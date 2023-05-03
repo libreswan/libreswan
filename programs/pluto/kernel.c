@@ -1065,12 +1065,6 @@ static void revert_kernel_policy(struct spd_route *spd,
 					 EXPECT_KERNEL_POLICY_OK,
 					 c->logger, HERE,
 					 "deleting failed policy");
-		if (st != NULL && spd->local->child->has_cat && !spd->block) {
-			ldbg(logger, "cleaning up CAT that had kittens");
-			delete_cat_kernel_policy(spd, DIRECTION_OUTBOUND,
-						 c->logger, HERE,
-						 "CAT: deleting outbound IPsec policy");
-		}
 		return;
 	}
 
@@ -2309,6 +2303,7 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child)
 	 */
 
 	if (!ok) {
+		delete_cat_kernel_policies(child->sa.st_connection, child->sa.st_logger, HERE);
 		FOR_EACH_ITEM(spd, &c->child.spds) {
 			revert_kernel_policy(spd, &child->sa, logger);
 		}

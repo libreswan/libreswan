@@ -207,10 +207,14 @@ void add_cat_kernel_policy(const struct connection *c,
 			   struct logger *logger, where_t where,
 			   const char *reason);
 
-void delete_cat_kernel_policy(const struct spd_route *spd,
-			      enum direction direction,
-			      struct logger *logger, where_t where,
-			      const char *story);
+void add_cat_kernel_policies(const struct connection *c,
+			     const struct kernel_policy *kernel_policy,
+			     enum direction direction,
+			     struct logger *logger, where_t where,
+			     const char *reason);
+
+void delete_cat_kernel_policies(struct connection *c,
+				struct logger *logger, where_t where);
 
 void install_inbound_ipsec_kernel_policy(struct child_sa *child, struct spd_route *spd,
 					 where_t where);

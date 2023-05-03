@@ -578,11 +578,11 @@ void add_cat_kernel_policy(const struct connection *c,
 	}
 }
 
-void delete_cat_kernel_policy(const struct spd_route *spd,
-			      enum direction direction,
-			      struct logger *logger,
-			      where_t where,
-			      const char *story)
+static void delete_cat_kernel_policy(const struct spd_route *spd,
+				     enum direction direction,
+				     struct logger *logger,
+				     where_t where,
+				     const char *story)
 {
 	const struct connection *c = spd->connection;
 	ldbg(logger, "%s", story);
@@ -614,6 +614,29 @@ void delete_cat_kernel_policy(const struct spd_route *spd,
 				  HUNK_AS_SHUNK(spd->connection->config->sec_label),
 				  logger, where, story)) {
 		llog(RC_LOG, logger, "%s failed", story);
+	}
+}
+
+void delete_cat_kernel_policies(struct connection *c,
+				struct logger *logger,
+				where_t where)
+{
+
+#if defined(HAVE_NFTABLES)
+	bool has_inbound = true;
+#else
+	bool has_inbound = false;
+#endif
+	FOR_EACH_ITEM(spd, &c->child.spds) {
+		if (spd->local->child->has_cat) {
+			delete_cat_kernel_policy(spd, DIRECTION_OUTBOUND, logger, where,
+						 "CAT: removing outbound IPsec policy");
+			if (has_inbound) {
+				delete_cat_kernel_policy(spd, DIRECTION_INBOUND,
+							 logger, where,
+							 "CAT: removing inbound IPsec policy");
+			}
+		}
 	}
 }
 
@@ -752,19 +775,6 @@ static void replace_ipsec_with_bare_kernel_policy(struct child_sa *child,
 		/* what was installed? */
 		const struct kernel_policy kernel_policy =
 			kernel_policy_from_state(child, spd, DIRECTION_OUTBOUND, where);
-		delete_cat_kernel_policy(spd, DIRECTION_OUTBOUND,
-					 logger, where,
-					 "CAT: removing outbound IPsec policy");
-#if defined(HAVE_NFTABLES)
-		bool has_inbound = true;
-#else
-		bool has_inbound = false;
-#endif
-		if (has_inbound) {
-			delete_cat_kernel_policy(spd, DIRECTION_INBOUND,
-						 logger, where,
-						 "CAT: removing inbound IPsec policy");
-		}
 		if (!delete_kernel_policy(DIRECTION_OUTBOUND,
 					  EXPECT_KERNEL_POLICY_OK,
 					  &kernel_policy.src.route,
@@ -841,6 +851,31 @@ void replace_ipsec_with_bare_kernel_policies(struct child_sa *child,
 #endif
 
 		do_updown(UPDOWN_DOWN, c, spd, &child->sa, logger);
+	}
+
+	delete_cat_kernel_policies(c, logger, where);
+
+	FOR_EACH_ITEM(spd, &c->child.spds) {
+
+#ifdef USE_CISCO_SPLIT
+		if (spd == c->spd && c->remotepeertype == CISCO) {
+			/*
+			 * XXX: this comment is out-of-date:
+			 *
+			 * XXX: this is currently the only reason for
+			 * spd_next walking.
+			 *
+			 * Routing should become RT_ROUTED_FAILURE,
+			 * but if POLICY_FAIL_NONE, then we just go
+			 * right back to RT_ROUTED_PROSPECTIVE as if
+			 * no failure happened.
+			 */
+			ldbg_sa(child,
+				"kernel: %s() skipping, first SPD and remotepeertype is CISCO, damage done",
+				__func__);
+			continue;
+		}
+#endif
 
 		replace_ipsec_with_bare_kernel_policy(child, c, spd, shunt_kind,
 						      expect_inbound_policy,
