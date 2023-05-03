@@ -392,8 +392,8 @@ extern ipsec_spi_t get_ipsec_spi(const struct connection *c,
 extern ipsec_spi_t get_ipsec_cpi(const struct connection *c,
 				 struct logger *logger/*state*/);
 
-bool unrouted_to_routed_never_negotiate(struct connection *c);
-bool unrouted_to_routed_ondemand(struct connection *c);
+bool unrouted_to_routed_never_negotiate(struct connection *c, where_t where);
+bool unrouted_to_routed_ondemand(struct connection *c, where_t where);
 
 bool install_inbound_ipsec_sa(struct child_sa *child, where_t where);
 bool install_ipsec_sa(struct child_sa *child, lset_t direction, where_t where);
@@ -409,7 +409,7 @@ bool kernel_ops_migrate_ipsec_sa(struct child_sa *child);
 extern void show_kernel_interface(struct show *s);
 void shutdown_kernel(struct logger *logger);
 
-bool unrouted_to_routed_sec_label(struct connection *c, struct logger *logger);
+bool unrouted_to_routed_sec_label(struct connection *c, struct logger *logger, where_t where);
 
 extern deltatime_t bare_shunt_interval;
 

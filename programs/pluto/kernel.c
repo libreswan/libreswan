@@ -1090,7 +1090,8 @@ static void revert_kernel_policy(struct spd_route *spd,
 	}
 }
 
-static bool unrouted_to_routed(struct connection *c, enum shunt_kind shunt_kind)
+static bool unrouted_to_routed(struct connection *c, enum shunt_kind shunt_kind,
+			       where_t where)
 {
 	enum routability r = connection_routability(c, c->logger);
 	switch (r) {
@@ -1137,19 +1138,19 @@ static bool unrouted_to_routed(struct connection *c, enum shunt_kind shunt_kind)
 		    PEXPECT(c->logger, !kernel_ops->overlap_supported)) {
 			delete_bare_shunt_kernel_policy(*spd->wip.conflicting.shunt,
 							EXPECT_KERNEL_POLICY_OK,
-							c->logger, HERE);
+							c->logger, where);
 			/* if everything succeeds, delete below */
 		}
 
 		ok &= spd->wip.installed.policy =
 			install_prospective_kernel_policies(spd, shunt_kind,
-							    c->logger, HERE);
+							    c->logger, where);
 
 		if (spd->wip.conflicting.shunt != NULL &&
 		    PBAD(c->logger, kernel_ops->overlap_supported)) {
 			delete_bare_shunt_kernel_policy(*spd->wip.conflicting.shunt,
 							EXPECT_KERNEL_POLICY_OK,
-							c->logger, HERE);
+							c->logger, where);
 			/* if everything succeeds, delete below */
 		}
 	}
@@ -1206,18 +1207,18 @@ static bool unrouted_to_routed(struct connection *c, enum shunt_kind shunt_kind)
 	return true;
 }
 
-bool unrouted_to_routed_ondemand(struct connection *c)
+bool unrouted_to_routed_ondemand(struct connection *c, where_t where)
 {
-	if (!unrouted_to_routed(c, SHUNT_KIND_ONDEMAND)) {
+	if (!unrouted_to_routed(c, SHUNT_KIND_ONDEMAND, where)) {
 		return false;
 	}
 	set_routing(c, RT_ROUTED_ONDEMAND, NULL);
 	return true;
 }
 
-bool unrouted_to_routed_never_negotiate(struct connection *c)
+bool unrouted_to_routed_never_negotiate(struct connection *c, where_t where)
 {
-	if (!unrouted_to_routed(c, SHUNT_KIND_NEVER_NEGOTIATE)) {
+	if (!unrouted_to_routed(c, SHUNT_KIND_NEVER_NEGOTIATE, where)) {
 		return false;
 	}
 	set_routing(c, RT_ROUTED_NEVER_NEGOTIATE, NULL);
@@ -1373,7 +1374,7 @@ static void clear_narrow_holds(const ip_selector *src_client,
 	}
 }
 
-bool unrouted_to_routed_sec_label(struct connection *c, struct logger *logger)
+bool unrouted_to_routed_sec_label(struct connection *c, struct logger *logger, where_t where)
 {
 	connection_buf cb;
 	ldbg(logger,
@@ -1400,7 +1401,7 @@ bool unrouted_to_routed_sec_label(struct connection *c, struct logger *logger)
 	 */
 	FOR_EACH_THING(direction, DIRECTION_OUTBOUND, DIRECTION_INBOUND) {
 		if (!add_sec_label_kernel_policy(c->spd, direction,
-						 /*logger*/logger, HERE,
+						 /*logger*/logger, where,
 						 "ondemand security label")) {
 			if (direction == DIRECTION_INBOUND) {
 				/*
@@ -1412,7 +1413,7 @@ bool unrouted_to_routed_sec_label(struct connection *c, struct logger *logger)
 				delete_spd_kernel_policy(c->spd, DIRECTION_OUTBOUND,
 							 EXPECT_KERNEL_POLICY_OK,
 							 /*logger*/logger,
-							 HERE, "security label policy");
+							 where, "security label policy");
 			}
 			return false;
 		}
@@ -1431,10 +1432,10 @@ bool unrouted_to_routed_sec_label(struct connection *c, struct logger *logger)
 		}
 		delete_spd_kernel_policy(c->spd, DIRECTION_OUTBOUND,
 					 EXPECT_KERNEL_POLICY_OK,
-					 logger, HERE, "failed security label");
+					 logger, where, "failed security label");
 		delete_spd_kernel_policy(c->spd, DIRECTION_INBOUND,
 					 EXPECT_KERNEL_POLICY_OK,
-					 logger, HERE, "failed security label");
+					 logger, where, "failed security label");
 		return false;
 	}
 
