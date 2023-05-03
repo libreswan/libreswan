@@ -580,7 +580,7 @@ static bool zap_connection(const char *story, struct ike_sa **ike, where_t where
 	/*
 	 * Stop reviving children trying to use this IKE SA.
 	 */
-	ldbg_sa(*ike, "due to %s IKE SA is no longer viable", story);
+	ldbg_sa(*ike, "%s() due to %s IKE SA is no longer viable", __func__, story);
 	(*ike)->sa.st_viable_parent = false;
 
 	/*
@@ -782,6 +782,11 @@ void connection_timeout_ike(struct ike_sa **ike, where_t where)
 
 void connection_delete_ike(struct ike_sa **ike, where_t where)
 {
+	if (labeled((*ike)->sa.st_connection)) {
+		delete_ike_family(ike);
+		return;
+	}
+
 	dispatch(CONNECTION_DELETE_IKE,
 		 (*ike)->sa.st_connection,
 		 (*ike)->sa.st_logger, where,
@@ -1277,6 +1282,21 @@ void dispatch(enum connection_event event, struct connection *c,
 						   CONNECTION_TIMEOUT_CHILD)) {
 					return;
 				}
+			}
+			break;
+
+#if 0
+		case X(DELETE_IKE, UNROUTED_NEGOTIATION, INSTANCE):
+		case X(DELETE_IKE, UNROUTED, INSTANCE):
+		case X(DELETE_IKE, ROUTED_ONDEMAND, INSTANCE):
+#endif
+		case X(DELETE_IKE, ROUTED_ONDEMAND, PERMANENT):
+		case X(DELETE_IKE, UNROUTED, PERMANENT): /* UNROUTED_NEGOTIATION!?! */
+		case X(DELETE_IKE, ROUTED_TUNNEL, PERMANENT):
+		case X(DELETE_IKE, ROUTED_TUNNEL, INSTANCE):
+			if (BROKEN_TRANSITION) {
+				delete_ike_family(e->ike);
+				return;
 			}
 			break;
 

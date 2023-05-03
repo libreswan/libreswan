@@ -2711,7 +2711,7 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		send_recorded_v2_message(ike, "DELETE_IKE_FAMILY", MESSAGE_RESPONSE);
 		/* do the deed */
 		ike->sa.st_on_delete.skip_send_delete = true;
-		delete_ike_family(&ike);
+		connection_delete_ike(&ike, HERE);
 		pexpect(ike == NULL);
 		return;
 
@@ -2734,9 +2734,10 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		v2_msgid_finish(ike, md);
 		/* do the deed; record'n'send logs */
 		record_n_send_v2_delete(ike, HERE);
+		/* do the deed */
 		ike->sa.st_on_delete.skip_send_delete = true;
 		ike->sa.st_on_delete.skip_log_message = true;
-		delete_ike_family(&ike);
+		connection_delete_ike(&ike, HERE);
 		/* get out of here -- everything is invalid */
 		pexpect(ike == NULL);
 		return;
