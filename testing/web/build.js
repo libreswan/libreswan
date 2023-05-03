@@ -36,7 +36,8 @@ function build_summary(div_id, json_file) {
 		}
 	    },
 	    new Set())
-	for (os of oss) {
+
+	for (let os of oss) {
 	    columns.push({
 		title: os,
 		html: function(target) {
@@ -48,6 +49,8 @@ function build_summary(div_id, json_file) {
 		},
 	    })
 	}
+
+	console.log("columns", columns)
 
 	// Merge similar targets
 
@@ -70,7 +73,8 @@ function build_summary(div_id, json_file) {
 	    },
 	    new Map()
 	)
-	console.log(columns, runs)
+
+	console.log("runs", runs)
 
 	lsw_table({
 	    id: div_id,
