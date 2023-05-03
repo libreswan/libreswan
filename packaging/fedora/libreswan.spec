@@ -30,7 +30,7 @@
 Name: libreswan
 Summary: Internet Key Exchange (IKEv1 and IKEv2) implementation for IPsec
 # version is generated in the release script
-Version: 4.10
+Version: 4.11
 Release: %{?prever:0.}1%{?prever:.%{prever}}%{?dist}
 License: GPLv2
 Url: https://libreswan.org/
@@ -199,5 +199,5 @@ certutil -N -d sql:$tmpdir --empty-password
 %doc %{_mandir}/*/*
 
 %changelog
-* Tue Feb 28 2023 Team Libreswan <team@libreswan.org> - 4.10-1
+* Wed May  3 2023 Team Libreswan <team@libreswan.org> - 4.11-1
 - Automated build from release tar ball
