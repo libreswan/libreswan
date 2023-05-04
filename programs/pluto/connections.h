@@ -117,10 +117,10 @@ struct host_end_config {
 
 	enum eap_options eap;		/* whether to require/do EAP auth (eg EAPTLS) */
 	bool key_from_DNS_on_demand;
-	bool groundhog;			/* Is groundhogtime allowed?
-					 * Groundhog time just ignores
-					 * the expiry on the root
-					 * certificate. */
+	bool groundhog;			/* Is groundhog time allowed?
+					 * Groundhog effectively
+					 * ignores the expiry on the
+					 * root certificate. */
 };
 
 /*

@@ -326,21 +326,63 @@ static void show_one_spd(struct show *s,
 		     OPT_HOST(that_sourceip, thatipb),
 		     OPT_PREFIX_STR("; mycert=", cert_nickname(&c->local->host.config->cert)),
 		     OPT_PREFIX_STR("; peercert=", cert_nickname(&c->remote->host.config->cert)),
-		     ((spd->local->config->child.updown == NULL ||
-		       streq(spd->local->config->child.updown, "%disabled")) ? "<disabled>" :
-		      spd->local->config->child.updown));
+		     ((c->local->config->child.updown == NULL ||
+		       streq(c->local->config->child.updown, "%disabled")) ? "<disabled>" :
+		      c->local->config->child.updown));
 
 #undef OPT_HOST
 #undef OPT_PREFIX_STR
 
+}
+
+void show_connection_status(struct show *s, const struct connection *c)
+{
+	const char *ifn;
+	char ifnstr[2 *  IFNAMSIZ + 2];  /* id_rname@id_vname\0 */
+	char instance[32];
+	char mtustr[8];
+	char sapriostr[13];
+	char satfcstr[13];
+	char nflogstr[8];
+	char markstr[2 * (2 * strlen("0xffffffff") + strlen("/")) + strlen(", ") ];
+
+	if (oriented(c)) {
+		if (c->xfrmi != NULL && c->xfrmi->name != NULL) {
+			char *n = jam_str(ifnstr, sizeof(ifnstr),
+					c->xfrmi->name);
+			add_str(ifnstr, sizeof(ifnstr), n, "@");
+			add_str(ifnstr, sizeof(ifnstr), n,
+					c->interface->ip_dev->id_rname);
+			ifn = ifnstr;
+		} else {
+			ifn = c->interface->ip_dev->id_rname;
+		}
+	} else {
+		ifn = "";
+	};
+
+	instance[0] = '\0';
+	if (c->instance_serial > 0)
+		snprintf(instance, sizeof(instance), "[%lu]",
+			c->instance_serial);
+
+	/* Show topology. */
+	FOR_EACH_ITEM(spd, &c->child.spds) {
+		show_one_spd(s, c, spd, instance);
+	}
+
 	/*
 	 * Both should not be set, but if they are, we want
-	 * to know
+	 * to know.
+	 *
+	 * XXX: better way to do this would be to PBAD() the first
+	 * check! Then we'd really know.
 	 */
-#define COMBO(END, SERVER, CLIENT) \
-	((END).SERVER ? \
-		((END).CLIENT ? "BOTH??" : "server") : \
-		((END).CLIENT ? "client" : "none"))
+#define COMBO(END)					\
+	((END).server && (END).client ? "BOTH!?!" :	\
+	 (END).server ? "server" :			\
+	 (END).client ? "client" :			\
+	 "none")
 
 	show_comment(s, PRI_CONNECTION":   xauth us:%s, xauth them:%s, %s my_username=%s; their_username=%s",
 		     c->name, instance,
@@ -348,18 +390,18 @@ static void show_one_spd(struct show *s,
 		      * Both should not be set, but if they are, we
 		      * want to know.
 		      */
-		     COMBO(spd->local->host->config->xauth, server, client),
-		     COMBO(spd->remote->host->config->xauth, server, client),
+		     COMBO(c->local->config->host.xauth),
+		     COMBO(c->remote->config->host.xauth),
 		     /* should really be an enum name */
-		     (spd->local->host->config->xauth.server ?
+		     (c->local->config->host.xauth.server ?
 		      c->config->xauthby == XAUTHBY_FILE ? "xauthby:file;" :
 		      c->config->xauthby == XAUTHBY_PAM ? "xauthby:pam;" :
 		      "xauthby:alwaysok;" :
 		      ""),
-		     (spd->local->host->config->xauth.username == NULL ? "[any]" :
-		      spd->local->host->config->xauth.username),
-		     (spd->remote->host->config->xauth.username == NULL ? "[any]" :
-		      spd->remote->host->config->xauth.username));
+		     (c->local->config->host.xauth.username == NULL ? "[any]" :
+		      c->local->config->host.xauth.username),
+		     (c->remote->config->host.xauth.username == NULL ? "[any]" :
+		      c->remote->config->host.xauth.username));
 
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
 		const char *who;
@@ -412,8 +454,8 @@ static void show_one_spd(struct show *s,
 
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
 		jam(buf, PRI_CONNECTION":   modecfg info:", c->name, instance);
-		jam(buf, " us:%s,", COMBO(spd->local->host->config->modecfg, server, client));
-		jam(buf, " them:%s,", COMBO(spd->remote->host->config->modecfg, server, client));
+		jam(buf, " us:%s,", COMBO(c->local->config->host.modecfg));
+		jam(buf, " them:%s,", COMBO(c->remote->config->host.modecfg));
 		jam(buf, " modecfg policy:%s,", (c->policy & POLICY_MODECFG_PULL ? "pull" : "push"));
 
 		jam_string(buf, " dns:");
@@ -440,75 +482,30 @@ static void show_one_spd(struct show *s,
 			}
 		}
 
-		jam(buf, " cat:%s;", spd->local->child->config->has_client_address_translation ? "set" : "unset");
+		jam(buf, " cat:%s;", c->local->config->child.has_client_address_translation ? "set" : "unset");
 	}
 
 #undef COMBO
 
+	/* the banner */
 	if (c->config->modecfg.banner != NULL) {
-		show_comment(s, PRI_CONNECTION": banner:%s;",
+		show_comment(s, PRI_CONNECTION":   banner:%s;",
 			     c->name, instance, c->config->modecfg.banner);
 	}
 
-	/*
-	 * Show the first valid sec_label.
-	 *
-	 * We only support symmetric labels, but store it in struct
-	 * end - pick one.
-	 *
-	 * XXX: IKEv1 stores the negotiated sec_label in the state.
-	 */
-	if (labeled_child(c)) {
-		/* negotiated (IKEv2) */
-		show_comment(s, PRI_CONNECTION":   sec_label:"PRI_SHUNK,
-			     c->name, instance,
-			     pri_shunk(c->child.sec_label));
-	} else if (labeled_template(c) ||
-		   labeled_parent(c)) {
-		/* configured */
-		show_comment(s, "\"%s\"%s:   sec_label:"PRI_SHUNK,
-			     c->name, instance,
-			     pri_shunk(c->config->sec_label));
-	} else {
-		show_comment(s, PRI_CONNECTION":   sec_label:unset;",
-			     c->name, instance);
-	}
-}
-
-void show_connection_status(struct show *s, const struct connection *c)
-{
-	const char *ifn;
-	char ifnstr[2 *  IFNAMSIZ + 2];  /* id_rname@id_vname\0 */
-	char instance[32];
-	char mtustr[8];
-	char sapriostr[13];
-	char satfcstr[13];
-	char nflogstr[8];
-	char markstr[2 * (2 * strlen("0xffffffff") + strlen("/")) + strlen(", ") ];
-
-	if (oriented(c)) {
-		if (c->xfrmi != NULL && c->xfrmi->name != NULL) {
-			char *n = jam_str(ifnstr, sizeof(ifnstr),
-					c->xfrmi->name);
-			add_str(ifnstr, sizeof(ifnstr), n, "@");
-			add_str(ifnstr, sizeof(ifnstr), n,
-					c->interface->ip_dev->id_rname);
-			ifn = ifnstr;
+	/* The first valid sec_label. */
+	SHOW_JAMBUF(RC_COMMENT, s, buf) {
+		jam(buf, PRI_CONNECTION":   sec_label:", c->name, instance);
+		if (labeled_child(c)) {
+			/* negotiated (IKEv2) */
+			jam_shunk(buf, c->child.sec_label);
+		} else if (labeled_template(c) ||
+			   labeled_parent(c)) {
+			/* configured */
+			jam_shunk(buf, c->config->sec_label);
 		} else {
-			ifn = c->interface->ip_dev->id_rname;
+			jam_string(buf, "unset;");
 		}
-	} else {
-		ifn = "";
-	};
-
-	instance[0] = '\0';
-	if (c->instance_serial > 0)
-		snprintf(instance, sizeof(instance), "[%lu]",
-			c->instance_serial);
-
-	/* Show topology. */
-	FOR_EACH_ITEM(spd, &c->child.spds) {
-		show_one_spd(s, c, spd, instance);
 	}
 
 	/* Show CAs */
