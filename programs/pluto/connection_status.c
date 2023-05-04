@@ -313,25 +313,16 @@ static void show_one_spd(struct show *s,
 
 #define OPT_HOST(h, ipb)  (address_is_specified(h) ? str_address(&h, &ipb) : "unset")
 
-		/* note: this macro generates a pair of arguments */
-#define OPT_PREFIX_STR(pre, s) (s) == NULL ? "" : (pre), (s) == NULL? "" : (s)
-
 	ip_address this_sourceip = spd_end_sourceip(spd->local);
 	ip_address that_sourceip = spd_end_sourceip(spd->remote);
 
-	show_comment(s, PRI_CONNECTION":     %s; my_ip=%s; their_ip=%s%s%s%s%s; my_updown=%s;",
+	show_comment(s, PRI_CONNECTION":     %s; my_ip=%s; their_ip=%s;",
 		     c->name, instance,
 		     oriented(c) ? "oriented" : "unoriented",
 		     OPT_HOST(this_sourceip, thisipb),
-		     OPT_HOST(that_sourceip, thatipb),
-		     OPT_PREFIX_STR("; mycert=", cert_nickname(&c->local->host.config->cert)),
-		     OPT_PREFIX_STR("; peercert=", cert_nickname(&c->remote->host.config->cert)),
-		     ((c->local->config->child.updown == NULL ||
-		       streq(c->local->config->child.updown, "%disabled")) ? "<disabled>" :
-		      c->local->config->child.updown));
+		     OPT_HOST(that_sourceip, thatipb));
 
 #undef OPT_HOST
-#undef OPT_PREFIX_STR
 
 }
 
@@ -369,6 +360,26 @@ void show_connection_status(struct show *s, const struct connection *c)
 	/* Show topology. */
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 		show_one_spd(s, c, spd, instance);
+	}
+
+	SHOW_JAMBUF(RC_COMMENT, s, buf) {
+		jam(buf, PRI_CONNECTION":  ", c->name, instance);
+		const char *local_cert = cert_nickname(&c->local->host.config->cert);
+		if (local_cert != NULL) {
+			jam(buf, " mycert=%s;", local_cert);
+		}
+		const char *remote_cert = cert_nickname(&c->remote->host.config->cert);
+		if (remote_cert != NULL) {
+			jam(buf, " peercert=%s;", remote_cert);
+		}
+		jam_string(buf, " my_updown=");
+		if (c->local->config->child.updown == NULL ||
+		    streq(c->local->config->child.updown, "%disabled")) {
+			jam_string(buf, "<disabled>;");
+		} else {
+			jam_string(buf, c->local->config->child.updown);
+			jam_string(buf, ";");
+		}
 	}
 
 	/*
