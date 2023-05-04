@@ -17,7 +17,8 @@ east #
 east #
  ipsec auto --status | grep westnet-eastnet
 000 "westnet-eastnet": 192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]---192.1.2.45...%any; unrouted; eroute owner: #0
-000 "westnet-eastnet":     oriented; my_ip=unset; their_ip=unset; mycert=east; my_updown=ipsec _updown;
+000 "westnet-eastnet":     oriented; my_ip=unset; their_ip=unset;
+000 "westnet-eastnet":   mycert=east; my_updown=ipsec _updown;
 000 "westnet-eastnet":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "westnet-eastnet":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 000 "westnet-eastnet":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;

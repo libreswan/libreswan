@@ -13,7 +13,8 @@ east #
 east #
  ipsec auto --status | grep north-east-x509-pluto-02
 000 "north-east-x509-pluto-02": 192.0.2.0/24===192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]---192.1.2.254...192.1.3.33[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=*, E=*]===192.0.3.0/24; unrouted; eroute owner: #0
-000 "north-east-x509-pluto-02":     oriented; my_ip=unset; their_ip=unset; mycert=east; my_updown=ipsec _updown;
+000 "north-east-x509-pluto-02":     oriented; my_ip=unset; their_ip=unset;
+000 "north-east-x509-pluto-02":   mycert=east; my_updown=ipsec _updown;
 000 "north-east-x509-pluto-02":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "north-east-x509-pluto-02":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 000 "north-east-x509-pluto-02":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;

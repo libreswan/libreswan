@@ -27,7 +27,7 @@ west #
  # should be unoriented
 west #
  ipsec auto --status | grep westnet-eastnet-ikev2 | grep orient
-000 "westnet-eastnet-ikev2":     unoriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
+000 "westnet-eastnet-ikev2":     unoriented; my_ip=unset; their_ip=unset;
 west #
  ip addr add 192.1.2.46/24 dev eth1
 west #
@@ -42,7 +42,7 @@ west #
  # should be oriented
 west #
  ipsec auto --status | grep westnet-eastnet-ikev2 | grep orient
-000 "westnet-eastnet-ikev2":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
+000 "westnet-eastnet-ikev2":     oriented; my_ip=unset; their_ip=unset;
 west #
  echo "initdone"
 initdone

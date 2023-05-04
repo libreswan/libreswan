@@ -10,7 +10,8 @@ east #
 east #
  ipsec auto --status | grep westnet-eastnet-ah-sha1-pfs
 000 "westnet-eastnet-ah-sha1-pfs": 192.0.2.0/24===192.1.2.23[@east]...192.1.2.45[@west]===192.0.1.0/24; unrouted; eroute owner: #0
-000 "westnet-eastnet-ah-sha1-pfs":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
+000 "westnet-eastnet-ah-sha1-pfs":     oriented; my_ip=unset; their_ip=unset;
+000 "westnet-eastnet-ah-sha1-pfs":   my_updown=ipsec _updown;
 000 "westnet-eastnet-ah-sha1-pfs":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "westnet-eastnet-ah-sha1-pfs":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 000 "westnet-eastnet-ah-sha1-pfs":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;

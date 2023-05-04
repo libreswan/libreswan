@@ -40,9 +40,9 @@ east #
 000 "test3":   conn_prio: 32,32; interface: ; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 east #
  ipsec auto --status | grep orient
-000 "test1":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
-000 "test2":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
-000 "test3":     unoriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
+000 "test1":     oriented; my_ip=unset; their_ip=unset;
+000 "test2":     oriented; my_ip=unset; their_ip=unset;
+000 "test3":     unoriented; my_ip=unset; their_ip=unset;
 east #
  ip addr add 192.1.3.3/24 dev eth3
 east #
@@ -58,9 +58,9 @@ east #
 002 loading secrets from "/etc/ipsec.secrets"
 east #
  ipsec auto --status | grep orient
-000 "test1":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
-000 "test2":     unoriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
-000 "test3":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
+000 "test1":     oriented; my_ip=unset; their_ip=unset;
+000 "test2":     unoriented; my_ip=unset; their_ip=unset;
+000 "test3":     oriented; my_ip=unset; their_ip=unset;
 east #
  ipsec auto --ready
 002 listening for IKE messages
@@ -68,9 +68,9 @@ east #
 002 loading secrets from "/etc/ipsec.secrets"
 east #
  ipsec auto --status | grep orient
-000 "test1":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
-000 "test2":     unoriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
-000 "test3":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
+000 "test1":     oriented; my_ip=unset; their_ip=unset;
+000 "test2":     unoriented; my_ip=unset; their_ip=unset;
+000 "test3":     oriented; my_ip=unset; their_ip=unset;
 east #
  ipsec whack --shutdown
 east #

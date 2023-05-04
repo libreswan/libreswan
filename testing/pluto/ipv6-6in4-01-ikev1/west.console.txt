@@ -31,7 +31,8 @@ west #
 west #
  ipsec status | grep westnet-eastnet-6in4
 000 "westnet-eastnet-6in4": 2001:db8:0:1::/64===192.1.2.45[@west]...192.1.2.23[@east]===2001:db8:0:2::/64; unrouted; eroute owner: #0
-000 "westnet-eastnet-6in4":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
+000 "westnet-eastnet-6in4":     oriented; my_ip=unset; their_ip=unset;
+000 "westnet-eastnet-6in4":   my_updown=ipsec _updown;
 000 "westnet-eastnet-6in4":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "westnet-eastnet-6in4":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 000 "westnet-eastnet-6in4":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;

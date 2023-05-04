@@ -102,7 +102,8 @@ east #
 000 Connection list:
 000  
 000 "rw-eastnet-ipv6": 2001:db8:0:2::/64===2001:db8:1:2::23[@east,MS+S=C]...%any[+MC+S=C]; unrouted; eroute owner: #0
-000 "rw-eastnet-ipv6":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
+000 "rw-eastnet-ipv6":     oriented; my_ip=unset; their_ip=unset;
+000 "rw-eastnet-ipv6":   my_updown=ipsec _updown;
 000 "rw-eastnet-ipv6":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "rw-eastnet-ipv6":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 000 "rw-eastnet-ipv6":   modecfg info: us:server, them:client, modecfg policy:push, dns:unset, domains:unset, cat:unset;

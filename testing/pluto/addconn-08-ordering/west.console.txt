@@ -8,9 +8,10 @@ west #
  ipsec whack --name order-test --tunnel --encrypt --ipv4 --tunnelipv6  --host 1.2.3.4 --id foo --client fe80::1/128 --to --host 2.3.4.5 --id bar --client fe80::2/128
 002 "order-test": added IKEv2 connection
 west #
- ipsec whack --status | grep order-test
+ ipsec whack --connectionstatus --name order-test
 000 "order-test": fe80::1/128===1.2.3.4[+S?C]...2.3.4.5[+S?C]===fe80::2/128; unrouted; eroute owner: #0
-000 "order-test":     unoriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
+000 "order-test":     unoriented; my_ip=unset; their_ip=unset;
+000 "order-test":   my_updown=ipsec _updown;
 000 "order-test":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "order-test":   our auth:rsasig(RSASIG+ECDSA+RSASIG_v1_5), their auth:rsasig(RSASIG+ECDSA+RSASIG_v1_5), our autheap:none, their autheap:none;
 000 "order-test":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;

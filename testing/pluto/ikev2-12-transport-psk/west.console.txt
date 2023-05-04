@@ -26,7 +26,8 @@ west #
 west #
  ipsec auto --status | grep ipv4-psk-ikev2-transport
 000 "ipv4-psk-ikev2-transport": 192.1.2.45[@west]...192.1.2.23[@east]; unrouted; eroute owner: #0
-000 "ipv4-psk-ikev2-transport":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
+000 "ipv4-psk-ikev2-transport":     oriented; my_ip=unset; their_ip=unset;
+000 "ipv4-psk-ikev2-transport":   my_updown=ipsec _updown;
 000 "ipv4-psk-ikev2-transport":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "ipv4-psk-ikev2-transport":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 000 "ipv4-psk-ikev2-transport":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;

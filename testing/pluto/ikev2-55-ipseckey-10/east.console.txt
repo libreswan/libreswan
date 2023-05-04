@@ -10,7 +10,8 @@ east #
 east #
  ipsec auto --status | grep road-east-ikev2
 000 "road-east-ikev2": 192.1.2.23[@east]...192.1.3.209[@road.testing.libreswan.org]; unrouted; eroute owner: #0
-000 "road-east-ikev2":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
+000 "road-east-ikev2":     oriented; my_ip=unset; their_ip=unset;
+000 "road-east-ikev2":   my_updown=ipsec _updown;
 000 "road-east-ikev2":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "road-east-ikev2":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 000 "road-east-ikev2":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;

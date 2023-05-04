@@ -112,7 +112,8 @@ west #
 west #
  ipsec auto --status | grep TUNNEL
 000 "TUNNEL-A": 192.0.1.254/32===192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===192.0.2.254/32; erouted; eroute owner: #2
-000 "TUNNEL-A":     oriented; my_ip=unset; their_ip=unset; mycert=west; my_updown=ipsec _updown;
+000 "TUNNEL-A":     oriented; my_ip=unset; their_ip=unset;
+000 "TUNNEL-A":   mycert=west; my_updown=ipsec _updown;
 000 "TUNNEL-A":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "TUNNEL-A":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 000 "TUNNEL-A":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
@@ -130,7 +131,8 @@ west #
 000 "TUNNEL-A":   newest ISAKMP SA: #0; newest IPsec SA: #2; conn serial: $2;
 000 "TUNNEL-A":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
 000 "TUNNEL-B": 192.0.1.254/32===192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===192.0.2.244/32; prospective erouted; eroute owner: #0
-000 "TUNNEL-B":     oriented; my_ip=unset; their_ip=unset; mycert=west; my_updown=ipsec _updown;
+000 "TUNNEL-B":     oriented; my_ip=unset; their_ip=unset;
+000 "TUNNEL-B":   mycert=west; my_updown=ipsec _updown;
 000 "TUNNEL-B":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "TUNNEL-B":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 000 "TUNNEL-B":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
@@ -147,7 +149,8 @@ west #
 000 "TUNNEL-B":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
 000 "TUNNEL-B":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $3;
 000 "TUNNEL-C": 192.0.1.254/32===192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===192.0.2.234/32; erouted; eroute owner: #4
-000 "TUNNEL-C":     oriented; my_ip=unset; their_ip=unset; mycert=west; my_updown=ipsec _updown;
+000 "TUNNEL-C":     oriented; my_ip=unset; their_ip=unset;
+000 "TUNNEL-C":   mycert=west; my_updown=ipsec _updown;
 000 "TUNNEL-C":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "TUNNEL-C":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 000 "TUNNEL-C":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
@@ -176,7 +179,8 @@ west #
 west #
  ipsec auto --status | grep TUNNEL
 000 "TUNNEL-A": 192.0.1.254/32===192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===192.0.2.254/32; erouted; eroute owner: #2
-000 "TUNNEL-A":     oriented; my_ip=unset; their_ip=unset; mycert=west; my_updown=ipsec _updown;
+000 "TUNNEL-A":     oriented; my_ip=unset; their_ip=unset;
+000 "TUNNEL-A":   mycert=west; my_updown=ipsec _updown;
 000 "TUNNEL-A":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "TUNNEL-A":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 000 "TUNNEL-A":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
@@ -194,7 +198,8 @@ west #
 000 "TUNNEL-A":   newest ISAKMP SA: #0; newest IPsec SA: #2; conn serial: $2;
 000 "TUNNEL-A":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
 000 "TUNNEL-C": 192.0.1.254/32===192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===192.0.2.234/32; erouted; eroute owner: #4
-000 "TUNNEL-C":     oriented; my_ip=unset; their_ip=unset; mycert=west; my_updown=ipsec _updown;
+000 "TUNNEL-C":     oriented; my_ip=unset; their_ip=unset;
+000 "TUNNEL-C":   mycert=west; my_updown=ipsec _updown;
 000 "TUNNEL-C":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "TUNNEL-C":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 000 "TUNNEL-C":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;

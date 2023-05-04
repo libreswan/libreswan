@@ -17,7 +17,8 @@ initdone
 west #
  ipsec auto --status | grep westnet-eastnet
 000 "westnet-eastnet-0": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; eroute owner: #0
-000 "westnet-eastnet-0":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
+000 "westnet-eastnet-0":     oriented; my_ip=unset; their_ip=unset;
+000 "westnet-eastnet-0":   my_updown=ipsec _updown;
 000 "westnet-eastnet-0":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "westnet-eastnet-0":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 000 "westnet-eastnet-0":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
@@ -35,7 +36,8 @@ west #
 000 "westnet-eastnet-0":   newest IKE SA: #0; newest IPsec SA: #0; conn serial: $1;
 000 "westnet-eastnet-0":   aliases: westnet-eastnet
 000 "westnet-eastnet-1": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; eroute owner: #0
-000 "westnet-eastnet-1":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
+000 "westnet-eastnet-1":     oriented; my_ip=unset; their_ip=unset;
+000 "westnet-eastnet-1":   my_updown=ipsec _updown;
 000 "westnet-eastnet-1":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "westnet-eastnet-1":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 000 "westnet-eastnet-1":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
@@ -53,7 +55,8 @@ west #
 000 "westnet-eastnet-1":   newest IKE SA: #0; newest IPsec SA: #0; conn serial: $1;
 000 "westnet-eastnet-1":   aliases: westnet-eastnet
 000 "westnet-eastnet-2": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; eroute owner: #0
-000 "westnet-eastnet-2":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
+000 "westnet-eastnet-2":     oriented; my_ip=unset; their_ip=unset;
+000 "westnet-eastnet-2":   my_updown=ipsec _updown;
 000 "westnet-eastnet-2":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "westnet-eastnet-2":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 000 "westnet-eastnet-2":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
@@ -169,7 +172,8 @@ src 192.0.2.0/24 dst 192.0.1.0/24
 west #
  ipsec auto --status | grep westnet-eastnet
 000 "westnet-eastnet-0": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; erouted; eroute owner: #2
-000 "westnet-eastnet-0":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
+000 "westnet-eastnet-0":     oriented; my_ip=unset; their_ip=unset;
+000 "westnet-eastnet-0":   my_updown=ipsec _updown;
 000 "westnet-eastnet-0":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "westnet-eastnet-0":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 000 "westnet-eastnet-0":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
@@ -189,7 +193,8 @@ west #
 000 "westnet-eastnet-0":   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-MODP2048
 000 "westnet-eastnet-0":   ESP algorithm newest: AES_GCM_16_256-NONE; pfsgroup=<Phase1>
 000 "westnet-eastnet-1": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; erouted; eroute owner: #4
-000 "westnet-eastnet-1":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
+000 "westnet-eastnet-1":     oriented; my_ip=unset; their_ip=unset;
+000 "westnet-eastnet-1":   my_updown=ipsec _updown;
 000 "westnet-eastnet-1":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "westnet-eastnet-1":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 000 "westnet-eastnet-1":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
@@ -208,7 +213,8 @@ west #
 000 "westnet-eastnet-1":   aliases: westnet-eastnet
 000 "westnet-eastnet-1":   ESP algorithm newest: AES_GCM_16_256-NONE; pfsgroup=<Phase1>
 000 "westnet-eastnet-2": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; erouted; eroute owner: #3
-000 "westnet-eastnet-2":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
+000 "westnet-eastnet-2":     oriented; my_ip=unset; their_ip=unset;
+000 "westnet-eastnet-2":   my_updown=ipsec _updown;
 000 "westnet-eastnet-2":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "westnet-eastnet-2":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 000 "westnet-eastnet-2":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;

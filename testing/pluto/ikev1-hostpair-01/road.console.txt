@@ -98,7 +98,8 @@ done
 road #
  ipsec status | grep eastnet
 000 "westnet-eastnet-ipv4-psk-ikev1": 192.0.2.1/32===192.1.3.210[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org,+MC+XC+S=C]---192.1.3.254...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]; erouted; eroute owner: #2
-000 "westnet-eastnet-ipv4-psk-ikev1":     oriented; my_ip=192.0.2.1; their_ip=unset; mycert=road; my_updown=ipsec _updown;
+000 "westnet-eastnet-ipv4-psk-ikev1":     oriented; my_ip=192.0.2.1; their_ip=unset;
+000 "westnet-eastnet-ipv4-psk-ikev1":   mycert=road; my_updown=ipsec _updown;
 000 "westnet-eastnet-ipv4-psk-ikev1":   xauth us:client, xauth them:none,  my_username=[any]; their_username=[any]
 000 "westnet-eastnet-ipv4-psk-ikev1":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 000 "westnet-eastnet-ipv4-psk-ikev1":   modecfg info: us:client, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
