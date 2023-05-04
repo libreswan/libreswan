@@ -8,7 +8,7 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec whack --impair delete-on-retransmit
+ ipsec whack --impair timeout-on-retransmit
 west #
  ipsec auto --add nss-cert
 002 "nss-cert": added IKEv1 connection
@@ -46,7 +46,7 @@ west #
 1v1 "nss-cert" #1: sent Main Mode I3
 003 "nss-cert" #1: ignoring informational payload INVALID_KEY_INFORMATION, msgid=00000000, length=12
 003 "nss-cert" #1: received and ignored notification payload: INVALID_KEY_INFORMATION
-002 "nss-cert" #1: IMPAIR: retransmit so deleting SA
+002 "nss-cert" #1: IMPAIR: retransmit so timing out SA (may retry)
 002 "nss-cert" #1: deleting ISAKMP SA (MAIN_I3) and NOT sending notification
 002 "nss-cert" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 west #

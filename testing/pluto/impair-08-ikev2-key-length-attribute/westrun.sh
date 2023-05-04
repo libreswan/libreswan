@@ -8,12 +8,12 @@ ipsec whack --impair none
 
 # send AES_0
 
-ipsec whack --impair delete-on-retransmit
+ipsec whack --impair timeout-on-retransmit
 ipsec whack --impair ike-key-length-attribute:0
 ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
 ipsec whack --impair none
 
-ipsec whack --impair delete-on-retransmit
+ipsec whack --impair timeout-on-retransmit
 ipsec whack --impair child-key-length-attribute:0
 ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
 ipsec whack --impair none
@@ -32,25 +32,25 @@ ipsec whack --impair none
 
 # send AES; should fail
 
-ipsec whack --impair delete-on-retransmit
+ipsec whack --impair timeout-on-retransmit
 ipsec whack --impair ike-key-length-attribute:omit
 ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
 ipsec whack --impair none
 
-ipsec whack --impair delete-on-retransmit
+ipsec whack --impair timeout-on-retransmit
 ipsec whack --impair child-key-length-attribute:omit
 ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
 ipsec whack --impair none
 
 # send AES_<>; should fail
 
-ipsec whack --impair delete-on-retransmit
+ipsec whack --impair timeout-on-retransmit
 ipsec whack --impair emitting
 ipsec whack --impair ike-key-length-attribute:empty
 ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
 ipsec whack --impair none
 
-ipsec whack --impair delete-on-retransmit
+ipsec whack --impair timeout-on-retransmit
 ipsec whack --impair emitting
 ipsec whack --impair ike-key-length-attribute:empty
 ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
@@ -71,7 +71,7 @@ ipsec whack --impair none
 
 # send 3DES_192; should work (but doesn't)
 
-ipsec whack --impair delete-on-retransmit
+ipsec whack --impair timeout-on-retransmit
 ipsec whack --impair ike-key-length-attribute:192
 ../../guestbin/libreswan-up-down.sh 3des -I 192.0.1.254 192.0.2.254
 ipsec whack --impair none

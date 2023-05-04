@@ -4,7 +4,7 @@
 ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec whack --impair major-version-bump
-ipsec whack --impair delete-on-retransmit
+ipsec whack --impair timeout-on-retransmit
 ipsec whack --impair revival
 ipsec auto --add westnet-eastnet-ikev2-major
 echo "initdone"

@@ -38,7 +38,7 @@ initdone
 west #
  ipsec whack --impair revival
 west #
- ipsec whack --impair delete-on-retransmit
+ ipsec whack --impair timeout-on-retransmit
 west #
  # expected to fail
 west #

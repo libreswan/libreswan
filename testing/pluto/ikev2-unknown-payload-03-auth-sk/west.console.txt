@@ -35,7 +35,7 @@ west #
 west #
  ipsec whack --impair none
 west #
- ipsec whack --impair delete-on-retransmit
+ ipsec whack --impair timeout-on-retransmit
 west #
  ipsec whack --impair add-unknown-v2-payload-to-sk:IKE_AUTH
 west #

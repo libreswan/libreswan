@@ -31,7 +31,7 @@ west #
 west #
  # send AES_0
 west #
- ipsec whack --impair delete-on-retransmit
+ ipsec whack --impair timeout-on-retransmit
 west #
  ipsec whack --impair ike-key-length-attribute:0
 west #
@@ -41,13 +41,13 @@ west #
 002 "aes128" #3: IMPAIR: emitting fixed-length key-length attribute with 0 key
 1v2 "aes128" #3: sent IKE_SA_INIT request to 192.1.2.23:500
 003 "aes128" #3: dropping unexpected IKE_SA_INIT message containing NO_PROPOSAL_CHOSEN notification; message payloads: N; missing payloads: SA,KE,Ni
-002 "aes128" #3: IMPAIR: retransmit so deleting SA
-002 "aes128" #3: deleting IKE SA (PARENT_I1) and NOT sending notification
+002 "aes128" #3: IMPAIR: retransmit so timing out SA (may retry)
 002 "aes128" #3: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+002 "aes128" #3: deleting IKE SA (PARENT_I1) and NOT sending notification
 west #
  ipsec whack --impair none
 west #
- ipsec whack --impair delete-on-retransmit
+ ipsec whack --impair timeout-on-retransmit
 west #
  ipsec whack --impair child-key-length-attribute:0
 west #
@@ -106,7 +106,7 @@ west #
 west #
  # send AES; should fail
 west #
- ipsec whack --impair delete-on-retransmit
+ ipsec whack --impair timeout-on-retransmit
 west #
  ipsec whack --impair ike-key-length-attribute:omit
 west #
@@ -116,13 +116,13 @@ west #
 002 "aes128" #11: IMPAIR: omitting fixed-size key-length attribute
 1v2 "aes128" #11: sent IKE_SA_INIT request to 192.1.2.23:500
 003 "aes128" #11: dropping unexpected IKE_SA_INIT message containing NO_PROPOSAL_CHOSEN notification; message payloads: N; missing payloads: SA,KE,Ni
-002 "aes128" #11: IMPAIR: retransmit so deleting SA
-002 "aes128" #11: deleting IKE SA (PARENT_I1) and NOT sending notification
+002 "aes128" #11: IMPAIR: retransmit so timing out SA (may retry)
 002 "aes128" #11: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+002 "aes128" #11: deleting IKE SA (PARENT_I1) and NOT sending notification
 west #
  ipsec whack --impair none
 west #
- ipsec whack --impair delete-on-retransmit
+ ipsec whack --impair timeout-on-retransmit
 west #
  ipsec whack --impair child-key-length-attribute:omit
 west #
@@ -139,7 +139,7 @@ west #
 west #
  # send AES_<>; should fail
 west #
- ipsec whack --impair delete-on-retransmit
+ ipsec whack --impair timeout-on-retransmit
 west #
  ipsec whack --impair emitting
 west #
@@ -152,13 +152,13 @@ west #
 002 "aes128" #15: IMPAIR: emitting af+type of IKEv2 Attribute Substructure Payload has an unknown value: 0x0+14 (0xe)
 1v2 "aes128" #15: sent IKE_SA_INIT request to 192.1.2.23:500
 003 "aes128" #15: dropping unexpected IKE_SA_INIT message containing INVALID_SYNTAX notification; message payloads: N; missing payloads: SA,KE,Ni
-002 "aes128" #15: IMPAIR: retransmit so deleting SA
-002 "aes128" #15: deleting IKE SA (PARENT_I1) and NOT sending notification
+002 "aes128" #15: IMPAIR: retransmit so timing out SA (may retry)
 002 "aes128" #15: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+002 "aes128" #15: deleting IKE SA (PARENT_I1) and NOT sending notification
 west #
  ipsec whack --impair none
 west #
- ipsec whack --impair delete-on-retransmit
+ ipsec whack --impair timeout-on-retransmit
 west #
  ipsec whack --impair emitting
 west #
@@ -171,9 +171,9 @@ west #
 002 "aes128" #17: IMPAIR: emitting af+type of IKEv2 Attribute Substructure Payload has an unknown value: 0x0+14 (0xe)
 1v2 "aes128" #17: sent IKE_SA_INIT request to 192.1.2.23:500
 003 "aes128" #17: dropping unexpected IKE_SA_INIT message containing INVALID_SYNTAX notification; message payloads: N; missing payloads: SA,KE,Ni
-002 "aes128" #17: IMPAIR: retransmit so deleting SA
-002 "aes128" #17: deleting IKE SA (PARENT_I1) and NOT sending notification
+002 "aes128" #17: IMPAIR: retransmit so timing out SA (may retry)
 002 "aes128" #17: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+002 "aes128" #17: deleting IKE SA (PARENT_I1) and NOT sending notification
 west #
  ipsec whack --impair none
 west #
@@ -220,7 +220,7 @@ west #
 west #
  # send 3DES_192; should work (but doesn't)
 west #
- ipsec whack --impair delete-on-retransmit
+ ipsec whack --impair timeout-on-retransmit
 west #
  ipsec whack --impair ike-key-length-attribute:192
 west #
@@ -230,9 +230,9 @@ west #
 002 "3des" #23: IMPAIR: emitting fixed-length key-length attribute with 192 key
 1v2 "3des" #23: sent IKE_SA_INIT request to 192.1.2.23:500
 003 "3des" #23: dropping unexpected IKE_SA_INIT message containing NO_PROPOSAL_CHOSEN notification; message payloads: N; missing payloads: SA,KE,Ni
-002 "3des" #23: IMPAIR: retransmit so deleting SA
-002 "3des" #23: deleting IKE SA (PARENT_I1) and NOT sending notification
+002 "3des" #23: IMPAIR: retransmit so timing out SA (may retry)
 002 "3des" #23: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+002 "3des" #23: deleting IKE SA (PARENT_I1) and NOT sending notification
 west #
  ipsec whack --impair none
 west #

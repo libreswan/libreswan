@@ -50,7 +50,7 @@ road #
 road #
  ipsec whack --impair none
 road #
- ipsec whack --impair revival --impair delete-on-retransmit
+ ipsec whack --impair revival --impair timeout-on-retransmit
 road #
  ipsec auto --add road-east
 002 "road-east": added IKEv2 connection
@@ -63,9 +63,9 @@ road #
 002 "road-east" #4: deleting IKE SA (PARENT_I1) and NOT sending notification
 002 "road-east" #4: IMPAIR: skipping revival of connection that is supposed to remain up
 1v2 "road-east" #5: sent IKE_SA_INIT request to 192.1.2.44:500
-002 "road-east" #5: IMPAIR: retransmit so deleting SA
-002 "road-east" #5: deleting IKE SA (PARENT_I1) and NOT sending notification
+002 "road-east" #5: IMPAIR: retransmit so timing out SA (may retry)
 002 "road-east" #5: IMPAIR: skipping revival of connection that is supposed to remain up
+002 "road-east" #5: deleting IKE SA (PARENT_I1) and NOT sending notification
 road #
  ipsec whack --trafficstatus
 road #

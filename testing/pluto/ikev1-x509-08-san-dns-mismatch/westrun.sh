@@ -1,4 +1,4 @@
-ipsec whack --impair delete-on-retransmit
+ipsec whack --impair timeout-on-retransmit
 # this should fail
 ipsec auto --up san
 echo "done"

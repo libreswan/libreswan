@@ -35,7 +35,7 @@ west #
 west #
  ipsec whack --impair none
 west #
- ipsec whack --impair delete-on-retransmit
+ ipsec whack --impair timeout-on-retransmit
 west #
  ipsec whack --impair add-unknown-v2-payload-to:IKE_AUTH
 west #
@@ -48,9 +48,9 @@ west #
 002 "westnet-eastnet-ipv4-psk-ikev2" #3: IMPAIR: adding an unknown critical payload of type 255 to IKE_AUTH request
 002 "westnet-eastnet-ipv4-psk-ikev2" #3: IMPAIR: setting (should be off) critical payload bit
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #3: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "westnet-eastnet-ipv4-psk-ikev2" #3: IMPAIR: retransmit so deleting SA
-002 "westnet-eastnet-ipv4-psk-ikev2" #3: deleting IKE SA (PARENT_I2) and NOT sending notification
+002 "westnet-eastnet-ipv4-psk-ikev2" #3: IMPAIR: retransmit so timing out SA (may retry)
 002 "westnet-eastnet-ipv4-psk-ikev2" #3: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+002 "westnet-eastnet-ipv4-psk-ikev2" #3: deleting IKE SA (PARENT_I2) and NOT sending notification
 west #
  echo done
 done

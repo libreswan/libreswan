@@ -5,7 +5,7 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec whack --impair delete-on-retransmit
+ ipsec whack --impair timeout-on-retransmit
 west #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev1
 002 "westnet-eastnet-ipv4-psk-ikev1": added IKEv1 connection
@@ -22,7 +22,7 @@ west #
 004 "westnet-eastnet-ipv4-psk-ikev1" #1: IKE SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "westnet-eastnet-ipv4-psk-ikev1" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 1v1 "westnet-eastnet-ipv4-psk-ikev1" #2: sent Quick Mode request
-002 "westnet-eastnet-ipv4-psk-ikev1" #2: IMPAIR: retransmit so deleting SA
+002 "westnet-eastnet-ipv4-psk-ikev1" #2: IMPAIR: retransmit so timing out SA (may retry)
 002 "westnet-eastnet-ipv4-psk-ikev1" #2: deleting IPsec SA (QUICK_I1) and NOT sending notification
 west #
  echo done

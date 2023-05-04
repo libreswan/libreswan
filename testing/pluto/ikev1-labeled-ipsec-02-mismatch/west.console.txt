@@ -19,7 +19,7 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec whack --impair delete-on-retransmit
+ ipsec whack --impair timeout-on-retransmit
 west #
  # expected to fail
 west #
@@ -33,7 +33,7 @@ west #
 004 "labeled" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "labeled" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 1v1 "labeled" #2: sent Quick Mode request
-002 "labeled" #2: IMPAIR: retransmit so deleting SA
+002 "labeled" #2: IMPAIR: retransmit so timing out SA (may retry)
 002 "labeled" #2: deleting IPsec SA (QUICK_I1) and NOT sending notification
 west #
  echo done

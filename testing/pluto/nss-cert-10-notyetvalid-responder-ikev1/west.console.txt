@@ -14,7 +14,7 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec whack --impair delete-on-retransmit
+ ipsec whack --impair timeout-on-retransmit
 west #
  ipsec whack --impair revival
 west #
@@ -31,7 +31,7 @@ west #
 002 "nss-cert" #1: X509: certificate rejected for this connection
 002 "nss-cert" #1: X509: CERT payload bogus or revoked
 218 "nss-cert" #1: sending encrypted notification INVALID_ID_INFORMATION to 192.1.2.23:500
-002 "nss-cert" #1: IMPAIR: retransmit so deleting SA
+002 "nss-cert" #1: IMPAIR: retransmit so timing out SA (may retry)
 002 "nss-cert" #1: deleting ISAKMP SA (MAIN_I3) and NOT sending notification
 002 "nss-cert" #1: IMPAIR: skipping revival of connection that is supposed to remain up
 west #

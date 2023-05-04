@@ -32,7 +32,7 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec whack --impair delete-on-retransmit
+ ipsec whack --impair timeout-on-retransmit
 west #
  ipsec whack --impair revival
 west #

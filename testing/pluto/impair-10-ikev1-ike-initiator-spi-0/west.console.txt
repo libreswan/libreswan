@@ -8,7 +8,7 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec whack --impair delete-on-retransmit
+ ipsec whack --impair timeout-on-retransmit
 west #
  ipsec whack --impair ike-initiator-spi:0
 west #
@@ -18,7 +18,7 @@ west #
 1v1 "aes128" #1: sent Main Mode request
 003 "aes128" #1: ignoring informational payload INVALID_COOKIE, msgid=00000000, length=12
 003 "aes128" #1: received and ignored notification payload: INVALID_COOKIE
-002 "aes128" #1: IMPAIR: retransmit so deleting SA
+002 "aes128" #1: IMPAIR: retransmit so timing out SA (may retry)
 002 "aes128" #1: deleting ISAKMP SA (MAIN_I1) and NOT sending notification
 002 "aes128" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 west #

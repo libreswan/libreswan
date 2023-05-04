@@ -10,7 +10,7 @@ initdone
 west #
  ipsec whack --impair revival
 west #
- ipsec whack --impair delete-on-retransmit
+ ipsec whack --impair timeout-on-retransmit
 west #
  ipsec whack --impair ike-initiator-spi:0
 west #
@@ -18,7 +18,7 @@ west #
 002 "aes128": added IKEv2 connection
 1v2 "aes128" #1: initiating IKEv2 connection
 1v2 "aes128" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-002 "aes128" #1: IMPAIR: retransmit so deleting SA
+002 "aes128" #1: IMPAIR: retransmit so timing out SA (may retry)
 002 "aes128" #1: deleting IKE SA (PARENT_I1) and NOT sending notification
 002 "aes128" #1: IMPAIR: skipping revival of connection that is supposed to remain up
 west #

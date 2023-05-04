@@ -1,7 +1,7 @@
 # initiator sends an empty KE payload
 # responder should return invalid KE
 ipsec whack --impair ke-payload:empty
-ipsec whack --impair delete-on-retransmit
+ipsec whack --impair timeout-on-retransmit
 ipsec whack --impair revival
 ipsec auto --up westnet-eastnet-ipv4-psk
 ipsec auto --delete westnet-eastnet-ipv4-psk

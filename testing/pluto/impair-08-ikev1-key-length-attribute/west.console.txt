@@ -40,7 +40,7 @@ west #
 west #
  ipsec whack --impair revival
 west #
- ipsec whack --impair delete-on-retransmit
+ ipsec whack --impair timeout-on-retransmit
 west #
  ipsec whack --impair ike-key-length-attribute:duplicate
 west #
@@ -52,7 +52,7 @@ west #
 1v1 "aes128" #3: sent Main Mode request
 003 "aes128" #3: ignoring informational payload BAD_PROPOSAL_SYNTAX, msgid=00000000, length=12
 003 "aes128" #3: received and ignored notification payload: BAD_PROPOSAL_SYNTAX
-002 "aes128" #3: IMPAIR: retransmit so deleting SA
+002 "aes128" #3: IMPAIR: retransmit so timing out SA (may retry)
 002 "aes128" #3: deleting ISAKMP SA (MAIN_I1) and NOT sending notification
 002 "aes128" #3: IMPAIR: skipping revival of connection that is supposed to remain up
 west #
@@ -60,7 +60,7 @@ west #
 west #
  ipsec whack --impair revival
 west #
- ipsec whack --impair delete-on-retransmit
+ ipsec whack --impair timeout-on-retransmit
 west #
  ipsec whack --impair child-key-length-attribute:duplicate
 west #
@@ -76,7 +76,7 @@ west #
 002 "aes128" #5: IMPAIR: stripping key-length
 002 "aes128" #5: IMPAIR: duplicating key-length
 1v1 "aes128" #5: sent Quick Mode request
-002 "aes128" #5: IMPAIR: retransmit so deleting SA
+002 "aes128" #5: IMPAIR: retransmit so timing out SA (may retry)
 002 "aes128" #5: deleting IPsec SA (QUICK_I1) and NOT sending notification
 west #
  ipsec whack --impair none
@@ -85,7 +85,7 @@ west #
 west #
  ipsec whack --impair revival
 west #
- ipsec whack --impair delete-on-retransmit
+ ipsec whack --impair timeout-on-retransmit
 west #
  ipsec whack --impair ike-key-length-attribute:0
 west #
@@ -97,7 +97,7 @@ west #
 1v1 "aes128" #6: sent Main Mode request
 003 "aes128" #6: ignoring informational payload NO_PROPOSAL_CHOSEN, msgid=00000000, length=12
 003 "aes128" #6: received and ignored notification payload: NO_PROPOSAL_CHOSEN
-002 "aes128" #6: IMPAIR: retransmit so deleting SA
+002 "aes128" #6: IMPAIR: retransmit so timing out SA (may retry)
 002 "aes128" #6: deleting ISAKMP SA (MAIN_I1) and NOT sending notification
 002 "aes128" #6: IMPAIR: skipping revival of connection that is supposed to remain up
 west #
@@ -105,7 +105,7 @@ west #
 west #
  ipsec whack --impair revival
 west #
- ipsec whack --impair delete-on-retransmit
+ ipsec whack --impair timeout-on-retransmit
 west #
  ipsec whack --impair child-key-length-attribute:0
 west #
@@ -121,7 +121,7 @@ west #
 002 "aes128" #8: IMPAIR: stripping key-length
 002 "aes128" #8: IMPAIR: sending key-length attribute value 0
 1v1 "aes128" #8: sent Quick Mode request
-002 "aes128" #8: IMPAIR: retransmit so deleting SA
+002 "aes128" #8: IMPAIR: retransmit so timing out SA (may retry)
 002 "aes128" #8: deleting IPsec SA (QUICK_I1) and NOT sending notification
 west #
  ipsec whack --impair none
@@ -130,7 +130,7 @@ west #
 west #
  ipsec whack --impair revival
 west #
- ipsec whack --impair delete-on-retransmit
+ ipsec whack --impair timeout-on-retransmit
 west #
  ipsec whack --impair ike-key-length-attribute:omit
 west #
@@ -158,7 +158,7 @@ west #
 west #
  ipsec whack --impair revival
 west #
- ipsec whack --impair delete-on-retransmit
+ ipsec whack --impair timeout-on-retransmit
 west #
  ipsec whack --impair child-key-length-attribute:omit
 west #
@@ -174,7 +174,7 @@ west #
 002 "aes128" #12: IMPAIR: stripping key-length
 002 "aes128" #12: IMPAIR: not sending key-length attribute
 1v1 "aes128" #12: sent Quick Mode request
-002 "aes128" #12: IMPAIR: retransmit so deleting SA
+002 "aes128" #12: IMPAIR: retransmit so timing out SA (may retry)
 002 "aes128" #12: deleting IPsec SA (QUICK_I1) and NOT sending notification
 west #
  ipsec whack --impair none
@@ -183,7 +183,7 @@ west #
 west #
  ipsec whack --impair revival
 west #
- ipsec whack --impair delete-on-retransmit
+ ipsec whack --impair timeout-on-retransmit
 west #
  ipsec whack --impair emitting
 west #
@@ -213,7 +213,7 @@ west #
 west #
  ipsec whack --impair revival
 west #
- ipsec whack --impair delete-on-retransmit
+ ipsec whack --impair timeout-on-retransmit
 west #
  ipsec whack --impair emitting
 west #
@@ -231,7 +231,7 @@ west #
 002 "aes128" #16: IMPAIR: stripping key-length
 002 "aes128" #16: IMPAIR: key-length-attribute:empty not implemented
 1v1 "aes128" #16: sent Quick Mode request
-002 "aes128" #16: IMPAIR: retransmit so deleting SA
+002 "aes128" #16: IMPAIR: retransmit so timing out SA (may retry)
 002 "aes128" #16: deleting IPsec SA (QUICK_I1) and NOT sending notification
 west #
  ipsec whack --impair none
@@ -272,7 +272,7 @@ west #
 west #
  ipsec whack --impair revival
 west #
- ipsec whack --impair delete-on-retransmit
+ ipsec whack --impair timeout-on-retransmit
 west #
  ipsec whack --impair ike-key-length-attribute:0
 west #
@@ -283,7 +283,7 @@ west #
 1v1 "3des" #19: sent Main Mode request
 003 "3des" #19: ignoring informational payload NO_PROPOSAL_CHOSEN, msgid=00000000, length=12
 003 "3des" #19: received and ignored notification payload: NO_PROPOSAL_CHOSEN
-002 "3des" #19: IMPAIR: retransmit so deleting SA
+002 "3des" #19: IMPAIR: retransmit so timing out SA (may retry)
 002 "3des" #19: deleting ISAKMP SA (MAIN_I1) and NOT sending notification
 002 "3des" #19: IMPAIR: skipping revival of connection that is supposed to remain up
 west #
@@ -293,7 +293,7 @@ west #
 west #
  ipsec whack --impair revival
 west #
- ipsec whack --impair delete-on-retransmit
+ ipsec whack --impair timeout-on-retransmit
 west #
  ipsec whack --impair ike-key-length-attribute:192
 west #

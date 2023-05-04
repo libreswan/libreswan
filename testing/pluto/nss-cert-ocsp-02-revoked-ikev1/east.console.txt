@@ -8,7 +8,7 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec whack --impair delete-on-retransmit
+ ipsec whack --impair timeout-on-retransmit
 east #
  ipsec auto --add nss-cert-ocsp
 002 "nss-cert-ocsp": added IKEv1 connection

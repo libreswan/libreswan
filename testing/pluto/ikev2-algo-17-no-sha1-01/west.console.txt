@@ -128,7 +128,7 @@ initdone
 west #
  # this should fail, as SHA1 is not part of the default proposal set anymore
 west #
- ipsec whack --impair delete-on-retransmit
+ ipsec whack --impair timeout-on-retransmit
 west #
  ipsec auto --up westnet-eastnet-no-sha1
 1v2 "westnet-eastnet-no-sha1" #1: initiating IKEv2 connection

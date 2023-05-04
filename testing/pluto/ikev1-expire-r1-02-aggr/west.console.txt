@@ -15,14 +15,14 @@ west #
 west #
  ipsec whack --impair drop-i2
 west #
- ipsec whack --impair delete-on-retransmit
+ ipsec whack --impair timeout-on-retransmit
 west #
  ipsec whack --impair revival
 west #
  ipsec auto --up westnet-eastnet-aggr
 002 "westnet-eastnet-aggr" #1: initiating IKEv1 Aggressive Mode connection
 1v1 "westnet-eastnet-aggr" #1: sent Aggressive Mode request
-002 "westnet-eastnet-aggr" #1: IMPAIR: retransmit so deleting SA
+002 "westnet-eastnet-aggr" #1: IMPAIR: retransmit so timing out SA (may retry)
 002 "westnet-eastnet-aggr" #1: deleting ISAKMP SA (AGGR_I1) and NOT sending notification
 002 "westnet-eastnet-aggr" #1: IMPAIR: skipping revival of connection that is supposed to remain up
 west #

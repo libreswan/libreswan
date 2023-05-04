@@ -19,14 +19,14 @@ west #
 west #
  ipsec whack --impair ke-payload:omit
 west #
- ipsec whack --impair delete-on-retransmit
+ ipsec whack --impair timeout-on-retransmit
 west #
  ipsec auto --up westnet-eastnet-ipv4-psk-ikev2
 002 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv1 Main Mode connection
 1v1 "westnet-eastnet-ipv4-psk-ikev2" #1: sent Main Mode request
 002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: sending no KE (g^x) payload
 1v1 "westnet-eastnet-ipv4-psk-ikev2" #1: sent Main Mode I2
-002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: retransmit so deleting SA
+002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: retransmit so timing out SA (may retry)
 002 "westnet-eastnet-ipv4-psk-ikev2" #1: deleting ISAKMP SA (MAIN_I2) and NOT sending notification
 002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: skipping revival of connection that is supposed to remain up
 west #

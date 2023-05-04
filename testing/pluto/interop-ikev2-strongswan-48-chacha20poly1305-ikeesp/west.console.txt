@@ -24,7 +24,7 @@ west #
  ipsec auto --add chacha
 002 "chacha": added IKEv2 connection
 west #
- ipsec whack --impair delete-on-retransmit
+ ipsec whack --impair timeout-on-retransmit
 west #
  echo "initdone"
 initdone

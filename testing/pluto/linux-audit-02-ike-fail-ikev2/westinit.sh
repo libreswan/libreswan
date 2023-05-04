@@ -5,5 +5,5 @@ echo ': PSK "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"' >> /etc/ipsec.secrets
 ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec auto --add ikev2-failtest
-#ipsec whack --impair delete-on-retransmit
+#ipsec whack --impair timeout-on-retransmit
 echo "initdone"

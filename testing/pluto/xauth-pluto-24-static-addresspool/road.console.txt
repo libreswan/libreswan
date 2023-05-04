@@ -13,7 +13,7 @@ road #
  echo initdone
 initdone
 road #
- ipsec whack --impair delete-on-retransmit
+ ipsec whack --impair timeout-on-retransmit
 road #
  # expected to fail due to overlap of IP
 road #

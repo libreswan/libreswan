@@ -13,7 +13,7 @@ north #
 north #
  ipsec whack --impair none
 north #
- ipsec whack --impair revival --impair delete-on-retransmit
+ ipsec whack --impair revival --impair timeout-on-retransmit
 north #
  ipsec auto --add north-east
 002 "north-east": added IKEv2 connection
@@ -26,9 +26,9 @@ north #
 002 "north-east" #1: deleting IKE SA (PARENT_I1) and NOT sending notification
 002 "north-east" #1: IMPAIR: skipping revival of connection that is supposed to remain up
 1v2 "north-east" #2: sent IKE_SA_INIT request to 192.1.2.44:500
-002 "north-east" #2: IMPAIR: retransmit so deleting SA
-002 "north-east" #2: deleting IKE SA (PARENT_I1) and NOT sending notification
+002 "north-east" #2: IMPAIR: retransmit so timing out SA (may retry)
 002 "north-east" #2: IMPAIR: skipping revival of connection that is supposed to remain up
+002 "north-east" #2: deleting IKE SA (PARENT_I1) and NOT sending notification
 north #
  ipsec auto --delete north-east
 002 "north-east": terminating SAs using this connection
@@ -37,7 +37,7 @@ north #
 north #
  ipsec whack --impair none
 north #
- ipsec whack --impair revival --impair delete-on-retransmit
+ ipsec whack --impair revival --impair timeout-on-retransmit
 north #
  ipsec auto --add north-east
 002 "north-east": added IKEv2 connection
@@ -50,9 +50,9 @@ north #
 002 "north-east" #3: deleting IKE SA (PARENT_I1) and NOT sending notification
 002 "north-east" #3: IMPAIR: skipping revival of connection that is supposed to remain up
 1v2 "north-east" #4: sent IKE_SA_INIT request to 192.1.2.46:500
-002 "north-east" #4: IMPAIR: retransmit so deleting SA
-002 "north-east" #4: deleting IKE SA (PARENT_I1) and NOT sending notification
+002 "north-east" #4: IMPAIR: retransmit so timing out SA (may retry)
 002 "north-east" #4: IMPAIR: skipping revival of connection that is supposed to remain up
+002 "north-east" #4: deleting IKE SA (PARENT_I1) and NOT sending notification
 north #
  ipsec auto --delete north-east
 002 "north-east": terminating SAs using this connection

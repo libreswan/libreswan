@@ -13,7 +13,7 @@ west #
  ipsec auto --add westnet-eastnet-ikev2-major
 002 "westnet-eastnet-ikev2-major": added IKEv2 connection
 west #
- ipsec whack --impair delete-on-retransmit
+ ipsec whack --impair timeout-on-retransmit
 west #
  echo "initdone"
 initdone
@@ -21,9 +21,9 @@ west #
  ipsec auto --up westnet-eastnet-ikev2-major
 1v2 "westnet-eastnet-ikev2-major" #1: initiating IKEv2 connection
 1v2 "westnet-eastnet-ikev2-major" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-002 "westnet-eastnet-ikev2-major" #1: IMPAIR: retransmit so deleting SA
-002 "westnet-eastnet-ikev2-major" #1: deleting IKE SA (PARENT_I1) and NOT sending notification
+002 "westnet-eastnet-ikev2-major" #1: IMPAIR: retransmit so timing out SA (may retry)
 002 "westnet-eastnet-ikev2-major" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+002 "westnet-eastnet-ikev2-major" #1: deleting IKE SA (PARENT_I1) and NOT sending notification
 west #
  echo done
 done

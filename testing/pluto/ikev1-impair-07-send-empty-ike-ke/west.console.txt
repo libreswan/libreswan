@@ -17,7 +17,7 @@ west #
 west #
  ipsec whack --impair ke-payload:empty
 west #
- ipsec whack --impair delete-on-retransmit
+ ipsec whack --impair timeout-on-retransmit
 west #
  ipsec whack --impair revival
 west #
@@ -28,7 +28,7 @@ west #
 1v1 "westnet-eastnet-ipv4-psk" #1: sent Main Mode I2
 003 "westnet-eastnet-ipv4-psk" #1: ignoring informational payload INVALID_KEY_INFORMATION, msgid=00000000, length=12
 003 "westnet-eastnet-ipv4-psk" #1: received and ignored notification payload: INVALID_KEY_INFORMATION
-002 "westnet-eastnet-ipv4-psk" #1: IMPAIR: retransmit so deleting SA
+002 "westnet-eastnet-ipv4-psk" #1: IMPAIR: retransmit so timing out SA (may retry)
 002 "westnet-eastnet-ipv4-psk" #1: deleting ISAKMP SA (MAIN_I2) and NOT sending notification
 002 "westnet-eastnet-ipv4-psk" #1: IMPAIR: skipping revival of connection that is supposed to remain up
 west #

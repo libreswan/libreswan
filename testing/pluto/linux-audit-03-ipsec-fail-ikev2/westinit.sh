@@ -3,5 +3,5 @@ setenforce 1
 ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec auto --add ikev2-ipsec-fail
-#ipsec whack --impair delete-on-retransmit
+#ipsec whack --impair timeout-on-retransmit
 echo "initdone"

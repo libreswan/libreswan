@@ -14,7 +14,7 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec whack --impair delete-on-retransmit
+ ipsec whack --impair timeout-on-retransmit
 west #
  # this should fail
 west #
@@ -25,7 +25,7 @@ west #
 003 "san" #1: X509: authentication failed; peer certificate subjectAltName extension does not match ID_IPV4_ADDR '192.1.2.123'
 003 "san" #1: initial Aggressive Mode packet claiming to be from 192.1.2.123 on 192.1.2.23:500 but no connection has been authorized
 218 "san" #1: sending notification INVALID_ID_INFORMATION to 192.1.2.23:500
-002 "san" #1: IMPAIR: retransmit so deleting SA
+002 "san" #1: IMPAIR: retransmit so timing out SA (may retry)
 002 "san" #1: deleting ISAKMP SA (AGGR_I1) and NOT sending notification
 002 "san" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 west #

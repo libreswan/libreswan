@@ -33,7 +33,7 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec whack --impair delete-on-retransmit
+ ipsec whack --impair timeout-on-retransmit
 west #
  # expected to fail
 west #
@@ -47,7 +47,7 @@ west #
 1v1 "nss-cert-chain" #1: sent Main Mode I3
 003 "nss-cert-chain" #1: ignoring informational payload INVALID_ID_INFORMATION, msgid=00000000, length=12
 003 "nss-cert-chain" #1: received and ignored notification payload: INVALID_ID_INFORMATION
-002 "nss-cert-chain" #1: IMPAIR: retransmit so deleting SA
+002 "nss-cert-chain" #1: IMPAIR: retransmit so timing out SA (may retry)
 002 "nss-cert-chain" #1: deleting ISAKMP SA (MAIN_I3) and NOT sending notification
 002 "nss-cert-chain" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 west #

@@ -43,7 +43,7 @@ west #
 1v1 "west-x509" #2: sent Quick Mode request
 004 "west-x509" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
- ipsec whack --impair delete-on-retransmit
+ ipsec whack --impair timeout-on-retransmit
 west #
  # this one should fail, as east is only expecting selfsigned cert of west, not road
 west #
@@ -56,7 +56,7 @@ west #
 1v1 "road-x509" #3: sent Main Mode I3
 003 "road-x509" #3: ignoring informational payload INVALID_ID_INFORMATION, msgid=00000000, length=12
 003 "road-x509" #3: received and ignored notification payload: INVALID_ID_INFORMATION
-002 "road-x509" #3: IMPAIR: retransmit so deleting SA
+002 "road-x509" #3: IMPAIR: retransmit so timing out SA (may retry)
 002 "road-x509" #3: deleting ISAKMP SA (MAIN_I3) and NOT sending notification
 002 "road-x509" #3: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 west #
