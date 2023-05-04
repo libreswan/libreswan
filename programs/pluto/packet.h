@@ -964,7 +964,7 @@ struct ikev2_prop {
 
 extern struct_desc ikev2_prop_desc;
 
-/* draft-ietf-ipsecme-qr-ikev2-01 */
+/* RFC 8784 */
 struct ikev2_ppk_id {
 	uint8_t isappkid_type;
 };

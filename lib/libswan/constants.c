@@ -2143,7 +2143,7 @@ enum_names secret_kind_names = {
 };
 
 /*
- * IKEv2 PPK ID types - draft-ietf-ipsecme-qr-ikev2-01
+ * IKEv2 PPK ID types - RFC 8784
  */
 static const char *const ikev2_ppk_id_type_name[] = {
 	/* 0 - Reserved */

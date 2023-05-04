@@ -10,7 +10,7 @@ only if PPK is used for key derivation;
 signifying that PPK should not be used for key derivation.
 PPKs can be used in connections that allow only IKEv2. In libreswan that would
 mean that ikev2 option must have value <emphasis remap='B'>insist</emphasis>.
- (currently based on draft-fluhrer-qr-ikev2, not raft-ietf-ipsecme-qr-ikev2-00)
+ This feature is based on RFC 8784.
 </para>
   </listitem>
   </varlistentry>
