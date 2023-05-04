@@ -93,11 +93,6 @@ void event_v2_retransmit(struct state *ike_sa, monotime_t now UNUSED)
 		connection_timeout_ike(&ike, HERE);
 		return;
 
-	case DELETE_ON_RETRANSMIT:
-		ike->sa.st_on_delete.skip_send_delete = true;
-		delete_ike_family(&ike);
-		return;
-
 	}
 
 	bad_case(retransmit_action);

@@ -46,7 +46,6 @@ enum retransmit_action {
 	RETRANSMIT_YES,
 	/* due to impair */
 	TIMEOUT_ON_RETRANSMIT,
-	DELETE_ON_RETRANSMIT,
 };
 
 enum retransmit_action retransmit(struct state *st);

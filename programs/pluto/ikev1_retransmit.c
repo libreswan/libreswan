@@ -63,8 +63,6 @@ void event_v1_retransmit(struct state *st, monotime_t now UNUSED)
 		break;
 	case TIMEOUT_ON_RETRANSMIT:
 		break;
-	case DELETE_ON_RETRANSMIT:
-		break;
 	}
 
 	pstat_sa_failed(st, REASON_TOO_MANY_RETRANSMITS);

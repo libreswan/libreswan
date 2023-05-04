@@ -105,7 +105,6 @@ struct impair {
 	bool major_version_bump;
 	bool minor_version_bump;
 	bool timeout_on_retransmit;
-	bool delete_on_retransmit;
 	bool suppress_retransmits;
 	bool send_bogus_payload_flag;
 	bool send_bogus_isakmp_flag;

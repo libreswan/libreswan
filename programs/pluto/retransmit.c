@@ -175,11 +175,6 @@ enum retransmit_action retransmit(struct state *st)
 		return TIMEOUT_ON_RETRANSMIT;
 	}
 
-	if (impair.delete_on_retransmit) {
-		log_state(RC_LOG, st, "IMPAIR: retransmit so deleting SA");
-		return DELETE_ON_RETRANSMIT;
-	}
-
 	if (st->st_interface->io->protocol == &ip_protocol_tcp) {
 		dbg_retransmit(st, "TCP: retransmit skipped because TCP is handling retransmits");
 		return RETRANSMIT_NO;

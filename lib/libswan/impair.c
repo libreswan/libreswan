@@ -117,7 +117,6 @@ struct impairment impairments[] = {
 	V("child-key-length-attribute", child_key_length_attribute, "corrupt the outgoing CHILD proposal's key length attribute",
 	  .how_keywords = &impair_emit_keywords, .unsigned_help = "emit <unsigned> as the key length"),
 	V("corrupt-encrypted", corrupt_encrypted, "corrupts the encrypted packet so that the decryption fails"),
-	V("delete-on-retransmit", delete_on_retransmit, "causes pluto to fail on the first retransmit"),
 	V("drop-i2", drop_i2, "drop second initiator packet"),
 	V("drop-xauth-r0", drop_xauth_r0, "causes pluto to drop an XAUTH user/passwd request on IKE initiator"),
 	V("emitting", emitting, "disable correctness-checks when emitting a payload (let anything out)"),
