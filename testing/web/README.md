@@ -308,74 +308,77 @@ Some things, annoyingly, don't quite work right:
 
 After the release, save the results to elsewhere.
 
-- shut down the tester (with out this it will likely try to test
-  results that have been archived)
+- shut down the tester
 
-- delete results/commits*; this will be rebuilt
+  With out this it will likely try to test results that have been
+  archived.  Something like:
+
+      ( cd libreswan-web/test-repo/ && ./kvm kill )
+      pkill tester
+
+- clean up scratch directories (they get rebuilt):
+
+      rm -rf results/commits*
+      rm -rf results/tests
+
+   well perhaps not the second, later
 
 - set up the variables
 
-  o=v4.7
-  n=v4.8
+      o=v4.7
+      n=v4.8
 
 - make some paths easier:
 
 - create the archive directory:
 
-  mkdir ~/${o}-${n}
+      mkdir ~/${o}-${n}
 
 - move results from previous release:
 
-  mv ~/results/${o}-* ~/${o}-${n}
+      mv ~/results/${o}-* ~/${o}-${n}
 
 - copy result from latest relese (so results are bookended with by
   releases) (tester.sh given a chance will seek out and test ${n}-0):
 
-  cp -r ~/results/${n}-0-* ~/${o}-${n}
+      cp -r ~/results/${n}-0-* ~/${o}-${n}
 
 - now clean the archive of old logs (these should match the pattern
   OUTPUT/*):
 
-  find ~/${o}-${n} -name 'debug.log.gz' | xargs rm -v
-  find ~/${o}-${n} -name 'pluto.log' -print | xargs rm -v
-  find ~/${o}-${n} -name 'iked.log' -print | xargs rm -v
-  find ~/${o}-${n} -name 'charon.log' -print | xargs rm -v
+      find ~/${o}-${n} -name 'debug.log.gz' | xargs rm -v
+      find ~/${o}-${n} -name 'pluto.log' -print | xargs rm -v
+      find ~/${o}-${n} -name 'iked.log' -print | xargs rm -v
+      find ~/${o}-${n} -name 'charon.log' -print | xargs rm -v
 
 - check for other files:
 
-  find ~/${o}-${n} -name '*.log.gz' -print # delete?
+      find ~/${o}-${n} -name '*.log.gz' -print # delete?
 
   this finds some bonus stuff in OUTPUT which should be added to
   above
 
 - check for stray logs:
 
-  find ~/${o}-${n} -name '.log' -print # delete?
+      find ~/${o}-${n} -name '.log' -print # delete?
 
   this finds things like kvm-check.log which should be compressed
 
 - finally re-generate the pages in the archive:
 
-  ( cd ~/libreswan-web/testbench-repo/ && make WEB_SUMMARYDIR=~/${o}-${n} web-summarydir )
+      ( cd ~/libreswan-web/script-repo/ && make WEB_SUMMARYDIR=~/${o}-${n} web-summarydir )
 
 - and restart tester.sh
 
   Note the addition of ${n} to specify the commit to start from.
 
-  cp /dev/null nohup.out ; nohup ;
-  ./libreswan-web/testbench-repo/testing/web/tester.sh libreswan-web/test-repo results ${n} &
+      cp /dev/null nohup.out ; nohup ;
+      ./libreswan-web/testbench-repo/testing/web/tester.sh libreswan-web/test-repo results ${n} &
 
 
 # Improvements
 
 Some things could work better:
-
-- "good" and "wip" each list their errors separately
-
-  So it is easier to identify "good" errors.
-
-  Unfortunately, the raw data (found in `results.json`) isn't
-  currently included in `summary.json`.
 
 - examine (compare) individual tests
 
@@ -383,12 +386,6 @@ Some things could work better:
   display (graph?) that test's history under a "Compare Test" tab.
 
   The raw test results are in <run>/<test>/OUTPUT/result.json.
-
-- Bookmark comparisons
-
-  For instance `results?hash,hash`.
-
-  The required information seems to be in `location.search`.
 
 - Use an accumulative bar graph instead of a scatter plot
 

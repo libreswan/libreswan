@@ -85,6 +85,7 @@ run() (
 	${status} "'make ${href}' failed"
 	exit 1
     fi
+    gzip -v -9 ${resultsdir}/$1.log
 )
 
 while true ; do
