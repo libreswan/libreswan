@@ -98,10 +98,14 @@ uint8_t build_ikev2_critical(bool impaired, struct logger *logger)
  * must be non-NULL (the message being responded to).
  */
 
-static struct pbs_out open_v2_message_body(struct pbs_out *message,
-					   struct ike_sa *ike, struct msg_digest *md,
-					   enum isakmp_xchg_type exchange_type)
+static bool open_v2_message_body(struct pbs_out *message,
+				 const struct ike_sa *ike,
+				 const struct msg_digest *md,
+				 enum isakmp_xchg_type exchange_type,
+				 struct pbs_out *body)
 {
+	*body = empty_pbs_out;
+
 	/* at least one, possibly both */
 	passert(ike != NULL || md != NULL);
 
@@ -206,17 +210,16 @@ static struct pbs_out open_v2_message_body(struct pbs_out *message,
 		}
 	}
 
-	struct pbs_out body;
-	if (!pbs_out_struct(message, &isakmp_hdr_desc, &hdr, sizeof(hdr), &body)) {
+	if (!pbs_out_struct(message, &isakmp_hdr_desc, &hdr, sizeof(hdr), body)) {
 		/* already logged */
-		return empty_pbs_out; /*fatal*/
+		return false;
 	}
 	if (impair.add_unknown_v2_payload_to == exchange_type &&
-	    !emit_v2UNKNOWN("request", exchange_type, &body)) {
-		return empty_pbs_out;
+	    !emit_v2UNKNOWN("request", exchange_type, body)) {
+		return false;
 	}
 
-	return body;
+	return true;
 }
 
 /*
@@ -239,12 +242,12 @@ static bool emit_v2SK_iv(struct v2SK_payload *sk)
 	return true;
 }
 
-static struct v2SK_payload open_v2SK_payload(struct logger *logger,
-					     struct pbs_out *container,
-					     struct ike_sa *ike)
+static bool open_body_v2SK_payload(struct pbs_out *container,
+				   struct ike_sa *ike,
+				   struct logger *logger,
+				   struct v2SK_payload *sk)
 {
-	static const struct v2SK_payload empty_sk;
-	struct v2SK_payload sk = {
+	*sk = (struct v2SK_payload) {
 		.logger = logger,
 		.ike = ike,
 		.payload = {
@@ -259,30 +262,34 @@ static struct v2SK_payload open_v2SK_payload(struct logger *logger,
 		.isag_length = 0, /* filled in later */
 		.isag_critical = build_ikev2_critical(false, ike->sa.st_logger),
 	};
-	if (!out_struct(&e, &ikev2_sk_desc, container, &sk.pbs)) {
+	if (!pbs_out_struct(container, &ikev2_sk_desc, &e, sizeof(e), &sk->pbs)) {
 		llog(RC_LOG, logger,
-			    "error initializing SK header for encrypted %s message",
-			    container->name);
-		return empty_sk;
+		     "error initializing SK header for encrypted %s message",
+		     container->name);
+		return false;
 	}
 
 	/* emit IV and save location */
 
-	if (!emit_v2SK_iv(&sk)) {
+	if (!emit_v2SK_iv(sk)) {
 		llog(RC_LOG, logger,
 			    "error initializing IV for encrypted %s message",
 			    container->name);
-		return empty_sk;
+		return false;
 	}
 
 	/* save cleartext start */
 
-	sk.cleartext.ptr = sk.pbs.cur;
-	passert(sk.iv.ptr <= sk.cleartext.ptr);
-	/* XXX: coverity thinks .container (set to E by out_struct() above) can be NULL. */
-	passert(sk.pbs.container != NULL && sk.pbs.container->name == container->name);
+	sk->cleartext.ptr = sk->pbs.cur;
+	sk->cleartext.len = 0; /* to be determined */
 
-	return sk;
+	passert(sk->iv.ptr <= sk->cleartext.ptr);
+
+	/* XXX: coverity thinks .container (set to E by out_struct()
+	 * above) can be NULL. */
+	passert(sk->pbs.container != NULL && sk->pbs.container->name == container->name);
+
+	return true;
 }
 
 static bool close_v2SK_payload(struct v2SK_payload *sk)
@@ -1403,8 +1410,8 @@ bool open_v2_message(const char *story,
 
 	message->message = open_pbs_out(story, buf, sizeof_buf, logger);
 
-	message->body = open_v2_message_body(&message->message, ike, request_md, exchange_type);
-	if (!pbs_ok(&message->body)) {
+	if (!open_v2_message_body(&message->message, ike, request_md,
+				  exchange_type, &message->body)) {
 		llog(RC_LOG, message->logger,
 		     "error initializing hdr for encrypted notification");
 		return false;
@@ -1422,8 +1429,7 @@ bool open_v2_message(const char *story,
 		if (!pexpect(ike != NULL && ike->sa.hidden_variables.st_skeyid_calculated)) {
 			return false;
 		}
-		message->sk = open_v2SK_payload(logger, &message->body, ike);
-		if (!pbs_ok(&message->sk.pbs)) {
+		if (!open_body_v2SK_payload(&message->body, ike, logger, &message->sk)) {
 			return false;
 		}
 		message->pbs = &message->sk.pbs;

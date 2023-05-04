@@ -233,7 +233,6 @@ chunk_t clone_pbs_in_left(const struct pbs_in *pbs, const char *name);
  *
  * XXX: How can an input pbs have room()?
  */
-#define pbs_ok(PBS) ((PBS)->start != NULL)
 #define pbs_offset(pbs) ((size_t)((pbs)->cur - (pbs)->start))
 #define pbs_room(pbs) ((size_t)((pbs)->roof - (pbs)->start))
 #define pbs_left(pbs) ((size_t)((pbs)->roof - (pbs)->cur))
