@@ -392,8 +392,9 @@ extern lset_t cur_debugging;	/* current debugging level */
 void ldbg(const struct logger *logger, const char *message, ...) PRINTF_LIKE(2);
 
 /* LDBG_JAMBUF() is ambigious - LDBG_op() or ldbg() ucase? */
-#define LDBGP_JAMBUF(COND, LOGGER, BUF)			\
-	for (bool cond_ = COND; cond_; cond_ = false)	\
+#define LDBGP_JAMBUF(COND, LOGGER, BUF)					\
+	for (bool cond_ = COND & (cur_debugging | (LOGGER)->debugging);	\
+	     cond_; cond_ = false)					\
 		LLOG_JAMBUF(DEBUG_STREAM, LOGGER, BUF)
 
 
