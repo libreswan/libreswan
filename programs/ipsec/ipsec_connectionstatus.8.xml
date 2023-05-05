@@ -3,36 +3,32 @@
                    "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
 <refentry>
   <refmeta>
-    <refentrytitle>IPSEC_REREADCERTS</refentrytitle>
+    <refentrytitle>IPSEC_CONNECTIONSTATUS</refentrytitle>
     <manvolnum>8</manvolnum>
-    <refmiscinfo class='date'>15 April 2023</refmiscinfo>
+    <refmiscinfo class='date'>05 May 2023</refmiscinfo>
     <refmiscinfo class="source">libreswan</refmiscinfo>
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
-    <refname>ipsec rereadcerts</refname>
-    <refpurpose>Reread IPsec certificates from IPsec NSS database</refpurpose>
+    <refname>ipsec connectionstatus</refname>
+    <refpurpose>Get brief status from IPsec service</refpurpose>
   </refnamediv>
-  <!-- body begins here -->
+
   <refsynopsisdiv id='synopsis'>
     <cmdsynopsis>
       <command>ipsec</command>
-      <arg choice='plain'>rereadcerts</arg>
+      <arg choice='plain'>connectionstatus</arg>
+      <arg choice='opt'>connectionname</arg>
       <arg choice='opt'>--ctlsocket <replaceable>@@RUNDIR@@/pluto.ctl</replaceable></arg>
       <sbr/>
     </cmdsynopsis>
   </refsynopsisdiv>
 
-
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>Rereadcerts</emphasis> operation instructs
-      pluto to reread certificates from IPsec NSS database. This is
-      useful when you replace expiring certificate in NSS database
-      with a new one. After replacing certificate in NSS database you
-      can instruct <option>pluto</option> to reread certificates while
-      all IPsec connections continue to work without any interruption.
+      <emphasis remap='I'>Connectionstatus</emphasis> list status of all
+      connections or optionally specitfied <option>connectionname</option>.
     </para>
   </refsect1>
 
@@ -48,7 +44,6 @@
       <citerefentry><refentrytitle>ipsec_certutil</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_checknflog</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_checknss</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-      <citerefentry><refentrytitle>ipsec_connectionstatus</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_crlutil</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_delete</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_down</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
@@ -75,6 +70,7 @@
       <citerefentry><refentrytitle>ipsec_redirect</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_replace</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_rereadall</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+      <citerefentry><refentrytitle>ipsec_rereadcerts</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_rereadsecrets</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_restart</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_route</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
