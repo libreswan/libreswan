@@ -755,6 +755,8 @@ void llog_vendorid(struct logger *logger, enum known_vendorid id, shunk_t vid, b
 			}
 			jam(buf, "]");
 		}
+		/* this includes ascii */
+		ldbg_hunk(logger, vid);
 	} else {
 		/*
 		 * Known Vendor ID, casually mention it in the debug

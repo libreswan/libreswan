@@ -408,7 +408,7 @@ void DBG_dump(const char *label, const void *p, size_t len);
 #define DBG_dump_thing(LABEL, THING) DBG_dump(LABEL, &(THING), sizeof(THING))
 
 /*
- * XXX: unlike dbg_dump() et.al., these don't take a label; instead
+ * XXX: unlike dbg_dump() et.al., these don't take a prefix; instead
  * caller should log that separately.
  */
 #define LDBG_dump(LOGGER, DATA, LEN)				\
@@ -418,7 +418,7 @@ void DBG_dump(const char *label, const void *p, size_t len);
 #define LDBG_hunk(LOGGER, HUNK)						\
 	{								\
 		const typeof(HUNK) *hunk_ = &(HUNK); /* evaluate once */ \
-		llog_dump(DEBUG_STREAM, LOGGER, hunk_->.ptr, hunk_->len); \
+		llog_dump(DEBUG_STREAM, LOGGER, hunk_->ptr, hunk_->len); \
 	}
 #define LDBG_thing(LOGGER, THING)					\
 	{								\
@@ -433,7 +433,7 @@ void DBG_dump(const char *label, const void *p, size_t len);
 #define ldbg_hunk(LOGGER, HUNK)					\
 	{							\
 		if (DBGP(DBG_BASE)) {				\
-			LDBG_hunk(DEBUG_STREAM, LOGGER, HUNK);	\
+			LDBG_hunk(LOGGER, HUNK);		\
 		}						\
 	}
 #define ldbg_thing(LOGGER, THING)			\
