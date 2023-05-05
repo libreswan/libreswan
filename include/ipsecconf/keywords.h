@@ -208,6 +208,7 @@ enum keyword_numeric_conn_field {
 	KNCF_SPIBASE,
 	KNCF_SPI,
 	KNCF_ESPREPLAYWINDOW,
+	KNCF_DEBUG,
 
 	/* ??? these were once in keyword_numeric_config_field (KBF prefix) */
 	KNCF_DPDACTION,

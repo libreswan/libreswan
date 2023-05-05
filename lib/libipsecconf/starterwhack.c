@@ -629,6 +629,8 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 			    conn->name, msg.sec_label);
 	}
 
+	msg.conn_debug = conn->options[KNCF_DEBUG];
+
 	msg.modecfg_dns = conn->modecfg_dns;
 	conn_log_val(conn, "modecfgdns", msg.modecfg_dns);
 	msg.modecfg_domains = conn->modecfg_domains;

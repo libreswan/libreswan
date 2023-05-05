@@ -151,6 +151,7 @@ struct whack_message {
 
 	/* for debugging! */
 	lmod_t debugging;
+	lset_t conn_debug;
 
 	/* what to impair and how */
 	struct whack_impair *impairments;

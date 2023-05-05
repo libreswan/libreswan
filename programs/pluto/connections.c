@@ -2941,7 +2941,8 @@ void add_connection(const struct whack_message *wm, struct logger *logger)
 	/* will inherit defaults */
 	lset_t debugging = lmod(LEMPTY, wm->debugging);
 	struct connection *c = alloc_connection(wm->name,
-						debugging, logger->global_whackfd,
+						debugging | wm->conn_debug,
+						logger->global_whackfd,
 						HERE);
 
 	diag_t d = extract_connection(wm, c);
