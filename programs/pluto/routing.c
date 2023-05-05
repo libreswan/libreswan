@@ -1275,6 +1275,7 @@ void dispatch(enum routing_event event, struct connection *c,
 			/* connection lives to fight another day */
 			return;
 
+		case X(TIMEOUT_IKE, ROUTED_NEGOTIATION, INSTANCE):
 		case X(TIMEOUT_IKE, UNROUTED_NEGOTIATION, INSTANCE):
 			if (BROKEN_TRANSITION) {
 				if (zap_connection("timeout", e->ike, where,
@@ -1282,7 +1283,6 @@ void dispatch(enum routing_event event, struct connection *c,
 					return;
 				}
 			}
-			/* for instance, permenant ondemand */
 			if (should_revive(&(*e->ike)->sa)) {
 				schedule_revival(&(*e->ike)->sa, "timed out");
 				delete_ike_sa(e->ike);
@@ -1317,10 +1317,10 @@ void dispatch(enum routing_event event, struct connection *c,
 			break;
 
 #if 0
-		case X(DELETE_IKE, UNROUTED_NEGOTIATION, INSTANCE):
-		case X(DELETE_IKE, UNROUTED, INSTANCE):
 		case X(DELETE_IKE, ROUTED_ONDEMAND, INSTANCE):
 #endif
+		case X(DELETE_IKE, UNROUTED, INSTANCE):		/* certoe-08-nat-packet-cop-restart */
+		case X(DELETE_IKE, UNROUTED_NEGOTIATION, INSTANCE):	/* dnsoe-01 ... */
 		case X(DELETE_IKE, ROUTED_ONDEMAND, PERMANENT):
 		case X(DELETE_IKE, UNROUTED, PERMANENT): /* UNROUTED_NEGOTIATION!?! */
 		case X(DELETE_IKE, ROUTED_TUNNEL, PERMANENT):
@@ -1356,6 +1356,15 @@ void dispatch(enum routing_event event, struct connection *c,
 			}
 			return;
 
+		case X(ESTABLISH_INBOUND, ROUTED_INBOUND, PERMANENT): /* alias-01 */
+		case X(ESTABLISH_INBOUND, ROUTED_ONDEMAND, TEMPLATE): /* ikev1-l2tp-03-two-interfaces */
+		case X(ESTABLISH_INBOUND, UNROUTED, TEMPLATE): /* xauth-pluto-14 */
+			if (BROKEN_TRANSITION) {
+				/* instance was routed by routed-ondemand? */
+				set_routing(event, c, RT_ROUTED_INBOUND, NULL, where);
+				return;
+			}
+			break;
 		case X(ESTABLISH_INBOUND, ROUTED_NEGOTIATION, INSTANCE):
 		case X(ESTABLISH_INBOUND, ROUTED_NEGOTIATION, PERMANENT):
 		case X(ESTABLISH_INBOUND, ROUTED_ONDEMAND, PERMANENT):
