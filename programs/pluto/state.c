@@ -1097,7 +1097,7 @@ void delete_state(struct state *st)
 		} else {
 			/* this function just returns when the call is
 			 * invalid */
-			teardown_ipsec_kernel_policies(pexpect_child_sa(st));
+			teardown_ipsec_kernel_policies(CONNECTION_DELETE_CHILD, pexpect_child_sa(st));
 		}
 		/* this function just returns when the call is
 		 * invalid */

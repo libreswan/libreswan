@@ -1332,7 +1332,7 @@ static void uninstall_v1_ipsec_sa(struct child_sa *child)
 	}
 
 	if (IS_IPSEC_SA_ESTABLISHED(&child->sa)) {
-		teardown_ipsec_kernel_policies(child);
+		teardown_ipsec_kernel_policies(CONNECTION_DELETE_CHILD, child);
 		uninstall_kernel_states(child);
 	}
 }

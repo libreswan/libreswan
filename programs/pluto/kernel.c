@@ -1207,21 +1207,21 @@ static bool unrouted_to_routed(struct connection *c, enum shunt_kind shunt_kind,
 	return true;
 }
 
-bool unrouted_to_routed_ondemand(struct connection *c, where_t where)
+bool unrouted_to_routed_ondemand(enum routing_event event, struct connection *c, where_t where)
 {
 	if (!unrouted_to_routed(c, SHUNT_KIND_ONDEMAND, where)) {
 		return false;
 	}
-	set_routing(c, RT_ROUTED_ONDEMAND, NULL);
+	set_routing(event, c, RT_ROUTED_ONDEMAND, NULL, where);
 	return true;
 }
 
-bool unrouted_to_routed_never_negotiate(struct connection *c, where_t where)
+bool unrouted_to_routed_never_negotiate(enum routing_event event, struct connection *c, where_t where)
 {
 	if (!unrouted_to_routed(c, SHUNT_KIND_NEVER_NEGOTIATE, where)) {
 		return false;
 	}
-	set_routing(c, RT_ROUTED_NEVER_NEGOTIATE, NULL);
+	set_routing(event, c, RT_ROUTED_NEVER_NEGOTIATE, NULL, where);
 	return true;
 }
 
@@ -1374,7 +1374,8 @@ static void clear_narrow_holds(const ip_selector *src_client,
 	}
 }
 
-bool unrouted_to_routed_sec_label(struct connection *c, struct logger *logger, where_t where)
+bool unrouted_to_routed_sec_label(enum routing_event event,
+				  struct connection *c, struct logger *logger, where_t where)
 {
 	connection_buf cb;
 	ldbg(logger,
@@ -1440,7 +1441,7 @@ bool unrouted_to_routed_sec_label(struct connection *c, struct logger *logger, w
 	}
 
 	/* Success! */
-	set_routing(c, RT_ROUTED_ONDEMAND, NULL);
+	set_routing(event, c, RT_ROUTED_ONDEMAND, NULL, where);
 	return true;
 }
 
@@ -2430,7 +2431,8 @@ bool install_ipsec_sa(struct child_sa *child, lset_t direction, where_t where)
 	if (PEXPECT(logger, r == ROUTEABLE)
 	    && (direction & DIRECTION_OUTBOUND)) {
 		if (!install_outbound_ipsec_kernel_policies(child)) {
-			teardown_ipsec_kernel_policies(child);
+			/* make something up */
+			teardown_ipsec_kernel_policies(CONNECTION_ESTABLISH_OUTBOUND, child);
 			uninstall_kernel_states(child);
 			return false;
 		}
@@ -2500,7 +2502,7 @@ bool install_ipsec_sa(struct child_sa *child, lset_t direction, where_t where)
  * EXPECT_KERNEL_POLICY is trying to help sort this out.
  */
 
-void teardown_ipsec_kernel_policies(struct child_sa *child)
+void teardown_ipsec_kernel_policies(enum routing_event event, struct child_sa *child)
 {
 	struct connection *c = child->sa.st_connection;
 	struct logger *logger = child->sa.st_logger;
@@ -2585,18 +2587,18 @@ void teardown_ipsec_kernel_policies(struct child_sa *child)
 		 * update routing; route_owner() will see this and not
 		 * think this route is the owner?
 		 */
-		set_routing(c, RT_UNROUTED, NULL);
+		set_routing(event, c, RT_UNROUTED, NULL, HERE);
 		do_updown_spds(UPDOWN_DOWN, c, &spds, &child->sa, child->sa.st_logger);
 		delete_spd_kernel_policies(&spds, EXPECT_KERNEL_POLICY_OK,
 					   child->sa.st_logger, HERE, "unroute");
 		do_updown_unowned_spds(UPDOWN_UNROUTE, c, &spds, NULL, child->sa.st_logger);
 		break;
 	case RT_ROUTED_ONDEMAND:
-		replace_ipsec_with_bare_kernel_policies(child, RT_ROUTED_ONDEMAND,
+		replace_ipsec_with_bare_kernel_policies(event, child, RT_ROUTED_ONDEMAND,
 							EXPECT_KERNEL_POLICY_OK, HERE);
 		break;
 	case RT_ROUTED_FAILURE:
-		replace_ipsec_with_bare_kernel_policies(child, RT_ROUTED_FAILURE,
+		replace_ipsec_with_bare_kernel_policies(event, child, RT_ROUTED_FAILURE,
 							EXPECT_KERNEL_POLICY_OK, HERE);
 		break;
 	case RT_UNROUTED_NEGOTIATION:

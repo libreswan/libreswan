@@ -98,9 +98,33 @@ void connection_delete_ike(struct ike_sa **ike, where_t where);
 void fake_connection_establish_inbound(struct ike_sa *ike, struct child_sa *child, where_t where);
 void fake_connection_establish_outbound(struct ike_sa *ike, struct child_sa *child, where_t where);
 
-void set_routing_where(struct connection *c, enum routing routing,
-		       const struct child_sa *child, where_t where);
-#define set_routing(C, RT, CHILD)		\
-	set_routing_where(C, RT, CHILD, HERE)
+enum routing_event {
+	/* fiddle with the ROUTE bit */
+	CONNECTION_ROUTE,
+	CONNECTION_UNROUTE,
+	/* fiddle with the UP bit (speculative) */
+	CONNECTION_UP,
+	CONNECTION_DOWN,
+	/* start a connection */
+	CONNECTION_INITIATE,
+	CONNECTION_ACQUIRE,
+	CONNECTION_REVIVE,
+	/* establish a connection (speculative) */
+	CONNECTION_ESTABLISH_INBOUND,
+	CONNECTION_ESTABLISH_OUTBOUND,
+	/* tear down a connection */
+	CONNECTION_DELETE_IKE,
+	CONNECTION_DELETE_CHILD,
+	CONNECTION_TIMEOUT_IKE,
+	CONNECTION_TIMEOUT_CHILD,
+	/* mobike */
+	CONNECTION_SUSPEND,
+	CONNECTION_RESUME,
+#define CONNECTION_EVENT_ROOF (CONNECTION_RESUME+1)
+};
+
+void set_routing(enum routing_event event,
+		 struct connection *c, enum routing routing,
+		 const struct child_sa *child, where_t where);
 
 #endif

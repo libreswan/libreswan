@@ -812,7 +812,8 @@ static void replace_ipsec_with_bare_kernel_policy(struct child_sa *child,
 	}
 }
 
-void replace_ipsec_with_bare_kernel_policies(struct child_sa *child,
+void replace_ipsec_with_bare_kernel_policies(enum routing_event event,
+					     struct child_sa *child,
 					     enum routing new_routing,
 					     enum expect_kernel_policy expect_inbound_policy,
 					     where_t where)
@@ -826,7 +827,7 @@ void replace_ipsec_with_bare_kernel_policies(struct child_sa *child,
 	PASSERT(logger, shunt_kind != SHUNT_KIND_ROOF);
 	PASSERT(logger, c->config->shunt[shunt_kind] != SHUNT_NONE);
 	/* it's being stripped of the state, hence SOS_NOBODY */
-	set_routing(c, new_routing, NULL);
+	set_routing(event, c, new_routing, NULL, where);
 
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 
