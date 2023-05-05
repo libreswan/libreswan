@@ -580,9 +580,16 @@ bool process_impair(const struct whack_impair *wc,
 	const struct impairment *impairment = &impairments[wc->what];
 	switch (impairment->action) {
 	case CALL_IMPAIR_UPDATE:
+	{
 		/* do not un-bias */
+		uintmax_t old;
 		switch (impairment->sizeof_value) {
-#define L(T) case sizeof(uint##T##_t): *(uint##T##_t*)impairment->value = wc->biased_value; break;
+#define L(T) case sizeof(uint##T##_t):					\
+			{						\
+				old = *(uint##T##_t*)impairment->value;	\
+				*(uint##T##_t*)impairment->value = wc->biased_value; \
+				break;					\
+			}
 			L(8);
 			L(16);
 			L(32);
@@ -591,11 +598,14 @@ bool process_impair(const struct whack_impair *wc,
 		default:
 			bad_case(impairment->sizeof_value);
 		}
-		/* log the update */
-		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+		/* log the update; but not to whack */
+		LLOG_JAMBUF(LOG_STREAM, logger, buf) {
+			jam_string(buf, "impair ");
 			jam_impairment(buf, impairment);
+			jam(buf, " (was %ju)", old);
 		}
 		return true;
+	}
 	case CALL_INITIATE_v2_LIVENESS:
 	case CALL_SEND_KEEPALIVE:
 	case CALL_GLOBAL_EVENT_HANDLER:
