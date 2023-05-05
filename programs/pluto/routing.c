@@ -358,6 +358,22 @@ static void unrouted_negotiation_to_unrouted(enum routing_event event,
 	set_routing(event, c, RT_UNROUTED, NULL, where);
 }
 
+static void routed_negotiation_to_unrouted(enum routing_event event,
+					   struct connection *c,
+					   struct logger *logger, where_t where,
+					   const char *story)
+{
+	PEXPECT(logger, (c->policy & POLICY_OPPORTUNISTIC) == LEMPTY);
+	delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
+				   logger, where, story);
+	FOR_EACH_ITEM(spd, &c->child.spds) {
+		if (route_owner(spd) == NULL) {
+			do_updown(UPDOWN_ROUTE, c, spd, NULL/*state*/, c->logger);
+		}
+	}
+	set_routing(event, c, RT_UNROUTED, NULL, where);
+}
+
 /*
  * This is permanent and routed.
  *
@@ -675,10 +691,11 @@ static bool zap_connection(const char *story, struct ike_sa **ike, where_t where
 	}
 
 	/*
-	 * Finally notify the IKE SA.
+	 * With everything cleaned up decide what to do with the IKE
+	 * SA.
 	 *
-	 * Only do this when there's no Child SA sharing the
-	 * connection.
+	 * If the connection had a Child SA and that's been notified,
+	 * the IKE SA can be deleted ...
 	 */
 	if (told_connection) {
 		struct connection *c = (*ike)->sa.st_connection;
@@ -687,8 +704,15 @@ static bool zap_connection(const char *story, struct ike_sa **ike, where_t where
 		    c->child.routing == RT_UNROUTED) {
 			delete_connection(&c);
 		}
+		return true;
 	}
-	return told_connection;
+
+	/*
+	 * ... otherwize caller gets to decide.  This code could
+	 * handle this if it weren't for the more complicated routing
+	 * changes that are needed.
+	 */
+	return false;
 }
 
 void connection_route(struct connection *c, where_t where)
@@ -1191,6 +1215,8 @@ void dispatch(enum routing_event event, struct connection *c,
 
 		case X(TIMEOUT_IKE, UNROUTED, PERMANENT):
 			if (BROKEN_TRANSITION) {
+				/* should be in UNROUTED_NEGOTIATION,
+				 * SAY? */
 				if (zap_connection("timeout", e->ike, where,
 						   CONNECTION_TIMEOUT_CHILD)) {
 					return;
@@ -1209,17 +1235,27 @@ void dispatch(enum routing_event event, struct connection *c,
 			}
 			break;
 
+		case X(DELETE_IKE, ROUTED_NEGOTIATION, PERMANENT):
 		case X(TIMEOUT_IKE, ROUTED_NEGOTIATION, PERMANENT):
-			if (BROKEN_TRANSITION) {
-				if (zap_connection("timeout", e->ike, where,
-						   CONNECTION_TIMEOUT_CHILD)) {
-					return;
-				}
+			/*
+			 * For instance, this end initiated a Child SA
+			 * for the connection while at the same time
+			 * the peer initiated an IKE SA delete and/or
+			 * the exchange timed out.
+			 *
+			 * Because the Child SA is larval and,
+			 * presumably, there is no earlier child, this
+			 * code will need to deal with revival et.al.
+			 */
+			if (zap_connection("timeout", e->ike, where,
+					   CONNECTION_TIMEOUT_CHILD)) {
+				/* will this happen? */
+				return;
 			}
 			/* ex, permanent+up */
 			if (should_revive(&(*e->ike)->sa)) {
 				routed_negotiation_to_routed_ondemand(event, c, logger, where,
-								      "restoring ondemand kernel policy as will revive");
+								      "restoring ondemand, reviving");
 				PEXPECT(logger, c->child.routing == RT_ROUTED_ONDEMAND);
 				schedule_revival(&(*e->ike)->sa, "timed out");
 				delete_ike_sa(e->ike);
@@ -1227,15 +1263,14 @@ void dispatch(enum routing_event event, struct connection *c,
 			}
 			if (c->policy & POLICY_ROUTE) {
 				routed_negotiation_to_routed_ondemand(event, c, logger, where,
-								      "restoring ondemand kernel policy as routed");
+								      "restoring ondemand, connection is routed");
 				PEXPECT(logger, c->child.routing == RT_ROUTED_ONDEMAND);
 				delete_ike_sa(e->ike);
 				return;
 			}
-#if 0
 			/* is this reachable? */
-			routed_negotiation_to_unrouted(event, c, where);
-#endif
+			routed_negotiation_to_unrouted(event, c, logger, where, "deleting");
+			PEXPECT(logger, c->child.routing == RT_UNROUTED);
 			delete_ike_sa(e->ike);
 			/* connection lives to fight another day */
 			return;
@@ -1270,11 +1305,14 @@ void dispatch(enum routing_event event, struct connection *c,
 
 		case X(TIMEOUT_IKE, ROUTED_TUNNEL, PERMANENT):
 		case X(TIMEOUT_IKE, ROUTED_TUNNEL, INSTANCE):
-			if (BROKEN_TRANSITION) {
-				if (zap_connection("timeout", e->ike, where,
-						   CONNECTION_TIMEOUT_CHILD)) {
-					return;
-				}
+			/*
+			 * Since the tunnel is up, there must be a
+			 * child to notify.  Hence this should always
+			 * succeed.
+			 */
+			if (zap_connection("timeout", e->ike, where,
+					   CONNECTION_TIMEOUT_CHILD)) {
+				return;
 			}
 			break;
 
