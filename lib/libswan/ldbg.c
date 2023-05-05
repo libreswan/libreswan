@@ -19,8 +19,7 @@
 
 void ldbg(const struct logger *logger, const char *message, ...)
 {
-	lset_t debug = (cur_debugging | logger->debugging);
-	if (debug & DBG_BASE) {
+	if (LDBGP(DBG_BASE, logger)) {
 		va_list ap;
 		va_start(ap, message);
 		llog_va_list(DEBUG_STREAM, logger, message, ap);

@@ -374,6 +374,7 @@ void llog_errno(lset_t rc_flags, const struct logger *logger, int error,
 extern lset_t cur_debugging;	/* current debugging level */
 
 #define DBGP(cond)	(cur_debugging & (cond))
+#define LDBGP(COND, LOGGER) (COND & (cur_debugging | (LOGGER)->debugging))
 
 #define DBGF(COND, MESSAGE, ...)				\
 	{							\
@@ -393,8 +394,7 @@ void ldbg(const struct logger *logger, const char *message, ...) PRINTF_LIKE(2);
 
 /* LDBG_JAMBUF() is ambigious - LDBG_op() or ldbg() ucase? */
 #define LDBGP_JAMBUF(COND, LOGGER, BUF)					\
-	for (bool cond_ = COND & (cur_debugging | (LOGGER)->debugging);	\
-	     cond_; cond_ = false)					\
+	for (bool cond_ = LDBGP(COND, LOGGER); cond_; cond_ = false)	\
 		LLOG_JAMBUF(DEBUG_STREAM, LOGGER, BUF)
 
 
