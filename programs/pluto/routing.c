@@ -1038,11 +1038,29 @@ void dispatch(enum routing_event event, struct connection *c,
 			return;
 		}
 
+		case X(REVIVE, ROUTED_NEGOTIATION, INSTANCE):
+			if (BROKEN_TRANSITION) {
+				/* ikev2-32-nat-rw-rekey
+				 * ikev2-liveness-05 ikev2-liveness-07
+				 * ikev2-liveness-08 */
+				threadtime_t inception = threadtime_start();
+				ipsecdoi_initiate(c, c->policy, SOS_NOBODY, &inception,
+						  null_shunk, /*background*/false, logger);
+				return;
+			}
+			break;
+		case X(REVIVE, UNROUTED_NEGOTIATION, INSTANCE):
+			if (BROKEN_TRANSITION) {
+				/* ikev2-x509-31-wifi-assist */
+				threadtime_t inception = threadtime_start();
+				ipsecdoi_initiate(c, c->policy, SOS_NOBODY, &inception,
+						  null_shunk, /*background*/false, logger);
+				return;
+			}
+			break;
 		case X(REVIVE, ROUTED_TUNNEL, PERMANENT):
 			if (BROKEN_TRANSITION) {
-				/*
-				 * See ikev2-59-multiple-acquires-alias.
-				 */
+				/* ikev2-59-multiple-acquires-alias. */
 				threadtime_t inception = threadtime_start();
 				ipsecdoi_initiate(c, c->policy, SOS_NOBODY, &inception,
 						  null_shunk, /*background*/false, logger);
