@@ -895,20 +895,22 @@ $(KVM_FEDORA_BASE_DOMAIN): | $(KVM_FEDORA_KICKSTART_FILE)
 #
 # FreeBSD
 #
-# - uses a modified install CD
+# - modifies the install CD
+#
+# - uses DISK 1, and not DVD 1, as the former does not contain
+#   packages; they will be downloaded later
 #
 
-KVM_FREEBSD_ISO_URL ?= https://download.freebsd.org/releases/amd64/amd64/ISO-IMAGES/13.0/FreeBSD-13.0-RELEASE-amd64-disc1.iso
-# 13.1 installer barfs with:
-# /usr/libexec/bsdinstall/script: 3: Bad file descriptor
-# See https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=266802
-KVM_FREEBSD_ISO_URL ?= https://download.freebsd.org/releases/amd64/amd64/ISO-IMAGES/13.1/FreeBSD-13.1-RELEASE-amd64-disc1.iso
+KVM_FREEBSD_ISO_SHA256 ?= 52a1420db86802cfab8bafa36eccaa78c8b65b59673cbdf690e4b57f9d80f01f
+KVM_FREEBSD_ISO_URL ?= https://download.freebsd.org/ftp/releases/ISO-IMAGES/13.2/FreeBSD-13.2-RELEASE-amd64-disc1.iso
 KVM_FREEBSD_ISO ?= $(KVM_POOLDIR)/$(notdir $(KVM_FREEBSD_ISO_URL))
 
 kvm-iso: $(KVM_FREEBSD_ISO)
 # For FreeBSD, download the compressed ISO
-$(KVM_FREEBSD_ISO): | $(KVM_POOLDIR)
-	wget --output-document $@.xz --no-clobber -- $(KVM_FREEBSD_ISO_URL).xz
+$(KVM_FREEBSD_ISO).xz: | $(KVM_POOLDIR)
+	wget --output-document $@ --no-clobber -- $(KVM_FREEBSD_ISO_URL).xz
+$(KVM_FREEBSD_ISO): | $(KVM_FREEBSD_ISO).xz
+	echo 'SHA256 ($@.xz) = $(KVM_FREEBSD_ISO_SHA256)' | cksum -c
 	xz --uncompress --keep $@.xz
 
 KVM_FREEBSD_BASE_ISO = $(KVM_FREEBSD_BASE_DOMAIN).iso
