@@ -848,7 +848,7 @@ kvmplutotest	xauth-pluto-10		good
 kvmplutotest	xauth-pluto-11		good
 kvmplutotest	xauth-pluto-12-resolvconf	good
 kvmplutotest	xauth-pluto-13		good
-kvmplutotest	xauth-pluto-14		wip	github/1116
+kvmplutotest	xauth-pluto-14		good	github/1116
 kvmplutotest	xauth-pluto-15		good
 kvmplutotest	xauth-pluto-16		good
 kvmplutotest	xauth-pluto-17		good
