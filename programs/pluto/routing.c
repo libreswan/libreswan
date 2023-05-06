@@ -1356,8 +1356,28 @@ void dispatch(enum routing_event event, struct connection *c,
 			}
 			return;
 
-		case X(ESTABLISH_INBOUND, ROUTED_INBOUND, PERMANENT): /* alias-01 */
 		case X(ESTABLISH_INBOUND, ROUTED_ONDEMAND, TEMPLATE): /* ikev1-l2tp-03-two-interfaces */
+			if (BROKEN_TRANSITION) {
+				/*
+				 * ikev1-l2tp-03-two-interfaces
+				 * github/693 github/1117
+				 */
+				set_routing(event, c, RT_ROUTED_INBOUND, NULL, where);
+				return;
+			}
+			break;
+		case X(ESTABLISH_OUTBOUND, ROUTED_INBOUND, TEMPLATE): /* ikev1-l2tp-03-two-interfaces */
+			if (BROKEN_TRANSITION) {
+				/*
+				 * ikev1-l2tp-03-two-interfaces
+				 * github/693 github/1117
+				 */
+				set_routing(event, c, RT_ROUTED_TUNNEL, *(e->child), where);
+				return;
+			}
+			break;
+
+		case X(ESTABLISH_INBOUND, ROUTED_INBOUND, PERMANENT): /* alias-01 */
 		case X(ESTABLISH_INBOUND, UNROUTED, TEMPLATE): /* xauth-pluto-14 */
 			if (BROKEN_TRANSITION) {
 				/* instance was routed by routed-ondemand? */
