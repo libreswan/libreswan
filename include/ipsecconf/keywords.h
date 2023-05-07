@@ -151,6 +151,7 @@ enum keyword_string_conn_field {
 	KSCF_last_leftright = KSCF_SUBNETS,
 
 	KSCF_AUTHBY,
+	KSCF_PPKIDS,
 	KSCF_MODECFGDNS,
 	KSCF_MODECFGDOMAINS,
 	KSCF_IKE,

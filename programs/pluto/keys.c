@@ -518,33 +518,10 @@ const chunk_t *get_connection_psk(const struct connection *c)
 	return psk;
 }
 
-
-/* Return ppk and store ppk_id in *ppk_id */
-
-chunk_t *get_connection_ppk(const struct connection *c, chunk_t **ppk_id)
-{
-	struct secret *s = lsw_get_secret(c, SECRET_PPK, false);
-
-	if (s == NULL) {
-		*ppk_id = NULL;
-		return NULL;
-	}
-
-	struct secret_stuff *pks = get_secret_stuff(s);
-	*ppk_id = &pks->ppk_id;
-	if (DBGP(DBG_CRYPT)) {
-		DBG_log("Found PPK");
-		DBG_dump_hunk("PPK_ID:", **ppk_id);
-		DBG_dump_hunk("PPK:", pks->ppk);
-	}
-	return &pks->ppk;
-}
-
 /*
  * Find PPK, by its id (PPK_ID).
- * Used by responder.
  */
-const chunk_t *get_ppk_by_id(const chunk_t *ppk_id)
+static const chunk_t *get_ppk_by_id(const chunk_t *ppk_id)
 {
 	struct secret *s = lsw_get_ppk_by_id(pluto_secrets, *ppk_id);
 
@@ -557,6 +534,107 @@ const chunk_t *get_ppk_by_id(const chunk_t *ppk_id)
 		return &pks->ppk;
 	}
 	dbg("No PPK found with given PPK_ID");
+	return NULL;
+}
+
+/*
+ * Get connection PPK and store ppk_id in *ppk_id. If ppk-ids conn option
+ * was set, one of the listed PPK_IDs needs to be found in .secrets
+ */
+const chunk_t *get_connection_ppk_initiator(const struct connection *c, chunk_t **ppk_id)
+{
+	char *ppk_ids = c->config->ppk_ids;
+
+	if (ppk_ids == NULL) {
+		/*
+		 * try to find any matching PPK, if found, save the corresponding
+		 * PPK_ID in ppk_id
+		 */
+		DBG_log("ppk-ids conn option not specified, look for first matching secret");
+		struct secret *s = lsw_get_secret(c, SECRET_PPK, false);
+
+		if (s == NULL) {
+			*ppk_id = NULL;
+			return NULL;
+		}
+
+		struct secret_stuff *pks = get_secret_stuff(s);
+		*ppk_id = &pks->ppk_id;
+		if (DBGP(DBG_CRYPT)) {
+			DBG_log("Found PPK");
+			DBG_dump_hunk("PPK_ID:", **ppk_id);
+			DBG_dump_hunk("PPK:", pks->ppk);
+		}
+		return &pks->ppk;
+	} else {
+		DBG_log("ppk-ids conn option specified, iterate through list: %s", ppk_ids);
+		/*
+		 * iterate through PPK_ID (ppk-ids:) list and try to at
+		 * least one secrets entry that matches a PPK_ID from the
+		 * list. Start by stripping any leading delimiters in the
+		 * ppk-ids string
+		 */
+		ppk_ids =  ppk_ids + strspn(ppk_ids, ", \t");
+		/* iterate through the list */
+		while (*ppk_ids != '\0') {
+			size_t len = strcspn(ppk_ids, ",");
+			chunk_t ppk_ids_elem = chunk2(ppk_ids, len);
+
+			DBG_dump_hunk("try to find PPK with PPK_ID:", ppk_ids_elem);
+
+			const chunk_t *ppk = get_ppk_by_id(&ppk_ids_elem);
+
+			if (ppk == NULL) {
+				ppk_ids = ppk_ids + len + strspn(ppk_ids + len, ",");
+			} else {
+				*ppk_id = &ppk_ids_elem;
+				return ppk;
+			}
+		}
+	}
+	return NULL;
+}
+
+/*
+ * Get connection PPK with PPK_ID ppk_id. If ppk-ids conn option was set,
+ * ppk_id (that was received) needs to be in it. Used by responder.
+ */
+const chunk_t *get_connection_ppk_responder(const struct connection *c, chunk_t *ppk_id)
+{
+	char *ppk_ids = c->config->ppk_ids;
+
+	if (ppk_ids == NULL) {
+		/* try to find PPK with PPK_ID ppk_id */
+		DBG_dump_hunk("ppk-ids conn option not specified, look for PPK with ID:",
+				*ppk_id);
+		return get_ppk_by_id(ppk_id);
+	} else {
+		DBG_log("ppk-ids conn option specified, iterate through list: %s", ppk_ids);
+		/*
+		 * iterate through PPK_ID (ppk-ids:) list and try to at
+		 * least one secrets entry that matches a PPK_ID from the
+		 * list. Start by stripping any leading delimiters in the
+		 * ppk-ids string
+		 */
+		ppk_ids =  ppk_ids + strspn(ppk_ids, ", \t");
+		/* iterate through the list */
+		while (*ppk_ids != '\0') {
+			size_t len = strcspn(ppk_ids, ",");
+			chunk_t ppk_ids_elem = chunk2(ppk_ids, len);
+
+			DBG_dump_hunk("checking if received PPK_ID is equal to: ", ppk_ids_elem);
+
+			if (hunk_eq(*ppk_id, ppk_ids_elem)) {
+				DBG_dump_hunk("match! try to find PPK with PPK_ID:", ppk_ids_elem);
+				/* ppk_id in the conf option list, try to find it */
+				return get_ppk_by_id(ppk_id);
+			} else {
+				/* not a match, jump to next one in the list */
+				ppk_ids = ppk_ids + len + strspn(ppk_ids + len, ",");
+				continue;
+			}
+		}
+	}
 	return NULL;
 }
 

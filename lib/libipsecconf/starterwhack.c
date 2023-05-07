@@ -654,6 +654,9 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	if (conn->options_set[KNCF_VTI_SHARED])
 		msg.vti_shared = conn->options[KNCF_VTI_SHARED];
 
+	msg.ppk_ids = conn->ppk_ids;
+	conn_log_val(conn, "ppk-ids", msg.ppk_ids);
+
 	msg.redirect_to = conn->redirect_to;
 	conn_log_val(conn, "redirect-to", msg.redirect_to);
 	msg.accept_redirect_to = conn->accept_redirect_to;

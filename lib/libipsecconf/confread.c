@@ -1244,6 +1244,7 @@ static bool load_conn(struct starter_conn *conn,
 	str_to_conn(conn_mark_out, KSCF_CONN_MARK_OUT);
 	str_to_conn(vti_iface, KSCF_VTI_IFACE);
 
+	str_to_conn(ppk_ids, KSCF_PPKIDS);
 	str_to_conn(redirect_to, KSCF_REDIRECT_TO);
 	str_to_conn(accept_redirect_to, KSCF_ACCEPT_REDIRECT_TO);
 
@@ -1580,6 +1581,7 @@ static void copy_conn_default(struct starter_conn *conn,
 	STR_FIELD(conn_mark_in);
 	STR_FIELD(conn_mark_out);
 	STR_FIELD(vti_iface);
+	STR_FIELD(ppk_ids);
 	STR_FIELD(redirect_to);
 	STR_FIELD(accept_redirect_to);
 	STR_FIELD(dpd_delay);
@@ -1747,6 +1749,7 @@ static void confread_free_conn(struct starter_conn *conn)
 	STR_FIELD(conn_mark_in);
 	STR_FIELD(conn_mark_out);
 	STR_FIELD(vti_iface);
+	STR_FIELD(ppk_ids);
 	STR_FIELD(redirect_to);
 	STR_FIELD(accept_redirect_to);
 
