@@ -918,6 +918,32 @@ void dispatch(enum routing_event event, struct connection *c,
 			do_updown_unroute(c);
 			return;
 
+		case X(UNROUTE, ROUTED_INBOUND, PERMANENT): /* ikev1-xfrmi-02-aggr */
+			if (BROKEN_TRANSITION) {
+				/* ikev1-xfrmi-02-aggr ikev1-xfrmi-02
+				 * ikev1-xfrmi-02-tcpdump */
+				delete_spd_kernel_policies(&c->child.spds,
+							   EXPECT_KERNEL_POLICY_OK,
+							   c->logger, where, "unroute permanent");
+				set_routing(event, c, RT_UNROUTED, NULL, where);
+				do_updown_unroute(c);
+				return;
+			}
+			break;
+
+		case X(UNROUTE, ROUTED_INBOUND, TEMPLATE):
+			if (BROKEN_TRANSITION) {
+				/* xauth-pluto-25-lsw299
+				 * xauth-pluto-25-mixed-addresspool */
+				delete_spd_kernel_policies(&c->child.spds,
+							   EXPECT_KERNEL_POLICY_OK,
+							   c->logger, where, "unroute permanent");
+				set_routing(event, c, RT_UNROUTED, NULL, where);
+				do_updown_unroute(c);
+				return;
+			}
+			break;
+
 		case X(UNROUTE, UNROUTED, PERMANENT):
 			ldbg(logger, "already unrouted");
 			return;
@@ -1395,10 +1421,23 @@ void dispatch(enum routing_event event, struct connection *c,
 			}
 			break;
 
+		case X(ESTABLISH_INBOUND, ROUTED_ONDEMAND, INSTANCE): /* ikev2-32-nat-rw-rekey */
+			if (BROKEN_TRANSITION) {
+				/* ikev2-32-nat-rw-rekey */
+				set_routing(event, c, RT_ROUTED_INBOUND, NULL, where);
+				return;
+			}
+			break;
 		case X(ESTABLISH_INBOUND, ROUTED_INBOUND, PERMANENT): /* alias-01 */
+			if (BROKEN_TRANSITION) {
+				/* alias-01 */
+				set_routing(event, c, RT_ROUTED_INBOUND, NULL, where);
+				return;
+			}
+			break;
 		case X(ESTABLISH_INBOUND, UNROUTED, TEMPLATE): /* xauth-pluto-14 */
 			if (BROKEN_TRANSITION) {
-				/* instance was routed by routed-ondemand? */
+				/*  xauth-pluto-14 */
 				set_routing(event, c, RT_ROUTED_INBOUND, NULL, where);
 				return;
 			}
