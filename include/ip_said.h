@@ -42,29 +42,6 @@ struct jambuf;
 #define PASSTHROUGHDST		0
 
 /*
- * Magic values for use in combination with ip_protocol_internal to
- * flag shunt types.
- *
- * Danger! these are in host order; but SPIs are often in network
- * order.
- *
- * XXX: why do these start at 256? i.e., require more than one byte?
- */
-
-enum policy_spi {
-	SPI_NONE = 0,
-	SPI_PASS = 256,
-	SPI_DROP = 257,
-	SPI_REJECT = 258,
-	SPI_HOLD = 259,
-	SPI_TRAP = 260,
-	SPI_IGNORE = 261,
-};
-
-extern const struct enum_names policy_spi_names;
-
-
-/*
  * to identify an SA, we need
  */
 

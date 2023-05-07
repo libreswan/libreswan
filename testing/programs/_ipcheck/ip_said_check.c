@@ -27,69 +27,53 @@ static void check_str_said(void)
 		int line;
 		char *in;
 		char *out;	/* NULL means error expected */
-		bool fudge;
 	} tests[] = {
 		/* all known prefixes */
-		{ LN, "icmp.1@1.2.3.0", "icmp.1@1.2.3.0", false, },
-		{ LN, "tun.4@1.2.3.0", "tun.4@1.2.3.0", false, },
-		{ LN, "tcp.6@1.2.3.0", "tcp.6@1.2.3.0", false, },
-		{ LN, "udp.17@1.2.3.0", "udp.17@1.2.3.0", false, },
-		{ LN, "esp.50@1.2.3.0", "esp.50@1.2.3.0", false, },
-		{ LN, "ah.51@1.2.3.0", "ah.51@1.2.3.0", false, },
-		{ LN, "int.61@1.2.3.0", "%unk-97", false, },
-		{ LN, "comp.108@1.2.3.0", "comp.108@1.2.3.0", false, },
+		{ LN, "icmp.1@1.2.3.0", "icmp.1@1.2.3.0", },
+		{ LN, "tun.4@1.2.3.0", "tun.4@1.2.3.0", },
+		{ LN, "tcp.6@1.2.3.0", "tcp.6@1.2.3.0", },
+		{ LN, "udp.17@1.2.3.0", "udp.17@1.2.3.0", },
+		{ LN, "esp.50@1.2.3.0", "esp.50@1.2.3.0", },
+		{ LN, "ah.51@1.2.3.0", "ah.51@1.2.3.0", },
+		{ LN, "comp.108@1.2.3.0", "comp.108@1.2.3.0", },
 		/* number conversion */
-		{ LN, "tun20@1.2.3.4", "tun.14@1.2.3.4", false, },
-		{ LN, "esp257@1.2.3.0", "esp.101@1.2.3.0", false, },
-		{ LN, "ah0x20@1.2.3.4", "ah.20@1.2.3.4", false, },
-		{ LN, "comp20@1.2.3.4", "comp.14@1.2.3.4", false, },
-		{ LN, "esp257@::1", "esp:101@::1", false, },
-		{ LN, "esp257@0bc:12de::1", "esp:101@bc:12de::1", false, },
-		{ LN, "esp78@1049:1::8007:2040", "esp:4e@1049:1::8007:2040", false, },
-		{ LN, "esp0x78@1049:1::8007:2040", "esp:78@1049:1::8007:2040", false, },
-		{ LN, "ah78@1049:1::8007:2040", "ah:4e@1049:1::8007:2040", false, },
-		{ LN, "ah0x78@1049:1::8007:2040", "ah:78@1049:1::8007:2040", false, },
-		{ LN, "tun78@1049:1::8007:2040", "tun:4e@1049:1::8007:2040", false, },
-		{ LN, "tun0x78@1049:1::8007:2040", "tun:78@1049:1::8007:2040", false, },
-		{ LN, "duk99@3ffe:370:400:ff::9001:3001", NULL, false, },
-		{ LN, "esp78x@1049:1::8007:2040", NULL, false, },
-		{ LN, "esp0x78@1049:1:0xfff::8007:2040", NULL, false, },
-		{ LN, "es78@1049:1::8007:2040", NULL, false, },
-		{ LN, "", NULL, false, },
-		{ LN, "_", NULL, false, },
-		{ LN, "ah2.2", NULL, false, },
-		{ LN, "goo2@1.2.3.4", NULL, false, },
-		{ LN, "esp9@1.2.3.4", "esp.9@1.2.3.4", false, },
-		{ LN, "espp9@1.2.3.4", NULL, false, },
-		{ LN, "es9@1.2.3.4", NULL, false, },
-		{ LN, "ah@1.2.3.4", NULL, false, },
-		{ LN, "esp7x7@1.2.3.4", NULL, false, },
-		{ LN, "esp77@1.0x02.0003.4", "esp.4d@1.2.3.4", false, },
-		{ LN, "esp77@1.0x0g.3.4", NULL, false, },
-		{ LN, PASSTHROUGHNAME, PASSTHROUGH4NAME, false, },
-		{ LN, PASSTHROUGH6NAME, PASSTHROUGH6NAME, false, },
-
-		{ LN, "%pass",   "%pass", false, },   { LN, "int256@0.0.0.0", "%pass", false, },
-		{ LN, "%drop",   "%drop", false, },   { LN, "int257@0.0.0.0", "%drop", false, },
-		{ LN, "%reject", "%reject", false, }, { LN, "int258@0.0.0.0", "%reject", false, },
-		{ LN, "%hold",   "%hold", false, },   { LN, "int259@0.0.0.0", "%hold", false, },
-		{ LN, "%trap",   "%trap", false, },   { LN, "int260@0.0.0.0", "%trap", false, },
-		{ LN, "%ignore", "%ignore", false, }, { LN, "int261@0.0.0.0", "%ignore", false, },
-		/* was %trapsubnet */
-		{ LN, "int262@0.0.0.0", "%unk-262", false, },
-		/* was "int.106@0.0.0.0" */
-		{ LN, "int263@0.0.0.0", "%unk-263", false, },
-		{ LN, "esp9@1.2.3.4", "unk.9@1.2.3.4", .fudge = true, },
-		{ LN, "unk77.9@1.2.3.4", NULL, false, },
+		{ LN, "tun20@1.2.3.4", "tun.14@1.2.3.4", },
+		{ LN, "esp257@1.2.3.0", "esp.101@1.2.3.0", },
+		{ LN, "ah0x20@1.2.3.4", "ah.20@1.2.3.4", },
+		{ LN, "comp20@1.2.3.4", "comp.14@1.2.3.4", },
+		{ LN, "esp257@::1", "esp:101@::1", },
+		{ LN, "esp257@0bc:12de::1", "esp:101@bc:12de::1", },
+		{ LN, "esp78@1049:1::8007:2040", "esp:4e@1049:1::8007:2040", },
+		{ LN, "esp0x78@1049:1::8007:2040", "esp:78@1049:1::8007:2040", },
+		{ LN, "ah78@1049:1::8007:2040", "ah:4e@1049:1::8007:2040", },
+		{ LN, "ah0x78@1049:1::8007:2040", "ah:78@1049:1::8007:2040", },
+		{ LN, "tun78@1049:1::8007:2040", "tun:4e@1049:1::8007:2040", },
+		{ LN, "tun0x78@1049:1::8007:2040", "tun:78@1049:1::8007:2040", },
+		{ LN, "duk99@3ffe:370:400:ff::9001:3001", NULL, },
+		{ LN, "esp78x@1049:1::8007:2040", NULL, },
+		{ LN, "esp0x78@1049:1:0xfff::8007:2040", NULL, },
+		{ LN, "es78@1049:1::8007:2040", NULL, },
+		{ LN, "", NULL, },
+		{ LN, "_", NULL, },
+		{ LN, "ah2.2", NULL, },
+		{ LN, "goo2@1.2.3.4", NULL, },
+		{ LN, "esp9@1.2.3.4", "esp.9@1.2.3.4", },
+		{ LN, "espp9@1.2.3.4", NULL, },
+		{ LN, "es9@1.2.3.4", NULL, },
+		{ LN, "ah@1.2.3.4", NULL, },
+		{ LN, "esp7x7@1.2.3.4", NULL, },
+		{ LN, "esp77@1.0x02.0003.4", "esp.4d@1.2.3.4", },
+		{ LN, "esp77@1.0x0g.3.4", NULL, },
+		{ LN, PASSTHROUGHNAME, PASSTHROUGH4NAME, },
+		{ LN, PASSTHROUGH6NAME, PASSTHROUGH6NAME, },
 
 		/* buffer size? */
-		{ LN, "esp.3a7292a2@192.1.2.24", "esp.3a7292a2@192.1.2.24", false, },
-		{ LN, "esp:3a7292a2@1000:2000:3000:4000:5000:6000:7000:8000", "esp:3a7292a2@1000:2000:3000:4000:5000:6000:7000:8000", false, },
+		{ LN, "esp.3a7292a2@192.1.2.24", "esp.3a7292a2@192.1.2.24", },
+		{ LN, "esp:3a7292a2@1000:2000:3000:4000:5000:6000:7000:8000", "esp:3a7292a2@1000:2000:3000:4000:5000:6000:7000:8000", },
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		PRINT("'%s' fudge: %s", t->in, bool_str(t->fudge));
 
 		/* convert it *to* internal format */
 		ip_said sa;
@@ -104,10 +88,6 @@ static void check_str_said(void)
 			}
 		} else if (t->out == NULL) {
 			FAIL("ttosa(%s) unexpectedly succeeded", t->in);
-		}
-
-		if (t->fudge) {
-			sa.ipproto = 0;
 		}
 
 		/* now convert it back */

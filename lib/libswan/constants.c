@@ -2222,36 +2222,6 @@ const struct enum_names eaptls_flag_names = {
 	NULL, /* next */
 };
 
-
-/* magic SPI values (specific to Libreswan */
-
-static const char *const policy_spi_none_name[] = {
-	"0",
-};
-
-static enum_names policy_spi_none_names = {
-	SPI_NONE, SPI_NONE,
-	ARRAY_REF(policy_spi_none_name),
-	NULL,	/* prefix */
-	NULL
-};
-
-static const char *const policy_spi_name[] = {
-	"%pass",
-	"%drop",
-	"%reject",
-	"%hold",
-	"%trap",
-	"%ignore",
-};
-
-enum_names policy_spi_names = {
-	SPI_PASS, SPI_IGNORE,
-	ARRAY_REF(policy_spi_name),
-	"%",	/* prefix */
-	&policy_spi_none_names
-};
-
 /*
  * enum global_timers
  */
@@ -2417,7 +2387,6 @@ static const enum_names *en_checklist[] = {
 	&oakley_attr_bit_names,
 	&global_timer_names,
 	&event_type_names,
-	&policy_spi_names,
 	&eaptls_flag_names,
 	&pluto_exit_code_names,
 	&ipseckey_algorithm_type_names,

@@ -64,29 +64,6 @@ size_t jam_said(struct jambuf *buf, const ip_said *said)
 		return jam_string(buf, "<unset-said>");
 	}
 
-	if (said->ipproto == ip_protocol_internal.ipproto) {
-		switch (ntohl(said->spi)) {
-		case SPI_PASS:
-			return jam_string(buf, "%pass");
-		case SPI_DROP:
-			return jam_string(buf, "%drop");
-		case SPI_REJECT:
-			return jam_string(buf, "%reject");
-		case SPI_HOLD:
-			return jam_string(buf, "%hold");
-		case SPI_TRAP:
-			return jam_string(buf, "%trap");
-		case SPI_IGNORE:
-			return jam_string(buf, "%ignore");
-		default:
-#if 0
-			return jam(buf, "%s-"PRI_IPSEC_SPI, "%unk", pri_ipsec_spi(said->spi));
-#else
-			return jam(buf, "%s-%d", "%unk", ntohl(said->spi));
-#endif
-		}
-	}
-
 	const struct ip_info *afi = said_type(said);
 	if (afi == NULL) {
 		return jam(buf, "<said-has-no-type");

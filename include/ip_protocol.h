@@ -77,7 +77,6 @@ typedef const struct ip_protocol *ip_protocol; /* good idea? */
 #ifdef IPPROTO_IPCOMP
 #define IPCOMP_IPPROTO IPPROTO_IPCOMP /*everything else*/
 #endif
-#define INTERNAL_IPPROTO 61
 
 extern const struct ip_protocol ip_protocols[256];
 
@@ -90,7 +89,6 @@ extern const struct ip_protocol ip_protocols[256];
 #define ip_protocol_esp ip_protocols[IPPROTO_ESP]		/* Encapsulated Security Payload */
 #define ip_protocol_ah ip_protocols[IPPROTO_AH]			/* Authentication Header */
 #define ip_protocol_ipcomp ip_protocols[IPCOMP_IPPROTO]		/* IP Payload Compression Protocol */
-#define ip_protocol_internal ip_protocols[INTERNAL_IPPROTO]	/* any host internal protocol */
 
 /* match then eat the start of prefix */
 const struct ip_protocol *protocol_from_caseeat_prefix(shunk_t *prefix);

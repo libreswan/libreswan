@@ -440,7 +440,7 @@ const struct ip_protocol ip_protocols[256] = {
 	[61] = {
 		.description = "any host internal protocol",
 		.name = "61",
-		.ipproto = INTERNAL_IPPROTO,
+		.ipproto = 61,
 		.reference = "[Internet_Assigned_Numbers_Authority]",
 		/* libreswan */
 		.prefix = "int",
