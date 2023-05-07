@@ -2973,7 +2973,7 @@ void add_connection(const struct whack_message *wm, struct logger *logger)
 			    c->config->ike_info->version_name);
 	llog(RC_LOG, c->logger, "added %s connection", what);
 	policy_buf pb;
-	dbg("ike_life: %jd; ipsec_life: %jds; rekey_margin: %jds; rekey_fuzz: %lu%%; replay_window: %u; policy: %s ipsec_max_bytes: %" PRIu64 " ipsec_max_packets %" PRIu64,
+	dbg("ike_life: %jd; ipsec_life: %jds; rekey_margin: %jds; rekey_fuzz: %lu%%; replay_window: %u; policy: %s ipsec_max_bytes: %ju ipsec_max_packets %ju",
 	    deltasecs(c->config->sa_ike_max_lifetime),
 	    deltasecs(c->config->sa_ipsec_max_lifetime),
 	    deltasecs(c->config->sa_rekey_margin),
