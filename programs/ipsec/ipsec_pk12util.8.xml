@@ -27,7 +27,7 @@
     <title>DESCRIPTION</title>
     <para>
       <emphasis remap='I'>pk12util</emphasis> operation is a helper to run
-      NSS pk12util on IPsec NSS database with <option>-d @IPSEC_NSSDIR@</option>
+      NSS pk12util on IPsec NSS database with <option>-d @@IPSEC_NSSDIR@@</option>
       option. See <option>pk12util</option>(1) for other options.
     </para>
   </refsect1>

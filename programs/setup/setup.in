@@ -66,16 +66,16 @@ case "$1" in
 		exec rc-service ipsec start
 		;;
 	    sysvinit )
-		echo "Redirecting to: @INIT_D_DIR@/ipsec start"
-		exec @INIT_D_DIR@/ipsec start
+		echo "Redirecting to: @@INIT_D_DIR@@/ipsec start"
+		exec @@INIT_D_DIR@@/ipsec start
 		;;
 	    docker )
-		echo "Redirecting to: @INIT_D_DIR@/ipsec start"
-		exec @INIT_D_DIR@/ipsec start
+		echo "Redirecting to: @@INIT_D_DIR@@/ipsec start"
+		exec @@INIT_D_DIR@@/ipsec start
 		;;
 	    rc.d )
-		echo "Redirecting to: @RC_D_DIR@/pluto onestart"
-		exec @RC_D_DIR@/pluto onestart
+		echo "Redirecting to: @@RC_D_DIR@@/pluto onestart"
+		exec @@RC_D_DIR@@/pluto onestart
 		;;
 	    namespaces )
 		echo "Redirecting to: namespaces direct start via ipsec pluto"
@@ -117,16 +117,16 @@ case "$1" in
 		exec rc-service ipsec stop
 		;;
 	    sysvinit )
-		echo "Redirecting to: @INIT_D_DIR@/ipsec stop"
-		exec @INIT_D_DIR@/ipsec stop
+		echo "Redirecting to: @@INIT_D_DIR@@/ipsec stop"
+		exec @@INIT_D_DIR@@/ipsec stop
 		;;
 	    docker )
-		echo "Redirecting to: @INIT_D_DIR@/ipsec stop"
-		exec @INIT_D_DIR@/ipsec stop
+		echo "Redirecting to: @@INIT_D_DIR@@/ipsec stop"
+		exec @@INIT_D_DIR@@/ipsec stop
 		;;
 	    rc.d )
-		echo "Redirecting to: @RC_D_DIR@/pluto onestop"
-		@RC_D_DIR@/pluto onestop
+		echo "Redirecting to: @@RC_D_DIR@@/pluto onestop"
+		@@RC_D_DIR@@/pluto onestop
 		;;
 	    namespaces )
 		echo "Redirecting to: namespaces direct stop via ipsec whack --shutdown"
@@ -184,12 +184,12 @@ case "$1" in
 		exec rc-service ipsec status
 		;;
 	    sysvinit )
-		echo "Redirecting to: @INIT_D_DIR@/ipsec status"
-		exec @INIT_D_DIR@/ipsec status
+		echo "Redirecting to: @@INIT_D_DIR@@/ipsec status"
+		exec @@INIT_D_DIR@@/ipsec status
 		;;
 	    rc.d )
-		echo "Redirecting to: @RC_D_DIR@/pluto onestatus"
-		exec @RC_D_DIR@/pluto onestatus
+		echo "Redirecting to: @@RC_D_DIR@@/pluto onestatus"
+		exec @@RC_D_DIR@@/pluto onestatus
 		;;
 	    * )
 		echo "Unknown init system ${initsystem} in use - aborted"
@@ -220,16 +220,16 @@ case "$1" in
 		exec rc-service ipsec restart
 		;;
 	    sysvinit )
-		echo "Redirecting to: @INIT_D_DIR@/ipsec restart"
-		exec @INIT_D_DIR@/ipsec restart
+		echo "Redirecting to: @@INIT_D_DIR@@/ipsec restart"
+		exec @@INIT_D_DIR@@/ipsec restart
 		;;
 	    docker )
-		echo "Redirecting to: @INIT_D_DIR@/ipsec restart"
-		exec @INIT_D_DIR@/ipsec restart
+		echo "Redirecting to: @@INIT_D_DIR@@/ipsec restart"
+		exec @@INIT_D_DIR@@/ipsec restart
 		;;
 	    rc.d )
-		echo "Redirecting to: @RC_D_DIR@/pluto onerestart"
-		exec @RC_D_DIR@/pluto onerestart
+		echo "Redirecting to: @@RC_D_DIR@@/pluto onerestart"
+		exec @@RC_D_DIR@@/pluto onerestart
 		;;
 	    namespaces )
 		echo "Redirecting to: namespaces"

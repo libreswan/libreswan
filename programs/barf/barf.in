@@ -211,9 +211,9 @@ cat @@IPSEC_SECRETS@@ | ipsec _secretcensor
 _________________________ ipsec/listall
 ipsec whack --listall
 _________________________ nss/contents
-certutil -L -d sql:@IPSEC_NSSDIR@
+certutil -L -d sql:@@IPSEC_NSSDIR@@
 _________________________ nss/crls
-crlutil -L -d sql:@IPSEC_NSSDIR@
+crlutil -L -d sql:@@IPSEC_NSSDIR@@
 if [ -n "${POLICIES}" ]; then
     for policy in ${POLICIES}/*
     do

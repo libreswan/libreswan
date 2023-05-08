@@ -82,7 +82,7 @@
     <para>
       The <option>--nssdir</option> option specifies the directory to use for the nss database.
       This is the directory where the NSS certificate, key and security modules databases reside. The
-      default value is <filename>@IPSEC_NSSDIR@</filename>.
+      default value is <filename>@@IPSEC_NSSDIR@@</filename>.
     </para>
 
     <para>
@@ -163,7 +163,7 @@
       randomness, and  the time taken by the search for primes is also somewhat
       unpredictable. Specifically, embedded systems and most virtual machines are low on
       entropy. In such a situation, consider generating the RSA key on another machine,
-      and copying <filename>ipsec.secrets</filename> and the <filename>@IPSEC_NSSDIR@</filename>
+      and copying <filename>ipsec.secrets</filename> and the <filename>@@IPSEC_NSSDIR@@</filename>
       directory tree to the embedded platform. Note that NSS embeds the full path in the DB files, so
       the path on proxy machine must be identical to the path on the destination machine.
     </para>

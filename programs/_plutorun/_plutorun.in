@@ -17,7 +17,7 @@
 
 PLUTO_OPTIONS=$*
 pidfile=@@RUNDIR@@/pluto.pid
-execdir=${IPSEC_EXECDIR:-@IPSEC_EXECDIR@}
+execdir=${IPSEC_EXECDIR:-@@IPSEC_EXECDIR@@}
 
 # create nss if the admin deleted it or the packaging did not create it
 ipsec --checknss

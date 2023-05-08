@@ -314,7 +314,7 @@ PREFIX ?= /usr/local
 # look for them when it is run.
 LIBEXECDIR ?= $(PREFIX)/libexec/ipsec
 TRANSFORMS += 's:@@LIBEXECDIR@@:$(LIBEXECDIR):g'
-TRANSFORMS += 's:@IPSEC_EXECDIR@:$(LIBEXECDIR):g'
+TRANSFORMS += 's:@@IPSEC_EXECDIR@@:$(LIBEXECDIR):g'
 USERLAND_CFLAGS += -DIPSEC_EXECDIR=\"$(LIBEXECDIR)\"
 
 # SBINDIR is where the user interface command goes.
@@ -349,19 +349,19 @@ INSTALL_INITSYSTEM ?= true
 # During install the $(DESTDIR) prefix is added.
 
 RC_D_DIR ?= $(SYSCONFDIR)/rc.d
-TRANSFORMS += 's:@RC_D_DIR@:$(RC_D_DIR):g'
+TRANSFORMS += 's:@@RC_D_DIR@@:$(RC_D_DIR):g'
 
 EXAMPLE_RC_D_DIR ?= $(EXAMPLE_IPSEC_SYSCONFDIR)/$(notdir $(RC_D_DIR))
-TRANSFORMS += 's:@EXAMPLE_RC_D_DIR@:$(EXAMPLE_RC_D_DIR):g'
+TRANSFORMS += 's:@@EXAMPLE_RC_D_DIR@@:$(EXAMPLE_RC_D_DIR):g'
 
 # Where the INITSYSTEM=init.d scripts and examples go.  During install
 # $(DESTDIR) prefix is added.
 
 INIT_D_DIR ?= /etc/init.d
-TRANSFORMS += 's:@INIT_D_DIR@:$(INIT_D_DIR):g'
+TRANSFORMS += 's:@@INIT_D_DIR@@:$(INIT_D_DIR):g'
 
 EXAMPLE_INIT_D_DIR ?= $(EXAMPLE_IPSEC_SYSCONFDIR)/$(notdir $(INIT_D_DIR))
-TRANSFORMS += 's:@EXAMPLE_INIT_D_DIR@:$(EXAMPLE_INIT_D_DIR):g'
+TRANSFORMS += 's:@@EXAMPLE_INIT_D_DIR@@:$(EXAMPLE_INIT_D_DIR):g'
 
 
 # run dir - defaults to /run/pluto
@@ -401,15 +401,15 @@ TRANSFORMS += 's:@@LOGDIR@@:$(LOGDIR):g'
 
 # Directory for logrotate config
 LOGROTATEDDIR ?= $(SYSCONFDIR)/logrotate.d
-TRANSFORMS += 's:@LOGROTATEDDIR@:$(LOGROTATEDDIR):g'
+TRANSFORMS += 's:@@LOGROTATEDDIR@@:$(LOGROTATEDDIR):g'
 EXAMPLE_LOGROTATEDDIR ?= $(EXAMPLE_IPSEC_SYSCONFDIR)/logrotate.d
-TRANSFORMS += 's:@EXAMPLE_LOGROTATEDDIR@:$(EXAMPLE_LOGROTATEDDIR):g'
+TRANSFORMS += 's:@@EXAMPLE_LOGROTATEDDIR@@:$(EXAMPLE_LOGROTATEDDIR):g'
 
 # Where nss databases go
 NSSDIR ?= $(VARDIR)/lib/ipsec/nss
 # RHEL/CentOS <= 8 and Fedora <= 32 uses /etc/ipsec.d
 # NSSDIR ?= /etc/ipsec.d
-TRANSFORMS += 's:@IPSEC_NSSDIR@:$(NSSDIR):g'
+TRANSFORMS += 's:@@IPSEC_NSSDIR@@:$(NSSDIR):g'
 USERLAND_CFLAGS += -DIPSEC_NSSDIR=\"$(NSSDIR)\"
 
 # Where NSS programs live (well most of them, fedora hides vfychain,

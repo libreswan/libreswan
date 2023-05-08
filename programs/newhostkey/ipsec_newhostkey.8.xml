@@ -63,13 +63,13 @@
 
 	<varlistentry>
 	  <term>
-	    <option>--nssdir</option>&nbsp;<replaceable>@IPSEC_NSSDIR@</replaceable>
+	    <option>--nssdir</option>&nbsp;<replaceable>@@IPSEC_NSSDIR@@</replaceable>
 	  </term>
 	  <listitem>
 	    <para>
 	      The <option>--nssdir</option> option specifies the NSS DB
 	      directory where the certificate key, and modsec databases reside
-	      (default <filename>@IPSEC_NSSDIR@</filename>)
+	      (default <filename>@@IPSEC_NSSDIR@@</filename>)
 	    </para>
 	  </listitem>
 	</varlistentry>

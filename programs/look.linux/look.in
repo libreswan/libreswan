@@ -173,15 +173,15 @@ if ${look_route} ; then
 fi
 
 if ${look_nss} ; then
-    if [ -f @IPSEC_NSSDIR@/cert9.db ]; then
+    if [ -f @@IPSEC_NSSDIR@@/cert9.db ]; then
 	echo NSS_CERTIFICATES
-	certutil -L -d sql:@IPSEC_NSSDIR@ | head -4
-	certutil -L -d sql:@IPSEC_NSSDIR@ | \
+	certutil -L -d sql:@@IPSEC_NSSDIR@@ | head -4
+	certutil -L -d sql:@@IPSEC_NSSDIR@@ | \
 	    grep -E -v '^NSS_CERTIFICATES|^$|Trust Attributes|MIME,' | LC_ALL=C sort
-    elif [ -f @IPSEC_NSSDIR@/cert8.db ]; then
+    elif [ -f @@IPSEC_NSSDIR@@/cert8.db ]; then
 	echo NSS_CERTIFICATES
-	certutil -L -d @IPSEC_NSSDIR@ | head -4
-	certutil -L -d @IPSEC_NSSDIR@ | \
+	certutil -L -d @@IPSEC_NSSDIR@@ | head -4
+	certutil -L -d @@IPSEC_NSSDIR@@ | \
 	    grep -E -v '^NSS_CERTIFICATES|^$|Trust Attributes|MIME,' | LC_ALL=C sort
     fi
 fi

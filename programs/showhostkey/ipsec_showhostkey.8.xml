@@ -101,7 +101,7 @@
 	    <para>
 	      Specify the libreswan directory that
 	      contains the NSS database (default
-	      <filename>@IPSEC_NSSDIR@</filename>).
+	      <filename>@@IPSEC_NSSDIR@@</filename>).
 	    </para>
 	  </listitem>
 	</varlistentry>
@@ -277,7 +277,7 @@ IN    IPSECKEY  10 1 2 10.11.12.13  AQOF8tZ2...+buFuFn/"
   <refsect1 id='files'>
     <title>FILES</title>
     <para>
-      <filename>@IPSEC_NSSDIR@</filename>,
+      <filename>@@IPSEC_NSSDIR@@</filename>,
       <filename>@IPSEC_CONFDDIR@/nsspassword</filename>
     </para>
   </refsect1>

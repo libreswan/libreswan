@@ -54,7 +54,7 @@ FIXME
 # NETKEY/KLIPS is the kernel half of it, Pluto is the user-level management daemon.
 
 # Source function library.
-. @INIT_D_DIR@/functions
+. @@INIT_D_DIR@@/functions
 
 # Check that networking is up.
 [ "${NETWORKING}" = "no" ] && exit 6
@@ -72,7 +72,7 @@ fi
 
 # where the private directory and the config files are
 IPSEC_CONF="${IPSEC_CONF:-@@IPSEC_CONF@@}"
-IPSEC_EXECDIR="${IPSEC_EXECDIR:-@IPSEC_EXECDIR@}"
+IPSEC_EXECDIR="${IPSEC_EXECDIR:-@@IPSEC_EXECDIR@@}"
 IPSEC_SBINDIR="${IPSEC_SBINDIR:-@@SBINDIR@@}"
 
 
@@ -164,7 +164,7 @@ restart() {
 
 condrestart() {
     verify_config
-    @INIT_D_DIR@/ipsec status || exit 0
+    @@INIT_D_DIR@@/ipsec status || exit 0
     restart
 }
 

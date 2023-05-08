@@ -24,7 +24,7 @@ usage="Usage:
 	$me [--seeddev device] [--keytype rsa] [--bits n]
 	$me [--seeddev device] --keytype ecdsa [--curve curve]
 
-	other options: [--quiet] [--hostname host] [--nssdir @IPSEC_NSSDIR@] \\
+	other options: [--quiet] [--hostname host] [--nssdir @@IPSEC_NSSDIR@@] \\
 		[--password password]"
 
 bits=
@@ -33,7 +33,7 @@ keytype=rsa
 verbose=
 host=
 seeddev="--seeddev /dev/random"
-nssdir="@IPSEC_NSSDIR@"
+nssdir="@@IPSEC_NSSDIR@@"
 password=
 while [ $# != 0 ] ; do
     case "$1" in

@@ -27,7 +27,7 @@ CERT3="https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem.txt"
 CERT4="https://letsencrypt.org/certs/letsencryptauthorityx3.pem.txt"
 CERT4NAME="letsencryptauthorityx3.pem.txt"
 
-# @IPSEC_NSSDIR@ variable for getting location to save the configuration files
+# @@IPSEC_NSSDIR@@ variable for getting location to save the configuration files
 # Installing for -server or -client
 ServerClient=$1
 HostName=$2
@@ -111,7 +111,7 @@ setup() {
     fi
 
     # Checking if nss database exists
-    dbFileCheck=$(ls "@IPSEC_NSSDIR@"/*.db 2>/dev/null)
+    dbFileCheck=$(ls "@@IPSEC_NSSDIR@@"/*.db 2>/dev/null)
     if [ -z "${dbFileCheck}" ]; then
 	# NSS database does not exist. Initializing the nss database
 	ipsec initnss
@@ -121,13 +121,13 @@ setup() {
     echo "Importing the downloaded certificates into the database"
     for file in "${CERTDIR1}"/*; do
 	file=${file##*/}
-	certutil -A -d "sql:@IPSEC_NSSDIR@" -n "${file%.pem.txt}" -i "${CERTDIR1}"/"${file}" -t "CT,,"
+	certutil -A -d "sql:@@IPSEC_NSSDIR@@" -n "${file%.pem.txt}" -i "${CERTDIR1}"/"${file}" -t "CT,,"
     done
 
     # Importing the Intermediate certificates in NSS database
     for file in "${CERTDIR2}"/*; do
 	file=${file##*/}
-	certutil -A -d "sql:@IPSEC_NSSDIR@" -n "${file%.pem.txt}" -i "${CERTDIR2}"/"${file}" -t "u,u,u"
+	certutil -A -d "sql:@@IPSEC_NSSDIR@@" -n "${file%.pem.txt}" -i "${CERTDIR2}"/"${file}" -t "u,u,u"
     done
 
     # restore umask
@@ -190,13 +190,13 @@ generate_certificate() {
 
     # Importing the certificate in nss database
     echo "Importing the certificate in database. Password for PKCS12 file is the same as the Export Password you entered above."
-    pk12util -d "sql:@IPSEC_NSSDIR@" -i "${LetsEncryptCertDir}/generatedCertificate.p12"
+    pk12util -d "sql:@@IPSEC_NSSDIR@@" -i "${LetsEncryptCertDir}/generatedCertificate.p12"
 
     # restore umask
     umask ${umask}
 
     # Displaying the certificates installed in nss database
-    certutil -L -d "sql:@IPSEC_NSSDIR@"
+    certutil -L -d "sql:@@IPSEC_NSSDIR@@"
 
     # Now generating the certbot configuration for reusing key
     LetsEncryptConfFile="/etc/letsencrypt/renewal/${HostName}.conf"
@@ -247,14 +247,14 @@ update_certificate() {
     # Importing the certificate in nss database
     echo "Importing the certificate in database."
     echo "Password for PKCS12 file is the same as the Export Password you entered above."
-    pk12util -d "sql:@IPSEC_NSSDIR@" -i "${LetsEncryptCertDir}/generatedCertificate.p12"
+    pk12util -d "sql:@@IPSEC_NSSDIR@@" -i "${LetsEncryptCertDir}/generatedCertificate.p12"
 
     # restore umask
     umask ${umask}
 
     # Displaying the certificates installed in nss database
     echo "Displaying the certificates installed in the database."
-    certutil -L -d "sql:@IPSEC_NSSDIR@"
+    certutil -L -d "sql:@@IPSEC_NSSDIR@@"
 
     # restarting ipsec to load all certificates
     ipsec restart

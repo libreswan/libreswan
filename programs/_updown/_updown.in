@@ -118,10 +118,10 @@ export LC_ALL
 #	PLUTO_SA_REQID
 #		When using KAME or XFRM/NETKEY, the IPsec SA reqid value
 
-if [ -x @IPSEC_EXECDIR@/_updown.${PLUTO_STACK} ]; then
-    exec @IPSEC_EXECDIR@/_updown.${PLUTO_STACK} $@
+if [ -x @@IPSEC_EXECDIR@@/_updown.${PLUTO_STACK} ]; then
+    exec @@IPSEC_EXECDIR@@/_updown.${PLUTO_STACK} $@
 else
-    echo "FATAL: Could not execute @IPSEC_EXECDIR@/_updown.${PLUTO_STACK} $@"
+    echo "FATAL: Could not execute @@IPSEC_EXECDIR@@/_updown.${PLUTO_STACK} $@"
 fi
 
 exit 3

@@ -18,7 +18,7 @@
     <cmdsynopsis>
       <command>ipsec</command>
       <arg choice='plain'>initnss</arg>
-      <arg choice='opt'>--nssdir <replaceable>@IPSEC_NSSDIR@</replaceable></arg>
+      <arg choice='opt'>--nssdir <replaceable>@@IPSEC_NSSDIR@@</replaceable></arg>
       <sbr/>
     </cmdsynopsis>
   </refsynopsisdiv>
@@ -30,7 +30,7 @@
       where all private keys for RSA and certificate keypairs are stored.
       If already initialised, it will return an error. To remove an existing
       IPsec NSS database, remove all the *.db files and pkcs11.txt from the
-      NSS data directory (default: @IPSEC_NSSDIR@).
+      NSS data directory (default: @@IPSEC_NSSDIR@@).
     </para>
   </refsect1>
 

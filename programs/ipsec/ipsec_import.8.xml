@@ -17,7 +17,7 @@
   <refsynopsisdiv id='synopsis'>
     <cmdsynopsis>
       <command>ipsec import</command>
-      <arg choice='opt'>--nssdir <replaceable>@IPSEC_NSSDIR@</replaceable></arg>
+      <arg choice='opt'>--nssdir <replaceable>@@IPSEC_NSSDIR@@</replaceable></arg>
       <arg choice='plain'><replaceable>/path/to/certificate.p12</replaceable></arg>
       <sbr/>
     </cmdsynopsis>
@@ -28,7 +28,7 @@
     <title>DESCRIPTION</title>
     <para>
       <emphasis remap='I'>Import</emphasis> PKCS#12 files into the IPsec NSS database
-      located at the ipsec NSS data directory (default: @IPSEC_NSSDIR@)
+      located at the ipsec NSS data directory (default: @@IPSEC_NSSDIR@@)
     </para>
   </refsect1>
 
