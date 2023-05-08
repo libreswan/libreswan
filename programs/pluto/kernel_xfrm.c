@@ -680,8 +680,8 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 	const struct ip_protocol *client_proto = selector_protocol(*src_client);
 	pexpect(selector_protocol(*dst_client) == client_proto);
 
-	unsigned xfrm_action;
-	const char *policy_name;
+	unsigned xfrm_action = UINT_MAX;
+	const char *policy_name = NULL;
 	/* shunt route */
 	switch (policy->shunt) {
 	case SHUNT_IPSEC:
@@ -692,34 +692,38 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 		break;
 	case SHUNT_PASS:
 		xfrm_action = XFRM_POLICY_ALLOW;
-		policy_name = "%pass(none)";
+		policy_name = "%pass(allow)";
 		break;
 	case SHUNT_DROP:
 		/* used with type=passthrough - can it not use SHUNT_PASS ?? */
 		xfrm_action = XFRM_POLICY_BLOCK;
-		policy_name = "%drop(discard)";
+		policy_name = "%drop(block)";
 		break;
 	case SHUNT_REJECT:
 		/* used with type=passthrough - can it not use SHUNT_PASS ?? */
 		xfrm_action = XFRM_POLICY_BLOCK;
-		policy_name = "%reject(discard)";
+		policy_name = "%reject(block)";
 		break;
 	case SHUNT_NONE:
 		/* used with type=passthrough - can it not use SPI_PASS ?? */
 		xfrm_action = XFRM_POLICY_BLOCK;
-		policy_name = "%discard(discard)";
+		policy_name = "%none(block)";
 		break;
 	case SHUNT_TRAP: /*ondemand*/
 		PASSERT(logger, dir == DIRECTION_OUTBOUND);
 		xfrm_action = XFRM_POLICY_ALLOW;
-		policy_name = "%trap(ipsec)";
+		policy_name = "%trap(allow)";
 		break;
-
-	case SHUNT_HOLD:	/* MUST BE NEGOTIATION */
+	case SHUNT_HOLD:
+		/* used with type=passthrough - can it not use SHUNT_PASS ?? */
+		xfrm_action = XFRM_POLICY_BLOCK;
+		policy_name = "%hold(block)";
+		break;
 	case SHUNT_UNSET:	/* MUST BE DELETE! */
-	default:
 		bad_case(policy->shunt);
 	}
+	PASSERT(logger, xfrm_action != UINT_MAX);
+	PASSERT(logger, policy_name != NULL);
 
 	const unsigned xfrm_dir =
 		(op == KERNEL_POLICY_OP_ADD && dir == DIRECTION_INBOUND ? XFRM_POLICY_IN :

@@ -1231,30 +1231,44 @@ static bool kernel_pfkeyv2_policy_add(enum kernel_policy_op op,
 		 pexpect(0));
 
 	enum sadb_x_flow_type policy_type = UINT_MAX;
+	const char *policy_name = NULL;
 	switch (policy->shunt) {
-	case SHUNT_PASS:
-		policy_type = SADB_X_FLOW_TYPE_BYPASS;
-		break;
-	case SHUNT_UNSET:
-		policy_type = SADB_X_FLOW_TYPE_REQUIRE;
-		/* XXX: XFRM also considers delete here? */
-		break;
 	case SHUNT_IPSEC:
 		policy_type = SADB_X_FLOW_TYPE_REQUIRE;
+		policy_name = (policy->mode == ENCAP_MODE_TUNNEL ? ip_protocol_ipip.name :
+			       policy->mode == ENCAP_MODE_TRANSPORT ? protocol_from_ipproto(policy->rule[policy->nr_rules-1].proto)->name :
+			       "UNKNOWN");
 		break;
-	case SHUNT_HOLD:
-		pexpect(0);
-		return true; /* lie */
-	case SHUNT_TRAP:
-		policy_type = SADB_X_FLOW_TYPE_ACQUIRE;
+	case SHUNT_PASS:
+		policy_type = SADB_X_FLOW_TYPE_BYPASS;
+		policy_name = "%pass(bypass)";
 		break;
 	case SHUNT_DROP:
+		policy_type = SADB_X_FLOW_TYPE_DENY;
+		policy_name = "%none(deny)";
+		break;
 	case SHUNT_REJECT:
+		policy_type = SADB_X_FLOW_TYPE_DENY;
+		policy_name = "%none(deny)";
+		break;
 	case SHUNT_NONE:
 		policy_type = SADB_X_FLOW_TYPE_DENY;
+		policy_name = "%none(deny)";
 		break;
+	case SHUNT_TRAP:
+		policy_type = SADB_X_FLOW_TYPE_ACQUIRE;
+		policy_name = "%trap(acquire)";
+		break;
+	case SHUNT_HOLD:
+		policy_type = SADB_X_FLOW_TYPE_DENY;
+		policy_name = "%hold(deny)";
+	case SHUNT_UNSET:
+		bad_case(policy->shunt);
 	}
-	pexpect(policy_type != UINT_MAX);
+	PASSERT(logger, policy_type != UINT_MAX);
+	PASSERT(logger, policy_name != NULL);
+
+	ldbg(logger, "%s() policy=%s", __func__, policy_name);
 
 	put_sadb_ext(&req, sadb_protocol, SADB_X_EXT_FLOW_TYPE,
 		     .sadb_protocol_direction = policy_direction,
@@ -1326,30 +1340,45 @@ static bool kernel_pfkeyv2_policy_add(enum kernel_policy_op op,
 	/* policy */
 
 	enum ipsec_policy policy_type = UINT_MAX;
+	const char *policy_name = NULL;
 	switch (policy->shunt) {
-	case SHUNT_PASS:
-		policy_type = IPSEC_POLICY_NONE;
-		break;
-	case SHUNT_UNSET:
-		policy_type = IPSEC_POLICY_IPSEC;
-		/* XXX: XFRM also considers delete here? */
-		break;
 	case SHUNT_IPSEC:
 		policy_type = IPSEC_POLICY_IPSEC;
+		policy_name = (policy->mode == ENCAP_MODE_TUNNEL ? ip_protocol_ipip.name :
+			       policy->mode == ENCAP_MODE_TRANSPORT ? protocol_from_ipproto(policy->rule[policy->nr_rules-1].proto)->name :
+			       "UNKNOWN");
 		break;
-	case SHUNT_HOLD:
-		pexpect(0);
-		return true; /* lie */
-	case SHUNT_TRAP:
-		policy_type = IPSEC_POLICY_IPSEC;
+	case SHUNT_PASS:
+		policy_type = IPSEC_POLICY_NONE;
+		policy_name = "%pass(none)";
 		break;
 	case SHUNT_DROP:
+		policy_type = IPSEC_POLICY_DISCARD;
+		policy_name = "%drop(discard)";
+		break;
 	case SHUNT_REJECT:
+		policy_type = IPSEC_POLICY_DISCARD;
+		policy_name = "%reject(discard)";
+		break;
 	case SHUNT_NONE:
 		policy_type = IPSEC_POLICY_DISCARD;
+		policy_name = "%none(discard)";
 		break;
+	case SHUNT_TRAP:
+		policy_type = IPSEC_POLICY_IPSEC;
+		policy_name = "%trap(ipsec)";
+		break;
+	case SHUNT_HOLD:
+		policy_type = IPSEC_POLICY_DISCARD;
+		policy_name = "%hold(discard)";
+		break;
+	case SHUNT_UNSET:
+		bad_case(policy->shunt);
 	}
-	pexpect(policy_type != UINT_MAX);
+	PASSERT(logger, policy_type != UINT_MAX);
+	PASSERT(logger, policy_name != NULL);
+
+	ldbg(logger, "%s() policy=%s", __func__, policy_name);
 
 	put_sadb_x_policy(&req, dir, policy_type,
 			  policy->id, policy);
