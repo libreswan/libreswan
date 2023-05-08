@@ -4,7 +4,7 @@
 # Copyright (C) 2003-2006   Xelerance Corporation
 # Copyright (C) 2012-2020 Paul Wouters <paul@libreswan.org>
 # Copyright (C) 2015,2017-2018 Andrew Cagney
-# Copyright (C) 2015-2019 Tuomo Soini <tis@foobar.fi>
+# Copyright (C) 2015-2023 Tuomo Soini <tis@foobar.fi>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
