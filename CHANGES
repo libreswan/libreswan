@@ -861,7 +861,7 @@ v3.20 (March 14, 2017)
 * documentation: added oe-letsencrypt-* example configs [Paul]
 
 v3.19 (January 15, 2017)
-* NSS: Support for configurable nss dir via @@IPSEC_NSSDIR@@ [dkg/Tuomo]
+* NSS: Support for configurable nss dir via IPSEC_NSSDIR [dkg/Tuomo]
 * FIPS: Only pluto needs a .hmac file, reducing crypto boundary [Paul]
 * FIPS: do not allow DBG_PRIVATE to be set when running in FIPS mode [Paul]
 * FIPS: Ignore failureshunt=passthrough and negotiationshunt=passthrough [Paul]
