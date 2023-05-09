@@ -1251,10 +1251,6 @@ static bool kernel_pfkeyv2_policy_add(enum kernel_policy_op op,
 		policy_type = SADB_X_FLOW_TYPE_DENY;
 		policy_name = "%none(deny)";
 		break;
-	case SHUNT_NONE:
-		policy_type = SADB_X_FLOW_TYPE_DENY;
-		policy_name = "%none(deny)";
-		break;
 	case SHUNT_TRAP:
 		policy_type = SADB_X_FLOW_TYPE_ACQUIRE;
 		policy_name = "%trap(acquire)";
@@ -1262,6 +1258,10 @@ static bool kernel_pfkeyv2_policy_add(enum kernel_policy_op op,
 	case SHUNT_HOLD:
 		policy_type = SADB_X_FLOW_TYPE_DENY;
 		policy_name = "%hold(deny)";
+	case SHUNT_NONE:
+		/* FAILURE=NONE should have been turned into
+		 * NEGOTIATION */
+		bad_case(policy->shunt);
 	case SHUNT_UNSET:
 		bad_case(policy->shunt);
 	}
@@ -1360,10 +1360,6 @@ static bool kernel_pfkeyv2_policy_add(enum kernel_policy_op op,
 		policy_type = IPSEC_POLICY_DISCARD;
 		policy_name = "%reject(discard)";
 		break;
-	case SHUNT_NONE:
-		policy_type = IPSEC_POLICY_DISCARD;
-		policy_name = "%none(discard)";
-		break;
 	case SHUNT_TRAP:
 		policy_type = IPSEC_POLICY_IPSEC;
 		policy_name = "%trap(ipsec)";
@@ -1372,6 +1368,10 @@ static bool kernel_pfkeyv2_policy_add(enum kernel_policy_op op,
 		policy_type = IPSEC_POLICY_DISCARD;
 		policy_name = "%hold(discard)";
 		break;
+	case SHUNT_NONE:
+		/* FAILURE=NONE should have been turned into
+		 * NEGOTIATION */
+		bad_case(policy->shunt);
 	case SHUNT_UNSET:
 		bad_case(policy->shunt);
 	}

@@ -704,11 +704,6 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 		xfrm_action = XFRM_POLICY_BLOCK;
 		policy_name = "%reject(block)";
 		break;
-	case SHUNT_NONE:
-		/* used with type=passthrough - can it not use SPI_PASS ?? */
-		xfrm_action = XFRM_POLICY_BLOCK;
-		policy_name = "%none(block)";
-		break;
 	case SHUNT_TRAP: /*ondemand*/
 		PASSERT(logger, dir == DIRECTION_OUTBOUND);
 		xfrm_action = XFRM_POLICY_ALLOW;
@@ -719,7 +714,11 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 		xfrm_action = XFRM_POLICY_BLOCK;
 		policy_name = "%hold(block)";
 		break;
-	case SHUNT_UNSET:	/* MUST BE DELETE! */
+	case SHUNT_NONE:
+		/* FAILURE=NONE should have been turned into
+		 * NEGOTIATION */
+		bad_case(policy->shunt);
+	case SHUNT_UNSET:
 		bad_case(policy->shunt);
 	}
 	PASSERT(logger, xfrm_action != UINT_MAX);

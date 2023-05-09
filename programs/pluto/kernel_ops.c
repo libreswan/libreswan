@@ -39,10 +39,6 @@ bool kernel_ops_policy_add(enum kernel_policy_op op,
 {
 	const struct ip_protocol *client_proto = selector_protocol(*src_client);
 	pexpect(client_proto == selector_protocol(*dst_client));
-	PASSERT(logger, policy != NULL);
-	PASSERT(logger, policy->shunt != SHUNT_UNSET);
-	PASSERT(logger, ((policy->nr_rules == 0) ==/*iff*/
-			 (policy->shunt == SHUNT_PASS)));
 
 	if (DBGP(DBG_BASE)) {
 
@@ -145,20 +141,47 @@ bool kernel_ops_policy_add(enum kernel_policy_op op,
 		}
 	}
 
+	PASSERT(logger, policy != NULL);
+
 	switch(policy->shunt) {
+	case SHUNT_IPSEC:
+		PASSERT(logger, policy->nr_rules > 0);
+		PASSERT(logger, (policy->kind == SHUNT_KIND_IPSEC));
+		break;
+	case SHUNT_PASS:
+		PASSERT(logger, policy->nr_rules == 0);
+		PASSERT(logger, (policy->kind == SHUNT_KIND_NEVER_NEGOTIATE ||
+				 policy->kind == SHUNT_KIND_NEGOTIATION ||
+				 policy->kind == SHUNT_KIND_FAILURE));
+		break;
+	case SHUNT_DROP:
+		PASSERT(logger, policy->nr_rules > 0);
+		PASSERT(logger, (policy->kind == SHUNT_KIND_FAILURE ||
+				 policy->kind == SHUNT_KIND_NEVER_NEGOTIATE));
+		break;
+	case SHUNT_REJECT:
+		PASSERT(logger, policy->nr_rules > 0);
+		PASSERT(logger, (policy->kind == SHUNT_KIND_NEVER_NEGOTIATE));
+		break;
+	case SHUNT_NONE:
+		PASSERT(logger, policy->nr_rules > 0);
+		PASSERT(logger, (policy->kind == SHUNT_KIND_FAILURE));
+		/* FAILURE=NONE should have been turned into
+		 * NEGOTIATION */
+		bad_case(policy->shunt);
+	case SHUNT_TRAP:
+		PASSERT(logger, policy->nr_rules > 0);
+		PASSERT(logger, (dir == DIRECTION_OUTBOUND));
+		PASSERT(logger, (policy->kind == SHUNT_KIND_ONDEMAND));
+		break;
 	case SHUNT_HOLD:
-		PEXPECT(logger, policy->kind == SHUNT_KIND_NEGOTIATION);
+		PASSERT(logger, policy->nr_rules > 0);
+		PASSERT(logger, (dir == DIRECTION_OUTBOUND));
+		PASSERT(logger, policy->kind == SHUNT_KIND_NEGOTIATION);
 		ldbg(logger, "%s() SPI_HOLD implemented as no-op", __func__);
 		return true;
-	case SHUNT_TRAP:
-		if (dir == DIRECTION_INBOUND) {
-			PEXPECT(logger, policy->kind == SHUNT_KIND_ONDEMAND);
-			llog_pexpect(logger, where, "inbound ondemand SHUNT_TRAP is a no-op");
-			return true;
-		}
-		break;
-	default:
-		break;
+	case SHUNT_UNSET:
+		bad_case(policy->shunt);
 	}
 
 	bool ok = kernel_ops->policy_add(op, dir,
