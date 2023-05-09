@@ -152,6 +152,7 @@ bool kernel_ops_policy_add(enum kernel_policy_op op,
 		PASSERT(logger, policy->nr_rules == 0);
 		PASSERT(logger, (policy->kind == SHUNT_KIND_NEVER_NEGOTIATE ||
 				 policy->kind == SHUNT_KIND_NEGOTIATION ||
+				 /* via FAILURE=NONE */
 				 policy->kind == SHUNT_KIND_FAILURE));
 		break;
 	case SHUNT_DROP:
@@ -163,12 +164,6 @@ bool kernel_ops_policy_add(enum kernel_policy_op op,
 		PASSERT(logger, policy->nr_rules > 0);
 		PASSERT(logger, (policy->kind == SHUNT_KIND_NEVER_NEGOTIATE));
 		break;
-	case SHUNT_NONE:
-		PASSERT(logger, policy->nr_rules > 0);
-		PASSERT(logger, (policy->kind == SHUNT_KIND_FAILURE));
-		/* FAILURE=NONE should have been turned into
-		 * NEGOTIATION */
-		bad_case(policy->shunt);
 	case SHUNT_TRAP:
 		PASSERT(logger, policy->nr_rules > 0);
 		PASSERT(logger, (dir == DIRECTION_OUTBOUND));
@@ -178,8 +173,15 @@ bool kernel_ops_policy_add(enum kernel_policy_op op,
 		PASSERT(logger, policy->nr_rules > 0);
 		PASSERT(logger, (dir == DIRECTION_OUTBOUND));
 		PASSERT(logger, policy->kind == SHUNT_KIND_NEGOTIATION);
-		ldbg(logger, "%s() SPI_HOLD implemented as no-op", __func__);
-		return true;
+		bad_case(policy->shunt);
+	case SHUNT_NONE:
+		/*
+		 * FAILURE=NONE should have been turned into
+		 * NEGOTIATION=...
+		 */
+		PASSERT(logger, policy->nr_rules > 0);
+		PASSERT(logger, (policy->kind == SHUNT_KIND_FAILURE));
+		bad_case(policy->shunt);
 	case SHUNT_UNSET:
 		bad_case(policy->shunt);
 	}

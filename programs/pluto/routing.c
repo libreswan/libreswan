@@ -320,10 +320,14 @@ static void unrouted_instance_to_unrouted_negotiation(enum routing_event event,
 	bool oe = ((c->policy & POLICY_OPPORTUNISTIC) != LEMPTY);
 	const char *reason = (oe ? "replace unrouted opportunistic %trap with broad %pass or %hold" :
 			      "replace unrouted %trap with broad %pass or %hold");
-	add_spd_kernel_policies(c, KERNEL_POLICY_OP_REPLACE,
-				DIRECTION_OUTBOUND,
-				SHUNT_KIND_NEGOTIATION,
-				logger, where, reason);
+	if (BROKEN_TRANSITION && c->config->negotiation_shunt == SHUNT_HOLD) {
+		ldbg(c->logger, "%s() skipping NEGOTIATION=HOLD", __func__);
+	} else {
+		add_spd_kernel_policies(c, KERNEL_POLICY_OP_REPLACE,
+					DIRECTION_OUTBOUND,
+					SHUNT_KIND_NEGOTIATION,
+					logger, where, reason);
+	}
 	set_routing(event, c, RT_UNROUTED_NEGOTIATION, NULL, where);
 }
 
@@ -375,11 +379,12 @@ static void routed_negotiation_to_unrouted(enum routing_event event,
 }
 
 /*
- * This is permanent and routed.
- *
  * The negotiation is for the full SPDs which have been installed as
  * KIND_ONDEMAND.  Hence the full suite of SPDs needs to be converted
  * to KIND_NEGOTIATION.
+ *
+ * XXX: not true! This is called when ACQUIRE which may have a very
+ * narrow idea of what to pass/hold.
  *
  * But what of the lurking acquire?
  */
@@ -390,14 +395,18 @@ static void routed_ondemand_to_routed_negotiation(enum routing_event event,
 	ldbg(c->logger, "%s() for %s", __func__, c->name);
         struct logger *logger = c->logger;
         PEXPECT(logger, (c->policy & POLICY_OPPORTUNISTIC) == LEMPTY);
-	FOR_EACH_ITEM(spd, &c->child.spds) {
-		if (!replace_spd_kernel_policy(spd, DIRECTION_OUTBOUND,
-					       RT_ROUTED_NEGOTIATION,
-					       SHUNT_KIND_NEGOTIATION,
-					       logger, where,
-					       "ondemand->negotiation")) {
-			llog(RC_LOG, c->logger,
-			     "converting ondemand kernel policy to negotiation");
+	if (BROKEN_TRANSITION && c->config->negotiation_shunt == SHUNT_HOLD) {
+		ldbg(c->logger, "%s() skipping NEGOTIATION=HOLD", __func__);
+	} else {
+		FOR_EACH_ITEM(spd, &c->child.spds) {
+			if (!replace_spd_kernel_policy(spd, DIRECTION_OUTBOUND,
+						       RT_ROUTED_NEGOTIATION,
+						       SHUNT_KIND_NEGOTIATION,
+						       logger, where,
+						       "ondemand->negotiation")) {
+				llog(RC_LOG, c->logger,
+				     "converting ondemand kernel policy to negotiation");
+			}
 		}
 	}
 	/* the state isn't yet known */
