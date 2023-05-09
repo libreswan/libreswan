@@ -158,7 +158,8 @@ bool kernel_ops_policy_add(enum kernel_policy_op op,
 	case SHUNT_DROP:
 		PASSERT(logger, policy->nr_rules > 0);
 		PASSERT(logger, (policy->kind == SHUNT_KIND_FAILURE ||
-				 policy->kind == SHUNT_KIND_NEVER_NEGOTIATE));
+				 policy->kind == SHUNT_KIND_NEVER_NEGOTIATE ||
+				 policy->kind == SHUNT_KIND_BLOCK));
 		break;
 	case SHUNT_REJECT:
 		PASSERT(logger, policy->nr_rules > 0);
