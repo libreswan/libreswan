@@ -8,7 +8,7 @@ east #
  # ipsec start
 east #
  ipsec pluto --config /etc/ipsec.conf --leak-detective --impair event-check-crls
-| event-check-crls:yes
+PATH/libexec/ipsec/pluto: impair event-check-crls:yes (was 0)
 east #
  ../../guestbin/wait-until-pluto-started
 east #
