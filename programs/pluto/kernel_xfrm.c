@@ -340,7 +340,9 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 	size_t len = hdr->nlmsg_len;
 
 	ldbg(logger, "%s() sending %d", __func__, hdr->nlmsg_type);
-	ldbg_dump(logger, hdr, len);
+	if (DBGP(DBG_TMI)) {
+		LDBG_dump(logger, hdr, len);
+	}
 
 	ssize_t r;
 	static uint32_t seq = 0;	/* STATIC */
@@ -390,7 +392,9 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 		}
 
 		ldbg(logger, "%s() recvfrom() returned %zd bytes", __func__, r);
-		ldbg_dump(logger, &rsp, r);
+		if (DBGP(DBG_TMI)) {
+			LDBG_dump(logger, &rsp, r);
+		}
 
 		size_t l = (size_t) r; /* must be non -ve */
 		if (l < sizeof(rsp.n)) {
@@ -2289,7 +2293,9 @@ static bool netlink_get(int fd,
 	}
 
 	ldbg(logger, "%s() recvfrom() returned %zd bytes", __func__, r);
-	ldbg_dump(logger, &rsp, r);
+	if (DBGP(DBG_TMI)) {
+		LDBG_dump(logger, &rsp, r);
+	}
 
 	size_t l = (size_t)r; /* must be non -ve */
 	if (l < sizeof(rsp.n)) {
