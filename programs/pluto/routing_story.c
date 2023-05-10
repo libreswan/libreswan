@@ -24,6 +24,7 @@ static const char *const routing_story_strings[] = {
 	[RT_UNROUTED] = "unrouted",			  /* unrouted */
 	[RT_UNROUTED_NEGOTIATION] = "unrouted HOLD",      /* unrouted, but HOLD shunt installed */
 	[RT_UNROUTED_INBOUND] = "unrouted HOLD",	/* unrouted, outbound negotiation, inbound established */
+	[RT_UNROUTED_ONDEMAND] = "unrouted ondemand",		/* unrouted, and ondemand shunt installed */
 	[RT_ROUTED_ONDEMAND] = "prospective erouted",  /* routed, and prospective shunt installed */
 #if 0
 	[RT_ROUTED_NEVER_NEGOTIATE] = "routed never-negotiate",  /* routed, and .never_negotiate_shunt installed */
@@ -32,6 +33,7 @@ static const char *const routing_story_strings[] = {
 #endif
 	[RT_ROUTED_NEGOTIATION] = "erouted HOLD",         /* routed, and HOLD shunt installed */
 	[RT_ROUTED_INBOUND] = "erouted HOLD",		/* (lie) routed, outbound negotiation, inbound established */
+	[RT_UNROUTED_FAILURE] = "unrouted failure",       /* unrouted, and failure shunt installed */
 	[RT_ROUTED_FAILURE] = "fail erouted",         	  /* routed, and failure-context shunt eroute installed */
 	[RT_ROUTED_TUNNEL] = "erouted",		      	  /* routed, and erouted to an IPSEC SA group */
 	[RT_UNROUTED_TUNNEL] = "migrating",		  /* unrouted, established; used by MOBIKE */

@@ -180,6 +180,7 @@ void fake_connection_establish_outbound(struct ike_sa *ike, struct child_sa *chi
 enum shunt_kind routing_shunt_kind(enum routing routing)
 {
 	switch (routing) {
+	case RT_UNROUTED_ONDEMAND:
 	case RT_ROUTED_ONDEMAND:
 		return SHUNT_KIND_ONDEMAND;
 	case RT_ROUTED_NEVER_NEGOTIATE:
@@ -187,6 +188,7 @@ enum shunt_kind routing_shunt_kind(enum routing routing)
 	case RT_UNROUTED_NEGOTIATION:
 	case RT_ROUTED_NEGOTIATION:
 		return SHUNT_KIND_NEGOTIATION;
+	case RT_UNROUTED_FAILURE:
 	case RT_ROUTED_FAILURE:
 		return SHUNT_KIND_FAILURE;
 	case RT_UNROUTED_INBOUND:
@@ -213,7 +215,9 @@ bool routed(enum routing r)
 	case RT_ROUTED_FAILURE:
 		return true;
 	case RT_UNROUTED:
+	case RT_UNROUTED_ONDEMAND:
 	case RT_UNROUTED_NEGOTIATION:
+	case RT_UNROUTED_FAILURE:
 	case RT_UNROUTED_INBOUND:
 	case RT_UNROUTED_TUNNEL:
 		return false;
@@ -226,13 +230,15 @@ bool kernel_policy_installed(const struct connection *c)
 	switch (c->child.routing) {
 	case RT_UNROUTED:
 		return false;
-	case RT_UNROUTED_NEGOTIATION:
-	case RT_UNROUTED_INBOUND:
+	case RT_UNROUTED_ONDEMAND:
 	case RT_ROUTED_ONDEMAND:
-	case RT_ROUTED_NEVER_NEGOTIATE:
+	case RT_UNROUTED_NEGOTIATION:
 	case RT_ROUTED_NEGOTIATION:
+	case RT_UNROUTED_INBOUND:
+	case RT_ROUTED_NEVER_NEGOTIATE:
 	case RT_ROUTED_INBOUND:
 	case RT_ROUTED_TUNNEL:
+	case RT_UNROUTED_FAILURE:
 	case RT_ROUTED_FAILURE:
 	case RT_UNROUTED_TUNNEL:
 		return true;
@@ -1538,13 +1544,15 @@ void connection_resume(struct child_sa *child, where_t where)
 		}
 		return;
 	case RT_UNROUTED:
-	case RT_UNROUTED_NEGOTIATION:
-	case RT_UNROUTED_INBOUND:
+	case RT_UNROUTED_ONDEMAND:
 	case RT_ROUTED_ONDEMAND:
+	case RT_UNROUTED_NEGOTIATION:
 	case RT_ROUTED_NEGOTIATION:
+	case RT_UNROUTED_INBOUND:
 	case RT_ROUTED_INBOUND:
-	case RT_ROUTED_TUNNEL:
+	case RT_UNROUTED_FAILURE:
 	case RT_ROUTED_FAILURE:
+	case RT_ROUTED_TUNNEL:
 	case RT_ROUTED_NEVER_NEGOTIATE:
 		llog_pexpect(child->sa.st_logger, where,
 			     "%s() unexpected routing %s",
@@ -1605,7 +1613,9 @@ void connection_suspend(struct child_sa *child, where_t where)
 		set_routing(event, c, RT_UNROUTED_TUNNEL, child, where);
 		return;
 	case RT_UNROUTED:
+	case RT_UNROUTED_ONDEMAND:
 	case RT_UNROUTED_NEGOTIATION:
+	case RT_UNROUTED_FAILURE:
 	case RT_UNROUTED_INBOUND:
 	case RT_UNROUTED_TUNNEL:
 		llog_pexpect(child->sa.st_logger, HERE,

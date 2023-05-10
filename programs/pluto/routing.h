@@ -41,10 +41,12 @@ enum direction;
 
 enum routing {
 	RT_UNROUTED,			/* unrouted */
-	RT_UNROUTED_NEGOTIATION,	/* unrouted, but .negotiation_shunt installed */
-	RT_ROUTED_ONDEMAND,		/* routed, and SHUNT_TRAP installed */
 	RT_ROUTED_NEVER_NEGOTIATE,	/* routed, and .never_negotiate_shunt installed */
+	RT_UNROUTED_ONDEMAND,		/* unrouted, and SHUNT_TRAP installed */
+	RT_ROUTED_ONDEMAND,		/* routed, and SHUNT_TRAP installed */
+	RT_UNROUTED_NEGOTIATION,	/* unrouted, but .negotiation_shunt installed */
 	RT_ROUTED_NEGOTIATION,		/* routed, and .negotiation_shunt installed */
+	RT_UNROUTED_FAILURE,      	/* unrouted, and .failure_shunt installed */
 	RT_ROUTED_FAILURE,      	/* routed, and .failure_shunt installed */
 	/* half established */
 	RT_UNROUTED_INBOUND,		/* unrouted, outbound: negotiation, inbound: installed */
