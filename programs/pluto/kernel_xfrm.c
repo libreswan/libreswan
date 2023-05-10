@@ -472,7 +472,7 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 static bool sendrecv_xfrm_policy(struct nlmsghdr *hdr,
 				 enum expect_kernel_policy what_about_inbound,
 				 const char *story, const char *adstory,
-				 struct logger *logger)
+				 struct logger *logger, const char *func)
 {
 	struct nlm_resp rsp;
 
@@ -492,25 +492,52 @@ static bool sendrecv_xfrm_policy(struct nlmsghdr *hdr,
 
 	switch (what_about_inbound) {
 	case IGNORE_KERNEL_POLICY_MISSING:
-		if (error == 0 || error == ENOENT) {
+		if (error == 0) {
+			/* pexpect? */
+			sparse_buf sb;
+			ldbg(logger,
+			     "%s()   %s for flow %s %s had A policy",
+			     func, str_sparse(xfrm_type_names, hdr->nlmsg_type, &sb),
+			     story, adstory);
+			return true;
+		}
+		if (error == ENOENT) {
+			/* pexpect? */
+			sparse_buf sb;
+			ldbg(logger,
+			     "%s()   %s for flow %s %s had NO policy",
+			     func, str_sparse(xfrm_type_names, hdr->nlmsg_type, &sb),
+			     story, adstory);
 			return true;
 		}
 		break;
 	case EXPECT_KERNEL_POLICY_OK:
 		if (error == 0) {
+			/* pexpect? */
+			sparse_buf sb;
+			ldbg(logger,
+			     "%s()   %s for flow %s %s had A policy",
+			     func, str_sparse(xfrm_type_names, hdr->nlmsg_type, &sb),
+			     story, adstory);
 			return true;
 		}
 		break;
 	case EXPECT_NO_INBOUND:
 		if (error == ENOENT) {
+			/* pexpect? */
+			sparse_buf sb;
+			ldbg(logger,
+			     "%s()   %s for flow %s %s had NO policy",
+			     func, str_sparse(xfrm_type_names, hdr->nlmsg_type, &sb),
+			     story, adstory);
 			return true;
 		}
 		if (error == 0) {
 			/* pexpect? */
 			sparse_buf sb;
 			llog(RC_LOG, logger,
-			     "kernel: xfrm %s for flow %s %s encountered unexpected policy",
-			     str_sparse(xfrm_type_names, hdr->nlmsg_type, &sb),
+			     "%s()   %s for flow %s %s encountered unexpected policy",
+			     func, str_sparse(xfrm_type_names, hdr->nlmsg_type, &sb),
 			     story, adstory);
 			return true;
 		}
@@ -672,7 +699,7 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 				   const ip_selector *dst_client,
 				   const struct kernel_policy *policy,
 				   deltatime_t use_lifetime UNUSED,
-				   struct logger *logger)
+				   struct logger *logger, const char *func)
 {
 	const char *op_str = enum_name_short(&kernel_policy_op_names, op);
 	const char *dir_str = enum_name_short(&direction_names, dir);
@@ -727,8 +754,8 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 	const unsigned xfrm_dir =
 		(op == KERNEL_POLICY_OP_ADD && dir == DIRECTION_INBOUND ? XFRM_POLICY_IN :
 		 XFRM_POLICY_OUT);
-	ldbg(logger, "%s() policy=%s action=%d xfrm_dir=%d op=%s dir=%s",
-	     __func__, policy_name, xfrm_action, xfrm_dir, op_str, dir_str);
+	ldbg(logger, "%s()   policy=%s action=%d xfrm_dir=%d op=%s dir=%s",
+	     func, policy_name, xfrm_action, xfrm_dir, op_str, dir_str);
 
 	struct {
 		struct nlmsghdr n;
@@ -844,7 +871,7 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 		 EXPECT_KERNEL_POLICY_OK);
 	bool ok = sendrecv_xfrm_policy(&req.n, what_about_inbound, policy_name,
 				       (dir == DIRECTION_OUTBOUND ? "(out)" : "(in)"),
-				       logger);
+				       logger, func);
 
 	/*
 	 * ??? deal with any forwarding policy.
@@ -867,7 +894,8 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 			ldbg(logger, "%s() adding policy forward (suspect a tunnel)", __func__);
 			info->dir = XFRM_POLICY_FWD;
 			ok &= sendrecv_xfrm_policy(&req.n, what_about_inbound,
-						   policy_name, "(fwd)", logger);
+						   policy_name, "(fwd)",
+						   logger, func);
 			break;
 		default:
 			break; /*no-op*/
@@ -884,7 +912,7 @@ static bool kernel_xfrm_policy_del(enum direction direction,
 				   const struct pluto_xfrmi *xfrmi,
 				   enum kernel_policy_id policy_id,
 				   const shunk_t sec_label,
-				   struct logger *logger)
+				   struct logger *logger, const char *func)
 {
 	const struct ip_protocol *child_proto = selector_protocol(*src_child);
 	pexpect(selector_protocol(*dst_child) == child_proto);
@@ -928,7 +956,7 @@ static bool kernel_xfrm_policy_del(enum direction direction,
 				       (direction == DIRECTION_OUTBOUND ? "(out)" :
 					direction == DIRECTION_INBOUND ? "(in)" :
 					NULL),
-				       logger);
+				       logger, func);
 
 	/*
 	 * ??? deal with any forwarding policy.
@@ -948,7 +976,8 @@ static bool kernel_xfrm_policy_del(enum direction direction,
 		    __func__);
 		id->dir = XFRM_POLICY_FWD;
 		ok &= sendrecv_xfrm_policy(&req.n, IGNORE_KERNEL_POLICY_MISSING,
-					   "delete", "(fwd)", logger);
+					   "delete", "(fwd)",
+					   logger, func);
 	}
 	return ok;
 }
@@ -2509,17 +2538,17 @@ static bool add_icmpv6_bypass_policy(int port, struct logger *logger)
 	 */
 	req.p.dir = XFRM_POLICY_IN;
 	if (!sendrecv_xfrm_policy(&req.n, EXPECT_KERNEL_POLICY_OK,
-				  text, "(in)", logger))
+				  text, "(in)", logger, __func__))
 		return false;
 
 	req.p.dir = XFRM_POLICY_FWD;
 	if (!sendrecv_xfrm_policy(&req.n, EXPECT_KERNEL_POLICY_OK,
-				  text, "(fwd)", logger))
+				  text, "(fwd)", logger, __func__))
 		return false;
 
 	req.p.dir = XFRM_POLICY_OUT;
 	if (!sendrecv_xfrm_policy(&req.n, EXPECT_KERNEL_POLICY_OK,
-				  text, "(out)", logger))
+				  text, "(out)", logger, __func__))
 		return false;
 
 	return true;

@@ -174,7 +174,7 @@ bool kernel_ops_policy_add(enum kernel_policy_op op,
 		PASSERT(logger, policy->nr_rules > 0);
 		PASSERT(logger, (dir == DIRECTION_OUTBOUND));
 		PASSERT(logger, policy->kind == SHUNT_KIND_NEGOTIATION);
-		bad_case(policy->shunt);
+		break;
 	case SHUNT_NONE:
 		/*
 		 * FAILURE=NONE should have been turned into
@@ -191,7 +191,7 @@ bool kernel_ops_policy_add(enum kernel_policy_op op,
 					 src_client, dst_client,
 					 policy,
 					 use_lifetime,
-					 logger);
+					 logger, __func__);
 	ldbg(logger, "%s() ... %s", __func__, bool_str(ok));
 
 	return ok;
@@ -269,7 +269,7 @@ bool kernel_ops_policy_del(enum direction dir,
 	bool ok = kernel_ops->policy_del(dir, expect_kernel_policy,
 					 src_client, dst_client,
 					 sa_marks, xfrmi, id, sec_label,
-					 logger);
+					 logger, __func__);
 
 	ldbg(logger, "%s() ... %s", __func__, bool_str(ok));
 	return ok;

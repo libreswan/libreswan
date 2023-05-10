@@ -1184,7 +1184,7 @@ static bool kernel_pfkeyv2_policy_add(enum kernel_policy_op op,
 				      const ip_selector *dst_client,
 				      const struct kernel_policy *policy,
 				      deltatime_t use_lifetime UNUSED,
-				      struct logger *logger)
+				      struct logger *logger, const char *func)
 {
 #ifdef __OpenBSD__
 
@@ -1268,7 +1268,7 @@ static bool kernel_pfkeyv2_policy_add(enum kernel_policy_op op,
 	PASSERT(logger, policy_type != UINT_MAX);
 	PASSERT(logger, policy_name != NULL);
 
-	ldbg(logger, "%s() policy=%s", __func__, policy_name);
+	ldbg(logger, "%s()   policy=%s", func, policy_name);
 
 	put_sadb_ext(&req, sadb_protocol, SADB_X_EXT_FLOW_TYPE,
 		     .sadb_protocol_direction = policy_direction,
@@ -1378,7 +1378,7 @@ static bool kernel_pfkeyv2_policy_add(enum kernel_policy_op op,
 	PASSERT(logger, policy_type != UINT_MAX);
 	PASSERT(logger, policy_name != NULL);
 
-	ldbg(logger, "%s() policy=%s", __func__, policy_name);
+	ldbg(logger, "%s()   policy=%s", func, policy_name);
 
 	put_sadb_x_policy(&req, dir, policy_type,
 			  policy->id, policy);
@@ -1399,7 +1399,7 @@ static bool kernel_pfkeyv2_policy_del(enum direction direction,
 				      const struct pluto_xfrmi *xfrmi UNUSED,
 				      enum kernel_policy_id policy_id,
 				      const shunk_t sec_label UNUSED,
-				      struct logger *logger)
+				      struct logger *logger, const char *func)
 {
 #ifdef __OpenBSD__
 
@@ -1476,10 +1476,10 @@ static bool kernel_pfkeyv2_policy_del(enum direction direction,
 		switch (expect_kernel_policy) {
 		case IGNORE_KERNEL_POLICY_MISSING:
 		case EXPECT_NO_INBOUND:
-			dbg("Ignoring pfkey error");
+			ldbg(logger, "%s()   ignoring pfkey error", func);
 			break;
 		case EXPECT_KERNEL_POLICY_OK:
-			llog_pexpect(logger, HERE, "receiving");
+			llog_pexpect(logger, HERE, "%s()   receiving", func);
 			return false;
 		}
 	}
