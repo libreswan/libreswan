@@ -37,7 +37,7 @@
 
 static void do_updown_unroute(struct connection *c);
 
-static const char *connection_event_name[] = {
+static const char *routing_event_name[] = {
 #define S(E) [E] = #E
 	S(CONNECTION_ROUTE),
 	S(CONNECTION_UNROUTE),
@@ -57,9 +57,9 @@ static const char *connection_event_name[] = {
 #undef S
 };
 
-static enum_names connection_event_names = {
+static enum_names routing_event_names = {
 	0, CONNECTION_EVENT_ROOF-1,
-	ARRAY_REF(connection_event_name),
+	ARRAY_REF(routing_event_name),
 	"CONNECTION_",
 	NULL,
 };
@@ -129,7 +129,7 @@ static void jam_annex(struct jambuf *buf, const struct annex *e)
 static void jam_event(struct jambuf *buf, enum routing_event event,
 		      const struct connection *c, const struct annex *e)
 {
-	jam_enum_short(buf, &connection_event_names, event);
+	jam_enum_short(buf, &routing_event_names, event);
 	jam_string(buf, " to ");
 	jam_routing(buf, c);
 	jam_annex(buf, e);
@@ -257,7 +257,7 @@ void set_routing(enum routing_event event,
 		 */
 		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, logger, buf) {
 			jam_string(buf, "routing: change ");
-			jam_enum_short(buf, &connection_event_names, event);
+			jam_enum_short(buf, &routing_event_names, event);
 			jam_string(buf, " -> ");
 			jam_routing(buf, c);
 			jam_string(buf, " -> ");
@@ -592,13 +592,22 @@ static void delete_routed_tunnel(enum routing_event event,
 	delete_connection(&c);
 }
 
-static bool zap_connection(const char *story, struct ike_sa **ike, where_t where,
-			   enum routing_event child_event)
+static bool zap_connection(enum routing_event event,
+			   struct ike_sa **ike, where_t where)
 {
+	PASSERT((*ike)->sa.st_logger, (event == CONNECTION_TIMEOUT_IKE ||
+				       event == CONNECTION_DELETE_IKE));
+	enum routing_event child_event = (event == CONNECTION_TIMEOUT_IKE ? CONNECTION_TIMEOUT_CHILD :
+					  event == CONNECTION_DELETE_IKE ? CONNECTION_DELETE_CHILD :
+					  CONNECTION_EVENT_ROOF);
+	PASSERT((*ike)->sa.st_logger, child_event != CONNECTION_EVENT_ROOF);
+
 	/*
 	 * Stop reviving children trying to use this IKE SA.
 	 */
-	ldbg_sa(*ike, "%s() due to %s IKE SA is no longer viable", __func__, story);
+	enum_buf ren;
+	ldbg_sa(*ike, "%s() due to %s IKE SA is no longer viable", __func__,
+		str_enum_short(&routing_event_names, event, &ren));
 	(*ike)->sa.st_viable_parent = false;
 
 	/*
@@ -625,9 +634,10 @@ static bool zap_connection(const char *story, struct ike_sa **ike, where_t where
 			 */
 			if (IS_IKE_SA_ESTABLISHED(&(*ike)->sa)) {
 				attach_whack(child->sa.st_logger, (*ike)->sa.st_logger);
+				enum_buf ren;
 				llog_sa(RC_LOG, child, "deleting larval %s (%s)",
 					child->sa.st_connection->config->ike_info->sa_type_name[IPSEC_SA],
-					story);
+					str_enum_short(&routing_event_names, event, &ren));
 			}
 			delete_child_sa(&child);
 		}
@@ -1247,8 +1257,7 @@ void dispatch(enum routing_event event, struct connection *c,
 
 		case X(TIMEOUT_IKE, UNROUTED_NEGOTIATION, PERMANENT):
 			if (BROKEN_TRANSITION) {
-				if (zap_connection("timeout", e->ike, where,
-						   CONNECTION_TIMEOUT_CHILD)) {
+				if (zap_connection(event, e->ike, where)) {
 					return;
 				}
 			}
@@ -1270,8 +1279,7 @@ void dispatch(enum routing_event event, struct connection *c,
 			if (BROKEN_TRANSITION) {
 				/* should be in UNROUTED_NEGOTIATION,
 				 * SAY? */
-				if (zap_connection("timeout", e->ike, where,
-						   CONNECTION_TIMEOUT_CHILD)) {
+				if (zap_connection(event, e->ike, where)) {
 					return;
 				}
 			}
@@ -1300,8 +1308,7 @@ void dispatch(enum routing_event event, struct connection *c,
 			 * presumably, there is no earlier child, this
 			 * code will need to deal with revival et.al.
 			 */
-			if (zap_connection("timeout", e->ike, where,
-					   CONNECTION_TIMEOUT_CHILD)) {
+			if (zap_connection(event, e->ike, where)) {
 				/* will this happen? */
 				return;
 			}
@@ -1331,8 +1338,7 @@ void dispatch(enum routing_event event, struct connection *c,
 		case X(TIMEOUT_IKE, ROUTED_NEGOTIATION, INSTANCE):
 		case X(TIMEOUT_IKE, UNROUTED_NEGOTIATION, INSTANCE):
 			if (BROKEN_TRANSITION) {
-				if (zap_connection("timeout", e->ike, where,
-						   CONNECTION_TIMEOUT_CHILD)) {
+				if (zap_connection(event, e->ike, where)) {
 					return;
 				}
 			}
@@ -1363,8 +1369,7 @@ void dispatch(enum routing_event event, struct connection *c,
 			 * child to notify.  Hence this should always
 			 * succeed.
 			 */
-			if (zap_connection("timeout", e->ike, where,
-					   CONNECTION_TIMEOUT_CHILD)) {
+			if (zap_connection(event, e->ike, where)) {
 				return;
 			}
 			break;
