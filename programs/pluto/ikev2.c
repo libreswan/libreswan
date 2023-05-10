@@ -2770,9 +2770,8 @@ void complete_v2_state_transition(struct ike_sa *ike,
 			break;
 		}
 
-		/* if this was a child fail, don't destroy the IKE SA */
 		ike->sa.st_on_delete.skip_send_delete = true;
-		delete_ike_family(&ike);
+		connection_delete_ike(&ike, HERE);
 		pexpect(ike == NULL);
 		return;
 
@@ -2788,7 +2787,7 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		     transition->story,
 		     enum_name(&v2_notification_names, notification));
 	ike->sa.st_on_delete.skip_send_delete = true;
-	delete_ike_family(&ike);
+	connection_delete_ike(&ike, HERE);
 }
 
 static void reinitiate_v2_ike_sa_init(const char *story, struct state *st, void *arg)
