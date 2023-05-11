@@ -677,18 +677,17 @@ kvm-clean-keys kvm-keys-clean:
 # For moment don't force keys to be re-built.
 .PHONY: kvm-keys-ok
 kvm-keys-ok:
-	@if test ! -r $(KVM_KEYS); then							\
-		echo "" ;								\
-		echo "The KVM keys are missing; was 'make kvm-install' run?" ;		\
-		echo "" ;								\
-		exit 1 ;								\
-	elif test $$($(KVM_KEYS_EXPIRED) | wc -l) -gt 0 ; then				\
-		echo "" ;								\
-		echo "The following KVM keys are too old:" ;				\
-		$(KVM_KEYS_EXPIRED) ;							\
-		echo "run 'make kvm-keys-clean kvm-keys' to force an update" ;		\
-		echo "" ;								\
-		exit 1 ;								\
+	@if test ! -r $(KVM_KEYS); then					\
+		$(MAKE) $(KVM_KEYS) ;					\
+	elif test $$($(KVM_KEYS_EXPIRED) | wc -l) -gt 0 ; then		\
+		echo "" ;						\
+		echo "  The  KVM keys are too old.  Run:" ;		\
+		echo "" ;						\
+		echo "      ./kvm keys";				\
+		echo "" ;						\
+		echo "  to force an update" ;				\
+		echo "" ;						\
+		exit 1 ;						\
 	fi
 
 #
@@ -1183,18 +1182,6 @@ kvm-make-install-all-%: $(KVM_POOLDIR_PREFIX)%
 		'ls > /dev/null' \; \
 		'time gmake install $(KVM_MAKEFLAGS) $(KVM_$($*)_MAKEFLAGS)'
 
-kvm-html: | $(KVM_POOLDIR)/$(KVM_KEYS_DOMAIN)
-	: $@ $<
-	$(KVMSH) $(KVMSH_FLAGS) \
-		--chdir /source \
-		$(KVM_KEYS_DOMAIN) \
-		-- \
-		'ls > /dev/null' \; \
-		'time gmake html $(KVM_MAKEFLAGS) $(KVM_$($*)_MAKEFLAGS)' \; \
-		'rm -rf /source/OBJ.KVM.html' \; \
-		'cp -rv $${OBJDIR}/html /source/OBJ.KVM.html'
-	$(KVMSH) --shutdown $(KVM_KEYS_DOMAIN)
-
 $(patsubst %, kvm-install-%, $(KVM_PLATFORM)): \
 kvm-install-%:
 	: $@
@@ -1220,16 +1207,16 @@ kvm-install-all-%:
 	$(MAKE) $(KVM_$($*)_TEST_DOMAINS)
 
 .PHONY: kvm-install
+kvm-install: kvm-keys-ok
 kvm-install: $(foreach os, $(KVM_OS), kvm-install-$(os))
-	$(MAKE) $(KVM_KEYS)
 
 .PHONY: kvm-install-all
+kvm-install-all: kvm-keys-ok
 kvm-install-all: $(foreach os, $(KVM_OS), kvm-install-all-$(os))
-	$(MAKE) $(KVM_KEYS)
 
 .PHONY: kvm-install-base
+kvm-install-base: kvm-keys-ok
 kvm-install-base: $(foreach os, $(KVM_OS), kvm-install-base-$(os))
-	$(MAKE) $(KVM_KEYS)
 
 #
 # Create the test domains
