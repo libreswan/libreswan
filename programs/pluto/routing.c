@@ -413,13 +413,17 @@ static void routed_ondemand_to_routed_negotiation(enum routing_event event,
 	set_routing(event, c, RT_ROUTED_NEGOTIATION, NULL, where);
 }
 
-static void routed_negotiation_to_routed_ondemand(enum routing_event event,
-						  struct connection *c,
-						  struct logger *logger,
-						  where_t where,
-						  const char *reason)
+static void negotiation_to_ondemand(enum routing_event event,
+				    struct connection *c,
+				    struct logger *logger,
+				    where_t where,
+				    const char *reason)
 {
 	ldbg(logger, "%s() %s for %s", __func__, reason, c->name);
+	PASSERT(logger, (event == CONNECTION_ACQUIRE));
+	enum routing rt_ondemand = (c->child.routing == RT_ROUTED_NEGOTIATION ? RT_ROUTED_ONDEMAND :
+				    CONNECTION_ROUTING_ROOF);
+	PASSERT(logger, rt_ondemand != CONNECTION_ROUTING_ROOF);
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 		if (!replace_spd_kernel_policy(spd, DIRECTION_OUTBOUND,
 					       RT_ROUTED_ONDEMAND,
@@ -428,7 +432,7 @@ static void routed_negotiation_to_routed_ondemand(enum routing_event event,
 			llog(RC_LOG, logger, "%s failed", reason);
 		}
 	}
-	set_routing(event, c, RT_ROUTED_ONDEMAND, NULL, where);
+	set_routing(event, c, rt_ondemand, NULL, where);
 }
 
 void connection_initiate(struct connection *c, const threadtime_t *inception,
@@ -1314,16 +1318,16 @@ void dispatch(enum routing_event event, struct connection *c,
 			}
 			/* ex, permanent+up */
 			if (should_revive(&(*e->ike)->sa)) {
-				routed_negotiation_to_routed_ondemand(event, c, logger, where,
-								      "restoring ondemand, reviving");
+				negotiation_to_ondemand(event, c, logger, where,
+							"restoring ondemand, reviving");
 				PEXPECT(logger, c->child.routing == RT_ROUTED_ONDEMAND);
 				schedule_revival(&(*e->ike)->sa, "timed out");
 				delete_ike_sa(e->ike);
 				return;
 			}
 			if (c->policy & POLICY_ROUTE) {
-				routed_negotiation_to_routed_ondemand(event, c, logger, where,
-								      "restoring ondemand, connection is routed");
+				negotiation_to_ondemand(event, c, logger, where,
+							"restoring ondemand, connection is routed");
 				PEXPECT(logger, c->child.routing == RT_ROUTED_ONDEMAND);
 				delete_ike_sa(e->ike);
 				return;
