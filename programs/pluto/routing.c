@@ -385,39 +385,42 @@ static void routed_negotiation_to_unrouted(enum routing_event event,
 }
 
 /*
- * The negotiation is for the full SPDs which have been installed as
- * KIND_ONDEMAND.  Hence the full suite of SPDs needs to be converted
- * to KIND_NEGOTIATION.
- *
- * XXX: not true! This is called when ACQUIRE which may have a very
- * narrow idea of what to pass/hold.
- *
- * But what of the lurking acquire?
+ * Either C is permanent, or C is an instance that going to be revived
+ * - the full set of SPDs need to be changed to negotiation (just
+ * instantiated instances do not take this code path).
  */
 
-static void routed_ondemand_to_routed_negotiation(enum routing_event event,
-						  struct connection *c, where_t where)
+static void ondemand_to_negotiation(enum routing_event event,
+				    struct connection *c, where_t where)
 {
-	ldbg(c->logger, "%s() for %s", __func__, c->name);
         struct logger *logger = c->logger;
+	ldbg(logger, "%s() for %s", __func__, c->name);
         PEXPECT(logger, (c->policy & POLICY_OPPORTUNISTIC) == LEMPTY);
-	if (BROKEN_TRANSITION && c->config->negotiation_shunt == SHUNT_HOLD) {
-		ldbg(c->logger, "%s() skipping NEGOTIATION=HOLD", __func__);
-	} else {
-		FOR_EACH_ITEM(spd, &c->child.spds) {
-			if (!replace_spd_kernel_policy(spd, DIRECTION_OUTBOUND,
-						       RT_ROUTED_NEGOTIATION,
-						       SHUNT_KIND_NEGOTIATION,
-						       logger, where,
-						       "ondemand->negotiation")) {
-				llog(RC_LOG, c->logger,
-				     "converting ondemand kernel policy to negotiation");
-			}
+	PASSERT(logger, (event == CONNECTION_INITIATE ||
+			 event == CONNECTION_ACQUIRE ||
+			 event == CONNECTION_REVIVE));
+	enum routing rt_negotiation = (c->child.routing == RT_ROUTED_ONDEMAND ? RT_ROUTED_NEGOTIATION :
+				       CONNECTION_ROUTING_ROOF);
+	PASSERT(logger, (rt_negotiation != CONNECTION_ROUTING_ROOF));
+	FOR_EACH_ITEM(spd, &c->child.spds) {
+		if (!replace_spd_kernel_policy(spd, DIRECTION_OUTBOUND,
+					       rt_negotiation,
+					       SHUNT_KIND_NEGOTIATION,
+					       logger, where,
+					       "ondemand->negotiation")) {
+			llog(RC_LOG, c->logger,
+			     "converting ondemand kernel policy to negotiation");
 		}
 	}
 	/* the state isn't yet known */
-	set_routing(event, c, RT_ROUTED_NEGOTIATION, NULL, where);
+	set_routing(event, c, rt_negotiation, NULL, where);
 }
+
+/*
+ * Either C is permanent, or C is an instance that going to be revived
+ * - the full set of SPDs need to be changed to ondemand (just
+ * instantiated instances do not take this code path).
+ */
 
 static void negotiation_to_ondemand(enum routing_event event,
 				    struct connection *c,
@@ -1013,7 +1016,17 @@ void dispatch(enum routing_event event, struct connection *c,
 			return;
 
 		case X(INITIATE, ROUTED_ONDEMAND, PERMANENT):
-			routed_ondemand_to_routed_negotiation(event, c, where);
+			if (BROKEN_TRANSITION &&
+			    c->config->negotiation_shunt == SHUNT_HOLD) {
+				ldbg(c->logger, "%s() skipping NEGOTIATION=HOLD", __func__);
+				set_routing(event, c, RT_ROUTED_NEGOTIATION, NULL, where);
+				/* ipsecdoi_initiate may replace SOS_NOBODY with a state */
+				ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
+						  e->inception, null_shunk,
+						  e->background, c->logger);
+				return;
+			}
+			ondemand_to_negotiation(event, c, where);
 			PEXPECT(logger, c->child.routing == RT_ROUTED_NEGOTIATION);
 			/* ipsecdoi_initiate may replace SOS_NOBODY with a state */
 			ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
@@ -1021,7 +1034,17 @@ void dispatch(enum routing_event event, struct connection *c,
 					  e->background, c->logger);
 			return;
 		case X(ACQUIRE, ROUTED_ONDEMAND, PERMANENT):
-			routed_ondemand_to_routed_negotiation(event, c, where);
+			if (BROKEN_TRANSITION &&
+			    c->config->negotiation_shunt == SHUNT_HOLD) {
+				ldbg(c->logger, "%s() skipping NEGOTIATION=HOLD", __func__);
+				set_routing(event, c, RT_ROUTED_NEGOTIATION, NULL, where);
+				/* ipsecdoi_initiate may replace SOS_NOBODY with a state */
+				ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
+						  e->inception, null_shunk,
+						  e->background, c->logger);
+				return;
+			}
+			ondemand_to_negotiation(event, c, where);
 			PEXPECT(logger, c->child.routing == RT_ROUTED_NEGOTIATION);
 			/* ipsecdoi_initiate may replace SOS_NOBODY with a state */
 			ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
@@ -1085,7 +1108,17 @@ void dispatch(enum routing_event event, struct connection *c,
 		case X(REVIVE, ROUTED_ONDEMAND, PERMANENT):
 		case X(REVIVE, ROUTED_ONDEMAND, INSTANCE):
 		{
-			routed_ondemand_to_routed_negotiation(event, c, where);
+			if (BROKEN_TRANSITION &&
+			    c->config->negotiation_shunt == SHUNT_HOLD) {
+				ldbg(c->logger, "%s() skipping NEGOTIATION=HOLD", __func__);
+				set_routing(event, c, RT_ROUTED_NEGOTIATION, NULL, where);
+				/* ipsecdoi_initiate may replace SOS_NOBODY with a state */
+				ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
+						  e->inception, null_shunk,
+						  e->background, c->logger);
+				return;
+			}
+			ondemand_to_negotiation(event, c, where);
 			PEXPECT(logger, c->child.routing == RT_ROUTED_NEGOTIATION);
 			threadtime_t inception = threadtime_start();
 			ipsecdoi_initiate(c, c->policy, SOS_NOBODY, &inception,
