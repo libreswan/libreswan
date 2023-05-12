@@ -400,6 +400,7 @@ static void ondemand_to_negotiation(enum routing_event event,
 			 event == CONNECTION_ACQUIRE ||
 			 event == CONNECTION_REVIVE));
 	enum routing rt_negotiation = (c->child.routing == RT_ROUTED_ONDEMAND ? RT_ROUTED_NEGOTIATION :
+				       c->child.routing == RT_UNROUTED_ONDEMAND ? RT_UNROUTED_NEGOTIATION :
 				       CONNECTION_ROUTING_ROOF);
 	PASSERT(logger, (rt_negotiation != CONNECTION_ROUTING_ROOF));
 	FOR_EACH_ITEM(spd, &c->child.spds) {
@@ -429,13 +430,15 @@ static void negotiation_to_ondemand(enum routing_event event,
 				    const char *reason)
 {
 	ldbg(logger, "%s() %s for %s", __func__, reason, c->name);
-	PASSERT(logger, (event == CONNECTION_TIMEOUT_IKE));
+	PASSERT(logger, (event == CONNECTION_TIMEOUT_IKE ||
+			 event == CONNECTION_DELETE_IKE));
 	enum routing rt_ondemand = (c->child.routing == RT_ROUTED_NEGOTIATION ? RT_ROUTED_ONDEMAND :
+				    c->child.routing == RT_UNROUTED_NEGOTIATION ? RT_UNROUTED_ONDEMAND :
 				    CONNECTION_ROUTING_ROOF);
 	PASSERT(logger, rt_ondemand != CONNECTION_ROUTING_ROOF);
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 		if (!replace_spd_kernel_policy(spd, DIRECTION_OUTBOUND,
-					       RT_ROUTED_ONDEMAND,
+					       rt_ondemand,
 					       SHUNT_KIND_ONDEMAND,
 					       logger, where, reason)) {
 			llog(RC_LOG, logger, "%s failed", reason);
@@ -996,17 +999,6 @@ void dispatch(enum routing_event event, struct connection *c,
 			break;
 
 		case X(INITIATE, UNROUTED, PERMANENT):
-			if (BROKEN_TRANSITION) {
-				/*
-				 * Need to update policy.
-				 *
-				 * See everything.
-				 */
-				ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
-						  e->inception, null_shunk,
-						  e->background, c->logger);
-				return;
-			}
 			/* presumably triggered by whack */
 			unrouted_permanent_to_unrouted_negotiation(event, c, where);
 			PEXPECT(logger, c->child.routing == RT_UNROUTED_NEGOTIATION);
@@ -1054,6 +1046,18 @@ void dispatch(enum routing_event event, struct connection *c,
 					  e->acquire->logger);
 			return;
 
+		case X(INITIATE, UNROUTED_NEGOTIATION, PERMANENT):
+			if (BROKEN_TRANSITION) {
+				/* ikev2-redirect-01-global-load-balancer
+				 * ikev2-redirect-01-global
+				 * ikev2-redirect-03-auth-loop
+				 * ikev2-tcp-07-fail-ike-auth-redirect */
+				ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
+						  e->inception, null_shunk,
+						  e->background, logger);
+				return;
+			}
+			break;
 		case X(INITIATE, ROUTED_NEGOTIATION, PERMANENT):
 			if (BROKEN_TRANSITION) {
 				/*
@@ -1105,6 +1109,16 @@ void dispatch(enum routing_event event, struct connection *c,
 					  e->inception, e->acquire->sec_label,
 					  e->background, e->acquire->logger);
 			return;
+		case X(REVIVE, UNROUTED_ONDEMAND, PERMANENT):
+		case X(REVIVE, UNROUTED_ONDEMAND, INSTANCE):
+		{
+			ondemand_to_negotiation(event, c, where);
+			PEXPECT(logger, c->child.routing == RT_UNROUTED_NEGOTIATION);
+			threadtime_t inception = threadtime_start();
+			ipsecdoi_initiate(c, c->policy, SOS_NOBODY, &inception,
+					  null_shunk, /*background*/false, logger);
+			return;
+		}
 		case X(REVIVE, ROUTED_ONDEMAND, PERMANENT):
 		case X(REVIVE, ROUTED_ONDEMAND, INSTANCE):
 		{
@@ -1126,6 +1140,20 @@ void dispatch(enum routing_event event, struct connection *c,
 			return;
 		}
 
+		case X(REVIVE, UNROUTED_NEGOTIATION, INSTANCE):
+			if (BROKEN_TRANSITION) {
+				/* ikev2-redirect-01-global
+				 * ikev2-redirect-02-auth
+				 * ikev2-redirect-03-auth-loop
+				 * ikev2-tcp-05-transport-mode
+				 * ikev2-tcp-06-fail-ike-sa-init-redirect
+				 * ikev2-tcp-07-fail-ike-auth-redirect */
+				threadtime_t inception = threadtime_start();
+				ipsecdoi_initiate(c, c->policy, SOS_NOBODY, &inception,
+						  null_shunk, /*background*/false, logger);
+				return;
+			}
+			break;
 		case X(REVIVE, ROUTED_NEGOTIATION, INSTANCE):
 			if (BROKEN_TRANSITION) {
 				/* ikev2-32-nat-rw-rekey
@@ -1137,7 +1165,7 @@ void dispatch(enum routing_event event, struct connection *c,
 				return;
 			}
 			break;
-		case X(REVIVE, UNROUTED_NEGOTIATION, INSTANCE):
+		case X(REVIVE, UNROUTED_NEGOTIATION, PERMANENT):
 			if (BROKEN_TRANSITION) {
 				/* ikev2-x509-31-wifi-assist */
 				threadtime_t inception = threadtime_start();
@@ -1189,6 +1217,18 @@ void dispatch(enum routing_event event, struct connection *c,
 			set_routing(event, c, RT_UNROUTED, NULL, where);
 			do_updown_unroute(c);
 			return;
+		case X(UNROUTE, UNROUTED_ONDEMAND, PERMANENT):
+			if (BROKEN_TRANSITION) {
+				PEXPECT(logger, !NEVER_NEGOTIATE(c->policy));
+				delete_spd_kernel_policies(&c->child.spds,
+							   EXPECT_NO_INBOUND,
+							   c->logger, where, "unroute permanent");
+				/* stop updown_unroute() finding this
+				 * connection */
+				set_routing(event, c, RT_UNROUTED, NULL, where);
+				return;
+			}
+			break;
 
 		case X(ROUTE, ROUTED_TUNNEL, PERMANENT):
 			c->policy |= POLICY_ROUTE; /* always */
@@ -1298,6 +1338,7 @@ void dispatch(enum routing_event event, struct connection *c,
 			set_routing(event, c, RT_UNROUTED, NULL, where);
 			return;
 
+		case X(DELETE_IKE, UNROUTED_NEGOTIATION, PERMANENT):
 		case X(TIMEOUT_IKE, UNROUTED_NEGOTIATION, PERMANENT):
 			if (BROKEN_TRANSITION) {
 				if (zap_connection(event, e->ike, where)) {
@@ -1306,9 +1347,9 @@ void dispatch(enum routing_event event, struct connection *c,
 			}
 			/* ex, permanent+up */
 			if (should_revive(&(*e->ike)->sa)) {
-				unrouted_negotiation_to_unrouted(event, c, logger, where,
-								 "deleting unrouted negotiation");
-				PEXPECT(logger, c->child.routing == RT_UNROUTED);
+				negotiation_to_ondemand(event, c, logger, where,
+							"deleting unrouted negotiation");
+				PEXPECT(logger, c->child.routing == RT_UNROUTED_ONDEMAND);
 				schedule_revival(&(*e->ike)->sa, "timed out");
 				delete_ike_sa(e->ike);
 				return;
@@ -1348,8 +1389,9 @@ void dispatch(enum routing_event event, struct connection *c,
 			 * the exchange timed out.
 			 *
 			 * Because the Child SA is larval and,
-			 * presumably, there is no earlier child, this
-			 * code will need to deal with revival et.al.
+			 * presumably, there is no earlier child the
+			 * code below, and not zap_connection(), will
+			 * need to deal with revival et.al.
 			 */
 			if (zap_connection(event, e->ike, where)) {
 				/* will this happen? */
@@ -1492,6 +1534,11 @@ void dispatch(enum routing_event event, struct connection *c,
 				return;
 			}
 			break;
+		case X(ESTABLISH_INBOUND, UNROUTED_NEGOTIATION, PERMANENT):
+			/* addconn-05-bogus-left-interface
+			 * algo-ikev2-aes128-sha1-ecp256 et.al. */
+			set_routing(event, c, RT_UNROUTED_INBOUND, NULL, where);
+			return;
 		case X(ESTABLISH_INBOUND, UNROUTED, TEMPLATE): /* xauth-pluto-14 */
 			if (BROKEN_TRANSITION) {
 				/*  xauth-pluto-14 */
