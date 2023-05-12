@@ -30,6 +30,7 @@
 #include "ip_endpoint.h"
 #include "ip_sockaddr.h"
 #include "diag.h"
+#include "pluto_timing.h"		/* for threadtime_t */
 
 struct state;
 struct msg_digest;
@@ -79,11 +80,15 @@ extern void run_server(char *conffile, struct logger *logger) NEVER_RETURNS;
 typedef void (*server_stopped_cb)(int r) NEVER_RETURNS;
 extern void stop_server(server_stopped_cb cb);
 
-typedef void timeout_cb(void *arg, struct logger *logger);
+struct timer_event {
+	threadtime_t inception;
+	struct logger *logger;
+};
 
 void schedule_timeout(const char *name,
 		      struct timeout **to, const deltatime_t delay,
-		      timeout_cb *cb, void *arg);
+		      void (*cb)(void *arg, const struct timer_event *event),
+		      void *arg);
 void destroy_timeout(struct timeout **to);
 
 typedef void (fd_accept_listener_cb)(int fd, ip_sockaddr *sa,

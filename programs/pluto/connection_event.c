@@ -24,7 +24,7 @@
 #include "revival.h"			/* for revive_connection() */
 #include "list_entry.h"
 
-static timeout_cb connection_event_handler;
+static void connection_event_handler(void *arg, const struct timer_event *event);
 
 static const char *connection_event_name[] = {
 #define S(E) [E] = #E
@@ -72,14 +72,12 @@ void schedule_connection_event(const struct connection *c,
 			 connection_event_handler, d);
 }
 
-void connection_event_handler(void *arg, struct logger *logger)
+void connection_event_handler(void *arg, const struct timer_event *event)
 {
-	threadtime_t inception = threadtime_start();
-
 	/* save event details*/
 	struct event_connection *tmp = arg;
 	remove_list_entry(&tmp->entry);
-	enum connection_event event = tmp->event;
+	enum connection_event connection_event = tmp->event;
 	co_serial_t serialno = tmp->serialno;
 	const char *subplot = tmp->subplot;
 	passert(tmp->timeout != NULL);
@@ -89,21 +87,21 @@ void connection_event_handler(void *arg, struct logger *logger)
 	/* is connection still around? */
 	struct connection *c = connection_by_serialno(serialno);
 	if (c == NULL) {
-		llog_pexpect(logger, HERE, PRI_CO" no longer exists",
+		llog_pexpect(event->logger, HERE, PRI_CO" no longer exists",
 			     pri_co(serialno));
 		return;
 	}
 
-	ldbg(logger, "%s() dispatching %s to "PRI_CO,
+	ldbg(event->logger, "%s() dispatching %s to "PRI_CO,
 	     __func__,
-	     enum_name_short(&connection_event_names, event),
+	     enum_name_short(&connection_event_names, connection_event),
 	     pri_co(serialno));
 
-	switch (event) {
+	switch (connection_event) {
 	case CONNECTION_NONEVENT:
 		break;
 	case CONNECTION_REVIVAL:
-		revive_connection(c, subplot, &inception, logger);
+		revive_connection(c, subplot, event);
 		break;
 	}
 }

@@ -414,13 +414,12 @@ static void iketcp_cleanup(struct iface_endpoint *ifp)
 	stop_iketcp_timeout("cleaning up", ifp);
 }
 
-static void iketcp_server_timeout(void *arg, struct logger *global_logger)
+static void iketcp_server_timeout(void *arg, const struct timer_event *event)
 {
 	struct iface_endpoint *ifp = arg;
 	/* build up the logger using the stack */
-	struct logger from_logger = logger_from(global_logger, &ifp->iketcp_remote_endpoint);
-	struct logger *logger = &from_logger;
-	llog_iketcp(RC_LOG, logger, ifp, /*no-error*/0,
+	struct logger from_logger = logger_from(event->logger, &ifp->iketcp_remote_endpoint);
+	llog_iketcp(RC_LOG, &from_logger, ifp, /*no-error*/0,
 		    "timeout out before first message received");
 	iface_endpoint_delref(&ifp);
 }

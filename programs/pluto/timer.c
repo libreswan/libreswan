@@ -181,13 +181,8 @@ void delete_state_event(struct state_event **evp, where_t where)
 static void dispatch_event(struct state *st, enum event_type event_type,
 			   deltatime_t event_delay);
 
-static void timer_event_cb(void *arg, struct logger *logger)
+static void timer_event_cb(void *arg, const struct timer_event *event)
 {
-	/*
-	 * Start billing before state is found.
-	 */
-	threadtime_t inception = threadtime_start();
-
 	/*
 	 * Get rid of the old timer event before calling the timer
 	 * event processor.
@@ -207,7 +202,7 @@ static void timer_event_cb(void *arg, struct logger *logger)
 		passert(st != NULL);
 		passert(event_name != NULL);
 
-		ldbg(logger, "%s: processing %s-event@%p for %s SA #%lu in state %s",
+		ldbg(event->logger, "%s: processing %s-event@%p for %s SA #%lu in state %s",
 		     __func__, event_name, ev,
 		     IS_IKE_SA(st) ? "IKE" : "CHILD",
 		     st->st_serialno, st->st_state->short_name);
@@ -232,7 +227,7 @@ static void timer_event_cb(void *arg, struct logger *logger)
 		arg = ev = *evp = NULL; /* all gone */
 	}
 
-	statetime_t start = statetime_backdate(st, &inception);
+	statetime_t start = statetime_backdate(st, &event->inception);
 	dispatch_event(st, event_type, event_delay);
 	statetime_stop(&start, "%s() %s", __func__, event_name);
 }

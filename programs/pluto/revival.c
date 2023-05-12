@@ -252,10 +252,10 @@ void schedule_revival(struct state *st, const char *subplot)
 }
 
 void revive_connection(struct connection *c, const char *subplot,
-		       const threadtime_t *inception, struct logger *logger)
+		       const struct timer_event *event)
 {
 	/* for instance, when triggered by an event injection */
-	attach_whack(c->logger, logger);
+	attach_whack(c->logger, event->logger);
 
 	llog(RC_LOG, c->logger,
 	     "initiating connection '%s' with serial "PRI_CO" which %s but must remain up per local policy",
@@ -287,9 +287,9 @@ void revive_connection(struct connection *c, const char *subplot,
 		initiate_connection(c, /*remote-host-name*/NULL,
 				    /*background*/true,
 				    /*log-failure*/true,
-				    logger);
+				    event->logger);
 		return;
 	}
 
-	connection_revive(c, inception, HERE);
+	connection_revive(c, &event->inception, HERE);
 }

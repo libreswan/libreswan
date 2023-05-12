@@ -20,9 +20,10 @@ struct logger;
 struct state;
 struct connection;
 struct child_sa;
+struct timer_event;
 
 void revive_connection(struct connection *c, const char *subplot,
-		       const threadtime_t *inception, struct logger *logger);
+		       const struct timer_event *event);
 bool should_revive(struct state *st);
 bool should_revive_connection(struct child_sa *child);
 void schedule_revival(struct state *st, const char *subplot);

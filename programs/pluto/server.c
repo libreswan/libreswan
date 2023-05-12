@@ -540,22 +540,26 @@ static void link_pluto_event_list(struct fd_read_listener *e) {
 
 struct timeout {
 	const char *name;
-	timeout_cb *cb;
+	void (*cb)(void *arg, const struct timer_event *event);
 	void *arg;
 	struct event ev;
 };
 
 static void timeout(evutil_socket_t fd UNUSED,
-		    const short event UNUSED, void *arg)
+		    const short ev_event UNUSED, void *arg)
 {
-	struct logger logger[1] = { global_logger, }; /* event-handler */
 	struct timeout *tt = arg;
-	tt->cb(tt->arg, logger);
+	struct timer_event event = {
+		.inception = threadtime_start(),
+		.logger = &global_logger,
+	};
+	tt->cb(tt->arg, &event);
 }
 
 void schedule_timeout(const char *name,
 		      struct timeout **tt, const deltatime_t delay,
-		      timeout_cb *cb, void *arg)
+		      void (*cb)(void *arg, const struct timer_event *event),
+		      void *arg)
 {
 	*tt = alloc_thing(struct timeout, name);
 	dbg_alloc("tt", *tt, HERE);
@@ -617,7 +621,7 @@ void complete_state_transition(struct state *st, struct msg_digest *md, stf_stat
 	}
 }
 
-static void resume_handler(void *arg, struct logger *logger)
+static void resume_handler(void *arg, const struct timer_event *event)
 {
 	struct resume_event *e = (struct resume_event *)arg;
 	/*
@@ -628,7 +632,7 @@ static void resume_handler(void *arg, struct logger *logger)
 	 * pexpect() failed yet the passert() passed.
 	 */
 	pexpect(e->timer != NULL);
-	ldbg(logger, "processing resume %s for #%lu", e->name, e->serialno);
+	ldbg(event->logger, "processing resume %s for #%lu", e->name, e->serialno);
 	/*
 	 * XXX: Don't confuse this and the "callback") code path.
 	 * This unsuspends MD, "callback" does not.
@@ -657,7 +661,8 @@ static void resume_handler(void *arg, struct logger *logger)
 
 		if (status == STF_SKIP_COMPLETE_STATE_TRANSITION) {
 			/* MD.ST may have been freed! */
-			ldbg(logger, "resume %s for #%lu suppresed complete_v%d_state_transition()%s",
+			ldbg(event->logger,
+			     "resume %s for #%lu suppresed complete_v%d_state_transition()%s",
 			     e->name, e->serialno, ike_version,
 			     (old_md_st != SOS_NOBODY && md->v1_st == NULL ? "; MD.ST disappeared" :
 			      old_md_st != SOS_NOBODY && md->v1_st != st ? "; MD.ST was switched" :
@@ -729,7 +734,7 @@ struct callback_event {
 	struct timeout *timer;
 };
 
-static void callback_handler(void *arg, struct logger *logger)
+static void callback_handler(void *arg, const struct timer_event *event)
 {
 	/*
 	 * Save all fields so that all event-loop memory can be freed
@@ -750,14 +755,14 @@ static void callback_handler(void *arg, struct logger *logger)
 
 	struct state *st;
 	if (e.serialno == SOS_NOBODY) {
-		ldbg(logger, "processing callback %s", e.story);
+		ldbg(event->logger, "processing callback %s", e.story);
 		st = NULL;
 	} else {
 		/*
 		 * XXX: Don't confuse this and the "resume" code paths
 		 * - this does not unsuspend MD, "resume" does.
 		 */
-		ldbg(logger, "processing callback %s for #%lu", e.story, e.serialno);
+		ldbg(event->logger, "processing callback %s for #%lu", e.story, e.serialno);
 		st = state_by_serialno(e.serialno);
 	}
 
