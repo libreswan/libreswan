@@ -2522,67 +2522,11 @@ void teardown_ipsec_kernel_policies(enum routing_event event, struct child_sa *c
 		return;
 	}
 
-	enum routing new_routing;
+	struct spds spds = c->child.spds;
 	if (c->kind == CK_INSTANCE && (c->policy & POLICY_OPPORTUNISTIC)) {
 		ldbg(logger,
 		     "kernel: %s() instance with OPPORTUNISTIC; transitioning to UNROUTED",
 		     __func__);
-		new_routing = RT_UNROUTED;
-	} else if (c->kind == CK_INSTANCE && !c->config->rekey) {
-		ldbg(logger,
-		     "kernel: %s() instance with REKEY disabled; transitioning to UNROUTED",
-		     __func__);
-		new_routing = RT_UNROUTED;
-	} else if (c->config->failure_shunt == SHUNT_NONE) {
-		/*
-		 * If the .failure_shunt==SHUNT_NONE then the
-		 * .ondemand_shunt==SHUNT_TRAP is chosen and that
-		 * can't be SHUNT_NONE.
-		 */
-		ldbg(logger,
-		     "kernel: %s() failure_shunt==NONE; transitioning to ROUTED_ONDEMAND",
-		     __func__);
-		new_routing = RT_ROUTED_ONDEMAND;
-	} else {
-		 /*
-		 * If the .failure_shunt!=SHUNT_NONE then the
-		 * .failure_shunt is chosen, and that isn't
-		 * SHUNT_NONE.
-		 */
-		enum_buf spb;
-		ldbg(logger,
-		     "kernel: %s() failure_shunt=%s; transitioning to ROUTED_FAILURE",
-		     __func__, str_enum_short(&shunt_policy_names,
-					      c->config->failure_shunt, &spb));
-		new_routing = RT_ROUTED_FAILURE;
-	}
-
-
-	struct spds spds = c->child.spds;
-#ifdef USE_CISCO_SPLIT
-	if (c->remotepeertype == CISCO) {
-		/*
-		 * XXX: this comment is out-of-date:
-		 *
-		 * XXX: this is currently the only reason for
-		 * spd_next walking.
-		 *
-		 * Routing should become RT_ROUTED_FAILURE,
-		 * but if POLICY_FAIL_NONE, then we just go
-		 * right back to RT_ROUTED_PROSPECTIVE as if
-		 * no failure happened.
-		 */
-		ldbg_sa(child,
-			"kernel: %s() skipping, first SPD and remotepeertype is CISCO, damage done",
-			__func__);
-		passert(spds.len > 0);
-		spds.list++;
-		spds.len--;
-	}
-#endif
-
-	switch (new_routing) {
-	case RT_UNROUTED:
 		/*
 		 * update routing; route_owner() will see this and not
 		 * think this route is the owner?
@@ -2592,24 +2536,52 @@ void teardown_ipsec_kernel_policies(enum routing_event event, struct child_sa *c
 		delete_spd_kernel_policies(&spds, EXPECT_KERNEL_POLICY_OK,
 					   child->sa.st_logger, HERE, "unroute");
 		do_updown_unowned_spds(UPDOWN_UNROUTE, c, &spds, NULL, child->sa.st_logger);
-		break;
-	case RT_ROUTED_ONDEMAND:
-		replace_ipsec_with_bare_kernel_policies(event, child, RT_ROUTED_ONDEMAND,
-							EXPECT_KERNEL_POLICY_OK, HERE);
-		break;
-	case RT_ROUTED_FAILURE:
+		return;
+	}
+
+	if (c->kind == CK_INSTANCE && !c->config->rekey) {
+		ldbg(logger,
+		     "kernel: %s() instance with REKEY disabled; transitioning to UNROUTED",
+		     __func__);
+		/*
+		 * update routing; route_owner() will see this and not
+		 * think this route is the owner?
+		 */
+		set_routing(event, c, RT_UNROUTED, NULL, HERE);
+		do_updown_spds(UPDOWN_DOWN, c, &spds, &child->sa, child->sa.st_logger);
+		delete_spd_kernel_policies(&spds, EXPECT_KERNEL_POLICY_OK,
+					   child->sa.st_logger, HERE, "unroute");
+		do_updown_unowned_spds(UPDOWN_UNROUTE, c, &spds, NULL, child->sa.st_logger);
+		return;
+	}
+
+	if (c->config->failure_shunt != SHUNT_NONE) {
+
+		/*
+		 * If the .failure_shunt!=SHUNT_NONE then the
+		 * .failure_shunt is chosen, and that isn't
+		 * SHUNT_NONE.
+		 */
+		enum_buf spb;
+		ldbg(logger,
+		     "kernel: %s() failure_shunt=%s; transitioning to ROUTED_FAILURE",
+		     __func__, str_enum_short(&shunt_policy_names,
+					      c->config->failure_shunt, &spb));
 		replace_ipsec_with_bare_kernel_policies(event, child, RT_ROUTED_FAILURE,
 							EXPECT_KERNEL_POLICY_OK, HERE);
-		break;
-	case RT_UNROUTED_NEGOTIATION:
-	case RT_UNROUTED_INBOUND:
-	case RT_ROUTED_NEGOTIATION:
-	case RT_ROUTED_INBOUND:
-	case RT_ROUTED_TUNNEL:
-	case RT_UNROUTED_TUNNEL:
-	case RT_ROUTED_NEVER_NEGOTIATE:
-		bad_case(new_routing);
+		return;
 	}
+
+	/*
+	 * If the .failure_shunt==SHUNT_NONE then the
+	 * .ondemand_shunt==SHUNT_TRAP is chosen and, clearly, that
+	 * isn't SHUNT_NONE.
+	 */
+	ldbg(logger,
+	     "kernel: %s() failure_shunt==NONE; transitioning to ROUTED_ONDEMAND",
+	     __func__);
+	replace_ipsec_with_bare_kernel_policies(event, child, RT_ROUTED_ONDEMAND,
+						EXPECT_KERNEL_POLICY_OK, HERE);
 }
 
 void uninstall_kernel_states(struct child_sa *child)
