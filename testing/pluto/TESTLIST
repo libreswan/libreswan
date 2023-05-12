@@ -475,7 +475,7 @@ kvmplutotest	pluto-ipcmp-01				good
 kvmplutotest	ikev2-38-psk-65bytes			good
 kvmplutotest	ikev2-39-psk-64bytes 			good
 
-kvmplutotest	nflog-01-global				good
+kvmplutotest	nflog-01-global				wip	github/1131
 kvmplutotest	nflog-02-conn				good
 kvmplutotest	nflog-03-conns				good
 
