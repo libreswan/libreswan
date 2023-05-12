@@ -74,6 +74,8 @@ void schedule_connection_event(const struct connection *c,
 
 void connection_event_handler(void *arg, struct logger *logger)
 {
+	threadtime_t inception = threadtime_start();
+
 	/* save event details*/
 	struct event_connection *tmp = arg;
 	remove_list_entry(&tmp->entry);
@@ -101,7 +103,7 @@ void connection_event_handler(void *arg, struct logger *logger)
 	case CONNECTION_NONEVENT:
 		break;
 	case CONNECTION_REVIVAL:
-		revive_connection(c, subplot, logger);
+		revive_connection(c, subplot, &inception, logger);
 		break;
 	}
 }

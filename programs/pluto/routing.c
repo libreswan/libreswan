@@ -491,7 +491,7 @@ void connection_acquire(struct connection *c, threadtime_t *inception,
 		 });
 }
 
-void connection_revive(struct connection *c, where_t where)
+void connection_revive(struct connection *c, const threadtime_t *inception, where_t where)
 {
 	if (labeled(c)) {
 		initiate_connection(c, /*remote-host-name*/NULL,
@@ -501,11 +501,10 @@ void connection_revive(struct connection *c, where_t where)
 		return;
 	}
 
-	threadtime_t inception = threadtime_start();
 	dispatch(CONNECTION_REVIVE, c,
 		 c->logger, where,
 		 (struct annex) {
-			 .inception = &inception,
+			 .inception = inception,
 			 .background = true,
 		 });
 }
@@ -1116,7 +1115,6 @@ void dispatch(enum routing_event event, struct connection *c,
 		}
 		case X(REVIVE, ROUTED_ONDEMAND, PERMANENT):
 		case X(REVIVE, ROUTED_ONDEMAND, INSTANCE):
-		{
 			if (BROKEN_TRANSITION &&
 			    c->config->negotiation_shunt == SHUNT_HOLD) {
 				ldbg(c->logger, "%s() skipping NEGOTIATION=HOLD", __func__);
@@ -1129,11 +1127,9 @@ void dispatch(enum routing_event event, struct connection *c,
 			}
 			ondemand_to_negotiation(event, c, where);
 			PEXPECT(logger, c->child.routing == RT_ROUTED_NEGOTIATION);
-			threadtime_t inception = threadtime_start();
-			ipsecdoi_initiate(c, c->policy, SOS_NOBODY, &inception,
+			ipsecdoi_initiate(c, c->policy, SOS_NOBODY, e->inception,
 					  null_shunk, /*background*/false, logger);
 			return;
-		}
 
 		case X(REVIVE, UNROUTED_NEGOTIATION, INSTANCE):
 			if (BROKEN_TRANSITION) {
@@ -1154,8 +1150,7 @@ void dispatch(enum routing_event event, struct connection *c,
 				/* ikev2-32-nat-rw-rekey
 				 * ikev2-liveness-05 ikev2-liveness-07
 				 * ikev2-liveness-08 */
-				threadtime_t inception = threadtime_start();
-				ipsecdoi_initiate(c, c->policy, SOS_NOBODY, &inception,
+				ipsecdoi_initiate(c, c->policy, SOS_NOBODY, e->inception,
 						  null_shunk, /*background*/false, logger);
 				return;
 			}
@@ -1163,8 +1158,7 @@ void dispatch(enum routing_event event, struct connection *c,
 		case X(REVIVE, UNROUTED_NEGOTIATION, PERMANENT):
 			if (BROKEN_TRANSITION) {
 				/* ikev2-x509-31-wifi-assist */
-				threadtime_t inception = threadtime_start();
-				ipsecdoi_initiate(c, c->policy, SOS_NOBODY, &inception,
+				ipsecdoi_initiate(c, c->policy, SOS_NOBODY, e->inception,
 						  null_shunk, /*background*/false, logger);
 				return;
 			}
@@ -1172,8 +1166,7 @@ void dispatch(enum routing_event event, struct connection *c,
 		case X(REVIVE, ROUTED_TUNNEL, PERMANENT):
 			if (BROKEN_TRANSITION) {
 				/* ikev2-59-multiple-acquires-alias. */
-				threadtime_t inception = threadtime_start();
-				ipsecdoi_initiate(c, c->policy, SOS_NOBODY, &inception,
+				ipsecdoi_initiate(c, c->policy, SOS_NOBODY, e->inception,
 						  null_shunk, /*background*/false, logger);
 				return;
 			}

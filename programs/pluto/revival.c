@@ -251,7 +251,8 @@ void schedule_revival(struct state *st, const char *subplot)
 	schedule_connection_event(c, CONNECTION_REVIVAL, subplot, delay);
 }
 
-void revive_connection(struct connection *c, const char *subplot, struct logger *logger)
+void revive_connection(struct connection *c, const char *subplot,
+		       const threadtime_t *inception, struct logger *logger)
 {
 	/* for instance, when triggered by an event injection */
 	attach_whack(c->logger, logger);
@@ -290,5 +291,5 @@ void revive_connection(struct connection *c, const char *subplot, struct logger 
 		return;
 	}
 
-	connection_revive(c, HERE);
+	connection_revive(c, inception, HERE);
 }
