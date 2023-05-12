@@ -1439,27 +1439,29 @@ void dispatch(enum routing_event event, struct connection *c,
 			delete_connection(&c);
 			return;
 
+		case X(DELETE_IKE, ROUTED_TUNNEL, PERMANENT):
+#if 0 /* TODO: delete below */
+		case X(DELETE_IKE, ROUTED_TUNNEL, INSTANCE):
+#endif
 		case X(TIMEOUT_IKE, ROUTED_TUNNEL, PERMANENT):
 		case X(TIMEOUT_IKE, ROUTED_TUNNEL, INSTANCE):
 			/*
-			 * Since the tunnel is up, there must be a
-			 * child to notify.  Hence this should always
-			 * succeed.
+			 * Since the connection has an established
+			 * tunnel there there must be a child to
+			 * notify.  Hence this should always succeed.
 			 */
 			if (zap_connection(event, e->ike, where)) {
 				return;
 			}
 			break;
 
-#if 0
-		case X(DELETE_IKE, ROUTED_ONDEMAND, INSTANCE):
-#endif
 		case X(DELETE_IKE, UNROUTED, INSTANCE):		/* certoe-08-nat-packet-cop-restart */
 		case X(DELETE_IKE, UNROUTED_NEGOTIATION, INSTANCE):	/* dnsoe-01 ... */
 		case X(DELETE_IKE, ROUTED_ONDEMAND, PERMANENT):
 		case X(DELETE_IKE, UNROUTED, PERMANENT): /* UNROUTED_NEGOTIATION!?! */
-		case X(DELETE_IKE, ROUTED_TUNNEL, PERMANENT):
+#if 1 /* TODO: move to above */
 		case X(DELETE_IKE, ROUTED_TUNNEL, INSTANCE):
+#endif
 			if (BROKEN_TRANSITION) {
 				delete_ike_family(e->ike);
 				return;
