@@ -6,7 +6,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --status |grep westnet-eastnet-ipv4-psk-ikev2
-000 "westnet-eastnet-ipv4-psk-ikev2": 192.0.0.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; eroute owner: #0
+000 "westnet-eastnet-ipv4-psk-ikev2": 192.0.0.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted HOLD; eroute owner: #0
 000 "westnet-eastnet-ipv4-psk-ikev2":     oriented; my_ip=unset; their_ip=unset;
 000 "westnet-eastnet-ipv4-psk-ikev2":   my_updown=ipsec _updown;
 000 "westnet-eastnet-ipv4-psk-ikev2":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
@@ -31,7 +31,7 @@ west #
 initdone
 west #
  ipsec auto --status | grep westnet-eastnet-ipv4-psk-ikev2
-000 "westnet-eastnet-ipv4-psk-ikev2": 192.0.0.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; eroute owner: #0
+000 "westnet-eastnet-ipv4-psk-ikev2": 192.0.0.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted HOLD; eroute owner: #0
 000 "westnet-eastnet-ipv4-psk-ikev2":     oriented; my_ip=unset; their_ip=unset;
 000 "westnet-eastnet-ipv4-psk-ikev2":   my_updown=ipsec _updown;
 000 "westnet-eastnet-ipv4-psk-ikev2":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
@@ -58,7 +58,7 @@ west #
 000 #2: pending CHILD SA for "westnet-eastnet-ipv4-psk-ikev2"
 west #
  ipsec auto --status | grep westnet-eastnet-ipv4-psk-ikev2
-000 "westnet-eastnet-ipv4-psk-ikev2": 192.0.0.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; eroute owner: #0
+000 "westnet-eastnet-ipv4-psk-ikev2": 192.0.0.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted HOLD; eroute owner: #0
 000 "westnet-eastnet-ipv4-psk-ikev2":     oriented; my_ip=unset; their_ip=unset;
 000 "westnet-eastnet-ipv4-psk-ikev2":   my_updown=ipsec _updown;
 000 "westnet-eastnet-ipv4-psk-ikev2":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
@@ -83,6 +83,10 @@ west #
 west NOW
 XFRM state:
 XFRM policy:
+src 192.0.0.0/24 dst 192.0.2.0/24
+	dir out action block priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
 XFRM done
 IPSEC mangle TABLES
 iptables filter TABLE

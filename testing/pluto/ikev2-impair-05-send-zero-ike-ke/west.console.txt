@@ -31,8 +31,8 @@ west #
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 003 "westnet-eastnet-ipv4-psk-ikev2" #1: NSS: shared key calculation using MODP failed: SEC_ERROR_NO_MEMORY: security library: memory allocation failure.
 036 "westnet-eastnet-ipv4-psk-ikev2" #1: encountered fatal error in state STATE_V2_PARENT_I1
-002 "westnet-eastnet-ipv4-psk-ikev2" #1: deleting IKE SA (PARENT_I1) and NOT sending notification
 002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: skipping revival of connection that is supposed to remain up
+002 "westnet-eastnet-ipv4-psk-ikev2" #1: deleting IKE SA (PARENT_I1) and NOT sending notification
 west #
  # send valid KE
 west #
@@ -51,8 +51,8 @@ west #
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #2: sent IKE_SA_INIT request to 192.1.2.23:500
 003 "westnet-eastnet-ipv4-psk-ikev2" #2: NSS: shared key calculation using MODP failed: SEC_ERROR_NO_MEMORY: security library: memory allocation failure.
 036 "westnet-eastnet-ipv4-psk-ikev2" #2: encountered fatal error in state STATE_V2_PARENT_I1
-002 "westnet-eastnet-ipv4-psk-ikev2" #2: deleting IKE SA (PARENT_I1) and NOT sending notification
 002 "westnet-eastnet-ipv4-psk-ikev2" #2: IMPAIR: skipping revival of connection that is supposed to remain up
+002 "westnet-eastnet-ipv4-psk-ikev2" #2: deleting IKE SA (PARENT_I1) and NOT sending notification
 west #
  echo done
 done
