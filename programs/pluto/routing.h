@@ -16,6 +16,11 @@
 #ifndef ROUTING_H
 #define ROUTING_H
 
+/*
+ * The transition contains broken code.
+ */
+#define BROKEN_TRANSITION true
+
 #include "pluto_timing.h"	/* for threadtime_t */
 
 struct connection;

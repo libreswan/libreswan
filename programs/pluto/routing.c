@@ -30,11 +30,6 @@
 #include "initiate.h"			/* for ipsecdoi_initiate() */
 #include "updown.h"
 
-/*
- * The transition contains broken code.
- */
-#define BROKEN_TRANSITION true
-
 static void do_updown_unroute(struct connection *c);
 
 static const char *routing_event_name[] = {
