@@ -420,7 +420,7 @@ static void negotiation_to_ondemand(enum routing_event event,
 				    const char *reason)
 {
 	ldbg(logger, "%s() %s for %s", __func__, reason, c->name);
-	PASSERT(logger, (event == CONNECTION_ACQUIRE));
+	PASSERT(logger, (event == CONNECTION_TIMEOUT_IKE));
 	enum routing rt_ondemand = (c->child.routing == RT_ROUTED_NEGOTIATION ? RT_ROUTED_ONDEMAND :
 				    CONNECTION_ROUTING_ROOF);
 	PASSERT(logger, rt_ondemand != CONNECTION_ROUTING_ROOF);
