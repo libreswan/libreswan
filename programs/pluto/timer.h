@@ -52,8 +52,6 @@ struct state_event **state_event_slot(struct state *st, enum event_type type);
 extern void event_force(enum event_type type, struct state *st);
 
 extern void delete_event(struct state *st);
-extern void handle_next_timer_event(void);
-extern void init_timer(void);
 
 void call_state_event_handler(struct logger *logger, struct state *st,
 			      enum event_type type);
