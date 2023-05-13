@@ -126,14 +126,21 @@ bool lmod_arg(lmod_t *mod, const struct lmod_info *info,
 	return ok;
 }
 
-size_t jam_lmod(struct jambuf *buf, enum_names *names,
-		const char *separator, lmod_t mod)
+size_t jam_lmod(struct jambuf *buf, enum_names *names, lmod_t mod)
 {
 	size_t s = 0;
+	static const char separator[] = "+";
 	s += jam_lset_short(buf, names, separator, mod.set);
 	if (mod.clr != LEMPTY) {
 		s += jam(buf, " - ");
 		s += jam_lset_short(buf, names, separator, mod.clr);
 	}
 	return s;
+}
+
+const char *str_lmod(const struct enum_names *sd, lmod_t val, lmod_buf *out)
+{
+	struct jambuf buf = ARRAY_AS_JAMBUF(out->buf);
+	jam_lmod(&buf, sd, val);
+	return out->buf;
 }

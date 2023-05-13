@@ -56,7 +56,13 @@ struct lmod_info {
 bool lmod_arg(lmod_t *mod, const struct lmod_info *info,
 	      const char *optarg, bool enable);
 
+typedef struct {
+	char buf[512]; /* arbitrary */
+} lmod_buf;
+
 size_t jam_lmod(struct jambuf *buf, const struct enum_names *names,
-		const char *separator, lmod_t mod);
+		lmod_t mod);
+const char *str_lmod(const struct enum_names *sd,
+		     lmod_t val, lmod_buf *buf);
 
 #endif
