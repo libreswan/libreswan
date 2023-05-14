@@ -25,7 +25,9 @@ import os
 command = sys.argv[1:]
 print("command", command)
 
-child = pexpect.spawn(command[0], command[1:], logfile=sys.stdout.buffer, echo=False)
+child = pexpect.spawn(command=command[0], args=command[1:],
+                      logfile=sys.stdout.buffer,
+                      echo=False)
 
 def i():
     '''go interactive then quit'''
@@ -39,7 +41,7 @@ def rs(r, s):
         child.send(c)
 
 def c(s):
-    child.expect('\n# ')
+    child.expect('\n# ', timeout=None)
     time.sleep(1)
     for c in s:
         child.send(c)

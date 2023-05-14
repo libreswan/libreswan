@@ -44,7 +44,7 @@ installboot -v -o console=com0,timeout=5,speed=9600 /dev/rld0a /usr/mdec/bootxx_
 mount -o async /dev/ld0a /targetroot
 touch /targetroot/.
 cd /targetroot
-mount -rt cd9660 /dev/cd1 /mnt
+
 for f in /mnt/i386/binary/sets/[a-jl-z]*.tgz ; do echo $f ; tar xpf $f || break ; done
 # not kern-GENERIC.tgz, renamed on ISO
 tar xpf /mnt/i386/binary/sets/kern_generic.tgz
