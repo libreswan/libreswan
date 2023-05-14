@@ -1002,16 +1002,6 @@ void dispatch(enum routing_event event, struct connection *c,
 			return;
 
 		case X(INITIATE, ROUTED_ONDEMAND, PERMANENT):
-			if (BROKEN_TRANSITION &&
-			    c->config->negotiation_shunt == SHUNT_HOLD) {
-				ldbg(c->logger, "%s() skipping NEGOTIATION=HOLD", __func__);
-				set_routing(event, c, RT_ROUTED_NEGOTIATION, NULL, where);
-				/* ipsecdoi_initiate may replace SOS_NOBODY with a state */
-				ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
-						  e->inception, null_shunk,
-						  e->background, c->logger);
-				return;
-			}
 			ondemand_to_negotiation(event, c, where);
 			PEXPECT(logger, c->child.routing == RT_ROUTED_NEGOTIATION);
 			/* ipsecdoi_initiate may replace SOS_NOBODY with a state */
