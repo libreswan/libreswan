@@ -1002,32 +1002,15 @@ void dispatch(enum routing_event event, struct connection *c,
 			return;
 
 		case X(INITIATE, ROUTED_ONDEMAND, PERMANENT):
+		case X(ACQUIRE, ROUTED_ONDEMAND, PERMANENT):
+			PEXPECT(logger, ((event == CONNECTION_INITIATE && e->acquire == NULL) ||
+					 (event == CONNECTION_ACQUIRE && e->acquire->sec_label.ptr == NULL)));
 			ondemand_to_negotiation(event, c, where);
 			PEXPECT(logger, c->child.routing == RT_ROUTED_NEGOTIATION);
 			/* ipsecdoi_initiate may replace SOS_NOBODY with a state */
 			ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
 					  e->inception, null_shunk,
 					  e->background, c->logger);
-			return;
-		case X(ACQUIRE, ROUTED_ONDEMAND, PERMANENT):
-			if (BROKEN_TRANSITION &&
-			    c->config->negotiation_shunt == SHUNT_HOLD) {
-				ldbg(c->logger, "%s() skipping NEGOTIATION=HOLD", __func__);
-				set_routing(event, c, RT_ROUTED_NEGOTIATION, NULL, where);
-				/* ipsecdoi_initiate may replace SOS_NOBODY with a state */
-				ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
-						  e->inception, null_shunk,
-						  e->background, c->logger);
-				return;
-			}
-			ondemand_to_negotiation(event, c, where);
-			PEXPECT(logger, c->child.routing == RT_ROUTED_NEGOTIATION);
-			/* ipsecdoi_initiate may replace SOS_NOBODY with a state */
-			ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
-					  e->inception,
-					  e->acquire->sec_label,
-					  e->background,
-					  e->acquire->logger);
 			return;
 
 		case X(INITIATE, UNROUTED_NEGOTIATION, PERMANENT):
