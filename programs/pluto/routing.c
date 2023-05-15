@@ -1510,9 +1510,7 @@ void dispatch(enum routing_event event, struct connection *c,
 			return;
 
 		case X(DELETE_IKE, ROUTED_TUNNEL, PERMANENT):
-#if 0 /* TODO: delete below */
 		case X(DELETE_IKE, ROUTED_TUNNEL, INSTANCE):
-#endif
 		case X(TIMEOUT_IKE, ROUTED_TUNNEL, PERMANENT):
 		case X(TIMEOUT_IKE, ROUTED_TUNNEL, INSTANCE):
 			/*
@@ -1529,9 +1527,6 @@ void dispatch(enum routing_event event, struct connection *c,
 		case X(DELETE_IKE, UNROUTED_NEGOTIATION, INSTANCE):	/* dnsoe-01 ... */
 		case X(DELETE_IKE, ROUTED_ONDEMAND, PERMANENT):
 		case X(DELETE_IKE, UNROUTED, PERMANENT): /* UNROUTED_NEGOTIATION!?! */
-#if 1 /* TODO: move to above */
-		case X(DELETE_IKE, ROUTED_TUNNEL, INSTANCE):
-#endif
 			if (BROKEN_TRANSITION) {
 				delete_ike_family(e->ike);
 				return;
