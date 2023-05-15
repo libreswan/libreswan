@@ -31,7 +31,7 @@ north #
 north #
  ../../guestbin/ipsec-kernel-policy.sh
 src 192.0.3.254/32 dst 192.0.2.0/24
-	dir out priority PRIORITY ptype main
+	dir out action block priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
 north #

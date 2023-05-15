@@ -31,7 +31,7 @@ west #
 west #
  ../../guestbin/ipsec-kernel-policy.sh
 src 192.1.2.45/32 dst 192.1.2.23/32
-	dir out priority PRIORITY ptype main
+	dir out action block priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
 west #

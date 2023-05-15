@@ -60,6 +60,7 @@ west #
  # west expects XfrmOutNoStates=8
 west #
  ../../guestbin/xfrmcheck.sh
-ERROR: west: XfrmOutNoStates         	8
+ERROR: west: XfrmOutNoStates         	4
+ERROR: west: XfrmOutPolBlock         	2
 west #
  
