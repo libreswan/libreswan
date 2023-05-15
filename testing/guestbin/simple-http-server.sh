@@ -33,7 +33,7 @@ echo $! > ${pidfile}
 # Wait for the server to start.  Check for both the "Serving ..." log
 # line and an open port.
 
-i=0
+i=10
 while true ; do
     if test -s ${logfile} && ncat 127.0.0.1 ${port} < /dev/null 2>/dev/null ; then
 	# Strip off f28's extra text:
@@ -42,8 +42,8 @@ while true ; do
 	sed -e 's; (http://[^)]*);;' simple-http-server.log
 	exit 0
     fi
-    i=$((i + 1))
-    test $i -lt 5 || break
+    i=$((i - 1))
+    test $i -gt 0 || break
     sleep 1
 done
 
