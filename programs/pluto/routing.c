@@ -321,14 +321,10 @@ static void unrouted_instance_to_unrouted_negotiation(enum routing_event event,
 	bool oe = ((c->policy & POLICY_OPPORTUNISTIC) != LEMPTY);
 	const char *reason = (oe ? "replace unrouted opportunistic %trap with broad %pass or %hold" :
 			      "replace unrouted %trap with broad %pass or %hold");
-	if (BROKEN_TRANSITION && c->config->negotiation_shunt == SHUNT_HOLD) {
-		ldbg(c->logger, "%s() skipping NEGOTIATION=HOLD", __func__);
-	} else {
-		add_spd_kernel_policies(c, KERNEL_POLICY_OP_REPLACE,
-					DIRECTION_OUTBOUND,
-					SHUNT_KIND_NEGOTIATION,
-					logger, where, reason);
-	}
+	add_spd_kernel_policies(c, KERNEL_POLICY_OP_REPLACE,
+				DIRECTION_OUTBOUND,
+				SHUNT_KIND_NEGOTIATION,
+				logger, where, reason);
 	set_routing(event, c, RT_UNROUTED_NEGOTIATION, NULL, where);
 }
 
@@ -1258,12 +1254,33 @@ void dispatch(enum routing_event event, struct connection *c,
 			/*
 			 * Triggered by whack against the template
 			 * which is then instantiated creating this
-			 * connection.
+			 * connection.  The template may or may not be
+			 * routed.
 			 *
-			 * The template may or may not be routed (but
-			 * this code seems to expect it to?).  Check
-			 * parent?
+			 * When the template is routed, should this
+			 * instead transition to routed_negotiation?
+			 *
+			 * When the template is routed, should the
+			 * instance start in ROUTED_UNINSTALLED?
+			 *
+			 * NO? because when it is pulled it shouldn't
+			 * undo the routing?
+			 *
+			 * YES? because the routing code has to deal
+			 * with that.
+			 *
+			 * MAYBE? but only when the template and
+			 * instance have the same SPDs.
 			 */
+			if (BROKEN_TRANSITION &&
+			    c->config->negotiation_shunt == SHUNT_HOLD) {
+				ldbg(c->logger, "%s() skipping NEGOTIATION=HOLD", __func__);
+				set_routing(event, c, RT_UNROUTED_NEGOTIATION, NULL, where);
+				ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
+						  e->inception, null_shunk,
+						  e->background, logger);
+				return;
+			}
 			unrouted_instance_to_unrouted_negotiation(event, c, where);
 			ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
 					  e->inception, null_shunk,
@@ -1273,14 +1290,33 @@ void dispatch(enum routing_event event, struct connection *c,
 			/*
 			 * Triggered by acquire against the template
 			 * which then instantiated creating this
-			 * connection.
+			 * connection.  The template may or may not be
+			 * routed.
 			 *
-			 * Given it is an acquire, the template is
-			 * presumably routed.  Should this instead
-			 * transition to routed_negotiation?  Probably
-			 * no because when it is pulled it shouldn't
+			 * When the template is routed, should this
+			 * instead transition to routed_negotiation?
+			 *
+			 * NO? because when it is pulled it shouldn't
 			 * undo the routing?
+			 *
+			 * When the template is routed, should the
+			 * instance start in ROUTED_UNINSTALLED?
+			 *
+			 * YES? because the routing code has to deal
+			 * with that.
+			 *
+			 * MAYBE? but only when the template and
+			 * instance have the same SPDs.
 			 */
+			if (BROKEN_TRANSITION &&
+			    c->config->negotiation_shunt == SHUNT_HOLD) {
+				ldbg(c->logger, "%s() skipping NEGOTIATION=HOLD", __func__);
+				set_routing(event, c, RT_UNROUTED_NEGOTIATION, NULL, where);
+				ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
+						  e->inception, null_shunk,
+						  e->background, logger);
+				return;
+			}
 			unrouted_instance_to_unrouted_negotiation(event, c, where);
 			ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
 					  e->inception, e->acquire->sec_label,
