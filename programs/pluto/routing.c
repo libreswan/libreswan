@@ -1109,14 +1109,11 @@ void dispatch(enum routing_event event, struct connection *c,
 			return;
 		case X(REVIVE, UNROUTED_ONDEMAND, PERMANENT):
 		case X(REVIVE, UNROUTED_ONDEMAND, INSTANCE):
-		{
 			ondemand_to_negotiation(event, c, where);
 			PEXPECT(logger, c->child.routing == RT_UNROUTED_NEGOTIATION);
-			threadtime_t inception = threadtime_start();
-			ipsecdoi_initiate(c, c->policy, SOS_NOBODY, &inception,
+			ipsecdoi_initiate(c, c->policy, SOS_NOBODY, e->inception,
 					  null_shunk, /*background*/false, logger);
 			return;
-		}
 		case X(REVIVE, ROUTED_ONDEMAND, PERMANENT):
 		case X(REVIVE, ROUTED_ONDEMAND, INSTANCE):
 			if (BROKEN_TRANSITION &&
@@ -1143,8 +1140,7 @@ void dispatch(enum routing_event event, struct connection *c,
 				 * ikev2-tcp-05-transport-mode
 				 * ikev2-tcp-06-fail-ike-sa-init-redirect
 				 * ikev2-tcp-07-fail-ike-auth-redirect */
-				threadtime_t inception = threadtime_start();
-				ipsecdoi_initiate(c, c->policy, SOS_NOBODY, &inception,
+				ipsecdoi_initiate(c, c->policy, SOS_NOBODY, e->inception,
 						  null_shunk, /*background*/false, logger);
 				return;
 			}
