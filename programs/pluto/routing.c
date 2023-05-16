@@ -1083,19 +1083,6 @@ void dispatch(enum routing_event event, struct connection *c,
 			llog(RC_LOG, c->logger, "connection already negotiating");
 			return;
 
-		case X(REVIVE, UNROUTED, PERMANENT):
-			/* e.g., permenant initiate fails */
-			if (BROKEN_TRANSITION) {
-				initiate_connection(c, /*remote-host-name*/NULL,
-						    /*background*/true,
-						    /*log-failure*/true,
-						    logger);
-				return;
-			}
-			ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
-					  e->inception, e->acquire->sec_label,
-					  e->background, e->acquire->logger);
-			return;
 		case X(REVIVE, UNROUTED, INSTANCE):
 			if (BROKEN_TRANSITION) {
 				/*
