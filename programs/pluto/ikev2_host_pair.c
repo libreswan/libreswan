@@ -73,7 +73,7 @@ static bool match_connection(const struct connection *c,
 		return false;
 	}
 
-	if (NEVER_NEGOTIATE(c->policy)) {
+	if (never_negotiate(c)) {
 		/*
 		 * Normally NEVER_NEGOTIATE means, drop packet but
 		 * respond with NO_PROPOSAL_CHOSEN (the default

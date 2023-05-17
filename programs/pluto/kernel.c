@@ -866,7 +866,7 @@ static enum routability connection_routability(struct connection *c,
 	     pri_shunk(c->config->sec_label));
 
 	/* it makes no sense to route a connection that is ISAKMP-only */
-	if (!NEVER_NEGOTIATE(c->policy) && !HAS_IPSEC_POLICY(c->policy)) {
+	if (!never_negotiate(c) && !HAS_IPSEC_POLICY(c->policy)) {
 		llog(RC_ROUTE, logger,
 		     "cannot route an %s-only connection",
 		     c->config->ike_info->sa_name[IKE_SA]);
@@ -2911,7 +2911,7 @@ static void expire_bare_shunts(struct logger *logger)
 				 */
 				struct connection *c = connection_by_serialno(bsp->restore_serialno);
 				if (c != NULL) {
-					enum shunt_kind shunt_kind = (NEVER_NEGOTIATE(c->policy) ? SHUNT_KIND_NEVER_NEGOTIATE :
+					enum shunt_kind shunt_kind = (never_negotiate(c) ? SHUNT_KIND_NEVER_NEGOTIATE :
 								      SHUNT_KIND_ONDEMAND);
 					if (!install_prospective_kernel_policies(c->spd,
 										 shunt_kind,

@@ -49,7 +49,7 @@ static bool match_v1_connection(struct connection *c, struct authby authby,
 		return false;
 	}
 
-	if (NEVER_NEGOTIATE(c->policy)) {
+	if (never_negotiate(c)) {
 		/* are we a block or clear connection? */
 		enum shunt_policy shunt = c->config->never_negotiate_shunt;
 		if (shunt != SHUNT_UNSET) {

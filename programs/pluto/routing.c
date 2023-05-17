@@ -90,7 +90,7 @@ static void jam_routing(struct jambuf *buf, const struct connection *c)
 	jam_enum_short(buf, &connection_kind_names, c->kind);
 	jam_string(buf, " ");
 	jam_connection_co(buf, c);
-	if (NEVER_NEGOTIATE(c->policy)) {
+	if (never_negotiate(c)) {
 		jam_string(buf, " never-negotiate");
 	}
 	if (c->child.newest_routing_sa != SOS_NOBODY) {
@@ -982,7 +982,7 @@ void dispatch(enum routing_event event, struct connection *c,
 		case X(ROUTE, UNROUTED, TEMPLATE):
 		case X(ROUTE, UNROUTED, PERMANENT):
 			c->policy |= POLICY_ROUTE; /* always */
-			if (NEVER_NEGOTIATE(c->policy)) {
+			if (never_negotiate(c)) {
 				if (!unrouted_to_routed_never_negotiate(event, c, where)) {
 					/* XXX: why whack only? */
 					llog(WHACK_STREAM|RC_ROUTE, logger, "could not route");
@@ -1009,7 +1009,7 @@ void dispatch(enum routing_event event, struct connection *c,
 
 		case X(UNROUTE, ROUTED_NEVER_NEGOTIATE, TEMPLATE):
 		case X(UNROUTE, ROUTED_NEVER_NEGOTIATE, PERMANENT):
-			PEXPECT(logger, NEVER_NEGOTIATE(c->policy));
+			PEXPECT(logger, never_negotiate(c));
 			delete_spd_kernel_policies(&c->child.spds,
 						   EXPECT_KERNEL_POLICY_OK,
 						   c->logger, where, "unroute permanent");
@@ -1224,7 +1224,7 @@ void dispatch(enum routing_event event, struct connection *c,
 			return;
 
 		case X(UNROUTE, ROUTED_ONDEMAND, PERMANENT):
-			PEXPECT(logger, !NEVER_NEGOTIATE(c->policy));
+			PEXPECT(logger, !never_negotiate(c));
 			delete_spd_kernel_policies(&c->child.spds,
 						   EXPECT_NO_INBOUND,
 						   c->logger, where, "unroute permanent");
@@ -1235,7 +1235,7 @@ void dispatch(enum routing_event event, struct connection *c,
 			return;
 		case X(UNROUTE, UNROUTED_ONDEMAND, PERMANENT):
 			if (BROKEN_TRANSITION) {
-				PEXPECT(logger, !NEVER_NEGOTIATE(c->policy));
+				PEXPECT(logger, !never_negotiate(c));
 				delete_spd_kernel_policies(&c->child.spds,
 							   EXPECT_NO_INBOUND,
 							   c->logger, where, "unroute permanent");

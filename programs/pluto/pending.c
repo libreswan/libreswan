@@ -373,7 +373,7 @@ void connection_check_phase2(struct logger *logger)
 	while (next_connection_new2old(&cf)) {
 		struct connection *c = cf.c;
 
-		if (NEVER_NEGOTIATE(c->policy)) {
+		if (never_negotiate(c)) {
 			connection_buf cib;
 			dbg("pending review: connection "PRI_CONNECTION" has no negotiated policy, skipped",
 			    pri_connection(c, &cib));

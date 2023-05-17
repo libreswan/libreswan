@@ -478,7 +478,7 @@ void connection_group_route(struct connection *g, where_t where)
 	 * ... except when it is an IKE only connection such is
 	 * created for labeled IPsec, but that doesn't apply here.
 	 */
-	if (!NEVER_NEGOTIATE(g->policy) && !HAS_IPSEC_POLICY(g->policy)) {
+	if (!never_negotiate(g) && !HAS_IPSEC_POLICY(g->policy)) {
 		llog(RC_ROUTE, g->logger,
 		     "cannot route an IKE-only group connection");
 		return;

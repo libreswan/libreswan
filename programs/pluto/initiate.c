@@ -108,7 +108,7 @@ static bool initiate_connection_1_basics(struct connection *c,
 		return false;
 	}
 
-	if (NEVER_NEGOTIATE(c->policy)) {
+	if (never_negotiate(c)) {
 		llog(RC_INITSHUNT, c->logger,
 		     "cannot initiate an authby=never connection");
 		return false;
@@ -769,7 +769,7 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 		return;
 
 	/* should we let the caller get away with this? */
-	if (NEVER_NEGOTIATE(c->policy))
+	if (never_negotiate(c))
 		return;
 
 	/*

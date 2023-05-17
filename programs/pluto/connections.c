@@ -442,7 +442,7 @@ int foreach_concrete_connection_by_name(const char *name,
 	do {
 		struct connection *c = cq.c;
 		if (c->kind >= CK_PERMANENT &&
-		    !NEVER_NEGOTIATE(c->policy) &&
+		    !never_negotiate(c) &&
 		    streq(c->name, name)) {
 			total += f(c, arg, logger);
 		}
@@ -2724,7 +2724,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	if (c->local->host.config->xauth.server || c->remote->host.config->xauth.server)
 		c->policy |= POLICY_XAUTH;
 
-	if (NEVER_NEGOTIATE(c->policy)) {
+	if (never_negotiate(c)) {
 		if (!PEXPECT(c->logger,
 			     c->local->host.config->auth == AUTH_NEVER &&
 			     c->remote->host.config->auth == AUTH_NEVER)) {
@@ -2977,7 +2977,7 @@ void add_connection(const struct whack_message *wm, struct logger *logger)
 	if (tss != NULL) {
 		llog(RC_LOG, c->logger, "connection is using multiple %s", tss);
 	}
-	const char *what = (NEVER_NEGOTIATE(c->policy) ? policy_shunt_names[c->config->never_negotiate_shunt] :
+	const char *what = (never_negotiate(c) ? policy_shunt_names[c->config->never_negotiate_shunt] :
 			    c->config->ike_info->version_name);
 	llog(RC_LOG, c->logger, "added %s connection", what);
 	policy_buf pb;
@@ -3237,7 +3237,7 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 		sep = "+";
 	}
 
-	if (NEVER_NEGOTIATE(c->policy)) {
+	if (never_negotiate(c)) {
 		jam(buf, "%sNEVER_NEGOTIATE", sep);
 		sep = "+";
 	}
@@ -3488,7 +3488,7 @@ struct connection *find_connection_for_packet(const ip_packet packet,
 	/*
 	 * XXX: So that the best connection can prevent negotiation?
 	 */
-	if (NEVER_NEGOTIATE(best_connection->policy)) {
+	if (never_negotiate(best_connection)) {
 		connection_buf cb;
 		ldbg(logger, "  concluding with empty; best connection "PRI_CONNECTION" was NEVER_NEGOTIATE",
 		     pri_connection(best_connection, &cb));
@@ -3839,4 +3839,9 @@ err_t connection_requires_tss(const struct connection *c)
 		}
 	}
 	return NULL;
+}
+
+bool never_negotiate(const struct connection *c)
+{
+	return (c != NULL && NEVER_NEGOTIATE(c->policy));
 }

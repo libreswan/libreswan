@@ -2084,7 +2084,7 @@ static struct connection *fc_try(const struct connection *c,
 		}
 	}
 
-	if (best != NULL && NEVER_NEGOTIATE(best->policy))
+	if (best != NULL && never_negotiate(best))
 		best = NULL;
 
 	dbg("  fc_try concluding with %s [%" PRIu32 "]",
@@ -2200,7 +2200,7 @@ static struct connection *fc_try_oppo(const struct connection *c,
 
 	/* if the best wasn't opportunistic, we fail: it must be a shunt */
 	if (best != NULL &&
-	    (NEVER_NEGOTIATE(best->policy) ||
+	    (never_negotiate(best) ||
 	     (best->policy & POLICY_OPPORTUNISTIC) == LEMPTY))
 		best = NULL;
 

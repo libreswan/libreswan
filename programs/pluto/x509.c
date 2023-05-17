@@ -301,7 +301,7 @@ generalName_t *collect_rw_ca_candidates(struct msg_digest *md)
 		}
 #endif
 
-		if (NEVER_NEGOTIATE(d->policy)) {
+		if (never_negotiate(d)) {
 			continue;
 		}
 
