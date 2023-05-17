@@ -784,6 +784,38 @@ static bool zap_connection(enum routing_event event,
 	return false;
 }
 
+/*
+ * zap (unroute) any instances of the connection; for instance when an
+ * unrouted template gets instantiated using whack.
+ */
+
+static bool zap_instances(enum routing_event event, struct connection *c, where_t where)
+{
+	enum_buf ren;
+	ldbg_routing(c->logger, "due to %s, zapping instances",
+		     str_enum_short(&routing_event_names, event, &ren));
+	PASSERT(c->logger, c->kind == CK_TEMPLATE);
+
+	struct connection_filter cq = {
+		.clonedfrom = c,
+		.where = HERE,
+	};
+	bool had_instances;
+	while (next_connection_old2new(&cq)) {
+		had_instances = true;
+		connection_buf cqb;
+		ldbg_routing(c->logger, "zapping instance "PRI_CONNECTION,
+			     pri_connection(cq.c, &cqb));
+		dispatch(CONNECTION_UNROUTE, cq.c, cq.c->logger, where,
+			 (struct annex) {
+				 0,
+			 });
+		/* unroute doesn't delete instances, should it? */
+		delete_connection(&cq.c);
+	}
+	return had_instances;
+}
+
 void connection_route(struct connection *c, where_t where)
 {
 	if (!oriented(c)) {
@@ -1237,6 +1269,9 @@ void dispatch(enum routing_event event, struct connection *c,
 			return;
 
 		case X(UNROUTE, UNROUTED, TEMPLATE):
+			if (zap_instances(event, c, where)) {
+				return;
+			}
 			ldbg_routing(logger, "already unrouted");
 			return;
 		case X(UNROUTE, ROUTED_ONDEMAND, TEMPLATE):
