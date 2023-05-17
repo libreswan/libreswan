@@ -1694,6 +1694,14 @@ static enum connection_kind extract_connection_kind(const struct whack_message *
 			     we->leftright);
 			return CK_TEMPLATE;
 		}
+		if (we->modecfg_server) {
+			ldbg(logger, "connection is CK_TEMPLATE: %s modecfg_server",
+			     we->leftright);
+		}
+		if (we->modecfg_client) {
+			ldbg(logger, "connection is CK_TEMPLATE: %s modecfg_client",
+			     we->leftright);
+		}
 		if (!NEVER_NEGOTIATE(wm->policy) &&
 		    !address_is_specified(we->host_addr) &&
 		    we->host_type != KH_IPHOSTNAME) {
