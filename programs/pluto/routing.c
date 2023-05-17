@@ -1275,6 +1275,7 @@ void dispatch(enum routing_event event, struct connection *c,
 			ldbg_routing(logger, "already unrouted");
 			return;
 		case X(UNROUTE, ROUTED_ONDEMAND, TEMPLATE):
+			zap_instances(event, c, where);
 			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
 						   c->logger, where, "unroute template");
 			/* do now so route_owner won't find us */
