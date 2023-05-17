@@ -850,5 +850,6 @@ bool labeled_parent(const struct connection *c);
 bool labeled_child(const struct connection *c);
 
 bool never_negotiate(const struct connection *c);
+bool opportunistic(const struct connection *c);
 
 #endif

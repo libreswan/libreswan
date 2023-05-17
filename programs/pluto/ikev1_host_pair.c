@@ -64,7 +64,7 @@ static bool match_v1_connection(struct connection *c, struct authby authby,
 			 * be hit and do the work.  if not policy_oppo
 			 * -> we hit clear/block so this is right c
 			 */
-			if ((c->policy & POLICY_OPPORTUNISTIC)) {
+			if (opportunistic(c)) {
 				connection_buf cb;
 				dbg("  skipping "PRI_CONNECTION", never negotiate + opportunistic",
 				    pri_connection(c, &cb));

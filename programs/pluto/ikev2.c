@@ -2544,7 +2544,7 @@ static void success_v2_state_transition(struct ike_sa *ike,
 	 */
 
         if (!pexpect(transition->llog_success != NULL) ||
-	    (c->policy & POLICY_OPPORTUNISTIC)) {
+	    opportunistic(c)) {
 		ldbg_v2_success(ike);
 	} else {
 		transition->llog_success(ike);

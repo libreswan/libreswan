@@ -421,7 +421,7 @@ static bool expire_ike_because_child_not_used(struct state *st)
 
 	struct connection *c = st->st_connection;
 
-	if (!(c->policy & POLICY_OPPORTUNISTIC)) {
+	if (!opportunistic(c)) {
 		/* killing idle IPsec SA's is only for opportunistic SA's */
 		return false;
 	}
@@ -492,7 +492,7 @@ void schedule_v2_replace_event(struct state *st)
 
 	enum event_type kind;
 	const char *story;
-	if ((c->policy & POLICY_OPPORTUNISTIC) &&
+	if (opportunistic(c) &&
 	    nr_child_leases(st->st_connection->remote) > 0) {
 		kind = EVENT_SA_EXPIRE;
 		story = "always expire opportunistic SA with lease";

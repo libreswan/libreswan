@@ -75,7 +75,7 @@ void ldbg_cp(struct logger *logger, const struct connection *cc, const char *fmt
 		if (cc->config->modecfg.dns.len > 0) {
 			jam_string(buf, " dns");
 		}
-		if (cc->policy & POLICY_OPPORTUNISTIC) {
+		if (opportunistic(cc)) {
 			jam_string(buf, " OE");
 		}
 	}
@@ -408,7 +408,7 @@ static bool ikev2_set_dns(struct pbs_in *cp_a_pbs, struct child_sa *child,
 	struct connection *c = child->sa.st_connection;
 	bool ignore = LIN(POLICY_IGNORE_PEER_DNS, c->policy);
 
-	if (c->policy & POLICY_OPPORTUNISTIC) {
+	if (opportunistic(c)) {
 		llog_sa(RC_LOG, child,
 			  "ignored INTERNAL_IP%d_DNS CP payload for Opportunistic IPsec",
 			  af->ip_version);

@@ -332,7 +332,7 @@ static void unrouted_instance_to_unrouted_negotiation(enum routing_event event,
 	struct connection *t = c->clonedfrom; /* could be NULL */
 	PEXPECT(logger, t != NULL && t->child.routing == RT_ROUTED_ONDEMAND);
 #endif
-	bool oe = ((c->policy & POLICY_OPPORTUNISTIC) != LEMPTY);
+	bool oe = opportunistic(c);
 	const char *reason = (oe ? "replace unrouted opportunistic %trap with broad %pass or %hold" :
 			      "replace unrouted %trap with broad %pass or %hold");
 	add_spd_kernel_policies(c, KERNEL_POLICY_OP_REPLACE,
@@ -354,7 +354,7 @@ static void unrouted_permanent_to_unrouted_negotiation(enum routing_event event,
 						       struct connection *c, where_t where)
 {
 	struct logger *logger = c->logger;
-	PEXPECT(logger, (c->policy & POLICY_OPPORTUNISTIC) == LEMPTY);
+	PEXPECT(logger, !opportunistic(c));
 	const char *reason = "installing negotiation kernel policy for permanent connection";
 	add_spd_kernel_policies(c, KERNEL_POLICY_OP_ADD,
 				DIRECTION_OUTBOUND,
@@ -367,7 +367,7 @@ static void unrouted_negotiation_to_unrouted(enum routing_event event,
 					     struct connection *c,
 					     struct logger *logger, where_t where, const char *story)
 {
-	PEXPECT(logger, (c->policy & POLICY_OPPORTUNISTIC) == LEMPTY);
+	PEXPECT(logger, !opportunistic(c));
 	delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
 				   logger, where, story);
 	set_routing(event, c, RT_UNROUTED, NULL, where);
@@ -378,7 +378,7 @@ static void routed_negotiation_to_unrouted(enum routing_event event,
 					   struct logger *logger, where_t where,
 					   const char *story)
 {
-	PEXPECT(logger, (c->policy & POLICY_OPPORTUNISTIC) == LEMPTY);
+	PEXPECT(logger, !opportunistic(c));
 	delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
 				   logger, where, story);
 	FOR_EACH_ITEM(spd, &c->child.spds) {
@@ -401,7 +401,7 @@ static void ondemand_to_negotiation(enum routing_event event,
 {
         struct logger *logger = c->logger;
 	ldbg_routing(c->logger, "%s() %s", __func__, reason);
-        PEXPECT(logger, (c->policy & POLICY_OPPORTUNISTIC) == LEMPTY);
+        PEXPECT(logger, !opportunistic(c));
 	PASSERT(logger, (event == CONNECTION_INITIATE ||
 			 event == CONNECTION_ACQUIRE ||
 			 event == CONNECTION_REVIVE));
@@ -1471,7 +1471,7 @@ void dispatch(enum routing_event event, struct connection *c,
 				delete_ike_sa(e->ike);
 				return;
 			}
-			if (c->policy & POLICY_OPPORTUNISTIC) {
+			if (opportunistic(c)) {
 				/*
 				 * A failed OE initiator, make shunt bare.
 				 */

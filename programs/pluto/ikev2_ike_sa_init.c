@@ -530,7 +530,7 @@ void initiate_v2_IKE_SA_INIT_request(struct connection *c,
 {
 	if (drop_new_exchanges()) {
 		/* Only drop outgoing opportunistic connections */
-		if (c->policy & POLICY_OPPORTUNISTIC) {
+		if (opportunistic(c)) {
 			return;
 		}
 	}
@@ -630,7 +630,7 @@ void initiate_v2_IKE_SA_INIT_request(struct connection *c,
 	 * This was, after all, triggered by something that happened
 	 * at this end.
 	 */
-	enum stream log_stream = ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) ? ALL_STREAMS : WHACK_STREAM;
+	enum stream log_stream = (!opportunistic(c) ? ALL_STREAMS : WHACK_STREAM);
 
 	/*
 	 * XXX: this is the first of two IKE_SA_INIT messages that are
@@ -935,7 +935,7 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 				     /*expect_ike*/ true,
 				     /*expect_spi*/ false,
 				     /*expect_accepted*/ false,
-				     LIN(POLICY_OPPORTUNISTIC, c->policy),
+				     opportunistic(c),
 				     &ike->sa.st_v2_accepted_proposal,
 				     ike_proposals, ike->sa.st_logger);
 	if (n != v2N_NOTHING_WRONG) {
@@ -1478,7 +1478,7 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 					     /*expect_ike*/ true,
 					     /*expect_spi*/ false,
 					     /*expect_accepted*/ true,
-					     LIN(POLICY_OPPORTUNISTIC, c->policy),
+					     opportunistic(c),
 					     &ike->sa.st_v2_accepted_proposal,
 					     ike_proposals, ike->sa.st_logger);
 		if (n != v2N_NOTHING_WRONG) {

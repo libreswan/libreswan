@@ -667,7 +667,7 @@ void initiate_ondemand(const struct kernel_acquire *b)
 		PASSERT(b->logger, b->sec_label.len > 0);
 		PASSERT(b->logger, sec_label_within_range("acquire", HUNK_AS_SHUNK(b->sec_label),
 							  c->config->sec_label, b->logger));
-		PASSERT(b->logger, (c->policy & POLICY_OPPORTUNISTIC) == LEMPTY);
+		PASSERT(b->logger, !opportunistic(c));
 		PASSERT(b->logger, (labeled_template(c) || labeled_parent(c)));
 
 		/*
@@ -716,7 +716,7 @@ void initiate_ondemand(const struct kernel_acquire *b)
 		}
 		return;
 	case CK_PERMANENT:
-		PASSERT(b->logger, (c->policy & POLICY_OPPORTUNISTIC) == LEMPTY);
+		PASSERT(b->logger, !opportunistic(c));
 		LLOG_JAMBUF(RC_LOG, b->logger, buf) {
 			jam_kernel_acquire(buf, b);
 			/* jam(buf, " using "); */
@@ -724,7 +724,7 @@ void initiate_ondemand(const struct kernel_acquire *b)
 		connection_acquire(c, &inception, b, HERE);
 		return;
 	case CK_TEMPLATE:
-		if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+		if (!opportunistic(c)) {
 			/*
 			 * Only opportunistic connections can ondemand
 			 * instantiate a template.
@@ -850,7 +850,7 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 		ldbg(c->logger, "  %s.child already has a hard-wired selectors; skipping",
 		     c->remote->config->leftright);
 	} else if (c->remote->child.has_client) {
-		pexpect(c->policy & POLICY_OPPORTUNISTIC);
+		pexpect(opportunistic(c));
 		ldbg(c->logger, "  %s.child.has_client yet no selectors; skipping magic",
 		     c->remote->config->leftright);
 	} else {

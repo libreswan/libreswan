@@ -76,12 +76,12 @@ static void jam_end_host(struct jambuf *buf, const struct connection *c,
 			jam(buf, "<%s>", this->host->config->addr_name);
 		} else {
 			if (c->kind == CK_GROUP) {
-				if (c->policy & POLICY_OPPORTUNISTIC) {
+				if (opportunistic(c)) {
 					jam_string(buf, "%opportunisticgroup");
 				} else {
 					jam_string(buf, "%group");
 				}
-			} else if (c->policy & POLICY_OPPORTUNISTIC) {
+			} else if (opportunistic(c)) {
 				jam_string(buf, "%opportunistic");
 			} else {
 				jam_string(buf, "%any");
@@ -147,8 +147,7 @@ static void jam_end_client(struct jambuf *buf, const struct connection *c,
 	}
 
 	if (selector_is_all(this->client) &&
-	    (c->kind == CK_GROUP ||
-	     c->policy & POLICY_OPPORTUNISTIC)) {
+	    (c->kind == CK_GROUP || opportunistic(c))) {
 		/* booring */
 		return;
 	}

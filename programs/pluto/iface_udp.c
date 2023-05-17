@@ -651,7 +651,7 @@ static bool check_msg_errqueue(const struct iface_endpoint *ifp, short interest,
 					 */
 					log_to = NO_STREAM;
 				} else if (sender != NULL && sender->st_connection != NULL &&
-					   LDISJOINT(sender->st_connection->policy, POLICY_OPPORTUNISTIC)) {
+					   !opportunistic(sender->st_connection)) {
 					/*
 					 * The sender is known and
 					 * this isn't an opportunistic

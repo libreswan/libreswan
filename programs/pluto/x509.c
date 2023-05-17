@@ -307,7 +307,7 @@ generalName_t *collect_rw_ca_candidates(struct msg_digest *md)
 
 		/* we require a road warrior connection */
 		if (d->kind != CK_TEMPLATE ||
-		    (d->policy & POLICY_OPPORTUNISTIC) ||
+		    opportunistic(d) ||
 		    d->remote->host.config->ca.ptr == NULL) {
 			continue;
 		}

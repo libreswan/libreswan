@@ -555,7 +555,7 @@ struct connection *rw_responder_instantiate(struct connection *t,
 					    const ip_address peer_addr,
 					    where_t where)
 {
-	PASSERT(t->logger, (t->policy & POLICY_OPPORTUNISTIC) == LEMPTY);
+	PASSERT(t->logger, !opportunistic(t));
 	PASSERT(t->logger, !labeled(t));
 
 	struct connection *d = instantiate(t, peer_addr, /*TBD peer_id*/NULL,
@@ -577,7 +577,7 @@ struct connection *rw_responder_id_instantiate(struct connection *t,
 					       const struct id *remote_id,
 					       where_t where)
 {
-	PASSERT(t->logger, (t->policy & POLICY_OPPORTUNISTIC) == LEMPTY);
+	PASSERT(t->logger, !opportunistic(t));
 	PASSERT(t->logger, !labeled(t));
 
 	/*
@@ -618,7 +618,7 @@ static struct connection *oppo_instantiate(struct connection *t,
 
 	PASSERT(d->logger, d->kind == CK_INSTANCE);
 	PASSERT(d->logger, oriented(d)); /* else won't instantiate */
-	PASSERT(d->logger, d->policy & POLICY_OPPORTUNISTIC);
+	PASSERT(d->logger, opportunistic(d));
 	PASSERT(d->logger, address_eq_address(d->remote->host.addr, remote_address));
 
 	/*

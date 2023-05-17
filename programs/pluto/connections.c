@@ -258,7 +258,7 @@ void delete_connection(struct connection **cp)
 
 	if (c->kind == CK_INSTANCE) {
 		c->going_away = true;
-		if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+		if (!opportunistic(c)) {
 			address_buf b;
 			llog(RC_LOG, c->logger,
 			     "deleting connection instance with peer %s {isakmp=#%lu/ipsec=#%lu}",
@@ -1010,7 +1010,7 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 	if (src->modecfg_server && src->modecfg_client) {
 		diag_t d = diag("both %smodecfgserver=yes and %smodecfgclient=yes defined",
 				leftright, leftright);
-		if ((wm->policy & (POLICY_OPPORTUNISTIC)) == LEMPTY) {
+		if ((wm->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
 			return d;
 		}
 		llog_diag(RC_LOG, logger, &d, "opportunistic: ");
@@ -3083,7 +3083,7 @@ size_t jam_connection_instance(struct jambuf *buf, const struct connection *c)
 	if (c->instance_serial > 0) {
 		s += jam(buf, "[%lu]", c->instance_serial);
 	}
-	if (c->policy & POLICY_OPPORTUNISTIC) {
+	if (opportunistic(c)) {
 		/*
 		 * XXX: print proposed or accepted selectors?
 		 */
@@ -3355,7 +3355,7 @@ struct connection *find_connection_for_packet(const ip_packet packet,
 		 * connection?!?
 		 */
 		bool instance_initiation_ok =
-			((c->policy & POLICY_OPPORTUNISTIC) &&
+			(opportunistic(c) &&
 			 c->kind == CK_INSTANCE &&
 			 pexpect(c->clonedfrom != NULL) /* because instance */ &&
 			 routed(c->clonedfrom->child.routing));
@@ -3844,4 +3844,9 @@ err_t connection_requires_tss(const struct connection *c)
 bool never_negotiate(const struct connection *c)
 {
 	return (c != NULL && NEVER_NEGOTIATE(c->policy));
+}
+
+bool opportunistic(const struct connection *c)
+{
+	return (c != NULL && (c->policy & POLICY_OPPORTUNISTIC));
 }

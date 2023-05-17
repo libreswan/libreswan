@@ -276,7 +276,7 @@ static struct connection *refine_host_connection_on_responder(int indent,
 			 * opportunistic.
 			 */
 
-			if (c != d && (d->policy & POLICY_OPPORTUNISTIC)) {
+			if (c != d && opportunistic(d)) {
 				connection_buf cb;
 				dbg_rhc("skipping opportunistic connection "PRI_CONNECTION"",
 					pri_connection(d, &cb));
