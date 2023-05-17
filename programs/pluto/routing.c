@@ -1383,27 +1383,6 @@ void dispatch(enum routing_event event, struct connection *c,
 			delete_ike_sa(e->ike);
 			return;
 
-		case X(TIMEOUT_IKE, UNROUTED, PERMANENT):
-			if (BROKEN_TRANSITION) {
-				/* should be in UNROUTED_NEGOTIATION,
-				 * SAY? */
-				if (zap_connection(event, e->ike, where)) {
-					return;
-				}
-			}
-			if (BROKEN_TRANSITION) {
-				/* ex, permanent+up */
-				if (should_revive(&(*e->ike)->sa)) {
-					schedule_revival(&(*e->ike)->sa, "timed out");
-					delete_ike_sa(e->ike);
-					return;
-				}
-				delete_ike_sa(e->ike);
-				/* connection lives to fight another day */
-				return;
-			}
-			break;
-
 		case X(DELETE_IKE, ROUTED_NEGOTIATION, PERMANENT):
 		case X(TIMEOUT_IKE, ROUTED_NEGOTIATION, PERMANENT):
 			/*
