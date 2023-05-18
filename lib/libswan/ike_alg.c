@@ -797,7 +797,13 @@ static void encrypt_desc_check(const struct ike_alg *alg, struct logger *logger)
 static bool encrypt_desc_is_ike(const struct ike_alg *alg)
 {
 	const struct encrypt_desc *encrypt = encrypt_desc(alg);
-	return encrypt->encrypt_ops != NULL;
+	if (encrypt->encrypt_ops == NULL) {
+		return false;
+	}
+	if (encrypt->encrypt_ops == &ike_alg_encrypt_null_ops) {
+		return impair.allow_null_none;
+	}
+	return true;
 }
 
 static struct algorithm_table encrypt_algorithms = ALGORITHM_TABLE(encrypt_descriptors);

@@ -210,6 +210,7 @@ ifeq ($(USE_NSS_KDF),true)
 OBJS += ike_alg_prf_ikev1_nss_ops.o
 OBJS += ike_alg_prf_ikev2_nss_ops.o
 endif
+OBJS += ike_alg_encrypt_null_ops.o
 OBJS += ike_alg_encrypt_chacha20_poly1305.o
 OBJS += ike_alg_encrypt_nss_aead_ops.o
 OBJS += ike_alg_encrypt_nss_cbc_ops.o

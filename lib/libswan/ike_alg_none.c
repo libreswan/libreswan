@@ -19,6 +19,7 @@
 #include "ike_alg_encrypt.h"
 #include "ike_alg_integ.h"
 #include "ike_alg_dh.h"
+#include "ike_alg_encrypt_ops.h"
 #include "ike_alg_dh_ops.h"
 #include "lsw-pfkeyv2.h"	/* for SADB_*ALG_* */
 
@@ -53,6 +54,7 @@ const struct encrypt_desc ike_alg_encrypt_null =
 	.encrypt_tcpdump_name = "null",
 	.encrypt_ike_audit_name = "null",
 	.encrypt_kernel_audit_name = "NULL",
+	.encrypt_ops = &ike_alg_encrypt_null_ops,
 };
 
 /*

@@ -21,6 +21,7 @@
 #include "crypt_symkey.h"
 #include "lswfips.h"
 #include "lswnss.h"
+#include "ike_alg_encrypt.h"		/* for ike_alg_encrypt_null */
 
 #define SPACES "    "
 
@@ -543,6 +544,14 @@ PK11SymKey *encrypt_key_from_symkey_bytes(const char *name,
 					  PK11SymKey *source_key,
 					  where_t where, struct logger *logger)
 {
+	/*
+	 * NSS throws a hissy fit when asked to extract 0 bytes.
+	 */
+	if (sizeof_symkey == 0) {
+		PASSERT(logger, encrypt == &ike_alg_encrypt_null);
+		PASSERT(logger, impair.allow_null_none);
+		return NULL;
+	}
 	/*
 	 * NSS expects a key's mechanism to match the NSS algorithm
 	 * the key is intended for.  If this is wrong then the
