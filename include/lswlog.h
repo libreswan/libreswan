@@ -383,6 +383,13 @@ extern lset_t cur_debugging;	/* current debugging level */
 		}						\
 	}
 
+#define LDBGF(COND, LOGGER, MESSAGE, ...)				\
+	{								\
+		if (LDBGP(COND, LOGGER)) {				\
+			LDBG_log(LOGGER, MESSAGE, ##__VA_ARGS__);	\
+		}							\
+	}
+
 #define dbg(MESSAGE, ...)					\
 	{							\
 		if (DBGP(DBG_BASE)) {				\
