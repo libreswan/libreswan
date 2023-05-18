@@ -79,6 +79,7 @@ east #
 002 "new-east": added IKEv2 connection
 east #
  ipsec auto --delete new-east
+002 "new-east"[2] 192.1.2.45: terminating SAs using this connection
 east #
  ipsec auto --delete old-east
 east #
