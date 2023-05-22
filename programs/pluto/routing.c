@@ -208,6 +208,7 @@ enum shunt_kind routing_shunt_kind(enum routing routing)
 	case RT_ROUTED_TUNNEL:
 		return SHUNT_KIND_IPSEC;
 	case RT_UNROUTED:
+	case RT_UNROUTED_REVIVAL:
 		bad_case(routing);
 	}
 	bad_case(routing);
@@ -224,6 +225,7 @@ bool routed(enum routing r)
 	case RT_ROUTED_FAILURE:
 		return true;
 	case RT_UNROUTED:
+	case RT_UNROUTED_REVIVAL:
 	case RT_UNROUTED_ONDEMAND:
 	case RT_UNROUTED_NEGOTIATION:
 	case RT_UNROUTED_FAILURE:
@@ -238,6 +240,7 @@ bool kernel_policy_installed(const struct connection *c)
 {
 	switch (c->child.routing) {
 	case RT_UNROUTED:
+	case RT_UNROUTED_REVIVAL:
 		return false;
 	case RT_UNROUTED_ONDEMAND:
 	case RT_ROUTED_ONDEMAND:
@@ -1665,6 +1668,7 @@ void connection_resume(struct child_sa *child, where_t where)
 		}
 		return;
 	case RT_UNROUTED:
+	case RT_UNROUTED_REVIVAL:
 	case RT_UNROUTED_ONDEMAND:
 	case RT_ROUTED_ONDEMAND:
 	case RT_UNROUTED_NEGOTIATION:
@@ -1734,6 +1738,7 @@ void connection_suspend(struct child_sa *child, where_t where)
 		set_routing(event, c, RT_UNROUTED_TUNNEL, child, where);
 		return;
 	case RT_UNROUTED:
+	case RT_UNROUTED_REVIVAL:
 	case RT_UNROUTED_ONDEMAND:
 	case RT_UNROUTED_NEGOTIATION:
 	case RT_UNROUTED_FAILURE:

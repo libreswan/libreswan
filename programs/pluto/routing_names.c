@@ -21,6 +21,7 @@
 static const char *routing_name[] = {
 #define S(E) [E] = #E
 	S(RT_UNROUTED),
+	S(RT_UNROUTED_REVIVAL),
 	S(RT_UNROUTED_NEGOTIATION),
 	S(RT_UNROUTED_INBOUND),
 	S(RT_ROUTED_NEVER_NEGOTIATE),

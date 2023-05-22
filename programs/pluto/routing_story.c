@@ -22,6 +22,7 @@
 /* routing status names */
 static const char *const routing_story_strings[] = {
 	[RT_UNROUTED] = "unrouted",			  /* unrouted */
+	[RT_UNROUTED_REVIVAL] = "unrouted revival",	  /* unrouted, no shunts, revival */
 	[RT_UNROUTED_NEGOTIATION] = "unrouted HOLD",      /* unrouted, but HOLD shunt installed */
 	[RT_UNROUTED_INBOUND] = "unrouted HOLD",	/* unrouted, outbound negotiation, inbound established */
 	[RT_UNROUTED_ONDEMAND] = "unrouted ondemand",		/* unrouted, and ondemand shunt installed */
