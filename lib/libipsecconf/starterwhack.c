@@ -196,7 +196,7 @@ static int starter_whack_read_reply(int sock,
 	return ret;
 }
 
-static int send_whack_msg(struct whack_message *msg, char *ctlsocket)
+static int send_whack_msg(struct whack_message *msg, char *ctlsocket, struct logger *logger)
 {
 	struct sockaddr_un ctl_addr = { .sun_family = AF_UNIX };
 	int sock;
@@ -213,7 +213,7 @@ static int send_whack_msg(struct whack_message *msg, char *ctlsocket)
 	wp.str_next = (unsigned char *)msg->string;
 	wp.str_roof = (unsigned char *)&msg->string[sizeof(msg->string)];
 
-	ugh = pack_whack_msg(&wp);
+	ugh = pack_whack_msg(&wp, logger);
 
 	if (ugh != NULL) {
 		starter_log(LOG_LEVEL_ERR,
@@ -410,7 +410,8 @@ static bool set_whack_end(struct whack_end *w,
 
 static int starter_whack_add_pubkey(struct starter_config *cfg,
 				    const struct starter_conn *conn,
-				    const struct starter_end *end)
+				    const struct starter_end *end,
+				    struct logger *logger)
 {
 	int ret = 0;
 	const char *lr = end->leftright;
@@ -471,7 +472,7 @@ static int starter_whack_add_pubkey(struct starter_config *cfg,
 				    str_enum(&ipseckey_algorithm_config_names, end->pubkey_alg, &pkb),
 				    end->pubkey);
 			msg.keyval = keyspace;
-			ret = send_whack_msg(&msg, cfg->ctlsocket);
+			ret = send_whack_msg(&msg, cfg->ctlsocket, logger);
 			free_chunk_content(&keyspace);
 		}
 		}
@@ -491,7 +492,8 @@ static void conn_log_val(const struct starter_conn *conn,
 }
 
 static int starter_whack_basic_add_conn(struct starter_config *cfg,
-					const struct starter_conn *conn)
+					const struct starter_conn *conn,
+					struct logger *logger)
 {
 	struct whack_message msg = empty_whack_message;
 	msg.whack_add = true;
@@ -672,17 +674,17 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	msg.ike = conn->ike_crypto;
 	conn_log_val(conn, "ike", msg.ike);
 
-	int r = send_whack_msg(&msg, cfg->ctlsocket);
+	int r = send_whack_msg(&msg, cfg->ctlsocket, logger);
 	if (r != 0)
 		return r;
 
 	if (conn->left.pubkey != NULL) {
-		r = starter_whack_add_pubkey(cfg, conn, &conn->left);
+		r = starter_whack_add_pubkey(cfg, conn, &conn->left, logger);
 		if (r != 0)
 			return r;
 	}
 	if (conn->right.pubkey != NULL) {
-		r = starter_whack_add_pubkey(cfg, conn, &conn->right);
+		r = starter_whack_add_pubkey(cfg, conn, &conn->right, logger);
 		if (r != 0)
 			return r;
 	}
@@ -819,7 +821,8 @@ static bool next_subnet(struct subnets *sn)
 
 static int starter_permutate_conns(int
 				   (*operation)(struct starter_config *cfg,
-						const struct starter_conn *conn),
+						const struct starter_conn *conn,
+						struct logger *logger),
 				   struct starter_config *cfg,
 				   const struct starter_conn *conn,
 				   struct logger *logger)
@@ -902,7 +905,7 @@ static int starter_permutate_conns(int
 			const struct ip_info *right_afi = subnet_info(right.subnet);
 			if (left_afi == right_afi ||
 			    left_afi == NULL || right_afi == NULL) {
-				int fail = (*operation)(cfg, &sc);
+				int fail = (*operation)(cfg, &sc, logger);
 				if (fail != 0) {
 					/* Fail at first failure?  I think so. */
 					return fail;
@@ -946,7 +949,7 @@ int starter_whack_add_conn(struct starter_config *cfg,
 	/* basic case, nothing special to synthize! */
 	if (!starter_conn->left.strings_set[KSCF_SUBNETS] &&
 	    !starter_conn->right.strings_set[KSCF_SUBNETS])
-		return starter_whack_basic_add_conn(cfg, starter_conn);
+		return starter_whack_basic_add_conn(cfg, starter_conn, logger);
 
 	/* trying to do subnets aka aliases */
 	struct starter_conn alias_conn = *starter_conn;
@@ -959,7 +962,7 @@ int starter_whack_add_conn(struct starter_config *cfg,
 	FOR_EACH_THING(end, &alias_conn.left, &alias_conn.right) {
 		if (end->strings_set[KSCF_SUBNET] &&
 		    strchr(end->strings[KSCF_SUBNET], ',') != NULL) {
-			return starter_whack_basic_add_conn(cfg, &alias_conn);
+			return starter_whack_basic_add_conn(cfg, &alias_conn, logger);
 		}
 	}
 
@@ -968,12 +971,13 @@ int starter_whack_add_conn(struct starter_config *cfg,
 }
 
 static int starter_whack_basic_route_conn(struct starter_config *cfg,
-					const struct starter_conn *conn)
+					  const struct starter_conn *conn,
+					  struct logger *logger)
 {
 	struct whack_message msg = empty_whack_message;
 	msg.whack_route = true;
 	msg.name = connection_name(conn);
-	return send_whack_msg(&msg, cfg->ctlsocket);
+	return send_whack_msg(&msg, cfg->ctlsocket, logger);
 }
 
 int starter_whack_route_conn(struct starter_config *cfg,
@@ -983,25 +987,26 @@ int starter_whack_route_conn(struct starter_config *cfg,
 	/* basic case, nothing special to synthize! */
 	if (!conn->left.strings_set[KSCF_SUBNETS] &&
 	    !conn->right.strings_set[KSCF_SUBNETS])
-		return starter_whack_basic_route_conn(cfg, conn);
+		return starter_whack_basic_route_conn(cfg, conn, logger);
 
 	return starter_permutate_conns(starter_whack_basic_route_conn,
 				       cfg, conn, logger);
 }
 
 int starter_whack_initiate_conn(struct starter_config *cfg,
-				struct starter_conn *conn)
+				struct starter_conn *conn,
+				struct logger *logger)
 {
 	struct whack_message msg = empty_whack_message;
 	msg.whack_initiate = true;
 	msg.whack_async = true;
 	msg.name = connection_name(conn);
-	return send_whack_msg(&msg, cfg->ctlsocket);
+	return send_whack_msg(&msg, cfg->ctlsocket, logger);
 }
 
-int starter_whack_listen(struct starter_config *cfg)
+int starter_whack_listen(struct starter_config *cfg, struct logger *logger)
 {
 	struct whack_message msg = empty_whack_message;
 	msg.whack_listen = true;
-	return send_whack_msg(&msg, cfg->ctlsocket);
+	return send_whack_msg(&msg, cfg->ctlsocket, logger);
 }

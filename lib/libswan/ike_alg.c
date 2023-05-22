@@ -945,11 +945,11 @@ static void check_enum_name(const char *what,
 				     alg->fqn, what);
 		}
 		const char *enum_name = enum_name_short(enum_names, id);
-		DBGF(DBG_CRYPT, "%s id: %d enum name: %s",
-		     what, id, enum_name);
+		ldbgf(DBG_CRYPT, logger, "%s id: %d enum name: %s",
+		      what, id, enum_name);
 		pexpect_ike_alg_has_name(logger, HERE, alg, enum_name, "enum table name");
 	} else {
-		DBGF(DBG_CRYPT, "%s id: %d enum name: N/A", what, id);
+		ldbgf(DBG_CRYPT, logger, "%s id: %d enum name: N/A", what, id);
 	}
 }
 
@@ -969,16 +969,17 @@ static void check_algorithm_table(const struct ike_alg_type *type,
 	passert(type->Name != NULL);
 	passert(strcasecmp(type->name, type->Name) == 0);
 
-	DBGF(DBG_CRYPT, "%s algorithm assertion checks", type->name);
+	ldbgf(DBG_CRYPT, logger, "%s algorithm assertion checks", type->name);
 	FOR_EACH_IKE_ALGP(type, algp) {
 		const struct ike_alg *alg = *algp;
 
-		DBGF(DBG_CRYPT, "%s algorithm %s, IKEv1 OAKLEY: %d, IKEv1 ESP_INFO: %d, IKEv2: %d SADB: %d",
-		     type->name, alg->fqn,
-		     alg->id[IKEv1_OAKLEY_ID],
-		     alg->id[IKEv1_ESP_ID],
-		     alg->id[IKEv2_ALG_ID],
-		     alg->id[SADB_ALG_ID]);
+		ldbgf(DBG_CRYPT, logger,
+		      "%s algorithm %s, IKEv1 OAKLEY: %d, IKEv1 ESP_INFO: %d, IKEv2: %d SADB: %d",
+		      type->name, alg->fqn,
+		      alg->id[IKEv1_OAKLEY_ID],
+		      alg->id[IKEv1_ESP_ID],
+		      alg->id[IKEv2_ALG_ID],
+		      alg->id[SADB_ALG_ID]);
 
 		/*
 		 * Check the FQN first; and require upper case.  If

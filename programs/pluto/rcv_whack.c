@@ -1171,7 +1171,7 @@ static void whack_handle(struct fd *whackfd, struct logger *whack_logger)
 	}
 
 	static uintmax_t msgnum;
-	DBGF(DBG_TMI, "whack message %ju; size=%zd", msgnum++, n);
+	ldbgf(DBG_TMI, whack_logger, "whack message %ju; size=%zd", msgnum++, n);
 
 	/* sanity check message */
 	if ((size_t)n < offsetof(struct whack_message, whack_shutdown) + sizeof(msg.whack_shutdown)) {

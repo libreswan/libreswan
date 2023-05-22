@@ -431,7 +431,7 @@ int main(int argc, char *argv[])
 		 * We loaded all connections. Now tell pluto to listen,
 		 * then route the conns and resolve default route.
 		 */
-		starter_whack_listen(cfg);
+		starter_whack_listen(cfg, logger);
 
 		if (verbose > 0)
 			printf("  Pass #2: Routing auto=route connections\n");
@@ -451,7 +451,7 @@ int main(int argc, char *argv[])
 			if (conn->autostart == AUTOSTART_START) {
 				if (verbose > 0)
 					printf(" %s", conn->name);
-				starter_whack_initiate_conn(cfg, conn);
+				starter_whack_initiate_conn(cfg, conn, logger);
 			}
 		}
 

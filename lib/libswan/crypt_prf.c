@@ -86,8 +86,8 @@ static struct crypt_prf *wrap(const struct prf_desc *prf_desc,
 		};
 	}
 	/* not @POINTER, confuses refcnt.awk */
-	DBGF(DBG_CRYPT, "%s PRF %s %p",
-	     name, prf_desc->common.fqn, prf);
+	ldbgf(DBG_CRYPT, logger, "%s PRF %s %p",
+	      name, prf_desc->common.fqn, prf);
 	return prf;
 }
 

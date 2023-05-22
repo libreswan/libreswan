@@ -34,7 +34,7 @@ static void ike_alg_nss_cbc(const struct encrypt_desc *alg,
 			    uint8_t *iv, bool enc,
 			    struct logger *logger)
 {
-	DBGF(DBG_CRYPT, "NSS ike_alg_nss_cbc: %s - enter", alg->common.fqn);
+	ldbgf(DBG_CRYPT, logger, "NSS ike_alg_nss_cbc: %s - enter", alg->common.fqn);
 
 	if (symkey == NULL) {
 		llog_passert(logger, HERE,
@@ -104,7 +104,7 @@ static void ike_alg_nss_cbc(const struct encrypt_desc *alg,
 
 	if (secparam != NULL)
 		SECITEM_FreeItem(secparam, PR_TRUE);
-	DBGF(DBG_CRYPT, "NSS ike_alg_nss_cbc: %s - exit", alg->common.fqn);
+	ldbgf(DBG_CRYPT, logger, "NSS ike_alg_nss_cbc: %s - exit", alg->common.fqn);
 }
 
 static void nss_cbc_check(const struct encrypt_desc *encrypt, struct logger *logger)

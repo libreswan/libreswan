@@ -2703,7 +2703,7 @@ int main(int argc, char **argv)
 			 msg.pfsgroup != NULL ? msg.pfsgroup : "");
 		msg.esp = esp_buf;
 	}
-	ugh = pack_whack_msg(&wp);
+	ugh = pack_whack_msg(&wp, logger);
 	if (ugh != NULL)
 		diagw(ugh);
 

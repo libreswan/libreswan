@@ -60,7 +60,7 @@ static void calc_skeyseed_v2(PK11SymKey *shared,
 			     chunk_t *chunk_SK_pr_out,
 			     struct logger *logger)
 {
-	DBGF(DBG_CRYPT, "NSS: Started key computation");
+	ldbgf(DBG_CRYPT, logger, "NSS: Started key computation");
 
 	passert(prf != NULL);
 	dbg("calculating skeyseed using prf=%s integ=%s cipherkey-size=%zu salt-size=%zu",
@@ -181,7 +181,7 @@ static void calc_skeyseed_v2(PK11SymKey *shared,
 	/* store copy of SK_pr_k for later use in authnull */
 	*chunk_SK_pr_out = chunk_from_symkey("chunk_SK_pr", *SK_pr_out, logger);
 
-	DBGF(DBG_CRYPT, "NSS ikev2: finished computing individual keys for IKEv2 SA");
+	ldbgf(DBG_CRYPT, logger, "NSS ikev2: finished computing individual keys for IKEv2 SA");
 	release_symkey(__func__, "finalkey", &finalkey);
 }
 

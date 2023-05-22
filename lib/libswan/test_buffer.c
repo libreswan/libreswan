@@ -100,8 +100,8 @@ bool verify_symkey(const char *desc, chunk_t expected, PK11SymKey *actual,
 		   struct logger *logger)
 {
 	if (expected.len != sizeof_symkey(actual)) {
-		DBGF(DBG_CRYPT, "%s: expected length %zd but got %zd",
-		     desc, expected.len, sizeof_symkey(actual));
+		ldbgf(DBG_CRYPT, logger, "%s: expected length %zd but got %zd",
+		      desc, expected.len, sizeof_symkey(actual));
 		return false;
 	}
 	chunk_t chunk = chunk_from_symkey(desc, actual, logger);

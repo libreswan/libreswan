@@ -861,9 +861,9 @@ void init_ikev1(struct logger *logger)
 		 * always true of a state?
 		 */
 		if ((t->flags & from->v1.flags) != from->v1.flags) {
-			DBGF(DBG_BASE, "transition %s -> %s (%s) missing flags 0x"PRI_LSET,
-			     from->short_name, to->short_name,
-			     t->message, from->v1.flags);
+			ldbgf(DBG_BASE, logger, "transition %s -> %s (%s) missing flags 0x"PRI_LSET,
+			      from->short_name, to->short_name,
+			      t->message, from->v1.flags);
 		}
 		from->v1.flags |= t->flags & SMF_RETRANSMIT_ON_DUPLICATE;
 

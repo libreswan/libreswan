@@ -333,8 +333,9 @@ void append_algorithm(struct proposal_parser *parser,
 		      const struct ike_alg *alg,
 		      int enckeylen)
 {
+	struct logger *logger = parser->policy->logger;
 	if (alg == NULL) {
-		DBGF(DBG_PROPOSAL_PARSER, "no algorithm to append");
+		ldbgf(DBG_PROPOSAL_PARSER, logger, "no algorithm to append");
 		return;
 	}
 	enum proposal_algorithm algorithm = ike_to_proposal_algorithm(alg);
@@ -349,9 +350,9 @@ void append_algorithm(struct proposal_parser *parser,
 		.desc = alg,
 		.enckeylen = enckeylen,
 	};
-	DBGF(DBG_PROPOSAL_PARSER, "appending %s %s algorithm %s[_%d]",
-	     parser->protocol->name, ike_alg_type_name(alg->algo_type), alg->fqn,
-	     enckeylen);
+	ldbgf(DBG_PROPOSAL_PARSER, logger, "appending %s %s algorithm %s[_%d]",
+	      parser->protocol->name, ike_alg_type_name(alg->algo_type), alg->fqn,
+	      enckeylen);
 	*end = clone_thing(new_algorithm, "alg");
 }
 
@@ -691,6 +692,7 @@ bool proposal_parse_encrypt(struct proposal_parser *parser,
 			    const struct ike_alg **encrypt,
 			    int *encrypt_keylen)
 {
+	struct logger *logger = parser->policy->logger;
 	if (tokens->this.len == 0) {
 		proposal_error(parser, "%s encryption algorithm is empty",
 			       parser->protocol->name);
@@ -720,9 +722,9 @@ bool proposal_parse_encrypt(struct proposal_parser *parser,
 		const struct ike_alg *alg = encrypt_alg_byname(parser, ealg,
 							       enckeylen, print);
 		if (alg == NULL) {
-			DBGF(DBG_PROPOSAL_PARSER,
-			     "<ealg>byname('"PRI_SHUNK"') with <eklen>='"PRI_SHUNK"' failed: %s",
-			     pri_shunk(ealg), pri_shunk(eklen), str_diag(parser->diag));
+			ldbgf(DBG_PROPOSAL_PARSER, logger,
+			      "<ealg>byname('"PRI_SHUNK"') with <eklen>='"PRI_SHUNK"' failed: %s",
+			      pri_shunk(ealg), pri_shunk(eklen), str_diag(parser->diag));
 			return false;
 		}
 		/* consume <ealg>-<eklen> */

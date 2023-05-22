@@ -149,14 +149,14 @@ static bool test_cbc_op(const struct encrypt_desc *encrypt_desc,
 					    logger);
 
 	if (!verify_hunk(op, expected, tmp)) {
-		DBGF(DBG_CRYPT, "test_cbc_op: %s: %s: output does not match",
-		     description, op);
+		ldbgf(DBG_CRYPT, logger, "test_cbc_op: %s: %s: output does not match",
+		      description, op);
 		ok = false;
 	}
 	if (!verify_bytes("updated CBC IV", iv.ptr, iv.len,
 			  expected_iv.ptr + expected_iv.len - iv.len, iv.len)) {
-		DBGF(DBG_CRYPT, "test_cbc_op: %s: %s: IV does not match",
-		     description, op);
+		ldbgf(DBG_CRYPT, logger, "test_cbc_op: %s: %s: IV does not match",
+		      description, op);
 		ok = false;
 	}
 
@@ -198,8 +198,8 @@ static bool test_cbc_vector(const struct encrypt_desc *encrypt_desc,
 	/* Clean up. */
 	release_symkey(__func__, "sym_key", &sym_key);
 
-	DBGF(DBG_CRYPT, "test_ctr_vector: %s %s",
-	     test->description, ok ? "passed" : "failed");
+	ldbgf(DBG_CRYPT, logger, "test_ctr_vector: %s %s",
+	      test->description, ok ? "passed" : "failed");
 	return ok;
 }
 

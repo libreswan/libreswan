@@ -53,7 +53,7 @@ bool lexopen(struct file_lex_position **flp, const char *name,
 		return false;
 	}
 
-	DBGF(DBG_TMI, "lex open: %s", name);
+	ldbgf(DBG_TMI, oflp->logger, "lex open: %s", name);
 	struct file_lex_position *new_flp = alloc_thing(struct file_lex_position, name);
 	new_flp->depth = oflp->depth + 1;
 	new_flp->filename = clone_str(name, "lexopen filename");
@@ -73,7 +73,7 @@ bool lexopen(struct file_lex_position **flp, const char *name,
  */
 void lexclose(struct file_lex_position **flp)
 {
-	DBGF(DBG_TMI, "lex close:");
+	ldbgf(DBG_TMI, (*flp)->logger, "lex close:");
 	fclose((*flp)->fp);
 	pfreeany((*flp)->filename);
 	pfree(*flp);
@@ -134,7 +134,8 @@ bool shift(struct file_lex_position *flp)
 					flp->fp) == NULL) {
 				flp->bdry = B_file;
 				flp->tok = flp->cur = NULL;
-				DBGF(DBG_TMI, "lex shift: file(eof)");
+				ldbgf(DBG_TMI, flp->logger,
+				      "lex shift: file(eof)");
 				return false; /* no token */
 			}
 
@@ -165,7 +166,7 @@ bool shift(struct file_lex_position *flp)
 				 * START_OF_RECORD is NULL).
 				 */
 				start_record(flp, p);
-				DBGF(DBG_TMI, "lex shift: record(new line, with quotes)");
+				ldbgf(DBG_TMI, flp->logger, "lex shift: record(new line, with quotes)");
 				return false; /* no token */
 			}
 
@@ -194,7 +195,7 @@ bool shift(struct file_lex_position *flp)
 			flp->under = *p;
 			*p = '\0';
 			flp->cur = p;
-			DBGF(DBG_TMI, "lex shift: '%s'", flp->tok);
+			ldbgf(DBG_TMI, flp->logger, "lex shift: '%s'", flp->tok);
 			return true; /* token */
 
 		default:
@@ -206,7 +207,7 @@ bool shift(struct file_lex_position *flp)
 				 * NULL).
 				 */
 				start_record(flp, p);
-				DBGF(DBG_TMI, "lex shift: record(new line, with quotes)");
+				ldbgf(DBG_TMI, flp->logger, "lex shift: record(new line, with quotes)");
 				return false; /* no token */
 			}
 
@@ -243,7 +244,7 @@ bool shift(struct file_lex_position *flp)
 			flp->under = *p;
 			*p = '\0';
 			flp->cur = p;
-			DBGF(DBG_TMI, "lex shift: '%s'", flp->tok);
+			ldbgf(DBG_TMI, flp->logger, "lex shift: '%s'", flp->tok);
 			return true; /* token */
 		}
 	}
@@ -258,17 +259,17 @@ bool shift(struct file_lex_position *flp)
 bool flushline(struct file_lex_position *flp, const char *message)
 {
 	if (flp->bdry != B_none) {
-		DBGF(DBG_TMI, "lex flushline: already on eof or record boundary");
+		ldbgf(DBG_TMI, flp->logger, "lex flushline: already on eof or record boundary");
 		return true;
 	}
 
 	/* discard tokens until boundary reached */
-	DBGF(DBG_TMI, "lex flushline: need to flush tokens");
+	ldbgf(DBG_TMI, flp->logger, "lex flushline: need to flush tokens");
 	if (message != NULL) {
 		llog(RC_LOG_SERIOUS, flp->logger, "%s", message);
 	}
 	do {
-		DBGF(DBG_TMI, "lex flushline: discarding '%s'", flp->tok);
+		ldbgf(DBG_TMI, flp->logger, "lex flushline: discarding '%s'", flp->tok);
 	} while (shift(flp));
 	return false;
 }

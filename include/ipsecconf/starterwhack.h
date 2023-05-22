@@ -27,8 +27,10 @@ int starter_whack_route_conn(struct starter_config *cfg,
 			     struct starter_conn *conn,
 			     struct logger *logger);
 int starter_whack_initiate_conn(struct starter_config *cfg,
-				struct starter_conn *conn);
-extern int starter_whack_listen(struct starter_config *cfg);
+				struct starter_conn *conn,
+				struct logger *logger);
+extern int starter_whack_listen(struct starter_config *cfg,
+				struct logger *logger);
 
 #endif /* _STARTER_WHACK_H_ */
 

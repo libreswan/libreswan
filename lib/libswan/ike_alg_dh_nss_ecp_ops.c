@@ -46,7 +46,7 @@ static void nss_ecp_calc_local_secret(const struct dh_desc *group,
 	 * Get the PK11 formatted EC parameters (stored in static
 	 * data) from NSS.
 	 */
-	DBGF(DBG_CRYPT, "oid %d %x", group->nss_oid, group->nss_oid);
+	ldbgf(DBG_CRYPT, logger, "oid %d %x", group->nss_oid, group->nss_oid);
 
 	/*
 	 * Wrap the raw OID in ASN.1.  SECKEYECParams is just a

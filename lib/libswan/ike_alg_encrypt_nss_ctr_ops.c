@@ -39,7 +39,7 @@ static void do_nss_ctr(const struct encrypt_desc *alg UNUSED,
 		       uint8_t *counter_block, bool encrypt,
 		       struct logger *logger)
 {
-	DBGF(DBG_CRYPT, "do_aes_ctr: enter");
+	ldbgf(DBG_CRYPT, logger, "do_aes_ctr: enter");
 
 	passert(sym_key);
 	if (sym_key == NULL) {
@@ -90,13 +90,13 @@ static void do_nss_ctr(const struct encrypt_desc *alg UNUSED,
 	uint32_t old_counter = ntohl(*counter);
 	size_t increment = (buf_len + AES_BLOCK_SIZE - 1) / AES_BLOCK_SIZE;
 	uint32_t new_counter = old_counter + increment;
-	DBGF(DBG_CRYPT, "do_aes_ctr: counter-block updated from 0x%" PRIx32 " to 0x%" PRIx32 " for %zd bytes",
-	     old_counter, new_counter, buf_len);
+	ldbgf(DBG_CRYPT, logger, "do_aes_ctr: counter-block updated from 0x%" PRIx32 " to 0x%" PRIx32 " for %zd bytes",
+	      old_counter, new_counter, buf_len);
 	/* Wrap ... */
 	passert(new_counter >= old_counter);
 	*counter = htonl(new_counter);
 
-	DBGF(DBG_CRYPT, "do_aes_ctr: exit");
+	ldbgf(DBG_CRYPT, logger, "do_aes_ctr: exit");
 }
 
 static void nss_ctr_check(const struct encrypt_desc *alg UNUSED, struct logger *unused_logger UNUSED)

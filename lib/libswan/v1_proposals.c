@@ -75,6 +75,7 @@ static bool add_alg_defaults(struct proposal_parser *parser,
 			     const struct ike_alg **default_algs,
 			     merge_alg_default_t *merge_alg_default)
 {
+	struct logger *logger = parser->policy->logger;
 	/*
 	 * Use VALID_ALG to add the valid algorithms into VALID_ALGS.
 	 */
@@ -83,14 +84,16 @@ static bool add_alg_defaults(struct proposal_parser *parser,
 		const struct ike_alg *alg = *default_alg;
 		if (!alg_byname_ok(parser, alg,
 				   shunk1(alg->fqn))) {
-			DBGF(DBG_PROPOSAL_PARSER, "skipping default %s",
-			     str_diag(parser->diag));
+			ldbgf(DBG_PROPOSAL_PARSER, logger,
+			      "skipping default %s",
+			      str_diag(parser->diag));
 			pfree_diag(&parser->diag);
 			continue;
 		}
 		/* add it */
-		DBGF(DBG_PROPOSAL_PARSER, "adding default %s %s",
-		     ike_alg_type_name(type), alg->fqn);
+		ldbgf(DBG_PROPOSAL_PARSER, logger,
+		      "adding default %s %s",
+		      ike_alg_type_name(type), alg->fqn);
 		struct v1_proposal merged_proposal = merge_alg_default(*proposal,
 									 *default_alg);
 		if (!add_proposal_defaults(parser, defaults,
@@ -360,8 +363,10 @@ bool v1_proposals_parse_str(struct proposal_parser *parser,
 			    struct proposals *proposals,
 			    shunk_t alg_str)
 {
-	DBGF(DBG_PROPOSAL_PARSER, "parsing '"PRI_SHUNK"' for %s",
-	     pri_shunk(alg_str), parser->protocol->name);
+	struct logger *logger = parser->policy->logger;
+	ldbgf(DBG_PROPOSAL_PARSER, logger,
+	      "parsing '"PRI_SHUNK"' for %s",
+	      pri_shunk(alg_str), parser->protocol->name);
 
 	if (alg_str.len == 0) {
 		/* XXX: hack to keep testsuite happy */

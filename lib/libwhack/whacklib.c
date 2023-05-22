@@ -44,11 +44,12 @@
 
 static bool pack_raw(struct whackpacker *wp,
 		     void **bytes, size_t nr_bytes,
-		     const char *what)
+		     const char *what,
+		     struct logger *logger)
 {
 	if (wp->str_next + nr_bytes > wp->str_roof) {
-		DBGF(DBG_TMI, "%s: buffer overflow for '%s'",
-		    __func__, what);
+		ldbgf(DBG_TMI, logger, "%s: buffer overflow for '%s'",
+		      __func__, what);
 		return false; /* would overflow buffer */
 	}
 	memcpy(wp->str_next, *bytes, nr_bytes);
@@ -58,13 +59,14 @@ static bool pack_raw(struct whackpacker *wp,
 
 static bool unpack_raw(struct whackpacker *wp,
 		       void **bytes, size_t nr_bytes,
-		       const char *what)
+		       const char *what,
+		       struct logger *logger)
 {
 	uint8_t *end = wp->str_next + nr_bytes;
 	if (end > wp->str_roof) {
 		/* overflow */
-		DBGF(DBG_TMI, "%s: buffer overflow for '%s'; needing %zu bytes",
-		    __func__, what, nr_bytes);
+		ldbgf(DBG_TMI, logger, "%s: buffer overflow for '%s'; needing %zu bytes",
+		      __func__, what, nr_bytes);
 		return false;
 	}
 	*bytes = wp->str_next;
@@ -93,7 +95,7 @@ static bool unpack_raw(struct whackpacker *wp,
 			return true;					\
 		}							\
 		if (!pack_raw(WP, (void**)&(HUNK)->ptr,			\
-			      HUNK->len, WHAT)) {			\
+			      HUNK->len, WHAT, logger)) {		\
 			return false;					\
 		}							\
 		HUNK->ptr = NULL; /* kill pointer being sent on wire! */ \
@@ -109,28 +111,28 @@ static bool unpack_raw(struct whackpacker *wp,
 			return true;					\
 		}							\
 		if (!unpack_raw(WP, (void**)&(HUNK)->ptr,		\
-				HUNK->len, WHAT)) {			\
+				HUNK->len, WHAT, logger)) {		\
 			return false;					\
 		}							\
 		return true;						\
 	}
 
-static bool pack_chunk(struct whackpacker *wp, chunk_t *chunk, const char *what)
+static bool pack_chunk(struct whackpacker *wp, chunk_t *chunk, const char *what, struct logger *logger)
 {
 	PACK_HUNK(wp, chunk, what);
 }
 
-static bool unpack_chunk(struct whackpacker *wp, chunk_t *chunk, const char *what)
+static bool unpack_chunk(struct whackpacker *wp, chunk_t *chunk, const char *what, struct logger *logger)
 {
 	UNPACK_HUNK(wp, chunk, what);
 }
 
-static bool pack_shunk(struct whackpacker *wp, shunk_t *shunk, const char *what)
+static bool pack_shunk(struct whackpacker *wp, shunk_t *shunk, const char *what, struct logger *logger)
 {
 	PACK_HUNK(wp, shunk, what);
 }
 
-static bool unpack_shunk(struct whackpacker *wp, shunk_t *shunk, const char *what)
+static bool unpack_shunk(struct whackpacker *wp, shunk_t *shunk, const char *what, struct logger *logger)
 {
 	UNPACK_HUNK(wp, shunk, what);
 }
@@ -149,14 +151,14 @@ static bool unpack_shunk(struct whackpacker *wp, shunk_t *shunk, const char *wha
  * - NULL pointers are converted to ""
  */
 
-static bool pack_string(struct whackpacker *wp, char **p, const char *what)
+static bool pack_string(struct whackpacker *wp, char **p, const char *what, struct logger *logger)
 {
 	const char *s = (*p == NULL ? "" : *p); /* note: NULL becomes ""! */
 	size_t len = strlen(s) + 1;
 
 	if (wp->str_roof - wp->str_next < (ptrdiff_t)len) {
-		DBGF(DBG_TMI, "%s: buffer overflow for '%s'",
-		    __func__, what);
+		ldbgf(DBG_TMI, logger, "%s: buffer overflow for '%s'",
+		      __func__, what);
 		return false; /* would overflow buffer */
 	}
 
@@ -166,21 +168,21 @@ static bool pack_string(struct whackpacker *wp, char **p, const char *what)
 	return true;
 }
 
-static bool unpack_string(struct whackpacker *wp, char **p, const char *what)
+static bool unpack_string(struct whackpacker *wp, char **p, const char *what, struct logger *logger)
 {
 	/* expect wire-pointer to be NULL */
 	pexpect(*p == NULL);
 
 	uint8_t *end = memchr(wp->str_next, '\0', (wp->str_roof - wp->str_next) );
 	if (end == NULL) {
-		DBGF(DBG_TMI, "%s: buffer overflow for '%s'; missing NUL",
-		    __func__, what);
+		ldbgf(DBG_TMI, logger, "%s: buffer overflow for '%s'; missing NUL",
+		      __func__, what);
 		return false; /* fishy: no end found */
 	}
 
 	unsigned char *s = (wp->str_next == end ? NULL : wp->str_next);
 
-	DBGF(DBG_TMI, "%s: '%s' is %ld bytes", __func__, what, (long int)(end - wp->str_next));
+	ldbgf(DBG_TMI, logger, "%s: '%s' is %ld bytes", __func__, what, (long int)(end - wp->str_next));
 
 	*p = (char *)s;
 	wp->str_next = end + 1;
@@ -193,7 +195,8 @@ static bool unpack_string(struct whackpacker *wp, char **p, const char *what)
 
 static bool pack_ip_info(struct whackpacker *wp UNUSED,
 			 const struct ip_info **info,
-			 const char *what UNUSED)
+			 const char *what UNUSED,
+			 struct logger *logger UNUSED)
 {
 	/* spell out conversions */
 	enum ip_version v = (*info == NULL ? 0 : (*info)->ip_version);
@@ -203,7 +206,8 @@ static bool pack_ip_info(struct whackpacker *wp UNUSED,
 
 static bool unpack_ip_info(struct whackpacker *wp UNUSED,
 			   const struct ip_info **info,
-			   const char *what UNUSED)
+			   const char *what UNUSED,
+			   struct logger *logger UNUSED)
 {
 	/* spell out conversions */
 	*info = ip_version_info((unsigned)(uintptr_t)(const void*)*info);
@@ -212,7 +216,8 @@ static bool unpack_ip_info(struct whackpacker *wp UNUSED,
 
 static bool pack_ip_protocol(struct whackpacker *wp UNUSED,
 			     const struct ip_protocol **protocol,
-			     const char *what UNUSED)
+			     const char *what UNUSED,
+			     struct logger *logger UNUSED)
 {
 	/* spell out conversions */
 	*protocol = (const void*)(uintptr_t)(unsigned)(*protocol)->ipproto;
@@ -221,7 +226,8 @@ static bool pack_ip_protocol(struct whackpacker *wp UNUSED,
 
 static bool unpack_ip_protocol(struct whackpacker *wp UNUSED,
 			       const struct ip_protocol **protocol,
-			       const char *what UNUSED)
+			       const char *what UNUSED,
+			       struct logger *logger UNUSED)
 {
 	/* spell out conversions */
 	*protocol = protocol_from_ipproto((unsigned)(uintptr_t)(const void*)*protocol);
@@ -231,10 +237,11 @@ static bool unpack_ip_protocol(struct whackpacker *wp UNUSED,
 static bool pack_constant_string(struct whackpacker *wp UNUSED,
 				 const char **string,
 				 const char *constant,
-				 const char *what)
+				 const char *what,
+				 struct logger *logger)
 {
 	if (*string != NULL) {
-		DBGF(DBG_TMI, "%s: '%s' was: %s (%s)", __func__, what, *string, constant);
+		ldbgf(DBG_TMI, logger, "%s: '%s' was: %s (%s)", __func__, what, *string, constant);
 		passert(streq(*string, constant));
 		*string = NULL;
 	} else {
@@ -245,19 +252,20 @@ static bool pack_constant_string(struct whackpacker *wp UNUSED,
 		 *
 		 * The unpack will set the field, oops.
 		 */
-		DBGF(DBG_TMI, "%s: '%s' was null (%s)", __func__, what, constant);
+		ldbgf(DBG_TMI, logger, "%s: '%s' was null (%s)", __func__, what, constant);
 	}
 	return true;
 }
 
 static bool unpack_constant_string(struct whackpacker *wp UNUSED,
-				 const char **string,
-				 const char *constant,
-				 const char *what)
+				   const char **string,
+				   const char *constant,
+				   const char *what,
+				   struct logger *logger)
 {
 	pexpect(*string == NULL);
 	*string = constant;
-	DBGF(DBG_TMI, "%s: '%s' is %s", __func__, what, *string);
+	ldbgf(DBG_TMI, logger, "%s: '%s' is %s", __func__, what, *string);
 	return true;
 }
 
@@ -265,13 +273,13 @@ static bool unpack_constant_string(struct whackpacker *wp UNUSED,
  * in and out/
  */
 struct pickler {
-	bool (*string)(struct whackpacker *wp, char **p, const char *what);
-	bool (*shunk)(struct whackpacker *wp, shunk_t *s, const char *what);
-	bool (*chunk)(struct whackpacker *wp, chunk_t *s, const char *what);
-	bool (*raw)(struct whackpacker *wp, void **bytes, size_t nr_bytes, const char *what);
-	bool (*ip_info)(struct whackpacker *wp, const struct ip_info **info, const char *what);
-	bool (*ip_protocol)(struct whackpacker *wp, const struct ip_protocol **protocol, const char *what);
-	bool (*constant_string)(struct whackpacker *wp, const char **p, const char *leftright, const char *what);
+	bool (*string)(struct whackpacker *wp, char **p, const char *what, struct logger *logger);
+	bool (*shunk)(struct whackpacker *wp, shunk_t *s, const char *what, struct logger *logger);
+	bool (*chunk)(struct whackpacker *wp, chunk_t *s, const char *what, struct logger *logger);
+	bool (*raw)(struct whackpacker *wp, void **bytes, size_t nr_bytes, const char *what, struct logger *logger);
+	bool (*ip_info)(struct whackpacker *wp, const struct ip_info **info, const char *what, struct logger *logger);
+	bool (*ip_protocol)(struct whackpacker *wp, const struct ip_protocol **protocol, const char *what, struct logger *logger);
+	bool (*constant_string)(struct whackpacker *wp, const char **p, const char *leftright, const char *what, struct logger *logger);
 };
 
 const struct pickler pickle_packer = {
@@ -294,12 +302,12 @@ const struct pickler pickle_unpacker = {
 	.constant_string = unpack_constant_string,
 };
 
-#define PICKLE_STRING(FIELD) pickle->string(wp, FIELD, #FIELD)
-#define PICKLE_CHUNK(FIELD) pickle->chunk(wp, FIELD, #FIELD)
-#define PICKLE_SHUNK(FIELD) pickle->shunk(wp, FIELD, #FIELD)
-#define PICKLE_THINGS(THINGS, NR) pickle->raw(wp, (void**)(THINGS), NR*sizeof((THINGS)[0][0]), #THINGS)
-#define PICKLE_CONSTANT_STRING(FIELD, VALUE) pickle->constant_string(wp, FIELD, VALUE, #FIELD)
-#define PICKLE_IP_INFO(FIELD) pickle->ip_info(wp, FIELD, #FIELD)
+#define PICKLE_STRING(FIELD) pickle->string(wp, FIELD, #FIELD, logger)
+#define PICKLE_CHUNK(FIELD) pickle->chunk(wp, FIELD, #FIELD, logger)
+#define PICKLE_SHUNK(FIELD) pickle->shunk(wp, FIELD, #FIELD, logger)
+#define PICKLE_THINGS(THINGS, NR) pickle->raw(wp, (void**)(THINGS), NR*sizeof((THINGS)[0][0]), #THINGS, logger)
+#define PICKLE_CONSTANT_STRING(FIELD, VALUE) pickle->constant_string(wp, FIELD, VALUE, #FIELD, logger)
+#define PICKLE_IP_INFO(FIELD) pickle->ip_info(wp, FIELD, #FIELD, logger)
 
 #if 0
 #define PICKLE_CIDR(CIDR) \
@@ -311,7 +319,8 @@ const struct pickler pickle_unpacker = {
 static bool pickle_whack_end(struct whackpacker *wp,
 			     const char *leftright,
 			     struct whack_end *end,
-			     const struct pickler *pickle)
+			     const struct pickler *pickle,
+			     struct logger *logger)
 {
 	return (PICKLE_CONSTANT_STRING(&end->leftright, leftright),
 		PICKLE_STRING(&end->id) &&
@@ -333,11 +342,13 @@ static bool pickle_whack_end(struct whackpacker *wp,
 		true);
 }
 
-static bool pickle_whack_message(struct whackpacker *wp, const struct pickler *pickle)
+static bool pickle_whack_message(struct whackpacker *wp,
+				 const struct pickler *pickle,
+				 struct logger *logger)
 {
 	return (PICKLE_STRING(&wp->msg->name) && /* first */
-		pickle_whack_end(wp, "left", &wp->msg->left, pickle) &&
-		pickle_whack_end(wp, "right",&wp->msg->right, pickle) &&
+		pickle_whack_end(wp, "left", &wp->msg->left, pickle, logger) &&
+		pickle_whack_end(wp, "right",&wp->msg->right, pickle, logger) &&
 		PICKLE_STRING(&wp->msg->keyid) &&
 		PICKLE_STRING(&wp->msg->ike) &&
 		PICKLE_STRING(&wp->msg->esp) &&
@@ -370,13 +381,13 @@ static bool pickle_whack_message(struct whackpacker *wp, const struct pickler *p
  * @param wp The whack message
  * @return err_t
  */
-err_t pack_whack_msg(struct whackpacker *wp)
+err_t pack_whack_msg(struct whackpacker *wp, struct logger *logger)
 {
 	/* Pack strings */
 
 	wp->str_next = wp->msg->string;
 	wp->str_roof = &wp->msg->string[sizeof(wp->msg->string)];
-	if (!pickle_whack_message(wp, &pickle_packer)) {
+	if (!pickle_whack_message(wp, &pickle_packer, logger)) {
 		return "too many bytes of strings or key to fit in message to pluto";
 	}
 	return NULL;
@@ -397,7 +408,7 @@ bool unpack_whack_msg(struct whackpacker *wp, struct logger *logger)
 		return false;
 	}
 
-	if (!pickle_whack_message(wp, &pickle_unpacker)) {
+	if (!pickle_whack_message(wp, &pickle_unpacker, logger)) {
 		llog(RC_BADWHACKMESSAGE, logger,
 			    "message from whack contains bad string or key");
 		return false;

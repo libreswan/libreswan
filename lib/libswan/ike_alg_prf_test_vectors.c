@@ -198,7 +198,7 @@ static bool test_prf_vector(const struct prf_desc *prf,
 	if (!verify_symkey(test->description, prf_output, symkey_output, logger)) {
 		ok = false;
 	}
-	DBGF(DBG_CRYPT, "%s: %s %s", __func__, test->description, ok ? "passed" : "failed");
+	ldbgf(DBG_CRYPT, logger, "%s: %s %s", __func__, test->description, ok ? "passed" : "failed");
 
 	free_chunk_content(&chunk_message);
 	free_chunk_content(&chunk_key);
@@ -320,8 +320,8 @@ static bool test_kdf_vector(const struct prf_desc *prf,
 		ok = false;
 	}
 
-	DBGF(DBG_CRYPT, "%s: %s %s", __func__, test->description,
-	     ok ? "passed" : "failed");
+	ldbgf(DBG_CRYPT, logger, "%s: %s %s", __func__, test->description,
+	      ok ? "passed" : "failed");
 
 	release_symkey(__func__, "gir", &gir);
 	release_symkey(__func__, "gir_new", &gir_new);

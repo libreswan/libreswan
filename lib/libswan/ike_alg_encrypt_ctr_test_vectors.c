@@ -172,13 +172,15 @@ static bool test_ctr_op(const struct encrypt_desc *encrypt_desc,
 	encrypt_desc->encrypt_ops->do_crypt(encrypt_desc, tmp.ptr, tmp.len,
 					    sym_key, cb.ptr, encrypt, logger);
 	if (!verify_hunk(op, expected_output, tmp)) {
-		DBGF(DBG_CRYPT, "test_ctr_op: %s: %s: output does not match",
-		     description, op);
+		ldbgf(DBG_CRYPT, logger,
+		      "test_ctr_op: %s: %s: output does not match",
+		      description, op);
 		ok = false;
 	}
 	if (!verify_hunk("counter-block", expected_cb, cb)) {
-		DBGF(DBG_CRYPT, "test_ctr_op: %s: %s: counter-block does not match",
-		     description, op);
+		ldbgf(DBG_CRYPT, logger,
+		      "test_ctr_op: %s: %s: counter-block does not match",
+		      description, op);
 		ok = false;
 	}
 
@@ -215,8 +217,8 @@ static bool test_ctr_vector(const struct encrypt_desc *encrypt_desc,
 	/* Clean up. */
 	release_symkey(__func__, "sym_key", &sym_key);
 
-	DBGF(DBG_CRYPT, "test_ctr_vector: %s %s",
-	     test->description, ok ? "passed" : "failed");
+	ldbgf(DBG_CRYPT, logger, "test_ctr_vector: %s %s",
+	      test->description, ok ? "passed" : "failed");
 	return ok;
 }
 

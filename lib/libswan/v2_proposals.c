@@ -34,6 +34,7 @@
 static bool warning_or_false(struct proposal_parser *parser,
 			     const char *what, shunk_t print)
 {
+	struct logger *logger = parser->policy->logger;
 	passert(parser->diag != NULL);
 	bool result;
 	if (parser->policy->ignore_parser_errors) {
@@ -41,16 +42,16 @@ static bool warning_or_false(struct proposal_parser *parser,
 		 * XXX: the algorithm might be unknown, or might be
 		 * known but not enabled due to FIPS, or ...?
 		 */
-		llog(RC_LOG, parser->policy->logger,
-			    "ignoring %s %s %s algorithm '"PRI_SHUNK"'",
-			    enum_name(&ike_version_names, parser->policy->version),
-			    parser->protocol->name, /* ESP|IKE|AH */
-			    what, pri_shunk(print));
+		llog(RC_LOG, logger,
+		     "ignoring %s %s %s algorithm '"PRI_SHUNK"'",
+		     enum_name(&ike_version_names, parser->policy->version),
+		     parser->protocol->name, /* ESP|IKE|AH */
+		     what, pri_shunk(print));
 		result = true;
 	} else {
-		DBGF(DBG_PROPOSAL_PARSER,
-		     "lookup for %s algorithm '"PRI_SHUNK"' failed",
-		     what, pri_shunk(print));
+		ldbgf(DBG_PROPOSAL_PARSER, logger,
+		      "lookup for %s algorithm '"PRI_SHUNK"' failed",
+		      what, pri_shunk(print));
 		result = false;
 	}
 	return result;
@@ -159,6 +160,7 @@ enum proposal_status {
 static enum proposal_status parse_proposal(struct proposal_parser *parser,
 					   struct proposal *proposal, shunk_t input)
 {
+	struct logger *logger = parser->policy->logger;
 	if (DBGP(DBG_PROPOSAL_PARSER)) {
 		DBG_log("proposal: '"PRI_SHUNK"'", pri_shunk(input));
 	}
@@ -207,7 +209,8 @@ static enum proposal_status parse_proposal(struct proposal_parser *parser,
 		/* deal with all encryption algorithm tokens being discarded */
 		if (next_algorithm(proposal, PROPOSAL_encrypt, NULL) == NULL) {
 			if (parser->policy->ignore_parser_errors) {
-				DBGF(DBG_PROPOSAL_PARSER, "all encryption algorithms skipped; stumbling on");
+				ldbgf(DBG_PROPOSAL_PARSER, logger,
+				      "all encryption algorithms skipped; stumbling on");
 				passert(parser->diag == NULL);
 				return PROPOSAL_IGNORE;
 			}
@@ -225,7 +228,7 @@ static enum proposal_status parse_proposal(struct proposal_parser *parser,
 	/* Error left in parser->diag */
 #define PARSE_ALG(TOKENS, ALG)						\
 	passert(parser->diag == NULL); /* so far so good */		\
-	DBGF(DBG_PROPOSAL_PARSER, "parsing "#ALG":");			\
+	ldbgf(DBG_PROPOSAL_PARSER, logger, "parsing "#ALG":");		\
 	if (parse_alg(parser, proposal,					\
 		      &ike_alg_##ALG, TOKENS.this)) {			\
 		passert(parser->diag == NULL);				\
@@ -266,14 +269,15 @@ static enum proposal_status parse_proposal(struct proposal_parser *parser,
 		PARSE_ALG(prf_tokens, prf);
 		if (parser->diag == NULL) {
 			/* advance */
-			DBGF(DBG_PROPOSAL_PARSER, "<encr>-<PRF> succeeded, advancing tokens");
+			ldbgf(DBG_PROPOSAL_PARSER, logger,
+			      "<encr>-<PRF> succeeded, advancing tokens");
 			tokens = prf_tokens;
 			remove_duplicate_algorithms(parser, proposal, PROPOSAL_prf);
 		} else {
 			/* toss the result, but save the error */
-			DBGF(DBG_PROPOSAL_PARSER,
-			     "<encr>-<PRF> failed, saving error '%s' and tossing result",
-			     str_diag(parser->diag));
+			ldbgf(DBG_PROPOSAL_PARSER, logger,
+			      "<encr>-<PRF> failed, saving error '%s' and tossing result",
+			      str_diag(parser->diag));
 			free_algorithms(proposal, PROPOSAL_prf);
 			prf_diag = parser->diag;
 			parser->diag = NULL;
@@ -294,16 +298,16 @@ static enum proposal_status parse_proposal(struct proposal_parser *parser,
 		PARSE_ALG(tokens, integ);
 		if (parser->diag != NULL) {
 			if (prf_diag != NULL) {
-				DBGF(DBG_PROPOSAL_PARSER,
-				     "<encr>-<PRF> and <encr>-<INTEG> failed, returning earlier PRF error '%s' and discarding INTEG error '%s')",
-				     str_diag(prf_diag), str_diag(parser->diag));
+				ldbgf(DBG_PROPOSAL_PARSER, logger,
+				      "<encr>-<PRF> and <encr>-<INTEG> failed, returning earlier PRF error '%s' and discarding INTEG error '%s')",
+				      str_diag(prf_diag), str_diag(parser->diag));
 				pfree_diag(&parser->diag);
 				parser->diag = prf_diag;
 				return PROPOSAL_ERROR;
 			} else {
-				DBGF(DBG_PROPOSAL_PARSER,
-				     "<INTEG> or <encr>-<INTEG> failed '%s')",
-				     str_diag(parser->diag));
+				ldbgf(DBG_PROPOSAL_PARSER, logger,
+				      "<INTEG> or <encr>-<INTEG> failed '%s')",
+				      str_diag(parser->diag));
 				pexpect(prf_diag == NULL);
 				pfree_diag(&prf_diag);
 				return PROPOSAL_ERROR;
@@ -327,7 +331,8 @@ static enum proposal_status parse_proposal(struct proposal_parser *parser,
 	    next_algorithm(proposal, PROPOSAL_prf, NULL) == NULL) {
 		PARSE_ALG(tokens, prf);
 		if (parser->diag != NULL) {
-			DBGF(DBG_PROPOSAL_PARSER, "<encr>-<integ>-<PRF> failed '%s'", str_diag(parser->diag));
+			ldbgf(DBG_PROPOSAL_PARSER, logger,
+			      "<encr>-<integ>-<PRF> failed '%s'", str_diag(parser->diag));
 			return PROPOSAL_ERROR;
 		}
 		remove_duplicate_algorithms(parser, proposal, PROPOSAL_prf);
@@ -348,7 +353,8 @@ static enum proposal_status parse_proposal(struct proposal_parser *parser,
 	    tokens.this.ptr != NULL /*more*/) {
 		PARSE_ALG(tokens, dh);
 		if (parser->diag != NULL) {
-			DBGF(DBG_PROPOSAL_PARSER, "...<dh> failed '%s'", str_diag(parser->diag));
+			ldbgf(DBG_PROPOSAL_PARSER, logger,
+			      "...<dh> failed '%s'", str_diag(parser->diag));
 			return PROPOSAL_ERROR;
 		}
 		remove_duplicate_algorithms(parser, proposal, PROPOSAL_dh);
@@ -379,8 +385,9 @@ bool v2_proposals_parse_str(struct proposal_parser *parser,
 			    struct proposals *proposals,
 			    shunk_t input)
 {
-	DBGF(DBG_PROPOSAL_PARSER, "parsing '"PRI_SHUNK"' for %s",
-	     pri_shunk(input), parser->protocol->name);
+	struct logger *logger = parser->policy->logger;
+	ldbgf(DBG_PROPOSAL_PARSER, logger, "parsing '"PRI_SHUNK"' for %s",
+	      pri_shunk(input), parser->protocol->name);
 
 	if (input.len == 0) {
 		/* XXX: hack to keep testsuite happy */

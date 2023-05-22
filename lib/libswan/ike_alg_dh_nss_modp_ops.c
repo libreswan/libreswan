@@ -59,9 +59,10 @@ static void nss_modp_calc_local_secret(const struct dh_desc *group,
 	*privk = NULL;
 	do {
 		if (*privk != NULL) {
-			DBGF(DBG_CRYPT, "NSS: re-generating dh keys (pubkey %d did not match %zu)",
-			     (*pubk)->u.dh.publicValue.len,
-			     group->bytes);
+			ldbgf(DBG_CRYPT, logger,
+			      "NSS: re-generating dh keys (pubkey %d did not match %zu)",
+			      (*pubk)->u.dh.publicValue.len,
+			      group->bytes);
 			SECKEY_DestroyPrivateKey(*privk);
 			SECKEY_DestroyPublicKey(*pubk);
 		}
@@ -92,7 +93,7 @@ static diag_t nss_modp_calc_shared_secret(const struct dh_desc *group,
 					  PK11SymKey **shared_secret,
 					  struct logger *logger)
 {
-	DBGF(DBG_CRYPT, "Started DH shared-secret computation in NSS:");
+	ldbgf(DBG_CRYPT, logger, "Started DH shared-secret computation in NSS:");
 
 	/*
 	 * See NSS's SSL code for how this gets constructed on the

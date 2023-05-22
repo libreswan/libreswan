@@ -60,9 +60,10 @@ static struct prf_context *init(const struct prf_desc *prf_desc,
 				  key_name, key);
 		return NULL;
 	}
-	DBGF(DBG_CRYPT, "%s prf: created %s context %p from %s-key@%p",
-	     name, prf_desc->common.fqn,
-	     context, key_name, key);
+	ldbgf(DBG_CRYPT, logger,
+	      "%s prf: created %s context %p from %s-key@%p",
+	      name, prf_desc->common.fqn,
+	      context, key_name, key);
 
 	SECStatus rc = PK11_DigestBegin(context);
 	if (rc) {
@@ -71,9 +72,10 @@ static struct prf_context *init(const struct prf_desc *prf_desc,
 		PK11_DestroyContext(context, PR_TRUE);
 		return NULL;
 	}
-	DBGF(DBG_CRYPT, "%s prf: begin %s with context %p from %s-key@%p",
-	     name, prf_desc->common.fqn,
-	     context, key_name, key);
+	ldbgf(DBG_CRYPT, logger,
+	      "%s prf: begin %s with context %p from %s-key@%p",
+	      name, prf_desc->common.fqn,
+	      context, key_name, key);
 
 	struct prf_context prf = {
 		.name = name,

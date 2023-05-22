@@ -286,7 +286,7 @@ static struct hash_signature ECDSA_raw_sign_hash(const struct secret_stuff *pks,
 						 const struct hash_desc *hash_alg,
 						 struct logger *logger)
 {
-	DBGF(DBG_CRYPT, "%s: started using NSS", __func__);
+	ldbgf(DBG_CRYPT, logger, "%s: started using NSS", __func__);
 
 	if (!pexpect(pks->u.pubkey.private_key != NULL)) {
 		dbg("no private key!");
@@ -416,7 +416,7 @@ static struct hash_signature ECDSA_digsig_sign_hash(const struct secret_stuff *p
 		return (struct hash_signature) { .len = 0, };
 	}
 
-	DBGF(DBG_CRYPT, "ECDSA_sign_hash: Started using NSS");
+	ldbgf(DBG_CRYPT, logger, "ECDSA_sign_hash: Started using NSS");
 
 	/* point HASH to sign at HASH_VAL */
 	SECItem hash_to_sign = {
@@ -462,7 +462,7 @@ static struct hash_signature ECDSA_digsig_sign_hash(const struct secret_stuff *p
 	memcpy(signature.ptr, encoded_signature.data, encoded_signature.len);
 	SECITEM_FreeItem(&encoded_signature, PR_FALSE);
 
-	DBGF(DBG_CRYPT, "ECDSA_sign_hash: Ended using NSS");
+	ldbgf(DBG_CRYPT, logger, "ECDSA_sign_hash: Ended using NSS");
 	return signature;
 }
 

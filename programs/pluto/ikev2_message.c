@@ -353,17 +353,20 @@ static bool close_v2SK_payload(struct v2SK_payload *sk)
 static void construct_enc_iv(const char *name,
 			     uint8_t enc_iv[],
 			     uint8_t *wire_iv, chunk_t salt,
-			     const struct encrypt_desc *encrypter)
+			     const struct encrypt_desc *encrypter,
+			     struct logger *logger)
 {
-	DBGF(DBG_CRYPT, "construct_enc_iv: %s: salt-size=%zd wire-IV-size=%zd block-size %zd",
-	     name, encrypter->salt_size, encrypter->wire_iv_size,
-	     encrypter->enc_blocksize);
+	ldbgf(DBG_CRYPT, logger,
+	      "construct_enc_iv: %s: salt-size=%zd wire-IV-size=%zd block-size %zd",
+	      name, encrypter->salt_size, encrypter->wire_iv_size,
+	      encrypter->enc_blocksize);
 	passert(salt.len == encrypter->salt_size);
 	passert(encrypter->enc_blocksize <= MAX_CBC_BLOCK_SIZE);
 	passert(encrypter->enc_blocksize >= encrypter->salt_size + encrypter->wire_iv_size);
 	size_t counter_size = encrypter->enc_blocksize - encrypter->salt_size - encrypter->wire_iv_size;
-	DBGF(DBG_CRYPT, "construct_enc_iv: %s: computed counter-size=%zd",
-	     name, counter_size);
+	ldbgf(DBG_CRYPT, logger,
+	      "construct_enc_iv: %s: computed counter-size=%zd",
+	      name, counter_size);
 
 	memcpy(enc_iv, salt.ptr, salt.len);
 	memcpy(enc_iv + salt.len, wire_iv, encrypter->wire_iv_size);
@@ -373,7 +376,7 @@ static void construct_enc_iv(const char *name,
 		enc_iv[encrypter->enc_blocksize - 1] = 1;
 	}
 	if (DBGP(DBG_CRYPT)) {
-		DBG_dump(name, enc_iv, encrypter->enc_blocksize);
+		LDBG_dump(logger, enc_iv, encrypter->enc_blocksize);
 	}
 }
 
@@ -460,7 +463,8 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 		unsigned char enc_iv[MAX_CBC_BLOCK_SIZE];
 		construct_enc_iv("encryption IV/starting-variable", enc_iv,
 				 wire_iv_start, salt,
-				 ike->sa.st_oakley.ta_encrypt);
+				 ike->sa.st_oakley.ta_encrypt,
+				 ike->sa.st_logger);
 
 		/* now, encrypt */
 		if (DBGP(DBG_CRYPT)) {
@@ -653,7 +657,8 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 		unsigned char enc_iv[MAX_CBC_BLOCK_SIZE];
 		construct_enc_iv("decryption IV/starting-variable", enc_iv,
 				 wire_iv_start, salt,
-				 ike->sa.st_oakley.ta_encrypt);
+				 ike->sa.st_oakley.ta_encrypt,
+				 ike->sa.st_logger);
 
 		/* decrypt */
 		if (DBGP(DBG_CRYPT)) {

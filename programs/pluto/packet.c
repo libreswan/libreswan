@@ -2653,9 +2653,9 @@ bool pbs_out_struct(struct pbs_out *outs, struct_desc *sd,
 		/* verify that we are at the right place in the input structure */
 		passert(inp - (cur - outs->cur) == struct_ptr);
 
-		DBGF(DBG_TMI, "out_struct: %d %s",
-		     (int) (cur - outs->cur),
-		     fp->name == NULL ? "<end>" : fp->name);
+		ldbgf(DBG_TMI, outs->outs_logger, "out_struct: %d %s",
+		      (int) (cur - outs->cur),
+		      fp->name == NULL ? "<end>" : fp->name);
 
 		switch (fp->field_type) {
 		case ft_zig: /* zero */

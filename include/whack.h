@@ -405,7 +405,7 @@ struct whackpacker {
 	int n;
 };
 
-extern err_t pack_whack_msg(struct whackpacker *wp);
+extern err_t pack_whack_msg(struct whackpacker *wp, struct logger *logger);
 extern bool unpack_whack_msg(struct whackpacker *wp, struct logger *logger);
 extern void clear_end(const char *leftright, struct whack_end *e);
 

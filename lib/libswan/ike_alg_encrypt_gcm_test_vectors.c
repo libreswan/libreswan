@@ -157,7 +157,7 @@ static bool test_gcm_vector(const struct encrypt_desc *encrypt_desc,
 	/* Clean up. */
 	release_symkey(__func__, "sym_key", &sym_key);
 
-	DBGF(DBG_CRYPT, "test_gcm_vector: %s", ok ? "passed" : "failed");
+	ldbgf(DBG_CRYPT, logger, "test_gcm_vector: %s", ok ? "passed" : "failed");
 	return ok;
 }
 

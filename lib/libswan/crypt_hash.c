@@ -34,8 +34,8 @@ struct crypt_hash {
 struct crypt_hash *crypt_hash_init(const char *name, const struct hash_desc *hash_desc,
 				   struct logger *logger)
 {
-	DBGF(DBG_CRYPT, "%s hash %s init",
-	     name, hash_desc->common.fqn);
+	ldbgf(DBG_CRYPT, logger, "%s hash %s init",
+	      name, hash_desc->common.fqn);
 	struct hash_context *context =
 		hash_desc->hash_ops->init(hash_desc, name);
 	if (context == NULL) {
@@ -129,9 +129,9 @@ PK11SymKey *crypt_hash_symkey(const char *name, const struct hash_desc *hash_des
 			      const char *symkey_name, PK11SymKey *symkey,
 			      struct logger *logger)
 {
-	DBGF(DBG_CRYPT, "%s hash %s %s-key@%p (size %zu)",
-	     name, hash_desc->common.fqn,
-	     symkey_name, symkey, sizeof_symkey(symkey));
+	ldbgf(DBG_CRYPT, logger, "%s hash %s %s-key@%p (size %zu)",
+	      name, hash_desc->common.fqn,
+	      symkey_name, symkey, sizeof_symkey(symkey));
 	struct crypt_hash *hash = crypt_hash_init(name, hash_desc, logger);
 	crypt_hash_digest_symkey(hash, symkey_name, symkey);
 	struct crypt_mac out = crypt_hash_final_mac(&hash);

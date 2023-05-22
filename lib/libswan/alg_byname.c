@@ -89,6 +89,7 @@ const struct ike_alg *alg_byname(struct proposal_parser *parser,
 				 const struct ike_alg_type *type,
 				 shunk_t name, shunk_t print_name)
 {
+	struct logger *logger = parser->policy->logger;
 	passert(parser->diag == NULL);
 	const struct proposal_protocol *protocol = parser->protocol;
 	const struct ike_alg *alg = ike_alg_byname(type, name);
@@ -108,8 +109,9 @@ const struct ike_alg *alg_byname(struct proposal_parser *parser,
 				       pri_shunk(print_name));
 		}
 		passert(parser->diag != NULL);
-		DBGF(DBG_PROPOSAL_PARSER, "ike_alg_byname() failed: %s",
-		     str_diag(parser->diag));
+		ldbgf(DBG_PROPOSAL_PARSER, logger,
+		      "ike_alg_byname() failed: %s",
+		      str_diag(parser->diag));
 		return NULL;
 	}
 
@@ -118,8 +120,9 @@ const struct ike_alg *alg_byname(struct proposal_parser *parser,
 	 */
 	if (!alg_byname_ok(parser, alg, print_name)) {
 		passert(parser->diag != NULL);
-		DBGF(DBG_PROPOSAL_PARSER, "alg_byname_ok() failed: %s",
-		     str_diag(parser->diag));
+		ldbgf(DBG_PROPOSAL_PARSER, logger,
+		      "alg_byname_ok() failed: %s",
+		      str_diag(parser->diag));
 		return NULL;
 	}
 

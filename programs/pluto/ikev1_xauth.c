@@ -1044,9 +1044,9 @@ static bool do_file_authentication(struct state *st, const char *name,
 			cp = crypt(password, passwdhash);
 			win = cp != NULL && streq(cp, passwdhash);
 
-			DBGF(DBG_CRYPT, "XAUTH: %s user(%s:%s) pass %s vs %s",
-			     win ? "success" : "failure",
-			     userid, connectionname, cp, passwdhash);
+			ldbgf(DBG_CRYPT, st->st_logger, "XAUTH: %s user(%s:%s) pass %s vs %s",
+			      win ? "success" : "failure",
+			      userid, connectionname, cp, passwdhash);
 
 			log_state(RC_LOG, st, "XAUTH: %s user(%s:%s) ",
 				  win ? "success" : "failure",
