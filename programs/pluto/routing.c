@@ -353,29 +353,6 @@ static void unrouted_instance_to_unrouted_negotiation(enum routing_event event,
  * installed as KIND_NEGOTIATION.
  */
 
-static void unrouted_permanent_to_unrouted_negotiation(enum routing_event event,
-						       struct connection *c, where_t where)
-{
-	struct logger *logger = c->logger;
-	PEXPECT(logger, !opportunistic(c));
-	const char *reason = "installing negotiation kernel policy for permanent connection";
-	add_spd_kernel_policies(c, KERNEL_POLICY_OP_ADD,
-				DIRECTION_OUTBOUND,
-				SHUNT_KIND_NEGOTIATION,
-				logger, where, reason);
-	set_routing(event, c, RT_UNROUTED_NEGOTIATION, NULL, where);
-}
-
-static void unrouted_negotiation_to_unrouted(enum routing_event event,
-					     struct connection *c,
-					     struct logger *logger, where_t where, const char *story)
-{
-	PEXPECT(logger, !opportunistic(c));
-	delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
-				   logger, where, story);
-	set_routing(event, c, RT_UNROUTED, NULL, where);
-}
-
 static void routed_negotiation_to_unrouted(enum routing_event event,
 					   struct connection *c,
 					   struct logger *logger, where_t where,
@@ -1068,9 +1045,7 @@ void dispatch(enum routing_event event, struct connection *c,
 			break;
 
 		case X(INITIATE, UNROUTED, PERMANENT):
-			/* presumably triggered by whack */
-			unrouted_permanent_to_unrouted_negotiation(event, c, where);
-			PEXPECT(logger, c->child.routing == RT_UNROUTED_NEGOTIATION);
+			set_routing(event, c, RT_UNROUTED_NEGOTIATION, NULL, where);
 			ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
 					  e->inception, null_shunk,
 					  e->background, c->logger);
@@ -1138,6 +1113,11 @@ void dispatch(enum routing_event event, struct connection *c,
 					  e->inception, e->acquire->sec_label,
 					  e->background, e->acquire->logger);
 			return;
+		case X(REVIVE, UNROUTED_REVIVAL, PERMANENT):
+			set_routing(event, c, RT_UNROUTED_NEGOTIATION, NULL, where);
+			ipsecdoi_initiate(c, c->policy, SOS_NOBODY, e->inception,
+					  null_shunk, /*background*/false, logger);
+			return;
 		case X(REVIVE, UNROUTED_ONDEMAND, PERMANENT):
 		case X(REVIVE, UNROUTED_ONDEMAND, INSTANCE):
 			ondemand_to_negotiation(event, c, where, "negotiating unrouted");
@@ -1204,13 +1184,18 @@ void dispatch(enum routing_event event, struct connection *c,
 			break;
 
 		case X(ROUTE, UNROUTED_NEGOTIATION, PERMANENT):
-			c->policy |= POLICY_ROUTE;
-			llog(RC_LOG_SERIOUS, logger,
-			     "policy ROUTE added to negotiating connection");
-			return;
+			if (BROKEN_TRANSITION) {
+				/*
+				 * XXX: should install routing+policy!
+				 */
+				c->policy |= POLICY_ROUTE;
+				llog(RC_LOG_SERIOUS, logger,
+				     "policy ROUTE added to negotiating connection");
+				return;
+			}
+			break;
 		case X(UNROUTE, UNROUTED_NEGOTIATION, PERMANENT):
-			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
-						   c->logger, where, "unroute permanent");
+		case X(UNROUTE, UNROUTED_REVIVAL, PERMANENT):
 			set_routing(event, c, RT_UNROUTED, NULL, where);
 			return;
 
@@ -1403,22 +1388,17 @@ void dispatch(enum routing_event event, struct connection *c,
 
 		case X(DELETE_IKE, UNROUTED_NEGOTIATION, PERMANENT):
 		case X(TIMEOUT_IKE, UNROUTED_NEGOTIATION, PERMANENT):
-			if (BROKEN_TRANSITION) {
-				if (zap_connection(event, e->ike, where)) {
-					return;
-				}
+			if (zap_connection(event, e->ike, where)) {
+				return;
 			}
-			/* ex, permanent+up */
+			/* ex, permanent+initiate */
 			if (should_revive(&(*e->ike)->sa)) {
-				negotiation_to_ondemand(event, c, logger, where,
-							"deleting unrouted negotiation");
-				PEXPECT(logger, c->child.routing == RT_UNROUTED_ONDEMAND);
+				set_routing(event, c, RT_UNROUTED_REVIVAL, NULL, where);
 				schedule_revival(&(*e->ike)->sa, "timed out");
 				delete_ike_sa(e->ike);
 				return;
 			}
-			unrouted_negotiation_to_unrouted(event, c, logger, where,
-							 "deleting unrouted negotiation");
+			set_routing(event, c, RT_UNROUTED, NULL, where);
 			delete_ike_sa(e->ike);
 			return;
 
