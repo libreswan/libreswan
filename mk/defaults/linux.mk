@@ -81,6 +81,14 @@ ifneq ($(filter arch,$(LINUX_VARIANT)),)
 endif
 
 #
+# Alpine
+#
+
+ifneq ($(filter alpine,$(LINUX_VARIANT)),)
+  DEFAULT_DNSSEC_ROOTKEY_FILE ?= /usr/share/dnssec-root/trusted-key.key
+endif
+
+#
 # INITSYSTEM
 #
 

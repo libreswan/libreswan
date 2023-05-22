@@ -35,11 +35,7 @@ endef
 # The guest operating system.
 #
 
-#include testing/libvirt/debian/kvm.mk
 include testing/libvirt/fedora/kvm.mk
-include testing/libvirt/freebsd/kvm.mk
-include testing/libvirt/netbsd/kvm.mk
-include testing/libvirt/openbsd/kvm.mk
 
 #
 # where things live and what gets created
@@ -189,6 +185,7 @@ VIRT_INSTALL_FLAGS = \
 #     KVM_OPENBSD=
 # NOT ...=false
 
+KVM_ALPINE ?=
 KVM_DEBIAN ?=
 KVM_FEDORA ?= true
 KVM_FREEBSD ?=
@@ -196,6 +193,7 @@ KVM_NETBSD ?=
 KVM_OPENBSD ?=
 
 # so that $($*) converts % to upper case
+alpine = ALPINE
 debian = DEBIAN
 fedora = FEDORA
 freebsd = FREEBSD
@@ -203,6 +201,7 @@ netbsd = NETBSD
 openbsd = OPENBSD
 
 # this is what works
+KVM_PLATFORM += alpine
 #KVM_PLATFORM += debian
 KVM_PLATFORM += fedora
 KVM_PLATFORM += freebsd
@@ -210,6 +209,7 @@ KVM_PLATFORM += netbsd
 KVM_PLATFORM += openbsd
 
 # this is what is enabled
+KVM_OS += $(if $(KVM_DEBIAN),  alpine)
 KVM_OS += $(if $(KVM_DEBIAN),  debian)
 KVM_OS += $(if $(KVM_FEDORA),  fedora)
 KVM_OS += $(if $(KVM_FREEBSD), freebsd)
@@ -217,6 +217,7 @@ KVM_OS += $(if $(KVM_NETBSD),  netbsd)
 KVM_OS += $(if $(KVM_OPENBSD), openbsd)
 
 # fed into virt-install --os-variant
+KVM_ALPINE_OS_VARIANT ?= $(shell osinfo-query os | awk '/alpinelinux[1-9]/ {print $$1}' | sort -V | tail -1)
 KVM_DEBIAN_OS_VARIANT ?= $(shell osinfo-query os | awk '/debian[1-9]/ {print $$1}' | sort -V | tail -1)
 KVM_FEDORA_OS_VARIANT ?= $(shell osinfo-query os | awk '/fedora[1-9]/ {print $$1}' | sort -V | tail -1)
 KVM_FREEBSD_OS_VARIANT ?= $(shell osinfo-query os | awk '/freebsd[1-9]/ {print $$1}' | sort -V | tail -1)
@@ -821,6 +822,7 @@ $(KVM_POOLDIR_PREFIX)%-base: | \
 	DOMAIN=$(notdir $@) \
 	GATEWAY=$(KVM_GATEWAY_ADDRESS) \
 	POOLDIR=$(KVM_POOLDIR) \
+	BENCHDIR=$(KVM_BENCHDIR) \
 	$(KVM_PYTHON) testing/libvirt/$*/base.py \
 		$(VIRT_INSTALL) \
 			$(VIRT_INSTALL_FLAGS) \
@@ -867,6 +869,43 @@ $(KVM_POOLDIR_PREFIX)%-base: | \
 
 
 .PHONY: kvm-iso
+
+#
+# Alpine
+#
+
+KVM_ALPINE_ISO_URL ?= https://dl-cdn.alpinelinux.org/alpine/v3.18/releases/x86_64/alpine-standard-3.18.0-x86_64.iso
+KVM_ALPINE_ISO = $(KVM_POOLDIR)/$(notdir $(KVM_ALPINE_ISO_URL))
+kvm-iso: $(KVM_ALPINE_ISO)
+$(KVM_ALPINE_ISO): | $(KVM_POOLDIR)
+	wget --output-document $@.tmp --no-clobber -- $(KVM_ALPINE_ISO_URL)
+	mv $@.tmp $@
+
+KVM_ALPINE_VIRT_INSTALL_FLAGS = \
+	--cdrom=$(KVM_ALPINE_ISO)
+
+$(KVM_ALPINE_BASE_DOMAIN): | $(KVM_ALPINE_ISO)
+$(KVM_ALPINE_BASE_DOMAIN): | $(KVM_ALPINE_KICKSTART_FILE)
+
+
+#
+# Debian
+#
+
+KVM_DEBIAN_ISO_URL ?= https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/debian-11.7.0-amd64-netinst.iso
+KVM_DEBIAN_ISO = $(KVM_POOLDIR)/$(notdir $(KVM_DEBIAN_ISO_URL))
+kvm-iso: $(KVM_DEBIAN_ISO)
+$(KVM_DEBIAN_ISO): | $(KVM_POOLDIR)
+	wget --output-document $@.tmp --no-clobber -- $(KVM_DEBIAN_ISO_URL)
+	mv $@.tmp $@
+
+KVM_DEBIAN_VIRT_INSTALL_FLAGS = \
+	--cdrom=$(KVM_DEBIAN_ISO)
+	--extra-args="console=ttyS0,115200 net.ifnames=0 biosdevname=0"
+
+$(KVM_DEBIAN_BASE_DOMAIN): | $(KVM_DEBIAN_ISO)
+$(KVM_DEBIAN_BASE_DOMAIN): | $(KVM_DEBIAN_KICKSTART_FILE)
+
 
 #
 # Fedora
@@ -1486,12 +1525,14 @@ Configuration:
     $(call kvm-var-value,KVM_OS)
     $(call kvm-var-value,KVM_PLATFORM)
 
+    $(call kvm-var-value,KVM_ALPINE_MAKEFLAGS)
     $(call kvm-var-value,KVM_DEBIAN_MAKEFLAGS)
     $(call kvm-var-value,KVM_FEDORA_MAKEFLAGS)
     $(call kvm-var-value,KVM_FREEBSD_MAKEFLAGS)
     $(call kvm-var-value,KVM_NETBSD_MAKEFLAGS)
     $(call kvm-var-value,KVM_OPENBSD_MAKEFLAGS)
 
+    $(call kvm-var-value,KVM_ALPINE_OS_VARIANT)
     $(call kvm-var-value,KVM_DEBIAN_OS_VARIANT)
     $(call kvm-var-value,KVM_FEDORA_OS_VARIANT)
     $(call kvm-var-value,KVM_FREEBSD_OS_VARIANT)
@@ -1502,6 +1543,7 @@ Configuration:
 
     $(call kvm-var-value,KVM_OS_HOST_NAMES)
 
+    $(call kvm-var-value,KVM_ALPINE_BASE_HOST_NAME)
     $(call kvm-var-value,KVM_DEBIAN_BASE_HOST_NAME)
     $(call kvm-var-value,KVM_FEDORA_BASE_HOST_NAME)
     $(call kvm-var-value,KVM_FREEBSD_BASE_HOST_NAME)
@@ -1510,6 +1552,7 @@ Configuration:
 
     $(call kvm-var-value,KVM_BASE_HOST_NAMES)
 
+    $(call kvm-var-value,KVM_ALPINE_UPGRADE_HOST_NAME)
     $(call kvm-var-value,KVM_DEBIAN_UPGRADE_HOST_NAME)
     $(call kvm-var-value,KVM_FEDORA_UPGRADE_HOST_NAME)
     $(call kvm-var-value,KVM_FREEBSD_UPGRADE_HOST_NAME)
@@ -1518,6 +1561,7 @@ Configuration:
 
     $(call kvm-var-value,KVM_UPGRADE_HOST_NAMES)
 
+    $(call kvm-var-value,KVM_ALPINE_BUILD_HOST_NAME)
     $(call kvm-var-value,KVM_DEBIAN_BUILD_HOST_NAME)
     $(call kvm-var-value,KVM_FEDORA_BUILD_HOST_NAME)
     $(call kvm-var-value,KVM_FREEBSD_BUILD_HOST_NAME)
@@ -1528,6 +1572,7 @@ Configuration:
     $(call kvm-var-value,KVM_UPGRADE_HOST_NAMES)
     $(call kvm-var-value,KVM_BUILD_HOST_NAMES)
 
+    $(call kvm-var-value,KVM_ALPINE_TEST_HOST_NAMES)
     $(call kvm-var-value,KVM_DEBIAN_TEST_HOST_NAMES)
     $(call kvm-var-value,KVM_FEDORA_TEST_HOST_NAMES)
     $(call kvm-var-value,KVM_FREEBSD_TEST_HOST_NAMES)
@@ -1538,6 +1583,7 @@ Configuration:
 
     $(call kvm-var-value,KVM_HOST_NAMES)
 
+    $(call kvm-var-value,KVM_ALPINE_TEST_DOMAIN_NAMES)
     $(call kvm-var-value,KVM_DEBIAN_TEST_DOMAIN_NAMES)
     $(call kvm-var-value,KVM_FEDORA_TEST_DOMAIN_NAMES)
     $(call kvm-var-value,KVM_FREEBSD_TEST_DOMAIN_NAMES)
@@ -1546,6 +1592,7 @@ Configuration:
 
     $(call kvm-var-value,KVM_TEST_DOMAIN_NAMES)
 
+    $(call kvm-var-value,KVM_ALPINE_TEST_DOMAINS)
     $(call kvm-var-value,KVM_DEBIAN_TEST_DOMAINS)
     $(call kvm-var-value,KVM_FEDORA_TEST_DOMAINS)
     $(call kvm-var-value,KVM_FREEBSD_TEST_DOMAINS)
