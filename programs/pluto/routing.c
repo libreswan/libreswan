@@ -1044,6 +1044,7 @@ void dispatch(enum routing_event event, struct connection *c,
 			break;
 
 		case X(INITIATE, UNROUTED, PERMANENT):
+		case X(INITIATE, UNROUTED_REVIVAL, PERMANENT):
 			set_routing(event, c, RT_UNROUTED_NEGOTIATION, NULL, where);
 			ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
 					  e->inception, null_shunk,
