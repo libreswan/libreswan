@@ -22,9 +22,9 @@ import sys
 import time
 import os
 
-domain = os.getenv("DOMAIN")
-gateway = os.getenv("GATEWAY")
-pooldir = os.getenv("POOLDIR")
+domain = "@@DOMAIN@@"
+gateway = "@@GATEWAY@@"
+pooldir = "@@POOLDIR@@"
 command = sys.argv[1:]
 
 print("domain", domain)

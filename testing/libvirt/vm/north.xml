@@ -4,7 +4,7 @@ You can load this machine definition into libvirt using:
 -->
 
 <domain type='kvm'>
-  <name>@@NAME@@</name>
+  <name>@@DOMAIN@@</name>
   <memory unit='MiB'>512</memory>
   <vcpu>1</vcpu>
   <os>
@@ -23,7 +23,7 @@ You can load this machine definition into libvirt using:
   <devices>
     <disk type='file' device='disk'>
       <driver name='qemu' type='qcow2' cache='writeback'/>
-      <source file='@@LOCALDIR@@/@@NAME@@.qcow2'/>
+      <source file='@@LOCALDIR@@/@@DOMAIN@@.qcow2'/>
       <target dev='vda' bus='virtio'/>
     </disk>
     <controller type='usb' index='0'>

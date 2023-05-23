@@ -816,14 +816,16 @@ $(KVM_POOLDIR_PREFIX)%-base: | \
 		$(KVM_POOLDIR) \
 		$(KVM_HOST_OK) \
 		$(KVM_GATEWAY)
+	: @=$@ *=$*
 	: clean up old domains
 	./testing/libvirt/kvm-uninstall-domain.sh $@
 	: use script to drive build of new domain
-	DOMAIN=$(notdir $@) \
-	GATEWAY=$(KVM_GATEWAY_ADDRESS) \
-	POOLDIR=$(KVM_POOLDIR) \
-	BENCHDIR=$(KVM_BENCHDIR) \
-	$(KVM_PYTHON) testing/libvirt/$*/base.py \
+	$(KVM_TRANSMOGRIFY) \
+		-e 's;@@DOMAIN@@;$(notdir $@);' \
+		testing/libvirt/$*/base.py \
+		> $@.py
+	chmod a+x $@.py
+	$(KVM_PYTHON) $@.py \
 		$(VIRT_INSTALL) \
 			$(VIRT_INSTALL_FLAGS) \
 			--vcpus=$(call kvm-os-flag, KVM_BASE_CPUS) \
@@ -842,6 +844,8 @@ $(KVM_POOLDIR_PREFIX)%-base: | \
 	:     [user@host pwd]# false
 	:     [user@host pwd 1]# true
 	:     [user@host pwd]#
+	:   OR
+	:     [user@host pwd 0]#
 	:
 	$(KVMSH) $(notdir $@) -- true
 	! $(KVMSH) $(notdir $@) -- false
@@ -1094,6 +1098,7 @@ $(patsubst %, $(KVM_POOLDIR_PREFIX)%-upgrade, $(KVM_PLATFORM)): \
 $(KVM_POOLDIR_PREFIX)%-upgrade: $(KVM_POOLDIR_PREFIX)%-base \
 		testing/libvirt/%/upgrade.sh \
 		| $(KVM_HOST_OK)
+	: @=$@ *=$*
 	./testing/libvirt/kvm-uninstall-domain.sh $@
 	$(QEMU_IMG) create -f qcow2 -F qcow2 -b $<.qcow2 $@.qcow2
 	$(VIRT_INSTALL) \
@@ -1111,9 +1116,12 @@ $(KVM_POOLDIR_PREFIX)%-upgrade: $(KVM_POOLDIR_PREFIX)%-base \
 	: to KVM_POOLDIR where it can be run from within the VM.
 	: Do not use transmogrify.sh from KVM_TESTINGDIR where tests live,
 	: or KVM_SOURCEDIR where pluto sources live.
-	$(KVM_TRANSMOGRIFY) testing/libvirt/$*/upgrade.sh > $@.upgrade.sh
+	$(KVM_TRANSMOGRIFY) \
+		-e 's;@@DOMAIN@@;$(notdir $@);' \
+		testing/libvirt/$*/upgrade.sh \
+		> $@.sh
 	$(KVMSH) $(notdir $@) -- \
-		/bin/sh -x /pool/$(notdir $@).upgrade.sh $(KVM_$($*)_UPGRADE_FLAGS)
+		/bin/sh -x /pool/$(notdir $@).sh $(KVM_$($*)_UPGRADE_FLAGS)
 	: only shutdown after upgrade succeeds
 	$(KVMSH) --shutdown $(notdir $@)
 	touch $@
@@ -1144,6 +1152,7 @@ $(KVM_POOLDIR_PREFIX)%: $(KVM_POOLDIR_PREFIX)%-upgrade \
 		| \
 		testing/libvirt/%/transmogrify.sh \
 		$(KVM_HOST_OK)
+	: @=$@ *=$*
 	./testing/libvirt/kvm-uninstall-domain.sh $@
 	$(QEMU_IMG) create -f qcow2 -F qcow2 -b $<.qcow2 $@.qcow2
 	: fedora runs chcon TESTINGDIR
@@ -1164,7 +1173,10 @@ $(KVM_POOLDIR_PREFIX)%: $(KVM_POOLDIR_PREFIX)%-upgrade \
 	: to KVM_POOLDIR where it can be run from within the VM.
 	: Do not use transmogrify.sh from KVM_TESTINGDIR where tests live,
 	: or KVM_SOURCEDIR where pluto sources live.
-	$(KVM_TRANSMOGRIFY) testing/libvirt/$*/transmogrify.sh > $@.transmogrify.sh
+	$(KVM_TRANSMOGRIFY) \
+		-e 's;@@DOMAIN@@;$(notdir $@);' \
+		testing/libvirt/$*/transmogrify.sh \
+		> $@.transmogrify.sh
 	$(KVMSH) $(notdir $@) -- \
 		/bin/sh -x /pool/$(notdir $@).transmogrify.sh $(KVM_$($*)_TRANSMOGRIFY_FLAGS)
 	: only shutdown after transmogrify succeeds
@@ -1272,14 +1284,14 @@ define define-test-domain
   $(strip $(1))$(strip $(2))$(strip $(3)): $(KVM_POOLDIR_PREFIX)$(strip $(2)) | \
 		$$(addprefix $(1), $$(KVM_TEST_NETWORK_NAMES)) \
 		testing/libvirt/vm/$(strip $(3)).xml
-	: $$@
+	: @=$$@
 	: install-kvm-test-domain prefix=$(strip $(1)) platform=$(strip $(2)) host=$(strip $(3))
 	./testing/libvirt/kvm-uninstall-domain.sh $$@
 	$$(QEMU_IMG) create -f qcow2 -F qcow2 -b $(KVM_POOLDIR_PREFIX)$(strip $(2)).qcow2 $$@.qcow2
 	$$(KVM_TRANSMOGRIFY) \
-		-e "s:@@NAME@@:$$(notdir $$@):" \
-		-e "s:network='192_:network='$(addprefix $(notdir $(1)), 192_):" \
-		< testing/libvirt/vm/$(strip $(3)).xml \
+		-e 's;@@DOMAIN@@;$$(notdir $$@);' \
+		-e "s;network='192_;network='$(addprefix $(notdir $(1)), 192_);" \
+		testing/libvirt/vm/$(strip $(3)).xml \
 		> '$$@.tmp'
 	$$(VIRSH) define $$@.tmp
 	mv $$@.tmp $$@
@@ -1298,14 +1310,14 @@ define define-fedora-domain
   $(addprefix $(1), $(2)): $(3) | \
 		$$(addprefix $(1), $$(KVM_TEST_NETWORK_NAMES)) \
 		testing/libvirt/vm/$(strip $(2)).xml
-	: $$@
+	: @=$$@
 	: install-kvm-test-domain prefix=$(strip $(1)) host=$(strip $(2)) template=$(strip $(3))
 	./testing/libvirt/kvm-uninstall-domain.sh $$@
 	$$(QEMU_IMG) create -f qcow2 -F qcow2 -b $(strip $(3)).qcow2 $$@.qcow2
 	$$(KVM_TRANSMOGRIFY) \
-		-e "s:@@NAME@@:$$(notdir $$@):" \
-		-e "s:network='192_:network='$(addprefix $(notdir $(1)), 192_):" \
-		< testing/libvirt/vm/$(strip $(2)).xml \
+		-e 's;@@DOMAIN@@;$$(notdir $$@);' \
+		-e "s;network='192_;network='$(addprefix $(notdir $(1)), 192_);" \
+		testing/libvirt/vm/$(strip $(2)).xml \
 		> '$$@.tmp'
 	$$(VIRSH) define $$@.tmp
 	mv $$@.tmp $$@

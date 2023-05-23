@@ -22,10 +22,10 @@ import os
 command = sys.argv[1:]
 print("command", command)
 
-domain = os.getenv("DOMAIN")
-gateway = os.getenv("GATEWAY")
-pooldir = os.getenv("POOLDIR")
-benchdir = os.getenv("BENCHDIR")
+domain = "@@DOMAIN@@"
+gateway = "@@GATEWAY@@"
+pooldir = "@@POOLDIR@@"
+benchdir = "@@BENCHDIR@@"
 
 print("domain", domain)
 print("gateway", gateway)
