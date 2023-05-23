@@ -103,12 +103,6 @@ static bool revival_plausable(struct connection *c, struct logger *logger)
 		return false;
 	}
 
-	if (impair.revival) {
-		llog(RC_LOG, logger,
-		     "IMPAIR: skipping revival of connection that is supposed to remain up");
-		return false;
-	}
-
 	/* not completely ruled out */
 	return true;
 }
@@ -242,6 +236,12 @@ void schedule_revival(struct state *st, const char *subplot)
 		c->remote->host.encap =
 			(st->hidden_variables.st_nat_traversal & NAT_T_DETECTED ||
 			 st->st_interface->io->protocol == &ip_protocol_tcp);
+	}
+
+	if (impair.revival) {
+		llog(RC_LOG, st->st_logger,
+		     "IMPAIR: skip secheduling revival of connection that is supposed to remain up");
+		return;
 	}
 
 	llog(RC_LOG, st->st_logger,
