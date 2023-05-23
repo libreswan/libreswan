@@ -503,72 +503,109 @@ void connection_revive(struct connection *c, const threadtime_t *inception, wher
  * Delete the ROUTED_TUNNEL, and possibly delete the connection.
  */
 
-static void delete_routed_tunnel(enum routing_event event,
-				 struct connection *c,
-				 where_t where,
-				 struct annex *e)
+static void down_routed_tunnel(enum routing_event event,
+			       struct connection *c,
+			       struct child_sa **child,
+			       where_t where)
 {
-	if (c->child.newest_routing_sa > (*e->child)->sa.st_serialno) {
+	PASSERT((*child)->sa.st_logger, c == (*child)->sa.st_connection);
+
+	if (c->child.newest_routing_sa > (*child)->sa.st_serialno) {
 		/* no longer child's */
-		ldbg_routing(c->logger, "keeping connection kernel policy; routing SA "PRI_SO" is newer",
+		ldbg_routing((*child)->sa.st_logger,
+			     "keeping connection kernel policy; routing SA "PRI_SO" is newer",
 			     pri_so(c->child.newest_routing_sa));
-		delete_child_sa(e->child);
+		delete_child_sa(child);
 		return;
 	}
 
-	if (c->newest_ipsec_sa > (*e->child)->sa.st_serialno) {
+	if (c->newest_ipsec_sa > (*child)->sa.st_serialno) {
 		/* covered by above; no!? */
-		ldbg_routing(c->logger, "keeping connection kernel policy; IPsec SA "PRI_SO" is newer",
+		ldbg_routing((*child)->sa.st_logger,
+			     "keeping connection kernel policy; IPsec SA "PRI_SO" is newer",
 			     pri_so(c->newest_ipsec_sa));
-		delete_child_sa(e->child);
+		delete_child_sa(child);
 		return;
 	}
 
-	if (should_revive_connection(*(e->child))) {
+	if (should_revive_connection(*child)) {
 		/* XXX: should this be ROUTED_NEGOTIATING? */
-		ldbg_routing(c->logger, "replacing connection kernel policy with ROUTED_ONDEMAND; it will be revived");
-		replace_ipsec_with_bare_kernel_policies(event, *(e->child), RT_ROUTED_ONDEMAND,
+		ldbg_routing((*child)->sa.st_logger,
+			     "replacing connection kernel policy with ROUTED_ONDEMAND; it will be revived");
+		replace_ipsec_with_bare_kernel_policies(event, *child,
+							RT_ROUTED_ONDEMAND,
 							EXPECT_KERNEL_POLICY_OK, HERE);
-		schedule_revival(&(*e->child)->sa, "received Delete/Notify");
+		schedule_revival(&(*child)->sa, "received Delete/Notify");
 		/* covered by above; no!? */
-		delete_child_sa(e->child);
+		delete_child_sa(child);
 		return;
 	}
 
 	/*
-	 * Change routing so we don't get cleared out
-	 * when state/connection dies.
+	 * Should this go back to on-demand?
 	 */
-	enum routing new_routing =
-		(c->policy & POLICY_ROUTE ? RT_ROUTED_ONDEMAND :
-		 c->config->failure_shunt != SHUNT_NONE ? RT_ROUTED_FAILURE :
-		 RT_ROUTED_ONDEMAND);
-	enum_buf rb;
-	ldbg_routing(c->logger, "replacing connection kernel policy with %s",
-		     str_enum_short(&routing_names, new_routing, &rb));
-
-	replace_ipsec_with_bare_kernel_policies(event, (*e->child), new_routing,
-						EXPECT_KERNEL_POLICY_OK, HERE);
-	delete_child_sa(e->child);
+	if (c->kind == CK_PERMANENT && c->policy & POLICY_ROUTE) {
+		ldbg_routing((*child)->sa.st_logger,
+			     "replacing connection kernel policy with on-demand");
+		replace_ipsec_with_bare_kernel_policies(event, *child,
+							RT_ROUTED_ONDEMAND,
+							EXPECT_KERNEL_POLICY_OK, HERE);
+		delete_child_sa(child);
+		return;
+	}
 
 	/*
-	 * Never delete permanent (leaving only instances)
+	 * Is there a failure shunt?
+	 */
+	if (c->kind == CK_PERMANENT && c->config->failure_shunt != SHUNT_NONE) {
+		ldbg_routing((*child)->sa.st_logger,
+			     "replacing connection kernel policy with failure");
+		replace_ipsec_with_bare_kernel_policies(event, *child,
+							RT_ROUTED_FAILURE,
+							EXPECT_KERNEL_POLICY_OK, HERE);
+		delete_child_sa(child);
+		return;
+	}
+
+	/*
+	 * Never delete permanent connections.
 	 */
 	if (c->kind == CK_PERMANENT) {
-		ldbg_routing(c->logger, "keeping connection; it is permanent");
+		ldbg_routing((*child)->sa.st_logger,
+			     "keeping connection; it is permanent");
+		do_updown_spds(UPDOWN_DOWN, c, &c->child.spds, &(*child)->sa,
+			       (*child)->sa.st_logger);
+		delete_spd_kernel_policies(&c->child.spds,
+					   EXPECT_KERNEL_POLICY_OK,
+					   (*child)->sa.st_logger,
+					   where, "delete");
+		/*
+		 * update routing; route_owner() will see this and not
+		 * think this route is the owner?
+		 */
+		set_routing(event, c, RT_UNROUTED, NULL, HERE);
+		do_updown_unroute(c, *child);
+		delete_child_sa(child);
 		return;
 	}
 
-	PEXPECT(c->logger, c->kind == CK_INSTANCE);
+	PASSERT((*child)->sa.st_logger, c->kind == CK_INSTANCE);
+
+	delete_spd_kernel_policies(&c->child.spds,
+				   EXPECT_KERNEL_POLICY_OK,
+				   (*child)->sa.st_logger,
+				   where, "delete");
+	set_routing(event, c, RT_UNROUTED, NULL, where);
 
 	/*
-	 * If the connection is shared with the IKE SA, don't delete
-	 * it.
+	 * If the Child SA's IKE SA is also using the connection don't
+	 * delete it.
 	 */
-	if (pexpect(e->ike != NULL)/*IKEv1?*/ &&
-	    c == (*e->ike)->sa.st_connection) {
-		ldbg_routing(c->logger, "keeping connection; shared with IKE SA "PRI_SO,
-			     pri_so((*e->ike)->sa.st_serialno));
+	if (c->newest_ike_sa == (*child)->sa.st_clonedfrom) {
+		ldbg_routing((*child)->sa.st_logger,
+			     "keeping connection; shared with IKE SA "PRI_SO,
+			     pri_so(c->newest_ike_sa));
+		delete_child_sa(child);
 		return;
 	}
 
@@ -582,13 +619,15 @@ static void delete_routed_tunnel(enum routing_event event,
 	};
 	if (next_state_new2old(&sf)) {
 		connection_buf cb;
-		llog_pexpect(c->logger, where,
+		llog_pexpect((*child)->sa.st_logger, where,
 			     "connection "PRI_CONNECTION" in use by #%lu, skipping delete-unused",
 			     pri_connection(c, &cb), sf.st->st_serialno);
+		delete_child_sa(child);
 		return;
 	}
 
-	ldbg_routing(c->logger, "keeping connection; NO!");
+	ldbg_routing((*child)->sa.st_logger, "keeping connection; NO!");
+	delete_child_sa(child);
 	delete_connection(&c);
 }
 
@@ -1502,11 +1541,11 @@ void dispatch(enum routing_event event, struct connection *c,
 		case X(TIMEOUT_CHILD, ROUTED_TUNNEL, PERMANENT):
 		case X(DELETE_CHILD, ROUTED_TUNNEL, PERMANENT):
 			/* permenant connections are never deleted */
-			delete_routed_tunnel(event, c, where, e);
+			down_routed_tunnel(event, c, e->child, where);
 			return;
 		case X(TIMEOUT_CHILD, ROUTED_TUNNEL, INSTANCE):
 		case X(DELETE_CHILD, ROUTED_TUNNEL, INSTANCE):
-			delete_routed_tunnel(event, c, where, e);
+			down_routed_tunnel(event, c, e->child, where);
 			return;
 
 		case X(TIMEOUT_CHILD, UNROUTED_NEGOTIATION, INSTANCE):
