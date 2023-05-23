@@ -2527,15 +2527,15 @@ void teardown_ipsec_kernel_policies(enum routing_event event, struct child_sa *c
 		ldbg(logger,
 		     "kernel: %s() instance with OPPORTUNISTIC; transitioning to UNROUTED",
 		     __func__);
+		do_updown_spds(UPDOWN_DOWN, c, &spds, &child->sa, child->sa.st_logger);
+		delete_spd_kernel_policies(&spds, EXPECT_KERNEL_POLICY_OK,
+					   child->sa.st_logger, HERE, "unroute");
 		/*
 		 * update routing; route_owner() will see this and not
 		 * think this route is the owner?
 		 */
 		set_routing(event, c, RT_UNROUTED, NULL, HERE);
-		do_updown_spds(UPDOWN_DOWN, c, &spds, &child->sa, child->sa.st_logger);
-		delete_spd_kernel_policies(&spds, EXPECT_KERNEL_POLICY_OK,
-					   child->sa.st_logger, HERE, "unroute");
-		do_updown_unowned_spds(UPDOWN_UNROUTE, c, &spds, NULL, child->sa.st_logger);
+		do_updown_unroute(c, child);
 		return;
 	}
 
@@ -2543,15 +2543,15 @@ void teardown_ipsec_kernel_policies(enum routing_event event, struct child_sa *c
 		ldbg(logger,
 		     "kernel: %s() instance with REKEY disabled; transitioning to UNROUTED",
 		     __func__);
+		do_updown_spds(UPDOWN_DOWN, c, &spds, &child->sa, child->sa.st_logger);
+		delete_spd_kernel_policies(&spds, EXPECT_KERNEL_POLICY_OK,
+					   child->sa.st_logger, HERE, "unroute");
 		/*
 		 * update routing; route_owner() will see this and not
 		 * think this route is the owner?
 		 */
 		set_routing(event, c, RT_UNROUTED, NULL, HERE);
-		do_updown_spds(UPDOWN_DOWN, c, &spds, &child->sa, child->sa.st_logger);
-		delete_spd_kernel_policies(&spds, EXPECT_KERNEL_POLICY_OK,
-					   child->sa.st_logger, HERE, "unroute");
-		do_updown_unowned_spds(UPDOWN_UNROUTE, c, &spds, NULL, child->sa.st_logger);
+		do_updown_unroute(c, child);
 		return;
 	}
 

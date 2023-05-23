@@ -30,8 +30,6 @@
 #include "initiate.h"			/* for ipsecdoi_initiate() */
 #include "updown.h"
 
-static void do_updown_unroute(struct connection *c);
-
 static const char *routing_event_name[] = {
 #define S(E) [E] = #E
 	S(CONNECTION_ROUTE),
@@ -997,7 +995,7 @@ void dispatch(enum routing_event event, struct connection *c,
 			/* stop updown_unroute() finding this
 			 * connection */
 			set_routing(event, c, RT_UNROUTED, NULL, where);
-			do_updown_unroute(c);
+			do_updown_unroute(c, NULL);
 			return;
 
 		case X(UNROUTE, ROUTED_INBOUND, PERMANENT): /* ikev1-xfrmi-02-aggr */
@@ -1008,7 +1006,7 @@ void dispatch(enum routing_event event, struct connection *c,
 							   EXPECT_KERNEL_POLICY_OK,
 							   c->logger, where, "unroute permanent");
 				set_routing(event, c, RT_UNROUTED, NULL, where);
-				do_updown_unroute(c);
+				do_updown_unroute(c, NULL);
 				return;
 			}
 			break;
@@ -1021,7 +1019,7 @@ void dispatch(enum routing_event event, struct connection *c,
 							   EXPECT_KERNEL_POLICY_OK,
 							   c->logger, where, "unroute permanent");
 				set_routing(event, c, RT_UNROUTED, NULL, where);
-				do_updown_unroute(c);
+				do_updown_unroute(c, NULL);
 				return;
 			}
 			break;
@@ -1209,7 +1207,7 @@ void dispatch(enum routing_event event, struct connection *c,
 						   c->logger, where, "unroute permanent");
 			/* do now so route_owner won't find us */
 			set_routing(event, c, RT_UNROUTED, NULL, where);
-			do_updown_unroute(c);
+			do_updown_unroute(c, NULL);
 			return;
 
 		case X(UNROUTE, ROUTED_ONDEMAND, PERMANENT):
@@ -1220,7 +1218,7 @@ void dispatch(enum routing_event event, struct connection *c,
 			/* stop updown_unroute() finding this
 			 * connection */
 			set_routing(event, c, RT_UNROUTED, NULL, where);
-			do_updown_unroute(c);
+			do_updown_unroute(c, NULL);
 			return;
 		case X(UNROUTE, UNROUTED_ONDEMAND, PERMANENT):
 			if (BROKEN_TRANSITION) {
@@ -1248,7 +1246,7 @@ void dispatch(enum routing_event event, struct connection *c,
 						   c->logger, where, "unroute permanent");
 			/* do now so route_owner won't find us */
 			set_routing(event, c, RT_UNROUTED, NULL, where);
-			do_updown_unroute(c);
+			do_updown_unroute(c, NULL);
 			return;
 
 		case X(UNROUTE, UNROUTED_TUNNEL, PERMANENT):
@@ -1269,7 +1267,7 @@ void dispatch(enum routing_event event, struct connection *c,
 						   c->logger, where, "unroute template");
 			/* do now so route_owner won't find us */
 			set_routing(event, c, RT_UNROUTED, NULL, where);
-			do_updown_unroute(c);
+			do_updown_unroute(c, NULL);
 			return;
 
 		case X(UNROUTE, UNROUTED, INSTANCE):
@@ -1358,7 +1356,8 @@ void dispatch(enum routing_event event, struct connection *c,
 		case X(UNROUTE, ROUTED_NEGOTIATION, INSTANCE):
 			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
 						   c->logger, where, "unroute instance");
-			do_updown_unroute(c);
+			set_routing(event, c, RT_UNROUTED, NULL, where);
+			do_updown_unroute(c, NULL);
 			return;
 
 		case X(UNROUTE, ROUTED_TUNNEL, INSTANCE):
@@ -1370,7 +1369,7 @@ void dispatch(enum routing_event event, struct connection *c,
 						   c->logger, where, "unroute instance");
 			/* do now so route_owner won't find us */
 			set_routing(event, c, RT_UNROUTED, NULL, where);
-			do_updown_unroute(c);
+			do_updown_unroute(c, NULL);
 			return;
 
 		case X(UNROUTE, ROUTED_FAILURE, INSTANCE):
@@ -1378,7 +1377,7 @@ void dispatch(enum routing_event event, struct connection *c,
 						   c->logger, where, "unroute instance");
 			/* do now so route_owner won't find us */
 			set_routing(event, c, RT_UNROUTED, NULL, where);
-			do_updown_unroute(c);
+			do_updown_unroute(c, NULL);
 			return;
 
 		case X(UNROUTE, UNROUTED_TUNNEL, INSTANCE):
@@ -1614,16 +1613,6 @@ void dispatch(enum routing_event event, struct connection *c,
 		jam_string(buf, "routing: unhandled ");
 		jam_event(buf, event, c, e);
 	}
-}
-
-/*
- * Delete any kernal policies for a connection and unroute it if route
- * isn't shared.
- */
-
-static void do_updown_unroute(struct connection *c)
-{
-	do_updown_unowned_spds(UPDOWN_UNROUTE, c, &c->child.spds, NULL, c->logger);
 }
 
 /*

@@ -34,6 +34,7 @@ struct connection;
 struct spd_route;
 struct spds;
 struct logger;
+struct child_sa;
 
 /* many bits reach in to use this, but maybe shouldn't */
 enum updown {
@@ -56,9 +57,6 @@ void do_updown_spds(enum updown updown_verb,
 		    const struct spds *spds,
 		    struct state *st, struct logger *logger);
 
-void do_updown_unowned_spds(enum updown updown_verb,
-			    const struct connection *c,
-			    const struct spds *spds,
-			    struct state *st, struct logger *logger);
+void do_updown_unroute(const struct connection *c, struct child_sa *child);
 
 #endif

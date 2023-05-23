@@ -541,16 +541,21 @@ void do_updown_spds(enum updown updown_verb,
 	}
 }
 
-void do_updown_unowned_spds(enum updown updown_verb,
-			    const struct connection *c,
-			    const struct spds *spds,
-			    struct state *st,
-			    struct logger *logger)
+/*
+ * Delete any kernal policies for a connection and unroute it if route
+ * isn't shared.
+ */
+
+void do_updown_unroute(const struct connection *c, struct child_sa *child)
 {
-	FOR_EACH_ITEM(spd, spds) {
+	struct logger *logger = (child != NULL ? child->sa.st_logger : c->logger);
+	PEXPECT(logger, !routed(c));
+	FOR_EACH_ITEM(spd, &c->child.spds) {
 		/* only unroute if no other connection shares it */
 		if (route_owner(spd) == NULL) {
-			do_updown(updown_verb, c, spd, st, logger);
+			do_updown(UPDOWN_UNROUTE, c, spd,
+				  (child != NULL ? &child->sa : NULL),
+				  logger);
 		}
 	}
 }
