@@ -3350,9 +3350,8 @@ struct connection *find_connection_for_packet(const ip_packet packet,
 			(opportunistic(c) &&
 			 c->kind == CK_INSTANCE &&
 			 pexpect(c->clonedfrom != NULL) /* because instance */ &&
-			 routed(c->clonedfrom->child.routing));
-		if (!routed(c->child.routing) &&
-		    !instance_initiation_ok &&
+			 routed(c->clonedfrom));
+		if (!routed(c) && !instance_initiation_ok &&
 		    c->config->sec_label.len == 0) {
 			connection_buf cb;
 			selector_pair_buf sb;

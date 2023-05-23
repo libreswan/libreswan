@@ -816,7 +816,7 @@ static struct spd_owner spd_conflict(const struct spd_route *c_spd,
 		if (!address_eq_address(c->local->host.addr,
 					d->local->host.addr)) {
 			ldbg_spd(logger, indent, d_spd, "route skipped; different local address?!?");
-		} else if (!routed(d->child.routing)) {
+		} else if (!routed(d)) {
 			ldbg_spd(logger, indent, d_spd, "route skipped; not routed");
 		} else {
 			/* winner? */

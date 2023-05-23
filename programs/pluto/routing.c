@@ -214,8 +214,9 @@ enum shunt_kind routing_shunt_kind(enum routing routing)
 	bad_case(routing);
 }
 
-bool routed(enum routing r)
+bool routed(const struct connection *c)
 {
+	enum routing r = c->child.routing;
 	switch (r) {
 	case RT_ROUTED_ONDEMAND:
 	case RT_ROUTED_NEVER_NEGOTIATE:
