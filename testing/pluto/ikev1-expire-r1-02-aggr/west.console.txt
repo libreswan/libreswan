@@ -24,7 +24,7 @@ west #
 1v1 "westnet-eastnet-aggr" #1: sent Aggressive Mode request
 002 "westnet-eastnet-aggr" #1: IMPAIR: retransmit so timing out SA (may retry)
 002 "westnet-eastnet-aggr" #1: deleting ISAKMP SA (AGGR_I1) and NOT sending notification
-002 "westnet-eastnet-aggr" #1: IMPAIR: skipping revival of connection that is supposed to remain up
+002 "westnet-eastnet-aggr" #1: IMPAIR: skip secheduling revival of connection that is supposed to remain up
 west #
  # we are waiting for east to expire the partial IKE state in 1+1+2+4+8+16+32 secs
 west #

@@ -84,7 +84,7 @@ west #
 1v2 "west" #4: sent CREATE_CHILD_SA request to rekey IPsec SA
 031 "west" #1: STATE_V2_ESTABLISHED_IKE_SA: 15 second timeout exceeded after 0 retransmits.  No response (or no acceptable response) to our IKEv2 message
 002 "west" #4: deleting larval Child SA (TIMEOUT_IKE)
-002 "west" #3: IMPAIR: skipping revival of connection that is supposed to remain up
+002 "west" #3: IMPAIR: skip secheduling revival of connection that is supposed to remain up
 005 "west" #3: ESP traffic information: in=0B out=0B
 002 "west" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and NOT sending notification
 west #

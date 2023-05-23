@@ -37,7 +37,7 @@ west #
 003 "ikev1-failtest" #1: received and ignored notification payload: NO_PROPOSAL_CHOSEN
 031 "ikev1-failtest" #1: STATE_MAIN_I1: 2 second timeout exceeded after 2 retransmits. No response (or no acceptable response) to our first IKEv1 message
 002 "ikev1-failtest" #1: deleting ISAKMP SA (MAIN_I1) and NOT sending notification
-002 "ikev1-failtest" #1: IMPAIR: skipping revival of connection that is supposed to remain up
+002 "ikev1-failtest" #1: IMPAIR: skip secheduling revival of connection that is supposed to remain up
 west #
  ipsec auto --delete ikev1-failtest
 002 "ikev1-failtest": terminating SAs using this connection
@@ -49,7 +49,7 @@ west #
 003 "ikev1-aggr-failtest" #2: authentication failed: using RSA with SHA1 for '@east-v1' tried preloaded: *000000000
 217 "ikev1-aggr-failtest" #2: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
 002 "ikev1-aggr-failtest" #2: deleting ISAKMP SA (AGGR_I1) and NOT sending notification
-002 "ikev1-aggr-failtest" #2: IMPAIR: skipping revival of connection that is supposed to remain up
+002 "ikev1-aggr-failtest" #2: IMPAIR: skip secheduling revival of connection that is supposed to remain up
 west #
  ipsec auto --delete ikev1-aggr-failtest
 002 "ikev1-aggr-failtest": terminating SAs using this connection

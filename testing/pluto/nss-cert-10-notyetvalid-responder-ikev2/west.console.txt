@@ -27,7 +27,7 @@ west #
 003 "nss-cert" #1: NSS: ERROR: IPsec certificate E=user-notyetvalid@testing.libreswan.org,CN=notyetvalid.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA invalid: SEC_ERROR_EXPIRED_CERTIFICATE: Peer's Certificate has expired.
 002 "nss-cert" #1: X509: certificate payload rejected for this connection
 036 "nss-cert" #1: encountered fatal error in state STATE_V2_PARENT_I2
-002 "nss-cert" #1: IMPAIR: skipping revival of connection that is supposed to remain up
+002 "nss-cert" #1: IMPAIR: skip secheduling revival of connection that is supposed to remain up
 002 "nss-cert" #1: deleting IKE SA (PARENT_I2) and NOT sending notification
 west #
  echo done

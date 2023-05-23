@@ -25,7 +25,7 @@ west #
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 003 "westnet-eastnet-ipv4-psk-ikev2" #1: dropping unexpected IKE_SA_INIT message containing INVALID_SYNTAX notification; message payloads: N; missing payloads: SA,KE,Ni
 002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: retransmit so timing out SA (may retry)
-002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: skipping revival of connection that is supposed to remain up
+002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: skip secheduling revival of connection that is supposed to remain up
 002 "westnet-eastnet-ipv4-psk-ikev2" #1: deleting IKE SA (PARENT_I1) and NOT sending notification
 west #
  ipsec whack --impair none
@@ -39,7 +39,7 @@ west #
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #2: sent IKE_SA_INIT request to 192.1.2.23:500
 003 "westnet-eastnet-ipv4-psk-ikev2" #2: dropping unexpected IKE_SA_INIT message containing IKEV2_FRAGMENTATION_SUPPORTED... notification; message payloads: SA,Ni,N; missing payloads: KE
 031 "westnet-eastnet-ipv4-psk-ikev2" #2: STATE_V2_PARENT_I1: 60 second timeout exceeded after 0 retransmits.  No response (or no acceptable response) to our first IKEv2 message
-002 "westnet-eastnet-ipv4-psk-ikev2" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+002 "westnet-eastnet-ipv4-psk-ikev2" #2: connection is supposed to remain up; revival attempt 2 scheduled in 5 seconds
 002 "westnet-eastnet-ipv4-psk-ikev2" #2: deleting IKE SA (PARENT_I1) and NOT sending notification
 west #
  echo done
