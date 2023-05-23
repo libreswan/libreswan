@@ -486,7 +486,9 @@ struct iface_endpoint *connect_to_tcp_endpoint(struct iface_dev *local_dev,
 	ldbg(logger, "TCP: socket %d: connecting to other end", fd);
 	ip_sockaddr remote_sockaddr = sockaddr_from_endpoint(remote_endpoint);
 	if (connect(fd, &remote_sockaddr.sa.sa, remote_sockaddr.len) < 0) {
-		llog_error(logger, errno, "TCP: connect(%d) failed", fd);
+		endpoint_buf eb;
+		llog_error(logger, errno, "TCP: socket %d: connecting to %s",
+			   fd, str_endpoint(&remote_endpoint, &eb));
 		close(fd);
 		return NULL;
 	}
@@ -499,7 +501,8 @@ struct iface_endpoint *connect_to_tcp_endpoint(struct iface_dev *local_dev,
 			.len = sizeof(local_sockaddr.sa),
 		};
 		if (getsockname(fd, &local_sockaddr.sa.sa, &local_sockaddr.len) < 0) {
-			llog_error(logger, errno, "TCP: socket %d: failed to get local TCP address from socket", fd);
+			llog_error(logger, errno,
+				   "TCP: socket %d: getting local TCP sockaddr", fd);
 			close(fd);
 			return NULL;
 		}
@@ -508,7 +511,8 @@ struct iface_endpoint *connect_to_tcp_endpoint(struct iface_dev *local_dev,
 		err_t err = sockaddr_to_address_port(&local_sockaddr.sa.sa, local_sockaddr.len,
 						     &local_address, &local_port);
 		if (err != NULL) {
-			llog(RC_LOG, logger, "TCP: socket %d: failed to get local TCP address from socket, %s", fd, err);
+			llog_pexpect(logger, HERE,
+				     "TCP: socket %d: converting sockaddr to address/port: %s", fd, err);
 			close(fd);
 			return NULL;
 		}
@@ -526,7 +530,7 @@ struct iface_endpoint *connect_to_tcp_endpoint(struct iface_dev *local_dev,
 		const uint8_t iketcp[] = IKE_IN_TCP_PREFIX;
 		if (write(fd, iketcp, sizeof(iketcp)) != (ssize_t)sizeof(iketcp)) {
 			llog_error(logger, errno,
-				   "TCP: socket %d: send of IKE-in-TCP prefix failed", fd);
+				   "TCP: socket %d: sending IKE-in-TCP prefix", fd);
 			close(fd);
 			return NULL;
 		}
@@ -545,8 +549,7 @@ struct iface_endpoint *connect_to_tcp_endpoint(struct iface_dev *local_dev,
 		ldbg(logger, "TCP: socket %d: enabling \"espintcp\"", fd);
 		if (setsockopt(fd, IPPROTO_TCP, TCP_ULP, "espintcp", sizeof("espintcp"))) {
 			llog_error(logger, errno,
-				   "setsockopt(SOL_TCP, TCP_ULP) failed "PRI_WHERE,
-				   pri_where(HERE));
+				   "TCP: socket %d: setting socket option \"espintcp\"", fd);
 			close(fd);
 			return NULL;
 		}
