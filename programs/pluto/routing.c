@@ -777,11 +777,11 @@ static bool zap_connection(enum routing_event event,
 		 */
 		delete_ike_sa(ike);
 		/*
-		 * ... and if the connection is a template and was
+		 * ... and if the connection is an instance and was
 		 * unrouted then it can be deleted as well
 		 * (alternatives include being revived).
 		 */
-		if (c->kind == CK_TEMPLATE &&
+		if (c->kind == CK_INSTANCE &&
 		    c->child.routing == RT_UNROUTED) {
 			delete_connection(&c);
 		}
