@@ -67,8 +67,7 @@ struct annex {
 
 static void dispatch(const enum routing_event event,
 		     struct connection *c,
-		     struct logger *logger,
-		     where_t where,
+		     struct logger *logger, where_t where,
 		     struct annex e);
 
 static void jam_event_sa(struct jambuf *buf, struct state *st)
@@ -303,8 +302,8 @@ void set_routing(enum routing_event event,
 	 */
 	PEXPECT(logger, old_routing_sa >= c->newest_ipsec_sa);
 	if (new_routing_sa != SOS_NOBODY) {
-		PEXPECT(logger, new_routing_sa >= c->child.newest_routing_sa);
-		PEXPECT(logger, new_routing_sa >= c->newest_ipsec_sa);
+		PEXPECT(c->logger, new_routing_sa >= c->child.newest_routing_sa);
+		PEXPECT(c->logger, new_routing_sa >= c->newest_ipsec_sa);
 	}
 #endif
 	c->child.routing = new_routing;
@@ -326,9 +325,9 @@ void set_routing(enum routing_event event,
  */
 
 static void unrouted_instance_to_unrouted_negotiation(enum routing_event event,
-						      struct connection *c,
-						      struct logger *logger, where_t where)
+						      struct connection *c, where_t where)
 {
+	struct logger *logger = c->logger;
 #if 0
 	/* fails when whack forces the initiate so that the template
 	 * is instantiated before it is routed */
@@ -355,8 +354,7 @@ static void unrouted_instance_to_unrouted_negotiation(enum routing_event event,
 
 static void routed_negotiation_to_unrouted(enum routing_event event,
 					   struct connection *c,
-					   struct logger *logger,
-					   where_t where,
+					   struct logger *logger, where_t where,
 					   const char *story)
 {
 	PEXPECT(logger, !opportunistic(c));
@@ -364,7 +362,7 @@ static void routed_negotiation_to_unrouted(enum routing_event event,
 				   logger, where, story);
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 		if (route_owner(spd) == NULL) {
-			do_updown(UPDOWN_ROUTE, c, spd, NULL/*state*/, logger);
+			do_updown(UPDOWN_ROUTE, c, spd, NULL/*state*/, c->logger);
 		}
 	}
 	set_routing(event, c, RT_UNROUTED, NULL, where);
@@ -377,12 +375,11 @@ static void routed_negotiation_to_unrouted(enum routing_event event,
  */
 
 static void ondemand_to_negotiation(enum routing_event event,
-				    struct connection *c,
-				    struct logger *logger,
-				    where_t where,
-				    const char *story)
+				    struct connection *c, where_t where,
+				    const char *reason)
 {
-	ldbg_routing(logger, "%s() %s", __func__, story);
+        struct logger *logger = c->logger;
+	ldbg_routing(c->logger, "%s() %s", __func__, reason);
         PEXPECT(logger, !opportunistic(c));
 	PASSERT(logger, (event == CONNECTION_INITIATE ||
 			 event == CONNECTION_ACQUIRE ||
@@ -397,7 +394,7 @@ static void ondemand_to_negotiation(enum routing_event event,
 					       SHUNT_KIND_NEGOTIATION,
 					       logger, where,
 					       "ondemand->negotiation")) {
-			llog(RC_LOG, logger,
+			llog(RC_LOG, c->logger,
 			     "converting ondemand kernel policy to negotiation");
 		}
 	}
@@ -415,9 +412,9 @@ static void negotiation_to_ondemand(enum routing_event event,
 				    struct connection *c,
 				    struct logger *logger,
 				    where_t where,
-				    const char *story)
+				    const char *reason)
 {
-	ldbg_routing(logger, "%s() %s", __func__, story);
+	ldbg_routing(c->logger, "%s() %s", __func__, reason);
 	PASSERT(logger, (event == CONNECTION_TIMEOUT_IKE ||
 			 event == CONNECTION_DELETE_IKE));
 	enum routing rt_ondemand = (c->child.routing == RT_ROUTED_NEGOTIATION ? RT_ROUTED_ONDEMAND :
@@ -428,17 +425,15 @@ static void negotiation_to_ondemand(enum routing_event event,
 		if (!replace_spd_kernel_policy(spd, DIRECTION_OUTBOUND,
 					       rt_ondemand,
 					       SHUNT_KIND_ONDEMAND,
-					       logger, where, story)) {
-			llog(RC_LOG, logger, "%s failed", story);
+					       logger, where, reason)) {
+			llog(RC_LOG, logger, "%s failed", reason);
 		}
 	}
 	set_routing(event, c, rt_ondemand, NULL, where);
 }
 
-void connection_initiate(struct connection *c,
-			 const threadtime_t *inception,
-			 bool background,
-			 where_t where)
+void connection_initiate(struct connection *c, const threadtime_t *inception,
+			 bool background, where_t where)
 {
 	if (labeled(c)) {
 		ipsecdoi_initiate(c, c->policy, SOS_NOBODY, inception,
@@ -511,14 +506,13 @@ void connection_revive(struct connection *c, const threadtime_t *inception, wher
 static void down_routed_tunnel(enum routing_event event,
 			       struct connection *c,
 			       struct child_sa **child,
-			       struct logger *logger,
 			       where_t where)
 {
-	PASSERT(logger, c == (*child)->sa.st_connection);
+	PASSERT((*child)->sa.st_logger, c == (*child)->sa.st_connection);
 
 	if (c->child.newest_routing_sa > (*child)->sa.st_serialno) {
 		/* no longer child's */
-		ldbg_routing(logger,
+		ldbg_routing((*child)->sa.st_logger,
 			     "keeping connection kernel policy; routing SA "PRI_SO" is newer",
 			     pri_so(c->child.newest_routing_sa));
 		delete_child_sa(child);
@@ -527,7 +521,7 @@ static void down_routed_tunnel(enum routing_event event,
 
 	if (c->newest_ipsec_sa > (*child)->sa.st_serialno) {
 		/* covered by above; no!? */
-		ldbg_routing(logger,
+		ldbg_routing((*child)->sa.st_logger,
 			     "keeping connection kernel policy; IPsec SA "PRI_SO" is newer",
 			     pri_so(c->newest_ipsec_sa));
 		delete_child_sa(child);
@@ -536,7 +530,7 @@ static void down_routed_tunnel(enum routing_event event,
 
 	if (should_revive_connection(*child)) {
 		/* XXX: should this be ROUTED_NEGOTIATING? */
-		ldbg_routing(logger,
+		ldbg_routing((*child)->sa.st_logger,
 			     "replacing connection kernel policy with ROUTED_ONDEMAND; it will be revived");
 		replace_ipsec_with_bare_kernel_policies(event, *child,
 							RT_ROUTED_ONDEMAND,
@@ -551,7 +545,7 @@ static void down_routed_tunnel(enum routing_event event,
 	 * Should this go back to on-demand?
 	 */
 	if (c->kind == CK_PERMANENT && c->policy & POLICY_ROUTE) {
-		ldbg_routing(logger,
+		ldbg_routing((*child)->sa.st_logger,
 			     "replacing connection kernel policy with on-demand");
 		replace_ipsec_with_bare_kernel_policies(event, *child,
 							RT_ROUTED_ONDEMAND,
@@ -564,7 +558,7 @@ static void down_routed_tunnel(enum routing_event event,
 	 * Is there a failure shunt?
 	 */
 	if (c->kind == CK_PERMANENT && c->config->failure_shunt != SHUNT_NONE) {
-		ldbg_routing(logger,
+		ldbg_routing((*child)->sa.st_logger,
 			     "replacing connection kernel policy with failure");
 		replace_ipsec_with_bare_kernel_policies(event, *child,
 							RT_ROUTED_FAILURE,
@@ -577,12 +571,14 @@ static void down_routed_tunnel(enum routing_event event,
 	 * Never delete permanent connections.
 	 */
 	if (c->kind == CK_PERMANENT) {
-		ldbg_routing(logger,
+		ldbg_routing((*child)->sa.st_logger,
 			     "keeping connection; it is permanent");
-		do_updown_spds(UPDOWN_DOWN, c, &c->child.spds, &(*child)->sa, logger);
+		do_updown_spds(UPDOWN_DOWN, c, &c->child.spds, &(*child)->sa,
+			       (*child)->sa.st_logger);
 		delete_spd_kernel_policies(&c->child.spds,
 					   EXPECT_KERNEL_POLICY_OK,
-					   logger, where, "delete");
+					   (*child)->sa.st_logger,
+					   where, "delete");
 		/*
 		 * update routing; route_owner() will see this and not
 		 * think this route is the owner?
@@ -593,11 +589,12 @@ static void down_routed_tunnel(enum routing_event event,
 		return;
 	}
 
-	PASSERT(logger, c->kind == CK_INSTANCE);
+	PASSERT((*child)->sa.st_logger, c->kind == CK_INSTANCE);
 
 	delete_spd_kernel_policies(&c->child.spds,
 				   EXPECT_KERNEL_POLICY_OK,
-				   logger, where, "delete");
+				   (*child)->sa.st_logger,
+				   where, "delete");
 	set_routing(event, c, RT_UNROUTED, NULL, where);
 
 	/*
@@ -605,7 +602,7 @@ static void down_routed_tunnel(enum routing_event event,
 	 * delete it.
 	 */
 	if (c->newest_ike_sa == (*child)->sa.st_clonedfrom) {
-		ldbg_routing(logger,
+		ldbg_routing((*child)->sa.st_logger,
 			     "keeping connection; shared with IKE SA "PRI_SO,
 			     pri_so(c->newest_ike_sa));
 		delete_child_sa(child);
@@ -622,37 +619,35 @@ static void down_routed_tunnel(enum routing_event event,
 	};
 	if (next_state_new2old(&sf)) {
 		connection_buf cb;
-		llog_pexpect(logger, where,
+		llog_pexpect((*child)->sa.st_logger, where,
 			     "connection "PRI_CONNECTION" in use by #%lu, skipping delete-unused",
 			     pri_connection(c, &cb), sf.st->st_serialno);
 		delete_child_sa(child);
 		return;
 	}
 
-	ldbg_routing(logger, "keeping connection; NO!");
+	ldbg_routing((*child)->sa.st_logger, "keeping connection; NO!");
 	delete_child_sa(child);
 	delete_connection(&c);
 }
 
 static bool zap_connection(enum routing_event event,
-			   struct ike_sa **ike,
-			   struct logger *logger,
-			   where_t where)
+			   struct ike_sa **ike, where_t where)
 {
 	struct connection *c = (*ike)->sa.st_connection;
 
-	PASSERT(logger, (event == CONNECTION_TIMEOUT_IKE ||
-			 event == CONNECTION_DELETE_IKE));
+	PASSERT((*ike)->sa.st_logger, (event == CONNECTION_TIMEOUT_IKE ||
+				       event == CONNECTION_DELETE_IKE));
 	enum routing_event child_event = (event == CONNECTION_TIMEOUT_IKE ? CONNECTION_TIMEOUT_CHILD :
 					  event == CONNECTION_DELETE_IKE ? CONNECTION_DELETE_CHILD :
 					  CONNECTION_EVENT_ROOF);
-	PASSERT(logger, child_event != CONNECTION_EVENT_ROOF);
+	PASSERT((*ike)->sa.st_logger, child_event != CONNECTION_EVENT_ROOF);
 
 	/*
 	 * Stop reviving children trying to use this IKE SA.
 	 */
 	enum_buf ren;
-	ldbg_routing(logger, "due to %s, IKE SA is no longer viable",
+	ldbg_routing((*ike)->sa.st_logger, "due to %s, IKE SA is no longer viable",
 		     str_enum_short(&routing_event_names, event, &ren));
 	(*ike)->sa.st_viable_parent = false;
 
@@ -681,7 +676,7 @@ static bool zap_connection(enum routing_event event,
 			 * child of larval ike is hidden).
 			 */
 			if (IS_IKE_SA_ESTABLISHED(&(*ike)->sa)) {
-				attach_whack(child->sa.st_logger, logger);
+				attach_whack(child->sa.st_logger, (*ike)->sa.st_logger);
 				enum_buf ren;
 				llog_sa(RC_LOG, child, "deleting larval %s (%s)",
 					child->sa.st_connection->config->ike_info->sa_type_name[IPSEC_SA],
@@ -715,16 +710,15 @@ static bool zap_connection(enum routing_event event,
 		child_sa_by_serialno((*ike)->sa.st_connection->child.newest_routing_sa);
 	if (connection_child == NULL) {
 		dispatched_to_child = false;
-		ldbg_routing(logger, "IKE SA's connection has no Child SA "PRI_SO,
+		ldbg_routing((*ike)->sa.st_logger, "IKE SA's connection has no Child SA "PRI_SO,
 			     pri_so((*ike)->sa.st_connection->child.newest_routing_sa));
 	} else if (connection_child->sa.st_clonedfrom != (*ike)->sa.st_serialno) {
 		dispatched_to_child = false;
-		ldbg_routing(logger, "IKE SA "PRI_SO" is not the parent of the connection's Child SA "PRI_SO,
-			     pri_so((*ike)->sa.st_serialno),
+		ldbg_routing((*ike)->sa.st_logger, "IKE SA is not the parent of the connection's Child SA "PRI_SO,
 			     pri_so(connection_child->sa.st_serialno));
 	} else if (connection_child != NULL) {
 		dispatched_to_child = true;
-		attach_whack(connection_child->sa.st_logger, logger);
+		attach_whack(connection_child->sa.st_logger, (*ike)->sa.st_logger);
 		/* will delete child and its logger */
 		dispatch(child_event, connection_child->sa.st_connection,
 			 connection_child->sa.st_logger, where,
@@ -732,8 +726,8 @@ static bool zap_connection(enum routing_event event,
 				 .ike = ike,
 				 .child = &connection_child,
 			 });
-		PEXPECT(logger, connection_child == NULL); /*gone!*/
-		PEXPECT(logger, (*ike)->sa.st_connection->child.newest_routing_sa == SOS_NOBODY);
+		PEXPECT((*ike)->sa.st_logger, connection_child == NULL); /*gone!*/
+		PEXPECT((*ike)->sa.st_logger, (*ike)->sa.st_connection->child.newest_routing_sa == SOS_NOBODY);
 	}
 
 	/*
@@ -750,20 +744,20 @@ static bool zap_connection(enum routing_event event,
 		};
 		while (next_state_new2old(&child_filter)) {
 			struct child_sa *child = pexpect_child_sa(child_filter.st);
-			if (!PEXPECT(logger,
+			if (!PEXPECT((*ike)->sa.st_logger,
 				     child->sa.st_connection->child.newest_routing_sa ==
 				     child->sa.st_serialno)) {
 				continue;
 			}
 			/* will delete child and its logger */
-			attach_whack(child->sa.st_logger, logger);
+			attach_whack(child->sa.st_logger, (*ike)->sa.st_logger);
 			dispatch(child_event, child->sa.st_connection,
 				 child->sa.st_logger, where,
 				 (struct annex) {
 					 .ike = ike,
 					 .child = &child,
 				 });
-			PEXPECT(logger, child == NULL);
+			PEXPECT((*ike)->sa.st_logger, child == NULL);
 		}
 	}
 
@@ -805,8 +799,8 @@ static bool zap_connection(enum routing_event event,
 		 * reparenting the Child SA should have updated that
 		 * field to the newer IKE SA as well.
 		 */
-		PEXPECT(logger, (connection_child->sa.st_clonedfrom !=
-				 (*ike)->sa.st_serialno));
+		PEXPECT((*ike)->sa.st_logger, (connection_child->sa.st_clonedfrom !=
+					       (*ike)->sa.st_serialno));
 		delete_ike_sa(ike);
 		return true;
 	}
@@ -829,13 +823,12 @@ static bool zap_connection(enum routing_event event,
  * unrouted template gets instantiated using whack.
  */
 
-static bool zap_instances(enum routing_event event, struct connection *c,
-			  struct logger *logger, where_t where)
+static bool zap_instances(enum routing_event event, struct connection *c, where_t where)
 {
 	enum_buf ren;
-	ldbg_routing(logger, "due to %s, zapping instances",
+	ldbg_routing(c->logger, "due to %s, zapping instances",
 		     str_enum_short(&routing_event_names, event, &ren));
-	PASSERT(logger, c->kind == CK_TEMPLATE);
+	PASSERT(c->logger, c->kind == CK_TEMPLATE);
 
 	struct connection_filter cq = {
 		.clonedfrom = c,
@@ -845,9 +838,8 @@ static bool zap_instances(enum routing_event event, struct connection *c,
 	while (next_connection_old2new(&cq)) {
 		had_instances = true;
 		connection_buf cqb;
-		ldbg_routing(logger, "zapping instance "PRI_CONNECTION,
+		ldbg_routing(c->logger, "zapping instance "PRI_CONNECTION,
 			     pri_connection(cq.c, &cqb));
-		/* XXX: switch to child's logger */
 		dispatch(CONNECTION_UNROUTE, cq.c, cq.c->logger, where,
 			 (struct annex) {
 				 0,
@@ -955,12 +947,6 @@ void connection_delete_ike(struct ike_sa **ike, where_t where)
 		 });
 }
 
-void dispatch_1(enum routing_event event,
-		struct connection *c,
-		struct logger *logger,
-		where_t where,
-		struct annex *e);
-
 void dispatch(enum routing_event event, struct connection *c,
 	      struct logger *logger, where_t where,
 	      struct annex ee)
@@ -1014,19 +1000,6 @@ void dispatch(enum routing_event event, struct connection *c,
 	}
 #endif
 
-	/*
-	 * Capture the logger so that it can be safely used after the
-	 * connection / ike / child is gone.
-	 */
-	struct logger *llogger = clone_logger(logger, HERE);
-	dispatch_1(event, c, llogger, where, e);
-	free_logger(&llogger, HERE);
-}
-
-void dispatch_1(enum routing_event event, struct connection *c,
-		struct logger *logger, where_t where,
-		struct annex *e)
-{
 #define XX(CONNECTION_EVENT, CONNECTION_ROUTING, CONNECTION_KIND)	\
 	(((CONNECTION_EVENT) *						\
 	  CONNECTION_ROUTING_ROOF + CONNECTION_ROUTING) *		\
@@ -1073,7 +1046,7 @@ void dispatch_1(enum routing_event event, struct connection *c,
 			PEXPECT(logger, never_negotiate(c));
 			delete_spd_kernel_policies(&c->child.spds,
 						   EXPECT_KERNEL_POLICY_OK,
-						   logger, where, "unroute permanent");
+						   c->logger, where, "unroute permanent");
 			/* stop updown_unroute() finding this
 			 * connection */
 			set_routing(event, c, RT_UNROUTED, NULL, where);
@@ -1086,7 +1059,7 @@ void dispatch_1(enum routing_event event, struct connection *c,
 				 * ikev1-xfrmi-02-tcpdump */
 				delete_spd_kernel_policies(&c->child.spds,
 							   EXPECT_KERNEL_POLICY_OK,
-							   logger, where, "unroute permanent");
+							   c->logger, where, "unroute permanent");
 				set_routing(event, c, RT_UNROUTED, NULL, where);
 				do_updown_unroute(c, NULL);
 				return;
@@ -1099,7 +1072,7 @@ void dispatch_1(enum routing_event event, struct connection *c,
 				 * xauth-pluto-25-mixed-addresspool */
 				delete_spd_kernel_policies(&c->child.spds,
 							   EXPECT_KERNEL_POLICY_OK,
-							   logger, where, "unroute permanent");
+							   c->logger, where, "unroute permanent");
 				set_routing(event, c, RT_UNROUTED, NULL, where);
 				do_updown_unroute(c, NULL);
 				return;
@@ -1120,7 +1093,7 @@ void dispatch_1(enum routing_event event, struct connection *c,
 				 */
 				ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
 						  e->inception, null_shunk,
-						  e->background, logger);
+						  e->background, c->logger);
 				return;
 			}
 			break;
@@ -1130,19 +1103,19 @@ void dispatch_1(enum routing_event event, struct connection *c,
 			set_routing(event, c, RT_UNROUTED_NEGOTIATION, NULL, where);
 			ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
 					  e->inception, null_shunk,
-					  e->background, logger);
+					  e->background, c->logger);
 			return;
 
 		case X(INITIATE, ROUTED_ONDEMAND, PERMANENT):
 		case X(ACQUIRE, ROUTED_ONDEMAND, PERMANENT):
 			PEXPECT(logger, ((event == CONNECTION_INITIATE && e->acquire == NULL) ||
 					 (event == CONNECTION_ACQUIRE && e->acquire->sec_label.ptr == NULL)));
-			ondemand_to_negotiation(event, c, logger, where, "negotiating permanent");
+			ondemand_to_negotiation(event, c, where, "negotiating permanent");
 			PEXPECT(logger, c->child.routing == RT_ROUTED_NEGOTIATION);
 			/* ipsecdoi_initiate may replace SOS_NOBODY with a state */
 			ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
 					  e->inception, null_shunk,
-					  e->background, logger);
+					  e->background, c->logger);
 			return;
 
 		case X(INITIATE, UNROUTED_NEGOTIATION, PERMANENT):
@@ -1169,10 +1142,10 @@ void dispatch_1(enum routing_event event, struct connection *c,
 						  e->background, logger);
 				return;
 			}
-			llog(RC_LOG, logger, "connection already negotiating");
+			llog(RC_LOG, c->logger, "connection already negotiating");
 			return;
 		case X(ACQUIRE, ROUTED_NEGOTIATION, PERMANENT):
-			llog(RC_LOG, logger, "connection already negotiating");
+			llog(RC_LOG, c->logger, "connection already negotiating");
 			return;
 
 		case X(REVIVE, UNROUTED, INSTANCE):
@@ -1193,7 +1166,7 @@ void dispatch_1(enum routing_event event, struct connection *c,
 			}
 			ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
 					  e->inception, e->acquire->sec_label,
-					  e->background, logger);
+					  e->background, e->acquire->logger);
 			return;
 		case X(REVIVE, UNROUTED_REVIVAL, PERMANENT):
 			set_routing(event, c, RT_UNROUTED_NEGOTIATION, NULL, where);
@@ -1202,7 +1175,7 @@ void dispatch_1(enum routing_event event, struct connection *c,
 			return;
 		case X(REVIVE, UNROUTED_ONDEMAND, PERMANENT):
 		case X(REVIVE, UNROUTED_ONDEMAND, INSTANCE):
-			ondemand_to_negotiation(event, c, logger, where, "negotiating unrouted");
+			ondemand_to_negotiation(event, c, where, "negotiating unrouted");
 			PEXPECT(logger, c->child.routing == RT_UNROUTED_NEGOTIATION);
 			ipsecdoi_initiate(c, c->policy, SOS_NOBODY, e->inception,
 					  null_shunk, /*background*/false, logger);
@@ -1211,15 +1184,15 @@ void dispatch_1(enum routing_event event, struct connection *c,
 		case X(REVIVE, ROUTED_ONDEMAND, INSTANCE):
 			if (BROKEN_TRANSITION &&
 			    c->config->negotiation_shunt == SHUNT_HOLD) {
-				ldbg_routing(logger, "skipping NEGOTIATION=HOLD");
+				ldbg_routing(c->logger, "skipping NEGOTIATION=HOLD");
 				set_routing(event, c, RT_ROUTED_NEGOTIATION, NULL, where);
 				/* ipsecdoi_initiate may replace SOS_NOBODY with a state */
 				ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
 						  e->inception, null_shunk,
-						  e->background, logger);
+						  e->background, c->logger);
 				return;
 			}
-			ondemand_to_negotiation(event, c, logger, where, "negotiating revival");
+			ondemand_to_negotiation(event, c, where, "negotiating revival");
 			PEXPECT(logger, c->child.routing == RT_ROUTED_NEGOTIATION);
 			ipsecdoi_initiate(c, c->policy, SOS_NOBODY, e->inception,
 					  null_shunk, /*background*/false, logger);
@@ -1287,7 +1260,7 @@ void dispatch_1(enum routing_event event, struct connection *c,
 			return;
 		case X(UNROUTE, ROUTED_NEGOTIATION, PERMANENT):
 			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
-						   logger, where, "unroute permanent");
+						   c->logger, where, "unroute permanent");
 			/* do now so route_owner won't find us */
 			set_routing(event, c, RT_UNROUTED, NULL, where);
 			do_updown_unroute(c, NULL);
@@ -1297,7 +1270,7 @@ void dispatch_1(enum routing_event event, struct connection *c,
 			PEXPECT(logger, !never_negotiate(c));
 			delete_spd_kernel_policies(&c->child.spds,
 						   EXPECT_NO_INBOUND,
-						   logger, where, "unroute permanent");
+						   c->logger, where, "unroute permanent");
 			/* stop updown_unroute() finding this
 			 * connection */
 			set_routing(event, c, RT_UNROUTED, NULL, where);
@@ -1308,7 +1281,7 @@ void dispatch_1(enum routing_event event, struct connection *c,
 				PEXPECT(logger, !never_negotiate(c));
 				delete_spd_kernel_policies(&c->child.spds,
 							   EXPECT_NO_INBOUND,
-							   logger, where, "unroute permanent");
+							   c->logger, where, "unroute permanent");
 				/* stop updown_unroute() finding this
 				 * connection */
 				set_routing(event, c, RT_UNROUTED, NULL, where);
@@ -1326,7 +1299,7 @@ void dispatch_1(enum routing_event event, struct connection *c,
 
 		case X(UNROUTE, ROUTED_FAILURE, PERMANENT):
 			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
-						   logger, where, "unroute permanent");
+						   c->logger, where, "unroute permanent");
 			/* do now so route_owner won't find us */
 			set_routing(event, c, RT_UNROUTED, NULL, where);
 			do_updown_unroute(c, NULL);
@@ -1334,20 +1307,20 @@ void dispatch_1(enum routing_event event, struct connection *c,
 
 		case X(UNROUTE, UNROUTED_TUNNEL, PERMANENT):
 			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
-						   logger, where, "unroute permanent");
+						   c->logger, where, "unroute permanent");
 			set_routing(event, c, RT_UNROUTED, NULL, where);
 			return;
 
 		case X(UNROUTE, UNROUTED, TEMPLATE):
-			if (zap_instances(event, c, logger, where)) {
+			if (zap_instances(event, c, where)) {
 				return;
 			}
 			ldbg_routing(logger, "already unrouted");
 			return;
 		case X(UNROUTE, ROUTED_ONDEMAND, TEMPLATE):
-			zap_instances(event, c, logger, where);
+			zap_instances(event, c, where);
 			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
-						   logger, where, "unroute template");
+						   c->logger, where, "unroute template");
 			/* do now so route_owner won't find us */
 			set_routing(event, c, RT_UNROUTED, NULL, where);
 			do_updown_unroute(c, NULL);
@@ -1387,7 +1360,7 @@ void dispatch_1(enum routing_event event, struct connection *c,
 						  e->background, logger);
 				return;
 			}
-			unrouted_instance_to_unrouted_negotiation(event, c, logger, where);
+			unrouted_instance_to_unrouted_negotiation(event, c, where);
 			ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
 					  e->inception, null_shunk,
 					  e->background, logger);
@@ -1423,22 +1396,22 @@ void dispatch_1(enum routing_event event, struct connection *c,
 						  e->background, logger);
 				return;
 			}
-			unrouted_instance_to_unrouted_negotiation(event, c, logger, where);
+			unrouted_instance_to_unrouted_negotiation(event, c, where);
 			ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
 					  e->inception, e->acquire->sec_label,
-					  e->background, logger);
+					  e->background, e->acquire->logger);
 			return;
 
 		case X(UNROUTE, UNROUTED_NEGOTIATION, INSTANCE):
 			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
-						   logger, where, "unroute instance");
+						   c->logger, where, "unroute instance");
 			/* do now so route_owner won't find us */
 			set_routing(event, c, RT_UNROUTED, NULL, where);
 			return;
 
 		case X(UNROUTE, ROUTED_NEGOTIATION, INSTANCE):
 			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
-						   logger, where, "unroute instance");
+						   c->logger, where, "unroute instance");
 			set_routing(event, c, RT_UNROUTED, NULL, where);
 			do_updown_unroute(c, NULL);
 			return;
@@ -1449,7 +1422,7 @@ void dispatch_1(enum routing_event event, struct connection *c,
 
 		case X(UNROUTE, ROUTED_ONDEMAND, INSTANCE):
 			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
-						   logger, where, "unroute instance");
+						   c->logger, where, "unroute instance");
 			/* do now so route_owner won't find us */
 			set_routing(event, c, RT_UNROUTED, NULL, where);
 			do_updown_unroute(c, NULL);
@@ -1457,7 +1430,7 @@ void dispatch_1(enum routing_event event, struct connection *c,
 
 		case X(UNROUTE, ROUTED_FAILURE, INSTANCE):
 			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
-						   logger, where, "unroute instance");
+						   c->logger, where, "unroute instance");
 			/* do now so route_owner won't find us */
 			set_routing(event, c, RT_UNROUTED, NULL, where);
 			do_updown_unroute(c, NULL);
@@ -1465,13 +1438,13 @@ void dispatch_1(enum routing_event event, struct connection *c,
 
 		case X(UNROUTE, UNROUTED_TUNNEL, INSTANCE):
 			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
-						   logger, where, "unroute instance");
+						   c->logger, where, "unroute instance");
 			set_routing(event, c, RT_UNROUTED, NULL, where);
 			return;
 
 		case X(DELETE_IKE, UNROUTED_NEGOTIATION, PERMANENT):
 		case X(TIMEOUT_IKE, UNROUTED_NEGOTIATION, PERMANENT):
-			if (zap_connection(event, e->ike, logger, where)) {
+			if (zap_connection(event, e->ike, where)) {
 				return;
 			}
 			/* ex, permanent+initiate */
@@ -1498,7 +1471,7 @@ void dispatch_1(enum routing_event event, struct connection *c,
 			 * code below, and not zap_connection(), will
 			 * need to deal with revival et.al.
 			 */
-			if (zap_connection(event, e->ike, logger, where)) {
+			if (zap_connection(event, e->ike, where)) {
 				/* will this happen? */
 				return;
 			}
@@ -1528,7 +1501,7 @@ void dispatch_1(enum routing_event event, struct connection *c,
 		case X(TIMEOUT_IKE, ROUTED_NEGOTIATION, INSTANCE):
 		case X(TIMEOUT_IKE, UNROUTED_NEGOTIATION, INSTANCE):
 			if (BROKEN_TRANSITION) {
-				if (zap_connection(event, e->ike, logger, where)) {
+				if (zap_connection(event, e->ike, where)) {
 					return;
 				}
 			}
@@ -1561,7 +1534,7 @@ void dispatch_1(enum routing_event event, struct connection *c,
 			 * tunnel there must be a child to notify.
 			 * Hence this should always succeed.
 			 */
-			if (zap_connection(event, e->ike, logger, where)) {
+			if (zap_connection(event, e->ike, where)) {
 				return;
 			}
 			break;
@@ -1578,9 +1551,8 @@ void dispatch_1(enum routing_event event, struct connection *c,
 			 * Since there's no established Child SA
 			 * zap_connection() should always fail?
 			 */
-			if (zap_connection(event, e->ike, logger, where)) {
-				llog_pexpect(logger, where,
-					     "larval IKE SA should have no children");
+			if (zap_connection(event, e->ike, where)) {
+				pexpect(0); /* logger is invalid */
 				return;
 			}
 			delete_ike_sa(e->ike);
@@ -1598,11 +1570,11 @@ void dispatch_1(enum routing_event event, struct connection *c,
 		case X(TIMEOUT_CHILD, ROUTED_TUNNEL, PERMANENT):
 		case X(DELETE_CHILD, ROUTED_TUNNEL, PERMANENT):
 			/* permenant connections are never deleted */
-			down_routed_tunnel(event, c, e->child, logger, where);
+			down_routed_tunnel(event, c, e->child, where);
 			return;
 		case X(TIMEOUT_CHILD, ROUTED_TUNNEL, INSTANCE):
 		case X(DELETE_CHILD, ROUTED_TUNNEL, INSTANCE):
-			down_routed_tunnel(event, c, e->child, logger, where);
+			down_routed_tunnel(event, c, e->child, where);
 			return;
 
 		case X(TIMEOUT_CHILD, UNROUTED_NEGOTIATION, INSTANCE):
