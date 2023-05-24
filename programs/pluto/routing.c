@@ -652,9 +652,10 @@ static bool zap_connection(enum routing_event event,
 	(*ike)->sa.st_viable_parent = false;
 
 	/*
-	 * Weed out any lurking larval children (i.e., children that
-	 * don't yet own their connection's route) that are sharing
-	 * this IKE SA.
+	 * Weed out any lurking larval children that are sharing this
+	 * IKE SA (i.e., children that are part way through an
+	 * IKE_AUTH or CREATE_CHILD_SA exchange and don't yet own
+	 * their connection's route).
 	 */
 
 	{
@@ -690,16 +691,17 @@ static bool zap_connection(enum routing_event event,
 	}
 
 	/*
-	 * If the IKE SA's connection has Child SA owning the route
-	 * and the Child SA's parent is this IKE SA then then send a
-	 * delete/timeout to that Child SA first.
+	 * If the IKE SA's connection has a direct Child SA (shares
+	 * connection) that owns the route then send a delete/timeout
+	 * to that Child SA first.
 	 *
-	 * This way, the IKE SA's connection is always put at the
-	 * front of the revival queue (without this the IKE SA and
-	 * other Child SAs all fight for who is first to revive).
+	 * This way the IKE SA's connection can jump to the front of
+	 * the revival queue (without this an IKE SA with multiple
+	 * children ends up with its chilren sqabbling over which SA
+	 * should be revived first).
 	 *
-	 * Also remember if the first child was told; later the event
-	 * only gets dispatched for IKE when there wasn't a child
+	 * Also remember if there was a direct child.  The event only
+	 * gets dispatched to the IKE SA when there wasn't a child
 	 * (such as during IKE_SA_INIT).
 	 */
 
@@ -730,9 +732,6 @@ static bool zap_connection(enum routing_event event,
 
 	/*
 	 * Now go through any remaining children.
-	 *
-	 * If the child is the routing owner, notify it of the
-	 * timeout.  Otherwise just blow it away.
 	 *
 	 * This could include children of the first IKE SA that are
 	 * been replaced.
@@ -765,12 +764,23 @@ static bool zap_connection(enum routing_event event,
 	/*
 	 * With everything cleaned up decide what to do with the IKE
 	 * SA.
-	 *
-	 * If the connection had a Child SA and it was notified, the
-	 * IKE SA can be deleted ...
 	 */
+
 	if (dispatched_to_child) {
+		/*
+		 * The connection had a direct and established Child
+		 * SA and that was notified.  Presumably that also
+		 * handled things like revival and updating the
+		 * connection's routing.
+		 *
+		 * The IKE SA can simply be deleted ...
+		 */
 		delete_ike_sa(ike);
+		/*
+		 * ... and if the connection is a template and was
+		 * unrouted then it can be deleted as well
+		 * (alternatives include being revived).
+		 */
 		if (c->kind == CK_TEMPLATE &&
 		    c->child.routing == RT_UNROUTED) {
 			delete_connection(&c);
@@ -778,16 +788,17 @@ static bool zap_connection(enum routing_event event,
 		return true;
 	}
 
-	/*
-	 * If the connection has a Child SA but it isn't also the IKE
-	 * SA's child then delete the IKE SA but not the connection
-	 * (the child, and likely another IKE SA share it).
-	 *
-	 * XXX: would it be easier to compare IKE against the
-	 * connection's .newest_ike_sa.
-	 */
-
 	if (connection_child != NULL) {
+		/*
+		 * The connection has a Child SA that is NOT the IKE
+		 * SA's child.  For instance, the Child SA has being
+		 * migrated to a new IKE SA.
+		 *
+		 * XXX: suspect it would be easier to just compare the
+		 * IKE SA against the connection's .newest_ike_sa as -
+		 * reparenting the Child SA should have updated that
+		 * field to the newer IKE SA as well.
+		 */
 		PEXPECT((*ike)->sa.st_logger, (connection_child->sa.st_clonedfrom !=
 					       (*ike)->sa.st_serialno));
 		delete_ike_sa(ike);
@@ -795,9 +806,14 @@ static bool zap_connection(enum routing_event event,
 	}
 
 	/*
-	 * ... otherwize caller gets to decide.  This code could
-	 * handle this if it weren't for the more complicated routing
-	 * changes that are needed.
+	 * ... otherwize caller gets to:
+	 *
+	 * - delete the IKE SA
+	 *
+	 * - update the connectin's routing
+	 *
+	 * This code could handle this if it weren't for the more
+	 * complicated routing changes that are needed.
 	 */
 	return false;
 }
@@ -1515,18 +1531,36 @@ void dispatch(enum routing_event event, struct connection *c,
 		case X(TIMEOUT_IKE, ROUTED_TUNNEL, INSTANCE):
 			/*
 			 * Since the connection has an established
-			 * tunnel there there must be a child to
-			 * notify.  Hence this should always succeed.
+			 * tunnel there must be a child to notify.
+			 * Hence this should always succeed.
 			 */
 			if (zap_connection(event, e->ike, where)) {
 				return;
 			}
 			break;
 
-		case X(DELETE_IKE, UNROUTED, INSTANCE):		/* certoe-08-nat-packet-cop-restart */
+		case X(DELETE_IKE, UNROUTED, PERMANENT):
+			/*
+			 * fips-12-ikev2-esp-dh-wrong et.al.
+			 *
+			 * The IKE_SA_INIT responder rejects the
+			 * initial exchange and deletes the IKE SA.
+			 *
+			 * XXX: can this also happen during IKE_AUTH?
+			 *
+			 * Since there's no established Child SA
+			 * zap_connection() should always fail?
+			 */
+			if (zap_connection(event, e->ike, where)) {
+				pexpect(0); /* logger is invalid */
+				return;
+			}
+			delete_ike_sa(e->ike);
+			return;
+
+		case X(DELETE_IKE, UNROUTED, INSTANCE):			/* certoe-08-nat-packet-cop-restart */
 		case X(DELETE_IKE, UNROUTED_NEGOTIATION, INSTANCE):	/* dnsoe-01 ... */
-		case X(DELETE_IKE, ROUTED_ONDEMAND, PERMANENT):
-		case X(DELETE_IKE, UNROUTED, PERMANENT): /* UNROUTED_NEGOTIATION!?! */
+		case X(DELETE_IKE, ROUTED_ONDEMAND, PERMANENT):		/* ROUTED_NEGOTIATION!?! */
 			if (BROKEN_TRANSITION) {
 				delete_ike_family(e->ike);
 				return;
