@@ -161,7 +161,7 @@ bool should_revive(struct state *st)
 	return true;
 }
 
-bool should_revive_connection(struct child_sa *child)
+bool should_revive_child(struct child_sa *child)
 {
 	struct connection *c = child->sa.st_connection;
 
@@ -197,25 +197,9 @@ bool should_revive_connection(struct child_sa *child)
 	return true;
 }
 
-void schedule_revival(struct state *st, const char *subplot)
+static void update_remote_port(struct connection *c, struct state *st)
 {
-	struct connection *c = st->st_connection;
-
-	deltatime_buf db, ndb;
-	deltatime_t delay = c->temp_vars.revival.delay;
-
-	c->temp_vars.revival.delay =
-		deltatime_min(deltatime_add(delay, REVIVE_CONN_DELAY),
-			      REVIVE_CONN_DELAY_MAX);
-	c->temp_vars.revival.attempt++;
-
-	ldbg(st->st_logger,
-	     "add revival %u for '%s' ("PRI_CO") in %s, next in %s",
-	     c->temp_vars.revival.attempt,
-	     c->name, pri_co(c->serialno),
-	     str_deltatime(delay, &db),
-	     str_deltatime(c->temp_vars.revival.delay, &ndb));
-
+	/* XXX: check that IKE is for C? */
 	if ((IS_IKE_SA_ESTABLISHED(st) ||
 	     IS_V1_ISAKMP_SA_ESTABLISHED(st)) &&
 	    c->kind == CK_INSTANCE) {
@@ -237,18 +221,50 @@ void schedule_revival(struct state *st, const char *subplot)
 			(st->hidden_variables.st_nat_traversal & NAT_T_DETECTED ||
 			 st->st_interface->io->protocol == &ip_protocol_tcp);
 	}
+}
+
+static void schedule_revival_event(struct connection *c, struct logger *logger, const char *subplot)
+{
+	deltatime_buf db, ndb;
+	deltatime_t delay = c->temp_vars.revival.delay;
+
+	c->temp_vars.revival.delay =
+		deltatime_min(deltatime_add(delay, REVIVE_CONN_DELAY),
+			      REVIVE_CONN_DELAY_MAX);
+	c->temp_vars.revival.attempt++;
+
+	ldbg(logger,
+	     "add revival %u for '%s' ("PRI_CO") in %s, next in %s",
+	     c->temp_vars.revival.attempt,
+	     c->name, pri_co(c->serialno),
+	     str_deltatime(delay, &db),
+	     str_deltatime(c->temp_vars.revival.delay, &ndb));
 
 	if (impair.revival) {
-		llog(RC_LOG, st->st_logger,
+		llog(RC_LOG, logger,
 		     "IMPAIR: skip secheduling revival of connection that is supposed to remain up");
 		return;
 	}
 
-	llog(RC_LOG, st->st_logger,
+	llog(RC_LOG, logger,
 	     "connection is supposed to remain up; revival attempt %u scheduled in %s seconds",
 	     c->temp_vars.revival.attempt,
 	     str_deltatime(delay, &db));
 	schedule_connection_event(c, CONNECTION_REVIVAL, subplot, delay);
+}
+
+void schedule_revival(struct state *st, const char *subplot)
+{
+	struct connection *c = st->st_connection;
+	update_remote_port(c, st);
+	schedule_revival_event(c, st->st_logger, subplot);
+}
+
+void schedule_child_revival(struct ike_sa *ike, struct child_sa *child, const char *subplot)
+{
+	struct connection *c = child->sa.st_connection;
+	update_remote_port(c, &ike->sa);
+	schedule_revival_event(c, child->sa.st_logger, subplot);
 }
 
 void revive_connection(struct connection *c, const char *subplot,

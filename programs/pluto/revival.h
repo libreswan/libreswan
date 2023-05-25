@@ -25,8 +25,11 @@ struct timer_event;
 void revive_connection(struct connection *c, const char *subplot,
 		       const struct timer_event *event);
 bool should_revive(struct state *st);
-bool should_revive_connection(struct child_sa *child);
 void schedule_revival(struct state *st, const char *subplot);
+
+bool should_revive_child(struct child_sa *child);
+void schedule_child_revival(struct ike_sa *ike, struct child_sa *child, const char *subplot);
+
 void init_revival_timer(void);
 
 #endif
