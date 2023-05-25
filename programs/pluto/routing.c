@@ -1733,8 +1733,8 @@ void dispatch(enum routing_event event, struct connection *c,
 				    *e->child, where);
 			return;
 
-		case X(RESUME, ROUTED_TUNNEL, PERMANENT):
-		case X(RESUME, ROUTED_TUNNEL, INSTANCE):
+		case X(RESUME, UNROUTED_TUNNEL, PERMANENT):
+		case X(RESUME, UNROUTED_TUNNEL, INSTANCE):
 			set_routing(event, c, RT_ROUTED_TUNNEL, *e->child, where);
 			FOR_EACH_ITEM(spd, &c->child.spds) {
 				do_updown(UPDOWN_UP, c, spd, &(*e->child)->sa, logger);
