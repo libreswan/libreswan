@@ -947,6 +947,40 @@ void connection_delete_ike(struct ike_sa **ike, where_t where)
 		 });
 }
 
+/*
+ * "down" / "unroute" the connection but _don't_ delete the kernel
+ * state / policy.
+ *
+ * Presumably the kernel policy (at least) is acting like a trap while
+ * mibike migrates things?
+ */
+
+void connection_suspend(struct child_sa *child, where_t where)
+{
+	dispatch(CONNECTION_SUSPEND,
+		 child->sa.st_connection,
+		 child->sa.st_logger, where,
+		 (struct annex) {
+			 .child = &child,
+		 });
+}
+
+void connection_resume(struct child_sa *child, where_t where)
+{
+	dispatch(CONNECTION_RESUME,
+		 child->sa.st_connection,
+		 child->sa.st_logger, where,
+		 (struct annex) {
+			 .child = &child,
+		 });
+}
+
+void dispatch_1(enum routing_event event,
+		struct connection *c,
+		struct logger *logger,
+		where_t where,
+		struct annex *e);
+
 void dispatch(enum routing_event event, struct connection *c,
 	      struct logger *logger, where_t where,
 	      struct annex ee)
@@ -1675,119 +1709,45 @@ void dispatch(enum routing_event event, struct connection *c,
 			}
 			return;
 
+		case X(SUSPEND, ROUTED_TUNNEL, PERMANENT):
+		case X(SUSPEND, ROUTED_TUNNEL, INSTANCE):
+			/*
+			 * Update connection's routing so that
+			 * route_owner() won't find us.
+			 *
+			 * Only unroute when no other routed
+			 * connection shares the SPD.
+			 */
+			FOR_EACH_ITEM(spd, &c->child.spds) {
+				/* XXX: never finds SPD */
+				if (route_owner(spd) == NULL) {
+					do_updown(UPDOWN_DOWN, c, spd,
+						  &(*e->child)->sa, logger);
+					(*e->child)->sa.st_mobike_del_src_ip = true;
+					do_updown(UPDOWN_UNROUTE, c, spd,
+						  &(*e->child)->sa, logger);
+					(*e->child)->sa.st_mobike_del_src_ip = false;
+				}
+			}
+			set_routing(event, c, RT_UNROUTED_TUNNEL,
+				    *e->child, where);
+			return;
+
+		case X(RESUME, ROUTED_TUNNEL, PERMANENT):
+		case X(RESUME, ROUTED_TUNNEL, INSTANCE):
+			set_routing(event, c, RT_ROUTED_TUNNEL, *e->child, where);
+			FOR_EACH_ITEM(spd, &c->child.spds) {
+				do_updown(UPDOWN_UP, c, spd, &(*e->child)->sa, logger);
+				do_updown(UPDOWN_ROUTE, c, spd, &(*e->child)->sa, logger);
+			}
+			return;
+
 		}
+
 	}
 
 	LLOG_PEXPECT_JAMBUF(logger, where, buf) {
 		jam_string(buf, "routing: unhandled ");
 		jam_event(buf, event, c, e);
 	}
-}
-
-/*
- * "down" / "unroute" the connection but _don't_ delete the kernel
- * state / policy.
- *
- * Presumably the kernel policy (at least) is acting like a trap while
- * mibike migrates things?
- */
-
-void connection_resume(struct child_sa *child, where_t where)
-{
-	struct connection *c = child->sa.st_connection;
-	enum routing_event event = CONNECTION_RESUME;
-	/* do now so route_owner won't find us */
-	enum routing cr = c->child.routing;
-	switch (cr) {
-	case RT_UNROUTED_TUNNEL:
-		set_routing(event, c, RT_ROUTED_TUNNEL, child, where);
-		FOR_EACH_ITEM(spd, &c->child.spds) {
-			do_updown(UPDOWN_UP, c, spd, &child->sa, child->sa.st_logger);
-			do_updown(UPDOWN_ROUTE, c, spd, &child->sa, child->sa.st_logger);
-		}
-		return;
-	case RT_UNROUTED:
-	case RT_UNROUTED_REVIVAL:
-	case RT_UNROUTED_ONDEMAND:
-	case RT_ROUTED_ONDEMAND:
-	case RT_UNROUTED_NEGOTIATION:
-	case RT_ROUTED_NEGOTIATION:
-	case RT_UNROUTED_INBOUND:
-	case RT_ROUTED_INBOUND:
-	case RT_UNROUTED_FAILURE:
-	case RT_ROUTED_FAILURE:
-	case RT_ROUTED_TUNNEL:
-	case RT_ROUTED_NEVER_NEGOTIATE:
-		llog_pexpect(child->sa.st_logger, where,
-			     "%s() unexpected routing %s",
-			     __func__, enum_name_short(&routing_names, cr));
-		set_routing(event, c, RT_ROUTED_TUNNEL, child, where);
-		return;
-	}
-	bad_case(cr);
-}
-
-void connection_suspend(struct child_sa *child, where_t where)
-{
-	struct connection *c = child->sa.st_connection;
-	enum routing_event event = CONNECTION_SUSPEND;
-	/*
-	 * XXX: this an expansion of routed(); most of these
-	 * transitions are probably invalid!
-	 */
-	enum routing cr = c->child.routing;
-	PEXPECT(c->logger, cr == RT_ROUTED_TUNNEL);
-	switch (cr) {
-	case RT_ROUTED_TUNNEL:
-		/*
-		 * Update connection's routing so that route_owner()
-		 * won't find us.
-		 *
-		 * Only unroute when no other routed connection shares
-		 * the SPD.
-		 */
-		FOR_EACH_ITEM(spd, &c->child.spds) {
-			/* XXX: never finds SPD */
-			if (route_owner(spd) == NULL) {
-				do_updown(UPDOWN_DOWN, c, spd, &child->sa, child->sa.st_logger);
-				child->sa.st_mobike_del_src_ip = true;
-				do_updown(UPDOWN_UNROUTE, c, spd, &child->sa, child->sa.st_logger);
-				child->sa.st_mobike_del_src_ip = false;
-			}
-		}
-		set_routing(event, c, RT_UNROUTED_TUNNEL, child, where);
-		return;
-	case RT_ROUTED_ONDEMAND:
-	case RT_ROUTED_NEVER_NEGOTIATE:
-	case RT_ROUTED_NEGOTIATION:
-	case RT_ROUTED_INBOUND:
-	case RT_ROUTED_FAILURE:
-		llog_pexpect(child->sa.st_logger, where,
-			     "%s() unexpected routing %s",
-			     __func__, enum_name_short(&routing_names, cr));
-		FOR_EACH_ITEM(spd, &c->child.spds) {
-			/* XXX: never finds SPD */
-			if (route_owner(spd) == NULL) {
-				do_updown(UPDOWN_DOWN, c, spd, &child->sa, child->sa.st_logger);
-				child->sa.st_mobike_del_src_ip = true;
-				do_updown(UPDOWN_UNROUTE, c, spd, &child->sa, child->sa.st_logger);
-				child->sa.st_mobike_del_src_ip = false;
-			}
-		}
-		set_routing(event, c, RT_UNROUTED_TUNNEL, child, where);
-		return;
-	case RT_UNROUTED:
-	case RT_UNROUTED_REVIVAL:
-	case RT_UNROUTED_ONDEMAND:
-	case RT_UNROUTED_NEGOTIATION:
-	case RT_UNROUTED_FAILURE:
-	case RT_UNROUTED_INBOUND:
-	case RT_UNROUTED_TUNNEL:
-		llog_pexpect(child->sa.st_logger, HERE,
-			     "%s() unexpected routing %s",
-			     __func__, enum_name_short(&routing_names, cr));
-		set_routing(event, c, RT_UNROUTED_TUNNEL, child, where);
-		return;
-	}
-	bad_case(cr);
 }
