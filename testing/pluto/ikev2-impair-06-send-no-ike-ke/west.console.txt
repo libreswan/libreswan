@@ -8,12 +8,14 @@ west #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
 002 "westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
 west #
- ipsec whack --impair revival
-west #
  echo "initdone"
 initdone
 west #
  # expect quick fail
+west #
+ ipsec whack --impair none
+west #
+ ipsec whack --impair revival
 west #
  ipsec whack --impair ke-payload:omit
 west #
@@ -28,9 +30,11 @@ west #
 002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: skip secheduling revival of connection that is supposed to remain up
 002 "westnet-eastnet-ipv4-psk-ikev2" #1: deleting IKE SA (PARENT_I1) and NOT sending notification
 west #
+ # expect slower fail
+west #
  ipsec whack --impair none
 west #
- # expect slower fail
+ ipsec whack --impair revival
 west #
  ipsec whack --impair suppress-retransmits
 west #
@@ -39,7 +43,7 @@ west #
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #2: sent IKE_SA_INIT request to 192.1.2.23:500
 003 "westnet-eastnet-ipv4-psk-ikev2" #2: dropping unexpected IKE_SA_INIT message containing IKEV2_FRAGMENTATION_SUPPORTED... notification; message payloads: SA,Ni,N; missing payloads: KE
 031 "westnet-eastnet-ipv4-psk-ikev2" #2: STATE_V2_PARENT_I1: 60 second timeout exceeded after 0 retransmits.  No response (or no acceptable response) to our first IKEv2 message
-002 "westnet-eastnet-ipv4-psk-ikev2" #2: connection is supposed to remain up; revival attempt 2 scheduled in 5 seconds
+002 "westnet-eastnet-ipv4-psk-ikev2" #2: IMPAIR: skip secheduling revival of connection that is supposed to remain up
 002 "westnet-eastnet-ipv4-psk-ikev2" #2: deleting IKE SA (PARENT_I1) and NOT sending notification
 west #
  echo done
