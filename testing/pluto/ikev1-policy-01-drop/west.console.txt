@@ -20,7 +20,7 @@ west #
 1v1 "ikev1" #1: sent Main Mode request
 002 "ikev1" #1: IMPAIR: retransmit so timing out SA (may retry)
 002 "ikev1" #1: deleting ISAKMP SA (MAIN_I1) and NOT sending notification
-002 "ikev1" #1: IMPAIR: skip secheduling revival of connection that is supposed to remain up
+002 "ikev1" #1: IMPAIR: revival: skip scheduling revival event
 west #
  echo done
 done

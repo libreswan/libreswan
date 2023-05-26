@@ -54,7 +54,7 @@ west #
 003 "aes128" #3: received and ignored notification payload: BAD_PROPOSAL_SYNTAX
 002 "aes128" #3: IMPAIR: retransmit so timing out SA (may retry)
 002 "aes128" #3: deleting ISAKMP SA (MAIN_I1) and NOT sending notification
-002 "aes128" #3: IMPAIR: skip secheduling revival of connection that is supposed to remain up
+002 "aes128" #3: IMPAIR: revival: skip scheduling revival event
 west #
  ipsec whack --impair none
 west #
@@ -99,7 +99,7 @@ west #
 003 "aes128" #6: received and ignored notification payload: NO_PROPOSAL_CHOSEN
 002 "aes128" #6: IMPAIR: retransmit so timing out SA (may retry)
 002 "aes128" #6: deleting ISAKMP SA (MAIN_I1) and NOT sending notification
-002 "aes128" #6: IMPAIR: skip secheduling revival of connection that is supposed to remain up
+002 "aes128" #6: IMPAIR: revival: skip scheduling revival event
 west #
  ipsec whack --impair none
 west #
@@ -285,7 +285,7 @@ west #
 003 "3des" #19: received and ignored notification payload: NO_PROPOSAL_CHOSEN
 002 "3des" #19: IMPAIR: retransmit so timing out SA (may retry)
 002 "3des" #19: deleting ISAKMP SA (MAIN_I1) and NOT sending notification
-002 "3des" #19: IMPAIR: skip secheduling revival of connection that is supposed to remain up
+002 "3des" #19: IMPAIR: revival: skip scheduling revival event
 west #
  ipsec whack --impair none
 west #
