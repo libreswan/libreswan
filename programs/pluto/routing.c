@@ -187,6 +187,7 @@ void fake_connection_establish_outbound(struct ike_sa *ike, struct child_sa *chi
 enum shunt_kind routing_shunt_kind(enum routing routing)
 {
 	switch (routing) {
+	case RT_ROUTED_REVIVAL:
 	case RT_UNROUTED_ONDEMAND:
 	case RT_ROUTED_ONDEMAND:
 		return SHUNT_KIND_ONDEMAND;
@@ -216,6 +217,7 @@ bool routed(const struct connection *c)
 {
 	enum routing r = c->child.routing;
 	switch (r) {
+	case RT_ROUTED_REVIVAL:
 	case RT_ROUTED_ONDEMAND:
 	case RT_ROUTED_NEVER_NEGOTIATE:
 	case RT_ROUTED_NEGOTIATION:
@@ -240,10 +242,11 @@ bool kernel_policy_installed(const struct connection *c)
 	switch (c->child.routing) {
 	case RT_UNROUTED:
 	case RT_UNROUTED_REVIVAL:
+	case RT_UNROUTED_NEGOTIATION:
 		return false;
 	case RT_UNROUTED_ONDEMAND:
 	case RT_ROUTED_ONDEMAND:
-	case RT_UNROUTED_NEGOTIATION:
+	case RT_ROUTED_REVIVAL:
 	case RT_ROUTED_NEGOTIATION:
 	case RT_UNROUTED_INBOUND:
 	case RT_ROUTED_NEVER_NEGOTIATE:
