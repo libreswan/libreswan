@@ -533,11 +533,10 @@ static void down_routed_tunnel(enum routing_event event,
 	}
 
 	if (should_revive_child(*child)) {
-		/* XXX: should this be ROUTED_NEGOTIATING? */
 		ldbg_routing((*child)->sa.st_logger,
-			     "replacing connection kernel policy with ROUTED_ONDEMAND; it will be revived");
+			     "replacing TUNNEL with ONDEMAND; it will be revived");
 		replace_ipsec_with_bare_kernel_policies(event, *child,
-							RT_ROUTED_ONDEMAND,
+							RT_ROUTED_REVIVAL,
 							EXPECT_KERNEL_POLICY_OK, HERE);
 		schedule_child_revival(ike, *child, "received Delete/Notify");
 		/* covered by above; no!? */
@@ -1145,7 +1144,9 @@ void dispatch(enum routing_event event, struct connection *c,
 			return;
 
 		case X(INITIATE, ROUTED_ONDEMAND, PERMANENT):
+		case X(INITIATE, ROUTED_REVIVAL, PERMANENT):
 		case X(ACQUIRE, ROUTED_ONDEMAND, PERMANENT):
+		case X(ACQUIRE, ROUTED_REVIVAL, PERMANENT):
 			PEXPECT(logger, ((event == CONNECTION_INITIATE && e->acquire == NULL) ||
 					 (event == CONNECTION_ACQUIRE && e->acquire->sec_label.ptr == NULL)));
 			ondemand_to_negotiation(event, c, where, "negotiating permanent");
@@ -1219,22 +1220,34 @@ void dispatch(enum routing_event event, struct connection *c,
 					  null_shunk, /*background*/false, logger);
 			return;
 		case X(REVIVE, ROUTED_ONDEMAND, PERMANENT):
+		case X(REVIVE, ROUTED_REVIVAL, PERMANENT):
 		case X(REVIVE, ROUTED_ONDEMAND, INSTANCE):
-			if (BROKEN_TRANSITION &&
-			    c->config->negotiation_shunt == SHUNT_HOLD) {
-				ldbg_routing(c->logger, "skipping NEGOTIATION=HOLD");
-				set_routing(event, c, RT_ROUTED_NEGOTIATION, NULL, where);
-				/* ipsecdoi_initiate may replace SOS_NOBODY with a state */
-				ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
-						  e->inception, null_shunk,
-						  e->background, c->logger);
+		case X(REVIVE, ROUTED_REVIVAL, INSTANCE):
+			if (BROKEN_TRANSITION) {
+				/*
+				 * ikev2-20-ikesa-reauth:
+				 *
+				 * The re-auth code still calls
+				 * delete_ike_family().
+				 *
+				 * others?
+				 */
+				if (c->config->negotiation_shunt == SHUNT_HOLD) {
+					ldbg_routing(c->logger, "skipping NEGOTIATION=HOLD");
+					set_routing(event, c, RT_ROUTED_NEGOTIATION, NULL, where);
+					/* ipsecdoi_initiate may replace SOS_NOBODY with a state */
+					ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
+							  e->inception, null_shunk,
+							  e->background, c->logger);
+					return;
+				}
+				ondemand_to_negotiation(event, c, where, "negotiating revival");
+				PEXPECT(logger, c->child.routing == RT_ROUTED_NEGOTIATION);
+				ipsecdoi_initiate(c, c->policy, SOS_NOBODY, e->inception,
+						  null_shunk, /*background*/false, logger);
 				return;
 			}
-			ondemand_to_negotiation(event, c, where, "negotiating revival");
-			PEXPECT(logger, c->child.routing == RT_ROUTED_NEGOTIATION);
-			ipsecdoi_initiate(c, c->policy, SOS_NOBODY, e->inception,
-					  null_shunk, /*background*/false, logger);
-			return;
+			break;
 
 		case X(REVIVE, UNROUTED_NEGOTIATION, INSTANCE):
 			if (BROKEN_TRANSITION) {
@@ -1305,6 +1318,7 @@ void dispatch(enum routing_event event, struct connection *c,
 			return;
 
 		case X(UNROUTE, ROUTED_ONDEMAND, PERMANENT):
+		case X(UNROUTE, ROUTED_REVIVAL, PERMANENT):
 			PEXPECT(logger, !never_negotiate(c));
 			delete_spd_kernel_policies(&c->child.spds,
 						   EXPECT_NO_INBOUND,
@@ -1356,6 +1370,7 @@ void dispatch(enum routing_event event, struct connection *c,
 			ldbg_routing(logger, "already unrouted");
 			return;
 		case X(UNROUTE, ROUTED_ONDEMAND, TEMPLATE):
+		case X(UNROUTE, ROUTED_REVIVAL, TEMPLATE):
 			zap_instances(event, c, where);
 			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
 						   c->logger, where, "unroute template");
@@ -1459,6 +1474,7 @@ void dispatch(enum routing_event event, struct connection *c,
 			return;
 
 		case X(UNROUTE, ROUTED_ONDEMAND, INSTANCE):
+		case X(UNROUTE, ROUTED_REVIVAL, INSTANCE):
 			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
 						   c->logger, where, "unroute instance");
 			/* do now so route_owner won't find us */
@@ -1517,7 +1533,7 @@ void dispatch(enum routing_event event, struct connection *c,
 			if (should_revive(&(*e->ike)->sa)) {
 				negotiation_to_ondemand(event, c, logger, where,
 							"restoring ondemand, reviving");
-				PEXPECT(logger, c->child.routing == RT_ROUTED_ONDEMAND);
+				PEXPECT(logger, c->child.routing == RT_ROUTED_REVIVAL);
 				schedule_revival(&(*e->ike)->sa, "timed out");
 				delete_ike_sa(e->ike);
 				return;
@@ -1543,7 +1559,10 @@ void dispatch(enum routing_event event, struct connection *c,
 					return;
 				}
 			}
-			if (should_revive(&(*e->ike)->sa)) {
+			if (BROKEN_TRANSITION &&
+			    should_revive(&(*e->ike)->sa)) {
+				/* when ROUTED_NEGOTIATION should
+				 * switch to ROUTED_REVIVAL */
 				schedule_revival(&(*e->ike)->sa, "timed out");
 				delete_ike_sa(e->ike);
 				return;
@@ -1599,6 +1618,7 @@ void dispatch(enum routing_event event, struct connection *c,
 		case X(DELETE_IKE, UNROUTED, INSTANCE):			/* certoe-08-nat-packet-cop-restart */
 		case X(DELETE_IKE, UNROUTED_NEGOTIATION, INSTANCE):	/* dnsoe-01 ... */
 		case X(DELETE_IKE, ROUTED_ONDEMAND, PERMANENT):		/* ROUTED_NEGOTIATION!?! */
+		case X(DELETE_IKE, ROUTED_REVIVAL, PERMANENT):		/* ROUTED_NEGOTIATION!?! */
 			if (BROKEN_TRANSITION) {
 				delete_ike_family(e->ike);
 				return;
@@ -1631,6 +1651,7 @@ void dispatch(enum routing_event event, struct connection *c,
 			return;
 
 		case X(ESTABLISH_INBOUND, ROUTED_ONDEMAND, TEMPLATE): /* ikev1-l2tp-03-two-interfaces */
+		case X(ESTABLISH_INBOUND, ROUTED_REVIVAL, TEMPLATE): /* ? */
 			if (BROKEN_TRANSITION) {
 				/*
 				 * ikev1-l2tp-03-two-interfaces
@@ -1652,6 +1673,7 @@ void dispatch(enum routing_event event, struct connection *c,
 			break;
 
 		case X(ESTABLISH_INBOUND, ROUTED_ONDEMAND, INSTANCE): /* ikev2-32-nat-rw-rekey */
+		case X(ESTABLISH_INBOUND, ROUTED_REVIVAL, INSTANCE): /* ? */
 			if (BROKEN_TRANSITION) {
 				/* ikev2-32-nat-rw-rekey */
 				set_routing(event, c, RT_ROUTED_INBOUND, NULL, where);
@@ -1680,6 +1702,7 @@ void dispatch(enum routing_event event, struct connection *c,
 		case X(ESTABLISH_INBOUND, ROUTED_NEGOTIATION, INSTANCE):
 		case X(ESTABLISH_INBOUND, ROUTED_NEGOTIATION, PERMANENT):
 		case X(ESTABLISH_INBOUND, ROUTED_ONDEMAND, PERMANENT):
+		case X(ESTABLISH_INBOUND, ROUTED_REVIVAL, PERMANENT):
 		case X(ESTABLISH_INBOUND, UNROUTED, INSTANCE):
 		case X(ESTABLISH_INBOUND, UNROUTED, PERMANENT):
 		case X(ESTABLISH_INBOUND, UNROUTED_NEGOTIATION, INSTANCE):
