@@ -388,6 +388,7 @@ static void ondemand_to_negotiation(enum routing_event event,
 			 event == CONNECTION_ACQUIRE ||
 			 event == CONNECTION_REVIVE));
 	enum routing rt_negotiation = (c->child.routing == RT_ROUTED_ONDEMAND ? RT_ROUTED_NEGOTIATION :
+				       c->child.routing == RT_ROUTED_REVIVAL ? RT_ROUTED_NEGOTIATION :
 				       c->child.routing == RT_UNROUTED_ONDEMAND ? RT_UNROUTED_NEGOTIATION :
 				       CONNECTION_ROUTING_ROOF);
 	PASSERT(logger, (rt_negotiation != CONNECTION_ROUTING_ROOF));
