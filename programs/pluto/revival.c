@@ -59,9 +59,20 @@
  * outstanding revivals; hence no need to free revivals.
  */
 
-void flush_revival(const struct connection *c)
+void delete_revival(const struct connection *c)
 {
-	flush_connection_event(c, CONNECTION_REVIVAL);
+	if (!flush_connection_event(c, CONNECTION_REVIVAL)) {
+		if (impair.revival) {
+#if 0
+			/* XXX: should be log but messages with output */
+			llog(RC_LOG, c->logger, "IMPAIR: revival: no event to delete");
+#else
+			ldbg(c->logger, "IMPAIR: revival: no event to delete");
+#endif
+			return;
+		}
+		llog_pexpect(c->logger, HERE, "revival: no event to delete");
+	}
 }
 
 static bool revival_plausable(struct connection *c, struct logger *logger)

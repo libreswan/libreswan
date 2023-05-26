@@ -1137,6 +1137,9 @@ void dispatch(enum routing_event event, struct connection *c,
 
 		case X(INITIATE, UNROUTED, PERMANENT):
 		case X(INITIATE, UNROUTED_REVIVAL, PERMANENT):
+			if (c->child.routing == RT_UNROUTED_REVIVAL) {
+				delete_revival(c);
+			}
 			set_routing(event, c, RT_UNROUTED_NEGOTIATION, NULL, where);
 			ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
 					  e->inception, null_shunk,
@@ -1149,6 +1152,9 @@ void dispatch(enum routing_event event, struct connection *c,
 		case X(ACQUIRE, ROUTED_REVIVAL, PERMANENT):
 			PEXPECT(logger, ((event == CONNECTION_INITIATE && e->acquire == NULL) ||
 					 (event == CONNECTION_ACQUIRE && e->acquire->sec_label.ptr == NULL)));
+			if (c->child.routing == RT_ROUTED_REVIVAL) {
+				delete_revival(c);
+			}
 			ondemand_to_negotiation(event, c, where, "negotiating permanent");
 			PEXPECT(logger, c->child.routing == RT_ROUTED_NEGOTIATION);
 			/* ipsecdoi_initiate may replace SOS_NOBODY with a state */
@@ -1208,10 +1214,18 @@ void dispatch(enum routing_event event, struct connection *c,
 					  e->background, e->acquire->logger);
 			return;
 		case X(REVIVE, UNROUTED_REVIVAL, PERMANENT):
-			set_routing(event, c, RT_UNROUTED_NEGOTIATION, NULL, where);
-			ipsecdoi_initiate(c, c->policy, SOS_NOBODY, e->inception,
-					  null_shunk, /*background*/false, logger);
-			return;
+			if (BROKEN_TRANSITION) {
+				/*
+				 * Same as INITIATE, UNROUTED_REVIVAL,
+				 * PERMANENT except slight initiate
+				 * difference.
+				 */
+				set_routing(event, c, RT_UNROUTED_NEGOTIATION, NULL, where);
+				ipsecdoi_initiate(c, c->policy, SOS_NOBODY, e->inception,
+						  null_shunk, /*background*/false, logger);
+				return;
+			}
+			break;
 		case X(REVIVE, UNROUTED_ONDEMAND, PERMANENT):
 		case X(REVIVE, UNROUTED_ONDEMAND, INSTANCE):
 			ondemand_to_negotiation(event, c, where, "negotiating unrouted");
@@ -1302,6 +1316,9 @@ void dispatch(enum routing_event event, struct connection *c,
 			break;
 		case X(UNROUTE, UNROUTED_NEGOTIATION, PERMANENT):
 		case X(UNROUTE, UNROUTED_REVIVAL, PERMANENT):
+			if (c->child.routing == RT_UNROUTED_REVIVAL) {
+				delete_revival(c);
+			}
 			set_routing(event, c, RT_UNROUTED, NULL, where);
 			return;
 
@@ -1320,6 +1337,9 @@ void dispatch(enum routing_event event, struct connection *c,
 		case X(UNROUTE, ROUTED_ONDEMAND, PERMANENT):
 		case X(UNROUTE, ROUTED_REVIVAL, PERMANENT):
 			PEXPECT(logger, !never_negotiate(c));
+			if (c->child.routing == RT_ROUTED_REVIVAL) {
+				delete_revival(c);
+			}
 			delete_spd_kernel_policies(&c->child.spds,
 						   EXPECT_NO_INBOUND,
 						   c->logger, where, "unroute permanent");
@@ -1371,6 +1391,9 @@ void dispatch(enum routing_event event, struct connection *c,
 			return;
 		case X(UNROUTE, ROUTED_ONDEMAND, TEMPLATE):
 		case X(UNROUTE, ROUTED_REVIVAL, TEMPLATE):
+			if (c->child.routing == RT_ROUTED_REVIVAL) {
+				delete_revival(c);
+			}
 			zap_instances(event, c, where);
 			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
 						   c->logger, where, "unroute template");
@@ -1475,6 +1498,9 @@ void dispatch(enum routing_event event, struct connection *c,
 
 		case X(UNROUTE, ROUTED_ONDEMAND, INSTANCE):
 		case X(UNROUTE, ROUTED_REVIVAL, INSTANCE):
+			if (c->child.routing == RT_ROUTED_REVIVAL) {
+				delete_revival(c);
+			}
 			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
 						   c->logger, where, "unroute instance");
 			/* do now so route_owner won't find us */
@@ -1653,6 +1679,9 @@ void dispatch(enum routing_event event, struct connection *c,
 		case X(ESTABLISH_INBOUND, ROUTED_ONDEMAND, TEMPLATE): /* ikev1-l2tp-03-two-interfaces */
 		case X(ESTABLISH_INBOUND, ROUTED_REVIVAL, TEMPLATE): /* ? */
 			if (BROKEN_TRANSITION) {
+				if (c->child.routing == RT_ROUTED_REVIVAL) {
+					delete_revival(c);
+				}
 				/*
 				 * ikev1-l2tp-03-two-interfaces
 				 * github/693 github/1117
@@ -1675,6 +1704,9 @@ void dispatch(enum routing_event event, struct connection *c,
 		case X(ESTABLISH_INBOUND, ROUTED_ONDEMAND, INSTANCE): /* ikev2-32-nat-rw-rekey */
 		case X(ESTABLISH_INBOUND, ROUTED_REVIVAL, INSTANCE): /* ? */
 			if (BROKEN_TRANSITION) {
+				if (c->child.routing == RT_ROUTED_REVIVAL) {
+					delete_revival(c);
+				}
 				/* ikev2-32-nat-rw-rekey */
 				set_routing(event, c, RT_ROUTED_INBOUND, NULL, where);
 				return;
@@ -1708,6 +1740,9 @@ void dispatch(enum routing_event event, struct connection *c,
 		case X(ESTABLISH_INBOUND, UNROUTED_NEGOTIATION, INSTANCE):
 			if (BROKEN_TRANSITION) {
 				/* instance was routed by routed-ondemand? */
+				if (c->child.routing == RT_ROUTED_REVIVAL) {
+					delete_revival(c);
+				}
 				set_routing(event, c, RT_ROUTED_INBOUND, NULL, where);
 				return;
 			}
