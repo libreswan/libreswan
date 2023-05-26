@@ -40,7 +40,8 @@ void schedule_connection_event(const struct connection *c,
 			       enum connection_event event, const char *subplot,
 			       deltatime_t delay);
 
-void flush_connection_event(const struct connection *c,
+bool flush_connection_event(const struct connection *c,
 			    enum connection_event event);
+void flush_connection_events(const struct connection *c);
 
 #endif

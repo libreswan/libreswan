@@ -119,14 +119,28 @@ bool connection_event_is_scheduled(const struct connection *c,
 	return false;
 }
 
-void flush_connection_event(const struct connection *c,
+bool flush_connection_event(const struct connection *c,
 			    enum connection_event event)
 {
-
+	bool flushed = false;
 	struct event_connection *e;
 	FOR_EACH_LIST_ENTRY_OLD2NEW(e, &connection_events) {
 		if (e->serialno == c->serialno &&
 		    e->event == event) {
+			remove_list_entry(&e->entry);
+			destroy_timeout(&e->timeout);
+			pfree(e);
+			flushed = true;
+		}
+	}
+	return flushed;
+}
+
+void flush_connection_events(const struct connection *c)
+{
+	struct event_connection *e;
+	FOR_EACH_LIST_ENTRY_OLD2NEW(e, &connection_events) {
+		if (e->serialno == c->serialno) {
 			remove_list_entry(&e->entry);
 			destroy_timeout(&e->timeout);
 			pfree(e);

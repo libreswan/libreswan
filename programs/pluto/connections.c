@@ -100,6 +100,7 @@
 #include "show.h"
 #include "routing.h"
 #include "timescale.h"
+#include "connection_event.h"
 
 void ldbg_connection(const struct connection *c, where_t where,
 		     const char *message, ...)
@@ -309,7 +310,7 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 	/* find and delete c from the host pair list */
 	host_pair_remove_connection(c, connection_valid);
 
-	flush_revival(c);
+	flush_connection_events(c);
 
 	if (connection_valid) {
 		connection_db_del(c);
