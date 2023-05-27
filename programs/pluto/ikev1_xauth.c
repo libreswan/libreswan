@@ -251,6 +251,7 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 		 * last's is finished at the end so our loop structure
 		 * is odd.
 		 */
+		ip_address *end = c->config->modecfg.dns.list + c->config->modecfg.dns.len;
 		FOR_EACH_ITEM(dns, &c->config->modecfg.dns) {
 
 			/* emit attribute's value */
@@ -259,7 +260,7 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 				return STF_INTERNAL_ERROR;
 			}
 
-			if (dns[1].is_set) {
+			if (dns + 1 < end) {
 				/* end this attribute */
 				close_output_pbs(&attrval);
 
