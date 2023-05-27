@@ -44,26 +44,27 @@ diag_t ttoranges_num(shunk_t input, const char *delims,
 	 *   Pass 2: save the values in separate IPv[46] lists.
 	 */
 
+	struct shunks *tokens = shunks(input, delims, KEEP_EMPTY_SHUNKS, HERE); /* must free */
+	if (tokens->kept_empty_shunks) {
+		pfree(tokens);
+		return diag("empty field");
+	}
+
 	for (unsigned pass = 1; pass <= 2; pass++) {
-		shunk_t cursor = input;
 		unsigned nr_tokens = 0;
-		while (true) {
-			shunk_t token = shunk_token(&cursor, NULL/*delim*/, delims);
-			if (token.ptr == NULL) {
-				break;
-			}
-			if (token.len == 0) {
-				return diag("empty field");
-			}
+		FOR_EACH_ITEM(token, tokens) {
+			passert(token->len > 0);
 			ip_token tmp_token;
-			err_t e = ttorange_num(token, input_afi, &tmp_token);
+			err_t e = ttorange_num(*token, input_afi, &tmp_token);
 			const struct ip_info *afi = range_info(tmp_token);
 			switch (pass) {
 			case 1:
 				/* validate during first pass */
 				if (e != NULL) {
-					return diag(PRI_SHUNK" invalid, %s",
-						    pri_shunk(token), e);
+					diag_t d = diag(PRI_SHUNK" invalid, %s",
+							pri_shunk(*token), e);
+					pfree(tokens);
+					return d;
 				}
 				break;
 			case 2:
@@ -77,6 +78,7 @@ diag_t ttoranges_num(shunk_t input, const char *delims,
 			nr_tokens++;
 		}
 		if (nr_tokens == 0) {
+			pfree(tokens);
 			return NULL;
 		}
 		switch (pass) {
@@ -100,5 +102,6 @@ diag_t ttoranges_num(shunk_t input, const char *delims,
 		}
 	}
 
+	pfree(tokens);
 	return NULL;
 }
