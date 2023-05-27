@@ -87,7 +87,11 @@ extern bool report_leaks(struct logger *logger); /* true is bad */
 #define over_alloc_thing(THING, EXTRA)				\
 	((THING*) alloc_bytes(sizeof(THING) + (EXTRA), #THING))
 
-#define alloc_things(THING, COUNT, NAME) ((THING*) alloc_bytes(sizeof(THING) * (COUNT), (NAME)))
+#define alloc_things(THING, COUNT, NAME)			\
+	((THING*) alloc_bytes(sizeof(THING) * (COUNT), (NAME)))
+
+#define over_alloc_things(THING, COUNT, EXTRA)			\
+	((THING*) alloc_bytes(sizeof(THING) * (COUNT) +  (EXTRA), #THING"s"))
 
 #define realloc_things(THINGS, OLD_COUNT, NEW_COUNT, NAME)		\
 	{								\
