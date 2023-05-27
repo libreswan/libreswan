@@ -24,6 +24,7 @@
 #include "chunk.h"
 #include "where.h"
 #include "passert.h"
+#include "lswlog.h"		/* for cur_debugging */
 
 #include "lswtool.h"		/* for tool_init_log() */
 
@@ -827,10 +828,69 @@ static void check_ntoh_hton_hunk(void)
 	}
 }
 
-int main(int argc UNUSED, char *argv[])
+static void check_hunks(void)
+{
+	static const struct test {
+		const char *input;
+		const char *delims;
+		enum shunks_opt opt;
+		bool kept_empty_shunks;
+		const char *output[10];
+	} tests[] = {
+
+		{ "1",    ",",  KEEP_EMPTY_SHUNKS, false, { "1", } },
+		{ "1",    ",",  EAT_EMPTY_SHUNKS,  false, { "1", } },
+
+		{ "1,2",  ",",  KEEP_EMPTY_SHUNKS, false, { "1", "2", } },
+		{ "1,2",  ",",  EAT_EMPTY_SHUNKS,  false, { "1", "2", } },
+
+		{ "1,,2", ",",  KEEP_EMPTY_SHUNKS, true,  { "1", "", "2", } },
+		{ "1,,2", ",",  EAT_EMPTY_SHUNKS,  false, { "1", "2", } },
+
+		{ "1, ",  ", ", KEEP_EMPTY_SHUNKS, true,  { "1", "", "", } },
+		{ "1, ",  ", ", EAT_EMPTY_SHUNKS,  false, { "1", } },
+	};
+
+	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		const struct test *t = &tests[ti];
+		PRINT(" input=%s delims=%s", t->input, t->delims);
+		shunk_t input = shunk1(t->input);
+
+		struct shunks *output = shunks(input, t->delims, t->opt, HERE);
+		unsigned len;
+		for (len = 0; t->output[len] != NULL; len++) {
+			shunk_t s = shunk1(t->output[len]);
+			if (!hunk_eq(s, output->list[len])) {
+				FAIL("shunks(\"%s\",\"%s\")[%u]==\""PRI_SHUNK"\" does not match expected \""PRI_SHUNK"\"",
+				     t->input, t->delims, len,pri_shunk(output->list[len]),
+				     pri_shunk(s));
+			}
+		}
+
+		if (t->kept_empty_shunks != output->kept_empty_shunks) {
+			FAIL("shunks(\"%s\",\"%s\")->kept_empty_shunks==%s does not match expected %s",
+			     t->input, t->delims,
+			     bool_str(output->kept_empty_shunks),
+			     bool_str(t->kept_empty_shunks));
+		}
+
+		if (len != output->len) {
+			FAIL("shunks(\"%s\",\"%s\")->len==%u does not match expected %u",
+			     t->input, t->delims, output->len, len);
+		}
+
+		pfree(output);
+	}
+}
+
+int main(int argc, char *argv[])
 {
 	leak_detective = true;
 	struct logger *logger = tool_logger(argc, argv);
+
+	if (argc > 1) {
+		cur_debugging = -1;
+	}
 
 	check_hunk_eq();
 	check_shunk_slice();
@@ -842,6 +902,7 @@ int main(int argc UNUSED, char *argv[])
 	check_shunk_to_uintmax();
 	check_ntoh_hton_hunk();
 	check__hunk_get__hunk_put();
+	check_hunks();
 
 	if (report_leaks(logger)) {
 		fails++;

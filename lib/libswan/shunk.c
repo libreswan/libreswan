@@ -20,6 +20,7 @@
 
 #include "shunk.h"
 #include "lswlog.h"	/* for pexpect() */
+#include "lswalloc.h"	/* for over_alloc_things() */
 
 /*
  * Don't mistake a NULL_SHUNK for an EMPTY_SHUNK - just like when
@@ -245,4 +246,48 @@ err_t shunk_to_uintmax(shunk_t input, shunk_t *output, unsigned draft_base, uint
 		*output = cursor;
 	}
 	return NULL;
+}
+
+struct shunks *shunks(shunk_t input, const char *delims,
+		      enum shunks_opt opt, where_t where)
+{
+	DBGF(DBG_TMI, "%s() input=\""PRI_SHUNK"\" delims=\"%s\"",
+	     __func__, pri_shunk(input), delims);
+
+	/*
+	 * Allocate a minimal buffer.  Will grow it as more tokens are
+	 * found.
+	 */
+	size_t tokens_size = sizeof(struct shunks);
+	struct shunks *tokens = alloc_bytes(tokens_size, where->func);
+
+	shunk_t cursor = input;
+	while (true) {
+		char delim;
+		shunk_t token = shunk_token(&cursor, &delim, delims);
+		if (token.ptr == NULL) {
+			break;
+		}
+		if (token.len == 0) {
+			if (opt == EAT_EMPTY_SHUNKS) {
+				/* eat spaces when part of delims */
+				DBGF(DBG_TMI, "%s() pass 1 eat empty", __func__);
+				continue;
+			}
+			tokens->kept_empty_shunks = true;
+		}
+		DBGF(DBG_TMI, "%s() [%u] \""PRI_SHUNK"\"",
+		     __func__, tokens->len, pri_shunk(token));
+		/* grow by one shunk_t */
+		void *new = tokens;
+		size_t new_size = tokens_size + sizeof(shunk_t);
+		realloc_bytes(&new, tokens_size, new_size, where->func);
+		tokens = new;
+		tokens_size = new_size;
+		/* save */
+		tokens->list[tokens->len] = token;
+		tokens->len++;
+	}
+
+	return tokens;
 }

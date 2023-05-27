@@ -59,6 +59,28 @@ shunk_t shunk2(const void *ptr, int len);
 #define THING_AS_SHUNK(THING) shunk2(&(THING), sizeof(THING))
 
 /*
+ * Given LIST, split it using DELIM (and shunk_token()) returning a
+ * .ptr=NULL terminated array of shunks (and a copy of the memory).
+ *
+ * To discard blanks and empty fields specify delims=", ",
+ * opts=EAT_EMPTY_SHUNKS.
+ */
+
+struct shunks {
+	bool kept_empty_shunks;
+	unsigned len;
+	shunk_t list[];
+};
+
+enum shunks_opt {
+	KEEP_EMPTY_SHUNKS,
+	EAT_EMPTY_SHUNKS,
+};
+
+struct shunks *shunks(shunk_t input, const char *delim, enum shunks_opt opt,
+		      where_t where);
+
+/*
  * A shunk version of strsep() / strtok(): split off from INPUT a
  * possibly empty TOKEN containing characters not found in DELIMS and
  * the delimiting character (or NUL).
