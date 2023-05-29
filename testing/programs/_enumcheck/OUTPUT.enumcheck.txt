@@ -36,6 +36,27 @@ pluto enum_names:
          short_name 4: INSTANCE OK
          jam_enum_short 4: INSTANCE OK
          match INSTANCE [short]: OK
+    5 -> CK_LABELED_TEMPLATE
+         jam_enum 5: CK_LABELED_TEMPLATE OK
+         search CK_LABELED_TEMPLATE: OK
+         match CK_LABELED_TEMPLATE: OK
+         short_name 5: LABELED_TEMPLATE OK
+         jam_enum_short 5: LABELED_TEMPLATE OK
+         match LABELED_TEMPLATE [short]: OK
+    6 -> CK_LABELED_PARENT
+         jam_enum 6: CK_LABELED_PARENT OK
+         search CK_LABELED_PARENT: OK
+         match CK_LABELED_PARENT: OK
+         short_name 6: LABELED_PARENT OK
+         jam_enum_short 6: LABELED_PARENT OK
+         match LABELED_PARENT [short]: OK
+    7 -> CK_LABELED_CHILD
+         jam_enum 7: CK_LABELED_CHILD OK
+         search CK_LABELED_CHILD: OK
+         match CK_LABELED_CHILD: OK
+         short_name 7: LABELED_CHILD OK
+         jam_enum_short 7: LABELED_CHILD OK
+         match LABELED_CHILD [short]: OK
 
   certpolicy_type_names:
     1 -> CERT_NEVERSEND
