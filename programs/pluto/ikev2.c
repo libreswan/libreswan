@@ -2692,7 +2692,7 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		release_pending_whacks(&ike->sa, "internal error");
 		return;
 
-	case STF_V2_RESPONDER_DELETE_IKE_FAMILY:
+	case STF_OK_RESPONDER_DELETE_IKE:
 		/*
 		 * Responder processing something that triggered a
 		 * delete IKE family (but not for reasons that are
@@ -2704,7 +2704,7 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		 * re-transmits have something that can respond.
 		 */
 		/* send the response */
-		dbg_v2_msgid(ike, "finishing old exchange (STF_V2_RESPONDER_DELETE_IKE_FAMILY)");
+		dbg_v2_msgid(ike, "finishing old exchange (STF_OK_RESPONDER_DELETE_IKE)");
 		pexpect(transition->recv_role == MESSAGE_REQUEST);
 		pexpect(transition->send_role == MESSAGE_RESPONSE);
 		v2_msgid_finish(ike, md);
@@ -2715,7 +2715,7 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		pexpect(ike == NULL);
 		return;
 
-	case STF_V2_INITIATOR_DELETE_IKE_FAMILY:
+	case STF_OK_INITIATOR_DELETE_IKE:
 		/*
 		 * Initiator processing response, finish current
 		 * exchange and then record'n'send a fire'n'forget
@@ -2729,7 +2729,31 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		 * XXX: this should instead jump to a new transition
 		 * that performs a proper delete exchange.
 		 */
-		dbg_v2_msgid(ike, "finishing old exchange (STF_V2_INITIATOR_DELETE_IKE_FAMILY)");
+		dbg_v2_msgid(ike, "finishing old exchange (STF_OK_INITIATOR_DELETE_IKE)");
+		pexpect(transition->recv_role == MESSAGE_RESPONSE);
+		v2_msgid_finish(ike, md);
+		/* do the deed */
+		ike->sa.st_on_delete.skip_send_delete = true;
+		connection_delete_ike(&ike, HERE);
+		/* get out of here -- everything is invalid */
+		pexpect(ike == NULL);
+		return;
+
+	case STF_OK_INITIATOR_SEND_DELETE_IKE:
+		/*
+		 * Initiator processing response, finish current
+		 * exchange and then record'n'send a fire'n'forget
+		 * delete.
+		 *
+		 * For instance, when the IKE_AUTH response's
+		 * authentication fails the initiator needs to quickly
+		 * send out a delete (this is IKEv2's documented
+		 * violation to the don't respond to a response rule).
+		 *
+		 * XXX: this should instead jump to a new transition
+		 * that performs a proper delete exchange.
+		 */
+		dbg_v2_msgid(ike, "finishing old exchange (STF_OK_INITIATOR_SEND_DELETE_IKE)");
 		pexpect(transition->recv_role == MESSAGE_RESPONSE);
 		v2_msgid_finish(ike, md);
 		/* do the deed; record'n'send logs */

@@ -197,7 +197,7 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 		/*
 		 * Complete the transtion; but then wipe us out.
 		 */
-		return STF_V2_RESPONDER_DELETE_IKE_FAMILY;
+		return STF_OK_RESPONDER_DELETE_IKE;
 	}
 
 	mobike_possibly_send_recorded(ike, md);
@@ -291,8 +291,8 @@ stf_status IKE_SA_DEL_process_v2_INFORMATIONAL_response(struct ike_sa *ike,
 							struct child_sa *null_child,
 							struct msg_digest *md)
 {
-	pexpect(null_child == NULL);
-	pexpect(md != NULL);
+	PEXPECT(ike->sa.st_logger, null_child == NULL);
+	PEXPECT(ike->sa.st_logger, md != NULL);
 	/*
 	 * This must be a response to our IKE SA delete request Even
 	 * if there are are other Delete Payloads, they cannot matter:
@@ -306,8 +306,5 @@ stf_status IKE_SA_DEL_process_v2_INFORMATIONAL_response(struct ike_sa *ike,
 	 *
 	 * Killing .v1_st is an extra safety net.
 	 */
-	ike->sa.st_on_delete.skip_send_delete = true;
-	connection_delete_ike(&ike, HERE);
-	pexpect(ike == NULL);
-	return STF_SKIP_COMPLETE_STATE_TRANSITION;
+	return STF_OK_INITIATOR_DELETE_IKE;
 }

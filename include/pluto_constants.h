@@ -338,16 +338,16 @@ typedef enum {
 	 * continuation functions.
 	 */
 	STF_SKIP_COMPLETE_STATE_TRANSITION,
-	/*                         TRANSITION  DELETE   RESPOND  LOG */
-	STF_IGNORE,             /*     no        no       no     tbd? */
-	STF_SUSPEND,            /*   suspend     no       no     tbd? */
-	STF_OK,                 /*    yes        no     message? tbd? */
-	STF_INTERNAL_ERROR,     /*     no        no      never   tbd? */
-	STF_V2_RESPONDER_DELETE_IKE_FAMILY, /* does not send delete */
-	STF_V2_INITIATOR_DELETE_IKE_FAMILY, /* sends delete */
-				/*   forced    maybe     maybe  'success' */
-	STF_FATAL,		/*     no      always    never   fail */
-	STF_FAIL_v1N,       	/*     no      maybe?    maybe?  fail */
+	/*                      		   TRANSITION  DELETE    SEND */
+	STF_IGNORE,            			/*     no        no       no  */
+	STF_SUSPEND,            		/*   suspend     no       no  */
+	STF_OK,                 		/*    yes        no     response? */
+	STF_OK_INITIATOR_DELETE_IKE,		/*    yes        yes      no */
+	STF_OK_INITIATOR_SEND_DELETE_IKE,	/*    yes        yes    request */
+	STF_OK_RESPONDER_DELETE_IKE,		/*    yes        yes    response? */
+	STF_INTERNAL_ERROR,			/*     no        no      never? */
+	STF_FATAL,				/*     no        yes     never */
+	STF_FAIL_v1N,       			/*     no       maybe?   response? */
 #define STF_ROOF (STF_FAIL_v1N + 65536) /* see RFC and above */
 } stf_status;
 

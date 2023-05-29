@@ -1301,11 +1301,11 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 		pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
 		/*
 		 * We cannot send a response as we are processing
-		 * IKE_AUTH reply the RFC states we should pretend
-		 * IKE_AUTH was okay, and then send an INFORMATIONAL
-		 * DELETE IKE SA but we have not implemented that yet.
+		 * IKE_AUTH reply the RFC states we pretend IKE_AUTH
+		 * was okay, and then send an INFORMATIONAL DELETE IKE
+		 * SA.
 		 */
-		return STF_V2_INITIATOR_DELETE_IKE_FAMILY;
+		return STF_OK_INITIATOR_SEND_DELETE_IKE;
 	}
 
 	struct connection *c = ike->sa.st_connection;
@@ -1365,11 +1365,11 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 		pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
 		/*
 		 * We cannot send a response as we are processing
-		 * IKE_AUTH reply the RFC states we should pretend
-		 * IKE_AUTH was okay, and then send an INFORMATIONAL
-		 * DELETE IKE SA but we have not implemented that yet.
+		 * IKE_AUTH reply the RFC states we pretend IKE_AUTH
+		 * was okay, and then send an INFORMATIONAL DELETE IKE
+		 * SA.
 		 */
-		return STF_V2_INITIATOR_DELETE_IKE_FAMILY;
+		return STF_OK_INITIATOR_SEND_DELETE_IKE;
 	}
 
 	/*
