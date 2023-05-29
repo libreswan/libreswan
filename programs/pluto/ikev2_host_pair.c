@@ -160,7 +160,7 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 			return sec_label_parent_instantiate(c, remote_address, HERE);
 		}
 
-		if (c->kind == CK_TEMPLATE &&
+		if (is_template(c) &&
 		    c->config->ikev2_allow_narrowing) {
 			ldbg(md->md_logger,
 			     "local endpoint has narrowing=yes - needs instantiation");
@@ -197,7 +197,7 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 		/*
 		 * Road Warrior: we have an instant winner.
 		 */
-		if (d->kind == CK_TEMPLATE && !opportunistic(d)) {
+		if (is_template(d) && !opportunistic(d)) {
 			connection_buf cb;
 			dbg("  accepting "PRI_CONNECTION", non-opportunistic",
 			    pri_connection(d, &cb));

@@ -832,7 +832,7 @@ static bool zap_instances(enum routing_event event, struct connection *c, where_
 	enum_buf ren;
 	ldbg_routing(c->logger, "due to %s, zapping instances",
 		     str_enum_short(&routing_event_names, event, &ren));
-	PASSERT(c->logger, c->kind == CK_TEMPLATE);
+	PASSERT(c->logger, is_template(c));
 
 	struct connection_filter cq = {
 		.clonedfrom = c,

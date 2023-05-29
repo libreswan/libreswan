@@ -304,7 +304,7 @@ struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 		 * we found a non %any conn. double check if it needs
 		 * instantiation anyway (eg vnet=)
 		 */
-		if (c->kind == CK_TEMPLATE) {
+		if (is_template(c)) {
 			ldbg(md->md_logger, "local endpoint needs instantiation");
 			return rw_responder_instantiate(c, sender_address, HERE);
 		}
@@ -342,7 +342,7 @@ struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 			continue;
 		}
 
-		if (d->kind == CK_TEMPLATE) {
+		if (is_template(d)) {
 			/*
 			 * must be Road Warrior: we have a
 			 * winner
@@ -371,7 +371,7 @@ struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 		return NULL;
 	}
 
-	if (c->kind != CK_TEMPLATE) {
+	if (!is_template(c)) {
 		connection_buf cib;
 		llog(RC_LOG_SERIOUS, md->md_logger,
 		     "initial Main Mode message received but "PRI_CONNECTION" forbids connection",

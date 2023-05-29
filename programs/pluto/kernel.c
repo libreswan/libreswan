@@ -889,7 +889,7 @@ static enum routability connection_routability(struct connection *c,
 	 * However, opportunistic and sec_label templates can be
 	 * routed (as in install the policy).
 	 */
-	if (c->kind == CK_TEMPLATE) {
+	if (is_template(c)) {
 		if (opportunistic(c)) {
 			ldbg(logger, "template-route-possible: opportunistic");
 		} else if (c->policy & POLICY_GROUPINSTANCE) {

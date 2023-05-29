@@ -143,7 +143,7 @@ static bool initiate_connection_2_address(struct connection *c,
 		 * the remote address and then continue.
 		 */
 
-		if (c->kind != CK_TEMPLATE) {
+		if (!is_template(c)) {
 			llog(RC_NOPEERIP, c->logger,
 			     "cannot instantiate non-template connection to a supplied remote IP address");
 			return false;
@@ -279,7 +279,7 @@ static bool initiate_connection_3_template(struct connection *c,
 		return ok;
 	}
 
-	if (c->kind == CK_TEMPLATE &&
+	if (is_template(c) &&
 	    c->config->ike_version == IKEv2 &&
 	    c->config->ikev2_allow_narrowing) {
 		struct connection *d = spd_instantiate(c, c->remote->host.addr, HERE);

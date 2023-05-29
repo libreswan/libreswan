@@ -3877,3 +3877,24 @@ bool is_instance(const struct connection *c)
 	}
 	bad_case(c->kind);
 }
+
+bool is_template(const struct connection *c)
+{
+	if (c == NULL) {
+		return false;
+	}
+	switch (c->kind) {
+	case CK_INVALID:
+		break;
+	case CK_TEMPLATE:
+	case CK_LABELED_TEMPLATE:
+		return true;
+	case CK_PERMANENT:
+	case CK_GROUP:
+	case CK_INSTANCE:
+	case CK_LABELED_PARENT:
+	case CK_LABELED_CHILD:
+		return false;
+	}
+	bad_case(c->kind);
+}

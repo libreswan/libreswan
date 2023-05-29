@@ -157,7 +157,7 @@ bool labeled(const struct connection *c)
 bool labeled_template(const struct connection *c)
 {
 	return (c != NULL &&
-		c->kind == CK_TEMPLATE &&
+		is_template(c) &&
 		c->config->sec_label.len > 0 &&
 		c->child.sec_label.len == 0);
 }

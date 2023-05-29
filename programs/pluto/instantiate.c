@@ -286,7 +286,7 @@ static struct connection *instantiate(struct connection *t,
 			pri_shunk(sec_label));
 
 	PASSERT(t->logger, address_is_specified(remote_addr)); /* always */
-	PASSERT(t->logger, (t->kind == CK_TEMPLATE ||
+	PASSERT(t->logger, (is_template(t) ||
 			    labeled_template(t) ||
 			    labeled_parent(t)));
 
@@ -594,7 +594,7 @@ static struct connection *oppo_instantiate(struct connection *t,
 					   const ip_address remote_address,
 					   const char *func, where_t where)
 {
-	PASSERT(t->logger, t->kind == CK_TEMPLATE);
+	PASSERT(t->logger, is_template(t));
 	PASSERT(t->logger, oriented(t)); /* else won't instantiate */
 	PASSERT(t->logger, t->local->child.selectors.proposed.len == 1);
 	PASSERT(t->logger, t->remote->child.selectors.proposed.len == 1);

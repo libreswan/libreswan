@@ -1420,7 +1420,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 			/* responder -- note D! */
 			enum fit responder_selector_fit;
 			if (d->config->ikev2_allow_narrowing) {
-				if (d->kind == CK_TEMPLATE) {
+				if (is_template(d)) {
 					/*
 					 * A template starts wider
 					 * than the TS and then, when
@@ -1493,7 +1493,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 		dbg_ts("connection "PRI_CONNECTION" "PRI_CO" best by "PRI_CONNECTION" "PRI_CO"%s%s",
 		       pri_connection(cc, &cb), pri_so(cc->serialno),
 		       pri_connection(best.connection, &bcb), pri_so(best.connection->serialno),
-		       (best.connection->kind == CK_TEMPLATE ? " needs instantiating!" : ""),
+		       (is_template(best.connection) ? " needs instantiating!" : ""),
 		       (best.connection->policy & POLICY_GROUPINSTANCE ? " group-instance!" : ""));
 	}
 
@@ -1748,7 +1748,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 		/* switch to instance; same score */
 		best.connection = s;
 	} else if (best.connection != NULL &&
-		   best.connection->kind == CK_TEMPLATE) {
+		   is_template(best.connection)) {
 		dbg_ts("instantiating the template connection");
 		indent.level = 2;
 		pexpect(best.nsps.i.sec_label.len == 0);

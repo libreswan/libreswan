@@ -851,5 +851,6 @@ bool labeled_child(const struct connection *c);
 bool never_negotiate(const struct connection *c);
 bool opportunistic(const struct connection *c);
 bool is_instance(const struct connection *c);
+bool is_template(const struct connection *c);
 
 #endif

@@ -1092,7 +1092,7 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 			/* We've got a better connection: it can support the
 			 * specified clients.  But it may need instantiation.
 			 */
-			if (p->kind == CK_TEMPLATE) {
+			if (is_template(p)) {
 				/*
 				 * Plain Road Warrior because no OPPO
 				 * for IKEv1 instantiate, carrying
@@ -1761,7 +1761,7 @@ static bool is_virtual_net_used(struct connection *c,
 		case CK_TEMPLATE:
 		case CK_INSTANCE:
 
-			if (d->kind == CK_TEMPLATE &&
+			if (is_template(d) &&
 			    d->remote->config->child.selectors.len > 0) {
 				/*
 				 * For instance when the template''s
