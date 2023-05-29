@@ -24,11 +24,11 @@ west #
  # an acquire.
 west #
  ipsec auto --up labeled
-1v2 "labeled" #1: initiating IKEv2 connection
-1v2 "labeled" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-002 "labeled" #1: omitting CHILD SA payloads
-1v2 "labeled" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "labeled" #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
+1v2 "labeled"[1] 192.1.2.23 #1: initiating IKEv2 connection
+1v2 "labeled"[1] 192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:500
+002 "labeled"[1] 192.1.2.23 #1: omitting CHILD SA payloads
+1v2 "labeled"[1] 192.1.2.23 #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+003 "labeled"[1] 192.1.2.23 #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
 west #
  ../../guestbin/ipsec-look.sh
 west NOW
@@ -72,11 +72,11 @@ west #
 002 IMPAIR: will drop outgoing message 1
 west #
  ipsec whack --asynchronous --impair event-v2-rekey:1
-000 "labeled" #1: deleting existing REKEY event
-000 "labeled" #1: calling REKEY event handler
+000 "labeled"[1] 192.1.2.23 #1: deleting existing REKEY event
+000 "labeled"[1] 192.1.2.23 #1: calling REKEY event handler
 west #
  ../../guestbin/wait-for.sh --match REKEY_IKE_I1 -- ipsec whack --showstates
-000 #2: "labeled":500 STATE_V2_REKEY_IKE_I1 (sent CREATE_CHILD_SA request to rekey IKE SA); idle;
+000 #2: "labeled"[1] 192.1.2.23:500 STATE_V2_REKEY_IKE_I1 (sent CREATE_CHILD_SA request to rekey IKE SA); idle;
 west #
  # Trigger traffic using the predefined ping_t context.  Because the
 west #
@@ -88,7 +88,7 @@ west #
 fired and forgotten
 west #
  ../../guestbin/wait-for.sh --match 192.1.2.23 -- ipsec trafficstatus
-006 #3: "labeled"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+006 #3: "labeled"[1][1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
 west #
  ../../guestbin/ping-once.sh --runcon "system_u:system_r:ping_t:s0:c1.c256" --up     -I 192.1.2.45 192.1.2.23
 up
@@ -96,7 +96,7 @@ west #
  # there should be 1 tunnel in each direction
 west #
  ipsec trafficstatus
-006 #3: "labeled"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=64, outBytes=64, maxBytes=2^63B, id='@east'
+006 #3: "labeled"[1][1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=64, outBytes=64, maxBytes=2^63B, id='@east'
 west #
  # there should be no bare shunts
 west #
@@ -174,8 +174,8 @@ west #
  # The IKE SA should be associated with the template connection
 west #
  ipsec showstates
-000 #2: "labeled":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
-000 #3: "labeled"[1] 192.1.2.23:500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; IKE SA #2; idle;
-000 #3: "labeled"[1] 192.1.2.23 esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 Traffic: ESPin=64B ESPout=64B ESPmax=2^63B 
+000 #2: "labeled"[1] 192.1.2.23:500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
+000 #3: "labeled"[1][1] 192.1.2.23:500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; IKE SA #2; idle;
+000 #3: "labeled"[1][1] 192.1.2.23 esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 Traffic: ESPin=64B ESPout=64B ESPmax=2^63B 
 west #
  

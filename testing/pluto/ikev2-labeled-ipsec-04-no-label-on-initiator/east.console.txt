@@ -24,6 +24,6 @@ east #
 initdone
 east #
  hostname |grep east > /dev/null && grep "No IKEv2 connection found" /tmp/pluto.log
-"labeled" #2: No IKEv2 connection found with compatible Traffic Selectors
+"labeled"[1] 192.1.2.45 #2: No IKEv2 connection found with compatible Traffic Selectors
 east #
  

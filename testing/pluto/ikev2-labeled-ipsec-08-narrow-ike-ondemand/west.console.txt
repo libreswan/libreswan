@@ -77,7 +77,7 @@ west #
 fired and forgotten
 west #
  ../../guestbin/wait-for.sh --match 192.1.2.23 -- ipsec trafficstatus
-006 #2: "labeled"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='%fromcert'
+006 #2: "labeled"[1][1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='%fromcert'
 west #
  ../../guestbin/ping-once.sh --runcon "system_u:system_r:ping_t:s0:c1.c256" --up     -I 192.1.2.45 192.1.2.23
 up
@@ -85,7 +85,7 @@ west #
  # there should be 1 tunnel in each direction
 west #
  ipsec trafficstatus
-006 #2: "labeled"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='%fromcert'
+006 #2: "labeled"[1][1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='%fromcert'
 west #
  # there should be no bare shunts
 west #

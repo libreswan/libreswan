@@ -26,16 +26,16 @@ west #
  echo 1 >/proc/sys/net/ipv4/tcp_tw_reuse
 west #
  ipsec auto --up labeled
-002 "labeled" #1: initiating IKEv1 Main Mode connection
-1v1 "labeled" #1: sent Main Mode request
-1v1 "labeled" #1: sent Main Mode I2
-1v1 "labeled" #1: sent Main Mode I3
-002 "labeled" #1: Peer ID is ID_FQDN: '@east'
-003 "labeled" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
-004 "labeled" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "labeled" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-1v1 "labeled" #2: sent Quick Mode request
-004 "labeled" #2: IPsec SA established transport mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+002 "labeled"[1] 192.1.2.23 #1: initiating IKEv1 Main Mode connection
+1v1 "labeled"[1] 192.1.2.23 #1: sent Main Mode request
+1v1 "labeled"[1] 192.1.2.23 #1: sent Main Mode I2
+1v1 "labeled"[1] 192.1.2.23 #1: sent Main Mode I3
+002 "labeled"[1] 192.1.2.23 #1: Peer ID is ID_FQDN: '@east'
+003 "labeled"[1] 192.1.2.23 #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+004 "labeled"[1] 192.1.2.23 #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+002 "labeled"[1] 192.1.2.23 #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+1v1 "labeled"[1] 192.1.2.23 #2: sent Quick Mode request
+004 "labeled"[1] 192.1.2.23 #2: IPsec SA established transport mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
  # there should be 1 (bogus) tunnel in each direction
 west #
@@ -100,7 +100,7 @@ src 0.0.0.0/0 dst 0.0.0.0/0
 	socket in priority 0 ptype main 
 west #
  ipsec trafficstatus
-006 #2: "labeled", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+006 #2: "labeled"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
 west #
  # trigger acquire using the predefined ping_t context
 west #
@@ -108,7 +108,7 @@ west #
 fired and forgotten
 west #
  ../../guestbin/wait-for.sh --match '#3' -- ipsec trafficstatus
-006 #3: "labeled", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+006 #3: "labeled"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
 west #
  sleep 5 # allow for IKEv1 protocol sillyness
 west #
@@ -118,8 +118,8 @@ west #
  # there should be 2 tunnel in each direction
 west #
  ipsec trafficstatus
-006 #2: "labeled", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
-006 #3: "labeled", type=ESP, add_time=1234567890, inBytes=64, outBytes=64, maxBytes=2^63B, id='@east'
+006 #2: "labeled"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+006 #3: "labeled"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=64, outBytes=64, maxBytes=2^63B, id='@east'
 west #
  echo done
 done

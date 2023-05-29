@@ -67,7 +67,7 @@ west #
 fired and forgotten
 west #
  ../../guestbin/wait-for.sh --match '^[^|].*TS_UNACCEPTABLE' -- cat /tmp/pluto.log
-"labeled"[1] 192.1.2.23 #2: IKE_AUTH response rejected Child SA with TS_UNACCEPTABLE
+"labeled"[1][1] 192.1.2.23 #2: IKE_AUTH response rejected Child SA with TS_UNACCEPTABLE
 west #
  # there should be 0 tunnels - child rejected
 west #
