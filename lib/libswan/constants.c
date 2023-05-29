@@ -195,12 +195,15 @@ static const char *const connection_kind_name[] = {
 	S(CK_TEMPLATE),		/* abstract connection, with wildcard */
 	S(CK_PERMANENT),	/* normal connection */
 	S(CK_INSTANCE),		/* instance of template */
+	S(CK_LABELED_TEMPLATE),
+	S(CK_LABELED_PARENT),
+	S(CK_LABELED_CHILD),
 #undef S
 };
 
 enum_names connection_kind_names = {
 	CK_INVALID,
-	CK_INSTANCE,
+	CONNECTION_KIND_ROOF - 1,
 	ARRAY_REF(connection_kind_name),
 	"CK_", /* prefix */
 	NULL
