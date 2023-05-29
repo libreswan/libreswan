@@ -3067,15 +3067,25 @@ static size_t jam_connection_child(struct jambuf *b,
 	return s;
 }
 
+static size_t jam_connection_serials(struct jambuf *buf, const struct connection *c)
+{
+	size_t s = 0;
+	if (c->instance_serial > 0) {
+		if (c->clonedfrom != NULL) {
+			s += jam_connection_serials(buf, c->clonedfrom);
+		}
+		s += jam(buf, "[%lu]", c->instance_serial);
+	}
+	return s;
+}
+
 size_t jam_connection_instance(struct jambuf *buf, const struct connection *c)
 {
 	if (PBAD(c->logger, c->kind != CK_INSTANCE)) {
 		return 0;
 	}
 	size_t s = 0;
-	if (c->instance_serial > 0) {
-		s += jam(buf, "[%lu]", c->instance_serial);
-	}
+	s += jam_connection_serials(buf, c);
 	if (opportunistic(c)) {
 		/*
 		 * XXX: print proposed or accepted selectors?

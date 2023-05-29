@@ -274,7 +274,6 @@ struct connection *group_instantiate(struct connection *group,
 static struct connection *instantiate(struct connection *t,
 				      const ip_address remote_addr,
 				      const struct id *peer_id,
-				      bool assign_serial,
 				      shunk_t sec_label, /* for ldbg() message only */
 				      const char *func, where_t where)
 {
@@ -301,13 +300,11 @@ static struct connection *instantiate(struct connection *t,
 	passert(t->name != d->name); /* see clone_connection() */
 
 	/*
-	 *  Only update .instance_serial when requested by caller.
+	 *  Update the .instance_serial.
 	 */
-	if (assign_serial) {
-		d->instance_serial = ++t->next_instance_serial;
-		ldbg(d->logger, "updating instance serial %lu next %lu",
-		     d->instance_serial, t->next_instance_serial);
-	}
+	d->instance_serial = ++t->next_instance_serial;
+	ldbg(d->logger, "updating instance serial %lu next %lu",
+	     d->instance_serial, t->next_instance_serial);
 
 	d->kind = CK_INSTANCE;
 	passert(oriented(d)); /*like parent like child*/
@@ -469,8 +466,7 @@ struct connection *spd_instantiate(struct connection *t,
 	PASSERT(t->logger, !labeled(t));
 
 	struct connection *d = instantiate(t, remote_addr, /*peer-id*/NULL,
-					   /*update_serial*/true, empty_shunk,
-					   __func__, where);
+					   empty_shunk, __func__, where);
 
 	update_selectors(d);
 	add_connection_spds(d, address_info(d->local->host.addr));
@@ -498,8 +494,7 @@ struct connection *sec_label_parent_instantiate(struct connection *t,
 	PASSERT(t->logger, labeled_template(t));
 
 	struct connection *p = instantiate(t, remote_address, /*peer-id*/NULL,
-					   /*update_serial*/false, empty_shunk,
-					   __func__, where);
+					   empty_shunk, __func__, where);
 
 	update_selectors(p);
 	add_connection_spds(p, address_info(p->local->host.addr));
@@ -528,8 +523,7 @@ struct connection *sec_label_child_instantiate(struct ike_sa *ike,
 
 	ip_address remote_addr = endpoint_address(ike->sa.st_remote_endpoint);
 	struct connection *c = instantiate(p, remote_addr, /*peer-id*/NULL,
-					   /*update_serial*/true, sec_label,
-					   __func__, where);
+					   sec_label, __func__, where);
 
 	/*
 	 * Install the sec_label from either an acquire or child
@@ -559,8 +553,7 @@ struct connection *rw_responder_instantiate(struct connection *t,
 	PASSERT(t->logger, !labeled(t));
 
 	struct connection *d = instantiate(t, peer_addr, /*TBD peer_id*/NULL,
-					   /*update_serial*/true, empty_shunk,
-					   __func__, where);
+					   empty_shunk, __func__, where);
 
 	update_selectors(d);
 	add_connection_spds(d, address_info(d->local->host.addr));
@@ -585,8 +578,7 @@ struct connection *rw_responder_id_instantiate(struct connection *t,
 	 * sec_labels?
 	 */
 	struct connection *d = instantiate(t, remote_addr, remote_id,
-					   /*update_serial*/true, empty_shunk,
-					   __func__, where);
+					   empty_shunk, __func__, where);
 
 	update_subnet_selectors(d, remote_subnet);
 	add_connection_spds(d, address_info(d->local->host.addr));
@@ -613,8 +605,7 @@ static struct connection *oppo_instantiate(struct connection *t,
 	 */
 
 	struct connection *d = instantiate(t, remote_address, /*peer_id*/NULL,
-					   /*update_serial*/true, empty_shunk,
-					   func, where);
+					   empty_shunk, func, where);
 
 	PASSERT(d->logger, d->kind == CK_INSTANCE);
 	PASSERT(d->logger, oriented(d)); /* else won't instantiate */
