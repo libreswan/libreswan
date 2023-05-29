@@ -53,7 +53,7 @@ static bool match_connection(const struct connection *c,
 		return false;
 	}
 
-	if (c->kind == CK_INSTANCE && c->remote->host.id.kind == ID_NULL) {
+	if (is_instance(c) && c->remote->host.id.kind == ID_NULL) {
 		connection_buf cb;
 		dbg("  skipping "PRI_CONNECTION", ID_NULL instance",
 		    pri_connection(c, &cb));

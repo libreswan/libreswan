@@ -505,7 +505,7 @@ void restart_connections_by_peer(struct connection *const c, struct logger *logg
 	 */
 
 	struct host_pair *hp = c->host_pair;
-	enum connection_kind c_kind = c->kind;
+	bool c_is_instance = is_instance(c);
 	struct connection *hp_next = hp->connections->hp_next;
 
 	pexpect(hp != NULL);	/* ??? why would this happen? */
@@ -530,7 +530,7 @@ void restart_connections_by_peer(struct connection *const c, struct logger *logg
 		d = next;
 	}
 
-	if (c_kind != CK_INSTANCE) {
+	if (!c_is_instance) {
 		/* reference to c is OK because not CK_INSTANCE */
 		update_host_pairs(c);
 		/* host_pair/host_addr changes with dynamic dns */
@@ -538,7 +538,7 @@ void restart_connections_by_peer(struct connection *const c, struct logger *logg
 		host_addr = c->remote->host.addr;
 	}
 
-	if (c_kind == CK_INSTANCE && hp_next == NULL) {
+	if (c_is_instance && hp_next == NULL) {
 		/* in simple cases this is a dangling hp */
 		dbg("no connection to restart after termination");
 	} else {
@@ -742,7 +742,7 @@ void initiate_ondemand(const struct kernel_acquire *b)
 		/* XXX: re-use c */
 		c = oppo_initiator_instantiate(c, b, HERE);
 		/* switched C to instance */
-		PASSERT(b->logger, c->kind == CK_INSTANCE);
+		PASSERT(b->logger, is_instance(c));
 		PASSERT(b->logger, HAS_IPSEC_POLICY(c->policy));
 		PASSERT(b->logger, c->child.routing == RT_UNROUTED); /*instance*/
 		connection_acquire(c, &inception, b, HERE);

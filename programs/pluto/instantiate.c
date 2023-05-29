@@ -607,7 +607,7 @@ static struct connection *oppo_instantiate(struct connection *t,
 	struct connection *d = instantiate(t, remote_address, /*peer_id*/NULL,
 					   empty_shunk, func, where);
 
-	PASSERT(d->logger, d->kind == CK_INSTANCE);
+	PASSERT(d->logger, is_instance(d));
 	PASSERT(d->logger, oriented(d)); /* else won't instantiate */
 	PASSERT(d->logger, opportunistic(d));
 	PASSERT(d->logger, address_eq_address(d->remote->host.addr, remote_address));

@@ -3060,7 +3060,7 @@ void ISAKMP_SA_established(const struct ike_sa *ike)
 					 * don't transfer it to the
 					 * old connection.
 					 */
-					if (d->kind == CK_INSTANCE) {
+					if (is_instance(d)) {
 						delete_connection(&d);
 					} else {
 						/* this deletes the states */

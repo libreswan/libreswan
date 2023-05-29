@@ -560,7 +560,7 @@ void delete_spd_kernel_policies(const struct spds *spds,
 static bool pexpect_cat(const struct connection *c, struct logger *logger)
 {
 	return (PEXPECT(logger, opportunistic(c)) &&
-		PEXPECT(logger, c->kind == CK_INSTANCE) &&
+		PEXPECT(logger, is_instance(c)) &&
 		PEXPECT(logger, c->clonedfrom != NULL) &&
 		PEXPECT(logger, c->local->child.config->has_client_address_translation) &&
 		PEXPECT(logger, c->local->child.has_cat));

@@ -478,7 +478,7 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 		DBG_dump_thing("  ICOOKIE-DUMP:", st->st_ike_spis.initiator);
 	}
 
-	if (c->kind == CK_INSTANCE) {
+	if (is_instance(c)) {
 		endpoint_buf b;
 		log_state(RC_LOG, st, "responding to Main Mode from unknown peer %s",
 			  str_endpoint_sensitive(&md->sender, &b));

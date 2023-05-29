@@ -88,7 +88,7 @@ void event_v1_dpd_timeout(struct state *tbd_st)
 	struct connection *c = tbd_st->st_connection;
 	tbd_st = NULL; /* kill TBD_ST; can no longer be trusted */
 	llog(RC_LOG, logger, "DPD action - putting connection into hold");
-	if (c->kind == CK_INSTANCE) {
+	if (is_instance(c)) {
 		ldbg(logger, "DPD warning dpdaction=hold on instance futile - will be deleted");
 	}
 	delete_v1_states_by_connection_family(&c);

@@ -593,7 +593,7 @@ static void down_routed_tunnel(enum routing_event event,
 		return;
 	}
 
-	PASSERT((*child)->sa.st_logger, c->kind == CK_INSTANCE);
+	PASSERT((*child)->sa.st_logger, is_instance(c));
 
 	delete_spd_kernel_policies(&c->child.spds,
 				   EXPECT_KERNEL_POLICY_OK,
@@ -785,7 +785,7 @@ static bool zap_connection(enum routing_event event,
 		 * unrouted then it can be deleted as well
 		 * (alternatives include being revived).
 		 */
-		if (c->kind == CK_INSTANCE &&
+		if (is_instance(c) &&
 		    c->child.routing == RT_UNROUTED) {
 			delete_connection(&c);
 		}
@@ -1670,7 +1670,7 @@ void dispatch(enum routing_event event, struct connection *c,
 				return;
 			}
 			delete_child_sa(e->child);
-			if (kind == CK_INSTANCE &&
+			if (is_instance(c) &&
 			    e->ike != NULL/*IKEv1?*/ &&
 			    c != (*e->ike)->sa.st_connection) {
 				delete_connection(&c);

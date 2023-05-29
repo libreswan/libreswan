@@ -181,7 +181,7 @@ struct connection *conn_by_name(const char *nm, bool no_inst)
 	};
 	while (next_connection_new2old(&cq)) {
 		struct connection *c = cq.c;
-		if (no_inst && c->kind == CK_INSTANCE) {
+		if (no_inst && is_instance(c)) {
 			continue;
 		}
 		return c;
@@ -257,7 +257,7 @@ void delete_connection(struct connection **cp)
 	 */
 	PASSERT(c->logger, !c->going_away);
 
-	if (c->kind == CK_INSTANCE) {
+	if (is_instance(c)) {
 		c->going_away = true;
 		if (!opportunistic(c)) {
 			address_buf b;
@@ -425,7 +425,7 @@ int foreach_concrete_connection_by_name(const char *name,
 	bool found = false;
 	while (next_connection_old2new(&cq)) {
 		struct connection *c = cq.c;
-		if (c->kind == CK_INSTANCE) {
+		if (is_instance(c)) {
 			continue;
 		}
 		found = true;
@@ -3081,7 +3081,11 @@ static size_t jam_connection_serials(struct jambuf *buf, const struct connection
 
 size_t jam_connection_instance(struct jambuf *buf, const struct connection *c)
 {
-	if (PBAD(c->logger, c->kind != CK_INSTANCE)) {
+	/*
+	 * Not PEXPECT(c->connection) as that will recursively call
+	 * this function when trying to log prefix.
+	 */
+	if (!pexpect(is_instance(c))) {
 		return 0;
 	}
 	size_t s = 0;
@@ -3359,7 +3363,7 @@ struct connection *find_connection_for_packet(const ip_packet packet,
 		 */
 		bool instance_initiation_ok =
 			(opportunistic(c) &&
-			 c->kind == CK_INSTANCE &&
+			 is_instance(c) &&
 			 pexpect(c->clonedfrom != NULL) /* because instance */ &&
 			 routed(c->clonedfrom));
 		if (!routed(c) && !instance_initiation_ok &&
@@ -3445,7 +3449,7 @@ struct connection *find_connection_for_packet(const ip_packet packet,
 		 * above).
 		 */
 		connection_priority_t priority =
-			(8 * (connection_priority(c) + (c->kind == CK_INSTANCE)) +
+			(8 * (connection_priority(c) + is_instance(c)) +
 			 (src - 1/*strip 1 added above*/) +
 			 (dst - 1/*strip 1 added above*/));
 
@@ -3589,7 +3593,7 @@ void connection_delete_unused_instance(struct connection **cp,
 		return;
 	}
 
-	if (c->kind != CK_INSTANCE) {
+	if (!is_instance(c)) {
 		connection_buf cb;
 		dbg("connection "PRI_CONNECTION" is not an instance, skipping delete-unused",
 		    pri_connection(c, &cb));
@@ -3851,4 +3855,25 @@ bool never_negotiate(const struct connection *c)
 bool opportunistic(const struct connection *c)
 {
 	return (c != NULL && (c->policy & POLICY_OPPORTUNISTIC));
+}
+
+bool is_instance(const struct connection *c)
+{
+	if (c == NULL) {
+		return false;
+	}
+	switch (c->kind) {
+	case CK_INVALID:
+		break;
+	case CK_PERMANENT:
+	case CK_TEMPLATE:
+	case CK_GROUP:
+	case CK_LABELED_TEMPLATE:
+		return false;
+	case CK_INSTANCE:
+	case CK_LABELED_PARENT:
+	case CK_LABELED_CHILD:
+		return true;
+	}
+	bad_case(c->kind);
 }

@@ -342,7 +342,7 @@ static bool nat_traversal_update_family_mapp_state(struct state *st, void *data)
 		st->st_remote_endpoint = nfo->new_remote_endpoint;
 		st->hidden_variables.st_natd = endpoint_address(nfo->new_remote_endpoint);
 		struct connection *c = st->st_connection;
-		if (c->kind == CK_INSTANCE)
+		if (is_instance(c))
 			c->remote->host.addr = endpoint_address(nfo->new_remote_endpoint);
 	}
 	return false; /* search for more */

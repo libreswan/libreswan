@@ -1930,7 +1930,7 @@ static struct connection *fc_try(const struct connection *c,
 			continue;
 		}
 
-		if (d->kind == CK_INSTANCE && d->remote->host.id.kind == ID_NULL) {
+		if (is_instance(d) && d->remote->host.id.kind == ID_NULL) {
 			connection_buf cb;
 			dbg("skipping unauthenticated "PRI_CONNECTION" with ID_NULL",
 			    pri_connection(d, &cb));
@@ -2113,7 +2113,7 @@ static struct connection *fc_try_oppo(const struct connection *c,
 			continue;
 		}
 
-		if (d->kind == CK_INSTANCE && d->remote->host.id.kind == ID_NULL) {
+		if (is_instance(d) && d->remote->host.id.kind == ID_NULL) {
 			connection_buf cb;
 			dbg("skipping unauthenticated "PRI_CONNECTION" with ID_NULL",
 			    pri_connection(d, &cb));

@@ -1359,7 +1359,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 			 * when switching.  The exception being the
 			 * current connection - it needs a score.
 			 */
-			if (d->kind == CK_INSTANCE &&
+			if (is_instance(d) &&
 			    d->remote->host.id.kind == ID_NULL &&
 			    d != child->sa.st_connection) {
 				connection_buf cb;

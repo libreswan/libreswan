@@ -165,7 +165,7 @@ bool labeled_template(const struct connection *c)
 bool labeled_parent(const struct connection *c)
 {
 	return (c != NULL &&
-		c->kind == CK_INSTANCE &&
+		is_instance(c) &&
 		c->config->sec_label.len > 0 &&
 		c->child.sec_label.len == 0);
 }
@@ -173,7 +173,7 @@ bool labeled_parent(const struct connection *c)
 bool labeled_child(const struct connection *c)
 {
 	return (c != NULL &&
-		c->kind == CK_INSTANCE &&
+		is_instance(c) &&
 		c->config->sec_label.len > 0 &&
 		c->child.sec_label.len > 0);
 }

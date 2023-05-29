@@ -307,7 +307,7 @@ void release_dead_interfaces(struct logger *logger)
 		 * template will only be processed after all instances
 		 * have been deleted.
 		 */
-		if (c->kind == CK_INSTANCE) {
+		if (is_instance(c)) {
 			delete_connection(&c);
 			pexpect(c == NULL);
 			continue;

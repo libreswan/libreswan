@@ -293,7 +293,7 @@ generalName_t *collect_rw_ca_candidates(struct msg_digest *md)
 
 #if 0
 		/* REMOTE==%any so d can never be an instance */
-		if (d->kind == CK_INSTANCE && d->remote->host.id.kind == ID_NULL) {
+		if (instance(d) && d->remote->host.id.kind == ID_NULL) {
 			connection_buf cb;
 			dbg("skipping unauthenticated "PRI_CONNECTION" with ID_NULL",
 			    pri_connection(d, &cb));

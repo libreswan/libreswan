@@ -661,7 +661,7 @@ extern void rekey_now(const char *name, enum sa_type sa_type,
 		      bool background, struct logger *logger);
 
 #define remote_id_was_instantiated(c) \
-	( (c)->kind == CK_INSTANCE && \
+	( is_instance(c) && \
 	  ( !id_is_ipaddr(&(c)->remote->host.id) || \
 	    sameaddr(&(c)->remote->host.id.ip_addr, &(c)->remote->host.addr) ) )
 
@@ -850,5 +850,6 @@ bool labeled_child(const struct connection *c);
 
 bool never_negotiate(const struct connection *c);
 bool opportunistic(const struct connection *c);
+bool is_instance(const struct connection *c);
 
 #endif

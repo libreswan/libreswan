@@ -213,7 +213,7 @@ static void update_remote_port(struct connection *c, struct state *st)
 	/* XXX: check that IKE is for C? */
 	if ((IS_IKE_SA_ESTABLISHED(st) ||
 	     IS_V1_ISAKMP_SA_ESTABLISHED(st)) &&
-	    c->kind == CK_INSTANCE) {
+	    is_instance(c)) {
 		/*
 		 * Why isn't the host_port set by instantiation?
 		 *

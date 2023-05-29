@@ -1357,7 +1357,7 @@ static void delete_v1_states_by_connection_bottom_up(struct connection **cp,
 	 * Stop recursive calls trying to delete this template
 	 * connection by flaging this connection as going away.
 	 */
-	bool delete_instance = (c->kind == CK_INSTANCE && !c->going_away);
+	bool delete_instance = (is_instance(c) && !c->going_away);
 	if (delete_instance) {
 		/* stop recursive delete by state code */
 		c->going_away = true;
@@ -1491,7 +1491,7 @@ void delete_states_by_connection(struct connection **cp)
 	dbg("deleting all states for connection "PRI_CONNECTION,
 	    pri_connection(*cp, &cb));
 
-	enum connection_kind ck = (*cp)->kind;
+	bool ck_is_instance = is_instance(*cp);
 	co_serial_t connection_serialno = (*cp)->serialno;
 
 	switch ((*cp)->config->ike_version) {
@@ -1502,7 +1502,7 @@ void delete_states_by_connection(struct connection **cp)
 	/* Was (*cp), an instance, deleted? */
 	struct connection *c = connection_by_serialno(connection_serialno);
 	if (c == NULL) {
-		pexpect(ck == CK_INSTANCE);
+		pexpect(ck_is_instance);
 		*cp = NULL;
 		return;
 	}

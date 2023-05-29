@@ -253,7 +253,7 @@ static struct connection *refine_host_connection_on_responder(int indent,
 			 * instance which is allowed to have no
 			 * authentication.
 			 */
-			if (c != d && d->kind == CK_INSTANCE && d->remote->host.id.kind == ID_NULL) {
+			if (c != d && is_instance(d) && d->remote->host.id.kind == ID_NULL) {
 				connection_buf cb;
 				dbg_rhc("skipping ID_NULL instance "PRI_CONNECTION"",
 					pri_connection(d, &cb));

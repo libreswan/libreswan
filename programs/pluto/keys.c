@@ -440,7 +440,7 @@ static struct secret *lsw_get_secret(const struct connection *c,
 	      kind == SECRET_PSK /*shared-secret*/ &&
 	      ( ( c->kind == CK_TEMPLATE &&
 		  c->remote->host.id.kind == ID_NONE ) ||
-		( c->kind == CK_INSTANCE &&
+		( is_instance(c) &&
 		  id_is_ipaddr(&c->remote->host.id) &&
 		  /* Check if we are a road warrior instantiation, not a vnet: instantiation */
 		  !address_is_specified(c->remote->host.addr) ) ) ) ) {

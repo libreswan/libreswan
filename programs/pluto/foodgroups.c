@@ -427,7 +427,7 @@ void load_groups(struct logger *logger)
 					if (t != NULL) {
 						/* instance when remote addr valid */
 						PEXPECT(logger, (t->kind == CK_TEMPLATE ||
-								 t->kind == CK_INSTANCE));
+								 is_instance(t)));
 						/* route if group is routed */
 						if (g->policy & POLICY_ROUTE) {
 							/* XXX: something better? */

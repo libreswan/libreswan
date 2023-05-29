@@ -168,7 +168,7 @@ kernel_priority_t calculate_kernel_priority(const struct connection *c)
 	 * "Ensure an instance always has preference over it's
 	 * template/OE-group always has preference."
 	 */
-	unsigned instw = (c->kind == CK_INSTANCE ? 0 : 1);
+	unsigned instw = (is_instance(c) ? 0 : 1);
 	prio = (prio << 1) | instw;
 
 	ldbg(c->logger,
@@ -2093,7 +2093,7 @@ bool install_inbound_ipsec_sa(struct child_sa *child, where_t where)
 	 * XXX: can this make use of connection_routability() and / or
 	 * get_connection_spd_conflicts() below?
 	 */
-	passert(c->kind == CK_PERMANENT || c->kind == CK_INSTANCE);
+	passert(c->kind == CK_PERMANENT || is_instance(c));
 	if (c->remote->child.has_client) {
 		for (;; ) {
 			const struct spd_route *ro = route_owner(c->spd);
@@ -2133,7 +2133,7 @@ bool install_inbound_ipsec_sa(struct child_sa *child, where_t where)
 				"route to peer's client conflicts with "PRI_CONNECTION" %s; releasing old connection to free the route",
 				pri_connection(co, &cib),
 				str_address_sensitive(&co->remote->host.addr, &b));
-			if (co->kind == CK_INSTANCE) {
+			if (is_instance(co)) {
 				delete_connection(&co);
 			} else {
 				release_connection(co);
@@ -2523,7 +2523,7 @@ void teardown_ipsec_kernel_policies(enum routing_event event, struct child_sa *c
 	}
 
 	struct spds spds = c->child.spds;
-	if (c->kind == CK_INSTANCE && opportunistic(c)) {
+	if (is_instance(c) && opportunistic(c)) {
 		ldbg(logger,
 		     "kernel: %s() instance with OPPORTUNISTIC; transitioning to UNROUTED",
 		     __func__);
@@ -2539,7 +2539,7 @@ void teardown_ipsec_kernel_policies(enum routing_event event, struct child_sa *c
 		return;
 	}
 
-	if (c->kind == CK_INSTANCE && !c->config->rekey) {
+	if (is_instance(c) && !c->config->rekey) {
 		ldbg(logger,
 		     "kernel: %s() instance with REKEY disabled; transitioning to UNROUTED",
 		     __func__);
