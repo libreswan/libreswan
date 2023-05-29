@@ -1404,6 +1404,7 @@ void dispatch(enum routing_event event, struct connection *c,
 			return;
 
 		case X(UNROUTE, UNROUTED, INSTANCE):
+		case X(UNROUTE, UNROUTED, LABELED_CHILD):
 			ldbg_routing(logger, "already unrouted");
 			return;
 		case X(INITIATE, UNROUTED, INSTANCE):
