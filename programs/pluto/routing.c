@@ -1052,6 +1052,7 @@ void dispatch(enum routing_event event, struct connection *c,
 		switch (XX(event, routing, kind)) {
 
 		case X(ROUTE, UNROUTED, TEMPLATE):
+		case X(ROUTE, UNROUTED, LABELED_TEMPLATE):
 		case X(ROUTE, UNROUTED, PERMANENT):
 			c->policy |= POLICY_ROUTE; /* always */
 			if (never_negotiate(c)) {
@@ -1385,11 +1386,13 @@ void dispatch(enum routing_event event, struct connection *c,
 			return;
 
 		case X(UNROUTE, UNROUTED, TEMPLATE):
+		case X(UNROUTE, UNROUTED, LABELED_TEMPLATE):
 			if (zap_instances(event, c, where)) {
 				return;
 			}
 			ldbg_routing(logger, "already unrouted");
 			return;
+		case X(UNROUTE, ROUTED_ONDEMAND, LABELED_TEMPLATE):
 		case X(UNROUTE, ROUTED_ONDEMAND, TEMPLATE):
 		case X(UNROUTE, ROUTED_REVIVAL, TEMPLATE):
 			if (c->child.routing == RT_ROUTED_REVIVAL) {

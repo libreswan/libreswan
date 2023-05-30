@@ -1666,8 +1666,8 @@ static enum connection_kind extract_connection_kind(const struct whack_message *
 		return CK_GROUP;
 	}
 	if (wm->sec_label != NULL) {
-		ldbg(logger, "connection is CK_TEMPLATE: has security label: %s", wm->sec_label);
-		return CK_TEMPLATE;
+		ldbg(logger, "connection is CK_LABELED_TEMPLATE: has security label: %s", wm->sec_label);
+		return CK_LABELED_TEMPLATE;
 	}
 	if(wm->ikev2_allow_narrowing == YN_YES) {
 		ldbg(logger, "connection is CK_TEMPLATE: POLICY_IKEV2_ALLOW_NARROWING");
