@@ -63,7 +63,6 @@ struct annex {
 	const threadtime_t *const inception;
 	bool background;
 	shunk_t sec_label;
-	const struct kernel_acquire *const acquire;
 };
 
 static void dispatch(const enum routing_event event,
@@ -117,10 +116,6 @@ static void jam_annex(struct jambuf *buf, const struct annex *e)
 	if (e->sec_label.len > 0) {
 		jam_string(buf, ", sec_label=");
 		jam_shunk(buf, e->sec_label);
-	}
-	if (e->acquire != NULL) {
-		jam_string(buf, "; ");
-		jam_kernel_acquire(buf, e->acquire);
 	}
 }
 
@@ -482,12 +477,11 @@ void connection_acquire(struct connection *c, threadtime_t *inception,
 	}
 
 	dispatch(CONNECTION_ACQUIRE, c,
-		 c->logger, where,
+		 b->logger, where,
 		 (struct annex) {
 			 .inception = inception,
 			 .background = b->background,
 			 .sec_label = b->sec_label,
-			 .acquire = b,
 		 });
 }
 
@@ -1159,9 +1153,6 @@ void dispatch(enum routing_event event, struct connection *c,
 		case X(INITIATE, ROUTED_REVIVAL, PERMANENT):
 		case X(ACQUIRE, ROUTED_ONDEMAND, PERMANENT):
 		case X(ACQUIRE, ROUTED_REVIVAL, PERMANENT):
-			PEXPECT(logger, (event == CONNECTION_INITIATE ? e->acquire == NULL :
-					 event == CONNECTION_ACQUIRE ? e->acquire != NULL && e->sec_label.ptr == NULL :
-					 false));
 			if (c->child.routing == RT_ROUTED_REVIVAL) {
 				delete_revival(c);
 			}
@@ -1221,7 +1212,7 @@ void dispatch(enum routing_event event, struct connection *c,
 			}
 			ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
 					  e->inception, e->sec_label,
-					  e->background, e->acquire->logger);
+					  e->background, logger);
 			return;
 		case X(REVIVE, UNROUTED_REVIVAL, PERMANENT):
 			if (BROKEN_TRANSITION) {
@@ -1489,7 +1480,7 @@ void dispatch(enum routing_event event, struct connection *c,
 			unrouted_instance_to_unrouted_negotiation(event, c, where);
 			ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
 					  e->inception, e->sec_label,
-					  e->background, e->acquire->logger);
+					  e->background, logger);
 			return;
 
 		case X(UNROUTE, UNROUTED_NEGOTIATION, INSTANCE):
