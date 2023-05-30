@@ -1120,18 +1120,18 @@ bool v2_ike_sa_auth_responder_establish(struct ike_sa *ike, bool *send_redirecti
 		}
 	}
 
-	if (labeled_parent(c)) {
+	if (is_labeled_parent(c)) {
 		/*
 		 * For SEC_LABELs install a trap for any outgoing
 		 * connection so that it will trigger an acquire which
 		 * will then negotiate the child.
 		 *
-		 * Because the labeled_parent() connection was
-		 * instantiated from the labeled_template() the parent
+		 * Because the is_labeled_parent() connection was
+		 * instantiated from the is_labeled_template() the parent
 		 * is unrouted.
 		 *
-		 * There's a chance that the labeled_template() and
-		 * labeled_parent() have overlapping SPDs that seems
+		 * There's a chance that the is_labeled_template() and
+		 * is_labeled_parent() have overlapping SPDs that seems
 		 * to do no harm.
 		 */
 		PEXPECT(c->logger, c->child.routing == RT_UNROUTED);
@@ -1415,9 +1415,9 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 		}
 	}
 
-	if (labeled_parent(c)) {
+	if (is_labeled_parent(c)) {
 		/*
-		 * The labeled_template() connection will have been
+		 * The is_labeled_template() connection will have been
 		 * routed, but not this labeled_parent.
 		 *
 		 * But what if the two have the same SPDs?  Then the

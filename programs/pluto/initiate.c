@@ -166,7 +166,7 @@ static bool initiate_connection_2_address(struct connection *c,
 		}
 
 		struct connection *d;
-		if (labeled(c)) {
+		if (is_labeled(c)) {
 			d = sec_label_parent_instantiate(c, remote_ip, HERE);
 		} else {
 			d = spd_instantiate(c, remote_ip, HERE);
@@ -257,7 +257,7 @@ static bool initiate_connection_3_template(struct connection *c,
 
 	passert(address_is_specified(c->remote->host.addr));
 
-	if (labeled_template(c)) {
+	if (is_labeled_template(c)) {
 		struct connection *d =
 			sec_label_parent_instantiate(c, c->remote->host.addr, HERE);
 		/* XXX: something better? */
@@ -657,7 +657,7 @@ void initiate_ondemand(const struct kernel_acquire *b)
 		bad_case(c->kind);
 	}
 
-	if (labeled(c)) {
+	if (is_labeled(c)) {
 		/*
 		 * We've found a sec_label connection that can serve.
 		 *
@@ -671,8 +671,8 @@ void initiate_ondemand(const struct kernel_acquire *b)
 		PASSERT(b->logger, b->sec_label.len > 0);
 		PASSERT(b->logger, sec_label_within_range("acquire", HUNK_AS_SHUNK(b->sec_label),
 							  c->config->sec_label, b->logger));
-		PASSERT(b->logger, !opportunistic(c));
-		PASSERT(b->logger, (labeled_template(c) || labeled_parent(c)));
+		PASSERT(b->logger, !is_opportunistic(c));
+		PASSERT(b->logger, (is_labeled_template(c) || is_labeled_parent(c)));
 
 		/*
 		 * Announce this to the world.  Use c->logger instead?
@@ -686,12 +686,12 @@ void initiate_ondemand(const struct kernel_acquire *b)
 		 * ondemand negotiation always requires a parent.
 		 */
 		struct connection *cc;
-		if (labeled_template(c)) {
+		if (is_labeled_template(c)) {
 			cc = sec_label_parent_instantiate(c, c->remote->host.addr, HERE);
 		} else {
 			cc = c;
 		}
-		PASSERT(b->logger, labeled_parent(cc));
+		PASSERT(b->logger, is_labeled_parent(cc));
 
 		connection_acquire(cc, &inception, b, HERE);
 		return;
@@ -720,7 +720,7 @@ void initiate_ondemand(const struct kernel_acquire *b)
 		}
 		return;
 	case CK_PERMANENT:
-		PASSERT(b->logger, !opportunistic(c));
+		PASSERT(b->logger, !is_opportunistic(c));
 		LLOG_JAMBUF(RC_LOG, b->logger, buf) {
 			jam_kernel_acquire(buf, b);
 			/* jam(buf, " using "); */
@@ -728,7 +728,7 @@ void initiate_ondemand(const struct kernel_acquire *b)
 		connection_acquire(c, &inception, b, HERE);
 		return;
 	case CK_TEMPLATE:
-		if (!opportunistic(c)) {
+		if (!is_opportunistic(c)) {
 			/*
 			 * Only opportunistic connections can ondemand
 			 * instantiate a template.
@@ -854,7 +854,7 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 		ldbg(c->logger, "  %s.child already has a hard-wired selectors; skipping",
 		     c->remote->config->leftright);
 	} else if (c->remote->child.has_client) {
-		pexpect(opportunistic(c));
+		pexpect(is_opportunistic(c));
 		ldbg(c->logger, "  %s.child.has_client yet no selectors; skipping magic",
 		     c->remote->config->leftright);
 	} else {

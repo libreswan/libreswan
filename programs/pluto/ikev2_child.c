@@ -528,7 +528,7 @@ v2_notification_t process_v2_childs_sa_payload(const char *what,
 				     /*expect_ike*/ false,
 				     /*expect_spi*/ true,
 				     expect_accepted_proposal,
-				     opportunistic(c),
+				     is_opportunistic(c),
 				     &child->sa.st_v2_accepted_proposal,
 				     child_proposals, child->sa.st_logger);
 	if (n != v2N_NOTHING_WRONG) {
@@ -920,7 +920,7 @@ static v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ik
 		(child->sa.st_connection->pool[IPv4_INDEX] != NULL ? &ipv4_info :
 		 child->sa.st_connection->pool[IPv6_INDEX] != NULL ? &ipv6_info :
 		 NULL);
-	bool oe_server = (opportunistic(ike->sa.st_connection) &&
+	bool oe_server = (is_opportunistic(ike->sa.st_connection) &&
 			  md->chain[ISAKMP_NEXT_v2CP] != NULL && pool_afi != NULL);
 
 	ldbg_cp(child->sa.st_logger, child->sa.st_connection,

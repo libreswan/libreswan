@@ -1377,7 +1377,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 			 * that matches an existing connection
 			 * instance.
 			 */
-			if (labeled_child(d)) {
+			if (is_labeled_child(d)) {
 				connection_buf cb;
 				dbg_ts("skipping "PRI_CONNECTION", labeled IKEv2 child",
 				       pri_connection(d, &cb));
@@ -1513,7 +1513,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 	 *   should have found the same label
 	 */
 	if (best.connection == NULL &&
-	    (cc->kind == CK_PERMANENT || labeled(cc))) {
+	    (cc->kind == CK_PERMANENT || is_labeled(cc))) {
 		/*
 		 * Don't try to look for something else to
 		 * 'instantiate' when the current connection is
@@ -1564,7 +1564,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 	 */
 
 	if (best.connection == NULL &&
-	    !labeled(cc) &&
+	    !is_labeled(cc) &&
 	    (cc->policy & POLICY_GROUPINSTANCE)) {
 		/*
 		 * Is there something better than the current
@@ -1676,7 +1676,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 						     t->remote->child.selectors.proposed.list[0]));
 			pexpect(selector_eq_selector(t->spd->local->client,
 						     t->local->child.selectors.proposed.list[0]));
-			pexpect(!labeled(t));
+			pexpect(!is_labeled(t));
 			struct child_selector_ends ends = {
 				.i.selectors = &t->remote->child.selectors.proposed,
 				.i.sec_label = t->config->sec_label,
@@ -1731,7 +1731,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 	 */
 
 	indent.level = 1;
-	if (labeled_parent(best.connection)) {
+	if (is_labeled_parent(best.connection)) {
 		/*
 		 * Convert the hybrid sec_label template-instance into
 		 * a proper instance, and then update its selectors.

@@ -294,7 +294,7 @@ void set_routing(enum routing_event event,
 	 * policy.  Instead the kernel deals with the policy, and the
 	 * template/parent owns the route.
 	 */
-	PEXPECT(logger, !labeled_child(c));
+	PEXPECT(logger, !is_labeled_child(c));
 #if 0
 	/*
 	 * Always going forward; never in reverse.
@@ -337,7 +337,7 @@ static void unrouted_instance_to_unrouted_negotiation(enum routing_event event,
 	struct connection *t = c->clonedfrom; /* could be NULL */
 	PEXPECT(logger, t != NULL && t->child.routing == RT_ROUTED_ONDEMAND);
 #endif
-	bool oe = opportunistic(c);
+	bool oe = is_opportunistic(c);
 	const char *reason = (oe ? "replace unrouted opportunistic %trap with broad %pass or %hold" :
 			      "replace unrouted %trap with broad %pass or %hold");
 	add_spd_kernel_policies(c, KERNEL_POLICY_OP_REPLACE,
@@ -360,7 +360,7 @@ static void routed_negotiation_to_unrouted(enum routing_event event,
 					   struct logger *logger, where_t where,
 					   const char *story)
 {
-	PEXPECT(logger, !opportunistic(c));
+	PEXPECT(logger, !is_opportunistic(c));
 	delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
 				   logger, where, story);
 	FOR_EACH_ITEM(spd, &c->child.spds) {
@@ -383,7 +383,7 @@ static void ondemand_to_negotiation(enum routing_event event,
 {
         struct logger *logger = c->logger;
 	ldbg_routing(c->logger, "%s() %s", __func__, reason);
-        PEXPECT(logger, !opportunistic(c));
+        PEXPECT(logger, !is_opportunistic(c));
 	PASSERT(logger, (event == CONNECTION_INITIATE ||
 			 event == CONNECTION_ACQUIRE ||
 			 event == CONNECTION_REVIVE));
@@ -439,7 +439,7 @@ static void negotiation_to_ondemand(enum routing_event event,
 void connection_initiate(struct connection *c, const threadtime_t *inception,
 			 bool background, where_t where)
 {
-	if (labeled(c)) {
+	if (is_labeled(c)) {
 		ipsecdoi_initiate(c, c->policy, SOS_NOBODY, inception,
 				  (c->config->ike_version == IKEv1 ? HUNK_AS_SHUNK(c->child.sec_label) : null_shunk),
 				  background, c->logger);
@@ -464,8 +464,8 @@ void connection_initiate(struct connection *c, const threadtime_t *inception,
 void connection_acquire(struct connection *c, threadtime_t *inception,
 			const struct kernel_acquire *b, where_t where)
 {
-	if (labeled(c)) {
-		PASSERT(c->logger, labeled_parent(c));
+	if (is_labeled(c)) {
+		PASSERT(c->logger, is_labeled_parent(c));
 		ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
 				  inception, b->sec_label, b->background, b->logger);
 		packet_buf pb;
@@ -487,7 +487,7 @@ void connection_acquire(struct connection *c, threadtime_t *inception,
 
 void connection_revive(struct connection *c, const threadtime_t *inception, where_t where)
 {
-	if (labeled(c)) {
+	if (is_labeled(c)) {
 		initiate_connection(c, /*remote-host-name*/NULL,
 				    /*background*/true,
 				    /*log-failure*/true,
@@ -938,7 +938,7 @@ void connection_timeout_ike(struct ike_sa **ike, where_t where)
 
 void connection_delete_ike(struct ike_sa **ike, where_t where)
 {
-	if (labeled((*ike)->sa.st_connection)) {
+	if (is_labeled((*ike)->sa.st_connection)) {
 		delete_ike_family(ike);
 		return;
 	}
@@ -1062,7 +1062,7 @@ void dispatch(enum routing_event event, struct connection *c,
 					return;
 				}
 				PEXPECT(logger, c->child.routing == RT_ROUTED_NEVER_NEGOTIATE);
-			} else if (labeled_template(c)) {
+			} else if (is_labeled_template(c)) {
 				if (!unrouted_to_routed_sec_label(event, c, logger, where)) {
 					/* XXX: why whack only? */
 					llog(RC_ROUTE, logger, "could not route");
@@ -1070,7 +1070,7 @@ void dispatch(enum routing_event event, struct connection *c,
 				}
 				PEXPECT(logger, c->child.routing == RT_ROUTED_ONDEMAND);
 			} else {
-				PEXPECT(logger, !labeled(c));
+				PEXPECT(logger, !is_labeled(c));
 				if (!unrouted_to_routed_ondemand(event, c, where)) {
 					/* XXX: why whack only? */
 					llog(WHACK_STREAM|RC_ROUTE, logger, "could not route");
@@ -1600,7 +1600,7 @@ void dispatch(enum routing_event event, struct connection *c,
 				delete_ike_sa(e->ike);
 				return;
 			}
-			if (opportunistic(c)) {
+			if (is_opportunistic(c)) {
 				/*
 				 * A failed OE initiator, make shunt bare.
 				 */

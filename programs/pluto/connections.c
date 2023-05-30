@@ -259,7 +259,7 @@ void delete_connection(struct connection **cp)
 
 	if (is_instance(c)) {
 		c->going_away = true;
-		if (!opportunistic(c)) {
+		if (!is_opportunistic(c)) {
 			address_buf b;
 			llog(RC_LOG, c->logger,
 			     "deleting connection instance with peer %s {isakmp=#%lu/ipsec=#%lu}",
@@ -3090,7 +3090,7 @@ size_t jam_connection_instance(struct jambuf *buf, const struct connection *c)
 	}
 	size_t s = 0;
 	s += jam_connection_serials(buf, c);
-	if (opportunistic(c)) {
+	if (is_opportunistic(c)) {
 		/*
 		 * XXX: print proposed or accepted selectors?
 		 */
@@ -3311,13 +3311,13 @@ struct connection *find_connection_for_packet(const ip_packet packet,
 		 * Don't try to mix 'n' match acquire sec_label with
 		 * non-sec_label connections.
 		 */
-		if (sec_label.len == 0 && labeled(c)) {
+		if (sec_label.len == 0 && is_labeled(c)) {
 			connection_buf cb;
 			ldbg(logger, "    skipping "PRI_CONNECTION"; has unwanted label",
 			     pri_connection(c, &cb));
 			continue;
 		}
-		if (sec_label.len > 0 && !labeled(c)) {
+		if (sec_label.len > 0 && !is_labeled(c)) {
 			connection_buf cb;
 			ldbg(logger, "    skipping "PRI_CONNECTION"; doesn't have label",
 			     pri_connection(c, &cb));
@@ -3329,7 +3329,7 @@ struct connection *find_connection_for_packet(const ip_packet packet,
 		 * template or the parent - assume the kernel won't
 		 * send a duplicate child request.
 		 */
-		if (labeled_child(c)) {
+		if (is_labeled_child(c)) {
 			connection_buf cb;
 			ldbg(logger, "    skipping "PRI_CONNECTION"; IKEv2 sec_label connection is a child",
 			     pri_connection(c, &cb));
@@ -3362,7 +3362,7 @@ struct connection *find_connection_for_packet(const ip_packet packet,
 		 * connection?!?
 		 */
 		bool instance_initiation_ok =
-			(opportunistic(c) &&
+			(is_opportunistic(c) &&
 			 is_instance(c) &&
 			 pexpect(c->clonedfrom != NULL) /* because instance */ &&
 			 routed(c->clonedfrom));
@@ -3852,7 +3852,7 @@ bool never_negotiate(const struct connection *c)
 	return (c != NULL && NEVER_NEGOTIATE(c->policy));
 }
 
-bool opportunistic(const struct connection *c)
+bool is_opportunistic(const struct connection *c)
 {
 	return (c != NULL && (c->policy & POLICY_OPPORTUNISTIC));
 }

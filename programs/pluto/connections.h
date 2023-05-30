@@ -843,14 +843,15 @@ void finish_connection(struct connection *c, const char *name,
  * Three types of labels.
  */
 
-bool labeled(const struct connection *c);
-bool labeled_template(const struct connection *c);
-bool labeled_parent(const struct connection *c);
-bool labeled_child(const struct connection *c);
-
-bool never_negotiate(const struct connection *c);
-bool opportunistic(const struct connection *c);
+bool is_labeled(const struct connection *c);
+bool is_labeled_template(const struct connection *c);
+bool is_labeled_parent(const struct connection *c);
+bool is_labeled_child(const struct connection *c);
 bool is_instance(const struct connection *c);
 bool is_template(const struct connection *c);
+
+bool never_negotiate(const struct connection *c);
+
+bool is_opportunistic(const struct connection *c);
 
 #endif

@@ -287,8 +287,8 @@ static struct connection *instantiate(struct connection *t,
 
 	PASSERT(t->logger, address_is_specified(remote_addr)); /* always */
 	PASSERT(t->logger, (is_template(t) ||
-			    labeled_template(t) ||
-			    labeled_parent(t)));
+			    is_labeled_template(t) ||
+			    is_labeled_parent(t)));
 
 	if (peer_id != NULL) {
 		int wildcards;	/* value ignored */
@@ -306,8 +306,8 @@ static struct connection *instantiate(struct connection *t,
 	ldbg(d->logger, "updating instance serial %lu next %lu",
 	     d->instance_serial, t->next_instance_serial);
 
-	d->kind = (labeled_template(t) ? CK_LABELED_PARENT :
-		   labeled_parent(t) ? CK_LABELED_CHILD :
+	d->kind = (is_labeled_template(t) ? CK_LABELED_PARENT :
+		   is_labeled_parent(t) ? CK_LABELED_CHILD :
 		   CK_INSTANCE);
 	passert(oriented(d)); /*like parent like child*/
 
@@ -465,7 +465,7 @@ struct connection *spd_instantiate(struct connection *t,
 				   const ip_address remote_addr,
 				   where_t where)
 {
-	PASSERT(t->logger, !labeled(t));
+	PASSERT(t->logger, !is_labeled(t));
 
 	struct connection *d = instantiate(t, remote_addr, /*peer-id*/NULL,
 					   empty_shunk, __func__, where);
@@ -493,7 +493,7 @@ struct connection *sec_label_parent_instantiate(struct connection *t,
 						const ip_address remote_address,
 						where_t where)
 {
-	PASSERT(t->logger, labeled_template(t));
+	PASSERT(t->logger, is_labeled_template(t));
 
 	struct connection *p = instantiate(t, remote_address, /*peer-id*/NULL,
 					   empty_shunk, __func__, where);
@@ -521,7 +521,7 @@ struct connection *sec_label_child_instantiate(struct ike_sa *ike,
 					       where_t where)
 {
 	struct connection *p = ike->sa.st_connection;
-	PASSERT(p->logger, labeled_parent(p));
+	PASSERT(p->logger, is_labeled_parent(p));
 
 	ip_address remote_addr = endpoint_address(ike->sa.st_remote_endpoint);
 	struct connection *c = instantiate(p, remote_addr, /*peer-id*/NULL,
@@ -551,8 +551,8 @@ struct connection *rw_responder_instantiate(struct connection *t,
 					    const ip_address peer_addr,
 					    where_t where)
 {
-	PASSERT(t->logger, !opportunistic(t));
-	PASSERT(t->logger, !labeled(t));
+	PASSERT(t->logger, !is_opportunistic(t));
+	PASSERT(t->logger, !is_labeled(t));
 
 	struct connection *d = instantiate(t, peer_addr, /*TBD peer_id*/NULL,
 					   empty_shunk, __func__, where);
@@ -572,8 +572,8 @@ struct connection *rw_responder_id_instantiate(struct connection *t,
 					       const struct id *remote_id,
 					       where_t where)
 {
-	PASSERT(t->logger, !opportunistic(t));
-	PASSERT(t->logger, !labeled(t));
+	PASSERT(t->logger, !is_opportunistic(t));
+	PASSERT(t->logger, !is_labeled(t));
 
 	/*
 	 * XXX: this function is never called when there are
@@ -611,7 +611,7 @@ static struct connection *oppo_instantiate(struct connection *t,
 
 	PASSERT(d->logger, is_instance(d));
 	PASSERT(d->logger, oriented(d)); /* else won't instantiate */
-	PASSERT(d->logger, opportunistic(d));
+	PASSERT(d->logger, is_opportunistic(d));
 	PASSERT(d->logger, address_eq_address(d->remote->host.addr, remote_address));
 
 	/*

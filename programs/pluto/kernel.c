@@ -247,7 +247,7 @@ static bool install_prospective_kernel_policies(const struct spd_route *spd,
 	/*
 	 * Labeled ipsec has its own ondemand path.
 	 */
-	if (PBAD(logger, labeled(c))) {
+	if (PBAD(logger, is_labeled(c))) {
 		return false;
 	}
 
@@ -861,7 +861,7 @@ static enum routability connection_routability(struct connection *c,
 	     __func__,
 	     enum_show(&connection_kind_names, c->kind, &b),
 	     bool_str(c->remote->child.has_client),
-	     bool_str(opportunistic(c)),
+	     bool_str(is_opportunistic(c)),
 	     c->local->host.port,
 	     pri_shunk(c->config->sec_label));
 
@@ -890,7 +890,7 @@ static enum routability connection_routability(struct connection *c,
 	 * routed (as in install the policy).
 	 */
 	if (is_template(c)) {
-		if (opportunistic(c)) {
+		if (is_opportunistic(c)) {
 			ldbg(logger, "template-route-possible: opportunistic");
 		} else if (c->policy & POLICY_GROUPINSTANCE) {
 			ldbg(logger, "template-route-possible: groupinstance");
@@ -985,7 +985,7 @@ static bool get_connection_spd_conflict(struct spd_route *spd, struct logger *lo
 		 * TODO: XFRM supports this. For now, only allow this
 		 * for OE.
 		 */
-		if (!opportunistic(c)) {
+		if (!is_opportunistic(c)) {
 			connection_buf cib;
 			llog(RC_LOG_SERIOUS, logger,
 			     "cannot route -- route already in use for "PRI_CONNECTION"",
@@ -1387,7 +1387,7 @@ bool unrouted_to_routed_sec_label(enum routing_event event,
 	     enum_name(&routing_names, c->child.routing),
 	     pri_shunk(c->config->sec_label));
 
-	if (!PEXPECT(logger, labeled_template(c) || labeled_parent(c))) {
+	if (!PEXPECT(logger, is_labeled_template(c) || is_labeled_parent(c))) {
 		return false;
 	}
 
@@ -2149,7 +2149,7 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child)
 	struct connection *c = child->sa.st_connection;
 
 	if (c->config->ike_version == IKEv2 &&
-	    labeled_child(c)) {
+	    is_labeled_child(c)) {
 		ldbg(logger, "kernel: %s() skipping install of IPsec policies as security label", __func__);
 		return true;
 	}
@@ -2523,7 +2523,7 @@ void teardown_ipsec_kernel_policies(enum routing_event event, struct child_sa *c
 	}
 
 	struct spds spds = c->child.spds;
-	if (is_instance(c) && opportunistic(c)) {
+	if (is_instance(c) && is_opportunistic(c)) {
 		ldbg(logger,
 		     "kernel: %s() instance with OPPORTUNISTIC; transitioning to UNROUTED",
 		     __func__);

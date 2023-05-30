@@ -530,7 +530,7 @@ void initiate_v2_IKE_SA_INIT_request(struct connection *c,
 {
 	if (drop_new_exchanges()) {
 		/* Only drop outgoing opportunistic connections */
-		if (opportunistic(c)) {
+		if (is_opportunistic(c)) {
 			return;
 		}
 	}
@@ -599,13 +599,13 @@ void initiate_v2_IKE_SA_INIT_request(struct connection *c,
 		ldbg_sa(ike, "TCP: first attempt, sticking with UDP");
 	}
 
-	if (labeled(c) && sec_label.len == 0) {
+	if (is_labeled(c) && sec_label.len == 0) {
 		/*
 		 * Establishing a sec_label connection yet there's no
 		 * sec-label for the child.  Assume this is a forced
 		 * up aka childless IKE SA.
 		 */
-		PEXPECT(c->logger, labeled_parent(c));
+		PEXPECT(c->logger, is_labeled_parent(c));
 		ldbg(c->logger,
 		     "labeled parent connection with sec_label="PRI_SHUNK" but no child sec_label; assuming childless",
 		     pri_shunk(c->config->sec_label));
@@ -613,8 +613,8 @@ void initiate_v2_IKE_SA_INIT_request(struct connection *c,
 		llog_sa(RC_LOG, ike, "IMPAIR: omitting CHILD SA payloads from the IKE_AUTH request");
 	} else if (HAS_IPSEC_POLICY(policy)) {
 		struct connection *cc;
-		if (labeled(c)) {
-			PEXPECT(ike->sa.st_logger, labeled_parent(c));
+		if (is_labeled(c)) {
+			PEXPECT(ike->sa.st_logger, is_labeled_parent(c));
 			PEXPECT(ike->sa.st_logger, c == ike->sa.st_connection);
 			cc = sec_label_child_instantiate(ike, sec_label, HERE);
 		} else {
@@ -630,7 +630,7 @@ void initiate_v2_IKE_SA_INIT_request(struct connection *c,
 	 * This was, after all, triggered by something that happened
 	 * at this end.
 	 */
-	enum stream log_stream = (!opportunistic(c) ? ALL_STREAMS : WHACK_STREAM);
+	enum stream log_stream = (!is_opportunistic(c) ? ALL_STREAMS : WHACK_STREAM);
 
 	/*
 	 * XXX: this is the first of two IKE_SA_INIT messages that are
@@ -935,7 +935,7 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 				     /*expect_ike*/ true,
 				     /*expect_spi*/ false,
 				     /*expect_accepted*/ false,
-				     opportunistic(c),
+				     is_opportunistic(c),
 				     &ike->sa.st_v2_accepted_proposal,
 				     ike_proposals, ike->sa.st_logger);
 	if (n != v2N_NOTHING_WRONG) {
@@ -1478,7 +1478,7 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 					     /*expect_ike*/ true,
 					     /*expect_spi*/ false,
 					     /*expect_accepted*/ true,
-					     opportunistic(c),
+					     is_opportunistic(c),
 					     &ike->sa.st_v2_accepted_proposal,
 					     ike_proposals, ike->sa.st_logger);
 		if (n != v2N_NOTHING_WRONG) {

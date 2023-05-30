@@ -64,7 +64,7 @@ static bool match_v1_connection(struct connection *c, struct authby authby,
 			 * be hit and do the work.  if not policy_oppo
 			 * -> we hit clear/block so this is right c
 			 */
-			if (opportunistic(c)) {
+			if (is_opportunistic(c)) {
 				connection_buf cb;
 				dbg("  skipping "PRI_CONNECTION", never negotiate + opportunistic",
 				    pri_connection(c, &cb));
@@ -294,7 +294,7 @@ struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 		/*
 		 * We found a possibly non-wildcard connection.
 		 */
-		if (labeled_template(c)) {
+		if (is_labeled_template(c)) {
 			ldbg(md->md_logger,
 			     "local endpoint is a labeled template - needs instantiation");
 			return sec_label_parent_instantiate(c, sender_address, HERE);

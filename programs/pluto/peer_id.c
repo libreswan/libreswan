@@ -276,7 +276,7 @@ static struct connection *refine_host_connection_on_responder(int indent,
 			 * opportunistic.
 			 */
 
-			if (c != d && opportunistic(d)) {
+			if (c != d && is_opportunistic(d)) {
 				connection_buf cb;
 				dbg_rhc("skipping opportunistic connection "PRI_CONNECTION"",
 					pri_connection(d, &cb));
@@ -287,7 +287,7 @@ static struct connection *refine_host_connection_on_responder(int indent,
 			 * Only consider template and parent instances
 			 * sec_label connections.
 			 */
-			if (labeled_child(d)) {
+			if (is_labeled_child(d)) {
 				connection_buf cb;
 				dbg_rhc("skipping labeled child "PRI_CONNECTION,
 					pri_connection(d, &cb));

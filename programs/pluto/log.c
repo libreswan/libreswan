@@ -406,7 +406,7 @@ static size_t jam_connection_prefix(struct jambuf *buf, const void *object)
 static bool suppress_connection_log(const void *object)
 {
 	const struct connection *connection = object;
-	return opportunistic(connection);
+	return is_opportunistic(connection);
 }
 
 const struct logger_object_vec logger_connection_vec = {
@@ -454,7 +454,7 @@ static size_t jam_state_prefix(struct jambuf *buf, const void *object)
 static bool suppress_state_log(const void *object)
 {
 	const struct state *state = object;
-	return opportunistic(state->st_connection);
+	return is_opportunistic(state->st_connection);
 }
 
 const struct logger_object_vec logger_state_vec = {

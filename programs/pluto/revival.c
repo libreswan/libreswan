@@ -176,7 +176,7 @@ bool should_revive_child(struct child_sa *child)
 {
 	struct connection *c = child->sa.st_connection;
 
-	if (labeled(c)) {
+	if (is_labeled(c)) {
 		/* not supported for now */
 		ldbg_sa(child, "revival: skipping, labeled Child SA is too hard");
 		return false;

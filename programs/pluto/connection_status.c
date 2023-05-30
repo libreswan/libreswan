@@ -76,12 +76,12 @@ static void jam_end_host(struct jambuf *buf, const struct connection *c,
 			jam(buf, "<%s>", this->host->config->addr_name);
 		} else {
 			if (c->kind == CK_GROUP) {
-				if (opportunistic(c)) {
+				if (is_opportunistic(c)) {
 					jam_string(buf, "%opportunisticgroup");
 				} else {
 					jam_string(buf, "%group");
 				}
-			} else if (opportunistic(c)) {
+			} else if (is_opportunistic(c)) {
 				jam_string(buf, "%opportunistic");
 			} else {
 				jam_string(buf, "%any");
@@ -147,7 +147,7 @@ static void jam_end_client(struct jambuf *buf, const struct connection *c,
 	}
 
 	if (selector_is_all(this->client) &&
-	    (c->kind == CK_GROUP || opportunistic(c))) {
+	    (c->kind == CK_GROUP || is_opportunistic(c))) {
 		/* booring */
 		return;
 	}
@@ -506,11 +506,11 @@ void show_connection_status(struct show *s, const struct connection *c)
 	/* The first valid sec_label. */
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
 		jam(buf, PRI_CONNECTION":   sec_label:", c->name, instance);
-		if (labeled_child(c)) {
+		if (is_labeled_child(c)) {
 			/* negotiated (IKEv2) */
 			jam_shunk(buf, c->child.sec_label);
-		} else if (labeled_template(c) ||
-			   labeled_parent(c)) {
+		} else if (is_labeled_template(c) ||
+			   is_labeled_parent(c)) {
 			/* configured */
 			jam_shunk(buf, c->config->sec_label);
 		} else {
