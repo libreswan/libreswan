@@ -306,7 +306,7 @@ static struct connection *instantiate(struct connection *t,
 	ldbg(d->logger, "updating instance serial %lu next %lu",
 	     d->instance_serial, t->next_instance_serial);
 
-	d->kind = (labeled_template(t) ? CK_INSTANCE /*CK_LABELED_PARENT*/ :
+	d->kind = (labeled_template(t) ? CK_LABELED_PARENT :
 		   labeled_parent(t) ? CK_LABELED_CHILD :
 		   CK_INSTANCE);
 	passert(oriented(d)); /*like parent like child*/

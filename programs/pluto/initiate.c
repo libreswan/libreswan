@@ -647,9 +647,13 @@ void initiate_ondemand(const struct kernel_acquire *b)
 	switch (c->kind) {
 	case CK_PERMANENT:
 	case CK_TEMPLATE: /* sec_label or opportunistic */
+	case CK_LABELED_PARENT:
+	case CK_LABELED_TEMPLATE:
 	case CK_INSTANCE:
 		break;
-	default:
+	case CK_INVALID:
+	case CK_LABELED_CHILD:
+	case CK_GROUP:
 		bad_case(c->kind);
 	}
 

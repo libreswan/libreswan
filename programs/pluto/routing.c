@@ -1405,6 +1405,7 @@ void dispatch(enum routing_event event, struct connection *c,
 
 		case X(UNROUTE, UNROUTED, INSTANCE):
 		case X(UNROUTE, UNROUTED, LABELED_CHILD):
+		case X(UNROUTE, UNROUTED, LABELED_PARENT):
 			ldbg_routing(logger, "already unrouted");
 			return;
 		case X(INITIATE, UNROUTED, INSTANCE):
@@ -1499,6 +1500,7 @@ void dispatch(enum routing_event event, struct connection *c,
 			return;
 
 		case X(UNROUTE, ROUTED_ONDEMAND, INSTANCE):
+		case X(UNROUTE, ROUTED_ONDEMAND, LABELED_PARENT):
 		case X(UNROUTE, ROUTED_REVIVAL, INSTANCE):
 			if (c->child.routing == RT_ROUTED_REVIVAL) {
 				delete_revival(c);
@@ -1738,6 +1740,7 @@ void dispatch(enum routing_event event, struct connection *c,
 		case X(ESTABLISH_INBOUND, ROUTED_ONDEMAND, PERMANENT):
 		case X(ESTABLISH_INBOUND, ROUTED_REVIVAL, PERMANENT):
 		case X(ESTABLISH_INBOUND, UNROUTED, INSTANCE):
+		case X(ESTABLISH_INBOUND, UNROUTED, LABELED_PARENT):
 		case X(ESTABLISH_INBOUND, UNROUTED, PERMANENT):
 		case X(ESTABLISH_INBOUND, UNROUTED_NEGOTIATION, INSTANCE):
 			if (BROKEN_TRANSITION) {
@@ -1754,6 +1757,7 @@ void dispatch(enum routing_event event, struct connection *c,
 		case X(ESTABLISH_OUTBOUND, UNROUTED_INBOUND, INSTANCE):
 		case X(ESTABLISH_OUTBOUND, ROUTED_INBOUND, PERMANENT):
 		case X(ESTABLISH_OUTBOUND, ROUTED_INBOUND, INSTANCE):
+		case X(ESTABLISH_OUTBOUND, ROUTED_INBOUND, LABELED_PARENT):
 			if (BROKEN_TRANSITION) {
 				set_routing(event, c, RT_ROUTED_TUNNEL, *(e->child), where);
 				return;
@@ -1762,11 +1766,13 @@ void dispatch(enum routing_event event, struct connection *c,
 
 		case X(ESTABLISH_OUTBOUND, ROUTED_TUNNEL, PERMANENT):
 		case X(ESTABLISH_OUTBOUND, ROUTED_TUNNEL, INSTANCE):
+		case X(ESTABLISH_OUTBOUND, ROUTED_TUNNEL, LABELED_PARENT): /* ikev1-labeled-ipsec-01-permissive */
 			if (BROKEN_TRANSITION) {
 				/*
 				 * For instance rekey in
 				 * ikev2-12-transport-psk and
 				 * ikev2-28-rw-server-rekey
+				 * ikev1-labeled-ipsec-01-permissive
 				 */
 				set_routing(event, c, RT_ROUTED_TUNNEL, *(e->child), where);
 				return;
