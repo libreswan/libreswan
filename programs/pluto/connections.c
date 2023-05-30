@@ -3898,3 +3898,95 @@ bool is_template(const struct connection *c)
 	}
 	bad_case(c->kind);
 }
+
+bool is_labeled(const struct connection *c)
+{
+	if (c == NULL) {
+		return false;
+	}
+	switch (c->kind) {
+	case CK_INVALID:
+		break;
+	case CK_LABELED_PARENT:
+	case CK_LABELED_CHILD:
+	case CK_LABELED_TEMPLATE:
+		PASSERT(c->logger, c->config->sec_label.len > 0);
+		return true;
+	case CK_TEMPLATE:
+	case CK_PERMANENT:
+	case CK_GROUP:
+	case CK_INSTANCE:
+		PASSERT(c->logger, c->config->sec_label.len == 0);
+		return false;
+	}
+	bad_case(c->kind);
+}
+
+bool is_labeled_template(const struct connection *c)
+{
+	if (c == NULL) {
+		return false;
+	}
+	switch (c->kind) {
+	case CK_INVALID:
+		break;
+	case CK_LABELED_TEMPLATE:
+		PASSERT(c->logger, (c->config->sec_label.len > 0 &&
+				    c->child.sec_label.len == 0));
+		return true;
+	case CK_LABELED_PARENT:
+	case CK_LABELED_CHILD:
+	case CK_TEMPLATE:
+	case CK_PERMANENT:
+	case CK_GROUP:
+	case CK_INSTANCE:
+		return false;
+	}
+	bad_case(c->kind);
+}
+
+bool is_labeled_parent(const struct connection *c)
+{
+	if (c == NULL) {
+		return false;
+	}
+	switch (c->kind) {
+	case CK_INVALID:
+		break;
+	case CK_LABELED_PARENT:
+		PASSERT(c->logger, (c->config->sec_label.len > 0 &&
+				    c->child.sec_label.len == 0));
+		return true;
+	case CK_LABELED_TEMPLATE:
+	case CK_LABELED_CHILD:
+	case CK_TEMPLATE:
+	case CK_PERMANENT:
+	case CK_GROUP:
+	case CK_INSTANCE:
+		return false;
+	}
+	bad_case(c->kind);
+}
+
+bool is_labeled_child(const struct connection *c)
+{
+	if (c == NULL) {
+		return false;
+	}
+	switch (c->kind) {
+	case CK_INVALID:
+		break;
+	case CK_LABELED_CHILD:
+		PASSERT(c->logger, (c->config->sec_label.len > 0 &&
+				    c->child.sec_label.len > 0));
+		return true;
+	case CK_LABELED_TEMPLATE:
+	case CK_LABELED_PARENT:
+	case CK_TEMPLATE:
+	case CK_PERMANENT:
+	case CK_GROUP:
+	case CK_INSTANCE:
+		return false;
+	}
+	bad_case(c->kind);
+}

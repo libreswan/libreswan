@@ -147,33 +147,3 @@ bool sec_label_within_range(const char *source, shunk_t label,
 	return false;
 #endif
 }
-
-bool is_labeled(const struct connection *c)
-{
-	return (c != NULL &&
-		c->config->sec_label.len > 0);
-}
-
-bool is_labeled_template(const struct connection *c)
-{
-	return (c != NULL &&
-		is_template(c) &&
-		c->config->sec_label.len > 0 &&
-		c->child.sec_label.len == 0);
-}
-
-bool is_labeled_parent(const struct connection *c)
-{
-	return (c != NULL &&
-		is_instance(c) &&
-		c->config->sec_label.len > 0 &&
-		c->child.sec_label.len == 0);
-}
-
-bool is_labeled_child(const struct connection *c)
-{
-	return (c != NULL &&
-		is_instance(c) &&
-		c->config->sec_label.len > 0 &&
-		c->child.sec_label.len > 0);
-}
