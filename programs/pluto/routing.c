@@ -1092,6 +1092,7 @@ void dispatch(enum routing_event event, struct connection *c,
 			do_updown_unroute(c, NULL);
 			return;
 
+		case X(UNROUTE, ROUTED_INBOUND, INSTANCE): /* xauth-pluto-25-lsw299 */
 		case X(UNROUTE, ROUTED_INBOUND, PERMANENT): /* ikev1-xfrmi-02-aggr */
 			if (BROKEN_TRANSITION) {
 				/* ikev1-xfrmi-02-aggr ikev1-xfrmi-02
