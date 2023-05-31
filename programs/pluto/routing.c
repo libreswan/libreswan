@@ -464,7 +464,7 @@ void connection_initiate(struct connection *c, const threadtime_t *inception,
 void connection_acquire(struct connection *c, threadtime_t *inception,
 			const struct kernel_acquire *b, where_t where)
 {
-	if (is_labeled(c)) {
+	if (c->config->ike_version == IKEv1 && is_labeled(c)) {
 		PASSERT(c->logger, is_labeled_parent(c));
 		ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
 				  inception, b->sec_label, b->background, b->logger);
@@ -1615,8 +1615,19 @@ void dispatch(enum routing_event event, struct connection *c,
 			delete_connection(&c);
 			return;
 
+		case X(ACQUIRE, UNROUTED, LABELED_PARENT):
+		case X(ACQUIRE, ROUTED_ONDEMAND, LABELED_PARENT):
+			if (BROKEN_TRANSITION) {
+				ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
+						  e->inception, e->sec_label, e->background,
+						  logger);
+				return;
+			}
+			break;
 		case X(DELETE_IKE, ROUTED_ONDEMAND, LABELED_PARENT):
-			delete_ike_family(e->ike);
+			if (BROKEN_TRANSITION) {
+				delete_ike_family(e->ike);
+			}
 			return;
 
 		case X(DELETE_IKE, ROUTED_TUNNEL, PERMANENT):
