@@ -29,6 +29,7 @@
 #include "orient.h"
 #include "initiate.h"			/* for ipsecdoi_initiate() */
 #include "updown.h"
+#include "instantiate.h"
 
 static const char *routing_event_name[] = {
 #define S(E) [E] = #E
@@ -61,6 +62,7 @@ struct annex {
 	struct ike_sa **ike;
 	struct child_sa **child;
 	const threadtime_t *const inception;
+	ip_packet packet;
 	bool background;
 	shunk_t sec_label;
 };
@@ -163,8 +165,8 @@ static void ldbg_routing(struct logger *logger, const char *fmt, ...)
 void fake_connection_establish_inbound(struct ike_sa *ike, struct child_sa *child,
 				       where_t where)
 {
-	dispatch(CONNECTION_ESTABLISH_INBOUND,
-		 child->sa.st_connection,
+	struct connection *cc = child->sa.st_connection;
+	dispatch(CONNECTION_ESTABLISH_INBOUND, cc,
 		 child->sa.st_logger, where,
 		 (struct annex) {
 			 .ike = &ike,
@@ -175,8 +177,8 @@ void fake_connection_establish_inbound(struct ike_sa *ike, struct child_sa *chil
 void fake_connection_establish_outbound(struct ike_sa *ike, struct child_sa *child,
 					where_t where)
 {
-	dispatch(CONNECTION_ESTABLISH_OUTBOUND,
-		 child->sa.st_connection,
+	struct connection *cc = child->sa.st_connection;
+	dispatch(CONNECTION_ESTABLISH_OUTBOUND, cc,
 		 child->sa.st_logger, where,
 		 (struct annex) {
 			 .ike = &ike,
@@ -475,6 +477,7 @@ void connection_acquire(struct connection *c, threadtime_t *inception,
 			 .inception = inception,
 			 .background = b->background,
 			 .sec_label = b->sec_label,
+			 .packet = b->packet,
 		 });
 }
 
@@ -717,7 +720,8 @@ static bool zap_connection(enum routing_event event,
 		dispatched_to_child = true;
 		attach_whack(connection_child->sa.st_logger, (*ike)->sa.st_logger);
 		/* will delete child and its logger */
-		dispatch(child_event, connection_child->sa.st_connection,
+		struct connection *cc = connection_child->sa.st_connection;
+		dispatch(child_event, cc,
 			 connection_child->sa.st_logger, where,
 			 (struct annex) {
 				 .ike = ike,
@@ -748,7 +752,8 @@ static bool zap_connection(enum routing_event event,
 			}
 			/* will delete child and its logger */
 			attach_whack(child->sa.st_logger, (*ike)->sa.st_logger);
-			dispatch(child_event, child->sa.st_connection,
+			struct connection *cc = child->sa.st_connection;
+			dispatch(child_event, cc,
 				 child->sa.st_logger, where,
 				 (struct annex) {
 					 .ike = ike,
@@ -902,7 +907,8 @@ void connection_delete_child(struct ike_sa *ike, struct child_sa **child, where_
 		/*
 		 * Let state machine figure out how to react.
 		 */
-		dispatch(CONNECTION_DELETE_CHILD, (*child)->sa.st_connection,
+		struct connection *cc = (*child)->sa.st_connection;
+		dispatch(CONNECTION_DELETE_CHILD, cc,
 			 (*child)->sa.st_logger, where,
 			 (struct annex) {
 				 .ike = &ike,
@@ -921,8 +927,8 @@ void connection_timeout_ike(struct ike_sa **ike, where_t where)
 {
 	pstat_sa_failed(&(*ike)->sa, REASON_TOO_MANY_RETRANSMITS);
 
-	dispatch(CONNECTION_TIMEOUT_IKE,
-		 (*ike)->sa.st_connection,
+	struct connection *c = (*ike)->sa.st_connection;
+	dispatch(CONNECTION_TIMEOUT_IKE, c,
 		 (*ike)->sa.st_logger, where,
 		 (struct annex) {
 			 .ike = ike,
@@ -1440,6 +1446,15 @@ void dispatch(enum routing_event event, struct connection *c,
 					  e->inception, null_shunk,
 					  e->background, logger);
 			return;
+		case X(ACQUIRE, ROUTED_ONDEMAND, TEMPLATE):
+		{
+			PEXPECT(logger, is_opportunistic(c));
+			struct connection *cc = oppo_initiator_instantiate(c, e->packet, where);
+			/* XXX: (b->)logger has whack attached */
+			dispatch(CONNECTION_ACQUIRE, cc,
+				 logger, where, *e);
+			return;
+		}
 		case X(ACQUIRE, UNROUTED, INSTANCE):
 			/*
 			 * Triggered by acquire against the template
@@ -1608,6 +1623,15 @@ void dispatch(enum routing_event event, struct connection *c,
 			delete_connection(&c);
 			return;
 
+		case X(ACQUIRE, ROUTED_ONDEMAND, LABELED_TEMPLATE):
+		{
+			struct connection *cp =
+				sec_label_parent_instantiate(c, c->remote->host.addr, where);
+			/* (b->)logger has whack attached */
+			dispatch(CONNECTION_ACQUIRE, cp,
+				 logger, where, *e);
+			return;
+		}
 		case X(ACQUIRE, UNROUTED, LABELED_PARENT):
 		case X(ACQUIRE, ROUTED_ONDEMAND, LABELED_PARENT):
 		case X(INITIATE, UNROUTED, LABELED_PARENT):

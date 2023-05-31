@@ -19,6 +19,7 @@
 #include "ip_port.h"
 #include "ip_subnet.h"
 #include "ip_selector.h"
+#include "ip_packet.h"
 #include "where.h"
 #include "shunk.h"
 
@@ -49,7 +50,7 @@ extern struct connection *rw_responder_id_instantiate(struct connection *t,
 						      where_t where);
 
 struct connection *oppo_initiator_instantiate(struct connection *t,
-					      const struct kernel_acquire *b,
+					      ip_packet packet,
 					      where_t where);
 struct connection *oppo_responder_instantiate(struct connection *t,
 					      const ip_address remote_address,

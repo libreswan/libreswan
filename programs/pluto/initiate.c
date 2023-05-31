@@ -640,120 +640,31 @@ void initiate_ondemand(const struct kernel_acquire *b)
 		return;
 	}
 
+	/*
+	 * XXX: is_template() includes is_labeled_template() but not
+	 * is_group_template()
+	 */
+	if (!is_labeled(c) && is_template(c) && !is_opportunistic(c)) {
+		/*
+		 * Only opportunistic connections can ondemand
+		 * instantiate a template.
+		 *
+		 * Here, the connection should never have been
+		 * routed and/or whack should never have
+		 * allowed ondemand?
+		 */
+		cannot_ondemand(RC_NOPEERIP, b, "non-opportunistic template connection");
+		return;
+	}
+
 	/* else C would not have been found */
 	PASSERT(b->logger, oriented(c));
 
-	/* spell out types that c can return */
-	switch (c->kind) {
-	case CK_PERMANENT:
-	case CK_TEMPLATE: /* sec_label or opportunistic */
-	case CK_LABELED_PARENT:
-	case CK_LABELED_TEMPLATE:
-	case CK_INSTANCE:
-		break;
-	case CK_INVALID:
-	case CK_LABELED_CHILD:
-	case CK_GROUP:
-		bad_case(c->kind);
+	LLOG_JAMBUF(RC_LOG, b->logger, buf) {
+		jam_kernel_acquire(buf, b);
 	}
 
-	if (is_labeled(c)) {
-		/*
-		 * We've found a sec_label connection that can serve.
-		 *
-		 * It could be a labeled-template (which needs
-		 * instantiated), or labeled-parent (which means a
-		 * piggyback), but never a labeled-child.
-		 *
-		 * Above should only returns sec_label C when below
-		 * are true.
-		 */
-		PASSERT(b->logger, b->sec_label.len > 0);
-		PASSERT(b->logger, sec_label_within_range("acquire", HUNK_AS_SHUNK(b->sec_label),
-							  c->config->sec_label, b->logger));
-		PASSERT(b->logger, !is_opportunistic(c));
-		PASSERT(b->logger, (is_labeled_template(c) || is_labeled_parent(c)));
-
-		/*
-		 * Announce this to the world.  Use c->logger instead?
-		 */
-		LLOG_JAMBUF(RC_LOG, b->logger, buf) {
-			jam_kernel_acquire(buf, b);
-			/* jam(buf, " using "); */
-		}
-
-		/*
-		 * ondemand negotiation always requires a parent.
-		 */
-		struct connection *cc;
-		if (is_labeled_template(c)) {
-			cc = sec_label_parent_instantiate(c, c->remote->host.addr, HERE);
-		} else {
-			cc = c;
-		}
-		PASSERT(b->logger, is_labeled_parent(cc));
-
-		connection_acquire(cc, &inception, b, HERE);
-		return;
-	}
-
-	/* sec_labels are  off the table */
-	PASSERT(b->logger, b->sec_label.len == 0);
-	PASSERT(b->logger, c->config->sec_label.len == 0);
-
-	/* Labeled IPsec and Opportunistic cannot both be used */
-	switch (c->kind) {
-	case CK_INSTANCE:
-		/*
-		 * XXX We got an acquire (NETKEY only?) for something
-		 * we already have an instance for ??  We cannot
-		 * process as normal because the bare_shunts table and
-		 * assign_holdpass() (connection_negotiating()) would
-		 * get confused between this new entry and the
-		 * existing one.  So we return without doing anything.
-		 */
-		LLOG_JAMBUF(RC_LOG, b->logger, buf) {
-			jam_string(buf, "ignoring found existing connection instance ");
-			jam_connection(buf, c);
-			jam(buf, " that covers kernel acquire with IKE state #%lu and IPsec state #%lu - due to duplicate acquire?",
-			    c->newest_ike_sa, c->newest_ipsec_sa);
-		}
-		return;
-	case CK_PERMANENT:
-		PASSERT(b->logger, !is_opportunistic(c));
-		LLOG_JAMBUF(RC_LOG, b->logger, buf) {
-			jam_kernel_acquire(buf, b);
-			/* jam(buf, " using "); */
-		}
-		connection_acquire(c, &inception, b, HERE);
-		return;
-	case CK_TEMPLATE:
-		if (!is_opportunistic(c)) {
-			/*
-			 * Only opportunistic connections can ondemand
-			 * instantiate a template.
-			 *
-			 * Here, the connection should never have been
-			 * routed and/or whack should never have
-			 * allowed ondemand?
-			 */
-			cannot_ondemand(RC_NOPEERIP, b, "non-opportunistic template connection");
-			return;
-		}
-		LLOG_JAMBUF(RC_LOG, b->logger, buf) {
-			jam_kernel_acquire(buf, b);
-		}
-		/* XXX: re-use c */
-		c = oppo_initiator_instantiate(c, b, HERE);
-		/* switched C to instance */
-		PASSERT(b->logger, is_instance(c));
-		PASSERT(b->logger, HAS_IPSEC_POLICY(c->policy));
-		PASSERT(b->logger, c->child.routing == RT_UNROUTED); /*instance*/
-		connection_acquire(c, &inception, b, HERE);
-		return;
-	default:
-		bad_case(c->kind);
-	}
+	connection_acquire(c, &inception, b, HERE);
 }
 
 /* time before retrying DDNS host lookup for phase 1 */

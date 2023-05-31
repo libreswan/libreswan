@@ -661,7 +661,7 @@ struct connection *oppo_responder_instantiate(struct connection *t,
 }
 
 struct connection *oppo_initiator_instantiate(struct connection *t,
-					      const struct kernel_acquire *b,
+					      ip_packet packet,
 					      where_t where)
 {
 	/*
@@ -673,9 +673,9 @@ struct connection *oppo_initiator_instantiate(struct connection *t,
 	 */
 	PASSERT(t->logger, t->remote->child.selectors.proposed.len == 1);
 	ip_selector remote_template = t->remote->child.selectors.proposed.list[0];
-	ip_endpoint remote_endpoint = packet_dst_endpoint(b->packet);
+	ip_endpoint remote_endpoint = packet_dst_endpoint(packet);
 	PASSERT(t->logger, endpoint_in_selector(remote_endpoint, remote_template));
-	ip_address local_address = packet_src_address(b->packet);
+	ip_address local_address = packet_src_address(packet);
 	PEXPECT(t->logger, address_eq_address(local_address, t->local->host.addr));
 	ip_address remote_address = endpoint_address(remote_endpoint);
 	return oppo_instantiate(t, remote_address, __func__, where);
