@@ -2093,7 +2093,7 @@ bool install_inbound_ipsec_sa(struct child_sa *child, where_t where)
 	 * XXX: can this make use of connection_routability() and / or
 	 * get_connection_spd_conflicts() below?
 	 */
-	passert(c->kind == CK_PERMANENT || is_instance(c));
+	passert(is_permanent(c) || is_instance(c));
 	if (c->remote->child.has_client) {
 		for (;; ) {
 			const struct spd_route *ro = route_owner(c->spd);

@@ -694,7 +694,7 @@ bool remote_has_preloaded_pubkey(const struct state *st)
 	/* do not consider rw connections since
 	 * the peer's identity must be known
 	 */
-	if (c->kind == CK_PERMANENT) {
+	if (is_permanent(c)) {
 		/* look for a matching RSA public key */
 		for (const struct pubkey_list *p = pluto_pubkeys; p != NULL;
 		     p = p->next) {

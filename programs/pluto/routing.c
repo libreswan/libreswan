@@ -541,7 +541,7 @@ static void down_routed_tunnel(enum routing_event event,
 	/*
 	 * Should this go back to on-demand?
 	 */
-	if (c->kind == CK_PERMANENT && c->policy & POLICY_ROUTE) {
+	if (is_permanent(c) && c->policy & POLICY_ROUTE) {
 		ldbg_routing((*child)->sa.st_logger,
 			     "replacing connection kernel policy with on-demand");
 		replace_ipsec_with_bare_kernel_policies(event, *child,
@@ -554,7 +554,7 @@ static void down_routed_tunnel(enum routing_event event,
 	/*
 	 * Is there a failure shunt?
 	 */
-	if (c->kind == CK_PERMANENT && c->config->failure_shunt != SHUNT_NONE) {
+	if (is_permanent(c) && c->config->failure_shunt != SHUNT_NONE) {
 		ldbg_routing((*child)->sa.st_logger,
 			     "replacing connection kernel policy with failure");
 		replace_ipsec_with_bare_kernel_policies(event, *child,
@@ -567,7 +567,7 @@ static void down_routed_tunnel(enum routing_event event,
 	/*
 	 * Never delete permanent connections.
 	 */
-	if (c->kind == CK_PERMANENT) {
+	if (is_permanent(c)) {
 		ldbg_routing((*child)->sa.st_logger,
 			     "keeping connection; it is permanent");
 		do_updown_spds(UPDOWN_DOWN, c, &c->child.spds, &(*child)->sa,

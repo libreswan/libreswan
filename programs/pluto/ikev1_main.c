@@ -801,7 +801,7 @@ static stf_status main_inI2_outR2_continue1(struct state *st,
 
 	/* CR out */
 	if (send_cr) {
-		if (st->st_connection->kind == CK_PERMANENT) {
+		if (is_permanent(st->st_connection)) {
 			if (!ikev1_build_and_ship_CR(CERT_X509_SIGNATURE,
 						     st->st_connection->remote->host.config->ca,
 						     &rbody))

@@ -847,7 +847,12 @@ bool is_labeled(const struct connection *c);
 bool is_labeled_template(const struct connection *c);
 bool is_labeled_parent(const struct connection *c);
 bool is_labeled_child(const struct connection *c);
+
+bool is_permanent(const struct connection *c);
+
+/* also return true when labeled parent or child */
 bool is_instance(const struct connection *c);
+/* also returns true when labeled template */
 bool is_template(const struct connection *c);
 
 bool never_negotiate(const struct connection *c);

@@ -1513,7 +1513,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 	 *   should have found the same label
 	 */
 	if (best.connection == NULL &&
-	    (cc->kind == CK_PERMANENT || is_labeled(cc))) {
+	    (is_permanent(cc) || is_labeled(cc))) {
 		/*
 		 * Don't try to look for something else to
 		 * 'instantiate' when the current connection is

@@ -232,7 +232,7 @@ stf_status emit_v2CERTREQ(const struct ike_sa *ike,
 		return STF_INTERNAL_ERROR; /*fatal*/
 	}
 
-	if (ike->sa.st_connection->kind == CK_PERMANENT) {
+	if (is_permanent(ike->sa.st_connection)) {
 		dbg("connection->kind is CK_PERMANENT so send (possibly empty) CERTREQ");
 		chunk_t ca = ike->sa.st_connection->remote->host.config->ca;
 		if (ca.len > 0) {

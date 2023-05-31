@@ -442,11 +442,17 @@ int foreach_concrete_connection_by_name(const char *name,
 	int total = 0;
 	do {
 		struct connection *c = cq.c;
-		if (c->kind >= CK_PERMANENT &&
-		    !never_negotiate(c) &&
-		    streq(c->name, name)) {
-			total += f(c, arg, logger);
+		if (never_negotiate(c)) {
+			continue;
 		}
+		if (!streq(c->name, name)) {
+			continue;
+		}
+		if (!is_permanent(c) && !is_instance(c)) {
+			/* something concrete */
+			continue;
+		}
+		total += f(c, arg, logger);
 	} while (next_connection_old2new(&cq));
 	return total;
 }
@@ -3890,6 +3896,27 @@ bool is_template(const struct connection *c)
 	case CK_LABELED_TEMPLATE:
 		return true;
 	case CK_PERMANENT:
+	case CK_GROUP:
+	case CK_INSTANCE:
+	case CK_LABELED_PARENT:
+	case CK_LABELED_CHILD:
+		return false;
+	}
+	bad_case(c->kind);
+}
+
+bool is_permanent(const struct connection *c)
+{
+	if (c == NULL) {
+		return false;
+	}
+	switch (c->kind) {
+	case CK_INVALID:
+		break;
+	case CK_PERMANENT:
+		return true;
+	case CK_TEMPLATE:
+	case CK_LABELED_TEMPLATE:
 	case CK_GROUP:
 	case CK_INSTANCE:
 	case CK_LABELED_PARENT:

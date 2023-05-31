@@ -109,7 +109,7 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 	 * STF_ZOMBIFY and and let state machine clean things up.
 	 */
 	struct connection *c = ike->sa.st_connection;
-	bool do_unroute = ike->sa.st_sent_redirect && c->kind == CK_PERMANENT;
+	bool do_unroute = ike->sa.st_sent_redirect && is_permanent(c);
 
 	/*
 	 * response packet preparation: DELETE or non-delete (eg MOBIKE/keepalive/REDIRECT)
@@ -244,7 +244,7 @@ stf_status process_v2_INFORMATIONAL_response(struct ike_sa *ike,
 	 * STF_ZOMBIFY and and let state machine clean things up.
 	 */
 	struct connection *c = ike->sa.st_connection;
-	bool do_unroute = ike->sa.st_sent_redirect && c->kind == CK_PERMANENT;
+	bool do_unroute = ike->sa.st_sent_redirect && is_permanent(c);
 
 	/*
 	 * Process NOTIFY payloads
