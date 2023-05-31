@@ -1417,11 +1417,12 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 
 	if (is_labeled_parent(c)) {
 		/*
-		 * The is_labeled_template() connection will have been
-		 * routed, but not this labeled_parent.
+		 * The CK_LABELED_TEMPLATE connection may have been
+		 * routed (i.e., route+ondemand), but not this
+		 * CK_LABELED_PARENT - it is still negotiating.
 		 *
 		 * But what if the two have the same SPDs?  Then the
-		 * routinghappens twice which seems to be harmless.
+		 * routing happens twice which seems to be harmless.
 		 */
 		PEXPECT(ike->sa.st_logger, c->child.routing == RT_UNROUTED);
 		if (!unrouted_to_routed_sec_label(CONNECTION_ROUTE, c, ike->sa.st_logger, HERE)) {

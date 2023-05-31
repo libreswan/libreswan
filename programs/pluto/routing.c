@@ -480,7 +480,7 @@ void connection_acquire(struct connection *c, threadtime_t *inception,
 
 void connection_revive(struct connection *c, const threadtime_t *inception, where_t where)
 {
-	if (is_labeled(c)) {
+	if (c->config->ike_version == IKEv1 && is_labeled(c)) {
 		initiate_connection(c, /*remote-host-name*/NULL,
 				    /*background*/true,
 				    /*log-failure*/true,
