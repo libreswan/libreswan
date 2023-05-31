@@ -938,13 +938,14 @@ void connection_timeout_ike(struct ike_sa **ike, where_t where)
 
 void connection_delete_ike(struct ike_sa **ike, where_t where)
 {
-	if (is_labeled((*ike)->sa.st_connection)) {
+	struct connection *c = (*ike)->sa.st_connection;
+
+	if (c->config->ike_version == IKEv1 && is_labeled(c)) {
 		delete_ike_family(ike);
 		return;
 	}
 
-	dispatch(CONNECTION_DELETE_IKE,
-		 (*ike)->sa.st_connection,
+	dispatch(CONNECTION_DELETE_IKE, c,
 		 (*ike)->sa.st_logger, where,
 		 (struct annex) {
 			 .ike = ike,
@@ -1612,6 +1613,10 @@ void dispatch(enum routing_event event, struct connection *c,
 			}
 			delete_ike_sa(e->ike);
 			delete_connection(&c);
+			return;
+
+		case X(DELETE_IKE, ROUTED_ONDEMAND, LABELED_PARENT):
+			delete_ike_family(e->ike);
 			return;
 
 		case X(DELETE_IKE, ROUTED_TUNNEL, PERMANENT):
