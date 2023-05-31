@@ -439,16 +439,9 @@ static void negotiation_to_ondemand(enum routing_event event,
 void connection_initiate(struct connection *c, const threadtime_t *inception,
 			 bool background, where_t where)
 {
-	if (is_labeled(c)) {
-		ipsecdoi_initiate(c, c->policy, SOS_NOBODY, inception,
-				  (c->config->ike_version == IKEv1 ? HUNK_AS_SHUNK(c->child.sec_label) : null_shunk),
-				  background, c->logger);
-		return;
-	}
-
 	if (c->config->ike_version == IKEv1) {
 		ipsecdoi_initiate(c, c->policy, SOS_NOBODY, inception,
-				  (c->config->ike_version == IKEv1 ? HUNK_AS_SHUNK(c->child.sec_label) : null_shunk),
+				  HUNK_AS_SHUNK(c->child.sec_label),
 				  background, c->logger);
 		return;
 	}
@@ -1617,6 +1610,7 @@ void dispatch(enum routing_event event, struct connection *c,
 
 		case X(ACQUIRE, UNROUTED, LABELED_PARENT):
 		case X(ACQUIRE, ROUTED_ONDEMAND, LABELED_PARENT):
+		case X(INITIATE, UNROUTED, LABELED_PARENT):
 			if (BROKEN_TRANSITION) {
 				ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
 						  e->inception, e->sec_label, e->background,
