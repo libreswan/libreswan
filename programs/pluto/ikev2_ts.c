@@ -1347,7 +1347,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 			 * which start as templates, become hybrid
 			 * template instances, and finally instances.
 			 */
-			if (d->kind == CK_GROUP) {
+			if (is_group_template(d)) {
 				connection_buf cb;
 				dbg_ts("skipping "PRI_CONNECTION", group policy",
 				       pri_connection(d, &cb));

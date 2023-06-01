@@ -139,7 +139,7 @@ struct connection *group_instantiate(struct connection *group,
 			protocol->name,
 			str_subnet(&remote_subnet, &rsb),
 			pri_hport(remote_port));
-	PASSERT(group->logger, group->kind == CK_GROUP);
+	PASSERT(group->logger, is_group_template(group));
 	PASSERT(group->logger, oriented(group));
 	PASSERT(group->logger, protocol != NULL);
 	PASSERT(group->logger, group->child.spds.len <= 1);

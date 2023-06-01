@@ -860,7 +860,7 @@ void connection_route(struct connection *c, where_t where)
 		return;
 	}
 
-	if (c->kind == CK_GROUP) {
+	if (is_group_template(c)) {
 		connection_group_route(c, where);
 		return;
 	}
@@ -874,7 +874,7 @@ void connection_route(struct connection *c, where_t where)
 
 void connection_unroute(struct connection *c, where_t where)
 {
-	if (c->kind == CK_GROUP) {
+	if (is_group_template(c)) {
 		/* XXX: may recurse back to here with group
 		 * instances. */
 		connection_group_unroute(c, where);

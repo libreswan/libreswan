@@ -857,6 +857,7 @@ bool is_template(const struct connection *c);
 
 bool never_negotiate(const struct connection *c);
 
+bool is_group_template(const struct connection *c);
 bool is_opportunistic(const struct connection *c);
 
 #endif

@@ -238,7 +238,7 @@ void delete_connection(struct connection **cp)
 	struct connection *c = *cp;
 	*cp = NULL;
 
-	if (c->kind == CK_GROUP) {
+	if (is_group_template(c)) {
 		delete_connection_group_instances(c);
 		discard_connection(&c, true/*connection_valid*/);
 		return;
@@ -1853,6 +1853,16 @@ static bool extract_yn(enum yn_options yn, bool unset)
 static diag_t extract_connection(const struct whack_message *wm,
 				 struct connection *c)
 {
+	/*
+	 * Determine the connection KIND from the wm.
+	 *
+	 * Save it in a local variable so code can use that (and be
+	 * forced to only use value after it's been determined).  Yea,
+	 * hack.
+	 */
+	const enum connection_kind connection_kind =
+		c->kind = extract_connection_kind(wm, c->logger);
+
 	diag_t d;
 	struct config *config = c->root_config; /* writeable; root only */
 	passert(c->name != NULL); /* see alloc_connection() */
@@ -2602,16 +2612,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 		return diag("both left and right define virtual subnets");
 	}
 
-	/*
-	 * Determine the connection KIND from the wm.
-	 *
-	 * Save it in a local variable so code can use that (and be
-	 * forced to only use value after it's been determined).  Yea,
-	 * hack.
-	 */
-	const enum connection_kind connection_kind =
-		c->kind = extract_connection_kind(wm, c->logger);
-
 	if (connection_kind == CK_GROUP &&
 	    (wm->left.virt != NULL || wm->right.virt != NULL)) {
 		return diag("connection groups do not support virtual subnets");
@@ -3221,7 +3221,7 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 		sep = "+";
 	}
 
-	if (c->kind == CK_GROUP) {
+	if (is_group_template(c)) {
 		s += jam_string(buf, sep);
 		s += jam_string(buf, "GROUP");
 		sep = "+";
@@ -3306,7 +3306,7 @@ struct connection *find_connection_for_packet(const ip_packet packet,
 	while (next_connection_new2old(&cq)) {
 		struct connection *c = cq.c;
 
-		if (c->kind == CK_GROUP) {
+		if (is_group_template(c)) {
 			connection_buf cb;
 			ldbg(logger, "    skipping "PRI_CONNECTION"; a food group",
 			     pri_connection(c, &cb));
@@ -3918,6 +3918,27 @@ bool is_permanent(const struct connection *c)
 	case CK_TEMPLATE:
 	case CK_LABELED_TEMPLATE:
 	case CK_GROUP:
+	case CK_INSTANCE:
+	case CK_LABELED_PARENT:
+	case CK_LABELED_CHILD:
+		return false;
+	}
+	bad_case(c->kind);
+}
+
+bool is_group_template(const struct connection *c)
+{
+	if (c == NULL) {
+		return false;
+	}
+	switch (c->kind) {
+	case CK_INVALID:
+		break;
+	case CK_GROUP:
+		return true;
+	case CK_PERMANENT:
+	case CK_TEMPLATE:
+	case CK_LABELED_TEMPLATE:
 	case CK_INSTANCE:
 	case CK_LABELED_PARENT:
 	case CK_LABELED_CHILD:

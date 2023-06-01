@@ -295,7 +295,7 @@ static struct connection *refine_host_connection_on_responder(int indent,
 			}
 
 			/* ignore group connections */
-			if (d->kind == CK_GROUP) {
+			if (is_group_template(d)) {
 				connection_buf cb;
 				dbg_rhc("skipping group template connection "PRI_CONNECTION,
 					pri_connection(d, &cb));
@@ -606,7 +606,7 @@ bool refine_host_connection_of_state_on_responder(struct state *st,
 		 *
 		 * Should the ID be fully updated here?
 		 */
-		if (is_template(r) || r->kind == CK_GROUP) {
+		if (is_template(r) || is_group_template(r)) {
 			/*
 			 * XXX: is r->kind == CK_GROUP ever
 			 * true?  refine_host_connection*()

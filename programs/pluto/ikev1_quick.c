@@ -1937,7 +1937,7 @@ static struct connection *fc_try(const struct connection *c,
 			continue;
 		}
 
-		if (d->kind == CK_GROUP) {
+		if (is_group_template(d)) {
 			continue;
 		}
 
@@ -2120,7 +2120,7 @@ static struct connection *fc_try_oppo(const struct connection *c,
 			continue;
 		}
 
-		if (d->kind == CK_GROUP) {
+		if (is_group_template(d)) {
 			continue;
 		}
 
