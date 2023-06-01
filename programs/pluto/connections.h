@@ -430,6 +430,7 @@ struct child_end {
 err_t connection_requires_tss(const struct connection *c);
 
 struct connection_end {
+	enum connection_kind kind;
 	const struct config_end *config;
 	struct host_end host;
 	struct child_end child;
@@ -593,7 +594,6 @@ struct connection {
 
 	unsigned long next_instance_serial;
 	unsigned long instance_serial;
-	enum connection_kind kind;
 	struct iface_endpoint *interface;	/* filled in iff oriented */
 
 	struct ephemeral_variables temp_vars;

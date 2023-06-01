@@ -3029,7 +3029,7 @@ void ISAKMP_SA_established(const struct ike_sa *ike)
 
 			/* if old IKE SA is same as new IKE sa and non-auth isn't overwrting auth */
 			if (c != d &&
-			    c->kind == d->kind &&
+			    c->local->kind == d->local->kind &&
 			    streq(c->name, d->name) &&
 			    same_id(&c->local->host.id, &d->local->host.id) &&
 			    same_id(&c->remote->host.id, &d->remote->host.id)) {

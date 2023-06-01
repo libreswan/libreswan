@@ -692,7 +692,7 @@ void wipe_old_v2_connections(const struct ike_sa *ike)
 	 */
 	struct connection_filter cf = {
 		.name = c->name,
-		.kind = c->kind,
+		.kind = c->local->kind,
 		.this_id_eq = &c->local->host.id,
 		.that_id_eq = &c->remote->host.id,
 		.where = HERE,

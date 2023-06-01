@@ -87,7 +87,7 @@ static void jam_routing(struct jambuf *buf, const struct connection *c)
 {
 	jam_enum_short(buf, &routing_names, c->child.routing);
 	jam_string(buf, " ");
-	jam_enum_short(buf, &connection_kind_names, c->kind);
+	jam_enum_short(buf, &connection_kind_names, c->local->kind);
 	jam_string(buf, " ");
 	jam_connection_co(buf, c);
 	if (never_negotiate(c)) {
@@ -1047,7 +1047,7 @@ void dispatch(enum routing_event event, struct connection *c,
 
 	{
 		const enum routing routing = c->child.routing;
-		const enum connection_kind kind = c->kind;
+		const enum connection_kind kind = c->local->kind;
 
 		switch (XX(event, routing, kind)) {
 

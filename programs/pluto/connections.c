@@ -126,7 +126,7 @@ void ldbg_connection(const struct connection *c, where_t where,
 		}
 		LDBG_log(c->logger, "    routing+kind: %s %s",
 			 enum_name_short(&routing_names, c->child.routing),
-			 enum_name_short(&connection_kind_names, c->kind));
+			 enum_name_short(&connection_kind_names, c->local->kind));
 		address_buf lb, rb;
 		LDBG_log(c->logger, "    host: %s->%s",
 			 str_address(&c->local->host.addr, &lb),
@@ -1861,7 +1861,9 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 * hack.
 	 */
 	const enum connection_kind connection_kind =
-		c->kind = extract_connection_kind(wm, c->logger);
+		c->local->kind =
+		c->remote->kind =
+		extract_connection_kind(wm, c->logger);
 
 	diag_t d;
 	struct config *config = c->root_config; /* writeable; root only */
@@ -3512,7 +3514,7 @@ struct connection *find_connection_for_packet(const ip_packet packet,
 	dbg("  concluding with "PRI_CONNECTION" priority %" PRIu32 " kind=%s",
 	    pri_connection(best_connection, &cib),
 	    best_priority,
-	    str_enum_short(&connection_kind_names, best_connection->kind, &kb));
+	    str_enum_short(&connection_kind_names, best_connection->local->kind, &kb));
 	return best_connection;
 }
 
@@ -3527,12 +3529,12 @@ int connection_compare(const struct connection *ca,
 		return ret;
 
 	/* note: enum connection_kind behaves like int */
-	ret = ca->kind - cb->kind;
+	ret = ca->local->kind - cb->local->kind;
 	if (ret != 0)
 		return ret;
 
 	/* same name, and same type */
-	switch (ca->kind) {
+	switch (ca->local->kind) {
 	case CK_INSTANCE:
 		return (ca->instance_serial < cb->instance_serial ? -1 :
 			ca->instance_serial > cb->instance_serial ? 1 :
@@ -3868,7 +3870,7 @@ bool is_instance(const struct connection *c)
 	if (c == NULL) {
 		return false;
 	}
-	switch (c->kind) {
+	switch (c->local->kind) {
 	case CK_INVALID:
 		break;
 	case CK_PERMANENT:
@@ -3881,7 +3883,7 @@ bool is_instance(const struct connection *c)
 	case CK_LABELED_CHILD:
 		return true;
 	}
-	bad_case(c->kind);
+	bad_case(c->local->kind);
 }
 
 bool is_template(const struct connection *c)
@@ -3889,7 +3891,7 @@ bool is_template(const struct connection *c)
 	if (c == NULL) {
 		return false;
 	}
-	switch (c->kind) {
+	switch (c->local->kind) {
 	case CK_INVALID:
 		break;
 	case CK_TEMPLATE:
@@ -3902,7 +3904,7 @@ bool is_template(const struct connection *c)
 	case CK_LABELED_CHILD:
 		return false;
 	}
-	bad_case(c->kind);
+	bad_case(c->local->kind);
 }
 
 bool is_permanent(const struct connection *c)
@@ -3910,7 +3912,7 @@ bool is_permanent(const struct connection *c)
 	if (c == NULL) {
 		return false;
 	}
-	switch (c->kind) {
+	switch (c->local->kind) {
 	case CK_INVALID:
 		break;
 	case CK_PERMANENT:
@@ -3923,7 +3925,7 @@ bool is_permanent(const struct connection *c)
 	case CK_LABELED_CHILD:
 		return false;
 	}
-	bad_case(c->kind);
+	bad_case(c->local->kind);
 }
 
 bool is_group_template(const struct connection *c)
@@ -3931,7 +3933,7 @@ bool is_group_template(const struct connection *c)
 	if (c == NULL) {
 		return false;
 	}
-	switch (c->kind) {
+	switch (c->local->kind) {
 	case CK_INVALID:
 		break;
 	case CK_GROUP:
@@ -3944,7 +3946,7 @@ bool is_group_template(const struct connection *c)
 	case CK_LABELED_CHILD:
 		return false;
 	}
-	bad_case(c->kind);
+	bad_case(c->local->kind);
 }
 
 bool is_labeled(const struct connection *c)
@@ -3952,7 +3954,7 @@ bool is_labeled(const struct connection *c)
 	if (c == NULL) {
 		return false;
 	}
-	switch (c->kind) {
+	switch (c->local->kind) {
 	case CK_INVALID:
 		break;
 	case CK_LABELED_PARENT:
@@ -3967,7 +3969,7 @@ bool is_labeled(const struct connection *c)
 		PASSERT(c->logger, c->config->sec_label.len == 0);
 		return false;
 	}
-	bad_case(c->kind);
+	bad_case(c->local->kind);
 }
 
 bool is_labeled_template(const struct connection *c)
@@ -3975,7 +3977,7 @@ bool is_labeled_template(const struct connection *c)
 	if (c == NULL) {
 		return false;
 	}
-	switch (c->kind) {
+	switch (c->local->kind) {
 	case CK_INVALID:
 		break;
 	case CK_LABELED_TEMPLATE:
@@ -3990,7 +3992,7 @@ bool is_labeled_template(const struct connection *c)
 	case CK_INSTANCE:
 		return false;
 	}
-	bad_case(c->kind);
+	bad_case(c->local->kind);
 }
 
 bool is_labeled_parent(const struct connection *c)
@@ -3998,7 +4000,7 @@ bool is_labeled_parent(const struct connection *c)
 	if (c == NULL) {
 		return false;
 	}
-	switch (c->kind) {
+	switch (c->local->kind) {
 	case CK_INVALID:
 		break;
 	case CK_LABELED_PARENT:
@@ -4013,7 +4015,7 @@ bool is_labeled_parent(const struct connection *c)
 	case CK_INSTANCE:
 		return false;
 	}
-	bad_case(c->kind);
+	bad_case(c->local->kind);
 }
 
 bool is_labeled_child(const struct connection *c)
@@ -4021,7 +4023,7 @@ bool is_labeled_child(const struct connection *c)
 	if (c == NULL) {
 		return false;
 	}
-	switch (c->kind) {
+	switch (c->local->kind) {
 	case CK_INVALID:
 		break;
 	case CK_LABELED_CHILD:
@@ -4036,5 +4038,5 @@ bool is_labeled_child(const struct connection *c)
 	case CK_INSTANCE:
 		return false;
 	}
-	bad_case(c->kind);
+	bad_case(c->local->kind);
 }

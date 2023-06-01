@@ -229,7 +229,7 @@ struct connection *group_instantiate(struct connection *group,
 
 	t->policy &= ~POLICY_ROUTE;
 	t->policy |= POLICY_GROUPINSTANCE; /* mark as group instance for later */
-	t->kind = CK_TEMPLATE;
+	t->local->kind = t->remote->kind = CK_TEMPLATE;
 	t->child.reqid = (t->config->sa_reqid == 0 ? gen_reqid() :
 			  t->config->sa_reqid);
 	ldbg(t->logger,
@@ -282,7 +282,7 @@ static struct connection *instantiate(struct connection *t,
 	ldbg_connection(t, where, "%s: remote=%s id=%s kind=%s sec_label="PRI_SHUNK,
 			func, str_address(&remote_addr, &ab),
 			str_id(peer_id, &idb),
-			enum_name_short(&connection_kind_names, t->kind),
+			enum_name_short(&connection_kind_names, t->local->kind),
 			pri_shunk(sec_label));
 
 	PASSERT(t->logger, address_is_specified(remote_addr)); /* always */
@@ -306,9 +306,10 @@ static struct connection *instantiate(struct connection *t,
 	ldbg(d->logger, "updating instance serial %lu next %lu",
 	     d->instance_serial, t->next_instance_serial);
 
-	d->kind = (is_labeled_template(t) ? CK_LABELED_PARENT :
-		   is_labeled_parent(t) ? CK_LABELED_CHILD :
-		   CK_INSTANCE);
+	d->local->kind = d->remote->kind =
+		(is_labeled_template(t) ? CK_LABELED_PARENT :
+		 is_labeled_parent(t) ? CK_LABELED_CHILD :
+		 CK_INSTANCE);
 	passert(oriented(d)); /*like parent like child*/
 
 	/* propogate remote address when set */

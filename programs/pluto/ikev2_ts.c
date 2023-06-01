@@ -1325,7 +1325,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 			connection_buf cb;
 			policy_buf pb;
 			dbg_ts("evaluating %s connection "PRI_CONNECTION" "PRI_CO" with policy <%s>:",
-			       enum_name_short(&connection_kind_names, cc->kind),
+			       enum_name_short(&connection_kind_names, cc->local->kind),
 			       pri_connection(d, &cb), pri_co(d->serialno),
 			       str_connection_policies(d, &pb));
 
@@ -1538,7 +1538,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 		 * to CC?!?
 		 */
 		dbg_ts("no best spd route; but the current %s connection \"%s\" is not a CK_INSTANCE; giving up",
-		       enum_name(&connection_kind_names, cc->kind), cc->name);
+		       enum_name(&connection_kind_names, cc->local->kind), cc->name);
 		llog_sa(RC_LOG_SERIOUS, child, "No IKEv2 connection found with compatible Traffic Selectors");
 		return false;
 	}

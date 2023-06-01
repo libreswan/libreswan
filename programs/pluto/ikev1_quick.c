@@ -1756,7 +1756,7 @@ static bool is_virtual_net_used(struct connection *c,
 	struct connection_filter cq = { .where = HERE, };
 	while (next_connection_new2old(&cq)) {
 		struct connection *d = cq.c;
-		switch (d->kind) {
+		switch (d->local->kind) {
 		case CK_PERMANENT:
 		case CK_TEMPLATE:
 		case CK_INSTANCE:
@@ -1776,7 +1776,7 @@ static bool is_virtual_net_used(struct connection *c,
 				connection_buf dcb;
 				enum_buf kb;
 				dbg(" skipping %s "PRI_CONNECTION" as remote's %ssubnet is wild (not set)",
-				    str_enum_short(&connection_kind_names, d->kind, &kb),
+				    str_enum_short(&connection_kind_names, d->local->kind, &kb),
 				    pri_connection(d, &dcb),
 				    d->remote->config->leftright);
 				continue;
@@ -1792,7 +1792,7 @@ static bool is_virtual_net_used(struct connection *c,
 				connection_buf dcb;
 				enum_buf kb;
 				dbg(" skipping %s "PRI_CONNECTION" as there is no overlap",
-				    str_enum_short(&connection_kind_names, d->kind, &kb),
+				    str_enum_short(&connection_kind_names, d->local->kind, &kb),
 				    pri_connection(d, &dcb));
 				continue;
 			}
@@ -1805,7 +1805,7 @@ static bool is_virtual_net_used(struct connection *c,
 				enum_buf kb;
 				id_buf idb;
 				dbg(" skipping %s "PRI_CONNECTION" as it has the same id: %s",
-				    str_enum_short(&connection_kind_names, d->kind, &kb),
+				    str_enum_short(&connection_kind_names, d->local->kind, &kb),
 				    pri_connection(d, &dcb),
 				    str_id(&d->remote->host.id, &idb));
 				continue;

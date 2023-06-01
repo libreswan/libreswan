@@ -126,7 +126,7 @@ static struct list_head *connection_filter_head(struct connection_filter *filter
 
 static bool matches_connection_filter(struct connection *c, struct connection_filter *filter)
 {
-	if (filter->kind != 0 && filter->kind != c->kind) {
+	if (filter->kind != 0 && filter->kind != c->local->kind) {
 		return false;
 	}
 	if (filter->clonedfrom != NULL &&
