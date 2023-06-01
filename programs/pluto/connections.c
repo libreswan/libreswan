@@ -1697,12 +1697,10 @@ static enum connection_kind extract_connection_end_kind(const struct whack_messa
 			return CK_TEMPLATE;
 		}
 	}
-	FOR_EACH_THING(we, this, that) {
-		if (we->addresspool != NULL) {
-			ldbg(logger, "%s connection is CK_TEMPLATE: %s has an address pool",
-			     this->leftright, we->leftright);
-			return CK_TEMPLATE;
-		}
+	if (that->addresspool != NULL) {
+		ldbg(logger, "%s connection is CK_TEMPLATE: %s has an address pool",
+		     this->leftright, that->leftright);
+		return CK_TEMPLATE;
 	}
 	FOR_EACH_THING(we, this, that) {
 		if (we->protoport.has_port_wildcard) {
