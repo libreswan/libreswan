@@ -1,4 +1,4 @@
-/* initiating connections, for libreswan
+/* handle acquire (ondemand) from kernel, for libreswan
  *
  * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
  *
@@ -14,28 +14,11 @@
  *
  */
 
-#ifndef INITIATE_H
-#define INITIATE_H
+#ifndef ACQUIRE_H
+#define ACQUIRE_H
 
-#include <stdbool.h>
-
-#include "lset.h"
-#include "shunk.h"
-#include "ip_packet.h"
-#include "pluto_timing.h"	/* for threadtime_t */
-
-struct logger;
 struct kernel_acquire;
-struct connection;
 
-bool initiate_connection(struct connection *c, const char *remote_host,
-			 bool background, bool log_failure, struct logger *logger);
-
-void ipsecdoi_initiate(struct connection *c,
-		       lset_t policy,
-		       so_serial_t replacing,
-		       const threadtime_t *inception,
-		       shunk_t sec_label,
-		       bool background, struct logger *logger);
+extern void initiate_ondemand(const struct kernel_acquire *b);
 
 #endif

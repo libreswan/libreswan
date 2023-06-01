@@ -104,7 +104,7 @@
 #include "iface.h"
 #include "ip_selector.h"
 #include "ip_encap.h"
-#include "initiate.h"		/* for initiate_ondemand() */
+#include "acquire.h"		/* for initiate_ondemand() */
 #include "labeled_ipsec.h"	/* for vet_seclabel() */
 #include "ikev2_mobike.h"
 #include "ip_packet.h"

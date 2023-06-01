@@ -75,6 +75,7 @@
 #include "crl_queue.h"
 #include "pluto_sd.h"
 #include "initiate.h"
+#include "acquire.h"
 #include "iface.h"
 #include "show.h"
 #include "impair_message.h"

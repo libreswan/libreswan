@@ -222,7 +222,10 @@ OBJS += routing.o
 OBJS += routing_names.o
 OBJS += routing_story.o
 
-OBJS += initiate.o terminate.o ikev2_rekey_now.o
+OBJS += acquire.o
+OBJS += initiate.o
+OBJS += terminate.o
+OBJS += ikev2_rekey_now.o
 OBJS += pending.o crypto.o defs.o
 OBJS += ike_spi.o
 OBJS += foodgroups.o
