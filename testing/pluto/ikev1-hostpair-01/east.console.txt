@@ -15,7 +15,7 @@ east #
 initdone
 east #
  ipsec status | grep eastnet
-000 "roadnet-eastnet-ipv4-psk-ikev1": 192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org,MS+XS+S=C]...%any[%fromcert,+MC+XS+S=C]; unrouted; eroute owner: #0
+000 "roadnet-eastnet-ipv4-psk-ikev1": 192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org,MS+XS+S=C]...%any[%fromcert,+MC+XS+S=C]===0.0.0.0/0; unrouted; eroute owner: #0
 000 "roadnet-eastnet-ipv4-psk-ikev1":     oriented; my_ip=unset; their_ip=unset;
 000 "roadnet-eastnet-ipv4-psk-ikev1":   mycert=east; my_updown=ipsec _updown;
 000 "roadnet-eastnet-ipv4-psk-ikev1":   xauth us:server, xauth them:server, xauthby:alwaysok; my_username=[any]; their_username=[any]
