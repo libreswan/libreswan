@@ -1658,8 +1658,8 @@ static bool is_duplicate_response(struct ike_sa *ike,
 	intmax_t msgid = md->hdr.isa_msgid;
 
 	/* the sliding window is really small!?! */
-	pexpect(ike->sa.st_v2_msgid_windows.responder.recv ==
-		ike->sa.st_v2_msgid_windows.responder.sent);
+	pexpect(ike->sa.st_v2_msgid_windows.initiator.sent >=
+		ike->sa.st_v2_msgid_windows.initiator.recv);
 
 	if (msgid <= ike->sa.st_v2_msgid_windows.initiator.recv) {
 		/*
