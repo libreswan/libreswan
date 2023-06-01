@@ -1873,7 +1873,8 @@ int main(int argc, char **argv)
 			msg.policy |= LELEM(c - CDP_SINGLETON);
 			continue;
 
-		case CD_INITIATEONTRAFFIC:	/* --initiateontraffic */
+		case CD_INITIATEONTRAFFIC:		/* --initiateontraffic */
+			fprintf(stderr, "whack warning: --initiateontraffic is obsolete, did you mean --ondemand");
 			continue;
 
 		case CDS_NEVER_NEGOTIATE + SHUNT_PASS:	/* --pass */
