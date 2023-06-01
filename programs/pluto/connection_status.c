@@ -146,10 +146,18 @@ static void jam_end_client(struct jambuf *buf, const struct connection *c,
 		return;
 	}
 
-	if (selector_is_all(this->client) &&
-	    (is_group_template(c) || is_opportunistic(c))) {
-		/* booring */
-		return;
+	if (selector_is_all(this->client)) {
+		if (is_group_template(c) || is_opportunistic(c)) {
+			/* booring */
+			return;
+		}
+		if (this->host->config->pool_ranges.len > 0) {
+			/*
+			 * Suppress zero selectors that were probably derived
+			 * from the address pool.
+			 */
+			return;
+		}
 	}
 
 	if (left_right == RIGHT_END) {
