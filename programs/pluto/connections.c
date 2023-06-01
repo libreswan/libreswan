@@ -1472,7 +1472,7 @@ static void mark_parse(/*const*/ char *wmmark,
 	}
 }
 
-static void set_connection_selectors_from_config(struct connection *c, const struct ip_info *host_afi)
+static void set_connection_selector_proposals(struct connection *c, const struct ip_info *host_afi)
 {
 	/*
 	 * Fill in selectors.
@@ -1495,7 +1495,7 @@ static void set_connection_selectors_from_config(struct connection *c, const str
 			     __func__, leftright);
 			FOR_EACH_ELEMENT(afi, ip_families) {
 				if (end->host.config->pool_ranges.ip[afi->ip_index].len > 0) {
-					append_end_selector(end, afi, unset_selector,
+					append_end_selector(end, afi, afi->selector.all,
 							    c->logger, HERE);
 				}
 			}
@@ -1509,7 +1509,7 @@ static void set_connection_selectors_from_config(struct connection *c, const str
 			 * selectors then the combination becomes a
 			 * list.
 			 */
-			ldbg(c->logger, "%s() %s selector from host address+protoport",
+			ldbg(c->logger, "%s() %s selector proposals from host address+protoport",
 			     __func__, leftright);
 			ip_selector selector =
 				selector_from_address_protoport(end->host.addr,
@@ -1522,7 +1522,7 @@ static void set_connection_selectors_from_config(struct connection *c, const str
 			 * opportunistic group but make space
 			 * regardless.
 			 */
-			ldbg(c->logger, "%s() %s selector from unset host family",
+			ldbg(c->logger, "%s() %s selector proposals from unset host family",
 			     __func__, leftright);
 			append_end_selector(end, host_afi, unset_selector,
 					    c->logger, HERE);
@@ -2920,11 +2920,11 @@ static diag_t extract_connection(const struct whack_message *wm,
 	     (c->config->sa_reqid == 0 ? "generate" : "use"));
 
 	/*
-	 * Fill in the child's selectors from the config.  It might
-	 * use subnet or host or addresspool.
+	 * Fill in the child's selector proposals from the config.  It
+	 * might use subnet or host or addresspool.
 	 */
 
-	set_connection_selectors_from_config(c, host_afi);
+	set_connection_selector_proposals(c, host_afi);
 
 	/*
 	 * Generate the SPDs from the populated selectors.  Is this
