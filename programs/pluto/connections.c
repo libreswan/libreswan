@@ -1664,22 +1664,27 @@ static void extract_max_sa_lifetime(const char *sa_name,
 	}
 }
 
-static enum connection_kind extract_connection_kind(const struct whack_message *wm,
-						    struct logger *logger)
+static enum connection_kind extract_connection_end_kind(const struct whack_message *wm,
+							const struct whack_end *this,
+							const struct whack_end *that,
+							struct logger *logger)
 {
 	if (wm->is_connection_group) {
-		ldbg(logger, "connection is CK_GROUP: by .connection_group");
+		ldbg(logger, "%s connection is CK_GROUP: by .connection_group",
+		     this->leftright);
 		return CK_GROUP;
 	}
 	if (wm->sec_label != NULL) {
-		ldbg(logger, "connection is CK_LABELED_TEMPLATE: has security label: %s", wm->sec_label);
+		ldbg(logger, "%s connection is CK_LABELED_TEMPLATE: has security label: %s",
+		     this->leftright, wm->sec_label);
 		return CK_LABELED_TEMPLATE;
 	}
 	if(wm->ikev2_allow_narrowing == YN_YES) {
-		ldbg(logger, "connection is CK_TEMPLATE: POLICY_IKEV2_ALLOW_NARROWING");
+		ldbg(logger, "%s connection is CK_TEMPLATE: POLICY_IKEV2_ALLOW_NARROWING",
+		     this->leftright);
 		return CK_TEMPLATE;
 	}
-	FOR_EACH_THING(we, &wm->left, &wm->right) {
+	FOR_EACH_THING(we, this, that) {
 		if (we->virt != NULL) {
 			/*
 			 * If we have a subnet=vnet: needing
@@ -1687,29 +1692,36 @@ static enum connection_kind extract_connection_kind(const struct whack_message *
 			 * multiple subnets from the remote
 			 * peer.
 			 */
-			ldbg(logger, "connection is CK_TEMPLATE: %s has vnets at play",
-			     we->leftright);
-			return CK_TEMPLATE;
-		}
-		if (we->addresspool != NULL) {
-			ldbg(logger, "connection is CK_TEMPLATE: %s has an address pool",
-			     we->leftright);
-			return CK_TEMPLATE;
-		}
-		if (we->protoport.has_port_wildcard) {
-			ldbg(logger, "connection is CK_TEMPLATE: %s child has wildcard protoport",
-			     we->leftright);
-			return CK_TEMPLATE;
-		}
-		if (!NEVER_NEGOTIATE(wm->policy) &&
-		    !address_is_specified(we->host_addr) &&
-		    we->host_type != KH_IPHOSTNAME) {
-			ldbg(logger, "connection is CK_TEMPLATE: unspecified %s address yet policy negotiate",
-			     we->leftright);
+			ldbg(logger, "%s connection is CK_TEMPLATE: %s has vnets at play",
+			     this->leftright, we->leftright);
 			return CK_TEMPLATE;
 		}
 	}
-	dbg("connection is CK_PERMANENT: by default");
+	FOR_EACH_THING(we, this, that) {
+		if (we->addresspool != NULL) {
+			ldbg(logger, "%s connection is CK_TEMPLATE: %s has an address pool",
+			     this->leftright, we->leftright);
+			return CK_TEMPLATE;
+		}
+	}
+	FOR_EACH_THING(we, this, that) {
+		if (we->protoport.has_port_wildcard) {
+			ldbg(logger, "%s connection is CK_TEMPLATE: %s child has wildcard protoport",
+			     this->leftright, we->leftright);
+			return CK_TEMPLATE;
+		}
+	}
+	FOR_EACH_THING(we, this, that) {
+		if (!NEVER_NEGOTIATE(wm->policy) &&
+		    !address_is_specified(we->host_addr) &&
+		    we->host_type != KH_IPHOSTNAME) {
+			ldbg(logger, "%s connection is CK_TEMPLATE: unspecified %s address yet policy negotiate",
+			     this->leftright, we->leftright);
+			return CK_TEMPLATE;
+		}
+	}
+	ldbg(logger, "%s connection is CK_PERMANENT: by default",
+	     this->leftright);
 	return CK_PERMANENT;
 }
 
@@ -1853,6 +1865,11 @@ static bool extract_yn(enum yn_options yn, bool unset)
 static diag_t extract_connection(const struct whack_message *wm,
 				 struct connection *c)
 {
+	const struct whack_end *whack_ends[] = {
+		[LEFT_END] = &wm->left,
+		[RIGHT_END] = &wm->right,
+	};
+
 	/*
 	 * Determine the connection KIND from the wm.
 	 *
@@ -1860,10 +1877,14 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 * forced to only use value after it's been determined).  Yea,
 	 * hack.
 	 */
-	const enum connection_kind connection_kind =
-		c->local->kind =
-		c->remote->kind =
-		extract_connection_kind(wm, c->logger);
+	FOR_EACH_THING(this, LEFT_END, RIGHT_END) {
+		enum left_right that = (this + 1) % END_ROOF;
+		c->end[this].kind =
+			extract_connection_end_kind(wm,
+						    whack_ends[this],
+						    whack_ends[that],
+						    c->logger);
+	}
 
 	diag_t d;
 	struct config *config = c->root_config; /* writeable; root only */
@@ -2614,7 +2635,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 		return diag("both left and right define virtual subnets");
 	}
 
-	if (connection_kind == CK_GROUP &&
+	if ((c->end[LEFT_END].kind == CK_GROUP || c->end[RIGHT_END].kind == CK_GROUP) &&
 	    (wm->left.virt != NULL || wm->right.virt != NULL)) {
 		return diag("connection groups do not support virtual subnets");
 	}
@@ -2622,11 +2643,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 	/*
 	 * Unpack and verify the ends.
 	 */
-
-	const struct whack_end *whack_ends[] = {
-		[LEFT_END] = &wm->left,
-		[RIGHT_END] = &wm->right,
-	};
 
 	bool same_ca[END_ROOF] = { false, };
 
