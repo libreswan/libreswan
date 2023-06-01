@@ -3545,7 +3545,7 @@ int connection_compare(const struct connection *ca,
 		return ret;
 
 	/* note: enum connection_kind behaves like int */
-	ret = ca->local->kind - cb->local->kind;
+	ret = (int)ca->local->kind - (int)cb->local->kind;
 	if (ret != 0)
 		return ret;
 
