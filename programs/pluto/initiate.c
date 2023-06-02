@@ -217,9 +217,7 @@ static bool initiate_connection_2_address(struct connection *c,
 				     "cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=%s)",
 				     enum_show(&connection_kind_names, c->local->kind, &b));
 			}
-			ldbg(c->logger, "%s() %s POLICY_UP:%s->%s", __func__, c->name,
-			     bool_str(c->policy & POLICY_UP), bool_str(true));
-			c->policy |= POLICY_UP;
+			add_policy(c, POLICY_UP);
 			return true;
 		}
 
@@ -363,9 +361,7 @@ static bool initiate_connection_4_fab(struct connection *c,
 	}
 #endif
 
-	ldbg(c->logger, "%s() %s POLICY_UP:%s->%s", __func__, c->name,
-	     bool_str(c->policy & POLICY_UP), bool_str(true));
-	c->policy |= POLICY_UP;
+	add_policy(c, POLICY_UP);
 
 	/*
 	 * FOR IKEv2, when the sec_label template connection is

@@ -484,7 +484,7 @@ void connection_group_route(struct connection *g, where_t where)
 		return;
 	}
 
-	g->policy |= POLICY_ROUTE;
+	add_policy(g, POLICY_ROUTE);
 	for (struct fg_targets *t = targets; t != NULL; t = t->next) {
 		if (t->group == g) {
 			struct connection *ci = connection_by_serialno(t->serialno);
@@ -501,7 +501,7 @@ void connection_group_unroute(struct connection *g, where_t where)
 		return;
 	}
 
-	g->policy &= ~POLICY_ROUTE;
+	del_policy(g, POLICY_ROUTE);
 	for (struct fg_targets *t = targets; t != NULL; t = t->next) {
 		if (t->group == g) {
 			struct connection *ci = connection_by_serialno(t->serialno);

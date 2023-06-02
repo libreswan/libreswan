@@ -2165,9 +2165,7 @@ bool accept_delete(struct msg_digest *md,
 				 */
 				struct connection *rc = connection_by_serialno(rc_serialno);
 				if (rc != NULL && rc->newest_ipsec_sa == SOS_NOBODY) {
-					ldbg(rc->logger, "%s() %s POLICY_UP:%s->%s", __func__, rc->name,
-					     bool_str(rc->policy & POLICY_UP), bool_str(false));
-					rc->policy &= ~POLICY_UP;
+					del_policy(rc, POLICY_UP);
 					if (!shared_phase1_connection(rc)) {
 						remove_connection_from_pending(rc);
 						/*

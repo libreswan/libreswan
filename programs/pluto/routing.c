@@ -880,7 +880,7 @@ void connection_unroute(struct connection *c, where_t where)
 		return;
 	}
 
-	c->policy &= ~POLICY_ROUTE;
+	del_policy(c, POLICY_ROUTE);
 	dispatch(CONNECTION_UNROUTE, c,
 		 c->logger, where,
 		 (struct annex) {
@@ -1053,7 +1053,7 @@ void dispatch(enum routing_event event, struct connection *c,
 		case X(ROUTE, UNROUTED, TEMPLATE):
 		case X(ROUTE, UNROUTED, LABELED_TEMPLATE):
 		case X(ROUTE, UNROUTED, PERMANENT):
-			c->policy |= POLICY_ROUTE; /* always */
+			add_policy(c, POLICY_ROUTE); /* always */
 			if (never_negotiate(c)) {
 				if (!unrouted_to_routed_never_negotiate(event, c, where)) {
 					/* XXX: why whack only? */
@@ -1308,7 +1308,7 @@ void dispatch(enum routing_event event, struct connection *c,
 				/*
 				 * XXX: should install routing+policy!
 				 */
-				c->policy |= POLICY_ROUTE;
+				add_policy(c, POLICY_ROUTE);
 				llog(RC_LOG_SERIOUS, logger,
 				     "policy ROUTE added to negotiating connection");
 				return;
@@ -1323,7 +1323,7 @@ void dispatch(enum routing_event event, struct connection *c,
 			return;
 
 		case X(ROUTE, ROUTED_NEGOTIATION, PERMANENT):
-			c->policy |= POLICY_ROUTE;
+			add_policy(c, POLICY_ROUTE);
 			llog(RC_LOG_SERIOUS, logger, "connection already routed");
 			return;
 		case X(UNROUTE, ROUTED_NEGOTIATION, PERMANENT):
@@ -1362,7 +1362,7 @@ void dispatch(enum routing_event event, struct connection *c,
 			break;
 
 		case X(ROUTE, ROUTED_TUNNEL, PERMANENT):
-			c->policy |= POLICY_ROUTE; /* always */
+			add_policy(c, POLICY_ROUTE); /* always */
 			llog(RC_LOG, logger, "policy ROUTE added to established connection");
 			return;
 		case X(UNROUTE, ROUTED_TUNNEL, PERMANENT):

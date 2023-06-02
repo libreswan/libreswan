@@ -227,8 +227,8 @@ struct connection *group_instantiate(struct connection *group,
 
 	set_end_selector(t->local, local_selector, t->logger);
 
-	t->policy &= ~POLICY_ROUTE;
-	t->policy |= POLICY_GROUPINSTANCE; /* mark as group instance for later */
+	del_policy(t, POLICY_ROUTE);
+	add_policy(t, POLICY_GROUPINSTANCE); /* mark as group instance for later */
 	t->local->kind = t->remote->kind = CK_TEMPLATE;
 	t->child.reqid = (t->config->sa_reqid == 0 ? gen_reqid() :
 			  t->config->sa_reqid);

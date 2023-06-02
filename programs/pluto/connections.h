@@ -543,6 +543,20 @@ struct connection {
 	struct logger *logger;
 	char *foodgroup;
 	lset_t policy;
+#define add_policy(C, POLICY)						\
+	{								\
+		ldbg((C)->logger, "%s() "PRI_CO" %s %s:%s->%s",		\
+		     __func__, pri_connection_co(C), (C)->name, #POLICY, \
+		     bool_str((C)->policy & POLICY), bool_str(true));	\
+		(C)->policy |= POLICY;					\
+	}
+#define del_policy(C, POLICY)						\
+	{								\
+		ldbg((C)->logger, "%s() "PRI_CO" %s %s:%s->%s",		\
+		     __func__, pri_connection_co(C), (C)->name, #POLICY, \
+		     bool_str((C)->policy & POLICY), bool_str(false));	\
+		(C)->policy &= ~POLICY;					\
+	}
 	bool going_away;		/* Is the connection already
 					 * in the process of being
 					 * deleted and, hence,

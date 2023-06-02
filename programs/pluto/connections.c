@@ -2046,9 +2046,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	case AUTOSTART_START:
 		ldbg(c->logger, "autostart=%s implies +POLICY_UP",
 		     enum_name_short(&autostart_names, wm->autostart));
-		ldbg(c->logger, "%s() %s POLICY_UP:%s->%s", __func__, c->name,
-		     bool_str(c->policy & POLICY_UP), bool_str(true));
-		c->policy |= POLICY_UP;
+		add_policy(c, POLICY_UP);
 		break;
 	case AUTOSTART_IGNORE:
 	case AUTOSTART_ADD:
@@ -2123,14 +2121,14 @@ static diag_t extract_connection(const struct whack_message *wm,
 		 * anti-replay for an SA.
 		 */
 		dbg("ESN: disabled as replay-window=0"); /* XXX: log? */
-		c->policy &= ~POLICY_ESN_YES;
-		c->policy |= POLICY_ESN_NO;
+		del_policy(c, POLICY_ESN_YES);
+		add_policy(c, POLICY_ESN_NO);
 #ifdef USE_IKEv1
 	} else if (wm->ike_version == IKEv1) {
 #if 0
 		dbg("ESN: disabled as not implemented with IKEv1");
-		c->policy &= ~POLICY_ESN_YES;
-		c->policy |= POLICY_ESN_NO;
+		del_policy(c, POLICY_ESN_YES);
+		add_policy(c, POLICY_ESN_NO);
 #else
 		dbg("ESN: ignored as not implemented with IKEv1");
 #endif
@@ -2138,8 +2136,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 	} else if (!kernel_ops->esn_supported) {
 		llog(RC_LOG, c->logger,
 		     "kernel interface does not support ESN so disabling");
-		c->policy &= ~POLICY_ESN_YES;
-		c->policy |= POLICY_ESN_NO;
+		del_policy(c, POLICY_ESN_YES);
+		add_policy(c, POLICY_ESN_NO);
 	} else if (wm->sa_replay_window > kernel_ops->max_replay_window) {
 		return diag("replay-window=%ju exceeds %s limit of %ju",
 			    wm->sa_replay_window,
@@ -2672,8 +2670,9 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 * Cross-check the auth= vs authby= results.
 	 */
 
-	if (c->local->host.config->xauth.server || c->remote->host.config->xauth.server)
-		c->policy |= POLICY_XAUTH;
+	if (c->local->host.config->xauth.server || c->remote->host.config->xauth.server) {
+		add_policy(c, POLICY_XAUTH);
+	}
 
 	if (never_negotiate(c)) {
 		if (!PEXPECT(c->logger,
