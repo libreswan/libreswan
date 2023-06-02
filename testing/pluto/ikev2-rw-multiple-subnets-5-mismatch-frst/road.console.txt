@@ -16,11 +16,12 @@ road #
 initdone
 road #
  ipsec auto --up road
-000 initiating all conns with alias="road"
+000 initiating all connections with alias="road"
 1v2 "road/0x4" #1: initiating IKEv2 connection
 000 "road/0x3": queue Child SA; waiting on IKE SA "road/0x4" #1 negotiating with 192.1.2.23
 000 "road/0x2": queue Child SA; waiting on IKE SA "road/0x4" #1 negotiating with 192.1.2.23
 000 "road/0x1": queue Child SA; waiting on IKE SA "road/0x4" #1 negotiating with 192.1.2.23
+000 initiating 4 connections
 1v2 "road/0x4" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 002 "road/0x4" #1: switching CHILD #2 to pending connection "road/0x1"
 1v2 "road/0x4" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}

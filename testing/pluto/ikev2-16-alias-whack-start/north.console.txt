@@ -16,9 +16,10 @@ north #
  ipsec auto --start northnet-eastnets
 002 "northnet-eastnets/0x1": added IKEv2 connection
 002 "northnet-eastnets/0x2": added IKEv2 connection
-000 initiating all conns with alias="northnet-eastnets"
+000 initiating all connections with alias="northnet-eastnets"
 1v2 "northnet-eastnets/0x2" #1: initiating IKEv2 connection
 000 "northnet-eastnets/0x1": queue Child SA; waiting on IKE SA "northnet-eastnets/0x2" #1 negotiating with 192.1.2.23
+000 initiating 2 connections
 1v2 "northnet-eastnets/0x2" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 002 "northnet-eastnets/0x2" #1: switching CHILD #2 to pending connection "northnet-eastnets/0x1"
 1v2 "northnet-eastnets/0x2" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}

@@ -107,12 +107,13 @@ west #
  ipsec whack --impair suppress-retransmits
 west #
  ipsec auto --up westnet-eastnet-subnets
-000 initiating all conns with alias="westnet-eastnet-subnets"
+000 initiating all connections with alias="westnet-eastnet-subnets"
 002 "westnet-eastnet-subnets/2x2" #1: initiating IKEv1 Main Mode connection
 1v1 "westnet-eastnet-subnets/2x2" #1: sent Main Mode request
 000 "westnet-eastnet-subnets/2x1": queue IPsec SA; waiting on ISAKMP SA "westnet-eastnet-subnets/2x2" #1 negotiating with 192.1.2.23
 000 "westnet-eastnet-subnets/1x2": queue IPsec SA; waiting on ISAKMP SA "westnet-eastnet-subnets/2x2" #1 negotiating with 192.1.2.23
 000 "westnet-eastnet-subnets/1x1": queue IPsec SA; waiting on ISAKMP SA "westnet-eastnet-subnets/2x2" #1 negotiating with 192.1.2.23
+000 initiating 4 connections
 1v1 "westnet-eastnet-subnets/2x2" #1: sent Main Mode I2
 1v1 "westnet-eastnet-subnets/2x2" #1: sent Main Mode I3
 002 "westnet-eastnet-subnets/2x2" #1: Peer ID is ID_FQDN: '@east'
@@ -140,6 +141,7 @@ west #
  # test return code for --down when using aliases
 west #
  ipsec auto --down westnet-eastnet-subnets || echo "return code failed - should be 0"
+000 terminating all connections with alias="westnet-eastnet-subnets"
 002 "westnet-eastnet-subnets/2x2": terminating SAs using this connection
 002 "westnet-eastnet-subnets/2x2": IKE SA is shared - only terminating IPsec SA
 002 "westnet-eastnet-subnets/2x2" #5: deleting IPsec SA (QUICK_I2) and sending notification
@@ -153,7 +155,7 @@ west #
 002 "westnet-eastnet-subnets/1x1": terminating SAs using this connection
 002 "westnet-eastnet-subnets/1x1" #2: deleting IPsec SA (QUICK_I2) and sending notification
 005 "westnet-eastnet-subnets/1x1" #2: ESP traffic information: in=0B out=0B
-000 terminated 4 connections from aliased connection "westnet-eastnet-subnets"
+000 terminated 4 connections
 west #
  ipsec status | grep westnet
 000 "westnet-eastnet-subnets/1x1": 192.0.1.0/28===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.16/28; prospective erouted; eroute owner: #0

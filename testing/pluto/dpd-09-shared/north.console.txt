@@ -16,7 +16,7 @@ north #
 initdone
 north #
  ipsec auto --up north-b
-000 initiating all conns with alias="north-b"
+000 initiating all connections with alias="north-b"
 021 no connection named "north-b"
 north #
  ipsec auto --up north-a-dpd
