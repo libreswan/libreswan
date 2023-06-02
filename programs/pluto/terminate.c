@@ -100,6 +100,72 @@ static int terminate_a_connection(struct connection *c, void *unused_arg UNUSED,
 	return 1;
 }
 
+/*
+ * return -1 if nothing was found at all; else total from
+ * terminate_a_connection().
+ *
+ * XXX: A better strategy is to find the connection root and then use
+ * recursion to terminate its clones (which might also be recursive).
+ */
+
+static int terminate_each_concrete_connection_by_name(const char *name, void *arg,
+						      struct logger *logger)
+{
+	/*
+	 * Find the first non-CK_INSTANCE connection matching NAME;
+	 * that is CK_GROUP, CK_TEMPLATE, CK_PERMENANT, CK_GOING_AWAY.
+	 *
+	 * If this search succeeds, then the function also succeeds.
+	 *
+	 * But here's the kicker:
+	 *
+	 * The original conn_by_name() call also moved the connection
+	 * to the front of the connections list.  For CK_GROUP and
+	 * CK_TEMPLATE this put any CK_INSTANCES after it in the list
+	 * so continuing the search would find them (without this the
+	 * list is new-to-old so instances would have been skipped).
+	 *
+	 * This code achieves the same effect by searching old2new.
+	 */
+	struct connection_filter cq = {
+		.name = name,
+		.where = HERE,
+	};
+	bool found = false;
+	while (next_connection_old2new(&cq)) {
+		struct connection *c = cq.c;
+		if (is_instance(c)) {
+			continue;
+		}
+		found = true;
+		break;
+	}
+	if (!found) {
+		/* nothing matched at all */
+		return -1;
+	}
+	/*
+	 * Now continue with the connection list looking for
+	 * CK_PERMENANT and/or CK_INSTANCE connections with the name.
+	 */
+	int total = 0;
+	do {
+		struct connection *c = cq.c;
+		if (never_negotiate(c)) {
+			continue;
+		}
+		if (!streq(c->name, name)) {
+			continue;
+		}
+		if (!is_permanent(c) && !is_instance(c)) {
+			/* something concrete */
+			continue;
+		}
+		total += terminate_a_connection(c, arg, logger);
+	} while (next_connection_old2new(&cq));
+	return total;
+}
+
 void terminate_connections_by_name(const char *name, bool quiet, struct logger *logger)
 {
 	/*
@@ -109,7 +175,7 @@ void terminate_connections_by_name(const char *name, bool quiet, struct logger *
 	 * checked aliases
 	 */
 
-	if (foreach_concrete_connection_by_name(name, terminate_a_connection, NULL, logger) >= 0) {
+	if (terminate_each_concrete_connection_by_name(name, NULL, logger) >= 0) {
 		/* logged by terminate_a_connection() */
 		return;
 	}

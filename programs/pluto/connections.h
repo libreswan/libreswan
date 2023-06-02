@@ -722,12 +722,6 @@ extern int foreach_connection_by_alias(const char *alias,
 						void *arg, struct logger *logger),
 				       void *arg, struct logger *logger);
 
-/* -1: none found */
-extern int foreach_concrete_connection_by_name(const char *name,
-					       int (*f)(struct connection *c,
-							void *arg, struct logger *logger),
-					       void *arg, struct logger *logger);
-
 so_serial_t get_newer_sa_from_connection(struct state *st);
 
 diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
