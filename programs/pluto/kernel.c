@@ -933,7 +933,20 @@ static bool get_connection_spd_conflict(struct spd_route *spd, struct logger *lo
 	 */
 
 	struct spd_owner owner = spd_conflict(spd, indent);
-	pexpect(owner.policy == NULL || kernel_policy_installed(owner.policy->connection));
+
+	/*
+	 * Double check that it really does own the SPD.
+	 */
+	if (owner.policy != NULL) {
+		const struct connection *oc = owner.policy->connection;
+		if (!kernel_policy_installed(oc)) {
+			connection_buf ocb;
+			llog_pexpect(logger, HERE,
+				     "conflicting %s policy for "PRI_CONNECTION" is not installed",
+				     enum_name_short(&routing_names, oc->child.routing),
+				     pri_connection(oc, &ocb));
+		}
+	}
 
 	/*
 	 * If there's no SPD with a conflicting policy, perhaps
