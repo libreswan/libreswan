@@ -41,6 +41,7 @@
 #include "ikev2_ike_sa_init.h"		/* for ikev2_out_IKE_SA_INIT_I() */
 #include "ikev2_create_child_sa.h"	/* for initiate_v2_CREATE_CHILD_SA_create_child() */
 #include "instantiate.h"
+#include "terminate.h"
 
 static bool initiate_connection_1_basics(struct connection *c,
 					 const char *remote_host,

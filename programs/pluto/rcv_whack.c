@@ -75,6 +75,7 @@
 #include "crl_queue.h"
 #include "pluto_sd.h"
 #include "initiate.h"
+#include "terminate.h"
 #include "acquire.h"
 #include "iface.h"
 #include "show.h"
@@ -341,6 +342,13 @@ static bool whack_unroute_connection(struct show *s, struct connection *c,
 	/* XXX: something better? */
 	fd_delref(&c->logger->global_whackfd);
 
+	return true; /* ok; keep going */
+}
+
+static bool whack_terminate_connections(struct show *s, struct connection *c,
+					const struct whack_message *m UNUSED)
+{
+	terminate_connections(c, show_logger(s));
 	return true; /* ok; keep going */
 }
 
@@ -981,7 +989,8 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 	if (m->whack_terminate) {
 		passert(m->name != NULL);
 		dbg_whack(s, "terminate: start: %s", m->name);
-		terminate_connections_by_name(m->name, /*quiet?*/true, logger);
+		whack_each_connection_by_name_or_alias(m, s, NULL,
+						       whack_terminate_connections);
 		dbg_whack(s, "terminate: stop: %s", m->name);
 	}
 

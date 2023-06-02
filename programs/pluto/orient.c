@@ -32,6 +32,7 @@
 #include "iface.h"
 #include "server.h"		/* for listening; */
 #include "orient.h"
+#include "terminate.h"
 
 static enum left_right orient_1(struct connection *c, struct logger *logger);
 

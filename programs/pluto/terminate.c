@@ -56,8 +56,7 @@
 #include "plutoalg.h"
 #include "ikev1_xauth.h"
 #include "nat_traversal.h"
-
-
+#include "terminate.h"
 #include "host_pair.h"
 
 static int terminate_a_connection(struct connection *c, void *unused_arg UNUSED, struct logger *logger)
@@ -188,4 +187,33 @@ void terminate_connections_by_name(const char *name, bool quiet, struct logger *
 			     "terminated %d connections from aliased connection \"%s\"",
 		     count, name);
 	}
+}
+
+void terminate_connections(struct connection *c, struct logger *logger)
+{
+	switch (c->local->kind) {
+	case CK_PERMANENT:
+	case CK_INSTANCE:
+	case CK_LABELED_CHILD:
+		terminate_a_connection(c, NULL, logger); /* could delete C! */
+		return;
+	case CK_TEMPLATE:
+	case CK_GROUP:
+	case CK_LABELED_PARENT:
+	case CK_LABELED_TEMPLATE:
+	{
+		struct connection_filter cq = {
+			.clonedfrom = c,
+			.where = HERE,
+		};
+		while (next_connection_old2new(&cq)) {
+			terminate_connections(cq.c, logger);
+		}
+		// terminate_a_connection(c, NULL, logger);
+		return;
+	}
+	case CK_INVALID:
+		break;
+	}
+	bad_case(c->local->kind);
 }
