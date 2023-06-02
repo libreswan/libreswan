@@ -33,6 +33,7 @@
 #include "log.h"
 #include "rnd.h"
 #include "initiate.h"
+#include "acquire.h"
 #include "server.h"		/* for add_fd_read_listener() */
 
 static pid_t pfkeyv2_pid;
