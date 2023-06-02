@@ -75,18 +75,12 @@ void connection_route(struct connection *c, where_t where);
 void connection_unroute(struct connection *c, where_t where);
 
 /*
- * These are speculative.
- */
-void connection_up(struct connection *c, where_t where);
-void connection_down(struct connection *c, where_t where);
-
-/*
- * These are closely related; with one possibly redundant?
+ * These are closely related
  */
 void connection_initiate(struct connection *c, const threadtime_t *inception,
 			 bool background, where_t where);
+void connection_terminate(struct connection *c, bool background, where_t where);
 void connection_revive(struct connection *c, const threadtime_t *inception, where_t where);
-
 void connection_acquire(struct connection *c, threadtime_t *inception,
 			const struct kernel_acquire *b, where_t where);
 
@@ -111,11 +105,9 @@ enum routing_event {
 	/* fiddle with the ROUTE bit */
 	CONNECTION_ROUTE,
 	CONNECTION_UNROUTE,
-	/* fiddle with the UP bit (speculative) */
-	CONNECTION_UP,
-	CONNECTION_DOWN,
-	/* start a connection */
+	/* start/stop a connection */
 	CONNECTION_INITIATE,
+	CONNECTION_TERMINATE,
 	CONNECTION_ACQUIRE,
 	CONNECTION_REVIVE,
 	/* establish a connection (speculative) */
