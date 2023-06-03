@@ -629,21 +629,27 @@ void log_state(lset_t rc_flags, const struct state *st,
 	va_end(ap);
 }
 
+static struct fd *logger_whack(const struct logger *logger)
+{
+	/* find a whack */
+	FOR_EACH_THING(fdp, &logger->global_whackfd, &logger->object_whackfd) {
+		if (*fdp != NULL) {
+			return *fdp;
+		}
+	}
+	return NULL;
+}
+
 void attach_whack(struct logger *dst, const struct logger *src)
 {
 	/* find a whack to attach */
-	struct fd *src_fd = NULL;
-	FOR_EACH_THING(fdp, &src->global_whackfd, &src->object_whackfd) {
-		if (*fdp != NULL) {
-			src_fd = *fdp;
-			break;
-		}
-	}
+	struct fd *src_fd = logger_whack(src);
 	/* do no harm? */
 	if (src_fd == NULL) {
 		ldbg(dst, "no whack to attach");
 		return;
 	}
+
 	/* already attached? */
 	FOR_EACH_THING(fdp, &dst->global_whackfd, &dst->object_whackfd) {
 		if (*fdp == src_fd) {
@@ -652,6 +658,7 @@ void attach_whack(struct logger *dst, const struct logger *src)
 			return;
 		}
 	}
+
 	/* attach to spare slot */
 	FOR_EACH_THING(fdp, &dst->global_whackfd, &dst->object_whackfd) {
 		if (*fdp == NULL) {
@@ -660,8 +667,28 @@ void attach_whack(struct logger *dst, const struct logger *src)
 			return;
 		}
 	}
+
 	/* replace global */
 	ldbg(dst, "whack attached to global slot");
 	fd_delref(&dst->global_whackfd);
 	dst->global_whackfd = fd_addref(src_fd);
+}
+
+void detach_whack(struct logger *dst, const struct logger *src)
+{
+	/* find a whack to detach */
+	struct fd *src_fd = logger_whack(src);
+	if (src_fd == NULL) {
+		ldbg(dst, "no whack to detach");
+		return;
+	}
+
+	/* find where it is attached */
+	FOR_EACH_THING(fdp, &dst->global_whackfd, &dst->object_whackfd) {
+		if (*fdp == src_fd) {
+			ldbg(dst, "detaching whack");
+			fd_delref(fdp);
+			return;
+		}
+	}
 }
