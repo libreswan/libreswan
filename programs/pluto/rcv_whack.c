@@ -189,9 +189,7 @@ static void whack_each_connection_by_name_or_alias(const struct whack_message *m
 
 static int whack_delete_connection_wrap(struct connection *c, void *arg UNUSED, struct logger *logger)
 {
-	/* XXX: something better? */
-	fd_delref(&c->logger->global_whackfd);
-	c->logger->global_whackfd = fd_addref(logger->global_whackfd); /* freed by discard_conection() */
+	attach_whack(c->logger, logger);
 	delete_connection(&c);
 	return 1;
 }
@@ -202,7 +200,6 @@ static void whack_delete_connections(const char *name, bool strict, struct logge
 	struct connection *c = conn_by_name(name, strict);
 	if (c != NULL) {
 		do {
-			/* XXX: something better? */
 			whack_delete_connection_wrap(c, NULL, logger);
 			c = conn_by_name(name, false/*!strict*/);
 		} while (c != NULL);
@@ -328,15 +325,11 @@ static bool whack_connection_status(struct show *s, struct connection *c,
 static bool whack_route_connection(struct show *s, struct connection *c,
 				   const struct whack_message *m UNUSED)
 {
-	/* XXX: something better? */
-	struct logger *logger = show_logger(s);
-	fd_delref(&c->logger->global_whackfd);
-	c->logger->global_whackfd = fd_addref(logger->global_whackfd);
+	attach_whack(c->logger, show_logger(s));
 
 	connection_route(c, HERE);
 
-	/* XXX: something better? */
-	fd_delref(&c->logger->global_whackfd);
+	detach_whack(c->logger, show_logger(s));
 
 	return true; /* ok; keep going */
 }
@@ -346,15 +339,11 @@ static bool whack_unroute_connection(struct show *s, struct connection *c,
 {
 	passert(c != NULL);
 
-	/* XXX: something better? */
-	struct logger *logger = show_logger(s);
-	fd_delref(&c->logger->global_whackfd);
-	c->logger->global_whackfd = fd_addref(logger->global_whackfd);
+	attach_whack(c->logger, show_logger(s));
 
 	connection_unroute(c, HERE);
 
-	/* XXX: something better? */
-	fd_delref(&c->logger->global_whackfd);
+	detach_whack(c->logger, show_logger(s));
 
 	return true; /* ok; keep going */
 }
