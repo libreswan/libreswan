@@ -1432,19 +1432,13 @@ static void delete_v2_states_by_connection_top_down(struct connection **cp)
 	/*
 	 * Capture anything useful in the connection.
 	 *
-	 * From here on out, the pointer *cp can't be deferenced as
-	 * the connection may have been deleted.
+	 * When *CP is an instance, deleting the last state refering
+	 * to *CP will also delete *CP leaving *CP dangling.
 	 */
 
 	co_serial_t connection_serialno = (*cp)->serialno;
 	so_serial_t newest_ike_sa = (*cp)->newest_ike_sa;
 	so_serial_t newest_child_sa = (*cp)->newest_ipsec_sa;
-	struct fd *whackfd = fd_addref((*cp)->logger->global_whackfd); /* must delref */
-
-	/*
-	 * Stop recursive calls trying to delete this connection by
-	 * flaging this connection as going away.
-	 */
 
 	struct state *sa;
 	if (newest_ike_sa != SOS_NOBODY) {
@@ -1460,9 +1454,7 @@ static void delete_v2_states_by_connection_top_down(struct connection **cp)
 
 	if (sa != NULL) {
 		pexpect(sa->st_connection == *cp);
-		/* XXX: something better? */
-		fd_delref(&sa->st_logger->global_whackfd);
-		sa->st_logger->global_whackfd = fd_addref(whackfd);
+		attach_whack(sa->st_logger, sa->st_connection->logger);
 		delete_state(sa);
 	}
 
@@ -1476,13 +1468,9 @@ static void delete_v2_states_by_connection_top_down(struct connection **cp)
 	while (next_state_new2old(&sf)) {
 		struct state *st = sf.st;
 		pexpect(st->st_connection == *cp);
-		/* XXX: something better? */
-		fd_delref(&st->st_logger->global_whackfd);
-		st->st_logger->global_whackfd = fd_addref(whackfd);
+		attach_whack(st->st_logger, st->st_connection->logger);
 		delete_state(st);
 	}
-
-	fd_delref(&whackfd);
 }
 
 void delete_states_by_connection(struct connection **cp)
