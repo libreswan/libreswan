@@ -1383,9 +1383,7 @@ static void delete_v1_states_by_connection_bottom_up(struct connection **cp,
 			struct state *st = sf.st;
 			dbg("pass 0: delete "PRI_SO" which is a sibling",
 			    st->st_serialno);
-			/* XXX: something better? */
-			fd_delref(&st->st_logger->global_whackfd);
-			st->st_logger->global_whackfd = fd_addref(whackfd);
+			attach_fd(st->st_logger, whackfd);
 			delete_state(st);
 		}
 	}
@@ -1413,9 +1411,7 @@ static void delete_v1_states_by_connection_bottom_up(struct connection **cp,
 			dbg("pass %d: delete "PRI_SO" which has connection",
 			    pass, this->st_serialno);
 			pexpect(this->st_connection == *cp);
-			/* XXX: something better? */
-			fd_delref(&this->st_logger->global_whackfd);
-			this->st_logger->global_whackfd = fd_addref(whackfd);
+			attach_fd(this->st_logger, whackfd);
 			delete_state(this);
 		}
 	}

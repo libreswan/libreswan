@@ -629,7 +629,7 @@ void log_state(lset_t rc_flags, const struct state *st,
 	va_end(ap);
 }
 
-static struct fd *logger_whack(const struct logger *logger)
+static struct fd *logger_fd(const struct logger *logger)
 {
 	/* find a whack */
 	FOR_EACH_THING(fdp, &logger->global_whackfd, &logger->object_whackfd) {
@@ -640,10 +640,8 @@ static struct fd *logger_whack(const struct logger *logger)
 	return NULL;
 }
 
-void attach_whack(struct logger *dst, const struct logger *src)
+void attach_fd(struct logger *dst, struct fd *src_fd)
 {
-	/* find a whack to attach */
-	struct fd *src_fd = logger_whack(src);
 	/* do no harm? */
 	if (src_fd == NULL) {
 		ldbg(dst, "no whack to attach");
@@ -674,10 +672,15 @@ void attach_whack(struct logger *dst, const struct logger *src)
 	dst->global_whackfd = fd_addref(src_fd);
 }
 
+void attach_whack(struct logger *dst, const struct logger *src)
+{
+	attach_fd(dst, logger_fd(src));
+}
+
 void detach_whack(struct logger *dst, const struct logger *src)
 {
 	/* find a whack to detach */
-	struct fd *src_fd = logger_whack(src);
+	struct fd *src_fd = logger_fd(src);
 	if (src_fd == NULL) {
 		ldbg(dst, "no whack to detach");
 		return;

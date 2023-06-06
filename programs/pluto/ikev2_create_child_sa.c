@@ -666,6 +666,9 @@ void submit_v2_CREATE_CHILD_SA_new_child(struct ike_sa *ike,
 					 struct connection *c, /* for child */
 					 lset_t policy, struct fd *whackfd)
 {
+	/* share the log! */
+	attach_fd(ike->sa.st_logger, whackfd);
+
 	struct child_sa *larval_child = new_v2_child_sa(c, ike, IPSEC_SA,
 							SA_INITIATOR,
 							STATE_V2_NEW_CHILD_I0,
@@ -674,9 +677,6 @@ void submit_v2_CREATE_CHILD_SA_new_child(struct ike_sa *ike,
 	free_chunk_content(&larval_child->sa.st_ni); /* this is from the parent. */
 	free_chunk_content(&larval_child->sa.st_nr); /* this is from the parent. */
 
-	/* share the love; XXX: something better? */
-	fd_delref(&ike->sa.st_logger->object_whackfd);
-	ike->sa.st_logger->object_whackfd = fd_addref(whackfd);
 	larval_child->sa.st_policy = policy;
 
 	llog_sa(RC_LOG, larval_child,

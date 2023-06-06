@@ -3592,9 +3592,7 @@ void connection_delete_unused_instance(struct connection **cp,
 	connection_buf cb;
 	dbg("connection "PRI_CONNECTION" is not being used, deleting",
 	    pri_connection(c, &cb));
-	/* XXX: something better? */
-	fd_delref(&c->logger->global_whackfd);
-	c->logger->global_whackfd = fd_addref(whackfd);
+	attach_fd(c->logger, whackfd);
 	delete_connection(&c);
 }
 
