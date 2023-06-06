@@ -244,9 +244,7 @@ static struct logger merge_loggers(struct state *st, bool background, struct log
 	struct logger loggers = *st->st_logger;
 	loggers.global_whackfd = logger->global_whackfd;
 	if (!background) {
-		/* XXX: something better */
-		fd_delref(&st->st_logger->object_whackfd);
-		st->st_logger->object_whackfd = fd_addref(logger->global_whackfd);
+		attach_whack(st->st_logger, logger);
 	}
 	return loggers;
 }
@@ -1157,7 +1155,11 @@ void whack_handle_cb(int fd, void *arg UNUSED, struct logger *global_logger)
 			return;
 		}
 
-		/* XXX: something better? */
+		/*
+		 * Hack to get the whack fd attached to the initial
+		 * event handler logger.  With this done, everything
+		 * from here on everything can use attach_whack().
+		 */
 		struct logger whack_logger = *global_logger;
 		whack_logger.global_whackfd = whackfd;
 		whack_logger.where = HERE;
