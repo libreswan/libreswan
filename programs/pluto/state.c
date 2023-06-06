@@ -1434,33 +1434,26 @@ static void delete_v2_states_by_connection_top_down(struct connection **cp)
 	 *
 	 * When *CP is an instance, deleting the last state refering
 	 * to *CP will also delete *CP leaving *CP dangling.
+	 *
+	 * Somewhat conversely, if the code below finds a state
+	 * sharing the connection then the connection can't have yet
+	 * been deleted.
 	 */
 
 	co_serial_t connection_serialno = (*cp)->serialno;
-	so_serial_t newest_ike_sa = (*cp)->newest_ike_sa;
-	so_serial_t newest_child_sa = (*cp)->newest_ipsec_sa;
+	struct ike_sa *ike = ike_sa_by_serialno((*cp)->newest_ike_sa);
 
-	struct state *sa;
-	if (newest_ike_sa != SOS_NOBODY) {
-		sa = state_by_serialno(newest_ike_sa);
-		pexpect(sa != NULL);
-	} else if (newest_child_sa != SOS_NOBODY) {
-		/* IKEv1 children can be parents! */
-		sa = state_by_serialno(newest_child_sa);
-		pexpect(sa != NULL);
-	} else {
-		sa = NULL;
-	}
-
-	if (sa != NULL) {
-		pexpect(sa->st_connection == *cp);
-		attach_whack(sa->st_logger, sa->st_connection->logger);
-		delete_state(sa);
+	if (ike != NULL) {
+		pexpect(ike->sa.st_connection == *cp);
+		attach_whack(ike->sa.st_logger, ike->sa.st_connection->logger);
+		delete_state(&ike->sa);
+		ike = NULL;
 	}
 
 	/*
-	 * Now clean up anything left behind.
+	 * Now zap any children.
 	 */
+
 	struct state_filter sf = {
 		.connection_serialno = connection_serialno,
 		.where = HERE,
