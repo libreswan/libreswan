@@ -90,9 +90,7 @@ static void remove_group_instance(const struct connection *group,
 	};
 	while (next_connection_new2old(&cq)) {
 		struct connection *c = cq.c;
-		/* XXX: something better? */
-		fd_delref(&c->logger->global_whackfd);
-		c->logger->global_whackfd = fd_addref(group->logger->global_whackfd); /* freed by discard_conection() */
+		attach_whack(c->logger, group->logger);
 		delete_connection(&c);
 	}
 
@@ -414,9 +412,7 @@ void load_groups(struct logger *logger)
 				}
 				if (r >= 0) {
 					struct connection *g = np->group;
-					/* XXX: something better? */
-					fd_delref(&g->logger->global_whackfd);
-					g->logger->global_whackfd = fd_addref(logger->global_whackfd);
+					attach_whack(g->logger, logger);
 					/* group instance (which is a template) */
 					struct connection *t = group_instantiate(g,
 										 np->subnet,
@@ -430,12 +426,9 @@ void load_groups(struct logger *logger)
 								 is_instance(t)));
 						/* route if group is routed */
 						if (g->policy & POLICY_ROUTE) {
-							/* XXX: something better? */
-							fd_delref(&t->logger->global_whackfd);
-							t->logger->global_whackfd = fd_addref(g->logger->global_whackfd);
+							attach_whack(t->logger, logger);
 							connection_route(t, HERE);
-							/* XXX: something better? */
-							fd_delref(&t->logger->global_whackfd);
+							detach_whack(t->logger, logger);
 						}
 						ldbg(g->logger, "setting "PRI_CO, pri_co(t->serialno));
 						passert(np->serialno == UNSET_CO_SERIAL);
@@ -449,8 +442,7 @@ void load_groups(struct logger *logger)
 						*npp = np->next;
 						pfree_target(&np);
 					}
-					/* XXX: something better? */
-					fd_delref(&g->logger->global_whackfd);
+					detach_whack(g->logger, logger);
 				}
 			}
 		}
