@@ -209,7 +209,7 @@ while true ; do
 
     targets="distclean html" # NATIVE!
     finished=""
-    oss="+fedora ~freebsd ~netbsd ~openbsd -alpine"
+    oss="+fedora ~freebsd ~netbsd ~openbsd ~alpine"
 
     if ${build_kvms} ; then
 	targets="${targets} kvm-purge"
