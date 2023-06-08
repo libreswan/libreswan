@@ -132,16 +132,31 @@ static void whack_each_connection_by_name_or_alias(const struct whack_message *m
 						    const struct whack_message *m))
 {
 	struct logger *logger = show_logger(s);
-	struct connection *c = conn_by_name(m->name, true/*strict*/);
-	if (c != NULL) {
+	unsigned nr_found = 0;
+
+	/*
+	 * First try by name.
+	 */
+	struct connection_filter by_name = {
+		.name = m->name,
+		.where = HERE,
+	};
+	nr_found = 0;
+	while (next_connection_new2old(&by_name)) {
+		struct connection *c = by_name.c;
+		if (is_instance(c)) {
+			continue;
+		}
 		whack_connection(s, c, m);
+		nr_found++;
+	}
+	if (nr_found > 0) {
 		return;
 	}
 
 	/*
 	 * When name fails, try by alias.
 	 */
-	unsigned nr_found = 0;
 	struct connection_filter by_alias = {
 		.alias = m->name,
 		.where = HERE,
