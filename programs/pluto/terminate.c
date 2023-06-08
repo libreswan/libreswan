@@ -61,7 +61,7 @@
 
 static int terminate_a_connection(struct connection *c, void *unused_arg UNUSED, struct logger *logger)
 {
-	attach_whack(c->logger, logger);
+	connection_attach(c, logger);
 
 	llog(RC_LOG, c->logger,
 	     "terminating SAs using this connection");
@@ -73,7 +73,7 @@ static int terminate_a_connection(struct connection *c, void *unused_arg UNUSED,
 		     "IKE SA is shared - only terminating IPsec SA");
 		if (c->newest_ipsec_sa != SOS_NOBODY) {
 			struct state *st = state_by_serialno(c->newest_ipsec_sa);
-			attach_whack(st->st_logger, logger);
+			state_attach(st, logger);
 			delete_state(st);
 		}
 	} else {
@@ -86,7 +86,7 @@ static int terminate_a_connection(struct connection *c, void *unused_arg UNUSED,
 	}
 
 	if (c != NULL) {
-		detach_whack(c->logger, logger);
+		connection_detach(c, logger);
 	}
 
 	return 1;

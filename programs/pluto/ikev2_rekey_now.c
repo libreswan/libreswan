@@ -34,10 +34,10 @@ struct rekey_how {
 static void rekey_state(struct state *st, bool background, struct logger *logger)
 {
 	if (!background) {
-		attach_whack(st->st_logger, logger);
+		state_attach(st, logger);
 		if (IS_CHILD_SA(st)) {
 			struct ike_sa *ike = ike_sa(st, HERE);
-			attach_whack(ike->sa.st_logger, logger);
+			state_attach(&ike->sa, logger);
 		}
 	}
 	event_force(EVENT_v2_REKEY, st);

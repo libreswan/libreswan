@@ -66,12 +66,12 @@ bool initiate_connection(struct connection *c,
 {
 	ldbg_connection(c, HERE, "initiate: remote_host=%s",
 			(remote_host == NULL ? "<null> (using host from connection)" : remote_host));
-	attach_whack(c->logger, logger);
+	connection_attach(c, logger);
 	bool ok = initiate_connection_1_basics(c, remote_host, background);
 	if (log_failure && !ok) {
 		llog(RC_FATAL, c->logger, "failed to initiate connection");
 	}
-	detach_whack(c->logger, logger);
+	connection_detach(c, logger);
 	return ok;
 }
 
@@ -169,7 +169,7 @@ static bool initiate_connection_2_address(struct connection *c,
 		 * connection?
 		 */
 
-		attach_whack(d->logger, c->logger);
+		connection_attach(d, c->logger);
 
 		address_buf ab;
 		llog(RC_LOG, d->logger,
@@ -182,7 +182,7 @@ static bool initiate_connection_2_address(struct connection *c,
 			/* instance so free to delete */
 			delete_connection(&d);
 		} else {
-			detach_whack(d->logger, d->logger);
+			connection_detach(d, d->logger);
 		}
 		return ok;
 	}
@@ -247,7 +247,7 @@ static bool initiate_connection_3_template(struct connection *c,
 	if (is_labeled_template(c)) {
 		struct connection *d =
 			sec_label_parent_instantiate(c, c->remote->host.addr, HERE);
-		attach_whack(d->logger, c->logger);
+		connection_attach(d, c->logger);
 		/*
 		 * LOGGING: why not log this (other than it messes
 		 * with test output)?
@@ -258,7 +258,7 @@ static bool initiate_connection_3_template(struct connection *c,
 		if (!ok) {
 			delete_connection(&d);
 		} else {
-			detach_whack(d->logger, c->logger);
+			connection_detach(d, c->logger);
 		}
 		return ok;
 	}
@@ -267,7 +267,7 @@ static bool initiate_connection_3_template(struct connection *c,
 	    c->config->ike_version == IKEv2 &&
 	    c->config->ikev2_allow_narrowing) {
 		struct connection *d = spd_instantiate(c, c->remote->host.addr, HERE);
-		attach_whack(d->logger, c->logger);
+		connection_attach(d, c->logger);
 		/*
 		 * LOGGING: why not log this (other than it messes
 		 * with test output)?
@@ -278,7 +278,7 @@ static bool initiate_connection_3_template(struct connection *c,
 		if (!ok) {
 			delete_connection(&d);
 		} else {
-			detach_whack(d->logger, c->logger);
+			connection_detach(d, c->logger);
 		}
 		return ok;
 	}

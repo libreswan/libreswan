@@ -688,7 +688,7 @@ static bool zap_connection_states(enum routing_event event,
 			 * child of larval ike is hidden).
 			 */
 			if (IS_IKE_SA_ESTABLISHED(&(*ike)->sa)) {
-				attach_whack(child->sa.st_logger, (*ike)->sa.st_logger);
+				state_attach(&child->sa, (*ike)->sa.st_logger);
 				enum_buf ren;
 				llog_sa(RC_LOG, child, "deleting larval %s (%s)",
 					child->sa.st_connection->config->ike_info->sa_type_name[IPSEC_SA],
@@ -730,7 +730,7 @@ static bool zap_connection_states(enum routing_event event,
 			     pri_so(connection_child->sa.st_serialno));
 	} else if (connection_child != NULL) {
 		dispatched_to_child = true;
-		attach_whack(connection_child->sa.st_logger, (*ike)->sa.st_logger);
+		state_attach(&connection_child->sa, (*ike)->sa.st_logger);
 		/* will delete child and its logger */
 		struct connection *cc = connection_child->sa.st_connection;
 		dispatch(child_event, &cc,
@@ -763,7 +763,7 @@ static bool zap_connection_states(enum routing_event event,
 				continue;
 			}
 			/* will delete child and its logger */
-			attach_whack(child->sa.st_logger, (*ike)->sa.st_logger);
+			state_attach(&child->sa, (*ike)->sa.st_logger);
 			struct connection *cc = child->sa.st_connection;
 			dispatch(child_event, &cc,
 				 child->sa.st_logger, where,
@@ -929,7 +929,7 @@ void connection_delete_child(struct ike_sa *ike, struct child_sa **child, where_
 		/* no logger as no child */
 		pexpect(*child == NULL);
 	} else {
-		attach_whack((*child)->sa.st_logger, ike->sa.st_logger);
+		state_attach(&(*child)->sa, ike->sa.st_logger);
 		llog_sa(RC_LOG, (*child), "deleted");
 		delete_child_sa(child);
 	}

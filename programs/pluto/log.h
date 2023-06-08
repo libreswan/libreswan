@@ -59,8 +59,13 @@ extern bool whack_prompt_for(struct state *st, const char *prompt,
 			     bool echo, char *ansbuf, size_t ansbuf_len);
 
 void release_whack(struct logger *logger, where_t where);
-void attach_whack(struct logger *dst, const struct logger *src);
-void detach_whack(struct logger *dst, const struct logger *src);
+
+void connection_attach(struct connection *c, const struct logger *src);
+void connection_detach(struct connection *c, const struct logger *src);
+
+void state_attach(struct state *st, const struct logger *src);
+void state_detach(struct state *st, const struct logger *src);
+
 void attach_fd(struct logger *dst, struct fd *whack_fd);
 
 /* for pushing state to other subsystems */

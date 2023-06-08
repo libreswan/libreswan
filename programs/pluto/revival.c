@@ -281,7 +281,7 @@ void revive_connection(struct connection *c, const char *subplot,
 		       const struct timer_event *event)
 {
 	/* for instance, when triggered by an event injection */
-	attach_whack(c->logger, event->logger);
+	connection_attach(c, event->logger);
 
 	llog(RC_LOG, c->logger,
 	     "initiating connection '%s' with serial "PRI_CO" which %s but must remain up per local policy",

@@ -189,7 +189,7 @@ static void whack_each_connection_by_name_or_alias(const struct whack_message *m
 
 static int whack_delete_connection_wrap(struct connection *c, void *arg UNUSED, struct logger *logger)
 {
-	attach_whack(c->logger, logger);
+	connection_attach(c, logger);
 	delete_connection(&c);
 	return 1;
 }
@@ -244,7 +244,7 @@ static struct logger merge_loggers(struct state *st, bool background, struct log
 	struct logger loggers = *st->st_logger;
 	loggers.global_whackfd = logger->global_whackfd;
 	if (!background) {
-		attach_whack(st->st_logger, logger);
+		state_attach(st, logger);
 	}
 	return loggers;
 }
@@ -323,11 +323,11 @@ static bool whack_connection_status(struct show *s, struct connection *c,
 static bool whack_route_connection(struct show *s, struct connection *c,
 				   const struct whack_message *m UNUSED)
 {
-	attach_whack(c->logger, show_logger(s));
+	connection_attach(c, show_logger(s));
 
 	connection_route(c, HERE);
 
-	detach_whack(c->logger, show_logger(s));
+	connection_detach(c, show_logger(s));
 
 	return true; /* ok; keep going */
 }
@@ -337,11 +337,11 @@ static bool whack_unroute_connection(struct show *s, struct connection *c,
 {
 	passert(c != NULL);
 
-	attach_whack(c->logger, show_logger(s));
+	connection_attach(c, show_logger(s));
 
 	connection_unroute(c, HERE);
 
-	detach_whack(c->logger, show_logger(s));
+	connection_detach(c, show_logger(s));
 
 	return true; /* ok; keep going */
 }

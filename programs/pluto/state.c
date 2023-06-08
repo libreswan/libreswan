@@ -1441,7 +1441,7 @@ static void delete_v2_states_by_connection_top_down(struct connection **cp)
 
 	if (ike != NULL) {
 		pexpect(ike->sa.st_connection == *cp);
-		attach_whack(ike->sa.st_logger, ike->sa.st_connection->logger);
+		state_attach(&ike->sa, ike->sa.st_connection->logger);
 		delete_state(&ike->sa);
 		ike = NULL;
 	}
@@ -1457,7 +1457,7 @@ static void delete_v2_states_by_connection_top_down(struct connection **cp)
 	while (next_state_new2old(&sf)) {
 		struct state *st = sf.st;
 		pexpect(st->st_connection == *cp);
-		attach_whack(st->st_logger, st->st_connection->logger);
+		state_attach(st, st->st_connection->logger);
 		delete_state(st);
 	}
 }

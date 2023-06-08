@@ -290,7 +290,7 @@ void release_dead_interfaces(struct logger *logger)
 		dbg("connection interface deleted: "PRI_CONNECTION,
 		    pri_connection(c, &cb));
 
-		attach_whack(c->logger, logger);
+		connection_attach(c, logger);
 
 		/*
 		 * This connection instance's interface is going away.
@@ -341,7 +341,7 @@ void release_dead_interfaces(struct logger *logger)
 		unoriented_connections = c;
 		pexpect(c->host_pair == NULL);
 
-		detach_whack(c->logger, logger);
+		connection_detach(c, logger);
 	}
 }
 

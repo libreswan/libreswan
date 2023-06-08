@@ -672,12 +672,17 @@ void attach_fd(struct logger *dst, struct fd *src_fd)
 	dst->global_whackfd = fd_addref(src_fd);
 }
 
-void attach_whack(struct logger *dst, const struct logger *src)
+void connection_attach(struct connection *c, const struct logger *src)
 {
-	attach_fd(dst, logger_fd(src));
+	attach_fd(c->logger, logger_fd(src));
 }
 
-void detach_whack(struct logger *dst, const struct logger *src)
+void state_attach(struct state *st, const struct logger *src)
+{
+	attach_fd(st->st_logger, logger_fd(src));
+}
+
+static void detach_whack(struct logger *dst, const struct logger *src)
 {
 	/* find a whack to detach */
 	struct fd *src_fd = logger_fd(src);
@@ -694,4 +699,20 @@ void detach_whack(struct logger *dst, const struct logger *src)
 			return;
 		}
 	}
+}
+
+void connection_detach(struct connection *c, const struct logger *src)
+{
+	if (c == NULL) {
+		return;
+	}
+	detach_whack(c->logger, src);
+}
+
+void state_detach(struct state *st, const struct logger *src)
+{
+	if (st == NULL) {
+		return;
+	}
+	detach_whack(st->st_logger, src);
 }
