@@ -129,11 +129,13 @@ static bool matches_connection_filter(struct connection *c, struct connection_fi
 	if (filter->kind != 0 && filter->kind != c->local->kind) {
 		return false;
 	}
-	if (filter->clonedfrom != NULL &&
-	    filter->clonedfrom != c->clonedfrom) {
+	if (filter->clonedfrom != NULL && filter->clonedfrom != c->clonedfrom) {
 		return false;
 	}
 	if (filter->name != NULL && !streq(filter->name, c->name)) {
+		return false;
+	}
+	if (filter->alias != NULL && !lsw_alias_cmp(filter->alias, c->config->connalias)) {
 		return false;
 	}
 	if (filter->this_id_eq != NULL && !id_eq(filter->this_id_eq, &c->local->host.id)) {

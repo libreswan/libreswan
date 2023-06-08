@@ -138,13 +138,16 @@ static void whack_each_connection_by_name_or_alias(const struct whack_message *m
 		return;
 	}
 
+	/*
+	 * When name fails, try by alias.
+	 */
 	unsigned nr_found = 0;
-	struct connection_filter cq = { .where = HERE, };
-	while (next_connection_new2old(&cq)) {
-		struct connection *p = cq.c;
-		if (!lsw_alias_cmp(m->name, p->config->connalias)) {
-			continue;
-		}
+	struct connection_filter by_alias = {
+		.alias = m->name,
+		.where = HERE,
+	};
+	while (next_connection_new2old(&by_alias)) {
+		struct connection *p = by_alias.c;
 		nr_found++;
 		if (nr_found == 1 && future != NULL) {
 			llog(RC_COMMENT, logger, "%s all connections with alias=\"%s\"",

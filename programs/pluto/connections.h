@@ -758,6 +758,7 @@ struct connection_filter {
 	/* filters */
 	enum connection_kind kind;
 	const char *name;
+	const char *alias;
 	const struct id *this_id_eq; /* strict; not same_id() */
 	const struct id *that_id_eq; /* strict; not same_id() */
 	struct connection *clonedfrom;
