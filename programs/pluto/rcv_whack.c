@@ -212,18 +212,16 @@ static int whack_delete_connection_wrap(struct connection *c, void *arg UNUSED, 
 	return 1;
 }
 
-static void whack_delete_connections(const char *name, bool strict, struct logger *logger)
+static void whack_delete_connections(const char *name, struct logger *logger)
 {
 	passert(name != NULL);
-	struct connection *c = conn_by_name(name, strict);
+	struct connection *c = conn_by_name(name, true);
 	if (c != NULL) {
-		do {
-			whack_delete_connection_wrap(c, NULL, logger);
-			c = conn_by_name(name, false/*!strict*/);
-		} while (c != NULL);
-	} else {
-		foreach_connection_by_alias(name, whack_delete_connection_wrap, NULL, logger);
+		whack_delete_connection_wrap(c, NULL, logger);
+		return;
 	}
+
+	foreach_connection_by_alias(name, whack_delete_connection_wrap, NULL, logger);
 }
 
 static bool whack_initiate_connection(struct show *s, struct connection *c,
@@ -690,7 +688,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 				  "received whack command to delete a connection, but did not receive the connection name - ignored");
 		} else {
 			terminate_connections_by_name(m->name, /*quiet?*/true, logger);
-			whack_delete_connections(m->name, !m->whack_add, logger);
+			whack_delete_connections(m->name, logger);
 		}
 		dbg_whack(s, "delete: stop: '%s'", m->name == NULL ? "NULL" : m->name);
 	}
