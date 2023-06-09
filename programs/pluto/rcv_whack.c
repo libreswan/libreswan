@@ -124,8 +124,8 @@ static void whack_listcacerts(struct show *s)
 
 static void whack_each_connection_by_name_or_alias(const struct whack_message *m,
 						   struct show *s,
-						   const char *future,
-						   const char *past,
+						   const char *future_tense,
+						   const char *past_tense,
 						   bool (*whack_connection)
 						   (struct show *s,
 						    struct connection *c,
@@ -141,7 +141,6 @@ static void whack_each_connection_by_name_or_alias(const struct whack_message *m
 		.name = m->name,
 		.where = HERE,
 	};
-	nr_found = 0;
 	while (next_connection_new2old(&by_name)) {
 		struct connection *c = by_name.c;
 		if (is_instance(c)) {
@@ -163,21 +162,19 @@ static void whack_each_connection_by_name_or_alias(const struct whack_message *m
 	};
 	while (next_connection_new2old(&by_alias)) {
 		struct connection *p = by_alias.c;
-		nr_found++;
-		if (nr_found == 1 && future != NULL) {
+		if (nr_found == 0 && future_tense != NULL) {
 			llog(RC_COMMENT, logger, "%s all connections with alias=\"%s\"",
-			     future, m->name);
+			     future_tense, m->name);
 		}
-		if (!whack_connection(s, p, m)) {
-			break;
-		}
+		whack_connection(s, p, m);
+		nr_found++;
 	}
 
 	switch (nr_found) {
 	case 0:
-		/* what means leave more breadcrumbs */
 #define MESSAGE "no connection or alias named \"%s\"'", m->name
-		if (past != NULL) {
+		/* what means leave more breadcrumbs */
+		if (past_tense != NULL) {
 			llog(RC_UNKNOWN_NAME, logger, MESSAGE);
 		} else {
 			show_rc(s, RC_UNKNOWN_NAME, MESSAGE);
@@ -185,15 +182,15 @@ static void whack_each_connection_by_name_or_alias(const struct whack_message *m
 #undef MESSAGE
 		break;
 	case 1:
-		if (past != NULL) {
+		if (past_tense != NULL) {
 			llog(RC_COMMENT, logger, "%s %u connection",
-			     past, nr_found);
+			     past_tense, nr_found);
 		}
 		break;
 	default: /* i.e., > 1 */
-		if (past != NULL) {
+		if (past_tense != NULL) {
 			llog(RC_COMMENT, logger, "%s %u connections",
-			     past, nr_found);
+			     past_tense, nr_found);
 		}
 		break;
 	}
@@ -1034,9 +1031,14 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 	}
 
 	if (m->whack_traffic_status) {
-		dbg_whack(s, "trafficstatus: start:");
-		show_traffic_status(s, m->name);
-		dbg_whack(s, "trafficstatus: stop:");
+		dbg_whack(s, "trafficstatus: start: %s", (m->name == NULL ? "<null>" : m->name));
+		if (m->name == NULL) {
+			show_traffic_status_of_states(s);
+		} else {
+			whack_each_connection_by_name_or_alias(m, s, NULL, NULL,
+							       show_traffic_status_of_connection);
+		}
+		dbg_whack(s, "trafficstatus: stop: %s", (m->name == NULL ? "<null>" : m->name));
 	}
 
 	if (m->whack_shunt_status) {

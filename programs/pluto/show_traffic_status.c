@@ -112,8 +112,7 @@ static void jam_child_sa_traffic(struct jambuf *buf, struct child_sa *child)
 	}
 }
 
-static void show_state_traffic(struct show *s,
-			       enum rc_type rc, struct state *st)
+static void show_state_traffic(struct show *s, struct state *st)
 {
 	if (IS_IKE_SA(st))
 		return; /* ignore non-IPsec states */
@@ -122,60 +121,34 @@ static void show_state_traffic(struct show *s,
 		return; /* ignore non established states */
 
 	/* whack-log-global - no prefix */
-	SHOW_JAMBUF(rc, s, buf) {
+	SHOW_JAMBUF(RC_INFORMATIONAL_TRAFFIC, s, buf) {
 		/* note: this mutates *st by calling get_sa_bundle_info */
 		jam_child_sa_traffic(buf, pexpect_child_sa(st));
 	}
 }
 
-static int show_newest_state_traffic(struct connection *c,
-				     void *arg, struct logger *logger UNUSED)
+bool show_traffic_status_of_connection(struct show *s, struct connection *c,
+				       const struct whack_message *m UNUSED)
 {
-	struct show *s = arg;
 	struct state *st = state_by_serialno(c->newest_ipsec_sa);
 
 	if (st == NULL)
-		return 0;
+		return false;
 
-	show_state_traffic(s, RC_INFORMATIONAL_TRAFFIC, st);
-	return 1;
+	show_state_traffic(s, st);
+	return true;
 }
 
-void show_traffic_status(struct show *s, const char *name)
+void show_traffic_status_of_states(struct show *s)
 {
-	if (name == NULL) {
-		struct state **array = sort_states(state_compare_serial, HERE);
+	struct state **array = sort_states(state_compare_serial, HERE);
 
-		/* now print sorted results */
-		if (array != NULL) {
-			int i;
-			for (i = 0; array[i] != NULL; i++) {
-				show_state_traffic(s,
-						   RC_INFORMATIONAL_TRAFFIC,
-						   array[i]);
-			}
-			pfree(array);
+	/* now print sorted results */
+	if (array != NULL) {
+		int i;
+		for (i = 0; array[i] != NULL; i++) {
+			show_state_traffic(s, array[i]);
 		}
-	} else {
-		struct connection *c = conn_by_name(name, true/*strict*/);
-
-		if (c != NULL) {
-			/* cast away const sillyness */
-			show_newest_state_traffic(c, s, show_logger(s));
-		} else {
-			/* cast away const sillyness */
-			int count = foreach_connection_by_alias(name, show_newest_state_traffic,
-								s, show_logger(s));
-			if (count == 0) {
-				/*
-				 * XXX: don't bother implementing
-				 * show_rc(...) - this is the only
-				 * place where it would be useful.
-				 */
-				SHOW_JAMBUF(RC_UNKNOWN_NAME, s, buf) {
-					jam(buf, "no such connection or aliased connection named \"%s\"", name);
-				}
-			}
-		}
+		pfree(array);
 	}
 }
