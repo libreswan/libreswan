@@ -184,13 +184,64 @@ void terminate_connections_by_name(const char *name, bool quiet, struct logger *
 	}
 }
 
+static void terminate_connection(struct connection **c, struct logger *logger)
+{
+	connection_attach(*c, logger);
+
+	llog(RC_LOG, (*c)->logger, "terminating SAs using this connection");
+	del_policy(*c, POLICY_UP);
+	remove_connection_from_pending(*c);
+
+	switch ((*c)->config->ike_version) {
+	case IKEv1:
+		if (shared_phase1_connection(*c)) {
+			llog(RC_LOG, (*c)->logger,
+			     "IKE SA is shared - only terminating IPsec SA");
+			if ((*c)->newest_ipsec_sa != SOS_NOBODY) {
+				struct state *st = state_by_serialno((*c)->newest_ipsec_sa);
+				state_attach(st, logger);
+				delete_state(st);
+			}
+		} else {
+			/*
+			 * CK_INSTANCE is deleted simultaneous to deleting
+			 * state :-/
+			 */
+			dbg("connection not shared - terminating IKE and IPsec SA");
+			delete_states_by_connection(c);
+		}
+		break;
+	case IKEv2:
+		if (shared_phase1_connection(*c)) {
+			llog(RC_LOG, (*c)->logger,
+			     "IKE SA is shared - only terminating IPsec SA");
+			struct child_sa *child = child_sa_by_serialno((*c)->newest_ipsec_sa);
+			if (child != NULL) {
+				state_attach(&child->sa, logger);
+				connection_delete_child(ike_sa(&child->sa, HERE),
+							&child, HERE);
+			}
+		} else {
+			/*
+			 * CK_INSTANCE is deleted simultaneous to deleting
+			 * state :-/
+			 */
+			dbg("connection not shared - terminating IKE and IPsec SA");
+			delete_states_by_connection(c);
+		}
+		break;
+	}
+
+	connection_detach(*c, logger);
+}
+
 void terminate_connections(struct connection *c, struct logger *logger)
 {
 	switch (c->local->kind) {
 	case CK_PERMANENT:
 	case CK_INSTANCE:
 	case CK_LABELED_CHILD:
-		terminate_a_connection(c, NULL, logger); /* could delete C! */
+		terminate_connection(&c, logger); /* could delete C! */
 		return;
 	case CK_TEMPLATE:
 	case CK_GROUP:
