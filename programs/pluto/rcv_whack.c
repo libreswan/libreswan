@@ -544,8 +544,25 @@ static void dbg_whack(struct show *s, const char *fmt, ...)
 	}
 }
 
-static void whack_debug_options(const struct whack_message *m, struct logger *logger)
+static bool whack_debug_connection(struct show *s, struct connection *c, const struct whack_message *m)
 {
+	connection_attach(c, show_logger(s));
+	c->logger->debugging = lmod(c->logger->debugging, m->debugging);
+	if (LDBGP(DBG_BASE, c->logger)) {
+		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, c->logger, buf) {
+			jam_string(buf, "extra_debugging = ");
+			jam_lset_short(buf, &debug_names,
+				       "+", c->logger->debugging);
+		}
+	}
+	connection_detach(c, show_logger(s));
+	return true;
+}
+
+static void whack_debug_options(const struct whack_message *m,
+				struct show *s)
+{
+	struct logger *logger = show_logger(s);
 	if (libreswan_fipsmode()) {
 		if (lmod_is_set(m->debugging, DBG_PRIVATE)) {
 			llog(RC_FATAL, logger,
@@ -584,19 +601,8 @@ static void whack_debug_options(const struct whack_message *m, struct logger *lo
 		}
 		set_debugging(new_debugging);
 	} else if (!m->whack_add/*connection*/) {
-		struct connection *c = conn_by_name(m->name, true/*strict*/);
-		if (c == NULL) {
-			llog(WHACK_STREAM|RC_UNKNOWN_NAME, logger,
-			     "no connection named \"%s\"", m->name);
-		} else {
-			c->logger->debugging = lmod(c->logger->debugging, m->debugging);
-			LDBGP_JAMBUF(DBG_BASE, &global_logger, buf) {
-				jam(buf, "\"%s\" extra_debugging = ",
-				    c->name);
-				jam_lset_short(buf, &debug_names,
-					       "+", c->logger->debugging);
-			}
-		}
+		whack_each_connection(m, s, NULL, NULL,
+				      whack_debug_connection);
 	}
 }
 
@@ -645,11 +651,9 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 
 	if (!lmod_empty(m->debugging)) {
 		lmod_buf lb;
-		dbg_whack(s, "debugging: start: %s",
-			  str_lmod(&debug_names, m->debugging, &lb));
-		whack_debug_options(m, logger);
-		dbg_whack(s, "debugging: stop: %s",
-			  str_lmod(&debug_names, m->debugging, &lb));
+		dbg_whack(s, "debugging: start: %s", str_lmod(&debug_names, m->debugging, &lb));
+		whack_debug_options(m, s);
+		dbg_whack(s, "debugging: stop: %s", str_lmod(&debug_names, m->debugging, &lb));
 	}
 
 	if (m->nr_impairments > 0) {
