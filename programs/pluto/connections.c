@@ -168,25 +168,19 @@ void ldbg_connection(const struct connection *c, where_t where,
 }
 
 /*
- * Find a connection by name.
- *
- * no_inst: don't accept a CK_INSTANCE.
+ * Is there an existing connection with NAME?
  */
 
-struct connection *conn_by_name(const char *nm, bool no_inst)
+bool connection_with_name_exists(const char *name)
 {
 	struct connection_filter cq = {
-		.name = nm,
+		.name = name,
 		.where = HERE,
 	};
 	while (next_connection_new2old(&cq)) {
-		struct connection *c = cq.c;
-		if (no_inst && is_instance(c)) {
-			continue;
-		}
-		return c;
+		return true;
 	}
-	return NULL;
+	return false;
 }
 
 void release_connection(struct connection *c)
@@ -2873,7 +2867,7 @@ void add_connection(const struct whack_message *wm, struct logger *logger)
 	 * will return the just allocated connection missing the
 	 * original.
 	 */
-	if (conn_by_name(wm->name, false/*!strict*/) != NULL) {
+	if (connection_with_name_exists(wm->name)) {
 		llog(RC_DUPNAME, logger,
 		     "attempt to redefine connection \"%s\"", wm->name);
 		return;

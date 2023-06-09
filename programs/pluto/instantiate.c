@@ -167,7 +167,7 @@ struct connection *group_instantiate(struct connection *group,
 				       pri_hport(remote_port));
 	}
 
-	if (conn_by_name(namebuf, false/*!strict*/) != NULL) {
+	if (connection_with_name_exists(namebuf)) {
 		llog(RC_DUPNAME, group->logger,
 		     "group name + target yields duplicate name \"%s\"", namebuf);
 		pfreeany(namebuf);

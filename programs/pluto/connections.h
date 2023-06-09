@@ -680,7 +680,7 @@ extern void rekey_now(const char *name, enum sa_type sa_type,
 
 struct state;   /* forward declaration of tag (defined in state.h) */
 
-extern struct connection *conn_by_name(const char *nm, bool strict);
+bool connection_with_name_exists(const char *name);
 struct connection *find_connection_for_packet(const ip_packet packet,
 					      shunk_t sec_label,
 					      struct logger *logger);
