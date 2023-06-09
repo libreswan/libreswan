@@ -376,24 +376,6 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 	pfree(c);
 }
 
-int foreach_connection_by_alias(const char *alias,
-				int (*f)(struct connection *c,
-					 void *arg, struct logger *logger),
-				void *arg, struct logger *logger)
-{
-	int count = 0;
-
-	struct connection_filter by_alias = {
-		.alias = alias,
-		.where = HERE,
-	};
-	while (next_connection_new2old(&by_alias)) {
-		struct connection *p = by_alias.c;
-		count += (*f)(p, arg, logger);
-	}
-	return count;
-}
-
 void delete_every_connection(void)
 {
 	/*

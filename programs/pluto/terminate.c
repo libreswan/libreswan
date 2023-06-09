@@ -59,7 +59,7 @@
 #include "terminate.h"
 #include "host_pair.h"
 
-static int terminate_a_connection(struct connection *c, void *unused_arg UNUSED, struct logger *logger)
+static int terminate_a_connection(struct connection *c, struct logger *logger)
 {
 	connection_attach(c, logger);
 
@@ -100,7 +100,7 @@ static int terminate_a_connection(struct connection *c, void *unused_arg UNUSED,
  * recursion to terminate its clones (which might also be recursive).
  */
 
-static int terminate_each_concrete_connection_by_name(const char *name, void *arg,
+static int terminate_each_concrete_connection_by_name(const char *name,
 						      struct logger *logger)
 {
 	/*
@@ -153,9 +153,24 @@ static int terminate_each_concrete_connection_by_name(const char *name, void *ar
 			/* something concrete */
 			continue;
 		}
-		total += terminate_a_connection(c, arg, logger);
+		total += terminate_a_connection(c, logger);
 	} while (next_connection_old2new(&cq));
 	return total;
+}
+
+static int foreach_connection_by_alias(const char *alias, struct logger *logger)
+{
+	int count = 0;
+
+	struct connection_filter by_alias = {
+		.alias = alias,
+		.where = HERE,
+	};
+	while (next_connection_new2old(&by_alias)) {
+		struct connection *p = by_alias.c;
+		count += terminate_a_connection(p, logger);
+	}
+	return count;
 }
 
 void terminate_connections_by_name(const char *name, bool quiet, struct logger *logger)
@@ -167,12 +182,12 @@ void terminate_connections_by_name(const char *name, bool quiet, struct logger *
 	 * checked aliases
 	 */
 
-	if (terminate_each_concrete_connection_by_name(name, NULL, logger) >= 0) {
+	if (terminate_each_concrete_connection_by_name(name, logger) >= 0) {
 		/* logged by terminate_a_connection() */
 		return;
 	}
 
-	int count = foreach_connection_by_alias(name, terminate_a_connection, NULL, logger);
+	int count = foreach_connection_by_alias(name, logger);
 	if (count == 0) {
 		if (!quiet)
 			llog(RC_UNKNOWN_NAME, logger,

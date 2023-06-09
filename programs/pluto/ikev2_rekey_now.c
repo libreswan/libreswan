@@ -44,14 +44,14 @@ static void rekey_state(struct state *st, bool background, struct logger *logger
 }
 
 static int rekey_connection(struct connection *c,
-			    void *arg, struct logger *logger)
+			    const struct rekey_how *how,
+			    struct logger *logger)
 {
 	if (c->config->ike_version != IKEv2) {
 		llog(RC_LOG, logger, "cannot force rekey of %s connection",
 		     c->config->ike_info->version_name);
 		return 0;
 	}
-	struct rekey_how *how = arg;
 	struct state *st;
 	switch (how->sa_type) {
 	case IKE_SA:
@@ -138,6 +138,23 @@ static int rekey_each_concrete_connection_by_name(const char *name, void *arg,
 	return total;
 }
 
+static int foreach_connection_by_alias(const char *alias,
+				       const struct rekey_how *how,
+				       struct logger *logger)
+{
+	int count = 0;
+
+	struct connection_filter by_alias = {
+		.alias = alias,
+		.where = HERE,
+	};
+	while (next_connection_new2old(&by_alias)) {
+		struct connection *p = by_alias.c;
+		count += rekey_connection(p, how, logger);
+	}
+	return count;
+}
+
 void rekey_now(const char *str, enum sa_type sa_type,
 	       bool background, struct logger *logger)
 {
@@ -168,8 +185,7 @@ void rekey_now(const char *str, enum sa_type sa_type,
 			return;
 		}
 
-		int count = foreach_connection_by_alias(str, rekey_connection,
-							&how, logger);
+		int count = foreach_connection_by_alias(str, &how, logger);
 		if (count == 0) {
 			llog(RC_UNKNOWN_NAME, logger,
 			     "no such connection or aliased connection named \"%s\"", str);
