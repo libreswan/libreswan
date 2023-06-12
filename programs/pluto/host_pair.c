@@ -321,12 +321,6 @@ void release_dead_interfaces(struct logger *logger)
 		 * those's Child SAs sharing the IKE SA are also
 		 * sharing the IKE SA's interface and that is going
 		 * away, the'll be deleted anyway.
-		 *
-		 * XXX: terminate_connections_by_name() added for
-		 * https://bugzilla.redhat.com/show_bug.cgi?id=609343.
-		 * removed.  Since then the host_pair iterator's been
-		 * replaced by the more robust for-all-connections
-		 * loop, presumably making the call unnecessary.
 		 */
 		release_connection(c);
 
