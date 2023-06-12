@@ -504,7 +504,7 @@ void restart_connections_by_peer(struct connection *const c, struct logger *logg
 			      d->config->dnshostname, &d->remote->host.addr)) {
 			/* This might delete c if CK_INSTANCE */
 			/* ??? is there a chance hp becomes dangling? */
-			terminate_connections_by_name(d->name, /*quiet?*/false, logger);
+			terminate_connections_by_name_or_alias(d->name, /*quiet?*/false, logger);
 		}
 		d = next;
 	}

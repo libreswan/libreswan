@@ -92,33 +92,15 @@ static int terminate_a_connection(struct connection *c, struct logger *logger)
 	return 1;
 }
 
-/*
- * return -1 if nothing was found at all; else total from
- * terminate_a_connection().
- *
- * XXX: A better strategy is to find the connection root and then use
- * recursion to terminate its clones (which might also be recursive).
- */
-
-static int terminate_each_concrete_connection_by_name(const char *name,
-						      struct logger *logger)
+static bool terminate_connections_by_name(const char *name,
+					  struct logger *logger)
 {
 	/*
-	 * Find the first non-CK_INSTANCE connection matching NAME;
-	 * that is CK_GROUP, CK_TEMPLATE, CK_PERMENANT, CK_GOING_AWAY.
-	 *
-	 * If this search succeeds, then the function also succeeds.
-	 *
-	 * But here's the kicker:
-	 *
-	 * The original conn_by_name() call also moved the connection
-	 * to the front of the connections list.  For CK_GROUP and
-	 * CK_TEMPLATE this put any CK_INSTANCES after it in the list
-	 * so continuing the search would find them (without this the
-	 * list is new-to-old so instances would have been skipped).
-	 *
-	 * This code achieves the same effect by searching old2new.
+	 * Find all the permenant/instance connections and terminate
+	 * them.  This means skipping over group and template
+	 * connections.
 	 */
+
 	struct connection_filter cq = {
 		.name = name,
 		.where = HERE,
@@ -126,39 +108,20 @@ static int terminate_each_concrete_connection_by_name(const char *name,
 	bool found = false;
 	while (next_connection_old2new(&cq)) {
 		struct connection *c = cq.c;
-		if (is_instance(c)) {
-			continue;
-		}
-		found = true;
-		break;
-	}
-	if (!found) {
-		/* nothing matched at all */
-		return -1;
-	}
-	/*
-	 * Now continue with the connection list looking for
-	 * CK_PERMENANT and/or CK_INSTANCE connections with the name.
-	 */
-	int total = 0;
-	do {
-		struct connection *c = cq.c;
 		if (never_negotiate(c)) {
 			continue;
 		}
-		if (!streq(c->name, name)) {
-			continue;
-		}
 		if (!is_permanent(c) && !is_instance(c)) {
-			/* something concrete */
+			/* something real */
 			continue;
 		}
-		total += terminate_a_connection(c, logger);
-	} while (next_connection_old2new(&cq));
-	return total;
+		found = true;
+		terminate_a_connection(c, logger);
+	}
+	return found;
 }
 
-static int foreach_connection_by_alias(const char *alias, struct logger *logger)
+static int terminate_connections_by_alias(const char *alias, bool quiet, struct logger *logger)
 {
 	int count = 0;
 
@@ -170,10 +133,22 @@ static int foreach_connection_by_alias(const char *alias, struct logger *logger)
 		struct connection *p = by_alias.c;
 		count += terminate_a_connection(p, logger);
 	}
+
+	if (count == 0) {
+		if (!quiet) {
+			llog(RC_UNKNOWN_NAME, logger,
+			     "no such connection or aliased connection named \"%s\"", alias);
+		}
+	} else {
+		llog(RC_COMMENT, logger,
+		     "terminated %d connections from aliased connection \"%s\"",
+		     count, alias);
+	}
+
 	return count;
 }
 
-void terminate_connections_by_name(const char *name, bool quiet, struct logger *logger)
+void terminate_connections_by_name_or_alias(const char *name, bool quiet, struct logger *logger)
 {
 	/*
 	 * Loop because more than one may match (template and
@@ -181,22 +156,12 @@ void terminate_connections_by_name(const char *name, bool quiet, struct logger *
 	 * conn_by_name).  Don't log an error if not found before we
 	 * checked aliases
 	 */
-
-	if (terminate_each_concrete_connection_by_name(name, logger) >= 0) {
+	if (terminate_connections_by_name(name, logger)) {
 		/* logged by terminate_a_connection() */
 		return;
 	}
 
-	int count = foreach_connection_by_alias(name, logger);
-	if (count == 0) {
-		if (!quiet)
-			llog(RC_UNKNOWN_NAME, logger,
-			     "no such connection or aliased connection named \"%s\"", name);
-	} else {
-		llog(RC_COMMENT, logger,
-			     "terminated %d connections from aliased connection \"%s\"",
-		     count, name);
-	}
+	terminate_connections_by_alias(name, quiet, logger);
 }
 
 static void terminate_connection(struct connection **c, struct logger *logger)

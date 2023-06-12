@@ -243,7 +243,7 @@ enum left_right orient_1(struct connection *c, struct logger *logger)
 			     "both sides of "PRI_CONNECTION" are our interface %s!",
 			     pri_connection(c, &cib),
 			     ifp->ip_dev->id_rname);
-			terminate_connections_by_name(c->name, /*quiet?*/false, logger);
+			terminate_connections_by_name_or_alias(c->name, /*quiet?*/false, logger);
 			return END_ROOF;
 		}
 
@@ -284,7 +284,7 @@ enum left_right orient_1(struct connection *c, struct logger *logger)
 				     ifp->ip_dev->id_rname,
 				     str_address(&ifp->ip_dev->id_address, &ifpb));
 			}
-			terminate_connections_by_name(c->name, /*quiet?*/false, logger);
+			terminate_connections_by_name_or_alias(c->name, /*quiet?*/false, logger);
 			return END_ROOF;
 		}
 

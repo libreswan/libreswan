@@ -702,7 +702,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 			whack_log(RC_FATAL, whackfd,
 				  "received whack command to delete a connection, but did not receive the connection name - ignored");
 		} else {
-			terminate_connections_by_name(m->name, /*quiet?*/true, logger);
+			terminate_connections_by_name_or_alias(m->name, /*quiet?*/true, logger);
 			whack_each_connection(m, s, NULL, NULL,
 					      /*log_unknown_name*/false,
 					      whack_delete_connection);
