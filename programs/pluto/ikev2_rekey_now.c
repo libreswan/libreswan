@@ -80,24 +80,12 @@ static int rekey_connection(struct connection *c,
  * recursion to terminate its clones (which might also be recursive).
  */
 
-static int rekey_each_concrete_connection_by_name(const char *name, void *arg,
-						  struct logger *logger)
+static bool rekey_connections_by_name(const char *name,
+				      const struct rekey_how *how,
+				      struct logger *logger)
 {
 	/*
-	 * Find the first non-CK_INSTANCE connection matching NAME;
-	 * that is CK_GROUP, CK_TEMPLATE, CK_PERMENANT, CK_GOING_AWAY.
-	 *
-	 * If this search succeeds, then the function also succeeds.
-	 *
-	 * But here's the kicker:
-	 *
-	 * The original conn_by_name() call also moved the connection
-	 * to the front of the connections list.  For CK_GROUP and
-	 * CK_TEMPLATE this put any CK_INSTANCES after it in the list
-	 * so continuing the search would find them (without this the
-	 * list is new-to-old so instances would have been skipped).
-	 *
-	 * This code achieves the same effect by searching old2new.
+	 * Rekey all permenant/instance connections matching name.
 	 */
 	struct connection_filter cq = {
 		.name = name,
@@ -106,41 +94,22 @@ static int rekey_each_concrete_connection_by_name(const char *name, void *arg,
 	bool found = false;
 	while (next_connection_old2new(&cq)) {
 		struct connection *c = cq.c;
-		if (is_instance(c)) {
-			continue;
-		}
-		found = true;
-		break;
-	}
-	if (!found) {
-		/* nothing matched at all */
-		return -1;
-	}
-	/*
-	 * Now continue with the connection list looking for
-	 * CK_PERMENANT and/or CK_INSTANCE connections with the name.
-	 */
-	int total = 0;
-	do {
-		struct connection *c = cq.c;
 		if (never_negotiate(c)) {
-			continue;
-		}
-		if (!streq(c->name, name)) {
 			continue;
 		}
 		if (!is_permanent(c) && !is_instance(c)) {
 			/* something concrete */
 			continue;
 		}
-		total += rekey_connection(c, arg, logger);
-	} while (next_connection_old2new(&cq));
-	return total;
+		rekey_connection(c, how, logger);
+		found = true;
+	}
+	return found;
 }
 
-static int foreach_connection_by_alias(const char *alias,
-				       const struct rekey_how *how,
-				       struct logger *logger)
+static int rekey_connections_by_alias(const char *alias,
+				      const struct rekey_how *how,
+				      struct logger *logger)
 {
 	int count = 0;
 
@@ -179,13 +148,13 @@ void rekey_now(const char *str, enum sa_type sa_type,
 		 * connection instances may need more work to work ???
 		 */
 
-		if (rekey_each_concrete_connection_by_name(str, &how, logger) >= 0) {
+		if (rekey_connections_by_name(str, &how, logger)) {
 			/* logged by rekey_connection_now() */
 			dbg("found connections by name");
 			return;
 		}
 
-		int count = foreach_connection_by_alias(str, &how, logger);
+		int count = rekey_connections_by_alias(str, &how, logger);
 		if (count == 0) {
 			llog(RC_UNKNOWN_NAME, logger,
 			     "no such connection or aliased connection named \"%s\"", str);
@@ -194,6 +163,7 @@ void rekey_now(const char *str, enum sa_type sa_type,
 			     "rekeyed %d connections from aliased connection \"%s\"",
 			     count, str);
 		}
+
 	} else {
 		/* str is a state number - this overrides ike vs ipsec rekey command */
 		struct state *st = state_by_serialno(num);
