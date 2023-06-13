@@ -127,19 +127,18 @@ static void show_state_traffic(struct show *s, struct state *st)
 	}
 }
 
-bool show_traffic_status_of_connection(struct show *s, struct connection **c,
-				       const struct whack_message *m UNUSED)
+void show_traffic_status(struct show *s, const struct connection *c)
 {
-	struct state *st = state_by_serialno((*c)->newest_ipsec_sa);
+	struct state *st = state_by_serialno(c->newest_ipsec_sa);
 
-	if (st == NULL)
-		return false;
+	if (st == NULL) {
+		return;
+	}
 
 	show_state_traffic(s, st);
-	return true;
 }
 
-void show_traffic_status_of_states(struct show *s)
+void show_traffic_statuses(struct show *s)
 {
 	struct state **array = sort_states(state_compare_serial, HERE);
 

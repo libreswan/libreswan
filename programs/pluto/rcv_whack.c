@@ -344,6 +344,13 @@ static bool whack_connection_status(struct show *s, struct connection **c,
 	return true;
 }
 
+static bool whack_traffic_status(struct show *s, struct connection **c,
+				 const struct whack_message *m UNUSED)
+{
+	show_traffic_status(s, *c);
+	return true;
+}
+
 static bool whack_route_connection(struct show *s, struct connection **c,
 				   const struct whack_message *m UNUSED)
 {
@@ -1049,11 +1056,11 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 	if (m->whack_traffic_status) {
 		dbg_whack(s, "trafficstatus: start: %s", (m->name == NULL ? "<null>" : m->name));
 		if (m->name == NULL) {
-			show_traffic_status_of_states(s);
+			show_traffic_statuses(s);
 		} else {
 			whack_each_connection(m, s, NULL, NULL,
 					      /*log_unknown_name*/true,
-					      show_traffic_status_of_connection);
+					      whack_traffic_status);
 		}
 		dbg_whack(s, "trafficstatus: stop: %s", (m->name == NULL ? "<null>" : m->name));
 	}

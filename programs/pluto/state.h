@@ -942,9 +942,8 @@ extern struct state *find_v1_info_state(const ike_spis_t *ike_spis,
 
 extern void initialize_new_state(struct state *st, lset_t policy);
 
-void show_traffic_status_of_states(struct show *s);
-bool show_traffic_status_of_connection(struct show *s, struct connection **c,
-				       const struct whack_message *m);
+void show_traffic_statuses(struct show *s);
+void show_traffic_status(struct show *s, const struct connection *c);
 
 extern void show_brief_status(struct show *s);
 extern void show_states(struct show *s, const monotime_t now);
