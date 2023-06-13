@@ -363,7 +363,7 @@ enum option_enums {
 	OPT_GLOBAL_STATUS,
 	OPT_CLEAR_STATS,
 	OPT_SHUTDOWN_DIRTY,
-	OPT_TRAFFIC_STATUS,
+	OPT_TRAFFICSTATUS,
 	OPT_SHUNT_STATUS,
 	OPT_SHOW_STATES,
 	OPT_ADDRESSPOOL_STATUS,
@@ -647,7 +647,7 @@ static const struct option long_opts[] = {
 
 	{ "status", no_argument, NULL, OPT_STATUS + OO },
 	{ "globalstatus", no_argument, NULL, OPT_GLOBAL_STATUS + OO },
-	{ "trafficstatus", no_argument, NULL, OPT_TRAFFIC_STATUS + OO },
+	{ "trafficstatus", no_argument, NULL, OPT_TRAFFICSTATUS + OO },
 	{ "shuntstatus", no_argument, NULL, OPT_SHUNT_STATUS + OO },
 	{ "addresspoolstatus", no_argument, NULL, OPT_ADDRESSPOOL_STATUS + OO },
 	{ "connectionstatus", no_argument, NULL, OPT_CONNECTION_STATUS + OO },
@@ -1488,8 +1488,8 @@ int main(int argc, char **argv)
 			msg.whack_clear_stats = true;
 			continue;
 
-		case OPT_TRAFFIC_STATUS:	/* --trafficstatus */
-			msg.whack_traffic_status = true;
+		case OPT_TRAFFICSTATUS:	/* --trafficstatus */
+			msg.whack_trafficstatus = true;
 			ignore_errors = true;
 			continue;
 
@@ -2626,7 +2626,7 @@ int main(int argc, char **argv)
 			diagw("missing --name <connection_name>");
 		}
 	} else if (seen[OPT_NAME] &&
-		   !seen[OPT_TRAFFIC_STATUS] &&
+		   !seen[OPT_TRAFFICSTATUS] &&
 		   !seen[OPT_CONNECTION_STATUS] &&
 		   !seen[OPT_SHOW_STATES] &&
 		   !seen[OPT_REDIRECT_TO]) {
@@ -2657,7 +2657,8 @@ int main(int argc, char **argv)
 	      msg.whack_fetchcrls ||
 	      msg.whack_rereadsecrets ||
 	      msg.whack_crash || msg.whack_shunt_status ||
-	      msg.whack_status || msg.whack_global_status || msg.whack_traffic_status ||
+	      msg.whack_status || msg.whack_global_status ||
+	      msg.whack_trafficstatus ||
 	      msg.whack_addresspool_status ||
 	      msg.whack_connection_status ||
 	      msg.whack_process_status ||

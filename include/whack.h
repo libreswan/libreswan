@@ -127,7 +127,7 @@ struct whack_message {
 	bool whack_status;
 	bool whack_global_status;
 	bool whack_clear_stats;
-	bool whack_traffic_status;
+	bool whack_trafficstatus;	/* match name to option/command  */
 	bool whack_shunt_status;
 	bool whack_fips_status;
 	bool whack_brief_status;

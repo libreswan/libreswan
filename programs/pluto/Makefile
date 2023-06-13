@@ -87,8 +87,10 @@ OBJS += ikev2_eap.o
 
 OBJS += state_db.o
 OBJS += show.o
-OBJS += show_traffic_status.o
 OBJS += retransmit.o
+
+OBJS += rcv_whack.o
+OBJS += whack_trafficstatus.o
 
 # local (possibly more up to date) copy of <linux/xfrm.h>
 ifeq ($(USE_XFRM_HEADER_COPY),true)
@@ -261,7 +263,7 @@ OBJS += ikev2_states.o
 OBJS += ikev2_psk.o ikev2_ppk.o ikev2_crypto.o
 OBJS += ikev2_redirect.o
 OBJS += cert_decode_helper.o
-OBJS += rcv_whack.o pluto_stats.o
+OBJS += pluto_stats.o
 OBJS += demux.o msgdigest.o keys.o
 OBJS += crypt_ke.o crypt_dh.o
 OBJS += crypt_dh_v2.o

@@ -37,8 +37,10 @@
 #include "connections.h"
 #include "state.h"
 #include "log.h"
-#include "kernel.h"
+#include "kernel.h"		/* for get_ipsec_traffic() */
 #include "show.h"
+#include "rcv_whack.h"		/* for whack_each_connection() */
+#include "whack_trafficstatus.h"
 
 /* note: this mutates *st by calling get_sa_bundle_info */
 static void jam_child_sa_traffic(struct jambuf *buf, struct child_sa *child)
@@ -112,42 +114,41 @@ static void jam_child_sa_traffic(struct jambuf *buf, struct child_sa *child)
 	}
 }
 
-static void show_state_traffic(struct show *s, struct state *st)
+static bool whack_trafficstatus_connection(struct show *s, struct connection **c,
+					   const struct whack_message *m UNUSED)
 {
-	if (IS_IKE_SA(st))
-		return; /* ignore non-IPsec states */
+	struct state_filter state_by_connection = {
+		.connection_serialno = (*c)->serialno,
+		.where = HERE,
+	};
+	while (next_state_old2new(&state_by_connection)) {
 
-	if (!IS_IPSEC_SA_ESTABLISHED(st))
-		return; /* ignore non established states */
+		struct state *st = state_by_connection.st;
 
-	/* whack-log-global - no prefix */
-	SHOW_JAMBUF(RC_INFORMATIONAL_TRAFFIC, s, buf) {
-		/* note: this mutates *st by calling get_sa_bundle_info */
-		jam_child_sa_traffic(buf, pexpect_child_sa(st));
-	}
-}
-
-void show_traffic_status(struct show *s, const struct connection *c)
-{
-	struct state *st = state_by_serialno(c->newest_ipsec_sa);
-
-	if (st == NULL) {
-		return;
-	}
-
-	show_state_traffic(s, st);
-}
-
-void show_traffic_statuses(struct show *s)
-{
-	struct state **array = sort_states(state_compare_serial, HERE);
-
-	/* now print sorted results */
-	if (array != NULL) {
-		int i;
-		for (i = 0; array[i] != NULL; i++) {
-			show_state_traffic(s, array[i]);
+		/* ignore non-IPsec states (XXX: redundant?) */
+		if (IS_IKE_SA(st)) {
+			continue;
 		}
-		pfree(array);
+
+		/* ignore non established states */
+		if (!IS_IPSEC_SA_ESTABLISHED(st)) {
+			continue;
+		}
+
+		/* whack-log-global - no prefix */
+		SHOW_JAMBUF(RC_INFORMATIONAL_TRAFFIC, s, buf) {
+			/* note: this mutates *st by calling
+			 * get_sa_bundle_info */
+			jam_child_sa_traffic(buf, pexpect_child_sa(st));
+		}
 	}
+
+	return true;
+}
+
+void whack_trafficstatus(const struct whack_message *m, struct show *s)
+{
+	whack_each_connection(m, s, NULL, NULL,
+			      /*log_unknown_name*/true,
+			      whack_trafficstatus_connection);
 }

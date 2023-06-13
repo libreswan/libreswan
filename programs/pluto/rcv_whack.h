@@ -25,4 +25,14 @@
 
 extern void whack_handle_cb(int fd, void *arg, struct logger *logger);
 
+void whack_each_connection(const struct whack_message *m,
+			   struct show *s,
+			   const char *future_tense,
+			   const char *past_tense,
+			   bool log_unknown_name,
+			   bool (*whack_connection)
+			   (struct show *s,
+			    struct connection **c,
+			    const struct whack_message *m));
+
 #endif

@@ -99,6 +99,8 @@
 #include "orient.h"
 #include "ikev2_create_child_sa.h"	/* for submit_v2_CREATE_CHILD_SA_*() */
 
+#include "whack_trafficstatus.h"
+
 static void whack_rereadsecrets(struct show *s)
 {
 	load_preshared_secrets(show_logger(s));
@@ -122,18 +124,36 @@ static void whack_listcacerts(struct show *s)
 	root_certs_delref(&roots, show_logger(s));
 }
 
-static void whack_each_connection(const struct whack_message *m,
-				  struct show *s,
-				  const char *future_tense,
-				  const char *past_tense,
-				  bool log_unknown_name,
-				  bool (*whack_connection)
-				  (struct show *s,
-				   struct connection **c,
-				   const struct whack_message *m))
+void whack_each_connection(const struct whack_message *m,
+			   struct show *s,
+			   const char *future_tense,
+			   const char *past_tense,
+			   bool log_unknown_name,
+			   bool (*whack_connection)
+			   (struct show *s,
+			    struct connection **c,
+			    const struct whack_message *m))
 {
 	struct logger *logger = show_logger(s);
 	unsigned nr_found = 0;
+
+	/*
+	 * When there's no name, whack all connections.
+	 *
+	 * How to decorate this with a header / footer?
+	 */
+	if (m->name == NULL) {
+		struct connection **connections = sort_connections();
+		if (connections == NULL) {
+			return;
+		}
+
+		for (struct connection **cp = connections; *cp != NULL; cp++) {
+			whack_connection(s, cp, m);
+		}
+		pfree(connections);
+		return;
+	}
 
 	/*
 	 * First try by name.
@@ -341,13 +361,6 @@ static bool whack_connection_status(struct show *s, struct connection **c,
 				    const struct whack_message *m UNUSED)
 {
 	show_connection_status(s, *c);
-	return true;
-}
-
-static bool whack_traffic_status(struct show *s, struct connection **c,
-				 const struct whack_message *m UNUSED)
-{
-	show_traffic_status(s, *c);
 	return true;
 }
 
@@ -1053,15 +1066,9 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		dbg_whack(s, "clearstats: stop:");
 	}
 
-	if (m->whack_traffic_status) {
+	if (m->whack_trafficstatus) {
 		dbg_whack(s, "trafficstatus: start: %s", (m->name == NULL ? "<null>" : m->name));
-		if (m->name == NULL) {
-			show_traffic_statuses(s);
-		} else {
-			whack_each_connection(m, s, NULL, NULL,
-					      /*log_unknown_name*/true,
-					      whack_traffic_status);
-		}
+		whack_trafficstatus(m, s);
 		dbg_whack(s, "trafficstatus: stop: %s", (m->name == NULL ? "<null>" : m->name));
 	}
 
