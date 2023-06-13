@@ -969,13 +969,16 @@ static v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ik
 					 ike, child, md,
 					 child->sa.st_connection->config->v2_ike_auth_child_proposals,
 					 /*expect-accepted-proposal?*/false);
-	dbg("process_v2_childs_sa_payload returned %s", enum_name(&v2_notification_names, n));
+	ldbg(child->sa.st_logger, "process_v2_childs_sa_payload() returned %s",
+	     enum_name(&v2_notification_names, n));
 	if (n != v2N_NOTHING_WRONG) {
 		/* already logged; caller, below, cleans up */
 		return n;
 	}
 
 	n = process_v2_child_request_payloads(ike, child, md, sk_pbs);
+	ldbg(child->sa.st_logger, "process_v2_child_request_payloads() returned %s",
+	     enum_name(&v2_notification_names, n));
 	if (n != v2N_NOTHING_WRONG) {
 		/* already logged; caller, below, cleans up */
 		return n;
