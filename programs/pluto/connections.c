@@ -1597,18 +1597,14 @@ static enum connection_kind extract_connection_end_kind(const struct whack_messa
 		     this->leftright);
 		return CK_TEMPLATE;
 	}
-	FOR_EACH_THING(we, this, that) {
-		if (we->virt != NULL) {
-			/*
-			 * If we have a subnet=vnet: needing
-			 * instantiation so we can accept
-			 * multiple subnets from the remote
-			 * peer.
-			 */
-			ldbg(logger, "%s connection is CK_TEMPLATE: %s has vnets at play",
-			     this->leftright, we->leftright);
-			return CK_TEMPLATE;
-		}
+	if (that->virt != NULL) {
+		/*
+		 * A peer with subnet=vnet:.. needs instantiation so
+		 * we can accept multiple subnets from that peer.
+		 */
+		ldbg(logger, "%s connection is CK_TEMPLATE: %s has vnets at play",
+		     this->leftright, that->leftright);
+		return CK_TEMPLATE;
 	}
 	if (that->addresspool != NULL) {
 		ldbg(logger, "%s connection is CK_TEMPLATE: %s has an address pool",
