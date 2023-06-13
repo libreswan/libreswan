@@ -723,7 +723,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 			     "received whack to delete connection by user %s", m->name);
 			struct state_filter sf = { .where = HERE, };
 			while (next_state_new2old(&sf)) {
-				v1_delete_state_by_username(sf.st, m->name);
+				delete_v1_state_by_username(sf.st, m->name);
 			}
 		}
 		dbg_whack(s, "deleteuser: stop: '%s'", m->name == NULL ? "NULL" : m->name);

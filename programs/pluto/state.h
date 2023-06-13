@@ -955,7 +955,7 @@ extern ipsec_spi_t uniquify_peer_cpi(ipsec_spi_t cpi, const struct state *st, in
 
 extern void delete_states_by_peer(const struct fd *whackfd, const ip_address *peer);
 extern void replace_states_by_peer(const ip_address *peer);
-extern void v1_delete_state_by_username(struct state *st, const char *name);
+extern void delete_v1_state_by_username(struct state *st, const char *name);
 extern void delete_state_by_id_name(struct state *st, const char *name);
 
 extern void delete_cryptographic_continuation(struct state *st);

@@ -502,6 +502,10 @@ void record_n_send_v2_delete(struct ike_sa *ike, where_t where)
 	 * still needs to send a delete (but again it should
 	 * do that using a state transition)?
 	 */
+	if (impair.send_no_delete) {
+		llog_sa(RC_LOG, ike, "IMPAIR: impair-send-no-delete set - not sending Delete/Notify");
+		return;
+	}
 	dbg_v2_msgid(ike, "hacking around record'n'send for "PRI_SO" "PRI_WHERE,
 		     ike->sa.st_serialno, pri_where(where));
 	if (!ike->sa.st_on_delete.skip_log_message) {

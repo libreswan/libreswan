@@ -1810,7 +1810,8 @@ void send_v1_notification_from_md(struct msg_digest *md, v1_notification_t type)
 /*
  * Send a Delete Notification to announce deletion of ISAKMP SA or
  * inbound IPSEC SAs. Does nothing if no such SAs are being deleted.
- * Delete Notifications cannot announce deletion of outbound IPSEC/ISAKMP SAs.
+ * Delete Notifications cannot announce deletion of outbound
+ * IPSEC/ISAKMP SAs.
  *
  * @param st State struct (we hope it has some SA's related to it)
  */
@@ -1822,6 +1823,11 @@ void send_v1_delete(struct state *st)
 	ip_said said[EM_MAXRELSPIS];
 	ip_said *ns = said;
 	bool isakmp_sa = false;
+
+	if (impair.send_no_delete) {
+		llog(RC_LOG, st->st_logger, "IMPAIR: impair-send-no-delete set - not sending Delete/Notify");
+		return;
+	}
 
 	/* If there are IPsec SA's related to this state struct... */
 	if (IS_IPSEC_SA_ESTABLISHED(st)) {

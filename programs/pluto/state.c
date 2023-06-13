@@ -523,11 +523,6 @@ void init_states(void)
 
 static void send_delete(struct ike_sa *ike)
 {
-	if (impair.send_no_delete) {
-		llog_sa(RC_LOG, ike, "IMPAIR: impair-send-no-delete set - not sending Delete/Notify");
-		return;
-	}
-
 	switch (ike->sa.st_ike_version) {
 #ifdef USE_IKEv1
 	case IKEv1:
@@ -578,7 +573,7 @@ void delete_state_by_id_name(struct state *st, const char *name)
 	}
 }
 
-void v1_delete_state_by_username(struct state *st, const char *name)
+void delete_v1_state_by_username(struct state *st, const char *name)
 {
 	/* only support deleting ikev1 with XAUTH username */
 	if (!IS_ISAKMP_SA(st)) {
@@ -591,7 +586,7 @@ void v1_delete_state_by_username(struct state *st, const char *name)
 	}
 
 	if (IS_PARENT_SA_ESTABLISHED(&ike->sa)) {
-		send_delete(ike);
+		send_v1_delete(&ike->sa);
 	}
 	ike->sa.st_on_delete.skip_send_delete = true;
 	delete_ike_family(&ike);
@@ -1023,28 +1018,24 @@ void delete_state(struct state *st)
 	}
 
 	if (should_send_delete(st)) {
-		if (impair.send_no_delete) {
-			llog(RC_LOG, st->st_logger, "IMPAIR: impair-send-no-delete set - not sending Delete/Notify");
-		} else {
-			switch (st->st_ike_version) {
+		switch (st->st_ike_version) {
 #ifdef USE_IKEv1
-			case IKEv1:
-				/*
-				 * Tell the other side of any IPsec
-				 * SAs that are going down
-				 */
-				send_v1_delete(st);
-				break;
+		case IKEv1:
+			/*
+			 * Tell the other side of any IPsec
+			 * SAs that are going down
+			 */
+			send_v1_delete(st);
+			break;
 #endif
-			case IKEv2:
-				/*
-				 * ??? in IKEv2, we should not immediately delete: we
-				 * should use an Informational Exchange to coordinate
-				 * deletion.
-				 */
-				record_n_send_v2_delete(pexpect_ike_sa(st), HERE);
-				break;
-			}
+		case IKEv2:
+			/*
+			 * ??? in IKEv2, we should not immediately delete: we
+			 * should use an Informational Exchange to coordinate
+			 * deletion.
+			 */
+			record_n_send_v2_delete(pexpect_ike_sa(st), HERE);
+			break;
 		}
 	}
 
