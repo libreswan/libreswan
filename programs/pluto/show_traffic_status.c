@@ -127,10 +127,10 @@ static void show_state_traffic(struct show *s, struct state *st)
 	}
 }
 
-bool show_traffic_status_of_connection(struct show *s, struct connection *c,
+bool show_traffic_status_of_connection(struct show *s, struct connection **c,
 				       const struct whack_message *m UNUSED)
 {
-	struct state *st = state_by_serialno(c->newest_ipsec_sa);
+	struct state *st = state_by_serialno((*c)->newest_ipsec_sa);
 
 	if (st == NULL)
 		return false;

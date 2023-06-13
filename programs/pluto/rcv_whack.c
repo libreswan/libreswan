@@ -129,7 +129,7 @@ static void whack_each_connection(const struct whack_message *m,
 				  bool log_unknown_name,
 				  bool (*whack_connection)
 				  (struct show *s,
-				   struct connection *c,
+				   struct connection **c,
 				   const struct whack_message *m))
 {
 	struct logger *logger = show_logger(s);
@@ -143,11 +143,10 @@ static void whack_each_connection(const struct whack_message *m,
 		.where = HERE,
 	};
 	while (next_connection_new2old(&by_name)) {
-		struct connection *c = by_name.c;
-		if (is_instance(c)) {
+		if (is_instance(by_name.c)) {
 			continue;
 		}
-		whack_connection(s, c, m);
+		whack_connection(s, &by_name.c, m);
 		nr_found++;
 	}
 	if (nr_found > 0) {
@@ -162,12 +161,11 @@ static void whack_each_connection(const struct whack_message *m,
 		.where = HERE,
 	};
 	while (next_connection_new2old(&by_alias)) {
-		struct connection *p = by_alias.c;
 		if (nr_found == 0 && future_tense != NULL) {
 			llog(RC_COMMENT, logger, "%s all connections with alias=\"%s\"",
 			     future_tense, m->name);
 		}
-		whack_connection(s, p, m);
+		whack_connection(s, &by_alias.c, m);
 		nr_found++;
 	}
 	if (nr_found == 1) {
@@ -193,7 +191,7 @@ static void whack_each_connection(const struct whack_message *m,
 		co < MAX_CO_SERIAL) {
 		struct connection *c = connection_by_serialno(co);
 		if (c != NULL) {
-			whack_connection(s, c, m);
+			whack_connection(s, &c, m);
 			return;
 		}
 	}
@@ -226,22 +224,22 @@ static void whack_each_connection(const struct whack_message *m,
  * wipe everything
  */
 
-static bool whack_delete_connection(struct show *s, struct connection *c,
+static bool whack_delete_connection(struct show *s, struct connection **c,
 				   const struct whack_message *m UNUSED)
 {
-	connection_attach(c, show_logger(s));
-	delete_connection(&c);
+	connection_attach(*c, show_logger(s));
+	delete_connection(c);
 	return true;
 }
 
-static bool whack_initiate_connection(struct show *s, struct connection *c,
+static bool whack_initiate_connection(struct show *s, struct connection **c,
 				      const struct whack_message *m)
 {
 	struct logger *logger = show_logger(s);
 	connection_buf cb;
-	dbg("%s() for "PRI_CONNECTION, __func__, pri_connection(c, &cb));
-	bool log_failure = (c->config->connalias == NULL);
-	return initiate_connection(c,
+	dbg("%s() for "PRI_CONNECTION, __func__, pri_connection(*c, &cb));
+	bool log_failure = ((*c)->config->connalias == NULL);
+	return initiate_connection(*c,
 				   m->remote_host,
 				   m->whack_async/*background*/,
 				   log_failure,
@@ -339,43 +337,41 @@ static void whack_impair_action(enum impair_action impairment_action,
 	}
 }
 
-static bool whack_connection_status(struct show *s, struct connection *c,
+static bool whack_connection_status(struct show *s, struct connection **c,
 				    const struct whack_message *m UNUSED)
 {
-	show_connection_status(s, c);
+	show_connection_status(s, *c);
 	return true;
 }
 
-static bool whack_route_connection(struct show *s, struct connection *c,
+static bool whack_route_connection(struct show *s, struct connection **c,
 				   const struct whack_message *m UNUSED)
 {
-	connection_attach(c, show_logger(s));
-
-	connection_route(c, HERE);
-
-	connection_detach(c, show_logger(s));
-
+	connection_attach(*c, show_logger(s));
+	connection_route(*c, HERE);
+	connection_detach(*c, show_logger(s));
 	return true; /* ok; keep going */
 }
 
-static bool whack_unroute_connection(struct show *s, struct connection *c,
+static bool whack_unroute_connection(struct show *s, struct connection **c,
 				     const struct whack_message *m UNUSED)
 {
-	passert(c != NULL);
-
-	connection_attach(c, show_logger(s));
-
-	connection_unroute(c, HERE);
-
-	connection_detach(c, show_logger(s));
-
+	connection_attach(*c, show_logger(s));
+	connection_unroute(*c, HERE);
+	connection_detach(*c, show_logger(s));
 	return true; /* ok; keep going */
 }
 
-static bool whack_terminate_connections(struct show *s, struct connection *c,
+static bool whack_terminate_connections(struct show *s, struct connection **c,
 					const struct whack_message *m UNUSED)
 {
-	terminate_connections(c, show_logger(s));
+#if 0
+	connection_attach(*c, show_logger(s));
+#endif
+	terminate_connections(*c, show_logger(s));
+#if 0
+	connection_detach(*c, show_logger(s));
+#endif
 	return true; /* ok; keep going */
 }
 
@@ -546,18 +542,18 @@ static void dbg_whack(struct show *s, const char *fmt, ...)
 	}
 }
 
-static bool whack_debug_connection(struct show *s, struct connection *c, const struct whack_message *m)
+static bool whack_debug_connection(struct show *s, struct connection **c, const struct whack_message *m)
 {
-	connection_attach(c, show_logger(s));
-	c->logger->debugging = lmod(c->logger->debugging, m->debugging);
-	if (LDBGP(DBG_BASE, c->logger)) {
-		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, c->logger, buf) {
+	connection_attach(*c, show_logger(s));
+	(*c)->logger->debugging = lmod((*c)->logger->debugging, m->debugging);
+	if (LDBGP(DBG_BASE, (*c)->logger)) {
+		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, (*c)->logger, buf) {
 			jam_string(buf, "extra_debugging = ");
 			jam_lset_short(buf, &debug_names,
-				       "+", c->logger->debugging);
+				       "+", (*c)->logger->debugging);
 		}
 	}
-	connection_detach(c, show_logger(s));
+	connection_detach(*c, show_logger(s));
 	return true;
 }
 
