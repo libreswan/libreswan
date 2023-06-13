@@ -735,7 +735,7 @@ static int connection_compare_qsort(const void *a, const void *b)
 				*(const struct connection *const *)b);
 }
 
-void show_connections_status(struct show *s)
+void show_connection_statuses(struct show *s)
 {
 	int count = 0;
 	int active = 0;

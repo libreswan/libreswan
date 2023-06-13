@@ -1091,7 +1091,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 	if (m->whack_connection_status) {
 		dbg_whack(s, "connectionstatus: start:");
 		if (m->name == NULL) {
-			show_connections_status(s);
+			show_connection_statuses(s);
 		} else {
 			whack_each_connection(m, s, NULL, NULL,
 					      /*log_unknown_name*/true,

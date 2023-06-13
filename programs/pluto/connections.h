@@ -721,7 +721,7 @@ extern void connection_delete_unused_instance(struct connection **cp, struct sta
 
 /* print connection status */
 
-extern void show_connections_status(struct show *s);
+extern void show_connection_statuses(struct show *s);
 extern void show_connection_status(struct show *s, const struct connection *c);
 extern int connection_compare(const struct connection *ca,
 			      const struct connection *cb);

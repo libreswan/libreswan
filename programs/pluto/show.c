@@ -219,7 +219,7 @@ void show_status(struct show *s, const monotime_t now)
 	show_kernel_alg_status(s);
 	show_ike_alg_status(s);
 	show_db_ops_status(s);
-	show_connections_status(s);
+	show_connection_statuses(s);
 	show_brief_status(s);
 	show_states(s, now);
 #if defined(KERNEL_XFRM)
