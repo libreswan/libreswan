@@ -66,6 +66,11 @@ struct annex {
 	shunk_t sec_label;
 };
 
+static bool zap_connection_states(enum routing_event event,
+				  struct connection **c,
+				  struct ike_sa **ike,
+				  where_t where);
+
 static void dispatch(const enum routing_event event,
 		     struct connection **c,
 		     struct logger *logger, where_t where,
@@ -380,6 +385,39 @@ static void routed_negotiation_to_unrouted(enum routing_event event,
 	set_routing(event, c, RT_UNROUTED, NULL, where);
 }
 
+static void terminate_routed_tunnel_permanent(enum routing_event event,
+					      struct connection **c,
+					      struct logger *logger, where_t where,
+					      const char *story)
+{
+	del_policy(*c, POLICY_UP);
+	struct ike_sa *ike = ike_sa_by_serialno((*c)->newest_ike_sa);
+	if (ike != NULL) {
+		if (zap_connection_states(event, c, &ike, where)) {
+			return;
+		}
+	}
+
+	struct child_sa *child = child_sa_by_serialno((*c)->newest_ipsec_sa);
+	if (PBAD(logger, child == NULL)) {
+		return;
+	}
+
+	state_attach(&child->sa, logger);
+	PEXPECT(logger, child->sa.st_connection == *c);
+	do_updown_spds(UPDOWN_DOWN, *c, &(*c)->child.spds, &child->sa, logger);
+	delete_spd_kernel_policies(&(*c)->child.spds,
+				   EXPECT_KERNEL_POLICY_OK,
+				   logger, where, story);
+	/*
+	 * update routing; route_owner() will see this and not think
+	 * this route is the owner?
+	 */
+	set_routing(event, *c, RT_UNROUTED, NULL, where);
+	do_updown_unroute(*c, child);
+	delete_child_sa(&child);
+}
+
 /*
  * Either C is permanent, or C is an instance that going to be revived
  * - the full set of SPDs need to be changed to negotiation (just
@@ -461,6 +499,13 @@ void connection_initiate(struct connection *c, const threadtime_t *inception,
 			 .inception = inception,
 			 .background = background,
 		 });
+}
+
+void connection_terminate(struct connection **c, struct logger *logger, where_t where)
+{
+	dispatch(CONNECTION_TERMINATE, c,
+		 logger, where,
+		 (struct annex) {0});
 }
 
 void connection_acquire(struct connection *c, threadtime_t *inception,
@@ -1853,6 +1898,11 @@ void dispatch(enum routing_event event,
 				do_updown(UPDOWN_UP, *c, spd, &(*e->child)->sa, logger);
 				do_updown(UPDOWN_ROUTE, *c, spd, &(*e->child)->sa, logger);
 			}
+			return;
+
+		case X(TERMINATE, ROUTED_TUNNEL, PERMANENT):
+			terminate_routed_tunnel_permanent(event, c, logger, where,
+							  "terminate permanent");
 			return;
 
 		}

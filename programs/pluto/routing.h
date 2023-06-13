@@ -79,7 +79,7 @@ void connection_unroute(struct connection *c, where_t where);
  */
 void connection_initiate(struct connection *c, const threadtime_t *inception,
 			 bool background, where_t where);
-void connection_terminate(struct connection *c, bool background, where_t where);
+void connection_terminate(struct connection **c, struct logger *logger, where_t where);
 void connection_revive(struct connection *c, const threadtime_t *inception, where_t where);
 void connection_acquire(struct connection *c, threadtime_t *inception,
 			const struct kernel_acquire *b, where_t where);

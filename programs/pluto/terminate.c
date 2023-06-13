@@ -85,9 +85,7 @@ static int terminate_a_connection(struct connection *c, struct logger *logger)
 		delete_states_by_connection(&c);
 	}
 
-	if (c != NULL) {
-		connection_detach(c, logger);
-	}
+	connection_detach(c, logger); /* C could be NULL */
 
 	return 1;
 }
@@ -215,31 +213,37 @@ static void terminate_connection(struct connection **c, struct logger *logger)
 	connection_detach(*c, logger);
 }
 
-void terminate_connections(struct connection *c, struct logger *logger)
+void terminate_connections(struct connection **c, struct logger *logger, where_t where)
 {
-	switch (c->local->kind) {
+
+	switch ((*c)->local->kind) {
 	case CK_PERMANENT:
+		if ((*c)->config->ike_version == IKEv1) {
+			terminate_a_connection(*c, logger); /* could delete C! */
+			return;
+		}
+		terminate_connection(c, logger);
+		return;
 	case CK_INSTANCE:
-	case CK_LABELED_CHILD:
-		terminate_connection(&c, logger); /* could delete C! */
+	case CK_LABELED_PARENT:
+	case CK_LABELED_CHILD: /* should not happen? */
+		terminate_connection(c, logger); /* could delete C! */
 		return;
 	case CK_TEMPLATE:
 	case CK_GROUP:
-	case CK_LABELED_PARENT:
 	case CK_LABELED_TEMPLATE:
 	{
 		struct connection_filter cq = {
-			.clonedfrom = c,
+			.clonedfrom = *c,
 			.where = HERE,
 		};
 		while (next_connection_old2new(&cq)) {
-			terminate_connections(cq.c, logger);
+			terminate_connections(&cq.c, logger, where);
 		}
-		// terminate_a_connection(c, NULL, logger);
 		return;
 	}
 	case CK_INVALID:
 		break;
 	}
-	bad_case(c->local->kind);
+	bad_case((*c)->local->kind);
 }

@@ -368,7 +368,7 @@ static bool whack_terminate_connections(struct show *s, struct connection **c,
 #if 0
 	connection_attach(*c, show_logger(s));
 #endif
-	terminate_connections(*c, show_logger(s));
+	terminate_connections(c, show_logger(s), HERE);
 #if 0
 	connection_detach(*c, show_logger(s));
 #endif

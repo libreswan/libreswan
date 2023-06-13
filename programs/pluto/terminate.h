@@ -18,10 +18,12 @@
 
 #include <stdbool.h>
 
+#include "where.h"
+
 struct connection;
 struct logger;
 
-void terminate_connections(struct connection *c, struct logger *logger);
+void terminate_connections(struct connection **c, struct logger *logger, where_t where);
 void terminate_connections_by_name_or_alias(const char *name, bool quiet, struct logger *logger);
 
 #endif
