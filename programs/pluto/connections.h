@@ -723,8 +723,10 @@ extern void connection_delete_unused_instance(struct connection **cp, struct sta
 
 extern void show_connection_statuses(struct show *s);
 extern void show_connection_status(struct show *s, const struct connection *c);
-extern int connection_compare(const struct connection *ca,
-			      const struct connection *cb);
+
+struct connection **sort_connections(void);
+int connection_compare(const struct connection *ca,
+		       const struct connection *cb);
 
 void connection_check_ddns(struct logger *logger);
 void connection_check_phase2(struct logger *logger);

@@ -729,51 +729,26 @@ void show_connection_status(struct show *s, const struct connection *c)
 	show_kernel_alg_connection(s, c, instance);
 }
 
-static int connection_compare_qsort(const void *a, const void *b)
-{
-	return connection_compare(*(const struct connection *const *)a,
-				*(const struct connection *const *)b);
-}
-
 void show_connection_statuses(struct show *s)
 {
-	int count = 0;
-	int active = 0;
-
 	show_separator(s);
 	show_comment(s, "Connection list:");
 	show_separator(s);
 
-	struct connection_filter cq = { .where = HERE, };
-	while (next_connection_new2old(&cq)) {
-		struct connection *c = cq.c;
-		count++;
-		if (c->child.routing == RT_ROUTED_TUNNEL)
-			active++;
-	}
+	int count = 0;
+	int active = 0;
 
-	if (count != 0) {
+	struct connection **connections = sort_connections();
+	if (connections != NULL) {
 		/* make an array of connections, sort it, and report it */
-
-		struct connection **array =
-			alloc_bytes(sizeof(struct connection *) * count,
-				"connection array");
-		int i = 0;
-
-
-		struct connection_filter cq = { .where = HERE, };
-		while (next_connection_new2old(&cq)) {
-			array[i++] = cq.c;
+		for (struct connection **c = connections; *c != NULL; c++) {
+			count++;
+			if ((*c)->child.routing == RT_ROUTED_TUNNEL) {
+				active++;
+			}
+			show_connection_status(s, *c);
 		}
-
-		/* sort it! */
-		qsort(array, count, sizeof(struct connection *),
-			connection_compare_qsort);
-
-		for (i = 0; i < count; i++)
-			show_connection_status(s, array[i]);
-
-		pfree(array);
+		pfree(connections);
 		show_separator(s);
 	}
 

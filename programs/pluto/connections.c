@@ -3442,7 +3442,7 @@ struct connection *find_connection_for_packet(const ip_packet packet,
 
 /* signed result suitable for quicksort */
 int connection_compare(const struct connection *ca,
-		const struct connection *cb)
+		       const struct connection *cb)
 {
 	int ret;
 
@@ -3470,6 +3470,52 @@ int connection_compare(const struct connection *ca,
 			cap > cbp ? 1 : 0);
 	}
 	}
+}
+
+static int connection_compare_qsort(const void *a, const void *b)
+{
+	return connection_compare(*(const struct connection *const *)a,
+				  *(const struct connection *const *)b);
+}
+
+/*
+ * Return a sorted array of connections.  Caller must free.
+ *
+ * See also sort_states().
+ */
+struct connection **sort_connections(void)
+{
+	/* count up the connections */
+	unsigned nr_connections = 0;
+	{
+		struct connection_filter cq = { .where = HERE, };
+		while (next_connection_new2old(&cq)) {
+			nr_connections++;
+		}
+	}
+
+	if (nr_connections == 0) {
+		return NULL;
+	}
+
+	/* make a NULL terminated array of connections */
+	struct connection **connections = alloc_things(struct connection *,
+						       nr_connections + 1,
+						       "connection array");
+	{
+		unsigned i = 0;
+		struct connection_filter cq = { .where = HERE, };
+		while (next_connection_new2old(&cq)) {
+			connections[i++] = cq.c;
+		}
+		passert(i == nr_connections);
+	}
+
+	/* sort it! */
+	qsort(connections, nr_connections, sizeof(struct connection *),
+	      connection_compare_qsort);
+
+	return connections;
 }
 
 ip_address spd_end_sourceip(const struct spd_end *spde)
