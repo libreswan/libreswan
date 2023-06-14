@@ -125,6 +125,8 @@ pass2help()
 	report the status of the running test
     kill
 	kill the running testsuite
+    nohup
+	run in the background
 
   Step wize create/delete the domains (just use ./kvm install):
 
@@ -306,78 +308,101 @@ prefix=$(eval echo ${kvm_prefixes[0]})
 
 i=0
 while test $# -gt 0 ; do
-    case " ${pass2} " in
-	*" $1 "* )
-	    # accumulate pass2 commands
-	    ops[$i]="$1" ; i=$((i + 1))
+
+    # pass 1; look for modifiers  commands
+
+    case "$1" in
+
+	nohup )
+	    if test "$i" -ne 0 ; then
+		echo "nohup must be first command" 1>&2
+		exit 1
+	    fi
+	    if test "$#" -eq 1 ; then
+		echo "expecting a command after nohup" 1>&2
+		exit 1
+	    fi
+	    # avoid race tail can try to open nohup.out before nohup
+	    # creates it.
+	    touch nohup.out
+	    shift
+	    nohup ./kvm "$@" &
+	    exec tail -f nohup.out
 	    ;;
-	* )
-	    # must be a pass1 command
-	    case "$1" in
 
-		--baseline* )
-		    baseline=$(expr $1 : '--\(.*\)')
-		    shift
-		    __baseline="--baseline $1"
-		    ;;
+	--baseline* )
+	    baseline=$(expr $1 : '--\(.*\)')
+	    shift
+	    __baseline="--baseline $1"
+	    ;;
 
-		# aliases for pass2 commands
-		diff )   ops[$i]=diffs ;   i=$((i + 1)) ;;
-		result ) ops[$i]=results ; i=$((i + 1)) ;;
-		failed ) ops[$i]=failed ;  i=$((i + 1)) ;;
-		test   ) ops[$i]=check ;   i=$((i + 1)) ;;
-		retest ) ops[$i]=recheck ; i=$((i + 1)) ;;
-		test-clean ) ops[$i]=check-clean ; i=$((i + 1)) ;;
+	# aliases for pass2 commands
+	diff )   ops[$i]=diffs ;   i=$((i + 1)) ;;
+	result ) ops[$i]=results ; i=$((i + 1)) ;;
+	failed ) ops[$i]=failed ;  i=$((i + 1)) ;;
+	test   ) ops[$i]=check ;   i=$((i + 1)) ;;
+	retest ) ops[$i]=recheck ; i=$((i + 1)) ;;
+	test-clean ) ops[$i]=check-clean ; i=$((i + 1)) ;;
 
-		sh )
-		    shift
-		    host=${prefix}$1 ; shift
-		    echo "Connecting to ${host}" 1>&2
-		    exec testing/utils/kvmsh.py ${host} "$@"
-		    ;;
+	sh )
+	    shift
+	    host=${prefix}$1 ; shift
+	    echo "Connecting to ${host}" 1>&2
+	    exec testing/utils/kvmsh.py ${host} "$@"
+	    ;;
 
-		# wrappers
-		modified )
-		    modified=$(git status testing/pluto/ \
-				   | awk '/(modified|deleted|renamed|new file):/ { print $NF }' \
-				   | grep '/.*/.*/' \
-				   | cut -d/ -f1-3 \
-				   | sort -u)
-		    if test -z "${modified}" ; then
-			echo "no modified tests" 1>&2
-			exit 1
+	# wrappers
+	modified )
+	    modified=$(git status testing/pluto/ \
+			   | awk '/(modified|deleted|renamed|new file):/ { print $NF }' \
+			   | grep '/.*/.*/' \
+			   | cut -d/ -f1-3 \
+			   | sort -u)
+	    if test -z "${modified}" ; then
+		echo "no modified tests" 1>&2
+		exit 1
+	    fi
+	    ;;
+
+	baseline | baseline-passed | baseline-failed )
+	    if test -z "${__baseline}" ; then
+		echo "no KVM_BASELINE" 1&2
+		exit 1
+	    fi
+	    baseline=$1
+	    ;;
+
+
+	* ) # either a directory; a hostname; or pass2 command
+
+	    if [[ " ${pass2} " =~ " $1 " ]] ; then
+
+	       # pass2 command, accumulate
+	       ops[$i]="$1" ; i=$((i + 1))
+
+	    elif [[ " ${hosts} " =~ " $1 " ]] ; then
+
+		# a hostname
+		host=${prefix}$1 ; shift
+		echo "Connecting to ${host}" 1>&2
+		exec testing/utils/kvmsh.py ${host} "$@"
+
+	    else
+
+		# If the argument is a directory then bail; it's
+		# assumed that "$@" is a list of test directories.
+		if test ! -d "$1" ; then
+		    if test -z "${ops[*]}" ; then
+			echo "unknown command: $1" 1>&2
+		    else
+			echo "not a directory: $1" 1>&2
 		    fi
-		    ;;
+		    exit 1
+		fi
+		break
 
-		baseline | baseline-passed | baseline-failed )
-		    if test -z "${__baseline}" ; then
-			echo "no KVM_BASELINE" 1&2
-			exit 1
-		    fi
-		    baseline=$1
-		    ;;
+	    fi
 
-		* ) # either a directory; or a hostname
-		    case " ${hosts} " in
-
-			*" $1 "* )
-			    host=${prefix}$1 ; shift
-			    echo "Connecting to ${host}" 1>&2
-			    exec testing/utils/kvmsh.py ${host} "$@"
-			    ;;
-
-			* ) # check first trailing argument is a directory
-			    if test ! -d "$1" ; then
-				if test -z "${ops[*]}" ; then
-				    echo "unknown command: $1" 1>&2
-				else
-				    echo "not a directory: $1" 1>&2
-				fi
-				exit 1
-			    fi
-			    break
-		    esac
-	    esac
 	    ;;
     esac
     shift
