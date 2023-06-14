@@ -1032,9 +1032,4 @@ extern void set_sa_expire_next_event(enum event_type next_event, struct state *s
 void jam_humber_uintmax(struct jambuf *buf,
 			const char *prefix, uintmax_t val, const char *suffix);
 
-/* see implementation for meaning of LHS-RHS  */
-int state_compare_connection(const void *a, const void *b);
-int state_compare_serial(const void *a, const void *b);
-struct state **sort_states(int (*sort_fn)(const void *, const void *), where_t where);
-
 #endif /* STATE_H */

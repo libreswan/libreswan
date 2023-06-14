@@ -2257,52 +2257,41 @@ static void show_established_child_details(struct show *s, struct child_sa *chil
 
 /*
  * sorting logic is:
- *  name
- *  state serial no#
- */
-
-int state_compare_serial(const void *a, const void *b)
-{
-	const struct state *sap = *(const struct state *const *)a;
-	const struct state *sbp = *(const struct state *const *)b;
-	const so_serial_t a_sn = sap->st_serialno;
-	const so_serial_t b_sn = sbp->st_serialno;
-	struct connection *ca = sap->st_connection;
-	struct connection *cb = sbp->st_connection;
-	int ret;
-
-	ret = strcmp(ca->name, cb->name);
-	if (ret != 0)
-		return ret;
-
-	return a_sn < b_sn ? -1 : a_sn > b_sn ? 1 : 0;
-}
-
-/*
- * sorting logic is:
  *
  *  name
  *  type
  *  instance#
  *  isakmp_sa (XXX probably wrong)
- *  state_compare_serial above
+ *  state serial no#
  */
 
-int state_compare_connection(const void *a, const void *b)
+static int state_compare(const struct state *sl,
+			 const struct state *sr)
 {
-	const struct state *sap = *(const struct state *const *)a;
-	struct connection *ca = sap->st_connection;
-	const struct state *sbp = *(const struct state *const *)b;
-	struct connection *cb = sbp->st_connection;
+	struct connection *cl = sl->st_connection;
+	struct connection *cr = sr->st_connection;
 
 	/* DBG_log("comparing %s to %s", ca->name, cb->name); */
 
-	int order = connection_compare(ca, cb);
+	int order = connection_compare(cl, cr);
 	if (order != 0) {
 		return order;
 	}
 
-	return state_compare_serial(a, b);
+	const so_serial_t sol = sl->st_serialno;
+	const so_serial_t sor = sr->st_serialno;
+
+	/* sol - sor */
+	return (sol < sor ? -1 :
+		sol > sor ? 1 :
+		0);
+}
+
+static int state_cmp(const void *l, const void *r)
+{
+	const struct state *sl = *(const struct state *const *)l;
+	const struct state *sr = *(const struct state *const *)r;
+	return state_compare(sl, sr);
 }
 
 /*
@@ -2314,7 +2303,7 @@ int state_compare_connection(const void *a, const void *b)
  * Caller is responsible for freeing the structure.
  */
 
-struct state **sort_states(int (*sort_fn)(const void *, const void *), where_t where)
+static struct state **sort_states(where_t where)
 {
 	/* COUNT the number of states. */
 	int count = 0;
@@ -2347,7 +2336,7 @@ struct state **sort_states(int (*sort_fn)(const void *, const void *), where_t w
 	}
 
 	/* sort it! */
-	qsort(array, count, sizeof(struct state *), sort_fn);
+	qsort(array, count, sizeof(struct state *), state_cmp);
 
 	return array;
 }
@@ -2374,7 +2363,7 @@ void show_brief_status(struct show *s)
 void show_states(struct show *s, const monotime_t now)
 {
 	show_separator(s);
-	struct state **array = sort_states(state_compare_connection, HERE);
+	struct state **array = sort_states(HERE);
 
 	if (array != NULL) {
 		/* now print sorted results */
