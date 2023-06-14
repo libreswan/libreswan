@@ -543,9 +543,9 @@ static const chunk_t *get_ppk_by_id(const chunk_t *ppk_id)
  */
 const chunk_t *get_connection_ppk_initiator(const struct connection *c, chunk_t **ppk_id)
 {
-	char *ppk_ids = c->config->ppk_ids;
+	struct shunks *ppk_ids_shunks = c->config->ppk_ids_shunks;
 
-	if (ppk_ids == NULL) {
+	if (ppk_ids_shunks == NULL) {
 		/*
 		 * try to find any matching PPK, if found, save the corresponding
 		 * PPK_ID in ppk_id
@@ -567,28 +567,24 @@ const chunk_t *get_connection_ppk_initiator(const struct connection *c, chunk_t 
 		}
 		return &pks->ppk;
 	} else {
-		ldbg(c->logger, "ppk-ids conn option specified, iterate through list: %s", ppk_ids);
+		ldbg(c->logger, "ppk-ids conn option specified, iterate through list: %s",
+		     c->config->ppk_ids);
 		/*
-		 * iterate through PPK_ID (ppk-ids:) list and try to at
-		 * least one secrets entry that matches a PPK_ID from the
-		 * list. Start by stripping any leading delimiters in the
-		 * ppk-ids string
+		 * iterate through PPK_ID (ppk-ids=) list and try to find
+		 * at least one secrets entry that matches a PPK_ID from the
+		 * list.
 		 */
-		ppk_ids =  ppk_ids + strspn(ppk_ids, ", \t");
-		/* iterate through the list */
-		while (*ppk_ids != '\0') {
-			size_t len = strcspn(ppk_ids, ",");
-			chunk_t ppk_ids_elem = chunk2(ppk_ids, len);
+		FOR_EACH_ITEM(ppk_id_shunk, ppk_ids_shunks) {
+			/* XXX cast away the const qualifier from shunk_t pointer... */
+			chunk_t chunk = chunk2((void *) ppk_id_shunk->ptr, ppk_id_shunk->len);
 
 			ldbg(c->logger, "try to find PPK with PPK_ID:");
-			ldbg_hunk(c->logger, ppk_ids_elem);
+			ldbg_hunk(c->logger, *ppk_id_shunk);
 
-			const chunk_t *ppk = get_ppk_by_id(&ppk_ids_elem);
+			const chunk_t *ppk = get_ppk_by_id(&chunk);
 
-			if (ppk == NULL) {
-				ppk_ids = ppk_ids + len + strspn(ppk_ids + len, ",");
-			} else {
-				*ppk_id = &ppk_ids_elem;
+			if (ppk != NULL) {
+				*ppk_id = &chunk;
 				return ppk;
 			}
 		}
@@ -602,38 +598,30 @@ const chunk_t *get_connection_ppk_initiator(const struct connection *c, chunk_t 
  */
 const chunk_t *get_connection_ppk_responder(const struct connection *c, chunk_t *ppk_id)
 {
-	char *ppk_ids = c->config->ppk_ids;
+	struct shunks *ppk_ids_shunks = c->config->ppk_ids_shunks;
 
-	if (ppk_ids == NULL) {
+	if (ppk_ids_shunks == NULL) {
 		/* try to find PPK with PPK_ID ppk_id */
 		ldbg(c->logger, "ppk-ids conn option not specified, look for PPK with ID:");
 		ldbg_hunk(c->logger, *ppk_id);
 		return get_ppk_by_id(ppk_id);
 	} else {
-		ldbg(c->logger, "ppk-ids conn option specified, iterate through list: %s", ppk_ids);
+		ldbg(c->logger, "ppk-ids conn option specified, iterate through list: %s",
+		     c->config->ppk_ids);
 		/*
-		 * iterate through PPK_ID (ppk-ids:) list and try to at
-		 * least one secrets entry that matches a PPK_ID from the
-		 * list. Start by stripping any leading delimiters in the
-		 * ppk-ids string
+		 * iterate through PPK_ID (ppk-ids=) list and try to match
+		 * ppk_id with one entry from PPK_ID list.
 		 */
-		ppk_ids =  ppk_ids + strspn(ppk_ids, ", \t");
-		/* iterate through the list */
-		while (*ppk_ids != '\0') {
-			size_t len = strcspn(ppk_ids, ",");
-			chunk_t ppk_ids_elem = chunk2(ppk_ids, len);
+		FOR_EACH_ITEM(ppk_id_shunk, ppk_ids_shunks) {
+			/* XXX cast away the const qualifier from shunk_t pointer... */
+			chunk_t ppk_id_chunk = chunk2((void *) ppk_id_shunk->ptr, ppk_id_shunk->len);
 
 			ldbg(c->logger, "checking if received PPK_ID is equal to:");
-			ldbg_hunk(c->logger, ppk_ids_elem);
+			ldbg_hunk(c->logger, *ppk_id_shunk);
 
-			if (hunk_eq(*ppk_id, ppk_ids_elem)) {
+			if (hunk_eq(*ppk_id, *ppk_id_shunk)) {
 				ldbg(c->logger, "match! try to find PPK with that PPK_ID");
-				/* ppk_id in the conf option list, try to find it */
-				return get_ppk_by_id(ppk_id);
-			} else {
-				/* not a match, jump to next one in the list */
-				ppk_ids = ppk_ids + len + strspn(ppk_ids + len, ",");
-				continue;
+				return get_ppk_by_id(&ppk_id_chunk);
 			}
 		}
 	}
