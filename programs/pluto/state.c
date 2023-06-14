@@ -450,7 +450,7 @@ static struct state *new_state(struct connection *c,
 	st->st_state = &state_undefined;
 	st->st_inception = realnow();
 	st->st_sa_role = sa_role;
-	st->st_establishing_sa = sa_type;
+	st->st_sa_type_when_established = sa_type;
 	st->st_ike_spis.initiator = ike_initiator_spi;
 	st->st_ike_spis.responder = ike_responder_spi;
 	st->st_ah.protocol = &ip_protocol_ah;
@@ -663,10 +663,10 @@ static bool flush_incomplete_child(struct state *cst, void *pst)
 		 * CHILD SA have eventually replaced?
 		 */
 		so_serial_t replacing_sa;
-		switch (child->sa.st_establishing_sa) {
+		switch (child->sa.st_sa_type_when_established) {
 		case IKE_SA: replacing_sa = c->newest_ike_sa; break;
 		case IPSEC_SA: replacing_sa = c->newest_ipsec_sa; break;
-		default: bad_case(child->sa.st_establishing_sa);
+		default: bad_case(child->sa.st_sa_type_when_established);
 		}
 
 		if (child->sa.st_serialno > replacing_sa &&
@@ -874,7 +874,7 @@ void llog_state_delete_n_send(lset_t rc_flags, struct state *st, bool sending_de
 	LLOG_JAMBUF(rc_flags, st->st_logger, buf) {
 		/* deleting {IKE,Child,IPsec,ISAKMP} SA */
 		jam_string(buf, "deleting ");
-		jam_string(buf, st->st_connection->config->ike_info->sa_type_name[st->st_establishing_sa]);
+		jam_string(buf, st->st_connection->config->ike_info->sa_type_name[st->st_sa_type_when_established]);
 		/* (STATE-NAME) XXX: drop this? */
 		jam_string(buf, " (");
 		jam_string(buf, st->st_state->short_name);

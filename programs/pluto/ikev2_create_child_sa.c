@@ -1090,7 +1090,7 @@ stf_status process_v2_CREATE_CHILD_SA_child_response(struct ike_sa *ike,
 		return STF_INTERNAL_ERROR;
 	}
 
-	pexpect(larval_child->sa.st_establishing_sa == IPSEC_SA);
+	pexpect(larval_child->sa.st_sa_type_when_established == IPSEC_SA);
 
 	/*
 	 * Drive the larval Child SA's state machine.
@@ -1211,7 +1211,7 @@ static stf_status process_v2_CREATE_CHILD_SA_child_response_continue_1(struct st
 
 	pexpect(v2_msg_role(response_md) == MESSAGE_RESPONSE); /* i.e., MD!=NULL */
 	pexpect(larval_child->sa.st_sa_role == SA_INITIATOR);
-	pexpect(larval_child->sa.st_establishing_sa == IPSEC_SA);
+	pexpect(larval_child->sa.st_sa_type_when_established == IPSEC_SA);
 	dbg("%s() for #%lu %s",
 	     __func__, larval_child->sa.st_serialno, larval_child->sa.st_state->name);
 
@@ -1601,7 +1601,7 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response(struct ike_sa *ike,
 		return STF_INTERNAL_ERROR;
 	}
 
-	pexpect(larval_ike->sa.st_establishing_sa == IKE_SA);
+	pexpect(larval_ike->sa.st_sa_type_when_established == IKE_SA);
 	pexpect(ike->sa.st_serialno == larval_ike->sa.st_clonedfrom); /* not yet emancipated */
 	struct connection *c = larval_ike->sa.st_connection;
 
@@ -1707,7 +1707,7 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response_continue_1(struc
 
 	/* Just checking this is the rekey IKE SA initiator */
 	pexpect(larval_ike->sa.st_sa_role == SA_INITIATOR);
-	pexpect(larval_ike->sa.st_establishing_sa == IKE_SA);
+	pexpect(larval_ike->sa.st_sa_type_when_established == IKE_SA);
 	pexpect(larval_ike->sa.st_state->kind == STATE_V2_REKEY_IKE_I1);
 	pexpect(larval_ike->sa.st_v2_transition->state == STATE_V2_REKEY_IKE_I1);
 	pexpect(larval_ike->sa.st_v2_transition->next_state == STATE_V2_ESTABLISHED_IKE_SA);

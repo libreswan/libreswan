@@ -306,7 +306,7 @@ struct state {
 	 * new_state() could use clone_thing(const state on stack).
 	 */
 #define st_ike_version st_connection->config->ike_version
-	/*const*/ enum sa_type st_establishing_sa;	/* where is this state going? */
+	/*const*/ enum sa_type st_sa_type_when_established;	/* where is this state going? */
 
 	bool st_ikev2_anon;                     /* is this an anonymous IKEv2 state? */
 

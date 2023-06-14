@@ -2641,7 +2641,7 @@ void teardown_ipsec_kernel_states(struct child_sa *child)
 #endif
 			uninstall_kernel_states(child);
 		} else if (child->sa.st_sa_role == SA_INITIATOR &&
-			   child->sa.st_establishing_sa == IPSEC_SA) {
+			   child->sa.st_sa_type_when_established == IPSEC_SA) {
 			/*
 			 * XXX: so much for dreams of becoming an
 			 * established Child SA.

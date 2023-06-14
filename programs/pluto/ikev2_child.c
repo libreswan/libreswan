@@ -166,7 +166,7 @@ bool emit_v2_child_request_payloads(const struct ike_sa *ike,
 		return false;
 	}
 
-	if (!pexpect(larval_child->sa.st_establishing_sa == IPSEC_SA)) {
+	if (!pexpect(larval_child->sa.st_sa_type_when_established == IPSEC_SA)) {
 		return false;
 	}
 
@@ -427,7 +427,7 @@ bool emit_v2_child_response_payloads(struct ike_sa *ike,
 				     const struct msg_digest *request_md,
 				     struct pbs_out *outpbs)
 {
-	pexpect(larval_child->sa.st_establishing_sa == IPSEC_SA); /* never grow up */
+	pexpect(larval_child->sa.st_sa_type_when_established == IPSEC_SA); /* never grow up */
 	enum isakmp_xchg_type isa_xchg = request_md->hdr.isa_xchg;
 	struct connection *cc = larval_child->sa.st_connection;
 
