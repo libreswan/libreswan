@@ -78,9 +78,10 @@ static void dispatch(const enum routing_event event,
 
 static void jam_event_sa(struct jambuf *buf, struct state *st)
 {
+	const struct connection *c = st->st_connection;
 	jam_string(buf, "; ");
-	enum sa_type sa_type = IS_PARENT_SA(st) ? IKE_SA : IPSEC_SA;
-	jam_string(buf, st->st_connection->config->ike_info->sa_type_name[sa_type]);
+	enum sa_type sa_type = st->st_sa_type_when_established;
+	jam_string(buf, sa_name(c->config->ike_version, sa_type));
 	jam_string(buf, " ");
 	jam_so(buf, st->st_serialno);
 	jam_string(buf, " ");
@@ -736,11 +737,11 @@ static bool zap_connection_states(enum routing_event event,
 				state_attach(&child->sa, (*ike)->sa.st_logger);
 				enum_buf ren;
 				llog_sa(RC_LOG, child, "deleting larval %s (%s)",
-					child->sa.st_connection->config->ike_info->sa_type_name[IPSEC_SA],
+					child->sa.st_connection->config->ike_info->child_sa_name,
 					str_enum_short(&routing_event_names, event, &ren));
 			} else {
 				ldbg_routing(child->sa.st_logger, "deleting larval %s (%s)",
-					     child->sa.st_connection->config->ike_info->sa_type_name[IPSEC_SA],
+					     child->sa.st_connection->config->ike_info->child_sa_name,
 					     str_enum_short(&routing_event_names, event, &ren));
 			}
 			delete_child_sa(&child);

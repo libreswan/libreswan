@@ -65,7 +65,7 @@ static int rekey_connection(struct connection *c,
 	}
 	if (st == NULL) {
 		llog(RC_LOG, logger, "connection does not have %s",
-		     c->config->ike_info->sa_type_name[how->sa_type]);
+		     sa_name(c->config->ike_version, how->sa_type));
 		return 0;
 	}
 	rekey_state(st, how->background, logger);

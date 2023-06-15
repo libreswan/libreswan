@@ -869,7 +869,7 @@ static enum routability connection_routability(struct connection *c,
 	if (!never_negotiate(c) && !HAS_IPSEC_POLICY(c->policy)) {
 		llog(RC_ROUTE, logger,
 		     "cannot route an %s-only connection",
-		     c->config->ike_info->sa_name[IKE_SA]);
+		     c->config->ike_info->ike_name);
 		return ROUTE_IMPOSSIBLE;
 	}
 

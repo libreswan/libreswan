@@ -80,6 +80,9 @@ enum sa_type {
 #define SA_TYPE_ROOF (IPSEC_SA+1)
 };
 
+/* IKE SA | Child SA || ISAKMP SA | IPsec SA */
+const char *sa_name(enum ike_version, enum sa_type);
+
 typedef uint32_t msgid_t;      /* Host byte ordered */
 #define PRI_MSGID "%"PRIu32
 #define v1_MAINMODE_MSGID  ((msgid_t) 0)		/* network and host order */
