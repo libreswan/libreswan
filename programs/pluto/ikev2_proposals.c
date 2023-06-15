@@ -1503,10 +1503,21 @@ static bool emit_proposal(struct pbs_out *sa_pbs,
 		return false;
 	}
 
+	enum ikev2_sec_proto_id proposal_protoid = proposal->protoid;
+	if (impair.v2_proposal_protoid > 0) {
+		enum_buf ebo, ebn;
+		enum ikev2_sec_proto_id protoid = impair.v2_proposal_protoid - 1; /* unbias */
+		llog(RC_LOG, sa_pbs->outs_logger, "IMPAIR: changing proposal substructure Protocol ID from %s to %s (%u)",
+		     str_enum_short(&ikev2_proposal_protocol_id_names, proposal_protoid, &ebo),
+		     str_enum_short(&ikev2_proposal_protocol_id_names, protoid, &ebn),
+		     protoid);
+		proposal_protoid = protoid;
+	}
+
 	struct ikev2_prop prop = {
 		.isap_lp = last_proposal,
 		.isap_propnum = propnum,
-		.isap_protoid = proposal->protoid,
+		.isap_protoid = proposal_protoid,
 		.isap_spisize = local_spi.len,
 		.isap_numtrans = numtrans,
 	};
