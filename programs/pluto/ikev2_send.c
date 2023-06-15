@@ -146,7 +146,10 @@ bool emit_v2Nsa_pl(v2_notification_t ntype,
 		   struct pbs_out *payload_pbs /* optional */)
 {
 	/* See RFC 5996 section 3.10 "Notify Payload" */
-	passert(protoid == PROTO_v2_RESERVED || protoid == PROTO_v2_AH || protoid == PROTO_v2_ESP);
+	PASSERT(outs->outs_logger, (impair.emitting ||
+				    protoid == PROTO_v2_RESERVED ||
+				    protoid == PROTO_v2_AH ||
+				    protoid == PROTO_v2_ESP));
 
 	switch (ntype) {
 	case v2N_INVALID_SELECTORS:

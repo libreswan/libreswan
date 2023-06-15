@@ -63,6 +63,16 @@ bool record_v2_delete(struct ike_sa *ike, struct state *st)
 			};
 		}
 
+		if (impair.v2_delete_protoid > 0) {
+			enum_buf ebo, ebn;
+			enum ikev2_sec_proto_id protoid = impair.v2_delete_protoid - 1; /* unbias */
+			llog(RC_LOG, st->st_logger, "IMPAIR: changing Delete payload Protocol ID from %s to %s (%u)",
+			     str_enum_short(&ikev2_delete_protocol_id_names, v2del_tmp.isad_protoid, &ebo),
+			     str_enum_short(&ikev2_delete_protocol_id_names, protoid, &ebn),
+			     protoid);
+			v2del_tmp.isad_protoid = protoid;
+		}
+
 		/* Emit delete payload header out */
 		if (!out_struct(&v2del_tmp, &ikev2_delete_desc,
 				request.pbs, &del_pbs))

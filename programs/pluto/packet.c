@@ -2549,11 +2549,16 @@ static bool pbs_out_number(struct pbs_out *outs, struct_desc *sd,
 
 	case ft_enum:   /* value from an enumeration */
 		if (enum_name(fp->desc, n) == NULL) {
-			llog_pexpect(outs->outs_logger, HERE,
-				     "%s of %s has an unknown value: %" PRIu32 " (0x%" PRIx32 ")",
-				     fp->name, sd->name,
-				     n, n);
-			return false;
+			if (!impair.emitting) {
+				llog_pexpect(outs->outs_logger, HERE,
+					     "%s of %s has an unknown value: %" PRIu32 " (0x%" PRIx32 ")",
+					     fp->name, sd->name,
+					     n, n);
+				return false;
+			}
+			llog(RC_LOG, outs->outs_logger,
+			     "IMPAIR: %s of %s has an unknown value: %" PRIu32 " (0x%" PRIx32 ")",
+			     fp->name, sd->name, n, n);
 		}
 		break;
 

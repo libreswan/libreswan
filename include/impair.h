@@ -165,6 +165,10 @@ struct impair {
 	enum impair_emit v1_isakmp_delete_payload;
 	enum impair_emit v1_ipsec_delete_payload;
 
+	unsigned v2_delete_protoid;
+	unsigned v2n_rekey_sa_protoid;
+	unsigned v2_proposal_protoid;
+
 	/*
 	 * add more here
 	 */
