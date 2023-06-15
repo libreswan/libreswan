@@ -175,80 +175,94 @@ static void emancipate_larval_ike_sa(struct ike_sa *old_ike, struct child_sa *ne
 	release_whack(new_ike->sa.st_logger, HERE);
 }
 
-static struct child_sa *find_v2N_REKEY_SA_child(struct ike_sa *ike,
-						struct msg_digest *md)
+/*
+ * Find the Child SA identified by the v2N_REKEY_SA payload.
+ *
+ * FALSE: payload corrupt; caller should respond with the fatal
+ * v2N_INVALID_SYNTAX.
+ *
+ * TRUE, CHILD==NULL: payload ok but no matching Child SA was
+ * found. The v2N_CHILD_SA_NOT_FOUND response already recorded using
+ * information extracted from the rekey notify payload.
+ *
+ * TRUE, CHILD!=NULL: payload ok, matching Child SA found.
+ */
+
+static bool find_v2N_REKEY_SA_child(struct ike_sa *ike,
+				    struct msg_digest *md,
+				    struct child_sa **child)
 {
+	*child = NULL;
+
 	/*
-	 * Previously found by the state machine.
+	 * Previously decoded and minimially validated by the state
+	 * machine using ikev2_notify_desc (i.e., more validation
+	 * required).
 	 */
+
 	const struct payload_digest *rekey_sa_payload = md->pd[PD_v2N_REKEY_SA];
 	if (rekey_sa_payload == NULL) {
 		llog_pexpect(ike->sa.st_logger, HERE,
 			     "rekey child can't find its rekey_sa payload");
-		return NULL;
+		return false;
 	}
-#if 0
-	/* XXX: this would require a separate .pd_next link? */
-	if (rekey_sa_payload->next != NULL) {
-		/* will tolerate multiple */
-		llog_sa(RC_LOG_SERIOUS, ike,
-			  "ignoring duplicate v2N_REKEY_SA in exchange");
-	}
-#endif
-
-	/*
-	 * find old state to rekey
-	 */
 
 	const struct ikev2_notify *rekey_notify = &rekey_sa_payload->payload.v2n;
-	esb_buf b;
-	dbg("CREATE_CHILD_SA IPsec SA rekey Protocol %s",
-	    enum_show(&ikev2_notify_protocol_id_names, rekey_notify->isan_protoid, &b));
 
-	if (rekey_notify->isan_spisize != sizeof(ipsec_spi_t)) {
-		llog_sa(RC_LOG, ike,
-			  "CREATE_CHILD_SA IPsec SA rekey invalid spi size %u",
-			  rekey_notify->isan_spisize);
-		record_v2N_response(ike->sa.st_logger, ike, md, v2N_INVALID_SYNTAX,
-				    NULL/*empty data*/, ENCRYPTED_PAYLOAD);
-		return NULL;
-	}
-
-	ipsec_spi_t spi = 0;
-	struct pbs_in rekey_pbs = rekey_sa_payload->pbs;
-	diag_t d = pbs_in_thing(&rekey_pbs, spi, "SPI");
-	if (d != NULL) {
-		llog_diag(RC_LOG, ike->sa.st_logger, &d, "%s", "");
-		record_v2N_response(ike->sa.st_logger, ike, md, v2N_INVALID_SYNTAX,
-				    NULL/*empty data*/, ENCRYPTED_PAYLOAD);
-		return NULL; /* cannot happen; XXX: why? */
-	}
-
-	if (spi == 0) {
-		llog_sa(RC_LOG, ike,
-			  "CREATE_CHILD_SA IPsec SA rekey contains zero SPI");
-		record_v2N_response(ike->sa.st_logger, ike, md, v2N_INVALID_SYNTAX,
-				    NULL/*empty data*/, ENCRYPTED_PAYLOAD);
-		return NULL;
-	}
+	/*
+	 * Check the protocol.
+	 *
+	 * "ikev2_notify_desc" allows 0, IKE, ESP and AH; reject the
+	 * first two.  Will also need to check that the protocl
+	 * matches that extablished by the Child SA.
+	 */
 
 	if (rekey_notify->isan_protoid != PROTO_IPSEC_ESP &&
 	    rekey_notify->isan_protoid != PROTO_IPSEC_AH) {
 		esb_buf b;
 		llog_sa(RC_LOG, ike,
-			  "CREATE_CHILD_SA IPsec SA rekey invalid Protocol ID %s",
-			  enum_show(&ikev2_notify_protocol_id_names, rekey_notify->isan_protoid, &b));
-		record_v2N_spi_response(ike->sa.st_logger, ike, md,
-					rekey_notify->isan_protoid, &spi,
-					v2N_CHILD_SA_NOT_FOUND,
-					NULL/*empty data*/, ENCRYPTED_PAYLOAD);
-		return NULL;
+			"CREATE_CHILD_SA IPsec SA rekey invalid Protocol ID %s",
+			enum_show(&ikev2_notify_protocol_id_names, rekey_notify->isan_protoid, &b));
+		return false;
+	}
+
+	esb_buf b;
+	ldbg_sa(ike, "CREATE_CHILD_SA IPsec SA rekey Protocol %s",
+		enum_show(&ikev2_notify_protocol_id_names, rekey_notify->isan_protoid, &b));
+
+	/*
+	 * Get the SPI.
+	 *
+	 * The SPI (and the protoid?) can be used to find the Child SA
+	 * to rekey.
+	 */
+
+	if (rekey_notify->isan_spisize != sizeof(ipsec_spi_t)) {
+		llog_sa(RC_LOG, ike,
+			"CREATE_CHILD_SA IPsec SA rekey invalid spi size %u",
+			rekey_notify->isan_spisize);
+		return false;
+	}
+
+	ipsec_spi_t spi = 0; /* network ordered */
+	struct pbs_in rekey_pbs = rekey_sa_payload->pbs;
+	diag_t d = pbs_in_thing(&rekey_pbs, spi, "SPI");
+	if (d != NULL) {
+		/* for instance, truncated SPI */
+		llog_diag(RC_LOG, ike->sa.st_logger, &d, "%s", "");
+		return false;
+	}
+
+	if (spi == 0) {
+		llog_sa(RC_LOG, ike,
+			"CREATE_CHILD_SA IPsec SA rekey contains zero SPI");
+		return false;
 	}
 
 	esb_buf protoesb;
-	dbg("CREATE_CHILD_S to rekey IPsec SA(0x%08" PRIx32 ") Protocol %s",
-	    ntohl((uint32_t) spi),
-	    enum_show(&ikev2_notify_protocol_id_names, rekey_notify->isan_protoid, &protoesb));
+	ldbg_sa(ike, "CREATE_CHILD_SA to rekey IPsec SA("PRI_IPSEC_SPI") Protocol %s",
+		pri_ipsec_spi(spi),
+		enum_show(&ikev2_notify_protocol_id_names, rekey_notify->isan_protoid, &protoesb));
 
 	/*
 	 * From 1.3.3.  Rekeying Child SAs with the CREATE_CHILD_SA
@@ -257,29 +271,31 @@ static struct child_sa *find_v2N_REKEY_SA_child(struct ike_sa *ike,
 	 * exchange initiator would expect in inbound ESP or AH
 	 * packets.
 	 *
-	 * From our POV, that's the outbound SPI.
+	 * From our, the responder's POV, that's the outbound SPI.
 	 */
+
 	struct child_sa *replaced_child = find_v2_child_sa_by_outbound_spi(ike, rekey_notify->isan_protoid, spi);
 	if (replaced_child == NULL) {
 		esb_buf b;
 		llog_sa(RC_LOG, ike,
-			  "CREATE_CHILD_SA no such IPsec SA to rekey SA(0x%08" PRIx32 ") Protocol %s",
-			  ntohl((uint32_t) spi),
-			  enum_show(&ikev2_notify_protocol_id_names, rekey_notify->isan_protoid, &b));
+			"CREATE_CHILD_SA no such IPsec SA to rekey SA("PRI_IPSEC_SPI") Protocol %s",
+			pri_ipsec_spi(spi),
+			enum_show(&ikev2_notify_protocol_id_names, rekey_notify->isan_protoid, &b));
 		record_v2N_spi_response(ike->sa.st_logger, ike, md,
 					rekey_notify->isan_protoid, &spi,
 					v2N_CHILD_SA_NOT_FOUND,
 					NULL/*empty data*/, ENCRYPTED_PAYLOAD);
-		return NULL;
+		return true;
 	}
 
 	connection_buf cb;
-	dbg("#%lu hasa a rekey request for "PRI_CONNECTION" #%lu TSi TSr",
-	    ike->sa.st_serialno,
-	    pri_connection(replaced_child->sa.st_connection, &cb),
-	    replaced_child->sa.st_serialno);
+	ldbg_sa(ike, "#%lu hasa a rekey request for "PRI_CONNECTION" #%lu TSi TSr",
+		ike->sa.st_serialno,
+		pri_connection(replaced_child->sa.st_connection, &cb),
+		replaced_child->sa.st_serialno);
 
-	return replaced_child;
+	*child = replaced_child;
+	return true;
 }
 
 static bool record_v2_rekey_ike_message(struct ike_sa *ike,
@@ -637,8 +653,13 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 							  struct child_sa *larval_child,
 							  struct msg_digest *md)
 {
+	struct child_sa *predecessor = NULL;
+	if (!find_v2N_REKEY_SA_child(ike, md, &predecessor)) {
+		record_v2N_response(ike->sa.st_logger, ike, md, v2N_INVALID_SYNTAX,
+				    NULL/*empty data*/, ENCRYPTED_PAYLOAD);
+		return STF_FATAL;
+	}
 
-	struct child_sa *predecessor = find_v2N_REKEY_SA_child(ike, md);
 	if (predecessor == NULL) {
 		/* already logged; already recorded */
 		return STF_OK; /*IKE*/
