@@ -1557,20 +1557,58 @@ void add_connection_spds(struct connection *c,
  * least shouldn't be) (look for strange free() vs delref() sequence).
  */
 
+static diag_t check_min_sa_lifetime(const char *sa_name,
+				    deltatime_t whack_lifetime,
+				    const struct whack_message *wm)
+{
+	/*
+	 * Check for wild values
+	 * Must never overflow: rekeymargin*(100+rekeyfuzz)/100
+	 * We don't know the maximum value for a time_t, so we use INT_MAX
+	 * ??? this should be checked wherever any of these is set in Pluto
+	 * too.
+	 */
+	if (wm->sa_rekeyfuzz_percent > INT_MAX - 100) {
+		return diag("rekeyfuzz=%jd%% is so large it causes overflow",
+			    wm->sa_rekeyfuzz_percent);
+	}
+	if (deltasecs(wm->sa_rekey_margin) > (INT_MAX / (100 + (intmax_t)wm->sa_rekeyfuzz_percent))) {
+		return diag("rekeymargin=%jd is so large it causes overflow",
+			    deltasecs(wm->sa_rekey_margin));
+	}
+	deltatime_t min_rekey_margin = deltatime_scale(wm->sa_rekey_margin, 100 + wm->sa_rekeyfuzz_percent, 100);
+
+	if (wm->rekey && deltatime_cmp(whack_lifetime, <, min_rekey_margin)) {
+		return diag("%s [%jd] must be greater than rekeymargin*(100+rekeyfuzz)/100 [%jd*(100+%lu)/100 = %jd]",
+			    sa_name,
+			    deltasecs(whack_lifetime),
+			    deltasecs(wm->sa_rekey_margin),
+			    wm->sa_rekeyfuzz_percent,
+			    deltasecs(min_rekey_margin));
+	}
+	return NULL;
+}
+
 static void extract_max_sa_lifetime(const char *sa_name,
-				    deltatime_t *lifetime, deltatime_t whack_lifetime,
-				    time_t fips_lifetime_max, time_t lifetime_max,
-				    struct logger *logger)
+				      deltatime_t *lifetime,
+				      deltatime_t whack_lifetime,
+				      time_t fips_lifetime_max,
+				      time_t raw_lifetime_max,
+				      struct logger *logger)
 {
 	/* http://csrc.nist.gov/publications/nistpubs/800-77/sp800-77.pdf */
 	deltatime_t max_lifetime =
-		deltatime(libreswan_fipsmode() ? fips_lifetime_max : lifetime_max);
+		deltatime(libreswan_fipsmode() ? fips_lifetime_max : raw_lifetime_max);
 
-	if (deltatime_cmp(whack_lifetime, ==, deltatime_zero) ||
-	    deltatime_cmp(whack_lifetime, >, max_lifetime)) {
+	if (deltatime_cmp(whack_lifetime, ==, deltatime_zero)) {
 		llog(RC_LOG, logger,
 		     "%s lifetime set to the maximum allowed %jds",
 		     sa_name, deltasecs(max_lifetime));
+		*lifetime = max_lifetime;
+	} else if (deltatime_cmp(whack_lifetime, >, max_lifetime)) {
+		llog(RC_LOG, logger,
+		     "%s lifetime %jd must not exceed %ld seconds, set to the maximum allowed",
+		     sa_name, deltasecs(whack_lifetime), deltasecs(max_lifetime));
 		*lifetime = max_lifetime;
 	} else {
 		*lifetime = whack_lifetime;
@@ -2261,15 +2299,26 @@ static diag_t extract_connection(const struct whack_message *wm,
 	if (NEVER_NEGOTIATE(wm->policy)) {
 		dbg("skipping over misc settings as NEVER_NEGOTIATE");
 	} else {
+
+		d = check_min_sa_lifetime("IKE", wm->sa_ike_max_lifetime, wm);
+		if (d != NULL) {
+			return d;
+		}
+		d = check_min_sa_lifetime("IPsec", wm->sa_ipsec_max_lifetime,wm);
+		if (d != NULL) {
+			return d;
+		}
+
 		/* http://csrc.nist.gov/publications/nistpubs/800-77/sp800-77.pdf */
 		extract_max_sa_lifetime("IKE", &config->sa_ike_max_lifetime, wm->sa_ike_max_lifetime,
 					FIPS_IKE_SA_LIFETIME_MAXIMUM, IKE_SA_LIFETIME_MAXIMUM, c->logger);
 		extract_max_sa_lifetime("IPsec", &config->sa_ipsec_max_lifetime, wm->sa_ipsec_max_lifetime,
-					FIPS_IPSEC_SA_LIFETIME_MAXIMUM, IPSEC_SA_LIFETIME_MAXIMUM, c->logger);
+					    FIPS_IPSEC_SA_LIFETIME_MAXIMUM, IPSEC_SA_LIFETIME_MAXIMUM, c->logger);
 
 		config->nic_offload = wm->nic_offload;
+
 		config->sa_rekey_margin = wm->sa_rekey_margin;
-		config->sa_rekey_fuzz = wm->sa_rekey_fuzz;
+		config->sa_rekey_fuzz = wm->sa_rekeyfuzz_percent;
 		c->sa_replay_window = wm->sa_replay_window;
 
 		config->retransmit_timeout = wm->retransmit_timeout;

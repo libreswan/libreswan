@@ -512,7 +512,7 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	msg.sa_rekey_margin = deltatime_ms(conn->options[KNCF_REKEYMARGIN_MS]);
 	msg.sa_ipsec_max_bytes = conn->options[KNCF_IPSEC_MAXBYTES];
 	msg.sa_ipsec_max_packets = conn->options[KNCF_IPSEC_MAXPACKETS];
-	msg.sa_rekey_fuzz = conn->options[KNCF_REKEYFUZZ];
+	msg.sa_rekeyfuzz_percent = conn->options[KNCF_REKEYFUZZ];
 	if (conn->options_set[KNCF_KEYINGTRIES]) {
 		msg.keyingtries.set = true;
 		msg.keyingtries.value = conn->options[KNCF_KEYINGTRIES];

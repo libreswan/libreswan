@@ -176,7 +176,7 @@ struct whack_message {
 	deltatime_t sa_ike_max_lifetime;
 	deltatime_t sa_ipsec_max_lifetime;
 	deltatime_t sa_rekey_margin;
-	unsigned long sa_rekey_fuzz;
+	uintmax_t sa_rekeyfuzz_percent;
 
 	struct {
 		bool set;

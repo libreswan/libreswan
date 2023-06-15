@@ -964,38 +964,6 @@ static void optarg_to_uintmax(uintmax_t *val)
 	}
 }
 
-/* ??? there seems to be no consequence for invalid life_time. */
-static void check_max_lifetime(deltatime_t life, time_t raw_limit,
-			       const char *which,
-			       const struct whack_message *msg)
-{
-	deltatime_t limit = deltatime(raw_limit);
-	deltatime_t mint = deltatime_scale(msg->sa_rekey_margin, 100 + msg->sa_rekey_fuzz/*percent*/, 100);
-
-	if (deltatime_cmp(limit, <, life)) {
-		char buf[200];	/* arbitrary limit */
-
-		snprintf(buf, sizeof(buf),
-			 "%s [%ld seconds] must be less than %ld seconds",
-			 which,
-			 (long)deltasecs(life),
-			 (long)deltasecs(limit));
-		diagw(buf);
-	}
-	if (msg->rekey && !deltatime_cmp(mint, <, life)) {
-		char buf[200];	/* arbitrary limit */
-
-		snprintf(buf, sizeof(buf),
-			 "%s [%ld] must be greater than rekeymargin*(100+rekeyfuzz)/100 [%ld*(100+%lu)/100 = %ld]",
-			 which,
-			 (long)deltasecs(life),
-			 (long)deltasecs(msg->sa_rekey_margin),
-			 msg->sa_rekey_fuzz,
-			 (long)deltasecs(mint));
-		diagw(buf);
-	}
-}
-
 static void send_reply(int sock, char *buf, ssize_t len)
 {
 	/* send the secret to pluto */
@@ -1073,7 +1041,7 @@ int main(int argc, char **argv)
 	msg.sa_ike_max_lifetime = deltatime(IKE_SA_LIFETIME_DEFAULT);
 	msg.sa_ipsec_max_lifetime = deltatime(IPSEC_SA_LIFETIME_DEFAULT);
 	msg.sa_rekey_margin = deltatime(SA_REPLACEMENT_MARGIN_DEFAULT);
-	msg.sa_rekey_fuzz = SA_REPLACEMENT_FUZZ_DEFAULT;
+	msg.sa_rekeyfuzz_percent = SA_REPLACEMENT_FUZZ_DEFAULT;
 	msg.keyingtries.set = false;
 	/* whack cannot access kernel_ops->replay_window */
 	msg.sa_replay_window = IPSEC_SA_DEFAULT_REPLAY_WINDOW;
@@ -1923,7 +1891,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_RKFUZZ:	/* --rekeyfuzz <percentage> */
-			msg.sa_rekey_fuzz = opt_whole;
+			msg.sa_rekeyfuzz_percent = opt_whole;
 			continue;
 
 		case CD_KTRIES:	/* --keyingtries <count> */
@@ -2674,20 +2642,6 @@ int main(int argc, char **argv)
 		if (msg.ike == NULL)
 			diagw("cannot specify aggressive mode without ike= to set algorithm");
 	}
-
-	/*
-	 * Check for wild values
-	 * Must never overflow: rekeymargin*(100+rekeyfuzz)/100
-	 * We don't know the maximum value for a time_t, so we use INT_MAX
-	 * ??? this should be checked wherever any of these is set in Pluto
-	 * too.
-	 */
-	if (msg.sa_rekey_fuzz > INT_MAX - 100 ||
-	    deltasecs(msg.sa_rekey_margin) > (time_t)(INT_MAX / (100 + msg.sa_rekey_fuzz)))
-		diagw("rekeymargin or rekeyfuzz values are so large that they cause overflow");
-
-	check_max_lifetime(msg.sa_ike_max_lifetime, IKE_SA_LIFETIME_MAXIMUM, "ike-lifetime", &msg);
-	check_max_lifetime(msg.sa_ipsec_max_lifetime, IPSEC_SA_LIFETIME_MAXIMUM, "ipsec-lifetime", &msg);
 
 	if (msg.remotepeertype != CISCO &&
 	    msg.remotepeertype != NON_CISCO) {
