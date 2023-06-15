@@ -9,8 +9,8 @@ else
 fi
 
 case $d in
-    *ikev1*) ikev2=no ;;
-    *ikev2*) ikev2=yes ;;
+    *ikev1*) ikev2=no  ; ikev1_policy=accept ;;
+    *ikev2*) ikev2=yes ; ikev1_policy=drop   ;;
 esac
 
 ike=$(echo $d | sed -n -e 's/-esp.*//' -e 's/-ah.*//' -e 's/.*-ikev[0-9]*-\(.*\)/\1/p')
@@ -73,6 +73,7 @@ echo /etc/ipsec.conf ...
 {
     cat <<EOF
 config setup
+	ikev1-policy=${ikev1_policy}
 	# put the logs in /tmp for the UMLs, so that we can operate
 	# without syslogd, which seems to break on UMLs
 	logfile=/tmp/pluto.log

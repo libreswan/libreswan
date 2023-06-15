@@ -1,6 +1,7 @@
 ../../guestbin/algo.sh
 /etc/ipsec.conf ...
 config setup
+	ikev1-policy=drop
 	# put the logs in /tmp for the UMLs, so that we can operate
 	# without syslogd, which seems to break on UMLs
 	logfile=/tmp/pluto.log
