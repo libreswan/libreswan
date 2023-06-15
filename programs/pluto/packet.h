@@ -476,7 +476,7 @@ extern struct_desc ipsec_sit_desc;
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  * ! Next Payload  !   RESERVED    !         Payload Length        !
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
- * !  Proposal #   !  Protocol-Id  !    SPI Size   !# of Transforms!
+ * !  Proposal #   !  Protocol ID  !    SPI Size   !# of Transforms!
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  * !                        SPI (variable)                         !
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -718,7 +718,7 @@ extern struct_desc isakmp_nonce_desc;
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  * !              Domain of Interpretation  (DOI)                  !
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
- * !  Protocol-ID  !   SPI Size    !      Notify Message Type      !
+ * !  Protocol ID  !   SPI Size    !      Notify Message Type      !
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  * !                                                               !
  * ~                Security Parameter Index (SPI)                 ~
@@ -769,7 +769,7 @@ extern struct_desc isakmp_xauth_attribute_desc;
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  * !              Domain of Interpretation  (DOI)                  !
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
- * !  Protocol-ID  !   SPI Size    !      Notify Message Type      !
+ * !  Protocol ID  !   SPI Size    !      Notify Message Type      !
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  * !                                                               !
  * ~                Security Parameter Index (SPI)                 ~
@@ -803,7 +803,7 @@ extern struct_desc isakmp_notification_desc;
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  * !              Domain of Interpretation  (DOI)                  !
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
- * !  Protocol-Id  !   SPI Size    !           # of SPIs           !
+ * !  Protocol ID  !   SPI Size    !           # of SPIs           !
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  * !                                                               !
  * ~               Security Parameter Index(es) (SPI)              ~
@@ -951,6 +951,26 @@ struct ikev2_sa {
 
 extern struct_desc ikev2_sa_desc;
 
+/*
+ * IKEv2 Proposal Substructure
+ *
+ * Layout taken from RFC 7296 3.3.1.  Proposal Substructure
+ *
+ *                      1                   2                   3
+ *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * | Last Substruc |   RESERVED    |         Proposal Length       |
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * | Proposal Num  |  Protocol ID  |    SPI Size   |Num  Transforms|
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * ~                        SPI (variable)                         ~
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * |                                                               |
+ * ~                        <Transforms>                           ~
+ * |                                                               |
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ */
+
 struct ikev2_prop {
 	uint8_t isap_lp;		/* Last proposal or not */
 					/* Matches IKEv1 ISAKMP_NEXT_P by design */
@@ -1056,7 +1076,27 @@ extern struct_desc ikev2_certificate_req_desc;
 /* rfc4306, section 3.9, nonce, uses generic header */
 extern struct_desc ikev2_nonce_desc;
 
-/* rfc4306 section 3.10 NOTIFY Payload */
+/*
+ * IKEv2 Notify Payload
+ *
+ * Layout from RFC 7296 3.10.  Notify Payload
+ *
+ *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * | Next Payload  |C|  RESERVED   |         Payload Length        |
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * |  Protocol ID  |   SPI Size    |      Notify Message Type      |
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * |                                                               |
+ * ~                Security Parameter Index (SPI)                 ~
+ * |                                                               |
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * |                                                               |
+ * ~                       Notification Data                       ~
+ * |                                                               |
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ */
+
 struct ikev2_notify {
 	uint8_t isan_np;	/* Next payload */
 	uint8_t isan_critical;
@@ -1065,6 +1105,7 @@ struct ikev2_notify {
 	uint8_t isan_spisize;	/* SPI size: 0 for IKE_SA */
 	uint16_t isan_type;	/* Notification type, see v2_notification_t */
 };
+
 extern struct_desc ikev2_notify_desc;
 
 /* IKEv2 Delete Payload
