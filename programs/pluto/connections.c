@@ -3440,42 +3440,60 @@ struct connection *find_connection_for_packet(const ip_packet packet,
 	return best_connection;
 }
 
+/*
+ * Recursively order instances.
+ */
+
+static int connection_instance_compare(const struct connection *cl,
+				       const struct connection *cr)
+{
+	if (cl->clonedfrom != NULL && cr->clonedfrom != NULL) {
+		int ret = connection_instance_compare(cl->clonedfrom,
+						      cr->clonedfrom);
+		if (ret != 0) {
+			return ret;
+		}
+	}
+
+	return (cl->instance_serial < cr->instance_serial ? -1 :
+		cl->instance_serial > cr->instance_serial ? 1 :
+		0);
+}
+
 /* signed result suitable for quicksort */
-int connection_compare(const struct connection *ca,
-		       const struct connection *cb)
+int connection_compare(const struct connection *cl,
+		       const struct connection *cr)
 {
 	int ret;
 
-	ret = strcmp(ca->name, cb->name);
-	if (ret != 0)
+	ret = strcmp(cl->name, cr->name);
+	if (ret != 0) {
 		return ret;
+	}
 
 	/* note: enum connection_kind behaves like int */
-	ret = (int)ca->local->kind - (int)cb->local->kind;
-	if (ret != 0)
+	ret = (long)cl->local->kind - (long)cr->local->kind;
+	if (ret != 0) {
 		return ret;
+	}
 
 	/* same name, and same type */
-	switch (ca->local->kind) {
-	case CK_INSTANCE:
-		return (ca->instance_serial < cb->instance_serial ? -1 :
-			ca->instance_serial > cb->instance_serial ? 1 :
-			0);
+	ret = connection_instance_compare(cl, cr);
+	if (ret != 0) {
+		return ret;
+	}
 
-	default:
-	{
-		connection_priority_t cap = connection_priority(ca);
-		connection_priority_t cbp = connection_priority(cb);
-		return (cap < cbp ? -1 :
-			cap > cbp ? 1 : 0);
-	}
-	}
+	connection_priority_t pl = connection_priority(cl);
+	connection_priority_t pr = connection_priority(cr);
+	return (pl < pr ? -1 :
+		pl > pr ? 1 :
+		0);
 }
 
-static int connection_compare_qsort(const void *a, const void *b)
+static int connection_compare_qsort(const void *l, const void *r)
 {
-	return connection_compare(*(const struct connection *const *)a,
-				  *(const struct connection *const *)b);
+	return connection_compare(*(const struct connection *const *)l,
+				  *(const struct connection *const *)r);
 }
 
 /*
