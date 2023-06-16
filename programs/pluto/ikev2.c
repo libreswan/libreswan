@@ -1969,6 +1969,25 @@ static void complete_protected_but_fatal_exchange(struct ike_sa *ike, struct msg
 		pexpect(transition->next_state == STATE_V2_ESTABLISHED_IKE_SA);
 		break;
 	}
+	case STATE_V2_ESTABLISHED_IKE_SA:
+		/*
+		 * The transitions come in request/response pairs; the
+		 * last two are the most generic.
+		 */
+		passert(state->nr_transitions >= 2);
+		switch (v2_msg_role(md)) {
+		case MESSAGE_REQUEST:
+			transition = &state->v2.transitions[state->nr_transitions - 2];
+			pexpect(transition->recv_role == MESSAGE_REQUEST);
+			break;
+		case MESSAGE_RESPONSE:
+			transition = &state->v2.transitions[state->nr_transitions - 1];
+			pexpect(transition->recv_role == MESSAGE_RESPONSE);
+			break;
+		default:
+			bad_case(v2_msg_role(md));
+		}
+		break;
 	default:
 		if (/*pexpect*/(state->nr_transitions > 0)) {
 			transition = &state->v2.transitions[state->nr_transitions - 1];
