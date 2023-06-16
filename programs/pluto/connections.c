@@ -1579,7 +1579,7 @@ static diag_t check_min_sa_lifetime(const char *sa_name,
 	deltatime_t min_rekey_margin = deltatime_scale(wm->sa_rekey_margin, 100 + wm->sa_rekeyfuzz_percent, 100);
 
 	if (wm->rekey && deltatime_cmp(whack_lifetime, <, min_rekey_margin)) {
-		return diag("%s [%jd] must be greater than rekeymargin*(100+rekeyfuzz)/100 [%jd*(100+%lu)/100 = %jd]",
+		return diag("%s [%jd] must be greater than rekeymargin*(100+rekeyfuzz)/100 [%jd*(100+%ju)/100 = %jd]",
 			    sa_name,
 			    deltasecs(whack_lifetime),
 			    deltasecs(wm->sa_rekey_margin),
@@ -1607,7 +1607,7 @@ static void extract_max_sa_lifetime(const char *sa_name,
 		*lifetime = max_lifetime;
 	} else if (deltatime_cmp(whack_lifetime, >, max_lifetime)) {
 		llog(RC_LOG, logger,
-		     "%s lifetime %jd must not exceed %ld seconds, set to the maximum allowed",
+		     "%s lifetime %jd must not exceed %ju seconds, set to the maximum allowed",
 		     sa_name, deltasecs(whack_lifetime), deltasecs(max_lifetime));
 		*lifetime = max_lifetime;
 	} else {
