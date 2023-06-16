@@ -640,7 +640,7 @@ static struct fd *logger_fd(const struct logger *logger)
 	return NULL;
 }
 
-void attach_fd(struct logger *dst, struct fd *src_fd)
+void attach_fd_where(struct logger *dst, struct fd *src_fd, where_t where)
 {
 	/* do no harm? */
 	if (src_fd == NULL) {
@@ -660,7 +660,7 @@ void attach_fd(struct logger *dst, struct fd *src_fd)
 	/* attach to spare slot */
 	FOR_EACH_THING(fdp, &dst->global_whackfd, &dst->object_whackfd) {
 		if (*fdp == NULL) {
-			*fdp = fd_addref(src_fd);
+			*fdp = fd_addref_where(src_fd, where);
 			ldbg(dst, "whack attached to spare slot");
 			return;
 		}
@@ -668,21 +668,21 @@ void attach_fd(struct logger *dst, struct fd *src_fd)
 
 	/* replace global */
 	ldbg(dst, "whack attached to global slot");
-	fd_delref(&dst->global_whackfd);
-	dst->global_whackfd = fd_addref(src_fd);
+	fd_delref_where(&dst->global_whackfd, where);
+	dst->global_whackfd = fd_addref_where(src_fd, where);
 }
 
-void connection_attach(struct connection *c, const struct logger *src)
+void connection_attach_where(struct connection *c, const struct logger *src, where_t where)
 {
-	attach_fd(c->logger, logger_fd(src));
+	attach_fd_where(c->logger, logger_fd(src), where);
 }
 
-void state_attach(struct state *st, const struct logger *src)
+void state_attach_where(struct state *st, const struct logger *src, where_t where)
 {
-	attach_fd(st->st_logger, logger_fd(src));
+	attach_fd_where(st->st_logger, logger_fd(src), where);
 }
 
-static void detach_whack(struct logger *dst, const struct logger *src)
+static void detach_whack_where(struct logger *dst, const struct logger *src, where_t where)
 {
 	/* find a whack to detach */
 	struct fd *src_fd = logger_fd(src);
@@ -695,24 +695,24 @@ static void detach_whack(struct logger *dst, const struct logger *src)
 	FOR_EACH_THING(fdp, &dst->global_whackfd, &dst->object_whackfd) {
 		if (*fdp == src_fd) {
 			ldbg(dst, "detaching whack");
-			fd_delref(fdp);
+			fd_delref_where(fdp, where);
 			return;
 		}
 	}
 }
 
-void connection_detach(struct connection *c, const struct logger *src)
+void connection_detach_where(struct connection *c, const struct logger *src, where_t where)
 {
 	if (c == NULL) {
 		return;
 	}
-	detach_whack(c->logger, src);
+	detach_whack_where(c->logger, src, where);
 }
 
-void state_detach(struct state *st, const struct logger *src)
+void state_detach_where(struct state *st, const struct logger *src, where_t where)
 {
 	if (st == NULL) {
 		return;
 	}
-	detach_whack(st->st_logger, src);
+	detach_whack_where(st->st_logger, src, where);
 }

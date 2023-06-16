@@ -60,13 +60,20 @@ extern bool whack_prompt_for(struct state *st, const char *prompt,
 
 void release_whack(struct logger *logger, where_t where);
 
-void connection_attach(struct connection *c, const struct logger *src);
-void connection_detach(struct connection *c, const struct logger *src);
+void connection_attach_where(struct connection *c, const struct logger *src, where_t where);
+void connection_detach_where(struct connection *c, const struct logger *src, where_t where);
 
-void state_attach(struct state *st, const struct logger *src);
-void state_detach(struct state *st, const struct logger *src);
+#define connection_attach(C, SRC) connection_attach_where(C, SRC, HERE)
+#define connection_detach(C, SRC) connection_detach_where(C, SRC, HERE)
 
-void attach_fd(struct logger *dst, struct fd *whack_fd);
+void state_attach_where(struct state *st, const struct logger *src, where_t where);
+void state_detach_where(struct state *st, const struct logger *src, where_t where);
+
+#define state_attach(ST, SRC) state_attach_where(ST, SRC, HERE)
+#define state_detach(ST, SRC) state_detach_where(ST, SRC, HERE)
+
+#define attach_fd(DST, WHACK_FD) attach_fd_where(DST, WHACK_FD, HERE)
+void attach_fd_where(struct logger *dst, struct fd *whack_fd, where_t where);
 
 /* for pushing state to other subsystems */
 #define binlog_refresh_state(st) binlog_state((st), (st)->st_state->kind)
