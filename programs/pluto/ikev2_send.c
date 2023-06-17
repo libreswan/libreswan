@@ -138,26 +138,30 @@ bool emit_v2UNKNOWN(const char *victim, enum isakmp_xchg_type exchange_type,
  */
 
 
-/* emit a v2 Notification payload, with optional SA and optional sub-payload */
-bool emit_v2Nsa_pl(v2_notification_t ntype,
-		   enum ikev2_sec_proto_id protoid,
-		   const ipsec_spi_t *spi, /* optional */
-		   struct pbs_out *outs,
-		   struct pbs_out *payload_pbs /* optional */)
+bool emit_v2N_header(struct pbs_out *outs,
+		     v2_notification_t ntype,
+		     enum ikev2_sec_proto_id protocol_id,
+		     unsigned spi_size,
+		     struct pbs_out *spi_and_data)
 {
 	/* See RFC 5996 section 3.10 "Notify Payload" */
-	passert(protoid == PROTO_v2_RESERVED || protoid == PROTO_v2_AH || protoid == PROTO_v2_ESP);
+	if (!PEXPECT(outs->outs_logger, (impair.emitting ||
+					 protocol_id == PROTO_v2_RESERVED ||
+					 protocol_id == PROTO_v2_AH ||
+					 protocol_id == PROTO_v2_ESP))) {
+		return false;
+	}
 
 	switch (ntype) {
 	case v2N_INVALID_SELECTORS:
 	case v2N_REKEY_SA:
 	case v2N_CHILD_SA_NOT_FOUND:
-		if (protoid == PROTO_v2_RESERVED || spi == NULL) {
+		if (protocol_id == PROTO_v2_RESERVED || spi_size == 0) {
 			dbg("XXX: type requires SA; missing");
 		}
 		break;
 	default:
-		if (protoid != PROTO_v2_RESERVED || spi != NULL) {
+		if (protocol_id != PROTO_v2_RESERVED || spi_size > 0) {
 			dbg("XXX: type forbids SA but SA present");
 		}
 		break;
@@ -167,15 +171,29 @@ bool emit_v2Nsa_pl(v2_notification_t ntype,
 
 	struct ikev2_notify n = {
 		.isan_critical = build_ikev2_critical(false, outs->outs_logger),
-		.isan_protoid = protoid,
-		.isan_spisize = spi != NULL ? sizeof(*spi) : 0,
+		.isan_protoid = protocol_id,
+		.isan_spisize = spi_size,
 		.isan_type = ntype,
 	};
 
-	struct pbs_out pls;
+	return pbs_out_struct(outs, &ikev2_notify_desc,
+			      &n, sizeof(n), spi_and_data);
+}
 
-	if (!out_struct(&n, &ikev2_notify_desc, outs, &pls))
+/* emit a v2 Notification payload, with optional SA and optional sub-payload */
+bool emit_v2Nsa_pl(v2_notification_t ntype,
+		   enum ikev2_sec_proto_id protoid,
+		   const ipsec_spi_t *spi, /* optional */
+		   struct pbs_out *outs,
+		   struct pbs_out *payload_pbs /* optional */)
+{
+	size_t spi_size = (spi == NULL ? 0 : sizeof(*spi));
+
+	struct pbs_out pls;
+	if (!emit_v2N_header(outs, ntype, protoid, spi_size, &pls)) {
 		return false;
+	}
+
 	if (spi != NULL) {
 		if (!pbs_out_thing(&pls, *spi, "SPI")) {
 			/* already logged */
