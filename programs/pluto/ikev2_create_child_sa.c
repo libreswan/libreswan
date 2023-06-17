@@ -1744,20 +1744,20 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response_continue_1(struc
 }
 
 stf_status process_v2_CREATE_CHILD_SA_failure_response(struct ike_sa *ike,
-						       struct child_sa *child,
+						       struct child_sa *unused_child UNUSED,
 						       struct msg_digest *md UNUSED)
 {
 	passert(ike != NULL);
-	passert(child == NULL);
-	child = ike->sa.st_v2_msgid_windows.initiator.wip_sa;
-	if (!pexpect(child != NULL)) {
+	passert(unused_child == NULL);
+	struct child_sa **larval_child = &ike->sa.st_v2_msgid_windows.initiator.wip_sa;
+	if (pbad(*larval_child == NULL)) {
 		/* XXX: drop everything on the floor */
 		return STF_INTERNAL_ERROR;
 	}
 
-        pstat_sa_failed(&child->sa, REASON_TRAFFIC_SELECTORS_FAILED);
+        pstat_sa_failed(&(*larval_child)->sa, REASON_TRAFFIC_SELECTORS_FAILED);
 
-	stf_status status = STF_OK; /*IKE*/
+	stf_status status = STF_ROOF; /*IKE;place holder*/
 
 	/*
 	 * This assumes that the first notify is the (fatal) error
@@ -1768,23 +1768,36 @@ stf_status process_v2_CREATE_CHILD_SA_failure_response(struct ike_sa *ike,
 		if (n < v2N_ERROR_PSTATS_ROOF) {
 			pstat(ikev2_recv_notifies_e, n);
 			enum_buf esb;
-			llog_sa(RC_LOG_SERIOUS, child,
+			llog_sa(RC_LOG_SERIOUS, (*larval_child),
 				"CREATE_CHILD_SA failed with error notification %s",
 				str_enum_short(&v2_notification_names, n, &esb));
 			dbg("re-add child to pending queue with exponential back-off?");
-			if (n == v2N_INVALID_SYNTAX) {
-				status = STF_FATAL; /* kill IKE */
-			}
+			status = (n == v2N_INVALID_SYNTAX ? STF_FATAL/*kill IKE*/ :
+				  STF_OK/*keep IKE*/);
 			break;
 		}
 	}
 
-	/* keep tests happy */
-	llog_sa(RC_NOTIFICATION, child, "state transition '%s' failed",
-		child->sa.st_v2_transition->story);
+	if (status == STF_ROOF) {
+		/* there was no reason, huh? */
+		status = STF_OK;/*keep IKE?*/
+		/* log something */
+		llog_sa(RC_NOTIFICATION, (*larval_child), "state transition '%s' failed",
+			(*larval_child)->sa.st_v2_transition->story);
+	}
 
-	delete_state(&child->sa);
-	ike->sa.st_v2_msgid_windows.initiator.wip_sa = child = NULL;
+	/*
+	 * If LARVAL_CHILD is rekeying (replacing) a Child SA, also
+	 * detach the logger from that state.
+	 */
+	struct state *replacing = state_by_serialno((*larval_child)->sa.st_v2_rekey_pred);
+	if (replacing != NULL && IS_CHILD_SA(replacing)) {
+		PEXPECT((*larval_child)->sa.st_logger,
+			(*larval_child)->sa.st_sa_type_when_established == IPSEC_SA);
+		state_detach(replacing, (*larval_child)->sa.st_logger);
+	}
+
+	delete_child_sa(larval_child);
 
 	return status; /* IKE */
 }
