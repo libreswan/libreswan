@@ -314,6 +314,8 @@ bool pbs_out_zero(struct pbs_out *outs, size_t len, const char *name) MUST_USE_R
 bool pbs_out_repeated_byte(struct pbs_out *pbs, uint8_t byte, size_t len,
 			   const char *name) MUST_USE_RESULT;
 
+#define pbs_out_thing(OUTS, THING, NAME) pbs_out_raw(OUTS, &(THING), sizeof(THING), NAME)
+
 bool pbs_out_raw(struct pbs_out *outs, const void *bytes, size_t len,
 		 const char *name) MUST_USE_RESULT;
 

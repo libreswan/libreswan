@@ -148,8 +148,7 @@ static bool emit_v2CP_attribute_address(uint16_t type, const ip_address *ip,
 
 	if (afi == &ipv6_info) {
 		uint8_t ipv6_prefix_len = IKEv2_INTERNAL_IP6_PREFIX_LEN; /*128*/
-		if (!pbs_out_raw(&a_pbs, &ipv6_prefix_len,
-				 sizeof(uint8_t), "INTERNAL_IP6_PREFIX_LEN")) {
+		if (!pbs_out_thing(&a_pbs, ipv6_prefix_len, "INTERNAL_IP6_PREFIX_LEN")) {
 			/* already logged */
 			return false;
 		}

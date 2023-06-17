@@ -146,7 +146,7 @@ static bool emit_v2CERTREQ_ca_hash(struct pbs_out *cr_pbs,
 	pexpect(ctx == NULL);
 
 
-	if (!pbs_out_raw(cr_pbs, sighash, sizeof(sighash), "Certification Authority hash")) {
+	if (!pbs_out_thing(cr_pbs, sighash, "Certification Authority hash")) {
 		return false;
 	}
 

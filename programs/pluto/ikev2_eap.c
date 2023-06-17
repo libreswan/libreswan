@@ -363,7 +363,7 @@ static stf_status send_eap_fragment_response(struct ike_sa *ike, struct msg_dige
 
 	if (eaptls.eaptls_flags & EAPTLS_FLAGS_LENGTH) {
 		uint32_t msglen = htonl(eap->eaptls_chunk.len);
-		if (!pbs_out_raw(&eap_data, &msglen, sizeof(msglen), "TLS Message length")) {
+		if (!pbs_out_thing(&eap_data, msglen, "TLS Message length")) {
 			/* already logged */
 			goto err;
 		}

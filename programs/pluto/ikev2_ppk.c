@@ -54,11 +54,11 @@ bool create_ppk_id_payload(chunk_t *ppk_id, struct ppk_id_payload *payl)
 bool emit_unified_ppk_id(struct ppk_id_payload *payl, pb_stream *outs)
 {
 	uint8_t type = PPK_ID_FIXED;
-	if (!pbs_out_raw(outs, &type, sizeof(type), "PPK_ID_FIXED")) {
+	if (!pbs_out_thing(outs, type, "PPK_ID_FIXED")) {
 		/* already logged */
 		return false;
 	}
-	return out_hunk(payl->ppk_id, outs, "PPK_ID");
+	return pbs_out_hunk(outs, payl->ppk_id, "PPK_ID");
 }
 
 /*

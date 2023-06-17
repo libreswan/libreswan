@@ -177,7 +177,7 @@ bool emit_v2Nsa_pl(v2_notification_t ntype,
 	if (!out_struct(&n, &ikev2_notify_desc, outs, &pls))
 		return false;
 	if (spi != NULL) {
-		if (!pbs_out_raw(&pls, spi, sizeof(*spi), "SPI")) {
+		if (!pbs_out_thing(&pls, *spi, "SPI")) {
 			/* already logged */
 			return false;
 		}
@@ -238,7 +238,7 @@ bool emit_v2N_SIGNATURE_HASH_ALGORITHMS(lset_t sighash_policy,
 	if (sighash_policy & POLICY) {					\
 		uint16_t hash_id = htons(ID);				\
 		passert(sizeof(hash_id) == RFC_7427_HASH_ALGORITHM_IDENTIFIER_SIZE); \
-		if (!pbs_out_raw(&n_pbs, &hash_id, sizeof(hash_id),	\
+		if (!pbs_out_thing(&n_pbs, hash_id,			\
 				 "hash algorithm identifier "#ID)) {	\
 			/* already logged */				\
 			return false;					\

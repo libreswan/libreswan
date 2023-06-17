@@ -70,8 +70,7 @@ bool record_v2_delete(struct ike_sa *ike, struct state *st)
 
 		/* Emit values of spi to be sent to the peer */
 		if (IS_CHILD_SA(st)) {
-			if (!pbs_out_raw(&del_pbs, &st->st_esp.inbound.spi,
-					 sizeof(ipsec_spi_t), "local spis")) {
+			if (!pbs_out_thing(&del_pbs, st->st_esp.inbound.spi, "local spis")) {
 				/* already logged */
 				return false;
 			}
