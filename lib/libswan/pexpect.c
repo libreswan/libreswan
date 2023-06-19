@@ -21,18 +21,13 @@
 
 void llog_pexpect(const struct logger *logger, where_t where, const char *message, ...)
 {
-	struct barfbuf barfbuf;
-	struct jambuf *buf = jambuf_from_barfbuf(&barfbuf, logger, 0, where, PEXPECT_FLAGS);
+	struct logjam logjam;
+	struct jambuf *buf = jambuf_from_logjam(&logjam, logger, 0, where, PEXPECT_FLAGS);
 	{
 		va_list ap;
 		va_start(ap, message);
 		jam_va_list(buf, message, ap);
 		va_end(ap);
 	}
-	pexpect_barfbuf_to_logger(&barfbuf);
-}
-
-void pexpect_barfbuf_to_logger(struct barfbuf *barfbuf)
-{
-	barfbuf_to_logger(barfbuf);
+	logjam_to_logger(&logjam);
 }

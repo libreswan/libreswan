@@ -16,36 +16,49 @@
 
 #include <stdlib.h>		/* for abort() */
 
+#include "logjam.h"
 #include "lswlog.h"
 
-struct jambuf *jambuf_from_barfbuf(struct barfbuf *barfbuf,
+struct jambuf *jambuf_from_logjam(struct logjam *logjam,
 				   const struct logger *logger,
 				   enum pluto_exit_code pec,
 				   where_t where,
 				   lset_t rc_flags)
 {
 	/*
-	 * Note: don't initialize entire barfbuf; as that would zero
+	 * Note: don't initialize entire logjam; as that would zero
 	 * the very large array[LOG_WIDTH].
 	 */
-	barfbuf->barf = (struct barfjam) {
+	logjam->barf = (struct barf) {
 		.rc_flags = rc_flags,
-		.jambuf = ARRAY_AS_JAMBUF(barfbuf->array),
+		.jambuf = ARRAY_AS_JAMBUF(logjam->array),
 		.logger = logger,
 		.where = where,
 		.pec = pec,
 	};
-	jam_logger_rc_prefix(&barfbuf->barf.jambuf, logger, rc_flags);
-	return &barfbuf->barf.jambuf;
+	jam_logger_rc_prefix(&logjam->barf.jambuf, logger, rc_flags);
+	return &logjam->barf.jambuf;
 }
 
-void barfbuf_to_logger(struct barfbuf *barfbuf)
+void logjam_to_logger(struct logjam *logjam)
 {
-	if (barfbuf->barf.where != NULL) {
-		jam(&barfbuf->barf.jambuf, " "PRI_WHERE, pri_where(barfbuf->barf.where));
+	if (logjam->barf.where != NULL) {
+		jam_string(&logjam->barf.jambuf, " ");
+		jam_where(&logjam->barf.jambuf, logjam->barf.where);
 	}
-	jambuf_to_logger(&barfbuf->barf.jambuf, barfbuf->barf.logger, barfbuf->barf.rc_flags);
-	if ((barfbuf->barf.rc_flags & STREAM_MASK) == PASSERT_STREAM) {
+	jambuf_to_logger(&logjam->barf.jambuf, logjam->barf.logger, logjam->barf.rc_flags);
+	if ((logjam->barf.rc_flags & STREAM_MASK) == PASSERT_STREAM) {
 		abort();
+	}
+}
+
+void barf(lset_t rc_flags, struct logger *logger, enum pluto_exit_code pec, where_t where,
+	  const char *fmt, ...)
+{
+	BARF_JAMBUF(rc_flags, logger, pec, where, buf) {
+		va_list ap;
+		va_start(ap, fmt);
+		jam_va_list(buf, fmt, ap);
+		va_end(ap);
 	}
 }

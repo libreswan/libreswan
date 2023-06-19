@@ -27,9 +27,9 @@
 #include "lswcdefs.h"		/* for NEVER_RETURNS PRINTF_LIKE() */
 #include "where.h"
 #include "lset.h"
+#include "logjam.h"
 
 struct logger;
-struct barfbuf;
 
 /* our versions of assert: log result */
 
@@ -51,18 +51,18 @@ extern struct logger global_logger;
 extern void llog_passert(const struct logger *logger, where_t where,
 			 const char *message, ...) NEVER_RETURNS PRINTF_LIKE(3);
 
-void passert_barfbuf_to_logger(struct barfbuf *buf) NEVER_RETURNS;
+void passert_logjam_to_logger(struct logjam *buf) NEVER_RETURNS;
 
 #define LLOG_PASSERT_JAMBUF(LOGGER, WHERE, BUF)				\
 	/* create the buffer */						\
-	for (struct barfbuf barfbuf_, *bf_ = &barfbuf_;			\
+	for (struct logjam logjam_, *bf_ = &logjam_;			\
 	     bf_ != NULL; bf_ = NULL)					\
 		/* create the jambuf */					\
 		for (struct jambuf *BUF =				\
-			     jambuf_from_barfbuf(&barfbuf_, LOGGER,	\
+			     jambuf_from_logjam(&logjam_, LOGGER,	\
 						 0, WHERE, PASSERT_FLAGS); \
 		     BUF != NULL;					\
-		     passert_barfbuf_to_logger(&barfbuf_), BUF = NULL)
+		     passert_logjam_to_logger(&logjam_), BUF = NULL)
 
 #define PASSERT_WHERE(LOGGER, WHERE, ASSERTION)				\
 	({								\

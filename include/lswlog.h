@@ -162,19 +162,6 @@ enum stream {
 	 */
 };
 
-#define DEBUG_PREFIX		"| "
-#define ERROR_PREFIX		"ERROR: "
-#define PEXPECT_PREFIX		"EXPECTATION FAILED: "
-#define PASSERT_PREFIX		"FATAL: ASSERTION FAILED: "
-#define FATAL_PREFIX		"FATAL ERROR: "
-
-#define DEBUG_FLAGS		(DEBUG_STREAM)
-#define PEXPECT_FLAGS		(PEXPECT_STREAM|RC_LOG_SERIOUS)
-#define PASSERT_FLAGS		(PASSERT_STREAM|RC_LOG_SERIOUS)
-#define ERROR_FLAGS		(ERROR_STREAM|RC_LOG_SERIOUS)
-#define FATAL_FLAGS		(FATAL_STREAM|RC_LOG_SERIOUS)
-#define PRINTF_FLAGS		(NO_PREFIX|WHACK_STREAM)
-
 /*
  * Broadcast a log message.
  *
@@ -204,49 +191,6 @@ struct logger_object_vec {
 };
 
 void jam_logger_rc_prefix(struct jambuf *buf, const struct logger *logger, lset_t rc_flags);
-
-struct barfbuf {
-	char array[LOG_WIDTH];
-	struct barfjam {
-		const struct logger *logger;
-		struct jambuf jambuf;
-		lset_t rc_flags;
-		where_t where;
-		enum pluto_exit_code pec;
-	} barf;
-};
-
-struct jambuf *jambuf_from_barfbuf(struct barfbuf *barfbuf,
-				   const struct logger *logger,
-				   enum pluto_exit_code pec,
-				   where_t where,
-				   lset_t rc_flags) MUST_USE_RESULT;
-void barfbuf_to_logger(struct barfbuf *buf); /* may not return */
-
-#define BARFBUF(RC_FLAGS, LOGGER, PEC, WHERE, BUF)			\
-	/* create the buffer */						\
-	for (struct barfbuf barfbuf_, *bf_ = &barfbuf_;			\
-	     bf_ != NULL; bf_ = NULL)					\
-		/* create the jambuf */					\
-		for (struct jambuf *BUF =				\
-			     jambuf_from_barfbuf(&barfbuf_, LOGGER,	\
-						 PEC, WHERE, RC_FLAGS); \
-		     BUF != NULL;					\
-		     barfbuf_to_logger(&barfbuf_), BUF = NULL)
-
-struct logbuf {
-	char array[LOG_WIDTH];
-	struct logjam {
-		const struct logger *logger;
-		struct jambuf jambuf;
-		lset_t rc_flags;
-	} log;
-};
-
-struct jambuf *jambuf_from_logbuf(struct logbuf *logbuf,
-				  const struct logger *logger,
-				  lset_t rc_flags) MUST_USE_RESULT;
-void logbuf_to_logger(struct logbuf *buf);
 
 bool suppress_object_log_false(const void *object);
 bool suppress_object_log_true(const void *object);
@@ -282,14 +226,14 @@ void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, lset_t rc
 
 #define LLOG_JAMBUF(RC_FLAGS, LOGGER, BUF)				\
 	/* create the buffer */						\
-	for (struct logbuf logbuf_, *lbp_ = &logbuf_;			\
+	for (struct logjam logjam_, *lbp_ = &logjam_;			\
 	     lbp_ != NULL; lbp_ = NULL)					\
 		/* create the jambuf */					\
 		for (struct jambuf *BUF =				\
-			     jambuf_from_logbuf(&logbuf_, LOGGER,	\
-						RC_FLAGS);		\
+			     jambuf_from_logjam(&logjam_, LOGGER,	\
+						0, NULL, RC_FLAGS);	\
 		     BUF != NULL;					\
-		     logbuf_to_logger(&logbuf_), BUF = NULL)
+		     logjam_to_logger(&logjam_), BUF = NULL)
 
 void llog_dump(lset_t rc_flags,
 	       const struct logger *log,

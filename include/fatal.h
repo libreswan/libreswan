@@ -22,10 +22,12 @@
 
 #include "lswcdefs.h"
 
+#include "logjam.h"
+
 enum pluto_exit_code;
 struct logger;
 struct jambuf;
-struct barfbuf;
+struct logjam;
 
 /*
  * XXX: The message format is:
@@ -39,17 +41,17 @@ void fatal(enum pluto_exit_code pec, const struct logger *logger,
 void fatal_errno(enum pluto_exit_code pec, const struct logger *logger,
 		 int error, const char *message, ...) PRINTF_LIKE(4) NEVER_RETURNS;
 
-void fatal_barfbuf_to_logger(struct barfbuf *buf) NEVER_RETURNS;
+void fatal_logjam_to_logger(struct logjam *buf) NEVER_RETURNS;
 
 #define LLOG_FATAL_JAMBUF(PEC, LOGGER, BUF)				\
 	/* create the buffer */						\
-	for (struct barfbuf barfbuf_, *lbp_ = &barfbuf_;		\
+	for (struct logjam logjam_, *lbp_ = &logjam_;		\
 	     lbp_ != NULL; lbp_ = NULL)					\
 		/* create the jambuf */					\
 		for (struct jambuf *BUF =				\
-			     jambuf_from_barfbuf(&barfbuf_, LOGGER,	\
+			     jambuf_from_logjam(&logjam_, LOGGER,	\
 						 PEC, NULL, FATAL_FLAGS); \
 		     BUF != NULL;					\
-		     fatal_barfbuf_to_logger(&barfbuf_), BUF = NULL)
+		     fatal_logjam_to_logger(&logjam_), BUF = NULL)
 
 #endif

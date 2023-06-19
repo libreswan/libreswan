@@ -21,19 +21,19 @@
 
 void llog_passert(const struct logger *logger, where_t where, const char *fmt, ...)
 {
-	struct barfbuf barfbuf;
-	struct jambuf *buf = jambuf_from_barfbuf(&barfbuf, logger, 0, where, PASSERT_FLAGS);
+	struct logjam logjam;
+	struct jambuf *buf = jambuf_from_logjam(&logjam, logger, 0, where, PASSERT_FLAGS);
 	{
 		va_list ap;
 		va_start(ap, fmt);
 		jam_va_list(buf, fmt, ap);
 		va_end(ap);
 	}
-	passert_barfbuf_to_logger(&barfbuf);
+	passert_logjam_to_logger(&logjam);
 }
 
-void passert_barfbuf_to_logger(struct barfbuf *barfbuf)
+void passert_logjam_to_logger(struct logjam *logjam)
 {
-	barfbuf_to_logger(barfbuf);
+	logjam_to_logger(logjam);
 	abort();
 }

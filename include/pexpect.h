@@ -32,9 +32,9 @@
 #include "where.h"		/* used by macros */
 #include "fd.h"			/* for null_fd */
 #include "impair.h"
+#include "logjam.h"
 
 struct jambuf;
-struct barfbuf;
 
 /*
  * Log an expectation failure message to the error streams.  That is
@@ -50,18 +50,16 @@ struct barfbuf;
 extern void llog_pexpect(const struct logger *logger, where_t where,
 			 const char *message, ...) PRINTF_LIKE(3);
 
-void pexpect_barfbuf_to_logger(struct barfbuf *buf);
-
 #define LLOG_PEXPECT_JAMBUF(LOGGER, WHERE, BUF)				\
 	/* create the buffer */						\
-	for (struct barfbuf barfbuf_, *lbp_ = &barfbuf_;		\
+	for (struct logjam logjam_, *lbp_ = &logjam_;		\
 	     lbp_ != NULL; lbp_ = NULL)					\
 		/* create the jambuf */					\
 		for (struct jambuf *BUF =				\
-			     jambuf_from_barfbuf(&barfbuf_, LOGGER,	\
+			     jambuf_from_logjam(&logjam_, LOGGER,	\
 						 0, WHERE, PEXPECT_FLAGS); \
 		     BUF != NULL;					\
-		     pexpect_barfbuf_to_logger(&barfbuf_), BUF = NULL)
+		     logjam_to_logger(&logjam_), BUF = NULL)
 
 #define PEXPECT_WHERE(LOGGER, WHERE, ASSERTION)				\
 	({								\
