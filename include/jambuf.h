@@ -25,6 +25,8 @@
 #include "lswcdefs.h"		/* for PRINTF_LIKE */
 #include "shunk.h"
 
+#define LOG_WIDTH	((size_t)1024)	/* roof of number of chars in log line */
+
 /*
  * struct jambuf provides a mechanism for accumulating formatted
  * strings into a string buffer, vis:

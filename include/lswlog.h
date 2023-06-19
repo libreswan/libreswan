@@ -35,8 +35,6 @@
 #include "pexpect.h"
 #include "fatal.h"
 
-#define LOG_WIDTH	((size_t)1024)	/* roof of number of chars in log line */
-
 extern bool log_to_stderr;          /* should log go to stderr? */
 
 
