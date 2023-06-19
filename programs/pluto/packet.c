@@ -2561,11 +2561,16 @@ static bool pbs_out_number(struct pbs_out *outs, struct_desc *sd,
 
 	case ft_enum:   /* value from an enumeration */
 		if (enum_name(fp->desc, n) == NULL) {
-			llog_pexpect(outs->outs_logger, HERE,
-				     "%s of %s has an unknown value: %" PRIu32 " (0x%" PRIx32 ")",
-				     fp->name, sd->name,
-				     n, n);
-			return false;
+			if (!impair.emitting) {
+				llog_pexpect(outs->outs_logger, HERE,
+					     "%s of %s has an unknown value: %" PRIu32 " (0x%" PRIx32 ")",
+					     fp->name, sd->name,
+					     n, n);
+				return false;
+			}
+			llog(RC_LOG, outs->outs_logger,
+			     "IMPAIR: %s of %s has an unknown value: %" PRIu32 " (0x%" PRIx32 ")",
+			     fp->name, sd->name, n, n);
 		}
 		break;
 
@@ -2577,13 +2582,21 @@ static bool pbs_out_number(struct pbs_out *outs, struct_desc *sd,
 
 	case ft_lset:           /* bits representing set */
 		if (!test_lset(fp->desc, n)) {
+			if (!impair.emitting) {
+				lset_buf lb;
+				llog_pexpect(outs->outs_logger, HERE,
+					     "bitset %s of %s has unknown member(s): %s (0x%" PRIx32 ")",
+					     fp->name, sd->name,
+					     str_lset(fp->desc, n, &lb),
+					     n);
+				return false;
+			}
 			lset_buf lb;
-			llog_pexpect(outs->outs_logger, HERE,
-				     "bitset %s of %s has unknown member(s): %s (0x%" PRIx32 ")",
-				     fp->name, sd->name,
-				     str_lset(fp->desc, n, &lb),
-				     n);
-			return false;
+			llog(RC_LOG, outs->outs_logger,
+			     "IMPAIR: bitset %s of %s has unknown member(s): %s (0x%" PRIx32 ")",
+			     fp->name, sd->name,
+			     str_lset(fp->desc, n, &lb),
+			     n);
 		}
 		break;
 
