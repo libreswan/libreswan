@@ -975,9 +975,13 @@ void connection_delete_child(struct ike_sa *ike, struct child_sa **child, where_
 		/* no logger as no child */
 		pexpect(*child == NULL);
 	} else {
+		struct connection *c = (*child)->sa.st_connection;
 		state_attach(&(*child)->sa, ike->sa.st_logger);
 		llog_sa(RC_LOG, (*child), "deleted");
 		delete_child_sa(child);
+		if (is_labeled_child(c)) {
+			delete_connection(&c);
+		}
 	}
 }
 
