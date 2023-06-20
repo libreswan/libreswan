@@ -234,9 +234,13 @@ void delete_connection(struct connection **cp)
 
 	if (is_group_template(c)) {
 		delete_connection_group_instances(c);
-		discard_connection(&c, true/*connection_valid*/);
-		return;
+		/* continue with deleting this connection */
 	}
+
+	/*
+	 * See if a connection, any connection (presumably an
+	 * instance), is still using this connection.
+	 */
 
 	/*
 	 * Must be careful to avoid circularity, something like:
@@ -275,19 +279,37 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 	     pri_connection_co(c),
 	     pri_connection_co(c->clonedfrom));
 
-	/*
-	 * Don't expect any offspring?  If there are things will
-	 * quickly explode so help it along.
+	/*.
+	 * Don't expect any states to still be using this connection.
+	 * When there are things quickly explode so help it along.
 	 */
 	{
-		struct connection_filter cq = {
+		struct state_filter sf = {
+			.connection_serialno = c->serialno,
+			.where = HERE,
+		};
+		if (next_state_new2old(&sf)) {
+			state_buf sb;
+			llog_passert(c->logger, HERE,
+				     "unexpected state "PRI_STATE" when deleting connection",
+				     pri_state(sf.st, &sb));
+		}
+	}
+
+	/*
+	 * Don't expect any instances.  When there are things quickly
+	 * explode so help it along.
+	 */
+	{
+		struct connection_filter cf = {
 			.clonedfrom = c,
 			.where = HERE,
 		};
-		if (next_connection_old2new(&cq)) {
-			connection_buf cqb;
-			llog_passert(c->logger, HERE, "unexpected offspring "PRI_CONNECTION,
-				     pri_connection(cq.c, &cqb));
+		if (next_connection_old2new(&cf)) {
+			connection_buf cb;
+			llog_passert(c->logger, HERE,
+				     "unexpected instance "PRI_CONNECTION" when deleting connection",
+				     pri_connection(cf.c, &cb));
 		}
 	}
 

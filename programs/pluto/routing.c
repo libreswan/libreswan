@@ -662,23 +662,6 @@ static void down_routed_tunnel(enum routing_event event,
 		return;
 	}
 
-	/*.
-	 * See of a state, any state (presumably the
-	 * IKE SA, is using the connection.
-	 */
-	struct state_filter sf = {
-		.connection_serialno = (*c)->serialno,
-		.where = HERE,
-	};
-	if (next_state_new2old(&sf)) {
-		connection_buf cb;
-		llog_pexpect((*child)->sa.st_logger, where,
-			     "connection "PRI_CONNECTION" in use by #%lu, skipping delete-unused",
-			     pri_connection(*c, &cb), sf.st->st_serialno);
-		delete_child_sa(child);
-		return;
-	}
-
 	ldbg_routing((*child)->sa.st_logger, "keeping connection; NO!");
 	delete_child_sa(child);
 	delete_connection(c);
