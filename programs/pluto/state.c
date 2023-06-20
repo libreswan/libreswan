@@ -901,6 +901,30 @@ void llog_state_delete_n_send(lset_t rc_flags, struct state *st, bool sending_de
 void delete_state(struct state *st)
 {
 	/*
+	 * WHen an IKEv2 IKE SA, there can be no children.
+	 */
+	if (st->st_connection->config->ike_version == IKEv2 &&
+	    IS_IKE_SA(st) &&
+	    DBGP(DBG_BASE)) {
+		struct state_filter sf = {
+			.ike = ike_sa(st, HERE),
+			.where = HERE,
+		};
+		while (next_state_old2new(&sf)) {
+			state_buf sb;
+#if 0
+			llog_passert(st->st_logger, HERE,
+				     "unexpected child state "PRI_STATE,
+				     pri_state(sf.st, &sb));
+#else
+			llog(DEBUG_STREAM|ADD_PREFIX, st->st_logger,
+			     "unexpected child state "PRI_STATE,
+			     pri_state(sf.st, &sb));
+#endif
+		}
+	}
+
+	/*
 	 * Where to log?
 	 *
 	 * IKEv2 children never send send a delete notification so
