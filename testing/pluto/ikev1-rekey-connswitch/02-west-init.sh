@@ -8,6 +8,7 @@ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
 ipsec start
 ../../guestbin/wait-until-pluto-started
+ipsec whack --impair lifetime
 ipsec auto --add TUNNEL-C
 ipsec auto --add TUNNEL-A
 ipsec auto --add TUNNEL-B

@@ -22,13 +22,21 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
+ ipsec whack --impair lifetime
+west #
  ipsec auto --add TUNNEL-C
+002 "TUNNEL-C": IMPAIR: skipping ikelifetime=60 checks
+002 "TUNNEL-C": IMPAIR: skipping ipsec-lifetime=28800 checks
 002 "TUNNEL-C": added IKEv1 connection
 west #
  ipsec auto --add TUNNEL-A
+002 "TUNNEL-A": IMPAIR: skipping ikelifetime=60 checks
+002 "TUNNEL-A": IMPAIR: skipping ipsec-lifetime=28800 checks
 002 "TUNNEL-A": added IKEv1 connection
 west #
  ipsec auto --add TUNNEL-B
+002 "TUNNEL-B": IMPAIR: skipping ikelifetime=60 checks
+002 "TUNNEL-B": IMPAIR: skipping ipsec-lifetime=28800 checks
 002 "TUNNEL-B": added IKEv1 connection
 west #
  ipsec whack --impair suppress-retransmits
