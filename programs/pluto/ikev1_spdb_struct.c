@@ -1784,7 +1784,7 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 
 		/* initialize only optional field in ta */
 		struct trans_attrs ta = {
-			.life_seconds = deltatime(IKE_SA_LIFETIME_DEFAULT) /* When this SA expires (seconds) */
+			.life_seconds = IKE_SA_LIFETIME_DEFAULT /* until SA expires */
 		};
 
 		struct isakmp_transform trans;
@@ -2072,11 +2072,11 @@ rsasig_common:
 
 				switch (life_type) {
 				case OAKLEY_LIFE_SECONDS:
-					if (val > IKE_SA_LIFETIME_MAXIMUM) {
+					if (val > deltasecs(IKE_SA_LIFETIME_MAXIMUM)) {
 						log_state(RC_LOG, st,
-							  "warning: peer requested IKE lifetime of %" PRIu32 " seconds which we capped at our limit of %d seconds",
-							  val, IKE_SA_LIFETIME_MAXIMUM);
-						val = IKE_SA_LIFETIME_MAXIMUM;
+							  "warning: peer requested IKE lifetime of %" PRIu32 " seconds which we capped at our limit of %ju seconds",
+							  val, deltasecs(IKE_SA_LIFETIME_MAXIMUM));
+						val = deltasecs(IKE_SA_LIFETIME_MAXIMUM);
 					}
 					ta.life_seconds = deltatime(val);
 					break;
@@ -2433,7 +2433,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 	}
 
 	*attrs = (struct ipsec_trans_attrs) {
-		.life_seconds = DELTATIME_INIT(IPSEC_SA_LIFETIME_DEFAULT),	/* life_seconds */
+		.life_seconds = IPSEC_SA_LIFETIME_DEFAULT,	/* life_seconds */
 		.mode = ENCAPSULATION_MODE_UNSPECIFIED,        /* encapsulation */
 	};
 
@@ -2551,8 +2551,8 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				 * Silently limit duration to our maximum.
 				 */
 				deltatime_t lifemax =
-					deltatime(libreswan_fipsmode() ? FIPS_IPSEC_SA_LIFETIME_MAXIMUM :
-						  IPSEC_SA_LIFETIME_MAXIMUM);
+					(libreswan_fipsmode() ? FIPS_IPSEC_SA_LIFETIME_MAXIMUM :
+					 IPSEC_SA_LIFETIME_MAXIMUM);
 				attrs->life_seconds =
 					(deltatime_cmp(val, >, lifemax) ? lifemax :
 					 deltatime_cmp(val, >, st->st_connection->config->sa_ipsec_max_lifetime) ? st->st_connection->config->sa_ipsec_max_lifetime :

@@ -1038,8 +1038,6 @@ int main(int argc, char **argv)
 	msg.nic_offload = yna_auto;
 	msg.sa_ipsec_max_bytes = IPSEC_SA_MAX_OPERATIONS; /* max uint_64_t */
 	msg.sa_ipsec_max_packets = IPSEC_SA_MAX_OPERATIONS; /* max uint_64_t */
-	msg.sa_ike_max_lifetime = deltatime(IKE_SA_LIFETIME_DEFAULT);
-	msg.sa_ipsec_max_lifetime = deltatime(IPSEC_SA_LIFETIME_DEFAULT);
 	msg.sa_rekey_margin = deltatime(SA_REPLACEMENT_MARGIN_DEFAULT);
 	msg.sa_rekeyfuzz_percent = SA_REPLACEMENT_FUZZ_DEFAULT;
 	msg.keyingtries.set = false;
@@ -1871,11 +1869,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_IKE_LIFETIME:	/* --ike-lifetime <seconds> */
-			optarg_to_deltatime(&msg.sa_ike_max_lifetime, &timescale_seconds);
+			optarg_to_deltatime(&msg.ikelifetime, &timescale_seconds);
 			continue;
 
 		case CD_IPSEC_LIFETIME:	/* --ipsec-lifetime <seconds> */
-			optarg_to_deltatime(&msg.sa_ipsec_max_lifetime, &timescale_seconds);
+			optarg_to_deltatime(&msg.ipsec_lifetime, &timescale_seconds);
 			continue;
 
 		case CD_IPSEC_MAX_BYTES:	/* --ipsec-max-bytes <bytes> */

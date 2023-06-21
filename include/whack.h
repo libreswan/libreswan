@@ -173,8 +173,9 @@ struct whack_message {
 	uintmax_t sa_ipsec_max_bytes;
 	uintmax_t sa_ipsec_max_packets;
 
-	deltatime_t sa_ike_max_lifetime;
-	deltatime_t sa_ipsec_max_lifetime;
+	deltatime_t ikelifetime;
+	deltatime_t ipsec_lifetime;
+
 	deltatime_t sa_rekey_margin;
 	uintmax_t sa_rekeyfuzz_percent;
 

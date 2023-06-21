@@ -50,12 +50,14 @@ enum ike_version {
  * FIPS SP800-77 sayas IKE max is 24h, IPsec max is 8h
  * We say maximum for either is 1d
  */
-#define IKE_SA_LIFETIME_DEFAULT secs_per_hour * 8
-#define IKE_SA_LIFETIME_MAXIMUM secs_per_day
-#define IPSEC_SA_LIFETIME_DEFAULT secs_per_hour * 8
-#define IPSEC_SA_LIFETIME_MAXIMUM secs_per_day
-#define FIPS_IPSEC_SA_LIFETIME_MAXIMUM secs_per_hour * 8
-#define FIPS_IKE_SA_LIFETIME_MAXIMUM secs_per_hour * 24
+#define IKE_SA_LIFETIME_DEFAULT deltatime(secs_per_hour * 8)
+#define IKE_SA_LIFETIME_MAXIMUM deltatime(secs_per_day)
+#define FIPS_IKE_SA_LIFETIME_MAXIMUM deltatime(secs_per_day)
+
+#define IPSEC_SA_LIFETIME_DEFAULT deltatime(secs_per_hour * 8)
+#define IPSEC_SA_LIFETIME_MAXIMUM deltatime(secs_per_day)
+#define FIPS_IPSEC_SA_LIFETIME_MAXIMUM deltatime(secs_per_hour * 8)
+
 #define FIPS_MIN_RSA_KEY_SIZE 2048 /* 112 bits, see SP800-131A */
 
 /*
