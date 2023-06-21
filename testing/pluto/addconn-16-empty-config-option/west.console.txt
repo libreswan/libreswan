@@ -5,24 +5,24 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- echo "initdone"
-initdone
+ # this should add, subnet= silently ignored
 west #
  ipsec auto --add first
-002 "first": added IKEv1 connection
+002 "first": added IKEv2 connection
 west #
- ipsec auto --add second
-002 "second": added IKEv1 connection
+ # now append a second conn; should also add
 west #
- # conn second should inherit the conn %default values with 3des-md5
+ echo 'conn second' >> /etc/ipsec.conf
 west #
- ipsec status |grep "algorithms:"
-000 "first":   IKE algorithms: AES_CBC-HMAC_SHA2_256-MODP2048+MODP3072+MODP4096+MODP8192+DH19+DH20+DH21+DH31
-000 "first":   ESP algorithms: AES_CBC-HMAC_SHA2_256_128
-000 "second":   IKE algorithms: 3DES_CBC-HMAC_SHA1-MODP2048+MODP3072+MODP4096+MODP8192+DH19+DH20+DH21+DH31
-000 "second":   ESP algorithms: 3DES_CBC-HMAC_SHA1_96
+ echo '        left=2.3.4.5' >> /etc/ipsec.conf
 west #
- echo done
-done
+ echo '        right=5.6.7.8' >> /etc/ipsec.conf
+west #
+ ipsec auto --add first
+002 "first": terminating SAs using this connection
+002 "first": added IKEv2 connection
+west #
+ echo "initdone"
+initdone
 west #
  

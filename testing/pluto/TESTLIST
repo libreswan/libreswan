@@ -111,7 +111,7 @@ kvmplutotest	addconn-12-family				good	github:540;github:579
 kvmplutotest	addconn-13-subnets				good
 kvmplutotest	addconn-14-addresspool				good
 kvmplutotest	addconn-15-sourceip				good
-kvmplutotest	addconn-16-empty-config-option			wip
+kvmplutotest	addconn-16-empty-config-option			good
 kvmplutotest	addconn-17-config-time-suffix			good
 kvmplutotest	addconn-18-config-percentage-suffix		good
 kvmplutotest	addconn-19-recursive-include			good
