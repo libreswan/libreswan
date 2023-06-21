@@ -205,16 +205,47 @@ void whack_each_connection(const struct whack_message *m,
 	}
 
 	/*
-	 * When alias fails, try connection number.
+	 * When alias fails, see if the name is a connection ($
+	 * prefix) and/or state (# prefix) number.
 	 */
-	uintmax_t co = 0;
-	if (shunk_to_uintmax(shunk1(m->name), NULL, /*base*/0, &co) == NULL &&
-		co < MAX_CO_SERIAL) {
-		struct connection *c = connection_by_serialno(co);
-		if (c != NULL) {
-			whack_connection(s, &c, m);
+
+	if (m->name[0] == '$' ||
+	    m->name[0] == '#') {
+		ldbg(logger, "looking up '%s' by serialno", m->name);
+		uintmax_t serialno = 0;
+		err_t e = shunk_to_uintmax(shunk1(m->name + 1), NULL, /*base*/0, &serialno);
+		if (e != NULL) {
+			llog(RC_LOG, logger, "invalid serial number '%s': %s",
+			     m->name, e);
 			return;
 		}
+		if (serialno >= INT_MAX) {/* arbitrary limit */
+			llog(RC_LOG, logger, "serial number '%s' is huge", m->name);
+			return;
+		}
+		switch (m->name[0]) {
+		case '$':
+		{
+			struct connection *c = connection_by_serialno(serialno);
+			if (c != NULL) {
+				whack_connection(s, &c, m);
+				return;
+			}
+			break;
+		}
+		case '#':
+		{
+			struct state *st = state_by_serialno(serialno);
+			if (st != NULL) {
+				struct connection *c = st->st_connection;
+				whack_connection(s, &c, m);
+				return;
+			}
+			break;
+		}
+		}
+		llog(RC_LOG, logger, "serialno '%s' not found", m->name);
+		return;
 	}
 
 	/*
