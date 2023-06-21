@@ -1,3 +1,1 @@
 Test keywords with prefixes time (s,m,d..) with unexpected prefixes.
-
-no console output committed because the output include ephemeral values
