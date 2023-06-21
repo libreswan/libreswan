@@ -38,7 +38,6 @@ road #
 002 "road/0x2" #3: initiating Child SA using IKE SA #1
 1v2 "road/0x2" #3: sent CREATE_CHILD_SA request for new IPsec SA
 003 "road/0x2" #3: CREATE_CHILD_SA failed with error notification TS_UNACCEPTABLE
-002 "road/0x2" #3: deleted
 road #
  ipsec whack --impair none
 road #
@@ -63,7 +62,6 @@ road #
 002 "road/0x4" #5: initiating Child SA using IKE SA #1
 1v2 "road/0x4" #5: sent CREATE_CHILD_SA request for new IPsec SA
 003 "road/0x4" #5: CREATE_CHILD_SA failed with error notification TS_UNACCEPTABLE
-002 "road/0x4" #5: deleted
 road #
  ipsec whack --impair none
 road #
