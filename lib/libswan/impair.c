@@ -233,6 +233,8 @@ struct impairment impairments[] = {
 	  "send bogus number of selectors in TSr payload",
 	  .unsigned_help = "force number of selectors"),
 
+	B(lifetime, "skip any IKE/IPsec lifetime checks when adding connection"),
+
 	B(copy_v1_notify_response_SPIs_to_retransmission,
 	  "copy SPIs in IKEv1 notify response to last sent packet and then retransmit"),
 
