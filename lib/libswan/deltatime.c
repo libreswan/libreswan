@@ -23,11 +23,7 @@
 #include "timescale.h"
 #include "lswlog.h"
 
-const deltatime_t deltatime_zero;
-const deltatime_t deltatime_epoc = {
-	.dt = {
-	},
-};
+const deltatime_t deltatime_zero = { .is_set = true, };
 
 /*
  * Rather than deal with the 'bias' in a -ve timeval, this code
@@ -69,14 +65,17 @@ struct timeval timeval_ms(intmax_t ms)
 
 deltatime_t deltatime_ms(intmax_t milliseconds)
 {
-	return (deltatime_t) { .dt = timeval_ms(milliseconds), };
+	return (deltatime_t) {
+		.dt = timeval_ms(milliseconds),
+		.is_set = true,
+	};
 }
 
 deltatime_t deltatime_timevals_diff(struct timeval a, struct timeval b)
 {
-	deltatime_t res;
-	timersub(&a, &b, &res.dt);
-	return res;
+	struct timeval res;
+	timersub(&a, &b, &res);
+	return deltatime_from_timeval(res);
 }
 
 int timeval_sub_sign(struct timeval l, struct timeval r)
@@ -118,16 +117,16 @@ deltatime_t deltatime_min(deltatime_t l, deltatime_t r)
 
 deltatime_t deltatime_add(deltatime_t a, deltatime_t b)
 {
-	deltatime_t res;
-	timeradd(&a.dt, &b.dt, &res.dt);
-	return res;
+	struct timeval res;
+	timeradd(&a.dt, &b.dt, &res);
+	return deltatime_from_timeval(res);
 }
 
 deltatime_t deltatime_sub(deltatime_t a, deltatime_t b)
 {
-	deltatime_t res;
-	timersub(&a.dt, &b.dt, &res.dt);
-	return res;
+	struct timeval res;
+	timersub(&a.dt, &b.dt, &res);
+	return deltatime_from_timeval(res);
 }
 
 deltatime_t deltatime_mulu(deltatime_t a, unsigned scalar)
@@ -164,7 +163,7 @@ struct timeval timeval_from_deltatime(deltatime_t d)
 
 deltatime_t deltatime_from_timeval(struct timeval t)
 {
-	deltatime_t d = { t, };
+	deltatime_t d = { .dt = t, .is_set = true, };
 	return d;
 }
 

@@ -41,11 +41,14 @@ struct timescale;
  * Sigh.
  */
 
-typedef struct { struct timeval dt; } deltatime_t;
+typedef struct {
+	struct timeval dt;
+	bool is_set;
+} deltatime_t;
 
 extern const deltatime_t deltatime_zero;
 
-#define DELTATIME_INIT(S) { .dt = { .tv_sec = (S), } }
+#define DELTATIME_INIT(S) { .dt = { .tv_sec = (S), }, .is_set = true, }
 
 deltatime_t deltatime(time_t secs);
 deltatime_t deltatime_ms(intmax_t milliseconds);
