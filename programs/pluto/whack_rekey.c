@@ -25,6 +25,8 @@
 #include "connections.h"
 #include "state.h"
 #include "timer.h"
+#include "whack_rekey.h"
+#include "show.h"
 
 struct rekey_how {
 	bool background;
@@ -124,9 +126,11 @@ static int rekey_connections_by_alias(const char *alias,
 	return count;
 }
 
-void rekey_now(const char *str, enum sa_type sa_type,
-	       bool background, struct logger *logger)
+void whack_rekey(const struct whack_message *m, struct show *s, enum sa_type sa_type)
 {
+	bool background = m->whack_async;
+	struct logger *logger = show_logger(s);
+	const char *str = m->name;
 
 	/* see if we got a stat enumber or name */
 	char *err = NULL;

@@ -91,6 +91,7 @@ OBJS += retransmit.o
 
 OBJS += rcv_whack.o
 OBJS += whack_trafficstatus.o
+OBJS += whack_rekey.o
 
 # local (possibly more up to date) copy of <linux/xfrm.h>
 ifeq ($(USE_XFRM_HEADER_COPY),true)
@@ -227,7 +228,6 @@ OBJS += routing_story.o
 OBJS += acquire.o
 OBJS += initiate.o
 OBJS += terminate.o
-OBJS += ikev2_rekey_now.o
 OBJS += pending.o crypto.o defs.o
 OBJS += ike_spi.o
 OBJS += foodgroups.o

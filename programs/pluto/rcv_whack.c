@@ -100,6 +100,7 @@
 #include "ikev2_create_child_sa.h"	/* for submit_v2_CREATE_CHILD_SA_*() */
 
 #include "whack_trafficstatus.h"
+#include "whack_rekey.h"
 
 static void whack_rereadsecrets(struct show *s)
 {
@@ -683,25 +684,13 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 
 	if (m->whack_rekey_ike) {
 		dbg_whack(s, "rekey-ike: start: '%s'", m->name == NULL ? "NULL" : m->name);
-		if (m->name == NULL) {
-			/* leave bread crumb */
-			llog(RC_FATAL, logger,
-			     "received whack command to rekey IKE SA of connection, but did not receive the connection name or state number - ignored");
-		} else {
-			rekey_now(m->name, IKE_SA, m->whack_async/*background*/, logger);
-		}
+		whack_rekey(m, s, IKE_SA);
 		dbg_whack(s, "rekey-ike: stop: '%s'", m->name == NULL ? "NULL" : m->name);
 	}
 
 	if (m->whack_rekey_ipsec) {
 		dbg_whack(s, "rekey_ipsec: start: '%s'", m->name == NULL ? "<null>" : m->name);
-		if (m->name == NULL) {
-			/* leave bread crumb */
-			llog(RC_FATAL, logger,
-			     "received whack command to rekey IPsec SA of connection, but did not receive the connection name or state number - ignored");
-		} else {
-			rekey_now(m->name, IPSEC_SA, m->whack_async/*background*/, logger);
-		}
+		whack_rekey(m, s, IPSEC_SA);
 		dbg_whack(s, "rekey_ipsec: stop: '%s'", m->name == NULL ? "NULL" : m->name);
 	}
 

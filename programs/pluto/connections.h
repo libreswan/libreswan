@@ -670,9 +670,6 @@ extern void release_connection(struct connection *c);
 extern void delete_connection(struct connection **cp);
 extern void delete_every_connection(void);
 
-extern void rekey_now(const char *name, enum sa_type sa_type,
-		      bool background, struct logger *logger);
-
 #define remote_id_was_instantiated(c) \
 	( is_instance(c) && \
 	  ( !id_is_ipaddr(&(c)->remote->host.id) || \
