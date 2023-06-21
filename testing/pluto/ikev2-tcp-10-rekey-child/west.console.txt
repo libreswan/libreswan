@@ -120,8 +120,7 @@ west #
 west #
  sleep 5
 west #
- ipsec whack --rekey-ipsec --name 2
-002 rekeying IPsec SA state #2 of connection "westnet-eastnet-ikev2"
+ ipsec whack --rekey-ipsec --name westnet-eastnet-ikev2
 002 "westnet-eastnet-ikev2" #3: initiating rekey to replace Child SA #2
 1v2 "westnet-eastnet-ikev2" #3: sent CREATE_CHILD_SA request to rekey IPsec SA
 004 "westnet-eastnet-ikev2" #3: initiator rekeyed Child SA #2 using #1; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESPinTCP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
