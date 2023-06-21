@@ -628,8 +628,8 @@ kvmplutotest	certoe-10-symmetric-cert-whack		good
 kvmplutotest	certoe-11-symmetric-cert-nat		good
 kvmplutotest	certoe-12-nat-server			good
 kvmplutotest	certoe-13-poc-del-slash24		wip	github:577
-kvmplutotest	certoe-14-poc-del-slash32		wip	github:528
-kvmplutotest	certoe-15-poc-east-west			wip	github:528
+kvmplutotest	certoe-14-poc-del-slash32		good	github/528
+kvmplutotest	certoe-15-poc-east-west			good	github/528
 
 kvmplutotest	certoe-16-rhbz1724200-halfopen-shunt	wip
 
