@@ -130,6 +130,7 @@ void whack_each_connection(const struct whack_message *m,
 			   const char *future_tense,
 			   const char *past_tense,
 			   bool log_unknown_name,
+			   bool skip_instances, /*broken*/
 			   bool (*whack_connection)
 			   (struct show *s,
 			    struct connection **c,
@@ -164,7 +165,14 @@ void whack_each_connection(const struct whack_message *m,
 		.where = HERE,
 	};
 	while (next_connection_new2old(&by_name)) {
-		if (is_instance(by_name.c)) {
+		/*
+		 * XXX: broken, other whack_connection() calls do not have this guard.
+		 *
+		 * Instead instead let whack_connection() decide if
+		 * the connection should be skipped and return true
+		 * when the connection should be counted?
+		 */
+		if (skip_instances && is_instance(by_name.c)) {
 			continue;
 		}
 		whack_connection(s, &by_name.c, m);
@@ -653,6 +661,7 @@ static void whack_debug_options(const struct whack_message *m,
 	} else if (!m->whack_add/*connection*/) {
 		whack_each_connection(m, s, NULL, NULL,
 				      /*log_unknown_name*/true,
+				      /*skip-instances*/true,
 				      whack_debug_connection);
 	}
 }
@@ -741,6 +750,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 			terminate_connections_by_name_or_alias(m->name, /*quiet?*/true, logger);
 			whack_each_connection(m, s, NULL, NULL,
 					      /*log_unknown_name*/false,
+					      /*skip-instances*/true,
 					      whack_delete_connection);
 		}
 		dbg_whack(s, "delete: stop: '%s'", m->name == NULL ? "NULL" : m->name);
@@ -997,6 +1007,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		} else {
 			whack_each_connection(m, s, NULL, NULL,
 					      /*log_unknown_name*/true,
+					      /*skip-instances*/true,
 					      whack_route_connection);
 		}
 		dbg_whack(s, "route: stop: \"%s\"", m->name);
@@ -1007,6 +1018,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		passert(m->name != NULL);
 		whack_each_connection(m, s, NULL, NULL,
 				      /*log_unknown_name*/true,
+				      /*skip-instances*/true,
 				      whack_unroute_connection);
 		dbg_whack(s, "unroute: stop: \"%s\"", m->name);
 	}
@@ -1023,6 +1035,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		} else {
 			whack_each_connection(m, s, "initiating", "initiating",
 					      /*log_unknown_name*/true,
+					      /*skip-instances*/true,
 					      whack_initiate_connection);
 		}
 		dbg_whack(s, "initiate: stop: name='%s' remote='%s' async=%s",
@@ -1064,6 +1077,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		dbg_whack(s, "terminate: start: %s", m->name);
 		whack_each_connection(m, s, "terminating", "terminated",
 				      /*log_unknown_name*/true,
+				      /*skip-instances*/true,
 				      whack_terminate_connections);
 		dbg_whack(s, "terminate: stop: %s", m->name);
 	}
@@ -1129,6 +1143,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		} else {
 			whack_each_connection(m, s, NULL, NULL,
 					      /*log_unknown_name*/true,
+					      /*skip-instances*/true,
 					      whack_connection_status);
 		}
 		dbg_whack(s, "connectionstatus: stop:");

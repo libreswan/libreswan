@@ -30,6 +30,7 @@ void whack_each_connection(const struct whack_message *m,
 			   const char *future_tense,
 			   const char *past_tense,
 			   bool log_unknown_name,
+			   bool skip_instances,
 			   bool (*whack_connection)
 			   (struct show *s,
 			    struct connection **c,

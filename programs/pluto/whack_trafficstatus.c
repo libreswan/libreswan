@@ -150,5 +150,6 @@ void whack_trafficstatus(const struct whack_message *m, struct show *s)
 {
 	whack_each_connection(m, s, NULL, NULL,
 			      /*log_unknown_name*/true,
+			      /*skip-instances*/true,
 			      whack_trafficstatus_connection);
 }
