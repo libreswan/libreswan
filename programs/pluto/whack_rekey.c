@@ -27,166 +27,80 @@
 #include "timer.h"
 #include "whack_rekey.h"
 #include "show.h"
+#include "rcv_whack.h"
 
-struct rekey_how {
-	bool background;
-	enum sa_type sa_type;
-};
-
-static void rekey_state(struct state *st, bool background, struct logger *logger)
+static bool rekey_state(const struct whack_message *m, struct show *s,
+			struct connection *c, enum sa_type sa_type, so_serial_t so)
 {
-	if (!background) {
+	struct logger *logger = show_logger(s);
+
+	if (!is_permanent(c) && !is_instance(c)) {
+		/* silently skip */
+		connection_buf cb;
+		ldbg(logger, "skipping !permanent/!instance connection "PRI_CONNECTION,
+		     pri_connection(c, &cb));
+		return false;
+	}
+
+	struct state *st = state_by_serialno(so);
+	if (st == NULL) {
+		connection_attach(c, logger);
+		llog(RC_LOG, c->logger, "connection does not have %s",
+		     sa_name(c->config->ike_version, sa_type));
+		connection_detach(c, logger);
+		return false;
+	}
+
+	if (!m->whack_async) {
 		state_attach(st, logger);
 		if (IS_CHILD_SA(st)) {
 			struct ike_sa *ike = ike_sa(st, HERE);
 			state_attach(&ike->sa, logger);
 		}
 	}
+
+	ldbg(logger, "rekeying "PRI_SO, pri_so(so));
 	event_force(EVENT_v2_REKEY, st);
+	return true;
 }
 
-static int rekey_connection(struct connection *c,
-			    const struct rekey_how *how,
-			    struct logger *logger)
+static bool whack_rekey_ike(struct show *s,
+			    struct connection **c,
+			    const struct whack_message *m)
 {
-	if (c->config->ike_version != IKEv2) {
-		llog(RC_LOG, logger, "cannot force rekey of %s connection",
-		     c->config->ike_info->version_name);
-		return 0;
-	}
-	struct state *st;
-	switch (how->sa_type) {
-	case IKE_SA:
-		st = state_by_serialno(c->newest_ike_sa);
-		break;
-	case IPSEC_SA:
-		st = state_by_serialno(c->newest_ipsec_sa);
-		break;
-	default:
-		bad_case(how->sa_type);
-	}
-	if (st == NULL) {
-		llog(RC_LOG, logger, "connection does not have %s",
-		     sa_name(c->config->ike_version, how->sa_type));
-		return 0;
-	}
-	rekey_state(st, how->background, logger);
-	return 1;
+	return rekey_state(m, s, *c, IKE_SA, (*c)->newest_ike_sa);
 }
 
-/*
- * return -1 if nothing was found at all; else total from
- * rekey_connection().
- *
- * XXX: A better strategy is to find the connection root and then use
- * recursion to terminate its clones (which might also be recursive).
- */
-
-static bool rekey_connections_by_name(const char *name,
-				      const struct rekey_how *how,
-				      struct logger *logger)
+static bool whack_rekey_child(struct show *s,
+			      struct connection **c,
+			      const struct whack_message *m)
 {
-	/*
-	 * Rekey all permenant/instance connections matching name.
-	 */
-	struct connection_filter cq = {
-		.name = name,
-		.where = HERE,
-	};
-	bool found = false;
-	while (next_connection_old2new(&cq)) {
-		struct connection *c = cq.c;
-		if (never_negotiate(c)) {
-			continue;
-		}
-		if (!is_permanent(c) && !is_instance(c)) {
-			/* something concrete */
-			continue;
-		}
-		rekey_connection(c, how, logger);
-		found = true;
-	}
-	return found;
-}
-
-static int rekey_connections_by_alias(const char *alias,
-				      const struct rekey_how *how,
-				      struct logger *logger)
-{
-	int count = 0;
-
-	struct connection_filter by_alias = {
-		.alias = alias,
-		.where = HERE,
-	};
-	while (next_connection_new2old(&by_alias)) {
-		struct connection *p = by_alias.c;
-		count += rekey_connection(p, how, logger);
-	}
-	return count;
+	return rekey_state(m, s, *c, IPSEC_SA, (*c)->newest_ipsec_sa);
 }
 
 void whack_rekey(const struct whack_message *m, struct show *s, enum sa_type sa_type)
 {
-	bool background = m->whack_async;
 	struct logger *logger = show_logger(s);
-	const char *str = m->name;
-
-	/* see if we got a stat enumber or name */
-	char *err = NULL;
-	int num = strtol(str, &err, 0);
-
-	if (str == err || *err != '\0') {
-
-		struct rekey_how how = {
-			.background = background,
-			.sa_type = sa_type,
-		};
-
-		/*
-		 * Loop because more than one may match (template and
-		 * instances) but only interested in instances.  Don't
-		 * log an error if not found before we checked
-		 * aliases.
-		 *
-		 * connection instances may need more work to work ???
-		 */
-
-		if (rekey_connections_by_name(str, &how, logger)) {
-			/* logged by rekey_connection_now() */
-			dbg("found connections by name");
-			return;
-		}
-
-		int count = rekey_connections_by_alias(str, &how, logger);
-		if (count == 0) {
-			llog(RC_UNKNOWN_NAME, logger,
-			     "no such connection or aliased connection named \"%s\"", str);
-		} else {
-			llog(RC_COMMENT, logger,
-			     "rekeyed %d connections from aliased connection \"%s\"",
-			     count, str);
-		}
-
-	} else {
-		/* str is a state number - this overrides ike vs ipsec rekey command */
-		struct state *st = state_by_serialno(num);
-		if (st == NULL) {
-			llog(RC_LOG, logger, "can't find SA #%d to rekey", num);
-			return;
-		}
-
-		struct connection *c = st->st_connection;
-		if (IS_IKE_SA(st)) {
-			connection_buf cb;
-			llog(RC_LOG, logger, "rekeying IKE SA state #%d of connection "PRI_CONNECTION"",
-			     num, pri_connection(c, &cb));
-			rekey_state(st, background, logger);
-		} else {
-			connection_buf cb;
-			llog(RC_LOG, logger, "rekeying IPsec SA state #%d of connection "PRI_CONNECTION"",
-			     num, pri_connection(c, &cb));
-			rekey_state(st, background, logger);
-		}
+	if (m->name == NULL) {
+		/* leave bread crumb */
+		llog(RC_FATAL, logger,
+		     "received whack command to rekey connection, but did not receive the connection name - ignored");
+		return;
 	}
+
+	switch (sa_type) {
+	case IKE_SA:
+		whack_each_connection(m, s, /*future*/NULL, /*past*/NULL,
+				      /*log-not-found*/true,
+				      /*skip-instances*/false,
+				      whack_rekey_ike);
+		return;
+	case IPSEC_SA:
+		whack_each_connection(m, s, /*future*/NULL, /*past*/NULL,
+				      /*log-not-found*/true,
+				      /*skip-instances*/false,
+				      whack_rekey_child);
+		return;
+	}
+	bad_case(sa_type);
 }
