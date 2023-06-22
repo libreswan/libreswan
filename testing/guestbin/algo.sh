@@ -9,8 +9,8 @@ else
 fi
 
 case $d in
-    *ikev1*) ikev2=no  ; ikev1_policy=accept ;;
-    *ikev2*) ikev2=yes ; ikev1_policy=drop   ;;
+    *ikev1*) keyexchange=ikev1 ; ikev1_policy=accept ;;
+    *ikev2*) keyexchange=ikev2 ; ikev1_policy=drop   ;;
 esac
 
 ike=$(echo $d | sed -n -e 's/-esp.*//' -e 's/-ah.*//' -e 's/.*-ikev[0-9]*-\(.*\)/\1/p')
@@ -83,7 +83,7 @@ config setup
 	plutodebug=all
 conn algo
 	# IKE
-	ikev2=${ikev2}
+	keyexchange=${keyexchange}
 	$(test -n "${ike}" || echo '#')ike=${ike}
 	left=${left}
 	right=${right}

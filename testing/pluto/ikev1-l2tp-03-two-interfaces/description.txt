@@ -9,7 +9,7 @@ East is configured with two template connections:
 
 where both have:
 
-        ikev2=no
+        keyexchange=ikev1
         type=transport
 	leftsubnet=vhost:%priv,%no
         left=%any

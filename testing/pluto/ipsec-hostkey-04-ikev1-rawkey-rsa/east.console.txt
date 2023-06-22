@@ -38,7 +38,7 @@ config setup
 	dumpdir=/tmp
 	plutodebug=all
 conn hostkey
-	ikev2=no
+	keyexchange=ikev1
 	left=192.1.2.45
 	leftsubnet=192.0.1.0/24
 	right=192.1.2.23

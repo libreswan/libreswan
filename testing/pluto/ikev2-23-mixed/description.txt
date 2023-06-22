@@ -1,7 +1,7 @@
-This is an IKEv2 and IKEv1 test. Two connections between the same end points road-east. One with ikev=insist and the other ikev2=never. It use X509 certs on the initiator (road), and on the responder(east).
+This is an IKEv2 and IKEv1 test. Two connections between the same end points road-east. One with ikev=insist and the other keyexchange=ikev1. It use X509 certs on the initiator (road), and on the responder(east).
 
 If the connections get added and brought up as in the scripts,
-it is observed that conn with ikev2=insist get established with ikev1.
+it is observed that conn with keyexchange=ikev2 get established with ikev1.
 
 if we change the order of add and up there will be two connections.
 
