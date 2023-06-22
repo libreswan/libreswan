@@ -1,0 +1,57 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec add ikev2=no
+005 "ikev2=no": ikev2=no has been replaced by keyexchange=ikev1
+002 "ikev2=no": added IKEv1 connection
+west #
+ ipsec add ikev2=yes
+005 "ikev2=yes": ikev2=yes has been replaced by keyexchange=ikev2
+002 "ikev2=yes": added IKEv2 connection
+west #
+ ipsec add ikev2=always
+005 "ikev2=always": ikev2=yes has been replaced by keyexchange=ikev2
+002 "ikev2=always": added IKEv2 connection
+west #
+ ipsec add ikev2=never
+005 "ikev2=never": ikev2=no has been replaced by keyexchange=ikev1
+002 "ikev2=never": added IKEv1 connection
+west #
+ ipsec add keyexchange=ike
+002 "keyexchange=ike": added IKEv2 connection
+west #
+ ipsec add keyexchange=ikev1
+002 "keyexchange=ikev1": added IKEv1 connection
+west #
+ ipsec add keyexchange=ikev2
+002 "keyexchange=ikev2": added IKEv2 connection
+west #
+ ipsec add keyexchange=ike-ikev2=n
+005 "keyexchange=ike-ikev2=n": ikev2=no has been replaced by keyexchange=ikev1
+002 "keyexchange=ike-ikev2=n": added IKEv1 connection
+west #
+ ipsec add keyexchange=ike-ikev2=y
+005 "keyexchange=ike-ikev2=y": ikev2=yes has been replaced by keyexchange=ikev2
+002 "keyexchange=ike-ikev2=y": added IKEv2 connection
+west #
+ ipsec add keyexchange=ikev1-ikev2=n
+005 "keyexchange=ikev1-ikev2=n": ikev2=no has been replaced by keyexchange=ikev1
+002 "keyexchange=ikev1-ikev2=n": added IKEv1 connection
+west #
+ ipsec add keyexchange=ikev1-ikev2=y
+005 "keyexchange=ikev1-ikev2=y": ignoring ikev2=yes which conflicts with keyexchange=IKEv1
+002 "keyexchange=ikev1-ikev2=y": added IKEv1 connection
+west #
+ ipsec add keyexchange=ikev2-ikev2=n
+005 "keyexchange=ikev2-ikev2=n": ignoring ikev2=no which conflicts with keyexchange=IKEv2
+002 "keyexchange=ikev2-ikev2=n": added IKEv2 connection
+west #
+ ipsec add keyexchange=ikev2-ikev2=y
+005 "keyexchange=ikev2-ikev2=y": ikev2=yes has been replaced by keyexchange=ikev2
+002 "keyexchange=ikev2-ikev2=y": added IKEv2 connection
+west #
+ 
