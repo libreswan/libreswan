@@ -1934,6 +1934,26 @@ static diag_t extract_connection(const struct whack_message *wm,
 		return diag("IKEv1 support not compiled in");
 #endif
 	}
+
+	if ((wm->ike_version == IKEv1 && wm->ikev2 == YN_YES) ||
+	    (wm->ike_version == IKEv2 && wm->ikev2 == YN_NO)) {
+		llog(RC_INFORMATIONAL, c->logger,
+		     "ignoring ikev2=%s which conflicts with keyexchange=%s",
+		     (wm->ikev2 == YN_YES ? "yes" :
+		      wm->ikev2 == YN_NO ? "no" :
+		      "???"),
+		     enum_name(&ike_version_names, wm->ike_version));
+	} else if (wm->ikev2 != 0) {
+		llog(RC_INFORMATIONAL, c->logger,
+		     "ikev2=%s has been replaced by keyexchange=%s",
+		     (wm->ikev2 == YN_YES ? "yes" :
+		      wm->ikev2 == YN_NO ? "no" :
+		      "???"),
+		     (wm->ikev2 == YN_YES ? "ikev2" :
+		      wm->ikev2 == YN_NO ? "ikev1" :
+		      "???"));
+	}
+
 	config->ike_version = wm->ike_version;
 	static const struct ike_info ike_info[] = {
 		[0] = {
