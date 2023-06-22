@@ -61,11 +61,26 @@ static const struct sparse_name kw_negotiationshunt_list[] = {
 };
 
 /*
+ * Common aliases for YES and NO, add this to a keyword list so all
+ * are accepted.
+ */
+#define YES_NO(YES, NO)				\
+	{ "yes",        YES },                  \
+       { "no",         NO },			\
+       { "true",       YES },			\
+       { "false",      NO },			\
+       { "1",          YES },			\
+       { "0",          NO },			\
+       { "on",         YES },			\
+       { "off",        NO },			\
+       { "y",          YES },			\
+       { "n",          NO }
+
+/*
  * Values for enable-tcp={no, yes, fallback}
  */
 static const struct sparse_name kw_tcp_list[] = {
-	{ "no", IKE_TCP_NO }, /* default */
-	{ "yes", IKE_TCP_ONLY },
+	YES_NO(IKE_TCP_ONLY, IKE_TCP_NO/*default*/),
 	{ "fallback", IKE_TCP_FALLBACK },
 	SPARSE_NULL
 };
@@ -97,8 +112,7 @@ static const struct sparse_name kw_fourvalued_list[] = {
  */
 static const struct sparse_name kw_ynf_list[] = {
 	{ "never",     ynf_no },
-	{ "no",        ynf_no },
-	{ "yes",       ynf_yes },
+	YES_NO(ynf_yes, ynf_no),
 	{ "insist",    ynf_force },
 	{ "force",     ynf_force },
 	SPARSE_NULL
@@ -107,8 +121,7 @@ static const struct sparse_name kw_ynf_list[] = {
 #ifdef USE_XFRM_INTERFACE
 /* Values for no/yes, used by ipsec-interface */
 static const struct sparse_name kw_yndev_list[] = {
-	{ "yes",	1 /* ipsec1 */ },
-	{ "no",		UINT32_MAX /* disabled */},
+	YES_NO(1/*ipsec1*/, UINT32_MAX/*disabled*/),
 	/* any specified number becomes ipsecXXXX */
 	SPARSE_NULL
 };
@@ -116,30 +129,19 @@ static const struct sparse_name kw_yndev_list[] = {
 
 /* match <BOOLEAN_VALUE> in parser.lex */
 static const struct sparse_name kw_yn_list[] = {
-	{ "yes",	YN_YES },
-	{ "no",		YN_NO },
-	{ "true",	YN_YES },
-	{ "false",	YN_NO },
-	{ "1",		YN_YES },
-	{ "0",		YN_NO },
-	{ "on",		YN_YES },
-	{ "off",	YN_NO },
-	{ "y",		YN_YES },
-	{ "n",		YN_NO },
+	YES_NO(YN_YES, YN_NO),
 	SPARSE_NULL,
 };
 
 /* Values for yes/no/auto, used by encapsulation and nic-offload */
 static const struct sparse_name kw_yna_list[] = {
-	{ "yes",	yna_yes },
-	{ "no",		yna_no },
+	YES_NO(yna_yes, yna_no),
 	{ "auto",	yna_auto },
 	SPARSE_NULL
 };
 
 static const struct sparse_name kw_esn_list[] = {
-	{ "yes",	ESN_YES },
-	{ "no",		ESN_NO },
+	YES_NO(ESN_YES, ESN_NO),
 	{ "either",	ESN_EITHER },
 	SPARSE_NULL
 };
