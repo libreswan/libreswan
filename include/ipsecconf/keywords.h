@@ -223,7 +223,6 @@ enum keyword_numeric_conn_field {
 	KNCF_SEND_CA,
 	KNCF_METRIC,
 	KNCF_PHASE2,
-	KNCF_KEYEXCHANGE,
 	KNCF_AUTO,
 	KNCF_PFS,
 	KNCF_SHA2_TRUNCBUG,
@@ -246,7 +245,8 @@ enum keyword_numeric_conn_field {
 	KNCF_AGGRMODE,
 	KNCF_MODECONFIGPULL,
 	KNCF_ENCAPS,
-	KNCF_IKEv2,
+	KNCF_IKEv2,		/* obsolete, use KEYEXCHANGE */
+	KNCF_KEYEXCHANGE,
 	KNCF_PPK,
 	KNCF_INTERMEDIATE,	/* enable support for Intermediate Exchange */
 	KNCF_ESN,
@@ -307,12 +307,6 @@ enum keyword_valid {
 	kv_milliseconds = LELEM(9),	/* value already in milliseconds */
 };
 #define KV_CONTEXT_MASK (kv_config | kv_conn | kv_leftright)
-
-/* values keyexchange= */
-enum keyword_keyexchange {
-	KE_NONE = 0,
-	KE_IKE  = 1,
-};
 
 /*
  * Potential keyword values for fields like {left,right}rsasigkey=.

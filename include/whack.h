@@ -161,7 +161,8 @@ struct whack_message {
 	bool whack_add;
 	bool whack_async;
 
-	enum ike_version ike_version;
+	enum ike_version ike_version;	/* from keyexchange= */
+	enum yn_options ikev2;
 
 	lset_t policy;
 	struct authby authby;

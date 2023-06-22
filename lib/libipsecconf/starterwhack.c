@@ -531,6 +531,7 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	msg.retransmit_timeout = deltatime_ms(conn->options[KNCF_RETRANSMIT_TIMEOUT_MS]);
 
 	msg.ike_version = conn->ike_version;
+	msg.ikev2 = conn->options[KNCF_IKEv2];
 	msg.policy = conn->policy;
 	msg.is_connection_group = conn->is_connection_group;
 	msg.authby = conn->authby;

@@ -79,6 +79,19 @@ static const struct sparse_name kw_negotiationshunt_list[] = {
 /*
  * Values for enable-tcp={no, yes, fallback}
  */
+
+#define YES_NO(YES, NO)				\
+	{ "yes",	YES },			\
+	{ "no",		NO },			\
+	{ "true",	YES },			\
+	{ "false",	NO },			\
+	{ "1",		YES },			\
+	{ "0",		NO },			\
+	{ "on",		YES },			\
+	{ "off",	NO },			\
+	{ "y",		YES },			\
+	{ "n",		NO }
+
 static const struct sparse_name kw_tcp_list[] = {
 	YES_NO(IKE_TCP_ONLY, IKE_TCP_NO/*default*/),
 	{ "fallback", IKE_TCP_FALLBACK },
@@ -86,10 +99,34 @@ static const struct sparse_name kw_tcp_list[] = {
 };
 
 /*
- * Values for keyexchange=
+ * Values for keyexchange= and ikev2=
+ *
+ * The ikev2= keyword, which was originally very flexible, has been
+ * reduced to a boolean.  Retain original keywords for backwards
+ * compatibility for now.
  */
+
 static const struct sparse_name kw_keyexchange_list[] = {
-	{ "ike",  KE_IKE },
+	{ "ike",  IKE_VERSION_ROOF },
+	{ "ikev1", IKEv1 },
+	{ "ikev2", IKEv2 },
+	SPARSE_NULL
+};
+
+static const struct sparse_name kw_ikev2_list[] = {
+	/* from fo_{never,permit,propose,insist} */
+	{ "never",     YN_NO },
+	{ "propose",   YN_YES },	/* originally: initiate IKEv2,
+					 * but allow downgrade to
+					 * IKEv1; accept IKEv1 or
+					 * IKEv2 */
+	{ "permit",    YN_NO },		/* reverse of propose:
+					 * initiate IKEv1, but allow
+					 * upgrade to IKEv2; accept
+					 * IKEv1 or IKEv2? */
+	{ "insist",    YN_YES },
+	YES_NO(YN_YES, YN_NO),
+	{ "always",    YN_YES },
 	SPARSE_NULL
 };
 
@@ -101,9 +138,8 @@ static const struct sparse_name kw_fourvalued_list[] = {
 	{ "permit",    fo_permit },
 	{ "propose",   fo_propose },
 	{ "insist",    fo_insist },
-	{ "yes",       fo_propose },
 	{ "always",    fo_insist },
-	{ "no",        fo_never },
+	YES_NO(fo_propose, fo_never),
 	SPARSE_NULL
 };
 
@@ -483,7 +519,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "type",  kv_conn,  kt_enum,  KNCF_TYPE,  kw_type_list, NULL, },
   { "authby",  kv_conn,  kt_string,  KSCF_AUTHBY, NULL, NULL, },
   { "keyexchange",  kv_conn,  kt_enum,  KNCF_KEYEXCHANGE,  kw_keyexchange_list, NULL, },
-  { "ikev2",  kv_conn | kv_processed,  kt_enum,  KNCF_IKEv2,  kw_fourvalued_list, NULL, },
+  { "ikev2",  kv_conn | kv_processed,  kt_enum,  KNCF_IKEv2,  kw_ikev2_list, NULL, },
   { "ppk", kv_conn | kv_processed, kt_enum, KNCF_PPK, kw_fourvalued_list, NULL, },
   { "intermediate",  kv_conn | kv_processed, kt_bool, KNCF_INTERMEDIATE, NULL, NULL, },
   { "esn",  kv_conn | kv_processed,  kt_enum,  KNCF_ESN,  kw_esn_list, NULL, },

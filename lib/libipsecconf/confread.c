@@ -1256,23 +1256,21 @@ static bool load_conn(struct starter_conn *conn,
 		conn->policy |= conn->options[KNCF_PHASE2];
 	}
 
-	/*
-	 * This option has really been turned into a boolean, but
-	 * we need the keywords for backwards compatibility for now
-	 */
-	if (conn->options_set[KNCF_IKEv2]) {
-
-		switch (conn->options[KNCF_IKEv2]) {
-		case fo_never:
-		case fo_permit:
-			conn->ike_version = IKEv1;
-			break;
-
-		case fo_propose:
-		case fo_insist:
-			conn->ike_version = IKEv2;
-			break;
+	if (conn->options_set[KNCF_KEYEXCHANGE]) {
+		if (conn->options[KNCF_KEYEXCHANGE] == IKE_VERSION_ROOF) {
+			/*
+			 * i.e., keyexchange=ike which was ignored.
+			 * Use ikev2= when specified.
+			 */
+			if (conn->options_set[KNCF_IKEv2]) {
+				conn->ike_version = (conn->options[KNCF_IKEv2] == YN_YES ? IKEv2 : IKEv1);
+			}
+		} else {
+			/* IKEv1, IKEv2, ... */
+			conn->ike_version = conn->options[KNCF_KEYEXCHANGE];
 		}
+	} else if (conn->options_set[KNCF_IKEv2]) {
+		conn->ike_version = (conn->options[KNCF_IKEv2] == YN_YES ? IKEv2 : IKEv1);
 	}
 
 	if (conn->options_set[KNCF_SEND_REDIRECT]) {
