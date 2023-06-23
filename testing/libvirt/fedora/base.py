@@ -21,21 +21,38 @@ import sys
 import os
 import sys
 import pexpect
+import re
 
 command = sys.argv[1:]
 print("command", command)
 
-class LogFilter:
+#see https://web.archive.org/web/20200805075926/http://ascii-table.com/ansi-escape-sequences.php
+class AsciiDecoder(object):
     def __init__(self):
-        self.stream=sys.stdout.buffer
-    def write(self, record):
-        self.stream.write(record.replace(b'\33', b''))
-    def flush(self):
-        self.stream.flush()
+        self.buf = b''
+    def encode(self, b, final=False):
+        return b
+    def decode(self, b, final=False):
+        self.buf = self.buf + b
+        i = self.buf.find(b'\n')
+        if i >= 0:
+            c = self.buf[0:i+1]
+            self.buf = self.buf[i+1:]
+            d = re.sub(rb'\x1b\[[0-9;=?]*[HfABCDsuJKmhlr]', b'*', c)
+            e = re.sub(rb'\x1b', b'<ESC>', d)
+            if e != e:
+                print(">", e, "<")
+            return e
+        return b''
 
 child = pexpect.spawn(command=command[0],
                       args=command[1:],
-                      logfile=LogFilter(),
+                      logfile=sys.stdout.buffer,
                       echo=False)
+
+# two ways to manipulate the output from command
+# wrap child.read_nonblocking()
+child._decoder = AsciiDecoder() # used by SpawnBase.read_nonblocking()
+
 child.expect([pexpect.EOF], timeout=None, searchwindowsize=1)
 sys.exit(child.wait())
