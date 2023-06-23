@@ -2,21 +2,27 @@
 
 ## Supported Versions
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
-
 | Version | Supported          |
 | ------- | ------------------ |
-| 5.1.x   | :white_check_mark: |
-| 5.0.x   | :x:                |
-| 4.0.x   | :white_check_mark: |
-| < 4.0   | :x:                |
+|   5.0   | unreleased         |
+|   4.11  | :heavy_check_mark: |
+| < 4.11  | :x:                |
+
+Ref: https://libreswan.org/wiki/Support
 
 ## Reporting a Vulnerability
 
-Use this section to tell people how to report a vulnerability.
+Please contact security@libreswan.org if you suspect you have found a
+security issue or vulnerability in libreswan.  Encrypted email can be
+received encrypted to the libreswan OpenPGP key.
 
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
+We strongly encourage you to report potential security vulnerabilities
+to us before disclosing them in a public forum or in a public security
+paper or conference.  The Libreswan Team typically responds within a
+few days but usually needs a few weeks to publish a new release with
+the security fix.  The Libreswan Team does not accept any third party
+clauses before receiving information.  A vulnerability reporter cannot
+mandate a timeline of public disclosure, however The Libreswan Team
+might accept reasonable requests for short delays.
 
+Ref: https://libreswan.org/security/
