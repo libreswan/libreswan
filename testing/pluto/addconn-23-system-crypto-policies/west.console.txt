@@ -11,6 +11,7 @@ west #
  cp PATH/share/crypto-policies/back-ends/DEFAULT/libreswan.config /tmp/west-add.conf
 west #
  ipsec auto --add test
+005 "test": ikev2=yes has been replaced by keyexchange=ikev2
 002 "test": added IKEv2 connection
 west #
  ipsec status | grep algorithms: # DEFAULT
@@ -25,6 +26,7 @@ west #
 west #
  ipsec auto --add test
 002 "test": terminating SAs using this connection
+005 "test": ikev2=yes has been replaced by keyexchange=ikev2
 002 "test": added IKEv2 connection
 west #
  ipsec status | grep algorithms: # FIPS
@@ -39,6 +41,7 @@ west #
 west #
  ipsec auto --add test
 002 "test": terminating SAs using this connection
+005 "test": ikev2=yes has been replaced by keyexchange=ikev2
 002 "test": added IKEv2 connection
 west #
  ipsec status | grep algorithms: # FUTURE
@@ -53,6 +56,7 @@ west #
 west #
  ipsec auto --add test
 002 "test": terminating SAs using this connection
+005 "test": ikev2=yes has been replaced by keyexchange=ikev2
 002 "test": added IKEv2 connection
 west #
  ipsec status | grep algorithms: # LEGACY
