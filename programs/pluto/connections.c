@@ -1956,14 +1956,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	config->ike_version = wm->ike_version;
 	static const struct ike_info ike_info[] = {
-		[0] = {
-			.version = 0,
-			.version_name = "INVALID",
-			.ike_name = "IKE?!?",
-			.child_name = "Child?!?",
-			.ike_sa_name = "IKE SA?!?",
-			.child_sa_name = "Child SA?!?",
-		},
 		[IKEv1] = {
 			.version = IKEv1,
 			.version_name = "IKEv1",
@@ -1983,7 +1975,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 			.replace_event = EVENT_v2_REPLACE,
 		},
 	};
-	passert(wm->ike_version < elemsof(ike_info));
+	PASSERT(c->logger, wm->ike_version < elemsof(ike_info));
+	PASSERT(c->logger, ike_info[wm->ike_version].version > 0);
 	config->ike_info = &ike_info[wm->ike_version];
 
 	if (wm->policy & POLICY_OPPORTUNISTIC &&
