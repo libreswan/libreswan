@@ -369,6 +369,9 @@ struct whack_message {
 	bool vti_routing; /* perform routing into vti device or not */
 	bool vti_shared; /* use remote %any and skip cleanup on down? */
 
+	/* RFC 8784 and draft-smyslov-ipsecme-ikev2-qr-alt-07 */
+	char *ppk_ids;
+
 	/* for RFC 5685 - IKEv2 Redirect mechanism */
 	enum allow_global_redirect global_redirect;
 	char *global_redirect_to;

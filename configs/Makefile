@@ -153,6 +153,7 @@ XMLSOURCES += d.ipsec.conf/ms-dh-downgrade.xml
 XMLSOURCES += d.ipsec.conf/dns-match-id.xml
 XMLSOURCES += d.ipsec.conf/require-id-on-certificate.xml
 XMLSOURCES += d.ipsec.conf/ppk.xml
+XMLSOURCES += d.ipsec.conf/ppk-ids.xml
 XMLSOURCES += d.ipsec.conf/nat-ikev1-method.xml
 XMLSOURCES += d.ipsec.conf/esp.xml
 XMLSOURCES += d.ipsec.conf/ah.xml

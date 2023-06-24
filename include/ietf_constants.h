@@ -1639,9 +1639,9 @@ typedef enum {
 	v2N_CLONE_IKE_SA_SUPPORTED = 16432, /* RFC-7791 */
 	v2N_CLONE_IKE_SA = 16433, /* RFC-7791 */
 	v2N_PUZZLE = 16434, /* RFC-8019 */
-	v2N_USE_PPK = 16435, /* draft-ietf-ipsecme-qr-ikev2 */
-	v2N_PPK_IDENTITY = 16436, /* draft-ietf-ipsecme-qr-ikev2 */
-	v2N_NO_PPK_AUTH = 16437, /* draft-ietf-ipsecme-qr-ikev2 */
+	v2N_USE_PPK = 16435, /* RFC 8784 */
+	v2N_PPK_IDENTITY = 16436, /* RFC 8784 */
+	v2N_NO_PPK_AUTH = 16437, /* RFC 8784 */
 	v2N_INTERMEDIATE_EXCHANGE_SUPPORTED = 16438, /* draft-ietf-ipsecme-ikev2-intermediate-04 */
 	v2N_IP4_ALLOWED = 16439,
 	v2N_IP6_ALLOWED = 16440,
@@ -1658,7 +1658,7 @@ typedef enum {
 
 } v2_notification_t;
 
-/* draft-ietf-ipsecme-qr-ikev2-01 created registry */
+/* RFC 8784 created registry */
 enum ikev2_ppk_id_type {
 	PPK_ID_OPAQUE = 1,
 	PPK_ID_FIXED = 2,

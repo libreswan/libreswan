@@ -365,6 +365,10 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 		pfreeany(config->modecfg.dns.list);
 		pfreeany(config->modecfg.domains);
 		pfreeany(config->modecfg.banner);
+		pfreeany(config->ppk_ids);
+		if (config->ppk_ids_shunks != NULL) {
+			pfree(config->ppk_ids_shunks);
+		}
 		pfreeany(config->redirect.to);
 		pfreeany(config->redirect.accept);
 		FOR_EACH_ELEMENT(end, config->end) {
@@ -2536,6 +2540,14 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 		config->modecfg.banner = clone_str(wm->modecfg_banner, "connection modecfg_banner");
 
+		/* RFC 8784 and draft-smyslov-ipsecme-ikev2-qr-alt-07 */
+		config->ppk_ids = clone_str(wm->ppk_ids, "connection ppk_ids");
+		if (config->ppk_ids != NULL) {
+			config->ppk_ids_shunks = shunks(shunk1(config->ppk_ids),
+							", ",
+							EAT_EMPTY_SHUNKS,
+							HERE); /* process into shunks once */
+		}
 
 		/* RFC 5685 - IKEv2 Redirect mechanism */
 		config->redirect.to = clone_str(wm->redirect_to, "connection redirect_to");

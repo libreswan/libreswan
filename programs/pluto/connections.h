@@ -194,6 +194,10 @@ struct config {
 
 	reqid_t sa_reqid;
 
+	/* RFC 8784 and draft-smyslov-ipsecme-ikev2-qr-alt-07 */
+	char *ppk_ids;
+	struct shunks *ppk_ids_shunks;
+
 	struct {
 		char *to;        /* RFC 5685 */
 		char *accept;

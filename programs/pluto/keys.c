@@ -518,33 +518,10 @@ const chunk_t *get_connection_psk(const struct connection *c)
 	return psk;
 }
 
-
-/* Return ppk and store ppk_id in *ppk_id */
-
-chunk_t *get_connection_ppk(const struct connection *c, chunk_t **ppk_id)
-{
-	struct secret *s = lsw_get_secret(c, SECRET_PPK, false);
-
-	if (s == NULL) {
-		*ppk_id = NULL;
-		return NULL;
-	}
-
-	struct secret_stuff *pks = get_secret_stuff(s);
-	*ppk_id = &pks->ppk_id;
-	if (DBGP(DBG_CRYPT)) {
-		DBG_log("Found PPK");
-		DBG_dump_hunk("PPK_ID:", **ppk_id);
-		DBG_dump_hunk("PPK:", pks->ppk);
-	}
-	return &pks->ppk;
-}
-
 /*
  * Find PPK, by its id (PPK_ID).
- * Used by responder.
  */
-const chunk_t *get_ppk_by_id(const chunk_t *ppk_id)
+static const chunk_t *get_ppk_by_id(const chunk_t *ppk_id)
 {
 	struct secret *s = lsw_get_ppk_by_id(pluto_secrets, *ppk_id);
 
@@ -557,6 +534,97 @@ const chunk_t *get_ppk_by_id(const chunk_t *ppk_id)
 		return &pks->ppk;
 	}
 	dbg("No PPK found with given PPK_ID");
+	return NULL;
+}
+
+/*
+ * Get connection PPK and store ppk_id in *ppk_id. If ppk-ids conn option
+ * was set, one of the listed PPK_IDs needs to be found in .secrets
+ */
+const chunk_t *get_connection_ppk_initiator(const struct connection *c, chunk_t **ppk_id)
+{
+	struct shunks *ppk_ids_shunks = c->config->ppk_ids_shunks;
+
+	if (ppk_ids_shunks == NULL) {
+		/*
+		 * try to find any matching PPK, if found, save the corresponding
+		 * PPK_ID in ppk_id
+		 */
+		ldbg(c->logger, "ppk-ids conn option not specified, look for first matching secret");
+		struct secret *s = lsw_get_secret(c, SECRET_PPK, false);
+
+		if (s == NULL) {
+			*ppk_id = NULL;
+			return NULL;
+		}
+
+		struct secret_stuff *pks = get_secret_stuff(s);
+		*ppk_id = &pks->ppk_id;
+		if (DBGP(DBG_CRYPT)) {
+			DBG_log("Found PPK");
+			DBG_dump_hunk("PPK_ID:", **ppk_id);
+			DBG_dump_hunk("PPK:", pks->ppk);
+		}
+		return &pks->ppk;
+	} else {
+		ldbg(c->logger, "ppk-ids conn option specified, iterate through list: %s",
+		     c->config->ppk_ids);
+		/*
+		 * iterate through PPK_ID (ppk-ids=) list and try to find
+		 * at least one secrets entry that matches a PPK_ID from the
+		 * list.
+		 */
+		FOR_EACH_ITEM(ppk_id_shunk, ppk_ids_shunks) {
+			/* XXX cast away the const qualifier from shunk_t pointer... */
+			chunk_t chunk = chunk2((void *) ppk_id_shunk->ptr, ppk_id_shunk->len);
+
+			ldbg(c->logger, "try to find PPK with PPK_ID:");
+			ldbg_hunk(c->logger, *ppk_id_shunk);
+
+			const chunk_t *ppk = get_ppk_by_id(&chunk);
+
+			if (ppk != NULL) {
+				*ppk_id = &chunk;
+				return ppk;
+			}
+		}
+	}
+	return NULL;
+}
+
+/*
+ * Get connection PPK with PPK_ID ppk_id. If ppk-ids conn option was set,
+ * ppk_id (that was received) needs to be in it. Used by responder.
+ */
+const chunk_t *get_connection_ppk_responder(const struct connection *c, chunk_t *ppk_id)
+{
+	struct shunks *ppk_ids_shunks = c->config->ppk_ids_shunks;
+
+	if (ppk_ids_shunks == NULL) {
+		/* try to find PPK with PPK_ID ppk_id */
+		ldbg(c->logger, "ppk-ids conn option not specified, look for PPK with ID:");
+		ldbg_hunk(c->logger, *ppk_id);
+		return get_ppk_by_id(ppk_id);
+	} else {
+		ldbg(c->logger, "ppk-ids conn option specified, iterate through list: %s",
+		     c->config->ppk_ids);
+		/*
+		 * iterate through PPK_ID (ppk-ids=) list and try to match
+		 * ppk_id with one entry from PPK_ID list.
+		 */
+		FOR_EACH_ITEM(ppk_id_shunk, ppk_ids_shunks) {
+			/* XXX cast away the const qualifier from shunk_t pointer... */
+			chunk_t ppk_id_chunk = chunk2((void *) ppk_id_shunk->ptr, ppk_id_shunk->len);
+
+			ldbg(c->logger, "checking if received PPK_ID is equal to:");
+			ldbg_hunk(c->logger, *ppk_id_shunk);
+
+			if (hunk_eq(*ppk_id, *ppk_id_shunk)) {
+				ldbg(c->logger, "match! try to find PPK with that PPK_ID");
+				return get_ppk_by_id(&ppk_id_chunk);
+			}
+		}
+	}
 	return NULL;
 }
 

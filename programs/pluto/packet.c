@@ -1089,7 +1089,7 @@ struct_desc ikev2_id_r_desc = {
 };
 
 /*
- * IKEv2 - draft-ietf-ipsecme-qr-ikev2-01 (no ascii art provided in RFC)
+ * IKEv2 - RFC 8784 (no ascii art provided in RFC)
  * PPK_ID types
  *                         1                   2                   3
  *     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
