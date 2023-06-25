@@ -52,18 +52,6 @@ resolving family=IPv4 src=<defaultroute> gateway=178.62.192.1 peer <any>
   success: src=178.62.253.21 gateway=178.62.192.1
 resolving family=IPv4 src=<any> gateway=<not-set> peer 178.62.253.21
   seeking NOTHING
-conn: "test" modecfgdns=<unset>
-conn: "test" modecfgdomains=<unset>
-conn: "test" modecfgbanner=<unset>
-conn: "test" mark=<unset>
-conn: "test" mark-in=<unset>
-conn: "test" mark-out=<unset>
-conn: "test" vti_iface=<unset>
-conn: "test" ppk-ids=<unset>
-conn: "test" redirect-to=<unset>
-conn: "test" accept-redirect-to=<unset>
-conn: "test" esp=<unset>
-conn: "test" ike=<unset>
 002 "test": added IKEv2 connection
 east #
  echo "initdone"

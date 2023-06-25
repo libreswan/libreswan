@@ -18,18 +18,6 @@ resolving family=IPv4 src=192.1.2.45 gateway=<not-set> peer 192.1.2.23
   seeking NOTHING
 resolving family=IPv4 src=192.1.2.23 gateway=<not-set> peer 192.1.2.45
   seeking NOTHING
-conn: "east" modecfgdns=<unset>
-conn: "east" modecfgdomains=<unset>
-conn: "east" modecfgbanner=<unset>
-conn: "east" mark=<unset>
-conn: "east" mark-in=<unset>
-conn: "east" mark-out=<unset>
-conn: "east" vti_iface=<unset>
-conn: "east" ppk-ids=<unset>
-conn: "east" redirect-to=<unset>
-conn: "east" accept-redirect-to=<unset>
-conn: "east" esp=<unset>
-conn: "east" ike=<unset>
 002 "east": added IKEv2 connection
 east #
  echo "initdone"
