@@ -490,8 +490,10 @@ static int starter_whack_add_pubkey(struct starter_config *cfg,
 static void conn_log_val(const struct starter_conn *conn,
 			 const char *name, const char *value)
 {
-	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" %s=%s",
-		    conn->name, name, value == NULL ? "<unset>" : value);
+	if (value != NULL) {
+		starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" %s=%s",
+			    conn->name, name, value);
+	}
 }
 
 static int starter_whack_basic_add_conn(struct starter_config *cfg,
