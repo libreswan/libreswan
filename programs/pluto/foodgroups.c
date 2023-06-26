@@ -71,7 +71,7 @@ static struct fg_targets *targets = NULL;
 static void remove_group_instance(const struct connection *group,
 				  co_serial_t serialno)
 {
-	passert(is_group_template(group));
+	passert(is_group(group));
 	ldbg(group->logger, "removing group instance "PRI_CO, pri_co(serialno));
 	struct connection *gi = connection_by_serialno(serialno);
 	if (gi == NULL) {
@@ -456,7 +456,7 @@ void load_groups(struct logger *logger)
 
 void connection_group_route(struct connection *g, where_t where)
 {
-	if (!PEXPECT(g->logger, is_group_template(g))) {
+	if (!PEXPECT(g->logger, is_group(g))) {
 		return;
 	}
 
@@ -489,7 +489,7 @@ void connection_group_route(struct connection *g, where_t where)
 
 void connection_group_unroute(struct connection *g, where_t where)
 {
-	if (!PEXPECT(g->logger, is_group_template(g))) {
+	if (!PEXPECT(g->logger, is_group(g))) {
 		return;
 	}
 

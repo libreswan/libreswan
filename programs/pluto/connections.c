@@ -232,7 +232,7 @@ void delete_connection(struct connection **cp)
 	struct connection *c = *cp;
 	*cp = NULL;
 
-	if (is_group_template(c)) {
+	if (is_group(c)) {
 		delete_connection_group_instances(c);
 		/* continue with deleting this connection */
 	}
@@ -3280,7 +3280,7 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 		sep = "+";
 	}
 
-	if (is_group_template(c)) {
+	if (is_group(c)) {
 		s += jam_string(buf, sep);
 		s += jam_string(buf, "GROUP");
 		sep = "+";
@@ -3365,7 +3365,7 @@ struct connection *find_connection_for_packet(const ip_packet packet,
 	while (next_connection_new2old(&cq)) {
 		struct connection *c = cq.c;
 
-		if (is_group_template(c)) {
+		if (is_group(c)) {
 			connection_buf cb;
 			ldbg(logger, "    skipping "PRI_CONNECTION"; a food group",
 			     pri_connection(c, &cb));
@@ -4047,7 +4047,7 @@ bool is_permanent(const struct connection *c)
 	bad_case(c->local->kind);
 }
 
-bool is_group_template(const struct connection *c)
+bool is_group(const struct connection *c)
 {
 	if (c == NULL) {
 		return false;

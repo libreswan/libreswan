@@ -119,7 +119,7 @@ void initiate_ondemand(const struct kernel_acquire *b)
 
 	/*
 	 * XXX: is_template() includes is_labeled_template() but not
-	 * is_group_template()
+	 * is_group()
 	 */
 	if (!is_labeled(c) && is_template(c) && !is_opportunistic(c)) {
 		/*

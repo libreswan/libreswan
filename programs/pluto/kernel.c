@@ -108,7 +108,7 @@ kernel_priority_t calculate_kernel_priority(const struct connection *c)
 		return (kernel_priority_t) { c->sa_priority, };
 	}
 
-	if (is_group_template(c)) {
+	if (is_group(c)) {
 		llog_pexpect(c->logger, HERE,
 			     "priority calculation of connection skipped - group template does not install SPDs");
 		return highest_kernel_priority;

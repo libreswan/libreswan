@@ -46,7 +46,7 @@ static bool match_connection(const struct connection *c,
 		return false;
 	}
 
-	if (is_group_template(c)) {
+	if (is_group(c)) {
 		connection_buf cb;
 		dbg("  skipping "PRI_CONNECTION", connection group",
 		    pri_connection(c, &cb));

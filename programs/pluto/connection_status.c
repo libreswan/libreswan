@@ -75,7 +75,7 @@ static void jam_end_host(struct jambuf *buf, const struct connection *c,
 			jam_string(buf, "%dns");
 			jam(buf, "<%s>", this->host->config->addr_name);
 		} else {
-			if (is_group_template(c)) {
+			if (is_group(c)) {
 				if (is_opportunistic(c)) {
 					jam_string(buf, "%opportunisticgroup");
 				} else {
@@ -147,7 +147,7 @@ static void jam_end_client(struct jambuf *buf, const struct connection *c,
 	}
 
 	if (selector_is_all(this->client)) {
-		if (is_group_template(c) || is_opportunistic(c)) {
+		if (is_group(c) || is_opportunistic(c)) {
 			/* booring */
 			return;
 		}

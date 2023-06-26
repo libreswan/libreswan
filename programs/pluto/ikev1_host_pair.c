@@ -338,7 +338,7 @@ struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 			continue;
 		}
 
-		if (is_group_template(d)) {
+		if (is_group(d)) {
 			continue;
 		}
 
