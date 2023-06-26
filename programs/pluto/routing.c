@@ -1485,15 +1485,7 @@ void dispatch(enum routing_event event,
 					  e->inception, null_shunk,
 					  e->background, logger);
 			return;
-		case X(ACQUIRE, ROUTED_ONDEMAND, TEMPLATE):
-		{
-			PEXPECT(logger, is_opportunistic(*c));
-			struct connection *cc = oppo_initiator_instantiate(*c, e->packet, where);
-			/* XXX: (b->)logger has whack attached */
-			dispatch(CONNECTION_ACQUIRE, &cc,
-				 logger, where, *e);
-			return;
-		}
+
 		case X(ACQUIRE, UNROUTED, INSTANCE):
 			/*
 			 * Triggered by acquire against the template
@@ -1662,15 +1654,6 @@ void dispatch(enum routing_event event,
 			delete_connection(c);
 			return;
 
-		case X(ACQUIRE, ROUTED_ONDEMAND, LABELED_TEMPLATE):
-		{
-			struct connection *cp =
-				sec_label_parent_instantiate(*c, (*c)->remote->host.addr, where);
-			/* (b->)logger has whack attached */
-			dispatch(CONNECTION_ACQUIRE, &cp,
-				 logger, where, *e);
-			return;
-		}
 		case X(ACQUIRE, UNROUTED, LABELED_PARENT):
 		case X(ACQUIRE, ROUTED_ONDEMAND, LABELED_PARENT):
 		case X(INITIATE, UNROUTED, LABELED_PARENT):

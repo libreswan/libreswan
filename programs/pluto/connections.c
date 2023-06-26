@@ -4026,6 +4026,27 @@ bool is_template(const struct connection *c)
 	bad_case(c->local->kind);
 }
 
+bool is_opportunistic_template(const struct connection *c)
+{
+	if (c == NULL) {
+		return false;
+	}
+	switch (c->local->kind) {
+	case CK_INVALID:
+		break;
+	case CK_TEMPLATE:
+		return is_opportunistic(c);
+	case CK_LABELED_TEMPLATE:
+	case CK_PERMANENT:
+	case CK_GROUP:
+	case CK_INSTANCE:
+	case CK_LABELED_PARENT:
+	case CK_LABELED_CHILD:
+		return false;
+	}
+	bad_case(c->local->kind);
+}
+
 bool is_permanent(const struct connection *c)
 {
 	if (c == NULL) {

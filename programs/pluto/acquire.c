@@ -32,6 +32,7 @@
 #include "log.h"
 #include "kernel.h"
 #include "orient.h"
+#include "instantiate.h"
 
 /* (Possibly) Opportunistic Initiation:
  *
@@ -117,29 +118,30 @@ void initiate_ondemand(const struct kernel_acquire *b)
 		return;
 	}
 
-	/*
-	 * XXX: is_template() includes is_labeled_template() but not
-	 * is_group()
-	 */
-	if (!is_labeled(c) && is_template(c) && !is_opportunistic(c)) {
-		/*
-		 * Only opportunistic connections can ondemand
-		 * instantiate a template.
-		 *
-		 * Here, the connection should never have been
-		 * routed and/or whack should never have
-		 * allowed ondemand?
-		 */
-		cannot_ondemand(RC_NOPEERIP, b, "non-opportunistic template connection");
+	/* else C would not have been found */
+	if (!PEXPECT(b->logger, oriented(c))) {
 		return;
 	}
-
-	/* else C would not have been found */
-	PASSERT(b->logger, oriented(c));
 
 	LLOG_JAMBUF(RC_LOG, b->logger, buf) {
 		jam_kernel_acquire(buf, b);
 	}
 
-	connection_acquire(c, &inception, b, HERE);
+	struct connection *cp =
+		(is_labeled_template(c) ? sec_label_parent_instantiate(c, (c)->remote->host.addr, HERE) :
+		 is_opportunistic_template(c) ? oppo_initiator_instantiate(c, b->packet, HERE) :
+		 is_permanent(c) ? c :
+		 is_instance(c) ? c /*valid?*/:
+		 NULL);
+
+	if (cp == NULL) {
+		connection_attach(c, b->logger);
+		llog_pexpect(c->logger, HERE, "can't acquire (ondemand) connection");
+		connection_detach(c, b->logger);
+		return;
+	}
+
+	/* (b->)logger has whack attached */
+	connection_acquire(cp, &inception, b, HERE);
+
 }
