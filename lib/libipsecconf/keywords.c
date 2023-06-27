@@ -63,14 +63,15 @@ static const struct sparse_name kw_negotiationshunt_list[] = {
 /*
  * Common aliases for YES and NO, add this to a keyword list so all
  * are accepted.
+ *
+ * This list does not include "0" or "1" as they, for things like
+ * yndev have special meanings.
  */
 #define YES_NO(YES, NO)				\
 	{ "yes",        YES },                  \
        { "no",         NO },			\
        { "true",       YES },			\
        { "false",      NO },			\
-       { "1",          YES },			\
-       { "0",          NO },			\
        { "on",         YES },			\
        { "off",        NO },			\
        { "y",          YES },			\
@@ -79,18 +80,6 @@ static const struct sparse_name kw_negotiationshunt_list[] = {
 /*
  * Values for enable-tcp={no, yes, fallback}
  */
-
-#define YES_NO(YES, NO)				\
-	{ "yes",	YES },			\
-	{ "no",		NO },			\
-	{ "true",	YES },			\
-	{ "false",	NO },			\
-	{ "1",		YES },			\
-	{ "0",		NO },			\
-	{ "on",		YES },			\
-	{ "off",	NO },			\
-	{ "y",		YES },			\
-	{ "n",		NO }
 
 static const struct sparse_name kw_tcp_list[] = {
 	YES_NO(IKE_TCP_ONLY, IKE_TCP_NO/*default*/),
@@ -166,6 +155,13 @@ static const struct sparse_name kw_yndev_list[] = {
 /* match <BOOLEAN_VALUE> in parser.lex */
 static const struct sparse_name kw_yn_list[] = {
 	YES_NO(YN_YES, YN_NO),
+	/*
+	 * These are unique to YN, and probably should be dropped
+	 * completely.  Some keywords, such as yndev, interpret "1"
+	 * and "0".
+	 */
+	{ "1",          YN_YES, },
+	{ "0",          YN_NO, },
 	SPARSE_NULL,
 };
 
