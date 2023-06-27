@@ -53,7 +53,7 @@ static unsigned log_limit(const struct log_limiter *limiter)
 	}
 }
 
-bool log_is_limited(struct logger *logger, struct log_limiter *limiter)
+lset_t log_limiter_rc_flags(struct logger *logger, struct log_limiter *limiter)
 {
 	/* allow imparing to override specified limit */
 	unsigned limit = log_limit(limiter);
@@ -76,34 +76,23 @@ bool log_is_limited(struct logger *logger, struct log_limiter *limiter)
 	}
 	pthread_mutex_unlock(&limiter->mutex);
 
-	return is_limited;
-}
-
-VPRINTF_LIKE(3)
-static void rate_log_raw(const char *prefix,
-			 struct logger *logger,
-			 const char *message,
-			 va_list ap)
-{
-	JAMBUF(buf) {
-		jam_string(buf, prefix);
-		jam_logger_prefix(buf, logger);
-		jam_va_list(buf, message, ap);
-		jambuf_to_logger(buf, logger, LOG_STREAM);
+	if (is_limited) {
+		return (DBGP(DBG_BASE) ? DEBUG_STREAM : LEMPTY);
 	}
+
+	return RC_LOG|LOG_STREAM;
 }
 
 void llog_md(const struct msg_digest *md,
 	     const char *message, ...)
 {
-	va_list ap;
-	va_start(ap, message);
-	if (log_is_limited(md->md_logger, &md_log_limiter)) {
-		rate_log_raw(DEBUG_PREFIX, md->md_logger, message, ap);
-	} else {
-		rate_log_raw("", md->md_logger, message, ap);
+	lset_t rc_flags = log_limiter_rc_flags(md->md_logger, &md_log_limiter);
+	if (rc_flags != LEMPTY) {
+		va_list ap;
+		va_start(ap, message);
+		llog_va_list(rc_flags, md->md_logger, message, ap);
+		va_end(ap);
 	}
-	va_end(ap);
 }
 
 static global_timer_cb reset_log_limiter;	/* type check */

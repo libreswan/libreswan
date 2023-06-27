@@ -16,12 +16,11 @@
 #ifndef LOG_LIMITER_H
 #define LOG_LIMITER_H
 
-#include <stdbool.h>
-
-#include "lswcdefs.h"	/* for PRINTF_LIKE() */
+#include "lset.h"
 
 struct msg_digest;
 struct logger;
+struct log_limiter;
 
 /*
  * rate limited logging
@@ -30,7 +29,17 @@ struct logger;
 extern struct log_limiter md_log_limiter;
 extern struct log_limiter certificate_log_limiter;
 
-bool log_is_limited(struct logger *logger, struct log_limiter *limiter);
+/*
+ * Returns non-LEMPTY rc_flags when the message should be logged.  For
+ * instance:
+ *
+ *    lset_t rc_flags = log_limiter_rc_flags(logger, &md_log_limiter);
+ *    if (rc_flags != LEMPTY) {
+ *        llog(rc_flags, logger, "I am rate limited");
+ *    }
+ *
+ */
+lset_t log_limiter_rc_flags(struct logger *logger, struct log_limiter *limiter);
 
 void init_log_limiter(void);
 
