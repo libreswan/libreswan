@@ -477,7 +477,7 @@ void check_orientations(struct logger *logger)
 	while (c != NULL) {
 		/* step off */
 		struct connection *nxt = c->hp_next;
-		orient(c, logger);
+		orient(&c, logger);
 		/*
 		 * Either put C back on unoriented, or add to a host
 		 * pair.
@@ -523,7 +523,7 @@ void check_orientations(struct logger *logger)
 						iface_endpoint_delref(&c->interface);
 						c->host_pair = NULL;
 						c->hp_next = NULL;
-						orient(c, logger);
+						orient(&c, logger);
 						connect_to_host_pair(c);
 						c = nxt;
 					}

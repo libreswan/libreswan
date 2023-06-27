@@ -127,7 +127,7 @@ void initialize_new_state(struct state *st,
 	struct connection *c = st->st_connection;
 	pexpect(oriented(c));
 	iface_endpoint_delref(&c->interface);
-	orient(c, st->st_logger);
+	orient(&c, st->st_logger); /*XXX: why*/
 	pexpect(st->st_interface == NULL); /* no-leak */
 	st->st_interface = iface_endpoint_addref(c->interface);
 	passert(st->st_interface != NULL);

@@ -2658,7 +2658,7 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 	child->sa.st_interface = iface_endpoint_addref(md->iface);
 
 	delete_oriented_hp(c); /* hp list may have changed */
-	if (!orient(c, ike->sa.st_logger)) {
+	if (!orient(&c, ike->sa.st_logger)) {
 		llog_pexpect(ike->sa.st_logger, HERE,
 			     "%s after mobike failed", "orient");
 	}

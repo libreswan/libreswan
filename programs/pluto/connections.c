@@ -2984,7 +2984,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	connection_db_add(c);
 
 	/* this triggers a rehash of the SPDs */
-	orient(c, c->logger);
+	orient(&c, c->logger);
 
 	connect_to_host_pair(c);
 
