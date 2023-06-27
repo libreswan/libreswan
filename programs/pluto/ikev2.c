@@ -1666,7 +1666,7 @@ static bool is_duplicate_response(struct ike_sa *ike,
 		 * Processing of the response was completed so drop as
 		 * too old.
 		 *
-		 * XXX: Should be rate_log() but that shows up in the
+		 * XXX: Should be llog_md() but that shows up in the
 		 * whack output.  While "correct" it messes with test
 		 * output.  The old log line didn't show up because
 		 * current-state wasn't set.
@@ -1855,9 +1855,9 @@ void ikev2_process_packet(struct msg_digest *md)
 					    expected_local_ike_role);
 	if (ike == NULL) {
 		enum_buf ixb;
-		rate_log(md, "%s %s has no corresponding IKE SA; message dropped",
-			 str_enum_short(&ikev2_exchange_names, ix, &ixb),
-			 v2_msg_role(md) == MESSAGE_REQUEST ? "request" : "response");
+		llog_md(md, "%s %s has no corresponding IKE SA; message dropped",
+			str_enum_short(&ikev2_exchange_names, ix, &ixb),
+			v2_msg_role(md) == MESSAGE_REQUEST ? "request" : "response");
 		return;
 	}
 
@@ -1886,10 +1886,10 @@ void ikev2_process_packet(struct msg_digest *md)
 	if (!ike->sa.st_state->v2.secured) {
 		enum_buf ixb;
 		/* there's no rate_llog() */
-		rate_log(md, "IKE SA "PRI_SO" for %s %s has not been secured; message dropped",
-			 ike->sa.st_serialno,
-			 str_enum_short(&ikev2_exchange_names, ix, &ixb),
-			 v2_msg_role(md) == MESSAGE_REQUEST ? "request" : "response");
+		llog_md(md, "IKE SA "PRI_SO" for %s %s has not been secured; message dropped",
+			ike->sa.st_serialno,
+			str_enum_short(&ikev2_exchange_names, ix, &ixb),
+			v2_msg_role(md) == MESSAGE_REQUEST ? "request" : "response");
 		return;
 	}
 

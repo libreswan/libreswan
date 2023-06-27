@@ -123,18 +123,18 @@ void process_md(struct msg_digest *md)
 		 * IKEv2 doesn't say what to do with low versions,
 		 * just drop them.
 		 */
-		rate_log(md, "ignoring packet with IKE major version '%d'", vmaj);
+		llog_md(md, "ignoring packet with IKE major version '%d'", vmaj);
 		return;
 
 	case ISAKMP_MAJOR_VERSION: /* IKEv1 */
 		if (pluto_ikev1_pol == GLOBAL_IKEv1_DROP) {
-			rate_log(md,
+			llog_md(md,
 			     "ignoring IKEv1 packet as global policy is set to silently drop all IKEv1 packets");
 			return;
 		}
 #ifdef USE_IKEv1
 		if (pluto_ikev1_pol == GLOBAL_IKEv1_REJECT) {
-			rate_log(md,
+			llog_md(md,
 			     "rejecting IKEv1 packet as global policy is set to reject all IKEv1 packets");
 			send_v1_notification_from_md(md, v1N_INVALID_MAJOR_VERSION);
 			return;
@@ -155,7 +155,7 @@ void process_md(struct msg_digest *md)
 			 * own, given the major version numbers are
 			 * identical.
 			 */
-			rate_log(md,
+			llog_md(md,
 			     "ignoring packet with IKEv1 minor version number %d greater than %d", vmin, ISAKMP_MINOR_VERSION);
 			send_v1_notification_from_md(md, v1N_INVALID_MINOR_VERSION);
 			return;
@@ -175,7 +175,7 @@ void process_md(struct msg_digest *md)
 			/* Unlike IKEv1, for IKEv2 we are supposed to try to
 			 * continue on unknown minors
 			 */
-			rate_log(md,
+			llog_md(md,
 			     "Ignoring unknown/unsupported IKEv2 minor version number %d", vmin);
 		}
 		dbg(" processing version=%u.%u packet with exchange type=%s (%d)",
@@ -186,8 +186,7 @@ void process_md(struct msg_digest *md)
 		break;
 
 	default:
-		rate_log(md,
-		     "message contains unsupported IKE major version '%d'", vmaj);
+		llog_md(md, "message contains unsupported IKE major version '%d'", vmaj);
 		/*
 		 * According to 1.5.  Informational Messages outside
 		 * of an IKE SA, [...] the message is always sent

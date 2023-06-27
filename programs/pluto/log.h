@@ -153,8 +153,9 @@ size_t jam_state(struct jambuf *buf, const struct state *st);
 /*
  * rate limited logging
  */
-void rate_log(const struct msg_digest *md,
-	      const char *message, ...) PRINTF_LIKE(2);
+
+PRINTF_LIKE(2)
+void llog_md(const struct msg_digest *md, const char *message, ...);
 
 /*
  * Whack only logging.

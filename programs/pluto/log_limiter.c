@@ -93,8 +93,8 @@ static void rate_log_raw(const char *prefix,
 	}
 }
 
-void rate_log(const struct msg_digest *md,
-	      const char *message, ...)
+void llog_md(const struct msg_digest *md,
+	     const char *message, ...)
 {
 	va_list ap;
 	va_start(ap, message);

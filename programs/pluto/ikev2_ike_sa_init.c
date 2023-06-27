@@ -75,7 +75,7 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 	 * zero.
 	 */
 	if (md->hdr.isa_msgid != 0) {
-		rate_log(md, "IKE_SA_INIT message has non-zero message ID; dropping packet");
+		llog_md(md, "IKE_SA_INIT message has non-zero message ID; dropping packet");
 		return;
 	}
 	/*
@@ -101,7 +101,7 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 		 * i.e., in the request, I must be set
 		 */
 		if (!(md->hdr.isa_flags & ISAKMP_FLAGS_v2_IKE_I)) {
-			rate_log(md, "IKE_SA_INIT request has I (IKE Initiator) flag clear; dropping packet");
+			llog_md(md, "IKE_SA_INIT request has I (IKE Initiator) flag clear; dropping packet");
 			return;
 		}
 
@@ -116,7 +116,7 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 		 * exchanges still work)
 		 */
 		if (ike_spi_is_zero(&md->hdr.isa_ike_initiator_spi)) {
-			rate_log(md, "IKE_SA_INIT request has zero IKE SA Initiator SPI; dropping packet");
+			llog_md(md, "IKE_SA_INIT request has zero IKE SA Initiator SPI; dropping packet");
 			return;
 		}
 
@@ -134,7 +134,7 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 		 * initiator can't know the responder's SPI).
 		 */
 		if (!ike_spi_is_zero(&md->hdr.isa_ike_responder_spi)) {
-			rate_log(md, "IKE_SA_INIT request has non-zero IKE SA Responder SPI; dropping packet");
+			llog_md(md, "IKE_SA_INIT request has non-zero IKE SA Responder SPI; dropping packet");
 			return;
 		}
 
@@ -416,7 +416,7 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 		 * i.e., in the response I must be clear
 		 */
 		if (md->hdr.isa_flags & ISAKMP_FLAGS_v2_IKE_I) {
-			rate_log(md, "IKE_SA_INIT response has I (IKE Initiator) flag set; dropping packet");
+			llog_md(md, "IKE_SA_INIT response has I (IKE Initiator) flag set; dropping packet");
 			return;
 		}
 
@@ -455,7 +455,7 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 			 * isn't someone's playing games.  Drop the
 			 * packet.
 			 */
-			rate_log(md, "dropping IKE_SA_INIT response no matching IKE ISA");
+			llog_md(md, "dropping IKE_SA_INIT response no matching IKE ISA");
 			return;
 		}
 
@@ -467,8 +467,8 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 			 * This doesn't seem right; drop the
 			 * packet.
 			 */
-			rate_log(md, "dropping IKE_SA_INIT response as unexpected for matching IKE SA #%lu",
-				 ike->sa.st_serialno);
+			llog_md(md, "dropping IKE_SA_INIT response as unexpected for matching IKE SA #%lu",
+				ike->sa.st_serialno);
 			return;
 		}
 
