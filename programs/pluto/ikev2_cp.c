@@ -384,20 +384,100 @@ bool process_v2_IKE_AUTH_request_v2CP_request_payload(struct ike_sa *ike,
 	return true;
 }
 
+/*
+ * Verify and save the INTERNAL_DNS_DOMAIN.
+ *
+ * THIS FUNCTION IS WRONG
+ *
+ * According to RFC 8598 (Split DNS Configuration for the Internet Key
+ * Exchange Protocol Version 2 (IKEv2)) the payload contains:
+ *
+ *   o  Domain Name (0 or more octets) - A Fully Qualified Domain Name
+ *      used for Split DNS rules, such as "example.com", in DNS
+ *      presentation format and using an Internationalized Domain Names
+ *      for Applications (IDNA) A-label [RFC5890].  Implementors need to
+ *      be careful that this value is not null terminated.
+ *
+ * but the below is based on cisco_stringify() which is a hang-over
+ * from IKEv1.
+ */
+
+static char *broken_dns_stringify(shunk_t str, struct logger *logger)
+{
+	char strbuf[500]; /* Cisco maximum unknown - arbitrary choice */
+	struct jambuf buf = ARRAY_AS_JAMBUF(strbuf); /* let jambuf deal with overflow */
+
+	/*
+	 * detox string
+	 */
+	for (const char *p = (const void *)str.ptr, *end = p + str.len;
+	     p < end && *p != '\0'; p++) {
+		char c = *p;
+		switch (c) {
+		case '\'':
+			/*
+			 * preserve cisco_stringify() behaviour:
+			 *
+			 * ' is poison to the way this string will be
+			 * used in system() and hence shell.  Remove
+			 * any.
+			 */
+			jam(&buf, "?");
+			break;
+		case '\n':
+		case '\r':
+			/*
+			 * preserve sanitize_string() behaviour:
+			 *
+			 * exception is that all vertical space just
+			 * becomes white space
+			 */
+			jam(&buf, " ");
+			break;
+		default:
+			/*
+			 * preserve sanitize_string() behaviour:
+			 *
+			 * XXX: isprint() is wrong as it is affected
+			 * by locale - need portable is printable
+			 * ascii; is there something hiding in the
+			 * x509 sources?
+			 */
+			if (c != '\\' && isprint(c)) {
+				jam_char(&buf, c);
+			} else {
+				jam(&buf, "\\%03o", c);
+			}
+			break;
+		}
+	}
+	llog(RC_INFORMATIONAL, logger,
+	     "received INTERNAL_DNS_DOMAIN: %s%s",
+	     strbuf, (jambuf_ok(&buf) ? "" : " (truncated)"));
+	return clone_str(strbuf, "INTERNAL_DNS_NAME");
+}
+
 static void ikev2_set_domain(struct pbs_in *cp_a_pbs, struct child_sa *child)
 {
-	bool responder = (child->sa.st_sa_role == SA_RESPONDER);
-	bool ignore = LIN(POLICY_IGNORE_PEER_DNS, child->sa.st_connection->policy);
+	if (child->sa.st_sa_role == SA_RESPONDER) {
+		llog_sa(RC_LOG, child, "initiator INTERNAL_DNS_DOMAIN CP ignored");
+		return;
+	}
 
-	if (!responder) {
-		char *safestr = cisco_stringify(cp_a_pbs, "INTERNAL_DNS_DOMAIN",
-						ignore, child->sa.st_logger);
-		if (safestr != NULL) {
-			append_st_cfg_domain(&child->sa, safestr);
+	/* must be initiator parsing CP response */
+
+	shunk_t str = pbs_in_left(cp_a_pbs);
+	if (child->sa.st_connection->policy & POLICY_IGNORE_PEER_DNS) {
+		LLOG_JAMBUF(RC_INFORMATIONAL, child->sa.st_logger, buf) {
+			jam_string(buf, "received and ignored INTERNAL_DNS_DOMAIN: ");
+			jam_sanitized_hunk(buf, str);
 		}
-	} else {
-		llog_sa(RC_LOG, child,
-			  "initiator INTERNAL_DNS_DOMAIN CP ignored");
+		return;
+	}
+
+	char *safestr = broken_dns_stringify(str, child->sa.st_logger);
+	if (safestr != NULL) {
+		append_st_cfg_domain(&child->sa, safestr);
 	}
 }
 
