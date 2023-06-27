@@ -1639,12 +1639,83 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 }
 
 /*
+ * cisco_stringify()
+ *
+ * Auxiliary function for modecfg_inR1()
+ * Result is allocated on heap so caller must ensure it is freed.
+ */
+
+static char *cisco_stringify(pb_stream *input_pbs, const char *attr_name,
+			     bool ignore, struct logger *logger)
+{
+	char strbuf[500]; /* Cisco maximum unknown - arbitrary choice */
+	struct jambuf buf = ARRAY_AS_JAMBUF(strbuf); /* let jambuf deal with overflow */
+	shunk_t str = pbs_in_left(input_pbs);
+
+	/*
+	 * detox string
+	 */
+	for (const char *p = (const void *)str.ptr, *end = p + str.len;
+	     p < end && *p != '\0'; p++) {
+		char c = *p;
+		switch (c) {
+		case '\'':
+			/*
+			 * preserve cisco_stringify() behaviour:
+			 *
+			 * ' is poison to the way this string will be
+			 * used in system() and hence shell.  Remove
+			 * any.
+			 */
+			jam(&buf, "?");
+			break;
+		case '\n':
+		case '\r':
+			/*
+			 * preserve sanitize_string() behaviour:
+			 *
+			 * exception is that all vertical space just
+			 * becomes white space
+			 */
+			jam(&buf, " ");
+			break;
+		default:
+			/*
+			 * preserve sanitize_string() behaviour:
+			 *
+			 * XXX: isprint() is wrong as it is affected
+			 * by locale - need portable is printable
+			 * ascii; is there something hiding in the
+			 * x509 sources?
+			 */
+			if (c != '\\' && isprint(c)) {
+				jam_char(&buf, c);
+			} else {
+				jam(&buf, "\\%03o", c);
+			}
+			break;
+		}
+	}
+	llog(RC_INFORMATIONAL, logger,
+	     "Received %s%s%s: %s%s",
+	     ignore ? "and ignored " : "",
+	     jambuf_ok(&buf) ? "" : "overlong ",
+	     attr_name, strbuf,
+	     jambuf_ok(&buf) ? "" : " (truncated)");
+	if (ignore) {
+		return NULL;
+	}
+	return clone_str(strbuf, attr_name);
+}
+
+/*
  * STATE_MODE_CFG_R1:
  * HDR*, HASH, ATTR(SET=IP) --> HDR*, HASH, ATTR(ACK,OK)
  *
  * @param md Message Digest
  * @return stf_status
  */
+
 stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 {
 	struct pbs_out rbody;
