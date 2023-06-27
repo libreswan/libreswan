@@ -38,12 +38,12 @@ struct logger *show_logger(struct show *s);
  * a jambuf.
  */
 
-struct jambuf *show_jambuf(struct show *s);
-void jambuf_to_show(struct jambuf *jambuf, struct show *s, enum rc_type rc);
+struct jambuf *show_jambuf(struct show *s, enum rc_type rc);
+void show_to_logger(struct show *s);
 #define SHOW_JAMBUF(RC, S, BUF)				\
-	for (struct jambuf *BUF = show_jambuf(s);	\
+	for (struct jambuf *BUF = show_jambuf(S, RC);	\
 	     BUF != NULL;				\
-	     jambuf_to_show(BUF, S, RC), BUF = NULL)
+	     show_to_logger(S), BUF = NULL)
 
 /*
  * Flag that the next line needs to be preceded by a separator (aka

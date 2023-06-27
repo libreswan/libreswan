@@ -59,8 +59,7 @@ struct show {
 	/*
 	 * Where to build the messages.
 	 */
-	char scratch_array[LOG_WIDTH];
-	struct jambuf scratch_jambuf;
+	struct logjam logjam;
 };
 
 struct show *alloc_show(struct logger *logger)
@@ -120,10 +119,16 @@ void show_blank(struct show *s)
 	s->separator = SEPARATE_NEXT_OUTPUT;
 }
 
-struct jambuf *show_jambuf(struct show *s)
+struct jambuf *show_jambuf(struct show *s, enum rc_type rc)
 {
-	s->scratch_jambuf = ARRAY_AS_JAMBUF(s->scratch_array);
-	return &s->scratch_jambuf;
+	pexpect(rc == RC_RAW ||
+		rc == RC_COMMENT ||
+		rc == RC_INFORMATIONAL_TRAFFIC/*show_state_traffic()*/ ||
+		rc == RC_UNKNOWN_NAME/*show_traffic_status()*/);
+	return jambuf_from_logjam(&s->logjam, s->logger,
+				  /*pluto_exit_code*/0,
+				  /*where*/NULL,
+				  WHACK_STREAM|rc|NO_PREFIX);
 }
 
 struct logger *show_logger(struct show *s)
@@ -131,7 +136,7 @@ struct logger *show_logger(struct show *s)
 	return s->logger;
 }
 
-void jambuf_to_show(struct jambuf *buf, struct show *s, enum rc_type rc)
+void show_to_logger(struct show *s)
 {
 	switch (s->separator) {
 	case NO_SEPARATOR:
@@ -143,20 +148,16 @@ void jambuf_to_show(struct jambuf *buf, struct show *s, enum rc_type rc)
 	default:
 		bad_case(s->separator);
 	}
-	pexpect(rc == RC_RAW ||
-		rc == RC_COMMENT ||
-		rc == RC_INFORMATIONAL_TRAFFIC/*show_state_traffic()*/ ||
-		rc == RC_UNKNOWN_NAME/*show_traffic_status()*/);
-	jambuf_to_logger(buf, s->logger, rc|WHACK_STREAM);
+	logjam_to_logger(&s->logjam);
 	s->separator = HAD_OUTPUT;
 }
 
 static void show_rc_va_list(struct show *s, enum rc_type rc,
 			    const char *message, va_list ap)
 {
-	struct jambuf *buf = show_jambuf(s);
+	struct jambuf *buf = show_jambuf(s, rc);
 	jam_va_list(buf, message, ap);
-	jambuf_to_show(buf, s, rc);
+	show_to_logger(s);
 }
 
 void show_comment(struct show *s, const char *message, ...)
