@@ -512,18 +512,6 @@ void connection_terminate(struct connection **c, struct logger *logger, where_t 
 void connection_acquire(struct connection *c, threadtime_t *inception,
 			const struct kernel_acquire *b, where_t where)
 {
-	if (c->config->ike_version == IKEv1 && is_labeled(c)) {
-		PASSERT(c->logger, is_labeled_parent(c));
-		ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
-				  inception, b->sec_label, b->background, b->logger);
-		packet_buf pb;
-		enum_buf hab;
-		dbg("initiated on demand using security label and %s %s",
-		    str_enum_short(&keyword_auth_names, c->local->host.config->auth, &hab),
-		    str_packet(&b->packet, &pb));
-		return;
-	}
-
 	dispatch(CONNECTION_ACQUIRE, &c,
 		 b->logger, where,
 		 (struct annex) {
@@ -1654,6 +1642,12 @@ void dispatch(enum routing_event event,
 			delete_connection(c);
 			return;
 
+		case X(ACQUIRE, ROUTED_TUNNEL, LABELED_PARENT): /* IKEv1 */
+			PEXPECT(logger, (*c)->config->ike_version == IKEv1);
+			ipsecdoi_initiate(*c, (*c)->policy, SOS_NOBODY,
+					  e->inception, e->sec_label, e->background,
+					  logger);
+			return;
 		case X(ACQUIRE, UNROUTED, LABELED_PARENT):
 		case X(ACQUIRE, ROUTED_ONDEMAND, LABELED_PARENT):
 		case X(INITIATE, UNROUTED, LABELED_PARENT):
