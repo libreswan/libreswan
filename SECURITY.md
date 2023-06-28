@@ -1,16 +1,4 @@
-# Security Policy
-
-## Supported Versions
-
-| Version | Supported          |
-| ------- | ------------------ |
-|   5.0   | unreleased         |
-|   4.11  | :heavy_check_mark: |
-| < 4.11  | :x:                |
-
-Ref: https://libreswan.org/wiki/Support
-
-## Reporting a Vulnerability
+# Reporting a Vulnerability
 
 Please contact security@libreswan.org if you suspect you have found a
 security issue or vulnerability in libreswan.  Encrypted email can be
