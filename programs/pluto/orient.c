@@ -236,17 +236,6 @@ enum left_right orient_1(struct connection *c, struct logger *logger)
 		bool left = host_end_matches_iface_endpoint(c, LEFT_END, ifp);
 		bool right = host_end_matches_iface_endpoint(c, RIGHT_END, ifp);
 
-		if (left && right) {
-			/* too many choices */
-			connection_buf cib;
-			llog(RC_LOG_SERIOUS, logger,
-			     "both sides of "PRI_CONNECTION" are our interface %s!",
-			     pri_connection(c, &cib),
-			     ifp->ip_dev->id_rname);
-			terminate_connections_by_name_or_alias(c->name, /*quiet?*/false, logger);
-			return END_ROOF;
-		}
-
 		if (!left && !right) {
 			endpoint_buf eb;
 			ldbg(c->logger, "  interface endpoint %s does not match left or right",
@@ -254,57 +243,89 @@ enum left_right orient_1(struct connection *c, struct logger *logger)
 			continue;
 		}
 
+		if (left && right) {
+			/* too many choices */
+			address_buf ab;
+			connection_attach(c, logger);
+			llog(RC_LOG_SERIOUS, c->logger,
+			     "both sides of the connection match the interface %s %s",
+			     ifp->ip_dev->id_rname,
+			     str_address(&ifp->ip_dev->id_address, &ab));
+			terminate_connections(&c, logger, HERE);
+			connection_detach(c, logger);
+			return END_ROOF;
+		}
+
 		passert(left != right); /* only one */
+		enum left_right end = (left ? LEFT_END :
+				       right ? RIGHT_END :
+				       END_ROOF);
+		passert(end != END_ROOF);
 
 		if (matching_ifp != NULL) {
 			/*
 			 * Oops there's already a MATCHING_IFP.  Try
 			 * to be helpful with the log line.
+			 *
+			 * Presumably the LHS(say) matched the first
+			 * interface and the RHS(say) is now matching
+			 * the second.
+			 *
+			 * XXX: if an interface has two addresses vis
+			 * <<ip addr add 192.1.2.23/24 dev eth1>> this
+			 * log line doesn't differentiate.
 			 */
-			if (matching_ifp->ip_dev == ifp->ip_dev) {
-				connection_buf cib;
-				llog(RC_LOG_SERIOUS, logger,
-				     "both sides of "PRI_CONNECTION" are our interface %s!",
-				     pri_connection(c, &cib),
-				     ifp->ip_dev->id_rname);
-			} else {
-				/*
-				 * XXX: if an interface has two
-				 * addresses vis <<ip addr add
-				 * 192.1.2.23/24 dev eth1>> this log
-				 * line doesn't differentiate.
-				 */
-				connection_buf cib;
-				address_buf cb, ifpb;
-				llog(RC_LOG_SERIOUS, logger,
-				     "two interfaces match "PRI_CONNECTION" (%s %s, %s %s)",
-				     pri_connection(c, &cib),
-				     matching_ifp->ip_dev->id_rname,
-				     str_address(&matching_ifp->ip_dev->id_address, &cb),
-				     ifp->ip_dev->id_rname,
-				     str_address(&ifp->ip_dev->id_address, &ifpb));
+			pexpect(end != matching_end);
+			connection_attach(c, logger);
+			LLOG_JAMBUF(RC_LOG_SERIOUS, c->logger, buf) {
+				jam_string(buf, "both sides of the connection match");
+				if (streq(matching_ifp->ip_dev->id_rname,
+					  ifp->ip_dev->id_rname)) {
+					jam_string(buf, " the interface ");
+					jam_string(buf, ifp->ip_dev->id_rname);
+					jam_string(buf, ": ");
+					/*matched*/
+					jam_string(buf, c->end[matching_end].config->leftright);
+					jam_string(buf, " ");
+					jam_address(buf, &matching_ifp->ip_dev->id_address);
+					jam_string(buf, "; ");
+					jam_string(buf, c->end[end].config->leftright);
+					jam_string(buf, " ");
+					jam_address(buf, &ifp->ip_dev->id_address);
+				} else {
+					/*matched*/
+					jam_string(buf, ": ");
+					jam_string(buf, c->end[matching_end].config->leftright);
+					jam_string(buf, " ");
+					jam_string(buf, matching_ifp->ip_dev->id_rname);
+					jam_string(buf, " ");
+					jam_address(buf, &matching_ifp->ip_dev->id_address);
+					jam_string(buf, "; ");
+					jam_string(buf, c->end[end].config->leftright);
+					jam_string(buf, " ");
+					jam_string(buf, ifp->ip_dev->id_rname);
+					jam_string(buf, " ");
+					jam_address(buf, &ifp->ip_dev->id_address);
+				}
 			}
-			terminate_connections_by_name_or_alias(c->name, /*quiet?*/false, logger);
+			terminate_connections(&c, logger, HERE);
+			connection_detach(c, logger);
+
 			return END_ROOF;
 		}
 
 		/* save match, and then continue search */
 		matching_ifp = ifp;
-		if (left) {
-			endpoint_buf eb;
-			ldbg(c->logger, "  interface endpoint %s matches 'left'; orienting",
-			     str_endpoint(&ifp->local_endpoint, &eb));
-			matching_end = LEFT_END;
-		}
-		if (right) {
-			endpoint_buf eb;
-			ldbg(c->logger, "  interface endpoint %s matches 'right'; orienting",
-			     str_endpoint(&ifp->local_endpoint, &eb));
-			matching_end = RIGHT_END;
-		}
+		endpoint_buf eb;
+		ldbg(c->logger, "  interface %s endpoint %s matches '%s'; orienting",
+		     ifp->ip_dev->id_rname,
+		     str_endpoint(&ifp->local_endpoint, &eb),
+		     c->end[end].config->leftright);
+		matching_end = end;
 	}
 
 	if (matching_ifp != NULL) {
+		passert(matching_end != END_ROOF);
 		pexpect(c->interface == NULL); /* wasn't updated */
 		c->interface = iface_endpoint_addref(matching_ifp);
 		return matching_end;
