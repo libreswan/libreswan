@@ -158,7 +158,8 @@ struct whack_message {
 
 	/* for WHACK_CONNECTION */
 
-	bool whack_add;
+	bool whack_replace;	/* addconn semantics */
+	bool whack_add;		/* whack semantics */
 	bool whack_async;
 
 	enum ike_version ike_version;	/* from keyexchange= */

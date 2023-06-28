@@ -2609,7 +2609,9 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if (!(msg.whack_add || msg.whack_key ||
+	if (!(msg.whack_add ||
+	      msg.whack_replace ||
+	      msg.whack_key ||
 	      msg.whack_delete ||msg.whack_deleteid || msg.whack_deletestate ||
 	      msg.whack_deleteuser ||
 	      msg.redirect_to != NULL ||

@@ -825,8 +825,29 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 
 	if (m->whack_add) {
 		dbg_whack(s, "add: start: '%s'", m->name == NULL ? "NULL" : m->name);
-		add_connection(m, logger);
+		if (m->name == NULL) {
+			whack_log(RC_FATAL, whackfd,
+				  "received whack command to delete a connection, but did not receive the connection name - ignored");
+		} else {
+			add_connection(m, logger);
+		}
 		dbg_whack(s, "add: stop: '%s'", m->name == NULL ? "NULL" : m->name);
+	}
+
+	if (m->whack_replace) {
+		dbg_whack(s, "replace: start: '%s'", m->name == NULL ? "NULL" : m->name);
+		if (m->name == NULL) {
+			whack_log(RC_FATAL, whackfd,
+				  "received whack command to delete a connection, but did not receive the connection name - ignored");
+		} else {
+			terminate_connections_by_name_or_alias(m->name, /*quiet?*/true, logger);
+			whack_each_connection(m, s, NULL, NULL,
+					      /*log_unknown_name*/false,
+					      /*skip-instances*/true,
+					      whack_delete_connection);
+			add_connection(m, logger);
+		}
+		dbg_whack(s, "replace: stop: '%s'", m->name == NULL ? "NULL" : m->name);
 	}
 
 	if (m->redirect_to != NULL && !m->whack_add) {
