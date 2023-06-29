@@ -52,9 +52,9 @@ DONTMENTION='^(_.*|.*\.old|.*\.orig|.*~)$'
 # version numbering (details filled in by build)
 export IPSEC_VERSION="@IPSECVERSION@"
 
-ipsec_addconn() {
+ipsec_add() {
     #
-    # ipsec add command
+    # ipsec add/replace command
     #
     local conn_name usage
 
@@ -62,6 +62,10 @@ ipsec_addconn() {
 	case "${1}" in
 	    add|--add)
 		usage="Usage: ipsec add connectionname|--chekcconfig \\
+		[--config ${IPSEC_CONF}] [--ctlsocket ${CTLSOCKET}] [--verbose]"
+		;;
+	    replace|--replace)
+		usage="Usage: ipsec replace connectionname \\
 		[--config ${IPSEC_CONF}] [--ctlsocket ${CTLSOCKET}] [--verbose]"
 		;;
 	    help|--help|-h)
@@ -99,6 +103,22 @@ ipsec_addconn() {
 	esac
 	shift
     done
+    # First, tell pluto to delete all connections with name or alias
+    # matching NAME.  The alias check is to ensure that a connection
+    # with subnets=..., and expanded then added as NAME/0x0, NAME/0x1,
+    # et.al., is deleted using the common alias.
+    if [ -z "${checkconfig}" ] ; then
+	# skip when --checkconfig
+	${dry_run} "${IPSEC_EXECDIR}/whack" --ctlsocket "${CTLSOCKET}" --name ${conn_name} --delete
+    fi
+    # Second, tell pluto to add the new connection called NAME or, in
+    # the case of subnets=), the new connections called NAME/1x1,
+    # NAME/2x2, ...
+    #
+    # Note: pluto will also delete any existing connection.  For
+    # subnets= that will be NAME/1x1 et.al. It can't delete
+    # connections with alias NAME as that would wipe out the other
+    # aliases just added).
     ${dry_run} "${IPSEC_EXECDIR}/addconn" --config "${IPSEC_CONF}" --ctlsocket "${CTLSOCKET}" ${checkconfig} ${verbose} ${conn_name}
     exit $?
 }
@@ -209,56 +229,6 @@ ipsec_redirect() {
 	shift
     done
     ${dry_run} "${IPSEC_EXECDIR}/whack" --ctlsocket "${CTLSOCKET}" --name ${conn_name} ${cmd} "${redirect_to}"
-    exit $?
-}
-
-ipsec_replace() {
-    #
-    # ipsec replace command
-    #
-    local cmd conn_name usage
-
-    while [ ${#} -gt 0 ]; do
-	case "${1}" in
-	    replace|--replace)
-		cmd="--delete"
-		usage="Usage: ipsec replace connectionname \\
-		[--config ${IPSEC_CONF}] [--ctlsocket ${CTLSOCKET}] [--verbose]"
-		;;
-	    help|--help|-h)
-		echo "${usage}"
-		exit 0
-		;;
-	    --config)
-		IPSEC_CONF="${2}"
-		export IPSEC_CONF
-		shift
-		;;
-	    --ctlsocket)
-		CTLSOCKET="${2}"
-		export CTLSOCKET
-		shift
-		;;
-	    --dry-run)
-		dry_run="echo"
-		;;
-	    --verbose)
-		verbose="${1}"
-		;;
-	    -*)
-		echo "Unknown option \"${1}\"" >&2
-		echo  >&2
-		echo "${usage}" >&2
-		exit 2
-		;;
-	    *)
-		conn_name="${1}"
-		;;
-	esac
-	shift
-    done
-    ${dry_run} "${IPSEC_EXECDIR}/whack" --ctlsocket "${CTLSOCKET}" --name ${conn_name} ${cmd}
-    ${dry_run} "${IPSEC_EXECDIR}/addconn" --config "${IPSEC_CONF}" --ctlsocket "${CTLSOCKET}" ${verbose} ${conn_name}
     exit $?
 }
 
@@ -1039,8 +1009,8 @@ while [ ${#} -gt 0 ]; do
 	    fi
 	    exit 0
 	    ;;
-	add|--add)
-	    ipsec_addconn "${@}"
+	add|--add|replace|--replace)
+	    ipsec_add "${@}"
 	    ;;
 	briefstatus|--briefstatus|\
 	checkpubkeys|--checkpubkeys|\
@@ -1074,9 +1044,6 @@ while [ ${#} -gt 0 ]; do
 	    ;;
 	redirect)
 	    ipsec_redirect "${@}"
-	    ;;
-	replace|--replace)
-	    ipsec_replace "${@}"
 	    ;;
 	restart|--restart)
 	    exec "${IPSEC_EXECDIR}/setup" --restart
