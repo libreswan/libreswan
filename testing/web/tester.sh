@@ -136,6 +136,8 @@ while true ; do
 	${status} "idle; deleting debug.log.gz files older than 30 days"
 	find ${summarydir} -type f -name 'debug.log.gz' -mtime +30 -print0 | \
 	    xargs -0 --no-run-if-empty rm -v
+	find ${summarydir} -type f -name '*.log.gz' -mtime +180 -print0 | \
+	    xargs -0 --no-run-if-empty rm -v
 
 	# is there still time?
 	now=$(date +%s)
