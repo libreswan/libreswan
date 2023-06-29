@@ -9,5 +9,5 @@ ip route get to 192.1.2.23
 # otherwise this add bring the connection down.
 #
 # see the source address selection when the tunnel is established
-ipsec auto --add --verbose --ctlsocket /run/pluto/foo road
+ipsec addconn --verbose --ctlsocket /run/pluto/foo road
 echo done

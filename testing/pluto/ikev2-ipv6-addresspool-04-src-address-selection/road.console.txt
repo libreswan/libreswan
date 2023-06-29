@@ -139,7 +139,7 @@ road #
 road #
  # see the source address selection when the tunnel is established
 road #
- ipsec auto --add --verbose --ctlsocket /run/pluto/foo road
+ ipsec addconn --verbose --ctlsocket /run/pluto/foo road
 opening file: /etc/ipsec.conf
 debugging mode enabled
 end of file /etc/ipsec.conf
