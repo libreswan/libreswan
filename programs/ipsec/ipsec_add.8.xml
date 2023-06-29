@@ -35,10 +35,10 @@
       down and new specification replaces old one.
     </para>
     <para>
-      With <option>ipsec add --checkconfig</option> you can check
-      validate your configuration file. This will return 0 if config
-      was valid. Optionally you can add <option>--verbose</option> for
-      more detailed analysis.
+      With <option>ipsec add --checkconfig</option> you can validate
+      your configuration file. This will return 0 if config was valid.
+      Optionally you can add <option>--verbose</option> for  more detailed
+      analysis.
     </para>
     <para>
       This only adds the connection specification making it possible for
