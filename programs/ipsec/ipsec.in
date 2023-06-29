@@ -67,6 +67,7 @@ ipsec_add() {
 	    replace|--replace)
 		usage="Usage: ipsec replace connectionname \\
 		[--config ${IPSEC_CONF}] [--ctlsocket ${CTLSOCKET}] [--verbose]"
+		;;
 	    checkconfig)
 		usage="Usage: ipsec checkconfig [--config ${IPSEC_CONF}] [--verbose]"
 		checkconfig="--checkconfig"
