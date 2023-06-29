@@ -61,7 +61,7 @@ ipsec_addconn() {
     while [ ${#} -gt 0 ]; do
 	case "${1}" in
 	    add|--add)
-		usage="Usage: ipsec add connectionname \\
+		usage="Usage: ipsec add connectionname|--chekcconfig \\
 		[--config ${IPSEC_CONF}] [--ctlsocket ${CTLSOCKET}] [--verbose]"
 		;;
 	    help|--help|-h)
@@ -84,6 +84,9 @@ ipsec_addconn() {
 	    --verbose)
 		verbose="${1}"
 		;;
+	    --checkconfig)
+		checkconfig="${1}"
+		;;
 	    -*)
 		echo "Unknown option \"${1}\"" >&2
 		echo >&2
@@ -96,7 +99,7 @@ ipsec_addconn() {
 	esac
 	shift
     done
-    ${dry_run} "${IPSEC_EXECDIR}/addconn" --config "${IPSEC_CONF}" --ctlsocket "${CTLSOCKET}" ${verbose} ${conn_name}
+    ${dry_run} "${IPSEC_EXECDIR}/addconn" --config "${IPSEC_CONF}" --ctlsocket "${CTLSOCKET}" ${checkconfig} ${verbose} ${conn_name}
     exit $?
 }
 
