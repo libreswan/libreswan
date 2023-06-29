@@ -125,16 +125,16 @@ static void whack_listcacerts(struct show *s)
 	root_certs_delref(&roots, show_logger(s));
 }
 
-void whack_each_connection(const struct whack_message *m,
-			   struct show *s,
-			   const char *future_tense,
-			   const char *past_tense,
-			   bool log_unknown_name,
-			   bool skip_instances, /*broken*/
+/*
+ * param to tune whack_each connection.
+ */
+
+void whack_each_connection(const struct whack_message *m, struct show *s,
 			   bool (*whack_connection)
 			   (struct show *s,
 			    struct connection **c,
-			    const struct whack_message *m))
+			    const struct whack_message *m),
+			   struct each each)
 {
 	struct logger *logger = show_logger(s);
 	unsigned nr_found = 0;
@@ -172,7 +172,7 @@ void whack_each_connection(const struct whack_message *m,
 		 * the connection should be skipped and return true
 		 * when the connection should be counted?
 		 */
-		if (skip_instances && is_instance(by_name.c)) {
+		if (each.skip_instances && is_instance(by_name.c)) {
 			continue;
 		}
 		whack_connection(s, &by_name.c, m);
@@ -190,24 +190,24 @@ void whack_each_connection(const struct whack_message *m,
 		.where = HERE,
 	};
 	while (next_connection_new2old(&by_alias)) {
-		if (nr_found == 0 && future_tense != NULL) {
+		if (nr_found == 0 && each.future_tense != NULL) {
 			llog(RC_COMMENT, logger, "%s all connections with alias=\"%s\"",
-			     future_tense, m->name);
+			     each.future_tense, m->name);
 		}
 		whack_connection(s, &by_alias.c, m);
 		nr_found++;
 	}
 	if (nr_found == 1) {
-		if (past_tense != NULL) {
+		if (each.past_tense != NULL) {
 			llog(RC_COMMENT, logger, "%s %u connection",
-			     past_tense, nr_found);
+			     each.past_tense, nr_found);
 		}
 		return;
 	}
 	if (nr_found > 1) {
-		if (past_tense != NULL) {
+		if (each.past_tense != NULL) {
 			llog(RC_COMMENT, logger, "%s %u connections",
-			     past_tense, nr_found);
+			     each.past_tense, nr_found);
 		}
 		return;
 	}
@@ -266,10 +266,10 @@ void whack_each_connection(const struct whack_message *m,
 	 * logged as it A. is confusing and B. would cause whack to
 	 * detach stopping the KEYS from being added.
 	 */
-	if (log_unknown_name) {
+	if (each.log_unknown_name) {
 #define MESSAGE "no connection or alias named \"%s\"'", m->name
 		/* what means leave more breadcrumbs */
-		if (past_tense != NULL) {
+		if (each.past_tense != NULL) {
 			llog(RC_UNKNOWN_NAME, logger, MESSAGE);
 		} else {
 			show_rc(s, RC_UNKNOWN_NAME, MESSAGE);
@@ -659,10 +659,12 @@ static void whack_debug_options(const struct whack_message *m,
 		}
 		set_debugging(new_debugging);
 	} else if (!m->whack_add/*connection*/) {
-		whack_each_connection(m, s, NULL, NULL,
-				      /*log_unknown_name*/true,
-				      /*skip-instances*/true,
-				      whack_debug_connection);
+		whack_each_connection(m, s, whack_debug_connection,
+				      (struct each) {
+					      .log_unknown_name = true,
+					      .skip_instances = true,
+				      });
+
 	}
 }
 
@@ -748,10 +750,11 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 				  "received whack command to delete a connection, but did not receive the connection name - ignored");
 		} else {
 			terminate_connections_by_name_or_alias(m->name, logger);
-			whack_each_connection(m, s, NULL, NULL,
-					      /*log_unknown_name*/false,
-					      /*skip-instances*/true,
-					      whack_delete_connection);
+			whack_each_connection(m, s, whack_delete_connection,
+					      (struct each) {
+						      .log_unknown_name = false,
+						      .skip_instances = true,
+					      });
 		}
 		dbg_whack(s, "delete: stop: '%s'", m->name == NULL ? "NULL" : m->name);
 	}
@@ -841,10 +844,11 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 				  "received whack command to delete a connection, but did not receive the connection name - ignored");
 		} else {
 			terminate_connections_by_name_or_alias(m->name, logger);
-			whack_each_connection(m, s, NULL, NULL,
-					      /*log_unknown_name*/false,
-					      /*skip-instances*/true,
-					      whack_delete_connection);
+			whack_each_connection(m, s, whack_delete_connection,
+					      (struct each) {
+						      .log_unknown_name = false,
+						      .skip_instances = true,
+					      });
 			add_connection(m, logger);
 		}
 		dbg_whack(s, "replace: stop: '%s'", m->name == NULL ? "NULL" : m->name);
@@ -1026,10 +1030,12 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 			whack_log(RC_DEAF, whackfd,
 				  "need --listen before --route");
 		} else {
-			whack_each_connection(m, s, NULL, NULL,
-					      /*log_unknown_name*/true,
-					      /*skip-instances*/true,
-					      whack_route_connection);
+			whack_each_connection(m, s, whack_route_connection,
+					      (struct each) {
+						      .log_unknown_name = true,
+						      .skip_instances = true,
+					      });
+
 		}
 		dbg_whack(s, "route: stop: \"%s\"", m->name);
 	}
@@ -1037,10 +1043,11 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 	if (m->whack_unroute) {
 		dbg_whack(s, "unroute: start: \"%s\"", m->name);
 		passert(m->name != NULL);
-		whack_each_connection(m, s, NULL, NULL,
-				      /*log_unknown_name*/true,
-				      /*skip-instances*/true,
-				      whack_unroute_connection);
+		whack_each_connection(m, s, whack_unroute_connection,
+				      (struct each) {
+					      .log_unknown_name = true,
+					      .skip_instances = true,
+				      });
 		dbg_whack(s, "unroute: stop: \"%s\"", m->name);
 	}
 
@@ -1054,10 +1061,13 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 			whack_log(RC_DEAF, whackfd,
 				  "need --listen before --initiate");
 		} else {
-			whack_each_connection(m, s, "initiating", "initiating",
-					      /*log_unknown_name*/true,
-					      /*skip-instances*/true,
-					      whack_initiate_connection);
+			whack_each_connection(m, s, whack_initiate_connection,
+					      (struct each) {
+						      .future_tense = "initiating",
+						      .past_tense = "initiating",
+						      .log_unknown_name = true,
+						      .skip_instances = true,
+					      });
 		}
 		dbg_whack(s, "initiate: stop: name='%s' remote='%s' async=%s",
 			  m->name,
@@ -1096,10 +1106,13 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 	if (m->whack_terminate) {
 		passert(m->name != NULL);
 		dbg_whack(s, "terminate: start: %s", m->name);
-		whack_each_connection(m, s, "terminating", "terminated",
-				      /*log_unknown_name*/true,
-				      /*skip-instances*/true,
-				      whack_terminate_connections);
+		whack_each_connection(m, s, whack_terminate_connections,
+				      (struct each) {
+					      .future_tense = "terminating",
+					      .past_tense = "terminated",
+					      .log_unknown_name = true,
+					      .skip_instances = true,
+				      });
 		dbg_whack(s, "terminate: stop: %s", m->name);
 	}
 
@@ -1162,10 +1175,11 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		if (m->name == NULL) {
 			show_connection_statuses(s);
 		} else {
-			whack_each_connection(m, s, NULL, NULL,
-					      /*log_unknown_name*/true,
-					      /*skip-instances*/true,
-					      whack_connection_status);
+			whack_each_connection(m, s, whack_connection_status,
+					      (struct each) {
+						      .log_unknown_name = true,
+						      .skip_instances = true,
+					      });
 		}
 		dbg_whack(s, "connectionstatus: stop:");
 	}

@@ -90,16 +90,18 @@ void whack_rekey(const struct whack_message *m, struct show *s, enum sa_type sa_
 
 	switch (sa_type) {
 	case IKE_SA:
-		whack_each_connection(m, s, /*future*/NULL, /*past*/NULL,
-				      /*log-not-found*/true,
-				      /*skip-instances*/false,
-				      whack_rekey_ike);
+		whack_each_connection(m, s, whack_rekey_ike,
+				      (struct each) {
+					      .log_unknown_name = true,
+					      .skip_instances = false,
+				      });
 		return;
 	case IPSEC_SA:
-		whack_each_connection(m, s, /*future*/NULL, /*past*/NULL,
-				      /*log-not-found*/true,
-				      /*skip-instances*/false,
-				      whack_rekey_child);
+		whack_each_connection(m, s, whack_rekey_child,
+				      (struct each) {
+					      .log_unknown_name = true,
+					      .skip_instances = false,
+				      });
 		return;
 	}
 	bad_case(sa_type);
