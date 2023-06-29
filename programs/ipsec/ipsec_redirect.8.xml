@@ -11,7 +11,7 @@
   </refmeta>
   <refnamediv id='name'>
     <refname>ipsec redirect</refname>
-    <refpurpose>Redirect a connection definition with one from @IPSEC_CONF@</refpurpose>
+    <refpurpose>Redirect a connection definition with one from @@IPSEC_CONF@@</refpurpose>
   </refnamediv>
   <!-- body begins here -->
   <refsynopsisdiv id='synopsis'>
@@ -45,6 +45,7 @@
       <citerefentry><refentrytitle>ipsec_barf</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_briefstatus</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_certutil</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+      <citerefentry><refentrytitle>ipsec_checkconfig</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_checknflog</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_checknss</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_connectionstatus</refentrytitle><manvolnum>8</manvolnum></citerefentry>,

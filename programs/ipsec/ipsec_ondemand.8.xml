@@ -19,7 +19,7 @@
       <command>ipsec</command>
       <arg choice='plain'>ondemand</arg>
       <arg choice='plain'>connectionname</arg>
-      <arg choice='opt'>--config <replaceable>@IPSEC_CONF@</replaceable></arg>
+      <arg choice='opt'>--config <replaceable>@@IPSEC_CONF@@</replaceable></arg>
       <arg choice='opt'>--ctlsocket <replaceable>@@RUNDIR@@/pluto.ctl</replaceable></arg>
       <sbr/>
     </cmdsynopsis>
@@ -55,6 +55,7 @@
       <citerefentry><refentrytitle>ipsec_barf</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_briefstatus</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_certutil</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+      <citerefentry><refentrytitle>ipsec_checkconfig</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_checknflog</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_checknss</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_connectionstatus</refentrytitle><manvolnum>8</manvolnum></citerefentry>,

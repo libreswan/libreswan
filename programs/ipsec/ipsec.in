@@ -67,6 +67,9 @@ ipsec_add() {
 	    replace|--replace)
 		usage="Usage: ipsec replace connectionname \\
 		[--config ${IPSEC_CONF}] [--ctlsocket ${CTLSOCKET}] [--verbose]"
+	    checkconfig)
+		usage="Usage: ipsec checkconfig [--config ${IPSEC_CONF}] [--verbose]"
+		checkconfig="--checkconfig"
 		;;
 	    help|--help|-h)
 		echo "${usage}"
@@ -418,6 +421,7 @@ ipsec_help() {
 	add \
 	briefstatus \
 	certutil \
+	checkconfig \
 	checknflog \
 	checknss \
 	connectionstatus \
@@ -1009,7 +1013,7 @@ while [ ${#} -gt 0 ]; do
 	    fi
 	    exit 0
 	    ;;
-	add|--add|replace|--replace)
+	add|--add|checkconfig|replace|--replace)
 	    ipsec_add "${@}"
 	    ;;
 	briefstatus|--briefstatus|\

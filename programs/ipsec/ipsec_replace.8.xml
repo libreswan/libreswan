@@ -11,7 +11,7 @@
   </refmeta>
   <refnamediv id='name'>
     <refname>ipsec replace</refname>
-    <refpurpose>Replace a connection definition with one from @IPSEC_CONF@</refpurpose>
+    <refpurpose>Replace a connection definition with one from @@IPSEC_CONF@@</refpurpose>
   </refnamediv>
   <!-- body begins here -->
   <refsynopsisdiv id='synopsis'>
@@ -19,7 +19,7 @@
       <command>ipsec</command>
       <arg choice='plain'>replace</arg>
       <arg choice='plain'>connectionname</arg>
-      <arg choice='opt'>--config <replaceable>@IPSEC_CONF@</replaceable></arg>
+      <arg choice='opt'>--config <replaceable>@@IPSEC_CONF@@</replaceable></arg>
       <arg choice='opt'>--ctlsocket <replaceable>@@RUNDIR@@/pluto.ctl</replaceable></arg>
       <sbr/>
     </cmdsynopsis>
@@ -30,7 +30,7 @@
     <title>DESCRIPTION</title>
     <para>
       <emphasis remap='I'>Replace</emphasis> a connection definition from
-      <option>pluto</option> internal database with one from @IPSEC_CONF@.
+      <option>pluto</option> internal database with one from @@IPSEC_CONF@@.
       Replace is very similar to <option>ipsec add</option> but it first
       deletes old connection secification and old tunnels using same
       connection name.
@@ -52,6 +52,7 @@
       <citerefentry><refentrytitle>ipsec_barf</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_briefstatus</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_certutil</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+      <citerefentry><refentrytitle>ipsec_checkconfig</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_checknflog</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_checknss</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_connectionstatus</refentrytitle><manvolnum>8</manvolnum></citerefentry>,

@@ -99,7 +99,11 @@
     </para>
 
     <para>
-      <userinput>ipsec checknflog</userinput> is used to initialise iptables rules for the nflog devices when specified via the nflog= or nflog-all= configuration options.
+      <userinput>ipsec checkconfig</userinput> is used to validate ipsec configuration (default @@IPSEC_CONF@@).
+    </para>
+
+    <para>
+      <userinput>ipsec checknflog</userinput> is used to initialise rules for the nflog devices when specified via the nflog= or nflog-all= configuration options.
     </para>
 
     <para>
@@ -139,6 +143,7 @@
       <citerefentry><refentrytitle>ipsec_barf</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_briefstatus</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_certutil</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+      <citerefentry><refentrytitle>ipsec_checkconfig</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_checknflog</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_checknss</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_connectionstatus</refentrytitle><manvolnum>8</manvolnum></citerefentry>,

@@ -11,7 +11,7 @@
   </refmeta>
   <refnamediv id='name'>
     <refname>ipsec add</refname>
-    <refpurpose>Add a connection specification to pluto internal database from @IPSEC_CONF@</refpurpose>
+    <refpurpose>Add a connection specification to pluto internal database from @@IPSEC_CONF@@</refpurpose>
   </refnamediv>
   <!-- body begins here -->
   <refsynopsisdiv id='synopsis'>
@@ -19,7 +19,7 @@
       <command>ipsec</command>
       <arg choice='plain'>add</arg>
       <arg choice='plain'>connectionname|--checkconfig</arg>
-      <arg choice='opt'>--config <replaceable>@IPSEC_CONF@</replaceable></arg>
+      <arg choice='opt'>--config <replaceable>@@IPSEC_CONF@@</replaceable></arg>
       <arg choice='opt'>--ctlsocket <replaceable>@@RUNDIR@@/pluto.ctl</replaceable></arg>
       <sbr/>
     </cmdsynopsis>
@@ -29,7 +29,7 @@
     <title>DESCRIPTION</title>
     <para>
       <emphasis remap='I'>Add</emphasis> operation add a connection
-      specification from @IPSEC_CONF@ to internal database within pluto,
+      specification from @@IPSEC_CONF@@ to internal database within pluto,
       The Libreswan IKE daemon. If there already was connection
       specification with same connectionname, old tunnels are torn
       down and new specification replaces old one.
@@ -64,6 +64,7 @@
       <citerefentry><refentrytitle>ipsec_barf</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_briefstatus</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_certutil</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+      <citerefentry><refentrytitle>ipsec_checkconfig</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_checknflog</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_checknss</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_connectionstatus</refentrytitle><manvolnum>8</manvolnum></citerefentry>,

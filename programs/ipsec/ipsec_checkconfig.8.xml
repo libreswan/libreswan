@@ -3,32 +3,34 @@
                    "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
 <refentry>
   <refmeta>
-    <refentrytitle>IPSEC_BRIEFSTATUS</refentrytitle>
+    <refentrytitle>IPSEC_CHECKCONFIG</refentrytitle>
     <manvolnum>8</manvolnum>
-    <refmiscinfo class='date'>14 April 2023</refmiscinfo>
+    <refmiscinfo class='date'>29 Jun 2023</refmiscinfo>
     <refmiscinfo class="source">libreswan</refmiscinfo>
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
-    <refname>ipsec briefstatus</refname>
-    <refpurpose>Get brief status from IPsec service</refpurpose>
+    <refname>ipsec checkconfig</refname>
+    <refpurpose>Validate ipsec configuration file, @@IPSEC_CONF@@</refpurpose>
   </refnamediv>
   <!-- body begins here -->
   <refsynopsisdiv id='synopsis'>
     <cmdsynopsis>
       <command>ipsec</command>
-      <arg choice='plain'>briefstatus</arg>
-      <arg choice='opt'>--ctlsocket <replaceable>@@RUNDIR@@/pluto.ctl</replaceable></arg>
+      <arg choice='plain'>checkconfig</arg>
+      <arg choice='opt'>--verbose</arg>
+      <arg choice='opt'>--config <replaceable>@@IPSEC_CONF@@</replaceable></arg>
       <sbr/>
     </cmdsynopsis>
   </refsynopsisdiv>
 
-
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>Briefstatus</emphasis> list brief status from
-      the pluto daemon. Get complete status with <option>ipsec status</option>.
+      <emphasis remap='I'>Checkconfig</emphasis> operation validates
+      your configuration file, @@IPSEC_CONF@@. Command will return 0 if
+      configuration is valid. Optionally you can add
+      <option>--verbose</option> for  more detailed analysis.
     </para>
   </refsect1>
 
@@ -40,8 +42,8 @@
       <citerefentry><refentrytitle>ipsec_add</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_algparse</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_barf</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+      <citerefentry><refentrytitle>ipsec_briefstatus</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_certutil</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-      <citerefentry><refentrytitle>ipsec_checkconfig</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_checknflog</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_checknss</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_connectionstatus</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
