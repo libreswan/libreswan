@@ -101,6 +101,7 @@
 
 #include "whack_trafficstatus.h"
 #include "whack_rekey.h"
+#include "whack_delete.h"
 
 static void whack_rereadsecrets(struct show *s)
 {
@@ -276,21 +277,6 @@ void whack_each_connection(const struct whack_message *m, struct show *s,
 		}
 	}
 #undef MESSAGE
-}
-
-/*
- * Terminate and then delete connections with the specified name.
- */
-
-static bool whack_delete_connection(struct show *s, struct connection **c,
-				   const struct whack_message *m UNUSED)
-{
-	terminate_connections(c, show_logger(s), HERE);
-	if (*c != NULL) {
-		connection_attach(*c, show_logger(s));
-		delete_connection(c);
-	}
-	return true;
 }
 
 static bool whack_initiate_connection(struct show *s, struct connection **c,
@@ -746,16 +732,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 	 */
 	if (m->whack_delete) {
 		dbg_whack(s, "delete: start: '%s'", m->name == NULL ? "NULL" : m->name);
-		if (m->name == NULL) {
-			whack_log(RC_FATAL, whackfd,
-				  "received whack command to delete a connection, but did not receive the connection name - ignored");
-		} else {
-			whack_each_connection(m, s, whack_delete_connection,
-					      (struct each) {
-						      .log_unknown_name = false,
-						      .skip_instances = true,
-					      });
-		}
+		whack_delete(m, s);
 		dbg_whack(s, "delete: stop: '%s'", m->name == NULL ? "NULL" : m->name);
 	}
 
@@ -843,11 +820,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 			whack_log(RC_FATAL, whackfd,
 				  "received whack command to delete a connection, but did not receive the connection name - ignored");
 		} else {
-			whack_each_connection(m, s, whack_delete_connection,
-					      (struct each) {
-						      .log_unknown_name = false,
-						      .skip_instances = true,
-					      });
+			whack_delete(m, s);
 			add_connection(m, logger);
 		}
 		dbg_whack(s, "replace: stop: '%s'", m->name == NULL ? "NULL" : m->name);

@@ -18,10 +18,17 @@
 #ifndef RCV_WHACK_H
 #define RCV_WHACK_H
 
+#include <stdbool.h>
+
 #include <event2/event.h>	/* for evutil_socket_t */
 
 #include "lswcdefs.h"
 #include "fd.h"
+
+struct logger;
+struct connection;
+struct show;
+struct whack_message;
 
 extern void whack_handle_cb(int fd, void *arg, struct logger *logger);
 

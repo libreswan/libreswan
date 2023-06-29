@@ -1,4 +1,4 @@
-/* show functions, for libreswan
+/* show (whack-only) output functions, for libreswan
  *
  * Copyright (C) 2020 Andrew Cagney
  *
@@ -17,8 +17,9 @@
 #define SHOW_H
 
 /*
- * Try to deal with the separator (aka blank line or spacer) problem
- * in show output.
+ * Try to deal with the separator (i.e., don't output duplicate blank
+ * / spacer lines when combining functions that send output to whack)
+ * in show (whack-only) output.
  */
 
 struct show;
