@@ -119,7 +119,7 @@ static bool terminate_connections_by_name(const char *name,
 	return found;
 }
 
-static int terminate_connections_by_alias(const char *alias, bool quiet, struct logger *logger)
+static int terminate_connections_by_alias(const char *alias, struct logger *logger)
 {
 	int count = 0;
 
@@ -132,12 +132,7 @@ static int terminate_connections_by_alias(const char *alias, bool quiet, struct 
 		count += terminate_a_connection(p, logger);
 	}
 
-	if (count == 0) {
-		if (!quiet) {
-			llog(RC_UNKNOWN_NAME, logger,
-			     "no such connection or aliased connection named \"%s\"", alias);
-		}
-	} else {
+	if (count > 0) {
 		llog(RC_COMMENT, logger,
 		     "terminated %d connections from aliased connection \"%s\"",
 		     count, alias);
@@ -146,7 +141,7 @@ static int terminate_connections_by_alias(const char *alias, bool quiet, struct 
 	return count;
 }
 
-void terminate_connections_by_name_or_alias(const char *name, bool quiet, struct logger *logger)
+void terminate_connections_by_name_or_alias(const char *name, struct logger *logger)
 {
 	/*
 	 * Loop because more than one may match (template and
@@ -159,7 +154,7 @@ void terminate_connections_by_name_or_alias(const char *name, bool quiet, struct
 		return;
 	}
 
-	terminate_connections_by_alias(name, quiet, logger);
+	terminate_connections_by_alias(name, logger);
 }
 
 static void terminate_connection(struct connection **c, struct logger *logger)
