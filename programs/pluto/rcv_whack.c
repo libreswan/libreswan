@@ -279,16 +279,17 @@ void whack_each_connection(const struct whack_message *m, struct show *s,
 }
 
 /*
- * Delete connections with the specified name;
- * strict==!wm->whack_add_connection i.e., when replacing a connection
- * wipe everything
+ * Terminate and then delete connections with the specified name.
  */
 
 static bool whack_delete_connection(struct show *s, struct connection **c,
 				   const struct whack_message *m UNUSED)
 {
-	connection_attach(*c, show_logger(s));
-	delete_connection(c);
+	terminate_connections(c, show_logger(s), HERE);
+	if (*c != NULL) {
+		connection_attach(*c, show_logger(s));
+		delete_connection(c);
+	}
 	return true;
 }
 
@@ -749,7 +750,6 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 			whack_log(RC_FATAL, whackfd,
 				  "received whack command to delete a connection, but did not receive the connection name - ignored");
 		} else {
-			terminate_connections_by_name_or_alias(m->name, logger);
 			whack_each_connection(m, s, whack_delete_connection,
 					      (struct each) {
 						      .log_unknown_name = false,
@@ -843,7 +843,6 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 			whack_log(RC_FATAL, whackfd,
 				  "received whack command to delete a connection, but did not receive the connection name - ignored");
 		} else {
-			terminate_connections_by_name_or_alias(m->name, logger);
 			whack_each_connection(m, s, whack_delete_connection,
 					      (struct each) {
 						      .log_unknown_name = false,
