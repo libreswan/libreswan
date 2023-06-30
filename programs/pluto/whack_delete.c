@@ -16,14 +16,131 @@
 
 #include "rcv_whack.h"
 #include "whack_delete.h"
-#include "terminate.h"
 #include "show.h"
 #include "log.h"
 #include "connections.h"
+#include "pending.h"
 
 /*
  * Terminate and then delete connections with the specified name.
  */
+
+static int terminate_a_connection(struct connection *c, struct logger *logger)
+{
+	connection_attach(c, logger);
+
+	llog(RC_LOG, c->logger,
+	     "terminating SAs using this connection");
+	del_policy(c, POLICY_UP);
+	remove_connection_from_pending(c);
+
+	if (shared_phase1_connection(c)) {
+		llog(RC_LOG, c->logger,
+		     "IKE SA is shared - only terminating IPsec SA");
+		if (c->newest_ipsec_sa != SOS_NOBODY) {
+			struct state *st = state_by_serialno(c->newest_ipsec_sa);
+			state_attach(st, logger);
+			delete_state(st);
+		}
+	} else {
+		/*
+		 * CK_INSTANCE is deleted simultaneous to deleting
+		 * state :-/
+		 */
+		dbg("connection not shared - terminating IKE and IPsec SA");
+		delete_states_by_connection(&c);
+	}
+
+	connection_detach(c, logger); /* C could be NULL */
+
+	return 1;
+}
+
+static void terminate_connection(struct connection **c, struct logger *logger)
+{
+	connection_attach(*c, logger);
+
+	llog(RC_LOG, (*c)->logger, "terminating SAs using this connection");
+	del_policy(*c, POLICY_UP);
+	remove_connection_from_pending(*c);
+
+	switch ((*c)->config->ike_version) {
+	case IKEv1:
+		if (shared_phase1_connection(*c)) {
+			llog(RC_LOG, (*c)->logger,
+			     "IKE SA is shared - only terminating IPsec SA");
+			if ((*c)->newest_ipsec_sa != SOS_NOBODY) {
+				struct state *st = state_by_serialno((*c)->newest_ipsec_sa);
+				state_attach(st, logger);
+				delete_state(st);
+			}
+		} else {
+			/*
+			 * CK_INSTANCE is deleted simultaneous to deleting
+			 * state :-/
+			 */
+			dbg("connection not shared - terminating IKE and IPsec SA");
+			delete_states_by_connection(c);
+		}
+		break;
+	case IKEv2:
+		if (shared_phase1_connection(*c)) {
+			llog(RC_LOG, (*c)->logger,
+			     "IKE SA is shared - only terminating IPsec SA");
+			struct child_sa *child = child_sa_by_serialno((*c)->newest_ipsec_sa);
+			if (child != NULL) {
+				state_attach(&child->sa, logger);
+				connection_delete_child(ike_sa(&child->sa, HERE),
+							&child, HERE);
+			}
+		} else {
+			/*
+			 * CK_INSTANCE is deleted simultaneous to deleting
+			 * state :-/
+			 */
+			dbg("connection not shared - terminating IKE and IPsec SA");
+			delete_states_by_connection(c);
+		}
+		break;
+	}
+
+	connection_detach(*c, logger);
+}
+
+static void terminate_connections(struct connection **c, struct logger *logger, where_t where)
+{
+
+	switch ((*c)->local->kind) {
+	case CK_PERMANENT:
+		if ((*c)->config->ike_version == IKEv1) {
+			terminate_a_connection(*c, logger); /* could delete C! */
+			return;
+		}
+		terminate_connection(c, logger);
+		return;
+	case CK_INSTANCE:
+	case CK_LABELED_PARENT:
+	case CK_LABELED_CHILD: /* should not happen? */
+		terminate_connection(c, logger); /* could delete C! */
+		return;
+	case CK_TEMPLATE:
+	case CK_GROUP:
+	case CK_LABELED_TEMPLATE:
+	{
+		struct connection_filter cq = {
+			.clonedfrom = *c,
+			.where = HERE,
+		};
+		while (next_connection_old2new(&cq)) {
+			terminate_connections(&cq.c, logger, where);
+		}
+		return;
+	}
+	case CK_INVALID:
+		break;
+	}
+	bad_case((*c)->local->kind);
+}
 
 static bool whack_delete_connection(struct show *s, struct connection **c,
 				   const struct whack_message *m UNUSED)
