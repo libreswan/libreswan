@@ -1530,12 +1530,12 @@ void delete_v1_states_by_connection_family(struct connection **cp)
  * peer is among those given.
  * This function is only called for ipsec whack --crash peer
  */
-void delete_states_by_peer(const struct fd *whackfd, const ip_address *peer)
+void delete_states_by_peer(struct show *s, const ip_address *peer)
 {
 	address_buf peer_buf;
 	const char *peerstr = ipstr(peer, &peer_buf);
 
-	whack_log(RC_COMMENT, whackfd, "restarting peer %s", peerstr);
+	whack_log(RC_COMMENT, s, "restarting peer %s", peerstr);
 
 	/* first restart the phase1s */
 	for (int ph1 = 0; ph1 < 2; ph1++) {
@@ -1551,7 +1551,7 @@ void delete_states_by_peer(const struct fd *whackfd, const ip_address *peer)
 			if (peer != NULL /* ever false? */ &&
 			    endpoint_address_eq_address(st->st_remote_endpoint, *peer)) {
 				if (ph1 == 0 && IS_IKE_SA(st)) {
-					whack_log(RC_COMMENT, whackfd,
+					whack_log(RC_COMMENT, s,
 						  "peer %s for connection %s crashed; replacing",
 						  peerstr,
 						  c->name);

@@ -274,7 +274,7 @@ void whack_each_connection(const struct whack_message *m, struct show *s,
 		if (each.past_tense != NULL) {
 			llog(RC_UNKNOWN_NAME, logger, MESSAGE);
 		} else {
-			show_rc(s, RC_UNKNOWN_NAME, MESSAGE);
+			whack_log(RC_UNKNOWN_NAME, s, MESSAGE);
 		}
 	}
 #undef MESSAGE
@@ -690,7 +690,6 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 	 * => use show_*() because the good output is for whack
 	 */
 	struct logger *logger = show_logger(s);
-	struct fd *whackfd = logger->global_whackfd;
 
 	/*
 	 * May be needed in future:
@@ -740,7 +739,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 	if (m->whack_deleteuser) {
 		dbg_whack(s, "deleteuser: start: '%s'", m->name == NULL ? "NULL" : m->name);
 		if (m->name == NULL ) {
-			whack_log(RC_FATAL, whackfd,
+			whack_log(RC_FATAL, s,
 				  "received whack command to delete a connection by username, but did not receive the username - ignored");
 		} else {
 			llog(LOG_STREAM, logger,
@@ -756,7 +755,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 	if (m->whack_deleteid) {
 		dbg_whack(s, "deleteid: start: '%s'", m->name == NULL ? "NULL" : m->name);
 		if (m->name == NULL ) {
-			whack_log(RC_FATAL, whackfd,
+			whack_log(RC_FATAL, s,
 				  "received whack command to delete a connection by id, but did not receive the id - ignored");
 		} else {
 			llog(LOG_STREAM, logger,
@@ -800,14 +799,14 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 	if (m->whack_crash) {
 		address_buf pb;
 		dbg_whack(s, "crash: start: %s", str_address(&m->whack_crash_peer, &pb));
-		delete_states_by_peer(whackfd, &m->whack_crash_peer);
+		delete_states_by_peer(s, &m->whack_crash_peer);
 		dbg_whack(s, "crash: stop: %s", str_address(&m->whack_crash_peer, &pb));
 	}
 
 	if (m->whack_add) {
 		dbg_whack(s, "add: start: '%s'", m->name == NULL ? "NULL" : m->name);
 		if (m->name == NULL) {
-			whack_log(RC_FATAL, whackfd,
+			whack_log(RC_FATAL, s,
 				  "received whack command to delete a connection, but did not receive the connection name - ignored");
 		} else {
 			add_connection(m, logger);
@@ -818,7 +817,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 	if (m->whack_replace) {
 		dbg_whack(s, "replace: start: '%s'", m->name == NULL ? "NULL" : m->name);
 		if (m->name == NULL) {
-			whack_log(RC_FATAL, whackfd,
+			whack_log(RC_FATAL, s,
 				  "received whack command to delete a connection, but did not receive the connection name - ignored");
 		} else {
 			whack_delete(m, s);
@@ -1000,7 +999,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		dbg_whack(s, "route: start: \"%s\"", m->name);
 		passert(m->name != NULL);
 		if (!listening) {
-			whack_log(RC_DEAF, whackfd,
+			whack_log(RC_DEAF, s,
 				  "need --listen before --route");
 		} else {
 			whack_each_connection(m, s, whack_route_connection,
@@ -1031,7 +1030,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 			  m->remote_host != NULL ? m->remote_host : "<null>",
 			  bool_str(m->whack_async));
 		if (!listening) {
-			whack_log(RC_DEAF, whackfd,
+			whack_log(RC_DEAF, s,
 				  "need --listen before --initiate");
 		} else {
 			whack_each_connection(m, s, whack_initiate_connection,
@@ -1051,7 +1050,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 	if (m->whack_oppo_initiate) {
 		dbg_whack(s, "oppo_initiate: start:");
 		if (!listening) {
-			whack_log(RC_DEAF, whackfd,
+			whack_log(RC_DEAF, s,
 				  "need --listen before opportunistic initiation");
 		} else {
 			const struct ip_protocol *protocol = protocol_from_ipproto(m->oppo.ipproto);

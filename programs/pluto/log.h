@@ -157,19 +157,6 @@ size_t jam_state(struct jambuf *buf, const struct state *st);
 PRINTF_LIKE(2)
 void llog_md(const struct msg_digest *md, const char *message, ...);
 
-/*
- * Whack only logging.
- *
- * None of these functions add a context prefix (such as connection
- * name).  If that's really really needed then use
- * log_*(WHACK_STREAM,...) above.
- *
- * also requires a valid whackfd.  It should only be used by show
- * commands.
- */
-
-void whack_log(enum rc_type rc, const struct fd *whackfd, const char *message, ...) PRINTF_LIKE(3);
-
 extern void show_setup_plutomain(struct show *s);
 extern void show_setup_natt(struct show *s);
 

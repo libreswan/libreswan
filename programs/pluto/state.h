@@ -950,7 +950,7 @@ void v2_migrate_children(struct ike_sa *from, struct child_sa *to);
 extern void find_my_cpi_gap(cpi_t *latest_cpi, cpi_t *first_busy_cpi);
 extern ipsec_spi_t uniquify_peer_cpi(ipsec_spi_t cpi, const struct state *st, int tries);
 
-extern void delete_states_by_peer(const struct fd *whackfd, const ip_address *peer);
+extern void delete_states_by_peer(struct show *s, const ip_address *peer);
 extern void replace_states_by_peer(const ip_address *peer);
 extern void delete_v1_state_by_username(struct state *st, const char *name);
 extern void delete_state_by_id_name(struct state *st, const char *name);

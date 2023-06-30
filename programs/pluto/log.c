@@ -224,44 +224,6 @@ void close_log(void)
 	}
 }
 
-/* emit message to whack.
- * form is "ddd statename text\n" where
- * - ddd is a decimal status code (RC_*) as described in whack.h
- * - text is a human-readable annotation
- */
-
-VPRINTF_LIKE(3)
-static void whack_va_list(enum rc_type rc, const struct fd *whackfd,
-			  const char *message, va_list args)
-{
-	/* no-prefix: RC added by jambuf_to_whack() below */
-	JAMBUF(buf) {
-		/* always get the message out */
-		if (!in_main_thread()) {
-			jam_string(buf, "["PEXPECT_PREFIX"on main thread]: ");
-		}
-		if (!fd_p(whackfd)) {
-			jam_string(buf, "["PEXPECT_PREFIX"whackfd valid]: ");
-		}
-		{
-			jam_va_list(buf, message, args);
-		}
-		if (!in_main_thread() || !fd_p(whackfd)) {
-			log_raw(LOG_ERR, "", buf);
-		} else {
-			jambuf_to_whack(buf, whackfd, rc);
-		}
-	}
-}
-
-void whack_log(enum rc_type rc, const struct fd *whackfd, const char *message, ...)
-{
-	va_list args;
-	va_start(args, message);
-	whack_va_list(rc, whackfd, message, args);
-	va_end(args);
-}
-
 void set_debugging(lset_t deb)
 {
 	cur_debugging = deb;

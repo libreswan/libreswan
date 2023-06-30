@@ -39,8 +39,8 @@ static bool whack_delete_connection(struct show *s, struct connection **c,
 void whack_delete(const struct whack_message *m, struct show *s)
 {
 	if (m->name == NULL) {
-		show_rc(s, RC_FATAL,
-			"received whack command to delete a connection, but did not receive the connection name - ignored");
+		whack_log(RC_FATAL, s,
+			  "received whack command to delete a connection, but did not receive the connection name - ignored");
 		return;
 	}
 

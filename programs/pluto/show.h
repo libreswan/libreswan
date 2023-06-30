@@ -90,7 +90,17 @@ void show_comment(struct show *s, const char *message, ...) PRINTF_LIKE(2);
  */
 void show_raw(struct show *s, const char *message, ...) PRINTF_LIKE(2);
 
-PRINTF_LIKE(3)
-void show_rc(struct show *s, enum rc_type, const char *message, ...);
+/*
+ * Whack only logging.
+ *
+ * None of these functions add a context prefix (such as connection
+ * name).  If that's really really needed then use
+ * log_*(WHACK_STREAM,...) above.
+ *
+ * also requires a valid whackfd.  It should only be used by show
+ * commands.
+ */
+
+void whack_log(enum rc_type rc, struct show *s, const char *message, ...) PRINTF_LIKE(3);
 
 #endif

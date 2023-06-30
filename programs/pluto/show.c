@@ -167,7 +167,7 @@ void show_comment(struct show *s, const char *message, ...)
 	va_end(ap);
 }
 
-void show_rc(struct show *s, enum rc_type rc, const char *message, ...)
+void whack_log(enum rc_type rc, struct show *s, const char *message, ...)
 {
 	va_list ap;
 	va_start(ap, message);
