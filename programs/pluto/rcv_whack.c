@@ -128,8 +128,27 @@ static void whack_listcacerts(struct show *s)
 }
 
 /*
- * param to tune whack_each connection.
+ * When there's no name, whack all connections.
+ *
+ * How to decorate this with a header / footer?
  */
+
+void whack_all_connections(const struct whack_message *m, struct show *s,
+			   bool (*whack_connection)
+			   (struct show *s,
+			    struct connection **c,
+			    const struct whack_message *m))
+{
+	struct connection **connections = sort_connections();
+	if (connections == NULL) {
+		return;
+	}
+
+	for (struct connection **cp = connections; *cp != NULL; cp++) {
+		whack_connection(s, cp, m);
+	}
+	pfree(connections);
+}
 
 void whack_each_connection(const struct whack_message *m, struct show *s,
 			   bool (*whack_connection)
@@ -140,24 +159,6 @@ void whack_each_connection(const struct whack_message *m, struct show *s,
 {
 	struct logger *logger = show_logger(s);
 	unsigned nr_found = 0;
-
-	/*
-	 * When there's no name, whack all connections.
-	 *
-	 * How to decorate this with a header / footer?
-	 */
-	if (m->name == NULL) {
-		struct connection **connections = sort_connections();
-		if (connections == NULL) {
-			return;
-		}
-
-		for (struct connection **cp = connections; *cp != NULL; cp++) {
-			whack_connection(s, cp, m);
-		}
-		pfree(connections);
-		return;
-	}
 
 	/*
 	 * First try by name.
@@ -712,15 +713,15 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 	}
 
 	if (m->whack_rekey_ike) {
-		dbg_whack(s, "rekey-ike: start: '%s'", m->name == NULL ? "NULL" : m->name);
+		dbg_whack(s, "rekey-ike: start: '%s'", (m->name == NULL ? "<null>" : m->name));
 		whack_rekey(m, s, IKE_SA);
-		dbg_whack(s, "rekey-ike: stop: '%s'", m->name == NULL ? "NULL" : m->name);
+		dbg_whack(s, "rekey-ike: stop: '%s'", (m->name == NULL ? "<null>" : m->name));
 	}
 
 	if (m->whack_rekey_ipsec) {
 		dbg_whack(s, "rekey_ipsec: start: '%s'", m->name == NULL ? "<null>" : m->name);
 		whack_rekey(m, s, IPSEC_SA);
-		dbg_whack(s, "rekey_ipsec: stop: '%s'", m->name == NULL ? "NULL" : m->name);
+		dbg_whack(s, "rekey_ipsec: stop: '%s'", (m->name == NULL ? "<null>" : m->name));
 	}
 
 	/*
@@ -731,13 +732,13 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 	 * will silently ignore the lack of the connection.
 	 */
 	if (m->whack_delete) {
-		dbg_whack(s, "delete: start: '%s'", m->name == NULL ? "NULL" : m->name);
+		dbg_whack(s, "delete: start: '%s'", (m->name == NULL ? "<null>" : m->name));
 		whack_delete(m, s);
-		dbg_whack(s, "delete: stop: '%s'", m->name == NULL ? "NULL" : m->name);
+		dbg_whack(s, "delete: stop: '%s'", (m->name == NULL ? "<null>" : m->name));
 	}
 
 	if (m->whack_deleteuser) {
-		dbg_whack(s, "deleteuser: start: '%s'", m->name == NULL ? "NULL" : m->name);
+		dbg_whack(s, "deleteuser: start: '%s'", (m->name == NULL ? "<null>" : m->name));
 		if (m->name == NULL ) {
 			whack_log(RC_FATAL, s,
 				  "received whack command to delete a connection by username, but did not receive the username - ignored");
@@ -749,11 +750,11 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 				delete_v1_state_by_username(sf.st, m->name);
 			}
 		}
-		dbg_whack(s, "deleteuser: stop: '%s'", m->name == NULL ? "NULL" : m->name);
+		dbg_whack(s, "deleteuser: stop: '%s'", (m->name == NULL ? "<null>" : m->name));
 	}
 
 	if (m->whack_deleteid) {
-		dbg_whack(s, "deleteid: start: '%s'", m->name == NULL ? "NULL" : m->name);
+		dbg_whack(s, "deleteid: start: '%s'", (m->name == NULL ? "<null>" : m->name));
 		if (m->name == NULL ) {
 			whack_log(RC_FATAL, s,
 				  "received whack command to delete a connection by id, but did not receive the id - ignored");
@@ -765,7 +766,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 				delete_state_by_id_name(sf.st, m->name);
 			}
 		}
-		dbg_whack(s, "deleteid: stop: '%s'", m->name == NULL ? "NULL" : m->name);
+		dbg_whack(s, "deleteid: stop: '%s'", (m->name == NULL ? "<null>" : m->name));
 	}
 
 	if (m->whack_deletestate) {
@@ -804,26 +805,26 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 	}
 
 	if (m->whack_add) {
-		dbg_whack(s, "add: start: '%s'", m->name == NULL ? "NULL" : m->name);
+		dbg_whack(s, "add: start: '%s'", (m->name == NULL ? "<null>" : m->name));
 		if (m->name == NULL) {
 			whack_log(RC_FATAL, s,
 				  "received whack command to delete a connection, but did not receive the connection name - ignored");
 		} else {
 			add_connection(m, logger);
 		}
-		dbg_whack(s, "add: stop: '%s'", m->name == NULL ? "NULL" : m->name);
+		dbg_whack(s, "add: stop: '%s'", (m->name == NULL ? "<null>" : m->name));
 	}
 
 	if (m->whack_replace) {
-		dbg_whack(s, "replace: start: '%s'", m->name == NULL ? "NULL" : m->name);
+		dbg_whack(s, "replace: start: '%s'", (m->name == NULL ? "<null>" : m->name));
 		if (m->name == NULL) {
 			whack_log(RC_FATAL, s,
-				  "received whack command to delete a connection, but did not receive the connection name - ignored");
+				  "received command to delete a connection, but did not receive the connection name - ignored");
 		} else {
 			whack_delete(m, s);
 			add_connection(m, logger);
 		}
-		dbg_whack(s, "replace: stop: '%s'", m->name == NULL ? "NULL" : m->name);
+		dbg_whack(s, "replace: stop: '%s'", (m->name == NULL ? "<null>" : m->name));
 	}
 
 	if (m->redirect_to != NULL && !m->whack_add && !m->whack_replace) {
@@ -835,9 +836,9 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		 * an ADD or a global op?  Checking .whack_add and/or
 		 * .whack_replace should help.
 		 */
-		dbg_whack(s, "active_redirect_dests: start: '%s'", m->name == NULL ? "NULL" : m->name);
+		dbg_whack(s, "redirect_to: start: '%s'", (m->name == NULL ? "<null>" : m->name));
 		find_and_active_redirect_states(m->name, m->redirect_to, logger);
-		dbg_whack(s, "active_redirect_dests: stop: '%s'", m->name == NULL ? "NULL" : m->name);
+		dbg_whack(s, "redirect_to: stop: '%s'", (m->name == NULL ? "<null>" : m->name));
 	}
 
 	if (m->global_redirect_to) {
@@ -996,11 +997,14 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 	}
 
 	if (m->whack_route) {
-		dbg_whack(s, "route: start: \"%s\"", m->name);
-		passert(m->name != NULL);
+		dbg_whack(s, "route: start: \"%s\"", (m->name == NULL ? "<null>" : m->name));
 		if (!listening) {
 			whack_log(RC_DEAF, s,
 				  "need --listen before --route");
+		} else if (m->name == NULL) {
+			/* leave bread crumb */
+			llog(RC_FATAL, logger,
+			     "received command to route connection, but did not receive the connection name - ignored");
 		} else {
 			whack_each_connection(m, s, whack_route_connection,
 					      (struct each) {
@@ -1009,29 +1013,37 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 					      });
 
 		}
-		dbg_whack(s, "route: stop: \"%s\"", m->name);
+		dbg_whack(s, "route: stop: \"%s\"", (m->name == NULL ? "<null>" : m->name));
 	}
 
 	if (m->whack_unroute) {
-		dbg_whack(s, "unroute: start: \"%s\"", m->name);
-		passert(m->name != NULL);
-		whack_each_connection(m, s, whack_unroute_connection,
-				      (struct each) {
-					      .log_unknown_name = true,
-					      .skip_instances = true,
-				      });
-		dbg_whack(s, "unroute: stop: \"%s\"", m->name);
+		dbg_whack(s, "unroute: start: \"%s\"", (m->name == NULL ? "<null>" : m->name));
+		if (m->name == NULL) {
+			/* leave bread crumb */
+			llog(RC_FATAL, logger,
+			     "received command to unroute connection, but did not receive the connection name - ignored");
+		} else {
+			whack_each_connection(m, s, whack_unroute_connection,
+					      (struct each) {
+						      .log_unknown_name = true,
+						      .skip_instances = true,
+					      });
+		}
+		dbg_whack(s, "unroute: stop: \"%s\"", (m->name == NULL ? "<null>" : m->name));
 	}
 
 	if (m->whack_initiate) {
-		passert(m->name != NULL);
 		dbg_whack(s, "initiate: start: name='%s' remote='%s' async=%s",
-			  m->name,
-			  m->remote_host != NULL ? m->remote_host : "<null>",
+			  (m->name == NULL ? "<null>" : m->name),
+			  (m->remote_host != NULL ? m->remote_host : "<null>"),
 			  bool_str(m->whack_async));
 		if (!listening) {
 			whack_log(RC_DEAF, s,
 				  "need --listen before --initiate");
+		} else if (m->name == NULL) {
+			/* leave bread crumb */
+			llog(RC_FATAL, logger,
+			     "received command to initiate connection, but did not receive the connection name - ignored");
 		} else {
 			whack_each_connection(m, s, whack_initiate_connection,
 					      (struct each) {
@@ -1042,7 +1054,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 					      });
 		}
 		dbg_whack(s, "initiate: stop: name='%s' remote='%s' async=%s",
-			  m->name,
+			  (m->name == NULL ? "<null>" : m->name),
 			  m->remote_host != NULL ? m->remote_host : "<null>",
 			  bool_str(m->whack_async));
 	}
@@ -1076,16 +1088,21 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 	}
 
 	if (m->whack_terminate) {
-		passert(m->name != NULL);
-		dbg_whack(s, "terminate: start: %s", m->name);
-		whack_each_connection(m, s, whack_terminate_connections,
-				      (struct each) {
-					      .future_tense = "terminating",
-					      .past_tense = "terminated",
-					      .log_unknown_name = true,
-					      .skip_instances = true,
-				      });
-		dbg_whack(s, "terminate: stop: %s", m->name);
+		dbg_whack(s, "terminate: start: %s", (m->name == NULL ? "<null>" : m->name));
+		if (m->name == NULL) {
+			/* leave bread crumb */
+			llog(RC_FATAL, logger,
+			     "received command to terminate connection, but did not receive the connection name - ignored");
+		} else {
+			whack_each_connection(m, s, whack_terminate_connections,
+					      (struct each) {
+						      .future_tense = "terminating",
+						      .past_tense = "terminated",
+						      .log_unknown_name = true,
+						      .skip_instances = true,
+					      });
+		}
+		dbg_whack(s, "terminate: stop: %s", (m->name == NULL ? "<null>" : m->name));
 	}
 
 	if (m->whack_status) {

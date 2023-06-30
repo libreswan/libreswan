@@ -84,7 +84,7 @@ void whack_rekey(const struct whack_message *m, struct show *s, enum sa_type sa_
 	if (m->name == NULL) {
 		/* leave bread crumb */
 		llog(RC_FATAL, logger,
-		     "received whack command to rekey connection, but did not receive the connection name - ignored");
+		     "received command to rekey connection, but did not receive the connection name - ignored");
 		return;
 	}
 
