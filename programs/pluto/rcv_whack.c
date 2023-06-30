@@ -102,6 +102,7 @@
 #include "whack_trafficstatus.h"
 #include "whack_rekey.h"
 #include "whack_delete.h"
+#include "whack_status.h"
 
 static void whack_rereadsecrets(struct show *s)
 {
@@ -1090,13 +1091,13 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 
 	if (m->whack_status) {
 		dbg_whack(s, "status: start:");
-		show_status(s, now);
+		whack_status(s, now);
 		dbg_whack(s, "status: stop:");
 	}
 
 	if (m->whack_global_status) {
 		dbg_whack(s, "globalstatus: start:");
-		show_global_status(s);
+		whack_globalstatus(s);
 		dbg_whack(s, "globalstatus: stop:");
 	}
 
@@ -1327,7 +1328,7 @@ static void whack_handle(struct fd *whackfd, struct logger *whack_logger)
 			/* Only basic commands.  Simpler inter-version compatibility. */
 			if (msg.whack_status) {
 				struct show *s = alloc_show(whack_logger);
-				show_status(s, mononow());
+				whack_status(s, mononow());
 				free_show(&s);
 			}
 			/* bail early, but without complaint */

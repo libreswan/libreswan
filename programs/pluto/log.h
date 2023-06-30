@@ -170,10 +170,8 @@ void llog_md(const struct msg_digest *md, const char *message, ...);
 
 void whack_log(enum rc_type rc, const struct fd *whackfd, const char *message, ...) PRINTF_LIKE(3);
 
-extern void show_status(struct show *s, const monotime_t now);
 extern void show_setup_plutomain(struct show *s);
 extern void show_setup_natt(struct show *s);
-extern void show_global_status(struct show *s);
 
 enum linux_audit_kind {
 	LAK_PARENT_START,
