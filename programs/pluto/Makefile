@@ -87,6 +87,7 @@ OBJS += ikev2_eap.o
 
 OBJS += state_db.o
 OBJS += show.o
+OBJS += binlog.o
 OBJS += retransmit.o
 
 OBJS += rcv_whack.o
