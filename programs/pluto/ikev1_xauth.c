@@ -2365,27 +2365,18 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 	}
 
 	if (gotrequest) {
-		if (DBGP(DBG_BASE)) {
-			if (xauth_resp &
-			    (XAUTHLELEM(XAUTH_USER_NAME) |
-			     XAUTHLELEM(XAUTH_USER_PASSWORD)))
-				DBG_log("XAUTH: Username or password request received");
-		}
-
-		/* sanitize what we were asked to reply to */
-		if (LDISJOINT(xauth_resp,
-			XAUTHLELEM(XAUTH_USER_NAME) |
-			XAUTHLELEM(XAUTH_USER_PASSWORD)))
-		{
-			if (st->st_connection->local->host.config->xauth.client) {
-				log_state(RC_LOG, st,
-					"XAUTH: No username or password request was received.");
-				return STF_IGNORE;
-			}
-		} else {
+		if (xauth_resp & (XAUTHLELEM(XAUTH_USER_NAME) |
+				  XAUTHLELEM(XAUTH_USER_PASSWORD))) {
 			if (!st->st_connection->local->host.config->xauth.client) {
 				log_state(RC_LOG, st,
-					"XAUTH: Username or password request was received, but XAUTH client mode not enabled.");
+					  "XAUTH: Username or password request was received, but XAUTH client mode not enabled.");
+				return STF_IGNORE;
+			}
+			ldbg(st->st_logger, "XAUTH: Username or password request received");
+		} else {
+			if (st->st_connection->local->host.config->xauth.client) {
+				log_state(RC_LOG, st,
+					  "XAUTH: No username or password request was received.");
 				return STF_IGNORE;
 			}
 		}
