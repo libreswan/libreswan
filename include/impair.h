@@ -171,6 +171,8 @@ struct impair {
 	bool copy_v1_notify_response_SPIs_to_retransmission;
 
 	unsigned v1_remote_quick_id;
+	enum impair_emit v1_isakmp_delete_payload;
+	enum impair_emit v1_ipsec_delete_payload;
 
 	/*
 	 * add more here
