@@ -1,0 +1,8 @@
+This is a test for CVE-2023-38712.
+
+send a messge that contains two IKEv1 ISAKMP SA deletes
+
+Pluto, even after the first delete ISAKMP SA had been processed and
+the ISAKMP SA deleted, would try to stumble on and process the second
+delete (similar, but not identical to an earlier bug where notifies
+were processed after the ISAKMP SA was deleted).
