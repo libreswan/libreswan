@@ -187,11 +187,6 @@ shunk_t address_as_shunk(const ip_address *address);
 chunk_t address_as_chunk(ip_address *address);
 
 /*
- * XXX: prop up IPv4 centric code that just isn't worth the effort.
- */
-uint32_t ntohl_address(const ip_address *address);
-
-/*
  * Old style.
  */
 

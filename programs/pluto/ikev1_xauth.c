@@ -301,11 +301,9 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 		/* XXX: bitstomask(c->spd->local->client.maskbits), */
 		ip_address mask = selector_prefix_mask(c->spd->local->client);
 		ip_address addr = selector_prefix(c->spd->local->client);
-		struct CISCO_split_item i = {
-			.cs_addr = { htonl(ntohl_address(&addr)), },
-			.cs_mask = { htonl(ntohl_address(&mask)), },
-		};
-
+		struct CISCO_split_item i = {0};
+		memcpy_hunk(&i.cs_addr, address_as_shunk(&addr), sizeof(i.cs_addr));
+		memcpy_hunk(&i.cs_mask, address_as_shunk(&mask), sizeof(i.cs_mask));
 		ok = out_struct(&i, &CISCO_split_desc, &attrval, NULL);
 		break;
 	}

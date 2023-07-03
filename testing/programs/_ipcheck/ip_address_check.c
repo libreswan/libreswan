@@ -379,17 +379,6 @@ static void check_in_addr(void)
 				out, t->in);
 		}
 
-		switch (t->family) {
-		case 4:
-		{
-			uint32_t h = ntohl_address(&a);
-			uint32_t n = htonl(h);
-			if (!memeq(&n, t->addr, sizeof(n))) {
-				FAIL("ntohl_address() returned %08"PRIx32", expecting something else", h);
-			}
-			break;
-		}
-		}
 	}
 }
 

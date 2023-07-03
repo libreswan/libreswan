@@ -44,20 +44,6 @@ ip_address address_from_in_addr(const struct in_addr *in)
 	return address_from_raw(HERE, IPv4, bytes);
 }
 
-uint32_t ntohl_address(const ip_address *a)
-{
-	uint32_t u;
-	shunk_t s = address_as_shunk(a);
-	if (address_type(a) == &ipv4_info) {
-		memcpy(&u, s.ptr, s.len);
-	} else {
-		/* IPv6 take bits 96 - 128 to compute size */
-		s.ptr += (s.len - sizeof(u));
-		memcpy(&u, s.ptr, sizeof(u));
-	}
-	return ntohl(u);
-}
-
 ip_address address_from_in6_addr(const struct in6_addr *in6)
 {
 	struct ip_bytes bytes = { .byte = { 0, }, };
