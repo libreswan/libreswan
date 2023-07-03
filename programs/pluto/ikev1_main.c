@@ -1970,6 +1970,27 @@ void send_v1_delete(struct state *st)
 }
 
 /*
+ * Is a connection in use by some state?
+ */
+
+static bool shared_phase1_connection(const struct connection *c)
+{
+	so_serial_t serial_us = c->newest_ike_sa;
+
+	if (serial_us == SOS_NOBODY)
+		return false;
+
+	struct state_filter sf = { .where = HERE, };
+	while (next_state_new2old(&sf)) {
+		struct state *st = sf.st;
+		if (st->st_connection != c && st->st_clonedfrom == serial_us)
+			return true;
+	}
+
+	return false;
+}
+
+/*
  * Accept a Delete SA notification, and process it if valid.
  *
  * @param st State structure

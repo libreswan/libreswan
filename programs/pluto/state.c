@@ -1306,27 +1306,6 @@ void delete_state(struct state *st)
 }
 
 /*
- * Is a connection in use by some state?
- */
-
-bool shared_phase1_connection(const struct connection *c)
-{
-	so_serial_t serial_us = c->newest_ike_sa;
-
-	if (serial_us == SOS_NOBODY)
-		return false;
-
-	struct state_filter sf = { .where = HERE, };
-	while (next_state_new2old(&sf)) {
-		struct state *st = sf.st;
-		if (st->st_connection != c && st->st_clonedfrom == serial_us)
-			return true;
-	}
-
-	return false;
-}
-
-/*
  * Delete all states that have somehow not ben deleted yet
  * but using interfaces that are going down
  */

@@ -976,8 +976,6 @@ extern void update_ike_endpoints(struct ike_sa *ike, const struct msg_digest *md
 extern bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md);
 extern void v2_expire_unused_ike_sa(struct ike_sa *ike);
 
-bool shared_phase1_connection(const struct connection *c);
-
 extern void append_st_cfg_domain(struct state *st, char *dnsip);
 extern void append_st_cfg_dns(struct state *st, const char *dnsip);
 extern bool ikev2_viable_parent(const struct ike_sa *ike);
