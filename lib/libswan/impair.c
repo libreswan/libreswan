@@ -214,6 +214,14 @@ struct impairment impairments[] = {
 	V("v1_remote_quick_id", v1_remote_quick_id, "set the remote quick ID",
 	  .unsigned_help = "value to set quick id too"),
 
+	V("v1_isakmp_delete_payload", v1_isakmp_delete_payload,
+	  "corrupt outgoing ISAKMP delete payload",
+	  .how_keywords = &impair_emit_keywords),
+
+	V("v1_ipsec_delete_payload", v1_ipsec_delete_payload,
+	  "corrupt outgoing IPsec delete payload",
+	  .how_keywords = &impair_emit_keywords),
+
 #undef V
 #undef A
 

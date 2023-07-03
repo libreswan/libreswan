@@ -162,6 +162,9 @@ struct impair {
 	bool ignore_soft_expire;
 	bool ignore_hard_expire;
 
+	enum impair_emit v1_isakmp_delete_payload;
+	enum impair_emit v1_ipsec_delete_payload;
+
 	/*
 	 * add more here
 	 */
