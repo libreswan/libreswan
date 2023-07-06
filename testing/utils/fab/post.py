@@ -320,7 +320,8 @@ class TestResult:
         sanitize = []
         for guest_name in test.guest_names:
             sanitize.append((guest_name, guest_name + "."))
-        sanitize.append(("", ""))
+        if os.path.exists(os.path.join(test.directory, "console.txt")):
+            sanitize.append(("", ""))
 
         # Check the raw console output for problems and that it
         # matches expected output.
