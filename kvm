@@ -11,6 +11,8 @@ gnumake="make"
 quietmake="${gnumake} -C $(realpath $(dirname $0)) --no-print-directory"
 
 kvm_platform=$(${quietmake} print-kvm-platform)
+kvm_testingdir=$(${quietmake} print-kvm-testingdir)
+
 buildhosts=${kvm_platform}
 basehosts=
 upgradehosts=
@@ -205,19 +207,18 @@ if test "$1" = $0 -a $# -eq 3 ; then
     elif test "${previous}" = sh ; then
 	# pass 1 command
 	compgen -W "${hosts}" "${word}"
+    elif [[ " ${pass2}" =~ " ${word}" ]] ; then
+	# word looks to be matching a command (or is empty),
+	# expand to either <command> or <directory>
+	compgen -o plusdirs -W "${pass2}" "${word}"
+    elif test -n "${kvm_testingdir}" ; then
+	# doesn't match a command, so throw in the testing
+	# directory as a quick expansion
+	compgen -o plusdirs -W "${pass2}" -G "${kvm_testingdir}/pluto/${word}*" "${word}"
     else
-	case $pass2 in
-	    *" ${word}"* )
-		# word looks to be matching a command (or is empty),
-		# expand to either <command> or <directory>
-		compgen -o plusdirs -W "${pass2}" "${word}"
-		;;
-	    * )
-		# doesn't match a command, so throw in the testing
-		# directory as a quick expansion
-		compgen -o plusdirs -W "${pass2}" -G "testing/pluto/${word}*" "${word}"
-		;;
-	esac
+	# doesn't match a command, so throw in the testing
+	# directory as a quick expansion
+	compgen -o plusdirs -W "${pass2}" -G "testing/pluto/${word}*" "${word}"
     fi
     exit 0
 fi
@@ -299,7 +300,10 @@ kvm_test_status=$(${quietmake} print-kvm-test-status)
 kvm_test_name=$(${quietmake} print-kvm-test-name)
 kvm_test_flags=$(${quietmake} print-kvm-test-flags)
 kvm_prefixes=($(${quietmake} print-kvm-prefixes))
-kvm_testingdir=$(${quietmake} print-kvm-testingdir)
+kvm_sourcedir=$(${quietmake} print-kvm-sourcedir)
+
+# repo under test
+rutdir=${kvm_testingdir:+$(realpath $(dirname "${kvm_testingdir}"))}
 
 modified=
 baseline=
@@ -373,16 +377,16 @@ while test $# -gt 0 ; do
 	    ;;
 
 
-	* ) # either a directory; a hostname; or pass2 command
+	* ) # either: a directory; a hostname; or pass2 command
 
 	    if [[ " ${pass2} " =~ " $1 " ]] ; then
 
-	       # pass2 command, accumulate
+	       # a pass2 command, accumulate
 	       ops[$i]="$1" ; i=$((i + 1))
 
 	    elif [[ " ${hosts} " =~ " $1 " ]] ; then
 
-		# a hostname
+		# a hostname, run; should this be made pass 2?
 		host=${prefix}$1 ; shift
 		echo "Connecting to ${host}" 1>&2
 		exec testing/utils/kvmsh.py ${host} "$@"
@@ -391,7 +395,7 @@ while test $# -gt 0 ; do
 
 		# If the argument is a directory then bail; it's
 		# assumed that "$@" is a list of test directories.
-		if test ! -d "$1" ; then
+		if test ! -d "$1" -a ! -d "${rutdir}/$1" ; then
 		    if test -z "${ops[*]}" ; then
 			echo "unknown command: $1" 1>&2
 		    else
@@ -429,6 +433,7 @@ fi
 kvmresults()
 {
     ./testing/utils/kvmresults.py \
+	${kvm_testingdir:+--testing-directory ${kvm_testingdir}} \
 	${kvm_test_status:+--test-status ${kvm_test_status}} \
 	${kvm_test_name:+--test-name ${kvm_test_name}} \
 	${kvm_test_flags} \
@@ -450,14 +455,14 @@ results_command()
 diffs_command()
 {
     if test -n "${baseline}" ; then
-	kvmresults ${__baseline} --stats none "$@" \
+	kvmresults ${__baseline} ${__testingdir} --stats none "$@" \
 	    | grep --line-buffered -v -e baseline:untested \
 	    | grep --line-buffered -e "${baseline}" \
 	    | while read test eol ; do
-	    ./testing/utils/kvmresults.py --stats none --print diffs ${test}
+	    ./testing/utils/kvmresults.py ${__testingdir} --stats none --print diffs ${test}
 	done
     else
-	kvmresults --stats none --print diffs "$@"
+	kvmresults ${__testingdir} --stats none --print diffs "$@"
 	status=$?
     fi
 }
