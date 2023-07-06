@@ -40,11 +40,13 @@ include testing/libvirt/fedora/kvm.mk
 #
 # where things live and what gets created
 #
+# can be a separate directories; RUT == repo under test; bench ==
+# testbench
 
-# can be a separate directories
-KVM_SOURCEDIR ?= $(abs_top_srcdir)
-KVM_TESTINGDIR ?= $(abs_top_srcdir)/testing
+KVM_RUTDIR ?= $(abs_top_srcdir)
 KVM_BENCHDIR ?= $(abs_top_srcdir)
+KVM_SOURCEDIR ?= $(KVM_RUTDIR)
+KVM_TESTINGDIR ?= $(KVM_RUTDIR)/testing
 # An educated guess ...
 KVM_POOLDIR ?= $(abspath $(abs_top_srcdir)/../pool)
 KVM_LOCALDIR ?= $(KVM_POOLDIR)
@@ -335,10 +337,16 @@ print-kvm-test-name: ; @:$(info $(STRIPPED_KVM_TEST_NAME))
 print-kvm-test-flags: ; @:$(info $(KVM_TEST_FLAGS))
 .PHONY: print-kvm-testingdir
 print-kvm-testingdir: ; @:$(info $(KVM_TESTINGDIR))
+.PHONY: print-kvm-sourcedir
+print-kvm-sourcedir: ; @:$(info $(KVM_SOURCEDIR))
 .PHONY: print-kvm-baseline
 print-kvm-baseline: ; @:$(info $(KVM_BASELINE))
 .PHONY: print-kvm-platform
 print-kvm-platform: ; @:$(info $(KVM_PLATFORM))
+.PHONY: print-kvm-rutdir
+print-kvm-rutdir: ; @:$(info $(KVM_RUTDIR))
+.PHONY: print-kvm-testdir
+print-kvm-testdir: ; @:$(info $(KVM_TESTDIR))
 
 KVM_POOLDIR_PREFIX = $(KVM_POOLDIR)/$(KVM_FIRST_PREFIX)
 KVM_LOCALDIR_PREFIXES = \
@@ -561,6 +569,7 @@ kvm-%: $(KVM_HOST_OK) kvm-keys-ok
 		$(if $(KVM_PIDFILE), --pid-file "$(KVM_PIDFILE)") \
 		$(foreach prefix,$(KVM_PREFIXES), --prefix $(prefix)) \
 		$(if $(KVM_WORKERS), --workers $(KVM_WORKERS)) \
+		$(if $(KVM_TESTINGDIR), --testing-directory $(KVM_TESTINGDIR)) \
 		$(if $(WEB_ENABLED), --publish-hash $(WEB_HASH)) \
 		$(if $(WEB_ENABLED), --publish-results $(WEB_RESULTSDIR)) \
 		$(if $(WEB_ENABLED), --publish-status $(WEB_SUMMARYDIR)/status.json) \
