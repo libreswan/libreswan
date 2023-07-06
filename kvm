@@ -56,14 +56,6 @@ Modifiers:
     --baseline-failed
 	specify baseline directory to compare against
 
-  To log into a domain:
-
-    sh <host> [ <command> ]
-	start a shell on <host> which can be a:
-	  test domain: ${testhosts}
-	  build domain: ${kvm_platform}
-	  base domain: ${basehosts}
-	  upgrade domain: ${upgradehosts}
 EOF
 }
 
@@ -169,6 +161,14 @@ pass2help()
     restart
 	restart libvirt to workaround catatonic daemon performance
 
+  To log into a domain:
+
+    sh <host> [ <command> ]
+	start a shell on <host> which can be a:
+	  test domain: ${testhosts}
+	  build domain: ${kvm_platform}
+	  base domain: ${basehosts}
+	  upgrade domain: ${upgradehosts}
 EOF
 }
 
@@ -205,7 +205,7 @@ if test "$1" = $0 -a $# -eq 3 ; then
 	# first command
 	compgen -W "${pass1} ${pass2}" "${word}" | sort
     elif test "${previous}" = sh ; then
-	# pass 1 command
+	# sh hostname
 	compgen -W "${hosts}" "${word}"
     elif [[ " ${pass2}" =~ " ${word}" ]] ; then
 	# word looks to be matching a command (or is empty),
@@ -349,10 +349,17 @@ while test $# -gt 0 ; do
 	test-clean ) ops[$i]=check-clean ; i=$((i + 1)) ;;
 
 	sh )
-	    shift
-	    host=${prefix}$1 ; shift
-	    echo "Connecting to ${host}" 1>&2
-	    exec testing/utils/kvmsh.py ${host} "$@"
+	    # remainder of line is host + optional commands
+	    ops[$i]=sh ; i=$((i + 1)) ; shift
+	    if test $# -lt 1 ; then
+		echo "missing hostname" 1>&2
+		exit 1
+	    fi
+	    if ! [[ " ${hosts} " =~ " $1 " ]] ; then
+		echo "unrecognized hostname" 1>&2
+		exit 1
+	    fi
+	    break
 	    ;;
 
 	# wrappers
@@ -376,7 +383,6 @@ while test $# -gt 0 ; do
 	    baseline=$1
 	    ;;
 
-
 	* ) # either: a directory; a hostname; or pass2 command
 
 	    if [[ " ${pass2} " =~ " $1 " ]] ; then
@@ -386,10 +392,9 @@ while test $# -gt 0 ; do
 
 	    elif [[ " ${hosts} " =~ " $1 " ]] ; then
 
-		# a hostname, run; should this be made pass 2?
-		host=${prefix}$1 ; shift
-		echo "Connecting to ${host}" 1>&2
-		exec testing/utils/kvmsh.py ${host} "$@"
+		# a hostname ..., run: sh hostname (leave it in input)
+		ops[$i]="sh" ; i=$((i + 1))
+		break
 
 	    else
 
@@ -503,6 +508,9 @@ for op in "${ops[@]}" ; do
 	restart )
 	    sudo systemctl restart libvirtd
 	    ;;
+	sh )
+	    echo "Connecting to ${host}" 1>&2
+	    exec testing/utils/kvmsh.py "$@"
     esac
 done
 
