@@ -620,7 +620,8 @@ const struct keyword_def ipsec_conf_keywords[] = {
 
   /* DPD */
   { "dpddelay",  kv_conn,  kt_string,  KSCF_DPDDELAY_MS, NULL, NULL, },
-  { "dpdtimeout",  kv_conn,  kt_string,  KSCF_DPDTIMEOUT_MS, NULL, NULL, },
+  { "ikev1-dpdtimeout",  kv_conn,  kt_string,  KSCF_DPDTIMEOUT_MS, NULL, NULL, },
+  { "dpdtimeout",  kv_conn | kv_alias,  kt_string,  KSCF_DPDTIMEOUT_MS, NULL, NULL, }, /* old name */
   { "dpdaction",  kv_conn,  kt_enum,  KNCF_DPDACTION,  kw_dpdaction_list, NULL, },
 
   { "sendca",      kv_conn,  kt_enum,  KNCF_SEND_CA,  kw_sendca_list, NULL, },
