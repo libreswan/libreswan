@@ -3123,7 +3123,7 @@ def localhost_sudo(args, testname):
         # s.child.setecho(False) # this does not seems to work!
         s.run('stty -echo')
         s.run('unalias mv cp ls ll rm iptables')
-        s.run("alias iptables='iptables --wait 120 --wait-interval=100000'")
+        s.run("alias iptables='iptables --wait 120'")
 
     return s
 
@@ -3423,7 +3423,7 @@ class Vshell(shell.Remote):
         # self.child.setecho(False) # this does not seems to work!
         self.run('stty -echo')
         self.run('unalias mv cp ls ll rm iptables')
-        self.run("alias iptables='iptables --wait 120 --wait-interval=100000'")
+        self.run("alias iptables='iptables --wait 120'")
 
 class Docker:
 
@@ -3574,7 +3574,7 @@ class Namespace:
             s.run('stty -echo')
             s.run('unalias mv cp ls ll rm iptables')
             # iptable alais specific to namespaces and docker
-            s.run("alias iptables='iptables --wait 120 --wait-interval=100000'")
+            s.run("alias iptables='iptables --wait 120'")
 
         return s
 
