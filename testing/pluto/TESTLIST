@@ -371,6 +371,8 @@ kvmplutotest	impair-12-ikev2-transform-none		good
 kvmplutotest	impair-09-protected-ikev1		good
 #kvmplutotest	impair-09-protected-ikev2		wip
 
+kvmplutotest	impair-30-ikev1-ip-as-fqdn		good
+
 kvmplutotest	ikev1-psk-dual-behind-nat-01		good
 kvmplutotest	ikev1-psk-two-rw-id-ip-01		good
 
