@@ -166,6 +166,8 @@ struct impair {
 	 * add more here
 	 */
 
+	unsigned v1_remote_quick_id;
+
 };
 
 extern struct impair impair;

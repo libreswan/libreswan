@@ -155,17 +155,24 @@ static v1_notification_t accept_PFS_KE(struct state *st, struct msg_digest *md,
  * Note: this is not called from demux.c
  */
 
-static bool emit_subnet_id(const ip_subnet net,
+static bool emit_subnet_id(enum perspective perspective,
+			   const ip_subnet net,
 			   uint8_t protoid,
 			   uint16_t port,
 			   struct pbs_out *outs)
 {
 	const struct ip_info *ai = subnet_type(&net);
-	const bool usehost = subnet_prefix_bits(net) == ai->mask_cnt;
+	const bool usehost = (subnet_prefix_bits(net) == ai->mask_cnt);
 	pb_stream id_pbs;
 
+	enum ike_id_type idtype =
+		(perspective == REMOTE_PERSPECTIVE &&
+		 impair.v1_remote_quick_id > 0 ? (int)impair.v1_remote_quick_id - 1/*unbias*/ :
+		 usehost ? ai->id_ip_addr :
+		 ai->id_ip_addr_subnet);
+
 	struct isakmp_ipsec_id id = {
-		.isaiid_idtype = usehost ? ai->id_ip_addr : ai->id_ip_addr_subnet,
+		.isaiid_idtype = idtype,
 		.isaiid_protoid = protoid,
 		.isaiid_port = port,
 	};
@@ -836,10 +843,12 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 	/* [ IDci, IDcr ] out */
 	if (has_client) {
 		/* IDci (we are initiator), then IDcr (peer is responder) */
-		if (!emit_subnet_id(selector_subnet(c->spd.this.client),
+		if (!emit_subnet_id(LOCAL_PERSPECTIVE,
+				    selector_subnet(c->spd.this.client),
 				    c->spd.this.client.ipproto,
 				    c->spd.this.client.hport, &rbody) ||
-		    !emit_subnet_id(selector_subnet(c->spd.that.client),
+		    !emit_subnet_id(REMOTE_PERSPECTIVE,
+				    selector_subnet(c->spd.that.client),
 				    c->spd.that.client.ipproto,
 				    c->spd.that.client.hport, &rbody)) {
 			return STF_INTERNAL_ERROR;

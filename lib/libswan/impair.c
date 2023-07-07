@@ -211,6 +211,9 @@ struct impairment impairments[] = {
 	A("event-sa-replace", STATE_EVENT_HANDLER, EVENT_SA_REPLACE,
 	  "trigger the replace event", "SA"),
 
+	V("v1_remote_quick_id", v1_remote_quick_id, "set the remote quick ID",
+	  .unsigned_help = "value to set quick id too"),
+
 #undef V
 #undef A
 
