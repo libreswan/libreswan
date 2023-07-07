@@ -28,15 +28,12 @@ west #
  ipsec whack --debug-all --impair suppress-retransmits
 west #
  ipsec auto --add westnet-eastnet-ikev2a
-002 "westnet-eastnet-ikev2a": warning: IKEv2 ignores dpdtimeout= and dpdaction=; use dpddelay= and retransmit-timeout=
 002 "westnet-eastnet-ikev2a": added IKEv2 connection
 west #
  ipsec auto --add westnet-eastnet-ikev2b
-002 "westnet-eastnet-ikev2b": warning: IKEv2 ignores dpdtimeout= and dpdaction=; use dpddelay= and retransmit-timeout=
 002 "westnet-eastnet-ikev2b": added IKEv2 connection
 west #
  ipsec auto --add westnet-eastnet-ikev2c
-002 "westnet-eastnet-ikev2c": warning: IKEv2 ignores dpdtimeout= and dpdaction=; use dpddelay= and retransmit-timeout=
 002 "westnet-eastnet-ikev2c": added IKEv2 connection
 west #
  echo "initdone"
