@@ -1,0 +1,5 @@
+Test for CVE-2023-38711
+
+Send an IKEv1 quick mode request where one of the IDs has been corrupted
+
+For instance, send an IPv4 ID but with the ID type set to FQDN.
