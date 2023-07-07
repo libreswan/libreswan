@@ -238,6 +238,9 @@ struct impairment impairments[] = {
 	B(copy_v1_notify_response_SPIs_to_retransmission,
 	  "copy SPIs in IKEv1 notify response to last sent packet and then retransmit"),
 
+	V("v1_remote_quick_id", v1_remote_quick_id, "set the remote quick ID",
+	  .unsigned_help = "value to set quick id too"),
+
 #undef B
 #undef V
 #undef A
