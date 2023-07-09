@@ -1795,7 +1795,6 @@ void process_packet_tail(struct msg_digest *md)
 	const struct state_v1_microcode *smc = md->smc;
 	enum state_kind from_state = smc->state;
 	bool new_iv_set = md->new_iv_set;
-	bool self_delete = false;
 
 	if (md->hdr.isa_flags & ISAKMP_FLAGS_v1_ENCRYPTION) {
 
@@ -2285,19 +2284,21 @@ void process_packet_tail(struct msg_digest *md)
 		}
 	}
 
+	pexpect(st == md->v1_st); /* could be NULL */
+
 	for (struct payload_digest *p = md->chain[ISAKMP_NEXT_D];
 	     p != NULL; p = p->next) {
-		self_delete |= accept_delete(md, p);
-		if (DBGP(DBG_BASE)) {
-			DBG_dump("del:", p->pbs.cur,
-				 pbs_left(&p->pbs));
+		if (!accept_delete(&st, md, p)) {
+			ldbg(md->md_logger, "bailing with bad delete message");
+			return;
 		}
-		if (md->v1_st != st) {
-			pexpect(md->v1_st == NULL);
-			dbg("zapping ST as accept_delete() zapped MD.ST");
-			st = md->v1_st;
+		if (st == NULL) {
+			ldbg(md->md_logger, "bailing due to self-inflicted delete");
+			return;
 		}
 	}
+
+	pexpect(st == md->v1_st); /* could be NULL */
 
 	for (struct payload_digest *p = md->chain[ISAKMP_NEXT_VID];
 	     p != NULL; p = p->next) {
@@ -2305,18 +2306,18 @@ void process_packet_tail(struct msg_digest *md)
 				   (st != NULL ? st->st_logger : md->md_logger));
 	}
 
-	if (self_delete) {
-		accept_self_delete(md);
-		st = md->v1_st;
-		/* note: st ought to be NULL from here on */
-	}
+	pexpect(st == md->v1_st); /* could be NULL */
 
-	pexpect(st == md->v1_st);
-	statetime_t start = statetime_start(md->v1_st);
 	/*
-	 * XXX: danger - the .informational() processor deletes ST;
-	 * and then tunnels this loss through MD.ST.
+	 * XXX: Danger.
+	 *
+	 * ++ the .informational() processor deletes ST; and then
+	 * tries to tunnel this loss back through MD.ST.
+	 *
+	 * ++ the .aggressive() processor replaces .V1_ST with the IKE
+	 * SA?
 	 */
+	statetime_t start = statetime_start(st);
 	stf_status e = smc->processor(st, md);
 	complete_v1_state_transition(md->v1_st, md, e);
 	statetime_stop(&start, "%s()", __func__);
