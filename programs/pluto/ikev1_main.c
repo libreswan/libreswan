@@ -2026,19 +2026,25 @@ void send_v1_delete(struct state *st)
  * @param md Message Digest
  * @param p Payload digest
  *
- * returns TRUE to indicate st needs to be deleted.
- *	We dare not do that ourselves because st is still in use.
- *	accept_self_delete must be called to do this
- *	at a more appropriate time.
+ * DANGER: this may stomp on *SDP and md->v1_st.
+ *
+ * Returns FALSE when the payload is crud.
  */
-bool accept_delete(struct msg_digest *md,
-		struct payload_digest *p)
+bool accept_delete(struct state **stp,
+		   struct msg_digest *md,
+		   struct payload_digest *p)
 {
-	struct state *st = md->v1_st;
+	struct state *st = *stp;
 	struct isakmp_delete *d = &(p->payload.delete);
 	size_t sizespi;
 	int i;
-	bool self_delete = false;
+
+	/* Need state for things to be encrypted */
+	if (st == NULL) {
+		llog(RC_LOG_SERIOUS, md->md_logger,
+		     "ignoring Delete SA with no matching state");
+		return false;
+	}
 
 	/* We only listen to encrypted notifications */
 	if (!md->encrypted) {
@@ -2073,7 +2079,7 @@ bool accept_delete(struct msg_digest *md,
 
 	case PROTO_IPCOMP:
 		/* nothing interesting to delete */
-		return false;
+		return true;
 
 	default:
 	{
@@ -2132,21 +2138,20 @@ bool accept_delete(struct msg_digest *md,
 				 * identities
 				 */
 				log_state(RC_LOG_SERIOUS, st, "ignoring Delete SA payload: ISAKMP SA used to convey Delete has different IDs from ISAKMP SA it deletes");
-			} else if (dst == st) {
-				/*
-				 * remember this for later:
-				 * we need st to do any remaining deletes
-				 */
-				self_delete = true;
 			} else {
 				/* note: this code is cloned for handling self_delete */
-				log_state(RC_LOG_SERIOUS, st, "received Delete SA payload: deleting ISAKMP State #%lu",
+				log_state(RC_LOG_SERIOUS, st, "received Delete SA payload: %sdeleting ISAKMP State #%lu",
+					  (dst == st ? "self-" : ""),
 					  dst->st_serialno);
 				if (nat_traversal_enabled && dst->st_connection->ikev1_natt != NATT_NONE) {
 					nat_traversal_change_port_lookup(md, dst);
 					v1_maybe_natify_initiator_endpoints(st, HERE);
-			}
+				}
 				delete_state(dst);
+				if (dst == st) {
+					*stp = dst = st = md->v1_st = NULL;
+					return true;
+				}
 			}
 		} else {
 			/*
@@ -2206,12 +2211,15 @@ bool accept_delete(struct msg_digest *md,
 					event_force(EVENT_SA_REPLACE, dst);
 				} else {
 					log_state(RC_LOG_SERIOUS, st,
-						  "received Delete SA(0x%08" PRIx32 ") payload: deleting IPsec State #%lu",
+						  "received Delete SA(0x%08" PRIx32 ") payload: %sdeleting IPsec State #%lu",
 						  ntohl(spi),
+						  (st == dst ? "self-" : ""),
 						  dst->st_serialno);
 					delete_state(dst);
-					if (md->v1_st == dst)
-						md->v1_st = NULL;
+					if (md->v1_st == dst) {
+						*stp = dst = md->v1_st = NULL;
+						return true;
+					}
 				}
 
 				/*
@@ -2236,29 +2244,15 @@ bool accept_delete(struct msg_digest *md,
 						 * states tied to the
 						 * connection?
 						 */
+						dbg("%s() self-inflicted delete of ISAKMP", __func__);
 						delete_states_by_connection(&rc);
-						md->v1_st = NULL;
+						*stp = st = dst = md->v1_st = NULL;
+						return true;
 					}
 				}
 			}
 		}
 	}
 
-	return self_delete;
-}
-
-/* now it is safe to delete our sponsor */
-void accept_self_delete(struct msg_digest *md)
-{
-	struct state *st = md->v1_st;
-
-	/* note: this code is cloned from handling ISAKMP non-self_delete */
-	log_state(RC_LOG_SERIOUS, st, "received Delete SA payload: self-deleting ISAKMP State #%lu",
-		  st->st_serialno);
-	if (nat_traversal_enabled && st->st_connection->ikev1_natt != NATT_NONE) {
-		nat_traversal_change_port_lookup(md, st);
-		v1_maybe_natify_initiator_endpoints(st, HERE);
-	}
-	delete_state(st);
-	md->v1_st = st = NULL;
+	return true;
 }

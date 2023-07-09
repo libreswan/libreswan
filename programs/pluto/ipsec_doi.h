@@ -31,9 +31,9 @@ extern void ipsecdoi_replace(struct state *st, unsigned long try);
 
 extern void init_phase2_iv(struct state *st, const msgid_t *msgid);
 
-extern bool accept_delete(struct msg_digest *md,
+extern bool accept_delete(struct state **st,
+			  struct msg_digest *md,
 			  struct payload_digest *p);
-extern void accept_self_delete(struct msg_digest *md);
 
 extern stf_status send_isakmp_notification(struct state *st,
 					   uint16_t type, const void *data,
