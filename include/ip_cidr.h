@@ -74,6 +74,9 @@ ip_address cidr_prefix(const ip_cidr cidr);
 ip_address cidr_host(const ip_cidr cidr);
 unsigned cidr_prefix_len(const ip_cidr cidr);
 
+/* are two is_set() cidrs identical? */
+bool cidr_eq_cidr(const ip_cidr address, const ip_cidr another);
+
 err_t ttocidr_num(shunk_t src, const struct ip_info *afi, ip_cidr *cidr);
 
 typedef struct {

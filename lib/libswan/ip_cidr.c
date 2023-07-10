@@ -202,3 +202,21 @@ void pexpect_cidr(const ip_cidr cidr, where_t where)
 		llog_pexpect(&global_logger, where, "invalid "PRI_CIDR, pri_cidr(cidr));
 	}
 }
+
+bool cidr_eq_cidr(const ip_cidr l, const ip_cidr r)
+{
+	bool l_set = cidr_is_specified(l);
+	bool r_set = cidr_is_specified(r);
+
+	if (! l_set && ! r_set) {
+		/* unset/NULL addresses are equal */
+		return true;
+	}
+	if (! l_set || ! r_set) {
+		return false;
+	}
+	/* must compare individual fields */
+	return (l.version == r.version &&
+			l.prefix_len == r.prefix_len &&
+		thingeq(l.bytes, r.bytes));
+}
