@@ -90,9 +90,8 @@ void whack_delete(const struct whack_message *m, struct show *s)
 	 * This is new-to-old which means that instances are processed
 	 * before templates.
 	 */
-	whack_each_connection(m, s, whack_delete_connection,
-			      (struct each) {
-				      .log_unknown_name = false,
-				      .skip_instances = false, /* handled by whack_delete_connection() */
-			      });
+	whack_connections_bottom_up(m, s, whack_delete_connection,
+				    (struct each) {
+					    .log_unknown_name = false,
+				    });
 }

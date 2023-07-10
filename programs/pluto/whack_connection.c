@@ -182,3 +182,147 @@ void whack_each_connection(const struct whack_message *m, struct show *s,
 	}
 #undef MESSAGE
 }
+
+static unsigned whack_bottom_up(struct connection **c,
+				const struct whack_message *m,
+				struct show *s,
+				bool (*whack_connection)
+				(struct show *s,
+				 struct connection **c,
+				 const struct whack_message *m),
+				const struct each *each)
+{
+	unsigned nr = 0;
+	struct connection_filter instances = {
+		.clonedfrom = *c,
+		.where = HERE,
+	};
+	while (next_connection_new2old(&instances)) {
+		/* abuse bool */
+		nr += whack_bottom_up(&instances.c, m, s, whack_connection, each);
+	}
+	/* abuse bool */
+	nr += whack_connection(s, c, m);
+	return nr;
+}
+
+void whack_connections_bottom_up(const struct whack_message *m,
+				 struct show *s,
+				 bool (*whack_connection)
+				 (struct show *s,
+				  struct connection **c,
+				  const struct whack_message *m),
+				 struct each each)
+{
+	struct logger *logger = show_logger(s);
+
+	/*
+	 * First try by name.  Only one thing should exactly match the
+	 * name.
+	 */
+	struct connection_filter by_name = {
+		.name = m->name,
+		.where = HERE,
+	};
+	if (next_connection_old2new(&by_name)) {
+		whack_bottom_up(&by_name.c, m, s,
+				whack_connection,
+				&each);
+		return;
+	}
+
+	/*
+	 * When name fails, try by alias.  Need the oldest alis so
+	 * that it can recurse to all instances.
+	 */
+	struct connection_filter by_alias = {
+		.alias = m->name,
+		.where = HERE,
+	};
+	if (next_connection_old2new(&by_alias)) {
+		if (each.future_tense != NULL) {
+			llog(RC_COMMENT, logger, "%s all connections with alias=\"%s\"",
+			     each.future_tense, m->name);
+		}
+		unsigned nr = whack_bottom_up(&by_alias.c, m, s, whack_connection, &each);
+		if (nr == 1) {
+			if (each.past_tense != NULL) {
+				llog(RC_COMMENT, logger, "%s %u connection",
+				     each.past_tense, nr);
+			}
+		} else {
+			PEXPECT(logger, (nr == 0 ||
+					 nr > 1 ));
+			if (each.past_tense != NULL) {
+				llog(RC_COMMENT, logger, "%s %u connections",
+				     each.past_tense, nr);
+			}
+		}
+		return;
+	}
+
+	/*
+	 * When alias fails, see if the name is a connection serial
+	 * number ("$" prefix) or a state serial number ("#" prefix).
+	 */
+
+	if (m->name[0] == '$' ||
+	    m->name[0] == '#') {
+		ldbg(logger, "looking up '%s' by serialno", m->name);
+		uintmax_t serialno = 0;
+		err_t e = shunk_to_uintmax(shunk1(m->name + 1), NULL, /*base*/0, &serialno);
+		if (e != NULL) {
+			llog(RC_LOG, logger, "invalid serial number '%s': %s",
+			     m->name, e);
+			return;
+		}
+		if (serialno >= INT_MAX) {/* arbitrary limit */
+			llog(RC_LOG, logger, "serial number '%s' is huge", m->name);
+			return;
+		}
+		switch (m->name[0]) {
+		case '$':
+		{
+			struct connection *c = connection_by_serialno(serialno);
+			if (c != NULL) {
+				whack_bottom_up(&c, m, s, whack_connection, &each);
+				return;
+			}
+			break;
+		}
+		case '#':
+		{
+			struct state *st = state_by_serialno(serialno);
+			if (st != NULL) {
+				struct connection *c = st->st_connection;
+				whack_bottom_up(&c, m, s, whack_connection, &each);
+				return;
+			}
+			break;
+		}
+		}
+		llog(RC_LOG, logger, "connection matching serial number '%s' not found", m->name);
+		return;
+	}
+
+	/*
+	 * Danger:
+	 *
+	 * Logging with RC_UNKNOWN_NAME is "fatal" - when whack sees
+	 * it it, it detaches immediately.  For instance, adding a
+	 * connection is performed in two steps: DELETE+ADD; KEYS.
+	 * When there's no connection to delete that should not be
+	 * logged as it A. is confusing and B. would cause whack to
+	 * detach stopping the KEYS from being added.
+	 */
+	if (each.log_unknown_name) {
+#define MESSAGE "no connection or alias named \"%s\"'", m->name
+		/* what means leave more breadcrumbs */
+		if (each.past_tense != NULL) {
+			llog(RC_UNKNOWN_NAME, logger, MESSAGE);
+		} else {
+			whack_log(RC_UNKNOWN_NAME, s, MESSAGE);
+		}
+	}
+#undef MESSAGE
+}

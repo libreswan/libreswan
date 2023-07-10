@@ -42,4 +42,17 @@ void whack_each_connection(const struct whack_message *m, struct show *s,
 			    const struct whack_message *m),
 			   struct each each);
 
+/*
+ * Visit all the connections matching M, bottom up.
+ *
+ * This means that an instance is visited before it's template; and
+ * group templates are visited before the matching group.
+ */
+void whack_connections_bottom_up(const struct whack_message *m, struct show *s,
+				 bool (*whack_connection)
+				 (struct show *s,
+				  struct connection **c,
+				  const struct whack_message *m),
+				 struct each each);
+
 #endif
