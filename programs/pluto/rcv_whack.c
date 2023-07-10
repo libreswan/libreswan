@@ -10,7 +10,7 @@
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2014-2020 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2014-2017 Antony Antony <antony@phenome.org>
- * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2019-2023 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -23,87 +23,47 @@
  * for more details.
  */
 
-#include <stdio.h>
-#include <stddef.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <resolv.h>
-#include <fcntl.h>
-#include <unistd.h>		/* for gethostname() */
+#include <unistd.h>			/* for getsid() */
 
-#include <event2/event.h>
-#include <event2/event_struct.h>
-
-#include "lswconf.h"
-#include "constants.h"
-#include "defs.h"
-#include "id.h"
-#include "x509.h"
-#include "pluto_x509.h"
-#include "certs.h"
-#include "connections.h"        /* needs id.h */
-#include "foodgroups.h"		/* for load_groups() */
-#include "whack.h"
-#include "packet.h"
-#include "demux.h"              /* needs packet.h */
-#include "state.h"
-#include "ipsec_doi.h"          /* needs demux.h and state.h */
-#include "kernel.h"             /* needs connections.h */
-#include "routing.h"
+#include "connections.h"
 #include "rcv_whack.h"
 #include "log.h"
 #include "lswfips.h"
-#include "keys.h"
-#include "secrets.h"
-#include "server.h"
-#include "fetch.h"
-#include "timer.h"
-#include "ikev2.h"
-#include "ikev2_redirect.h"
-#include "ikev2_delete.h"
-#include "ikev2_liveness.h"
-#include "server.h" /* for pluto_seccomp */
-#include "kernel_alg.h"
-#include "ike_alg.h"
-#include "ip_address.h" /* for setportof() */
-#include "crl_queue.h"
-#include "pluto_sd.h"
-#include "initiate.h"
-#include "terminate.h"
-#include "acquire.h"
-#include "iface.h"
 #include "show.h"
-#include "impair_message.h"
+#include "kernel.h"
 #ifdef USE_SECCOMP
 #include "pluto_seccomp.h"
 #endif
-#include "server_fork.h"		/* for show_process_status() */
+
+#include "initiate.h"			/* for initiate_connection() */
+#include "acquire.h"			/* for initiate_ondemand() */
+#include "keys.h"			/* for load_preshared_secrets() */
+#include "crl_queue.h"			/* for submit_crl_fetch_requests() */
+#include "nss_cert_reread.h"		/* for reread_cert_connections() */
 #include "root_certs.h"			/* for free_root_certs() */
-
+#include "server.h"			/* for call_global_event_inline() */
+#include "ikev2_liveness.h"		/* for submit_v2_liveness_exchange() */
+#include "send.h"			/* for send_keepalive_using_state() */
+#include "impair_message.h"		/* for add_message_impairment() */
+#include "terminate.h"			/* for terminate_connections() */
+#include "pluto_sd.h"			/* for pluto_sd() */
 #ifdef USE_XFRM_INTERFACE
-# include "kernel_xfrm_interface.h"
+#include "kernel_xfrm_interface.h"	/* for stale_xfrmi_interfaces() */
 #endif
-#include "addresspool.h"
-
-#include "pluto_stats.h"
-
-#include "nss_cert_reread.h"
-#include "send.h"			/* for impair: send_keepalive() */
+#include "iface.h"			/* for find_ifaces() */
+#include "foodgroups.h"			/* for load_groups() */
+#include "ikev2_delete.h"		/* for submit_v2_delete_exchange() */
+#include "ikev2_redirect.h"		/* for find_and_active_redirect_states() */
+#include "addresspool.h"		/* for show_addresspool_status() */
+#include "pluto_stats.h"		/* for clear_pluto_stats() et.al. */
+#include "server_fork.h"		/* for show_process_status() */
 #include "pluto_shutdown.h"		/* for shutdown_pluto() */
-#include "orient.h"
-#include "ikev2_create_child_sa.h"	/* for submit_v2_CREATE_CHILD_SA_*() */
 
-#include "whack_trafficstatus.h"
 #include "whack_connection.h"
 #include "whack_rekey.h"
 #include "whack_delete.h"
 #include "whack_status.h"
+#include "whack_trafficstatus.h"
 
 static void whack_rereadsecrets(struct show *s)
 {
