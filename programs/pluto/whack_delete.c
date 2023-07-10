@@ -14,7 +14,7 @@
  *
  */
 
-#include "rcv_whack.h"
+#include "whack_connection.h"
 #include "whack_delete.h"
 #include "show.h"
 #include "log.h"

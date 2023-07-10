@@ -18,38 +18,8 @@
 #ifndef RCV_WHACK_H
 #define RCV_WHACK_H
 
-#include <stdbool.h>
-
-#include <event2/event.h>	/* for evutil_socket_t */
-
-#include "lswcdefs.h"
-#include "fd.h"
-
 struct logger;
-struct connection;
-struct show;
-struct whack_message;
 
 extern void whack_handle_cb(int fd, void *arg, struct logger *logger);
-
-struct each {
-	const char *future_tense;
-	const char *past_tense;
-	bool log_unknown_name;
-	bool skip_instances;
-};
-
-void whack_all_connections(const struct whack_message *m, struct show *s,
-			   bool (*whack_connection)
-			   (struct show *s,
-			    struct connection **c,
-			    const struct whack_message *m));
-
-void whack_each_connection(const struct whack_message *m, struct show *s,
-			   bool (*whack_connection)
-			   (struct show *s,
-			    struct connection **c,
-			    const struct whack_message *m),
-			   struct each each);
 
 #endif

@@ -16,14 +16,17 @@
 #ifndef SHOW_H
 #define SHOW_H
 
+#include "lswcdefs.h"		/* for PRINTF_LIKE() */
+
+struct show;
+enum rc_type;
+struct logger;
+
 /*
  * Try to deal with the separator (i.e., don't output duplicate blank
  * / spacer lines when combining functions that send output to whack)
  * in show (whack-only) output.
  */
-
-struct show;
-enum rc_type;
 
 struct show *alloc_show(struct logger *logger);
 void free_show(struct show **s);

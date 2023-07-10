@@ -39,7 +39,7 @@
 #include "log.h"
 #include "kernel.h"		/* for get_ipsec_traffic() */
 #include "show.h"
-#include "rcv_whack.h"		/* for whack_each_connection() */
+#include "whack_connection.h"		/* for whack_each_connection() */
 #include "whack_trafficstatus.h"
 
 /* note: this mutates *st by calling get_sa_bundle_info */

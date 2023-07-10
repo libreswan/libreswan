@@ -27,7 +27,7 @@
 #include "timer.h"
 #include "whack_rekey.h"
 #include "show.h"
-#include "rcv_whack.h"
+#include "whack_connection.h"
 
 static bool rekey_state(const struct whack_message *m, struct show *s,
 			struct connection *c, enum sa_type sa_type, so_serial_t so)

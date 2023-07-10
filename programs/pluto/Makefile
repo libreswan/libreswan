@@ -92,6 +92,7 @@ OBJS += retransmit.o
 
 OBJS += rcv_whack.o
 OBJS += whack_trafficstatus.o
+OBJS += whack_connection.o
 OBJS += whack_rekey.o
 OBJS += whack_delete.o
 OBJS += whack_status.o
