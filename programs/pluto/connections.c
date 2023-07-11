@@ -232,11 +232,6 @@ void delete_connection(struct connection **cp)
 	struct connection *c = *cp;
 	*cp = NULL;
 
-	if (is_group(c)) {
-		delete_connection_group_instances(c);
-		/* continue with deleting this connection */
-	}
-
 	/*
 	 * See if a connection, any connection (presumably an
 	 * instance), is still using this connection.
@@ -337,6 +332,8 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 		free_id_content(&end->host.id);
 		pfreeany(end->child.selectors.accepted.list);
 	}
+
+	remove_from_group(c);
 
 	/*
 	 * Logging no longer valid.  Can this be delayed further?

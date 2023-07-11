@@ -65,37 +65,60 @@ struct fg_targets {
 
 static struct fg_targets *targets = NULL;
 
+void remove_from_group(struct connection *c)
+{
+	if (c->clonedfrom != NULL && c->clonedfrom->local->kind == CK_GROUP) {
+		for (struct fg_targets **t = &targets; *t != NULL; t = &(*t)->next) {
+			struct fg_targets *tbd = (*t);
+			if (tbd->serialno == c->serialno) {
+				*t = tbd->next;
+				pfree(tbd);
+				return;
+			}
+		}
+	}
+}
+
 /*
  * An old target has disappeared for a group: delete instance.
  */
-static void remove_group_instance(const struct connection *group,
-				  co_serial_t serialno)
+
+static void delete_group_instantiation(co_serial_t serialno, struct logger *logger)
 {
-	passert(is_group(group));
-	ldbg(group->logger, "removing group instance "PRI_CO, pri_co(serialno));
-	struct connection *gi = connection_by_serialno(serialno);
-	if (gi == NULL) {
+	ldbg(logger, "removing group instance "PRI_CO, pri_co(serialno));
+
+	/*
+	 * Get the template instantiated from the group.
+	 */
+	struct connection *template = connection_by_serialno(serialno);
+	if (template == NULL) {
 		/*
-		 * This happens during shutdown when all connections
-		 * are deleted in new-to-old order (i.e., group
-		 * instances are deleted before the group).
+		 * This happens both during shutdown and <<whack
+		 * delete>> when all connections are deleted
+		 * new-to-old aka bottom-up order (i.e., a group's
+		 * instances are deleted before templates, and a
+		 * groups templates are deleted before the group).
+		 *
+		 * XXX: but is this still called during those cases?
 		 */
 		return;
 	}
 
-	/* now delete instances */
-	struct connection_filter cq = {
-		.clonedfrom = gi,
+	/*
+	 * Now delete all instancess.
+	 */
+	struct connection_filter instance = {
+		.clonedfrom = template,
 		.where = HERE,
 	};
-	while (next_connection_new2old(&cq)) {
-		struct connection *c = cq.c;
-		connection_attach(c, group->logger);
-		delete_connection(&c);
+	while (next_connection_new2old(&instance)) {
+		connection_attach(instance.c, logger);
+		delete_connection(&instance.c);
 	}
 
 	/* and group instance */
-	delete_connection(&gi);
+	connection_attach(template, logger);
+	delete_connection(&template);
 }
 
 /* subnetcmp compares the two ip_subnet values a and b.
@@ -390,8 +413,12 @@ void load_groups(struct logger *logger)
 				r = hport(op->dport) - hport(np->dport);
 
 			if (r == 0 && op->group == np->group) {
-				/* unchanged; transfer connection &
-				 * skip over */
+				/*
+				 * Unchanged; transfer the connection
+				 * from the old list to the new list
+				 * (which is already populated other
+				 * than .serialno).
+				 */
 				ldbg(op->group->logger,
 				     "transfering "PRI_CO, pri_co(op->serialno));
 				passert(op->serialno != UNSET_CO_SERIAL);
@@ -403,9 +430,13 @@ void load_groups(struct logger *logger)
 				pfree_target(&op);
 				npp = &np->next;
 			} else {
-				/* note: r>=0 || r<= 0: following cases overlap! */
+				/*
+				 * note: r>=0 || r<=0: following cases
+				 * overlap!
+				 */
 				if (r <= 0) {
-					remove_group_instance(op->group, op->serialno);
+					/* free old; advance */
+					delete_group_instantiation(op->serialno, logger);
 					/* free old */
 					*opp = op->next;
 					pfree_target(&op);
@@ -500,27 +531,6 @@ void connection_group_unroute(struct connection *g, where_t where)
 			if (ci != NULL) {
 				connection_unroute(ci, where);
 			}
-		}
-	}
-}
-
-void delete_connection_group_instances(const struct connection *g)
-{
-	/*
-	 * find and remove from targets
-	 */
-	struct fg_targets **pp = &targets;
-	while (*pp != NULL) {
-		struct fg_targets *t = *pp;
-		if (t->group == g) {
-			/* remove *PP but advance first */
-			*pp = t->next;
-			remove_group_instance(t->group, t->serialno);
-			pfree_target(&t);
-			/* pp is ready for next iteration */
-		} else {
-			/* advance PP */
-			pp = &t->next;
 		}
 	}
 }
