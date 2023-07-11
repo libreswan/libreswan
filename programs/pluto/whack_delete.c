@@ -25,57 +25,79 @@
  * Terminate and then delete connections with the specified name.
  */
 
-static void terminate_connection(struct connection **c, struct logger *logger, where_t where)
+static bool whack_delete_connection(struct show *s, struct connection **c,
+				   const struct whack_message *m UNUSED)
 {
+	struct logger *logger = show_logger(s);
+	connection_attach(*c, logger);
+
 	if (never_negotiate(*c)) {
 		ldbg((*c)->logger, "skipping as never-negotiate");
 		PEXPECT(logger, (is_permanent(*c) || is_template(*c)));
-		return;
+		delete_connection(c);
+		return false;
 	}
+
+	del_policy(*c, POLICY_UP);
 	switch ((*c)->local->kind) {
+
 	case CK_PERMANENT:
+		llog(RC_LOG, (*c)->logger, "terminating SAs using this connection");
+		remove_connection_from_pending(*c);
+		delete_states_by_connection(c);
+		delete_connection(c);
+		return true;
+
+	case CK_GROUP:
+		/* little left to do */
+		delete_connection(c);
+		return true;
+
+	case CK_TEMPLATE:
+		/* also need to unroute */
+		connection_unroute(*c, HERE);
+		delete_connection(c);
+		return true;
 	case CK_INSTANCE:
-	case CK_LABELED_PARENT:
 		/*
 		 * For CK_INSTANCE, this could also delete the *C
 		 * connection.
 		 */
-		connection_attach(*c, logger);
 		llog(RC_LOG, (*c)->logger, "terminating SAs using this connection");
-		del_policy(*c, POLICY_UP);
 		remove_connection_from_pending(*c);
 		delete_states_by_connection(c);
-		connection_detach(*c, logger);
-		return;
-	case CK_LABELED_CHILD:
-		/* let labeled parent terminate the child */
-		PEXPECT(logger, (*c)->config->ike_version == IKEv2);
-		return;
-	case CK_GROUP:
-		/* nothing to do */
-		return;
-	case CK_TEMPLATE:
+		if (*c != NULL) {
+			delete_connection(c);
+		}
+		return true;
+
 	case CK_LABELED_TEMPLATE:
-		/* need to unroute */
-		connection_attach(*c, logger);
-		connection_unroute(*c, where);
-		connection_detach(*c, logger);
-		return;
+		/* also need to unroute */
+		connection_unroute(*c, HERE);
+		delete_connection(c);
+		return true;
+	case CK_LABELED_PARENT:
+		llog(RC_LOG, (*c)->logger, "terminating SAs using this connection");
+		remove_connection_from_pending(*c);
+		delete_states_by_connection(c);
+		delete_connection(c);
+		return true;
+	case CK_LABELED_CHILD:
+		/*
+		 * Let the labeled parent, called later, terminate the
+		 * entire IKE SA and unroute everything.
+		 *
+		 * XXX: does this need to stop delete_connection()
+		 * deleting the child?
+		 */
+		PEXPECT(logger, (*c)->config->ike_version == IKEv2);
+		delete_connection(c);
+		return true;
+
 	case CK_INVALID:
 		break;
 	}
 	bad_case((*c)->local->kind);
-}
-
-static bool whack_delete_connection(struct show *s, struct connection **c,
-				   const struct whack_message *m UNUSED)
-{
-	terminate_connection(c, show_logger(s), HERE);
-	if (*c != NULL) {
-		connection_attach(*c, show_logger(s));
-		delete_connection(c);
-	}
-	return true;
 }
 
 void whack_delete(const struct whack_message *m, struct show *s)
