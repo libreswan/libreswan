@@ -99,12 +99,11 @@ static void terminate_connection(struct connection **c, struct logger *logger)
 				delete_state(st);
 			}
 		} else {
-			/*
-			 * CK_INSTANCE is deleted simultaneous to deleting
-			 * state :-/
-			 */
 			dbg("connection not shared - terminating IKE and IPsec SA");
-			delete_states_by_connection(c);
+			delete_states_by_connection(*c);
+			if (is_instance(*c)) {
+				delete_connection(c);
+			}
 		}
 		break;
 	case IKEv2:
@@ -123,7 +122,10 @@ static void terminate_connection(struct connection **c, struct logger *logger)
 			 * state :-/
 			 */
 			dbg("connection not shared - terminating IKE and IPsec SA");
-			delete_states_by_connection(c);
+			delete_states_by_connection(*c);
+			if (is_instance(*c)) {
+				delete_connection(c);
+			}
 		}
 		break;
 	}

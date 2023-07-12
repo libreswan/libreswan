@@ -1342,21 +1342,10 @@ void delete_states_dead_interfaces(struct logger *logger)
  * also clean up larval and dying State.
  */
 
-static void delete_v1_states_by_connection_bottom_up(struct connection **cp,
+static void delete_v1_states_by_connection_bottom_up(struct connection *c,
 						     bool siblings)
 {
-	struct connection *c = *cp;
 	struct fd *whackfd = c->logger->global_whackfd;
-
-	/*
-	 * Stop recursive calls trying to delete this template
-	 * connection by flaging this connection as going away.
-	 */
-	bool delete_instance = (is_instance(c) && !c->going_away);
-	if (delete_instance) {
-		/* stop recursive delete by state code */
-		c->going_away = true;
-	}
 
 	/*
 	 * IKEv1 needs children to be deleted before the parent;
@@ -1405,20 +1394,14 @@ static void delete_v1_states_by_connection_bottom_up(struct connection **cp,
 			}
 			dbg("pass %d: delete "PRI_SO" which has connection",
 			    pass, this->st_serialno);
-			pexpect(this->st_connection == *cp);
+			pexpect(this->st_connection == c);
 			attach_fd(this->st_logger, whackfd);
 			delete_state(this);
 		}
 	}
-
-	if (delete_instance) {
-		c->going_away = false; /* scrub above bit */
-		/* already delt with relations above!?! */
-		delete_connection(cp);
-	}
 }
 
-static void delete_v2_states_by_connection_top_down(struct connection **cp)
+static void delete_v2_states_by_connection_top_down(struct connection *c)
 {
 	/*
 	 * Capture anything useful in the connection.
@@ -1431,11 +1414,9 @@ static void delete_v2_states_by_connection_top_down(struct connection **cp)
 	 * been deleted.
 	 */
 
-	co_serial_t connection_serialno = (*cp)->serialno;
-	struct ike_sa *ike = ike_sa_by_serialno((*cp)->newest_ike_sa);
-
+	struct ike_sa *ike = ike_sa_by_serialno(c->newest_ike_sa);
 	if (ike != NULL) {
-		pexpect(ike->sa.st_connection == *cp);
+		pexpect(ike->sa.st_connection == c);
 		state_attach(&ike->sa, ike->sa.st_connection->logger);
 		delete_state(&ike->sa);
 		ike = NULL;
@@ -1446,36 +1427,39 @@ static void delete_v2_states_by_connection_top_down(struct connection **cp)
 	 */
 
 	struct state_filter sf = {
-		.connection_serialno = connection_serialno,
+		.connection_serialno = c->serialno,
 		.where = HERE,
 	};
 	while (next_state_new2old(&sf)) {
 		struct state *st = sf.st;
-		pexpect(st->st_connection == *cp);
+		pexpect(st->st_connection == c);
 		state_attach(st, st->st_connection->logger);
 		delete_state(st);
 	}
 }
 
-void delete_states_by_connection(struct connection **cp)
+void delete_states_by_connection(struct connection *c)
 {
 	connection_buf cb;
 	dbg("deleting all states for connection "PRI_CONNECTION,
-	    pri_connection(*cp, &cb));
+	    pri_connection(c, &cb));
 
-	bool ck_is_instance = is_instance(*cp);
-	co_serial_t connection_serialno = (*cp)->serialno;
+	co_serial_t connection_serialno = c->serialno;
 
-	switch ((*cp)->config->ike_version) {
-	case IKEv1: delete_v1_states_by_connection_bottom_up(cp, /*siblings*/false); break;
-	case IKEv2: delete_v2_states_by_connection_top_down(cp); break;
+	c->going_away = true;
+	switch (c->config->ike_version) {
+	case IKEv1:
+		delete_v1_states_by_connection_bottom_up(c, /*siblings*/false);
+		break;
+	case IKEv2:
+		delete_v2_states_by_connection_top_down(c);
+		break;
 	}
+	c->going_away = false;
 
-	/* Was (*cp), an instance, deleted? */
-	struct connection *c = connection_by_serialno(connection_serialno);
-	if (c == NULL) {
-		pexpect(ck_is_instance);
-		*cp = NULL;
+	/* Was (c), an instance, deleted? */
+	passert(connection_by_serialno(connection_serialno) != NULL);
+	if (is_instance(c)) {
 		return;
 	}
 
@@ -1501,7 +1485,12 @@ void delete_v1_states_by_connection_family(struct connection **cp)
 	connection_buf cb;
 	dbg("deleting states including all other IPsec SA's of this IKE SA's connection "PRI_CONNECTION,
 	    pri_connection(*cp, &cb));
-	delete_v1_states_by_connection_bottom_up(cp, /*siblings?*/true);
+	(*cp)->going_away = true;
+	delete_v1_states_by_connection_bottom_up(*cp, /*siblings?*/true);
+	(*cp)->going_away = false;
+	if (is_instance(*cp)) {
+		delete_connection(cp);
+	}
 }
 
 /*

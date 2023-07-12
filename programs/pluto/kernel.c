@@ -2151,8 +2151,7 @@ bool install_inbound_ipsec_sa(struct child_sa *child, where_t where)
 				delete_connection(&co);
 			} else {
 				remove_connection_from_pending(c);
-				delete_states_by_connection(&c);
-				passert(c != NULL);
+				delete_states_by_connection(c);
 				connection_unroute(c, HERE);
 			}
 		}

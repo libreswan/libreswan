@@ -44,7 +44,7 @@ static bool whack_delete_connection(struct show *s, struct connection **c,
 	case CK_PERMANENT:
 		llog(RC_LOG, (*c)->logger, "terminating SAs using this connection");
 		remove_connection_from_pending(*c);
-		delete_states_by_connection(c);
+		delete_states_by_connection(*c);
 		delete_connection(c);
 		return true;
 
@@ -65,10 +65,8 @@ static bool whack_delete_connection(struct show *s, struct connection **c,
 		 */
 		llog(RC_LOG, (*c)->logger, "terminating SAs using this connection");
 		remove_connection_from_pending(*c);
-		delete_states_by_connection(c);
-		if (*c != NULL) {
-			delete_connection(c);
-		}
+		delete_states_by_connection(*c);
+		delete_connection(c);
 		return true;
 
 	case CK_LABELED_TEMPLATE:
@@ -79,7 +77,7 @@ static bool whack_delete_connection(struct show *s, struct connection **c,
 	case CK_LABELED_PARENT:
 		llog(RC_LOG, (*c)->logger, "terminating SAs using this connection");
 		remove_connection_from_pending(*c);
-		delete_states_by_connection(c);
+		delete_states_by_connection(*c);
 		delete_connection(c);
 		return true;
 	case CK_LABELED_CHILD:

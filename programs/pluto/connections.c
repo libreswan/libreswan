@@ -242,7 +242,6 @@ void delete_connection(struct connection **cp)
 	PASSERT(c->logger, !c->going_away);
 
 	if (is_instance(c)) {
-		c->going_away = true;
 		if (!is_opportunistic(c)) {
 			address_buf b;
 			llog(RC_LOG, c->logger,
@@ -253,8 +252,7 @@ void delete_connection(struct connection **cp)
 	}
 
 	remove_connection_from_pending(c);
-	delete_states_by_connection(&c);
-	passert(c != NULL);
+	delete_states_by_connection(c);
 	connection_unroute(c, HERE);
 	discard_connection(&c, true/*connection_valid*/);
 }

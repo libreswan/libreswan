@@ -3065,8 +3065,7 @@ void ISAKMP_SA_established(const struct ike_sa *ike)
 					} else {
 						/* this deletes the states */
 						remove_connection_from_pending(c);
-						delete_states_by_connection(&c);
-						passert(c != NULL);
+						delete_states_by_connection(c);
 						connection_unroute(c, HERE);
 					}
 				}

@@ -316,8 +316,7 @@ void release_dead_interfaces(struct logger *logger)
 		 * release it ...
 		 */
 		remove_connection_from_pending(c);
-		delete_states_by_connection(&c);
-		passert(c != NULL);
+		delete_states_by_connection(c);
 		connection_unroute(c, HERE);
 		/*
 		 * ... and then disorient it, moving it to the
