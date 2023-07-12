@@ -41,7 +41,7 @@ Encryption algorithms:
   AES_CTR            {256,192,*128} IKEv1: IKE ESP     IKEv2: IKE ESP     FIPS NSS(CTR)     aesctr
   AES_CBC            {256,192,*128} IKEv1: IKE ESP     IKEv2: IKE ESP     FIPS NSS(CBC)     aes
   NULL_AUTH_AES_GMAC {256,192,*128} IKEv1:     ESP     IKEv2:     ESP     FIPS              aes_gmac
-  NULL               []             IKEv1:     ESP     IKEv2:     ESP                      
+  NULL               []             IKEv1:     ESP     IKEv2:     ESP          NULL        
   CHACHA20_POLY1305  [*256]         IKEv1:             IKEv2: IKE ESP          NSS(AEAD)    chacha20poly1305
 Hash algorithms:
   MD5                               IKEv1: IKE         IKEv2:                  NSS         
