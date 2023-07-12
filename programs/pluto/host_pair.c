@@ -314,16 +314,11 @@ void release_dead_interfaces(struct logger *logger)
 		/*
 		 * The somewhat permanent connection is going away;
 		 * release it ...
-		 *
-		 * XXX: this code was passing relations=true to
-		 * release_connection() - i.e., delete any Child SAs
-		 * sharing this connection's IKE SA.  However, since
-		 * those's Child SAs sharing the IKE SA are also
-		 * sharing the IKE SA's interface and that is going
-		 * away, the'll be deleted anyway.
 		 */
-		release_connection(c);
-
+		remove_connection_from_pending(c);
+		delete_states_by_connection(&c);
+		passert(c != NULL);
+		connection_unroute(c, HERE);
 		/*
 		 * ... and then disorient it, moving it to the
 		 * unoriented list.

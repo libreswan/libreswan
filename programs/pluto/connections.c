@@ -183,14 +183,6 @@ bool connection_with_name_exists(const char *name)
 	return false;
 }
 
-void release_connection(struct connection *c)
-{
-	remove_connection_from_pending(c);
-	delete_states_by_connection(&c);
-	passert(c != NULL);
-	connection_unroute(c, HERE);
-}
-
 /* Delete a connection */
 static void discard_spd_end_content(struct spd_end *e)
 {
@@ -240,7 +232,6 @@ void delete_connection(struct connection **cp)
 	/*
 	 * Must be careful to avoid circularity, something like:
 	 *
-	 *   release_connection() ->
 	 *   delete_states_by_connection() ->
 	 *   delete_v1_states_by_connection() ->
 	 *   delete_connection().
@@ -260,7 +251,11 @@ void delete_connection(struct connection **cp)
 			     c->newest_ike_sa, c->newest_ipsec_sa);
 		}
 	}
-	release_connection(c);
+
+	remove_connection_from_pending(c);
+	delete_states_by_connection(&c);
+	passert(c != NULL);
+	connection_unroute(c, HERE);
 	discard_connection(&c, true/*connection_valid*/);
 }
 

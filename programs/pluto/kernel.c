@@ -86,6 +86,7 @@
 #include "orient.h"
 #include "kernel_alg.h"
 #include "updown.h"
+#include "pending.h"
 
 static void delete_bare_shunt_kernel_policy(const struct bare_shunt *bsp,
 					    enum expect_kernel_policy expect_kernel_policy,
@@ -2093,7 +2094,7 @@ void show_kernel_interface(struct show *s)
  */
 bool install_inbound_ipsec_sa(struct child_sa *child, where_t where)
 {
-	struct connection *const c = child->sa.st_connection;
+	struct connection *c = child->sa.st_connection;
 
 	/*
 	 * If our peer has a fixed-address client, check if we already
@@ -2149,7 +2150,10 @@ bool install_inbound_ipsec_sa(struct child_sa *child, where_t where)
 			if (is_instance(co)) {
 				delete_connection(&co);
 			} else {
-				release_connection(co);
+				remove_connection_from_pending(c);
+				delete_states_by_connection(&c);
+				passert(c != NULL);
+				connection_unroute(c, HERE);
 			}
 		}
 	}

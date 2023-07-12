@@ -670,7 +670,6 @@ void update_hosts_from_end_host_addr(struct connection *c, enum left_right end,
 				     ip_address host_addr, where_t where);
 extern void restart_connections_by_peer(struct connection *c, struct logger *logger);
 
-extern void release_connection(struct connection *c);
 extern void delete_connection(struct connection **cp);
 extern void delete_every_connection(void);
 
