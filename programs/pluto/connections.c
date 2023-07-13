@@ -245,39 +245,77 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 	     pri_connection_co(c),
 	     pri_connection_co(c->clonedfrom));
 
-	/*.
-	 * Don't expect any states to still be using this connection.
-	 * When there are things quickly explode so help it along.
+	/*
+	 * Must be unrouted (i.e., all policies have been pulled).
 	 */
-	{
-		struct state_filter sf = {
-			.connection_serialno = c->serialno,
-			.where = HERE,
-		};
-		if (next_state_new2old(&sf)) {
-			state_buf sb;
-			llog_passert(c->logger, HERE,
-				     "unexpected state "PRI_STATE" when deleting connection",
-				     pri_state(sf.st, &sb));
-		}
+	if (c->child.routing != RT_UNROUTED) {
+		enum_buf rn;
+		llog_passert(c->logger, HERE,
+			     "connection still %s",
+			     str_enum_short(&routing_names, c->child.routing, &rn));
 	}
 
 	/*
-	 * Don't expect any instances.  When there are things quickly
-	 * explode so help it along.
+	 * Must not be pending (i.e., not on a queue waiting for an
+	 * IKE SA to establish).
 	 */
-	{
-		struct connection_filter cf = {
-			.clonedfrom = c,
-			.where = HERE,
-		};
-		if (next_connection_old2new(&cf)) {
-			connection_buf cb;
-			llog_passert(c->logger, HERE,
-				     "unexpected instance "PRI_CONNECTION" when deleting connection",
-				     pri_connection(cf.c, &cb));
-		}
+	PASSERT(c->logger, !connection_is_pending(c));
+
+	/*
+	 * Must have newest all cleared.
+	 */
+	if (c->newest_ike_sa != SOS_NOBODY) {
+		llog_passert(c->logger, HERE,
+			     "connection still has %s "PRI_SO,
+			     c->config->ike_info->ike_sa_name,
+			     pri_so(c->newest_ike_sa));
 	}
+	if (c->newest_ipsec_sa != SOS_NOBODY) {
+		llog_passert(c->logger, HERE,
+			     "connection still has %s "PRI_SO,
+			     c->config->ike_info->child_sa_name,
+			     pri_so(c->newest_ipsec_sa));
+	}
+	if (c->child.newest_routing_sa != SOS_NOBODY) {
+		llog_passert(c->logger, HERE,
+			     "connection still has routing SA "PRI_SO,
+			     pri_so(c->child.newest_routing_sa));
+	}
+
+	/*
+	 * Must not have instances (i.e., all intantiations are gone).
+	 */
+	struct connection_filter instance = {
+		.clonedfrom = c,
+		.where = HERE,
+	};
+	if (next_connection_old2new(&instance)) {
+		connection_buf cb;
+		llog_passert(c->logger, HERE,
+			     "connection still instantiated as "PRI_CONNECTION,
+			     pri_connection(instance.c, &cb));
+	}
+
+	/*.
+	 * Must not have states (i.e., no states are refering to this
+	 * connection).
+	 */
+	struct state_filter state = {
+		.connection_serialno = c->serialno,
+		.where = HERE,
+	};
+	if (next_state_new2old(&state)) {
+		state_buf sb;
+		llog_passert(c->logger, HERE,
+			     "connection is still being used by %s "PRI_STATE,
+			     sa_name(state.st->st_connection->config->ike_version,
+				     state.st->st_sa_type_when_established),
+			     pri_state(state.st, &sb));
+	}
+
+	/*
+	 * Finall start cleanup.
+	 */
 
 	FOR_EACH_ELEMENT(afi, ip_families) {
 		if (c->pool[afi->ip_index] != NULL) {
