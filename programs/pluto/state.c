@@ -1444,6 +1444,18 @@ void delete_states_by_connection(struct connection *c)
 	dbg("deleting all states for connection "PRI_CONNECTION,
 	    pri_connection(c, &cb));
 
+	/*
+	 * Must be careful to avoid circularity, something like:
+	 *
+	 *   delete_states_by_connection() ->
+	 *   delete_v1_states_by_connection() ->
+	 *   delete_connection().
+	 *
+	 * We mark c as going away so it won't get deleted
+	 * recursively.
+	 */
+	PASSERT(c->logger, !c->going_away);
+
 	co_serial_t connection_serialno = c->serialno;
 
 	c->going_away = true;
