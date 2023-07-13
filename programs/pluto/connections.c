@@ -224,22 +224,9 @@ void delete_connection(struct connection **cp)
 	struct connection *c = *cp;
 	*cp = NULL;
 
-	/*
-	 * See if a connection, any connection (presumably an
-	 * instance), is still using this connection.
-	 */
-
-	/*
-	 * Must be careful to avoid circularity, something like:
-	 *
-	 *   delete_states_by_connection() ->
-	 *   delete_v1_states_by_connection() ->
-	 *   delete_connection().
-	 *
-	 * We mark c as going away so it won't get deleted
-	 * recursively.
-	 */
-	PASSERT(c->logger, !c->going_away);
+	remove_connection_from_pending(c);
+	delete_states_by_connection(c);
+	connection_unroute(c, HERE);
 
 	if (is_instance(c)) {
 		if (!is_opportunistic(c)) {
@@ -251,9 +238,6 @@ void delete_connection(struct connection **cp)
 		}
 	}
 
-	remove_connection_from_pending(c);
-	delete_states_by_connection(c);
-	connection_unroute(c, HERE);
 	discard_connection(&c, true/*connection_valid*/);
 }
 
