@@ -737,6 +737,11 @@ void wipe_old_v2_connections(const struct ike_sa *ike)
 		 */
 		if (is_instance(d)) {
 			/* this also deletes the states */
+
+			remove_connection_from_pending(d);
+			delete_states_by_connection(d);
+			connection_unroute(d, HERE);
+
 			delete_connection(&d);
 		} else {
 			/* this only deletes the states */

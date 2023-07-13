@@ -1501,6 +1501,11 @@ void delete_v1_states_by_connection_family(struct connection **cp)
 	delete_v1_states_by_connection_bottom_up(*cp, /*siblings?*/true);
 	(*cp)->going_away = false;
 	if (is_instance(*cp)) {
+
+		remove_connection_from_pending(*cp);
+		delete_states_by_connection(*cp);
+		connection_unroute(*cp, HERE);
+
 		delete_connection(cp);
 	}
 }

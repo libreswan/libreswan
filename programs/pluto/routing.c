@@ -619,6 +619,11 @@ static void down_routed_tunnel(enum routing_event event,
 
 	ldbg_routing((*child)->sa.st_logger, "keeping connection; NO!");
 	delete_child_sa(child);
+
+	remove_connection_from_pending(*c);
+	delete_states_by_connection(*c);
+	connection_unroute(*c, HERE);
+
 	delete_connection(c);
 }
 
@@ -781,6 +786,11 @@ static bool zap_connection_states(enum routing_event event,
 		 */
 		if (is_instance(*c) &&
 		    (*c)->child.routing == RT_UNROUTED) {
+
+			remove_connection_from_pending(*c);
+			delete_states_by_connection(*c);
+			connection_unroute(*c, HERE);
+
 			delete_connection(c);
 		}
 		return true;
@@ -843,6 +853,11 @@ static bool unroute_connection_instances(enum routing_event event, struct connec
 				 0,
 			 });
 		/* unroute doesn't delete instances, should it? */
+
+		remove_connection_from_pending(cq.c);
+		delete_states_by_connection(cq.c);
+		connection_unroute(cq.c, HERE);
+
 		delete_connection(&cq.c);
 	}
 	return had_instances;
@@ -917,6 +932,11 @@ void connection_delete_child(struct ike_sa *ike, struct child_sa **child, where_
 		state_attach(&(*child)->sa, ike->sa.st_logger);
 		delete_child_sa(child);
 		if (is_labeled_child(c)) {
+
+			remove_connection_from_pending(c);
+			delete_states_by_connection(c);
+			connection_unroute(c, HERE);
+
 			delete_connection(&c);
 		}
 	}
@@ -1606,6 +1626,11 @@ void dispatch(enum routing_event event,
 				set_routing(event, *c, RT_UNROUTED, NULL, where);
 			}
 			delete_ike_sa(e->ike);
+
+			remove_connection_from_pending(*c);
+			delete_states_by_connection(*c);
+			connection_unroute(*c, HERE);
+
 			delete_connection(c);
 			return;
 
@@ -1695,6 +1720,11 @@ void dispatch(enum routing_event event,
 			if (is_instance(*c) &&
 			    e->ike != NULL/*IKEv1?*/ &&
 			    *c != (*e->ike)->sa.st_connection) {
+
+				remove_connection_from_pending(*c);
+				delete_states_by_connection(*c);
+				connection_unroute(*c, HERE);
+
 				delete_connection(c);
 			}
 			return;

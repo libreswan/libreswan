@@ -102,6 +102,11 @@ static void terminate_connection(struct connection **c, struct logger *logger)
 			dbg("connection not shared - terminating IKE and IPsec SA");
 			delete_states_by_connection(*c);
 			if (is_instance(*c)) {
+
+				remove_connection_from_pending(*c);
+				delete_states_by_connection(*c);
+				connection_unroute(*c, HERE);
+
 				delete_connection(c);
 			}
 		}
@@ -124,6 +129,11 @@ static void terminate_connection(struct connection **c, struct logger *logger)
 			dbg("connection not shared - terminating IKE and IPsec SA");
 			delete_states_by_connection(*c);
 			if (is_instance(*c)) {
+
+				remove_connection_from_pending(*c);
+				delete_states_by_connection(*c);
+				connection_unroute(*c, HERE);
+
 				delete_connection(c);
 			}
 		}

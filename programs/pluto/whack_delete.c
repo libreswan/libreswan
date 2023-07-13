@@ -34,6 +34,11 @@ static bool whack_delete_connection(struct show *s, struct connection **c,
 	if (never_negotiate(*c)) {
 		ldbg((*c)->logger, "skipping as never-negotiate");
 		PEXPECT(logger, (is_permanent(*c) || is_template(*c)));
+
+		remove_connection_from_pending(*c);
+		delete_states_by_connection(*c);
+		connection_unroute(*c, HERE);
+
 		delete_connection(c);
 		return false;
 	}
@@ -45,17 +50,32 @@ static bool whack_delete_connection(struct show *s, struct connection **c,
 		llog(RC_LOG, (*c)->logger, "terminating SAs using this connection");
 		remove_connection_from_pending(*c);
 		delete_states_by_connection(*c);
+
+		remove_connection_from_pending(*c);
+		delete_states_by_connection(*c);
+		connection_unroute(*c, HERE);
+
 		delete_connection(c);
 		return true;
 
 	case CK_GROUP:
 		/* little left to do */
+
+		remove_connection_from_pending(*c);
+		delete_states_by_connection(*c);
+		connection_unroute(*c, HERE);
+
 		delete_connection(c);
 		return true;
 
 	case CK_TEMPLATE:
 		/* also need to unroute */
 		connection_unroute(*c, HERE);
+
+		remove_connection_from_pending(*c);
+		delete_states_by_connection(*c);
+		connection_unroute(*c, HERE);
+
 		delete_connection(c);
 		return true;
 	case CK_INSTANCE:
@@ -66,18 +86,33 @@ static bool whack_delete_connection(struct show *s, struct connection **c,
 		llog(RC_LOG, (*c)->logger, "terminating SAs using this connection");
 		remove_connection_from_pending(*c);
 		delete_states_by_connection(*c);
+
+		remove_connection_from_pending(*c);
+		delete_states_by_connection(*c);
+		connection_unroute(*c, HERE);
+
 		delete_connection(c);
 		return true;
 
 	case CK_LABELED_TEMPLATE:
 		/* also need to unroute */
 		connection_unroute(*c, HERE);
+
+		remove_connection_from_pending(*c);
+		delete_states_by_connection(*c);
+		connection_unroute(*c, HERE);
+
 		delete_connection(c);
 		return true;
 	case CK_LABELED_PARENT:
 		llog(RC_LOG, (*c)->logger, "terminating SAs using this connection");
 		remove_connection_from_pending(*c);
 		delete_states_by_connection(*c);
+
+		remove_connection_from_pending(*c);
+		delete_states_by_connection(*c);
+		connection_unroute(*c, HERE);
+
 		delete_connection(c);
 		return true;
 	case CK_LABELED_CHILD:
@@ -89,6 +124,11 @@ static bool whack_delete_connection(struct show *s, struct connection **c,
 		 * deleting the child?
 		 */
 		PEXPECT(logger, (*c)->config->ike_version == IKEv2);
+
+		remove_connection_from_pending(*c);
+		delete_states_by_connection(*c);
+		connection_unroute(*c, HERE);
+
 		delete_connection(c);
 		return true;
 

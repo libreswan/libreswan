@@ -224,10 +224,6 @@ void delete_connection(struct connection **cp)
 	struct connection *c = *cp;
 	*cp = NULL;
 
-	remove_connection_from_pending(c);
-	delete_states_by_connection(c);
-	connection_unroute(c, HERE);
-
 	if (is_instance(c)) {
 		if (!is_opportunistic(c)) {
 			address_buf b;
@@ -385,6 +381,11 @@ void delete_every_connection(void)
 			break;
 		}
 		struct connection *c = cq.c;
+
+		remove_connection_from_pending(c);
+		delete_states_by_connection(c);
+		connection_unroute(c, HERE);
+
 		delete_connection(&c);
 	}
 }
@@ -3739,6 +3740,11 @@ void connection_delete_unused_instance(struct connection **cp,
 	dbg("connection "PRI_CONNECTION" is not being used, deleting",
 	    pri_connection(c, &cb));
 	attach_fd(c->logger, whackfd);
+
+	remove_connection_from_pending(c);
+	delete_states_by_connection(c);
+	connection_unroute(c, HERE);
+
 	delete_connection(&c);
 }
 

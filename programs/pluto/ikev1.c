@@ -3061,6 +3061,11 @@ void ISAKMP_SA_established(const struct ike_sa *ike)
 					 * old connection.
 					 */
 					if (is_instance(d)) {
+
+						remove_connection_from_pending(d);
+						delete_states_by_connection(d);
+						connection_unroute(d, HERE);
+
 						delete_connection(&d);
 					} else {
 						/* this deletes the states */

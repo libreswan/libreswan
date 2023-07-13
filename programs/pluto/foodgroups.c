@@ -43,6 +43,7 @@
 #include "orient.h"
 #include "routing.h"
 #include "instantiate.h"
+#include "pending.h"
 
 /* Targets is a list of pairs: subnet and its policy group.
  * This list is bulk-updated on whack --listen and
@@ -113,11 +114,21 @@ static void delete_group_instantiation(co_serial_t serialno, struct logger *logg
 	};
 	while (next_connection_new2old(&instance)) {
 		connection_attach(instance.c, logger);
+
+		remove_connection_from_pending(instance.c);
+		delete_states_by_connection(instance.c);
+		connection_unroute(instance.c, HERE);
+
 		delete_connection(&instance.c);
 	}
 
 	/* and group instance */
 	connection_attach(template, logger);
+
+	remove_connection_from_pending(template);
+	delete_states_by_connection(template);
+	connection_unroute(template, HERE);
+
 	delete_connection(&template);
 }
 

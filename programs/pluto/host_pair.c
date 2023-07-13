@@ -306,6 +306,11 @@ void release_dead_interfaces(struct logger *logger)
 		 * have been deleted.
 		 */
 		if (is_instance(c)) {
+
+			remove_connection_from_pending(c);
+			delete_states_by_connection(c);
+			connection_unroute(c, HERE);
+
 			delete_connection(&c);
 			pexpect(c == NULL);
 			continue;
