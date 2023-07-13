@@ -1345,8 +1345,6 @@ void delete_states_dead_interfaces(struct logger *logger)
 static void delete_v1_states_by_connection_bottom_up(struct connection *c,
 						     bool siblings)
 {
-	struct fd *whackfd = c->logger->global_whackfd;
-
 	/*
 	 * IKEv1 needs children to be deleted before the parent;
 	 * otherwise the child has no way to send its delete message.
@@ -1367,7 +1365,7 @@ static void delete_v1_states_by_connection_bottom_up(struct connection *c,
 			struct state *st = sf.st;
 			dbg("pass 0: delete "PRI_SO" which is a sibling",
 			    st->st_serialno);
-			attach_fd(st->st_logger, whackfd);
+			state_attach(st, c->logger);
 			delete_state(st);
 		}
 	}
@@ -1395,7 +1393,7 @@ static void delete_v1_states_by_connection_bottom_up(struct connection *c,
 			dbg("pass %d: delete "PRI_SO" which has connection",
 			    pass, this->st_serialno);
 			pexpect(this->st_connection == c);
-			attach_fd(this->st_logger, whackfd);
+			state_attach(this, c->logger);
 			delete_state(this);
 		}
 	}
