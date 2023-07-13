@@ -102,6 +102,8 @@
 #include "timescale.h"
 #include "connection_event.h"
 
+static void discard_connection(struct connection **cp, bool connection_valid);
+
 void ldbg_connection(const struct connection *c, where_t where,
 		     const char *message, ...)
 {
@@ -217,24 +219,20 @@ void discard_connection_spds(struct connection *c)
  *
  */
 
-static void discard_connection(struct connection **cp, bool connection_valid);
-
 void delete_connection(struct connection **cp)
 {
-	struct connection *c = *cp;
-	*cp = NULL;
-
-	if (is_instance(c)) {
-		if (!is_opportunistic(c)) {
+	if (is_instance(*cp)) {
+		/* XXX: pointless check? */
+		if (!is_opportunistic(*cp)) {
+			/* XXX: pointless log? */
 			address_buf b;
-			llog(RC_LOG, c->logger,
-			     "deleting connection instance with peer %s {isakmp=#%lu/ipsec=#%lu}",
-			     str_address_sensitive(&c->remote->host.addr, &b),
-			     c->newest_ike_sa, c->newest_ipsec_sa);
+			llog(RC_LOG, (*cp)->logger,
+			     "deleting connection instance with peer %s",
+			     str_address_sensitive(&(*cp)->remote->host.addr, &b));
 		}
 	}
 
-	discard_connection(&c, true/*connection_valid*/);
+	discard_connection(cp, true/*connection_valid*/);
 }
 
 static void discard_connection(struct connection **cp, bool connection_valid)
