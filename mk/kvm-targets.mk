@@ -936,12 +936,18 @@ $(KVM_FEDORA_ISO): | $(KVM_POOLDIR)
 
 KVM_FEDORA_VIRT_INSTALL_FLAGS = \
 	--location=$(KVM_FEDORA_ISO) \
-	--initrd-inject=$(KVM_FEDORA_KICKSTART_FILE) \
-	--extra-args="inst.ks=file:/$(notdir $(KVM_FEDORA_KICKSTART_FILE)) console=ttyS0,115200 net.ifnames=0 biosdevname=0"
+	--initrd-inject=$(KVM_FEDORA_BASE_DOMAIN).ks \
+	--extra-args="inst.ks=file:/$(notdir $(KVM_FEDORA_BASE_DOMAIN).ks) console=ttyS0,115200 net.ifnames=0 biosdevname=0"
 
 $(KVM_FEDORA_BASE_DOMAIN): | $(KVM_FEDORA_ISO)
 $(KVM_FEDORA_BASE_DOMAIN): | $(KVM_FEDORA_KICKSTART_FILE)
+$(KVM_FEDORA_BASE_DOMAIN): | $(KVM_FEDORA_BASE_DOMAIN).ks
 
+$(KVM_FEDORA_BASE_DOMAIN).ks: | $(KVM_FEDORA_KICKSTART_FILE)
+	$(KVM_TRANSMOGRIFY) \
+		$(KVM_FEDORA_KICKSTART_FILE) \
+		> $@.tmp
+	mv $@.tmp $@
 
 #
 # FreeBSD
