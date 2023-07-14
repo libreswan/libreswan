@@ -12,6 +12,18 @@ quietmake="${gnumake} -C $(realpath $(dirname $0)) --no-print-directory"
 
 kvm_platform=$(${quietmake} print-kvm-platform)
 kvm_testingdir=$(${quietmake} print-kvm-testingdir)
+kvm_baseline=$(${quietmake} print-kvm-baseline)
+kvm_test_status=$(${quietmake} print-kvm-test-status)
+kvm_test_name=$(${quietmake} print-kvm-test-name)
+kvm_test_flags=$(${quietmake} print-kvm-test-flags)
+kvm_prefixes=($(${quietmake} print-kvm-prefixes))
+kvm_sourcedir=$(${quietmake} print-kvm-sourcedir)
+
+# repo under test
+rutdir=${kvm_testingdir:+$(realpath $(dirname "${kvm_testingdir}"))}
+
+__baseline=${kvm_baseline:+--baseline ${kvm_baseline}}
+
 
 buildhosts=${kvm_platform}
 basehosts=
@@ -211,14 +223,10 @@ if test "$1" = $0 -a $# -eq 3 ; then
 	# word looks to be matching a command (or is empty),
 	# expand to either <command> or <directory>
 	compgen -o plusdirs -W "${pass2}" "${word}"
-    elif test -n "${kvm_testingdir}" ; then
-	# doesn't match a command, so throw in the testing
-	# directory as a quick expansion
-	compgen -o plusdirs -W "${pass2}" -G "${kvm_testingdir}/pluto/${word}*" "${word}"
     else
-	# doesn't match a command, so throw in the testing
-	# directory as a quick expansion
-	compgen -o plusdirs -W "${pass2}" -G "testing/pluto/${word}*" "${word}"
+	# doesn't match a command, so throw in the testing directory
+	# as a quick expansion
+	compgen -o plusdirs -W "${pass2}" -G "$(realpath --relative-base $PWD ${kvm_testingdir}/pluto)/${word}*" "${word}"
     fi
     exit 0
 fi
@@ -295,19 +303,8 @@ fi
 
 declare -a ops
 
-kvm_baseline=$(${quietmake} print-kvm-baseline)
-kvm_test_status=$(${quietmake} print-kvm-test-status)
-kvm_test_name=$(${quietmake} print-kvm-test-name)
-kvm_test_flags=$(${quietmake} print-kvm-test-flags)
-kvm_prefixes=($(${quietmake} print-kvm-prefixes))
-kvm_sourcedir=$(${quietmake} print-kvm-sourcedir)
-
-# repo under test
-rutdir=${kvm_testingdir:+$(realpath $(dirname "${kvm_testingdir}"))}
-
 modified=
 baseline=
-__baseline=${kvm_baseline:+--baseline ${kvm_baseline}}
 prefix=$(eval echo ${kvm_prefixes[0]})
 
 i=0
@@ -460,14 +457,14 @@ results_command()
 diffs_command()
 {
     if test -n "${baseline}" ; then
-	kvmresults ${__baseline} ${__testingdir} --stats none "$@" \
+	kvmresults ${__baseline} --stats none "$@" \
 	    | grep --line-buffered -v -e baseline:untested \
 	    | grep --line-buffered -e "${baseline}" \
 	    | while read test eol ; do
-	    ./testing/utils/kvmresults.py ${__testingdir} --stats none --print diffs ${test}
+	    kvmresults --stats none --print diffs ${test}
 	done
     else
-	kvmresults ${__testingdir} --stats none --print diffs "$@"
+	kvmresults --stats none --print diffs "$@"
 	status=$?
     fi
 }
