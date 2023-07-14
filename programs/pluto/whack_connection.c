@@ -217,8 +217,12 @@ void whack_connections_bottom_up(const struct whack_message *m,
 	struct logger *logger = show_logger(s);
 
 	/*
-	 * First try by name.  Only one thing should exactly match the
-	 * name.
+	 * Try by name.
+	 *
+	 * A templte connection ends up giving instances the same
+	 * name.  Hence use OLD2NEW so that the ancestral root (i.e.,
+	 * template) is found first.  Then whack_bottom_up() visits
+	 * instances before templates.
 	 */
 	struct connection_filter by_name = {
 		.name = m->name,
@@ -232,19 +236,31 @@ void whack_connections_bottom_up(const struct whack_message *m,
 	}
 
 	/*
-	 * When name fails, try by alias.  Need the oldest alis so
-	 * that it can recurse to all instances.
+	 * Try by alias.
+	 *
+	 * A connection like:
+	 *
+	 *   conn foo
+	 *     subnets=...
+	 *
+	 * will expand into alias=FOO name=FOO/1x1 et.al.
+	 *
+	 * If FOO is a template, the whack_bottom_up() call will
+	 * further expand that.
 	 */
 	struct connection_filter by_alias = {
 		.alias = m->name,
 		.where = HERE,
 	};
-	if (next_connection_old2new(&by_alias)) {
+	if (next_connection_new2old(&by_alias)) {
 		if (each.future_tense != NULL) {
 			llog(RC_COMMENT, logger, "%s all connections with alias=\"%s\"",
 			     each.future_tense, m->name);
 		}
-		unsigned nr = whack_bottom_up(&by_alias.c, m, s, whack_connection, &each);
+		unsigned nr = 0;
+		do {
+			nr += whack_bottom_up(&by_alias.c, m, s, whack_connection, &each);
+		} while (next_connection_new2old(&by_alias));
 		if (nr == 1) {
 			if (each.past_tense != NULL) {
 				llog(RC_COMMENT, logger, "%s %u connection",
@@ -262,6 +278,8 @@ void whack_connections_bottom_up(const struct whack_message *m,
 	}
 
 	/*
+	 * Try by serial number
+	 *
 	 * When alias fails, see if the name is a connection serial
 	 * number ("$" prefix) or a state serial number ("#" prefix).
 	 */
