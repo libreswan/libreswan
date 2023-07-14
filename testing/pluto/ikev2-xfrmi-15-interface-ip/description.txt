@@ -1,0 +1,1 @@
+XFRMi test with interface-ip enabled.
