@@ -45,7 +45,6 @@
 #include "ikev2_liveness.h"		/* for submit_v2_liveness_exchange() */
 #include "send.h"			/* for send_keepalive_using_state() */
 #include "impair_message.h"		/* for add_message_impairment() */
-#include "terminate.h"			/* for terminate_connections() */
 #include "pluto_sd.h"			/* for pluto_sd() */
 #ifdef USE_XFRM_INTERFACE
 #include "kernel_xfrm_interface.h"	/* for stale_xfrmi_interfaces() */
@@ -64,6 +63,7 @@
 #include "whack_delete.h"
 #include "whack_status.h"
 #include "whack_trafficstatus.h"
+#include "whack_terminate.h"
 
 static void whack_rereadsecrets(struct show *s)
 {
@@ -215,19 +215,6 @@ static bool whack_unroute_connection(struct show *s, struct connection **c,
 	connection_attach(*c, show_logger(s));
 	connection_unroute(*c, HERE);
 	connection_detach(*c, show_logger(s));
-	return true; /* ok; keep going */
-}
-
-static bool whack_terminate_connections(struct show *s, struct connection **c,
-					const struct whack_message *m UNUSED)
-{
-#if 0
-	connection_attach(*c, show_logger(s));
-#endif
-	terminate_connections(c, show_logger(s), HERE);
-#if 0
-	connection_detach(*c, show_logger(s));
-#endif
 	return true; /* ok; keep going */
 }
 
@@ -896,19 +883,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 
 	if (m->whack_terminate) {
 		dbg_whack(s, "terminate: start: %s", (m->name == NULL ? "<null>" : m->name));
-		if (m->name == NULL) {
-			/* leave bread crumb */
-			llog(RC_FATAL, logger,
-			     "received command to terminate connection, but did not receive the connection name - ignored");
-		} else {
-			whack_each_connection(m, s, whack_terminate_connections,
-					      (struct each) {
-						      .future_tense = "terminating",
-						      .past_tense = "terminated",
-						      .log_unknown_name = true,
-						      .skip_instances = true,
-					      });
-		}
+		whack_terminate(m, s);
 		dbg_whack(s, "terminate: stop: %s", (m->name == NULL ? "<null>" : m->name));
 	}
 
