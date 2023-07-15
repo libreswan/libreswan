@@ -305,24 +305,15 @@ void release_dead_interfaces(struct logger *logger)
 		 * template will only be processed after all instances
 		 * have been deleted.
 		 */
+		remove_connection_from_pending(c);
+		delete_states_by_connection(c);
+		connection_unroute(c, HERE);
 		if (is_instance(c)) {
-
-			remove_connection_from_pending(c);
-			delete_states_by_connection(c);
-			connection_unroute(c, HERE);
-
 			delete_connection(&c);
 			pexpect(c == NULL);
 			continue;
 		}
 
-		/*
-		 * The somewhat permanent connection is going away;
-		 * release it ...
-		 */
-		remove_connection_from_pending(c);
-		delete_states_by_connection(c);
-		connection_unroute(c, HERE);
 		/*
 		 * ... and then disorient it, moving it to the
 		 * unoriented list.

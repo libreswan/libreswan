@@ -2148,13 +2148,14 @@ bool install_inbound_ipsec_sa(struct child_sa *child, where_t where)
 				pri_connection(co, &cib),
 				str_address_sensitive(&co->remote->host.addr, &b));
 			if (is_instance(co)) {
-
+				/* NOTE: CO not C */
 				remove_connection_from_pending(co);
 				delete_states_by_connection(co);
 				connection_unroute(co, HERE);
 
 				delete_connection(&co);
 			} else {
+				/* NOTE: C not CO */
 				remove_connection_from_pending(c);
 				delete_states_by_connection(c);
 				connection_unroute(c, HERE);
