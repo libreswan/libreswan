@@ -506,8 +506,9 @@ for op in "${ops[@]}" ; do
 	    sudo systemctl restart libvirtd
 	    ;;
 	sh )
+	    host=${prefix}$1 ; shift
 	    echo "Connecting to ${host}" 1>&2
-	    exec testing/utils/kvmsh.py "$@"
+	    exec testing/utils/kvmsh.py ${host} "$@"
     esac
 done
 
