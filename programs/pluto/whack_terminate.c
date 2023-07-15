@@ -112,46 +112,28 @@ static void terminate_connection(struct connection **c, struct logger *logger)
 	connection_detach(*c, logger);
 }
 
-static void terminate_connections(struct connection **c, struct logger *logger, where_t where)
+static bool whack_terminate_connections(struct show *s, struct connection **c,
+					const struct whack_message *m UNUSED)
 {
-
+	struct logger *logger = show_logger(s);
+	connection_buf cb;
 	switch ((*c)->local->kind) {
 	case CK_PERMANENT:
 	case CK_INSTANCE:
 	case CK_LABELED_PARENT:
-	case CK_LABELED_CHILD: /* should not happen? */
 		terminate_connection(c, logger); /* could delete C! */
-		return;
+		return true;
 	case CK_TEMPLATE:
 	case CK_GROUP:
 	case CK_LABELED_TEMPLATE:
-	{
-		struct connection_filter cq = {
-			.clonedfrom = *c,
-			.where = HERE,
-		};
-		while (next_connection_old2new(&cq)) {
-			terminate_connections(&cq.c, logger, where);
-		}
-		return;
-	}
+	case CK_LABELED_CHILD:
+		ldbg(logger, "skipping "PRI_CONNECTION,
+		     pri_connection(*c, &cb));
+		return false;
 	case CK_INVALID:
 		break;
 	}
 	bad_case((*c)->local->kind);
-}
-
-static bool whack_terminate_connections(struct show *s, struct connection **c,
-					const struct whack_message *m UNUSED)
-{
-#if 0
-	connection_attach(*c, show_logger(s));
-#endif
-	terminate_connections(c, show_logger(s), HERE);
-#if 0
-	connection_detach(*c, show_logger(s));
-#endif
-	return true; /* ok; keep going */
 }
 
 void whack_terminate(const struct whack_message *m, struct show *s)
@@ -163,11 +145,10 @@ void whack_terminate(const struct whack_message *m, struct show *s)
 		return;
 	}
 
-	whack_each_connection(m, s, whack_terminate_connections,
-			      (struct each) {
-				      .future_tense = "terminating",
-				      .past_tense = "terminated",
-				      .log_unknown_name = true,
-				      .skip_instances = true,
-			      });
+	whack_connections_bottom_up(m, s, whack_terminate_connections,
+				    (struct each) {
+					    .future_tense = "terminating",
+					    .past_tense = "terminated",
+					    .log_unknown_name = true,
+				    });
 }
