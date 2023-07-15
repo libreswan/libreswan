@@ -48,8 +48,6 @@ static bool whack_delete_connection(struct show *s, struct connection **c,
 
 	case CK_PERMANENT:
 		llog(RC_LOG, (*c)->logger, "terminating SAs using this connection");
-		remove_connection_from_pending(*c);
-		delete_states_by_connection(*c);
 
 		remove_connection_from_pending(*c);
 		delete_states_by_connection(*c);
@@ -70,7 +68,6 @@ static bool whack_delete_connection(struct show *s, struct connection **c,
 
 	case CK_TEMPLATE:
 		/* also need to unroute */
-		connection_unroute(*c, HERE);
 
 		remove_connection_from_pending(*c);
 		delete_states_by_connection(*c);
@@ -84,8 +81,6 @@ static bool whack_delete_connection(struct show *s, struct connection **c,
 		 * connection.
 		 */
 		llog(RC_LOG, (*c)->logger, "terminating SAs using this connection");
-		remove_connection_from_pending(*c);
-		delete_states_by_connection(*c);
 
 		remove_connection_from_pending(*c);
 		delete_states_by_connection(*c);
@@ -96,7 +91,6 @@ static bool whack_delete_connection(struct show *s, struct connection **c,
 
 	case CK_LABELED_TEMPLATE:
 		/* also need to unroute */
-		connection_unroute(*c, HERE);
 
 		remove_connection_from_pending(*c);
 		delete_states_by_connection(*c);
@@ -104,10 +98,9 @@ static bool whack_delete_connection(struct show *s, struct connection **c,
 
 		delete_connection(c);
 		return true;
+
 	case CK_LABELED_PARENT:
 		llog(RC_LOG, (*c)->logger, "terminating SAs using this connection");
-		remove_connection_from_pending(*c);
-		delete_states_by_connection(*c);
 
 		remove_connection_from_pending(*c);
 		delete_states_by_connection(*c);
@@ -115,6 +108,7 @@ static bool whack_delete_connection(struct show *s, struct connection **c,
 
 		delete_connection(c);
 		return true;
+
 	case CK_LABELED_CHILD:
 		/*
 		 * Let the labeled parent, called later, terminate the
