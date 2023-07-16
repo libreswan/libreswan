@@ -64,16 +64,22 @@ static void terminate_connection(struct connection **c, struct logger *logger)
 	connection_attach(*c, logger);
 
 	llog(RC_LOG, (*c)->logger, "terminating SAs using this connection");
+
 	del_policy(*c, POLICY_UP);
+
+	/*
+	 * XXX: see ikev2-removed-iface-01
+	 *
+	 * Extra output appears because of the unroute:
+	 *
+	 * +002 "test2": connection no longer oriented - system interface change?
+	 * +002 "test2": unroute-host output: Device "NULL" does not exist.
+	 */
 	remove_connection_from_pending(*c);
-
 	delete_states_by_connection(*c);
+	connection_unroute(*c, HERE);
+
 	if (is_instance(*c)) {
-
-		remove_connection_from_pending(*c);
-		delete_states_by_connection(*c);
-		connection_unroute(*c, HERE);
-
 		delete_connection(c);
 	}
 
