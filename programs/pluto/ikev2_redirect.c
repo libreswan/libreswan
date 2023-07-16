@@ -535,7 +535,6 @@ static void initiate_redirect(const char *story, struct state *ike_sa, void *con
 
 	initiate_connection(c, /*remote-host-name*/NULL,
 			    /*background*/false /* try to keep it in the foreground */,
-			    /*verbose*/true,
 			    ike->sa.st_logger);
 }
 

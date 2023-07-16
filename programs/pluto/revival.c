@@ -312,7 +312,6 @@ void revive_connection(struct connection *c, const char *subplot,
 	if (c->config->ike_version == IKEv1) {
 		initiate_connection(c, /*remote-host-name*/NULL,
 				    /*background*/true,
-				    /*log-failure*/true,
 				    event->logger);
 		return;
 	}

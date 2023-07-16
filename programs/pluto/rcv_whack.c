@@ -94,11 +94,9 @@ static bool whack_initiate_connection(struct show *s, struct connection **c,
 	struct logger *logger = show_logger(s);
 	connection_buf cb;
 	dbg("%s() for "PRI_CONNECTION, __func__, pri_connection(*c, &cb));
-	bool log_failure = ((*c)->config->connalias == NULL);
 	return initiate_connection(*c,
 				   m->remote_host,
 				   m->whack_async/*background*/,
-				   log_failure,
 				   logger);
 }
 

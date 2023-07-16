@@ -428,7 +428,6 @@ void connection_check_phase2(struct logger *logger)
 			/* start a new connection. Something wanted it up */
 			initiate_connection(c, /*remote-host-name*/NULL,
 					    /*background*/true,
-					    /*log-failure*/false,
 					    logger);
 		}
 	}

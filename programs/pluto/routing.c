@@ -494,7 +494,6 @@ void connection_revive(struct connection *c, const threadtime_t *inception, wher
 	if (c->config->ike_version == IKEv1 && is_labeled(c)) {
 		initiate_connection(c, /*remote-host-name*/NULL,
 				    /*background*/true,
-				    /*log-failure*/true,
 				    c->logger);
 		return;
 	}
@@ -1220,7 +1219,6 @@ void dispatch(enum routing_event event,
 				*/
 				initiate_connection(*c, /*remote-host-name*/NULL,
 						    /*background*/true,
-						    /*log-failure*/true,
 						    logger);
 				return;
 			}

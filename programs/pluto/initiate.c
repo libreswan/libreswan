@@ -61,16 +61,13 @@ static bool initiate_connection_4_fab(struct connection *c,
 
 bool initiate_connection(struct connection *c,
 			 const char *remote_host,
-			 bool background, bool log_failure,
+			 bool background,
 			 struct logger *logger)
 {
 	ldbg_connection(c, HERE, "initiate: remote_host=%s",
 			(remote_host == NULL ? "<null> (using host from connection)" : remote_host));
 	connection_attach(c, logger);
 	bool ok = initiate_connection_1_basics(c, remote_host, background);
-	if (log_failure && !ok) {
-		llog(RC_FATAL, c->logger, "failed to initiate connection");
-	}
 	connection_detach(c, logger);
 	return ok;
 }
@@ -542,7 +539,6 @@ void restart_connections_by_peer(struct connection *const c, struct logger *logg
 				      &d->remote->host.addr)) {
 				initiate_connection(d, NULL/*remote-host*/,
 						    false/*background*/,
-						    true/*verbose*/,
 						    logger);
 			}
 		}
@@ -681,7 +677,6 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 		    pri_connection(c, &cib));
 		initiate_connection(c, /*remote-host-name*/NULL,
 				    /*background*/true,
-				    /*log-failure*/true,
 				    logger);
 	} else {
 		connection_buf cib;
