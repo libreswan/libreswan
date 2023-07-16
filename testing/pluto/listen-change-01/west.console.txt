@@ -47,6 +47,8 @@ west #
 002 "west-east" #2: deleting IPsec SA (QUICK_I2) and sending notification
 005 "west-east" #2: ESP traffic information: in=0B out=0B
 002 "west-east" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
+002 "west-east": connection no longer oriented - system interface change?
+002 "west-east": unroute-host output: Device "NULL" does not exist.
 002 forgetting secrets
 002 loading secrets from "/etc/ipsec.secrets"
 002 no secrets filename matched "/etc/ipsec.d/*.secrets"

@@ -54,6 +54,8 @@ east #
 002 "test2": terminating SAs using this connection
 002 "test2" #3: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 005 "test2" #4: ESP traffic information: in=84B out=84B
+002 "test2": connection no longer oriented - system interface change?
+002 "test2": unroute-host output: Device "NULL" does not exist.
 002 forgetting secrets
 002 loading secrets from "/etc/ipsec.secrets"
 east #
