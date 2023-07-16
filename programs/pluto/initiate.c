@@ -177,11 +177,6 @@ static bool initiate_connection_2_address(struct connection *c,
 
 		if (!ok) {
 			/* instance so free to delete */
-
-			remove_connection_from_pending(d);
-			delete_states_by_connection(d);
-			connection_unroute(d, HERE);
-
 			delete_connection(&d);
 		} else {
 			connection_detach(d, d->logger);
@@ -258,11 +253,7 @@ static bool initiate_connection_3_template(struct connection *c,
 		/* flip cur_connection */
 		bool ok = initiate_connection_4_fab(d, background, inception);
 		if (!ok) {
-
-			remove_connection_from_pending(d);
-			delete_states_by_connection(d);
-			connection_unroute(d, HERE);
-
+			/* instance so free to delete */
 			delete_connection(&d);
 		} else {
 			connection_detach(d, c->logger);
@@ -283,11 +274,7 @@ static bool initiate_connection_3_template(struct connection *c,
 		/* flip cur_connection */
 		bool ok = initiate_connection_4_fab(d, background, inception);
 		if (!ok) {
-
-			remove_connection_from_pending(d);
-			delete_states_by_connection(d);
-			connection_unroute(d, HERE);
-
+			/* instance so free to delete */
 			delete_connection(&d);
 		} else {
 			connection_detach(d, c->logger);
