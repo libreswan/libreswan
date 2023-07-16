@@ -495,40 +495,6 @@ void load_groups(struct logger *logger)
 	}
 }
 
-
-void connection_group_route(struct connection *g, where_t where)
-{
-	if (!PEXPECT(g->logger, is_group(g))) {
-		return;
-	}
-
-	if (!PEXPECT(g->logger, oriented(g))) {
-		return;
-	}
-
-	/*
-	 * It makes no sense to route a connection that is IKE-only.
-	 *
-	 * ... except when it is an IKE only connection such is
-	 * created for labeled IPsec, but that doesn't apply here.
-	 */
-	if (!never_negotiate(g) && !HAS_IPSEC_POLICY(g->policy)) {
-		llog(RC_ROUTE, g->logger,
-		     "cannot route an IKE-only group connection");
-		return;
-	}
-
-	add_policy(g, POLICY_ROUTE);
-	for (struct fg_targets *t = targets; t != NULL; t = t->next) {
-		if (t->group == g) {
-			struct connection *ci = connection_by_serialno(t->serialno);
-			if (ci != NULL) {
-				connection_route(ci, where);
-			}
-		}
-	}
-}
-
 void connection_group_unroute(struct connection *g, where_t where)
 {
 	if (!PEXPECT(g->logger, is_group(g))) {

@@ -1,5 +1,6 @@
-/* Implement policygroups-style control files (aka "foodgroups")
- * Copyright (C) 2002  D. Hugh Redelmeier.
+/* route connection, for libreswan
+ *
+ * Copyright (C) 2023 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -12,16 +13,12 @@
  * for more details.
  */
 
-#ifndef FOODGROUPS_H
-#define FOODGROUPS_H
+#ifndef WHACK_ROUTE_H
+#define WHACK_ROUTE_H
 
-struct connection;      /* forward declaration */
-struct logger;
+struct show;
+struct whack_message;
 
-void connection_group_unroute(struct connection *c, where_t where);
-
-void load_groups(struct logger *logger);
-
-void remove_from_group(struct connection *c);
+void whack_route(const struct whack_message *m, struct show *s);
 
 #endif

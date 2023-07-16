@@ -870,11 +870,6 @@ void connection_route(struct connection *c, where_t where)
 		return;
 	}
 
-	if (is_group(c)) {
-		connection_group_route(c, where);
-		return;
-	}
-
 	dispatch(CONNECTION_ROUTE, &c, c->logger, where,
 		 (struct annex) {
 			 0,
@@ -1063,6 +1058,11 @@ void dispatch(enum routing_event event,
 		const enum connection_kind kind = (*c)->local->kind;
 
 		switch (XX(event, routing, kind)) {
+
+		case X(ROUTE, UNROUTED, GROUP):
+			/* caller deals with recursion */
+			add_policy(*c, POLICY_ROUTE); /* always */
+			return;
 
 		case X(ROUTE, UNROUTED, TEMPLATE):
 		case X(ROUTE, UNROUTED, LABELED_TEMPLATE):

@@ -95,6 +95,7 @@ OBJS += whack_trafficstatus.o
 OBJS += whack_connection.o
 OBJS += whack_rekey.o
 OBJS += whack_delete.o
+OBJS += whack_route.o
 OBJS += whack_status.o
 OBJS += whack_terminate.o
 

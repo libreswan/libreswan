@@ -64,6 +64,7 @@
 #include "whack_status.h"
 #include "whack_trafficstatus.h"
 #include "whack_terminate.h"
+#include "whack_route.h"
 
 static void whack_rereadsecrets(struct show *s)
 {
@@ -196,15 +197,6 @@ static bool whack_connection_status(struct show *s, struct connection **c,
 {
 	show_connection_status(s, *c);
 	return true;
-}
-
-static bool whack_route_connection(struct show *s, struct connection **c,
-				   const struct whack_message *m UNUSED)
-{
-	connection_attach(*c, show_logger(s));
-	connection_route(*c, HERE);
-	connection_detach(*c, show_logger(s));
-	return true; /* ok; keep going */
 }
 
 static bool whack_unroute_connection(struct show *s, struct connection **c,
@@ -790,21 +782,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 
 	if (m->whack_route) {
 		dbg_whack(s, "route: start: \"%s\"", (m->name == NULL ? "<null>" : m->name));
-		if (!listening) {
-			whack_log(RC_DEAF, s,
-				  "need --listen before --route");
-		} else if (m->name == NULL) {
-			/* leave bread crumb */
-			llog(RC_FATAL, logger,
-			     "received command to route connection, but did not receive the connection name - ignored");
-		} else {
-			whack_each_connection(m, s, whack_route_connection,
-					      (struct each) {
-						      .log_unknown_name = true,
-						      .skip_instances = true,
-					      });
-
-		}
+		whack_route(m, s);
 		dbg_whack(s, "route: stop: \"%s\"", (m->name == NULL ? "<null>" : m->name));
 	}
 
