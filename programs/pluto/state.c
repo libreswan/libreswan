@@ -1342,8 +1342,7 @@ void delete_states_dead_interfaces(struct logger *logger)
  * also clean up larval and dying State.
  */
 
-static void delete_v1_states_by_connection_bottom_up(struct connection *c,
-						     bool siblings)
+static void delete_v1_states_by_connection_bottom_up(struct connection *c)
 {
 	/*
 	 * IKEv1 needs children to be deleted before the parent;
@@ -1356,7 +1355,7 @@ static void delete_v1_states_by_connection_bottom_up(struct connection *c,
 	 */
 
 	struct ike_sa *ike = ike_sa_by_serialno(c->newest_ike_sa);
-	if (siblings && ike != NULL) {
+	if (ike != NULL) {
 		struct state_filter sf = {
 			.ike = ike,
 			.where = HERE,
@@ -1459,7 +1458,7 @@ void delete_states_by_connection(struct connection *c)
 	c->going_away = true;
 	switch (c->config->ike_version) {
 	case IKEv1:
-		delete_v1_states_by_connection_bottom_up(c, /*siblings*/false);
+		delete_v1_states_by_connection_bottom_up(c);
 		break;
 	case IKEv2:
 		delete_v2_states_by_connection_top_down(c);
@@ -1496,7 +1495,7 @@ void delete_v1_states_by_connection_family(struct connection **cp)
 	dbg("deleting states including all other IPsec SA's of this IKE SA's connection "PRI_CONNECTION,
 	    pri_connection(*cp, &cb));
 	(*cp)->going_away = true;
-	delete_v1_states_by_connection_bottom_up(*cp, /*siblings?*/true);
+	delete_v1_states_by_connection_bottom_up(*cp);
 	(*cp)->going_away = false;
 	if (is_instance(*cp)) {
 
