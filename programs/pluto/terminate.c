@@ -59,13 +59,11 @@
 #include "terminate.h"
 #include "host_pair.h"
 
-static void terminate_connection(struct connection **c, struct logger *logger)
+static void terminate_connection(struct connection *c)
 {
-	connection_attach(*c, logger);
+	llog(RC_LOG, c->logger, "terminating SAs using this connection");
 
-	llog(RC_LOG, (*c)->logger, "terminating SAs using this connection");
-
-	del_policy(*c, POLICY_UP);
+	del_policy(c, POLICY_UP);
 
 	/*
 	 * XXX: see ikev2-removed-iface-01
@@ -75,27 +73,28 @@ static void terminate_connection(struct connection **c, struct logger *logger)
 	 * +002 "test2": connection no longer oriented - system interface change?
 	 * +002 "test2": unroute-host output: Device "NULL" does not exist.
 	 */
-	remove_connection_from_pending(*c);
-	delete_states_by_connection(*c);
-	connection_unroute(*c, HERE);
-
-	if (is_instance(*c)) {
-		delete_connection(c);
-	}
-
-	connection_detach(*c, logger);
+	remove_connection_from_pending(c);
+	delete_states_by_connection(c);
+	connection_unroute(c, HERE);
 }
 
 void terminate_connections(struct connection **c, struct logger *logger, where_t where)
 {
-
 	switch ((*c)->local->kind) {
-	case CK_PERMANENT:
 	case CK_INSTANCE:
-	case CK_LABELED_PARENT:
 	case CK_LABELED_CHILD: /* should not happen? */
-		terminate_connection(c, logger); /* could delete C! */
+		connection_attach(*c, logger);
+		terminate_connection(*c);
+		delete_connection(c);
 		return;
+
+	case CK_PERMANENT:
+	case CK_LABELED_PARENT:
+		connection_attach(*c, logger);
+		terminate_connection(*c);
+		connection_detach(*c, logger);
+		return;
+
 	case CK_TEMPLATE:
 	case CK_GROUP:
 	case CK_LABELED_TEMPLATE:
