@@ -33,7 +33,6 @@ west #
 west #
  ipsec auto --up westnet-eastnet-ipv4-psk-ikev2
 029 "westnet-eastnet-ipv4-psk-ikev2": cannot initiate connection (serial $1) without knowing peer IP address (kind=CK_TEMPLATE)
-036 "westnet-eastnet-ipv4-psk-ikev2": failed to initiate connection
 west #
  # Now we specify the remote ip, so the connection knows how to initiate
 west #
