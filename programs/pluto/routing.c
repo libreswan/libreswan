@@ -880,7 +880,6 @@ void connection_route(struct connection *c, where_t where)
 void connection_unroute(struct connection *c, where_t where)
 {
 	del_policy(c, POLICY_ROUTE);
-	del_policy(c, POLICY_UP);
 	dispatch(CONNECTION_UNROUTE, &c,
 		 c->logger, where,
 		 (struct annex) {
