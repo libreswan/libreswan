@@ -879,7 +879,11 @@ void connection_route(struct connection *c, where_t where)
 
 void connection_unroute(struct connection *c, where_t where)
 {
-	del_policy(c, POLICY_ROUTE);
+	/*
+	 * XXX: strip POLICY_ROUTE in whack code, not here (code
+	 * expects to be able to route/unroute without loosing the
+	 * policy bits).
+	 */
 	dispatch(CONNECTION_UNROUTE, &c,
 		 c->logger, where,
 		 (struct annex) {

@@ -31,6 +31,16 @@ static bool whack_delete_connection(struct show *s, struct connection **c,
 	struct logger *logger = show_logger(s);
 	connection_attach(*c, logger);
 
+	/*
+	 * Let code know of intent.
+	 *
+	 * Functions such as connection_unroute() don't fiddle policy
+	 * bits as they are called as part of unroute/route sequences.
+	 */
+
+	del_policy(*c, POLICY_UP);
+	del_policy(*c, POLICY_ROUTE);
+
 	if (never_negotiate(*c)) {
 		ldbg((*c)->logger, "skipping as never-negotiate");
 		PEXPECT(logger, (is_permanent(*c) || is_template(*c)));
@@ -40,7 +50,6 @@ static bool whack_delete_connection(struct show *s, struct connection **c,
 		return false;
 	}
 
-	del_policy(*c, POLICY_UP);
 	switch ((*c)->local->kind) {
 
 	case CK_PERMANENT:
