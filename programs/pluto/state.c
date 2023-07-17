@@ -1342,33 +1342,12 @@ void delete_states_dead_interfaces(struct logger *logger)
  * also clean up larval and dying State.
  */
 
-static void delete_v1_states_by_connection_bottom_up(struct connection *c,
-						     bool siblings)
+static void delete_v1_states_by_connection_bottom_up(struct connection *c)
 {
 	/*
 	 * IKEv1 needs children to be deleted before the parent;
 	 * otherwise the child has no way to send its delete message.
 	 */
-
-	/*
-	 * Pass 0: any siblings, assuming the connection is bound to a
-	 * parent.
-	 */
-
-	struct ike_sa *ike = ike_sa_by_serialno(c->newest_ike_sa);
-	if (siblings && ike != NULL) {
-		struct state_filter sf = {
-			.ike = ike,
-			.where = HERE,
-		};
-		while (next_state_new2old(&sf)) {
-			struct state *st = sf.st;
-			dbg("pass 0: delete "PRI_SO" which is a sibling",
-			    st->st_serialno);
-			state_attach(st, c->logger);
-			delete_state(st);
-		}
-	}
 
  	/*
 	 * We take two passes so that we delete any ISAKMP SAs last.
@@ -1459,7 +1438,7 @@ void delete_states_by_connection(struct connection *c)
 	c->going_away = true;
 	switch (c->config->ike_version) {
 	case IKEv1:
-		delete_v1_states_by_connection_bottom_up(c, /*siblings*/false);
+		delete_v1_states_by_connection_bottom_up(c);
 		break;
 	case IKEv2:
 		delete_v2_states_by_connection_top_down(c);
@@ -1487,24 +1466,6 @@ void delete_states_by_connection(struct connection *c)
 			     pri_so(c->child.newest_routing_sa));
 	} else {
 		ldbg(c->logger, "kernel_policy_owner is 0");
-	}
-}
-
-void delete_v1_states_by_connection_family(struct connection **cp)
-{
-	connection_buf cb;
-	dbg("deleting states including all other IPsec SA's of this IKE SA's connection "PRI_CONNECTION,
-	    pri_connection(*cp, &cb));
-	(*cp)->going_away = true;
-	delete_v1_states_by_connection_bottom_up(*cp, /*siblings?*/true);
-	(*cp)->going_away = false;
-	if (is_instance(*cp)) {
-
-		remove_connection_from_pending(*cp);
-		delete_states_by_connection(*cp);
-		connection_unroute(*cp, HERE);
-
-		delete_connection(cp);
 	}
 }
 

@@ -66,9 +66,14 @@
 /**
  * DPD Timeout Function
  *
- * This function is called when a timeout DPD_EVENT occurs.  We set clear/trap
- * both the SA and the eroutes, depending on what the connection definition
- * tells us (either 'hold' or 'clear')
+ * This function is called when a timeout DPD_EVENT occurs.  We set
+ * clear/trap both the SA and the eroutes, depending on what the
+ * connection definition tells us (either 'hold' or 'clear')
+ *
+ * Delete all states that were created for a given connection.
+ *
+ * In addition to the currently established Child/IKE SAs, this will
+ * also clean up larval and dying State.
  *
  * @param st A state structure that is fully negotiated
  * @return void
@@ -88,10 +93,72 @@ void event_v1_dpd_timeout(struct state *tbd_st)
 	struct connection *c = tbd_st->st_connection;
 	tbd_st = NULL; /* kill TBD_ST; can no longer be trusted */
 	llog(RC_LOG, logger, "DPD action - putting connection into hold");
+	c->going_away = true;
+	{
+		/*
+		 * IKEv1 needs children to be deleted before the
+		 * parent; otherwise the child has no way to send its
+		 * delete message.
+		 */
+
+		/*
+		 * Pass 0: any siblings, assuming the connection is
+		 * bound to a parent.
+		 */
+
+		struct ike_sa *ike = ike_sa_by_serialno(c->newest_ike_sa);
+		if (ike != NULL) {
+			struct state_filter sf = {
+				.ike = ike,
+				.where = HERE,
+			};
+			while (next_state_new2old(&sf)) {
+				struct state *st = sf.st;
+				dbg("pass 0: delete "PRI_SO" which is a sibling",
+				    st->st_serialno);
+				state_attach(st, c->logger);
+				delete_state(st);
+			}
+		}
+
+		/*
+		 * We take two passes so that we delete any ISAKMP SAs
+		 * last.  This allows Delete Notifications to be sent.
+		 *
+		 * XXX: need to go through all states using the
+		 * connection as, in addition to .newest_ike_sa there
+		 * could be larval or dying states hanging around.
+		 */
+		for (int pass = 1; pass <= 2; pass++) {
+			struct state_filter sf = {
+				.connection_serialno = c->serialno,
+				.where = HERE,
+			};
+			while (next_state_new2old(&sf)) {
+				struct state *this = sf.st;
+				/* on first pass, ignore established ISAKMP SA's */
+				if (pass == 1 &&
+				    IS_V1_ISAKMP_SA_ESTABLISHED(this)) {
+					continue;
+				}
+				dbg("pass %d: delete "PRI_SO" which has connection",
+				    pass, this->st_serialno);
+				pexpect(this->st_connection == c);
+				state_attach(this, c->logger);
+				delete_state(this);
+			}
+		}
+	}
+	c->going_away = false;
 	if (is_instance(c)) {
 		ldbg(logger, "DPD warning dpdaction=hold on instance futile - will be deleted");
+
+		remove_connection_from_pending(c);
+		delete_states_by_connection(c);
+		connection_unroute(c, HERE);
+
+		delete_connection(&c);
 	}
-	delete_v1_states_by_connection_family(&c);
 	free_logger(&logger, HERE);
 }
 

@@ -911,7 +911,6 @@ void delete_child_sa(struct child_sa **child);
 
 void llog_state_delete_n_send(lset_t rc_flags, struct state *st, bool sending_delete);
 void delete_state(struct state *st);
-extern void delete_v1_states_by_connection_family(struct connection **c);
 extern void delete_states_by_connection(struct connection *c);
 extern void rekey_p2states_by_connection(struct connection *c);
 extern void delete_ike_family(struct ike_sa **ikep);
