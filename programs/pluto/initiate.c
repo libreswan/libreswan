@@ -546,12 +546,22 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 	const char *e;
 
 	/* this is the cheapest check, so do it first */
-	if (c->config->dnshostname == NULL)
+	if (c->config->dnshostname == NULL) {
+		connection_buf cb;
+		ldbg(c->logger,
+		     "pending ddns: connection "PRI_CONNECTION" has no .dnshostname",
+		     pri_connection(c, &cb));
 		return;
+	}
 
 	/* should we let the caller get away with this? */
-	if (never_negotiate(c))
+	if (never_negotiate(c)) {
+		connection_buf cb;
+		ldbg(c->logger,
+		     "pending ddns: connection "PRI_CONNECTION" is never_negotiate",
+		     pri_connection(c, &cb));
 		return;
+	}
 
 	/*
 	 * We do not update a resolved address once resolved.  That might
@@ -561,8 +571,9 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 	 */
 	if (address_is_specified(c->remote->host.addr)) {
 		connection_buf cib;
-		dbg("pending ddns: connection "PRI_CONNECTION" has address",
-		    pri_connection(c, &cib));
+		ldbg(c->logger,
+		     "pending ddns: connection "PRI_CONNECTION" has address",
+		     pri_connection(c, &cib));
 		return;
 	}
 
@@ -570,8 +581,9 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 	    (c->config->never_negotiate_shunt == SHUNT_UNSET &&
 	     id_has_wildcards(&c->remote->host.id))) {
 		connection_buf cib;
-		dbg("pending ddns: connection "PRI_CONNECTION" with wildcard not started",
-		    pri_connection(c, &cib));
+		ldbg(c->logger,
+		     "pending ddns: connection "PRI_CONNECTION" with wildcard not started",
+		     pri_connection(c, &cib));
 		return;
 	}
 
@@ -580,15 +592,17 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 	e = ttoaddress_dns(shunk1(c->config->dnshostname), NULL/*UNSPEC*/, &new_remote_addr);
 	if (e != NULL) {
 		connection_buf cib;
-		dbg("pending ddns: connection "PRI_CONNECTION" lookup of \"%s\" failed: %s",
-		    pri_connection(c, &cib), c->config->dnshostname, e);
+		ldbg(c->logger,
+		     "pending ddns: connection "PRI_CONNECTION" lookup of \"%s\" failed: %s",
+		     pri_connection(c, &cib), c->config->dnshostname, e);
 		return;
 	}
 
 	if (!address_is_specified(new_remote_addr)) {
 		connection_buf cib;
-		dbg("pending ddns: connection "PRI_CONNECTION" still no address for \"%s\"",
-		    pri_connection(c, &cib), c->config->dnshostname);
+		ldbg(c->logger,
+		     "pending ddns: connection "PRI_CONNECTION" still no address for \"%s\"",
+		     pri_connection(c, &cib), c->config->dnshostname);
 		return;
 	}
 
@@ -598,8 +612,9 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 	    (IS_IKE_SA_ESTABLISHED(newest_ike_sa) ||
 	     IS_V1_ISAKMP_SA_ESTABLISHED(newest_ike_sa))) {
 		connection_buf cib;
-		dbg("pending ddns: connection "PRI_CONNECTION" is established",
-		    pri_connection(c, &cib));
+		ldbg(c->logger,
+		     "pending ddns: connection "PRI_CONNECTION" is established",
+		     pri_connection(c, &cib));
 		return;
 	}
 
@@ -609,26 +624,32 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 	 */
 	if (sameaddr(&new_remote_addr, &c->remote->host.addr)) {
 		connection_buf cib;
-		dbg("pending ddns: IP address unchanged for connection "PRI_CONNECTION"",
-		    pri_connection(c, &cib));
+		ldbg(c->logger,
+		     "pending ddns: connection "PRI_CONNECTION" address is unchanged",
+		     pri_connection(c, &cib));
 		return;
 	}
 
 	/* I think this is OK now we check everything above. */
 
 	address_buf old, new;
-	dbg("pending ddns: updating IP address for %s from %s to %s",
-	    c->config->dnshostname,
-	    str_address_sensitive(&c->remote->host.addr, &old),
-	    str_address_sensitive(&new_remote_addr, &new));
+	connection_buf cb;
+	ldbg(c->logger,
+	     "pending ddns: connection "PRI_CONNECTION" IP address updated by '%s' from %s to %s",
+	     pri_connection(c, &cb),
+	     c->config->dnshostname,
+	     str_address_sensitive(&c->remote->host.addr, &old),
+	     str_address_sensitive(&new_remote_addr, &new));
 	pexpect(!address_is_specified(c->remote->host.addr)); /* per above */
 
 	/* propogate remote address */
+	ldbg(c->logger, "  updating hosts");
 	update_hosts_from_end_host_addr(c, c->remote->config->index, new_remote_addr, HERE); /* from DNS */
+	ldbg(c->logger, "  discarding SPDs");
 	discard_connection_spds(c);
 
 	if (c->remote->child.config->selectors.len > 0) {
-		ldbg(c->logger, "  %s.child already has a hard-wired selectors; skipping",
+		ldbg(c->logger, "  %s.child already has hard-wired selectors; skipping",
 		     c->remote->config->leftright);
 	} else if (c->remote->child.has_client) {
 		pexpect(is_opportunistic(c));
@@ -644,32 +665,39 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 		ip_selector remote =
 			selector_from_address_protoport(new_remote_addr, child->config->protoport);
 		selector_buf new;
-		dbg("  updated %s.selector to %s",
+		ldbg(logger,
+		     "  updated %s.selector to %s",
 		    c->remote->config->leftright,
 		    str_selector(&remote, &new));
 		append_end_selector(c->remote, selector_info(remote), remote,
 				    c->logger, HERE);
 	}
 
+	ldbg(c->logger, "  adding SPDs");
 	add_connection_spds(c, address_info(c->local->host.addr));
 
 	/*
 	 * reduce the work we do by updating all connections waiting for this
 	 * lookup
 	 */
+	ldbg(c->logger, "  updating host pairs");
 	update_host_pairs(c);
-	if (c->policy & POLICY_UP) {
+
+	if (!(c->policy & POLICY_UP)) {
 		connection_buf cib;
-		dbg("pending ddns: re-initiating connection "PRI_CONNECTION"",
-		    pri_connection(c, &cib));
-		initiate_connection(c, /*remote-host-name*/NULL,
-				    /*background*/true,
-				    logger);
-	} else {
-		connection_buf cib;
-		dbg("pending ddns: connection "PRI_CONNECTION" was updated, but does not want to be up",
-		    pri_connection(c, &cib));
+		ldbg(c->logger,
+		     "pending ddns: connection "PRI_CONNECTION" was updated, but does not want to be up",
+		     pri_connection(c, &cib));
+		return;
 	}
+
+	connection_buf cib;
+	ldbg(c->logger,
+	     "pending ddns: re-initiating connection "PRI_CONNECTION"",
+	     pri_connection(c, &cib));
+	initiate_connection(c, /*remote-host-name*/NULL,
+			    /*background*/true,
+			    logger);
 }
 
 void connection_check_ddns(struct logger *logger)
@@ -681,6 +709,8 @@ void connection_check_ddns(struct logger *logger)
 		struct connection *c = cf.c;
 		connection_check_ddns1(c, logger);
 	}
+
+	ldbg(logger, "DDNS: checking orientations");
 	check_orientations(logger);
 
 	threadtime_stop(&start, SOS_NOBODY, "in %s for hostname lookup", __func__);
