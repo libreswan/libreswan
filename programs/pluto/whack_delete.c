@@ -35,10 +35,7 @@ static bool whack_delete_connection(struct show *s, struct connection **c,
 		ldbg((*c)->logger, "skipping as never-negotiate");
 		PEXPECT(logger, (is_permanent(*c) || is_template(*c)));
 
-		remove_connection_from_pending(*c);
-		delete_states_by_connection(*c);
 		connection_unroute(*c, HERE);
-
 		delete_connection(c);
 		return false;
 	}
@@ -58,23 +55,16 @@ static bool whack_delete_connection(struct show *s, struct connection **c,
 
 	case CK_GROUP:
 		/* little left to do */
-
-		remove_connection_from_pending(*c);
-		delete_states_by_connection(*c);
 		connection_unroute(*c, HERE);
-
 		delete_connection(c);
 		return true;
 
 	case CK_TEMPLATE:
 		/* also need to unroute */
-
-		remove_connection_from_pending(*c);
-		delete_states_by_connection(*c);
 		connection_unroute(*c, HERE);
-
 		delete_connection(c);
 		return true;
+
 	case CK_INSTANCE:
 		/*
 		 * For CK_INSTANCE, this could also delete the *C
