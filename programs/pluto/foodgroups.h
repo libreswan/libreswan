@@ -18,8 +18,6 @@
 struct connection;      /* forward declaration */
 struct logger;
 
-void connection_group_unroute(struct connection *c, where_t where);
-
 void load_groups(struct logger *logger);
 
 void remove_from_group(struct connection *c);

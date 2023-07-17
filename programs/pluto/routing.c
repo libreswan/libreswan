@@ -879,14 +879,8 @@ void connection_route(struct connection *c, where_t where)
 
 void connection_unroute(struct connection *c, where_t where)
 {
-	if (is_group(c)) {
-		/* XXX: may recurse back to here with group
-		 * instances. */
-		connection_group_unroute(c, where);
-		return;
-	}
-
 	del_policy(c, POLICY_ROUTE);
+	del_policy(c, POLICY_UP);
 	dispatch(CONNECTION_UNROUTE, &c,
 		 c->logger, where,
 		 (struct annex) {
@@ -1062,6 +1056,9 @@ void dispatch(enum routing_event event,
 		case X(ROUTE, UNROUTED, GROUP):
 			/* caller deals with recursion */
 			add_policy(*c, POLICY_ROUTE); /* always */
+			return;
+		case X(UNROUTE, UNROUTED, GROUP):
+			/* ROUTE+UP cleared by caller */
 			return;
 
 		case X(ROUTE, UNROUTED, TEMPLATE):
