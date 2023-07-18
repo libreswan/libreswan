@@ -110,7 +110,9 @@ function stop_tcpdump()
 {
     if test -r ${pid_path} ; then
 	pid=$(cat ${pid_path})
-	if kill -TERM ${pid} ; then
+	(kill -TERM ${pid} 2> /dev/null > /dev/null)
+
+	if -f ${out_path}; then
 	    # wait for tcpudump output to write and sync
 	    sleep 1
 	    while kill -0 ${pid} > /dev/null 2>&1 ; do
@@ -122,7 +124,7 @@ function stop_tcpdump()
 	    echo tcpdump stopped
 	fi
     else
-	echo tcpdump is not running
+	echo tcpdump ${pid_path} is not running
     fi
 }
 
