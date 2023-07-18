@@ -24,10 +24,10 @@ east #
  ipsec whack --trafficstatus
 006 #2: "east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@road'
 east #
- ../../guestbin/tcpdump.sh --stop --host east
+ hostname | grep east > /dev/null && ../../guestbin/tcpdump.sh --stop -i eth1
 [ 00.00] device eth1 left promiscuous mode
 tcpdump stopped
-reading from file /tmp/east.ikev2-xfrmi-02-responder.tcpdump.pcap, link-type EN10MB (Ethernet)
+reading from file /tmp/east.ikev2-xfrmi-02-responder.eth1.tcpdump.pcap, link-type EN10MB (Ethernet)
 IP 192.1.3.209.isakmp > 192.1.2.23.isakmp: isakmp: parent_sa ikev2_init[I]
 IP 192.1.2.23.isakmp > 192.1.3.209.isakmp: isakmp: parent_sa ikev2_init[R]
 IP 192.1.3.209.isakmp > 192.1.2.23.isakmp: isakmp: child_sa  ikev2_auth[I]
@@ -35,10 +35,10 @@ IP 192.1.2.23.isakmp > 192.1.3.209.isakmp: isakmp: child_sa  ikev2_auth[R]
 east #
  hostname | grep east > /dev/null && ip -s link show ipsec1
 X: ipsec1@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
-    RX: bytes  packets  errors  dropped missed  mcast   
-    0          0        0       0       0       0       
-    TX: bytes  packets  errors  dropped carrier collsns 
-    0          0        0       0       0       0       
+    RX:  bytes packets errors dropped  missed   mcast           
+             0       0      0       0       0       0 
+    TX:  bytes packets errors dropped carrier collsns           
+             0       0      0       0       0       0 
 east #
  hostname | grep east > /dev/null && ip rule show
 0:	from all lookup local
@@ -50,8 +50,8 @@ east #
 192.1.3.209 via 192.1.2.254 dev eth1 
 east #
  hostname | grep east > /dev/null && ip route
-default via 192.1.2.254 dev eth1 
-192.0.1.0/24 via 192.1.2.45 dev eth1 
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 via 192.1.2.45 dev eth1
 192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254 
 192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23 
 192.1.3.209 dev ipsec1 scope link 

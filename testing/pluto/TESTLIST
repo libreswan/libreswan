@@ -524,6 +524,9 @@ kvmplutotest	ikev1-xfrmi-04				good
 kvmplutotest	ikev1-xfrmi-04-aggr			good
 kvmplutotest	ikev1-xfrmi-05-remote-access-client	good
 kvmplutotest	ikev2-xfrmi-15-interface-ip		wip
+kvmplutotest	ikev2-xfrmi-16-rekey			wip
+kvmplutotest	ikev2-xfrmi-16-rekey-responder		wip
+
 
 
 kvmplutotest	ikev2-decap-dscp-01			good
