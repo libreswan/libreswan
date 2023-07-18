@@ -11,6 +11,7 @@ sync_wait_stop=5
 sync_wait_start=1
 this_host=$(hostname)
 host=${this_host}
+ip6="not ip6"
 
 function usage () {
     cat <<EOF >/dev/stderr
@@ -18,7 +19,7 @@ function usage () {
 Usage:
 
     $0 --start -i <ethX> [--host <hostname>]
-    $0 --stop [--host <hostname>]
+    $0 --stop [--host <hostname>] [--ip6]
     $0 --kill [--host <hostname>]
 
 Start tcpdump saving output to /tmp/
@@ -59,6 +60,11 @@ while true; do
 			interface=$2
 			shift 2
 			;;
+		-ip6 )
+			ip6=''
+			shift
+			;;
+
 		--start )
 			action="start"
 			shift
@@ -82,9 +88,9 @@ function set_file_names()
 {
 	tmp_dir=/tmp
 	testname=$(basename ${PWD})
-	out_path="${tmp_dir}/${host}.${testname}.tcpdump.pcap"
-	log_path="${tmp_dir}/${host}.${testname}.tcpdump.log"
-	pid_path="${tmp_dir}/${host}.${testname}.tcpdump.pid"
+	out_path="${tmp_dir}/${host}.${testname}.${interface}.tcpdump.pcap"
+	log_path="${tmp_dir}/${host}.${testname}.${interface}.tcpdump.log"
+	pid_path="${tmp_dir}/${host}.${testname}.${interface}.tcpdump.pid"
 }
 
 function start_tcpdump()
@@ -132,7 +138,7 @@ case "${action}" in
 	;;
     stop)
 	stop_tcpdump
-	tcpdump -n -r ${out_path} not arp and not icmp6 and not stp
+	tcpdump -n -r ${out_path} not arp and ${ip6} and not stp
 	;;
     kill)
 	stop_tcpdump
