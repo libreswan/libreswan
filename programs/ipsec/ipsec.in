@@ -508,7 +508,7 @@ nflog_nftables_delete_table() {
     local table=$1
 
     t=$(nft list table inet $table 2>/dev/null | wc -l)
-    [ ${t} -eq 2 ] &&  nft delete table ${table}
+    [ ${t} -eq 2 ] && nft delete table inet ${table}
 }
 
 nflog_nftables_delete_chain() {
