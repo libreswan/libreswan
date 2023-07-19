@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 set -eu
 verbose=${verbose-''}
 
@@ -112,7 +112,7 @@ function stop_tcpdump()
 	pid=$(cat ${pid_path})
 	(kill -TERM ${pid} 2> /dev/null > /dev/null)
 
-	if -f ${out_path}; then
+	if [ -f ${out_path} ]; then
 	    # wait for tcpudump output to write and sync
 	    sleep 1
 	    while kill -0 ${pid} > /dev/null 2>&1 ; do
@@ -121,7 +121,6 @@ function stop_tcpdump()
 	    cp ${out_path} OUTPUT/
 	    cp ${log_path} OUTPUT/
 	    rm -f ${pid_path}
-	    echo tcpdump stopped
 	fi
     else
 	echo tcpdump ${pid_path} is not running
