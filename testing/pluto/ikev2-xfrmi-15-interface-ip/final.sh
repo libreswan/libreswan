@@ -4,5 +4,6 @@ ip rule show
 ip route show table 50
 ip route
 : ==== cut ====
-ip addr show scope global
+# this is global will be noisy and change based on host.
+ip addr show
 : ==== tuc ====
