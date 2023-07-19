@@ -36,7 +36,6 @@ north #
  sleep  2
 north #
  ../../guestbin/tcpdump.sh --start -i ipsec2
-tcpdump is not running
 [ 00.00] device ipsec2 entered promiscuous mode
 tcpdump started
 north #
@@ -54,10 +53,10 @@ up
 north #
  ip -s link show ipsec2
 X: ipsec2@lo: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
-    RX:  bytes packets errors dropped  missed   mcast           
-           336       4      0       0       0       0 
-    TX:  bytes packets errors dropped carrier collsns           
-           336       4      0       0       0       0 
+    RX:  bytes packets errors dropped  missed   mcast
+           336       4      0       0       0       0
+    TX:  bytes packets errors dropped carrier collsns
+           336       4      0       0       0       0
 north #
  ip rule show
 0:	from all lookup local
@@ -74,9 +73,8 @@ north #
 Error: ipv4: FIB table does not exist.
 Dump terminated
 north #
- ../../guestbin/tcpdump.sh --kill
+ ../../guestbin/tcpdump.sh --stop -i ipsec1
 [ 00.00] device ipsec2 left promiscuous mode
-tcpdump stopped
 north #
  # rm the test specific systemd-networkd file for next test
 north #
@@ -85,4 +83,4 @@ north #
  echo done
 done
 north #
- 
+
