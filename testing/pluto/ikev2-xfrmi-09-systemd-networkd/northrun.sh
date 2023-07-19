@@ -9,7 +9,7 @@ ip -s link show ipsec2
 ip rule show
 ip route
 ip route show table 50
-../../guestbin/tcpdump.sh --stop -i ipsec1
+../../guestbin/tcpdump.sh --stop -i ipsec2
 # rm the test specific systemd-networkd file for next test
 rm /etc/systemd/network/ipsec2.netdev
 echo done

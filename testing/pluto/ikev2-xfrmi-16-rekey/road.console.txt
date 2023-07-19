@@ -8,6 +8,7 @@ road #
  ../../guestbin/wait-until-pluto-started
 road #
  ../../guestbin/tcpdump.sh --start -i eth0
+tcpdump /tmp/road.ikev2-xfrmi-16-rekey.eth0.tcpdump.pid is not running
 tcpdump started
 road #
  ipsec whack --impair revival
@@ -28,6 +29,7 @@ road #
  sleep 2
 road #
  ../../guestbin/tcpdump.sh --start -i ipsec1
+tcpdump /tmp/road.ikev2-xfrmi-16-rekey.ipsec1.tcpdump.pid is not running
 [ 00.00] device ipsec1 entered promiscuous mode
 tcpdump started
 road #
@@ -110,7 +112,6 @@ road #
  # next tcpdump outout should be empty
 road #
  ../../guestbin/tcpdump.sh --stop -i ipsec1 --host road
-reading from file /tmp/road.ikev2-xfrmi-16-rekey.ipsec1.tcpdump.pcap, link-type RAW (Raw IP)
 road #
  hostname | grep east > /dev/null && ip -s link show ipsec1
 road #
@@ -120,4 +121,4 @@ road #
 road #
  hostname | grep east > /dev/null && ip route
 road #
-
+ 

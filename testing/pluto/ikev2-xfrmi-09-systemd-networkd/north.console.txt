@@ -36,6 +36,7 @@ north #
  sleep  2
 north #
  ../../guestbin/tcpdump.sh --start -i ipsec2
+tcpdump /tmp/north.ikev2-xfrmi-09-systemd-networkd.ipsec2.tcpdump.pid is not running
 [ 00.00] device ipsec2 entered promiscuous mode
 tcpdump started
 north #
@@ -73,8 +74,7 @@ north #
 Error: ipv4: FIB table does not exist.
 Dump terminated
 north #
- ../../guestbin/tcpdump.sh --stop -i ipsec1
-[ 00.00] device ipsec2 left promiscuous mode
+ ../../guestbin/tcpdump.sh --stop -i ipsec2
 north #
  # rm the test specific systemd-networkd file for next test
 north #
