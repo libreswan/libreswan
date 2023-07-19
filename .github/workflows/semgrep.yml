@@ -9,7 +9,7 @@ on:
     branches: ["master", "main"]
   # Schedule the CI job (this method uses cron syntax):
   schedule:
-    - cron: '20 17 * * *' # Sets Semgrep to scan every day at 17:20 UTC.
+    - cron: "20 17 * * *" # Sets Semgrep to scan every day at 17:20 UTC.
     # It is recommended to change the schedule to a random time.
 
   # Enable manual trigger of the action. Useful for debugging purposes
@@ -19,7 +19,7 @@ jobs:
   semgrep:
     # User definable name of this GitHub Actions job.
     name: Scan
-    # If you are self-hosting, change the following `runs-on` value: 
+    # If you are self-hosting, change the following `runs-on` value:
     runs-on: ubuntu-latest
     permissions:
       # required for all workflows
@@ -39,7 +39,8 @@ jobs:
       - run: semgrep ci --sarif --output=semgrep.sarif --config auto --exclude-rule c.lang.security.insecure-use-memset.insecure-use-memset --exclude testing/
 
       - name: Upload SARIF file for GitHub Advanced Security Dashboard
-        uses: github/codeql-action/upload-sarif@v2
+        # pinning to full commit hash from tagged version v2.20.4
+        uses: github/codeql-action/upload-sarif@489225d82a57396c6f426a40e66d461b16b3461d
         with:
           sarif_file: semgrep.sarif
         if: always()
