@@ -63,7 +63,7 @@
 #include "whack_delete.h"
 #include "whack_status.h"
 #include "whack_trafficstatus.h"
-#include "whack_terminate.h"
+#include "whack_down.h"
 #include "whack_route.h"
 
 static void whack_rereadsecrets(struct show *s)
@@ -864,10 +864,10 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		dbg_whack(s, "oppo_initiate: stop:");
 	}
 
-	if (m->whack_terminate) {
-		dbg_whack(s, "terminate: start: %s", (m->name == NULL ? "<null>" : m->name));
-		whack_terminate(m, s);
-		dbg_whack(s, "terminate: stop: %s", (m->name == NULL ? "<null>" : m->name));
+	if (m->whack_down) {
+		dbg_whack(s, "down: start: %s", (m->name == NULL ? "<null>" : m->name));
+		whack_down(m, s);
+		dbg_whack(s, "down: stop: %s", (m->name == NULL ? "<null>" : m->name));
 	}
 
 	if (m->whack_status) {

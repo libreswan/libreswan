@@ -299,8 +299,8 @@ struct whack_message {
 		unsigned ipproto;
 	} oppo;
 
-	/* for WHACK_TERMINATE: */
-	bool whack_terminate;
+	/* for WHACK_DOWN: */
+	bool whack_down;
 
 	/* for WHACK_DELETE: */
 	bool whack_delete;

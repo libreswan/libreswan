@@ -261,7 +261,7 @@ ipsec_whack() {
 		usage="Usage: ipsec delete connectionname [--ctlsocket ${CTLSOCKET}]"
 		;;
 	    down|--down|terminate)
-		cmd="--terminate"
+		cmd="--terminate" # or --down
 		usage="Usage: ipsec down connectionname \\
 		[--remote-host ipaddr] [--ctlsocket ${CTLSOCKET}]"
 		;;

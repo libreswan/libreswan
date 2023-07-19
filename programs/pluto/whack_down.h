@@ -13,12 +13,12 @@
  * for more details.
  */
 
-#ifndef WHACK_TERMINATE_H
-#define WHACK_TERMINATE_H
+#ifndef WHACK_DOWN_H
+#define WHACK_DOWN_H
 
 struct show;
 struct whack_message;
 
-void whack_terminate(const struct whack_message *m, struct show *s);
+void whack_down(const struct whack_message *m, struct show *s);
 
 #endif

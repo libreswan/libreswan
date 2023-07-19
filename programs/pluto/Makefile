@@ -97,7 +97,7 @@ OBJS += whack_rekey.o
 OBJS += whack_delete.o
 OBJS += whack_route.o
 OBJS += whack_status.o
-OBJS += whack_terminate.o
+OBJS += whack_down.o
 
 # local (possibly more up to date) copy of <linux/xfrm.h>
 ifeq ($(USE_XFRM_HEADER_COPY),true)

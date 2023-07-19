@@ -21,7 +21,7 @@
 
 #include <stdbool.h>
 
-#include "whack_terminate.h"
+#include "whack_down.h"
 #include "connections.h"
 #include "show.h"
 #include "log.h"
@@ -49,7 +49,7 @@ static bool shared_phase1_connection(const struct connection *c)
 	return false;
 }
 
-static void terminate_connection(struct connection **c, struct logger *logger)
+static void down_connection(struct connection **c, struct logger *logger)
 {
 	connection_attach(*c, logger);
 
@@ -112,7 +112,7 @@ static void terminate_connection(struct connection **c, struct logger *logger)
 	connection_detach(*c, logger);
 }
 
-static bool whack_terminate_connections(struct show *s, struct connection **c,
+static bool whack_down_connections(struct show *s, struct connection **c,
 					const struct whack_message *m UNUSED)
 {
 	struct logger *logger = show_logger(s);
@@ -121,7 +121,7 @@ static bool whack_terminate_connections(struct show *s, struct connection **c,
 	case CK_PERMANENT:
 	case CK_INSTANCE:
 	case CK_LABELED_PARENT:
-		terminate_connection(c, logger); /* could delete C! */
+		down_connection(c, logger); /* could delete C! */
 		return true;
 	case CK_TEMPLATE:
 	case CK_GROUP:
@@ -136,7 +136,7 @@ static bool whack_terminate_connections(struct show *s, struct connection **c,
 	bad_case((*c)->local->kind);
 }
 
-void whack_terminate(const struct whack_message *m, struct show *s)
+void whack_down(const struct whack_message *m, struct show *s)
 {
 	if (m->name == NULL) {
 		/* leave bread crumb */
@@ -145,7 +145,7 @@ void whack_terminate(const struct whack_message *m, struct show *s)
 		return;
 	}
 
-	whack_connections_bottom_up(m, s, whack_terminate_connections,
+	whack_connections_bottom_up(m, s, whack_down_connections,
 				    (struct each) {
 					    .future_tense = "terminating",
 					    .past_tense = "terminated",

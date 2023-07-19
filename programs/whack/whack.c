@@ -330,7 +330,7 @@ enum option_enums {
 	OPT_UNROUTE,
 
 	OPT_INITIATE,
-	OPT_TERMINATE,
+	OPT_DOWN,
 	OPT_DELETE,
 	OPT_DELETEID,
 	OPT_DELETESTATE,
@@ -614,7 +614,8 @@ static const struct option long_opts[] = {
 	{ "unroute", no_argument, NULL, OPT_UNROUTE + OO },
 
 	{ "initiate", no_argument, NULL, OPT_INITIATE + OO },
-	{ "terminate", no_argument, NULL, OPT_TERMINATE + OO },
+	{ "down", no_argument, NULL, OPT_DOWN + OO },
+	{ "terminate", no_argument, NULL, OPT_DOWN + OO }, /* backwards compat */
 	{ "delete", no_argument, NULL, OPT_DELETE + OO },
 	{ "deleteid", no_argument, NULL, OPT_DELETEID + OO },
 	{ "deletestate", required_argument, NULL, OPT_DELETESTATE + OO + NUMERIC_ARG },
@@ -1328,8 +1329,8 @@ int main(int argc, char **argv)
 			msg.whack_initiate = true;
 			continue;
 
-		case OPT_TERMINATE:	/* --terminate */
-			msg.whack_terminate = true;
+		case OPT_DOWN:	/* --down | --terminate */
+			msg.whack_down = true;
 			continue;
 
 		case OPT_REKEY_IKE: /* --rekey-ike */
@@ -2581,7 +2582,7 @@ int main(int argc, char **argv)
 	if (seen[OPT_ROUTE] ||
 	    seen[OPT_UNROUTE] ||
 	    seen[OPT_INITIATE] ||
-	    seen[OPT_TERMINATE] ||
+	    seen[OPT_DOWN] ||
 	    seen[OPT_DELETE] ||
 	    seen[OPT_DELETEID] ||
 	    seen[OPT_DELETEUSER] ||
@@ -2617,7 +2618,7 @@ int main(int argc, char **argv)
 	      msg.redirect_to != NULL ||
 	      msg.global_redirect || msg.global_redirect_to ||
 	      msg.whack_initiate || msg.whack_oppo_initiate ||
-	      msg.whack_terminate ||
+	      msg.whack_down ||
 	      msg.whack_route || msg.whack_unroute || msg.whack_listen ||
 	      msg.whack_unlisten || msg.whack_list || msg.ike_buf_size ||
 	      msg.whack_ddos != DDOS_undefined || msg.whack_ddns ||
