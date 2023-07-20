@@ -54,10 +54,10 @@ up
 north #
  ip -s link show ipsec2
 X: ipsec2@lo: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
-    RX:  bytes packets errors dropped  missed   mcast
-           336       4      0       0       0       0
-    TX:  bytes packets errors dropped carrier collsns
-           336       4      0       0       0       0
+    RX:  bytes packets errors dropped  missed   mcast           
+           336       4      0       0       0       0 
+    TX:  bytes packets errors dropped carrier collsns           
+           336       4      0       0       0       0 
 north #
  ip rule show
 0:	from all lookup local
@@ -75,6 +75,10 @@ Error: ipv4: FIB table does not exist.
 Dump terminated
 north #
  ../../guestbin/tcpdump.sh --stop -i ipsec2
+[ 00.00] device ipsec2 left promiscuous mode
+reading from file /tmp/north.ikev2-xfrmi-09-systemd-networkd.ipsec2.tcpdump.pcap, link-type RAW (Raw IP)
+IP 192.0.3.254 > 192.0.2.254: ICMP echo request, id XXXX, seq 1, length 64
+IP 192.0.2.254 > 192.0.3.254: ICMP echo reply, id XXXX, seq 1, length 64
 north #
  # rm the test specific systemd-networkd file for next test
 north #
@@ -83,4 +87,4 @@ north #
  echo done
 done
 north #
-
+ 
