@@ -195,7 +195,7 @@ export LC_ALL
 # 	INTERFACE_IP
 # 		The IP to configure / expect on the interface? Currently is never set
 #
-#	PLUTO_XFRM_ROUTE
+#	PLUTO_XFRMI_ROUTE
 #		if an XFRM (ipsec-device) has been specified, value will be "yes"
 #
 #	XAUTH_FAILED
@@ -501,12 +501,15 @@ addsource() {
     if [ -z "${PLUTO_MY_SOURCEIP}" ]; then
         return ${st}
     fi
+    # XFRMi interface IPs are managed in Pluto
+    if [ "${PLUTO_XFRMI_ROUTE}" == "yes" ]; then
+        return ${st}
+    fi
+
     # check if given sourceip is local and add as alias if not
     if ! ip -${FAMILY} -o route get ${PLUTO_MY_SOURCEIP} | grep -q ^local; then
 	if [ -n "${VTI_IFACE}" -a "${VTI_ROUTING}" = yes ]; then
 	    interface="${VTI_IFACE}"
-	elif [ -n "${PLUTO_XFRMI_ROUTE}" ]; then
-	    interface=${PLUTO_VIRT_INTERFACE}
 	fi
 	it="ip addr add ${PLUTO_MY_SOURCEIP}/${MAX_CIDR} dev ${interface} scope ${SCOPE}"
 	oops="$(eval ${it} 2>&1)"
@@ -538,12 +541,15 @@ delsource() {
     if [ -z "${PLUTO_MY_SOURCEIP}" ]; then
         return ${st}
     fi
+    # XFRMi interface IPs are managed in Pluto
+    if [ "${PLUTO_XFRMI_ROUTE}" == "yes" ]; then
+        return ${st}
+    fi
+
     # Remove source ip if it's not used any more.
     if [ -z "$(ip -${FAMILY} -o route list src ${PLUTO_MY_SOURCEIP})" ]; then
 	if [ -n "${VTI_IFACE}" -a "${VTI_ROUTING}" = yes ]; then
 	    interface="${VTI_IFACE}"
-	elif [ -n "${PLUTO_XFRMI_ROUTE}" ]; then
-	    interface=${PLUTO_VIRT_INTERFACE}
 	fi
 	# If there is no ip we just return
 	if ! ip -${FAMILY} -o addr list dev ${interface} scope ${SCOPE} | \
