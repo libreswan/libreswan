@@ -162,14 +162,14 @@ def cmdchecks():
 
 	if "true" in nftables:
 		printfun("Checking 'nft' command")
-		nft = which("nft")
-		if nft:
+		nftyes = which("nft")
+		if nftyes:
 			print_result("OK","OK")
-			nftbales = True
+			nftyes = "true"
 		else:
 			print_result("WARN","MISSING")
 
-	if "true" in iptables and !nftbales:
+	if "true" in iptables and not "true" in nftyes:
 		printfun("Checking 'iptables' command")
 
 		if which("iptables"):
