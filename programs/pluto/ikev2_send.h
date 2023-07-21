@@ -176,5 +176,4 @@ bool emit_v2N(v2_notification_t ntype,
 bool emit_v2N_SIGNATURE_HASH_ALGORITHMS(lset_t sighash_policy,
 					pb_stream *outs);
 
-extern void ike_set_out_mark(const struct connection *c, ip_endpoint *ike_remote);
 #endif

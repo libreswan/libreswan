@@ -40,6 +40,10 @@
 #include "rnd.h"
 #include "kernel.h"	/* for get_my_cpi() */
 
+#ifdef USE_XFRM_INTERFACE
+#include "kernel_xfrm_interface.h"	/* for set_ike_mark_out() */
+#endif
+
 bool send_recorded_v2_message(struct ike_sa *ike,
 			      const char *where,
 			      enum message_role message)
@@ -51,7 +55,7 @@ bool send_recorded_v2_message(struct ike_sa *ike,
 	}
 
 #ifdef USE_XFRM_INTERFACE
-	ike_set_out_mark(ike->sa.st_connection, &ike->sa.st_remote_endpoint);
+	set_ike_mark_out(ike->sa.st_connection, &ike->sa.st_remote_endpoint);
 #endif
 
 	if (frags == NULL) {

@@ -61,4 +61,6 @@ extern void free_xfrmi_ipsec1(struct logger *logger);
 extern void unreference_xfrmi(struct connection *c);
 extern void reference_xfrmi(struct connection *c);
 
+void set_ike_mark_out(const struct connection *c, ip_endpoint *ike_remote);
+
 #endif

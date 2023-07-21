@@ -785,8 +785,7 @@ void unreference_xfrmi(struct connection *c)
 	}
 }
 
-void ike_set_out_mark(const struct connection *c, ip_endpoint *ike_remote);
-void ike_set_out_mark(const struct connection *c, ip_endpoint *ike_remote)
+void set_ike_mark_out(const struct connection *c, ip_endpoint *ike_remote)
 {
 	bool set_mark = false;
 	const struct spds *spds = &c->child.spds;
