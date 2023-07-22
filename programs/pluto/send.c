@@ -226,26 +226,24 @@ bool send_pbs_out_using_md(struct msg_digest *md, const char *where, struct pbs_
 			   md->md_logger);
 }
 
-bool send_chunks_using_state(struct state *st, const char *where,
-			     chunk_t chunk_a, chunk_t chunk_b)
+bool send_shunks_using_state(struct state *st, const char *where,
+			     shunk_t shunk_a, shunk_t shunk_b)
 {
 	return send_shunks(where, false, st->st_serialno,
 			   st->st_interface, st->st_remote_endpoint,
-			   HUNK_AS_SHUNK(chunk_a), HUNK_AS_SHUNK(chunk_b),
+			   shunk_a, shunk_b,
 			   st->st_logger);
 }
 
-bool send_chunk_using_state(struct state *st, const char *where, chunk_t packet)
+bool send_shunk_using_state(struct state *st, const char *where,
+			    shunk_t shunk)
 {
-	return send_chunks_using_state(st, where, packet, EMPTY_CHUNK);
+	return send_shunks_using_state(st, where, shunk, empty_shunk);
 }
 
 bool send_pbs_out_using_state(struct state *st, const char *where, struct pbs_out *pbs)
 {
-	return send_shunks(where, /*just_a_keepalive?*/false,
-			   st->st_serialno, st->st_interface, st->st_remote_endpoint,
-			   pbs_out_all(pbs), null_shunk,
-			   st->st_logger);
+	return send_shunk_using_state(st, where, pbs_out_all(pbs));
 }
 
 /*

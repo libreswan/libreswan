@@ -55,7 +55,11 @@ extern const shunk_t empty_shunk;
 shunk_t shunk1(const char *ptr); /* strlen() implied */
 shunk_t shunk2(const void *ptr, int len);
 
-#define HUNK_AS_SHUNK(HUNK) ({ typeof(HUNK) h_ = (HUNK); shunk2(h_.ptr, h_.len); })
+#define HUNK_AS_SHUNK(HUNK)			\
+	({					\
+		typeof(HUNK) *h_ = &(HUNK);	\
+		shunk2(h_->ptr, h_->len);	\
+	})
 #define THING_AS_SHUNK(THING) shunk2(&(THING), sizeof(THING))
 
 /*

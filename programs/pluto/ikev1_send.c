@@ -128,10 +128,10 @@ static bool send_v1_frags(struct state *st, const char *where)
 		    fragnum,
 		    packet_remainder_len == data_len ? " (last)" : "");
 
-		if (!send_chunks_using_state(st, where,
-					     chunk2(frag_prefix,
+		if (!send_shunks_using_state(st, where,
+					     shunk2(frag_prefix,
 						    NSIZEOF_isakmp_hdr + NSIZEOF_isakmp_ikefrag),
-					     chunk2(packet_cursor, data_len)))
+					     shunk2(packet_cursor, data_len)))
 			return false;
 
 		packet_remainder_len -= data_len;
@@ -211,7 +211,7 @@ static bool send_or_resend_v1_ike_msg_from_state(struct state *st,
 	    should_fragment_v1_ike_msg(st, len + natt_bonus, resending)) {
 		return send_v1_frags(st, where);
 	} else {
-		return send_chunk_using_state(st, where, st->st_v1_tpacket);
+		return send_hunk_using_state(st, where, st->st_v1_tpacket);
 	}
 }
 

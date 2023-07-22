@@ -28,15 +28,13 @@ struct msg_digest;
 bool send_pbs_out_using_md(struct msg_digest *md, const char *where, struct pbs_out *packet);
 bool send_pbs_out_using_state(struct state *st, const char *where, struct pbs_out *packet);
 
-bool send_chunks_using_state(struct state *st, const char *where,
-			     chunk_t a, chunk_t b);
-
-bool send_chunk_using_state(struct state *st, const char *where, chunk_t packet);
+bool send_shunks_using_state(struct state *st, const char *where, shunk_t a, shunk_t b);
+bool send_shunk_using_state(struct state *st, const char *where, shunk_t packet);
 
 #define send_hunk_using_state(ST, WHERE, HUNK)				\
 	({								\
-		chunk_t h_ = { .ptr = (HUNK).ptr, .len = (HUNK).len, };	\
-		send_chunk_using_state(ST, WHERE, h_);			\
+		shunk_t h_ = HUNK_AS_SHUNK(HUNK);			\
+		send_shunk_using_state(ST, WHERE, h_);			\
 	})
 
 bool send_keepalive_using_state(struct state *st, const char *where);
