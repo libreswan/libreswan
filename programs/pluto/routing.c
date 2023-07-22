@@ -469,11 +469,12 @@ void connection_initiate(struct connection *c, const threadtime_t *inception,
 		 });
 }
 
-void connection_terminate(struct connection **c, struct logger *logger, where_t where)
+void connection_terminate(struct connection *c, struct logger *logger, where_t where)
 {
-	dispatch(CONNECTION_TERMINATE, c,
+	dispatch(CONNECTION_TERMINATE, &c,
 		 logger, where,
 		 (struct annex) {0});
+	PASSERT(logger, c != NULL);
 }
 
 void connection_acquire(struct connection *c, threadtime_t *inception,
@@ -1856,6 +1857,19 @@ void dispatch(enum routing_event event,
 			FOR_EACH_ITEM(spd, &(*c)->child.spds) {
 				do_updown(UPDOWN_UP, *c, spd, &(*e->child)->sa, logger);
 				do_updown(UPDOWN_ROUTE, *c, spd, &(*e->child)->sa, logger);
+			}
+			return;
+
+		case X(TERMINATE, ROUTED_TUNNEL, PERMANENT):
+		case X(TERMINATE, ROUTED_TUNNEL, INSTANCE):
+		case X(TERMINATE, ROUTED_ONDEMAND, PERMANENT):
+		case X(TERMINATE, UNROUTED, PERMANENT):
+		case X(TERMINATE, UNROUTED_NEGOTIATION, PERMANENT):
+		case X(TERMINATE, UNROUTED_REVIVAL, PERMANENT):
+			if (BROKEN_TRANSITION) {
+				remove_connection_from_pending(*c);
+				delete_states_by_connection(*c);
+				connection_unroute(*c, HERE);
 			}
 			return;
 

@@ -55,10 +55,7 @@ static bool whack_delete_connection(struct show *s, struct connection **c,
 	case CK_PERMANENT:
 		llog(RC_LOG, (*c)->logger, "terminating SAs using this connection");
 
-		remove_connection_from_pending(*c);
-		delete_states_by_connection(*c);
-		connection_unroute(*c, HERE);
-
+		connection_terminate(*c, logger, HERE);
 		delete_connection(c);
 		return true;
 
@@ -81,30 +78,21 @@ static bool whack_delete_connection(struct show *s, struct connection **c,
 		 */
 		llog(RC_LOG, (*c)->logger, "terminating SAs using this connection");
 
-		remove_connection_from_pending(*c);
-		delete_states_by_connection(*c);
-		connection_unroute(*c, HERE);
-
+		connection_terminate(*c, logger, HERE);
 		delete_connection(c);
 		return true;
 
 	case CK_LABELED_TEMPLATE:
 		/* also need to unroute */
 
-		remove_connection_from_pending(*c);
-		delete_states_by_connection(*c);
-		connection_unroute(*c, HERE);
-
+		connection_terminate(*c, logger, HERE);
 		delete_connection(c);
 		return true;
 
 	case CK_LABELED_PARENT:
 		llog(RC_LOG, (*c)->logger, "terminating SAs using this connection");
 
-		remove_connection_from_pending(*c);
-		delete_states_by_connection(*c);
-		connection_unroute(*c, HERE);
-
+		connection_terminate(*c, logger, HERE);
 		delete_connection(c);
 		return true;
 
@@ -118,10 +106,7 @@ static bool whack_delete_connection(struct show *s, struct connection **c,
 		 */
 		PEXPECT(logger, (*c)->config->ike_version == IKEv2);
 
-		remove_connection_from_pending(*c);
-		delete_states_by_connection(*c);
-		connection_unroute(*c, HERE);
-
+		connection_terminate(*c, logger, HERE);
 		delete_connection(c);
 		return true;
 
