@@ -21,6 +21,7 @@
  */
 #define BROKEN_TRANSITION true
 
+#include "ip_packet.h"
 #include "pluto_timing.h"	/* for threadtime_t */
 
 struct connection;
@@ -124,8 +125,27 @@ enum routing_event {
 #define CONNECTION_EVENT_ROOF (CONNECTION_RESUME+1)
 };
 
+struct routing_annex {
+	struct ike_sa **ike;
+	struct child_sa **child;
+	const threadtime_t *const inception;
+	ip_packet packet;
+	bool background;
+	shunk_t sec_label;
+};
+
+void jam_routing_annex(struct jambuf *buf, const struct routing_annex *e);
+
 void set_routing(enum routing_event event,
 		 struct connection *c, enum routing routing,
 		 const struct child_sa *child, where_t where);
+
+PRINTF_LIKE(2)
+void ldbg_routing(struct logger *logger, const char *fmt, ...);
+
+void ldbg_routing_event(struct logger *logger,
+			enum routing_event event,
+			struct connection **c,
+			where_t where, const struct routing_annex *e);
 
 #endif

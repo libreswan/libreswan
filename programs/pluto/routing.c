@@ -57,15 +57,6 @@ static enum_names routing_event_names = {
 	NULL,
 };
 
-struct annex {
-	struct ike_sa **ike;
-	struct child_sa **child;
-	const threadtime_t *const inception;
-	ip_packet packet;
-	bool background;
-	shunk_t sec_label;
-};
-
 static bool zap_connection_states(enum routing_event event,
 				  struct connection **c,
 				  struct ike_sa **ike,
@@ -74,7 +65,7 @@ static bool zap_connection_states(enum routing_event event,
 static void dispatch(const enum routing_event event,
 		     struct connection **c,
 		     struct logger *logger, where_t where,
-		     struct annex e);
+		     struct routing_annex e);
 
 static void jam_event_sa(struct jambuf *buf, struct state *st)
 {
@@ -117,7 +108,7 @@ static void jam_routing(struct jambuf *buf,
 	}
 }
 
-static void jam_annex(struct jambuf *buf, const struct annex *e)
+void jam_routing_annex(struct jambuf *buf, const struct routing_annex *e)
 {
 	if (e->ike != NULL) {
 		jam_event_sa(buf, &(*e->ike)->sa);
@@ -134,18 +125,18 @@ static void jam_annex(struct jambuf *buf, const struct annex *e)
 static void jam_event(struct jambuf *buf,
 		      enum routing_event event,
 		      struct connection **c,
-		      const struct annex *e)
+		      const struct routing_annex *e)
 {
 	jam_enum_short(buf, &routing_event_names, event);
 	jam_string(buf, " to ");
 	jam_routing(buf, c);
-	jam_annex(buf, e);
+	jam_routing_annex(buf, e);
 }
 
-static void ldbg_dispatch(struct logger *logger,
-			  enum routing_event event,
-			  struct connection **c,
-			  where_t where, const struct annex *e)
+void ldbg_routing_event(struct logger *logger,
+			enum routing_event event,
+			struct connection **c,
+			where_t where, const struct routing_annex *e)
 {
 	if (DBGP(DBG_BASE)) {
 		/*
@@ -162,7 +153,7 @@ static void ldbg_dispatch(struct logger *logger,
 }
 
 PRINTF_LIKE(2)
-static void ldbg_routing(struct logger *logger, const char *fmt, ...)
+void ldbg_routing(struct logger *logger, const char *fmt, ...)
 {
 	if (DBGP(DBG_BASE)) {
 		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, logger, buf) {
@@ -181,7 +172,7 @@ void fake_connection_establish_inbound(struct ike_sa *ike, struct child_sa *chil
 	struct connection *cc = child->sa.st_connection;
 	dispatch(CONNECTION_ESTABLISH_INBOUND, &cc,
 		 child->sa.st_logger, where,
-		 (struct annex) {
+		 (struct routing_annex) {
 			 .ike = &ike,
 			 .child = &child,
 		 });
@@ -193,7 +184,7 @@ void fake_connection_establish_outbound(struct ike_sa *ike, struct child_sa *chi
 	struct connection *cc = child->sa.st_connection;
 	dispatch(CONNECTION_ESTABLISH_OUTBOUND, &cc,
 		 child->sa.st_logger, where,
-		 (struct annex) {
+		 (struct routing_annex) {
 			 .ike = &ike,
 			 .child = &child,
 		 });
@@ -463,7 +454,7 @@ void connection_initiate(struct connection *c, const threadtime_t *inception,
 
 	dispatch(CONNECTION_INITIATE, &c,
 		 c->logger, where,
-		 (struct annex) {
+		 (struct routing_annex) {
 			 .inception = inception,
 			 .background = background,
 		 });
@@ -473,7 +464,7 @@ void connection_terminate(struct connection *c, struct logger *logger, where_t w
 {
 	dispatch(CONNECTION_TERMINATE, &c,
 		 logger, where,
-		 (struct annex) {0});
+		 (struct routing_annex) {0});
 	PASSERT(logger, c != NULL);
 }
 
@@ -482,7 +473,7 @@ void connection_acquire(struct connection *c, threadtime_t *inception,
 {
 	dispatch(CONNECTION_ACQUIRE, &c,
 		 b->logger, where,
-		 (struct annex) {
+		 (struct routing_annex) {
 			 .inception = inception,
 			 .background = b->background,
 			 .sec_label = b->sec_label,
@@ -501,7 +492,7 @@ void connection_revive(struct connection *c, const threadtime_t *inception, wher
 
 	dispatch(CONNECTION_REVIVE, &c,
 		 c->logger, where,
-		 (struct annex) {
+		 (struct routing_annex) {
 			 .inception = inception,
 			 .background = true,
 		 });
@@ -724,7 +715,7 @@ static bool zap_connection_states(enum routing_event event,
 		struct connection *cc = connection_child->sa.st_connection;
 		dispatch(child_event, &cc,
 			 connection_child->sa.st_logger, where,
-			 (struct annex) {
+			 (struct routing_annex) {
 				 .ike = ike,
 				 .child = &connection_child,
 			 });
@@ -756,7 +747,7 @@ static bool zap_connection_states(enum routing_event event,
 			struct connection *cc = child->sa.st_connection;
 			dispatch(child_event, &cc,
 				 child->sa.st_logger, where,
-				 (struct annex) {
+				 (struct routing_annex) {
 					 .ike = ike,
 					 .child = &child,
 				 });
@@ -849,7 +840,7 @@ static bool unroute_connection_instances(enum routing_event event, struct connec
 		ldbg_routing(c->logger, "zapping instance "PRI_CONNECTION,
 			     pri_connection(cq.c, &cqb));
 		dispatch(CONNECTION_UNROUTE, &cq.c, cq.c->logger, where,
-			 (struct annex) {
+			 (struct routing_annex) {
 				 0,
 			 });
 		/* unroute doesn't delete instances, should it? */
@@ -872,7 +863,7 @@ void connection_route(struct connection *c, where_t where)
 	}
 
 	dispatch(CONNECTION_ROUTE, &c, c->logger, where,
-		 (struct annex) {
+		 (struct routing_annex) {
 			 0,
 		 });
 
@@ -887,7 +878,7 @@ void connection_unroute(struct connection *c, where_t where)
 	 */
 	dispatch(CONNECTION_UNROUTE, &c,
 		 c->logger, where,
-		 (struct annex) {
+		 (struct routing_annex) {
 			 0,
 		 });
 }
@@ -913,7 +904,7 @@ void connection_delete_child(struct ike_sa *ike, struct child_sa **child, where_
 		struct connection *cc = (*child)->sa.st_connection;
 		dispatch(CONNECTION_DELETE_CHILD, &cc,
 			 (*child)->sa.st_logger, where,
-			 (struct annex) {
+			 (struct routing_annex) {
 				 .ike = &ike,
 				 .child = child,
 			 });
@@ -941,7 +932,7 @@ void connection_timeout_ike(struct ike_sa **ike, where_t where)
 	struct connection *c = (*ike)->sa.st_connection;
 	dispatch(CONNECTION_TIMEOUT_IKE, &c,
 		 (*ike)->sa.st_logger, where,
-		 (struct annex) {
+		 (struct routing_annex) {
 			 .ike = ike,
 		 });
 }
@@ -957,7 +948,7 @@ void connection_delete_ike(struct ike_sa **ike, where_t where)
 
 	dispatch(CONNECTION_DELETE_IKE, &c,
 		 (*ike)->sa.st_logger, where,
-		 (struct annex) {
+		 (struct routing_annex) {
 			 .ike = ike,
 		 });
 }
@@ -975,7 +966,7 @@ void connection_suspend(struct child_sa *child, where_t where)
 	struct connection *cc = child->sa.st_connection;
 	dispatch(CONNECTION_SUSPEND, &cc,
 		 child->sa.st_logger, where,
-		 (struct annex) {
+		 (struct routing_annex) {
 			 .child = &child,
 		 });
 }
@@ -985,7 +976,7 @@ void connection_resume(struct child_sa *child, where_t where)
 	struct connection *cc = child->sa.st_connection;
 	dispatch(CONNECTION_RESUME, &cc,
 		 child->sa.st_logger, where,
-		 (struct annex) {
+		 (struct routing_annex) {
 			 .child = &child,
 		 });
 }
@@ -993,10 +984,10 @@ void connection_resume(struct child_sa *child, where_t where)
 void dispatch(enum routing_event event,
 	      struct connection **c,
 	      struct logger *logger, where_t where,
-	      struct annex ee)
+	      struct routing_annex ee)
 {
-	struct annex *e = &ee;
-	ldbg_dispatch(logger, event, c, where, e);
+	struct routing_annex *e = &ee;
+	ldbg_routing_event(logger, event, c, where, e);
 
 #if 0
 	/*
