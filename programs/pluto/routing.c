@@ -756,11 +756,6 @@ static bool zap_connection_states(enum routing_event event,
 		 */
 		if (is_instance(*c) &&
 		    (*c)->child.routing == RT_UNROUTED) {
-
-			remove_connection_from_pending(*c);
-			delete_states_by_connection(*c);
-			connection_unroute(*c, HERE);
-
 			delete_connection(c);
 		}
 		return true;
