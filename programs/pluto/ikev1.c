@@ -3086,6 +3086,8 @@ void ISAKMP_SA_established(const struct ike_sa *ike)
 		DBG_tcpdump_ike_sa_keys(&ike->sa);
 	}
 
+	ldbg(c->logger, ".newest_ike_sa "PRI_SO"->"PRI_SO,
+	     pri_so(c->newest_ike_sa), pri_so(ike->sa.st_serialno));
 	c->newest_ike_sa = ike->sa.st_serialno;
 }
 

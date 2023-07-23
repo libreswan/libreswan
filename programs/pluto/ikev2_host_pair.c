@@ -35,28 +35,29 @@
 
 static bool match_connection(const struct connection *c,
 			     struct authby remote_authby,
-			     bool *send_reject_response)
+			     bool *send_reject_response,
+			     struct logger *logger)
 {
 	pexpect(oriented(c)); /* searching oriented lists */
 
 	if (c->config->ike_version != IKEv2) {
 		connection_buf cb;
-		dbg("  skipping "PRI_CONNECTION", not IKEv2",
-		    pri_connection(c, &cb));
+		ldbg(logger, "  skipping "PRI_CONNECTION", not IKEv2",
+		     pri_connection(c, &cb));
 		return false;
 	}
 
 	if (is_group(c)) {
 		connection_buf cb;
-		dbg("  skipping "PRI_CONNECTION", connection group",
-		    pri_connection(c, &cb));
+		ldbg(logger, "  skipping "PRI_CONNECTION", connection group",
+		     pri_connection(c, &cb));
 		return false;
 	}
 
 	if (is_instance(c) && c->remote->host.id.kind == ID_NULL) {
 		connection_buf cb;
-		dbg("  skipping "PRI_CONNECTION", ID_NULL instance",
-		    pri_connection(c, &cb));
+		ldbg(logger, "  skipping "PRI_CONNECTION", ID_NULL instance",
+		     pri_connection(c, &cb));
 		return false;
 	}
 
@@ -66,10 +67,10 @@ static bool match_connection(const struct connection *c,
 	if (!authby_le(remote_authby, c->remote->host.config->authby)) {
 		connection_buf cb;
 		authby_buf ab, cab;
-		dbg("  skipping "PRI_CONNECTION", %s missing required authby %s",
-		    pri_connection(c, &cb),
-		    str_authby(c->remote->host.config->authby, &cab),
-		    str_authby(remote_authby, &ab));
+		ldbg(logger, "  skipping "PRI_CONNECTION", %s missing required authby %s",
+		     pri_connection(c, &cb),
+		     str_authby(c->remote->host.config->authby, &cab),
+		     str_authby(remote_authby, &ab));
 		return false;
 	}
 
@@ -97,8 +98,8 @@ static bool match_connection(const struct connection *c,
 			}
 		}
 		connection_buf cb;
-		dbg("  skipping "PRI_CONNECTION", never negotiate",
-		    pri_connection(c, &cb));
+		ldbg(logger, "  skipping "PRI_CONNECTION", never negotiate",
+		     pri_connection(c, &cb));
 		return false;
 	}
 
@@ -119,10 +120,10 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 	address_buf lb;
 	address_buf rb;
 	authby_buf pb;
-	dbg("%s() %s->%s remote_authby=%s", __func__,
-	    str_address(&remote_address, &rb),
-	    str_address(&local_address, &lb),
-	    str_authby(remote_authby, &pb));
+	ldbg(md->md_logger, "%s() %s->%s remote_authby=%s", __func__,
+	     str_address(&remote_address, &rb),
+	     str_address(&local_address, &lb),
+	     str_authby(remote_authby, &pb));
 
 	/*
 	 * Pass #1: look for "static" or established connections which
@@ -131,7 +132,8 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 	struct connection *c = NULL;
 	FOR_EACH_HOST_PAIR_CONNECTION(local_address, remote_address, d) {
 
-		if (!match_connection(d, remote_authby, send_reject_response)) {
+		if (!match_connection(d, remote_authby, send_reject_response,
+				      md->md_logger)) {
 			continue;
 		}
 
@@ -142,10 +144,15 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 		 */
 		if (d->newest_ike_sa != SOS_NOBODY) {
 			/* instant winner */
+			connection_buf cb;
+			ldbg(md->md_logger, "  instant winner with "PRI_CONNECTION" IKE SA "PRI_SO,
+			     pri_connection(d, &cb),
+			     pri_so(d->newest_ike_sa));
 			c = d;
 			break;
 		}
 		if (c == NULL) {
+			ldbg(md->md_logger, "  saving for later");
 			c = d;
 		}
 	}
@@ -167,6 +174,9 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 			return rw_responder_instantiate(c, remote_address, HERE);
 		}
 
+		connection_buf cb;
+		ldbg(md->md_logger, "winner is "PRI_CONNECTION,
+		     pri_connection(c, &cb));
 		return c;
 	}
 
@@ -190,7 +200,8 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 	 */
 	FOR_EACH_HOST_PAIR_CONNECTION(local_address, unset_address, d) {
 
-		if (!match_connection(d, remote_authby, send_reject_response)) {
+		if (!match_connection(d, remote_authby, send_reject_response,
+				      md->md_logger)) {
 			continue;
 		}
 
@@ -199,8 +210,9 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 		 */
 		if (is_template(d) && !is_opportunistic(d)) {
 			connection_buf cb;
-			dbg("  accepting "PRI_CONNECTION", non-opportunistic",
-			    pri_connection(d, &cb));
+			ldbg(md->md_logger,
+			     "  instant winner with non-opportunistic template "PRI_CONNECTION,
+			     pri_connection(d, &cb));
 			c = d;
 			break;
 		}
