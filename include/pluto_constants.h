@@ -888,7 +888,6 @@ enum sa_policy_bits {
 	POLICY_MSDH_DOWNGRADE_IX, /* allow IKEv2 rekey to downgrade DH group - Microsoft bug */
 	POLICY_ALLOW_NO_SAN_IX, /* allow a certificate conn to not have IKE ID on cert SAN */
 	POLICY_DNS_MATCH_ID_IX, /* perform reverse DNS lookup on IP to confirm ID */
-	POLICY_SHA2_TRUNCBUG_IX, /* workaround old Linux kernel (android 4.x) */
 
 	/* connection policy
 	 * Other policies could vary per state object.  These live in connection.
@@ -931,7 +930,6 @@ enum sa_policy_bits {
 #define POLICY_MSDH_DOWNGRADE	LELEM(POLICY_MSDH_DOWNGRADE_IX)
 #define POLICY_ALLOW_NO_SAN	LELEM(POLICY_ALLOW_NO_SAN_IX)
 #define POLICY_DNS_MATCH_ID	LELEM(POLICY_DNS_MATCH_ID_IX)
-#define POLICY_SHA2_TRUNCBUG	LELEM(POLICY_SHA2_TRUNCBUG_IX)
 #define POLICY_OPPORTUNISTIC	LELEM(POLICY_OPPORTUNISTIC_IX)	/* is this opportunistic? */
 #define POLICY_GROUPINSTANCE	LELEM(POLICY_GROUPINSTANCE_IX)	/* is this a group template instance? */
 #define POLICY_ROUTE	LELEM(POLICY_ROUTE_IX)	/* do we want to keep this connection routed? */

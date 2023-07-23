@@ -255,6 +255,7 @@ struct config {
 
 	bool mobike;			/* Allow MOBIKE */
 	bool intermediate;		/* allow Intermediate Exchange */
+	bool sha2_truncbug;		/* workaround old Linux kernel (android 4.x) */
 
 	struct config_end end[END_ROOF];
 };

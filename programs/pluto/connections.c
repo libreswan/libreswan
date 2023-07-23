@@ -2006,6 +2006,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 		}
 	}
 
+	config->sha2_truncbug = extract_yn(wm->sha2_truncbug, /*default*/false);
+
 	config->mobike = extract_yn(wm->mobike, /*default*/false);
 	if (config->mobike) {
 		if (wm->ike_version < IKEv2) {
@@ -3249,7 +3251,7 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 	PP(MSDH_DOWNGRADE);
 	PP(ALLOW_NO_SAN);
 	PP(DNS_MATCH_ID);
-	PP(SHA2_TRUNCBUG);
+	CP(sha2_truncbug);
 
 	/* note reversed logic */
 	if (!c->config->rekey) {

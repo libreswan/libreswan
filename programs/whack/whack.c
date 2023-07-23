@@ -732,8 +732,8 @@ static const struct option long_opts[] = {
 	PS("ms-dh-downgrade", MSDH_DOWNGRADE),
 	PS("dns-match-id", DNS_MATCH_ID),
 	PS("allow-cert-without-san-id", ALLOW_NO_SAN),
-	PS("sha2-truncbug", SHA2_TRUNCBUG),
-	PS("sha2_truncbug", SHA2_TRUNCBUG), /* backwards compatibility */
+	{ "sha2-truncbug", no_argument, NULL, CD_SHA2_TRUNCBUG + OO },
+	{ "sha2_truncbug", no_argument, NULL, CD_SHA2_TRUNCBUG + OO }, /* backwards compatibility */
 	PS("aggressive", AGGRESSIVE),
 	PS("aggrmode", AGGRESSIVE), /*  backwards compatibility */
 
@@ -1827,10 +1827,13 @@ int main(int argc, char **argv)
 		case CDP_SINGLETON + POLICY_DNS_MATCH_ID_IX:
 		/* --allow-cert-without-san-id */
 		case CDP_SINGLETON + POLICY_ALLOW_NO_SAN_IX:
-		/* --sha2-truncbug or --sha2_truncbug */
-		case CDP_SINGLETON + POLICY_SHA2_TRUNCBUG_IX:
 
 			msg.policy |= LELEM(c - CDP_SINGLETON);
+			continue;
+
+		/* --sha2-truncbug or --sha2_truncbug */
+		case CD_SHA2_TRUNCBUG:
+			msg.sha2_truncbug = YN_YES;
 			continue;
 
 		/* --intermediate */

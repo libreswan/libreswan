@@ -1701,7 +1701,7 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 		said_next->integ = ta->ta_integ;
 #ifdef USE_SHA2
 		if (said_next->integ == &ike_alg_integ_sha2_256 &&
-			LIN(POLICY_SHA2_TRUNCBUG, c->policy)) {
+		    c->config->sha2_truncbug) {
 			if (kernel_ops->sha2_truncbug_support) {
 				if (libreswan_fipsmode() == 1) {
 					log_state(RC_LOG_SERIOUS, st,

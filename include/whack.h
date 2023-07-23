@@ -173,6 +173,7 @@ struct whack_message {
 	bool is_connection_group;
 	enum yn_options mobike;		/* allow MOBIKE */
 	enum yn_options intermediate;	/* allow Intermediate Exchange */
+	enum yn_options sha2_truncbug;	/* allow Intermediate Exchange */
 
 	uintmax_t sa_ipsec_max_bytes;
 	uintmax_t sa_ipsec_max_packets;
