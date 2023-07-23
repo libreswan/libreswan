@@ -1823,7 +1823,7 @@ static bool is_virtual_net_used(struct connection *c,
 				return true;
 			}
 
-			if (POLICY_OVERLAPIP & c->policy & d->policy) {
+			if (c->config->overlapip && d->config->overlapip) {
 				connection_buf cbuf;
 				subnet_buf pcb, dcb;
 				llog(RC_LOG, c->logger,
@@ -1843,7 +1843,7 @@ static bool is_virtual_net_used(struct connection *c,
 			 * report.
 			 */
 
-			if (LIN(POLICY_OVERLAPIP, c->policy)) {
+			if (c->config->overlapip) {
 				/* not C; must be D objecting */
 				connection_buf cbuf;
 				subnet_buf pcb, dcb;
@@ -1852,7 +1852,7 @@ static bool is_virtual_net_used(struct connection *c,
 				     str_selector_subnet(peer_net, &pcb),
 				     pri_connection(d, &cbuf),
 				     str_selector_subnet(&d->spd->remote->client, &dcb));
-			} else if (LIN(POLICY_OVERLAPIP, d->policy)) {
+			} else if (d->config->overlapip) {
 				/* not D; must be C objecting */
 				connection_buf cbuf;
 				subnet_buf pcb, dcb;

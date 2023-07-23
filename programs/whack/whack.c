@@ -502,6 +502,7 @@ enum option_enums {
 	CD_IKEV2_ALLOW_NARROWING,
 	CD_ESP,
 	CD_INTERMEDIATE,
+	CD_OVERLAPIP,
 	CD_INITIATEONTRAFFIC,
 #define CD_LAST CD_INITIATEONTRAFFIC	/* last connection description */
 
@@ -724,7 +725,7 @@ static const struct option long_opts[] = {
 	PS("encrypt", ENCRYPT),
 	PS("authenticate", AUTHENTICATE),
 	PS("compress", COMPRESS),
-	PS("overlapip", OVERLAPIP),
+	{ "overlapip", no_argument, NULL, CD_OVERLAPIP + OO },
 	PS("tunnel", TUNNEL),
 	{ "tunnelipv4", no_argument, NULL, CD_TUNNELIPV4 + OO },
 	{ "tunnelipv6", no_argument, NULL, CD_TUNNELIPV6 + OO },
@@ -1804,8 +1805,6 @@ int main(int argc, char **argv)
 		case CDP_SINGLETON + POLICY_MODECFG_PULL_IX:
 		/* --aggrmode */
 		case CDP_SINGLETON + POLICY_AGGRESSIVE_IX:
-		/* --overlapip */
-		case CDP_SINGLETON + POLICY_OVERLAPIP_IX:
 
 		/* --ikefrag-allow */
 		case CDP_SINGLETON + POLICY_IKE_FRAG_ALLOW_IX:
@@ -1829,6 +1828,11 @@ int main(int argc, char **argv)
 		case CDP_SINGLETON + POLICY_ALLOW_NO_SAN_IX:
 
 			msg.policy |= LELEM(c - CDP_SINGLETON);
+			continue;
+
+		/* --overlapip */
+		case CD_OVERLAPIP:
+			msg.overlapip = YN_YES;
 			continue;
 
 		/* --sha2-truncbug or --sha2_truncbug */

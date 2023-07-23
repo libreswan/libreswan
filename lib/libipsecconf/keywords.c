@@ -590,7 +590,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
 
   { "encapsulation",  kv_conn,  kt_enum,  KNCF_ENCAPS,  kw_yna_list, NULL, },
 
-  { "overlapip",  kv_conn,  kt_bool,  KNCF_OVERLAPIP, NULL, NULL, },
+  { "overlapip",  kv_conn,  kt_enum,  KNCF_OVERLAPIP, kw_yn_list, NULL, },
   { "reauth",  kv_conn,  kt_enum,  KNCF_REAUTH, kw_yn_list, NULL, },
   { "rekey",  kv_conn,  kt_enum,  KNCF_REKEY, kw_yn_list, NULL, },
   { "rekeymargin",  kv_conn,  kt_time,  KNCF_REKEYMARGIN_MS, NULL, NULL, },

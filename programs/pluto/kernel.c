@@ -791,7 +791,7 @@ static struct spd_owner spd_conflict(const struct spd_route *c_spd,
 
 		if (!selector_eq_selector(c_spd->local->client, d_spd->local->client)) {
 			ldbg_spd(logger, indent, d_spd, "policy skipped;  different local selectors");
-		} else if ((c->policy & POLICY_OVERLAPIP) && (d->policy & POLICY_OVERLAPIP)) {
+		} else if (c->config->overlapip && d->config->overlapip) {
 			ldbg_spd(logger, indent, d_spd, "policy skipped;  both ends have POLICY_OVERLAPIP");
 		} else {
 			/* winner? */
@@ -2137,7 +2137,7 @@ bool install_inbound_ipsec_sa(struct child_sa *child, where_t where)
 					break;
 
 				/* Both declared that overlapping is OK. */
-				if (LIN(POLICY_OVERLAPIP, c->policy & co->policy))
+				if (c->config->overlapip && co->config->overlapip)
 					break;
 			}
 

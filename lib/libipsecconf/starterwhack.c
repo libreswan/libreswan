@@ -674,6 +674,7 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	msg.mobike = conn->options[KNCF_MOBIKE]; /*yn_option*/
 	msg.intermediate = conn->options[KNCF_INTERMEDIATE]; /*yn_option*/
 	msg.sha2_truncbug = conn->options[KNCF_SHA2_TRUNCBUG]; /* workaround old Linux kernel (android 4.x) */
+	msg.overlapip = conn->options[KNCF_OVERLAPIP]; /* can two conns that have subnet=vhost: declare the same IP? */
 
 	if (conn->options_set[KNCF_XAUTHBY])
 		msg.xauthby = conn->options[KNCF_XAUTHBY];

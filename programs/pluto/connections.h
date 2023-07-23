@@ -256,6 +256,9 @@ struct config {
 	bool mobike;			/* Allow MOBIKE */
 	bool intermediate;		/* allow Intermediate Exchange */
 	bool sha2_truncbug;		/* workaround old Linux kernel (android 4.x) */
+	bool overlapip;			/* can two conns that have
+					 * subnet=vhost: declare the
+					 * same IP? */
 
 	struct config_end end[END_ROOF];
 };

@@ -2007,6 +2007,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	}
 
 	config->sha2_truncbug = extract_yn(wm->sha2_truncbug, /*default*/false);
+	config->overlapip = extract_yn(wm->overlapip, /*default*/false);
 
 	config->mobike = extract_yn(wm->mobike, /*default*/false);
 	if (config->mobike) {
@@ -3269,7 +3270,7 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 	PP(XAUTH);
 	PP(MODECFG_PULL);
 	PP(AGGRESSIVE);
-	PP(OVERLAPIP);
+	CP(overlapip);
 
 	CP(ikev2_allow_narrowing);
 
