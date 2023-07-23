@@ -8,6 +8,7 @@ ipsec pk12util -i OUTPUT/hog-west.p12 -W secret
 
 ipsec start
 ../../guestbin/wait-until-pluto-started
+ipsec whack --impair suppress-retransmits
 ipsec auto --add old-west
 ipsec auto --add new-west
 ipsec auto --add hog-west

@@ -39,6 +39,8 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
+ ipsec whack --impair suppress-retransmits
+west #
  ipsec auto --add old-west
 002 "old-west": added IKEv2 connection
 west #
