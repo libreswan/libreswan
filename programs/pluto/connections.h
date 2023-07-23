@@ -254,6 +254,7 @@ struct config {
 					 * ephemeral */
 
 	bool mobike;			/* Allow MOBIKE */
+	bool intermediate;		/* allow Intermediate Exchange */
 
 	struct config_end end[END_ROOF];
 };

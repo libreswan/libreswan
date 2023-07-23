@@ -172,6 +172,7 @@ struct whack_message {
 	enum autostart autostart;
 	bool is_connection_group;
 	enum yn_options mobike;		/* allow MOBIKE */
+	enum yn_options intermediate;	/* allow Intermediate Exchange */
 
 	uintmax_t sa_ipsec_max_bytes;
 	uintmax_t sa_ipsec_max_packets;

@@ -147,7 +147,6 @@ static const char *const sa_policy_bit_name[] = {
 	P(POLICY_PPK_INSIST),
 	P(POLICY_ESN_NO),
 	P(POLICY_ESN_YES),
-	P(POLICY_INTERMEDIATE),
 	P(POLICY_IGNORE_PEER_DNS),
 #undef P
 };

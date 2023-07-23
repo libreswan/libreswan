@@ -719,9 +719,8 @@ static const struct option long_opts[] = {
 
 	/* option for cert rotation */
 
+	{ "intermediate", no_argument, NULL, CD_INTERMEDIATE + OO },
 #define PS(o, p)	{ o, no_argument, NULL, CDP_SINGLETON + POLICY_##p##_IX + OO }
-	PS("intermediate", INTERMEDIATE),
-
 	PS("encrypt", ENCRYPT),
 	PS("authenticate", AUTHENTICATE),
 	PS("compress", COMPRESS),
@@ -1808,9 +1807,6 @@ int main(int argc, char **argv)
 		/* --overlapip */
 		case CDP_SINGLETON + POLICY_OVERLAPIP_IX:
 
-		/* --intermediate */
-		case CDP_SINGLETON + POLICY_INTERMEDIATE_IX:
-
 		/* --ikefrag-allow */
 		case CDP_SINGLETON + POLICY_IKE_FRAG_ALLOW_IX:
 		/* --ikefrag-force */
@@ -1835,6 +1831,11 @@ int main(int argc, char **argv)
 		case CDP_SINGLETON + POLICY_SHA2_TRUNCBUG_IX:
 
 			msg.policy |= LELEM(c - CDP_SINGLETON);
+			continue;
+
+		/* --intermediate */
+		case CD_INTERMEDIATE:
+			msg.intermediate = YN_YES;
 			continue;
 
 		/* --mobike */

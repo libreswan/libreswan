@@ -672,6 +672,7 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	conn_log_val(conn, "accept-redirect-to", msg.accept_redirect_to);
 
 	msg.mobike = conn->options[KNCF_MOBIKE]; /*yn_option*/
+	msg.intermediate = conn->options[KNCF_INTERMEDIATE]; /*yn_option*/
 
 	if (conn->options_set[KNCF_XAUTHBY])
 		msg.xauthby = conn->options[KNCF_XAUTHBY];

@@ -1999,6 +1999,13 @@ static diag_t extract_connection(const struct whack_message *wm,
 		return diag("opportunistic connection MUST have IKEv2");
 	}
 
+	config->intermediate = extract_yn(wm->intermediate, /*default*/false);
+	if (config->intermediate) {
+		if (wm->ike_version < IKEv2) {
+			return diag("INTERMEDIATE requires IKEv2");
+		}
+	}
+
 	config->mobike = extract_yn(wm->mobike, /*default*/false);
 	if (config->mobike) {
 		if (wm->ike_version < IKEv2) {
@@ -3278,7 +3285,7 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 	PP(PPK_INSIST);
 	PP(ESN_NO);
 	PP(ESN_YES);
-	PP(INTERMEDIATE);
+	CP(intermediate);
 	PP(IGNORE_PEER_DNS);
 
 	/* just in case something was missed */

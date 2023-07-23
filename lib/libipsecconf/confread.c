@@ -1314,12 +1314,6 @@ static bool load_conn(struct starter_conn *conn,
 		}
 	}
 
-	if (conn->options_set[KNCF_INTERMEDIATE]) {
-		if (conn->ike_version >= IKEv2) {
-			conn->policy |= POLICY_INTERMEDIATE;
-		}
-	}
-
 	if (conn->options_set[KNCF_PPK]) {
 		lset_t ppk = LEMPTY;
 
