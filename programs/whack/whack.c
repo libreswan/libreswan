@@ -761,7 +761,7 @@ static const struct option long_opts[] = {
 	{ "cisco_unity", no_argument, NULL, CD_CISCO_UNITY + OO },	/* obsolete _ */
 	{ "cisco-unity", no_argument, NULL, CD_CISCO_UNITY + OO },
 	{ "fake-strongswan", no_argument, NULL, CD_FAKE_STRONGSWAN + OO },
-	PS("mobike", MOBIKE),
+	{ "mobike", no_argument, NULL, CD_MOBIKE + OO },
 
 	{ "dpddelay", required_argument, NULL, CD_DPDDELAY + OO },
 	{ "dpdtimeout", required_argument, NULL, CD_DPDTIMEOUT + OO },
@@ -1808,9 +1808,6 @@ int main(int argc, char **argv)
 		/* --overlapip */
 		case CDP_SINGLETON + POLICY_OVERLAPIP_IX:
 
-		/* --mobike */
-		case CDP_SINGLETON + POLICY_MOBIKE_IX:
-
 		/* --intermediate */
 		case CDP_SINGLETON + POLICY_INTERMEDIATE_IX:
 
@@ -1838,6 +1835,11 @@ int main(int argc, char **argv)
 		case CDP_SINGLETON + POLICY_SHA2_TRUNCBUG_IX:
 
 			msg.policy |= LELEM(c - CDP_SINGLETON);
+			continue;
+
+		/* --mobike */
+		case CD_MOBIKE:
+			msg.mobike = YN_YES;
 			continue;
 
 		case CD_INITIATEONTRAFFIC:		/* --initiateontraffic */

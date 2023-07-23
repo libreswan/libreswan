@@ -143,7 +143,6 @@ static const char *const sa_policy_bit_name[] = {
 	P(POLICY_IKE_FRAG_ALLOW),
 	P(POLICY_IKE_FRAG_FORCE),
 	P(POLICY_NO_IKEPAD),
-	P(POLICY_MOBIKE),
 	P(POLICY_PPK_ALLOW),
 	P(POLICY_PPK_INSIST),
 	P(POLICY_ESN_NO),

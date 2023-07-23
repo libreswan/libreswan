@@ -52,7 +52,7 @@ static bool add_mobike_response_payloads(shunk_t cookie2, struct msg_digest *md,
 static bool mobike_check_established(struct ike_sa *ike)
 {
 	struct connection *c = ike->sa.st_connection;
-	bool ret = (LIN(POLICY_MOBIKE, c->policy) &&
+	bool ret = (c->config->mobike &&
 		    ike->sa.st_ike_seen_v2n_mobike_supported &&
 		    ike->sa.st_ike_sent_v2n_mobike_supported &&
 		    IS_IKE_SA_ESTABLISHED(&ike->sa));

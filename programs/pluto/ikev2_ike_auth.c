@@ -404,7 +404,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 		return STF_INTERNAL_ERROR;
 	}
 
-	if (LIN(POLICY_MOBIKE, ike->sa.st_connection->policy)) {
+	if (ike->sa.st_connection->config->mobike) {
 		ike->sa.st_ike_sent_v2n_mobike_supported = true;
 		if (!emit_v2N(v2N_MOBIKE_SUPPORTED, request.pbs)) {
 			return STF_INTERNAL_ERROR;
@@ -1098,7 +1098,7 @@ bool v2_ike_sa_auth_responder_establish(struct ike_sa *ike, bool *send_redirecti
 	}
 
 	/* send response */
-	if (LIN(POLICY_MOBIKE, c->policy) && ike->sa.st_ike_seen_v2n_mobike_supported) {
+	if (c->config->mobike && ike->sa.st_ike_seen_v2n_mobike_supported) {
 		if (c->remote->host.config->type == KH_ANY) {
 			/* only allow %any connection to mobike */
 			ike->sa.st_ike_sent_v2n_mobike_supported = true;

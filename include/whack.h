@@ -171,6 +171,7 @@ struct whack_message {
 	enum shunt_policy shunt[SHUNT_KIND_ROOF];
 	enum autostart autostart;
 	bool is_connection_group;
+	enum yn_options mobike;		/* allow MOBIKE */
 
 	uintmax_t sa_ipsec_max_bytes;
 	uintmax_t sa_ipsec_max_packets;

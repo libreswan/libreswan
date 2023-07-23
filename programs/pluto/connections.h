@@ -253,6 +253,8 @@ struct config {
 					 * local port will be
 					 * ephemeral */
 
+	bool mobike;			/* Allow MOBIKE */
+
 	struct config_end end[END_ROOF];
 };
 
@@ -577,7 +579,6 @@ struct connection {
 	struct pluto_xfrmi *xfrmi; /* pointer to possibly shared interface */
 
 	bool nat_keepalive;		/* Send NAT-T Keep-Alives if we are behind NAT */
-	bool mobike;			/* Allow MOBIKE */
 	enum ikev1_natt_policy ikev1_natt; /* whether or not to send IKEv1 draft/rfc NATT VIDs */
 	enum yna_options encaps; /* encapsulation mode of auto/yes/no - formerly forceencaps=yes/no */
 

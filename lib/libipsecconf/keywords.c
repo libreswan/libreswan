@@ -523,7 +523,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "decap-dscp",  kv_conn | kv_processed,  kt_bool,  KNCF_DECAP_DSCP,  NULL, NULL, },
   { "nopmtudisc",  kv_conn | kv_processed,  kt_bool,  KNCF_NOPMTUDISC,  NULL, NULL, },
   { "fragmentation",  kv_conn | kv_processed,  kt_enum,  KNCF_IKE_FRAG,  kw_ynf_list, NULL, },
-  { "mobike",  kv_conn,  kt_bool,  KNCF_MOBIKE, NULL, NULL, },
+  { "mobike",  kv_conn,  kt_enum,  KNCF_MOBIKE, kw_yn_list, NULL, },
   { "narrowing",  kv_conn,  kt_enum,  KNCF_IKEv2_ALLOW_NARROWING, kw_yn_list, NULL, },
   { "pam-authorize",  kv_conn,  kt_bool,  KNCF_IKEv2_PAM_AUTHORIZE, NULL, NULL, },
   { "send-redirect",  kv_conn,  kt_enum,  KNCF_SEND_REDIRECT, kw_yna_list, NULL, },

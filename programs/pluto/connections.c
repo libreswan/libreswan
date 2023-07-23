@@ -1999,17 +1999,14 @@ static diag_t extract_connection(const struct whack_message *wm,
 		return diag("opportunistic connection MUST have IKEv2");
 	}
 
-	if (wm->policy & POLICY_MOBIKE &&
-	    c->config->ike_version < IKEv2) {
-		return diag("MOBIKE requires IKEv2");
-	}
-
-	if ((wm->policy & POLICY_MOBIKE) &&
-	    (wm->policy & POLICY_TUNNEL) == LEMPTY) {
-		return diag("MOBIKE requires tunnel mode");
-	}
-
-	if (wm->policy & POLICY_MOBIKE) {
+	config->mobike = extract_yn(wm->mobike, /*default*/false);
+	if (config->mobike) {
+		if (wm->ike_version < IKEv2) {
+			return diag("MOBIKE requires IKEv2");
+		}
+		if ((wm->policy & POLICY_TUNNEL) == LEMPTY) {
+			return diag("MOBIKE requires tunnel mode");
+		}
 		if (kernel_ops->migrate_ipsec_sa_is_enabled == NULL) {
 			return diag("MOBIKE is not supported by %s kernel interface",
 				    kernel_ops->interface_name);
@@ -3276,7 +3273,7 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 	PP(IKE_FRAG_ALLOW);
 	PP(IKE_FRAG_FORCE);
 	PP(NO_IKEPAD);
-	PP(MOBIKE);
+	CP(mobike);
 	PP(PPK_ALLOW);
 	PP(PPK_INSIST);
 	PP(ESN_NO);
