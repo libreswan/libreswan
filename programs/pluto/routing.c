@@ -442,62 +442,6 @@ static void negotiation_to_ondemand(enum routing_event event,
 	set_routing(event, c, rt_ondemand, NULL, where);
 }
 
-void connection_initiate(struct connection *c, const threadtime_t *inception,
-			 bool background, where_t where)
-{
-	if (c->config->ike_version == IKEv1) {
-		ipsecdoi_initiate(c, c->policy, SOS_NOBODY, inception,
-				  HUNK_AS_SHUNK(c->child.sec_label),
-				  background, c->logger);
-		return;
-	}
-
-	dispatch(CONNECTION_INITIATE, &c,
-		 c->logger, where,
-		 (struct routing_annex) {
-			 .inception = inception,
-			 .background = background,
-		 });
-}
-
-void connection_terminate(struct connection *c, struct logger *logger, where_t where)
-{
-	dispatch(CONNECTION_TERMINATE, &c,
-		 logger, where,
-		 (struct routing_annex) {0});
-	PASSERT(logger, c != NULL);
-}
-
-void connection_acquire(struct connection *c, threadtime_t *inception,
-			const struct kernel_acquire *b, where_t where)
-{
-	dispatch(CONNECTION_ACQUIRE, &c,
-		 b->logger, where,
-		 (struct routing_annex) {
-			 .inception = inception,
-			 .background = b->background,
-			 .sec_label = b->sec_label,
-			 .packet = b->packet,
-		 });
-}
-
-void connection_revive(struct connection *c, const threadtime_t *inception, where_t where)
-{
-	if (c->config->ike_version == IKEv1 && is_labeled(c)) {
-		initiate_connection(c, /*remote-host-name*/NULL,
-				    /*background*/true,
-				    c->logger);
-		return;
-	}
-
-	dispatch(CONNECTION_REVIVE, &c,
-		 c->logger, where,
-		 (struct routing_annex) {
-			 .inception = inception,
-			 .background = true,
-		 });
-}
-
 /*
  * Delete the ROUTED_TUNNEL, and possibly delete the connection.
  */
@@ -887,6 +831,62 @@ static bool unroute_connection_instances(enum routing_event event, struct connec
 		delete_connection(&cq.c);
 	}
 	return had_instances;
+}
+
+void connection_initiate(struct connection *c, const threadtime_t *inception,
+			 bool background, where_t where)
+{
+	if (c->config->ike_version == IKEv1) {
+		ipsecdoi_initiate(c, c->policy, SOS_NOBODY, inception,
+				  HUNK_AS_SHUNK(c->child.sec_label),
+				  background, c->logger);
+		return;
+	}
+
+	dispatch(CONNECTION_INITIATE, &c,
+		 c->logger, where,
+		 (struct routing_annex) {
+			 .inception = inception,
+			 .background = background,
+		 });
+}
+
+void connection_terminate(struct connection *c, struct logger *logger, where_t where)
+{
+	dispatch(CONNECTION_TERMINATE, &c,
+		 logger, where,
+		 (struct routing_annex) {0});
+	PASSERT(logger, c != NULL);
+}
+
+void connection_acquire(struct connection *c, threadtime_t *inception,
+			const struct kernel_acquire *b, where_t where)
+{
+	dispatch(CONNECTION_ACQUIRE, &c,
+		 b->logger, where,
+		 (struct routing_annex) {
+			 .inception = inception,
+			 .background = b->background,
+			 .sec_label = b->sec_label,
+			 .packet = b->packet,
+		 });
+}
+
+void connection_revive(struct connection *c, const threadtime_t *inception, where_t where)
+{
+	if (c->config->ike_version == IKEv1 && is_labeled(c)) {
+		initiate_connection(c, /*remote-host-name*/NULL,
+				    /*background*/true,
+				    c->logger);
+		return;
+	}
+
+	dispatch(CONNECTION_REVIVE, &c,
+		 c->logger, where,
+		 (struct routing_annex) {
+			 .inception = inception,
+			 .background = true,
+		 });
 }
 
 void connection_route(struct connection *c, where_t where)
