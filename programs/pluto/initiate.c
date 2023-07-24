@@ -385,7 +385,7 @@ void ipsecdoi_initiate(struct connection *c,
 						     V1_ISAKMP_SA_ESTABLISHED_STATES |
 						     V1_PHASE1_INITIATOR_STATES);
 		struct fd *whackfd = background ? null_fd : logger->global_whackfd;
-		if (st == NULL && (policy & POLICY_AGGRESSIVE)) {
+		if (st == NULL && (c->policy & POLICY_AGGRESSIVE)) {
 			aggr_outI1(whackfd, c, NULL, policy, inception, sec_label);
 		} else if (st == NULL) {
 			main_outI1(whackfd, c, NULL, policy, inception, sec_label);

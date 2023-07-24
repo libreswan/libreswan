@@ -181,8 +181,6 @@ stf_status aggr_inI1_outR1(struct state *null_st UNUSED,
 			"IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's");
 	}
 
-	ike->sa.st_policy = POLICY_AGGRESSIVE;	/* ??? not sure what's needed here */
-
 	/*
 	 * ??? not sure what's needed here.
 	 *
@@ -522,8 +520,6 @@ stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 		dbg("dropping Aggressive Mode I2 packet as per impair");
 		return STF_IGNORE;
 	}
-
-	st->st_policy |= POLICY_AGGRESSIVE;	/* ??? surely this should be done elsewhere */
 
 	if (!v1_decode_certs(md)) {
 		log_state(RC_LOG, st, "X509: CERT payload bogus or revoked");

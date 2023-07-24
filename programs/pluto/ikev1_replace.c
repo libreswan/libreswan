@@ -60,7 +60,7 @@ void ikev1_replace(struct state *st)
 
 		lset_t policy = c->policy & ~POLICY_IPSEC_MASK;
 
-		if (policy & POLICY_AGGRESSIVE) {
+		if (c->policy & POLICY_AGGRESSIVE) {
 			aggr_outI1(st->st_logger->object_whackfd, c, st,
 				   policy, &inception,
 				   HUNK_AS_SHUNK(c->child.sec_label));
