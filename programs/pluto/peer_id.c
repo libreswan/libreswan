@@ -650,15 +650,19 @@ diag_t update_peer_id_certs(struct ike_sa *ike)
 	       if (remote_cert_id.kind != ID_NONE) {
 		       replace_connection_that_id(c, &remote_cert_id);
 	       }
-       } else if (LIN(POLICY_ALLOW_NO_SAN, c->policy)) {
+	       return NULL;
+       }
+
+       if (!c->config->require_id_on_certificate) {
 	       id_buf idb;
-	       dbg("X509: CERT '%s' and ID '%s' don't match but POLICY_ALLOW_NO_SAN",
-		   end_cert->subjectName, str_id(&c->remote->host.id, &idb));
+	       ldbg_sa(ike, "X509: CERT '%s' and ID '%s' don't match but require-id-on-certificate=no",
+		       end_cert->subjectName, str_id(&c->remote->host.id, &idb));
 	       llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
 	       llog_sa(RC_LOG, ike, "X509: connection allows unmatched IKE ID and certificate SAN");
-       } else {
-	       return diag_diag(&d, "X509: authentication failed; ");
+	       return NULL;
        }
+
+       return diag_diag(&d, "X509: authentication failed; ");
        return NULL;
 }
 

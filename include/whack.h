@@ -191,6 +191,10 @@ struct whack_message {
 						 * locally */
 	enum yn_options ikepad;		/* pad ike packets to 4 bytes
 					 * or not */
+	enum yn_options require_id_on_certificate;
+					/* require certificates to
+					 * have IKE ID on cert SAN */
+
 
 	uintmax_t sa_ipsec_max_bytes;
 	uintmax_t sa_ipsec_max_packets;

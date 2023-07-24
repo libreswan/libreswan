@@ -885,8 +885,6 @@ enum sa_policy_bits {
 
 #define POLICY_IPSEC_MASK	LRANGE(POLICY_ENCRYPT_IX, POLICY_NOPMTUDISC_IX)
 
-	POLICY_ALLOW_NO_SAN_IX, /* allow a certificate conn to not have IKE ID on cert SAN */
-
 	/* connection policy
 	 * Other policies could vary per state object.  These live in connection.
 	 */
@@ -907,8 +905,10 @@ enum sa_policy_bits {
 	POLICY_IKE_FRAG_ALLOW_IX,
 	POLICY_IKE_FRAG_FORCE_IX,
 #define POLICY_IKE_FRAG_MASK	LRANGE(POLICY_IKE_FRAG_ALLOW_IX,POLICY_IKE_FRAG_FORCE_IX)
+
 	POLICY_PPK_ALLOW_IX,
 	POLICY_PPK_INSIST_IX,
+
 	POLICY_ESN_NO_IX,		/* send/accept ESNno */
 	POLICY_ESN_YES_IX,		/* send/accept ESNyes */
 #define POLICY_IX_LAST	POLICY_ESN_YES_IX
@@ -921,7 +921,6 @@ enum sa_policy_bits {
 #define POLICY_PFS	LELEM(POLICY_PFS_IX)
 #define POLICY_DECAP_DSCP	LELEM(POLICY_DECAP_DSCP_IX)	/* decap ToS/DSCP bits */
 #define POLICY_NOPMTUDISC	LELEM(POLICY_NOPMTUDISC_IX)
-#define POLICY_ALLOW_NO_SAN	LELEM(POLICY_ALLOW_NO_SAN_IX)
 #define POLICY_OPPORTUNISTIC	LELEM(POLICY_OPPORTUNISTIC_IX)	/* is this opportunistic? */
 #define POLICY_GROUPINSTANCE	LELEM(POLICY_GROUPINSTANCE_IX)	/* is this a group template instance? */
 #define POLICY_ROUTE	LELEM(POLICY_ROUTE_IX)	/* do we want to keep this connection routed? */

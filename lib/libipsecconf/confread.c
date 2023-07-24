@@ -1198,11 +1198,6 @@ static bool load_conn(struct starter_conn *conn,
 	KW_POLICY_FLAG(KNCF_DECAP_DSCP, POLICY_DECAP_DSCP);
 	KW_POLICY_FLAG(KNCF_NOPMTUDISC, POLICY_NOPMTUDISC);
 
-	if (conn->options_set[KNCF_SAN_ON_CERT]) {
-		if (!conn->options[KNCF_SAN_ON_CERT])
-			conn->policy |= POLICY_ALLOW_NO_SAN;
-	}
-
 	/* ??? sometimes (when? why?) the member is already set */
 
 #	define str_to_conn(member, kscf) { \

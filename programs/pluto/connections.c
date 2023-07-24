@@ -2012,6 +2012,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 	config->dns_match_id = extract_yn(wm->dns_match_id, /*default*/false);
 	config->ikev2_pam_authorize = extract_yn(wm->pam_authorize, /*default*/false);
 	config->ikepad = extract_yn(wm->ikepad, /*default*/true/*YES-TRUE*/);
+	config->require_id_on_certificate = extract_yn(wm->require_id_on_certificate,
+						       /*default*/true/*YES-TRUE*/);
 
 	config->mobike = extract_yn(wm->mobike, /*default*/false);
 	if (config->mobike) {
@@ -3254,7 +3256,13 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 	PP(DECAP_DSCP);
 	PP(NOPMTUDISC);
 	CP(ms_dh_downgrade);
-	PP(ALLOW_NO_SAN);
+
+	if (!c->config->require_id_on_certificate) {
+		s += jam_string(buf, sep);
+		s += jam_string(buf, "ALLOW_NO_SAN");
+		sep = "+";
+	}
+
 	CP(dns_match_id);
 	CP(sha2_truncbug);
 

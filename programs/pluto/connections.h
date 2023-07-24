@@ -270,6 +270,8 @@ struct config {
 					 * servers locally */
 	bool ikepad;			/* pad ike packets to 4 bytes
 					 * or not */
+	bool require_id_on_certificate;	/* require certificates to
+					 * have IKE ID on cert SAN */
 
 	struct config_end end[END_ROOF];
 };

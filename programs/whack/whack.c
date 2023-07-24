@@ -507,6 +507,7 @@ enum option_enums {
 	CD_DNS_MATCH_ID,
 	CD_IGNORE_PEER_DNS,
 	CD_NO_IKEPAD,
+	CD_ALLOW_CERT_WITHOUT_SAN_ID,
 	CD_INITIATEONTRAFFIC,
 #define CD_LAST CD_INITIATEONTRAFFIC	/* last connection description */
 
@@ -736,7 +737,7 @@ static const struct option long_opts[] = {
 	PS("pfs", PFS),
 	{ "ms-dh-downgrade", no_argument, NULL, CD_MSDH_DOWNGRADE + OO },
 	{ "dns-match-id", no_argument, NULL, CD_DNS_MATCH_ID + 00 },
-	PS("allow-cert-without-san-id", ALLOW_NO_SAN),
+	{ "allow-cert-without-san-id", no_argument, NULL, CD_ALLOW_CERT_WITHOUT_SAN_ID + OO },
 	{ "sha2-truncbug", no_argument, NULL, CD_SHA2_TRUNCBUG + OO },
 	{ "sha2_truncbug", no_argument, NULL, CD_SHA2_TRUNCBUG + OO }, /* backwards compatibility */
 	PS("aggressive", AGGRESSIVE),
@@ -1820,10 +1821,13 @@ int main(int argc, char **argv)
 		case CDP_SINGLETON + POLICY_DECAP_DSCP_IX:
 		/* --nopmtudisc */
 		case CDP_SINGLETON + POLICY_NOPMTUDISC_IX:
-		/* --allow-cert-without-san-id */
-		case CDP_SINGLETON + POLICY_ALLOW_NO_SAN_IX:
 
 			msg.policy |= LELEM(c - CDP_SINGLETON);
+			continue;
+
+		/* --allow-cert-without-san-id */
+		case CD_ALLOW_CERT_WITHOUT_SAN_ID:
+			msg.require_id_on_certificate = YN_NO;
 			continue;
 
 		/* --no-ikepad */
