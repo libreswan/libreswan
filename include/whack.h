@@ -189,6 +189,8 @@ struct whack_message {
 	enum yn_options ignore_peer_dns;	/* install obtained
 						 * DNS servers
 						 * locally */
+	enum yn_options ikepad;		/* pad ike packets to 4 bytes
+					 * or not */
 
 	uintmax_t sa_ipsec_max_bytes;
 	uintmax_t sa_ipsec_max_packets;

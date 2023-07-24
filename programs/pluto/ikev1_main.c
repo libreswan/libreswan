@@ -392,19 +392,22 @@ bool ikev1_encrypt_message(pb_stream *pbs, struct state *st)
  *
  * @param pbs PB Stream
  */
-bool ikev1_close_message(pb_stream *pbs, const struct state *st)
+bool ikev1_close_message(struct pbs_out *pbs, const struct state *st)
 {
-	passert(st->st_ike_version == IKEv1);
-	size_t padding = pad_up(pbs_offset(pbs), 4);
+	if (pbad(st == NULL)) {
+		return false;
+	}
 
+	PASSERT(st->st_logger, st->st_ike_version == IKEv1);
+
+	size_t padding = pad_up(pbs_offset(pbs), 4);
 	if (padding == 0) {
-		dbg("no IKEv1 message padding required");
-	} else if (pexpect(st != NULL) && pexpect(st->st_connection != NULL) &&
-		   (st->st_connection->policy & POLICY_NO_IKEPAD)) {
-		dbg("IKEv1 message padding of %zu bytes skipped by policy",
-		    padding);
+		ldbg(st->st_logger, "no IKEv1 message padding required");
+	} else if (!st->st_connection->config->ikepad) {
+		ldbg(st->st_logger, "IKEv1 message padding of %zu bytes skipped by policy",
+		     padding);
 	} else {
-		dbg("padding IKEv1 message with %zu bytes", padding);
+		ldbg(st->st_logger, "padding IKEv1 message with %zu bytes", padding);
 		if (!pbs_out_zero(pbs, padding, "message padding")) {
 			/* already logged */
 			return false; /*fatal*/

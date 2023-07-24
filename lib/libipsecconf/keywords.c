@@ -553,7 +553,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "retransmit-timeout",  kv_conn,  kt_time,  KNCF_RETRANSMIT_TIMEOUT_MS, NULL, NULL, },
   { "retransmit-interval",  kv_conn|kv_milliseconds,  kt_time,  KNCF_RETRANSMIT_INTERVAL_MS, NULL, NULL, },
 
-  {"ikepad",  kv_conn,  kt_bool,  KNCF_IKEPAD, NULL, NULL, },
+  { "ikepad",  kv_conn,  kt_enum,  KNCF_IKEPAD, kw_yn_list, NULL, },
   { "nat-ikev1-method",  kv_conn | kv_processed,  kt_enum,  KNCF_IKEV1_NATT,  kw_ikev1natt_list, NULL, },
 
   { "policy-label",  kv_conn,  kt_string,  KSCF_SEC_LABEL, NULL, NULL, }, /* obsolete variant */

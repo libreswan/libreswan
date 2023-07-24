@@ -268,6 +268,8 @@ struct config {
 					 * authorize call on ID */
 	bool ignore_peer_dns;		/* install obtained DNS
 					 * servers locally */
+	bool ikepad;			/* pad ike packets to 4 bytes
+					 * or not */
 
 	struct config_end end[END_ROOF];
 };

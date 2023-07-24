@@ -137,8 +137,6 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 
 	DOPT(KNCF_REMOTEPEERTYPE, NON_CISCO);
 
-	DOPT(KNCF_IKEPAD, true);
-
 	DOPT(KNCF_IKEV1_NATT, NATT_BOTH);
 	DOPT(KNCF_ENCAPS, yna_auto);
 
@@ -1192,8 +1190,6 @@ static bool load_conn(struct starter_conn *conn,
 
 	KW_POLICY_FLAG(KNCF_COMPRESS, POLICY_COMPRESS);
 	KW_POLICY_FLAG(KNCF_PFS, POLICY_PFS);
-
-	KW_POLICY_NEGATIVE_FLAG(KNCF_IKEPAD, POLICY_NO_IKEPAD);
 
 	KW_POLICY_FLAG(KNCF_AGGRMODE, POLICY_AGGRESSIVE);
 

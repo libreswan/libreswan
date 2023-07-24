@@ -2011,6 +2011,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	config->ms_dh_downgrade = extract_yn(wm->ms_dh_downgrade, /*default*/false);
 	config->dns_match_id = extract_yn(wm->dns_match_id, /*default*/false);
 	config->ikev2_pam_authorize = extract_yn(wm->pam_authorize, /*default*/false);
+	config->ikepad = extract_yn(wm->ikepad, /*default*/true/*YES-TRUE*/);
 
 	config->mobike = extract_yn(wm->mobike, /*default*/false);
 	if (config->mobike) {
@@ -3285,7 +3286,14 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 
 	PP(IKE_FRAG_ALLOW);
 	PP(IKE_FRAG_FORCE);
-	PP(NO_IKEPAD);
+
+	/* need to flip parity */
+	if (!c->config->ikepad) {
+		s += jam_string(buf, sep);
+		s += jam_string(buf, "NO_IKEPAD");
+		sep = "+";
+	}
+
 	CP(mobike);
 	PP(PPK_ALLOW);
 	PP(PPK_INSIST);

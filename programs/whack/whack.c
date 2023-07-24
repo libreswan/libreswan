@@ -506,6 +506,7 @@ enum option_enums {
 	CD_MSDH_DOWNGRADE,
 	CD_DNS_MATCH_ID,
 	CD_IGNORE_PEER_DNS,
+	CD_NO_IKEPAD,
 	CD_INITIATEONTRAFFIC,
 #define CD_LAST CD_INITIATEONTRAFFIC	/* last connection description */
 
@@ -855,7 +856,7 @@ static const struct option long_opts[] = {
 #endif
 	PS("ikefrag-allow", IKE_FRAG_ALLOW),
 	PS("ikefrag-force", IKE_FRAG_FORCE),
-	PS("no-ikepad", NO_IKEPAD),
+	{ "no-ikepad", no_argument, NULL, CD_NO_IKEPAD + OO },
 
 	PS("no-esn", ESN_NO),
 	PS("esn", ESN_YES),
@@ -1811,8 +1812,6 @@ int main(int argc, char **argv)
 		case CDP_SINGLETON + POLICY_IKE_FRAG_ALLOW_IX:
 		/* --ikefrag-force */
 		case CDP_SINGLETON + POLICY_IKE_FRAG_FORCE_IX:
-		/* --no-ikepad */
-		case CDP_SINGLETON + POLICY_NO_IKEPAD_IX:
 		/* --no-esn */
 		case CDP_SINGLETON + POLICY_ESN_NO_IX:
 		/* --esn */
@@ -1825,6 +1824,11 @@ int main(int argc, char **argv)
 		case CDP_SINGLETON + POLICY_ALLOW_NO_SAN_IX:
 
 			msg.policy |= LELEM(c - CDP_SINGLETON);
+			continue;
+
+		/* --no-ikepad */
+		case CD_NO_IKEPAD:
+			msg.ikepad = YN_NO;
 			continue;
 
 		/* --ignore-peer-dns */

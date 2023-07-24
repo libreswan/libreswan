@@ -380,8 +380,11 @@ static void confwrite_comments(FILE *out, struct starter_conn *conn)
 
 static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 {
-	/* short-cut for writing out a field (string-valued, indented, on its own line) */
-#	define cwf(name, value)	{ fprintf(out, "\t" name "=%s\n", (value)); }
+	/*
+	 * config-write-field: short-cut for writing out a field
+	 * (string-valued, indented, on its own line).
+	 */
+#define cwf(name, value)	{ fprintf(out, "\t" name "=%s\n", (value)); }
 
 	if (verbose)
 		fprintf(out, "# begin conn %s\n", conn->name);
@@ -450,12 +453,23 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 		lset_t ppk_policy = (conn->policy & (POLICY_PPK_ALLOW | POLICY_PPK_INSIST));
 		lset_t ike_frag_policy = (conn->policy & POLICY_IKE_FRAG_MASK);
 		static const char *const noyes[2 /*bool*/] = {"no", "yes"};
-		/* short-cuts for writing out a field that is a policy bit.
-		 * cwpbf flips the sense of the bit.
+		/*
+		 * config-write-policy-bit: short-cut for writing out a field that is a policy
+		 * bit.
+		 *
+		 * config-write-policy-bit-flipped: cwpbf() flips the
+		 * sense of the bit.
+		 *
+		 * config-write-yn: for writing out optional
+		 * yn_options fields.
 		 */
 #		define cwpb(name, p)  { cwf(name, noyes[(conn->policy & (p)) != LEMPTY]); }
 #		define cwpbf(name, p)  { cwf(name, noyes[(conn->policy & (p)) == LEMPTY]); }
-
+#define cwyn(NAME, KNCF)						\
+		{							\
+			if (conn->options[KNCF] != YN_UNSET)		\
+				cwf(NAME, noyes[conn->options[KNCF] == YN_YES]); \
+		}
 		switch (shunt_policy) {
 		case SHUNT_UNSET:
 			cwf("type", conn->policy & POLICY_TUNNEL? "tunnel" : "transport");
@@ -463,8 +477,7 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 			cwpb("compress", POLICY_COMPRESS);
 
 			cwpb("pfs", POLICY_PFS);
-			cwpbf("ikepad", POLICY_NO_IKEPAD);
-
+			cwyn("ikepad", KNCF_IKEPAD);
 
 			if (conn->left.options[KNCF_AUTH] == k_unset ||
 			    conn->right.options[KNCF_AUTH] == k_unset) {
@@ -599,8 +612,9 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 
 		}
 
-#		undef cwpb
-#		undef cwpbf
+#undef cwpb
+#undef cwpbf
+#undef cwyn
 	}
 
 	if (verbose)
