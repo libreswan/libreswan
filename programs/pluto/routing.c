@@ -1562,10 +1562,6 @@ void dispatch(enum routing_event event,
 		case X(DELETE_IKE, UNROUTED_NEGOTIATION, PERMANENT):
 		case X(TIMEOUT_IKE, UNROUTED_NEGOTIATION, PERMANENT):
 			if (zap_connection_family(event, *c, e->ike, where)) {
-				if (is_instance(*c) &&
-				    (*c)->child.routing == RT_UNROUTED) {
-					delete_connection(c);
-				}
 				return;
 			}
 			/* ex, permanent+initiate */
@@ -1593,10 +1589,6 @@ void dispatch(enum routing_event event,
 			 * need to deal with revival et.al.
 			 */
 			if (zap_connection_family(event, *c, e->ike, where)) {
-				if (is_instance(*c) &&
-				    (*c)->child.routing == RT_UNROUTED) {
-					delete_connection(c);
-				}
 				/* will this happen? */
 				return;
 			}
@@ -1627,8 +1619,8 @@ void dispatch(enum routing_event event,
 		case X(TIMEOUT_IKE, UNROUTED_NEGOTIATION, INSTANCE):
 			if (BROKEN_TRANSITION) {
 				if (zap_connection_family(event, *c, e->ike, where)) {
-					if (is_instance(*c) &&
-					    (*c)->child.routing == RT_UNROUTED) {
+					if ((*c)->child.routing == RT_UNROUTED) {
+						/* since instance */
 						delete_connection(c);
 					}
 					return;
@@ -1685,8 +1677,18 @@ void dispatch(enum routing_event event,
 			return;
 
 		case X(DELETE_IKE, ROUTED_TUNNEL, PERMANENT):
-		case X(DELETE_IKE, ROUTED_TUNNEL, INSTANCE):
 		case X(TIMEOUT_IKE, ROUTED_TUNNEL, PERMANENT):
+			/*
+			 * Since the connection has an established
+			 * tunnel there must be a child to notify.
+			 * Hence this should always succeed.
+			 */
+			if (zap_connection_family(event, *c, e->ike, where)) {
+				return;
+			}
+			break;
+
+		case X(DELETE_IKE, ROUTED_TUNNEL, INSTANCE):
 		case X(TIMEOUT_IKE, ROUTED_TUNNEL, INSTANCE):
 			/*
 			 * Since the connection has an established
@@ -1694,8 +1696,8 @@ void dispatch(enum routing_event event,
 			 * Hence this should always succeed.
 			 */
 			if (zap_connection_family(event, *c, e->ike, where)) {
-				if (is_instance(*c) &&
-				    (*c)->child.routing == RT_UNROUTED) {
+				if ((*c)->child.routing == RT_UNROUTED) {
+					/* since instance */
 					delete_connection(c);
 				}
 				return;
@@ -1715,10 +1717,6 @@ void dispatch(enum routing_event event,
 			 * zap_connection_states() should always fail?
 			 */
 			if (zap_connection_family(event, *c, e->ike, where)) {
-				if (is_instance(*c) &&
-				    (*c)->child.routing == RT_UNROUTED) {
-					delete_connection(c);
-				}
 				pexpect(0); /* logger is invalid */
 				return;
 			}
