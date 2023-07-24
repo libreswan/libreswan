@@ -264,6 +264,8 @@ struct config {
 					 * Microsoft bug */
 	bool dns_match_id;		/* perform reverse DNS lookup
 					 * on IP to confirm ID */
+	bool ikev2_pam_authorize;	/* non-standard, custom PAM
+					 * authorize call on ID */
 
 	struct config_end end[END_ROOF];
 };

@@ -848,7 +848,7 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 	 * password) When pam helper is done state will be woken up
 	 * and continue.
 	 */
-	if (ike->sa.st_connection->policy & POLICY_IKEV2_PAM_AUTHORIZE) {
+	if (ike->sa.st_connection->config->ikev2_pam_authorize) {
 		id_buf thatidb;
 		const char *thatid = str_id(&ike->sa.st_connection->remote->host.id, &thatidb);
 		llog_sa(RC_LOG, ike,

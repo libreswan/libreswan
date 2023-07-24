@@ -183,6 +183,9 @@ struct whack_message {
 						 * bug */
 	enum yn_options dns_match_id;	/* perform reverse DNS lookup
 					 * on IP to confirm ID */
+	enum yn_options pam_authorize;	/* non-standard, custom PAM
+					 * authorize call on ID
+					 * (IKEv2) */
 
 	uintmax_t sa_ipsec_max_bytes;
 	uintmax_t sa_ipsec_max_packets;
