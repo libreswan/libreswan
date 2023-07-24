@@ -57,11 +57,6 @@ static enum_names routing_event_names = {
 	NULL,
 };
 
-static bool zap_connection_states(enum routing_event event,
-				  struct connection **c,
-				  struct ike_sa **ike,
-				  where_t where);
-
 static void dispatch(const enum routing_event event,
 		     struct connection **c,
 		     struct logger *logger, where_t where,
@@ -563,15 +558,15 @@ static void down_routed_tunnel(enum routing_event event,
 }
 
 /*
- * Strip a connection of all states.
+ * Strip a connection of all states that belong to the IKE SA.
  */
 
-static bool zap_connection_states(enum routing_event event,
-				  struct connection **c,
+static bool zap_connection_family(enum routing_event event,
+				  struct connection *c,
 				  struct ike_sa **ike,
 				  where_t where)
 {
-	PASSERT((*ike)->sa.st_logger, *c == (*ike)->sa.st_connection);
+	PASSERT((*ike)->sa.st_logger, c == (*ike)->sa.st_connection);
 	PASSERT((*ike)->sa.st_logger, (event == CONNECTION_TIMEOUT_IKE ||
 				       event == CONNECTION_DELETE_IKE));
 	enum routing_event child_event = (event == CONNECTION_TIMEOUT_IKE ? CONNECTION_TIMEOUT_CHILD :
@@ -638,7 +633,7 @@ static bool zap_connection_states(enum routing_event event,
 
 	{
 		struct state_filter sf = {
-			.connection_serialno = (*c)->serialno,
+			.connection_serialno = c->serialno,
 			.where = HERE,
 		};
 		while (next_state_new2old(&sf)) {
@@ -687,7 +682,7 @@ static bool zap_connection_states(enum routing_event event,
 		dispatched_to_child = false;
 		ldbg_routing((*ike)->sa.st_logger, "IKE SA is not the parent of the connection's Child SA "PRI_SO,
 			     pri_so(connection_child->sa.st_serialno));
-	} else if (connection_child != NULL) {
+	} else {
 		dispatched_to_child = true;
 		state_attach(&connection_child->sa, (*ike)->sa.st_logger);
 		/* will delete child and its logger */
@@ -749,31 +744,32 @@ static bool zap_connection_states(enum routing_event event,
 		 * The IKE SA can simply be deleted ...
 		 */
 		delete_ike_sa(ike);
-		/*
-		 * ... and if the connection is an instance and was
-		 * unrouted then it can be deleted as well
-		 * (alternatives include being revived).
-		 */
-		if (is_instance(*c) &&
-		    (*c)->child.routing == RT_UNROUTED) {
-			delete_connection(c);
-		}
 		return true;
 	}
 
 	if (connection_child != NULL) {
 		/*
-		 * The connection has a Child SA that is NOT the IKE
-		 * SA's child.  For instance, the Child SA has being
-		 * migrated to a new IKE SA.
-		 *
+		 * The connection's Child SA is NOT a child of the IKE
+		 * SA.  For instance, the Child SA has being migrated
+		 * to a new IKE SA.
+		 */
+		PEXPECT((*ike)->sa.st_logger,
+			(connection_child->sa.st_clonedfrom != (*ike)->sa.st_serialno));
+		/*
+		 * Since the child is still live, the connection can't
+		 * be deleted.  Verify the callers can-delete logic is
+		 * false.
+		 */
+		PEXPECT((*ike)->sa.st_logger,
+			(!is_instance(c) || c->child.routing != RT_UNROUTED));
+		/*
 		 * XXX: suspect it would be easier to just compare the
 		 * IKE SA against the connection's .newest_ike_sa as -
 		 * reparenting the Child SA should have updated that
 		 * field to the newer IKE SA as well.
 		 */
-		PEXPECT((*ike)->sa.st_logger, (connection_child->sa.st_clonedfrom !=
-					       (*ike)->sa.st_serialno));
+		PEXPECT((*ike)->sa.st_logger,
+			((*ike)->sa.st_serialno != c->newest_ike_sa));
 		delete_ike_sa(ike);
 		return true;
 	}
@@ -1565,7 +1561,11 @@ void dispatch(enum routing_event event,
 
 		case X(DELETE_IKE, UNROUTED_NEGOTIATION, PERMANENT):
 		case X(TIMEOUT_IKE, UNROUTED_NEGOTIATION, PERMANENT):
-			if (zap_connection_states(event, c, e->ike, where)) {
+			if (zap_connection_family(event, *c, e->ike, where)) {
+				if (is_instance(*c) &&
+				    (*c)->child.routing == RT_UNROUTED) {
+					delete_connection(c);
+				}
 				return;
 			}
 			/* ex, permanent+initiate */
@@ -1592,7 +1592,11 @@ void dispatch(enum routing_event event,
 			 * code below, and not zap_connection(), will
 			 * need to deal with revival et.al.
 			 */
-			if (zap_connection_states(event, c, e->ike, where)) {
+			if (zap_connection_family(event, *c, e->ike, where)) {
+				if (is_instance(*c) &&
+				    (*c)->child.routing == RT_UNROUTED) {
+					delete_connection(c);
+				}
 				/* will this happen? */
 				return;
 			}
@@ -1622,7 +1626,11 @@ void dispatch(enum routing_event event,
 		case X(TIMEOUT_IKE, ROUTED_NEGOTIATION, INSTANCE):
 		case X(TIMEOUT_IKE, UNROUTED_NEGOTIATION, INSTANCE):
 			if (BROKEN_TRANSITION) {
-				if (zap_connection_states(event, c, e->ike, where)) {
+				if (zap_connection_family(event, *c, e->ike, where)) {
+					if (is_instance(*c) &&
+					    (*c)->child.routing == RT_UNROUTED) {
+						delete_connection(c);
+					}
 					return;
 				}
 			}
@@ -1685,7 +1693,11 @@ void dispatch(enum routing_event event,
 			 * tunnel there must be a child to notify.
 			 * Hence this should always succeed.
 			 */
-			if (zap_connection_states(event, c, e->ike, where)) {
+			if (zap_connection_family(event, *c, e->ike, where)) {
+				if (is_instance(*c) &&
+				    (*c)->child.routing == RT_UNROUTED) {
+					delete_connection(c);
+				}
 				return;
 			}
 			break;
@@ -1702,7 +1714,11 @@ void dispatch(enum routing_event event,
 			 * Since there's no established Child SA
 			 * zap_connection_states() should always fail?
 			 */
-			if (zap_connection_states(event, c, e->ike, where)) {
+			if (zap_connection_family(event, *c, e->ike, where)) {
+				if (is_instance(*c) &&
+				    (*c)->child.routing == RT_UNROUTED) {
+					delete_connection(c);
+				}
 				pexpect(0); /* logger is invalid */
 				return;
 			}
