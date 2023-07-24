@@ -644,41 +644,76 @@ static bool zap_connection_states(enum routing_event event,
 	(*ike)->sa.st_viable_parent = false;
 
 	/*
-	 * Weed out any lurking larval children that are sharing this
-	 * IKE SA (i.e., children that are part way through an
+	 * Weed out any lurking children.
+	 *
+	 * For instance, children that are part way through an
 	 * IKE_AUTH or CREATE_CHILD_SA exchange and don't yet own
-	 * their connection's route).
+	 * their connection's route.
 	 */
 
 	{
-		struct state_filter larval_filter = {
+		struct state_filter sf = {
 			.ike = *ike,
 			.where = HERE,
 		};
-		while (next_state_new2old(&larval_filter)) {
-			struct child_sa *child = pexpect_child_sa(larval_filter.st);
-			if (child->sa.st_connection->child.newest_routing_sa ==
-			    child->sa.st_serialno) {
+		while (next_state_new2old(&sf)) {
+			/* non-owners */
+			if (sf.st->st_connection->child.newest_routing_sa == sf.st->st_serialno) {
 				continue;
 			}
+			struct child_sa *lurking_child = pexpect_child_sa(sf.st);
 			/*
 			 * The death of a larval child is never logged
 			 * by delete_state().  Do it here, but only
-			 * when the IKE SA is established (larval
-			 * child of larval ike is hidden).
+			 * when the IKE SA is established (the larval
+			 * child of a larval IKE SA is hidden).
 			 */
 			if (IS_IKE_SA_ESTABLISHED(&(*ike)->sa)) {
-				state_attach(&child->sa, (*ike)->sa.st_logger);
+				state_attach(&lurking_child->sa, (*ike)->sa.st_logger);
 				enum_buf ren;
-				llog_sa(RC_LOG, child, "deleting larval %s (%s)",
-					child->sa.st_connection->config->ike_info->child_sa_name,
+				llog_sa(RC_LOG, lurking_child,
+					"deleting larval %s (%s)",
+					lurking_child->sa.st_connection->config->ike_info->child_sa_name,
 					str_enum_short(&routing_event_names, event, &ren));
 			} else {
-				ldbg_routing(child->sa.st_logger, "deleting larval %s (%s)",
-					     child->sa.st_connection->config->ike_info->child_sa_name,
+				enum_buf ren;
+				ldbg_routing(lurking_child->sa.st_logger,
+					     "deleting larval %s (%s)",
+					     lurking_child->sa.st_connection->config->ike_info->child_sa_name,
 					     str_enum_short(&routing_event_names, event, &ren));
 			}
-			delete_child_sa(&child);
+			delete_child_sa(&lurking_child);
+		}
+	}
+
+	/*
+	 * Weed out any lurking IKE SAs
+	 *
+	 * For instance, a previous IKE SA that failed to establish.
+	 */
+
+	{
+		struct state_filter sf = {
+			.connection_serialno = (*c)->serialno,
+			.where = HERE,
+		};
+		while (next_state_new2old(&sf)) {
+			if (sf.st == &(*ike)->sa) {
+				continue;
+			}
+			if (!IS_PARENT_SA(sf.st)) {
+				continue;
+			}
+			if (IS_PARENT_SA_ESTABLISHED(sf.st)) {
+				continue;
+			}
+			struct ike_sa *lurking_ike = pexpect_ike_sa(sf.st);
+			enum_buf ren;
+			state_attach(&lurking_ike->sa, (*ike)->sa.st_logger);
+			llog_sa(RC_LOG, lurking_ike, "deleting larval %s (%s)",
+				lurking_ike->sa.st_connection->config->ike_info->ike_sa_name,
+				str_enum_short(&routing_event_names, event, &ren));
+			delete_ike_sa(&lurking_ike);
 		}
 	}
 
