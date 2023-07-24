@@ -262,6 +262,8 @@ struct config {
 	bool ms_dh_downgrade;		/* allow IKEv2 rekey to
 					 * downgrade DH group -
 					 * Microsoft bug */
+	bool dns_match_id;		/* perform reverse DNS lookup
+					 * on IP to confirm ID */
 
 	struct config_end end[END_ROOF];
 };

@@ -181,6 +181,8 @@ struct whack_message {
 						 * to downgrade DH
 						 * group - Microsoft
 						 * bug */
+	enum yn_options dns_match_id;	/* perform reverse DNS lookup
+					 * on IP to confirm ID */
 
 	uintmax_t sa_ipsec_max_bytes;
 	uintmax_t sa_ipsec_max_packets;

@@ -481,7 +481,7 @@ dns_status responder_fetch_idi_ipseckey(struct ike_sa *ike,
 		ike->sa.ipseckey_dnsr = dnsr_idi;
 	}
 
-	if (LIN(ike->sa.st_connection->policy, POLICY_DNS_MATCH_ID)) {
+	if (ike->sa.st_connection->config->dns_match_id) {
 		struct id id = ike->sa.st_connection->remote->host.id;
 		if (id.kind == ID_FQDN) {
 			dnsr_a = qry_st_init(ike, LDNS_RR_TYPE_A, "A",

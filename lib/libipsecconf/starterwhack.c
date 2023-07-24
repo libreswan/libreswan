@@ -676,6 +676,7 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	msg.sha2_truncbug = conn->options[KNCF_SHA2_TRUNCBUG]; /*yn_options*/
 	msg.overlapip = conn->options[KNCF_OVERLAPIP]; /*yn_options*/
 	msg.ms_dh_downgrade = conn->options[KNCF_MS_DH_DOWNGRADE]; /*yn_options*/
+	msg.dns_match_id = conn->options[KNCF_DNS_MATCH_ID]; /* yn_options */
 
 	if (conn->options_set[KNCF_XAUTHBY])
 		msg.xauthby = conn->options[KNCF_XAUTHBY];
