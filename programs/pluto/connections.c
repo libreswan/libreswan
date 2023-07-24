@@ -3292,7 +3292,7 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 	PP(ESN_NO);
 	PP(ESN_YES);
 	CP(intermediate);
-	PP(IGNORE_PEER_DNS);
+	CP(ignore_peer_dns);
 
 	/* just in case something was missed */
 	if (policy != LEMPTY) {

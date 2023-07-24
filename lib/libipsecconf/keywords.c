@@ -575,7 +575,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "modecfgdns",  kv_conn,  kt_string,  KSCF_MODECFGDNS, NULL, NULL, },
   { "modecfgdomains",  kv_conn,  kt_string,  KSCF_MODECFGDOMAINS, NULL, NULL, },
   { "modecfgbanner",  kv_conn,  kt_string,  KSCF_MODECFGBANNER, NULL, NULL, },
-  { "ignore-peer-dns",  kv_conn,  kt_bool,  KNCF_IGNORE_PEER_DNS, NULL, NULL, },
+  { "ignore-peer-dns",  kv_conn,  kt_enum,  KNCF_IGNORE_PEER_DNS, kw_yn_list, NULL, },
   { "mark",  kv_conn,  kt_string,  KSCF_CONN_MARK_BOTH, NULL, NULL, },
   { "mark-in",  kv_conn,  kt_string,  KSCF_CONN_MARK_IN, NULL, NULL, },
   { "mark-out",  kv_conn,  kt_string,  KSCF_CONN_MARK_OUT, NULL, NULL, },

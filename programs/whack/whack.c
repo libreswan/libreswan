@@ -505,6 +505,7 @@ enum option_enums {
 	CD_OVERLAPIP,
 	CD_MSDH_DOWNGRADE,
 	CD_DNS_MATCH_ID,
+	CD_IGNORE_PEER_DNS,
 	CD_INITIATEONTRAFFIC,
 #define CD_LAST CD_INITIATEONTRAFFIC	/* last connection description */
 
@@ -860,7 +861,7 @@ static const struct option long_opts[] = {
 	PS("esn", ESN_YES),
 	PS("decap-dscp", DECAP_DSCP),
 	PS("nopmtudisc", NOPMTUDISC),
-	PS("ignore-peer-dns", IGNORE_PEER_DNS),
+	{ "ignore-peer-dns", no_argument, NULL, CD_IGNORE_PEER_DNS + OO },
 #undef PS
 
 	{ "tcp", required_argument, NULL, CD_IKE_TCP + OO },
@@ -1824,6 +1825,11 @@ int main(int argc, char **argv)
 		case CDP_SINGLETON + POLICY_ALLOW_NO_SAN_IX:
 
 			msg.policy |= LELEM(c - CDP_SINGLETON);
+			continue;
+
+		/* --ignore-peer-dns */
+		case CD_IGNORE_PEER_DNS:
+			msg.ignore_peer_dns = YN_YES;
 			continue;
 
 		/* --dns-match-id */

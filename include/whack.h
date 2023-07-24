@@ -186,6 +186,9 @@ struct whack_message {
 	enum yn_options pam_authorize;	/* non-standard, custom PAM
 					 * authorize call on ID
 					 * (IKEv2) */
+	enum yn_options ignore_peer_dns;	/* install obtained
+						 * DNS servers
+						 * locally */
 
 	uintmax_t sa_ipsec_max_bytes;
 	uintmax_t sa_ipsec_max_packets;

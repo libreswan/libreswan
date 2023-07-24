@@ -912,8 +912,7 @@ enum sa_policy_bits {
 	POLICY_PPK_INSIST_IX,
 	POLICY_ESN_NO_IX,		/* send/accept ESNno */
 	POLICY_ESN_YES_IX,		/* send/accept ESNyes */
-	POLICY_IGNORE_PEER_DNS_IX, /* install obtained DNS servers locally */
-#define POLICY_IX_LAST	POLICY_IGNORE_PEER_DNS_IX
+#define POLICY_IX_LAST	POLICY_ESN_YES_IX
 };
 
 #define POLICY_ENCRYPT	LELEM(POLICY_ENCRYPT_IX)	/* must be first of IPSEC policies */
@@ -941,7 +940,6 @@ enum sa_policy_bits {
 #define POLICY_PPK_INSIST	LELEM(POLICY_PPK_INSIST_IX)
 #define POLICY_ESN_NO		LELEM(POLICY_ESN_NO_IX)	/* accept or request ESNno */
 #define POLICY_ESN_YES		LELEM(POLICY_ESN_YES_IX)	/* accept or request ESNyes */
-#define POLICY_IGNORE_PEER_DNS	LELEM(POLICY_IGNORE_PEER_DNS_IX)
 
 /*
  * RFC 7427 Signature Hash Algorithm exchang

@@ -266,6 +266,8 @@ struct config {
 					 * on IP to confirm ID */
 	bool ikev2_pam_authorize;	/* non-standard, custom PAM
 					 * authorize call on ID */
+	bool ignore_peer_dns;		/* install obtained DNS
+					 * servers locally */
 
 	struct config_end end[END_ROOF];
 };

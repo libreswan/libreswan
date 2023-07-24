@@ -467,7 +467,7 @@ static void ikev2_set_domain(struct pbs_in *cp_a_pbs, struct child_sa *child)
 	/* must be initiator parsing CP response */
 
 	shunk_t str = pbs_in_left(cp_a_pbs);
-	if (child->sa.st_connection->policy & POLICY_IGNORE_PEER_DNS) {
+	if (child->sa.st_connection->config->ignore_peer_dns) {
 		LLOG_JAMBUF(RC_INFORMATIONAL, child->sa.st_logger, buf) {
 			jam_string(buf, "received and ignored INTERNAL_DNS_DOMAIN: ");
 			jam_sanitized_hunk(buf, str);
@@ -485,7 +485,7 @@ static bool ikev2_set_dns(struct pbs_in *cp_a_pbs, struct child_sa *child,
 			  const struct ip_info *af)
 {
 	struct connection *c = child->sa.st_connection;
-	bool ignore = LIN(POLICY_IGNORE_PEER_DNS, c->policy);
+	bool ignore = c->config->ignore_peer_dns;
 
 	if (is_opportunistic(c)) {
 		llog_sa(RC_LOG, child,

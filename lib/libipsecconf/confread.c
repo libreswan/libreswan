@@ -1201,7 +1201,6 @@ static bool load_conn(struct starter_conn *conn,
 
 	KW_POLICY_FLAG(KNCF_DECAP_DSCP, POLICY_DECAP_DSCP);
 	KW_POLICY_FLAG(KNCF_NOPMTUDISC, POLICY_NOPMTUDISC);
-	KW_POLICY_FLAG(KNCF_IGNORE_PEER_DNS, POLICY_IGNORE_PEER_DNS);
 
 	if (conn->options_set[KNCF_SAN_ON_CERT]) {
 		if (!conn->options[KNCF_SAN_ON_CERT])
