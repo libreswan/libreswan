@@ -177,6 +177,10 @@ struct whack_message {
 	enum yn_options overlapip;	/* can two conns that have
 					 * subnet=vhost: declare the
 					 * same IP? */
+	enum yn_options ms_dh_downgrade;	/* allow IKEv2 rekey
+						 * to downgrade DH
+						 * group - Microsoft
+						 * bug */
 
 	uintmax_t sa_ipsec_max_bytes;
 	uintmax_t sa_ipsec_max_packets;

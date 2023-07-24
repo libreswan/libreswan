@@ -885,7 +885,6 @@ enum sa_policy_bits {
 
 #define POLICY_IPSEC_MASK	LRANGE(POLICY_ENCRYPT_IX, POLICY_NOPMTUDISC_IX)
 
-	POLICY_MSDH_DOWNGRADE_IX, /* allow IKEv2 rekey to downgrade DH group - Microsoft bug */
 	POLICY_ALLOW_NO_SAN_IX, /* allow a certificate conn to not have IKE ID on cert SAN */
 	POLICY_DNS_MATCH_ID_IX, /* perform reverse DNS lookup on IP to confirm ID */
 
@@ -926,7 +925,6 @@ enum sa_policy_bits {
 #define POLICY_PFS	LELEM(POLICY_PFS_IX)
 #define POLICY_DECAP_DSCP	LELEM(POLICY_DECAP_DSCP_IX)	/* decap ToS/DSCP bits */
 #define POLICY_NOPMTUDISC	LELEM(POLICY_NOPMTUDISC_IX)
-#define POLICY_MSDH_DOWNGRADE	LELEM(POLICY_MSDH_DOWNGRADE_IX)
 #define POLICY_ALLOW_NO_SAN	LELEM(POLICY_ALLOW_NO_SAN_IX)
 #define POLICY_DNS_MATCH_ID	LELEM(POLICY_DNS_MATCH_ID_IX)
 #define POLICY_OPPORTUNISTIC	LELEM(POLICY_OPPORTUNISTIC_IX)	/* is this opportunistic? */

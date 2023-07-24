@@ -259,6 +259,9 @@ struct config {
 	bool overlapip;			/* can two conns that have
 					 * subnet=vhost: declare the
 					 * same IP? */
+	bool ms_dh_downgrade;		/* allow IKEv2 rekey to
+					 * downgrade DH group -
+					 * Microsoft bug */
 
 	struct config_end end[END_ROOF];
 };

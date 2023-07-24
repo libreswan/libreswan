@@ -2008,6 +2008,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	config->sha2_truncbug = extract_yn(wm->sha2_truncbug, /*default*/false);
 	config->overlapip = extract_yn(wm->overlapip, /*default*/false);
+	config->ms_dh_downgrade = extract_yn(wm->ms_dh_downgrade, /*default*/false);
 
 	config->mobike = extract_yn(wm->mobike, /*default*/false);
 	if (config->mobike) {
@@ -3249,7 +3250,7 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 	PP(PFS);
 	PP(DECAP_DSCP);
 	PP(NOPMTUDISC);
-	PP(MSDH_DOWNGRADE);
+	CP(ms_dh_downgrade);
 	PP(ALLOW_NO_SAN);
 	PP(DNS_MATCH_ID);
 	CP(sha2_truncbug);

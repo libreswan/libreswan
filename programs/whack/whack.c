@@ -503,6 +503,7 @@ enum option_enums {
 	CD_ESP,
 	CD_INTERMEDIATE,
 	CD_OVERLAPIP,
+	CD_MSDH_DOWNGRADE,
 	CD_INITIATEONTRAFFIC,
 #define CD_LAST CD_INITIATEONTRAFFIC	/* last connection description */
 
@@ -730,7 +731,7 @@ static const struct option long_opts[] = {
 	{ "tunnelipv4", no_argument, NULL, CD_TUNNELIPV4 + OO },
 	{ "tunnelipv6", no_argument, NULL, CD_TUNNELIPV6 + OO },
 	PS("pfs", PFS),
-	PS("ms-dh-downgrade", MSDH_DOWNGRADE),
+	{ "ms-dh-downgrade", no_argument, NULL, CD_MSDH_DOWNGRADE + OO },
 	PS("dns-match-id", DNS_MATCH_ID),
 	PS("allow-cert-without-san-id", ALLOW_NO_SAN),
 	{ "sha2-truncbug", no_argument, NULL, CD_SHA2_TRUNCBUG + OO },
@@ -858,7 +859,6 @@ static const struct option long_opts[] = {
 	PS("esn", ESN_YES),
 	PS("decap-dscp", DECAP_DSCP),
 	PS("nopmtudisc", NOPMTUDISC),
-	PS("ms-dh-downgrade", MSDH_DOWNGRADE),
 	PS("dns-match-id", DNS_MATCH_ID),
 	PS("ignore-peer-dns", IGNORE_PEER_DNS),
 #undef PS
@@ -1820,14 +1820,17 @@ int main(int argc, char **argv)
 		case CDP_SINGLETON + POLICY_DECAP_DSCP_IX:
 		/* --nopmtudisc */
 		case CDP_SINGLETON + POLICY_NOPMTUDISC_IX:
-		/* --ms-dh-downgrade */
-		case CDP_SINGLETON + POLICY_MSDH_DOWNGRADE_IX:
 		/* --dns-match-id */
 		case CDP_SINGLETON + POLICY_DNS_MATCH_ID_IX:
 		/* --allow-cert-without-san-id */
 		case CDP_SINGLETON + POLICY_ALLOW_NO_SAN_IX:
 
 			msg.policy |= LELEM(c - CDP_SINGLETON);
+			continue;
+
+		/* --ms-dh-downgrade */
+		case CD_MSDH_DOWNGRADE:
+			msg.ms_dh_downgrade = YN_YES;
 			continue;
 
 		/* --overlapip */

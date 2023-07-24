@@ -2102,8 +2102,8 @@ struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
 	 * Even when DEFAULT_DH is NULL, DH may be added
 	 * (found in alg-info).  Deal with that below.
 	 */
-	bool add_empty_msdh_duplicates = (c->policy & POLICY_MSDH_DOWNGRADE) &&
-		default_dh != &unset_group;
+	bool add_empty_msdh_duplicates = (c->config->ms_dh_downgrade &&
+					  default_dh != &unset_group);
 
 	struct ikev2_proposals *v2_proposals = alloc_thing(struct ikev2_proposals,
 							   "ESP/AH proposals");
@@ -2271,7 +2271,7 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_rekey_child_proposals(struct ike_
 
 	struct ikev2_proposals *rekey_proposals;
 	const struct dh_desc *accepted_dh = ikev2_proposal_first_dh(accepted_proposal);
-	bool msdh_downgrade = (larval_child->sa.st_connection->policy & POLICY_MSDH_DOWNGRADE);
+	bool msdh_downgrade = larval_child->sa.st_connection->config->ms_dh_downgrade;
 	if (accepted_dh != NULL/*i.e., non-NONE*/) {
 		/*
 		 * The previous CREATE_CHILD_SA exchange for this

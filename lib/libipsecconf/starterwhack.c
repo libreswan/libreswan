@@ -671,10 +671,11 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	msg.accept_redirect_to = conn->accept_redirect_to;
 	conn_log_val(conn, "accept-redirect-to", msg.accept_redirect_to);
 
-	msg.mobike = conn->options[KNCF_MOBIKE]; /*yn_option*/
-	msg.intermediate = conn->options[KNCF_INTERMEDIATE]; /*yn_option*/
-	msg.sha2_truncbug = conn->options[KNCF_SHA2_TRUNCBUG]; /* workaround old Linux kernel (android 4.x) */
-	msg.overlapip = conn->options[KNCF_OVERLAPIP]; /* can two conns that have subnet=vhost: declare the same IP? */
+	msg.mobike = conn->options[KNCF_MOBIKE]; /*yn_options*/
+	msg.intermediate = conn->options[KNCF_INTERMEDIATE]; /*yn_options*/
+	msg.sha2_truncbug = conn->options[KNCF_SHA2_TRUNCBUG]; /*yn_options*/
+	msg.overlapip = conn->options[KNCF_OVERLAPIP]; /*yn_options*/
+	msg.ms_dh_downgrade = conn->options[KNCF_MS_DH_DOWNGRADE]; /*yn_options*/
 
 	if (conn->options_set[KNCF_XAUTHBY])
 		msg.xauthby = conn->options[KNCF_XAUTHBY];

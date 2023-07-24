@@ -540,7 +540,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "fake-strongswan",  kv_conn,  kt_bool,  KNCF_VID_STRONGSWAN, NULL, NULL, },
   { "send-vendorid",  kv_conn,  kt_bool,  KNCF_SEND_VENDORID, NULL, NULL, },
   { "sha2-truncbug",  kv_conn,  kt_enum,  KNCF_SHA2_TRUNCBUG, kw_yn_list, NULL, },
-  { "ms-dh-downgrade",  kv_conn,  kt_bool,  KNCF_MSDH_DOWNGRADE, NULL, NULL, },
+  { "ms-dh-downgrade",  kv_conn,  kt_enum,  KNCF_MS_DH_DOWNGRADE, kw_yn_list, NULL, },
   { "require-id-on-certificate",  kv_conn,  kt_bool,  KNCF_SAN_ON_CERT, NULL, NULL, },
   { "dns-match-id,",  kv_conn,  kt_bool,  KNCF_DNS_MATCH_ID, NULL, NULL, },
   { "ipsec-max-bytes",  kv_conn,  kt_byte,  KNCF_IPSEC_MAXBYTES, NULL, NULL, },
