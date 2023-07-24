@@ -634,9 +634,9 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "nflog",  kv_conn,  kt_number,  KNCF_NFLOG_CONN, NULL, NULL, },
 #endif
 
-  { "aggressive",  kv_conn,  kt_invertbool,  KNCF_AGGRMODE, NULL, NULL, },
+  { "aggressive",  kv_conn,  kt_invertbool,  KNCF_AGGRESSIVE, NULL, NULL, },
   /* alias for compatibility - undocumented on purpose */
-  { "aggrmode",  kv_conn | kv_alias,  kt_invertbool,  KNCF_AGGRMODE, NULL, NULL, },
+  { "aggrmode",  kv_conn | kv_alias,  kt_invertbool,  KNCF_AGGRESSIVE, NULL, NULL, },
 
   { NULL,  0,  0,  0, NULL, NULL, }
 };
