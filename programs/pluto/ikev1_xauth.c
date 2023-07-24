@@ -1410,7 +1410,7 @@ stf_status xauth_inR1(struct state *st, struct msg_digest *md UNUSED)
 	}
 
 	if (st->st_connection->local->host.config->modecfg.server &&
-	    st->st_connection->policy & POLICY_MODECFG_PULL) {
+	    st->st_connection->config->modecfg.pull) {
 		dbg("modecfg server, pull mode. Starting new exchange.");
 		st->st_v1_msgid.phase15 = v1_MAINMODE_MSGID;
 	}

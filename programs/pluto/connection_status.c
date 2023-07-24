@@ -474,7 +474,7 @@ void show_connection_status(struct show *s, const struct connection *c)
 		jam(buf, PRI_CONNECTION":   modecfg info:", c->name, instance);
 		jam(buf, " us:%s,", COMBO(c->local->config->host.modecfg));
 		jam(buf, " them:%s,", COMBO(c->remote->config->host.modecfg));
-		jam(buf, " modecfg policy:%s,", (c->policy & POLICY_MODECFG_PULL ? "pull" : "push"));
+		jam(buf, " modecfg policy:%s,", (c->config->modecfg.pull ? "pull" : "push"));
 
 		jam_string(buf, " dns:");
 		if (c->config->modecfg.dns.len == 0) {

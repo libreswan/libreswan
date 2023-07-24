@@ -681,6 +681,7 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	msg.ignore_peer_dns = conn->options[KNCF_IGNORE_PEER_DNS]; /* yn_options */
 	msg.ikepad = conn->options[KNCF_IKEPAD]; /* yn_options */
 	msg.require_id_on_certificate = conn->options[KNCF_REQUIRE_ID_ON_CERTIFICATE]; /* yn_options */
+	msg.modecfgpull = conn->options[KNCF_MODECFGPULL]; /* yn_options */
 
 	if (conn->options_set[KNCF_XAUTHBY])
 		msg.xauthby = conn->options[KNCF_XAUTHBY];

@@ -2758,15 +2758,14 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		dbg("modecfg pull: %s policy:%s %s",
 		    (st->quirks.modecfg_pull_mode ?
 		     "quirk-poll" : "noquirk"),
-		    (st->st_connection->policy & POLICY_MODECFG_PULL) ?
-		    "pull" : "push",
+		    (st->st_connection->config->modecfg.pull ? "pull" : "push"),
 		    (st->st_connection->local->host.config->modecfg.client ?
 		     "modecfg-client" : "not-client"));
 
 		if (st->st_connection->local->host.config->modecfg.client &&
 		    IS_V1_ISAKMP_SA_ESTABLISHED(st) &&
 		    (st->quirks.modecfg_pull_mode ||
-		     st->st_connection->policy & POLICY_MODECFG_PULL) &&
+		     st->st_connection->config->modecfg.pull) &&
 		    !st->hidden_variables.st_modecfg_started) {
 			dbg("modecfg client is starting due to %s",
 			    st->quirks.modecfg_pull_mode ? "quirk" :
@@ -2779,7 +2778,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		if (st->st_connection->local->host.config->modecfg.server &&
 		    IS_V1_ISAKMP_SA_ESTABLISHED(st) &&
 		    !st->hidden_variables.st_modecfg_vars_set &&
-		    !(st->st_connection->policy & POLICY_MODECFG_PULL)) {
+		    !st->st_connection->config->modecfg.pull) {
 			change_v1_state(st, STATE_MODE_CFG_R1);
 			log_state(RC_LOG, st, "Sending MODE CONFIG set");
 			/*

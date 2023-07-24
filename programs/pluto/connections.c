@@ -2014,6 +2014,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	config->ikepad = extract_yn(wm->ikepad, /*default*/true/*YES-TRUE*/);
 	config->require_id_on_certificate = extract_yn(wm->require_id_on_certificate,
 						       /*default*/true/*YES-TRUE*/);
+	config->modecfg.pull = extract_yn(wm->modecfgpull, /*default*/false);
 
 	config->mobike = extract_yn(wm->mobike, /*default*/false);
 	if (config->mobike) {
@@ -3280,7 +3281,12 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 	PP(ROUTE);
 	PP(UP);
 	PP(XAUTH);
-	PP(MODECFG_PULL);
+	if (c->config->modecfg.pull) {
+		s += jam_string(buf, sep);
+		/* not MODECFG.PULL */
+		s += jam_string(buf, "MODECFG_PULL");
+		sep = "+";
+	}
 	PP(AGGRESSIVE);
 	CP(overlapip);
 

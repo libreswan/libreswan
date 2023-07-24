@@ -194,7 +194,8 @@ struct whack_message {
 	enum yn_options require_id_on_certificate;
 					/* require certificates to
 					 * have IKE ID on cert SAN */
-
+	enum yn_options modecfgpull;	/* is modecfg pulled by
+					 * client? */
 
 	uintmax_t sa_ipsec_max_bytes;
 	uintmax_t sa_ipsec_max_packets;

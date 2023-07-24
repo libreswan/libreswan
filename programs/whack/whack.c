@@ -508,6 +508,7 @@ enum option_enums {
 	CD_IGNORE_PEER_DNS,
 	CD_NO_IKEPAD,
 	CD_ALLOW_CERT_WITHOUT_SAN_ID,
+	CD_MODECFGPULL,
 	CD_INITIATEONTRAFFIC,
 #define CD_LAST CD_INITIATEONTRAFFIC	/* last connection description */
 
@@ -780,7 +781,7 @@ static const struct option long_opts[] = {
 	{ "xauthclient", no_argument, NULL, END_XAUTHCLIENT + OO },
 	{ "xauthby", required_argument, NULL, CD_XAUTHBY + OO },
 	{ "xauthfail", required_argument, NULL, CD_XAUTHFAIL + OO },
-	PS("modecfgpull", MODECFG_PULL),
+	{ "modecfgpull", no_argument, NULL, CD_MODECFGPULL + OO },
 	{ "modecfgserver", no_argument, NULL, END_MODECFGSERVER + OO },
 	{ "modecfgclient", no_argument, NULL, END_MODECFGCLIENT + OO },
 	{ "addresspool", required_argument, NULL, END_ADDRESSPOOL + OO },
@@ -1804,8 +1805,6 @@ int main(int argc, char **argv)
 		case CDP_SINGLETON + POLICY_TUNNEL_IX:	/* --tunnel */
 		case CDP_SINGLETON + POLICY_PFS_IX:	/* --pfs */
 
-		/* --modecfgpull */
-		case CDP_SINGLETON + POLICY_MODECFG_PULL_IX:
 		/* --aggrmode */
 		case CDP_SINGLETON + POLICY_AGGRESSIVE_IX:
 
@@ -1823,6 +1822,11 @@ int main(int argc, char **argv)
 		case CDP_SINGLETON + POLICY_NOPMTUDISC_IX:
 
 			msg.policy |= LELEM(c - CDP_SINGLETON);
+			continue;
+
+		/* --modecfgpull */
+		case CD_MODECFGPULL:
+			msg.modecfgpull = YN_YES;
 			continue;
 
 		/* --allow-cert-without-san-id */

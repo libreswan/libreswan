@@ -225,6 +225,7 @@ struct config {
 	char *dnshostname;
 
 	struct {
+		bool pull;		/* is modecfg pulled by client? */
 		ip_addresses dns;	/* !.is_set terminated list */
 		shunk_t *domains;	/* NULL terminated list */
 		char *banner;
