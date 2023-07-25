@@ -176,7 +176,8 @@ stf_status aggr_inI1_outR1(struct state *null_st UNUSED,
 	 * Aggressive Mode and PSK (IKEv1 authentication is symmetric
 	 * so also applies to this end).
 	 */
-	if (c->remote->host.config->auth == AUTH_PSK && LIN(POLICY_AGGRESSIVE, c->policy)) {
+	if (c->remote->host.config->auth == AUTH_PSK &&
+	    c->config->aggressive) {
 		llog_sa(RC_LOG_SERIOUS, ike,
 			"IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's");
 	}
@@ -994,7 +995,8 @@ void aggr_outI1(struct fd *whack_sock,
 	change_v1_state(&ike->sa, STATE_AGGR_I1);
 	initialize_new_state(&ike->sa, policy);
 
-	if (c->local->host.config->auth == AUTH_PSK && LIN(POLICY_AGGRESSIVE, c->policy)) {
+	if (c->local->host.config->auth == AUTH_PSK &&
+	    c->config->aggressive) {
 		llog_sa(RC_LOG_SERIOUS, ike,
 			"IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's");
 	}

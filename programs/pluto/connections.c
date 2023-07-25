@@ -2016,6 +2016,14 @@ static diag_t extract_connection(const struct whack_message *wm,
 						       /*default*/true/*YES-TRUE*/);
 	config->modecfg.pull = extract_yn(wm->modecfgpull, /*default*/false);
 
+	if (wm->aggressive == YN_YES && wm->ike_version >= IKEv2) {
+		return diag("cannot specify aggressive mode with IKEv2");
+	}
+	if (wm->aggressive == YN_YES && wm->ike == NULL) {
+		return diag("cannot specify aggressive mode without ike= to set algorithm");
+	}
+	config->aggressive = extract_yn(wm->aggressive, /*default*/false);
+
 	config->mobike = extract_yn(wm->mobike, /*default*/false);
 	if (config->mobike) {
 		if (wm->ike_version < IKEv2) {
@@ -3287,7 +3295,7 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 		s += jam_string(buf, "MODECFG_PULL");
 		sep = "+";
 	}
-	PP(AGGRESSIVE);
+	CP(aggressive);
 	CP(overlapip);
 
 	CP(ikev2_allow_narrowing);

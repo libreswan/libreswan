@@ -100,7 +100,7 @@ static bool match_v1_connection(struct connection *c, struct authby authby,
 		    pri_connection(c, &cb));
 		return false;
 	}
-	if (policy_aggressive == !(c->policy & POLICY_AGGRESSIVE)) {
+	if (policy_aggressive != c->config->aggressive) {
 		connection_buf cb;
 		dbg("  skipping "PRI_CONNECTION", exact match POLICY_AGGRESSIVE failed",
 		    pri_connection(c, &cb));

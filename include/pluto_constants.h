@@ -893,7 +893,6 @@ enum sa_policy_bits {
 	POLICY_ROUTE_IX,	/* do we want to keep this connection routed? */
 	POLICY_UP_IX,		/* do we want to keep this connection up? */
 	POLICY_XAUTH_IX,	/* do we offer XAUTH? */
-	POLICY_AGGRESSIVE_IX,	/* do we do aggressive mode? */
 
 	POLICY_SEND_REDIRECT_ALWAYS_IX,		/* next three policies are for RFC 5685 */
 	POLICY_SEND_REDIRECT_NEVER_IX,
@@ -925,7 +924,6 @@ enum sa_policy_bits {
 #define POLICY_ROUTE	LELEM(POLICY_ROUTE_IX)	/* do we want to keep this connection routed? */
 #define POLICY_UP	LELEM(POLICY_UP_IX)	/* do we want to keep this connection up? */
 #define POLICY_XAUTH	LELEM(POLICY_XAUTH_IX)	/* do we offer XAUTH? */
-#define POLICY_AGGRESSIVE	LELEM(POLICY_AGGRESSIVE_IX)	/* do we do aggressive mode? */
 #define POLICY_SEND_REDIRECT_ALWAYS	LELEM(POLICY_SEND_REDIRECT_ALWAYS_IX)
 #define POLICY_SEND_REDIRECT_NEVER	LELEM(POLICY_SEND_REDIRECT_NEVER_IX)
 #define POLICY_ACCEPT_REDIRECT_YES	LELEM(POLICY_ACCEPT_REDIRECT_YES_IX)

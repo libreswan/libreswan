@@ -1918,12 +1918,13 @@ void process_packet_tail(struct msg_digest *md)
 			struct payload_digest *const pd = md->digest + md->digest_roof;
 
 			/*
-			 * only do this in main mode. In aggressive mode, there
-			 * is no negotiation of NAT-T method. Get it right.
+			 * Only do this in main mode. In aggressive
+			 * mode, there is no negotiation of NAT-T
+			 * method. Get it right.
 			 */
-			if (st != NULL && st->st_connection != NULL &&
-			    (st->st_connection->policy & POLICY_AGGRESSIVE) == LEMPTY)
-			{
+			if (st != NULL &&
+			    st->st_connection != NULL &&
+			    !st->st_connection->config->aggressive) {
 				switch (np) {
 				case ISAKMP_NEXT_NATD_RFC:
 				case ISAKMP_NEXT_NATOA_RFC:
@@ -2499,9 +2500,8 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		if (st->st_connection->local->host.config->xauth.client &&
 		    st->hidden_variables.st_xauth_client_done &&
 		    !st->st_connection->local->host.config->modecfg.client &&
-		    st->st_state->kind == STATE_XAUTH_I1)
-		{
-			bool aggrmode = LHAS(st->st_connection->policy, POLICY_AGGRESSIVE_IX);
+		    st->st_state->kind == STATE_XAUTH_I1) {
+			bool aggrmode = st->st_connection->config->aggressive;
 
 			log_state(RC_LOG, st, "XAUTH completed; ModeCFG skipped as per configuration");
 			change_v1_state(st, aggrmode ? STATE_AGGR_I2 : STATE_MAIN_I4);

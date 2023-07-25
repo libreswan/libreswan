@@ -432,7 +432,7 @@ static struct secret *lsw_get_secret(const struct connection *c,
 	if (
 	    /* case 1: */
 	    ( remote_id_was_instantiated(c) &&
-	      !(c->policy & POLICY_AGGRESSIVE) &&
+	      !c->config->aggressive &&
 	      !address_is_specified(c->remote->host.addr) ) ||
 
 	    /* case 2 */

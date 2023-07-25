@@ -273,6 +273,8 @@ struct config {
 					 * or not */
 	bool require_id_on_certificate;	/* require certificates to
 					 * have IKE ID on cert SAN */
+	bool aggressive;		/* do we do aggressive
+					 * mode? */
 
 	struct config_end end[END_ROOF];
 };

@@ -509,6 +509,7 @@ enum option_enums {
 	CD_NO_IKEPAD,
 	CD_ALLOW_CERT_WITHOUT_SAN_ID,
 	CD_MODECFGPULL,
+	CD_AGGRESSIVE,
 	CD_INITIATEONTRAFFIC,
 #define CD_LAST CD_INITIATEONTRAFFIC	/* last connection description */
 
@@ -741,8 +742,8 @@ static const struct option long_opts[] = {
 	{ "allow-cert-without-san-id", no_argument, NULL, CD_ALLOW_CERT_WITHOUT_SAN_ID + OO },
 	{ "sha2-truncbug", no_argument, NULL, CD_SHA2_TRUNCBUG + OO },
 	{ "sha2_truncbug", no_argument, NULL, CD_SHA2_TRUNCBUG + OO }, /* backwards compatibility */
-	PS("aggressive", AGGRESSIVE),
-	PS("aggrmode", AGGRESSIVE), /*  backwards compatibility */
+	{ "aggressive", no_argument, NULL, CD_AGGRESSIVE + OO },
+	{ "aggrmode", no_argument, NULL, CD_AGGRESSIVE + OO }, /*  backwards compatibility */
 
 	{ "initiateontraffic", no_argument, NULL, CD_INITIATEONTRAFFIC + OO }, /* obsolete */
 
@@ -1805,9 +1806,6 @@ int main(int argc, char **argv)
 		case CDP_SINGLETON + POLICY_TUNNEL_IX:	/* --tunnel */
 		case CDP_SINGLETON + POLICY_PFS_IX:	/* --pfs */
 
-		/* --aggrmode */
-		case CDP_SINGLETON + POLICY_AGGRESSIVE_IX:
-
 		/* --ikefrag-allow */
 		case CDP_SINGLETON + POLICY_IKE_FRAG_ALLOW_IX:
 		/* --ikefrag-force */
@@ -1822,6 +1820,11 @@ int main(int argc, char **argv)
 		case CDP_SINGLETON + POLICY_NOPMTUDISC_IX:
 
 			msg.policy |= LELEM(c - CDP_SINGLETON);
+			continue;
+
+		/* --aggressive | --aggrmode */
+		case CD_AGGRESSIVE:
+			msg.aggressive = YN_YES;
 			continue;
 
 		/* --modecfgpull */
@@ -2503,8 +2506,6 @@ int main(int argc, char **argv)
 		msg.sighash_policy = LEMPTY;
 		break;
 	case IKEv2:
-		if (msg.policy & POLICY_AGGRESSIVE)
-			diagw("connection cannot specify --ikev2 and --aggressive");
 		break;
 	}
 
@@ -2672,11 +2673,6 @@ int main(int argc, char **argv)
 	      msg.whack_rekey_ike || msg.whack_rekey_ipsec ||
 	      msg.whack_listpubkeys || msg.whack_checkpubkeys))
 		diagw("no action specified; try --help for hints");
-
-	if (msg.policy & POLICY_AGGRESSIVE) {
-		if (msg.ike == NULL)
-			diagw("cannot specify aggressive mode without ike= to set algorithm");
-	}
 
 	if (msg.remotepeertype != CISCO &&
 	    msg.remotepeertype != NON_CISCO) {

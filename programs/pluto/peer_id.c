@@ -358,7 +358,7 @@ static struct connection *refine_host_connection_on_responder(int indent,
 			 */
 			switch (st->st_ike_version) {
 			case IKEv1:
-				if (d->policy & POLICY_AGGRESSIVE) {
+				if (d->config->aggressive) {
 					dbg_rhc("skipping because AGGRESSIVE isn't right");
 					continue;	/* differ about aggressive mode */
 				}
