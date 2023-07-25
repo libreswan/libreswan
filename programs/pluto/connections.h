@@ -275,6 +275,7 @@ struct config {
 					 * have IKE ID on cert SAN */
 	bool aggressive;		/* do we do aggressive
 					 * mode? */
+	bool decap_dscp;		/* decap ToS/DSCP bits */
 
 	struct config_end end[END_ROOF];
 };

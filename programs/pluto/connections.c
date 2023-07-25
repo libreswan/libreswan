@@ -2024,6 +2024,13 @@ static diag_t extract_connection(const struct whack_message *wm,
 	}
 	config->aggressive = extract_yn(wm->aggressive, /*default*/false);
 
+	if (wm->decap_dscp == YN_YES && NEVER_NEGOTIATE(wm->policy)) {
+		llog(RC_INFORMATIONAL, c->logger,
+		     "warning: decap-dscp=yes ignored for never-negotiate connection");
+	} else {
+		config->decap_dscp = extract_yn(wm->decap_dscp, /*default*/false);
+	}
+
 	config->mobike = extract_yn(wm->mobike, /*default*/false);
 	if (config->mobike) {
 		if (wm->ike_version < IKEv2) {
@@ -3262,7 +3269,7 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 	PP(COMPRESS);
 	PP(TUNNEL);
 	PP(PFS);
-	PP(DECAP_DSCP);
+	CP(decap_dscp);
 	PP(NOPMTUDISC);
 	CP(ms_dh_downgrade);
 

@@ -510,6 +510,7 @@ enum option_enums {
 	CD_ALLOW_CERT_WITHOUT_SAN_ID,
 	CD_MODECFGPULL,
 	CD_AGGRESSIVE,
+	CD_DECAP_DSCP,
 	CD_INITIATEONTRAFFIC,
 #define CD_LAST CD_INITIATEONTRAFFIC	/* last connection description */
 
@@ -863,7 +864,7 @@ static const struct option long_opts[] = {
 
 	PS("no-esn", ESN_NO),
 	PS("esn", ESN_YES),
-	PS("decap-dscp", DECAP_DSCP),
+	{ "decap-dscp", no_argument, NULL, CD_DECAP_DSCP + OO },
 	PS("nopmtudisc", NOPMTUDISC),
 	{ "ignore-peer-dns", no_argument, NULL, CD_IGNORE_PEER_DNS + OO },
 #undef PS
@@ -1814,12 +1815,15 @@ int main(int argc, char **argv)
 		case CDP_SINGLETON + POLICY_ESN_NO_IX:
 		/* --esn */
 		case CDP_SINGLETON + POLICY_ESN_YES_IX:
-		/* --decap-dscp */
-		case CDP_SINGLETON + POLICY_DECAP_DSCP_IX:
 		/* --nopmtudisc */
 		case CDP_SINGLETON + POLICY_NOPMTUDISC_IX:
 
 			msg.policy |= LELEM(c - CDP_SINGLETON);
+			continue;
+
+		/* --decap-dscp */
+		case CD_DECAP_DSCP:
+			msg.decap_dscp = YN_YES;
 			continue;
 
 		/* --aggressive | --aggrmode */

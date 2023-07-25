@@ -520,7 +520,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "ppk-ids", kv_conn | kv_processed, kt_string, KSCF_PPKIDS, NULL, NULL, },
   { "intermediate",  kv_conn | kv_processed, kt_enum, KNCF_INTERMEDIATE, kw_yn_list, NULL, },
   { "esn",  kv_conn | kv_processed,  kt_enum,  KNCF_ESN,  kw_esn_list, NULL, },
-  { "decap-dscp",  kv_conn | kv_processed,  kt_bool,  KNCF_DECAP_DSCP,  NULL, NULL, },
+  { "decap-dscp",  kv_conn | kv_processed,  kt_enum,  KNCF_DECAP_DSCP,  kw_yn_list, NULL, },
   { "nopmtudisc",  kv_conn | kv_processed,  kt_bool,  KNCF_NOPMTUDISC,  NULL, NULL, },
   { "fragmentation",  kv_conn | kv_processed,  kt_enum,  KNCF_IKE_FRAG,  kw_ynf_list, NULL, },
   { "mobike",  kv_conn,  kt_enum,  KNCF_MOBIKE, kw_yn_list, NULL, },

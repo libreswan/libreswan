@@ -1189,7 +1189,6 @@ static bool load_conn(struct starter_conn *conn,
 	KW_POLICY_FLAG(KNCF_COMPRESS, POLICY_COMPRESS);
 	KW_POLICY_FLAG(KNCF_PFS, POLICY_PFS);
 
-	KW_POLICY_FLAG(KNCF_DECAP_DSCP, POLICY_DECAP_DSCP);
 	KW_POLICY_FLAG(KNCF_NOPMTUDISC, POLICY_NOPMTUDISC);
 
 	/* ??? sometimes (when? why?) the member is already set */
@@ -1454,7 +1453,6 @@ static bool load_conn(struct starter_conn *conn,
 				   POLICY_COMPRESS |
 				   POLICY_ESN_NO |
 				   POLICY_ESN_YES |
-				   POLICY_DECAP_DSCP |
 				   POLICY_NOPMTUDISC) &
 				 /* remove IKE related options */
 				 ~(POLICY_IKE_FRAG_ALLOW |

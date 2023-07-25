@@ -198,6 +198,7 @@ struct whack_message {
 					 * client? */
 	enum yn_options aggressive;	/* do we do aggressive
 					 * mode? */
+	enum yn_options decap_dscp;	/* decap ToS/DSCP bits */
 
 	uintmax_t sa_ipsec_max_bytes;
 	uintmax_t sa_ipsec_max_packets;

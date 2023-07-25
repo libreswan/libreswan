@@ -1689,8 +1689,8 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 			said_next->tfcpad = c->sa_tfcpad;
 		}
 
-		if (c->policy & POLICY_DECAP_DSCP) {
-			dbg("kernel: Enabling Decap ToS/DSCP bits");
+		if (c->config->decap_dscp) {
+			ldbg(st->st_logger, "kernel: Enabling Decap ToS/DSCP bits");
 			said_next->decap_dscp = true;
 		}
 		if (c->policy & POLICY_NOPMTUDISC) {
