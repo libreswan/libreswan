@@ -800,16 +800,22 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 
 	/* SA out */
 
-	/* Emit SA payload based on a subset of the policy bits.
+	/*
+	 * Emit SA payload based on a subset of the policy bits.
 	 * POLICY_COMPRESS is considered iff we can do IPcomp.
 	 */
 	{
-		lset_t pm = st->st_policy & (POLICY_ENCRYPT |
-					     POLICY_AUTHENTICATE |
-					     POLICY_COMPRESS);
-		policy_buf pb;
-		dbg("emitting quick defaults using policy %s",
-		    str_policy(pm, &pb));
+		struct ipsec_db_policy pm = {
+			.encrypt = (st->st_policy & POLICY_ENCRYPT),
+			.authenticate = (st->st_policy & POLICY_AUTHENTICATE),
+			.compress = (st->st_policy & POLICY_COMPRESS),
+		};
+
+		ldbg(st->st_logger,
+		     "emitting quick defaults using policy:%s%s%s",
+		     (pm.encrypt ? " encrypt" : ""),
+		     (pm.authenticate ? " authenticate" : ""),
+		     (pm.compress ? " compress" : ""));
 
 		if (!ikev1_out_sa(&rbody, IKEv1_ipsec_db_sa(pm),
 				  st, false, false)) {

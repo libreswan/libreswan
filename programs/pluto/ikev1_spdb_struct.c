@@ -532,11 +532,14 @@ struct db_sa *v1_kernel_alg_makedb(lset_t policy,
 				   bool logit, struct logger *logger)
 {
 	if (proposals.p == NULL) {
-		lset_t pm = policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE);
-
-		policy_buf pb;
-		dbg("empty esp_info, returning defaults for %s",
-		    str_policy(pm, &pb));
+		struct ipsec_db_policy pm = {
+			.encrypt = (policy & POLICY_ENCRYPT),
+			.authenticate = (policy & POLICY_AUTHENTICATE),
+		};
+		ldbg(logger,
+		     "empty esp_info, returning defaults for:%s%s",
+		     (pm.encrypt ? " encrypt" : ""),
+		     (pm.authenticate ? " authenticate" : ""));
 
 		/* make copy, to keep from freeing the static policies */
 		const struct db_sa *db = IKEv1_ipsec_db_sa(pm);

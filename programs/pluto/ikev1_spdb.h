@@ -117,7 +117,13 @@ extern struct db_sa *IKEv1_oakley_aggr_mode_db_sa(const struct connection *c);
  * The ipsec sadb is subscripted by a bitset with members from
  * POLICY_ENCRYPT, POLICY_AUTHENTICATE, POLICY_COMPRESS.
  */
-extern const struct db_sa *IKEv1_ipsec_db_sa(lset_t policy);
+struct ipsec_db_policy {
+	bool encrypt;
+	bool authenticate;
+	bool compress;
+};
+
+const struct db_sa *IKEv1_ipsec_db_sa(struct ipsec_db_policy policy);
 
 /* for db_sa */
 #define AD_SAp(x)    .prop_conjs = (x), .prop_conj_cnt = elemsof(x), .parentSA = true

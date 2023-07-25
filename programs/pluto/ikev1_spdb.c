@@ -787,9 +787,10 @@ static struct db_prop_conj esp_compress_props[] =
 static struct db_prop_conj ah_esp_compress_props[] =
 	{ { AD_PC(ah_esp_compress_pc) } };
 
-/* The IPsec SA DB is subscripted by a bitset (subset of policy)
- * with members from { POLICY_ENCRYPT, POLICY_AUTHENTICATE, POLICY_COMPRESS }
- * shifted right by POLICY_IPSEC_SHIFT.
+/*
+ * The IPsec SA DB is subscripted by a bitset (subset of policy) with
+ * members from { POLICY_ENCRYPT, POLICY_AUTHENTICATE, POLICY_COMPRESS
+ * } shifted right by POLICY_IPSEC_SHIFT.
  */
 
 static const struct db_sa ipsec_db_sa[1 << 3] = {
@@ -803,12 +804,11 @@ static const struct db_sa ipsec_db_sa[1 << 3] = {
 	{ AD_SAc(ah_esp_compress_props) },      /* POLICY_ENCRYPT+POLICY_AUTHENTICATE+POLICY_COMPRESS */
 };
 
-const struct db_sa *IKEv1_ipsec_db_sa(lset_t policy)
+const struct db_sa *IKEv1_ipsec_db_sa(struct ipsec_db_policy policy)
 {
-	passert((policy & ~(POLICY_ENCRYPT |
-			    POLICY_AUTHENTICATE |
-			    POLICY_COMPRESS)) == LEMPTY);
-	unsigned ix = (policy >> POLICY_ENCRYPT_IX);
+	unsigned ix = (policy.encrypt << 0 |
+		       policy.authenticate << 1 |
+		       policy.compress << 2);
 	passert(ix < elemsof(ipsec_db_sa));
 	return &ipsec_db_sa[ix];
 }
