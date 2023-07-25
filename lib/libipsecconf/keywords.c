@@ -714,7 +714,6 @@ int parser_find_keyword(const char *s, YYSTYPE *lval)
 		keywordtype = COMMENT;
 		break;
 	case kt_bool:
-	case kt_invertbool:
 		keywordtype = BOOLWORD;
 		break;
 	default:

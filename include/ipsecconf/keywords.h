@@ -349,7 +349,6 @@ enum keyword_type {
 	kt_filename,            /* value is a filename string */
 	kt_dirname,             /* value is a dir name string */
 	kt_bool,                /* value is an on/off type */
-	kt_invertbool,          /* value is an off/on type ("disable") */
 	kt_enum,                /* value is from a set of key words */
 	kt_list,                /* a set of values from a set of key words */
 	kt_lset,                /* a set of values from an enum name */

@@ -92,7 +92,6 @@ static void confwrite_int(FILE *out,
 			break;
 
 		case kt_bool:
-		case kt_invertbool:
 			/* special enumeration */
 			if (options_set[k->field]) {
 				fprintf(out, "\t%s%s=%s\n", side,
@@ -221,7 +220,6 @@ static void confwrite_str(FILE *out,
 			break;
 
 		case kt_bool:
-		case kt_invertbool:
 		case kt_enum:
 		case kt_list:
 		case kt_lset:

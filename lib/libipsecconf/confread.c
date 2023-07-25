@@ -330,7 +330,6 @@ static bool load_setup(struct starter_config *cfg,
 		case kt_list:
 		case kt_lset:
 		case kt_bool:
-		case kt_invertbool:
 		case kt_enum:
 		case kt_number:
 		case kt_time:
@@ -824,7 +823,6 @@ static bool translate_field(struct starter_conn *conn,
 	case kt_list:
 	case kt_lset:
 	case kt_bool:
-	case kt_invertbool:
 	case kt_enum:
 	case kt_number:
 	case kt_time:

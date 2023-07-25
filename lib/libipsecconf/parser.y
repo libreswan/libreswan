@@ -183,7 +183,6 @@ statement_kw:
 			break;
 
 		case kt_bool:
-		case kt_invertbool:
 		case kt_number:
 		case kt_time:
 		case kt_percent:
@@ -257,7 +256,6 @@ statement_kw:
 			break;
 
 		case kt_bool:
-		case kt_invertbool:
 		case kt_percent:
 		case kt_binary:
 		case kt_byte:
