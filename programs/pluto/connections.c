@@ -2031,6 +2031,13 @@ static diag_t extract_connection(const struct whack_message *wm,
 		config->decap_dscp = extract_yn(wm->decap_dscp, /*default*/false);
 	}
 
+	if (wm->nopmtudisc == YN_YES && NEVER_NEGOTIATE(wm->policy)) {
+		llog(RC_INFORMATIONAL, c->logger,
+		     "warning: nopmtudisc=yes ignored for never-negotiate connection");
+	} else {
+		config->nopmtudisc = extract_yn(wm->nopmtudisc, /*default*/false);
+	}
+
 	config->mobike = extract_yn(wm->mobike, /*default*/false);
 	if (config->mobike) {
 		if (wm->ike_version < IKEv2) {
@@ -3270,7 +3277,7 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 	PP(TUNNEL);
 	PP(PFS);
 	CP(decap_dscp);
-	PP(NOPMTUDISC);
+	CP(nopmtudisc);
 	CP(ms_dh_downgrade);
 
 	if (!c->config->require_id_on_certificate) {

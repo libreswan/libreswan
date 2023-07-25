@@ -1189,8 +1189,6 @@ static bool load_conn(struct starter_conn *conn,
 	KW_POLICY_FLAG(KNCF_COMPRESS, POLICY_COMPRESS);
 	KW_POLICY_FLAG(KNCF_PFS, POLICY_PFS);
 
-	KW_POLICY_FLAG(KNCF_NOPMTUDISC, POLICY_NOPMTUDISC);
-
 	/* ??? sometimes (when? why?) the member is already set */
 
 #	define str_to_conn(member, kscf) { \
@@ -1452,8 +1450,7 @@ static bool load_conn(struct starter_conn *conn,
 		conn->policy &= (~(POLICY_PFS |
 				   POLICY_COMPRESS |
 				   POLICY_ESN_NO |
-				   POLICY_ESN_YES |
-				   POLICY_NOPMTUDISC) &
+				   POLICY_ESN_YES) &
 				 /* remove IKE related options */
 				 ~(POLICY_IKE_FRAG_ALLOW |
 				   POLICY_IKE_FRAG_FORCE));

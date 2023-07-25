@@ -880,9 +880,8 @@ enum sa_policy_bits {
 	POLICY_COMPRESS_IX,	/* must be third */
 	POLICY_TUNNEL_IX,
 	POLICY_PFS_IX,
-	POLICY_NOPMTUDISC_IX,
 
-#define POLICY_IPSEC_MASK	LRANGE(POLICY_ENCRYPT_IX, POLICY_NOPMTUDISC_IX)
+#define POLICY_IPSEC_MASK	LRANGE(POLICY_ENCRYPT_IX, POLICY_PFS_IX)
 
 	/* connection policy
 	 * Other policies could vary per state object.  These live in connection.
@@ -916,7 +915,6 @@ enum sa_policy_bits {
 #define POLICY_COMPRESS	LELEM(POLICY_COMPRESS_IX)	/* must be third */
 #define POLICY_TUNNEL	LELEM(POLICY_TUNNEL_IX)
 #define POLICY_PFS	LELEM(POLICY_PFS_IX)
-#define POLICY_NOPMTUDISC	LELEM(POLICY_NOPMTUDISC_IX)
 #define POLICY_OPPORTUNISTIC	LELEM(POLICY_OPPORTUNISTIC_IX)	/* is this opportunistic? */
 #define POLICY_GROUPINSTANCE	LELEM(POLICY_GROUPINSTANCE_IX)	/* is this a group template instance? */
 #define POLICY_ROUTE	LELEM(POLICY_ROUTE_IX)	/* do we want to keep this connection routed? */

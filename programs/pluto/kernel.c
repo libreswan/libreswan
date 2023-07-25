@@ -1693,8 +1693,8 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 			ldbg(st->st_logger, "kernel: Enabling Decap ToS/DSCP bits");
 			said_next->decap_dscp = true;
 		}
-		if (c->policy & POLICY_NOPMTUDISC) {
-			dbg("kernel: Disabling Path MTU Discovery");
+		if (c->config->nopmtudisc) {
+			ldbg(st->st_logger, "kernel: Disabling Path MTU Discovery");
 			said_next->nopmtudisc = true;
 		}
 

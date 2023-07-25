@@ -276,6 +276,7 @@ struct config {
 	bool aggressive;		/* do we do aggressive
 					 * mode? */
 	bool decap_dscp;		/* decap ToS/DSCP bits */
+	bool nopmtudisc;		/* ??? */
 
 	struct config_end end[END_ROOF];
 };
