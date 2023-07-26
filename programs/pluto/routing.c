@@ -591,6 +591,7 @@ static bool zap_connection_family(enum routing_event event,
 	 */
 
 	{
+		ldbg_routing((*ike)->sa.st_logger, "weeding out lurking (unestablished) Child SAs");
 		struct state_filter sf = {
 			.ike = *ike,
 			.where = HERE,
@@ -632,6 +633,7 @@ static bool zap_connection_family(enum routing_event event,
 	 */
 
 	{
+		ldbg_routing((*ike)->sa.st_logger, "weeding out lurking (unestablished) IKE SAs");
 		struct state_filter sf = {
 			.connection_serialno = c->serialno,
 			.where = HERE,
@@ -683,6 +685,8 @@ static bool zap_connection_family(enum routing_event event,
 		ldbg_routing((*ike)->sa.st_logger, "IKE SA is not the parent of the connection's Child SA "PRI_SO,
 			     pri_so(connection_child->sa.st_serialno));
 	} else {
+		ldbg_routing((*ike)->sa.st_logger, "dispatching delete to Child SA "PRI_SO,
+			     pri_so(connection_child->sa.st_serialno));
 		dispatched_to_child = true;
 		state_attach(&connection_child->sa, (*ike)->sa.st_logger);
 		/* will delete child and its logger */
@@ -705,6 +709,7 @@ static bool zap_connection_family(enum routing_event event,
 	 */
 
 	{
+		ldbg_routing((*ike)->sa.st_logger, "dispatching delete to Child SA siblings");
 		struct state_filter child_filter = {
 			.ike = *ike,
 			.where = HERE,
