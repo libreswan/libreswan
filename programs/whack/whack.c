@@ -2058,21 +2058,12 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_ACCEPT_REDIRECT:	/* --accept-redirect */
-		{
-			lset_t new_policy = LEMPTY;
-
 			if (streq(optarg, "yes"))
-				new_policy |= POLICY_ACCEPT_REDIRECT_YES;
+				msg.accept_redirect = YN_YES;
 			else if (streq(optarg, "no"))
-				new_policy |= LEMPTY;
+				msg.accept_redirect = YN_NO;
 			else
 				diagw("--accept-redirect options are 'yes' and 'no'");
-
-			if (new_policy != LEMPTY)
-				msg.policy |= new_policy;
-			else
-				msg.policy = msg.policy & ~POLICY_ACCEPT_REDIRECT_YES;
-		}
 			continue;
 
 		case CD_ACCEPT_REDIRECT_TO:	/* --accept-redirect-to */

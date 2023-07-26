@@ -825,7 +825,7 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 	if (address_is_specified(c->temp_vars.redirect_ip)) {
 		if (!emit_redirected_from_notification(&c->temp_vars.old_gw_address, request.pbs))
 			return false;
-	} else if (LIN(POLICY_ACCEPT_REDIRECT_YES, c->policy)) {
+	} else if (c->config->redirect.accept) {
 		if (!emit_v2N(v2N_REDIRECT_SUPPORTED, request.pbs))
 			return false;
 	}

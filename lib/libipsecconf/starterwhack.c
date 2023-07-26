@@ -685,6 +685,7 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	msg.aggressive = conn->options[KNCF_AGGRESSIVE]; /* yn_options */
 	msg.decap_dscp = conn->options[KNCF_DECAP_DSCP]; /* yn_options */
 	msg.nopmtudisc = conn->options[KNCF_NOPMTUDISC]; /* yn_options */
+	msg.accept_redirect = conn->options[KNCF_ACCEPT_REDIRECT]; /* yn_options */
 
 	if (conn->options_set[KNCF_XAUTHBY])
 		msg.xauthby = conn->options[KNCF_XAUTHBY];

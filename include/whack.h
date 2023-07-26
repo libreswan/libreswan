@@ -406,6 +406,7 @@ struct whack_message {
 	enum allow_global_redirect global_redirect;
 	char *global_redirect_to;
 	char *redirect_to;		/* either for connection or active */
+	enum yn_options accept_redirect;
 	char *accept_redirect_to;
 
 	/* what metric to put on ipsec routes */

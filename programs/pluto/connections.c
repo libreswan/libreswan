@@ -2058,6 +2058,16 @@ static diag_t extract_connection(const struct whack_message *wm,
 		}
 	}
 
+	if (wm->ike_version == IKEv1) {
+		if (wm->accept_redirect != YN_UNSET) {
+			llog(RC_INFORMATIONAL, c->logger,
+			     "warning: IKEv1 connection ignores accept-redirect=");
+		}
+	} else {
+		config->redirect.accept = extract_yn(wm->accept_redirect, /*default*/false);
+		ldbg(c->logger, "redirect %s", bool_str(config->redirect.accept));
+	}
+
 	/* RFC 8229 TCP encap*/
 
 	if (NEVER_NEGOTIATE(wm->policy)) {
@@ -3321,7 +3331,11 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 
 	PP(SEND_REDIRECT_ALWAYS);
 	PP(SEND_REDIRECT_NEVER);
-	PP(ACCEPT_REDIRECT_YES);
+	if (c->config->redirect.accept) {
+		s += jam_string(buf, sep);
+		/* not REDIRECT.ACCEPT */
+		s += jam_string(buf, "ACCEPT_REDIRECT_YES");
+	}
 
 	PP(IKE_FRAG_ALLOW);
 	PP(IKE_FRAG_FORCE);

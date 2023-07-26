@@ -1262,27 +1262,6 @@ static bool load_conn(struct starter_conn *conn,
 		}
 	}
 
-	if (conn->options_set[KNCF_ACCEPT_REDIRECT]) {
-		if (conn->ike_version >= IKEv2) {
-			switch (conn->options[KNCF_ACCEPT_REDIRECT]) {
-			case yna_yes:
-				conn->policy |= POLICY_ACCEPT_REDIRECT_YES;
-				break;
-
-			/* default policy is no, so there is no POLICY_ACCEPT_REDIRECT_YES
-			 * in policy.
-			 *
-			 * technically the values for this option are yes/no,
-			 * although we use yna option set (we do not want to
-			 * make new yes-no enum)
-			 */
-			case yna_auto:
-			case yna_no:
-				break;
-			}
-		}
-	}
-
 	if (conn->options_set[KNCF_PPK]) {
 		lset_t ppk = LEMPTY;
 

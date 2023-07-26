@@ -528,7 +528,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "pam-authorize",  kv_conn,  kt_enum,  KNCF_PAM_AUTHORIZE, kw_yn_list, NULL, },
   { "send-redirect",  kv_conn,  kt_enum,  KNCF_SEND_REDIRECT, kw_yna_list, NULL, },
   { "redirect-to",  kv_conn,  kt_string,  KSCF_REDIRECT_TO, NULL, NULL, },
-  { "accept-redirect",  kv_conn,  kt_enum, KNCF_ACCEPT_REDIRECT, kw_yna_list, NULL, },
+  { "accept-redirect",  kv_conn,  kt_enum, KNCF_ACCEPT_REDIRECT, kw_yn_list, NULL, },
   { "accept-redirect-to",  kv_conn,  kt_string, KSCF_ACCEPT_REDIRECT_TO, NULL, NULL, },
   { "pfs",  kv_conn,  kt_bool,  KNCF_PFS, NULL, NULL, },
 

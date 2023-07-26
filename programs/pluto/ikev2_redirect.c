@@ -444,7 +444,7 @@ bool redirect_ike_auth(struct ike_sa *ike, struct msg_digest *md, stf_status *re
 	}
 
 	dbg("redirect: received v2N_REDIRECT in authenticated IKE_AUTH reply");
-	if (!LIN(POLICY_ACCEPT_REDIRECT_YES, ike->sa.st_connection->policy)) {
+	if (!ike->sa.st_connection->config->redirect.accept) {
 		dbg("ignoring v2N_REDIRECT, we don't accept being redirected");
 		return false;
 	}
@@ -622,9 +622,9 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_REDIRECT(struct ike_sa *ike,
 	}
 	struct pbs_in redirect_pbs = md->pd[PD_v2N_REDIRECT]->pbs;
 
-	if (!LIN(POLICY_ACCEPT_REDIRECT_YES, ike->sa.st_connection->policy)) {
+	if (!ike->sa.st_connection->config->redirect.accept) {
 		llog_sa(RC_LOG, ike,
-			  "ignoring v2N_REDIRECT, we don't accept being redirected");
+			"ignoring v2N_REDIRECT, we don't accept being redirected");
 		return STF_IGNORE;
 	}
 

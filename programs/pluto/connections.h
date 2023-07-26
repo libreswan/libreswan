@@ -199,6 +199,7 @@ struct config {
 	struct shunks *ppk_ids_shunks;
 
 	struct {
+		bool accept;
 		char *to;        /* RFC 5685 */
 		char *accept_to;
 	} redirect;
