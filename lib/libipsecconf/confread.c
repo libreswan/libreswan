@@ -671,10 +671,6 @@ static bool validate_end(struct starter_conn *conn_st,
 		}
 	}
 
-	if (end->options_set[KNCF_XAUTHSERVER] ||
-	    end->options_set[KNCF_XAUTHCLIENT])
-		conn_st->policy |= POLICY_XAUTH;
-
 	return err;
 #  undef ERR_FOUND
 }

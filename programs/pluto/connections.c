@@ -2825,10 +2825,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 * Cross-check the auth= vs authby= results.
 	 */
 
-	if (c->local->host.config->xauth.server || c->remote->host.config->xauth.server) {
-		add_policy(c, POLICY_XAUTH);
-	}
-
 	if (never_negotiate(c)) {
 		if (!PEXPECT(c->logger,
 			     c->local->host.config->auth == AUTH_NEVER &&
@@ -3302,13 +3298,20 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 	PP(GROUPINSTANCE);
 	PP(ROUTE);
 	PP(UP);
-	PP(XAUTH);
+
+	if (is_xauth(c)) {
+		s += jam_string(buf, sep);
+		s += jam_string(buf, "XAUTH");
+		sep = "+";
+	}
+
 	if (c->config->modecfg.pull) {
 		s += jam_string(buf, sep);
 		/* not MODECFG.PULL */
 		s += jam_string(buf, "MODECFG_PULL");
 		sep = "+";
 	}
+
 	CP(aggressive);
 	CP(overlapip);
 
@@ -4249,4 +4252,17 @@ bool is_labeled_child(const struct connection *c)
 		return false;
 	}
 	bad_case(c->local->kind);
+}
+
+/*
+ * XXX: is this too strict?
+ *
+ * addconn was setting XAUTH when either of SERVER or CLIENT was set,
+ * but the below only considers SERVER.
+ */
+ 
+bool is_xauth(const struct connection *c)
+{
+	return (c->local->host.config->xauth.server || c->remote->host.config->xauth.server ||
+		c->local->host.config->xauth.client || c->remote->host.config->xauth.client);
 }

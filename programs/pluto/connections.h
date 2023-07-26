@@ -893,4 +893,6 @@ bool is_opportunistic_group(const struct connection *c);
 bool is_opportunistic_template(const struct connection *c);
 bool is_opportunistic_instance(const struct connection *c);
 
+bool is_xauth(const struct connection *c);
+
 #endif

@@ -94,7 +94,7 @@ static bool match_v1_connection(struct connection *c, struct authby authby,
 	 * Each of our callers knows what is known so specifies
 	 * the policy_exact_mask.
 	 */
-	if (policy_xauth == !(c->policy & POLICY_XAUTH)) {
+	if (policy_xauth != is_xauth(c)) {
 		connection_buf cb;
 		dbg("  skipping "PRI_CONNECTION", exact match POLICY_XAUTH failed",
 		    pri_connection(c, &cb));
