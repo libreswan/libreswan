@@ -23,8 +23,8 @@ north #
 1v1 "north-east" #1: sent Main Mode I3
 002 "north-east" #1: Peer ID is ID_FQDN: '@east'
 004 "north-east" #1: IKE SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-041 "north-east" #1: north-east prompt for Username:
-040 "north-east" #1: north-east prompt for Password:
+041 "north-east" #1: prompt for Username:
+040 "north-east" #1: prompt for Password:
 002 "north-east" #1: XAUTH: Answering XAUTH challenge with user='xnorth'
 004 "north-east" #1: XAUTH client - possibly awaiting CFG_set {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "north-east" #1: XAUTH: Successfully Authenticated

@@ -18,8 +18,8 @@ road #
 1v1 "modecfg-road-eastnet-psk" #1: sent Main Mode I3
 002 "modecfg-road-eastnet-psk" #1: Peer ID is ID_FQDN: '@east'
 004 "modecfg-road-eastnet-psk" #1: IKE SA established {auth=PRESHARED_KEY cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP2048}
-041 "modecfg-road-eastnet-psk" #1: modecfg-road-eastnet-psk prompt for Username:
-040 "modecfg-road-eastnet-psk" #1: modecfg-road-eastnet-psk prompt for Password:
+041 "modecfg-road-eastnet-psk" #1: prompt for Username:
+040 "modecfg-road-eastnet-psk" #1: prompt for Password:
 002 "modecfg-road-eastnet-psk" #1: XAUTH: Answering XAUTH challenge with user='use3'
 004 "modecfg-road-eastnet-psk" #1: XAUTH client - possibly awaiting CFG_set {auth=PRESHARED_KEY cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP2048}
 002 "modecfg-road-eastnet-psk" #1: XAUTH: Successfully Authenticated

@@ -21,8 +21,8 @@ road #
 002 "modecfg-road-east" #1: Peer ID is ID_FQDN: '@east'
 003 "modecfg-road-east" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
 004 "modecfg-road-east" #1: IKE SA established {auth=RSA_SIG cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP2048}
-041 "modecfg-road-east" #1: modecfg-road-east prompt for Username:
-040 "modecfg-road-east" #1: modecfg-road-east prompt for Password:
+041 "modecfg-road-east" #1: prompt for Username:
+040 "modecfg-road-east" #1: prompt for Password:
 002 "modecfg-road-east" #1: XAUTH: Answering XAUTH challenge with user='use3'
 004 "modecfg-road-east" #1: XAUTH client - possibly awaiting CFG_set {auth=RSA_SIG cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP2048}
 002 "modecfg-road-east" #1: XAUTH: Successfully Authenticated

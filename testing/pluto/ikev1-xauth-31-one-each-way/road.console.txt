@@ -25,8 +25,8 @@ road #
 002 "xauth-road-to-east-on-road" #1: Peer ID is ID_FQDN: '@east'
 003 "xauth-road-to-east-on-road" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
 004 "xauth-road-to-east-on-road" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-041 "xauth-road-to-east-on-road" #1: xauth-road-to-east-on-road prompt for Username:
-040 "xauth-road-to-east-on-road" #1: xauth-road-to-east-on-road prompt for Password:
+041 "xauth-road-to-east-on-road" #1: prompt for Username:
+040 "xauth-road-to-east-on-road" #1: prompt for Password:
 002 "xauth-road-to-east-on-road" #1: XAUTH: Answering XAUTH challenge with user='use1'
 004 "xauth-road-to-east-on-road" #1: XAUTH client - possibly awaiting CFG_set {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "xauth-road-to-east-on-road" #1: XAUTH: Successfully Authenticated

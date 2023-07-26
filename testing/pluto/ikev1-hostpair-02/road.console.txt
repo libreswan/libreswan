@@ -26,8 +26,8 @@ road #
 002 "westnet-eastnet-ipv4-psk-ikev1" #1: Peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 003 "westnet-eastnet-ipv4-psk-ikev1" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 004 "westnet-eastnet-ipv4-psk-ikev1" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-041 "westnet-eastnet-ipv4-psk-ikev1" #1: westnet-eastnet-ipv4-psk-ikev1 prompt for Username:
-040 "westnet-eastnet-ipv4-psk-ikev1" #1: westnet-eastnet-ipv4-psk-ikev1 prompt for Password:
+041 "westnet-eastnet-ipv4-psk-ikev1" #1: prompt for Username:
+040 "westnet-eastnet-ipv4-psk-ikev1" #1: prompt for Password:
 002 "westnet-eastnet-ipv4-psk-ikev1" #1: XAUTH: Answering XAUTH challenge with user='use3'
 004 "westnet-eastnet-ipv4-psk-ikev1" #1: XAUTH client - possibly awaiting CFG_set {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "westnet-eastnet-ipv4-psk-ikev1" #1: XAUTH: Successfully Authenticated
@@ -68,8 +68,8 @@ road #
 002 "westnet-eastnet-ipv4-psk-ikev1" #3: Peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 003 "westnet-eastnet-ipv4-psk-ikev1" #3: authenticated peer '2nnn-bit RSA with SHA1' signature using peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 004 "westnet-eastnet-ipv4-psk-ikev1" #3: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-041 "westnet-eastnet-ipv4-psk-ikev1" #3: westnet-eastnet-ipv4-psk-ikev1 prompt for Username:
-040 "westnet-eastnet-ipv4-psk-ikev1" #3: westnet-eastnet-ipv4-psk-ikev1 prompt for Password:
+041 "westnet-eastnet-ipv4-psk-ikev1" #3: prompt for Username:
+040 "westnet-eastnet-ipv4-psk-ikev1" #3: prompt for Password:
 002 "westnet-eastnet-ipv4-psk-ikev1" #3: XAUTH: Answering XAUTH challenge with user='use3'
 004 "westnet-eastnet-ipv4-psk-ikev1" #3: XAUTH client - possibly awaiting CFG_set {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "westnet-eastnet-ipv4-psk-ikev1" #3: XAUTH: Successfully Authenticated
@@ -100,8 +100,8 @@ road #
 002 "westnet-eastnet-ipv4-psk-ikev1" #5: Peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 003 "westnet-eastnet-ipv4-psk-ikev1" #5: authenticated peer '2nnn-bit RSA with SHA1' signature using peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 004 "westnet-eastnet-ipv4-psk-ikev1" #5: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-041 "westnet-eastnet-ipv4-psk-ikev1" #5: westnet-eastnet-ipv4-psk-ikev1 prompt for Username:
-040 "westnet-eastnet-ipv4-psk-ikev1" #5: westnet-eastnet-ipv4-psk-ikev1 prompt for Password:
+041 "westnet-eastnet-ipv4-psk-ikev1" #5: prompt for Username:
+040 "westnet-eastnet-ipv4-psk-ikev1" #5: prompt for Password:
 002 "westnet-eastnet-ipv4-psk-ikev1" #5: XAUTH: Answering XAUTH challenge with user='use3'
 004 "westnet-eastnet-ipv4-psk-ikev1" #5: XAUTH client - possibly awaiting CFG_set {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "westnet-eastnet-ipv4-psk-ikev1" #5: XAUTH: Successfully Authenticated
@@ -132,8 +132,8 @@ road #
 002 "westnet-eastnet-ipv4-psk-ikev1" #7: Peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 003 "westnet-eastnet-ipv4-psk-ikev1" #7: authenticated peer '2nnn-bit RSA with SHA1' signature using peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 004 "westnet-eastnet-ipv4-psk-ikev1" #7: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-041 "westnet-eastnet-ipv4-psk-ikev1" #7: westnet-eastnet-ipv4-psk-ikev1 prompt for Username:
-040 "westnet-eastnet-ipv4-psk-ikev1" #7: westnet-eastnet-ipv4-psk-ikev1 prompt for Password:
+041 "westnet-eastnet-ipv4-psk-ikev1" #7: prompt for Username:
+040 "westnet-eastnet-ipv4-psk-ikev1" #7: prompt for Password:
 002 "westnet-eastnet-ipv4-psk-ikev1" #7: XAUTH: Answering XAUTH challenge with user='use3'
 004 "westnet-eastnet-ipv4-psk-ikev1" #7: XAUTH client - possibly awaiting CFG_set {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "westnet-eastnet-ipv4-psk-ikev1" #7: XAUTH: Successfully Authenticated

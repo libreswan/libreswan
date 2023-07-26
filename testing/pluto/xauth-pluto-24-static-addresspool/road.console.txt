@@ -24,8 +24,8 @@ road #
 1v1 "road-east" #1: sent Main Mode I3
 002 "road-east" #1: Peer ID is ID_FQDN: '@east'
 004 "road-east" #1: IKE SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-041 "road-east" #1: road-east prompt for Username:
-040 "road-east" #1: road-east prompt for Password:
+041 "road-east" #1: prompt for Username:
+040 "road-east" #1: prompt for Password:
 002 "road-east" #1: XAUTH: Answering XAUTH challenge with user='xroad'
 004 "road-east" #1: XAUTH client - possibly awaiting CFG_set {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "road-east" #1: Received Cisco XAUTH status: FAIL

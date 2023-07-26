@@ -22,8 +22,8 @@ road #
 002 "modecfg-road-east" #1: Peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 003 "modecfg-road-east" #1: authenticated peer '3nnn-bit RSA with SHA1' signature using peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 004 "modecfg-road-east" #1: IKE SA established {auth=RSA_SIG cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP2048}
-041 "modecfg-road-east" #1: modecfg-road-east prompt for Username:
-040 "modecfg-road-east" #1: modecfg-road-east prompt for Password:
+041 "modecfg-road-east" #1: prompt for Username:
+040 "modecfg-road-east" #1: prompt for Password:
 002 "modecfg-road-east" #1: XAUTH: Answering XAUTH challenge with user='use3'
 004 "modecfg-road-east" #1: XAUTH client - possibly awaiting CFG_set {auth=RSA_SIG cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP2048}
 002 "modecfg-road-east" #1: XAUTH: Successfully Authenticated

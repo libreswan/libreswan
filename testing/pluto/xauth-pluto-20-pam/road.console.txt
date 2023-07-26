@@ -21,8 +21,8 @@ road #
 002 "xauth-road-eastnet" #1: Peer ID is ID_FQDN: '@east'
 003 "xauth-road-eastnet" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
 004 "xauth-road-eastnet" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-041 "xauth-road-eastnet" #1: xauth-road-eastnet prompt for Username:
-040 "xauth-road-eastnet" #1: xauth-road-eastnet prompt for Password:
+041 "xauth-road-eastnet" #1: prompt for Username:
+040 "xauth-road-eastnet" #1: prompt for Password:
 002 "xauth-road-eastnet" #1: XAUTH: Answering XAUTH challenge with user='baduser'
 004 "xauth-road-eastnet" #1: XAUTH client - possibly awaiting CFG_set {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "xauth-road-eastnet" #1: Received Cisco XAUTH status: FAIL
@@ -44,8 +44,8 @@ road #
 002 "xauth-road-eastnet" #3: Peer ID is ID_FQDN: '@east'
 003 "xauth-road-eastnet" #3: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
 004 "xauth-road-eastnet" #3: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-041 "xauth-road-eastnet" #3: xauth-road-eastnet prompt for Username:
-040 "xauth-road-eastnet" #3: xauth-road-eastnet prompt for Password:
+041 "xauth-road-eastnet" #3: prompt for Username:
+040 "xauth-road-eastnet" #3: prompt for Password:
 002 "xauth-road-eastnet" #3: XAUTH: Answering XAUTH challenge with user='gooduser'
 004 "xauth-road-eastnet" #3: XAUTH client - possibly awaiting CFG_set {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "xauth-road-eastnet" #3: XAUTH: Successfully Authenticated
