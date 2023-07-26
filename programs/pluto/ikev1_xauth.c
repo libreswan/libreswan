@@ -2033,20 +2033,12 @@ static stf_status xauth_client_resp(struct state *st,
 						return STF_INTERNAL_ERROR;
 
 					if (st->st_xauth_username[0] == '\0') {
-						if (!fd_p(st->st_logger->object_whackfd)) {
-							log_state(RC_LOG_SERIOUS, st,
-							       "XAUTH username requested, but no file descriptor available for prompt");
-							return STF_FATAL;
-						}
-
 						if (!whack_prompt_for(st,
-							"Username",
-							true,
-							xauth_username,
-							sizeof(xauth_username)))
-						{
-							log_state(RC_LOG_SERIOUS, st,
-							       "XAUTH username prompt failed.");
+								      "Username",
+								      true,
+								      xauth_username,
+								      sizeof(xauth_username))) {
+							/* already logged */
 							return STF_FATAL;
 						}
 						/* replace the first newline character with a string-terminating \0. */
@@ -2109,21 +2101,12 @@ static stf_status xauth_client_resp(struct state *st,
 
 					if (st->st_xauth_password.ptr == NULL) {
 						char xauth_password[XAUTH_MAX_PASS_LENGTH];
-
-						if (!fd_p(st->st_logger->object_whackfd)) {
-							log_state(RC_LOG_SERIOUS, st,
-							       "XAUTH password requested, but no file descriptor available for prompt");
-							return STF_FATAL;
-						}
-
 						if (!whack_prompt_for(st,
 								      "Password",
 								      false,
 								      xauth_password,
-								      sizeof(xauth_password)))
-						{
-							log_state(RC_LOG_SERIOUS, st,
-							       "XAUTH password prompt failed.");
+								      sizeof(xauth_password))) {
+							/* already logged */
 							return STF_FATAL;
 						}
 

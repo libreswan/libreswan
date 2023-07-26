@@ -41,6 +41,7 @@
 #include "demux.h"	/* for struct msg_digest */
 #include "pending.h"
 
+static struct fd *logger_fd(const struct logger *logger);
 static void log_raw(int severity, const char *prefix, struct jambuf *buf);
 
 const struct log_param default_log_param = {
@@ -166,25 +167,27 @@ static void jambuf_to_whack(struct jambuf *buf, const struct fd *whackfd, enum r
 }
 
 /*
- * interactive input from the whack user, using current whack_fd
+ * Interactive input from the whack user, using current whack_fd
  */
-bool whack_prompt_for(struct state *st, const char *prompt,
+bool whack_prompt_for(struct state *st,
+		      const char *prompt,
 		      bool echo, char *ansbuf, size_t ansbuf_len)
 {
-	dbg("prompting whack for %s", prompt);
+	ldbg(st->st_logger, "prompting whack for %s", prompt);
 
-	/*
-	 * XXX: This includes the connection name twice: first from
-	 * the state prefix; and second explicitly.  Only reason is so
-	 * that tests are happy.
-	 */
+	/* find an fd */
+	struct fd *whack_fd = logger_fd(st->st_logger);
+	if (whack_fd == NULL) {
+		log_state(RC_LOG_SERIOUS, st,
+			  "XAUTH password requested, but no file descriptor available for prompt");
+		return false;
+	}
+
 	JAMBUF(buf) {
-		/* XXX: one of these is redundant */
 		jam_logger_prefix(buf, st->st_logger);
-		jam(buf, "%s ", st->st_connection->name);
 		/* the real message */
 		jam(buf, "prompt for %s:", prompt);
-		jambuf_to_whack(buf, st->st_logger->object_whackfd,
+		jambuf_to_whack(buf, whack_fd,
 				echo ? RC_USERPROMPT : RC_ENTERSECRET);
 	}
 
