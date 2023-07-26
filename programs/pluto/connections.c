@@ -1774,7 +1774,8 @@ void finish_connection(struct connection *c, const char *name,
 
 	c->name = clone_str(name, __func__);
 	c->logger = alloc_logger(c, &logger_connection_vec,
-				 debugging, whackfd, where);
+				 debugging, where);
+	attach_fd(c->logger, whackfd);
 
 	/*
 	 * Determine left/right vs local/remote.

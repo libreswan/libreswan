@@ -29,8 +29,7 @@ struct msg_digest *alloc_md(struct iface_endpoint *ifp,
 	md->iface = iface_endpoint_addref_where(ifp, where);
 	md->sender = *sender;
 	md->md_logger = alloc_logger(md, &logger_message_vec,
-				     /*debugging*/LEMPTY, null_fd,
-				     where);
+				     /*debugging*/LEMPTY, where);
 	void *buffer = md + 1;
 	init_pbs(&md->packet_pbs, buffer, packet_len, "packet");
 	if (packet != NULL) {

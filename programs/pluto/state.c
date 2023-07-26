@@ -434,8 +434,9 @@ static struct state *new_state(struct connection *c,
 
 	/* Create the logger ASAP; needs real ST */
 	st->st_logger = alloc_logger(st, &logger_state_vec,
-				     c->logger->debugging, whackfd,
+				     c->logger->debugging,
 				     where);
+	attach_fd(st->st_logger, whackfd);
 
 	/* Determine the serialno.  */
 	static so_serial_t state_serialno;

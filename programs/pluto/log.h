@@ -55,8 +55,11 @@ extern bool log_to_syslog;          /* should log go to syslog? */
 extern char *pluto_log_file;
 extern char *pluto_stats_binary;
 
-extern bool whack_prompt_for(struct state *st, const char *prompt,
-			     bool echo, char *ansbuf, size_t ansbuf_len);
+extern bool whack_prompt_for(struct state *st,
+			     const char *prompt,
+			     bool echo,
+			     char *ansbuf,
+			     size_t ansbuf_len);
 
 void release_whack(struct logger *logger, where_t where);
 
@@ -92,8 +95,7 @@ struct logger *string_logger(struct fd *whackfd, where_t where, const char *fmt,
 
 struct logger logger_from(struct logger *outer, const ip_endpoint *endpoint); /*on-stack*/
 struct logger *alloc_logger(void *object, const struct logger_object_vec *vec,
-			    lset_t debugging, struct fd *whackfd,
-			    where_t where);
+			    lset_t debugging, where_t where);
 struct logger *clone_logger(const struct logger *stack, where_t where);
 void free_logger(struct logger **logp, where_t where);
 
