@@ -74,6 +74,12 @@ err_t ttoaddress_dns(shunk_t src, const struct ip_info *afi, ip_address *dst)
 	}
 
 	/*
+	 * If getaddrinfo succeeded, res must be non-empty.
+	 * Make this assumption manifest: it quiets lclint.
+	 */
+	passert(res != NULL);
+
+	/*
 	 * When AFI is specified, use the first entry; and prefer IPv4
 	 * when it wasn't.
 	 *
