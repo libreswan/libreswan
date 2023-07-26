@@ -2314,11 +2314,9 @@ diag_t pbs_in_raw(struct pbs_in *ins, void *bytes, size_t len, const char *name)
 		return d;
 	}
 
-	if (bytes == NULL) {
-		return NULL;
+	if (bytes != NULL && shunk.len != 0) {
+		memcpy(bytes, shunk.ptr, shunk.len);
 	}
-
-	memcpy(bytes, shunk.ptr, shunk.len);
 	return NULL;
 }
 
