@@ -451,7 +451,7 @@ bool redirect_ike_auth(struct ike_sa *ike, struct msg_digest *md, stf_status *re
 
 	ip_address redirect_ip;
 	err_t err = parse_redirect_payload(&md->pd[PD_v2N_REDIRECT]->pbs,
-					   ike->sa.st_connection->config->redirect.accept,
+					   ike->sa.st_connection->config->redirect.accept_to,
 					   NULL,
 					   &redirect_ip,
 					   ike->sa.st_logger);
@@ -630,7 +630,7 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_REDIRECT(struct ike_sa *ike,
 
 	ip_address redirect_ip;
 	err_t err = parse_redirect_payload(&redirect_pbs,
-					   c->config->redirect.accept,
+					   c->config->redirect.accept_to,
 					   &ike->sa.st_ni,
 					   &redirect_ip,
 					   ike->sa.st_logger);
@@ -662,7 +662,7 @@ void process_v2_INFORMATIONAL_request_v2N_REDIRECT(struct ike_sa *ike, struct ms
 	struct pbs_in pbs = md->pd[PD_v2N_REDIRECT]->pbs;
 	dbg("received v2N_REDIRECT in informational");
 	ip_address redirect_to;
-	err_t e = parse_redirect_payload(&pbs, ike->sa.st_connection->config->redirect.accept,
+	err_t e = parse_redirect_payload(&pbs, ike->sa.st_connection->config->redirect.accept_to,
 					 NULL, &redirect_to, ike->sa.st_logger);
 	if (e != NULL) {
 		/* XXX: parse_redirect_payload() also often logs! */

@@ -200,7 +200,7 @@ struct config {
 
 	struct {
 		char *to;        /* RFC 5685 */
-		char *accept;
+		char *accept_to;
 	} redirect;
 
 	/*

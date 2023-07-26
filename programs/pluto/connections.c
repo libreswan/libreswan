@@ -376,7 +376,7 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 			pfree(config->ppk_ids_shunks);
 		}
 		pfreeany(config->redirect.to);
-		pfreeany(config->redirect.accept);
+		pfreeany(config->redirect.accept_to);
 		FOR_EACH_ELEMENT(end, config->end) {
 			if (end->host.cert.nss_cert != NULL) {
 				CERT_DestroyCertificate(end->host.cert.nss_cert);
@@ -2598,7 +2598,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 		/* RFC 5685 - IKEv2 Redirect mechanism */
 		config->redirect.to = clone_str(wm->redirect_to, "connection redirect_to");
-		config->redirect.accept = clone_str(wm->accept_redirect_to, "connection accept_redirect_to");
+		config->redirect.accept_to = clone_str(wm->accept_redirect_to, "connection accept_redirect_to");
 
 		/*
 		 * parse mark and mask values form the mark/mask string
