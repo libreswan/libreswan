@@ -173,8 +173,6 @@ bool whack_prompt_for(struct state *st,
 		      const char *prompt,
 		      bool echo, char *ansbuf, size_t ansbuf_len)
 {
-	ldbg(st->st_logger, "prompting whack for %s", prompt);
-
 	/* find an fd */
 	struct fd *whack_fd = logger_fd(st->st_logger);
 	if (whack_fd == NULL) {
@@ -182,6 +180,9 @@ bool whack_prompt_for(struct state *st,
 			  "XAUTH password requested, but no file descriptor available for prompt");
 		return false;
 	}
+
+	ldbg(st->st_logger, "prompting whack for %s using "PRI_FD,
+	     prompt, pri_fd(whack_fd));
 
 	JAMBUF(buf) {
 		jam_logger_prefix(buf, st->st_logger);
@@ -191,7 +192,7 @@ bool whack_prompt_for(struct state *st,
 				echo ? RC_USERPROMPT : RC_ENTERSECRET);
 	}
 
-	ssize_t n = fd_read(st->st_logger->object_whackfd, ansbuf, ansbuf_len);
+	ssize_t n = fd_read(whack_fd, ansbuf, ansbuf_len);
 	if (n < 0) {
 		llog_errno(RC_LOG_SERIOUS, st->st_logger, (-(int)n),
 			   "read(whackfd) failed: ");
