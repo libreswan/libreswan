@@ -2058,13 +2058,14 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_ACCEPT_REDIRECT:	/* --accept-redirect */
-			if (streq(optarg, "yes"))
-				msg.accept_redirect = YN_YES;
-			else if (streq(optarg, "no"))
-				msg.accept_redirect = YN_NO;
-			else
+		{
+			const struct sparse_name *sn = sparse_lookup(yn_option_names, optarg);
+			if (sn == NULL) {
 				diagw("--accept-redirect options are 'yes' and 'no'");
+			}
+			msg.accept_redirect = sn->value;
 			continue;
+		}
 
 		case CD_ACCEPT_REDIRECT_TO:	/* --accept-redirect-to */
 			msg.accept_redirect_to = strdup(optarg);

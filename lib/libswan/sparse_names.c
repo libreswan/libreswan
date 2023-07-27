@@ -21,6 +21,7 @@
 
 #include <stdio.h>
 
+#include "constants.h"		/* for strcaseeq() */
 #include "sparse_names.h"
 
 #include "jambuf.h"
@@ -34,6 +35,16 @@ const char *sparse_name(sparse_names sd, unsigned long val)
 		}
 	}
 
+	return NULL;
+}
+
+const struct sparse_name *sparse_lookup(const struct sparse_name *names, const char *name)
+{
+	for (const struct sparse_name *sn = names; sn->name != NULL; sn++) {
+		if (strcaseeq(name, sn->name)) {
+			return sn;
+		}
+	}
 	return NULL;
 }
 

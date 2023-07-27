@@ -41,6 +41,7 @@ OBJS += x509dn.o asn1.o oid.o
 
 OBJS += authby.o
 OBJS += rnd.o
+OBJS += option_names.o
 
 OBJS += constants.o \
 	id.o \

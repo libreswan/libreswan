@@ -44,6 +44,8 @@ struct sparse_name {
 
 typedef const struct sparse_name sparse_names[];
 
+const struct sparse_name *sparse_lookup(const struct sparse_name *, const char *);
+
 typedef struct {
 	char buf[16];/*how big?*/
 } sparse_buf;

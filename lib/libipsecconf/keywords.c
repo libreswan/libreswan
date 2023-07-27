@@ -152,19 +152,6 @@ static const struct sparse_name kw_yndev_list[] = {
 };
 #endif
 
-/* match <BOOLEAN_VALUE> in parser.lex */
-static const struct sparse_name kw_yn_list[] = {
-	YES_NO(YN_YES, YN_NO),
-	/*
-	 * These are unique to YN, and probably should be dropped
-	 * completely.  Some keywords, such as yndev, interpret "1"
-	 * and "0".
-	 */
-	{ "1",          YN_YES, },
-	{ "0",          YN_NO, },
-	SPARSE_NULL,
-};
-
 /* Values for yes/no/auto, used by encapsulation and nic-offload */
 static const struct sparse_name kw_yna_list[] = {
 	YES_NO(yna_yes, yna_no),
@@ -518,17 +505,17 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "ikev2",  kv_conn | kv_processed,  kt_enum,  KNCF_IKEv2,  kw_ikev2_list, NULL, },
   { "ppk", kv_conn | kv_processed, kt_enum, KNCF_PPK, kw_fourvalued_list, NULL, },
   { "ppk-ids", kv_conn | kv_processed, kt_string, KSCF_PPKIDS, NULL, NULL, },
-  { "intermediate",  kv_conn | kv_processed, kt_enum, KNCF_INTERMEDIATE, kw_yn_list, NULL, },
+  { "intermediate",  kv_conn | kv_processed, kt_enum, KNCF_INTERMEDIATE, yn_option_names, NULL, },
   { "esn",  kv_conn | kv_processed,  kt_enum,  KNCF_ESN,  kw_esn_list, NULL, },
-  { "decap-dscp",  kv_conn | kv_processed,  kt_enum,  KNCF_DECAP_DSCP,  kw_yn_list, NULL, },
-  { "nopmtudisc",  kv_conn | kv_processed,  kt_enum,  KNCF_NOPMTUDISC,  kw_yn_list, NULL, },
+  { "decap-dscp",  kv_conn | kv_processed,  kt_enum,  KNCF_DECAP_DSCP,  yn_option_names, NULL, },
+  { "nopmtudisc",  kv_conn | kv_processed,  kt_enum,  KNCF_NOPMTUDISC,  yn_option_names, NULL, },
   { "fragmentation",  kv_conn | kv_processed,  kt_enum,  KNCF_IKE_FRAG,  kw_ynf_list, NULL, },
-  { "mobike",  kv_conn,  kt_enum,  KNCF_MOBIKE, kw_yn_list, NULL, },
-  { "narrowing",  kv_conn,  kt_enum,  KNCF_IKEv2_ALLOW_NARROWING, kw_yn_list, NULL, },
-  { "pam-authorize",  kv_conn,  kt_enum,  KNCF_PAM_AUTHORIZE, kw_yn_list, NULL, },
+  { "mobike",  kv_conn,  kt_enum,  KNCF_MOBIKE, yn_option_names, NULL, },
+  { "narrowing",  kv_conn,  kt_enum,  KNCF_IKEv2_ALLOW_NARROWING, yn_option_names, NULL, },
+  { "pam-authorize",  kv_conn,  kt_enum,  KNCF_PAM_AUTHORIZE, yn_option_names, NULL, },
   { "send-redirect",  kv_conn,  kt_enum,  KNCF_SEND_REDIRECT, kw_yna_list, NULL, },
   { "redirect-to",  kv_conn,  kt_string,  KSCF_REDIRECT_TO, NULL, NULL, },
-  { "accept-redirect",  kv_conn,  kt_enum, KNCF_ACCEPT_REDIRECT, kw_yn_list, NULL, },
+  { "accept-redirect",  kv_conn,  kt_enum, KNCF_ACCEPT_REDIRECT, yn_option_names, NULL, },
   { "accept-redirect-to",  kv_conn,  kt_string, KSCF_ACCEPT_REDIRECT_TO, NULL, NULL, },
   { "pfs",  kv_conn,  kt_bool,  KNCF_PFS, NULL, NULL, },
 
@@ -539,10 +526,10 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "send-no-esp-tfc",  kv_conn,  kt_bool,  KNCF_NO_ESP_TFC, NULL, NULL, },
   { "fake-strongswan",  kv_conn,  kt_bool,  KNCF_VID_STRONGSWAN, NULL, NULL, },
   { "send-vendorid",  kv_conn,  kt_bool,  KNCF_SEND_VENDORID, NULL, NULL, },
-  { "sha2-truncbug",  kv_conn,  kt_enum,  KNCF_SHA2_TRUNCBUG, kw_yn_list, NULL, },
-  { "ms-dh-downgrade",  kv_conn,  kt_enum,  KNCF_MS_DH_DOWNGRADE, kw_yn_list, NULL, },
-  { "require-id-on-certificate",  kv_conn,  kt_enum,  KNCF_REQUIRE_ID_ON_CERTIFICATE, kw_yn_list, NULL, },
-  { "dns-match-id,",  kv_conn,  kt_enum,  KNCF_DNS_MATCH_ID, kw_yn_list, NULL, },
+  { "sha2-truncbug",  kv_conn,  kt_enum,  KNCF_SHA2_TRUNCBUG, yn_option_names, NULL, },
+  { "ms-dh-downgrade",  kv_conn,  kt_enum,  KNCF_MS_DH_DOWNGRADE, yn_option_names, NULL, },
+  { "require-id-on-certificate",  kv_conn,  kt_enum,  KNCF_REQUIRE_ID_ON_CERTIFICATE, yn_option_names, NULL, },
+  { "dns-match-id,",  kv_conn,  kt_enum,  KNCF_DNS_MATCH_ID, yn_option_names, NULL, },
   { "ipsec-max-bytes",  kv_conn,  kt_byte,  KNCF_IPSEC_MAXBYTES, NULL, NULL, },
   { "ipsec-lifetime",  kv_conn,  kt_time,  KNCF_IPSEC_LIFETIME_MS, NULL, NULL, },
   { "keylife",  kv_conn | kv_alias,  kt_time,  KNCF_IPSEC_LIFETIME_MS, NULL, NULL, }, /* old name */
@@ -553,7 +540,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "retransmit-timeout",  kv_conn,  kt_time,  KNCF_RETRANSMIT_TIMEOUT_MS, NULL, NULL, },
   { "retransmit-interval",  kv_conn|kv_milliseconds,  kt_time,  KNCF_RETRANSMIT_INTERVAL_MS, NULL, NULL, },
 
-  { "ikepad",  kv_conn,  kt_enum,  KNCF_IKEPAD, kw_yn_list, NULL, },
+  { "ikepad",  kv_conn,  kt_enum,  KNCF_IKEPAD, yn_option_names, NULL, },
   { "nat-ikev1-method",  kv_conn | kv_processed,  kt_enum,  KNCF_IKEV1_NATT,  kw_ikev1natt_list, NULL, },
 
   { "policy-label",  kv_conn,  kt_string,  KSCF_SEC_LABEL, NULL, NULL, }, /* obsolete variant */
@@ -571,11 +558,11 @@ const struct keyword_def ipsec_conf_keywords[] = {
 
   { "xauthby",  kv_conn,  kt_enum,  KNCF_XAUTHBY,  kw_xauthby_list, NULL, },
   { "xauthfail",  kv_conn,  kt_enum,  KNCF_XAUTHFAIL,  kw_xauthfail_list, NULL, },
-  { "modecfgpull",  kv_conn,  kt_enum,  KNCF_MODECFGPULL, kw_yn_list, NULL, },
+  { "modecfgpull",  kv_conn,  kt_enum,  KNCF_MODECFGPULL, yn_option_names, NULL, },
   { "modecfgdns",  kv_conn,  kt_string,  KSCF_MODECFGDNS, NULL, NULL, },
   { "modecfgdomains",  kv_conn,  kt_string,  KSCF_MODECFGDOMAINS, NULL, NULL, },
   { "modecfgbanner",  kv_conn,  kt_string,  KSCF_MODECFGBANNER, NULL, NULL, },
-  { "ignore-peer-dns",  kv_conn,  kt_enum,  KNCF_IGNORE_PEER_DNS, kw_yn_list, NULL, },
+  { "ignore-peer-dns",  kv_conn,  kt_enum,  KNCF_IGNORE_PEER_DNS, yn_option_names, NULL, },
   { "mark",  kv_conn,  kt_string,  KSCF_CONN_MARK_BOTH, NULL, NULL, },
   { "mark-in",  kv_conn,  kt_string,  KSCF_CONN_MARK_IN, NULL, NULL, },
   { "mark-out",  kv_conn,  kt_string,  KSCF_CONN_MARK_OUT, NULL, NULL, },
@@ -590,9 +577,9 @@ const struct keyword_def ipsec_conf_keywords[] = {
 
   { "encapsulation",  kv_conn,  kt_enum,  KNCF_ENCAPS,  kw_yna_list, NULL, },
 
-  { "overlapip",  kv_conn,  kt_enum,  KNCF_OVERLAPIP, kw_yn_list, NULL, },
-  { "reauth",  kv_conn,  kt_enum,  KNCF_REAUTH, kw_yn_list, NULL, },
-  { "rekey",  kv_conn,  kt_enum,  KNCF_REKEY, kw_yn_list, NULL, },
+  { "overlapip",  kv_conn,  kt_enum,  KNCF_OVERLAPIP, yn_option_names, NULL, },
+  { "reauth",  kv_conn,  kt_enum,  KNCF_REAUTH, yn_option_names, NULL, },
+  { "rekey",  kv_conn,  kt_enum,  KNCF_REKEY, yn_option_names, NULL, },
   { "rekeymargin",  kv_conn,  kt_time,  KNCF_REKEYMARGIN_MS, NULL, NULL, },
   { "rekeyfuzz",  kv_conn,  kt_percent,  KNCF_REKEYFUZZ, NULL, NULL, },
   { "keyingtries",  kv_conn,  kt_number,  KNCF_KEYINGTRIES, NULL, NULL, },
@@ -634,9 +621,9 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "nflog",  kv_conn,  kt_number,  KNCF_NFLOG_CONN, NULL, NULL, },
 #endif
 
-  { "aggressive",  kv_conn,  kt_enum,  KNCF_AGGRESSIVE, kw_yn_list, NULL, },
+  { "aggressive",  kv_conn,  kt_enum,  KNCF_AGGRESSIVE, yn_option_names, NULL, },
   /* alias for compatibility - undocumented on purpose */
-  { "aggrmode",  kv_conn | kv_alias,  kt_enum,  KNCF_AGGRESSIVE, kw_yn_list, NULL, },
+  { "aggrmode",  kv_conn | kv_alias,  kt_enum,  KNCF_AGGRESSIVE, yn_option_names, NULL, },
 
   { NULL,  0,  0,  0, NULL, NULL, }
 };
@@ -733,10 +720,9 @@ uintmax_t parser_enum(const struct keyword_def *kd, const char *s)
 	assert(kd->type == kt_enum);
 	assert(kd->validenum != NULL && kd->validenum != NULL);
 
-	for (const struct sparse_name *kev = kd->validenum; kev->name != NULL; kev++) {
-		if (strcaseeq(s, kev->name)) {
-			return kev->value;
-		}
+	const struct sparse_name *sn = sparse_lookup(kd->validenum, s);
+	if (sn != NULL) {
+		return sn->value;
 	}
 
 	/* perhaps an unsigned integer? */

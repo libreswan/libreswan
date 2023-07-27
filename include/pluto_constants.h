@@ -25,6 +25,7 @@
  */
 
 #include "lset.h"
+#include "sparse_names.h"
 
 /*
  * Size of hash tables; a prime.
@@ -788,6 +789,8 @@ enum yn_options {
 	YN_NO = 1,
 	YN_YES = 2,
 };
+
+extern const struct sparse_name yn_option_names[];
 
 enum yna_options {
 	yna_auto = 1, /* default */
