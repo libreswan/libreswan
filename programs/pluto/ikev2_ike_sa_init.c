@@ -798,7 +798,7 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 	}
 
 	/* Send fragmentation support notification */
-	if (c->policy & POLICY_IKE_FRAG_ALLOW) {
+	if (c->config->ike_frag.allow) {
 		if (!emit_v2N(v2N_IKEV2_FRAGMENTATION_SUPPORTED, request.pbs))
 			return false;
 	}
@@ -1166,7 +1166,7 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	}
 
 	/* Send fragmentation support notification */
-	if (c->policy & POLICY_IKE_FRAG_ALLOW) {
+	if (c->config->ike_frag.allow) {
 		if (!emit_v2N(v2N_IKEV2_FRAGMENTATION_SUPPORTED, response.pbs))
 			return STF_INTERNAL_ERROR;
 	}

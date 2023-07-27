@@ -449,7 +449,6 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 			 (POLICY_AUTHENTICATE | POLICY_ENCRYPT));
 		enum shunt_policy shunt_policy = conn->never_negotiate_shunt;
 		lset_t ppk_policy = (conn->policy & (POLICY_PPK_ALLOW | POLICY_PPK_INSIST));
-		lset_t ike_frag_policy = (conn->policy & POLICY_IKE_FRAG_MASK);
 		static const char *const noyes[2 /*bool*/] = {"no", "yes"};
 		/*
 		 * config-write-policy-bit: short-cut for writing out a field that is a policy
@@ -557,25 +556,18 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 				cwf("esn", esn);
 			}
 
-			{
-				const char *ifp = "UNKNOWN";
-
-				switch (ike_frag_policy) {
-				case LEMPTY:
-					ifp = "never";
-					break;
-
-				case POLICY_IKE_FRAG_ALLOW:
-					/* it's the default, do not print anything */
-					ifp = NULL;
-					break;
-
-				case POLICY_IKE_FRAG_ALLOW | POLICY_IKE_FRAG_FORCE:
-					ifp = "force";
-					break;
-				}
-				if (ifp != NULL)
-					cwf("ike_frag", ifp);
+			switch (conn->options[KNCF_FRAGMENTATION]) {
+			case YNF_UNSET:
+				/* it's the default, do not print anything */
+				break;
+			case YNF_FORCE:
+				cwf("fragmentation", "force");
+				break;
+			case YNF_NO:
+				cwf("fragmentation", "no");
+				break;
+			case YNF_YES:
+				cwf("fragmentation", "yes");
 			}
 
 			break; /* end of case UNSET aka SHUNT_TRAP? */

@@ -266,7 +266,7 @@ enum keyword_numeric_conn_field {
 	KNCF_WARNIGNORE,	/* to ignore obsoleted keywords */
 	KNCF_XAUTHBY,		/* method of xauth user auth - file, pam or alwaysok */
 	KNCF_XAUTHFAIL,		/* method of failing, soft or hard */
-	KNCF_IKE_FRAG,		/* Enable support for IKE fragmentation */
+	KNCF_FRAGMENTATION,	/* Enable support for IKE fragmentation */
 	KNCF_NAT_KEEPALIVE,	/* per conn enabling/disabling of sending keep-alives */
 	KNCF_INITIAL_CONTACT,	/* send initial contact VID */
 	KNCF_CISCO_UNITY,	/* send cisco unity VID */

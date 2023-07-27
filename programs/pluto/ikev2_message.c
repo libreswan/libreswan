@@ -825,7 +825,7 @@ static const char *ignore_v2_incoming_fragment(struct v2_incoming_fragments *fra
 enum collected_fragment collect_v2_incoming_fragment(struct ike_sa *ike,
 						     struct msg_digest *md)
 {
-	if (!(ike->sa.st_connection->policy & POLICY_IKE_FRAG_ALLOW)) {
+	if (!ike->sa.st_connection->config->ike_frag.allow) {
 		llog_sa(RC_LOG_SERIOUS, ike, "ignoring fragment as not allowed by local policy");
 		return false;
 	}
@@ -1363,7 +1363,7 @@ static stf_status record_v2SK_message(struct pbs_out *msg,
 
 	/* IPv4 and IPv6 have different fragment sizes */
 	if (sk->ike->sa.st_interface->io->protocol == &ip_protocol_udp &&
-	    LIN(POLICY_IKE_FRAG_ALLOW, sk->ike->sa.st_connection->policy) &&
+	    sk->ike->sa.st_connection->config->ike_frag.allow &&
 	    sk->ike->sa.st_seen_fragmentation_supported &&
 	    len >= endpoint_type(&sk->ike->sa.st_remote_endpoint)->ikev2_max_fragment_size) {
 		struct v2_outgoing_fragment **frags = &sk->ike->sa.st_v2_outgoing[message];

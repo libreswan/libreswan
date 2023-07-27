@@ -279,6 +279,11 @@ struct config {
 	bool decap_dscp;		/* decap ToS/DSCP bits */
 	bool nopmtudisc;		/* ??? */
 
+	struct {
+		bool allow;
+		bool force;
+	} ike_frag;
+
 	struct config_end end[END_ROOF];
 };
 

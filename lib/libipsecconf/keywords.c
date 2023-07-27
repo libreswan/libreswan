@@ -132,17 +132,6 @@ static const struct sparse_name kw_fourvalued_list[] = {
 	SPARSE_NULL
 };
 
-/*
- * Values for yes/no/force, used by fragmentation=
- */
-static const struct sparse_name kw_ynf_list[] = {
-	{ "never",     ynf_no },
-	YES_NO(ynf_yes, ynf_no),
-	{ "insist",    ynf_force },
-	{ "force",     ynf_force },
-	SPARSE_NULL
-};
-
 #ifdef USE_XFRM_INTERFACE
 /* Values for no/yes, used by ipsec-interface */
 static const struct sparse_name kw_yndev_list[] = {
@@ -509,7 +498,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "esn",  kv_conn | kv_processed,  kt_enum,  KNCF_ESN,  kw_esn_list, NULL, },
   { "decap-dscp",  kv_conn | kv_processed,  kt_enum,  KNCF_DECAP_DSCP,  yn_option_names, NULL, },
   { "nopmtudisc",  kv_conn | kv_processed,  kt_enum,  KNCF_NOPMTUDISC,  yn_option_names, NULL, },
-  { "fragmentation",  kv_conn | kv_processed,  kt_enum,  KNCF_IKE_FRAG,  kw_ynf_list, NULL, },
+  { "fragmentation",  kv_conn | kv_processed,  kt_enum,  KNCF_FRAGMENTATION,  ynf_option_names, NULL, },
   { "mobike",  kv_conn,  kt_enum,  KNCF_MOBIKE, yn_option_names, NULL, },
   { "narrowing",  kv_conn,  kt_enum,  KNCF_IKEv2_ALLOW_NARROWING, yn_option_names, NULL, },
   { "pam-authorize",  kv_conn,  kt_enum,  KNCF_PAM_AUTHORIZE, yn_option_names, NULL, },

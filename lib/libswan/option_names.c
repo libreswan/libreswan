@@ -55,3 +55,14 @@ const struct sparse_name yn_option_names[] = {
 	{ "0",          YN_NO, },
 	SPARSE_NULL,
 };
+
+/*
+ * Values for yes/no/force, used by fragmentation=
+ */
+const struct sparse_name ynf_option_names[] = {
+	YES_NO(YNF_YES, YNF_NO),
+	{ "force",     YNF_FORCE },
+	{ "never",     YNF_NO },
+	{ "insist",    YNF_FORCE },
+	SPARSE_NULL
+};

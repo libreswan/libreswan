@@ -2069,6 +2069,36 @@ static diag_t extract_connection(const struct whack_message *wm,
 		ldbg(c->logger, "redirect %s", bool_str(config->redirect.accept));
 	}
 
+	/* fragmentation */
+
+	/*
+	 * some options are set as part of our default, but
+	 * some make no sense for shunts, so remove those again
+	 */
+	if (NEVER_NEGOTIATE(wm->policy)) {
+		if (wm->fragmentation != YNF_UNSET) {
+			llog(RC_INFORMATIONAL, c->logger,
+			     "warning: never-negotiate connection ignores fragmentation=");
+		}
+	} else {
+		bool ok = false;
+		switch (wm->fragmentation) {
+		case YNF_UNSET: /*default*/
+		case YNF_YES:
+			ok = true;
+			config->ike_frag.allow = true;
+			break;
+		case YNF_NO:
+			ok = true;
+			break;
+		case YNF_FORCE:
+			ok = true;
+			config->ike_frag.allow = true;
+			config->ike_frag.force = true;
+		}
+		PASSERT(c->logger, ok);
+	}
+
 	/* RFC 8229 TCP encap*/
 
 	if (NEVER_NEGOTIATE(wm->policy)) {
@@ -3322,8 +3352,8 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 	PP(SEND_REDIRECT_NEVER);
 	CN(c->config->redirect.accept, ACCEPT_REDIRECT_YES);
 
-	PP(IKE_FRAG_ALLOW);
-	PP(IKE_FRAG_FORCE);
+	CN(c->config->ike_frag.allow, IKE_FRAG_ALLOW);
+	CN(c->config->ike_frag.force, IKE_FRAG_FORCE);
 
 	/* need to flip parity */
 	CN(!c->config->ikepad, NO_IKEPAD);

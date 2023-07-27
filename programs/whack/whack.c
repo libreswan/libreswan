@@ -552,6 +552,8 @@ enum option_enums {
 	CD_AGGRESSIVE,
 	CD_DECAP_DSCP,
 	CD_NOPMTUDISC,
+	CD_IKEFRAG_ALLOW,
+	CD_IKEFRAG_FORCE,
 	CD_INITIATEONTRAFFIC,
 
 	/*
@@ -888,8 +890,8 @@ static const struct option long_opts[] = {
 #ifdef AUTH_HAVE_PAM
 	PS("ikev2-pam-authorize", IKEV2_PAM_AUTHORIZE),
 #endif
-	PS("ikefrag-allow", IKE_FRAG_ALLOW),
-	PS("ikefrag-force", IKE_FRAG_FORCE),
+	{ "ikefrag-allow", no_argument, NULL, CD_IKEFRAG_ALLOW },
+	{ "ikefrag-force", no_argument, NULL, CD_IKEFRAG_FORCE },
 	{ "no-ikepad", no_argument, NULL, CD_NO_IKEPAD },
 
 	PS("no-esn", ESN_NO),
@@ -1814,16 +1816,26 @@ int main(int argc, char **argv)
 		case CDP_SINGLETON + POLICY_TUNNEL_IX:	/* --tunnel */
 		case CDP_SINGLETON + POLICY_PFS_IX:	/* --pfs */
 
-		/* --ikefrag-allow */
-		case CDP_SINGLETON + POLICY_IKE_FRAG_ALLOW_IX:
-		/* --ikefrag-force */
-		case CDP_SINGLETON + POLICY_IKE_FRAG_FORCE_IX:
 		/* --no-esn */
 		case CDP_SINGLETON + POLICY_ESN_NO_IX:
 		/* --esn */
 		case CDP_SINGLETON + POLICY_ESN_YES_IX:
 
 			msg.policy |= LELEM(c - CDP_SINGLETON);
+			continue;
+
+		/* --ikefrag-allow */
+		case CD_IKEFRAG_ALLOW:
+			if (msg.fragmentation == YNF_UNSET) {
+				msg.fragmentation = YNF_YES;
+			} else {
+				passert(msg.fragmentation == YNF_YES ||
+					msg.fragmentation == YNF_FORCE);
+			}
+			continue;
+		/* --ikefrag-force */
+		case CD_IKEFRAG_FORCE:
+			msg.fragmentation = YNF_FORCE;
 			continue;
 
 		/* --nopmtudisc */
@@ -2525,6 +2537,10 @@ int main(int argc, char **argv)
 
 	msg.child_afi = child_family.type;
 	msg.host_afi = host_family.type;
+
+	if (msg.fragmentation == YNF_UNSET) {
+		msg.fragmentation = YNF_NO; /* see github/1209 */
+	}
 
 	if (!authby_is_set(msg.authby)) {
 		/*

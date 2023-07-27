@@ -1564,7 +1564,7 @@ void process_v1_packet(struct msg_digest *md)
 			return;
 		}
 
-		if ((st->st_connection->policy & POLICY_IKE_FRAG_ALLOW) == 0) {
+		if (!st->st_connection->config->ike_frag.allow) {
 			dbg("discarding IKE fragment packet - fragmentation not allowed by local policy (ike_frag=no)");
 			return;
 		}

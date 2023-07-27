@@ -174,7 +174,6 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 	d->ike_version = IKEv2;
 	d->policy = (POLICY_TUNNEL |
 		     POLICY_ENCRYPT | POLICY_PFS |
-		     /* ike_frag=yes */ POLICY_IKE_FRAG_ALLOW |
 		     /* esn=either */ POLICY_ESN_NO | POLICY_ESN_YES);
 	d->authby = AUTHBY_NONE; /* blank goes to defaults */
 	d->never_negotiate_shunt = SHUNT_UNSET;
@@ -1305,25 +1304,6 @@ static bool load_conn(struct starter_conn *conn,
 		}
 	}
 
-	if (conn->options_set[KNCF_IKE_FRAG]) {
-		conn->policy &= ~(POLICY_IKE_FRAG_ALLOW | POLICY_IKE_FRAG_FORCE);
-
-		switch (conn->options[KNCF_IKE_FRAG]) {
-		case ynf_no:
-			break;
-
-		case ynf_yes:
-			/* this is the default */
-			conn->policy |= POLICY_IKE_FRAG_ALLOW;
-			break;
-
-		case ynf_force:
-			conn->policy |= POLICY_IKE_FRAG_ALLOW |
-					POLICY_IKE_FRAG_FORCE;
-			break;
-		}
-	}
-
 	/*
 	 * Read in the authby= string and translate to policy bits.
 	 *
@@ -1422,13 +1402,10 @@ static bool load_conn(struct starter_conn *conn,
 	 */
 	if (NEVER_NEGOTIATE(conn->policy)) {
 		/* remove IPsec related options */
-		conn->policy &= (~(POLICY_PFS |
-				   POLICY_COMPRESS |
-				   POLICY_ESN_NO |
-				   POLICY_ESN_YES) &
-				 /* remove IKE related options */
-				 ~(POLICY_IKE_FRAG_ALLOW |
-				   POLICY_IKE_FRAG_FORCE));
+		conn->policy &= ~(POLICY_PFS |
+				  POLICY_COMPRESS |
+				  POLICY_ESN_NO |
+				  POLICY_ESN_YES);
 	}
 
 	/* Let this go through to pluto which will validate it. */
