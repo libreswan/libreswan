@@ -5,48 +5,38 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- echo "initdone"
-initdone
+ # parser---* connections from west.conf loaded
 west #
- # first conn is already loaded, do the second one now
-west #
- ipsec whack --name whack----rsasig --host 1.2.3.4 --ikefrag-allow --no-esn --pfs --tunnel --rsasig --encrypt --ikev2-allow --ipv4 --to --host 5.6.7.8
+ ipsec whack --name whack----rsasig      --host 1.2.3.4 --ikefrag-allow --no-esn --pfs --tunnel --rsasig --encrypt --ikev2-allow --ipv4 --to --host 5.6.7.8
 002 "whack----rsasig": added IKEv2 connection
 west #
- ipsec whack --name whack-----ecdsa --host 1.2.3.4 --ikefrag-allow --no-esn --pfs --tunnel --ecdsa --encrypt --ikev2-allow --ipv4 --to --host 5.6.7.8
+ ipsec whack --name whack-----ecdsa      --host 1.2.3.4 --ikefrag-allow --no-esn --pfs --tunnel --ecdsa  --encrypt --ikev2-allow --ipv4 --to --host 5.6.7.8
 002 "whack-----ecdsa": added IKEv2 connection
 west #
- ipsec whack --name whack--defaults --host 1.2.3.4 --ikefrag-allow --no-esn --pfs --tunnel --encrypt --ikev2-allow --ipv4 --to --host 5.6.7.8
+ ipsec whack --name whack--defaults      --host 1.2.3.4 --ikefrag-allow --no-esn --pfs --tunnel          --encrypt --ikev2-allow --ipv4 --to --host 5.6.7.8
 002 "whack--defaults": added IKEv2 connection
 west #
- ipsec whack --name whack--ikev2-default --host 1.2.3.4 --ikefrag-allow --no-esn --pfs --tunnel --encrypt --ipv4 --to --host 5.6.7.8
+ ipsec whack --name whack--ikev2-default --host 1.2.3.4 --ikefrag-allow --no-esn --pfs --tunnel          --encrypt               --ipv4 --to --host 5.6.7.8
 002 "whack--ikev2-default": added IKEv2 connection
 west #
- ipsec status | grep "policy:" | grep rsasig | grep TUNNEL
+ ipsec connectionstatus | grep "policy:" | grep rsasig | grep TUNNEL
 000 "parser---rsasig":   policy: IKEv2+RSASIG+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 000 "whack----rsasig":   policy: IKEv2+RSASIG+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO;
 west #
- echo ""
-west #
- ipsec status | grep "policy:" | grep defaults | grep TUNNEL
+ ipsec connectionstatus | grep "policy:" | grep defaults | grep TUNNEL
 000 "parser-defaults":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 000 "whack--defaults":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO;
 west #
- echo ""
-west #
- ipsec status | grep "hash-policy:" | grep rsasig
+ ipsec connectionstatus | grep "hash-policy:" | grep rsasig
 000 "parser---rsasig":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 000 "whack----rsasig":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 west #
- echo ""
-west #
- ipsec status | grep "hash-policy:" | grep defaults
+ ipsec connectionstatus | grep "hash-policy:" | grep defaults
 000 "parser-defaults":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 000 "whack--defaults":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 west #
- echo ""
+ ipsec connectionstatus | grep "TUNNEL" | grep ikev2-default | sed "s/^.*policy: \(IKEv.\).*$/\1/"
+IKEv2
+IKEv2
 west #
- ipsec status | grep "TUNNEL" | grep ikev2-default | sed "s/^.*policy: \(IKEv.\).*$/\1/"
-IKEv2
-IKEv2
-
+ 

@@ -123,6 +123,8 @@ kvmplutotest	addconn-24-conn-default-rsasigkey		wip	github:833
 kvmplutotest	addconn-25-missing-cert				wip	github/1066
 kvmplutotest	addconn-26-keyingtries				good	github/1061
 kvmplutotest	addconn-27-keyexchange				good	github/1168
+kvmplutotest	addconn-28-whack-ikefrag			good
+
 
 #################################################################
 # Whack UI tests
