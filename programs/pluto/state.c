@@ -1346,14 +1346,28 @@ void delete_states_dead_interfaces(struct logger *logger)
  * also clean up larval and dying State.
  */
 
-static void delete_v1_states_by_connection_bottom_up(struct connection *c)
+void delete_v1_states_by_connection(struct connection *c)
 {
+	PASSERT(c->logger, c->config->ike_version == IKEv1);
+	/*
+	 * Must be careful to avoid circularity, something like:
+	 *
+	 *   delete_v1_states_by_connection() ->
+	 *   delete_connection().
+	 *   delete_states_by_connection() ->
+	 *
+	 * We mark c as going away so it won't get deleted
+	 * recursively.
+	 */
+	PASSERT(c->logger, !c->going_away);
+	c->going_away = true;
+
+	co_serial_t connection_serialno = c->serialno;
+
 	/*
 	 * IKEv1 needs children to be deleted before the parent;
 	 * otherwise the child has no way to send its delete message.
-	 */
-
- 	/*
+	 *
 	 * We take two passes so that we delete any ISAKMP SAs last.
 	 * This allows Delete Notifications to be sent.
 	 *
@@ -1380,10 +1394,51 @@ static void delete_v1_states_by_connection_bottom_up(struct connection *c)
 			delete_state(this);
 		}
 	}
+
+	c->going_away = false;
+
+	/* Was (c), an instance, deleted? Can't trust c->logger */
+	passert(connection_by_serialno(connection_serialno) != NULL);
+
+	if (is_instance(c)) {
+		return;
+	}
+
+	if (c->child.routing == RT_ROUTED_TUNNEL) {
+		llog_pexpect(c->logger, HERE, "routing should not be ROUTED_TUNNEL (what should it be?)");
+	}
+
+	/*
+	 * These passerts are not true currently due to
+	 * mobike.  Requires some re-implementation. Use
+	 * pexpect for now.
+	 */
+	if (c->child.newest_routing_sa != SOS_NOBODY) {
+		llog_pexpect(c->logger, HERE, "kernel_policy_owner for is "PRI_SO", should be 0",
+			     pri_so(c->child.newest_routing_sa));
+	} else {
+		ldbg(c->logger, "kernel_policy_owner is 0");
+	}
 }
 
-static void delete_v2_states_by_connection_top_down(struct connection *c)
+void delete_v2_states_by_connection(struct connection *c)
 {
+	PASSERT(c->logger, c->config->ike_version == IKEv2);
+	/*
+	 * Must be careful to avoid circularity, something like:
+	 *
+	 *   delete_v2_states_by_connection() ->
+	 *   delete_connection().
+	 *   delete_states_by_connection() ->
+	 *
+	 * We mark c as going away so it won't get deleted
+	 * recursively.
+	 */
+	PASSERT(c->logger, !c->going_away);
+	c->going_away = true;
+
+	co_serial_t connection_serialno = c->serialno;
+
 	/*
 	 * Capture anything useful in the connection.
 	 *
@@ -1417,40 +1472,10 @@ static void delete_v2_states_by_connection_top_down(struct connection *c)
 		state_attach(st, st->st_connection->logger);
 		delete_state(st);
 	}
-}
 
-void delete_states_by_connection(struct connection *c)
-{
-	connection_buf cb;
-	dbg("deleting all states for connection "PRI_CONNECTION,
-	    pri_connection(c, &cb));
-
-	/*
-	 * Must be careful to avoid circularity, something like:
-	 *
-	 *   delete_states_by_connection() ->
-	 *   delete_v1_states_by_connection() ->
-	 *   delete_connection().
-	 *
-	 * We mark c as going away so it won't get deleted
-	 * recursively.
-	 */
-	PASSERT(c->logger, !c->going_away);
-
-	co_serial_t connection_serialno = c->serialno;
-
-	c->going_away = true;
-	switch (c->config->ike_version) {
-	case IKEv1:
-		delete_v1_states_by_connection_bottom_up(c);
-		break;
-	case IKEv2:
-		delete_v2_states_by_connection_top_down(c);
-		break;
-	}
 	c->going_away = false;
 
-	/* Was (c), an instance, deleted? */
+	/* Was (c), an instance, deleted? Can't trust c->logger */
 	passert(connection_by_serialno(connection_serialno) != NULL);
 	if (is_instance(c)) {
 		return;
@@ -1471,6 +1496,19 @@ void delete_states_by_connection(struct connection *c)
 	} else {
 		ldbg(c->logger, "kernel_policy_owner is 0");
 	}
+}
+
+void delete_states_by_connection(struct connection *c)
+{
+	switch (c->config->ike_version) {
+	case IKEv1:
+		delete_v1_states_by_connection(c);
+		return;
+	case IKEv2:
+		delete_v2_states_by_connection(c);
+		return;
+	}
+	bad_case(c->config->ike_version);
 }
 
 /*

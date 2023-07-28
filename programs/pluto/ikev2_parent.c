@@ -741,7 +741,7 @@ void wipe_old_v2_connections(const struct ike_sa *ike)
 			/* NOTE: D not C */
 			/* this also deletes the states */
 			remove_connection_from_pending(d);
-			delete_states_by_connection(d);
+			delete_v2_states_by_connection(d);
 			connection_unroute(d, HERE);
 
 			delete_connection(&d);
@@ -749,7 +749,7 @@ void wipe_old_v2_connections(const struct ike_sa *ike)
 			/* NOTE: C not D */
 			/* this only deletes the states */
 			remove_connection_from_pending(c);
-			delete_states_by_connection(c);
+			delete_v2_states_by_connection(c);
 			connection_unroute(c, HERE);
 		}
 	}

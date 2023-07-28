@@ -116,7 +116,7 @@ static void delete_group_instantiation(co_serial_t serialno, struct logger *logg
 		connection_attach(instance.c, logger);
 
 		remove_connection_from_pending(instance.c);
-		delete_states_by_connection(instance.c);
+		delete_v2_states_by_connection(instance.c);
 		connection_unroute(instance.c, HERE);
 
 		delete_connection(&instance.c);
@@ -126,7 +126,7 @@ static void delete_group_instantiation(co_serial_t serialno, struct logger *logg
 	connection_attach(template, logger);
 
 	remove_connection_from_pending(template);
-	delete_states_by_connection(template);
+	delete_v2_states_by_connection(template);
 	connection_unroute(template, HERE);
 
 	delete_connection(&template);

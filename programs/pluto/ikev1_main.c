@@ -2197,7 +2197,6 @@ bool accept_delete(struct msg_digest *md,
 				if (rc != NULL && rc->newest_ipsec_sa == SOS_NOBODY) {
 					del_policy(rc, POLICY_UP);
 					if (!shared_phase1_connection(rc)) {
-						remove_connection_from_pending(rc);
 						/*
 						 * why loop? there can
 						 * be only one IKE SA,
@@ -2210,13 +2209,10 @@ bool accept_delete(struct msg_digest *md,
 						 * states tied to the
 						 * connection?
 						 */
-						delete_states_by_connection(rc);
+						remove_connection_from_pending(rc);
+						delete_v1_states_by_connection(rc);
 						if (is_instance(rc)) {
-
-							remove_connection_from_pending(rc);
-							delete_states_by_connection(rc);
 							connection_unroute(rc, HERE);
-
 							delete_connection(&rc);
 						}
 						md->v1_st = NULL;

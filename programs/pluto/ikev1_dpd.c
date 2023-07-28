@@ -154,7 +154,7 @@ void event_v1_dpd_timeout(struct state *tbd_st)
 		ldbg(logger, "DPD warning dpdaction=hold on instance futile - will be deleted");
 
 		remove_connection_from_pending(c);
-		delete_states_by_connection(c);
+		delete_v1_states_by_connection(c);
 		connection_unroute(c, HERE);
 
 		delete_connection(&c);
