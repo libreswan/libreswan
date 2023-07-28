@@ -3277,6 +3277,12 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 		s += jam_ucase_string(buf, #C);		\
 		sep = "+";				\
 	}
+#define CN(C,N)					\
+	if (C) {				\
+		s += jam_string(buf, sep);	\
+		s += jam_string(buf, #N);	\
+		sep = "+";			\
+	}
 
 	PP(ENCRYPT);
 	PP(AUTHENTICATE);
@@ -3287,21 +3293,13 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 	CP(nopmtudisc);
 	CP(ms_dh_downgrade);
 
-	if (!c->config->require_id_on_certificate) {
-		s += jam_string(buf, sep);
-		s += jam_string(buf, "ALLOW_NO_SAN");
-		sep = "+";
-	}
+	CN(!c->config->require_id_on_certificate, ALLOW_NO_SAN);
 
 	CP(dns_match_id);
 	CP(sha2_truncbug);
 
 	/* note reversed logic */
-	if (!c->config->rekey) {
-		s += jam_string(buf, sep);
-		s += jam_string(buf, "DONT_REKEY");
-		sep = "+";
-	}
+	CN(!c->config->rekey, DONT_REKEY);
 
 	CP(reauth);
 
@@ -3310,18 +3308,8 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 	PP(ROUTE);
 	PP(UP);
 
-	if (is_xauth(c)) {
-		s += jam_string(buf, sep);
-		s += jam_string(buf, "XAUTH");
-		sep = "+";
-	}
-
-	if (c->config->modecfg.pull) {
-		s += jam_string(buf, sep);
-		/* not MODECFG.PULL */
-		s += jam_string(buf, "MODECFG_PULL");
-		sep = "+";
-	}
+	CN(is_xauth(c), XAUTH);
+	CN(c->config->modecfg.pull, MODECFG_PULL);
 
 	CP(aggressive);
 	CP(overlapip);
@@ -3332,21 +3320,13 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 
 	PP(SEND_REDIRECT_ALWAYS);
 	PP(SEND_REDIRECT_NEVER);
-	if (c->config->redirect.accept) {
-		s += jam_string(buf, sep);
-		/* not REDIRECT.ACCEPT */
-		s += jam_string(buf, "ACCEPT_REDIRECT_YES");
-	}
+	CN(c->config->redirect.accept, ACCEPT_REDIRECT_YES);
 
 	PP(IKE_FRAG_ALLOW);
 	PP(IKE_FRAG_FORCE);
 
 	/* need to flip parity */
-	if (!c->config->ikepad) {
-		s += jam_string(buf, sep);
-		s += jam_string(buf, "NO_IKEPAD");
-		sep = "+";
-	}
+	CN(!c->config->ikepad, NO_IKEPAD);
 
 	CP(mobike);
 	PP(PPK_ALLOW);
