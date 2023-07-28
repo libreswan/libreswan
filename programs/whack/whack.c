@@ -309,6 +309,10 @@ enum opt_seen_ix {
 
 enum option_enums {
 
+	OPT_HELP = 'h',
+	OPT_VERSION = 'v',
+	OPT_LABEL = 'l',
+
 /*
  * Start the the non-ASCIC options at 256 so that they can't clash
  * with ASCII options.
@@ -638,9 +642,9 @@ static const struct option long_opts[] = {
 
 	/* name, has_arg, flag, val */
 
-	{ "help", no_argument, NULL, 'h' },
-	{ "version", no_argument, NULL, 'v' },
-	{ "label", required_argument, NULL, 'l' },
+	{ "help", no_argument, NULL, OPT_HELP },
+	{ "version", no_argument, NULL, OPT_VERSION },
+	{ "label", required_argument, NULL, OPT_LABEL },
 
 	{ "rundir", required_argument, NULL, OPT_RUNDIR },
 	{ "ctlbase", required_argument, NULL, OPT_RUNDIR }, /* backwards compat */
@@ -1102,8 +1106,6 @@ int main(int argc, char **argv)
 	msg.dpd_action = DPD_ACTION_UNSET;
 
 	for (;;) {
-		/* numeric argument for some flags */
-		uintmax_t opt_whole = 0;
 
 		/*
 		 * Note: we don't like the way short options get parsed
@@ -1118,6 +1120,7 @@ int main(int argc, char **argv)
 		}
 
 		/* decode a numeric argument, if expected */
+		uintmax_t opt_whole = 0;
 		if (c & NUMERIC_ARG) {
 			c -= NUMERIC_ARG;
 			optarg_to_uintmax(&opt_whole);
@@ -1223,17 +1226,17 @@ int main(int argc, char **argv)
 			/* not actually reached */
 			break;
 
-		case 'h':	/* --help */
+		case OPT_HELP:	/* --help */
 			help();
 			/* GNU coding standards say to stop here */
 			return 0;
 
-		case 'v':	/* --version */
+		case OPT_VERSION:	/* --version */
 			printf("%s\n", ipsec_version_string());
 			/* GNU coding standards say to stop here */
 			return 0;
 
-		case 'l':	/* --label <string> */
+		case OPT_LABEL:	/* --label <string> */
 			label = optarg;	/* remember for diagnostics */
 			continue;
 
