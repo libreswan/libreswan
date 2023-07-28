@@ -596,7 +596,6 @@ enum option_enums {
  */
 #define OPTION_OFFSET   256	/* to get out of the way of letter options */
 #define NUMERIC_ARG (1 << 11)	/* expect a numeric argument */
-#define AUX_SHIFT   12	/* amount to shift for aux information */
 
 int long_index;
 
@@ -1083,17 +1082,12 @@ int main(int argc, char **argv)
 		 */
 		int c = getopt_long(argc, argv, "", long_opts, &long_index)
 			- OPTION_OFFSET;
-		int aux = 0;
 
 		/* decode a numeric argument, if expected */
 		if (0 <= c) {
 			if (c & NUMERIC_ARG) {
 				c -= NUMERIC_ARG;
 				optarg_to_uintmax(&opt_whole);
-			}
-			if (c >= (1 << AUX_SHIFT)) {
-				aux = c >> AUX_SHIFT;
-				c -= aux << AUX_SHIFT;
 			}
 		}
 
