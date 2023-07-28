@@ -627,15 +627,6 @@ enum option_enums {
 #define OPTION_ENUMS_ROOF	(OPTION_ENUMS_LAST+1)
 };
 
-/*
- * Carve up space for result from getop_long.
- * Stupidly, the only result is an int.
- * Numeric arg is bit immediately left of basic value.
- *
- */
-
-#define NUMERIC_ARG (1 << 11)	/* expect a numeric argument */
-
 int long_index;
 
 static const struct option long_opts[] = {
@@ -666,12 +657,12 @@ static const struct option long_opts[] = {
 	{ "terminate", no_argument, NULL, OPT_DOWN }, /* backwards compat */
 	{ "delete", no_argument, NULL, OPT_DELETE },
 	{ "deleteid", no_argument, NULL, OPT_DELETEID },
-	{ "deletestate", required_argument, NULL, OPT_DELETESTATE + NUMERIC_ARG },
+	{ "deletestate", required_argument, NULL, OPT_DELETESTATE },
 	{ "deleteuser", no_argument, NULL, OPT_DELETEUSER },
 	{ "crash", required_argument, NULL, OPT_DELETECRASH },
 	{ "listen", no_argument, NULL, OPT_LISTEN },
 	{ "unlisten", no_argument, NULL, OPT_UNLISTEN },
-	{ "ike-socket-bufsize", required_argument, NULL, OPT_IKEBUF + NUMERIC_ARG},
+	{ "ike-socket-bufsize", required_argument, NULL, OPT_IKEBUF},
 	{ "ike-socket-errqueue-toggle", no_argument, NULL, OPT_IKE_MSGERR },
 
 	{ "redirect-to", required_argument, NULL, OPT_REDIRECT_TO },
@@ -746,7 +737,7 @@ static const struct option long_opts[] = {
 	{ "ckaid", required_argument, NULL, END_CKAID },
 	{ "ca", required_argument, NULL, END_CA },
 	{ "groups", required_argument, NULL, END_GROUPS },
-	{ "ikeport", required_argument, NULL, END_IKEPORT + NUMERIC_ARG },
+	{ "ikeport", required_argument, NULL, END_IKEPORT },
 	{ "nexthop", required_argument, NULL, END_NEXTHOP },
 	{ "client", required_argument, NULL, END_SUBNET },	/* alias / backward compat */
 	{ "subnet", required_argument, NULL, END_SUBNET },
@@ -832,20 +823,20 @@ static const struct option long_opts[] = {
 	{ "modeconfigserver", no_argument, NULL, END_MODECFGSERVER },
 	{ "modeconfigclient", no_argument, NULL, END_MODECFGCLIENT },
 
-	{ "metric", required_argument, NULL, CD_METRIC + NUMERIC_ARG },
-	{ "mtu", required_argument, NULL, CD_CONNMTU + NUMERIC_ARG },
-	{ "priority", required_argument, NULL, CD_PRIORITY + NUMERIC_ARG },
-	{ "tfc", required_argument, NULL, CD_TFCPAD + NUMERIC_ARG },
+	{ "metric", required_argument, NULL, CD_METRIC },
+	{ "mtu", required_argument, NULL, CD_CONNMTU },
+	{ "priority", required_argument, NULL, CD_PRIORITY },
+	{ "tfc", required_argument, NULL, CD_TFCPAD },
 	{ "send-no-esp-tfc", no_argument, NULL, CD_SEND_TFCPAD },
-	{ "reqid", required_argument, NULL, CD_REQID + NUMERIC_ARG },
-	{ "nflog-group", required_argument, NULL, CD_NFLOG_GROUP + NUMERIC_ARG },
+	{ "reqid", required_argument, NULL, CD_REQID },
+	{ "nflog-group", required_argument, NULL, CD_NFLOG_GROUP },
 	{ "conn-mark", required_argument, NULL, CD_CONN_MARK_BOTH },
 	{ "conn-mark-in", required_argument, NULL, CD_CONN_MARK_IN },
 	{ "conn-mark-out", required_argument, NULL, CD_CONN_MARK_OUT },
 	{ "vti-iface", required_argument, NULL, CD_VTI_IFACE },
 	{ "vti-routing", no_argument, NULL, CD_VTI_ROUTING },
 	{ "vti-shared", no_argument, NULL, CD_VTI_SHARED },
-	{ "ipsec-interface", required_argument, NULL, CD_IPSEC_IFACE + NUMERIC_ARG },
+	{ "ipsec-interface", required_argument, NULL, CD_IPSEC_IFACE },
 	{ "sendcert", required_argument, NULL, END_SENDCERT },
 	{ "sendca", required_argument, NULL, CD_SEND_CA },
 	{ "ipv4", no_argument, NULL, CD_CONNIPV4 },
@@ -853,15 +844,15 @@ static const struct option long_opts[] = {
 	{ "ikelifetime", required_argument, NULL, CD_IKE_LIFETIME },
 	{ "ipseclifetime", required_argument, NULL, CD_IPSEC_LIFETIME }, /* backwards compat */
 	{ "ipsec-lifetime", required_argument, NULL, CD_IPSEC_LIFETIME },
-	{ "ipsec-max-bytes", required_argument, NULL, CD_IPSEC_MAX_BYTES + NUMERIC_ARG},
-	{ "ipsec-max-packets", required_argument, NULL, CD_IPSEC_MAX_PACKETS + NUMERIC_ARG},
+	{ "ipsec-max-bytes", required_argument, NULL, CD_IPSEC_MAX_BYTES},
+	{ "ipsec-max-packets", required_argument, NULL, CD_IPSEC_MAX_PACKETS},
 	{ "retransmit-timeout", required_argument, NULL, CD_RETRANSMIT_TIMEOUT },
 	{ "retransmit-interval", required_argument, NULL, CD_RETRANSMIT_INTERVAL },
 	{ "rekeymargin", required_argument, NULL, CD_REKEYMARGIN },
 	/* OBSOLETE */
-	{ "rekeywindow", required_argument, NULL, CD_REKEYMARGIN + NUMERIC_ARG },
-	{ "rekeyfuzz", required_argument, NULL, CD_RKFUZZ + NUMERIC_ARG },
-	{ "keyingtries", required_argument, NULL, CD_KTRIES + NUMERIC_ARG },
+	{ "rekeywindow", required_argument, NULL, CD_REKEYMARGIN },
+	{ "rekeyfuzz", required_argument, NULL, CD_RKFUZZ },
+	{ "keyingtries", required_argument, NULL, CD_KTRIES },
 	{ "replay-window", required_argument, NULL, CD_REPLAY_WINDOW },
 	{ "ike",    required_argument, NULL, CD_IKE },
 	{ "ikealg", required_argument, NULL, CD_IKE },
@@ -909,7 +900,7 @@ static const struct option long_opts[] = {
 #undef PS
 
 	{ "tcp", required_argument, NULL, CD_IKE_TCP },
-	{ "tcp-remote-port", required_argument, NULL, CD_IKE_TCP_REMOTE_PORT + NUMERIC_ARG},
+	{ "tcp-remote-port", required_argument, NULL, CD_IKE_TCP_REMOTE_PORT },
 
 #ifdef HAVE_NM
 	{ "nm_configured", no_argument, NULL, CD_NMCONFIGURED }, /* backwards compat */
@@ -992,20 +983,26 @@ struct sockaddr_un ctl_addr = {
 #endif
 };
 
-static void optarg_to_deltatime(deltatime_t *deltatime, const struct timescale *timescale)
+static deltatime_t optarg_deltatime(const struct timescale *timescale)
 {
-	diag_t diag = ttodeltatime(optarg, deltatime, timescale);
+	passert(long_opts[long_index].has_arg == required_argument);
+	deltatime_t deltatime;
+	diag_t diag = ttodeltatime(optarg, &deltatime, timescale);
 	if (diag != NULL) {
 		diagq(str_diag(diag), optarg);
 	}
+	return deltatime;
 }
 
-static void optarg_to_uintmax(uintmax_t *val)
+static uintmax_t optarg_uintmax(void)
 {
-	err_t err = shunk_to_uintmax(shunk1(optarg), NULL, /*base*/0, val);
+	passert(long_opts[long_index].has_arg == required_argument);
+	uintmax_t val;
+	err_t err = shunk_to_uintmax(shunk1(optarg), NULL, /*base*/0, &val);
 	if (err != NULL) {
 		diagq(err, optarg);
 	}
+	return val;
 }
 
 static void send_reply(int sock, char *buf, ssize_t len)
@@ -1039,9 +1036,6 @@ int main(int argc, char **argv)
 	bool gotusername = false, gotxauthpass = false;
 	const char *ugh;
 	bool ignore_errors = false;
-
-	/* check division of numbering space */
-	assert(OPTION_ENUMS_LAST < NUMERIC_ARG);
 
 	zero(&msg);	/* ??? pointer fields might not be NULLed */
 
@@ -1117,13 +1111,6 @@ int main(int argc, char **argv)
 		/* end of flags? exit loop */
 		if (c < 0) {
 			break;
-		}
-
-		/* decode a numeric argument, if expected */
-		uintmax_t opt_whole = 0;
-		if (c & NUMERIC_ARG) {
-			c -= NUMERIC_ARG;
-			optarg_to_uintmax(&opt_whole);
 		}
 
 		/*
@@ -1274,6 +1261,8 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_IKEBUF:	/* --ike-socket-bufsize <bufsize> */
+		{
+			uintmax_t opt_whole = optarg_uintmax();
 			if (opt_whole < 1500) {
 				diagw("Ignoring extremely unwise IKE buffer size choice");
 			} else {
@@ -1281,6 +1270,7 @@ int main(int argc, char **argv)
 				msg.whack_listen = true;
 			}
 			continue;
+		}
 
 		case OPT_IKE_MSGERR:	/* --ike-socket-errqueue-toggle */
 			msg.ike_sock_err_toggle = true;
@@ -1361,7 +1351,7 @@ int main(int argc, char **argv)
 
 		case OPT_DELETESTATE: /* --deletestate <state_object_number> */
 			msg.whack_deletestate = true;
-			msg.whack_deletestateno = opt_whole;
+			msg.whack_deletestateno = optarg_uintmax();
 			continue;
 
 		case OPT_DELETECRASH:	/* --crash <ip-address> */
@@ -1696,12 +1686,15 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_IKEPORT:	/* --ikeport <port-number> */
+		{
+			uintmax_t opt_whole = optarg_uintmax();
 			if (opt_whole <= 0 || opt_whole >= 0x10000) {
 				diagq("<port-number> must be a number between 1 and 65535",
 					optarg);
 			}
 			end->host_ikeport = opt_whole;
 			continue;
+		}
 
 		case END_NEXTHOP:	/* --nexthop <ip-address> */
 			if (streq(optarg, "%direct")) {
@@ -1920,40 +1913,40 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_RETRANSMIT_TIMEOUT:	/* --retransmit-timeout <seconds> */
-			optarg_to_deltatime(&msg.retransmit_timeout, &timescale_seconds);
+			msg.retransmit_timeout = optarg_deltatime(&timescale_seconds);
 			continue;
 
 		case CD_RETRANSMIT_INTERVAL:	/* --retransmit-interval <milliseconds> (not seconds) */
-			optarg_to_deltatime(&msg.retransmit_interval, &timescale_milliseconds);
+			msg.retransmit_interval = optarg_deltatime(&timescale_milliseconds);
 			continue;
 
 		case CD_IKE_LIFETIME:	/* --ike-lifetime <seconds> */
-			optarg_to_deltatime(&msg.ikelifetime, &timescale_seconds);
+			msg.ikelifetime = optarg_deltatime(&timescale_seconds);
 			continue;
 
 		case CD_IPSEC_LIFETIME:	/* --ipsec-lifetime <seconds> */
-			optarg_to_deltatime(&msg.ipsec_lifetime, &timescale_seconds);
+			msg.ipsec_lifetime = optarg_deltatime(&timescale_seconds);
 			continue;
 
 		case CD_IPSEC_MAX_BYTES:	/* --ipsec-max-bytes <bytes> */
-			msg.sa_ipsec_max_bytes = opt_whole; /* TODO accept K/M/G/T etc */
+			msg.sa_ipsec_max_bytes = optarg_uintmax(); /* TODO accept K/M/G/T etc */
 			continue;
 
 		case CD_IPSEC_MAX_PACKETS:	/* --ipsec-max-packets <packets> */
-			msg.sa_ipsec_max_packets = opt_whole; /* TODO accept K/M/G/T etc */
+			msg.sa_ipsec_max_packets = optarg_uintmax(); /* TODO accept K/M/G/T etc */
 			continue;
 
 		case CD_REKEYMARGIN:	/* --rekeymargin <seconds> */
-			optarg_to_deltatime(&msg.sa_rekey_margin, &timescale_seconds);
+			msg.sa_rekey_margin = optarg_deltatime(&timescale_seconds);
 			continue;
 
 		case CD_RKFUZZ:	/* --rekeyfuzz <percentage> */
-			msg.sa_rekeyfuzz_percent = opt_whole;
+			msg.sa_rekeyfuzz_percent = optarg_uintmax();
 			continue;
 
 		case CD_KTRIES:	/* --keyingtries <count> */
 			msg.keyingtries.set = true;
-			msg.keyingtries.value = opt_whole;
+			msg.keyingtries.value = optarg_uintmax();
 			continue;
 
 		case CD_REPLAY_WINDOW: /* --replay-window <num> */
@@ -1963,7 +1956,7 @@ int main(int argc, char **argv)
 			 * processing the message.  The value is
 			 * relatively small.
 			 */
-			optarg_to_uintmax(&msg.sa_replay_window);
+			msg.sa_replay_window = optarg_uintmax();
 			continue;
 
 		case CD_SEND_CA:	/* --sendca */
@@ -2323,7 +2316,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_IPSEC_IFACE:      /* --ipsec-interface */
-			msg.xfrm_if_id = opt_whole;
+			msg.xfrm_if_id = optarg_uintmax();
 			continue;
 
 		case CD_XAUTHBY:	/* --xauthby */
@@ -2358,19 +2351,19 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_METRIC:	/* --metric */
-			msg.metric = opt_whole;
+			msg.metric = optarg_uintmax();
 			continue;
 
 		case CD_CONNMTU:	/* --mtu */
-			msg.connmtu = opt_whole;
+			msg.connmtu = optarg_uintmax();
 			continue;
 
 		case CD_PRIORITY:	/* --priority */
-			msg.sa_priority = opt_whole;
+			msg.sa_priority = optarg_uintmax();
 			continue;
 
 		case CD_TFCPAD:	/* --tfc */
-			msg.sa_tfcpad = opt_whole;
+			msg.sa_tfcpad = optarg_uintmax();
 			continue;
 
 		case CD_SEND_TFCPAD:	/* --send-no-esp-tfc */
@@ -2378,6 +2371,8 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_NFLOG_GROUP:	/* --nflog-group */
+		{
+			uintmax_t opt_whole = optarg_uintmax();
 			if (opt_whole <= 0  ||
 			    opt_whole > 65535) {
 				char buf[120];
@@ -2389,8 +2384,11 @@ int main(int argc, char **argv)
 			}
 			msg.nflog_group = opt_whole;
 			continue;
+		}
 
 		case CD_REQID:	/* --reqid */
+		{
+			uintmax_t opt_whole = optarg_uintmax();
 			if (opt_whole <= 0  ||
 			    opt_whole > IPSEC_MANUAL_REQID_MAX) {
 				char buf[120];
@@ -2404,6 +2402,7 @@ int main(int argc, char **argv)
 
 			msg.sa_reqid = opt_whole;
 			continue;
+		}
 
 		case DBGOPT_NONE:	/* --debug-none (obsolete) */
 			/*
