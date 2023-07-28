@@ -310,13 +310,20 @@ enum opt_seen_ix {
 enum option_enums {
 
 /*
+ * Start the the non-ASCIC options at 256 so that they can't clash
+ * with ASCII options.
+ */
+
+#define OPT_START 356
+
+/*
  * Basic options - status and shutdown - are ment to work between
  * whack versions.  Look further down for where whack-magic is set.
  */
 
 #define FIRST_BASIC_OPT		OPT_STATUS	/* first "basic" option */
 
-	OPT_STATUS,		/* must be part of first group */
+	OPT_STATUS = OPT_START,	/* must be part of first group */
 	OPT_SHUTDOWN,		/* must be part of first group */
 
 #define LAST_BASIC_OPT		OPT_SHUTDOWN	/* last "basic" option */
@@ -622,244 +629,244 @@ enum option_enums {
  * Numeric arg is bit immediately left of basic value.
  *
  */
-#define OPTION_OFFSET   256	/* to get out of the way of letter options */
+
 #define NUMERIC_ARG (1 << 11)	/* expect a numeric argument */
 
 int long_index;
 
 static const struct option long_opts[] = {
-#   define OO   OPTION_OFFSET
+
 	/* name, has_arg, flag, val */
 
 	{ "help", no_argument, NULL, 'h' },
 	{ "version", no_argument, NULL, 'v' },
 	{ "label", required_argument, NULL, 'l' },
 
-	{ "rundir", required_argument, NULL, OPT_RUNDIR + OO },
-	{ "ctlbase", required_argument, NULL, OPT_RUNDIR + OO }, /* backwards compat */
-	{ "ctlsocket", required_argument, NULL, OPT_CTLSOCKET + OO },
-	{ "name", required_argument, NULL, OPT_NAME + OO },
-	{ "remote-host", required_argument, NULL, OPT_REMOTE_HOST + OO },
-	{ "connalias", required_argument, NULL, OPT_CONNALIAS + OO },
+	{ "rundir", required_argument, NULL, OPT_RUNDIR },
+	{ "ctlbase", required_argument, NULL, OPT_RUNDIR }, /* backwards compat */
+	{ "ctlsocket", required_argument, NULL, OPT_CTLSOCKET },
+	{ "name", required_argument, NULL, OPT_NAME },
+	{ "remote-host", required_argument, NULL, OPT_REMOTE_HOST },
+	{ "connalias", required_argument, NULL, OPT_CONNALIAS },
 
-	{ "keyid", required_argument, NULL, OPT_KEYID + OO },
-	{ "addkey", no_argument, NULL, OPT_ADDKEY + OO },
-	{ "pubkeyrsa", required_argument, NULL, OPT_PUBKEYRSA + OO },
+	{ "keyid", required_argument, NULL, OPT_KEYID },
+	{ "addkey", no_argument, NULL, OPT_ADDKEY },
+	{ "pubkeyrsa", required_argument, NULL, OPT_PUBKEYRSA },
 
-	{ "route", no_argument, NULL, OPT_ROUTE + OO },
-	{ "ondemand", no_argument, NULL, OPT_ROUTE + OO },	/* alias */
-	{ "unroute", no_argument, NULL, OPT_UNROUTE + OO },
+	{ "route", no_argument, NULL, OPT_ROUTE },
+	{ "ondemand", no_argument, NULL, OPT_ROUTE },	/* alias */
+	{ "unroute", no_argument, NULL, OPT_UNROUTE },
 
-	{ "initiate", no_argument, NULL, OPT_INITIATE + OO },
-	{ "down", no_argument, NULL, OPT_DOWN + OO },
-	{ "terminate", no_argument, NULL, OPT_DOWN + OO }, /* backwards compat */
-	{ "delete", no_argument, NULL, OPT_DELETE + OO },
-	{ "deleteid", no_argument, NULL, OPT_DELETEID + OO },
-	{ "deletestate", required_argument, NULL, OPT_DELETESTATE + OO + NUMERIC_ARG },
-	{ "deleteuser", no_argument, NULL, OPT_DELETEUSER + OO },
-	{ "crash", required_argument, NULL, OPT_DELETECRASH + OO },
-	{ "listen", no_argument, NULL, OPT_LISTEN + OO },
-	{ "unlisten", no_argument, NULL, OPT_UNLISTEN + OO },
-	{ "ike-socket-bufsize", required_argument, NULL, OPT_IKEBUF + OO + NUMERIC_ARG},
-	{ "ike-socket-errqueue-toggle", no_argument, NULL, OPT_IKE_MSGERR + OO },
+	{ "initiate", no_argument, NULL, OPT_INITIATE },
+	{ "down", no_argument, NULL, OPT_DOWN },
+	{ "terminate", no_argument, NULL, OPT_DOWN }, /* backwards compat */
+	{ "delete", no_argument, NULL, OPT_DELETE },
+	{ "deleteid", no_argument, NULL, OPT_DELETEID },
+	{ "deletestate", required_argument, NULL, OPT_DELETESTATE + NUMERIC_ARG },
+	{ "deleteuser", no_argument, NULL, OPT_DELETEUSER },
+	{ "crash", required_argument, NULL, OPT_DELETECRASH },
+	{ "listen", no_argument, NULL, OPT_LISTEN },
+	{ "unlisten", no_argument, NULL, OPT_UNLISTEN },
+	{ "ike-socket-bufsize", required_argument, NULL, OPT_IKEBUF + NUMERIC_ARG},
+	{ "ike-socket-errqueue-toggle", no_argument, NULL, OPT_IKE_MSGERR },
 
-	{ "redirect-to", required_argument, NULL, OPT_REDIRECT_TO + OO },
-	{ "global-redirect", required_argument, NULL, OPT_GLOBAL_REDIRECT + OO },
-	{ "global-redirect-to", required_argument, NULL, OPT_GLOBAL_REDIRECT_TO + OO },
+	{ "redirect-to", required_argument, NULL, OPT_REDIRECT_TO },
+	{ "global-redirect", required_argument, NULL, OPT_GLOBAL_REDIRECT },
+	{ "global-redirect-to", required_argument, NULL, OPT_GLOBAL_REDIRECT_TO },
 
-	{ "ddos-busy", no_argument, NULL, OPT_DDOS_BUSY + OO },
-	{ "ddos-unlimited", no_argument, NULL, OPT_DDOS_UNLIMITED + OO },
-	{ "ddos-auto", no_argument, NULL, OPT_DDOS_AUTO + OO },
+	{ "ddos-busy", no_argument, NULL, OPT_DDOS_BUSY },
+	{ "ddos-unlimited", no_argument, NULL, OPT_DDOS_UNLIMITED },
+	{ "ddos-auto", no_argument, NULL, OPT_DDOS_AUTO },
 
-	{ "ddns", no_argument, NULL, OPT_DDNS + OO },
+	{ "ddns", no_argument, NULL, OPT_DDNS },
 
-	{ "rereadsecrets", no_argument, NULL, OPT_REREADSECRETS + OO },
-	{ "rereadcrls", no_argument, NULL, OPT_REREADCRLS + OO }, /* obsolete */
-	{ "rereadcerts", no_argument, NULL, OPT_REREADCERTS + OO },
-	{ "fetchcrls", no_argument, NULL, OPT_FETCHCRLS + OO },
-	{ "rereadall", no_argument, NULL, OPT_REREADALL + OO },
+	{ "rereadsecrets", no_argument, NULL, OPT_REREADSECRETS },
+	{ "rereadcrls", no_argument, NULL, OPT_REREADCRLS }, /* obsolete */
+	{ "rereadcerts", no_argument, NULL, OPT_REREADCERTS },
+	{ "fetchcrls", no_argument, NULL, OPT_FETCHCRLS },
+	{ "rereadall", no_argument, NULL, OPT_REREADALL },
 
-	{ "purgeocsp", no_argument, NULL, OPT_PURGEOCSP + OO },
+	{ "purgeocsp", no_argument, NULL, OPT_PURGEOCSP },
 
-	{ "clearstats", no_argument, NULL, OPT_CLEAR_STATS + OO },
+	{ "clearstats", no_argument, NULL, OPT_CLEAR_STATS },
 
-	{ "status", no_argument, NULL, OPT_STATUS + OO },
-	{ "globalstatus", no_argument, NULL, OPT_GLOBAL_STATUS + OO },
-	{ "trafficstatus", no_argument, NULL, OPT_TRAFFICSTATUS + OO },
-	{ "shuntstatus", no_argument, NULL, OPT_SHUNT_STATUS + OO },
-	{ "addresspoolstatus", no_argument, NULL, OPT_ADDRESSPOOL_STATUS + OO },
-	{ "connectionstatus", no_argument, NULL, OPT_CONNECTION_STATUS + OO },
-	{ "fipsstatus", no_argument, NULL, OPT_FIPS_STATUS + OO },
-	{ "briefstatus", no_argument, NULL, OPT_BRIEF_STATUS + OO },
-	{ "processstatus", no_argument, NULL, OPT_PROCESS_STATUS + OO },
-	{ "statestatus", no_argument, NULL, OPT_SHOW_STATES + OO }, /* alias to catch typos */
-	{ "showstates", no_argument, NULL, OPT_SHOW_STATES + OO },
+	{ "status", no_argument, NULL, OPT_STATUS },
+	{ "globalstatus", no_argument, NULL, OPT_GLOBAL_STATUS },
+	{ "trafficstatus", no_argument, NULL, OPT_TRAFFICSTATUS },
+	{ "shuntstatus", no_argument, NULL, OPT_SHUNT_STATUS },
+	{ "addresspoolstatus", no_argument, NULL, OPT_ADDRESSPOOL_STATUS },
+	{ "connectionstatus", no_argument, NULL, OPT_CONNECTION_STATUS },
+	{ "fipsstatus", no_argument, NULL, OPT_FIPS_STATUS },
+	{ "briefstatus", no_argument, NULL, OPT_BRIEF_STATUS },
+	{ "processstatus", no_argument, NULL, OPT_PROCESS_STATUS },
+	{ "statestatus", no_argument, NULL, OPT_SHOW_STATES }, /* alias to catch typos */
+	{ "showstates", no_argument, NULL, OPT_SHOW_STATES },
 
 #ifdef USE_SECCOMP
-	{ "seccomp-crashtest", no_argument, NULL, OPT_SECCOMP_CRASHTEST + OO },
+	{ "seccomp-crashtest", no_argument, NULL, OPT_SECCOMP_CRASHTEST },
 #endif
-	{ "shutdown", no_argument, NULL, OPT_SHUTDOWN + OO },
-	{ "leave-state", no_argument, NULL, OPT_SHUTDOWN_DIRTY + OO },
-	{ "username", required_argument, NULL, OPT_USERNAME + OO },
-	{ "xauthuser", required_argument, NULL, OPT_USERNAME + OO }, /* old name */
-	{ "xauthname", required_argument, NULL, OPT_USERNAME + OO }, /* old name */
-	{ "xauthpass", required_argument, NULL, OPT_XAUTHPASS + OO },
+	{ "shutdown", no_argument, NULL, OPT_SHUTDOWN },
+	{ "leave-state", no_argument, NULL, OPT_SHUTDOWN_DIRTY },
+	{ "username", required_argument, NULL, OPT_USERNAME },
+	{ "xauthuser", required_argument, NULL, OPT_USERNAME }, /* old name */
+	{ "xauthname", required_argument, NULL, OPT_USERNAME }, /* old name */
+	{ "xauthpass", required_argument, NULL, OPT_XAUTHPASS },
 
-	{ "oppohere", required_argument, NULL, OPT_OPPO_HERE + OO },
-	{ "oppothere", required_argument, NULL, OPT_OPPO_THERE + OO },
-	{ "oppoproto", required_argument, NULL, OPT_OPPO_PROTO + OO },
-	{ "opposport", required_argument, NULL, OPT_OPPO_SPORT + OO },
-	{ "oppodport", required_argument, NULL, OPT_OPPO_DPORT + OO },
+	{ "oppohere", required_argument, NULL, OPT_OPPO_HERE },
+	{ "oppothere", required_argument, NULL, OPT_OPPO_THERE },
+	{ "oppoproto", required_argument, NULL, OPT_OPPO_PROTO },
+	{ "opposport", required_argument, NULL, OPT_OPPO_SPORT },
+	{ "oppodport", required_argument, NULL, OPT_OPPO_DPORT },
 
-	{ "asynchronous", no_argument, NULL, OPT_ASYNC + OO },
+	{ "asynchronous", no_argument, NULL, OPT_ASYNC },
 
-	{ "rekey-ike", no_argument, NULL, OPT_REKEY_IKE + OO },
-	{ "rekey-ipsec", no_argument, NULL, OPT_REKEY_IPSEC + OO },
+	{ "rekey-ike", no_argument, NULL, OPT_REKEY_IKE },
+	{ "rekey-ipsec", no_argument, NULL, OPT_REKEY_IPSEC },
 	/* list options */
 
-	{ "utc", no_argument, NULL, LST_UTC + OO },
-	{ "checkpubkeys", no_argument, NULL, LST_CHECKPUBKEYS + OO },
-	{ "listpubkeys", no_argument, NULL, LST_PUBKEYS + OO },
-	{ "listcerts", no_argument, NULL, LST_CERTS + OO },
-	{ "listcacerts", no_argument, NULL, LST_CACERTS + OO },
-	{ "listcrls", no_argument, NULL, LST_CRLS + OO },
-	{ "listpsks", no_argument, NULL, LST_PSKS + OO },
-	{ "listevents", no_argument, NULL, LST_EVENTS + OO },
-	{ "listall", no_argument, NULL, LST_ALL + OO },
+	{ "utc", no_argument, NULL, LST_UTC },
+	{ "checkpubkeys", no_argument, NULL, LST_CHECKPUBKEYS },
+	{ "listpubkeys", no_argument, NULL, LST_PUBKEYS },
+	{ "listcerts", no_argument, NULL, LST_CERTS },
+	{ "listcacerts", no_argument, NULL, LST_CACERTS },
+	{ "listcrls", no_argument, NULL, LST_CRLS },
+	{ "listpsks", no_argument, NULL, LST_PSKS },
+	{ "listevents", no_argument, NULL, LST_EVENTS },
+	{ "listall", no_argument, NULL, LST_ALL },
 
 	/* options for an end description */
 
-	{ "host", required_argument, NULL, END_HOST + OO },
-	{ "id", required_argument, NULL, END_ID + OO },
-	{ "cert", required_argument, NULL, END_CERT + OO },
-	{ "ckaid", required_argument, NULL, END_CKAID + OO },
-	{ "ca", required_argument, NULL, END_CA + OO },
-	{ "groups", required_argument, NULL, END_GROUPS + OO },
-	{ "ikeport", required_argument, NULL, END_IKEPORT + OO + NUMERIC_ARG },
-	{ "nexthop", required_argument, NULL, END_NEXTHOP + OO },
-	{ "client", required_argument, NULL, END_SUBNET + OO },	/* alias / backward compat */
-	{ "subnet", required_argument, NULL, END_SUBNET + OO },
-	{ "clientprotoport", required_argument, NULL, END_CLIENTPROTOPORT + OO },
+	{ "host", required_argument, NULL, END_HOST },
+	{ "id", required_argument, NULL, END_ID },
+	{ "cert", required_argument, NULL, END_CERT },
+	{ "ckaid", required_argument, NULL, END_CKAID },
+	{ "ca", required_argument, NULL, END_CA },
+	{ "groups", required_argument, NULL, END_GROUPS },
+	{ "ikeport", required_argument, NULL, END_IKEPORT + NUMERIC_ARG },
+	{ "nexthop", required_argument, NULL, END_NEXTHOP },
+	{ "client", required_argument, NULL, END_SUBNET },	/* alias / backward compat */
+	{ "subnet", required_argument, NULL, END_SUBNET },
+	{ "clientprotoport", required_argument, NULL, END_CLIENTPROTOPORT },
 #ifdef USE_DNSSEC
-	{ "dnskeyondemand", no_argument, NULL, END_DNSKEYONDEMAND + OO },
+	{ "dnskeyondemand", no_argument, NULL, END_DNSKEYONDEMAND },
 #endif
-	{ "sourceip",  required_argument, NULL, END_SOURCEIP + OO },
-	{ "srcip",  required_argument, NULL, END_SOURCEIP + OO },	/* alias / backwards compat */
-	{ "vtiip",  required_argument, NULL, END_VTIIP + OO },
-	{ "authby",  required_argument, NULL, END_AUTHBY + OO },
-	{ "autheap",  required_argument, NULL, END_AUTHEAP + OO },
-	{ "updown", required_argument, NULL, END_UPDOWN + OO },
+	{ "sourceip",  required_argument, NULL, END_SOURCEIP },
+	{ "srcip",  required_argument, NULL, END_SOURCEIP },	/* alias / backwards compat */
+	{ "vtiip",  required_argument, NULL, END_VTIIP },
+	{ "authby",  required_argument, NULL, END_AUTHBY },
+	{ "autheap",  required_argument, NULL, END_AUTHEAP },
+	{ "updown", required_argument, NULL, END_UPDOWN },
 
 	/* options for a connection description */
 
-	{ "to", no_argument, NULL, CD_TO + OO },
+	{ "to", no_argument, NULL, CD_TO },
 
 	/* option for cert rotation */
 
-	{ "intermediate", no_argument, NULL, CD_INTERMEDIATE + OO },
-#define PS(o, p)	{ o, no_argument, NULL, CDP_SINGLETON + POLICY_##p##_IX + OO }
+	{ "intermediate", no_argument, NULL, CD_INTERMEDIATE },
+#define PS(o, p)	{ o, no_argument, NULL, CDP_SINGLETON + POLICY_##p##_IX }
 	PS("encrypt", ENCRYPT),
 	PS("authenticate", AUTHENTICATE),
 	PS("compress", COMPRESS),
-	{ "overlapip", no_argument, NULL, CD_OVERLAPIP + OO },
+	{ "overlapip", no_argument, NULL, CD_OVERLAPIP },
 	PS("tunnel", TUNNEL),
-	{ "tunnelipv4", no_argument, NULL, CD_TUNNELIPV4 + OO },
-	{ "tunnelipv6", no_argument, NULL, CD_TUNNELIPV6 + OO },
+	{ "tunnelipv4", no_argument, NULL, CD_TUNNELIPV4 },
+	{ "tunnelipv6", no_argument, NULL, CD_TUNNELIPV6 },
 	PS("pfs", PFS),
-	{ "ms-dh-downgrade", no_argument, NULL, CD_MSDH_DOWNGRADE + OO },
-	{ "dns-match-id", no_argument, NULL, CD_DNS_MATCH_ID + 00 },
-	{ "allow-cert-without-san-id", no_argument, NULL, CD_ALLOW_CERT_WITHOUT_SAN_ID + OO },
-	{ "sha2-truncbug", no_argument, NULL, CD_SHA2_TRUNCBUG + OO },
-	{ "sha2_truncbug", no_argument, NULL, CD_SHA2_TRUNCBUG + OO }, /* backwards compatibility */
-	{ "aggressive", no_argument, NULL, CD_AGGRESSIVE + OO },
-	{ "aggrmode", no_argument, NULL, CD_AGGRESSIVE + OO }, /*  backwards compatibility */
+	{ "ms-dh-downgrade", no_argument, NULL, CD_MSDH_DOWNGRADE },
+	{ "dns-match-id", no_argument, NULL, CD_DNS_MATCH_ID },
+	{ "allow-cert-without-san-id", no_argument, NULL, CD_ALLOW_CERT_WITHOUT_SAN_ID },
+	{ "sha2-truncbug", no_argument, NULL, CD_SHA2_TRUNCBUG },
+	{ "sha2_truncbug", no_argument, NULL, CD_SHA2_TRUNCBUG }, /* backwards compatibility */
+	{ "aggressive", no_argument, NULL, CD_AGGRESSIVE },
+	{ "aggrmode", no_argument, NULL, CD_AGGRESSIVE }, /*  backwards compatibility */
 
-	{ "initiateontraffic", no_argument, NULL, CD_INITIATEONTRAFFIC + OO }, /* obsolete */
+	{ "initiateontraffic", no_argument, NULL, CD_INITIATEONTRAFFIC }, /* obsolete */
 
-	{ "pass", no_argument, NULL, CDS_NEVER_NEGOTIATE + SHUNT_PASS + OO },
-	{ "drop", no_argument, NULL, CDS_NEVER_NEGOTIATE + SHUNT_DROP + OO },
-	{ "reject", no_argument, NULL, CDS_NEVER_NEGOTIATE + SHUNT_REJECT + OO },
+	{ "pass", no_argument, NULL, CDS_NEVER_NEGOTIATE + SHUNT_PASS },
+	{ "drop", no_argument, NULL, CDS_NEVER_NEGOTIATE + SHUNT_DROP },
+	{ "reject", no_argument, NULL, CDS_NEVER_NEGOTIATE + SHUNT_REJECT },
 
-	{ "negopass", no_argument, NULL, CDS_NEGOTIATION + SHUNT_PASS + OO },
+	{ "negopass", no_argument, NULL, CDS_NEGOTIATION + SHUNT_PASS },
 
-	{ "failnone", no_argument, NULL, CDS_FAILURE + SHUNT_NONE + OO },
-	{ "failpass", no_argument, NULL, CDS_FAILURE + SHUNT_PASS + OO },
-	{ "faildrop", no_argument, NULL, CDS_FAILURE + SHUNT_DROP + OO },
-	{ "failreject", no_argument, NULL, CDS_FAILURE + SHUNT_REJECT + OO },
+	{ "failnone", no_argument, NULL, CDS_FAILURE + SHUNT_NONE },
+	{ "failpass", no_argument, NULL, CDS_FAILURE + SHUNT_PASS },
+	{ "faildrop", no_argument, NULL, CDS_FAILURE + SHUNT_DROP },
+	{ "failreject", no_argument, NULL, CDS_FAILURE + SHUNT_REJECT },
 
 	{ "dontrekey", no_argument, NULL, CD_DONT_REKEY, },
 	{ "reauth", no_argument, NULL, CD_REAUTH, },
-	{ "encaps", required_argument, NULL, CD_ENCAPS + OO },
-	{ "no-nat_keepalive", no_argument, NULL,  CD_NO_NAT_KEEPALIVE + OO },
-	{ "ikev1_natt", required_argument, NULL, CD_IKEV1_NATT + OO },	/* obsolete _ */
-	{ "ikev1-natt", required_argument, NULL, CD_IKEV1_NATT + OO },
-	{ "initialcontact", no_argument, NULL,  CD_INITIAL_CONTACT + OO },
-	{ "cisco_unity", no_argument, NULL, CD_CISCO_UNITY + OO },	/* obsolete _ */
-	{ "cisco-unity", no_argument, NULL, CD_CISCO_UNITY + OO },
-	{ "fake-strongswan", no_argument, NULL, CD_FAKE_STRONGSWAN + OO },
-	{ "mobike", no_argument, NULL, CD_MOBIKE + OO },
+	{ "encaps", required_argument, NULL, CD_ENCAPS },
+	{ "no-nat_keepalive", no_argument, NULL,  CD_NO_NAT_KEEPALIVE },
+	{ "ikev1_natt", required_argument, NULL, CD_IKEV1_NATT },	/* obsolete _ */
+	{ "ikev1-natt", required_argument, NULL, CD_IKEV1_NATT },
+	{ "initialcontact", no_argument, NULL,  CD_INITIAL_CONTACT },
+	{ "cisco_unity", no_argument, NULL, CD_CISCO_UNITY },	/* obsolete _ */
+	{ "cisco-unity", no_argument, NULL, CD_CISCO_UNITY },
+	{ "fake-strongswan", no_argument, NULL, CD_FAKE_STRONGSWAN },
+	{ "mobike", no_argument, NULL, CD_MOBIKE },
 
-	{ "dpddelay", required_argument, NULL, CD_DPDDELAY + OO },
-	{ "dpdtimeout", required_argument, NULL, CD_DPDTIMEOUT + OO },
-	{ "dpdaction", required_argument, NULL, CD_DPDACTION + OO },
-	{ "send-redirect", required_argument, NULL, CD_SEND_REDIRECT + OO },
-	{ "accept-redirect", required_argument, NULL, CD_ACCEPT_REDIRECT + OO },
-	{ "accept-redirect-to", required_argument, NULL, CD_ACCEPT_REDIRECT_TO + OO },
+	{ "dpddelay", required_argument, NULL, CD_DPDDELAY },
+	{ "dpdtimeout", required_argument, NULL, CD_DPDTIMEOUT },
+	{ "dpdaction", required_argument, NULL, CD_DPDACTION },
+	{ "send-redirect", required_argument, NULL, CD_SEND_REDIRECT },
+	{ "accept-redirect", required_argument, NULL, CD_ACCEPT_REDIRECT },
+	{ "accept-redirect-to", required_argument, NULL, CD_ACCEPT_REDIRECT_TO },
 
-	{ "xauth", no_argument, NULL, END_XAUTHSERVER + OO },
-	{ "xauthserver", no_argument, NULL, END_XAUTHSERVER + OO },
-	{ "xauthclient", no_argument, NULL, END_XAUTHCLIENT + OO },
-	{ "xauthby", required_argument, NULL, CD_XAUTHBY + OO },
-	{ "xauthfail", required_argument, NULL, CD_XAUTHFAIL + OO },
-	{ "modecfgpull", no_argument, NULL, CD_MODECFGPULL + OO },
-	{ "modecfgserver", no_argument, NULL, END_MODECFGSERVER + OO },
-	{ "modecfgclient", no_argument, NULL, END_MODECFGCLIENT + OO },
-	{ "addresspool", required_argument, NULL, END_ADDRESSPOOL + OO },
-	{ "modecfgdns", required_argument, NULL, CD_MODECFGDNS + OO },
-	{ "modecfgdomains", required_argument, NULL, CD_MODECFGDOMAINS + OO },
-	{ "modecfgbanner", required_argument, NULL, CD_MODECFGBANNER + OO },
-	{ "modeconfigserver", no_argument, NULL, END_MODECFGSERVER + OO },
-	{ "modeconfigclient", no_argument, NULL, END_MODECFGCLIENT + OO },
+	{ "xauth", no_argument, NULL, END_XAUTHSERVER },
+	{ "xauthserver", no_argument, NULL, END_XAUTHSERVER },
+	{ "xauthclient", no_argument, NULL, END_XAUTHCLIENT },
+	{ "xauthby", required_argument, NULL, CD_XAUTHBY },
+	{ "xauthfail", required_argument, NULL, CD_XAUTHFAIL },
+	{ "modecfgpull", no_argument, NULL, CD_MODECFGPULL },
+	{ "modecfgserver", no_argument, NULL, END_MODECFGSERVER },
+	{ "modecfgclient", no_argument, NULL, END_MODECFGCLIENT },
+	{ "addresspool", required_argument, NULL, END_ADDRESSPOOL },
+	{ "modecfgdns", required_argument, NULL, CD_MODECFGDNS },
+	{ "modecfgdomains", required_argument, NULL, CD_MODECFGDOMAINS },
+	{ "modecfgbanner", required_argument, NULL, CD_MODECFGBANNER },
+	{ "modeconfigserver", no_argument, NULL, END_MODECFGSERVER },
+	{ "modeconfigclient", no_argument, NULL, END_MODECFGCLIENT },
 
-	{ "metric", required_argument, NULL, CD_METRIC + OO + NUMERIC_ARG },
-	{ "mtu", required_argument, NULL, CD_CONNMTU + OO + NUMERIC_ARG },
-	{ "priority", required_argument, NULL, CD_PRIORITY + OO + NUMERIC_ARG },
-	{ "tfc", required_argument, NULL, CD_TFCPAD + OO + NUMERIC_ARG },
-	{ "send-no-esp-tfc", no_argument, NULL, CD_SEND_TFCPAD + OO },
-	{ "reqid", required_argument, NULL, CD_REQID + OO + NUMERIC_ARG },
-	{ "nflog-group", required_argument, NULL, CD_NFLOG_GROUP + OO + NUMERIC_ARG },
-	{ "conn-mark", required_argument, NULL, CD_CONN_MARK_BOTH + OO },
-	{ "conn-mark-in", required_argument, NULL, CD_CONN_MARK_IN + OO },
-	{ "conn-mark-out", required_argument, NULL, CD_CONN_MARK_OUT + OO },
-	{ "vti-iface", required_argument, NULL, CD_VTI_IFACE + OO },
-	{ "vti-routing", no_argument, NULL, CD_VTI_ROUTING + OO },
-	{ "vti-shared", no_argument, NULL, CD_VTI_SHARED + OO },
-	{ "ipsec-interface", required_argument, NULL, CD_IPSEC_IFACE + OO + NUMERIC_ARG },
-	{ "sendcert", required_argument, NULL, END_SENDCERT + OO },
-	{ "sendca", required_argument, NULL, CD_SEND_CA + OO },
-	{ "ipv4", no_argument, NULL, CD_CONNIPV4 + OO },
-	{ "ipv6", no_argument, NULL, CD_CONNIPV6 + OO },
-	{ "ikelifetime", required_argument, NULL, CD_IKE_LIFETIME + OO },
-	{ "ipseclifetime", required_argument, NULL, CD_IPSEC_LIFETIME + OO }, /* backwards compat */
-	{ "ipsec-lifetime", required_argument, NULL, CD_IPSEC_LIFETIME + OO },
-	{ "ipsec-max-bytes", required_argument, NULL, CD_IPSEC_MAX_BYTES + OO + NUMERIC_ARG},
-	{ "ipsec-max-packets", required_argument, NULL, CD_IPSEC_MAX_PACKETS + OO + NUMERIC_ARG},
-	{ "retransmit-timeout", required_argument, NULL, CD_RETRANSMIT_TIMEOUT + OO },
-	{ "retransmit-interval", required_argument, NULL, CD_RETRANSMIT_INTERVAL + OO },
-	{ "rekeymargin", required_argument, NULL, CD_REKEYMARGIN + OO },
+	{ "metric", required_argument, NULL, CD_METRIC + NUMERIC_ARG },
+	{ "mtu", required_argument, NULL, CD_CONNMTU + NUMERIC_ARG },
+	{ "priority", required_argument, NULL, CD_PRIORITY + NUMERIC_ARG },
+	{ "tfc", required_argument, NULL, CD_TFCPAD + NUMERIC_ARG },
+	{ "send-no-esp-tfc", no_argument, NULL, CD_SEND_TFCPAD },
+	{ "reqid", required_argument, NULL, CD_REQID + NUMERIC_ARG },
+	{ "nflog-group", required_argument, NULL, CD_NFLOG_GROUP + NUMERIC_ARG },
+	{ "conn-mark", required_argument, NULL, CD_CONN_MARK_BOTH },
+	{ "conn-mark-in", required_argument, NULL, CD_CONN_MARK_IN },
+	{ "conn-mark-out", required_argument, NULL, CD_CONN_MARK_OUT },
+	{ "vti-iface", required_argument, NULL, CD_VTI_IFACE },
+	{ "vti-routing", no_argument, NULL, CD_VTI_ROUTING },
+	{ "vti-shared", no_argument, NULL, CD_VTI_SHARED },
+	{ "ipsec-interface", required_argument, NULL, CD_IPSEC_IFACE + NUMERIC_ARG },
+	{ "sendcert", required_argument, NULL, END_SENDCERT },
+	{ "sendca", required_argument, NULL, CD_SEND_CA },
+	{ "ipv4", no_argument, NULL, CD_CONNIPV4 },
+	{ "ipv6", no_argument, NULL, CD_CONNIPV6 },
+	{ "ikelifetime", required_argument, NULL, CD_IKE_LIFETIME },
+	{ "ipseclifetime", required_argument, NULL, CD_IPSEC_LIFETIME }, /* backwards compat */
+	{ "ipsec-lifetime", required_argument, NULL, CD_IPSEC_LIFETIME },
+	{ "ipsec-max-bytes", required_argument, NULL, CD_IPSEC_MAX_BYTES + NUMERIC_ARG},
+	{ "ipsec-max-packets", required_argument, NULL, CD_IPSEC_MAX_PACKETS + NUMERIC_ARG},
+	{ "retransmit-timeout", required_argument, NULL, CD_RETRANSMIT_TIMEOUT },
+	{ "retransmit-interval", required_argument, NULL, CD_RETRANSMIT_INTERVAL },
+	{ "rekeymargin", required_argument, NULL, CD_REKEYMARGIN },
 	/* OBSOLETE */
-	{ "rekeywindow", required_argument, NULL, CD_REKEYMARGIN + OO + NUMERIC_ARG },
-	{ "rekeyfuzz", required_argument, NULL, CD_RKFUZZ + OO + NUMERIC_ARG },
-	{ "keyingtries", required_argument, NULL, CD_KTRIES + OO + NUMERIC_ARG },
-	{ "replay-window", required_argument, NULL, CD_REPLAY_WINDOW + OO },
-	{ "ike",    required_argument, NULL, CD_IKE + OO },
-	{ "ikealg", required_argument, NULL, CD_IKE + OO },
-	{ "pfsgroup", required_argument, NULL, CD_PFSGROUP + OO },
-	{ "esp", required_argument, NULL, CD_ESP + OO },
-	{ "remote-peer-type", required_argument, NULL, CD_REMOTEPEERTYPE + OO },
-	{ "nic-offload", required_argument, NULL, CD_NIC_OFFLOAD + OO},
+	{ "rekeywindow", required_argument, NULL, CD_REKEYMARGIN + NUMERIC_ARG },
+	{ "rekeyfuzz", required_argument, NULL, CD_RKFUZZ + NUMERIC_ARG },
+	{ "keyingtries", required_argument, NULL, CD_KTRIES + NUMERIC_ARG },
+	{ "replay-window", required_argument, NULL, CD_REPLAY_WINDOW },
+	{ "ike",    required_argument, NULL, CD_IKE },
+	{ "ikealg", required_argument, NULL, CD_IKE },
+	{ "pfsgroup", required_argument, NULL, CD_PFSGROUP },
+	{ "esp", required_argument, NULL, CD_ESP },
+	{ "remote-peer-type", required_argument, NULL, CD_REMOTEPEERTYPE },
+	{ "nic-offload", required_argument, NULL, CD_NIC_OFFLOAD},
 
-#define AB(NAME, ENUM) { NAME, no_argument, NULL, OPT_AUTHBY_##ENUM + OO, }
+#define AB(NAME, ENUM) { NAME, no_argument, NULL, OPT_AUTHBY_##ENUM, }
 	AB("psk", PSK),
 	AB("auth-never", AUTH_NEVER),
 	AB("auth-null", AUTH_NULL),
@@ -876,11 +883,11 @@ static const struct option long_opts[] = {
 	AB("rsa-sha2_512", RSA_SHA2_512),
 #undef AB
 
-	{ "ikev1", no_argument, NULL, CD_IKEv1 + OO },
-	{ "ikev1-allow", no_argument, NULL, CD_IKEv1 + OO }, /* obsolete name */
-	{ "ikev2", no_argument, NULL, CD_IKEv2 +OO },
-	{ "ikev2-allow", no_argument, NULL, CD_IKEv2 +OO }, /* obsolete name */
-	{ "ikev2-propose", no_argument, NULL, CD_IKEv2 +OO }, /* obsolete, map onto allow */
+	{ "ikev1", no_argument, NULL, CD_IKEv1 },
+	{ "ikev1-allow", no_argument, NULL, CD_IKEv1 }, /* obsolete name */
+	{ "ikev2", no_argument, NULL, CD_IKEv2 },
+	{ "ikev2-allow", no_argument, NULL, CD_IKEv2 }, /* obsolete name */
+	{ "ikev2-propose", no_argument, NULL, CD_IKEv2 }, /* obsolete, map onto allow */
 
 	{ "allow-narrowing", no_argument, NULL, CD_IKEV2_ALLOW_NARROWING, },
 #ifdef AUTH_HAVE_PAM
@@ -888,34 +895,32 @@ static const struct option long_opts[] = {
 #endif
 	PS("ikefrag-allow", IKE_FRAG_ALLOW),
 	PS("ikefrag-force", IKE_FRAG_FORCE),
-	{ "no-ikepad", no_argument, NULL, CD_NO_IKEPAD + OO },
+	{ "no-ikepad", no_argument, NULL, CD_NO_IKEPAD },
 
 	PS("no-esn", ESN_NO),
 	PS("esn", ESN_YES),
-	{ "decap-dscp", no_argument, NULL, CD_DECAP_DSCP + OO },
-	{ "nopmtudisc", no_argument, NULL, CD_NOPMTUDISC + OO },
-	{ "ignore-peer-dns", no_argument, NULL, CD_IGNORE_PEER_DNS + OO },
+	{ "decap-dscp", no_argument, NULL, CD_DECAP_DSCP },
+	{ "nopmtudisc", no_argument, NULL, CD_NOPMTUDISC },
+	{ "ignore-peer-dns", no_argument, NULL, CD_IGNORE_PEER_DNS },
 #undef PS
 
-	{ "tcp", required_argument, NULL, CD_IKE_TCP + OO },
-	{ "tcp-remote-port", required_argument, NULL, CD_IKE_TCP_REMOTE_PORT + OO + NUMERIC_ARG},
+	{ "tcp", required_argument, NULL, CD_IKE_TCP },
+	{ "tcp-remote-port", required_argument, NULL, CD_IKE_TCP_REMOTE_PORT + NUMERIC_ARG},
 
 #ifdef HAVE_NM
-	{ "nm_configured", no_argument, NULL, CD_NMCONFIGURED + OO }, /* backwards compat */
-	{ "nm-configured", no_argument, NULL, CD_NMCONFIGURED + OO },
+	{ "nm_configured", no_argument, NULL, CD_NMCONFIGURED }, /* backwards compat */
+	{ "nm-configured", no_argument, NULL, CD_NMCONFIGURED },
 #endif
 
-	{ "policylabel", required_argument, NULL, CD_SEC_LABEL + OO },
+	{ "policylabel", required_argument, NULL, CD_SEC_LABEL },
 
-	{ "debug-none", no_argument, NULL, DBGOPT_NONE + OO },
-	{ "debug-all", no_argument, NULL, DBGOPT_ALL + OO },
-	{ "debug", required_argument, NULL, DBGOPT_DEBUG + OO, },
-	{ "no-debug", required_argument, NULL, DBGOPT_NO_DEBUG + OO, },
-	{ "impair", required_argument, NULL, DBGOPT_IMPAIR + OO, },
-	{ "no-impair", required_argument, NULL, DBGOPT_NO_IMPAIR + OO, },
+	{ "debug-none", no_argument, NULL, DBGOPT_NONE },
+	{ "debug-all", no_argument, NULL, DBGOPT_ALL },
+	{ "debug", required_argument, NULL, DBGOPT_DEBUG, },
+	{ "no-debug", required_argument, NULL, DBGOPT_NO_DEBUG, },
+	{ "impair", required_argument, NULL, DBGOPT_IMPAIR, },
+	{ "no-impair", required_argument, NULL, DBGOPT_NO_IMPAIR, },
 
-#    undef DO
-#   undef OO
 	{ 0, 0, 0, 0 }
 };
 
@@ -1032,7 +1037,7 @@ int main(int argc, char **argv)
 	bool ignore_errors = false;
 
 	/* check division of numbering space */
-	assert(OPTION_OFFSET + OPTION_ENUMS_LAST < NUMERIC_ARG);
+	assert(OPTION_ENUMS_LAST < NUMERIC_ARG);
 
 	zero(&msg);	/* ??? pointer fields might not be NULLed */
 
@@ -1105,15 +1110,17 @@ int main(int argc, char **argv)
 		 * by getopt_long, so we simply pass an empty string as
 		 * the list.  It could be "hp:d:c:o:eatfs" "NARXPECK".
 		 */
-		int c = getopt_long(argc, argv, "", long_opts, &long_index)
-			- OPTION_OFFSET;
+		int c = getopt_long(argc, argv, "", long_opts, &long_index);
+
+		/* end of flags? exit loop */
+		if (c < 0) {
+			break;
+		}
 
 		/* decode a numeric argument, if expected */
-		if (0 <= c) {
-			if (c & NUMERIC_ARG) {
-				c -= NUMERIC_ARG;
-				optarg_to_uintmax(&opt_whole);
-			}
+		if (c & NUMERIC_ARG) {
+			c -= NUMERIC_ARG;
+			optarg_to_uintmax(&opt_whole);
 		}
 
 		/*
@@ -1193,38 +1200,40 @@ int main(int argc, char **argv)
 		}
 
 		/*
-		 * Note: "break"ing from switch terminates loop.
-		 * most cases should end with "continue".
+		 * Note: all switches must "continue" the loop (or
+		 * barf).
+		 *
+		 * Note: no "default:".  Instead missing cases fall
+		 * off the end and hit the bad_case.
+		 *
+		 * XXX: should cast C to enum option_enums; can't
+		 * because some ranges are missing.
 		 */
 		switch (c) {
-		case EOF - OPTION_OFFSET:	/* end of flags */
-			break;
 
-		case 0 - OPTION_OFFSET:	/* long option already handled */
+		case 0:	/* long option already handled */
 			continue;
 
 		/* diagnostic already printed by getopt_long */
-		case ':' - OPTION_OFFSET:
+		case ':':
 		/* diagnostic already printed by getopt_long */
-		case '?' - OPTION_OFFSET:
+		case '?':
 			/* print no additional diagnostic, but exit sadly */
 			diagw(NULL);
 			/* not actually reached */
 			break;
 
-		case 'h' - OPTION_OFFSET:	/* --help */
+		case 'h':	/* --help */
 			help();
 			/* GNU coding standards say to stop here */
 			return 0;
 
-		case 'v' - OPTION_OFFSET:	/* --version */
-		{
+		case 'v':	/* --version */
 			printf("%s\n", ipsec_version_string());
-		}
 			/* GNU coding standards say to stop here */
 			return 0;
 
-		case 'l' - OPTION_OFFSET:	/* --label <string> */
+		case 'l':	/* --label <string> */
 			label = optarg;	/* remember for diagnostics */
 			continue;
 
@@ -2486,11 +2495,13 @@ int main(int argc, char **argv)
 			msg.nr_impairments++;
 			continue;
 		}
-
-		default:
-			bad_case(c);
 		}
-		break;
+
+		/*
+		 * Since cases in above switch "continue" the loop;
+		 * reaching here is BAD.
+		 */
+		bad_case(c);
 	}
 
 	if (msg.ike_version == 0) {
