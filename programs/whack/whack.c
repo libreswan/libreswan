@@ -281,33 +281,52 @@ static void diagq(err_t ugh, const char *this)
  * - CD_* options (Connection Description options)
  * - CDP_* options (Connection Description Policy bit options)
  */
+
+enum opt_seen_ix {
+
+#define BASIC_OPT_SEEN LELEM(BASIC_OPT_SEEN_IX)
+	BASIC_OPT_SEEN_IX,	/* indicates an option from the
+				 * {FIRST,LAST}_BASIC_OPT range was
+				 * seen */
+#define NORMAL_OPT_SEEN LELEM(NORMAL_OPT_SEEN_IX)
+	NORMAL_OPT_SEEN_IX,	/* indicates an option from the
+				 * {FIRST,LAST}_NORMAL_OPT range was
+				 * seen */
+#define CONN_OPT_SEEN LELEM(CONN_OPT_SEEN_IX)
+	CONN_OPT_SEEN_IX,	/* indicates an option from the
+				 * {FIRST,LAST}_CONN_OPT OR
+				 * {FIRST,LAST}_END_OPT range was
+				 * seen */
+#define END_OPT_SEEN LELEM(END_OPT_SEEN_IX)
+	END_OPT_SEEN_IX,	/* indicates an option from the
+				 * {FIRST,LAST}_END_OPT range was
+				 * seen */
+#define DBGOPT_SEEN LELEM(DBGOPT_SEEN_IX)
+	DBGOPT_SEEN_IX,		/* indicates that an option from the
+				 * {FIRST,LAST}_DBGOPT range was
+				 * seen. */
+};
+
 enum option_enums {
 
-#define OPTS_SEEN_CD LELEM(OPTS_SEEN_CD_IX)
-	OPTS_SEEN_CD_IX,	/* magic, indicates an option from the
-				 * CD_{FIRST,LAST} or CDP_{FIRST,LAST}
-				 * range was seen */
-#define OPTS_SEEN_NORMAL LELEM(OPTS_SEEN_NORMAL_IX)
-	OPTS_SEEN_NORMAL_IX,	/* magic, indicates an option from the
-				 * OPT_{FIRST,LAST}{1,2} range was
-				 * seen (which has lots of space) */
-#define OPTS_SEEN_LST LELEM(OPTS_SEEN_LST_IX)
-	OPTS_SEEN_LST_IX,	/* magic, indicates that an option
-				 * from the LST_{FIRST,LAST} range was
-				 * seen. */
-#define OPTS_SEEN_DBG LELEM(OPTS_SEEN_DBG_IX)
-	OPTS_SEEN_DBG_IX,	/* magic, indicates that an option
-				 * from the DBGOPT_{FIRST,LAST} range
-				 * was seen. */
+/*
+ * Basic options - status and shutdown - are ment to work between
+ * whack versions.  Look further down for where whack-magic is set.
+ */
 
-#   define OPT_FIRST1    OPT_STATUS	/* first normal option, range 1 */
+#define FIRST_BASIC_OPT		OPT_STATUS	/* first "basic" option */
 
 	OPT_STATUS,		/* must be part of first group */
 	OPT_SHUTDOWN,		/* must be part of first group */
 
-#   define OPT_LAST1 OPT_SHUTDOWN	/* last "normal" option, range 1 */
+#define LAST_BASIC_OPT		OPT_SHUTDOWN	/* last "basic" option */
 
-#define OPT_FIRST2  OPT_ASYNC	/* first "normal" option, range 2 */
+/*
+ * Normal options don't fall into the connection category (better
+ * description? global?).
+ */
+
+#define FIRST_NORMAL_OPT	OPT_ASYNC	/* first "normal" option */
 
 	OPT_ASYNC,
 
@@ -382,11 +401,8 @@ enum option_enums {
 	OPT_OPPO_SPORT,
 	OPT_OPPO_DPORT,
 
-#define OPT_LAST2 OPT_OPPO_DPORT	/* last "normal" option, range 2 */
+	/* List options */
 
-/* List options */
-
-#   define LST_FIRST LST_UTC	/* first list option */
 	LST_UTC,
 	LST_CHECKPUBKEYS,
 	LST_PUBKEYS,
@@ -400,11 +416,19 @@ enum option_enums {
 	LST_GROUPS,
 	LST_CARDS,
 	LST_ALL,
-#   define LST_LAST LST_ALL	/* last list option */
 
-/* Connection End Description options */
+#define LAST_NORMAL_OPT		LST_ALL		/* last "normal" option */
 
-#   define END_FIRST END_HOST	/* first end description */
+/*
+ * Connection End Description options.
+ *
+ * These are accumulated in .right.  Then, at some point, --to is
+ * encountered and .right is copied to .left and .right cleared and
+ * things continue.
+ */
+
+#define FIRST_END_OPT		END_HOST	/* first end description */
+
 	END_HOST,
 	END_ID,
 	END_CERT,
@@ -429,11 +453,16 @@ enum option_enums {
 	END_AUTHEAP,
 	END_UPDOWN,
 
-#define END_LAST  END_UPDOWN	/* last end description*/
+#define LAST_END_OPT		END_UPDOWN	/* last end description*/
 
-/* Connection Description options -- segregated */
+/*
+ * Connection Description options.
+ *
+ * These are not end specific.
+ */
 
-#   define CD_FIRST CD_TO	/* first connection description */
+#define FIRST_CONN_OPT		CD_TO		/* first connection description */
+
 	CD_TO,
 
 	CD_IKEv1,
@@ -513,13 +542,13 @@ enum option_enums {
 	CD_DECAP_DSCP,
 	CD_NOPMTUDISC,
 	CD_INITIATEONTRAFFIC,
-#define CD_LAST CD_INITIATEONTRAFFIC	/* last connection description */
 
-/*
- * Proof-of-identity options (just because CD_ was full) that fill in
- * the .authby and .sighash_policy fields.
- */
-#define OPT_AUTHBY_FIRST	OPT_AUTHBY_RSASIG
+	/*
+	 * Connection proof-of-identity options that set .auth and
+	 * .sighash_policy fields (yes the options are called authby,
+	 * contradicting config files).
+	 */
+
 	OPT_AUTHBY_PSK,
 	OPT_AUTHBY_AUTH_NEVER,
 	OPT_AUTHBY_AUTH_NULL,
@@ -533,47 +562,46 @@ enum option_enums {
 	OPT_AUTHBY_ECDSA_SHA2_256,
 	OPT_AUTHBY_ECDSA_SHA2_384,
 	OPT_AUTHBY_ECDSA_SHA2_512,
-#define OPT_AUTHBY_LAST	OPT_AUTHBY_ECDSA_SHA2_512
 
-/*
- * Proof of identity options that set .auth (yes the options are
- * called authby, contradicting config files).
- */
-
-
-/*
- * Shunt policies
- */
+	/*
+	 * Connection shunt policies.
+	 */
 
 	CDS_NEVER_NEGOTIATE,
 	CDS_NEGOTIATION = CDS_NEVER_NEGOTIATE + SHUNT_POLICY_ROOF,
 	CDS_FAILURE = CDS_NEGOTIATION + SHUNT_POLICY_ROOF,
 	CDS_LAST = CDS_FAILURE + SHUNT_POLICY_ROOF - 1,
 
-/*
- * Policy options
- *
- * Really part of Connection Description but, seemingly, easier to
- * manipulate as separate policy bits.
- *
- * XXX: I'm skeptical.
- */
-
-#define CDP_FIRST	CDP_SINGLETON
-
 	/*
+	 * Connection policy bits options.
+	 *
+	 * Really part of Connection Description but, seemingly,
+	 * easier to manipulate as separate policy bits.
+	 *
+	 * XXX: I'm skeptical.
+	 *
+	 *
 	 * The next range is for single-element policy options.
 	 * It covers enum sa_policy_bits values.
 	 */
+
 	CDP_SINGLETON,
 	/* large gap of unnamed values... */
 	CDP_SINGLETON_LAST = CDP_SINGLETON + POLICY_IX_LAST,
 
-#define CDP_LAST	CDP_SINGLETON_LAST
+	/* === end of correspondence with POLICY_* === */
 
-/* === end of correspondence with POLICY_* === */
+#define LAST_CONN_OPT		CDP_SINGLETON_LAST	/* last connection description */
 
-#   define DBGOPT_FIRST DBGOPT_NONE
+/*
+ * Debug and impair options.
+ *
+ * Unlike the above, these are allowed to repeat (and probably play
+ * other tricks).
+ */
+
+#define FIRST_DBGOPT		DBGOPT_NONE
+
 	DBGOPT_NONE,
 	DBGOPT_ALL,
 
@@ -582,9 +610,9 @@ enum option_enums {
 	DBGOPT_IMPAIR,
 	DBGOPT_NO_IMPAIR,
 
-	DBGOPT_LAST = DBGOPT_NO_IMPAIR,
+#define LAST_DBGOPT		DBGOPT_NO_IMPAIR
 
-#define	OPTION_ENUMS_LAST	DBGOPT_LAST
+#define	OPTION_ENUMS_LAST	LAST_DBGOPT
 #define OPTION_ENUMS_ROOF	(OPTION_ENUMS_LAST+1)
 };
 
@@ -994,7 +1022,6 @@ int main(int argc, char **argv)
 	char esp_buf[256];	/* uses snprintf */
 	bool seen[OPTION_ENUMS_ROOF] = {0};
 	lset_t opts_seen = LEMPTY;
-	lset_t end_seen = LEMPTY;
 
 	char xauthusername[MAX_XAUTH_USERNAME_LEN];
 	char xauthpass[XAUTH_MAX_PASS_LENGTH];
@@ -1006,8 +1033,6 @@ int main(int argc, char **argv)
 
 	/* check division of numbering space */
 	assert(OPTION_OFFSET + OPTION_ENUMS_LAST < NUMERIC_ARG);
-	assert(OPT_LAST1 - OPT_FIRST1 < LELEM_ROOF);
-	assert(END_LAST - END_FIRST < LELEM_ROOF);
 
 	zero(&msg);	/* ??? pointer fields might not be NULLed */
 
@@ -1096,7 +1121,7 @@ int main(int argc, char **argv)
 		 *
 		 * Mostly detection of repeated flags.
 		 */
-		if (OPT_FIRST1 <= c && c <= OPT_LAST1) {
+		if (FIRST_BASIC_OPT <= c && c <= LAST_BASIC_OPT) {
 			/*
 			 * OPT_* options get added to "opts_seen" and
 			 * "seen[]".  Any repeated options are
@@ -1105,10 +1130,9 @@ int main(int argc, char **argv)
 			if (seen[c])
 				diagq("duplicated flag",
 				      long_opts[long_index].name);
-			opts_seen |= LELEM(c);
 			seen[c] = true;
-			opts_seen |= OPTS_SEEN_NORMAL;
-		} else if (OPT_FIRST2 <= c && c <= OPT_LAST2) {
+			opts_seen |= BASIC_OPT_SEEN;
+		} else if (FIRST_NORMAL_OPT <= c && c <= LAST_NORMAL_OPT) {
 			/*
 			 * OPT_* options in the above range get added
 			 * to "seen[]".  Any repeated options are
@@ -1120,79 +1144,52 @@ int main(int argc, char **argv)
 				      long_opts[long_index].name);
 			}
 			seen[c] = true;
-			opts_seen |= OPTS_SEEN_NORMAL;
-		} else if (LST_FIRST <= c && c <= LST_LAST) {
-			/*
-			 * LST_* options get added to seen[].
-			 * Repeated options are rejected.  The marker
-			 * OPT_LST_SEEN is also added to "opts_seen".
-			 */
-			if (seen[c]) {
-				diagq("duplicated flag",
-				      long_opts[long_index].name);
-			}
-			seen[c] = true;
-			opts_seen |= OPTS_SEEN_LST;
-		} else if (DBGOPT_FIRST <= c && c <= DBGOPT_LAST) {
+			opts_seen |= NORMAL_OPT_SEEN;
+		} else if (FIRST_DBGOPT <= c && c <= LAST_DBGOPT) {
 			/*
 			 * DBGOPT_* options are treated separately.
-			 * For instance, repeats are alloowed.
+			 * For instance, repeats are allowed.
 			 */
 #if 0
 			seen[c] = true;
 #endif
-			opts_seen |= OPTS_SEEN_DBG;
-		} else if (END_FIRST <= c && c <= END_LAST) {
+			opts_seen |= DBGOPT_SEEN;
+		} else if (FIRST_END_OPT <= c && c <= LAST_END_OPT) {
 			/*
-			 * END_* options are added to end_seen.
-			 * Reject repeated options for the current end
-			 * (code below, when parsing --to, will clear
-			 * END_SEEN so that the second end can
-			 * duplicate options from the first end).  The
-			 * marker OPTS_SEEN_CD is also added to
-			 * "opts_seen".
+			 * END_* options are added to seen[] but when
+			 * --to is encountered, their range is
+			 * scrubbed.  This way they can appear both
+			 * before and after --to.
+			 *
+			 * To track that they appeared anywhere, the
+			 * END_OPT_SEEN bit is also set.
+			 *
+			 * Since END options are also conn options,
+			 * CONN_OPT_SEEN is also set.
 			 */
-			lset_t f = LELEM(c - END_FIRST);
-
-			if (end_seen & f)
+			if (seen[c])
 				diagq("duplicated flag",
 				      long_opts[long_index].name);
-			end_seen |= f;
-			opts_seen |= OPTS_SEEN_CD;
-		} else if (CD_FIRST <= c && c <= CD_LAST) {
+			seen[c] = true;
+			opts_seen |= END_OPT_SEEN;
+			opts_seen |= CONN_OPT_SEEN;
+		} else if (FIRST_CONN_OPT <= c && c <= LAST_CONN_OPT) {
 			/*
 			 * CD_* options are added to seen[].  Repeated
-			 * options are rejected.  The marker
-			 * OPTS_SEEN_CD is also added to "opts_seen".
+			 * options are rejected.
 			 */
 			if (seen[c])
 				diagq("duplicated flag",
 				      long_opts[long_index].name);
 			seen[c] = true;
-			opts_seen |= OPTS_SEEN_CD;
-		} else if (CDP_FIRST <= c && c <= CDP_LAST) {
+			opts_seen |= CONN_OPT_SEEN;
+#if 0
+		} else {
 			/*
-			 * CDP_* options are added to seen[].
-			 * Repeated options are rejected.  The marker
-			 * OPTS_SEEN_CD is also added to "opts_seen".
+			 * Not yet as C could be EOF or a character.
 			 */
-			if (seen[c])
-				diagq("duplicated flag",
-				      long_opts[long_index].name);
-			seen[c] = true;
-			opts_seen |= OPTS_SEEN_CD;
-		} else if (OPT_AUTHBY_FIRST <= c && c <= OPT_AUTHBY_LAST) {
-			/*
- 			 * ALGO options all translate into two lset's
- 			 * msg.policy and msg.sighash.  Don't allow
- 			 * duplicates(!?!).
- 			 */
-			if (seen[c]) {
-				diagq("duplicated flag",
-				      long_opts[long_index].name);
-			}
-			seen[c] = true;
-			opts_seen |= OPTS_SEEN_CD;
+			passert(bad option);
+#endif
 		}
 
 		/*
@@ -1628,13 +1625,16 @@ int main(int argc, char **argv)
 
 			if (msg.is_connection_group) {
 				/*
-				 * client subnet must not be specified by
-				 * user: it will come from the group's file.
+				 * client subnet must not be specified
+				 * by user: it will come from the
+				 * group's file.
+				 *
+				 * Hence, for --host, pretend --subnet
+				 * has also been seen.
 				 */
-				if (LHAS(end_seen, END_SUBNET - END_FIRST))
+				if (seen[END_SUBNET])
 					diagw("--host %group clashes with --client");
-
-				end_seen |= LELEM(END_SUBNET - END_FIRST);
+				seen[END_SUBNET] = true;
 			}
 			if (new_policy & POLICY_OPPORTUNISTIC)
 				end->key_from_DNS_on_demand = true;
@@ -1759,12 +1759,19 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_TO:	/* --to */
-			/* process right end, move it to left, reset it */
-			if (!LHAS(end_seen, END_HOST - END_FIRST))
+			/*
+			 * Move .right to .left, so further END
+			 * options.  Reset what was seen so more
+			 * options can be added.
+			 */
+			if (!seen[END_HOST]) {
 				diagw("connection missing --host before --to");
+			}
 
 			end = &msg.right;
-			end_seen = LEMPTY;
+			for (enum option_enums e = FIRST_END_OPT; e <= LAST_END_OPT; e++) {
+				seen[e] = false;
+			}
 			continue;
 
 		/* --ikev1 --ikev2 --ikev2-propose */
@@ -2539,20 +2546,24 @@ int main(int argc, char **argv)
 		/*
 		 * When the only CD (connection description) option is
 		 * TUNNELIPV[46] scrub that a connection description
-		 * was seen (OPTS_SEEN will be left with
-		 * OPT_OPPO_{HERE,THERE}.
+		 * option was seen.
 		 *
-		 * XXX: is this broken?  It scrubs the OPTS_SEEN_CD
-		 * bit when though a CDP_* or OPT_AUTHBY_* bit was set
-		 * (both of which seem to be incompatible with OPPO).
+		 * The END options are easy to exclude, the generic
+		 * conn options requires a brute force search.
 		 */
-		for (enum option_enums e = CD_FIRST; e <= CD_LAST; e++) {
-			if (e != CD_TUNNELIPV4 &&
-			    e != CD_TUNNELIPV6 &&
-			    seen[e]) {
-				pexpect(opts_seen & OPTS_SEEN_CD);
-				opts_seen &= ~OPTS_SEEN_CD;
-				break;
+		if ((opts_seen & CONN_OPT_SEEN) && !(opts_seen & END_OPT_SEEN)) {
+			bool scrub = false;
+			for (enum option_enums e = FIRST_CONN_OPT; e <= LAST_CONN_OPT; e++) {
+				if (e != CD_TUNNELIPV4 &&
+				    e != CD_TUNNELIPV6 &&
+				    seen[e]) {
+					scrub = false;
+					break;
+				}
+			}
+			if (scrub) {
+				pexpect(opts_seen & CONN_OPT_SEEN);
+				opts_seen &= ~CONN_OPT_SEEN;
 			}
 		}
 	} else if (seen[OPT_OPPO_HERE] || seen[OPT_OPPO_THERE]) {
@@ -2560,13 +2571,15 @@ int main(int argc, char **argv)
 	}
 
 	/* check connection description */
-	if (opts_seen & OPTS_SEEN_CD) {
+	if (opts_seen & CONN_OPT_SEEN) {
 		if (!seen[CD_TO]) {
 			diagw("connection description option, but no --to");
 		}
 
-		if (!LHAS(end_seen, END_HOST - END_FIRST))
+		if (!seen[END_HOST]) {
+			/* must be after --to as --to scrubs seen[END_*] */
 			diagw("connection missing --host after --to");
+		}
 
 		if (msg.policy & POLICY_OPPORTUNISTIC) {
 			if (msg.authby.psk) {
@@ -2617,7 +2630,7 @@ int main(int argc, char **argv)
 	    seen[OPT_DELETEUSER] ||
 	    seen[OPT_REKEY_IKE] ||
 	    seen[OPT_REKEY_IPSEC] ||
-	    (opts_seen & OPTS_SEEN_CD)) {
+	    (opts_seen & CONN_OPT_SEEN)) {
 		if (!seen[OPT_NAME]) {
 			diagw("missing --name <connection_name>");
 		}
@@ -2688,7 +2701,7 @@ int main(int argc, char **argv)
 	if (ugh != NULL)
 		diagw(ugh);
 
-	msg.magic = ((opts_seen & ~(LELEM(OPT_SHUTDOWN) | LELEM(OPT_STATUS))) != LEMPTY ? WHACK_MAGIC :
+	msg.magic = ((opts_seen & ~BASIC_OPT_SEEN) != LEMPTY ? WHACK_MAGIC :
 		     WHACK_BASIC_MAGIC);
 
 	/* send message to Pluto */
