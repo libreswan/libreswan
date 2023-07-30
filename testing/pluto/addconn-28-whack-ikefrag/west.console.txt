@@ -16,6 +16,7 @@ west #
 west #
  ipsec connectionstatus | sed -n -e 's/\(.* policy:\) .*IKE_FRAG_ALLOW.*/\1 IKE_FRAG_ALLOW/p'
 000 "whack--ikefrag-allow":   policy: IKE_FRAG_ALLOW
+000 "whack--ikefrag-force":   policy: IKE_FRAG_ALLOW
 west #
  ipsec connectionstatus | sed -n -e 's/\(.* policy:\) .*IKE_FRAG_FORCE.*/\1 IKE_FRAG_FORCE/p'
 000 "whack--ikefrag-force":   policy: IKE_FRAG_FORCE
