@@ -921,6 +921,11 @@ void connection_unroute(struct connection *c, where_t where)
 void connection_delete_child(struct ike_sa *ike, struct child_sa **child, where_t where)
 {
 	struct connection *c = (*child)->sa.st_connection;
+	PEXPECT(c->logger,
+		c->config->ike_version == IKEv1 ? ike == NULL || ike->sa.st_serialno == (*child)->sa.st_clonedfrom :
+		c->config->ike_version == IKEv2 ? ike != NULL && ike->sa.st_serialno == (*child)->sa.st_clonedfrom :
+		false);
+
 	if ((*child)->sa.st_serialno == c->child.newest_routing_sa) {
 		/*
 		 * Caller is responsible for generating any messages; suppress
