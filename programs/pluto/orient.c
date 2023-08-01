@@ -242,7 +242,8 @@ enum left_right orient_1(struct connection **c, struct logger *logger)
 
 		if (!left && !right) {
 			endpoint_buf eb;
-			ldbg((*c)->logger, "  interface endpoint %s does not match left or right",
+			ldbg((*c)->logger, "    interface %s endpoint %s does not match left or right",
+			     ifp->ip_dev->id_rname,
 			     str_endpoint(&ifp->local_endpoint, &eb));
 			continue;
 		}
