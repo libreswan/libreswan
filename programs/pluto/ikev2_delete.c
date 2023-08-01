@@ -472,48 +472,37 @@ bool process_v2D_responses(struct ike_sa *ike, struct msg_digest *md)
 	return true;
 }
 
+/*
+ * This code forces a delete notification for an IKE SA
+ *
+ * For instance, when a connection is deleted, a delete notification
+ * is forced overriding the message window state.
+ *
+ * XXX: record'n'send call shouldn't be needed.
+ *
+ * Instead of forcing a delete, this code should use normal state
+ * transitions and exchanges to delete things.
+ *
+ * XXX: record'n'send call can violate RFC
+ *
+ * Since nothing is waiting for the response, there's nothing to
+ * ensure that this send was received before the next is sent.
+ */
 void record_n_send_v2_delete(struct ike_sa *ike, where_t where)
 {
-	/*
-	 * XXX: This code sends delete for Child SAs.
-	 *
-	 * For instance, during shutdown and because
-	 * connections are are deleted new-to-old, a
-	 * connection instance with a Child SA will be deleted
-	 * before the connection instance with the IKE SA.
-	 *
-	 * XXX: record'n'send call shouldn't be needed.
-	 *
-	 * Instead of forcing a delete, this code should use
-	 * normal state transitions and exchanges to delete
-	 * things.
-	 *
-	 * XXX: record'n'send call can violate RFC
-	 *
-	 * Since nothing is waiting for the response, there's
-	 * nothing to ensure that this send was received
-	 * before the next is sent.
-	 *
-	 * XXX: the established IKE SA may not be viable
-	 *
-	 * For instance, even though after a rekey, the old
-	 * IKE SA is established and not .st_viable_parent,
-	 * still needs to send a delete (but again it should
-	 * do that using a state transition)?
-	 */
-	if (impair.send_no_delete) {
-		llog_sa(RC_LOG, ike, "IMPAIR: impair-send-no-delete set - not sending Delete/Notify");
-		return;
-	}
 	dbg_v2_msgid(ike, "hacking around record'n'send for "PRI_SO" "PRI_WHERE,
 		     ike->sa.st_serialno, pri_where(where));
 	if (!ike->sa.st_on_delete.skip_log_message) {
 		llog_state_delete_n_send(RC_LOG, &ike->sa, true);
 	}
+	ike->sa.st_on_delete.skip_log_message = true;
+	ike->sa.st_on_delete.skip_send_delete = true;
+	if (impair.send_no_delete) {
+		llog_sa(RC_LOG, ike, "IMPAIR: impair-send-no-delete set - not sending Delete/Notify");
+		return;
+	}
 	v2_msgid_start(ike, NULL/*MD*/);
 	record_v2_delete(ike, &ike->sa);
 	send_recorded_v2_message(ike, "delete notification", MESSAGE_REQUEST);
 	v2_msgid_finish(ike, NULL/*MD*/);
-	ike->sa.st_on_delete.skip_log_message = true;
-	ike->sa.st_on_delete.skip_send_delete = true;
 }

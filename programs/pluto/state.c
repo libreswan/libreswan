@@ -928,10 +928,10 @@ void delete_state(struct state *st)
 	/*
 	 * Where to log?
 	 *
-	 * IKEv2 children never send send a delete notification so
-	 * logging "and NOT sending delete" is redundant.  However,
-	 * sometimes IKEv2 children should log that they have been
-	 * deleted.  Let the caller decide.
+	 * IKEv2 children never send a delete notification from
+	 * delete_state() so logging "and NOT sending delete" is
+	 * redundant.  However, sometimes IKEv2 children should log
+	 * that they have been deleted.  Let the caller decide.
 	 */
 	lset_t rc_flags;
 	if (st->st_ike_version == IKEv2 && IS_CHILD_SA(st)) {
