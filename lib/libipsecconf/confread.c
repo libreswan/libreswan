@@ -173,8 +173,7 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 
 	d->ike_version = IKEv2;
 	d->policy = (POLICY_TUNNEL |
-		     POLICY_ENCRYPT | POLICY_PFS |
-		     /* esn=either */ POLICY_ESN_NO | POLICY_ESN_YES);
+		     POLICY_ENCRYPT | POLICY_PFS);
 	d->authby = AUTHBY_NONE; /* blank goes to defaults */
 	d->never_negotiate_shunt = SHUNT_UNSET;
 	d->negotiation_shunt = SHUNT_UNSET;
@@ -1285,25 +1284,6 @@ static bool load_conn(struct starter_conn *conn,
 		conn->policy = conn->policy | ppk;
 	}
 
-	if (conn->options_set[KNCF_ESN]) {
-		conn->policy &= ~(POLICY_ESN_NO | POLICY_ESN_YES);
-
-		switch (conn->options[KNCF_ESN]) {
-		case ESN_YES:
-			conn->policy |= POLICY_ESN_YES;
-			break;
-
-		case ESN_NO:
-			/* this is the default for now */
-			conn->policy |= POLICY_ESN_NO;
-			break;
-
-		case ESN_EITHER:
-			conn->policy |= POLICY_ESN_NO | POLICY_ESN_YES;
-			break;
-		}
-	}
-
 	/*
 	 * Read in the authby= string and translate to policy bits.
 	 *
@@ -1403,9 +1383,7 @@ static bool load_conn(struct starter_conn *conn,
 	if (NEVER_NEGOTIATE(conn->policy)) {
 		/* remove IPsec related options */
 		conn->policy &= ~(POLICY_PFS |
-				  POLICY_COMPRESS |
-				  POLICY_ESN_NO |
-				  POLICY_ESN_YES);
+				  POLICY_COMPRESS);
 	}
 
 	/* Let this go through to pluto which will validate it. */

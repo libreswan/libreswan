@@ -2063,13 +2063,14 @@ struct ikev2_proposals *ikev2_proposals_from_proposals(enum ikev2_sec_proto_id p
 	return v2_proposals;
 }
 
-static void add_esn_transforms(struct ikev2_proposal *proposal, lset_t policy)
+static void add_esn_transforms(struct ikev2_proposal *proposal,
+			       const struct connection *c)
 {
 	passert(!proposal->transforms[IKEv2_TRANS_TYPE_ESN].transform[0].valid);
-	if (policy & POLICY_ESN_YES) {
+	if (c->config->esn.yes) {
 		append_transform(proposal, IKEv2_TRANS_TYPE_ESN, IKEv2_ESN_ENABLED, 0);
 	}
-	if (policy & POLICY_ESN_NO) {
+	if (c->config->esn.no) {
 		append_transform(proposal, IKEv2_TRANS_TYPE_ESN, IKEv2_ESN_DISABLED, 0);
 	}
 }
@@ -2156,7 +2157,7 @@ struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
 								  dup ? &unset_group : default_dh,
 								  logger);
 			if (v2_proposal != NULL) {
-				add_esn_transforms(v2_proposal, c->policy);
+				add_esn_transforms(v2_proposal, c);
 				if (DBGP(DBG_BASE)) {
 					DBG_log_ikev2_proposal("... ", v2_proposal);
 				}

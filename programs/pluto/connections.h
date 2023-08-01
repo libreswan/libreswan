@@ -284,6 +284,11 @@ struct config {
 		bool force;
 	} ike_frag;
 
+	struct {
+		bool yes;
+		bool no;
+	} esn;		/* accept or request ESN{yes,no} */
+
 	struct config_end end[END_ROOF];
 };
 

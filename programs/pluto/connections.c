@@ -2275,10 +2275,18 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 * resort (fixing the kernel will break less tests).
 	 */
 
+	if (wm->sa_replay_window > kernel_ops->max_replay_window) {
+		return diag("replay-window=%ju exceeds %s kernel interface limit of %ju",
+			    wm->sa_replay_window,
+			    kernel_ops->interface_name, kernel_ops->max_replay_window);
+	}
+
 	if (NEVER_NEGOTIATE(wm->policy)) {
-		dbg("ESN: never negotiating so ESN unchanged");
-	} else if ((c->policy & POLICY_ESN_YES) == LEMPTY) {
-		dbg("ESN: already disabled so nothing to do");
+		if (wm->esn != YNE_UNSET) {
+			llog(RC_INFORMATIONAL, c->logger,
+			     "warning: ignoring esn=%s as connection is never-negotiate",
+			     sparse_name(yne_option_names, wm->esn));
+		}
 	} else if (wm->sa_replay_window == 0) {
 		/*
 		 * RFC 4303 states:
@@ -2293,28 +2301,64 @@ static diag_t extract_connection(const struct whack_message *wm,
 		 * is generally contrary to the notion of disabling
 		 * anti-replay for an SA.
 		 */
-		dbg("ESN: disabled as replay-window=0"); /* XXX: log? */
-		del_policy(c, POLICY_ESN_YES);
-		add_policy(c, POLICY_ESN_NO);
+		if (wm->esn != YNE_UNSET && wm->esn != YNE_NO) {
+			llog(RC_INFORMATIONAL, c->logger,
+			     "warning: forcing esn=no as replay-window=0");
+		} else {
+			dbg("ESN: disabled as replay-window=0"); /* XXX: log? */
+		}
+		config->esn.no = true;
+	} else if (!kernel_ops->esn_supported) {
+		if (wm->esn != YNE_UNSET && wm->esn != YNE_NO) {
+			llog(RC_LOG, c->logger,
+			     "warning: %s kernel interface does not support ESN so disabling",
+			     kernel_ops->interface_name);
+		}
+		config->esn.no = true;
 #ifdef USE_IKEv1
 	} else if (wm->ike_version == IKEv1) {
-#if 0
-		dbg("ESN: disabled as not implemented with IKEv1");
-		del_policy(c, POLICY_ESN_YES);
-		add_policy(c, POLICY_ESN_NO);
-#else
+		/*
+		 * Ignore ESN when IKEv1.
+		 *
+		 * XXX: except it isn't; it still gets decoded and
+		 * stuffed into the config.  It just isn't acted on.
+		 */
 		dbg("ESN: ignored as not implemented with IKEv1");
+#if 0
+		if (wm->esn != YNE_UNSET) {
+			llog(RC_INFORMATIONAL, c->logger,
+			     "warning: ignoring esn=%s as not implemented with IKEv1",
+			     sparse_name(yne_option_names, wm->esn));
+		}
 #endif
+		switch (wm->esn) {
+		case YNE_UNSET:
+		case YNE_EITHER:
+			config->esn.no = true;
+			config->esn.yes = true;
+			break;
+		case YNE_NO:
+			config->esn.no = true;
+			break;
+		case YNE_YES:
+			config->esn.yes = true;
+			break;
+		}
 #endif
-	} else if (!kernel_ops->esn_supported) {
-		llog(RC_LOG, c->logger,
-		     "kernel interface does not support ESN so disabling");
-		del_policy(c, POLICY_ESN_YES);
-		add_policy(c, POLICY_ESN_NO);
-	} else if (wm->sa_replay_window > kernel_ops->max_replay_window) {
-		return diag("replay-window=%ju exceeds %s limit of %ju",
-			    wm->sa_replay_window,
-			    kernel_ops->interface_name, kernel_ops->max_replay_window);
+	} else {
+		switch (wm->esn) {
+		case YNE_UNSET:
+		case YNE_EITHER:
+			config->esn.no = true;
+			config->esn.yes = true;
+			break;
+		case YNE_NO:
+			config->esn.no = true;
+			break;
+		case YNE_YES:
+			config->esn.yes = true;
+			break;
+		}
 	}
 
 	connection_buf cb;
@@ -3361,8 +3405,8 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 	CP(mobike);
 	PP(PPK_ALLOW);
 	PP(PPK_INSIST);
-	PP(ESN_NO);
-	PP(ESN_YES);
+	CN(c->config->esn.no, ESN_NO);
+	CN(c->config->esn.yes, ESN_YES);
 	CP(intermediate);
 	CP(ignore_peer_dns);
 

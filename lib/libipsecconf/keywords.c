@@ -148,12 +148,6 @@ static const struct sparse_name kw_yna_list[] = {
 	SPARSE_NULL
 };
 
-static const struct sparse_name kw_esn_list[] = {
-	YES_NO(ESN_YES, ESN_NO),
-	{ "either",	ESN_EITHER },
-	SPARSE_NULL
-};
-
 static const struct sparse_name kw_ddos_list[] = {
 	{ "auto",      DDOS_AUTO },
 	{ "busy",      DDOS_FORCE_BUSY },
@@ -495,7 +489,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "ppk", kv_conn | kv_processed, kt_enum, KNCF_PPK, kw_fourvalued_list, NULL, },
   { "ppk-ids", kv_conn | kv_processed, kt_string, KSCF_PPKIDS, NULL, NULL, },
   { "intermediate",  kv_conn | kv_processed, kt_enum, KNCF_INTERMEDIATE, yn_option_names, NULL, },
-  { "esn",  kv_conn | kv_processed,  kt_enum,  KNCF_ESN,  kw_esn_list, NULL, },
+  { "esn",  kv_conn | kv_processed,  kt_enum,  KNCF_ESN,  yne_option_names, NULL, },
   { "decap-dscp",  kv_conn | kv_processed,  kt_enum,  KNCF_DECAP_DSCP,  yn_option_names, NULL, },
   { "nopmtudisc",  kv_conn | kv_processed,  kt_enum,  KNCF_NOPMTUDISC,  yn_option_names, NULL, },
   { "fragmentation",  kv_conn | kv_processed,  kt_enum,  KNCF_FRAGMENTATION,  ynf_option_names, NULL, },

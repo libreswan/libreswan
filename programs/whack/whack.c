@@ -554,6 +554,8 @@ enum option_enums {
 	CD_NOPMTUDISC,
 	CD_IKEFRAG_ALLOW,
 	CD_IKEFRAG_FORCE,
+	CD_NO_ESN,
+	CD_ESN,
 	CD_INITIATEONTRAFFIC,
 
 	/*
@@ -894,8 +896,8 @@ static const struct option long_opts[] = {
 	{ "ikefrag-force", no_argument, NULL, CD_IKEFRAG_FORCE },
 	{ "no-ikepad", no_argument, NULL, CD_NO_IKEPAD },
 
-	PS("no-esn", ESN_NO),
-	PS("esn", ESN_YES),
+	{ "no-esn", no_argument, NULL, CD_NO_ESN },
+	{ "esn", no_argument, NULL, CD_ESN },
 	{ "decap-dscp", no_argument, NULL, CD_DECAP_DSCP },
 	{ "nopmtudisc", no_argument, NULL, CD_NOPMTUDISC },
 	{ "ignore-peer-dns", no_argument, NULL, CD_IGNORE_PEER_DNS },
@@ -1816,12 +1818,18 @@ int main(int argc, char **argv)
 		case CDP_SINGLETON + POLICY_TUNNEL_IX:	/* --tunnel */
 		case CDP_SINGLETON + POLICY_PFS_IX:	/* --pfs */
 
-		/* --no-esn */
-		case CDP_SINGLETON + POLICY_ESN_NO_IX:
-		/* --esn */
-		case CDP_SINGLETON + POLICY_ESN_YES_IX:
-
 			msg.policy |= LELEM(c - CDP_SINGLETON);
+			continue;
+
+		/* --no-esn */
+		case CD_NO_ESN:
+			msg.esn = (msg.esn == YNE_EITHER ? YNE_EITHER :
+				   msg.esn == YNE_YES ? YNE_EITHER : YNE_NO);
+			continue;
+		/* --esn */
+		case CD_ESN:
+			msg.esn = (msg.esn == YNE_EITHER ? YNE_EITHER :
+				   msg.esn == YNE_NO ? YNE_EITHER : YNE_YES);
 			continue;
 
 		/* --ikefrag-allow */

@@ -801,11 +801,14 @@ enum yna_options {
 	yna_yes = 3,
 };
 
-enum esn_options {
-	ESN_NO = 1, /* default */
-	ESN_YES = 2,
-	ESN_EITHER = 3,
+enum yne_options {
+	YNE_UNSET,
+	YNE_NO,
+	YNE_YES,
+	YNE_EITHER,
 };
+
+extern const struct sparse_name yne_option_names[];
 
 enum tcp_options {
        IKE_TCP_NO = 1,
@@ -905,9 +908,7 @@ enum sa_policy_bits {
 	POLICY_PPK_ALLOW_IX,
 	POLICY_PPK_INSIST_IX,
 
-	POLICY_ESN_NO_IX,		/* send/accept ESNno */
-	POLICY_ESN_YES_IX,		/* send/accept ESNyes */
-#define POLICY_IX_LAST	POLICY_ESN_YES_IX
+#define POLICY_IX_LAST	POLICY_PPK_INSIST_IX
 };
 
 #define POLICY_ENCRYPT	LELEM(POLICY_ENCRYPT_IX)	/* must be first of IPSEC policies */
@@ -923,8 +924,6 @@ enum sa_policy_bits {
 #define POLICY_SEND_REDIRECT_NEVER	LELEM(POLICY_SEND_REDIRECT_NEVER_IX)
 #define POLICY_PPK_ALLOW	LELEM(POLICY_PPK_ALLOW_IX)
 #define POLICY_PPK_INSIST	LELEM(POLICY_PPK_INSIST_IX)
-#define POLICY_ESN_NO		LELEM(POLICY_ESN_NO_IX)	/* accept or request ESNno */
-#define POLICY_ESN_YES		LELEM(POLICY_ESN_YES_IX)	/* accept or request ESNyes */
 
 /*
  * RFC 7427 Signature Hash Algorithm exchang

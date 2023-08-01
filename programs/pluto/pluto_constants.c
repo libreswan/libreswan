@@ -130,8 +130,6 @@ static const char *const sa_policy_bit_name[] = {
 	P(POLICY_SEND_REDIRECT_NEVER),
 	P(POLICY_PPK_ALLOW),
 	P(POLICY_PPK_INSIST),
-	P(POLICY_ESN_NO),
-	P(POLICY_ESN_YES),
 #undef P
 };
 

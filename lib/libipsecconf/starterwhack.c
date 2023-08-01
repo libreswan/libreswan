@@ -687,6 +687,7 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	msg.nopmtudisc = conn->options[KNCF_NOPMTUDISC]; /* yn_options */
 	msg.accept_redirect = conn->options[KNCF_ACCEPT_REDIRECT]; /* yn_options */
 	msg.fragmentation = conn->options[KNCF_FRAGMENTATION]; /* yna_options */
+	msg.esn = conn->options[KNCF_ESN]; /* yne_options */
 
 	if (conn->options_set[KNCF_XAUTHBY])
 		msg.xauthby = conn->options[KNCF_XAUTHBY];

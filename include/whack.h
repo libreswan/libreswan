@@ -201,6 +201,7 @@ struct whack_message {
 	enum yn_options decap_dscp;	/* decap ToS/DSCP bits */
 	enum yn_options nopmtudisc;	/* ??? */
 	enum ynf_options fragmentation;	/* fragment IKE payload */
+	enum yne_options esn;		/* accept or request ESN{yes,no} */
 
 	uintmax_t sa_ipsec_max_bytes;
 	uintmax_t sa_ipsec_max_packets;

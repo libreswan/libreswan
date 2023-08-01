@@ -540,20 +540,9 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 			}
 
 			/* esn= */
-			{
-				const char *esn = "UNKNOWN";
-
-				if ((conn->policy & POLICY_ESN_NO)) {
-					if ((conn->policy & POLICY_ESN_YES) == LEMPTY)
-						esn = "no";
-					else
-						esn = "either";
-				} else {
-						/* both cannot be unset */
-						esn = "yes";
-					}
-
-				cwf("esn", esn);
+			if (conn->options[KNCF_ESN] != YNE_UNSET) {
+				cwf("esn", sparse_name(yne_option_names,
+						       conn->options[KNCF_ESN]));
 			}
 
 			switch (conn->options[KNCF_FRAGMENTATION]) {

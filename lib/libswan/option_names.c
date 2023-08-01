@@ -66,3 +66,13 @@ const struct sparse_name ynf_option_names[] = {
 	{ "insist",    YNF_FORCE },
 	SPARSE_NULL
 };
+
+/*
+ * Values for ESP
+ */
+
+const struct sparse_name yne_option_names[] = {
+	YES_NO(YNE_YES, YNE_NO),
+	{ "either",	YNE_EITHER },
+	SPARSE_NULL
+};
