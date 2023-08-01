@@ -273,7 +273,7 @@ static uint32_t set_mark_out(const struct logger *logger, uint32_t mark, int fd)
 static ssize_t udp_write_packet(const struct iface_endpoint *ifp,
 				const void *ptr, size_t len,
 				const ip_endpoint *remote_endpoint,
-				struct logger *logger)
+				struct logger *logger /*possibly*/UNUSED)
 {
 #ifdef MSG_ERRQUEUE
 	if (pluto_sock_errqueue) {
