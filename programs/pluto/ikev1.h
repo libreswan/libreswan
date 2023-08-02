@@ -50,7 +50,7 @@ extern void aggr_outI1(struct fd *whack_sock,
 		       const threadtime_t *inception,
 		       shunk_t sec_label);
 
-extern void send_v1_delete(struct state *st);
+void send_n_log_v1_delete(struct state *st, where_t where);
 
 struct hash_signature v1_sign_hash_RSA(const struct connection *c,
 				       const struct crypt_mac *hash,

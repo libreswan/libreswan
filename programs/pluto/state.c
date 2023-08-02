@@ -522,7 +522,7 @@ void init_states(void)
 	}
 }
 
-static void send_delete(struct ike_sa *ike)
+static void send_delete(struct ike_sa *ike, where_t where)
 {
 	switch (ike->sa.st_ike_version) {
 #ifdef USE_IKEv1
@@ -531,7 +531,7 @@ static void send_delete(struct ike_sa *ike)
 		 * Tell the other side of any IPSEC
 		 * SAs that are going down
 		 */
-		send_v1_delete(&ike->sa);
+		send_n_log_v1_delete(&ike->sa, where);
 		return;
 #endif
 	case IKEv2:
@@ -548,7 +548,7 @@ static void send_delete(struct ike_sa *ike)
 		 * the below sends out a delete for
 		 * the IKE SA.
 		 */
-		record_n_send_n_log_v2_delete(ike, HERE);
+		record_n_send_n_log_v2_delete(ike, where);
 		return;
 	}
 	bad_case(ike->sa.st_ike_version);
@@ -567,7 +567,7 @@ void delete_state_by_id_name(struct state *st, const char *name)
 	const char *thatidbuf = str_id(&c->remote->host.id, &thatidb);
 	if (streq(thatidbuf, name)) {
 		if (IS_PARENT_SA_ESTABLISHED(&ike->sa)) {
-			send_delete(ike);
+			send_delete(ike, HERE);
 		}
 		ike->sa.st_on_delete.skip_send_delete = true;
 		delete_ike_family(&ike);
@@ -587,7 +587,7 @@ void delete_v1_state_by_username(struct state *st, const char *name)
 	}
 
 	if (IS_PARENT_SA_ESTABLISHED(&ike->sa)) {
-		send_v1_delete(&ike->sa);
+		send_n_log_v1_delete(&ike->sa, HERE);
 	}
 	ike->sa.st_on_delete.skip_send_delete = true;
 	delete_ike_family(&ike);
@@ -1051,7 +1051,7 @@ void delete_state(struct state *st)
 			 * Tell the other side of any IPsec
 			 * SAs that are going down
 			 */
-			send_v1_delete(st);
+			send_n_log_v1_delete(st, HERE);
 			break;
 #endif
 		case IKEv2:

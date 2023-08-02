@@ -1818,8 +1818,11 @@ void send_v1_notification_from_md(struct msg_digest *md, v1_notification_t type)
  *
  * @param st State struct (we hope it has some SA's related to it)
  */
-void send_v1_delete(struct state *st)
+void send_n_log_v1_delete(struct state *st, where_t where)
 {
+	ldbg(st->st_logger, "hacking around IKEv1 send'n'log delete for "PRI_SO" "PRI_WHERE,
+	     pri_so(st->st_serialno), pri_where(where));
+
 	pb_stream r_hdr_pbs;
 	msgid_t msgid;
 	struct state *p1st;
