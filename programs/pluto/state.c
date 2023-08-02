@@ -548,7 +548,7 @@ static void send_delete(struct ike_sa *ike)
 		 * the below sends out a delete for
 		 * the IKE SA.
 		 */
-		record_n_send_v2_delete(ike, HERE);
+		record_n_send_n_log_v2_delete(ike, HERE);
 		return;
 	}
 	bad_case(ike->sa.st_ike_version);
@@ -1060,7 +1060,7 @@ void delete_state(struct state *st)
 			 * should use an Informational Exchange to coordinate
 			 * deletion.
 			 */
-			record_n_send_v2_delete(pexpect_ike_sa(st), HERE);
+			record_n_send_n_log_v2_delete(pexpect_ike_sa(st), HERE);
 			break;
 		}
 	}

@@ -349,7 +349,7 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 				/* IKEv2 parent, delete children too */
 				dbg("IKEv2 SA expired, delete whole family");
 				passert(&ike->sa == st);
-				record_n_send_v2_delete(ike, HERE);
+				record_n_send_n_log_v2_delete(ike, HERE);
 				ike->sa.st_on_delete.skip_send_delete = true;
 				ike->sa.st_on_delete.skip_log_message = true;
 				delete_ike_family(&ike);

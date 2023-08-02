@@ -488,10 +488,11 @@ bool process_v2D_responses(struct ike_sa *ike, struct msg_digest *md)
  * Since nothing is waiting for the response, there's nothing to
  * ensure that this send was received before the next is sent.
  */
-void record_n_send_v2_delete(struct ike_sa *ike, where_t where)
+void record_n_send_n_log_v2_delete(struct ike_sa *ike, where_t where)
 {
-	dbg_v2_msgid(ike, "hacking around record'n'send for "PRI_SO" "PRI_WHERE,
-		     ike->sa.st_serialno, pri_where(where));
+	dbg_v2_msgid(ike, "hacking around record'n'send'n'log delete for "PRI_SO" "PRI_WHERE,
+		     pri_so(ike->sa.st_serialno), pri_where(where));
+
 	if (!ike->sa.st_on_delete.skip_log_message) {
 		llog_state_delete_n_send(RC_LOG, &ike->sa, true);
 	}

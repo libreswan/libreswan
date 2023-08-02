@@ -2776,7 +2776,7 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		pexpect(transition->recv_role == MESSAGE_RESPONSE);
 		v2_msgid_finish(ike, md);
 		/* do the deed; record'n'send logs */
-		record_n_send_v2_delete(ike, HERE);
+		record_n_send_n_log_v2_delete(ike, HERE);
 		/* do the deed */
 		ike->sa.st_on_delete.skip_send_delete = true;
 		ike->sa.st_on_delete.skip_log_message = true;
