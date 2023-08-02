@@ -2778,8 +2778,6 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		/* do the deed; record'n'send logs */
 		record_n_send_n_log_v2_delete(ike, HERE);
 		/* do the deed */
-		ike->sa.st_on_delete.skip_send_delete = true;
-		ike->sa.st_on_delete.skip_log_message = true;
 		connection_delete_ike(&ike, HERE);
 		/* get out of here -- everything is invalid */
 		pexpect(ike == NULL);
