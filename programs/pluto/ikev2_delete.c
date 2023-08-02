@@ -493,15 +493,26 @@ void record_n_send_n_log_v2_delete(struct ike_sa *ike, where_t where)
 	dbg_v2_msgid(ike, "hacking around record'n'send'n'log delete for "PRI_SO" "PRI_WHERE,
 		     pri_so(ike->sa.st_serialno), pri_where(where));
 
-	if (!ike->sa.st_on_delete.skip_log_message) {
+	if (ike->sa.st_on_delete.skip_log_message) {
+		llog_pexpect(ike->sa.st_logger, where,
+			     "%s() called when skipping log message", __func__);
+	} else {
 		llog_state_delete_n_send(RC_LOG, &ike->sa, true);
+		ike->sa.st_on_delete.skip_log_message = true;
 	}
-	ike->sa.st_on_delete.skip_log_message = true;
-	ike->sa.st_on_delete.skip_send_delete = true;
+
+	if (ike->sa.st_on_delete.skip_send_delete) {
+		llog_pexpect(ike->sa.st_logger, where,
+			     "%s() called when skipping send delete", __func__);
+	} else {
+		ike->sa.st_on_delete.skip_send_delete = true;
+	}
+
 	if (impair.send_no_delete) {
 		llog_sa(RC_LOG, ike, "IMPAIR: impair-send-no-delete set - not sending Delete/Notify");
 		return;
 	}
+
 	v2_msgid_start(ike, NULL/*MD*/);
 	record_v2_delete(ike, &ike->sa);
 	send_recorded_v2_message(ike, "delete notification", MESSAGE_REQUEST);
