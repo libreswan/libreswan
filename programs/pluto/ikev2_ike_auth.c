@@ -1083,7 +1083,7 @@ bool v2_ike_sa_auth_responder_establish(struct ike_sa *ike, bool *send_redirecti
 			if (c == d && same_id(&c->remote->host.id, &d->remote->host.id)) {
 				dbg("Initial Contact received, deleting old state #%lu from connection '%s' due to new IKE SA #%lu",
 				    c->newest_ipsec_sa, c->name, ike->sa.st_serialno);
-				old_p2->st_on_delete.skip_send_delete = true;
+				on_delete(old_p2, skip_send_delete);
 				event_force(EVENT_SA_DISCARD, old_p2);
 			}
 		}

@@ -1829,8 +1829,8 @@ void send_n_log_v1_delete(struct state *st, where_t where)
 	ip_said *ns = said;
 
 	/* only once */
-	st->st_on_delete.skip_log_message = true;
-	st->st_on_delete.skip_send_delete = true;
+	on_delete(st, skip_log_message);
+	on_delete(st, skip_send_delete);
 
 	/*
 	 * Find the established ISAKMP SA, can't send a delete notify

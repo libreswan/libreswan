@@ -746,15 +746,10 @@ struct state {
 	 * Long term, for IKEv2, most of these flags will be true by
 	 * default (and IKEv1 will be deleted).
 	 *
-	 * Problem #1:
-	 *
 	 * Both the connection and state code think they are in
 	 * control.  For instance, the connection code will delete the
 	 * current state only to have the state code recursively
 	 * delete that connection.
-	 *
-
-	 * Problem #2: 
 	 */
 
 	struct {
@@ -820,6 +815,13 @@ struct state {
 		bool skip_log_message;
 
 	} st_on_delete;
+#define on_delete(ST, S)				\
+	{						\
+		ldbg((ST)->st_logger,			\
+		     PRI_SO".st_on_delete."#S,		\
+		     pri_so((ST)->st_serialno));	\
+		(ST)->st_on_delete.S = true;		\
+	}
 };
 
 /*

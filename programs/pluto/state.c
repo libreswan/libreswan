@@ -569,7 +569,7 @@ void delete_state_by_id_name(struct state *st, const char *name)
 		if (IS_PARENT_SA_ESTABLISHED(&ike->sa)) {
 			send_n_log_delete(ike, HERE);
 		}
-		ike->sa.st_on_delete.skip_send_delete = true;
+		on_delete(&ike->sa, skip_send_delete);
 		delete_ike_family(&ike);
 	}
 }
@@ -589,7 +589,7 @@ void delete_v1_state_by_username(struct state *st, const char *name)
 	if (IS_PARENT_SA_ESTABLISHED(&ike->sa)) {
 		send_n_log_v1_delete(&ike->sa, HERE);
 	}
-	ike->sa.st_on_delete.skip_send_delete = true;
+	on_delete(&ike->sa, skip_send_delete);
 	delete_ike_family(&ike);
 	/* note: no md->v1_st to clear */
 }
@@ -821,10 +821,10 @@ void delete_child_sa(struct child_sa **child)
 {
 	struct state *st = &(*child)->sa;
 	*child = NULL;
-	st->st_on_delete.skip_revival = true;
-	st->st_on_delete.skip_send_delete = true;
-	st->st_on_delete.skip_connection = true;
-	st->st_on_delete.skip_kernel_policy = true;
+	on_delete(st, skip_revival);
+	on_delete(st, skip_send_delete);
+	on_delete(st, skip_connection);
+	on_delete(st, skip_kernel_policy);
 	delete_state(st);
 }
 
@@ -832,9 +832,9 @@ void delete_ike_sa(struct ike_sa **ike)
 {
 	struct state *st = &(*ike)->sa;
 	*ike = NULL;
-	st->st_on_delete.skip_revival = true;
-	st->st_on_delete.skip_send_delete = true;
-	st->st_on_delete.skip_connection = true;
+	on_delete(st, skip_revival);
+	on_delete(st, skip_send_delete);
+	on_delete(st, skip_connection);
 	delete_state(st);
 }
 
@@ -972,7 +972,7 @@ void delete_state(struct state *st)
 						 should_send_delete(st));
 		}
 		/* delete logged, don't log again */
-		st->st_on_delete.skip_log_message = true;
+		on_delete(st, skip_log_message);
 	}
 
 	pstat_sa_deleted(st);
@@ -2779,11 +2779,11 @@ static bool delete_ike_family_child(struct state *st, void *unused_context UNUSE
 	}
 
 	case IKEv2:
-		st->st_on_delete.skip_send_delete = true;
+		on_delete(st, skip_send_delete);
 		break;
 	}
 
-	st->st_on_delete.skip_log_message = true;
+	on_delete(st, skip_log_message);
 	delete_state(st);
 	return false; /* keep going */
 }
@@ -3009,7 +3009,7 @@ void suppress_delete_notify(const struct ike_sa *ike,
 		return;
 	}
 
-	st->st_on_delete.skip_send_delete = true;
+	on_delete(st, skip_send_delete);
 	dbg("marked %s state #%lu to suppress sending delete notify",
 	    what, st->st_serialno);
 }

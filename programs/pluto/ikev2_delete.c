@@ -453,7 +453,7 @@ bool process_v2D_responses(struct ike_sa *ike, struct msg_digest *md)
 					    ntohl((uint32_t)spi));
 
 					/* we just received a delete, don't send another delete */
-					dst->sa.st_on_delete.skip_send_delete = true;
+					on_delete(&dst->sa, skip_send_delete);
 					/* st is a parent */
 					passert(&ike->sa != &dst->sa);
 					passert(ike->sa.st_serialno == dst->sa.st_clonedfrom);
@@ -498,14 +498,14 @@ void record_n_send_n_log_v2_delete(struct ike_sa *ike, where_t where)
 			     "%s() called when skipping log message", __func__);
 	} else {
 		llog_state_delete_n_send(RC_LOG, &ike->sa, true);
-		ike->sa.st_on_delete.skip_log_message = true;
+		on_delete(&ike->sa, skip_log_message);
 	}
 
 	if (ike->sa.st_on_delete.skip_send_delete) {
 		llog_pexpect(ike->sa.st_logger, where,
 			     "%s() called when skipping send delete", __func__);
 	} else {
-		ike->sa.st_on_delete.skip_send_delete = true;
+		on_delete(&ike->sa, skip_send_delete);
 	}
 
 	if (impair.send_no_delete) {

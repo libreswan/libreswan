@@ -931,9 +931,9 @@ void connection_delete_child(struct ike_sa *ike, struct child_sa **child, where_
 		 * Caller is responsible for generating any messages; suppress
 		 * delete_state()'s desire to send an out-of-band delete.
 		 */
-		(*child)->sa.st_on_delete.skip_send_delete = true;
-		(*child)->sa.st_on_delete.skip_revival = true;
-		(*child)->sa.st_on_delete.skip_connection = true;
+		on_delete(&(*child)->sa, skip_send_delete);
+		on_delete(&(*child)->sa, skip_revival);
+		on_delete(&(*child)->sa, skip_connection);
 		/*
 		 * Let state machine figure out how to react.
 		 */
