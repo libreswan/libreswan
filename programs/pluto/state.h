@@ -911,7 +911,8 @@ extern void state_eroute_usage(const ip_selector *ours, const ip_selector *peers
 void delete_ike_sa(struct ike_sa **ike);
 void delete_child_sa(struct child_sa **child);
 
-void llog_state_delete_n_send(lset_t rc_flags, struct state *st, bool sending_delete);
+void llog_sa_delete_n_send(struct state *st, bool sending_delete);
+
 void delete_state(struct state *st);
 
 void delete_states_by_connection(struct connection *c);

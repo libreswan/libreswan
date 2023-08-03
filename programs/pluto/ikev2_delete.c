@@ -493,13 +493,7 @@ void record_n_send_n_log_v2_delete(struct ike_sa *ike, where_t where)
 	dbg_v2_msgid(ike, "hacking around record'n'send'n'log delete for "PRI_SO" "PRI_WHERE,
 		     pri_so(ike->sa.st_serialno), pri_where(where));
 
-	if (ike->sa.st_on_delete.skip_log_message) {
-		llog_pexpect(ike->sa.st_logger, where,
-			     "%s() called when skipping log message", __func__);
-	} else {
-		llog_state_delete_n_send(RC_LOG, &ike->sa, true);
-		on_delete(&ike->sa, skip_log_message);
-	}
+	llog_sa_delete_n_send(&ike->sa, true);
 
 	if (ike->sa.st_on_delete.skip_send_delete) {
 		llog_pexpect(ike->sa.st_logger, where,

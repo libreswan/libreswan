@@ -870,7 +870,7 @@ static void update_and_log_traffic(struct child_sa *child, const char *name,
 	pstats->out += proto->outbound.bytes;
 }
 
-void llog_state_delete_n_send(lset_t rc_flags, struct state *st, bool sending_delete)
+static void llog_delete_n_send(lset_t rc_flags, struct state *st, bool sending_delete)
 {
 	LLOG_JAMBUF(rc_flags, st->st_logger, buf) {
 		/* deleting {IKE,Child,IPsec,ISAKMP} SA */
@@ -895,6 +895,20 @@ void llog_state_delete_n_send(lset_t rc_flags, struct state *st, bool sending_de
 		} else {
 			jam_string(buf, " and NOT sending notification");
 		}
+	}
+}
+
+void llog_sa_delete_n_send(struct state *st, bool sending_delete)
+{
+	PEXPECT(st->st_logger, !st->st_on_delete.skip_log_message);
+	llog_delete_n_send(RC_LOG, st, sending_delete);
+	on_delete(st, skip_log_message);
+}
+
+static void ldbg_sa_delete_n_send(struct state *st, bool sending_delete)
+{
+	if (DBGP(DBG_BASE)) {
+		llog_delete_n_send(DEBUG_STREAM, st, sending_delete);
 	}
 }
 
@@ -945,34 +959,25 @@ void delete_state(struct state *st)
 			record_n_send_n_log_v2_delete(pexpect_ike_sa(st), HERE);
 			break;
 		}
-	} else {
+	} else if (st->st_on_delete.skip_log_message) {
+		ldbg_sa_delete_n_send(st, false);
+	} else if (st->st_ike_version == IKEv2 && IS_CHILD_SA(st)) {
 		/*
-		 * Where to log?
+		 * IKEv2 children never send a delete notification
+		 * from delete_state() so logging "and NOT sending
+		 * delete" is redundant.  However, sometimes IKEv2
+		 * children should log that they have been deleted.
+		 * Let the caller decide.
 		 *
-		 * IKEv2 children never send a delete notification from
-		 * delete_state() so logging "and NOT sending delete" is
-		 * redundant.  However, sometimes IKEv2 children should log
-		 * that they have been deleted.  Let the caller decide.
+		 * XXX: this should be a pexpect; as all callers
+		 * logging child sa delete should also set
+		 * .skip_log_message.
 		 */
-		lset_t rc_flags;
-		if (st->st_ike_version == IKEv2 && IS_CHILD_SA(st)) {
-			rc_flags = DBGP(DBG_BASE) ? DEBUG_STREAM : LEMPTY;
-		} else if (st->st_on_delete.skip_log_message) {
-			rc_flags = DBGP(DBG_BASE) ? DEBUG_STREAM : LEMPTY;
-		} else {
-			rc_flags = RC_LOG;
-		}
-		if (rc_flags != LEMPTY) {
-			/*
-			 * Use should_send_delete() to try and second guess if
-			 * a send is needed (the actual decision is made
-			 * later).
-			 */
-			llog_state_delete_n_send(rc_flags, st,
-						 should_send_delete(st));
-		}
-		/* delete logged, don't log again */
-		on_delete(st, skip_log_message);
+		ldbg_sa_delete_n_send(st, false);
+	} else {
+		PEXPECT(st->st_logger, (st->st_ike_version == IKEv1 ||
+					IS_PARENT_SA(st)));
+		llog_sa_delete_n_send(st, false);
 	}
 
 	pstat_sa_deleted(st);

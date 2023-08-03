@@ -1829,7 +1829,6 @@ void send_n_log_v1_delete(struct state *st, where_t where)
 	ip_said *ns = said;
 
 	/* only once */
-	on_delete(st, skip_log_message);
 	on_delete(st, skip_send_delete);
 
 	/*
@@ -1863,7 +1862,7 @@ void send_n_log_v1_delete(struct state *st, where_t where)
 		p1st = NULL;
 	}
 
-	llog_state_delete_n_send(RC_LOG, st, /*sending-delete*/p1st != NULL);
+	llog_sa_delete_n_send(st, /*sending-delete*/p1st != NULL);
 
 	if (p1st == NULL) {
 		dbg("no established Phase 1 state to carry the Delete notify");
