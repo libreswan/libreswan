@@ -61,7 +61,7 @@
 #include "pluto_stats.h"
 #include "ip_info.h"
 #include "revival.h"
-#include "ikev1.h"		/* for send_v1_delete() */
+#include "ikev1.h"		/* for send_n_log_v1_delete() */
 #include "ikev2_delete.h"	/* for record_v2_delete() */
 #include "orient.h"
 #include "ikev2_proposals.h"		/* for free_ikev2_proposal() */
@@ -522,7 +522,7 @@ void init_states(void)
 	}
 }
 
-static void send_delete(struct ike_sa *ike, where_t where)
+static void send_n_log_delete(struct ike_sa *ike, where_t where)
 {
 	switch (ike->sa.st_ike_version) {
 #ifdef USE_IKEv1
@@ -567,7 +567,7 @@ void delete_state_by_id_name(struct state *st, const char *name)
 	const char *thatidbuf = str_id(&c->remote->host.id, &thatidb);
 	if (streq(thatidbuf, name)) {
 		if (IS_PARENT_SA_ESTABLISHED(&ike->sa)) {
-			send_delete(ike, HERE);
+			send_n_log_delete(ike, HERE);
 		}
 		ike->sa.st_on_delete.skip_send_delete = true;
 		delete_ike_family(&ike);
@@ -925,33 +925,55 @@ void delete_state(struct state *st)
 		}
 	}
 
-	/*
-	 * Where to log?
-	 *
-	 * IKEv2 children never send a delete notification from
-	 * delete_state() so logging "and NOT sending delete" is
-	 * redundant.  However, sometimes IKEv2 children should log
-	 * that they have been deleted.  Let the caller decide.
-	 */
-	lset_t rc_flags;
-	if (st->st_ike_version == IKEv2 && IS_CHILD_SA(st)) {
-		rc_flags = DBGP(DBG_BASE) ? DEBUG_STREAM : LEMPTY;
-	} else if (st->st_on_delete.skip_log_message) {
-		rc_flags = DBGP(DBG_BASE) ? DEBUG_STREAM : LEMPTY;
+	if (should_send_delete(st)) {
+		switch (st->st_ike_version) {
+#ifdef USE_IKEv1
+		case IKEv1:
+			/*
+			 * Tell the other side of any IPsec
+			 * SAs that are going down
+			 */
+			send_n_log_v1_delete(st, HERE);
+			break;
+#endif
+		case IKEv2:
+			/*
+			 * ??? in IKEv2, we should not immediately delete: we
+			 * should use an Informational Exchange to coordinate
+			 * deletion.
+			 */
+			record_n_send_n_log_v2_delete(pexpect_ike_sa(st), HERE);
+			break;
+		}
 	} else {
-		rc_flags = RC_LOG;
-	}
-	if (rc_flags != LEMPTY) {
 		/*
-		 * Use should_send_delete() to try and second guess if
-		 * a send is needed (the actual decision is made
-		 * later).
+		 * Where to log?
+		 *
+		 * IKEv2 children never send a delete notification from
+		 * delete_state() so logging "and NOT sending delete" is
+		 * redundant.  However, sometimes IKEv2 children should log
+		 * that they have been deleted.  Let the caller decide.
 		 */
-		llog_state_delete_n_send(rc_flags, st,
-					 should_send_delete(st));
+		lset_t rc_flags;
+		if (st->st_ike_version == IKEv2 && IS_CHILD_SA(st)) {
+			rc_flags = DBGP(DBG_BASE) ? DEBUG_STREAM : LEMPTY;
+		} else if (st->st_on_delete.skip_log_message) {
+			rc_flags = DBGP(DBG_BASE) ? DEBUG_STREAM : LEMPTY;
+		} else {
+			rc_flags = RC_LOG;
+		}
+		if (rc_flags != LEMPTY) {
+			/*
+			 * Use should_send_delete() to try and second guess if
+			 * a send is needed (the actual decision is made
+			 * later).
+			 */
+			llog_state_delete_n_send(rc_flags, st,
+						 should_send_delete(st));
+		}
+		/* delete logged, don't log again */
+		st->st_on_delete.skip_log_message = true;
 	}
-	/* delete logged, don't log again */
-	st->st_on_delete.skip_log_message = true;
 
 	pstat_sa_deleted(st);
 
@@ -1041,28 +1063,6 @@ void delete_state(struct state *st)
 	if (md != NULL) {
 		dbg("disconnecting state #%lu from md", st->st_serialno);
 		md_delref(&md);
-	}
-
-	if (should_send_delete(st)) {
-		switch (st->st_ike_version) {
-#ifdef USE_IKEv1
-		case IKEv1:
-			/*
-			 * Tell the other side of any IPsec
-			 * SAs that are going down
-			 */
-			send_n_log_v1_delete(st, HERE);
-			break;
-#endif
-		case IKEv2:
-			/*
-			 * ??? in IKEv2, we should not immediately delete: we
-			 * should use an Informational Exchange to coordinate
-			 * deletion.
-			 */
-			record_n_send_n_log_v2_delete(pexpect_ike_sa(st), HERE);
-			break;
-		}
 	}
 
 	/* delete any pending timer event */

@@ -1825,24 +1825,21 @@ void send_n_log_v1_delete(struct state *st, where_t where)
 
 	pb_stream r_hdr_pbs;
 	msgid_t msgid;
-	struct state *p1st;
 	ip_said said[EM_MAXRELSPIS];
 	ip_said *ns = said;
-	bool isakmp_sa = false;
 
-	if (impair.send_no_delete) {
-		llog(RC_LOG, st->st_logger, "IMPAIR: impair-send-no-delete set - not sending Delete/Notify");
-		return;
-	}
+	/* only once */
+	st->st_on_delete.skip_log_message = true;
+	st->st_on_delete.skip_send_delete = true;
 
-	/* If there are IPsec SA's related to this state struct... */
+	/*
+	 * Find the established ISAKMP SA, can't send a delete notify
+	 * without this.
+	 */
+	struct state *p1st;
 	if (IS_IPSEC_SA_ESTABLISHED(st)) {
-		/* Find their phase1 state object */
+		/* IPsec, still has a parent? */
 		p1st = find_phase1_state(st->st_connection, V1_ISAKMP_SA_ESTABLISHED_STATES);
-		if (p1st == NULL) {
-			dbg("no Phase 1 state for Delete");
-			return;
-		}
 
 		if (st->st_ah.present) {
 			*ns = said_from_address_protocol_spi(st->st_connection->local->host.addr,
@@ -1857,13 +1854,25 @@ void send_n_log_v1_delete(struct state *st, where_t where)
 			ns++;
 		}
 
-		passert(ns != said); /* there must be some SAs to delete */
+		PASSERT(st->st_logger, ns != said); /* there must be some SAs to delete */
+
 	} else if (IS_V1_ISAKMP_SA_ESTABLISHED(st)) {
 		/* or ISAKMP SA's... */
 		p1st = st;
-		isakmp_sa = true;
 	} else {
-		return; /* nothing to do */
+		p1st = NULL;
+	}
+
+	llog_state_delete_n_send(RC_LOG, st, /*sending-delete*/p1st != NULL);
+
+	if (p1st == NULL) {
+		dbg("no established Phase 1 state to carry the Delete notify");
+		return;
+	}
+
+	if (impair.send_no_delete) {
+		llog(RC_LOG, st->st_logger, "IMPAIR: impair-send-no-delete set - not sending Delete/Notify");
+		return;
 	}
 
 	msgid = generate_msgid(p1st);
@@ -1895,7 +1904,7 @@ void send_n_log_v1_delete(struct state *st, where_t where)
 	}
 
 	/* Delete Payloads */
-	if (isakmp_sa) {
+	if (st == p1st) {
 		pb_stream del_pbs;
 		struct isakmp_delete isad = {
 			.isad_doi = ISAKMP_DOI_IPSEC,
