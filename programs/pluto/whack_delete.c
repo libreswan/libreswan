@@ -21,6 +21,7 @@
 #include "connections.h"
 #include "pending.h"
 #include "ikev2_delete.h"
+#include "ikev1.h"		/* for send_v1_delete() */
 
 /* order here matters */
 
@@ -52,12 +53,15 @@ enum whack_state {
 	WHACK_ORPHAN,
 	WHACK_CUCKOO,
 	/*
-	 * Any other children of the IKE SA.
+	 * Any IKE SA children that are not for the current
+	 * connection.
+	 *
+	 * This is the reverse of a CUCKOO.
 	 */
 	WHACK_SIBLING,
 	/*
-	 * When there's no Child SA, or the Child SA is for another
-	 * IKE SA (ever the case?).  The IKE SA.
+	 * When the connection has no Child SA, or the connection's
+	 * Child SA is for another IKE SA (ever the case?).
 	 */
 	WHACK_IKE,
 	/* finally */
@@ -143,15 +147,15 @@ static void whack_states(struct connection *c,
 	struct child_sa *connection_child =
 		child_sa_by_serialno(c->child.newest_routing_sa);
 	if (connection_child == NULL) {
-		whack_ike = true;
 		ldbg(c->logger, "%s()   skipping Child SA, as no "PRI_SO,
 		     __func__, pri_so(c->child.newest_routing_sa));
+		whack_ike = true;
 	} else if (connection_child->sa.st_clonedfrom != c->newest_ike_sa) {
 		/* st_clonedfrom can't be be SOS_NOBODY */
-		whack_ike = true;
 		ldbg(c->logger, "%s()   dispatch cuckoo Child SA "PRI_SO,
 		     __func__,
 		     pri_so(connection_child->sa.st_serialno));
+		whack_ike = true;
 		whack_state(c, NULL, &connection_child, WHACK_CUCKOO);
 	} else if (ike == NULL) {
 		ldbg(c->logger, "%s()   dispatch orphaned Child SA "PRI_SO,
@@ -211,6 +215,70 @@ static void whack_states(struct connection *c,
 	}
 }
 
+static void whack_v1_states(struct connection *c,
+			    struct ike_sa **ike,
+			    struct child_sa **child,
+			    enum whack_state whacamole)
+{
+	switch (whacamole) {
+	case WHACK_START_IKE:
+		/*
+		 * IKEv1 announces the death of the ISAKMP SA after
+		 * all the children have gone (reverse of IKEv2).
+		 */
+		state_attach(&(*ike)->sa, c->logger);
+		(*ike)->sa.st_viable_parent = false;
+		return;
+	case WHACK_LURKING_CHILD:
+		state_attach(&(*child)->sa, c->logger);
+		delete_child_sa(child);
+		return;
+	case WHACK_LURKING_IKE:
+		state_attach(&(*ike)->sa, c->logger);
+		delete_ike_sa(ike);
+		return;
+	case WHACK_CHILD:
+		state_attach(&(*child)->sa, c->logger);
+		send_n_log_v1_delete(&(*child)->sa, HERE);
+		connection_delete_child(*ike, child, HERE);
+		return;
+	case WHACK_CUCKOO:
+		state_attach(&(*child)->sa, c->logger);
+		llog_pexpect(c->logger, HERE, "unexpected Child SA cuckoo"PRI_SO,
+			     (*child)->sa.st_serialno);
+		send_n_log_v1_delete(&(*child)->sa, HERE);
+		connection_delete_child(*ike, child, HERE);
+		return;
+	case WHACK_ORPHAN:
+		/* IKEv1 has orphans */
+		state_attach(&(*child)->sa, c->logger);
+		connection_delete_child(*ike, child, HERE);
+		return;
+	case WHACK_SIBLING:
+		/*
+		 * When IKEv1 deletes an IKE SA any siblings are
+		 * orphaned.
+		 */
+		return;
+	case WHACK_IKE:
+		/*
+		 * When IKEv1 deletes an IKE SA it always sends a
+		 * delete notify; hence handle this in WHACK_STOP_IKE.
+		 */
+		return;
+	case WHACK_STOP_IKE:
+		/*
+		 * Can't use connection_delete_ike() as that has IKEv2
+		 * semantics - deletes all siblings skipped above.
+		 */
+		send_n_log_v1_delete(&(*ike)->sa, HERE);
+		delete_ike_sa(ike);
+		connection_unroute(c, HERE);
+		return;
+	}
+	bad_case(whacamole);
+}
+
 static void whack_v2_states(struct connection *c,
 			    struct ike_sa **ike,
 			    struct child_sa **child,
@@ -261,6 +329,22 @@ static void whack_v2_states(struct connection *c,
 	bad_case(whacamole);
 }
 
+static void delete_states(struct connection *c,
+			  struct ike_sa **ike,
+			  struct child_sa **child,
+			  enum whack_state whacamole)
+{
+	switch (c->config->ike_version) {
+	case IKEv1:
+		whack_v1_states(c, ike, child, whacamole);
+		return;
+	case IKEv2:
+		whack_v2_states(c, ike, child, whacamole);
+		return;
+	}
+	bad_case(c->config->ike_version);
+}
+
 /*
  * Terminate and then delete connections with the specified name.
  */
@@ -281,120 +365,38 @@ static bool whack_delete_connection(struct show *s, struct connection **c,
 	del_policy(*c, POLICY_UP);
 	del_policy(*c, POLICY_ROUTE);
 
-	if (never_negotiate(*c)) {
-		ldbg((*c)->logger, "skipping as never-negotiate");
-		PEXPECT(logger, (is_permanent(*c) || is_template(*c)));
-
-		connection_unroute(*c, HERE);
-		delete_connection(c);
-		return false;
-	}
-
 	switch ((*c)->local->kind) {
 
 	case CK_PERMANENT:
-		llog(RC_LOG, (*c)->logger, "terminating SAs using this connection");
-		switch ((*c)->config->ike_version) {
-		case IKEv1:
-			remove_connection_from_pending(*c);
-			delete_v1_states_by_connection(*c);
-			connection_unroute(*c, HERE);
-			delete_connection(c);
-			return true;
-		case IKEv2:
-			remove_connection_from_pending(*c);
-			switch ((*c)->child.routing) {
-			case RT_ROUTED_INBOUND:
-			case RT_ROUTED_TUNNEL:
-			case RT_ROUTED_NEGOTIATION:
-				whack_states(*c, whack_v2_states, HERE);
-				break;
-
-			case RT_UNROUTED_INBOUND:
-			case RT_UNROUTED_TUNNEL:
-				whack_states(*c, whack_v2_states, HERE);
-				break;
-			case RT_UNROUTED_NEGOTIATION:
-				whack_states(*c, whack_v2_states, HERE);
-				connection_unroute(*c, HERE);
-				break;
-
-			case RT_ROUTED_FAILURE:
-			case RT_ROUTED_ONDEMAND:
-			case RT_ROUTED_REVIVAL:
-			case RT_ROUTED_NEVER_NEGOTIATE:
-				connection_unroute(*c, HERE);
-				break;
-			case RT_UNROUTED_REVIVAL:
-				connection_unroute(*c, HERE);
-				break;
-			case RT_UNROUTED_ONDEMAND:
-			case RT_UNROUTED_FAILURE:
-				connection_unroute(*c, HERE);
-				break;
-			case RT_UNROUTED:
-				break;
-			}
-			delete_connection(c);
-			return true;
+		if (never_negotiate(*c)) {
+			ldbg((*c)->logger, "skipping as never-negotiate");
+			break;
 		}
+		llog(RC_LOG, (*c)->logger, "terminating SAs using this connection");
+		remove_connection_from_pending(*c);
+		whack_states(*c, delete_states, HERE);
+		break;
+
+	case CK_INSTANCE:
+	case CK_LABELED_PARENT:
+		llog(RC_LOG, (*c)->logger, "terminating SAs using this connection");
+		remove_connection_from_pending(*c);
+		whack_states(*c, delete_states, HERE);
 		break;
 
 	case CK_GROUP:
-		/* little left to do */
-		connection_unroute(*c, HERE);
-		delete_connection(c);
-		return true;
-
 	case CK_TEMPLATE:
-		/* also need to unroute */
-		connection_unroute(*c, HERE);
-		delete_connection(c);
-		return true;
-
-	case CK_INSTANCE:
-		/*
-		 * For CK_INSTANCE, this could also delete the *C
-		 * connection.
-		 */
-		llog(RC_LOG, (*c)->logger, "terminating SAs using this connection");
-
-		connection_terminate(*c, logger, HERE);
-		delete_connection(c);
-		return true;
-
 	case CK_LABELED_TEMPLATE:
-		/* also need to unroute */
-
-		connection_terminate(*c, logger, HERE);
-		delete_connection(c);
-		return true;
-
-	case CK_LABELED_PARENT:
-		llog(RC_LOG, (*c)->logger, "terminating SAs using this connection");
-
-		connection_terminate(*c, logger, HERE);
-		delete_connection(c);
-		return true;
-
 	case CK_LABELED_CHILD:
-		/*
-		 * Let the labeled parent, called later, terminate the
-		 * entire IKE SA and unroute everything.
-		 *
-		 * XXX: does this need to stop delete_connection()
-		 * deleting the child?
-		 */
-		PEXPECT(logger, (*c)->config->ike_version == IKEv2);
-
-		connection_terminate(*c, logger, HERE);
-		delete_connection(c);
-		return true;
+		break;
 
 	case CK_INVALID:
-		break;
+		bad_case((*c)->local->kind);
 	}
-	bad_case((*c)->local->kind);
+
+	connection_unroute(*c, HERE); /* some times redundant */
+	delete_connection(c);
+	return true;
 }
 
 void whack_delete(const struct whack_message *m, struct show *s)
