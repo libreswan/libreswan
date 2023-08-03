@@ -43,7 +43,7 @@ struct finite_state v1_states[] = {
 	/*
 	 * Count I1 as half-open too because with ondemand, a
 	 * plaintext packet (that is spoofed) will trigger an outgoing
-	 * IKE SA.
+	 * ISAKMP (IKE) SA.
 	 */
 
 	S(STATE_AGGR_R0, "expecting Aggressive Mode request", CAT_HALF_OPEN_IKE_SA),
@@ -72,10 +72,10 @@ struct finite_state v1_states[] = {
 	 * after the connection is established and authenticated.
 	 */
 
-	S(STATE_MAIN_I4, "IKE SA established", CAT_ESTABLISHED_IKE_SA),
-	S(STATE_MAIN_R3, "IKE SA established", CAT_ESTABLISHED_IKE_SA),
-	S(STATE_AGGR_I2, "IKE SA established", CAT_ESTABLISHED_IKE_SA),
-	S(STATE_AGGR_R2, "IKE SA established", CAT_ESTABLISHED_IKE_SA),
+	S(STATE_MAIN_I4, "ISAKMP SA established", CAT_ESTABLISHED_IKE_SA),
+	S(STATE_MAIN_R3, "ISAKMP SA established", CAT_ESTABLISHED_IKE_SA),
+	S(STATE_AGGR_I2, "ISAKMP SA established", CAT_ESTABLISHED_IKE_SA),
+	S(STATE_AGGR_R2, "ISAKMP SA established", CAT_ESTABLISHED_IKE_SA),
 	S(STATE_XAUTH_I0, "XAUTH client - possibly awaiting CFG_request", CAT_ESTABLISHED_IKE_SA),
 	S(STATE_XAUTH_I1, "XAUTH client - possibly awaiting CFG_set", CAT_ESTABLISHED_IKE_SA),
 	S(STATE_XAUTH_R0, "XAUTH responder - optional CFG exchange", CAT_ESTABLISHED_IKE_SA),
