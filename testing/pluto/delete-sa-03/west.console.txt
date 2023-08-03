@@ -79,7 +79,7 @@ west #
 1v1 "west-east" #1: sent Main Mode I3
 002 "west-east" #1: Peer ID is ID_FQDN: '@east'
 003 "west-east" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
-004 "west-east" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+004 "west-east" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "west-east" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 1v1 "west-east" #2: sent Quick Mode request
 004 "west-east" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
@@ -150,7 +150,7 @@ west #
 000 "west-east-c":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
 000 "west-east-c":   newest ISAKMP SA: #0; newest IPsec SA: #4; conn serial: $3;
 000 "west-east-c":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
-000 #1: "west-east":500 STATE_MAIN_I4 (IKE SA established); REPLACE in XXs; newest; lastdpd=-1s(seq in:0 out:0); idle;
+000 #1: "west-east":500 STATE_MAIN_I4 (ISAKMP SA established); REPLACE in XXs; newest; lastdpd=-1s(seq in:0 out:0); idle;
 000 #2: "west-east":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
 000 #2: "west-east" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
 000 #3: "west-east-b":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
@@ -221,7 +221,7 @@ west #
 000 "west-east-c":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
 000 "west-east-c":   newest ISAKMP SA: #0; newest IPsec SA: #4; conn serial: $3;
 000 "west-east-c":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
-000 #1: "west-east":500 STATE_MAIN_I4 (IKE SA established); REPLACE in XXs; newest; lastdpd=-1s(seq in:0 out:0); idle;
+000 #1: "west-east":500 STATE_MAIN_I4 (ISAKMP SA established); REPLACE in XXs; newest; lastdpd=-1s(seq in:0 out:0); idle;
 000 #3: "west-east-b":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
 000 #3: "west-east-b" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
 000 #4: "west-east-c":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
@@ -284,7 +284,7 @@ west #
 000 "west-east-c":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
 000 "west-east-c":   newest ISAKMP SA: #0; newest IPsec SA: #4; conn serial: $3;
 000 "west-east-c":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
-000 #1: "west-east":500 STATE_MAIN_I4 (IKE SA established); REPLACE in XXs; newest; lastdpd=-1s(seq in:0 out:0); idle;
+000 #1: "west-east":500 STATE_MAIN_I4 (ISAKMP SA established); REPLACE in XXs; newest; lastdpd=-1s(seq in:0 out:0); idle;
 000 #3: "west-east-b":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
 000 #3: "west-east-b" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
 000 #4: "west-east-c":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;

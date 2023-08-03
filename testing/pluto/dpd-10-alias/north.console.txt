@@ -26,7 +26,7 @@ north #
 1v1 "north-dpd/0x2" #1: sent Main Mode I3
 002 "north-dpd/0x2" #1: Peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 003 "north-dpd/0x2" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-004 "north-dpd/0x2" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+004 "north-dpd/0x2" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "north-dpd/0x1" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 002 "north-dpd/0x2" #3: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 1v1 "north-dpd/0x1" #2: sent Quick Mode request
@@ -97,7 +97,7 @@ north #
 000 "north-dpd/0x2":   aliases: north-dpd
 000 "north-dpd/0x2":   IKEv1 algorithm newest: AES_CBC_256-HMAC_SHA2_256-MODP2048
 000 #5: "north-dpd/0x1":500 STATE_QUICK_I1 (sent Quick Mode request); RETRANSMIT in XXs; lastdpd=-1s(seq in:0 out:0); idle;
-000 #1: "north-dpd/0x2":500 STATE_MAIN_I4 (IKE SA established); REPLACE in XXs; newest; lastdpd=30s(seq in:XXXXX out:YYYYY); idle;
+000 #1: "north-dpd/0x2":500 STATE_MAIN_I4 (ISAKMP SA established); REPLACE in XXs; newest; lastdpd=30s(seq in:XXXXX out:YYYYY); idle;
 000 #4: "north-dpd/0x2":500 STATE_QUICK_I1 (sent Quick Mode request); RETRANSMIT in XXs; lastdpd=-1s(seq in:0 out:0); idle;
 north #
  ip route del unreachable 192.1.2.23

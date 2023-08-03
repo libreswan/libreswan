@@ -19,7 +19,7 @@ west #
 1v1 "ipv4-psk-ikev2-transport" #1: sent Main Mode I2
 1v1 "ipv4-psk-ikev2-transport" #1: sent Main Mode I3
 002 "ipv4-psk-ikev2-transport" #1: Peer ID is ID_FQDN: '@east'
-004 "ipv4-psk-ikev2-transport" #1: IKE SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+004 "ipv4-psk-ikev2-transport" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "ipv4-psk-ikev2-transport" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 1v1 "ipv4-psk-ikev2-transport" #2: sent Quick Mode request
 004 "ipv4-psk-ikev2-transport" #2: IPsec SA established transport mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}

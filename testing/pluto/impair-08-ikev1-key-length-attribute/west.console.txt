@@ -23,7 +23,7 @@ west #
 1v1 "aes128" #1: sent Main Mode I2
 1v1 "aes128" #1: sent Main Mode I3
 002 "aes128" #1: Peer ID is ID_FQDN: '@east'
-004 "aes128" #1: IKE SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
+004 "aes128" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
 002 "aes128" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 1v1 "aes128" #2: sent Quick Mode request
 004 "aes128" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
@@ -71,7 +71,7 @@ west #
 1v1 "aes128" #4: sent Main Mode I2
 1v1 "aes128" #4: sent Main Mode I3
 002 "aes128" #4: Peer ID is ID_FQDN: '@east'
-004 "aes128" #4: IKE SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
+004 "aes128" #4: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
 002 "aes128" #5: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 002 "aes128" #5: IMPAIR: stripping key-length
 002 "aes128" #5: IMPAIR: duplicating key-length
@@ -116,7 +116,7 @@ west #
 1v1 "aes128" #7: sent Main Mode I2
 1v1 "aes128" #7: sent Main Mode I3
 002 "aes128" #7: Peer ID is ID_FQDN: '@east'
-004 "aes128" #7: IKE SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
+004 "aes128" #7: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
 002 "aes128" #8: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 002 "aes128" #8: IMPAIR: stripping key-length
 002 "aes128" #8: IMPAIR: sending key-length attribute value 0
@@ -143,7 +143,7 @@ west #
 1v1 "aes128" #9: sent Main Mode I2
 1v1 "aes128" #9: sent Main Mode I3
 002 "aes128" #9: Peer ID is ID_FQDN: '@east'
-004 "aes128" #9: IKE SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
+004 "aes128" #9: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
 002 "aes128" #10: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 1v1 "aes128" #10: sent Quick Mode request
 004 "aes128" #10: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
@@ -169,7 +169,7 @@ west #
 1v1 "aes128" #11: sent Main Mode I2
 1v1 "aes128" #11: sent Main Mode I3
 002 "aes128" #11: Peer ID is ID_FQDN: '@east'
-004 "aes128" #11: IKE SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
+004 "aes128" #11: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
 002 "aes128" #12: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 002 "aes128" #12: IMPAIR: stripping key-length
 002 "aes128" #12: IMPAIR: not sending key-length attribute
@@ -198,7 +198,7 @@ west #
 1v1 "aes128" #13: sent Main Mode I2
 1v1 "aes128" #13: sent Main Mode I3
 002 "aes128" #13: Peer ID is ID_FQDN: '@east'
-004 "aes128" #13: IKE SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
+004 "aes128" #13: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
 002 "aes128" #14: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 1v1 "aes128" #14: sent Quick Mode request
 004 "aes128" #14: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
@@ -226,7 +226,7 @@ west #
 1v1 "aes128" #15: sent Main Mode I2
 1v1 "aes128" #15: sent Main Mode I3
 002 "aes128" #15: Peer ID is ID_FQDN: '@east'
-004 "aes128" #15: IKE SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
+004 "aes128" #15: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
 002 "aes128" #16: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 002 "aes128" #16: IMPAIR: stripping key-length
 002 "aes128" #16: IMPAIR: key-length-attribute:empty not implemented
@@ -255,7 +255,7 @@ west #
 1v1 "3des" #17: sent Main Mode I2
 1v1 "3des" #17: sent Main Mode I3
 002 "3des" #17: Peer ID is ID_FQDN: '@east'
-004 "3des" #17: IKE SA established {auth=PRESHARED_KEY cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP2048}
+004 "3des" #17: ISAKMP SA established {auth=PRESHARED_KEY cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP2048}
 002 "3des" #18: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 1v1 "3des" #18: sent Quick Mode request
 004 "3des" #18: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 DPD=passive}
@@ -305,7 +305,7 @@ west #
 1v1 "3des" #20: sent Main Mode I2
 1v1 "3des" #20: sent Main Mode I3
 002 "3des" #20: Peer ID is ID_FQDN: '@east'
-004 "3des" #20: IKE SA established {auth=PRESHARED_KEY cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP2048}
+004 "3des" #20: ISAKMP SA established {auth=PRESHARED_KEY cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP2048}
 002 "3des" #21: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 1v1 "3des" #21: sent Quick Mode request
 004 "3des" #21: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 DPD=passive}

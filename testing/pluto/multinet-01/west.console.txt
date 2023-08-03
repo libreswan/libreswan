@@ -118,7 +118,7 @@ west #
 1v1 "westnet-eastnet-subnets/2x2" #1: sent Main Mode I3
 002 "westnet-eastnet-subnets/2x2" #1: Peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-subnets/2x2" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
-004 "westnet-eastnet-subnets/2x2" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+004 "westnet-eastnet-subnets/2x2" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "westnet-eastnet-subnets/1x1" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 002 "westnet-eastnet-subnets/1x2" #3: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 002 "westnet-eastnet-subnets/2x1" #4: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
@@ -231,7 +231,7 @@ west #
 000 "westnet-eastnet-subnets/2x2":   newest ISAKMP SA: #1; newest IPsec SA: #0; conn serial: $4;
 000 "westnet-eastnet-subnets/2x2":   aliases: westnet-eastnet-subnets
 000 "westnet-eastnet-subnets/2x2":   IKEv1 algorithm newest: AES_CBC_256-HMAC_SHA2_256-MODP2048
-000 #1: "westnet-eastnet-subnets/2x2":500 STATE_MAIN_I4 (IKE SA established); REPLACE in XXs; newest; lastdpd=-1s(seq in:0 out:0); idle;
+000 #1: "westnet-eastnet-subnets/2x2":500 STATE_MAIN_I4 (ISAKMP SA established); REPLACE in XXs; newest; lastdpd=-1s(seq in:0 out:0); idle;
 west #
  echo done
 done
