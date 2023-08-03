@@ -37,8 +37,8 @@ road #
  ipsec auto --delete road-east
 002 "road-east": terminating SAs using this connection
 002 "road-east" #2: deleting IPsec SA (QUICK_I2) and sending notification
-005 "road-east" #2: ESP traffic information: in=0B out=0B
 002 "road-east" #2: IMPAIR: impair-send-no-delete set - not sending Delete/Notify
+005 "road-east" #2: ESP traffic information: in=0B out=0B
 002 "road-east" #1: deleting ISAKMP SA (AGGR_I2) and sending notification
 002 "road-east" #1: IMPAIR: impair-send-no-delete set - not sending Delete/Notify
 road #

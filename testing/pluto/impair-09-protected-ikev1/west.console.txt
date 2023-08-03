@@ -152,8 +152,8 @@ west #
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "westnet-eastnet": terminating SAs using this connection
 002 "westnet-eastnet" #10: deleting IPsec SA (QUICK_I2) and sending notification
-005 "westnet-eastnet" #10: ESP traffic information: in=84B out=84B
 002 "westnet-eastnet" #10: IMPAIR: omitting HASH payload for send delete
+005 "westnet-eastnet" #10: ESP traffic information: in=84B out=84B
 002 "westnet-eastnet" #9: deleting ISAKMP SA (MAIN_I4) and sending notification
 002 "westnet-eastnet" #9: IMPAIR: omitting HASH payload for send delete
 002 "westnet-eastnet": terminating SAs using this connection
@@ -177,8 +177,8 @@ west #
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "westnet-eastnet": terminating SAs using this connection
 002 "westnet-eastnet" #12: deleting IPsec SA (QUICK_I2) and sending notification
-005 "westnet-eastnet" #12: ESP traffic information: in=84B out=84B
 002 "westnet-eastnet" #12: IMPAIR: sending HASH payload with no data for send delete
+005 "westnet-eastnet" #12: ESP traffic information: in=84B out=84B
 002 "westnet-eastnet" #11: deleting ISAKMP SA (MAIN_I4) and sending notification
 002 "westnet-eastnet" #11: IMPAIR: sending HASH payload with no data for send delete
 002 "westnet-eastnet": terminating SAs using this connection
@@ -202,8 +202,8 @@ west #
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "westnet-eastnet": terminating SAs using this connection
 002 "westnet-eastnet" #14: deleting IPsec SA (QUICK_I2) and sending notification
-005 "westnet-eastnet" #14: ESP traffic information: in=84B out=84B
 002 "westnet-eastnet" #14: IMPAIR: setting HASH payload bytes to 00
+005 "westnet-eastnet" #14: ESP traffic information: in=84B out=84B
 002 "westnet-eastnet" #13: deleting ISAKMP SA (MAIN_I4) and sending notification
 002 "westnet-eastnet" #13: IMPAIR: setting HASH payload bytes to 00
 002 "westnet-eastnet": terminating SAs using this connection
