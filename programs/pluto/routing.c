@@ -529,6 +529,9 @@ static void down_routed_tunnel(enum routing_event event,
 
 	PASSERT((*child)->sa.st_logger, is_instance(*c));
 
+	do_updown_spds(UPDOWN_DOWN, (*c), &(*c)->child.spds,
+		       &(*child)->sa, (*child)->sa.st_logger);
+
 	delete_spd_kernel_policies(&(*c)->child.spds,
 				   EXPECT_KERNEL_POLICY_OK,
 				   (*child)->sa.st_logger,
