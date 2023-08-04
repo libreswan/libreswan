@@ -417,8 +417,9 @@ bool unrouted_to_routed_sec_label(enum routing_event event,
 extern deltatime_t bare_shunt_interval;
 
 extern bool kernel_ops_detect_offload(const struct raw_iface *ifp, struct logger *logger);
-extern void handle_sa_expire(ipsec_spi_t spi, uint8_t protoid, ip_address *dst,
-		      bool hard, uint64_t bytes, uint64_t packets, uint64_t add_time);
+extern void handle_sa_expire(ipsec_spi_t spi, uint8_t protoid, ip_address dst,
+			     bool hard, uint64_t bytes, uint64_t packets, uint64_t add_time,
+			     struct logger *logger);
 
 typedef struct { uint32_t value; } kernel_priority_t;
 #define PRI_KERNEL_PRIORITY PRIu32

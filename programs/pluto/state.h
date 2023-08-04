@@ -995,7 +995,7 @@ void suppress_delete_notify(const struct ike_sa *ike,
 
 void list_state_events(struct show *s, const monotime_t now);
 struct child_sa *find_v2_child_sa_by_spi(ipsec_spi_t spi, int8_t protoid,
-					 ip_address *dst);
+					 ip_address dst);
 
 void connswitch_state_and_log(struct state *st, struct connection *c);
 

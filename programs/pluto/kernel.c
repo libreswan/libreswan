@@ -2978,16 +2978,19 @@ void shutdown_kernel(struct logger *logger)
 	kernel_ops->shutdown(logger);
 }
 
-void handle_sa_expire(ipsec_spi_t spi, uint8_t protoid, ip_address *dst,
-		       bool hard, uint64_t bytes, uint64_t packets, uint64_t add_time)
+void handle_sa_expire(ipsec_spi_t spi, uint8_t protoid, ip_address dst,
+		      bool hard, uint64_t bytes, uint64_t packets, uint64_t add_time,
+		      struct logger *logger)
 {
 	struct child_sa *child = find_v2_child_sa_by_spi(spi, protoid, dst);
 
 	if (child == NULL) {
 		address_buf a;
-		dbg("received kernel %s EXPIRE event for IPsec SPI 0x%x, but there is no connection with this SPI and dst %s bytes %" PRIu64 " packets %" PRIu64,
+		ldbg(logger,
+		     "received kernel %s EXPIRE event for IPsec SPI "PRI_IPSEC_SPI", but there is no connection with this SPI and dst %s bytes %" PRIu64 " packets %" PRIu64,
 		     hard ? "hard" : "soft",
-		     ntohl(spi), str_address(dst, &a), bytes, packets);
+		     pri_ipsec_spi(spi),
+		     str_address(&dst, &a), bytes, packets);
 		return;
 	}
 
@@ -2997,8 +3000,10 @@ void handle_sa_expire(ipsec_spi_t spi, uint8_t protoid, ip_address *dst,
 	    (!hard && impair.ignore_soft_expire)) {
 		address_buf a;
 		llog_sa(RC_LOG, child,
-			"IMPAIR: suppressing a %s EXPIRE event spi 0x%x dst %s bytes %" PRIu64 " packets %" PRIu64,
-			hard ? "hard" : "soft", ntohl(spi), str_address(dst, &a),
+			"IMPAIR: suppressing a %s EXPIRE event spi "PRI_IPSEC_SPI" dst %s bytes %" PRIu64 " packets %" PRIu64,
+			hard ? "hard" : "soft",
+			pri_ipsec_spi(spi),
+			str_address(&dst, &a),
 			bytes, packets);
 		return;
 	}

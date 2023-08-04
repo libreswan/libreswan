@@ -2117,7 +2117,7 @@ static void process_addr_change(struct nlmsghdr *n, struct logger *logger)
 		rta = RTA_NEXT(rta, msg_size);
 	}
 }
-static void netlink_kernel_sa_expire(struct nlmsghdr *n, struct logger *logger)
+static void xfrm_kernel_sa_expire(struct nlmsghdr *n, struct logger *logger)
 {
 	struct xfrm_user_expire *ue = NLMSG_DATA(n);
 
@@ -2136,28 +2136,42 @@ static void netlink_kernel_sa_expire(struct nlmsghdr *n, struct logger *logger)
 		return;
 	}
 
-	const struct ip_protocol *protocol = protocol_from_ipproto(ue->state.id.proto);
-	if (protocol == NULL) {
-		llog(RC_LOG, logger,
-		      "XFRM_MSG_EXPIRE message from kernel malformed: protocol %u unknown",
-		       ue->state.id.proto);
-		return;
-	}
-
 	ip_address src = address_from_xfrm(afi, &ue->state.saddr);
 	ip_address dst = address_from_xfrm(afi, &ue->state.id.daddr);
-	address_buf a;
-	address_buf b;
-	ldbg(logger, "%s() spi 0x%x src %s dst %s %s mode %u proto %d bytes %"PRIu64" packets %"PRIu64"%s",
-	     __func__, ntohl(ue->state.id.spi),
-	     str_address(&src, &a), str_address(&dst, &b), ue->hard ? "hard" : "soft",
-	     ue->state.mode, ue->state.id.proto,
+	address_buf srcb;
+	address_buf dstb;
+	ipsec_spi_t spi = ue->state.id.spi;
+	ldbg(logger, "%s() spi "PRI_IPSEC_SPI" src %s dst %s %s mode %u proto %d bytes %"PRIu64" packets %"PRIu64,
+	     __func__,
+	     pri_ipsec_spi(spi),
+	     str_address(&src, &srcb),
+	     str_address(&dst, &dstb),
+	     (ue->hard ? "hard" : "soft"),
+	     ue->state.mode,
+	     ue->state.id.proto,
 	     /* XXX: on linux __u64 is either long, or long long
 	      * conflicting with either PRIu64 or %ll */
 	     (uint64_t) ue->state.curlft.bytes,
-	     (uint64_t) ue->state.curlft.packets,
-	     (ue->state.id.spi == 0 ? " ACQUIRE state expired discard this message" : ""));
+	     (uint64_t) ue->state.curlft.packets);
 
+	if (ue->hard) {
+		if (impair.ignore_hard_expire) {
+			llog(RC_LOG, logger, "IMPAIR is suppress a HARD EXPIRE event");
+			return;
+		}
+	} else {
+		if (impair.ignore_soft_expire) {
+			llog(RC_LOG, logger, "IMPAIR is suppress a SOFT EXPIRE event");
+			return;
+		}
+	}
+
+	if (spi == 0) {
+		ldbg(logger, "acquire state with SPI 0x0 expired, ignore it");
+		return;  /* acquire state with SPI 0x0 expired, ignore it */
+	}
+
+	/* convert IP protocol to IKE ID */
 	uint8_t protoid = PROTO_RESERVED;
 	switch (ue->state.id.proto) {
 	case  IPPROTO_ESP:
@@ -2166,23 +2180,18 @@ static void netlink_kernel_sa_expire(struct nlmsghdr *n, struct logger *logger)
 	case  IPPROTO_AH:
 		protoid = PROTO_IPSEC_AH;
 		break;
+	case  IPPROTO_COMP:
+		protoid = PROTO_IPCOMP;
+		break;
 	default:
 		bad_case(ue->state.id.proto);
 	}
 
-	if ((ue->hard && impair.ignore_hard_expire) ||
-	    (!ue->hard && impair.ignore_soft_expire)) {
-		llog(RC_LOG, logger, "IMPAIR is suppress a %s EXPIRE event",
-		     ue->hard ? "hard" : "soft");
-	}
-
-	if (ue->state.id.spi == 0)
-		return;  /* acquire state with SPI 0x0 expired, ignore it */
-
-	handle_sa_expire(ue->state.id.spi, protoid, &dst,
-			ue->hard, ue->state.curlft.bytes,
-			ue->state.curlft.packets,
-			ue->state.curlft.add_time);
+	handle_sa_expire(spi, protoid, dst,
+			 ue->hard, ue->state.curlft.bytes,
+			 ue->state.curlft.packets,
+			 ue->state.curlft.add_time,
+			 logger);
 }
 
 static void netlink_policy_expire(struct nlmsghdr *n, struct logger *logger)
@@ -2339,7 +2348,7 @@ static void netlink_xfrm_message_processor(struct nlm_resp *rsp, struct logger *
 		break;
 
 	case XFRM_MSG_EXPIRE: /* SA soft and hard limit */
-		netlink_kernel_sa_expire(&rsp->n, logger);
+		xfrm_kernel_sa_expire(&rsp->n, logger);
 		break;
 
 	case XFRM_MSG_POLEXPIRE:

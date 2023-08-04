@@ -1814,6 +1814,9 @@ static bool v2_spi_predicate(struct state *st, void *context)
 	case PROTO_IPSEC_ESP:
 		pr = &st->st_esp;
 		break;
+	case PROTO_IPCOMP:
+		pr = &st->st_ipcomp;
+		break;
 	default:
 		bad_case(filter->protoid);
 	}
@@ -1830,14 +1833,14 @@ static bool v2_spi_predicate(struct state *st, void *context)
 					ret = true;
 			}
 		} else if (filter->inbound_spi > 0 &&
-				filter->inbound_spi == pr->inbound.spi) {
+			   filter->inbound_spi == pr->inbound.spi) {
 			dbg("v2 CHILD SA #%lu found using their our SPI, in %s",
 			    st->st_serialno, st->st_state->name);
 			ret = true;
 			if (filter->dst != NULL) {
 				ret = false;
 				if (sameaddr(&st->st_connection->local->host.addr,
-				    filter->dst))
+					     filter->dst))
 					ret = true;
 			}
 		}
@@ -1855,14 +1858,14 @@ static bool v2_spi_predicate(struct state *st, void *context)
 }
 
 struct child_sa *find_v2_child_sa_by_spi(ipsec_spi_t spi, int8_t protoid,
-					 ip_address *dst)
+					 ip_address dst)
 {
 	struct v2_spi_filter filter = {
 		.protoid = protoid,
 		.outbound_spi = spi,
 		/* fill the same spi, the kernel expire has no direction */
 		.inbound_spi = spi,
-		.dst = dst,
+		.dst = &dst,
 	};
 	struct state_filter sf = { .where = HERE, };
 	while (next_state_new2old(&sf)) {
