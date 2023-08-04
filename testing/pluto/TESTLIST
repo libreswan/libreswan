@@ -123,7 +123,7 @@ kvmplutotest	addconn-24-conn-default-rsasigkey		wip	github:833
 kvmplutotest	addconn-25-missing-cert				wip	github/1066
 kvmplutotest	addconn-26-keyingtries				good	github/1061
 kvmplutotest	addconn-27-keyexchange				good	github/1168
-kvmplutotest	addconn-28-whack-ikefrag			good
+kvmplutotest	addconn-28-fragmentation			good	github/1209
 
 
 #################################################################
@@ -537,7 +537,8 @@ kvmplutotest	ikev2-44-switch-initiator-strongswan	wip	github/964
 kvmplutotest	ikev2-frag-01				good
 kvmplutotest	ikev2-frag-02-ipv6			good
 kvmplutotest	ikev2-frag-03-retrans			good
-kvmplutotest	ikev2-frag-04-nofrag			good
+kvmplutotest	ikev2-frag-04-nofrag-east		good
+kvmplutotest	ikev2-frag-05-nofrag-west		good
 
 kvmplutotest	dynamic-iface-01			good
 kvmplutotest	ikev2-removed-iface-01			good
