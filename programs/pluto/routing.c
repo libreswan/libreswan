@@ -105,10 +105,10 @@ static void jam_routing(struct jambuf *buf,
 
 void jam_routing_annex(struct jambuf *buf, const struct routing_annex *e)
 {
-	if (e->ike != NULL) {
+	if (e->ike != NULL && (*e->ike) != NULL) {
 		jam_event_sa(buf, &(*e->ike)->sa);
 	}
-	if (e->child != NULL) {
+	if (e->child != NULL && (*e->child) != NULL) {
 		jam_event_sa(buf, &(*e->child)->sa);
 	}
 	if (e->sec_label.len > 0) {

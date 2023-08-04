@@ -849,6 +849,8 @@ struct state {
 
 struct ike_sa { struct state sa; };
 struct ike_sa *ike_sa(struct state *st, where_t where);
+struct ike_sa *isakmp_sa(struct child_sa *child, where_t where);
+
 struct ike_sa *pexpect_ike_sa_where(struct state *st, where_t where);
 #define pexpect_ike_sa(ST) pexpect_ike_sa_where(ST, HERE)
 

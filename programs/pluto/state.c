@@ -380,6 +380,34 @@ struct ike_sa *ike_sa(struct state *st, where_t where)
 	return (struct ike_sa*) st;
 }
 
+struct ike_sa *isakmp_sa(struct child_sa *child, where_t where)
+{
+	if (child == NULL) {
+		return NULL;
+	}
+
+	if (!PEXPECT(child->sa.st_logger, child->sa.st_ike_version == IKEv1)) {
+		return NULL;
+	}
+
+	if (!PEXPECT(child->sa.st_logger, IS_CHILD_SA(&child->sa))) {
+		return NULL;
+	}
+
+	struct ike_sa *isakmp = ike_sa_by_serialno(child->sa.st_clonedfrom);
+	if (isakmp == NULL) {
+		ldbg(child->sa.st_logger,
+		     "IKEv1 IPsec SA "PRI_SO" missing ISAKMP SA "PRI_SO" "PRI_WHERE,
+		     pri_so(child->sa.st_serialno),
+		     pri_so(child->sa.st_clonedfrom),
+		     pri_where(where));
+		/* typical IKEv1 */
+		return NULL;
+	}
+
+	return isakmp;
+}
+
 struct ike_sa *pexpect_ike_sa_where(struct state *st, where_t where)
 {
 	if (st == NULL) {

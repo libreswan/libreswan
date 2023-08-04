@@ -162,7 +162,7 @@ static void whack_states(struct connection *c,
 		     __func__,
 		     pri_so(connection_child->sa.st_serialno));
 		whack_ike = false;
-		whack_state(c, &ike, &connection_child, WHACK_ORPHAN);
+		whack_state(c, NULL, &connection_child, WHACK_ORPHAN);
 	} else {
 		ldbg(c->logger, "%s()   dispatch Child SA "PRI_SO,
 		     __func__,
@@ -240,16 +240,21 @@ static void whack_v1_states(struct connection *c,
 	case WHACK_CHILD:
 		state_attach(&(*child)->sa, c->logger);
 		send_n_log_v1_delete(&(*child)->sa, HERE);
+		PEXPECT(c->logger, (*ike) != NULL);
 		connection_delete_child(*ike, child, HERE);
 		return;
 	case WHACK_CUCKOO:
+		/* IKEv1 has cuckoos */
 		state_attach(&(*child)->sa, c->logger);
 		send_n_log_v1_delete(&(*child)->sa, HERE);
-		connection_delete_child(*ike, child, HERE);
+		PEXPECT(c->logger, ike == NULL);
+		connection_delete_child(isakmp_sa(*child, HERE)/*could-be-null*/,
+					child, HERE);
 		return;
 	case WHACK_ORPHAN:
 		/* IKEv1 has orphans */
 		state_attach(&(*child)->sa, c->logger);
+		PEXPECT(c->logger, ike == NULL);
 		connection_delete_child(*ike, child, HERE);
 		return;
 	case WHACK_SIBLING:
@@ -303,13 +308,15 @@ static void whack_v2_states(struct connection *c,
 		return;
 	case WHACK_CUCKOO:
 		state_attach(&(*child)->sa, c->logger);
+		PEXPECT(c->logger, ike == NULL);
 		connection_delete_child(ike_sa(&(*child)->sa, HERE), child, HERE);
 		return;
 	case WHACK_ORPHAN:
 		state_attach(&(*child)->sa, c->logger);
 		llog_pexpect(c->logger, HERE, "unexpected orphan Child SA "PRI_SO,
 			     (*child)->sa.st_serialno);
-		connection_delete_child(*ike, child, HERE);
+		PEXPECT(c->logger, ike == NULL);
+		delete_child_sa(child);
 		return;
 	case WHACK_SIBLING:
 		state_attach(&(*child)->sa, c->logger);
