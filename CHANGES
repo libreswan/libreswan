@@ -2,8 +2,11 @@
 See also https://libreswan.org/
 
 v5.0 (Unreleased)
-* ipsec: Deprecate ipsec auto sub-command [Tuomo]
+* ipsec: deprecate ipsec auto sub-command [Tuomo]
   - ipsec auto --{cmd} connection -> ipsec {cmd} connection
+* ikev2: warn that fragmentation=force is ignored [Andrew]
+* whack: add --fragmentation option; change default to yes [Andrew]
+* config: fix keyexchange={ikev1,ikev2}; deprecate ikev2= [Andrew]
 * pluto: retry and revival code merged (dpdaction=, keyingtries= ignored) [Andrew]
 * pluto: IKEv1 globally disabled by default (ikev1-policy=reject) See RFCxxxx
 * pluto: avoid post-authentication crash on corrupt TS payload [Andrew]
