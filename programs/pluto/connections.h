@@ -281,7 +281,7 @@ struct config {
 
 	struct {
 		bool allow;
-		bool force;
+		bool v1_force;		/* IKEv1 only */
 	} ike_frag;
 
 	struct {

@@ -114,7 +114,8 @@ static void help(void)
 		"	[--tfc <size>] [--send-no-esp-tfc] \\\n"
 		"	[--ikev1 | --ikev2] \\\n"
 		"	[--allow-narrowing] \\\n"
-		"	[--ikefrag-allow | --ikefrag-force] [--no-ikepad] \\\n"
+		"	[--fragmentation {yes,no,force}] [--no-ikepad]  \\\n"
+		"	[--ikefrag-allow | --ikefrag-force] \\\n"
 		"	[--esn ] [--no-esn] [--decap-dscp] [--nopmtudisc] [--mobike] \\\n"
 		"	[--tcp <no|yes|fallback>] --tcp-remote-port <port>\\\n"
 #ifdef HAVE_NM
@@ -554,6 +555,7 @@ enum option_enums {
 	CD_NOPMTUDISC,
 	CD_IKEFRAG_ALLOW,
 	CD_IKEFRAG_FORCE,
+	CD_FRAGMENTATION,
 	CD_NO_ESN,
 	CD_ESN,
 	CD_INITIATEONTRAFFIC,
@@ -892,8 +894,10 @@ static const struct option long_opts[] = {
 #ifdef AUTH_HAVE_PAM
 	PS("ikev2-pam-authorize", IKEV2_PAM_AUTHORIZE),
 #endif
-	{ "ikefrag-allow", no_argument, NULL, CD_IKEFRAG_ALLOW },
-	{ "ikefrag-force", no_argument, NULL, CD_IKEFRAG_FORCE },
+	{ "ikefrag-allow", no_argument, NULL, CD_IKEFRAG_ALLOW }, /* obsolete name */
+	{ "ikefrag-force", no_argument, NULL, CD_IKEFRAG_FORCE }, /* obsolete name */
+	{ "fragmentation", required_argument, NULL, CD_FRAGMENTATION },
+
 	{ "no-ikepad", no_argument, NULL, CD_NO_IKEPAD },
 
 	{ "no-esn", no_argument, NULL, CD_NO_ESN },
@@ -1007,6 +1011,15 @@ static uintmax_t optarg_uintmax(void)
 		diagq(err, optarg);
 	}
 	return val;
+}
+
+static uintmax_t optarg_sparse(const struct sparse_name names[])
+{
+	const struct sparse_name *name = sparse_lookup(names, optarg);
+	if (name == NULL) {
+		diagq("unrecognized", optarg);
+	}
+	return name->value;
 }
 
 static void send_reply(int sock, char *buf, ssize_t len)
@@ -1846,6 +1859,13 @@ int main(int argc, char **argv)
 			msg.fragmentation = YNF_FORCE;
 			continue;
 
+		case CD_FRAGMENTATION: /* --fragmentation {yes,no,force} */
+			if (msg.fragmentation != YNF_UNSET) {
+				diagw("duplicate fragmentation option");
+			}
+			msg.fragmentation = optarg_sparse(ynf_option_names);
+			continue;
+
 		/* --nopmtudisc */
 		case CD_NOPMTUDISC:
 			msg.nopmtudisc = YN_YES;
@@ -2545,10 +2565,6 @@ int main(int argc, char **argv)
 
 	msg.child_afi = child_family.type;
 	msg.host_afi = host_family.type;
-
-	if (msg.fragmentation == YNF_UNSET) {
-		msg.fragmentation = YNF_NO; /* see github/1209 */
-	}
 
 	if (!authby_is_set(msg.authby)) {
 		/*

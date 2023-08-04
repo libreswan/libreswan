@@ -2078,25 +2078,26 @@ static diag_t extract_connection(const struct whack_message *wm,
 	if (NEVER_NEGOTIATE(wm->policy)) {
 		if (wm->fragmentation != YNF_UNSET) {
 			llog(RC_INFORMATIONAL, c->logger,
-			     "warning: never-negotiate connection ignores fragmentation=");
+			     "warning: never-negotiate connection ignores fragmentation=%s",
+			     sparse_name(ynf_option_names, wm->fragmentation));
 		}
+	} else if (wm->ike_version >= IKEv2 && wm->fragmentation == YNF_FORCE) {
+		llog(RC_INFORMATIONAL, c->logger,
+		     "warning: IKEv1 only fragmentation=%s ignored; using fragmentation=yes",
+		     sparse_name(ynf_option_names, wm->fragmentation));
+		config->ike_frag.allow = true;
 	} else {
-		bool ok = false;
 		switch (wm->fragmentation) {
 		case YNF_UNSET: /*default*/
 		case YNF_YES:
-			ok = true;
 			config->ike_frag.allow = true;
 			break;
 		case YNF_NO:
-			ok = true;
 			break;
 		case YNF_FORCE:
-			ok = true;
 			config->ike_frag.allow = true;
-			config->ike_frag.force = true;
+			config->ike_frag.v1_force = true;
 		}
-		PASSERT(c->logger, ok);
 	}
 
 	/* RFC 8229 TCP encap*/
@@ -3397,7 +3398,7 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 	CN(c->config->redirect.accept, ACCEPT_REDIRECT_YES);
 
 	CN(c->config->ike_frag.allow, IKE_FRAG_ALLOW);
-	CN(c->config->ike_frag.force, IKE_FRAG_FORCE);
+	CN(c->config->ike_frag.v1_force, IKE_FRAG_FORCE);
 
 	/* need to flip parity */
 	CN(!c->config->ikepad, NO_IKEPAD);

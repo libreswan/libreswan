@@ -170,7 +170,7 @@ static bool should_fragment_v1_ike_msg(struct state *st, size_t len, bool resend
 	    (   (resending &&
 		 st->st_connection->config->ike_frag.allow &&
 		 st->st_seen_fragmentation_supported) ||
-		st->st_connection->config->ike_frag.force ||
+		st->st_connection->config->ike_frag.v1_force ||
 		st->st_v1_seen_fragments   );
 }
 

@@ -122,6 +122,14 @@
 
       <arg choice="opt">--clientprotoport <replaceable>protocol</replaceable>/<replaceable>port</replaceable></arg>
 
+      <arg choice="opt">--fragmentation
+      <group choice="plain">
+	<arg choice="plain">yes</arg>
+	<arg choice="plain">no</arg>
+	<arg choice="plain">force</arg>
+      </group>
+      </arg>
+
       <arg choice="opt">--sourceip <replaceable>ip-address</replaceable></arg>
       <arg choice="opt">--srcip <replaceable>ip-address</replaceable></arg>
 
