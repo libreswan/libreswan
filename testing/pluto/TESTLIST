@@ -754,6 +754,7 @@ kvmplutotest	ikev2-child-rekey-10-impair-rekey-respond-subnet	good
 kvmplutotest	ikev2-expire-01-bytes		good
 kvmplutotest	ikev2-expire-02-packets		good
 kvmplutotest	ikev2-expire-03-bytes-ignore-soft			good
+kvmplutotest	ikev2-expire-04-ipcomp		good
 kvmplutotest	ikev2-child-dual-asym-01	good
 kvmplutotest	ikev2-ike-rekey-01		good
 kvmplutotest	ikev2-ike-rekey-02		good
