@@ -1,0 +1,178 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec auto --add west
+002 "west": added IKEv2 connection
+west #
+ # confirm max bytes for IPsec SA is set
+west #
+ ipsec status |grep ipsec_max_bytes
+000 "west":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2KiB; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec auto --up west
+1v2 "west" #1: initiating IKEv2 connection
+1v2 "west" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+1v2 "west" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+003 "west" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+004 "west" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE IPCOMP=>0xESPESP <0xESPESP DPD=passive}
+west #
+ # find out the actual number of packets
+west #
+ actual=$(sed -n -e 's/.* ipsec-max-bytes.* actual-limit=\([0-9]*\).*/\1/ p' /tmp/pluto.log | head -1)
+west #
+ echo $actual
+512
+west #
+ # pings will get to almost rekey, but rekey wouldn't trigger; expect
+west #
+ # ony #2 IPsec original Child SA; expression truncates but that is
+west #
+ # good enough
+west #
+ ping -n -q -c $((actual / 84)) -I 192.0.1.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+--- 192.0.2.254 ping statistics ---
+6 packets transmitted, 6 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ ipsec trafficstatus
+006 #2: "west", type=ESP, add_time=1234567890, inBytes=504, outBytes=504, maxBytes=2KiB, id='@east'
+west #
+ # next pings will go over and initiate a rekey expect only #3 IPsec
+west #
+ # first rekeyed Child SA #2 should have expired and replaced.
+west #
+ ping -n -q -c $((actual / 84)) -I 192.0.1.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+--- 192.0.2.254 ping statistics ---
+6 packets transmitted, 6 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ sleep 5
+west #
+ ipsec trafficstatus
+006 #3: "west", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2KiB, id='@east'
+west #
+ # expect only #4 IPsec second rekeyed Child SA
+west #
+ ping -n -q -c $((actual / 84)) -I 192.0.1.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+--- 192.0.2.254 ping statistics ---
+6 packets transmitted, 6 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ sleep 5
+west #
+ ipsec trafficstatus
+006 #4: "west", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2KiB, id='@east'
+west #
+ echo done
+done
+west #
+ ../../guestbin/ipsec-look.sh
+west NOW
+XFRM state:
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 0 flag esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+	sel src 0.0.0.0/0 dst 0.0.0.0/0 
+src 192.1.2.23 dst 192.1.2.45
+	proto comp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec
+	comp deflate 
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 0 flag esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+	sel src 0.0.0.0/0 dst 0.0.0.0/0 
+src 192.1.2.45 dst 192.1.2.23
+	proto comp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec
+	comp deflate 
+	lastused YYYY-MM-DD HH:MM:SS
+src 192.1.2.23 dst 192.1.2.45
+	proto 4 spi 0xSPISPI reqid 0 mode tunnel
+	replay-window 0 flag af-unspec
+	lastused YYYY-MM-DD HH:MM:SS
+src 192.1.2.45 dst 192.1.2.23
+	proto 4 spi 0xSPISPI reqid 0 mode tunnel
+	replay-window 0 flag af-unspec
+XFRM policy:
+src 192.0.1.0/24 dst 192.0.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto comp reqid REQID mode tunnel
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid REQID mode transport
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto comp reqid REQID mode tunnel
+		level use
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid REQID mode transport
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto comp reqid REQID mode tunnel
+		level use
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid REQID mode transport
+XFRM done
+IPSEC mangle TABLES
+iptables filter TABLE
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+Chain FORWARD (policy ACCEPT)
+target     prot opt source               destination         
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination         
+ROUTING TABLES
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
+192.0.2.0/24 via 192.1.2.23 dev eth1
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+west #
+ # should match only on west, exactly twice
+west #
+ grep "initiating rekey to replace Child SA" OUTPUT/$(hostname).pluto.log
+"west" #3: initiating rekey to replace Child SA #2
+"west" #4: initiating rekey to replace Child SA #3
+west #
+ # should be absent
+west #
+ grep "initiating Child SA using IKE SA" OUTPUT/$(hostname).pluto.log || echo "success"
+success
+west #
+ # should hit twice on west only
+west #
+ grep "received .* EXPIRE " OUTPUT/$(hostname).pluto.log | sed 's/for SPI 0x.*$/for SPI .../'
+"west" #2: received soft EXPIRE for outbound SPI SPISPI bytes 588 packets 7 rekey=yes; replacing
+"west" #2: received soft EXPIRE for outbound SPI SPISPI bytes 588 packets 7 rekey=yes; already soft expired
+"west" #2: received soft EXPIRE for inbound SPI SPISPI bytes 588 packets 7 rekey=yes; already soft expired
+"west" #3: received soft EXPIRE for outbound SPI SPISPI bytes 588 packets 7 rekey=yes; replacing
+"west" #3: received soft EXPIRE for outbound SPI SPISPI bytes 588 packets 7 rekey=yes; already soft expired
+"west" #3: received soft EXPIRE for inbound SPI SPISPI bytes 588 packets 7 rekey=yes; already soft expired
+west #
+ 
