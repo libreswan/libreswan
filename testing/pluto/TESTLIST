@@ -1443,6 +1443,10 @@ kvmplutotest	interop-ikev2-openbsd-01-iked-responder		openbsd
 kvmplutotest	interop-ikev2-openbsd-02-iked-initiator		openbsd
 kvmplutotest	interop-ikev2-openbsd-03-pluto-initiator	openbsd
 
+# trying to reproduce github bugs
+
+kvmplutotest	github-1210-ikev1-quick-mismatch	wip
+
 # real world interop configurations
 kvmplutotest	 elvis-is-alive				skiptest # ELVIS-PLUS IPsec test server
 kvmplutotest	 android-be-happy			skiptest # ANDROID simulator
