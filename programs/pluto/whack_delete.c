@@ -244,8 +244,6 @@ static void whack_v1_states(struct connection *c,
 		return;
 	case WHACK_CUCKOO:
 		state_attach(&(*child)->sa, c->logger);
-		llog_pexpect(c->logger, HERE, "unexpected Child SA cuckoo"PRI_SO,
-			     (*child)->sa.st_serialno);
 		send_n_log_v1_delete(&(*child)->sa, HERE);
 		connection_delete_child(*ike, child, HERE);
 		return;
@@ -305,9 +303,7 @@ static void whack_v2_states(struct connection *c,
 		return;
 	case WHACK_CUCKOO:
 		state_attach(&(*child)->sa, c->logger);
-		llog_pexpect(c->logger, HERE, "unexpected Child SA cuckoo"PRI_SO,
-			     (*child)->sa.st_serialno);
-		connection_delete_child(*ike, child, HERE);
+		connection_delete_child(ike_sa(&(*child)->sa, HERE), child, HERE);
 		return;
 	case WHACK_ORPHAN:
 		state_attach(&(*child)->sa, c->logger);
