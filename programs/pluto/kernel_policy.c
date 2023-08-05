@@ -52,6 +52,7 @@ static struct kernel_policy kernel_policy_from_void(ip_selector local, ip_select
 						    const struct sa_marks *sa_marks,
 						    const struct pluto_xfrmi *xfrmi,
 						    const shunk_t sec_label,
+						    const struct nic_offload *nic_offload,
 						    where_t where)
 {
 	const struct ip_info *child_afi = selector_info(local);
@@ -81,6 +82,7 @@ static struct kernel_policy kernel_policy_from_void(ip_selector local, ip_select
 		.xfrmi = xfrmi,
 		.sec_label = sec_label,
 		.mode = ENCAP_MODE_TRANSPORT,
+		.nic_offload = *nic_offload,
 	};
 
 	switch (direction) {
@@ -112,6 +114,7 @@ static struct kernel_policy kernel_policy_from_spd(lset_t policy,
 						   enum direction direction,
 						   enum shunt_kind shunt_kind,
 						   enum shunt_policy shunt_policy,
+						   struct nic_offload *nic_offload,
 						   where_t where)
 {
 	/*
@@ -159,6 +162,10 @@ static struct kernel_policy kernel_policy_from_spd(lset_t policy,
 		.sec_label = HUNK_AS_SHUNK(spd->connection->config->sec_label),
 		.nr_rules = 0,
 	};
+
+	if (nic_offload && nic_offload->dev)
+		kernel_policy.nic_offload = *nic_offload;
+
 
 	switch (direction) {
 	case DIRECTION_OUTBOUND:
@@ -219,6 +226,7 @@ static struct kernel_policy kernel_policy_from_state(const struct child_sa *chil
 {
 	bool tunnel = false;
 	lset_t policy = LEMPTY;
+	struct nic_offload nic_offload = {};
 
 	if (child->sa.st_ipcomp.present) {
 		policy |= POLICY_COMPRESS;
@@ -235,11 +243,13 @@ static struct kernel_policy kernel_policy_from_state(const struct child_sa *chil
 		tunnel |= (child->sa.st_ah.attrs.mode == ENCAPSULATION_MODE_TUNNEL);
 	}
 
+	setup_esp_nic_offload(&nic_offload, child->sa.st_connection, NULL);
 	enum encap_mode mode = (tunnel ? ENCAP_MODE_TUNNEL : ENCAP_MODE_TRANSPORT);
 	struct kernel_policy kernel_policy = kernel_policy_from_spd(policy,
 								    spd, mode, direction,
 								    SHUNT_KIND_IPSEC,
 								    SHUNT_IPSEC,
+								    &nic_offload,
 								    where);
 	return kernel_policy;
 }
@@ -262,10 +272,15 @@ bool add_sec_label_kernel_policy(const struct spd_route *spd,
 	PASSERT(logger, c->config->sec_label.len > 0);
 	enum encap_mode encap_mode = (c->policy & POLICY_TUNNEL ? ENCAP_MODE_TUNNEL :
 				      ENCAP_MODE_TRANSPORT);
+
+	struct nic_offload nic_offload = {};
+	setup_esp_nic_offload(&nic_offload, c, NULL);
+
 	struct kernel_policy kernel_policy =
 		kernel_policy_from_spd(c->policy, spd, encap_mode, direction,
 				       SHUNT_KIND_IPSEC,
 				       SHUNT_IPSEC,
+				       &nic_offload,
 				       where);
 	if (!kernel_ops_policy_add(KERNEL_POLICY_OP_ADD, direction,
 				   &kernel_policy.src.client,
@@ -291,6 +306,7 @@ bool add_spd_kernel_policy(const struct spd_route *spd,
 			   where_t where, const char *what)
 {
 	const struct connection *c = spd->connection;
+	struct nic_offload nic_offload = {};
 
 	PASSERT(logger, (op == KERNEL_POLICY_OP_ADD ||
 			 op == KERNEL_POLICY_OP_REPLACE));
@@ -317,6 +333,7 @@ bool add_spd_kernel_policy(const struct spd_route *spd,
 	 * _from_spd shouldn't be doing).
 	 */
 
+	setup_esp_nic_offload(&nic_offload, c, NULL);
 	struct kernel_policy kernel_policy =
 		kernel_policy_from_void(spd->local->client, spd->remote->client,
 					direction, calculate_kernel_priority(c),
@@ -324,6 +341,7 @@ bool add_spd_kernel_policy(const struct spd_route *spd,
 					spd->connection->config->shunt[shunt_kind],
 					&c->sa_marks, c->xfrmi,
 					HUNK_AS_SHUNK(c->config->sec_label),
+					&nic_offload,
 					where);
 
 	if (!kernel_ops_policy_add(op, direction,
@@ -394,7 +412,9 @@ bool replace_spd_kernel_policy(const struct spd_route *spd,
 			       where_t where, const char *what)
 {
 	struct connection *c = spd->connection;
+	struct nic_offload nic_offload = {};
 
+	setup_esp_nic_offload(&nic_offload, c, NULL);
 	selector_pair_buf spb;
 	ldbg(logger, " replacing %s",
 	     str_selector_pair(&spd->local->client, &spd->remote->client, &spb));
@@ -416,6 +436,7 @@ bool replace_spd_kernel_policy(const struct spd_route *spd,
 					spd->connection->config->shunt[shunt_kind],
 					&c->sa_marks, c->xfrmi,
 					HUNK_AS_SHUNK(c->config->sec_label),
+					&nic_offload,
 					where);
 	return add_kernel_policy(KERNEL_POLICY_OP_REPLACE, direction,
 				 &spd->local->client,
@@ -434,11 +455,13 @@ static bool restore_spd_kernel_policy(const struct spd_route *spd,
 	struct connection *c = spd->connection;
 	enum routing routing = c->child.routing;
 	enum shunt_kind shunt_kind = routing_shunt_kind(routing);
-
+	struct nic_offload nic_offload = {};
 	selector_pair_buf spb;
+
 	ldbg(logger, "%s() %s", __func__,
 	     str_selector_pair(&spd->local->client, &spd->remote->client, &spb));
 
+	setup_esp_nic_offload(&nic_offload, c, NULL);
 	struct kernel_policy kernel_policy =
 		kernel_policy_from_void(spd->local->client,
 					spd->remote->client,
@@ -448,6 +471,7 @@ static bool restore_spd_kernel_policy(const struct spd_route *spd,
 					spd->connection->config->shunt[shunt_kind],
 					&c->sa_marks, c->xfrmi,
 					HUNK_AS_SHUNK(c->config->sec_label),
+					&nic_offload,
 					where);
 	return add_kernel_policy(KERNEL_POLICY_OP_REPLACE, direction,
 				 &spd->local->client,
@@ -575,6 +599,7 @@ void add_cat_kernel_policy(const struct connection *c,
 	if (!pexpect_cat(c, logger)) {
 		return;
 	}
+
 	ip_selector local_client = selector_from_address(kernel_policy->local.host);
 	if (!add_kernel_policy(KERNEL_POLICY_OP_ADD, direction,
 			       &local_client, &kernel_policy->remote.route,
@@ -737,6 +762,7 @@ bool install_outbound_ipsec_kernel_policy(struct child_sa *child,
 bool install_bare_kernel_policy(ip_selector src, ip_selector dst,
 				enum shunt_kind shunt_kind,
 				enum shunt_policy shunt_policy,
+				const struct nic_offload *nic_offload,
 				struct logger *logger, where_t where)
 {
 	struct kernel_policy kernel_policy =
@@ -750,6 +776,7 @@ bool install_bare_kernel_policy(ip_selector src, ip_selector dst,
 					 * connection so no
 					 * security label */
 					/*sec_label*/null_shunk,
+					nic_offload,
 					where);
 	return kernel_ops_policy_add(KERNEL_POLICY_OP_REPLACE,
 				     DIRECTION_OUTBOUND,

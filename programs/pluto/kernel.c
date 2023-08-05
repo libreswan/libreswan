@@ -1095,9 +1095,11 @@ static void revert_kernel_policy(struct spd_route *spd,
 
 	ldbg(logger, "kernel: %s() restoring bare shunt", __func__);
 	struct bare_shunt *bs = *spd->wip.conflicting.shunt;
+	struct nic_offload nic_offload = {};
+	setup_esp_nic_offload(&nic_offload, c, NULL);
 	if (!install_bare_kernel_policy(bs->our_client, bs->peer_client,
 					bs->shunt_kind, bs->shunt_policy,
-					logger, HERE)) {
+					&nic_offload, logger, HERE)) {
 		llog(RC_LOG, st->st_logger,
 		     "%s() failed to restore/replace SA",
 		     __func__);
@@ -1459,7 +1461,7 @@ bool unrouted_to_routed_sec_label(enum routing_event event,
 	return true;
 }
 
-static void setup_esp_nic_offload(struct kernel_state *sa, struct connection *c,
+void setup_esp_nic_offload(struct nic_offload *nic_offload, const struct connection *c,
 		bool *nic_offload_fallback)
 {
 	if (c->config->nic_offload == offload_no ||
@@ -1475,13 +1477,14 @@ static void setup_esp_nic_offload(struct kernel_state *sa, struct connection *c,
 				c->name, c->interface->ip_dev->id_rname);
 			return;
 		}
-		*nic_offload_fallback = true;
+		if (nic_offload_fallback)
+			*nic_offload_fallback = true;
 		dbg("kernel: NIC esp-hw-offload offload for connection '%s' enabled on interface %s",
 		    c->name, c->interface->ip_dev->id_rname);
 	}
-	sa->nic_offload.dev = c->interface->ip_dev->id_rname;
-	sa->nic_offload.type = c->config->nic_offload == offload_packet ?
-		OFFLOAD_PACKET : OFFLOAD_CRYPTO;
+	nic_offload->dev = c->interface->ip_dev->id_rname;
+	nic_offload->type = (c->config->nic_offload == offload_packet) ?
+				OFFLOAD_PACKET : OFFLOAD_CRYPTO;
 }
 
 /*
@@ -1756,7 +1759,7 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 			DBG_dump_hunk("ESP integrity key:", said_next->integ_key);
 		}
 
-		setup_esp_nic_offload(said_next, c, &nic_offload_fallback);
+		setup_esp_nic_offload(&said_next->nic_offload, c, &nic_offload_fallback);
 
 		bool ret = kernel_ops_add_sa(said_next, replace, st->st_logger);
 
@@ -2885,8 +2888,11 @@ void orphan_holdpass(struct connection *c,
 	 * included?
 	 */
 
+	struct nic_offload nic_offload = {};
+	setup_esp_nic_offload(&nic_offload, c, NULL);
 	if (install_bare_kernel_policy(src, dst,
 				       SHUNT_KIND_FAILURE, c->config->shunt[SHUNT_KIND_FAILURE],
+				       &nic_offload,
 				       logger, HERE)) {
 		/*
 		 * If the bare shunt exactly matches the template,

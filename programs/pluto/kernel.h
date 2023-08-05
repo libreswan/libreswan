@@ -453,6 +453,8 @@ struct kernel_acquire {
 };
 
 void jam_kernel_acquire(struct jambuf *buf, const struct kernel_acquire *b);
+void setup_esp_nic_offload(struct nic_offload *nic_offload, const struct connection *c,
+				bool *nic_offload_fallback);
 
 const struct spd_route *bare_spd_owner(const struct spd_route *spd,
 				       struct logger *logger, where_t where);

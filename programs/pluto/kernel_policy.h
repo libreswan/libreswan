@@ -120,6 +120,7 @@ struct kernel_policy {
 	enum encap_mode mode;
 	unsigned nr_rules;
 	struct kernel_policy_rule rule[3/*IPCOMP+{ESP,AH}+PADDING*/];
+	struct nic_offload nic_offload;
 };
 
 bool add_sec_label_kernel_policy(const struct spd_route *spd,
@@ -230,6 +231,7 @@ void replace_ipsec_with_bare_kernel_policies(enum routing_event event,
 bool install_bare_kernel_policy(ip_selector src, ip_selector dst,
 				enum shunt_kind shunt_kind,
 				enum shunt_policy shunt_policy,
+				const struct nic_offload *nic_offload,
 				struct logger *logger, where_t where);
 
 #endif

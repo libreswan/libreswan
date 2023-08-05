@@ -860,6 +860,25 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 
 	}
 
+	if (policy != NULL && policy->nic_offload.dev != NULL &&
+	    policy->nic_offload.type == OFFLOAD_PACKET &&
+	    (xfrm_dir == XFRM_POLICY_IN || xfrm_dir == XFRM_POLICY_OUT)) {
+
+		const struct nic_offload *nic_offload = &policy->nic_offload;
+		struct rtattr *attr = (struct rtattr *)
+			((char *)&req + req.n.nlmsg_len);
+		struct xfrm_user_offload *xuo;
+
+		llog(RC_LOG, logger,"%s() adding offload via interface %s for IPsec policy, type: Packet",
+			__func__, nic_offload->dev);
+		attr->rta_type = XFRMA_OFFLOAD_DEV;
+		attr->rta_len = RTA_LENGTH(sizeof(*xuo));
+		xuo = RTA_DATA(attr);
+		xuo->flags = XFRM_OFFLOAD_PACKET;
+		xuo->ifindex = if_nametoindex(nic_offload->dev);
+		req.n.nlmsg_len += attr->rta_len;
+	}
+
 	/*
 	 * Add mark policy extension if present.
 	 *
