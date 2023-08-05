@@ -158,7 +158,7 @@ struct whack_message {
 
 	/* for WHACK_CONNECTION */
 
-	bool whack_replace;	/* addconn semantics */
+	bool whack_addconn;	/* addconn semantics */
 	bool whack_add;		/* whack semantics */
 	bool whack_async;
 

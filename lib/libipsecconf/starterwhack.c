@@ -501,7 +501,7 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 					struct logger *logger)
 {
 	struct whack_message msg = empty_whack_message;
-	msg.whack_replace = true;
+	msg.whack_addconn = true;
 	msg.name = connection_name(conn);
 
 	msg.host_afi = conn->left.host_family;

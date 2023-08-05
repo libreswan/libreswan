@@ -606,8 +606,8 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		dbg_whack(s, "add: stop: '%s'", (m->name == NULL ? "<null>" : m->name));
 	}
 
-	if (m->whack_replace) {
-		dbg_whack(s, "replace: start: '%s'", (m->name == NULL ? "<null>" : m->name));
+	if (m->whack_addconn) {
+		dbg_whack(s, "addconn: start: '%s'", (m->name == NULL ? "<null>" : m->name));
 		if (m->name == NULL) {
 			whack_log(RC_FATAL, s,
 				  "received command to delete a connection, but did not receive the connection name - ignored");
@@ -615,10 +615,10 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 			whack_delete(m, s);
 			add_connection(m, logger);
 		}
-		dbg_whack(s, "replace: stop: '%s'", (m->name == NULL ? "<null>" : m->name));
+		dbg_whack(s, "addconn: stop: '%s'", (m->name == NULL ? "<null>" : m->name));
 	}
 
-	if (m->redirect_to != NULL && !m->whack_add && !m->whack_replace) {
+	if (m->redirect_to != NULL && !m->whack_add && !m->whack_addconn) {
 		/*
 		 * We are redirecting all peers of one or all
 		 * connections.
