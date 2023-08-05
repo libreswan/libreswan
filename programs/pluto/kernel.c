@@ -1462,14 +1462,14 @@ bool unrouted_to_routed_sec_label(enum routing_event event,
 static void setup_esp_nic_offload(struct kernel_state *sa, struct connection *c,
 		bool *nic_offload_fallback)
 {
-	if (c->config->nic_offload == yna_no ||
+	if (c->config->nic_offload == offload_no ||
 	    c->interface == NULL || c->interface->ip_dev == NULL ||
 	    c->interface->ip_dev->id_rname == NULL) {
 		dbg("kernel: NIC esp-hw-offload disabled for connection '%s'", c->name);
 		return;
 	}
 
-	if (c->config->nic_offload == yna_auto) {
+	if (c->config->nic_offload == offload_auto) {
 		if (!c->interface->ip_dev->id_nic_offload) {
 			dbg("kernel: NIC esp-hw-offload not for connection '%s' not available on interface %s",
 				c->name, c->interface->ip_dev->id_rname);
@@ -1479,7 +1479,9 @@ static void setup_esp_nic_offload(struct kernel_state *sa, struct connection *c,
 		dbg("kernel: NIC esp-hw-offload offload for connection '%s' enabled on interface %s",
 		    c->name, c->interface->ip_dev->id_rname);
 	}
-	sa->nic_offload_dev = c->interface->ip_dev->id_rname;
+	sa->nic_offload.dev = c->interface->ip_dev->id_rname;
+	sa->nic_offload.type = c->config->nic_offload == offload_packet ?
+		OFFLOAD_PACKET : OFFLOAD_CRYPTO;
 }
 
 /*
@@ -1759,10 +1761,18 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 		bool ret = kernel_ops_add_sa(said_next, replace, st->st_logger);
 
 		if (!ret && nic_offload_fallback &&
-		    said_next->nic_offload_dev != NULL) {
-			/* Fallback to non-nic-offload crypto */
-			said_next->nic_offload_dev = NULL;
-			ret = kernel_ops_add_sa(said_next, replace, st->st_logger);
+			said_next->nic_offload.dev != NULL) {
+			/* Fallback to crypto offload from packet offload */
+			if (said_next->nic_offload.type == OFFLOAD_PACKET) {
+				said_next->nic_offload.type = OFFLOAD_CRYPTO;
+				ret = kernel_ops_add_sa(said_next, replace, st->st_logger);
+			}
+
+			if (!ret) {
+				/* Fallback to non-nic-offload crypto */
+				said_next->nic_offload.dev = NULL;
+				ret = kernel_ops_add_sa(said_next, replace, st->st_logger);
+			}
 		}
 
 		/* scrub keys from memory */

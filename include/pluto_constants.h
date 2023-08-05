@@ -824,6 +824,16 @@ enum eap_options {
 };
 
 /*
+ * Use lower case to avoid confusion with kernel options
+ */
+enum offload_options {
+	offload_auto = 1, /* will be default soon */
+	offload_no = 2, /* default for now */
+	offload_crypto = 3,
+	offload_packet = 4,
+};
+
+/*
  * Policies for establishing an SA
  *
  * These are used to specify attributes (eg. encryption) and

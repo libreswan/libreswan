@@ -105,6 +105,18 @@ enum direction {
 
 extern const struct enum_names direction_names;
 
+enum offload_type {
+	OFFLOAD_NONE,
+	OFFLOAD_CRYPTO,
+	OFFLOAD_PACKET,
+};
+
+struct nic_offload {
+	const char *dev;
+	enum offload_type type;
+};
+
+
 /*
  * The CHILD (IPsec, kernel) SA has two IP ends.
  */
@@ -178,7 +190,7 @@ struct kernel_state {
 	const char *story;
 	chunk_t sec_label;
 
-	const char *nic_offload_dev;
+	struct nic_offload nic_offload;
 	uint32_t xfrm_if_id;
 	struct sa_mark mark_set; /* config keyword mark-out */
 	uint64_t sa_ipsec_max_bytes;

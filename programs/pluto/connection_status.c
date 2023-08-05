@@ -638,9 +638,10 @@ void show_connection_status(struct show *s, const struct connection *c)
 		     c->vti_iface == NULL ? "unset" : c->vti_iface,
 		     bool_str(c->vti_routing),
 		     bool_str(c->vti_shared),
-		     (c->config->nic_offload == yna_auto ? "auto" :
-		      bool_str(c->config->nic_offload == yna_yes)));
-
+		     c->config->nic_offload == offload_auto ? "auto" :
+			c->config->nic_offload == offload_packet ? "packet" :
+			c->config->nic_offload == offload_crypto ? "crypto" :
+			"no");
 	{
 		id_buf thisidb;
 		id_buf thatidb;

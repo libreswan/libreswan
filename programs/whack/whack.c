@@ -1087,7 +1087,7 @@ int main(int argc, char **argv)
 	msg.modecfg_dns = NULL;
 	msg.modecfg_banner = NULL;
 
-	msg.nic_offload = yna_auto;
+	msg.nic_offload = offload_no; /* will be changed soon to auto */
 	msg.sa_ipsec_max_bytes = IPSEC_SA_MAX_OPERATIONS; /* max uint_64_t */
 	msg.sa_ipsec_max_packets = IPSEC_SA_MAX_OPERATIONS; /* max uint_64_t */
 	msg.sa_rekey_margin = deltatime(SA_REPLACEMENT_MARGIN_DEFAULT);
@@ -2021,13 +2021,15 @@ int main(int argc, char **argv)
 
 		case CD_NIC_OFFLOAD:  /* --nic-offload */
 			if (streq(optarg, "no"))
-				msg.nic_offload = yna_no;
-			else if (streq(optarg, "yes"))
-				msg.nic_offload = yna_yes;
+				msg.nic_offload = offload_no;
+			else if (streq(optarg, "yes") || streq(optarg, "crypto"))
+				msg.nic_offload = offload_crypto;
 			else if (streq(optarg, "auto"))
-				msg.nic_offload = yna_auto;
+				msg.nic_offload = offload_auto;
+			else if (streq(optarg, "packet"))
+				msg.nic_offload = offload_packet;
 			else
-				diagw("--nic-offload options are 'no', 'yes' or 'auto'");
+				diagw("--nic-offload options are 'auto', 'no', 'crypto' or 'packet'. For backwards compatibility, 'yes' means 'crypto'.");
 			continue;
 
 		case CD_NO_NAT_KEEPALIVE:	/* --no-nat_keepalive */

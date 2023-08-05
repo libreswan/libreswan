@@ -1425,10 +1425,18 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 	req.p.reqid = sa->reqid;
 	ldbg(logger, "%s() adding IPsec SA with reqid %d", __func__, sa->reqid);
 
-	req.p.lft.soft_byte_limit = sa->sa_max_soft_bytes;
-	req.p.lft.hard_byte_limit = sa->sa_ipsec_max_bytes;
-	req.p.lft.hard_packet_limit = sa->sa_ipsec_max_packets;
-	req.p.lft.soft_packet_limit = sa->sa_max_soft_packets;
+	if (!sa->nic_offload.dev || sa->nic_offload.type != OFFLOAD_PACKET) {
+		req.p.lft.soft_byte_limit = sa->sa_max_soft_bytes;
+		req.p.lft.hard_byte_limit = sa->sa_ipsec_max_bytes;
+		req.p.lft.hard_packet_limit = sa->sa_ipsec_max_packets;
+		req.p.lft.soft_packet_limit = sa->sa_max_soft_packets;
+	} else {
+		/* This has further FIPS implications :/ */
+		req.p.lft.soft_byte_limit = XFRM_INF;
+		req.p.lft.hard_byte_limit = XFRM_INF;
+		req.p.lft.hard_packet_limit = XFRM_INF;
+		req.p.lft.soft_packet_limit = XFRM_INF;
+	}
 
 	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.p)));
 
@@ -1687,11 +1695,12 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 	}
 #endif
 
-	if (sa->nic_offload_dev) {
+	if (sa->nic_offload.dev) {
 		struct xfrm_user_offload xuo = {
 			.flags = ((sa->direction == DIRECTION_INBOUND ? XFRM_OFFLOAD_INBOUND : 0) |
-				  (address_info(sa->src.address) == &ipv6_info ? XFRM_OFFLOAD_IPV6 : 0)),
-			.ifindex = if_nametoindex(sa->nic_offload_dev),
+				   (address_info(sa->src.address) == &ipv6_info ? XFRM_OFFLOAD_IPV6 : 0) |
+				   (sa->nic_offload.type == OFFLOAD_PACKET ? XFRM_OFFLOAD_PACKET : 0)),
+			.ifindex = if_nametoindex(sa->nic_offload.dev),
 		};
 
 		attr->rta_type = XFRMA_OFFLOAD_DEV;
@@ -1701,8 +1710,9 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 
 		req.n.nlmsg_len += attr->rta_len;
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
-		ldbg(logger, "%s() esp-hw-offload set via interface %s for IPsec SA",
-		     __func__, sa->nic_offload_dev);
+		ldbg(logger, "%s() esp-hw-offload set via interface %s for IPsec SA, type: %s",
+		     __func__, sa->nic_offload.dev,
+		     sa->nic_offload.type == OFFLOAD_PACKET ? "Packet" : "Crypto");
 	} else {
 		ldbg(logger, "%s() esp-hw-offload not set for IPsec SA", __func__);
 	}
