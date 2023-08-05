@@ -337,6 +337,7 @@ static bool pickle_whack_end(struct whackpacker *wp,
 		PICKLE_CIDR(&end->ifaceip) &&
 		PICKLE_STRING(&end->addresspool) &&
 		PICKLE_STRING(&end->subnet) &&
+		PICKLE_STRING(&end->subnets) &&
 		PICKLE_STRING(&end->sourceip) &&
 		PICKLE_STRING(&end->groundhog) &&
 		true);

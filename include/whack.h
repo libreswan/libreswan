@@ -97,6 +97,7 @@ struct whack_end {
 	ip_cidr ifaceip;
 
 	char *subnet; /* child */
+	char *subnets;	/* alias subnet expansion */
 	ip_protoport protoport;
 
 	bool key_from_DNS_on_demand;

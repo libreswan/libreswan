@@ -349,6 +349,11 @@ static bool set_whack_end(struct whack_end *w,
 		w->ifaceip = l->ifaceip;
 
 	w->subnet = l->subnet;
+
+	if (l->strings[KSCF_SUBNETS] != NULL) {
+		w->subnets = clone_str(l->strings[KSCF_SUBNETS], "subnets");
+	}
+
 	w->host_ikeport = l->options[KNCF_IKEPORT];
 	w->protoport = l->protoport;
 
