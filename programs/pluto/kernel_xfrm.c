@@ -2756,6 +2756,69 @@ static err_t xfrm_migrate_ipsec_sa_is_enabled(struct logger *logger)
 	}
 }
 
+static bool netlink_poke_ipsec_offload_policy_hole(struct nic_offload *nic_offload, struct logger *logger)
+{
+	if (nic_offload->type != OFFLOAD_PACKET)
+		return false;
+
+	struct {
+		struct nlmsghdr n;
+		struct {
+			struct xfrm_userpolicy_info p;
+			struct rtattr attr;
+			struct xfrm_user_offload uo;
+		} __attribute__((packed, aligned(4))) nlmsg;
+	} req = {
+		.n = {
+			.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK,
+			.nlmsg_type = XFRM_MSG_NEWPOLICY,
+			.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.nlmsg))),
+		},
+		.nlmsg = {
+			.p = {
+				.priority = 1, /* give admin prio 0 as override */
+				.action = XFRM_POLICY_ALLOW,
+				.share = XFRM_SHARE_ANY,
+				.dir = XFRM_POLICY_OUT,
+
+				.lft.soft_byte_limit = XFRM_INF,
+				.lft.soft_packet_limit = XFRM_INF,
+				.lft.hard_byte_limit = XFRM_INF,
+				.lft.hard_packet_limit = XFRM_INF,
+
+				.sel.proto = IPPROTO_UDP,
+				.sel.family = AF_INET,
+				.sel.sport = htons(IKE_UDP_PORT),
+				.sel.dport = htons(IKE_UDP_PORT),
+				.sel.sport_mask = 0xffff,
+				.sel.dport_mask = 0xffff,
+			},
+			.attr = {
+				.rta_type = XFRMA_OFFLOAD_DEV,
+				.rta_len = RTA_LENGTH(sizeof(req.nlmsg.uo)),
+			},
+			.uo = {
+				.flags = XFRM_OFFLOAD_PACKET,
+				.ifindex = if_nametoindex(nic_offload->dev),
+			},
+		},
+	};
+
+	char *text = "add IPv4 ike port bypass for nic-offload";
+
+	if (!sendrecv_xfrm_policy(&req.n, EXPECT_KERNEL_POLICY_OK,
+				  text, "(out)", logger, __func__))
+		return false;
+
+	text = "add IPv6 ike port bypass for nic-offload";
+	req.nlmsg.p.sel.family = AF_INET6;
+	if (!sendrecv_xfrm_policy(&req.n, EXPECT_KERNEL_POLICY_OK,
+				  text, "(out)", logger, __func__))
+		return false;
+
+	return true;
+}
+
 static bool netlink_poke_ipsec_policy_hole(int fd, const struct ip_info *afi, struct logger *logger)
 {
 	int af = afi->af;
@@ -2831,4 +2894,5 @@ const struct kernel_ops xfrm_kernel_ops = {
 	.v6holes = netlink_v6holes,
 	.poke_ipsec_policy_hole = netlink_poke_ipsec_policy_hole,
 	.detect_offload = xfrm_detect_offload,
+	.poke_ipsec_offload_policy_hole = netlink_poke_ipsec_offload_policy_hole,
 };

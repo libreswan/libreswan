@@ -337,6 +337,7 @@ struct kernel_ops {
 	void (*v6holes)(struct logger *logger);
 	bool (*poke_ipsec_policy_hole)(int fd, const struct ip_info *afi, struct logger *logger);
 	bool (*detect_offload)(const struct raw_iface *ifp, struct logger *logger);
+	bool (*poke_ipsec_offload_policy_hole)(struct nic_offload *nic_offload, struct logger *logger);
 };
 
 extern int create_socket(const struct raw_iface *ifp, const char *v_name, int port, int proto);

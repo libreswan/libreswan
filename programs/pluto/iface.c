@@ -475,6 +475,23 @@ static void add_new_ifaces(struct logger *logger)
 					    false /*float_nat_initiator*/,
 					    logger);
 		}
+
+		/*
+		 * Policy Packet nic offload requires us to poke an IPsec policy
+		 * hole that allows IKE packets. This installs one IPsec policy
+		 * per interface (that supports offload), this function is called
+		 * for port 500.
+		 */
+		if (ifd->id_nic_offload && kernel_ops->poke_ipsec_offload_policy_hole != NULL) {
+			struct nic_offload nic_offload = {
+				.dev = ifd->id_rname,
+				.type = OFFLOAD_PACKET,
+			};
+
+			if (!kernel_ops->poke_ipsec_offload_policy_hole(&nic_offload, logger))
+				llog(RC_LOG, logger, "poke_ipsec_offload_policy_hole failed");
+			/* non-fatal; stumble on */
+		}
 	}
 }
 
