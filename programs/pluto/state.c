@@ -1731,6 +1731,9 @@ static bool v2_spi_predicate(struct state *st, void *context)
 	case PROTO_IPSEC_ESP:
 		pr = &st->st_esp;
 		break;
+	case PROTO_IPCOMP:
+		pr = &st->st_ipcomp;
+		break;
 	default:
 		bad_case(filter->protoid);
 	}

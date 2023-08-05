@@ -2007,6 +2007,9 @@ static void netlink_kernel_sa_expire(struct nlmsghdr *n, struct logger *logger)
 	case  IPPROTO_AH:
 		protoid = PROTO_IPSEC_AH;
 		break;
+	case  IPPROTO_COMP:
+		protoid = PROTO_IPCOMP;
+		break;
 	default:
 		bad_case(ue->state.id.proto);
 	}
