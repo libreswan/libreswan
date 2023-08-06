@@ -331,7 +331,7 @@ void whack_addconn(const struct whack_message *wm, struct show *s)
 	 * not all instances.  An earlier delete .name=NAME message
 	 * will have purged everything (see <<ipsec>>).
 	 */
-	whack_delete(wm, s);
+	whack_delete(wm, s, /*log_unknown_name*/false);
 
 	/*
 	 * Confirm above did its job.

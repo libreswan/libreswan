@@ -402,7 +402,8 @@ static bool whack_delete_connection(struct show *s, struct connection **c,
 	return true;
 }
 
-void whack_delete(const struct whack_message *m, struct show *s)
+void whack_delete(const struct whack_message *m, struct show *s,
+		  bool log_unknown_name)
 {
 	if (m->name == NULL) {
 		whack_log(RC_FATAL, s,
@@ -416,6 +417,6 @@ void whack_delete(const struct whack_message *m, struct show *s)
 	 */
 	whack_connections_bottom_up(m, s, whack_delete_connection,
 				    (struct each) {
-					    .log_unknown_name = false,
+					    .log_unknown_name = log_unknown_name,
 				    });
 }

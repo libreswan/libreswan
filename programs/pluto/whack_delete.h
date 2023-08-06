@@ -20,6 +20,6 @@
 struct whack_message;
 struct show;
 
-void whack_delete(const struct whack_message *m, struct show *s);
+void whack_delete(const struct whack_message *m, struct show *s, bool log_unknown_name);
 
 #endif
