@@ -30,10 +30,10 @@ west #
 002 "s1-ss2/0x2": added IKEv2 connection
 west #
  ipsec auto --add s2-ss1
-036 "s2-ss1": failed to add connection: multi-selector "leftsubnet=2.2.2.1/32,2.2.2.2/32" combined with subnets=
+036 "s2-ss1": failed to add connection: multi-selector leftsubnet="2.2.2.1/32,2.2.2.2/32" combined with rightsubnets="1.1.1.1/32"
 west #
  ipsec auto --add s2-ss2
-036 "s2-ss2": failed to add connection: multi-selector "leftsubnet=2.2.2.1/32,2.2.2.2/32" combined with subnets=
+036 "s2-ss2": failed to add connection: multi-selector leftsubnet="2.2.2.1/32,2.2.2.2/32" combined with rightsubnets="1.1.1.1/32,1.1.1.2/32"
 west #
  ipsec auto --add s1ss1-s1
 002 "s1ss1-s1/0x0": added IKEv2 connection
@@ -45,9 +45,9 @@ west #
 002 "s1ss2-s1/2x0": added IKEv2 connection
 west #
  ipsec auto --add s2ss1-s1
-036 "s2ss1-s1": failed to add connection: multi-selector "leftsubnet=2.2.2.1/32,2.2.2.2/32" combined with subnets=
+036 "s2ss1-s1": failed to add connection: multi-selector leftsubnet="2.2.2.1/32,2.2.2.2/32" combined with leftsubnets="2.2.2.3/32"
 west #
  ipsec auto --add s2ss2-s1
-036 "s2ss2-s1": failed to add connection: multi-selector "leftsubnet=2.2.2.1/32,2.2.2.2/32" combined with subnets=
+036 "s2ss2-s1": failed to add connection: multi-selector leftsubnet="2.2.2.1/32,2.2.2.2/32" combined with leftsubnets="2.2.2.3/32,2.2.2.4/32"
 west #
  
