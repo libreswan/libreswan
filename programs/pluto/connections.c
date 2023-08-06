@@ -3122,17 +3122,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 void add_connection(const struct whack_message *wm, struct logger *logger)
 {
-	/*
-	 * Check for duplicate before allocating; otherwise the lookup
-	 * will return the just allocated connection missing the
-	 * original.
-	 */
-	if (connection_with_name_exists(wm->name)) {
-		llog(RC_DUPNAME, logger,
-		     "attempt to redefine connection \"%s\"", wm->name);
-		return;
-	}
-
 	/* will inherit defaults */
 	lset_t debugging = lmod(LEMPTY, wm->debugging);
 	struct connection *c = alloc_connection(wm->name,

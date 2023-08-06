@@ -65,6 +65,8 @@
 #include "whack_trafficstatus.h"
 #include "whack_down.h"
 #include "whack_route.h"
+#include "whack_add.h"
+#include "whack_addconn.h"
 
 static void whack_rereadsecrets(struct show *s)
 {
@@ -597,24 +599,13 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 
 	if (m->whack_add) {
 		dbg_whack(s, "add: start: '%s'", (m->name == NULL ? "<null>" : m->name));
-		if (m->name == NULL) {
-			whack_log(RC_FATAL, s,
-				  "received whack command to delete a connection, but did not receive the connection name - ignored");
-		} else {
-			add_connection(m, logger);
-		}
+		whack_add(m, s);
 		dbg_whack(s, "add: stop: '%s'", (m->name == NULL ? "<null>" : m->name));
 	}
 
 	if (m->whack_addconn) {
 		dbg_whack(s, "addconn: start: '%s'", (m->name == NULL ? "<null>" : m->name));
-		if (m->name == NULL) {
-			whack_log(RC_FATAL, s,
-				  "received command to delete a connection, but did not receive the connection name - ignored");
-		} else {
-			whack_delete(m, s);
-			add_connection(m, logger);
-		}
+		whack_addconn(m, s);
 		dbg_whack(s, "addconn: stop: '%s'", (m->name == NULL ? "<null>" : m->name));
 	}
 
