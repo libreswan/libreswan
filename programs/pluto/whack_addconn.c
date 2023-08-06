@@ -286,16 +286,10 @@ static void add_connections(const struct whack_message *wm, struct logger *logge
 				continue;
 			}
 			/* have subnets=.. and subnet=a,b... */
-#if 0
 			llog(RC_FATAL, logger,
 			     CONNECTION_ADD_FAILED(wm, "multi-selector %ssubnet=\"%s\" combined with %ssubnets=\"%s\""),
 			     subnet->leftright, subnet->subnet,
 			     subnets->leftright, subnets->subnets);
-#else
-			llog(RC_FATAL, logger,
-			     CONNECTION_ADD_FAILED(wm, "multi-selector \"%ssubnet=%s\" combined with subnets="),
-			     subnet->leftright, subnet->subnet);
-#endif
 			return;
 		}
 	}
