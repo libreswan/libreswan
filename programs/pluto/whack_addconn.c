@@ -181,19 +181,25 @@ static void permutate_connection_subnets(const struct whack_message *wm,
 		do {
 
 			/*
-			 * copy conn --- we can borrow all pointers,
-			 * since this is a temporary copy.
+			 * whack message --- we can borrow all
+			 * pointers, since this is a temporary copy.
 			 */
 			struct whack_message wam = *wm;
 			wam.connalias = wm->name;
+
+			/*
+			 * Preserve old ADDCONN behaviour of only
+			 * providing subnet= for now.
+			 */
 			wam.left.subnets = NULL;
 			wam.right.subnets = NULL;
 
 			/*
-			 * Build a new conn name by appending
+			 * Build a new connection name by appending
 			 * /<left-nr>x<right-nr>.
 			 *
-			 * When using subnet= NR==0.
+			 * When the connection also contained subnet=,
+			 * that has NR==0.
 			 */
 			char tmpconnname[256];
 			snprintf(tmpconnname, sizeof(tmpconnname), "%s/%ux%u",
@@ -206,7 +212,8 @@ static void permutate_connection_subnets(const struct whack_message *wm,
 			 * properly, make sure that has_client
 			 * is set.
 			 *
-			 * XXX: LB and RB are same scope as SC.
+			 * Danger: LB and RB must be the same scope as
+			 * WAM.
 			 */
 			subnet_buf lb, rb;
 			str_subnet(&left.subnet, &lb);
@@ -216,25 +223,22 @@ static void permutate_connection_subnets(const struct whack_message *wm,
 
 			/*
 			 * Either .subnet is !.is_set or is valid.
+			 * {left,right}_afi can be NULL.
 			 */
 			const struct ip_info *left_afi = subnet_info(left.subnet);
 			const struct ip_info *right_afi = subnet_info(right.subnet);
 			if (left_afi == right_afi ||
-			    left_afi == NULL || right_afi == NULL) {
+			    left_afi == NULL ||
+			    right_afi == NULL) {
 				if (!add_connection(&wam, logger)) {
 					return;
 				}
 			} else {
-				/*
-				 * XXX: avoid test churn by only
-				 * sending to the file.
-				 */
-				subnet_buf lb, rb;
-				llog(LOG_STREAM|RC_LOG, logger,
-				     "\"%s\": skipping mismatched leftsubnets=%s rightsubnets=%s",
-				     wm->name,
-				     str_subnet(&left.subnet, &lb),
-				     str_subnet(&right.subnet, &rb));
+				PASSERT(logger, (wam.left.subnet != NULL &&
+						 wam.right.subnet != NULL));
+				llog(RC_LOG, logger,
+				     "\"%s\": warning: skipping mismatched leftsubnets=%s rightsubnets=%s",
+				     wm->name, wam.left.subnet, wam.right.subnet);
 			}
 
 			/*
@@ -263,20 +267,16 @@ static void permutate_connection_subnets(const struct whack_message *wm,
 
 static void add_connections(const struct whack_message *wm, struct logger *logger)
 {
-	/* basic case, nothing special to synthize! */
-	if (wm->left.subnets == NULL && wm->right.subnets == NULL) {
-		add_connection(wm, logger);
-		return;
-	}
-
 	/*
 	 * Reject {left,right}subnets=... combined with
 	 * {left,right}subnet=a,b
 	 */
+	bool have_subnets = false;
 	FOR_EACH_THING(subnets, &wm->left, &wm->right) {
 		if (subnets->subnets == NULL) {
 			continue;
 		}
+		have_subnets = true;
 		/* have subnets=... */
 		FOR_EACH_THING(subnet, &wm->left, &wm->right) {
 			if (subnet->subnet == NULL) {
@@ -292,6 +292,12 @@ static void add_connections(const struct whack_message *wm, struct logger *logge
 			     subnets->leftright, subnets->subnets);
 			return;
 		}
+	}
+
+	/* basic case, nothing special to synthize! */
+	if (!have_subnets) {
+		add_connection(wm, logger);
+		return;
 	}
 
 	struct subnets first_left = {0};
