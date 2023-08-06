@@ -107,22 +107,9 @@ ipsec_add() {
 	esac
 	shift
     done
-    # First, tell pluto to delete all connections with name or alias
-    # matching NAME.  The alias check is to ensure that a connection
-    # with subnets=..., and expanded then added as NAME/0x0, NAME/0x1,
-    # et.al., is deleted using the common alias.
-    if [ -z "${checkconfig}" ] ; then
-	# skip when --checkconfig
-	${dry_run} "${IPSEC_EXECDIR}/whack" --ctlsocket "${CTLSOCKET}" --name ${conn_name} --delete
-    fi
-    # Second, tell pluto to add the new connection called NAME or, in
-    # the case of subnets=), the new connections called NAME/1x1,
-    # NAME/2x2, ...
-    #
-    # Note: pluto will also delete any existing connection.  For
-    # subnets= that will be NAME/1x1 et.al. It can't delete
-    # connections with alias NAME as that would wipe out the other
-    # aliases just added).
+    # addconn performs a replace.  FIrst it deletes all connections
+    # and aliases matching ${conn_name} and then creates a new
+    # connection or aliases.
     ${dry_run} "${IPSEC_EXECDIR}/addconn" --config "${IPSEC_CONF}" --ctlsocket "${CTLSOCKET}" ${checkconfig} ${verbose} ${conn_name}
     exit $?
 }
