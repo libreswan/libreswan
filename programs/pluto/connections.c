@@ -557,8 +557,6 @@ static diag_t extract_host_afi(const struct whack_message *wm,
 	return NULL;
 }
 
-#define ADD_FAILED_PREFIX "failed to add connection: "
-
 static diag_t extract_host_end(struct connection *c, /* for POOL */
 			       struct host_end *host,
 			       struct host_end_config *host_config,
@@ -1208,13 +1206,6 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 		ldbg(logger, "%s child selectors unknown; probably derived from host?!?",
 		     leftright);
 	}
-
-	if (child_selectors->len > 1 && wm->connalias != NULL) {
-		/* XXX: don't know which end has subnets= */
-		return diag("multi-selector \"%ssubnet=%s\" combined with subnets=",
-			    leftright, src->subnet);
-	}
-
 
 	/*
 	 * Also extract .virt.
@@ -3120,7 +3111,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	return NULL;
 }
 
-void add_connection(const struct whack_message *wm, struct logger *logger)
+bool add_connection(const struct whack_message *wm, struct logger *logger)
 {
 	/* will inherit defaults */
 	lset_t debugging = lmod(LEMPTY, wm->debugging);
@@ -3133,7 +3124,7 @@ void add_connection(const struct whack_message *wm, struct logger *logger)
 	if (d != NULL) {
 		llog_diag(RC_FATAL, c->logger, &d, ADD_FAILED_PREFIX);
 		discard_connection(&c, false/*not-valid*/);
-		return;
+		return false;
 	}
 
 	/* log all about this connection */
@@ -3169,6 +3160,7 @@ void add_connection(const struct whack_message *wm, struct logger *logger)
 	spd_buf spdb;
 	dbg("%s", str_spd(c->spd, &spdb));
 	release_whack(c->logger, HERE);
+	return true;
 }
 
 /* priority formatting */

@@ -501,9 +501,9 @@ static void conn_log_val(const struct starter_conn *conn,
 	}
 }
 
-static int starter_whack_basic_add_conn(struct starter_config *cfg,
-					const struct starter_conn *conn,
-					struct logger *logger)
+int starter_whack_add_conn(struct starter_config *cfg,
+			   const struct starter_conn *conn,
+			   struct logger *logger)
 {
 	struct whack_message msg = empty_whack_message;
 	msg.whack_addconn = true;
@@ -975,34 +975,6 @@ static int starter_permutate_conns(int
 	}
 
 	return 0;	/* success. */
-}
-
-int starter_whack_add_conn(struct starter_config *cfg,
-			   const struct starter_conn *starter_conn,
-			   struct logger *logger)
-{
-	/* basic case, nothing special to synthize! */
-	if (!starter_conn->left.strings_set[KSCF_SUBNETS] &&
-	    !starter_conn->right.strings_set[KSCF_SUBNETS])
-		return starter_whack_basic_add_conn(cfg, starter_conn, logger);
-
-	/* trying to do subnets aka aliases */
-	struct starter_conn alias_conn = *starter_conn;
-	alias_conn.connalias = starter_conn->name;
-
-	/*
-	 * Throw subnet=a,b pluto which will see CONNALIAS != NULL and
-	 * reject things.
-	 */
-	FOR_EACH_THING(end, &alias_conn.left, &alias_conn.right) {
-		if (end->strings_set[KSCF_SUBNET] &&
-		    strchr(end->strings[KSCF_SUBNET], ',') != NULL) {
-			return starter_whack_basic_add_conn(cfg, &alias_conn, logger);
-		}
-	}
-
-	return starter_permutate_conns(starter_whack_basic_add_conn,
-				       cfg, &alias_conn, logger);
 }
 
 static int starter_whack_basic_route_conn(struct starter_config *cfg,
