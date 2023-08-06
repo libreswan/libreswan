@@ -1400,6 +1400,9 @@ kvm-purge: kvm-clean
 kvm-purge: kvm-downgrade
 	rm -f $(KVM_HOST_OK)
 
+$(patsubst %, kvm-purge-%, $(KVM_PLATFORM)): \
+kvm-purge-%: kvm-clean kvm-downgrade-%
+
 $(patsubst %, kvm-uninstall-%, $(KVM_PLATFORM)): \
 kvm-uninstall-%:
 	: $@

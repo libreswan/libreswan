@@ -106,15 +106,16 @@ pass2help()
     recheck [ <test-directory> ... ]
 	re-run the testsuite
     clean
-	clean the test environment (delete test and build domains and
-	build trees)
+	clean the test environment
+	- delete test and build domains
+	- delete test results
     check-clean
 	delete the test results (leave the build trees and domains alone)
     keys
 	update the keys used for testing
 
-    purge
-	delete build and test domains
+    purge[-PLATFORM]
+	delete all but base domains
 	delete any build trees
 	delete any keys
 
@@ -479,7 +480,7 @@ for op in "${ops[@]}" ; do
 	kill ) ${gnumake} kvm-${op} ;;
 	base* | upgrade* | transmogrify* | build* | install* | \
         shutdown* | uninstall* | downgrade* | demolish* | \
-        status | check-clean | clean )
+        status | check-clean | clean | purge* )
 	    echo ${gnumake} kvm-${op}
 	    ${gnumake} kvm-${op} || exit $?
 	    ;;
