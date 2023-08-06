@@ -13,6 +13,8 @@ road #
  ipsec auto --add road
 002 "road/1x1": connection is using multiple sourceips
 002 "road/1x1": added IKEv2 connection
+002 "road": warning: skipping mismatched leftsubnets=192.0.3.0/24 rightsubnets=2001:db8:0:20::/64
+002 "road": warning: skipping mismatched leftsubnets=2001:db8:0:30::/64 rightsubnets=192.0.2.0/24
 002 "road/2x2": connection is using multiple sourceips
 002 "road/2x2": added IKEv2 connection
 road #
