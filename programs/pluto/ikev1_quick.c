@@ -1933,6 +1933,11 @@ static struct connection *fc_try(const struct connection *c,
 				 const ip_selector *local_client,
 				 const ip_selector *remote_client)
 {
+	if (selector_is_unset(local_client) ||
+	    selector_is_unset(remote_client)) {
+		return NULL;
+	}
+
 	struct connection *best = NULL;
 	connection_priority_t best_prio = BOTTOM_PRIORITY;
 	const bool remote_is_host = selector_eq_address(*remote_client,
@@ -2119,6 +2124,11 @@ static struct connection *fc_try_oppo(const struct connection *c,
 				      const ip_selector *local_client,
 				      const ip_selector *remote_client)
 {
+	if (selector_is_unset(local_client) ||
+	    selector_is_unset(remote_client)) {
+		return NULL;
+	}
+
 	struct connection *best = NULL;
 	connection_priority_t best_prio = BOTTOM_PRIORITY;
 
@@ -2240,6 +2250,16 @@ struct connection *find_v1_client_connection(struct connection *const c,
 		DBG_log("find_v1_client_connection starting with %s", c->name);
 		DBG_log("  looking for %s",
 			str_selector_pair(local_client, remote_client, &sb));
+	}
+
+	if (selector_is_unset(local_client)) {
+		dbg("peer's local client is not set");
+		return NULL;
+	}
+
+	if (selector_is_unset(remote_client)) {
+		dbg("peer's remote client is not set");
+		return NULL;
 	}
 
 	/*
