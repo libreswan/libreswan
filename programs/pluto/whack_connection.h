@@ -18,6 +18,10 @@
 
 #include <stdbool.h>
 
+#include "where.h"
+
+struct child_sa;
+struct ike_sa;
 struct connection;
 struct whack_message;
 struct show;
@@ -54,5 +58,61 @@ void whack_connections_bottom_up(const struct whack_message *m, struct show *s,
 				  struct connection **c,
 				  const struct whack_message *m),
 				 struct each each);
+
+/*
+ * Whack each of a connection's states in turn.
+ */
+
+enum whack_state {
+	/*
+	 * When connection has an established IKE SA.
+	 */
+	WHACK_START_IKE,
+	/*
+	 * Random stuff that gets in the way; typically just blown
+	 * away.  These are returned in no particular order.
+	 *
+	 * The lurking IKE includes the larval IKE SA from a failed
+	 * establish.
+	 */
+	WHACK_LURKING_IKE,
+	WHACK_LURKING_CHILD,
+	/*
+	 * The connection's Child SA.
+	 *
+	 * A child still has its IKE SA.  An orphan lost its IKE SA
+	 * (IKEv1) and a cuckoo is the child of someother IKE SA
+	 * (which may or may not exist).
+	 *
+	 * This is returned before any siblings so that it gets
+	 * priority for things like revival.
+	 */
+	WHACK_CHILD,
+	WHACK_ORPHAN,
+	WHACK_CUCKOO,
+	/*
+	 * Any IKE SA children that are not for the current
+	 * connection.
+	 *
+	 * This is the reverse of a CUCKOO.
+	 */
+	WHACK_SIBLING,
+	/*
+	 * When the connection has no Child SA, or the connection's
+	 * Child SA is for another IKE SA (ever the case?).
+	 */
+	WHACK_IKE,
+	/* finally */
+	WHACK_STOP_IKE,
+};
+
+void whack_connection_states(struct connection *c,
+			     void (whack)(struct connection *c,
+					  struct ike_sa **ike,
+					  struct child_sa **child,
+					  enum whack_state),
+			     where_t where);
+
+void whack_connection_delete_states(struct connection *c, where_t where);
 
 #endif
