@@ -77,7 +77,7 @@ You can also pick a specific spec file. For example, to build for CentOS8,
 use: rpmbuild -ba packaging/centos/8/libreswan.spec
 
 ## Building for DEB based systems
-The packaging/debian directly is used to build deb files. Simply issue the
+The packaging/debian directory is used to build deb files. Simply issue the
 command: make deb
 
 ## Compiling the userland and IKE daemon manually in /usr/local
