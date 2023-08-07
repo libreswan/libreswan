@@ -289,6 +289,11 @@ struct config {
 		bool no;
 	} esn;		/* accept or request ESN{yes,no} */
 
+	struct {
+		bool allow;
+		bool insist;
+	} ppk;
+
 	struct config_end end[END_ROOF];
 };
 

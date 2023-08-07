@@ -1260,30 +1260,6 @@ static bool load_conn(struct starter_conn *conn,
 		}
 	}
 
-	if (conn->options_set[KNCF_PPK]) {
-		lset_t ppk = LEMPTY;
-
-		if (conn->ike_version >= IKEv2) {
-			switch (conn->options[KNCF_PPK]) {
-			case fo_propose:
-				ppk = POLICY_PPK_ALLOW;
-				break;
-
-			case fo_permit:
-				ppk = POLICY_PPK_ALLOW;
-				break;
-
-			case fo_insist:
-				ppk = POLICY_PPK_ALLOW | POLICY_PPK_INSIST;
-				break;
-
-			case fo_never:
-				break;
-			}
-		}
-		conn->policy = conn->policy | ppk;
-	}
-
 	/*
 	 * Read in the authby= string and translate to policy bits.
 	 *

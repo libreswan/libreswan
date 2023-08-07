@@ -2353,6 +2353,29 @@ static diag_t extract_connection(const struct whack_message *wm,
 		}
 	}
 
+	if (wm->ike_version == IKEv1) {
+		if (wm->ppk != NPPI_UNSET) {
+			sparse_buf sb;
+			llog(RC_INFORMATIONAL, c->logger,
+			     "warning: ignoring ppk=%s as IKEv1",
+			     str_sparse(nppi_option_names, wm->ppk, &sb));
+		}
+	} else {
+		switch (wm->ppk) {
+		case NPPI_UNSET:
+		case NPPI_NEVER:
+			break;
+		case NPPI_PERMIT:
+		case NPPI_PROPOSE:
+			config->ppk.allow = true;
+			break;
+		case NPPI_INSIST:
+			config->ppk.allow = true;
+			config->ppk.insist = true;
+			break;
+		}
+	}
+
 	connection_buf cb;
 	policy_buf pb;
 	dbg("added new %s connection "PRI_CONNECTION" with policy %s",
@@ -3385,8 +3408,8 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 	CN(!c->config->ikepad, NO_IKEPAD);
 
 	CP(mobike);
-	PP(PPK_ALLOW);
-	PP(PPK_INSIST);
+	CN(c->config->ppk.allow, PPK_ALLOW);
+	CN(c->config->ppk.insist, PPK_INSIST);
 	CN(c->config->esn.no, ESN_NO);
 	CN(c->config->esn.yes, ESN_YES);
 	CP(intermediate);

@@ -203,6 +203,7 @@ struct whack_message {
 	enum yn_options nopmtudisc;	/* ??? */
 	enum ynf_options fragmentation;	/* fragment IKE payload */
 	enum yne_options esn;		/* accept or request ESN{yes,no} */
+	enum nppi_options ppk;		/* pre-shared post-quantum key */
 
 	uintmax_t sa_ipsec_max_bytes;
 	uintmax_t sa_ipsec_max_packets;

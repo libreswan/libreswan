@@ -119,19 +119,6 @@ static const struct sparse_name kw_ikev2_list[] = {
 	SPARSE_NULL
 };
 
-/*
- * Values for Four-State options, used for ppk=
- */
-static const struct sparse_name kw_fourvalued_list[] = {
-	{ "never",     fo_never },
-	{ "permit",    fo_permit },
-	{ "propose",   fo_propose },
-	{ "insist",    fo_insist },
-	{ "always",    fo_insist },
-	YES_NO(fo_propose, fo_never),
-	SPARSE_NULL
-};
-
 #ifdef USE_XFRM_INTERFACE
 /* Values for no/yes, used by ipsec-interface */
 static const struct sparse_name kw_yndev_list[] = {
@@ -495,7 +482,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "authby",  kv_conn,  kt_string,  KSCF_AUTHBY, NULL, NULL, },
   { "keyexchange",  kv_conn,  kt_enum,  KNCF_KEYEXCHANGE,  kw_keyexchange_list, NULL, },
   { "ikev2",  kv_conn | kv_processed,  kt_enum,  KNCF_IKEv2,  kw_ikev2_list, NULL, },
-  { "ppk", kv_conn | kv_processed, kt_enum, KNCF_PPK, kw_fourvalued_list, NULL, },
+  { "ppk", kv_conn | kv_processed, kt_enum, KNCF_PPK, nppi_option_names, NULL, },
   { "ppk-ids", kv_conn | kv_processed, kt_string, KSCF_PPKIDS, NULL, NULL, },
   { "intermediate",  kv_conn | kv_processed, kt_enum, KNCF_INTERMEDIATE, yn_option_names, NULL, },
   { "esn",  kv_conn | kv_processed,  kt_enum,  KNCF_ESN,  yne_option_names, NULL, },

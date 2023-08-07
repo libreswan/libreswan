@@ -76,3 +76,17 @@ const struct sparse_name yne_option_names[] = {
 	{ "either",	YNE_EITHER },
 	SPARSE_NULL
 };
+
+/*
+ * Values for Four-State options, used for ppk=
+ */
+
+const struct sparse_name nppi_option_names[] = {
+	{ "never",     NPPI_NEVER },
+	{ "permit",    NPPI_PERMIT },
+	{ "propose",   NPPI_PROPOSE },
+	{ "insist",    NPPI_INSIST },
+	{ "always",    NPPI_INSIST },
+	YES_NO(NPPI_PROPOSE, NPPI_NEVER),
+	SPARSE_NULL
+};

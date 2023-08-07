@@ -771,12 +771,15 @@ enum ikev1_natt_policy {
 	NATT_NONE = 3 /* Workaround for forcing non-encaps */
 };
 
-enum four_options {
-	fo_never   = 0,         /* do not propose, do not permit */
-	fo_permit  = 1,         /* do not propose, but permit peer to propose */
-	fo_propose = 2,         /* propose, and permit, but do not insist */
-	fo_insist  = 3          /* propose, and only accept if peer agrees */
+enum nppi_options {
+	NPPI_UNSET = 0,
+	NPPI_NEVER,		/* do not propose, do not permit */
+	NPPI_PERMIT,		/* do not propose, but permit peer to propose */
+	NPPI_PROPOSE,		/* propose, and permit, but do not insist */
+	NPPI_INSIST		/* propose, and only accept if peer agrees */
 };
+
+extern const struct sparse_name nppi_option_names[];
 
 enum ynf_options {
 	YNF_UNSET = 0,
@@ -915,10 +918,7 @@ enum sa_policy_bits {
 #define POLICY_SEND_REDIRECT_MASK					\
 	LRANGE(POLICY_SEND_REDIRECT_ALWAYS_IX, POLICY_SEND_REDIRECT_NEVER_IX)
 
-	POLICY_PPK_ALLOW_IX,
-	POLICY_PPK_INSIST_IX,
-
-#define POLICY_IX_LAST	POLICY_PPK_INSIST_IX
+#define POLICY_IX_LAST	POLICY_SEND_REDIRECT_NEVER_IX
 };
 
 #define POLICY_ENCRYPT	LELEM(POLICY_ENCRYPT_IX)	/* must be first of IPSEC policies */
@@ -932,8 +932,6 @@ enum sa_policy_bits {
 #define POLICY_UP	LELEM(POLICY_UP_IX)	/* do we want to keep this connection up? */
 #define POLICY_SEND_REDIRECT_ALWAYS	LELEM(POLICY_SEND_REDIRECT_ALWAYS_IX)
 #define POLICY_SEND_REDIRECT_NEVER	LELEM(POLICY_SEND_REDIRECT_NEVER_IX)
-#define POLICY_PPK_ALLOW	LELEM(POLICY_PPK_ALLOW_IX)
-#define POLICY_PPK_INSIST	LELEM(POLICY_PPK_INSIST_IX)
 
 /*
  * RFC 7427 Signature Hash Algorithm exchang

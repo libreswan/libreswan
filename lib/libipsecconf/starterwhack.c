@@ -693,6 +693,7 @@ int starter_whack_add_conn(struct starter_config *cfg,
 	msg.accept_redirect = conn->options[KNCF_ACCEPT_REDIRECT]; /* yn_options */
 	msg.fragmentation = conn->options[KNCF_FRAGMENTATION]; /* yna_options */
 	msg.esn = conn->options[KNCF_ESN]; /* yne_options */
+	msg.ppk = conn->options[KNCF_PPK]; /* nppi_options */
 
 	if (conn->options_set[KNCF_XAUTHBY])
 		msg.xauthby = conn->options[KNCF_XAUTHBY];

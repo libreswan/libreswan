@@ -117,7 +117,7 @@ stf_status initiate_v2_IKE_AUTH_request(struct ike_sa *ike, struct msg_digest *m
 	 * Stash the no-ppk keys in st_skey_*_no_ppk, and then
 	 * scramble the st_skey_* keys with PPK.
 	 */
-	if (LIN(POLICY_PPK_ALLOW, pc->policy) && ike->sa.st_seen_ppk) {
+	if (pc->config->ppk.allow && ike->sa.st_seen_ppk) {
 		chunk_t *ppk_id;
 		const chunk_t *ppk = get_connection_ppk_initiator(ike->sa.st_connection, &ppk_id);
 
@@ -141,7 +141,7 @@ stf_status initiate_v2_IKE_AUTH_request(struct ike_sa *ike, struct msg_digest *m
 			llog_sa(RC_LOG, ike,
 				  "PPK AUTH calculated as initiator");
 		} else {
-			if (pc->policy & POLICY_PPK_INSIST) {
+			if (pc->config->ppk.insist) {
 				llog_sa(RC_LOG_SERIOUS, ike,
 					  "connection requires PPK, but we didn't find one");
 				return STF_FATAL;
@@ -173,7 +173,7 @@ stf_status initiate_v2_IKE_AUTH_request(struct ike_sa *ike, struct msg_digest *m
 	ike->sa.st_v2_id_payload.mac = v2_hash_id_payload("IDi", ike,
 							  "st_skey_pi_nss",
 							  ike->sa.st_skey_pi_nss);
-	if (ike->sa.st_seen_ppk && !LIN(POLICY_PPK_INSIST, pc->policy)) {
+	if (ike->sa.st_seen_ppk && !pc->config->ppk.insist) {
 		/* ID payload that we've build is the same */
 		ike->sa.st_v2_id_payload.mac_no_ppk_auth =
 			v2_hash_id_payload("IDi (no-PPK)", ike,
@@ -485,7 +485,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 		}
 		close_output_pbs(&ppks);
 
-		if (!LIN(POLICY_PPK_INSIST, cc->policy)) {
+		if (!cc->config->ppk.insist) {
 			if (!ikev2_calc_no_ppk_auth(ike, &ike->sa.st_v2_id_payload.mac_no_ppk_auth,
 						    &ike->sa.st_no_ppk_auth)) {
 				dbg("ikev2_calc_no_ppk_auth() failed dying");
@@ -646,7 +646,7 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 		return STF_FATAL;
 	}
 
-	lset_t policy = ike->sa.st_connection->policy;
+	const struct connection *c = ike->sa.st_connection;
 	bool found_ppk = false;
 
 	/*
@@ -669,7 +669,7 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 			found_ppk = true;
 		}
 
-		if (found_ppk && LIN(POLICY_PPK_ALLOW, policy)) {
+		if (found_ppk && c->config->ppk.allow) {
 			ppk_recalculate(ppk, ike->sa.st_oakley.ta_prf,
 					&ike->sa.st_skey_d_nss,
 					&ike->sa.st_skey_pi_nss,
@@ -685,7 +685,7 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 	}
 	if (md->pd[PD_v2N_NO_PPK_AUTH] != NULL) {
 		dbg("received NO_PPK_AUTH");
-		if (LIN(POLICY_PPK_INSIST, policy)) {
+		if (c->config->ppk.insist) {
 			dbg("Ignored NO_PPK_AUTH data - connection insists on PPK");
 		} else {
 			struct pbs_in pbs = md->pd[PD_v2N_NO_PPK_AUTH]->pbs;
@@ -707,10 +707,11 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 	 * If we found proper PPK ID and policy allows PPK, use that.
 	 * Otherwise use NO_PPK_AUTH
 	 */
-	if (found_ppk && LIN(POLICY_PPK_ALLOW, policy))
+	if (found_ppk && c->config->ppk.allow) {
 		free_chunk_content(&ike->sa.st_no_ppk_auth);
+	}
 
-	if (!found_ppk && LIN(POLICY_PPK_INSIST, policy)) {
+	if (!found_ppk && c->config->ppk.insist) {
 		llog_sa(RC_LOG_SERIOUS, ike, "Requested PPK_ID not found and connection requires a valid PPK");
 		record_v2N_response(ike->sa.st_logger, ike, md,
 				    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
@@ -1315,12 +1316,12 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 	passert(that_authby != AUTH_NEVER && that_authby != AUTH_UNSET);
 
 	if (md->pd[PD_v2N_PPK_IDENTITY] != NULL) {
-		if (!LIN(POLICY_PPK_ALLOW, c->policy)) {
+		if (!c->config->ppk.allow) {
 			llog_sa(RC_LOG_SERIOUS, ike, "received PPK_IDENTITY but connection does not allow PPK");
 			return STF_FATAL;
 		}
 	} else {
-		if (LIN(POLICY_PPK_INSIST, c->policy)) {
+		if (c->config->ppk.insist) {
 			llog_sa(RC_LOG_SERIOUS, ike,
 				"failed to receive PPK confirmation and connection has ppk=insist");
 			dbg("should be initiating a notify that kills the state");
@@ -1337,7 +1338,7 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 	 */
 	if (ike->sa.st_seen_ppk &&
 	    md->pd[PD_v2N_PPK_IDENTITY] == NULL &&
-	    LIN(POLICY_PPK_ALLOW, c->policy)) {
+	    c->config->ppk.allow) {
 		/* discard the PPK based calculations */
 
 		llog_sa(RC_LOG, ike, "peer wants to continue without PPK - switching to NO_PPK");

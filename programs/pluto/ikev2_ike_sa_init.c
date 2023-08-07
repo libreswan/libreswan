@@ -804,7 +804,7 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 	}
 
 	/* Send USE_PPK Notify payload */
-	if (LIN(POLICY_PPK_ALLOW, c->policy)) {
+	if (c->config->ppk.allow) {
 		if (!emit_v2N(v2N_USE_PPK, request.pbs))
 			return false;
 	}

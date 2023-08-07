@@ -442,13 +442,17 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 		cwf("auto", dsn);
 	}
 
+	if (conn->options[KNCF_PPK] != NPPI_UNSET) {
+		sparse_buf sb;
+		cwf("ppk", str_sparse(nppi_option_names, conn->options[KNCF_PPK], &sb));
+	}
+
 	if (conn->policy != LEMPTY ||
 	    conn->never_negotiate_shunt != SHUNT_UNSET) {
 		lset_t phase2_policy =
 			(conn->policy &
 			 (POLICY_AUTHENTICATE | POLICY_ENCRYPT));
 		enum shunt_policy shunt_policy = conn->never_negotiate_shunt;
-		lset_t ppk_policy = (conn->policy & (POLICY_PPK_ALLOW | POLICY_PPK_INSIST));
 		static const char *const noyes[2 /*bool*/] = {"no", "yes"};
 		/*
 		 * config-write-policy-bit: short-cut for writing out a field that is a policy
@@ -519,24 +523,6 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 					break;
 				}
 				cwf("ikev2", v2ps);
-			}
-
-			/* ppk= */
-			{
-				const char *p_ppk = "UNKNOWN";
-
-				switch (ppk_policy) {
-				case LEMPTY:
-					p_ppk = "no";
-					break;
-				case POLICY_PPK_ALLOW:
-					p_ppk = "permit";
-					break;
-				case POLICY_PPK_INSIST:
-					p_ppk = "insist";
-					break;
-				}
-				cwf("ppk", p_ppk);
 			}
 
 			/* esn= */
