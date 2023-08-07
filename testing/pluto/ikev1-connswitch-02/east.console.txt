@@ -1,0 +1,99 @@
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
+east #
+ certutil -d sql:/etc/ipsec.d -D -n west
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec auto --add westnet-eastnet
+002 "westnet-eastnet": added IKEv1 connection
+east #
+ ipsec auto --add distraction
+002 "distraction": bad left CA string 'Something bogus': unknown OID in ID_DER_ASN1_DN (ignored)
+002 "distraction": added IKEv1 connection
+east #
+ ipsec auto --status | grep westnet-eastnet
+000 "westnet-eastnet": 192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]---192.1.2.45...%any; unrouted; eroute owner: #0
+000 "westnet-eastnet":     oriented; my_ip=unset; their_ip=unset; mycert=east; my_updown=ipsec _updown;
+000 "westnet-eastnet":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+000 "westnet-eastnet":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
+000 "westnet-eastnet":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+000 "westnet-eastnet":   sec_label:unset;
+000 "westnet-eastnet":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
+000 "westnet-eastnet":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "westnet-eastnet":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+000 "westnet-eastnet":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+000 "westnet-eastnet":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+000 "westnet-eastnet":   conn_prio: 32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+000 "westnet-eastnet":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+000 "westnet-eastnet":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org; their idtype: %none; their id=(none)
+000 "westnet-eastnet":   dpd: passive; action:hold; delay:0s; timeout:0s
+000 "westnet-eastnet":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
+000 "westnet-eastnet":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $1;
+east #
+ echo "initdone"
+initdone
+east #
+ ../../guestbin/ipsec-look.sh
+east NOW
+XFRM state:
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+XFRM policy:
+src 192.1.2.23/32 dst 192.1.2.45/32
+	dir out priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+src 192.1.2.45/32 dst 192.1.2.23/32
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.1.2.45/32 dst 192.1.2.23/32
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+XFRM done
+IPSEC mangle TABLES
+iptables filter TABLE
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+Chain FORWARD (policy ACCEPT)
+target     prot opt source               destination         
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination         
+ROUTING TABLES
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 via 192.1.2.45 dev eth1
+192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+Libreswan test CA for mainca - Libreswan                     CT,, 
+east                                                         u,u,u
+hashsha1                                                     P,,  
+nic                                                          P,,  
+north                                                        P,,  
+road                                                         P,,  
+west-ec                                                      P,,  
+east #
+ 
