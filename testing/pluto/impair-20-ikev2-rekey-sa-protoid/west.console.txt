@@ -41,8 +41,9 @@ west #
 west #
  ipsec auto --down west
 002 "west": terminating SAs using this connection
-002 "west" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+002 "west" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 005 "west" #3: ESP traffic information: in=0B out=0B
+005 "west" #2: ESP traffic information: in=84B out=84B
 west #
  # protoid=none
 west #
@@ -68,8 +69,6 @@ west #
 west #
  ipsec auto --down west
 002 "west": terminating SAs using this connection
-002 "west" #4: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
-005 "west" #5: ESP traffic information: in=84B out=84B
 west #
  # protoid=IKE
 west #
@@ -95,8 +94,6 @@ west #
 west #
  ipsec auto --down west
 002 "west": terminating SAs using this connection
-002 "west" #7: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
-005 "west" #8: ESP traffic information: in=84B out=84B
 west #
  # protoid=unknown
 west #
@@ -122,8 +119,6 @@ west #
 west #
  ipsec auto --down west
 002 "west": terminating SAs using this connection
-002 "west" #10: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
-005 "west" #11: ESP traffic information: in=84B out=84B
 west #
  ipsec whack --trafficstatus
 west #
