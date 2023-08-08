@@ -25,6 +25,12 @@ v5.0 (Unreleased)
 * initsystems: Use documented ipsec sub-commands [Tuomo]
 * documentation: update to docbook xml 4.5 [Tuomo]
 
+v4.12 (Aug 8, 2023)
+* SECURITY IKEv2: Fixes https://libreswan.org/security/CVE-2023-38710
+* SECURITY IKEv1: Fixes https://libreswan.org/security/CVE-2023-38711
+* SECURITY IKEv1: Fixes https://libreswan.org/security/CVE-2023-38712
+* pluto: Do not crash on ipcomp expiry msg [Andrew]
+
 v4.11 (May 3, 2023)
 * SECURITY IKEv1: Fixes https://libreswan.org/security/CVE-2023-30570
 
