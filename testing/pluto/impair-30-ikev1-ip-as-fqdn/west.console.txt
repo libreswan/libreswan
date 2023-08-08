@@ -20,7 +20,7 @@ west #
 1v1 "west" #1: sent Main Mode request
 1v1 "west" #1: sent Main Mode I2
 1v1 "west" #1: sent Main Mode I3
-004 "west" #1: IKE SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP1536}
+004 "west" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP1536}
 002 "west" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 1v1 "west" #2: sent Quick Mode request
 031 "west" #2: STATE_QUICK_I1: 60 second timeout exceeded after 7 retransmits.  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal
