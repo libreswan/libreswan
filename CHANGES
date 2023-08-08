@@ -12,6 +12,7 @@ v5.0 (Unreleased)
 * pluto: avoid post-authentication crash on corrupt TS payload [Andrew]
 * pluto: Support addresspool=v4/mask,v6/mask [Andrew]
 * pluto: Support multiple TSes per Child SA [Andrew]
+* pluto: HW packet offload support [Raed Salem <raeds@nvidia.com>]
 * building: remove old copy of unbound headers [Andrew]
 * building: Use DESTDIR instead of FINAL* env vars [Andrew]
 * building: Fix "make git-rpm" [Paul/Tuomo]
