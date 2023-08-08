@@ -781,6 +781,7 @@ kvmplutotest	ikev1-28-huge-lifetime		good	github/695
 
 # connection switching tests
 kvmplutotest	ikev1-connswitch-01		good
+kvmplutotest	ikev1-connswitch-02		good
 kvmplutotest	ikev1-connswitch-ports-01	good
 kvmplutotest	ikev1-ikev2-connswitch-01	good
 kvmplutotest	ikev1-rekey-connswitch		wip	github/1170

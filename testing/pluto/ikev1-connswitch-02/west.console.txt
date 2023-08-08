@@ -14,24 +14,26 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-ikev1
+005 "westnet-eastnet-ikev1": ikev2=no has been replaced by keyexchange=ikev1
 002 "westnet-eastnet-ikev1": added IKEv1 connection
 west #
  ipsec auto --status | grep westnet-eastnet-ikev1
 000 "westnet-eastnet-ikev1": 192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]...192.1.2.23[%fromcert]; unrouted; eroute owner: #0
-000 "westnet-eastnet-ikev1":     oriented; my_ip=unset; their_ip=unset; mycert=west; my_updown=ipsec _updown;
+000 "westnet-eastnet-ikev1":     oriented; my_ip=unset; their_ip=unset;
+000 "westnet-eastnet-ikev1":   mycert=west; my_updown=ipsec _updown;
 000 "westnet-eastnet-ikev1":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "westnet-eastnet-ikev1":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 000 "westnet-eastnet-ikev1":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "westnet-eastnet-ikev1":   sec_label:unset;
 000 "westnet-eastnet-ikev1":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
-000 "westnet-eastnet-ikev1":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "westnet-eastnet-ikev1":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
 000 "westnet-eastnet-ikev1":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "westnet-eastnet-ikev1":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "westnet-eastnet-ikev1":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 000 "westnet-eastnet-ikev1":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet-ikev1":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-eastnet-ikev1":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org; their idtype: %fromcert; their id=%fromcert
-000 "westnet-eastnet-ikev1":   dpd: passive; action:hold; delay:0s; timeout:0s
+000 "westnet-eastnet-ikev1":   dpd: passive; delay:0s; timeout:0s
 000 "westnet-eastnet-ikev1":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
 000 "westnet-eastnet-ikev1":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $1;
 west #
@@ -49,7 +51,7 @@ west #
 1v1 "westnet-eastnet-ikev1" #1: sent Main Mode I3
 002 "westnet-eastnet-ikev1" #1: Peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 003 "westnet-eastnet-ikev1" #1: authenticated peer '3nnn-bit RSA with SHA1' signature using peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-004 "westnet-eastnet-ikev1" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+004 "westnet-eastnet-ikev1" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "westnet-eastnet-ikev1" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 1v1 "westnet-eastnet-ikev1" #2: sent Quick Mode request
 004 "westnet-eastnet-ikev1" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
@@ -71,6 +73,7 @@ src 192.1.2.23 dst 192.1.2.45
 	replay-window 0 flag af-unspec
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
+	lastused YYYY-MM-DD HH:MM:SS
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
@@ -80,6 +83,7 @@ src 192.1.2.45 dst 192.1.2.23
 	replay-window 0 flag af-unspec
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
+	lastused YYYY-MM-DD HH:MM:SS
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
