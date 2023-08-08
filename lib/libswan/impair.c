@@ -249,6 +249,14 @@ struct impairment impairments[] = {
 	  "corrupt outgoing IPsec delete payload",
 	  .how_keywords = &impair_emit_keywords),
 
+#define U(VALUE, HELP, ...) \
+	{ .what = #VALUE, .action = CALL_IMPAIR_UPDATE, .value = &impair.VALUE, .help = HELP, .sizeof_value = sizeof(impair.VALUE), .unsigned_help = "<unsigned>", ##__VA_ARGS__, }
+
+	U(v2_delete_protoid, "corrupt the IKEv2 Delete protocol ID"),
+	U(v2n_rekey_sa_protoid, "corrupt the IKEv2 REKEY CHILD notify protocol ID"),
+	U(v2_proposal_protoid, "corrupt the IKEv2 proposal substructure protocol ID"),
+
+#undef U
 #undef B
 #undef V
 #undef A

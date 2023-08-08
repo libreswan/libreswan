@@ -1,0 +1,3 @@
+Test case for CVE-2023-38710.
+
+Test rekey of child with bogus REKEY_SA Protocol ID

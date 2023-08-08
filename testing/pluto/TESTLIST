@@ -371,6 +371,7 @@ kvmplutotest	impair-12-ikev2-transform-none		good
 kvmplutotest	impair-09-protected-ikev1		good
 #kvmplutotest	impair-09-protected-ikev2		wip
 
+kvmplutotest	impair-20-ikev2-rekey-sa-protoid	good
 kvmplutotest	impair-30-ikev1-ip-as-fqdn		good
 kvmplutotest	impair-40-ikev1-delete-child		good
 
