@@ -6,6 +6,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add west-east
+005 "west-east": ikev2=no has been replaced by keyexchange=ikev1
 002 "west-east": added IKEv1 connection
 west #
  echo "initdone"
@@ -18,20 +19,23 @@ west #
 1v1 "west-east" #1: sent Main Mode I3
 002 "west-east" #1: Peer ID is ID_FQDN: '@east'
 003 "west-east" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
-004 "west-east" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+004 "west-east" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "west-east" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 1v1 "west-east" #2: sent Quick Mode request
 004 "west-east" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
- # enable sending a bogus Notify with the Delete
+ # send to delete child SAs
 west #
- ipsec whack --debug-all --impair ikev1-del-with-notify
+ ipsec whack --impair v1_isakmp_delete_payload:duplicate
 west #
- ipsec auto --down west-east
+ ipsec whack --impair v1_ipsec_delete_payload:duplicate
+west #
+ ipsec auto --delete west-east
 002 "west-east": terminating SAs using this connection
 002 "west-east" #2: deleting IPsec SA (QUICK_I2) and sending notification
+002 "west-east" #2: IMPAIR: emitting duplicte IPsec delete payloads
 005 "west-east" #2: ESP traffic information: in=0B out=0B
-002 "west-east" #2: IMPAIR: adding bogus Notify payload after IKE Delete payload
 002 "west-east" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
+002 "west-east" #1: IMPAIR: emitting duplicate ISKMP delete payloads
 west #
  
