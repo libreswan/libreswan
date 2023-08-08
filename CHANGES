@@ -1,6 +1,6 @@
 
 See also https://libreswan.org/
-v4.12 (Aug 7, 2023)
+v4.12 (Aug 8, 2023)
 * SECURITY IKEv2: Fixes https://libreswan.org/security/CVE-2023-38710
 * SECURITY IKEv1: Fixes https://libreswan.org/security/CVE-2023-38711
 * SECURITY IKEv1: Fixes https://libreswan.org/security/CVE-2023-38712

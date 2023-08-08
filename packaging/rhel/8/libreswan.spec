@@ -200,5 +200,5 @@ certutil -N -d sql:$tmpdir --empty-password
 %attr(0644,root,root) %doc %{_mandir}/*/*
 
 %changelog
-* Mon Aug  7 2023 Team Libreswan <team@libreswan.org> - 4.12-1
+* Tue Aug  8 2023 Team Libreswan <team@libreswan.org> - 4.12-1
 - Automated build from release tar ball
