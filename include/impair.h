@@ -170,6 +170,8 @@ struct impair {
 
 	bool copy_v1_notify_response_SPIs_to_retransmission;
 
+	unsigned v1_remote_quick_id;
+
 	/*
 	 * add more here
 	 */

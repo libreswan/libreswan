@@ -155,17 +155,24 @@ static v1_notification_t accept_PFS_KE(struct state *st, struct msg_digest *md,
  * Note: this is not called from demux.c
  */
 
-static bool emit_subnet_id(const ip_subnet net,
+static bool emit_subnet_id(enum perspective perspective,
+			   const ip_subnet net,
 			   uint8_t protoid,
 			   uint16_t port,
 			   struct pbs_out *outs)
 {
 	const struct ip_info *ai = subnet_type(&net);
-	const bool usehost = subnet_prefix_bits(net) == ai->mask_cnt;
+	const bool usehost = (subnet_prefix_bits(net) == ai->mask_cnt);
 	pb_stream id_pbs;
 
+	enum ike_id_type idtype =
+		(perspective == REMOTE_PERSPECTIVE &&
+		 impair.v1_remote_quick_id > 0 ? (int)impair.v1_remote_quick_id - 1/*unbias*/ :
+		 usehost ? ai->id_ip_addr :
+		 ai->id_ip_addr_subnet);
+
 	struct isakmp_ipsec_id id = {
-		.isaiid_idtype = usehost ? ai->id_ip_addr : ai->id_ip_addr_subnet,
+		.isaiid_idtype = idtype,
 		.isaiid_protoid = protoid,
 		.isaiid_port = port,
 	};
@@ -840,10 +847,12 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 	/* [ IDci, IDcr ] out */
 	if (has_client) {
 		/* IDci (we are initiator), then IDcr (peer is responder) */
-		if (!emit_subnet_id(selector_subnet(c->spd->local->client),
+		if (!emit_subnet_id(LOCAL_PERSPECTIVE,
+				    selector_subnet(c->spd->local->client),
 				    c->spd->local->client.ipproto,
 				    c->spd->local->client.hport, &rbody) ||
-		    !emit_subnet_id(selector_subnet(c->spd->remote->client),
+		    !emit_subnet_id(REMOTE_PERSPECTIVE,
+				    selector_subnet(c->spd->remote->client),
 				    c->spd->remote->client.ipproto,
 				    c->spd->remote->client.hport, &rbody)) {
 			return STF_INTERNAL_ERROR;
@@ -1924,6 +1933,11 @@ static struct connection *fc_try(const struct connection *c,
 				 const ip_selector *local_client,
 				 const ip_selector *remote_client)
 {
+	if (selector_is_unset(local_client) ||
+	    selector_is_unset(remote_client)) {
+		return NULL;
+	}
+
 	struct connection *best = NULL;
 	connection_priority_t best_prio = BOTTOM_PRIORITY;
 	const bool remote_is_host = selector_eq_address(*remote_client,
@@ -2110,6 +2124,11 @@ static struct connection *fc_try_oppo(const struct connection *c,
 				      const ip_selector *local_client,
 				      const ip_selector *remote_client)
 {
+	if (selector_is_unset(local_client) ||
+	    selector_is_unset(remote_client)) {
+		return NULL;
+	}
+
 	struct connection *best = NULL;
 	connection_priority_t best_prio = BOTTOM_PRIORITY;
 
@@ -2231,6 +2250,16 @@ struct connection *find_v1_client_connection(struct connection *const c,
 		DBG_log("find_v1_client_connection starting with %s", c->name);
 		DBG_log("  looking for %s",
 			str_selector_pair(local_client, remote_client, &sb));
+	}
+
+	if (selector_is_unset(local_client)) {
+		dbg("peer's local client is not set");
+		return NULL;
+	}
+
+	if (selector_is_unset(remote_client)) {
+		dbg("peer's remote client is not set");
+		return NULL;
 	}
 
 	/*
