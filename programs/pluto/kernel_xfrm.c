@@ -2765,6 +2765,8 @@ static bool netlink_poke_ipsec_offload_policy_hole(struct nic_offload *nic_offlo
 		struct nlmsghdr n;
 		struct {
 			struct xfrm_userpolicy_info p;
+			struct rtattr if_id_attr;
+			uint32_t if_id;
 			struct rtattr attr;
 			struct xfrm_user_offload uo;
 		} __attribute__((packed, aligned(4))) nlmsg;
@@ -2793,6 +2795,11 @@ static bool netlink_poke_ipsec_offload_policy_hole(struct nic_offload *nic_offlo
 				.sel.sport_mask = 0xffff,
 				.sel.dport_mask = 0xffff,
 			},
+			.if_id_attr = {
+				.rta_type = XFRMA_IF_ID,
+				.rta_len = RTA_LENGTH(sizeof(uint32_t)),
+			},
+			.if_id = if_nametoindex(nic_offload->dev),
 			.attr = {
 				.rta_type = XFRMA_OFFLOAD_DEV,
 				.rta_len = RTA_LENGTH(sizeof(req.nlmsg.uo)),
