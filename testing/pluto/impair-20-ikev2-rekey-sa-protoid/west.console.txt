@@ -43,7 +43,6 @@ west #
 002 "west": terminating SAs using this connection
 002 "west" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 005 "west" #3: ESP traffic information: in=0B out=0B
-005 "west" #2: ESP traffic information: in=84B out=84B
 west #
  # protoid=none
 west #

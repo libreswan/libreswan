@@ -52,8 +52,8 @@ road #
  ipsec auto --down westnet-eastnet-ipv4-psk-ikev2
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23: terminating SAs using this connection
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
-005 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: ESP traffic information: in=84B out=84B
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: down-client output: restoring resolvconf
+005 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: ESP traffic information: in=84B out=84B
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23: deleting connection instance with peer 192.1.2.23
 road #
  #check if the address, 192.0.2.1, is removed
