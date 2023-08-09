@@ -69,10 +69,8 @@ static void down_connection(struct connection **c, struct logger *logger)
 			}
 		} else {
 			dbg("connection not shared - terminating IKE and IPsec SA");
-			delete_v1_states_by_connection(*c);
+			whack_connection_delete_states(*c, HERE);
 			if (is_instance(*c)) {
-				remove_connection_from_pending(*c);
-				connection_unroute(*c, HERE);
 				delete_connection(c);
 			}
 		}
