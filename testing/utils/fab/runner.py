@@ -336,7 +336,7 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
 
                         try:
 
-                            verbose_txt = open(os.path.join(test.output_directory, "verbose.txt"), "w")
+                            verbose_txt = open(os.path.join(test.output_directory, "all.console.verbose.txt"), "w")
                             verbose_files = {None: verbose_txt}
 
                             # re-direct the test-result log file

@@ -125,9 +125,9 @@ _GUEST_COMMAND_REGEX = re.compile(_GUEST_COMMAND_PATTERN)
 def commands(directory, logger):
     commands = Commands()
 
-    console_txt = os.path.join(directory, "console.txt")
-    if os.path.exists(console_txt):
-        with open(console_txt, "r") as file:
+    all_console_txt = os.path.join(directory, "all.console.txt")
+    if os.path.exists(all_console_txt):
+        with open(all_console_txt, "r") as file:
             for line in file:
                 match = _GUEST_COMMAND_REGEX.match(line)
                 if match:

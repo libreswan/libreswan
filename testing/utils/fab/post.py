@@ -309,26 +309,24 @@ class TestResult:
         # console.txt (but not both).
 
         verify = []
-        if os.path.exists(os.path.join(test.directory, "console.txt")):
-            verify.append(("", "verbose", "console"))
+        if os.path.exists(os.path.join(test.directory, "all.console.txt")):
+            verify.append("all")
         else:
             for guest_name in test.guest_names:
-                verify.append((guest_name,
-                               guest_name + ".console.verbose",
-                               guest_name + ".console"))
+                verify.append(guest_name)
 
         sanitize = []
         for guest_name in test.guest_names:
-            sanitize.append((guest_name, guest_name + "."))
-        if os.path.exists(os.path.join(test.directory, "console.txt")):
-            sanitize.append(("", ""))
+            sanitize.append(guest_name)
+        if os.path.exists(os.path.join(test.directory, "all.console.txt")):
+            sanitize.append("all")
 
         # Check the raw console output for problems and that it
         # matches expected output.
 
-        for guest_name, raw_prefix, sanitized_prefix in verify:
+        for guest_name in verify:
 
-            raw_output_filename = raw_prefix + ".txt"
+            raw_output_filename = guest_name + ".console.verbose.txt"
 
             # Check that the host's raw output is present.
             #
@@ -404,11 +402,11 @@ class TestResult:
         # Sanitize both merged and individual files so there is a
         # choice for what to look at.
 
-        for guest_name, prefix in sanitize:
+        for guest_name in sanitize:
 
-            sanitized_filename = prefix + "console.txt"
+            sanitized_filename = guest_name + ".console.txt"
             sanitized_path = os.path.join(self.output_directory, sanitized_filename)
-            raw_filename = prefix and prefix + "console.verbose.txt" or "verbose.txt"
+            raw_filename = guest_name + ".console.verbose.txt"
             raw_path = os.path.join(self.output_directory, raw_filename)
 
             if not os.path.exists(raw_path):
@@ -431,8 +429,8 @@ class TestResult:
 
         # now verify just one of the sanitized results
 
-        for guest_name, raw_prefix, sanitized_prefix in verify:
-            sanitized_filename = sanitized_prefix + ".txt"
+        for guest_name in verify:
+            sanitized_filename = guest_name + ".console.txt"
             if guest_name not in self.sanitized_output:
                 continue
             sanitized_output = self.sanitized_output[guest_name]
@@ -454,7 +452,7 @@ class TestResult:
                 self.resolution.failed()
 
             expected_output_path = test.testing_directory("pluto", test.name,
-                                                          sanitized_prefix + ".txt")
+                                                          guest_name + ".console.txt")
             self.logger.debug("comparing %s against known-good output '%s'",
                               sanitized_filename, expected_output_path)
 
@@ -465,7 +463,7 @@ class TestResult:
                 continue
 
             diff_output = None
-            diff_filename = sanitized_prefix + ".diff"
+            diff_filename = guest_name + ".console.diff"
 
             if quick:
                 # Try to load the existing diff file.  Like _diff()
@@ -476,9 +474,9 @@ class TestResult:
             if diff_output is None:
                 # use brute force
                 diff_output = _diff(self.logger,
-                                    "MASTER/" + test.directory + "/" + sanitized_prefix + ".txt",
+                                    "MASTER/" + test.directory + "/" + guest_name + ".console.txt",
                                     expected_output,
-                                    "OUTPUT/" + test.directory + "/" + sanitized_prefix + ".txt",
+                                    "OUTPUT/" + test.directory + "/" + guest_name + ".console.txt",
                                     sanitized_output)
 
             # always add entry so that save() knows what to write
@@ -501,14 +499,14 @@ class TestResult:
             return
         # write the sanitized console output
         for guest_name, sanitized_output in self.sanitized_output.items():
-            sanitized_filename = guest_name and guest_name + ".console.txt" or "console.txt"
+            sanitized_filename = guest_name + ".console.txt"
             sanitized_path = os.path.join(output_directory, sanitized_filename)
             self.logger.debug("writing sanitized output file: %s", sanitized_path)
             with open(sanitized_path, "wb") as f:
                 f.write(sanitized_output)
         # write the diffs
         for guest_name, diff_output in self.diff_output.items():
-            diff_filename = guest_name and guest_name + ".console.diff" or "console.diff"
+            diff_filename = guest_name + ".console.diff"
             diff_path = os.path.join(output_directory, diff_filename)
             self.logger.debug("writing diff file %s", diff_path)
             with open(diff_path, "wb") as f:
