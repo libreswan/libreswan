@@ -70,10 +70,6 @@ west #
 west NOW
 XFRM state:
 XFRM policy:
-src 192.0.1.254/32 dst 0.0.0.0/0
-	dir out priority PRIORITY ptype main
-	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
 XFRM done
 IPSEC mangle TABLES
 iptables filter TABLE
@@ -86,9 +82,7 @@ target     prot opt source               destination
 Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination         
 ROUTING TABLES
-0.0.0.0/1 dev eth1 scope link src 192.0.1.254
 default via 192.1.2.254 dev eth1
-128.0.0.0/1 dev eth1 scope link src 192.0.1.254
 192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
 192.0.2.0/24 via 192.1.2.23 dev eth1
 192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
