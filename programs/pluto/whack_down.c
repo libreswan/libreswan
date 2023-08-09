@@ -55,48 +55,31 @@ static void down_connection(struct connection **c, struct logger *logger)
 
 	llog(RC_LOG, (*c)->logger, "terminating SAs using this connection");
 	del_policy(*c, POLICY_UP);
-	remove_connection_from_pending(*c);
 
-	switch ((*c)->config->ike_version) {
-	case IKEv1:
-		if (shared_phase1_connection(*c)) {
-			llog(RC_LOG, (*c)->logger,
-			     "IKE SA is shared - only terminating IPsec SA");
-			if ((*c)->newest_ipsec_sa != SOS_NOBODY) {
-				struct state *st = state_by_serialno((*c)->newest_ipsec_sa);
-				state_attach(st, logger);
-				delete_state(st);
-			}
-		} else {
-			dbg("connection not shared - terminating IKE and IPsec SA");
-			whack_connection_delete_states(*c, HERE);
-			if (is_instance(*c)) {
-				delete_connection(c);
-			}
-		}
-		break;
-	case IKEv2:
-		if (shared_phase1_connection(*c)) {
-			llog(RC_LOG, (*c)->logger,
-			     "IKE SA is shared - only terminating IPsec SA");
-			struct child_sa *child = child_sa_by_serialno((*c)->newest_ipsec_sa);
-			if (child != NULL) {
-				state_attach(&child->sa, logger);
+	remove_connection_from_pending(*c);
+	if (shared_phase1_connection(*c)) {
+		llog(RC_LOG, (*c)->logger, "%s is shared - only terminating %s",
+		     (*c)->config->ike_info->ike_sa_name,
+		     (*c)->config->ike_info->child_sa_name);
+		struct child_sa *child = child_sa_by_serialno((*c)->newest_ipsec_sa);
+		if (child != NULL) {
+			state_attach(&child->sa, logger);
+			switch ((*c)->config->ike_version) {
+			case IKEv1:
+				delete_state(&child->sa);
+				break;
+			case IKEv2:
 				connection_delete_child(ike_sa(&child->sa, HERE),
 							&child, HERE);
-			}
-		} else {
-			/*
-			 * CK_INSTANCE is deleted simultaneous to deleting
-			 * state :-/
-			 */
-			dbg("connection not shared - terminating IKE and IPsec SA");
-			whack_connection_delete_states(*c, HERE);
-			if (is_instance(*c)) {
-				delete_connection(c);
+				break;
 			}
 		}
-		break;
+	} else {
+		dbg("connection not shared - terminating IKE and IPsec SA");
+		whack_connection_delete_states(*c, HERE);
+		if (is_instance(*c)) {
+			delete_connection(c);
+		}
 	}
 
 	connection_detach(*c, logger);
