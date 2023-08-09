@@ -49,7 +49,7 @@ west #
 west #
  ipsec down west-cuckold
 002 "west-cuckold": terminating SAs using this connection
-002 "west-cuckold": IKE SA is shared - only terminating IPsec SA
+002 "west-cuckold": ISAKMP SA is shared - only terminating IPsec SA
 002 "west-cuckold" #2: deleting IPsec SA (QUICK_I2) and sending notification
 005 "west-cuckold" #2: ESP traffic information: in=84B out=84B
 west #

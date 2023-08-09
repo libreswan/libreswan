@@ -21,7 +21,7 @@ road #
  ipsec auto --down road
 000 terminating all connections with alias="road"
 002 "road/0x2": terminating SAs using this connection
-002 "road/0x2": IKE SA is shared - only terminating IPsec SA
+002 "road/0x2": ISAKMP SA is shared - only terminating IPsec SA
 002 "road/0x2" #3: deleting IPsec SA (QUICK_I2) and sending notification
 005 "road/0x2" #3: ESP traffic information: in=84B out=84B
 002 "road/0x1": terminating SAs using this connection
