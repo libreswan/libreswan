@@ -27,6 +27,7 @@
 #include "log.h"
 #include "pending.h"
 #include "whack_connection.h"
+#include "ikev2_delete.h"
 
 /*
  * Is a connection in use by some state?
@@ -61,6 +62,10 @@ static void down_connection(struct connection **c, struct logger *logger)
 		llog(RC_LOG, (*c)->logger, "%s is shared - only terminating %s",
 		     (*c)->config->ike_info->ike_sa_name,
 		     (*c)->config->ike_info->child_sa_name);
+		/*
+		 * XXX: should "down" down the routing_sa when
+		 * ipsec_sa is NULL?
+		 */
 		struct child_sa *child = child_sa_by_serialno((*c)->newest_ipsec_sa);
 		if (child != NULL) {
 			state_attach(&child->sa, logger);
@@ -69,8 +74,7 @@ static void down_connection(struct connection **c, struct logger *logger)
 				delete_state(&child->sa);
 				break;
 			case IKEv2:
-				connection_delete_child(ike_sa(&child->sa, HERE),
-							&child, HERE);
+				submit_v2_delete_exchange(ike_sa(&child->sa, HERE), child);
 				break;
 			}
 		}
