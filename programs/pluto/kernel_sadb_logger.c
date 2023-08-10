@@ -241,7 +241,6 @@ void llog_sadb_sa(lset_t rc_flags, struct logger *logger,
 	JAM_SPARSE_SPARSE(sadb_satype_aalg_names, satype, sadb_sa, auth);
 	JAM_SPARSE_SPARSE(sadb_satype_ealg_names, satype, sadb_sa, encrypt);
 	JAM_SPARSE_LSET(sadb_saflag_names, sadb_sa, flags);
-	jambuf_to_logger(buf, logger, rc_flags);
 
 	jambuf_to_logger(buf, logger, rc_flags);
 }
