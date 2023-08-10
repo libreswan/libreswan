@@ -16,7 +16,7 @@ Build-Depends:
  htmldoc,
  libaudit-dev [linux-any],
  libcap-ng-dev [linux-any],
- libcurl4-nss-dev,
+ libcurl4-gnutls-dev,
  libevent-dev,
  libkrb5-dev,
  libldap2-dev,
