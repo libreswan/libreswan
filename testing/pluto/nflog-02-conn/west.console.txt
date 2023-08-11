@@ -64,8 +64,8 @@ west #
 west #
  set +m
 west #
- tcpdump -c 4 -s 0 -w /tmp/nflog-50.pcap -i nflog:50 > /tmp/tcpdump.log 2>&1 &
-[B] PID
+ tcpdump -c 4 -s 0 -w /tmp/nflog-50.pcap -i nflog:50 > /tmp/tcpdump.log 2>&1 & sleep 1
+[x] PID
 west #
  ../../guestbin/wait-for.sh --match 'listening on' -- cat /tmp/tcpdump.log
 tcpdump: listening on INTERFACE DETAILS
