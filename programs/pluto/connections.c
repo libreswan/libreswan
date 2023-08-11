@@ -171,7 +171,13 @@ void ldbg_connection(const struct connection *c, where_t where,
 
 static bool never_negotiate_wm(const struct whack_message *wm)
 {
-	return NEVER_NEGOTIATE(wm->policy);
+	if (NEVER_NEGOTIATE(wm->policy)) {
+		pexpect(wm->never_negotiate_shunt != SHUNT_UNSET);
+		return true;
+	} else {
+		pexpect(wm->never_negotiate_shunt == SHUNT_UNSET);
+		return false;
+	}
 }
 
 /*
@@ -4133,7 +4139,16 @@ err_t connection_requires_tss(const struct connection *c)
 
 bool never_negotiate(const struct connection *c)
 {
-	return (c != NULL && NEVER_NEGOTIATE(c->policy));
+	if (c == NULL) {
+		return false;
+	}
+	if (NEVER_NEGOTIATE(c->policy)) {
+		pexpect(c->config->never_negotiate_shunt != SHUNT_UNSET);
+		return true;
+	} else {
+		pexpect(c->config->never_negotiate_shunt == SHUNT_UNSET);
+		return false;
+	}
 }
 
 bool is_opportunistic(const struct connection *c)
