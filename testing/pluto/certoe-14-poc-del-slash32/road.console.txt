@@ -37,7 +37,7 @@ road #
  ../../guestbin/wait-for.sh --match 'loaded 11,' -- ipsec auto --status
 000 Total IPsec connections: loaded 11, active 0
 road #
- ip -s xfrm monitor > /tmp/xfrm-monitor.out &
+ ip -s xfrm monitor > /tmp/xfrm-monitor.out & sleep 1
 [x] PID
 road #
  echo "initdone"
