@@ -4,7 +4,7 @@ west #
 west #
  chmod 600 /etc/iked.conf
 west #
- /sbin/iked -dvvv > OUTPUT/iked.log 2>&1 &
+ /sbin/iked -dvvv > OUTPUT/iked.log 2>&1 & sleep 1
 [x] PID
 west #
  echo "initdone"

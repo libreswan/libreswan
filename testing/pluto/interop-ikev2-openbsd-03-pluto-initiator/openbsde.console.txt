@@ -8,7 +8,7 @@ east #
 east #
  ln -s $PWD/OUTPUT/openbsde.iked.log /tmp/iked.log
 east #
- /sbin/iked -dvvv > /tmp/iked.log 2>&1 &
+ /sbin/iked -dvvv > /tmp/iked.log 2>&1 & sleep 1
 [x] PID
 east #
  echo "initdone"
