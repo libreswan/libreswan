@@ -169,6 +169,11 @@ void ldbg_connection(const struct connection *c, where_t where,
 
 }
 
+static bool never_negotiate_wm(const struct whack_message *wm)
+{
+	return NEVER_NEGOTIATE(wm->policy);
+}
+
 /*
  * Is there an existing connection with NAME?
  */
@@ -804,7 +809,7 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 	 * Determine the authentication from auth= and authby=.
 	 */
 
-	if (NEVER_NEGOTIATE(wm->policy) && src->auth != AUTH_UNSET && src->auth != AUTH_NEVER) {
+	if (never_negotiate_wm(wm) && src->auth != AUTH_UNSET && src->auth != AUTH_NEVER) {
 		/* AUTH_UNSET is updated below */
 		enum_buf ab;
 		return diag("%sauth=%s option is invalid for type=passthrough connection",
@@ -823,7 +828,7 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 	}
 
 	/* value starting points */
-	struct authby authby = (NEVER_NEGOTIATE(wm->policy) ? AUTHBY_NEVER :
+	struct authby authby = (never_negotiate_wm(wm) ? AUTHBY_NEVER :
 				!authby_is_set(wm->authby) ? AUTHBY_DEFAULTS :
 				wm->authby);
 	enum keyword_auth auth = src->auth;
@@ -1718,7 +1723,7 @@ static enum connection_kind extract_connection_end_kind(const struct whack_messa
 		}
 	}
 	FOR_EACH_THING(we, this, that) {
-		if (!NEVER_NEGOTIATE(wm->policy) &&
+		if (!never_negotiate_wm(wm) &&
 		    !address_is_specified(we->host_addr) &&
 		    we->host_type != KH_IPHOSTNAME) {
 			ldbg(logger, "%s connection is CK_TEMPLATE: unspecified %s address yet policy negotiate",
@@ -2016,14 +2021,14 @@ static diag_t extract_connection(const struct whack_message *wm,
 	}
 	config->aggressive = extract_yn(wm->aggressive, /*default*/false);
 
-	if (wm->decap_dscp == YN_YES && NEVER_NEGOTIATE(wm->policy)) {
+	if (wm->decap_dscp == YN_YES && never_negotiate_wm(wm)) {
 		llog(RC_INFORMATIONAL, c->logger,
 		     "warning: decap-dscp=yes ignored for never-negotiate connection");
 	} else {
 		config->decap_dscp = extract_yn(wm->decap_dscp, /*default*/false);
 	}
 
-	if (wm->nopmtudisc == YN_YES && NEVER_NEGOTIATE(wm->policy)) {
+	if (wm->nopmtudisc == YN_YES && never_negotiate_wm(wm)) {
 		llog(RC_INFORMATIONAL, c->logger,
 		     "warning: nopmtudisc=yes ignored for never-negotiate connection");
 	} else {
@@ -2066,7 +2071,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 * some options are set as part of our default, but
 	 * some make no sense for shunts, so remove those again
 	 */
-	if (NEVER_NEGOTIATE(wm->policy)) {
+	if (never_negotiate_wm(wm)) {
 		if (wm->fragmentation != YNF_UNSET) {
 			llog(RC_INFORMATIONAL, c->logger,
 			     "warning: never-negotiate connection ignores fragmentation=%s",
@@ -2093,7 +2098,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	/* RFC 8229 TCP encap*/
 
-	if (NEVER_NEGOTIATE(wm->policy)) {
+	if (never_negotiate_wm(wm)) {
 		if (wm->enable_tcp != 0) {
 			enum_buf eb;
 			llog(RC_INFORMATIONAL, c->logger,
@@ -2144,7 +2149,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	/* authentication (proof of identity) */
 
-	if (NEVER_NEGOTIATE(wm->policy)) {
+	if (never_negotiate_wm(wm)) {
 		dbg("ignore sighash, never negotiate");
 	} else if (c->config->ike_version == IKEv1) {
 		dbg("ignore sighash, IKEv1");
@@ -2273,7 +2278,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 			    kernel_ops->interface_name, kernel_ops->max_replay_window);
 	}
 
-	if (NEVER_NEGOTIATE(wm->policy)) {
+	if (never_negotiate_wm(wm)) {
 		if (wm->esn != YNE_UNSET) {
 			llog(RC_INFORMATIONAL, c->logger,
 			     "warning: ignoring esn=%s as connection is never-negotiate",
@@ -2389,7 +2394,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	/* IKE cipher suites */
 
-	if (NEVER_NEGOTIATE(wm->policy)) {
+	if (never_negotiate_wm(wm)) {
 		if (wm->ike != NULL) {
 			llog(RC_INFORMATIONAL, c->logger,
 			     "ignored ike= option for type=passthrough connection");
@@ -2440,7 +2445,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	/* ESP or AH cipher suites (but not both) */
 
-	if (NEVER_NEGOTIATE(wm->policy)) {
+	if (never_negotiate_wm(wm)) {
 		if (wm->esp != NULL) {
 			llog(RC_INFORMATIONAL, c->logger,
 			     "ignored esp= option for type=passthrough connection");
@@ -2520,7 +2525,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 		}
 	}
 
-	if (NEVER_NEGOTIATE(wm->policy)) {
+	if (never_negotiate_wm(wm)) {
 		dbg("skipping over misc settings as NEVER_NEGOTIATE");
 	} else {
 
@@ -2977,7 +2982,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 * and try to re-install another negotiation or failure shunt.
 	 */
 	if (wm->keyingtries.set) {
-		if (NEVER_NEGOTIATE(wm->policy)) {
+		if (never_negotiate_wm(wm)) {
 			llog(RC_LOG, c->logger,
 			     "warning: keyingtries=%ju ignored, connection will never negotiate",
 			     wm->keyingtries.value);
