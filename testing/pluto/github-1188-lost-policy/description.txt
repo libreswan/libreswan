@@ -1,0 +1,5 @@
+road and east initiate an OE connection simultaneously
+
+- road initiates, but its IKE_AUTH packet is dropped
+- east initiates
+
