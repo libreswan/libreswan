@@ -1,7 +1,7 @@
 ipsec start
 ../../guestbin/wait-until-pluto-started
 # give OE policies time to load
-../../guestbin/wait-for.sh --match 'loaded 10,' -- ipsec auto --status
+../../guestbin/wait-for.sh --match 'loaded 2,' -- ipsec auto --status
 
 # fail to send send IKE_SA_INIT
 ipsec whack --impair suppress-retransmits
