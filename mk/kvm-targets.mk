@@ -621,7 +621,7 @@ kvm-diffs:
 # file to mark keys are up-to-date
 KVM_KEYS = $(KVM_TESTINGDIR)/x509/keys/up-to-date
 KVM_KEYS_EXPIRATION_DAY = 7
-KVM_KEYS_EXPIRED = find testing/x509/*/ -type f -mtime +$(KVM_KEYS_EXPIRATION_DAY) -ls
+KVM_KEYS_EXPIRED = find $(KVM_TESTINGDIR)/x509/*/ -type f -mtime +$(KVM_KEYS_EXPIRATION_DAY) -ls
 KVM_KEYS_DOMAIN = $(addprefix $(KVM_FIRST_PREFIX), fedora)
 
 .PHONY: kvm-keys
