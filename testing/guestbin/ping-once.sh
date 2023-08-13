@@ -119,6 +119,7 @@ case ${ping} in
 	interface=${interface:+--src ${interface}}
 	timeout=" --timeout ${wait}s"
 	size=${size:+--size ${size}}
+	nodns=
 	;;
     ping )
 	interface=${interface:+-I ${interface}}
@@ -126,6 +127,7 @@ case ${ping} in
 	# <interval> greater than the wait <deadline>.
 	timeout=" -i $(expr 1 + ${wait}) -w ${wait}"
 	size=${size:+-s ${size} -p 00}
+	nodns=-n
 	;;
 esac
 
@@ -133,7 +135,7 @@ esac
 # invoke ping is subject to change, it is hidden from the test
 # results).
 
-ping="${ping} -n -c 1 ${timeout} ${size} ${args} ${interface} "$@""
+ping="${ping} ${nodns} -c 1 ${timeout} ${size} ${args} ${interface} "$@""
 if test -n "${runcon}" ; then
     ping="runcon ${runcon} ${ping}"
 fi
