@@ -21,7 +21,7 @@
 
 struct jambuf *jambuf_from_logjam(struct logjam *logjam,
 				   const struct logger *logger,
-				   enum pluto_exit_code pec,
+				   enum pluto_exit_code pluto_exit_code,
 				   where_t where,
 				   lset_t rc_flags)
 {
@@ -34,7 +34,7 @@ struct jambuf *jambuf_from_logjam(struct logjam *logjam,
 		.jambuf = ARRAY_AS_JAMBUF(logjam->array),
 		.logger = logger,
 		.where = where,
-		.pec = pec,
+		.pluto_exit_code = pluto_exit_code,
 	};
 	jam_logger_rc_prefix(&logjam->barf.jambuf, logger, rc_flags);
 	return &logjam->barf.jambuf;
@@ -52,10 +52,11 @@ void logjam_to_logger(struct logjam *logjam)
 	}
 }
 
-void barf(lset_t rc_flags, struct logger *logger, enum pluto_exit_code pec, where_t where,
+void barf(lset_t rc_flags, struct logger *logger,
+	  enum pluto_exit_code pluto_exit_code, where_t where,
 	  const char *fmt, ...)
 {
-	BARF_JAMBUF(rc_flags, logger, pec, where, buf) {
+	BARF_JAMBUF(rc_flags, logger, pluto_exit_code, where, buf) {
 		va_list ap;
 		va_start(ap, fmt);
 		jam_va_list(buf, fmt, ap);

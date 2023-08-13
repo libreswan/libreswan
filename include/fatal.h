@@ -36,9 +36,9 @@ struct logjam;
  *   <log-prefix>FATAL ERROR: <message...>
  */
 
-void fatal(enum pluto_exit_code pec, const struct logger *logger,
+void fatal(enum pluto_exit_code pluto_exit_code, const struct logger *logger,
 	   const char *message, ...) PRINTF_LIKE(3) NEVER_RETURNS;
-void fatal_errno(enum pluto_exit_code pec, const struct logger *logger,
+void fatal_errno(enum pluto_exit_code pluto_exit_code, const struct logger *logger,
 		 int error, const char *message, ...) PRINTF_LIKE(4) NEVER_RETURNS;
 
 void fatal_logjam_to_logger(struct logjam *buf) NEVER_RETURNS;

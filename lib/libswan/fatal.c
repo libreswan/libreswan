@@ -22,10 +22,12 @@
 #include "constants.h"		/* for enum pluto_exit_code */
 #include "lswlog.h"		/* for LOG_WIDTH et.al. */
 
-void fatal(enum pluto_exit_code pec, const struct logger *logger, const char *fmt, ...)
+void fatal(enum pluto_exit_code pluto_exit_code,
+	   const struct logger *logger, const char *fmt, ...)
 {
 	struct logjam logjam;
-	struct jambuf *buf = jambuf_from_logjam(&logjam, logger, pec, NULL/*where*/, FATAL_FLAGS);
+	struct jambuf *buf = jambuf_from_logjam(&logjam, logger, pluto_exit_code,
+						NULL/*where*/, FATAL_FLAGS);
 	{
 		va_list ap;
 		va_start(ap, fmt);
@@ -35,11 +37,12 @@ void fatal(enum pluto_exit_code pec, const struct logger *logger, const char *fm
 	fatal_logjam_to_logger(&logjam);
 }
 
-void fatal_errno(enum pluto_exit_code pec, const struct logger *logger,
+void fatal_errno(enum pluto_exit_code pluto_exit_code, const struct logger *logger,
 		 int error, const char *fmt, ...)
 {
 	struct logjam logjam;
-	struct jambuf *buf = jambuf_from_logjam(&logjam, logger, pec, NULL/*where*/, FATAL_FLAGS);
+	struct jambuf *buf = jambuf_from_logjam(&logjam, logger, pluto_exit_code,
+						NULL/*where*/, FATAL_FLAGS);
 	{
 		va_list ap;
 		va_start(ap, fmt);
@@ -54,5 +57,5 @@ void fatal_errno(enum pluto_exit_code pec, const struct logger *logger,
 void fatal_logjam_to_logger(struct logjam *logjam)
 {
 	logjam_to_logger(logjam);
-	libreswan_exit(logjam->barf.pec);
+	libreswan_exit(logjam->barf.pluto_exit_code);
 }

@@ -53,31 +53,33 @@ struct logjam {
 		struct jambuf jambuf;
 		lset_t rc_flags;
 		where_t where;
-		enum pluto_exit_code pec;
+		enum pluto_exit_code pluto_exit_code;
 	} barf;
 };
 
 struct jambuf *jambuf_from_logjam(struct logjam *logjam,
 				  const struct logger *logger,
-				  enum pluto_exit_code pec,
+				  enum pluto_exit_code pluto_exit_code,
 				  where_t where,
 				  lset_t rc_flags) MUST_USE_RESULT;
 
 void logjam_to_logger(struct logjam *buf); /* may not return */
 
-#define BARF_JAMBUF(RC_FLAGS, LOGGER, PEC, WHERE, BUF)			\
+#define BARF_JAMBUF(RC_FLAGS, LOGGER, PLUTO_EXIT_CODE, WHERE, BUF)	\
 	/* create the buffer */						\
 	for (struct logjam logjam_, *bf_ = &logjam_;			\
 	     bf_ != NULL; bf_ = NULL)					\
 		/* create the jambuf */					\
 		for (struct jambuf *BUF =				\
 			     jambuf_from_logjam(&logjam_, LOGGER,	\
-						PEC, WHERE, RC_FLAGS);	\
+						PLUTO_EXIT_CODE, \
+						WHERE, RC_FLAGS);	\
 		     BUF != NULL;					\
 		     logjam_to_logger(&logjam_), BUF = NULL)
 
 PRINTF_LIKE(5)
-void barf(lset_t rc_flags, struct logger *logger, enum pluto_exit_code pec, where_t where,
+void barf(lset_t rc_flags, struct logger *logger,
+	  enum pluto_exit_code pluto_exit_code, where_t where,
 	  const char *fmt, ...);
 
 #endif
