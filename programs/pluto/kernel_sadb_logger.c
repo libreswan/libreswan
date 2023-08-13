@@ -71,11 +71,15 @@ typedef uint64_t u64_t;
 		jam_sparse_lset(buf, NAMES, m->T##_##F);		\
 	}
 
-#define JAM_HEADER(T)						\
-	char tmp[200];						\
-	struct jambuf buf[] = { ARRAY_AS_JAMBUF(tmp), };	\
-	jam_string(buf, what);					\
+#define JAM_HEADER(T)							\
+	struct logjam logjam;						\
+	struct jambuf *buf = jambuf_from_logjam(&logjam, logger,	\
+						0, NULL, rc_flags);	\
+	jam_string(buf, what);						\
 	jam(buf, #T" @%p", m);
+
+#define JAM_FOOTER()				\
+	logjam_to_logger(&logjam);
 
 #define JAM_HEADER_SADB(T)					\
 	JAM_HEADER(T);						\
@@ -106,7 +110,7 @@ void llog_sadb_address(lset_t rc_flags, struct logger *logger,
 	JAM(u8, sadb_address, prefixlen);
 #endif
 
-	jambuf_to_logger(buf, logger, rc_flags);
+	JAM_FOOTER();
 }
 
 void llog_sadb_alg(lset_t rc_flags, struct logger *logger,
@@ -122,7 +126,7 @@ void llog_sadb_alg(lset_t rc_flags, struct logger *logger,
 	JAM(u16, sadb_alg, maxbits);
 	JAM_RAW(sadb_alg, reserved);
 
-	jambuf_to_logger(buf, logger, rc_flags);
+	JAM_FOOTER();
 }
 
 void llog_sadb_comb(lset_t rc_flags, struct logger *logger,
@@ -147,7 +151,7 @@ void llog_sadb_comb(lset_t rc_flags, struct logger *logger,
 	JAM(u64, sadb_comb, soft_usetime);
 	JAM(u64, sadb_comb, hard_usetime);
 
-	jambuf_to_logger(buf, logger, rc_flags);
+	JAM_FOOTER();
 }
 
 void llog_sadb_ext(lset_t rc_flags, struct logger *logger,
@@ -158,7 +162,7 @@ void llog_sadb_ext(lset_t rc_flags, struct logger *logger,
 	JAM_LEN(sadb_ext, len);
 	JAM_SPARSE(sadb_exttype_names, sadb_ext, type);
 
-	jambuf_to_logger(buf, logger, rc_flags);
+	JAM_FOOTER();
 }
 
 void llog_sadb_ident(lset_t rc_flags, struct logger *logger,
@@ -170,7 +174,7 @@ void llog_sadb_ident(lset_t rc_flags, struct logger *logger,
 	JAM_RAW(sadb_ident, reserved);
 	JAM(u64, sadb_ident, id);
 
-	jambuf_to_logger(buf, logger, rc_flags);
+	JAM_FOOTER();
 }
 
 void llog_sadb_key(lset_t rc_flags, struct logger *logger,
@@ -181,7 +185,7 @@ void llog_sadb_key(lset_t rc_flags, struct logger *logger,
 	JAM(u16, sadb_key, bits);
 	JAM_RAW(sadb_key, reserved);
 
-	jambuf_to_logger(buf, logger, rc_flags);
+	JAM_FOOTER();
 }
 
 void llog_sadb_lifetime(lset_t rc_flags, struct logger *logger,
@@ -194,7 +198,7 @@ void llog_sadb_lifetime(lset_t rc_flags, struct logger *logger,
 	JAM(u64, sadb_lifetime, addtime);
 	JAM(u64, sadb_lifetime, usetime);
 
-	jambuf_to_logger(buf, logger, rc_flags);
+	JAM_FOOTER();
 }
 
 void llog_sadb_msg(lset_t rc_flags, struct logger *logger,
@@ -211,7 +215,7 @@ void llog_sadb_msg(lset_t rc_flags, struct logger *logger,
 	JAM(u32, sadb_msg, seq);
 	JAM(u32, sadb_msg, pid);
 
-	jambuf_to_logger(buf, logger, rc_flags);
+	JAM_FOOTER();
 }
 
 void llog_sadb_prop(lset_t rc_flags, struct logger *logger,
@@ -225,7 +229,7 @@ void llog_sadb_prop(lset_t rc_flags, struct logger *logger,
 	JAM(u8, sadb_prop, replay);
 	JAM_RAW(sadb_prop, reserved);
 
-	jambuf_to_logger(buf, logger, rc_flags);
+	JAM_FOOTER();
 }
 
 void llog_sadb_sa(lset_t rc_flags, struct logger *logger,
@@ -242,7 +246,7 @@ void llog_sadb_sa(lset_t rc_flags, struct logger *logger,
 	JAM_SPARSE_SPARSE(sadb_satype_ealg_names, satype, sadb_sa, encrypt);
 	JAM_SPARSE_LSET(sadb_saflag_names, sadb_sa, flags);
 
-	jambuf_to_logger(buf, logger, rc_flags);
+	JAM_FOOTER();
 }
 
 void llog_sadb_sens(lset_t rc_flags, struct logger *logger,
@@ -257,7 +261,7 @@ void llog_sadb_sens(lset_t rc_flags, struct logger *logger,
 	JAM(u8, sadb_sens, integ_len);
 	JAM_RAW(sadb_sens, reserved);
 
-	jambuf_to_logger(buf, logger, rc_flags);
+	JAM_FOOTER();
 }
 
 void llog_sadb_spirange(lset_t rc_flags, struct logger *logger,
@@ -269,7 +273,7 @@ void llog_sadb_spirange(lset_t rc_flags, struct logger *logger,
 	JAM(u32, sadb_spirange, max);
 	JAM_RAW(sadb_spirange, reserved);
 
-	jambuf_to_logger(buf, logger, rc_flags);
+	JAM_FOOTER();
 }
 
 void llog_sadb_supported(lset_t rc_flags, struct logger *logger,
@@ -279,7 +283,7 @@ void llog_sadb_supported(lset_t rc_flags, struct logger *logger,
 
 	JAM_RAW(sadb_supported, reserved);
 
-	jambuf_to_logger(buf, logger, rc_flags);
+	JAM_FOOTER();
 }
 
 #ifdef SADB_X_EXT_POLICY
@@ -300,7 +304,7 @@ void llog_sadb_x_ipsecrequest(lset_t rc_flags, struct logger *logger,
 	JAM_RAW(sadb_x_ipsecrequest, reserved2);
 #endif
 
-	jambuf_to_logger(buf, logger, rc_flags);
+	JAM_FOOTER();
 }
 #endif
 
@@ -313,7 +317,7 @@ void llog_sadb_x_nat_t_frag(lset_t rc_flags, struct logger *logger,
 	JAM(u16, sadb_x_nat_t_frag, fraglen);
 	JAM_RAW(sadb_x_nat_t_frag, reserved);
 
-	jambuf_to_logger(buf, logger, rc_flags);
+	JAM_FOOTER();
 }
 #endif
 
@@ -326,7 +330,7 @@ void llog_sadb_x_nat_t_port(lset_t rc_flags, struct logger *logger,
 	JAM(u16, sadb_x_nat_t_port, port);
 	JAM_RAW(sadb_x_nat_t_port, reserved);
 
-	jambuf_to_logger(buf, logger, rc_flags);
+	JAM_FOOTER();
 }
 #endif
 
@@ -339,7 +343,7 @@ void llog_sadb_x_nat_t_type(lset_t rc_flags, struct logger *logger,
 	JAM(u8, sadb_x_nat_t_type, type);
 	JAM_RAW(sadb_x_nat_t_type, reserved);
 
-	jambuf_to_logger(buf, logger, rc_flags);
+	JAM_FOOTER();
 }
 #endif
 
@@ -366,7 +370,7 @@ void llog_sadb_x_policy(lset_t rc_flags, struct logger *logger,
 	JAM_RAW(sadb_x_policy, reserved2);
 #endif
 
-	jambuf_to_logger(buf, logger, rc_flags);
+	JAM_FOOTER();
 }
 #endif
 
@@ -382,7 +386,7 @@ void llog_sadb_protocol(lset_t rc_flags, struct logger *logger,
 	JAM(u8, sadb_protocol, flags);
 	JAM_RAW(sadb_protocol, reserved2);
 
-	jambuf_to_logger(buf, logger, rc_flags);
+	JAM_FOOTER();
 };
 #endif
 
@@ -398,7 +402,7 @@ void llog_sadb_x_sa2(lset_t rc_flags, struct logger *logger,
 	JAM(u32, sadb_x_sa2, sequence);
 	JAM(u32, sadb_x_sa2, reqid);
 
-	jambuf_to_logger(buf, logger, rc_flags);
+	JAM_FOOTER();
 }
 #endif
 
@@ -410,7 +414,7 @@ void llog_sadb_x_sa_replay(lset_t rc_flags, struct logger *logger,
 
 	JAM(u32, sadb_x_sa_replay, replay);
 
-	jambuf_to_logger(buf, logger, rc_flags);
+	JAM_FOOTER();
 }
 #endif
 
@@ -430,7 +434,7 @@ void llog_sadb_x_counter(lset_t rc_flags, struct logger *logger,
 	JAM(u64, sadb_x_counter, idecompbytes);	/* Input bytes, decompressed */
 	JAM(u64, sadb_x_counter, ouncompbytes);	/* Output bytes, uncompressed */
 
-	jambuf_to_logger(buf, logger, rc_flags);
+	JAM_FOOTER();
 }
 #endif
 
@@ -443,7 +447,7 @@ void llog_sadb_x_replay(lset_t rc_flags, struct logger *logger,
 	JAM_RAW(sadb_x_replay, reserved);
 	JAM(u64, sadb_x_replay, count); /* number of replays detected? */
 
-	jambuf_to_logger(buf, logger, rc_flags);
+	JAM_FOOTER();
 }
 #endif
 
@@ -456,7 +460,7 @@ void llog_sadb_x_udpencap(lset_t rc_flags, struct logger *logger,
 	JAM(u16, sadb_x_udpencap, port);
 	JAM_RAW(sadb_x_udpencap, reserved);
 
-	jambuf_to_logger(buf, logger, rc_flags);
+	JAM_FOOTER();
 }
 #endif
 
