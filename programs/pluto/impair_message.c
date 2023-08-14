@@ -1,6 +1,6 @@
 /* impair message send/recv, for libreswan
  *
- * Copyright (C) 2020  Andrew Cagney
+ * Copyright (C) 2020,2023  Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -76,6 +76,7 @@ struct direction_impairment {
 	bool replay_duplicates;
 	bool replay_forward;
 	bool replay_backward;
+	bool block;
 };
 
 static struct direction_impairment inbound_impairments = {
@@ -157,6 +158,11 @@ void add_message_impairment(enum impair_action impair_action,
 	switch (impair_action) {
 	case CALL_IMPAIR_MESSAGE_DROP:
 		break;
+	case CALL_IMPAIR_MESSAGE_BLOCK:
+		direction->block = biased_value; /*0-or-1*/
+		llog(RC_LOG, logger, "IMPAIR: block all %s messages: %s",
+		     direction->name, bool_str(direction->block));
+		return;
 	case CALL_IMPAIR_MESSAGE_REPLAY_DUPLICATES:
 		direction->replay_duplicates = biased_value;
 		return;
@@ -185,6 +191,12 @@ static bool impair_message(const struct message *message,
 	ldbg(logger, "%s message nr is %u", direction->name, message->nr);
 
 	bool impaired = false;
+
+	if (direction->block) {
+		llog(RC_LOG, logger, "IMPAIR: blocking %s message %u",
+		     direction->name, message->nr);
+		return true;
+	}
 
 	for (struct message_impairment **mp = &direction->impairments; (*mp) != NULL; mp = &(*mp)->next) {
 		struct message_impairment *m = (*mp);

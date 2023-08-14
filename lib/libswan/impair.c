@@ -184,16 +184,30 @@ struct impairment impairments[] = {
 
 	A("send-keepalive", SEND_KEEPALIVE, 0, "send a NAT keepalive packet", "SA"),
 
+	/*
+	 * Impair message flow.
+	 */
+
 	A("drop-inbound", IMPAIR_MESSAGE_DROP, IMPAIR_INBOUND_MESSAGE,
 	  "drop the N'th inbound message", "message number"),
 	A("drop-outbound", IMPAIR_MESSAGE_DROP, IMPAIR_OUTBOUND_MESSAGE,
 	  "drop the N'th outbound message", "message number"),
+
+	A("block-inbound", IMPAIR_MESSAGE_BLOCK, IMPAIR_INBOUND_MESSAGE,
+	  "block all incoming message", NULL),
+	A("block-outbound", IMPAIR_MESSAGE_BLOCK, IMPAIR_OUTBOUND_MESSAGE,
+	  "block all outgoing message", NULL),
+
 	A("replay-backward", IMPAIR_MESSAGE_REPLAY_BACKWARD, IMPAIR_INBOUND_MESSAGE,
 	  "replay all earlier inbound packets new-to-old", NULL),
 	A("replay-duplicates", IMPAIR_MESSAGE_REPLAY_DUPLICATES, IMPAIR_INBOUND_MESSAGE,
 	  "duplicate each inbound packet", NULL),
 	A("replay-forward", IMPAIR_MESSAGE_REPLAY_FORWARD, IMPAIR_INBOUND_MESSAGE,
 	  "replay all inbound packets old-to-new", NULL),
+
+	/*
+	 * Mangle payloads.
+	 */
 
 	V("add-unknown-v2-payload-to", add_unknown_v2_payload_to,
 	  "impair the (unencrypted) part of the exchange",
@@ -637,6 +651,7 @@ bool process_impair(const struct whack_impair *wc,
 	case CALL_GLOBAL_EVENT_HANDLER:
 	case CALL_STATE_EVENT_HANDLER:
 	case CALL_IMPAIR_MESSAGE_DROP:
+	case CALL_IMPAIR_MESSAGE_BLOCK:
 	case CALL_IMPAIR_MESSAGE_REPLAY_DUPLICATES:
 	case CALL_IMPAIR_MESSAGE_REPLAY_FORWARD:
 	case CALL_IMPAIR_MESSAGE_REPLAY_BACKWARD:
