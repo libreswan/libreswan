@@ -75,8 +75,8 @@ west #
 west #
  # be a IKE_SA_INIT for the replacemnt.
 west #
- ipsec whack --impair drop-outgoing:1
-002 IMPAIR: will drop outgoing message 1
+ ipsec whack --impair drop-outbound:1
+002 IMPAIR: will drop outbound message 1
 west #
  ipsec whack --asynchronous --impair event-v2-reauth:1
 000 "labeled" #1: no existing REAUTH event to delete

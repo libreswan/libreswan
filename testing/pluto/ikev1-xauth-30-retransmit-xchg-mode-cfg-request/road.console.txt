@@ -11,8 +11,8 @@ road #
  echo done
 done
 road #
- ipsec whack --impair drop-incoming:4
-002 IMPAIR: will drop incoming message 4
+ ipsec whack --impair drop-inbound:4
+002 IMPAIR: will drop inbound message 4
 road #
  ipsec whack --xauthname 'use1' --xauthpass 'use1pass' --name xauth-road-eastnet --initiate
 002 "xauth-road-eastnet" #1: initiating IKEv1 Main Mode connection
@@ -22,7 +22,7 @@ road #
 002 "xauth-road-eastnet" #1: Peer ID is ID_FQDN: '@east'
 003 "xauth-road-eastnet" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
 004 "xauth-road-eastnet" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "xauth-road-eastnet" #1: IMPAIR: drop incoming message 4
+002 "xauth-road-eastnet" #1: IMPAIR: drop inbound message 4
 041 "xauth-road-eastnet" #1: prompt for Username:
 040 "xauth-road-eastnet" #1: prompt for Password:
 002 "xauth-road-eastnet" #1: XAUTH: Answering XAUTH challenge with user='use1'

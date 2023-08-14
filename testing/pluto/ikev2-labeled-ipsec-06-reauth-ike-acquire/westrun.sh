@@ -9,7 +9,7 @@ ipsec auto --up labeled
 
 # Initiate a replace of state #1; the next outgoing message which will
 # be a IKE_SA_INIT for the replacemnt.
-ipsec whack --impair drop-outgoing:1
+ipsec whack --impair drop-outbound:1
 ipsec whack --asynchronous --impair event-v2-reauth:1
 ../../guestbin/wait-for.sh --match PARENT_I1 -- ipsec whack --showstates
 
