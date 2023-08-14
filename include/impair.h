@@ -124,9 +124,6 @@ struct impair {
 	enum impair_v2_transform v2_proposal_dh;
 	unsigned ikev2_add_ike_transform;
 	unsigned ikev2_add_child_transform;
-	bool replay_duplicates;
-	bool replay_forward;
-	bool replay_backward;
 	bool replay_encrypted;
 	bool corrupt_encrypted;
 	bool proposal_parser;
@@ -217,10 +214,11 @@ enum impair_action {
 	CALL_STATE_EVENT_HANDLER,
 
 	CALL_IMPAIR_MESSAGE_DROP,
+	CALL_IMPAIR_MESSAGE_REPLAY_DUPLICATES,
+	CALL_IMPAIR_MESSAGE_REPLAY_FORWARD,
+	CALL_IMPAIR_MESSAGE_REPLAY_BACKWARD,
 
 #if 0
-	CALL_IMPAIR_DUP_INBOUND,
-	CALL_IMPAIR_DUP_OUTBOUND,
 	CALL_IMPAIR_CORRUPT_INBOUND,
 	CALL_IMPAIR_CORRUPT_OUTBOUND,
 #endif

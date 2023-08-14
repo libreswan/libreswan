@@ -151,10 +151,7 @@ struct impairment impairments[] = {
 	V("rekey-initiate-subnet", rekey_initiate_subnet, "impair IPsec SA rekey initiator TSi and TSR to X/32 or X/128"),
 	V("rekey-respond-supernet", rekey_respond_supernet, "impair IPsec SA rekey responder TSi and TSR to 0/0 ::0"),
 	V("rekey-respond-subnet", rekey_respond_subnet, "impair IPsec SA rekey responder TSi and TSR to X/32 X/128"),
-	V("replay-backward", replay_backward, "replay all earlier packets new-to-old"),
-	V("replay-duplicates", replay_duplicates, "replay duplicates of each incoming packet"),
 	V("replay-encrypted", replay_encrypted, "replay encrypted packets"),
-	V("replay-forward", replay_forward, "replay all earlier packets old-to-new"),
 	V("revival", revival, "disable code that revives a connection that is supposed to stay up"),
 	V("sa-creation", sa_creation, "fail all SA creation"),
 	V("send-bogus-dcookie", send_bogus_dcookie, "causes pluto to send a a bogus IKEv2 DCOOKIE"),
@@ -191,6 +188,12 @@ struct impairment impairments[] = {
 	  "drop the N'th inbound message", "message number"),
 	A("drop-outbound", IMPAIR_MESSAGE_DROP, IMPAIR_OUTBOUND_MESSAGE,
 	  "drop the N'th outbound message", "message number"),
+	A("replay-backward", IMPAIR_MESSAGE_REPLAY_BACKWARD, IMPAIR_INBOUND_MESSAGE,
+	  "replay all earlier inbound packets new-to-old", NULL),
+	A("replay-duplicates", IMPAIR_MESSAGE_REPLAY_DUPLICATES, IMPAIR_INBOUND_MESSAGE,
+	  "duplicate each inbound packet", NULL),
+	A("replay-forward", IMPAIR_MESSAGE_REPLAY_FORWARD, IMPAIR_INBOUND_MESSAGE,
+	  "replay all inbound packets old-to-new", NULL),
 
 	V("add-unknown-v2-payload-to", add_unknown_v2_payload_to,
 	  "impair the (unencrypted) part of the exchange",
@@ -634,6 +637,9 @@ bool process_impair(const struct whack_impair *wc,
 	case CALL_GLOBAL_EVENT_HANDLER:
 	case CALL_STATE_EVENT_HANDLER:
 	case CALL_IMPAIR_MESSAGE_DROP:
+	case CALL_IMPAIR_MESSAGE_REPLAY_DUPLICATES:
+	case CALL_IMPAIR_MESSAGE_REPLAY_FORWARD:
+	case CALL_IMPAIR_MESSAGE_REPLAY_BACKWARD:
 		/* how is always biased */
 		if (action == NULL) {
 			llog(RC_LOG|DEBUG_STREAM, logger,

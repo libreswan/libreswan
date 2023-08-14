@@ -189,6 +189,9 @@ static void whack_impair_action(enum impair_action impairment_action,
 		break;
 	}
 	case CALL_IMPAIR_MESSAGE_DROP:
+	case CALL_IMPAIR_MESSAGE_REPLAY_DUPLICATES:
+	case CALL_IMPAIR_MESSAGE_REPLAY_FORWARD:
+	case CALL_IMPAIR_MESSAGE_REPLAY_BACKWARD:
 		add_message_impairment(impairment_action,
 				       (enum impair_message_direction)impairment_param,
 				       biased_value - 1, logger);
