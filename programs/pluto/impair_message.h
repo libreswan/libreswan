@@ -54,7 +54,9 @@ struct logger;
 struct msg_digest;
 enum impair_action;
 
-void add_message_impairment(unsigned nr, enum impair_action action, struct logger *logger);
+void add_message_impairment(enum impair_action action,
+			    enum impair_message_direction impair_direction,
+			    unsigned nr, struct logger *logger);
 
 bool impair_outbound_message(shunk_t message, struct logger *logger);
 

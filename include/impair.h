@@ -204,14 +204,20 @@ enum impair_status {
 enum impair_status parse_impair(const char *optarg, struct whack_impair *whack_impair,
 				bool enable, struct logger *logger);
 
+enum impair_message_direction {
+	IMPAIR_INBOUND_MESSAGE = 1,
+	IMPAIR_OUTBOUND_MESSAGE,
+};
+
 enum impair_action {
 	CALL_IMPAIR_UPDATE,
 	CALL_INITIATE_v2_LIVENESS,
 	CALL_SEND_KEEPALIVE,
 	CALL_GLOBAL_EVENT_HANDLER,
 	CALL_STATE_EVENT_HANDLER,
-	CALL_IMPAIR_DROP_INBOUND,
-	CALL_IMPAIR_DROP_OUTBOUND,
+
+	CALL_IMPAIR_MESSAGE_DROP,
+
 #if 0
 	CALL_IMPAIR_DUP_INBOUND,
 	CALL_IMPAIR_DUP_OUTBOUND,

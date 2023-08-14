@@ -95,21 +95,26 @@ static struct direction_impairment inbound_impairments = {
 	.name = "inbound",
 };
 
-void add_message_impairment(unsigned nr, enum impair_action action, struct logger *logger)
+struct direction_impairment *const message_impairments[] = {
+	[IMPAIR_INBOUND_MESSAGE] = &inbound_impairments,
+	[IMPAIR_OUTBOUND_MESSAGE] = &outbound_impairments,
+};
+
+void add_message_impairment(enum impair_action impair_action,
+			    enum impair_message_direction impair_direction,
+			    unsigned nr, struct logger *logger)
 {
-	struct direction_impairment *direction;
-	switch (action) {
-	case CALL_IMPAIR_DROP_INBOUND:
-		direction = &inbound_impairments;
-		break;
-	case CALL_IMPAIR_DROP_OUTBOUND:
-		direction = &outbound_impairments;
+	PASSERT(logger, impair_direction < elemsof(message_impairments));
+	struct direction_impairment *direction = message_impairments[impair_direction];
+	switch (impair_action) {
+	case CALL_IMPAIR_MESSAGE_DROP:
 		break;
 	default:
-		bad_case(action);
+		bad_case(impair_action);
 	}
+	PASSERT(logger, direction != NULL);
 	llog(RC_LOG, logger, "IMPAIR: will drop %s message %u",
-		    direction->name, nr);
+	     direction->name, nr);
 	struct message_impairment *m = alloc_thing(struct message_impairment, "impair message");
 	m->message_nr = nr;
 	m->next = direction->impairments;
