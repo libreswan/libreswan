@@ -36,7 +36,7 @@
      Note that AES_GCM and AES_CCM for ESP come in 8, 12 and 16 byte ICV versions.
      RFC 8221 only requires AES_GCM with 16 byte ICV and AES_CCM with 8 byte ICV
      to be implemented, and "aes_gcm" and "aes_ccm" refer to these variants. The
-     ohter variants can be specified using an _a (8), _b(12) or _c(12) postfix,
+     other variants can be specified using an _a (8), _b(12) or _c(16) postfix,
      eg esp=aes_gcm_a for the 8 byte ICV and esp=aes_gcm_b for the 12 byte ICV.
     </para>
     <para>
