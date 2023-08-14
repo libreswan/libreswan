@@ -22,9 +22,11 @@
 #include "chunk.h"
 
 #include "defs.h"
+#include "log.h"
 #include "demux.h"
 #include "impair_message.h"
 #include "state.h"
+#include "iface.h"
 
 struct message;
 struct direction_impairment;
@@ -32,6 +34,9 @@ struct direction_impairment;
 static void drip_message(const struct direction_impairment *direction,
 			 const struct message *m, const char *reason,
 			 struct logger *logger);
+
+static void drip_inbound(const struct message *m, struct logger *logger);
+static void drip_outbound(const struct message *m, struct logger *logger);
 
 /*
  * Track messages to impair.
@@ -77,16 +82,19 @@ struct direction_impairment {
 	bool replay_forward;
 	bool replay_backward;
 	bool block;
+	void (*drip)(const struct message *m, struct logger *logger);
 };
 
 static struct direction_impairment inbound_impairments = {
 	.name = "inbound",
 	.messages = INIT_LIST_HEAD(&inbound_impairments.messages, &message_info),
+	.drip = drip_inbound,
 };
 
 static struct direction_impairment outbound_impairments = {
 	.name = "outbound",
 	.messages = INIT_LIST_HEAD(&outbound_impairments.messages, &message_info),
+	.drip = drip_outbound,
 };
 
 struct direction_impairment *const message_impairments[] = {
@@ -147,6 +155,27 @@ static const struct message *save_outbound(shunk_t message,
 			    interface, endpoint);
 }
 
+/*
+ * Find a message then drip feed it (to pluto or the peer).
+ */
+
+static void impair_message_drip(struct direction_impairment *direction,
+				unsigned nr, struct logger *logger)
+{
+	struct message *m = NULL;
+	FOR_EACH_LIST_ENTRY_OLD2NEW(m, &direction->messages) {
+		if (m->nr == nr) {
+			break;
+		}
+	}
+	if (m == NULL) {
+		llog(RC_LOG, logger, "IMPAIR: %s message %u not found",
+		     direction->name, nr);
+		return;
+	}
+	drip_message(direction, m, "drip", logger);
+}
+
 void add_message_impairment(enum impair_action impair_action,
 			    enum impair_message_direction impair_direction,
 			    unsigned biased_value, struct logger *logger)
@@ -162,6 +191,9 @@ void add_message_impairment(enum impair_action impair_action,
 		direction->block = biased_value; /*0-or-1*/
 		llog(RC_LOG, logger, "IMPAIR: block all %s messages: %s",
 		     direction->name, bool_str(direction->block));
+		return;
+	case CALL_IMPAIR_MESSAGE_DRIP:
+		impair_message_drip(direction, message_nr, logger);
 		return;
 	case CALL_IMPAIR_MESSAGE_REPLAY_DUPLICATES:
 		direction->replay_duplicates = biased_value;
@@ -291,14 +323,39 @@ static void drip_message(const struct direction_impairment *direction,
 		llog_dump_hunk(DEBUG_STREAM, logger, m->body);
 	}
 
-	struct msg_digest *md = clone_raw_md(m->inbound.md, HERE);
-	process_md(md);
-	md_delref(&md);
-	pexpect(md == NULL);
+	direction->drip(m, logger);
 
 	llog(RC_LOG, logger,
 	     "IMPAIR: stop processing %s %s packet %u",
 	     direction->name, reason, m->nr);
+}
+
+static void drip_inbound(const struct message *m, struct logger *logger)
+{
+	struct msg_digest *md = clone_raw_md(m->inbound.md, HERE);
+	md_attach(md, logger);
+	process_md(md);
+	md_delref(&md);
+	pexpect(md == NULL);
+}
+
+static void drip_outbound(const struct message *m, struct logger *logger)
+{
+	const struct iface_endpoint *interface = m->outbound.interface;
+	ssize_t wlen = interface->io->write_packet(interface,
+						   HUNK_AS_SHUNK(m->body),
+						   &m->outbound.endpoint,
+						   logger);
+	if (wlen != (ssize_t)m->body.len) {
+		endpoint_buf lb;
+		endpoint_buf rb;
+		llog_error(logger, errno,
+			   "send on %s from %s to %s using %s failed",
+			   interface->ip_dev->id_rname,
+			   str_endpoint(&interface->local_endpoint, &lb),
+			   str_endpoint_sensitive(&m->outbound.endpoint, &rb),
+			   interface->io->protocol->name);
+	}
 }
 
 bool impair_inbound(struct msg_digest *md)

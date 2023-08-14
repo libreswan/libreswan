@@ -198,6 +198,11 @@ struct impairment impairments[] = {
 	A("block-outbound", IMPAIR_MESSAGE_BLOCK, IMPAIR_OUTBOUND_MESSAGE,
 	  "block all outgoing message", NULL),
 
+	A("drip-inbound", IMPAIR_MESSAGE_DRIP, IMPAIR_INBOUND_MESSAGE,
+	  "drip N'th inbound message", "message number"),
+	A("drip-outbound", IMPAIR_MESSAGE_DRIP, IMPAIR_OUTBOUND_MESSAGE,
+	  "drip N'th outbound message", "message number"),
+
 	A("replay-backward", IMPAIR_MESSAGE_REPLAY_BACKWARD, IMPAIR_INBOUND_MESSAGE,
 	  "replay all earlier inbound packets new-to-old", NULL),
 	A("replay-duplicates", IMPAIR_MESSAGE_REPLAY_DUPLICATES, IMPAIR_INBOUND_MESSAGE,
@@ -652,6 +657,7 @@ bool process_impair(const struct whack_impair *wc,
 	case CALL_STATE_EVENT_HANDLER:
 	case CALL_IMPAIR_MESSAGE_DROP:
 	case CALL_IMPAIR_MESSAGE_BLOCK:
+	case CALL_IMPAIR_MESSAGE_DRIP:
 	case CALL_IMPAIR_MESSAGE_REPLAY_DUPLICATES:
 	case CALL_IMPAIR_MESSAGE_REPLAY_FORWARD:
 	case CALL_IMPAIR_MESSAGE_REPLAY_BACKWARD:
