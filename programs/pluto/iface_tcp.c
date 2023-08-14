@@ -358,7 +358,7 @@ static struct msg_digest *iketcp_read_packet(struct iface_endpoint **ifp,
 }
 
 static ssize_t iketcp_write_packet(const struct iface_endpoint *ifp,
-				   const void *ptr, size_t len,
+				   shunk_t packet,
 				   const ip_endpoint *remote_endpoint UNUSED,
 				   struct logger *logger)
 {
@@ -379,8 +379,8 @@ static ssize_t iketcp_write_packet(const struct iface_endpoint *ifp,
 				    ifp->fd, flags);
 		}
 	}
-	ssize_t wlen = write(ifp->fd, ptr, len);
-	dbg_iketcp(ifp, "wrote %zd of %zu bytes", wlen, len);
+	ssize_t wlen = write(ifp->fd, packet.ptr, packet.len);
+	dbg_iketcp(ifp, "wrote %zd of %zu bytes", wlen, packet.len);
 	if (impair.tcp_use_blocking_write && flags >= 0) {
 		llog_iketcp(RC_LOG, logger, ifp, /*no-error*/0,
 			    "IMPAIR: restoring flags 0%o after write", flags);

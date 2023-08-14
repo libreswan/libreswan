@@ -73,9 +73,6 @@ static bool send_shunks(const char *where, bool just_a_keepalive,
 			shunk_t a, shunk_t b,
 			struct logger *logger)
 {
-	/* NOTE: on system with limited stack, buf could be made static */
-	uint8_t buf[MAX_OUTPUT_UDP_SIZE];
-
 	/* Each fragment, if we are doing NATT, needs a non-ESP_Marker prefix.
 	 * natt_bonus is the size of the addition (0 if not needed).
 	 */
@@ -123,7 +120,6 @@ static bool send_shunks(const char *where, bool just_a_keepalive,
 				  interface->esp_encapsulation_enabled ?
 				  NON_ESP_MARKER_SIZE : 0;
 
-	const uint8_t *ptr;
 	size_t len = natt_bonus + a.len + b.len;
 
 	if (len > MAX_OUTPUT_UDP_SIZE) {
@@ -133,6 +129,18 @@ static bool send_shunks(const char *where, bool just_a_keepalive,
 		return false;
 	}
 
+	/*
+	 * BUF must be same scope as PACKET.  Use dummy assignment to
+	 * enforce this.
+	 *
+	 * NOTE: on system with limited stack, buf could be made
+	 * static.  XXX: except this is going to be made parallel.
+	 *
+	 * Instead of the copy, should write_packet act more like
+	 * iovec?
+	 */
+	uint8_t buf[MAX_OUTPUT_UDP_SIZE];
+	shunk_t packet = THING_AS_HUNK(buf);
 	if (len != a.len) {
 		/* copying required */
 
@@ -145,27 +153,27 @@ static bool send_shunks(const char *where, bool just_a_keepalive,
 		/* 3. chunk b */
 		memcpy(buf + natt_bonus + a.len, b.ptr, b.len);
 
-		ptr = buf;
+		packet = shunk2(buf, len);
 	} else {
-		ptr = a.ptr;
+		packet = a;
 	}
 
 	if (DBGP(DBG_BASE)) {
 		endpoint_buf lb;
 		endpoint_buf rb;
 		llog(DEBUG_STREAM, logger,
-			    "sending %zu bytes for %s through %s from %s to %s using %s (for #%lu)",
-			    len, where,
-			    interface->ip_dev->id_rname,
-			    str_endpoint(&interface->local_endpoint, &lb),
-			    str_endpoint(&remote_endpoint, &rb),
-			    interface->io->protocol->name,
-			    serialno);
-		DBG_dump(NULL, ptr, len);
+		     "sending %zu bytes for %s through %s from %s to %s using %s (for #%lu)",
+		     packet.len, where,
+		     interface->ip_dev->id_rname,
+		     str_endpoint(&interface->local_endpoint, &lb),
+		     str_endpoint(&remote_endpoint, &rb),
+		     interface->io->protocol->name,
+		     serialno);
+		llog_dump_hunk(DEBUG_STREAM, logger, packet);
 	}
 
-	if (!impair_outgoing_message(shunk2(ptr, len), logger)) {
-		ssize_t wlen = interface->io->write_packet(interface, ptr, len,
+	if (!impair_outgoing_message(packet, logger)) {
+		ssize_t wlen = interface->io->write_packet(interface, packet,
 							   &remote_endpoint, logger);
 		if (wlen != (ssize_t)len) {
 			if (!just_a_keepalive) {
@@ -203,7 +211,7 @@ static bool send_shunks(const char *where, bool just_a_keepalive,
 			    str_endpoint(&remote_endpoint, &b));
 
 		ip_sockaddr remote_sa = sockaddr_from_endpoint(remote_endpoint);
-		ssize_t wlen = sendto(interface->fd, ptr, len, 0, &remote_sa.sa.sa, remote_sa.len);
+		ssize_t wlen = sendto(interface->fd, packet.ptr, packet.len, 0, &remote_sa.sa.sa, remote_sa.len);
 		if (wlen != (ssize_t)len) {
 			if (!just_a_keepalive) {
 				llog_error(logger, errno,

@@ -23,6 +23,7 @@
 #include "ip_endpoint.h"
 #include "refcnt.h"
 #include "list_entry.h"
+#include "shunk.h"
 
 struct fd;
 struct raw_iface;
@@ -48,7 +49,7 @@ struct iface_io {
 	struct msg_digest *(*read_packet)(struct iface_endpoint **ifp,
 					  struct logger *logger);
 	ssize_t (*write_packet)(const struct iface_endpoint *ifp,
-				const void *ptr, size_t len,
+				shunk_t packet,
 				const ip_endpoint *remote_endpoint,
 				struct logger *logger);
 	void (*cleanup)(struct iface_endpoint *ifp);

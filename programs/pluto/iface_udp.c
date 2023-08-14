@@ -271,7 +271,7 @@ static uint32_t set_mark_out(const struct logger *logger, uint32_t mark, int fd)
 #endif
 
 static ssize_t udp_write_packet(const struct iface_endpoint *ifp,
-				const void *ptr, size_t len,
+				shunk_t packet,
 				const ip_endpoint *remote_endpoint,
 				struct logger *logger /*possibly*/UNUSED)
 {
@@ -289,7 +289,7 @@ static ssize_t udp_write_packet(const struct iface_endpoint *ifp,
 		old_mark = set_mark_out(logger, remote_endpoint->mark_out, ifp->fd);
 #endif
 
-	ssize_t ret = sendto(ifp->fd, ptr, len, 0, &remote_sa.sa.sa, remote_sa.len);
+	ssize_t ret = sendto(ifp->fd, packet.ptr, packet.len, 0, &remote_sa.sa.sa, remote_sa.len);
 
 #ifdef USE_XFRM_INTERFACE
 	if (remote_endpoint->mark_out > 0)
