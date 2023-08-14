@@ -87,23 +87,23 @@ struct direction_impairment {
 	const char *name;
 };
 
-static struct direction_impairment outgoing_impairments = {
-	.name = "outgoing",
+static struct direction_impairment outbound_impairments = {
+	.name = "outbound",
 };
 
-static struct direction_impairment incoming_impairments = {
-	.name = "incoming",
+static struct direction_impairment inbound_impairments = {
+	.name = "inbound",
 };
 
 void add_message_impairment(unsigned nr, enum impair_action action, struct logger *logger)
 {
 	struct direction_impairment *direction;
 	switch (action) {
-	case CALL_IMPAIR_DROP_INCOMING:
-		direction = &incoming_impairments;
+	case CALL_IMPAIR_DROP_INBOUND:
+		direction = &inbound_impairments;
 		break;
-	case CALL_IMPAIR_DROP_OUTGOING:
-		direction = &outgoing_impairments;
+	case CALL_IMPAIR_DROP_OUTBOUND:
+		direction = &outbound_impairments;
 		break;
 	default:
 		bad_case(action);
@@ -146,11 +146,11 @@ static bool impair_message(shunk_t message, struct direction_impairment *directi
 	return false;
 }
 
-static bool impair_incoming_message(struct msg_digest *md)
+static bool impair_inbound_message(struct msg_digest *md)
 {
 	struct message_impairment impairment;
 	bool impair = impair_message(pbs_in_all(&md->packet_pbs),
-				     &incoming_impairments, &impairment,
+				     &inbound_impairments, &impairment,
 				     md->md_logger);
 	if (!impair) {
 		return false;
@@ -163,17 +163,17 @@ static bool impair_incoming_message(struct msg_digest *md)
 		struct state *st = sf.st;
 		if (st->st_logger->object_whackfd != NULL ||
 		    st->st_logger->global_whackfd != NULL) {
-			llog(RC_LOG, st->st_logger, "IMPAIR: drop incoming message %u",
+			llog(RC_LOG, st->st_logger, "IMPAIR: drop inbound message %u",
 				    impairment.message_nr);
 		}
 	}
 	return true;
 }
 
-bool impair_outgoing_message(shunk_t message, struct logger *logger)
+bool impair_outbound_message(shunk_t message, struct logger *logger)
 {
 	struct message_impairment impairment; /*ignored*/
-	return impair_message(message, &outgoing_impairments, &impairment, logger);
+	return impair_message(message, &outbound_impairments, &impairment, logger);
 }
 
 static void free_direction(struct direction_impairment *direction, struct logger *logger)
@@ -261,9 +261,9 @@ static void save_md_for_replay(bool already_impaired, struct msg_digest *md)
 	}
 }
 
-bool impair_incoming(struct msg_digest *md)
+bool impair_inbound(struct msg_digest *md)
 {
-	if (impair_incoming_message(md)) {
+	if (impair_inbound_message(md)) {
 		return true;
 	}
 	bool impaired = false;
@@ -301,8 +301,8 @@ bool impair_incoming(struct msg_digest *md)
 
 void shutdown_impair_message(struct logger *logger)
 {
-	free_direction(&incoming_impairments, logger);
-	free_direction(&outgoing_impairments, logger);
+	free_direction(&inbound_impairments, logger);
+	free_direction(&outbound_impairments, logger);
 
 	struct replay_entry *e = NULL;
 	FOR_EACH_LIST_ENTRY_NEW2OLD(e, &replay_packets) {

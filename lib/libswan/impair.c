@@ -187,8 +187,8 @@ struct impairment impairments[] = {
 
 	A("send-keepalive", SEND_KEEPALIVE, 0, "send a NAT keepalive packet", "SA"),
 
-	A("drop-incoming", IMPAIR_DROP_INCOMING, 0, "drop the N'th incoming message", "message number"),
-	A("drop-outgoing", IMPAIR_DROP_OUTGOING, 0, "drop the N'th outgoing message", "message number"),
+	A("drop-inbound", IMPAIR_DROP_INBOUND, 0, "drop the N'th inbound message", "message number"),
+	A("drop-outbound", IMPAIR_DROP_OUTBOUND, 0, "drop the N'th outbound message", "message number"),
 
 	V("add-unknown-v2-payload-to", add_unknown_v2_payload_to,
 	  "impair the (unencrypted) part of the exchange",
@@ -631,8 +631,8 @@ bool process_impair(const struct whack_impair *wc,
 	case CALL_SEND_KEEPALIVE:
 	case CALL_GLOBAL_EVENT_HANDLER:
 	case CALL_STATE_EVENT_HANDLER:
-	case CALL_IMPAIR_DROP_INCOMING:
-	case CALL_IMPAIR_DROP_OUTGOING:
+	case CALL_IMPAIR_DROP_INBOUND:
+	case CALL_IMPAIR_DROP_OUTBOUND:
 		/* how is always biased */
 		if (action == NULL) {
 			llog(RC_LOG|DEBUG_STREAM, logger,

@@ -188,8 +188,8 @@ static void whack_impair_action(enum impair_action impairment_action,
 		send_keepalive_using_state(st, "inject keep-alive");
 		break;
 	}
-	case CALL_IMPAIR_DROP_INCOMING:
-	case CALL_IMPAIR_DROP_OUTGOING:
+	case CALL_IMPAIR_DROP_INBOUND:
+	case CALL_IMPAIR_DROP_OUTBOUND:
 		add_message_impairment(biased_value - 1, impairment_action, logger);
 	}
 }

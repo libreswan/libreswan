@@ -20,7 +20,7 @@
  * Impair a message identified using the message's direction's
  * sequence number:
  *
- * - incoming and outgoing message streams are numbered separately
+ * - inbound and outbound message streams are numbered separately
  *
  * - only unique messages (for each stream) are assigned a new number
  *
@@ -29,11 +29,11 @@
  *
  * - once an impair has been matched and actioned it is discarded
  *
- *   i.e., drop-inomming:2 will only match and drop the first incoming
+ *   i.e., drop-inomming:2 will only match and drop the first inbound
  *   message #2
  *
  * For instance, here's an exchange with the INITIATOR impaired to
- * drop the second incoming message:
+ * drop the second inbound message:
  *
  *     initiator                             responder
  *       out#1     IKE_SA_INIT req ->           in#1
@@ -56,9 +56,9 @@ enum impair_action;
 
 void add_message_impairment(unsigned nr, enum impair_action action, struct logger *logger);
 
-bool impair_outgoing_message(shunk_t message, struct logger *logger);
+bool impair_outbound_message(shunk_t message, struct logger *logger);
 
-bool impair_incoming(struct msg_digest *md);
+bool impair_inbound(struct msg_digest *md);
 
 void shutdown_impair_message(struct logger *logger);
 

@@ -285,7 +285,7 @@ void process_iface_packet(int fd, void *ifp_arg, struct logger *logger)
 		pstats_ike_bytes.in += pbs_room(&md->packet_pbs);
 
 		md->md_inception = md_start;
-		if (!impair_incoming(md)) {
+		if (!impair_inbound(md)) {
 			/*
 			 * If this needs to hang onto MD it will save
 			 * a reference (aka addref), and the below
