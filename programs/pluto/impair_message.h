@@ -1,6 +1,6 @@
 /* impair messages recv/sent, for libreswan
  *
- * Copyright (C) 2020  Andrew Cagney
+ * Copyright (C) 2020,2023  Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -56,9 +56,10 @@ enum impair_action;
 
 void add_message_impairment(unsigned nr, enum impair_action action, struct logger *logger);
 
-bool impair_incoming_message(struct msg_digest *md);
 bool impair_outgoing_message(shunk_t message, struct logger *logger);
 
-void free_impair_message(struct logger *logger);
+bool impair_incoming(struct msg_digest *md);
+
+void shutdown_impair_message(struct logger *logger);
 
 #endif /* _DEMUX_H */

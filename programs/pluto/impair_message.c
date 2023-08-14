@@ -146,7 +146,7 @@ static bool impair_message(shunk_t message, struct direction_impairment *directi
 	return false;
 }
 
-bool impair_incoming_message(struct msg_digest *md)
+static bool impair_incoming_message(struct msg_digest *md)
 {
 	struct message_impairment impairment;
 	bool impair = impair_message(pbs_in_all(&md->packet_pbs),
@@ -190,8 +190,124 @@ static void free_direction(struct direction_impairment *direction, struct logger
 	}
 }
 
-void free_impair_message(struct logger *logger)
+/*
+ * Impair pluto by replaying packets.
+ *
+ * To make things easier, all packets received are saved, in-order, in
+ * a list and then various impair operations iterate over this list.
+ *
+ * For instance, IKEv1 sends back-to-back packets (see XAUTH).  By
+ * replaying them (and everything else) this can simulate what happens
+ * when the remote starts re-transmitting them.
+ */
+
+static void process_md_clone(struct msg_digest *orig, const char *fmt, ...) PRINTF_LIKE(2);
+static void process_md_clone(struct msg_digest *orig, const char *fmt, ...)
+{
+	/* not whack FD yet is expected to be reset! */
+	struct msg_digest *md = clone_raw_md(orig, HERE);
+
+	LLOG_JAMBUF(RC_LOG, md->md_logger, buf) {
+		jam_string(buf, "IMPAIR: start processing ");
+		va_list ap;
+		va_start(ap, fmt);
+		jam_va_list(buf, fmt, ap);
+		va_end(ap);
+		jam(buf, " (%d bytes)", (int)pbs_room(&md->packet_pbs));
+	}
+	if (DBGP(DBG_BASE)) {
+		DBG_dump(NULL, md->packet_pbs.start, pbs_room(&md->packet_pbs));
+	}
+
+	process_md(md);
+
+	LLOG_JAMBUF(RC_LOG, md->md_logger, buf) {
+		jam(buf, "IMPAIR: stop processing ");
+		va_list ap;
+		va_start(ap, fmt);
+		jam_va_list(buf, fmt, ap);
+		va_end(ap);
+	}
+
+	md_delref(&md);
+	pexpect(md == NULL);
+}
+
+static unsigned long replay_count;
+
+struct replay_entry {
+	struct list_entry entry;
+	struct msg_digest *md;
+	unsigned long nr;
+};
+
+static void jam_replay_entry(struct jambuf *buf, const struct replay_entry *r)
+{
+	jam(buf, "replay packet %lu", r == NULL ? 0L : r->nr);
+}
+
+LIST_INFO(replay_entry, entry, replay_info, jam_replay_entry);
+
+static struct list_head replay_packets = INIT_LIST_HEAD(&replay_packets, &replay_info);
+
+static void save_md_for_replay(bool already_impaired, struct msg_digest *md)
+{
+	if (!already_impaired) {
+		struct replay_entry *e = alloc_thing(struct replay_entry, "replay");
+		e->md = clone_raw_md(md, HERE);
+		e->nr = ++replay_count; /* yes; pre-increment */
+		init_list_entry(&replay_info, e, &e->entry); /* back-link */
+		insert_list_entry(&replay_packets, &e->entry);
+	}
+}
+
+bool impair_incoming(struct msg_digest *md)
+{
+	if (impair_incoming_message(md)) {
+		return true;
+	}
+	bool impaired = false;
+	if (impair.replay_duplicates) {
+		save_md_for_replay(impaired, md);
+		/* MD is the most recent entry */
+		struct replay_entry *e = NULL;
+		FOR_EACH_LIST_ENTRY_NEW2OLD(e, &replay_packets) {
+			process_md_clone(e->md, "original packet");
+			process_md_clone(e->md, "duplicate packet");
+			break;
+		}
+		impaired = true;
+	}
+	if (impair.replay_forward) {
+		save_md_for_replay(impaired, md);
+		struct replay_entry *e = NULL;
+		FOR_EACH_LIST_ENTRY_OLD2NEW(e, &replay_packets) {
+			process_md_clone(e->md, "replay forward: packet %lu of %lu",
+					 e->nr, replay_count);
+		}
+		impaired = true;
+	}
+	if (impair.replay_backward) {
+		save_md_for_replay(impaired, md);
+		struct replay_entry *e = NULL;
+		FOR_EACH_LIST_ENTRY_NEW2OLD(e, &replay_packets) {
+			process_md_clone(e->md, "start replay backward: packet %lu of %lu",
+					 e->nr, replay_count);
+		}
+		impaired = true;
+	}
+	return impaired;
+}
+
+void shutdown_impair_message(struct logger *logger)
 {
 	free_direction(&incoming_impairments, logger);
 	free_direction(&outgoing_impairments, logger);
+
+	struct replay_entry *e = NULL;
+	FOR_EACH_LIST_ENTRY_NEW2OLD(e, &replay_packets) {
+		md_delref(&e->md);
+		remove_list_entry(&e->entry);
+		pfreeany(e);
+	}
 }

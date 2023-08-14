@@ -161,7 +161,13 @@ void exit_epilogue(void)
 
 	lsw_conf_free_oco();	/* free global_oco containing path names */
 
-	shutdown_demux();
+	/*
+	 * The impair_message code has pointers to to msg_digest
+	 * which, in turn has pointers to iface.  Hence it must be
+	 * shutdown (and links released) before the interfaces.
+	 */
+	shutdown_impair_message(logger);
+
 	shutdown_ifaces(logger);	/* free interface list from memory */
 	shutdown_kernel(logger);
 	lsw_nss_shutdown();
@@ -177,7 +183,6 @@ void exit_epilogue(void)
 
 	free_virtual_ip();	/* virtual_private= */
 	free_pluto_main();	/* our static chars */
-	free_impair_message(logger);
 
 	/* report memory leaks now, after all free_* calls */
 	if (leak_detective) {
