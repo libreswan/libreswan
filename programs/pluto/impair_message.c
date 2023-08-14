@@ -45,6 +45,14 @@ struct message {
 	struct {
 		struct msg_digest *md;
 	} inbound;
+	struct {
+		/*
+		 * Danger: assumes message is deleted before
+		 * interface.  Deleting an interface probably crashes.
+		 */
+		const struct iface_endpoint *interface;
+		ip_endpoint endpoint;
+	} outbound;
 	struct list_entry entry;
 };
 
@@ -91,7 +99,9 @@ struct direction_impairment *const message_impairments[] = {
 
 static const struct message *save_message(struct direction_impairment *direction,
 					  shunk_t message,
-					  struct msg_digest *inbound_md)
+					  struct msg_digest *inbound_md,
+					  const struct iface_endpoint *outbound_interface,
+					  const ip_endpoint outbound_endpoint)
 {
 	unsigned nr = 0;
 	struct message *old;
@@ -109,6 +119,8 @@ static const struct message *save_message(struct direction_impairment *direction
 	struct message *new = alloc_thing(struct message, "message");
 	new->body = clone_hunk(message, "message-body");
 	new->inbound.md = md_addref(inbound_md);
+	new->outbound.interface = outbound_interface;
+	new->outbound.endpoint = outbound_endpoint;
 	direction->nr_messages++;
 	new->nr = direction->nr_messages;
 	init_list_entry(&message_info, new, &new->entry); /* back-link */
@@ -120,13 +132,18 @@ static const struct message *save_inbound(struct msg_digest *md)
 {
 	return save_message(&inbound_impairments,
 			    pbs_in_all(&md->packet_pbs),
-			    /*inbound.md*/md);
+			    /*inbound.md*/md,
+			    /*outbound.interface*/NULL,
+			    /*outbound.endpoint*/unset_endpoint);
 }
 
-static const struct message *save_outbound(shunk_t message)
+static const struct message *save_outbound(shunk_t message,
+					   const struct iface_endpoint *interface,
+					   const ip_endpoint endpoint)
 {
 	return save_message(&outbound_impairments, message,
-			    /*inbound.md*/NULL);
+			    /*inbound.md*/NULL,
+			    interface, endpoint);
 }
 
 void add_message_impairment(enum impair_action impair_action,
@@ -282,13 +299,14 @@ bool impair_inbound(struct msg_digest *md)
 	return impair_message(saved_message, &inbound_impairments, md->md_logger);
 }
 
-bool impair_outbound_message(shunk_t message, struct logger *logger)
+bool impair_outbound(const struct iface_endpoint *interface, shunk_t message,
+		     const ip_endpoint *endpoint, struct logger *logger)
 {
 	if (!impair_messages) {
 		return false;
 	}
 
-	const struct message *saved_message = save_outbound(message);
+	const struct message *saved_message = save_outbound(message, interface, *endpoint);
 	return impair_message(saved_message, &outbound_impairments, logger);
 }
 
