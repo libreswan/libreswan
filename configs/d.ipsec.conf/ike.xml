@@ -20,8 +20,8 @@ Some examples are
 <emphasis remap='B'>ike=3des-sha1,aes-sha1</emphasis>,
 <emphasis remap='B'>ike=aes</emphasis>,
 <emphasis remap='B'>ike=aes_ctr</emphasis>,
-<emphasis remap='B'>ike=aes_gcm256-sha2</emphasis>,
-<emphasis remap='B'>ike=aes128-md5;modp2048</emphasis>,
+<emphasis remap='B'>ike=aes_gcm256-sha2_256</emphasis>,
+<emphasis remap='B'>ike=aes128-sha1;modp2048</emphasis>,
 <emphasis remap='B'>ike=aes256-sha2;dh19</emphasis>,
 <emphasis remap='B'>ike=aes128-sha1;dh22</emphasis>,
 <emphasis remap='B'>ike=3des-md5;modp1024,aes-sha1;modp1536</emphasis>.
