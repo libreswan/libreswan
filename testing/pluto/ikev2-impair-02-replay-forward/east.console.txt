@@ -35,44 +35,44 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 east #
- sed -n -e '/IMPAIR: start processing replay forward/,/IMPAIR: stop processing replay forward/ { /^[^|]/ p }' /tmp/pluto.log | grep -v 'message arrived'
-packet from 192.1.2.45:500: IMPAIR: start processing replay forward: packet 1 of 1 (842 bytes)
+ sed -n -e '/IMPAIR: start processing inbound replay forward/,/IMPAIR: stop processing inbound replay forward/ { /^[^|]/ p }' /tmp/pluto.log | grep -v 'message arrived'
+packet from 192.1.2.45:500: IMPAIR: start processing inbound replay forward packet 1
 "westnet-eastnet" #1: IMPAIR: processing a fake (cloned) message
 "westnet-eastnet" #1: proposal 1:IKE=AES_GCM_C_256-HMAC_SHA2_512-MODP2048 chosen from remote proposals 1:IKE:ENCR=AES_GCM_C_256;PRF=HMAC_SHA2_512;PRF=HMAC_SHA2_256;DH=MODP2048;DH=MODP3072;DH=MODP4096;DH=MODP8192;DH=ECP_256;DH=ECP_384;DH=ECP_521;DH=CURVE25519[first-match] 2:IKE:ENCR=AES_GCM_C_128;PRF=HMAC_SHA2_512;PRF=HMAC_SHA2_256;DH=MODP2048;DH=MODP3072;DH=MODP4096;DH=MODP8192;DH=ECP_256;DH=ECP_384;DH=ECP_521;DH=CURVE25519 3:IKE:ENCR=AES_CBC_256;PRF=HMAC_SHA2_512;PRF=HMAC_SHA2_256;INTEG=HMAC_SHA2_512_256;INTEG=HMAC_SHA2_256_128;DH=MODP2048;DH=MODP3072;DH=MODP4096;DH=MODP8192;DH=ECP_256;DH=ECP_384;DH=ECP_521;DH=CURVE25519 4:IKE:ENCR=AES_CBC_128;PRF=HMAC_SHA2_512;PRF=HMAC_SHA2_256;INTEG=HMAC_SHA2_512_256;INTEG=HMAC_SHA2_256_128;DH=MODP2048;DH=MODP3072;DH=MODP4096;DH=MODP8192;DH=ECP_256;DH=ECP_384;DH=ECP_521;DH=CURVE25519
-packet from 192.1.2.45:500: IMPAIR: stop processing replay forward: packet 1 of 1
-packet from 192.1.2.45:500: IMPAIR: start processing replay forward: packet 1 of 2 (842 bytes)
+packet from 192.1.2.45:500: IMPAIR: stop processing inbound replay forward packet 1
+packet from 192.1.2.45:500: IMPAIR: start processing inbound replay forward packet 1
 "westnet-eastnet" #1: IMPAIR: processing a fake (cloned) message
 "westnet-eastnet" #1: received duplicate IKE_SA_INIT message request (Message ID 0); retransmitting response
-packet from 192.1.2.45:500: IMPAIR: stop processing replay forward: packet 1 of 2
-packet from 192.1.2.45:500: IMPAIR: start processing replay forward: packet 2 of 2 (539 bytes)
+packet from 192.1.2.45:500: IMPAIR: stop processing inbound replay forward packet 1
+packet from 192.1.2.45:500: IMPAIR: start processing inbound replay forward packet 2
 "westnet-eastnet" #1: IMPAIR: processing a fake (cloned) message
-packet from 192.1.2.45:500: IMPAIR: stop processing replay forward: packet 2 of 2
-packet from 192.1.2.45:500: IMPAIR: start processing replay forward: packet 1 of 3 (842 bytes)
+packet from 192.1.2.45:500: IMPAIR: stop processing inbound replay forward packet 2
+packet from 192.1.2.45:500: IMPAIR: start processing inbound replay forward packet 1
 "westnet-eastnet" #1: IMPAIR: processing a fake (cloned) message
 "westnet-eastnet" #1: received duplicate IKE_SA_INIT message request (Message ID 0); retransmitting response
-packet from 192.1.2.45:500: IMPAIR: stop processing replay forward: packet 1 of 3
-packet from 192.1.2.45:500: IMPAIR: start processing replay forward: packet 2 of 3 (539 bytes)
+packet from 192.1.2.45:500: IMPAIR: stop processing inbound replay forward packet 1
+packet from 192.1.2.45:500: IMPAIR: start processing inbound replay forward packet 2
 "westnet-eastnet" #1: IMPAIR: processing a fake (cloned) message
 "westnet-eastnet" #1: dropping fragment 1 of 2 as repeat
-packet from 192.1.2.45:500: IMPAIR: stop processing replay forward: packet 2 of 3
-packet from 192.1.2.45:500: IMPAIR: start processing replay forward: packet 3 of 3 (201 bytes)
+packet from 192.1.2.45:500: IMPAIR: stop processing inbound replay forward packet 2
+packet from 192.1.2.45:500: IMPAIR: start processing inbound replay forward packet 3
 "westnet-eastnet" #1: IMPAIR: processing a fake (cloned) message
-packet from 192.1.2.45:500: IMPAIR: stop processing replay forward: packet 3 of 3
-packet from 192.1.2.45:500: IMPAIR: start processing replay forward: packet 1 of 4 (842 bytes)
+packet from 192.1.2.45:500: IMPAIR: stop processing inbound replay forward packet 3
+packet from 192.1.2.45:500: IMPAIR: start processing inbound replay forward packet 1
 "westnet-eastnet" #1: IMPAIR: processing a fake (cloned) message
 "westnet-eastnet" #1: received too old retransmit: 0 < 1
-packet from 192.1.2.45:500: IMPAIR: stop processing replay forward: packet 1 of 4
-packet from 192.1.2.45:500: IMPAIR: start processing replay forward: packet 2 of 4 (539 bytes)
+packet from 192.1.2.45:500: IMPAIR: stop processing inbound replay forward packet 1
+packet from 192.1.2.45:500: IMPAIR: start processing inbound replay forward packet 2
 "westnet-eastnet" #1: IMPAIR: processing a fake (cloned) message
 "westnet-eastnet" #1: IKE_AUTH request fragment 1 of 2 has duplicate Message ID 1; retransmitting response
-packet from 192.1.2.45:500: IMPAIR: stop processing replay forward: packet 2 of 4
-packet from 192.1.2.45:500: IMPAIR: start processing replay forward: packet 3 of 4 (201 bytes)
+packet from 192.1.2.45:500: IMPAIR: stop processing inbound replay forward packet 2
+packet from 192.1.2.45:500: IMPAIR: start processing inbound replay forward packet 3
 "westnet-eastnet" #1: IMPAIR: processing a fake (cloned) message
-packet from 192.1.2.45:500: IMPAIR: stop processing replay forward: packet 3 of 4
-packet from 192.1.2.45:500: IMPAIR: start processing replay forward: packet 4 of 4 (65 bytes)
+packet from 192.1.2.45:500: IMPAIR: stop processing inbound replay forward packet 3
+packet from 192.1.2.45:500: IMPAIR: start processing inbound replay forward packet 4
 "westnet-eastnet" #1: IMPAIR: processing a fake (cloned) message
 "westnet-eastnet" #2: ESP traffic information: in=84B out=84B
 "westnet-eastnet" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and NOT sending notification
-packet from 192.1.2.45:500: IMPAIR: stop processing replay forward: packet 4 of 4
+packet from 192.1.2.45:500: IMPAIR: stop processing inbound replay forward packet 4
 east #
  

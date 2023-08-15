@@ -35,21 +35,21 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 east #
- sed -n -e '/IMPAIR: start processing duplicate packet/,/IMPAIR: stop processing duplicate packet/ { /^[^|]/ p }' /tmp/pluto.log
-packet from 192.1.2.45:500: IMPAIR: start processing duplicate packet (xxx bytes)
+ sed -n -e '/IMPAIR: start processing inbound duplicate/,/IMPAIR: stop processing inbound duplicate/ { /^[^|]/ p }' /tmp/pluto.log
+packet from 192.1.2.45:500: IMPAIR: start processing inbound duplicate packet 1
 "westnet-eastnet" #1: IMPAIR: processing a fake (cloned) message
 "westnet-eastnet" #1: discarding packet received during asynchronous work (DNS or crypto) in STATE_V2_PARENT_R0
-packet from 192.1.2.45:500: IMPAIR: stop processing duplicate packet
-packet from 192.1.2.45:500: IMPAIR: start processing duplicate packet (xxx bytes)
+packet from 192.1.2.45:500: IMPAIR: stop processing inbound duplicate packet 1
+packet from 192.1.2.45:500: IMPAIR: start processing inbound duplicate packet 2
 "westnet-eastnet" #1: IMPAIR: processing a fake (cloned) message
 "westnet-eastnet" #1: dropping fragment 1 of 2 as repeat
-packet from 192.1.2.45:500: IMPAIR: stop processing duplicate packet
-packet from 192.1.2.45:500: IMPAIR: start processing duplicate packet (xxx bytes)
+packet from 192.1.2.45:500: IMPAIR: stop processing inbound duplicate packet 2
+packet from 192.1.2.45:500: IMPAIR: start processing inbound duplicate packet 3
 "westnet-eastnet" #1: IMPAIR: processing a fake (cloned) message
 "westnet-eastnet" #1: dropping fragment 2 of 2 as repeat
-packet from 192.1.2.45:500: IMPAIR: stop processing duplicate packet
-packet from 192.1.2.45:500: IMPAIR: start processing duplicate packet (xxx bytes)
+packet from 192.1.2.45:500: IMPAIR: stop processing inbound duplicate packet 3
+packet from 192.1.2.45:500: IMPAIR: start processing inbound duplicate packet 4
 packet from 192.1.2.45:500: INFORMATIONAL request has no corresponding IKE SA; message dropped
-packet from 192.1.2.45:500: IMPAIR: stop processing duplicate packet
+packet from 192.1.2.45:500: IMPAIR: stop processing inbound duplicate packet 4
 east #
  
