@@ -1408,6 +1408,7 @@ kvmplutotest	ikev2-revive-through-nat-01-down	good
 kvmplutotest	ikev2-revive-through-nat-02-cleanfail	wip	github/992
 
 # crossing the stream race conditions
+kvmplutotest    crossing-streams-01-ikev2-github-1211	wip	github/1211
 kvmplutotest	ikev2-crossing-streams-01		wip	github:557
 kvmplutotest	ikev2-crossing-streams-02		good
 kvmplutotest	ikev2-crossing-streams-03-iface		wip	github:557
