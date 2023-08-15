@@ -1,0 +1,14 @@
+IKEv2 streams with exchanges perfectly interleaved
+
+connection ends up with IKE SA from one end and Child SA from peer
+
+First:
+
+    west initiates IKE-I#1
+    east responds with IKE-R#2
+    west initiates CHILD-I#3 using IKE-I#1
+    east responds with CHILD-R#4 using IKE-R#2
+
+so everything is established.  Then:
+
+    east deletes IKE-R#2
