@@ -131,31 +131,32 @@ static const struct message *save_outbound(shunk_t message)
 
 void add_message_impairment(enum impair_action impair_action,
 			    enum impair_message_direction impair_direction,
-			    unsigned nr, struct logger *logger)
+			    unsigned biased_value, struct logger *logger)
 {
 	impair_messages = true; /* sticky */
 	PASSERT(logger, impair_direction < elemsof(message_impairments));
 	struct direction_impairment *direction = message_impairments[impair_direction];
+	unsigned message_nr = biased_value - 1; /*unbias 0*/
 	switch (impair_action) {
 	case CALL_IMPAIR_MESSAGE_DROP:
 		break;
 	case CALL_IMPAIR_MESSAGE_REPLAY_DUPLICATES:
-		direction->replay_duplicates = true;
+		direction->replay_duplicates = biased_value;
 		return;
 	case CALL_IMPAIR_MESSAGE_REPLAY_FORWARD:
-		direction->replay_forward = true;
+		direction->replay_forward = biased_value;
 		return;
 	case CALL_IMPAIR_MESSAGE_REPLAY_BACKWARD:
-		direction->replay_backward = true;
+		direction->replay_backward = biased_value;
 		return;
 	default:
 		bad_case(impair_action);
 	}
 	PASSERT(logger, direction != NULL);
 	llog(RC_LOG, logger, "IMPAIR: will drop %s message %u",
-	     direction->name, nr);
+	     direction->name, message_nr);
 	struct message_impairment *m = alloc_thing(struct message_impairment, "impair message");
-	m->message_nr = nr;
+	m->message_nr = message_nr;
 	m->next = direction->impairments;
 	direction->impairments = m;
 }
