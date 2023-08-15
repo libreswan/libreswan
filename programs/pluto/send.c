@@ -172,7 +172,7 @@ static bool send_shunks(const char *where, bool just_a_keepalive,
 		llog_dump_hunk(DEBUG_STREAM, logger, packet);
 	}
 
-	if (!impair_outbound_message(packet, logger)) {
+	if (!impair_outbound(interface, packet, &remote_endpoint, logger)) {
 		ssize_t wlen = interface->io->write_packet(interface, packet,
 							   &remote_endpoint, logger);
 		if (wlen != (ssize_t)len) {

@@ -49,16 +49,19 @@
 #include <stdbool.h>
 
 #include "shunk.h"
+#include "ip_endpoint.h"
 
 struct logger;
 struct msg_digest;
 enum impair_action;
+struct iface;
 
 void add_message_impairment(enum impair_action action,
 			    enum impair_message_direction impair_direction,
 			    unsigned nr, struct logger *logger);
 
-bool impair_outbound_message(shunk_t message, struct logger *logger);
+bool impair_outbound(const struct iface_endpoint *interface, shunk_t message,
+		     const ip_endpoint *endpoint, struct logger *logger);
 
 bool impair_inbound(struct msg_digest *md);
 

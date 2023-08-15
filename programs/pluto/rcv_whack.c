@@ -188,7 +188,9 @@ static void whack_impair_action(enum impair_action impairment_action,
 		send_keepalive_using_state(st, "inject keep-alive");
 		break;
 	}
+	case CALL_IMPAIR_MESSAGE_DRIP:
 	case CALL_IMPAIR_MESSAGE_DROP:
+	case CALL_IMPAIR_MESSAGE_BLOCK:
 	case CALL_IMPAIR_MESSAGE_REPLAY_DUPLICATES:
 	case CALL_IMPAIR_MESSAGE_REPLAY_FORWARD:
 	case CALL_IMPAIR_MESSAGE_REPLAY_BACKWARD:

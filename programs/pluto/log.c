@@ -636,14 +636,24 @@ void attach_fd_where(struct logger *dst, struct fd *src_fd, where_t where)
 	dst->global_whackfd = fd_addref_where(src_fd, where);
 }
 
+static void attach_whack_where(struct logger *dst, const struct logger *src, where_t where)
+{
+	attach_fd_where(dst, logger_fd(src), where);
+}
+
+void md_attach_where(struct msg_digest *md, const struct logger *src, where_t where)
+{
+	attach_whack_where(md->md_logger, src, where);
+}
+
 void connection_attach_where(struct connection *c, const struct logger *src, where_t where)
 {
-	attach_fd_where(c->logger, logger_fd(src), where);
+	attach_whack_where(c->logger, src, where);
 }
 
 void state_attach_where(struct state *st, const struct logger *src, where_t where)
 {
-	attach_fd_where(st->st_logger, logger_fd(src), where);
+	attach_whack_where(st->st_logger, src, where);
 }
 
 static void detach_whack_where(struct logger *dst, const struct logger *src, where_t where)
@@ -663,6 +673,14 @@ static void detach_whack_where(struct logger *dst, const struct logger *src, whe
 			return;
 		}
 	}
+}
+
+void md_detach_where(struct msg_digest *md, const struct logger *src, where_t where)
+{
+	if (md == NULL) {
+		return;
+	}
+	detach_whack_where(md->md_logger, src, where);
 }
 
 void connection_detach_where(struct connection *c, const struct logger *src, where_t where)
