@@ -14,6 +14,8 @@
  *
  */
 
+#include <errno.h>
+
 #include "impair.h"
 #include "lswalloc.h"
 #include "passert.h"
