@@ -120,10 +120,12 @@ static enum natt_method nat_traversal_vid_to_method(enum known_vendorid nat_t_vi
 
 void set_nat_traversal(struct state *st, const struct msg_digest *md)
 {
-	dbg("sender checking NAT-T: %s; VID %d",
+	dbg("sender checking NAT-T: %s; conn %s; VID %d",
 	    nat_traversal_enabled ? "enabled" : "disabled",
+	    (st->st_connection->ikev1_natt == NATT_NONE) ? "disabled" : "enabled",
 	    md->quirks.qnat_traversal_vid);
-	if (nat_traversal_enabled && md->quirks.qnat_traversal_vid != VID_none) {
+	if (nat_traversal_enabled && (md->quirks.qnat_traversal_vid != VID_none) &&
+		(st->st_connection->ikev1_natt != NATT_NONE)) {
 		enum natt_method v = nat_traversal_vid_to_method(md->quirks.qnat_traversal_vid);
 
 		st->hidden_variables.st_nat_traversal = LELEM(v);
@@ -386,9 +388,15 @@ static void nat_traversal_show_result(lset_t nt, uint16_t sport)
 void ikev1_natd_init(struct state *st, struct msg_digest *md)
 {
 	lset_buf lb;
-	dbg("init checking NAT-T: %s; %s",
+	dbg("init checking NAT-T: global %s; conn %s; vid %s",
 	    nat_traversal_enabled ? "enabled" : "disabled",
+	    st->st_connection->ikev1_natt == NATT_NONE ? "disabled" : "enabled",
 	    str_lset(&natt_method_names, st->hidden_variables.st_nat_traversal, &lb));
+
+	if (st->st_connection->ikev1_natt == NATT_NONE) {
+		dbg("Skip NATD payloads due to nat-ikev1-method=none configuration");
+		return;
+	}
 
 	if (st->hidden_variables.st_nat_traversal != LEMPTY) {
 		if (md->v1_st->st_oakley.ta_prf == NULL) {
