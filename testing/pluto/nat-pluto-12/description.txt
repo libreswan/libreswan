@@ -1,0 +1,5 @@
+test for responder with ikev1-nat-method=none
+
+Note both endpoints end up with different IPs on the tunnel, and it will
+not be a working tunnel for this test case.
+
