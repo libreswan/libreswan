@@ -815,6 +815,7 @@ kvmplutotest	nat-pluto-08		good
 kvmplutotest	nat-pluto-09		good
 kvmplutotest	nat-pluto-10		good
 kvmplutotest	nat-pluto-11		good
+kvmplutotest	nat-pluto-12		good
 
 #
 # Test of NAT traversal w/DPD
