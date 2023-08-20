@@ -136,6 +136,57 @@ static void queue_v2_CREATE_CHILD_SA_initiator(struct state *larval_sa,
 	v2_msgid_queue_initiator(ike, larval, transition);
 }
 
+/*
+ * Find all CHILD SAs belonging to FROM and migrate them to TO.
+ */
+
+static void migrate_v2_child(struct ike_sa *from, struct child_sa *to,
+			     struct child_sa *child)
+{
+	ldbg_sa(child, "migrating Child SA "PRI_SO" from IKE SA "PRI_SO" to IKE SA "PRI_SO,
+		pri_so(child->sa.st_serialno),
+		pri_so(from->sa.st_serialno),
+		pri_so(to->sa.st_serialno));
+	passert(child->sa.st_clonedfrom == from->sa.st_serialno);
+	passert(child->sa.st_serialno != to->sa.st_serialno);
+	/*
+	 * Migrate the Child SA to the new IKE SA.
+	 */
+	update_st_clonedfrom(&child->sa, to->sa.st_serialno);
+	/*
+	 * Delete the old IKE_SPI hash entries (both for I and I+R
+	 * and), and then inserts new ones using ST's current IKE SPI
+	 * values.  The serialno tables are not touched.
+	 *
+	 * XXX: this is to keep code that still uses
+	 * state_by_ike_spis() to find children working.
+	 */
+	child->sa.st_ike_spis = to->sa.st_ike_spis;
+	rehash_state_cookies_in_db(&child->sa);
+}
+
+static void migrate_v2_children(struct ike_sa *from, struct child_sa *to)
+{
+	/*
+	 * TO is in the process of being emancipated.  Its
+	 * .st_clonedfrom has been zapped (i.e., it is no longer a
+	 * child of FROM) and the new IKE_SPIs installed (a true child
+	 * would have FROM's IKE SPIs).
+	 */
+	ldbg_sa(to, "migrate children from "PRI_SO" to "PRI_SO,
+		pri_so(from->sa.st_serialno),
+		pri_so(to->sa.st_serialno));
+	passert(to->sa.st_clonedfrom == SOS_NOBODY);
+	/* passert(SPIs should be different) */
+	struct state_filter child = {
+		.clonedfrom = from->sa.st_serialno,
+		.where = HERE,
+	};
+	while (next_state_old2new(&child)) {
+		migrate_v2_child(from, to, pexpect_child_sa(child.st));
+	}
+}
+
 static void emancipate_larval_ike_sa(struct ike_sa *old_ike, struct child_sa *new_ike)
 {
 	/* initialize the the new IKE SA. reset and message ID */
@@ -147,8 +198,7 @@ static void emancipate_larval_ike_sa(struct ike_sa *old_ike, struct child_sa *ne
 	new_ike->sa.st_ike_spis = new_ike->sa.st_ike_rekey_spis;
 	rehash_state_cookies_in_db(&new_ike->sa);
 
-	dbg("NEW_IKE has updated IKE_SPIs, migrate children");
-	v2_migrate_children(old_ike, new_ike);
+	migrate_v2_children(old_ike, new_ike);
 
 	dbg("moving over any pending requests");
 	v2_msgid_migrate_queue(old_ike, new_ike);

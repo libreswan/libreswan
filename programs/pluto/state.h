@@ -957,8 +957,6 @@ extern void initialize_new_state(struct state *st, lset_t policy);
 extern void show_brief_status(struct show *s);
 extern void show_states(struct show *s, const monotime_t now);
 
-void v2_migrate_children(struct ike_sa *from, struct child_sa *to);
-
 extern void find_my_cpi_gap(cpi_t *latest_cpi, cpi_t *first_busy_cpi);
 extern ipsec_spi_t uniquify_peer_cpi(ipsec_spi_t cpi, const struct state *st, int tries);
 
