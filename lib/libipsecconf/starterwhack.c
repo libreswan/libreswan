@@ -530,7 +530,7 @@ int starter_whack_add_conn(struct starter_config *cfg,
 		msg.keyingtries.set = true;
 		msg.keyingtries.value = conn->options[KNCF_KEYINGTRIES];
 	}
-	msg.sa_replay_window = conn->options[KNCF_REPLAY_WINDOW];
+	msg.replay_window = conn->options[KNCF_REPLAY_WINDOW]; /*has default*/
 	msg.xfrm_if_id = conn->options[KNCF_XFRM_IF_ID];
 
 	msg.retransmit_interval = deltatime_ms(conn->options[KNCF_RETRANSMIT_INTERVAL_MS]);

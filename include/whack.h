@@ -219,7 +219,7 @@ struct whack_message {
 		uintmax_t value;
 	} keyingtries;
 
-	uintmax_t sa_replay_window;
+	uintmax_t replay_window;
 	deltatime_t retransmit_timeout;
 	deltatime_t retransmit_interval;
 	enum offload_options nic_offload;

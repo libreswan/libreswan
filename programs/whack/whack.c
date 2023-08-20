@@ -1094,7 +1094,7 @@ int main(int argc, char **argv)
 	msg.sa_rekeyfuzz_percent = SA_REPLACEMENT_FUZZ_DEFAULT;
 	msg.keyingtries.set = false;
 	/* whack cannot access kernel_ops->replay_window */
-	msg.sa_replay_window = IPSEC_SA_DEFAULT_REPLAY_WINDOW;
+	msg.replay_window = IPSEC_SA_DEFAULT_REPLAY_WINDOW;
 	msg.retransmit_timeout = deltatime(RETRANSMIT_TIMEOUT_DEFAULT);
 	msg.retransmit_interval = deltatime_ms(RETRANSMIT_INTERVAL_DEFAULT_MS);
 
@@ -1996,7 +1996,7 @@ int main(int argc, char **argv)
 			 * processing the message.  The value is
 			 * relatively small.
 			 */
-			msg.sa_replay_window = optarg_uintmax();
+			msg.replay_window = optarg_uintmax();
 			continue;
 
 		case CD_SEND_CA:	/* --sendca */

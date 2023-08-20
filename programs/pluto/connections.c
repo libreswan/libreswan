@@ -2289,11 +2289,13 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 * resort (fixing the kernel will break less tests).
 	 */
 
-	if (wm->sa_replay_window > kernel_ops->max_replay_window) {
+	if (wm->replay_window > kernel_ops->max_replay_window) {
 		return diag("replay-window=%ju exceeds %s kernel interface limit of %ju",
-			    wm->sa_replay_window,
-			    kernel_ops->interface_name, kernel_ops->max_replay_window);
+			    wm->replay_window,
+			    kernel_ops->interface_name,
+			    kernel_ops->max_replay_window);
 	}
+	config->child_sa.replay_window = wm->replay_window;
 
 	if (never_negotiate_wm(wm)) {
 		if (wm->esn != YNE_UNSET) {
@@ -2301,7 +2303,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 			     "warning: ignoring esn=%s as connection is never-negotiate",
 			     sparse_name(yne_option_names, wm->esn));
 		}
-	} else if (wm->sa_replay_window == 0) {
+	} else if (wm->replay_window == 0) {
 		/*
 		 * RFC 4303 states:
 		 *
@@ -2569,7 +2571,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 		config->sa_rekey_margin = wm->sa_rekey_margin;
 		config->sa_rekey_fuzz = wm->sa_rekeyfuzz_percent;
-		c->sa_replay_window = wm->sa_replay_window;
 
 		config->retransmit_timeout = wm->retransmit_timeout;
 		config->retransmit_interval = wm->retransmit_interval;
@@ -3219,15 +3220,16 @@ bool add_connection(const struct whack_message *wm, struct logger *logger)
 			    c->config->ike_info->version_name);
 	llog(RC_LOG, c->logger, "added %s connection", what);
 	policy_buf pb;
-	dbg("ike_life: %jd; ipsec_life: %jds; rekey_margin: %jds; rekey_fuzz: %lu%%; replay_window: %u; policy: %s ipsec_max_bytes: %ju ipsec_max_packets %ju",
-	    deltasecs(c->config->sa_ike_max_lifetime),
-	    deltasecs(c->config->sa_ipsec_max_lifetime),
-	    deltasecs(c->config->sa_rekey_margin),
-	    c->config->sa_rekey_fuzz,
-	    c->sa_replay_window,
-	    str_connection_policies(c, &pb),
-	    c->config->sa_ipsec_max_bytes,
-	    c->config->sa_ipsec_max_packets);
+	ldbg(c->logger,
+	     "ike_life: %jd; ipsec_life: %jds; rekey_margin: %jds; rekey_fuzz: %lu%%; replay_window: %ju; policy: %s ipsec_max_bytes: %ju ipsec_max_packets %ju",
+	     deltasecs(c->config->sa_ike_max_lifetime),
+	     deltasecs(c->config->sa_ipsec_max_lifetime),
+	     deltasecs(c->config->sa_rekey_margin),
+	     c->config->sa_rekey_fuzz,
+	     c->config->child_sa.replay_window,
+	     str_connection_policies(c, &pb),
+	     c->config->sa_ipsec_max_bytes,
+	     c->config->sa_ipsec_max_packets);
 	spd_buf spdb;
 	dbg("%s", str_spd(c->spd, &spdb));
 	release_whack(c->logger, HERE);
