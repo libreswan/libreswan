@@ -245,9 +245,17 @@ void delete_connection_where(struct connection **cp, where_t where)
 	discard_connection(&c, true/*connection_valid*/);
 }
 
+struct connection *connection_addref_where(struct connection *c, where_t where)
+{
+	return addref_where(c, where);
+}
+
 void connection_delref_where(struct connection **cp, where_t where)
 {
-	struct connection *c = delref_where(cp, (*cp)->logger, where);
+	/* allow/handle NULL *cp */
+	const struct logger *logger = ((*cp) != NULL ? (*cp)->logger :
+				       &global_logger);
+	struct connection *c = delref_where(cp, logger, where);
 	if (c == NULL) {
 		return;
 	}
@@ -315,7 +323,7 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 			     pri_connection(instance.c, &cb));
 	}
 
-	/*.
+	/*
 	 * Must not have states (i.e., no states are refering to this
 	 * connection).
 	 */
@@ -377,9 +385,13 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 
 	free_chunk_content(&c->child.sec_label);
 
+	/*
+	 * Only free config when the root connection.  Non-root
+	 * connections have .root_config==NULL.
+	 */
 	struct config *config = c->root_config;
 	if (config != NULL) {
-		passert(co_serial_is_unset(c->clonedfrom));
+		passert(c->clonedfrom == NULL); /*i.e., root */
 		free_chunk_content(&config->sec_label);
 		free_proposals(&config->ike_proposals.p);
 		free_proposals(&config->child_proposals.p);
@@ -414,6 +426,9 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 		}
 		pfree(c->root_config);
 	}
+
+	/* sever tie with parent */
+	connection_delref(&c->clonedfrom);
 
 	/* connection's final gasp; need's c->name */
 	pfreeany(c->name);
@@ -1832,7 +1847,7 @@ void finish_connection(struct connection *c, const char *name,
 	connection_serialno++;
 	passert(connection_serialno > 0); /* can't overflow */
 	c->serialno = connection_serialno;
-	c->clonedfrom = t;
+	c->clonedfrom = connection_addref(t);
 }
 
 static struct config *alloc_config(void)

@@ -720,8 +720,10 @@ void update_hosts_from_end_host_addr(struct connection *c, enum left_right end,
 extern void restart_connections_by_peer(struct connection *c, struct logger *logger);
 
 void delete_connection_where(struct connection **cp, where_t where);
+struct connection *connection_addref_where(struct connection *c, where_t where);
 void connection_delref_where(struct connection **cp, where_t where);
 #define delete_connection(CP) delete_connection_where(CP, HERE)
+#define connection_addref(C) connection_addref_where(C, HERE)
 #define connection_delref(CP) connection_delref_where(CP, HERE)
 
 extern void delete_every_connection(void);
