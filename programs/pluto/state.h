@@ -826,7 +826,7 @@ struct state {
 	}
 };
 
-void set_st_clonedfrom(struct state *st, so_serial_t clonedfrom);
+void update_st_clonedfrom(struct state *st, so_serial_t clonedfrom);
 
 /*
  * The IKE and CHILD SAs.

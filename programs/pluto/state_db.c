@@ -272,7 +272,15 @@ static hash_t hash_state_clonedfrom(const so_serial_t *clonedfrom)
 HASH_TABLE(state, clonedfrom, .st_clonedfrom, STATE_TABLE_SIZE);
 static REHASH_DB_ENTRY(state, clonedfrom, .st_clonedfrom);
 
-void set_st_clonedfrom(struct state *st, so_serial_t clonedfrom)
+/*
+ * ST could be either an IKE or Child SA.
+ *
+ * Used to converting a new state into a Child SA (SOS_NOBODY -> IKE),
+ * migrating a Child SA to a new IKE SA (old-IKE -> new-IKE), and
+ * emancipate a Child SA (IKE -> SOS_NOBODY).
+ */
+
+void update_st_clonedfrom(struct state *st, so_serial_t clonedfrom)
 {
 	st->st_clonedfrom = clonedfrom;
 	state_db_rehash_clonedfrom(st);
