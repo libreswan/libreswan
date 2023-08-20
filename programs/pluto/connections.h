@@ -37,6 +37,7 @@
 #include "ip_selector.h"
 #include "ip_protoport.h"
 #include "ip_packet.h"
+#include "refcnt.h"
 
 #include "defs.h"
 #include "proposals.h"
@@ -582,6 +583,7 @@ struct ephemeral_variables {
 };
 
 struct connection {
+	struct refcnt refcnt;
 	co_serial_t serialno;
 	struct connection *clonedfrom;
 	char *name;
@@ -713,7 +715,11 @@ void update_hosts_from_end_host_addr(struct connection *c, enum left_right end,
 				     ip_address host_addr, where_t where);
 extern void restart_connections_by_peer(struct connection *c, struct logger *logger);
 
-extern void delete_connection(struct connection **cp);
+void delete_connection_where(struct connection **cp, where_t where);
+void connection_delref_where(struct connection **cp, where_t where);
+#define delete_connection(CP) delete_connection_where(CP, HERE)
+#define connection_delref(CP) connection_delref_where(CP, HERE)
+
 extern void delete_every_connection(void);
 
 #define remote_id_was_instantiated(c) \

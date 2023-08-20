@@ -223,10 +223,14 @@ void discard_connection_spds(struct connection *c)
  * @relations - whether to delete any instances as well.
  * @connection_valid - apply sanity checks
  *
+ * Compat hack for code that thinks it knows the connection is
+ * finished with - it passerts() that it is delref()ing the last
+ * reference.
  */
 
-void delete_connection(struct connection **cp)
+void delete_connection_where(struct connection **cp, where_t where)
 {
+	struct connection *c = *cp;
 	if (is_instance(*cp)) {
 		/* XXX: pointless check? */
 		if (!is_opportunistic(*cp)) {
@@ -237,8 +241,17 @@ void delete_connection(struct connection **cp)
 			     str_address_sensitive(&(*cp)->remote->host.addr, &b));
 		}
 	}
+	PASSERT(c->logger, delref_where(cp, c->logger, where) == c);
+	discard_connection(&c, true/*connection_valid*/);
+}
 
-	discard_connection(cp, true/*connection_valid*/);
+void connection_delref_where(struct connection **cp, where_t where)
+{
+	struct connection *c = delref_where(cp, (*cp)->logger, where);
+	if (c == NULL) {
+		return;
+	}
+	discard_connection(&c, true/*connection_valid*/);
 }
 
 static void discard_connection(struct connection **cp, bool connection_valid)
@@ -403,7 +416,6 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 	}
 
 	/* connection's final gasp; need's c->name */
-	dbg_free(c->name, c, HERE);
 	pfreeany(c->name);
 	pfree(c);
 }
@@ -1766,9 +1778,6 @@ void finish_connection(struct connection *c, const char *name,
 		       lset_t debugging, struct fd *whackfd,
 		       where_t where)
 {
-	/* announce it (before code below logs its address) */
-	dbg_alloc(name, c, where);
-
 	c->name = clone_str(name, __func__);
 	c->logger = alloc_logger(c, &logger_connection_vec,
 				 debugging, where);
@@ -1849,7 +1858,7 @@ static struct connection *alloc_connection(const char *name,
 					   lset_t debugging, struct fd *whackfd,
 					   where_t where)
 {
-	struct connection *c = alloc_thing(struct connection, where->func);
+	struct connection *c = refcnt_alloc(struct connection, where);
 
 	/*
 	 * Allocate the configuration - only allocated on root
@@ -3157,6 +3166,8 @@ bool add_connection(const struct whack_message *wm, struct logger *logger)
 	diag_t d = extract_connection(wm, c);
 	if (d != NULL) {
 		llog_diag(RC_FATAL, c->logger, &d, ADD_FAILED_PREFIX);
+		struct connection *cp = c;
+		PASSERT(c->logger, delref_where(&cp, c->logger, HERE) == c);
 		discard_connection(&c, false/*not-valid*/);
 		return false;
 	}

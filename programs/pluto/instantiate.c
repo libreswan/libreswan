@@ -71,6 +71,8 @@ struct connection *clone_connection(const char *name, struct connection *t,
 				    const struct id *peer_id, where_t where)
 {
 	struct connection *c = clone_thing(*t, where->func);
+	zero_thing(c->refcnt);
+	refcnt_init(c, &c->refcnt, t->refcnt.base, where);
 	zero_thing(c->connection_db_entries); /* keep init_list_entry() happy */
 	finish_connection(c, name, t, t->config,
 			  t->logger->debugging,
