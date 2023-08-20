@@ -609,8 +609,9 @@ static stf_status main_inR1_outI2_continue(struct state *st,
 					   struct dh_local_secret *local_secret,
 					   chunk_t *nonce/*steal*/)
 {
-	dbg("main_inR1_outI2_continue for #%lu: calculated ke+nonce, sending I2",
-	    st->st_serialno);
+	struct ike_sa *ike = pexpect_ike_sa(st);
+	ldbg_sa(ike, "main_inR1_outI2_continue for #%lu: calculated ke+nonce, sending I2",
+		st->st_serialno);
 
 	/*
 	 * HDR out.
@@ -667,7 +668,7 @@ static stf_status main_inR1_outI2_continue(struct state *st,
 		return STF_INTERNAL_ERROR;
 
 	/* Reinsert the state, using the responder cookie we just received */
-	rehash_state(st, &md->hdr.isa_ike_responder_spi);
+	update_st_ike_spis_responder(ike, &md->hdr.isa_ike_responder_spi);
 
 	return STF_OK;
 }

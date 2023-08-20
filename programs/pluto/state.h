@@ -827,6 +827,8 @@ struct state {
 };
 
 void update_st_clonedfrom(struct state *st, so_serial_t clonedfrom);
+void update_st_ike_spis(struct child_sa *child, const ike_spis_t *ike_spis);
+void update_st_ike_spis_responder(struct ike_sa *ike, const ike_spi_t *ike_responder_spi);
 
 /*
  * The IKE and CHILD SAs.
@@ -900,8 +902,6 @@ void jam_v1_transition(struct jambuf *buf, const struct state_v1_microcode *tran
 void jam_v2_transition(struct jambuf *buf, const struct v2_state_transition *transition);
 
 extern void init_states(void);
-extern void rehash_state(struct state *st,
-			 const ike_spi_t *ike_responder_spi);
 extern void state_eroute_usage(const ip_selector *ours, const ip_selector *peers,
 			       unsigned long count, monotime_t nw);
 /*

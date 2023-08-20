@@ -276,7 +276,7 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 	 * Since systems are go, start updating the state, starting
 	 * with SPIr.
 	 */
-	rehash_state(&ike->sa, &md->hdr.isa_ike_responder_spi);
+	update_st_ike_spis_responder(ike, &md->hdr.isa_ike_responder_spi);
 
 	/* send Intermediate Exchange response packet */
 

@@ -300,13 +300,44 @@ HASH_DB(state,
 	&state_ike_initiator_spi_hash_table,
 	&state_ike_spis_hash_table);
 
-void rehash_state_cookies_in_db(struct state *st)
+/*
+ * The IKE SA has received the responder's SPI.  Update it and then
+ * rehash the DB entries.
+ */
+
+void update_st_ike_spis_responder(struct ike_sa *ike,
+			       const ike_spi_t *ike_responder_spi)
 {
-	dbg("State DB: re-hashing %s state #%lu IKE SPIi and SPI[ir]",
-	    st->st_connection->config->ike_info->version_name,
-	    st->st_serialno);
-	state_db_rehash_ike_spis(st);
-	state_db_rehash_ike_initiator_spi(st);
+	/* update the responder's SPI */
+	ike->sa.st_ike_spis.responder = *ike_responder_spi;
+	/* now, update the state */
+	ldbg_sa(ike, "State DB: re-hashing %s state #%lu IKE SPIr",
+		ike->sa.st_connection->config->ike_info->version_name,
+		ike->sa.st_serialno);
+	state_db_rehash_ike_spis(&ike->sa);
+	/* just logs change */
+	binlog_refresh_state(&ike->sa);
+}
+
+/*
+ * Re-insert the state in the database after updating the RCOOKIE, and
+ * possibly the ICOOKIE.
+ *
+ * ICOOKIE is only updated if icookie != NULL
+ */
+
+void update_st_ike_spis(struct child_sa *new_ike, const ike_spis_t *ike_spis)
+{
+	/* update the responder's SPI */
+	new_ike->sa.st_ike_spis = *ike_spis;
+	/* now, update the state */
+	ldbg_sa(new_ike, "State DB: re-hashing %s state #%lu IKE SPI[ir]",
+		new_ike->sa.st_connection->config->ike_info->version_name,
+		new_ike->sa.st_serialno);
+	state_db_rehash_ike_spis(&new_ike->sa);
+	state_db_rehash_ike_initiator_spi(&new_ike->sa);
+	/* just logs change */
+	binlog_refresh_state(&new_ike->sa);
 }
 
 /*

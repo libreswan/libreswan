@@ -510,6 +510,7 @@ static dh_shared_secret_cb aggr_inR1_outI2_crypto_continue;	/* forward decl and 
 
 stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 {
+	struct ike_sa *ike = pexpect_ike_sa(st);
 	/*
 	 * With Aggressive Mode, we get an ID payload in this, the
 	 * second message (first response), so we can use it to index
@@ -570,9 +571,14 @@ stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 	/* Ni in */
 	RETURN_STF_FAIL_v1NURE(accept_v1_nonce(st->st_logger, md, &st->st_nr, "Nr"));
 
-	/* moved the following up as we need Rcookie for hash, skeyids */
-	/* Reinsert the state, using the responder cookie we just received */
-	rehash_state(st, &md->hdr.isa_ike_responder_spi);
+	/*
+	 * Moved the following up as we need Rcookie for hash,
+	 * skeyids.
+	 *
+	 * Reinsert the state, using the responder cookie we just
+	 * received.
+	 */
+	update_st_ike_spis_responder(ike, &md->hdr.isa_ike_responder_spi);
 
 	ikev1_natd_init(st, md);
 

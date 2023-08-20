@@ -622,22 +622,6 @@ void delete_v1_state_by_username(struct state *st, const char *name)
 	/* note: no md->v1_st to clear */
 }
 
-/*
- * Re-insert the state in the database after updating the RCOOKIE, and
- * possibly the ICOOKIE.
- *
- * ICOOKIE is only updated if icookie != NULL
- */
-void rehash_state(struct state *st, const ike_spi_t *ike_responder_spi)
-{
-	/* update the responder's SPI */
-	st->st_ike_spis.responder = *ike_responder_spi;
-	/* now, update the state */
-	rehash_state_cookies_in_db(st);
-	/* just logs change */
-	binlog_refresh_state(st);
-}
-
 void v2_expire_unused_ike_sa(struct ike_sa *ike)
 {
 	passert(ike != NULL);
