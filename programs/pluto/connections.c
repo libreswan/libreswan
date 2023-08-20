@@ -1913,16 +1913,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 	passert(c->name != NULL); /* see alloc_connection() */
 
 	if ((wm->policy & POLICY_TUNNEL) == LEMPTY) {
-		if (wm->sa_tfcpad != 0) {
-			return diag("connection with type=transport cannot specify tfc=");
-		}
 		if (wm->vti_iface != NULL) {
 			return diag("VTI requires tunnel mode but connection specifies type=transport");
-		}
-	}
-	if (LIN(POLICY_AUTHENTICATE, wm->policy)) {
-		if (wm->sa_tfcpad != 0) {
-			return diag("connection with phase2=ah cannot specify tfc=");
 		}
 	}
 
@@ -2779,7 +2771,20 @@ static diag_t extract_connection(const struct whack_message *wm,
 	}
 	config->child_sa.priority = wm->priority;
 
-	c->sa_tfcpad = wm->sa_tfcpad;
+	if (wm->tfc != 0) {
+		if ((wm->policy & POLICY_TUNNEL) == LEMPTY) {
+			return diag("connection with type=transport cannot specify tfc=");
+		}
+		if (LIN(POLICY_AUTHENTICATE, wm->policy)) {
+			return diag("connection with phase2=ah cannot specify tfc=");
+		}
+		if (wm->tfc > UINT32_MAX) {
+			return diag("tfc=%ju exceeds upper bound of %"PRIu32,
+				    wm->tfc, UINT32_MAX);
+		}
+		config->child_sa.tfcpad = wm->tfc;
+	}
+
 	config->send_no_esp_tfc = wm->send_no_esp_tfc;
 
 	/*

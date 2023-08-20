@@ -219,7 +219,7 @@ enum keyword_numeric_conn_field {
 	KNCF_MOBIKE,
 	KNCF_CONNMTU,
 	KNCF_PRIORITY,
-	KNCF_TFCPAD,
+	KNCF_TFC,
 	KNCF_REQID,
 	KNCF_SEND_CA,
 	KNCF_METRIC,

@@ -559,8 +559,8 @@ int starter_whack_add_conn(struct starter_config *cfg,
 		msg.connmtu = conn->options[KNCF_CONNMTU];
 	if (conn->options_set[KNCF_PRIORITY])
 		msg.priority = conn->options[KNCF_PRIORITY];
-	if (conn->options_set[KNCF_TFCPAD])
-		msg.sa_tfcpad = conn->options[KNCF_TFCPAD];
+	if (conn->options_set[KNCF_TFC])
+		msg.tfc = conn->options[KNCF_TFC];
 	if (conn->options_set[KNCF_NO_ESP_TFC])
 		msg.send_no_esp_tfc = conn->options[KNCF_NO_ESP_TFC];
 	if (conn->options_set[KNCF_NFLOG_CONN])

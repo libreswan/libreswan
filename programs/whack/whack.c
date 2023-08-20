@@ -486,7 +486,7 @@ enum option_enums {
 	CD_METRIC,
 	CD_CONNMTU,
 	CD_PRIORITY,
-	CD_TFCPAD,
+	CD_TFC,
 	CD_SEND_TFCPAD,
 	CD_REQID,
 	CD_NFLOG_GROUP,
@@ -832,7 +832,7 @@ static const struct option long_opts[] = {
 	{ "metric", required_argument, NULL, CD_METRIC },
 	{ "mtu", required_argument, NULL, CD_CONNMTU },
 	{ "priority", required_argument, NULL, CD_PRIORITY },
-	{ "tfc", required_argument, NULL, CD_TFCPAD },
+	{ "tfc", required_argument, NULL, CD_TFC },
 	{ "send-no-esp-tfc", no_argument, NULL, CD_SEND_TFCPAD },
 	{ "reqid", required_argument, NULL, CD_REQID },
 	{ "nflog-group", required_argument, NULL, CD_NFLOG_GROUP },
@@ -2404,8 +2404,8 @@ int main(int argc, char **argv)
 			msg.priority = optarg_uintmax();
 			continue;
 
-		case CD_TFCPAD:	/* --tfc */
-			msg.sa_tfcpad = optarg_uintmax();
+		case CD_TFC:	/* --tfc */
+			msg.tfc = optarg_uintmax();
 			continue;
 
 		case CD_SEND_TFCPAD:	/* --send-no-esp-tfc */

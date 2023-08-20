@@ -609,10 +609,10 @@ void show_connection_status(struct show *s, const struct connection *c)
 		jam_string(buf, ";");
 		/* .sa_tfcpad */
 		jam_string(buf, " sa_tfc:");
-		if (c->sa_tfcpad == 0) {
+		if (c->config->child_sa.tfcpad == 0) {
 			jam_string(buf, "none");
 		} else {
-			jam(buf, "%u", c->sa_tfcpad);
+			jam(buf, "%ju", c->config->child_sa.tfcpad);
 		}
 		jam_string(buf, ";");
 	}

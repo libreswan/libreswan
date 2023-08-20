@@ -178,7 +178,7 @@ void jam_child_sa_details(struct jambuf *buf, struct state *st)
 		jam_string(buf, ini);
 		ini = " ";
 		bool nat = (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) != 0;
-		bool tfc = c->sa_tfcpad != 0 && !st->st_seen_no_tfc;
+		bool tfc = c->config->child_sa.tfcpad != 0 && !st->st_seen_no_tfc;
 		bool esn = st->st_esp.attrs.transattrs.esn_enabled;
 		bool tcp = st->st_interface->io->protocol == &ip_protocol_tcp;
 

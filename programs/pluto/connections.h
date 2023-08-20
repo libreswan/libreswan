@@ -282,6 +282,7 @@ struct config {
 
 	struct {
 		uintmax_t priority;
+		uintmax_t tfcpad;
 	} child_sa;
 
 	struct {
@@ -613,7 +614,7 @@ struct connection {
 					 * deleted and, hence,
 					 * delete_state() should leave
 					 * it alone? */
-	uint32_t sa_tfcpad;
+
 	uint32_t sa_replay_window; /* Usually 32, KLIPS and XFRM/NETKEY support 64 */
 				   /* See also kernel_ops->replay_window */
 	struct sa_marks sa_marks; /* contains a MARK values and MASK value for IPsec SA */

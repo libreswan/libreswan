@@ -1689,9 +1689,12 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 			said_next->mark_set = c->sa_marks.out;
 		}
 
-		if (direction == DIRECTION_OUTBOUND && c->sa_tfcpad != 0 && !st->st_seen_no_tfc) {
-			dbg("kernel: Enabling TFC at %d bytes (up to PMTU)", c->sa_tfcpad);
-			said_next->tfcpad = c->sa_tfcpad;
+		if (direction == DIRECTION_OUTBOUND &&
+		    c->config->child_sa.tfcpad != 0 &&
+		    !st->st_seen_no_tfc) {
+			ldbg(st->st_logger, "kernel: Enabling TFC at %ju bytes (up to PMTU)",
+			     c->config->child_sa.tfcpad);
+			said_next->tfcpad = c->config->child_sa.tfcpad;
 		}
 
 		if (c->config->decap_dscp) {

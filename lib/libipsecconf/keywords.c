@@ -594,7 +594,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
 
   { "mtu",  kv_conn,  kt_number,  KNCF_CONNMTU, NULL, NULL, },
   { "priority",  kv_conn,  kt_number,  KNCF_PRIORITY, NULL, NULL, },
-  { "tfc",  kv_conn,  kt_number,  KNCF_TFCPAD, NULL, NULL, },
+  { "tfc",  kv_conn,  kt_number,  KNCF_TFC, NULL, NULL, },
   { "reqid",  kv_conn,  kt_number,  KNCF_REQID, NULL, NULL, },
 #if defined(HAVE_IPTABLES) || defined(HAVE_NFTABLES)
   { "nflog",  kv_conn,  kt_number,  KNCF_NFLOG_CONN, NULL, NULL, },
