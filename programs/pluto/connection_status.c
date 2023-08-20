@@ -335,29 +335,7 @@ static void show_one_spd(struct show *s,
 
 void show_connection_status(struct show *s, const struct connection *c)
 {
-	const char *ifn;
-	char ifnstr[2 *  IFNAMSIZ + 2];  /* id_rname@id_vname\0 */
 	char instance[32];
-	char mtustr[8];
-	char sapriostr[13];
-	char satfcstr[13];
-	char nflogstr[8];
-	char markstr[2 * (2 * strlen("0xffffffff") + strlen("/")) + strlen(", ") ];
-
-	if (oriented(c)) {
-		if (c->xfrmi != NULL && c->xfrmi->name != NULL) {
-			char *n = jam_str(ifnstr, sizeof(ifnstr),
-					c->xfrmi->name);
-			add_str(ifnstr, sizeof(ifnstr), n, "@");
-			add_str(ifnstr, sizeof(ifnstr), n,
-					c->interface->ip_dev->id_rname);
-			ifn = ifnstr;
-		} else {
-			ifn = c->interface->ip_dev->id_rname;
-		}
-	} else {
-		ifn = "";
-	};
 
 	instance[0] = '\0';
 	if (c->instance_serial > 0)
@@ -596,52 +574,82 @@ void show_connection_status(struct show *s, const struct connection *c)
 					    c->config->sighash_policy, &hashpolbuf));
 	}
 
-	if (c->connmtu != 0)
-		snprintf(mtustr, sizeof(mtustr), "%d", c->connmtu);
-	else
-		strcpy(mtustr, "unset");
-
-	if (c->sa_priority != 0)
-		snprintf(sapriostr, sizeof(sapriostr), "%" PRIu32, c->sa_priority);
-	else
-		strcpy(sapriostr, "auto");
-
-	if (c->sa_tfcpad != 0)
-		snprintf(satfcstr, sizeof(satfcstr), "%u", c->sa_tfcpad);
-	else
-		strcpy(satfcstr, "none");
-
-	connection_priority_buf prio;
-	show_comment(s, PRI_CONNECTION":   conn_prio: %s; interface: %s; metric: %u; mtu: %s; sa_prio:%s; sa_tfc:%s;",
-		     c->name, instance,
-		     str_connection_priority(c, &prio),
-		     ifn,
-		     c->metric,
-		     mtustr, sapriostr, satfcstr);
-
-	if (c->nflog_group != 0)
-		snprintf(nflogstr, sizeof(nflogstr), "%d", c->nflog_group);
-	else
-		strcpy(nflogstr, "unset");
-
-	if (c->sa_marks.in.val != 0 || c->sa_marks.out.val != 0 ) {
-		snprintf(markstr, sizeof(markstr), "%" PRIu32 "/%#08" PRIx32 ", %" PRIu32 "/%#08" PRIx32,
-			c->sa_marks.in.val, c->sa_marks.in.mask,
-			c->sa_marks.out.val, c->sa_marks.out.mask);
-	} else {
-		strcpy(markstr, "unset");
+	SHOW_JAMBUF(RC_COMMENT, s, buf) {
+		connection_priority_buf prio;
+		jam(buf, PRI_CONNECTION":   conn_prio: %s;",
+		    c->name, instance,
+		    str_connection_priority(c, &prio));
+		/* .interface? id_rname@id_vname? */
+		jam_string(buf, " interface: ");
+		if (oriented(c)) {
+			if (c->xfrmi != NULL && c->xfrmi->name != NULL) {
+				jam_string(buf, c->xfrmi->name);
+				jam_string(buf, "@");
+			}
+			jam_string(buf, c->interface->ip_dev->id_rname);
+		};
+		jam_string(buf, ";");
+		/* .metric */
+		jam(buf, " metric: %u;", c->metric);
+		/* .connmtu */
+		jam_string(buf, " mtu: ");
+		if (c->connmtu == 0) {
+			jam_string(buf, "unset");
+		} else {
+			jam(buf, "%d", c->connmtu);
+		}
+		jam_string(buf, ";");
+		/* .sa_priority */
+		jam_string(buf, " sa_prio:");
+		if (c->sa_priority == 0) {
+			jam_string(buf, "auto");
+		} else {
+			jam(buf, "%"PRIu32, c->sa_priority);
+		}
+		jam_string(buf, ";");
+		/* .sa_tfcpad */
+		jam_string(buf, " sa_tfc:");
+		if (c->sa_tfcpad == 0) {
+			jam_string(buf, "none");
+		} else {
+			jam(buf, "%u", c->sa_tfcpad);
+		}
+		jam_string(buf, ";");
 	}
 
-	show_comment(s, PRI_CONNECTION":   nflog-group: %s; mark: %s; vti-iface:%s; vti-routing:%s; vti-shared:%s; nic-offload:%s;",
-		     c->name, instance,
-		     nflogstr, markstr,
-		     c->vti_iface == NULL ? "unset" : c->vti_iface,
-		     bool_str(c->vti_routing),
-		     bool_str(c->vti_shared),
-		     c->config->nic_offload == offload_auto ? "auto" :
-			c->config->nic_offload == offload_packet ? "packet" :
-			c->config->nic_offload == offload_crypto ? "crypto" :
-			"no");
+
+	SHOW_JAMBUF(RC_COMMENT, s, buf) {
+		jam(buf, PRI_CONNECTION":  ",
+		    c->name, instance);
+		/* .nflog_group */
+		jam_string(buf, " nflog-group: ");
+		if (c->nflog_group == 0) {
+			jam_string(buf, "unset");
+		} else {
+			jam(buf, "%d", c->nflog_group);
+		}
+		jam_string(buf, ";");
+		/* .sa_marks */
+		jam_string(buf, " mark: ");
+		if (c->sa_marks.in.val == 0 && c->sa_marks.out.val == 0 ) {
+			jam_string(buf, "unset");
+		} else {
+			jam(buf, "%" PRIu32 "/%#08" PRIx32 ", %" PRIu32 "/%#08" PRIx32,
+			    c->sa_marks.in.val, c->sa_marks.in.mask,
+			    c->sa_marks.out.val, c->sa_marks.out.mask);
+		}
+		jam_string(buf, ";");
+		/* ... */
+		jam(buf, " vti-iface:%s;", (c->vti_iface == NULL ? "unset" :
+					    c->vti_iface));
+		jam(buf, " vti-routing:%s;", bool_str(c->vti_routing));
+		jam(buf, " vti-shared:%s;", bool_str(c->vti_shared));
+		jam(buf, " nic-offload:%s;", (c->config->nic_offload == offload_auto ? "auto" :
+					      c->config->nic_offload == offload_packet ? "packet" :
+					      c->config->nic_offload == offload_crypto ? "crypto" :
+					      "no"));
+	}
+
 	{
 		id_buf thisidb;
 		id_buf thatidb;
