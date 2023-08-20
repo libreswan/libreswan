@@ -281,7 +281,7 @@ struct whack_message {
 	/* Force the MTU for this connection */
 	int connmtu;
 
-	uint32_t sa_priority;
+	uintmax_t priority;
 	uint32_t sa_tfcpad;
 	bool send_no_esp_tfc;
 	reqid_t sa_reqid;

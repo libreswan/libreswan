@@ -2772,7 +2772,13 @@ static diag_t extract_connection(const struct whack_message *wm,
 #endif
 
 	c->nflog_group = wm->nflog_group;
-	c->sa_priority = wm->sa_priority;
+
+	if (wm->priority > UINT32_MAX) {
+		return diag("priority=%ju exceeds upper bound of %"PRIu32,
+			    wm->priority, UINT32_MAX);
+	}
+	config->child_sa.priority = wm->priority;
+
 	c->sa_tfcpad = wm->sa_tfcpad;
 	config->send_no_esp_tfc = wm->send_no_esp_tfc;
 

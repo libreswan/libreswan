@@ -281,6 +281,10 @@ struct config {
 	bool nopmtudisc;		/* ??? */
 
 	struct {
+		uintmax_t priority;
+	} child_sa;
+
+	struct {
 		bool allow;
 		bool v1_force;		/* IKEv1 only */
 	} ike_frag;
@@ -609,7 +613,6 @@ struct connection {
 					 * deleted and, hence,
 					 * delete_state() should leave
 					 * it alone? */
-	uint32_t sa_priority;
 	uint32_t sa_tfcpad;
 	uint32_t sa_replay_window; /* Usually 32, KLIPS and XFRM/NETKEY support 64 */
 				   /* See also kernel_ops->replay_window */

@@ -601,10 +601,10 @@ void show_connection_status(struct show *s, const struct connection *c)
 		jam_string(buf, ";");
 		/* .sa_priority */
 		jam_string(buf, " sa_prio:");
-		if (c->sa_priority == 0) {
+		if (c->config->child_sa.priority == 0) {
 			jam_string(buf, "auto");
 		} else {
-			jam(buf, "%"PRIu32, c->sa_priority);
+			jam(buf, "%ju", c->config->child_sa.priority);
 		}
 		jam_string(buf, ";");
 		/* .sa_tfcpad */

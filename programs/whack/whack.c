@@ -2401,7 +2401,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_PRIORITY:	/* --priority */
-			msg.sa_priority = optarg_uintmax();
+			msg.priority = optarg_uintmax();
 			continue;
 
 		case CD_TFCPAD:	/* --tfc */

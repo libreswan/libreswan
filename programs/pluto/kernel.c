@@ -102,11 +102,11 @@ const kernel_priority_t highest_kernel_priority = { .value = 0, };
 
 kernel_priority_t calculate_kernel_priority(const struct connection *c)
 {
-	if (c->sa_priority != 0) {
+	if (c->config->child_sa.priority != 0) {
 		ldbg(c->logger,
-		     "priority calculation overruled by connection specification of %"PRIu32" (%#"PRIx32")",
-		     c->sa_priority, c->sa_priority);
-		return (kernel_priority_t) { c->sa_priority, };
+		     "priority calculation overruled by connection specification of %ju (0x%jx)",
+		     c->config->child_sa.priority, c->config->child_sa.priority);
+		return (kernel_priority_t) { c->config->child_sa.priority, };
 	}
 
 	if (is_group(c)) {
