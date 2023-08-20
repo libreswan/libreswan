@@ -2917,7 +2917,7 @@ bool already_has_larval_v2_child(struct ike_sa *ike, const struct connection *c)
 		.ike_version = IKEv2,
 		.ike_spis = &ike->sa.st_ike_spis,
 		/* only children */
-		.ike = ike,
+		.clonedfrom = ike->sa.st_serialno,
 	};
 
 	while (next_state_old2new(&sf)) {

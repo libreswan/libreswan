@@ -109,7 +109,7 @@ void event_v1_dpd_timeout(struct state *tbd_st)
 		struct ike_sa *ike = ike_sa_by_serialno(c->newest_ike_sa);
 		if (ike != NULL) {
 			struct state_filter sf = {
-				.ike = ike,
+				.clonedfrom = ike->sa.st_serialno,
 				.where = HERE,
 			};
 			while (next_state_new2old(&sf)) {

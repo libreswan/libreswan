@@ -139,7 +139,8 @@ static void queue_v2_CREATE_CHILD_SA_initiator(struct state *larval_sa,
 static void emancipate_larval_ike_sa(struct ike_sa *old_ike, struct child_sa *new_ike)
 {
 	/* initialize the the new IKE SA. reset and message ID */
-	new_ike->sa.st_clonedfrom = SOS_NOBODY;
+	set_st_clonedfrom(&new_ike->sa, SOS_NOBODY);
+
 	v2_msgid_init_ike(pexpect_ike_sa(&new_ike->sa));
 
 	/* Switch to the new IKE SPIs */

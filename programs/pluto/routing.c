@@ -596,7 +596,7 @@ static bool zap_connection_family(enum routing_event event,
 	{
 		ldbg_routing((*ike)->sa.st_logger, "weeding out lurking (unestablished) Child SAs");
 		struct state_filter sf = {
-			.ike = *ike,
+			.clonedfrom = (*ike)->sa.st_serialno,
 			.where = HERE,
 		};
 		while (next_state_new2old(&sf)) {
@@ -728,7 +728,7 @@ static bool zap_connection_family(enum routing_event event,
 	{
 		ldbg_routing((*ike)->sa.st_logger, "dispatching delete to Child SA siblings");
 		struct state_filter child_filter = {
-			.ike = *ike,
+			.clonedfrom = (*ike)->sa.st_serialno,
 			.where = HERE,
 		};
 		while (next_state_new2old(&child_filter)) {

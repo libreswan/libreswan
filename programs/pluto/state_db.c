@@ -261,12 +261,31 @@ struct state *state_by_ike_spis(enum ike_version ike_version,
 }
 
 /*
+ * Child hash table.
+ */
+
+static hash_t hash_state_clonedfrom(const so_serial_t *clonedfrom)
+{
+	return hash_thing(*clonedfrom, zero_hash);
+}
+
+HASH_TABLE(state, clonedfrom, .st_clonedfrom, STATE_TABLE_SIZE);
+static REHASH_DB_ENTRY(state, clonedfrom, .st_clonedfrom);
+
+void set_st_clonedfrom(struct state *st, so_serial_t clonedfrom)
+{
+	st->st_clonedfrom = clonedfrom;
+	state_db_rehash_clonedfrom(st);
+}
+
+/*
  * Maintain the contents of the hash tables.
  *
  * Unlike serialno, the IKE SPI[ir] keys can change over time.
  */
 
 HASH_DB(state,
+	&state_clonedfrom_hash_table,
 	&state_serialno_hash_table,
 	&state_connection_serialno_hash_table,
 	&state_reqid_hash_table,
@@ -299,11 +318,11 @@ static struct list_head *filter_head(struct state_filter *filter)
 		}
 		hash_t hash = hash_state_ike_spis(filter->ike_spis);
 		bucket = hash_table_bucket(&state_ike_spis_hash_table, hash);
-	} else if (filter->ike != NULL) {
-		dbg("FOR_EACH_STATE[ike="PRI_SO"]... in "PRI_WHERE,
-		    pri_so(filter->ike->sa.st_serialno), pri_where(filter->where));
-		hash_t hash = hash_state_ike_spis(&filter->ike->sa.st_ike_spis);
-		bucket = hash_table_bucket(&state_ike_spis_hash_table, hash);
+	} else if (filter->clonedfrom != SOS_NOBODY) {
+		dbg("FOR_EACH_STATE[clonedfrom="PRI_SO"]... in "PRI_WHERE,
+		    pri_so(filter->clonedfrom), pri_where(filter->where));
+		hash_t hash = hash_state_clonedfrom(&filter->clonedfrom);
+		bucket = hash_table_bucket(&state_clonedfrom_hash_table, hash);
 	} else if (filter->connection_serialno != 0) {
 		dbg("FOR_EACH_STATE[connection_serialno="PRI_CO"]... in "PRI_WHERE,
 		    pri_co(filter->connection_serialno), pri_where(filter->where));
@@ -327,8 +346,8 @@ static bool matches_filter(struct state *st, struct state_filter *filter)
 	    !ike_spis_eq(&st->st_ike_spis, filter->ike_spis)) {
 		return false;
 	}
-	if (filter->ike != NULL &&
-	    filter->ike->sa.st_serialno != st->st_clonedfrom) {
+	if (filter->clonedfrom != SOS_NOBODY &&
+	    filter->clonedfrom != st->st_clonedfrom) {
 		return false;
 	}
 	if (filter->connection_serialno != 0 &&

@@ -459,7 +459,7 @@ void whack_connection_states(struct connection *c,
 
 	if (ike != NULL) {
 		struct state_filter child_filter = {
-			.ike = ike,
+			.clonedfrom = ike->sa.st_serialno,
 			.where = where,
 		};
 		while (next_state_new2old(&child_filter)) {

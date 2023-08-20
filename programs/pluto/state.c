@@ -950,7 +950,7 @@ void delete_state(struct state *st)
 	    IS_IKE_SA(st) &&
 	    DBGP(DBG_BASE)) {
 		struct state_filter sf = {
-			.ike = ike_sa(st, HERE),
+			.clonedfrom = st->st_serialno,
 			.where = HERE,
 		};
 		while (next_state_old2new(&sf)) {
@@ -1639,7 +1639,7 @@ static struct state *duplicate_state(struct connection *c,
 	    st->st_serialno,pri_where(HERE));
 	pexpect(nst->st_interface == NULL);
 	nst->st_interface = iface_endpoint_addref(st->st_interface);
-	nst->st_clonedfrom = st->st_serialno;
+	set_st_clonedfrom(nst, st->st_serialno);
 	passert(nst->st_ike_version == st->st_ike_version);
 	nst->st_ikev2_anon = st->st_ikev2_anon;
 	nst->st_seen_fragmentation_supported = st->st_seen_fragmentation_supported;
@@ -2727,7 +2727,7 @@ static bool v2_migrate_predicate(struct state *st, void *context)
 	dbg("#%lu migrated from IKE SA #%lu to IKE SA #%lu",
 	    st->st_serialno, filter->from->sa.st_serialno,
 	    filter->to->sa.st_serialno);
-	st->st_clonedfrom = filter->to->sa.st_serialno;
+	set_st_clonedfrom(st, filter->to->sa.st_serialno);
 	st->st_ike_spis = filter->to->sa.st_ike_spis;
 	/*
 	 * Delete the old IKE_SPI hash entries (both for I and I+R

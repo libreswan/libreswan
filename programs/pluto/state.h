@@ -284,6 +284,7 @@ extern const struct finite_state *finite_states[STATE_IKE_ROOF];
  * - each state object will always have a pending event.
  *   This prevents leaks.
  */
+
 struct state {
 	realtime_t st_inception;		/* time state is created, for logging */
 	struct state_timing st_timing;		/* accumulative cpu time */
@@ -675,6 +676,7 @@ struct state {
 	/* all the hash table entries */
 	struct {
 		struct list_entry list;
+		struct list_entry clonedfrom;
 		struct list_entry serialno;
 		struct list_entry connection_serialno;
 		struct list_entry reqid;
@@ -823,6 +825,8 @@ struct state {
 		(ST)->st_on_delete.S = true;		\
 	}
 };
+
+void set_st_clonedfrom(struct state *st, so_serial_t clonedfrom);
 
 /*
  * The IKE and CHILD SAs.
@@ -1018,7 +1022,7 @@ struct state_filter {
 	/* filters */
 	enum ike_version ike_version;
 	const ike_spis_t *ike_spis;	/* hashed */
-	const struct ike_sa *ike;
+	so_serial_t clonedfrom;
 	co_serial_t connection_serialno;
 	/* current result (can be safely deleted) */
 	struct state *st;
