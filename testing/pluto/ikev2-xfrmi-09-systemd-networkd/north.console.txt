@@ -33,7 +33,7 @@ north #
 003 "north" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 004 "north" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.0-192.0.3.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 north #
- sleep  2
+ sleep  2 # why?
 north #
  ../../guestbin/tcpdump.sh --start -i ipsec2
 tcpdump /tmp/north.ikev2-xfrmi-09-systemd-networkd.ipsec2.tcpdump.pid is not running
@@ -74,9 +74,17 @@ north #
 Error: ipv4: FIB table does not exist.
 Dump terminated
 north #
+ sleep 20 # wait for tcpdump to collect all events
+north #
  ../../guestbin/tcpdump.sh --stop -i ipsec2
 [ 00.00] device ipsec2 left promiscuous mode
 reading from file /tmp/north.ikev2-xfrmi-09-systemd-networkd.ipsec2.tcpdump.pcap, link-type RAW (Raw IP)
+IP 192.0.3.254 > 192.0.2.254: ICMP echo request, id XXXX, seq 1, length 64
+IP 192.0.2.254 > 192.0.3.254: ICMP echo reply, id XXXX, seq 1, length 64
+IP 192.0.3.254 > 192.0.2.254: ICMP echo request, id XXXX, seq 1, length 64
+IP 192.0.2.254 > 192.0.3.254: ICMP echo reply, id XXXX, seq 1, length 64
+IP 192.0.3.254 > 192.0.2.254: ICMP echo request, id XXXX, seq 1, length 64
+IP 192.0.2.254 > 192.0.3.254: ICMP echo reply, id XXXX, seq 1, length 64
 IP 192.0.3.254 > 192.0.2.254: ICMP echo request, id XXXX, seq 1, length 64
 IP 192.0.2.254 > 192.0.3.254: ICMP echo reply, id XXXX, seq 1, length 64
 north #
