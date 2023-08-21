@@ -90,3 +90,15 @@ const struct sparse_name nppi_option_names[] = {
 	YES_NO(NPPI_PROPOSE, NPPI_NEVER),
 	SPARSE_NULL
 };
+
+/*
+ * Values for nat-ikev1-method={drafts,rfc,both,none}
+ */
+
+const struct sparse_name nat_ikev1_method_option_names[] = {
+	{ "both",       NATT_BOTH },
+	{ "rfc",        NATT_RFC },
+	{ "drafts",     NATT_DRAFTS },
+	{ "none",       NATT_NONE },
+	SPARSE_NULL
+};

@@ -607,11 +607,8 @@ int starter_whack_add_conn(struct starter_config *cfg,
 	else
 		msg.nat_keepalive = true;
 
-	if (conn->options_set[KNCF_IKEV1_NATT])
-		msg.ikev1_natt = conn->options[KNCF_IKEV1_NATT];
-	else
-		msg.ikev1_natt = NATT_BOTH;
-
+	/* can be 0 aka unset */
+	msg.nat_ikev1_method = conn->options[KNCF_NAT_IKEv1_METHOD];
 
 	/* Activate sending out own vendorid */
 	if (conn->options_set[KNCF_SEND_VENDORID])

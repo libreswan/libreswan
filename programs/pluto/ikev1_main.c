@@ -2181,7 +2181,8 @@ bool accept_delete(struct state **stp,
 				log_state(RC_LOG_SERIOUS, st, "received Delete SA payload: %sdeleting ISAKMP State #%lu",
 					  (dst == st ? "self-" : ""),
 					  dst->st_serialno);
-				if (nat_traversal_enabled && dst->st_connection->ikev1_natt != NATT_NONE) {
+				if (nat_traversal_enabled &&
+				    dst->st_connection->config->ikev1_natt != NATT_NONE) {
 					nat_traversal_change_port_lookup(md, dst);
 					v1_maybe_natify_initiator_endpoints(st, HERE);
 				}
@@ -2227,7 +2228,8 @@ bool accept_delete(struct state **stp,
 				/* save for post delete_state() code */
 				co_serial_t rc_serialno = dst->st_connection->serialno;
 
-				if (nat_traversal_enabled && dst->st_connection->ikev1_natt != NATT_NONE) {
+				if (nat_traversal_enabled &&
+				    dst->st_connection->config->ikev1_natt != NATT_NONE) {
 					nat_traversal_change_port_lookup(md, dst);
 					v1_maybe_natify_initiator_endpoints(st, HERE);
 				}

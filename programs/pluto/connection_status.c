@@ -695,12 +695,12 @@ void show_connection_status(struct show *s, const struct connection *c)
 		}
 		if (c->config->ike_version == IKEv1) {
 			jam_string(buf, "; ikev1-method:");
-			switch (c->ikev1_natt) {
+			switch (c->config->ikev1_natt) {
 			case NATT_BOTH: jam_string(buf, "rfc+drafts"); break;
 			case NATT_RFC: jam_string(buf, "rfc"); break;
 			case NATT_DRAFTS: jam_string(buf, "drafts"); break;
 			case NATT_NONE: jam_string(buf, "none"); break;
-			default: bad_case(c->ikev1_natt);
+			default: bad_case(c->config->ikev1_natt);
 			}
 		}
 	}

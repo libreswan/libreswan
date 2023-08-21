@@ -765,11 +765,13 @@ enum certpolicy {
 #define cert_defaultcertpolicy CERT_ALWAYSSEND
 
 enum ikev1_natt_policy {
-	NATT_BOTH = 0, /* the default */
-	NATT_RFC = 1,
-	NATT_DRAFTS = 2, /* Workaround for Cisco NAT-T bug */
-	NATT_NONE = 3 /* Workaround for forcing non-encaps */
+	NATT_BOTH = 1, /* the default */
+	NATT_RFC = 2,
+	NATT_DRAFTS = 3, /* Workaround for Cisco NAT-T bug */
+	NATT_NONE = 4 /* Workaround for forcing non-encaps */
 };
+
+extern const struct sparse_name nat_ikev1_method_option_names[];
 
 enum nppi_options {
 	NPPI_UNSET = 0,

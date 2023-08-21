@@ -58,7 +58,7 @@ bool nat_traversal_insert_vid(pb_stream *outs, const struct connection *c)
 	 * that want to do no-encapsulation, but are triggered for encapsulation
 	 * when they see NATT payloads.
 	 */
-	switch (c->ikev1_natt) {
+	switch (c->config->ikev1_natt) {
 	case NATT_RFC:
 		dbg("skipping VID_NATT drafts");
 		return out_v1VID(outs, VID_NATT_RFC);
@@ -83,7 +83,7 @@ bool nat_traversal_insert_vid(pb_stream *outs, const struct connection *c)
 		return true;
 
 	default:
-		bad_case(c->ikev1_natt);
+		bad_case(c->config->ikev1_natt);
 	}
 }
 
@@ -122,10 +122,10 @@ void set_nat_traversal(struct state *st, const struct msg_digest *md)
 {
 	dbg("sender checking NAT-T: %s; conn %s; VID %d",
 	    nat_traversal_enabled ? "enabled" : "disabled",
-	    (st->st_connection->ikev1_natt == NATT_NONE) ? "disabled" : "enabled",
+	    (st->st_connection->config->ikev1_natt == NATT_NONE) ? "disabled" : "enabled",
 	    md->quirks.qnat_traversal_vid);
 	if (nat_traversal_enabled && (md->quirks.qnat_traversal_vid != VID_none) &&
-		(st->st_connection->ikev1_natt != NATT_NONE)) {
+		(st->st_connection->config->ikev1_natt != NATT_NONE)) {
 		enum natt_method v = nat_traversal_vid_to_method(md->quirks.qnat_traversal_vid);
 
 		st->hidden_variables.st_nat_traversal = LELEM(v);
@@ -390,10 +390,10 @@ void ikev1_natd_init(struct state *st, struct msg_digest *md)
 	lset_buf lb;
 	dbg("init checking NAT-T: global %s; conn %s; vid %s",
 	    nat_traversal_enabled ? "enabled" : "disabled",
-	    st->st_connection->ikev1_natt == NATT_NONE ? "disabled" : "enabled",
+	    st->st_connection->config->ikev1_natt == NATT_NONE ? "disabled" : "enabled",
 	    str_lset(&natt_method_names, st->hidden_variables.st_nat_traversal, &lb));
 
-	if (st->st_connection->ikev1_natt == NATT_NONE) {
+	if (st->st_connection->config->ikev1_natt == NATT_NONE) {
 		dbg("Skip NATD payloads due to nat-ikev1-method=none configuration");
 		return;
 	}

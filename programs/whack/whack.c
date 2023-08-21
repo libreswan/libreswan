@@ -2037,16 +2037,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_IKEV1_NATT:	/* --ikev1-natt */
-			if (streq(optarg, "both"))
-				msg.ikev1_natt = NATT_BOTH;
-			else if (streq(optarg, "rfc"))
-				msg.ikev1_natt = NATT_RFC;
-			else if (streq(optarg, "drafts"))
-				msg.ikev1_natt = NATT_DRAFTS;
-			else if (streq(optarg, "none"))
-				msg.ikev1_natt = NATT_NONE;
-			else
-				diagw("--ikev1-natt options are 'both', 'rfc' or 'drafts'");
+			msg.nat_ikev1_method = optarg_sparse(nat_ikev1_method_option_names);
 			continue;
 
 		case CD_INITIAL_CONTACT:	/* --initialcontact */

@@ -284,6 +284,11 @@ struct config {
 	bool nat_keepalive;		/* Send NAT-T Keep-Alives if
 					 * we are behind NAT */
 
+	enum ikev1_natt_policy ikev1_natt;	/* whether or not to
+						 * send IKEv1
+						 * draft/rfc NATT
+						 * VIDs */
+
 	struct {
 		uintmax_t priority;
 		uintmax_t tfcpad;
@@ -632,7 +637,6 @@ struct connection {
 	bool vti_shared; /* should updown leave remote empty and not cleanup device on down */
 	struct pluto_xfrmi *xfrmi; /* pointer to possibly shared interface */
 
-	enum ikev1_natt_policy ikev1_natt; /* whether or not to send IKEv1 draft/rfc NATT VIDs */
 	enum yna_options encaps; /* encapsulation mode of auto/yes/no - formerly forceencaps=yes/no */
 
 	/* Network Manager support */

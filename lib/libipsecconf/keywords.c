@@ -310,17 +310,6 @@ static const struct sparse_name kw_sendcert_list[] = {
 };
 
 /*
- * Values for nat-ikev1-method={drafts,rfc,both,none}
- */
-static const struct sparse_name kw_ikev1natt_list[] = {
-	{ "both",       NATT_BOTH },
-	{ "rfc",        NATT_RFC },
-	{ "drafts",     NATT_DRAFTS },
-	{ "none",       NATT_NONE },
-	SPARSE_NULL
-};
-
-/*
  * Values for ocsp-method={get|post}
  *
  * This sets the NSS forcePost option for the OCSP request.
@@ -520,7 +509,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "retransmit-interval",  kv_conn|kv_milliseconds,  kt_time,  KNCF_RETRANSMIT_INTERVAL_MS, NULL, NULL, },
 
   { "ikepad",  kv_conn,  kt_enum,  KNCF_IKEPAD, yn_option_names, NULL, },
-  { "nat-ikev1-method",  kv_conn | kv_processed,  kt_enum,  KNCF_IKEV1_NATT,  kw_ikev1natt_list, NULL, },
+  { "nat-ikev1-method",  kv_conn | kv_processed,  kt_enum,  KNCF_NAT_IKEv1_METHOD,  nat_ikev1_method_option_names, NULL, },
 
   { "policy-label",  kv_conn,  kt_string,  KSCF_SEC_LABEL, NULL, NULL, }, /* obsolete variant */
   { "sec-label",  kv_conn,  kt_string,  KSCF_SEC_LABEL, NULL, NULL, },
