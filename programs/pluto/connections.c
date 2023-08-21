@@ -468,9 +468,10 @@ void delete_every_connection(void)
 		}
 		struct connection *c = cq.c;
 
-		remove_connection_from_pending(c);
 		delete_states_by_connection(c);
-		connection_unroute(c, HERE);
+		connection_unroute(c, HERE); /* should be redundant */
+		remove_connection_from_pending(c);
+		flush_connection_events(c);
 
 		delete_connection(&c);
 	}

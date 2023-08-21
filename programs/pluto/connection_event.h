@@ -36,7 +36,7 @@ extern const struct enum_names connection_event_names;
 bool connection_event_is_scheduled(const struct connection *c,
 				   enum connection_event event);
 
-void schedule_connection_event(const struct connection *c,
+void schedule_connection_event(struct connection *c,
 			       enum connection_event event, const char *subplot,
 			       deltatime_t delay);
 

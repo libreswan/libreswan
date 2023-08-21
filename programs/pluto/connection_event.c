@@ -42,14 +42,15 @@ const struct enum_names connection_event_names = {
 struct event_connection {
 	struct list_entry entry;
 	enum connection_event event;
-	co_serial_t serialno;
+	struct connection *connection;
 	const char *subplot;
 	struct timeout *timeout;
+	struct logger *logger;
 };
 
 static size_t jam_event_connection(struct jambuf *buf, const struct event_connection *event)
 {
-	return jam(buf, PRI_CO" %s", pri_co(event->serialno),
+	return jam(buf, PRI_CO" %s", pri_connection_co(event->connection),
 		   enum_name_short(&connection_event_names, event->event));
 }
 
@@ -57,14 +58,18 @@ LIST_INFO(event_connection, entry, event_connection_info, jam_event_connection);
 static struct list_head connection_events =
 	INIT_LIST_HEAD(&connection_events, &event_connection_info);
 
-void schedule_connection_event(const struct connection *c,
+void schedule_connection_event(struct connection *c,
 			       enum connection_event event, const char *subplot,
 			       deltatime_t delay)
 {
 	struct event_connection *d = alloc_thing(struct event_connection, "data");
-	d->serialno = c->serialno;
+	connection_buf cb;
+	d->logger = string_logger(null_fd, HERE, "event %s for "PRI_CONNECTION": ",
+				  enum_name(&connection_event_names, event),
+				  pri_connection(c, &cb));
 	d->event = event;
 	d->subplot = subplot;
+	d->connection = connection_addref(c, d->logger);
 	init_list_entry(&event_connection_info, d, &d->entry);
 	insert_list_entry(&connection_events, &d->entry);
 	schedule_timeout(enum_name(&connection_event_names, event),
@@ -72,38 +77,32 @@ void schedule_connection_event(const struct connection *c,
 			 connection_event_handler, d);
 }
 
+static void delete_connection_event(struct event_connection **e)
+{
+	remove_list_entry(&(*e)->entry);
+	destroy_timeout(&(*e)->timeout);
+	connection_delref(&(*e)->connection, (*e)->logger);
+	free_logger(&(*e)->logger, HERE);
+	pfree(*e);
+	*e = NULL;
+}
+
 void connection_event_handler(void *arg, const struct timer_event *event)
 {
 	/* save event details*/
-	struct event_connection *tmp = arg;
-	remove_list_entry(&tmp->entry);
-	enum connection_event connection_event = tmp->event;
-	co_serial_t serialno = tmp->serialno;
-	const char *subplot = tmp->subplot;
-	passert(tmp->timeout != NULL);
-	destroy_timeout(&tmp->timeout);
-	pfree(tmp); tmp = NULL;
+	struct event_connection *e = arg;
 
-	/* is connection still around? */
-	struct connection *c = connection_by_serialno(serialno);
-	if (c == NULL) {
-		llog_pexpect(event->logger, HERE, PRI_CO" no longer exists",
-			     pri_co(serialno));
-		return;
-	}
+	ldbg(e->logger, "dispatching");
 
-	ldbg(event->logger, "%s() dispatching %s to "PRI_CO,
-	     __func__,
-	     enum_name_short(&connection_event_names, connection_event),
-	     pri_co(serialno));
-
-	switch (connection_event) {
+	switch (e->event) {
 	case CONNECTION_NONEVENT:
 		break;
 	case CONNECTION_REVIVAL:
-		revive_connection(c, subplot, event);
+		revive_connection(e->connection, e->subplot, event);
 		break;
 	}
+
+	delete_connection_event(&e);
 }
 
 bool connection_event_is_scheduled(const struct connection *c,
@@ -111,7 +110,7 @@ bool connection_event_is_scheduled(const struct connection *c,
 {
 	struct event_connection *e;
 	FOR_EACH_LIST_ENTRY_OLD2NEW(e, &connection_events) {
-		if (e->serialno == c->serialno &&
+		if (e->connection == c &&
 		    e->event == event) {
 			return true;
 		}
@@ -125,11 +124,9 @@ bool flush_connection_event(const struct connection *c,
 	bool flushed = false;
 	struct event_connection *e;
 	FOR_EACH_LIST_ENTRY_OLD2NEW(e, &connection_events) {
-		if (e->serialno == c->serialno &&
+		if (e->connection == c &&
 		    e->event == event) {
-			remove_list_entry(&e->entry);
-			destroy_timeout(&e->timeout);
-			pfree(e);
+			delete_connection_event(&e);
 			flushed = true;
 		}
 	}
@@ -140,10 +137,8 @@ void flush_connection_events(const struct connection *c)
 {
 	struct event_connection *e;
 	FOR_EACH_LIST_ENTRY_OLD2NEW(e, &connection_events) {
-		if (e->serialno == c->serialno) {
-			remove_list_entry(&e->entry);
-			destroy_timeout(&e->timeout);
-			pfree(e);
+		if (e->connection == c) {
+			delete_connection_event(&e);
 		}
 	}
 }
