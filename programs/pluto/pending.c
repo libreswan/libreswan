@@ -89,7 +89,7 @@ static void add_pending(struct fd *whack_sock,
 	struct pending *p = alloc_thing(struct pending, "struct pending");
 	p->whack_sock = fd_addref(whack_sock); /*on heap*/
 	p->ike = ike;
-	p->connection = c;
+	p->connection = connection_addref(c);
 	p->policy = policy;
 	p->replacing = replacing;
 	p->pend_time = mononow();
@@ -243,6 +243,7 @@ static void delete_pending(struct pending **pp, const char *what)
 	struct pending *p = *pp;
 	*pp = p->next;
 
+	connection_delref(&p->connection);
 	fd_delref(&p->whack_sock); /*on-heap*/
 	pfree(p);
 }
