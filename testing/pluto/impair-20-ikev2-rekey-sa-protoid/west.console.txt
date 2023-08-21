@@ -19,7 +19,7 @@ initdone
 west #
  ipsec whack --impair revival
 west #
- # bring up west and confirm
+ # bring up west and then immediately re-key
 west #
  ipsec auto --up west
 1v2 "west" #1: initiating IKEv2 connection
@@ -38,6 +38,9 @@ west #
 west #
  ../../guestbin/wait-for.sh --match '#3: initiator rekeyed Child SA #2' -- cat /tmp/pluto.log
 "west" #3: initiator rekeyed Child SA #2 using #1; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
+west #
+ ../../guestbin/wait-for.sh --match '#2: ESP traffic information:' -- cat /tmp/pluto.log
+"west" #2: ESP traffic information: in=84B out=84B
 west #
  ipsec auto --down west
 002 "west": terminating SAs using this connection
