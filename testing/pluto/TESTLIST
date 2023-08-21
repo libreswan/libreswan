@@ -124,7 +124,7 @@ kvmplutotest	addconn-25-missing-cert				wip	github/1066
 kvmplutotest	addconn-26-keyingtries				good	github/1061
 kvmplutotest	addconn-27-keyexchange				good	github/1168
 kvmplutotest	addconn-28-fragmentation			good	github/1209
-
+kvmplutotest	addconn-29-nat-ikev1-method			good
 
 #################################################################
 # Whack UI tests

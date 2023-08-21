@@ -1,0 +1,50 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec add addconn--default
+002 "addconn--default": added IKEv1 connection
+west #
+ ipsec add addconn--both
+002 "addconn--both": added IKEv1 connection
+west #
+ ipsec add addconn--rfc
+002 "addconn--rfc": added IKEv1 connection
+west #
+ ipsec add addconn--drafts
+002 "addconn--drafts": added IKEv1 connection
+west #
+ ipsec add addconn--none
+002 "addconn--none": added IKEv1 connection
+west #
+ ipsec whack --name whack--default                      --encrypt --ikev1 --ipv4 --host 1.2.3.4 --to --host 5.6.7.8
+002 "whack--default": added IKEv1 connection
+west #
+ ipsec whack --name whack--both    --ikev1-natt both    --encrypt --ikev1 --ipv4 --host 1.2.3.4 --to --host 5.6.7.8
+002 "whack--both": added IKEv1 connection
+west #
+ ipsec whack --name whack--rfc     --ikev1-natt rfc     --encrypt --ikev1 --ipv4 --host 1.2.3.4 --to --host 5.6.7.8
+002 "whack--rfc": added IKEv1 connection
+west #
+ ipsec whack --name whack--drafts  --ikev1-natt drafts  --encrypt --ikev1 --ipv4 --host 1.2.3.4 --to --host 5.6.7.8
+002 "whack--drafts": added IKEv1 connection
+west #
+ ipsec whack --name whack--none    --ikev1-natt none    --encrypt --ikev1 --ipv4 --host 1.2.3.4 --to --host 5.6.7.8
+002 "whack--none": added IKEv1 connection
+west #
+ ipsec connectionstatus | sed -n -e 's/^\([^:]*:\) .* \(ikev1-method:\)[ ]*\([^ ;]*\).*/\1 \2 \3/p' | sort
+000 "addconn--both": ikev1-method: rfc+drafts
+000 "addconn--default": ikev1-method: rfc+drafts
+000 "addconn--drafts": ikev1-method: drafts
+000 "addconn--none": ikev1-method: none
+000 "addconn--rfc": ikev1-method: rfc
+000 "whack--both": ikev1-method: rfc+drafts
+000 "whack--default": ikev1-method: rfc+drafts
+000 "whack--drafts": ikev1-method: drafts
+000 "whack--none": ikev1-method: none
+000 "whack--rfc": ikev1-method: rfc
+west #
+ 
