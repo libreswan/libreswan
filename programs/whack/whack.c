@@ -484,7 +484,7 @@ enum option_enums {
 	CD_MODECFGDOMAINS,
 	CD_MODECFGBANNER,
 	CD_METRIC,
-	CD_CONNMTU,
+	CD_MTU,
 	CD_PRIORITY,
 	CD_TFC,
 	CD_SEND_TFCPAD,
@@ -830,7 +830,7 @@ static const struct option long_opts[] = {
 	{ "modeconfigclient", no_argument, NULL, END_MODECFGCLIENT },
 
 	{ "metric", required_argument, NULL, CD_METRIC },
-	{ "mtu", required_argument, NULL, CD_CONNMTU },
+	{ "mtu", required_argument, NULL, CD_MTU },
 	{ "priority", required_argument, NULL, CD_PRIORITY },
 	{ "tfc", required_argument, NULL, CD_TFC },
 	{ "send-no-esp-tfc", no_argument, NULL, CD_SEND_TFCPAD },
@@ -2396,8 +2396,8 @@ int main(int argc, char **argv)
 			msg.metric = optarg_uintmax();
 			continue;
 
-		case CD_CONNMTU:	/* --mtu */
-			msg.connmtu = optarg_uintmax();
+		case CD_MTU:	/* --mtu */
+			msg.mtu = optarg_uintmax();
 			continue;
 
 		case CD_PRIORITY:	/* --priority */

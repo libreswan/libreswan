@@ -555,8 +555,8 @@ int starter_whack_add_conn(struct starter_config *cfg,
 	msg.rekey = conn->options[KNCF_REKEY];
 	msg.reauth = conn->options[KNCF_REAUTH];
 
-	if (conn->options_set[KNCF_CONNMTU])
-		msg.connmtu = conn->options[KNCF_CONNMTU];
+	if (conn->options_set[KNCF_MTU])
+		msg.mtu = conn->options[KNCF_MTU];
 	if (conn->options_set[KNCF_PRIORITY])
 		msg.priority = conn->options[KNCF_PRIORITY];
 	if (conn->options_set[KNCF_TFC])

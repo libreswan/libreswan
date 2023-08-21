@@ -593,10 +593,10 @@ void show_connection_status(struct show *s, const struct connection *c)
 		jam(buf, " metric: %u;", c->config->child_sa.metric);
 		/* .connmtu */
 		jam_string(buf, " mtu: ");
-		if (c->connmtu == 0) {
+		if (c->config->child_sa.mtu == 0) {
 			jam_string(buf, "unset");
 		} else {
-			jam(buf, "%d", c->connmtu);
+			jam(buf, "%d", c->config->child_sa.mtu);
 		}
 		jam_string(buf, ";");
 		/* .sa_priority */

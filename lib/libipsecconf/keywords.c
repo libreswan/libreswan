@@ -592,7 +592,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
 
   { "sendca",      kv_conn,  kt_enum,  KNCF_SEND_CA,  kw_sendca_list, NULL, },
 
-  { "mtu",  kv_conn,  kt_number,  KNCF_CONNMTU, NULL, NULL, },
+  { "mtu",  kv_conn,  kt_number,  KNCF_MTU, NULL, NULL, },
   { "priority",  kv_conn,  kt_number,  KNCF_PRIORITY, NULL, NULL, },
   { "tfc",  kv_conn,  kt_number,  KNCF_TFC, NULL, NULL, },
   { "reqid",  kv_conn,  kt_number,  KNCF_REQID, NULL, NULL, },

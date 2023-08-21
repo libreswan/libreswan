@@ -2682,7 +2682,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 		c->remotepeertype = wm->remotepeertype;
 
 		config->child_sa.metric = wm->metric;
-		c->connmtu = wm->connmtu;
+		config->child_sa.mtu = wm->mtu;
 		c->encaps = wm->encaps;
 		config->nat_keepalive = wm->nat_keepalive;
 		c->ikev1_natt = wm->ikev1_natt;

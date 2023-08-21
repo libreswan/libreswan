@@ -176,8 +176,8 @@ static bool fmt_common_shell_out(char *buf,
 		jam(&jb, "PLUTO_METRIC=%d ", c->config->child_sa.metric);
 	}
 
-	if (c->connmtu != 0) {
-		jam(&jb, "PLUTO_MTU=%d ", c->connmtu);
+	if (c->config->child_sa.mtu != 0) {
+		jam(&jb, "PLUTO_MTU=%d ", c->config->child_sa.mtu);
 	}
 
 	JDuint64("PLUTO_ADDTIME", st == NULL ? (uint64_t)0 : st->st_esp.add_time);

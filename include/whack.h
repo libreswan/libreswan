@@ -279,7 +279,7 @@ struct whack_message {
 	enum send_ca_policy send_ca;
 
 	/* Force the MTU for this connection */
-	int connmtu;
+	int mtu;
 
 	uintmax_t priority;
 	uintmax_t tfc;
