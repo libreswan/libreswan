@@ -154,7 +154,7 @@ void natd_lookup_common(struct state *st,
 		break;
 	}
 
-	if (st->st_connection->nat_keepalive) {
+	if (st->st_connection->config->nat_keepalive) {
 		endpoint_buf b;
 		dbg("NAT_TRAVERSAL nat-keepalive enabled %s", str_endpoint(&sender, &b));
 	}
@@ -196,7 +196,7 @@ static void nat_traversal_ka_event_state(struct state *st, unsigned *data)
 		return;
 	}
 
-	if (!c->nat_keepalive) {
+	if (!c->config->nat_keepalive) {
 		dbg("Suppressing sending of NAT-T KEEP-ALIVE for conn %s (nat-keepalive=no)",
 		    c->name);
 		return;

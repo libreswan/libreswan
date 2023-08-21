@@ -688,7 +688,7 @@ void show_connection_status(struct show *s, const struct connection *c)
 		    (c->encaps == yna_auto ? "auto" :
 		     bool_str(c->encaps == yna_yes)));
 		jam_string(buf, "; keepalive:");
-		if (c->nat_keepalive) {
+		if (c->config->nat_keepalive) {
 			jam(buf, "%jds", deltasecs(nat_keepalive_period));
 		} else {
 			jam_string(buf, bool_str(false));

@@ -2684,7 +2684,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 		c->metric = wm->metric;
 		c->connmtu = wm->connmtu;
 		c->encaps = wm->encaps;
-		c->nat_keepalive = wm->nat_keepalive;
+		config->nat_keepalive = wm->nat_keepalive;
 		c->ikev1_natt = wm->ikev1_natt;
 		config->send_initial_contact = wm->initial_contact;
 		config->send_vid_cisco_unity = wm->cisco_unity;

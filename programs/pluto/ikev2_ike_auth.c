@@ -1092,7 +1092,7 @@ bool v2_ike_sa_auth_responder_establish(struct ike_sa *ike, bool *send_redirecti
 
 	if (LHAS(ike->sa.hidden_variables.st_nat_traversal, NATED_HOST)) {
 		/* ensure we run keepalives if needed */
-		if (c->nat_keepalive) {
+		if (c->config->nat_keepalive) {
 			/* XXX: just trigger this event? */
 			nat_traversal_ka_event(ike->sa.st_logger);
 		}
@@ -1406,7 +1406,7 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 	 */
 	if (LHAS(ike->sa.hidden_variables.st_nat_traversal, NATED_HOST)) {
 		/* ensure we run keepalives if needed */
-		if (c->nat_keepalive) {
+		if (c->config->nat_keepalive) {
 			/*
 			 * Trigger a keep alive for all states.
 			 *
