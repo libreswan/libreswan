@@ -951,7 +951,7 @@ static stf_status main_inR2_outI3_continue(struct state *st,
 			   (c->local->host.config->sendcert == CERT_ALWAYSSEND)));
 
 	bool send_authcerts = (send_cert &&
-			  c->send_ca != CA_SEND_NONE);
+			       c->config->send_ca != CA_SEND_NONE);
 
 	/*****
 	 * From here on, if send_authcerts, we are obligated to:
@@ -963,7 +963,7 @@ static stf_status main_inR2_outI3_continue(struct state *st,
 
 	if (send_authcerts) {
 		chain_len = get_auth_chain(auth_chain, MAX_CA_PATH_LEN, mycert,
-					   c->send_ca == CA_SEND_ALL);
+					   c->config->send_ca == CA_SEND_ALL);
 		if (chain_len == 0)
 			send_authcerts = false;
 	}
@@ -1200,7 +1200,7 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 			  ((c->local->host.config->sendcert == CERT_SENDIFASKED && cert_requested) ||
 			   (c->local->host.config->sendcert == CERT_ALWAYSSEND)));
 
-	bool send_authcerts = (send_cert && c->send_ca != CA_SEND_NONE);
+	bool send_authcerts = (send_cert && c->config->send_ca != CA_SEND_NONE);
 
 	/*****
 	 * From here on, if send_authcerts, we are obligated to:
@@ -1212,7 +1212,7 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 
 	if (send_authcerts) {
 		chain_len = get_auth_chain(auth_chain, MAX_CA_PATH_LEN, mycert,
-					   c->send_ca == CA_SEND_ALL);
+					   c->config->send_ca == CA_SEND_ALL);
 		if (chain_len == 0)
 			send_authcerts = false;
 	}

@@ -2690,7 +2690,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 		config->send_vid_cisco_unity = wm->cisco_unity;
 		config->send_vid_fake_strongswan = wm->fake_strongswan;
 		config->send_vendorid = wm->send_vendorid;
-		c->send_ca = wm->send_ca;
+		config->send_ca = wm->send_ca;
 		config->xauthby = wm->xauthby;
 		config->xauthfail = wm->xauthfail;
 

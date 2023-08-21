@@ -192,6 +192,7 @@ struct config {
 
 	enum keyword_xauthby xauthby;
 	enum keyword_xauthfail xauthfail;
+	enum send_ca_policy send_ca;
 
 	reqid_t sa_reqid;
 
@@ -675,8 +676,6 @@ struct connection {
 	/* host_pair linkage */
 	struct host_pair *host_pair;
 	struct connection *hp_next;
-
-	enum send_ca_policy send_ca;
 
 	struct addresspool *pool[IP_INDEX_ROOF];
 

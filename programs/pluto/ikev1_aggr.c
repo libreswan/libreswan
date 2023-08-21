@@ -307,7 +307,7 @@ static stf_status aggr_inI1_outR1_continue2(struct state *st,
 			  ((c->local->host.config->sendcert == CERT_SENDIFASKED && cert_requested) ||
 			   (c->local->host.config->sendcert == CERT_ALWAYSSEND)));
 
-	bool send_authcerts = (send_cert && c->send_ca != CA_SEND_NONE);
+	bool send_authcerts = (send_cert && c->config->send_ca != CA_SEND_NONE);
 
 	/*****
 	 * From here on, if send_authcerts, we are obligated to:
@@ -319,7 +319,7 @@ static stf_status aggr_inI1_outR1_continue2(struct state *st,
 
 	if (send_authcerts) {
 		chain_len = get_auth_chain(auth_chain, MAX_CA_PATH_LEN, mycert,
-					   c->send_ca == CA_SEND_ALL);
+					   c->config->send_ca == CA_SEND_ALL);
 
 		if (chain_len == 0)
 			send_authcerts = false;
@@ -630,7 +630,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 			  ((c->local->host.config->sendcert == CERT_SENDIFASKED && cert_requested) ||
 			   (c->local->host.config->sendcert == CERT_ALWAYSSEND)));
 
-	bool send_authcerts = (send_cert && c->send_ca != CA_SEND_NONE);
+	bool send_authcerts = (send_cert && c->config->send_ca != CA_SEND_NONE);
 
 	/*****
 	 * From here on, if send_authcerts, we are obligated to:
@@ -642,7 +642,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 
 	if (send_authcerts) {
 		chain_len = get_auth_chain(auth_chain, MAX_CA_PATH_LEN, mycert,
-					   c->send_ca == CA_SEND_ALL);
+					   c->config->send_ca == CA_SEND_ALL);
 
 		if (chain_len == 0)
 			send_authcerts = false;

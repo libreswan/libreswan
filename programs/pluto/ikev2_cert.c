@@ -47,8 +47,8 @@
 stf_status emit_v2CERT(const struct connection *c, struct pbs_out *outpbs)
 {
 	const struct cert *mycert = c->local->host.config->cert.nss_cert != NULL ? &c->local->host.config->cert : NULL;
-	bool send_authcerts = c->send_ca != CA_SEND_NONE;
-	bool send_full_chain = send_authcerts && c->send_ca == CA_SEND_ALL;
+	bool send_authcerts = c->config->send_ca != CA_SEND_NONE;
+	bool send_full_chain = send_authcerts && c->config->send_ca == CA_SEND_ALL;
 
 	if (impair.send_pkcs7_thingie) {
 		llog(RC_LOG, outpbs->outs_logger, "IMPAIR: sending cert as PKCS7 blob");
