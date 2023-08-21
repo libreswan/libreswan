@@ -590,7 +590,7 @@ void show_connection_status(struct show *s, const struct connection *c)
 		};
 		jam_string(buf, ";");
 		/* .metric */
-		jam(buf, " metric: %u;", c->metric);
+		jam(buf, " metric: %u;", c->config->child_sa.metric);
 		/* .connmtu */
 		jam_string(buf, " mtu: ");
 		if (c->connmtu == 0) {

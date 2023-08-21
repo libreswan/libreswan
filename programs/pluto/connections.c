@@ -2681,7 +2681,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 		/* Cisco interop: remote peer type */
 		c->remotepeertype = wm->remotepeertype;
 
-		c->metric = wm->metric;
+		config->child_sa.metric = wm->metric;
 		c->connmtu = wm->connmtu;
 		c->encaps = wm->encaps;
 		config->nat_keepalive = wm->nat_keepalive;

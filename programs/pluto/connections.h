@@ -291,6 +291,7 @@ struct config {
 						   support 64.  See
 						   also kernel_ops
 						   .replay_window */
+		uint32_t metric;	/* metric for tunnel routes */
 
 	} child_sa;
 
@@ -679,7 +680,6 @@ struct connection {
 
 	struct addresspool *pool[IP_INDEX_ROOF];
 
-	uint32_t metric;	/* metric for tunnel routes */
 	uint16_t connmtu;	/* mtu for tunnel routes */
 	uint16_t nflog_group;	/* NFLOG group - 0 means disabled */
 	msgid_t ike_window;     /* IKE v2 window size 7296#section-2.3 */

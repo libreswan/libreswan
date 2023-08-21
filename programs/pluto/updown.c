@@ -172,8 +172,8 @@ static bool fmt_common_shell_out(char *buf,
 
 	JDstr("PLUTO_STACK", kernel_ops->updown_name);
 
-	if (c->metric != 0) {
-		jam(&jb, "PLUTO_METRIC=%d ", c->metric);
+	if (c->config->child_sa.metric != 0) {
+		jam(&jb, "PLUTO_METRIC=%d ", c->config->child_sa.metric);
 	}
 
 	if (c->connmtu != 0) {
