@@ -245,17 +245,14 @@ void delete_connection_where(struct connection **cp, where_t where)
 	discard_connection(&c, true/*connection_valid*/);
 }
 
-struct connection *connection_addref_where(struct connection *c, where_t where)
+struct connection *connection_addref_where(struct connection *c, const struct logger *owner, where_t where)
 {
-	return addref_where(c, where);
+	return laddref_where(c, owner, where);
 }
 
-void connection_delref_where(struct connection **cp, where_t where)
+void connection_delref_where(struct connection **cp, const struct logger *owner, where_t where)
 {
-	/* allow/handle NULL *cp */
-	const struct logger *logger = ((*cp) != NULL ? (*cp)->logger :
-				       &global_logger);
-	struct connection *c = delref_where(cp, logger, where);
+	struct connection *c = delref_where(cp, owner, where);
 	if (c == NULL) {
 		return;
 	}
@@ -384,6 +381,9 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 
 	remove_from_group(c);
 
+	/* sever tie with parent */
+	connection_delref(&c->clonedfrom, c->logger);
+
 	/*
 	 * Logging no longer valid.  Can this be delayed further?
 	 */
@@ -439,9 +439,6 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 		}
 		pfree(c->root_config);
 	}
-
-	/* sever tie with parent */
-	connection_delref(&c->clonedfrom);
 
 	/* connection's final gasp; need's c->name */
 	pfreeany(c->name);
@@ -1860,7 +1857,7 @@ void finish_connection(struct connection *c, const char *name,
 	connection_serialno++;
 	passert(connection_serialno > 0); /* can't overflow */
 	c->serialno = connection_serialno;
-	c->clonedfrom = connection_addref(t);
+	c->clonedfrom = connection_addref(t, c->logger);
 }
 
 static struct config *alloc_config(void)
