@@ -130,8 +130,8 @@ void initiate_ondemand(const struct kernel_acquire *b)
 	struct connection *cp =
 		(is_labeled_template(c) ? sec_label_parent_instantiate(c, (c)->remote->host.addr, HERE) :
 		 is_opportunistic_template(c) ? oppo_initiator_instantiate(c, b->packet, HERE) :
-		 is_permanent(c) ? c :
-		 is_instance(c) ? c /*valid?*/:
+		 is_permanent(c) ? connection_addref(c, b->logger) :
+		 is_instance(c) ? connection_addref(c, b->logger) /*valid?*/:
 		 NULL);
 
 	if (cp == NULL) {
@@ -143,5 +143,7 @@ void initiate_ondemand(const struct kernel_acquire *b)
 
 	/* (b->)logger has whack attached */
 	connection_acquire(cp, &inception, b, HERE);
+
+	connection_delref(&cp, b->logger);
 
 }

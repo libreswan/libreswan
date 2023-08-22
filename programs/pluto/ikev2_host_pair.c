@@ -106,6 +106,10 @@ static bool match_connection(const struct connection *c,
 	return true;
 }
 
+/*
+ * This always returns a reference that needs to be released.
+ */
+
 static struct connection *ikev2_find_host_connection(const struct msg_digest *md,
 						     struct authby remote_authby,
 						     bool *send_reject_response)
@@ -177,7 +181,7 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 		connection_buf cb;
 		ldbg(md->md_logger, "winner is "PRI_CONNECTION,
 		     pri_connection(c, &cb));
-		return c;
+		return connection_addref(c, md->md_logger);
 	}
 
 	/*

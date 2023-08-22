@@ -454,7 +454,8 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 		return STF_IGNORE;
 	}
 
-	struct connection *c = find_v1_main_mode_connection(md);
+
+	struct connection *c = find_v1_main_mode_connection(md); /* must delref */
 	if (c == NULL) {
 		/* XXX: already logged */
 		/* XXX notification is in order! */
@@ -464,6 +465,10 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 	/* Set up state */
 	struct ike_sa *ike = new_v1_rstate(c, md);
 	struct state *st = md->v1_st = &ike->sa;
+
+	/* delref stack connection pointer */
+	connection_delref(&c, md->md_logger);
+	c = ike->sa.st_connection;
 
 	passert(!st->st_oakley.doing_xauth);
 

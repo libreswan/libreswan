@@ -159,7 +159,7 @@ stf_status aggr_inI1_outR1(struct state *null_st UNUSED,
 		ppeer_id = &peer_id;
 	}
 
-	struct connection *c = find_v1_aggr_mode_connection(md, authby, xauth, ppeer_id);
+	struct connection *c = find_v1_aggr_mode_connection(md, authby, xauth, ppeer_id); /* must delref */
 	if (c == NULL) {
 		/* XXX: already logged */
 		/* XXX notification is in order! */
@@ -168,6 +168,11 @@ stf_status aggr_inI1_outR1(struct state *null_st UNUSED,
 
 	/* Set up state */
 	struct ike_sa *ike = new_v1_rstate(c, md);
+
+	/* delref stack connection pointer */
+	connection_delref(&c, md->md_logger);
+	c = ike->sa.st_connection;
+
 	md->v1_st = &ike->sa;  /* (caller will reset cur_state) */
 	change_v1_state(&ike->sa, STATE_AGGR_R0);
 
