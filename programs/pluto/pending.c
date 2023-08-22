@@ -458,17 +458,17 @@ void flush_pending_by_state(struct ike_sa *ike)
 	for (struct pending *p, **pp = host_pair_first_pending(ike->sa.st_connection);
 	     pp != NULL && (p = *pp) != NULL; /*see-below*/ ) {
 		if (p->ike == ike) {
-			/* we don't have to worry about deref to free'ed
-			 * *pp, because delete_pending updates pp to
-			 * point to the next element before it frees *pp
+			/*
+			 * We don't have to worry about deref to
+			 * free'ed *pp, because delete_pending updates
+			 * pp to point to the next element before it
+			 * frees *pp
+			 *
+			 * We don't need to worry about delrefing
+			 * .connection because delete_pending() will
+			 * do it for us.
 			 */
-			struct connection *c = p->connection;
 			delete_pending(pp, "flush");	/* in effect, advances pp */
-			/* above unlink means C is no longer pending */
-			pexpect(!connection_is_pending(c));
-			connection_delete_unused_instance(&c,
-							  /*old-state*/NULL,
-							  null_fd/*XXX: p->whack_sock?*/);
 		} else {
 			pp = &p->next;
 		}
