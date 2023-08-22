@@ -66,12 +66,24 @@ unsigned refcnt_peek(const refcnt_t *refcnt);
  */
 
 void refcnt_addref_where(const char *what, const void *pointer,
-			 refcnt_t *refcnt, where_t where);
+			 refcnt_t *refcnt,
+			 const struct logger *owner, where_t where);
+
+/* old */
 
 #define addref_where(OBJ, WHERE)					\
 	({								\
 		typeof(OBJ) o_ = OBJ; /* evaluate once */		\
-		refcnt_addref_where(#OBJ, o_, o_ == NULL ? NULL : &o_->refcnt, WHERE); \
+		refcnt_addref_where(#OBJ, o_, o_ == NULL ? NULL : &o_->refcnt, NULL, WHERE); \
+		o_; /* result */					\
+	})
+
+/* new */
+
+#define laddref_where(OBJ, OWNER, WHERE)				\
+	({								\
+		typeof(OBJ) o_ = OBJ; /* evaluate once */		\
+		refcnt_addref_where(#OBJ, o_, o_ == NULL ? NULL : &o_->refcnt, OWNER, WHERE); \
 		o_; /* result */					\
 	})
 
@@ -84,21 +96,25 @@ void refcnt_addref_where(const char *what, const void *pointer,
 
 void *refcnt_delref_where(const char *what, void *pointer,
 			  struct refcnt *refcnt,
-			  const struct logger *logger, where_t where) MUST_USE_RESULT;
+			  const struct logger *owner, where_t where) MUST_USE_RESULT;
 
-#define delref_where(OBJP, LOGGER, WHERE)				\
+#define delref_where(OBJP, OWNER, WHERE)				\
 	({								\
 		typeof(OBJP) op_ = OBJP;				\
 		typeof(*OBJP) o_ = *op_;				\
 		*op_ = NULL; /* always kill pointer; and early */	\
 		refcnt_t *r_ = (o_ == NULL ? NULL : &o_->refcnt);	\
-		o_ = refcnt_delref_where(#OBJP, o_, r_, LOGGER, WHERE); \
+		o_ = refcnt_delref_where(#OBJP, o_, r_, OWNER, WHERE);	\
 		o_; /* NULL or last OBJ */				\
 	})
 
 /*
  * For code wanting to use refcnt checks but with normal allocs.
  */
+
+void ldbg_alloc(const struct logger *logger, const char *what, const void *pointer, where_t where);
+void ldbg_free(const struct logger *logger, const char *what, const void *pointer, where_t where);
+
 void dbg_alloc(const char *what, const void *pointer, where_t where);
 void dbg_free(const char *what, const void *pointer, where_t where);
 
