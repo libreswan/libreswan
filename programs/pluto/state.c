@@ -473,7 +473,7 @@ static struct state *new_state(struct connection *c,
 	st->st_serialno = state_serialno;
 
 	/* needed by jam_state_connection_serialno() */
-	st->st_connection = c;
+	st->st_connection = connection_addref(c, st->st_logger);
 	state_db_init_state(st); /* hash called below */
 
 	st->st_state = &state_undefined;
@@ -1246,17 +1246,7 @@ void delete_state(struct state *st)
 	 *   hash table this succeeding means that there must be a
 	 *   second state using the connection
 	 */
-	if (st->st_on_delete.skip_connection) {
-		connection_buf cb;
-		ldbg(st->st_logger, "skipping connection_delete_unused_instance "PRI_CONNECTION,
-		     pri_connection(st->st_connection, &cb));
-		st->st_connection = NULL;
-	} else {
-		connection_delete_unused_instance(&st->st_connection, st,
-						  st->st_logger->global_whackfd);
-	}
-
-	pexpect(st->st_connection == NULL);
+	connection_delref(&st->st_connection, st->st_logger);
 
 	v2_msgid_free(st);
 
@@ -3107,17 +3097,14 @@ void connswitch_state_and_log(struct state *st, struct connection *new)
 	struct connection *old = st->st_connection;
 	passert(old != NULL);
 	passert(new != NULL);
-
 	passert(old != new);
-	passert(old != NULL);
 
 	connection_buf nb;
 	log_state(RC_LOG, st, "switched to "PRI_CONNECTION,
 		  pri_connection(new, &nb));
-	st->st_connection = new;
+	st->st_connection = connection_addref(new, st->st_logger);
 	state_db_rehash_connection_serialno(st);
-	connection_delete_unused_instance(&old, st,
-					  st->st_logger->global_whackfd);
+	connection_delref(&old, st->st_logger);
 }
 
 /*
