@@ -2294,8 +2294,9 @@ static diag_t extract_connection(const struct whack_message *wm,
 			    wm->replay_window,
 			    kernel_ops->interface_name,
 			    kernel_ops->max_replay_window);
+	} else if (!never_negotiate_wm(wm)) {
+		config->child_sa.replay_window = wm->replay_window;
 	}
-	config->child_sa.replay_window = wm->replay_window;
 
 	if (never_negotiate_wm(wm)) {
 		if (wm->esn != YNE_UNSET) {
