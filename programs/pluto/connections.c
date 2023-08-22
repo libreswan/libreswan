@@ -267,9 +267,9 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 	struct connection *c = *cp;
 	*cp = NULL;
 
-	ldbg(c->logger, "%s() %s "PRI_CO" cloned from "PRI_CO,
+	ldbg(c->logger, "%s() %s "PRI_CO" @%p cloned from "PRI_CO,
 	     __func__, c->name,
-	     pri_connection_co(c),
+	     pri_connection_co(c), c,
 	     pri_connection_co(c->clonedfrom));
 
 	/*
@@ -278,7 +278,8 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 	if (c->child.routing != RT_UNROUTED) {
 		enum_buf rn;
 		llog_passert(c->logger, HERE,
-			     "connection still %s",
+			     "connection "PRI_CO" @%p still in %s",
+			     pri_connection_co(c), c,
 			     str_enum_short(&routing_names, c->child.routing, &rn));
 	}
 
@@ -286,26 +287,33 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 	 * Must not be pending (i.e., not on a queue waiting for an
 	 * IKE SA to establish).
 	 */
-	PASSERT(c->logger, !connection_is_pending(c));
+	if (connection_is_pending(c)) {
+		llog_passert(c->logger, HERE,
+			     "connection "PRI_CO" @%p is still pending",
+			     pri_connection_co(c), c);
+	}
 
 	/*
 	 * Must have newest all cleared.
 	 */
 	if (c->newest_ike_sa != SOS_NOBODY) {
 		llog_passert(c->logger, HERE,
-			     "connection still has %s "PRI_SO,
+			     "connection "PRI_CO" @%p still has %s "PRI_SO,
+			     pri_connection_co(c), c,
 			     c->config->ike_info->ike_sa_name,
 			     pri_so(c->newest_ike_sa));
 	}
 	if (c->newest_ipsec_sa != SOS_NOBODY) {
 		llog_passert(c->logger, HERE,
-			     "connection still has %s "PRI_SO,
+			     "connection "PRI_CO" @%p still has %s "PRI_SO,
+			     pri_connection_co(c), c,
 			     c->config->ike_info->child_sa_name,
 			     pri_so(c->newest_ipsec_sa));
 	}
 	if (c->child.newest_routing_sa != SOS_NOBODY) {
 		llog_passert(c->logger, HERE,
-			     "connection still has routing SA "PRI_SO,
+			     "connection "PRI_CO" @%p still has routing SA "PRI_SO,
+			     pri_connection_co(c), c,
 			     pri_so(c->child.newest_routing_sa));
 	}
 
