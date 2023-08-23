@@ -770,7 +770,7 @@ static bool zap_connection_family(enum routing_event event,
 		    (*cp)->child.routing == RT_UNROUTED &&
 		    !connection_has_interlopers) {
 			/* since instance */
-			delete_connection(cp);
+			connection_delref(cp, (*cp)->logger);
 		}
 		return true;
 	}
@@ -1038,12 +1038,11 @@ void connection_resume(struct child_sa *child, where_t where)
 		 });
 }
 
-void dispatch(enum routing_event event,
-	      struct connection **cp,
-	      struct logger *logger, where_t where,
-	      struct routing_annex ee)
+static void dispatch_1(enum routing_event event,
+		       struct connection **cp,
+		       struct logger *logger, where_t where,
+		       struct routing_annex *e)
 {
-	struct routing_annex *e = &ee;
 	ldbg_routing_event(logger, event, cp, where, e);
 
 #if 0
@@ -1678,7 +1677,7 @@ void dispatch(enum routing_event event,
 			delete_states_by_connection((*cp));
 			connection_unroute((*cp), HERE);
 
-			delete_connection(cp);
+			connection_delref(cp, (*cp)->logger);
 			return;
 
 		case X(ACQUIRE, ROUTED_TUNNEL, LABELED_PARENT): /* IKEv1 */
@@ -1939,4 +1938,15 @@ void dispatch(enum routing_event event,
 		jam_string(buf, "routing: unhandled ");
 		jam_event(buf, event, cp, e);
 	}
+}
+
+
+void dispatch(enum routing_event event,
+	      struct connection **cp,
+	      struct logger *logger, where_t where,
+	      struct routing_annex ee)
+{
+	struct connection *c = connection_addref(*cp, logger);
+	dispatch_1(event, cp, logger, where, &ee);
+	connection_delref(&c, c->logger);
 }

@@ -3985,7 +3985,7 @@ void connection_delete_unused_instance(struct connection **cp,
 	delete_states_by_connection(c);
 	connection_unroute(c, HERE);
 
-	delete_connection(&c);
+	connection_delref(&c, c->logger);
 }
 
 /*
