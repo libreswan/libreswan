@@ -258,6 +258,16 @@ void connection_delref_where(struct connection **cp, const struct logger *owner,
 	if (c == NULL) {
 		return;
 	}
+	if (is_instance(c)) {
+		/* XXX: pointless check? */
+		if (!is_opportunistic(c)) {
+			/* XXX: pointless log? */
+			address_buf b;
+			llog(RC_LOG, c->logger,
+			     "deleting connection instance with peer %s",
+			     str_address_sensitive(&c->remote->host.addr, &b));
+		}
+	}
 	discard_connection(&c, true/*connection_valid*/, where);
 }
 
