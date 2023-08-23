@@ -63,9 +63,9 @@ struct message {
 	struct list_entry entry;
 };
 
-static void jam_message(struct jambuf *buf, const struct message *r)
+static size_t jam_message(struct jambuf *buf, const struct message *r)
 {
-	jam(buf, "replay packet %lu", r == NULL ? 0L : r->nr);
+	return jam(buf, "replay packet %lu", r == NULL ? 0L : r->nr);
 }
 
 LIST_INFO(message, entry, message_info, jam_message);

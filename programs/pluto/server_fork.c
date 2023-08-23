@@ -66,17 +66,19 @@ struct pid_entry {
 	struct logger *logger;
 };
 
-static void jam_pid_entry(struct jambuf *buf, const struct pid_entry *entry)
+static size_t jam_pid_entry(struct jambuf *buf, const struct pid_entry *entry)
 {
 	if (entry == NULL) {
-		jam(buf, "NULL pid");
-	} else {
-		passert(entry->magic == PID_MAGIC);
-		if (entry->serialno != SOS_NOBODY) {
-			jam(buf, "#%lu ", entry->serialno);
-		}
-		jam(buf, "%s pid %d", entry->name, entry->pid);
+		return jam(buf, "NULL pid");
 	}
+
+	size_t s = 0;
+	passert(entry->magic == PID_MAGIC);
+	if (entry->serialno != SOS_NOBODY) {
+		s += jam(buf, "#%lu ", entry->serialno);
+	}
+	s += jam(buf, "%s pid %d", entry->name, entry->pid);
+	return s;
 }
 
 static hash_t hash_pid_entry_pid(const pid_t *pid)

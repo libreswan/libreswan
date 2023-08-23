@@ -23,16 +23,16 @@
 
 struct list_info {
 	const char *name;
-	void (*jam)(struct jambuf *buf, const void *data);
+	size_t (*jam)(struct jambuf *buf, const void *data);
 	ptrdiff_t offset;
 };
 
 #define LIST_INFO(STRUCT, FIELD, INFO, JAM)				\
 									\
-	static void jam_##INFO(struct jambuf *buf, const void *data)	\
+	static size_t jam_##INFO(struct jambuf *buf, const void *data)	\
 	{								\
 		const struct STRUCT *s = data;				\
-		JAM(buf, s);						\
+		return JAM(buf, s);						\
 	}								\
 									\
 	static const struct list_info INFO = {				\

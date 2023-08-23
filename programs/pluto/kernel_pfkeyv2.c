@@ -141,9 +141,9 @@ struct pending {
 	struct list_entry entry;
 };
 
-static void jam_pending(struct jambuf *buf, const struct pending *pending)
+static size_t jam_pending(struct jambuf *buf, const struct pending *pending)
 {
-	jam(buf, "%p", pending);
+	return jam(buf, "%p", pending);
 }
 
 LIST_INFO(pending, entry, pending_info, jam_pending);

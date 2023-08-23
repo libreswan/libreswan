@@ -47,10 +47,10 @@ struct event_connection {
 	struct timeout *timeout;
 };
 
-static void jam_event_connection(struct jambuf *buf, const struct event_connection *event)
+static size_t jam_event_connection(struct jambuf *buf, const struct event_connection *event)
 {
-	jam(buf, PRI_CO" %s", pri_co(event->serialno),
-	    enum_name_short(&connection_event_names, event->event));
+	return jam(buf, PRI_CO" %s", pri_co(event->serialno),
+		   enum_name_short(&connection_event_names, event->event));
 }
 
 LIST_INFO(event_connection, entry, event_connection_info, jam_event_connection);

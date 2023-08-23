@@ -40,12 +40,14 @@
 
 const char host_pair_magic[] = "host pair magic";
 
-static void jam_host_pair(struct jambuf *buf, const struct host_pair *hp)
+static size_t jam_host_pair(struct jambuf *buf, const struct host_pair *hp)
 {
+	size_t s = 0;
 	passert(hp->magic == host_pair_magic);
-	jam_address(buf, &hp->local);
-	jam(buf, "->");
-	jam_address(buf, &hp->remote);
+	s += jam_address(buf, &hp->local);
+	s += jam(buf, "->");
+	s += jam_address(buf, &hp->remote);
+	return s;
 }
 
 static hash_t hp_hasher(const ip_address local, const ip_address remote)

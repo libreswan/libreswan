@@ -57,9 +57,9 @@
 char *pluto_listen = NULL;		/* from --listen flag */
 struct iface_endpoint *interfaces = NULL;  /* public interfaces */
 
-static void jam_iface_endpoint(struct jambuf *buf, const struct iface_endpoint *ifp)
+static size_t jam_iface_endpoint(struct jambuf *buf, const struct iface_endpoint *ifp)
 {
-	jam(buf, "%d", ifp->fd);
+	return jam(buf, "%d", ifp->fd);
 }
 
 LIST_INFO(iface_endpoint, entry, iface_endpoint_info, jam_iface_endpoint);
@@ -70,9 +70,9 @@ static struct list_head iface_endpoints = INIT_LIST_HEAD(&iface_endpoints,
  * The interfaces - eth0 ...
  */
 
-static void jam_iface_dev(struct jambuf *buf, const struct iface_dev *ifd)
+static size_t jam_iface_dev(struct jambuf *buf, const struct iface_dev *ifd)
 {
-	jam_string(buf, ifd->id_rname);
+	return jam_string(buf, ifd->id_rname);
 }
 
 LIST_INFO(iface_dev, ifd_entry, iface_dev_info, jam_iface_dev);

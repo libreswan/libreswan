@@ -22,11 +22,13 @@
  * SPD_ROUTE database.
  */
 
-static void jam_spd_route(struct jambuf *buf, const struct spd_route *sr)
+static size_t jam_spd_route(struct jambuf *buf, const struct spd_route *sr)
 {
-	jam_connection(buf, sr->connection);
-	jam_string(buf, " ");
-	jam_selector_pair(buf, &sr->local->client, &sr->remote->client);
+	size_t s = 0;
+	s += jam_connection(buf, sr->connection);
+	s += jam_string(buf, " ");
+	s += jam_selector_pair(buf, &sr->local->client, &sr->remote->client);
+	return s;
 }
 
 static hash_t hash_spd_route_remote_client(const ip_selector *sr)

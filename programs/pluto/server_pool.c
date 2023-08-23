@@ -99,29 +99,31 @@ struct job {
  * The work queue.  Accesses must be locked.
  */
 
-static void jam_backlog(struct jambuf *buf, const void *data)
+static size_t jam_backlog(struct jambuf *buf, const void *data)
 {
 	if (data == NULL) {
-		jam(buf, "no job");
-	} else {
-		const struct job *job = data;
-		jam(buf, "job %ju", (uintmax_t)job->job_id);
-		if (job->so_serialno != SOS_NOBODY) {
-			jam(buf, " state #%lu", job->so_serialno);
-		}
-		if (job->helper_id != 0) {
-			jam(buf, " helper %u", job->helper_id);
-		}
-		if (job->cancelled) {
-			jam(buf, " cancelled");
-		}
-		if (job->where != NULL) {
-			jam(buf, " %s", job->where->func);
-		}
-		if (job->handler != NULL) {
-			jam(buf, " (%s)", job->handler->name);
-		}
+		return jam(buf, "no job");
 	}
+
+	size_t s = 0;
+	const struct job *job = data;
+	s += jam(buf, "job %ju", (uintmax_t)job->job_id);
+	if (job->so_serialno != SOS_NOBODY) {
+		s += jam(buf, " state #%lu", job->so_serialno);
+	}
+	if (job->helper_id != 0) {
+		s += jam(buf, " helper %u", job->helper_id);
+	}
+	if (job->cancelled) {
+		s += jam(buf, " cancelled");
+	}
+	if (job->where != NULL) {
+		s += jam(buf, " %s", job->where->func);
+	}
+	if (job->handler != NULL) {
+		s += jam(buf, " (%s)", job->handler->name);
+	}
+	return s;
 }
 
 LIST_INFO(job, backlog, backlog_info, jam_backlog);
