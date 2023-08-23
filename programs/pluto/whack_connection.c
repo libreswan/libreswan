@@ -40,7 +40,7 @@
 void whack_all_connections(const struct whack_message *m, struct show *s,
 			   bool (*whack_connection)
 			   (struct show *s,
-			    struct connection **c,
+			    struct connection **cp,
 			    const struct whack_message *m))
 {
 	struct connection **connections = sort_connections();
@@ -57,7 +57,7 @@ void whack_all_connections(const struct whack_message *m, struct show *s,
 void whack_each_connection(const struct whack_message *m, struct show *s,
 			   bool (*whack_connection)
 			   (struct show *s,
-			    struct connection **c,
+			    struct connection **cp,
 			    const struct whack_message *m),
 			   struct each each)
 {
@@ -185,18 +185,18 @@ void whack_each_connection(const struct whack_message *m, struct show *s,
 #undef MESSAGE
 }
 
-static unsigned whack_bottom_up(struct connection **c,
+static unsigned whack_bottom_up(struct connection **cp,
 				const struct whack_message *m,
 				struct show *s,
 				bool (*whack_connection)
 				(struct show *s,
-				 struct connection **c,
+				 struct connection **cp,
 				 const struct whack_message *m),
 				const struct each *each)
 {
 	unsigned nr = 0;
 	struct connection_filter instances = {
-		.clonedfrom = *c,
+		.clonedfrom = *cp,
 		.where = HERE,
 	};
 	while (next_connection_new2old(&instances)) {
@@ -204,7 +204,7 @@ static unsigned whack_bottom_up(struct connection **c,
 		nr += whack_bottom_up(&instances.c, m, s, whack_connection, each);
 	}
 	/* abuse bool */
-	nr += whack_connection(s, c, m);
+	nr += whack_connection(s, cp, m);
 	return nr;
 }
 
@@ -212,7 +212,7 @@ void whack_connections_bottom_up(const struct whack_message *m,
 				 struct show *s,
 				 bool (*whack_connection)
 				 (struct show *s,
-				  struct connection **c,
+				  struct connection **cp,
 				  const struct whack_message *m),
 				 struct each each)
 {
