@@ -486,7 +486,16 @@ void delete_every_connection(void)
 		if (!next_connection_new2old(&cq)) {
 			break;
 		}
-		struct connection *c = cq.c;
+
+		/*
+		 * If it's a connection instance, grap a reference so
+		 * that this function holds the last reference
+		 * (permanent connections have a free reference).
+		 */
+
+		struct connection *c =
+			(is_instance(cq.c) ? connection_addref(cq.c, &global_logger) :
+			 cq.c);
 
 		delete_states_by_connection(c);
 		connection_unroute(c, HERE); /* should be redundant */

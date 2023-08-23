@@ -2260,7 +2260,13 @@ bool accept_delete(struct state **stp,
 						  ntohl(spi),
 						  (st == dst ? "self-" : ""),
 						  dst->st_serialno);
+					struct connection *cc = connection_addref(dst->st_connection,
+										  dst->st_logger);
 					delete_state(dst);
+					if (is_instance(cc)) {
+						connection_unroute(cc, HERE);
+					}
+					connection_delref(&cc, cc->logger);
 					if (md->v1_st == dst) {
 						*stp = dst = md->v1_st = NULL;
 						return true;
@@ -2288,12 +2294,13 @@ bool accept_delete(struct state **stp,
 						 * connection?
 						 */
 						dbg("%s() self-inflicted delete of ISAKMP", __func__);
+						struct connection *cc = connection_addref(rc, rc->logger);
 						remove_connection_from_pending(rc);
 						delete_v1_states_by_connection(rc);
 						if (is_instance(rc)) {
 							connection_unroute(rc, HERE);
-							delete_connection(&rc);
 						}
+						connection_delref(&cc, cc->logger);
 						*stp = st = dst = md->v1_st = NULL;
 						return true;
 					}

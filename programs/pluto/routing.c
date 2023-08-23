@@ -947,7 +947,8 @@ void connection_unroute(struct connection *c, where_t where)
 
 void connection_delete_child(struct ike_sa *ike, struct child_sa **child, where_t where)
 {
-	struct connection *c = (*child)->sa.st_connection;
+	struct connection *c = connection_addref((*child)->sa.st_connection,
+						 (*child)->sa.st_logger);
 	PEXPECT(c->logger,
 		c->config->ike_version == IKEv1 ? ike == NULL || ike->sa.st_serialno == (*child)->sa.st_clonedfrom :
 		c->config->ike_version == IKEv2 ? ike != NULL && ike->sa.st_serialno == (*child)->sa.st_clonedfrom :
@@ -974,18 +975,16 @@ void connection_delete_child(struct ike_sa *ike, struct child_sa **child, where_
 		/* no logger as no child */
 		pexpect(*child == NULL);
 	} else {
-		struct connection *c = (*child)->sa.st_connection;
+		struct connection *cc = c;
 		state_attach(&(*child)->sa, ike->sa.st_logger);
 		delete_child_sa(child);
-		if (is_labeled_child(c)) {
-
-			remove_connection_from_pending(c);
-			delete_states_by_connection(c);
-			connection_unroute(c, HERE);
-
-			delete_connection(&c);
+		if (is_labeled_child(cc)) {
+			remove_connection_from_pending(cc);
+			delete_states_by_connection(cc);
+			connection_unroute(cc, HERE);
 		}
 	}
+	connection_delref(&c, c->logger);
 }
 
 void connection_timeout_ike(struct ike_sa **ike, where_t where)
