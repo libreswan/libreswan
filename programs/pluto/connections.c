@@ -102,7 +102,7 @@
 #include "timescale.h"
 #include "connection_event.h"
 
-static void discard_connection(struct connection **cp, bool connection_valid);
+static void discard_connection(struct connection **cp, bool connection_valid, where_t where);
 
 void ldbg_connection(const struct connection *c, where_t where,
 		     const char *message, ...)
@@ -244,7 +244,7 @@ void delete_connection_where(struct connection **cp, where_t where)
 	if (delref_where(cp, c->logger, where) == NULL) {
 		llog_passert(c->logger, where, "final reference to connection");
 	}
-	discard_connection(&c, true/*connection_valid*/);
+	discard_connection(&c, true/*connection_valid*/, where);
 }
 
 struct connection *connection_addref_where(struct connection *c, const struct logger *owner, where_t where)
@@ -258,10 +258,10 @@ void connection_delref_where(struct connection **cp, const struct logger *owner,
 	if (c == NULL) {
 		return;
 	}
-	discard_connection(&c, true/*connection_valid*/);
+	discard_connection(&c, true/*connection_valid*/, where);
 }
 
-static void discard_connection(struct connection **cp, bool connection_valid)
+static void discard_connection(struct connection **cp, bool connection_valid, where_t where)
 {
 	struct connection *c = *cp;
 	*cp = NULL;
@@ -270,7 +270,7 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 	 * Preserve the original logger's text.  Things like
 	 * delref(.clonedfrom) affect the prefix.
 	 */
-	struct logger *logger = clone_logger(c->logger, HERE);  /* must free */
+	struct logger *logger = clone_logger(c->logger, where);  /* must free */
 
 	/*
 	 * XXX: don't use "@%p".  The refcnt tracker will see it and
@@ -287,7 +287,7 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 	 */
 	if (c->child.routing != RT_UNROUTED) {
 		enum_buf rn;
-		llog_passert(logger, HERE,
+		llog_passert(logger, where,
 			     "connection "PRI_CO" [%p] still in %s",
 			     pri_connection_co(c), c,
 			     str_enum_short(&routing_names, c->child.routing, &rn));
@@ -298,7 +298,7 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 	 * IKE SA to establish).
 	 */
 	if (connection_is_pending(c)) {
-		llog_passert(logger, HERE,
+		llog_passert(logger, where,
 			     "connection "PRI_CO" [%p] is still pending",
 			     pri_connection_co(c), c);
 	}
@@ -307,21 +307,21 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 	 * Must have newest all cleared.
 	 */
 	if (c->newest_ike_sa != SOS_NOBODY) {
-		llog_passert(logger, HERE,
+		llog_passert(logger, where,
 			     "connection "PRI_CO" [%p] still has %s "PRI_SO,
 			     pri_connection_co(c), c,
 			     c->config->ike_info->ike_sa_name,
 			     pri_so(c->newest_ike_sa));
 	}
 	if (c->newest_ipsec_sa != SOS_NOBODY) {
-		llog_passert(logger, HERE,
+		llog_passert(logger, where,
 			     "connection "PRI_CO" [%p] still has %s "PRI_SO,
 			     pri_connection_co(c), c,
 			     c->config->ike_info->child_sa_name,
 			     pri_so(c->newest_ipsec_sa));
 	}
 	if (c->child.newest_routing_sa != SOS_NOBODY) {
-		llog_passert(logger, HERE,
+		llog_passert(logger, where,
 			     "connection "PRI_CO" [%p] still has routing SA "PRI_SO,
 			     pri_connection_co(c), c,
 			     pri_so(c->child.newest_routing_sa));
@@ -336,7 +336,7 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 	};
 	if (next_connection_old2new(&instance)) {
 		connection_buf cb;
-		llog_passert(logger, HERE,
+		llog_passert(logger, where,
 			     "connection still instantiated as "PRI_CONNECTION,
 			     pri_connection(instance.c, &cb));
 	}
@@ -351,7 +351,7 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 	};
 	if (next_state_new2old(&state)) {
 		state_buf sb;
-		llog_passert(logger, HERE,
+		llog_passert(logger, where,
 			     "connection is still being used by %s "PRI_STATE,
 			     sa_name(state.st->st_connection->config->ike_version,
 				     state.st->st_sa_type_when_established),
@@ -396,7 +396,7 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 	/* sever tie with parent */
 	connection_delref(&c->clonedfrom, logger);
 
-	free_logger(&c->logger, HERE);
+	free_logger(&c->logger, where);
 
 	pfreeany(c->foodgroup);
 	pfreeany(c->vti_iface);
@@ -448,7 +448,7 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 
 	/* connection's final gasp; need's c->name */
 	pfreeany(c->name);
-	free_logger(&logger, HERE);
+	free_logger(&logger, where);
 	pfree(c);
 }
 
@@ -3218,7 +3218,7 @@ bool add_connection(const struct whack_message *wm, struct logger *logger)
 		llog_diag(RC_FATAL, c->logger, &d, ADD_FAILED_PREFIX);
 		struct connection *cp = c;
 		PASSERT(c->logger, delref_where(&cp, c->logger, HERE) == c);
-		discard_connection(&c, false/*not-valid*/);
+		discard_connection(&c, false/*not-valid*/, HERE);
 		return false;
 	}
 
