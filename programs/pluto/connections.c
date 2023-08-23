@@ -265,11 +265,17 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 	*cp = NULL;
 
 	/*
+	 * Preserve the original logger's text.  Things like
+	 * delref(.clonedfrom) affect the prefix.
+	 */
+	struct logger *logger = clone_logger(c->logger, HERE);  /* must free */
+
+	/*
 	 * XXX: don't use "@%p".  The refcnt tracker will see it and
 	 * report a use-after-free (since refcnt loggs the pointer as
 	 * free before calling this code).
 	 */
-	ldbg(c->logger, "%s() %s "PRI_CO" [%p] cloned from "PRI_CO,
+	ldbg(logger, "%s() %s "PRI_CO" [%p] cloned from "PRI_CO,
 	     __func__, c->name,
 	     pri_connection_co(c), c,
 	     pri_connection_co(c->clonedfrom));
@@ -279,7 +285,7 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 	 */
 	if (c->child.routing != RT_UNROUTED) {
 		enum_buf rn;
-		llog_passert(c->logger, HERE,
+		llog_passert(logger, HERE,
 			     "connection "PRI_CO" [%p] still in %s",
 			     pri_connection_co(c), c,
 			     str_enum_short(&routing_names, c->child.routing, &rn));
@@ -290,7 +296,7 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 	 * IKE SA to establish).
 	 */
 	if (connection_is_pending(c)) {
-		llog_passert(c->logger, HERE,
+		llog_passert(logger, HERE,
 			     "connection "PRI_CO" [%p] is still pending",
 			     pri_connection_co(c), c);
 	}
@@ -299,21 +305,21 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 	 * Must have newest all cleared.
 	 */
 	if (c->newest_ike_sa != SOS_NOBODY) {
-		llog_passert(c->logger, HERE,
+		llog_passert(logger, HERE,
 			     "connection "PRI_CO" [%p] still has %s "PRI_SO,
 			     pri_connection_co(c), c,
 			     c->config->ike_info->ike_sa_name,
 			     pri_so(c->newest_ike_sa));
 	}
 	if (c->newest_ipsec_sa != SOS_NOBODY) {
-		llog_passert(c->logger, HERE,
+		llog_passert(logger, HERE,
 			     "connection "PRI_CO" [%p] still has %s "PRI_SO,
 			     pri_connection_co(c), c,
 			     c->config->ike_info->child_sa_name,
 			     pri_so(c->newest_ipsec_sa));
 	}
 	if (c->child.newest_routing_sa != SOS_NOBODY) {
-		llog_passert(c->logger, HERE,
+		llog_passert(logger, HERE,
 			     "connection "PRI_CO" [%p] still has routing SA "PRI_SO,
 			     pri_connection_co(c), c,
 			     pri_so(c->child.newest_routing_sa));
@@ -328,7 +334,7 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 	};
 	if (next_connection_old2new(&instance)) {
 		connection_buf cb;
-		llog_passert(c->logger, HERE,
+		llog_passert(logger, HERE,
 			     "connection still instantiated as "PRI_CONNECTION,
 			     pri_connection(instance.c, &cb));
 	}
@@ -343,7 +349,7 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 	};
 	if (next_state_new2old(&state)) {
 		state_buf sb;
-		llog_passert(c->logger, HERE,
+		llog_passert(logger, HERE,
 			     "connection is still being used by %s "PRI_STATE,
 			     sa_name(state.st->st_connection->config->ike_version,
 				     state.st->st_sa_type_when_established),
@@ -381,15 +387,13 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 
 	remove_from_group(c);
 
-	/* sever tie with parent */
-	connection_delref(&c->clonedfrom, c->logger);
-
 	/*
-	 * Logging no longer valid.  Can this be delayed further?
+	 * Freeing .clonedfrom breaks the logger's message.
 	 */
-#if 0
-	struct logger *connection_logger = clone_logger(c->logger, HERE);
-#endif
+
+	/* sever tie with parent */
+	connection_delref(&c->clonedfrom, logger);
+
 	free_logger(&c->logger, HERE);
 
 	pfreeany(c->foodgroup);
@@ -442,6 +446,7 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 
 	/* connection's final gasp; need's c->name */
 	pfreeany(c->name);
+	free_logger(&logger, HERE);
 	pfree(c);
 }
 
