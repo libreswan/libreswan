@@ -649,7 +649,6 @@ static bool zap_connection_family(enum routing_event event,
 	 * For instance, a previous IKE SA that failed to establish.
 	 */
 
-	bool connection_has_interlopers = false;
 	{
 		ldbg_routing((*ike)->sa.st_logger, "  weeding out lurking SAs with one foot on the connection");
 		struct state_filter sf = {
@@ -669,13 +668,11 @@ static bool zap_connection_family(enum routing_event event,
 			if (!IS_PARENT_SA(sf.st)) {
 				ldbg_routing((*ike)->sa.st_logger, "    skipping Child interloper "PRI_SO,
 					     pri_so(sf.st->st_serialno));
-				connection_has_interlopers = true;
 				continue;
 			}
 			if (IS_PARENT_SA_ESTABLISHED(sf.st)) {
 				ldbg_routing((*ike)->sa.st_logger, "    skipping IKE interloper "PRI_SO,
 					     pri_so(sf.st->st_serialno));
-				connection_has_interlopers = true;
 				continue;
 			}
 			struct ike_sa *lurking_ike = pexpect_ike_sa(sf.st);
@@ -787,12 +784,6 @@ static bool zap_connection_family(enum routing_event event,
 		 */
 		ldbg_routing((*ike)->sa.st_logger, "  deleting IKE as zapped Child SA");
 		delete_ike_sa(ike);
-		if ((*cp)->local->kind == CK_INSTANCE &&
-		    (*cp)->child.routing == RT_UNROUTED &&
-		    !connection_has_interlopers) {
-			/* since instance */
-			connection_delref(cp, (*cp)->logger);
-		}
 		return true;
 	}
 
