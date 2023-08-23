@@ -241,7 +241,9 @@ void delete_connection_where(struct connection **cp, where_t where)
 			     str_address_sensitive(&(*cp)->remote->host.addr, &b));
 		}
 	}
-	PASSERT(c->logger, delref_where(cp, c->logger, where) == c);
+	if (delref_where(cp, c->logger, where) == NULL) {
+		llog_passert(c->logger, where, "final reference to connection");
+	}
 	discard_connection(&c, true/*connection_valid*/);
 }
 
