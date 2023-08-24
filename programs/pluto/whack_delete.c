@@ -27,11 +27,11 @@
  * Terminate and then delete connections with the specified name.
  */
 
-static bool whack_delete_connection(struct show *s, struct connection **c,
+static bool whack_delete_connection(struct show *s, struct connection **cp,
 				    const struct whack_message *m UNUSED)
 {
 	struct logger *logger = show_logger(s);
-	connection_attach(*c, logger);
+	connection_attach((*cp), logger);
 
 	/*
 	 * Let code know of intent.
@@ -39,27 +39,26 @@ static bool whack_delete_connection(struct show *s, struct connection **c,
 	 * Functions such as connection_unroute() don't fiddle policy
 	 * bits as they are called as part of unroute/route sequences.
 	 */
+	del_policy((*cp), POLICY_UP);
+	del_policy((*cp), POLICY_ROUTE);
 
-	del_policy(*c, POLICY_UP);
-	del_policy(*c, POLICY_ROUTE);
-
-	switch ((*c)->local->kind) {
+	switch ((*cp)->local->kind) {
 
 	case CK_PERMANENT:
-		if (never_negotiate(*c)) {
-			ldbg((*c)->logger, "skipping as never-negotiate");
+		if (never_negotiate((*cp))) {
+			ldbg((*cp)->logger, "skipping as never-negotiate");
 			break;
 		}
-		llog(RC_LOG, (*c)->logger, "terminating SAs using this connection");
-		remove_connection_from_pending(*c);
-		whack_connection_delete_states(*c, HERE);
+		llog(RC_LOG, (*cp)->logger, "terminating SAs using this connection");
+		remove_connection_from_pending((*cp));
+		whack_connection_delete_states((*cp), HERE);
 		break;
 
 	case CK_INSTANCE:
 	case CK_LABELED_PARENT:
-		llog(RC_LOG, (*c)->logger, "terminating SAs using this connection");
-		remove_connection_from_pending(*c);
-		whack_connection_delete_states(*c, HERE);
+		llog(RC_LOG, (*cp)->logger, "terminating SAs using this connection");
+		remove_connection_from_pending((*cp));
+		whack_connection_delete_states((*cp), HERE);
 		break;
 
 	case CK_GROUP:
@@ -69,11 +68,11 @@ static bool whack_delete_connection(struct show *s, struct connection **c,
 		break;
 
 	case CK_INVALID:
-		bad_case((*c)->local->kind);
+		bad_case((*cp)->local->kind);
 	}
 
-	connection_unroute(*c, HERE); /* some times redundant */
-	delete_connection(c);
+	connection_unroute((*cp), HERE); /* some times redundant */
+	delete_connection(cp);
 	return true;
 }
 

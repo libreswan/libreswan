@@ -114,11 +114,11 @@ static void jam_child_sa_traffic(struct jambuf *buf, struct child_sa *child)
 	}
 }
 
-static bool whack_trafficstatus_connection(struct show *s, struct connection **c,
+static bool whack_trafficstatus_connection(struct show *s, struct connection **cp,
 					   const struct whack_message *m UNUSED)
 {
 	struct state_filter state_by_connection = {
-		.connection_serialno = (*c)->serialno,
+		.connection_serialno = (*cp)->serialno,
 		.where = HERE,
 	};
 	while (next_state_old2new(&state_by_connection)) {

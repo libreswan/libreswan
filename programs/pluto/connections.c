@@ -242,7 +242,7 @@ void delete_connection_where(struct connection **cp, where_t where)
 		}
 	}
 	if (delref_where(cp, c->logger, where) == NULL) {
-		llog_passert(c->logger, where, "final reference to connection");
+		llog_passert(c->logger, where, "final reference to connection @%p", c);
 	}
 	discard_connection(&c, true/*connection_valid*/, where);
 }

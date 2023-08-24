@@ -91,13 +91,13 @@ static void whack_listcacerts(struct show *s)
 	root_certs_delref(&roots, show_logger(s));
 }
 
-static bool whack_initiate_connection(struct show *s, struct connection **c,
+static bool whack_initiate_connection(struct show *s, struct connection **cp,
 				      const struct whack_message *m)
 {
 	struct logger *logger = show_logger(s);
 	connection_buf cb;
-	dbg("%s() for "PRI_CONNECTION, __func__, pri_connection(*c, &cb));
-	return initiate_connection(*c,
+	dbg("%s() for "PRI_CONNECTION, __func__, pri_connection((*cp), &cb));
+	return initiate_connection((*cp),
 				   m->remote_host,
 				   m->whack_async/*background*/,
 				   logger);
@@ -201,26 +201,26 @@ static void whack_impair_action(enum impair_action impairment_action,
 	}
 }
 
-static bool whack_connection_status(struct show *s, struct connection **c,
+static bool whack_connection_status(struct show *s, struct connection **cp,
 				    const struct whack_message *m UNUSED)
 {
-	show_connection_status(s, *c);
+	show_connection_status(s, (*cp));
 	return true;
 }
 
-static bool whack_unroute_connection(struct show *s, struct connection **c,
+static bool whack_unroute_connection(struct show *s, struct connection **cp,
 				     const struct whack_message *m UNUSED)
 {
-	connection_attach(*c, show_logger(s));
+	connection_attach((*cp), show_logger(s));
 	/*
 	 * Let code know of intent.
 	 *
 	 * Functions such as connection_unroute() don't fiddle policy
 	 * bits as they are called as part of unroute/route sequences.
 	 */
-	del_policy(*c, POLICY_ROUTE);
-	connection_unroute(*c, HERE);
-	connection_detach(*c, show_logger(s));
+	del_policy((*cp), POLICY_ROUTE);
+	connection_unroute((*cp), HERE);
+	connection_detach((*cp), show_logger(s));
 	return true; /* ok; keep going */
 }
 
@@ -391,18 +391,19 @@ static void dbg_whack(struct show *s, const char *fmt, ...)
 	}
 }
 
-static bool whack_debug_connection(struct show *s, struct connection **c, const struct whack_message *m)
+static bool whack_debug_connection(struct show *s, struct connection **cp,
+				   const struct whack_message *m)
 {
-	connection_attach(*c, show_logger(s));
-	(*c)->logger->debugging = lmod((*c)->logger->debugging, m->debugging);
-	if (LDBGP(DBG_BASE, (*c)->logger)) {
-		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, (*c)->logger, buf) {
+	connection_attach((*cp), show_logger(s));
+	(*cp)->logger->debugging = lmod((*cp)->logger->debugging, m->debugging);
+	if (LDBGP(DBG_BASE, (*cp)->logger)) {
+		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, (*cp)->logger, buf) {
 			jam_string(buf, "extra_debugging = ");
 			jam_lset_short(buf, &debug_names,
-				       "+", (*c)->logger->debugging);
+				       "+", (*cp)->logger->debugging);
 		}
 	}
-	connection_detach(*c, show_logger(s));
+	connection_detach((*cp), show_logger(s));
 	return true;
 }
 

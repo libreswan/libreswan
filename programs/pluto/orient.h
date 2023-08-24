@@ -22,6 +22,6 @@
 struct connection;
 
 bool oriented(const struct connection *c);
-bool orient(struct connection **c, struct logger *logger);
+bool orient(struct connection **cp, struct logger *logger);
 
 #endif

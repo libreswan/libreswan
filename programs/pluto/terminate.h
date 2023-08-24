@@ -23,6 +23,6 @@
 struct connection;
 struct logger;
 
-void terminate_connections(struct connection **c, struct logger *logger, where_t where);
+void terminate_connections(struct connection **cp, struct logger *logger, where_t where);
 
 #endif

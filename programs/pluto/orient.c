@@ -34,7 +34,7 @@
 #include "orient.h"
 #include "terminate.h"
 
-static enum left_right orient_1(struct connection **c, struct logger *logger);
+static enum left_right orient_1(struct connection **cp, struct logger *logger);
 
 bool oriented(const struct connection *c)
 {
@@ -178,53 +178,53 @@ static void LDBG_orient_end(struct connection *c, enum left_right end)
 		 bool_str(this->encap));
 }
 
-bool orient(struct connection **c, struct logger *logger)
+bool orient(struct connection **cp, struct logger *logger)
 {
-	if (oriented(*c)) {
-		ldbg((*c)->logger, "already oriented");
+	if (oriented((*cp))) {
+		ldbg((*cp)->logger, "already oriented");
 		return true;
 	}
 
-	enum left_right end = orient_1(c, logger);
+	enum left_right end = orient_1(cp, logger);
 	if (end == END_ROOF) {
 		return false;
 	}
 
-	if (PBAD(logger, *c == NULL)) {
+	if (PBAD(logger, (*cp) == NULL)) {
 		return false;
 	}
 
-	struct connection_end *local = &(*c)->end[end];
-	struct connection_end *remote = &(*c)->end[!end];
+	struct connection_end *local = &(*cp)->end[end];
+	struct connection_end *remote = &(*cp)->end[!end];
 
-	ldbg((*c)->logger, "  orienting %s=local %s=remote",
+	ldbg((*cp)->logger, "  orienting %s=local %s=remote",
 	     local->config->leftright, remote->config->leftright);
 
-	(*c)->local = local;
-	(*c)->remote = remote;
+	(*cp)->local = local;
+	(*cp)->remote = remote;
 
-	FOR_EACH_ITEM(spd, &(*c)->child.spds) {
+	FOR_EACH_ITEM(spd, &(*cp)->child.spds) {
 		spd->local = &spd->end[end];
 		spd->remote = &spd->end[!end];
 	}
 
 	/* rehash end dependent hashes */
-	connection_db_rehash_that_id(*c);
-	FOR_EACH_ITEM(spd, &(*c)->child.spds) {
+	connection_db_rehash_that_id((*cp));
+	FOR_EACH_ITEM(spd, &(*cp)->child.spds) {
 		spd_route_db_rehash_remote_client(spd);
 	}
 	return true;
 }
 
-enum left_right orient_1(struct connection **c, struct logger *logger)
+enum left_right orient_1(struct connection **cp, struct logger *logger)
 {
 	if (DBGP(DBG_BASE)) {
 		connection_buf cb;
-		LDBG_log((*c)->logger, "orienting "PRI_CONNECTION, pri_connection(*c, &cb));
-		LDBG_orient_end(*c, LEFT_END);
-		LDBG_orient_end(*c, RIGHT_END);
+		LDBG_log((*cp)->logger, "orienting "PRI_CONNECTION, pri_connection((*cp), &cb));
+		LDBG_orient_end((*cp), LEFT_END);
+		LDBG_orient_end((*cp), RIGHT_END);
 	}
-	passert((*c)->interface == NULL); /* aka not oriented */
+	passert((*cp)->interface == NULL); /* aka not oriented */
 
 	/*
 	 * Save match; don't update the connection until all the
@@ -237,12 +237,12 @@ enum left_right orient_1(struct connection **c, struct logger *logger)
 	for (struct iface_endpoint *ifp = interfaces; ifp != NULL; ifp = ifp->next) {
 
 		/* XXX: check connection allows p->protocol? */
-		bool left = host_end_matches_iface_endpoint(*c, LEFT_END, ifp);
-		bool right = host_end_matches_iface_endpoint(*c, RIGHT_END, ifp);
+		bool left = host_end_matches_iface_endpoint((*cp), LEFT_END, ifp);
+		bool right = host_end_matches_iface_endpoint((*cp), RIGHT_END, ifp);
 
 		if (!left && !right) {
 			endpoint_buf eb;
-			ldbg((*c)->logger, "    interface %s endpoint %s does not match left or right",
+			ldbg((*cp)->logger, "    interface %s endpoint %s does not match left or right",
 			     ifp->ip_dev->id_rname,
 			     str_endpoint(&ifp->local_endpoint, &eb));
 			continue;
@@ -251,13 +251,13 @@ enum left_right orient_1(struct connection **c, struct logger *logger)
 		if (left && right) {
 			/* too many choices */
 			address_buf ab;
-			connection_attach(*c, logger);
-			llog(RC_LOG_SERIOUS, (*c)->logger,
+			connection_attach((*cp), logger);
+			llog(RC_LOG_SERIOUS, (*cp)->logger,
 			     "both sides of the connection match the interface %s %s",
 			     ifp->ip_dev->id_rname,
 			     str_address(&ifp->ip_dev->id_address, &ab));
-			terminate_connections(c, logger, HERE);
-			connection_detach(*c, logger);
+			terminate_connections(cp, logger, HERE);
+			connection_detach((*cp), logger);
 			return END_ROOF;
 		}
 
@@ -281,8 +281,8 @@ enum left_right orient_1(struct connection **c, struct logger *logger)
 			 * log line doesn't differentiate.
 			 */
 			pexpect(end != matching_end);
-			connection_attach(*c, logger);
-			LLOG_JAMBUF(RC_LOG_SERIOUS, (*c)->logger, buf) {
+			connection_attach((*cp), logger);
+			LLOG_JAMBUF(RC_LOG_SERIOUS, (*cp)->logger, buf) {
 				jam_string(buf, "both sides of the connection match");
 				if (streq(matching_ifp->ip_dev->id_rname,
 					  ifp->ip_dev->id_rname)) {
@@ -290,31 +290,31 @@ enum left_right orient_1(struct connection **c, struct logger *logger)
 					jam_string(buf, ifp->ip_dev->id_rname);
 					jam_string(buf, ": ");
 					/*matched*/
-					jam_string(buf, (*c)->end[matching_end].config->leftright);
+					jam_string(buf, (*cp)->end[matching_end].config->leftright);
 					jam_string(buf, " ");
 					jam_address(buf, &matching_ifp->ip_dev->id_address);
 					jam_string(buf, "; ");
-					jam_string(buf, (*c)->end[end].config->leftright);
+					jam_string(buf, (*cp)->end[end].config->leftright);
 					jam_string(buf, " ");
 					jam_address(buf, &ifp->ip_dev->id_address);
 				} else {
 					/*matched*/
 					jam_string(buf, ": ");
-					jam_string(buf, (*c)->end[matching_end].config->leftright);
+					jam_string(buf, (*cp)->end[matching_end].config->leftright);
 					jam_string(buf, " ");
 					jam_string(buf, matching_ifp->ip_dev->id_rname);
 					jam_string(buf, " ");
 					jam_address(buf, &matching_ifp->ip_dev->id_address);
 					jam_string(buf, "; ");
-					jam_string(buf, (*c)->end[end].config->leftright);
+					jam_string(buf, (*cp)->end[end].config->leftright);
 					jam_string(buf, " ");
 					jam_string(buf, ifp->ip_dev->id_rname);
 					jam_string(buf, " ");
 					jam_address(buf, &ifp->ip_dev->id_address);
 				}
 			}
-			terminate_connections(c, logger, HERE);
-			connection_detach(*c, logger);
+			terminate_connections(cp, logger, HERE);
+			connection_detach((*cp), logger);
 
 			return END_ROOF;
 		}
@@ -322,17 +322,17 @@ enum left_right orient_1(struct connection **c, struct logger *logger)
 		/* save match, and then continue search */
 		matching_ifp = ifp;
 		endpoint_buf eb;
-		ldbg((*c)->logger, "  interface %s endpoint %s matches '%s'; orienting",
+		ldbg((*cp)->logger, "  interface %s endpoint %s matches '%s'; orienting",
 		     ifp->ip_dev->id_rname,
 		     str_endpoint(&ifp->local_endpoint, &eb),
-		     (*c)->end[end].config->leftright);
+		     (*cp)->end[end].config->leftright);
 		matching_end = end;
 	}
 
 	if (matching_ifp != NULL) {
 		passert(matching_end != END_ROOF);
-		pexpect((*c)->interface == NULL); /* wasn't updated */
-		(*c)->interface = iface_endpoint_addref(matching_ifp);
+		pexpect((*cp)->interface == NULL); /* wasn't updated */
+		(*cp)->interface = iface_endpoint_addref(matching_ifp);
 		return matching_end;
 	}
 
@@ -340,9 +340,9 @@ enum left_right orient_1(struct connection **c, struct logger *logger)
 	 * No existing interface worked, try to create a new one.
 	 */
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		passert((*c)->interface == NULL); /* wasn't updated */
-		if (add_new_iface_endpoint(*c, &(*c)->end[end].host)) {
-			passert((*c)->interface != NULL); /* was updated */
+		passert((*cp)->interface == NULL); /* wasn't updated */
+		if (add_new_iface_endpoint((*cp), &(*cp)->end[end].host)) {
+			passert((*cp)->interface != NULL); /* was updated */
 			return end;
 		}
 	}

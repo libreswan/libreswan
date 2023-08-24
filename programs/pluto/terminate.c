@@ -78,21 +78,21 @@ static void terminate_connection(struct connection *c)
 	connection_unroute(c, HERE);
 }
 
-void terminate_connections(struct connection **c, struct logger *logger, where_t where)
+void terminate_connections(struct connection **cp, struct logger *logger, where_t where)
 {
-	switch ((*c)->local->kind) {
+	switch ((*cp)->local->kind) {
 	case CK_INSTANCE:
 	case CK_LABELED_CHILD: /* should not happen? */
-		connection_attach(*c, logger);
-		terminate_connection(*c);
-		delete_connection(c);
+		connection_attach((*cp), logger);
+		terminate_connection((*cp));
+		delete_connection(cp);
 		return;
 
 	case CK_PERMANENT:
 	case CK_LABELED_PARENT:
-		connection_attach(*c, logger);
-		terminate_connection(*c);
-		connection_detach(*c, logger);
+		connection_attach((*cp), logger);
+		terminate_connection((*cp));
+		connection_detach((*cp), logger);
 		return;
 
 	case CK_TEMPLATE:
@@ -100,7 +100,7 @@ void terminate_connections(struct connection **c, struct logger *logger, where_t
 	case CK_LABELED_TEMPLATE:
 	{
 		struct connection_filter cq = {
-			.clonedfrom = *c,
+			.clonedfrom = (*cp),
 			.where = HERE,
 		};
 		while (next_connection_old2new(&cq)) {
@@ -111,5 +111,5 @@ void terminate_connections(struct connection **c, struct logger *logger, where_t
 	case CK_INVALID:
 		break;
 	}
-	bad_case((*c)->local->kind);
+	bad_case((*cp)->local->kind);
 }

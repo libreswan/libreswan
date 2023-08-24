@@ -36,13 +36,13 @@ struct each {
 void whack_all_connections(const struct whack_message *m, struct show *s,
 			   bool (*whack_connection)
 			   (struct show *s,
-			    struct connection **c,
+			    struct connection **cp,
 			    const struct whack_message *m));
 
 void whack_each_connection(const struct whack_message *m, struct show *s,
 			   bool (*whack_connection)
 			   (struct show *s,
-			    struct connection **c,
+			    struct connection **cp,
 			    const struct whack_message *m),
 			   struct each each);
 
@@ -55,7 +55,7 @@ void whack_each_connection(const struct whack_message *m, struct show *s,
 void whack_connections_bottom_up(const struct whack_message *m, struct show *s,
 				 bool (*whack_connection)
 				 (struct show *s,
-				  struct connection **c,
+				  struct connection **cp,
 				  const struct whack_message *m),
 				 struct each each);
 

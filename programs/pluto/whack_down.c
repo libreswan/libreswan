@@ -50,26 +50,26 @@ static bool shared_phase1_connection(const struct connection *c)
 	return false;
 }
 
-static void down_connection(struct connection **c, struct logger *logger)
+static void down_connection(struct connection **cp, struct logger *logger)
 {
-	connection_attach(*c, logger);
+	connection_attach((*cp), logger);
 
-	llog(RC_LOG, (*c)->logger, "terminating SAs using this connection");
-	del_policy(*c, POLICY_UP);
+	llog(RC_LOG, (*cp)->logger, "terminating SAs using this connection");
+	del_policy((*cp), POLICY_UP);
 
-	remove_connection_from_pending(*c);
-	if (shared_phase1_connection(*c)) {
-		llog(RC_LOG, (*c)->logger, "%s is shared - only terminating %s",
-		     (*c)->config->ike_info->ike_sa_name,
-		     (*c)->config->ike_info->child_sa_name);
+	remove_connection_from_pending((*cp));
+	if (shared_phase1_connection((*cp))) {
+		llog(RC_LOG, (*cp)->logger, "%s is shared - only terminating %s",
+		     (*cp)->config->ike_info->ike_sa_name,
+		     (*cp)->config->ike_info->child_sa_name);
 		/*
 		 * XXX: should "down" down the routing_sa when
 		 * ipsec_sa is NULL?
 		 */
-		struct child_sa *child = child_sa_by_serialno((*c)->newest_ipsec_sa);
+		struct child_sa *child = child_sa_by_serialno((*cp)->newest_ipsec_sa);
 		if (child != NULL) {
 			state_attach(&child->sa, logger);
-			switch ((*c)->config->ike_version) {
+			switch ((*cp)->config->ike_version) {
 			case IKEv1:
 				delete_state(&child->sa);
 				break;
@@ -80,37 +80,37 @@ static void down_connection(struct connection **c, struct logger *logger)
 		}
 	} else {
 		dbg("connection not shared - terminating IKE and IPsec SA");
-		whack_connection_delete_states(*c, HERE);
-		if (is_instance(*c)) {
-			delete_connection(c);
+		whack_connection_delete_states((*cp), HERE);
+		if (is_instance((*cp))) {
+			delete_connection(cp);
 		}
 	}
 
-	connection_detach(*c, logger);
+	connection_detach((*cp), logger);
 }
 
-static bool whack_down_connections(struct show *s, struct connection **c,
-					const struct whack_message *m UNUSED)
+static bool whack_down_connections(struct show *s, struct connection **cp,
+				   const struct whack_message *m UNUSED)
 {
 	struct logger *logger = show_logger(s);
 	connection_buf cb;
-	switch ((*c)->local->kind) {
+	switch ((*cp)->local->kind) {
 	case CK_PERMANENT:
 	case CK_INSTANCE:
 	case CK_LABELED_PARENT:
-		down_connection(c, logger); /* could delete C! */
+		down_connection(cp, logger); /* could delete C! */
 		return true;
 	case CK_TEMPLATE:
 	case CK_GROUP:
 	case CK_LABELED_TEMPLATE:
 	case CK_LABELED_CHILD:
 		ldbg(logger, "skipping "PRI_CONNECTION,
-		     pri_connection(*c, &cb));
+		     pri_connection((*cp), &cb));
 		return false;
 	case CK_INVALID:
 		break;
 	}
-	bad_case((*c)->local->kind);
+	bad_case((*cp)->local->kind);
 }
 
 void whack_down(const struct whack_message *m, struct show *s)

@@ -145,7 +145,7 @@ void ldbg_routing(struct logger *logger, const char *fmt, ...);
 
 void ldbg_routing_event(struct logger *logger,
 			enum routing_event event,
-			struct connection **c,
+			struct connection **cp,
 			where_t where, const struct routing_annex *e);
 
 #endif
