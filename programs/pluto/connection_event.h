@@ -37,8 +37,11 @@ bool connection_event_is_scheduled(const struct connection *c,
 				   enum connection_event event);
 
 void schedule_connection_event(struct connection *c,
-			       enum connection_event event, const char *subplot,
-			       deltatime_t delay);
+			       enum connection_event event,
+			       const char *subplot,
+			       deltatime_t delay,
+			       const char *impair,
+			       struct logger *logger);
 
 bool flush_connection_event(const struct connection *c,
 			    enum connection_event event);

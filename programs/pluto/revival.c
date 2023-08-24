@@ -71,6 +71,12 @@ void delete_revival(const struct connection *c)
 #endif
 			return;
 		}
+
+		if (exiting_pluto) {
+			ldbg(c->logger, "revival: ignoring missing event, pluto is going down");
+			return;
+		}
+
 		llog_pexpect(c->logger, HERE, "revival: no event to delete");
 	}
 }
@@ -253,13 +259,8 @@ static void schedule_revival_event(struct connection *c, struct logger *logger, 
 	     c->temp_vars.revival.attempt,
 	     str_deltatime(delay, &db));
 
-	if (impair.revival) {
-		llog(RC_LOG, logger,
-		     "IMPAIR: revival: skip scheduling revival event");
-		return;
-	}
-
-	schedule_connection_event(c, CONNECTION_REVIVAL, subplot, delay);
+	schedule_connection_event(c, CONNECTION_REVIVAL, subplot, delay,
+				  (impair.revival ? "revival" : NULL), logger);
 }
 
 void schedule_revival(struct state *st, const char *subplot)

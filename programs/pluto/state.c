@@ -1163,6 +1163,22 @@ void delete_state(struct state *st)
 		PEXPECT(st->st_logger, st->st_ike_version == IKEv1);
 #endif
 		schedule_revival(st, "received a Delete/Notify");
+		/*
+		 * Hack so that the code deleting a connection knows
+		 * that it needs to delete the revival.
+		 *
+		 * XXX: Should be handled in event_v1_retransmit() but
+		 * that scrambles test output.
+		 *
+		 * XXX: Should be sending event to the routing code,
+		 * but this is IKEv1.
+		 */
+		if (st->st_connection->child.routing == RT_UNROUTED) {
+			set_routing((IS_IKE_SA(st) ? CONNECTION_TIMEOUT_IKE :
+				     CONNECTION_TIMEOUT_CHILD),
+				    st->st_connection,
+				    RT_UNROUTED_REVIVAL, NULL, HERE);
+		}
 	}
 
 	/*

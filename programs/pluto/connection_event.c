@@ -60,7 +60,8 @@ static struct list_head connection_events =
 
 void schedule_connection_event(struct connection *c,
 			       enum connection_event event, const char *subplot,
-			       deltatime_t delay)
+			       deltatime_t delay,
+			       const char *impair, struct logger *logger)
 {
 	struct event_connection *d = alloc_thing(struct event_connection, "data");
 	connection_buf cb;
@@ -72,6 +73,14 @@ void schedule_connection_event(struct connection *c,
 	d->connection = connection_addref(c, d->logger);
 	init_list_entry(&event_connection_info, d, &d->entry);
 	insert_list_entry(&connection_events, &d->entry);
+
+	if (impair != NULL) {
+		llog(RC_LOG, logger,
+		     "IMPAIR: %s: skip scheduling %s event",
+		     impair, impair);
+		return;
+	}
+
 	schedule_timeout(enum_name(&connection_event_names, event),
 			 &d->timeout, delay,
 			 connection_event_handler, d);
@@ -80,6 +89,10 @@ void schedule_connection_event(struct connection *c,
 static void delete_connection_event(struct event_connection **e)
 {
 	remove_list_entry(&(*e)->entry);
+	/*
+	 * When impaired, .timeout is NULL but destroy_timeout()
+	 * handles that.
+	 */
 	destroy_timeout(&(*e)->timeout);
 	connection_delref(&(*e)->connection, (*e)->logger);
 	free_logger(&(*e)->logger, HERE);
