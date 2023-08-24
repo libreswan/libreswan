@@ -194,6 +194,8 @@ static unsigned whack_bottom_up(struct connection **cp,
 				 const struct whack_message *m),
 				const struct each *each)
 {
+	struct logger *logger = show_logger(s);
+
 	unsigned nr = 0;
 	struct connection_filter instances = {
 		.clonedfrom = *cp,
@@ -204,7 +206,9 @@ static unsigned whack_bottom_up(struct connection **cp,
 		nr += whack_bottom_up(&instances.c, m, s, whack_connection, each);
 	}
 	/* abuse bool */
+	struct connection *cc = connection_addref(*cp, logger);
 	nr += whack_connection(s, cp, m);
+	connection_delref(&cc, logger);
 	return nr;
 }
 

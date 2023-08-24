@@ -81,9 +81,20 @@ static void down_connection(struct connection **cp, struct logger *logger)
 	} else {
 		dbg("connection not shared - terminating IKE and IPsec SA");
 		whack_connection_delete_states((*cp), HERE);
-		if (is_instance((*cp))) {
-			delete_connection(cp);
+		struct connection *cc = (*cp);
+		if (is_instance(cc)) {
+			st_connection_delref(&cc);
 		}
+	}
+
+	/*
+	 * XXX: hack so that when the caller delref()s the connection
+	 * the magical deleting instance message appears on the
+	 * console.
+	 */
+	if (is_instance((*cp)) && refcnt_peek(&(*cp)->refcnt) == 1) {
+		ldbg((*cp)->logger, "hack attack: skipping detach so that caller can log deleting instance");
+		return;
 	}
 
 	connection_detach((*cp), logger);

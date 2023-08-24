@@ -72,7 +72,27 @@ static bool whack_delete_connection(struct show *s, struct connection **cp,
 	}
 
 	connection_unroute((*cp), HERE); /* some times redundant */
-	delete_connection(cp);
+
+	struct connection *cc = (*cp); /* hack part #1 */
+	if (is_instance(cc)) {
+		/*
+		 * An instance has no floating reference; when wrapper
+		 * unref's connection it will be deleted.
+		 */
+		st_connection_delref(&cc);
+	} else {
+		/*
+		 * A non-instance connection has a floating reference;
+		 * need to delete that so that caller's delref deletes
+		 * the connection.
+		 */
+		connection_delref(&cc, cc->logger);
+	}
+
+	/*
+	 * hack part #2; caller is left with the only reference.
+	 */
+	PEXPECT((*cp)->logger, refcnt_peek(&(*cp)->refcnt) == 1);
 	return true;
 }
 
