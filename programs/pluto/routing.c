@@ -86,6 +86,7 @@ static void jam_routing(struct jambuf *buf,
 	jam_enum_short(buf, &connection_kind_names, (*c)->local->kind);
 	jam_string(buf, " ");
 	jam_connection_co(buf, *c);
+	jam(buf, " @%p", *c);
 	if (never_negotiate(*c)) {
 		jam_string(buf, " never-negotiate");
 	}
