@@ -1155,10 +1155,13 @@ void delete_state(struct state *st)
 		ldbg(st->st_logger, "skipping revival (handled earlier)");
 	} else if (should_revive(st)) {
 		/*
-		 * XXX: no clue as to why the state is being deleted
-		 * so make something up; caller should have scheduled
-		 * revival earlier.
+		 * No clue as to why the state is being deleted so
+		 * make something up.  Caller, such as the IKEv1
+		 * timeout should have scheduled the revival already.
 		 */
+#if 0
+		PEXPECT(st->st_logger, st->st_ike_version == IKEv1);
+#endif
 		schedule_revival(st, "received a Delete/Notify");
 	}
 
