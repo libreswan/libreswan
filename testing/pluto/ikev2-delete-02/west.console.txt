@@ -91,6 +91,7 @@ west #
  ipsec whack --deletestate 1
 002 "west-east-delete1" #1: intiating delete
 002 "west-east-delete1" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
+002 "west-east-delete1" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 002 "west-east-delete1" #1: IMPAIR: revival: skip scheduling revival event
 west #
  sleep 2

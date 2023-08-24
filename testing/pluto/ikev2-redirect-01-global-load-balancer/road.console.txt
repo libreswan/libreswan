@@ -24,6 +24,7 @@ road #
 002 "road-east" #1: initiating IKE_SA_INIT redirect to new gateway (address: 192.1.2.45)
 1v2 "road-east" #2: initiating IKEv2 connection
 002 "road-east" #1: deleting IKE SA (PARENT_I1) and NOT sending notification
+002 "road-east" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 002 "road-east" #1: IMPAIR: revival: skip scheduling revival event
 1v2 "road-east" #2: sent IKE_SA_INIT request to 192.1.2.45:500
 1v2 "road-east" #2: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
@@ -61,9 +62,11 @@ road #
 002 "road-east" #4: initiating IKE_SA_INIT redirect to new gateway (address: 192.1.2.44)
 1v2 "road-east" #5: initiating IKEv2 connection
 002 "road-east" #4: deleting IKE SA (PARENT_I1) and NOT sending notification
+002 "road-east" #4: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 002 "road-east" #4: IMPAIR: revival: skip scheduling revival event
 1v2 "road-east" #5: sent IKE_SA_INIT request to 192.1.2.44:500
 002 "road-east" #5: IMPAIR: retransmit so timing out SA (may retry)
+002 "road-east" #5: connection is supposed to remain up; revival attempt 2 scheduled in 5 seconds
 002 "road-east" #5: IMPAIR: revival: skip scheduling revival event
 002 "road-east" #5: deleting IKE SA (PARENT_I1) and NOT sending notification
 road #

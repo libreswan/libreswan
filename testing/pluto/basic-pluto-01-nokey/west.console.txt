@@ -44,6 +44,7 @@ west #
 003 "westnet-eastnet" #1: unable to locate my private key for RSA Signature
 224 "westnet-eastnet" #1: sending notification AUTHENTICATION_FAILED to 192.1.2.23:500
 002 "westnet-eastnet" #1: deleting ISAKMP SA (MAIN_I2) and NOT sending notification
+002 "westnet-eastnet" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 002 "westnet-eastnet" #1: IMPAIR: revival: skip scheduling revival event
 west #
  # we should not see any leftover states
