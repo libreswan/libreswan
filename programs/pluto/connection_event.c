@@ -86,9 +86,8 @@ void schedule_connection_event(struct connection *c,
 			 connection_event_handler, d);
 }
 
-static void delete_connection_event(struct event_connection **e)
+static void discard_connection_event(struct event_connection **e)
 {
-	remove_list_entry(&(*e)->entry);
 	/*
 	 * When impaired, .timeout is NULL but destroy_timeout()
 	 * handles that.
@@ -100,12 +99,21 @@ static void delete_connection_event(struct event_connection **e)
 	*e = NULL;
 }
 
+static void delete_connection_event(struct event_connection **e)
+{
+	remove_list_entry(&(*e)->entry);
+	discard_connection_event(e);
+}
+
 void connection_event_handler(void *arg, const struct timer_event *event)
 {
 	/* save event details*/
 	struct event_connection *e = arg;
 
 	ldbg(e->logger, "dispatching");
+
+	/* make it invisible */
+	remove_list_entry(&e->entry);
 
 	switch (e->event) {
 	case CONNECTION_NONEVENT:
@@ -115,7 +123,7 @@ void connection_event_handler(void *arg, const struct timer_event *event)
 		break;
 	}
 
-	delete_connection_event(&e);
+	discard_connection_event(&e);
 }
 
 bool connection_event_is_scheduled(const struct connection *c,
