@@ -122,6 +122,11 @@ bool should_revive(struct state *st)
 {
 	struct connection *c = st->st_connection;
 
+	if (st->st_on_delete.skip_revival) {
+		llog_pexpect(st->st_logger, HERE, "revival was handled earlier");
+		return false;
+	}
+
 	/*
 	 * XXX: now the weird ones.
 	 */
@@ -265,6 +270,12 @@ static void schedule_revival_event(struct connection *c, struct logger *logger, 
 
 void schedule_revival(struct state *st, const char *subplot)
 {
+	if (st->st_on_delete.skip_revival) {
+		llog_pexpect(st->st_logger, HERE, "revival already scheduled");
+		return;
+	}
+	st->st_on_delete.skip_revival = true;
+
 	struct connection *c = st->st_connection;
 	update_remote_port(c, st);
 	schedule_revival_event(c, st->st_logger, subplot);
