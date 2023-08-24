@@ -858,6 +858,15 @@ void connection_initiate(struct connection *c, const threadtime_t *inception,
 			 bool background, where_t where)
 {
 	if (c->config->ike_version == IKEv1) {
+		/*
+		 * XXX: this goes with the hack in delete_state() to
+		 * change the connection's routing to revival.
+		 */
+		if (c->child.routing == RT_UNROUTED_REVIVAL) {
+			delete_revival(c);
+			set_routing(CONNECTION_INITIATE,
+				    c, RT_UNROUTED, NULL, HERE);
+		}
 		ipsecdoi_initiate(c, c->policy, SOS_NOBODY, inception,
 				  HUNK_AS_SHUNK(c->child.sec_label),
 				  background, c->logger);
