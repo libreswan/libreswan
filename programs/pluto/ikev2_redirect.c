@@ -532,6 +532,7 @@ static void initiate_redirect(const char *story, struct state *ike_sa, void *con
 
 	/* XXX: only makes sense when IKE_SA_INIT / IKE_AUTH redirect? */
 	flush_pending_by_state(ike);
+	on_delete(&ike->sa, skip_revival);
 
 	initiate_connection(c, /*remote-host-name*/NULL,
 			    /*background*/false /* try to keep it in the foreground */,
