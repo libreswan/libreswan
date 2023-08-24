@@ -298,7 +298,7 @@ static struct connection *instantiate(struct connection *t,
 			match_id("", peer_id, &t->remote->host.id, &wildcards));
 	}
 
-	struct connection *d = clone_connection(t->name, t, peer_id, HERE);
+	struct connection *d = clone_connection(t->name, t, peer_id, where);
 	passert(t->name != d->name); /* see clone_connection() */
 
 	/*
