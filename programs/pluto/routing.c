@@ -128,10 +128,11 @@ static void jam_event(struct jambuf *buf,
 	jam_routing_annex(buf, e);
 }
 
-void ldbg_routing_event(struct logger *logger,
-			enum routing_event event,
-			struct connection **cp,
-			where_t where, const struct routing_annex *e)
+static void ldbg_routing_event(struct logger *logger,
+			       const char *what,
+			       enum routing_event event,
+			       struct connection *c,
+			       where_t where, const struct routing_annex *e)
 {
 	if (DBGP(DBG_BASE)) {
 		/*
@@ -139,8 +140,10 @@ void ldbg_routing_event(struct logger *logger,
 		 * is before the interesting stuff.
 		 */
 		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, logger, buf) {
-			jam_string(buf, "routing: dispatch ");
-			jam_event(buf, event, cp, e);
+			jam_string(buf, "routing: ");
+			jam_string(buf, what);
+			jam_string(buf, " dispatch ");
+			jam_event(buf, event, &c, e);
 			jam_string(buf, " ");
 			jam_where(buf, where);
 		}
@@ -1043,53 +1046,6 @@ static void dispatch_1(enum routing_event event,
 		       struct logger *logger, where_t where,
 		       struct routing_annex *e)
 {
-	ldbg_routing_event(logger, event, cp, where, e);
-
-#if 0
-	/*
-	 * This isn't true for ONDEMAND when the connection is being
-	 * (re) attached to an existing IKE SA.
-	 *
-	 * For instance:
-	 *
-	 *   - permanent ike+child establish
-	 *   - large pings trigger hard expire of child, and then
-	 *   - ondemand request
-	 *
-	 * because the connection is permanent the IKE SA is set, but
-	 * ondemand doesn't think to pass in the existing IKE (and nor
-	 * should it?).
-	 *
-	 * See ikev2-expire-03-bytes-ignore-soft
-	 */
-	PEXPECT(logger, ((*c)->newest_ike_sa == SOS_NOBODY ||
-			 (e->ike != NULL &&
-			  (*e->ike)->sa.st_serialno == (*c)->newest_ike_sa)));
-#endif
-#if 0
-	/*
-	 * This isn't true when the child transitions from UNROUTED
-	 * NEGOTIATION to UNROUTED INBOUND, say.
-	 *
-	 * When there's a Child SA it must match the routing SA, but
-	 * not the reverse.
-	 *
-	 * For instance, a second acquire while a permanent connection
-	 * is still negotiating could find that there's an existing
-	 * routing SA.
-	 */
-	if (e->child != NULL &&
-	    (*e->child)->sa.st_serialno != (*c)->child.newest_routing_sa) {
-		LLOG_PEXPECT_JAMBUF(logger, where, buf) {
-			jam_string(buf, "Child SA ");
-			jam_so(buf, (*e->child)->sa.st_serialno);
-			jam_string(buf, " does not match routing SA ");
-			jam_so(buf, (*c)->child.newest_routing_sa);
-			jam_string(buf, " ");
-			jam_event(buf, event, c, e);
-		}
-	}
-#endif
 
 #define XX(CONNECTION_EVENT, CONNECTION_ROUTING, CONNECTION_KIND)	\
 	(((CONNECTION_EVENT) *						\
@@ -1946,7 +1902,57 @@ void dispatch(enum routing_event event,
 	      struct logger *logger, where_t where,
 	      struct routing_annex ee)
 {
-	struct connection *c = connection_addref(*cp, logger);
+	struct connection *c = connection_addref_where(*cp, logger, HERE);
+
+#if 0
+	/*
+	 * This isn't true for ONDEMAND when the connection is being
+	 * (re) attached to an existing IKE SA.
+	 *
+	 * For instance:
+	 *
+	 *   - permanent ike+child establish
+	 *   - large pings trigger hard expire of child, and then
+	 *   - ondemand request
+	 *
+	 * because the connection is permanent the IKE SA is set, but
+	 * ondemand doesn't think to pass in the existing IKE (and nor
+	 * should it?).
+	 *
+	 * See ikev2-expire-03-bytes-ignore-soft
+	 */
+	PEXPECT(logger, ((*c)->newest_ike_sa == SOS_NOBODY ||
+			 (e->ike != NULL &&
+			  (*e->ike)->sa.st_serialno == (*c)->newest_ike_sa)));
+#endif
+#if 0
+	/*
+	 * This isn't true when the child transitions from UNROUTED
+	 * NEGOTIATION to UNROUTED INBOUND, say.
+	 *
+	 * When there's a Child SA it must match the routing SA, but
+	 * not the reverse.
+	 *
+	 * For instance, a second acquire while a permanent connection
+	 * is still negotiating could find that there's an existing
+	 * routing SA.
+	 */
+	if (e->child != NULL &&
+	    (*e->child)->sa.st_serialno != (*c)->child.newest_routing_sa) {
+		LLOG_PEXPECT_JAMBUF(logger, where, buf) {
+			jam_string(buf, "Child SA ");
+			jam_so(buf, (*e->child)->sa.st_serialno);
+			jam_string(buf, " does not match routing SA ");
+			jam_so(buf, (*c)->child.newest_routing_sa);
+			jam_string(buf, " ");
+			jam_event(buf, event, c, e);
+		}
+	}
+#endif
+
+	ldbg_routing_event(c->logger, "start", event, c, where, &ee);
 	dispatch_1(event, cp, logger, where, &ee);
-	connection_delref(&c, c->logger);
+	ldbg_routing_event(c->logger, "stop", event, c, where, &ee);
+
+	connection_delref_where(&c, c->logger, HERE);
 }
