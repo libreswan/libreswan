@@ -49,6 +49,7 @@ west #
 002 "ikev2-westnet-eastnet-x509-cr" #1: no Certificate Authority in NSS Certificate DB! certificate payloads discarded
 003 "ikev2-westnet-eastnet-x509-cr" #1: authentication failed: no certificate matched RSASSA-PSS with SHA2_512 and 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 002 "ikev2-westnet-eastnet-x509-cr" #1: deleting IKE SA (PARENT_I2) and sending notification
+002 "ikev2-westnet-eastnet-x509-cr" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 002 "ikev2-westnet-eastnet-x509-cr" #1: IMPAIR: revival: skip scheduling revival event
 west #
  echo "done"

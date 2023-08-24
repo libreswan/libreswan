@@ -47,6 +47,7 @@ west #
 002 "west-cuckold": terminating SAs using this connection
 002 "west-cuckold" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 005 "west-cuckold" #2: ESP traffic information: in=84B out=84B
+002 "west-cuckoo" #3: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 002 "west-cuckoo" #3: IMPAIR: revival: skip scheduling revival event
 005 "west-cuckoo" #3: ESP traffic information: in=84B out=84B
 west #

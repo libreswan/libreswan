@@ -240,7 +240,7 @@ static void update_remote_port(struct connection *c, struct state *st)
 
 static void schedule_revival_event(struct connection *c, struct logger *logger, const char *subplot)
 {
-	deltatime_buf db, ndb;
+	deltatime_buf db;
 	deltatime_t delay = c->temp_vars.revival.delay;
 
 	c->temp_vars.revival.delay =
@@ -248,12 +248,10 @@ static void schedule_revival_event(struct connection *c, struct logger *logger, 
 			      REVIVE_CONN_DELAY_MAX);
 	c->temp_vars.revival.attempt++;
 
-	ldbg(logger,
-	     "revival: schedule revival %u for '%s' ("PRI_CO") in %s, next in %s",
+	llog(RC_LOG, logger,
+	     "connection is supposed to remain up; revival attempt %u scheduled in %s seconds",
 	     c->temp_vars.revival.attempt,
-	     c->name, pri_co(c->serialno),
-	     str_deltatime(delay, &db),
-	     str_deltatime(c->temp_vars.revival.delay, &ndb));
+	     str_deltatime(delay, &db));
 
 	if (impair.revival) {
 		llog(RC_LOG, logger,
@@ -261,10 +259,6 @@ static void schedule_revival_event(struct connection *c, struct logger *logger, 
 		return;
 	}
 
-	llog(RC_LOG, logger,
-	     "connection is supposed to remain up; revival attempt %u scheduled in %s seconds",
-	     c->temp_vars.revival.attempt,
-	     str_deltatime(delay, &db));
 	schedule_connection_event(c, CONNECTION_REVIVAL, subplot, delay);
 }
 

@@ -38,6 +38,7 @@ road #
 002 "xauth-road-eastnet" #1: XAUTH: aborting entire IKE Exchange
 036 "xauth-road-eastnet" #1: encountered fatal error in state STATE_XAUTH_I1
 002 "xauth-road-eastnet" #1: deleting ISAKMP SA (XAUTH_I1) and sending notification
+002 "xauth-road-eastnet" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 002 "xauth-road-eastnet" #1: IMPAIR: revival: skip scheduling revival event
 road #
  # next one should succeed and ping pass throguh
