@@ -274,7 +274,7 @@ void schedule_revival(struct state *st, const char *subplot)
 		llog_pexpect(st->st_logger, HERE, "revival already scheduled");
 		return;
 	}
-	st->st_on_delete.skip_revival = true;
+	on_delete(st, skip_revival);
 
 	struct connection *c = st->st_connection;
 	update_remote_port(c, st);
