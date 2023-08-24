@@ -1231,6 +1231,7 @@ static void dispatch_1(enum routing_event event,
 					  e->background, logger);
 			return;
 		case X(REVIVE, UNROUTED_REVIVAL, PERMANENT):
+		case X(REVIVE, UNROUTED_REVIVAL, INSTANCE):
 			if (BROKEN_TRANSITION) {
 				/*
 				 * Same as INITIATE, UNROUTED_REVIVAL,
@@ -1333,6 +1334,7 @@ static void dispatch_1(enum routing_event event,
 			break;
 		case X(UNROUTE, UNROUTED_NEGOTIATION, PERMANENT):
 		case X(UNROUTE, UNROUTED_REVIVAL, PERMANENT):
+		case X(UNROUTE, UNROUTED_REVIVAL, INSTANCE):
 			if ((*cp)->child.routing == RT_UNROUTED_REVIVAL) {
 				delete_revival((*cp));
 			}
