@@ -1154,14 +1154,18 @@ void delete_state(struct state *st)
 	if (st->st_on_delete.skip_revival) {
 		ldbg(st->st_logger, "skipping revival (handled earlier)");
 	} else if (should_revive(st)) {
+#if 0
+		/*
+		 * Not yet so.  IKEv2 code still ends up here
+		 * occasionally.
+		 */
+		PEXPECT(st->st_logger, st->st_ike_version == IKEv1);
+#endif
 		/*
 		 * No clue as to why the state is being deleted so
 		 * make something up.  Caller, such as the IKEv1
 		 * timeout should have scheduled the revival already.
 		 */
-#if 0
-		PEXPECT(st->st_logger, st->st_ike_version == IKEv1);
-#endif
 		schedule_revival(st, "received a Delete/Notify");
 		/*
 		 * Hack so that the code deleting a connection knows
@@ -1173,11 +1177,25 @@ void delete_state(struct state *st)
 		 * XXX: Should be sending event to the routing code,
 		 * but this is IKEv1.
 		 */
-		if (st->st_connection->child.routing == RT_UNROUTED) {
-			set_routing((IS_IKE_SA(st) ? CONNECTION_TIMEOUT_IKE :
-				     CONNECTION_TIMEOUT_CHILD),
-				    st->st_connection,
-				    RT_UNROUTED_REVIVAL, NULL, HERE);
+		if (st->st_ike_version == IKEv1) {
+			enum routing new_rt;
+			switch (st->st_connection->child.routing) {
+			case RT_UNROUTED:
+			case RT_UNROUTED_NEGOTIATION:
+				new_rt = RT_UNROUTED_REVIVAL;
+				break;
+			case RT_ROUTED_NEGOTIATION:
+				new_rt = RT_ROUTED_ONDEMAND;
+				break;
+			default:
+				new_rt = 0;
+			}
+			if (new_rt != 0) {
+				set_routing((IS_IKE_SA(st) ? CONNECTION_TIMEOUT_IKE :
+					     CONNECTION_TIMEOUT_CHILD),
+					    st->st_connection,
+					    new_rt, NULL, HERE);
+			}
 		}
 	}
 

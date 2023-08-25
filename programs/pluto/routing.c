@@ -857,13 +857,6 @@ static bool unroute_connection_instances(enum routing_event event, struct connec
 void connection_initiate(struct connection *c, const threadtime_t *inception,
 			 bool background, where_t where)
 {
-	if (c->config->ike_version == IKEv1) {
-		ipsecdoi_initiate(c, c->policy, SOS_NOBODY, inception,
-				  HUNK_AS_SHUNK(c->child.sec_label),
-				  background, c->logger);
-		return;
-	}
-
 	dispatch(CONNECTION_INITIATE, &c,
 		 c->logger, where,
 		 (struct routing_annex) {
