@@ -1130,15 +1130,27 @@ static void wipe_old_v2_connections(const struct ike_sa *ike)
 		 * don't transfer it to the old connection.
 		 */
 		if (is_instance(d)) {
-			/* NOTE: D not C */
-			/* this also deletes the states */
-			remove_connection_from_pending(d);
-			delete_v2_states_by_connection(d);
-			connection_unroute(d, HERE);
+			/*
+			 * NOTE: D not C (github/1247)
+			 *
+			 * Strip D of all states, and return it to
+			 * unrouted.  If the connection is a template,
+			 * it will also be deleted.
+			 *
+			 * Per github/1248, need to force unrouted as
+			 * delete_v2_states_by_connection() ->
+			 * teardown_ipsec_kernel_policies() can leave
+			 * the connection in ROUTED_ONDEMAND.
+			 */
+			struct connection *dd = connection_addref(d, ike->sa.st_logger);
+			remove_connection_from_pending(dd);
+			delete_v2_states_by_connection(dd);
+			connection_unroute(dd, HERE);
+			connection_delref(&dd, ike->sa.st_logger);
 
-			delete_connection(&d);
+			noref_delete_connection(&d);
 		} else {
-			/* NOTE: C not D */
+			/* NOTE: C not D (github/1247) */
 			/* this only deletes the states */
 			remove_connection_from_pending(c);
 			delete_v2_states_by_connection(c);
