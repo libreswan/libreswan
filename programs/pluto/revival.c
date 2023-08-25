@@ -290,8 +290,8 @@ void revive_connection(struct connection *c, const char *subplot,
 	connection_attach(c, event->logger);
 
 	llog(RC_LOG, c->logger,
-	     "initiating connection '%s' with serial "PRI_CO" which %s but must remain up per local policy",
-	     c->name, pri_co(c->serialno), subplot);
+	     "reviving connection which %s but must remain up per local policy (serial "PRI_CO")",
+	     subplot, pri_co(c->serialno));
 
 	/*
 	 * See ikev2-removed-iface-01
