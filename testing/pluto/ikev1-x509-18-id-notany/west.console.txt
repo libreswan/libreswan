@@ -32,8 +32,8 @@ west #
 003 "ikev2-westnet-eastnet-x509-cr" #1: X509: authentication failed; peer certificate contains no subjectAltName extension to match ID_FQDN '@right'
 218 "ikev2-westnet-eastnet-x509-cr" #1: sending encrypted notification INVALID_ID_INFORMATION to 192.1.2.23:500
 031 "ikev2-westnet-eastnet-x509-cr" #1: STATE_MAIN_I3: 60 second timeout exceeded after 0 retransmits.  Possible authentication failure: no acceptable response to our first encrypted message
-002 "ikev2-westnet-eastnet-x509-cr" #1: deleting ISAKMP SA (MAIN_I3) and NOT sending notification
 002 "ikev2-westnet-eastnet-x509-cr" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+002 "ikev2-westnet-eastnet-x509-cr" #1: deleting ISAKMP SA (MAIN_I3) and NOT sending notification
 west #
  echo "done"
 done

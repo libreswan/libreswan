@@ -27,8 +27,8 @@ west #
 003 "san" #1: initial Aggressive Mode packet claiming to be from @NOTeast.testing.libreswan.org on 192.1.2.23:500 but no connection has been authorized
 218 "san" #1: sending notification INVALID_ID_INFORMATION to 192.1.2.23:500
 002 "san" #1: IMPAIR: retransmit so timing out SA (may retry)
-002 "san" #1: deleting ISAKMP SA (AGGR_I1) and NOT sending notification
 002 "san" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+002 "san" #1: deleting ISAKMP SA (AGGR_I1) and NOT sending notification
 west #
  echo "done"
 done

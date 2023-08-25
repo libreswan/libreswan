@@ -57,8 +57,8 @@ west #
 003 "road-x509" #3: ignoring informational payload INVALID_ID_INFORMATION, msgid=00000000, length=12
 003 "road-x509" #3: received and ignored notification payload: INVALID_ID_INFORMATION
 002 "road-x509" #3: IMPAIR: retransmit so timing out SA (may retry)
-002 "road-x509" #3: deleting ISAKMP SA (MAIN_I3) and NOT sending notification
 002 "road-x509" #3: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+002 "road-x509" #3: deleting ISAKMP SA (MAIN_I3) and NOT sending notification
 west #
  echo "done"
 done

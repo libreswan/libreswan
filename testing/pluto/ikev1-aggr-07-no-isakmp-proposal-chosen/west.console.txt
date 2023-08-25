@@ -23,9 +23,9 @@ west #
 003 "westnet-eastnet-aggr" #1: ignoring informational payload NO_PROPOSAL_CHOSEN, msgid=00000000, length=12
 003 "westnet-eastnet-aggr" #1: received and ignored notification payload: NO_PROPOSAL_CHOSEN
 002 "westnet-eastnet-aggr" #1: IMPAIR: retransmit so timing out SA (may retry)
-002 "westnet-eastnet-aggr" #1: deleting ISAKMP SA (AGGR_I1) and NOT sending notification
 002 "westnet-eastnet-aggr" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 002 "westnet-eastnet-aggr" #1: IMPAIR: revival: skip scheduling revival event
+002 "westnet-eastnet-aggr" #1: deleting ISAKMP SA (AGGR_I1) and NOT sending notification
 west #
  echo done
 done
