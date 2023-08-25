@@ -31,6 +31,7 @@
 #include "pending.h"
 #include "ikev1_replace.h"
 #include "pluto_stats.h"
+#include "revival.h"
 
 #ifdef USE_IKEv1
 /* Time to retransmit, or give up.
@@ -69,6 +70,47 @@ void event_v1_retransmit(struct state *st, monotime_t now UNUSED)
 
 	/* placed here because IKEv1 doesn't do a proper state change to STF_FAIL_v1N/STF_FATAL */
 	linux_audit_conn(st, IS_IKE_SA(st) ? LAK_PARENT_FAIL : LAK_CHILD_FAIL);
+
+	/*
+	 * If policy dictates, try to keep the state's connection
+	 * alive.  DONT_REKEY overrides UP.
+	 */
+	PEXPECT(st->st_logger, !st->st_on_delete.skip_revival);
+	if (should_revive(st)) {
+		/*
+		 * No clue as to why the state is being deleted so
+		 * make something up.  Caller, such as the IKEv1
+		 * timeout should have scheduled the revival already.
+		 */
+		schedule_revival(st, "retransmit timeout");
+		/*
+		 * Hack so that the code deleting a connection knows
+		 * that it needs to delete the revival.
+		 *
+		 * XXX: Should be sending event to the routing code,
+		 * but this is IKEv1.
+		 */
+		if (st->st_ike_version == IKEv1) {
+			enum routing new_rt;
+			switch (st->st_connection->child.routing) {
+			case RT_UNROUTED:
+			case RT_UNROUTED_NEGOTIATION:
+				new_rt = RT_UNROUTED_REVIVAL;
+				break;
+			case RT_ROUTED_NEGOTIATION:
+				new_rt = RT_ROUTED_ONDEMAND;
+				break;
+			default:
+				new_rt = 0;
+			}
+			if (new_rt != 0) {
+				set_routing((IS_IKE_SA(st) ? CONNECTION_TIMEOUT_IKE :
+					     CONNECTION_TIMEOUT_CHILD),
+					    st->st_connection,
+					    new_rt, NULL, HERE);
+			}
+		}
+	}
 
 	delete_state(st);
 	/* note: no md->st to clear */
