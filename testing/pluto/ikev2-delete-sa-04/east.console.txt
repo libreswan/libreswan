@@ -24,6 +24,6 @@ east #
 east #
  test ! -r /tmp/pluto.log || grep -E -e '^[^|].* remain up' /tmp/pluto.log
 "west-east-auto" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"west-east-auto": initiating connection 'west-east-auto' with serial $1 which received Delete/Notify but must remain up per local policy
+"west-east-auto": reviving connection which received Delete/Notify but must remain up per local policy (serial $1)
 east #
  
