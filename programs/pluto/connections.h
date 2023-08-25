@@ -735,7 +735,7 @@ void delete_connection_where(struct connection **cp, where_t where);
  * Compensate for the state's .st_connection not being refcnt'd.  Once
  * that happens this becomes a no-op.
  */
-#define st_connection_delref(CP) connection_delref_where(CP, (*CP)->logger, HERE)
+#define st_connection_delref(CP) /* can't trust CP */
 
 struct connection *connection_addref_where(struct connection *c, const struct logger *owner, where_t where);
 void connection_delref_where(struct connection **cp, const struct logger *owner, where_t where);
