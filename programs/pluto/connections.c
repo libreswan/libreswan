@@ -228,22 +228,27 @@ void discard_connection_spds(struct connection *c)
  * reference.
  */
 
+static void llog_delete_connection_when_instance(const struct connection *c)
+{
+	if (is_instance(c)) {
+		/* XXX: pointless check? */
+		if (!is_opportunistic(c)) {
+			/* XXX: pointless log? */
+			address_buf b;
+			llog(RC_LOG, c->logger,
+			     "deleting connection instance with peer %s",
+			     str_address_sensitive(&c->remote->host.addr, &b));
+		}
+	}
+}
+
 void delete_connection_where(struct connection **cp, where_t where)
 {
 	struct connection *c = *cp;
-	if (is_instance(*cp)) {
-		/* XXX: pointless check? */
-		if (!is_opportunistic(*cp)) {
-			/* XXX: pointless log? */
-			address_buf b;
-			llog(RC_LOG, (*cp)->logger,
-			     "deleting connection instance with peer %s",
-			     str_address_sensitive(&(*cp)->remote->host.addr, &b));
-		}
-	}
 	if (delref_where(cp, c->logger, where) == NULL) {
 		llog_passert(c->logger, where, "final reference to connection @%p", c);
 	}
+	llog_delete_connection_when_instance(c);
 	discard_connection(&c, true/*connection_valid*/, where);
 }
 
@@ -258,16 +263,7 @@ void connection_delref_where(struct connection **cp, const struct logger *owner,
 	if (c == NULL) {
 		return;
 	}
-	if (is_instance(c)) {
-		/* XXX: pointless check? */
-		if (!is_opportunistic(c)) {
-			/* XXX: pointless log? */
-			address_buf b;
-			llog(RC_LOG, c->logger,
-			     "deleting connection instance with peer %s",
-			     str_address_sensitive(&c->remote->host.addr, &b));
-		}
-	}
+	llog_delete_connection_when_instance(c);
 	discard_connection(&c, true/*connection_valid*/, where);
 }
 
