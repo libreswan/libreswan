@@ -1038,6 +1038,115 @@ static stf_status process_v2_IKE_AUTH_request_tail(struct state *ike_st,
 	return generate_v2_responder_auth(ike, md, process_v2_IKE_AUTH_request_auth_signature_continue);
 }
 
+/*
+ * An IKE SA has been established.  Check if the freshly established
+ * connection is replacing an established version of itself.
+ *
+ * Note the serial number, and release any connections with the same
+ * peer ID but different peer IP address.
+ *
+ * The use of uniqueIDs is mostly historic and might be removed
+ * in a future version. It is ignored for PSK based connections,
+ * which only act based on being a "server using PSK".
+ */
+
+static void wipe_old_v2_connections(const struct ike_sa *ike)
+{
+	struct connection *c = ike->sa.st_connection;
+	bool new_remote_is_authnull =
+		(c->remote->host.config->authby.null ||
+		 /*XXX: redundant? */
+		 c->remote->host.config->auth == AUTH_NULL);
+
+	if (c->local->host.config->xauth.server &&
+	    c->remote->host.config->authby.psk) {
+		/*
+		 * If we are a server and authenticate all clients
+		 * using PSK then all clients use the same group ID
+		 * Note that "xauth.server" also refers to IKEv2 CP
+		 */
+		dbg("%s() skipped, we are a server using PSK and clients are using a group ID", __func__);
+		return;
+	}
+
+	if (!uniqueIDs) {
+		dbg("%s() skipped, uniqueIDs disabled", __func__);
+		return;
+	}
+
+	dbg("%s() contemplating releasing older self", __func__);
+
+	/*
+	 * For all existing connections: if the same Phase 1 IDs are
+	 * used, unorient the (old) connection (if different from
+	 * current connection).
+	 *
+	 * Only do this for connections with the same name (can be
+	 * shared ike sa).
+	 */
+	struct connection_filter cf = {
+		.name = c->name,
+		.kind = c->local->kind,
+		.this_id_eq = &c->local->host.id,
+		.that_id_eq = &c->remote->host.id,
+		.where = HERE,
+	};
+	while (next_connection_new2old(&cf)) {
+		struct connection *d = cf.c;
+
+		/*
+		 * If old IKE SA is same as new IKE sa and non-auth
+		 * isn't overwrting auth?
+		 */
+		if (c == d) {
+			continue;
+		}
+
+		bool old_remote_is_nullauth = (d->remote->host.config->authby.null ||
+					       /* XXX: redundant? */
+					       d->remote->host.config->auth == AUTH_NULL);
+		if (!old_remote_is_nullauth && new_remote_is_authnull) {
+			llog_sa(RC_LOG, ike, "cannot replace old authenticated connection with authnull connection");
+			continue;
+		}
+
+		if (!address_eq_address(c->remote->host.addr, d->remote->host.addr) &&
+		    old_remote_is_nullauth &&
+		    new_remote_is_authnull) {
+			llog_sa(RC_LOG, ike, "NULL auth ID for different IP's cannot replace each other");
+			continue;
+		}
+
+		dbg("unorienting old connection with same IDs");
+		/*
+		 * When replacing an old existing connection, suppress
+		 * sending delete notify.
+		 */
+		suppress_delete_notify(ike, "ISAKMP", d->newest_ike_sa);
+		suppress_delete_notify(ike, "IKE", d->newest_ipsec_sa);
+		/*
+		 * XXX: Assume this call doesn't want to log to whack?
+		 * Even though the IKE SA may have whack attached,
+		 * don't transfer it to the old connection.
+		 */
+		if (is_instance(d)) {
+			/* NOTE: D not C */
+			/* this also deletes the states */
+			remove_connection_from_pending(d);
+			delete_v2_states_by_connection(d);
+			connection_unroute(d, HERE);
+
+			delete_connection(&d);
+		} else {
+			/* NOTE: C not D */
+			/* this only deletes the states */
+			remove_connection_from_pending(c);
+			delete_v2_states_by_connection(c);
+			connection_unroute(c, HERE);
+		}
+	}
+}
+
 bool v2_ike_sa_auth_responder_establish(struct ike_sa *ike, bool *send_redirection)
 {
 	struct connection *c = ike->sa.st_connection;

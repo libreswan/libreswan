@@ -154,8 +154,6 @@ bool id_ipseckey_allowed(struct ike_sa *ike, enum ikev2_auth_method atype);
 struct crypt_mac v2_hash_id_payload(const char *id_name, struct ike_sa *ike,
 				    const char *key_name, PK11SymKey *key);
 
-void wipe_old_v2_connections(const struct ike_sa *ike);
-
 bool negotiate_hash_algo_from_notification(const struct pbs_in *payload_pbs,
 					   struct ike_sa *ike);
 
