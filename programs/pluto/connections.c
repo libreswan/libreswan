@@ -230,7 +230,21 @@ void discard_connection_spds(struct connection *c)
 
 static void llog_delete_connection_when_instance(const struct connection *c)
 {
-	if (is_instance(c)) {
+	if (is_labeled_parent(c)) {
+		/* XXX: pointless log? */
+		address_buf b;
+		llog(RC_LOG, c->logger,
+		     "deleting labeled parent connection with peer %s sec_label:"PRI_SHUNK,
+		     str_address_sensitive(&c->remote->host.addr, &b),
+		     pri_shunk(c->config->sec_label));
+	} else if (is_labeled_child(c)) {
+		/* XXX: pointless log? */
+		address_buf b;
+		llog(RC_LOG, c->logger,
+		     "deleting labeled child connection with peer %s sec_label:"PRI_SHUNK,
+		     str_address_sensitive(&c->remote->host.addr, &b),
+		     pri_shunk(c->child.sec_label));
+	} else if (is_instance(c)) {
 		/* XXX: pointless check? */
 		if (!is_opportunistic(c)) {
 			/* XXX: pointless log? */
