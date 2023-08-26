@@ -27,6 +27,16 @@ void ldbg(const struct logger *logger, const char *message, ...)
 	}
 }
 
+void pdbg(const struct logger *logger, const char *message, ...)
+{
+	if (LDBGP(DBG_BASE, logger)) {
+		va_list ap;
+		va_start(ap, message);
+		llog_va_list(DEBUG_STREAM|ADD_PREFIX, logger, message, ap);
+		va_end(ap);
+	}
+}
+
 void ldbgf(lset_t cond, const struct logger *logger, const char *message, ...)
 {
 	if (LDBGP(cond, logger)) {
