@@ -3065,11 +3065,12 @@ void ISAKMP_SA_established(const struct ike_sa *ike)
 
 						/* NOTE: D not C */
 
+						struct connection *dd = connection_addref(d, ike->sa.st_logger);
 						remove_connection_from_pending(d);
 						delete_v1_states_by_connection(d);
 						connection_unroute(d, HERE);
+						connection_delref(&dd, ike->sa.st_logger);
 
-						delete_connection(&d);
 					} else {
 						/* NOTE: C not D */
 						/* this deletes the states */
