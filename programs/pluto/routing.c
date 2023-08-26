@@ -1636,8 +1636,6 @@ static void dispatch_1(enum routing_event event,
 			remove_connection_from_pending((*cp));
 			delete_states_by_connection((*cp));
 			connection_unroute((*cp), HERE);
-
-			connection_delref(cp, (*cp)->logger);
 			return;
 
 		case X(ACQUIRE, ROUTED_TUNNEL, LABELED_PARENT): /* IKEv1 */
@@ -1659,6 +1657,9 @@ static void dispatch_1(enum routing_event event,
 		case X(DELETE_IKE, ROUTED_ONDEMAND, LABELED_PARENT):
 			if (BROKEN_TRANSITION) {
 				delete_ike_family(e->ike);
+				/* stop updown_unroute() finding this
+				 * connection */
+				set_routing(event, (*cp), RT_UNROUTED, NULL, where);
 			}
 			return;
 
