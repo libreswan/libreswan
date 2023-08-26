@@ -1717,6 +1717,13 @@ static void dispatch_1(enum routing_event event,
 
 		case X(DELETE_IKE, UNROUTED, INSTANCE):			/* certoe-08-nat-packet-cop-restart */
 		case X(DELETE_IKE, UNROUTED_NEGOTIATION, INSTANCE):	/* dnsoe-01 ... */
+			on_delete(&(*e->ike)->sa, skip_connection);
+			delete_ike_family(e->ike);
+			delete_spd_kernel_policies(&(*cp)->child.spds, EXPECT_NO_INBOUND,
+						   (*cp)->logger, where, "unroute instance");
+			set_routing(event, (*cp), RT_UNROUTED, NULL, where);
+			st_connection_delref(cp);
+			return;
 		case X(DELETE_IKE, ROUTED_ONDEMAND, PERMANENT):		/* ROUTED_NEGOTIATION!?! */
 		case X(DELETE_IKE, ROUTED_REVIVAL, PERMANENT):		/* ROUTED_NEGOTIATION!?! */
 			if (BROKEN_TRANSITION) {
