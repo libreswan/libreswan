@@ -581,11 +581,13 @@ static bool zap_connection_family(enum routing_event event,
 					  CONNECTION_EVENT_ROOF);
 	PASSERT((*ike)->sa.st_logger, child_event != CONNECTION_EVENT_ROOF);
 
+	ldbg_routing((*ike)->sa.st_logger, "%s()", __func__);
+
 	/*
 	 * Stop reviving children trying to use this IKE SA.
 	 */
 	enum_buf ren;
-	ldbg_routing((*ike)->sa.st_logger, "due to %s, IKE SA is no longer viable",
+	ldbg_routing((*ike)->sa.st_logger, "  due to %s, IKE SA is no longer viable",
 		     str_enum_short(&routing_event_names, event, &ren));
 	(*ike)->sa.st_viable_parent = false;
 
@@ -598,11 +600,12 @@ static bool zap_connection_family(enum routing_event event,
 	 */
 
 	{
-		ldbg_routing((*ike)->sa.st_logger, "weeding out lurking (unestablished) Child SAs");
+		ldbg_routing((*ike)->sa.st_logger, "  weeding out lurking (unestablished) Child SAs");
 		struct state_filter sf = {
 			.clonedfrom = (*ike)->sa.st_serialno,
 			.where = HERE,
 		};
+		unsigned nr = 0;
 		while (next_state_new2old(&sf)) {
 			/*
 			 * Skip children that own their connection
@@ -628,13 +631,16 @@ static bool zap_connection_family(enum routing_event event,
 					str_enum_short(&routing_event_names, event, &ren));
 			} else {
 				enum_buf ren;
-				ldbg_routing(lurking_child->sa.st_logger,
-					     "deleting larval %s (%s)",
+				ldbg_routing((*ike)->sa.st_logger,
+					     "    deleting larval %s "PRI_SO" (%s)",
 					     lurking_child->sa.st_connection->config->ike_info->child_sa_name,
+					     pri_so(lurking_child->sa.st_serialno),
 					     str_enum_short(&routing_event_names, event, &ren));
 			}
+			nr++;
 			delete_child_sa(&lurking_child);
 		}
+		ldbg_routing((*ike)->sa.st_logger, "    zapped %u children", nr);
 	}
 
 	/*
@@ -645,27 +651,30 @@ static bool zap_connection_family(enum routing_event event,
 
 	bool connection_has_interlopers = false;
 	{
-		ldbg_routing((*ike)->sa.st_logger, "weeding out lurking SAs with one foot on the connection");
+		ldbg_routing((*ike)->sa.st_logger, "  weeding out lurking SAs with one foot on the connection");
 		struct state_filter sf = {
 			.connection_serialno = (*cp)->serialno,
 			.where = HERE,
 		};
+		unsigned nr = 0;
 		while (next_state_new2old(&sf)) {
 			if (sf.st == &(*ike)->sa) {
-				ldbg_routing((*ike)->sa.st_logger, "  skipping IKE");
+				ldbg_routing((*ike)->sa.st_logger, "    skipping IKE SA (self)");
 				continue;
 			}
 			if (sf.st->st_clonedfrom == (*ike)->sa.st_serialno) {
-				ldbg_routing((*ike)->sa.st_logger, "  skipping Child");
+				ldbg_routing((*ike)->sa.st_logger, "    skipping Child SA");
 				continue;
 			}
 			if (!IS_PARENT_SA(sf.st)) {
-				ldbg_routing((*ike)->sa.st_logger, "  skipping Child interloper");
+				ldbg_routing((*ike)->sa.st_logger, "    skipping Child interloper "PRI_SO,
+					     pri_so(sf.st->st_serialno));
 				connection_has_interlopers = true;
 				continue;
 			}
 			if (IS_PARENT_SA_ESTABLISHED(sf.st)) {
-				ldbg_routing((*ike)->sa.st_logger, "  skipping IKE interloper");
+				ldbg_routing((*ike)->sa.st_logger, "    skipping IKE interloper "PRI_SO,
+					     pri_so(sf.st->st_serialno));
 				connection_has_interlopers = true;
 				continue;
 			}
@@ -675,8 +684,10 @@ static bool zap_connection_family(enum routing_event event,
 			llog_sa(RC_LOG, lurking_ike, "deleting larval %s (%s)",
 				lurking_ike->sa.st_connection->config->ike_info->ike_sa_name,
 				str_enum_short(&routing_event_names, event, &ren));
+			nr++;
 			delete_ike_sa(&lurking_ike);
 		}
+		ldbg_routing((*ike)->sa.st_logger, "    zapped %u IKE SAs", nr);
 	}
 
 	/*
@@ -699,14 +710,14 @@ static bool zap_connection_family(enum routing_event event,
 		child_sa_by_serialno((*ike)->sa.st_connection->child.newest_routing_sa);
 	if (connection_child == NULL) {
 		dispatched_to_child = false;
-		ldbg_routing((*ike)->sa.st_logger, "IKE SA's connection has no Child SA "PRI_SO,
+		ldbg_routing((*ike)->sa.st_logger, "  IKE SA's connection has no Child SA "PRI_SO,
 			     pri_so((*ike)->sa.st_connection->child.newest_routing_sa));
 	} else if (connection_child->sa.st_clonedfrom != (*ike)->sa.st_serialno) {
 		dispatched_to_child = false;
-		ldbg_routing((*ike)->sa.st_logger, "IKE SA is not the parent of the connection's Child SA "PRI_SO,
+		ldbg_routing((*ike)->sa.st_logger, "  IKE SA is not the parent of the connection's Child SA "PRI_SO,
 			     pri_so(connection_child->sa.st_serialno));
 	} else {
-		ldbg_routing((*ike)->sa.st_logger, "dispatching delete to Child SA "PRI_SO,
+		ldbg_routing((*ike)->sa.st_logger, "  dispatching delete to Child SA "PRI_SO,
 			     pri_so(connection_child->sa.st_serialno));
 		dispatched_to_child = true;
 		state_attach(&connection_child->sa, (*ike)->sa.st_logger);
@@ -730,11 +741,12 @@ static bool zap_connection_family(enum routing_event event,
 	 */
 
 	{
-		ldbg_routing((*ike)->sa.st_logger, "dispatching delete to Child SA siblings");
+		ldbg_routing((*ike)->sa.st_logger, "  dispatching delete to Child SA siblings");
 		struct state_filter child_filter = {
 			.clonedfrom = (*ike)->sa.st_serialno,
 			.where = HERE,
 		};
+		unsigned nr = 0;
 		while (next_state_new2old(&child_filter)) {
 			struct child_sa *child = pexpect_child_sa(child_filter.st);
 			if (!PEXPECT((*ike)->sa.st_logger,
@@ -745,6 +757,9 @@ static bool zap_connection_family(enum routing_event event,
 			/* will delete child and its logger */
 			state_attach(&child->sa, (*ike)->sa.st_logger);
 			struct connection *cc = child->sa.st_connection;
+			nr++;
+			ldbg_routing((*ike)->sa.st_logger, "    zapping Child SA "PRI_SO,
+				     pri_so(child->sa.st_serialno));
 			dispatch(child_event, &cc,
 				 child->sa.st_logger, where,
 				 (struct routing_annex) {
@@ -753,6 +768,7 @@ static bool zap_connection_family(enum routing_event event,
 				 });
 			PEXPECT((*ike)->sa.st_logger, child == NULL);
 		}
+		ldbg_routing((*ike)->sa.st_logger, "    zapped %u Child SAs", nr);
 	}
 
 	/*
@@ -769,6 +785,7 @@ static bool zap_connection_family(enum routing_event event,
 		 *
 		 * The IKE SA can simply be deleted ...
 		 */
+		ldbg_routing((*ike)->sa.st_logger, "  deleting IKE as zapped Child SA");
 		delete_ike_sa(ike);
 		if ((*cp)->local->kind == CK_INSTANCE &&
 		    (*cp)->child.routing == RT_UNROUTED &&
@@ -800,6 +817,7 @@ static bool zap_connection_family(enum routing_event event,
 		 * field to the newer IKE SA as well.
 		 */
 		PEXPECT((*ike)->sa.st_logger, ((*ike)->sa.st_serialno != (*cp)->newest_ike_sa));
+		ldbg_routing((*ike)->sa.st_logger, "  deleting IKE as not our Child");
 		delete_ike_sa(ike);
 		return true;
 	}
