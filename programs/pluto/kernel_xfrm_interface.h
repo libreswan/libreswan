@@ -2,6 +2,7 @@
  * xfrmi declarations, linux kernel IPsec interface/device
  *
  * Copyright (C) 2018-2020 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2023 Brady Johnson <bradyallenjohnson@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -20,6 +21,7 @@
 #include <stdbool.h>
 
 #include "err.h"
+#include "ip_cidr.h"
 #include "refcnt.h"
 #include "ip_endpoint.h"
 
@@ -36,16 +38,31 @@
 /* for ipsec0 we need to map it to a different if_id */
 #define PLUTO_XFRMI_REMAP_IF_ID_ZERO	16384
 
+/* And IPv6 str can be 8 4-character groups, separated by a colon (7 max).
+ * Also includes room for netmask "/NN" and newline */
+#define MAX_IP_CIDR_STR_LEN 44
+
 #define XFRMI_SUCCESS 0
 #define XFRMI_FAILURE 1
 
 struct connection;
 struct logger;
 
+/* The same interface IP can be used by multiple tunnels, with different remote
+ * IPs, so they are ref-counted to control removing the IP from the IF. */
+struct pluto_xfrmi_ipaddr {
+	ip_cidr if_ip;
+	char if_ip_str[MAX_IP_CIDR_STR_LEN];
+	refcnt_t refcnt;
+	bool pluto_added;
+	struct pluto_xfrmi_ipaddr *next;
+};
+
 struct pluto_xfrmi {
 	char *name;
 	uint32_t if_id; /* IFLA_XFRM_IF_ID */
 	uint32_t dev_if_id;  /* if_id of device, IFLA_XFRM_LINK */
+	struct pluto_xfrmi_ipaddr *if_ips; /* ref-counted IPs on this IF */
 	refcnt_t refcnt;
 	bool shared;
 	bool pluto_added;
