@@ -460,6 +460,7 @@ enum option_enums {
 	END_ADDRESSPOOL,
 	END_SENDCERT,
 	END_SOURCEIP,
+        END_INTERFACEIP,
 	END_VTIIP,
 	END_AUTHBY,
 	END_AUTHEAP,
@@ -754,6 +755,7 @@ static const struct option long_opts[] = {
 	{ "sourceip",  required_argument, NULL, END_SOURCEIP },
 	{ "srcip",  required_argument, NULL, END_SOURCEIP },	/* alias / backwards compat */
 	{ "vtiip",  required_argument, NULL, END_VTIIP },
+	{ "interfaceip", required_argument, NULL, END_INTERFACEIP },
 	{ "authby",  required_argument, NULL, END_AUTHBY },
 	{ "autheap",  required_argument, NULL, END_AUTHEAP },
 	{ "updown", required_argument, NULL, END_UPDOWN },
@@ -1722,7 +1724,17 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_SOURCEIP:	/* --sourceip <ip-address> */
+			if (end->ifaceip.is_set == false) {
+				diagw("only one --interfaceip <ip-address/mask> or --sourceip <ip-address> allowed");
+			}
 			end->sourceip = optarg;
+			continue;
+
+		case END_INTERFACEIP:	/* --interface-ip <ip-address/mask> */
+			if (end->sourceip != NULL) {
+				diagw("only one --sourceip <ip-address> or --interfaceip <ip-address/mask> allowed");
+			}
+			opt_to_cidr(&child_family, &end->ifaceip);
 			continue;
 
 		case END_VTIIP:	/* --vtiip <ip-address/mask> */
