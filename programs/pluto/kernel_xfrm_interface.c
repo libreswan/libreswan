@@ -154,7 +154,7 @@ static int nl_query_small_resp(const struct nlmsghdr *req,
 		/* a runt packet. Odd. */
 		/* pretend all is well */
 		llog_error(logger, errno,
-					"in nl_query_small_resp() rcvd less bytes than expected %ld vs %ld for %s() dev %s",
+					"in nl_query_small_resp() rcvd less bytes than expected %zd vs %zd for %s() dev %s",
 					r, sizeof(struct nlmsghdr), context, if_name);
 	} else if (rsp.n.nlmsg_type == NLMSG_ERROR) {
 		/* The packet is an error packet: rsp.u.e.error is a negative errno value */
