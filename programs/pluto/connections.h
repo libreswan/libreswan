@@ -788,8 +788,6 @@ const char *str_connection_instance(const struct connection *c,
 #define PRI_CONNECTION "\"%s\"%s"
 #define pri_connection(C,B) (C)->name, str_connection_instance(C, B)
 
-extern void connection_delete_unused_instance(struct connection **cp, struct state *old_state, struct fd *whackfd);
-
 /* print connection status */
 
 extern void show_connection_statuses(struct show *s);
