@@ -1120,12 +1120,16 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 				p = rw_responder_id_instantiate(p, c->remote->host.addr,
 								remote_client,
 								&c->remote->host.id,
-								HERE);
+								HERE); /* must delref */
+			} else {
+				p = connection_addref(p, p->logger); /* must delref */
 			}
 			connection_buf cib;
 			ldbg(p->logger, "using connection "PRI_CONNECTION"",
 			     pri_connection(p, &cib));
 			c = p;
+		} else {
+			c = connection_addref(c, c->logger); /* must delref */
 		}
 
 		/* fill in the client's true ip address/subnet */
@@ -1184,6 +1188,9 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 	/* create our new state */
 	{
 		struct state *const st = ikev1_duplicate_state(c, p1st, SA_RESPONDER, null_fd);
+		/* delref stack reference */
+		struct connection *cc = c;
+		connection_delref(&cc, cc->logger);
 
 		/* first: fill in missing bits of our new state object
 		 * note: we don't copy over st_peer_pubkey, the public key

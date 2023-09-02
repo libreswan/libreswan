@@ -2165,13 +2165,14 @@ bool install_inbound_ipsec_sa(struct child_sa *child, where_t where)
 				"route to peer's client conflicts with "PRI_CONNECTION" %s; releasing old connection to free the route",
 				pri_connection(co, &cib),
 				str_address_sensitive(&co->remote->host.addr, &b));
+
 			if (is_instance(co)) {
 				/* NOTE: CO not C */
+				struct connection *cc = connection_addref(co, child->sa.st_logger);
 				remove_connection_from_pending(co);
 				delete_states_by_connection(co);
 				connection_unroute(co, HERE);
-
-				delete_connection(&co);
+				connection_delref(&cc, child->sa.st_logger);
 			} else {
 				/* NOTE: C not CO */
 				remove_connection_from_pending(c);

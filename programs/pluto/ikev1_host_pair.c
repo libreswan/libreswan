@@ -223,6 +223,9 @@ static struct connection *find_v1_host_connection(const ip_address local_address
 	return c;
 }
 
+/*
+ * Always returns a new reference.
+ */
 struct connection *find_v1_aggr_mode_connection(struct msg_digest *md,
 						struct authby authby,
 						bool policy_xauth,
@@ -236,7 +239,7 @@ struct connection *find_v1_aggr_mode_connection(struct msg_digest *md,
 				    true/*POLICY_AGGRESSIVE*/,
 				    peer_id);
 	if (c != NULL) {
-		return c;
+		return connection_addref(c, md->md_logger);
 	}
 
 	c = find_v1_host_connection(md->iface->ip_dev->id_address,
@@ -244,8 +247,9 @@ struct connection *find_v1_aggr_mode_connection(struct msg_digest *md,
 				    true/*POLICY_AGGRESSIVE*/,
 				    peer_id);
 	if (c != NULL) {
-		/* Create a temporary connection that is a copy of this one.
-		 * Peers ID isn't declared yet.
+		/*
+		 * Create a temporary connection that is a copy of
+		 * this one.  Peers ID isn't declared yet.
 		 */
 		return rw_responder_instantiate(c, sender_address, HERE);
 	}
@@ -309,7 +313,7 @@ struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 			return rw_responder_instantiate(c, sender_address, HERE);
 		}
 
-		return c;
+		return connection_addref(c, md->md_logger);
 	}
 
 	/*

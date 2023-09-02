@@ -1289,6 +1289,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 	 */
 	struct best {
 		struct connection *connection;
+		bool instantiated;
 		struct narrowed_selector_payloads nsps;
 	} best = {0};
 
@@ -1476,6 +1477,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 				       pri_connection(d, &cb));
 				best = (struct best) {
 					.connection = d,
+					.instantiated = false,
 					.nsps = nsps,
 				};
 			}
@@ -1697,17 +1699,21 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 			 * instances shared?
 			 */
 			struct connection *s;
+			bool instantiated;
 			if (v2_child_connection_probably_shared(child, indent)) {
 				/* instantiate it, filling in peer's ID */
 				s = spd_instantiate(t, child->sa.st_connection->remote->host.addr, HERE);
+				instantiated = true;
 			} else {
 				s = child->sa.st_connection;
+				instantiated = false;
 			}
 			scribble_ts_request_on_responder(child, s, &nsps, indent);
 
 			/* switch */
 			best = (struct best) {
 				.connection = s,
+				.instantiated = instantiated,
 				.nsps = nsps,
 			};
 			break;
@@ -1745,8 +1751,9 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 		pexpect(address_is_specified(best.connection->remote->host.addr));
 		struct connection *s = sec_label_child_instantiate(ike_sa(&child->sa, HERE), best.nsps.i.sec_label, HERE);
 		scribble_ts_request_on_responder(child, s, &best.nsps, indent);
-		/* switch to instance; same score */
+		/* switch to instantiated instance; same score */
 		best.connection = s;
+		best.instantiated = true;
 	} else if (best.connection != NULL &&
 		   is_template(best.connection)) {
 		dbg_ts("instantiating the template connection");
@@ -1755,8 +1762,9 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 		pexpect(best.nsps.r.sec_label.len == 0);
 		struct connection *s = spd_instantiate(best.connection, child->sa.st_connection->remote->host.addr, HERE);
 		scribble_ts_request_on_responder(child, s, &best.nsps, indent);
-		/* switch to instance; same score */
+		/* switch to instantiated instance; same score */
 		best.connection = s;
+		best.instantiated = true;
 	}
 
 	indent.level = 1;
@@ -1775,6 +1783,9 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 	 */
 	if (best.connection != child->sa.st_connection) {
 		connswitch_state_and_log(&child->sa, best.connection);
+		if (best.instantiated) {
+			connection_delref(&best.connection, child->sa.st_logger);
+		}
 	}
 
 	return true;

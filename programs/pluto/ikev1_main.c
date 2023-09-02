@@ -454,7 +454,8 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 		return STF_IGNORE;
 	}
 
-	struct connection *c = find_v1_main_mode_connection(md);
+
+	struct connection *c = find_v1_main_mode_connection(md); /* must delref */
 	if (c == NULL) {
 		/* XXX: already logged */
 		/* XXX notification is in order! */
@@ -464,6 +465,10 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 	/* Set up state */
 	struct ike_sa *ike = new_v1_rstate(c, md);
 	struct state *st = md->v1_st = &ike->sa;
+
+	/* delref stack connection pointer */
+	connection_delref(&c, md->md_logger);
+	c = ike->sa.st_connection;
 
 	passert(!st->st_oakley.doing_xauth);
 
@@ -2255,7 +2260,13 @@ bool accept_delete(struct state **stp,
 						  ntohl(spi),
 						  (st == dst ? "self-" : ""),
 						  dst->st_serialno);
+					struct connection *cc = connection_addref(dst->st_connection,
+										  dst->st_logger);
 					delete_state(dst);
+					if (is_instance(cc)) {
+						connection_unroute(cc, HERE);
+					}
+					connection_delref(&cc, cc->logger);
 					if (md->v1_st == dst) {
 						*stp = dst = md->v1_st = NULL;
 						return true;
@@ -2283,12 +2294,13 @@ bool accept_delete(struct state **stp,
 						 * connection?
 						 */
 						dbg("%s() self-inflicted delete of ISAKMP", __func__);
+						struct connection *cc = connection_addref(rc, rc->logger);
 						remove_connection_from_pending(rc);
 						delete_v1_states_by_connection(rc);
 						if (is_instance(rc)) {
 							connection_unroute(rc, HERE);
-							delete_connection(&rc);
 						}
+						connection_delref(&cc, cc->logger);
 						*stp = st = dst = md->v1_st = NULL;
 						return true;
 					}

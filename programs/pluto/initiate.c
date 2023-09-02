@@ -175,12 +175,8 @@ static bool initiate_connection_2_address(struct connection *c,
 
 		bool ok = initiate_connection_3_template(d, background, inception);
 
-		if (!ok) {
-			/* instance so free to delete */
-			delete_connection(&d);
-		} else {
-			connection_detach(d, d->logger);
-		}
+		connection_detach(d, d->logger);
+		connection_delref(&d, c->logger);
 		return ok;
 	}
 
@@ -252,12 +248,9 @@ static bool initiate_connection_3_template(struct connection *c,
 		llog(LOG_STREAM|RC_LOG, d->logger, "instantiated connection");
 		/* flip cur_connection */
 		bool ok = initiate_connection_4_fab(d, background, inception);
-		if (!ok) {
-			/* instance so free to delete */
-			delete_connection(&d);
-		} else {
-			connection_detach(d, c->logger);
-		}
+
+		connection_detach(d, c->logger);
+		connection_delref(&d, c->logger);
 		return ok;
 	}
 
@@ -273,12 +266,9 @@ static bool initiate_connection_3_template(struct connection *c,
 		llog(LOG_STREAM|RC_LOG, d->logger, "instantiated connection");
 		/* flip cur_connection */
 		bool ok = initiate_connection_4_fab(d, background, inception);
-		if (!ok) {
-			/* instance so free to delete */
-			delete_connection(&d);
-		} else {
-			connection_detach(d, c->logger);
-		}
+
+		connection_detach(d, c->logger);
+		connection_delref(&d, c->logger);
 		return ok;
 	}
 
@@ -441,22 +431,24 @@ void ipsecdoi_initiate(struct connection *c,
 				/* sec-labels require a separate child connection */
 				cc = sec_label_child_instantiate(ike, sec_label, HERE);
 			} else {
-				cc = c;
+				cc = connection_addref(c, c->logger);
 			}
 			add_v2_pending(background ? null_fd : logger->global_whackfd,
 				       ike, cc, policy,
 				       replacing, sec_label,
 				       false /*part of initiate*/);
+			connection_delref(&cc, cc->logger);
 		} else if (!already_has_larval_v2_child(ike, c)) {
 			dbg("initiating child sa with "PRI_LOGGER, pri_logger(logger));
 			struct connection *cc;
 			if (c->config->sec_label.len > 0) {
 				cc = sec_label_child_instantiate(ike, sec_label, HERE);
 			} else {
-				cc = c;
+				cc = connection_addref(c, c->logger);
 			}
 			submit_v2_CREATE_CHILD_SA_new_child(ike, cc, policy,
 							    logger->global_whackfd);
+			connection_delref(&cc, cc->logger);
 		}
 		break;
 	}

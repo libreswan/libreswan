@@ -396,6 +396,7 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 		}
 		v2_dispatch(ike, md, transition);
 		statetime_stop(&start, "%s()", __func__);
+		connection_delref(&c, md->md_logger);
 		return;
 	}
 
@@ -618,11 +619,12 @@ void initiate_v2_IKE_SA_INIT_request(struct connection *c,
 			PEXPECT(ike->sa.st_logger, c == ike->sa.st_connection);
 			cc = sec_label_child_instantiate(ike, sec_label, HERE);
 		} else {
-			cc = c;
+			cc = connection_addref(c, ike->sa.st_logger);
 		}
 		add_v2_pending(background ? null_fd : logger->global_whackfd, ike, cc, policy,
 			       predecessor == NULL ? SOS_NOBODY : predecessor->st_serialno,
 			       sec_label, true /*part of initiate*/);
+		connection_delref(&cc, ike->sa.st_logger);
 	}
 
 	/*

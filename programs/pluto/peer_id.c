@@ -621,15 +621,19 @@ bool refine_host_connection_of_state_on_responder(struct state *st,
 			r = rw_responder_id_instantiate(r, st->st_connection->remote->host.addr,
 							NULL/*not-yet-known*/,
 							peer_id, HERE);
+		} else {
+			r = connection_addref(r, st->st_logger);
 		}
 		/*
 		 * R is an improvement on .st_connection -- replace.
 		 */
 		connswitch_state_and_log(st, r);
+		connection_delref(&r, st->st_logger);
 	}
+
 	connection_buf bcb;
 	dbg_rhc("most refined is "PRI_CONNECTION,
-		pri_connection(r, &bcb));
+		pri_connection(st->st_connection, &bcb));
 	return true;
 }
 
