@@ -790,22 +790,6 @@ struct state {
 		bool skip_send_delete;
 
 		/*
-		 * In delete_state(), should the code trying to delete
-		 * a connection be skipped?
-		 *
-		 * When tearing down an SA family, the state and
-		 * connection code get into a bun-fight over when
-		 * connections/states should be deleted.  This and
-		 * connection's .going_away try to avoid this.
-		 *
-		 * A simple rule would be for the connection code to
-		 * delete the (kernel) state, but most code has the
-		 * state trying to delete the connection.  IKEv2 is
-		 * being changed to do this.
-		 */
-		bool skip_connection;
-
-		/*
 		 * For the most part delete_state() will log a message
 		 * announcing that the state is being deleted if a
 		 * delete notify is/nt being sent.

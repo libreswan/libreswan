@@ -835,7 +835,6 @@ void delete_child_sa(struct child_sa **child)
 	*child = NULL;
 	on_delete(st, skip_revival);
 	on_delete(st, skip_send_delete);
-	on_delete(st, skip_connection);
 	on_delete(st, skip_kernel_policy);
 	delete_state(st);
 }
@@ -846,7 +845,6 @@ void delete_ike_sa(struct ike_sa **ike)
 	*ike = NULL;
 	on_delete(st, skip_revival);
 	on_delete(st, skip_send_delete);
-	on_delete(st, skip_connection);
 	delete_state(st);
 }
 

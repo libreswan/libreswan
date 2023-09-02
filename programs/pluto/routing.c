@@ -961,7 +961,6 @@ void connection_delete_child(struct ike_sa *ike, struct child_sa **child, where_
 		 */
 		on_delete(&(*child)->sa, skip_send_delete);
 		on_delete(&(*child)->sa, skip_revival);
-		on_delete(&(*child)->sa, skip_connection);
 		/*
 		 * Let state machine figure out how to react.
 		 */
@@ -1708,7 +1707,6 @@ static void dispatch_1(enum routing_event event,
 
 		case X(DELETE_IKE, UNROUTED, INSTANCE):			/* certoe-08-nat-packet-cop-restart */
 		case X(DELETE_IKE, UNROUTED_NEGOTIATION, INSTANCE):	/* dnsoe-01 ... */
-			on_delete(&(*e->ike)->sa, skip_connection);
 			delete_ike_family(e->ike);
 			delete_spd_kernel_policies(&(*cp)->child.spds, EXPECT_NO_INBOUND,
 						   (*cp)->logger, where, "unroute instance");
