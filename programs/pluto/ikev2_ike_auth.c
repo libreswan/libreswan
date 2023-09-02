@@ -1147,12 +1147,6 @@ static void wipe_old_v2_connections(const struct ike_sa *ike)
 			delete_v2_states_by_connection(dd);
 			connection_unroute(dd, HERE);
 			connection_delref(&dd, ike->sa.st_logger);
-
-			/*
-			 * When .st_connection is being refcnt'd above
-			 * delete states will drop this reference.
-			 */
-			st_connection_delref(&d);
 		} else {
 			/* NOTE: C not D (github/1247) */
 			/* this only deletes the states */

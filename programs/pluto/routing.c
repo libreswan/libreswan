@@ -1711,7 +1711,6 @@ static void dispatch_1(enum routing_event event,
 			delete_spd_kernel_policies(&(*cp)->child.spds, EXPECT_NO_INBOUND,
 						   (*cp)->logger, where, "unroute instance");
 			set_routing(event, (*cp), RT_UNROUTED, NULL, where);
-			st_connection_delref(cp);
 			return;
 		case X(DELETE_IKE, ROUTED_ONDEMAND, PERMANENT):		/* ROUTED_NEGOTIATION!?! */
 		case X(DELETE_IKE, ROUTED_REVIVAL, PERMANENT):		/* ROUTED_NEGOTIATION!?! */
