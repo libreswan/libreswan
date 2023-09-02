@@ -1811,8 +1811,7 @@ static enum connection_kind extract_connection_end_kind(const struct whack_messa
 	return CK_PERMANENT;
 }
 
-static diag_t extract_shunt(const char *shunt_name,
-			    struct config *config,
+static diag_t extract_shunt(struct config *config,
 			    const struct whack_message *wm,
 			    enum shunt_kind shunt_kind,
 			    enum shunt_policy unset_shunt)
@@ -1822,9 +1821,13 @@ static diag_t extract_shunt(const char *shunt_name,
 		shunt_policy = unset_shunt;
 	}
 	if (!shunt_ok(shunt_kind, shunt_policy)) {
-		enum_buf sb;
-		return diag("%sshunt=%s invalid",
-			    shunt_name, str_enum_short(&shunt_policy_names, shunt_policy, &sb));
+		JAMBUF(buf) {
+			jam_enum_human(buf, &shunt_kind_names, shunt_kind);
+			jam_string(buf, "shunt=");
+			jam_enum_human(buf, &shunt_policy_names, shunt_policy);
+			jam_string(buf, " invalid");
+			return diag_jambuf(buf);
+		}
 	}
 	config->shunt[shunt_kind] = shunt_policy;
 	return NULL;
@@ -2288,15 +2291,13 @@ static diag_t extract_connection(const struct whack_message *wm,
 		break;
 	}
 
-	d = extract_shunt("never-negotiate", config, wm,
-			  SHUNT_KIND_NEVER_NEGOTIATE,
+	d = extract_shunt(config, wm, SHUNT_KIND_NEVER_NEGOTIATE,
 			  /*unset*/SHUNT_UNSET);
 	if (d != NULL) {
 		return d;
 	}
 
-	d = extract_shunt("negotiation", config, wm,
-			  SHUNT_KIND_NEGOTIATION,
+	d = extract_shunt(config, wm, SHUNT_KIND_NEGOTIATION,
 			  /*unset*/SHUNT_HOLD);
 	if (d != NULL) {
 		return d;
@@ -2310,8 +2311,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 		config->negotiation_shunt = SHUNT_HOLD;
 	}
 
-	d = extract_shunt("failure", config, wm,
-			  SHUNT_KIND_FAILURE,
+	d = extract_shunt(config, wm, SHUNT_KIND_FAILURE,
 			  /*unset*/SHUNT_NONE);
 	if (d != NULL) {
 		return d;
