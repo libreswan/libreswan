@@ -7,6 +7,7 @@ pluto enum_names:
          match CK_INVALID: OK
          short_name 0: INVALID OK
          jam_enum_short 0: INVALID OK
+         jam_enum_human 0: invalid OK
          match INVALID [short]: OK
     1 -> CK_GROUP
          jam_enum 1: CK_GROUP OK
@@ -14,6 +15,7 @@ pluto enum_names:
          match CK_GROUP: OK
          short_name 1: GROUP OK
          jam_enum_short 1: GROUP OK
+         jam_enum_human 1: group OK
          match GROUP [short]: OK
     2 -> CK_TEMPLATE
          jam_enum 2: CK_TEMPLATE OK
@@ -21,6 +23,7 @@ pluto enum_names:
          match CK_TEMPLATE: OK
          short_name 2: TEMPLATE OK
          jam_enum_short 2: TEMPLATE OK
+         jam_enum_human 2: template OK
          match TEMPLATE [short]: OK
     3 -> CK_PERMANENT
          jam_enum 3: CK_PERMANENT OK
@@ -28,6 +31,7 @@ pluto enum_names:
          match CK_PERMANENT: OK
          short_name 3: PERMANENT OK
          jam_enum_short 3: PERMANENT OK
+         jam_enum_human 3: permanent OK
          match PERMANENT [short]: OK
     4 -> CK_INSTANCE
          jam_enum 4: CK_INSTANCE OK
@@ -35,6 +39,7 @@ pluto enum_names:
          match CK_INSTANCE: OK
          short_name 4: INSTANCE OK
          jam_enum_short 4: INSTANCE OK
+         jam_enum_human 4: instance OK
          match INSTANCE [short]: OK
     5 -> CK_LABELED_TEMPLATE
          jam_enum 5: CK_LABELED_TEMPLATE OK
@@ -42,6 +47,7 @@ pluto enum_names:
          match CK_LABELED_TEMPLATE: OK
          short_name 5: LABELED_TEMPLATE OK
          jam_enum_short 5: LABELED_TEMPLATE OK
+         jam_enum_human 5: labeled-template OK
          match LABELED_TEMPLATE [short]: OK
     6 -> CK_LABELED_PARENT
          jam_enum 6: CK_LABELED_PARENT OK
@@ -49,6 +55,7 @@ pluto enum_names:
          match CK_LABELED_PARENT: OK
          short_name 6: LABELED_PARENT OK
          jam_enum_short 6: LABELED_PARENT OK
+         jam_enum_human 6: labeled-parent OK
          match LABELED_PARENT [short]: OK
     7 -> CK_LABELED_CHILD
          jam_enum 7: CK_LABELED_CHILD OK
@@ -56,6 +63,7 @@ pluto enum_names:
          match CK_LABELED_CHILD: OK
          short_name 7: LABELED_CHILD OK
          jam_enum_short 7: LABELED_CHILD OK
+         jam_enum_human 7: labeled-child OK
          match LABELED_CHILD [short]: OK
 
   certpolicy_type_names:
@@ -65,6 +73,7 @@ pluto enum_names:
          match CERT_NEVERSEND: OK
          short_name 1: NEVERSEND OK
          jam_enum_short 1: NEVERSEND OK
+         jam_enum_human 1: neversend OK
          match NEVERSEND [short]: OK
     2 -> CERT_SENDIFASKED
          jam_enum 2: CERT_SENDIFASKED OK
@@ -72,6 +81,7 @@ pluto enum_names:
          match CERT_SENDIFASKED: OK
          short_name 2: SENDIFASKED OK
          jam_enum_short 2: SENDIFASKED OK
+         jam_enum_human 2: sendifasked OK
          match SENDIFASKED [short]: OK
     3 -> CERT_ALWAYSSEND
          jam_enum 3: CERT_ALWAYSSEND OK
@@ -79,6 +89,7 @@ pluto enum_names:
          match CERT_ALWAYSSEND: OK
          short_name 3: ALWAYSSEND OK
          jam_enum_short 3: ALWAYSSEND OK
+         jam_enum_human 3: alwayssend OK
          match ALWAYSSEND [short]: OK
 
 IETF registry enum_names:
@@ -91,6 +102,7 @@ IETF registry enum_names:
          match ISAKMP Version 1.0  [trunc]: OK
          short_name 16: ISAKMP Version 1.0 (rfc2407) OK
          jam_enum_short 16: ISAKMP Version 1.0 (rfc2407) OK
+         jam_enum_human 16: isakmp version 1.0 (rfc2407) OK
    32 -> IKEv2 version 2.0 (rfc4306/rfc5996)
          jam_enum 32: IKEv2 version 2.0 (rfc4306/rfc5996) OK
          search IKEv2 version 2.0 (rfc4306/rfc5996): OK
@@ -98,6 +110,7 @@ IETF registry enum_names:
          match IKEv2 version 2.0  [trunc]: OK
          short_name 32: IKEv2 version 2.0 (rfc4306/rfc5996) OK
          jam_enum_short 32: IKEv2 version 2.0 (rfc4306/rfc5996) OK
+         jam_enum_human 32: ikev2 version 2.0 (rfc4306/rfc5996) OK
 
   doi_names:
     0 -> ISAKMP_DOI_ISAKMP
@@ -106,12 +119,14 @@ IETF registry enum_names:
          match ISAKMP_DOI_ISAKMP: OK
          short_name 0: ISAKMP_DOI_ISAKMP OK
          jam_enum_short 0: ISAKMP_DOI_ISAKMP OK
+         jam_enum_human 0: isakmp-doi-isakmp OK
     1 -> ISAKMP_DOI_IPSEC
          jam_enum 1: ISAKMP_DOI_IPSEC OK
          search ISAKMP_DOI_IPSEC: OK
          match ISAKMP_DOI_IPSEC: OK
          short_name 1: ISAKMP_DOI_IPSEC OK
          jam_enum_short 1: ISAKMP_DOI_IPSEC OK
+         jam_enum_human 1: isakmp-doi-ipsec OK
 
   ikev1_payload_names:
     0 -> ISAKMP_NEXT_NONE
@@ -120,6 +135,7 @@ IETF registry enum_names:
          match ISAKMP_NEXT_NONE: OK
          short_name 0: NONE OK
          jam_enum_short 0: NONE OK
+         jam_enum_human 0: none OK
          match NONE [short]: OK
     1 -> ISAKMP_NEXT_SA
          jam_enum 1: ISAKMP_NEXT_SA OK
@@ -127,6 +143,7 @@ IETF registry enum_names:
          match ISAKMP_NEXT_SA: OK
          short_name 1: SA OK
          jam_enum_short 1: SA OK
+         jam_enum_human 1: sa OK
          match SA [short]: OK
     2 -> ISAKMP_NEXT_P
          jam_enum 2: ISAKMP_NEXT_P OK
@@ -134,6 +151,7 @@ IETF registry enum_names:
          match ISAKMP_NEXT_P: OK
          short_name 2: P OK
          jam_enum_short 2: P OK
+         jam_enum_human 2: p OK
          match P [short]: OK
     3 -> ISAKMP_NEXT_T
          jam_enum 3: ISAKMP_NEXT_T OK
@@ -141,6 +159,7 @@ IETF registry enum_names:
          match ISAKMP_NEXT_T: OK
          short_name 3: T OK
          jam_enum_short 3: T OK
+         jam_enum_human 3: t OK
          match T [short]: OK
     4 -> ISAKMP_NEXT_KE
          jam_enum 4: ISAKMP_NEXT_KE OK
@@ -148,6 +167,7 @@ IETF registry enum_names:
          match ISAKMP_NEXT_KE: OK
          short_name 4: KE OK
          jam_enum_short 4: KE OK
+         jam_enum_human 4: ke OK
          match KE [short]: OK
     5 -> ISAKMP_NEXT_ID
          jam_enum 5: ISAKMP_NEXT_ID OK
@@ -155,6 +175,7 @@ IETF registry enum_names:
          match ISAKMP_NEXT_ID: OK
          short_name 5: ID OK
          jam_enum_short 5: ID OK
+         jam_enum_human 5: id OK
          match ID [short]: OK
     6 -> ISAKMP_NEXT_CERT
          jam_enum 6: ISAKMP_NEXT_CERT OK
@@ -162,6 +183,7 @@ IETF registry enum_names:
          match ISAKMP_NEXT_CERT: OK
          short_name 6: CERT OK
          jam_enum_short 6: CERT OK
+         jam_enum_human 6: cert OK
          match CERT [short]: OK
     7 -> ISAKMP_NEXT_CR
          jam_enum 7: ISAKMP_NEXT_CR OK
@@ -169,6 +191,7 @@ IETF registry enum_names:
          match ISAKMP_NEXT_CR: OK
          short_name 7: CR OK
          jam_enum_short 7: CR OK
+         jam_enum_human 7: cr OK
          match CR [short]: OK
     8 -> ISAKMP_NEXT_HASH
          jam_enum 8: ISAKMP_NEXT_HASH OK
@@ -176,6 +199,7 @@ IETF registry enum_names:
          match ISAKMP_NEXT_HASH: OK
          short_name 8: HASH OK
          jam_enum_short 8: HASH OK
+         jam_enum_human 8: hash OK
          match HASH [short]: OK
     9 -> ISAKMP_NEXT_SIG
          jam_enum 9: ISAKMP_NEXT_SIG OK
@@ -183,6 +207,7 @@ IETF registry enum_names:
          match ISAKMP_NEXT_SIG: OK
          short_name 9: SIG OK
          jam_enum_short 9: SIG OK
+         jam_enum_human 9: sig OK
          match SIG [short]: OK
    10 -> ISAKMP_NEXT_NONCE
          jam_enum 10: ISAKMP_NEXT_NONCE OK
@@ -190,6 +215,7 @@ IETF registry enum_names:
          match ISAKMP_NEXT_NONCE: OK
          short_name 10: NONCE OK
          jam_enum_short 10: NONCE OK
+         jam_enum_human 10: nonce OK
          match NONCE [short]: OK
    11 -> ISAKMP_NEXT_N
          jam_enum 11: ISAKMP_NEXT_N OK
@@ -197,6 +223,7 @@ IETF registry enum_names:
          match ISAKMP_NEXT_N: OK
          short_name 11: N OK
          jam_enum_short 11: N OK
+         jam_enum_human 11: n OK
          match N [short]: OK
    12 -> ISAKMP_NEXT_D
          jam_enum 12: ISAKMP_NEXT_D OK
@@ -204,6 +231,7 @@ IETF registry enum_names:
          match ISAKMP_NEXT_D: OK
          short_name 12: D OK
          jam_enum_short 12: D OK
+         jam_enum_human 12: d OK
          match D [short]: OK
    13 -> ISAKMP_NEXT_VID
          jam_enum 13: ISAKMP_NEXT_VID OK
@@ -211,6 +239,7 @@ IETF registry enum_names:
          match ISAKMP_NEXT_VID: OK
          short_name 13: VID OK
          jam_enum_short 13: VID OK
+         jam_enum_human 13: vid OK
          match VID [short]: OK
    14 -> ISAKMP_NEXT_MODECFG
          jam_enum 14: ISAKMP_NEXT_MODECFG OK
@@ -218,6 +247,7 @@ IETF registry enum_names:
          match ISAKMP_NEXT_MODECFG: OK
          short_name 14: MODECFG OK
          jam_enum_short 14: MODECFG OK
+         jam_enum_human 14: modecfg OK
          match MODECFG [short]: OK
    15 -> ISAKMP_NEXT_SAK
          jam_enum 15: ISAKMP_NEXT_SAK OK
@@ -225,6 +255,7 @@ IETF registry enum_names:
          match ISAKMP_NEXT_SAK: OK
          short_name 15: SAK OK
          jam_enum_short 15: SAK OK
+         jam_enum_human 15: sak OK
          match SAK [short]: OK
    16 -> ISAKMP_NEXT_TEK
          jam_enum 16: ISAKMP_NEXT_TEK OK
@@ -232,6 +263,7 @@ IETF registry enum_names:
          match ISAKMP_NEXT_TEK: OK
          short_name 16: TEK OK
          jam_enum_short 16: TEK OK
+         jam_enum_human 16: tek OK
          match TEK [short]: OK
    17 -> ISAKMP_NEXT_KD
          jam_enum 17: ISAKMP_NEXT_KD OK
@@ -239,6 +271,7 @@ IETF registry enum_names:
          match ISAKMP_NEXT_KD: OK
          short_name 17: KD OK
          jam_enum_short 17: KD OK
+         jam_enum_human 17: kd OK
          match KD [short]: OK
    18 -> ISAKMP_NEXT_SEQ
          jam_enum 18: ISAKMP_NEXT_SEQ OK
@@ -246,6 +279,7 @@ IETF registry enum_names:
          match ISAKMP_NEXT_SEQ: OK
          short_name 18: SEQ OK
          jam_enum_short 18: SEQ OK
+         jam_enum_human 18: seq OK
          match SEQ [short]: OK
    19 -> ISAKMP_NEXT_POP
          jam_enum 19: ISAKMP_NEXT_POP OK
@@ -253,6 +287,7 @@ IETF registry enum_names:
          match ISAKMP_NEXT_POP: OK
          short_name 19: POP OK
          jam_enum_short 19: POP OK
+         jam_enum_human 19: pop OK
          match POP [short]: OK
    20 -> ISAKMP_NEXT_NATD_RFC
          jam_enum 20: ISAKMP_NEXT_NATD_RFC OK
@@ -260,6 +295,7 @@ IETF registry enum_names:
          match ISAKMP_NEXT_NATD_RFC: OK
          short_name 20: NATD_RFC OK
          jam_enum_short 20: NATD_RFC OK
+         jam_enum_human 20: natd-rfc OK
          match NATD_RFC [short]: OK
    21 -> ISAKMP_NEXT_NATOA_RFC
          jam_enum 21: ISAKMP_NEXT_NATOA_RFC OK
@@ -267,6 +303,7 @@ IETF registry enum_names:
          match ISAKMP_NEXT_NATOA_RFC: OK
          short_name 21: NATOA_RFC OK
          jam_enum_short 21: NATOA_RFC OK
+         jam_enum_human 21: natoa-rfc OK
          match NATOA_RFC [short]: OK
    22 -> ISAKMP_NEXT_GAP
          jam_enum 22: ISAKMP_NEXT_GAP OK
@@ -274,6 +311,7 @@ IETF registry enum_names:
          match ISAKMP_NEXT_GAP: OK
          short_name 22: GAP OK
          jam_enum_short 22: GAP OK
+         jam_enum_human 22: gap OK
          match GAP [short]: OK
   130 -> ISAKMP_NEXT_NATD_DRAFTS
          jam_enum 130: ISAKMP_NEXT_NATD_DRAFTS OK
@@ -281,6 +319,7 @@ IETF registry enum_names:
          match ISAKMP_NEXT_NATD_DRAFTS: OK
          short_name 130: NATD_DRAFTS OK
          jam_enum_short 130: NATD_DRAFTS OK
+         jam_enum_human 130: natd-drafts OK
          match NATD_DRAFTS [short]: OK
   131 -> ISAKMP_NEXT_NATOA_DRAFTS
          jam_enum 131: ISAKMP_NEXT_NATOA_DRAFTS OK
@@ -288,6 +327,7 @@ IETF registry enum_names:
          match ISAKMP_NEXT_NATOA_DRAFTS: OK
          short_name 131: NATOA_DRAFTS OK
          jam_enum_short 131: NATOA_DRAFTS OK
+         jam_enum_human 131: natoa-drafts OK
          match NATOA_DRAFTS [short]: OK
   132 -> ISAKMP_NEXT_IKE_FRAGMENTATION
          jam_enum 132: ISAKMP_NEXT_IKE_FRAGMENTATION OK
@@ -295,6 +335,7 @@ IETF registry enum_names:
          match ISAKMP_NEXT_IKE_FRAGMENTATION: OK
          short_name 132: IKE_FRAGMENTATION OK
          jam_enum_short 132: IKE_FRAGMENTATION OK
+         jam_enum_human 132: ike-fragmentation OK
          match IKE_FRAGMENTATION [short]: OK
 
   ikev2_payload_names:
@@ -304,6 +345,7 @@ IETF registry enum_names:
          match ISAKMP_NEXT_v2NONE: OK
          short_name 0: NONE OK
          jam_enum_short 0: NONE OK
+         jam_enum_human 0: none OK
          match NONE [short]: OK
    33 -> ISAKMP_NEXT_v2SA
          jam_enum 33: ISAKMP_NEXT_v2SA OK
@@ -311,6 +353,7 @@ IETF registry enum_names:
          match ISAKMP_NEXT_v2SA: OK
          short_name 33: SA OK
          jam_enum_short 33: SA OK
+         jam_enum_human 33: sa OK
          match SA [short]: OK
    34 -> ISAKMP_NEXT_v2KE
          jam_enum 34: ISAKMP_NEXT_v2KE OK
@@ -318,6 +361,7 @@ IETF registry enum_names:
          match ISAKMP_NEXT_v2KE: OK
          short_name 34: KE OK
          jam_enum_short 34: KE OK
+         jam_enum_human 34: ke OK
          match KE [short]: OK
    35 -> ISAKMP_NEXT_v2IDi
          jam_enum 35: ISAKMP_NEXT_v2IDi OK
@@ -325,6 +369,7 @@ IETF registry enum_names:
          match ISAKMP_NEXT_v2IDi: OK
          short_name 35: IDi OK
          jam_enum_short 35: IDi OK
+         jam_enum_human 35: idi OK
          match IDi [short]: OK
    36 -> ISAKMP_NEXT_v2IDr
          jam_enum 36: ISAKMP_NEXT_v2IDr OK
@@ -332,6 +377,7 @@ IETF registry enum_names:
          match ISAKMP_NEXT_v2IDr: OK
          short_name 36: IDr OK
          jam_enum_short 36: IDr OK
+         jam_enum_human 36: idr OK
          match IDr [short]: OK
    37 -> ISAKMP_NEXT_v2CERT
          jam_enum 37: ISAKMP_NEXT_v2CERT OK
@@ -339,6 +385,7 @@ IETF registry enum_names:
          match ISAKMP_NEXT_v2CERT: OK
          short_name 37: CERT OK
          jam_enum_short 37: CERT OK
+         jam_enum_human 37: cert OK
          match CERT [short]: OK
    38 -> ISAKMP_NEXT_v2CERTREQ
          jam_enum 38: ISAKMP_NEXT_v2CERTREQ OK
@@ -346,6 +393,7 @@ IETF registry enum_names:
          match ISAKMP_NEXT_v2CERTREQ: OK
          short_name 38: CERTREQ OK
          jam_enum_short 38: CERTREQ OK
+         jam_enum_human 38: certreq OK
          match CERTREQ [short]: OK
    39 -> ISAKMP_NEXT_v2AUTH
          jam_enum 39: ISAKMP_NEXT_v2AUTH OK
@@ -353,6 +401,7 @@ IETF registry enum_names:
          match ISAKMP_NEXT_v2AUTH: OK
          short_name 39: AUTH OK
          jam_enum_short 39: AUTH OK
+         jam_enum_human 39: auth OK
          match AUTH [short]: OK
    40 -> ISAKMP_NEXT_v2Ni
          jam_enum 40: ISAKMP_NEXT_v2Ni OK
@@ -360,6 +409,7 @@ IETF registry enum_names:
          match ISAKMP_NEXT_v2Ni: OK
          short_name 40: Ni OK
          jam_enum_short 40: Ni OK
+         jam_enum_human 40: ni OK
          match Ni [short]: OK
    41 -> ISAKMP_NEXT_v2N
          jam_enum 41: ISAKMP_NEXT_v2N OK
@@ -367,6 +417,7 @@ IETF registry enum_names:
          match ISAKMP_NEXT_v2N: OK
          short_name 41: N OK
          jam_enum_short 41: N OK
+         jam_enum_human 41: n OK
          match N [short]: OK
    42 -> ISAKMP_NEXT_v2D
          jam_enum 42: ISAKMP_NEXT_v2D OK
@@ -374,6 +425,7 @@ IETF registry enum_names:
          match ISAKMP_NEXT_v2D: OK
          short_name 42: D OK
          jam_enum_short 42: D OK
+         jam_enum_human 42: d OK
          match D [short]: OK
    43 -> ISAKMP_NEXT_v2V
          jam_enum 43: ISAKMP_NEXT_v2V OK
@@ -381,6 +433,7 @@ IETF registry enum_names:
          match ISAKMP_NEXT_v2V: OK
          short_name 43: V OK
          jam_enum_short 43: V OK
+         jam_enum_human 43: v OK
          match V [short]: OK
    44 -> ISAKMP_NEXT_v2TSi
          jam_enum 44: ISAKMP_NEXT_v2TSi OK
@@ -388,6 +441,7 @@ IETF registry enum_names:
          match ISAKMP_NEXT_v2TSi: OK
          short_name 44: TSi OK
          jam_enum_short 44: TSi OK
+         jam_enum_human 44: tsi OK
          match TSi [short]: OK
    45 -> ISAKMP_NEXT_v2TSr
          jam_enum 45: ISAKMP_NEXT_v2TSr OK
@@ -395,6 +449,7 @@ IETF registry enum_names:
          match ISAKMP_NEXT_v2TSr: OK
          short_name 45: TSr OK
          jam_enum_short 45: TSr OK
+         jam_enum_human 45: tsr OK
          match TSr [short]: OK
    46 -> ISAKMP_NEXT_v2SK
          jam_enum 46: ISAKMP_NEXT_v2SK OK
@@ -402,6 +457,7 @@ IETF registry enum_names:
          match ISAKMP_NEXT_v2SK: OK
          short_name 46: SK OK
          jam_enum_short 46: SK OK
+         jam_enum_human 46: sk OK
          match SK [short]: OK
    47 -> ISAKMP_NEXT_v2CP
          jam_enum 47: ISAKMP_NEXT_v2CP OK
@@ -409,6 +465,7 @@ IETF registry enum_names:
          match ISAKMP_NEXT_v2CP: OK
          short_name 47: CP OK
          jam_enum_short 47: CP OK
+         jam_enum_human 47: cp OK
          match CP [short]: OK
    48 -> ISAKMP_NEXT_v2EAP
          jam_enum 48: ISAKMP_NEXT_v2EAP OK
@@ -416,6 +473,7 @@ IETF registry enum_names:
          match ISAKMP_NEXT_v2EAP: OK
          short_name 48: EAP OK
          jam_enum_short 48: EAP OK
+         jam_enum_human 48: eap OK
          match EAP [short]: OK
    49 -> ISAKMP_NEXT_v2GSPM
          jam_enum 49: ISAKMP_NEXT_v2GSPM OK
@@ -423,6 +481,7 @@ IETF registry enum_names:
          match ISAKMP_NEXT_v2GSPM: OK
          short_name 49: GSPM OK
          jam_enum_short 49: GSPM OK
+         jam_enum_human 49: gspm OK
          match GSPM [short]: OK
    50 -> ISAKMP_NEXT_v2IDG
          jam_enum 50: ISAKMP_NEXT_v2IDG OK
@@ -430,6 +489,7 @@ IETF registry enum_names:
          match ISAKMP_NEXT_v2IDG: OK
          short_name 50: IDG OK
          jam_enum_short 50: IDG OK
+         jam_enum_human 50: idg OK
          match IDG [short]: OK
    51 -> ISAKMP_NEXT_v2GSA
          jam_enum 51: ISAKMP_NEXT_v2GSA OK
@@ -437,6 +497,7 @@ IETF registry enum_names:
          match ISAKMP_NEXT_v2GSA: OK
          short_name 51: GSA OK
          jam_enum_short 51: GSA OK
+         jam_enum_human 51: gsa OK
          match GSA [short]: OK
    52 -> ISAKMP_NEXT_v2KD
          jam_enum 52: ISAKMP_NEXT_v2KD OK
@@ -444,6 +505,7 @@ IETF registry enum_names:
          match ISAKMP_NEXT_v2KD: OK
          short_name 52: KD OK
          jam_enum_short 52: KD OK
+         jam_enum_human 52: kd OK
          match KD [short]: OK
    53 -> ISAKMP_NEXT_v2SKF
          jam_enum 53: ISAKMP_NEXT_v2SKF OK
@@ -451,6 +513,7 @@ IETF registry enum_names:
          match ISAKMP_NEXT_v2SKF: OK
          short_name 53: SKF OK
          jam_enum_short 53: SKF OK
+         jam_enum_human 53: skf OK
          match SKF [short]: OK
   132 -> ISAKMP_NEXT_v2IKE_FRAGMENTATION
          jam_enum 132: ISAKMP_NEXT_v2IKE_FRAGMENTATION OK
@@ -458,6 +521,7 @@ IETF registry enum_names:
          match ISAKMP_NEXT_v2IKE_FRAGMENTATION: OK
          short_name 132: IKE_FRAGMENTATION OK
          jam_enum_short 132: IKE_FRAGMENTATION OK
+         jam_enum_human 132: ike-fragmentation OK
          match IKE_FRAGMENTATION [short]: OK
 
   payload_names_ikev1orv2:
@@ -467,270 +531,315 @@ IETF registry enum_names:
          match ISAKMP_NEXT_NONE: OK
          short_name 0: ISAKMP_NEXT_NONE OK
          jam_enum_short 0: ISAKMP_NEXT_NONE OK
+         jam_enum_human 0: isakmp-next-none OK
     1 -> ISAKMP_NEXT_SA
          jam_enum 1: ISAKMP_NEXT_SA OK
          search ISAKMP_NEXT_SA: OK
          match ISAKMP_NEXT_SA: OK
          short_name 1: ISAKMP_NEXT_SA OK
          jam_enum_short 1: ISAKMP_NEXT_SA OK
+         jam_enum_human 1: isakmp-next-sa OK
     2 -> ISAKMP_NEXT_P
          jam_enum 2: ISAKMP_NEXT_P OK
          search ISAKMP_NEXT_P: OK
          match ISAKMP_NEXT_P: OK
          short_name 2: ISAKMP_NEXT_P OK
          jam_enum_short 2: ISAKMP_NEXT_P OK
+         jam_enum_human 2: isakmp-next-p OK
     3 -> ISAKMP_NEXT_T
          jam_enum 3: ISAKMP_NEXT_T OK
          search ISAKMP_NEXT_T: OK
          match ISAKMP_NEXT_T: OK
          short_name 3: ISAKMP_NEXT_T OK
          jam_enum_short 3: ISAKMP_NEXT_T OK
+         jam_enum_human 3: isakmp-next-t OK
     4 -> ISAKMP_NEXT_KE
          jam_enum 4: ISAKMP_NEXT_KE OK
          search ISAKMP_NEXT_KE: OK
          match ISAKMP_NEXT_KE: OK
          short_name 4: ISAKMP_NEXT_KE OK
          jam_enum_short 4: ISAKMP_NEXT_KE OK
+         jam_enum_human 4: isakmp-next-ke OK
     5 -> ISAKMP_NEXT_ID
          jam_enum 5: ISAKMP_NEXT_ID OK
          search ISAKMP_NEXT_ID: OK
          match ISAKMP_NEXT_ID: OK
          short_name 5: ISAKMP_NEXT_ID OK
          jam_enum_short 5: ISAKMP_NEXT_ID OK
+         jam_enum_human 5: isakmp-next-id OK
     6 -> ISAKMP_NEXT_CERT
          jam_enum 6: ISAKMP_NEXT_CERT OK
          search ISAKMP_NEXT_CERT: OK
          match ISAKMP_NEXT_CERT: OK
          short_name 6: ISAKMP_NEXT_CERT OK
          jam_enum_short 6: ISAKMP_NEXT_CERT OK
+         jam_enum_human 6: isakmp-next-cert OK
     7 -> ISAKMP_NEXT_CR
          jam_enum 7: ISAKMP_NEXT_CR OK
          search ISAKMP_NEXT_CR: OK
          match ISAKMP_NEXT_CR: OK
          short_name 7: ISAKMP_NEXT_CR OK
          jam_enum_short 7: ISAKMP_NEXT_CR OK
+         jam_enum_human 7: isakmp-next-cr OK
     8 -> ISAKMP_NEXT_HASH
          jam_enum 8: ISAKMP_NEXT_HASH OK
          search ISAKMP_NEXT_HASH: OK
          match ISAKMP_NEXT_HASH: OK
          short_name 8: ISAKMP_NEXT_HASH OK
          jam_enum_short 8: ISAKMP_NEXT_HASH OK
+         jam_enum_human 8: isakmp-next-hash OK
     9 -> ISAKMP_NEXT_SIG
          jam_enum 9: ISAKMP_NEXT_SIG OK
          search ISAKMP_NEXT_SIG: OK
          match ISAKMP_NEXT_SIG: OK
          short_name 9: ISAKMP_NEXT_SIG OK
          jam_enum_short 9: ISAKMP_NEXT_SIG OK
+         jam_enum_human 9: isakmp-next-sig OK
    10 -> ISAKMP_NEXT_NONCE
          jam_enum 10: ISAKMP_NEXT_NONCE OK
          search ISAKMP_NEXT_NONCE: OK
          match ISAKMP_NEXT_NONCE: OK
          short_name 10: ISAKMP_NEXT_NONCE OK
          jam_enum_short 10: ISAKMP_NEXT_NONCE OK
+         jam_enum_human 10: isakmp-next-nonce OK
    11 -> ISAKMP_NEXT_N
          jam_enum 11: ISAKMP_NEXT_N OK
          search ISAKMP_NEXT_N: OK
          match ISAKMP_NEXT_N: OK
          short_name 11: ISAKMP_NEXT_N OK
          jam_enum_short 11: ISAKMP_NEXT_N OK
+         jam_enum_human 11: isakmp-next-n OK
    12 -> ISAKMP_NEXT_D
          jam_enum 12: ISAKMP_NEXT_D OK
          search ISAKMP_NEXT_D: OK
          match ISAKMP_NEXT_D: OK
          short_name 12: ISAKMP_NEXT_D OK
          jam_enum_short 12: ISAKMP_NEXT_D OK
+         jam_enum_human 12: isakmp-next-d OK
    13 -> ISAKMP_NEXT_VID
          jam_enum 13: ISAKMP_NEXT_VID OK
          search ISAKMP_NEXT_VID: OK
          match ISAKMP_NEXT_VID: OK
          short_name 13: ISAKMP_NEXT_VID OK
          jam_enum_short 13: ISAKMP_NEXT_VID OK
+         jam_enum_human 13: isakmp-next-vid OK
    14 -> ISAKMP_NEXT_MODECFG
          jam_enum 14: ISAKMP_NEXT_MODECFG OK
          search ISAKMP_NEXT_MODECFG: OK
          match ISAKMP_NEXT_MODECFG: OK
          short_name 14: ISAKMP_NEXT_MODECFG OK
          jam_enum_short 14: ISAKMP_NEXT_MODECFG OK
+         jam_enum_human 14: isakmp-next-modecfg OK
    15 -> ISAKMP_NEXT_SAK
          jam_enum 15: ISAKMP_NEXT_SAK OK
          search ISAKMP_NEXT_SAK: OK
          match ISAKMP_NEXT_SAK: OK
          short_name 15: ISAKMP_NEXT_SAK OK
          jam_enum_short 15: ISAKMP_NEXT_SAK OK
+         jam_enum_human 15: isakmp-next-sak OK
    16 -> ISAKMP_NEXT_TEK
          jam_enum 16: ISAKMP_NEXT_TEK OK
          search ISAKMP_NEXT_TEK: OK
          match ISAKMP_NEXT_TEK: OK
          short_name 16: ISAKMP_NEXT_TEK OK
          jam_enum_short 16: ISAKMP_NEXT_TEK OK
+         jam_enum_human 16: isakmp-next-tek OK
    17 -> ISAKMP_NEXT_KD
          jam_enum 17: ISAKMP_NEXT_KD OK
          search ISAKMP_NEXT_KD: OK
          match ISAKMP_NEXT_KD: OK
          short_name 17: ISAKMP_NEXT_KD OK
          jam_enum_short 17: ISAKMP_NEXT_KD OK
+         jam_enum_human 17: isakmp-next-kd OK
    18 -> ISAKMP_NEXT_SEQ
          jam_enum 18: ISAKMP_NEXT_SEQ OK
          search ISAKMP_NEXT_SEQ: OK
          match ISAKMP_NEXT_SEQ: OK
          short_name 18: ISAKMP_NEXT_SEQ OK
          jam_enum_short 18: ISAKMP_NEXT_SEQ OK
+         jam_enum_human 18: isakmp-next-seq OK
    19 -> ISAKMP_NEXT_POP
          jam_enum 19: ISAKMP_NEXT_POP OK
          search ISAKMP_NEXT_POP: OK
          match ISAKMP_NEXT_POP: OK
          short_name 19: ISAKMP_NEXT_POP OK
          jam_enum_short 19: ISAKMP_NEXT_POP OK
+         jam_enum_human 19: isakmp-next-pop OK
    20 -> ISAKMP_NEXT_NATD_RFC
          jam_enum 20: ISAKMP_NEXT_NATD_RFC OK
          search ISAKMP_NEXT_NATD_RFC: OK
          match ISAKMP_NEXT_NATD_RFC: OK
          short_name 20: ISAKMP_NEXT_NATD_RFC OK
          jam_enum_short 20: ISAKMP_NEXT_NATD_RFC OK
+         jam_enum_human 20: isakmp-next-natd-rfc OK
    21 -> ISAKMP_NEXT_NATOA_RFC
          jam_enum 21: ISAKMP_NEXT_NATOA_RFC OK
          search ISAKMP_NEXT_NATOA_RFC: OK
          match ISAKMP_NEXT_NATOA_RFC: OK
          short_name 21: ISAKMP_NEXT_NATOA_RFC OK
          jam_enum_short 21: ISAKMP_NEXT_NATOA_RFC OK
+         jam_enum_human 21: isakmp-next-natoa-rfc OK
    22 -> ISAKMP_NEXT_GAP
          jam_enum 22: ISAKMP_NEXT_GAP OK
          search ISAKMP_NEXT_GAP: OK
          match ISAKMP_NEXT_GAP: OK
          short_name 22: ISAKMP_NEXT_GAP OK
          jam_enum_short 22: ISAKMP_NEXT_GAP OK
+         jam_enum_human 22: isakmp-next-gap OK
    33 -> ISAKMP_NEXT_v2SA
          jam_enum 33: ISAKMP_NEXT_v2SA OK
          search ISAKMP_NEXT_v2SA: OK
          match ISAKMP_NEXT_v2SA: OK
          short_name 33: ISAKMP_NEXT_v2SA OK
          jam_enum_short 33: ISAKMP_NEXT_v2SA OK
+         jam_enum_human 33: isakmp-next-v2sa OK
    34 -> ISAKMP_NEXT_v2KE
          jam_enum 34: ISAKMP_NEXT_v2KE OK
          search ISAKMP_NEXT_v2KE: OK
          match ISAKMP_NEXT_v2KE: OK
          short_name 34: ISAKMP_NEXT_v2KE OK
          jam_enum_short 34: ISAKMP_NEXT_v2KE OK
+         jam_enum_human 34: isakmp-next-v2ke OK
    35 -> ISAKMP_NEXT_v2IDi
          jam_enum 35: ISAKMP_NEXT_v2IDi OK
          search ISAKMP_NEXT_v2IDi: OK
          match ISAKMP_NEXT_v2IDi: OK
          short_name 35: ISAKMP_NEXT_v2IDi OK
          jam_enum_short 35: ISAKMP_NEXT_v2IDi OK
+         jam_enum_human 35: isakmp-next-v2idi OK
    36 -> ISAKMP_NEXT_v2IDr
          jam_enum 36: ISAKMP_NEXT_v2IDr OK
          search ISAKMP_NEXT_v2IDr: OK
          match ISAKMP_NEXT_v2IDr: OK
          short_name 36: ISAKMP_NEXT_v2IDr OK
          jam_enum_short 36: ISAKMP_NEXT_v2IDr OK
+         jam_enum_human 36: isakmp-next-v2idr OK
    37 -> ISAKMP_NEXT_v2CERT
          jam_enum 37: ISAKMP_NEXT_v2CERT OK
          search ISAKMP_NEXT_v2CERT: OK
          match ISAKMP_NEXT_v2CERT: OK
          short_name 37: ISAKMP_NEXT_v2CERT OK
          jam_enum_short 37: ISAKMP_NEXT_v2CERT OK
+         jam_enum_human 37: isakmp-next-v2cert OK
    38 -> ISAKMP_NEXT_v2CERTREQ
          jam_enum 38: ISAKMP_NEXT_v2CERTREQ OK
          search ISAKMP_NEXT_v2CERTREQ: OK
          match ISAKMP_NEXT_v2CERTREQ: OK
          short_name 38: ISAKMP_NEXT_v2CERTREQ OK
          jam_enum_short 38: ISAKMP_NEXT_v2CERTREQ OK
+         jam_enum_human 38: isakmp-next-v2certreq OK
    39 -> ISAKMP_NEXT_v2AUTH
          jam_enum 39: ISAKMP_NEXT_v2AUTH OK
          search ISAKMP_NEXT_v2AUTH: OK
          match ISAKMP_NEXT_v2AUTH: OK
          short_name 39: ISAKMP_NEXT_v2AUTH OK
          jam_enum_short 39: ISAKMP_NEXT_v2AUTH OK
+         jam_enum_human 39: isakmp-next-v2auth OK
    40 -> ISAKMP_NEXT_v2Ni
          jam_enum 40: ISAKMP_NEXT_v2Ni OK
          search ISAKMP_NEXT_v2Ni: OK
          match ISAKMP_NEXT_v2Ni: OK
          short_name 40: ISAKMP_NEXT_v2Ni OK
          jam_enum_short 40: ISAKMP_NEXT_v2Ni OK
+         jam_enum_human 40: isakmp-next-v2ni OK
    41 -> ISAKMP_NEXT_v2N
          jam_enum 41: ISAKMP_NEXT_v2N OK
          search ISAKMP_NEXT_v2N: OK
          match ISAKMP_NEXT_v2N: OK
          short_name 41: ISAKMP_NEXT_v2N OK
          jam_enum_short 41: ISAKMP_NEXT_v2N OK
+         jam_enum_human 41: isakmp-next-v2n OK
    42 -> ISAKMP_NEXT_v2D
          jam_enum 42: ISAKMP_NEXT_v2D OK
          search ISAKMP_NEXT_v2D: OK
          match ISAKMP_NEXT_v2D: OK
          short_name 42: ISAKMP_NEXT_v2D OK
          jam_enum_short 42: ISAKMP_NEXT_v2D OK
+         jam_enum_human 42: isakmp-next-v2d OK
    43 -> ISAKMP_NEXT_v2V
          jam_enum 43: ISAKMP_NEXT_v2V OK
          search ISAKMP_NEXT_v2V: OK
          match ISAKMP_NEXT_v2V: OK
          short_name 43: ISAKMP_NEXT_v2V OK
          jam_enum_short 43: ISAKMP_NEXT_v2V OK
+         jam_enum_human 43: isakmp-next-v2v OK
    44 -> ISAKMP_NEXT_v2TSi
          jam_enum 44: ISAKMP_NEXT_v2TSi OK
          search ISAKMP_NEXT_v2TSi: OK
          match ISAKMP_NEXT_v2TSi: OK
          short_name 44: ISAKMP_NEXT_v2TSi OK
          jam_enum_short 44: ISAKMP_NEXT_v2TSi OK
+         jam_enum_human 44: isakmp-next-v2tsi OK
    45 -> ISAKMP_NEXT_v2TSr
          jam_enum 45: ISAKMP_NEXT_v2TSr OK
          search ISAKMP_NEXT_v2TSr: OK
          match ISAKMP_NEXT_v2TSr: OK
          short_name 45: ISAKMP_NEXT_v2TSr OK
          jam_enum_short 45: ISAKMP_NEXT_v2TSr OK
+         jam_enum_human 45: isakmp-next-v2tsr OK
    46 -> ISAKMP_NEXT_v2SK
          jam_enum 46: ISAKMP_NEXT_v2SK OK
          search ISAKMP_NEXT_v2SK: OK
          match ISAKMP_NEXT_v2SK: OK
          short_name 46: ISAKMP_NEXT_v2SK OK
          jam_enum_short 46: ISAKMP_NEXT_v2SK OK
+         jam_enum_human 46: isakmp-next-v2sk OK
    47 -> ISAKMP_NEXT_v2CP
          jam_enum 47: ISAKMP_NEXT_v2CP OK
          search ISAKMP_NEXT_v2CP: OK
          match ISAKMP_NEXT_v2CP: OK
          short_name 47: ISAKMP_NEXT_v2CP OK
          jam_enum_short 47: ISAKMP_NEXT_v2CP OK
+         jam_enum_human 47: isakmp-next-v2cp OK
    48 -> ISAKMP_NEXT_v2EAP
          jam_enum 48: ISAKMP_NEXT_v2EAP OK
          search ISAKMP_NEXT_v2EAP: OK
          match ISAKMP_NEXT_v2EAP: OK
          short_name 48: ISAKMP_NEXT_v2EAP OK
          jam_enum_short 48: ISAKMP_NEXT_v2EAP OK
+         jam_enum_human 48: isakmp-next-v2eap OK
    49 -> ISAKMP_NEXT_v2GSPM
          jam_enum 49: ISAKMP_NEXT_v2GSPM OK
          search ISAKMP_NEXT_v2GSPM: OK
          match ISAKMP_NEXT_v2GSPM: OK
          short_name 49: ISAKMP_NEXT_v2GSPM OK
          jam_enum_short 49: ISAKMP_NEXT_v2GSPM OK
+         jam_enum_human 49: isakmp-next-v2gspm OK
    50 -> ISAKMP_NEXT_v2IDG
          jam_enum 50: ISAKMP_NEXT_v2IDG OK
          search ISAKMP_NEXT_v2IDG: OK
          match ISAKMP_NEXT_v2IDG: OK
          short_name 50: ISAKMP_NEXT_v2IDG OK
          jam_enum_short 50: ISAKMP_NEXT_v2IDG OK
+         jam_enum_human 50: isakmp-next-v2idg OK
    51 -> ISAKMP_NEXT_v2GSA
          jam_enum 51: ISAKMP_NEXT_v2GSA OK
          search ISAKMP_NEXT_v2GSA: OK
          match ISAKMP_NEXT_v2GSA: OK
          short_name 51: ISAKMP_NEXT_v2GSA OK
          jam_enum_short 51: ISAKMP_NEXT_v2GSA OK
+         jam_enum_human 51: isakmp-next-v2gsa OK
    52 -> ISAKMP_NEXT_v2KD
          jam_enum 52: ISAKMP_NEXT_v2KD OK
          search ISAKMP_NEXT_v2KD: OK
          match ISAKMP_NEXT_v2KD: OK
          short_name 52: ISAKMP_NEXT_v2KD OK
          jam_enum_short 52: ISAKMP_NEXT_v2KD OK
+         jam_enum_human 52: isakmp-next-v2kd OK
    53 -> ISAKMP_NEXT_v2SKF
          jam_enum 53: ISAKMP_NEXT_v2SKF OK
          search ISAKMP_NEXT_v2SKF: OK
          match ISAKMP_NEXT_v2SKF: OK
          short_name 53: ISAKMP_NEXT_v2SKF OK
          jam_enum_short 53: ISAKMP_NEXT_v2SKF OK
+         jam_enum_human 53: isakmp-next-v2skf OK
   130 -> ISAKMP_NEXT_NATD_DRAFTS
          jam_enum 130: ISAKMP_NEXT_NATD_DRAFTS OK
          search ISAKMP_NEXT_NATD_DRAFTS: OK
          match ISAKMP_NEXT_NATD_DRAFTS: OK
          short_name 130: NATD_DRAFTS OK
          jam_enum_short 130: NATD_DRAFTS OK
+         jam_enum_human 130: natd-drafts OK
          match NATD_DRAFTS [short]: OK
   131 -> ISAKMP_NEXT_NATOA_DRAFTS
          jam_enum 131: ISAKMP_NEXT_NATOA_DRAFTS OK
@@ -738,6 +847,7 @@ IETF registry enum_names:
          match ISAKMP_NEXT_NATOA_DRAFTS: OK
          short_name 131: NATOA_DRAFTS OK
          jam_enum_short 131: NATOA_DRAFTS OK
+         jam_enum_human 131: natoa-drafts OK
          match NATOA_DRAFTS [short]: OK
   132 -> ISAKMP_NEXT_IKE_FRAGMENTATION
          jam_enum 132: ISAKMP_NEXT_IKE_FRAGMENTATION OK
@@ -745,6 +855,7 @@ IETF registry enum_names:
          match ISAKMP_NEXT_IKE_FRAGMENTATION: OK
          short_name 132: IKE_FRAGMENTATION OK
          jam_enum_short 132: IKE_FRAGMENTATION OK
+         jam_enum_human 132: ike-fragmentation OK
          match IKE_FRAGMENTATION [short]: OK
 
   ikev1_exchange_names:
@@ -754,6 +865,7 @@ IETF registry enum_names:
          match ISAKMP_XCHG_NONE: OK
          short_name 0: NONE OK
          jam_enum_short 0: NONE OK
+         jam_enum_human 0: none OK
          match NONE [short]: OK
     1 -> ISAKMP_XCHG_BASE
          jam_enum 1: ISAKMP_XCHG_BASE OK
@@ -761,6 +873,7 @@ IETF registry enum_names:
          match ISAKMP_XCHG_BASE: OK
          short_name 1: BASE OK
          jam_enum_short 1: BASE OK
+         jam_enum_human 1: base OK
          match BASE [short]: OK
     2 -> ISAKMP_XCHG_IDPROT
          jam_enum 2: ISAKMP_XCHG_IDPROT OK
@@ -768,6 +881,7 @@ IETF registry enum_names:
          match ISAKMP_XCHG_IDPROT: OK
          short_name 2: IDPROT OK
          jam_enum_short 2: IDPROT OK
+         jam_enum_human 2: idprot OK
          match IDPROT [short]: OK
     3 -> ISAKMP_XCHG_AO
          jam_enum 3: ISAKMP_XCHG_AO OK
@@ -775,6 +889,7 @@ IETF registry enum_names:
          match ISAKMP_XCHG_AO: OK
          short_name 3: AO OK
          jam_enum_short 3: AO OK
+         jam_enum_human 3: ao OK
          match AO [short]: OK
     4 -> ISAKMP_XCHG_AGGR
          jam_enum 4: ISAKMP_XCHG_AGGR OK
@@ -782,6 +897,7 @@ IETF registry enum_names:
          match ISAKMP_XCHG_AGGR: OK
          short_name 4: AGGR OK
          jam_enum_short 4: AGGR OK
+         jam_enum_human 4: aggr OK
          match AGGR [short]: OK
     5 -> ISAKMP_XCHG_INFO
          jam_enum 5: ISAKMP_XCHG_INFO OK
@@ -789,6 +905,7 @@ IETF registry enum_names:
          match ISAKMP_XCHG_INFO: OK
          short_name 5: INFO OK
          jam_enum_short 5: INFO OK
+         jam_enum_human 5: info OK
          match INFO [short]: OK
     6 -> ISAKMP_XCHG_MODE_CFG
          jam_enum 6: ISAKMP_XCHG_MODE_CFG OK
@@ -796,6 +913,7 @@ IETF registry enum_names:
          match ISAKMP_XCHG_MODE_CFG: OK
          short_name 6: MODE_CFG OK
          jam_enum_short 6: MODE_CFG OK
+         jam_enum_human 6: mode-cfg OK
          match MODE_CFG [short]: OK
    30 -> ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREQUEST
          jam_enum 30: ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREQUEST OK
@@ -803,6 +921,7 @@ IETF registry enum_names:
          match ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREQUEST: OK
          short_name 30: STOLEN_BY_OPENSWAN_FOR_ECHOREQUEST OK
          jam_enum_short 30: STOLEN_BY_OPENSWAN_FOR_ECHOREQUEST OK
+         jam_enum_human 30: stolen-by-openswan-for-echorequest OK
          match STOLEN_BY_OPENSWAN_FOR_ECHOREQUEST [short]: OK
    31 -> ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREPLY
          jam_enum 31: ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREPLY OK
@@ -810,6 +929,7 @@ IETF registry enum_names:
          match ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREPLY: OK
          short_name 31: STOLEN_BY_OPENSWAN_FOR_ECHOREPLY OK
          jam_enum_short 31: STOLEN_BY_OPENSWAN_FOR_ECHOREPLY OK
+         jam_enum_human 31: stolen-by-openswan-for-echoreply OK
          match STOLEN_BY_OPENSWAN_FOR_ECHOREPLY [short]: OK
    32 -> ISAKMP_XCHG_QUICK
          jam_enum 32: ISAKMP_XCHG_QUICK OK
@@ -817,6 +937,7 @@ IETF registry enum_names:
          match ISAKMP_XCHG_QUICK: OK
          short_name 32: QUICK OK
          jam_enum_short 32: QUICK OK
+         jam_enum_human 32: quick OK
          match QUICK [short]: OK
    33 -> ISAKMP_XCHG_NGRP
          jam_enum 33: ISAKMP_XCHG_NGRP OK
@@ -824,6 +945,7 @@ IETF registry enum_names:
          match ISAKMP_XCHG_NGRP: OK
          short_name 33: NGRP OK
          jam_enum_short 33: NGRP OK
+         jam_enum_human 33: ngrp OK
          match NGRP [short]: OK
   244 -> ISAKMP_XCHG_ECHOREQUEST_PRIVATE
          jam_enum 244: ISAKMP_XCHG_ECHOREQUEST_PRIVATE OK
@@ -831,6 +953,7 @@ IETF registry enum_names:
          match ISAKMP_XCHG_ECHOREQUEST_PRIVATE: OK
          short_name 244: ECHOREQUEST_PRIVATE OK
          jam_enum_short 244: ECHOREQUEST_PRIVATE OK
+         jam_enum_human 244: echorequest-private OK
          match ECHOREQUEST_PRIVATE [short]: OK
   245 -> ISAKMP_XCHG_ECHOREPLY_PRIVATE
          jam_enum 245: ISAKMP_XCHG_ECHOREPLY_PRIVATE OK
@@ -838,6 +961,7 @@ IETF registry enum_names:
          match ISAKMP_XCHG_ECHOREPLY_PRIVATE: OK
          short_name 245: ECHOREPLY_PRIVATE OK
          jam_enum_short 245: ECHOREPLY_PRIVATE OK
+         jam_enum_human 245: echoreply-private OK
          match ECHOREPLY_PRIVATE [short]: OK
 
   ikev2_exchange_names:
@@ -847,6 +971,7 @@ IETF registry enum_names:
          match ISAKMP_v2_IKE_SA_INIT: OK
          short_name 34: IKE_SA_INIT OK
          jam_enum_short 34: IKE_SA_INIT OK
+         jam_enum_human 34: ike-sa-init OK
          match IKE_SA_INIT [short]: OK
    35 -> ISAKMP_v2_IKE_AUTH
          jam_enum 35: ISAKMP_v2_IKE_AUTH OK
@@ -854,6 +979,7 @@ IETF registry enum_names:
          match ISAKMP_v2_IKE_AUTH: OK
          short_name 35: IKE_AUTH OK
          jam_enum_short 35: IKE_AUTH OK
+         jam_enum_human 35: ike-auth OK
          match IKE_AUTH [short]: OK
    36 -> ISAKMP_v2_CREATE_CHILD_SA
          jam_enum 36: ISAKMP_v2_CREATE_CHILD_SA OK
@@ -861,6 +987,7 @@ IETF registry enum_names:
          match ISAKMP_v2_CREATE_CHILD_SA: OK
          short_name 36: CREATE_CHILD_SA OK
          jam_enum_short 36: CREATE_CHILD_SA OK
+         jam_enum_human 36: create-child-sa OK
          match CREATE_CHILD_SA [short]: OK
    37 -> ISAKMP_v2_INFORMATIONAL
          jam_enum 37: ISAKMP_v2_INFORMATIONAL OK
@@ -868,6 +995,7 @@ IETF registry enum_names:
          match ISAKMP_v2_INFORMATIONAL: OK
          short_name 37: INFORMATIONAL OK
          jam_enum_short 37: INFORMATIONAL OK
+         jam_enum_human 37: informational OK
          match INFORMATIONAL [short]: OK
    38 -> ISAKMP_v2_IKE_SESSION_RESUME
          jam_enum 38: ISAKMP_v2_IKE_SESSION_RESUME OK
@@ -875,6 +1003,7 @@ IETF registry enum_names:
          match ISAKMP_v2_IKE_SESSION_RESUME: OK
          short_name 38: IKE_SESSION_RESUME OK
          jam_enum_short 38: IKE_SESSION_RESUME OK
+         jam_enum_human 38: ike-session-resume OK
          match IKE_SESSION_RESUME [short]: OK
    39 -> ISAKMP_v2_GSA_AUTH
          jam_enum 39: ISAKMP_v2_GSA_AUTH OK
@@ -882,6 +1011,7 @@ IETF registry enum_names:
          match ISAKMP_v2_GSA_AUTH: OK
          short_name 39: GSA_AUTH OK
          jam_enum_short 39: GSA_AUTH OK
+         jam_enum_human 39: gsa-auth OK
          match GSA_AUTH [short]: OK
    40 -> ISAKMP_v2_GSA_REGISTRATION
          jam_enum 40: ISAKMP_v2_GSA_REGISTRATION OK
@@ -889,6 +1019,7 @@ IETF registry enum_names:
          match ISAKMP_v2_GSA_REGISTRATION: OK
          short_name 40: GSA_REGISTRATION OK
          jam_enum_short 40: GSA_REGISTRATION OK
+         jam_enum_human 40: gsa-registration OK
          match GSA_REGISTRATION [short]: OK
    41 -> ISAKMP_v2_GSA_REKEY
          jam_enum 41: ISAKMP_v2_GSA_REKEY OK
@@ -896,6 +1027,7 @@ IETF registry enum_names:
          match ISAKMP_v2_GSA_REKEY: OK
          short_name 41: GSA_REKEY OK
          jam_enum_short 41: GSA_REKEY OK
+         jam_enum_human 41: gsa-rekey OK
          match GSA_REKEY [short]: OK
    42 -> ISAKMP_v2_UNASSIGNED_42
          jam_enum 42: ISAKMP_v2_UNASSIGNED_42 OK
@@ -903,6 +1035,7 @@ IETF registry enum_names:
          match ISAKMP_v2_UNASSIGNED_42: OK
          short_name 42: UNASSIGNED_42 OK
          jam_enum_short 42: UNASSIGNED_42 OK
+         jam_enum_human 42: unassigned-42 OK
          match UNASSIGNED_42 [short]: OK
    43 -> ISAKMP_v2_IKE_INTERMEDIATE
          jam_enum 43: ISAKMP_v2_IKE_INTERMEDIATE OK
@@ -910,6 +1043,7 @@ IETF registry enum_names:
          match ISAKMP_v2_IKE_INTERMEDIATE: OK
          short_name 43: IKE_INTERMEDIATE OK
          jam_enum_short 43: IKE_INTERMEDIATE OK
+         jam_enum_human 43: ike-intermediate OK
          match IKE_INTERMEDIATE [short]: OK
   244 -> ISAKMP_XCHG_ECHOREQUEST_PRIVATE
          jam_enum 244: ISAKMP_XCHG_ECHOREQUEST_PRIVATE OK
@@ -917,12 +1051,14 @@ IETF registry enum_names:
          match ISAKMP_XCHG_ECHOREQUEST_PRIVATE: OK
          short_name 244: ISAKMP_XCHG_ECHOREQUEST_PRIVATE OK
          jam_enum_short 244: ISAKMP_XCHG_ECHOREQUEST_PRIVATE OK
+         jam_enum_human 244: isakmp-xchg-echorequest-private OK
   245 -> ISAKMP_XCHG_ECHOREPLY_PRIVATE
          jam_enum 245: ISAKMP_XCHG_ECHOREPLY_PRIVATE OK
          search ISAKMP_XCHG_ECHOREPLY_PRIVATE: OK
          match ISAKMP_XCHG_ECHOREPLY_PRIVATE: OK
          short_name 245: ISAKMP_XCHG_ECHOREPLY_PRIVATE OK
          jam_enum_short 245: ISAKMP_XCHG_ECHOREPLY_PRIVATE OK
+         jam_enum_human 245: isakmp-xchg-echoreply-private OK
 
   isakmp_xchg_type_names:
     0 -> ISAKMP_XCHG_NONE
@@ -931,72 +1067,84 @@ IETF registry enum_names:
          match ISAKMP_XCHG_NONE: OK
          short_name 0: ISAKMP_XCHG_NONE OK
          jam_enum_short 0: ISAKMP_XCHG_NONE OK
+         jam_enum_human 0: isakmp-xchg-none OK
     1 -> ISAKMP_XCHG_BASE
          jam_enum 1: ISAKMP_XCHG_BASE OK
          search ISAKMP_XCHG_BASE: OK
          match ISAKMP_XCHG_BASE: OK
          short_name 1: ISAKMP_XCHG_BASE OK
          jam_enum_short 1: ISAKMP_XCHG_BASE OK
+         jam_enum_human 1: isakmp-xchg-base OK
     2 -> ISAKMP_XCHG_IDPROT
          jam_enum 2: ISAKMP_XCHG_IDPROT OK
          search ISAKMP_XCHG_IDPROT: OK
          match ISAKMP_XCHG_IDPROT: OK
          short_name 2: ISAKMP_XCHG_IDPROT OK
          jam_enum_short 2: ISAKMP_XCHG_IDPROT OK
+         jam_enum_human 2: isakmp-xchg-idprot OK
     3 -> ISAKMP_XCHG_AO
          jam_enum 3: ISAKMP_XCHG_AO OK
          search ISAKMP_XCHG_AO: OK
          match ISAKMP_XCHG_AO: OK
          short_name 3: ISAKMP_XCHG_AO OK
          jam_enum_short 3: ISAKMP_XCHG_AO OK
+         jam_enum_human 3: isakmp-xchg-ao OK
     4 -> ISAKMP_XCHG_AGGR
          jam_enum 4: ISAKMP_XCHG_AGGR OK
          search ISAKMP_XCHG_AGGR: OK
          match ISAKMP_XCHG_AGGR: OK
          short_name 4: ISAKMP_XCHG_AGGR OK
          jam_enum_short 4: ISAKMP_XCHG_AGGR OK
+         jam_enum_human 4: isakmp-xchg-aggr OK
     5 -> ISAKMP_XCHG_INFO
          jam_enum 5: ISAKMP_XCHG_INFO OK
          search ISAKMP_XCHG_INFO: OK
          match ISAKMP_XCHG_INFO: OK
          short_name 5: ISAKMP_XCHG_INFO OK
          jam_enum_short 5: ISAKMP_XCHG_INFO OK
+         jam_enum_human 5: isakmp-xchg-info OK
     6 -> ISAKMP_XCHG_MODE_CFG
          jam_enum 6: ISAKMP_XCHG_MODE_CFG OK
          search ISAKMP_XCHG_MODE_CFG: OK
          match ISAKMP_XCHG_MODE_CFG: OK
          short_name 6: ISAKMP_XCHG_MODE_CFG OK
          jam_enum_short 6: ISAKMP_XCHG_MODE_CFG OK
+         jam_enum_human 6: isakmp-xchg-mode-cfg OK
    30 -> ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREQUEST
          jam_enum 30: ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREQUEST OK
          search ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREQUEST: OK
          match ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREQUEST: OK
          short_name 30: ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREQUEST OK
          jam_enum_short 30: ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREQUEST OK
+         jam_enum_human 30: isakmp-xchg-stolen-by-openswan-for-echorequest OK
    31 -> ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREPLY
          jam_enum 31: ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREPLY OK
          search ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREPLY: OK
          match ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREPLY: OK
          short_name 31: ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREPLY OK
          jam_enum_short 31: ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREPLY OK
+         jam_enum_human 31: isakmp-xchg-stolen-by-openswan-for-echoreply OK
    32 -> ISAKMP_XCHG_QUICK
          jam_enum 32: ISAKMP_XCHG_QUICK OK
          search ISAKMP_XCHG_QUICK: OK
          match ISAKMP_XCHG_QUICK: OK
          short_name 32: ISAKMP_XCHG_QUICK OK
          jam_enum_short 32: ISAKMP_XCHG_QUICK OK
+         jam_enum_human 32: isakmp-xchg-quick OK
    33 -> ISAKMP_XCHG_NGRP
          jam_enum 33: ISAKMP_XCHG_NGRP OK
          search ISAKMP_XCHG_NGRP: OK
          match ISAKMP_XCHG_NGRP: OK
          short_name 33: ISAKMP_XCHG_NGRP OK
          jam_enum_short 33: ISAKMP_XCHG_NGRP OK
+         jam_enum_human 33: isakmp-xchg-ngrp OK
    34 -> ISAKMP_v2_IKE_SA_INIT
          jam_enum 34: ISAKMP_v2_IKE_SA_INIT OK
          search ISAKMP_v2_IKE_SA_INIT: OK
          match ISAKMP_v2_IKE_SA_INIT: OK
          short_name 34: IKE_SA_INIT OK
          jam_enum_short 34: IKE_SA_INIT OK
+         jam_enum_human 34: ike-sa-init OK
          match IKE_SA_INIT [short]: OK
    35 -> ISAKMP_v2_IKE_AUTH
          jam_enum 35: ISAKMP_v2_IKE_AUTH OK
@@ -1004,6 +1152,7 @@ IETF registry enum_names:
          match ISAKMP_v2_IKE_AUTH: OK
          short_name 35: IKE_AUTH OK
          jam_enum_short 35: IKE_AUTH OK
+         jam_enum_human 35: ike-auth OK
          match IKE_AUTH [short]: OK
    36 -> ISAKMP_v2_CREATE_CHILD_SA
          jam_enum 36: ISAKMP_v2_CREATE_CHILD_SA OK
@@ -1011,6 +1160,7 @@ IETF registry enum_names:
          match ISAKMP_v2_CREATE_CHILD_SA: OK
          short_name 36: CREATE_CHILD_SA OK
          jam_enum_short 36: CREATE_CHILD_SA OK
+         jam_enum_human 36: create-child-sa OK
          match CREATE_CHILD_SA [short]: OK
    37 -> ISAKMP_v2_INFORMATIONAL
          jam_enum 37: ISAKMP_v2_INFORMATIONAL OK
@@ -1018,6 +1168,7 @@ IETF registry enum_names:
          match ISAKMP_v2_INFORMATIONAL: OK
          short_name 37: INFORMATIONAL OK
          jam_enum_short 37: INFORMATIONAL OK
+         jam_enum_human 37: informational OK
          match INFORMATIONAL [short]: OK
    38 -> ISAKMP_v2_IKE_SESSION_RESUME
          jam_enum 38: ISAKMP_v2_IKE_SESSION_RESUME OK
@@ -1025,6 +1176,7 @@ IETF registry enum_names:
          match ISAKMP_v2_IKE_SESSION_RESUME: OK
          short_name 38: IKE_SESSION_RESUME OK
          jam_enum_short 38: IKE_SESSION_RESUME OK
+         jam_enum_human 38: ike-session-resume OK
          match IKE_SESSION_RESUME [short]: OK
    39 -> ISAKMP_v2_GSA_AUTH
          jam_enum 39: ISAKMP_v2_GSA_AUTH OK
@@ -1032,6 +1184,7 @@ IETF registry enum_names:
          match ISAKMP_v2_GSA_AUTH: OK
          short_name 39: GSA_AUTH OK
          jam_enum_short 39: GSA_AUTH OK
+         jam_enum_human 39: gsa-auth OK
          match GSA_AUTH [short]: OK
    40 -> ISAKMP_v2_GSA_REGISTRATION
          jam_enum 40: ISAKMP_v2_GSA_REGISTRATION OK
@@ -1039,6 +1192,7 @@ IETF registry enum_names:
          match ISAKMP_v2_GSA_REGISTRATION: OK
          short_name 40: GSA_REGISTRATION OK
          jam_enum_short 40: GSA_REGISTRATION OK
+         jam_enum_human 40: gsa-registration OK
          match GSA_REGISTRATION [short]: OK
    41 -> ISAKMP_v2_GSA_REKEY
          jam_enum 41: ISAKMP_v2_GSA_REKEY OK
@@ -1046,6 +1200,7 @@ IETF registry enum_names:
          match ISAKMP_v2_GSA_REKEY: OK
          short_name 41: GSA_REKEY OK
          jam_enum_short 41: GSA_REKEY OK
+         jam_enum_human 41: gsa-rekey OK
          match GSA_REKEY [short]: OK
    42 -> ISAKMP_v2_UNASSIGNED_42
          jam_enum 42: ISAKMP_v2_UNASSIGNED_42 OK
@@ -1053,6 +1208,7 @@ IETF registry enum_names:
          match ISAKMP_v2_UNASSIGNED_42: OK
          short_name 42: UNASSIGNED_42 OK
          jam_enum_short 42: UNASSIGNED_42 OK
+         jam_enum_human 42: unassigned-42 OK
          match UNASSIGNED_42 [short]: OK
    43 -> ISAKMP_v2_IKE_INTERMEDIATE
          jam_enum 43: ISAKMP_v2_IKE_INTERMEDIATE OK
@@ -1060,6 +1216,7 @@ IETF registry enum_names:
          match ISAKMP_v2_IKE_INTERMEDIATE: OK
          short_name 43: IKE_INTERMEDIATE OK
          jam_enum_short 43: IKE_INTERMEDIATE OK
+         jam_enum_human 43: ike-intermediate OK
          match IKE_INTERMEDIATE [short]: OK
   244 -> ISAKMP_XCHG_ECHOREQUEST_PRIVATE
          jam_enum 244: ISAKMP_XCHG_ECHOREQUEST_PRIVATE OK
@@ -1067,12 +1224,14 @@ IETF registry enum_names:
          match ISAKMP_XCHG_ECHOREQUEST_PRIVATE: OK
          short_name 244: ISAKMP_XCHG_ECHOREQUEST_PRIVATE OK
          jam_enum_short 244: ISAKMP_XCHG_ECHOREQUEST_PRIVATE OK
+         jam_enum_human 244: isakmp-xchg-echorequest-private OK
   245 -> ISAKMP_XCHG_ECHOREPLY_PRIVATE
          jam_enum 245: ISAKMP_XCHG_ECHOREPLY_PRIVATE OK
          search ISAKMP_XCHG_ECHOREPLY_PRIVATE: OK
          match ISAKMP_XCHG_ECHOREPLY_PRIVATE: OK
          short_name 245: ISAKMP_XCHG_ECHOREPLY_PRIVATE OK
          jam_enum_short 245: ISAKMP_XCHG_ECHOREPLY_PRIVATE OK
+         jam_enum_human 245: isakmp-xchg-echoreply-private OK
 
   ikev1_protocol_names:
     0 -> PROTO_RESERVED
@@ -1081,30 +1240,35 @@ IETF registry enum_names:
          match PROTO_RESERVED: OK
          short_name 0: PROTO_RESERVED OK
          jam_enum_short 0: PROTO_RESERVED OK
+         jam_enum_human 0: proto-reserved OK
     1 -> PROTO_ISAKMP
          jam_enum 1: PROTO_ISAKMP OK
          search PROTO_ISAKMP: OK
          match PROTO_ISAKMP: OK
          short_name 1: PROTO_ISAKMP OK
          jam_enum_short 1: PROTO_ISAKMP OK
+         jam_enum_human 1: proto-isakmp OK
     2 -> PROTO_IPSEC_AH
          jam_enum 2: PROTO_IPSEC_AH OK
          search PROTO_IPSEC_AH: OK
          match PROTO_IPSEC_AH: OK
          short_name 2: PROTO_IPSEC_AH OK
          jam_enum_short 2: PROTO_IPSEC_AH OK
+         jam_enum_human 2: proto-ipsec-ah OK
     3 -> PROTO_IPSEC_ESP
          jam_enum 3: PROTO_IPSEC_ESP OK
          search PROTO_IPSEC_ESP: OK
          match PROTO_IPSEC_ESP: OK
          short_name 3: PROTO_IPSEC_ESP OK
          jam_enum_short 3: PROTO_IPSEC_ESP OK
+         jam_enum_human 3: proto-ipsec-esp OK
     4 -> PROTO_IPCOMP
          jam_enum 4: PROTO_IPCOMP OK
          search PROTO_IPCOMP: OK
          match PROTO_IPCOMP: OK
          short_name 4: PROTO_IPCOMP OK
          jam_enum_short 4: PROTO_IPCOMP OK
+         jam_enum_human 4: proto-ipcomp OK
 
   isakmp_transformid_names:
     1 -> KEY_IKE
@@ -1113,6 +1277,7 @@ IETF registry enum_names:
          match KEY_IKE: OK
          short_name 1: KEY_IKE OK
          jam_enum_short 1: KEY_IKE OK
+         jam_enum_human 1: key-ike OK
 
   ah_transformid_names:
     2 -> AH_MD5
@@ -1121,6 +1286,7 @@ IETF registry enum_names:
          match AH_MD5: OK
          short_name 2: MD5 OK
          jam_enum_short 2: MD5 OK
+         jam_enum_human 2: md5 OK
          match MD5 [short]: OK
     3 -> AH_SHA
          jam_enum 3: AH_SHA OK
@@ -1128,6 +1294,7 @@ IETF registry enum_names:
          match AH_SHA: OK
          short_name 3: SHA OK
          jam_enum_short 3: SHA OK
+         jam_enum_human 3: sha OK
          match SHA [short]: OK
     4 -> AH_DES(UNUSED)
          jam_enum 4: AH_DES(UNUSED) OK
@@ -1136,6 +1303,7 @@ IETF registry enum_names:
          match AH_DES [trunc]: OK
          short_name 4: DES(UNUSED) OK
          jam_enum_short 4: DES(UNUSED) OK
+         jam_enum_human 4: des(unused) OK
          match DES(UNUSED) [short]: OK
          match DES [short+trunc]: OK
     5 -> AH_SHA2_256
@@ -1144,6 +1312,7 @@ IETF registry enum_names:
          match AH_SHA2_256: OK
          short_name 5: SHA2_256 OK
          jam_enum_short 5: SHA2_256 OK
+         jam_enum_human 5: sha2-256 OK
          match SHA2_256 [short]: OK
     6 -> AH_SHA2_384
          jam_enum 6: AH_SHA2_384 OK
@@ -1151,6 +1320,7 @@ IETF registry enum_names:
          match AH_SHA2_384: OK
          short_name 6: SHA2_384 OK
          jam_enum_short 6: SHA2_384 OK
+         jam_enum_human 6: sha2-384 OK
          match SHA2_384 [short]: OK
     7 -> AH_SHA2_512
          jam_enum 7: AH_SHA2_512 OK
@@ -1158,6 +1328,7 @@ IETF registry enum_names:
          match AH_SHA2_512: OK
          short_name 7: SHA2_512 OK
          jam_enum_short 7: SHA2_512 OK
+         jam_enum_human 7: sha2-512 OK
          match SHA2_512 [short]: OK
     8 -> AH_RIPEMD
          jam_enum 8: AH_RIPEMD OK
@@ -1165,6 +1336,7 @@ IETF registry enum_names:
          match AH_RIPEMD: OK
          short_name 8: RIPEMD OK
          jam_enum_short 8: RIPEMD OK
+         jam_enum_human 8: ripemd OK
          match RIPEMD [short]: OK
     9 -> AH_AES_XCBC_MAC
          jam_enum 9: AH_AES_XCBC_MAC OK
@@ -1172,6 +1344,7 @@ IETF registry enum_names:
          match AH_AES_XCBC_MAC: OK
          short_name 9: AES_XCBC_MAC OK
          jam_enum_short 9: AES_XCBC_MAC OK
+         jam_enum_human 9: aes-xcbc-mac OK
          match AES_XCBC_MAC [short]: OK
    10 -> AH_RSA(UNUSED)
          jam_enum 10: AH_RSA(UNUSED) OK
@@ -1180,6 +1353,7 @@ IETF registry enum_names:
          match AH_RSA [trunc]: OK
          short_name 10: RSA(UNUSED) OK
          jam_enum_short 10: RSA(UNUSED) OK
+         jam_enum_human 10: rsa(unused) OK
          match RSA(UNUSED) [short]: OK
          match RSA [short+trunc]: OK
    11 -> AH_AES_128_GMAC
@@ -1188,6 +1362,7 @@ IETF registry enum_names:
          match AH_AES_128_GMAC: OK
          short_name 11: AES_128_GMAC OK
          jam_enum_short 11: AES_128_GMAC OK
+         jam_enum_human 11: aes-128-gmac OK
          match AES_128_GMAC [short]: OK
    12 -> AH_AES_192_GMAC
          jam_enum 12: AH_AES_192_GMAC OK
@@ -1195,6 +1370,7 @@ IETF registry enum_names:
          match AH_AES_192_GMAC: OK
          short_name 12: AES_192_GMAC OK
          jam_enum_short 12: AES_192_GMAC OK
+         jam_enum_human 12: aes-192-gmac OK
          match AES_192_GMAC [short]: OK
    13 -> AH_AES_256_GMAC
          jam_enum 13: AH_AES_256_GMAC OK
@@ -1202,6 +1378,7 @@ IETF registry enum_names:
          match AH_AES_256_GMAC: OK
          short_name 13: AES_256_GMAC OK
          jam_enum_short 13: AES_256_GMAC OK
+         jam_enum_human 13: aes-256-gmac OK
          match AES_256_GMAC [short]: OK
   250 -> AH_AES_CMAC_96
          jam_enum 250: AH_AES_CMAC_96 OK
@@ -1209,6 +1386,7 @@ IETF registry enum_names:
          match AH_AES_CMAC_96: OK
          short_name 250: AES_CMAC_96 OK
          jam_enum_short 250: AES_CMAC_96 OK
+         jam_enum_human 250: aes-cmac-96 OK
          match AES_CMAC_96 [short]: OK
   251 -> AH_NULL
          jam_enum 251: AH_NULL OK
@@ -1216,6 +1394,7 @@ IETF registry enum_names:
          match AH_NULL: OK
          short_name 251: NULL OK
          jam_enum_short 251: NULL OK
+         jam_enum_human 251: null OK
          match NULL [short]: OK
   252 -> AH_SHA2_256_TRUNC
          jam_enum 252: AH_SHA2_256_TRUNC OK
@@ -1223,6 +1402,7 @@ IETF registry enum_names:
          match AH_SHA2_256_TRUNC: OK
          short_name 252: SHA2_256_TRUNC OK
          jam_enum_short 252: SHA2_256_TRUNC OK
+         jam_enum_human 252: sha2-256-trunc OK
          match SHA2_256_TRUNC [short]: OK
 
   esp_transformid_names:
@@ -1233,6 +1413,7 @@ IETF registry enum_names:
          match ESP_DES_IV64 [trunc]: OK
          short_name 1: DES_IV64(UNUSED) OK
          jam_enum_short 1: DES_IV64(UNUSED) OK
+         jam_enum_human 1: des-iv64(unused) OK
          match DES_IV64(UNUSED) [short]: OK
          match DES_IV64 [short+trunc]: OK
     2 -> ESP_DES(UNUSED)
@@ -1242,6 +1423,7 @@ IETF registry enum_names:
          match ESP_DES [trunc]: OK
          short_name 2: DES(UNUSED) OK
          jam_enum_short 2: DES(UNUSED) OK
+         jam_enum_human 2: des(unused) OK
          match DES(UNUSED) [short]: OK
          match DES [short+trunc]: OK
     3 -> ESP_3DES
@@ -1250,6 +1432,7 @@ IETF registry enum_names:
          match ESP_3DES: OK
          short_name 3: 3DES OK
          jam_enum_short 3: 3DES OK
+         jam_enum_human 3: 3des OK
          match 3DES [short]: OK
     4 -> ESP_RC5(UNUSED)
          jam_enum 4: ESP_RC5(UNUSED) OK
@@ -1258,6 +1441,7 @@ IETF registry enum_names:
          match ESP_RC5 [trunc]: OK
          short_name 4: RC5(UNUSED) OK
          jam_enum_short 4: RC5(UNUSED) OK
+         jam_enum_human 4: rc5(unused) OK
          match RC5(UNUSED) [short]: OK
          match RC5 [short+trunc]: OK
     5 -> ESP_IDEA(UNUSED)
@@ -1267,6 +1451,7 @@ IETF registry enum_names:
          match ESP_IDEA [trunc]: OK
          short_name 5: IDEA(UNUSED) OK
          jam_enum_short 5: IDEA(UNUSED) OK
+         jam_enum_human 5: idea(unused) OK
          match IDEA(UNUSED) [short]: OK
          match IDEA [short+trunc]: OK
     6 -> ESP_CAST
@@ -1275,6 +1460,7 @@ IETF registry enum_names:
          match ESP_CAST: OK
          short_name 6: CAST OK
          jam_enum_short 6: CAST OK
+         jam_enum_human 6: cast OK
          match CAST [short]: OK
     7 -> ESP_BLOWFISH(UNUSED)
          jam_enum 7: ESP_BLOWFISH(UNUSED) OK
@@ -1283,6 +1469,7 @@ IETF registry enum_names:
          match ESP_BLOWFISH [trunc]: OK
          short_name 7: BLOWFISH(UNUSED) OK
          jam_enum_short 7: BLOWFISH(UNUSED) OK
+         jam_enum_human 7: blowfish(unused) OK
          match BLOWFISH(UNUSED) [short]: OK
          match BLOWFISH [short+trunc]: OK
     8 -> ESP_3IDEA(UNUSED)
@@ -1292,6 +1479,7 @@ IETF registry enum_names:
          match ESP_3IDEA [trunc]: OK
          short_name 8: 3IDEA(UNUSED) OK
          jam_enum_short 8: 3IDEA(UNUSED) OK
+         jam_enum_human 8: 3idea(unused) OK
          match 3IDEA(UNUSED) [short]: OK
          match 3IDEA [short+trunc]: OK
     9 -> ESP_DES_IV32(UNUSED)
@@ -1301,6 +1489,7 @@ IETF registry enum_names:
          match ESP_DES_IV32 [trunc]: OK
          short_name 9: DES_IV32(UNUSED) OK
          jam_enum_short 9: DES_IV32(UNUSED) OK
+         jam_enum_human 9: des-iv32(unused) OK
          match DES_IV32(UNUSED) [short]: OK
          match DES_IV32 [short+trunc]: OK
    10 -> ESP_RC4(UNUSED)
@@ -1310,6 +1499,7 @@ IETF registry enum_names:
          match ESP_RC4 [trunc]: OK
          short_name 10: RC4(UNUSED) OK
          jam_enum_short 10: RC4(UNUSED) OK
+         jam_enum_human 10: rc4(unused) OK
          match RC4(UNUSED) [short]: OK
          match RC4 [short+trunc]: OK
    11 -> ESP_NULL
@@ -1318,6 +1508,7 @@ IETF registry enum_names:
          match ESP_NULL: OK
          short_name 11: NULL OK
          jam_enum_short 11: NULL OK
+         jam_enum_human 11: null OK
          match NULL [short]: OK
    12 -> ESP_AES
          jam_enum 12: ESP_AES OK
@@ -1325,6 +1516,7 @@ IETF registry enum_names:
          match ESP_AES: OK
          short_name 12: AES OK
          jam_enum_short 12: AES OK
+         jam_enum_human 12: aes OK
          match AES [short]: OK
    13 -> ESP_AES_CTR
          jam_enum 13: ESP_AES_CTR OK
@@ -1332,6 +1524,7 @@ IETF registry enum_names:
          match ESP_AES_CTR: OK
          short_name 13: AES_CTR OK
          jam_enum_short 13: AES_CTR OK
+         jam_enum_human 13: aes-ctr OK
          match AES_CTR [short]: OK
    14 -> ESP_AES_CCM_A
          jam_enum 14: ESP_AES_CCM_A OK
@@ -1339,6 +1532,7 @@ IETF registry enum_names:
          match ESP_AES_CCM_A: OK
          short_name 14: AES_CCM_A OK
          jam_enum_short 14: AES_CCM_A OK
+         jam_enum_human 14: aes-ccm-a OK
          match AES_CCM_A [short]: OK
    15 -> ESP_AES_CCM_B
          jam_enum 15: ESP_AES_CCM_B OK
@@ -1346,6 +1540,7 @@ IETF registry enum_names:
          match ESP_AES_CCM_B: OK
          short_name 15: AES_CCM_B OK
          jam_enum_short 15: AES_CCM_B OK
+         jam_enum_human 15: aes-ccm-b OK
          match AES_CCM_B [short]: OK
    16 -> ESP_AES_CCM_C
          jam_enum 16: ESP_AES_CCM_C OK
@@ -1353,6 +1548,7 @@ IETF registry enum_names:
          match ESP_AES_CCM_C: OK
          short_name 16: AES_CCM_C OK
          jam_enum_short 16: AES_CCM_C OK
+         jam_enum_human 16: aes-ccm-c OK
          match AES_CCM_C [short]: OK
    17 -> ESP_UNUSED_ID17
          jam_enum 17: ESP_UNUSED_ID17 OK
@@ -1360,6 +1556,7 @@ IETF registry enum_names:
          match ESP_UNUSED_ID17: OK
          short_name 17: UNUSED_ID17 OK
          jam_enum_short 17: UNUSED_ID17 OK
+         jam_enum_human 17: unused-id17 OK
          match UNUSED_ID17 [short]: OK
    18 -> ESP_AES_GCM_A
          jam_enum 18: ESP_AES_GCM_A OK
@@ -1367,6 +1564,7 @@ IETF registry enum_names:
          match ESP_AES_GCM_A: OK
          short_name 18: AES_GCM_A OK
          jam_enum_short 18: AES_GCM_A OK
+         jam_enum_human 18: aes-gcm-a OK
          match AES_GCM_A [short]: OK
    19 -> ESP_AES_GCM_B
          jam_enum 19: ESP_AES_GCM_B OK
@@ -1374,6 +1572,7 @@ IETF registry enum_names:
          match ESP_AES_GCM_B: OK
          short_name 19: AES_GCM_B OK
          jam_enum_short 19: AES_GCM_B OK
+         jam_enum_human 19: aes-gcm-b OK
          match AES_GCM_B [short]: OK
    20 -> ESP_AES_GCM_C
          jam_enum 20: ESP_AES_GCM_C OK
@@ -1381,6 +1580,7 @@ IETF registry enum_names:
          match ESP_AES_GCM_C: OK
          short_name 20: AES_GCM_C OK
          jam_enum_short 20: AES_GCM_C OK
+         jam_enum_human 20: aes-gcm-c OK
          match AES_GCM_C [short]: OK
    21 -> ESP_SEED_CBC
          jam_enum 21: ESP_SEED_CBC OK
@@ -1388,6 +1588,7 @@ IETF registry enum_names:
          match ESP_SEED_CBC: OK
          short_name 21: SEED_CBC OK
          jam_enum_short 21: SEED_CBC OK
+         jam_enum_human 21: seed-cbc OK
          match SEED_CBC [short]: OK
    22 -> ESP_CAMELLIA
          jam_enum 22: ESP_CAMELLIA OK
@@ -1395,6 +1596,7 @@ IETF registry enum_names:
          match ESP_CAMELLIA: OK
          short_name 22: CAMELLIA OK
          jam_enum_short 22: CAMELLIA OK
+         jam_enum_human 22: camellia OK
          match CAMELLIA [short]: OK
    23 -> ESP_NULL_AUTH_AES_GMAC
          jam_enum 23: ESP_NULL_AUTH_AES_GMAC OK
@@ -1402,6 +1604,7 @@ IETF registry enum_names:
          match ESP_NULL_AUTH_AES_GMAC: OK
          short_name 23: NULL_AUTH_AES_GMAC OK
          jam_enum_short 23: NULL_AUTH_AES_GMAC OK
+         jam_enum_human 23: null-auth-aes-gmac OK
          match NULL_AUTH_AES_GMAC [short]: OK
    24 -> ESP_CAMELLIA_CTR
          jam_enum 24: ESP_CAMELLIA_CTR OK
@@ -1409,6 +1612,7 @@ IETF registry enum_names:
          match ESP_CAMELLIA_CTR: OK
          short_name 24: CAMELLIA_CTR OK
          jam_enum_short 24: CAMELLIA_CTR OK
+         jam_enum_human 24: camellia-ctr OK
          match CAMELLIA_CTR [short]: OK
    25 -> ESP_CAMELLIA_CCM_A
          jam_enum 25: ESP_CAMELLIA_CCM_A OK
@@ -1416,6 +1620,7 @@ IETF registry enum_names:
          match ESP_CAMELLIA_CCM_A: OK
          short_name 25: CAMELLIA_CCM_A OK
          jam_enum_short 25: CAMELLIA_CCM_A OK
+         jam_enum_human 25: camellia-ccm-a OK
          match CAMELLIA_CCM_A [short]: OK
    26 -> ESP_CAMELLIA_CCM_B
          jam_enum 26: ESP_CAMELLIA_CCM_B OK
@@ -1423,6 +1628,7 @@ IETF registry enum_names:
          match ESP_CAMELLIA_CCM_B: OK
          short_name 26: CAMELLIA_CCM_B OK
          jam_enum_short 26: CAMELLIA_CCM_B OK
+         jam_enum_human 26: camellia-ccm-b OK
          match CAMELLIA_CCM_B [short]: OK
    27 -> ESP_CAMELLIA_CCM_C
          jam_enum 27: ESP_CAMELLIA_CCM_C OK
@@ -1430,6 +1636,7 @@ IETF registry enum_names:
          match ESP_CAMELLIA_CCM_C: OK
          short_name 27: CAMELLIA_CCM_C OK
          jam_enum_short 27: CAMELLIA_CCM_C OK
+         jam_enum_human 27: camellia-ccm-c OK
          match CAMELLIA_CCM_C [short]: OK
   249 -> ESP_MARS
          jam_enum 249: ESP_MARS OK
@@ -1437,6 +1644,7 @@ IETF registry enum_names:
          match ESP_MARS: OK
          short_name 249: MARS OK
          jam_enum_short 249: MARS OK
+         jam_enum_human 249: mars OK
          match MARS [short]: OK
   250 -> ESP_RC6(UNUSED)
          jam_enum 250: ESP_RC6(UNUSED) OK
@@ -1445,6 +1653,7 @@ IETF registry enum_names:
          match ESP_RC6 [trunc]: OK
          short_name 250: RC6(UNUSED) OK
          jam_enum_short 250: RC6(UNUSED) OK
+         jam_enum_human 250: rc6(unused) OK
          match RC6(UNUSED) [short]: OK
          match RC6 [short+trunc]: OK
   251 -> ESP_KAME_NULL
@@ -1453,6 +1662,7 @@ IETF registry enum_names:
          match ESP_KAME_NULL: OK
          short_name 251: KAME_NULL OK
          jam_enum_short 251: KAME_NULL OK
+         jam_enum_human 251: kame-null OK
          match KAME_NULL [short]: OK
   252 -> ESP_SERPENT
          jam_enum 252: ESP_SERPENT OK
@@ -1460,6 +1670,7 @@ IETF registry enum_names:
          match ESP_SERPENT: OK
          short_name 252: SERPENT OK
          jam_enum_short 252: SERPENT OK
+         jam_enum_human 252: serpent OK
          match SERPENT [short]: OK
   253 -> ESP_TWOFISH
          jam_enum 253: ESP_TWOFISH OK
@@ -1467,6 +1678,7 @@ IETF registry enum_names:
          match ESP_TWOFISH: OK
          short_name 253: TWOFISH OK
          jam_enum_short 253: TWOFISH OK
+         jam_enum_human 253: twofish OK
          match TWOFISH [short]: OK
   254 -> ESP_ID254(UNUSED)
          jam_enum 254: ESP_ID254(UNUSED) OK
@@ -1475,6 +1687,7 @@ IETF registry enum_names:
          match ESP_ID254 [trunc]: OK
          short_name 254: ID254(UNUSED) OK
          jam_enum_short 254: ID254(UNUSED) OK
+         jam_enum_human 254: id254(unused) OK
          match ID254(UNUSED) [short]: OK
          match ID254 [short+trunc]: OK
   255 -> ESP_ID255(UNUSED)
@@ -1484,6 +1697,7 @@ IETF registry enum_names:
          match ESP_ID255 [trunc]: OK
          short_name 255: ID255(UNUSED) OK
          jam_enum_short 255: ID255(UNUSED) OK
+         jam_enum_human 255: id255(unused) OK
          match ID255(UNUSED) [short]: OK
          match ID255 [short+trunc]: OK
 
@@ -1494,6 +1708,7 @@ IETF registry enum_names:
          match IPCOMP_NONE: OK
          short_name 0: NONE OK
          jam_enum_short 0: NONE OK
+         jam_enum_human 0: none OK
          match NONE [short]: OK
     1 -> IPCOMP_OUI
          jam_enum 1: IPCOMP_OUI OK
@@ -1501,6 +1716,7 @@ IETF registry enum_names:
          match IPCOMP_OUI: OK
          short_name 1: OUI OK
          jam_enum_short 1: OUI OK
+         jam_enum_human 1: oui OK
          match OUI [short]: OK
     2 -> IPCOMP_DEFLATE
          jam_enum 2: IPCOMP_DEFLATE OK
@@ -1508,6 +1724,7 @@ IETF registry enum_names:
          match IPCOMP_DEFLATE: OK
          short_name 2: DEFLATE OK
          jam_enum_short 2: DEFLATE OK
+         jam_enum_human 2: deflate OK
          match DEFLATE [short]: OK
     3 -> IPCOMP_LZS
          jam_enum 3: IPCOMP_LZS OK
@@ -1515,6 +1732,7 @@ IETF registry enum_names:
          match IPCOMP_LZS: OK
          short_name 3: LZS OK
          jam_enum_short 3: LZS OK
+         jam_enum_human 3: lzs OK
          match LZS [short]: OK
     4 -> IPCOMP_LZJH
          jam_enum 4: IPCOMP_LZJH OK
@@ -1522,6 +1740,7 @@ IETF registry enum_names:
          match IPCOMP_LZJH: OK
          short_name 4: LZJH OK
          jam_enum_short 4: LZJH OK
+         jam_enum_human 4: lzjh OK
          match LZJH [short]: OK
 
   oakley_attr_names:
@@ -1532,6 +1751,7 @@ IETF registry enum_names:
          match OAKLEY_GROUP_PRIME  [trunc]: OK
          short_name 6: OAKLEY_GROUP_PRIME (variable length) OK
          jam_enum_short 6: OAKLEY_GROUP_PRIME (variable length) OK
+         jam_enum_human 6: oakley-group-prime (variable length) OK
     7 -> OAKLEY_GROUP_GENERATOR_ONE (variable length)
          jam_enum 7: OAKLEY_GROUP_GENERATOR_ONE (variable length) OK
          search OAKLEY_GROUP_GENERATOR_ONE (variable length): OK
@@ -1539,6 +1759,7 @@ IETF registry enum_names:
          match OAKLEY_GROUP_GENERATOR_ONE  [trunc]: OK
          short_name 7: OAKLEY_GROUP_GENERATOR_ONE (variable length) OK
          jam_enum_short 7: OAKLEY_GROUP_GENERATOR_ONE (variable length) OK
+         jam_enum_human 7: oakley-group-generator-one (variable length) OK
     8 -> OAKLEY_GROUP_GENERATOR_TWO (variable length)
          jam_enum 8: OAKLEY_GROUP_GENERATOR_TWO (variable length) OK
          search OAKLEY_GROUP_GENERATOR_TWO (variable length): OK
@@ -1546,6 +1767,7 @@ IETF registry enum_names:
          match OAKLEY_GROUP_GENERATOR_TWO  [trunc]: OK
          short_name 8: OAKLEY_GROUP_GENERATOR_TWO (variable length) OK
          jam_enum_short 8: OAKLEY_GROUP_GENERATOR_TWO (variable length) OK
+         jam_enum_human 8: oakley-group-generator-two (variable length) OK
     9 -> OAKLEY_GROUP_CURVE_A (variable length)
          jam_enum 9: OAKLEY_GROUP_CURVE_A (variable length) OK
          search OAKLEY_GROUP_CURVE_A (variable length): OK
@@ -1553,6 +1775,7 @@ IETF registry enum_names:
          match OAKLEY_GROUP_CURVE_A  [trunc]: OK
          short_name 9: OAKLEY_GROUP_CURVE_A (variable length) OK
          jam_enum_short 9: OAKLEY_GROUP_CURVE_A (variable length) OK
+         jam_enum_human 9: oakley-group-curve-a (variable length) OK
    10 -> OAKLEY_GROUP_CURVE_B (variable length)
          jam_enum 10: OAKLEY_GROUP_CURVE_B (variable length) OK
          search OAKLEY_GROUP_CURVE_B (variable length): OK
@@ -1560,6 +1783,7 @@ IETF registry enum_names:
          match OAKLEY_GROUP_CURVE_B  [trunc]: OK
          short_name 10: OAKLEY_GROUP_CURVE_B (variable length) OK
          jam_enum_short 10: OAKLEY_GROUP_CURVE_B (variable length) OK
+         jam_enum_human 10: oakley-group-curve-b (variable length) OK
    12 -> OAKLEY_LIFE_DURATION (variable length)
          jam_enum 12: OAKLEY_LIFE_DURATION (variable length) OK
          search OAKLEY_LIFE_DURATION (variable length): OK
@@ -1567,6 +1791,7 @@ IETF registry enum_names:
          match OAKLEY_LIFE_DURATION  [trunc]: OK
          short_name 12: OAKLEY_LIFE_DURATION (variable length) OK
          jam_enum_short 12: OAKLEY_LIFE_DURATION (variable length) OK
+         jam_enum_human 12: oakley-life-duration (variable length) OK
    16 -> OAKLEY_GROUP_ORDER (variable length)
          jam_enum 16: OAKLEY_GROUP_ORDER (variable length) OK
          search OAKLEY_GROUP_ORDER (variable length): OK
@@ -1574,6 +1799,7 @@ IETF registry enum_names:
          match OAKLEY_GROUP_ORDER  [trunc]: OK
          short_name 16: OAKLEY_GROUP_ORDER (variable length) OK
          jam_enum_short 16: OAKLEY_GROUP_ORDER (variable length) OK
+         jam_enum_human 16: oakley-group-order (variable length) OK
 
   ipsec_attr_names:
     2 -> SA_LIFE_DURATION (variable length)
@@ -1583,6 +1809,7 @@ IETF registry enum_names:
          match SA_LIFE_DURATION  [trunc]: OK
          short_name 2: SA_LIFE_DURATION (variable length) OK
          jam_enum_short 2: SA_LIFE_DURATION (variable length) OK
+         jam_enum_human 2: sa-life-duration (variable length) OK
     9 -> COMPRESS_PRIVATE_ALG (variable length)
          jam_enum 9: COMPRESS_PRIVATE_ALG (variable length) OK
          search COMPRESS_PRIVATE_ALG (variable length): OK
@@ -1590,12 +1817,14 @@ IETF registry enum_names:
          match COMPRESS_PRIVATE_ALG  [trunc]: OK
          short_name 9: COMPRESS_PRIVATE_ALG (variable length) OK
          jam_enum_short 9: COMPRESS_PRIVATE_ALG (variable length) OK
+         jam_enum_human 9: compress-private-alg (variable length) OK
    10 -> NULL
          jam_enum 10: NULL OK
          search NULL: OK
          match NULL: OK
          short_name 10: NULL OK
          jam_enum_short 10: NULL OK
+         jam_enum_human 10: null OK
 
   sa_lifetime_names:
     1 -> SA_LIFE_TYPE_SECONDS
@@ -1604,12 +1833,14 @@ IETF registry enum_names:
          match SA_LIFE_TYPE_SECONDS: OK
          short_name 1: SA_LIFE_TYPE_SECONDS OK
          jam_enum_short 1: SA_LIFE_TYPE_SECONDS OK
+         jam_enum_human 1: sa-life-type-seconds OK
     2 -> SA_LIFE_TYPE_KBYTES
          jam_enum 2: SA_LIFE_TYPE_KBYTES OK
          search SA_LIFE_TYPE_KBYTES: OK
          match SA_LIFE_TYPE_KBYTES: OK
          short_name 2: SA_LIFE_TYPE_KBYTES OK
          jam_enum_short 2: SA_LIFE_TYPE_KBYTES OK
+         jam_enum_human 2: sa-life-type-kbytes OK
 
   oakley_lifetime_names:
     1 -> OAKLEY_LIFE_SECONDS
@@ -1618,12 +1849,14 @@ IETF registry enum_names:
          match OAKLEY_LIFE_SECONDS: OK
          short_name 1: OAKLEY_LIFE_SECONDS OK
          jam_enum_short 1: OAKLEY_LIFE_SECONDS OK
+         jam_enum_human 1: oakley-life-seconds OK
     2 -> OAKLEY_LIFE_KILOBYTES
          jam_enum 2: OAKLEY_LIFE_KILOBYTES OK
          search OAKLEY_LIFE_KILOBYTES: OK
          match OAKLEY_LIFE_KILOBYTES: OK
          short_name 2: OAKLEY_LIFE_KILOBYTES OK
          jam_enum_short 2: OAKLEY_LIFE_KILOBYTES OK
+         jam_enum_human 2: oakley-life-kilobytes OK
 
   oakley_auth_names:
     1 -> OAKLEY_PRESHARED_KEY
@@ -1632,6 +1865,7 @@ IETF registry enum_names:
          match OAKLEY_PRESHARED_KEY: OK
          short_name 1: PRESHARED_KEY OK
          jam_enum_short 1: PRESHARED_KEY OK
+         jam_enum_human 1: preshared-key OK
          match PRESHARED_KEY [short]: OK
     2 -> OAKLEY_DSS_SIG
          jam_enum 2: OAKLEY_DSS_SIG OK
@@ -1639,6 +1873,7 @@ IETF registry enum_names:
          match OAKLEY_DSS_SIG: OK
          short_name 2: DSS_SIG OK
          jam_enum_short 2: DSS_SIG OK
+         jam_enum_human 2: dss-sig OK
          match DSS_SIG [short]: OK
     3 -> OAKLEY_RSA_SIG
          jam_enum 3: OAKLEY_RSA_SIG OK
@@ -1646,6 +1881,7 @@ IETF registry enum_names:
          match OAKLEY_RSA_SIG: OK
          short_name 3: RSA_SIG OK
          jam_enum_short 3: RSA_SIG OK
+         jam_enum_human 3: rsa-sig OK
          match RSA_SIG [short]: OK
     4 -> OAKLEY_RSA_ENC
          jam_enum 4: OAKLEY_RSA_ENC OK
@@ -1653,6 +1889,7 @@ IETF registry enum_names:
          match OAKLEY_RSA_ENC: OK
          short_name 4: RSA_ENC OK
          jam_enum_short 4: RSA_ENC OK
+         jam_enum_human 4: rsa-enc OK
          match RSA_ENC [short]: OK
     5 -> OAKLEY_RSA_REVISED_MODE
          jam_enum 5: OAKLEY_RSA_REVISED_MODE OK
@@ -1660,6 +1897,7 @@ IETF registry enum_names:
          match OAKLEY_RSA_REVISED_MODE: OK
          short_name 5: RSA_REVISED_MODE OK
          jam_enum_short 5: RSA_REVISED_MODE OK
+         jam_enum_human 5: rsa-revised-mode OK
          match RSA_REVISED_MODE [short]: OK
     6 -> OAKLEY_RESERVED_6
          jam_enum 6: OAKLEY_RESERVED_6 OK
@@ -1667,6 +1905,7 @@ IETF registry enum_names:
          match OAKLEY_RESERVED_6: OK
          short_name 6: RESERVED_6 OK
          jam_enum_short 6: RESERVED_6 OK
+         jam_enum_human 6: reserved-6 OK
          match RESERVED_6 [short]: OK
     7 -> OAKLEY_RESERVED_7
          jam_enum 7: OAKLEY_RESERVED_7 OK
@@ -1674,6 +1913,7 @@ IETF registry enum_names:
          match OAKLEY_RESERVED_7: OK
          short_name 7: RESERVED_7 OK
          jam_enum_short 7: RESERVED_7 OK
+         jam_enum_human 7: reserved-7 OK
          match RESERVED_7 [short]: OK
     8 -> OAKLEY_RESERVED_8
          jam_enum 8: OAKLEY_RESERVED_8 OK
@@ -1681,6 +1921,7 @@ IETF registry enum_names:
          match OAKLEY_RESERVED_8: OK
          short_name 8: RESERVED_8 OK
          jam_enum_short 8: RESERVED_8 OK
+         jam_enum_human 8: reserved-8 OK
          match RESERVED_8 [short]: OK
     9 -> OAKLEY_ECDSA_P256
          jam_enum 9: OAKLEY_ECDSA_P256 OK
@@ -1688,6 +1929,7 @@ IETF registry enum_names:
          match OAKLEY_ECDSA_P256: OK
          short_name 9: ECDSA_P256 OK
          jam_enum_short 9: ECDSA_P256 OK
+         jam_enum_human 9: ecdsa-p256 OK
          match ECDSA_P256 [short]: OK
    10 -> OAKLEY_ECDSA_P384
          jam_enum 10: OAKLEY_ECDSA_P384 OK
@@ -1695,6 +1937,7 @@ IETF registry enum_names:
          match OAKLEY_ECDSA_P384: OK
          short_name 10: ECDSA_P384 OK
          jam_enum_short 10: ECDSA_P384 OK
+         jam_enum_human 10: ecdsa-p384 OK
          match ECDSA_P384 [short]: OK
    11 -> OAKLEY_ECDSA_P521
          jam_enum 11: OAKLEY_ECDSA_P521 OK
@@ -1702,6 +1945,7 @@ IETF registry enum_names:
          match OAKLEY_ECDSA_P521: OK
          short_name 11: ECDSA_P521 OK
          jam_enum_short 11: ECDSA_P521 OK
+         jam_enum_human 11: ecdsa-p521 OK
          match ECDSA_P521 [short]: OK
 
   oakley_enc_names:
@@ -1712,6 +1956,7 @@ IETF registry enum_names:
          match OAKLEY_DES_CBC [trunc]: OK
          short_name 1: DES_CBC(UNUSED) OK
          jam_enum_short 1: DES_CBC(UNUSED) OK
+         jam_enum_human 1: des-cbc(unused) OK
          match DES_CBC(UNUSED) [short]: OK
          match DES_CBC [short+trunc]: OK
     2 -> OAKLEY_IDEA_CBC(UNUSED)
@@ -1721,6 +1966,7 @@ IETF registry enum_names:
          match OAKLEY_IDEA_CBC [trunc]: OK
          short_name 2: IDEA_CBC(UNUSED) OK
          jam_enum_short 2: IDEA_CBC(UNUSED) OK
+         jam_enum_human 2: idea-cbc(unused) OK
          match IDEA_CBC(UNUSED) [short]: OK
          match IDEA_CBC [short+trunc]: OK
     3 -> OAKLEY_BLOWFISH_CBC(UNUSED)
@@ -1730,6 +1976,7 @@ IETF registry enum_names:
          match OAKLEY_BLOWFISH_CBC [trunc]: OK
          short_name 3: BLOWFISH_CBC(UNUSED) OK
          jam_enum_short 3: BLOWFISH_CBC(UNUSED) OK
+         jam_enum_human 3: blowfish-cbc(unused) OK
          match BLOWFISH_CBC(UNUSED) [short]: OK
          match BLOWFISH_CBC [short+trunc]: OK
     4 -> OAKLEY_RC5_R16_B64_CBC(UNUSED)
@@ -1739,6 +1986,7 @@ IETF registry enum_names:
          match OAKLEY_RC5_R16_B64_CBC [trunc]: OK
          short_name 4: RC5_R16_B64_CBC(UNUSED) OK
          jam_enum_short 4: RC5_R16_B64_CBC(UNUSED) OK
+         jam_enum_human 4: rc5-r16-b64-cbc(unused) OK
          match RC5_R16_B64_CBC(UNUSED) [short]: OK
          match RC5_R16_B64_CBC [short+trunc]: OK
     5 -> OAKLEY_3DES_CBC
@@ -1747,6 +1995,7 @@ IETF registry enum_names:
          match OAKLEY_3DES_CBC: OK
          short_name 5: 3DES_CBC OK
          jam_enum_short 5: 3DES_CBC OK
+         jam_enum_human 5: 3des-cbc OK
          match 3DES_CBC [short]: OK
     6 -> OAKLEY_CAST_CBC
          jam_enum 6: OAKLEY_CAST_CBC OK
@@ -1754,6 +2003,7 @@ IETF registry enum_names:
          match OAKLEY_CAST_CBC: OK
          short_name 6: CAST_CBC OK
          jam_enum_short 6: CAST_CBC OK
+         jam_enum_human 6: cast-cbc OK
          match CAST_CBC [short]: OK
     7 -> OAKLEY_AES_CBC
          jam_enum 7: OAKLEY_AES_CBC OK
@@ -1761,6 +2011,7 @@ IETF registry enum_names:
          match OAKLEY_AES_CBC: OK
          short_name 7: AES_CBC OK
          jam_enum_short 7: AES_CBC OK
+         jam_enum_human 7: aes-cbc OK
          match AES_CBC [short]: OK
     8 -> OAKLEY_CAMELLIA_CBC
          jam_enum 8: OAKLEY_CAMELLIA_CBC OK
@@ -1768,6 +2019,7 @@ IETF registry enum_names:
          match OAKLEY_CAMELLIA_CBC: OK
          short_name 8: CAMELLIA_CBC OK
          jam_enum_short 8: CAMELLIA_CBC OK
+         jam_enum_human 8: camellia-cbc OK
          match CAMELLIA_CBC [short]: OK
     9 -> UNUSED_9
          jam_enum 9: UNUSED_9 OK
@@ -1775,30 +2027,35 @@ IETF registry enum_names:
          match UNUSED_9: OK
          short_name 9: UNUSED_9 OK
          jam_enum_short 9: UNUSED_9 OK
+         jam_enum_human 9: unused-9 OK
    10 -> UNUSED_10
          jam_enum 10: UNUSED_10 OK
          search UNUSED_10: OK
          match UNUSED_10: OK
          short_name 10: UNUSED_10 OK
          jam_enum_short 10: UNUSED_10 OK
+         jam_enum_human 10: unused-10 OK
    11 -> UNUSED_11
          jam_enum 11: UNUSED_11 OK
          search UNUSED_11: OK
          match UNUSED_11: OK
          short_name 11: UNUSED_11 OK
          jam_enum_short 11: UNUSED_11 OK
+         jam_enum_human 11: unused-11 OK
    12 -> UNUSED_12
          jam_enum 12: UNUSED_12 OK
          search UNUSED_12: OK
          match UNUSED_12: OK
          short_name 12: UNUSED_12 OK
          jam_enum_short 12: UNUSED_12 OK
+         jam_enum_human 12: unused-12 OK
    13 -> OAKLEY_AES_CTR
          jam_enum 13: OAKLEY_AES_CTR OK
          search OAKLEY_AES_CTR: OK
          match OAKLEY_AES_CTR: OK
          short_name 13: AES_CTR OK
          jam_enum_short 13: AES_CTR OK
+         jam_enum_human 13: aes-ctr OK
          match AES_CTR [short]: OK
    14 -> OAKLEY_AES_CCM_A
          jam_enum 14: OAKLEY_AES_CCM_A OK
@@ -1806,6 +2063,7 @@ IETF registry enum_names:
          match OAKLEY_AES_CCM_A: OK
          short_name 14: AES_CCM_A OK
          jam_enum_short 14: AES_CCM_A OK
+         jam_enum_human 14: aes-ccm-a OK
          match AES_CCM_A [short]: OK
    15 -> OAKLEY_AES_CCM_B
          jam_enum 15: OAKLEY_AES_CCM_B OK
@@ -1813,6 +2071,7 @@ IETF registry enum_names:
          match OAKLEY_AES_CCM_B: OK
          short_name 15: AES_CCM_B OK
          jam_enum_short 15: AES_CCM_B OK
+         jam_enum_human 15: aes-ccm-b OK
          match AES_CCM_B [short]: OK
    16 -> OAKLEY_AES_CCM_16
          jam_enum 16: OAKLEY_AES_CCM_16 OK
@@ -1820,6 +2079,7 @@ IETF registry enum_names:
          match OAKLEY_AES_CCM_16: OK
          short_name 16: AES_CCM_16 OK
          jam_enum_short 16: AES_CCM_16 OK
+         jam_enum_human 16: aes-ccm-16 OK
          match AES_CCM_16 [short]: OK
    17 -> UNUSED_17
          jam_enum 17: UNUSED_17 OK
@@ -1827,12 +2087,14 @@ IETF registry enum_names:
          match UNUSED_17: OK
          short_name 17: UNUSED_17 OK
          jam_enum_short 17: UNUSED_17 OK
+         jam_enum_human 17: unused-17 OK
    18 -> OAKLEY_AES_GCM_A
          jam_enum 18: OAKLEY_AES_GCM_A OK
          search OAKLEY_AES_GCM_A: OK
          match OAKLEY_AES_GCM_A: OK
          short_name 18: AES_GCM_A OK
          jam_enum_short 18: AES_GCM_A OK
+         jam_enum_human 18: aes-gcm-a OK
          match AES_GCM_A [short]: OK
    19 -> OAKLEY_AES_GCM_B
          jam_enum 19: OAKLEY_AES_GCM_B OK
@@ -1840,6 +2102,7 @@ IETF registry enum_names:
          match OAKLEY_AES_GCM_B: OK
          short_name 19: AES_GCM_B OK
          jam_enum_short 19: AES_GCM_B OK
+         jam_enum_human 19: aes-gcm-b OK
          match AES_GCM_B [short]: OK
    20 -> OAKLEY_AES_GCM_C
          jam_enum 20: OAKLEY_AES_GCM_C OK
@@ -1847,6 +2110,7 @@ IETF registry enum_names:
          match OAKLEY_AES_GCM_C: OK
          short_name 20: AES_GCM_C OK
          jam_enum_short 20: AES_GCM_C OK
+         jam_enum_human 20: aes-gcm-c OK
          match AES_GCM_C [short]: OK
    21 -> UNUSED_21
          jam_enum 21: UNUSED_21 OK
@@ -1854,24 +2118,28 @@ IETF registry enum_names:
          match UNUSED_21: OK
          short_name 21: UNUSED_21 OK
          jam_enum_short 21: UNUSED_21 OK
+         jam_enum_human 21: unused-21 OK
    22 -> UNUSED_22
          jam_enum 22: UNUSED_22 OK
          search UNUSED_22: OK
          match UNUSED_22: OK
          short_name 22: UNUSED_22 OK
          jam_enum_short 22: UNUSED_22 OK
+         jam_enum_human 22: unused-22 OK
    23 -> UNUSED_23
          jam_enum 23: UNUSED_23 OK
          search UNUSED_23: OK
          match UNUSED_23: OK
          short_name 23: UNUSED_23 OK
          jam_enum_short 23: UNUSED_23 OK
+         jam_enum_human 23: unused-23 OK
    24 -> OAKLEY_CAMELLIA_CTR
          jam_enum 24: OAKLEY_CAMELLIA_CTR OK
          search OAKLEY_CAMELLIA_CTR: OK
          match OAKLEY_CAMELLIA_CTR: OK
          short_name 24: CAMELLIA_CTR OK
          jam_enum_short 24: CAMELLIA_CTR OK
+         jam_enum_human 24: camellia-ctr OK
          match CAMELLIA_CTR [short]: OK
    25 -> OAKLEY_CAMELLIA_CCM_A
          jam_enum 25: OAKLEY_CAMELLIA_CCM_A OK
@@ -1879,6 +2147,7 @@ IETF registry enum_names:
          match OAKLEY_CAMELLIA_CCM_A: OK
          short_name 25: CAMELLIA_CCM_A OK
          jam_enum_short 25: CAMELLIA_CCM_A OK
+         jam_enum_human 25: camellia-ccm-a OK
          match CAMELLIA_CCM_A [short]: OK
    26 -> OAKLEY_CAMELLIA_CCM_B
          jam_enum 26: OAKLEY_CAMELLIA_CCM_B OK
@@ -1886,6 +2155,7 @@ IETF registry enum_names:
          match OAKLEY_CAMELLIA_CCM_B: OK
          short_name 26: CAMELLIA_CCM_B OK
          jam_enum_short 26: CAMELLIA_CCM_B OK
+         jam_enum_human 26: camellia-ccm-b OK
          match CAMELLIA_CCM_B [short]: OK
    27 -> OAKLEY_CAMELLIA_CCM_C
          jam_enum 27: OAKLEY_CAMELLIA_CCM_C OK
@@ -1893,6 +2163,7 @@ IETF registry enum_names:
          match OAKLEY_CAMELLIA_CCM_C: OK
          short_name 27: CAMELLIA_CCM_C OK
          jam_enum_short 27: CAMELLIA_CCM_C OK
+         jam_enum_human 27: camellia-ccm-c OK
          match CAMELLIA_CCM_C [short]: OK
 
   oakley_hash_names:
@@ -1902,6 +2173,7 @@ IETF registry enum_names:
          match OAKLEY_MD5: OK
          short_name 1: MD5 OK
          jam_enum_short 1: MD5 OK
+         jam_enum_human 1: md5 OK
          match MD5 [short]: OK
     2 -> OAKLEY_SHA1
          jam_enum 2: OAKLEY_SHA1 OK
@@ -1909,6 +2181,7 @@ IETF registry enum_names:
          match OAKLEY_SHA1: OK
          short_name 2: SHA1 OK
          jam_enum_short 2: SHA1 OK
+         jam_enum_human 2: sha1 OK
          match SHA1 [short]: OK
     3 -> OAKLEY_TIGER(UNUSED)
          jam_enum 3: OAKLEY_TIGER(UNUSED) OK
@@ -1917,6 +2190,7 @@ IETF registry enum_names:
          match OAKLEY_TIGER [trunc]: OK
          short_name 3: TIGER(UNUSED) OK
          jam_enum_short 3: TIGER(UNUSED) OK
+         jam_enum_human 3: tiger(unused) OK
          match TIGER(UNUSED) [short]: OK
          match TIGER [short+trunc]: OK
     4 -> OAKLEY_SHA2_256
@@ -1925,6 +2199,7 @@ IETF registry enum_names:
          match OAKLEY_SHA2_256: OK
          short_name 4: SHA2_256 OK
          jam_enum_short 4: SHA2_256 OK
+         jam_enum_human 4: sha2-256 OK
          match SHA2_256 [short]: OK
     5 -> OAKLEY_SHA2_384
          jam_enum 5: OAKLEY_SHA2_384 OK
@@ -1932,6 +2207,7 @@ IETF registry enum_names:
          match OAKLEY_SHA2_384: OK
          short_name 5: SHA2_384 OK
          jam_enum_short 5: SHA2_384 OK
+         jam_enum_human 5: sha2-384 OK
          match SHA2_384 [short]: OK
     6 -> OAKLEY_SHA2_512
          jam_enum 6: OAKLEY_SHA2_512 OK
@@ -1939,6 +2215,7 @@ IETF registry enum_names:
          match OAKLEY_SHA2_512: OK
          short_name 6: SHA2_512 OK
          jam_enum_short 6: SHA2_512 OK
+         jam_enum_human 6: sha2-512 OK
          match SHA2_512 [short]: OK
 
   oakley_group_names:
@@ -1948,6 +2225,7 @@ IETF registry enum_names:
          match OAKLEY_GROUP_NONE: OK
          short_name 0: NONE OK
          jam_enum_short 0: NONE OK
+         jam_enum_human 0: none OK
          match NONE [short]: OK
     1 -> OAKLEY_GROUP_MODP768
          jam_enum 1: OAKLEY_GROUP_MODP768 OK
@@ -1955,6 +2233,7 @@ IETF registry enum_names:
          match OAKLEY_GROUP_MODP768: OK
          short_name 1: MODP768 OK
          jam_enum_short 1: MODP768 OK
+         jam_enum_human 1: modp768 OK
          match MODP768 [short]: OK
     2 -> OAKLEY_GROUP_MODP1024
          jam_enum 2: OAKLEY_GROUP_MODP1024 OK
@@ -1962,6 +2241,7 @@ IETF registry enum_names:
          match OAKLEY_GROUP_MODP1024: OK
          short_name 2: MODP1024 OK
          jam_enum_short 2: MODP1024 OK
+         jam_enum_human 2: modp1024 OK
          match MODP1024 [short]: OK
     3 -> OAKLEY_GROUP_GP155(UNUSED)
          jam_enum 3: OAKLEY_GROUP_GP155(UNUSED) OK
@@ -1970,6 +2250,7 @@ IETF registry enum_names:
          match OAKLEY_GROUP_GP155 [trunc]: OK
          short_name 3: GP155(UNUSED) OK
          jam_enum_short 3: GP155(UNUSED) OK
+         jam_enum_human 3: gp155(unused) OK
          match GP155(UNUSED) [short]: OK
          match GP155 [short+trunc]: OK
     4 -> OAKLEY_GROUP_GP185(UNUSED)
@@ -1979,6 +2260,7 @@ IETF registry enum_names:
          match OAKLEY_GROUP_GP185 [trunc]: OK
          short_name 4: GP185(UNUSED) OK
          jam_enum_short 4: GP185(UNUSED) OK
+         jam_enum_human 4: gp185(unused) OK
          match GP185(UNUSED) [short]: OK
          match GP185 [short+trunc]: OK
     5 -> OAKLEY_GROUP_MODP1536
@@ -1987,6 +2269,7 @@ IETF registry enum_names:
          match OAKLEY_GROUP_MODP1536: OK
          short_name 5: MODP1536 OK
          jam_enum_short 5: MODP1536 OK
+         jam_enum_human 5: modp1536 OK
          match MODP1536 [short]: OK
     6 -> OAKLEY_GROUP_EC2N_2_1(UNUSED)
          jam_enum 6: OAKLEY_GROUP_EC2N_2_1(UNUSED) OK
@@ -1995,6 +2278,7 @@ IETF registry enum_names:
          match OAKLEY_GROUP_EC2N_2_1 [trunc]: OK
          short_name 6: EC2N_2_1(UNUSED) OK
          jam_enum_short 6: EC2N_2_1(UNUSED) OK
+         jam_enum_human 6: ec2n-2-1(unused) OK
          match EC2N_2_1(UNUSED) [short]: OK
          match EC2N_2_1 [short+trunc]: OK
     7 -> OAKLEY_GROUP_EC2N_2_2(UNUSED)
@@ -2004,6 +2288,7 @@ IETF registry enum_names:
          match OAKLEY_GROUP_EC2N_2_2 [trunc]: OK
          short_name 7: EC2N_2_2(UNUSED) OK
          jam_enum_short 7: EC2N_2_2(UNUSED) OK
+         jam_enum_human 7: ec2n-2-2(unused) OK
          match EC2N_2_2(UNUSED) [short]: OK
          match EC2N_2_2 [short+trunc]: OK
     8 -> OAKLEY_GROUP_EC2N_2_3(UNUSED)
@@ -2013,6 +2298,7 @@ IETF registry enum_names:
          match OAKLEY_GROUP_EC2N_2_3 [trunc]: OK
          short_name 8: EC2N_2_3(UNUSED) OK
          jam_enum_short 8: EC2N_2_3(UNUSED) OK
+         jam_enum_human 8: ec2n-2-3(unused) OK
          match EC2N_2_3(UNUSED) [short]: OK
          match EC2N_2_3 [short+trunc]: OK
     9 -> OAKLEY_GROUP_EC2N_2_4(UNUSED)
@@ -2022,6 +2308,7 @@ IETF registry enum_names:
          match OAKLEY_GROUP_EC2N_2_4 [trunc]: OK
          short_name 9: EC2N_2_4(UNUSED) OK
          jam_enum_short 9: EC2N_2_4(UNUSED) OK
+         jam_enum_human 9: ec2n-2-4(unused) OK
          match EC2N_2_4(UNUSED) [short]: OK
          match EC2N_2_4 [short+trunc]: OK
    10 -> OAKLEY_GROUP_EC2N_2_5(UNUSED)
@@ -2031,6 +2318,7 @@ IETF registry enum_names:
          match OAKLEY_GROUP_EC2N_2_5 [trunc]: OK
          short_name 10: EC2N_2_5(UNUSED) OK
          jam_enum_short 10: EC2N_2_5(UNUSED) OK
+         jam_enum_human 10: ec2n-2-5(unused) OK
          match EC2N_2_5(UNUSED) [short]: OK
          match EC2N_2_5 [short+trunc]: OK
    11 -> OAKLEY_GROUP_EC2N_2_6(UNUSED)
@@ -2040,6 +2328,7 @@ IETF registry enum_names:
          match OAKLEY_GROUP_EC2N_2_6 [trunc]: OK
          short_name 11: EC2N_2_6(UNUSED) OK
          jam_enum_short 11: EC2N_2_6(UNUSED) OK
+         jam_enum_human 11: ec2n-2-6(unused) OK
          match EC2N_2_6(UNUSED) [short]: OK
          match EC2N_2_6 [short+trunc]: OK
    12 -> OAKLEY_GROUP_EC2N_2_7(UNUSED)
@@ -2049,6 +2338,7 @@ IETF registry enum_names:
          match OAKLEY_GROUP_EC2N_2_7 [trunc]: OK
          short_name 12: EC2N_2_7(UNUSED) OK
          jam_enum_short 12: EC2N_2_7(UNUSED) OK
+         jam_enum_human 12: ec2n-2-7(unused) OK
          match EC2N_2_7(UNUSED) [short]: OK
          match EC2N_2_7 [short+trunc]: OK
    13 -> OAKLEY_GROUP_EC2N_2_8(UNUSED)
@@ -2058,6 +2348,7 @@ IETF registry enum_names:
          match OAKLEY_GROUP_EC2N_2_8 [trunc]: OK
          short_name 13: EC2N_2_8(UNUSED) OK
          jam_enum_short 13: EC2N_2_8(UNUSED) OK
+         jam_enum_human 13: ec2n-2-8(unused) OK
          match EC2N_2_8(UNUSED) [short]: OK
          match EC2N_2_8 [short+trunc]: OK
    14 -> OAKLEY_GROUP_MODP2048
@@ -2066,6 +2357,7 @@ IETF registry enum_names:
          match OAKLEY_GROUP_MODP2048: OK
          short_name 14: MODP2048 OK
          jam_enum_short 14: MODP2048 OK
+         jam_enum_human 14: modp2048 OK
          match MODP2048 [short]: OK
    15 -> OAKLEY_GROUP_MODP3072
          jam_enum 15: OAKLEY_GROUP_MODP3072 OK
@@ -2073,6 +2365,7 @@ IETF registry enum_names:
          match OAKLEY_GROUP_MODP3072: OK
          short_name 15: MODP3072 OK
          jam_enum_short 15: MODP3072 OK
+         jam_enum_human 15: modp3072 OK
          match MODP3072 [short]: OK
    16 -> OAKLEY_GROUP_MODP4096
          jam_enum 16: OAKLEY_GROUP_MODP4096 OK
@@ -2080,6 +2373,7 @@ IETF registry enum_names:
          match OAKLEY_GROUP_MODP4096: OK
          short_name 16: MODP4096 OK
          jam_enum_short 16: MODP4096 OK
+         jam_enum_human 16: modp4096 OK
          match MODP4096 [short]: OK
    17 -> OAKLEY_GROUP_MODP6144
          jam_enum 17: OAKLEY_GROUP_MODP6144 OK
@@ -2087,6 +2381,7 @@ IETF registry enum_names:
          match OAKLEY_GROUP_MODP6144: OK
          short_name 17: MODP6144 OK
          jam_enum_short 17: MODP6144 OK
+         jam_enum_human 17: modp6144 OK
          match MODP6144 [short]: OK
    18 -> OAKLEY_GROUP_MODP8192
          jam_enum 18: OAKLEY_GROUP_MODP8192 OK
@@ -2094,6 +2389,7 @@ IETF registry enum_names:
          match OAKLEY_GROUP_MODP8192: OK
          short_name 18: MODP8192 OK
          jam_enum_short 18: MODP8192 OK
+         jam_enum_human 18: modp8192 OK
          match MODP8192 [short]: OK
    19 -> OAKLEY_GROUP_ECP_256
          jam_enum 19: OAKLEY_GROUP_ECP_256 OK
@@ -2101,6 +2397,7 @@ IETF registry enum_names:
          match OAKLEY_GROUP_ECP_256: OK
          short_name 19: ECP_256 OK
          jam_enum_short 19: ECP_256 OK
+         jam_enum_human 19: ecp-256 OK
          match ECP_256 [short]: OK
    20 -> OAKLEY_GROUP_ECP_384
          jam_enum 20: OAKLEY_GROUP_ECP_384 OK
@@ -2108,6 +2405,7 @@ IETF registry enum_names:
          match OAKLEY_GROUP_ECP_384: OK
          short_name 20: ECP_384 OK
          jam_enum_short 20: ECP_384 OK
+         jam_enum_human 20: ecp-384 OK
          match ECP_384 [short]: OK
    21 -> OAKLEY_GROUP_ECP_521
          jam_enum 21: OAKLEY_GROUP_ECP_521 OK
@@ -2115,6 +2413,7 @@ IETF registry enum_names:
          match OAKLEY_GROUP_ECP_521: OK
          short_name 21: ECP_521 OK
          jam_enum_short 21: ECP_521 OK
+         jam_enum_human 21: ecp-521 OK
          match ECP_521 [short]: OK
    22 -> OAKLEY_GROUP_DH22
          jam_enum 22: OAKLEY_GROUP_DH22 OK
@@ -2122,6 +2421,7 @@ IETF registry enum_names:
          match OAKLEY_GROUP_DH22: OK
          short_name 22: DH22 OK
          jam_enum_short 22: DH22 OK
+         jam_enum_human 22: dh22 OK
          match DH22 [short]: OK
    23 -> OAKLEY_GROUP_DH23
          jam_enum 23: OAKLEY_GROUP_DH23 OK
@@ -2129,6 +2429,7 @@ IETF registry enum_names:
          match OAKLEY_GROUP_DH23: OK
          short_name 23: DH23 OK
          jam_enum_short 23: DH23 OK
+         jam_enum_human 23: dh23 OK
          match DH23 [short]: OK
    24 -> OAKLEY_GROUP_DH24
          jam_enum 24: OAKLEY_GROUP_DH24 OK
@@ -2136,6 +2437,7 @@ IETF registry enum_names:
          match OAKLEY_GROUP_DH24: OK
          short_name 24: DH24 OK
          jam_enum_short 24: DH24 OK
+         jam_enum_human 24: dh24 OK
          match DH24 [short]: OK
    25 -> OAKLEY_GROUP_ECP_192
          jam_enum 25: OAKLEY_GROUP_ECP_192 OK
@@ -2143,6 +2445,7 @@ IETF registry enum_names:
          match OAKLEY_GROUP_ECP_192: OK
          short_name 25: ECP_192 OK
          jam_enum_short 25: ECP_192 OK
+         jam_enum_human 25: ecp-192 OK
          match ECP_192 [short]: OK
    26 -> OAKLEY_GROUP_ECP_224
          jam_enum 26: OAKLEY_GROUP_ECP_224 OK
@@ -2150,6 +2453,7 @@ IETF registry enum_names:
          match OAKLEY_GROUP_ECP_224: OK
          short_name 26: ECP_224 OK
          jam_enum_short 26: ECP_224 OK
+         jam_enum_human 26: ecp-224 OK
          match ECP_224 [short]: OK
    27 -> OAKLEY_GROUP_BRAINPOOL_P224R1
          jam_enum 27: OAKLEY_GROUP_BRAINPOOL_P224R1 OK
@@ -2157,6 +2461,7 @@ IETF registry enum_names:
          match OAKLEY_GROUP_BRAINPOOL_P224R1: OK
          short_name 27: BRAINPOOL_P224R1 OK
          jam_enum_short 27: BRAINPOOL_P224R1 OK
+         jam_enum_human 27: brainpool-p224r1 OK
          match BRAINPOOL_P224R1 [short]: OK
    28 -> OAKLEY_GROUP_BRAINPOOL_P256R1
          jam_enum 28: OAKLEY_GROUP_BRAINPOOL_P256R1 OK
@@ -2164,6 +2469,7 @@ IETF registry enum_names:
          match OAKLEY_GROUP_BRAINPOOL_P256R1: OK
          short_name 28: BRAINPOOL_P256R1 OK
          jam_enum_short 28: BRAINPOOL_P256R1 OK
+         jam_enum_human 28: brainpool-p256r1 OK
          match BRAINPOOL_P256R1 [short]: OK
    29 -> OAKLEY_GROUP_BRAINPOOL_P384R1
          jam_enum 29: OAKLEY_GROUP_BRAINPOOL_P384R1 OK
@@ -2171,6 +2477,7 @@ IETF registry enum_names:
          match OAKLEY_GROUP_BRAINPOOL_P384R1: OK
          short_name 29: BRAINPOOL_P384R1 OK
          jam_enum_short 29: BRAINPOOL_P384R1 OK
+         jam_enum_human 29: brainpool-p384r1 OK
          match BRAINPOOL_P384R1 [short]: OK
    30 -> OAKLEY_GROUP_BRAINPOOL_P512R1
          jam_enum 30: OAKLEY_GROUP_BRAINPOOL_P512R1 OK
@@ -2178,6 +2485,7 @@ IETF registry enum_names:
          match OAKLEY_GROUP_BRAINPOOL_P512R1: OK
          short_name 30: BRAINPOOL_P512R1 OK
          jam_enum_short 30: BRAINPOOL_P512R1 OK
+         jam_enum_human 30: brainpool-p512r1 OK
          match BRAINPOOL_P512R1 [short]: OK
    31 -> OAKLEY_GROUP_CURVE25519
          jam_enum 31: OAKLEY_GROUP_CURVE25519 OK
@@ -2185,6 +2493,7 @@ IETF registry enum_names:
          match OAKLEY_GROUP_CURVE25519: OK
          short_name 31: CURVE25519 OK
          jam_enum_short 31: CURVE25519 OK
+         jam_enum_human 31: curve25519 OK
          match CURVE25519 [short]: OK
    32 -> OAKLEY_GROUP_CURVE448
          jam_enum 32: OAKLEY_GROUP_CURVE448 OK
@@ -2192,6 +2501,7 @@ IETF registry enum_names:
          match OAKLEY_GROUP_CURVE448: OK
          short_name 32: CURVE448 OK
          jam_enum_short 32: CURVE448 OK
+         jam_enum_human 32: curve448 OK
          match CURVE448 [short]: OK
 
   v1_notification_names:
@@ -2201,6 +2511,7 @@ IETF registry enum_names:
          match v1N_INVALID_PAYLOAD_TYPE: OK
          short_name 1: INVALID_PAYLOAD_TYPE OK
          jam_enum_short 1: INVALID_PAYLOAD_TYPE OK
+         jam_enum_human 1: invalid-payload-type OK
          match INVALID_PAYLOAD_TYPE [short]: OK
     2 -> v1N_DOI_NOT_SUPPORTED
          jam_enum 2: v1N_DOI_NOT_SUPPORTED OK
@@ -2208,6 +2519,7 @@ IETF registry enum_names:
          match v1N_DOI_NOT_SUPPORTED: OK
          short_name 2: DOI_NOT_SUPPORTED OK
          jam_enum_short 2: DOI_NOT_SUPPORTED OK
+         jam_enum_human 2: doi-not-supported OK
          match DOI_NOT_SUPPORTED [short]: OK
     3 -> v1N_SITUATION_NOT_SUPPORTED
          jam_enum 3: v1N_SITUATION_NOT_SUPPORTED OK
@@ -2215,6 +2527,7 @@ IETF registry enum_names:
          match v1N_SITUATION_NOT_SUPPORTED: OK
          short_name 3: SITUATION_NOT_SUPPORTED OK
          jam_enum_short 3: SITUATION_NOT_SUPPORTED OK
+         jam_enum_human 3: situation-not-supported OK
          match SITUATION_NOT_SUPPORTED [short]: OK
     4 -> v1N_INVALID_COOKIE
          jam_enum 4: v1N_INVALID_COOKIE OK
@@ -2222,6 +2535,7 @@ IETF registry enum_names:
          match v1N_INVALID_COOKIE: OK
          short_name 4: INVALID_COOKIE OK
          jam_enum_short 4: INVALID_COOKIE OK
+         jam_enum_human 4: invalid-cookie OK
          match INVALID_COOKIE [short]: OK
     5 -> v1N_INVALID_MAJOR_VERSION
          jam_enum 5: v1N_INVALID_MAJOR_VERSION OK
@@ -2229,6 +2543,7 @@ IETF registry enum_names:
          match v1N_INVALID_MAJOR_VERSION: OK
          short_name 5: INVALID_MAJOR_VERSION OK
          jam_enum_short 5: INVALID_MAJOR_VERSION OK
+         jam_enum_human 5: invalid-major-version OK
          match INVALID_MAJOR_VERSION [short]: OK
     6 -> v1N_INVALID_MINOR_VERSION
          jam_enum 6: v1N_INVALID_MINOR_VERSION OK
@@ -2236,6 +2551,7 @@ IETF registry enum_names:
          match v1N_INVALID_MINOR_VERSION: OK
          short_name 6: INVALID_MINOR_VERSION OK
          jam_enum_short 6: INVALID_MINOR_VERSION OK
+         jam_enum_human 6: invalid-minor-version OK
          match INVALID_MINOR_VERSION [short]: OK
     7 -> v1N_INVALID_EXCHANGE_TYPE
          jam_enum 7: v1N_INVALID_EXCHANGE_TYPE OK
@@ -2243,6 +2559,7 @@ IETF registry enum_names:
          match v1N_INVALID_EXCHANGE_TYPE: OK
          short_name 7: INVALID_EXCHANGE_TYPE OK
          jam_enum_short 7: INVALID_EXCHANGE_TYPE OK
+         jam_enum_human 7: invalid-exchange-type OK
          match INVALID_EXCHANGE_TYPE [short]: OK
     8 -> v1N_INVALID_FLAGS
          jam_enum 8: v1N_INVALID_FLAGS OK
@@ -2250,6 +2567,7 @@ IETF registry enum_names:
          match v1N_INVALID_FLAGS: OK
          short_name 8: INVALID_FLAGS OK
          jam_enum_short 8: INVALID_FLAGS OK
+         jam_enum_human 8: invalid-flags OK
          match INVALID_FLAGS [short]: OK
     9 -> v1N_INVALID_MESSAGE_ID
          jam_enum 9: v1N_INVALID_MESSAGE_ID OK
@@ -2257,6 +2575,7 @@ IETF registry enum_names:
          match v1N_INVALID_MESSAGE_ID: OK
          short_name 9: INVALID_MESSAGE_ID OK
          jam_enum_short 9: INVALID_MESSAGE_ID OK
+         jam_enum_human 9: invalid-message-id OK
          match INVALID_MESSAGE_ID [short]: OK
    10 -> v1N_INVALID_PROTOCOL_ID
          jam_enum 10: v1N_INVALID_PROTOCOL_ID OK
@@ -2264,6 +2583,7 @@ IETF registry enum_names:
          match v1N_INVALID_PROTOCOL_ID: OK
          short_name 10: INVALID_PROTOCOL_ID OK
          jam_enum_short 10: INVALID_PROTOCOL_ID OK
+         jam_enum_human 10: invalid-protocol-id OK
          match INVALID_PROTOCOL_ID [short]: OK
    11 -> v1N_INVALID_SPI
          jam_enum 11: v1N_INVALID_SPI OK
@@ -2271,6 +2591,7 @@ IETF registry enum_names:
          match v1N_INVALID_SPI: OK
          short_name 11: INVALID_SPI OK
          jam_enum_short 11: INVALID_SPI OK
+         jam_enum_human 11: invalid-spi OK
          match INVALID_SPI [short]: OK
    12 -> v1N_INVALID_TRANSFORM_ID
          jam_enum 12: v1N_INVALID_TRANSFORM_ID OK
@@ -2278,6 +2599,7 @@ IETF registry enum_names:
          match v1N_INVALID_TRANSFORM_ID: OK
          short_name 12: INVALID_TRANSFORM_ID OK
          jam_enum_short 12: INVALID_TRANSFORM_ID OK
+         jam_enum_human 12: invalid-transform-id OK
          match INVALID_TRANSFORM_ID [short]: OK
    13 -> v1N_ATTRIBUTES_NOT_SUPPORTED
          jam_enum 13: v1N_ATTRIBUTES_NOT_SUPPORTED OK
@@ -2285,6 +2607,7 @@ IETF registry enum_names:
          match v1N_ATTRIBUTES_NOT_SUPPORTED: OK
          short_name 13: ATTRIBUTES_NOT_SUPPORTED OK
          jam_enum_short 13: ATTRIBUTES_NOT_SUPPORTED OK
+         jam_enum_human 13: attributes-not-supported OK
          match ATTRIBUTES_NOT_SUPPORTED [short]: OK
    14 -> v1N_NO_PROPOSAL_CHOSEN
          jam_enum 14: v1N_NO_PROPOSAL_CHOSEN OK
@@ -2292,6 +2615,7 @@ IETF registry enum_names:
          match v1N_NO_PROPOSAL_CHOSEN: OK
          short_name 14: NO_PROPOSAL_CHOSEN OK
          jam_enum_short 14: NO_PROPOSAL_CHOSEN OK
+         jam_enum_human 14: no-proposal-chosen OK
          match NO_PROPOSAL_CHOSEN [short]: OK
    15 -> v1N_BAD_PROPOSAL_SYNTAX
          jam_enum 15: v1N_BAD_PROPOSAL_SYNTAX OK
@@ -2299,6 +2623,7 @@ IETF registry enum_names:
          match v1N_BAD_PROPOSAL_SYNTAX: OK
          short_name 15: BAD_PROPOSAL_SYNTAX OK
          jam_enum_short 15: BAD_PROPOSAL_SYNTAX OK
+         jam_enum_human 15: bad-proposal-syntax OK
          match BAD_PROPOSAL_SYNTAX [short]: OK
    16 -> v1N_PAYLOAD_MALFORMED
          jam_enum 16: v1N_PAYLOAD_MALFORMED OK
@@ -2306,6 +2631,7 @@ IETF registry enum_names:
          match v1N_PAYLOAD_MALFORMED: OK
          short_name 16: PAYLOAD_MALFORMED OK
          jam_enum_short 16: PAYLOAD_MALFORMED OK
+         jam_enum_human 16: payload-malformed OK
          match PAYLOAD_MALFORMED [short]: OK
    17 -> v1N_INVALID_KEY_INFORMATION
          jam_enum 17: v1N_INVALID_KEY_INFORMATION OK
@@ -2313,6 +2639,7 @@ IETF registry enum_names:
          match v1N_INVALID_KEY_INFORMATION: OK
          short_name 17: INVALID_KEY_INFORMATION OK
          jam_enum_short 17: INVALID_KEY_INFORMATION OK
+         jam_enum_human 17: invalid-key-information OK
          match INVALID_KEY_INFORMATION [short]: OK
    18 -> v1N_INVALID_ID_INFORMATION
          jam_enum 18: v1N_INVALID_ID_INFORMATION OK
@@ -2320,6 +2647,7 @@ IETF registry enum_names:
          match v1N_INVALID_ID_INFORMATION: OK
          short_name 18: INVALID_ID_INFORMATION OK
          jam_enum_short 18: INVALID_ID_INFORMATION OK
+         jam_enum_human 18: invalid-id-information OK
          match INVALID_ID_INFORMATION [short]: OK
    19 -> v1N_INVALID_CERT_ENCODING
          jam_enum 19: v1N_INVALID_CERT_ENCODING OK
@@ -2327,6 +2655,7 @@ IETF registry enum_names:
          match v1N_INVALID_CERT_ENCODING: OK
          short_name 19: INVALID_CERT_ENCODING OK
          jam_enum_short 19: INVALID_CERT_ENCODING OK
+         jam_enum_human 19: invalid-cert-encoding OK
          match INVALID_CERT_ENCODING [short]: OK
    20 -> v1N_INVALID_CERTIFICATE
          jam_enum 20: v1N_INVALID_CERTIFICATE OK
@@ -2334,6 +2663,7 @@ IETF registry enum_names:
          match v1N_INVALID_CERTIFICATE: OK
          short_name 20: INVALID_CERTIFICATE OK
          jam_enum_short 20: INVALID_CERTIFICATE OK
+         jam_enum_human 20: invalid-certificate OK
          match INVALID_CERTIFICATE [short]: OK
    21 -> v1N_CERT_TYPE_UNSUPPORTED
          jam_enum 21: v1N_CERT_TYPE_UNSUPPORTED OK
@@ -2341,6 +2671,7 @@ IETF registry enum_names:
          match v1N_CERT_TYPE_UNSUPPORTED: OK
          short_name 21: CERT_TYPE_UNSUPPORTED OK
          jam_enum_short 21: CERT_TYPE_UNSUPPORTED OK
+         jam_enum_human 21: cert-type-unsupported OK
          match CERT_TYPE_UNSUPPORTED [short]: OK
    22 -> v1N_INVALID_CERT_AUTHORITY
          jam_enum 22: v1N_INVALID_CERT_AUTHORITY OK
@@ -2348,6 +2679,7 @@ IETF registry enum_names:
          match v1N_INVALID_CERT_AUTHORITY: OK
          short_name 22: INVALID_CERT_AUTHORITY OK
          jam_enum_short 22: INVALID_CERT_AUTHORITY OK
+         jam_enum_human 22: invalid-cert-authority OK
          match INVALID_CERT_AUTHORITY [short]: OK
    23 -> v1N_INVALID_HASH_INFORMATION
          jam_enum 23: v1N_INVALID_HASH_INFORMATION OK
@@ -2355,6 +2687,7 @@ IETF registry enum_names:
          match v1N_INVALID_HASH_INFORMATION: OK
          short_name 23: INVALID_HASH_INFORMATION OK
          jam_enum_short 23: INVALID_HASH_INFORMATION OK
+         jam_enum_human 23: invalid-hash-information OK
          match INVALID_HASH_INFORMATION [short]: OK
    24 -> v1N_AUTHENTICATION_FAILED
          jam_enum 24: v1N_AUTHENTICATION_FAILED OK
@@ -2362,6 +2695,7 @@ IETF registry enum_names:
          match v1N_AUTHENTICATION_FAILED: OK
          short_name 24: AUTHENTICATION_FAILED OK
          jam_enum_short 24: AUTHENTICATION_FAILED OK
+         jam_enum_human 24: authentication-failed OK
          match AUTHENTICATION_FAILED [short]: OK
    25 -> v1N_INVALID_SIGNATURE
          jam_enum 25: v1N_INVALID_SIGNATURE OK
@@ -2369,6 +2703,7 @@ IETF registry enum_names:
          match v1N_INVALID_SIGNATURE: OK
          short_name 25: INVALID_SIGNATURE OK
          jam_enum_short 25: INVALID_SIGNATURE OK
+         jam_enum_human 25: invalid-signature OK
          match INVALID_SIGNATURE [short]: OK
    26 -> v1N_ADDRESS_NOTIFICATION
          jam_enum 26: v1N_ADDRESS_NOTIFICATION OK
@@ -2376,6 +2711,7 @@ IETF registry enum_names:
          match v1N_ADDRESS_NOTIFICATION: OK
          short_name 26: ADDRESS_NOTIFICATION OK
          jam_enum_short 26: ADDRESS_NOTIFICATION OK
+         jam_enum_human 26: address-notification OK
          match ADDRESS_NOTIFICATION [short]: OK
    27 -> v1N_NOTIFY_SA_LIFETIME
          jam_enum 27: v1N_NOTIFY_SA_LIFETIME OK
@@ -2383,6 +2719,7 @@ IETF registry enum_names:
          match v1N_NOTIFY_SA_LIFETIME: OK
          short_name 27: NOTIFY_SA_LIFETIME OK
          jam_enum_short 27: NOTIFY_SA_LIFETIME OK
+         jam_enum_human 27: notify-sa-lifetime OK
          match NOTIFY_SA_LIFETIME [short]: OK
    28 -> v1N_CERTIFICATE_UNAVAILABLE
          jam_enum 28: v1N_CERTIFICATE_UNAVAILABLE OK
@@ -2390,6 +2727,7 @@ IETF registry enum_names:
          match v1N_CERTIFICATE_UNAVAILABLE: OK
          short_name 28: CERTIFICATE_UNAVAILABLE OK
          jam_enum_short 28: CERTIFICATE_UNAVAILABLE OK
+         jam_enum_human 28: certificate-unavailable OK
          match CERTIFICATE_UNAVAILABLE [short]: OK
    29 -> v1N_UNSUPPORTED_EXCHANGE_TYPE
          jam_enum 29: v1N_UNSUPPORTED_EXCHANGE_TYPE OK
@@ -2397,6 +2735,7 @@ IETF registry enum_names:
          match v1N_UNSUPPORTED_EXCHANGE_TYPE: OK
          short_name 29: UNSUPPORTED_EXCHANGE_TYPE OK
          jam_enum_short 29: UNSUPPORTED_EXCHANGE_TYPE OK
+         jam_enum_human 29: unsupported-exchange-type OK
          match UNSUPPORTED_EXCHANGE_TYPE [short]: OK
    30 -> v1N_UNEQUAL_PAYLOAD_LENGTHS
          jam_enum 30: v1N_UNEQUAL_PAYLOAD_LENGTHS OK
@@ -2404,6 +2743,7 @@ IETF registry enum_names:
          match v1N_UNEQUAL_PAYLOAD_LENGTHS: OK
          short_name 30: UNEQUAL_PAYLOAD_LENGTHS OK
          jam_enum_short 30: UNEQUAL_PAYLOAD_LENGTHS OK
+         jam_enum_human 30: unequal-payload-lengths OK
          match UNEQUAL_PAYLOAD_LENGTHS [short]: OK
 
   v2_notification_names:
@@ -2413,6 +2753,7 @@ IETF registry enum_names:
          match v2N_RESERVED: OK
          short_name 0: RESERVED OK
          jam_enum_short 0: RESERVED OK
+         jam_enum_human 0: reserved OK
          match RESERVED [short]: OK
     1 -> v2N_UNSUPPORTED_CRITICAL_PAYLOAD
          jam_enum 1: v2N_UNSUPPORTED_CRITICAL_PAYLOAD OK
@@ -2420,6 +2761,7 @@ IETF registry enum_names:
          match v2N_UNSUPPORTED_CRITICAL_PAYLOAD: OK
          short_name 1: UNSUPPORTED_CRITICAL_PAYLOAD OK
          jam_enum_short 1: UNSUPPORTED_CRITICAL_PAYLOAD OK
+         jam_enum_human 1: unsupported-critical-payload OK
          match UNSUPPORTED_CRITICAL_PAYLOAD [short]: OK
     2 -> v2N_UNUSED_2
          jam_enum 2: v2N_UNUSED_2 OK
@@ -2427,6 +2769,7 @@ IETF registry enum_names:
          match v2N_UNUSED_2: OK
          short_name 2: UNUSED_2 OK
          jam_enum_short 2: UNUSED_2 OK
+         jam_enum_human 2: unused-2 OK
          match UNUSED_2 [short]: OK
     3 -> v2N_UNUSED_3
          jam_enum 3: v2N_UNUSED_3 OK
@@ -2434,6 +2777,7 @@ IETF registry enum_names:
          match v2N_UNUSED_3: OK
          short_name 3: UNUSED_3 OK
          jam_enum_short 3: UNUSED_3 OK
+         jam_enum_human 3: unused-3 OK
          match UNUSED_3 [short]: OK
     4 -> v2N_INVALID_IKE_SPI
          jam_enum 4: v2N_INVALID_IKE_SPI OK
@@ -2441,6 +2785,7 @@ IETF registry enum_names:
          match v2N_INVALID_IKE_SPI: OK
          short_name 4: INVALID_IKE_SPI OK
          jam_enum_short 4: INVALID_IKE_SPI OK
+         jam_enum_human 4: invalid-ike-spi OK
          match INVALID_IKE_SPI [short]: OK
     5 -> v2N_INVALID_MAJOR_VERSION
          jam_enum 5: v2N_INVALID_MAJOR_VERSION OK
@@ -2448,6 +2793,7 @@ IETF registry enum_names:
          match v2N_INVALID_MAJOR_VERSION: OK
          short_name 5: INVALID_MAJOR_VERSION OK
          jam_enum_short 5: INVALID_MAJOR_VERSION OK
+         jam_enum_human 5: invalid-major-version OK
          match INVALID_MAJOR_VERSION [short]: OK
     6 -> v2N_UNUSED_6
          jam_enum 6: v2N_UNUSED_6 OK
@@ -2455,6 +2801,7 @@ IETF registry enum_names:
          match v2N_UNUSED_6: OK
          short_name 6: UNUSED_6 OK
          jam_enum_short 6: UNUSED_6 OK
+         jam_enum_human 6: unused-6 OK
          match UNUSED_6 [short]: OK
     7 -> v2N_INVALID_SYNTAX
          jam_enum 7: v2N_INVALID_SYNTAX OK
@@ -2462,6 +2809,7 @@ IETF registry enum_names:
          match v2N_INVALID_SYNTAX: OK
          short_name 7: INVALID_SYNTAX OK
          jam_enum_short 7: INVALID_SYNTAX OK
+         jam_enum_human 7: invalid-syntax OK
          match INVALID_SYNTAX [short]: OK
     8 -> v2N_UNUSED_8
          jam_enum 8: v2N_UNUSED_8 OK
@@ -2469,6 +2817,7 @@ IETF registry enum_names:
          match v2N_UNUSED_8: OK
          short_name 8: UNUSED_8 OK
          jam_enum_short 8: UNUSED_8 OK
+         jam_enum_human 8: unused-8 OK
          match UNUSED_8 [short]: OK
     9 -> v2N_INVALID_MESSAGE_ID
          jam_enum 9: v2N_INVALID_MESSAGE_ID OK
@@ -2476,6 +2825,7 @@ IETF registry enum_names:
          match v2N_INVALID_MESSAGE_ID: OK
          short_name 9: INVALID_MESSAGE_ID OK
          jam_enum_short 9: INVALID_MESSAGE_ID OK
+         jam_enum_human 9: invalid-message-id OK
          match INVALID_MESSAGE_ID [short]: OK
    10 -> v2N_UNUSED_10
          jam_enum 10: v2N_UNUSED_10 OK
@@ -2483,6 +2833,7 @@ IETF registry enum_names:
          match v2N_UNUSED_10: OK
          short_name 10: UNUSED_10 OK
          jam_enum_short 10: UNUSED_10 OK
+         jam_enum_human 10: unused-10 OK
          match UNUSED_10 [short]: OK
    11 -> v2N_INVALID_SPI
          jam_enum 11: v2N_INVALID_SPI OK
@@ -2490,6 +2841,7 @@ IETF registry enum_names:
          match v2N_INVALID_SPI: OK
          short_name 11: INVALID_SPI OK
          jam_enum_short 11: INVALID_SPI OK
+         jam_enum_human 11: invalid-spi OK
          match INVALID_SPI [short]: OK
    12 -> v2N_UNUSED_12
          jam_enum 12: v2N_UNUSED_12 OK
@@ -2497,6 +2849,7 @@ IETF registry enum_names:
          match v2N_UNUSED_12: OK
          short_name 12: UNUSED_12 OK
          jam_enum_short 12: UNUSED_12 OK
+         jam_enum_human 12: unused-12 OK
          match UNUSED_12 [short]: OK
    13 -> v2N_UNUSED_13
          jam_enum 13: v2N_UNUSED_13 OK
@@ -2504,6 +2857,7 @@ IETF registry enum_names:
          match v2N_UNUSED_13: OK
          short_name 13: UNUSED_13 OK
          jam_enum_short 13: UNUSED_13 OK
+         jam_enum_human 13: unused-13 OK
          match UNUSED_13 [short]: OK
    14 -> v2N_NO_PROPOSAL_CHOSEN
          jam_enum 14: v2N_NO_PROPOSAL_CHOSEN OK
@@ -2511,6 +2865,7 @@ IETF registry enum_names:
          match v2N_NO_PROPOSAL_CHOSEN: OK
          short_name 14: NO_PROPOSAL_CHOSEN OK
          jam_enum_short 14: NO_PROPOSAL_CHOSEN OK
+         jam_enum_human 14: no-proposal-chosen OK
          match NO_PROPOSAL_CHOSEN [short]: OK
    15 -> v2N_UNUSED_15
          jam_enum 15: v2N_UNUSED_15 OK
@@ -2518,6 +2873,7 @@ IETF registry enum_names:
          match v2N_UNUSED_15: OK
          short_name 15: UNUSED_15 OK
          jam_enum_short 15: UNUSED_15 OK
+         jam_enum_human 15: unused-15 OK
          match UNUSED_15 [short]: OK
    16 -> v2N_UNUSED_16
          jam_enum 16: v2N_UNUSED_16 OK
@@ -2525,6 +2881,7 @@ IETF registry enum_names:
          match v2N_UNUSED_16: OK
          short_name 16: UNUSED_16 OK
          jam_enum_short 16: UNUSED_16 OK
+         jam_enum_human 16: unused-16 OK
          match UNUSED_16 [short]: OK
    17 -> v2N_INVALID_KE_PAYLOAD
          jam_enum 17: v2N_INVALID_KE_PAYLOAD OK
@@ -2532,6 +2889,7 @@ IETF registry enum_names:
          match v2N_INVALID_KE_PAYLOAD: OK
          short_name 17: INVALID_KE_PAYLOAD OK
          jam_enum_short 17: INVALID_KE_PAYLOAD OK
+         jam_enum_human 17: invalid-ke-payload OK
          match INVALID_KE_PAYLOAD [short]: OK
    18 -> v2N_UNUSED_18
          jam_enum 18: v2N_UNUSED_18 OK
@@ -2539,6 +2897,7 @@ IETF registry enum_names:
          match v2N_UNUSED_18: OK
          short_name 18: UNUSED_18 OK
          jam_enum_short 18: UNUSED_18 OK
+         jam_enum_human 18: unused-18 OK
          match UNUSED_18 [short]: OK
    19 -> v2N_UNUSED_19
          jam_enum 19: v2N_UNUSED_19 OK
@@ -2546,6 +2905,7 @@ IETF registry enum_names:
          match v2N_UNUSED_19: OK
          short_name 19: UNUSED_19 OK
          jam_enum_short 19: UNUSED_19 OK
+         jam_enum_human 19: unused-19 OK
          match UNUSED_19 [short]: OK
    20 -> v2N_UNUSED_20
          jam_enum 20: v2N_UNUSED_20 OK
@@ -2553,6 +2913,7 @@ IETF registry enum_names:
          match v2N_UNUSED_20: OK
          short_name 20: UNUSED_20 OK
          jam_enum_short 20: UNUSED_20 OK
+         jam_enum_human 20: unused-20 OK
          match UNUSED_20 [short]: OK
    21 -> v2N_UNUSED_21
          jam_enum 21: v2N_UNUSED_21 OK
@@ -2560,6 +2921,7 @@ IETF registry enum_names:
          match v2N_UNUSED_21: OK
          short_name 21: UNUSED_21 OK
          jam_enum_short 21: UNUSED_21 OK
+         jam_enum_human 21: unused-21 OK
          match UNUSED_21 [short]: OK
    22 -> v2N_UNUSED_22
          jam_enum 22: v2N_UNUSED_22 OK
@@ -2567,6 +2929,7 @@ IETF registry enum_names:
          match v2N_UNUSED_22: OK
          short_name 22: UNUSED_22 OK
          jam_enum_short 22: UNUSED_22 OK
+         jam_enum_human 22: unused-22 OK
          match UNUSED_22 [short]: OK
    23 -> v2N_UNUSED_23
          jam_enum 23: v2N_UNUSED_23 OK
@@ -2574,6 +2937,7 @@ IETF registry enum_names:
          match v2N_UNUSED_23: OK
          short_name 23: UNUSED_23 OK
          jam_enum_short 23: UNUSED_23 OK
+         jam_enum_human 23: unused-23 OK
          match UNUSED_23 [short]: OK
    24 -> v2N_AUTHENTICATION_FAILED
          jam_enum 24: v2N_AUTHENTICATION_FAILED OK
@@ -2581,6 +2945,7 @@ IETF registry enum_names:
          match v2N_AUTHENTICATION_FAILED: OK
          short_name 24: AUTHENTICATION_FAILED OK
          jam_enum_short 24: AUTHENTICATION_FAILED OK
+         jam_enum_human 24: authentication-failed OK
          match AUTHENTICATION_FAILED [short]: OK
    25 -> v2N_UNUSED_25
          jam_enum 25: v2N_UNUSED_25 OK
@@ -2588,6 +2953,7 @@ IETF registry enum_names:
          match v2N_UNUSED_25: OK
          short_name 25: UNUSED_25 OK
          jam_enum_short 25: UNUSED_25 OK
+         jam_enum_human 25: unused-25 OK
          match UNUSED_25 [short]: OK
    26 -> v2N_UNUSED_26
          jam_enum 26: v2N_UNUSED_26 OK
@@ -2595,6 +2961,7 @@ IETF registry enum_names:
          match v2N_UNUSED_26: OK
          short_name 26: UNUSED_26 OK
          jam_enum_short 26: UNUSED_26 OK
+         jam_enum_human 26: unused-26 OK
          match UNUSED_26 [short]: OK
    27 -> v2N_UNUSED_27
          jam_enum 27: v2N_UNUSED_27 OK
@@ -2602,6 +2969,7 @@ IETF registry enum_names:
          match v2N_UNUSED_27: OK
          short_name 27: UNUSED_27 OK
          jam_enum_short 27: UNUSED_27 OK
+         jam_enum_human 27: unused-27 OK
          match UNUSED_27 [short]: OK
    28 -> v2N_UNUSED_28
          jam_enum 28: v2N_UNUSED_28 OK
@@ -2609,6 +2977,7 @@ IETF registry enum_names:
          match v2N_UNUSED_28: OK
          short_name 28: UNUSED_28 OK
          jam_enum_short 28: UNUSED_28 OK
+         jam_enum_human 28: unused-28 OK
          match UNUSED_28 [short]: OK
    29 -> v2N_UNUSED_29
          jam_enum 29: v2N_UNUSED_29 OK
@@ -2616,6 +2985,7 @@ IETF registry enum_names:
          match v2N_UNUSED_29: OK
          short_name 29: UNUSED_29 OK
          jam_enum_short 29: UNUSED_29 OK
+         jam_enum_human 29: unused-29 OK
          match UNUSED_29 [short]: OK
    30 -> v2N_UNUSED_30
          jam_enum 30: v2N_UNUSED_30 OK
@@ -2623,6 +2993,7 @@ IETF registry enum_names:
          match v2N_UNUSED_30: OK
          short_name 30: UNUSED_30 OK
          jam_enum_short 30: UNUSED_30 OK
+         jam_enum_human 30: unused-30 OK
          match UNUSED_30 [short]: OK
    31 -> v2N_UNUSED_31
          jam_enum 31: v2N_UNUSED_31 OK
@@ -2630,6 +3001,7 @@ IETF registry enum_names:
          match v2N_UNUSED_31: OK
          short_name 31: UNUSED_31 OK
          jam_enum_short 31: UNUSED_31 OK
+         jam_enum_human 31: unused-31 OK
          match UNUSED_31 [short]: OK
    32 -> v2N_UNUSED_32
          jam_enum 32: v2N_UNUSED_32 OK
@@ -2637,6 +3009,7 @@ IETF registry enum_names:
          match v2N_UNUSED_32: OK
          short_name 32: UNUSED_32 OK
          jam_enum_short 32: UNUSED_32 OK
+         jam_enum_human 32: unused-32 OK
          match UNUSED_32 [short]: OK
    33 -> v2N_UNUSED_33
          jam_enum 33: v2N_UNUSED_33 OK
@@ -2644,6 +3017,7 @@ IETF registry enum_names:
          match v2N_UNUSED_33: OK
          short_name 33: UNUSED_33 OK
          jam_enum_short 33: UNUSED_33 OK
+         jam_enum_human 33: unused-33 OK
          match UNUSED_33 [short]: OK
    34 -> v2N_SINGLE_PAIR_REQUIRED
          jam_enum 34: v2N_SINGLE_PAIR_REQUIRED OK
@@ -2651,6 +3025,7 @@ IETF registry enum_names:
          match v2N_SINGLE_PAIR_REQUIRED: OK
          short_name 34: SINGLE_PAIR_REQUIRED OK
          jam_enum_short 34: SINGLE_PAIR_REQUIRED OK
+         jam_enum_human 34: single-pair-required OK
          match SINGLE_PAIR_REQUIRED [short]: OK
    35 -> v2N_NO_ADDITIONAL_SAS
          jam_enum 35: v2N_NO_ADDITIONAL_SAS OK
@@ -2658,6 +3033,7 @@ IETF registry enum_names:
          match v2N_NO_ADDITIONAL_SAS: OK
          short_name 35: NO_ADDITIONAL_SAS OK
          jam_enum_short 35: NO_ADDITIONAL_SAS OK
+         jam_enum_human 35: no-additional-sas OK
          match NO_ADDITIONAL_SAS [short]: OK
    36 -> v2N_INTERNAL_ADDRESS_FAILURE
          jam_enum 36: v2N_INTERNAL_ADDRESS_FAILURE OK
@@ -2665,6 +3041,7 @@ IETF registry enum_names:
          match v2N_INTERNAL_ADDRESS_FAILURE: OK
          short_name 36: INTERNAL_ADDRESS_FAILURE OK
          jam_enum_short 36: INTERNAL_ADDRESS_FAILURE OK
+         jam_enum_human 36: internal-address-failure OK
          match INTERNAL_ADDRESS_FAILURE [short]: OK
    37 -> v2N_FAILED_CP_REQUIRED
          jam_enum 37: v2N_FAILED_CP_REQUIRED OK
@@ -2672,6 +3049,7 @@ IETF registry enum_names:
          match v2N_FAILED_CP_REQUIRED: OK
          short_name 37: FAILED_CP_REQUIRED OK
          jam_enum_short 37: FAILED_CP_REQUIRED OK
+         jam_enum_human 37: failed-cp-required OK
          match FAILED_CP_REQUIRED [short]: OK
    38 -> v2N_TS_UNACCEPTABLE
          jam_enum 38: v2N_TS_UNACCEPTABLE OK
@@ -2679,6 +3057,7 @@ IETF registry enum_names:
          match v2N_TS_UNACCEPTABLE: OK
          short_name 38: TS_UNACCEPTABLE OK
          jam_enum_short 38: TS_UNACCEPTABLE OK
+         jam_enum_human 38: ts-unacceptable OK
          match TS_UNACCEPTABLE [short]: OK
    39 -> v2N_INVALID_SELECTORS
          jam_enum 39: v2N_INVALID_SELECTORS OK
@@ -2686,6 +3065,7 @@ IETF registry enum_names:
          match v2N_INVALID_SELECTORS: OK
          short_name 39: INVALID_SELECTORS OK
          jam_enum_short 39: INVALID_SELECTORS OK
+         jam_enum_human 39: invalid-selectors OK
          match INVALID_SELECTORS [short]: OK
    40 -> v2N_UNACCEPTABLE_ADDRESSES
          jam_enum 40: v2N_UNACCEPTABLE_ADDRESSES OK
@@ -2693,6 +3073,7 @@ IETF registry enum_names:
          match v2N_UNACCEPTABLE_ADDRESSES: OK
          short_name 40: UNACCEPTABLE_ADDRESSES OK
          jam_enum_short 40: UNACCEPTABLE_ADDRESSES OK
+         jam_enum_human 40: unacceptable-addresses OK
          match UNACCEPTABLE_ADDRESSES [short]: OK
    41 -> v2N_UNEXPECTED_NAT_DETECTED
          jam_enum 41: v2N_UNEXPECTED_NAT_DETECTED OK
@@ -2700,6 +3081,7 @@ IETF registry enum_names:
          match v2N_UNEXPECTED_NAT_DETECTED: OK
          short_name 41: UNEXPECTED_NAT_DETECTED OK
          jam_enum_short 41: UNEXPECTED_NAT_DETECTED OK
+         jam_enum_human 41: unexpected-nat-detected OK
          match UNEXPECTED_NAT_DETECTED [short]: OK
    42 -> v2N_USE_ASSIGNED_HoA
          jam_enum 42: v2N_USE_ASSIGNED_HoA OK
@@ -2707,6 +3089,7 @@ IETF registry enum_names:
          match v2N_USE_ASSIGNED_HoA: OK
          short_name 42: USE_ASSIGNED_HoA OK
          jam_enum_short 42: USE_ASSIGNED_HoA OK
+         jam_enum_human 42: use-assigned-hoa OK
          match USE_ASSIGNED_HoA [short]: OK
    43 -> v2N_TEMPORARY_FAILURE
          jam_enum 43: v2N_TEMPORARY_FAILURE OK
@@ -2714,6 +3097,7 @@ IETF registry enum_names:
          match v2N_TEMPORARY_FAILURE: OK
          short_name 43: TEMPORARY_FAILURE OK
          jam_enum_short 43: TEMPORARY_FAILURE OK
+         jam_enum_human 43: temporary-failure OK
          match TEMPORARY_FAILURE [short]: OK
    44 -> v2N_CHILD_SA_NOT_FOUND
          jam_enum 44: v2N_CHILD_SA_NOT_FOUND OK
@@ -2721,6 +3105,7 @@ IETF registry enum_names:
          match v2N_CHILD_SA_NOT_FOUND: OK
          short_name 44: CHILD_SA_NOT_FOUND OK
          jam_enum_short 44: CHILD_SA_NOT_FOUND OK
+         jam_enum_human 44: child-sa-not-found OK
          match CHILD_SA_NOT_FOUND [short]: OK
    45 -> v2N_INVALID_GROUP_ID
          jam_enum 45: v2N_INVALID_GROUP_ID OK
@@ -2728,6 +3113,7 @@ IETF registry enum_names:
          match v2N_INVALID_GROUP_ID: OK
          short_name 45: INVALID_GROUP_ID OK
          jam_enum_short 45: INVALID_GROUP_ID OK
+         jam_enum_human 45: invalid-group-id OK
          match INVALID_GROUP_ID [short]: OK
    46 -> v2N_AUTHORIZATION_FAILED
          jam_enum 46: v2N_AUTHORIZATION_FAILED OK
@@ -2735,6 +3121,7 @@ IETF registry enum_names:
          match v2N_AUTHORIZATION_FAILED: OK
          short_name 46: AUTHORIZATION_FAILED OK
          jam_enum_short 46: AUTHORIZATION_FAILED OK
+         jam_enum_human 46: authorization-failed OK
          match AUTHORIZATION_FAILED [short]: OK
    47 -> v2N_STATE_NOT_FOUND
          jam_enum 47: v2N_STATE_NOT_FOUND OK
@@ -2742,6 +3129,7 @@ IETF registry enum_names:
          match v2N_STATE_NOT_FOUND: OK
          short_name 47: STATE_NOT_FOUND OK
          jam_enum_short 47: STATE_NOT_FOUND OK
+         jam_enum_human 47: state-not-found OK
          match STATE_NOT_FOUND [short]: OK
 
   ikev2_ts_type_names:
@@ -2751,24 +3139,28 @@ IETF registry enum_names:
          match IKEv2_TS_IPV4_ADDR_RANGE: OK
          short_name 7: IKEv2_TS_IPV4_ADDR_RANGE OK
          jam_enum_short 7: IKEv2_TS_IPV4_ADDR_RANGE OK
+         jam_enum_human 7: ikev2-ts-ipv4-addr-range OK
     8 -> IKEv2_TS_IPV6_ADDR_RANGE
          jam_enum 8: IKEv2_TS_IPV6_ADDR_RANGE OK
          search IKEv2_TS_IPV6_ADDR_RANGE: OK
          match IKEv2_TS_IPV6_ADDR_RANGE: OK
          short_name 8: IKEv2_TS_IPV6_ADDR_RANGE OK
          jam_enum_short 8: IKEv2_TS_IPV6_ADDR_RANGE OK
+         jam_enum_human 8: ikev2-ts-ipv6-addr-range OK
     9 -> IKEv2_TS_FC_ADDR_RANGE
          jam_enum 9: IKEv2_TS_FC_ADDR_RANGE OK
          search IKEv2_TS_FC_ADDR_RANGE: OK
          match IKEv2_TS_FC_ADDR_RANGE: OK
          short_name 9: IKEv2_TS_FC_ADDR_RANGE OK
          jam_enum_short 9: IKEv2_TS_FC_ADDR_RANGE OK
+         jam_enum_human 9: ikev2-ts-fc-addr-range OK
    10 -> IKEv2_TS_SECLABEL
          jam_enum 10: IKEv2_TS_SECLABEL OK
          search IKEv2_TS_SECLABEL: OK
          match IKEv2_TS_SECLABEL: OK
          short_name 10: IKEv2_TS_SECLABEL OK
          jam_enum_short 10: IKEv2_TS_SECLABEL OK
+         jam_enum_human 10: ikev2-ts-seclabel OK
 
   ikev2_cp_type_names:
     1 -> IKEv2_CP_CFG_REQUEST
@@ -2777,24 +3169,28 @@ IETF registry enum_names:
          match IKEv2_CP_CFG_REQUEST: OK
          short_name 1: IKEv2_CP_CFG_REQUEST OK
          jam_enum_short 1: IKEv2_CP_CFG_REQUEST OK
+         jam_enum_human 1: ikev2-cp-cfg-request OK
     2 -> IKEv2_CP_CFG_REPLY
          jam_enum 2: IKEv2_CP_CFG_REPLY OK
          search IKEv2_CP_CFG_REPLY: OK
          match IKEv2_CP_CFG_REPLY: OK
          short_name 2: IKEv2_CP_CFG_REPLY OK
          jam_enum_short 2: IKEv2_CP_CFG_REPLY OK
+         jam_enum_human 2: ikev2-cp-cfg-reply OK
     3 -> IKEv2_CP_CFG_SET
          jam_enum 3: IKEv2_CP_CFG_SET OK
          search IKEv2_CP_CFG_SET: OK
          match IKEv2_CP_CFG_SET: OK
          short_name 3: IKEv2_CP_CFG_SET OK
          jam_enum_short 3: IKEv2_CP_CFG_SET OK
+         jam_enum_human 3: ikev2-cp-cfg-set OK
     4 -> IKEv2_CP_CFG_ACK
          jam_enum 4: IKEv2_CP_CFG_ACK OK
          search IKEv2_CP_CFG_ACK: OK
          match IKEv2_CP_CFG_ACK: OK
          short_name 4: IKEv2_CP_CFG_ACK OK
          jam_enum_short 4: IKEv2_CP_CFG_ACK OK
+         jam_enum_human 4: ikev2-cp-cfg-ack OK
 
   ikev2_cp_attribute_type_names:
     0 -> IKEv2_CP_ATTR_RESERVED
@@ -2803,162 +3199,189 @@ IETF registry enum_names:
          match IKEv2_CP_ATTR_RESERVED: OK
          short_name 0: IKEv2_CP_ATTR_RESERVED OK
          jam_enum_short 0: IKEv2_CP_ATTR_RESERVED OK
+         jam_enum_human 0: ikev2-cp-attr-reserved OK
     1 -> IKEv2_INTERNAL_IP4_ADDRESS
          jam_enum 1: IKEv2_INTERNAL_IP4_ADDRESS OK
          search IKEv2_INTERNAL_IP4_ADDRESS: OK
          match IKEv2_INTERNAL_IP4_ADDRESS: OK
          short_name 1: IKEv2_INTERNAL_IP4_ADDRESS OK
          jam_enum_short 1: IKEv2_INTERNAL_IP4_ADDRESS OK
+         jam_enum_human 1: ikev2-internal-ip4-address OK
     2 -> IKEv2_INTERNAL_IP4_NETMASK
          jam_enum 2: IKEv2_INTERNAL_IP4_NETMASK OK
          search IKEv2_INTERNAL_IP4_NETMASK: OK
          match IKEv2_INTERNAL_IP4_NETMASK: OK
          short_name 2: IKEv2_INTERNAL_IP4_NETMASK OK
          jam_enum_short 2: IKEv2_INTERNAL_IP4_NETMASK OK
+         jam_enum_human 2: ikev2-internal-ip4-netmask OK
     3 -> IKEv2_INTERNAL_IP4_DNS
          jam_enum 3: IKEv2_INTERNAL_IP4_DNS OK
          search IKEv2_INTERNAL_IP4_DNS: OK
          match IKEv2_INTERNAL_IP4_DNS: OK
          short_name 3: IKEv2_INTERNAL_IP4_DNS OK
          jam_enum_short 3: IKEv2_INTERNAL_IP4_DNS OK
+         jam_enum_human 3: ikev2-internal-ip4-dns OK
     4 -> IKEv2_INTERNAL_IP4_NBNS
          jam_enum 4: IKEv2_INTERNAL_IP4_NBNS OK
          search IKEv2_INTERNAL_IP4_NBNS: OK
          match IKEv2_INTERNAL_IP4_NBNS: OK
          short_name 4: IKEv2_INTERNAL_IP4_NBNS OK
          jam_enum_short 4: IKEv2_INTERNAL_IP4_NBNS OK
+         jam_enum_human 4: ikev2-internal-ip4-nbns OK
     5 -> IKEv2_CP_ATTRIBUTE_RESERVED_5
          jam_enum 5: IKEv2_CP_ATTRIBUTE_RESERVED_5 OK
          search IKEv2_CP_ATTRIBUTE_RESERVED_5: OK
          match IKEv2_CP_ATTRIBUTE_RESERVED_5: OK
          short_name 5: IKEv2_CP_ATTRIBUTE_RESERVED_5 OK
          jam_enum_short 5: IKEv2_CP_ATTRIBUTE_RESERVED_5 OK
+         jam_enum_human 5: ikev2-cp-attribute-reserved-5 OK
     6 -> IKEv2_INTERNAL_IP4_DHCP
          jam_enum 6: IKEv2_INTERNAL_IP4_DHCP OK
          search IKEv2_INTERNAL_IP4_DHCP: OK
          match IKEv2_INTERNAL_IP4_DHCP: OK
          short_name 6: IKEv2_INTERNAL_IP4_DHCP OK
          jam_enum_short 6: IKEv2_INTERNAL_IP4_DHCP OK
+         jam_enum_human 6: ikev2-internal-ip4-dhcp OK
     7 -> IKEv2_APPLICATION_VERSION
          jam_enum 7: IKEv2_APPLICATION_VERSION OK
          search IKEv2_APPLICATION_VERSION: OK
          match IKEv2_APPLICATION_VERSION: OK
          short_name 7: IKEv2_APPLICATION_VERSION OK
          jam_enum_short 7: IKEv2_APPLICATION_VERSION OK
+         jam_enum_human 7: ikev2-application-version OK
     8 -> IKEv2_INTERNAL_IP6_ADDRESS
          jam_enum 8: IKEv2_INTERNAL_IP6_ADDRESS OK
          search IKEv2_INTERNAL_IP6_ADDRESS: OK
          match IKEv2_INTERNAL_IP6_ADDRESS: OK
          short_name 8: IKEv2_INTERNAL_IP6_ADDRESS OK
          jam_enum_short 8: IKEv2_INTERNAL_IP6_ADDRESS OK
+         jam_enum_human 8: ikev2-internal-ip6-address OK
     9 -> IKEv2_CP_ATTRIBUTE_RESERVED_9
          jam_enum 9: IKEv2_CP_ATTRIBUTE_RESERVED_9 OK
          search IKEv2_CP_ATTRIBUTE_RESERVED_9: OK
          match IKEv2_CP_ATTRIBUTE_RESERVED_9: OK
          short_name 9: IKEv2_CP_ATTRIBUTE_RESERVED_9 OK
          jam_enum_short 9: IKEv2_CP_ATTRIBUTE_RESERVED_9 OK
+         jam_enum_human 9: ikev2-cp-attribute-reserved-9 OK
    10 -> IKEv2_INTERNAL_IP6_DNS
          jam_enum 10: IKEv2_INTERNAL_IP6_DNS OK
          search IKEv2_INTERNAL_IP6_DNS: OK
          match IKEv2_INTERNAL_IP6_DNS: OK
          short_name 10: IKEv2_INTERNAL_IP6_DNS OK
          jam_enum_short 10: IKEv2_INTERNAL_IP6_DNS OK
+         jam_enum_human 10: ikev2-internal-ip6-dns OK
    11 -> IKEv2_CP_ATTRIBUTE_RESERVED_11
          jam_enum 11: IKEv2_CP_ATTRIBUTE_RESERVED_11 OK
          search IKEv2_CP_ATTRIBUTE_RESERVED_11: OK
          match IKEv2_CP_ATTRIBUTE_RESERVED_11: OK
          short_name 11: IKEv2_CP_ATTRIBUTE_RESERVED_11 OK
          jam_enum_short 11: IKEv2_CP_ATTRIBUTE_RESERVED_11 OK
+         jam_enum_human 11: ikev2-cp-attribute-reserved-11 OK
    12 -> IKEv2_INTERNAL_IP6_DHCP
          jam_enum 12: IKEv2_INTERNAL_IP6_DHCP OK
          search IKEv2_INTERNAL_IP6_DHCP: OK
          match IKEv2_INTERNAL_IP6_DHCP: OK
          short_name 12: IKEv2_INTERNAL_IP6_DHCP OK
          jam_enum_short 12: IKEv2_INTERNAL_IP6_DHCP OK
+         jam_enum_human 12: ikev2-internal-ip6-dhcp OK
    13 -> IKEv2_INTERNAL_IP4_SUBNET
          jam_enum 13: IKEv2_INTERNAL_IP4_SUBNET OK
          search IKEv2_INTERNAL_IP4_SUBNET: OK
          match IKEv2_INTERNAL_IP4_SUBNET: OK
          short_name 13: IKEv2_INTERNAL_IP4_SUBNET OK
          jam_enum_short 13: IKEv2_INTERNAL_IP4_SUBNET OK
+         jam_enum_human 13: ikev2-internal-ip4-subnet OK
    14 -> IKEv2_SUPPORTED_ATTRIBUTES
          jam_enum 14: IKEv2_SUPPORTED_ATTRIBUTES OK
          search IKEv2_SUPPORTED_ATTRIBUTES: OK
          match IKEv2_SUPPORTED_ATTRIBUTES: OK
          short_name 14: IKEv2_SUPPORTED_ATTRIBUTES OK
          jam_enum_short 14: IKEv2_SUPPORTED_ATTRIBUTES OK
+         jam_enum_human 14: ikev2-supported-attributes OK
    15 -> IKEv2_INTERNAL_IP6_SUBNET
          jam_enum 15: IKEv2_INTERNAL_IP6_SUBNET OK
          search IKEv2_INTERNAL_IP6_SUBNET: OK
          match IKEv2_INTERNAL_IP6_SUBNET: OK
          short_name 15: IKEv2_INTERNAL_IP6_SUBNET OK
          jam_enum_short 15: IKEv2_INTERNAL_IP6_SUBNET OK
+         jam_enum_human 15: ikev2-internal-ip6-subnet OK
    16 -> IKEv2_MIP6_HOME_PREFIX
          jam_enum 16: IKEv2_MIP6_HOME_PREFIX OK
          search IKEv2_MIP6_HOME_PREFIX: OK
          match IKEv2_MIP6_HOME_PREFIX: OK
          short_name 16: IKEv2_MIP6_HOME_PREFIX OK
          jam_enum_short 16: IKEv2_MIP6_HOME_PREFIX OK
+         jam_enum_human 16: ikev2-mip6-home-prefix OK
    17 -> IKEv2_INTERNAL_IP6_LINK
          jam_enum 17: IKEv2_INTERNAL_IP6_LINK OK
          search IKEv2_INTERNAL_IP6_LINK: OK
          match IKEv2_INTERNAL_IP6_LINK: OK
          short_name 17: IKEv2_INTERNAL_IP6_LINK OK
          jam_enum_short 17: IKEv2_INTERNAL_IP6_LINK OK
+         jam_enum_human 17: ikev2-internal-ip6-link OK
    18 -> IKEv2_INTERNAL_IP6_PREFIX
          jam_enum 18: IKEv2_INTERNAL_IP6_PREFIX OK
          search IKEv2_INTERNAL_IP6_PREFIX: OK
          match IKEv2_INTERNAL_IP6_PREFIX: OK
          short_name 18: IKEv2_INTERNAL_IP6_PREFIX OK
          jam_enum_short 18: IKEv2_INTERNAL_IP6_PREFIX OK
+         jam_enum_human 18: ikev2-internal-ip6-prefix OK
    19 -> IKEv2_HOME_AGENT_ADDRESS
          jam_enum 19: IKEv2_HOME_AGENT_ADDRESS OK
          search IKEv2_HOME_AGENT_ADDRESS: OK
          match IKEv2_HOME_AGENT_ADDRESS: OK
          short_name 19: IKEv2_HOME_AGENT_ADDRESS OK
          jam_enum_short 19: IKEv2_HOME_AGENT_ADDRESS OK
+         jam_enum_human 19: ikev2-home-agent-address OK
    20 -> IKEv2_P_CSCF_IP4_ADDRESS
          jam_enum 20: IKEv2_P_CSCF_IP4_ADDRESS OK
          search IKEv2_P_CSCF_IP4_ADDRESS: OK
          match IKEv2_P_CSCF_IP4_ADDRESS: OK
          short_name 20: IKEv2_P_CSCF_IP4_ADDRESS OK
          jam_enum_short 20: IKEv2_P_CSCF_IP4_ADDRESS OK
+         jam_enum_human 20: ikev2-p-cscf-ip4-address OK
    21 -> IKEv2_P_CSCF_IP6_ADDRESS
          jam_enum 21: IKEv2_P_CSCF_IP6_ADDRESS OK
          search IKEv2_P_CSCF_IP6_ADDRESS: OK
          match IKEv2_P_CSCF_IP6_ADDRESS: OK
          short_name 21: IKEv2_P_CSCF_IP6_ADDRESS OK
          jam_enum_short 21: IKEv2_P_CSCF_IP6_ADDRESS OK
+         jam_enum_human 21: ikev2-p-cscf-ip6-address OK
    22 -> IKEv2_FTT_KAT
          jam_enum 22: IKEv2_FTT_KAT OK
          search IKEv2_FTT_KAT: OK
          match IKEv2_FTT_KAT: OK
          short_name 22: IKEv2_FTT_KAT OK
          jam_enum_short 22: IKEv2_FTT_KAT OK
+         jam_enum_human 22: ikev2-ftt-kat OK
    23 -> IKEv2_EXTERNAL_SOURCE_IP4_NAT_INFO
          jam_enum 23: IKEv2_EXTERNAL_SOURCE_IP4_NAT_INFO OK
          search IKEv2_EXTERNAL_SOURCE_IP4_NAT_INFO: OK
          match IKEv2_EXTERNAL_SOURCE_IP4_NAT_INFO: OK
          short_name 23: IKEv2_EXTERNAL_SOURCE_IP4_NAT_INFO OK
          jam_enum_short 23: IKEv2_EXTERNAL_SOURCE_IP4_NAT_INFO OK
+         jam_enum_human 23: ikev2-external-source-ip4-nat-info OK
    24 -> IKEv2_TIMEOUT_PERIOD_FOR_LIVENESS_CHECK
          jam_enum 24: IKEv2_TIMEOUT_PERIOD_FOR_LIVENESS_CHECK OK
          search IKEv2_TIMEOUT_PERIOD_FOR_LIVENESS_CHECK: OK
          match IKEv2_TIMEOUT_PERIOD_FOR_LIVENESS_CHECK: OK
          short_name 24: IKEv2_TIMEOUT_PERIOD_FOR_LIVENESS_CHECK OK
          jam_enum_short 24: IKEv2_TIMEOUT_PERIOD_FOR_LIVENESS_CHECK OK
+         jam_enum_human 24: ikev2-timeout-period-for-liveness-check OK
    25 -> IKEv2_INTERNAL_DNS_DOMAIN
          jam_enum 25: IKEv2_INTERNAL_DNS_DOMAIN OK
          search IKEv2_INTERNAL_DNS_DOMAIN: OK
          match IKEv2_INTERNAL_DNS_DOMAIN: OK
          short_name 25: IKEv2_INTERNAL_DNS_DOMAIN OK
          jam_enum_short 25: IKEv2_INTERNAL_DNS_DOMAIN OK
+         jam_enum_human 25: ikev2-internal-dns-domain OK
    26 -> IKEv2_INTERNAL_DNSSEC_TA
          jam_enum 26: IKEv2_INTERNAL_DNSSEC_TA OK
          search IKEv2_INTERNAL_DNSSEC_TA: OK
          match IKEv2_INTERNAL_DNSSEC_TA: OK
          short_name 26: IKEv2_INTERNAL_DNSSEC_TA OK
          jam_enum_short 26: IKEv2_INTERNAL_DNSSEC_TA OK
+         jam_enum_human 26: ikev2-internal-dnssec-ta OK
 
   secret_kind_names:
     1 -> SECRET_PSK
@@ -2967,6 +3390,7 @@ IETF registry enum_names:
          match SECRET_PSK: OK
          short_name 1: PSK OK
          jam_enum_short 1: PSK OK
+         jam_enum_human 1: psk OK
          match PSK [short]: OK
     2 -> SECRET_RSA
          jam_enum 2: SECRET_RSA OK
@@ -2974,6 +3398,7 @@ IETF registry enum_names:
          match SECRET_RSA: OK
          short_name 2: RSA OK
          jam_enum_short 2: RSA OK
+         jam_enum_human 2: rsa OK
          match RSA [short]: OK
     3 -> SECRET_XAUTH
          jam_enum 3: SECRET_XAUTH OK
@@ -2981,6 +3406,7 @@ IETF registry enum_names:
          match SECRET_XAUTH: OK
          short_name 3: XAUTH OK
          jam_enum_short 3: XAUTH OK
+         jam_enum_human 3: xauth OK
          match XAUTH [short]: OK
     4 -> SECRET_PPK
          jam_enum 4: SECRET_PPK OK
@@ -2988,6 +3414,7 @@ IETF registry enum_names:
          match SECRET_PPK: OK
          short_name 4: PPK OK
          jam_enum_short 4: PPK OK
+         jam_enum_human 4: ppk OK
          match PPK [short]: OK
     5 -> SECRET_ECDSA
          jam_enum 5: SECRET_ECDSA OK
@@ -2995,6 +3422,7 @@ IETF registry enum_names:
          match SECRET_ECDSA: OK
          short_name 5: ECDSA OK
          jam_enum_short 5: ECDSA OK
+         jam_enum_human 5: ecdsa OK
          match ECDSA [short]: OK
     6 -> SECRET_NULL
          jam_enum 6: SECRET_NULL OK
@@ -3002,6 +3430,7 @@ IETF registry enum_names:
          match SECRET_NULL: OK
          short_name 6: NULL OK
          jam_enum_short 6: NULL OK
+         jam_enum_human 6: null OK
          match NULL [short]: OK
     7 -> SECRET_INVALID
          jam_enum 7: SECRET_INVALID OK
@@ -3009,6 +3438,7 @@ IETF registry enum_names:
          match SECRET_INVALID: OK
          short_name 7: INVALID OK
          jam_enum_short 7: INVALID OK
+         jam_enum_human 7: invalid OK
          match INVALID [short]: OK
 
   enc_mode_names:
@@ -3018,6 +3448,7 @@ IETF registry enum_names:
          match ENCAPSULATION_MODE_TUNNEL: OK
          short_name 1: TUNNEL OK
          jam_enum_short 1: TUNNEL OK
+         jam_enum_human 1: tunnel OK
          match TUNNEL [short]: OK
     2 -> ENCAPSULATION_MODE_TRANSPORT
          jam_enum 2: ENCAPSULATION_MODE_TRANSPORT OK
@@ -3025,6 +3456,7 @@ IETF registry enum_names:
          match ENCAPSULATION_MODE_TRANSPORT: OK
          short_name 2: TRANSPORT OK
          jam_enum_short 2: TRANSPORT OK
+         jam_enum_human 2: transport OK
          match TRANSPORT [short]: OK
     3 -> ENCAPSULATION_MODE_UDP_TUNNEL_RFC
          jam_enum 3: ENCAPSULATION_MODE_UDP_TUNNEL_RFC OK
@@ -3032,6 +3464,7 @@ IETF registry enum_names:
          match ENCAPSULATION_MODE_UDP_TUNNEL_RFC: OK
          short_name 3: UDP_TUNNEL_RFC OK
          jam_enum_short 3: UDP_TUNNEL_RFC OK
+         jam_enum_human 3: udp-tunnel-rfc OK
          match UDP_TUNNEL_RFC [short]: OK
     4 -> ENCAPSULATION_MODE_UDP_TRANSPORT_RFC
          jam_enum 4: ENCAPSULATION_MODE_UDP_TRANSPORT_RFC OK
@@ -3039,6 +3472,7 @@ IETF registry enum_names:
          match ENCAPSULATION_MODE_UDP_TRANSPORT_RFC: OK
          short_name 4: UDP_TRANSPORT_RFC OK
          jam_enum_short 4: UDP_TRANSPORT_RFC OK
+         jam_enum_human 4: udp-transport-rfc OK
          match UDP_TRANSPORT_RFC [short]: OK
 
   auth_alg_names:
@@ -3048,6 +3482,7 @@ IETF registry enum_names:
          match AUTH_ALGORITHM_NONE: OK
          short_name 0: NONE OK
          jam_enum_short 0: NONE OK
+         jam_enum_human 0: none OK
          match NONE [short]: OK
     1 -> AUTH_ALGORITHM_HMAC_MD5
          jam_enum 1: AUTH_ALGORITHM_HMAC_MD5 OK
@@ -3055,6 +3490,7 @@ IETF registry enum_names:
          match AUTH_ALGORITHM_HMAC_MD5: OK
          short_name 1: HMAC_MD5 OK
          jam_enum_short 1: HMAC_MD5 OK
+         jam_enum_human 1: hmac-md5 OK
          match HMAC_MD5 [short]: OK
     2 -> AUTH_ALGORITHM_HMAC_SHA1
          jam_enum 2: AUTH_ALGORITHM_HMAC_SHA1 OK
@@ -3062,6 +3498,7 @@ IETF registry enum_names:
          match AUTH_ALGORITHM_HMAC_SHA1: OK
          short_name 2: HMAC_SHA1 OK
          jam_enum_short 2: HMAC_SHA1 OK
+         jam_enum_human 2: hmac-sha1 OK
          match HMAC_SHA1 [short]: OK
     3 -> AUTH_ALGORITHM_DES_MAC(UNUSED)
          jam_enum 3: AUTH_ALGORITHM_DES_MAC(UNUSED) OK
@@ -3070,6 +3507,7 @@ IETF registry enum_names:
          match AUTH_ALGORITHM_DES_MAC [trunc]: OK
          short_name 3: DES_MAC(UNUSED) OK
          jam_enum_short 3: DES_MAC(UNUSED) OK
+         jam_enum_human 3: des-mac(unused) OK
          match DES_MAC(UNUSED) [short]: OK
          match DES_MAC [short+trunc]: OK
     4 -> AUTH_ALGORITHM_KPDK(UNUSED)
@@ -3079,6 +3517,7 @@ IETF registry enum_names:
          match AUTH_ALGORITHM_KPDK [trunc]: OK
          short_name 4: KPDK(UNUSED) OK
          jam_enum_short 4: KPDK(UNUSED) OK
+         jam_enum_human 4: kpdk(unused) OK
          match KPDK(UNUSED) [short]: OK
          match KPDK [short+trunc]: OK
     5 -> AUTH_ALGORITHM_HMAC_SHA2_256
@@ -3087,6 +3526,7 @@ IETF registry enum_names:
          match AUTH_ALGORITHM_HMAC_SHA2_256: OK
          short_name 5: HMAC_SHA2_256 OK
          jam_enum_short 5: HMAC_SHA2_256 OK
+         jam_enum_human 5: hmac-sha2-256 OK
          match HMAC_SHA2_256 [short]: OK
     6 -> AUTH_ALGORITHM_HMAC_SHA2_384
          jam_enum 6: AUTH_ALGORITHM_HMAC_SHA2_384 OK
@@ -3094,6 +3534,7 @@ IETF registry enum_names:
          match AUTH_ALGORITHM_HMAC_SHA2_384: OK
          short_name 6: HMAC_SHA2_384 OK
          jam_enum_short 6: HMAC_SHA2_384 OK
+         jam_enum_human 6: hmac-sha2-384 OK
          match HMAC_SHA2_384 [short]: OK
     7 -> AUTH_ALGORITHM_HMAC_SHA2_512
          jam_enum 7: AUTH_ALGORITHM_HMAC_SHA2_512 OK
@@ -3101,6 +3542,7 @@ IETF registry enum_names:
          match AUTH_ALGORITHM_HMAC_SHA2_512: OK
          short_name 7: HMAC_SHA2_512 OK
          jam_enum_short 7: HMAC_SHA2_512 OK
+         jam_enum_human 7: hmac-sha2-512 OK
          match HMAC_SHA2_512 [short]: OK
     8 -> AUTH_ALGORITHM_HMAC_RIPEMD
          jam_enum 8: AUTH_ALGORITHM_HMAC_RIPEMD OK
@@ -3108,6 +3550,7 @@ IETF registry enum_names:
          match AUTH_ALGORITHM_HMAC_RIPEMD: OK
          short_name 8: HMAC_RIPEMD OK
          jam_enum_short 8: HMAC_RIPEMD OK
+         jam_enum_human 8: hmac-ripemd OK
          match HMAC_RIPEMD [short]: OK
     9 -> AUTH_ALGORITHM_AES_XCBC
          jam_enum 9: AUTH_ALGORITHM_AES_XCBC OK
@@ -3115,6 +3558,7 @@ IETF registry enum_names:
          match AUTH_ALGORITHM_AES_XCBC: OK
          short_name 9: AES_XCBC OK
          jam_enum_short 9: AES_XCBC OK
+         jam_enum_human 9: aes-xcbc OK
          match AES_XCBC [short]: OK
    10 -> AUTH_ALGORITHM_SIG_RSA(UNUSED)
          jam_enum 10: AUTH_ALGORITHM_SIG_RSA(UNUSED) OK
@@ -3123,6 +3567,7 @@ IETF registry enum_names:
          match AUTH_ALGORITHM_SIG_RSA [trunc]: OK
          short_name 10: SIG_RSA(UNUSED) OK
          jam_enum_short 10: SIG_RSA(UNUSED) OK
+         jam_enum_human 10: sig-rsa(unused) OK
          match SIG_RSA(UNUSED) [short]: OK
          match SIG_RSA [short+trunc]: OK
    11 -> AUTH_ALGORITHM_AES_128_GMAC
@@ -3131,6 +3576,7 @@ IETF registry enum_names:
          match AUTH_ALGORITHM_AES_128_GMAC: OK
          short_name 11: AES_128_GMAC OK
          jam_enum_short 11: AES_128_GMAC OK
+         jam_enum_human 11: aes-128-gmac OK
          match AES_128_GMAC [short]: OK
    12 -> AUTH_ALGORITHM_AES_192_GMAC
          jam_enum 12: AUTH_ALGORITHM_AES_192_GMAC OK
@@ -3138,6 +3584,7 @@ IETF registry enum_names:
          match AUTH_ALGORITHM_AES_192_GMAC: OK
          short_name 12: AES_192_GMAC OK
          jam_enum_short 12: AES_192_GMAC OK
+         jam_enum_human 12: aes-192-gmac OK
          match AES_192_GMAC [short]: OK
    13 -> AUTH_ALGORITHM_AES_256_GMAC
          jam_enum 13: AUTH_ALGORITHM_AES_256_GMAC OK
@@ -3145,6 +3592,7 @@ IETF registry enum_names:
          match AUTH_ALGORITHM_AES_256_GMAC: OK
          short_name 13: AES_256_GMAC OK
          jam_enum_short 13: AES_256_GMAC OK
+         jam_enum_human 13: aes-256-gmac OK
          match AES_256_GMAC [short]: OK
   250 -> AUTH_ALGORITHM_AES_CMAC_96
          jam_enum 250: AUTH_ALGORITHM_AES_CMAC_96 OK
@@ -3152,6 +3600,7 @@ IETF registry enum_names:
          match AUTH_ALGORITHM_AES_CMAC_96: OK
          short_name 250: AES_CMAC_96 OK
          jam_enum_short 250: AES_CMAC_96 OK
+         jam_enum_human 250: aes-cmac-96 OK
          match AES_CMAC_96 [short]: OK
   251 -> AUTH_ALGORITHM_NULL_KAME
          jam_enum 251: AUTH_ALGORITHM_NULL_KAME OK
@@ -3159,6 +3608,7 @@ IETF registry enum_names:
          match AUTH_ALGORITHM_NULL_KAME: OK
          short_name 251: NULL_KAME OK
          jam_enum_short 251: NULL_KAME OK
+         jam_enum_human 251: null-kame OK
          match NULL_KAME [short]: OK
   252 -> AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG
          jam_enum 252: AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG OK
@@ -3166,6 +3616,7 @@ IETF registry enum_names:
          match AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG: OK
          short_name 252: HMAC_SHA2_256_TRUNCBUG OK
          jam_enum_short 252: HMAC_SHA2_256_TRUNCBUG OK
+         jam_enum_human 252: hmac-sha2-256-truncbug OK
          match HMAC_SHA2_256_TRUNCBUG [short]: OK
 
   xauth_type_names:
@@ -3175,24 +3626,28 @@ IETF registry enum_names:
          match Generic: OK
          short_name 0: Generic OK
          jam_enum_short 0: Generic OK
+         jam_enum_human 0: generic OK
     1 -> RADIUS-CHAP
          jam_enum 1: RADIUS-CHAP OK
          search RADIUS-CHAP: OK
          match RADIUS-CHAP: OK
          short_name 1: RADIUS-CHAP OK
          jam_enum_short 1: RADIUS-CHAP OK
+         jam_enum_human 1: radius-chap OK
     2 -> OTP
          jam_enum 2: OTP OK
          search OTP: OK
          match OTP: OK
          short_name 2: OTP OK
          jam_enum_short 2: OTP OK
+         jam_enum_human 2: otp OK
     3 -> S/KEY
          jam_enum 3: S/KEY OK
          search S/KEY: OK
          match S/KEY: OK
          short_name 3: S/KEY OK
          jam_enum_short 3: S/KEY OK
+         jam_enum_human 3: s/key OK
 
   xauth_attr_names:
 
@@ -3203,24 +3658,28 @@ IETF registry enum_names:
          match ISAKMP_CFG_REQUEST: OK
          short_name 1: ISAKMP_CFG_REQUEST OK
          jam_enum_short 1: ISAKMP_CFG_REQUEST OK
+         jam_enum_human 1: isakmp-cfg-request OK
     2 -> ISAKMP_CFG_REPLY
          jam_enum 2: ISAKMP_CFG_REPLY OK
          search ISAKMP_CFG_REPLY: OK
          match ISAKMP_CFG_REPLY: OK
          short_name 2: ISAKMP_CFG_REPLY OK
          jam_enum_short 2: ISAKMP_CFG_REPLY OK
+         jam_enum_human 2: isakmp-cfg-reply OK
     3 -> ISAKMP_CFG_SET
          jam_enum 3: ISAKMP_CFG_SET OK
          search ISAKMP_CFG_SET: OK
          match ISAKMP_CFG_SET: OK
          short_name 3: ISAKMP_CFG_SET OK
          jam_enum_short 3: ISAKMP_CFG_SET OK
+         jam_enum_human 3: isakmp-cfg-set OK
     4 -> ISAKMP_CFG_ACK
          jam_enum 4: ISAKMP_CFG_ACK OK
          search ISAKMP_CFG_ACK: OK
          match ISAKMP_CFG_ACK: OK
          short_name 4: ISAKMP_CFG_ACK OK
          jam_enum_short 4: ISAKMP_CFG_ACK OK
+         jam_enum_human 4: isakmp-cfg-ack OK
 
   ikev2_proposal_protocol_id_names:
     1 -> IKEv2_SEC_PROTO_IKE
@@ -3229,6 +3688,7 @@ IETF registry enum_names:
          match IKEv2_SEC_PROTO_IKE: OK
          short_name 1: IKE OK
          jam_enum_short 1: IKE OK
+         jam_enum_human 1: ike OK
          match IKE [short]: OK
     2 -> IKEv2_SEC_PROTO_AH
          jam_enum 2: IKEv2_SEC_PROTO_AH OK
@@ -3236,6 +3696,7 @@ IETF registry enum_names:
          match IKEv2_SEC_PROTO_AH: OK
          short_name 2: AH OK
          jam_enum_short 2: AH OK
+         jam_enum_human 2: ah OK
          match AH [short]: OK
     3 -> IKEv2_SEC_PROTO_ESP
          jam_enum 3: IKEv2_SEC_PROTO_ESP OK
@@ -3243,6 +3704,7 @@ IETF registry enum_names:
          match IKEv2_SEC_PROTO_ESP: OK
          short_name 3: ESP OK
          jam_enum_short 3: ESP OK
+         jam_enum_human 3: esp OK
          match ESP [short]: OK
     4 -> IKEv2_SEC_FC_ESP_HEADER
          jam_enum 4: IKEv2_SEC_FC_ESP_HEADER OK
@@ -3250,12 +3712,14 @@ IETF registry enum_names:
          match IKEv2_SEC_FC_ESP_HEADER: OK
          short_name 4: IKEv2_SEC_FC_ESP_HEADER OK
          jam_enum_short 4: IKEv2_SEC_FC_ESP_HEADER OK
+         jam_enum_human 4: ikev2-sec-fc-esp-header OK
     5 -> IKEv2_SEC_FC_CT_AUTHENTICATION
          jam_enum 5: IKEv2_SEC_FC_CT_AUTHENTICATION OK
          search IKEv2_SEC_FC_CT_AUTHENTICATION: OK
          match IKEv2_SEC_FC_CT_AUTHENTICATION: OK
          short_name 5: IKEv2_SEC_FC_CT_AUTHENTICATION OK
          jam_enum_short 5: IKEv2_SEC_FC_CT_AUTHENTICATION OK
+         jam_enum_human 5: ikev2-sec-fc-ct-authentication OK
 
   ikev2_delete_protocol_id_names:
     1 -> IKEv2_SEC_PROTO_IKE
@@ -3264,6 +3728,7 @@ IETF registry enum_names:
          match IKEv2_SEC_PROTO_IKE: OK
          short_name 1: IKE OK
          jam_enum_short 1: IKE OK
+         jam_enum_human 1: ike OK
          match IKE [short]: OK
     2 -> IKEv2_SEC_PROTO_AH
          jam_enum 2: IKEv2_SEC_PROTO_AH OK
@@ -3271,6 +3736,7 @@ IETF registry enum_names:
          match IKEv2_SEC_PROTO_AH: OK
          short_name 2: AH OK
          jam_enum_short 2: AH OK
+         jam_enum_human 2: ah OK
          match AH [short]: OK
     3 -> IKEv2_SEC_PROTO_ESP
          jam_enum 3: IKEv2_SEC_PROTO_ESP OK
@@ -3278,6 +3744,7 @@ IETF registry enum_names:
          match IKEv2_SEC_PROTO_ESP: OK
          short_name 3: ESP OK
          jam_enum_short 3: ESP OK
+         jam_enum_human 3: esp OK
          match ESP [short]: OK
 
   ikev2_notify_protocol_id_names:
@@ -3287,6 +3754,7 @@ IETF registry enum_names:
          match IKEv2_SEC_PROTO_NONE: OK
          short_name 0: NONE OK
          jam_enum_short 0: NONE OK
+         jam_enum_human 0: none OK
          match NONE [short]: OK
     1 -> IKEv2_SEC_PROTO_IKE
          jam_enum 1: IKEv2_SEC_PROTO_IKE OK
@@ -3294,6 +3762,7 @@ IETF registry enum_names:
          match IKEv2_SEC_PROTO_IKE: OK
          short_name 1: IKE OK
          jam_enum_short 1: IKE OK
+         jam_enum_human 1: ike OK
          match IKE [short]: OK
     2 -> IKEv2_SEC_PROTO_AH
          jam_enum 2: IKEv2_SEC_PROTO_AH OK
@@ -3301,6 +3770,7 @@ IETF registry enum_names:
          match IKEv2_SEC_PROTO_AH: OK
          short_name 2: AH OK
          jam_enum_short 2: AH OK
+         jam_enum_human 2: ah OK
          match AH [short]: OK
     3 -> IKEv2_SEC_PROTO_ESP
          jam_enum 3: IKEv2_SEC_PROTO_ESP OK
@@ -3308,6 +3778,7 @@ IETF registry enum_names:
          match IKEv2_SEC_PROTO_ESP: OK
          short_name 3: ESP OK
          jam_enum_short 3: ESP OK
+         jam_enum_human 3: esp OK
          match ESP [short]: OK
 
   ikev2_auth_names:
@@ -3317,6 +3788,7 @@ IETF registry enum_names:
          match IKEv2_AUTH_RESERVED: OK
          short_name 0: RESERVED OK
          jam_enum_short 0: RESERVED OK
+         jam_enum_human 0: reserved OK
          match RESERVED [short]: OK
     1 -> IKEv2_AUTH_RSA
          jam_enum 1: IKEv2_AUTH_RSA OK
@@ -3324,6 +3796,7 @@ IETF registry enum_names:
          match IKEv2_AUTH_RSA: OK
          short_name 1: RSA OK
          jam_enum_short 1: RSA OK
+         jam_enum_human 1: rsa OK
          match RSA [short]: OK
     2 -> IKEv2_AUTH_SHARED
          jam_enum 2: IKEv2_AUTH_SHARED OK
@@ -3331,6 +3804,7 @@ IETF registry enum_names:
          match IKEv2_AUTH_SHARED: OK
          short_name 2: SHARED OK
          jam_enum_short 2: SHARED OK
+         jam_enum_human 2: shared OK
          match SHARED [short]: OK
     3 -> IKEv2_AUTH_DSS_DIGITAL_SIGNATURE
          jam_enum 3: IKEv2_AUTH_DSS_DIGITAL_SIGNATURE OK
@@ -3338,6 +3812,7 @@ IETF registry enum_names:
          match IKEv2_AUTH_DSS_DIGITAL_SIGNATURE: OK
          short_name 3: DSS_DIGITAL_SIGNATURE OK
          jam_enum_short 3: DSS_DIGITAL_SIGNATURE OK
+         jam_enum_human 3: dss-digital-signature OK
          match DSS_DIGITAL_SIGNATURE [short]: OK
     9 -> IKEv2_AUTH_ECDSA_SHA2_256_P256
          jam_enum 9: IKEv2_AUTH_ECDSA_SHA2_256_P256 OK
@@ -3345,6 +3820,7 @@ IETF registry enum_names:
          match IKEv2_AUTH_ECDSA_SHA2_256_P256: OK
          short_name 9: ECDSA_SHA2_256_P256 OK
          jam_enum_short 9: ECDSA_SHA2_256_P256 OK
+         jam_enum_human 9: ecdsa-sha2-256-p256 OK
          match ECDSA_SHA2_256_P256 [short]: OK
    10 -> IKEv2_AUTH_ECDSA_SHA2_384_P384
          jam_enum 10: IKEv2_AUTH_ECDSA_SHA2_384_P384 OK
@@ -3352,6 +3828,7 @@ IETF registry enum_names:
          match IKEv2_AUTH_ECDSA_SHA2_384_P384: OK
          short_name 10: ECDSA_SHA2_384_P384 OK
          jam_enum_short 10: ECDSA_SHA2_384_P384 OK
+         jam_enum_human 10: ecdsa-sha2-384-p384 OK
          match ECDSA_SHA2_384_P384 [short]: OK
    11 -> IKEv2_AUTH_ECDSA_SHA2_512_P521
          jam_enum 11: IKEv2_AUTH_ECDSA_SHA2_512_P521 OK
@@ -3359,6 +3836,7 @@ IETF registry enum_names:
          match IKEv2_AUTH_ECDSA_SHA2_512_P521: OK
          short_name 11: ECDSA_SHA2_512_P521 OK
          jam_enum_short 11: ECDSA_SHA2_512_P521 OK
+         jam_enum_human 11: ecdsa-sha2-512-p521 OK
          match ECDSA_SHA2_512_P521 [short]: OK
    12 -> IKEv2_AUTH_GENERIC_SECURE_PASSWORD_AUTHENTICATION_METHOD
          jam_enum 12: IKEv2_AUTH_GENERIC_SECURE_PASSWORD_AUTHENTICATION_METHOD OK
@@ -3366,6 +3844,7 @@ IETF registry enum_names:
          match IKEv2_AUTH_GENERIC_SECURE_PASSWORD_AUTHENTICATION_METHOD: OK
          short_name 12: GENERIC_SECURE_PASSWORD_AUTHENTICATION_METHOD OK
          jam_enum_short 12: GENERIC_SECURE_PASSWORD_AUTHENTICATION_METHOD OK
+         jam_enum_human 12: generic-secure-password-authentication-method OK
          match GENERIC_SECURE_PASSWORD_AUTHENTICATION_METHOD [short]: OK
    13 -> IKEv2_AUTH_NULL
          jam_enum 13: IKEv2_AUTH_NULL OK
@@ -3373,6 +3852,7 @@ IETF registry enum_names:
          match IKEv2_AUTH_NULL: OK
          short_name 13: NULL OK
          jam_enum_short 13: NULL OK
+         jam_enum_human 13: null OK
          match NULL [short]: OK
    14 -> IKEv2_AUTH_DIGSIG
          jam_enum 14: IKEv2_AUTH_DIGSIG OK
@@ -3380,6 +3860,7 @@ IETF registry enum_names:
          match IKEv2_AUTH_DIGSIG: OK
          short_name 14: DIGSIG OK
          jam_enum_short 14: DIGSIG OK
+         jam_enum_human 14: digsig OK
          match DIGSIG [short]: OK
 
   ikev2_trans_type_encr_names:
@@ -3390,6 +3871,7 @@ IETF registry enum_names:
          match DES_IV64 [trunc]: OK
          short_name 1: DES_IV64(UNUSED) OK
          jam_enum_short 1: DES_IV64(UNUSED) OK
+         jam_enum_human 1: des-iv64(unused) OK
     2 -> DES(UNUSED)
          jam_enum 2: DES(UNUSED) OK
          search DES(UNUSED): OK
@@ -3397,12 +3879,14 @@ IETF registry enum_names:
          match DES [trunc]: OK
          short_name 2: DES(UNUSED) OK
          jam_enum_short 2: DES(UNUSED) OK
+         jam_enum_human 2: des(unused) OK
     3 -> 3DES
          jam_enum 3: 3DES OK
          search 3DES: OK
          match 3DES: OK
          short_name 3: 3DES OK
          jam_enum_short 3: 3DES OK
+         jam_enum_human 3: 3des OK
     4 -> RC5(UNUSED)
          jam_enum 4: RC5(UNUSED) OK
          search RC5(UNUSED): OK
@@ -3410,6 +3894,7 @@ IETF registry enum_names:
          match RC5 [trunc]: OK
          short_name 4: RC5(UNUSED) OK
          jam_enum_short 4: RC5(UNUSED) OK
+         jam_enum_human 4: rc5(unused) OK
     5 -> IDEA(UNUSED)
          jam_enum 5: IDEA(UNUSED) OK
          search IDEA(UNUSED): OK
@@ -3417,12 +3902,14 @@ IETF registry enum_names:
          match IDEA [trunc]: OK
          short_name 5: IDEA(UNUSED) OK
          jam_enum_short 5: IDEA(UNUSED) OK
+         jam_enum_human 5: idea(unused) OK
     6 -> CAST
          jam_enum 6: CAST OK
          search CAST: OK
          match CAST: OK
          short_name 6: CAST OK
          jam_enum_short 6: CAST OK
+         jam_enum_human 6: cast OK
     7 -> BLOWFISH(UNUSED)
          jam_enum 7: BLOWFISH(UNUSED) OK
          search BLOWFISH(UNUSED): OK
@@ -3430,6 +3917,7 @@ IETF registry enum_names:
          match BLOWFISH [trunc]: OK
          short_name 7: BLOWFISH(UNUSED) OK
          jam_enum_short 7: BLOWFISH(UNUSED) OK
+         jam_enum_human 7: blowfish(unused) OK
     8 -> 3IDEA(UNUSED)
          jam_enum 8: 3IDEA(UNUSED) OK
          search 3IDEA(UNUSED): OK
@@ -3437,6 +3925,7 @@ IETF registry enum_names:
          match 3IDEA [trunc]: OK
          short_name 8: 3IDEA(UNUSED) OK
          jam_enum_short 8: 3IDEA(UNUSED) OK
+         jam_enum_human 8: 3idea(unused) OK
     9 -> DES_IV32(UNUSED)
          jam_enum 9: DES_IV32(UNUSED) OK
          search DES_IV32(UNUSED): OK
@@ -3444,6 +3933,7 @@ IETF registry enum_names:
          match DES_IV32 [trunc]: OK
          short_name 9: DES_IV32(UNUSED) OK
          jam_enum_short 9: DES_IV32(UNUSED) OK
+         jam_enum_human 9: des-iv32(unused) OK
    10 -> RES10(UNUSED)
          jam_enum 10: RES10(UNUSED) OK
          search RES10(UNUSED): OK
@@ -3451,42 +3941,49 @@ IETF registry enum_names:
          match RES10 [trunc]: OK
          short_name 10: RES10(UNUSED) OK
          jam_enum_short 10: RES10(UNUSED) OK
+         jam_enum_human 10: res10(unused) OK
    11 -> NULL
          jam_enum 11: NULL OK
          search NULL: OK
          match NULL: OK
          short_name 11: NULL OK
          jam_enum_short 11: NULL OK
+         jam_enum_human 11: null OK
    12 -> AES_CBC
          jam_enum 12: AES_CBC OK
          search AES_CBC: OK
          match AES_CBC: OK
          short_name 12: AES_CBC OK
          jam_enum_short 12: AES_CBC OK
+         jam_enum_human 12: aes-cbc OK
    13 -> AES_CTR
          jam_enum 13: AES_CTR OK
          search AES_CTR: OK
          match AES_CTR: OK
          short_name 13: AES_CTR OK
          jam_enum_short 13: AES_CTR OK
+         jam_enum_human 13: aes-ctr OK
    14 -> AES_CCM_A
          jam_enum 14: AES_CCM_A OK
          search AES_CCM_A: OK
          match AES_CCM_A: OK
          short_name 14: AES_CCM_A OK
          jam_enum_short 14: AES_CCM_A OK
+         jam_enum_human 14: aes-ccm-a OK
    15 -> AES_CCM_B
          jam_enum 15: AES_CCM_B OK
          search AES_CCM_B: OK
          match AES_CCM_B: OK
          short_name 15: AES_CCM_B OK
          jam_enum_short 15: AES_CCM_B OK
+         jam_enum_human 15: aes-ccm-b OK
    16 -> AES_CCM_C
          jam_enum 16: AES_CCM_C OK
          search AES_CCM_C: OK
          match AES_CCM_C: OK
          short_name 16: AES_CCM_C OK
          jam_enum_short 16: AES_CCM_C OK
+         jam_enum_human 16: aes-ccm-c OK
    17 -> UNASSIGNED(UNUSED)
          jam_enum 17: UNASSIGNED(UNUSED) OK
          search UNASSIGNED(UNUSED): OK
@@ -3494,30 +3991,35 @@ IETF registry enum_names:
          match UNASSIGNED [trunc]: OK
          short_name 17: UNASSIGNED(UNUSED) OK
          jam_enum_short 17: UNASSIGNED(UNUSED) OK
+         jam_enum_human 17: unassigned(unused) OK
    18 -> AES_GCM_A
          jam_enum 18: AES_GCM_A OK
          search AES_GCM_A: OK
          match AES_GCM_A: OK
          short_name 18: AES_GCM_A OK
          jam_enum_short 18: AES_GCM_A OK
+         jam_enum_human 18: aes-gcm-a OK
    19 -> AES_GCM_B
          jam_enum 19: AES_GCM_B OK
          search AES_GCM_B: OK
          match AES_GCM_B: OK
          short_name 19: AES_GCM_B OK
          jam_enum_short 19: AES_GCM_B OK
+         jam_enum_human 19: aes-gcm-b OK
    20 -> AES_GCM_C
          jam_enum 20: AES_GCM_C OK
          search AES_GCM_C: OK
          match AES_GCM_C: OK
          short_name 20: AES_GCM_C OK
          jam_enum_short 20: AES_GCM_C OK
+         jam_enum_human 20: aes-gcm-c OK
    21 -> NULL_AUTH_AES_GMAC
          jam_enum 21: NULL_AUTH_AES_GMAC OK
          search NULL_AUTH_AES_GMAC: OK
          match NULL_AUTH_AES_GMAC: OK
          short_name 21: NULL_AUTH_AES_GMAC OK
          jam_enum_short 21: NULL_AUTH_AES_GMAC OK
+         jam_enum_human 21: null-auth-aes-gmac OK
    22 -> RESERVED_FOR_IEEE_P1619_XTS_AES(UNUSED)
          jam_enum 22: RESERVED_FOR_IEEE_P1619_XTS_AES(UNUSED) OK
          search RESERVED_FOR_IEEE_P1619_XTS_AES(UNUSED): OK
@@ -3525,42 +4027,49 @@ IETF registry enum_names:
          match RESERVED_FOR_IEEE_P1619_XTS_AES [trunc]: OK
          short_name 22: RESERVED_FOR_IEEE_P1619_XTS_AES(UNUSED) OK
          jam_enum_short 22: RESERVED_FOR_IEEE_P1619_XTS_AES(UNUSED) OK
+         jam_enum_human 22: reserved-for-ieee-p1619-xts-aes(unused) OK
    23 -> CAMELLIA_CBC
          jam_enum 23: CAMELLIA_CBC OK
          search CAMELLIA_CBC: OK
          match CAMELLIA_CBC: OK
          short_name 23: CAMELLIA_CBC OK
          jam_enum_short 23: CAMELLIA_CBC OK
+         jam_enum_human 23: camellia-cbc OK
    24 -> CAMELLIA_CTR
          jam_enum 24: CAMELLIA_CTR OK
          search CAMELLIA_CTR: OK
          match CAMELLIA_CTR: OK
          short_name 24: CAMELLIA_CTR OK
          jam_enum_short 24: CAMELLIA_CTR OK
+         jam_enum_human 24: camellia-ctr OK
    25 -> CAMELLIA_CCM_A
          jam_enum 25: CAMELLIA_CCM_A OK
          search CAMELLIA_CCM_A: OK
          match CAMELLIA_CCM_A: OK
          short_name 25: CAMELLIA_CCM_A OK
          jam_enum_short 25: CAMELLIA_CCM_A OK
+         jam_enum_human 25: camellia-ccm-a OK
    26 -> CAMELLIA_CCM_B
          jam_enum 26: CAMELLIA_CCM_B OK
          search CAMELLIA_CCM_B: OK
          match CAMELLIA_CCM_B: OK
          short_name 26: CAMELLIA_CCM_B OK
          jam_enum_short 26: CAMELLIA_CCM_B OK
+         jam_enum_human 26: camellia-ccm-b OK
    27 -> CAMELLIA_CCM_C
          jam_enum 27: CAMELLIA_CCM_C OK
          search CAMELLIA_CCM_C: OK
          match CAMELLIA_CCM_C: OK
          short_name 27: CAMELLIA_CCM_C OK
          jam_enum_short 27: CAMELLIA_CCM_C OK
+         jam_enum_human 27: camellia-ccm-c OK
    28 -> CHACHA20_POLY1305
          jam_enum 28: CHACHA20_POLY1305 OK
          search CHACHA20_POLY1305: OK
          match CHACHA20_POLY1305: OK
          short_name 28: CHACHA20_POLY1305 OK
          jam_enum_short 28: CHACHA20_POLY1305 OK
+         jam_enum_human 28: chacha20-poly1305 OK
 
   ikev2_trans_type_prf_names:
     1 -> PRF_HMAC_MD5
@@ -3569,6 +4078,7 @@ IETF registry enum_names:
          match PRF_HMAC_MD5: OK
          short_name 1: HMAC_MD5 OK
          jam_enum_short 1: HMAC_MD5 OK
+         jam_enum_human 1: hmac-md5 OK
          match HMAC_MD5 [short]: OK
     2 -> PRF_HMAC_SHA1
          jam_enum 2: PRF_HMAC_SHA1 OK
@@ -3576,6 +4086,7 @@ IETF registry enum_names:
          match PRF_HMAC_SHA1: OK
          short_name 2: HMAC_SHA1 OK
          jam_enum_short 2: HMAC_SHA1 OK
+         jam_enum_human 2: hmac-sha1 OK
          match HMAC_SHA1 [short]: OK
     3 -> PRF_HMAC_TIGER
          jam_enum 3: PRF_HMAC_TIGER OK
@@ -3583,6 +4094,7 @@ IETF registry enum_names:
          match PRF_HMAC_TIGER: OK
          short_name 3: HMAC_TIGER OK
          jam_enum_short 3: HMAC_TIGER OK
+         jam_enum_human 3: hmac-tiger OK
          match HMAC_TIGER [short]: OK
     4 -> PRF_AES128_XCBC
          jam_enum 4: PRF_AES128_XCBC OK
@@ -3590,6 +4102,7 @@ IETF registry enum_names:
          match PRF_AES128_XCBC: OK
          short_name 4: AES128_XCBC OK
          jam_enum_short 4: AES128_XCBC OK
+         jam_enum_human 4: aes128-xcbc OK
          match AES128_XCBC [short]: OK
     5 -> PRF_HMAC_SHA2_256
          jam_enum 5: PRF_HMAC_SHA2_256 OK
@@ -3597,6 +4110,7 @@ IETF registry enum_names:
          match PRF_HMAC_SHA2_256: OK
          short_name 5: HMAC_SHA2_256 OK
          jam_enum_short 5: HMAC_SHA2_256 OK
+         jam_enum_human 5: hmac-sha2-256 OK
          match HMAC_SHA2_256 [short]: OK
     6 -> PRF_HMAC_SHA2_384
          jam_enum 6: PRF_HMAC_SHA2_384 OK
@@ -3604,6 +4118,7 @@ IETF registry enum_names:
          match PRF_HMAC_SHA2_384: OK
          short_name 6: HMAC_SHA2_384 OK
          jam_enum_short 6: HMAC_SHA2_384 OK
+         jam_enum_human 6: hmac-sha2-384 OK
          match HMAC_SHA2_384 [short]: OK
     7 -> PRF_HMAC_SHA2_512
          jam_enum 7: PRF_HMAC_SHA2_512 OK
@@ -3611,6 +4126,7 @@ IETF registry enum_names:
          match PRF_HMAC_SHA2_512: OK
          short_name 7: HMAC_SHA2_512 OK
          jam_enum_short 7: HMAC_SHA2_512 OK
+         jam_enum_human 7: hmac-sha2-512 OK
          match HMAC_SHA2_512 [short]: OK
     8 -> PRF_AES128_CMAC
          jam_enum 8: PRF_AES128_CMAC OK
@@ -3618,6 +4134,7 @@ IETF registry enum_names:
          match PRF_AES128_CMAC: OK
          short_name 8: AES128_CMAC OK
          jam_enum_short 8: AES128_CMAC OK
+         jam_enum_human 8: aes128-cmac OK
          match AES128_CMAC [short]: OK
 
   ikev2_trans_type_integ_names:
@@ -3627,6 +4144,7 @@ IETF registry enum_names:
          match AUTH_NONE: OK
          short_name 0: NONE OK
          jam_enum_short 0: NONE OK
+         jam_enum_human 0: none OK
          match NONE [short]: OK
     1 -> AUTH_HMAC_MD5_96
          jam_enum 1: AUTH_HMAC_MD5_96 OK
@@ -3634,6 +4152,7 @@ IETF registry enum_names:
          match AUTH_HMAC_MD5_96: OK
          short_name 1: HMAC_MD5_96 OK
          jam_enum_short 1: HMAC_MD5_96 OK
+         jam_enum_human 1: hmac-md5-96 OK
          match HMAC_MD5_96 [short]: OK
     2 -> AUTH_HMAC_SHA1_96
          jam_enum 2: AUTH_HMAC_SHA1_96 OK
@@ -3641,6 +4160,7 @@ IETF registry enum_names:
          match AUTH_HMAC_SHA1_96: OK
          short_name 2: HMAC_SHA1_96 OK
          jam_enum_short 2: HMAC_SHA1_96 OK
+         jam_enum_human 2: hmac-sha1-96 OK
          match HMAC_SHA1_96 [short]: OK
     3 -> AUTH_DES_MAC(UNUSED)
          jam_enum 3: AUTH_DES_MAC(UNUSED) OK
@@ -3649,6 +4169,7 @@ IETF registry enum_names:
          match AUTH_DES_MAC [trunc]: OK
          short_name 3: DES_MAC(UNUSED) OK
          jam_enum_short 3: DES_MAC(UNUSED) OK
+         jam_enum_human 3: des-mac(unused) OK
          match DES_MAC(UNUSED) [short]: OK
          match DES_MAC [short+trunc]: OK
     4 -> AUTH_KPDK_MD5(UNUSED)
@@ -3658,6 +4179,7 @@ IETF registry enum_names:
          match AUTH_KPDK_MD5 [trunc]: OK
          short_name 4: KPDK_MD5(UNUSED) OK
          jam_enum_short 4: KPDK_MD5(UNUSED) OK
+         jam_enum_human 4: kpdk-md5(unused) OK
          match KPDK_MD5(UNUSED) [short]: OK
          match KPDK_MD5 [short+trunc]: OK
     5 -> AUTH_AES_XCBC_96
@@ -3666,6 +4188,7 @@ IETF registry enum_names:
          match AUTH_AES_XCBC_96: OK
          short_name 5: AES_XCBC_96 OK
          jam_enum_short 5: AES_XCBC_96 OK
+         jam_enum_human 5: aes-xcbc-96 OK
          match AES_XCBC_96 [short]: OK
     6 -> AUTH_HMAC_MD5_128
          jam_enum 6: AUTH_HMAC_MD5_128 OK
@@ -3673,6 +4196,7 @@ IETF registry enum_names:
          match AUTH_HMAC_MD5_128: OK
          short_name 6: HMAC_MD5_128 OK
          jam_enum_short 6: HMAC_MD5_128 OK
+         jam_enum_human 6: hmac-md5-128 OK
          match HMAC_MD5_128 [short]: OK
     7 -> AUTH_HMAC_SHA1_160
          jam_enum 7: AUTH_HMAC_SHA1_160 OK
@@ -3680,6 +4204,7 @@ IETF registry enum_names:
          match AUTH_HMAC_SHA1_160: OK
          short_name 7: HMAC_SHA1_160 OK
          jam_enum_short 7: HMAC_SHA1_160 OK
+         jam_enum_human 7: hmac-sha1-160 OK
          match HMAC_SHA1_160 [short]: OK
     8 -> AUTH_AES_CMAC_96
          jam_enum 8: AUTH_AES_CMAC_96 OK
@@ -3687,6 +4212,7 @@ IETF registry enum_names:
          match AUTH_AES_CMAC_96: OK
          short_name 8: AES_CMAC_96 OK
          jam_enum_short 8: AES_CMAC_96 OK
+         jam_enum_human 8: aes-cmac-96 OK
          match AES_CMAC_96 [short]: OK
     9 -> AUTH_AES_128_GMAC
          jam_enum 9: AUTH_AES_128_GMAC OK
@@ -3694,6 +4220,7 @@ IETF registry enum_names:
          match AUTH_AES_128_GMAC: OK
          short_name 9: AES_128_GMAC OK
          jam_enum_short 9: AES_128_GMAC OK
+         jam_enum_human 9: aes-128-gmac OK
          match AES_128_GMAC [short]: OK
    10 -> AUTH_AES_192_GMAC
          jam_enum 10: AUTH_AES_192_GMAC OK
@@ -3701,6 +4228,7 @@ IETF registry enum_names:
          match AUTH_AES_192_GMAC: OK
          short_name 10: AES_192_GMAC OK
          jam_enum_short 10: AES_192_GMAC OK
+         jam_enum_human 10: aes-192-gmac OK
          match AES_192_GMAC [short]: OK
    11 -> AUTH_AES_256_GMAC
          jam_enum 11: AUTH_AES_256_GMAC OK
@@ -3708,6 +4236,7 @@ IETF registry enum_names:
          match AUTH_AES_256_GMAC: OK
          short_name 11: AES_256_GMAC OK
          jam_enum_short 11: AES_256_GMAC OK
+         jam_enum_human 11: aes-256-gmac OK
          match AES_256_GMAC [short]: OK
    12 -> AUTH_HMAC_SHA2_256_128
          jam_enum 12: AUTH_HMAC_SHA2_256_128 OK
@@ -3715,6 +4244,7 @@ IETF registry enum_names:
          match AUTH_HMAC_SHA2_256_128: OK
          short_name 12: HMAC_SHA2_256_128 OK
          jam_enum_short 12: HMAC_SHA2_256_128 OK
+         jam_enum_human 12: hmac-sha2-256-128 OK
          match HMAC_SHA2_256_128 [short]: OK
    13 -> AUTH_HMAC_SHA2_384_192
          jam_enum 13: AUTH_HMAC_SHA2_384_192 OK
@@ -3722,6 +4252,7 @@ IETF registry enum_names:
          match AUTH_HMAC_SHA2_384_192: OK
          short_name 13: HMAC_SHA2_384_192 OK
          jam_enum_short 13: HMAC_SHA2_384_192 OK
+         jam_enum_human 13: hmac-sha2-384-192 OK
          match HMAC_SHA2_384_192 [short]: OK
    14 -> AUTH_HMAC_SHA2_512_256
          jam_enum 14: AUTH_HMAC_SHA2_512_256 OK
@@ -3729,6 +4260,7 @@ IETF registry enum_names:
          match AUTH_HMAC_SHA2_512_256: OK
          short_name 14: HMAC_SHA2_512_256 OK
          jam_enum_short 14: HMAC_SHA2_512_256 OK
+         jam_enum_human 14: hmac-sha2-512-256 OK
          match HMAC_SHA2_512_256 [short]: OK
 
   ikev2_trans_type_esn_names:
@@ -3738,6 +4270,7 @@ IETF registry enum_names:
          match ESN_DISABLED: OK
          short_name 0: DISABLED OK
          jam_enum_short 0: DISABLED OK
+         jam_enum_human 0: disabled OK
          match DISABLED [short]: OK
     1 -> ESN_ENABLED
          jam_enum 1: ESN_ENABLED OK
@@ -3745,6 +4278,7 @@ IETF registry enum_names:
          match ESN_ENABLED: OK
          short_name 1: ENABLED OK
          jam_enum_short 1: ENABLED OK
+         jam_enum_human 1: enabled OK
          match ENABLED [short]: OK
 
   ikev2_trans_type_names:
@@ -3754,6 +4288,7 @@ IETF registry enum_names:
          match TRANS_TYPE_ENCR: OK
          short_name 1: ENCR OK
          jam_enum_short 1: ENCR OK
+         jam_enum_human 1: encr OK
          match ENCR [short]: OK
     2 -> TRANS_TYPE_PRF
          jam_enum 2: TRANS_TYPE_PRF OK
@@ -3761,6 +4296,7 @@ IETF registry enum_names:
          match TRANS_TYPE_PRF: OK
          short_name 2: PRF OK
          jam_enum_short 2: PRF OK
+         jam_enum_human 2: prf OK
          match PRF [short]: OK
     3 -> TRANS_TYPE_INTEG
          jam_enum 3: TRANS_TYPE_INTEG OK
@@ -3768,6 +4304,7 @@ IETF registry enum_names:
          match TRANS_TYPE_INTEG: OK
          short_name 3: INTEG OK
          jam_enum_short 3: INTEG OK
+         jam_enum_human 3: integ OK
          match INTEG [short]: OK
     4 -> TRANS_TYPE_DH
          jam_enum 4: TRANS_TYPE_DH OK
@@ -3775,6 +4312,7 @@ IETF registry enum_names:
          match TRANS_TYPE_DH: OK
          short_name 4: DH OK
          jam_enum_short 4: DH OK
+         jam_enum_human 4: dh OK
          match DH [short]: OK
     5 -> TRANS_TYPE_ESN
          jam_enum 5: TRANS_TYPE_ESN OK
@@ -3782,6 +4320,7 @@ IETF registry enum_names:
          match TRANS_TYPE_ESN: OK
          short_name 5: ESN OK
          jam_enum_short 5: ESN OK
+         jam_enum_human 5: esn OK
          match ESN [short]: OK
 
   ikev2_trans_attr_descs:
@@ -3793,6 +4332,7 @@ IETF registry enum_names:
          match CERT_PKCS7_WRAPPED_X509: OK
          short_name 1: PKCS7_WRAPPED_X509 OK
          jam_enum_short 1: PKCS7_WRAPPED_X509 OK
+         jam_enum_human 1: pkcs7-wrapped-x509 OK
          match PKCS7_WRAPPED_X509 [short]: OK
     2 -> CERT_PGP
          jam_enum 2: CERT_PGP OK
@@ -3800,6 +4340,7 @@ IETF registry enum_names:
          match CERT_PGP: OK
          short_name 2: PGP OK
          jam_enum_short 2: PGP OK
+         jam_enum_human 2: pgp OK
          match PGP [short]: OK
     3 -> CERT_DNS_SIGNED_KEY
          jam_enum 3: CERT_DNS_SIGNED_KEY OK
@@ -3807,6 +4348,7 @@ IETF registry enum_names:
          match CERT_DNS_SIGNED_KEY: OK
          short_name 3: DNS_SIGNED_KEY OK
          jam_enum_short 3: DNS_SIGNED_KEY OK
+         jam_enum_human 3: dns-signed-key OK
          match DNS_SIGNED_KEY [short]: OK
     4 -> CERT_X509_SIGNATURE
          jam_enum 4: CERT_X509_SIGNATURE OK
@@ -3814,6 +4356,7 @@ IETF registry enum_names:
          match CERT_X509_SIGNATURE: OK
          short_name 4: X509_SIGNATURE OK
          jam_enum_short 4: X509_SIGNATURE OK
+         jam_enum_human 4: x509-signature OK
          match X509_SIGNATURE [short]: OK
     5 -> CERT_X509_KEY_EXCHANGE
          jam_enum 5: CERT_X509_KEY_EXCHANGE OK
@@ -3821,6 +4364,7 @@ IETF registry enum_names:
          match CERT_X509_KEY_EXCHANGE: OK
          short_name 5: X509_KEY_EXCHANGE OK
          jam_enum_short 5: X509_KEY_EXCHANGE OK
+         jam_enum_human 5: x509-key-exchange OK
          match X509_KEY_EXCHANGE [short]: OK
     6 -> CERT_KERBEROS_TOKENS
          jam_enum 6: CERT_KERBEROS_TOKENS OK
@@ -3828,6 +4372,7 @@ IETF registry enum_names:
          match CERT_KERBEROS_TOKENS: OK
          short_name 6: KERBEROS_TOKENS OK
          jam_enum_short 6: KERBEROS_TOKENS OK
+         jam_enum_human 6: kerberos-tokens OK
          match KERBEROS_TOKENS [short]: OK
     7 -> CERT_CRL
          jam_enum 7: CERT_CRL OK
@@ -3835,6 +4380,7 @@ IETF registry enum_names:
          match CERT_CRL: OK
          short_name 7: CRL OK
          jam_enum_short 7: CRL OK
+         jam_enum_human 7: crl OK
          match CRL [short]: OK
     8 -> CERT_ARL
          jam_enum 8: CERT_ARL OK
@@ -3842,6 +4388,7 @@ IETF registry enum_names:
          match CERT_ARL: OK
          short_name 8: ARL OK
          jam_enum_short 8: ARL OK
+         jam_enum_human 8: arl OK
          match ARL [short]: OK
     9 -> CERT_SPKI
          jam_enum 9: CERT_SPKI OK
@@ -3849,6 +4396,7 @@ IETF registry enum_names:
          match CERT_SPKI: OK
          short_name 9: SPKI OK
          jam_enum_short 9: SPKI OK
+         jam_enum_human 9: spki OK
          match SPKI [short]: OK
    10 -> CERT_X509_ATTRIBUTE
          jam_enum 10: CERT_X509_ATTRIBUTE OK
@@ -3856,6 +4404,7 @@ IETF registry enum_names:
          match CERT_X509_ATTRIBUTE: OK
          short_name 10: X509_ATTRIBUTE OK
          jam_enum_short 10: X509_ATTRIBUTE OK
+         jam_enum_human 10: x509-attribute OK
          match X509_ATTRIBUTE [short]: OK
 
   ikev2_cert_type_names:
@@ -3865,6 +4414,7 @@ IETF registry enum_names:
          match CERT_PKCS7_WRAPPED_X509: OK
          short_name 1: PKCS7_WRAPPED_X509 OK
          jam_enum_short 1: PKCS7_WRAPPED_X509 OK
+         jam_enum_human 1: pkcs7-wrapped-x509 OK
          match PKCS7_WRAPPED_X509 [short]: OK
     2 -> CERT_PGP
          jam_enum 2: CERT_PGP OK
@@ -3872,6 +4422,7 @@ IETF registry enum_names:
          match CERT_PGP: OK
          short_name 2: PGP OK
          jam_enum_short 2: PGP OK
+         jam_enum_human 2: pgp OK
          match PGP [short]: OK
     3 -> CERT_DNS_SIGNED_KEY
          jam_enum 3: CERT_DNS_SIGNED_KEY OK
@@ -3879,6 +4430,7 @@ IETF registry enum_names:
          match CERT_DNS_SIGNED_KEY: OK
          short_name 3: DNS_SIGNED_KEY OK
          jam_enum_short 3: DNS_SIGNED_KEY OK
+         jam_enum_human 3: dns-signed-key OK
          match DNS_SIGNED_KEY [short]: OK
     4 -> CERT_X509_SIGNATURE
          jam_enum 4: CERT_X509_SIGNATURE OK
@@ -3886,6 +4438,7 @@ IETF registry enum_names:
          match CERT_X509_SIGNATURE: OK
          short_name 4: X509_SIGNATURE OK
          jam_enum_short 4: X509_SIGNATURE OK
+         jam_enum_human 4: x509-signature OK
          match X509_SIGNATURE [short]: OK
     6 -> CERT_KERBEROS_TOKENS
          jam_enum 6: CERT_KERBEROS_TOKENS OK
@@ -3893,6 +4446,7 @@ IETF registry enum_names:
          match CERT_KERBEROS_TOKENS: OK
          short_name 6: KERBEROS_TOKENS OK
          jam_enum_short 6: KERBEROS_TOKENS OK
+         jam_enum_human 6: kerberos-tokens OK
          match KERBEROS_TOKENS [short]: OK
     7 -> CERT_CRL
          jam_enum 7: CERT_CRL OK
@@ -3900,6 +4454,7 @@ IETF registry enum_names:
          match CERT_CRL: OK
          short_name 7: CRL OK
          jam_enum_short 7: CRL OK
+         jam_enum_human 7: crl OK
          match CRL [short]: OK
     8 -> CERT_ARL
          jam_enum 8: CERT_ARL OK
@@ -3907,6 +4462,7 @@ IETF registry enum_names:
          match CERT_ARL: OK
          short_name 8: ARL OK
          jam_enum_short 8: ARL OK
+         jam_enum_human 8: arl OK
          match ARL [short]: OK
     9 -> CERT_SPKI
          jam_enum 9: CERT_SPKI OK
@@ -3914,6 +4470,7 @@ IETF registry enum_names:
          match CERT_SPKI: OK
          short_name 9: SPKI OK
          jam_enum_short 9: SPKI OK
+         jam_enum_human 9: spki OK
          match SPKI [short]: OK
    10 -> CERT_X509_ATTRIBUTE
          jam_enum 10: CERT_X509_ATTRIBUTE OK
@@ -3921,6 +4478,7 @@ IETF registry enum_names:
          match CERT_X509_ATTRIBUTE: OK
          short_name 10: X509_ATTRIBUTE OK
          jam_enum_short 10: X509_ATTRIBUTE OK
+         jam_enum_human 10: x509-attribute OK
          match X509_ATTRIBUTE [short]: OK
    11 -> CERT_RAW_RSA
          jam_enum 11: CERT_RAW_RSA OK
@@ -3928,6 +4486,7 @@ IETF registry enum_names:
          match CERT_RAW_RSA: OK
          short_name 11: RAW_RSA OK
          jam_enum_short 11: RAW_RSA OK
+         jam_enum_human 11: raw-rsa OK
          match RAW_RSA [short]: OK
    12 -> CERT_X509_CERT_URL
          jam_enum 12: CERT_X509_CERT_URL OK
@@ -3935,6 +4494,7 @@ IETF registry enum_names:
          match CERT_X509_CERT_URL: OK
          short_name 12: X509_CERT_URL OK
          jam_enum_short 12: X509_CERT_URL OK
+         jam_enum_human 12: x509-cert-url OK
          match X509_CERT_URL [short]: OK
    13 -> CERT_X509_BUNDLE_URL
          jam_enum 13: CERT_X509_BUNDLE_URL OK
@@ -3942,6 +4502,7 @@ IETF registry enum_names:
          match CERT_X509_BUNDLE_URL: OK
          short_name 13: X509_BUNDLE_URL OK
          jam_enum_short 13: X509_BUNDLE_URL OK
+         jam_enum_human 13: x509-bundle-url OK
          match X509_BUNDLE_URL [short]: OK
    14 -> CERT_OCSP_CONTENT
          jam_enum 14: CERT_OCSP_CONTENT OK
@@ -3949,6 +4510,7 @@ IETF registry enum_names:
          match CERT_OCSP_CONTENT: OK
          short_name 14: OCSP_CONTENT OK
          jam_enum_short 14: OCSP_CONTENT OK
+         jam_enum_human 14: ocsp-content OK
          match OCSP_CONTENT [short]: OK
    15 -> CERT_RAW_PUBLIC_KEY
          jam_enum 15: CERT_RAW_PUBLIC_KEY OK
@@ -3956,6 +4518,7 @@ IETF registry enum_names:
          match CERT_RAW_PUBLIC_KEY: OK
          short_name 15: RAW_PUBLIC_KEY OK
          jam_enum_short 15: RAW_PUBLIC_KEY OK
+         jam_enum_human 15: raw-public-key OK
          match RAW_PUBLIC_KEY [short]: OK
 
   modecfg_attr_names:
@@ -3965,114 +4528,133 @@ IETF registry enum_names:
          match INTERNAL_IP4_ADDRESS: OK
          short_name 1: INTERNAL_IP4_ADDRESS OK
          jam_enum_short 1: INTERNAL_IP4_ADDRESS OK
+         jam_enum_human 1: internal-ip4-address OK
     2 -> INTERNAL_IP4_NETMASK
          jam_enum 2: INTERNAL_IP4_NETMASK OK
          search INTERNAL_IP4_NETMASK: OK
          match INTERNAL_IP4_NETMASK: OK
          short_name 2: INTERNAL_IP4_NETMASK OK
          jam_enum_short 2: INTERNAL_IP4_NETMASK OK
+         jam_enum_human 2: internal-ip4-netmask OK
     3 -> INTERNAL_IP4_DNS
          jam_enum 3: INTERNAL_IP4_DNS OK
          search INTERNAL_IP4_DNS: OK
          match INTERNAL_IP4_DNS: OK
          short_name 3: INTERNAL_IP4_DNS OK
          jam_enum_short 3: INTERNAL_IP4_DNS OK
+         jam_enum_human 3: internal-ip4-dns OK
     4 -> INTERNAL_IP4_NBNS
          jam_enum 4: INTERNAL_IP4_NBNS OK
          search INTERNAL_IP4_NBNS: OK
          match INTERNAL_IP4_NBNS: OK
          short_name 4: INTERNAL_IP4_NBNS OK
          jam_enum_short 4: INTERNAL_IP4_NBNS OK
+         jam_enum_human 4: internal-ip4-nbns OK
     5 -> INTERNAL_ADDRESS_EXPIRY
          jam_enum 5: INTERNAL_ADDRESS_EXPIRY OK
          search INTERNAL_ADDRESS_EXPIRY: OK
          match INTERNAL_ADDRESS_EXPIRY: OK
          short_name 5: INTERNAL_ADDRESS_EXPIRY OK
          jam_enum_short 5: INTERNAL_ADDRESS_EXPIRY OK
+         jam_enum_human 5: internal-address-expiry OK
     6 -> INTERNAL_IP4_DHCP
          jam_enum 6: INTERNAL_IP4_DHCP OK
          search INTERNAL_IP4_DHCP: OK
          match INTERNAL_IP4_DHCP: OK
          short_name 6: INTERNAL_IP4_DHCP OK
          jam_enum_short 6: INTERNAL_IP4_DHCP OK
+         jam_enum_human 6: internal-ip4-dhcp OK
     7 -> APPLICATION_VERSION
          jam_enum 7: APPLICATION_VERSION OK
          search APPLICATION_VERSION: OK
          match APPLICATION_VERSION: OK
          short_name 7: APPLICATION_VERSION OK
          jam_enum_short 7: APPLICATION_VERSION OK
+         jam_enum_human 7: application-version OK
     8 -> INTERNAL_IP6_ADDRESS
          jam_enum 8: INTERNAL_IP6_ADDRESS OK
          search INTERNAL_IP6_ADDRESS: OK
          match INTERNAL_IP6_ADDRESS: OK
          short_name 8: INTERNAL_IP6_ADDRESS OK
          jam_enum_short 8: INTERNAL_IP6_ADDRESS OK
+         jam_enum_human 8: internal-ip6-address OK
     9 -> INTERNAL_IP6_NETMASK
          jam_enum 9: INTERNAL_IP6_NETMASK OK
          search INTERNAL_IP6_NETMASK: OK
          match INTERNAL_IP6_NETMASK: OK
          short_name 9: INTERNAL_IP6_NETMASK OK
          jam_enum_short 9: INTERNAL_IP6_NETMASK OK
+         jam_enum_human 9: internal-ip6-netmask OK
    10 -> INTERNAL_IP6_DNS
          jam_enum 10: INTERNAL_IP6_DNS OK
          search INTERNAL_IP6_DNS: OK
          match INTERNAL_IP6_DNS: OK
          short_name 10: INTERNAL_IP6_DNS OK
          jam_enum_short 10: INTERNAL_IP6_DNS OK
+         jam_enum_human 10: internal-ip6-dns OK
    11 -> INTERNAL_IP6_NBNS
          jam_enum 11: INTERNAL_IP6_NBNS OK
          search INTERNAL_IP6_NBNS: OK
          match INTERNAL_IP6_NBNS: OK
          short_name 11: INTERNAL_IP6_NBNS OK
          jam_enum_short 11: INTERNAL_IP6_NBNS OK
+         jam_enum_human 11: internal-ip6-nbns OK
    12 -> INTERNAL_IP6_DHCP
          jam_enum 12: INTERNAL_IP6_DHCP OK
          search INTERNAL_IP6_DHCP: OK
          match INTERNAL_IP6_DHCP: OK
          short_name 12: INTERNAL_IP6_DHCP OK
          jam_enum_short 12: INTERNAL_IP6_DHCP OK
+         jam_enum_human 12: internal-ip6-dhcp OK
    13 -> INTERNAL_IP4_SUBNET
          jam_enum 13: INTERNAL_IP4_SUBNET OK
          search INTERNAL_IP4_SUBNET: OK
          match INTERNAL_IP4_SUBNET: OK
          short_name 13: INTERNAL_IP4_SUBNET OK
          jam_enum_short 13: INTERNAL_IP4_SUBNET OK
+         jam_enum_human 13: internal-ip4-subnet OK
    14 -> SUPPORTED_ATTRIBUTES
          jam_enum 14: SUPPORTED_ATTRIBUTES OK
          search SUPPORTED_ATTRIBUTES: OK
          match SUPPORTED_ATTRIBUTES: OK
          short_name 14: SUPPORTED_ATTRIBUTES OK
          jam_enum_short 14: SUPPORTED_ATTRIBUTES OK
+         jam_enum_human 14: supported-attributes OK
    15 -> INTERNAL_IP6_SUBNET
          jam_enum 15: INTERNAL_IP6_SUBNET OK
          search INTERNAL_IP6_SUBNET: OK
          match INTERNAL_IP6_SUBNET: OK
          short_name 15: INTERNAL_IP6_SUBNET OK
          jam_enum_short 15: INTERNAL_IP6_SUBNET OK
+         jam_enum_human 15: internal-ip6-subnet OK
    16 -> MIP6_HOME_PREFIX
          jam_enum 16: MIP6_HOME_PREFIX OK
          search MIP6_HOME_PREFIX: OK
          match MIP6_HOME_PREFIX: OK
          short_name 16: MIP6_HOME_PREFIX OK
          jam_enum_short 16: MIP6_HOME_PREFIX OK
+         jam_enum_human 16: mip6-home-prefix OK
    17 -> INTERNAL_IP6_LINK
          jam_enum 17: INTERNAL_IP6_LINK OK
          search INTERNAL_IP6_LINK: OK
          match INTERNAL_IP6_LINK: OK
          short_name 17: INTERNAL_IP6_LINK OK
          jam_enum_short 17: INTERNAL_IP6_LINK OK
+         jam_enum_human 17: internal-ip6-link OK
    18 -> INTERNAL_IP6_PREFIX
          jam_enum 18: INTERNAL_IP6_PREFIX OK
          search INTERNAL_IP6_PREFIX: OK
          match INTERNAL_IP6_PREFIX: OK
          short_name 18: INTERNAL_IP6_PREFIX OK
          jam_enum_short 18: INTERNAL_IP6_PREFIX OK
+         jam_enum_human 18: internal-ip6-prefix OK
    19 -> HOME_AGENT_ADDRESS
          jam_enum 19: HOME_AGENT_ADDRESS OK
          search HOME_AGENT_ADDRESS: OK
          match HOME_AGENT_ADDRESS: OK
          short_name 19: HOME_AGENT_ADDRESS OK
          jam_enum_short 19: HOME_AGENT_ADDRESS OK
+         jam_enum_human 19: home-agent-address OK
 
   ike_id_type_names:
    -1 -> %fromcert
@@ -4082,84 +4664,98 @@ IETF registry enum_names:
          match %none: OK
          short_name 0: %none OK
          jam_enum_short 0: %none OK
+         jam_enum_human 0: %none OK
     1 -> ID_IPV4_ADDR
          jam_enum 1: ID_IPV4_ADDR OK
          search ID_IPV4_ADDR: OK
          match ID_IPV4_ADDR: OK
          short_name 1: ID_IPV4_ADDR OK
          jam_enum_short 1: ID_IPV4_ADDR OK
+         jam_enum_human 1: id-ipv4-addr OK
     2 -> ID_FQDN
          jam_enum 2: ID_FQDN OK
          search ID_FQDN: OK
          match ID_FQDN: OK
          short_name 2: ID_FQDN OK
          jam_enum_short 2: ID_FQDN OK
+         jam_enum_human 2: id-fqdn OK
     3 -> ID_USER_FQDN
          jam_enum 3: ID_USER_FQDN OK
          search ID_USER_FQDN: OK
          match ID_USER_FQDN: OK
          short_name 3: ID_USER_FQDN OK
          jam_enum_short 3: ID_USER_FQDN OK
+         jam_enum_human 3: id-user-fqdn OK
     4 -> ID_IPV4_ADDR_SUBNET
          jam_enum 4: ID_IPV4_ADDR_SUBNET OK
          search ID_IPV4_ADDR_SUBNET: OK
          match ID_IPV4_ADDR_SUBNET: OK
          short_name 4: ID_IPV4_ADDR_SUBNET OK
          jam_enum_short 4: ID_IPV4_ADDR_SUBNET OK
+         jam_enum_human 4: id-ipv4-addr-subnet OK
     5 -> ID_IPV6_ADDR
          jam_enum 5: ID_IPV6_ADDR OK
          search ID_IPV6_ADDR: OK
          match ID_IPV6_ADDR: OK
          short_name 5: ID_IPV6_ADDR OK
          jam_enum_short 5: ID_IPV6_ADDR OK
+         jam_enum_human 5: id-ipv6-addr OK
     6 -> ID_IPV6_ADDR_SUBNET
          jam_enum 6: ID_IPV6_ADDR_SUBNET OK
          search ID_IPV6_ADDR_SUBNET: OK
          match ID_IPV6_ADDR_SUBNET: OK
          short_name 6: ID_IPV6_ADDR_SUBNET OK
          jam_enum_short 6: ID_IPV6_ADDR_SUBNET OK
+         jam_enum_human 6: id-ipv6-addr-subnet OK
     7 -> ID_IPV4_ADDR_RANGE
          jam_enum 7: ID_IPV4_ADDR_RANGE OK
          search ID_IPV4_ADDR_RANGE: OK
          match ID_IPV4_ADDR_RANGE: OK
          short_name 7: ID_IPV4_ADDR_RANGE OK
          jam_enum_short 7: ID_IPV4_ADDR_RANGE OK
+         jam_enum_human 7: id-ipv4-addr-range OK
     8 -> ID_IPV6_ADDR_RANGE
          jam_enum 8: ID_IPV6_ADDR_RANGE OK
          search ID_IPV6_ADDR_RANGE: OK
          match ID_IPV6_ADDR_RANGE: OK
          short_name 8: ID_IPV6_ADDR_RANGE OK
          jam_enum_short 8: ID_IPV6_ADDR_RANGE OK
+         jam_enum_human 8: id-ipv6-addr-range OK
     9 -> ID_DER_ASN1_DN
          jam_enum 9: ID_DER_ASN1_DN OK
          search ID_DER_ASN1_DN: OK
          match ID_DER_ASN1_DN: OK
          short_name 9: ID_DER_ASN1_DN OK
          jam_enum_short 9: ID_DER_ASN1_DN OK
+         jam_enum_human 9: id-der-asn1-dn OK
    10 -> ID_DER_ASN1_GN
          jam_enum 10: ID_DER_ASN1_GN OK
          search ID_DER_ASN1_GN: OK
          match ID_DER_ASN1_GN: OK
          short_name 10: ID_DER_ASN1_GN OK
          jam_enum_short 10: ID_DER_ASN1_GN OK
+         jam_enum_human 10: id-der-asn1-gn OK
    11 -> ID_KEY_ID
          jam_enum 11: ID_KEY_ID OK
          search ID_KEY_ID: OK
          match ID_KEY_ID: OK
          short_name 11: ID_KEY_ID OK
          jam_enum_short 11: ID_KEY_ID OK
+         jam_enum_human 11: id-key-id OK
    12 -> ID_FC_NAME
          jam_enum 12: ID_FC_NAME OK
          search ID_FC_NAME: OK
          match ID_FC_NAME: OK
          short_name 12: ID_FC_NAME OK
          jam_enum_short 12: ID_FC_NAME OK
+         jam_enum_human 12: id-fc-name OK
    13 -> ID_NULL
          jam_enum 13: ID_NULL OK
          search ID_NULL: OK
          match ID_NULL: OK
          short_name 13: ID_NULL OK
          jam_enum_short 13: ID_NULL OK
+         jam_enum_human 13: id-null OK
 
   ikev2_ike_id_type_names:
     1 -> ID_IPV4_ADDR
@@ -4168,78 +4764,91 @@ IETF registry enum_names:
          match ID_IPV4_ADDR: OK
          short_name 1: ID_IPV4_ADDR OK
          jam_enum_short 1: ID_IPV4_ADDR OK
+         jam_enum_human 1: id-ipv4-addr OK
     2 -> ID_FQDN
          jam_enum 2: ID_FQDN OK
          search ID_FQDN: OK
          match ID_FQDN: OK
          short_name 2: ID_FQDN OK
          jam_enum_short 2: ID_FQDN OK
+         jam_enum_human 2: id-fqdn OK
     3 -> ID_USER_FQDN
          jam_enum 3: ID_USER_FQDN OK
          search ID_USER_FQDN: OK
          match ID_USER_FQDN: OK
          short_name 3: ID_USER_FQDN OK
          jam_enum_short 3: ID_USER_FQDN OK
+         jam_enum_human 3: id-user-fqdn OK
     4 -> ID_IPV4_ADDR_SUBNET
          jam_enum 4: ID_IPV4_ADDR_SUBNET OK
          search ID_IPV4_ADDR_SUBNET: OK
          match ID_IPV4_ADDR_SUBNET: OK
          short_name 4: ID_IPV4_ADDR_SUBNET OK
          jam_enum_short 4: ID_IPV4_ADDR_SUBNET OK
+         jam_enum_human 4: id-ipv4-addr-subnet OK
     5 -> ID_IPV6_ADDR
          jam_enum 5: ID_IPV6_ADDR OK
          search ID_IPV6_ADDR: OK
          match ID_IPV6_ADDR: OK
          short_name 5: ID_IPV6_ADDR OK
          jam_enum_short 5: ID_IPV6_ADDR OK
+         jam_enum_human 5: id-ipv6-addr OK
     6 -> ID_IPV6_ADDR_SUBNET
          jam_enum 6: ID_IPV6_ADDR_SUBNET OK
          search ID_IPV6_ADDR_SUBNET: OK
          match ID_IPV6_ADDR_SUBNET: OK
          short_name 6: ID_IPV6_ADDR_SUBNET OK
          jam_enum_short 6: ID_IPV6_ADDR_SUBNET OK
+         jam_enum_human 6: id-ipv6-addr-subnet OK
     7 -> ID_IPV4_ADDR_RANGE
          jam_enum 7: ID_IPV4_ADDR_RANGE OK
          search ID_IPV4_ADDR_RANGE: OK
          match ID_IPV4_ADDR_RANGE: OK
          short_name 7: ID_IPV4_ADDR_RANGE OK
          jam_enum_short 7: ID_IPV4_ADDR_RANGE OK
+         jam_enum_human 7: id-ipv4-addr-range OK
     8 -> ID_IPV6_ADDR_RANGE
          jam_enum 8: ID_IPV6_ADDR_RANGE OK
          search ID_IPV6_ADDR_RANGE: OK
          match ID_IPV6_ADDR_RANGE: OK
          short_name 8: ID_IPV6_ADDR_RANGE OK
          jam_enum_short 8: ID_IPV6_ADDR_RANGE OK
+         jam_enum_human 8: id-ipv6-addr-range OK
     9 -> ID_DER_ASN1_DN
          jam_enum 9: ID_DER_ASN1_DN OK
          search ID_DER_ASN1_DN: OK
          match ID_DER_ASN1_DN: OK
          short_name 9: ID_DER_ASN1_DN OK
          jam_enum_short 9: ID_DER_ASN1_DN OK
+         jam_enum_human 9: id-der-asn1-dn OK
    10 -> ID_DER_ASN1_GN
          jam_enum 10: ID_DER_ASN1_GN OK
          search ID_DER_ASN1_GN: OK
          match ID_DER_ASN1_GN: OK
          short_name 10: ID_DER_ASN1_GN OK
          jam_enum_short 10: ID_DER_ASN1_GN OK
+         jam_enum_human 10: id-der-asn1-gn OK
    11 -> ID_KEY_ID
          jam_enum 11: ID_KEY_ID OK
          search ID_KEY_ID: OK
          match ID_KEY_ID: OK
          short_name 11: ID_KEY_ID OK
          jam_enum_short 11: ID_KEY_ID OK
+         jam_enum_human 11: id-key-id OK
    12 -> ID_FC_NAME
          jam_enum 12: ID_FC_NAME OK
          search ID_FC_NAME: OK
          match ID_FC_NAME: OK
          short_name 12: ID_FC_NAME OK
          jam_enum_short 12: ID_FC_NAME OK
+         jam_enum_human 12: id-fc-name OK
    13 -> ID_NULL
          jam_enum 13: ID_NULL OK
          search ID_NULL: OK
          match ID_NULL: OK
          short_name 13: ID_NULL OK
          jam_enum_short 13: ID_NULL OK
+         jam_enum_human 13: id-null OK
 
   ikev2_ike_id_type_names:
     1 -> ID_IPV4_ADDR
@@ -4248,54 +4857,63 @@ IETF registry enum_names:
          match ID_IPV4_ADDR: OK
          short_name 1: ID_IPV4_ADDR OK
          jam_enum_short 1: ID_IPV4_ADDR OK
+         jam_enum_human 1: id-ipv4-addr OK
     2 -> ID_FQDN
          jam_enum 2: ID_FQDN OK
          search ID_FQDN: OK
          match ID_FQDN: OK
          short_name 2: ID_FQDN OK
          jam_enum_short 2: ID_FQDN OK
+         jam_enum_human 2: id-fqdn OK
     3 -> ID_USER_FQDN
          jam_enum 3: ID_USER_FQDN OK
          search ID_USER_FQDN: OK
          match ID_USER_FQDN: OK
          short_name 3: ID_USER_FQDN OK
          jam_enum_short 3: ID_USER_FQDN OK
+         jam_enum_human 3: id-user-fqdn OK
     5 -> ID_IPV6_ADDR
          jam_enum 5: ID_IPV6_ADDR OK
          search ID_IPV6_ADDR: OK
          match ID_IPV6_ADDR: OK
          short_name 5: ID_IPV6_ADDR OK
          jam_enum_short 5: ID_IPV6_ADDR OK
+         jam_enum_human 5: id-ipv6-addr OK
     9 -> ID_DER_ASN1_DN
          jam_enum 9: ID_DER_ASN1_DN OK
          search ID_DER_ASN1_DN: OK
          match ID_DER_ASN1_DN: OK
          short_name 9: ID_DER_ASN1_DN OK
          jam_enum_short 9: ID_DER_ASN1_DN OK
+         jam_enum_human 9: id-der-asn1-dn OK
    10 -> ID_DER_ASN1_GN
          jam_enum 10: ID_DER_ASN1_GN OK
          search ID_DER_ASN1_GN: OK
          match ID_DER_ASN1_GN: OK
          short_name 10: ID_DER_ASN1_GN OK
          jam_enum_short 10: ID_DER_ASN1_GN OK
+         jam_enum_human 10: id-der-asn1-gn OK
    11 -> ID_KEY_ID
          jam_enum 11: ID_KEY_ID OK
          search ID_KEY_ID: OK
          match ID_KEY_ID: OK
          short_name 11: ID_KEY_ID OK
          jam_enum_short 11: ID_KEY_ID OK
+         jam_enum_human 11: id-key-id OK
    12 -> ID_FC_NAME
          jam_enum 12: ID_FC_NAME OK
          search ID_FC_NAME: OK
          match ID_FC_NAME: OK
          short_name 12: ID_FC_NAME OK
          jam_enum_short 12: ID_FC_NAME OK
+         jam_enum_human 12: id-fc-name OK
    13 -> ID_NULL
          jam_enum 13: ID_NULL OK
          search ID_NULL: OK
          match ID_NULL: OK
          short_name 13: ID_NULL OK
          jam_enum_short 13: ID_NULL OK
+         jam_enum_human 13: id-null OK
 
   ipseckey_algorithm_type_names:
     1 -> IPSECKEY_ALGORITHM_DSA
@@ -4304,6 +4922,7 @@ IETF registry enum_names:
          match IPSECKEY_ALGORITHM_DSA: OK
          short_name 1: DSA OK
          jam_enum_short 1: DSA OK
+         jam_enum_human 1: dsa OK
          match DSA [short]: OK
     2 -> IPSECKEY_ALGORITHM_RSA
          jam_enum 2: IPSECKEY_ALGORITHM_RSA OK
@@ -4311,6 +4930,7 @@ IETF registry enum_names:
          match IPSECKEY_ALGORITHM_RSA: OK
          short_name 2: RSA OK
          jam_enum_short 2: RSA OK
+         jam_enum_human 2: rsa OK
          match RSA [short]: OK
     3 -> IPSECKEY_ALGORITHM_ECDSA
          jam_enum 3: IPSECKEY_ALGORITHM_ECDSA OK
@@ -4318,6 +4938,7 @@ IETF registry enum_names:
          match IPSECKEY_ALGORITHM_ECDSA: OK
          short_name 3: ECDSA OK
          jam_enum_short 3: ECDSA OK
+         jam_enum_human 3: ecdsa OK
          match ECDSA [short]: OK
     4 -> IPSECKEY_ALGORITHM_X_PUBKEY
          jam_enum 4: IPSECKEY_ALGORITHM_X_PUBKEY OK
@@ -4325,6 +4946,7 @@ IETF registry enum_names:
          match IPSECKEY_ALGORITHM_X_PUBKEY: OK
          short_name 4: X_PUBKEY OK
          jam_enum_short 4: X_PUBKEY OK
+         jam_enum_human 4: x-pubkey OK
          match X_PUBKEY [short]: OK
 
   ipseckey_algorithm_config_names:
@@ -4334,18 +4956,21 @@ IETF registry enum_names:
          match rsasigkey: OK
          short_name 2: rsasigkey OK
          jam_enum_short 2: rsasigkey OK
+         jam_enum_human 2: rsasigkey OK
     3 -> ecdsakey
          jam_enum 3: ecdsakey OK
          search ecdsakey: OK
          match ecdsakey: OK
          short_name 3: ecdsakey OK
          jam_enum_short 3: ecdsakey OK
+         jam_enum_human 3: ecdsakey OK
     4 -> pubkey
          jam_enum 4: pubkey OK
          search pubkey: OK
          match pubkey: OK
          short_name 4: pubkey OK
          jam_enum_short 4: pubkey OK
+         jam_enum_human 4: pubkey OK
 
 IKEv2 transforms:
          enum_enum_table 1: OK
