@@ -1,6 +1,6 @@
-/* bad_case() wrapper, for libreswan
+/* bad_enum() wrapper, for libreswan
  *
- * Copyright (C) 2018 Andrew Cagney
+ * Copyright (C) 2013 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -20,9 +20,11 @@
 
 #include "lswlog.h"
 
-void libreswan_bad_case(const char *expression, long value, where_t where)
+void bad_enum_where(const struct logger *logger, const struct enum_names *en,
+		    unsigned long value, where_t where)
 {
-	llog_passert(&global_logger, where,
-		     "switch (%s) case %ld (0x%lx) unexpected",
-		     expression, value, value);
+	enum_buf eb;
+	llog_passert(logger, where,
+		     "enum %s (%ld) unexpected",
+		     str_enum(en, value, &eb), value);
 }

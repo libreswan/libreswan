@@ -168,7 +168,8 @@ OBJS += llog_pem_bytes.o
 OBJS += llog_errno.o
 OBJS += log_error.o
 OBJS += fatal.o
-OBJS += libreswan_bad_case.o
+OBJS += bad_enum_where.o
+OBJS += bad_case_where.o
 
 OBJS += lswglob.o
 
