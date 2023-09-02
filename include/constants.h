@@ -216,6 +216,8 @@ extern const char *enum_name_short(enum_names *ed, unsigned long val);
 
 size_t jam_enum(struct jambuf *, enum_names *en, unsigned long val);
 size_t jam_enum_short(struct jambuf *, enum_names *en, unsigned long val);
+/* drop prefix + transform [_A-Z]->[-a-z] */
+size_t jam_enum_human(struct jambuf *, enum_names *en, unsigned long val);
 
 /*
  * caller-allocated buffer for str_enum*().

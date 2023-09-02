@@ -116,9 +116,8 @@ static void test_enum(enum_names *enum_test, int i,
 		printf("ERROR\n");
 		errors++;
 		return;
-	} else {
-		printf("OK\n");
 	}
+	printf("OK\n");
 
 	{
 		printf(PREFIX "jam_enum_short %d: ", i);
@@ -133,6 +132,25 @@ static void test_enum(enum_names *enum_test, int i,
 			errors++;
 		}
 	}
+
+	{
+		printf(PREFIX "jam_enum_human %d: ", i);
+		struct jambuf buf = ARRAY_AS_JAMBUF(scratch);
+		jam_enum_human(&buf, enum_test, i);
+		shunk_t s = jambuf_as_shunk(&buf);
+		printf(""PRI_SHUNK" ", pri_shunk(s));
+		if (strchr(short_name, '_') == NULL) {
+			if (hunk_strcaseeq(s, short_name)) {
+				printf("OK\n");
+			} else {
+				printf("ERROR\n");
+				errors++;
+			}
+		} else {
+			printf("OK\n"); /* what can be checked? */
+		}
+	}
+
 
 	if (streq(short_name, name)) {
 		/* remaining tests redundant */

@@ -144,30 +144,58 @@ const char *enum_name_short(enum_names *ed, unsigned long val)
 	return enum_range_name(range, val, prefix, /*shorten?*/true);
 }
 
+static size_t jam_bad_enum(struct jambuf *buf, enum_names *en, unsigned long val)
+{
+	size_t s = 0;
+	if (en->en_prefix != NULL) {
+		s += jam_string(buf, en->en_prefix);
+		s += jam_string(buf, "_");
+	}
+	s += jam(buf, "%lu??", val);
+	return s;
+}
+
 size_t jam_enum(struct jambuf *buf, enum_names *en, unsigned long val)
 {
+	size_t s = 0;
 	const char *name = enum_name(en, val);
 	if (name == NULL) {
-		if (en->en_prefix != NULL) {
-			jam_string(buf, en->en_prefix);
-			jam_string(buf, "_");
-		}
-		return jam(buf, "%lu??", val);
+		s += jam_bad_enum(buf, en, val);
+	} else {
+		s += jam_string(buf, name);
 	}
-	return jam_string(buf, name);
+	return s;
 }
 
 size_t jam_enum_short(struct jambuf *buf, enum_names *en, unsigned long val)
 {
+	size_t s = 0;
 	const char *name = enum_name_short(en, val);
 	if (name == NULL) {
-		if (en->en_prefix != NULL) {
-			jam_string(buf, en->en_prefix);
-			jam_string(buf, "_");
-		}
-		return jam(buf, "%lu??", val);
+		s += jam_bad_enum(buf, en, val);
+	} else {
+		s += jam_string(buf, name);
 	}
-	return jam_string(buf, name);
+	return s;
+}
+
+size_t jam_enum_human(struct jambuf *buf, enum_names *en, unsigned long val)
+{
+	size_t s = 0;
+	const char *name = enum_name_short(en, val);
+	if (name == NULL) {
+		s += jam_bad_enum(buf, en, val);
+	} else {
+		for (const char *cp = name; (*cp) != '\0'; cp++) {
+			char c = *cp;
+			if (c == '_') {
+				s += jam_char(buf, '-');
+			} else {
+				s += jam_char(buf, char_tolower(c));
+			}
+		}
+	}
+	return s;
 }
 
 /*
