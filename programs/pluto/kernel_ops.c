@@ -182,9 +182,9 @@ bool kernel_ops_policy_add(enum kernel_policy_op op,
 		 */
 		PASSERT(logger, policy->nr_rules > 0);
 		PASSERT(logger, (policy->kind == SHUNT_KIND_FAILURE));
-		bad_case(policy->shunt);
+		bad_enum(logger, &shunt_policy_names, policy->shunt);
 	case SHUNT_UNSET:
-		bad_case(policy->shunt);
+		bad_enum(logger, &shunt_policy_names, policy->shunt);
 	}
 
 	bool ok = kernel_ops->policy_add(op, dir,
