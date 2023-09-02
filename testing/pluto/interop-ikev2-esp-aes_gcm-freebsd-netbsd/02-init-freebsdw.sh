@@ -1,0 +1,1 @@
+../../guestbin/netbsd-prep.sh

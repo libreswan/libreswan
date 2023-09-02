@@ -1022,6 +1022,8 @@ kvmplutotest	interop-ikev2-strongswan-26-ke-mismatch-responder	good
 kvmplutotest	interop-ikev2-strongswan-31-asymmetric-responder	good
 kvmplutotest	interop-ikev2-strongswan-32-ip-lease			good
 kvmplutotest	interop-ikev2-xfrmi-strongswan-01			good
+kvmplutotest	interop-ikev2-esp-aes_gcm-netbsd-linux			netbsd
+kvmplutotest	interop-ikev2-esp-aes_gcm-freebsd-netbsd		freebsd	github/1228
 
 # EAPTLS
 kvmplutotest	interop-ikev2-eaptls-strongswan-client			wip

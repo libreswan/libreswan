@@ -1,0 +1,62 @@
+../../guestbin/netbsd-prep.sh
+ipsec.conf -> PATH/etc/ipsec.conf
+ipsec.secrets -> PATH/etc/ipsec.secrets
+west #
+ ipsec start
+Redirecting to: [initsystem]
+Initializing NSS database
+Starting pluto.
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec add interop
+002 "interop": added IKEv2 connection
+west #
+ ipsec up interop
+1v2 "interop" #1: initiating IKEv2 connection
+1v2 "interop" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+1v2 "interop" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+003 "interop" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+004 "interop" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE DPD=passive}
+west #
+ ../../guestbin/ipsec-kernel-state.sh
+192.1.2.45 192.1.2.23
+	esp mode=any spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
+	E: aes-gcm-16  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+	seq=0x00000000 replay=16 flags=0x00000000 state=mature 
+	created: TIMESTAMP	current: TIMESTAMP
+	diff: N(s)	hard: 28800(s)	soft: 28800(s)
+	last:                     	hard: 0(s)	soft: 0(s)
+	current: 0(bytes)	hard: 0(bytes)	soft: 0(bytes)
+	allocated: 0	hard: 0	soft: 0
+	sadb_seq=1 pid=PID refcnt=1
+192.1.2.23 192.1.2.45
+	esp mode=any spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
+	E: aes-gcm-16  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+	seq=0x00000000 replay=16 flags=0x00000000 state=mature 
+	created: TIMESTAMP	current: TIMESTAMP
+	diff: N(s)	hard: 28800(s)	soft: 28800(s)
+	last:                     	hard: 0(s)	soft: 0(s)
+	current: 0(bytes)	hard: 0(bytes)	soft: 0(bytes)
+	allocated: 0	hard: 0	soft: 0
+	sadb_seq=0 pid=PID refcnt=1
+west #
+ ../../guestbin/ipsec-kernel-policy.sh
+192.0.2.0/24[any] 192.0.1.0/24[any] any
+	in ipsec
+	esp/tunnel/192.1.2.23-192.1.2.45/require
+	spid=1 seq=1 pid=PID scope=global 
+	refcnt=1
+192.0.1.0/24[any] 192.0.2.0/24[any] any
+	out ipsec
+	esp/tunnel/192.1.2.45-192.1.2.23/require
+	spid=2 seq=0 pid=PID scope=global 
+	refcnt=1
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
+west #
+ ipsec trafficstatus
+006 #2: "interop", type=ESP, add_time=1234567890, id='@east'
+west #
+ 
