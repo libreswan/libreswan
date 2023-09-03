@@ -63,6 +63,12 @@ extern bool whack_prompt_for(struct state *st,
 
 void release_whack(struct logger *logger, where_t where);
 
+void whack_attach_where(struct logger *dst, const struct logger *src, where_t where);
+void whack_detach_where(struct logger *dst, const struct logger *src, where_t where);
+
+#define whack_attach(DST, SRC) whack_attach_where(DST, SRC, HERE)
+#define whack_detach(DST, SRC) whack_detach_where(DST, SRC, HERE)
+
 void md_attach_where(struct msg_digest *md, const struct logger *src, where_t where);
 void md_detach_where(struct msg_digest *md, const struct logger *src, where_t where);
 

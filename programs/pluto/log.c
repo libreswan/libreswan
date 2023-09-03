@@ -636,27 +636,27 @@ void attach_fd_where(struct logger *dst, struct fd *src_fd, where_t where)
 	dst->global_whackfd = fd_addref_where(src_fd, where);
 }
 
-static void attach_whack_where(struct logger *dst, const struct logger *src, where_t where)
+void whack_attach_where(struct logger *dst, const struct logger *src, where_t where)
 {
 	attach_fd_where(dst, logger_fd(src), where);
 }
 
 void md_attach_where(struct msg_digest *md, const struct logger *src, where_t where)
 {
-	attach_whack_where(md->md_logger, src, where);
+	whack_attach_where(md->md_logger, src, where);
 }
 
 void connection_attach_where(struct connection *c, const struct logger *src, where_t where)
 {
-	attach_whack_where(c->logger, src, where);
+	whack_attach_where(c->logger, src, where);
 }
 
 void state_attach_where(struct state *st, const struct logger *src, where_t where)
 {
-	attach_whack_where(st->st_logger, src, where);
+	whack_attach_where(st->st_logger, src, where);
 }
 
-static void detach_whack_where(struct logger *dst, const struct logger *src, where_t where)
+void whack_detach_where(struct logger *dst, const struct logger *src, where_t where)
 {
 	/* find a whack to detach */
 	struct fd *src_fd = logger_fd(src);
@@ -680,7 +680,7 @@ void md_detach_where(struct msg_digest *md, const struct logger *src, where_t wh
 	if (md == NULL) {
 		return;
 	}
-	detach_whack_where(md->md_logger, src, where);
+	whack_detach_where(md->md_logger, src, where);
 }
 
 void connection_detach_where(struct connection *c, const struct logger *src, where_t where)
@@ -688,7 +688,7 @@ void connection_detach_where(struct connection *c, const struct logger *src, whe
 	if (c == NULL) {
 		return;
 	}
-	detach_whack_where(c->logger, src, where);
+	whack_detach_where(c->logger, src, where);
 }
 
 void state_detach_where(struct state *st, const struct logger *src, where_t where)
@@ -696,5 +696,5 @@ void state_detach_where(struct state *st, const struct logger *src, where_t wher
 	if (st == NULL) {
 		return;
 	}
-	detach_whack_where(st->st_logger, src, where);
+	whack_detach_where(st->st_logger, src, where);
 }
