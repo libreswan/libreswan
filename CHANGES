@@ -1,6 +1,7 @@
 
 See also https://libreswan.org/
 
+* BSD: fix esp=aes_gcm
 * NetBSD: fix compiler warning in lib/libswan/x509.c
 
 v4.12 (Aug 8, 2023)
