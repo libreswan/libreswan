@@ -108,12 +108,16 @@ static struct kernel_policy kernel_policy_from_void(ip_selector local, ip_select
 	return transport_esp;
 }
 
-static struct kernel_policy kernel_policy_from_spd(lset_t policy,
+struct kernel_policy_encap {
+	bool ipcomp;
+	bool esp;
+	bool ah;
+};
+
+static struct kernel_policy kernel_policy_from_spd(struct kernel_policy_encap policy,
 						   const struct spd_route *spd,
 						   enum encap_mode mode,
 						   enum direction direction,
-						   enum shunt_kind shunt_kind,
-						   enum shunt_policy shunt_policy,
 						   struct nic_offload *nic_offload,
 						   where_t where)
 {
@@ -153,8 +157,8 @@ static struct kernel_policy kernel_policy_from_spd(lset_t policy,
 		/* details */
 		.priority = calculate_kernel_priority(spd->connection),
 		.mode = mode,
-		.kind = shunt_kind,
-		.shunt = shunt_policy,
+		.kind = SHUNT_KIND_IPSEC,
+		.shunt = SHUNT_IPSEC,
 		.where = where,
 		.sa_marks = &spd->connection->sa_marks,
 		.xfrmi = spd->connection->xfrmi,
@@ -184,8 +188,7 @@ static struct kernel_policy kernel_policy_from_spd(lset_t policy,
 	 * Construct the kernel policy rules inner-to-outer (matching
 	 * the flow of an outgoing packet).
 	 *
-	 * Note: the order is fixed: compress -> encrypt ->
-	 * authenticate.
+	 * Note: the order is fixed: compress -> encrypt|authenticate.
 	 *
 	 * Note: only the inner most policy rule gets the tunnel bit
 	 * (aka worm) (currently the global .mode is set and kernel
@@ -196,17 +199,17 @@ static struct kernel_policy kernel_policy_from_spd(lset_t policy,
 
 	reqid_t child_reqid = spd->connection->child.reqid;
 	struct kernel_policy_rule *last = kernel_policy.rule;
-	if (policy & POLICY_COMPRESS) {
+	if (policy.ipcomp) {
 		last->reqid = reqid_ipcomp(child_reqid);
 		last->proto = ENCAP_PROTO_IPCOMP;
 		last++;
 	}
-	if (policy & POLICY_ENCRYPT) {
+	if (policy.esp) {
 		last->reqid = reqid_esp(child_reqid);
 		last->proto = ENCAP_PROTO_ESP;
 		last++;
 	}
-	if (policy & POLICY_AUTHENTICATE) {
+	if (policy.ah) {
 		last->reqid = reqid_ah(child_reqid);
 		last->proto = ENCAP_PROTO_AH;
 		last++;
@@ -225,21 +228,21 @@ static struct kernel_policy kernel_policy_from_state(const struct child_sa *chil
 						     where_t where)
 {
 	bool tunnel = false;
-	lset_t policy = LEMPTY;
 	struct nic_offload nic_offload = {};
+	struct kernel_policy_encap policy = {0};
 
 	if (child->sa.st_ipcomp.present) {
-		policy |= POLICY_COMPRESS;
+		policy.ipcomp = true;
 		tunnel |= (child->sa.st_ipcomp.attrs.mode == ENCAPSULATION_MODE_TUNNEL);
 	}
 
 	if (child->sa.st_esp.present) {
-		policy |= POLICY_ENCRYPT;
+		policy.esp = true;
 		tunnel |= (child->sa.st_esp.attrs.mode == ENCAPSULATION_MODE_TUNNEL);
 	}
 
 	if (child->sa.st_ah.present) {
-		policy |= POLICY_AUTHENTICATE;
+		policy.ah = true;
 		tunnel |= (child->sa.st_ah.attrs.mode == ENCAPSULATION_MODE_TUNNEL);
 	}
 
@@ -247,8 +250,6 @@ static struct kernel_policy kernel_policy_from_state(const struct child_sa *chil
 	enum encap_mode mode = (tunnel ? ENCAP_MODE_TUNNEL : ENCAP_MODE_TRANSPORT);
 	struct kernel_policy kernel_policy = kernel_policy_from_spd(policy,
 								    spd, mode, direction,
-								    SHUNT_KIND_IPSEC,
-								    SHUNT_IPSEC,
 								    &nic_offload,
 								    where);
 	return kernel_policy;
@@ -276,10 +277,13 @@ bool add_sec_label_kernel_policy(const struct spd_route *spd,
 	struct nic_offload nic_offload = {};
 	setup_esp_nic_offload(&nic_offload, c, NULL);
 
+	struct kernel_policy_encap policy = {
+		.ipcomp = (c->policy & POLICY_COMPRESS),
+		.esp = (c->policy & POLICY_ENCRYPT),
+		.ah = (c->policy & POLICY_AUTHENTICATE),
+	};
 	struct kernel_policy kernel_policy =
-		kernel_policy_from_spd(c->policy, spd, encap_mode, direction,
-				       SHUNT_KIND_IPSEC,
-				       SHUNT_IPSEC,
+		kernel_policy_from_spd(policy, spd, encap_mode, direction,
 				       &nic_offload,
 				       where);
 	if (!kernel_ops_policy_add(KERNEL_POLICY_OP_ADD, direction,
