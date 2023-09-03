@@ -1551,6 +1551,22 @@ static void set_connection_selector_proposals(struct connection *c, const struct
 	}
 }
 
+void init_connection_spd(struct connection *c, struct spd_route *spd)
+{
+	/* back link */
+	spd->connection = c;
+	/* local link */
+	spd->local = &spd->end[c->local->config->index];	/*clone must update*/
+	spd->remote = &spd->end[c->remote->config->index];	/*clone must update*/
+	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+		spd->end[end].config = c->end[end].config;
+		spd->end[end].host = &c->end[end].host;		/*clone must update*/
+		spd->end[end].child = &c->end[end].child;	/*clone must update*/
+	}
+	/* db; will be updated */
+	spd_route_db_init_spd_route(spd);
+}
+
 void alloc_connection_spds(struct connection *c, unsigned nr_spds)
 {
 	PASSERT(c->logger, c->child.spds.len == 0);
@@ -1561,18 +1577,7 @@ void alloc_connection_spds(struct connection *c, unsigned nr_spds)
 	};
 	c->spd = c->child.spds.list;
 	FOR_EACH_ITEM(spd, &c->child.spds) {
-		/* back link */
-		spd->connection = c;
-		/* local link */
-		spd->local = &spd->end[c->local->config->index];	/*clone must update*/
-		spd->remote = &spd->end[c->remote->config->index];	/*clone must update*/
-		FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-			spd->end[end].config = c->end[end].config;
-			spd->end[end].host = &c->end[end].host;		/*clone must update*/
-			spd->end[end].child = &c->end[end].child;	/*clone must update*/
-		}
-		/* db; will be updated */
-		spd_route_db_init_spd_route(spd);
+		init_connection_spd(c, spd);
 	}
 }
 

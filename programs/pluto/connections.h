@@ -874,6 +874,7 @@ PRINTF_LIKE(3)
 void ldbg_connection(const struct connection *c, where_t where,
 		     const char *message, ...);
 
+void init_connection_spd(struct connection *c, struct spd_route *spd);
 void alloc_connection_spds(struct connection *c, unsigned nr);
 void discard_connection_spds(struct connection *c);
 void add_connection_spds(struct connection *c, const struct ip_info *host_afi);
