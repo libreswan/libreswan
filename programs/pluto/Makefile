@@ -146,10 +146,6 @@ OBJS += x509.o
 OBJS += fetch.o
 OBJS += crl_queue.o
 
-ifeq ($(USE_IPSEC_CONNECTION_LIMIT),true)
-USERLAND_CFLAGS += -DIPSEC_CONNECTION_LIMIT=$(IPSEC_CONNECTION_LIMIT)
-endif
-
 OBJS += addresspool.o
 
 ifeq ($(USE_IKEv1),true)
