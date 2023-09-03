@@ -1811,6 +1811,27 @@ static enum connection_kind extract_connection_end_kind(const struct whack_messa
 	return CK_PERMANENT;
 }
 
+static bool shunt_ok(enum shunt_kind shunt_kind, enum shunt_policy shunt_policy)
+{
+	static const bool ok[SHUNT_KIND_ROOF][SHUNT_POLICY_ROOF] = {
+		[SHUNT_KIND_NEVER_NEGOTIATE] = {
+			[SHUNT_UNSET] = true,
+			[SHUNT_NONE] = false, [SHUNT_HOLD] = false, [SHUNT_TRAP] = false, [SHUNT_PASS] = true,  [SHUNT_DROP] = true,  [SHUNT_REJECT] = true,
+		},
+		[SHUNT_KIND_NEGOTIATION] = {
+			[SHUNT_NONE] = false, [SHUNT_HOLD] = true,  [SHUNT_TRAP] = false, [SHUNT_PASS] = true,  [SHUNT_DROP] = false, [SHUNT_REJECT] = false,
+		},
+		[SHUNT_KIND_FAILURE] = {
+			[SHUNT_NONE] = true,  [SHUNT_HOLD] = false, [SHUNT_TRAP] = false, [SHUNT_PASS] = true,  [SHUNT_DROP] = true,  [SHUNT_REJECT] = true,
+		},
+		/* hard-wired */
+		[SHUNT_KIND_IPSEC] = { [SHUNT_IPSEC] = true, },
+		[SHUNT_KIND_BLOCK] = { [SHUNT_DROP] = true, },
+		[SHUNT_KIND_ONDEMAND] = { [SHUNT_TRAP] = true, },
+	};
+	return ok[shunt_kind][shunt_policy];
+}
+
 static diag_t extract_shunt(struct config *config,
 			    const struct whack_message *wm,
 			    enum shunt_kind shunt_kind,
@@ -2291,6 +2312,10 @@ static diag_t extract_connection(const struct whack_message *wm,
 		break;
 	}
 
+	/*
+	 * Extract configurable shunts, set hardwired shunts.
+	 */
+
 	d = extract_shunt(config, wm, SHUNT_KIND_NEVER_NEGOTIATE,
 			  /*unset*/SHUNT_UNSET);
 	if (d != NULL) {
@@ -2320,6 +2345,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	/* make kernel code easier */
 	config->shunt[SHUNT_KIND_BLOCK] = SHUNT_DROP;
 	config->shunt[SHUNT_KIND_ONDEMAND] = SHUNT_TRAP;
+	config->shunt[SHUNT_KIND_IPSEC] = SHUNT_IPSEC;
 
 	if (libreswan_fipsmode() && config->failure_shunt != SHUNT_NONE) {
 		enum_buf eb;
@@ -2327,6 +2353,11 @@ static diag_t extract_connection(const struct whack_message *wm,
 		     "FIPS: ignored failureshunt=%s - packets MUST be blocked in FIPS mode",
 		     str_enum_short(&shunt_policy_names, config->failure_shunt, &eb));
 		config->failure_shunt = SHUNT_NONE;
+	}
+
+	for (enum shunt_kind sk = SHUNT_KIND_FLOOR; sk < SHUNT_KIND_ROOF; sk++) {
+		PASSERT(c->logger, sk < elemsof(config->shunt));
+		PASSERT(c->logger, shunt_ok(sk, config->shunt[sk]));
 	}
 
 	/*

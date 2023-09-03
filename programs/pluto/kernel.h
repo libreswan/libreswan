@@ -441,8 +441,6 @@ typedef struct { uint32_t value; } kernel_priority_t;
 extern const kernel_priority_t highest_kernel_priority;
 kernel_priority_t calculate_kernel_priority(const struct connection *c);
 
-bool shunt_ok(enum shunt_kind shunt_kind, enum shunt_policy shunt_policy);
-
 struct kernel_acquire {
 	ip_packet packet;			/* that triggered the on-demand exchange */
 	bool by_acquire;			/* by kernel acquire, else by whack */

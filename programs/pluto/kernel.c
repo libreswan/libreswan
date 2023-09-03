@@ -180,26 +180,6 @@ kernel_priority_t calculate_kernel_priority(const struct connection *c)
 
 static global_timer_cb kernel_scan_shunts;
 
-bool shunt_ok(enum shunt_kind shunt_kind, enum shunt_policy shunt_policy)
-{
-	static const bool ok[SHUNT_KIND_ROOF][SHUNT_POLICY_ROOF] = {
-		[SHUNT_KIND_NEVER_NEGOTIATE] = {
-			[SHUNT_UNSET] = true,
-			[SHUNT_NONE] = false, [SHUNT_HOLD] = false, [SHUNT_TRAP] = false, [SHUNT_PASS] = true,  [SHUNT_DROP] = true,  [SHUNT_REJECT] = true,
-		},
-		[SHUNT_KIND_ONDEMAND] = {
-			[SHUNT_NONE] = false, [SHUNT_HOLD] = false, [SHUNT_TRAP] = true,  [SHUNT_PASS] = false, [SHUNT_DROP] = false, [SHUNT_REJECT] = false,
-		},
-		[SHUNT_KIND_NEGOTIATION] = {
-			[SHUNT_NONE] = false, [SHUNT_HOLD] = true,  [SHUNT_TRAP] = false, [SHUNT_PASS] = true,  [SHUNT_DROP] = false, [SHUNT_REJECT] = false,
-		},
-		[SHUNT_KIND_FAILURE] = {
-			[SHUNT_NONE] = true,  [SHUNT_HOLD] = false, [SHUNT_TRAP] = false, [SHUNT_PASS] = true,  [SHUNT_DROP] = true,  [SHUNT_REJECT] = true,
-		},
-	};
-	return ok[shunt_kind][shunt_policy];
-}
-
 /*
  * Add an outbound bare kernel policy, aka shunt.
  *
