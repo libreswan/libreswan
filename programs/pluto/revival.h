@@ -23,7 +23,7 @@ struct child_sa;
 struct timer_event;
 
 void revive_connection(struct connection *c, const char *subplot,
-		       const struct timer_event *event);
+		       const threadtime_t *inception);
 bool should_revive(struct state *st);
 void schedule_revival(struct state *st, const char *subplot);
 

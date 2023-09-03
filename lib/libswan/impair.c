@@ -247,6 +247,9 @@ struct impairment impairments[] = {
 	A("event-v2-replace", STATE_EVENT_HANDLER, EVENT_v2_REPLACE,
 	  "trigger the IKEv2 replace event", "SA"),
 
+	A("event-revival", CONNECTION_EVENT_HANDLER, CONNECTION_REVIVAL,
+	  "trigger the revival event", "CONNECTION"),
+
 	V("cannot-ondemand", cannot_ondemand,
 	  "force acquire to call cannot_ondemand() and fail"),
 
@@ -655,6 +658,7 @@ bool process_impair(const struct whack_impair *wc,
 	case CALL_SEND_KEEPALIVE:
 	case CALL_GLOBAL_EVENT_HANDLER:
 	case CALL_STATE_EVENT_HANDLER:
+	case CALL_CONNECTION_EVENT_HANDLER:
 	case CALL_IMPAIR_MESSAGE_DROP:
 	case CALL_IMPAIR_MESSAGE_BLOCK:
 	case CALL_IMPAIR_MESSAGE_DRIP:

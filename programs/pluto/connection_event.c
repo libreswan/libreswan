@@ -105,11 +105,9 @@ static void delete_connection_event(struct event_connection **e)
 	discard_connection_event(e);
 }
 
-void connection_event_handler(void *arg, const struct timer_event *event)
+static void dispatch_connection_event(struct event_connection *e,
+				      const threadtime_t *inception)
 {
-	/* save event details*/
-	struct event_connection *e = arg;
-
 	ldbg(e->logger, "dispatching");
 
 	/* make it invisible */
@@ -119,11 +117,37 @@ void connection_event_handler(void *arg, const struct timer_event *event)
 	case CONNECTION_NONEVENT:
 		break;
 	case CONNECTION_REVIVAL:
-		revive_connection(e->connection, e->subplot, event);
+		revive_connection(e->connection, e->subplot, inception);
 		break;
 	}
 
 	discard_connection_event(&e);
+}
+
+void connection_event_handler(void *arg, const struct timer_event *event)
+{
+	dispatch_connection_event(arg, &event->inception);
+}
+
+void call_connection_event_handler(struct logger *logger,
+				   struct connection *c,
+				   enum connection_event event)
+{
+	struct event_connection *e;
+	FOR_EACH_LIST_ENTRY_OLD2NEW(e, &connection_events) {
+		if (e->connection == c &&
+		    e->event == event) {
+			threadtime_t inception = threadtime_start();
+			enum_buf eb;
+			llog(RC_COMMENT, logger, "dispatch %s event",
+			     str_enum_short(&connection_event_names, event, &eb));
+			dispatch_connection_event(e, &inception);
+			return;
+		}
+	}
+	enum_buf eb;
+	llog(RC_COMMENT, logger, "no %s event for connection found",
+	     str_enum_short(&connection_event_names, event, &eb));
 }
 
 bool connection_event_is_scheduled(const struct connection *c,

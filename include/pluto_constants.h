@@ -212,6 +212,17 @@ enum global_timer {
 };
 
 /*
+ * Connection based events.
+ */
+
+enum connection_event {
+	CONNECTION_NONEVENT,
+	CONNECTION_REVIVAL,
+};
+
+extern const struct enum_names connection_event_names;
+
+/*
  * State based events and timers.
  */
 

@@ -33,6 +33,7 @@
 #include "ikev2_liveness.h"	/* for submit_v2_liveness_exchange() */
 #include "send.h"		/* for send_keep_alive_using_state() */
 #include "impair_message.h"
+#include "connection_event.h"
 
 static struct state *find_impaired_state(unsigned biased_what,
 					 struct logger *logger)
@@ -50,15 +51,36 @@ static struct state *find_impaired_state(unsigned biased_what,
 	return st;
 }
 
-static struct logger merge_loggers(struct state *st, bool background, struct logger *logger)
+static struct connection *find_impaired_connection(unsigned biased_what,
+						   struct logger *logger)
 {
-	/* so errors go to whack and file regardless of BACKGROUND */
-	struct logger loggers = *st->st_logger;
-	loggers.global_whackfd = logger->global_whackfd;
-	if (!background) {
-		state_attach(st, logger);
+	if (biased_what == 0) {
+		llog(RC_COMMENT, logger, "connection 'no' is not valid");
+		return NULL;
 	}
-	return loggers;
+	co_serial_t co = biased_what - 1; /* unbias */
+	struct connection *c = connection_by_serialno(co);
+	if (c== NULL) {
+		llog(RC_COMMENT, logger, "connection "PRI_CO" not found", co);
+		return NULL;
+	}
+	return c;
+}
+
+static struct logger *merge_loggers(struct logger *o_logger,
+				   bool background,
+				   struct logger *g_logger)
+{
+	/*
+	 * Create a logger that looks like the object; but also has
+	 * whack attached.
+	 */
+	struct logger *logger = clone_logger(o_logger, HERE);
+	whack_attach(logger, g_logger);
+	if (!background) {
+		whack_attach(o_logger, g_logger);
+	}
+	return logger;
 }
 
 static void whack_impair_action(enum impair_action impairment_action,
@@ -84,8 +106,29 @@ static void whack_impair_action(enum impair_action impairment_action,
 			return;
 		}
 		/* will log */
-		struct logger loggers = merge_loggers(st, background, logger);
-		call_state_event_handler(&loggers, st, (enum event_type)impairment_param);
+		struct logger *loggers = merge_loggers(st->st_logger, background, logger);
+		enum event_type event = impairment_param;
+		call_state_event_handler(loggers, st, event);
+		free_logger(&loggers, HERE);
+		break;
+	}
+	case CALL_CONNECTION_EVENT_HANDLER:
+	{
+		struct connection *c = find_impaired_connection(biased_value, logger);
+		if (c == NULL) {
+			/* already logged */
+			return;
+		}
+		c = connection_addref(c, logger); /*must-delref*/
+		/* will log */
+		struct logger *loggers = merge_loggers(c->logger, background, logger);
+		enum connection_event event = impairment_param;
+		call_connection_event_handler(loggers, c, event);
+		free_logger(&loggers, HERE);
+		/* release whack, possibly attached to C by
+		 * merge_loggers */
+		connection_detach(c, logger);
+		connection_delref(&c, logger);
 		break;
 	}
 	case CALL_INITIATE_v2_LIVENESS:
@@ -101,9 +144,10 @@ static void whack_impair_action(enum impair_action impairment_action,
 			/* already logged */
 			return;
 		}
-		merge_loggers(&ike->sa, background, logger);
-		llog_sa(RC_COMMENT, ike, "initiating liveness for #%lu", st->st_serialno);
+		struct logger *loggers = merge_loggers(ike->sa.st_logger, background, logger);
+		llog(RC_COMMENT, loggers, "initiating liveness");
 		submit_v2_liveness_exchange(ike, st->st_serialno);
+		free_logger(&loggers, HERE);
 		break;
 	}
 	case CALL_SEND_KEEPALIVE:
@@ -114,9 +158,11 @@ static void whack_impair_action(enum impair_action impairment_action,
 			return;
 		}
 		/* will log */
-		struct logger loggers = merge_loggers(st, true/*background*/, logger);
-		llog(RC_COMMENT, &loggers, "sending keepalive");
+		struct logger *loggers = merge_loggers(st->st_logger,
+						       true/*background*/, logger);
+		llog(RC_COMMENT, loggers, "sending keepalive");
 		send_keepalive_using_state(st, "inject keep-alive");
+		free_logger(&loggers, HERE);
 		break;
 	}
 	case CALL_IMPAIR_MESSAGE_DRIP:

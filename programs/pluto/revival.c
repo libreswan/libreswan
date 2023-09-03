@@ -284,11 +284,8 @@ void schedule_child_revival(struct ike_sa *ike, struct child_sa *child, const ch
 }
 
 void revive_connection(struct connection *c, const char *subplot,
-		       const struct timer_event *event)
+		       const threadtime_t *inception)
 {
-	/* for instance, when triggered by an event injection */
-	connection_attach(c, event->logger);
-
 	llog(RC_LOG, c->logger,
 	     "reviving connection which %s but must remain up per local policy (serial "PRI_CO")",
 	     subplot, pri_co(c->serialno));
@@ -312,5 +309,5 @@ void revive_connection(struct connection *c, const char *subplot,
 		return;
 	}
 
-	connection_revive(c, &event->inception, HERE);
+	connection_revive(c, inception, HERE);
 }

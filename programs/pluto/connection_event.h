@@ -26,13 +26,6 @@ struct connection;
  * Connection based events and timers.
  */
 
-enum connection_event {
-	CONNECTION_NONEVENT,
-	CONNECTION_REVIVAL,
-};
-
-extern const struct enum_names connection_event_names;
-
 bool connection_event_is_scheduled(const struct connection *c,
 				   enum connection_event event);
 
@@ -46,5 +39,9 @@ void schedule_connection_event(struct connection *c,
 bool flush_connection_event(const struct connection *c,
 			    enum connection_event event);
 void flush_connection_events(const struct connection *c);
+
+void call_connection_event_handler(struct logger *logger,
+				   struct connection *c,
+				   enum connection_event type);
 
 #endif
