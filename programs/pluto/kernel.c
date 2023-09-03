@@ -1021,11 +1021,13 @@ static void revert_kernel_policy(struct spd_route *spd,
 	/*
 	 * Kill the firewall if previously there was no owner.
 	 */
-	if (spd->wip.installed.firewall && c->child.newest_routing_sa == SOS_NOBODY) {
+	if (spd->wip.installed.up && c->child.newest_routing_sa == SOS_NOBODY) {
 		PEXPECT(logger, st != NULL);
 		ldbg(logger, "kernel: %s() reverting the firewall", __func__);
-		if (!do_updown(UPDOWN_DOWN, c, spd, st, logger))
+		if (!do_updown(UPDOWN_DOWN, c, spd, st, logger)) {
 			dbg("kernel: down command returned an error");
+		}
+		spd->wip.installed.up = false;
 	}
 
 	/*
@@ -1035,7 +1037,7 @@ static void revert_kernel_policy(struct spd_route *spd,
 	 * installed, there's nothing to do.
 	 */
 
-	if (!spd->wip.installed.policy) {
+	if (!spd->wip.installed.kernel_policy) {
 		ldbg(logger, "kernel: %s() no kernel policy to revert", __func__);
 		return;
 	}
@@ -1138,7 +1140,7 @@ static bool unrouted_to_routed(struct connection *c, enum shunt_kind shunt_kind,
 			/* if everything succeeds, delete below */
 		}
 
-		ok &= spd->wip.installed.policy =
+		ok &= spd->wip.installed.kernel_policy =
 			install_prospective_kernel_policies(spd, shunt_kind,
 							    c->logger, where);
 
@@ -2235,13 +2237,13 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child)
 			 KERNEL_POLICY_OP_ADD);
 		if (spd->block) {
 			llog(RC_LOG, logger, "state spd requires a block (and no CAT?)");
-			ok = spd->wip.installed.policy =
+			ok = spd->wip.installed.kernel_policy =
 				add_spd_kernel_policy(spd, op, DIRECTION_OUTBOUND,
 						      SHUNT_KIND_BLOCK,
 						      logger, HERE,
 						      "install IPsec block policy");
 		} else {
-			ok = spd->wip.installed.policy =
+			ok = spd->wip.installed.kernel_policy =
 				install_outbound_ipsec_kernel_policy(child, spd, op, HERE);
 		}
 	}
@@ -2270,10 +2272,10 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child)
 #endif
 		if (c->child.newest_routing_sa != SOS_NOBODY) {
 			/* already notified */
-			spd->wip.installed.firewall = true;
+			spd->wip.installed.up = true;
 		} else {
 			/* go ahead and notify */
-			ok = spd->wip.installed.firewall =
+			ok = spd->wip.installed.up =
 				do_updown(UPDOWN_UP, c, spd, &child->sa, logger);
 		}
 	}

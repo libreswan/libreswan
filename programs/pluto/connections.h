@@ -558,9 +558,9 @@ struct spd_route {
 			struct bare_shunt **shunt;
 		} conflicting;
 		struct {
-			bool route;
-			bool policy;
-			bool firewall;
+			bool kernel_policy;
+			bool route;		/* vs unroute */
+			bool up;		/* vs down */
 		} installed;
 	} wip;
 	struct {
