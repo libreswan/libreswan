@@ -2,6 +2,7 @@
 See also https://libreswan.org/
 
 v5.0 (Unreleased)
+* BSD: fix esp=aes_gcm [github/1220, Igor V. Gubenko, Andrew]
 * ipsec: deprecate ipsec auto sub-command [Tuomo]
   - ipsec auto --{cmd} connection -> ipsec {cmd} connection
 * ikev2: warn that fragmentation=force is ignored [Andrew]
