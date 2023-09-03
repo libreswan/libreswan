@@ -4409,3 +4409,15 @@ bool is_xauth(const struct connection *c)
 	return (c->local->host.config->xauth.server || c->remote->host.config->xauth.server ||
 		c->local->host.config->xauth.client || c->remote->host.config->xauth.client);
 }
+
+bool is_v1_cisco_split(const struct spd_route *spd UNUSED)
+{
+#ifdef USE_CISCO_SPLIT
+	if (spd->connection->remotepeertype == CISCO &&
+	    spd->connection->child.spds.list == spd &&
+	    spd->connection->child.spds.len > 1) {
+		return true;
+	}
+#endif
+	return false;
+}

@@ -934,4 +934,6 @@ bool is_opportunistic_instance(const struct connection *c);
 
 bool is_xauth(const struct connection *c);
 
+bool is_v1_cisco_split(const struct spd_route *spd);
+
 #endif

@@ -571,6 +571,10 @@ void delete_spd_kernel_policies(const struct spds *spds,
 		 * For sec_label, it's tearing down the route,
 		 * hence that is included.
 		 */
+		if (is_v1_cisco_split(spd)) {
+			continue;
+		}
+
 		delete_spd_kernel_policy(spd, DIRECTION_OUTBOUND,
 					 EXPECT_KERNEL_POLICY_OK,
 					 logger, where, story);

@@ -276,7 +276,7 @@ struct bare_shunt {
 static struct bare_shunt *bare_shunts = NULL;
 
 #ifdef IPSEC_CONNECTION_LIMIT
-static int num_ipsec_eroute = 0;
+int num_ipsec_eroute = 0;
 #endif
 
 static void jam_bare_shunt(struct jambuf *buf, const struct bare_shunt *bs)
@@ -2189,17 +2189,15 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child)
 	    pri_so(c->child.newest_routing_sa),
 	    enum_name(&routing_names, c->child.routing));
 
-#ifdef USE_CISCO_SPLIT
-	struct spd_route *start = c->spd;
-	if (c->remotepeertype == CISCO && start->spd_next != NULL) {
-		/* XXX: why is CISCO skipped? */
-		start = start->spd_next;
-	}
-#endif
-
 #ifdef IPSEC_CONNECTION_LIMIT
 	unsigned new_spds = 0;
-	for (struct spd_route *spd = start; spd != NULL; spd = spd->spd_next) {
+	FOR_EACH_ITEM(spd, &c->child.spds) {
+
+		if (is_cisco_split(spd)) {
+			/* XXX: why is CISCO skipped? */
+			continue;
+		}
+
 		if (spd->wip.conflicting.shunt == NULL) {
 			new_spds++;
 		}
@@ -2224,13 +2222,10 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child)
 			break;
 		}
 
-#ifdef USE_CISCO_SPLIT
-		if (c->remotepeertype == CISCO &&
-		    spd == c->spd &&
-		    spd->spd_next != NULL) {
+		if (is_v1_cisco_split(spd)) {
+			/* XXX: why is CISCO skipped? */
 			continue;
 		}
-#endif
 
 		enum kernel_policy_op op =
 			(spd->wip.conflicting.shunt != NULL ? KERNEL_POLICY_OP_REPLACE :
@@ -2263,13 +2258,10 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child)
 			break;
 		}
 
-#ifdef USE_CISCO_SPLIT
-		if (c->remotepeertype == CISCO &&
-		    spd == c->spd &&
-		    spd->spd_next != NULL) {
+		if (is_v1_cisco_split(spd)) {
 			continue;
 		}
-#endif
+
 		if (c->child.newest_routing_sa != SOS_NOBODY) {
 			/* already notified */
 			spd->wip.installed.up = true;
@@ -2289,13 +2281,11 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child)
 	ldbg(logger, "kernel: %s() running updown-prepare", __func__);
 	if (ok) {
 		FOR_EACH_ITEM(spd, &c->child.spds) {
-#ifdef USE_CISCO_SPLIT
-			if (c->remotepeertype == CISCO &&
-			    spd == c->spd &&
-			    spd->spd_next != NULL) {
+
+			if (is_v1_cisco_split(spd)) {
 				continue;
 			}
-#endif
+
 			if (spd->wip.conflicting.route == NULL) {
 				/* a new route: no deletion required, but preparation is */
 				if (!do_updown(UPDOWN_PREPARE, c, spd, &child->sa, logger))
@@ -2309,13 +2299,11 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child)
 		if (!ok) {
 			break;
 		}
-#ifdef USE_CISCO_SPLIT
-		if (c->remotepeertype == CISCO &&
-		    spd == c->spd &&
-		    spd->spd_next != NULL) {
+
+		if (is_v1_cisco_split(spd)) {
 			continue;
 		}
-#endif
+
 		if (spd->wip.conflicting.route == NULL) {
 			/* a new route: no deletion required, but preparation is */
 			ok = spd->wip.installed.route =
@@ -2336,13 +2324,11 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child)
 	}
 
 	FOR_EACH_ITEM(spd, &c->child.spds) {
-#ifdef USE_CISCO_SPLIT
-		if (c->remotepeertype == CISCO &&
-		    spd == c->spd &&
-		    spd->spd_next != NULL) {
+
+		if (is_v1_cisco_split(spd)) {
 			continue;
 		}
-#endif
+
 		struct bare_shunt **bspp = spd->wip.conflicting.shunt;
 		if (bspp != NULL) {
 			free_bare_shunt(bspp);
