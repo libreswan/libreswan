@@ -100,6 +100,8 @@ OBJS += whack_rekey.o
 OBJS += whack_route.o
 OBJS += whack_status.o
 OBJS += whack_trafficstatus.o
+OBJS += whack_impair.o
+OBJS += whack_debug.o
 
 # local (possibly more up to date) copy of <linux/xfrm.h>
 ifeq ($(USE_XFRM_HEADER_COPY),true)

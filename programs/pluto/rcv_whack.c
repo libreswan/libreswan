@@ -67,6 +67,8 @@
 #include "whack_route.h"
 #include "whack_add.h"
 #include "whack_addconn.h"
+#include "whack_impair.h"
+#include "whack_debug.h"
 
 static void whack_rereadsecrets(struct show *s)
 {
@@ -103,22 +105,6 @@ static bool whack_initiate_connection(struct show *s, struct connection **cp,
 				   logger);
 }
 
-static struct state *find_impaired_state(unsigned biased_what,
-					 struct logger *logger)
-{
-	if (biased_what == 0) {
-		llog(RC_COMMENT, logger, "state 'no' is not valid");
-		return NULL;
-	}
-	so_serial_t so = biased_what - 1; /* unbias */
-	struct state *st = state_by_serialno(so);
-	if (st == NULL) {
-		llog(RC_COMMENT, logger, "state #%lu not found", so);
-		return NULL;
-	}
-	return st;
-}
-
 static struct logger merge_loggers(struct state *st, bool background, struct logger *logger)
 {
 	/* so errors go to whack and file regardless of BACKGROUND */
@@ -128,77 +114,6 @@ static struct logger merge_loggers(struct state *st, bool background, struct log
 		state_attach(st, logger);
 	}
 	return loggers;
-}
-
-static void whack_impair_action(enum impair_action impairment_action,
-				unsigned impairment_param,
-				unsigned biased_value,
-				bool background, struct logger *logger)
-{
-	switch (impairment_action) {
-	case CALL_IMPAIR_UPDATE:
-		/* err... */
-		break;
-	case CALL_GLOBAL_EVENT_HANDLER:
-	{
-		passert(biased_value > 0);
-		call_global_event_inline(biased_value, logger);
-		break;
-	}
-	case CALL_STATE_EVENT_HANDLER:
-	{
-		struct state *st = find_impaired_state(biased_value, logger);
-		if (st == NULL) {
-			/* already logged */
-			return;
-		}
-		/* will log */
-		struct logger loggers = merge_loggers(st, background, logger);
-		call_state_event_handler(&loggers, st, (enum event_type)impairment_param);
-		break;
-	}
-	case CALL_INITIATE_v2_LIVENESS:
-	{
-		struct state *st = find_impaired_state(biased_value, logger);
-		if (st == NULL) {
-			/* already logged */
-			return;
-		}
-		/* will log */
-		struct ike_sa *ike = ike_sa(st, HERE);
-		if (ike == NULL) {
-			/* already logged */
-			return;
-		}
-		merge_loggers(&ike->sa, background, logger);
-		llog_sa(RC_COMMENT, ike, "initiating liveness for #%lu", st->st_serialno);
-		submit_v2_liveness_exchange(ike, st->st_serialno);
-		break;
-	}
-	case CALL_SEND_KEEPALIVE:
-	{
-		struct state *st = find_impaired_state(biased_value, logger);
-		if (st == NULL) {
-			/* already logged */
-			return;
-		}
-		/* will log */
-		struct logger loggers = merge_loggers(st, true/*background*/, logger);
-		llog(RC_COMMENT, &loggers, "sending keepalive");
-		send_keepalive_using_state(st, "inject keep-alive");
-		break;
-	}
-	case CALL_IMPAIR_MESSAGE_DRIP:
-	case CALL_IMPAIR_MESSAGE_DROP:
-	case CALL_IMPAIR_MESSAGE_BLOCK:
-	case CALL_IMPAIR_MESSAGE_REPLAY_DUPLICATES:
-	case CALL_IMPAIR_MESSAGE_REPLAY_FORWARD:
-	case CALL_IMPAIR_MESSAGE_REPLAY_BACKWARD:
-		add_message_impairment(impairment_action,
-				       (enum impair_message_direction)impairment_param,
-				       biased_value, logger);
-		break;
-	}
 }
 
 static bool whack_connection_status(struct show *s, struct connection **cp,
@@ -391,88 +306,6 @@ static void dbg_whack(struct show *s, const char *fmt, ...)
 	}
 }
 
-static bool whack_debug_connection(struct show *s, struct connection **cp,
-				   const struct whack_message *m)
-{
-	connection_attach((*cp), show_logger(s));
-	(*cp)->logger->debugging = lmod((*cp)->logger->debugging, m->debugging);
-	if (LDBGP(DBG_BASE, (*cp)->logger)) {
-		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, (*cp)->logger, buf) {
-			jam_string(buf, "extra_debugging = ");
-			jam_lset_short(buf, &debug_names,
-				       "+", (*cp)->logger->debugging);
-		}
-	}
-	connection_detach((*cp), show_logger(s));
-	return true;
-}
-
-static void whack_debug_options(const struct whack_message *m,
-				struct show *s)
-{
-	struct logger *logger = show_logger(s);
-	if (libreswan_fipsmode()) {
-		if (lmod_is_set(m->debugging, DBG_PRIVATE)) {
-			llog(RC_FATAL, logger,
-			     "FIPS: --debug private is not allowed in FIPS mode, aborted");
-			return; /*don't shutdown*/
-		}
-		if (lmod_is_set(m->debugging, DBG_CRYPT)) {
-			llog(RC_FATAL, logger,
-			     "FIPS: --debug crypt is not allowed in FIPS mode, aborted");
-			return; /*don't shutdown*/
-		}
-	}
-	if (m->name == NULL) {
-		/*
-		 * This is done in two two-steps so that if either old
-		 * or new would cause a debug message to print, it
-		 * will be printed.
-		 *
-		 * XXX: why not unconditionally send what was changed
-		 * back to whack?
-		 */
-		lset_t old_debugging = cur_debugging & DBG_MASK;
-		lset_t new_debugging = lmod(old_debugging, m->debugging);
-		set_debugging(cur_debugging | new_debugging);
-		LDBGP_JAMBUF(DBG_BASE, logger, buf) {
-			jam(buf, "old debugging ");
-			jam_lset_short(buf, &debug_names,
-				       "+", old_debugging);
-			jam(buf, " + ");
-			jam_lmod(buf, &debug_names, m->debugging);
-		}
-		LDBGP_JAMBUF(DBG_BASE, logger, buf) {
-			jam(buf, "new debugging = ");
-			jam_lset_short(buf, &debug_names,
-				       "+", new_debugging);
-		}
-		set_debugging(new_debugging);
-	} else if (!m->whack_add/*connection*/) {
-		whack_each_connection(m, s, whack_debug_connection,
-				      (struct each) {
-					      .log_unknown_name = true,
-					      .skip_instances = true,
-				      });
-
-	}
-}
-
-static void whack_impair_options(const struct whack_message *m, struct logger *logger)
-{
-	if (m->name == NULL) {
-		for (unsigned i = 0; i < m->nr_impairments; i++) {
-			/* ??? what should we do with return value? */
-			process_impair(&m->impairments[i],
-				       whack_impair_action,
-				       m->whack_async/*background*/,
-				       logger);
-		}
-	} else if (!m->whack_add/*connection*/) {
-		ldbg(logger, "per-connection impairment not implemented");
-	}
-}
-
 /*
  * handle a whack message.
  */
@@ -503,13 +336,13 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 	if (!lmod_empty(m->debugging)) {
 		lmod_buf lb;
 		dbg_whack(s, "debugging: start: %s", str_lmod(&debug_names, m->debugging, &lb));
-		whack_debug_options(m, s);
+		whack_debug(m, s);
 		dbg_whack(s, "debugging: stop: %s", str_lmod(&debug_names, m->debugging, &lb));
 	}
 
 	if (m->nr_impairments > 0) {
 		dbg_whack(s, "impair: start: %d impairments", m->nr_impairments);
-		whack_impair_options(m, logger);
+		whack_impair(m, s);
 		dbg_whack(s, "impair: stop: %d impairments", m->nr_impairments);
 	}
 

@@ -1,0 +1,98 @@
+/* whack debug routines, for libreswan
+ *
+ * Copyright (C) 1997 Angelos D. Keromytis.
+ * Copyright (C) 1998-2001,2013-2016 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2003-2008 Michael Richardson <mcr@xelerance.com>
+ * Copyright (C) 2003-2010 Paul Wouters <paul@xelerance.com>
+ * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
+ * Copyright (C) 2010 David McCullough <david_mccullough@securecomputing.com>
+ * Copyright (C) 2011 Mika Ilmaranta <ilmis@foobar.fi>
+ * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2014-2020 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2014-2017 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2019-2023 Andrew Cagney <cagney@gnu.org>
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * for more details.
+ */
+
+#include "defs.h"
+#include "whack_debug.h"
+#include "connections.h"
+#include "log.h"
+#include "show.h"
+#include "lswfips.h"
+#include "whack_connection.h"
+
+static bool whack_debug_connection(struct show *s, struct connection **cp,
+				   const struct whack_message *m)
+{
+	connection_attach((*cp), show_logger(s));
+	(*cp)->logger->debugging = lmod((*cp)->logger->debugging, m->debugging);
+	if (LDBGP(DBG_BASE, (*cp)->logger)) {
+		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, (*cp)->logger, buf) {
+			jam_string(buf, "extra_debugging = ");
+			jam_lset_short(buf, &debug_names,
+				       "+", (*cp)->logger->debugging);
+		}
+	}
+	connection_detach((*cp), show_logger(s));
+	return true;
+}
+
+void whack_debug(const struct whack_message *m, struct show *s)
+{
+	struct logger *logger = show_logger(s);
+	if (libreswan_fipsmode()) {
+		if (lmod_is_set(m->debugging, DBG_PRIVATE)) {
+			llog(RC_FATAL, logger,
+			     "FIPS: --debug private is not allowed in FIPS mode, aborted");
+			return; /*don't shutdown*/
+		}
+		if (lmod_is_set(m->debugging, DBG_CRYPT)) {
+			llog(RC_FATAL, logger,
+			     "FIPS: --debug crypt is not allowed in FIPS mode, aborted");
+			return; /*don't shutdown*/
+		}
+	}
+	if (m->name == NULL) {
+		/*
+		 * This is done in two two-steps so that if either old
+		 * or new would cause a debug message to print, it
+		 * will be printed.
+		 *
+		 * XXX: why not unconditionally send what was changed
+		 * back to whack?
+		 */
+		lset_t old_debugging = cur_debugging & DBG_MASK;
+		lset_t new_debugging = lmod(old_debugging, m->debugging);
+		set_debugging(cur_debugging | new_debugging);
+		LDBGP_JAMBUF(DBG_BASE, logger, buf) {
+			jam(buf, "old debugging ");
+			jam_lset_short(buf, &debug_names,
+				       "+", old_debugging);
+			jam(buf, " + ");
+			jam_lmod(buf, &debug_names, m->debugging);
+		}
+		LDBGP_JAMBUF(DBG_BASE, logger, buf) {
+			jam(buf, "new debugging = ");
+			jam_lset_short(buf, &debug_names,
+				       "+", new_debugging);
+		}
+		set_debugging(new_debugging);
+	} else if (!m->whack_add/*connection*/) {
+		whack_each_connection(m, s, whack_debug_connection,
+				      (struct each) {
+					      .log_unknown_name = true,
+					      .skip_instances = true,
+				      });
+
+	}
+}
