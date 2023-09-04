@@ -7,7 +7,7 @@ ipsec auto --up labeled
 # request.  This will cause the exchange to become stuck; the
 # retransmit, scheduled for 10s, will unstick it.
 ipsec whack --impair drop-outbound:1
-ipsec whack --asynchronous --impair event-v2-rekey:1
+ipsec whack --asynchronous --impair trigger-v2-rekey:1
 ../../guestbin/wait-for.sh --match REKEY_IKE_I1 -- ipsec whack --showstates
 
 # Trigger traffic using the predefined ping_t context.  Because the

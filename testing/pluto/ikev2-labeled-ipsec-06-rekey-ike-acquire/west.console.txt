@@ -71,7 +71,7 @@ west #
  ipsec whack --impair drop-outbound:1
 002 IMPAIR: will drop outbound message 1
 west #
- ipsec whack --asynchronous --impair event-v2-rekey:1
+ ipsec whack --asynchronous --impair trigger-v2-rekey:1
 000 "labeled"[1] 192.1.2.23 #1: deleting existing REKEY event
 000 "labeled"[1] 192.1.2.23 #1: calling REKEY event handler
 west #

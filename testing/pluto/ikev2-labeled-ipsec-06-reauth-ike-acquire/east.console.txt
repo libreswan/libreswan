@@ -23,18 +23,36 @@ east #
  echo "initdone"
 initdone
 east #
- # There should be FOUR IPsec SA states (two sets), all with same
+ # There should be 2x2 IPsec SA states (in/out for ping and ssh), all
 east #
- # reqid. And there should be one set of tunnel policies using the
+ # with same reqid.
 east #
- # configured ipsec_spd_t label, and no outgoing %trap policy
-east #
- ../../guestbin/ipsec-look.sh
-east NOW
-XFRM state:
+ ../../guestbin/ipsec-kernel-state.sh
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode transport
-	replay-window 32 
+	replay-window 0 flag esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+	sel src 192.1.2.45/32 dst 192.1.2.23/32 
+	security context system_u:system_r:sshd_t:s0-s0:c0.c1023 
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 0 flag esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+	sel src 192.1.2.23/32 dst 192.1.2.45/32 
+	security context system_u:system_r:sshd_t:s0-s0:c0.c1023 
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 0 flag esn
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	lastused YYYY-MM-DD HH:MM:SS
 	anti-replay esn context:
@@ -45,7 +63,7 @@ src 192.1.2.45 dst 192.1.2.23
 	security context system_u:system_r:ping_t:s0:c1.c256 
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode transport
-	replay-window 32 
+	replay-window 0 flag esn
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	lastused YYYY-MM-DD HH:MM:SS
 	anti-replay esn context:
@@ -54,7 +72,12 @@ src 192.1.2.23 dst 192.1.2.45
 	 00000000 00000000 00000000 XXXXXXXX 
 	sel src 192.1.2.23/32 dst 192.1.2.45/32 
 	security context system_u:system_r:ping_t:s0:c1.c256 
-XFRM policy:
+east #
+ # And there should be one set of tunnel policies using the configured
+east #
+ # ipsec_spd_t label, and no outgoing %trap policy
+east #
+ ../../guestbin/ipsec-kernel-policy.sh
 src 192.1.2.23/32 dst 192.1.2.45/32
 	security context system_u:object_r:ipsec_spd_t:s0
 	dir out priority PRIORITY ptype main
@@ -65,28 +88,15 @@ src 192.1.2.45/32 dst 192.1.2.23/32
 	dir in priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
-XFRM done
-IPSEC mangle TABLES
-iptables filter TABLE
-Chain INPUT (policy ACCEPT)
-target     prot opt source               destination         
-Chain FORWARD (policy ACCEPT)
-target     prot opt source               destination         
-Chain OUTPUT (policy ACCEPT)
-target     prot opt source               destination         
-ROUTING TABLES
-default via 192.1.2.254 dev eth1
-192.0.1.0/24 via 192.1.2.45 dev eth1
-192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254
-192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23
-NSS_CERTIFICATES
-Certificate Nickname                                         Trust Attributes
-                                                             SSL,S/MIME,JAR/XPI
 east #
  # The IKE SA should be associated with the template connection
 east #
- ipsec status |grep STATE_
-000 #1: "labeled":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
-000 #2: "labeled"[1] 192.1.2.45:500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; IKE SA #1; idle;
+ ipsec showstates
+000 #1: "labeled"[1] 192.1.2.45:500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; idle;
+000 #3: "labeled"[1] 192.1.2.45:500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
+000 #2: "labeled"[1][1] 192.1.2.45:500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; IKE SA #1; idle;
+000 #2: "labeled"[1][1] 192.1.2.45 esp.ESPSPIi@192.1.2.45 esp.ESPSPIi@192.1.2.23 Traffic: ESPin=64B ESPout=64B ESPmax=2^63B 
+000 #4: "labeled"[1][2] 192.1.2.45:500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; IKE SA #3; idle;
+000 #4: "labeled"[1][2] 192.1.2.45 esp.ESPSPIi@192.1.2.45 esp.ESPSPIi@192.1.2.23 Traffic: ESPin=269B ESPout=257B ESPmax=2^63B 
 east #
  
