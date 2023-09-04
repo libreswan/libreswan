@@ -1340,7 +1340,7 @@ kvmplutotest	ipsec-delete-01-ikev2-child-1then2	good
 kvmplutotest	ipsec-delete-02-ikev1-child-2then1	good
 kvmplutotest	ipsec-delete-02-ikev2-child-2then1	good
 kvmplutotest	ipsec-delete-03-up-revival-ikev1	good
-kvmplutotest	ipsec-delete-03-up revival-ikev2	good
+kvmplutotest	ipsec-delete-03-up=revival-ikev2	good
 
 # PPK
 kvmplutotest	ikev2-ppk-static-01-insist-yes			good
