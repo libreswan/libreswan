@@ -47,6 +47,7 @@
 #include "pluto_seccomp.h"
 #endif
 #include "whack_status.h"
+#include "whack_connectionstatus.h"	/* for show_connection_statuses() */
 
 static void show_system_security(struct show *s)
 {

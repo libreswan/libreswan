@@ -94,6 +94,7 @@ OBJS += rcv_whack.o
 OBJS += whack_add.o
 OBJS += whack_addconn.o
 OBJS += whack_connection.o
+OBJS += whack_connectionstatus.o
 OBJS += whack_delete.o
 OBJS += whack_down.o
 OBJS += whack_rekey.o
@@ -224,7 +225,6 @@ OBJS += connections.o
 OBJS += instantiate.o
 OBJS += connection_db.o
 OBJS += connection_event.o
-OBJS += connection_status.o
 OBJS += spd_route_db.o
 
 OBJS += routing.o

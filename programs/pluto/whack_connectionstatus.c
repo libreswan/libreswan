@@ -31,6 +31,9 @@
  * for more details.
  */
 
+#include "whack_connectionstatus.h"
+#include "whack_connection.h"
+
 #include <net/if.h>		/* for IFNAMSIZ */
 
 #include "ike_alg.h"
@@ -333,7 +336,7 @@ static void show_one_spd(struct show *s,
 
 }
 
-void show_connection_status(struct show *s, const struct connection *c)
+static void show_connection_status(struct show *s, const struct connection *c)
 {
 	char instance[32];
 
@@ -763,4 +766,24 @@ void show_connection_statuses(struct show *s)
 
 	show_comment(s, "Total IPsec connections: loaded %d, active %d",
 		     count, active);
+}
+
+static bool whack_connection_status(struct show *s, struct connection **cp,
+				    const struct whack_message *m UNUSED)
+{
+	show_connection_status(s, (*cp));
+	return true;
+}
+
+void whack_connectionstatus(const struct whack_message *m, struct show *s)
+{
+		if (m->name == NULL) {
+			show_connection_statuses(s);
+		} else {
+			whack_each_connection(m, s, whack_connection_status,
+					      (struct each) {
+						      .log_unknown_name = true,
+						      .skip_instances = true,
+					      });
+		}
 }

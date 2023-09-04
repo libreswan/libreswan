@@ -781,11 +781,6 @@ const char *str_connection_instance(const struct connection *c,
 #define PRI_CONNECTION "\"%s\"%s"
 #define pri_connection(C,B) (C)->name, str_connection_instance(C, B)
 
-/* print connection status */
-
-extern void show_connection_statuses(struct show *s);
-extern void show_connection_status(struct show *s, const struct connection *c);
-
 struct connection **sort_connections(void);
 int connection_compare(const struct connection *ca,
 		       const struct connection *cb);

@@ -59,6 +59,7 @@
 #include "pluto_shutdown.h"		/* for shutdown_pluto() */
 
 #include "whack_connection.h"
+#include "whack_connectionstatus.h"
 #include "whack_rekey.h"
 #include "whack_delete.h"
 #include "whack_status.h"
@@ -114,13 +115,6 @@ static struct logger merge_loggers(struct state *st, bool background, struct log
 		state_attach(st, logger);
 	}
 	return loggers;
-}
-
-static bool whack_connection_status(struct show *s, struct connection **cp,
-				    const struct whack_message *m UNUSED)
-{
-	show_connection_status(s, (*cp));
-	return true;
 }
 
 static bool whack_unroute_connection(struct show *s, struct connection **cp,
@@ -758,15 +752,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 
 	if (m->whack_connection_status) {
 		dbg_whack(s, "connectionstatus: start:");
-		if (m->name == NULL) {
-			show_connection_statuses(s);
-		} else {
-			whack_each_connection(m, s, whack_connection_status,
-					      (struct each) {
-						      .log_unknown_name = true,
-						      .skip_instances = true,
-					      });
-		}
+		whack_connectionstatus(m, s);
 		dbg_whack(s, "connectionstatus: stop:");
 	}
 
