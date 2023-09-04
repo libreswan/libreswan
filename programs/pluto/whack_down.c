@@ -96,28 +96,29 @@ static void down_connection(struct connection **cp, struct logger *logger)
 	connection_detach((*cp), logger);
 }
 
-static bool whack_down_connections(struct show *s, struct connection **cp,
+static bool whack_down_connections(struct show *s, struct connection *c,
 				   const struct whack_message *m UNUSED)
 {
 	struct logger *logger = show_logger(s);
 	connection_buf cb;
-	switch ((*cp)->local->kind) {
+	switch (c->local->kind) {
 	case CK_PERMANENT:
 	case CK_INSTANCE:
 	case CK_LABELED_PARENT:
-		down_connection(cp, logger); /* could delete C! */
+		/* can delref C; caller still holds a ref */
+		down_connection(&c, logger);
 		return true;
 	case CK_TEMPLATE:
 	case CK_GROUP:
 	case CK_LABELED_TEMPLATE:
 	case CK_LABELED_CHILD:
 		ldbg(logger, "skipping "PRI_CONNECTION,
-		     pri_connection((*cp), &cb));
+		     pri_connection(c, &cb));
 		return false;
 	case CK_INVALID:
 		break;
 	}
-	bad_case((*cp)->local->kind);
+	bad_case(c->local->kind);
 }
 
 void whack_down(const struct whack_message *m, struct show *s)

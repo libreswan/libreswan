@@ -51,11 +51,14 @@ void whack_each_connection(const struct whack_message *m, struct show *s,
  *
  * This means that an instance is visited before it's template; and
  * group templates are visited before the matching group.
+ *
+ * Caller of whack_connection() takes a reference so never needs to
+ * worry about connection disappearing.
  */
 void whack_connections_bottom_up(const struct whack_message *m, struct show *s,
 				 bool (*whack_connection)
 				 (struct show *s,
-				  struct connection **cp,
+				  struct connection *c,
 				  const struct whack_message *m),
 				 struct each each);
 

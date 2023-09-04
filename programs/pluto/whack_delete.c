@@ -27,11 +27,11 @@
  * Terminate and then delete connections with the specified name.
  */
 
-static bool whack_delete_connection(struct show *s, struct connection **cp,
+static bool whack_delete_connection(struct show *s, struct connection *c,
 				    const struct whack_message *m UNUSED)
 {
 	struct logger *logger = show_logger(s);
-	connection_attach((*cp), logger);
+	connection_attach(c, logger);
 
 	/*
 	 * Let code know of intent.
@@ -39,26 +39,26 @@ static bool whack_delete_connection(struct show *s, struct connection **cp,
 	 * Functions such as connection_unroute() don't fiddle policy
 	 * bits as they are called as part of unroute/route sequences.
 	 */
-	del_policy((*cp), POLICY_UP);
-	del_policy((*cp), POLICY_ROUTE);
+	del_policy(c, POLICY_UP);
+	del_policy(c, POLICY_ROUTE);
 
-	switch ((*cp)->local->kind) {
+	switch (c->local->kind) {
 
 	case CK_PERMANENT:
-		if (never_negotiate((*cp))) {
-			ldbg((*cp)->logger, "skipping as never-negotiate");
+		if (never_negotiate(c)) {
+			ldbg(c->logger, "skipping as never-negotiate");
 			break;
 		}
-		llog(RC_LOG, (*cp)->logger, "terminating SAs using this connection");
-		remove_connection_from_pending((*cp));
-		whack_connection_delete_states((*cp), HERE);
+		llog(RC_LOG, c->logger, "terminating SAs using this connection");
+		remove_connection_from_pending(c);
+		whack_connection_delete_states(c, HERE);
 		break;
 
 	case CK_INSTANCE:
 	case CK_LABELED_PARENT:
-		llog(RC_LOG, (*cp)->logger, "terminating SAs using this connection");
-		remove_connection_from_pending((*cp));
-		whack_connection_delete_states((*cp), HERE);
+		llog(RC_LOG, c->logger, "terminating SAs using this connection");
+		remove_connection_from_pending(c);
+		whack_connection_delete_states(c, HERE);
 		break;
 
 	case CK_GROUP:
@@ -68,12 +68,12 @@ static bool whack_delete_connection(struct show *s, struct connection **cp,
 		break;
 
 	case CK_INVALID:
-		bad_case((*cp)->local->kind);
+		bad_case(c->local->kind);
 	}
 
-	connection_unroute((*cp), HERE); /* some times redundant */
+	connection_unroute(c, HERE); /* some times redundant */
 
-	struct connection *cc = (*cp); /* hack part #1 */
+	struct connection *cc = c; /* hack part #1 */
 	if (!is_instance(cc)) {
 		/*
 		 * A non-instance connection has a floating reference;
@@ -86,7 +86,7 @@ static bool whack_delete_connection(struct show *s, struct connection **cp,
 	/*
 	 * hack part #2; caller is left with the only reference.
 	 */
-	PEXPECT((*cp)->logger, refcnt_peek(&(*cp)->refcnt) == 1);
+	PEXPECT(c->logger, refcnt_peek(&c->refcnt) == 1);
 	return true;
 }
 
