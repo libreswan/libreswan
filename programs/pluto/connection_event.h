@@ -38,7 +38,7 @@ void schedule_connection_event(struct connection *c,
 
 bool flush_connection_event(const struct connection *c,
 			    enum connection_event event);
-void flush_connection_events(const struct connection *c);
+bool flush_connection_events(const struct connection *c);
 
 void call_connection_event_handler(struct logger *logger,
 				   struct connection *c,

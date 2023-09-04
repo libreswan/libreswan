@@ -22,6 +22,7 @@
 #include "pending.h"
 #include "ikev2_delete.h"
 #include "ikev1.h"		/* for send_v1_delete() */
+#include "connection_event.h"
 
 /*
  * Terminate and then delete connections with the specified name.
@@ -72,6 +73,20 @@ static bool whack_delete_connection(struct show *s, struct connection *c,
 	}
 
 	connection_unroute(c, HERE); /* some times redundant */
+
+	/*
+	 * Flush any lurking revivals.
+	 *
+	 * Work-around github/1255 and ikev2-delete-02 where:
+	 *
+	 * teardown_ipsec_kernel_policies() doesn't schedule a revival
+	 * for the Child SA but should.
+	 *
+	 * a later delete_ike schedules a revival but shouldn't.
+	 */
+	if (flush_connection_events(c)) {
+		ldbg(logger, "flushed bogus pending events");
+	}
 
 	struct connection *cc = c; /* hack part #1 */
 	if (!is_instance(cc)) {

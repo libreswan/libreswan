@@ -178,12 +178,15 @@ bool flush_connection_event(const struct connection *c,
 	return flushed;
 }
 
-void flush_connection_events(const struct connection *c)
+bool flush_connection_events(const struct connection *c)
 {
+	bool flushed = false;
 	struct event_connection *e;
 	FOR_EACH_LIST_ENTRY_OLD2NEW(e, &connection_events) {
 		if (e->connection == c) {
 			delete_connection_event(&e);
+			flushed = true;
 		}
 	}
+	return flushed;
 }

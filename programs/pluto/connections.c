@@ -379,6 +379,11 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 	}
 
 	/*
+	 * There can't be any outstanding events.
+	 */
+	PASSERT(logger, !connection_event_is_scheduled(c, CONNECTION_REVIVAL));
+
+	/*
 	 * Finall start cleanup.
 	 */
 
@@ -394,8 +399,6 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 
 	/* find and delete c from the host pair list */
 	host_pair_remove_connection(c, connection_valid);
-
-	flush_connection_events(c);
 
 	if (connection_valid) {
 		connection_db_del(c);
