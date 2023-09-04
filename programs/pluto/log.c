@@ -608,7 +608,7 @@ void attach_fd_where(struct logger *dst, struct fd *src_fd, where_t where)
 {
 	/* do no harm? */
 	if (src_fd == NULL) {
-		ldbg(dst, "no whack to attach");
+		pdbg(dst, "no whack to attach");
 		return;
 	}
 
@@ -616,7 +616,7 @@ void attach_fd_where(struct logger *dst, struct fd *src_fd, where_t where)
 	FOR_EACH_THING(fdp, &dst->global_whackfd, &dst->object_whackfd) {
 		if (*fdp == src_fd) {
 			/* already attached */
-			ldbg(dst, "whack already attached");
+			pdbg(dst, "whack already attached");
 			return;
 		}
 	}
@@ -625,13 +625,13 @@ void attach_fd_where(struct logger *dst, struct fd *src_fd, where_t where)
 	FOR_EACH_THING(fdp, &dst->global_whackfd, &dst->object_whackfd) {
 		if (*fdp == NULL) {
 			*fdp = fd_addref_where(src_fd, where);
-			ldbg(dst, "whack attached to spare slot");
+			pdbg(dst, "whack attached to spare slot");
 			return;
 		}
 	}
 
 	/* replace global */
-	ldbg(dst, "whack attached to global slot");
+	pdbg(dst, "whack attached to global slot");
 	fd_delref_where(&dst->global_whackfd, where);
 	dst->global_whackfd = fd_addref_where(src_fd, where);
 }
@@ -661,14 +661,14 @@ void whack_detach_where(struct logger *dst, const struct logger *src, where_t wh
 	/* find a whack to detach */
 	struct fd *src_fd = logger_fd(src);
 	if (src_fd == NULL) {
-		ldbg(dst, "no whack to detach");
+		pdbg(dst, "no whack to detach");
 		return;
 	}
 
 	/* find where it is attached */
 	FOR_EACH_THING(fdp, &dst->global_whackfd, &dst->object_whackfd) {
 		if (*fdp == src_fd) {
-			ldbg(dst, "detaching whack");
+			pdbg(dst, "detaching whack");
 			fd_delref_where(fdp, where);
 			return;
 		}
