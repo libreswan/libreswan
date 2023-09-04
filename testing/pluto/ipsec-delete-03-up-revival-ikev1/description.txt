@@ -1,0 +1,2 @@
+delete IKEv1 connection on the pending queue
+

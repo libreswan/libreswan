@@ -1,0 +1,1 @@
+ipsec delete west

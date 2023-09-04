@@ -1,0 +1,32 @@
+/testing/guestbin/swan-prep --46 --nokey
+Creating empty NSS database
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec whack --impair revival
+west #
+ ipsec whack --impair timeout-on-retransmit
+west #
+ ipsec add west
+002 "west": added IKEv2 connection
+west #
+ echo "initdone"
+initdone
+west #
+ # should go into revival
+west #
+ ipsec up west
+1v2 "west" #1: initiating IKEv2 connection
+1v2 "west" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+002 "west" #1: IMPAIR: retransmit so timing out SA (may retry)
+002 "west" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+002 "west" #1: IMPAIR: revival: skip scheduling revival event
+002 "west" #1: deleting IKE SA (PARENT_I1) and NOT sending notification
+west #
+ ipsec delete west
+002 "west": terminating SAs using this connection
+west #
+ 
