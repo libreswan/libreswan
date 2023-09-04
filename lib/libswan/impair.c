@@ -180,10 +180,6 @@ struct impairment impairments[] = {
 	V("tcp-use-blocking-write", tcp_use_blocking_write, "use a blocking write when sending TCP encapsulated IKE messages"),
 	V("tcp-skip-setsockopt-espintcp", tcp_skip_setsockopt_espintcp, "skip the required setsockopt(\"espintcp\") call"),
 
-	A("initiate-v2-liveness", INITIATE_v2_LIVENESS, 0, "initiate an IKEv2 liveness exchange", "IKE SA"),
-
-	A("send-keepalive", SEND_KEEPALIVE, 0, "send a NAT keepalive packet", "SA"),
-
 	/*
 	 * Impair message flow.
 	 */
@@ -234,21 +230,44 @@ struct impairment impairments[] = {
 	V("ignore-v2-ike-auth-child", ignore_v2_ike_auth_child,
 	  "ignore, but do expect, CHILD SA payloads in the IKE_AUTH message"),
 
+	/*
+	 * Trigger global event.
+	 */
+
 	A("trigger", GLOBAL_EVENT_HANDLER, 0, "trigger the global event", "EVENT",
 	  .how_enum_names = &global_timer_names),
-	A("event-v2-rekey", STATE_EVENT_HANDLER, EVENT_v2_REKEY,
-	  "trigger the rekey event", "SA"),
-	A("event-v2-reauth", STATE_EVENT_HANDLER, EVENT_v2_REAUTH,
-	  "trigger the reauthenticate event", "SA"),
-	A("event-v2-liveness", STATE_EVENT_HANDLER, EVENT_v2_LIVENESS,
-	  "trigger the liveness event", "SA"),
-	A("event-v1-replace", STATE_EVENT_HANDLER, EVENT_v1_REPLACE,
-	  "trigger the IKEv1 replace event", "SA"),
-	A("event-v2-replace", STATE_EVENT_HANDLER, EVENT_v2_REPLACE,
-	  "trigger the IKEv2 replace event", "SA"),
 
-	A("event-revival", CONNECTION_EVENT_HANDLER, CONNECTION_REVIVAL,
-	  "trigger the revival event", "CONNECTION"),
+	/*
+	 * Trigger state event.
+	 */
+
+	A("trigger-v2-rekey", STATE_EVENT_HANDLER, EVENT_v2_REKEY,
+	  "trigger the rekey event", "#SA"),
+	A("trigger-v2-reauth", STATE_EVENT_HANDLER, EVENT_v2_REAUTH,
+	  "trigger the reauthenticate event", "#SA"),
+	A("trigger-v2-liveness", STATE_EVENT_HANDLER, EVENT_v2_LIVENESS,
+	  "trigger the liveness event", "#SA"),
+	A("trigger-v1-replace", STATE_EVENT_HANDLER, EVENT_v1_REPLACE,
+	  "trigger the IKEv1 replace event", "#SA"),
+	A("trigger-v2-replace", STATE_EVENT_HANDLER, EVENT_v2_REPLACE,
+	  "trigger the IKEv2 replace event", "#SA"),
+
+	/*
+	 * Trigger connection event.
+	 */
+
+	A("trigger-revival", CONNECTION_EVENT_HANDLER, CONNECTION_REVIVAL,
+	  "trigger the revival event", "$CONNECTION"),
+
+	/*
+	 * Force the event (bypassing most of the should I do this
+	 * logic).
+	 */
+
+	A("initiate-v2-liveness", INITIATE_v2_LIVENESS, 0,
+	  "initiate an IKEv2 liveness exchange", "IKE SA"),
+	A("send-keepalive", SEND_KEEPALIVE, 0,
+	  "send a NAT keepalive packet", "SA"),
 
 	V("cannot-ondemand", cannot_ondemand,
 	  "force acquire to call cannot_ondemand() and fail"),
