@@ -22,6 +22,7 @@ v5.0 (Unreleased)
   - use INSTALL_INITSYSTEM=false to prevent update of /etc/<initsystem>
   - use INSTALL_CONFIGS=false prevents update of /etc/ipsec.d et.al.
   - drop FINAL* make variables; see mk/config.mk for alternatives
+* show/verify: drop these ipsec subcommands (old, incomplete) [Paul]
 * packaging: Fix debian systemd service install [Antonio Silva]
 * testing: Fix namespace tests for super long dir names [Paul]
 * initsystems: Use documented ipsec sub-commands [Tuomo]
