@@ -2901,7 +2901,10 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 */
 
 	if (wm->sec_label != NULL) {
-		dbg("received sec_label '%s' from whack", wm->sec_label);
+		ldbg(c->logger, "received sec_label '%s' from whack", wm->sec_label);
+		if (wm->ike_version == IKEv1) {
+			return diag("IKEv1 does not support Labeled IPsec");
+		}
 		/* include NUL! */
 		shunk_t sec_label = shunk2(wm->sec_label, strlen(wm->sec_label)+1);
 		err_t ugh = vet_seclabel(sec_label);
