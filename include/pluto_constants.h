@@ -969,8 +969,6 @@ enum sa_policy_bits {
  */
 #define HAS_IPSEC_POLICY(p) (((p) & POLICY_IPSEC_MASK) != 0)
 
-#define NEVER_NEGOTIATE(p)  (LDISJOINT((p), POLICY_ENCRYPT | POLICY_AUTHENTICATE))
-
 /*
  * values for right=/left=
  *

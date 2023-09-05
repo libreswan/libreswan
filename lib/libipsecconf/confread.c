@@ -1352,7 +1352,8 @@ static bool load_conn(struct starter_conn *conn,
 	 * some options are set as part of our default, but
 	 * some make no sense for shunts, so remove those again
 	 */
-	if (NEVER_NEGOTIATE(conn->policy)) {
+	if ((conn->policy & POLICY_ENCRYPT) == LEMPTY &&
+	    (conn->policy & POLICY_AUTHENTICATE) == LEMPTY) {
 		/* remove IPsec related options */
 		conn->policy &= ~(POLICY_PFS |
 				  POLICY_COMPRESS);
