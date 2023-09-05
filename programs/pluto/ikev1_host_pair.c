@@ -296,15 +296,6 @@ struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 				    NULL /* peer ID not known yet */);
 	if (c != NULL) {
 		/*
-		 * We found a possibly non-wildcard connection.
-		 */
-		if (is_labeled_template(c)) {
-			ldbg(md->md_logger,
-			     "local endpoint is a labeled template - needs instantiation");
-			return sec_label_parent_instantiate(c, sender_address, HERE);
-		}
-
-		/*
 		 * we found a non %any conn. double check if it needs
 		 * instantiation anyway (eg vnet=)
 		 */

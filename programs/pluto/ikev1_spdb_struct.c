@@ -25,30 +25,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#ifdef HAVE_LABELED_IPSEC
-/*
- * GRRR:
- *
- * GLIBC/Linux and MUSL/Linux define sockaddr_in et.al. in
- * <netinet/in.h>, and the generic network code uses this.
- * Unfortunately (cough) the Linux kernel headers also provide
- * definitions of those structures in <linux/in.h> et.al. which,
- * depending on header include order can result in conflicting
- * definitions.  For instance, if sockaddr_in is not defined,
- * <linux/xfrm.h> will include the definition in <linux/in.h> but that
- * will then clash with a later include of <netinet/in.h>.
- *
- * GLIBC/Linux has hacks on hacks to work-around this, not MUSL.
- * Fortunately, including <netinet/in.h> first will force the Linux
- * kernel headers to use that definition.
- *
- * XXX: on the one hand, this labeled ipsec code should be moved to
- * its own file, but on the other hand this is IKEv1.
- */
-#include <netinet/in.h>
-#include "linux/xfrm.h" /* local (if configured) or system copy; for XFRM_SC_DOI_LSM and XFRM_SC_ALG_SELINUX */
-#endif
-
 #include "sysdep.h"
 #include "constants.h"
 
@@ -79,79 +55,6 @@
 #include "ip_endpoint.h"
 #include "nat_traversal.h"
 #include "refcnt.h"		/* for dbg_alloc()+dbg_free() */
-
-#ifndef HAVE_LABELED_IPSEC
-static bool parse_secctx_attr(pb_stream *pbs UNUSED, struct state *st)
-{
-	/*
-	 * We received a security label but don't support it,
-	 * so fail the IKE negotiation
-	 */
-	log_state(RC_LOG_SERIOUS, st,
-		  "Received IPsec Security Label support for labeled ipsec not compiled in");
-	return false;
-}
-#else
-#include "ikev1_labeled_ipsec.h"
-
-static bool parse_secctx_attr(struct pbs_in *pbs, struct state *st)
-{
-	const struct connection *c = st->st_connection;
-
-	struct xfrm_user_sec_ctx_ike uctx;
-	diag_t d = pbs_in_struct(pbs, &sec_ctx_desc, &uctx.ctx, sizeof(uctx.ctx), NULL);
-	if (d != NULL) {
-		llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
-		return false;
-	}
-
-	/*
-	 * XXX: this and the IKEv2 equivalent have a lot in common.
-	 */
-	shunk_t sec_label = pbs_in_left(pbs);
-
-	if (sec_label.len != uctx.ctx.ctx_len) {
-		/* ??? should we ignore padding? */
-		log_state(RC_LOG_SERIOUS, st,
-			  "IPsec Security Label length mismatch (length=%u; packet space = %zu)",
-			  uctx.ctx.ctx_len, sec_label.len);
-		return false;
-	}
-
-	err_t ugh = vet_seclabel(sec_label);
-
-	if (ugh != NULL) {
-		log_state(RC_LOG_SERIOUS, st, "IPsec %s", ugh);
-		return false;
-	}
-
-	if (c->config->sec_label.len == 0) {
-		log_state(RC_LOG_SERIOUS, st,
-			  "received IPsec Security Label on connection not configured with labeled ipsec");
-		return false;
-	}
-
-	if (!sec_label_within_range("remote", sec_label, c->config->sec_label, st->st_logger)) {
-		LLOG_JAMBUF(RC_LOG_SERIOUS, st->st_logger, buf) {
-			jam(buf, "received IPsec Security Label '");
-			jam_sanitized_bytes(buf, sec_label.ptr,
-					    sec_label.len-1/*drop'\0'*/);
-			jam(buf, "' not within range of our configured security label '");
-			jam_sanitized_bytes(buf, c->config->sec_label.ptr,
-					    c->config->sec_label.len-1/*drop'\0'*/);
-			jam(buf, "'");
-		}
-		return false;
-	}
-
-	replace_chunk(&st->st_v1_seen_sec_label, sec_label, "st_seen_sec_label");
-	if (DBGP(DBG_BASE)) {
-		DBG_dump_hunk("connection security context IPsec Security Label verification succeeded with:",
-			      st->st_v1_seen_sec_label);
-	}
-	return true;
-}
-#endif
 
 /** output an attribute (within an SA) */
 /* Note: ikev2_out_attr is a clone, with the same bugs */
@@ -2620,14 +2523,6 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			}
 			attrs->transattrs.enckeylen = val;
 			break;
-
-		case SECCTX | ISAKMP_ATTR_AF_TLV:
-		{
-			pb_stream *pbs = &attr_pbs;
-			if (!parse_secctx_attr(pbs, st))
-				return false;
-			break;
-		}
 
 		default:
 		{

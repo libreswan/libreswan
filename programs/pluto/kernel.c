@@ -2171,8 +2171,7 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child)
 	struct logger *logger = child->sa.st_logger;
 	struct connection *c = child->sa.st_connection;
 
-	if (c->config->ike_version == IKEv2 &&
-	    is_labeled_child(c)) {
+	if (is_labeled_child(c)) {
 		ldbg(logger, "kernel: %s() skipping install of IPsec policies as security label", __func__);
 		return true;
 	}
