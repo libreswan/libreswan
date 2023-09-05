@@ -259,10 +259,8 @@ static void llog_delete_connection_when_instance(const struct connection *c)
 void delete_connection_where(struct connection **cp, where_t where)
 {
 	struct connection *c = *cp;
-	if (delref_where(cp, c->logger, where) == NULL) {
-		llog_passert(c->logger, where, "final reference to connection @%p", c);
-	}
 	llog_delete_connection_when_instance(c);
+	delref_where(cp, c->logger, where); /* should leave 0 references */
 	discard_connection(&c, true/*connection_valid*/, where);
 }
 
@@ -283,6 +281,7 @@ void connection_delref_where(struct connection **cp, const struct logger *owner,
 
 static void discard_connection(struct connection **cp, bool connection_valid, where_t where)
 {
+	bool ok_to_delete = true;
 	struct connection *c = *cp;
 	*cp = NULL;
 
@@ -302,15 +301,24 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 	     pri_connection_co(c), c,
 	     pri_connection_co(c->clonedfrom));
 
+	unsigned refcnt = refcnt_peek(&c->refcnt);
+	if (refcnt != 0) {
+		llog_pexpect(c->logger, where,
+			     "connection "PRI_CO" [%p] still has %u references",
+			     pri_connection_co(c), c, refcnt);
+		ok_to_delete = false;
+	}
+
 	/*
 	 * Must be unrouted (i.e., all policies have been pulled).
 	 */
 	if (c->child.routing != RT_UNROUTED) {
 		enum_buf rn;
-		llog_passert(logger, where,
+		llog_pexpect(logger, where,
 			     "connection "PRI_CO" [%p] still in %s",
 			     pri_connection_co(c), c,
 			     str_enum_short(&routing_names, c->child.routing, &rn));
+		ok_to_delete = false;
 	}
 
 	/*
@@ -318,33 +326,37 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 	 * IKE SA to establish).
 	 */
 	if (connection_is_pending(c)) {
-		llog_passert(logger, where,
+		llog_pexpect(logger, where,
 			     "connection "PRI_CO" [%p] is still pending",
 			     pri_connection_co(c), c);
+		ok_to_delete = false;
 	}
 
 	/*
 	 * Must have newest all cleared.
 	 */
 	if (c->newest_ike_sa != SOS_NOBODY) {
-		llog_passert(logger, where,
+		llog_pexpect(logger, where,
 			     "connection "PRI_CO" [%p] still has %s "PRI_SO,
 			     pri_connection_co(c), c,
 			     c->config->ike_info->ike_sa_name,
 			     pri_so(c->newest_ike_sa));
+		ok_to_delete = false;
 	}
 	if (c->newest_ipsec_sa != SOS_NOBODY) {
-		llog_passert(logger, where,
+		llog_pexpect(logger, where,
 			     "connection "PRI_CO" [%p] still has %s "PRI_SO,
 			     pri_connection_co(c), c,
 			     c->config->ike_info->child_sa_name,
 			     pri_so(c->newest_ipsec_sa));
+		ok_to_delete = false;
 	}
 	if (c->child.newest_routing_sa != SOS_NOBODY) {
-		llog_passert(logger, where,
+		llog_pexpect(logger, where,
 			     "connection "PRI_CO" [%p] still has routing SA "PRI_SO,
 			     pri_connection_co(c), c,
 			     pri_so(c->child.newest_routing_sa));
+		ok_to_delete = false;
 	}
 
 	/*
@@ -354,11 +366,12 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 		.clonedfrom = c,
 		.where = HERE,
 	};
-	if (next_connection_old2new(&instance)) {
+	while (next_connection_old2new(&instance)) {
 		connection_buf cb;
-		llog_passert(logger, where,
+		llog_pexpect(logger, where,
 			     "connection still instantiated as "PRI_CONNECTION,
 			     pri_connection(instance.c, &cb));
+		ok_to_delete = false;
 	}
 
 	/*
@@ -369,19 +382,27 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 		.connection_serialno = c->serialno,
 		.where = HERE,
 	};
-	if (next_state_new2old(&state)) {
+	while (next_state_new2old(&state)) {
 		state_buf sb;
-		llog_passert(logger, where,
+		llog_pexpect(logger, where,
 			     "connection is still being used by %s "PRI_STATE,
 			     sa_name(state.st->st_connection->config->ike_version,
 				     state.st->st_sa_type_when_established),
 			     pri_state(state.st, &sb));
+		ok_to_delete = false;
 	}
 
 	/*
 	 * There can't be any outstanding events.
 	 */
-	PASSERT(logger, !connection_event_is_scheduled(c, CONNECTION_REVIVAL));
+	if (connection_event_is_scheduled(c, CONNECTION_REVIVAL)) {
+		llog_pexpect(logger, where,
+			     "connection has REVVIAL pending");
+		ok_to_delete = false;
+	}
+
+
+	PASSERT(logger, ok_to_delete);
 
 	/*
 	 * Finall start cleanup.
