@@ -95,9 +95,6 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 	SOPT(KBF_DROP_OPPO_NULL, false);
 	SOPT(KBF_GLOBAL_IKEv1, GLOBAL_IKEv1_DROP);
 
-#ifdef HAVE_LABELED_IPSEC
-	SOPT(KBF_SECCTX, SECCTX);
-#endif
 	SOPT(KBF_DDOS_MODE, DDOS_AUTO);
 
 	SOPT(KBF_OCSP_CACHE_SIZE, OCSP_DEFAULT_CACHE_SIZE);

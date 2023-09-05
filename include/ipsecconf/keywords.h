@@ -101,7 +101,6 @@ enum keyword_numeric_config_field {
 	KBF_FORCEBUSY, 		/* obsoleted for KBF_DDOS_MODE */
 	KBF_DDOS_IKE_THRESHOLD,
 	KBF_MAX_HALFOPEN_IKE,
-	KBF_SECCTX,		/* security context attribute value for labeled ipsec */
 	KBF_NFLOG_ALL,		/* Enable global nflog device */
 	KBF_DDOS_MODE,		/* set DDOS mode */
 	KBF_SECCOMP,		/* set SECCOMP mode */

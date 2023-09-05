@@ -411,10 +411,6 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "protostack",  kv_config,  kt_string,  KSF_PROTOSTACK,  NULL, NULL, },
   { "nhelpers",  kv_config,  kt_number,  KBF_NHELPERS, NULL, NULL, },
   { "drop-oppo-null",  kv_config,  kt_bool,  KBF_DROP_OPPO_NULL, NULL, NULL, },
-#ifdef HAVE_LABELED_IPSEC
-  { "ikev1-secctx-attr-type",  kv_config,  kt_number,  KBF_SECCTX, NULL, NULL, },  /* obsolete: not a value, a type */
-  { "secctx-attr-type",  kv_config | kv_alias,  kt_number,  KBF_SECCTX, NULL, NULL, },
-#endif
   { "interfaces",  kv_config, kt_obsolete, KNCF_WARNIGNORE, NULL, NULL, }, /* obsoleted but often present keyword */
 
   /* these options are obsoleted (and not old aliases) */
@@ -508,6 +504,8 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "ikepad",  kv_conn,  kt_enum,  KNCF_IKEPAD, yn_option_names, NULL, },
   { "nat-ikev1-method",  kv_conn | kv_processed,  kt_enum,  KNCF_NAT_IKEv1_METHOD,  nat_ikev1_method_option_names, NULL, },
 
+  { "ikev1-secctx-attr-type",  kv_config,  kt_number,  KNCF_WARNIGNORE, NULL, NULL, },  /* obsolete: not a value, a type */
+  { "secctx-attr-type",  kv_config | kv_alias,  kt_number,  KNCF_WARNIGNORE, NULL, NULL, },
   { "policy-label",  kv_conn,  kt_string,  KSCF_SEC_LABEL, NULL, NULL, }, /* obsolete variant */
   { "sec-label",  kv_conn,  kt_string,  KSCF_SEC_LABEL, NULL, NULL, },
 
