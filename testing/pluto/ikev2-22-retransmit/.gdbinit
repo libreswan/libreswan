@@ -1,2 +1,0 @@
-b ikev2_parent_inI2outR2
-b ipsecdoi_replace

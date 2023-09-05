@@ -1,2 +1,0 @@
-bt full
-quit
