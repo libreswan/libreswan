@@ -967,7 +967,7 @@ enum sa_policy_bits {
  * Note: a connection can only be routed if it is NEVER_NEGOTIATE or
  * HAS_IPSEC_POLICY.
  */
-#define HAS_IPSEC_POLICY(p) (((p) & POLICY_IPSEC_MASK) != 0)
+#define HAS_IPSEC_POLICY(p) (((p) & POLICY_ENCRYPT) || ((p) & POLICY_AUTHENTICATE))
 
 /*
  * values for right=/left=
