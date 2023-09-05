@@ -1,4 +1,0 @@
-As ikev2-labeled-ipsec-01 but now one side is not using labels.
-
-The connection should fail.
-

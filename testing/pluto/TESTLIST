@@ -1028,10 +1028,6 @@ kvmplutotest	interop-ikev2-esp-aes_gcm-freebsd-netbsd		freebsd	github/1228
 # EAPTLS
 kvmplutotest	interop-ikev2-eaptls-strongswan-client			wip
 
-# IKEv1 Selinux / secure labeling tests
-kvmplutotest	ikev1-labeled-ipsec-01-permissive				good
-kvmplutotest	ikev1-labeled-ipsec-02-mismatch					wip
-kvmplutotest	ikev1-labeled-ipsec-03-multi-acquires				wip
 # IKEv2 Selinux / secure labeling tests
 kvmplutotest	ikev2-labeled-ipsec-01-ike-ondemand-permissive			good
 kvmplutotest	ikev2-labeled-ipsec-01-ike-ondemand-enforcing			wip
