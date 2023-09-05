@@ -556,11 +556,20 @@ static void down_routed_tunnel(enum routing_event event,
 	ldbg_routing((*child)->sa.st_logger, "keeping connection; NO!");
 	delete_child_sa(child);
 
+#if 0
+	/*
+	 * This code path is triggered during shutdown (and/or by
+	 * <<ipsec delete>>).
+	 *
+	 * For instance, ikev1-connswitch-02.
+	 */
 	llog_pexpect(c->logger, HERE, "reaching unreachable code?");
+#endif
 
 	remove_connection_from_pending(c);
 	delete_states_by_connection(c);
 	connection_unroute(c, HERE);
+	
 }
 
 /*
