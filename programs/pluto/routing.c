@@ -905,13 +905,6 @@ void connection_acquire(struct connection *c, threadtime_t *inception,
 
 void connection_revive(struct connection *c, const threadtime_t *inception, where_t where)
 {
-	if (c->config->ike_version == IKEv1 && is_labeled(c)) {
-		initiate_connection(c, /*remote-host-name*/NULL,
-				    /*background*/true,
-				    c->logger);
-		return;
-	}
-
 	dispatch(CONNECTION_REVIVE, &c,
 		 c->logger, where,
 		 (struct routing_annex) {
@@ -1009,12 +1002,6 @@ void connection_timeout_ike(struct ike_sa **ike, where_t where)
 void connection_delete_ike(struct ike_sa **ike, where_t where)
 {
 	struct connection *c = (*ike)->sa.st_connection;
-
-	if (c->config->ike_version == IKEv1 && is_labeled(c)) {
-		delete_ike_family(ike);
-		return;
-	}
-
 	dispatch(CONNECTION_DELETE_IKE, &c,
 		 (*ike)->sa.st_logger, where,
 		 (struct routing_annex) {
@@ -1082,22 +1069,14 @@ static void dispatch_1(enum routing_event event,
 			if (never_negotiate(c)) {
 				if (!unrouted_to_routed_never_negotiate(event, c, where)) {
 					/* XXX: why whack only? */
-					llog(WHACK_STREAM|RC_ROUTE, logger, "could not route");
-					return;
-				}
-				PEXPECT(logger, c->child.routing == RT_ROUTED_NEVER_NEGOTIATE);
-			} else if (is_labeled_template(c)) {
-				if (!unrouted_to_routed_sec_label(event, c, logger, where)) {
-					/* XXX: why whack only? */
 					llog(RC_ROUTE, logger, "could not route");
 					return;
 				}
-				PEXPECT(logger, c->child.routing == RT_ROUTED_ONDEMAND);
+				PEXPECT(logger, c->child.routing == RT_ROUTED_NEVER_NEGOTIATE);
 			} else {
-				PEXPECT(logger, !is_labeled(c));
 				if (!unrouted_to_routed_ondemand(event, c, where)) {
 					/* XXX: why whack only? */
-					llog(WHACK_STREAM|RC_ROUTE, logger, "could not route");
+					llog(RC_ROUTE, logger, "could not route");
 					return;
 				}
 				PEXPECT(logger, c->child.routing == RT_ROUTED_ONDEMAND);
@@ -1879,18 +1858,10 @@ static void dispatch_1(enum routing_event event,
 					return;
 				}
 				PEXPECT(logger, c->child.routing == RT_ROUTED_NEVER_NEGOTIATE);
-			} else if (is_labeled_template(c)) {
+			} else {
 				if (!unrouted_to_routed_sec_label(event, c, logger, where)) {
 					/* XXX: why whack only? */
 					llog(RC_ROUTE, logger, "could not route");
-					return;
-				}
-				PEXPECT(logger, c->child.routing == RT_ROUTED_ONDEMAND);
-			} else {
-				PEXPECT(logger, !is_labeled(c));
-				if (!unrouted_to_routed_ondemand(event, c, where)) {
-					/* XXX: why whack only? */
-					llog(WHACK_STREAM|RC_ROUTE, logger, "could not route");
 					return;
 				}
 				PEXPECT(logger, c->child.routing == RT_ROUTED_ONDEMAND);
@@ -1903,9 +1874,6 @@ static void dispatch_1(enum routing_event event,
 			ldbg_routing(logger, "already unrouted");
 			return;
 		case X(UNROUTE, ROUTED_ONDEMAND, LABELED_TEMPLATE):
-			if (c->child.routing == RT_ROUTED_REVIVAL) {
-				delete_revival(c);
-			}
 			unroute_connection_instances(event, c, where);
 			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
 						   c->logger, where, "unroute template");
@@ -1918,31 +1886,19 @@ static void dispatch_1(enum routing_event event,
 			ldbg_routing(logger, "already unrouted");
 			return;
 		case X(UNROUTE, ROUTED_ONDEMAND, LABELED_PARENT):
-			if (c->child.routing == RT_ROUTED_REVIVAL) {
-				delete_revival(c);
-			}
 			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
 						   c->logger, where, "unroute instance");
 			/* do now so route_owner won't find us */
 			set_routing(event, c, RT_UNROUTED, NULL, where);
 			do_updown_unroute(c, NULL);
 			return;
-		case X(ACQUIRE, ROUTED_TUNNEL, LABELED_PARENT): /* IKEv1 */
-			PEXPECT(logger, c->config->ike_version == IKEv1);
+		case X(ACQUIRE, UNROUTED, LABELED_PARENT):
+		case X(ACQUIRE, ROUTED_ONDEMAND, LABELED_PARENT):
+		case X(INITIATE, UNROUTED, LABELED_PARENT):
 			ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
 					  e->inception, e->sec_label, e->background,
 					  logger);
 			return;
-		case X(ACQUIRE, UNROUTED, LABELED_PARENT):
-		case X(ACQUIRE, ROUTED_ONDEMAND, LABELED_PARENT):
-		case X(INITIATE, UNROUTED, LABELED_PARENT):
-			if (BROKEN_TRANSITION) {
-				ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
-						  e->inception, e->sec_label, e->background,
-						  logger);
-				return;
-			}
-			break;
 		case X(DELETE_IKE, ROUTED_ONDEMAND, LABELED_PARENT):
 			if (BROKEN_TRANSITION) {
 				delete_ike_family(e->ike);
@@ -1953,10 +1909,6 @@ static void dispatch_1(enum routing_event event,
 			return;
 		case X(ESTABLISH_INBOUND, UNROUTED, LABELED_PARENT):
 			if (BROKEN_TRANSITION) {
-				/* instance was routed by routed-ondemand? */
-				if (c->child.routing == RT_ROUTED_REVIVAL) {
-					delete_revival(c);
-				}
 				set_routing(event, c, RT_ROUTED_INBOUND, NULL, where);
 				return;
 			}
