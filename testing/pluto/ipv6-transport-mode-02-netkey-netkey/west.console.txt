@@ -61,7 +61,6 @@ west #
 000 ocsp-trust-name=<unset>
 000 ocsp-cache-size=1000, ocsp-cache-min-age=3600, ocsp-cache-max-age=86400, ocsp-method=get
 000 global-redirect=no, global-redirect-to=<unset>
-000 secctx-attr-type=XXXX
 000 debug ...
 000  
 000 nat-traversal=yes, keep-alive=20, nat-ikeport=4500

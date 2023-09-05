@@ -34,7 +34,6 @@ ipsec auto --status
 000 ddos-cookies-threshold=25000, ddos-max-halfopen=50000, ddos-mode=auto, ikev1-policy=drop
 000 ikebuf=0, msg_errqueue=yes, crl-strict=no, crlcheckinterval=0, listen=<any>, nflog-all=0
 000 global-redirect=no, global-redirect-to=<unset>
-000 secctx-attr-type=XXXX
 000 debug ...
 000  
 000 nat-traversal=yes, keep-alive=20, nat-ikeport=4500
