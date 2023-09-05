@@ -17,9 +17,14 @@
 #ifndef WHACK_DELETE_H
 #define WHACK_DELETE_H
 
+#include "where.h"
+
+struct connection;
 struct whack_message;
 struct show;
 
 void whack_delete(const struct whack_message *m, struct show *s, bool log_unknown_name);
+
+void whack_delete_connection_states(struct connection *c, where_t where);
 
 #endif

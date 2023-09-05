@@ -22,6 +22,7 @@
 #include <stdbool.h>
 
 #include "whack_down.h"
+#include "whack_delete.h"
 #include "connections.h"
 #include "show.h"
 #include "log.h"
@@ -80,7 +81,7 @@ static void down_connection(struct connection **cp, struct logger *logger)
 		}
 	} else {
 		dbg("connection not shared - terminating IKE and IPsec SA");
-		whack_connection_delete_states((*cp), HERE);
+		whack_delete_connection_states((*cp), HERE);
 	}
 
 	/*

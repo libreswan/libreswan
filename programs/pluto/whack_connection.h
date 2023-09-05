@@ -116,6 +116,4 @@ void whack_connection_states(struct connection *c,
 					  enum whack_state),
 			     where_t where);
 
-void whack_connection_delete_states(struct connection *c, where_t where);
-
 #endif
