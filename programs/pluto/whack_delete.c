@@ -166,8 +166,8 @@ void whack_delete_connection_states(struct connection *c, where_t where)
  * Terminate and then delete connections with the specified name.
  */
 
-static bool whack_delete_connection(struct show *s, struct connection *c,
-				    const struct whack_message *m UNUSED)
+static bool whack_delete_one_connection(struct show *s, struct connection *c,
+					const struct whack_message *m UNUSED)
 {
 	struct logger *logger = show_logger(s);
 	connection_attach(c, logger);
@@ -243,6 +243,26 @@ static bool whack_delete_connection(struct show *s, struct connection *c,
 	return true;
 }
 
+void whack_delete_connection(struct connection **cp, struct logger *logger)
+{
+	/*
+	 * If it's a connection instance, grap a reference so
+	 * that this function holds the last reference
+	 * (permanent connections have a free reference).
+	 */
+
+	struct connection *c =
+		(is_instance(*cp) ? connection_addref(*cp, logger) :
+		 *cp);
+
+	delete_states_by_connection(c);
+	connection_unroute(c, HERE); /* should be redundant */
+	remove_connection_from_pending(c);
+	flush_connection_events(c);
+
+	delete_connection(&c);
+}
+
 void whack_delete(const struct whack_message *m, struct show *s,
 		  bool log_unknown_name)
 {
@@ -256,7 +276,7 @@ void whack_delete(const struct whack_message *m, struct show *s,
 	 * This is new-to-old which means that instances are processed
 	 * before templates.
 	 */
-	whack_connections_bottom_up(m, s, whack_delete_connection,
+	whack_connections_bottom_up(m, s, whack_delete_one_connection,
 				    (struct each) {
 					    .log_unknown_name = log_unknown_name,
 				    });

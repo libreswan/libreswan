@@ -31,6 +31,7 @@
 #include <unistd.h>		/* for exit(2) */
 
 #include "whack_shutdown.h"
+#include "whack_delete.h"	/* for whack_delete_connection() */
 
 #include "constants.h"
 #include "lswconf.h"		/* for lsw_conf_free_oco() */
@@ -119,22 +120,7 @@ static void delete_every_connection(void)
 			break;
 		}
 
-		/*
-		 * If it's a connection instance, grap a reference so
-		 * that this function holds the last reference
-		 * (permanent connections have a free reference).
-		 */
-
-		struct connection *c =
-			(is_instance(cq.c) ? connection_addref(cq.c, &global_logger) :
-			 cq.c);
-
-		delete_states_by_connection(c);
-		connection_unroute(c, HERE); /* should be redundant */
-		remove_connection_from_pending(c);
-		flush_connection_events(c);
-
-		delete_connection(&c);
+		whack_delete_connection(&cq.c, &global_logger);
 	}
 }
 
