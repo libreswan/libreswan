@@ -90,18 +90,6 @@ extern enum_names dns_auth_level_names;
 extern enum_names eap_code_names;
 extern enum_names eap_type_names;
 
-/*
- * Attribute Type "constant" for Security Context
- *
- * Originally, we assigned the value 10, but that properly belongs to ECN_TUNNEL.
- * We then assigned 32001 which is in the private range RFC 2407.
- * Unfortunately, we feel we have to support 10 as an option for backward
- * compatibility.
- * This variable specifies (globally!!) which we support: 10 or 32001.
- * ??? surely that makes migration to 32001 all or nothing.
- */
-extern uint16_t secctx_attr_type;
-
 extern enum_names natt_method_names;
 
 extern enum_names secret_kind_names;

@@ -440,18 +440,6 @@ static void pluto_init_nss(const char *nssdir, struct logger *logger)
 deltatime_t crl_check_interval = DELTATIME_INIT(0);
 
 /*
- * Attribute Type "constant" for Security Context
- *
- * Originally, we assigned the value 10, but that properly belongs to ECN_TUNNEL.
- * We then assigned 32001 which is in the private range RFC 2407.
- * Unfortunately, we feel we have to support 10 as an option for backward
- * compatibility.
- * This variable specifies (globally!!) which we support: 10 or 32001.
- * That makes migration to 32001 all or nothing.
- */
-uint16_t secctx_attr_type = SECCTX;
-
-/*
  * Table of Pluto command-line options.
  *
  * For getopt_long(3), but with twists.
@@ -847,20 +835,9 @@ int main(int argc, char **argv)
 			}
 			continue;
 
-#ifdef HAVE_LABELED_IPSEC
 		case 'w':	/* --secctx-attr-type */
-		{
-			unsigned long u;
-			check_err(ttoulb(optarg, 0, 0, 0xFFFF, &u),
-				  longindex, logger);
-			if (u != SECCTX && u != ECN_TUNNEL_or_old_SECCTX) {
-				fatal_opt(longindex, logger,
-					  "must be a positive 32001 (default) or 10 (for backward compatibility)");
-			}
-			secctx_attr_type = u;
+			llog(RC_LOG, logger, "--secctx-attr-type not supported");
 			continue;
-		}
-#endif
 
 		case 'k':	/* --ikev1-reject */
 			pluto_ikev1_pol = GLOBAL_IKEv1_REJECT;
@@ -1364,7 +1341,6 @@ int main(int argc, char **argv)
 			set_global_redirect_dests(cfg->setup.strings[KSF_GLOBAL_REDIRECT_TO]);
 
 			nhelpers = cfg->setup.options[KBF_NHELPERS];
-			secctx_attr_type = cfg->setup.options[KBF_SECCTX];
 			cur_debugging = cfg->setup.options[KBF_PLUTODEBUG];
 
 			char *protostack = cfg->setup.strings[KSF_PROTOSTACK];
@@ -1909,10 +1885,4 @@ void show_setup_plutomain(struct show *s)
 		enum_name(&allow_global_redirect_names, global_redirect),
 		strlen(global_redirect_to()) > 0 ? global_redirect_to() : "<unset>"
 		);
-
-#ifdef HAVE_LABELED_IPSEC
-	show_comment(s, "secctx-attr-type=%d", secctx_attr_type);
-#else
-	show_comment(s, "secctx-attr-type=<unsupported>");
-#endif
 }

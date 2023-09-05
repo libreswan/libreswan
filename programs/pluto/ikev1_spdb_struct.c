@@ -1274,46 +1274,6 @@ bool ikev1_out_sa(pb_stream *outs,
 						      attr_val_descs,
 						      &trans_pbs))
 						goto fail;
-
-#ifdef HAVE_LABELED_IPSEC
-					if (c->config->sec_label.len != 0) {
-						chunk_t out_label = c->config->sec_label;
-
-						if (st->st_v1_acquired_sec_label.len != 0) {
-							out_label = st->st_v1_acquired_sec_label;
-						} else {
-							if (st->st_v1_seen_sec_label.len !=0)
-								out_label = st->st_v1_seen_sec_label;
-						}
-
-						pb_stream val_pbs;
-						struct sec_ctx uctx = {
-							.ctx_doi = XFRM_SC_DOI_LSM,
-							.ctx_alg = XFRM_SC_ALG_SELINUX,
-							.ctx_len = out_label.len
-						};
-
-
-						struct isakmp_attribute attr = {
-							.isaat_af_type = secctx_attr_type |
-								ISAKMP_ATTR_AF_TLV,
-						};
-
-						if (!out_struct(&attr,
-								attr_desc,
-								&trans_pbs,
-								&val_pbs) ||
-						    !out_struct(&uctx,
-								&sec_ctx_desc,
-								&val_pbs,
-								NULL) ||
-						    !out_raw(out_label.ptr, out_label.len, &val_pbs,
-							     " variable length sec_label"))
-							goto fail;
-
-						close_output_pbs(&val_pbs);
-					}
-#endif
 				}
 
 				/*
@@ -2394,7 +2354,6 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 {
 	lset_t seen_attrs = LEMPTY,
 	       seen_durations = LEMPTY;
-	bool seen_secctx_attr = false;
 	uint16_t life_type = 0;	/* initialized to silence GCC */
 	const struct dh_desc *pfs_group = NULL;
 
@@ -2473,30 +2432,19 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		ty = a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK;
 		val = a.isaat_lv;
 
-		if (ty == secctx_attr_type) {
-			if (seen_secctx_attr) {
-				log_state(RC_LOG_SERIOUS, st,
-					  "repeated SECCTX attribute in IPsec Transform %u",
-					  trans->isat_transnum);
-				return false;
-			}
-			seen_secctx_attr = true;
-			vdesc = NULL;
-		} else {
-			passert(ty < LELEM_ROOF);
-			if (LHAS(seen_attrs, ty)) {
-				esb_buf b;
-				log_state(RC_LOG_SERIOUS, st,
-					  "repeated %s attribute in IPsec Transform %u",
-					  enum_show(&ipsec_attr_names, a.isaat_af_type, &b),
-					  trans->isat_transnum);
-				return false;
-			}
-
-			seen_attrs |= LELEM(ty);
-			passert(ty < IPSEC_ATTR_VAL_DESCS_ROOF);
-			vdesc = ipsec_attr_val_descs[ty];
+		passert(ty < LELEM_ROOF);
+		if (LHAS(seen_attrs, ty)) {
+			esb_buf b;
+			log_state(RC_LOG_SERIOUS, st,
+				  "repeated %s attribute in IPsec Transform %u",
+				  enum_show(&ipsec_attr_names, a.isaat_af_type, &b),
+				  trans->isat_transnum);
+			return false;
 		}
+
+		seen_attrs |= LELEM(ty);
+		passert(ty < IPSEC_ATTR_VAL_DESCS_ROOF);
+		vdesc = ipsec_attr_val_descs[ty];
 
 		if (vdesc != NULL) {
 			/* reject unknown enum values */
