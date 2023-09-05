@@ -1077,7 +1077,6 @@ static void dispatch_1(enum routing_event event,
 			return;
 
 		case X(ROUTE, UNROUTED, TEMPLATE):
-		case X(ROUTE, UNROUTED, LABELED_TEMPLATE):
 		case X(ROUTE, UNROUTED, PERMANENT):
 			add_policy(c, POLICY_ROUTE); /* always */
 			if (never_negotiate(c)) {
@@ -1411,13 +1410,11 @@ static void dispatch_1(enum routing_event event,
 			return;
 
 		case X(UNROUTE, UNROUTED, TEMPLATE):
-		case X(UNROUTE, UNROUTED, LABELED_TEMPLATE):
 			if (unroute_connection_instances(event, c, where)) {
 				return;
 			}
 			ldbg_routing(logger, "already unrouted");
 			return;
-		case X(UNROUTE, ROUTED_ONDEMAND, LABELED_TEMPLATE):
 		case X(UNROUTE, ROUTED_ONDEMAND, TEMPLATE):
 		case X(UNROUTE, ROUTED_REVIVAL, TEMPLATE):
 			if (c->child.routing == RT_ROUTED_REVIVAL) {
@@ -1432,8 +1429,6 @@ static void dispatch_1(enum routing_event event,
 			return;
 
 		case X(UNROUTE, UNROUTED, INSTANCE):
-		case X(UNROUTE, UNROUTED, LABELED_CHILD):
-		case X(UNROUTE, UNROUTED, LABELED_PARENT):
 			ldbg_routing(logger, "already unrouted");
 			return;
 		case X(INITIATE, UNROUTED, INSTANCE):
@@ -1529,7 +1524,6 @@ static void dispatch_1(enum routing_event event,
 			return;
 
 		case X(UNROUTE, ROUTED_ONDEMAND, INSTANCE):
-		case X(UNROUTE, ROUTED_ONDEMAND, LABELED_PARENT):
 		case X(UNROUTE, ROUTED_REVIVAL, INSTANCE):
 			if (c->child.routing == RT_ROUTED_REVIVAL) {
 				delete_revival(c);
@@ -1642,31 +1636,6 @@ static void dispatch_1(enum routing_event event,
 			remove_connection_from_pending(c);
 			delete_states_by_connection(c);
 			connection_unroute(c, HERE);
-			return;
-
-		case X(ACQUIRE, ROUTED_TUNNEL, LABELED_PARENT): /* IKEv1 */
-			PEXPECT(logger, c->config->ike_version == IKEv1);
-			ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
-					  e->inception, e->sec_label, e->background,
-					  logger);
-			return;
-		case X(ACQUIRE, UNROUTED, LABELED_PARENT):
-		case X(ACQUIRE, ROUTED_ONDEMAND, LABELED_PARENT):
-		case X(INITIATE, UNROUTED, LABELED_PARENT):
-			if (BROKEN_TRANSITION) {
-				ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
-						  e->inception, e->sec_label, e->background,
-						  logger);
-				return;
-			}
-			break;
-		case X(DELETE_IKE, ROUTED_ONDEMAND, LABELED_PARENT):
-			if (BROKEN_TRANSITION) {
-				delete_ike_family(e->ike);
-				/* stop updown_unroute() finding this
-				 * connection */
-				set_routing(event, c, RT_UNROUTED, NULL, where);
-			}
 			return;
 
 		case X(DELETE_IKE, ROUTED_TUNNEL, PERMANENT):
@@ -1815,7 +1784,6 @@ static void dispatch_1(enum routing_event event,
 		case X(ESTABLISH_INBOUND, ROUTED_ONDEMAND, PERMANENT):
 		case X(ESTABLISH_INBOUND, ROUTED_REVIVAL, PERMANENT):
 		case X(ESTABLISH_INBOUND, UNROUTED, INSTANCE):
-		case X(ESTABLISH_INBOUND, UNROUTED, LABELED_PARENT):
 		case X(ESTABLISH_INBOUND, UNROUTED, PERMANENT):
 		case X(ESTABLISH_INBOUND, UNROUTED_NEGOTIATION, INSTANCE):
 			if (BROKEN_TRANSITION) {
@@ -1832,7 +1800,6 @@ static void dispatch_1(enum routing_event event,
 		case X(ESTABLISH_OUTBOUND, UNROUTED_INBOUND, INSTANCE):
 		case X(ESTABLISH_OUTBOUND, ROUTED_INBOUND, PERMANENT):
 		case X(ESTABLISH_OUTBOUND, ROUTED_INBOUND, INSTANCE):
-		case X(ESTABLISH_OUTBOUND, ROUTED_INBOUND, LABELED_PARENT):
 			if (BROKEN_TRANSITION) {
 				set_routing(event, c, RT_ROUTED_TUNNEL, *(e->child), where);
 				return;
@@ -1841,7 +1808,6 @@ static void dispatch_1(enum routing_event event,
 
 		case X(ESTABLISH_OUTBOUND, ROUTED_TUNNEL, PERMANENT):
 		case X(ESTABLISH_OUTBOUND, ROUTED_TUNNEL, INSTANCE):
-		case X(ESTABLISH_OUTBOUND, ROUTED_TUNNEL, LABELED_PARENT): /* ikev1-labeled-ipsec-01-permissive */
 			if (BROKEN_TRANSITION) {
 				/*
 				 * For instance rekey in
@@ -1900,8 +1866,120 @@ static void dispatch_1(enum routing_event event,
 			}
 			return;
 
-		}
+/*
+ * Labeled IPsec.
+ */
 
+		case X(ROUTE, UNROUTED, LABELED_TEMPLATE):
+			add_policy(c, POLICY_ROUTE); /* always */
+			if (never_negotiate(c)) {
+				if (!unrouted_to_routed_never_negotiate(event, c, where)) {
+					/* XXX: why whack only? */
+					llog(WHACK_STREAM|RC_ROUTE, logger, "could not route");
+					return;
+				}
+				PEXPECT(logger, c->child.routing == RT_ROUTED_NEVER_NEGOTIATE);
+			} else if (is_labeled_template(c)) {
+				if (!unrouted_to_routed_sec_label(event, c, logger, where)) {
+					/* XXX: why whack only? */
+					llog(RC_ROUTE, logger, "could not route");
+					return;
+				}
+				PEXPECT(logger, c->child.routing == RT_ROUTED_ONDEMAND);
+			} else {
+				PEXPECT(logger, !is_labeled(c));
+				if (!unrouted_to_routed_ondemand(event, c, where)) {
+					/* XXX: why whack only? */
+					llog(WHACK_STREAM|RC_ROUTE, logger, "could not route");
+					return;
+				}
+				PEXPECT(logger, c->child.routing == RT_ROUTED_ONDEMAND);
+			}
+			return;
+		case X(UNROUTE, UNROUTED, LABELED_TEMPLATE):
+			if (unroute_connection_instances(event, c, where)) {
+				return;
+			}
+			ldbg_routing(logger, "already unrouted");
+			return;
+		case X(UNROUTE, ROUTED_ONDEMAND, LABELED_TEMPLATE):
+			if (c->child.routing == RT_ROUTED_REVIVAL) {
+				delete_revival(c);
+			}
+			unroute_connection_instances(event, c, where);
+			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
+						   c->logger, where, "unroute template");
+			/* do now so route_owner won't find us */
+			set_routing(event, c, RT_UNROUTED, NULL, where);
+			do_updown_unroute(c, NULL);
+			return;
+		case X(UNROUTE, UNROUTED, LABELED_CHILD):
+		case X(UNROUTE, UNROUTED, LABELED_PARENT):
+			ldbg_routing(logger, "already unrouted");
+			return;
+		case X(UNROUTE, ROUTED_ONDEMAND, LABELED_PARENT):
+			if (c->child.routing == RT_ROUTED_REVIVAL) {
+				delete_revival(c);
+			}
+			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
+						   c->logger, where, "unroute instance");
+			/* do now so route_owner won't find us */
+			set_routing(event, c, RT_UNROUTED, NULL, where);
+			do_updown_unroute(c, NULL);
+			return;
+		case X(ACQUIRE, ROUTED_TUNNEL, LABELED_PARENT): /* IKEv1 */
+			PEXPECT(logger, c->config->ike_version == IKEv1);
+			ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
+					  e->inception, e->sec_label, e->background,
+					  logger);
+			return;
+		case X(ACQUIRE, UNROUTED, LABELED_PARENT):
+		case X(ACQUIRE, ROUTED_ONDEMAND, LABELED_PARENT):
+		case X(INITIATE, UNROUTED, LABELED_PARENT):
+			if (BROKEN_TRANSITION) {
+				ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
+						  e->inception, e->sec_label, e->background,
+						  logger);
+				return;
+			}
+			break;
+		case X(DELETE_IKE, ROUTED_ONDEMAND, LABELED_PARENT):
+			if (BROKEN_TRANSITION) {
+				delete_ike_family(e->ike);
+				/* stop updown_unroute() finding this
+				 * connection */
+				set_routing(event, c, RT_UNROUTED, NULL, where);
+			}
+			return;
+		case X(ESTABLISH_INBOUND, UNROUTED, LABELED_PARENT):
+			if (BROKEN_TRANSITION) {
+				/* instance was routed by routed-ondemand? */
+				if (c->child.routing == RT_ROUTED_REVIVAL) {
+					delete_revival(c);
+				}
+				set_routing(event, c, RT_ROUTED_INBOUND, NULL, where);
+				return;
+			}
+			break;
+		case X(ESTABLISH_OUTBOUND, ROUTED_INBOUND, LABELED_PARENT):
+			if (BROKEN_TRANSITION) {
+				set_routing(event, c, RT_ROUTED_TUNNEL, *(e->child), where);
+				return;
+			}
+			break;
+		case X(ESTABLISH_OUTBOUND, ROUTED_TUNNEL, LABELED_PARENT): /* ikev1-labeled-ipsec-01-permissive */
+			if (BROKEN_TRANSITION) {
+				/*
+				 * For instance rekey in
+				 * ikev2-12-transport-psk and
+				 * ikev2-28-rw-server-rekey
+				 * ikev1-labeled-ipsec-01-permissive
+				 */
+				set_routing(event, c, RT_ROUTED_TUNNEL, *(e->child), where);
+				return;
+			}
+			return;
+		}
 	}
 
 	BARF_JAMBUF((DBGP(DBG_BASE) ? PASSERT_FLAGS : PEXPECT_FLAGS),
