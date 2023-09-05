@@ -1904,7 +1904,8 @@ static void dispatch_1(enum routing_event event,
 
 	}
 
-	LLOG_PEXPECT_JAMBUF(c->logger, where, buf) {
+	BARF_JAMBUF((DBGP(DBG_BASE) ? PASSERT_FLAGS : PEXPECT_FLAGS),
+		    c->logger, /*ignore-exit-code*/0, where, buf) {
 		jam_string(buf, "routing: unhandled ");
 		jam_event(buf, event, c, e);
 	}
