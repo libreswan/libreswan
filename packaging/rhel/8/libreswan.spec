@@ -17,7 +17,6 @@
     NSS_HAS_IPSEC_PROFILE=true \\\
     NSS_REQ_AVA_COPY=false \\\
     PREFIX=%{_prefix} \\\
-    PYTHON_BINARY=%{__python3} \\\
     SHELL_BINARY=%{_bindir}/sh \\\
     USE_AUTHPAM=true \\\
     USE_DNSSEC=true \\\

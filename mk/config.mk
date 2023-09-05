@@ -423,9 +423,6 @@ USERLAND_CFLAGS += -DNSS_BINDIR=\"$(NSS_BINDIR)\"
 
 DOCKER_PLUTONOFORK ?= --nofork
 
-# PYTHON_BINARY is used for python scripts shebang
-PYTHON_BINARY ?= /usr/bin/python3
-
 # SHELL_BINARY is used for sh scripts shebang
 SHELL_BINARY ?= /bin/sh
 
@@ -632,7 +629,6 @@ TRANSFORM_VARIABLES = sed \
 			-e "s:@MODPROBEARGS@:$(MODPROBEARGS):g" \
 			-e "s:@MODPROBEBIN@:$(MODPROBEBIN):g" \
 			-e "s:@OSDEP@:${OSDEP}:g" \
-			-e "s:@PYTHON_BINARY@:$(PYTHON_BINARY):g" \
 			-e "s:@SD_PLUTO_OPTIONS@:$(SD_PLUTO_OPTIONS):g" \
 			-e "s:@SD_RESTART_TYPE@:$(SD_RESTART_TYPE):g" \
 			-e "s:@SD_TYPE@:$(SD_TYPE):g" \

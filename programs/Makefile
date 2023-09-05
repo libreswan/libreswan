@@ -47,16 +47,8 @@ SUBDIRS += readwriteconf
 SUBDIRS += rsasigkey
 SUBDIRS += setup
 
-ifneq ($(LINUX_VARIANT),)
-SUBDIRS += show.linux
-endif
-
 SUBDIRS += showhostkey
 SUBDIRS += showroute
-
-ifneq ($(LINUX_VARIANT),)
-SUBDIRS += verify.linux
-endif
 
 ifeq ($(USE_PORTEXCLUDES),true)
 SUBDIRS += portexcludes

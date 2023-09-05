@@ -13,7 +13,6 @@
     NSSDIR=%{_sysconfdir}/ipsec.d \\\
     INITSYSTEM=systemd \\\
     PREFIX=%{_prefix} \\\
-    PYTHON_BINARY=%{__python2} \\\
     SHELL_BINARY=/bin/sh \\\
     USE_AUTHPAM=true \\\
     USE_DNSSEC=%{USE_DNSSEC} \\\

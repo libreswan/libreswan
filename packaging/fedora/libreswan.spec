@@ -11,7 +11,6 @@
     MANDIR=%{_mandir} \\\
     PREFIX=%{_prefix} \\\
     INITSYSTEM=systemd \\\
-    PYTHON_BINARY=%{__python3} \\\
     SHELL_BINARY=%{_bindir}/sh \\\
     USE_DNSSEC=true \\\
     USE_LABELED_IPSEC=true \\\

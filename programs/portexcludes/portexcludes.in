@@ -1,4 +1,4 @@
-#!@PYTHON_BINARY@
+#!/usr/bin/env python3
 # -*- mode: python; -*-
 
 """Insert/remove port exclude overrides.
