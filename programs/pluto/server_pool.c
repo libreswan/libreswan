@@ -38,7 +38,7 @@
 #include "log.h"
 #include "state.h"
 #include "server.h"
-#include "pluto_shutdown.h"		/* for exiting_pluto */
+#include "whack_shutdown.h"		/* for exiting_pluto; */
 #include "server_pool.h"
 #include "list_entry.h"
 #include "pluto_timing.h"

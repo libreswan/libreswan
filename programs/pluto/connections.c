@@ -475,40 +475,6 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 	pfree(c);
 }
 
-void delete_every_connection(void)
-{
-	/*
-	 * Keep deleting the newest connection until there isn't one.
-	 *
-	 * Deleting new-to-old means that instances are deleted before
-	 * templates.  Picking away at the queue avoids the posability
-	 * of a cascading delete deleting multiple connections.
-	 */
-	while (true) {
-		struct connection_filter cq = { .where = HERE, };
-		if (!next_connection_new2old(&cq)) {
-			break;
-		}
-
-		/*
-		 * If it's a connection instance, grap a reference so
-		 * that this function holds the last reference
-		 * (permanent connections have a free reference).
-		 */
-
-		struct connection *c =
-			(is_instance(cq.c) ? connection_addref(cq.c, &global_logger) :
-			 cq.c);
-
-		delete_states_by_connection(c);
-		connection_unroute(c, HERE); /* should be redundant */
-		remove_connection_from_pending(c);
-		flush_connection_events(c);
-
-		delete_connection(&c);
-	}
-}
-
 ip_port end_host_port(const struct host_end *this, const struct host_end *that)
 {
 	unsigned port;

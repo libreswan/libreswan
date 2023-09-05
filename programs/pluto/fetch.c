@@ -45,7 +45,7 @@
 #include "crl_queue.h"
 #include "server.h"
 #include "lswnss.h"			/* for llog_nss_error() */
-#include "pluto_shutdown.h"		/* for exiting_pluto */
+#include "whack_shutdown.h"		/* for exiting_pluto; */
 
 #define FETCH_CMD_TIMEOUT       5       /* seconds */
 

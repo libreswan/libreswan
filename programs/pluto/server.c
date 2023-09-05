@@ -73,7 +73,7 @@
 #include "ikev2.h"		/* for complete_v2_state_transition() */
 #include "iface.h"
 #include "server_fork.h"
-#include "pluto_shutdown.h"
+#include "whack_shutdown.h"	/* for whack_shutdown() and exiting_pluto; */
 #include "show.h"
 
 #ifdef USE_XFRM_INTERFACE
@@ -929,7 +929,7 @@ static void huphandler_cb(struct logger *logger)
 
 static void termhandler_cb(struct logger *logger)
 {
-	shutdown_pluto(logger, PLUTO_EXIT_OK);
+	whack_shutdown(logger, PLUTO_EXIT_OK);
 }
 
 #ifdef USE_SECCOMP

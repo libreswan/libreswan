@@ -39,7 +39,7 @@
 #include "iface.h"
 #include "initiate.h"			/* for initiate_connection() */
 #include "revival.h"
-#include "pluto_shutdown.h"		/* for exiting_pluto */
+#include "whack_shutdown.h"		/* for exiting_pluto; */
 #include "ikev2_replace.h"
 #include "orient.h"
 

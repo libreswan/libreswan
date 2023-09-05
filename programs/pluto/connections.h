@@ -735,8 +735,6 @@ void connection_delref_where(struct connection **cp, const struct logger *owner,
 #define connection_addref(C, OWNER) connection_addref_where(C, OWNER, HERE)
 #define connection_delref(CP, OWNER) connection_delref_where(CP, OWNER, HERE)
 
-extern void delete_every_connection(void);
-
 #define remote_id_was_instantiated(c) \
 	( is_instance(c) && \
 	  ( !id_is_ipaddr(&(c)->remote->host.id) || \

@@ -56,7 +56,6 @@
 #include "addresspool.h"		/* for show_addresspool_status() */
 #include "pluto_stats.h"		/* for clear_pluto_stats() et.al. */
 #include "server_fork.h"		/* for show_process_status() */
-#include "pluto_shutdown.h"		/* for shutdown_pluto() */
 
 #include "whack_connection.h"
 #include "whack_connectionstatus.h"
@@ -70,6 +69,7 @@
 #include "whack_addconn.h"
 #include "whack_impair.h"
 #include "whack_debug.h"
+#include "whack_shutdown.h"
 
 static void whack_rereadsecrets(struct show *s)
 {
@@ -828,7 +828,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 	/* luckly last !?! */
 	if (m->whack_shutdown) {
 		dbg_whack(s, "shutdown: start: leave-state=%s", bool_str(m->whack_leave_state));
-		shutdown_pluto(logger, m->whack_leave_state ? PLUTO_EXIT_LEAVE_STATE : PLUTO_EXIT_OK);
+		whack_shutdown(logger, (m->whack_leave_state ? PLUTO_EXIT_LEAVE_STATE : PLUTO_EXIT_OK));
 		dbg_whack(s, "shutdown: stop: leave-state=%s", bool_str(m->whack_leave_state));
 	}
 
@@ -866,6 +866,7 @@ void whack_handle_cb(int fd, void *arg UNUSED, struct logger *global_logger)
 /*
  * Handle a whack request.
  */
+
 static void whack_handle(struct fd *whackfd, struct logger *whack_logger)
 {
 	/*
@@ -917,9 +918,9 @@ static void whack_handle(struct fd *whackfd, struct logger *whack_logger)
 
 		if (msg.whack_shutdown) {
 			llog(RC_LOG, whack_logger, "shutting down%s",
-				    (msg.magic != WHACK_BASIC_MAGIC) ?  " despite whacky magic" : "");
+			     (msg.magic != WHACK_BASIC_MAGIC) ?  " despite whacky magic" : "");
 			/* magic invalid; msg.whack_leave_state is untouchable */
-			shutdown_pluto(whack_logger, PLUTO_EXIT_OK);
+			whack_shutdown(whack_logger, PLUTO_EXIT_OK);
 			return; /* force shutting down */
 		}
 

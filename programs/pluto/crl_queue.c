@@ -24,7 +24,7 @@
 #include "realtime.h"
 #include "defs.h"		/* for exiting_pluto */
 #include "log.h"
-#include "pluto_shutdown.h"		/* for exiting_pluto */
+#include "whack_shutdown.h"		/* for exiting_pluto; */
 #include "show.h"
 
 /*

@@ -19,9 +19,8 @@
 
 #include <stdbool.h>
 
-#include "lswcdefs.h"		/* for NEVER_RETURNS */
-
 enum pluto_exit_code;
+struct logger;
 
 /*
  * The global EXITING_PLUTO is there as a hint to long running threads
@@ -52,6 +51,6 @@ extern volatile bool exiting_pluto;
  * shutdown state (rather than special abort paths).
  */
 
-void shutdown_pluto(struct logger *logger, enum pluto_exit_code status);
+void whack_shutdown(struct logger *logger, enum pluto_exit_code exit_code);
 
 #endif

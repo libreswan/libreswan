@@ -30,20 +30,21 @@
 
 #include <unistd.h>		/* for exit(2) */
 
+#include "whack_shutdown.h"
+
 #include "constants.h"
 #include "lswconf.h"		/* for lsw_conf_free_oco() */
 #include "lswnss.h"		/* for lsw_nss_shutdown() */
 #include "lswalloc.h"		/* for report_leaks() et.al. */
 
 #include "defs.h"		/* for so_serial_t */
-#include "pluto_shutdown.h"
 #include "log.h"		/* for close_log() et.al. */
 
 #include "server_pool.h"	/* for stop_crypto_helpers() */
 #include "pluto_sd.h"		/* for pluto_sd() */
 #include "root_certs.h"		/* for free_root_certs() */
 #include "keys.h"		/* for free_preshared_secrets() */
-#include "connections.h"	/* for delete_every_connection() */
+#include "connections.h"
 #include "fetch.h"		/* for stop_crl_fetch_helper() et.al. */
 #include "crl_queue.h"		/* for free_crl_queue() */
 #include "iface.h"		/* for shutdown_ifaces() */
@@ -60,6 +61,8 @@
 #include "connection_db.h"	/* for check_connection_db() */
 #include "spd_route_db.h"	/* for check_spd_db() */
 #include "server_fork.h"	/* for check_server_fork() */
+#include "pending.h"
+#include "connection_event.h"
 
 volatile bool exiting_pluto = false;
 static enum pluto_exit_code pluto_exit_code;
@@ -99,6 +102,40 @@ static void exit_prologue(enum pluto_exit_code exit_code)
  #ifdef USE_SYSTEMD_WATCHDOG
 	pluto_sd(PLUTO_SD_STOPPING, exit_code);
  #endif
+}
+
+static void delete_every_connection(void)
+{
+	/*
+	 * Keep deleting the newest connection until there isn't one.
+	 *
+	 * Deleting new-to-old means that instances are deleted before
+	 * templates.  Picking away at the queue avoids the posability
+	 * of a cascading delete deleting multiple connections.
+	 */
+	while (true) {
+		struct connection_filter cq = { .where = HERE, };
+		if (!next_connection_new2old(&cq)) {
+			break;
+		}
+
+		/*
+		 * If it's a connection instance, grap a reference so
+		 * that this function holds the last reference
+		 * (permanent connections have a free reference).
+		 */
+
+		struct connection *c =
+			(is_instance(cq.c) ? connection_addref(cq.c, &global_logger) :
+			 cq.c);
+
+		delete_states_by_connection(c);
+		connection_unroute(c, HERE); /* should be redundant */
+		remove_connection_from_pending(c);
+		flush_connection_events(c);
+
+		delete_connection(&c);
+	}
 }
 
 void exit_epilogue(void)
@@ -195,9 +232,9 @@ void exit_epilogue(void)
 	exit(pluto_exit_code);	/* exit, with our error code */
 }
 
-void shutdown_pluto(struct logger *logger, enum pluto_exit_code status)
+void whack_shutdown(struct logger *logger, enum pluto_exit_code exit_code)
 {
-	switch (status) {
+	switch (exit_code) {
 	case PLUTO_EXIT_LEAVE_STATE:
 		llog(LOG_STREAM|RC_LOG, logger, "Pluto is shutting down (leaving state)");
 		break;
@@ -205,12 +242,7 @@ void shutdown_pluto(struct logger *logger, enum pluto_exit_code status)
 		llog(LOG_STREAM|RC_LOG, logger, "Pluto is shutting down");
 		break;
 	default:
-	{
-		enum_buf eb;
-		llog(LOG_STREAM|RC_LOG, logger, "Pluto is shutting down (%s)",
-		     str_enum_short(&pluto_exit_code_names, status, &eb));
-		break;
-	}
+		bad_enum(logger, &pluto_exit_code_names, exit_code);
 	}
 
 	/*
@@ -229,7 +261,7 @@ void shutdown_pluto(struct logger *logger, enum pluto_exit_code status)
 	 * Flag that things are going down and delete anything that
 	 * isn't asynchronous (or depends on something asynchronous).
 	 */
-	exit_prologue(status);
+	exit_prologue(exit_code);
 
 	/*
 	 * Wait for the crypto-helper threads to notice EXITING_PLUTO

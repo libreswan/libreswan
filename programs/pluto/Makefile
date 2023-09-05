@@ -99,6 +99,7 @@ OBJS += whack_delete.o
 OBJS += whack_down.o
 OBJS += whack_rekey.o
 OBJS += whack_route.o
+OBJS += whack_shutdown.o
 OBJS += whack_status.o
 OBJS += whack_trafficstatus.o
 OBJS += whack_impair.o
@@ -284,7 +285,6 @@ OBJS += pem.o nss_cert_verify.o
 OBJS += nss_ocsp.o nss_crl_import.o
 OBJS += root_certs.o
 OBJS += pluto_timing.o
-OBJS += pluto_shutdown.o
 OBJS += nss_cert_reread.o
 OBJS += rekeyfuzz.o
 
