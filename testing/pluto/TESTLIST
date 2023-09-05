@@ -125,6 +125,7 @@ kvmplutotest	addconn-26-keyingtries				good	github/1061
 kvmplutotest	addconn-27-keyexchange				good	github/1168
 kvmplutotest	addconn-28-fragmentation			good	github/1209
 kvmplutotest	addconn-29-nat-ikev1-method			good
+kvmplutotest	addconn-30-ikev1-labeled-ipsec			good
 
 #################################################################
 # Whack UI tests
