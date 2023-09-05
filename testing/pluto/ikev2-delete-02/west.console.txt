@@ -104,4 +104,7 @@ src 192.0.1.0/24 dst 192.0.2.0/24
 west #
  ipsec auto --showstates
 west #
+ ipsec delete west-east-delete1
+002 "west-east-delete1": terminating SAs using this connection
+west #
  
