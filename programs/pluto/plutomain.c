@@ -1703,8 +1703,8 @@ int main(int argc, char **argv)
 	 *
 	 */
 	capng_updatev(CAPNG_ADD, CAPNG_BOUNDING_SET, CAP_NET_ADMIN, CAP_NET_RAW,
-			CAP_DAC_READ_SEARCH, -1);
-	int ret = capng_apply(CAPNG_SELECT_BOUNDS);
+			CAP_DAC_READ_SEARCH, CAP_SETPCAP, -1);
+	int ret = capng_apply(CAPNG_SELECT_BOTH);
 	if (ret != CAPNG_NONE) {
 		fatal(PLUTO_EXIT_CAPNG_FAIL, logger,
 			"libcap-ng capng_apply failed to apply changes, err=%d. see: man capng_apply",
