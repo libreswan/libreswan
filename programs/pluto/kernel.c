@@ -1889,16 +1889,15 @@ static bool install_inbound_ipsec_kernel_policies(struct child_sa *child)
 	ldbg(logger, "kernel: %s() owner="PRI_SO,
 	     __func__, pri_so(c->child.newest_routing_sa));
 
-	if (c->child.newest_routing_sa != SOS_NOBODY) {
-		ldbg(logger, "kernel: %s() skipping as already has owner "PRI_SO,
-		     __func__, pri_so(c->child.newest_routing_sa));
+	if (is_labeled_child(c)) {
+		ldbg(logger, "kernel: %s() skipping as IKEv2 config.sec_label="PRI_SHUNK,
+		     __func__, pri_shunk(c->config->sec_label));
 		return true;
 	}
 
-	if (c->config->sec_label.len > 0 &&
-	    c->config->ike_version == IKEv2) {
-		ldbg(logger, "kernel: %s() skipping as IKEv2 config.sec_label="PRI_SHUNK,
-		     __func__, pri_shunk(c->config->sec_label));
+	if (c->child.newest_routing_sa != SOS_NOBODY) {
+		ldbg(logger, "kernel: %s() skipping as already has owner "PRI_SO,
+		     __func__, pri_so(c->child.newest_routing_sa));
 		return true;
 	}
 
@@ -1908,8 +1907,6 @@ static bool install_inbound_ipsec_kernel_policies(struct child_sa *child)
 		     __func__, str_selector_pair(&spd->remote->client, &spd->local->client, &spb));
 		install_inbound_ipsec_kernel_policy(child, spd, HERE);
 	}
-
-	fake_connection_establish_inbound(ike_sa(&child->sa, HERE), child, HERE);
 
 	return true;
 }
@@ -2344,7 +2341,6 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child)
 	     num_ipsec_eroute);
 #endif
 
-	fake_connection_establish_outbound(ike_sa(&child->sa, HERE), child, HERE);
 	return true;
 }
 
@@ -2423,6 +2419,8 @@ bool install_ipsec_sa(struct child_sa *child, lset_t direction, where_t where)
 			ldbg(logger, "kernel: %s() failed to install inbound kernel policy", __func__);
 			return false;
 		}
+
+		fake_connection_establish_inbound(ike_sa(&child->sa, HERE), child, HERE);
 		ldbg(logger, "kernel: %s() installed inbound kernel state+policy", __func__);
 
 		/*
@@ -2444,6 +2442,7 @@ bool install_ipsec_sa(struct child_sa *child, lset_t direction, where_t where)
 			uninstall_kernel_states(child);
 			return false;
 		}
+		fake_connection_establish_outbound(ike_sa(&child->sa, HERE), child, HERE);
 	}
 
 	/*

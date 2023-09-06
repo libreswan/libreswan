@@ -1789,18 +1789,20 @@ static void dispatch_1(enum routing_event event,
 			}
 			break;
 
+		case X(ESTABLISH_INBOUND, ROUTED_TUNNEL, PERMANENT):
+		case X(ESTABLISH_INBOUND, ROUTED_TUNNEL, INSTANCE):
 		case X(ESTABLISH_OUTBOUND, ROUTED_TUNNEL, PERMANENT):
 		case X(ESTABLISH_OUTBOUND, ROUTED_TUNNEL, INSTANCE):
-			if (BROKEN_TRANSITION) {
-				/*
-				 * For instance rekey in
-				 * ikev2-12-transport-psk and
-				 * ikev2-28-rw-server-rekey
-				 * ikev1-labeled-ipsec-01-permissive
-				 */
-				set_routing(event, c, RT_ROUTED_TUNNEL, e->child, where);
-				return;
-			}
+			/*
+			 * This happens when there's a re-key where
+			 * the state is re-established but not the
+			 * policy (that is left untouched).
+			 *
+			 * For instance ikev2-12-transport-psk and
+			 * ikev2-28-rw-server-rekey
+			 * ikev1-labeled-ipsec-01-permissive.
+			 */
+			set_routing(event, c, RT_ROUTED_TUNNEL, e->child, where);
 			return;
 
 		case X(SUSPEND, ROUTED_TUNNEL, PERMANENT):
@@ -1884,7 +1886,6 @@ static void dispatch_1(enum routing_event event,
 			set_routing(event, c, RT_UNROUTED, NULL, where);
 			do_updown_unroute(c, NULL);
 			return;
-		case X(UNROUTE, UNROUTED, LABELED_CHILD):
 		case X(UNROUTE, UNROUTED, LABELED_PARENT):
 			ldbg_routing(logger, "already unrouted");
 			return;
@@ -1903,37 +1904,53 @@ static void dispatch_1(enum routing_event event,
 					  logger);
 			return;
 		case X(DELETE_IKE, ROUTED_ONDEMAND, LABELED_PARENT):
-			if (BROKEN_TRANSITION) {
-				delete_ike_family(e->ike);
-				/* stop updown_unroute() finding this
-				 * connection */
-				set_routing(event, c, RT_UNROUTED, NULL, where);
+			/*
+			 * This returns false as IKE SA's connection
+			 * has no Child SA (the Child SAs are part of
+			 * a different connection).
+			 */
+			if (zap_connection_family(event, c, e->ike, where)) {
+				return;
 			}
+			delete_ike_sa(e->ike);
+			/*
+			 * Assume LABELED_TEMPLATE owns the route?
+			 */
+			set_routing(event, c, RT_UNROUTED, NULL, where);
 			return;
-		case X(ESTABLISH_INBOUND, UNROUTED, LABELED_PARENT):
-			if (BROKEN_TRANSITION) {
-				set_routing(event, c, RT_ROUTED_INBOUND, NULL, where);
-				return;
-			}
-			break;
-		case X(ESTABLISH_OUTBOUND, ROUTED_INBOUND, LABELED_PARENT):
-			if (BROKEN_TRANSITION) {
-				set_routing(event, c, RT_ROUTED_TUNNEL, e->child, where);
-				return;
-			}
-			break;
-		case X(ESTABLISH_OUTBOUND, ROUTED_TUNNEL, LABELED_PARENT): /* ikev1-labeled-ipsec-01-permissive */
-			if (BROKEN_TRANSITION) {
-				/*
-				 * For instance rekey in
-				 * ikev2-12-transport-psk and
-				 * ikev2-28-rw-server-rekey
-				 * ikev1-labeled-ipsec-01-permissive
-				 */
-				set_routing(event, c, RT_ROUTED_TUNNEL, e->child, where);
-				return;
-			}
+
+/*
+ * Labeled IPsec child.
+ */
+
+		case X(ESTABLISH_INBOUND, UNROUTED_TUNNEL, LABELED_CHILD):
+		case X(ESTABLISH_OUTBOUND, UNROUTED_TUNNEL, LABELED_CHILD):
+			/* rekey */
+			set_routing(event, c, RT_UNROUTED_TUNNEL, e->child, where);
 			return;
+		case X(ESTABLISH_INBOUND, UNROUTED, LABELED_CHILD):
+			set_routing(event, c, RT_UNROUTED_INBOUND, e->child, where);
+			return;
+		case X(ESTABLISH_OUTBOUND, UNROUTED_INBOUND, LABELED_CHILD):
+			set_routing(event, c, RT_UNROUTED_TUNNEL, e->child, where);
+			return;
+		case X(UNROUTE, UNROUTED_INBOUND, LABELED_CHILD):
+		case X(UNROUTE, UNROUTED_TUNNEL, LABELED_CHILD):
+#if 0
+			/* currently done by caller */
+			delete_child_sa(e->child);
+#endif
+			set_routing(event, c, RT_UNROUTED, NULL, where);
+			return;
+		case X(UNROUTE, UNROUTED, LABELED_CHILD):
+			ldbg_routing(logger, "already unrouted");
+			return;
+		case X(DELETE_CHILD, UNROUTED_INBOUND, LABELED_CHILD):
+		case X(DELETE_CHILD, UNROUTED_TUNNEL, LABELED_CHILD):
+			delete_child_sa(e->child);
+			set_routing(event, c, RT_UNROUTED, NULL, where);
+			return;
+
 		}
 	}
 
