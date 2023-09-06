@@ -181,64 +181,74 @@ static bool whack_delete_one_connection(struct show *s, struct connection *c,
 	del_policy(c, POLICY_UP);
 	del_policy(c, POLICY_ROUTE);
 
-	switch (c->local->kind) {
-
-	case CK_PERMANENT:
-		if (never_negotiate(c)) {
-			ldbg(c->logger, "skipping as never-negotiate");
+	if (never_negotiate(c)) {
+		ldbg(c->logger, "skipping as never-negotiate");
+		connection_unroute(c, HERE); /* some times redundant */
+	} else {
+		/* announce the change */
+		switch (c->local->kind) {
+		case CK_INSTANCE:
+		case CK_PERMANENT:
+		case CK_LABELED_PARENT:
+			llog(RC_LOG, c->logger, "terminating SAs using this connection");
+			break;
+		default:
 			break;
 		}
-		llog(RC_LOG, c->logger, "terminating SAs using this connection");
-		remove_connection_from_pending(c);
-		whack_delete_connection_states(c, HERE);
-		break;
 
-	case CK_INSTANCE:
-	case CK_LABELED_PARENT:
-		llog(RC_LOG, c->logger, "terminating SAs using this connection");
-		remove_connection_from_pending(c);
-		whack_delete_connection_states(c, HERE);
-		break;
+		/* flush things */
+		switch (c->local->kind) {
+		case CK_PERMANENT:
+		case CK_INSTANCE:
+		case CK_LABELED_PARENT:
+		case CK_LABELED_CHILD:
+			remove_connection_from_pending(c);
+			whack_delete_connection_states(c, HERE);
+			break;
+		default:
+			break;
+		}
 
-	case CK_GROUP:
-	case CK_TEMPLATE:
-	case CK_LABELED_TEMPLATE:
-	case CK_LABELED_CHILD:
-		break;
+		/*
+		 * Above remove from pending and delete connection
+		 * states calls, and below flush event call, should be
+		 * folded into connection_unroute().
+		 *
+		 * See github/1197
+		 */
+		connection_unroute(c, HERE); /* some times redundant */
 
-	case CK_INVALID:
-		bad_case(c->local->kind);
+		/*
+		 * Flush any lurking revivals.
+		 *
+		 * Work-around github/1255 and ikev2-delete-02 where:
+		 *
+		 * teardown_ipsec_kernel_policies() doesn't schedule a
+		 * revival for the Child SA but should, and then a
+		 * later delete_ike schedules a revival but shouldn't
+		 * (revival is tied to the Child SA not the IKE SA).
+		 */
+		switch (c->local->kind) {
+		case CK_PERMANENT:
+		case CK_INSTANCE:
+			if (flush_connection_events(c)) {
+				ldbg(logger, "flushed bogus pending events");
+			}
+			break;
+		default:
+			break;
+		}
 	}
-
-	connection_unroute(c, HERE); /* some times redundant */
 
 	/*
-	 * Flush any lurking revivals.
-	 *
-	 * Work-around github/1255 and ikev2-delete-02 where:
-	 *
-	 * teardown_ipsec_kernel_policies() doesn't schedule a revival
-	 * for the Child SA but should.
-	 *
-	 * a later delete_ike schedules a revival but shouldn't.
+	 * A non-instance connection has a floating reference; need to
+	 * delete that so that the caller is left with the only
+	 * reference to the connection.
 	 */
-	if (flush_connection_events(c)) {
-		ldbg(logger, "flushed bogus pending events");
-	}
-
-	struct connection *cc = c; /* hack part #1 */
+	struct connection *cc = c;
 	if (!is_instance(cc)) {
-		/*
-		 * A non-instance connection has a floating reference;
-		 * need to delete that so that caller's delref deletes
-		 * the connection.
-		 */
 		connection_delref(&cc, cc->logger);
 	}
-
-	/*
-	 * hack part #2; caller is left with the only reference.
-	 */
 	PEXPECT(c->logger, refcnt_peek(&c->refcnt) == 1);
 	return true;
 }

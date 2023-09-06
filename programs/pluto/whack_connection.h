@@ -33,11 +33,16 @@ struct each {
 	bool skip_instances;
 };
 
-void whack_all_connections(const struct whack_message *m, struct show *s,
-			   bool (*whack_connection)
-			   (struct show *s,
-			    struct connection **cp,
-			    const struct whack_message *m));
+/*
+ * Sort all connections then call-back WHACK_CONNECTION() for each.
+ *
+ * DO NOT USE THIS IF CONNECTIONS ARE EXPECTED TO BE DELETED.
+ */
+void whack_all_connections_sorted(const struct whack_message *m, struct show *s,
+				  bool (*whack_connection)
+				  (struct show *s,
+				   struct connection **cp,
+				   const struct whack_message *m));
 
 void whack_each_connection(const struct whack_message *m, struct show *s,
 			   bool (*whack_connection)

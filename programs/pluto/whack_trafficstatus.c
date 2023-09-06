@@ -149,12 +149,13 @@ static bool whack_trafficstatus_connection(struct show *s, struct connection **c
 void whack_trafficstatus(const struct whack_message *m, struct show *s)
 {
 	if (m->name == NULL) {
-		whack_all_connections(m, s, whack_trafficstatus_connection);
-	} else {
-		whack_each_connection(m, s, whack_trafficstatus_connection,
-				      (struct each) {
-					      .log_unknown_name = true,
-					      .skip_instances = true,
-				      });
+		whack_all_connections_sorted(m, s, whack_trafficstatus_connection);
+		return;
 	}
+
+	whack_each_connection(m, s, whack_trafficstatus_connection,
+			      (struct each) {
+				      .log_unknown_name = true,
+				      .skip_instances = true,
+			      });
 }

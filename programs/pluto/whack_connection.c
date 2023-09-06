@@ -37,11 +37,11 @@
  * How to decorate this with a header / footer?
  */
 
-void whack_all_connections(const struct whack_message *m, struct show *s,
-			   bool (*whack_connection)
-			   (struct show *s,
-			    struct connection **cp,
-			    const struct whack_message *m))
+void whack_all_connections_sorted(const struct whack_message *m, struct show *s,
+				  bool (*whack_connection)
+				  (struct show *s,
+				   struct connection **cp,
+				   const struct whack_message *m))
 {
 	struct connection **connections = sort_connections();
 	if (connections == NULL) {
