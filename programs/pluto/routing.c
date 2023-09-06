@@ -267,13 +267,13 @@ bool kernel_policy_installed(const struct connection *c)
 void set_routing(enum routing_event event,
 		 struct connection *c,
 		 enum routing new_routing,
-		 const struct child_sa *child,
+		 struct child_sa **child,
 		 where_t where)
 {
-	struct logger *logger = (child == NULL ? c->logger :
-				 child->sa.st_logger);
+	struct logger *logger = c->logger;
 	so_serial_t new_routing_sa = (child == NULL ? SOS_NOBODY :
-				      child->sa.st_serialno);
+				      *child == NULL ? SOS_NOBODY :
+				      (*child)->sa.st_serialno);
 	if (DBGP(DBG_BASE)) {
 		/*
 		 * XXX: force ADD_PREFIX so that the connection name
@@ -1727,7 +1727,7 @@ static void dispatch_1(enum routing_event event,
 				 * ikev1-l2tp-03-two-interfaces
 				 * github/693 github/1117
 				 */
-				set_routing(event, c, RT_ROUTED_TUNNEL, *(e->child), where);
+				set_routing(event, c, RT_ROUTED_TUNNEL, e->child, where);
 				return;
 			}
 			break;
@@ -1784,7 +1784,7 @@ static void dispatch_1(enum routing_event event,
 		case X(ESTABLISH_OUTBOUND, ROUTED_INBOUND, PERMANENT):
 		case X(ESTABLISH_OUTBOUND, ROUTED_INBOUND, INSTANCE):
 			if (BROKEN_TRANSITION) {
-				set_routing(event, c, RT_ROUTED_TUNNEL, *(e->child), where);
+				set_routing(event, c, RT_ROUTED_TUNNEL, e->child, where);
 				return;
 			}
 			break;
@@ -1798,7 +1798,7 @@ static void dispatch_1(enum routing_event event,
 				 * ikev2-28-rw-server-rekey
 				 * ikev1-labeled-ipsec-01-permissive
 				 */
-				set_routing(event, c, RT_ROUTED_TUNNEL, *(e->child), where);
+				set_routing(event, c, RT_ROUTED_TUNNEL, e->child, where);
 				return;
 			}
 			return;
@@ -1823,13 +1823,12 @@ static void dispatch_1(enum routing_event event,
 					(*e->child)->sa.st_mobike_del_src_ip = false;
 				}
 			}
-			set_routing(event, c, RT_UNROUTED_TUNNEL,
-				    *e->child, where);
+			set_routing(event, c, RT_UNROUTED_TUNNEL, e->child, where);
 			return;
 
 		case X(RESUME, UNROUTED_TUNNEL, PERMANENT):
 		case X(RESUME, UNROUTED_TUNNEL, INSTANCE):
-			set_routing(event, c, RT_ROUTED_TUNNEL, *e->child, where);
+			set_routing(event, c, RT_ROUTED_TUNNEL, e->child, where);
 			FOR_EACH_ITEM(spd, &c->child.spds) {
 				do_updown(UPDOWN_UP, c, spd, &(*e->child)->sa, logger);
 				do_updown(UPDOWN_ROUTE, c, spd, &(*e->child)->sa, logger);
@@ -1919,7 +1918,7 @@ static void dispatch_1(enum routing_event event,
 			break;
 		case X(ESTABLISH_OUTBOUND, ROUTED_INBOUND, LABELED_PARENT):
 			if (BROKEN_TRANSITION) {
-				set_routing(event, c, RT_ROUTED_TUNNEL, *(e->child), where);
+				set_routing(event, c, RT_ROUTED_TUNNEL, e->child, where);
 				return;
 			}
 			break;
@@ -1931,7 +1930,7 @@ static void dispatch_1(enum routing_event event,
 				 * ikev2-28-rw-server-rekey
 				 * ikev1-labeled-ipsec-01-permissive
 				 */
-				set_routing(event, c, RT_ROUTED_TUNNEL, *(e->child), where);
+				set_routing(event, c, RT_ROUTED_TUNNEL, e->child, where);
 				return;
 			}
 			return;
