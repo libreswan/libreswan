@@ -293,12 +293,16 @@ void set_routing(enum routing_event event,
 		}
 	}
 
+#if 0
 	/*
 	 * Labed children are never routed and/or have a kernel
-	 * policy.  Instead the kernel deals with the policy, and the
-	 * template/parent owns the route.
+	 * policy.  However, they do have a kernel state.  Hence they
+	 * get put into states such as UNROUTED_INBOUND, and
+	 * UNROUTED_TUNNEL.
 	 */
 	PEXPECT(logger, !is_labeled_child(c));
+#endif
+
 #if 0
 	/*
 	 * Always going forward; never in reverse.
