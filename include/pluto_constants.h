@@ -1022,7 +1022,8 @@ enum pluto_exit_code {
 	PLUTO_EXIT_UNBOUND_FAIL = 9,
 	PLUTO_EXIT_LOCK_FAIL = 10, /* historic value */
 	PLUTO_EXIT_SELINUX_FAIL = 11,
-	PLUTO_EXIT_LEAVE_STATE = 12, /* leave kernel state and routes */
+	PLUTO_EXIT_CAPNG_FAIL = 12,
+	PLUTO_EXIT_LEAVE_STATE = 13, /* leave kernel state and routes */
 	/**/
 	PLUTO_EXIT_GIT_BISECT_CAN_NOT_TEST = 125,
 	PLUTO_EXIT_SHELL_COMMAND_NOT_FOUND = 126,

@@ -1684,13 +1684,16 @@ int main(int argc, char **argv)
 	 */
 	capng_clear(CAPNG_SELECT_BOTH);
 
-	capng_updatev(CAPNG_ADD, CAPNG_EFFECTIVE | CAPNG_PERMITTED,
+	if (capng_updatev(CAPNG_ADD, CAPNG_EFFECTIVE | CAPNG_PERMITTED,
 		CAP_NET_BIND_SERVICE, CAP_NET_ADMIN, CAP_NET_RAW,
 		CAP_IPC_LOCK, CAP_AUDIT_WRITE,
 		/* for google authenticator pam */
 		CAP_SETGID, CAP_SETUID,
 		CAP_DAC_READ_SEARCH,
-		-1);
+		-1) != 0) {
+			fatal(PLUTO_EXIT_CAPNG_FAIL, logger,
+				"libcap-ng capng_updatev() failed");
+	}
 	/*
 	 * We need to retain some capabilities for our children (updown):
 	 * CAP_NET_ADMIN to change routes
@@ -1701,7 +1704,13 @@ int main(int argc, char **argv)
 	 */
 	capng_updatev(CAPNG_ADD, CAPNG_BOUNDING_SET, CAP_NET_ADMIN, CAP_NET_RAW,
 			CAP_DAC_READ_SEARCH, -1);
-	capng_apply(CAPNG_SELECT_BOTH);
+	int ret = capng_apply(CAPNG_SELECT_BOTH);
+	if (ret != CAPNG_NONE) {
+		fatal(PLUTO_EXIT_CAPNG_FAIL, logger,
+			"libcap-ng capng_apply failed to apply changes, err=%d. see: man capng_apply",
+			ret);
+	}
+
 	llog(RC_LOG, logger, "libcap-ng support [enabled]");
 #else
 	llog(RC_LOG, logger, "libcap-ng support [disabled]");

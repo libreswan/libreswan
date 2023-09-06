@@ -46,6 +46,7 @@ static const char *pluto_exit_code_name[] = {
 	S(PLUTO_EXIT_UNBOUND_FAIL),
 	S(PLUTO_EXIT_LOCK_FAIL),
 	S(PLUTO_EXIT_SELINUX_FAIL),
+	S(PLUTO_EXIT_CAPNG_FAIL),
 	S(PLUTO_EXIT_LEAVE_STATE),
 #undef S
 };
