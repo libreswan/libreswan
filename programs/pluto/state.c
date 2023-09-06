@@ -832,6 +832,11 @@ static bool should_send_delete(const struct state *st)
 
 void delete_child_sa(struct child_sa **child)
 {
+	if (pbad(child == NULL) ||
+	    pbad((*child) == NULL)) {
+		return;
+	}
+
 	struct state *st = &(*child)->sa;
 	*child = NULL;
 	on_delete(st, skip_revival);
@@ -842,6 +847,11 @@ void delete_child_sa(struct child_sa **child)
 
 void delete_ike_sa(struct ike_sa **ike)
 {
+	if (pbad(ike == NULL) ||
+	    pbad((*ike) == NULL)) {
+		return;
+	}
+
 	struct state *st = &(*ike)->sa;
 	*ike = NULL;
 	on_delete(st, skip_revival);
