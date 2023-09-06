@@ -1884,6 +1884,7 @@ static void dispatch_1(enum routing_event event,
 			set_routing(event, c, RT_UNROUTED, NULL, where);
 			do_updown_unroute(c, NULL);
 			return;
+		case X(UNROUTE, UNROUTED, LABELED_CHILD):
 		case X(UNROUTE, UNROUTED, LABELED_PARENT):
 			ldbg_routing(logger, "already unrouted");
 			return;
@@ -1902,21 +1903,13 @@ static void dispatch_1(enum routing_event event,
 					  logger);
 			return;
 		case X(DELETE_IKE, ROUTED_ONDEMAND, LABELED_PARENT):
-			/*
-			 * This returns false as IKE SA's connection
-			 * has no Child SA (the Child SAs are part of
-			 * a different connection).
-			 */
-			if (zap_connection_family(event, c, e->ike, where)) {
-				return;
+			if (BROKEN_TRANSITION) {
+				delete_ike_family(e->ike);
+				/* stop updown_unroute() finding this
+				 * connection */
+				set_routing(event, c, RT_UNROUTED, NULL, where);
 			}
-			delete_ike_sa(e->ike);
-			/*
-			 * Assume LABELED_TEMPLATE owns the route?
-			 */
-			set_routing(event, c, RT_UNROUTED, NULL, where);
 			return;
-#if 0
 		case X(ESTABLISH_INBOUND, UNROUTED, LABELED_PARENT):
 			if (BROKEN_TRANSITION) {
 				set_routing(event, c, RT_ROUTED_INBOUND, NULL, where);
@@ -1941,31 +1934,6 @@ static void dispatch_1(enum routing_event event,
 				return;
 			}
 			return;
-#endif
-
-		case X(ESTABLISH_INBOUND, UNROUTED, LABELED_CHILD):
-			set_routing(event, c, RT_UNROUTED_INBOUND, e->child, where);
-			return;
-		case X(ESTABLISH_OUTBOUND, UNROUTED_INBOUND, LABELED_CHILD):
-			set_routing(event, c, RT_UNROUTED_TUNNEL, e->child, where);
-			return;
-		case X(UNROUTE, UNROUTED_INBOUND, LABELED_CHILD):
-		case X(UNROUTE, UNROUTED_TUNNEL, LABELED_CHILD):
-#if 0
-			/* currently done by caller */
-			delete_child_sa(e->child);
-#endif
-			set_routing(event, c, RT_UNROUTED, NULL, where);
-			return;
-		case X(UNROUTE, UNROUTED, LABELED_CHILD):
-			ldbg_routing(logger, "already unrouted");
-			return;
-		case X(DELETE_CHILD, UNROUTED_INBOUND, LABELED_CHILD):
-		case X(DELETE_CHILD, UNROUTED_TUNNEL, LABELED_CHILD):
-			delete_child_sa(e->child);
-			set_routing(event, c, RT_UNROUTED, NULL, where);
-			return;
-
 		}
 	}
 
