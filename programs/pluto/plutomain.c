@@ -1696,32 +1696,56 @@ int main(int argc, char **argv)
 
 #ifdef HAVE_LIBCAP_NG
 	/*
+	 * If we don't have the capability to drop capailities, do nothing.
+	 *
 	 * Drop capabilities - this generates a false positive valgrind warning
 	 * See: http://marc.info/?l=linux-security-module&m=125895232029657
 	 *
 	 * We drop these after creating the pluto socket or else we can't
 	 * create a socket if the parent dir is non-root (eg openstack)
-	 */
-	capng_clear(CAPNG_SELECT_BOTH);
-
-	capng_updatev(CAPNG_ADD, CAPNG_EFFECTIVE | CAPNG_PERMITTED,
-		CAP_NET_BIND_SERVICE, CAP_NET_ADMIN, CAP_NET_RAW,
-		CAP_IPC_LOCK, CAP_AUDIT_WRITE,
-		/* for google authenticator pam */
-		CAP_SETGID, CAP_SETUID,
-		CAP_DAC_READ_SEARCH,
-		-1);
-	/*
+	 *
 	 * We need to retain some capabilities for our children (updown):
 	 * CAP_NET_ADMIN to change routes
 	 * (we also need it for some setsockopt() calls in main process)
 	 * CAP_NET_RAW for iptables -t mangle
 	 * CAP_DAC_READ_SEARCH for pam / google authenticator
-	 *
+	 * CAP_SETGID, CAP_SETUID for pam / google authenticator
 	 */
-	capng_updatev(CAPNG_ADD, CAPNG_BOUNDING_SET, CAP_NET_ADMIN, CAP_NET_RAW,
-			CAP_DAC_READ_SEARCH, -1);
-	capng_apply(CAPNG_SELECT_BOTH);
+	if (capng_get_caps_process() == -1) {
+		llog(RC_LOG_SERIOUS, logger, "failed to query pluto process for capng capabilities");
+	} else {
+		/* If we don't have CAP_SETPCAP, we cannot update the bounding set */
+		capng_select_t set = CAPNG_SELECT_CAPS;
+		if (capng_have_capability (CAPNG_EFFECTIVE, CAP_SETPCAP)) {
+			set = CAPNG_SELECT_BOTH;
+		}
+
+		capng_clear(CAPNG_SELECT_BOTH);
+		if (capng_updatev(CAPNG_ADD, CAPNG_EFFECTIVE | CAPNG_PERMITTED,
+			CAP_NET_BIND_SERVICE, CAP_NET_ADMIN, CAP_NET_RAW,
+			CAP_IPC_LOCK, CAP_AUDIT_WRITE,
+			CAP_SETGID, CAP_SETUID,
+			CAP_DAC_READ_SEARCH,
+			-1) != 0) {
+				llog(RC_LOG_SERIOUS, logger,
+					"libcap-ng capng_updatev() failed for CAPNG_EFFECTIVE | CAPNG_PERMITTED");
+		}
+
+		if (capng_updatev(CAPNG_ADD, CAPNG_BOUNDING_SET, CAP_NET_ADMIN,
+			CAP_NET_RAW, CAP_DAC_READ_SEARCH, CAP_SETPCAP,
+			-1) != 0) {
+				llog(RC_LOG_SERIOUS, logger,
+					"libcap-ng capng_updatev() failed for CAPNG_BOUNDING_SET");
+		}
+
+		int ret = capng_apply(set);
+		if (ret != CAPNG_NONE) {
+			llog(RC_LOG_SERIOUS, logger,
+				"libcap-ng capng_apply failed to apply changes, err=%d. see: man capng_apply",
+				ret);
+		}
+	}
+
 	llog(RC_LOG, logger, "libcap-ng support [enabled]");
 #else
 	llog(RC_LOG, logger, "libcap-ng support [disabled]");
