@@ -329,10 +329,11 @@ static unsigned visit_connections_bottom_up(struct connection *c,
 	return nr;
 }
 
-void whack_connections_bottom_up(const struct whack_message *m,
-				 struct show *s,
-				 whack_connection_visitor_cb *visit_connection,
-				 struct each each)
+static void whack_connections(const struct whack_message *m,
+			      struct show *s,
+			      whack_connections_visitor_cb *visit_connections,
+			      whack_connection_visitor_cb *visit_connection,
+			      const struct each *each)
 {
 	struct logger *logger = show_logger(s);
 
@@ -341,23 +342,23 @@ void whack_connections_bottom_up(const struct whack_message *m,
 	 */
 
 	if (whack_connections_by_name(m, s,
-				      visit_connections_bottom_up,
+				      visit_connections,
 				      visit_connection,
-				      &each)) {
+				      each)) {
 		return;
 	}
  
 	if (whack_connections_by_alias(m, s,
-				       visit_connections_bottom_up,
+				       visit_connections,
 				       visit_connection,
-				       &each)) {
+				       each)) {
 		return;
 	}
 
 	if (whack_connection_by_serialno(m, s,
-					 visit_connections_bottom_up,
+					 visit_connections,
 					 visit_connection,
-					 &each)) {
+					 each)) {
 		return;
 	}
 
@@ -371,16 +372,34 @@ void whack_connections_bottom_up(const struct whack_message *m,
 	 * logged as it A. is confusing and B. would cause whack to
 	 * detach stopping the KEYS from being added.
 	 */
-	if (each.log_unknown_name) {
+	if (each->log_unknown_name) {
 #define MESSAGE "no connection or alias named \"%s\"'", m->name
 		/* what means leave more breadcrumbs */
-		if (each.past_tense != NULL) {
+		if (each->past_tense != NULL) {
 			llog(RC_UNKNOWN_NAME, logger, MESSAGE);
 		} else {
 			whack_log(RC_UNKNOWN_NAME, s, MESSAGE);
 		}
 	}
 #undef MESSAGE
+}
+
+void whack_connection(const struct whack_message *m,
+		      struct show *s,
+		      whack_connection_visitor_cb *visit_connection,
+		      struct each each)
+{
+	whack_connections(m, s, visit_connections_root,
+			  visit_connection, &each);
+}
+
+void whack_connections_bottom_up(const struct whack_message *m,
+				 struct show *s,
+				 whack_connection_visitor_cb *visit_connection,
+				 struct each each)
+{
+	whack_connections(m, s, visit_connections_bottom_up,
+			  visit_connection, &each);
 }
 
 void whack_connection_states(struct connection *c,

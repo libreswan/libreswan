@@ -54,6 +54,15 @@ void whack_each_connection(const struct whack_message *m, struct show *s,
 			   struct each each);
 
 /*
+ * Visit the connection "root" identified by M (for aliases there may
+ * be multiple "root" connections)
+ */
+
+void whack_connection(const struct whack_message *m, struct show *s,
+		      whack_connection_visitor_cb *visit_connection,
+		      struct each each);
+
+/*
  * Visit all the connections matching M, bottom up.
  *
  * This means that an instance is visited before it's template; and
