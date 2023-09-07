@@ -38,6 +38,8 @@ typedef unsigned (whack_connections_visitor_cb)
  whack_connection_visitor_cb *visit_connection,
  const struct each *each);
 
+static whack_connections_visitor_cb visit_connections_bottom_up;
+
 /*
  * When there's no name, whack all connections.
  *
@@ -56,6 +58,80 @@ void whack_all_connections_sorted(const struct whack_message *m, struct show *s,
 		visit_connection(s, (*cp), m);
 	}
 	pfree(connections);
+}
+
+/*
+ * Try by alias.
+ *
+ * A connection like:
+ *
+ *   conn foo
+ *     subnets=...
+ *
+ * will expand into alias=FOO name=FOO/1x1 et.al.
+ *
+ * If FOO is a template, then that will be further expanded into alias-instances.
+ *
+ * The visit_connections() call-back is is passed the root of this
+ * connection tree, it will in turn call visit_connection().
+ */
+
+static bool whack_connections_by_alias(const struct whack_message *m,
+				       struct show *s,
+				       whack_connections_visitor_cb *visit_connections,
+				       whack_connection_visitor_cb *visit_connection,
+				       const struct each *each)
+{
+	struct logger *logger = show_logger(s);
+	struct connection_filter by_alias = {
+		.alias = m->name,
+		.where = HERE,
+	};
+	/*
+	 * Search new-to-old so that when the alias root is a template
+	 * there are no instances of that alias ahead in the search
+	 * list list (instances of an (alias) connection are newer
+	 * than the template).
+	 *
+	 * This way deleting an alias connection tree can't corrupt
+	 * the search list.
+	 */
+	if (next_connection_new2old(&by_alias)) {
+		/* header */
+		if (each->future_tense != NULL) {
+			llog(RC_COMMENT, logger, "%s all connections with alias=\"%s\"",
+			     each->future_tense, m->name);
+		}
+		unsigned nr = 0;
+		do {
+			/*
+			 * Only pass the matching connection root to
+			 * visit_connections().  i.e., ignore aliased
+			 * instances.  Instead visit_connections()
+			 * will then recurse through all the instances
+			 * if needed.
+			 *
+			 * Only the alias roots have .root_config
+			 * non-NULL.
+			 */
+			if (by_alias.c->root_config == NULL) {
+				continue;
+			}
+			nr += visit_connections(by_alias.c, m, s, visit_connection, each);
+		} while (next_connection_new2old(&by_alias));
+		/* footer */
+		if (each->past_tense != NULL) {
+			if (nr == 1) {
+				llog(RC_COMMENT, logger, "%s %u connection",
+				     each->past_tense, nr);
+			} else {
+				llog(RC_COMMENT, logger, "%s %u connections",
+				     each->past_tense, nr);
+			}
+		}
+		return true;
+	}
+	return false;
 }
 
 /*
@@ -157,31 +233,12 @@ void whack_each_connection(const struct whack_message *m, struct show *s,
 
 	/*
 	 * When name fails, try by alias.
+	 *
+	 * XXX: yes, not a typo; this does bottom-up serialno only
+	 * visits the root.
 	 */
-	struct connection_filter by_alias = {
-		.alias = m->name,
-		.where = HERE,
-	};
-	while (next_connection_new2old(&by_alias)) {
-		if (nr_found == 0 && each.future_tense != NULL) {
-			llog(RC_COMMENT, logger, "%s all connections with alias=\"%s\"",
-			     each.future_tense, m->name);
-		}
-		visit_connection(s, by_alias.c, m);
-		nr_found++;
-	}
-	if (nr_found == 1) {
-		if (each.past_tense != NULL) {
-			llog(RC_COMMENT, logger, "%s %u connection",
-			     each.past_tense, nr_found);
-		}
-		return;
-	}
-	if (nr_found > 1) {
-		if (each.past_tense != NULL) {
-			llog(RC_COMMENT, logger, "%s %u connections",
-			     each.past_tense, nr_found);
-		}
+	if (whack_connections_by_alias(m, s, visit_connections_bottom_up,
+				       visit_connection, &each)) {
 		return;
 	}
 
@@ -253,6 +310,10 @@ void whack_connections_bottom_up(const struct whack_message *m,
 	struct logger *logger = show_logger(s);
 
 	/*
+	 * Try by name, alias, then serial no.
+	 */
+
+ 	/*
 	 * Try by name.
 	 *
 	 * A templte connection ends up giving instances the same
@@ -270,55 +331,11 @@ void whack_connections_bottom_up(const struct whack_message *m,
 					    &each);
 		return;
 	}
-
-	/*
-	 * Try by alias.
-	 *
-	 * A connection like:
-	 *
-	 *   conn foo
-	 *     subnets=...
-	 *
-	 * will expand into alias=FOO name=FOO/1x1 et.al.
-	 *
-	 * If FOO is a template, the whack_bottom_up() call will
-	 * further expand that.
-	 */
-	struct connection_filter by_alias = {
-		.alias = m->name,
-		.where = HERE,
-	};
-	if (next_connection_new2old(&by_alias)) {
-		if (each.future_tense != NULL) {
-			llog(RC_COMMENT, logger, "%s all connections with alias=\"%s\"",
-			     each.future_tense, m->name);
-		}
-		unsigned nr = 0;
-		do {
-			/*
-			 * Only pass connection roots to bottom_up().
-			 * i.e., don't visit instances here and via
-			 * bottom_up (only roots have a non-NULL
-			 * .root_config).
-			 */
-			if (by_alias.c->root_config == NULL) {
-				continue;
-			}
-			nr += visit_connections_bottom_up(by_alias.c, m, s, visit_connection, &each);
-		} while (next_connection_new2old(&by_alias));
-		if (nr == 1) {
-			if (each.past_tense != NULL) {
-				llog(RC_COMMENT, logger, "%s %u connection",
-				     each.past_tense, nr);
-			}
-		} else {
-			PEXPECT(logger, (nr == 0 ||
-					 nr > 1 ));
-			if (each.past_tense != NULL) {
-				llog(RC_COMMENT, logger, "%s %u connections",
-				     each.past_tense, nr);
-			}
-		}
+ 
+	if (whack_connections_by_alias(m, s,
+				       visit_connections_bottom_up,
+				       visit_connection,
+				       &each)) {
 		return;
 	}
 
