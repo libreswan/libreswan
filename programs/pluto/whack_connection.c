@@ -303,6 +303,24 @@ void whack_each_connection(const struct whack_message *m, struct show *s,
 #undef MESSAGE
 }
 
+unsigned whack_connection_instances(const struct whack_message *m,
+				    struct show *s,
+				    struct connection *c,
+				    whack_connection_visitor_cb *visit_connection)
+{
+	unsigned nr = 0;
+	struct connection_filter instances = {
+		.clonedfrom = c,
+		.where = HERE,
+	};
+	while (next_connection_new2old(&instances)) {
+		/* abuse bool */
+		nr += visit_connection(s, instances.c, m);
+	}
+
+	return nr;
+}
+
 static unsigned visit_connections_bottom_up(struct connection *c,
 					    const struct whack_message *m,
 					    struct show *s,
