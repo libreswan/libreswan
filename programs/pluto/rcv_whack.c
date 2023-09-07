@@ -71,6 +71,7 @@
 #include "whack_debug.h"
 #include "whack_shutdown.h"
 #include "whack_unroute.h"
+#include "whack_initiate.h"
 
 static void whack_rereadsecrets(struct show *s)
 {
@@ -93,18 +94,6 @@ static void whack_listcacerts(struct show *s)
 	struct root_certs *roots = root_certs_addref(show_logger(s));
 	list_cacerts(s, roots);
 	root_certs_delref(&roots, show_logger(s));
-}
-
-static bool whack_initiate_connection(struct show *s, struct connection *c,
-				      const struct whack_message *m)
-{
-	struct logger *logger = show_logger(s);
-	connection_buf cb;
-	dbg("%s() for "PRI_CONNECTION, __func__, pri_connection(c, &cb));
-	return initiate_connection(c,
-				   m->remote_host,
-				   m->whack_async/*background*/,
-				   logger);
 }
 
 static struct logger merge_loggers(struct state *st, bool background, struct logger *logger)
@@ -615,22 +604,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 			  (m->name == NULL ? "<null>" : m->name),
 			  (m->remote_host != NULL ? m->remote_host : "<null>"),
 			  bool_str(m->whack_async));
-		if (!listening) {
-			whack_log(RC_DEAF, s,
-				  "need --listen before --initiate");
-		} else if (m->name == NULL) {
-			/* leave bread crumb */
-			llog(RC_FATAL, logger,
-			     "received command to initiate connection, but did not receive the connection name - ignored");
-		} else {
-			whack_each_connection(m, s, whack_initiate_connection,
-					      (struct each) {
-						      .future_tense = "initiating",
-						      .past_tense = "initiating",
-						      .log_unknown_name = true,
-						      .skip_instances = true,
-					      });
-		}
+		whack_initiate(m, s);
 		dbg_whack(s, "initiate: stop: name='%s' remote='%s' async=%s",
 			  (m->name == NULL ? "<null>" : m->name),
 			  m->remote_host != NULL ? m->remote_host : "<null>",
@@ -639,29 +613,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 
 	if (m->whack_oppo_initiate) {
 		dbg_whack(s, "oppo_initiate: start:");
-		if (!listening) {
-			whack_log(RC_DEAF, s,
-				  "need --listen before opportunistic initiation");
-		} else {
-			const struct ip_protocol *protocol = protocol_from_ipproto(m->oppo.ipproto);
-			ip_packet packet = packet_from_raw(HERE,
-							   address_type(&m->oppo.local.address),
-							   &m->oppo.local.address.bytes,
-							   &m->oppo.remote.address.bytes,
-							   protocol,
-							   m->oppo.local.port,
-							   m->oppo.remote.port);
-
-			struct kernel_acquire b = {
-				.packet = packet,
-				.by_acquire = false,
-				.logger = logger, /*on-stack*/
-				.background = m->whack_async,
-				.sec_label = null_shunk,
-			};
-
-			initiate_ondemand(&b);
-		}
+		whack_oppo_initiate(m, s);
 		dbg_whack(s, "oppo_initiate: stop:");
 	}
 
