@@ -185,41 +185,35 @@ void whack_each_connection(const struct whack_message *m, struct show *s,
 #undef MESSAGE
 }
 
-static unsigned whack_connection_bottom_up(struct connection **cp,
+static unsigned whack_connection_bottom_up(struct connection *c,
 					   const struct whack_message *m,
 					   struct show *s,
-					   bool (*whack_connection)
-					   (struct show *s,
-					    struct connection *c,
-					    const struct whack_message *m),
+					   whack_connection_visitor_cb *visit_connection,
 					   const struct each *each)
 {
 	struct logger *logger = show_logger(s);
-	connection_addref((*cp), logger); /* must delref */
+	connection_addref(c, logger); /* must delref */
 
 	unsigned nr = 0;
 	struct connection_filter instances = {
-		.clonedfrom = (*cp),
+		.clonedfrom = c,
 		.where = HERE,
 	};
 	while (next_connection_new2old(&instances)) {
 		/* abuse bool */
-		nr += whack_connection_bottom_up(&instances.c, m, s, whack_connection, each);
+		nr += whack_connection_bottom_up(instances.c, m, s, visit_connection, each);
 	}
 	/* abuse bool */
-	nr += whack_connection(s, *cp, m);
+	nr += visit_connection(s, c, m);
 
 	/* kill addref() and caller's pointer */
-	connection_delref(cp, logger);
+	connection_delref(&c, logger);
 	return nr;
 }
 
 void whack_connections_bottom_up(const struct whack_message *m,
 				 struct show *s,
-				 bool (*whack_connection)
-				 (struct show *s,
-				  struct connection *c,
-				  const struct whack_message *m),
+				 whack_connection_visitor_cb *visit_connection,
 				 struct each each)
 {
 	struct logger *logger = show_logger(s);
@@ -237,8 +231,8 @@ void whack_connections_bottom_up(const struct whack_message *m,
 		.where = HERE,
 	};
 	if (next_connection_old2new(&by_name)) {
-		whack_connection_bottom_up(&by_name.c, m, s,
-					   whack_connection,
+		whack_connection_bottom_up(by_name.c, m, s,
+					   visit_connection,
 					   &each);
 		return;
 	}
@@ -276,7 +270,7 @@ void whack_connections_bottom_up(const struct whack_message *m,
 			if (by_alias.c->root_config == NULL) {
 				continue;
 			}
-			nr += whack_connection_bottom_up(&by_alias.c, m, s, whack_connection, &each);
+			nr += whack_connection_bottom_up(by_alias.c, m, s, visit_connection, &each);
 		} while (next_connection_new2old(&by_alias));
 		if (nr == 1) {
 			if (each.past_tense != NULL) {
@@ -320,7 +314,7 @@ void whack_connections_bottom_up(const struct whack_message *m,
 		{
 			struct connection *c = connection_by_serialno(serialno);
 			if (c != NULL) {
-				whack_connection_bottom_up(&c, m, s, whack_connection, &each);
+				whack_connection_bottom_up(c, m, s, visit_connection, &each);
 				return;
 			}
 			break;
@@ -330,7 +324,7 @@ void whack_connections_bottom_up(const struct whack_message *m,
 			struct state *st = state_by_serialno(serialno);
 			if (st != NULL) {
 				struct connection *c = st->st_connection;
-				whack_connection_bottom_up(&c, m, s, whack_connection, &each);
+				whack_connection_bottom_up(c, m, s, visit_connection, &each);
 				return;
 			}
 			break;

@@ -34,6 +34,14 @@ struct each {
 };
 
 /*
+ * XXX: strange indentation is to stop emacs indent getting confused.
+ */
+typedef bool (whack_connection_visitor_cb)
+(struct show *s,
+ struct connection *c,
+ const struct whack_message *m);
+
+/*
  * Sort all connections then call-back WHACK_CONNECTION() for each.
  *
  * DO NOT USE THIS IF CONNECTIONS ARE EXPECTED TO BE DELETED.
@@ -61,10 +69,7 @@ void whack_each_connection(const struct whack_message *m, struct show *s,
  * worry about connection disappearing.
  */
 void whack_connections_bottom_up(const struct whack_message *m, struct show *s,
-				 bool (*whack_connection)
-				 (struct show *s,
-				  struct connection *c,
-				  const struct whack_message *m),
+				 whack_connection_visitor_cb *visit_connection,
 				 struct each each);
 
 /*
