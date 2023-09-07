@@ -37,14 +37,16 @@
 #include "kernel.h"		/* for struct kernel_acquire [oppo] */
 #include "acquire.h"		/* for initiate_ondemand() [oppo] */
 
-static bool whack_initiate_connection(struct show *s, struct connection *c,
-					  const struct whack_message *m)
+static unsigned whack_initiate_connection(const struct whack_message *m,
+					  struct show *s,
+					  struct connection *c)
 {
 	struct logger *logger = show_logger(s);
 	switch (c->local->kind) {
 	case CK_TEMPLATE:
 	case CK_LABELED_TEMPLATE:
 	case CK_PERMANENT:
+		/* abuse bool; for connection counts */
 		return initiate_connection(c,
 					   m->remote_host,
 					   m->whack_async/*background*/,
@@ -56,7 +58,7 @@ static bool whack_initiate_connection(struct show *s, struct connection *c,
 		connection_attach(c, logger);
 		llog(RC_LOG, c->logger, "cannot initiate");
 		connection_detach(c, logger);
-		return false;
+		return 0; /* the connection doesn't count */
 	case CK_INVALID:
 		break;
 	}

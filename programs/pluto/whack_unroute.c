@@ -22,8 +22,9 @@
 #include "log.h"
 #include "whack_connection.h"
 
-static bool whack_unroute_connection(struct show *s, struct connection *c,
-				     const struct whack_message *m UNUSED)
+static unsigned whack_unroute_connection(const struct whack_message *m UNUSED,
+					 struct show *s,
+					 struct connection *c)
 {
 	struct logger *logger = show_logger(s);
 	switch (c->local->kind) {
@@ -42,7 +43,7 @@ static bool whack_unroute_connection(struct show *s, struct connection *c,
 		del_policy(c, POLICY_ROUTE);
 		connection_unroute(c, HERE);
 		connection_detach(c, show_logger(s));
-		return true; /* ok; keep going */
+		return 1; /* the connection counts */
 
 	case CK_LABELED_PARENT:
 	case CK_LABELED_CHILD:
@@ -57,7 +58,7 @@ static bool whack_unroute_connection(struct show *s, struct connection *c,
 		connection_attach(c, logger);
 		llog(RC_LOG, c->logger, "cannot initiate");
 		connection_detach(c, logger);
-		return false;
+		return 0; /* the connection doesn't count */
 
 	case CK_GROUP:
 		return whack_connection_instances(m, s, c, whack_unroute_connection);

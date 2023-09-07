@@ -31,8 +31,9 @@
 #include "lswfips.h"
 #include "whack_connection.h"
 
-static bool whack_debug_connection(struct show *s, struct connection *c,
-				   const struct whack_message *m)
+static unsigned whack_debug_connection(const struct whack_message *m,
+				       struct show *s,
+				       struct connection *c)
 {
 	connection_attach(c, show_logger(s));
 	c->logger->debugging = lmod(c->logger->debugging, m->debugging);
@@ -44,7 +45,7 @@ static bool whack_debug_connection(struct show *s, struct connection *c,
 		}
 	}
 	connection_detach(c, show_logger(s));
-	return true;
+	return 1; /* the connection counts */
 }
 
 void whack_debug(const struct whack_message *m, struct show *s)

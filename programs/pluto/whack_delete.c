@@ -166,8 +166,9 @@ void whack_delete_connection_states(struct connection *c, where_t where)
  * Terminate and then delete connections with the specified name.
  */
 
-static bool whack_delete_one_connection(struct show *s, struct connection *c,
-					const struct whack_message *m UNUSED)
+static unsigned whack_delete_one_connection(const struct whack_message *m UNUSED,
+					    struct show *s,
+					    struct connection *c)
 {
 	struct logger *logger = show_logger(s);
 	connection_attach(c, logger);
@@ -250,7 +251,7 @@ static bool whack_delete_one_connection(struct show *s, struct connection *c,
 		connection_delref(&cc, cc->logger);
 	}
 	PEXPECT(c->logger, refcnt_peek(&c->refcnt) == 1);
-	return true;
+	return 1; /* the connection counts */
 }
 
 void whack_delete_connection(struct connection **cp, struct logger *logger)

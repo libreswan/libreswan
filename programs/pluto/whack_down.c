@@ -97,8 +97,8 @@ static void down_connection(struct connection **cp, struct logger *logger)
 	connection_detach((*cp), logger);
 }
 
-static bool whack_down_connections(struct show *s, struct connection *c,
-				   const struct whack_message *m UNUSED)
+static unsigned whack_down_connections(const struct whack_message *m UNUSED,
+				       struct show *s, struct connection *c)
 {
 	struct logger *logger = show_logger(s);
 	connection_buf cb;
@@ -108,14 +108,14 @@ static bool whack_down_connections(struct show *s, struct connection *c,
 	case CK_LABELED_PARENT:
 		/* can delref C; caller still holds a ref */
 		down_connection(&c, logger);
-		return true;
+		return 1; /* the connection counts */
 	case CK_TEMPLATE:
 	case CK_GROUP:
 	case CK_LABELED_TEMPLATE:
 	case CK_LABELED_CHILD:
 		ldbg(logger, "skipping "PRI_CONNECTION,
 		     pri_connection(c, &cb));
-		return false;
+		return 0; /* the connection doesn't count */
 	case CK_INVALID:
 		break;
 	}

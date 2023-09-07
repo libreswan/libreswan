@@ -30,16 +30,17 @@ struct each {
 	const char *future_tense;
 	const char *past_tense;
 	bool log_unknown_name;
-	bool skip_instances;
 };
 
 /*
  * XXX: strange indentation is to stop emacs indent getting confused.
+ *
+ * Returns a count of the applicable connections.
  */
-typedef bool (whack_connection_visitor_cb)
-(struct show *s,
- struct connection *c,
- const struct whack_message *m);
+typedef unsigned (whack_connection_visitor_cb)
+(const struct whack_message *m,
+ struct show *s,
+ struct connection *c);
 
 /*
  * Sort all connections then call-back WHACK_CONNECTION() for each.
@@ -48,10 +49,6 @@ typedef bool (whack_connection_visitor_cb)
  */
 void whack_all_connections_sorted(const struct whack_message *m, struct show *s,
 				  whack_connection_visitor_cb *visit_connection);
-
-void whack_each_connection(const struct whack_message *m, struct show *s,
-			   whack_connection_visitor_cb *visit_connection,
-			   struct each each);
 
 /*
  * Visit the connection "root" identified by M (for aliases there may

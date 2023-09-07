@@ -114,11 +114,12 @@ static void jam_child_sa_traffic(struct jambuf *buf, struct child_sa *child)
 	}
 }
 
-static bool whack_trafficstatus_connection(struct show *s, struct connection *c,
-					   const struct whack_message *m UNUSED)
+static unsigned whack_trafficstatus_connection(const struct whack_message *m UNUSED,
+					       struct show *s,
+					       struct connection *c)
 {
 	if (!can_have_child_sa(c)) {
-		return false; /* doesn't count */
+		return 0; /* the connection doesn't count */
 	}
 
 	/*
@@ -134,6 +135,7 @@ static bool whack_trafficstatus_connection(struct show *s, struct connection *c,
 		.connection_serialno = c->serialno,
 		.where = HERE,
 	};
+	unsigned nr = 0;
 	while (next_state_old2new(&state_by_connection)) {
 
 		struct state *st = state_by_connection.st;
@@ -147,6 +149,7 @@ static bool whack_trafficstatus_connection(struct show *s, struct connection *c,
 		}
 
 		/* whack-log-global - no prefix */
+		nr++;
 		SHOW_JAMBUF(RC_INFORMATIONAL_TRAFFIC, s, buf) {
 			/* note: this mutates *st by calling
 			 * get_sa_bundle_info */
@@ -154,7 +157,7 @@ static bool whack_trafficstatus_connection(struct show *s, struct connection *c,
 		}
 	}
 
-	return true;
+	return nr; /* return count */
 }
 
 void whack_trafficstatus(const struct whack_message *m, struct show *s)

@@ -40,7 +40,7 @@ static bool rekey_state(const struct whack_message *m, struct show *s,
 		llog(RC_LOG, c->logger, "connection does not have %s",
 		     sa_name(c->config->ike_version, sa_type));
 		connection_detach(c, logger);
-		return false;
+		return 0; /* the connection doesn't count */
 	}
 
 	if (!m->whack_async) {
@@ -55,7 +55,7 @@ static bool rekey_state(const struct whack_message *m, struct show *s,
 				"can't rekey, %s has no %s",
 				st->st_connection->config->ike_info->child_sa_name,
 				st->st_connection->config->ike_info->parent_sa_name);
-			return true; /* does still count */
+			return 0; /* the connection doesn't count */
 		}
 		if (!m->whack_async) {
 			state_attach(&parent->sa, logger);
@@ -64,12 +64,12 @@ static bool rekey_state(const struct whack_message *m, struct show *s,
 
 	ldbg(logger, "rekeying "PRI_SO, pri_so(so));
 	event_force(EVENT_v2_REKEY, st);
-	return true;
+	return 1; /* the connection counts */
 }
 
-static bool whack_rekey_ike(struct show *s,
-			    struct connection *c,
-			    const struct whack_message *m)
+static unsigned whack_rekey_ike(const struct whack_message *m,
+				struct show *s,
+				struct connection *c)
 {
 	struct logger *logger = show_logger(s);
 
@@ -78,15 +78,15 @@ static bool whack_rekey_ike(struct show *s,
 		connection_buf cb;
 		ldbg(logger, "skipping non-parent connection "PRI_CONNECTION,
 		     pri_connection(c, &cb));
-		return false;
+		return 0; /* the connection doesn't count */
 	}
 
 	return rekey_state(m, s, c, IKE_SA, c->newest_ike_sa);
 }
 
-static bool whack_rekey_child(struct show *s,
-			      struct connection *c,
-			      const struct whack_message *m)
+static unsigned whack_rekey_child(const struct whack_message *m,
+				  struct show *s,
+				  struct connection *c)
 {
 	struct logger *logger = show_logger(s);
 
@@ -95,7 +95,7 @@ static bool whack_rekey_child(struct show *s,
 		connection_buf cb;
 		ldbg(logger, "skipping non-child connection "PRI_CONNECTION,
 		     pri_connection(c, &cb));
-		return false;
+		return 0; /* the connection doesn't count */
 	}
 
 	return rekey_state(m, s, c, IPSEC_SA, c->newest_ipsec_sa);

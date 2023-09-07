@@ -23,13 +23,14 @@
 #include "log.h"
 #include "whack_connection.h"
 
-static bool whack_route_connection(struct show *s, struct connection *c,
-				   const struct whack_message *m UNUSED)
+static unsigned whack_route_connection(const struct whack_message *m UNUSED,
+				       struct show *s,
+				       struct connection *c)
 {
 	connection_attach(c, show_logger(s));
 	connection_route(c, HERE);
 	connection_detach(c, show_logger(s));
-	return true; /* ok; keep going */
+	return 1; /* the connection counts */
 }
 
 void whack_route(const struct whack_message *m, struct show *s)

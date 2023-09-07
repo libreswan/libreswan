@@ -35,10 +35,10 @@ typedef unsigned (whack_connections_visitor_cb)
 (struct connection *c,
  const struct whack_message *m,
  struct show *s,
- whack_connection_visitor_cb *visit_connection,
- const struct each *each);
+ whack_connection_visitor_cb *visit_connection);
 
 static whack_connections_visitor_cb visit_connections_bottom_up;
+static whack_connections_visitor_cb visit_connections_root;
 
 /*
  * When there's no name, whack all connections.
@@ -55,7 +55,7 @@ void whack_all_connections_sorted(const struct whack_message *m, struct show *s,
 	}
 
 	for (struct connection **cp = connections; *cp != NULL; cp++) {
-		visit_connection(s, (*cp), m);
+		visit_connection(m, s, (*cp));
 	}
 	pfree(connections);
 }
@@ -72,7 +72,7 @@ static bool whack_connections_by_name(const struct whack_message *m,
 				      struct show *s,
 				      whack_connections_visitor_cb *visit_connections,
 				      whack_connection_visitor_cb *visit_connection,
-				      const struct each *each)
+				      const struct each *each UNUSED)
 {
 	struct connection_filter by_name = {
 		.name = m->name,
@@ -80,11 +80,10 @@ static bool whack_connections_by_name(const struct whack_message *m,
 	};
 	if (next_connection_old2new(&by_name)) {
 		visit_connections(by_name.c, m, s,
-				  visit_connection,
-				  each);
-		return true;
+				  visit_connection);
+		return true; /* found something, stop */
 	}
-	return false;
+	return false; /* keep looking */
 }
 
 /*
@@ -144,7 +143,7 @@ static bool whack_connections_by_alias(const struct whack_message *m,
 			if (by_alias.c->root_config == NULL) {
 				continue;
 			}
-			nr += visit_connections(by_alias.c, m, s, visit_connection, each);
+			nr += visit_connections(by_alias.c, m, s, visit_connection);
 		} while (next_connection_new2old(&by_alias));
 		/* footer */
 		if (each->past_tense != NULL) {
@@ -156,9 +155,9 @@ static bool whack_connections_by_alias(const struct whack_message *m,
 				     each->past_tense, nr);
 			}
 		}
-		return true;
+		return true; /* found something, stop */
 	}
-	return false;
+	return false; /* keep looking */
 }
 
 /*
@@ -173,7 +172,7 @@ static bool whack_connection_by_serialno(const struct whack_message *m,
 					 struct show *s,
 					 whack_connections_visitor_cb *visit_connections,
 					 whack_connection_visitor_cb *visit_connection,
-					 const struct each *each)
+					 const struct each *each UNUSED)
 {
 	struct logger *logger = show_logger(s);
 	if (m->name[0] == '$' ||
@@ -184,19 +183,19 @@ static bool whack_connection_by_serialno(const struct whack_message *m,
 		if (e != NULL) {
 			llog(RC_LOG, logger, "invalid serial number '%s': %s",
 			     m->name, e);
-			return true;
+			return true; /* found something, stop */
 		}
 		if (serialno >= INT_MAX) {/* arbitrary limit */
 			llog(RC_LOG, logger, "serial number '%s' is huge", m->name);
-			return true;
+			return true; /* found something, stop */
 		}
 		switch (m->name[0]) {
 		case '$':
 		{
 			struct connection *c = connection_by_serialno(serialno);
 			if (c != NULL) {
-				visit_connections(c, m, s, visit_connection, each);
-				return true;
+				visit_connections(c, m, s, visit_connection);
+				return true; /* found something, stop */
 			}
 			break;
 		}
@@ -205,103 +204,26 @@ static bool whack_connection_by_serialno(const struct whack_message *m,
 			struct state *st = state_by_serialno(serialno);
 			if (st != NULL) {
 				struct connection *c = st->st_connection;
-				visit_connections(c, m, s, visit_connection, each);
-				return true;
+				visit_connections(c, m, s, visit_connection);
+				return true; /* found something, stop */
 			}
 			break;
 		}
 		}
 		llog(RC_LOG, logger, "serialno '%s' not found", m->name);
-		return true;
+		return true; /* found something, stop (YES!) */
 	}
-	return false;
+	return false; /* keep looking */
 }
 
 static unsigned visit_connections_root(struct connection *c,
 				       const struct whack_message *m,
 				       struct show *s,
-				       whack_connection_visitor_cb *visit_connection,
-				       const struct each *each UNUSED)
+				       whack_connection_visitor_cb *visit_connection)
 {
-	return visit_connection(s, c, m);
+	return visit_connection(m, s, c);
 }
 
-void whack_each_connection(const struct whack_message *m, struct show *s,
-			   whack_connection_visitor_cb *visit_connection,
-			   struct each each)
-{
-	struct logger *logger = show_logger(s);
-	unsigned nr_found = 0;
-
-	/*
-	 * First try by name.
-	 */
-	struct connection_filter by_name = {
-		.name = m->name,
-		.where = HERE,
-	};
-	while (next_connection_new2old(&by_name)) {
-		/*
-		 * XXX: broken, other visit_connection() calls do not have this guard.
-		 *
-		 * Instead instead let visit_connection() decide if
-		 * the connection should be skipped and return true
-		 * when the connection should be counted?
-		 */
-		if (each.skip_instances && is_instance(by_name.c)) {
-			continue;
-		}
-		visit_connection(s, by_name.c, m);
-		nr_found++;
-	}
-	if (nr_found > 0) {
-		return;
-	}
-
-	/*
-	 * When name fails, try by alias.
-	 *
-	 * XXX: yes, not a typo; this does bottom-up serialno only
-	 * visits the root.
-	 */
-	if (whack_connections_by_alias(m, s, visit_connections_bottom_up,
-				       visit_connection, &each)) {
-		return;
-	}
-
-	/*
-	 * When alias fails, see if the name is a connection ($
-	 * prefix) and/or state (# prefix) number.
-	 */
-
-	if (whack_connection_by_serialno(m, s,
-					 visit_connections_root,
-					 visit_connection,
-					 &each)) {
-		return;
-	}
-
-	/*
-	 * Danger:
-	 *
-	 * Logging with RC_UNKNOWN_NAME is "fatal" - when whack sees
-	 * it it, it detaches immediately.  For instance, adding a
-	 * connection is performed in two steps: DELETE+ADD; KEYS.
-	 * When there's no connection to delete that should not be
-	 * logged as it A. is confusing and B. would cause whack to
-	 * detach stopping the KEYS from being added.
-	 */
-	if (each.log_unknown_name) {
-#define MESSAGE "no connection or alias named \"%s\"'", m->name
-		/* what means leave more breadcrumbs */
-		if (each.past_tense != NULL) {
-			llog(RC_UNKNOWN_NAME, logger, MESSAGE);
-		} else {
-			whack_log(RC_UNKNOWN_NAME, s, MESSAGE);
-		}
-	}
-#undef MESSAGE
-}
 
 unsigned whack_connection_instances(const struct whack_message *m,
 				    struct show *s,
@@ -315,7 +237,7 @@ unsigned whack_connection_instances(const struct whack_message *m,
 	};
 	while (next_connection_new2old(&instances)) {
 		/* abuse bool */
-		nr += visit_connection(s, instances.c, m);
+		nr += visit_connection(m, s, instances.c);
 	}
 
 	return nr;
@@ -324,8 +246,7 @@ unsigned whack_connection_instances(const struct whack_message *m,
 static unsigned visit_connections_bottom_up(struct connection *c,
 					    const struct whack_message *m,
 					    struct show *s,
-					    whack_connection_visitor_cb *visit_connection,
-					    const struct each *each)
+					    whack_connection_visitor_cb *visit_connection)
 {
 	struct logger *logger = show_logger(s);
 	connection_addref(c, logger); /* must delref */
@@ -337,10 +258,10 @@ static unsigned visit_connections_bottom_up(struct connection *c,
 	};
 	while (next_connection_new2old(&instances)) {
 		/* abuse bool */
-		nr += visit_connections_bottom_up(instances.c, m, s, visit_connection, each);
+		nr += visit_connections_bottom_up(instances.c, m, s, visit_connection);
 	}
 	/* abuse bool */
-	nr += visit_connection(s, c, m);
+	nr += visit_connection(m, s, c);
 
 	/* kill addref() and caller's pointer */
 	connection_delref(&c, logger);
