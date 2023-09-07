@@ -916,6 +916,16 @@ bool is_instance(const struct connection *c);
 /* also returns true when labeled template */
 bool is_template(const struct connection *c);
 
+/*
+ * Parent connections can have IKE/ISAKMP SA.  Child connections can
+ * have an IPsec SA.
+ *
+ * permenant and template-instance connections allow both, but labeled
+ * connections are XOR.
+ */
+bool can_have_parent_sa(const struct connection *c);
+bool can_have_child_sa(const struct connection *c);
+
 bool never_negotiate(const struct connection *c);
 
 bool is_group(const struct connection *c);

@@ -4390,6 +4390,48 @@ bool is_labeled_child(const struct connection *c)
 	bad_case(c->local->kind);
 }
 
+bool can_have_parent_sa(const struct connection *c)
+{
+	if (c == NULL) {
+		return false;
+	}
+	switch (c->local->kind) {
+	case CK_INVALID:
+		break;
+	case CK_LABELED_CHILD:
+	case CK_GROUP:
+	case CK_LABELED_TEMPLATE:
+	case CK_TEMPLATE:
+		return false;
+	case CK_LABELED_PARENT:
+	case CK_PERMANENT:
+	case CK_INSTANCE:
+		return true;
+	}
+	bad_case(c->local->kind);
+}
+
+bool can_have_child_sa(const struct connection *c)
+{
+	if (c == NULL) {
+		return false;
+	}
+	switch (c->local->kind) {
+	case CK_INVALID:
+		break;
+	case CK_LABELED_TEMPLATE:
+	case CK_LABELED_PARENT:
+	case CK_TEMPLATE:
+	case CK_GROUP:
+		return false;
+	case CK_PERMANENT:
+	case CK_INSTANCE:
+	case CK_LABELED_CHILD:
+		return true;
+	}
+	bad_case(c->local->kind);
+}
+
 /*
  * XXX: is this too strict?
  *
