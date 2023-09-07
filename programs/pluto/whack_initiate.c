@@ -38,15 +38,29 @@
 #include "acquire.h"		/* for initiate_ondemand() [oppo] */
 
 static bool whack_initiate_connection(struct show *s, struct connection *c,
-				      const struct whack_message *m)
+					  const struct whack_message *m)
 {
 	struct logger *logger = show_logger(s);
-	connection_buf cb;
-	dbg("%s() for "PRI_CONNECTION, __func__, pri_connection(c, &cb));
-	return initiate_connection(c,
-				   m->remote_host,
-				   m->whack_async/*background*/,
-				   logger);
+	switch (c->local->kind) {
+	case CK_TEMPLATE:
+	case CK_LABELED_TEMPLATE:
+	case CK_PERMANENT:
+		return initiate_connection(c,
+					   m->remote_host,
+					   m->whack_async/*background*/,
+					   logger);
+	case CK_LABELED_PARENT:
+	case CK_LABELED_CHILD:
+	case CK_GROUP:
+	case CK_INSTANCE:
+		connection_attach(c, logger);
+		llog(RC_LOG, c->logger, "cannot initiate");
+		connection_detach(c, logger);
+		return false;
+	case CK_INVALID:
+		break;
+	}
+	bad_enum(show_logger(s), &connection_kind_names, c->local->kind);
 }
 
 void whack_initiate(const struct whack_message *m, struct show *s)
@@ -66,15 +80,13 @@ void whack_initiate(const struct whack_message *m, struct show *s)
 		return;
 	}
 
-	whack_each_connection(m, s, whack_initiate_connection,
-			      (struct each) {
-				      .future_tense = "initiating",
-				      .past_tense = "initiating",
-				      .log_unknown_name = true,
-				      .skip_instances = true,
-			      });
+	whack_connection(m, s, whack_initiate_connection,
+			 (struct each) {
+				 .future_tense = "initiating",
+				 .past_tense = "initiating",
+				 .log_unknown_name = true,
+			 });
 }
-
 
 void whack_oppo_initiate(const struct whack_message *m, struct show *s)
 {
