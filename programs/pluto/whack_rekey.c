@@ -34,14 +34,6 @@ static bool rekey_state(const struct whack_message *m, struct show *s,
 {
 	struct logger *logger = show_logger(s);
 
-	if (!is_permanent(c) && !is_instance(c)) {
-		/* silently skip */
-		connection_buf cb;
-		ldbg(logger, "skipping !permanent/!instance connection "PRI_CONNECTION,
-		     pri_connection(c, &cb));
-		return false;
-	}
-
 	struct state *st = state_by_serialno(so);
 	if (st == NULL) {
 		connection_attach(c, logger);
@@ -53,9 +45,20 @@ static bool rekey_state(const struct whack_message *m, struct show *s,
 
 	if (!m->whack_async) {
 		state_attach(st, logger);
-		if (IS_CHILD_SA(st)) {
-			struct ike_sa *ike = ike_sa(st, HERE);
-			state_attach(&ike->sa, logger);
+	}
+
+	if (IS_CHILD_SA(st)) {
+		struct child_sa *child = pexpect_child_sa(st);
+		struct ike_sa *parent = parent_sa(child);
+		if (parent == NULL) {
+			llog_sa(RC_LOG, child,
+				"can't rekey, %s has no %s",
+				st->st_connection->config->ike_info->child_sa_name,
+				st->st_connection->config->ike_info->parent_sa_name);
+			return true; /* does still count */
+		}
+		if (!m->whack_async) {
+			state_attach(&parent->sa, logger);
 		}
 	}
 
@@ -68,6 +71,16 @@ static bool whack_rekey_ike(struct show *s,
 			    struct connection *c,
 			    const struct whack_message *m)
 {
+	struct logger *logger = show_logger(s);
+
+	if (!can_have_parent_sa(c)) {
+		/* silently skip */
+		connection_buf cb;
+		ldbg(logger, "skipping non-parent connection "PRI_CONNECTION,
+		     pri_connection(c, &cb));
+		return false;
+	}
+
 	return rekey_state(m, s, c, IKE_SA, c->newest_ike_sa);
 }
 
@@ -75,6 +88,16 @@ static bool whack_rekey_child(struct show *s,
 			      struct connection *c,
 			      const struct whack_message *m)
 {
+	struct logger *logger = show_logger(s);
+
+	if (!can_have_child_sa(c)) {
+		/* silently skip */
+		connection_buf cb;
+		ldbg(logger, "skipping non-child connection "PRI_CONNECTION,
+		     pri_connection(c, &cb));
+		return false;
+	}
+
 	return rekey_state(m, s, c, IPSEC_SA, c->newest_ipsec_sa);
 }
 
@@ -90,18 +113,16 @@ void whack_rekey(const struct whack_message *m, struct show *s, enum sa_type sa_
 
 	switch (sa_type) {
 	case IKE_SA:
-		whack_each_connection(m, s, whack_rekey_ike,
-				      (struct each) {
-					      .log_unknown_name = true,
-					      .skip_instances = false,
-				      });
+		whack_connections_bottom_up(m, s, whack_rekey_ike,
+					    (struct each) {
+						    .log_unknown_name = true,
+					    });
 		return;
 	case IPSEC_SA:
-		whack_each_connection(m, s, whack_rekey_child,
-				      (struct each) {
-					      .log_unknown_name = true,
-					      .skip_instances = false,
-				      });
+		whack_connections_bottom_up(m, s, whack_rekey_child,
+					    (struct each) {
+						    .log_unknown_name = true,
+					    });
 		return;
 	}
 	bad_case(sa_type);
