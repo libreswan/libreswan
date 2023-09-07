@@ -102,6 +102,7 @@ OBJS += whack_route.o
 OBJS += whack_shutdown.o
 OBJS += whack_status.o
 OBJS += whack_trafficstatus.o
+OBJS += whack_unroute.o
 OBJS += whack_impair.o
 OBJS += whack_debug.o
 

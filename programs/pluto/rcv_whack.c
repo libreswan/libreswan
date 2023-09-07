@@ -70,6 +70,7 @@
 #include "whack_impair.h"
 #include "whack_debug.h"
 #include "whack_shutdown.h"
+#include "whack_unroute.h"
 
 static void whack_rereadsecrets(struct show *s)
 {
@@ -115,22 +116,6 @@ static struct logger merge_loggers(struct state *st, bool background, struct log
 		state_attach(st, logger);
 	}
 	return loggers;
-}
-
-static bool whack_unroute_connection(struct show *s, struct connection **cp,
-				     const struct whack_message *m UNUSED)
-{
-	connection_attach((*cp), show_logger(s));
-	/*
-	 * Let code know of intent.
-	 *
-	 * Functions such as connection_unroute() don't fiddle policy
-	 * bits as they are called as part of unroute/route sequences.
-	 */
-	del_policy((*cp), POLICY_ROUTE);
-	connection_unroute((*cp), HERE);
-	connection_detach((*cp), show_logger(s));
-	return true; /* ok; keep going */
 }
 
 static void do_whacklisten(struct logger *logger)
@@ -621,17 +606,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 
 	if (m->whack_unroute) {
 		dbg_whack(s, "unroute: start: \"%s\"", (m->name == NULL ? "<null>" : m->name));
-		if (m->name == NULL) {
-			/* leave bread crumb */
-			llog(RC_FATAL, logger,
-			     "received command to unroute connection, but did not receive the connection name - ignored");
-		} else {
-			whack_each_connection(m, s, whack_unroute_connection,
-					      (struct each) {
-						      .log_unknown_name = true,
-						      .skip_instances = true,
-					      });
-		}
+		whack_unroute(m, s);
 		dbg_whack(s, "unroute: stop: \"%s\"", (m->name == NULL ? "<null>" : m->name));
 	}
 
