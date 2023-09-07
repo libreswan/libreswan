@@ -117,6 +117,19 @@ static void jam_child_sa_traffic(struct jambuf *buf, struct child_sa *child)
 static bool whack_trafficstatus_connection(struct show *s, struct connection *c,
 					   const struct whack_message *m UNUSED)
 {
+	if (!can_have_child_sa(c)) {
+		return false; /* doesn't count */
+	}
+
+	/*
+	 * Look for all states with C as the connection.  And then
+	 * from there dump the traffic status of any children.
+	 *
+	 * Using .newest_ipsec_sa or .newest_routing_sa isn't
+	 * sufficient as this won't include established Child SAs that
+	 * are in the process of being replaced.
+	 */
+
 	struct state_filter state_by_connection = {
 		.connection_serialno = c->serialno,
 		.where = HERE,
@@ -125,12 +138,10 @@ static bool whack_trafficstatus_connection(struct show *s, struct connection *c,
 
 		struct state *st = state_by_connection.st;
 
-		/* ignore non-IPsec states (XXX: redundant?) */
 		if (IS_IKE_SA(st)) {
 			continue;
 		}
 
-		/* ignore non established states */
 		if (!IS_IPSEC_SA_ESTABLISHED(st)) {
 			continue;
 		}
@@ -153,9 +164,8 @@ void whack_trafficstatus(const struct whack_message *m, struct show *s)
 		return;
 	}
 
-	whack_each_connection(m, s, whack_trafficstatus_connection,
-			      (struct each) {
-				      .log_unknown_name = true,
-				      .skip_instances = true,
-			      });
+	whack_connections_bottom_up(m, s, whack_trafficstatus_connection,
+				    (struct each) {
+					    .log_unknown_name = true,
+				    });
 }
