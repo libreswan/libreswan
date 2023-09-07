@@ -57,7 +57,7 @@ static void delete_v1_states(struct connection *c,
 		state_attach(&(*child)->sa, c->logger);
 		send_n_log_v1_delete(&(*child)->sa, HERE);
 		PEXPECT(c->logger, ike == NULL);
-		connection_delete_child(isakmp_sa(*child, HERE)/*could-be-null*/,
+		connection_delete_child(isakmp_sa(*child)/*could-be-null*/,
 					child, HERE);
 		return;
 	case WHACK_ORPHAN:

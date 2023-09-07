@@ -380,7 +380,40 @@ struct ike_sa *ike_sa(struct state *st, where_t where)
 	return (struct ike_sa*) st;
 }
 
-struct ike_sa *isakmp_sa(struct child_sa *child, where_t where)
+struct ike_sa *parent_sa_where(struct child_sa *child, where_t where)
+{
+	if (child == NULL) {
+		return NULL;
+	}
+
+	/* the definition of a child */
+	if (!IS_CHILD_SA(&child->sa)) {
+		llog_passert(child->sa.st_logger, where,
+			     "Child SA is not a child");
+	}
+
+	struct ike_sa *parent = ike_sa_by_serialno(child->sa.st_clonedfrom); /* could be NULL */
+	if (parent != NULL) {
+		return parent;
+	}
+
+	if (child->sa.st_ike_version == IKEv1) {
+		ldbg(child->sa.st_logger,
+		     "IKEv1 IPsec SA "PRI_SO" missing ISAKMP SA "PRI_SO" "PRI_WHERE,
+		     pri_so(child->sa.st_serialno),
+		     pri_so(child->sa.st_clonedfrom),
+		     pri_where(where));
+		return NULL;
+	}
+
+	llog_pexpect(child->sa.st_logger, where,
+		     "child state missing parent state "PRI_SO,
+		     pri_so(child->sa.st_clonedfrom));
+	/* about to crash? */
+	return NULL;
+}
+
+struct ike_sa *isakmp_sa_where(struct child_sa *child, where_t where)
 {
 	if (child == NULL) {
 		return NULL;
@@ -390,22 +423,20 @@ struct ike_sa *isakmp_sa(struct child_sa *child, where_t where)
 		return NULL;
 	}
 
-	if (!PEXPECT(child->sa.st_logger, IS_CHILD_SA(&child->sa))) {
+	return parent_sa_where(child, where);
+}
+
+struct ike_sa *ike_sa_where(struct child_sa *child, where_t where)
+{
+	if (child == NULL) {
 		return NULL;
 	}
 
-	struct ike_sa *isakmp = ike_sa_by_serialno(child->sa.st_clonedfrom);
-	if (isakmp == NULL) {
-		ldbg(child->sa.st_logger,
-		     "IKEv1 IPsec SA "PRI_SO" missing ISAKMP SA "PRI_SO" "PRI_WHERE,
-		     pri_so(child->sa.st_serialno),
-		     pri_so(child->sa.st_clonedfrom),
-		     pri_where(where));
-		/* typical IKEv1 */
+	if (!PEXPECT(child->sa.st_logger, child->sa.st_ike_version >= IKEv2)) {
 		return NULL;
 	}
 
-	return isakmp;
+	return parent_sa_where(child, where);
 }
 
 struct ike_sa *pexpect_ike_sa_where(struct state *st, where_t where)

@@ -830,7 +830,7 @@ void update_st_ike_spis_responder(struct ike_sa *ike, const ike_spi_t *ike_respo
  *    struct ike_sa *ike; ike->sa.st_...
  *    struct child_sa *child; child->sa.st_...
  *
- * The function get_ike_sa() returns the IKE SA that the struct state
+ * The function ike_sa() returns the IKE SA that the struct state
  * belongs to (an IKE SA belongs to itself).
  *
  * pexpect_{ike,child}_sa() cast the SA (assuming it makes sense), or
@@ -838,8 +838,12 @@ void update_st_ike_spis_responder(struct ike_sa *ike, const ike_spi_t *ike_respo
  */
 
 struct ike_sa { struct state sa; };
-struct ike_sa *ike_sa(struct state *st, where_t where);
-struct ike_sa *isakmp_sa(struct child_sa *child, where_t where);
+struct ike_sa *ike_sa(struct state *st, where_t where); /* requires parent, IKEv[12], oops */
+struct ike_sa *ike_sa_where(struct child_sa *child, where_t where); /* IKEv2, parent required */
+struct ike_sa *isakmp_sa_where(struct child_sa *child, where_t where); /* IKEv1, parent optional */
+struct ike_sa *parent_sa_where(struct child_sa *child, where_t where); /* both the above */
+#define isakmp_sa(CHILD) isakmp_sa_where(CHILD, HERE)
+#define parent_sa(CHILD) parent_sa_where(CHILD, HERE)
 
 struct ike_sa *pexpect_ike_sa_where(struct state *st, where_t where);
 #define pexpect_ike_sa(ST) pexpect_ike_sa_where(ST, HERE)
