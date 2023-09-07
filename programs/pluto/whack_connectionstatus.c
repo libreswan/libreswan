@@ -777,13 +777,13 @@ static bool whack_connection_status(struct show *s, struct connection *c,
 
 void whack_connectionstatus(const struct whack_message *m, struct show *s)
 {
-		if (m->name == NULL) {
-			show_connection_statuses(s);
-		} else {
-			whack_each_connection(m, s, whack_connection_status,
-					      (struct each) {
-						      .log_unknown_name = true,
-						      .skip_instances = true,
-					      });
-		}
+	if (m->name == NULL) {
+		show_connection_statuses(s);
+		return;
+	}
+
+	whack_connections_bottom_up(m, s, whack_connection_status,
+				    (struct each) {
+					    .log_unknown_name = true,
+				    });
 }
