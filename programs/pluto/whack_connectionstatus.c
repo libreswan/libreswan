@@ -768,10 +768,10 @@ void show_connection_statuses(struct show *s)
 		     count, active);
 }
 
-static bool whack_connection_status(struct show *s, struct connection **cp,
+static bool whack_connection_status(struct show *s, struct connection *c,
 				    const struct whack_message *m UNUSED)
 {
-	show_connection_status(s, (*cp));
+	show_connection_status(s, c);
 	return true;
 }
 

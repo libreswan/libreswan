@@ -95,13 +95,13 @@ static void whack_listcacerts(struct show *s)
 	root_certs_delref(&roots, show_logger(s));
 }
 
-static bool whack_initiate_connection(struct show *s, struct connection **cp,
+static bool whack_initiate_connection(struct show *s, struct connection *c,
 				      const struct whack_message *m)
 {
 	struct logger *logger = show_logger(s);
 	connection_buf cb;
-	dbg("%s() for "PRI_CONNECTION, __func__, pri_connection((*cp), &cb));
-	return initiate_connection((*cp),
+	dbg("%s() for "PRI_CONNECTION, __func__, pri_connection(c, &cb));
+	return initiate_connection(c,
 				   m->remote_host,
 				   m->whack_async/*background*/,
 				   logger);

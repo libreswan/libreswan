@@ -22,19 +22,19 @@
 #include "log.h"
 #include "whack_connection.h"
 
-static bool whack_unroute_connection(struct show *s, struct connection **cp,
+static bool whack_unroute_connection(struct show *s, struct connection *c,
 				     const struct whack_message *m UNUSED)
 {
-	connection_attach((*cp), show_logger(s));
+	connection_attach(c, show_logger(s));
 	/*
 	 * Let code know of intent.
 	 *
 	 * Functions such as connection_unroute() don't fiddle policy
 	 * bits as they are called as part of unroute/route sequences.
 	 */
-	del_policy((*cp), POLICY_ROUTE);
-	connection_unroute((*cp), HERE);
-	connection_detach((*cp), show_logger(s));
+	del_policy(c, POLICY_ROUTE);
+	connection_unroute(c, HERE);
+	connection_detach(c, show_logger(s));
 	return true; /* ok; keep going */
 }
 

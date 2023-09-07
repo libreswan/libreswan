@@ -38,10 +38,7 @@
  */
 
 void whack_all_connections_sorted(const struct whack_message *m, struct show *s,
-				  bool (*whack_connection)
-				  (struct show *s,
-				   struct connection **cp,
-				   const struct whack_message *m))
+				  whack_connection_visitor_cb *visit_connection)
 {
 	struct connection **connections = sort_connections();
 	if (connections == NULL) {
@@ -49,16 +46,13 @@ void whack_all_connections_sorted(const struct whack_message *m, struct show *s,
 	}
 
 	for (struct connection **cp = connections; *cp != NULL; cp++) {
-		whack_connection(s, cp, m);
+		visit_connection(s, (*cp), m);
 	}
 	pfree(connections);
 }
 
 void whack_each_connection(const struct whack_message *m, struct show *s,
-			   bool (*whack_connection)
-			   (struct show *s,
-			    struct connection **cp,
-			    const struct whack_message *m),
+			   whack_connection_visitor_cb *visit_connection,
 			   struct each each)
 {
 	struct logger *logger = show_logger(s);
@@ -73,16 +67,16 @@ void whack_each_connection(const struct whack_message *m, struct show *s,
 	};
 	while (next_connection_new2old(&by_name)) {
 		/*
-		 * XXX: broken, other whack_connection() calls do not have this guard.
+		 * XXX: broken, other visit_connection() calls do not have this guard.
 		 *
-		 * Instead instead let whack_connection() decide if
+		 * Instead instead let visit_connection() decide if
 		 * the connection should be skipped and return true
 		 * when the connection should be counted?
 		 */
 		if (each.skip_instances && is_instance(by_name.c)) {
 			continue;
 		}
-		whack_connection(s, &by_name.c, m);
+		visit_connection(s, by_name.c, m);
 		nr_found++;
 	}
 	if (nr_found > 0) {
@@ -101,7 +95,7 @@ void whack_each_connection(const struct whack_message *m, struct show *s,
 			llog(RC_COMMENT, logger, "%s all connections with alias=\"%s\"",
 			     each.future_tense, m->name);
 		}
-		whack_connection(s, &by_alias.c, m);
+		visit_connection(s, by_alias.c, m);
 		nr_found++;
 	}
 	if (nr_found == 1) {
@@ -143,7 +137,7 @@ void whack_each_connection(const struct whack_message *m, struct show *s,
 		{
 			struct connection *c = connection_by_serialno(serialno);
 			if (c != NULL) {
-				whack_connection(s, &c, m);
+				visit_connection(s, c, m);
 				return;
 			}
 			break;
@@ -153,7 +147,7 @@ void whack_each_connection(const struct whack_message *m, struct show *s,
 			struct state *st = state_by_serialno(serialno);
 			if (st != NULL) {
 				struct connection *c = st->st_connection;
-				whack_connection(s, &c, m);
+				visit_connection(s, c, m);
 				return;
 			}
 			break;

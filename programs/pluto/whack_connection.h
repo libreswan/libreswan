@@ -47,16 +47,10 @@ typedef bool (whack_connection_visitor_cb)
  * DO NOT USE THIS IF CONNECTIONS ARE EXPECTED TO BE DELETED.
  */
 void whack_all_connections_sorted(const struct whack_message *m, struct show *s,
-				  bool (*whack_connection)
-				  (struct show *s,
-				   struct connection **cp,
-				   const struct whack_message *m));
+				  whack_connection_visitor_cb *visit_connection);
 
 void whack_each_connection(const struct whack_message *m, struct show *s,
-			   bool (*whack_connection)
-			   (struct show *s,
-			    struct connection **cp,
-			    const struct whack_message *m),
+			   whack_connection_visitor_cb *visit_connection,
 			   struct each each);
 
 /*

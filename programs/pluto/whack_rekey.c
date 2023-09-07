@@ -65,17 +65,17 @@ static bool rekey_state(const struct whack_message *m, struct show *s,
 }
 
 static bool whack_rekey_ike(struct show *s,
-			    struct connection **cp,
+			    struct connection *c,
 			    const struct whack_message *m)
 {
-	return rekey_state(m, s, (*cp), IKE_SA, (*cp)->newest_ike_sa);
+	return rekey_state(m, s, c, IKE_SA, c->newest_ike_sa);
 }
 
 static bool whack_rekey_child(struct show *s,
-			      struct connection **cp,
+			      struct connection *c,
 			      const struct whack_message *m)
 {
-	return rekey_state(m, s, (*cp), IPSEC_SA, (*cp)->newest_ipsec_sa);
+	return rekey_state(m, s, c, IPSEC_SA, c->newest_ipsec_sa);
 }
 
 void whack_rekey(const struct whack_message *m, struct show *s, enum sa_type sa_type)

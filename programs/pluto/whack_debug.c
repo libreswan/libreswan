@@ -31,19 +31,19 @@
 #include "lswfips.h"
 #include "whack_connection.h"
 
-static bool whack_debug_connection(struct show *s, struct connection **cp,
+static bool whack_debug_connection(struct show *s, struct connection *c,
 				   const struct whack_message *m)
 {
-	connection_attach((*cp), show_logger(s));
-	(*cp)->logger->debugging = lmod((*cp)->logger->debugging, m->debugging);
-	if (LDBGP(DBG_BASE, (*cp)->logger)) {
-		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, (*cp)->logger, buf) {
+	connection_attach(c, show_logger(s));
+	c->logger->debugging = lmod(c->logger->debugging, m->debugging);
+	if (LDBGP(DBG_BASE, c->logger)) {
+		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, c->logger, buf) {
 			jam_string(buf, "extra_debugging = ");
 			jam_lset_short(buf, &debug_names,
-				       "+", (*cp)->logger->debugging);
+				       "+", c->logger->debugging);
 		}
 	}
-	connection_detach((*cp), show_logger(s));
+	connection_detach(c, show_logger(s));
 	return true;
 }
 
