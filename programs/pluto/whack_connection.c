@@ -61,6 +61,33 @@ void whack_all_connections_sorted(const struct whack_message *m, struct show *s,
 }
 
 /*
+ * Try by name.
+ *
+ * Search OLD2NEW so that a template connection matching name is found
+ * before any of its instantiated instances (which have the same name,
+ * ugh).  WHACK_CONNECTIONS() will then vist it any any instances.
+ */
+
+static bool whack_connections_by_name(const struct whack_message *m,
+				      struct show *s,
+				      whack_connections_visitor_cb *visit_connections,
+				      whack_connection_visitor_cb *visit_connection,
+				      const struct each *each)
+{
+	struct connection_filter by_name = {
+		.name = m->name,
+		.where = HERE,
+	};
+	if (next_connection_old2new(&by_name)) {
+		visit_connections(by_name.c, m, s,
+				  visit_connection,
+				  each);
+		return true;
+	}
+	return false;
+}
+
+/*
  * Try by alias.
  *
  * A connection like:
@@ -313,22 +340,10 @@ void whack_connections_bottom_up(const struct whack_message *m,
 	 * Try by name, alias, then serial no.
 	 */
 
- 	/*
-	 * Try by name.
-	 *
-	 * A templte connection ends up giving instances the same
-	 * name.  Hence use OLD2NEW so that the ancestral root (i.e.,
-	 * template) is found first.  Then whack_bottom_up() visits
-	 * instances before templates.
-	 */
-	struct connection_filter by_name = {
-		.name = m->name,
-		.where = HERE,
-	};
-	if (next_connection_old2new(&by_name)) {
-		visit_connections_bottom_up(by_name.c, m, s,
-					    visit_connection,
-					    &each);
+	if (whack_connections_by_name(m, s,
+				      visit_connections_bottom_up,
+				      visit_connection,
+				      &each)) {
 		return;
 	}
  
