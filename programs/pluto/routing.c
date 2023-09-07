@@ -691,7 +691,7 @@ static bool zap_connection_family(enum routing_event event,
 			enum_buf ren;
 			state_attach(&lurking_ike->sa, (*ike)->sa.st_logger);
 			llog_sa(RC_LOG, lurking_ike, "deleting larval %s (%s)",
-				lurking_ike->sa.st_connection->config->ike_info->ike_sa_name,
+				lurking_ike->sa.st_connection->config->ike_info->parent_sa_name,
 				str_enum_short(&routing_event_names, event, &ren));
 			nr++;
 			delete_ike_sa(&lurking_ike);

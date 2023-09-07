@@ -109,7 +109,7 @@ static void add_pending(struct fd *whack_sock,
 			    /* "Child SA" or "IPsec SA" */
 			    p->connection->config->ike_info->child_sa_name,
 			    /* "IKE SA" or "ISAKMP SA" */
-			    p->connection->config->ike_info->ike_sa_name,
+			    p->connection->config->ike_info->parent_sa_name,
 			    pri_state(&ike->sa, &sab),
 			    ipstr(&c->remote->host.addr, &b));
 	}
@@ -399,7 +399,7 @@ void connection_check_phase2(struct logger *logger)
 		address_buf ab;
 		llog(RC_LOG, c->logger,
 		     "%s negotiating with %s took too long -- replacing",
-		     c->config->ike_info->ike_sa_name,
+		     c->config->ike_info->parent_sa_name,
 		     str_address_sensitive(&c->remote->host.addr, &ab));
 
 		struct state *p1st;

@@ -339,7 +339,7 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 		llog_pexpect(logger, where,
 			     "connection "PRI_CO" [%p] still has %s "PRI_SO,
 			     pri_connection_co(c), c,
-			     c->config->ike_info->ike_sa_name,
+			     c->config->ike_info->parent_sa_name,
 			     pri_so(c->newest_ike_sa));
 		ok_to_delete = false;
 	}
@@ -2054,18 +2054,18 @@ static diag_t extract_connection(const struct whack_message *wm,
 		[IKEv1] = {
 			.version = IKEv1,
 			.version_name = "IKEv1",
-			.ike_name = "ISAKMP",
+			.parent_name = "ISAKMP",
 			.child_name = "IPsec",
-			.ike_sa_name = "ISAKMP SA",
+			.parent_sa_name = "ISAKMP SA",
 			.child_sa_name = "IPsec SA",
 			.replace_event = EVENT_v1_REPLACE,
 		},
 		[IKEv2] = {
 			.version = IKEv2,
 			.version_name = "IKEv2",
-			.ike_name = "IKE",
+			.parent_name = "IKE",
 			.child_name = "Child",
-			.ike_sa_name = "IKE SA",
+			.parent_sa_name = "IKE SA",
 			.child_sa_name = "Child SA",
 			.replace_event = EVENT_v2_REPLACE,
 		},

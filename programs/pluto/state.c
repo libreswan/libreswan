@@ -694,7 +694,7 @@ static bool flush_incomplete_child(struct state *cst, void *pst)
 			llog_sa(RC_LOG_SERIOUS, child,
 				"reschedule pending %s - the %s #%lu is going away",
 				c->config->ike_info->child_sa_name,
-				c->config->ike_info->ike_sa_name,
+				c->config->ike_info->parent_sa_name,
 				ike->sa.st_serialno);
 			child->sa.st_policy = c->policy; /* for pick_initiator */
 			event_force(c->config->ike_info->replace_event, &child->sa);
@@ -709,7 +709,7 @@ static bool flush_incomplete_child(struct state *cst, void *pst)
 			llog_sa(RC_LOG_SERIOUS, child,
 				"expire pending %s - the %s #%lu is going away",
 				c->config->ike_info->child_sa_name,
-				c->config->ike_info->ike_sa_name,
+				c->config->ike_info->parent_sa_name,
 				ike->sa.st_serialno);
 			event_force(EVENT_SA_EXPIRE, &child->sa);
 
@@ -2157,7 +2157,7 @@ static void show_state(struct show *s, struct state *st, const monotime_t now)
 
 		if (IS_IPSEC_SA_ESTABLISHED(st)) {
 			jam(buf, " %s "PRI_SO";",
-			    c->config->ike_info->ike_sa_name,
+			    c->config->ike_info->parent_sa_name,
 			    pri_so(st->st_clonedfrom));
 		} else if (st->hidden_variables.st_peer_supports_dpd) {
 			/* ??? why is printing -1 better than 0? */

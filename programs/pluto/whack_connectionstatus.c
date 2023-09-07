@@ -719,7 +719,7 @@ static void show_connection_status(struct show *s, const struct connection *c)
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
 		jam(buf, PRI_CONNECTION":   newest %s: #%lu; newest IPsec SA: #%lu; conn serial: "PRI_CO"",
 		    c->name, instance,
-		    c->config->ike_info->ike_sa_name,
+		    c->config->ike_info->parent_sa_name,
 		    c->newest_ike_sa,
 		    c->newest_ipsec_sa, /* IPsec SA or Child SA? */
 		    pri_co(c->serialno));

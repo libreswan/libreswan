@@ -61,7 +61,7 @@ static void down_connection(struct connection **cp, struct logger *logger)
 	remove_connection_from_pending((*cp));
 	if (shared_phase1_connection((*cp))) {
 		llog(RC_LOG, (*cp)->logger, "%s is shared - only terminating %s",
-		     (*cp)->config->ike_info->ike_sa_name,
+		     (*cp)->config->ike_info->parent_sa_name,
 		     (*cp)->config->ike_info->child_sa_name);
 		/*
 		 * XXX: should "down" down the routing_sa when
