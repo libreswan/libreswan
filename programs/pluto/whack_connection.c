@@ -31,6 +31,13 @@
 #include "ikev1.h"		/* for send_n_log_v1_delete() */
 #include "ikev2_delete.h"
 
+typedef unsigned (whack_connections_visitor_cb)
+(struct connection *c,
+ const struct whack_message *m,
+ struct show *s,
+ whack_connection_visitor_cb *visit_connection,
+ const struct each *each);
+
 /*
  * When there's no name, whack all connections.
  *
@@ -49,6 +56,71 @@ void whack_all_connections_sorted(const struct whack_message *m, struct show *s,
 		visit_connection(s, (*cp), m);
 	}
 	pfree(connections);
+}
+
+/*
+ * If NAME is of the form "$N" or "#N", use that to find and whack a
+ * connection.
+ *
+ * Return true if the search for a connection should stop; not that
+ * the search was sucessful.
+ */
+
+static bool whack_connection_by_serialno(const struct whack_message *m,
+					 struct show *s,
+					 whack_connections_visitor_cb *visit_connections,
+					 whack_connection_visitor_cb *visit_connection,
+					 const struct each *each)
+{
+	struct logger *logger = show_logger(s);
+	if (m->name[0] == '$' ||
+	    m->name[0] == '#') {
+		ldbg(logger, "looking up '%s' by serialno", m->name);
+		uintmax_t serialno = 0;
+		err_t e = shunk_to_uintmax(shunk1(m->name + 1), NULL, /*base*/0, &serialno);
+		if (e != NULL) {
+			llog(RC_LOG, logger, "invalid serial number '%s': %s",
+			     m->name, e);
+			return true;
+		}
+		if (serialno >= INT_MAX) {/* arbitrary limit */
+			llog(RC_LOG, logger, "serial number '%s' is huge", m->name);
+			return true;
+		}
+		switch (m->name[0]) {
+		case '$':
+		{
+			struct connection *c = connection_by_serialno(serialno);
+			if (c != NULL) {
+				visit_connections(c, m, s, visit_connection, each);
+				return true;
+			}
+			break;
+		}
+		case '#':
+		{
+			struct state *st = state_by_serialno(serialno);
+			if (st != NULL) {
+				struct connection *c = st->st_connection;
+				visit_connections(c, m, s, visit_connection, each);
+				return true;
+			}
+			break;
+		}
+		}
+		llog(RC_LOG, logger, "serialno '%s' not found", m->name);
+		return true;
+	}
+	return false;
+}
+
+static unsigned visit_connections_root(struct connection *c,
+				       const struct whack_message *m,
+				       struct show *s,
+				       whack_connection_visitor_cb *visit_connection,
+				       const struct each *each UNUSED)
+{
+	return visit_connection(s, c, m);
 }
 
 void whack_each_connection(const struct whack_message *m, struct show *s,
@@ -118,42 +190,10 @@ void whack_each_connection(const struct whack_message *m, struct show *s,
 	 * prefix) and/or state (# prefix) number.
 	 */
 
-	if (m->name[0] == '$' ||
-	    m->name[0] == '#') {
-		ldbg(logger, "looking up '%s' by serialno", m->name);
-		uintmax_t serialno = 0;
-		err_t e = shunk_to_uintmax(shunk1(m->name + 1), NULL, /*base*/0, &serialno);
-		if (e != NULL) {
-			llog(RC_LOG, logger, "invalid serial number '%s': %s",
-			     m->name, e);
-			return;
-		}
-		if (serialno >= INT_MAX) {/* arbitrary limit */
-			llog(RC_LOG, logger, "serial number '%s' is huge", m->name);
-			return;
-		}
-		switch (m->name[0]) {
-		case '$':
-		{
-			struct connection *c = connection_by_serialno(serialno);
-			if (c != NULL) {
-				visit_connection(s, c, m);
-				return;
-			}
-			break;
-		}
-		case '#':
-		{
-			struct state *st = state_by_serialno(serialno);
-			if (st != NULL) {
-				struct connection *c = st->st_connection;
-				visit_connection(s, c, m);
-				return;
-			}
-			break;
-		}
-		}
-		llog(RC_LOG, logger, "serialno '%s' not found", m->name);
+	if (whack_connection_by_serialno(m, s,
+					 visit_connections_root,
+					 visit_connection,
+					 &each)) {
 		return;
 	}
 
@@ -179,11 +219,11 @@ void whack_each_connection(const struct whack_message *m, struct show *s,
 #undef MESSAGE
 }
 
-static unsigned whack_connection_bottom_up(struct connection *c,
-					   const struct whack_message *m,
-					   struct show *s,
-					   whack_connection_visitor_cb *visit_connection,
-					   const struct each *each)
+static unsigned visit_connections_bottom_up(struct connection *c,
+					    const struct whack_message *m,
+					    struct show *s,
+					    whack_connection_visitor_cb *visit_connection,
+					    const struct each *each)
 {
 	struct logger *logger = show_logger(s);
 	connection_addref(c, logger); /* must delref */
@@ -195,7 +235,7 @@ static unsigned whack_connection_bottom_up(struct connection *c,
 	};
 	while (next_connection_new2old(&instances)) {
 		/* abuse bool */
-		nr += whack_connection_bottom_up(instances.c, m, s, visit_connection, each);
+		nr += visit_connections_bottom_up(instances.c, m, s, visit_connection, each);
 	}
 	/* abuse bool */
 	nr += visit_connection(s, c, m);
@@ -225,9 +265,9 @@ void whack_connections_bottom_up(const struct whack_message *m,
 		.where = HERE,
 	};
 	if (next_connection_old2new(&by_name)) {
-		whack_connection_bottom_up(by_name.c, m, s,
-					   visit_connection,
-					   &each);
+		visit_connections_bottom_up(by_name.c, m, s,
+					    visit_connection,
+					    &each);
 		return;
 	}
 
@@ -264,7 +304,7 @@ void whack_connections_bottom_up(const struct whack_message *m,
 			if (by_alias.c->root_config == NULL) {
 				continue;
 			}
-			nr += whack_connection_bottom_up(by_alias.c, m, s, visit_connection, &each);
+			nr += visit_connections_bottom_up(by_alias.c, m, s, visit_connection, &each);
 		} while (next_connection_new2old(&by_alias));
 		if (nr == 1) {
 			if (each.past_tense != NULL) {
@@ -282,49 +322,10 @@ void whack_connections_bottom_up(const struct whack_message *m,
 		return;
 	}
 
-	/*
-	 * Try by serial number
-	 *
-	 * When alias fails, see if the name is a connection serial
-	 * number ("$" prefix) or a state serial number ("#" prefix).
-	 */
-
-	if (m->name[0] == '$' ||
-	    m->name[0] == '#') {
-		ldbg(logger, "looking up '%s' by serialno", m->name);
-		uintmax_t serialno = 0;
-		err_t e = shunk_to_uintmax(shunk1(m->name + 1), NULL, /*base*/0, &serialno);
-		if (e != NULL) {
-			llog(RC_LOG, logger, "invalid serial number '%s': %s",
-			     m->name, e);
-			return;
-		}
-		if (serialno >= INT_MAX) {/* arbitrary limit */
-			llog(RC_LOG, logger, "serial number '%s' is huge", m->name);
-			return;
-		}
-		switch (m->name[0]) {
-		case '$':
-		{
-			struct connection *c = connection_by_serialno(serialno);
-			if (c != NULL) {
-				whack_connection_bottom_up(c, m, s, visit_connection, &each);
-				return;
-			}
-			break;
-		}
-		case '#':
-		{
-			struct state *st = state_by_serialno(serialno);
-			if (st != NULL) {
-				struct connection *c = st->st_connection;
-				whack_connection_bottom_up(c, m, s, visit_connection, &each);
-				return;
-			}
-			break;
-		}
-		}
-		llog(RC_LOG, logger, "connection matching serial number '%s' not found", m->name);
+	if (whack_connection_by_serialno(m, s,
+					 visit_connections_bottom_up,
+					 visit_connection,
+					 &each)) {
 		return;
 	}
 
