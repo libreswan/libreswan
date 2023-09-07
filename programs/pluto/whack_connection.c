@@ -195,6 +195,7 @@ static unsigned whack_connection_bottom_up(struct connection **cp,
 					   const struct each *each)
 {
 	struct logger *logger = show_logger(s);
+	connection_addref((*cp), logger); /* must delref */
 
 	unsigned nr = 0;
 	struct connection_filter instances = {
@@ -206,8 +207,10 @@ static unsigned whack_connection_bottom_up(struct connection **cp,
 		nr += whack_connection_bottom_up(&instances.c, m, s, whack_connection, each);
 	}
 	/* abuse bool */
-	nr += whack_connection(s, connection_addref((*cp), logger), m);
-	connection_delref(cp, logger); /* kill addref() and caller's pointer */
+	nr += whack_connection(s, *cp, m);
+
+	/* kill addref() and caller's pointer */
+	connection_delref(cp, logger);
 	return nr;
 }
 
@@ -264,6 +267,15 @@ void whack_connections_bottom_up(const struct whack_message *m,
 		}
 		unsigned nr = 0;
 		do {
+			/*
+			 * Only pass connection roots to bottom_up().
+			 * i.e., don't visit instances here and via
+			 * bottom_up (only roots have a non-NULL
+			 * .root_config).
+			 */
+			if (by_alias.c->root_config == NULL) {
+				continue;
+			}
 			nr += whack_connection_bottom_up(&by_alias.c, m, s, whack_connection, &each);
 		} while (next_connection_new2old(&by_alias));
 		if (nr == 1) {
