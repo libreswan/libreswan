@@ -369,7 +369,8 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 	while (next_connection_old2new(&instance)) {
 		connection_buf cb;
 		llog_pexpect(logger, where,
-			     "connection still instantiated as "PRI_CONNECTION,
+			     "connection "PRI_CO" [%p] still instantiated as "PRI_CONNECTION,
+			     pri_connection_co(c), c,
 			     pri_connection(instance.c, &cb));
 		ok_to_delete = false;
 	}
@@ -385,7 +386,8 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 	while (next_state_new2old(&state)) {
 		state_buf sb;
 		llog_pexpect(logger, where,
-			     "connection is still being used by %s "PRI_STATE,
+			     "connection "PRI_CO" [%p] is still being used by %s "PRI_STATE,
+			     pri_connection_co(c), c,
 			     sa_name(state.st->st_connection->config->ike_version,
 				     state.st->st_sa_type_when_established),
 			     pri_state(state.st, &sb));
@@ -397,12 +399,16 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 	 */
 	if (connection_event_is_scheduled(c, CONNECTION_REVIVAL)) {
 		llog_pexpect(logger, where,
-			     "connection has REVVIAL pending");
+			     "connection "PRI_CO" [%p] has REVVIAL pending",
+			     pri_connection_co(c), c);
 		ok_to_delete = false;
 	}
 
-
-	PASSERT(logger, ok_to_delete);
+	if (!ok_to_delete) {
+		llog_passert(logger, where,
+			     "connection "PRI_CO" [%p] still in use",
+			     pri_connection_co(c), c);
+	}
 
 	/*
 	 * Finall start cleanup.
