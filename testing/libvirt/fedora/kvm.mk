@@ -147,6 +147,7 @@ KVM_FEDORA_UPGRADE_PACKAGES += \
     ldns \
     ldns-devel \
     libcap-ng-devel \
+    libcap-ng-utils \
     libfaketime \
     libevent-devel \
     libseccomp-devel \
