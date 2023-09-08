@@ -30,6 +30,7 @@
 #include "initiate.h"			/* for ipsecdoi_initiate() */
 #include "updown.h"
 #include "instantiate.h"
+#include "connection_event.h"
 
 static const char *routing_event_name[] = {
 #define S(E) [E] = #E
@@ -848,27 +849,33 @@ static bool unroute_connection_instances(enum routing_event event, struct connec
 	enum_buf ren;
 	ldbg_routing(c->logger, "due to %s, zapping instances",
 		     str_enum_short(&routing_event_names, event, &ren));
-	PASSERT(c->logger, is_template(c));
+	PEXPECT(c->logger, (is_template(c) ||
+			    is_labeled_template(c) ||
+			    is_labeled_parent(c)));
 
 	struct connection_filter cq = {
 		.clonedfrom = c,
 		.where = HERE,
 	};
 	bool had_instances;
-	while (next_connection_old2new(&cq)) {
+	while (next_connection_new2old(&cq)) {
 		had_instances = true;
+
 		connection_buf cqb;
 		ldbg_routing(c->logger, "zapping instance "PRI_CONNECTION,
 			     pri_connection(cq.c, &cqb));
-		dispatch(CONNECTION_UNROUTE, &cq.c, cq.c->logger, where,
-			 (struct routing_annex) {
-				 0,
-			 });
-		/* unroute doesn't delete instances, should it? */
+		PEXPECT(c->logger, ((is_template(c) && is_instance(cq.c)) ||
+				    (is_labeled_template(c) && is_labeled_parent(cq.c)) ||
+				    (is_labeled_parent(c) && is_labeled_child(cq.c))));
+
+		/*
+		 * unroute doesn't delete instances, should it?
+		 */
 
 		remove_connection_from_pending(cq.c);
 		delete_states_by_connection(cq.c);
-		connection_unroute(cq.c, HERE);
+		flush_connection_events(cq.c);
+		connection_unroute(cq.c, where);
 
 		delete_connection(&cq.c);
 	}
