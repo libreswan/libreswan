@@ -41,7 +41,7 @@ static size_t jam_progname_prefix(struct jambuf *buf, const void *object UNUSED)
 {
 	const char *progname = object;
 	if (progname != NULL) {
-		return jam(buf, "%s: ", progname);
+		return jam(buf, "%s", progname);
 	}
 	return 0;
 }

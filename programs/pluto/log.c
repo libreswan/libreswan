@@ -308,9 +308,9 @@ static size_t jam_from_prefix(struct jambuf *buf, const void *object)
 {
 	size_t s = 0;
 	if (!in_main_thread()) {
-		s += jam(buf, PEXPECT_PREFIX"%s in main thread: ", __func__);
+		s += jam(buf, PEXPECT_PREFIX"%s in main thread", __func__);
 	} else if (object == NULL) {
-		s += jam(buf, PEXPECT_PREFIX"%s NULL: ", __func__);
+		s += jam(buf, PEXPECT_PREFIX"%s NULL", __func__);
 	} else {
 		const ip_endpoint *from = object;
 		/* peer's IP address */
@@ -320,7 +320,6 @@ static size_t jam_from_prefix(struct jambuf *buf, const void *object)
 			s += jam(buf, "packet from ");
 		}
 		s += jam_endpoint_sensitive(buf, from);
-		s += jam(buf, ": ");
 	}
 	return s;
 }
@@ -336,9 +335,9 @@ static size_t jam_message_prefix(struct jambuf *buf, const void *object)
 {
 	size_t s = 0;
 	if (!in_main_thread()) {
-		s += jam(buf, PEXPECT_PREFIX"%s in main thread: ", __func__);
+		s += jam(buf, PEXPECT_PREFIX"%s in main thread", __func__);
 	} else if (object == NULL) {
-		s += jam(buf, PEXPECT_PREFIX"%s NULL: ", __func__);
+		s += jam(buf, PEXPECT_PREFIX"%s NULL", __func__);
 	} else {
 		const struct msg_digest *md = object;
 		s += jam_from_prefix(buf, &md->sender);
@@ -357,14 +356,13 @@ static size_t jam_connection_prefix(struct jambuf *buf, const void *object)
 {
 	size_t s = 0;
 	if (!in_main_thread()) {
-		s += jam(buf, PEXPECT_PREFIX"%s in main thread: ",
+		s += jam(buf, PEXPECT_PREFIX"%s in main thread",
 			 __func__);
 	} else if (object == NULL) {
-		s += jam(buf, PEXPECT_PREFIX"%s NULL: ", __func__);
+		s += jam(buf, PEXPECT_PREFIX"%s NULL", __func__);
 	} else {
 		const struct connection *c = object;
 		s += jam_connection(buf, c);
-		s += jam(buf, ": ");
 	}
 	return s;
 }
@@ -401,9 +399,9 @@ static size_t jam_state_prefix(struct jambuf *buf, const void *object)
 {
 	size_t s = 0;
 	if (!in_main_thread()) {
-		s += jam(buf, PEXPECT_PREFIX"%s in main thread: ", __func__);
+		s += jam(buf, PEXPECT_PREFIX"%s in main thread", __func__);
 	} else if (object == NULL) {
-		s += jam(buf, PEXPECT_PREFIX"%s NULL: ", __func__);
+		s += jam(buf, PEXPECT_PREFIX"%s NULL", __func__);
 	} else {
 		const struct state *st = object;
 		s += jam_state(buf, st);
@@ -412,7 +410,6 @@ static size_t jam_state_prefix(struct jambuf *buf, const void *object)
 			s += jam(buf, " ");
 			s += jam_string(buf, st->st_state->short_name);
 		}
-		s += jam(buf, ": ");
 	}
 	return s;
 }
@@ -470,10 +467,12 @@ struct logger *clone_logger(const struct logger *stack, where_t where)
 	 * Convert the dynamicically generated OBJECT prefix into an
 	 * unchanging string.  This way the prefix can be safely
 	 * accessed on a helper thread.
+	 *
+	 * Use str_logger_prefix() so that the prefix doesn't include
+	 * ":_" as added by jam_logger_prefix().
 	 */
-	char prefix[LOG_WIDTH];
-	struct jambuf prefix_buf = ARRAY_AS_JAMBUF(prefix);
-	jam_logger_prefix(&prefix_buf, stack);
+	logger_prefix_buf prefix_buf;
+	const char *prefix = str_logger_prefix(stack, &prefix_buf);
 	/*
 	 * choose a logger object vec with a hardwired suppress.
 	 */
