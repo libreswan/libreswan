@@ -65,7 +65,7 @@ void schedule_connection_event(struct connection *c,
 {
 	struct event_connection *d = alloc_thing(struct event_connection, "data");
 	connection_buf cb;
-	d->logger = string_logger(null_fd, HERE, "event %s for "PRI_CONNECTION": ",
+	d->logger = string_logger(null_fd, HERE, "event %s for "PRI_CONNECTION,
 				  enum_name(&connection_event_names, event),
 				  pri_connection(c, &cb));
 	d->event = event;
