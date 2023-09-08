@@ -1961,7 +1961,6 @@ static void dispatch_1(enum routing_event event,
 	}
 }
 
-
 void dispatch(enum routing_event event,
 	      struct connection **cp,
 	      struct logger *logger, where_t where,

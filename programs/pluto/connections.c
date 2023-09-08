@@ -271,7 +271,7 @@ struct connection *connection_addref_where(struct connection *c, const struct lo
 
 void connection_delref_where(struct connection **cp, const struct logger *owner, where_t where)
 {
-	struct connection *c = delref_where(cp, owner, where);
+	struct connection *c = ldelref_where(cp, owner, where);
 	if (c == NULL) {
 		return;
 	}

@@ -67,14 +67,20 @@ unsigned refcnt_peek(const refcnt_t *refcnt);
 
 void refcnt_addref_where(const char *what, const void *pointer,
 			 refcnt_t *refcnt,
-			 const struct logger *owner, where_t where);
+			 const struct logger *logger,
+			 const struct logger *new_owner,
+			 where_t where);
 
 /* old */
 
 #define addref_where(OBJ, WHERE)					\
 	({								\
 		typeof(OBJ) o_ = OBJ; /* evaluate once */		\
-		refcnt_addref_where(#OBJ, o_, o_ == NULL ? NULL : &o_->refcnt, NULL, WHERE); \
+		if (o_ != NULL) {					\
+			refcnt_addref_where(#OBJ, o_,			\
+					    &o_->refcnt,		\
+					    NULL, NULL, WHERE);		\
+		}							\
 		o_; /* result */					\
 	})
 
@@ -83,7 +89,12 @@ void refcnt_addref_where(const char *what, const void *pointer,
 #define laddref_where(OBJ, OWNER, WHERE)				\
 	({								\
 		typeof(OBJ) o_ = OBJ; /* evaluate once */		\
-		refcnt_addref_where(#OBJ, o_, o_ == NULL ? NULL : &o_->refcnt, OWNER, WHERE); \
+		if (o_ != NULL) {					\
+			refcnt_addref_where(#OBJ, o_,			\
+					    &o_->refcnt,		\
+					    o_->logger,			\
+					    OWNER, WHERE);		\
+		}							\
 		o_; /* result */					\
 	})
 
@@ -96,15 +107,34 @@ void refcnt_addref_where(const char *what, const void *pointer,
 
 void *refcnt_delref_where(const char *what, void *pointer,
 			  struct refcnt *refcnt,
-			  const struct logger *owner, where_t where) MUST_USE_RESULT;
+			  const struct logger *logger,
+			  const struct logger *owner,
+			  where_t where) MUST_USE_RESULT;
 
-#define delref_where(OBJP, OWNER, WHERE)				\
+#define delref_where(OBJP, LOGGER, WHERE)				\
 	({								\
 		typeof(OBJP) op_ = OBJP;				\
 		typeof(*OBJP) o_ = *op_;				\
 		*op_ = NULL; /* always kill pointer; and early */	\
-		refcnt_t *r_ = (o_ == NULL ? NULL : &o_->refcnt);	\
-		o_ = refcnt_delref_where(#OBJP, o_, r_, OWNER, WHERE);	\
+		if (o_ != NULL) {					\
+			o_ = refcnt_delref_where(#OBJP, o_,		\
+						 &o_->refcnt,		\
+						 LOGGER, NULL, WHERE);	\
+		}							\
+		o_; /* NULL or last OBJ */				\
+	})
+
+#define ldelref_where(OBJP, OWNER, WHERE)				\
+	({								\
+		typeof(OBJP) op_ = OBJP;				\
+		typeof(*OBJP) o_ = *op_;				\
+		*op_ = NULL; /* always kill pointer; and early */	\
+		if (o_ != NULL) {					\
+			o_ = refcnt_delref_where(#OBJP, o_,		\
+						 &o_->refcnt,		\
+						 o_->logger,		\
+						 OWNER, WHERE);		\
+		}							\
 		o_; /* NULL or last OBJ */				\
 	})
 

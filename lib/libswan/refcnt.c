@@ -21,43 +21,56 @@
 static pthread_mutex_t refcnt_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static void ldbg_ref(const struct logger *logger,
+		     const struct logger *owner,
 		     const char *why, const char *what,
 		     const void *pointer, where_t where,
 		     int old_count, int new_count)
 {
 	if (DBGP(DBG_REFCNT)) {
-		llog(DEBUG_STREAM|ADD_PREFIX, logger,
-		     "%sref %s@%p(%u->%u) "PRI_WHERE"",
-		     why, what, pointer, old_count, new_count,
-		     pri_where(where));
+		LLOG_JAMBUF(DEBUG_STREAM, &global_logger, buf) {
+			if (logger == NULL) {
+				jam_string(buf, what);
+				jam_string(buf, ": ");
+			} else {
+				jam_logger_prefix(buf, logger);
+			}
+			jam(buf, "%sref @%p(%u->%u)",
+			    why, pointer, old_count, new_count);
+			if (owner != NULL) {
+				jam_string(buf, " ");
+				jam_logger_prefix(buf, owner);
+			}
+			jam_string(buf, " ");
+			jam_where(buf, where);
+		}
 	}
 }
 
-#define LDBG_REF(LOGGER, WHY)						\
-	ldbg_ref(LOGGER, WHY, refcnt->base->what, pointer, where, old, new)
+#define LDBG_REF(WHY)						\
+	ldbg_ref(logger, owner, WHY, refcnt->base->what, pointer, where, old, new)
 
 /*
  * So existing code can use the refcnt tracer.
  */
 
-void ldbg_alloc(const struct logger *logger, const char *what, const void *pointer, where_t where)
+void ldbg_alloc(const struct logger *new_owner, const char *what, const void *pointer, where_t where)
 {
-	ldbg_ref(logger, "new", what, pointer, where, 0, 1);
+	ldbg_ref(NULL, new_owner, "new", what, pointer, where, 0, 1);
 }
 
 void ldbg_free(const struct logger *logger, const char *what, const void *pointer, where_t where)
 {
-	ldbg_ref(logger, "del", what, pointer, where, 1, 0);
+	ldbg_ref(logger, NULL, "del", what, pointer, where, 1, 0);
 }
 
 void dbg_alloc(const char *what, const void *pointer, where_t where)
 {
-	ldbg_alloc(&global_logger, what, pointer, where);
+	ldbg_alloc(NULL, what, pointer, where);
 }
 
 void dbg_free(const char *what, const void *pointer, where_t where)
 {
-	ldbg_free(&global_logger, what, pointer, where);
+	ldbg_free(NULL, what, pointer, where);
 }
 
 /* -- */
@@ -76,28 +89,20 @@ void refcnt_init(const void *pointer, struct refcnt *refcnt,
 	}
 	pthread_mutex_unlock(&refcnt_mutex);
 	if (old != 0 || new != 1) {
-		llog_pexpect(&global_logger, where, "refcnt for %s@%p should have been 0 initialized",
-			    base->what, pointer);
+		llog_passert(&global_logger, where,
+			     "%s() %s@%p should have been 0 initialized",
+			     __func__, base->what, pointer);
 	}
-	LDBG_REF(&global_logger, "new");
+	ldbg_ref(NULL, NULL, "new", base->what, pointer, where, old, new);
 }
 
-void refcnt_addref_where(const char *what, const void *pointer,
+void refcnt_addref_where(const char *what,
+			 const void *pointer,
 			 refcnt_t *refcnt,
-			 const struct logger *owner, where_t where)
+			 const struct logger *logger,
+			 const struct logger *owner,
+			 where_t where)
 {
-	if (owner == NULL) {
-		owner = &global_logger;
-	}
-
-	if (pointer == NULL) {
-		if (DBGP(DBG_REFCNT)) {
-			llog(DEBUG_STREAM|ADD_PREFIX, owner,
-			     "addref %s@NULL "PRI_WHERE"", what, pri_where(where));
-		}
-		return;
-	}
-
 	unsigned old, new;
 	pthread_mutex_lock(&refcnt_mutex);
 	{
@@ -108,10 +113,12 @@ void refcnt_addref_where(const char *what, const void *pointer,
 	pthread_mutex_unlock(&refcnt_mutex);
 
 	if (old == 0) {
-		llog_passert(owner, where, "refcnt for %s@%p should have been non-0",
-			     what, pointer);
+		llog_passert((logger == NULL ? &global_logger : logger), where,
+			     "%s() refcnt for %s@%p should have been non-0",
+			     __func__, what, pointer);
 	}
-	LDBG_REF(owner, "add");
+
+	LDBG_REF("add");
 }
 
 /*
@@ -131,20 +138,10 @@ unsigned refcnt_peek(const refcnt_t *refcnt)
 
 void *refcnt_delref_where(const char *what, void *pointer,
 			  struct refcnt *refcnt,
-			  const struct logger *owner, const struct where *where)
+			  const struct logger *logger,
+			  const struct logger *owner,
+			  const struct where *where)
 {
-	if (owner == NULL) {
-		owner = &global_logger;
-	}
-
-	if (pointer == NULL) {
-		if (DBGP(DBG_REFCNT)) {
-			llog(DEBUG_STREAM|ADD_PREFIX, owner,
-			     "delref %s@NULL "PRI_WHERE"", what, pri_where(where));
-		}
-		return NULL;
-	}
-
 	/* on main thread */
 	unsigned old, new;
 	pthread_mutex_lock(&refcnt_mutex);
@@ -158,11 +155,12 @@ void *refcnt_delref_where(const char *what, void *pointer,
 	pthread_mutex_unlock(&refcnt_mutex);
 
 	if (old == 0) {
-		llog_passert(owner, where, "refcnt for %s@%p should have been non-0",
-			     what, pointer);
+		llog_passert((logger == NULL ? &global_logger : logger), where,
+			     "%s() refcnt for %s@%p should have been non-0",
+			     __func__, what, pointer);
 	}
 
-	LDBG_REF(owner, "del");
+	LDBG_REF("del");
 
 	if (new == 0) {
 		return pointer;
