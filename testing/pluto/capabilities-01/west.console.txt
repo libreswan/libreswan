@@ -1,0 +1,22 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ echo "initdone"
+initdone
+west #
+ netcap | grep pluto | sed "s/^.*pluto/pluto/"
+pluto            udp      500    dac_read_search, setgid, setuid, net_bind_service, net_admin, net_raw, ipc_lock, audit_write +
+pluto            udp      500    dac_read_search, setgid, setuid, net_bind_service, net_admin, net_raw, ipc_lock, audit_write +
+pluto            udp      500    dac_read_search, setgid, setuid, net_bind_service, net_admin, net_raw, ipc_lock, audit_write +
+pluto            udp      4500   dac_read_search, setgid, setuid, net_bind_service, net_admin, net_raw, ipc_lock, audit_write +
+pluto            udp      4500   dac_read_search, setgid, setuid, net_bind_service, net_admin, net_raw, ipc_lock, audit_write +
+pluto            udp      4500   dac_read_search, setgid, setuid, net_bind_service, net_admin, net_raw, ipc_lock, audit_write +
+west #
+ echo done
+done
+west #
+ 
