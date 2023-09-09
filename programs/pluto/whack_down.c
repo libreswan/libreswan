@@ -51,26 +51,26 @@ static bool shared_phase1_connection(const struct connection *c)
 	return false;
 }
 
-static void down_connection(struct connection **cp, struct logger *logger)
+static void down_connection(struct connection *c, struct logger *logger)
 {
-	connection_attach((*cp), logger);
+	connection_attach(c, logger);
 
-	llog(RC_LOG, (*cp)->logger, "terminating SAs using this connection");
-	del_policy((*cp), POLICY_UP);
+	llog(RC_LOG, c->logger, "terminating SAs using this connection");
+	del_policy(c, POLICY_UP);
 
-	remove_connection_from_pending((*cp));
-	if (shared_phase1_connection((*cp))) {
-		llog(RC_LOG, (*cp)->logger, "%s is shared - only terminating %s",
-		     (*cp)->config->ike_info->parent_sa_name,
-		     (*cp)->config->ike_info->child_sa_name);
+	remove_connection_from_pending(c);
+	if (shared_phase1_connection(c)) {
+		llog(RC_LOG, c->logger, "%s is shared - only terminating %s",
+		     c->config->ike_info->parent_sa_name,
+		     c->config->ike_info->child_sa_name);
 		/*
 		 * XXX: should "down" down the routing_sa when
 		 * ipsec_sa is NULL?
 		 */
-		struct child_sa *child = child_sa_by_serialno((*cp)->newest_ipsec_sa);
+		struct child_sa *child = child_sa_by_serialno(c->newest_ipsec_sa);
 		if (child != NULL) {
 			state_attach(&child->sa, logger);
-			switch ((*cp)->config->ike_version) {
+			switch (c->config->ike_version) {
 			case IKEv1:
 				delete_state(&child->sa);
 				break;
@@ -81,7 +81,7 @@ static void down_connection(struct connection **cp, struct logger *logger)
 		}
 	} else {
 		dbg("connection not shared - terminating IKE and IPsec SA");
-		whack_delete_connection_states((*cp), HERE);
+		whack_delete_connection_states(c, HERE);
 	}
 
 	/*
@@ -89,12 +89,12 @@ static void down_connection(struct connection **cp, struct logger *logger)
 	 * the magical deleting instance message appears on the
 	 * console.
 	 */
-	if (is_instance((*cp)) && refcnt_peek(&(*cp)->refcnt) == 1) {
-		ldbg((*cp)->logger, "hack attack: skipping detach so that caller can log deleting instance");
+	if (is_instance(c) && refcnt_peek(&c->refcnt) == 1) {
+		ldbg(c->logger, "hack attack: skipping detach so that caller can log deleting instance");
 		return;
 	}
 
-	connection_detach((*cp), logger);
+	connection_detach(c, logger);
 }
 
 static unsigned whack_down_connections(const struct whack_message *m UNUSED,
@@ -107,7 +107,7 @@ static unsigned whack_down_connections(const struct whack_message *m UNUSED,
 	case CK_INSTANCE:
 	case CK_LABELED_PARENT:
 		/* can delref C; caller still holds a ref */
-		down_connection(&c, logger);
+		down_connection(c, logger);
 		return 1; /* the connection counts */
 	case CK_TEMPLATE:
 	case CK_GROUP:
