@@ -1023,20 +1023,23 @@ static bool load_conn(struct starter_conn *conn,
 			 * which we handle by zeroing the also list, and adding to it after
 			 * checking for duplicates.
 			 */
+			const char *seeking = alsos[alsoplace];
+			passert(seeking != NULL);
+
 			struct section_list *addin;
 
 			for (addin = cfgp->sections.tqh_first;
 			     addin != NULL &&
-			     !streq(alsos[alsoplace], addin->name);
+			     !streq(seeking, addin->name);
 			     addin = addin->link.tqe_next)
 				;
 
 			if (addin == NULL) {
 				starter_log(LOG_LEVEL_ERR,
 					    "cannot find conn '%s' needed by conn '%s'",
-					    alsos[alsoplace], conn->name);
+					    seeking, conn->name);
 				starter_error_append(perrl, "cannot find conn '%s' needed by conn '%s'",
-					alsos[alsoplace], conn->name);
+					seeking, conn->name);
 				err = true;
 				continue;	/* allowing further error detection */
 			}
@@ -1046,7 +1049,7 @@ static bool load_conn(struct starter_conn *conn,
 
 			starter_log(LOG_LEVEL_DEBUG,
 				    "\twhile loading conn '%s' also including '%s'",
-				    conn->name, alsos[alsoplace]);
+				    conn->name, seeking);
 
 			conn->strings_set[KSCF_ALSO] = false;
 			pfreeany(conn->strings[KSCF_ALSO]);
