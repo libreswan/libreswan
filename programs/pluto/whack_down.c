@@ -34,17 +34,20 @@
  * Is a connection in use by some state?
  */
 
-static bool shared_phase1_connection(const struct connection *c)
+static bool shared_phase1_connection(struct ike_sa *ike)
 {
-	so_serial_t serial_us = c->newest_ike_sa;
-
-	if (serial_us == SOS_NOBODY)
+	if (ike == NULL) {
+		/* can't share what doesn't exist? */
 		return false;
+	}
 
-	struct state_filter sf = { .where = HERE, };
+	struct state_filter sf = {
+		.clonedfrom = ike->sa.st_serialno,
+		.where = HERE,
+	};
 	while (next_state_new2old(&sf)) {
 		struct state *st = sf.st;
-		if (st->st_connection != c && st->st_clonedfrom == serial_us)
+		if (st->st_connection != ike->sa.st_connection)
 			return true;
 	}
 
@@ -57,17 +60,25 @@ static void down_connection(struct connection *c, struct logger *logger)
 
 	llog(RC_LOG, c->logger, "terminating SAs using this connection");
 	del_policy(c, POLICY_UP);
-
 	remove_connection_from_pending(c);
-	if (shared_phase1_connection(c)) {
+
+	/*
+	 * Danger:
+	 * Either of IKE and CHILD could be NULL.
+	 *
+	 * For IKEv1, when IKE is NULL the CHILD could have some other
+	 * parent.
+	 *
+	 * XXX: should "down" down the routing_sa when ipsec_sa is
+	 * NULL?
+	 */
+	struct ike_sa *ike = ike_sa_by_serialno(c->newest_ike_sa);
+	struct child_sa *child = child_sa_by_serialno(c->newest_ipsec_sa);
+
+	if (shared_phase1_connection(ike)) {
 		llog(RC_LOG, c->logger, "%s is shared - only terminating %s",
 		     c->config->ike_info->parent_sa_name,
 		     c->config->ike_info->child_sa_name);
-		/*
-		 * XXX: should "down" down the routing_sa when
-		 * ipsec_sa is NULL?
-		 */
-		struct child_sa *child = child_sa_by_serialno(c->newest_ipsec_sa);
 		if (child != NULL) {
 			state_attach(&child->sa, logger);
 			switch (c->config->ike_version) {
@@ -75,6 +86,8 @@ static void down_connection(struct connection *c, struct logger *logger)
 				delete_state(&child->sa);
 				break;
 			case IKEv2:
+				/* apparently not!?! */
+				PEXPECT(c->logger, ike->sa.st_serialno == child->sa.st_clonedfrom);
 				submit_v2_delete_exchange(ike_sa(&child->sa, HERE), child);
 				break;
 			}
