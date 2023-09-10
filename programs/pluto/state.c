@@ -581,38 +581,6 @@ void init_states(void)
 	}
 }
 
-static void send_n_log_delete(struct ike_sa *ike, where_t where)
-{
-	switch (ike->sa.st_ike_version) {
-#ifdef USE_IKEv1
-	case IKEv1:
-		/*
-		 * Tell the other side of any IPSEC
-		 * SAs that are going down
-		 */
-		send_n_log_v1_delete(&ike->sa, where);
-		return;
-#endif
-	case IKEv2:
-		/*
-		 *
-		 * ??? in IKEv2, we should not immediately delete: we
-		 * should use an Informational Exchange to coordinate
-		 * deletion.
-		 *
-		 * XXX: It's worse ....
-		 *
-		 * should_send_delete() can return
-		 * true when ST is a Child SA.  But
-		 * the below sends out a delete for
-		 * the IKE SA.
-		 */
-		record_n_send_n_log_v2_delete(ike, where);
-		return;
-	}
-	bad_case(ike->sa.st_ike_version);
-}
-
 void delete_state_by_id_name(struct state *st, const char *name)
 {
 	struct connection *c = st->st_connection;
@@ -626,9 +594,37 @@ void delete_state_by_id_name(struct state *st, const char *name)
 	const char *thatidbuf = str_id(&c->remote->host.id, &thatidb);
 	if (streq(thatidbuf, name)) {
 		if (IS_PARENT_SA_ESTABLISHED(&ike->sa)) {
-			send_n_log_delete(ike, HERE);
+			switch (ike->sa.st_ike_version) {
+#ifdef USE_IKEv1
+			case IKEv1:
+				/*
+				 * Tell the other side of any IPSEC
+				 * SAs that are going down
+				 */
+				send_n_log_v1_delete(&ike->sa, HERE);
+				break;
+#endif
+			case IKEv2:
+				/*
+				 *
+				 * ??? in IKEv2, we should not
+				 * immediately delete: we should use
+				 * an Informational Exchange to
+				 * coordinate deletion.
+				 *
+				 * XXX: It's worse ....
+				 *
+				 * should_send_delete() can return
+				 * true when ST is a Child SA.  But
+				 * the below sends out a delete for
+				 * the IKE SA.
+				 */
+				record_n_send_n_log_v2_delete(ike, HERE);
+				break;
+			}
 		}
 		on_delete(&ike->sa, skip_send_delete);
+		/* XXX: won't this also send deletes? */
 		delete_ike_family(&ike);
 	}
 }
