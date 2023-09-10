@@ -110,7 +110,7 @@ west #
  ipsec auto --down westnet-eastnet-nflog
 002 "westnet-eastnet-nflog": terminating SAs using this connection
 002 "westnet-eastnet-nflog": ISAKMP SA is shared - only terminating IPsec SA
-002 "westnet-eastnet-nflog" #2: deleting IPsec SA (QUICK_I2) and sending notification
+002 "westnet-eastnet-nflog" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
 005 "westnet-eastnet-nflog" #2: ESP traffic information: in=168B out=168B
 west #
  iptables -L -n
@@ -127,7 +127,7 @@ NFLOG      all  --  192.1.2.45           192.1.2.23           policy match dir o
 west #
  ipsec auto --down west-east-nflog
 002 "west-east-nflog": terminating SAs using this connection
-002 "west-east-nflog" #3: deleting IPsec SA (QUICK_I2) and sending notification
+002 "west-east-nflog" #3: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
 005 "west-east-nflog" #3: ESP traffic information: in=168B out=168B
 west #
  iptables -L -n

@@ -48,7 +48,7 @@ west #
 004 "westnet-eastnet" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "westnet-eastnet": terminating SAs using this connection
-002 "westnet-eastnet" #2: deleting IPsec SA (QUICK_I2) and sending notification
+002 "westnet-eastnet" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
 005 "westnet-eastnet" #2: ESP traffic information: in=84B out=84B
 002 "westnet-eastnet" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
 002 "westnet-eastnet": terminating SAs using this connection
@@ -151,7 +151,7 @@ west #
 004 "westnet-eastnet" #10: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "westnet-eastnet": terminating SAs using this connection
-002 "westnet-eastnet" #10: deleting IPsec SA (QUICK_I2) and sending notification
+002 "westnet-eastnet" #10: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #9
 002 "westnet-eastnet" #10: IMPAIR: omitting HASH payload for send delete
 005 "westnet-eastnet" #10: ESP traffic information: in=84B out=84B
 002 "westnet-eastnet" #9: deleting ISAKMP SA (MAIN_I4) and sending notification
@@ -176,7 +176,7 @@ west #
 004 "westnet-eastnet" #12: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "westnet-eastnet": terminating SAs using this connection
-002 "westnet-eastnet" #12: deleting IPsec SA (QUICK_I2) and sending notification
+002 "westnet-eastnet" #12: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #11
 002 "westnet-eastnet" #12: IMPAIR: sending HASH payload with no data for send delete
 005 "westnet-eastnet" #12: ESP traffic information: in=84B out=84B
 002 "westnet-eastnet" #11: deleting ISAKMP SA (MAIN_I4) and sending notification
@@ -201,7 +201,7 @@ west #
 004 "westnet-eastnet" #14: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "westnet-eastnet": terminating SAs using this connection
-002 "westnet-eastnet" #14: deleting IPsec SA (QUICK_I2) and sending notification
+002 "westnet-eastnet" #14: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #13
 002 "westnet-eastnet" #14: IMPAIR: setting HASH payload bytes to 00
 005 "westnet-eastnet" #14: ESP traffic information: in=84B out=84B
 002 "westnet-eastnet" #13: deleting ISAKMP SA (MAIN_I4) and sending notification
@@ -239,7 +239,7 @@ west #
 004 "westnet-eastnet" #16: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "westnet-eastnet": terminating SAs using this connection
-002 "westnet-eastnet" #16: deleting IPsec SA (QUICK_I2) and sending notification
+002 "westnet-eastnet" #16: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #15
 005 "westnet-eastnet" #16: ESP traffic information: in=84B out=84B
 002 "westnet-eastnet" #15: deleting ISAKMP SA (MAIN_I4) and sending notification
 002 "westnet-eastnet": terminating SAs using this connection
@@ -262,7 +262,7 @@ west #
 004 "westnet-eastnet" #18: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "westnet-eastnet": terminating SAs using this connection
-002 "westnet-eastnet" #18: deleting IPsec SA (QUICK_I2) and sending notification
+002 "westnet-eastnet" #18: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #17
 005 "westnet-eastnet" #18: ESP traffic information: in=84B out=84B
 002 "westnet-eastnet" #17: deleting ISAKMP SA (MAIN_I4) and sending notification
 002 "westnet-eastnet": terminating SAs using this connection
@@ -285,7 +285,7 @@ west #
 004 "westnet-eastnet" #20: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "westnet-eastnet": terminating SAs using this connection
-002 "westnet-eastnet" #20: deleting IPsec SA (QUICK_I2) and sending notification
+002 "westnet-eastnet" #20: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #19
 005 "westnet-eastnet" #20: ESP traffic information: in=84B out=84B
 002 "westnet-eastnet" #19: deleting ISAKMP SA (MAIN_I4) and sending notification
 002 "westnet-eastnet": terminating SAs using this connection
@@ -321,7 +321,7 @@ west #
 004 "westnet-eastnet" #22: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "westnet-eastnet": terminating SAs using this connection
-002 "westnet-eastnet" #22: deleting IPsec SA (QUICK_I2) and sending notification
+002 "westnet-eastnet" #22: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #21
 005 "westnet-eastnet" #22: ESP traffic information: in=84B out=84B
 002 "westnet-eastnet" #21: deleting ISAKMP SA (MAIN_I4) and sending notification
 002 "westnet-eastnet": terminating SAs using this connection
@@ -344,7 +344,7 @@ west #
 004 "westnet-eastnet" #24: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "westnet-eastnet": terminating SAs using this connection
-002 "westnet-eastnet" #24: deleting IPsec SA (QUICK_I2) and sending notification
+002 "westnet-eastnet" #24: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #23
 005 "westnet-eastnet" #24: ESP traffic information: in=84B out=84B
 002 "westnet-eastnet" #23: deleting ISAKMP SA (MAIN_I4) and sending notification
 002 "westnet-eastnet": terminating SAs using this connection
@@ -367,7 +367,7 @@ west #
 004 "westnet-eastnet" #26: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "westnet-eastnet": terminating SAs using this connection
-002 "westnet-eastnet" #26: deleting IPsec SA (QUICK_I2) and sending notification
+002 "westnet-eastnet" #26: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #25
 005 "westnet-eastnet" #26: ESP traffic information: in=84B out=84B
 002 "westnet-eastnet" #25: deleting ISAKMP SA (MAIN_I4) and sending notification
 002 "westnet-eastnet": terminating SAs using this connection
