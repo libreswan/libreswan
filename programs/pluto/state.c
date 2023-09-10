@@ -770,7 +770,7 @@ static void flush_incomplete_children(struct ike_sa *ike)
 			  __func__);
 }
 
-static bool should_send_delete(const struct state *st)
+static bool should_send_v1_delete(const struct state *st)
 {
 	if (st->st_on_delete.skip_send_delete) {
 		ldbg(st->st_logger,
@@ -779,87 +779,28 @@ static bool should_send_delete(const struct state *st)
 		return false;
 	}
 
-	switch (st->st_ike_version) {
-#ifdef USE_IKEv1
-	case IKEv1:
-		if (!IS_V1_ISAKMP_SA_ESTABLISHED(st) &&
-		    !IS_IPSEC_SA_ESTABLISHED(st)) {
-			ldbg(st->st_logger,
-			     "%s: "PRI_SO"? no, IKEv1 SA in state %s is not established",
-			     __func__, pri_so(st->st_serialno), st->st_state->short_name);
-			return false;
-		}
-		if (find_ike_sa_by_connection(st->st_connection,
-					      V1_ISAKMP_SA_ESTABLISHED_STATES) == NULL) {
-			/*
-			 * PW: But this is valid for IKEv1, where it
-			 * would need to start a new IKE SA to send
-			 * the delete notification ???
-			 */
-			ldbg(st->st_logger,
-			     "%s: "PRI_SO"? no, IKEv1 SA in state %s has no ISAKMP (Phase 1) SA",
-			     __func__, st->st_serialno, st->st_state->name);
-			return false;
-		}
-		ldbg(st->st_logger, "%s: "PRI_SO"? yes, IKEv1 and no reason not to",
-		     __func__, pri_so(st->st_serialno));
-		return true;
-#endif
-	case IKEv2:
-#if 0
-		/*
-		 * Not yet!
-		 *
-		 * addconn-05-bogus-left-interface, for instance,
-		 * barfs because "ipsec whack --delete" is expecting
-		 * delete_state() to send the delete message.
-		 */
-		llog_pexpect(st->st_logger, HERE,
-			     "IKEv2 should not need to do this");
-#endif
-		if (IS_CHILD_SA(st)) {
-			/*
-			 * Without an IKE SA sending the notify isn't
-			 * possible.
-			 *
-			 * ??? in v2, there must be a parent
-			 *
-			 * XXX:
-			 *
-			 * Except when delete_state(ike), instead of
-			 * delete_ike_family(ike), is called ...
-			 *
-			 * There's also the idea of having Child SAs
-			 * linger while the IKE SA is trying to
-			 * re-establish.  Or should that code only use
-			 * information in the connection?
-			 *
-			 * Anyway, play it safe.
-			 */
-			ldbg(st->st_logger,
-			     "%s: "PRI_SO"? no, IKEv2 Child SAs never send delete",
-			     __func__, pri_so(st->st_serialno));
-			return false;
-		}
-		if (!IS_IKE_SA_ESTABLISHED(st)) {
-			ldbg(st->st_logger,
-			     "%s: "PRI_SO"? no, IKEv2 IKE SA in state %s is not established",
-			     __func__, pri_so(st->st_serialno), st->st_state->short_name);
-			return false;
-		}
-		/*
-		 * Established Child SA implies it's IKE SA is
-		 * established.
-		 *
-		 * Don't require .st_viable_parent; a rekeyed IKE SA,
-		 * which is established but not viable, needs to send
-		 * a delete.
-		 */
-		dbg("%s: "PRI_SO"? yes, IKEv2 IKE SA is established",
-		    __func__, pri_so(st->st_serialno));
-		return true;
+	PASSERT(st->st_logger, st->st_ike_version == IKEv1);
+	if (!IS_V1_ISAKMP_SA_ESTABLISHED(st) &&
+	    !IS_IPSEC_SA_ESTABLISHED(st)) {
+		ldbg(st->st_logger,
+		     "%s: "PRI_SO"? no, IKEv1 SA in state %s is not established",
+		     __func__, pri_so(st->st_serialno), st->st_state->short_name);
+		return false;
 	}
-	bad_case(st->st_ike_version);
+	if (find_ike_sa_by_connection(st->st_connection, V1_ISAKMP_SA_ESTABLISHED_STATES) == NULL) {
+		/*
+		 * PW: But this is valid for IKEv1, where it would
+		 * need to start a new IKE SA to send the delete
+		 * notification ???
+		 */
+		ldbg(st->st_logger,
+		     "%s: "PRI_SO"? no, IKEv1 SA in state %s has no ISAKMP (Phase 1) SA",
+		     __func__, st->st_serialno, st->st_state->name);
+		return false;
+	}
+	ldbg(st->st_logger, "%s: "PRI_SO"? yes, IKEv1 and no reason not to",
+	     __func__, pri_so(st->st_serialno));
+	return true;
 }
 
 void delete_child_sa(struct child_sa **child)
@@ -992,45 +933,63 @@ void delete_state(struct state *st)
 		}
 	}
 
-	if (should_send_delete(st)) {
+	if (st->st_ike_version == IKEv2 && IS_CHILD_SA(st)) {
+		/*
+		 * XXX:
+		 *
+		 * This should be a pexpect; as all callers
+		 * logging child sa delete should also set
+		 * .skip_log_message.
+		 *
+		 * IKEv2 children never send a delete
+		 * notification from delete_state() so logging
+		 * "and NOT sending delete" is redundant.
+		 * However, sometimes IKEv2 children should
+		 * log that they have been deleted.  Let the
+		 * caller decide.
+		 */
+		ldbg_sa_delete_n_send(st, false);
+	} else if (st->st_on_delete.skip_send_delete) {
+		if (st->st_on_delete.skip_log_message) {
+			ldbg_sa_delete_n_send(st, false);
+		} else {
+			PEXPECT(st->st_logger, (st->st_ike_version == IKEv1 ||
+						IS_PARENT_SA(st)));
+			llog_sa_delete_n_send(st, false);
+		}
+	} else {
 		switch (st->st_ike_version) {
 #ifdef USE_IKEv1
 		case IKEv1:
-			/*
-			 * Tell the other side of any IPsec
-			 * SAs that are going down
-			 */
-			send_n_log_v1_delete(st, HERE);
+			if (should_send_v1_delete(st)) {
+				/*
+				 * Tell the other side of any IPsec
+				 * SAs that are going down
+				 */
+				send_n_log_v1_delete(st, HERE);
+			} else {
+				llog_sa_delete_n_send(st, false);
+			}
 			break;
 #endif
 		case IKEv2:
-			/*
-			 * ??? in IKEv2, we should not immediately delete: we
-			 * should use an Informational Exchange to coordinate
-			 * deletion.
-			 */
-			record_n_send_n_log_v2_delete(pexpect_ike_sa(st), HERE);
+			PEXPECT(st->st_logger, IS_PARENT_SA(st));
+			if (IS_IKE_SA_ESTABLISHED(st)) {
+				/*
+				 * XXX: this should be a pexpect(),
+				 * caller should have already handled
+				 * logging and sending delete.
+				 *
+				 * ??? in IKEv2, we should not immediately
+				 * delete: we should use an Informational
+				 * Exchange to coordinate deletion.
+				 */
+				record_n_send_n_log_v2_delete(pexpect_ike_sa(st), HERE);
+			} else {
+				llog_sa_delete_n_send(st, false);
+			}
 			break;
 		}
-	} else if (st->st_on_delete.skip_log_message) {
-		ldbg_sa_delete_n_send(st, false);
-	} else if (st->st_ike_version == IKEv2 && IS_CHILD_SA(st)) {
-		/*
-		 * IKEv2 children never send a delete notification
-		 * from delete_state() so logging "and NOT sending
-		 * delete" is redundant.  However, sometimes IKEv2
-		 * children should log that they have been deleted.
-		 * Let the caller decide.
-		 *
-		 * XXX: this should be a pexpect; as all callers
-		 * logging child sa delete should also set
-		 * .skip_log_message.
-		 */
-		ldbg_sa_delete_n_send(st, false);
-	} else {
-		PEXPECT(st->st_logger, (st->st_ike_version == IKEv1 ||
-					IS_PARENT_SA(st)));
-		llog_sa_delete_n_send(st, false);
 	}
 
 	pstat_sa_deleted(st);
@@ -2776,7 +2735,7 @@ static bool delete_ike_family_child(struct state *st, void *unused_context UNUSE
 	case IKEv1:
 	{
 		struct connection *const c = st->st_connection;
-		bool should_notify = should_send_delete(st);
+		bool should_notify = should_send_v1_delete(st);
 		bool will_notify = should_notify && !impair.send_no_delete;
 		const char *impair_notify = should_notify == will_notify ? "" : "IMPAIR: ";
 		if (ike->sa.st_connection == st->st_connection) {
