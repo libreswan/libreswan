@@ -772,35 +772,41 @@ static void flush_incomplete_children(struct ike_sa *ike)
 
 static bool should_send_v1_delete(const struct state *st)
 {
-	if (st->st_on_delete.skip_send_delete) {
+	PASSERT(st->st_logger, !st->st_on_delete.skip_send_delete);
+	PASSERT(st->st_logger, st->st_ike_version == IKEv1);
+
+	if (IS_V1_ISAKMP_SA_ESTABLISHED(st)) {
 		ldbg(st->st_logger,
-		     "%s: "PRI_SO"? NO, because .st_on_delete.skip_send_delete",
-		     __func__, pri_so(st->st_serialno));
+		     "%s: "PRI_SO"? yes, IKEv1 ISAKMP SA in state %s is established",
+		     __func__, pri_so(st->st_serialno), st->st_state->short_name);
+		return true;
+	}
+
+	if (IS_IPSEC_SA_ESTABLISHED(st)) {
+		struct ike_sa *isakmp = find_ike_sa_by_connection(st->st_connection, V1_ISAKMP_SA_ESTABLISHED_STATES);
+		if (isakmp != NULL) {
+			ldbg(st->st_logger,
+			     "%s: "PRI_SO"? yes, IKEv1 IPsec SA in state %s is established with a viable ISAKMP SA "PRI_SO,
+			     __func__, pri_so(st->st_serialno),
+			     st->st_state->short_name,
+			     pri_so(isakmp->sa.st_serialno));
+			return true;
+		}
+		ldbg(st->st_logger,
+		     "%s: "PRI_SO"? no, IKEv1 IPsec SA in state %s is established has no viable ISAKMP SA",
+		     __func__, pri_so(st->st_serialno),
+		     st->st_state->short_name);
 		return false;
 	}
 
-	PASSERT(st->st_logger, st->st_ike_version == IKEv1);
-	if (!IS_V1_ISAKMP_SA_ESTABLISHED(st) &&
-	    !IS_IPSEC_SA_ESTABLISHED(st)) {
-		ldbg(st->st_logger,
-		     "%s: "PRI_SO"? no, IKEv1 SA in state %s is not established",
-		     __func__, pri_so(st->st_serialno), st->st_state->short_name);
-		return false;
-	}
-	if (find_ike_sa_by_connection(st->st_connection, V1_ISAKMP_SA_ESTABLISHED_STATES) == NULL) {
-		/*
-		 * PW: But this is valid for IKEv1, where it would
-		 * need to start a new IKE SA to send the delete
-		 * notification ???
-		 */
-		ldbg(st->st_logger,
-		     "%s: "PRI_SO"? no, IKEv1 SA in state %s has no ISAKMP (Phase 1) SA",
-		     __func__, st->st_serialno, st->st_state->name);
-		return false;
-	}
-	ldbg(st->st_logger, "%s: "PRI_SO"? yes, IKEv1 and no reason not to",
-	     __func__, pri_so(st->st_serialno));
-	return true;
+	/*
+	 * PW: But this is valid for IKEv1, where it would need to
+	 * start a new IKE SA to send the delete notification ???
+	 */
+	ldbg(st->st_logger,
+	     "%s: "PRI_SO"? no, IKEv1 SA in state %s is not established",
+	     __func__, st->st_serialno, st->st_state->name);
+	return false;
 }
 
 void delete_child_sa(struct child_sa **child)
