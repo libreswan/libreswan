@@ -789,7 +789,8 @@ static bool should_send_delete(const struct state *st)
 			     __func__, pri_so(st->st_serialno), st->st_state->short_name);
 			return false;
 		}
-		if (find_phase1_state(st->st_connection, V1_ISAKMP_SA_ESTABLISHED_STATES) == NULL) {
+		if (find_ike_sa_by_connection(st->st_connection,
+					      V1_ISAKMP_SA_ESTABLISHED_STATES) == NULL) {
 			/*
 			 * PW: But this is valid for IKEv1, where it
 			 * would need to start a new IKE SA to send
@@ -2055,11 +2056,14 @@ bool ikev2_viable_parent(const struct ike_sa *ike)
 }
 
 /*
- * Find newest Phase 1 negotiation state object for suitable for connection c
+ * Find newest Phase 1 negotiation state object for suitable for
+ * connection c.
+ *
+ * Also used to find an IKEv1 ISAKMP SA suitable for sending a delete.
  */
-struct state *find_phase1_state(const struct connection *c, lset_t ok_states)
+struct ike_sa *find_ike_sa_by_connection(const struct connection *c, lset_t ok_states)
 {
-	struct state *best = NULL;
+	struct ike_sa *best = NULL;
 
 	struct state_filter sf = { .where = HERE, };
 	while (next_state_new2old(&sf)) {
@@ -2070,9 +2074,8 @@ struct state *find_phase1_state(const struct connection *c, lset_t ok_states)
 		    same_peer_ids(c, st->st_connection, NULL) &&
 		    endpoint_address_eq_address(st->st_remote_endpoint, c->remote->host.addr) &&
 		    IS_IKE_SA(st) &&
-		    (best == NULL || best->st_serialno < st->st_serialno))
-		{
-			best = st;
+		    (best == NULL || best->sa.st_serialno < st->st_serialno)) {
+			best = pexpect_ike_sa(st);
 		}
 	}
 

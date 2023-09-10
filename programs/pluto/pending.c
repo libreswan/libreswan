@@ -402,28 +402,27 @@ void connection_check_phase2(struct logger *logger)
 		     c->config->ike_info->parent_sa_name,
 		     str_address_sensitive(&c->remote->host.addr, &ab));
 
-		struct state *p1st;
+		struct ike_sa *ike;
 		switch (c->config->ike_version) {
 #ifdef USE_IKEv1
 		case IKEv1:
-			p1st = find_phase1_state(c,
-						 (V1_ISAKMP_SA_ESTABLISHED_STATES |
-						  V1_PHASE1_INITIATOR_STATES));
+			ike = find_ike_sa_by_connection(c, (V1_ISAKMP_SA_ESTABLISHED_STATES |
+							    V1_PHASE1_INITIATOR_STATES));
 			break;
 #endif
 		case IKEv2:
-			p1st = find_phase1_state(c, IKEV2_ISAKMP_INITIATOR_STATES);
+			ike = find_ike_sa_by_connection(c, IKEV2_ISAKMP_INITIATOR_STATES);
 			break;
 		default:
 			bad_case(c->config->ike_version);
 		}
 
-		if (p1st != NULL) {
+		if (ike != NULL) {
 			/* arrange to rekey the phase 1, if there was one. */
 			if (c->config->dnshostname != NULL) {
 				restart_connections_by_peer(c, logger);
 			} else {
-				event_force(c->config->ike_info->replace_event, p1st);
+				event_force(c->config->ike_info->replace_event, &ike->sa);
 			}
 		} else {
 			/* start a new connection. Something wanted it up */

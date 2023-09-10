@@ -1709,22 +1709,22 @@ static void send_v1_notification(struct logger *logger,
 void send_v1_notification_from_state(struct state *st, enum state_kind from_state,
 				     v1_notification_t type)
 {
-	struct state *p1st;
-
 	passert(st != NULL);
 
 	if (from_state == STATE_UNDEFINED)
 		from_state = st->st_state->kind;
 
 	if (IS_V1_QUICK(from_state)) {
-		p1st = find_phase1_state(st->st_connection, V1_ISAKMP_SA_ESTABLISHED_STATES);
+		struct ike_sa *p1st = find_ike_sa_by_connection(st->st_connection,
+								V1_ISAKMP_SA_ESTABLISHED_STATES);
 		if ((p1st == NULL) ||
-			(!IS_V1_ISAKMP_SA_ESTABLISHED(p1st))) {
+		    (!IS_V1_ISAKMP_SA_ESTABLISHED(&p1st->sa))) {
 			log_state(RC_LOG_SERIOUS, st,
 				  "no Phase1 state for Quick mode notification");
 			return;
 		}
-		send_v1_notification(st->st_logger, st, type, p1st, generate_msgid(p1st),
+		send_v1_notification(st->st_logger, st, type, &p1st->sa,
+				     generate_msgid(&p1st->sa),
 				     st->st_ike_spis.initiator.bytes,
 				     st->st_ike_spis.responder.bytes,
 				     PROTO_ISAKMP);
@@ -1844,8 +1844,9 @@ void send_n_log_v1_delete(struct state *st, where_t where)
 	struct state *p1st;
 	if (IS_IPSEC_SA_ESTABLISHED(st)) {
 		/* IPsec, still has a parent? */
-		p1st = find_phase1_state(st->st_connection, V1_ISAKMP_SA_ESTABLISHED_STATES);
-
+		struct ike_sa *ike = find_ike_sa_by_connection(st->st_connection,
+							       V1_ISAKMP_SA_ESTABLISHED_STATES);
+		p1st = (ike == NULL ? NULL : &ike->sa); /*hack*/
 		if (st->st_ah.present) {
 			*ns = said_from_address_protocol_spi(st->st_connection->local->host.addr,
 							     &ip_protocol_ah,
