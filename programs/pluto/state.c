@@ -864,7 +864,9 @@ static void update_and_log_traffic(struct child_sa *child, const char *name,
 	pstats->out += proto->outbound.bytes;
 }
 
-static void llog_delete_n_send(lset_t rc_flags, struct state *st, bool sending_delete)
+static void llog_delete_n_send(lset_t rc_flags,
+			       struct ike_sa *ike,
+			       struct state *st)
 {
 	LLOG_JAMBUF(rc_flags, st->st_logger, buf) {
 		/* deleting {IKE,Child,IPsec,ISAKMP} SA */
@@ -884,25 +886,30 @@ static void llog_delete_n_send(lset_t rc_flags, struct state *st, bool sending_d
 		 * SAs never send delete but logging that they are
 		 * gone can be useful
 		 */
-		if (sending_delete) {
-			jam_string(buf, " and sending notification");
-		} else {
+		if (ike == NULL) {
 			jam_string(buf, " and NOT sending notification");
+		} else if (ike->sa.st_serialno != st->st_serialno) {
+			jam_string(buf, " and sending notification using ");
+			jam_string(buf, st->st_connection->config->ike_info->parent_sa_name);
+			jam_string(buf, " ");
+			jam_so(buf, ike->sa.st_serialno);
+		} else {
+			jam_string(buf, " and sending notification");
 		}
 	}
 }
 
-void llog_sa_delete_n_send(struct state *st, bool sending_delete)
+void llog_sa_delete_n_send(struct ike_sa *ike, struct state *st)
 {
 	PEXPECT(st->st_logger, !st->st_on_delete.skip_log_message);
-	llog_delete_n_send(RC_LOG, st, sending_delete);
+	llog_delete_n_send(RC_LOG, ike, st);
 	on_delete(st, skip_log_message);
 }
 
-static void ldbg_sa_delete_n_send(struct state *st, bool sending_delete)
+static void ldbg_sa_delete_n_send(struct ike_sa *ike, struct state *st)
 {
 	if (DBGP(DBG_BASE)) {
-		llog_delete_n_send(DEBUG_STREAM, st, sending_delete);
+		llog_delete_n_send(DEBUG_STREAM, ike, st);
 	}
 }
 
@@ -947,15 +954,18 @@ void delete_state(struct state *st)
 		 * However, sometimes IKEv2 children should
 		 * log that they have been deleted.  Let the
 		 * caller decide.
+		 *
+		 * XXX: This should know the IKE SA, but often it's
+		 * already been deleted.  Ulgh!
 		 */
-		ldbg_sa_delete_n_send(st, false);
+		ldbg_sa_delete_n_send(NULL, st);
 	} else if (st->st_on_delete.skip_send_delete) {
 		if (st->st_on_delete.skip_log_message) {
-			ldbg_sa_delete_n_send(st, false);
+			ldbg_sa_delete_n_send(NULL, st);
 		} else {
 			PEXPECT(st->st_logger, (st->st_ike_version == IKEv1 ||
 						IS_PARENT_SA(st)));
-			llog_sa_delete_n_send(st, false);
+			llog_sa_delete_n_send(NULL, st);
 		}
 	} else {
 		switch (st->st_ike_version) {
@@ -968,7 +978,7 @@ void delete_state(struct state *st)
 				 */
 				send_n_log_v1_delete(st, HERE);
 			} else {
-				llog_sa_delete_n_send(st, false);
+				llog_sa_delete_n_send(NULL, st);
 			}
 			break;
 #endif
@@ -986,7 +996,7 @@ void delete_state(struct state *st)
 				 */
 				record_n_send_n_log_v2_delete(pexpect_ike_sa(st), HERE);
 			} else {
-				llog_sa_delete_n_send(st, false);
+				llog_sa_delete_n_send(pexpect_ike_sa(st), st);
 			}
 			break;
 		}

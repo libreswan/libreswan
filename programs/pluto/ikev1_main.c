@@ -1869,7 +1869,7 @@ void send_n_log_v1_delete(struct state *st, where_t where)
 		p1st = NULL;
 	}
 
-	llog_sa_delete_n_send(st, /*sending-delete*/p1st != NULL);
+	llog_sa_delete_n_send(pexpect_ike_sa(p1st), st);
 
 	if (p1st == NULL) {
 		dbg("no established Phase 1 state to carry the Delete notify");
