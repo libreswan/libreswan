@@ -601,7 +601,7 @@ void delete_state_by_id_name(struct state *st, const char *name)
 				 * Tell the other side of any IPSEC
 				 * SAs that are going down
 				 */
-				send_n_log_v1_delete(&ike->sa, HERE);
+				send_v1_delete(ike, &ike->sa, HERE);
 				break;
 #endif
 			case IKEv2:
@@ -642,7 +642,7 @@ void delete_v1_state_by_username(struct state *st, const char *name)
 	}
 
 	if (IS_PARENT_SA_ESTABLISHED(&ike->sa)) {
-		send_n_log_v1_delete(&ike->sa, HERE);
+		send_v1_delete(ike, &ike->sa, HERE);
 	}
 	on_delete(&ike->sa, skip_send_delete);
 	delete_ike_family(&ike);
@@ -764,45 +764,6 @@ static void flush_incomplete_children(struct ike_sa *ike)
 			  &ike->sa.st_ike_spis /* match: IKE SPIs */,
 			  flush_incomplete_child, ike/*arg*/,
 			  __func__);
-}
-
-static bool should_send_v1_delete(const struct state *st)
-{
-	PASSERT(st->st_logger, !st->st_on_delete.skip_send_delete);
-	PASSERT(st->st_logger, st->st_ike_version == IKEv1);
-
-	if (IS_V1_ISAKMP_SA_ESTABLISHED(st)) {
-		ldbg(st->st_logger,
-		     "%s: "PRI_SO"? yes, IKEv1 ISAKMP SA in state %s is established",
-		     __func__, pri_so(st->st_serialno), st->st_state->short_name);
-		return true;
-	}
-
-	if (IS_IPSEC_SA_ESTABLISHED(st)) {
-		struct ike_sa *isakmp = find_ike_sa_by_connection(st->st_connection, V1_ISAKMP_SA_ESTABLISHED_STATES);
-		if (isakmp != NULL) {
-			ldbg(st->st_logger,
-			     "%s: "PRI_SO"? yes, IKEv1 IPsec SA in state %s is established with a viable ISAKMP SA "PRI_SO,
-			     __func__, pri_so(st->st_serialno),
-			     st->st_state->short_name,
-			     pri_so(isakmp->sa.st_serialno));
-			return true;
-		}
-		ldbg(st->st_logger,
-		     "%s: "PRI_SO"? no, IKEv1 IPsec SA in state %s is established has no viable ISAKMP SA",
-		     __func__, pri_so(st->st_serialno),
-		     st->st_state->short_name);
-		return false;
-	}
-
-	/*
-	 * PW: But this is valid for IKEv1, where it would need to
-	 * start a new IKE SA to send the delete notification ???
-	 */
-	ldbg(st->st_logger,
-	     "%s: "PRI_SO"? no, IKEv1 SA in state %s is not established",
-	     __func__, st->st_serialno, st->st_state->name);
-	return false;
 }
 
 void delete_child_sa(struct child_sa **child)
@@ -973,15 +934,7 @@ void delete_state(struct state *st)
 		switch (st->st_ike_version) {
 #ifdef USE_IKEv1
 		case IKEv1:
-			if (should_send_v1_delete(st)) {
-				/*
-				 * Tell the other side of any IPsec
-				 * SAs that are going down
-				 */
-				send_n_log_v1_delete(st, HERE);
-			} else {
-				llog_sa_delete_n_send(NULL, st);
-			}
+			maybe_send_n_log_v1_delete(st, HERE);
 			break;
 #endif
 		case IKEv2:
@@ -2747,7 +2700,7 @@ static bool delete_ike_family_child(struct state *st, void *unused_context UNUSE
 	case IKEv1:
 	{
 		struct connection *const c = st->st_connection;
-		bool should_notify = should_send_v1_delete(st);
+		bool should_notify = (should_send_v1_delete(st) != NULL);
 		bool will_notify = should_notify && !impair.send_no_delete;
 		const char *impair_notify = should_notify == will_notify ? "" : "IMPAIR: ";
 		if (ike->sa.st_connection == st->st_connection) {

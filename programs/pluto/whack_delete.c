@@ -48,14 +48,14 @@ static void delete_v1_states(struct connection *c,
 		return;
 	case WHACK_CHILD:
 		state_attach(&(*child)->sa, c->logger);
-		send_n_log_v1_delete(&(*child)->sa, HERE);
+		maybe_send_n_log_v1_delete(&(*child)->sa, HERE);
 		PEXPECT(c->logger, (*ike) != NULL);
 		connection_delete_child(*ike, child, HERE);
 		return;
 	case WHACK_CUCKOO:
 		/* IKEv1 has cuckoos */
 		state_attach(&(*child)->sa, c->logger);
-		send_n_log_v1_delete(&(*child)->sa, HERE);
+		maybe_send_n_log_v1_delete(&(*child)->sa, HERE);
 		PEXPECT(c->logger, ike == NULL);
 		connection_delete_child(isakmp_sa(*child)/*could-be-null*/,
 					child, HERE);
@@ -83,7 +83,7 @@ static void delete_v1_states(struct connection *c,
 		 * Can't use connection_delete_ike() as that has IKEv2
 		 * semantics - deletes all siblings skipped above.
 		 */
-		send_n_log_v1_delete(&(*ike)->sa, HERE);
+		maybe_send_n_log_v1_delete(&(*ike)->sa, HERE);
 		delete_ike_sa(ike);
 		connection_unroute(c, HERE);
 		return;

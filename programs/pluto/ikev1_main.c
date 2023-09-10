@@ -1824,10 +1824,54 @@ void send_v1_notification_from_md(struct msg_digest *md, v1_notification_t type)
  *
  * @param st State struct (we hope it has some SA's related to it)
  */
-void send_n_log_v1_delete(struct state *st, where_t where)
+
+struct ike_sa *should_send_v1_delete(struct state *st)
+{
+	PASSERT(st->st_logger, !st->st_on_delete.skip_send_delete);
+	PASSERT(st->st_logger, st->st_ike_version == IKEv1);
+
+	if (IS_V1_ISAKMP_SA_ESTABLISHED(st)) {
+		ldbg(st->st_logger,
+		     "%s: "PRI_SO"? yes, IKEv1 ISAKMP SA in state %s is established",
+		     __func__, pri_so(st->st_serialno), st->st_state->short_name);
+		return pexpect_ike_sa(st);
+	}
+
+	if (IS_IPSEC_SA_ESTABLISHED(st)) {
+		struct ike_sa *isakmp = find_ike_sa_by_connection(st->st_connection, V1_ISAKMP_SA_ESTABLISHED_STATES);
+		if (isakmp != NULL) {
+			ldbg(st->st_logger,
+			     "%s: "PRI_SO"? yes, IKEv1 IPsec SA in state %s is established with a viable ISAKMP SA "PRI_SO,
+			     __func__, pri_so(st->st_serialno),
+			     st->st_state->short_name,
+			     pri_so(isakmp->sa.st_serialno));
+			return isakmp;
+		}
+		ldbg(st->st_logger,
+		     "%s: "PRI_SO"? no, IKEv1 IPsec SA in state %s is established has no viable ISAKMP SA",
+		     __func__, pri_so(st->st_serialno),
+		     st->st_state->short_name);
+		return NULL;
+	}
+
+	/*
+	 * PW: But this is valid for IKEv1, where it would need to
+	 * start a new IKE SA to send the delete notification ???
+	 */
+	ldbg(st->st_logger,
+	     "%s: "PRI_SO"? no, IKEv1 SA in state %s is not established",
+	     __func__, st->st_serialno, st->st_state->name);
+	return NULL;
+}
+
+void send_v1_delete(struct ike_sa *isakmp, struct state *st, where_t where)
 {
 	ldbg(st->st_logger, "hacking around IKEv1 send'n'log delete for "PRI_SO" "PRI_WHERE,
 	     pri_so(st->st_serialno), pri_where(where));
+
+	if (!PEXPECT(st->st_logger, IS_V1_ISAKMP_SA_ESTABLISHED(&isakmp->sa))) {
+		return;
+	}
 
 	pb_stream r_hdr_pbs;
 	msgid_t msgid;
@@ -1841,12 +1885,7 @@ void send_n_log_v1_delete(struct state *st, where_t where)
 	 * Find the established ISAKMP SA, can't send a delete notify
 	 * without this.
 	 */
-	struct state *p1st;
 	if (IS_IPSEC_SA_ESTABLISHED(st)) {
-		/* IPsec, still has a parent? */
-		struct ike_sa *ike = find_ike_sa_by_connection(st->st_connection,
-							       V1_ISAKMP_SA_ESTABLISHED_STATES);
-		p1st = (ike == NULL ? NULL : &ike->sa); /*hack*/
 		if (st->st_ah.present) {
 			*ns = said_from_address_protocol_spi(st->st_connection->local->host.addr,
 							     &ip_protocol_ah,
@@ -1861,19 +1900,6 @@ void send_n_log_v1_delete(struct state *st, where_t where)
 		}
 
 		PASSERT(st->st_logger, ns != said); /* there must be some SAs to delete */
-
-	} else if (IS_V1_ISAKMP_SA_ESTABLISHED(st)) {
-		/* or ISAKMP SA's... */
-		p1st = st;
-	} else {
-		p1st = NULL;
-	}
-
-	llog_sa_delete_n_send(pexpect_ike_sa(p1st), st);
-
-	if (p1st == NULL) {
-		dbg("no established Phase 1 state to carry the Delete notify");
-		return;
 	}
 
 	if (impair.send_no_delete) {
@@ -1881,6 +1907,7 @@ void send_n_log_v1_delete(struct state *st, where_t where)
 		return;
 	}
 
+	struct state *p1st = &isakmp->sa;
 	msgid = generate_msgid(p1st);
 
 	uint8_t buffer[8192];	/* ??? large enough for any deletion notification? */
@@ -2039,6 +2066,16 @@ void send_n_log_v1_delete(struct state *st, where_t where)
 		/* get back old IV for this state */
 		restore_iv(p1st, old_iv);
 	}
+}
+
+void maybe_send_n_log_v1_delete(struct state *st, where_t where)
+{
+	struct ike_sa *isakmp = should_send_v1_delete(st); /* could be NULL */
+	llog_sa_delete_n_send(isakmp, st);
+	if (isakmp == NULL) {
+		return;
+	}
+	send_v1_delete(isakmp, st, where);
 }
 
 /*
