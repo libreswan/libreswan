@@ -839,49 +839,6 @@ static bool zap_connection_family(enum routing_event event,
 	return false;
 }
 
-/*
- * zap (unroute) any instances of the connection; for instance when an
- * unrouted template gets instantiated using whack.
- */
-
-static bool unroute_connection_instances(enum routing_event event, struct connection *c, where_t where)
-{
-	enum_buf ren;
-	ldbg_routing(c->logger, "due to %s, zapping instances",
-		     str_enum_short(&routing_event_names, event, &ren));
-	PEXPECT(c->logger, (is_template(c) ||
-			    is_labeled_template(c) ||
-			    is_labeled_parent(c)));
-
-	struct connection_filter cq = {
-		.clonedfrom = c,
-		.where = HERE,
-	};
-	bool had_instances;
-	while (next_connection_new2old(&cq)) {
-		had_instances = true;
-
-		connection_buf cqb;
-		ldbg_routing(c->logger, "zapping instance "PRI_CONNECTION,
-			     pri_connection(cq.c, &cqb));
-		PEXPECT(c->logger, ((is_template(c) && is_instance(cq.c)) ||
-				    (is_labeled_template(c) && is_labeled_parent(cq.c)) ||
-				    (is_labeled_parent(c) && is_labeled_child(cq.c))));
-
-		/*
-		 * unroute doesn't delete instances, should it?
-		 */
-
-		remove_connection_from_pending(cq.c);
-		delete_states_by_connection(cq.c);
-		flush_connection_events(cq.c);
-		connection_unroute(cq.c, where);
-
-		delete_connection(&cq.c);
-	}
-	return had_instances;
-}
-
 void connection_initiate(struct connection *c, const threadtime_t *inception,
 			 bool background, where_t where)
 {
@@ -1400,17 +1357,10 @@ static void dispatch_1(enum routing_event event,
 			return;
 
 		case X(UNROUTE, UNROUTED, TEMPLATE):
-			if (unroute_connection_instances(event, c, where)) {
-				return;
-			}
 			ldbg_routing(logger, "already unrouted");
 			return;
 		case X(UNROUTE, ROUTED_ONDEMAND, TEMPLATE):
 		case X(UNROUTE, ROUTED_REVIVAL, TEMPLATE):
-			if (c->child.routing == RT_ROUTED_REVIVAL) {
-				delete_revival(c);
-			}
-			unroute_connection_instances(event, c, where);
 			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
 						   c->logger, where, "unroute template");
 			/* do now so route_owner won't find us */
@@ -1880,13 +1830,9 @@ static void dispatch_1(enum routing_event event,
 			}
 			return;
 		case X(UNROUTE, UNROUTED, LABELED_TEMPLATE):
-			if (unroute_connection_instances(event, c, where)) {
-				return;
-			}
 			ldbg_routing(logger, "already unrouted");
 			return;
 		case X(UNROUTE, ROUTED_ONDEMAND, LABELED_TEMPLATE):
-			unroute_connection_instances(event, c, where);
 			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
 						   c->logger, where, "unroute template");
 			/* do now so route_owner won't find us */

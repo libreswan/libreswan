@@ -22,46 +22,71 @@
 #include "log.h"
 #include "whack_connection.h"
 
-static unsigned whack_unroute_connection(const struct whack_message *m UNUSED,
+static whack_connection_visitor_cb whack_unroute_connection;
+
+static unsigned unroute_connection(struct connection *c, struct show *s)
+{
+	connection_attach(c, show_logger(s));
+	connection_unroute(c, HERE);
+	connection_detach(c, show_logger(s));
+	return 1; /* the connection counts */
+}
+
+static unsigned unroute_instances(const struct whack_message *m,
+				  struct connection *c, struct show *s)
+{
+	return whack_connection_instance_new2old(m, s, c, whack_unroute_connection);
+}
+
+static unsigned whack_unroute_connection(const struct whack_message *m,
 					 struct show *s,
 					 struct connection *c)
 {
-	struct logger *logger = show_logger(s);
+	unsigned nr = 0;
+
+	/*
+	 * Let code know of intent.
+	 *
+	 * Functions such as connection_unroute() don't fiddle policy
+	 * bits as they are called as part of unroute/route sequences.
+	 */
+	del_policy(c, POLICY_ROUTE);
+
 	switch (c->local->kind) {
+
+	case CK_PERMANENT:
+		nr += unroute_connection(c, s);
+		return nr;
 
 	case CK_TEMPLATE:
 	case CK_LABELED_TEMPLATE:
-	case CK_PERMANENT:
 		/*
-		 * Let code know of intent.
-		 *
-		 * Functions such as connection_unroute() don't fiddle
-		 * policy bits as they are called as part of
-		 * unroute/route sequences.
+		 * Both the template and the instance may have been
+		 * routed separately (for instance by manual initiate,
+		 * narrowing, ...).  Hence, regardless of template,
+		 * also callback to unroute instances.
 		 */
-		connection_attach(c, show_logger(s));
-		del_policy(c, POLICY_ROUTE);
-		connection_unroute(c, HERE);
-		connection_detach(c, show_logger(s));
-		return 1; /* the connection counts */
+		nr += unroute_instances(m, c, s);
+		nr += unroute_connection(c, s);
+		return nr;
+
+	case CK_LABELED_CHILD:
+		/*
+		 * Labeled children are routed/unrouted by their
+		 * parent.
+		 */
+		llog(RC_LOG, show_logger(s), "cannot unroute");
+		return 0;
 
 	case CK_LABELED_PARENT:
-	case CK_LABELED_CHILD:
 	case CK_INSTANCE:
-		/*
-		 * Skip instances, why?
-		 *
-		 * This assumes that an instance was routed by its
-		 * template?  And hence only templates and permanents
-		 * need unrouting?
-		 */
-		connection_attach(c, logger);
-		llog(RC_LOG, c->logger, "cannot initiate");
-		connection_detach(c, logger);
-		return 0; /* the connection doesn't count */
+		nr += unroute_connection(c, s);
+		return nr;
 
 	case CK_GROUP:
-		return whack_connection_instance_new2old(m, s, c, whack_unroute_connection);
+		del_policy(c, POLICY_ROUTE);
+		nr += unroute_instances(m, c, s);
+		return nr;
 
 	case CK_INVALID:
 		break;
