@@ -29,6 +29,7 @@
 #include "pending.h"
 #include "whack_connection.h"
 #include "ikev2_delete.h"
+#include "ikev1.h"		/* for maybe_send_n_log_v1_delete() */
 
 /*
  * Is a connection in use by some state?
@@ -83,7 +84,10 @@ static unsigned down_connection(struct connection *c, struct logger *logger)
 			state_attach(&child->sa, logger);
 			switch (c->config->ike_version) {
 			case IKEv1:
-				delete_state(&child->sa);
+				maybe_send_n_log_v1_delete(&child->sa, HERE);
+				/* IKE, above, may not be the ISAKMP
+				 * SA for this child! */
+				connection_delete_child(NULL, &child, HERE);
 				break;
 			case IKEv2:
 				/* apparently not!?! */
