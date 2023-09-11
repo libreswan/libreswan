@@ -1,8 +1,16 @@
-# trap installed
+# check policy installed / uninstalled
+ipsec route initiator
+../../guestbin/ipsec-kernel-policy.sh
+ipsec unroute initiator
 ../../guestbin/ipsec-kernel-policy.sh
 
+# put trap back
+ipsec route initiator
+../../guestbin/ipsec-kernel-policy.sh
+
+# one ping to trigger IKE
 ../../guestbin/ping-once.sh --forget -I 192.1.2.45 192.1.2.23
-../../guestbin/wait-for.sh --match west -- ipsec whack --trafficstatus
+../../guestbin/wait-for.sh --match initiator -- ipsec whack --trafficstatus
 ../../guestbin/ping-once.sh --up -I 192.1.2.45 192.1.2.23
 ipsec whack --trafficstatus
 

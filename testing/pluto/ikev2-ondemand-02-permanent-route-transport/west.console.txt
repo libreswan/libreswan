@@ -5,15 +5,15 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add west
-002 "west": added IKEv2 connection
-west #
- ipsec auto --route west
+ ipsec auto --add initiator
+002 "initiator": added IKEv2 connection
 west #
  echo "initdone"
 initdone
 west #
- # trap installed
+ # check policy installed / uninstalled
+west #
+ ipsec route initiator
 west #
  ../../guestbin/ipsec-kernel-policy.sh
 src 192.1.2.45/32 dst 192.1.2.23/32
@@ -21,17 +21,33 @@ src 192.1.2.45/32 dst 192.1.2.23/32
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
 west #
+ ipsec unroute initiator
+west #
+ ../../guestbin/ipsec-kernel-policy.sh
+west #
+ # put trap back
+west #
+ ipsec route initiator
+west #
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.2.45/32 dst 192.1.2.23/32
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+west #
+ # one ping to trigger IKE
+west #
  ../../guestbin/ping-once.sh --forget -I 192.1.2.45 192.1.2.23
 fired and forgotten
 west #
- ../../guestbin/wait-for.sh --match west -- ipsec whack --trafficstatus
-006 #2: "west", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+ ../../guestbin/wait-for.sh --match initiator -- ipsec whack --trafficstatus
+006 #2: "initiator", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
 west #
  ../../guestbin/ping-once.sh --up -I 192.1.2.45 192.1.2.23
 up
 west #
  ipsec whack --trafficstatus
-006 #2: "west", type=ESP, add_time=1234567890, inBytes=64, outBytes=64, maxBytes=2^63B, id='@east'
+006 #2: "initiator", type=ESP, add_time=1234567890, inBytes=64, outBytes=64, maxBytes=2^63B, id='@east'
 west #
  # real policy installed
 west #
@@ -67,12 +83,12 @@ src 192.1.2.45 dst 192.1.2.23
 	 00000000 00000000 00000000 XXXXXXXX 
 	sel src 192.1.2.45/32 dst 192.1.2.23/32 
 west #
- ipsec auto --down west
-002 "west": terminating SAs using this connection
-002 "west" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
-005 "west" #2: ESP traffic information: in=64B out=64B
+ # down before unroute; everything but trap cleared
 west #
- # only trap
+ ipsec auto --down initiator
+002 "initiator": terminating SAs using this connection
+002 "initiator" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+005 "initiator" #2: ESP traffic information: in=64B out=64B
 west #
  ../../guestbin/ipsec-kernel-policy.sh
 src 192.1.2.45/32 dst 192.1.2.23/32
@@ -80,8 +96,12 @@ src 192.1.2.45/32 dst 192.1.2.23/32
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
 west #
- # everything cleared out
-west #
  ../../guestbin/ipsec-kernel-state.sh
+west #
+ # now clear everything
+west #
+ ipsec unroute initiator
+west #
+ ../../guestbin/ipsec-kernel-policy.sh
 west #
  
