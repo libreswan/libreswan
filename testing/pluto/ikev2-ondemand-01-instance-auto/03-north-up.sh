@@ -8,6 +8,9 @@
 ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.0.2.254
 ipsec whack --trafficstatus
 
+# wait for larval state to clear; hack
+../../guestbin/wait-for.sh --no-match 0x00000000 ../../guestbin/ipsec-kernel-state.sh
+
 ../../guestbin/ipsec-kernel-policy.sh
 ../../guestbin/ipsec-kernel-state.sh
 

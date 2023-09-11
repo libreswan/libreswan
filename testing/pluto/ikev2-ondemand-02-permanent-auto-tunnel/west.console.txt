@@ -30,6 +30,10 @@ west #
  ipsec whack --trafficstatus
 006 #2: "west", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
+ # wait for larval state to clear; hack
+west #
+ ../../guestbin/wait-for.sh --no-match 0x00000000 ../../guestbin/ipsec-kernel-state.sh
+west #
  # real policy installed
 west #
  ../../guestbin/ipsec-kernel-policy.sh

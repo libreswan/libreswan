@@ -49,6 +49,10 @@ north #
  ipsec whack --trafficstatus
 006 #2: "initiator", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 north #
+ # wait for larval state to clear; hack
+north #
+ ../../guestbin/wait-for.sh --no-match 0x00000000 ../../guestbin/ipsec-kernel-state.sh
+north #
  # real policy installed
 north #
  ../../guestbin/ipsec-kernel-policy.sh

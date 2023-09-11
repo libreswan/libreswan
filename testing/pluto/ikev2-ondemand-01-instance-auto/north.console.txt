@@ -34,6 +34,10 @@ north #
  ipsec whack --trafficstatus
 006 #2: "north", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 north #
+ # wait for larval state to clear; hack
+north #
+ ../../guestbin/wait-for.sh --no-match 0x00000000 ../../guestbin/ipsec-kernel-state.sh
+north #
  ../../guestbin/ipsec-kernel-policy.sh
 src 192.0.2.0/24 dst 192.0.3.254/32
 	dir fwd priority PRIORITY ptype main
