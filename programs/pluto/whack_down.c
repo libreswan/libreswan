@@ -54,7 +54,7 @@ static bool shared_phase1_connection(struct ike_sa *ike)
 	return false;
 }
 
-static void down_connection(struct connection *c, struct logger *logger)
+static unsigned down_connection(struct connection *c, struct logger *logger)
 {
 	connection_attach(c, logger);
 
@@ -104,33 +104,45 @@ static void down_connection(struct connection *c, struct logger *logger)
 	 */
 	if (is_instance(c) && refcnt_peek(&c->refcnt) == 1) {
 		ldbg(c->logger, "hack attack: skipping detach so that caller can log deleting instance");
-		return;
+		return 1;
 	}
 
 	connection_detach(c, logger);
+	return 1;
 }
 
-static unsigned whack_down_connections(const struct whack_message *m UNUSED,
-				       struct show *s, struct connection *c)
+static unsigned whack_down_connection(const struct whack_message *m UNUSED,
+				      struct show *s, struct connection *c)
 {
-	struct logger *logger = show_logger(s);
-	connection_buf cb;
+	del_policy(c, POLICY_UP); /* XXX: where to put this? */
+
+	unsigned nr = 0;
 	switch (c->local->kind) {
+
 	case CK_PERMANENT:
 	case CK_INSTANCE:
 	case CK_LABELED_PARENT:
 		/* can delref C; caller still holds a ref */
-		down_connection(c, logger);
-		return 1; /* the connection counts */
+		nr += down_connection(c, show_logger(s));
+		return nr; /* the connection counts */
+
+	case CK_LABELED_TEMPLATE:
 	case CK_TEMPLATE:
 	case CK_GROUP:
-	case CK_LABELED_TEMPLATE:
+		nr += whack_connection_instance_new2old(m, s, c, whack_down_connection);
+		return nr;
+
 	case CK_LABELED_CHILD:
-		ldbg(logger, "skipping "PRI_CONNECTION,
+	{
+		connection_buf cb;
+		ldbg(show_logger(s), "skipping "PRI_CONNECTION,
 		     pri_connection(c, &cb));
 		return 0; /* the connection doesn't count */
+	}
+
 	case CK_INVALID:
 		break;
+
 	}
 	bad_case(c->local->kind);
 }
@@ -144,10 +156,10 @@ void whack_down(const struct whack_message *m, struct show *s)
 		return;
 	}
 
-	whack_connections_bottom_up(m, s, whack_down_connections,
-				    (struct each) {
-					    .future_tense = "terminating",
-					    .past_tense = "terminated",
-					    .log_unknown_name = true,
-				    });
+	whack_connection(m, s, whack_down_connection,
+			 (struct each) {
+				 .future_tense = "terminating",
+				 .past_tense = "terminated",
+				 .log_unknown_name = true,
+			 });
 }
