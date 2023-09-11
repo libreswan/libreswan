@@ -212,7 +212,7 @@ west #
 000 "westnet-eastnet-subnets/2x1":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
 000 "westnet-eastnet-subnets/2x1":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $3;
 000 "westnet-eastnet-subnets/2x1":   aliases: westnet-eastnet-subnets
-000 "westnet-eastnet-subnets/2x2": 192.0.1.128/28===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.64/30; prospective erouted; eroute owner: #0
+000 "westnet-eastnet-subnets/2x2": 192.0.1.128/28===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.64/30; unrouted; eroute owner: #0
 000 "westnet-eastnet-subnets/2x2":     oriented; my_ip=unset; their_ip=unset;
 000 "westnet-eastnet-subnets/2x2":   my_updown=ipsec _updown;
 000 "westnet-eastnet-subnets/2x2":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
@@ -240,10 +240,6 @@ west #
 west NOW
 XFRM state:
 XFRM policy:
-src 192.0.1.128/28 dst 192.0.2.64/30
-	dir out priority PRIORITY ptype main
-	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
 XFRM done
 IPSEC mangle TABLES
 iptables filter TABLE
