@@ -59,9 +59,9 @@ void whack_connection(const struct whack_message *m, struct show *s,
 		      whack_connection_visitor_cb *visit_connection,
 		      struct each each);
 
-unsigned whack_connection_instances(const struct whack_message *m, struct show *s,
-				    struct connection *c,
-				    whack_connection_visitor_cb *visit_connection);
+unsigned whack_connection_instance_new2old(const struct whack_message *m, struct show *s,
+					   struct connection *c,
+					   whack_connection_visitor_cb *visit_connection);
 
 /*
  * Visit all the connections matching M, bottom up.

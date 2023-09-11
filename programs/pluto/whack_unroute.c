@@ -61,7 +61,7 @@ static unsigned whack_unroute_connection(const struct whack_message *m UNUSED,
 		return 0; /* the connection doesn't count */
 
 	case CK_GROUP:
-		return whack_connection_instances(m, s, c, whack_unroute_connection);
+		return whack_connection_instance_new2old(m, s, c, whack_unroute_connection);
 
 	case CK_INVALID:
 		break;

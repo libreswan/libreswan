@@ -224,20 +224,33 @@ static unsigned visit_connections_root(struct connection *c,
 	return visit_connection(m, s, c);
 }
 
-
-unsigned whack_connection_instances(const struct whack_message *m,
-				    struct show *s,
-				    struct connection *c,
-				    whack_connection_visitor_cb *visit_connection)
+unsigned whack_connection_instance_new2old(const struct whack_message *m,
+					   struct show *s,
+					   struct connection *c,
+					   whack_connection_visitor_cb *visit_connection)
 {
+	PEXPECT(c->logger, (is_template(c) ||
+			    is_labeled_template(c) ||
+			    is_labeled_parent(c)));
+
 	unsigned nr = 0;
 	struct connection_filter instances = {
 		.clonedfrom = c,
 		.where = HERE,
 	};
 	while (next_connection_new2old(&instances)) {
+
+		connection_buf cqb;
+		ldbg(c->logger, "visting instance "PRI_CONNECTION,
+		     pri_connection(instances.c, &cqb));
+		PEXPECT(c->logger, ((is_template(c) && is_instance(instances.c)) ||
+				    (is_labeled_template(c) && is_labeled_parent(instances.c)) ||
+				    (is_labeled_parent(c) && is_labeled_child(instances.c))));
+
 		/* abuse bool */
+		connection_addref(instances.c, c->logger);
 		nr += visit_connection(m, s, instances.c);
+		connection_delref(&instances.c, c->logger);
 	}
 
 	return nr;
