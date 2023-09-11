@@ -325,7 +325,7 @@ ipsec_whack() {
 		usage="Usage: ipsec trafficstatus connectionname [--ctlsocket ${CTLSOCKET}]"
 		;;
 	    unroute|--unroute)
-		cmd="--route"
+		cmd="--unroute"
 		usage="Usage: ipsec unroute connectionname [--ctlsocket ${CTLSOCKET}]"
 		;;
 	    up|--up|initiate|--initiate)
