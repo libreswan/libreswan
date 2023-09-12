@@ -997,10 +997,10 @@ stf_status process_v2_CREATE_CHILD_SA_request(struct ike_sa *ike,
 	 */
 	if (larval_child->sa.st_pfs_group != NULL) {
 		pexpect(larval_child->sa.st_oakley.ta_dh == larval_child->sa.st_pfs_group);
-		if (!unpack_KE(&larval_child->sa.st_gi, "Gi", larval_child->sa.st_oakley.ta_dh,
-			       md->chain[ISAKMP_NEXT_v2KE], larval_child->sa.st_logger)) {
-			record_v2N_response(larval_child->sa.st_logger, ike, md, v2N_INVALID_SYNTAX,
-					    NULL/*no data*/, ENCRYPTED_PAYLOAD);
+		if(!v2_accept_ke_for_proposal(ike, &larval_child->sa, md,
+					      larval_child->sa.st_pfs_group,
+					      ENCRYPTED_PAYLOAD)) {
+			/* passert(reply-recorded) */
 			delete_state(&larval_child->sa);
 			ike->sa.st_v2_msgid_windows.responder.wip_sa = NULL;
 			return STF_OK; /*IKE*/
@@ -1543,15 +1543,6 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
 		return STF_FATAL; /* IKE family is doomed */
 	}
 
-	if (!v2_accept_ke_for_proposal(ike, &larval_ike->sa, request_md,
-				       larval_ike->sa.st_oakley.ta_dh,
-				       ENCRYPTED_PAYLOAD)) {
-		/* passert(reply-recorded) */
-		delete_state(&larval_ike->sa);
-		ike->sa.st_v2_msgid_windows.responder.wip_sa = NULL;
-		return STF_OK; /* IKE */
-	}
-
 	/*
 	 * Check and read the KE contents.
 	 *
@@ -1560,15 +1551,13 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
 	 */
 	pexpect(larval_ike->sa.st_oakley.ta_dh != NULL);
 	pexpect(larval_ike->sa.st_pfs_group == NULL);
-	if (!unpack_KE(&larval_ike->sa.st_gi, "Gi", larval_ike->sa.st_oakley.ta_dh,
-		       request_md->chain[ISAKMP_NEXT_v2KE], larval_ike->sa.st_logger)) {
-		/* Already logged */
-		record_v2N_response(ike->sa.st_logger, ike, request_md,
-				    v2N_INVALID_SYNTAX, NULL/*no data*/,
-				    ENCRYPTED_PAYLOAD);
+	if (!v2_accept_ke_for_proposal(ike, &larval_ike->sa, request_md,
+				       larval_ike->sa.st_oakley.ta_dh,
+				       ENCRYPTED_PAYLOAD)) {
+		/* passert(reply-recorded) */
 		delete_state(&larval_ike->sa);
 		ike->sa.st_v2_msgid_windows.responder.wip_sa = NULL;
-		return STF_FATAL; /* IKE family is doomed */
+		return STF_OK; /* IKE */
 	}
 
 	submit_ke_and_nonce(&ike->sa, larval_ike->sa.st_oakley.ta_dh,

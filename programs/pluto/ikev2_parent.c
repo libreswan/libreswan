@@ -209,31 +209,42 @@ void v2_ike_sa_established(struct ike_sa *ike)
  */
 
 bool v2_accept_ke_for_proposal(struct ike_sa *ike,
-				      struct state *st,
-				      struct msg_digest *md,
-				      const struct dh_desc *accepted_dh,
-				      enum payload_security security)
+			       struct state *st,
+			       struct msg_digest *md,
+			       const struct dh_desc *accepted_dh,
+			       enum payload_security security)
 {
 	passert(md->chain[ISAKMP_NEXT_v2KE] != NULL);
 	int ke_group = md->chain[ISAKMP_NEXT_v2KE]->payload.v2ke.isak_group;
-	if (accepted_dh->common.id[IKEv2_ALG_ID] == ke_group) {
-		return true;
+
+	if (accepted_dh->common.id[IKEv2_ALG_ID] != ke_group) {
+		enum_buf ke_esb;
+		llog(RC_LOG, st->st_logger,
+		     "initiator guessed wrong keying material group (%s); responding with INVALID_KE_PAYLOAD requesting %s",
+		     str_enum_short(&oakley_group_names, ke_group, &ke_esb),
+		     accepted_dh->common.fqn);
+		pstats(invalidke_sent_u, ke_group);
+		pstats(invalidke_sent_s, accepted_dh->common.id[IKEv2_ALG_ID]);
+		/* convert group to a raw buffer */
+		uint16_t gr = htons(accepted_dh->group);
+		chunk_t nd = THING_AS_CHUNK(gr);
+		record_v2N_response(st->st_logger, ike, md,
+				    v2N_INVALID_KE_PAYLOAD, &nd,
+				    security);
+		return false;
 	}
 
-	enum_buf ke_esb;
-	llog(RC_LOG, st->st_logger,
-	     "initiator guessed wrong keying material group (%s); responding with INVALID_KE_PAYLOAD requesting %s",
-	     str_enum_short(&oakley_group_names, ke_group, &ke_esb),
-	     accepted_dh->common.fqn);
-	pstats(invalidke_sent_u, ke_group);
-	pstats(invalidke_sent_s, accepted_dh->common.id[IKEv2_ALG_ID]);
-	/* convert group to a raw buffer */
-	uint16_t gr = htons(accepted_dh->group);
-	chunk_t nd = THING_AS_CHUNK(gr);
-	record_v2N_response(st->st_logger, ike, md,
-			    v2N_INVALID_KE_PAYLOAD, &nd,
-			    security);
-	return false;
+	/* ike sa init */
+	if (!unpack_KE(&st->st_gi, "Gi", accepted_dh,
+		       md->chain[ISAKMP_NEXT_v2KE], st->st_logger)) {
+		/* already logged? */
+		record_v2N_response(st->st_logger, ike, md,
+				    v2N_INVALID_SYNTAX,
+				    NULL, security);
+		return false;
+	}
+
+	return true;
 }
 
 bool id_ipseckey_allowed(struct ike_sa *ike, enum ikev2_auth_method atype)

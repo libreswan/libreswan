@@ -970,30 +970,12 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 	}
 
 	/*
-	 * Check the MODP group in the payload matches the accepted
-	 * proposal.
+	 * Check that the MODP group in the payload matches the
+	 * accepted proposal, and if it does, read it in.
 	 */
 	if (!v2_accept_ke_for_proposal(ike, &ike->sa, md,
 				       ike->sa.st_oakley.ta_dh,
 				       UNENCRYPTED_PAYLOAD)) {
-		/* pexpect(reply-recorded) */
-		/*
-		 * STF_FATAL will send the recorded message and then
-		 * kill the IKE SA.  Should it instead zombify the IKE
-		 * SA so that retransmits get a response?
-		 */
-		return STF_FATAL;
-	}
-
-	/*
-	 * Check and read the KE contents.
-	 */
-	/* note: v1 notification! */
-	if (!unpack_KE(&ike->sa.st_gi, "Gi", ike->sa.st_oakley.ta_dh,
-		       md->chain[ISAKMP_NEXT_v2KE], ike->sa.st_logger)) {
-		record_v2N_response(ike->sa.st_logger, ike, md,
-				    v2N_INVALID_SYNTAX,
-				    NULL, UNENCRYPTED_PAYLOAD);
 		/*
 		 * STF_FATAL will send the recorded message and then
 		 * kill the IKE SA.  Should it instead zombify the IKE
