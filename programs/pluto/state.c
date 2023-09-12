@@ -629,26 +629,6 @@ void delete_state_by_id_name(struct state *st, const char *name)
 	}
 }
 
-void delete_v1_state_by_username(struct state *st, const char *name)
-{
-	/* only support deleting ikev1 with XAUTH username */
-	if (!IS_ISAKMP_SA(st)) {
-		return;
-	}
-	struct ike_sa *ike = pexpect_ike_sa(st); /* per above */
-
-	if (!streq(ike->sa.st_xauth_username, name)) {
-		return;
-	}
-
-	if (IS_PARENT_SA_ESTABLISHED(&ike->sa)) {
-		send_v1_delete(ike, &ike->sa, HERE);
-	}
-	on_delete(&ike->sa, skip_send_delete);
-	delete_ike_family(&ike);
-	/* note: no md->v1_st to clear */
-}
-
 void v2_expire_unused_ike_sa(struct ike_sa *ike)
 {
 	passert(ike != NULL);

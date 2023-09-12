@@ -72,6 +72,7 @@
 #include "whack_shutdown.h"
 #include "whack_unroute.h"
 #include "whack_initiate.h"
+#include "whack_deleteuser.h"
 
 static void whack_rereadsecrets(struct show *s)
 {
@@ -341,17 +342,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 
 	if (m->whack_deleteuser) {
 		dbg_whack(s, "deleteuser: start: '%s'", (m->name == NULL ? "<null>" : m->name));
-		if (m->name == NULL ) {
-			whack_log(RC_FATAL, s,
-				  "received whack command to delete a connection by username, but did not receive the username - ignored");
-		} else {
-			llog(LOG_STREAM, logger,
-			     "received whack to delete connection by user %s", m->name);
-			struct state_filter sf = { .where = HERE, };
-			while (next_state_new2old(&sf)) {
-				delete_v1_state_by_username(sf.st, m->name);
-			}
-		}
+		whack_deleteuser(m, s);
 		dbg_whack(s, "deleteuser: stop: '%s'", (m->name == NULL ? "<null>" : m->name));
 	}
 
