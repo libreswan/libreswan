@@ -2688,6 +2688,82 @@ void delete_ike_family(struct ike_sa **ikep)
 }
 
 /*
+ * This is for panic situtations where the entire IKE family needs to
+ * be blown away.
+ */
+
+void send_n_log_delete_ike_family_now(struct ike_sa **ike,
+				      struct logger *logger,
+				      where_t where)
+{
+	state_attach(&(*ike)->sa, logger); /* no detach, going down */
+
+	ldbg_sa((*ike), "parent is no longer vivable (but can send delete)");
+	(*ike)->sa.st_viable_parent = false;
+	struct ike_sa *established_isakmp = NULL;
+
+	/*
+	 * IKEv2 should send out the delete immediately, IKEv1 delays
+	 * things until after the children are all gone.
+	 */
+
+	if (IS_PARENT_SA_ESTABLISHED(&(*ike)->sa)) {
+		switch ((*ike)->sa.st_ike_version) {
+		case IKEv1:
+			/*
+			 * Because IKEv1 needs the ISAKMP SA to delete
+			 * children it only announces its death after
+			 * everything is gone.
+			 *
+			 * Save the established ISAKMP so checking it
+			 * is easier.  Announce intent.
+			 */
+			established_isakmp = (*ike);
+			break;
+		case IKEv2:
+			/*
+			 * Per above, we're in a panic, violating
+			 * everything is ok.
+			 */
+			record_n_send_n_log_v2_delete((*ike), where);
+			break;
+		}
+	} else {
+		/* announce that delete is not being sent */
+		llog_sa_delete_n_send(NULL, &(*ike)->sa);
+	}
+
+	struct state_filter cf = {
+		.clonedfrom = (*ike)->sa.st_serialno,
+		.where = where,
+	};
+	while(next_state_new2old(&cf)) {
+		struct child_sa *child = pexpect_child_sa(cf.st);
+		state_attach(&child->sa, logger); /* no detach, going down */
+		switch (child->sa.st_ike_version) {
+		case IKEv1:
+			llog_sa_delete_n_send(established_isakmp, &child->sa);
+			if (established_isakmp != NULL) {
+				send_v1_delete(established_isakmp, &child->sa, where);
+			}
+			connection_delete_child(established_isakmp, &child, where);
+			break;
+		case IKEv2:
+			/* nothing to say? */
+			connection_delete_child((*ike), &child, where);
+			break;
+		}
+	}
+
+	if (established_isakmp != NULL) {
+		llog_sa_delete_n_send(established_isakmp, &(*ike)->sa);
+		send_v1_delete(established_isakmp, &established_isakmp->sa, where);
+	}
+
+	connection_delete_ike(ike, where);
+}
+
+/*
  * if the state is too busy to process a packet, say so
  *
  * Two things indicate this - st_suspended_md is non-NULL or there's

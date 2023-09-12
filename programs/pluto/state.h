@@ -915,6 +915,9 @@ void delete_v2_states_by_connection(struct connection *c);
 
 extern void rekey_p2states_by_connection(struct connection *c);
 extern void delete_ike_family(struct ike_sa **ikep);
+void send_n_log_delete_ike_family_now(struct ike_sa **ike,
+				      struct logger *logger,
+				      where_t where);
 
 struct state *state_by_serialno(so_serial_t serialno);
 struct ike_sa *ike_sa_by_serialno(so_serial_t serialno);
