@@ -1,0 +1,2 @@
+attempt CREATE_CHILD_SA rekey where east/west have different DH groups
+
