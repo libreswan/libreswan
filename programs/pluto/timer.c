@@ -334,16 +334,19 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 				 * attempting to delete / replace
 				 * itself?
 				 *
+				 * ST must be a Child SA (if it were
+				 * an IKE SA then ike_sa() would have
+				 * found itself).
+				 *
 				 * Because these things are
 				 * not serialized it is hard
 				 * to say.
-				 *
-				 * XXX: worth of a pexpect()?
 				 */
-				llog(RC_LOG_SERIOUS, st->st_logger,
-				     "Child SA lost its IKE SA #%lu",
-				     st->st_clonedfrom);
-				delete_state(st);
+				struct child_sa *child = pexpect_child_sa(st);
+				llog_pexpect(child->sa.st_logger, HERE,
+					     "Child SA lost its IKE SA #%lu",
+					     child->sa.st_clonedfrom);
+				connection_delete_child(NULL, &child, HERE);
 				st = NULL;
 			} else if (IS_IKE_SA_ESTABLISHED(st)) {
 				/* IKEv2 parent, delete children too */
@@ -366,7 +369,8 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 				submit_v2_delete_exchange(ike, pexpect_child_sa(st));
 				st = NULL;
 			} else {
-				delete_state(st);
+				struct child_sa *child = pexpect_child_sa(st);
+				connection_delete_child(ike, &child, HERE);
 				st = NULL;
 			}
 			break;
