@@ -33,66 +33,41 @@
 #include "ikev1.h"		/* for send_v1_delete() */
 #include "ikev2_delete.h"	/* for record_n_send_n_log_v2_delete() */
 
-static void delete_state_by_id_name(struct state *st, const char *name)
-{
-	struct connection *c = st->st_connection;
-
-	if (!IS_PARENT_SA(st)) {
-		return;
-	}
-	struct ike_sa *ike = pexpect_ike_sa(st); /* per above */
-
-	id_buf thatidb;
-	const char *thatidbuf = str_id(&c->remote->host.id, &thatidb);
-	if (streq(thatidbuf, name)) {
-		if (IS_PARENT_SA_ESTABLISHED(&ike->sa)) {
-			switch (ike->sa.st_ike_version) {
-#ifdef USE_IKEv1
-			case IKEv1:
-				/*
-				 * Tell the other side of any IPSEC
-				 * SAs that are going down
-				 */
-				send_v1_delete(ike, &ike->sa, HERE);
-				break;
-#endif
-			case IKEv2:
-				/*
-				 *
-				 * ??? in IKEv2, we should not
-				 * immediately delete: we should use
-				 * an Informational Exchange to
-				 * coordinate deletion.
-				 *
-				 * XXX: It's worse ....
-				 *
-				 * should_send_delete() can return
-				 * true when ST is a Child SA.  But
-				 * the below sends out a delete for
-				 * the IKE SA.
-				 */
-				record_n_send_n_log_v2_delete(ike, HERE);
-				break;
-			}
-		}
-		on_delete(&ike->sa, skip_send_delete);
-		/* XXX: won't this also send deletes? */
-		delete_ike_family(&ike);
-	}
-}
-
 void whack_deleteid(const struct whack_message *m, struct show *s)
 {
 	if (m->name == NULL ) {
 		whack_log(RC_FATAL, s,
-			  "received whack command to delete a connection by id, but did not receive the id - ignored");
+			  "received whack command to delete a connections with peer ID, but did not receive the ID - ignored");
 		return;
 	}
 
-	llog(LOG_STREAM, show_logger(s),
-	     "received whack to delete connection by id %s", m->name);
-	struct state_filter sf = { .where = HERE, };
+	llog(LOG_STREAM|RC_LOG, show_logger(s),
+	     "received whack command to delete connections with peer ID '%s'", m->name);
+
+	struct state_filter sf = {
+		.where = HERE,
+	};
+	unsigned nr = 0;
 	while (next_state_new2old(&sf)) {
-		delete_state_by_id_name(sf.st, m->name);
+		struct connection *c = sf.st->st_connection;
+
+		if (!IS_PARENT_SA(sf.st)) {
+			continue;
+		}
+
+		id_buf thatidb;
+		const char *thatidbuf = str_id(&c->remote->host.id, &thatidb);
+		if (!streq(thatidbuf, m->name)) {
+			continue;
+		}
+
+		struct ike_sa *ike = pexpect_ike_sa(sf.st);
+		send_n_log_delete_ike_family_now(&ike, show_logger(s), HERE);
+		nr++;
+	}
+
+	if (nr == 0) {
+		llog(RC_LOG, show_logger(s),
+		     "no connections matching peer id '%s' found", m->name);
 	}
 }
