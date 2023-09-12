@@ -2700,22 +2700,20 @@ static bool delete_ike_family_child(struct state *st, void *unused_context UNUSE
 	case IKEv1:
 	{
 		struct connection *const c = st->st_connection;
-		bool should_notify = (should_send_v1_delete(st) != NULL);
-		bool will_notify = should_notify && !impair.send_no_delete;
-		const char *impair_notify = should_notify == will_notify ? "" : "IMPAIR: ";
+		bool will_notify = (should_send_v1_delete(st) != NULL);
 		if (ike->sa.st_connection == st->st_connection) {
 			deltatime_buf dtb;
 			llog_sa(RC_LOG, ike,
-				"%sdeleting other state #%lu (%s) aged %ss and %ssending notification",
-				impair_notify, st->st_serialno, st->st_state->name,
+				"deleting other state #%lu (%s) aged %ss and %ssending notification",
+				st->st_serialno, st->st_state->name,
 				str_deltatime(realtimediff(realnow(), st->st_inception), &dtb),
 				will_notify ? "" : "NOT ");
 		} else {
 			deltatime_buf dtb;
 			connection_buf cib;
 			llog_sa(RC_LOG, ike,
-				"%sdeleting other state #%lu connection (%s) "PRI_CONNECTION" aged %ss and %ssending notification",
-				impair_notify, st->st_serialno, st->st_state->name,
+				"deleting other state #%lu connection (%s) "PRI_CONNECTION" aged %ss and %ssending notification",
+				st->st_serialno, st->st_state->name,
 				pri_connection(c, &cib),
 				str_deltatime(realtimediff(realnow(), st->st_inception), &dtb),
 				will_notify ? "" : "NOT ");
