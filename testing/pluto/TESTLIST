@@ -1342,6 +1342,8 @@ kvmplutotest	ipsec-delete-02-ikev2-child-2then1	good
 kvmplutotest	ipsec-delete-03-up-revival-ikev1	good
 kvmplutotest	ipsec-delete-03-up-revival-ikev2	good
 
+kvmplutotest	ipsec-deleteuser-01			wip	github/1269
+
 # PPK
 kvmplutotest	ikev2-ppk-static-01-insist-yes			good
 kvmplutotest	ikev2-ppk-static-02-insist-insist		good

@@ -1,0 +1,13 @@
+a basic xauth username/password but followed by a delete
+
+This test has a road warrior, ("road") connecting to VPN host east.
+
+It shows up from a random IP.
+
+It uses RSASIG to authenticate for phase 1.
+It then uses XAUTH to authenticate the phase 1.5. East is uses password based XAUTH
+using /etc/ipsec.d/passwd
+
+It then proceeds to phase 2.
+
+(see -04 for a case where aggressive mode is used)
