@@ -1,0 +1,34 @@
+/testing/guestbin/swan-prep --46 --nokey
+Creating empty NSS database
+west #
+ ip addr show eth0 | grep global | sort
+    inet 192.0.1.254/24 scope global eth0
+    inet6 2001:db8:0:1::254/64 scope global
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec whack --impair revival
+west #
+ ipsec add west-cuckold
+002 "west-cuckold": added IKEv2 connection
+west #
+ ipsec add west-cuckoo
+002 "west-cuckoo": added IKEv2 connection
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec up west-cuckold
+1v2 "west-cuckold" #1: initiating IKEv2 connection
+1v2 "west-cuckold" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+1v2 "west-cuckold" #1: sent IKE_AUTH request {cipher=AES_CBC_256 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP8192}
+003 "west-cuckold" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+004 "west-cuckold" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.0-192.0.3.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+west #
+ ipsec up west-cuckoo
+002 "west-cuckoo" #3: initiating Child SA using IKE SA #1
+1v2 "west-cuckoo" #3: sent CREATE_CHILD_SA request for new IPsec SA
+003 "west-cuckoo" #3: CREATE_CHILD_SA failed with error notification INVALID_KE_PAYLOAD

@@ -1,0 +1,4 @@
+two multinets, second has conflicting KE
+
+Causes a create_child_sa(new) request to be rejected with
+INVALID_KE_PAYLOAD response (ref #1266).

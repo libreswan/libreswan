@@ -346,6 +346,7 @@ kvmplutotest	ikev2-invalid-ke-01-invalid-modp	good
 kvmplutotest	ikev2-invalid-ke-02-wrong-modp		good
 kvmplutotest	ikev2-invalid-ke-03-default-initiator	good
 kvmplutotest	ikev2-invalid-ke-04-default-responder	good
+kvmplutotest	ikev2-invalid-ke-07-second-child	wip	github/1266
 kvmplutotest	ikev2-unknown-payload-01-sa-init		good
 kvmplutotest	ikev2-unknown-payload-01-sa-init-critical	good
 kvmplutotest	ikev2-unknown-payload-02-auth			good
