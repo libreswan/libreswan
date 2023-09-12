@@ -1,0 +1,24 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec auto --add road-eastnet-psk
+002 "road-eastnet-psk": added IKEv1 connection
+east #
+ echo "initdone"
+initdone
+east #
+ ipsec showstates
+000 #1: "road-eastnet-psk"[1] 192.1.3.209:500 STATE_AGGR_R2 (ISAKMP SA established); REPLACE in XXs; newest; lastdpd=-1s(seq in:0 out:0); idle;
+000 #2: "road-eastnet-psk"[1] 192.1.3.209:500 STATE_QUICK_R2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
+000 #2: "road-eastnet-psk"[1] 192.1.3.209 esp.ESPSPIi@192.1.3.209 esp.ESPSPIi@192.1.2.23 tun.0@192.1.3.209 tun.0@192.1.2.23 Traffic: ESPin=84B ESPout=84B ESPmax=2^63B 
+east #
+ ipsec whack --deleteid --name @madeup
+... should log that nothing was found ...
+east #
+ ipsec whack --deleteid --name @roadrandom
+... should log what was deleted ...
+east #
