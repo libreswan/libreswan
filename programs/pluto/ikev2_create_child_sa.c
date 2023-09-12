@@ -1836,13 +1836,60 @@ stf_status process_v2_CREATE_CHILD_SA_failure_response(struct ike_sa *ike,
 		v2_notification_t n = ntfy->payload.v2n.isan_type;
 		if (n < v2N_ERROR_PSTATS_ROOF) {
 			pstat(ikev2_recv_notifies_e, n);
-			enum_buf esb;
-			llog_sa(RC_LOG_SERIOUS, (*larval_child),
-				"CREATE_CHILD_SA failed with error notification %s",
-				str_enum_short(&v2_notification_names, n, &esb));
-			dbg("re-add child to pending queue with exponential back-off?");
-			status = (n == v2N_INVALID_SYNTAX ? STF_FATAL/*kill IKE*/ :
-				  STF_OK/*keep IKE*/);
+			switch (n) {
+			case v2N_INVALID_KE_PAYLOAD:
+			{
+				if (ike->sa.st_oakley.ta_dh == NULL) {
+					enum_buf nb;
+					llog_sa(RC_LOG_SERIOUS, (*larval_child),
+						"CREATE_CHILD_SA failed with error notification %s response but no KE was sent",
+						str_enum_short(&v2_notification_names, n, &nb));
+					status = STF_FATAL;
+					break;
+				}
+
+				if (!pexpect(md->pd[PD_v2N_INVALID_KE_PAYLOAD] != NULL)) {
+					status = STF_INTERNAL_ERROR;
+					break;
+				}
+
+				struct pbs_in invalid_ke_pbs = md->pd[PD_v2N_INVALID_KE_PAYLOAD]->pbs;
+				struct suggested_group sg;
+				diag_t d = pbs_in_struct(&invalid_ke_pbs, &suggested_group_desc,
+							 &sg, sizeof(sg), NULL);
+				if (d != NULL) {
+					enum_buf nb;
+					llog_diag(RC_LOG, (*larval_child)->sa.st_logger, &d,
+						  "CREATE_CHILD_SA failed with error notification %s response: ",
+						  str_enum_short(&v2_notification_names, n, &nb));
+					status = STF_FATAL;
+					break;
+				}
+
+				pstats(invalidke_recv_s, sg.sg_group);
+				pstats(invalidke_recv_u, ike->sa.st_oakley.ta_dh->group);
+
+				enum_buf nb, sgb;
+				llog_sa(RC_LOG_SERIOUS, (*larval_child),
+					"CREATE_CHILD_SA failed with error notification %s response suggesting %s instead of %s",
+					str_enum_short(&v2_notification_names, n, &nb),
+					str_enum_short(&oakley_group_names, sg.sg_group, &sgb),
+					ike->sa.st_oakley.ta_dh->common.fqn);
+				status = STF_OK; /* let IKE stumble on */
+				break;
+			}
+			default:
+			{
+				enum_buf esb;
+				llog_sa(RC_LOG_SERIOUS, (*larval_child),
+					"CREATE_CHILD_SA failed with error notification %s",
+					str_enum_short(&v2_notification_names, n, &esb));
+				dbg("re-add child to pending queue with exponential back-off?");
+				status = (n == v2N_INVALID_SYNTAX ? STF_FATAL/*kill IKE*/ :
+					  STF_OK/*keep IKE*/);
+				break;
+			}
+			}
 			break;
 		}
 	}
