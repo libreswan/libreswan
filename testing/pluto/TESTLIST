@@ -1343,8 +1343,8 @@ kvmplutotest	ipsec-delete-03-up-revival-ikev1	good
 kvmplutotest	ipsec-delete-03-up-revival-ikev2	good
 
 kvmplutotest	ipsec-deleteuser-01			wip	github/1269
-kvmplutotest	ipsec-deleteid-01-psk-ikev1		wip	github/1268
-kvmplutotest	ipsec-deleteid-01-psk-ikev2		wip	github/1268
+kvmplutotest	ipsec-deleteid-01-psk-ikev1		good	github/1268
+kvmplutotest	ipsec-deleteid-01-psk-ikev2		good	github/1268
 
 # PPK
 kvmplutotest	ikev2-ppk-static-01-insist-yes			good

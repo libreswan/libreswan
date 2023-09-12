@@ -16,12 +16,21 @@ east #
 000 #2: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
 000 #2: "westnet-eastnet-ipv4-psk-ikev2" esp.ESPSPIi@192.1.2.45 esp.ESPSPIi@192.1.2.23 tun.0@192.1.2.45 tun.0@192.1.2.23 Traffic: ESPin=84B ESPout=84B ESPmax=2^63B 
 east #
+ ipsec trafficstatus
+006 #2: "westnet-eastnet-ipv4-psk-ikev2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@west'
+east #
+ ipsec whack --deleteid
+whack error: missing --name <connection_name>
+east #
  ipsec whack --deleteid --name @madeup
- ... should log that @madeup wasn't found ...
+002 no connections matching peer id '@madeup' found
 east #
  ipsec whack --deleteid --name @west
- ... should log what went down ...
+002 "westnet-eastnet-ipv4-psk-ikev2" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+005 "westnet-eastnet-ipv4-psk-ikev2" #2: ESP traffic information: in=84B out=84B
 east #
  ipsec showstates
+east #
+ ipsec trafficstatus
 east #
  
