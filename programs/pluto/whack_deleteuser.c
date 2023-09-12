@@ -32,26 +32,6 @@
 #include "log.h"
 #include "show.h"
 
-static void delete_v1_state_by_username(struct state *st, const char *name)
-{
-	/* only support deleting ikev1 with XAUTH username */
-	if (!IS_ISAKMP_SA(st)) {
-		return;
-	}
-	struct ike_sa *ike = pexpect_ike_sa(st); /* per above */
-
-	if (!streq(ike->sa.st_xauth_username, name)) {
-		return;
-	}
-
-	if (IS_PARENT_SA_ESTABLISHED(&ike->sa)) {
-		send_v1_delete(ike, &ike->sa, HERE);
-	}
-	on_delete(&ike->sa, skip_send_delete);
-	delete_ike_family(&ike);
-	/* note: no md->v1_st to clear */
-}
-
 void whack_deleteuser(const struct whack_message *m, struct show *s)
 {
 	if (m->name == NULL ) {
@@ -60,10 +40,32 @@ void whack_deleteuser(const struct whack_message *m, struct show *s)
 		return;
 	}
 
-	llog(LOG_STREAM, show_logger(s),
+	llog(LOG_STREAM|RC_LOG, show_logger(s),
 	     "received whack to delete connection by user %s", m->name);
-	struct state_filter sf = { .where = HERE, };
+
+	struct state_filter sf = {
+		/* only support deleting ikev1 with XAUTH username */
+		.ike_version = IKEv1,
+		.where = HERE,
+	};
+	unsigned nr = 0;
 	while (next_state_new2old(&sf)) {
-		delete_v1_state_by_username(sf.st, m->name);
+
+		if (!IS_ISAKMP_SA(sf.st)) {
+			continue;
+		}
+
+		if (!streq(sf.st->st_xauth_username, m->name)) {
+			continue;
+		}
+
+		struct ike_sa *ike = pexpect_ike_sa(sf.st); /* per above */
+		send_n_log_delete_ike_family_now(&ike, show_logger(s), HERE);
+		nr++;
+	}
+
+	if (nr == 0) {
+		llog(RC_LOG, show_logger(s),
+		     "no connections matching username '%s' found", m->name);
 	}
 }
