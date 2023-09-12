@@ -11,58 +11,27 @@ east #
  echo "initdone"
 initdone
 east #
- ../../guestbin/ipsec-look.sh
-east NOW
-XFRM state:
-src 192.1.3.209 dst 192.1.2.23
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 0 flag af-unspec
-	auth-trunc hmac(sha1) 0xHASHKEY 96
-	enc cbc(aes) 0xENCKEY
-	lastused YYYY-MM-DD HH:MM:SS
-	anti-replay esn context:
-	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
-	 replay_window 128, bitmap-length 4
-	 00000000 00000000 00000000 XXXXXXXX 
-src 192.1.2.23 dst 192.1.3.209
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 0 flag af-unspec
-	auth-trunc hmac(sha1) 0xHASHKEY 96
-	enc cbc(aes) 0xENCKEY
-	lastused YYYY-MM-DD HH:MM:SS
-	anti-replay esn context:
-	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
-	 replay_window 128, bitmap-length 4
-	 00000000 00000000 00000000 XXXXXXXX 
-XFRM policy:
-src 192.0.2.0/24 dst 192.1.3.209/32
-	dir out priority PRIORITY ptype main
-	tmpl src 192.1.2.23 dst 192.1.3.209
-		proto esp reqid REQID mode tunnel
-src 192.1.3.209/32 dst 192.0.2.0/24
-	dir fwd priority PRIORITY ptype main
-	tmpl src 192.1.3.209 dst 192.1.2.23
-		proto esp reqid REQID mode tunnel
-src 192.1.3.209/32 dst 192.0.2.0/24
-	dir in priority PRIORITY ptype main
-	tmpl src 192.1.3.209 dst 192.1.2.23
-		proto esp reqid REQID mode tunnel
-XFRM done
-IPSEC mangle TABLES
-iptables filter TABLE
-Chain INPUT (policy ACCEPT)
-target     prot opt source               destination         
-Chain FORWARD (policy ACCEPT)
-target     prot opt source               destination         
-Chain OUTPUT (policy ACCEPT)
-target     prot opt source               destination         
-ROUTING TABLES
-default via 192.1.2.254 dev eth1
-192.0.1.0/24 via 192.1.2.45 dev eth1
-192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254
-192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23
-NSS_CERTIFICATES
-Certificate Nickname                                         Trust Attributes
-                                                             SSL,S/MIME,JAR/XPI
+ ipsec showstates
+000 #1: "xauth-road-eastnet"[1] 192.1.3.209:500 STATE_MAIN_R3 (ISAKMP SA established); REPLACE in XXs; newest; lastdpd=-1s(seq in:0 out:0); idle;
+000 #2: "xauth-road-eastnet"[1] 192.1.3.209:500 STATE_QUICK_R2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
+000 #2: "xauth-road-eastnet"[1] 192.1.3.209 esp.ESPSPIi@192.1.3.209 esp.ESPSPIi@192.1.2.23 tun.0@192.1.3.209 tun.0@192.1.2.23 Traffic: ESPin=84B ESPout=84B ESPmax=2^63B username=use1
+east #
+ ipsec trafficstatus
+006 #2: "xauth-road-eastnet"[1] 192.1.3.209, username=use1, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B
+east #
+ ipsec whack --deleteuser
+whack error: missing --name <connection_name>
+east #
+ ipsec whack --deleteuser --name madeup
+002 no connections matching username 'madeup' found
+east #
+ ipsec whack --deleteuser --name use1
+002 "xauth-road-eastnet"[1] 192.1.3.209 #2: deleting IPsec SA (QUICK_R2) and sending notification using ISAKMP SA #1
+005 "xauth-road-eastnet"[1] 192.1.3.209 #2: ESP traffic information: in=84B out=84B XAUTHuser=use1
+002 "xauth-road-eastnet"[1] 192.1.3.209 #1: deleting ISAKMP SA (MAIN_R3) and sending notification
+east #
+ ipsec showstates
+east #
+ ipsec trafficstatus
 east #
  
