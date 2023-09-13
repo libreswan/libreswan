@@ -2143,6 +2143,42 @@ static diag_t extract_connection(const struct whack_message *wm,
 		}
 	}
 
+	/*
+	 * RFC 5685 - IKEv2 Redirect mechanism.
+	 */
+	config->redirect.to = clone_str(wm->redirect_to, "connection redirect_to");
+	config->redirect.accept_to = clone_str(wm->accept_redirect_to, "connection accept_redirect_to");
+	if (wm->ike_version == IKEv1) {
+		if (wm->send_redirect != YNA_UNSET) {
+			llog(RC_INFORMATIONAL, c->logger,
+			     "warning: IKEv1 connection ignores send-redirect=");
+		}
+	} else {
+		switch (wm->send_redirect) {
+		case YNA_YES:
+			if (wm->redirect_to == NULL) {
+				llog(RC_INFORMATIONAL, c->logger,
+				     "warning: send-redirect=yes ignored, redirect-to= was not specified");
+			}
+			/* set it anyway!?!  the code checking it
+			 * issues a second warning */
+			config->redirect.send_always = true;
+			break;
+
+		case YNA_NO:
+			if (wm->redirect_to != NULL) {
+				llog(RC_INFORMATIONAL, c->logger,
+				     "warning: send-redirect=no, redirect-to= is ignored");
+			}
+			config->redirect.send_never = true;
+			break;
+
+		case YNA_UNSET:
+		case YNA_AUTO:
+			break;
+		}
+	}
+
 	if (wm->ike_version == IKEv1) {
 		if (wm->accept_redirect != YN_UNSET) {
 			llog(RC_INFORMATIONAL, c->logger,
@@ -2806,10 +2842,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 							EAT_EMPTY_SHUNKS,
 							HERE); /* process into shunks once */
 		}
-
-		/* RFC 5685 - IKEv2 Redirect mechanism */
-		config->redirect.to = clone_str(wm->redirect_to, "connection redirect_to");
-		config->redirect.accept_to = clone_str(wm->accept_redirect_to, "connection accept_redirect_to");
 
 		/*
 		 * parse mark and mask values form the mark/mask string
@@ -3534,8 +3566,8 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 
 	CP(ikev2_pam_authorize);
 
-	PP(SEND_REDIRECT_ALWAYS);
-	PP(SEND_REDIRECT_NEVER);
+	CN(c->config->redirect.send_always, SEND_REDIRECT_ALWAYS);
+	CN(c->config->redirect.send_never, SEND_REDIRECT_NEVER);
 	CN(c->config->redirect.accept, ACCEPT_REDIRECT_YES);
 
 	CN(c->config->ike_frag.allow, IKE_FRAG_ALLOW);

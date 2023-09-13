@@ -668,10 +668,11 @@ int starter_whack_add_conn(struct starter_config *cfg,
 	msg.ppk_ids = conn->ppk_ids;
 	conn_log_val(conn, "ppk-ids", msg.ppk_ids);
 
-	msg.redirect_to = conn->redirect_to;
+	msg.redirect_to = conn->strings[KSCF_REDIRECT_TO];
 	conn_log_val(conn, "redirect-to", msg.redirect_to);
-	msg.accept_redirect_to = conn->accept_redirect_to;
+	msg.accept_redirect_to = conn->strings[KSCF_ACCEPT_REDIRECT_TO];
 	conn_log_val(conn, "accept-redirect-to", msg.accept_redirect_to);
+	msg.send_redirect = conn->options[KNCF_SEND_REDIRECT];
 
 	msg.mobike = conn->options[KNCF_MOBIKE]; /*yn_options*/
 	msg.intermediate = conn->options[KNCF_INTERMEDIATE]; /*yn_options*/

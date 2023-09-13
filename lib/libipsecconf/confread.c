@@ -1208,8 +1208,6 @@ static bool load_conn(struct starter_conn *conn,
 	str_to_conn(vti_iface, KSCF_VTI_IFACE);
 
 	str_to_conn(ppk_ids, KSCF_PPKIDS);
-	str_to_conn(redirect_to, KSCF_REDIRECT_TO);
-	str_to_conn(accept_redirect_to, KSCF_ACCEPT_REDIRECT_TO);
 
 	str_to_conn(dpd_delay, KSCF_DPDDELAY_MS);
 	str_to_conn(dpd_timeout, KSCF_DPDTIMEOUT_MS);
@@ -1236,27 +1234,6 @@ static bool load_conn(struct starter_conn *conn,
 		}
 	} else if (conn->options_set[KNCF_IKEv2]) {
 		conn->ike_version = (conn->options[KNCF_IKEv2] == YN_YES ? IKEv2 : IKEv1);
-	}
-
-	if (conn->options_set[KNCF_SEND_REDIRECT]) {
-		if (conn->ike_version >= IKEv2) {
-			switch (conn->options[KNCF_SEND_REDIRECT]) {
-			case YNA_YES:
-				conn->policy |= POLICY_SEND_REDIRECT_ALWAYS;
-				if (conn->redirect_to == NULL) {
-					starter_log(LOG_LEVEL_INFO,
-					"redirect-to is not specified, although send-redirect is set to yes");
-				}
-				break;
-
-			case YNA_NO:
-				conn->policy |= POLICY_SEND_REDIRECT_NEVER;
-				break;
-
-			case YNA_AUTO:
-				break;
-			}
-		}
 	}
 
 	/*
@@ -1448,8 +1425,6 @@ static void copy_conn_default(struct starter_conn *conn,
 	STR_FIELD(conn_mark_out);
 	STR_FIELD(vti_iface);
 	STR_FIELD(ppk_ids);
-	STR_FIELD(redirect_to);
-	STR_FIELD(accept_redirect_to);
 	STR_FIELD(dpd_delay);
 	STR_FIELD(dpd_timeout);
 
@@ -1616,8 +1591,6 @@ static void confread_free_conn(struct starter_conn *conn)
 	STR_FIELD(conn_mark_out);
 	STR_FIELD(vti_iface);
 	STR_FIELD(ppk_ids);
-	STR_FIELD(redirect_to);
-	STR_FIELD(accept_redirect_to);
 
 	for (unsigned i = 0; i < elemsof(conn->strings); i++)
 		STR_FIELD(strings[i]);

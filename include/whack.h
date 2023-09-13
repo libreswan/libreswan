@@ -412,6 +412,7 @@ struct whack_message {
 	char *redirect_to;		/* either for connection or active */
 	enum yn_options accept_redirect;
 	char *accept_redirect_to;
+	enum yna_options send_redirect;
 
 	/* what metric to put on ipsec routes */
 	int metric;

@@ -143,8 +143,6 @@ struct starter_conn {
 	char *conn_mark_out;
 	char *vti_iface;
 	char *ppk_ids;
-	char *redirect_to;
-	char *accept_redirect_to;
 	bool vti_routing;
 	bool vti_shared;
 	uint32_t xfrm_if_id;

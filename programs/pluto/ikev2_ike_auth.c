@@ -1229,12 +1229,12 @@ bool v2_ike_sa_auth_responder_establish(struct ike_sa *ike, bool *send_redirecti
 	}
 
 	if (ike->sa.st_seen_redirect_sup &&
-	    (LIN(POLICY_SEND_REDIRECT_ALWAYS, c->policy) ||
-	     (!LIN(POLICY_SEND_REDIRECT_NEVER, c->policy) &&
+	    (c->config->redirect.send_always ||
+	     (!c->config->redirect.send_never &&
 	      require_ddos_cookies()))) {
 		if (c->config->redirect.to == NULL) {
 			llog_sa(RC_LOG_SERIOUS, ike,
-				  "redirect-to is not specified, can't redirect requests");
+				"redirect-to is not specified, can't redirect requests");
 		} else {
 			*send_redirection = true;
 			return true;

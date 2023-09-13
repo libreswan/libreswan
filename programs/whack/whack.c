@@ -2091,21 +2091,13 @@ int main(int argc, char **argv)
 
 		case CD_SEND_REDIRECT:	/* --send-redirect */
 		{
-			lset_t new_policy = LEMPTY;
-
-			if (streq(optarg, "yes"))
-				new_policy |= POLICY_SEND_REDIRECT_ALWAYS;
-			else if (streq(optarg, "no"))
-				new_policy |= POLICY_SEND_REDIRECT_NEVER;
-			else if (streq(optarg, "auto"))
-				new_policy = LEMPTY;	/* avoid compiler error for no expression */
-			else
+			const struct sparse_name *sn = sparse_lookup(yna_option_names, optarg);
+			if (sn == NULL) {
 				diagw("--send-redirect options are 'yes', 'no' or 'auto'");
-
-			msg.policy = msg.policy & ~(POLICY_SEND_REDIRECT_MASK);
-			msg.policy |= new_policy;
-		}
+			}
+			msg.send_redirect = sn->value;
 			continue;
+		}
 
 		case CD_ACCEPT_REDIRECT:	/* --accept-redirect */
 		{

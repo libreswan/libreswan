@@ -126,8 +126,6 @@ static const char *const sa_policy_bit_name[] = {
 	P(POLICY_GROUPINSTANCE),
 	P(POLICY_ROUTE),
 	P(POLICY_UP),
-	P(POLICY_SEND_REDIRECT_ALWAYS),
-	P(POLICY_SEND_REDIRECT_NEVER),
 #undef P
 };
 

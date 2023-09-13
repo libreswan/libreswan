@@ -201,6 +201,9 @@ struct config {
 	struct shunks *ppk_ids_shunks;
 
 	struct {
+		/* make these two an enum? */
+		bool send_always;
+		bool send_never;
 		bool accept;
 		char *to;        /* RFC 5685 */
 		char *accept_to;

@@ -930,12 +930,7 @@ enum sa_policy_bits {
 	POLICY_ROUTE_IX,	/* do we want to keep this connection routed? */
 	POLICY_UP_IX,		/* do we want to keep this connection up? */
 
-	POLICY_SEND_REDIRECT_ALWAYS_IX,		/* next three policies are for RFC 5685 */
-	POLICY_SEND_REDIRECT_NEVER_IX,
-#define POLICY_SEND_REDIRECT_MASK					\
-	LRANGE(POLICY_SEND_REDIRECT_ALWAYS_IX, POLICY_SEND_REDIRECT_NEVER_IX)
-
-#define POLICY_IX_LAST	POLICY_SEND_REDIRECT_NEVER_IX
+#define POLICY_IX_LAST	POLICY_UP_IX
 };
 
 #define POLICY_ENCRYPT	LELEM(POLICY_ENCRYPT_IX)	/* must be first of IPSEC policies */
@@ -947,8 +942,6 @@ enum sa_policy_bits {
 #define POLICY_GROUPINSTANCE	LELEM(POLICY_GROUPINSTANCE_IX)	/* is this a group template instance? */
 #define POLICY_ROUTE	LELEM(POLICY_ROUTE_IX)	/* do we want to keep this connection routed? */
 #define POLICY_UP	LELEM(POLICY_UP_IX)	/* do we want to keep this connection up? */
-#define POLICY_SEND_REDIRECT_ALWAYS	LELEM(POLICY_SEND_REDIRECT_ALWAYS_IX)
-#define POLICY_SEND_REDIRECT_NEVER	LELEM(POLICY_SEND_REDIRECT_NEVER_IX)
 
 /*
  * RFC 7427 Signature Hash Algorithm exchang
