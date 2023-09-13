@@ -91,9 +91,9 @@ static void jam_routing(struct jambuf *buf,
 	if (never_negotiate(c)) {
 		jam_string(buf, " never-negotiate");
 	}
-	if (c->child.newest_routing_sa != SOS_NOBODY) {
+	if (c->newest_routing_sa != SOS_NOBODY) {
 		jam_string(buf, " routing");
-		jam_so(buf, c->child.newest_routing_sa);
+		jam_so(buf, c->newest_routing_sa);
 	}
 	if (c->newest_ipsec_sa != SOS_NOBODY) {
 		jam_string(buf, " IPsec");
@@ -314,12 +314,12 @@ void set_routing(enum routing_event event,
 	 */
 	PEXPECT(logger, old_routing_sa >= c->newest_ipsec_sa);
 	if (new_routing_sa != SOS_NOBODY) {
-		PEXPECT(c->logger, new_routing_sa >= c->child.newest_routing_sa);
+		PEXPECT(c->logger, new_routing_sa >= c->newest_routing_sa);
 		PEXPECT(c->logger, new_routing_sa >= c->newest_ipsec_sa);
 	}
 #endif
 	c->child.routing = new_routing;
-	c->child.newest_routing_sa = new_routing_sa;
+	c->newest_routing_sa = new_routing_sa;
 }
 
 /*
@@ -457,11 +457,11 @@ static void down_routed_tunnel(enum routing_event event,
 {
 	PASSERT((*child)->sa.st_logger, c == (*child)->sa.st_connection);
 
-	if (c->child.newest_routing_sa > (*child)->sa.st_serialno) {
+	if (c->newest_routing_sa > (*child)->sa.st_serialno) {
 		/* no longer child's */
 		ldbg_routing((*child)->sa.st_logger,
 			     "keeping connection kernel policy; routing SA "PRI_SO" is newer",
-			     pri_so(c->child.newest_routing_sa));
+			     pri_so(c->newest_routing_sa));
 		delete_child_sa(child);
 		return;
 	}
@@ -625,7 +625,7 @@ static bool zap_connection_family(enum routing_event event,
 			 * (this includes this connection's child and
 			 * other connections using this IKE).
 			 */
-			if (sf.st->st_connection->child.newest_routing_sa == sf.st->st_serialno) {
+			if (sf.st->st_connection->newest_routing_sa == sf.st->st_serialno) {
 				continue;
 			}
 			struct child_sa *lurking_child = pexpect_child_sa(sf.st);
@@ -717,11 +717,11 @@ static bool zap_connection_family(enum routing_event event,
 
 	bool dispatched_to_child;
 	struct child_sa *connection_child =
-		child_sa_by_serialno((*ike)->sa.st_connection->child.newest_routing_sa);
+		child_sa_by_serialno((*ike)->sa.st_connection->newest_routing_sa);
 	if (connection_child == NULL) {
 		dispatched_to_child = false;
 		ldbg_routing((*ike)->sa.st_logger, "  IKE SA's connection has no Child SA "PRI_SO,
-			     pri_so((*ike)->sa.st_connection->child.newest_routing_sa));
+			     pri_so((*ike)->sa.st_connection->newest_routing_sa));
 	} else if (connection_child->sa.st_clonedfrom != (*ike)->sa.st_serialno) {
 		dispatched_to_child = false;
 		ldbg_routing((*ike)->sa.st_logger, "  IKE SA is not the parent of the connection's Child SA "PRI_SO,
@@ -740,7 +740,7 @@ static bool zap_connection_family(enum routing_event event,
 				 .child = &connection_child,
 			 });
 		PEXPECT((*ike)->sa.st_logger, connection_child == NULL); /*gone!*/
-		PEXPECT((*ike)->sa.st_logger, (*ike)->sa.st_connection->child.newest_routing_sa == SOS_NOBODY);
+		PEXPECT((*ike)->sa.st_logger, (*ike)->sa.st_connection->newest_routing_sa == SOS_NOBODY);
 	}
 
 	/*
@@ -760,7 +760,7 @@ static bool zap_connection_family(enum routing_event event,
 		while (next_state_new2old(&child_filter)) {
 			struct child_sa *child = pexpect_child_sa(child_filter.st);
 			if (!PEXPECT((*ike)->sa.st_logger,
-				     child->sa.st_connection->child.newest_routing_sa ==
+				     child->sa.st_connection->newest_routing_sa ==
 				     child->sa.st_serialno)) {
 				continue;
 			}
@@ -923,7 +923,7 @@ void connection_delete_child(struct ike_sa *ike, struct child_sa **child, where_
 		c->config->ike_version == IKEv2 ? ike != NULL && ike->sa.st_serialno == (*child)->sa.st_clonedfrom :
 		false);
 
-	if ((*child)->sa.st_serialno == c->child.newest_routing_sa) {
+	if ((*child)->sa.st_serialno == c->newest_routing_sa) {
 		/*
 		 * Caller is responsible for generating any messages; suppress
 		 * delete_state()'s desire to send an out-of-band delete.
@@ -1955,12 +1955,12 @@ void dispatch(enum routing_event event,
 	 * routing SA.
 	 */
 	if (e->child != NULL &&
-	    (*e->child)->sa.st_serialno != (*c)->child.newest_routing_sa) {
+	    (*e->child)->sa.st_serialno != (*c)->newest_routing_sa) {
 		LLOG_PEXPECT_JAMBUF(logger, where, buf) {
 			jam_string(buf, "Child SA ");
 			jam_so(buf, (*e->child)->sa.st_serialno);
 			jam_string(buf, " does not match routing SA ");
-			jam_so(buf, (*c)->child.newest_routing_sa);
+			jam_so(buf, (*c)->newest_routing_sa);
 			jam_string(buf, " ");
 			jam_event(buf, event, c, e);
 		}

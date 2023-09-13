@@ -351,11 +351,11 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 			     pri_so(c->newest_ipsec_sa));
 		ok_to_delete = false;
 	}
-	if (c->child.newest_routing_sa != SOS_NOBODY) {
+	if (c->newest_routing_sa != SOS_NOBODY) {
 		llog_pexpect(logger, where,
 			     "connection "PRI_CO" [%p] still has routing SA "PRI_SO,
 			     pri_connection_co(c), c,
-			     pri_so(c->child.newest_routing_sa));
+			     pri_so(c->newest_routing_sa));
 		ok_to_delete = false;
 	}
 

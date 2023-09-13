@@ -653,7 +653,6 @@ struct connection {
 
 	struct child {
 		enum routing routing; /* level of routing in place */
-		so_serial_t newest_routing_sa;
 
 		/*
 		 * This is identical across kernel-states and shared
@@ -674,6 +673,7 @@ struct connection {
 
 	struct ephemeral_variables temp_vars;
 
+	so_serial_t newest_routing_sa;
 	so_serial_t newest_ike_sa;
 	so_serial_t newest_ipsec_sa;
 

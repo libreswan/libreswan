@@ -1021,7 +1021,7 @@ static void revert_kernel_policy(struct spd_route *spd,
 	/*
 	 * Kill the firewall if previously there was no owner.
 	 */
-	if (spd->wip.installed.up && c->child.newest_routing_sa == SOS_NOBODY) {
+	if (spd->wip.installed.up && c->newest_routing_sa == SOS_NOBODY) {
 		PEXPECT(logger, st != NULL);
 		ldbg(logger, "kernel: %s() reverting the firewall", __func__);
 		if (!do_updown(UPDOWN_DOWN, c, spd, st, logger)) {
@@ -1887,7 +1887,7 @@ static bool install_inbound_ipsec_kernel_policies(struct child_sa *child)
 	 * Not much to be done on failure.
 	 */
 	ldbg(logger, "kernel: %s() owner="PRI_SO,
-	     __func__, pri_so(c->child.newest_routing_sa));
+	     __func__, pri_so(c->newest_routing_sa));
 
 	if (is_labeled_child(c)) {
 		ldbg(logger, "kernel: %s() skipping as IKEv2 config.sec_label="PRI_SHUNK,
@@ -1895,9 +1895,9 @@ static bool install_inbound_ipsec_kernel_policies(struct child_sa *child)
 		return true;
 	}
 
-	if (c->child.newest_routing_sa != SOS_NOBODY) {
+	if (c->newest_routing_sa != SOS_NOBODY) {
 		ldbg(logger, "kernel: %s() skipping as already has owner "PRI_SO,
-		     __func__, pri_so(c->child.newest_routing_sa));
+		     __func__, pri_so(c->newest_routing_sa));
 		return true;
 	}
 
@@ -2173,7 +2173,7 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child)
 		return true;
 	}
 
-	if (c->child.newest_routing_sa == child->sa.st_serialno) {
+	if (c->newest_routing_sa == child->sa.st_serialno) {
 		ldbg(logger, "kernel: %s() skipping kernel policies as already owner", __func__);
 		return true;
 	}
@@ -2182,7 +2182,7 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child)
 	     "kernel: %s() installing IPsec policies for "PRI_SO": connection is currently "PRI_SO" %s",
 	    __func__,
 	    pri_so(child->sa.st_serialno),
-	    pri_so(c->child.newest_routing_sa),
+	    pri_so(c->newest_routing_sa),
 	    enum_name(&routing_names, c->child.routing));
 
 #ifdef IPSEC_CONNECTION_LIMIT
@@ -2258,7 +2258,7 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child)
 			continue;
 		}
 
-		if (c->child.newest_routing_sa != SOS_NOBODY) {
+		if (c->newest_routing_sa != SOS_NOBODY) {
 			/* already notified */
 			spd->wip.installed.up = true;
 		} else {
@@ -2462,7 +2462,7 @@ bool install_ipsec_sa(struct child_sa *child, lset_t direction, where_t where)
 	if (direction & DIRECTION_OUTBOUND) {
 		so_serial_t old_ipsec_sa = c->newest_ipsec_sa;
 		so_serial_t new_ipsec_sa = child->sa.st_serialno;
-		so_serial_t routing_sa = c->child.newest_routing_sa;
+		so_serial_t routing_sa = c->newest_routing_sa;
 		connection_buf cb;
 		ldbg(logger,
 		     "kernel: %s() .newest_ipsec_sa "PRI_SO"->"PRI_SO" (routing SA "PRI_SO") "PRI_CONNECTION" "PRI_WHERE,
@@ -2521,11 +2521,11 @@ void teardown_ipsec_kernel_policies(enum routing_event event, struct child_sa *c
 		return;
 	}
 
-	if (c->child.newest_routing_sa != child->sa.st_serialno) {
+	if (c->newest_routing_sa != child->sa.st_serialno) {
 		ldbg(logger,
 		     "kernel: %s() skipping, "PRI_SO" is not the routed owner "PRI_SO,
 		     __func__, pri_so(child->sa.st_serialno),
-		     pri_so(c->child.newest_routing_sa));
+		     pri_so(c->newest_routing_sa));
 		return;
 	}
 

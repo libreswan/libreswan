@@ -193,14 +193,14 @@ bool should_revive_child(struct child_sa *child)
 		return false;
 	}
 
-	if (c->child.newest_routing_sa > child->sa.st_serialno) {
+	if (c->newest_routing_sa > child->sa.st_serialno) {
 		/*
 		 * There's a newer SA playing with the routing.
 		 * Presumably this is an old Child SA that is in the
 		 * process of being rekeyed or replaced.
 		 */
 		ldbg_sa(child, "revival: skipping, newest routing SA "PRI_SO" is newer than this Child SA "PRI_SO,
-			pri_so(c->child.newest_routing_sa), pri_so(child->sa.st_serialno));
+			pri_so(c->newest_routing_sa), pri_so(child->sa.st_serialno));
 		return false;
 	}
 

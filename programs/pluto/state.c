@@ -1354,9 +1354,9 @@ void delete_v1_states_by_connection(struct connection *c)
 	 * mobike.  Requires some re-implementation. Use
 	 * pexpect for now.
 	 */
-	if (c->child.newest_routing_sa != SOS_NOBODY) {
+	if (c->newest_routing_sa != SOS_NOBODY) {
 		llog_pexpect(c->logger, HERE, "kernel_policy_owner for is "PRI_SO", should be 0",
-			     pri_so(c->child.newest_routing_sa));
+			     pri_so(c->newest_routing_sa));
 	} else {
 		ldbg(c->logger, "kernel_policy_owner is 0");
 	}
@@ -1431,9 +1431,9 @@ void delete_v2_states_by_connection(struct connection *c)
 	 * mobike.  Requires some re-implementation. Use
 	 * pexpect for now.
 	 */
-	if (c->child.newest_routing_sa != SOS_NOBODY) {
+	if (c->newest_routing_sa != SOS_NOBODY) {
 		llog_pexpect(c->logger, HERE, "kernel_policy_owner for is "PRI_SO", should be 0",
-			     pri_so(c->child.newest_routing_sa));
+			     pri_so(c->newest_routing_sa));
 	} else {
 		ldbg(c->logger, "kernel_policy_owner is 0");
 	}
@@ -1948,7 +1948,7 @@ void state_eroute_usage(const ip_selector *ours, const ip_selector *peers,
 
 		/* XXX spd-enum */
 		if (IS_IPSEC_SA_ESTABLISHED(st) &&
-		    c->child.newest_routing_sa == st->st_serialno &&
+		    c->newest_routing_sa == st->st_serialno &&
 		    c->child.routing == RT_ROUTED_TUNNEL &&
 		    selector_range_eq_selector_range(c->spd->local->client, *ours) &&
 		    selector_range_eq_selector_range(c->spd->remote->client, *peers)) {
@@ -2041,7 +2041,7 @@ static void show_state(struct show *s, struct state *st, const monotime_t now)
 		}
 
 		/* XXX spd-enum */ /* XXX: huh? */
-		if (c->child.newest_routing_sa == st->st_serialno) {
+		if (c->newest_routing_sa == st->st_serialno) {
 			jam(buf, " eroute owner;");
 		}
 
@@ -2096,7 +2096,7 @@ static void show_established_child_details(struct show *s, struct child_sa *chil
 		 * XXX - mcr last used is really an attribute of
 		 * the connection
 		 */
-		if (c->child.newest_routing_sa == child->sa.st_serialno &&
+		if (c->newest_routing_sa == child->sa.st_serialno &&
 		    child->sa.st_outbound_count != 0) {
 			jam(buf, " used %jds ago;",
 			    deltasecs(monotimediff(now , child->sa.st_outbound_time)));
