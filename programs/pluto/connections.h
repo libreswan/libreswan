@@ -680,8 +680,8 @@ struct connection {
 	{								\
 		so_serial_t o_ = (C)->NEWEST;				\
 		so_serial_t n_ = SO;					\
-		pdbg((C)->logger, "routing: "#NEWEST" "PRI_SO"->"PRI_SO, \
-		     pri_so(o_), pri_so(n_));				\
+		pdbg((C)->logger, "routing: "#NEWEST" "PRI_SO"->"PRI_SO" "PRI_WHERE, \
+		     pri_so(o_), pri_so(n_), pri_where(HERE));		\
 		(C)->NEWEST = SO;					\
 	}
 	so_serial_t newest_routing_sa;

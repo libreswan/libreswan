@@ -324,7 +324,7 @@ void set_routing(enum routing_event event,
 	}
 #endif
 	c->child.routing = new_routing;
-	c->newest_routing_sa = new_routing_sa;
+	set_newest_sa(c, newest_routing_sa, new_routing_sa);
 }
 
 /*
@@ -927,10 +927,16 @@ void connection_delete_child(struct ike_sa *ike, struct child_sa **child, where_
 		c->config->ike_version == IKEv2 ? ike != NULL && ike->sa.st_serialno == (*child)->sa.st_clonedfrom :
 		false);
 
+	struct routing_annex annex = {
+		.ike = &ike,
+		.child = child,
+	};
+
 	if ((*child)->sa.st_serialno != c->newest_routing_sa) {
 		if (ike != NULL) {
 			state_attach(&(*child)->sa, ike->sa.st_logger);
 		}
+		ldbg_routing_event(c, "skip", CONNECTION_DELETE_CHILD, where, &annex);
 		delete_child_sa(child);
 		return;
 	}
@@ -945,11 +951,7 @@ void connection_delete_child(struct ike_sa *ike, struct child_sa **child, where_
 	 * Let state machine figure out how to react.
 	 */
 	dispatch(CONNECTION_DELETE_CHILD, &c,
-		 (*child)->sa.st_logger, where,
-		 (struct routing_annex) {
-			 .ike = &ike,
-			 .child = child,
-		 });
+		 (*child)->sa.st_logger, where, annex);
 	pexpect(*child == NULL);
 }
 

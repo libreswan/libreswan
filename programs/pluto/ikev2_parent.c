@@ -191,8 +191,6 @@ void llog_v2_ike_sa_established(struct ike_sa *ike, struct child_sa *larval)
 void v2_ike_sa_established(struct ike_sa *ike)
 {
 	struct connection *c = ike->sa.st_connection;
-	ldbg(c->logger, ".newest_ike_sa "PRI_SO"->"PRI_SO,
-	     pri_so(c->newest_ike_sa), pri_so(ike->sa.st_serialno));
 	set_newest_sa(c, newest_ike_sa, ike->sa.st_serialno);
 	ike->sa.st_viable_parent = true;
 	linux_audit_conn(&ike->sa, LAK_PARENT_START);
