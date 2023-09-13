@@ -673,13 +673,13 @@ struct connection {
 
 	struct ephemeral_variables temp_vars;
 
-#define set_newest_sa(C, NEWEST, SO)			\
-	{						\
-		so_serial_t o_ = (C)->NEWEST;		\
-		so_serial_t n_ = SO;			\
-		pdbg((C)->logger, #NEWEST" "PRI_SO"->"PRI_SO,	\
-		     pri_so(o_), pri_so(n_));		\
-		(C)->NEWEST = SO;			\
+#define set_newest_sa(C, NEWEST, SO)					\
+	{								\
+		so_serial_t o_ = (C)->NEWEST;				\
+		so_serial_t n_ = SO;					\
+		pdbg((C)->logger, "routing: "#NEWEST" "PRI_SO"->"PRI_SO, \
+		     pri_so(o_), pri_so(n_));				\
+		(C)->NEWEST = SO;					\
 	}
 	so_serial_t newest_routing_sa;
 	so_serial_t newest_ike_sa;
@@ -946,5 +946,10 @@ bool is_opportunistic_instance(const struct connection *c);
 bool is_xauth(const struct connection *c);
 
 bool is_v1_cisco_split(const struct spd_route *spd);
+
+/* IKE SA | ISAKMP SA || Child SA | IPsec SA */
+const char *connection_sa_name(const struct connection *c, enum sa_type sa_type);
+/* IKE | ISAKMP || Child | IPsec */
+const char *connection_sa_short_name(const struct connection *c, enum sa_type sa_type);
 
 #endif

@@ -351,21 +351,6 @@ const char *str_policy(lset_t policy, policy_buf *dst)
 	return dst->buf;
 }
 
-const char *sa_name(enum ike_version ike_version, enum sa_type sa_type)
-{
-	static const char *name[IKE_VERSION_ROOF][SA_TYPE_ROOF] = {
-		[IKEv1][IKE_SA] = "ISAKMP SA",
-		[IKEv1][IPSEC_SA] = "IPsec SA",
-		[IKEv2][IKE_SA] = "IKE SA",
-		[IKEv2][IPSEC_SA] = "Child SA",
-	};
-	passert(ike_version < IKE_VERSION_ROOF);
-	passert(sa_type < SA_TYPE_ROOF);
-	const char *n = name[ike_version][sa_type];
-	passert(n != NULL);
-	return n;
-}
-
 static const enum_names *pluto_enum_names_checklist[] = {
 	&dpd_action_names,
 	&sd_action_names,

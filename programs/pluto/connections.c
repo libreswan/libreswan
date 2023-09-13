@@ -388,8 +388,7 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 		llog_pexpect(logger, where,
 			     "connection "PRI_CO" [%p] is still being used by %s "PRI_STATE,
 			     pri_connection_co(c), c,
-			     sa_name(state.st->st_connection->config->ike_version,
-				     state.st->st_sa_type_when_established),
+			     state_sa_name(state.st),
 			     pri_state(state.st, &sb));
 		ok_to_delete = false;
 	}
@@ -4463,3 +4462,29 @@ bool is_v1_cisco_split(const struct spd_route *spd UNUSED)
 #endif
 	return false;
 }
+
+
+/* IKE SA | ISAKMP SA || Child SA | IPsec SA */
+const char *connection_sa_name(const struct connection *c, enum sa_type sa_type)
+{
+	switch (sa_type) {
+	case IKE_SA:
+		return c->config->ike_info->parent_sa_name;
+	case IPSEC_SA:
+		return c->config->ike_info->child_sa_name;
+	}
+	bad_case(sa_type);
+}
+
+/* IKE | ISAKMP || Child | IPsec */
+const char *connection_sa_short_name(const struct connection *c, enum sa_type sa_type)
+{
+	switch (sa_type) {
+	case IKE_SA:
+		return c->config->ike_info->parent_name;
+	case IPSEC_SA:
+		return c->config->ike_info->child_name;
+	}
+	bad_case(sa_type);
+}
+

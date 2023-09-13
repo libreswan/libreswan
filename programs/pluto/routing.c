@@ -65,14 +65,12 @@ static void dispatch(const enum routing_event event,
 
 static void jam_event_sa(struct jambuf *buf, struct state *st)
 {
-	const struct connection *c = st->st_connection;
-	jam_string(buf, "; ");
-	enum sa_type sa_type = st->st_sa_type_when_established;
-	jam_string(buf, sa_name(c->config->ike_version, sa_type));
 	jam_string(buf, " ");
+	jam_string(buf, state_sa_short_name(st));
 	jam_so(buf, st->st_serialno);
-	jam_string(buf, " ");
+	jam_string(buf, " (");
 	jam_string(buf, st->st_state->short_name);
+	jam_string(buf, ")");
 }
 
 static void jam_routing(struct jambuf *buf,
@@ -87,20 +85,27 @@ static void jam_routing(struct jambuf *buf,
 	jam_enum_short(buf, &connection_kind_names, c->local->kind);
 	jam_string(buf, " ");
 	jam_connection_co(buf, c);
-	jam(buf, " @%p", c);
+	jam(buf, "@%p", c);
 	if (never_negotiate(c)) {
-		jam_string(buf, " never-negotiate");
+		jam_string(buf, "; never-negotiate");
+	}
+	if (c->newest_routing_sa != SOS_NOBODY ||
+	    c->newest_ipsec_sa != SOS_NOBODY ||
+	    c->newest_ike_sa != SOS_NOBODY) {
+		jam_string(buf, "; newest");
 	}
 	if (c->newest_routing_sa != SOS_NOBODY) {
 		jam_string(buf, " routing");
 		jam_so(buf, c->newest_routing_sa);
 	}
 	if (c->newest_ipsec_sa != SOS_NOBODY) {
-		jam_string(buf, " IPsec");
+		jam_string(buf, " ");
+		jam_string(buf, c->config->ike_info->child_name);
 		jam_so(buf, c->newest_ipsec_sa);
 	}
 	if (c->newest_ike_sa != SOS_NOBODY) {
-		jam_string(buf, " IKE");
+		jam_string(buf, " ");
+		jam_string(buf, c->config->ike_info->parent_name);
 		jam_so(buf, c->newest_ike_sa);
 	}
 }
@@ -125,9 +130,9 @@ static void jam_event(struct jambuf *buf,
 		      const struct routing_annex *e)
 {
 	jam_enum_short(buf, &routing_event_names, event);
+	jam_routing_annex(buf, e);
 	jam_string(buf, " to ");
 	jam_routing(buf, c);
-	jam_routing_annex(buf, e);
 }
 
 static void ldbg_routing_event(struct connection *c,

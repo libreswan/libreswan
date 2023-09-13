@@ -1030,4 +1030,9 @@ extern void set_sa_expire_next_event(enum event_type next_event, struct state *s
 void jam_humber_uintmax(struct jambuf *buf,
 			const char *prefix, uintmax_t val, const char *suffix);
 
+/* IKE SA | ISAKMP SA || Child SA | IPsec SA */
+const char *state_sa_name(const struct state *st);
+/* IKE | ISAKMP || Child | IPsec */
+const char *state_sa_short_name(const struct state *st);
+
 #endif /* STATE_H */

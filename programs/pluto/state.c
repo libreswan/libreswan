@@ -766,8 +766,7 @@ static void llog_delete_n_send(lset_t rc_flags,
 	LLOG_JAMBUF(rc_flags, st->st_logger, buf) {
 		/* deleting {IKE,Child,IPsec,ISAKMP} SA */
 		jam_string(buf, "deleting ");
-		jam_string(buf, sa_name(st->st_connection->config->ike_version,
-					st->st_sa_type_when_established));
+		jam_string(buf, state_sa_name(st));
 		/* (STATE-NAME) XXX: drop this? */
 		jam_string(buf, " (");
 		jam_string(buf, st->st_state->short_name);
@@ -3182,4 +3181,18 @@ void set_sa_expire_next_event(enum event_type next_event, struct state *st)
 	}
 
 	event_force(next_event, st);
+}
+
+/* IKE SA | ISAKMP SA || Child SA | IPsec SA */
+const char *state_sa_name(const struct state *st)
+{
+	return connection_sa_name(st->st_connection,
+				  st->st_sa_type_when_established);
+}
+
+/* IKE | ISAKMP || Child | IPsec */
+const char *state_sa_short_name(const struct state *st)
+{
+	return connection_sa_short_name(st->st_connection,
+					st->st_sa_type_when_established);
 }

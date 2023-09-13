@@ -38,7 +38,7 @@ static bool rekey_state(const struct whack_message *m, struct show *s,
 	if (st == NULL) {
 		connection_attach(c, logger);
 		llog(RC_LOG, c->logger, "connection does not have %s",
-		     sa_name(c->config->ike_version, sa_type));
+		     connection_sa_name(c, sa_type));
 		connection_detach(c, logger);
 		return 0; /* the connection doesn't count */
 	}
