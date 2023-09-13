@@ -1602,20 +1602,26 @@ int main(int argc, char **argv)
 			if (streq(optarg, "%any")) {
 				new_policy = LEMPTY;
 				end->host_addr = get_address_any(&host_family);
+				end->host_type = KH_ANY;
 			} else if (streq(optarg, "%opportunistic")) {
 				/* always use tunnel mode; mark as opportunistic */
-				new_policy = POLICY_TUNNEL | POLICY_OPPORTUNISTIC;
+				new_policy = POLICY_TUNNEL;
+				end->host_type = KH_OPPO;
 				end->host_addr = get_address_any(&host_family);
+				end->key_from_DNS_on_demand = true;
 			} else if (streq(optarg, "%group")) {
 				/* always use tunnel mode; mark as group */
 				new_policy = POLICY_TUNNEL;
 				msg.is_connection_group = true;
+				end->host_type = KH_GROUP;
 				end->host_addr = get_address_any(&host_family);
 			} else if (streq(optarg, "%opportunisticgroup")) {
 				/* always use tunnel mode; mark as opportunistic */
-				new_policy = POLICY_TUNNEL | POLICY_OPPORTUNISTIC;
+				new_policy = POLICY_TUNNEL;
 				msg.is_connection_group = true;
+				end->host_type = KH_OPPOGROUP;
 				end->host_addr = get_address_any(&host_family);
+				end->key_from_DNS_on_demand = true;
 			} else if (msg.left.id != NULL && !streq(optarg, "%null")) {
 				new_policy = LEMPTY;
 				if (opt_ttoaddress_num(&host_family, &end->host_addr) == NULL) {
@@ -1657,8 +1663,6 @@ int main(int argc, char **argv)
 					diagw("--host %group clashes with --client");
 				seen[END_SUBNET] = true;
 			}
-			if (new_policy & POLICY_OPPORTUNISTIC)
-				end->key_from_DNS_on_demand = true;
 			continue;
 		}
 

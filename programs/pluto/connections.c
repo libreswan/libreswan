@@ -175,6 +175,30 @@ static bool never_negotiate_wm(const struct whack_message *wm)
 	return (wm->never_negotiate_shunt != SHUNT_UNSET);
 }
 
+static bool is_opportunistic_wm_end(const struct whack_end *end)
+{
+	return (end->host_type == KH_OPPO ||
+		end->host_type == KH_OPPOGROUP);
+}
+
+static bool is_opportunistic_wm(const struct whack_message *wm)
+{
+	return (is_opportunistic_wm_end(&wm->left) ||
+		is_opportunistic_wm_end(&wm->right));
+}
+
+static bool is_group_wm_end(const struct whack_end *end)
+{
+	return (end->host_type == KH_GROUP ||
+		end->host_type == KH_OPPOGROUP);
+}
+
+static bool is_group_wm(const struct whack_message *wm)
+{
+	return (is_group_wm_end(&wm->left) ||
+		is_group_wm_end(&wm->right));
+}
+
 /*
  * Is there an existing connection with NAME?
  */
@@ -1040,7 +1064,7 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 	if (src->modecfg_server && src->modecfg_client) {
 		diag_t d = diag("both %smodecfgserver=yes and %smodecfgclient=yes defined",
 				leftright, leftright);
-		if ((wm->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+		if (!is_opportunistic_wm(wm)) {
 			return d;
 		}
 		llog_diag(RC_LOG, logger, &d, "opportunistic: ");
@@ -1049,7 +1073,7 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 	if (src->modecfg_server && src->cat) {
 		diag_t d = diag("both %smodecfgserver=yes and %scat=yes defined",
 				leftright, leftright);
-		if ((wm->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+		if (!is_opportunistic_wm(wm)) {
 			return d;
 		}
 		llog_diag(RC_LOG, logger, &d, "opportunistic: ");
@@ -1058,7 +1082,7 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 	if (src->modecfg_client && other_src->cat) {
 		diag_t d = diag("both %smodecfgclient=yes and %scat=yes defined",
 				leftright, other_src->leftright);
-		if ((wm->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+		if (!is_opportunistic_wm(wm)) {
 			return d;
 		}
 		llog_diag(RC_LOG, logger, &d, "opportunistic: ");
@@ -1095,7 +1119,7 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 	if (src->modecfg_server && src->addresspool != NULL) {
 		diag_t d = diag("%smodecfgserver=yes expects %saddresspool= and not %saddresspool=",
 				leftright, other_src->leftright, leftright);
-		if ((wm->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+		if (!is_opportunistic_wm(wm)) {
 			return d;
 		}
 		llog_diag(RC_LOG, logger, &d, "opportunistic: ");
@@ -1104,7 +1128,7 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 	if (src->cat && other_src->addresspool != NULL) {
 		diag_t d = diag("both %scat=yes and %saddresspool= defined",
 				leftright, other_src->leftright);
-		if ((wm->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+		if (!is_opportunistic_wm(wm)) {
 			return d;
 		}
 		llog_diag(RC_LOG, logger, &d, "opportunistic: ");
@@ -1113,7 +1137,7 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 	if (src->modecfg_client && other_src->addresspool != NULL) {
 		diag_t d = diag("both %smodecfgclient=yes and %saddresspool= defined",
 				leftright, other_src->leftright);
-		if ((wm->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+		if (!is_opportunistic_wm(wm)) {
 			return d;
 		}
 		llog_diag(RC_LOG, logger, &d, "opportunistic: ");
@@ -1761,8 +1785,8 @@ static enum connection_kind extract_connection_end_kind(const struct whack_messa
 							const struct whack_end *that,
 							struct logger *logger)
 {
-	if (wm->is_connection_group) {
-		ldbg(logger, "%s connection is CK_GROUP: by .connection_group",
+	if (is_group_wm(wm)) {
+		ldbg(logger, "%s connection is CK_GROUP: by is_group_wm()",
 		     this->leftright);
 		return CK_GROUP;
 	}
@@ -2079,8 +2103,11 @@ static diag_t extract_connection(const struct whack_message *wm,
 	PASSERT(c->logger, ike_info[wm->ike_version].version > 0);
 	config->ike_info = &ike_info[wm->ike_version];
 
-	if (wm->policy & POLICY_OPPORTUNISTIC &&
-	    c->config->ike_version < IKEv2) {
+	PASSERT(c->logger,
+		is_opportunistic_wm(wm) == ((wm->policy & POLICY_OPPORTUNISTIC) != LEMPTY));
+	PASSERT(c->logger, is_group_wm(wm) == wm->is_connection_group);
+
+	if (is_opportunistic_wm(wm) && c->config->ike_version < IKEv2) {
 		return diag("opportunistic connection MUST have IKEv2");
 	}
 
@@ -2961,7 +2988,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	if (wm->left.modecfg_server && wm->right.modecfg_server) {
 		diag_t d = diag("both left and right define modecfgserver=yes");
-		if ((wm->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+		if (!is_opportunistic_wm(wm)) {
 			return d;
 		}
 		llog_diag(RC_LOG, c->logger, &d, "opportunistic: ");
@@ -2969,7 +2996,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	if (wm->left.modecfg_client && wm->right.modecfg_client) {
 		diag_t d = diag("both left and right define modecfgclient=yes");
-		if ((wm->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+		if (!is_opportunistic_wm(wm)) {
 			return d;
 		}
 		llog_diag(RC_LOG, c->logger, &d, "opportunistic: ");
@@ -2977,7 +3004,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	if (wm->left.cat && wm->right.cat) {
 		diag_t d = diag("both left and right define cat=yes");
-		if ((wm->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+		if (!is_opportunistic_wm(wm)) {
 			return d;
 		}
 		llog_diag(RC_LOG, c->logger, &d, "opportunistic: ");
@@ -3033,7 +3060,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	if (config->end[LEFT_END].host.modecfg.server &&
 	    config->end[RIGHT_END].host.modecfg.server) {
 		diag_t d = diag("both left and right are configured as a server");
-		if ((wm->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+		if (!is_opportunistic_wm(wm)) {
 			return d;
 		}
 		llog_diag(RC_LOG, c->logger, &d, "opportunistic: ");
@@ -3042,7 +3069,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	if (config->end[LEFT_END].host.modecfg.client &&
 	    config->end[RIGHT_END].host.modecfg.client) {
 		diag_t d = diag("both left and right are configured as a client");
-		if ((wm->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+		if (!is_opportunistic_wm(wm)) {
 			return d;
 		}
 		llog_diag(RC_LOG, c->logger, &d, "opportunistic: ");
@@ -3142,7 +3169,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 			llog(RC_LOG, c->logger,
 			     "warning: keyingtries=%ju ignored, connection will never negotiate",
 			     wm->keyingtries.value);
-		} else if ((wm->policy & POLICY_OPPORTUNISTIC) &&
+		} else if (is_opportunistic_wm(wm) &&
 			   wm->keyingtries.value != 1) {
 			llog(RC_LOG, c->logger,
 			     "warning: keyingtries=%ju ignored, Opportunistic connections do not retry",
