@@ -673,6 +673,14 @@ struct connection {
 
 	struct ephemeral_variables temp_vars;
 
+#define set_newest_sa(C, NEWEST, SO)			\
+	{						\
+		so_serial_t o_ = (C)->NEWEST;		\
+		so_serial_t n_ = SO;			\
+		pdbg((C)->logger, #NEWEST" "PRI_SO"->"PRI_SO,	\
+		     pri_so(o_), pri_so(n_));		\
+		(C)->NEWEST = SO;			\
+	}
 	so_serial_t newest_routing_sa;
 	so_serial_t newest_ike_sa;
 	so_serial_t newest_ipsec_sa;

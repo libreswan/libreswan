@@ -114,7 +114,7 @@ struct connection *clone_connection(const char *name, struct connection *t,
 		reference_xfrmi(c);
 	}
 
-	c->newest_routing_sa = SOS_NOBODY;
+	set_newest_sa(c, newest_routing_sa, SOS_NOBODY);
 	c->child.routing = RT_UNROUTED;
 
 	return c;
@@ -332,8 +332,9 @@ static struct connection *instantiate(struct connection *t,
 	/*
 	 * Reset; sec_label templates will have set this.
 	 */
-	d->newest_ike_sa = SOS_NOBODY;
+	set_newest_sa(d, newest_ike_sa, SOS_NOBODY);
 	pexpect(d->newest_ipsec_sa == SOS_NOBODY);
+	set_newest_sa(d, newest_ipsec_sa, SOS_NOBODY);
 
 	/* assumption: orientation is the same as c's */
 	connect_to_host_pair(d);

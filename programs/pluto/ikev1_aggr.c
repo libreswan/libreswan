@@ -799,7 +799,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 
 	ldbg(c->logger, ".newest_ike_sa "PRI_SO"->"PRI_SO,
 	     pri_so(c->newest_ike_sa), pri_so(st->st_serialno));
-	c->newest_ike_sa = st->st_serialno;
+	set_newest_sa(c, newest_ike_sa, st->st_serialno);
 
 	/* save last IV from phase 1 so it can be restored later so anything
 	 * between the end of phase 1 and the start of phase 2 i.e. mode config
@@ -955,7 +955,7 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 
 	ldbg(c->logger, ".newest_ike_sa "PRI_SO"->"PRI_SO,
 	     pri_so(c->newest_ike_sa), pri_so(st->st_serialno));
-	c->newest_ike_sa = st->st_serialno;
+	set_newest_sa(c, newest_ike_sa, st->st_serialno);
 
 	update_iv(st);  /* Finalize our Phase 1 IV */
 

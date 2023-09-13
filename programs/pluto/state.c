@@ -1035,13 +1035,14 @@ void delete_state(struct state *st)
 		teardown_ipsec_kernel_states(pexpect_child_sa(st));
 	}
 
-	if (st->st_connection->newest_ipsec_sa == st->st_serialno)
-		st->st_connection->newest_ipsec_sa = SOS_NOBODY;
+	if (st->st_connection->newest_ipsec_sa == st->st_serialno) {
+		set_newest_sa(st->st_connection, newest_ipsec_sa, SOS_NOBODY);
+	}
 
 	if (st->st_connection->newest_ike_sa == st->st_serialno) {
 		ldbg(st->st_connection->logger, ".newest_ike_sa "PRI_SO"->"PRI_SO,
 		     pri_so(st->st_connection->newest_ike_sa), pri_so(st->st_serialno));
-		st->st_connection->newest_ike_sa = SOS_NOBODY;
+		set_newest_sa(st->st_connection, newest_ike_sa, SOS_NOBODY);
 	}
 
 	/*

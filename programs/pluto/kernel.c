@@ -2482,7 +2482,7 @@ bool install_ipsec_sa(struct child_sa *child, lset_t direction, where_t where)
 #if 0
 		PEXPECT(child->sa.st_logger, routing_sa == new_ipsec_sa);
 #endif
-		child->sa.st_connection->newest_ipsec_sa = new_ipsec_sa;
+		set_newest_sa(child->sa.st_connection, newest_ipsec_sa, new_ipsec_sa);
 	}
 
 	/* we only audit once for IPsec SA's, we picked the inbound SA */

@@ -3090,7 +3090,7 @@ void ISAKMP_SA_established(const struct ike_sa *ike)
 
 	ldbg(c->logger, ".newest_ike_sa "PRI_SO"->"PRI_SO,
 	     pri_so(c->newest_ike_sa), pri_so(ike->sa.st_serialno));
-	c->newest_ike_sa = ike->sa.st_serialno;
+	set_newest_sa(c, newest_ike_sa, ike->sa.st_serialno);
 }
 
 /*
