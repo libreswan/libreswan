@@ -921,43 +921,36 @@ void connection_unroute(struct connection *c, where_t where)
 
 void connection_delete_child(struct ike_sa *ike, struct child_sa **child, where_t where)
 {
-	struct connection *c = connection_addref((*child)->sa.st_connection,
-						 (*child)->sa.st_logger);
+	struct connection *c = (*child)->sa.st_connection;
 	PEXPECT(c->logger,
 		c->config->ike_version == IKEv1 ? ike == NULL || ike->sa.st_serialno == (*child)->sa.st_clonedfrom :
 		c->config->ike_version == IKEv2 ? ike != NULL && ike->sa.st_serialno == (*child)->sa.st_clonedfrom :
 		false);
 
-	if ((*child)->sa.st_serialno == c->newest_routing_sa) {
-		/*
-		 * Caller is responsible for generating any messages; suppress
-		 * delete_state()'s desire to send an out-of-band delete.
-		 */
-		on_delete(&(*child)->sa, skip_send_delete);
-		on_delete(&(*child)->sa, skip_revival);
-		/*
-		 * Let state machine figure out how to react.
-		 */
-		struct connection *cc = (*child)->sa.st_connection;
-		dispatch(CONNECTION_DELETE_CHILD, &cc,
-			 (*child)->sa.st_logger, where,
-			 (struct routing_annex) {
-				 .ike = &ike,
-				 .child = child,
-			 });
-		/* no logger as no child */
-		pexpect(*child == NULL);
-	} else {
-		struct connection *cc = c;
-		state_attach(&(*child)->sa, ike->sa.st_logger);
-		delete_child_sa(child);
-		if (is_labeled_child(cc)) {
-			remove_connection_from_pending(cc);
-			delete_states_by_connection(cc);
-			connection_unroute(cc, HERE);
+	if ((*child)->sa.st_serialno != c->newest_routing_sa) {
+		if (ike != NULL) {
+			state_attach(&(*child)->sa, ike->sa.st_logger);
 		}
+		delete_child_sa(child);
+		return;
 	}
-	connection_delref(&c, c->logger);
+
+	/*
+	 * Caller is responsible for generating any messages; suppress
+	 * delete_state()'s desire to send an out-of-band delete.
+	 */
+	on_delete(&(*child)->sa, skip_send_delete);
+	on_delete(&(*child)->sa, skip_revival);
+	/*
+	 * Let state machine figure out how to react.
+	 */
+	dispatch(CONNECTION_DELETE_CHILD, &c,
+		 (*child)->sa.st_logger, where,
+		 (struct routing_annex) {
+			 .ike = &ike,
+			 .child = child,
+		 });
+	pexpect(*child == NULL);
 }
 
 void connection_timeout_ike(struct ike_sa **ike, where_t where)
