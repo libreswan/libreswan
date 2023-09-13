@@ -187,7 +187,7 @@ void jam_child_sa_details(struct jambuf *buf, struct state *st)
 			     c->spd->remote->host->port);
 
 		dbg("NAT-T: encaps is '%s'",
-		     c->encaps == yna_auto ? "auto" : bool_str(c->encaps == yna_yes));
+		     c->encaps == YNA_AUTO ? "auto" : bool_str(c->encaps == YNA_YES));
 
 		jam(buf, "ESP%s%s%s=>0x%08" PRIx32 " <0x%08" PRIx32 "",
 		    tcp ? "inTCP" : nat ? "inUDP" : "",

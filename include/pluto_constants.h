@@ -812,10 +812,13 @@ enum yn_options {
 extern const struct sparse_name yn_option_names[];
 
 enum yna_options {
-	yna_auto = 1, /* default */
-	yna_no = 2,
-	yna_yes = 3,
+	YNA_UNSET = 0,
+	YNA_AUTO = 1, /* default?!? */
+	YNA_NO = 2,
+	YNA_YES = 3,
 };
+
+extern const struct sparse_name yna_option_names[];
 
 enum yne_options {
 	YNE_UNSET,

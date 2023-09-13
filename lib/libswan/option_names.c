@@ -102,3 +102,13 @@ const struct sparse_name nat_ikev1_method_option_names[] = {
 	{ "none",       NATT_NONE },
 	SPARSE_NULL
 };
+
+/*
+ * Values for yes/no/auto, used by encapsulation.
+ */
+
+const struct sparse_name yna_option_names[] = {
+	YES_NO(YNA_YES, YNA_NO),
+	{ "auto",	YNA_AUTO },
+	SPARSE_NULL,
+};

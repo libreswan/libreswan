@@ -688,8 +688,8 @@ static void show_connection_status(struct show *s, const struct connection *c)
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
 		jam(buf, PRI_CONNECTION":   nat-traversal: encaps:%s",
 		    c->name, instance,
-		    (c->encaps == yna_auto ? "auto" :
-		     bool_str(c->encaps == yna_yes)));
+		    (c->encaps == YNA_AUTO ? "auto" :
+		     bool_str(c->encaps == YNA_YES)));
 		jam_string(buf, "; keepalive:");
 		if (c->config->nat_keepalive) {
 			jam(buf, "%jds", deltasecs(nat_keepalive_period));

@@ -119,7 +119,8 @@ void natd_lookup_common(struct state *st,
 
 	/* update NAT-T settings for local policy */
 	switch (st->st_connection->encaps) {
-	case yna_auto:
+	case YNA_UNSET:
+	case YNA_AUTO:
 		dbg("NAT_TRAVERSAL encaps using auto-detect");
 		if (!found_me) {
 			dbg("NAT_TRAVERSAL this end is behind NAT");
@@ -140,12 +141,12 @@ void natd_lookup_common(struct state *st,
 		}
 		break;
 
-	case yna_no:
+	case YNA_NO:
 		st->hidden_variables.st_nat_traversal |= LEMPTY;
 		dbg("NAT_TRAVERSAL local policy prohibits encapsulation");
 		break;
 
-	case yna_yes:
+	case YNA_YES:
 		dbg("NAT_TRAVERSAL local policy enforces encapsulation");
 		dbg("NAT_TRAVERSAL forceencaps enabled");
 		st->hidden_variables.st_nat_traversal |=

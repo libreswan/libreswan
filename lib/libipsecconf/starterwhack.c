@@ -600,7 +600,7 @@ int starter_whack_add_conn(struct starter_config *cfg,
 	if (conn->options_set[KNCF_ENCAPS])
 		msg.encaps = conn->options[KNCF_ENCAPS];
 	else
-		msg.encaps = yna_auto;
+		msg.encaps = YNA_AUTO;
 
 	if (conn->options_set[KNCF_NAT_KEEPALIVE])
 		msg.nat_keepalive = conn->options[KNCF_NAT_KEEPALIVE];

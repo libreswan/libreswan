@@ -134,7 +134,7 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 
 	DOPT(KNCF_REMOTEPEERTYPE, NON_CISCO);
 
-	DOPT(KNCF_ENCAPS, yna_auto);
+	DOPT(KNCF_ENCAPS, YNA_AUTO);
 
 	DOPT(KNCF_ENABLE_TCP, 0); /* aka use default */
 	DOPT(KNCF_TCP_REMOTEPORT, 0);	/* aka use default */
@@ -1241,7 +1241,7 @@ static bool load_conn(struct starter_conn *conn,
 	if (conn->options_set[KNCF_SEND_REDIRECT]) {
 		if (conn->ike_version >= IKEv2) {
 			switch (conn->options[KNCF_SEND_REDIRECT]) {
-			case yna_yes:
+			case YNA_YES:
 				conn->policy |= POLICY_SEND_REDIRECT_ALWAYS;
 				if (conn->redirect_to == NULL) {
 					starter_log(LOG_LEVEL_INFO,
@@ -1249,11 +1249,11 @@ static bool load_conn(struct starter_conn *conn,
 				}
 				break;
 
-			case yna_no:
+			case YNA_NO:
 				conn->policy |= POLICY_SEND_REDIRECT_NEVER;
 				break;
 
-			case yna_auto:
+			case YNA_AUTO:
 				break;
 			}
 		}

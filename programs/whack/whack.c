@@ -2021,15 +2021,14 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_ENCAPS:	/* --encaps */
-			if (streq(optarg, "auto"))
-				msg.encaps = yna_auto;
-			else if (streq(optarg, "yes"))
-				msg.encaps = yna_yes;
-			else if (streq(optarg, "no"))
-				msg.encaps = yna_no;
-			else
+		{
+			const struct sparse_name *sn = sparse_lookup(yna_option_names, optarg);
+			if (sn == NULL) {
 				diagw("--encaps options are 'auto', 'yes' or 'no'");
+			}
+			msg.encaps = sn->value;
 			continue;
+		}
 
 		case CD_NIC_OFFLOAD:  /* --nic-offload */
 			if (streq(optarg, "no"))

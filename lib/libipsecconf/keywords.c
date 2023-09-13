@@ -128,13 +128,6 @@ static const struct sparse_name kw_yndev_list[] = {
 };
 #endif
 
-/* Values for yes/no/auto, used by encapsulation */
-static const struct sparse_name kw_yna_list[] = {
-	YES_NO(yna_yes, yna_no),
-	{ "auto",	yna_auto },
-	SPARSE_NULL
-};
-
 static const struct sparse_name kw_offload_list[] = {
 	{ "no",         offload_no },
 	{ "auto",       offload_auto },
@@ -474,7 +467,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "mobike",  kv_conn,  kt_enum,  KNCF_MOBIKE, yn_option_names, NULL, },
   { "narrowing",  kv_conn,  kt_enum,  KNCF_IKEv2_ALLOW_NARROWING, yn_option_names, NULL, },
   { "pam-authorize",  kv_conn,  kt_enum,  KNCF_PAM_AUTHORIZE, yn_option_names, NULL, },
-  { "send-redirect",  kv_conn,  kt_enum,  KNCF_SEND_REDIRECT, kw_yna_list, NULL, },
+  { "send-redirect",  kv_conn,  kt_enum,  KNCF_SEND_REDIRECT, yna_option_names, NULL, },
   { "redirect-to",  kv_conn,  kt_string,  KSCF_REDIRECT_TO, NULL, NULL, },
   { "accept-redirect",  kv_conn,  kt_enum, KNCF_ACCEPT_REDIRECT, yn_option_names, NULL, },
   { "accept-redirect-to",  kv_conn,  kt_string, KSCF_ACCEPT_REDIRECT_TO, NULL, NULL, },
@@ -538,7 +531,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
 
   { "nic-offload",  kv_conn,  kt_enum,  KNCF_NIC_OFFLOAD,  kw_offload_list, NULL, },
 
-  { "encapsulation",  kv_conn,  kt_enum,  KNCF_ENCAPS,  kw_yna_list, NULL, },
+  { "encapsulation",  kv_conn,  kt_enum,  KNCF_ENCAPS,  yna_option_names, NULL, },
 
   { "overlapip",  kv_conn,  kt_enum,  KNCF_OVERLAPIP, yn_option_names, NULL, },
   { "reauth",  kv_conn,  kt_enum,  KNCF_REAUTH, yn_option_names, NULL, },
