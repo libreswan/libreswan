@@ -52,33 +52,31 @@ static bool match_v1_connection(struct connection *c, struct authby authby,
 	if (never_negotiate(c)) {
 		/* are we a block or clear connection? */
 		enum shunt_policy shunt = c->config->never_negotiate_shunt;
-		if (shunt != SHUNT_UNSET) {
-			/*
-			 * We need to match block/clear so we can send
-			 * back NO_PROPOSAL_CHOSEN, otherwise not
-			 * match so we can hit packetdefault to do
-			 * real IKE.  clear and block do not have
-			 * POLICY_OPPORTUNISTIC, but clear-or-private
-			 * and private-or-clear do, but they don't do
-			 * IKE themselves but allow packetdefault to
-			 * be hit and do the work.  if not policy_oppo
-			 * -> we hit clear/block so this is right c
-			 */
-			if (is_opportunistic(c)) {
-				connection_buf cb;
-				dbg("  skipping "PRI_CONNECTION", never negotiate + opportunistic",
-				    pri_connection(c, &cb));
-				return false;
-			}
-
-			/* shunt match - stop the search for another conn if we are groupinstance*/
-			if (c->policy & POLICY_GROUPINSTANCE) {
-				connection_buf cb;
-				dbg("  skipping "PRI_CONNECTION", never negotiate + group instance",
-				    pri_connection(c, &cb));
-				return true;
-			}
+		passert(shunt != SHUNT_UNSET); /* since never-negotiate */
+		/*
+		 * We need to match block/clear so we can send back
+		 * NO_PROPOSAL_CHOSEN, otherwise not match so we can
+		 * hit packetdefault to do real IKE.
+		 *
+		 * clear and block do not have POLICY_OPPORTUNISTIC,
+		 * but clear-or-private and private-or-clear do, but
+		 * they don't do IKE themselves but allow
+		 * packetdefault to be hit and do the work.  if not
+		 * policy_oppo -> we hit clear/block so this is right
+		 * c
+		 *
+		 * XXX: er, this isn't a skip!
+		 *
+		 * shunt match - stop the search for another conn if
+		 * we are groupinstance.
+		 */
+		if (c->policy & POLICY_GROUPINSTANCE) {
+			connection_buf cb;
+			dbg("  choosing "PRI_CONNECTION", never negotiate + group instance",
+			    pri_connection(c, &cb));
+			return true;
 		}
+
 		connection_buf cb;
 		dbg("  skipping "PRI_CONNECTION", never negotiate",
 		    pri_connection(c, &cb));
