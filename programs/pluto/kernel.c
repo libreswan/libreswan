@@ -1019,9 +1019,9 @@ static void revert_kernel_policy(struct spd_route *spd,
 			 logger == st->st_logger));
 
 	/*
-	 * Kill the firewall if previously there was no owner.
+	 * Kill the firewall if just installed.
 	 */
-	if (spd->wip.installed.up && c->newest_routing_sa == SOS_NOBODY) {
+	if (spd->wip.installed.up) {
 		PEXPECT(logger, st != NULL);
 		ldbg(logger, "kernel: %s() reverting the firewall", __func__);
 		if (!do_updown(UPDOWN_DOWN, c, spd, st, logger)) {
@@ -2259,8 +2259,8 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child)
 		}
 
 		if (c->newest_routing_sa != SOS_NOBODY) {
-			/* already notified */
-			spd->wip.installed.up = true;
+			/* skip as already installed */
+			spd->wip.installed.up = false;
 		} else {
 			/* go ahead and notify */
 			ok = spd->wip.installed.up =
