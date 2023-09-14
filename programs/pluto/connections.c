@@ -2103,13 +2103,34 @@ static diag_t extract_connection(const struct whack_message *wm,
 	PASSERT(c->logger, ike_info[wm->ike_version].version > 0);
 	config->ike_info = &ike_info[wm->ike_version];
 
+#if 0
 	PASSERT(c->logger,
 		is_opportunistic_wm(wm) == ((wm->policy & POLICY_OPPORTUNISTIC) != LEMPTY));
+#endif
 	PASSERT(c->logger, is_group_wm(wm) == wm->is_connection_group);
 
 	if (is_opportunistic_wm(wm) && c->config->ike_version < IKEv2) {
 		return diag("opportunistic connection MUST have IKEv2");
 	}
+	config->opportunistic = is_opportunistic_wm(wm);
+
+#if 0
+	if (is_opportunistic_wm(wm)) {
+		if (wm->authby.psk) {
+			return diag("PSK is not supported for opportunism");
+		}
+		if (!authby_has_digsig(wm->authby)) {
+			return diag("only Digital Signatures are supported for opportunism");
+		}
+
+		if ((wm->policy & POLICY_PFS) == 0) {
+			return diag("PFS required for opportunism");
+		}
+		if ((wm->policy & POLICY_ENCRYPT) == 0) {
+			return diag("encryption required for opportunism");
+		}
+	}
+#endif
 
 	config->intermediate = extract_yn(wm->intermediate, /*default*/false);
 	if (config->intermediate) {
@@ -3578,7 +3599,7 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 
 	CP(reauth);
 
-	PP(OPPORTUNISTIC);
+	CN(is_opportunistic(c), OPPORTUNISTIC);
 	PP(GROUPINSTANCE);
 	PP(ROUTE);
 	PP(UP);
@@ -4255,7 +4276,7 @@ bool never_negotiate(const struct connection *c)
 
 bool is_opportunistic(const struct connection *c)
 {
-	return (c != NULL && (c->policy & POLICY_OPPORTUNISTIC));
+	return (c != NULL && c->config->opportunistic);
 }
 
 bool is_instance(const struct connection *c)

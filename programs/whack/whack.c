@@ -2634,20 +2634,6 @@ int main(int argc, char **argv)
 			diagw("connection missing --host after --to");
 		}
 
-		if (msg.policy & POLICY_OPPORTUNISTIC) {
-			if (msg.authby.psk) {
-				diagw("PSK is not supported for opportunism");
-			}
-			if (!authby_has_digsig(msg.authby)) {
-				diagw("only Digital Signatures are supported for opportunism");
-			}
-
-			if ((msg.policy & POLICY_PFS) == 0)
-				diagw("PFS required for opportunism");
-			if ((msg.policy & POLICY_ENCRYPT) == 0)
-				diagw("encryption required for opportunism");
-		}
-
 		if (msg.authby.never) {
 			if (msg.never_negotiate_shunt == SHUNT_UNSET) {
 				diagw("shunt connection must have shunt policy (eg --pass, --drop or --reject). Is this a non-shunt connection missing an authentication method such as --psk or --rsasig or --auth-null ?");

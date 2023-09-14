@@ -442,11 +442,9 @@ static bool validate_end(struct starter_conn *conn_st,
 		break;
 
 	case KH_OPPO:
-		conn_st->policy |= POLICY_OPPORTUNISTIC;
 		break;
 
 	case KH_OPPOGROUP:
-		conn_st->policy |= POLICY_OPPORTUNISTIC;
 		conn_st->is_connection_group = true;
 		break;
 

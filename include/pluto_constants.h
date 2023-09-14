@@ -925,7 +925,6 @@ enum sa_policy_bits {
 	/* connection policy
 	 * Other policies could vary per state object.  These live in connection.
 	 */
-	POLICY_OPPORTUNISTIC_IX,	/* is this opportunistic? */
 	POLICY_GROUPINSTANCE_IX,	/* is this a group template instance? */
 	POLICY_ROUTE_IX,	/* do we want to keep this connection routed? */
 	POLICY_UP_IX,		/* do we want to keep this connection up? */
@@ -938,7 +937,6 @@ enum sa_policy_bits {
 #define POLICY_COMPRESS	LELEM(POLICY_COMPRESS_IX)	/* must be third */
 #define POLICY_TUNNEL	LELEM(POLICY_TUNNEL_IX)
 #define POLICY_PFS	LELEM(POLICY_PFS_IX)
-#define POLICY_OPPORTUNISTIC	LELEM(POLICY_OPPORTUNISTIC_IX)	/* is this opportunistic? */
 #define POLICY_GROUPINSTANCE	LELEM(POLICY_GROUPINSTANCE_IX)	/* is this a group template instance? */
 #define POLICY_ROUTE	LELEM(POLICY_ROUTE_IX)	/* do we want to keep this connection routed? */
 #define POLICY_UP	LELEM(POLICY_UP_IX)	/* do we want to keep this connection up? */

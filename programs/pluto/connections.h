@@ -291,6 +291,7 @@ struct config {
 						 * send IKEv1
 						 * draft/rfc NATT
 						 * VIDs */
+	bool opportunistic;		/* is this opportunistic? */
 
 	struct {
 		uintmax_t priority;
