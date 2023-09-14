@@ -179,7 +179,7 @@ void delete_state_event(struct state_event **evp, where_t where)
  */
 
 static void dispatch_event(struct state *st, enum event_type event_type,
-			   deltatime_t event_delay);
+			   deltatime_t event_delay, struct logger *logger);
 
 static void timer_event_cb(void *arg, const struct timer_event *event)
 {
@@ -202,23 +202,23 @@ static void timer_event_cb(void *arg, const struct timer_event *event)
 		passert(st != NULL);
 		passert(event_name != NULL);
 
-		ldbg(event->logger, "%s: processing %s-event@%p for %s SA #%lu in state %s",
+		ldbg(event->logger, "%s: processing %s-event@%p for %s SA "PRI_SO" in state %s",
 		     __func__, event_name, ev,
 		     IS_IKE_SA(st) ? "IKE" : "CHILD",
-		     st->st_serialno, st->st_state->short_name);
+		     pri_so(st->st_serialno), st->st_state->short_name);
 
 		struct state_event **evp = state_event_slot(st, event_type);
 		if (evp == NULL) {
 			llog_pexpect(st->st_logger, HERE,
-				     "#%lu has no .st_event field for %s",
-				     st->st_serialno, event_name);
+				     ".st_event field is NULL for %s",
+				     event_name);
 			return;
 		}
 
 		if (*evp != ev) {
 			llog_pexpect(st->st_logger, HERE,
-				     "#%lu .st_event is %p but should be %s-pe@%p",
-				     st->st_serialno, *evp, event_name, ev);
+				     ".st_event is %p but should be %s-pe@%p",
+				     *evp, event_name, ev);
 			return;
 		}
 
@@ -228,12 +228,12 @@ static void timer_event_cb(void *arg, const struct timer_event *event)
 	}
 
 	statetime_t start = statetime_backdate(st, &event->inception);
-	dispatch_event(st, event_type, event_delay);
+	dispatch_event(st, event_type, event_delay, event->logger);
 	statetime_stop(&start, "%s() %s", __func__, event_name);
 }
 
 static void dispatch_event(struct state *st, enum event_type event_type,
-			   deltatime_t event_delay)
+			   deltatime_t event_delay, struct logger *logger)
 {
 	const monotime_t now = mononow();
 	/*
@@ -248,12 +248,12 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 	switch (event_type) {
 
 	case EVENT_v2_ADDR_CHANGE:
-		dbg("#%lu IKEv2 local address change", st->st_serialno);
+		ldbg(st->st_logger, "#%lu IKEv2 local address change", st->st_serialno);
 		ikev2_addr_change(st);
 		break;
 
 	case EVENT_RETRANSMIT:
-		dbg("IKEv%d retransmit event", st->st_ike_version);
+		ldbg(st->st_logger, "IKEv%d retransmit event", st->st_ike_version);
 		switch (st->st_ike_version) {
 		case IKEv2:
 			event_v2_retransmit(st, now);
@@ -270,8 +270,8 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 
 #ifdef USE_IKEv1
 	case EVENT_v1_SEND_XAUTH:
-		dbg("XAUTH: event EVENT_v1_SEND_XAUTH #%lu %s",
-		    st->st_serialno, st->st_state->name);
+		ldbg(st->st_logger, "XAUTH: event EVENT_v1_SEND_XAUTH #%lu %s",
+		     st->st_serialno, st->st_state->name);
 		xauth_send_request(st);
 		break;
 #endif
@@ -308,16 +308,17 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 
 		if (newer_sa != SOS_NOBODY) {
 			/* not very interesting: already superseded */
-			dbg("%s SA expired (superseded by #%lu)",
-			    satype, newer_sa);
+			ldbg(st->st_logger, "%s SA expired (superseded by #%lu)",
+			     satype, newer_sa);
 		} else if (!IS_IKE_SA_ESTABLISHED(st) &&
 			   !IS_V1_ISAKMP_SA_ESTABLISHED(st)) {
 			/* not very interesting: failed IKE attempt */
-			dbg("un-established partial Child SA timeout (SA expired)");
+			ldbg(st->st_logger, "un-established partial Child SA timeout (SA expired)");
 			pstat_sa_failed(st, REASON_EXCHANGE_TIMEOUT);
 		} else {
-			log_state(RC_LOG, st, "%s SA expired (%s)", satype,
-				  (c->config->rekey ? "LATEST!" : "--dontrekey"));
+			llog(RC_LOG, st->st_logger,
+			     "%s SA expired (%s)", satype,
+			     (c->config->rekey ? "LATEST!" : "--dontrekey"));
 		}
 
 		/* Delete this state object.  It must be in the hash table. */
@@ -343,6 +344,7 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 				 * to say.
 				 */
 				struct child_sa *child = pexpect_child_sa(st);
+				state_attach(&child->sa, logger);
 				llog_pexpect(child->sa.st_logger, HERE,
 					     "Child SA lost its IKE SA #%lu",
 					     child->sa.st_clonedfrom);
@@ -350,7 +352,7 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 				st = NULL;
 			} else if (IS_IKE_SA_ESTABLISHED(st)) {
 				/* IKEv2 parent, delete children too */
-				dbg("IKEv2 SA expired, delete whole family");
+				ldbg(st->st_logger, "IKEv2 SA expired, delete whole family");
 				passert(&ike->sa == st);
 				record_n_send_n_log_v2_delete(ike, HERE);
 				delete_ike_family(&ike);
@@ -358,7 +360,7 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 				st = NULL;
 			} else if (IS_IKE_SA(st)) {
 				/* IKEv2 parent, delete children too */
-				dbg("IKEv2 SA expired, delete whole family");
+				ldbg(st->st_logger, "IKEv2 SA expired, delete whole family");
 				passert(&ike->sa == st);
 				on_delete(&ike->sa, skip_send_delete);
 				delete_ike_family(&ike);
@@ -370,12 +372,14 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 				st = NULL;
 			} else {
 				struct child_sa *child = pexpect_child_sa(st);
+				state_attach(&child->sa, logger);
 				connection_delete_child(ike, &child, HERE);
 				st = NULL;
 			}
 			break;
 		}
 		case IKEv1:
+			state_attach(st, logger);
 			delete_state(st);
 			/* note: no md->st to clear */
 			/* st = NULL; */
@@ -394,11 +398,13 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 		 * being garbage collected.  Either way, time to
 		 * delete it.
 		 */
+		state_attach(st, logger);
 		if (deltatime_cmp(event_delay, >, deltatime_zero)) {
 			/* Don't bother logging 0 delay */
 			deltatime_buf dtb;
-			log_state(RC_LOG, st, "deleting incomplete state after %s seconds",
-				  str_deltatime(event_delay, &dtb));
+			llog(RC_LOG, st->st_logger,
+			     "deleting incomplete state after %s seconds",
+			     str_deltatime(event_delay, &dtb));
 		}
 		/*
 		 * If no other reason has been given then this is a
@@ -429,7 +435,7 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 
 #ifdef USE_PAM_AUTH
 	case EVENT_v1_PAM_TIMEOUT:
-		dbg("PAM thread timeout on state #%lu", st->st_serialno);
+		ldbg(st->st_logger, "PAM thread timeout on state #%lu", st->st_serialno);
 		pam_auth_abort(st, "timeout");
 		/*
 		 * Things get cleaned up when the PAM process exits.
@@ -441,8 +447,9 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 #endif
 #endif
 	case EVENT_CRYPTO_TIMEOUT:
-		dbg("event crypto_failed on state #%lu, aborting",
-		    st->st_serialno);
+		state_attach(st, logger);
+		ldbg(st->st_logger, "event crypto_failed on state #%lu, aborting",
+		     st->st_serialno);
 		pstat_sa_failed(st, REASON_CRYPTO_TIMEOUT);
 		delete_state(st);
 		/* note: no md->st to clear */
@@ -518,9 +525,9 @@ void event_schedule_where(enum event_type type, deltatime_t delay, struct state 
 	*evp = ev;
 
 	deltatime_buf buf;
-	dbg("%s: newref %s-pe@%p timeout in %s seconds for #%lu",
-	    __func__, event_name, ev, str_deltatime(delay, &buf),
-	    ev->ev_state->st_serialno);
+	ldbg(st->st_logger, "%s: newref %s-pe@%p timeout in %s seconds for #%lu",
+	     __func__, event_name, ev, str_deltatime(delay, &buf),
+	     ev->ev_state->st_serialno);
 
 	schedule_timeout(event_name, &ev->timeout, delay, timer_event_cb, ev);
 }
@@ -538,9 +545,9 @@ void event_delete_where(enum event_type type, struct state *st, where_t where)
 		return;
 	}
 	if (*evp != NULL) {
-		dbg("#%lu requesting %s-event@%p be deleted "PRI_WHERE,
-		    st->st_serialno, enum_name(&event_type_names, (*evp)->ev_type),
-		    *evp, pri_where(where));
+		ldbg(st->st_logger, "#%lu requesting %s-event@%p be deleted "PRI_WHERE,
+		     st->st_serialno, enum_name(&event_type_names, (*evp)->ev_type),
+		     *evp, pri_where(where));
 		pexpect(st == (*evp)->ev_state);
 		delete_state_event(evp, where);
 		pexpect((*evp) == NULL);
@@ -593,5 +600,5 @@ void call_state_event_handler(struct logger *logger, struct state *st,
 	}
 
 	llog(RC_COMMENT, logger, "calling %s event handler", event_name);
-	dispatch_event(st, event_type, event_delay);
+	dispatch_event(st, event_type, event_delay, logger);
 }
