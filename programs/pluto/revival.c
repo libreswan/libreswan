@@ -201,6 +201,22 @@ bool should_revive_child(struct child_sa *child)
 	return true;
 }
 
+bool should_revive_ike(struct ike_sa *ike)
+{
+	struct connection *c = ike->sa.st_connection;
+
+	if (c->newest_ike_sa != SOS_NOBODY &&
+	    c->newest_ike_sa != ike->sa.st_serialno) {
+		/* should be covered by above */
+		llog_pexpect(ike->sa.st_logger, HERE,
+			     "revival: skipping, newest IKE SA "PRI_SO" is is not us",
+			     pri_so(c->newest_ike_sa));
+		return false;
+	}
+
+	return revival_plausable(c, ike->sa.st_logger);
+}
+
 static void update_remote_port(struct connection *c, struct state *st)
 {
 	/* XXX: check that IKE is for C? */
@@ -263,6 +279,13 @@ void schedule_child_revival(struct ike_sa *ike, struct child_sa *child, const ch
 	struct connection *c = child->sa.st_connection;
 	update_remote_port(c, &ike->sa);
 	schedule_revival_event(c, child->sa.st_logger, subplot);
+}
+
+void schedule_ike_revival(struct ike_sa *ike, const char *subplot)
+{
+	struct connection *c = ike->sa.st_connection;
+	update_remote_port(c, &ike->sa);
+	schedule_revival_event(c, ike->sa.st_logger, subplot);
 }
 
 void revive_connection(struct connection *c, const char *subplot,
