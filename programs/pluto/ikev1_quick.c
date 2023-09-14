@@ -614,72 +614,72 @@ void init_phase2_iv(struct state *st, const msgid_t *msgid)
 static ke_and_nonce_cb quick_outI1_continue;	/* type assertion */
 
 void quick_outI1(struct fd *whack_sock,
-		 struct state *isakmp_sa,
+		 struct ike_sa *isakmp,
 		 struct connection *c,
 		 lset_t policy,
 		 so_serial_t replacing,
 		 shunk_t sec_label)
 {
-	struct state *st = ikev1_duplicate_state(c, isakmp_sa, SA_INITIATOR, whack_sock);
 	passert(c != NULL);
+	struct child_sa *child = new_v1_child_sa(c, isakmp, SA_INITIATOR, whack_sock);
 
-	st->st_policy = policy;
+	child->sa.st_policy = policy;
 
 	if (c->config->sec_label.len != 0) {
 		dbg("pending phase 2 with base security context '"PRI_SHUNK"'",
 		    pri_shunk(c->config->sec_label));
 		if (sec_label.len != 0) {
-			st->st_v1_acquired_sec_label = clone_hunk(sec_label, "st_acquired_sec_label");
+			child->sa.st_v1_acquired_sec_label = clone_hunk(sec_label, "st_acquired_sec_label");
 			dbg("pending phase 2 with 'instance' security context '"PRI_SHUNK"'",
 			    pri_shunk(sec_label));
 		}
 	}
 
 
-	st->st_v1_msgid.id = generate_msgid(isakmp_sa);
-	change_v1_state(st, STATE_QUICK_I1); /* from STATE_UNDEFINED */
+	child->sa.st_v1_msgid.id = generate_msgid(&isakmp->sa);
+	change_v1_state(&child->sa, STATE_QUICK_I1); /* from STATE_UNDEFINED */
 
-	binlog_refresh_state(st);
+	binlog_refresh_state(&child->sa);
 
 	/* figure out PFS group, if any */
 
 	if (policy & POLICY_PFS ) {
 		/*
 		 * Old code called ike_alg_pfsgroup() and that first
-		 * checked st->st_policy for POLICY_PFS.  It's assumed
+		 * checked child->sa.st_policy for POLICY_PFS.  It's assumed
 		 * the check was redundant.
 		 */
-		pexpect((st->st_policy & POLICY_PFS));
+		pexpect((child->sa.st_policy & POLICY_PFS));
 		/*
 		 * See if pfs_group has been specified for this conn,
 		 * use that group.
 		 * if not, fallback to old use-same-as-P1 behaviour
 		 */
-		st->st_pfs_group = ikev1_quick_pfs(c->config->child_proposals);
+		child->sa.st_pfs_group = ikev1_quick_pfs(c->config->child_proposals);
 		/* otherwise, use the same group as during Phase 1:
 		 * since no negotiation is possible, we pick one that is
 		 * very likely supported.
 		 */
-		if (st->st_pfs_group == NULL)
-			st->st_pfs_group = isakmp_sa->st_oakley.ta_dh;
+		if (child->sa.st_pfs_group == NULL)
+			child->sa.st_pfs_group = isakmp->sa.st_oakley.ta_dh;
 	}
 
-	LLOG_JAMBUF(RC_LOG, st->st_logger, buf) {
+	LLOG_JAMBUF(RC_LOG, child->sa.st_logger, buf) {
 		jam(buf, "initiating Quick Mode ");
-		jam_connection_policies(buf, st->st_connection);
+		jam_connection_policies(buf, child->sa.st_connection);
 		if (replacing != SOS_NOBODY) {
 			jam(buf, " to replace #%lu", replacing);
 		}
 		jam(buf, " {using isakmp#%lu msgid:%08" PRIx32 " proposal=",
-			isakmp_sa->st_serialno, st->st_v1_msgid.id);
-		if (st->st_connection->config->child_proposals.p != NULL) {
-			jam_proposals(buf, st->st_connection->config->child_proposals.p);
+			isakmp->sa.st_serialno, child->sa.st_v1_msgid.id);
+		if (child->sa.st_connection->config->child_proposals.p != NULL) {
+			jam_proposals(buf, child->sa.st_connection->config->child_proposals.p);
 		} else {
 			jam(buf, "defaults");
 		}
 		jam(buf, " pfsgroup=");
 		if ((policy & POLICY_PFS) != LEMPTY) {
-			jam_string(buf, st->st_pfs_group->common.fqn);
+			jam_string(buf, child->sa.st_pfs_group->common.fqn);
 		} else {
 			jam_string(buf, "no-pfs");
 		}
@@ -687,13 +687,13 @@ void quick_outI1(struct fd *whack_sock,
 	}
 
 	/* save for post crypto logging */
-	st->st_v1_ipsec_pred = replacing;
+	child->sa.st_v1_ipsec_pred = replacing;
 
 	if (policy & POLICY_PFS) {
-		submit_ke_and_nonce(st, st->st_pfs_group,
+		submit_ke_and_nonce(&child->sa, child->sa.st_pfs_group,
 				    quick_outI1_continue, HERE);
 	} else {
-		submit_ke_and_nonce(st, NULL /* no-nonce*/,
+		submit_ke_and_nonce(&child->sa, NULL /* no-nonce*/,
 				    quick_outI1_continue, HERE);
 	}
 }
@@ -1051,6 +1051,7 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 					const ip_selector *remote_client,
 					struct crypt_mac new_iv)
 {
+	struct ike_sa *parent = pexpect_parent_sa(p1st);
 	pexpect(p1st == md->v1_st);
 	struct connection *c = p1st->st_connection;
 	struct hidden_variables hv;
@@ -1063,112 +1064,111 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 	log_state(RC_LOG, p1st, "the peer proposed: %s",
 		  str_selector_pair(local_client, remote_client, &sb));
 
-	/* Now that we have identities of client subnets, we must look for
-	 * a suitable connection (our current one only matches for hosts).
+	/*
+	 * Now that we have identities of client subnets, we must look
+	 * for a suitable connection (our current one only matches for
+	 * hosts).
 	 */
-	{
-		struct connection *p = find_v1_client_connection(c, local_client, remote_client);
+	struct connection *p = find_v1_client_connection(c, local_client, remote_client);
 
-		if ((p1st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) &&
-		    !(p1st->st_policy & POLICY_TUNNEL) &&
-		    p == NULL) {
-			p = c;
-			connection_buf cib;
-			dbg("using something (we hope the IP we or they are NAT'ed to) for transport mode connection "PRI_CONNECTION"",
-			    pri_connection(p, &cib));
-		}
+	if ((p1st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) &&
+	    !(p1st->st_policy & POLICY_TUNNEL) &&
+	    p == NULL) {
+		p = c;
+		connection_buf cib;
+		dbg("using something (we hope the IP we or they are NAT'ed to) for transport mode connection "PRI_CONNECTION"",
+		    pri_connection(p, &cib));
+	}
 
-		if (p == NULL) {
-			LLOG_JAMBUF(RC_LOG, p1st->st_logger, buf) {
-				jam(buf, "cannot respond to IPsec SA request because no connection is known for ");
+	if (p == NULL) {
+		LLOG_JAMBUF(RC_LOG, p1st->st_logger, buf) {
+			jam(buf, "cannot respond to IPsec SA request because no connection is known for ");
 
-				/*
-				 * This message occurs in very
-				 * puzzling circumstances so we must
-				 * add as much information and beauty
-				 * as we can.
-				 */
-
-				struct spd_end local = *c->spd->local;
-				local.client = *local_client;
-				jam_spd_end(buf, c, &local, NULL, LEFT_END, oriented(c));
-
-				jam_string(buf, "...");
-
-				struct spd_end remote = *c->spd->remote;
-				remote.client = *remote_client;
-				jam_spd_end(buf, c, &remote, NULL, RIGHT_END, oriented(c));
-			}
-			return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
-		}
-
-		/* did we find a better connection? */
-		if (p != c) {
-			/* We've got a better connection: it can support the
-			 * specified clients.  But it may need instantiation.
+			/*
+			 * This message occurs in very puzzling
+			 * circumstances so we must add as much
+			 * information and beauty as we can.
 			 */
-			if (is_template(p)) {
-				/*
-				 * Plain Road Warrior because no OPPO
-				 * for IKEv1 instantiate, carrying
-				 * over authenticated peer ID
-				 *
-				 * Don't try to update the
-				 * instantiated template's address
-				 * when it is already set.
-				 */
-				p = rw_responder_id_instantiate(p, c->remote->host.addr,
-								remote_client,
-								&c->remote->host.id,
-								HERE); /* must delref */
-			} else {
-				p = connection_addref(p, p->logger); /* must delref */
-			}
-			connection_buf cib;
-			ldbg(p->logger, "using connection "PRI_CONNECTION"",
-			     pri_connection(p, &cib));
-			c = p;
+
+			struct spd_end local = *c->spd->local;
+			local.client = *local_client;
+			jam_spd_end(buf, c, &local, NULL, LEFT_END, oriented(c));
+
+			jam_string(buf, "...");
+
+			struct spd_end remote = *c->spd->remote;
+			remote.client = *remote_client;
+			jam_spd_end(buf, c, &remote, NULL, RIGHT_END, oriented(c));
+		}
+		return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
+	}
+
+	/* did we find a better connection? */
+	if (p != c) {
+		/*
+		 * We've got a better connection: it can support the
+		 * specified clients.  But it may need instantiation.
+		 */
+		if (is_template(p)) {
+			/*
+			 * Plain Road Warrior because no OPPO for
+			 * IKEv1 instantiate, carrying over
+			 * authenticated peer ID
+			 *
+			 * Don't try to update the instantiated
+			 * template's address when it is already set.
+			 */
+			p = rw_responder_id_instantiate(p, c->remote->host.addr,
+							remote_client,
+							&c->remote->host.id,
+							HERE); /* must delref */
 		} else {
-			c = connection_addref(c, c->logger); /* must delref */
+			p = connection_addref(p, p->logger); /* must delref */
+		}
+		connection_buf cib;
+		ldbg(p->logger, "using connection "PRI_CONNECTION"",
+		     pri_connection(p, &cib));
+		c = p;
+	} else {
+		c = connection_addref(c, c->logger); /* must delref */
+	}
+
+	/* fill in the client's true ip address/subnet */
+	dbg("client: %s  port wildcard: %s  virtual: %s",
+	    bool_str(c->remote->child.has_client),
+	    bool_str(c->remote->config->child.protoport.has_port_wildcard),
+	    bool_str(is_virtual_remote(c)));
+
+	/* fill in the client's true port */
+	if (c->remote->config->child.protoport.has_port_wildcard) {
+		ip_selector selector =
+			selector_from_range_protocol_port(selector_range(c->remote->child.selectors.proposed.list[0]),
+							  selector_protocol(c->remote->child.selectors.proposed.list[0]),
+							  selector_port(*remote_client));
+		update_first_selector(c, remote, selector);
+	}
+
+	if (is_virtual_remote(c)) {
+
+		ldbg(c->logger, "virt: %s() spd %s/%s; config %s/%s",
+		     __func__,
+		     bool_str(c->spd->local->virt != NULL),
+		     bool_str(c->spd->remote->virt != NULL),
+		     bool_str(c->local->config->child.virt != NULL),
+		     bool_str(c->remote->config->child.virt != NULL));
+
+		update_first_selector(c, remote, *remote_client);
+		spd_route_db_rehash_remote_client(c->spd);
+		set_child_has_client(c, remote, true);
+		virtual_ip_delref(&c->spd->remote->virt);
+
+		if (selector_eq_address(*remote_client, c->remote->host.addr)) {
+			set_child_has_client(c, remote, false);
 		}
 
-		/* fill in the client's true ip address/subnet */
-		dbg("client: %s  port wildcard: %s  virtual: %s",
-		    bool_str(c->remote->child.has_client),
-		    bool_str(c->remote->config->child.protoport.has_port_wildcard),
-		    bool_str(is_virtual_remote(c)));
-
-		/* fill in the client's true port */
-		if (c->remote->config->child.protoport.has_port_wildcard) {
-			ip_selector selector =
-				selector_from_range_protocol_port(selector_range(c->remote->child.selectors.proposed.list[0]),
-								  selector_protocol(c->remote->child.selectors.proposed.list[0]),
-								  selector_port(*remote_client));
-			update_first_selector(c, remote, selector);
-		}
-
-		if (is_virtual_remote(c)) {
-
-			ldbg(c->logger, "virt: %s() spd %s/%s; config %s/%s",
-			     __func__,
-			     bool_str(c->spd->local->virt != NULL),
-			     bool_str(c->spd->remote->virt != NULL),
-			     bool_str(c->local->config->child.virt != NULL),
-			     bool_str(c->remote->config->child.virt != NULL));
-
-			update_first_selector(c, remote, *remote_client);
-			spd_route_db_rehash_remote_client(c->spd);
-			set_child_has_client(c, remote, true);
-			virtual_ip_delref(&c->spd->remote->virt);
-
-			if (selector_eq_address(*remote_client, c->remote->host.addr)) {
-				set_child_has_client(c, remote, false);
-			}
-
-			LDBGP_JAMBUF(DBG_BASE, &global_logger, buf) {
-				jam(buf, "setting phase 2 virtual values to ");
-				jam_spd_end(buf, c, c->spd->remote, NULL, LEFT_END, oriented(c));
-			}
+		LDBGP_JAMBUF(DBG_BASE, &global_logger, buf) {
+			jam(buf, "setting phase 2 virtual values to ");
+			jam_spd_end(buf, c, c->spd->remote, NULL, LEFT_END, oriented(c));
 		}
 	}
 
@@ -1186,92 +1186,95 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 		nat_traversal_natoa_lookup(md, &hv, p1st->st_logger);
 
 	/* create our new state */
-	{
-		struct state *const st = ikev1_duplicate_state(c, p1st, SA_RESPONDER, null_fd);
-		/* delref stack reference */
-		struct connection *cc = c;
-		connection_delref(&cc, cc->logger);
 
-		/* first: fill in missing bits of our new state object
-		 * note: we don't copy over st_peer_pubkey, the public key
-		 * that authenticated the ISAKMP SA.  We only need it in this
-		 * routine, so we can "reach back" to p1st to get it.
-		 */
+	struct child_sa *child = new_v1_child_sa(c, parent, SA_RESPONDER, null_fd);
+	/* delref stack reference */
+	struct connection *cc = c;
+	connection_delref(&cc, cc->logger);
 
-		st->st_v1_msgid.id = md->hdr.isa_msgid;
+	/*
+	 * first: fill in missing bits of our new state object note:
+	 * we don't copy over st_peer_pubkey, the public key that
+	 * authenticated the ISAKMP SA.  We only need it in this
+	 * routine, so we can "reach back" to p1st to get it.
+	 */
 
-		restore_new_iv(st, new_iv);
+	child->sa.st_v1_msgid.id = md->hdr.isa_msgid;
 
-		switch_md_st(md, st, HERE);	/* feed back new state */
+	restore_new_iv(&child->sa, new_iv);
 
-		change_v1_state(st, STATE_QUICK_R0);
+	switch_md_st(md, &child->sa, HERE);	/* feed back new state */
 
-		binlog_refresh_state(st);
+	change_v1_state(&child->sa, STATE_QUICK_R0);
 
-		/* copy hidden variables (possibly with changes) */
-		st->hidden_variables = hv;
+	binlog_refresh_state(&child->sa);
 
-		/* copy the connection's
-		 * IPSEC policy into our state.  The ISAKMP policy is water under
-		 * the bridge, I think.  It will reflect the ISAKMP SA that we
-		 * are using.
-		 */
-		st->st_policy = c->policy;
+	/* copy hidden variables (possibly with changes) */
+	child->sa.hidden_variables = hv;
 
-		if (p1st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) {
-			/* ??? this partially overwrites what was done via hv */
-			st->hidden_variables.st_nat_traversal =
-				p1st->hidden_variables.st_nat_traversal;
-			nat_traversal_change_port_lookup(md, md->v1_st);
-			v1_maybe_natify_initiator_endpoints(st, HERE);
-		} else {
-			/* ??? this partially overwrites what was done via hv */
-			st->hidden_variables.st_nat_traversal = LEMPTY;
-		}
+	/*
+	 * copy the connection's IPSEC policy into our state.  The
+	 * ISAKMP policy is water under the bridge, I think.  It will
+	 * reflect the ISAKMP SA that we are using.
+	 */
+	child->sa.st_policy = c->policy;
 
-		passert(st->st_connection != NULL);
-		passert(st->st_connection == c);
-
-		/* process SA in */
-		{
-			struct payload_digest *const sapd =
-				md->chain[ISAKMP_NEXT_SA];
-			pb_stream in_pbs = sapd->pbs;
-
-			/* parse and accept body, setting variables, but not forming
-			 * our reply. We'll make up the reply later on.
-			 *
-			 * note that we process the copy of the pbs,
-			 * so that we can process it again in the
-			 * tail(). XXX: Huh, this is the tail
-			 * function!
-			 *
-			 */
-			st->st_pfs_group = &unset_group;
-			RETURN_STF_FAIL_v1NURE(parse_ipsec_sa_body(&in_pbs,
-							       &sapd->payload.
-							       sa,
-							       NULL,
-							       false, st));
-		}
-
-		/* Ni in */
-		RETURN_STF_FAIL_v1NURE(accept_v1_nonce(st->st_logger, md, &st->st_ni, "Ni"));
-
-		/* [ KE ] in (for PFS) */
-		RETURN_STF_FAIL_v1NURE(accept_PFS_KE(st, md, &st->st_gi,
-						 "Gi", "Quick Mode I1"));
-
-		passert(st->st_pfs_group != &unset_group);
-
-		passert(st->st_connection != NULL);
-
-		submit_ke_and_nonce(st, st->st_pfs_group/*possibly-null*/,
-				    quick_inI1_outR1_continue1, HERE);
-
-		passert(st->st_connection != NULL);
-		return STF_SUSPEND;
+	if (parent->sa.hidden_variables.st_nat_traversal & NAT_T_DETECTED) {
+		/* ??? this partially overwrites what was done via hv */
+		child->sa.hidden_variables.st_nat_traversal =
+			parent->sa.hidden_variables.st_nat_traversal;
+		nat_traversal_change_port_lookup(md, md->v1_st);
+		v1_maybe_natify_initiator_endpoints(&child->sa, HERE);
+	} else {
+		/* ??? this partially overwrites what was done via hv */
+		child->sa.hidden_variables.st_nat_traversal = LEMPTY;
 	}
+
+	passert(child->sa.st_connection != NULL);
+	passert(child->sa.st_connection == c);
+
+	/* process SA in */
+	{
+		struct payload_digest *const sapd =
+			md->chain[ISAKMP_NEXT_SA];
+		struct pbs_in in_pbs = sapd->pbs;
+
+		/*
+		 * parse and accept body, setting variables, but not
+		 * forming our reply. We'll make up the reply later
+		 * on.
+		 *
+		 * note that we process the copy of the pbs,
+		 * so that we can process it again in the
+		 * tail(). XXX: Huh, this is the tail
+		 * function!
+		 */
+		child->sa.st_pfs_group = &unset_group;
+		RETURN_STF_FAIL_v1NURE(parse_ipsec_sa_body(&in_pbs,
+							   &sapd->payload.
+							   sa,
+							   NULL,
+							   false,
+							   &child->sa));
+	}
+
+	/* Ni in */
+	RETURN_STF_FAIL_v1NURE(accept_v1_nonce(child->sa.st_logger, md, &child->sa.st_ni, "Ni"));
+
+	/* [ KE ] in (for PFS) */
+	RETURN_STF_FAIL_v1NURE(accept_PFS_KE(&child->sa, md, &child->sa.st_gi,
+					     "Gi", "Quick Mode I1"));
+
+	passert(child->sa.st_pfs_group != &unset_group);
+
+	passert(child->sa.st_connection != NULL);
+
+	submit_ke_and_nonce(&child->sa, child->sa.st_pfs_group/*possibly-null*/,
+			    quick_inI1_outR1_continue1, HERE);
+
+	passert(child->sa.st_connection != NULL);
+	return STF_SUSPEND;
+
 }
 
 static stf_status quick_inI1_outR1_continue1(struct state *st,

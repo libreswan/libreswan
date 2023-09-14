@@ -847,6 +847,7 @@ struct ike_sa *parent_sa_where(struct child_sa *child, where_t where); /* both t
 
 struct ike_sa *pexpect_ike_sa_where(struct state *st, where_t where);
 #define pexpect_ike_sa(ST) pexpect_ike_sa_where(ST, HERE)
+#define pexpect_parent_sa(ST) pexpect_ike_sa_where(ST, HERE)
 
 struct child_sa { struct state sa; };
 struct child_sa *pexpect_child_sa_where(struct state *st, where_t where);
@@ -865,8 +866,8 @@ extern bool states_use_connection(const struct connection *c);
 
 struct ike_sa *new_v1_istate(struct connection *c, struct fd *whackfd);
 struct ike_sa *new_v1_rstate(struct connection *c, struct msg_digest *md);
-struct state *ikev1_duplicate_state(struct connection *c, struct state *st,
-				    enum sa_role sa_role, struct fd *whackfd);
+struct child_sa *new_v1_child_sa(struct connection *c, struct ike_sa *ike,
+				 enum sa_role sa_role, struct fd *whackfd);
 
 struct ike_sa *new_v2_ike_sa(struct connection *c,
 			     const struct v2_state_transition *transition,

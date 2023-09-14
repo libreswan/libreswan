@@ -293,7 +293,7 @@ void unpend(struct ike_sa *ike, struct connection *cc)
 				break;
 			case IKEv1:
 #ifdef USE_IKEv1
-				quick_outI1(p->whack_sock, &ike->sa, p->connection,
+				quick_outI1(p->whack_sock, ike, p->connection,
 					    p->policy,
 					    p->replacing,
 					    null_shunk);

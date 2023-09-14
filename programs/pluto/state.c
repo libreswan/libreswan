@@ -474,6 +474,7 @@ struct child_sa *pexpect_child_sa_where(struct state *st, where_t where)
  */
 
 static struct state *new_state(struct connection *c,
+			       so_serial_t clonedfrom,
 			       const ike_spi_t ike_initiator_spi,
 			       const ike_spi_t ike_responder_spi,
 			       enum sa_type sa_type,
@@ -507,6 +508,7 @@ static struct state *new_state(struct connection *c,
 	st->st_connection = connection_addref(c, st->st_logger);
 	state_db_init_state(st); /* hash called below */
 
+	st->st_clonedfrom = clonedfrom;
 	st->st_state = &state_undefined;
 	st->st_inception = realnow();
 	st->st_sa_role = sa_role;
@@ -529,20 +531,22 @@ static struct state *new_state(struct connection *c,
 
 struct ike_sa *new_v1_istate(struct connection *c, struct fd *whackfd)
 {
-	struct state *st = new_state(c, ike_initiator_spi(), zero_ike_spi,
-				     IKE_SA, SA_INITIATOR, whackfd, HERE);
-	struct ike_sa *ike = pexpect_ike_sa(st);
-	return ike;
+	struct ike_sa *parent =
+		pexpect_parent_sa(new_state(c, SOS_NOBODY,
+					    ike_initiator_spi(), zero_ike_spi,
+					    IKE_SA, SA_INITIATOR, whackfd, HERE));
+	return parent;
 }
 
 struct ike_sa *new_v1_rstate(struct connection *c, struct msg_digest *md)
 {
-	struct state *st = new_state(c, md->hdr.isa_ike_spis.initiator,
-				     ike_responder_spi(&md->sender, md->md_logger),
-				     IKE_SA, SA_RESPONDER, null_fd, HERE);
-	struct ike_sa *ike = pexpect_ike_sa(st);
-	update_ike_endpoints(ike, md);
-	return ike;
+	struct ike_sa *parent =
+		pexpect_parent_sa(new_state(c, SOS_NOBODY,
+					    md->hdr.isa_ike_spis.initiator,
+					    ike_responder_spi(&md->sender, md->md_logger),
+					    IKE_SA, SA_RESPONDER, null_fd, HERE));
+	update_ike_endpoints(parent, md);
+	return parent;
 }
 
 struct ike_sa *new_v2_ike_sa(struct connection *c,
@@ -553,7 +557,8 @@ struct ike_sa *new_v2_ike_sa(struct connection *c,
 			     lset_t policy,
 			     struct fd *whack_sock)
 {
-	struct state *st = new_state(c, ike_initiator_spi, ike_responder_spi,
+	struct state *st = new_state(c, SOS_NOBODY,
+				     ike_initiator_spi, ike_responder_spi,
 				     IKE_SA, sa_role, whack_sock, HERE);
 	struct ike_sa *ike = pexpect_ike_sa(st);
 	change_state(&ike->sa, transition->state);
@@ -1509,62 +1514,60 @@ void delete_states_by_peer(struct show *s, const ip_address *peer)
  * Caller must schedule an event for this object so that it doesn't leak.
  * Caller must insert_state().
  */
-static struct state *duplicate_state(struct connection *c,
-				     struct state *st,
-				     enum sa_type sa_type,
-				     enum sa_role sa_role,
-				     struct fd *whackfd)
+static struct child_sa *duplicate_state(struct connection *c,
+					struct ike_sa *ike,
+					enum sa_type sa_type,
+					enum sa_role sa_role,
+					struct fd *whackfd)
 {
-	struct state *nst;
-
 	if (sa_type == IPSEC_SA) {
 		/* record use of the Phase 1 / Parent state */
-		st->st_outbound_count++;
-		st->st_outbound_time = mononow();
+		ike->sa.st_outbound_count++;
+		ike->sa.st_outbound_time = mononow();
 	}
 
-	nst = new_state(c,
-			st->st_ike_spis.initiator,
-			st->st_ike_spis.responder,
-			sa_type, sa_role, whackfd, HERE);
+	struct child_sa *child =
+		pexpect_child_sa(new_state(c, ike->sa.st_serialno,
+					   ike->sa.st_ike_spis.initiator,
+					   ike->sa.st_ike_spis.responder,
+					   sa_type, sa_role, whackfd, HERE));
 
 	connection_buf cib;
 	dbg("duplicating state object #%lu "PRI_CONNECTION" as #%lu for %s",
-	    st->st_serialno, pri_connection(st->st_connection, &cib),
-	    nst->st_serialno, sa_type == IPSEC_SA ? "IPSEC SA" : "IKE SA");
+	    ike->sa.st_serialno, pri_connection(ike->sa.st_connection, &cib),
+	    child->sa.st_serialno, sa_type == IPSEC_SA ? "IPSEC SA" : "IKE SA");
 
 	if (sa_type == IPSEC_SA) {
-		nst->st_oakley = st->st_oakley;
+		child->sa.st_oakley = ike->sa.st_oakley;
 	}
 
-	nst->quirks = st->quirks;
-	nst->hidden_variables = st->hidden_variables;
-	nst->st_remote_endpoint = st->st_remote_endpoint;
+	child->sa.quirks = ike->sa.quirks;
+	child->sa.hidden_variables = ike->sa.hidden_variables;
+	child->sa.st_remote_endpoint = ike->sa.st_remote_endpoint;
 	endpoint_buf eb;
 	dbg("#%lu setting local endpoint to %s from #%ld.st_localport "PRI_WHERE,
-	    nst->st_serialno,
-	    str_endpoint(&st->st_interface->local_endpoint, &eb),
-	    st->st_serialno,pri_where(HERE));
-	pexpect(nst->st_interface == NULL);
-	nst->st_interface = iface_endpoint_addref(st->st_interface);
-	update_st_clonedfrom(nst, st->st_serialno);
-	passert(nst->st_ike_version == st->st_ike_version);
-	nst->st_ikev2_anon = st->st_ikev2_anon;
-	nst->st_seen_fragmentation_supported = st->st_seen_fragmentation_supported;
-	nst->st_v1_seen_fragments = st->st_v1_seen_fragments;
-	nst->st_seen_ppk = st->st_seen_ppk;
-	nst->st_seen_redirect_sup = st->st_seen_redirect_sup;
-	nst->st_sent_redirect = st->st_sent_redirect;
-	nst->st_event = NULL;
+	    child->sa.st_serialno,
+	    str_endpoint(&ike->sa.st_interface->local_endpoint, &eb),
+	    ike->sa.st_serialno,pri_where(HERE));
+	pexpect(child->sa.st_interface == NULL);
+	child->sa.st_interface = iface_endpoint_addref(ike->sa.st_interface);
+	passert(child->sa.st_ike_version == ike->sa.st_ike_version);
+	child->sa.st_ikev2_anon = ike->sa.st_ikev2_anon;
+	child->sa.st_seen_fragmentation_supported = ike->sa.st_seen_fragmentation_supported;
+	child->sa.st_v1_seen_fragments = ike->sa.st_v1_seen_fragments;
+	child->sa.st_seen_ppk = ike->sa.st_seen_ppk;
+	child->sa.st_seen_redirect_sup = ike->sa.st_seen_redirect_sup;
+	child->sa.st_sent_redirect = ike->sa.st_sent_redirect;
+	child->sa.st_event = NULL;
 
 	/* these were set while we didn't have client state yet */
 	/* we should really split the NOTIFY loop in two cleaner ones */
-	nst->st_ipcomp.attrs = st->st_ipcomp.attrs;
-	nst->st_ipcomp.present = st->st_ipcomp.present;
-	nst->st_ipcomp.inbound.spi = st->st_ipcomp.inbound.spi;
+	child->sa.st_ipcomp.attrs = ike->sa.st_ipcomp.attrs;
+	child->sa.st_ipcomp.present = ike->sa.st_ipcomp.present;
+	child->sa.st_ipcomp.inbound.spi = ike->sa.st_ipcomp.inbound.spi;
 
 	if (sa_type == IPSEC_SA) {
-#   define clone_nss_symkey_field(field) nst->field = reference_symkey(__func__, #field, st->field)
+#   define clone_nss_symkey_field(field) child->sa.field = reference_symkey(__func__, #field, ike->sa.field)
 		clone_nss_symkey_field(st_skeyid_nss);
 		clone_nss_symkey_field(st_skey_d_nss); /* aka st_skeyid_d_nss */
 		clone_nss_symkey_field(st_skey_ai_nss); /* aka st_skeyid_a_nss */
@@ -1577,7 +1580,7 @@ static struct state *duplicate_state(struct connection *c,
 #   undef clone_nss_symkey_field
 
 		/* v2 duplication of state */
-#   define state_clone_chunk(CHUNK) nst->CHUNK = clone_hunk(st->CHUNK, #CHUNK " in duplicate state")
+#   define state_clone_chunk(CHUNK) child->sa.CHUNK = clone_hunk(ike->sa.CHUNK, #CHUNK " in duplicate state")
 		state_clone_chunk(st_ni);
 		state_clone_chunk(st_nr);
 #   undef state_clone_chunk
@@ -1589,25 +1592,25 @@ static struct state *duplicate_state(struct connection *c,
 	 * Maybe similarly to above for chunks, do this for all
 	 * strings on the state?
 	 */
-	jam_str(nst->st_xauth_username, sizeof(nst->st_xauth_username), st->st_xauth_username);
+	jam_str(child->sa.st_xauth_username, sizeof(child->sa.st_xauth_username), ike->sa.st_xauth_username);
 
-	nst->st_seen_cfg_dns = clone_str(st->st_seen_cfg_dns, "child st_seen_cfg_dns");
-	nst->st_seen_cfg_domains = clone_str(st->st_seen_cfg_domains, "child st_seen_cfg_domains");
-	nst->st_seen_cfg_banner = clone_str(st->st_seen_cfg_banner, "child st_seen_cfg_banner");
+	child->sa.st_seen_cfg_dns = clone_str(ike->sa.st_seen_cfg_dns, "child st_seen_cfg_dns");
+	child->sa.st_seen_cfg_domains = clone_str(ike->sa.st_seen_cfg_domains, "child st_seen_cfg_domains");
+	child->sa.st_seen_cfg_banner = clone_str(ike->sa.st_seen_cfg_banner, "child st_seen_cfg_banner");
 
 	/* XXX: scary */
-	nst->st_v1_acquired_sec_label = st->st_v1_acquired_sec_label;
-	nst->st_v1_seen_sec_label = st->st_v1_seen_sec_label;
+	child->sa.st_v1_acquired_sec_label = ike->sa.st_v1_acquired_sec_label;
+	child->sa.st_v1_seen_sec_label = ike->sa.st_v1_seen_sec_label;
 
-	return nst;
+	return child;
 }
 
-struct state *ikev1_duplicate_state(struct connection *c,
-				    struct state *st,
-				    enum sa_role sa_role,
-				    struct fd *whackfd)
+struct child_sa *new_v1_child_sa(struct connection *c,
+				 struct ike_sa *isakmp,
+				 enum sa_role sa_role,
+				 struct fd *whackfd)
 {
-	return duplicate_state(c, st, IPSEC_SA, sa_role, whackfd);
+	return duplicate_state(c, isakmp, IPSEC_SA, sa_role, whackfd);
 }
 
 struct child_sa *new_v2_child_sa(struct connection *c,
@@ -1621,8 +1624,7 @@ struct child_sa *new_v2_child_sa(struct connection *c,
 	const struct finite_state *fs = finite_states[kind];
 	passert(fs->nr_transitions == 1);
 	const struct v2_state_transition *transition = &fs->v2.transitions[0];
-	struct state *cst = duplicate_state(c, &ike->sa, sa_type, sa_role, whackfd);
-	struct child_sa *child = pexpect_child_sa(cst);
+	struct child_sa *child = duplicate_state(c, ike, sa_type, sa_role, whackfd);
 	change_state(&child->sa, transition->state);
 	set_v2_transition(&child->sa, transition, HERE);
 	binlog_refresh_state(&child->sa);

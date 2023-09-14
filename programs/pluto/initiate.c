@@ -371,26 +371,26 @@ void ipsecdoi_initiate(struct connection *c,
 		 * Note: there is no way to initiate with a Road
 		 * Warrior.
 		 */
-		struct ike_sa *ike =
+		struct ike_sa *isakmp =
 			find_ike_sa_by_connection(c, (V1_ISAKMP_SA_ESTABLISHED_STATES |
 						      V1_PHASE1_INITIATOR_STATES));
 		struct fd *whackfd = background ? null_fd : logger->global_whackfd;
-		if (ike == NULL && c->config->aggressive) {
+		if (isakmp == NULL && c->config->aggressive) {
 			aggr_outI1(whackfd, c, NULL, policy, inception, sec_label);
-		} else if (ike == NULL) {
+		} else if (isakmp == NULL) {
 			main_outI1(whackfd, c, NULL, policy, inception, sec_label);
-		} else if (IS_V1_ISAKMP_SA_ESTABLISHED(&ike->sa)) {
+		} else if (IS_V1_ISAKMP_SA_ESTABLISHED(&isakmp->sa)) {
 			/*
 			 * ??? we assume that peer_nexthop_sin isn't
 			 * important: we already have it from when we
 			 * negotiated the ISAKMP SA!  It isn't clear
 			 * what to do with the error return.
 			 */
-			quick_outI1(whackfd, &ike->sa, c, policy,
+			quick_outI1(whackfd, isakmp, c, policy,
 				    replacing, sec_label);
 		} else {
 			/* leave our Phase 2 negotiation pending */
-			add_v1_pending(whackfd, ike, c, policy,
+			add_v1_pending(whackfd, isakmp, c, policy,
 				       replacing, sec_label,
 				       false /*part of initiate*/);
 		}
