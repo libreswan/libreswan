@@ -278,7 +278,7 @@ bool add_sec_label_kernel_policy(const struct spd_route *spd,
 	setup_esp_nic_offload(&nic_offload, c, NULL);
 
 	struct kernel_policy_encap policy = {
-		.ipcomp = (c->policy & POLICY_COMPRESS),
+		.ipcomp = c->config->child_sa.ipcomp,
 		.esp = (c->policy & POLICY_ENCRYPT),
 		.ah = (c->policy & POLICY_AUTHENTICATE),
 	};

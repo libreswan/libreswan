@@ -2043,6 +2043,21 @@ static diag_t extract_connection(const struct whack_message *wm,
 	config->pfs = pfs;
 	c->policy |= (pfs ? POLICY_PFS : LEMPTY);
 
+	bool compress;
+	if (never_negotiate_wm(wm)) {
+		if (wm->compress != YN_UNSET) {
+			sparse_buf sb;
+			llog(RC_INFORMATIONAL, c->logger,
+			     "warning: compress=%s ignored for never-negotiate connection",
+			     str_sparse(yn_option_names, wm->compress, &sb));
+		}
+		compress = false;
+	} else {
+		compress = extract_yn(wm->compress, false);
+	}
+	config->child_sa.ipcomp = compress;
+	c->policy |= (compress ? POLICY_COMPRESS : LEMPTY);
+
 	if ((wm->policy & POLICY_TUNNEL) == LEMPTY) {
 		if (wm->vti_iface != NULL) {
 			return diag("VTI requires tunnel mode but connection specifies type=transport");
@@ -3601,7 +3616,7 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 
 	PP(ENCRYPT);
 	PP(AUTHENTICATE);
-	PP(COMPRESS);
+	CN(c->config->child_sa.ipcomp, COMPRESS); policy &= ~POLICY_COMPRESS;
 	PP(TUNNEL);
 	CN(c->config->pfs, PFS); policy &= ~POLICY_PFS;
 	CP(decap_dscp);

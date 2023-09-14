@@ -305,6 +305,7 @@ struct config {
 						   .replay_window */
 		uint32_t metric;	/* metric for tunnel routes */
 		uint16_t mtu;		/* mtu for tunnel routes */
+		bool ipcomp;
 	} child_sa;
 
 	struct {

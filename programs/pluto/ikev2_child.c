@@ -142,7 +142,7 @@ static bool emit_v2N_ipcomp_supported(const struct child_sa *child, struct pbs_o
 bool prep_v2_child_for_request(struct child_sa *larval_child)
 {
 	struct connection *cc = larval_child->sa.st_connection;
-	if ((cc->policy & POLICY_COMPRESS) &&
+	if (cc->config->child_sa.ipcomp &&
 	    !compute_v2_child_ipcomp_cpi(larval_child)) {
 		return false;
 	}
@@ -227,7 +227,7 @@ bool emit_v2_child_request_payloads(const struct ike_sa *ike,
 
 	/* IPCOMP based on policy */
 
-	if ((cc->policy & POLICY_COMPRESS) &&
+	if (cc->config->child_sa.ipcomp &&
 	    !emit_v2N_ipcomp_supported(larval_child, pbs)) {
 		return false;
 	}
@@ -322,7 +322,7 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 		return v2N_INVALID_SYNTAX;/* something fatal */
 	}
 
-	bool expecting_compression = (cc->policy & POLICY_COMPRESS);
+	bool expecting_compression = cc->config->child_sa.ipcomp;
 	if (request_md->pd[PD_v2N_IPCOMP_SUPPORTED] != NULL) {
 		if (!expecting_compression) {
 			dbg("Ignored IPCOMP request as connection has compress=no");
@@ -765,7 +765,7 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 		struct ikev2_notify_ipcomp_data n_ipcomp;
 
 		dbg("received v2N_IPCOMP_SUPPORTED of length %zd", len);
-		if ((c->policy & POLICY_COMPRESS) == LEMPTY) {
+		if (!c->config->child_sa.ipcomp) {
 			llog_sa(RC_LOG_SERIOUS, child,
 				  "Unexpected IPCOMP request as our connection policy did not indicate support for it");
 			return v2N_NO_PROPOSAL_CHOSEN;

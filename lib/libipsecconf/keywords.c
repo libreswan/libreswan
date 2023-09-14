@@ -556,7 +556,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
 
   { "phase2",  kv_conn | kv_policy,  kt_enum,  KNCF_PHASE2,  kw_phase2types_list, NULL, },
 
-  { "compress",  kv_conn,  kt_bool,  KNCF_COMPRESS, NULL, NULL, },
+  { "compress",  kv_conn,  kt_enum,  KNCF_COMPRESS, yn_option_names, NULL, },
 
   /* route metric */
   { "metric",  kv_conn,  kt_number,  KNCF_METRIC, NULL, NULL, },

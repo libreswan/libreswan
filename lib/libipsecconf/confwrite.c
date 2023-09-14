@@ -475,8 +475,7 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 		case SHUNT_UNSET:
 			cwf("type", conn->policy & POLICY_TUNNEL? "tunnel" : "transport");
 
-			cwpb("compress", POLICY_COMPRESS);
-
+			cwyn("compress", KNCF_COMPRESS);
 			cwyn("pfs", KNCF_PFS);
 			cwyn("ikepad", KNCF_IKEPAD);
 

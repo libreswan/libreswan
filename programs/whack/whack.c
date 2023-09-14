@@ -561,6 +561,8 @@ enum option_enums {
 	CD_FRAGMENTATION,
 	CD_NO_ESN,
 	CD_ESN,
+	CD_NO_COMPRESS,
+	CD_COMPRESS,
 	CD_INITIATEONTRAFFIC,
 
 	/*
@@ -772,7 +774,8 @@ static const struct option long_opts[] = {
 #define PS(o, p)	{ o, no_argument, NULL, CDP_SINGLETON + POLICY_##p##_IX }
 	PS("encrypt", ENCRYPT),
 	PS("authenticate", AUTHENTICATE),
-	PS("compress", COMPRESS),
+	{ "no-compress", no_argument, NULL, CD_NO_COMPRESS },
+	{ "compress", no_argument, NULL, CD_COMPRESS },
 	{ "overlapip", no_argument, NULL, CD_OVERLAPIP },
 	PS("tunnel", TUNNEL),
 	{ "tunnelipv4", no_argument, NULL, CD_TUNNELIPV4 },
@@ -1842,11 +1845,16 @@ int main(int argc, char **argv)
 			msg.reauth = YN_YES;
 			continue;
 
+		case CD_COMPRESS:	/* --compress */
+			msg.compress = YN_YES;
+			continue;
+		case CD_NO_COMPRESS:	/* --no-compress */
+			msg.compress = YN_NO;
+			continue;
+
 		case CDP_SINGLETON + POLICY_ENCRYPT_IX:	/* --encrypt */
 		/* --authenticate */
 		case CDP_SINGLETON + POLICY_AUTHENTICATE_IX:
-		/* --compress */
-		case CDP_SINGLETON + POLICY_COMPRESS_IX:
 		case CDP_SINGLETON + POLICY_TUNNEL_IX:	/* --tunnel */
 
 			msg.policy |= LELEM(c - CDP_SINGLETON);
