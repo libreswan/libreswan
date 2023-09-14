@@ -137,19 +137,6 @@ bool should_revive(struct state *st)
 	 * XXX: now the weird ones.
 	 */
 
-	if (IS_CHILD_SA_ESTABLISHED(st) &&
-	    c->newest_ipsec_sa == st->st_serialno &&
-	    (c->policy & POLICY_UP)) {
-		struct ike_sa *ike = ike_sa(st, HERE);
-		llog_sa(RC_LOG_SERIOUS, ike,
-			  "received Delete SA payload: replace CHILD SA #%lu now",
-			  st->st_serialno);
-		PASSERT(st->st_logger, st->st_ike_version == IKEv2);
-		st->st_replace_margin = deltatime(0);
-		ikev2_replace(st);
-		return false;
-	}
-
 	if (!IS_IKE_SA(st)) {
 		ldbg(st->st_logger, "revival: skipping, not an IKE SA");
 		return false;
