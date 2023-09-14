@@ -93,6 +93,12 @@ static bool revival_plausable(struct connection *c, struct logger *logger)
 		return false;
 	}
 
+	if (is_labeled(c)) {
+		/* not supported for now */
+		ldbg(logger, "revival: skipping, labeled IPsec is too hard");
+		return false;
+	}
+
 	if (!oriented(c)) {
 		/* e.x., interface deleted while up */
 		ldbg(logger, "revival: skipping, not oriented");
@@ -142,11 +148,6 @@ bool should_revive(struct state *st)
 		return false;
 	}
 
-	if (c->config->ike_version == IKEv2 && c->config->sec_label.len > 0) {
-		ldbg(st->st_logger, "revival: skipping, childless IKE SA");
-		return false;
-	}
-
 	so_serial_t newer_sa = get_newer_sa_from_connection(st);
 	if (state_by_serialno(newer_sa) != NULL) {
 		/*
@@ -173,12 +174,6 @@ bool should_revive(struct state *st)
 bool should_revive_child(struct child_sa *child)
 {
 	struct connection *c = child->sa.st_connection;
-
-	if (is_labeled(c)) {
-		/* not supported for now */
-		ldbg_sa(child, "revival: skipping, labeled Child SA is too hard");
-		return false;
-	}
 
 	if (c->newest_routing_sa > child->sa.st_serialno) {
 		/*
