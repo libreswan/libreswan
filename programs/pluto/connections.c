@@ -2106,8 +2106,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 #if 0
 	PASSERT(c->logger,
 		is_opportunistic_wm(wm) == ((wm->policy & POLICY_OPPORTUNISTIC) != LEMPTY));
-#endif
 	PASSERT(c->logger, is_group_wm(wm) == wm->is_connection_group);
+#endif
 
 	if (is_opportunistic_wm(wm) && c->config->ike_version < IKEv2) {
 		return diag("opportunistic connection MUST have IKEv2");

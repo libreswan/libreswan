@@ -442,14 +442,9 @@ static bool validate_end(struct starter_conn *conn_st,
 		break;
 
 	case KH_OPPO:
-		break;
-
 	case KH_OPPOGROUP:
-		conn_st->is_connection_group = true;
-		break;
-
 	case KH_GROUP:
-		conn_st->is_connection_group = true;
+		/* handled by pluto using .host_type */
 		break;
 
 	case KH_IPHOSTNAME:

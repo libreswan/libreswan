@@ -111,7 +111,6 @@ struct starter_conn {
 	lset_t policy;
 	struct authby authby;
 	lset_t sighash_policy;
-	bool is_connection_group;
 	enum shunt_policy shunt[SHUNT_KIND_ROOF];
 
 	char **alsos;	/* pointer to NULL-terminated array of strings */

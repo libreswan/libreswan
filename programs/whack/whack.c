@@ -1612,13 +1612,11 @@ int main(int argc, char **argv)
 			} else if (streq(optarg, "%group")) {
 				/* always use tunnel mode; mark as group */
 				new_policy = POLICY_TUNNEL;
-				msg.is_connection_group = true;
 				end->host_type = KH_GROUP;
 				end->host_addr = get_address_any(&host_family);
 			} else if (streq(optarg, "%opportunisticgroup")) {
 				/* always use tunnel mode; mark as opportunistic */
 				new_policy = POLICY_TUNNEL;
-				msg.is_connection_group = true;
 				end->host_type = KH_OPPOGROUP;
 				end->host_addr = get_address_any(&host_family);
 				end->key_from_DNS_on_demand = true;
@@ -1650,7 +1648,8 @@ int main(int argc, char **argv)
 
 			msg.policy |= new_policy;
 
-			if (msg.is_connection_group) {
+			if (end->host_type == KH_GROUP ||
+			    end->host_type == KH_OPPOGROUP) {
 				/*
 				 * client subnet must not be specified
 				 * by user: it will come from the

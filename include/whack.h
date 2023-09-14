@@ -171,7 +171,6 @@ struct whack_message {
 	lset_t sighash_policy;
 	enum shunt_policy shunt[SHUNT_KIND_ROOF];
 	enum autostart autostart;
-	bool is_connection_group;
 	enum yn_options mobike;		/* allow MOBIKE */
 	enum yn_options intermediate;	/* allow Intermediate Exchange */
 	enum yn_options sha2_truncbug;	/* allow Intermediate Exchange */
