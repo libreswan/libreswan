@@ -925,9 +925,14 @@ enum sa_policy_bits {
 	/* connection policy
 	 * Other policies could vary per state object.  These live in connection.
 	 */
-	POLICY_GROUPINSTANCE_IX,	/* is this a group template instance? */
-	POLICY_ROUTE_IX,	/* do we want to keep this connection routed? */
-	POLICY_UP_IX,		/* do we want to keep this connection up? */
+	POLICY_GROUPINSTANCE_IX,	/* the CK_TEMPLATE or
+					 * CK_INSTANCE was originally
+					 * instantiated from a
+					 * CK_GROUP */
+	POLICY_ROUTE_IX,		/* do we want to keep this
+					 * connection routed? */
+	POLICY_UP_IX,			/* do we want to keep this
+					 * connection up? */
 
 #define POLICY_IX_LAST	POLICY_UP_IX
 };
@@ -937,7 +942,7 @@ enum sa_policy_bits {
 #define POLICY_COMPRESS	LELEM(POLICY_COMPRESS_IX)	/* must be third */
 #define POLICY_TUNNEL	LELEM(POLICY_TUNNEL_IX)
 #define POLICY_PFS	LELEM(POLICY_PFS_IX)
-#define POLICY_GROUPINSTANCE	LELEM(POLICY_GROUPINSTANCE_IX)	/* is this a group template instance? */
+#define POLICY_GROUPINSTANCE	LELEM(POLICY_GROUPINSTANCE_IX)	/* originally instantiated fro CK_GROUP */
 #define POLICY_ROUTE	LELEM(POLICY_ROUTE_IX)	/* do we want to keep this connection routed? */
 #define POLICY_UP	LELEM(POLICY_UP_IX)	/* do we want to keep this connection up? */
 

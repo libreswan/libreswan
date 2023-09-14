@@ -230,7 +230,13 @@ struct connection *group_instantiate(struct connection *group,
 	set_end_selector(t->local, local_selector, t->logger);
 
 	del_policy(t, POLICY_ROUTE);
-	add_policy(t, POLICY_GROUPINSTANCE); /* mark as group instance for later */
+	/*
+	 * Mark as template+group aka GROUPINSTANCE for later.
+	 *
+	 * When this template_group is instantiated the policy bit is
+	 * inherited resulting in instance+group aka GROUPINSTANCE
+	 * also. */
+	add_policy(t, POLICY_GROUPINSTANCE);
 	t->local->kind = t->remote->kind = CK_TEMPLATE;
 	t->child.reqid = (t->config->sa_reqid == 0 ? gen_reqid() :
 			  t->config->sa_reqid);
@@ -300,6 +306,13 @@ static struct connection *instantiate(struct connection *t,
 
 	struct connection *d = clone_connection(t->name, t, peer_id, where);
 	passert(t->name != d->name); /* see clone_connection() */
+
+	/*
+	 * It's a clone so policy bits, noteably POLICY_GROUPINSTANCE,
+	 * don't change.  i.e., if a the template is GROUPINSTANCE or
+	 * ROUTED or UP, so is the instance.
+	 */
+	PEXPECT(d->logger, t->policy == d->policy);
 
 	/*
 	 *  Update the .instance_serial.
