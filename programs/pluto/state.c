@@ -586,75 +586,6 @@ void init_states(void)
 	}
 }
 
-/*
- * XXX: This is broken on IKEv2.  It schedules a replace event for
- * each child except that fires _after_ the IKE SA has been deleted.
- * Should it schedule pending events?
- */
-
-static void flush_incomplete_v1_child(struct ike_sa *ike,
-				      struct child_sa *child)
-{
-	if (!IS_IPSEC_SA_ESTABLISHED(&child->sa)) {
-
-		struct connection *c = child->sa.st_connection;
-
-		/*
-		 * If it wasn't so rudely interrupted, what would the
-		 * CHILD SA have eventually replaced?
-		 */
-		so_serial_t replacing_sa;
-		switch (child->sa.st_sa_type_when_established) {
-		case IKE_SA: replacing_sa = c->newest_ike_sa; break;
-		case IPSEC_SA: replacing_sa = c->newest_ipsec_sa; break;
-		default: bad_case(child->sa.st_sa_type_when_established);
-		}
-
-		if (child->sa.st_serialno > replacing_sa &&
-		    (c->policy & POLICY_UP) &&
-		    c->config->rekey) {
-
-			/*
-			 * Nothing else has managed to replace
-			 * REPLACING_SA and the connection needs to
-			 * say up.
-			 */
-			llog_sa(RC_LOG_SERIOUS, child,
-				"reschedule pending %s - the %s #%lu is going away",
-				c->config->ike_info->child_sa_name,
-				c->config->ike_info->parent_sa_name,
-				ike->sa.st_serialno);
-			child->sa.st_policy = c->policy; /* for pick_initiator */
-			event_force(c->config->ike_info->replace_event, &child->sa);
-
-		} else {
-
-			/*
-			 * Either something else replaced
-			 * REPLACING_SA, or the connection shouldn't
-			 * stay up.
-			 */
-			llog_sa(RC_LOG_SERIOUS, child,
-				"expire pending %s - the %s #%lu is going away",
-				c->config->ike_info->child_sa_name,
-				c->config->ike_info->parent_sa_name,
-				ike->sa.st_serialno);
-			event_force(EVENT_SA_EXPIRE, &child->sa);
-
-		}
-		/*
-		 * Shut down further logging for the child, above are
-		 * the last whack will hear from them.
-		 */
-		release_whack(child->sa.st_logger, HERE);
-	}
-	/*
-	 * XXX: why was this non-conditional?  probably doesn't matter
-	 * as it is idenpotent?
-	 */
-	delete_cryptographic_continuation(&child->sa);
-}
-
 static void flush_incomplete_children(struct ike_sa *ike)
 {
 	struct state_filter sf = {
@@ -665,7 +596,10 @@ static void flush_incomplete_children(struct ike_sa *ike)
 		struct child_sa *child = pexpect_child_sa(sf.st);
 		switch (child->sa.st_ike_version) {
 		case IKEv1:
-			flush_incomplete_v1_child(ike, child);
+			if (!IS_IPSEC_SA_ESTABLISHED(&child->sa)) {
+				state_attach(&child->sa, ike->sa.st_logger);
+				connection_delete_child(ike, &child, HERE);
+			}
 			continue;
 		case IKEv2:
 			state_attach(&child->sa, ike->sa.st_logger);
