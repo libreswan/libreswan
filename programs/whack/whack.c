@@ -94,7 +94,7 @@ static void help(void)
 		"		[ --auth-null] | [--auth-never] \\\n"
 		"	[--encrypt] [--authenticate] [--compress] [--sha2-truncbug] \\\n"
 		"	[--ms-dh-downgrade] \\\n"
-		"	[--overlapip] [--tunnel] [--pfs] \\\n"
+		"	[--overlapip] [--tunnel] [--no-pfs] \\\n"
 		"	[--allow-cert-without-san-id] [--dns-match-id] \\\n"
 		"	[--pfsgroup <modp1024 | modp1536 | modp2048 | \\\n"
 		"		modp3072 | modp4096 | modp6144 | modp8192 \\\n"
@@ -489,6 +489,8 @@ enum option_enums {
 	CD_PRIORITY,
 	CD_TFC,
 	CD_SEND_TFCPAD,
+	CD_NO_PFS,
+	CD_PFS_OBSOLETE,
 	CD_REQID,
 	CD_NFLOG_GROUP,
 	CD_CONN_MARK_BOTH,
@@ -775,7 +777,6 @@ static const struct option long_opts[] = {
 	PS("tunnel", TUNNEL),
 	{ "tunnelipv4", no_argument, NULL, CD_TUNNELIPV4 },
 	{ "tunnelipv6", no_argument, NULL, CD_TUNNELIPV6 },
-	PS("pfs", PFS),
 	{ "ms-dh-downgrade", no_argument, NULL, CD_MSDH_DOWNGRADE },
 	{ "dns-match-id", no_argument, NULL, CD_DNS_MATCH_ID },
 	{ "allow-cert-without-san-id", no_argument, NULL, CD_ALLOW_CERT_WITHOUT_SAN_ID },
@@ -836,6 +837,8 @@ static const struct option long_opts[] = {
 	{ "priority", required_argument, NULL, CD_PRIORITY },
 	{ "tfc", required_argument, NULL, CD_TFC },
 	{ "send-no-esp-tfc", no_argument, NULL, CD_SEND_TFCPAD },
+	{ "no-pfs", no_argument, NULL, CD_NO_PFS },
+	{ "pfs", no_argument, NULL, CD_PFS_OBSOLETE },
 	{ "reqid", required_argument, NULL, CD_REQID },
 	{ "nflog-group", required_argument, NULL, CD_NFLOG_GROUP },
 	{ "conn-mark", required_argument, NULL, CD_CONN_MARK_BOTH },
@@ -1119,6 +1122,9 @@ int main(int argc, char **argv)
 	msg.oppo.remote.port = ip_hport(0);
 
 	msg.dpd_action = DPD_ACTION_UNSET;
+
+	/* ideally we should sync defaults with libipsecconf here */
+	msg.policy |= POLICY_PFS;
 
 	for (;;) {
 
@@ -1846,7 +1852,6 @@ int main(int argc, char **argv)
 		/* --compress */
 		case CDP_SINGLETON + POLICY_COMPRESS_IX:
 		case CDP_SINGLETON + POLICY_TUNNEL_IX:	/* --tunnel */
-		case CDP_SINGLETON + POLICY_PFS_IX:	/* --pfs */
 
 			msg.policy |= LELEM(c - CDP_SINGLETON);
 			continue;
@@ -2409,6 +2414,14 @@ int main(int argc, char **argv)
 
 		case CD_SEND_TFCPAD:	/* --send-no-esp-tfc */
 			msg.send_no_esp_tfc = true;
+			continue;
+
+		case CD_NO_PFS:	/* --no-pfs */
+			msg.policy &= ~POLICY_PFS;
+			continue;
+
+		case CD_PFS_OBSOLETE:	/* --pfs */
+			/* pfs is now the default, silently eat the option */
 			continue;
 
 		case CD_NFLOG_GROUP:	/* --nflog-group */
