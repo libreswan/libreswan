@@ -586,40 +586,6 @@ void init_states(void)
 	}
 }
 
-void v2_expire_unused_ike_sa(struct ike_sa *ike)
-{
-	passert(ike != NULL);
-	passert(ike->sa.st_ike_version == IKEv2);
-
-	if (!IS_IKE_SA_ESTABLISHED(&ike->sa)) {
-		dbg("can't expire unused IKE SA #%lu; not established - strange",
-		    ike->sa.st_serialno);
-		return; /* only deal with established parent SA */
-	}
-
-	/* Any children? */
-	struct state *st = state_by_ike_spis(IKEv2,
-					     &ike->sa.st_serialno,
-					     NULL /* ignore v1 msgid */,
-					     NULL /* ignore role */,
-					     &ike->sa.st_ike_spis,
-					     NULL, NULL /* no predicate */,
-					     __func__);
-	if (st != NULL) {
-		dbg("can't expire unused IKE SA #%lu; it has the child #%lu",
-		    ike->sa.st_serialno, st->st_serialno);
-		return;
-	}
-
-	connection_buf cib;
-	struct connection *c = ike->sa.st_connection;
-	llog_sa(RC_INFORMATIONAL, ike, "expire unused IKE SA #%lu "PRI_CONNECTION,
-		  ike->sa.st_serialno,
-		  pri_connection(c, &cib));
-	event_force(EVENT_SA_EXPIRE, &ike->sa);
-}
-
-
 /*
  * XXX: This is broken on IKEv2.  It schedules a replace event for
  * each child except that fires _after_ the IKE SA has been deleted.
