@@ -1,5 +1,7 @@
 /testing/guestbin/swan-prep
 road #
+ echo 1 >/proc/sys/net/core/xfrm_acq_expires
+road #
  cp policies/* /etc/ipsec.d/policies/
 road #
  ipsec start
