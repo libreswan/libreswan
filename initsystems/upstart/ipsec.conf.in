@@ -21,7 +21,6 @@ script
     . /etc/default/pluto
     @@SBINDIR@@/ipsec checknss
     @@SBINDIR@@/ipsec checknflog
-    @@SBINDIR@@/ipsec _stackmanager start
     @@LIBEXECDIR@@/pluto --config @@IPSEC_CONF@@ --nofork $PLUTO_OPTIONS
     if [ -f @@LIBEXECDIR@@/portexcludes ] ; then
 	@@LIBEXECDIR@@/portexcludes

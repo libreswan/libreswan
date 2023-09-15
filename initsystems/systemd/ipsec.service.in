@@ -21,8 +21,6 @@ WatchdogSec=@SD_WATCHDOGSEC@
 
 # Check configuration file
 ExecStartPre=@@LIBEXECDIR@@/addconn --config @@IPSEC_CONF@@ --checkconfig
-# Check for kernel modules
-ExecStartPre=@@LIBEXECDIR@@/_stackmanager start
 # Check for nss database status and migration
 ExecStartPre=@@SBINDIR@@/ipsec checknss
 # Check for nflog setup

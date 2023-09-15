@@ -1257,9 +1257,8 @@ int main(int argc, char **argv)
 			do_dnssec = false;
 #endif
 			/*
-			 * We don't check interfaces= here because
-			 * that part has been dealt with in
-			 * _stackmanager before we started.
+			 * We don't check interfaces= here, should we?
+			 * This was hack becuse we had _stackmanager?
 			 */
 			replace_when_cfg_setup(&pluto_listen, cfg, KSF_LISTEN);
 

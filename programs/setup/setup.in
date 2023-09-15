@@ -145,13 +145,8 @@ case "$1" in
 		;;
 	esac
 
-	# Remove any loaded IPsec stack
 	# linux_START
-	[ -f /proc/modules ] && ipsec _stackmanager stop
-	# linux_STOP
-
-	# If stack is non-modular, we want to force clean too
-	# linux_START
+	# Flush XFRM state before starting pluto
 	[ -f /proc/sys/net/core/xfrm_acq_expires ] && ip xfrm state flush && ip xfrm policy flush
 	# linux_STOP
 

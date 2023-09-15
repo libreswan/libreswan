@@ -115,8 +115,6 @@ verify_config() {
 
 start() {
     echo -n "Starting pluto IKE daemon for IPsec: "
-    ipsec _stackmanager start
-
     # pluto searches the current directory, so this is required for making it selinux compliant
     cd /
     # Create nss db or convert from old format to new sql format
@@ -186,7 +184,6 @@ stop() {
 	rm -f ${plutopid}
     fi
 
-    ipsec _stackmanager stop
     ipsec stopnflog > /dev/null
 
     # cleaning up backup resolv.conf

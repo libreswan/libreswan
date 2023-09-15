@@ -77,14 +77,14 @@ bool uniqueIDs = false;
 /*
  * default global NFLOG group - 0 means no logging
  * Note: variable is only used to display in ipsec status
- * actual work is done outside pluto, by ipsec --checknflog
+ * actual work is done outside pluto, by ipsec checknflog
  */
 uint16_t pluto_nflog_group = 0;
 
 #ifdef XFRM_LIFETIME_DEFAULT
 /*
  * Note: variable is only used to display in ipsec status
- * actual work is done outside pluto, by ipsec _stackmanager
+ * actual work is done outside pluto, via sysctl interface.
  */
 uint16_t pluto_xfrmlifetime = 30;
 #endif
