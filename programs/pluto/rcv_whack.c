@@ -295,6 +295,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 	 * => use show_*() because the good output is for whack
 	 */
 	struct logger *logger = show_logger(s);
+	ldbg(logger, "processing message from %s", m->from_whack ? "whack" : "addconn");
 
 	/*
 	 * May be needed in future:

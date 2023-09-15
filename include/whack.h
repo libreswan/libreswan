@@ -143,6 +143,9 @@ struct whack_message {
 	 * If you change anything earlier in this struct, update WHACK_BASIC_MAGIC.
 	 */
 
+	bool from_whack;		/* i.e., not addconn; they
+					 * have different semantics */
+
 	bool whack_process_status; /* non-basic */
 
 	bool whack_leave_state; /* non-basic: dont send delete or  clean kernel state on shutdown */

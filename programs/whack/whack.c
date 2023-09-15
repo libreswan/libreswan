@@ -1065,6 +1065,8 @@ int main(int argc, char **argv)
 	struct family host_family = { 0, };
 	struct family child_family = { 0, };
 
+	msg.from_whack = true;		/* use whack defaults */
+
 	msg.name = NULL;
 	msg.remote_host = NULL;
 	msg.dnshostname = NULL;
