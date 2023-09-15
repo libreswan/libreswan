@@ -2615,9 +2615,8 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 	return true;
 }
 
-static bool delete_ike_family_child(struct state *st, void *unused_context UNUSED)
+static bool delete_ike_family_child(struct ike_sa *ike, struct state *st)
 {
-	struct ike_sa *ike = ike_sa(st, HERE);
 	passert(&ike->sa != st); /* only children */
 	passert(ike != NULL);
 
@@ -2625,10 +2624,8 @@ static bool delete_ike_family_child(struct state *st, void *unused_context UNUSE
 	 * Transfer the IKE SA's whack-fd to the child so that the
 	 * child can also log its demise; better abstraction?
 	 */
-	if (fd_p(ike->sa.st_logger->global_whackfd)) {
-		fd_delref(&st->st_logger->global_whackfd);
-		st->st_logger->global_whackfd = fd_addref(ike->sa.st_logger->global_whackfd);
-	}
+	state_attach(st, ike->sa.st_logger);
+
 	switch (st->st_ike_version) {
 
 	case IKEv1:
@@ -2672,19 +2669,18 @@ void delete_ike_family(struct ike_sa **ikep)
 	ike->sa.st_viable_parent = false;
 
 	/*
-	 * We are a parent: delete our children and
-	 * then prepare to delete ourself.
-	 * Our children will be on the same hash chain
-	 * because we share IKE SPIs.
+	 * We are a parent: delete our children and then prepare to
+	 * delete ourself.  Our children will be on the same hash
+	 * chain because we share IKE SPIs.
 	 */
-	dbg("delete_ike_family() called");
-	state_by_ike_spis(ike->sa.st_ike_version,
-			  &ike->sa.st_serialno,
-			  NULL /*ignore v1 msgid */,
-			  NULL /*ignore-sa-role */,
-			  &ike->sa.st_ike_spis,
-			  delete_ike_family_child, NULL,
-			  __func__);
+
+	struct state_filter cf = {
+		.clonedfrom = ike->sa.st_serialno,
+		.where = HERE,
+	};
+	while(next_state_new2old(&cf)) {
+		delete_ike_family_child(ike, cf.st);
+	}
 	/* delete self */
 	delete_state(&ike->sa);
 }
