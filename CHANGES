@@ -27,7 +27,8 @@ v5.0 (Unreleased)
 * show/verify: drop these ipsec subcommands (old, incomplete) [Paul]
 * packaging: Fix debian systemd service install [Antonio Silva]
 * testing: Fix namespace tests for super long dir names [Paul]
-* initsystems: Use documented ipsec sub-commands [Tuomo]
+* initsystem: Use documented ipsec sub-commands [Tuomo]
+* initsystem: Stop using _stackmanager [Tuomo]
 * documentation: update to docbook xml 4.5 [Tuomo]
 
 v4.12 (Aug 8, 2023)
