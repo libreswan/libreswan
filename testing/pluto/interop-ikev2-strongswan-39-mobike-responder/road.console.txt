@@ -131,8 +131,6 @@ road #
     link/ether 12:00:00:ab:cd:02 brd ff:ff:ff:ff:ff:ff
     inet 192.1.33.222/24 scope global eth0
        valid_lft forever preferred_lft forever
-3: ip_vti0@NONE: <NOARP> mtu XXXX qdisc noop state DOWN group default
-    link/ipip 0.0.0.0 brd 0.0.0.0
 road #
  # let libreswan detect change and do a MOBIKE update
 road #
