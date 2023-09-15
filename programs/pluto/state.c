@@ -626,13 +626,12 @@ void v2_expire_unused_ike_sa(struct ike_sa *ike)
  * Should it schedule pending events?
  */
 
-static bool flush_incomplete_child(struct state *cst, void *pst)
+static void flush_incomplete_child(struct ike_sa *ike, struct state *cst)
 {
 	struct child_sa *child = pexpect_child_sa(cst);
 
 	if (!IS_IPSEC_SA_ESTABLISHED(&child->sa)) {
 
-		struct ike_sa *ike = pexpect_ike_sa(pst);
 		struct connection *c = child->sa.st_connection;
 
 		/*
@@ -689,18 +688,17 @@ static bool flush_incomplete_child(struct state *cst, void *pst)
 	 * as it is idenpotent?
 	 */
 	delete_cryptographic_continuation(&child->sa);
-	return false; /* keep going */
 }
 
 static void flush_incomplete_children(struct ike_sa *ike)
 {
-	state_by_ike_spis(ike->sa.st_ike_version, /* match: IKE VERSION */
-			  &ike->sa.st_serialno /* match: parent is IKE SA */,
-			  NULL /* ignore MSGID */,
-			  NULL /* ignore role */,
-			  &ike->sa.st_ike_spis /* match: IKE SPIs */,
-			  flush_incomplete_child, ike/*arg*/,
-			  __func__);
+	struct state_filter sf = {
+		.clonedfrom = ike->sa.st_serialno,
+		.where = HERE,
+	};
+	while (next_state_old2new(&sf)) {
+		flush_incomplete_child(ike, sf.st);
+	}
 }
 
 void delete_child_sa(struct child_sa **child)
