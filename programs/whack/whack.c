@@ -490,7 +490,7 @@ enum option_enums {
 	CD_TFC,
 	CD_SEND_TFCPAD,
 	CD_NO_PFS,
-	CD_PFS_OBSOLETE,
+	CD_PFS,
 	CD_REQID,
 	CD_NFLOG_GROUP,
 	CD_CONN_MARK_BOTH,
@@ -838,7 +838,7 @@ static const struct option long_opts[] = {
 	{ "tfc", required_argument, NULL, CD_TFC },
 	{ "send-no-esp-tfc", no_argument, NULL, CD_SEND_TFCPAD },
 	{ "no-pfs", no_argument, NULL, CD_NO_PFS },
-	{ "pfs", no_argument, NULL, CD_PFS_OBSOLETE },
+	{ "pfs", no_argument, NULL, CD_PFS },
 	{ "reqid", required_argument, NULL, CD_REQID },
 	{ "nflog-group", required_argument, NULL, CD_NFLOG_GROUP },
 	{ "conn-mark", required_argument, NULL, CD_CONN_MARK_BOTH },
@@ -1079,7 +1079,6 @@ int main(int argc, char **argv)
 	msg.esp = NULL;
 	msg.ike = NULL;
 	msg.pfsgroup = NULL;
-
 	msg.remotepeertype = NON_CISCO;
 	msg.nat_keepalive = true;
 
@@ -1122,9 +1121,6 @@ int main(int argc, char **argv)
 	msg.oppo.remote.port = ip_hport(0);
 
 	msg.dpd_action = DPD_ACTION_UNSET;
-
-	/* ideally we should sync defaults with libipsecconf here */
-	msg.policy |= POLICY_PFS;
 
 	for (;;) {
 
@@ -2417,11 +2413,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_NO_PFS:	/* --no-pfs */
-			msg.policy &= ~POLICY_PFS;
+			msg.pfs = YN_NO;
 			continue;
 
-		case CD_PFS_OBSOLETE:	/* --pfs */
-			/* pfs is now the default, silently eat the option */
+		case CD_PFS:	/* --pfs */
+			msg.pfs = YN_YES;
 			continue;
 
 		case CD_NFLOG_GROUP:	/* --nflog-group */

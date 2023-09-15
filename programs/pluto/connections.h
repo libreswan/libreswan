@@ -292,6 +292,8 @@ struct config {
 						 * draft/rfc NATT
 						 * VIDs */
 	bool opportunistic;		/* is this opportunistic? */
+	bool pfs;			/* IKEv1 seems to use this for
+					 * both parent and child?!? */
 
 	struct {
 		uintmax_t priority;

@@ -2022,6 +2022,21 @@ static diag_t extract_connection(const struct whack_message *wm,
 	struct config *config = c->root_config; /* writeable; root only */
 	passert(c->name != NULL); /* see alloc_connection() */
 
+	/*
+	 * Extract policy bits.
+	 */
+
+	c->policy = wm->policy;
+
+	/*
+	 * Note: unlike addconn, whack defaults to pfs=no (there's no
+	 * --no-pfs option to switch pfs=yes off).
+	 */
+	bool pfs = (never_negotiate_wm(wm) ? false :
+		    extract_yn(wm->pfs, wm->from_whack ? false : true));
+	config->pfs = pfs;
+	c->policy |= (pfs ? POLICY_PFS : LEMPTY);
+
 	if ((wm->policy & POLICY_TUNNEL) == LEMPTY) {
 		if (wm->vti_iface != NULL) {
 			return diag("VTI requires tunnel mode but connection specifies type=transport");
@@ -2122,8 +2137,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 		if (!authby_has_digsig(wm->authby)) {
 			return diag("only Digital Signatures are supported for opportunism");
 		}
-
-		if ((wm->policy & POLICY_PFS) == 0) {
+		if (!pfs) {
 			return diag("PFS required for opportunism");
 		}
 		if ((wm->policy & POLICY_ENCRYPT) == 0) {
@@ -2368,7 +2382,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 	config->connalias = clone_str(wm->connalias, "connection alias");
 
 	config->dnshostname = clone_str(wm->dnshostname, "connection dnshostname");
-	c->policy = wm->policy;
 
 	config->ikev2_allow_narrowing =
 		extract_yn(wm->ikev2_allow_narrowing,
@@ -2587,7 +2600,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 			/* logic needs to match pick_initiator() */
 			.version = c->config->ike_version,
 			.alg_is_ok = ike_alg_is_ike,
-			.pfs = LIN(POLICY_PFS, wm->policy),
+			.pfs = pfs,
 			.check_pfs_vs_dh = false,
 			.logger_rc_flags = ALL_STREAMS|RC_LOG,
 			.logger = c->logger, /* on-stack */
@@ -2647,7 +2660,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 			 */
 			.version = c->config->ike_version,
 			.alg_is_ok = kernel_alg_is_ok,
-			.pfs = LIN(POLICY_PFS, wm->policy),
+			.pfs = pfs,
 			.check_pfs_vs_dh = true,
 			.logger_rc_flags = ALL_STREAMS|RC_LOG,
 			.logger = c->logger, /* on-stack */
@@ -3584,7 +3597,7 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 	PP(AUTHENTICATE);
 	PP(COMPRESS);
 	PP(TUNNEL);
-	PP(PFS);
+	CN(c->config->pfs, PFS); policy &= ~POLICY_PFS;
 	CP(decap_dscp);
 	CP(nopmtudisc);
 	CP(ms_dh_downgrade);

@@ -539,6 +539,7 @@ int starter_whack_add_conn(struct starter_config *cfg,
 	msg.ike_version = conn->ike_version;
 	msg.ikev2 = conn->options[KNCF_IKEv2];
 	msg.policy = conn->policy;
+	msg.pfs = conn->options[KNCF_PFS];
 	msg.authby = conn->authby;
 	msg.sighash_policy = conn->sighash_policy;
 	msg.never_negotiate_shunt = conn->never_negotiate_shunt;

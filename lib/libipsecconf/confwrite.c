@@ -477,7 +477,7 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 
 			cwpb("compress", POLICY_COMPRESS);
 
-			cwpb("pfs", POLICY_PFS);
+			cwyn("pfs", KNCF_PFS);
 			cwyn("ikepad", KNCF_IKEPAD);
 
 			if (conn->left.options[KNCF_AUTH] == k_unset ||

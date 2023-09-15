@@ -98,7 +98,7 @@ void show_kernel_alg_connection(struct show *s,
 
 	const char *pfsbuf;
 
-	if (c->policy & POLICY_PFS) {
+	if (c->config->pfs) {
 		/*
 		 * Get the DH algorithm specified for the child (ESP or AH).
 		 *

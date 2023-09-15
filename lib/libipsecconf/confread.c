@@ -168,8 +168,7 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 # undef DOPT
 
 	d->ike_version = IKEv2;
-	d->policy = (POLICY_TUNNEL |
-		     POLICY_ENCRYPT | POLICY_PFS);
+	d->policy = (POLICY_TUNNEL | POLICY_ENCRYPT);
 	d->authby = AUTHBY_NONE; /* blank goes to defaults */
 	d->never_negotiate_shunt = SHUNT_UNSET;
 	d->negotiation_shunt = SHUNT_UNSET;
@@ -1173,7 +1172,6 @@ static bool load_conn(struct starter_conn *conn,
 	}
 
 	KW_POLICY_FLAG(KNCF_COMPRESS, POLICY_COMPRESS);
-	KW_POLICY_FLAG(KNCF_PFS, POLICY_PFS);
 
 	/* ??? sometimes (when? why?) the member is already set */
 
@@ -1328,8 +1326,7 @@ static bool load_conn(struct starter_conn *conn,
 	if ((conn->policy & POLICY_ENCRYPT) == LEMPTY &&
 	    (conn->policy & POLICY_AUTHENTICATE) == LEMPTY) {
 		/* remove IPsec related options */
-		conn->policy &= ~(POLICY_PFS |
-				  POLICY_COMPRESS);
+		conn->policy &= ~(POLICY_COMPRESS);
 	}
 
 	/* Let this go through to pluto which will validate it. */

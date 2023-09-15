@@ -2195,7 +2195,7 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_new_child_proposals(struct ike_sa
 {
 	struct connection *c = larval_child->sa.st_connection;
 	const struct dh_desc *default_dh =
-		c->policy & POLICY_PFS ? ike->sa.st_oakley.ta_dh : NULL;
+		c->config->pfs ? ike->sa.st_oakley.ta_dh : NULL;
 	struct ikev2_proposals *proposals =
 		get_v2_child_proposals(larval_child->sa.st_connection,
 				       "Child SA proposals (new child)", default_dh,
@@ -2297,7 +2297,7 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_rekey_child_proposals(struct ike_
 							       accepted_proposal,
 							       accepted_dh,
 							       msdh_downgrade);
-	} else if (larval_child->sa.st_connection->policy & POLICY_PFS) {
+	} else if (larval_child->sa.st_connection->config->pfs) {
 		/*
 		 * This is an IKE_AUTH child being rekeyed for the
 		 * first time.  Since that exchange doesn't negotiate

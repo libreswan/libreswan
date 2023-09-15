@@ -471,7 +471,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "redirect-to",  kv_conn,  kt_string,  KSCF_REDIRECT_TO, NULL, NULL, },
   { "accept-redirect",  kv_conn,  kt_enum, KNCF_ACCEPT_REDIRECT, yn_option_names, NULL, },
   { "accept-redirect-to",  kv_conn,  kt_string, KSCF_ACCEPT_REDIRECT_TO, NULL, NULL, },
-  { "pfs",  kv_conn,  kt_bool,  KNCF_PFS, NULL, NULL, },
+  { "pfs",  kv_conn,  kt_enum,  KNCF_PFS, yn_option_names, NULL, },
 
   { "nat-keepalive",  kv_conn,  kt_bool,  KNCF_NAT_KEEPALIVE, NULL, NULL, },
 
