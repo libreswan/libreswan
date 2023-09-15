@@ -592,10 +592,9 @@ void init_states(void)
  * Should it schedule pending events?
  */
 
-static void flush_incomplete_child(struct ike_sa *ike, struct state *cst)
+static void flush_incomplete_v1_child(struct ike_sa *ike,
+				      struct child_sa *child)
 {
-	struct child_sa *child = pexpect_child_sa(cst);
-
 	if (!IS_IPSEC_SA_ESTABLISHED(&child->sa)) {
 
 		struct connection *c = child->sa.st_connection;
@@ -663,7 +662,17 @@ static void flush_incomplete_children(struct ike_sa *ike)
 		.where = HERE,
 	};
 	while (next_state_old2new(&sf)) {
-		flush_incomplete_child(ike, sf.st);
+		struct child_sa *child = pexpect_child_sa(sf.st);
+		switch (child->sa.st_ike_version) {
+		case IKEv1:
+			flush_incomplete_v1_child(ike, child);
+			continue;
+		case IKEv2:
+			state_attach(&child->sa, ike->sa.st_logger);
+			connection_delete_child(ike, &child, HERE);
+			continue;
+		}
+		bad_enum(ike->sa.st_logger, &ike_version_names, child->sa.st_ike_version);
 	}
 }
 
