@@ -168,7 +168,6 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 # undef DOPT
 
 	d->ike_version = IKEv2;
-	d->policy = LEMPTY;
 	d->authby = AUTHBY_NONE; /* blank goes to defaults */
 	d->never_negotiate_shunt = SHUNT_UNSET;
 	d->negotiation_shunt = SHUNT_UNSET;

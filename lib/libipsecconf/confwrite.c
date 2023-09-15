@@ -448,8 +448,7 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 		cwf("ppk", str_sparse(nppi_option_names, conn->options[KNCF_PPK], &sb));
 	}
 
-	if (conn->policy != LEMPTY ||
-	    conn->never_negotiate_shunt != SHUNT_UNSET ||
+	if (conn->never_negotiate_shunt != SHUNT_UNSET ||
 	    conn->options[KNCF_PHASE2] != 0) {
 		enum encap_proto encap_proto = conn->options[KNCF_PHASE2];
 		enum shunt_policy shunt_policy = conn->never_negotiate_shunt;

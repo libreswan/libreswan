@@ -108,7 +108,6 @@ struct starter_conn {
 	int_set options_set;
 
 	enum ike_version ike_version;
-	lset_t policy;
 	struct authby authby;
 	lset_t sighash_policy;
 	enum shunt_policy shunt[SHUNT_KIND_ROOF];

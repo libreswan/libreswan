@@ -2026,7 +2026,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 * Extract policy bits.
 	 */
 
-	c->policy = wm->policy;
+	c->policy = LEMPTY;
 
 	bool pfs;
 	if (never_negotiate_wm(wm)) {

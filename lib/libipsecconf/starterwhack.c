@@ -538,7 +538,6 @@ int starter_whack_add_conn(struct starter_config *cfg,
 
 	msg.ike_version = conn->ike_version;
 	msg.ikev2 = conn->options[KNCF_IKEv2];
-	msg.policy = conn->policy;
 	msg.pfs = conn->options[KNCF_PFS];
 	msg.compress = conn->options[KNCF_COMPRESS];
 	enum keyword_satype satype = conn->options[KNCF_TYPE];

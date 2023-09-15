@@ -171,7 +171,6 @@ struct whack_message {
 	enum ike_version ike_version;	/* from keyexchange= */
 	enum yn_options ikev2;
 
-	lset_t policy;
 	struct authby authby;
 	lset_t sighash_policy;
 	enum shunt_policy shunt[SHUNT_KIND_ROOF];
