@@ -1,4 +1,5 @@
 /testing/guestbin/swan-prep
+echo 3 >/proc/sys/net/core/xfrm_acq_expires
 cp policies/* /etc/ipsec.d/policies/
 echo "192.1.2.0/24"  >> /etc/ipsec.d/policies/private-or-clear
 ipsec start
