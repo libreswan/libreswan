@@ -31,7 +31,6 @@ east #
 002 "road-eastnet-psk"[1] 192.1.3.209 #1: deleting ISAKMP SA (AGGR_R2) and sending notification
 east #
  ipsec showstates
-000 #3: "road-eastnet-psk"[2] 192.1.3.209:500 STATE_AGGR_R0 (expecting Aggressive Mode request); CRYPTO_TIMEOUT in XXs; nodpd; crypto_calculating;
 east #
  ipsec trafficstatus
 east #
