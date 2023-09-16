@@ -400,41 +400,46 @@ bool accept_delete(struct state **stp,
 		   struct msg_digest *md,
 		   struct payload_digest *p)
 {
-	struct state *st = *stp;
 	const struct isakmp_delete *d = &(p->payload.delete);
-	size_t sizespi;
-	int i;
 
 	/* Need state for things to be encrypted */
-	if (st == NULL) {
+	if (*stp == NULL) {
+		/* should not be here */
 		llog(RC_LOG_SERIOUS, md->md_logger,
-		     "ignoring Delete SA with no matching state");
+		     "ignoring Delete SA payload: no state");
+		return false;
+	}
+
+	if (!IS_IKE_SA(*stp)) {
+		llog(RC_LOG_SERIOUS, (*stp)->st_logger,
+		     "ignoring Delete SA payload: not an ISAKMP SA");
+		return false;
+	}
+
+	struct ike_sa *p1 = pexpect_ike_sa(*stp);
+
+	/* If there is no SA related to this request, but it was encrypted */
+	if (!IS_V1_ISAKMP_SA_ESTABLISHED(&p1->sa)) {
+		/* can't happen (if msg is encrypt), but just to be sure */
+		llog_sa(RC_LOG_SERIOUS, p1,
+			"ignoring Delete SA payload: ISAKMP SA not established");
+		return false;
+	}
+
+	if (d->isad_nospi == 0) {
+		llog_sa(RC_LOG_SERIOUS, p1,
+			"ignoring Delete SA payload: no SPI");
 		return false;
 	}
 
 	/* We only listen to encrypted notifications */
 	if (!md->encrypted) {
-		log_state(RC_LOG_SERIOUS, st,
-			  "ignoring Delete SA payload: not encrypted");
+		llog_sa(RC_LOG_SERIOUS, p1,
+			"ignoring Delete SA payload: not encrypted");
 		return false;
 	}
 
-	/* If there is no SA related to this request, but it was encrypted */
-	if (!IS_V1_ISAKMP_SA_ESTABLISHED(st)) {
-		/* can't happen (if msg is encrypt), but just to be sure */
-		log_state(RC_LOG_SERIOUS, st,
-			  "ignoring Delete SA payload: ISAKMP SA not established");
-		return false;
-	}
-
-	struct ike_sa *p1 = pexpect_ike_sa(st);
-
-	if (d->isad_nospi == 0) {
-		log_state(RC_LOG_SERIOUS, st,
-			  "ignoring Delete SA payload: no SPI");
-		return false;
-	}
-
+	size_t sizespi;
 	switch (d->isad_protoid) {
 	case PROTO_ISAKMP:
 		sizespi = 2 * COOKIE_SIZE;
@@ -452,29 +457,29 @@ bool accept_delete(struct state **stp,
 	default:
 	{
 		esb_buf b;
-		log_state(RC_LOG_SERIOUS, st,
-			  "ignoring Delete SA payload: unknown Protocol ID (%s)",
-			  enum_show(&ikev1_protocol_names, d->isad_protoid, &b));
+		llog_sa(RC_LOG_SERIOUS, p1,
+			"ignoring Delete SA payload: unknown Protocol ID (%s)",
+			enum_show(&ikev1_protocol_names, d->isad_protoid, &b));
 		return false;
 	}
 	}
 
 	if (d->isad_spisize != sizespi) {
 		esb_buf b;
-		log_state(RC_LOG_SERIOUS, st,
-			  "ignoring Delete SA payload: bad SPI size (%d) for %s",
-			  d->isad_spisize,
-			  enum_show(&ikev1_protocol_names, d->isad_protoid, &b));
+		llog_sa(RC_LOG_SERIOUS, p1,
+			"ignoring Delete SA payload: bad SPI size (%d) for %s",
+			d->isad_spisize,
+			enum_show(&ikev1_protocol_names, d->isad_protoid, &b));
 		return false;
 	}
 
 	if (pbs_left(&p->pbs) != d->isad_nospi * sizespi) {
-		log_state(RC_LOG_SERIOUS, st,
-			  "ignoring Delete SA payload: invalid payload size");
+		llog_sa(RC_LOG_SERIOUS, p1,
+			"ignoring Delete SA payload: invalid payload size");
 		return false;
 	}
 
-	for (i = 0; i < d->isad_nospi; i++) {
+	for (unsigned i = 0; i < d->isad_nospi; i++) {
 		if (d->isad_protoid == PROTO_ISAKMP) {
 			/*
 			 * ISAKMP
@@ -485,43 +490,60 @@ bool accept_delete(struct state **stp,
 			passert(sizeof(cookies.initiator) == COOKIE_SIZE);
 			d = pbs_in_thing(&p->pbs, cookies.initiator, "iCookie");
 			if (d != NULL) {
-				llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
+				llog_diag(RC_LOG, p1->sa.st_logger, &d, "%s", "");
 				return false;
 			}
 
 			d = pbs_in_thing(&p->pbs, cookies.responder, "rCookie");
 			if (d != NULL) {
-				llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
+				llog_diag(RC_LOG, p1->sa.st_logger, &d, "%s", "");
 				return false;
 			}
 
-			struct state *dst = find_state_ikev1(&cookies, v1_MAINMODE_MSGID);
+			/* this only finds ISAKMP SAs. Right!?! */
+			struct state *st = find_state_ikev1(&cookies, v1_MAINMODE_MSGID);
+			if (st == NULL) {
+				llog_sa(RC_LOG_SERIOUS, p1,
+					"ignoring Delete SA payload: ISAKMP SA not found (maybe expired)");
+				continue;
+			}
 
-			if (dst == NULL) {
-				log_state(RC_LOG_SERIOUS, st, "ignoring Delete SA payload: ISAKMP SA not found (maybe expired)");
-			} else if (!same_peer_ids(st->st_connection,
-							dst->st_connection,
-							NULL)) {
+			if (!IS_PARENT_SA(st)) {
+				llog_pexpect(p1->sa.st_logger, HERE,
+					     "ignoring Delete SA payload: "PRI_SO" is not an ISAKMP SA",
+					     pri_so(st->st_serialno));
+				continue;
+			}
+
+			struct ike_sa *dst = pexpect_ike_sa(st);
+
+			if (!same_peer_ids(p1->sa.st_connection,
+					   dst->sa.st_connection,
+					   NULL)) {
 				/*
 				 * we've not authenticated the relevant
 				 * identities
 				 */
-				log_state(RC_LOG_SERIOUS, st, "ignoring Delete SA payload: ISAKMP SA used to convey Delete has different IDs from ISAKMP SA it deletes");
-			} else {
-				/* note: this code is cloned for handling self_delete */
-				log_state(RC_LOG_SERIOUS, st, "received Delete SA payload: %sdeleting ISAKMP State #%lu",
-					  (dst == st ? "self-" : ""),
-					  dst->st_serialno);
-				if (nat_traversal_enabled &&
-				    dst->st_connection->config->ikev1_natt != NATT_NONE) {
-					nat_traversal_change_port_lookup(md, dst);
-					v1_maybe_natify_initiator_endpoints(st, HERE);
-				}
-				delete_state(dst);
-				if (dst == st) {
-					*stp = dst = st = md->v1_st = NULL;
-					return true;
-				}
+				llog_sa(RC_LOG_SERIOUS, p1,
+					"ignoring Delete SA payload: ISAKMP SA used to convey Delete has different IDs from ISAKMP SA it deletes");
+				continue;
+			}
+
+			/* note: this code is cloned for handling self_delete */
+			llog_sa(RC_LOG_SERIOUS, p1,
+				"received Delete SA payload: %sdeleting ISAKMP State "PRI_SO,
+				(dst == p1 ? "self-" : ""),
+				pri_so(dst->sa.st_serialno));
+			if (nat_traversal_enabled &&
+			    dst->sa.st_connection->config->ikev1_natt != NATT_NONE) {
+				nat_traversal_change_port_lookup(md, &dst->sa);
+				v1_maybe_natify_initiator_endpoints(&p1->sa, HERE);
+			}
+			delete_state(&dst->sa);
+			if (dst == p1) {
+				*stp = md->v1_st = NULL;
+				dst = p1 = NULL;
+				return true;
 			}
 		} else {
 			/*
@@ -530,7 +552,7 @@ bool accept_delete(struct state **stp,
 			ipsec_spi_t spi;	/* network order */
 			diag_t dt = pbs_in_thing(&p->pbs, spi, "SPI");
 			if (dt != NULL) {
-				llog_diag(RC_LOG, st->st_logger, &dt, "%s", "");
+				llog_diag(RC_LOG, p1->sa.st_logger, &dt, "%s", "");
 				return false;
 			}
 
@@ -539,67 +561,103 @@ bool accept_delete(struct state **stp,
 									   d->isad_protoid,
 									   spi,
 									   &bogus);
-
 			if (p2d == NULL) {
 				esb_buf b;
-				log_state(RC_LOG_SERIOUS, st,
-					  "ignoring Delete SA payload: %s SA(0x%08" PRIx32 ") not found (maybe expired)",
-					  enum_show(&ikev1_protocol_names, d->isad_protoid, &b),
-					  ntohl(spi));
-			} else {
-				passert(&p1->sa != &p2d->sa);	/* st is an IKE SA */
-				if (bogus) {
-					esb_buf b;
-					log_state(RC_LOG_SERIOUS, st,
-						  "warning: Delete SA payload: %s SA(0x%08" PRIx32 ") is our own SPI (bogus implementation) - deleting anyway",
-						  enum_show(&ikev1_protocol_names, d->isad_protoid, &b),
-						  ntohl(spi));
-				}
+				llog_sa(RC_LOG_SERIOUS, p1,
+					"ignoring Delete SA payload: %s SA(0x%08" PRIx32 ") not found (maybe expired)",
+					enum_show(&ikev1_protocol_names, d->isad_protoid, &b),
+					ntohl(spi));
+				continue;
+			}
 
-				/* save for post delete_state() code */
-				co_serial_t rc_serialno = p2d->sa.st_connection->serialno;
+			passert(&p1->sa != &p2d->sa);	/* st is an IKE SA */
+			if (bogus) {
+				esb_buf b;
+				llog_sa(RC_LOG_SERIOUS, p1,
+					"warning: Delete SA payload: %s SA(0x%08" PRIx32 ") is our own SPI (bogus implementation) - deleting anyway",
+					enum_show(&ikev1_protocol_names, d->isad_protoid, &b),
+					ntohl(spi));
+			}
 
-				if (nat_traversal_enabled &&
-				    p2d->sa.st_connection->config->ikev1_natt != NATT_NONE) {
-					nat_traversal_change_port_lookup(md, &p2d->sa);
-					v1_maybe_natify_initiator_endpoints(&p1->sa, HERE);
-				}
+			/* save for post delete_state() code */
+			co_serial_t rc_serialno = p2d->sa.st_connection->serialno;
 
-				if (p2d->sa.st_connection->newest_ipsec_sa == p2d->sa.st_serialno &&
-				    (p2d->sa.st_connection->policy & POLICY_UP)) {
-					/*
-					 * Last IPsec SA for a permanent
-					 * connection that we have initiated.
-					 * Replace it.
-					 *
-					 * Useful if the other peer is
-					 * rebooting.
-					 */
-					log_state(RC_LOG_SERIOUS, st,
-						  "received Delete SA payload: replace IPsec State #%lu now",
-						  p2d->sa.st_serialno);
-					p2d->sa.st_replace_margin = deltatime(0);
-					event_force(EVENT_v1_REPLACE, &p2d->sa);
-				} else {
-					log_state(RC_LOG_SERIOUS, st,
-						  "received Delete SA(0x%08" PRIx32 ") payload: %sdeleting IPsec State #%lu",
-						  ntohl(spi),
-						  /* XXX: can't happen see pexpect above */
-						  (&p1->sa == &p2d->sa ? "self-" : ""),
-						  p2d->sa.st_serialno);
-					struct connection *cc = connection_addref(p2d->sa.st_connection,
-										  p2d->sa.st_logger);
-					delete_state(&p2d->sa);
-					if (is_instance(cc)) {
-						connection_unroute(cc, HERE);
-					}
-					connection_delref(&cc, cc->logger);
-					/* danger p2d is invalid! */
-					if (md->v1_st == &p2d->sa) {
-						p2d = NULL;
+			if (nat_traversal_enabled &&
+			    p2d->sa.st_connection->config->ikev1_natt != NATT_NONE) {
+				nat_traversal_change_port_lookup(md, &p2d->sa);
+				v1_maybe_natify_initiator_endpoints(&p1->sa, HERE);
+			}
+
+			if (p2d->sa.st_connection->newest_ipsec_sa == p2d->sa.st_serialno &&
+			    (p2d->sa.st_connection->policy & POLICY_UP)) {
+				/*
+				 * Last IPsec SA for a permanent
+				 * connection that we have initiated.
+				 * Replace it.
+				 *
+				 * Useful if the other peer is
+				 * rebooting.
+				 */
+				llog_sa(RC_LOG_SERIOUS, p1,
+					"received Delete SA payload: replace IPsec State #%lu now",
+					p2d->sa.st_serialno);
+				p2d->sa.st_replace_margin = deltatime(0);
+				event_force(EVENT_v1_REPLACE, &p2d->sa);
+
+				/*
+				 * Either .newest_ipsec_sa matches DST
+				 * and is cleared, or was never set.
+				 */
+				struct connection *rc = connection_by_serialno(rc_serialno);
+				if (rc != NULL && rc->newest_ipsec_sa == SOS_NOBODY) {
+					del_policy(rc, POLICY_UP);
+					if (!shared_phase1_connection(rc)) {
+						/*
+						 * why loop? there can
+						 * be only one IKE SA,
+						 * just
+						 * delete_state(st)?
+						 *
+						 * XXX: because there
+						 * could also be
+						 * larval or dying
+						 * states tied to the
+						 * connection?
+						 */
+						dbg("%s() self-inflicted delete of ISAKMP", __func__);
+						struct connection *cc = connection_addref(rc, rc->logger);
+						remove_connection_from_pending(rc);
+						delete_v1_states_by_connection(rc);
+						if (is_instance(rc)) {
+							connection_unroute(rc, HERE);
+						}
+						connection_delref(&cc, cc->logger);
 						*stp = md->v1_st = NULL;
+						p1 = NULL;
+						p2d = NULL;
 						return true;
 					}
+				}
+
+			} else {
+				llog_sa(RC_LOG_SERIOUS, p1,
+					"received Delete SA(0x%08" PRIx32 ") payload: %sdeleting IPsec State #%lu",
+					ntohl(spi),
+					/* XXX: can't happen see pexpect above */
+					(&p1->sa == &p2d->sa ? "self-" : ""),
+					p2d->sa.st_serialno);
+				struct connection *cc = connection_addref(p2d->sa.st_connection,
+									  p2d->sa.st_logger);
+				delete_state(&p2d->sa);
+				if (is_instance(cc)) {
+					connection_unroute(cc, HERE);
+				}
+				connection_delref(&cc, cc->logger);
+				/* danger p2d is invalid! */
+				if (md->v1_st == &p2d->sa) {
+					p2d = NULL;
+					*stp = md->v1_st = NULL;
+					return true;
 				}
 
 				/*
@@ -636,6 +694,7 @@ bool accept_delete(struct state **stp,
 						return true;
 					}
 				}
+
 			}
 		}
 	}
