@@ -1,0 +1,1 @@
+test compress using whack and addconn

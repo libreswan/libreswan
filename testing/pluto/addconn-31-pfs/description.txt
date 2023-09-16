@@ -1,1 +1,1 @@
-test fragmentation using whack and addconn
+test pfs using whack and addconn

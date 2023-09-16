@@ -1,0 +1,52 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec add addconn
+002 "addconn": added IKEv2 connection
+west #
+ ipsec add addconn--compress=no
+002 "addconn--compress=no": added IKEv2 connection
+west #
+ ipsec add addconn--compress=yes
+002 "addconn--compress=yes": added IKEv2 connection
+west #
+ ipsec add addconn--type=passthrough
+002 "addconn--type=passthrough": added passthrough connection
+west #
+ ipsec add addconn--type=passthrough--compress=no
+005 "addconn--type=passthrough--compress=no": warning: compress=no ignored for never-negotiate connection
+002 "addconn--type=passthrough--compress=no": added passthrough connection
+west #
+ ipsec add addconn--type=passthrough--compress=yes
+005 "addconn--type=passthrough--compress=yes": warning: compress=yes ignored for never-negotiate connection
+002 "addconn--type=passthrough--compress=yes": added passthrough connection
+west #
+ ipsec whack --name whack                               --encrypt --host 1.2.3.4 --to --host 5.6.7.8
+002 "whack": added IKEv2 connection
+west #
+ ipsec whack --name whack--no-compress   --no-compress  --encrypt --host 1.2.3.4 --to --host 5.6.7.8
+002 "whack--no-compress": added IKEv2 connection
+west #
+ ipsec whack --name whack--compress      --compress     --encrypt --host 1.2.3.4 --to --host 5.6.7.8
+002 "whack--compress": added IKEv2 connection
+west #
+ ipsec whack --name whack--passthrough                               --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
+002 "whack--passthrough": added passthrough connection
+west #
+ ipsec whack --name whack--passthrough--no-compress   --no-compress  --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
+005 "whack--passthrough--no-compress": warning: compress=no ignored for never-negotiate connection
+002 "whack--passthrough--no-compress": added passthrough connection
+west #
+ ipsec whack --name whack--passthrough--compress      --compress     --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
+005 "whack--passthrough--compress": warning: compress=yes ignored for never-negotiate connection
+002 "whack--passthrough--compress": added passthrough connection
+west #
+ ipsec connectionstatus | sed -n -e 's/\(.* policy:\) .*COMPRESS.*/\1 COMPRESS/p'
+000 "addconn--compress=yes":   policy: COMPRESS
+000 "whack--compress":   policy: COMPRESS
+west #
+ 
