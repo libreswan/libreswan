@@ -19,7 +19,7 @@ west #
 000 "order-test":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
 000 "order-test":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "order-test":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "order-test":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+000 "order-test":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 000 "order-test":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 000 "order-test":   conn_prio: 128,128; interface: ; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "order-test":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
