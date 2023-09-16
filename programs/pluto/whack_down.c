@@ -29,7 +29,7 @@
 #include "pending.h"
 #include "whack_connection.h"
 #include "ikev2_delete.h"
-#include "ikev1.h"		/* for maybe_send_n_log_v1_delete() */
+#include "ikev1_delete.h"		/* for maybe_send_n_log_v1_delete() */
 
 /*
  * Is a connection in use by some state?

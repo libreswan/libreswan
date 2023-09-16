@@ -21,7 +21,7 @@
 #include "connections.h"
 #include "pending.h"
 #include "ikev2_delete.h"
-#include "ikev1.h"		/* for send_v1_delete() */
+#include "ikev1_delete.h"		/* for send_v1_delete() */
 #include "connection_event.h"
 
 static void delete_v1_states(struct connection *c,
