@@ -1049,7 +1049,7 @@ static bool init_xfrm_kernel_migrate(struct child_sa *child,
 				     struct kernel_migrate *migrate)
 {
 	const struct connection *const c = child->sa.st_connection;
-	pexpect(c->policy & POLICY_TUNNEL);
+	pexpect(c->config->child_sa.encap_mode == ENCAP_MODE_TUNNEL);
 
 	const struct ip_encap *encap_type =
 		(child->sa.st_interface->io->protocol == &ip_protocol_tcp) ? &ip_encap_esp_in_tcp :

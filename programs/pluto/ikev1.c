@@ -2352,8 +2352,8 @@ static void remember_received_packet(struct state *st, struct msg_digest *md)
 static void jam_v1_ipsec_details(struct jambuf *buf, struct state *st)
 {
 	struct connection *const c = st->st_connection;
-	jam_string(buf, c->policy & POLICY_TUNNEL ? "tunnel mode" : "transport mode");
-	jam(buf, " ");
+	jam_enum(buf, &encap_mode_story, c->config->child_sa.encap_mode);
+	jam_string(buf, " mode ");
 	jam_child_sa_details(buf, st);
 }
 

@@ -234,7 +234,7 @@ bool emit_v2_child_request_payloads(const struct ike_sa *ike,
 
 	/* Transport based on policy */
 
-	bool send_use_transport = (cc->policy & POLICY_TUNNEL) == LEMPTY;
+	bool send_use_transport = (cc->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT);
 	dbg("Initiator child policy is transport mode, sending v2N_USE_TRANSPORT_MODE? %s",
 	    bool_str(send_use_transport));
 	if (send_use_transport &&
@@ -290,7 +290,7 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 	 * proposal as needed.
 	 */
 
-	bool expecting_transport_mode = ((cc->policy & POLICY_TUNNEL) == LEMPTY);
+	bool expecting_transport_mode = (cc->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT);
 	enum encapsulation_mode encapsulation_mode = ENCAPSULATION_MODE_TUNNEL;
 	if (request_md->pd[PD_v2N_USE_TRANSPORT_MODE] != NULL) {
 		if (!expecting_transport_mode) {
@@ -740,7 +740,7 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 	/* check for Child SA related NOTIFY payloads */
 	enum encapsulation_mode encapsulation_mode = ENCAPSULATION_MODE_TUNNEL;
 	if (md->pd[PD_v2N_USE_TRANSPORT_MODE] != NULL) {
-		if (c->policy & POLICY_TUNNEL) {
+		if (c->config->child_sa.encap_mode == ENCAP_MODE_TUNNEL) {
 			/*
 			 * This means we did not send
 			 * v2N_USE_TRANSPORT, however responder is
@@ -1118,13 +1118,13 @@ v2_notification_t process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *
 	/* AUTH is ok, we can trust the notify payloads */
 	if (response_md->pd[PD_v2N_USE_TRANSPORT_MODE] != NULL) {
 		/* FIXME: use new RFC logic turning this into a request, not requirement */
-		if (LIN(POLICY_TUNNEL, child->sa.st_connection->policy)) {
+		if (child->sa.st_connection->config->child_sa.encap_mode == ENCAP_MODE_TUNNEL) {
 			llog_sa(RC_LOG_SERIOUS, child,
 				  "local policy requires Tunnel Mode but peer requires required Transport Mode");
 			return v2N_TS_UNACCEPTABLE;
 		}
 	} else {
-		if (!LIN(POLICY_TUNNEL, child->sa.st_connection->policy)) {
+		if (child->sa.st_connection->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT) {
 			llog_sa(RC_LOG_SERIOUS, child,
 				  "local policy requires Transport Mode but peer requires required Tunnel Mode");
 			return v2N_TS_UNACCEPTABLE;

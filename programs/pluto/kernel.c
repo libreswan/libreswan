@@ -859,7 +859,7 @@ static enum routability connection_routability(struct connection *c,
 	 * this route is not necessary at all.
 	 */
 	PEXPECT(logger, !kernel_ops->overlap_supported); /* still WIP */
-	if (kernel_ops->overlap_supported && !LIN(POLICY_TUNNEL, c->policy)) {
+	if (kernel_ops->overlap_supported && c->config->child_sa.encap_mode == ENCAP_MODE_TUNNEL) {
 		ldbg(logger, "route-unnecessary: overlap and !tunnel");
 		return ROUTE_UNNECESSARY;
 	}
@@ -2130,7 +2130,8 @@ bool install_inbound_ipsec_sa(struct child_sa *child, where_t where)
 				 * intended, but am leaving it in to make it
 				 * behave like before
 				 */
-				if (!LIN(POLICY_TUNNEL, c->policy | co->policy))
+				if (c->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT &&
+				    co->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT)
 					break;
 
 				/* Both declared that overlapping is OK. */

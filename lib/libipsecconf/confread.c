@@ -168,7 +168,7 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 # undef DOPT
 
 	d->ike_version = IKEv2;
-	d->policy = (POLICY_TUNNEL | POLICY_ENCRYPT);
+	d->policy = (POLICY_ENCRYPT);
 	d->authby = AUTHBY_NONE; /* blank goes to defaults */
 	d->never_negotiate_shunt = SHUNT_UNSET;
 	d->negotiation_shunt = SHUNT_UNSET;
@@ -1092,39 +1092,33 @@ static bool load_conn(struct starter_conn *conn,
 	if (conn->options_set[KNCF_TYPE]) {
 		switch ((enum keyword_satype)conn->options[KNCF_TYPE]) {
 		case KS_TUNNEL:
-			conn->policy |= POLICY_TUNNEL;
 			break;
 
 		case KS_TRANSPORT:
-			conn->policy &= ~POLICY_TUNNEL;
 			break;
 
 		case KS_PASSTHROUGH:
 			conn->policy &= ~(POLICY_ENCRYPT |
-					  POLICY_AUTHENTICATE |
-					  POLICY_TUNNEL);
+					  POLICY_AUTHENTICATE);
 			conn->authby = AUTHBY_NONE;
 			conn->never_negotiate_shunt = SHUNT_PASS;
 			break;
 
 		case KS_DROP:
 			conn->policy &= ~(POLICY_ENCRYPT |
-					  POLICY_AUTHENTICATE |
-					  POLICY_TUNNEL);
+					  POLICY_AUTHENTICATE);
 			conn->authby = AUTHBY_NONE;
 			conn->never_negotiate_shunt = SHUNT_DROP;
 			break;
 
 		case KS_REJECT:
 			conn->policy &= ~(POLICY_ENCRYPT |
-					  POLICY_AUTHENTICATE |
-					  POLICY_TUNNEL);
+					  POLICY_AUTHENTICATE);
 			conn->authby = AUTHBY_NONE;
 			conn->never_negotiate_shunt = SHUNT_REJECT;
 			break;
 		}
 	}
-
 
 	if (conn->options_set[KNCF_NEGOTIATIONSHUNT]) {
 		switch (conn->options[KNCF_NEGOTIATIONSHUNT]) {

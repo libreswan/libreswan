@@ -2058,7 +2058,26 @@ static diag_t extract_connection(const struct whack_message *wm,
 	config->child_sa.ipcomp = compress;
 	c->policy |= (compress ? POLICY_COMPRESS : LEMPTY);
 
-	if ((wm->policy & POLICY_TUNNEL) == LEMPTY) {
+	enum encap_mode mode;
+	if (never_negotiate_wm(wm)) {
+		if (wm->encap_mode != ENCAP_MODE_UNSET) {
+			enum_buf sb;
+			/* XXX: type= is an overloaded field that
+			 * includes mode! */
+			llog(RC_INFORMATIONAL, c->logger,
+			     "warning: type=%s ignored for never-negotiate connection",
+			     str_enum_short(&encap_mode_story, wm->encap_mode, &sb));
+		}
+		mode = ENCAP_MODE_UNSET;
+	} else if (wm->encap_mode == ENCAP_MODE_UNSET) {
+		mode = ENCAP_MODE_TUNNEL;
+	} else {
+		mode = wm->encap_mode;
+	}
+	config->child_sa.encap_mode = mode;
+	c->policy |= (mode == ENCAP_MODE_TUNNEL ? POLICY_TUNNEL : LEMPTY);
+
+	if (mode == ENCAP_MODE_TRANSPORT) {
 		if (wm->vti_iface != NULL) {
 			return diag("VTI requires tunnel mode but connection specifies type=transport");
 		}
@@ -2211,7 +2230,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 		if (wm->ike_version < IKEv2) {
 			return diag("MOBIKE requires IKEv2");
 		}
-		if ((wm->policy & POLICY_TUNNEL) == LEMPTY) {
+		if (mode != ENCAP_MODE_TUNNEL) {
 			return diag("MOBIKE requires tunnel mode");
 		}
 		if (kernel_ops->migrate_ipsec_sa_is_enabled == NULL) {
@@ -2985,7 +3004,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	config->child_sa.priority = wm->priority;
 
 	if (wm->tfc != 0) {
-		if ((wm->policy & POLICY_TUNNEL) == LEMPTY) {
+		if (mode == ENCAP_MODE_TRANSPORT) {
 			return diag("connection with type=transport cannot specify tfc=");
 		}
 		if (LIN(POLICY_AUTHENTICATE, wm->policy)) {
@@ -3594,6 +3613,12 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 		sep = "+";
 	}
 
+#define CS(C,S)					\
+	if (C) {				\
+		s += jam_string(buf, sep);	\
+		s += jam_string(buf, S);	\
+		sep = "+";			\
+	}
 #define PP(P)					\
 	if (policy & POLICY_##P) {		\
 		s += jam_string(buf, sep);	\
@@ -3617,7 +3642,9 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 	PP(ENCRYPT);
 	PP(AUTHENTICATE);
 	CN(c->config->child_sa.ipcomp, COMPRESS); policy &= ~POLICY_COMPRESS;
-	PP(TUNNEL);
+	CS(c->config->child_sa.encap_mode != ENCAP_MODE_UNSET,
+	   enum_name_short(&encap_mode_names, c->config->child_sa.encap_mode));
+	policy &= ~POLICY_TUNNEL;
 	CN(c->config->pfs, PFS); policy &= ~POLICY_PFS;
 	CP(decap_dscp);
 	CP(nopmtudisc);

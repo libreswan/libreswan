@@ -306,6 +306,7 @@ struct config {
 		uint32_t metric;	/* metric for tunnel routes */
 		uint16_t mtu;		/* mtu for tunnel routes */
 		bool ipcomp;
+		enum encap_mode encap_mode;	/* tunnel or transport */
 	} child_sa;
 
 	struct {

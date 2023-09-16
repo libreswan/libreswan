@@ -85,7 +85,7 @@ static bool fmt_common_shell_out(char *buf,
 				 struct state *st)
 {
 	struct jambuf jb = array_as_jambuf(buf, blen);
-	const bool tunneling = LIN(POLICY_TUNNEL, c->policy);
+	const bool tunneling = (c->config->child_sa.encap_mode == ENCAP_MODE_TUNNEL);
 
 	/* macros to jam definitions of various forms */
 #	define JDstr(name, string)  jam(&jb, name "='%s' ", string)
