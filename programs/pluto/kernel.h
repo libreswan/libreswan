@@ -87,22 +87,6 @@ enum encap_proto {
 	ENCAP_PROTO_IPCOMP= 108,	/* (108) compression */
 };
 
-/*
- * Encapsulation mode.
- *
- * Contrary to the RFCs and ENCAPSULATION_MODE_*, the kernel only has
- * to handle two modes.  Hence an ENUM that only defines those values.
- *
- * Except contrary to that, PF KEY v2 accepts the mode "any".
- */
-
-enum encap_mode {
-	ENCAP_MODE_TRANSPORT = 2, /*>true */
-	ENCAP_MODE_TUNNEL,
-};
-
-extern const struct enum_names encap_mode_names;
-
 enum direction {
 	DIRECTION_INBOUND = 2, /*>true*/
 	DIRECTION_OUTBOUND = 4, /* so lset_t works */

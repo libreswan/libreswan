@@ -22,6 +22,7 @@
 #include "where.h"
 #include "lset.h"
 #include "ip_selector.h"
+#include "encap_mode.h"
 
 #include "kernel.h"		/* for kernel_priority_t */
 
