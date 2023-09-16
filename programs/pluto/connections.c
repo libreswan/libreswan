@@ -2028,12 +2028,18 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	c->policy = wm->policy;
 
-	/*
-	 * Note: unlike addconn, whack defaults to pfs=no (there's no
-	 * --no-pfs option to switch pfs=yes off).
-	 */
-	bool pfs = (never_negotiate_wm(wm) ? false :
-		    extract_yn(wm->pfs, wm->from_whack ? false : true));
+	bool pfs;
+	if (never_negotiate_wm(wm)) {
+		if (wm->pfs != YN_UNSET) {
+			sparse_buf sb;
+			llog(RC_INFORMATIONAL, c->logger,
+			     "warning: pfs=%s ignored for never-negotiate connection",
+			     str_sparse(yn_option_names, wm->pfs, &sb));
+		}
+		pfs = false;
+	} else {
+		pfs = extract_yn(wm->pfs, true);
+	}
 	config->pfs = pfs;
 	c->policy |= (pfs ? POLICY_PFS : LEMPTY);
 
