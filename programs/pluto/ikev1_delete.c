@@ -602,44 +602,10 @@ bool accept_delete(struct state **stp,
 					"received Delete SA payload: replace IPsec State #%lu now",
 					p2d->sa.st_serialno);
 				p2d->sa.st_replace_margin = deltatime(0);
-				event_force(EVENT_v1_REPLACE, &p2d->sa);
-
-				/*
-				 * Either .newest_ipsec_sa matches DST
-				 * and is cleared, or was never set.
-				 */
-				struct connection *rc = connection_by_serialno(rc_serialno);
-				if (rc != NULL && rc->newest_ipsec_sa == SOS_NOBODY) {
-					del_policy(rc, POLICY_UP);
-					if (!shared_phase1_connection(rc)) {
-						/*
-						 * why loop? there can
-						 * be only one IKE SA,
-						 * just
-						 * delete_state(st)?
-						 *
-						 * XXX: because there
-						 * could also be
-						 * larval or dying
-						 * states tied to the
-						 * connection?
-						 */
-						dbg("%s() self-inflicted delete of ISAKMP", __func__);
-						struct connection *cc = connection_addref(rc, rc->logger);
-						remove_connection_from_pending(rc);
-						delete_v1_states_by_connection(rc);
-						if (is_instance(rc)) {
-							connection_unroute(rc, HERE);
-						}
-						connection_delref(&cc, cc->logger);
-						*stp = md->v1_st = NULL;
-						p1 = NULL;
-						p2d = NULL;
-						return true;
-					}
-				}
+				connection_delete_child(p1, &p2d, HERE);
 
 			} else {
+
 				llog_sa(RC_LOG_SERIOUS, p1,
 					"received Delete SA(0x%08" PRIx32 ") payload: %sdeleting IPsec State #%lu",
 					ntohl(spi),
