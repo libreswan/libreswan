@@ -924,8 +924,6 @@ struct state *state_by_serialno(so_serial_t serialno);
 struct ike_sa *ike_sa_by_serialno(so_serial_t serialno);
 struct child_sa *child_sa_by_serialno(so_serial_t serialno);
 
-struct state *find_phase2_state_to_delete(const struct state *p1st, uint8_t protoid,
-					  ipsec_spi_t spi, bool *bogus);
 struct ike_sa *find_ike_sa_by_connection(const struct connection *c,
 					 lset_t ok_states);
 

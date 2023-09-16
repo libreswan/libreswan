@@ -1746,51 +1746,6 @@ struct state *find_v1_info_state(const ike_spis_t *ike_spis, msgid_t msgid)
 #endif
 
 /*
- * find_phase2_state_to_delete: find an AH or ESP SA to delete
- *
- * We are supposed to be given the other side's SPI.
- * Certain CISCO implementations send our side's SPI instead.
- * We'll accept this, but mark it as bogus.
- */
-struct state *find_phase2_state_to_delete(const struct state *p1st,
-					  uint8_t protoid,
-					  ipsec_spi_t spi,
-					  bool *bogus)
-{
-	const struct connection *p1c = p1st->st_connection;
-	struct state *bogusst = NULL;
-
-	*bogus = false;
-	struct state_filter sf = { .where = HERE, };
-	while (next_state_new2old(&sf)) {
-		struct state *st = sf.st;
-		const struct connection *c = st->st_connection;
-		if (IS_IPSEC_SA_ESTABLISHED(st) &&
-		    p1c->host_pair == c->host_pair &&
-		    same_peer_ids(p1c, c, NULL))
-		{
-			struct ipsec_proto_info *pr =
-				protoid == PROTO_IPSEC_AH ?
-					&st->st_ah : &st->st_esp;
-
-			if (pr->present) {
-				if (pr->outbound.spi == spi) {
-					*bogus = false;
-					return st;
-				}
-
-				if (pr->inbound.spi == spi) {
-					*bogus = true;
-					bogusst = st;
-					/* don't return! */
-				}
-			}
-		}
-	}
-	return bogusst;
-}
-
-/*
  * to initiate a new IPsec SA or to rekey IPsec
  * the IKE SA must be around for while. If IKE rekeying itself no new IPsec SA.
  */

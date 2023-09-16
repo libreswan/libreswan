@@ -2100,6 +2100,59 @@ static bool shared_phase1_connection(const struct connection *c)
 }
 
 /*
+ * find_phase2_state_to_delete: find an AH or ESP SA to delete
+ *
+ * We are supposed to be given the other side's SPI.  Certain CISCO
+ * implementations send our side's SPI instead.  We'll accept this,
+ * but mark it as bogus.
+ */
+
+static struct child_sa *find_phase2_state_to_delete(const struct ike_sa *p1,
+						    uint8_t protoid,
+						    ipsec_spi_t spi,
+						    bool *bogus)
+{
+	struct child_sa *bogusst = NULL;
+	*bogus = false;
+
+	struct state_filter sf = {
+		.where = HERE,
+	};
+	while (next_state_new2old(&sf)) {
+		if (!IS_CHILD_SA(sf.st)) {
+			continue;
+		}
+		struct child_sa *p2 = pexpect_child_sa(sf.st);
+		if (!IS_IPSEC_SA_ESTABLISHED(&p2->sa)) {
+			continue;
+		}
+		if (p1->sa.st_connection->host_pair != p2->sa.st_connection->host_pair) {
+			continue;
+		}
+		if (!same_peer_ids(p1->sa.st_connection, p2->sa.st_connection, NULL)) {
+			continue;
+		}
+		const struct ipsec_proto_info *pr =
+			(protoid == PROTO_IPSEC_AH ? &p2->sa.st_ah :
+			 &p2->sa.st_esp);
+		if (!pr->present) {
+			continue;
+		}
+		if (pr->outbound.spi == spi) {
+			*bogus = false;
+			return p2;
+		}
+
+		if (pr->inbound.spi == spi) {
+			*bogus = true;
+			bogusst = p2;
+			/* don't return! */
+		}
+	}
+	return bogusst;
+}
+
+/*
  * Accept a Delete SA notification, and process it if valid.
  *
  * @param st State structure
@@ -2110,12 +2163,13 @@ static bool shared_phase1_connection(const struct connection *c)
  *
  * Returns FALSE when the payload is crud.
  */
+
 bool accept_delete(struct state **stp,
 		   struct msg_digest *md,
 		   struct payload_digest *p)
 {
 	struct state *st = *stp;
-	struct isakmp_delete *d = &(p->payload.delete);
+	const struct isakmp_delete *d = &(p->payload.delete);
 	size_t sizespi;
 	int i;
 
@@ -2140,6 +2194,8 @@ bool accept_delete(struct state **stp,
 			  "ignoring Delete SA payload: ISAKMP SA not established");
 		return false;
 	}
+
+	struct ike_sa *p1 = pexpect_ike_sa(st);
 
 	if (d->isad_nospi == 0) {
 		log_state(RC_LOG_SERIOUS, st,
@@ -2247,19 +2303,19 @@ bool accept_delete(struct state **stp,
 			}
 
 			bool bogus;
-			struct state *dst = find_phase2_state_to_delete(st,
-							d->isad_protoid,
-							spi,
-							&bogus);
+			struct child_sa *p2d = find_phase2_state_to_delete(p1,
+									   d->isad_protoid,
+									   spi,
+									   &bogus);
 
-			passert(dst != st);	/* st is an IKE SA */
-			if (dst == NULL) {
+			if (p2d == NULL) {
 				esb_buf b;
 				log_state(RC_LOG_SERIOUS, st,
 					  "ignoring Delete SA payload: %s SA(0x%08" PRIx32 ") not found (maybe expired)",
 					  enum_show(&ikev1_protocol_names, d->isad_protoid, &b),
 					  ntohl(spi));
 			} else {
+				passert(&p1->sa != &p2d->sa);	/* st is an IKE SA */
 				if (bogus) {
 					esb_buf b;
 					log_state(RC_LOG_SERIOUS, st,
@@ -2269,16 +2325,16 @@ bool accept_delete(struct state **stp,
 				}
 
 				/* save for post delete_state() code */
-				co_serial_t rc_serialno = dst->st_connection->serialno;
+				co_serial_t rc_serialno = p2d->sa.st_connection->serialno;
 
 				if (nat_traversal_enabled &&
-				    dst->st_connection->config->ikev1_natt != NATT_NONE) {
-					nat_traversal_change_port_lookup(md, dst);
-					v1_maybe_natify_initiator_endpoints(st, HERE);
+				    p2d->sa.st_connection->config->ikev1_natt != NATT_NONE) {
+					nat_traversal_change_port_lookup(md, &p2d->sa);
+					v1_maybe_natify_initiator_endpoints(&p1->sa, HERE);
 				}
 
-				if (dst->st_connection->newest_ipsec_sa == dst->st_serialno &&
-				    (dst->st_connection->policy & POLICY_UP)) {
+				if (p2d->sa.st_connection->newest_ipsec_sa == p2d->sa.st_serialno &&
+				    (p2d->sa.st_connection->policy & POLICY_UP)) {
 					/*
 					 * Last IPsec SA for a permanent
 					 * connection that we have initiated.
@@ -2289,24 +2345,27 @@ bool accept_delete(struct state **stp,
 					 */
 					log_state(RC_LOG_SERIOUS, st,
 						  "received Delete SA payload: replace IPsec State #%lu now",
-						  dst->st_serialno);
-					dst->st_replace_margin = deltatime(0);
-					event_force(EVENT_v1_REPLACE, dst);
+						  p2d->sa.st_serialno);
+					p2d->sa.st_replace_margin = deltatime(0);
+					event_force(EVENT_v1_REPLACE, &p2d->sa);
 				} else {
 					log_state(RC_LOG_SERIOUS, st,
 						  "received Delete SA(0x%08" PRIx32 ") payload: %sdeleting IPsec State #%lu",
 						  ntohl(spi),
-						  (st == dst ? "self-" : ""),
-						  dst->st_serialno);
-					struct connection *cc = connection_addref(dst->st_connection,
-										  dst->st_logger);
-					delete_state(dst);
+						  /* XXX: can't happen see pexpect above */
+						  (&p1->sa == &p2d->sa ? "self-" : ""),
+						  p2d->sa.st_serialno);
+					struct connection *cc = connection_addref(p2d->sa.st_connection,
+										  p2d->sa.st_logger);
+					delete_state(&p2d->sa);
 					if (is_instance(cc)) {
 						connection_unroute(cc, HERE);
 					}
 					connection_delref(&cc, cc->logger);
-					if (md->v1_st == dst) {
-						*stp = dst = md->v1_st = NULL;
+					/* danger p2d is invalid! */
+					if (md->v1_st == &p2d->sa) {
+						p2d = NULL;
+						*stp = md->v1_st = NULL;
 						return true;
 					}
 				}
@@ -2339,7 +2398,9 @@ bool accept_delete(struct state **stp,
 							connection_unroute(rc, HERE);
 						}
 						connection_delref(&cc, cc->logger);
-						*stp = st = dst = md->v1_st = NULL;
+						*stp = md->v1_st = NULL;
+						p1 = NULL;
+						p2d = NULL;
 						return true;
 					}
 				}
