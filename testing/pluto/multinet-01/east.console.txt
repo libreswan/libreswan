@@ -92,22 +92,6 @@ east #
 east NOW
 XFRM state:
 XFRM policy:
-src 192.0.2.64/30 dst 192.0.1.0/28
-	dir out priority PRIORITY ptype main
-	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
-src 192.0.2.64/30 dst 192.0.1.128/28
-	dir out priority PRIORITY ptype main
-	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
-src 192.0.2.16/28 dst 192.0.1.0/28
-	dir out priority PRIORITY ptype main
-	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
-src 192.0.2.16/28 dst 192.0.1.128/28
-	dir out priority PRIORITY ptype main
-	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
 XFRM done
 IPSEC mangle TABLES
 iptables filter TABLE

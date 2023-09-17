@@ -73,7 +73,7 @@ east #
  # both east and west should still have one IKE SA #1
 east #
  ipsec status | grep west-east
-000 "west-east": 192.1.2.23[@east]...192.1.2.45[@west]; prospective erouted; eroute owner: #0
+000 "west-east": 192.1.2.23[@east]...192.1.2.45[@west]; unrouted; eroute owner: #0
 000 "west-east":     oriented; my_ip=unset; their_ip=unset;
 000 "west-east":   my_updown=ipsec _updown;
 000 "west-east":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]

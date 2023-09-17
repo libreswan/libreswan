@@ -396,9 +396,6 @@ west #
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | Informational Exchange is for an unknown (expired?) SA with MSGID:0x....
--- start message (HASH)
-|    next payload type: ISAKMP_NEXT_HASH (0x8)
-| Informational Exchange is for an unknown (expired?) SA with MSGID:0x....
 -- start message (ID)
 |    next payload type: ISAKMP_NEXT_ID (0x5)
 | ***parse ISAKMP Signature Payload:
@@ -486,27 +483,6 @@ west #
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | Informational Exchange is for an unknown (expired?) SA with MSGID:0x....
--- start message (HASH)
-|    next payload type: ISAKMP_NEXT_HASH (0x8)
-| Informational Exchange is for an unknown (expired?) SA with MSGID:0x....
--- start message (HASH)
-|    next payload type: ISAKMP_NEXT_HASH (0x8)
-| Informational Exchange is for an unknown (expired?) SA with MSGID:0x....
--- start message (HASH)
-|    next payload type: ISAKMP_NEXT_HASH (0x8)
-| Informational Exchange is for an unknown (expired?) SA with MSGID:0x....
--- start message (HASH)
-|    next payload type: ISAKMP_NEXT_HASH (0x8)
-| Informational Exchange is for an unknown (expired?) SA with MSGID:0x....
--- start message (HASH)
-|    next payload type: ISAKMP_NEXT_HASH (0x8)
-| Informational Exchange is for an unknown (expired?) SA with MSGID:0x....
--- start message (HASH)
-|    next payload type: ISAKMP_NEXT_HASH (0x8)
-| Informational Exchange is for an unknown (expired?) SA with MSGID:0x....
--- start message (HASH)
-|    next payload type: ISAKMP_NEXT_HASH (0x8)
-| Informational Exchange is for an unknown (expired?) SA with MSGID:0x....
 -- start message (ID)
 |    next payload type: ISAKMP_NEXT_ID (0x5)
 | ***parse ISAKMP Signature Payload:
@@ -519,9 +495,6 @@ west #
 |    next payload type: ISAKMP_NEXT_SA (0x1)
 |    length: 36 (00 24)
 | received 'quick_inR1_outI2' message HASH(2) data ok
--- start message (HASH)
-|    next payload type: ISAKMP_NEXT_HASH (0x8)
-| Informational Exchange is for an unknown (expired?) SA with MSGID:0x....
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | Informational Exchange is for an unknown (expired?) SA with MSGID:0x....
@@ -540,9 +513,6 @@ west #
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | Informational Exchange is for an unknown (expired?) SA with MSGID:0x....
--- start message (HASH)
-|    next payload type: ISAKMP_NEXT_HASH (0x8)
-| Informational Exchange is for an unknown (expired?) SA with MSGID:0x....
 -- start message (ID)
 |    next payload type: ISAKMP_NEXT_ID (0x5)
 | ***parse ISAKMP Signature Payload:
@@ -555,9 +525,6 @@ west #
 |    next payload type: ISAKMP_NEXT_SA (0x1)
 |    length: 36 (00 24)
 | received 'quick_inR1_outI2' message HASH(2) data ok
--- start message (HASH)
-|    next payload type: ISAKMP_NEXT_HASH (0x8)
-| Informational Exchange is for an unknown (expired?) SA with MSGID:0x....
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | Informational Exchange is for an unknown (expired?) SA with MSGID:0x....
@@ -576,9 +543,6 @@ west #
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | Informational Exchange is for an unknown (expired?) SA with MSGID:0x....
--- start message (HASH)
-|    next payload type: ISAKMP_NEXT_HASH (0x8)
-| Informational Exchange is for an unknown (expired?) SA with MSGID:0x....
 -- start message (ID)
 |    next payload type: ISAKMP_NEXT_ID (0x5)
 | ***parse ISAKMP Signature Payload:
@@ -591,6 +555,21 @@ west #
 |    next payload type: ISAKMP_NEXT_SA (0x1)
 |    length: 36 (00 24)
 | received 'quick_inR1_outI2' message HASH(2) data ok
+-- start message (HASH)
+|    next payload type: ISAKMP_NEXT_HASH (0x8)
+| Informational Exchange is for an unknown (expired?) SA with MSGID:0x....
+-- start message (HASH)
+|    next payload type: ISAKMP_NEXT_HASH (0x8)
+| Informational Exchange is for an unknown (expired?) SA with MSGID:0x....
+-- start message (HASH)
+|    next payload type: ISAKMP_NEXT_HASH (0x8)
+| Informational Exchange is for an unknown (expired?) SA with MSGID:0x....
+-- start message (HASH)
+|    next payload type: ISAKMP_NEXT_HASH (0x8)
+| Informational Exchange is for an unknown (expired?) SA with MSGID:0x....
+-- start message (HASH)
+|    next payload type: ISAKMP_NEXT_HASH (0x8)
+| Informational Exchange is for an unknown (expired?) SA with MSGID:0x....
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | Informational Exchange is for an unknown (expired?) SA with MSGID:0x....

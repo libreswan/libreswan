@@ -33,7 +33,7 @@ west #
 west #
  # give Delete/Notify some time
 west #
- sleep 5
+ sleep 10
 west #
  # A new IPsec SA should be established (older versions would take 30 seconds)
 west #

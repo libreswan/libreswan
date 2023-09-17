@@ -52,7 +52,17 @@ east #
 | received 'informational' message HASH(1) data ok
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
-| Informational Exchange is for an unknown (expired?) SA with MSGID:0x....
+| ***parse ISAKMP Hash Payload:
+|    next payload type: ISAKMP_NEXT_D (0xc)
+|    length: 36 (00 24)
+| ***parse ISAKMP Delete Payload:
+|    next payload type: ISAKMP_NEXT_NONE (0x0)
+|    length: 28 (00 1c)
+|    DOI: ISAKMP_DOI_IPSEC (0x1)
+|    protocol ID: 1 (01)
+|    SPI size: 16 (10)
+|    number of SPIs: 1 (00 01)
+| received 'informational' message HASH(1) data ok
 -- start message (ID)
 |    next payload type: ISAKMP_NEXT_ID (0x5)
 | ***parse ISAKMP Signature Payload:
@@ -281,7 +291,17 @@ east #
 | received 'informational' message HASH(1) data ok
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
-| Informational Exchange is for an unknown (expired?) SA with MSGID:0x....
+| ***parse ISAKMP Hash Payload:
+|    next payload type: ISAKMP_NEXT_D (0xc)
+|    length: 36 (00 24)
+| ***parse ISAKMP Delete Payload:
+|    next payload type: ISAKMP_NEXT_NONE (0x0)
+|    length: 28 (00 1c)
+|    DOI: ISAKMP_DOI_IPSEC (0x1)
+|    protocol ID: 1 (01)
+|    SPI size: 16 (10)
+|    number of SPIs: 1 (00 01)
+| received 'informational' message HASH(1) data ok
 -- start message (ID)
 |    next payload type: ISAKMP_NEXT_ID (0x5)
 | ***parse ISAKMP Signature Payload:
@@ -315,7 +335,17 @@ east #
 | received 'informational' message HASH(1) data ok
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
-| Informational Exchange is for an unknown (expired?) SA with MSGID:0x....
+| ***parse ISAKMP Hash Payload:
+|    next payload type: ISAKMP_NEXT_D (0xc)
+|    length: 36 (00 24)
+| ***parse ISAKMP Delete Payload:
+|    next payload type: ISAKMP_NEXT_NONE (0x0)
+|    length: 28 (00 1c)
+|    DOI: ISAKMP_DOI_IPSEC (0x1)
+|    protocol ID: 1 (01)
+|    SPI size: 16 (10)
+|    number of SPIs: 1 (00 01)
+| received 'informational' message HASH(1) data ok
 -- start message (ID)
 |    next payload type: ISAKMP_NEXT_ID (0x5)
 | ***parse ISAKMP Signature Payload:
@@ -349,7 +379,17 @@ east #
 | received 'informational' message HASH(1) data ok
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
-| Informational Exchange is for an unknown (expired?) SA with MSGID:0x....
+| ***parse ISAKMP Hash Payload:
+|    next payload type: ISAKMP_NEXT_D (0xc)
+|    length: 36 (00 24)
+| ***parse ISAKMP Delete Payload:
+|    next payload type: ISAKMP_NEXT_NONE (0x0)
+|    length: 28 (00 1c)
+|    DOI: ISAKMP_DOI_IPSEC (0x1)
+|    protocol ID: 1 (01)
+|    SPI size: 16 (10)
+|    number of SPIs: 1 (00 01)
+| received 'informational' message HASH(1) data ok
 -- start message (ID)
 |    next payload type: ISAKMP_NEXT_ID (0x5)
 | ***parse ISAKMP Signature Payload:
@@ -383,7 +423,17 @@ east #
 | received 'informational' message HASH(1) data ok
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
-| Informational Exchange is for an unknown (expired?) SA with MSGID:0x....
+| ***parse ISAKMP Hash Payload:
+|    next payload type: ISAKMP_NEXT_D (0xc)
+|    length: 36 (00 24)
+| ***parse ISAKMP Delete Payload:
+|    next payload type: ISAKMP_NEXT_NONE (0x0)
+|    length: 28 (00 1c)
+|    DOI: ISAKMP_DOI_IPSEC (0x1)
+|    protocol ID: 1 (01)
+|    SPI size: 16 (10)
+|    number of SPIs: 1 (00 01)
+| received 'informational' message HASH(1) data ok
 -- start message (ID)
 |    next payload type: ISAKMP_NEXT_ID (0x5)
 | ***parse ISAKMP Signature Payload:
@@ -417,7 +467,17 @@ east #
 | received 'informational' message HASH(1) data ok
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
-| Informational Exchange is for an unknown (expired?) SA with MSGID:0x....
+| ***parse ISAKMP Hash Payload:
+|    next payload type: ISAKMP_NEXT_D (0xc)
+|    length: 36 (00 24)
+| ***parse ISAKMP Delete Payload:
+|    next payload type: ISAKMP_NEXT_NONE (0x0)
+|    length: 28 (00 1c)
+|    DOI: ISAKMP_DOI_IPSEC (0x1)
+|    protocol ID: 1 (01)
+|    SPI size: 16 (10)
+|    number of SPIs: 1 (00 01)
+| received 'informational' message HASH(1) data ok
 -- start message (ID)
 |    next payload type: ISAKMP_NEXT_ID (0x5)
 | ***parse ISAKMP Signature Payload:
@@ -451,5 +511,15 @@ east #
 | received 'informational' message HASH(1) data ok
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
-| Informational Exchange is for an unknown (expired?) SA with MSGID:0x....
+| ***parse ISAKMP Hash Payload:
+|    next payload type: ISAKMP_NEXT_D (0xc)
+|    length: 36 (00 24)
+| ***parse ISAKMP Delete Payload:
+|    next payload type: ISAKMP_NEXT_NONE (0x0)
+|    length: 28 (00 1c)
+|    DOI: ISAKMP_DOI_IPSEC (0x1)
+|    protocol ID: 1 (01)
+|    SPI size: 16 (10)
+|    number of SPIs: 1 (00 01)
+| received 'informational' message HASH(1) data ok
 

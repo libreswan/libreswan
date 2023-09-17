@@ -24,7 +24,9 @@ west #
 005 "west-east-auto" #3: ESP traffic information: in=0B out=0B
 002 "west-east-auto" #1: deleting ISAKMP SA (MAIN_R3) and sending notification
 west #
- sleep 2
+ # wait for revival of IPsec then IKE
+west #
+ sleep 10
 west #
  # We should still have the ISAKMP SA for west-east-auto2
 west #
