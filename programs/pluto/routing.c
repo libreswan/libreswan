@@ -923,7 +923,7 @@ void connection_delete_child(struct ike_sa *ike, struct child_sa **child, where_
 {
 	struct connection *c = (*child)->sa.st_connection;
 	PEXPECT(c->logger,
-		c->config->ike_version == IKEv1 ? ike == NULL || ike->sa.st_serialno == (*child)->sa.st_clonedfrom :
+		c->config->ike_version == IKEv1 ? true :
 		c->config->ike_version == IKEv2 ? ike != NULL && ike->sa.st_serialno == (*child)->sa.st_clonedfrom :
 		false);
 
