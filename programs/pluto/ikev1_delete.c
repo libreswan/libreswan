@@ -543,9 +543,9 @@ bool accept_delete(struct state **stp,
 			if (p2d == NULL) {
 				esb_buf b;
 				llog_sa(RC_LOG_SERIOUS, p1,
-					"ignoring Delete SA payload: %s SA(0x%08" PRIx32 ") not found (maybe expired)",
+					"ignoring Delete SA payload: IPsec %s SA with SPI "PRI_IPSEC_SPI" not found (maybe expired)",
 					enum_show(&ikev1_protocol_names, d->isad_protoid, &b),
-					ntohl(spi));
+					pri_ipsec_spi(spi));
 				continue;
 			}
 
@@ -553,9 +553,9 @@ bool accept_delete(struct state **stp,
 			if (bogus) {
 				esb_buf b;
 				llog_sa(RC_LOG_SERIOUS, p1,
-					"warning: Delete SA payload: %s SA(0x%08" PRIx32 ") is our own SPI (bogus implementation) - deleting anyway",
+					"warning: Delete SA payload: IPsec %s SA with SPI "PRI_IPSEC_SPI" is our own SPI (bogus implementation) - deleting anyway",
 					enum_show(&ikev1_protocol_names, d->isad_protoid, &b),
-					ntohl(spi));
+					pri_ipsec_spi(spi));
 			}
 
 			if (nat_traversal_enabled &&
