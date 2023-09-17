@@ -311,27 +311,6 @@ void maybe_send_n_log_v1_delete(struct state *st, where_t where)
 }
 
 /*
- * Is a connection in use by some state?
- */
-
-static bool shared_phase1_connection(const struct connection *c)
-{
-	so_serial_t serial_us = c->newest_ike_sa;
-
-	if (serial_us == SOS_NOBODY)
-		return false;
-
-	struct state_filter sf = { .where = HERE, };
-	while (next_state_new2old(&sf)) {
-		struct state *st = sf.st;
-		if (st->st_connection != c && st->st_clonedfrom == serial_us)
-			return true;
-	}
-
-	return false;
-}
-
-/*
  * find_phase2_state_to_delete: find an AH or ESP SA to delete
  *
  * We are supposed to be given the other side's SPI.  Certain CISCO
@@ -579,89 +558,18 @@ bool accept_delete(struct state **stp,
 					ntohl(spi));
 			}
 
-			/* save for post delete_state() code */
-			co_serial_t rc_serialno = p2d->sa.st_connection->serialno;
-
 			if (nat_traversal_enabled &&
 			    p2d->sa.st_connection->config->ikev1_natt != NATT_NONE) {
 				nat_traversal_change_port_lookup(md, &p2d->sa);
 				v1_maybe_natify_initiator_endpoints(&p1->sa, HERE);
 			}
 
-			if (p2d->sa.st_connection->newest_ipsec_sa == p2d->sa.st_serialno &&
-			    (p2d->sa.st_connection->policy & POLICY_UP)) {
-				/*
-				 * Last IPsec SA for a permanent
-				 * connection that we have initiated.
-				 * Replace it.
-				 *
-				 * Useful if the other peer is
-				 * rebooting.
-				 */
-				llog_sa(RC_LOG_SERIOUS, p1,
-					"received Delete SA payload: replace IPsec State #%lu now",
-					p2d->sa.st_serialno);
-				p2d->sa.st_replace_margin = deltatime(0);
-				connection_delete_child(p1, &p2d, HERE);
+			llog_sa(RC_LOG_SERIOUS, p2d,
+				"received Delete SA payload via "PRI_SO,
+				pri_so(p1->sa.st_serialno));
+			p2d->sa.st_replace_margin = deltatime(0); /*NEEDED?*/
+			connection_delete_child(p1, &p2d, HERE);
 
-			} else {
-
-				llog_sa(RC_LOG_SERIOUS, p1,
-					"received Delete SA(0x%08" PRIx32 ") payload: %sdeleting IPsec State #%lu",
-					ntohl(spi),
-					/* XXX: can't happen see pexpect above */
-					(&p1->sa == &p2d->sa ? "self-" : ""),
-					p2d->sa.st_serialno);
-				struct connection *cc = connection_addref(p2d->sa.st_connection,
-									  p2d->sa.st_logger);
-				delete_state(&p2d->sa);
-				if (is_instance(cc)) {
-					connection_unroute(cc, HERE);
-				}
-				connection_delref(&cc, cc->logger);
-				/* danger p2d is invalid! */
-				if (md->v1_st == &p2d->sa) {
-					p2d = NULL;
-					*stp = md->v1_st = NULL;
-					return true;
-				}
-
-				/*
-				 * Either .newest_ipsec_sa matches DST
-				 * and is cleared, or was never set.
-				 */
-				struct connection *rc = connection_by_serialno(rc_serialno);
-				if (rc != NULL && rc->newest_ipsec_sa == SOS_NOBODY) {
-					del_policy(rc, POLICY_UP);
-					if (!shared_phase1_connection(rc)) {
-						/*
-						 * why loop? there can
-						 * be only one IKE SA,
-						 * just
-						 * delete_state(st)?
-						 *
-						 * XXX: because there
-						 * could also be
-						 * larval or dying
-						 * states tied to the
-						 * connection?
-						 */
-						dbg("%s() self-inflicted delete of ISAKMP", __func__);
-						struct connection *cc = connection_addref(rc, rc->logger);
-						remove_connection_from_pending(rc);
-						delete_v1_states_by_connection(rc);
-						if (is_instance(rc)) {
-							connection_unroute(rc, HERE);
-						}
-						connection_delref(&cc, cc->logger);
-						*stp = md->v1_st = NULL;
-						p1 = NULL;
-						p2d = NULL;
-						return true;
-					}
-				}
-
-			}
 		}
 	}
 
