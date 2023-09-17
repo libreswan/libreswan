@@ -35,6 +35,23 @@ struct logger;
 struct spd_route;
 
 /*
+ * The kernel protocol used to encapsulate.
+ *
+ * Since ip-xfrm(8) lists esp, ah, comp, route2, hao and setkey(8)
+ * lists ah, esp, ipcomp.
+ *
+ * XXX: The numbers end up being fed into the kernel so need to match
+ * IETF equivalents.
+ */
+
+enum kernel_proto {
+	KERNEL_PROTO_UNSPEC = 0,
+	KERNEL_PROTO_ESP = 50,		/* (50)  encryption/auth */
+	KERNEL_PROTO_AH = 51,		/* (51)  authentication */
+	KERNEL_PROTO_IPCOMP= 108,	/* (108) compression */
+};
+
+/*
  * Kernel encapsulation policy.
  *
  * This determine how a packet matching a policy should be
@@ -48,7 +65,7 @@ struct spd_route;
  */
 
 struct kernel_policy_rule {
-	enum encap_proto proto;
+	enum kernel_proto proto;
 	reqid_t reqid;
 };
 

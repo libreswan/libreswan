@@ -824,7 +824,7 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 			struct xfrm_user_tmpl *tmpl = &tmpls[i];
 			tmpl->reqid = rule->reqid;
 			tmpl->id.proto = rule->proto;
-			tmpl->optional = (rule->proto == ENCAP_PROTO_IPCOMP &&
+			tmpl->optional = (rule->proto == KERNEL_PROTO_IPCOMP &&
 					  xfrm_dir != XFRM_POLICY_OUT);
 			tmpl->aalgos = tmpl->ealgos = tmpl->calgos = ~0;
 			tmpl->family = address_type(&policy->dst.host)->af;

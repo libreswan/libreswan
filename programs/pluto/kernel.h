@@ -65,28 +65,6 @@ extern const struct enum_names kernel_policy_op_names;
 extern int num_ipsec_eroute;
 #endif
 
-
-/*
- * The protocol used to encapsulate.
- *
- * Since ip-xfrm(8) lists esp, ah, comp, route2, hao and setkey(8)
- * lists ah, esp, ipcomp.
- *
- * XXX: The numbers end up being fed into the kernel so need to match
- * IETF equivalents.
- *
- * XXX: eroute_type includes ET_INT and ET_IPIP but in this context
- * the're not valid.  Hence the separate enum to enforce their
- * exclusion.  Suspect eroute_type can be chopped.
- */
-
-enum encap_proto {
-	ENCAP_PROTO_UNSPEC = 0,
-	ENCAP_PROTO_ESP = 50,		/* (50)  encryption/auth */
-	ENCAP_PROTO_AH = 51,		/* (51)  authentication */
-	ENCAP_PROTO_IPCOMP= 108,	/* (108) compression */
-};
-
 enum direction {
 	DIRECTION_INBOUND = 2, /*>true*/
 	DIRECTION_OUTBOUND = 4, /* so lset_t works */

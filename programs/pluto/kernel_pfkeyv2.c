@@ -1210,9 +1210,9 @@ static bool kernel_pfkeyv2_policy_add(enum kernel_policy_op op,
 			       pexpect(0));
 
 	enum sadb_satype satype =
-		(policy->rule[0].proto == ENCAP_PROTO_ESP ? SADB_SATYPE_ESP :
-		 policy->rule[0].proto == ENCAP_PROTO_AH ? SADB_SATYPE_AH :
-		 policy->rule[0].proto == ENCAP_PROTO_IPCOMP ? SADB_X_SATYPE_IPCOMP :
+		(policy->rule[0].proto == KERNEL_PROTO_ESP ? SADB_SATYPE_ESP :
+		 policy->rule[0].proto == KERNEL_PROTO_AH ? SADB_SATYPE_AH :
+		 policy->rule[0].proto == KERNEL_PROTO_IPCOMP ? SADB_X_SATYPE_IPCOMP :
 		 pexpect(0));
 
 	uint8_t reqbuf[SIZEOF_SADB_BASE +
