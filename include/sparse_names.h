@@ -24,6 +24,8 @@
 #ifndef SPARSE_NAMES_H
 #define SPARSE_NAMES_H
 
+#include <stddef.h>		/* for size_t */
+
 struct jambuf;
 
 /*

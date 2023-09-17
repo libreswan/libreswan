@@ -39,6 +39,7 @@
 #include "ip_said.h"		/* for SPI_PASS et.al. */
 #include "secrets.h"		/* for enum privae_key_kind */
 #include "encap_mode.h"
+#include "encap_proto.h"
 
 const char *bool_str(bool b)
 {
