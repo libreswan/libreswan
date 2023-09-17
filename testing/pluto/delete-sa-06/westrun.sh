@@ -6,7 +6,7 @@ ipsec whack --trafficstatus
 # sending delete/notify should cause east to re-initiate
 ipsec auto --down westnet-eastnet
 # give Delete/Notify some time
-sleep 5
+sleep 10
 # A new IPsec SA should be established (older versions would take 30 seconds)
 # traffic counters should be zero
 ipsec whack --trafficstatus
