@@ -51,7 +51,7 @@ packet from 192.1.2.45:500: IMPAIR: stop processing inbound duplicate packet 4
 packet from 192.1.2.45:500: IMPAIR: start processing inbound duplicate packet 5
 packet from 192.1.2.45:500: IMPAIR: stop processing inbound duplicate packet 5
 packet from 192.1.2.45:500: IMPAIR: start processing inbound duplicate packet 6
-"westnet-eastnet" #1: ignoring Delete SA payload: PROTO_IPSEC_ESP SA(0x7b2c7112) not found (maybe expired)
+"westnet-eastnet" #1: ignoring Delete SA payload: IPsec PROTO_IPSEC_ESP SA with SPI SPISPI not found (maybe expired)
 packet from 192.1.2.45:500: IMPAIR: stop processing inbound duplicate packet 6
 packet from 192.1.2.45:500: IMPAIR: start processing inbound duplicate packet 7
 packet from 192.1.2.45:500: IMPAIR: stop processing inbound duplicate packet 7
