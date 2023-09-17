@@ -241,22 +241,6 @@ enum_names direction_names = {
 	.en_prefix = "DIRECTION_",
 };
 
-/* enum encap_mode_names */
-
-static const char *encap_mode_name[] = {
-#define S(E) [E-ENCAP_MODE_TRANSPORT] = #E
-	S(ENCAP_MODE_TRANSPORT),
-	S(ENCAP_MODE_TUNNEL),
-#undef S
-};
-
-enum_names encap_mode_names = {
-	ENCAP_MODE_TRANSPORT,
-	ENCAP_MODE_TUNNEL,
-	ARRAY_REF(encap_mode_name),
-	.en_prefix = "ENCAP_MODE_",
-};
-
 /* */
 
 static const char *const perspective_name[] = {
@@ -359,7 +343,6 @@ static const enum_names *pluto_enum_names_checklist[] = {
 	&sa_policy_bit_names,
 	&kernel_policy_op_names,
 	&direction_names,
-	&encap_mode_names,
 	&shunt_kind_names,
 	&shunt_policy_names,
 	&keyword_auth_names,

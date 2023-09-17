@@ -271,8 +271,7 @@ bool add_sec_label_kernel_policy(const struct spd_route *spd,
 {
 	const struct connection *c = spd->connection;
 	PASSERT(logger, c->config->sec_label.len > 0);
-	enum encap_mode encap_mode = (c->policy & POLICY_TUNNEL ? ENCAP_MODE_TUNNEL :
-				      ENCAP_MODE_TRANSPORT);
+	enum encap_mode encap_mode = c->config->child_sa.encap_mode;
 
 	struct nic_offload nic_offload = {};
 	setup_esp_nic_offload(&nic_offload, c, NULL);

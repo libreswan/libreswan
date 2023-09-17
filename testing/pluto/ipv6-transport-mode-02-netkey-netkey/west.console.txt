@@ -132,7 +132,7 @@ west #
 000 "v6-transport":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
 000 "v6-transport":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "v6-transport":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "v6-transport":   policy: IKEv1+RSASIG+ENCRYPT+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+000 "v6-transport":   policy: IKEv1+RSASIG+ENCRYPT+TRANSPORT+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 000 "v6-transport":   conn_prio: 128,128; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "v6-transport":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "v6-transport":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
@@ -160,7 +160,7 @@ west #
 002 "v6-transport" #1: Peer ID is ID_FQDN: '@east'
 003 "v6-transport" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
 004 "v6-transport" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "v6-transport" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+002 "v6-transport" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TRANSPORT+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 1v1 "v6-transport" #2: sent Quick Mode request
 004 "v6-transport" #2: IPsec SA established transport mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #

@@ -563,6 +563,8 @@ enum option_enums {
 	CD_ESN,
 	CD_NO_COMPRESS,
 	CD_COMPRESS,
+	CD_TUNNEL,
+	CD_TRANSPORT,
 	CD_INITIATEONTRAFFIC,
 
 	/*
@@ -777,7 +779,8 @@ static const struct option long_opts[] = {
 	{ "no-compress", no_argument, NULL, CD_NO_COMPRESS },
 	{ "compress", no_argument, NULL, CD_COMPRESS },
 	{ "overlapip", no_argument, NULL, CD_OVERLAPIP },
-	PS("tunnel", TUNNEL),
+	{ "tunnel", no_argument, NULL, CD_TUNNEL, },
+	{ "transport", no_argument, NULL, CD_TRANSPORT, },
 	{ "tunnelipv4", no_argument, NULL, CD_TUNNELIPV4 },
 	{ "tunnelipv6", no_argument, NULL, CD_TUNNELIPV6 },
 	{ "ms-dh-downgrade", no_argument, NULL, CD_MSDH_DOWNGRADE },
@@ -1605,30 +1608,27 @@ int main(int argc, char **argv)
 
 		case END_HOST:	/* --host <ip-address> */
 		{
-			lset_t new_policy;
 			if (streq(optarg, "%any")) {
-				new_policy = LEMPTY;
 				end->host_addr = get_address_any(&host_family);
 				end->host_type = KH_ANY;
 			} else if (streq(optarg, "%opportunistic")) {
 				/* always use tunnel mode; mark as opportunistic */
-				new_policy = POLICY_TUNNEL;
+				msg.encap_mode = ENCAP_MODE_TUNNEL;
 				end->host_type = KH_OPPO;
 				end->host_addr = get_address_any(&host_family);
 				end->key_from_DNS_on_demand = true;
 			} else if (streq(optarg, "%group")) {
 				/* always use tunnel mode; mark as group */
-				new_policy = POLICY_TUNNEL;
+				msg.encap_mode = ENCAP_MODE_TUNNEL;
 				end->host_type = KH_GROUP;
 				end->host_addr = get_address_any(&host_family);
 			} else if (streq(optarg, "%opportunisticgroup")) {
 				/* always use tunnel mode; mark as opportunistic */
-				new_policy = POLICY_TUNNEL;
+				msg.encap_mode = ENCAP_MODE_TUNNEL;
 				end->host_type = KH_OPPOGROUP;
 				end->host_addr = get_address_any(&host_family);
 				end->key_from_DNS_on_demand = true;
 			} else if (msg.left.id != NULL && !streq(optarg, "%null")) {
-				new_policy = LEMPTY;
 				if (opt_ttoaddress_num(&host_family, &end->host_addr) == NULL) {
 					/*
 					 * we have a proper numeric IP
@@ -1649,11 +1649,8 @@ int main(int argc, char **argv)
 					 */
 				}
 			} else {
-				new_policy = LEMPTY;
 				opt_to_address(&host_family, &end->host_addr);
 			}
-
-			msg.policy |= new_policy;
 
 			if (end->host_type == KH_GROUP ||
 			    end->host_type == KH_OPPOGROUP) {
@@ -1785,7 +1782,7 @@ int main(int argc, char **argv)
 			} else {
 				end->subnet = optarg;	/* decoded by Pluto */
 			}
-			msg.policy |= POLICY_TUNNEL;	/* client => tunnel */
+			msg.encap_mode = ENCAP_MODE_TUNNEL;	/* client => tunnel */
 			continue;
 
 		/* --clientprotoport <protocol>/<port> */
@@ -1852,11 +1849,17 @@ int main(int argc, char **argv)
 			msg.compress = YN_NO;
 			continue;
 
+		case CD_TUNNEL:		/* --tunnel */
+			msg.encap_mode = ENCAP_MODE_TUNNEL;
+			continue;
+
+		case CD_TRANSPORT:	/* --transport */
+			msg.encap_mode = ENCAP_MODE_TRANSPORT;
+			continue;
+
 		case CDP_SINGLETON + POLICY_ENCRYPT_IX:	/* --encrypt */
 		/* --authenticate */
 		case CDP_SINGLETON + POLICY_AUTHENTICATE_IX:
-		case CDP_SINGLETON + POLICY_TUNNEL_IX:	/* --tunnel */
-
 			msg.policy |= LELEM(c - CDP_SINGLETON);
 			continue;
 

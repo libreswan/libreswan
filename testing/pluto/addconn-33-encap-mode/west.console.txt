@@ -1,0 +1,36 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec add addconn
+002 "addconn": added IKEv2 connection
+west #
+ ipsec add addconn--type=transport
+002 "addconn--type=transport": added IKEv2 connection
+west #
+ ipsec add addconn--type=tunnel
+002 "addconn--type=tunnel": added IKEv2 connection
+west #
+ ipsec whack --name whack                           --encrypt --host 1.2.3.4 --to --host 5.6.7.8
+002 "whack": added IKEv2 connection
+west #
+ ipsec whack --name whack--tunnel     --tunnel      --encrypt --host 1.2.3.4 --to --host 5.6.7.8
+002 "whack--tunnel": added IKEv2 connection
+west #
+ ipsec whack --name whack--transport  --transport   --encrypt --host 1.2.3.4 --to --host 5.6.7.8
+002 "whack--transport": added IKEv2 connection
+west #
+ ipsec connectionstatus | sed -n -e 's/\(.* policy:\) .*TUNNEL.*/\1 TUNNEL/p'
+000 "addconn":   policy: TUNNEL
+000 "addconn--type=tunnel":   policy: TUNNEL
+000 "whack":   policy: TUNNEL
+000 "whack--tunnel":   policy: TUNNEL
+west #
+ ipsec connectionstatus | sed -n -e 's/\(.* policy:\) .*TRANSPORT.*/\1 TRANSPORT/p'
+000 "addconn--type=transport":   policy: TRANSPORT
+000 "whack--transport":   policy: TRANSPORT
+west #
+ 

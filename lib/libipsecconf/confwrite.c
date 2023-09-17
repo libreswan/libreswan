@@ -453,6 +453,7 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 			(conn->policy &
 			 (POLICY_AUTHENTICATE | POLICY_ENCRYPT));
 		enum shunt_policy shunt_policy = conn->never_negotiate_shunt;
+		enum keyword_satype satype = conn->options[KNCF_TYPE];
 		static const char *const noyes[2 /*bool*/] = {"no", "yes"};
 		/*
 		 * config-write-policy-bit: short-cut for writing out a field that is a policy
@@ -473,7 +474,16 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 		}
 		switch (shunt_policy) {
 		case SHUNT_UNSET:
-			cwf("type", conn->policy & POLICY_TUNNEL? "tunnel" : "transport");
+			switch (satype) {
+			case KS_TUNNEL:
+				cwf("type", "tunnel");
+				break;
+			case KS_TRANSPORT:
+				cwf("type", "transport");
+				break;
+			default:
+				break;
+			}
 
 			cwyn("compress", KNCF_COMPRESS);
 			cwyn("pfs", KNCF_PFS);

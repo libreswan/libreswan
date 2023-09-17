@@ -231,12 +231,13 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 	case LAK_CHILD_FAIL:
 	{
 		/* head */
-		jam(&buf, "op=%s %s connstate=%lu, satype=%s samode=%s",
+		jam(&buf, "op=%s %s connstate=%lu, satype=%s",
 		    op == LAK_CHILD_DESTROY ? "destroy" : "start", /* fail uses op=start */
 		    conn_encode,
 		    st->st_serialno,
-		    st->st_esp.present ? "ipsec-esp" : st->st_ah.present ? "ipsec-ah" : "ipsec-policy",
-		    (c->policy & POLICY_TUNNEL ? "tunnel" : "transport"));
+		    st->st_esp.present ? "ipsec-esp" : st->st_ah.present ? "ipsec-ah" : "ipsec-policy");
+		jam_string(&buf, " samode=");
+		jam_enum_short(&buf, &encap_mode_story, c->config->child_sa.encap_mode);
 
 		/*
 		 * XXX: Instead of IKEv1_ESP_ID, this should use

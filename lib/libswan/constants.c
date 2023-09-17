@@ -38,6 +38,7 @@
 #include "lswlog.h"
 #include "ip_said.h"		/* for SPI_PASS et.al. */
 #include "secrets.h"		/* for enum privae_key_kind */
+#include "encap_mode.h"
 
 const char *bool_str(bool b)
 {
@@ -2395,6 +2396,8 @@ static const enum_names *en_checklist[] = {
 	&ipseckey_algorithm_type_names,
 	&ipseckey_algorithm_config_names,
 	&tcp_option_story,
+	&encap_mode_names,
+	&encap_mode_story,
 #ifdef KERNEL_XFRM
 	&xfrm_policy_names,
 #endif
