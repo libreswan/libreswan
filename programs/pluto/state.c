@@ -722,6 +722,13 @@ static void ldbg_sa_delete_n_send(struct ike_sa *ike, struct state *st)
 /* delete a state object */
 void delete_state(struct state *st)
 {
+	pdbg(st->st_logger, "%s() skipping revival:%s kernel_policy:%s send_delete:%s log_message:%s",
+	     __func__,
+	     bool_str(st->st_on_delete.skip_revival),
+	     bool_str(st->st_on_delete.skip_kernel_policy),
+	     bool_str(st->st_on_delete.skip_send_delete),
+	     bool_str(st->st_on_delete.skip_log_message));
+
 	/*
 	 * WHen an IKEv2 IKE SA, there can be no children.
 	 */
