@@ -862,7 +862,6 @@ void replace_ipsec_with_bare_kernel_policies(enum routing_event event,
 	struct connection *c = child->sa.st_connection;
 	enum shunt_kind shunt_kind =
 		(new_routing == RT_ROUTED_ONDEMAND ? SHUNT_KIND_ONDEMAND :
-		 new_routing == RT_ROUTED_REVIVAL ? SHUNT_KIND_ONDEMAND :
 		 new_routing == RT_ROUTED_FAILURE ? SHUNT_KIND_FAILURE :
 		 SHUNT_KIND_ROOF);
 	PASSERT(logger, shunt_kind != SHUNT_KIND_ROOF);

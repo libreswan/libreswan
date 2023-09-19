@@ -23,7 +23,6 @@
 static const char *const routing_story_strings[] = {
 	[RT_UNROUTED] = "unrouted",			  /* unrouted */
 	[RT_UNROUTED_REVIVAL] = "unrouted revival",	  /* unrouted, no shunts, revival */
-	[RT_ROUTED_REVIVAL] = "prospective erouted",	  /* routed, ondemand shunts, revival (LOG A LIE) */
 	[RT_UNROUTED_NEGOTIATION] = "unrouted HOLD",      /* unrouted, but HOLD shunt installed */
 	[RT_UNROUTED_INBOUND] = "unrouted HOLD",	/* unrouted, outbound negotiation, inbound established */
 	[RT_ROUTED_ONDEMAND] = "prospective erouted",  /* routed, and prospective shunt installed */

@@ -197,7 +197,6 @@ void fake_connection_establish_outbound(struct ike_sa *ike, struct child_sa *chi
 enum shunt_kind routing_shunt_kind(enum routing routing)
 {
 	switch (routing) {
-	case RT_ROUTED_REVIVAL:
 	case RT_ROUTED_ONDEMAND:
 		return SHUNT_KIND_ONDEMAND;
 	case RT_ROUTED_NEVER_NEGOTIATE:
@@ -226,7 +225,6 @@ bool routed(const struct connection *c)
 {
 	enum routing r = c->child.routing;
 	switch (r) {
-	case RT_ROUTED_REVIVAL:
 	case RT_ROUTED_ONDEMAND:
 	case RT_ROUTED_NEVER_NEGOTIATE:
 	case RT_ROUTED_NEGOTIATION:
@@ -253,7 +251,6 @@ bool kernel_policy_installed(const struct connection *c)
 	case RT_UNROUTED_NEGOTIATION:
 		return false;
 	case RT_ROUTED_ONDEMAND:
-	case RT_ROUTED_REVIVAL:
 	case RT_ROUTED_NEGOTIATION:
 	case RT_UNROUTED_INBOUND:
 	case RT_ROUTED_NEVER_NEGOTIATE:
@@ -399,7 +396,6 @@ static void ondemand_to_negotiation(enum routing_event event,
 			 event == CONNECTION_ACQUIRE ||
 			 event == CONNECTION_REVIVE));
 	enum routing rt_negotiation = (c->child.routing == RT_ROUTED_ONDEMAND ? RT_ROUTED_NEGOTIATION :
-				       c->child.routing == RT_ROUTED_REVIVAL ? RT_ROUTED_NEGOTIATION :
 				       CONNECTION_ROUTING_ROOF);
 	PASSERT(logger, (rt_negotiation != CONNECTION_ROUTING_ROOF));
 	FOR_EACH_ITEM(spd, &c->child.spds) {
@@ -422,27 +418,24 @@ static void ondemand_to_negotiation(enum routing_event event,
  * instantiated instances do not take this code path).
  */
 
-static void routed_negotiation_to_ondemand(enum routing_event event,
-					   struct connection *c,
-					   struct logger *logger,
-					   where_t where,
-					   enum routing rt_ondemand,
-					   const char *reason)
+static void routed_negotiation_to_routed_ondemand(enum routing_event event,
+						  struct connection *c,
+						  struct logger *logger,
+						  where_t where,
+						  const char *reason)
 {
 	ldbg_routing(c->logger, "%s() %s", __func__, reason);
 	PASSERT(logger, (event == CONNECTION_TIMEOUT_IKE ||
 			 event == CONNECTION_DELETE_IKE));
-	PASSERT(logger, (rt_ondemand == RT_ROUTED_ONDEMAND ||
-			 rt_ondemand == RT_ROUTED_REVIVAL));
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 		if (!replace_spd_kernel_policy(spd, DIRECTION_OUTBOUND,
-					       rt_ondemand,
+					       RT_ROUTED_ONDEMAND,
 					       SHUNT_KIND_ONDEMAND,
 					       logger, where, reason)) {
 			llog(RC_LOG, logger, "%s failed", reason);
 		}
 	}
-	set_routing(event, c, rt_ondemand, NULL, where);
+	set_routing(event, c, RT_ROUTED_ONDEMAND, NULL, where);
 }
 
 /*
@@ -479,7 +472,7 @@ static void down_routed_tunnel(enum routing_event event,
 		ldbg_routing((*child)->sa.st_logger,
 			     "replacing TUNNEL with ONDEMAND; it will be revived");
 		replace_ipsec_with_bare_kernel_policies(event, *child,
-							RT_ROUTED_REVIVAL,
+							RT_ROUTED_ONDEMAND,
 							EXPECT_KERNEL_POLICY_OK, HERE);
 		schedule_child_revival(ike, *child, "received Delete/Notify");
 		/* covered by above; no!? */
@@ -1116,12 +1109,8 @@ static void dispatch_1(enum routing_event event,
 			return;
 
 		case X(INITIATE, ROUTED_ONDEMAND, PERMANENT):
-		case X(INITIATE, ROUTED_REVIVAL, PERMANENT):
 		case X(ACQUIRE, ROUTED_ONDEMAND, PERMANENT):
-		case X(ACQUIRE, ROUTED_REVIVAL, PERMANENT):
-			if (c->child.routing == RT_ROUTED_REVIVAL) {
-				delete_revival(c);
-			}
+			flush_routed_ondemand_revival(c);
 			ondemand_to_negotiation(event, c, where, "negotiating permanent");
 			PEXPECT(logger, c->child.routing == RT_ROUTED_NEGOTIATION);
 			/* ipsecdoi_initiate may replace SOS_NOBODY with a state */
@@ -1194,9 +1183,7 @@ static void dispatch_1(enum routing_event event,
 			}
 			break;
 		case X(REVIVE, ROUTED_ONDEMAND, PERMANENT):
-		case X(REVIVE, ROUTED_REVIVAL, PERMANENT):
 		case X(REVIVE, ROUTED_ONDEMAND, INSTANCE):
-		case X(REVIVE, ROUTED_REVIVAL, INSTANCE):
 			if (BROKEN_TRANSITION) {
 				/*
 				 * ikev2-20-ikesa-reauth:
@@ -1296,11 +1283,8 @@ static void dispatch_1(enum routing_event event,
 			return;
 
 		case X(UNROUTE, ROUTED_ONDEMAND, PERMANENT):
-		case X(UNROUTE, ROUTED_REVIVAL, PERMANENT):
 			PEXPECT(logger, !never_negotiate(c));
-			if (c->child.routing == RT_ROUTED_REVIVAL) {
-				delete_revival(c);
-			}
+			flush_routed_ondemand_revival(c);
 			delete_spd_kernel_policies(&c->child.spds,
 						   EXPECT_NO_INBOUND,
 						   c->logger, where, "unroute permanent");
@@ -1336,7 +1320,7 @@ static void dispatch_1(enum routing_event event,
 			ldbg_routing(logger, "already unrouted");
 			return;
 		case X(UNROUTE, ROUTED_ONDEMAND, TEMPLATE):
-		case X(UNROUTE, ROUTED_REVIVAL, TEMPLATE):
+			flush_routed_ondemand_revival(c);
 			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
 						   c->logger, where, "unroute template");
 			/* do now so route_owner won't find us */
@@ -1440,10 +1424,7 @@ static void dispatch_1(enum routing_event event,
 			return;
 
 		case X(UNROUTE, ROUTED_ONDEMAND, INSTANCE):
-		case X(UNROUTE, ROUTED_REVIVAL, INSTANCE):
-			if (c->child.routing == RT_ROUTED_REVIVAL) {
-				delete_revival(c);
-			}
+			flush_routed_ondemand_revival(c);
 			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
 						   c->logger, where, "unroute instance");
 			/* do now so route_owner won't find us */
@@ -1501,19 +1482,17 @@ static void dispatch_1(enum routing_event event,
 			}
 			/* ex, permanent+up */
 			if (should_revive_ike((*e->ike))) {
-				routed_negotiation_to_ondemand(event, c, logger, where,
-							       RT_ROUTED_REVIVAL,
-							       "restoring ondemand, reviving");
-				PEXPECT(logger, c->child.routing == RT_ROUTED_REVIVAL);
+				routed_negotiation_to_routed_ondemand(event, c, logger, where,
+								      "restoring ondemand, reviving");
+				PEXPECT(logger, c->child.routing == RT_ROUTED_ONDEMAND);
 				schedule_ike_revival((*e->ike), (event == CONNECTION_DELETE_IKE ? "delete IKE SA" :
 								 "timeout IKE SA"));
 				delete_ike_sa(e->ike);
 				return;
 			}
 			if (c->policy & POLICY_ROUTE) {
-				routed_negotiation_to_ondemand(event, c, logger, where,
-							       RT_ROUTED_ONDEMAND,
-							       "restoring ondemand, connection is routed");
+				routed_negotiation_to_routed_ondemand(event, c, logger, where,
+								      "restoring ondemand, connection is routed");
 				PEXPECT(logger, c->child.routing == RT_ROUTED_ONDEMAND);
 				delete_ike_sa(e->ike);
 				return;
@@ -1609,7 +1588,6 @@ static void dispatch_1(enum routing_event event,
 			set_routing(event, c, RT_UNROUTED, NULL, where);
 			return;
 		case X(DELETE_IKE, ROUTED_ONDEMAND, PERMANENT):		/* ROUTED_NEGOTIATION!?! */
-		case X(DELETE_IKE, ROUTED_REVIVAL, PERMANENT):		/* ROUTED_NEGOTIATION!?! */
 			if (BROKEN_TRANSITION) {
 				delete_ike_family(e->ike);
 				return;
@@ -1645,11 +1623,8 @@ static void dispatch_1(enum routing_event event,
 			return;
 
 		case X(ESTABLISH_INBOUND, ROUTED_ONDEMAND, TEMPLATE): /* ikev1-l2tp-03-two-interfaces */
-		case X(ESTABLISH_INBOUND, ROUTED_REVIVAL, TEMPLATE): /* ? */
 			if (BROKEN_TRANSITION) {
-				if (c->child.routing == RT_ROUTED_REVIVAL) {
-					delete_revival(c);
-				}
+				flush_routed_ondemand_revival(c);
 				/*
 				 * ikev1-l2tp-03-two-interfaces
 				 * github/693 github/1117
@@ -1670,11 +1645,8 @@ static void dispatch_1(enum routing_event event,
 			break;
 
 		case X(ESTABLISH_INBOUND, ROUTED_ONDEMAND, INSTANCE): /* ikev2-32-nat-rw-rekey */
-		case X(ESTABLISH_INBOUND, ROUTED_REVIVAL, INSTANCE): /* ? */
 			if (BROKEN_TRANSITION) {
-				if (c->child.routing == RT_ROUTED_REVIVAL) {
-					delete_revival(c);
-				}
+				flush_routed_ondemand_revival(c);
 				/* ikev2-32-nat-rw-rekey */
 				set_routing(event, c, RT_ROUTED_INBOUND, NULL, where);
 				return;
@@ -1699,18 +1671,20 @@ static void dispatch_1(enum routing_event event,
 				return;
 			}
 			break;
+		case X(ESTABLISH_INBOUND, ROUTED_ONDEMAND, PERMANENT):
+			if (BROKEN_TRANSITION) {
+				/* instance was routed by routed-ondemand? */
+				flush_routed_ondemand_revival(c);
+				set_routing(event, c, RT_ROUTED_INBOUND, NULL, where);
+				return;
+			}
+			break;
 		case X(ESTABLISH_INBOUND, ROUTED_NEGOTIATION, INSTANCE):
 		case X(ESTABLISH_INBOUND, ROUTED_NEGOTIATION, PERMANENT):
-		case X(ESTABLISH_INBOUND, ROUTED_ONDEMAND, PERMANENT):
-		case X(ESTABLISH_INBOUND, ROUTED_REVIVAL, PERMANENT):
 		case X(ESTABLISH_INBOUND, UNROUTED, INSTANCE):
 		case X(ESTABLISH_INBOUND, UNROUTED, PERMANENT):
 		case X(ESTABLISH_INBOUND, UNROUTED_NEGOTIATION, INSTANCE):
 			if (BROKEN_TRANSITION) {
-				/* instance was routed by routed-ondemand? */
-				if (c->child.routing == RT_ROUTED_REVIVAL) {
-					delete_revival(c);
-				}
 				set_routing(event, c, RT_ROUTED_INBOUND, NULL, where);
 				return;
 			}

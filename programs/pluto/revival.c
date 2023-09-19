@@ -81,6 +81,16 @@ void delete_revival(const struct connection *c)
 	}
 }
 
+void flush_routed_ondemand_revival(struct connection *c)
+{
+	PEXPECT(c->logger, c->child.routing == RT_ROUTED_ONDEMAND);
+	if (c->temp_vars.revival.attempt > 0) {
+		delete_revival(c);
+	} else {
+		PEXPECT(c->logger, !connection_event_is_scheduled(c, CONNECTION_REVIVAL));
+	}
+}
+
 static bool revival_plausable(struct connection *c, struct logger *logger)
 {
 	if (exiting_pluto) {
