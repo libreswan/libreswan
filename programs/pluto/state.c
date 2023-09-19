@@ -2500,7 +2500,8 @@ static bool delete_ike_family_child(struct ike_sa *ike, struct state *st)
 	case IKEv1:
 	{
 		struct connection *const c = st->st_connection;
-		bool will_notify = (should_send_v1_delete(st) != NULL);
+		struct ike_sa *isakmp = should_send_v1_delete(st);
+		bool will_notify = (isakmp != NULL);
 		if (ike->sa.st_connection == st->st_connection) {
 			deltatime_buf dtb;
 			llog_sa(RC_LOG, ike,
@@ -2518,15 +2519,21 @@ static bool delete_ike_family_child(struct ike_sa *ike, struct state *st)
 				str_deltatime(realtimediff(realnow(), st->st_inception), &dtb),
 				will_notify ? "" : "NOT ");
 		}
+		on_delete(st, skip_log_message);
+		if (isakmp != NULL) {
+			send_v1_delete(isakmp, st, HERE);
+		} else {
+			on_delete(st, skip_send_delete);
+		}
 		break;
 	}
 
 	case IKEv2:
 		on_delete(st, skip_send_delete);
+		on_delete(st, skip_log_message);
 		break;
 	}
 
-	on_delete(st, skip_log_message);
 	delete_state(st);
 	return false; /* keep going */
 }

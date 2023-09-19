@@ -305,6 +305,7 @@ void maybe_send_n_log_v1_delete(struct state *st, where_t where)
 	struct ike_sa *isakmp = should_send_v1_delete(st); /* could be NULL */
 	llog_sa_delete_n_send(isakmp, st);
 	if (isakmp == NULL) {
+		on_delete(st, skip_send_delete);
 		return;
 	}
 	send_v1_delete(isakmp, st, where);
