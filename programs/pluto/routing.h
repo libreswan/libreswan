@@ -47,7 +47,6 @@ enum direction;
 
 enum routing {
 	RT_UNROUTED,			/* unrouted, no shunts */
-	RT_UNROUTED_REVIVAL,		/* unrouted, no shunts, revival pending */
 	RT_ROUTED_NEVER_NEGOTIATE,	/* routed, and .never_negotiate_shunt installed */
 	RT_ROUTED_ONDEMAND,		/* routed, and SHUNT_TRAP installed */
 	RT_UNROUTED_NEGOTIATION,	/* unrouted, but .negotiation_shunt installed */

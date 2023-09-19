@@ -95,7 +95,7 @@ void event_v1_retransmit(struct state *st, monotime_t now UNUSED)
 			switch (st->st_connection->child.routing) {
 			case RT_UNROUTED:
 			case RT_UNROUTED_NEGOTIATION:
-				new_rt = RT_UNROUTED_REVIVAL;
+				new_rt = RT_UNROUTED;
 				break;
 			case RT_ROUTED_NEGOTIATION:
 				new_rt = RT_ROUTED_ONDEMAND;

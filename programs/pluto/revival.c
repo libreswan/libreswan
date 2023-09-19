@@ -59,7 +59,7 @@
  * outstanding revivals; hence no need to free revivals.
  */
 
-void delete_revival(const struct connection *c)
+static void delete_revival(const struct connection *c)
 {
 	if (!flush_connection_event(c, CONNECTION_REVIVAL)) {
 		if (impair.revival) {
@@ -84,6 +84,16 @@ void delete_revival(const struct connection *c)
 void flush_routed_ondemand_revival(struct connection *c)
 {
 	PEXPECT(c->logger, c->child.routing == RT_ROUTED_ONDEMAND);
+	if (c->temp_vars.revival.attempt > 0) {
+		delete_revival(c);
+	} else {
+		PEXPECT(c->logger, !connection_event_is_scheduled(c, CONNECTION_REVIVAL));
+	}
+}
+
+void flush_unrouted_revival(struct connection *c)
+{
+	PEXPECT(c->logger, c->child.routing == RT_UNROUTED);
 	if (c->temp_vars.revival.attempt > 0) {
 		delete_revival(c);
 	} else {

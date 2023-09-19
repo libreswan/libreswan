@@ -33,8 +33,8 @@ void schedule_child_revival(struct ike_sa *ike, struct child_sa *child, const ch
 bool should_revive_ike(struct ike_sa *ike);
 void schedule_ike_revival(struct ike_sa *ike, const char *subplot);
 
-void delete_revival(const struct connection *c);
 void flush_routed_ondemand_revival(struct connection *c);
+void flush_unrouted_revival(struct connection *c);
 
 void init_revival_timer(void);
 

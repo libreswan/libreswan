@@ -215,7 +215,6 @@ enum shunt_kind routing_shunt_kind(enum routing routing)
 	case RT_ROUTED_TUNNEL:
 		return SHUNT_KIND_IPSEC;
 	case RT_UNROUTED:
-	case RT_UNROUTED_REVIVAL:
 		bad_case(routing);
 	}
 	bad_case(routing);
@@ -233,7 +232,6 @@ bool routed(const struct connection *c)
 	case RT_ROUTED_FAILURE:
 		return true;
 	case RT_UNROUTED:
-	case RT_UNROUTED_REVIVAL:
 	case RT_UNROUTED_NEGOTIATION:
 	case RT_UNROUTED_FAILURE:
 	case RT_UNROUTED_INBOUND:
@@ -247,7 +245,6 @@ bool kernel_policy_installed(const struct connection *c)
 {
 	switch (c->child.routing) {
 	case RT_UNROUTED:
-	case RT_UNROUTED_REVIVAL:
 	case RT_UNROUTED_NEGOTIATION:
 		return false;
 	case RT_ROUTED_ONDEMAND:
@@ -1098,10 +1095,7 @@ static void dispatch_1(enum routing_event event,
 			break;
 
 		case X(INITIATE, UNROUTED, PERMANENT):
-		case X(INITIATE, UNROUTED_REVIVAL, PERMANENT):
-			if (c->child.routing == RT_UNROUTED_REVIVAL) {
-				delete_revival(c);
-			}
+			flush_unrouted_revival(c);
 			set_routing(event, c, RT_UNROUTED_NEGOTIATION, NULL, where);
 			ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
 					  e->inception, null_shunk,
@@ -1150,38 +1144,16 @@ static void dispatch_1(enum routing_event event,
 			return;
 
 		case X(REVIVE, UNROUTED, INSTANCE):
-			if (BROKEN_TRANSITION) {
-				/*
-				 * Ex ikev2-30-rw-no-rekey.
-				 *
-				 * ROAD in ROUTED_TUNNEL, receiving a
-				 * delete message, transitions to
-				 * UNROUTED when it should have
-				 * transitioned to ROUTED_ONDEMAND?
-				*/
-				initiate_connection(c, /*remote-host-name*/NULL,
-						    /*background*/true,
-						    logger);
-				return;
-			}
-			ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
-					  e->inception, e->sec_label,
-					  e->background, logger);
+		case X(REVIVE, UNROUTED, PERMANENT):
+			/*
+			 * Same as INITIATE, UNROUTED_REVIVAL,
+			 * PERMANENT except slight initiate
+			 * difference.
+			 */
+			set_routing(event, c, RT_UNROUTED_NEGOTIATION, NULL, where);
+			ipsecdoi_initiate(c, c->policy, SOS_NOBODY, e->inception,
+					  null_shunk, /*background*/false, logger);
 			return;
-		case X(REVIVE, UNROUTED_REVIVAL, PERMANENT):
-		case X(REVIVE, UNROUTED_REVIVAL, INSTANCE):
-			if (BROKEN_TRANSITION) {
-				/*
-				 * Same as INITIATE, UNROUTED_REVIVAL,
-				 * PERMANENT except slight initiate
-				 * difference.
-				 */
-				set_routing(event, c, RT_UNROUTED_NEGOTIATION, NULL, where);
-				ipsecdoi_initiate(c, c->policy, SOS_NOBODY, e->inception,
-						  null_shunk, /*background*/false, logger);
-				return;
-			}
-			break;
 		case X(REVIVE, ROUTED_ONDEMAND, PERMANENT):
 		case X(REVIVE, ROUTED_ONDEMAND, INSTANCE):
 			if (BROKEN_TRANSITION) {
@@ -1262,11 +1234,6 @@ static void dispatch_1(enum routing_event event,
 			}
 			break;
 		case X(UNROUTE, UNROUTED_NEGOTIATION, PERMANENT):
-		case X(UNROUTE, UNROUTED_REVIVAL, PERMANENT):
-		case X(UNROUTE, UNROUTED_REVIVAL, INSTANCE):
-			if (c->child.routing == RT_UNROUTED_REVIVAL) {
-				delete_revival(c);
-			}
 			set_routing(event, c, RT_UNROUTED, NULL, where);
 			return;
 
@@ -1453,7 +1420,7 @@ static void dispatch_1(enum routing_event event,
 			}
 			/* ex, permanent+initiate */
 			if (should_revive_ike((*e->ike))) {
-				set_routing(event, c, RT_UNROUTED_REVIVAL, NULL, where);
+				set_routing(event, c, RT_UNROUTED, NULL, where);
 				schedule_ike_revival((*e->ike), (event == CONNECTION_DELETE_IKE ? "delete IKE SA" :
 								 "timeout IKE SA"));
 				delete_ike_sa(e->ike);
@@ -1753,7 +1720,6 @@ static void dispatch_1(enum routing_event event,
 		case X(TERMINATE, ROUTED_ONDEMAND, PERMANENT):
 		case X(TERMINATE, UNROUTED, PERMANENT):
 		case X(TERMINATE, UNROUTED_NEGOTIATION, PERMANENT):
-		case X(TERMINATE, UNROUTED_REVIVAL, PERMANENT):
 			if (BROKEN_TRANSITION) {
 				remove_connection_from_pending(c);
 				delete_states_by_connection(c);
