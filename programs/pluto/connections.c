@@ -2058,6 +2058,25 @@ static diag_t extract_connection(const struct whack_message *wm,
 	config->child_sa.ipcomp = compress;
 	c->policy |= (compress ? POLICY_COMPRESS : LEMPTY);
 
+	/* sanity check?  done below */
+	enum encap_proto encap_proto;
+	if (never_negotiate_wm(wm)) {
+		if (wm->phase2 != ENCAP_PROTO_UNSET) {
+			enum_buf sb;
+			llog(RC_INFORMATIONAL, c->logger,
+			     "warning: phase2=%s ignored for never-negotiate connection",
+			     str_enum(&encap_proto_story, wm->phase2, &sb));
+		}
+		encap_proto = ENCAP_PROTO_UNSET;
+	} else {
+		encap_proto = (wm->phase2 == ENCAP_PROTO_UNSET ? ENCAP_PROTO_ESP :
+			       wm->phase2);
+	}
+	config->child_sa.encap_proto = encap_proto;
+	c->policy |= (encap_proto == ENCAP_PROTO_ESP ? POLICY_ENCRYPT :
+		      encap_proto == ENCAP_PROTO_AH ? POLICY_AUTHENTICATE :
+		      LEMPTY);
+
 	enum encap_mode mode;
 	if (never_negotiate_wm(wm)) {
 		if (wm->encap_mode != ENCAP_MODE_UNSET) {
@@ -2096,16 +2115,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 			return diag("kind=%s shunt connection cannot have authby=%s authentication",
 				    str_enum_short(&shunt_policy_names, wm->never_negotiate_shunt, &sb),
 				    str_authby(wm->authby, &ab));
-		}
-	} else {
-		switch (wm->policy & (POLICY_AUTHENTICATE | POLICY_ENCRYPT)) {
-		case LEMPTY:
-			if (!wm->authby.never) {
-				return diag("non-shunt connection must have AH or ESP");
-			}
-			break;
-		case POLICY_AUTHENTICATE | POLICY_ENCRYPT:
-			return diag("non-shunt connection must not specify both AH and ESP");
 		}
 	}
 
@@ -2184,9 +2193,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 		}
 		if (!pfs) {
 			return diag("PFS required for opportunism");
-		}
-		if ((wm->policy & POLICY_ENCRYPT) == 0) {
-			return diag("encryption required for opportunism");
 		}
 	}
 #endif
@@ -2691,8 +2697,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 			     "ignored esp= option for type=passthrough connection");
 		}
 	} else if (wm->esp != NULL ||
-		   (c->config->ike_version == IKEv2 &&
-		    (c->policy & (POLICY_ENCRYPT|POLICY_AUTHENTICATE)))) {
+		   (c->config->ike_version == IKEv2 && encap_proto != ENCAP_PROTO_UNSET)) {
 
 		const struct proposal_policy proposal_policy = {
 			/*
@@ -2720,8 +2725,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 		 * those functions are almost identical).
 		 */
 		struct proposal_parser *(*fn)(const struct proposal_policy *policy) =
-			(c->policy & POLICY_ENCRYPT) ? esp_proposal_parser :
-			(c->policy & POLICY_AUTHENTICATE) ? ah_proposal_parser :
+			(encap_proto == ENCAP_PROTO_ESP) ? esp_proposal_parser :
+			(encap_proto == ENCAP_PROTO_AH) ? ah_proposal_parser :
 			NULL;
 		passert(fn != NULL);
 		struct proposal_parser *parser = fn(&proposal_policy);
@@ -3012,8 +3017,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 		if (mode == ENCAP_MODE_TRANSPORT) {
 			return diag("connection with type=transport cannot specify tfc=");
 		}
-		if (LIN(POLICY_AUTHENTICATE, wm->policy)) {
-			return diag("connection with phase2=ah cannot specify tfc=");
+		if (encap_proto == ENCAP_PROTO_AH) {
+			return diag("connection with encap_proto=ah cannot specify tfc=");
 		}
 		if (wm->tfc > UINT32_MAX) {
 			return diag("tfc=%ju exceeds upper bound of %"PRIu32,
@@ -3644,8 +3649,18 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 		sep = "+";			\
 	}
 
-	PP(ENCRYPT);
-	PP(AUTHENTICATE);
+	switch (c->config->child_sa.encap_proto) {
+	case ENCAP_PROTO_ESP:
+		CN(true, ENCRYPT);
+		break;
+	case ENCAP_PROTO_AH:
+		CN(true, AUTHENTICATE);
+		break;
+	default:
+		break;
+	}
+	policy &= ~(POLICY_ENCRYPT|POLICY_AUTHENTICATE);
+
 	CN(c->config->child_sa.ipcomp, COMPRESS); policy &= ~POLICY_COMPRESS;
 	CS(c->config->child_sa.encap_mode != ENCAP_MODE_UNSET,
 	   enum_name_short(&encap_mode_names, c->config->child_sa.encap_mode));

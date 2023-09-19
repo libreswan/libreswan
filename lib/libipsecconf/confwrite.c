@@ -28,6 +28,7 @@
 #include "lmod.h"
 #include "ip_address.h"
 #include "sparse_names.h"
+#include "encap_proto.h"
 
 #include "ipsecconf/confread.h"
 #include "ipsecconf/confwrite.h"
@@ -448,10 +449,9 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 	}
 
 	if (conn->policy != LEMPTY ||
-	    conn->never_negotiate_shunt != SHUNT_UNSET) {
-		lset_t phase2_policy =
-			(conn->policy &
-			 (POLICY_AUTHENTICATE | POLICY_ENCRYPT));
+	    conn->never_negotiate_shunt != SHUNT_UNSET ||
+	    conn->options[KNCF_PHASE2] != 0) {
+		enum encap_proto encap_proto = conn->options[KNCF_PHASE2];
 		enum shunt_policy shunt_policy = conn->never_negotiate_shunt;
 		enum keyword_satype satype = conn->options[KNCF_TYPE];
 		static const char *const noyes[2 /*bool*/] = {"no", "yes"};
@@ -495,26 +495,9 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 				cwf("authby", str_authby(conn->authby, &ab));
 			}
 
-			{
-				const char *p2ps = "UNKNOWN";
-
-				switch (phase2_policy) {
-				case POLICY_AUTHENTICATE:
-					p2ps = "ah";
-					break;
-
-				case POLICY_ENCRYPT:
-					p2ps = "esp";
-					break;
-
-				case POLICY_ENCRYPT | POLICY_AUTHENTICATE:
-					p2ps = "ah+esp";
-					break;
-
-				default:
-					break;
-				}
-				cwf("phase2", p2ps);
+			if (encap_proto != ENCAP_PROTO_UNSET) {
+				/* story is lower-case */
+				cwf("phase2", enum_name_short(&encap_proto_story, encap_proto));
 			}
 
 			/* ikev2= */

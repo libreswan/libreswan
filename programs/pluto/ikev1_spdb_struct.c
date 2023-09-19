@@ -116,7 +116,7 @@ static bool ikev1_verify_esp(const struct connection *c,
 			     const struct trans_attrs *ta,
 			     struct logger *logger)
 {
-	if (!(c->policy & POLICY_ENCRYPT)) {
+	if (c->config->child_sa.encap_proto != ENCAP_PROTO_ESP) {
 		dbg("ignoring ESP proposal as POLICY_ENCRYPT unset");
 		return false;       /* try another */
 	}
@@ -226,7 +226,7 @@ static bool ikev1_verify_ah(const struct connection *c,
 			    const struct trans_attrs *ta,
 			    struct logger *logger)
 {
-	if (!(c->policy & POLICY_AUTHENTICATE)) {
+	if (c->config->child_sa.encap_proto != ENCAP_PROTO_AH) {
 		dbg("ignoring AH proposal as POLICY_AUTHENTICATE unset");
 		return false;       /* try another */
 	}

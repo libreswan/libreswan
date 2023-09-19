@@ -278,8 +278,8 @@ bool add_sec_label_kernel_policy(const struct spd_route *spd,
 
 	struct kernel_policy_encap policy = {
 		.ipcomp = c->config->child_sa.ipcomp,
-		.esp = (c->policy & POLICY_ENCRYPT),
-		.ah = (c->policy & POLICY_AUTHENTICATE),
+		.esp = (c->config->child_sa.encap_proto == ENCAP_PROTO_ESP),
+		.ah = (c->config->child_sa.encap_proto == ENCAP_PROTO_AH),
 	};
 	struct kernel_policy kernel_policy =
 		kernel_policy_from_spd(policy, spd, encap_mode, direction,

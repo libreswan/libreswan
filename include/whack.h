@@ -38,6 +38,7 @@
 #include "ip_cidr.h"
 #include "authby.h"
 #include "encap_mode.h"
+#include "encap_proto.h"
 
 #ifndef DEFAULT_CTL_SOCKET
 # define DEFAULT_CTL_SOCKET IPSEC_RUNDIR "/pluto.ctl"
@@ -209,7 +210,8 @@ struct whack_message {
 	enum nppi_options ppk;		/* pre-shared post-quantum key */
 	enum yn_options pfs;
 	enum yn_options compress;
-	enum encap_mode encap_mode;	/* TUNNEL|TRANSPORT */
+	enum encap_mode encap_mode;	/* outer mode: TUNNEL|TRANSPORT */
+	enum encap_proto phase2;	/* outer protocol: ESP|AH */
 
 	uintmax_t sa_ipsec_max_bytes;
 	uintmax_t sa_ipsec_max_packets;

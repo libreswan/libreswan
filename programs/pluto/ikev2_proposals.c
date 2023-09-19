@@ -2130,11 +2130,11 @@ struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
 	v2_proposals->roof = 1;
 
 	enum ikev2_sec_proto_id protoid;
-	switch (c->policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE)) {
-	case POLICY_ENCRYPT:
+	switch (c->config->child_sa.encap_proto) {
+	case ENCAP_PROTO_ESP:
 		protoid = IKEv2_SEC_PROTO_ESP;
 		break;
-	case POLICY_AUTHENTICATE:
+	case ENCAP_PROTO_AH:
 		protoid = IKEv2_SEC_PROTO_AH;
 		break;
 	default:
