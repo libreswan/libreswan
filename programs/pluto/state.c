@@ -687,14 +687,21 @@ static void llog_delete_n_send(lset_t rc_flags,
 		jam_string(buf, " aged ");
 		jam_deltatime(buf, realtimediff(realnow(), st->st_inception));
 		jam_string(buf, "s");
-		/*
-		 * Should this be optional?  For instance IKEv2 child
-		 * SAs never send delete but logging that they are
-		 * gone can be useful
-		 */
 		if (ike == NULL) {
 			jam_string(buf, " and NOT sending notification");
-		} else if (ike->sa.st_serialno != st->st_serialno) {
+			if (IS_ISAKMP_SA_ESTABLISHED(st)) {
+				jam_string(buf, " (");
+				jam_string(buf, st->st_connection->config->ike_info->parent_sa_name);
+				jam_string(buf, " was ");
+				jam_so(buf, st->st_clonedfrom);
+				jam_string(buf, ")");
+			}
+		} else if (ike->sa.st_connection != st->st_connection) {
+			jam_string(buf, " and sending notification using ");
+			jam_string(buf, st->st_connection->config->ike_info->parent_sa_name);
+			jam_string(buf, " ");
+			jam_prefix(buf, ike->sa.st_logger);
+		} else if (st->st_clonedfrom != SOS_NOBODY) {
 			jam_string(buf, " and sending notification using ");
 			jam_string(buf, st->st_connection->config->ike_info->parent_sa_name);
 			jam_string(buf, " ");
