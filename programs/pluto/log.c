@@ -468,11 +468,11 @@ struct logger *clone_logger(const struct logger *stack, where_t where)
 	 * unchanging string.  This way the prefix can be safely
 	 * accessed on a helper thread.
 	 *
-	 * Use str_logger_prefix() so that the prefix doesn't include
+	 * Use str_prefix() so that the prefix doesn't include
 	 * ":_" as added by jam_logger_prefix().
 	 */
-	logger_prefix_buf prefix_buf;
-	const char *prefix = str_logger_prefix(stack, &prefix_buf);
+	prefix_buf pb;
+	const char *prefix = str_prefix(stack, &pb);
 	/*
 	 * choose a logger object vec with a hardwired suppress.
 	 */

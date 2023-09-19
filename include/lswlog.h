@@ -189,12 +189,15 @@ struct logger_object_vec {
 #define suppress_log(LOGGER) (LOGGER)->object_vec->suppress_object_log((LOGGER)->object)
 };
 
-size_t jam_logger_prefix(struct jambuf *buf, const struct logger *logger);
+/* these omit ": " always */
 typedef struct {
 	char buf[100];/* completely made up size */
-} logger_prefix_buf;
-const char *str_logger_prefix(const struct logger *logger, logger_prefix_buf *buf);
+} prefix_buf;
+const char *str_prefix(const struct logger *logger, prefix_buf *buf);
+size_t jam_prefix(struct jambuf *buf, const struct logger *logger);
 
+/* these include ": " when jam_prefix() is non-empty */
+size_t jam_logger_prefix(struct jambuf *buf, const struct logger *logger);
 void jam_logger_rc_prefix(struct jambuf *buf, const struct logger *logger, lset_t rc_flags);
 
 bool suppress_object_log_false(const void *object);
