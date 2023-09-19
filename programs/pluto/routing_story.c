@@ -26,7 +26,6 @@ static const char *const routing_story_strings[] = {
 	[RT_ROUTED_REVIVAL] = "prospective erouted",	  /* routed, ondemand shunts, revival (LOG A LIE) */
 	[RT_UNROUTED_NEGOTIATION] = "unrouted HOLD",      /* unrouted, but HOLD shunt installed */
 	[RT_UNROUTED_INBOUND] = "unrouted HOLD",	/* unrouted, outbound negotiation, inbound established */
-	[RT_UNROUTED_ONDEMAND] = "unrouted ondemand",		/* unrouted, and ondemand shunt installed */
 	[RT_ROUTED_ONDEMAND] = "prospective erouted",  /* routed, and prospective shunt installed */
 #if 0
 	[RT_ROUTED_NEVER_NEGOTIATE] = "routed never-negotiate",  /* routed, and .never_negotiate_shunt installed */

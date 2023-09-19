@@ -198,7 +198,6 @@ enum shunt_kind routing_shunt_kind(enum routing routing)
 {
 	switch (routing) {
 	case RT_ROUTED_REVIVAL:
-	case RT_UNROUTED_ONDEMAND:
 	case RT_ROUTED_ONDEMAND:
 		return SHUNT_KIND_ONDEMAND;
 	case RT_ROUTED_NEVER_NEGOTIATE:
@@ -237,7 +236,6 @@ bool routed(const struct connection *c)
 		return true;
 	case RT_UNROUTED:
 	case RT_UNROUTED_REVIVAL:
-	case RT_UNROUTED_ONDEMAND:
 	case RT_UNROUTED_NEGOTIATION:
 	case RT_UNROUTED_FAILURE:
 	case RT_UNROUTED_INBOUND:
@@ -254,7 +252,6 @@ bool kernel_policy_installed(const struct connection *c)
 	case RT_UNROUTED_REVIVAL:
 	case RT_UNROUTED_NEGOTIATION:
 		return false;
-	case RT_UNROUTED_ONDEMAND:
 	case RT_ROUTED_ONDEMAND:
 	case RT_ROUTED_REVIVAL:
 	case RT_ROUTED_NEGOTIATION:
@@ -403,7 +400,6 @@ static void ondemand_to_negotiation(enum routing_event event,
 			 event == CONNECTION_REVIVE));
 	enum routing rt_negotiation = (c->child.routing == RT_ROUTED_ONDEMAND ? RT_ROUTED_NEGOTIATION :
 				       c->child.routing == RT_ROUTED_REVIVAL ? RT_ROUTED_NEGOTIATION :
-				       c->child.routing == RT_UNROUTED_ONDEMAND ? RT_UNROUTED_NEGOTIATION :
 				       CONNECTION_ROUTING_ROOF);
 	PASSERT(logger, (rt_negotiation != CONNECTION_ROUTING_ROOF));
 	FOR_EACH_ITEM(spd, &c->child.spds) {
@@ -1197,13 +1193,6 @@ static void dispatch_1(enum routing_event event,
 				return;
 			}
 			break;
-		case X(REVIVE, UNROUTED_ONDEMAND, PERMANENT):
-		case X(REVIVE, UNROUTED_ONDEMAND, INSTANCE):
-			ondemand_to_negotiation(event, c, where, "negotiating unrouted");
-			PEXPECT(logger, c->child.routing == RT_UNROUTED_NEGOTIATION);
-			ipsecdoi_initiate(c, c->policy, SOS_NOBODY, e->inception,
-					  null_shunk, /*background*/false, logger);
-			return;
 		case X(REVIVE, ROUTED_ONDEMAND, PERMANENT):
 		case X(REVIVE, ROUTED_REVIVAL, PERMANENT):
 		case X(REVIVE, ROUTED_ONDEMAND, INSTANCE):
@@ -1320,18 +1309,6 @@ static void dispatch_1(enum routing_event event,
 			set_routing(event, c, RT_UNROUTED, NULL, where);
 			do_updown_unroute(c, NULL);
 			return;
-		case X(UNROUTE, UNROUTED_ONDEMAND, PERMANENT):
-			if (BROKEN_TRANSITION) {
-				PEXPECT(logger, !never_negotiate(c));
-				delete_spd_kernel_policies(&c->child.spds,
-							   EXPECT_NO_INBOUND,
-							   c->logger, where, "unroute permanent");
-				/* stop updown_unroute() finding this
-				 * connection */
-				set_routing(event, c, RT_UNROUTED, NULL, where);
-				return;
-			}
-			break;
 
 		case X(ROUTE, ROUTED_TUNNEL, PERMANENT):
 			add_policy(c, POLICY_ROUTE); /* always */
