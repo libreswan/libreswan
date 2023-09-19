@@ -25,7 +25,7 @@ road #
 002 "road/0x2" #3: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
 005 "road/0x2" #3: ESP traffic information: in=84B out=84B
 002 "road/0x1": terminating SAs using this connection
-002 "road/0x1" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
+002 "road/0x1" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA "road/0x2" #1
 005 "road/0x1" #2: ESP traffic information: in=84B out=84B
 000 terminated 2 connections
 road #

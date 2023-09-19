@@ -49,7 +49,7 @@ west #
 west #
  ipsec down west-cuckoo
 002 "west-cuckoo": terminating SAs using this connection
-002 "west-cuckoo" #3: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
+002 "west-cuckoo" #3: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA "west-cuckold" #1
 005 "west-cuckoo" #3: ESP traffic information: in=84B out=84B
 west #
  ipsec down west-cuckold
