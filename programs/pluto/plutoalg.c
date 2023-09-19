@@ -77,23 +77,20 @@ void show_kernel_alg_connection(struct show *s,
 {
 	const char *satype;
 
-	switch (c->policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE)) {
-	default:	/* shut up gcc */
-	case 0u:
+	switch (c->config->child_sa.encap_proto) {
+	case ENCAP_PROTO_UNSET:
 		satype = "noESPnoAH";
 		break;
 
-	case POLICY_ENCRYPT:
+	case ENCAP_PROTO_ESP:
 		satype = "ESP";
 		break;
 
-	case POLICY_AUTHENTICATE:
+	case ENCAP_PROTO_AH:
 		satype = "AH";
 		break;
-
-	case POLICY_ENCRYPT | POLICY_AUTHENTICATE:
-		satype = "ESP+AH";
-		break;
+	default:
+		bad_case(c->config->child_sa.encap_proto);
 	}
 
 	const char *pfsbuf;

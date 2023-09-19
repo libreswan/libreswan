@@ -565,6 +565,8 @@ enum option_enums {
 	CD_COMPRESS,
 	CD_TUNNEL,
 	CD_TRANSPORT,
+	CD_ENCRYPT,
+	CD_AUTHENTICATE,
 	CD_INITIATEONTRAFFIC,
 
 	/*
@@ -774,8 +776,8 @@ static const struct option long_opts[] = {
 
 	{ "intermediate", no_argument, NULL, CD_INTERMEDIATE },
 #define PS(o, p)	{ o, no_argument, NULL, CDP_SINGLETON + POLICY_##p##_IX }
-	PS("encrypt", ENCRYPT),
-	PS("authenticate", AUTHENTICATE),
+	{ "encrypt", no_argument, NULL, CD_ENCRYPT },
+	{ "authenticate", no_argument, NULL, CD_AUTHENTICATE },
 	{ "no-compress", no_argument, NULL, CD_NO_COMPRESS },
 	{ "compress", no_argument, NULL, CD_COMPRESS },
 	{ "overlapip", no_argument, NULL, CD_OVERLAPIP },
@@ -1857,10 +1859,12 @@ int main(int argc, char **argv)
 			msg.encap_mode = ENCAP_MODE_TRANSPORT;
 			continue;
 
-		case CDP_SINGLETON + POLICY_ENCRYPT_IX:	/* --encrypt */
-		/* --authenticate */
-		case CDP_SINGLETON + POLICY_AUTHENTICATE_IX:
-			msg.policy |= LELEM(c - CDP_SINGLETON);
+		case CD_ENCRYPT:	/* --encrypt */
+			msg.phase2 = ENCAP_PROTO_ESP;
+			continue;
+
+		case CD_AUTHENTICATE:	/* --authenticate */
+			msg.phase2 = ENCAP_PROTO_AH;
 			continue;
 
 		/* --no-esn */
@@ -2670,7 +2674,7 @@ int main(int argc, char **argv)
 			 *	!NEVER_NEGOTIATE=>HAS_IPSEC_POLICY
 			 * These interlocking tests should be redone.
 			 */
-			if (!HAS_IPSEC_POLICY(msg.policy) &&
+			if (msg.never_negotiate_shunt != SHUNT_UNSET &&
 			    (msg.left.subnet != NULL || msg.right.subnet != NULL))
 				diagw("must not specify clients for ISAKMP-only connection");
 		}

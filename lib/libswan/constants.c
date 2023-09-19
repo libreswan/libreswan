@@ -2399,6 +2399,8 @@ static const enum_names *en_checklist[] = {
 	&tcp_option_story,
 	&encap_mode_names,
 	&encap_mode_story,
+	&encap_proto_names,
+	&encap_proto_story,
 #ifdef KERNEL_XFRM
 	&xfrm_policy_names,
 #endif

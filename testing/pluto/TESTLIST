@@ -129,6 +129,7 @@ kvmplutotest	addconn-30-ikev1-labeled-ipsec			good
 kvmplutotest	addconn-31-pfs					good	github/1273
 kvmplutotest	addconn-32-compress				good
 kvmplutotest	addconn-33-encap-mode				good
+kvmplutotest	addconn-34-encap-proto				good
 
 #################################################################
 # Whack UI tests

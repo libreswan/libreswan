@@ -324,7 +324,7 @@ static bool initiate_connection_4_fab(struct connection *c,
 	 */
 #ifdef USE_IKEv1
 	if (c->config->ike_version == IKEv1 &&
-	    (c->policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE))) {
+	    c->config->child_sa.encap_proto != ENCAP_PROTO_UNSET) {
 		struct db_sa *phase2_sa = v1_kernel_alg_makedb(c->policy, c->config->child_proposals,
 							       true, c->logger);
 		if (c->config->child_proposals.p != NULL && phase2_sa == NULL) {

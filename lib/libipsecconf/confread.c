@@ -168,7 +168,7 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 # undef DOPT
 
 	d->ike_version = IKEv2;
-	d->policy = (POLICY_ENCRYPT);
+	d->policy = LEMPTY;
 	d->authby = AUTHBY_NONE; /* blank goes to defaults */
 	d->never_negotiate_shunt = SHUNT_UNSET;
 	d->negotiation_shunt = SHUNT_UNSET;
@@ -1098,22 +1098,16 @@ static bool load_conn(struct starter_conn *conn,
 			break;
 
 		case KS_PASSTHROUGH:
-			conn->policy &= ~(POLICY_ENCRYPT |
-					  POLICY_AUTHENTICATE);
 			conn->authby = AUTHBY_NONE;
 			conn->never_negotiate_shunt = SHUNT_PASS;
 			break;
 
 		case KS_DROP:
-			conn->policy &= ~(POLICY_ENCRYPT |
-					  POLICY_AUTHENTICATE);
 			conn->authby = AUTHBY_NONE;
 			conn->never_negotiate_shunt = SHUNT_DROP;
 			break;
 
 		case KS_REJECT:
-			conn->policy &= ~(POLICY_ENCRYPT |
-					  POLICY_AUTHENTICATE);
 			conn->authby = AUTHBY_NONE;
 			conn->never_negotiate_shunt = SHUNT_REJECT;
 			break;
@@ -1196,11 +1190,6 @@ static bool load_conn(struct starter_conn *conn,
 	str_to_conn(dpd_timeout, KSCF_DPDTIMEOUT_MS);
 
 #	undef str_to_conn
-
-	if (conn->options_set[KNCF_PHASE2]) {
-		conn->policy &= ~(POLICY_AUTHENTICATE | POLICY_ENCRYPT);
-		conn->policy |= conn->options[KNCF_PHASE2];
-	}
 
 	if (conn->options_set[KNCF_KEYEXCHANGE]) {
 		if (conn->options[KNCF_KEYEXCHANGE] == IKE_VERSION_ROOF) {

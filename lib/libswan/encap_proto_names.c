@@ -15,12 +15,33 @@
 
 #include "encap_proto.h"
 
-#include "sparse_names.h"
+#include "lswcdefs.h"		/* for ARRAY_REF */
+#include "enum_names.h"
 
-static const struct sparse_name encap_proto_name[] = {
-	{ "esp", ENCAP_PROTO_ESP, },
-	{ "ah", ENCAP_PROTO_AH, },
-	SPARSE_NULL
+static const char *encap_proto_name[] = {
+#define S(E) [E - ENCAP_PROTO_ESP] = #E
+	S(ENCAP_PROTO_ESP),
+	S(ENCAP_PROTO_AH),
+#undef S
 };
 
-const struct sparse_name *const encap_proto_names = encap_proto_name;
+const struct enum_names encap_proto_names = {
+	ENCAP_PROTO_ESP,
+	ENCAP_PROTO_AH,
+	ARRAY_REF(encap_proto_name),
+	.en_prefix = "ENCAP_PROTO_",
+};
+
+static const char *encap_proto_story_name[] = {
+#define S(E,V) [E - ENCAP_PROTO_ESP] = V
+	S(ENCAP_PROTO_ESP, "esp"),
+	S(ENCAP_PROTO_AH, "ah"),
+#undef S
+};
+
+const struct enum_names encap_proto_story = {
+	ENCAP_PROTO_ESP,
+	ENCAP_PROTO_AH,
+	ARRAY_REF(encap_proto_story_name),
+	.en_prefix = NULL,
+};
