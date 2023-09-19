@@ -2517,18 +2517,26 @@ void delete_ike_family(struct ike_sa **ike, where_t where)
 
 		switch (child->sa.st_ike_version) {
 		case IKEv1:
+		{
 			/*
 			 * don't assume the ISAKMP SA is always
 			 * capable of sending delete.
 			 */
+			struct ike_sa *isakmp;
 			if (IS_V1_ISAKMP_SA_ESTABLISHED(&(*ike)->sa)) {
-				llog_sa_delete_n_send((*ike), &child->sa);
-				send_v1_delete((*ike), &child->sa, where);
+				isakmp = (*ike);
 			} else {
-				maybe_send_n_log_v1_delete(&child->sa, where);
+				isakmp = should_send_v1_delete(&child->sa); /* could be NULL */
 			}
-			delete_state(&child->sa);
+			llog_sa_delete_n_send(isakmp, &child->sa);
+			if (isakmp == NULL) {
+				on_delete(&child->sa, skip_send_delete);
+			} else {
+				send_v1_delete(isakmp, &child->sa, where);
+			}
+			connection_delete_child(isakmp, &child, where);
 			break;
+		}
 		case IKEv2:
 			/*
 			 * The IKE SA is assumed to have already sent
