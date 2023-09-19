@@ -31,9 +31,11 @@ west #
  # We should still have the ISAKMP SA for west-east-auto2
 west #
  ipsec showstates | grep west-east
-000 #2: "west-east-auto2":500 STATE_QUICK_R2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
+000 #2: "west-east-auto2":500 STATE_QUICK_R2 (IPsec SA established); REPLACE in XXs; ISAKMP SA #1; idle;
 000 #2: "west-east-auto2" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
 000 #4: "west-east-auto2":500 STATE_MAIN_R3 (ISAKMP SA established); REPLACE in XXs; newest; lastdpd=-1s(seq in:0 out:0); idle;
+000 #5: "west-east-auto2":500 STATE_QUICK_R2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #4; idle;
+000 #5: "west-east-auto2" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
 west #
  # one IPsec SA should be up and one ISAKMP SA should be there
 west #
@@ -43,10 +45,13 @@ west #
 west #
  ipsec whack --trafficstatus
 006 #2: "west-east-auto2", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+006 #5: "west-east-auto2", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
 west #
  ipsec showstates | grep west-east
-000 #2: "west-east-auto2":500 STATE_QUICK_R2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
+000 #2: "west-east-auto2":500 STATE_QUICK_R2 (IPsec SA established); REPLACE in XXs; ISAKMP SA #1; idle;
 000 #2: "west-east-auto2" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
 000 #4: "west-east-auto2":500 STATE_MAIN_R3 (ISAKMP SA established); REPLACE in XXs; newest; lastdpd=-1s(seq in:0 out:0); idle;
+000 #5: "west-east-auto2":500 STATE_QUICK_R2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #4; idle;
+000 #5: "west-east-auto2" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
 west #
  
