@@ -2491,60 +2491,6 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 	return true;
 }
 
-static bool delete_ike_family_child(struct ike_sa *ike, struct state *st)
-{
-	passert(&ike->sa != st); /* only children */
-	passert(ike != NULL);
-
-	/*
-	 * Transfer the IKE SA's whack-fd to the child so that the
-	 * child can also log its demise; better abstraction?
-	 */
-	state_attach(st, ike->sa.st_logger);
-
-	switch (st->st_ike_version) {
-
-	case IKEv1:
-	{
-		struct connection *const c = st->st_connection;
-		struct ike_sa *isakmp = should_send_v1_delete(st);
-		bool will_notify = (isakmp != NULL);
-		if (ike->sa.st_connection == st->st_connection) {
-			deltatime_buf dtb;
-			llog_sa(RC_LOG, ike,
-				"deleting other state #%lu (%s) aged %ss and %ssending notification",
-				st->st_serialno, st->st_state->name,
-				str_deltatime(realtimediff(realnow(), st->st_inception), &dtb),
-				will_notify ? "" : "NOT ");
-		} else {
-			deltatime_buf dtb;
-			connection_buf cib;
-			llog_sa(RC_LOG, ike,
-				"deleting other state #%lu connection (%s) "PRI_CONNECTION" aged %ss and %ssending notification",
-				st->st_serialno, st->st_state->name,
-				pri_connection(c, &cib),
-				str_deltatime(realtimediff(realnow(), st->st_inception), &dtb),
-				will_notify ? "" : "NOT ");
-		}
-		on_delete(st, skip_log_message);
-		if (isakmp != NULL) {
-			send_v1_delete(isakmp, st, HERE);
-		} else {
-			on_delete(st, skip_send_delete);
-		}
-		break;
-	}
-
-	case IKEv2:
-		on_delete(st, skip_send_delete);
-		on_delete(st, skip_log_message);
-		break;
-	}
-
-	delete_state(st);
-	return false; /* keep going */
-}
-
 void delete_ike_family(struct ike_sa **ikep)
 {
 	struct ike_sa *ike = (*ikep);
@@ -2562,8 +2508,41 @@ void delete_ike_family(struct ike_sa **ikep)
 		.where = HERE,
 	};
 	while(next_state_new2old(&cf)) {
-		delete_ike_family_child(ike, cf.st);
+		struct state *st = cf.st;
+
+		/*
+		 * Attach the IKE SA's whack to the child so that the
+		 * child can also log its demise.
+		 */
+		state_attach(st, ike->sa.st_logger);
+
+		switch (st->st_ike_version) {
+		case IKEv1:
+			/*
+			 * don't assume the ISAKMP SA is always
+			 * capable of sending delete.
+			 */
+			if (IS_V1_ISAKMP_SA_ESTABLISHED(&ike->sa)) {
+				llog_sa_delete_n_send(ike, st);
+				send_v1_delete(ike, st, HERE);
+			} else {
+				maybe_send_n_log_v1_delete(cf.st, HERE);
+			}
+			break;
+		case IKEv2:
+			/*
+			 * The IKE SA is assumed to have already sent
+			 * the delete for the entire family.
+			 */
+			on_delete(st, skip_send_delete);
+			on_delete(st, skip_log_message);
+			break;
+		}
+
+		delete_state(st);
+
 	}
+
 	/* delete self */
 	delete_state(&ike->sa);
 }
