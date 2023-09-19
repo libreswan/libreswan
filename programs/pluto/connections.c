@@ -2089,8 +2089,13 @@ static diag_t extract_connection(const struct whack_message *wm,
 		}
 	}
 	if (wm->never_negotiate_shunt != SHUNT_UNSET) {
-		if (!authby_eq(wm->authby, (struct authby) { .never = true, })) {
-			return diag("shunt connection cannot have authentication method other then authby=never");
+		if (!authby_eq(wm->authby, AUTHBY_NONE) &&
+		    !authby_eq(wm->authby, AUTHBY_NEVER)) {
+			authby_buf ab;
+			enum_buf sb;
+			return diag("kind=%s shunt connection cannot have authby=%s authentication",
+				    str_enum_short(&shunt_policy_names, wm->never_negotiate_shunt, &sb),
+				    str_authby(wm->authby, &ab));
 		}
 	} else {
 		switch (wm->policy & (POLICY_AUTHENTICATE | POLICY_ENCRYPT)) {
