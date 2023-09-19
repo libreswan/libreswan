@@ -2507,36 +2507,36 @@ void delete_ike_family(struct ike_sa **ike, where_t where)
 		.where = HERE,
 	};
 	while(next_state_new2old(&cf)) {
-		struct state *st = cf.st;
+		struct child_sa *child = pexpect_child_sa(cf.st);
 
 		/*
 		 * Attach the IKE SA's whack to the child so that the
 		 * child can also log its demise.
 		 */
-		state_attach(st, (*ike)->sa.st_logger);
+		state_attach(&child->sa, (*ike)->sa.st_logger);
 
-		switch (st->st_ike_version) {
+		switch (child->sa.st_ike_version) {
 		case IKEv1:
 			/*
 			 * don't assume the ISAKMP SA is always
 			 * capable of sending delete.
 			 */
 			if (IS_V1_ISAKMP_SA_ESTABLISHED(&(*ike)->sa)) {
-				llog_sa_delete_n_send((*ike), st);
-				send_v1_delete((*ike), st, where);
+				llog_sa_delete_n_send((*ike), &child->sa);
+				send_v1_delete((*ike), &child->sa, where);
 			} else {
-				maybe_send_n_log_v1_delete(cf.st, where);
+				maybe_send_n_log_v1_delete(&child->sa, where);
 			}
-			delete_state(st);
+			delete_state(&child->sa);
 			break;
 		case IKEv2:
 			/*
 			 * The IKE SA is assumed to have already sent
 			 * the delete for the entire family.
 			 */
-			on_delete(st, skip_send_delete);
-			on_delete(st, skip_log_message);
-			delete_state(st);
+			on_delete(&child->sa, skip_send_delete);
+			on_delete(&child->sa, skip_log_message);
+			connection_delete_child((*ike), &child, where);
 			break;
 		}
 	}
