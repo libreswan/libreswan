@@ -2491,11 +2491,10 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 	return true;
 }
 
-void delete_ike_family(struct ike_sa **ikep)
+void delete_ike_family(struct ike_sa **ike, where_t where)
 {
-	struct ike_sa *ike = (*ikep);
-	(*ikep) = NULL;
-	ike->sa.st_viable_parent = false;
+	ldbg_sa((*ike), "no longer viable");
+	(*ike)->sa.st_viable_parent = false;
 
 	/*
 	 * We are a parent: delete our children and then prepare to
@@ -2504,7 +2503,7 @@ void delete_ike_family(struct ike_sa **ikep)
 	 */
 
 	struct state_filter cf = {
-		.clonedfrom = ike->sa.st_serialno,
+		.clonedfrom = (*ike)->sa.st_serialno,
 		.where = HERE,
 	};
 	while(next_state_new2old(&cf)) {
@@ -2514,7 +2513,7 @@ void delete_ike_family(struct ike_sa **ikep)
 		 * Attach the IKE SA's whack to the child so that the
 		 * child can also log its demise.
 		 */
-		state_attach(st, ike->sa.st_logger);
+		state_attach(st, (*ike)->sa.st_logger);
 
 		switch (st->st_ike_version) {
 		case IKEv1:
@@ -2522,12 +2521,13 @@ void delete_ike_family(struct ike_sa **ikep)
 			 * don't assume the ISAKMP SA is always
 			 * capable of sending delete.
 			 */
-			if (IS_V1_ISAKMP_SA_ESTABLISHED(&ike->sa)) {
-				llog_sa_delete_n_send(ike, st);
-				send_v1_delete(ike, st, HERE);
+			if (IS_V1_ISAKMP_SA_ESTABLISHED(&(*ike)->sa)) {
+				llog_sa_delete_n_send((*ike), st);
+				send_v1_delete((*ike), st, where);
 			} else {
-				maybe_send_n_log_v1_delete(cf.st, HERE);
+				maybe_send_n_log_v1_delete(cf.st, where);
 			}
+			delete_state(st);
 			break;
 		case IKEv2:
 			/*
@@ -2536,15 +2536,13 @@ void delete_ike_family(struct ike_sa **ikep)
 			 */
 			on_delete(st, skip_send_delete);
 			on_delete(st, skip_log_message);
+			delete_state(st);
 			break;
 		}
-
-		delete_state(st);
-
 	}
 
 	/* delete self */
-	delete_state(&ike->sa);
+	delete_state(&(*ike)->sa); (*ike) = NULL;
 }
 
 /*
