@@ -959,7 +959,8 @@ USERLAND_CFLAGS += -DHAVE_LIBCAP_NG
 LIBCAP_NG_LDFLAGS ?= -lcap-ng
 endif
 
-# Support for CISCO adding a second child route to IKEv2?!?
+# Support for CISCO adding a second, narrower, child to IKEv1?!?
+# probably broken.
 
 USE_CISCO_SPLIT ?= false
 ifeq ($(USE_CISCO_SPLIT),true)
