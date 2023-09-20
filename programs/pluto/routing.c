@@ -870,6 +870,14 @@ static bool zap_connection_family(enum routing_event event,
 	return false;
 }
 
+void connection_unrouted(struct connection *c)
+{
+	set_newest_sa(c, newest_routing_sa, SOS_NOBODY);
+	set_newest_sa(c, newest_ike_sa, SOS_NOBODY);
+	set_newest_sa(c, newest_ipsec_sa, SOS_NOBODY);
+	c->child.routing = RT_UNROUTED;
+}
+
 void connection_initiate(struct connection *c, const threadtime_t *inception,
 			 bool background, where_t where)
 {

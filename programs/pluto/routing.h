@@ -69,6 +69,8 @@ bool routed(const struct connection *c);
 enum shunt_kind routing_shunt_kind(enum routing routing);
 bool kernel_policy_installed(const struct connection *c);
 
+void connection_unrouted(struct connection *);
+
 void connection_route(struct connection *c, where_t where);
 void connection_unroute(struct connection *c, where_t where);
 

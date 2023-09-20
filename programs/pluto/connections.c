@@ -3233,9 +3233,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	c->instance_serial = 0;
 	c->interface = NULL; /* initializing */
 
-	set_newest_sa(c, newest_ike_sa, SOS_NOBODY);
-	set_newest_sa(c, newest_ipsec_sa, SOS_NOBODY);
-	set_newest_sa(c, newest_routing_sa, SOS_NOBODY);
+	connection_unrouted(c);
 	c->temp_vars.num_redirects = 0;
 
 	/* non configurable */
