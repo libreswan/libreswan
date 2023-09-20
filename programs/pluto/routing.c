@@ -1031,16 +1031,10 @@ void connection_delete_child(struct ike_sa *ike, struct child_sa **child, where_
 	pexpect(*child == NULL);
 }
 
-void connection_timeout_ike(struct ike_sa **ike, where_t where)
+void connection_timeout_ike_family(struct ike_sa **ike, where_t where)
 {
 	pstat_sa_failed(&(*ike)->sa, REASON_TOO_MANY_RETRANSMITS);
-
-	struct connection *c = (*ike)->sa.st_connection;
-	dispatch(CONNECTION_TIMEOUT_IKE, &c,
-		 (*ike)->sa.st_logger, where,
-		 (struct routing_annex) {
-			 .ike = ike,
-		 });
+	connection_zap_ike_family(ike, CONNECTION_TIMEOUT_IKE, where);
 }
 
 void connection_delete_ike(struct ike_sa **ike, where_t where)
