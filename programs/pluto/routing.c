@@ -603,7 +603,82 @@ static void down_routed_tunnel(enum routing_event event,
 	remove_connection_from_pending(c);
 	delete_states_by_connection(c);
 	connection_unroute(c, HERE);
-	
+}
+
+/*
+ * Map the IKE event onto the equivalent child event.
+ */
+
+static enum routing_event zap_child_event(struct ike_sa **ike, enum routing_event event)
+{
+	PASSERT((*ike)->sa.st_logger, (event == CONNECTION_TIMEOUT_IKE ||
+				       event == CONNECTION_DELETE_IKE));
+	enum routing_event child_event = (event == CONNECTION_TIMEOUT_IKE ? CONNECTION_TIMEOUT_CHILD :
+					  event == CONNECTION_DELETE_IKE ? CONNECTION_DELETE_CHILD :
+					  CONNECTION_EVENT_ROOF);
+	PASSERT((*ike)->sa.st_logger, child_event != CONNECTION_EVENT_ROOF);
+	return child_event;
+}
+
+/*
+ * Stop reviving children trying to use this IKE SA.
+ */
+
+static void zap_revival(struct ike_sa **ike, enum routing_event event)
+{
+	enum_buf ren;
+	ldbg_routing((*ike)->sa.st_logger, "  due to %s, IKE SA is no longer viable",
+		     str_enum_short(&routing_event_names, event, &ren));
+	(*ike)->sa.st_viable_parent = false;
+}
+
+/*
+ * If the IKE SA's connection has a direct Child SA (shares
+ * connection) that owns the route then send a delete/timeout to that
+ * Child SA first.
+ *
+ * This way the IKE SA's connection can jump to the front of the
+ * revival queue (without this an IKE SA with multiple children ends
+ * up with its chilren sqabbling over which SA should be revived
+ * first).
+ *
+ * Also remember if there was a direct child.  The event only gets
+ * dispatched to the IKE SA when there wasn't a child (such as during
+ * IKE_SA_INIT).
+ */
+
+static bool zap_connection_child(struct ike_sa **ike, enum routing_event child_event,
+				 struct child_sa **child, where_t where)
+{
+
+	bool dispatched_to_child;
+	(*child) = child_sa_by_serialno((*ike)->sa.st_connection->newest_routing_sa);
+	if ((*child) == NULL) {
+		dispatched_to_child = false;
+		ldbg_routing((*ike)->sa.st_logger, "  IKE SA's connection has no Child SA "PRI_SO,
+			     pri_so((*ike)->sa.st_connection->newest_routing_sa));
+	} else if ((*child)->sa.st_clonedfrom != (*ike)->sa.st_serialno) {
+		dispatched_to_child = false;
+		ldbg_routing((*ike)->sa.st_logger, "  IKE SA is not the parent of the connection's Child SA "PRI_SO,
+			     pri_so((*child)->sa.st_serialno));
+	} else {
+		ldbg_routing((*ike)->sa.st_logger, "  dispatching delete to Child SA "PRI_SO,
+			     pri_so((*child)->sa.st_serialno));
+		dispatched_to_child = true;
+		state_attach(&(*child)->sa, (*ike)->sa.st_logger);
+		/* will delete child and its logger */
+		struct connection *cc = (*child)->sa.st_connection;
+		dispatch(child_event, &cc,
+			 (*child)->sa.st_logger, where,
+			 (struct routing_annex) {
+				 .ike = ike,
+				 .child = child,
+			 });
+		PEXPECT((*ike)->sa.st_logger, (*child) == NULL); /*gone!*/
+		PEXPECT((*ike)->sa.st_logger, (*ike)->sa.st_connection->newest_routing_sa == SOS_NOBODY);
+		PEXPECT((*ike)->sa.st_logger, (*ike)->sa.st_connection->newest_ipsec_sa == SOS_NOBODY);
+	}
+	return dispatched_to_child;
 }
 
 /*
@@ -615,23 +690,13 @@ static bool zap_connection_family(enum routing_event event,
 				  struct ike_sa **ike,
 				  where_t where)
 {
-	PASSERT((*ike)->sa.st_logger, c == (*ike)->sa.st_connection);
-	PASSERT((*ike)->sa.st_logger, (event == CONNECTION_TIMEOUT_IKE ||
-				       event == CONNECTION_DELETE_IKE));
-	enum routing_event child_event = (event == CONNECTION_TIMEOUT_IKE ? CONNECTION_TIMEOUT_CHILD :
-					  event == CONNECTION_DELETE_IKE ? CONNECTION_DELETE_CHILD :
-					  CONNECTION_EVENT_ROOF);
-	PASSERT((*ike)->sa.st_logger, child_event != CONNECTION_EVENT_ROOF);
+
 
 	ldbg_routing((*ike)->sa.st_logger, "%s()", __func__);
+	PASSERT((*ike)->sa.st_logger, c == (*ike)->sa.st_connection);
 
-	/*
-	 * Stop reviving children trying to use this IKE SA.
-	 */
-	enum_buf ren;
-	ldbg_routing((*ike)->sa.st_logger, "  due to %s, IKE SA is no longer viable",
-		     str_enum_short(&routing_event_names, event, &ren));
-	(*ike)->sa.st_viable_parent = false;
+	enum routing_event child_event = zap_child_event(ike, event);
+	zap_revival(ike, event);
 
 	/*
 	 * Weed out any lurking children of the IKE SA
@@ -744,33 +809,9 @@ static bool zap_connection_family(enum routing_event event,
 	 * (such as during IKE_SA_INIT).
 	 */
 
-	bool dispatched_to_child;
-	struct child_sa *connection_child =
-		child_sa_by_serialno((*ike)->sa.st_connection->newest_routing_sa);
-	if (connection_child == NULL) {
-		dispatched_to_child = false;
-		ldbg_routing((*ike)->sa.st_logger, "  IKE SA's connection has no Child SA "PRI_SO,
-			     pri_so((*ike)->sa.st_connection->newest_routing_sa));
-	} else if (connection_child->sa.st_clonedfrom != (*ike)->sa.st_serialno) {
-		dispatched_to_child = false;
-		ldbg_routing((*ike)->sa.st_logger, "  IKE SA is not the parent of the connection's Child SA "PRI_SO,
-			     pri_so(connection_child->sa.st_serialno));
-	} else {
-		ldbg_routing((*ike)->sa.st_logger, "  dispatching delete to Child SA "PRI_SO,
-			     pri_so(connection_child->sa.st_serialno));
-		dispatched_to_child = true;
-		state_attach(&connection_child->sa, (*ike)->sa.st_logger);
-		/* will delete child and its logger */
-		struct connection *cc = connection_child->sa.st_connection;
-		dispatch(child_event, &cc,
-			 connection_child->sa.st_logger, where,
-			 (struct routing_annex) {
-				 .ike = ike,
-				 .child = &connection_child,
-			 });
-		PEXPECT((*ike)->sa.st_logger, connection_child == NULL); /*gone!*/
-		PEXPECT((*ike)->sa.st_logger, (*ike)->sa.st_connection->newest_routing_sa == SOS_NOBODY);
-	}
+	struct child_sa *connection_child = NULL;
+	bool dispatched_to_child = zap_connection_child(ike, child_event,
+							&connection_child, where);
 
 	/*
 	 * Now go through any remaining children.
@@ -1007,6 +1048,114 @@ void connection_delete_ike(struct ike_sa **ike, where_t where)
 	struct connection *c = (*ike)->sa.st_connection;
 	dispatch(CONNECTION_DELETE_IKE, &c,
 		 (*ike)->sa.st_logger, where,
+		 (struct routing_annex) {
+			 .ike = ike,
+		 });
+}
+
+static void zap_v1_child(struct ike_sa **ike, struct child_sa *child)
+{
+	/*
+	 * With IKEv1, deleting an ISAKMP SA only deletes larval
+	 * children.  Any established children are released to the
+	 * wild.
+	 */
+	if (IS_IPSEC_SA_ESTABLISHED(&child->sa)) {
+		ldbg_routing((*ike)->sa.st_logger, "    letting established IPsec SA "PRI_SO" go wild",
+			     pri_so(child->sa.st_serialno));
+	} else {
+		/*
+		 * Attach the IKE SA's whack to the child so that the
+		 * child can also log its demise.
+		 */
+		ldbg_routing((*ike)->sa.st_logger, "    deleting larval IPsec SA "PRI_SO,
+			     pri_so(child->sa.st_serialno));
+		state_attach(&child->sa, (*ike)->sa.st_logger);
+		delete_child_sa(&child);
+	}
+}
+
+static void zap_v2_child(struct ike_sa **ike, struct child_sa *child,
+			 enum routing_event child_event, where_t where)
+{
+	/*
+	 * With IKEv2, deleting an IKE SA deletes all children; the
+	 * only question is how.
+	 *
+	 * If the child owns the connection's routing then it needs to
+	 * be dispatched; else it can simply be deleted.
+	 */
+	state_attach(&child->sa, (*ike)->sa.st_logger);
+	/* redundant */
+	on_delete(&child->sa, skip_send_delete);
+	on_delete(&child->sa, skip_log_message);
+	struct connection *cc = child->sa.st_connection;
+	if (cc->newest_routing_sa == child->sa.st_serialno) {
+		PEXPECT((*ike)->sa.st_logger, IS_IPSEC_SA_ESTABLISHED(&child->sa));
+		/* will delete child and its logger */
+		ldbg_routing((*ike)->sa.st_logger, "    zapping Child SA "PRI_SO,
+			     pri_so(child->sa.st_serialno));
+		dispatch(child_event, &cc, child->sa.st_logger, where,
+			 (struct routing_annex) {
+				 .ike = ike,
+				 .child = &child,
+			 });
+	} else if (IS_IPSEC_SA_ESTABLISHED(&child->sa)) {
+		/* presumably it lost ownership; or never gained it */
+		enum_buf ren;
+		llog_sa(RC_LOG, child, "deleting lingering %s (%s)",
+			child->sa.st_connection->config->ike_info->parent_sa_name,
+			str_enum_short(&routing_event_names, child_event, &ren));
+		delete_child_sa(&child);
+	} else if (IS_IKE_SA_ESTABLISHED(&(*ike)->sa)) {
+		/*
+		 * The IKE SA is established; log any larval children
+		 * (presumably from a CREATE_CHILD_SA exchange).
+		 */
+		enum_buf ren;
+		llog_sa(RC_LOG, child, "deleting larval %s (%s)",
+			child->sa.st_connection->config->ike_info->child_sa_name,
+			str_enum_short(&routing_event_names, child_event, &ren));
+		delete_child_sa(&child);
+	} else {
+		ldbg_routing((*ike)->sa.st_logger, "    zapping Child SA "PRI_SO,
+			     pri_so(child->sa.st_serialno));
+		delete_child_sa(&child);
+	}
+}
+
+void connection_zap_ike_family(struct ike_sa **ike, enum routing_event ike_event, where_t where)
+{
+	ldbg_routing((*ike)->sa.st_logger, "%s()", __func__);
+	enum routing_event child_event = zap_child_event(ike, ike_event);
+	zap_revival(ike, ike_event);
+	struct child_sa *connection_child = NULL;
+	zap_connection_child(ike, child_event, &connection_child, where);
+
+	/*
+	 * We are a parent: prune any remaining children and then
+	 * prepare to delete ourself.
+	 */
+
+	struct state_filter cf = {
+		.clonedfrom = (*ike)->sa.st_serialno,
+		.where = HERE,
+	};
+	while(next_state_new2old(&cf)) {
+		struct child_sa *child = pexpect_child_sa(cf.st);
+		switch (child->sa.st_ike_version) {
+		case IKEv1:
+			zap_v1_child(ike, child);
+			break;
+		case IKEv2:
+			zap_v2_child(ike, child, child_event, where);
+			break;
+		}
+	}
+
+	/* delete self */
+	struct connection *c = (*ike)->sa.st_connection;
+	dispatch(ike_event, &c, (*ike)->sa.st_logger, where,
 		 (struct routing_annex) {
 			 .ike = ike,
 		 });
@@ -1461,6 +1610,27 @@ static void dispatch_1(enum routing_event event,
 			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
 						   c->logger, where, "unroute instance");
 			set_routing(event, c, RT_UNROUTED, NULL, where);
+			return;
+
+		case X(TIMEOUT_IKE, UNROUTED, INSTANCE):		/* ikev2-31-nat-rw-no-rekey */
+		case X(TIMEOUT_IKE, ROUTED_ONDEMAND, PERMANENT):	/* ikev2-child-ipsec-retransmit */
+#if 0
+		case X(DELETE_IKE, UNROUTED, INSTANCE): /*duplicate!?!*/
+#endif
+			/*
+			 * ikev2-31-nat-rw-no-rekey:
+			 *
+			 * The established child unroutes the
+			 * connection; followed by this IKE timeout.
+			 *
+			 * ikev2-child-ipsec-retransmit:
+			 *
+			 * The UP and established child schedules
+			 * revival, putting the connection into
+			 * ROUTED_ONDEMAND, followed by this IKE
+			 * timeout.
+			 */
+			delete_ike_sa(e->ike);
 			return;
 
 		case X(DELETE_IKE, UNROUTED_NEGOTIATION, PERMANENT):

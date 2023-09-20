@@ -133,6 +133,17 @@ struct routing_annex {
 	shunk_t sec_label;
 };
 
+/*
+ * Wrapper that zaps the IKE SA of any children before deleting the
+ * IKE SA.
+ *
+ * IKEv1: any non-established children are deleted.  Established
+ * children are set free.
+ *
+ * IKEv2: all children are deleted.
+ */
+void connection_zap_ike_family(struct ike_sa **ike, enum routing_event event, where_t where);
+
 void jam_routing_annex(struct jambuf *buf, const struct routing_annex *e);
 
 void set_routing(enum routing_event event,
