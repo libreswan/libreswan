@@ -39,10 +39,10 @@ west #
 002 "westnet-eastnet-ikev2b" #3: initiating Child SA using IKE SA #1
 1v2 "westnet-eastnet-ikev2b" #3: sent CREATE_CHILD_SA request for new IPsec SA
 002 "westnet-eastnet-ikev2a" #1: IMPAIR: retransmit so timing out SA (may retry)
-002 "westnet-eastnet-ikev2b" #3: deleting larval Child SA (TIMEOUT_IKE)
 002 "westnet-eastnet-ikev2a" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 002 "westnet-eastnet-ikev2a" #2: IMPAIR: revival: skip scheduling revival event
 005 "westnet-eastnet-ikev2a" #2: ESP traffic information: in=0B out=0B
+002 "westnet-eastnet-ikev2b" #3: deleting larval Child SA (TIMEOUT_CHILD)
 002 "westnet-eastnet-ikev2a" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and NOT sending notification
 west #
  echo done
