@@ -81,7 +81,6 @@ void connection_initiate(struct connection *c, const threadtime_t *inception,
 			 bool background, where_t where);
 void connection_establish_ike(const struct ike_sa *ike, where_t where);
 
-void connection_terminate(struct connection *c, struct logger *logger, where_t where);
 void connection_revive(struct connection *c, const threadtime_t *inception, where_t where);
 void connection_acquire(struct connection *c, threadtime_t *inception,
 			const struct kernel_acquire *b, where_t where);
@@ -109,7 +108,6 @@ enum routing_event {
 	CONNECTION_UNROUTE,
 	/* start/stop a connection */
 	CONNECTION_INITIATE,
-	CONNECTION_TERMINATE,
 	CONNECTION_ACQUIRE,
 	CONNECTION_REVIVE,
 	/* establish a connection (speculative) */

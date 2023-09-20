@@ -37,7 +37,6 @@ static const char *routing_event_name[] = {
 	S(CONNECTION_ROUTE),
 	S(CONNECTION_UNROUTE),
 	S(CONNECTION_INITIATE),
-	S(CONNECTION_TERMINATE),
 	S(CONNECTION_ACQUIRE),
 	S(CONNECTION_REVIVE),
 	S(CONNECTION_ESTABLISH_INBOUND),
@@ -895,14 +894,6 @@ void connection_establish_ike(const struct ike_sa *ike, where_t where)
 #if 0
 	ike->sa.st_viable_parent = true;
 #endif
-}
-
-void connection_terminate(struct connection *c, struct logger *logger, where_t where)
-{
-	dispatch(CONNECTION_TERMINATE, &c,
-		 logger, where,
-		 (struct routing_annex) {0});
-	PASSERT(logger, c != NULL);
 }
 
 void connection_acquire(struct connection *c, threadtime_t *inception,
@@ -1769,18 +1760,6 @@ static void dispatch_1(enum routing_event event,
 			FOR_EACH_ITEM(spd, &c->child.spds) {
 				do_updown(UPDOWN_UP, c, spd, &(*e->child)->sa, logger);
 				do_updown(UPDOWN_ROUTE, c, spd, &(*e->child)->sa, logger);
-			}
-			return;
-
-		case X(TERMINATE, ROUTED_TUNNEL, PERMANENT):
-		case X(TERMINATE, ROUTED_TUNNEL, INSTANCE):
-		case X(TERMINATE, ROUTED_ONDEMAND, PERMANENT):
-		case X(TERMINATE, UNROUTED, PERMANENT):
-		case X(TERMINATE, UNROUTED_NEGOTIATION, PERMANENT):
-			if (BROKEN_TRANSITION) {
-				remove_connection_from_pending(c);
-				delete_states_by_connection(c);
-				connection_unroute(c, HERE);
 			}
 			return;
 
