@@ -374,8 +374,7 @@ extern ipsec_spi_t get_ipsec_spi(const struct connection *c,
 extern ipsec_spi_t get_ipsec_cpi(const struct connection *c,
 				 struct logger *logger/*state*/);
 
-bool unrouted_to_routed_never_negotiate(enum routing_event event, struct connection *c, where_t where);
-bool unrouted_to_routed_ondemand(enum routing_event event, struct connection *c, where_t where);
+bool unrouted_to_routed(struct connection *c, enum shunt_kind shunt_kind, where_t where);
 
 bool install_inbound_ipsec_sa(struct child_sa *child, where_t where);
 bool install_ipsec_sa(struct child_sa *child, lset_t direction, where_t where);

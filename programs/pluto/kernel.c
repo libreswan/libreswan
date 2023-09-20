@@ -1088,8 +1088,7 @@ static void revert_kernel_policy(struct spd_route *spd,
 	}
 }
 
-static bool unrouted_to_routed(struct connection *c, enum shunt_kind shunt_kind,
-			       where_t where)
+bool unrouted_to_routed(struct connection *c, enum shunt_kind shunt_kind, where_t where)
 {
 	enum routability r = connection_routability(c, c->logger);
 	switch (r) {
@@ -1202,24 +1201,6 @@ static bool unrouted_to_routed(struct connection *c, enum shunt_kind shunt_kind,
 		}
 	}
 
-	return true;
-}
-
-bool unrouted_to_routed_ondemand(enum routing_event event, struct connection *c, where_t where)
-{
-	if (!unrouted_to_routed(c, SHUNT_KIND_ONDEMAND, where)) {
-		return false;
-	}
-	set_routing(event, c, RT_ROUTED_ONDEMAND, NULL, where);
-	return true;
-}
-
-bool unrouted_to_routed_never_negotiate(enum routing_event event, struct connection *c, where_t where)
-{
-	if (!unrouted_to_routed(c, SHUNT_KIND_NEVER_NEGOTIATE, where)) {
-		return false;
-	}
-	set_routing(event, c, RT_ROUTED_NEVER_NEGOTIATE, NULL, where);
 	return true;
 }
 

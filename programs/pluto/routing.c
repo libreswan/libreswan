@@ -341,6 +341,24 @@ void set_routing(enum routing_event event,
 	set_newest_sa(c, newest_routing_sa, new_routing_sa);
 }
 
+static bool unrouted_to_routed_ondemand(enum routing_event event, struct connection *c, where_t where)
+{
+	if (!unrouted_to_routed(c, SHUNT_KIND_ONDEMAND, where)) {
+		return false;
+	}
+	set_routing(event, c, RT_ROUTED_ONDEMAND, NULL, where);
+	return true;
+}
+
+static bool unrouted_to_routed_never_negotiate(enum routing_event event, struct connection *c, where_t where)
+{
+	if (!unrouted_to_routed(c, SHUNT_KIND_NEVER_NEGOTIATE, where)) {
+		return false;
+	}
+	set_routing(event, c, RT_ROUTED_NEVER_NEGOTIATE, NULL, where);
+	return true;
+}
+
 /*
  * For instance:
  *
