@@ -889,6 +889,14 @@ void connection_initiate(struct connection *c, const threadtime_t *inception,
 		 });
 }
 
+void connection_establish_ike(const struct ike_sa *ike, where_t where)
+{
+	set_newest_sa_where(ike->sa.st_connection, newest_ike_sa, ike->sa.st_serialno, where);
+#if 0
+	ike->sa.st_viable_parent = true;
+#endif
+}
+
 void connection_terminate(struct connection *c, struct logger *logger, where_t where)
 {
 	dispatch(CONNECTION_TERMINATE, &c,

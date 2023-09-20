@@ -190,8 +190,7 @@ void llog_v2_ike_sa_established(struct ike_sa *ike, struct child_sa *larval)
 
 void v2_ike_sa_established(struct ike_sa *ike)
 {
-	struct connection *c = ike->sa.st_connection;
-	set_newest_sa(c, newest_ike_sa, ike->sa.st_serialno);
+	connection_establish_ike(ike, HERE);
 	ike->sa.st_viable_parent = true;
 	linux_audit_conn(&ike->sa, LAK_PARENT_START);
 	pstat_sa_established(&ike->sa);
