@@ -252,15 +252,14 @@ void send_v1_delete(struct ike_sa *isakmp, struct state *st, where_t where)
 	}
 }
 
-void maybe_send_n_log_v1_delete(struct state *st, where_t where)
+void llog_n_maybe_send_v1_delete(struct ike_sa *isakmp, struct state *st, where_t where)
 {
-	struct ike_sa *isakmp = established_isakmp_sa_for_state(st); /* could be NULL */
 	llog_sa_delete_n_send(isakmp, st);
 	if (isakmp == NULL) {
 		on_delete(st, skip_send_delete);
-		return;
+	} else {
+		send_v1_delete(isakmp, st, where);
 	}
-	send_v1_delete(isakmp, st, where);
 }
 
 /*

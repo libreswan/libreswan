@@ -792,8 +792,12 @@ void delete_state(struct state *st)
 		switch (st->st_ike_version) {
 #ifdef USE_IKEv1
 		case IKEv1:
-			maybe_send_n_log_v1_delete(st, HERE);
+		{
+			struct ike_sa *isakmp =
+				established_isakmp_sa_for_state(st);
+			llog_n_maybe_send_v1_delete(isakmp, st, HERE);
 			break;
+		}
 #endif
 		case IKEv2:
 			PEXPECT(st->st_logger, IS_PARENT_SA(st));
@@ -2523,18 +2527,9 @@ void delete_ike_family(struct ike_sa **ike, where_t where)
 			 * don't assume the ISAKMP SA is always
 			 * capable of sending delete.
 			 */
-			struct ike_sa *isakmp;
-			if (IS_V1_ISAKMP_SA_ESTABLISHED(&(*ike)->sa)) {
-				isakmp = (*ike);
-			} else {
-				isakmp = established_isakmp_sa_for_state(&child->sa); /* could be NULL */
-			}
-			llog_sa_delete_n_send(isakmp, &child->sa);
-			if (isakmp == NULL) {
-				on_delete(&child->sa, skip_send_delete);
-			} else {
-				send_v1_delete(isakmp, &child->sa, where);
-			}
+			struct ike_sa *isakmp = /* could be NULL */
+				established_isakmp_sa_for_state(&child->sa);
+			llog_n_maybe_send_v1_delete(isakmp, &child->sa, where);
 			connection_delete_child(isakmp, &child, where);
 			break;
 		}

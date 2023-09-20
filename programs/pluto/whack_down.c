@@ -85,11 +85,17 @@ static unsigned down_connection(struct connection *c, struct logger *logger)
 			state_attach(&child->sa, logger);
 			switch (c->config->ike_version) {
 			case IKEv1:
-				maybe_send_n_log_v1_delete(&child->sa, HERE);
-				/* IKE, above, may not be the ISAKMP
-				 * SA for this child! */
-				connection_delete_child(NULL, &child, HERE);
+			{
+				/*
+				 * IKE, above, may not be the best
+				 * ISAKMP SA for this child!
+				 */
+				struct ike_sa *isakmp =
+					established_isakmp_sa_for_state(&child->sa);
+				llog_n_maybe_send_v1_delete(isakmp, &child->sa, HERE);
+				connection_delete_child(isakmp, &child, HERE);
 				break;
+			}
 			case IKEv2:
 				/* apparently not!?! */
 				PEXPECT(c->logger, ike->sa.st_serialno == child->sa.st_clonedfrom);

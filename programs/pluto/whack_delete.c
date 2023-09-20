@@ -48,19 +48,20 @@ static void delete_v1_states(struct connection *c,
 		delete_ike_sa(ike);
 		return;
 	case WHACK_CHILD:
-		state_attach(&(*child)->sa, c->logger);
-		maybe_send_n_log_v1_delete(&(*child)->sa, HERE);
-		PEXPECT(c->logger, (*ike) != NULL);
-		connection_delete_child(*ike, child, HERE);
-		return;
 	case WHACK_CUCKOO:
 	{
-		/* could be NULL */
-		struct ike_sa *isakmp = established_isakmp_sa_for_state(&(*child)->sa);
-		/* IKEv1 has cuckoos */
+		/*
+		 * Can't always assume IKE is suitable for sending
+		 * deletes: for CHILD it probably is; and for CUCKOO
+		 * it is NULL.
+		 *
+		 * Hence just always re-compute it.
+		 */
 		state_attach(&(*child)->sa, c->logger);
-		maybe_send_n_log_v1_delete(&(*child)->sa, HERE);
-		PEXPECT(c->logger, ike == NULL);
+		struct ike_sa *isakmp = /* could be NULL */
+			established_isakmp_sa_for_state(&(*child)->sa);
+		/* IKEv1 has cuckoos */
+		llog_n_maybe_send_v1_delete(isakmp, &(*child)->sa, HERE);
 		connection_delete_child(isakmp, child, HERE);
 		return;
 	}
@@ -83,14 +84,18 @@ static void delete_v1_states(struct connection *c,
 		 */
 		return;
 	case WHACK_STOP_IKE:
+	{
 		/*
 		 * Can't use connection_delete_ike() as that has IKEv2
 		 * semantics - deletes all siblings skipped above.
 		 */
-		maybe_send_n_log_v1_delete(&(*ike)->sa, HERE);
+		struct ike_sa *isakmp =
+			established_isakmp_sa_for_state(&(*ike)->sa);
+		llog_n_maybe_send_v1_delete(isakmp, &(*ike)->sa, HERE);
 		delete_ike_sa(ike);
 		connection_unroute(c, HERE);
 		return;
+	}
 	}
 	bad_case(whacamole);
 }
