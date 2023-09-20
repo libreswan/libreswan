@@ -61,6 +61,7 @@
 #include "pluto_stats.h"
 #include "ip_info.h"
 #include "revival.h"
+#include "ikev1.h"			/* for established_isakmp_for_state() */
 #include "ikev1_delete.h"	/* for send_n_log_v1_delete() */
 #include "ikev2_delete.h"	/* for record_v2_delete() */
 #include "orient.h"
@@ -2526,7 +2527,7 @@ void delete_ike_family(struct ike_sa **ike, where_t where)
 			if (IS_V1_ISAKMP_SA_ESTABLISHED(&(*ike)->sa)) {
 				isakmp = (*ike);
 			} else {
-				isakmp = should_send_v1_delete(&child->sa); /* could be NULL */
+				isakmp = established_isakmp_sa_for_state(&child->sa); /* could be NULL */
 			}
 			llog_sa_delete_n_send(isakmp, &child->sa);
 			if (isakmp == NULL) {

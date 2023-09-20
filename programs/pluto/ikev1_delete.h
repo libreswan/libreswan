@@ -35,7 +35,6 @@
 struct ike_sa;
 struct state;
 
-struct ike_sa *should_send_v1_delete(struct state *st);
 void maybe_send_n_log_v1_delete(struct state *st, where_t where);
 void send_v1_delete(struct ike_sa *isakmp, struct state *st, where_t where);
 

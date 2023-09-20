@@ -29,7 +29,8 @@
 #include "pending.h"
 #include "whack_connection.h"
 #include "ikev2_delete.h"
-#include "ikev1_delete.h"		/* for maybe_send_n_log_v1_delete() */
+#include "ikev1.h"			/* for established_isakmp_for_state() */
+#include "ikev1_delete.h"		/* for llog_n_maybe_send_v1_delete() */
 
 /*
  * Is a connection in use by some state?

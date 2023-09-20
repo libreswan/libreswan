@@ -21,7 +21,8 @@
 #include "connections.h"
 #include "pending.h"
 #include "ikev2_delete.h"
-#include "ikev1_delete.h"		/* for send_v1_delete() */
+#include "ikev1.h"			/* for established_isakmp_for_state() */
+#include "ikev1_delete.h"		/* for llog_n_maybe_send_v1_delete() */
 #include "connection_event.h"
 
 static void delete_v1_states(struct connection *c,
@@ -53,13 +54,16 @@ static void delete_v1_states(struct connection *c,
 		connection_delete_child(*ike, child, HERE);
 		return;
 	case WHACK_CUCKOO:
+	{
+		/* could be NULL */
+		struct ike_sa *isakmp = established_isakmp_sa_for_state(&(*child)->sa);
 		/* IKEv1 has cuckoos */
 		state_attach(&(*child)->sa, c->logger);
 		maybe_send_n_log_v1_delete(&(*child)->sa, HERE);
 		PEXPECT(c->logger, ike == NULL);
-		connection_delete_child(isakmp_sa(*child)/*could-be-null*/,
-					child, HERE);
+		connection_delete_child(isakmp, child, HERE);
 		return;
+	}
 	case WHACK_ORPHAN:
 		/* IKEv1 has orphans */
 		state_attach(&(*child)->sa, c->logger);

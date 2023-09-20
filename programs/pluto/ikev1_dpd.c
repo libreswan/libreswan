@@ -57,7 +57,7 @@
 #include "whack.h"
 #include "ip_address.h"
 #include "pending.h" /* for flush_pending_by_connection */
-
+#include "ikev1.h"			/* for established_isakmp_for_state() */
 #include "ikev1_dpd.h"
 #include "pluto_x509.h"
 
@@ -426,9 +426,7 @@ static void p2_dpd_outI1(struct state *p2st)
 	deltatime_t delay = p2st->st_connection->config->dpd.delay;
 	deltatime_t timeout = p2st->st_connection->config->dpd.timeout;
 
-	struct ike_sa *ike = find_ike_sa_by_connection(p2st->st_connection,
-						       V1_ISAKMP_SA_ESTABLISHED_STATES);
-
+	struct ike_sa *ike = established_isakmp_sa_for_state(p2st);
 	if (ike == NULL) {
 		log_state(RC_LOG_SERIOUS, p2st,
 			  "DPD: could not find newest phase 1 state - initiating a new one");

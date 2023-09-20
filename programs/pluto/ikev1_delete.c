@@ -48,54 +48,6 @@
 #include "ikev1_nat.h"
 #include "packet.h"
 
-/*
- * Send a Delete Notification to announce deletion of ISAKMP SA or
- * inbound IPSEC SAs. Does nothing if no such SAs are being deleted.
- * Delete Notifications cannot announce deletion of outbound
- * IPSEC/ISAKMP SAs.
- *
- * @param st State struct (we hope it has some SA's related to it)
- */
-
-struct ike_sa *should_send_v1_delete(struct state *st)
-{
-	PASSERT(st->st_logger, !st->st_on_delete.skip_send_delete);
-	PASSERT(st->st_logger, st->st_ike_version == IKEv1);
-
-	if (IS_V1_ISAKMP_SA_ESTABLISHED(st)) {
-		ldbg(st->st_logger,
-		     "%s: "PRI_SO"? yes, IKEv1 ISAKMP SA in state %s is established",
-		     __func__, pri_so(st->st_serialno), st->st_state->short_name);
-		return pexpect_ike_sa(st);
-	}
-
-	if (IS_IPSEC_SA_ESTABLISHED(st)) {
-		struct ike_sa *isakmp = find_ike_sa_by_connection(st->st_connection, V1_ISAKMP_SA_ESTABLISHED_STATES);
-		if (isakmp != NULL) {
-			ldbg(st->st_logger,
-			     "%s: "PRI_SO"? yes, IKEv1 IPsec SA in state %s is established with a viable ISAKMP SA "PRI_SO,
-			     __func__, pri_so(st->st_serialno),
-			     st->st_state->short_name,
-			     pri_so(isakmp->sa.st_serialno));
-			return isakmp;
-		}
-		ldbg(st->st_logger,
-		     "%s: "PRI_SO"? no, IKEv1 IPsec SA in state %s is established has no viable ISAKMP SA",
-		     __func__, pri_so(st->st_serialno),
-		     st->st_state->short_name);
-		return NULL;
-	}
-
-	/*
-	 * PW: But this is valid for IKEv1, where it would need to
-	 * start a new IKE SA to send the delete notification ???
-	 */
-	ldbg(st->st_logger,
-	     "%s: "PRI_SO"? no, IKEv1 SA in state %s is not established",
-	     __func__, st->st_serialno, st->st_state->name);
-	return NULL;
-}
-
 void send_v1_delete(struct ike_sa *isakmp, struct state *st, where_t where)
 {
 	ldbg(st->st_logger, "hacking around IKEv1 send'n'log delete for "PRI_SO" "PRI_WHERE,
@@ -302,7 +254,7 @@ void send_v1_delete(struct ike_sa *isakmp, struct state *st, where_t where)
 
 void maybe_send_n_log_v1_delete(struct state *st, where_t where)
 {
-	struct ike_sa *isakmp = should_send_v1_delete(st); /* could be NULL */
+	struct ike_sa *isakmp = established_isakmp_sa_for_state(st); /* could be NULL */
 	llog_sa_delete_n_send(isakmp, st);
 	if (isakmp == NULL) {
 		on_delete(st, skip_send_delete);

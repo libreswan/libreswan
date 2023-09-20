@@ -842,7 +842,6 @@ struct ike_sa *ike_sa(struct state *st, where_t where); /* requires parent, IKEv
 struct ike_sa *ike_sa_where(struct child_sa *child, where_t where); /* IKEv2, parent required */
 struct ike_sa *isakmp_sa_where(struct child_sa *child, where_t where); /* IKEv1, parent optional */
 struct ike_sa *parent_sa_where(struct child_sa *child, where_t where); /* both the above */
-#define isakmp_sa(CHILD) isakmp_sa_where(CHILD, HERE)
 #define parent_sa(CHILD) parent_sa_where(CHILD, HERE)
 
 struct ike_sa *pexpect_ike_sa_where(struct state *st, where_t where);
