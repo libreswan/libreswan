@@ -63,14 +63,51 @@ static void dispatch(const enum routing_event event,
 		     struct logger *logger, where_t where,
 		     struct routing_annex e);
 
+static void jam_sa_update(struct jambuf *buf, const char *sa_name,
+			  so_serial_t sa_so, struct state *st)
+{
+	if (sa_name != NULL) {
+		jam_string(buf, " ");
+		jam_string(buf, sa_name);
+		jam_so(buf, sa_so);
+		if (st == NULL) {
+			jam_string(buf, "(deleted)");
+		} else {
+			jam_string(buf, "(");
+			jam_string(buf, st->st_state->short_name);
+			jam_string(buf, ")");
+		}
+	}
+}
+
 static void jam_event_sa(struct jambuf *buf, struct state *st)
 {
-	jam_string(buf, " ");
-	jam_string(buf, state_sa_short_name(st));
-	jam_so(buf, st->st_serialno);
-	jam_string(buf, " (");
-	jam_string(buf, st->st_state->short_name);
-	jam_string(buf, ")");
+	jam_sa_update(buf, state_sa_short_name(st), st->st_serialno, st);
+}
+
+static void jam_so_update(struct jambuf *buf, const char *what,
+			  so_serial_t old, so_serial_t new,
+			  const char **prefix)
+{
+	if (old != SOS_NOBODY || new != SOS_NOBODY) {
+		jam_string(buf, (*prefix)); (*prefix) = "";
+		jam_string(buf, " ");
+		jam_string(buf, what);
+		jam_so(buf, old);
+		if (old != new) {
+			jam_string(buf, "->");
+			jam_so(buf, new);
+		}
+	}
+}
+
+static void jam_routing_update(struct jambuf *buf, enum routing old, enum routing new)
+{
+	jam_enum_short(buf, &routing_names, old);
+	if (old != new) {
+		jam_string(buf, "->");
+		jam_enum_short(buf, &routing_names, new);
+	}
 }
 
 static void jam_routing(struct jambuf *buf,
@@ -89,25 +126,11 @@ static void jam_routing(struct jambuf *buf,
 	if (never_negotiate(c)) {
 		jam_string(buf, "; never-negotiate");
 	}
-	if (c->newest_routing_sa != SOS_NOBODY ||
-	    c->newest_ipsec_sa != SOS_NOBODY ||
-	    c->newest_ike_sa != SOS_NOBODY) {
-		jam_string(buf, "; newest");
-	}
-	if (c->newest_routing_sa != SOS_NOBODY) {
-		jam_string(buf, " routing");
-		jam_so(buf, c->newest_routing_sa);
-	}
-	if (c->newest_ipsec_sa != SOS_NOBODY) {
-		jam_string(buf, " ");
-		jam_string(buf, c->config->ike_info->child_name);
-		jam_so(buf, c->newest_ipsec_sa);
-	}
-	if (c->newest_ike_sa != SOS_NOBODY) {
-		jam_string(buf, " ");
-		jam_string(buf, c->config->ike_info->parent_name);
-		jam_so(buf, c->newest_ike_sa);
-	}
+	/* no actual update */
+	const char *newest = "; newest";
+	jam_so_update(buf, "routing", c->newest_routing_sa, c->newest_routing_sa, &newest);
+	jam_so_update(buf, c->config->ike_info->child_name, c->newest_ipsec_sa, c->newest_ipsec_sa, &newest);
+	jam_so_update(buf, c->config->ike_info->parent_name, c->newest_ike_sa, c->newest_ike_sa, &newest);
 }
 
 void jam_routing_annex(struct jambuf *buf, const struct routing_annex *e)
@@ -1887,9 +1910,50 @@ void dispatch(enum routing_event event,
 	}
 #endif
 
+	/* capture what can change */
+	const char *ike_name = (ee.ike == NULL || (*ee.ike) == NULL ? SOS_NOBODY :
+				state_sa_short_name(&(*ee.ike)->sa));
+	so_serial_t ike_so = (ee.ike == NULL || (*ee.ike) == NULL ? SOS_NOBODY :
+			      (*ee.ike)->sa.st_serialno);
+	const char *child_name = (ee.child == NULL || (*ee.child) == NULL ? SOS_NOBODY :
+				  state_sa_short_name(&(*ee.child)->sa));
+	so_serial_t child_so = (ee.child == NULL || (*ee.child) == NULL ? SOS_NOBODY :
+				(*ee.child)->sa.st_serialno);
+	so_serial_t old_ipsec_sa = c->newest_ipsec_sa;
+	so_serial_t old_routing_sa = c->newest_routing_sa;
+	so_serial_t old_ike_sa = c->newest_ike_sa;
+	enum routing old_routing = c->child.routing;
+
 	ldbg_routing_event(c, "start", event, where, &ee);
 	dispatch_1(event, c, logger, where, &ee);
-	ldbg_routing_event(c, "stop", event, where, &ee);
+
+	if (DBGP(DBG_BASE)) {
+		/*
+		 * XXX: force ADD_PREFIX so that the connection name
+		 * is before the interesting stuff.
+		 */
+		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, c->logger, buf) {
+			jam_string(buf, "routing: stop dispatch ");
+			jam_enum_short(buf, &routing_event_names, event);
+			jam_sa_update(buf, ike_name, ike_so,
+				      (ee.ike == NULL || (*ee.ike) == NULL ? NULL : &(*ee.ike)->sa));
+			jam_sa_update(buf, child_name, child_so,
+				      (ee.child == NULL || (*ee.child) == NULL ? NULL : &(*ee.child)->sa));
+			jam_string(buf, "; ");
+			/* routing */
+			jam_routing_update(buf, old_routing, c->child.routing);
+			/* various SAs */
+			const char *newest = "; newest";
+			jam_so_update(buf, "routing",
+				      old_routing_sa, c->newest_routing_sa, &newest);
+			jam_so_update(buf, c->config->ike_info->child_name,
+				      old_ipsec_sa, c->newest_ipsec_sa, &newest);
+			jam_so_update(buf, c->config->ike_info->parent_name,
+				      old_ike_sa, c->newest_ike_sa, &newest);
+			jam_string(buf, " ");
+			jam_where(buf, where);
+		}
+	}
 
 	connection_delref_where(&c, c->logger, HERE);
 }
