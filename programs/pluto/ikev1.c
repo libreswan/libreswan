@@ -2995,7 +2995,7 @@ void doi_log_cert_thinking(uint16_t auth,
  * IKEv1 code does not send or process INITIAL_CONTACT.
  */
 
-void ISAKMP_SA_established(const struct ike_sa *ike)
+void ISAKMP_SA_established(struct ike_sa *ike)
 {
 	struct connection *c = ike->sa.st_connection;
 	/*
@@ -3081,11 +3081,6 @@ void ISAKMP_SA_established(const struct ike_sa *ike)
 				}
 			}
 		}
-	}
-
-	/* dump new keys */
-	if (DBGP(DBG_PRIVATE)) {
-		DBG_tcpdump_ike_sa_keys(&ike->sa);
 	}
 
 	connection_establish_ike(ike, HERE);

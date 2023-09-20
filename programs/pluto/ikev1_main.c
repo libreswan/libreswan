@@ -1365,13 +1365,12 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 		}
 	}
 
-	ISAKMP_SA_established(pexpect_ike_sa(st));
 #ifdef USE_XFRM_INTERFACE
 	if (c->xfrmi != NULL && c->xfrmi->if_id != 0)
 		if (!add_xfrm_interface(c, st->st_logger))
 			return STF_FATAL;
 #endif
-	linux_audit_conn(st, LAK_PARENT_START);
+	ISAKMP_SA_established(pexpect_ike_sa(st));
 	return STF_OK;
 }
 
@@ -1431,13 +1430,12 @@ stf_status main_inR3(struct state *st, struct msg_digest *md)
 		}
 	}
 
-	ISAKMP_SA_established(pexpect_ike_sa(st));
 #ifdef USE_XFRM_INTERFACE
 	if (c->xfrmi != NULL && c->xfrmi->if_id != 0)
 		if (!add_xfrm_interface(c, st->st_logger))
 			return STF_FATAL;
 #endif
-	linux_audit_conn(st, LAK_PARENT_START);
+	ISAKMP_SA_established(pexpect_ike_sa(st));
 
 	passert((st->st_policy & POLICY_PFS) == 0 ||
 		st->st_pfs_group != NULL);

@@ -111,7 +111,7 @@ extern ikev1_state_transition_fn quick_inI2;
 	(st)->st_v1_new_iv = (tmp); \
     }
 
-void ISAKMP_SA_established(const struct ike_sa *ike);
+void ISAKMP_SA_established(struct ike_sa *ike);
 
 extern pb_stream reply_stream;
 

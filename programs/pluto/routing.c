@@ -888,12 +888,15 @@ void connection_initiate(struct connection *c, const threadtime_t *inception,
 		 });
 }
 
-void connection_establish_ike(const struct ike_sa *ike, where_t where)
+void connection_establish_ike(struct ike_sa *ike, where_t where)
 {
 	set_newest_sa_where(ike->sa.st_connection, newest_ike_sa, ike->sa.st_serialno, where);
-#if 0
 	ike->sa.st_viable_parent = true;
-#endif
+	linux_audit_conn(&ike->sa, LAK_PARENT_START);
+	/* dump new keys */
+	if (DBGP(DBG_PRIVATE)) {
+		DBG_tcpdump_ike_sa_keys(&ike->sa);
+	}
 }
 
 void connection_acquire(struct connection *c, threadtime_t *inception,

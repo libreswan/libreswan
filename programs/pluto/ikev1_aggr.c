@@ -804,14 +804,12 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 	set_ph1_iv_from_new(st);
 	dbg("phase 1 complete");
 
-	ISAKMP_SA_established(pexpect_ike_sa(st));
 #ifdef USE_XFRM_INTERFACE
 	if (c->xfrmi != NULL && c->xfrmi->if_id != 0)
 		if (!add_xfrm_interface(c, st->st_logger))
 			return STF_FATAL;
 #endif
-
-	linux_audit_conn(st, LAK_PARENT_START);
+	ISAKMP_SA_established(pexpect_ike_sa(st));
 	return STF_OK;
 }
 
@@ -958,14 +956,12 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 	set_ph1_iv_from_new(st);
 	dbg("phase 1 complete");
 
-	ISAKMP_SA_established(pexpect_ike_sa(st));
 #ifdef USE_XFRM_INTERFACE
 	if (c->xfrmi != NULL && c->xfrmi->if_id != 0)
 		if (!add_xfrm_interface(c, st->st_logger))
 			return STF_FATAL;
 #endif
-
-	linux_audit_conn(st, LAK_PARENT_START);
+	ISAKMP_SA_established(pexpect_ike_sa(st));
 	return STF_OK;
 }
 
