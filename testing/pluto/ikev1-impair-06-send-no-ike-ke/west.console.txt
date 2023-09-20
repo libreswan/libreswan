@@ -50,8 +50,9 @@ west #
 003 "westnet-eastnet-ipv4-psk-ikev2" #2: message for STATE_MAIN_I2 is missing payloads KE
 003 "westnet-eastnet-ipv4-psk-ikev2" #2: message for STATE_MAIN_I2 is missing payloads KE
 031 "westnet-eastnet-ipv4-psk-ikev2" #2: STATE_MAIN_I2: 60 second timeout exceeded after 0 retransmits.  No response (or no acceptable response) to our IKEv1 message
-002 "westnet-eastnet-ipv4-psk-ikev2" #2: connection is supposed to remain up; revival attempt 2 scheduled in 5 seconds
+002 "westnet-eastnet-ipv4-psk-ikev2" #2: event CONNECTION_REVIVAL already scheduled
 002 "westnet-eastnet-ipv4-psk-ikev2" #2: deleting ISAKMP SA (MAIN_I2) and NOT sending notification
+002 "westnet-eastnet-ipv4-psk-ikev2" #2: event CONNECTION_REVIVAL already scheduled
 west #
  echo done
 done
