@@ -873,7 +873,6 @@ struct ike_sa *new_v2_ike_sa(struct connection *c,
 			     enum sa_role sa_role,
 			     const ike_spi_t ike_initiator_spi,
 			     const ike_spi_t ike_responder_spi,
-			     lset_t policy,
 			     struct fd *whack_sock);
 /* could eventually be IKE or CHILD SA */
 struct child_sa *new_v2_child_sa(struct connection *c,
@@ -942,7 +941,7 @@ struct child_sa *find_v2_child_sa_by_outbound_spi(struct ike_sa *ike,
 extern struct state *find_v1_info_state(const ike_spis_t *ike_spis,
 					msgid_t msgid);
 
-extern void initialize_new_state(struct state *st, lset_t policy);
+extern void initialize_new_state(struct state *st);
 
 extern void show_brief_status(struct show *s);
 extern void show_states(struct show *s, const monotime_t now);

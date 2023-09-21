@@ -58,7 +58,8 @@ void ikev2_replace(struct state *st)
 
 		struct connection *c = st->st_connection;
 
-		lset_t policy = c->policy & ~POLICY_IPSEC_MASK;
+		/* should this call capture_child_rekey_policy(st)? */
+		lset_t policy = LEMPTY;
 
 		if (IS_IKE_SA_ESTABLISHED(st))
 			log_state(RC_LOG, st, "initiate reauthentication of IKE SA");

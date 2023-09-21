@@ -222,7 +222,7 @@ stf_status aggr_inI1_outR1(struct state *null_st UNUSED,
 
 	passert(c == ike->sa.st_connection); /* no switch */
 
-	ike->sa.st_policy &= ~POLICY_IPSEC_MASK; /* only as accurate as connection */
+	ike->sa.st_policy = LEMPTY; /* only as accurate as connection */
 
 	binlog_refresh_state(&ike->sa);
 
@@ -992,7 +992,7 @@ void aggr_outI1(struct fd *whack_sock,
 	struct ike_sa *ike = new_v1_istate(c, whack_sock);
 	statetime_t start = statetime_backdate(&ike->sa, inception);
 	change_v1_state(&ike->sa, STATE_AGGR_I1);
-	initialize_new_state(&ike->sa, policy);
+	initialize_new_state(&ike->sa);
 
 	if (c->local->host.config->auth == AUTH_PSK &&
 	    c->config->aggressive) {

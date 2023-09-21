@@ -555,7 +555,6 @@ struct ike_sa *new_v2_ike_sa(struct connection *c,
 			     enum sa_role sa_role,
 			     const ike_spi_t ike_initiator_spi,
 			     const ike_spi_t ike_responder_spi,
-			     lset_t policy,
 			     struct fd *whack_sock)
 {
 	struct state *st = new_state(c, SOS_NOBODY,
@@ -565,7 +564,7 @@ struct ike_sa *new_v2_ike_sa(struct connection *c,
 	change_state(&ike->sa, transition->state);
 	set_v2_transition(&ike->sa, transition, HERE);
 	v2_msgid_init_ike(ike);
-	initialize_new_state(&ike->sa, policy);
+	initialize_new_state(&ike->sa);
 	event_schedule(EVENT_SA_DISCARD, EXCHANGE_TIMEOUT_DELAY, &ike->sa);
 	return ike;
 }

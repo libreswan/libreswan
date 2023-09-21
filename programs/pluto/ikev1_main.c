@@ -120,7 +120,7 @@ void main_outI1(struct fd *whack_sock,
 	statetime_t start = statetime_backdate(st, inception);
 
 	/* set up new state */
-	initialize_new_state(st, policy);
+	initialize_new_state(st);
 
 	change_v1_state(st, STATE_MAIN_I1);
 
@@ -473,7 +473,7 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 	passert(!st->st_oakley.doing_xauth);
 
 	/* only as accurate as connection */
-	st->st_policy = c->policy & ~POLICY_IPSEC_MASK;
+	st->st_policy = LEMPTY;
 	change_v1_state(st, STATE_MAIN_R0);
 
 	binlog_refresh_state(st);

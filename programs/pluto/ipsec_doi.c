@@ -115,8 +115,7 @@ lset_t capture_child_rekey_policy(struct state *st)
 	return policy;
 }
 
-void initialize_new_state(struct state *st,
-			  lset_t policy)
+void initialize_new_state(struct state *st)
 {
 	struct connection *c = st->st_connection;
 	PASSERT(st->st_logger, oriented(c));
@@ -153,7 +152,7 @@ void initialize_new_state(struct state *st,
 	     str_endpoint(&st->st_interface->local_endpoint, &lb),
 	     str_endpoint(&st->st_remote_endpoint, &rb));
 
-	st->st_policy = policy & ~POLICY_IPSEC_MASK;        /* clear bits */
+	st->st_policy = LEMPTY;        /* clear bits */
 
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 		if (spd->local->host->config->xauth.client) {
