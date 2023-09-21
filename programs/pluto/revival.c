@@ -250,11 +250,14 @@ static void update_remote_port(struct state *st)
 	 */
 
 	if (!is_instance(c)) {
+		ldbg(st->st_logger, "revival: skip %s(), not an instance", __func__);
 		return;
 	}
 
 	if (!IS_PARENT_SA_ESTABLISHED(st) &&
 	    !IS_IPSEC_SA_ESTABLISHED(st)) {
+		ldbg(st->st_logger, "revival: skip %s(), not established",
+		     __func__);
 		return;
 	}
 
@@ -263,11 +266,15 @@ static void update_remote_port(struct state *st)
 		 established_isakmp_sa_for_state(st));
 
 	if (ike == NULL) {
+		ldbg(st->st_logger, "revival: skip %s(), no %s",
+		     __func__, c->config->ike_info->parent_sa_name);
 		return;
 	}
 
-	if (!IS_PARENT_SA_ESTABLISHED(st)) {
+	if (!IS_PARENT_SA_ESTABLISHED(&ike->sa)) {
 		/* should always be true? */
+		ldbg(st->st_logger, "revival: skip %s(), %s is not established",
+		     __func__, c->config->ike_info->parent_sa_name);
 		return;
 	}
 
