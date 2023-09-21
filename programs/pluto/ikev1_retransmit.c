@@ -70,12 +70,26 @@ void event_v1_retransmit(struct state *st, monotime_t now UNUSED)
 
 	/* placed here because IKEv1 doesn't do a proper state change to STF_FAIL_v1N/STF_FATAL */
 	linux_audit_conn(st, IS_IKE_SA(st) ? LAK_PARENT_FAIL : LAK_CHILD_FAIL);
+	PEXPECT(st->st_logger, !st->st_on_delete.skip_revival);
+
+	if (IS_V1_ISAKMP_SA(st)) {
+		struct ike_sa *isakmp = pexpect_ike_sa(st);
+		connection_timeout_ike_family(&isakmp, HERE);
+		return;
+	}
+
+	if (IS_IPSEC_SA_ESTABLISHED(st)) {
+		ldbg(st->st_logger, "unhandled established IPsec SA");
+	} else if (IS_CHILD_SA(st)) {
+		ldbg(st->st_logger, "unhandled larval IPsec SA");
+	} else {
+		llog_pexpect(st->st_logger, HERE, "unhandled");
+	}
 
 	/*
 	 * If policy dictates, try to keep the state's connection
 	 * alive.  DONT_REKEY overrides UP.
 	 */
-	PEXPECT(st->st_logger, !st->st_on_delete.skip_revival);
 	if (should_revive(st)) {
 		/*
 		 * No clue as to why the state is being deleted so
@@ -90,25 +104,23 @@ void event_v1_retransmit(struct state *st, monotime_t now UNUSED)
 		 * XXX: Should be sending event to the routing code,
 		 * but this is IKEv1.
 		 */
-		if (st->st_ike_version == IKEv1) {
-			enum routing new_rt;
-			switch (st->st_connection->child.routing) {
-			case RT_UNROUTED:
-			case RT_UNROUTED_NEGOTIATION:
-				new_rt = RT_UNROUTED;
-				break;
-			case RT_ROUTED_NEGOTIATION:
-				new_rt = RT_ROUTED_ONDEMAND;
-				break;
-			default:
-				new_rt = 0;
-			}
-			if (new_rt != 0) {
-				set_routing((IS_IKE_SA(st) ? CONNECTION_TIMEOUT_IKE :
-					     CONNECTION_TIMEOUT_CHILD),
-					    st->st_connection,
-					    new_rt, NULL, HERE);
-			}
+		enum routing new_rt;
+		switch (st->st_connection->child.routing) {
+		case RT_UNROUTED:
+		case RT_UNROUTED_NEGOTIATION:
+			new_rt = RT_UNROUTED;
+			break;
+		case RT_ROUTED_NEGOTIATION:
+			new_rt = RT_ROUTED_ONDEMAND;
+			break;
+		default:
+			new_rt = 0;
+		}
+		if (new_rt != 0) {
+			set_routing((IS_IKE_SA(st) ? CONNECTION_TIMEOUT_IKE :
+				     CONNECTION_TIMEOUT_CHILD),
+				    st->st_connection,
+				    new_rt, NULL, HERE);
 		}
 	}
 
