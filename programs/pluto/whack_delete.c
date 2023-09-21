@@ -62,14 +62,14 @@ static void delete_v1_states(struct connection *c,
 			established_isakmp_sa_for_state(&(*child)->sa);
 		/* IKEv1 has cuckoos */
 		llog_n_maybe_send_v1_delete(isakmp, &(*child)->sa, HERE);
-		connection_delete_child(isakmp, child, HERE);
+		connection_delete_child(child, HERE);
 		return;
 	}
 	case WHACK_ORPHAN:
 		/* IKEv1 has orphans */
 		state_attach(&(*child)->sa, c->logger);
 		PEXPECT(c->logger, ike == NULL);
-		connection_delete_child(*ike, child, HERE);
+		connection_delete_child(child, HERE);
 		return;
 	case WHACK_SIBLING:
 		/*
@@ -122,12 +122,12 @@ static void delete_v2_states(struct connection *c,
 		return;
 	case WHACK_CHILD:
 		state_attach(&(*child)->sa, c->logger);
-		connection_delete_child(*ike, child, HERE);
+		connection_delete_child(child, HERE);
 		return;
 	case WHACK_CUCKOO:
 		state_attach(&(*child)->sa, c->logger);
 		PEXPECT(c->logger, ike == NULL);
-		connection_delete_child(ike_sa(&(*child)->sa, HERE), child, HERE);
+		connection_delete_child(child, HERE);
 		return;
 	case WHACK_ORPHAN:
 		state_attach(&(*child)->sa, c->logger);
@@ -138,7 +138,7 @@ static void delete_v2_states(struct connection *c,
 		return;
 	case WHACK_SIBLING:
 		state_attach(&(*child)->sa, c->logger);
-		connection_delete_child(*ike, child, HERE);
+		connection_delete_child(child, HERE);
 		return;
 	case WHACK_IKE:
 		connection_delete_ike(ike, HERE);

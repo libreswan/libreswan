@@ -598,12 +598,12 @@ static void flush_incomplete_children(struct ike_sa *ike)
 		case IKEv1:
 			if (!IS_IPSEC_SA_ESTABLISHED(&child->sa)) {
 				state_attach(&child->sa, ike->sa.st_logger);
-				connection_delete_child(ike, &child, HERE);
+				connection_delete_child(&child, HERE);
 			}
 			continue;
 		case IKEv2:
 			state_attach(&child->sa, ike->sa.st_logger);
-			connection_delete_child(ike, &child, HERE);
+			connection_delete_child(&child, HERE);
 			continue;
 		}
 		bad_enum(ike->sa.st_logger, &ike_version_names, child->sa.st_ike_version);
@@ -2530,7 +2530,7 @@ void delete_ike_family(struct ike_sa **ike, where_t where)
 			struct ike_sa *isakmp = /* could be NULL */
 				established_isakmp_sa_for_state(&child->sa);
 			llog_n_maybe_send_v1_delete(isakmp, &child->sa, where);
-			connection_delete_child(isakmp, &child, where);
+			connection_delete_child(&child, where);
 			break;
 		}
 		case IKEv2:
@@ -2540,7 +2540,7 @@ void delete_ike_family(struct ike_sa **ike, where_t where)
 			 */
 			on_delete(&child->sa, skip_send_delete);
 			on_delete(&child->sa, skip_log_message);
-			connection_delete_child((*ike), &child, where);
+			connection_delete_child(&child, where);
 			break;
 		}
 	}
@@ -2608,11 +2608,11 @@ void send_n_log_delete_ike_family_now(struct ike_sa **ike,
 			if (established_isakmp != NULL) {
 				send_v1_delete(established_isakmp, &child->sa, where);
 			}
-			connection_delete_child(established_isakmp, &child, where);
+			connection_delete_child(&child, where);
 			break;
 		case IKEv2:
 			/* nothing to say? */
-			connection_delete_child((*ike), &child, where);
+			connection_delete_child(&child, where);
 			break;
 		}
 	}

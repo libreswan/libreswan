@@ -93,7 +93,7 @@ static unsigned down_connection(struct connection *c, struct logger *logger)
 				struct ike_sa *isakmp =
 					established_isakmp_sa_for_state(&child->sa);
 				llog_n_maybe_send_v1_delete(isakmp, &child->sa, HERE);
-				connection_delete_child(isakmp, &child, HERE);
+				connection_delete_child(&child, HERE);
 				break;
 			}
 			case IKEv2:

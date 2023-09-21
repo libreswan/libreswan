@@ -348,7 +348,7 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 				llog_pexpect(child->sa.st_logger, HERE,
 					     "Child SA lost its IKE SA #%lu",
 					     child->sa.st_clonedfrom);
-				connection_delete_child(NULL, &child, HERE);
+				connection_delete_child(&child, HERE);
 				st = NULL;
 			} else if (IS_IKE_SA_ESTABLISHED(st)) {
 				/* IKEv2 parent, delete children too */
@@ -373,7 +373,7 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 			} else {
 				struct child_sa *child = pexpect_child_sa(st);
 				state_attach(&child->sa, logger);
-				connection_delete_child(ike, &child, HERE);
+				connection_delete_child(&child, HERE);
 				st = NULL;
 			}
 			break;

@@ -95,7 +95,7 @@ void connection_suspend(struct child_sa *child, where_t where);
  * Both delete_ike and timeout are close to identical?
  */
 void connection_timeout_ike_family(struct ike_sa **ike, where_t where);
-void connection_delete_child(struct ike_sa *ike, struct child_sa **child, where_t where);
+void connection_delete_child(struct child_sa **child, where_t where);
 void connection_delete_ike(struct ike_sa **ike, where_t where);
 
 /* fake a debug message for establish for now */

@@ -1913,7 +1913,7 @@ stf_status process_v2_CREATE_CHILD_SA_failure_response(struct ike_sa *ike,
 		state_detach(replacing, (*larval_child)->sa.st_logger);
 	}
 
-	connection_delete_child(ike, larval_child, HERE);
+	connection_delete_child(larval_child, HERE);
 
 	return status; /* IKE */
 }

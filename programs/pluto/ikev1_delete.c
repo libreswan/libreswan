@@ -523,7 +523,7 @@ bool accept_delete(struct state **stp,
 				"received Delete SA payload via "PRI_SO,
 				pri_so(p1->sa.st_serialno));
 			p2d->sa.st_replace_margin = deltatime(0); /*NEEDED?*/
-			connection_delete_child(p1, &p2d, HERE);
+			connection_delete_child(&p2d, HERE);
 
 		}
 	}
