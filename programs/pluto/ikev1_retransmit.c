@@ -86,44 +86,6 @@ void event_v1_retransmit(struct state *st, monotime_t now UNUSED)
 		llog_pexpect(st->st_logger, HERE, "unhandled");
 	}
 
-	/*
-	 * If policy dictates, try to keep the state's connection
-	 * alive.  DONT_REKEY overrides UP.
-	 */
-	if (should_revive(st)) {
-		/*
-		 * No clue as to why the state is being deleted so
-		 * make something up.  Caller, such as the IKEv1
-		 * timeout should have scheduled the revival already.
-		 */
-		schedule_revival(st, "retransmit timeout");
-		/*
-		 * Hack so that the code deleting a connection knows
-		 * that it needs to delete the revival.
-		 *
-		 * XXX: Should be sending event to the routing code,
-		 * but this is IKEv1.
-		 */
-		enum routing new_rt;
-		switch (st->st_connection->child.routing) {
-		case RT_UNROUTED:
-		case RT_UNROUTED_NEGOTIATION:
-			new_rt = RT_UNROUTED;
-			break;
-		case RT_ROUTED_NEGOTIATION:
-			new_rt = RT_ROUTED_ONDEMAND;
-			break;
-		default:
-			new_rt = 0;
-		}
-		if (new_rt != 0) {
-			set_routing((IS_IKE_SA(st) ? CONNECTION_TIMEOUT_IKE :
-				     CONNECTION_TIMEOUT_CHILD),
-				    st->st_connection,
-				    new_rt, NULL, HERE);
-		}
-	}
-
 	delete_state(st);
 	/* note: no md->st to clear */
 }
