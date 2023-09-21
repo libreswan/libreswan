@@ -636,6 +636,7 @@ void delete_ike_sa(struct ike_sa **ike)
 	*ike = NULL;
 	on_delete(st, skip_revival);
 	on_delete(st, skip_send_delete);
+	on_delete(st, skip_kernel_policy); /* child thing but who cares */
 	delete_state(st);
 }
 
