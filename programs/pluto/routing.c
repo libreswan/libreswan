@@ -690,10 +690,13 @@ static bool zap_connection_family(enum routing_event event,
 				  struct ike_sa **ike,
 				  where_t where)
 {
-
-
 	ldbg_routing((*ike)->sa.st_logger, "%s()", __func__);
 	PASSERT((*ike)->sa.st_logger, c == (*ike)->sa.st_connection);
+
+	if (event == CONNECTION_TIMEOUT_IKE) {
+		ldbg_routing((*ike)->sa.st_logger, "  skipping as IKE timeout");
+		return false;
+	}
 
 	enum routing_event child_event = zap_child_event(ike, event);
 	zap_revival(ike, event);
