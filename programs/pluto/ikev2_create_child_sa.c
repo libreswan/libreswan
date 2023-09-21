@@ -593,7 +593,7 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 			"IKE SA #%lu no longer viable for rekey of Child SA #%lu",
 			ike->sa.st_serialno, larval_child->sa.st_v2_rekey_pred);
 		larval_child->sa.st_policy = cc->policy; /* for pick_initiator */
-		delete_state(&larval_child->sa);
+		delete_child_sa(&larval_child);
 		ike->sa.st_v2_msgid_windows.initiator.wip_sa = larval_child = NULL;
 		return STF_OK; /* IKE */
 	}
@@ -625,7 +625,7 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 	}
 
 	if (!prep_v2_child_for_request(larval_child)) {
-		delete_state(&larval_child->sa);
+		delete_child_sa(&larval_child);
 		ike->sa.st_v2_msgid_windows.initiator.wip_sa = larval_child = NULL;
 		return STF_OK; /* IKE */
 	}
@@ -730,7 +730,7 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 		record_v2N_response(ike->sa.st_logger, ike, md,
 				    v2N_TS_UNACCEPTABLE, NULL/*no data*/,
 				    ENCRYPTED_PAYLOAD);
-		delete_state(&larval_child->sa);
+		delete_child_sa(&larval_child);
 		ike->sa.st_v2_msgid_windows.responder.wip_sa = NULL;
 		return STF_OK; /*IKE*/
 	}
@@ -865,7 +865,7 @@ stf_status initiate_v2_CREATE_CHILD_SA_new_child_request(struct ike_sa *ike,
 			"IKE SA #%lu no longer viable for initiating a Child SA",
 			ike->sa.st_serialno);
 		larval_child->sa.st_policy = larval_child->sa.st_connection->policy; /* for pick_initiator */
-		delete_state(&larval_child->sa);
+		delete_child_sa(&larval_child);
 		ike->sa.st_v2_msgid_windows.initiator.wip_sa = larval_child = NULL;
 		return STF_OK; /* IKE */
 	}
@@ -938,7 +938,7 @@ stf_status process_v2_CREATE_CHILD_SA_new_child_request(struct ike_sa *ike,
 		record_v2N_response(larval_child->sa.st_logger, ike, md,
 				    v2N_TS_UNACCEPTABLE,
 				    NULL/*no-data*/, ENCRYPTED_PAYLOAD);
-		delete_state(&larval_child->sa);
+		delete_child_sa(&larval_child);
 		ike->sa.st_v2_msgid_windows.responder.wip_sa = NULL;
 		return STF_OK; /*IKE*/
 	}
@@ -970,7 +970,7 @@ stf_status process_v2_CREATE_CHILD_SA_request(struct ike_sa *ike,
 		record_v2N_response(ike->sa.st_logger, ike, md,
 				    v2N_INVALID_SYNTAX, NULL/*no-data*/,
 				    ENCRYPTED_PAYLOAD);
-		delete_state(&larval_child->sa);
+		delete_child_sa(&larval_child);
 		ike->sa.st_v2_msgid_windows.responder.wip_sa = NULL;
 		return STF_FATAL; /* invalid syntax means we're dead */
 	}
@@ -982,7 +982,7 @@ stf_status process_v2_CREATE_CHILD_SA_request(struct ike_sa *ike,
 	if (n != v2N_NOTHING_WRONG) {
 		record_v2N_response(ike->sa.st_logger, ike, md,
 				    n, NULL/*no-data*/, ENCRYPTED_PAYLOAD);
-		delete_state(&larval_child->sa);
+		delete_child_sa(&larval_child);
 		ike->sa.st_v2_msgid_windows.responder.wip_sa = NULL;
 		return v2_notification_fatal(n) ? STF_FATAL : STF_OK; /*IKE*/
 	}
@@ -1001,7 +1001,7 @@ stf_status process_v2_CREATE_CHILD_SA_request(struct ike_sa *ike,
 					      larval_child->sa.st_pfs_group,
 					      ENCRYPTED_PAYLOAD)) {
 			/* passert(reply-recorded) */
-			delete_state(&larval_child->sa);
+			delete_child_sa(&larval_child);
 			ike->sa.st_v2_msgid_windows.responder.wip_sa = NULL;
 			return STF_OK; /*IKE*/
 		}
@@ -1095,7 +1095,7 @@ static stf_status process_v2_CREATE_CHILD_SA_request_continue_2(struct state *ik
 		record_v2N_response(larval_child->sa.st_logger, ike, request_md,
 				    v2N_INVALID_SYNTAX, NULL,
 				    ENCRYPTED_PAYLOAD);
-		delete_state(&larval_child->sa);
+		delete_child_sa(&larval_child);
 		ike->sa.st_v2_msgid_windows.responder.wip_sa = NULL;
 		return STF_FATAL; /* kill IKE family */
 	}
@@ -1137,7 +1137,7 @@ stf_status process_v2_CREATE_CHILD_SA_request_continue_3(struct ike_sa *ike,
 		/* already logged */
 		record_v2N_response(larval_child->sa.st_logger, ike, request_md,
 				    n, NULL/*no-data*/, ENCRYPTED_PAYLOAD);
-		delete_state(&larval_child->sa);
+		delete_child_sa(&larval_child);
 		ike->sa.st_v2_msgid_windows.responder.wip_sa = NULL;
 		return v2_notification_fatal(n) ? STF_FATAL : STF_OK; /*IKE*/
 	}
@@ -1212,7 +1212,7 @@ stf_status process_v2_CREATE_CHILD_SA_child_response(struct ike_sa *ike,
 		 * XXX: initiator; need to initiate a delete
 		 * exchange.
 		 */
-		delete_state(&larval_child->sa);
+		delete_child_sa(&larval_child);
 		ike->sa.st_v2_msgid_windows.initiator.wip_sa = larval_child = NULL;
 		return STF_OK; /* IKE */
 	}
@@ -1232,7 +1232,7 @@ stf_status process_v2_CREATE_CHILD_SA_child_response(struct ike_sa *ike,
 			 * XXX: initiator; need to initiate a delete
 			 * exchange.
 			 */
-			delete_state(&larval_child->sa);
+			delete_child_sa(&larval_child);
 			ike->sa.st_v2_msgid_windows.initiator.wip_sa = larval_child = NULL;
 			return STF_OK; /* IKE */
 		}
@@ -1262,7 +1262,7 @@ stf_status process_v2_CREATE_CHILD_SA_child_response(struct ike_sa *ike,
 		/*
 		 * XXX: Initiator; need to initiate a delete exchange.
 		 */
-		delete_state(&larval_child->sa);
+		delete_child_sa(&larval_child);
 		ike->sa.st_v2_msgid_windows.initiator.wip_sa = larval_child = NULL;
 		return STF_OK; /* IKE */
 	}
@@ -1307,7 +1307,7 @@ static stf_status process_v2_CREATE_CHILD_SA_child_response_continue_1(struct st
 		/*
 		 * XXX: initiator; need to initiate a delete exchange.
 		 */
-		delete_state(&larval_child->sa);
+		delete_child_sa(&larval_child);
 		ike->sa.st_v2_msgid_windows.initiator.wip_sa = larval_child = NULL;
 		return STF_OK; /* IKE */
 	}
@@ -1326,7 +1326,7 @@ static stf_status process_v2_CREATE_CHILD_SA_child_response_continue_1(struct st
 		/*
 		 * XXX: initiator; need to intiate a delete exchange.
 		 */
-		delete_state(&larval_child->sa);
+		delete_child_sa(&larval_child);
 		ike->sa.st_v2_msgid_windows.initiator.wip_sa = larval_child = NULL;
 		return STF_OK; /* IKE */
 	}
@@ -1503,7 +1503,7 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
 		record_v2N_response(ike->sa.st_logger, ike, request_md,
 				    v2N_INVALID_SYNTAX, NULL/*no-data*/,
 				    ENCRYPTED_PAYLOAD);
-		delete_state(&larval_ike->sa);
+		delete_child_sa(&larval_ike);
 		ike->sa.st_v2_msgid_windows.responder.wip_sa = NULL;
 		return STF_FATAL; /* IKE family is doomed */
 	}
@@ -1524,7 +1524,7 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
 		pexpect(larval_ike->sa.st_sa_role == SA_RESPONDER);
 		record_v2N_response(larval_ike->sa.st_logger, ike, request_md,
 				    n, NULL, ENCRYPTED_PAYLOAD);
-		delete_state(&larval_ike->sa);
+		delete_child_sa(&larval_ike);
 		ike->sa.st_v2_msgid_windows.responder.wip_sa = NULL;
 		return v2_notification_fatal(n) ? STF_FATAL : STF_OK; /* IKE */
 	}
@@ -1538,7 +1538,7 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
 					   &larval_ike->sa.st_oakley, larval_ike->sa.st_logger)) {
 		llog_sa(RC_LOG_SERIOUS, larval_ike,
 			"IKE responder accepted an unsupported algorithm");
-		delete_state(&larval_ike->sa);
+		delete_child_sa(&larval_ike);
 		ike->sa.st_v2_msgid_windows.responder.wip_sa = NULL;
 		return STF_FATAL; /* IKE family is doomed */
 	}
@@ -1555,7 +1555,7 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
 				       larval_ike->sa.st_oakley.ta_dh,
 				       ENCRYPTED_PAYLOAD)) {
 		/* passert(reply-recorded) */
-		delete_state(&larval_ike->sa);
+		delete_child_sa(&larval_ike);
 		ike->sa.st_v2_msgid_windows.responder.wip_sa = NULL;
 		return STF_OK; /* IKE */
 	}
@@ -1635,7 +1635,7 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_2(struct
 		record_v2N_response(ike->sa.st_logger, ike, request_md,
 				    v2N_INVALID_SYNTAX, NULL,
 				    ENCRYPTED_PAYLOAD);
-		delete_state(&larval_ike->sa);
+		delete_child_sa(&larval_ike);
 		ike->sa.st_v2_msgid_windows.responder.wip_sa = NULL;
 		return STF_FATAL; /* IKE family is doomed */
 	}
@@ -1713,7 +1713,7 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response(struct ike_sa *ike,
 	}
 	if (n != v2N_NOTHING_WRONG) {
 		dbg("failed to accept IKE SA, REKEY, response, in process_v2_CREATE_CHILD_SA_rekey_ike_response");
-		delete_state(&larval_ike->sa);
+		delete_child_sa(&larval_ike);
 		ike->sa.st_v2_msgid_windows.initiator.wip_sa = larval_ike = NULL;
 		return STF_OK; /* IKE */
 	}
