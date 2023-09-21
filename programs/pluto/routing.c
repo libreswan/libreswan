@@ -1606,6 +1606,7 @@ static void dispatch_1(enum routing_event event,
 			set_routing(event, c, RT_UNROUTED, NULL, where);
 			return;
 
+		case X(TIMEOUT_IKE, UNROUTED, PERMANENT):
 		case X(TIMEOUT_IKE, UNROUTED, INSTANCE):		/* ikev2-31-nat-rw-no-rekey */
 		case X(TIMEOUT_IKE, ROUTED_ONDEMAND, PERMANENT):	/* ikev2-child-ipsec-retransmit */
 #if 0
