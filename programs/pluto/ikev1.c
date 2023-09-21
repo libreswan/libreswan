@@ -3087,12 +3087,8 @@ void ISAKMP_SA_established(struct ike_sa *ike)
 }
 
 /*
- * Send a Delete Notification to announce deletion of ISAKMP SA or
- * inbound IPSEC SAs. Does nothing if no such SAs are being deleted.
- * Delete Notifications cannot announce deletion of outbound
- * IPSEC/ISAKMP SAs.
- *
- * @param st State struct (we hope it has some SA's related to it)
+ * Return the established ISAKMP SA that can send messages (such as
+ * Delete or DPD) for the established state.
  */
 
 struct ike_sa *established_isakmp_sa_for_state(struct state *st)
@@ -3102,34 +3098,45 @@ struct ike_sa *established_isakmp_sa_for_state(struct state *st)
 
 	if (IS_V1_ISAKMP_SA_ESTABLISHED(st)) {
 		pdbg(st->st_logger,
-		     "send? yes: is an established ISAKMP SA in state %s",
+		     "send? yes, IKEv1 ISAKMP SA in state %s is established",
 		     st->st_state->short_name);
 		return pexpect_ike_sa(st);
 	}
 
-	if (IS_IPSEC_SA_ESTABLISHED(st)) {
-		struct ike_sa *isakmp = find_ike_sa_by_connection(st->st_connection, V1_ISAKMP_SA_ESTABLISHED_STATES);
-		if (isakmp != NULL) {
-			pdbg(st->st_logger,
-			     "send? yes: IKEv1 IPsec SA in state %s is established and has a viable ISAKMP SA "PRI_SO,
-			     st->st_state->short_name,
-			     pri_so(isakmp->sa.st_serialno));
-			return isakmp;
-		}
+	if (IS_V1_ISAKMP_SA(st)) {
 		pdbg(st->st_logger,
-		     "send? no: IKEv1 IPsec SA in state %s is established but has no viable ISAKMP SA",
+		     "send? no, IKEv1 ISAKMP SA in state %s is NOT established",
 		     st->st_state->short_name);
 		return NULL;
 	}
 
-	/*
-	 * PW: But this is valid for IKEv1, where it would need to
-	 * start a new IKE SA to send the delete notification ???
-	 */
+	PEXPECT(st->st_logger, IS_CHILD_SA(st));
+
+	if (!IS_IPSEC_SA_ESTABLISHED(st)) {
+		/*
+		 * PW: But this is valid for IKEv1, where it would
+		 * need to start a new IKE SA to send the delete
+		 * notification ???
+		 */
+		pdbg(st->st_logger,
+		     "send? no, IKEv1 IPsec SA in state %s is not established",
+		     st->st_state->name);
+		return NULL;
+	}
+
+	struct ike_sa *isakmp = find_ike_sa_by_connection(st->st_connection, V1_ISAKMP_SA_ESTABLISHED_STATES);
+	if (isakmp == NULL) {
+		pdbg(st->st_logger,
+		     "send? no, IKEv1 IPsec SA in state %s is established but has no established ISAKMP SA",
+		     st->st_state->short_name);
+		return NULL;
+	}
+
 	pdbg(st->st_logger,
-	     "send? no, IKEv1 SA in state %s is not established",
-	     st->st_state->name);
-	return NULL;
+	     "send? yes, IKEv1 IPsec SA in state %s is established and has the established ISAKMP SA "PRI_SO,
+	     st->st_state->short_name,
+	     pri_so(isakmp->sa.st_serialno));
+	return isakmp;
 }
 
 /*

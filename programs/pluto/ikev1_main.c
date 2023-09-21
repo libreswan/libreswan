@@ -1713,7 +1713,13 @@ void send_v1_notification_from_state(struct state *st, enum state_kind from_stat
 		from_state = st->st_state->kind;
 
 	if (IS_V1_QUICK(from_state)) {
-		struct ike_sa *p1st = established_isakmp_sa_for_state(st);
+		/*
+		 * Don't use established_isakmp_sa_for_state().  It
+		 * returns NULL when ST isn't established and here ST
+		 * is still larval.
+		 */
+		struct ike_sa *p1st = find_ike_sa_by_connection(st->st_connection,
+								V1_ISAKMP_SA_ESTABLISHED_STATES);
 		if (p1st == NULL) {
 			log_state(RC_LOG_SERIOUS, st,
 				  "no Phase1 state for Quick mode notification");
