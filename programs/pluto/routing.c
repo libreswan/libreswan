@@ -481,7 +481,6 @@ static void routed_negotiation_to_routed_ondemand(enum routing_event event,
 
 static void down_routed_tunnel(enum routing_event event,
 			       struct connection *c,
-			       struct ike_sa *ike,
 			       struct child_sa **child,
 			       where_t where)
 {
@@ -511,7 +510,7 @@ static void down_routed_tunnel(enum routing_event event,
 		replace_ipsec_with_bare_kernel_policies(event, *child,
 							RT_ROUTED_ONDEMAND,
 							EXPECT_KERNEL_POLICY_OK, HERE);
-		schedule_child_revival(ike, *child, "received Delete/Notify");
+		schedule_child_revival(*child, "received Delete/Notify");
 		/* covered by above; no!? */
 		delete_child_sa(child);
 		return;
@@ -1615,17 +1614,17 @@ static void dispatch_1(enum routing_event event,
 		case X(TIMEOUT_CHILD, ROUTED_TUNNEL, PERMANENT):
 		case X(DELETE_CHILD, ROUTED_TUNNEL, PERMANENT):
 			/* permenant connections are never deleted */
-			down_routed_tunnel(event, c, *e->ike, e->child, where);
+			down_routed_tunnel(event, c, e->child, where);
 			return;
 		case X(TIMEOUT_CHILD, ROUTED_TUNNEL, INSTANCE):
 		case X(DELETE_CHILD, ROUTED_TUNNEL, INSTANCE):
-			down_routed_tunnel(event, c, *e->ike, e->child, where);
+			down_routed_tunnel(event, c, e->child, where);
 			return;
 
 		case X(TIMEOUT_CHILD, UNROUTED_NEGOTIATION, INSTANCE):
 		case X(TIMEOUT_CHILD, UNROUTED, PERMANENT): /* permanent+up */
 			if (should_revive_child(*(e->child))) {
-				schedule_child_revival(*e->ike, *e->child, "timed out");
+				schedule_child_revival((*e->child), "timed out");
 				delete_child_sa(e->child);
 				return;
 			}

@@ -42,6 +42,7 @@
 #include "whack_shutdown.h"		/* for exiting_pluto; */
 #include "ikev2_replace.h"
 #include "orient.h"
+#include "ikev1.h"	/* for established_isakmp_sa_for_state() */
 
 /*
  * Revival mechanism: keep track of connections
@@ -237,29 +238,55 @@ bool should_revive_ike(struct ike_sa *ike)
 	return revival_plausable(c, ike->sa.st_logger);
 }
 
-static void update_remote_port(struct connection *c, struct state *st)
+static void update_remote_port(struct state *st)
 {
-	/* XXX: check that IKE is for C? */
-	if ((IS_IKE_SA_ESTABLISHED(st) ||
-	     IS_V1_ISAKMP_SA_ESTABLISHED(st)) &&
-	    is_instance(c)) {
-		/*
-		 * Why isn't the host_port set by instantiation?
-		 *
-		 * XXX: it is, but it is set to 500; better question
-		 * is why isn't the host_port updated once things have
-		 * established and nat has been detected.
-		 */
-		ldbg(st->st_logger, "revival: %s() %s.host_port: %u->%u (that)", __func__, c->remote->config->leftright,
-		     c->remote->host.port, st->st_remote_endpoint.hport);
-		c->remote->host.port = st->st_remote_endpoint.hport;
-		/*
-		 * Need to force the host to use the encap port.
-		 */
-		c->remote->host.encap =
-			(st->hidden_variables.st_nat_traversal & NAT_T_DETECTED ||
-			 st->st_interface->io->protocol == &ip_protocol_tcp);
+	struct connection *c = st->st_connection;
+
+	/*
+	 * Need to find the IKE/ISAKMP SA that is being used to
+	 * exchange messages, and then extract its port.
+	 *
+	 * But first dismiss a few edge cases.
+	 */
+
+	if (!is_instance(c)) {
+		return;
 	}
+
+	if (!IS_PARENT_SA_ESTABLISHED(st) &&
+	    !IS_IPSEC_SA_ESTABLISHED(st)) {
+		return;
+	}
+
+	struct ike_sa *ike =
+		(st->st_ike_version > IKEv1 ? ike_sa(st, HERE) :
+		 established_isakmp_sa_for_state(st));
+
+	if (ike == NULL) {
+		return;
+	}
+
+	if (!IS_PARENT_SA_ESTABLISHED(st)) {
+		/* should always be true? */
+		return;
+	}
+
+	/*
+	 * Why isn't the host_port set by instantiation?
+	 *
+	 * XXX: it is, but it is set to 500; better question
+	 * is why isn't the host_port updated once things have
+	 * established and nat has been detected.
+	 */
+	ldbg(st->st_logger, "revival: %s() %s.host_port: %u->%u (that)", __func__, c->remote->config->leftright,
+	     c->remote->host.port, st->st_remote_endpoint.hport);
+	c->remote->host.port = st->st_remote_endpoint.hport;
+	/*
+	 * Need to force the host to use the encap port.
+	 */
+	c->remote->host.encap =
+		(st->hidden_variables.st_nat_traversal & NAT_T_DETECTED ||
+		 st->st_interface->io->protocol == &ip_protocol_tcp);
 }
 
 static void schedule_revival_event(struct connection *c, struct logger *logger, const char *subplot)
@@ -289,22 +316,22 @@ void schedule_revival(struct state *st, const char *subplot)
 	}
 	on_delete(st, skip_revival);
 
+	update_remote_port(st);
 	struct connection *c = st->st_connection;
-	update_remote_port(c, st);
 	schedule_revival_event(c, st->st_logger, subplot);
 }
 
-void schedule_child_revival(struct ike_sa *ike, struct child_sa *child, const char *subplot)
+void schedule_child_revival(struct child_sa *child, const char *subplot)
 {
+	update_remote_port(&child->sa);
 	struct connection *c = child->sa.st_connection;
-	update_remote_port(c, &ike->sa);
 	schedule_revival_event(c, child->sa.st_logger, subplot);
 }
 
 void schedule_ike_revival(struct ike_sa *ike, const char *subplot)
 {
+	update_remote_port(&ike->sa);
 	struct connection *c = ike->sa.st_connection;
-	update_remote_port(c, &ike->sa);
 	schedule_revival_event(c, ike->sa.st_logger, subplot);
 }
 
