@@ -457,18 +457,17 @@ bool process_v2D_responses(struct ike_sa *ike, struct msg_digest *md)
 						  ntohl((uint32_t)spi));
 				} else {
 					esb_buf b;
-					dbg("our side SPI that needs to be deleted: %s SA(0x%08" PRIx32 ")",
-					    enum_show(&ikev2_delete_protocol_id_names,
-						      v2del->isad_protoid, &b),
-					    ntohl((uint32_t)spi));
+					ldbg_sa(dst, "our side SPI that needs to be deleted: %s SA(0x%08" PRIx32 ")",
+						enum_show(&ikev2_delete_protocol_id_names,
+							  v2del->isad_protoid, &b),
+						ntohl((uint32_t)spi));
 
 					/* we just received a delete, don't send another delete */
 					on_delete(&dst->sa, skip_send_delete);
 					/* st is a parent */
 					passert(&ike->sa != &dst->sa);
 					passert(ike->sa.st_serialno == dst->sa.st_clonedfrom);
-					delete_state(&dst->sa);
-					dst = NULL;
+					connection_delete_child(&dst, HERE);
 				}
 			} /* for each spi */
 			break;
