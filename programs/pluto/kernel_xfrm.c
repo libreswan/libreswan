@@ -277,13 +277,39 @@ static void init_netlink(struct logger *logger)
 #define XFRM_STAT "/proc/net/xfrm_stat"
 
 	struct stat buf;
-	if (stat(XFRM_ACQ_EXPIRES, &buf) != 0) {
-		if (stat(XFRM_STAT, &buf) != 0) {
+	char line[255];
+	ssize_t n;
+	int fd = open(XFRM_ACQ_EXPIRES, O_RDONLY);
+	int lifetime = 0;
+
+	if ((fd == -1) && stat(XFRM_STAT, &buf) != 0) {
 			fatal_errno(PLUTO_EXIT_KERNEL_FAIL, logger, errno,
 			    "no XFRM kernel support detected, missing "XFRM_ACQ_EXPIRES" and "XFRM_STAT);
-		}
 	}
 
+	n = read(fd, line, sizeof(line));
+	if (n == -1) {
+		llog_error(logger, errno, "Failed to read %s - ignoring xfrmlifetime= option", XFRM_ACQ_EXPIRES);
+	} else {
+		close(fd);
+		lifetime = atoi(line);
+		if (lifetime != 0 && lifetime != pluto_xfrmlifetime) {
+			fd = open(XFRM_ACQ_EXPIRES, O_WRONLY);
+			if (fd == -1) {
+				llog_error(logger, errno, "Failed to open %s for writing- ignoring xfrmlifetime= option", XFRM_ACQ_EXPIRES);
+			} else {
+				char numstr[255];
+
+				sprintf(numstr,"%d", pluto_xfrmlifetime);
+				n = write(fd, numstr, strlen(numstr));
+				if (n == -1) {
+					llog_error(logger, errno, "Failed to write %s - ignoring xfrmlifetime= option", XFRM_ACQ_EXPIRES);
+				} else {
+					ldbg(logger, "successfully set kernel xfrmlifetime=%s", numstr);
+				}
+			}
+		}
+	}
 
 	nl_send_fd = cloexec_socket(AF_NETLINK, SOCK_DGRAM, NETLINK_XFRM);
 
