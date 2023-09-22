@@ -2138,7 +2138,7 @@ struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
 		protoid = IKEv2_SEC_PROTO_AH;
 		break;
 	default:
-		bad_case(c->policy);
+		bad_enum(c->logger, &encap_proto_names, c->config->child_sa.encap_proto);
 	}
 
 	for (int dup = 0; dup < (add_empty_msdh_duplicates ? 2 : 1); dup++) {

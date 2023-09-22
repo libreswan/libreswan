@@ -639,7 +639,7 @@ void llog_v2_child_sa_established(struct ike_sa *ike UNUSED, struct child_sa *ch
 		}
 		jam(buf, " using "PRI_SO"; ", pri_so(child->sa.st_clonedfrom));
 		/* log Child SA Traffic Selector details for admin's pleasure */
-		jam(buf, "IPsec %s", (c->policy & POLICY_TUNNEL ? "tunnel" : "transport"));
+		jam(buf, "IPsec %s", (child_sa_policy(c) & POLICY_TUNNEL ? "tunnel" : "transport"));
 		FOR_EACH_ITEM(spd, &c->child.spds) {
 			jam_string(buf, " ");
 			if (connection_requires_tss(c) == NULL) {

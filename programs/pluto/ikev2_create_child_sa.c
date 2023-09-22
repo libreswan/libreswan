@@ -592,7 +592,7 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 		llog_sa(RC_LOG_SERIOUS, larval_child,
 			"IKE SA #%lu no longer viable for rekey of Child SA #%lu",
 			ike->sa.st_serialno, larval_child->sa.st_v2_rekey_pred);
-		larval_child->sa.st_policy = cc->policy; /* for pick_initiator */
+		larval_child->sa.st_policy = child_sa_policy(cc); /* for pick_initiator */
 		delete_child_sa(&larval_child);
 		ike->sa.st_v2_msgid_windows.initiator.wip_sa = larval_child = NULL;
 		return STF_OK; /* IKE */
@@ -864,7 +864,7 @@ stf_status initiate_v2_CREATE_CHILD_SA_new_child_request(struct ike_sa *ike,
 		llog_sa(RC_LOG_SERIOUS, larval_child,
 			"IKE SA #%lu no longer viable for initiating a Child SA",
 			ike->sa.st_serialno);
-		larval_child->sa.st_policy = larval_child->sa.st_connection->policy; /* for pick_initiator */
+		larval_child->sa.st_policy = child_sa_policy(larval_child->sa.st_connection); /* for pick_initiator */
 		delete_child_sa(&larval_child);
 		ike->sa.st_v2_msgid_windows.initiator.wip_sa = larval_child = NULL;
 		return STF_OK; /* IKE */

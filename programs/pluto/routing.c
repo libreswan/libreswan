@@ -1280,7 +1280,7 @@ static void dispatch_1(enum routing_event event,
 				 *
 				 * See ikev2-13-ah.
 				 */
-				ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
+				ipsecdoi_initiate(c, child_sa_policy(c), SOS_NOBODY,
 						  e->inception, null_shunk,
 						  e->background, c->logger);
 				return;
@@ -1290,7 +1290,7 @@ static void dispatch_1(enum routing_event event,
 		case X(INITIATE, UNROUTED, PERMANENT):
 			flush_unrouted_revival(c);
 			set_routing(event, c, RT_UNROUTED_NEGOTIATION, NULL, where);
-			ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
+			ipsecdoi_initiate(c, child_sa_policy(c), SOS_NOBODY,
 					  e->inception, null_shunk,
 					  e->background, c->logger);
 			return;
@@ -1301,7 +1301,7 @@ static void dispatch_1(enum routing_event event,
 			ondemand_to_negotiation(event, c, where, "negotiating permanent");
 			PEXPECT(logger, c->child.routing == RT_ROUTED_NEGOTIATION);
 			/* ipsecdoi_initiate may replace SOS_NOBODY with a state */
-			ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
+			ipsecdoi_initiate(c, child_sa_policy(c), SOS_NOBODY,
 					  e->inception, null_shunk,
 					  e->background, c->logger);
 			return;
@@ -1312,7 +1312,7 @@ static void dispatch_1(enum routing_event event,
 				 * ikev2-redirect-01-global
 				 * ikev2-redirect-03-auth-loop
 				 * ikev2-tcp-07-fail-ike-auth-redirect */
-				ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
+				ipsecdoi_initiate(c, child_sa_policy(c), SOS_NOBODY,
 						  e->inception, null_shunk,
 						  e->background, logger);
 				return;
@@ -1325,7 +1325,7 @@ static void dispatch_1(enum routing_event event,
 				 *
 				 * See ikev2-impair-10-nr-ts-selectors
 				 */
-				ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
+				ipsecdoi_initiate(c, child_sa_policy(c), SOS_NOBODY,
 						  e->inception, null_shunk,
 						  e->background, logger);
 				return;
@@ -1344,7 +1344,7 @@ static void dispatch_1(enum routing_event event,
 			 * difference.
 			 */
 			set_routing(event, c, RT_UNROUTED_NEGOTIATION, NULL, where);
-			ipsecdoi_initiate(c, c->policy, SOS_NOBODY, e->inception,
+			ipsecdoi_initiate(c, child_sa_policy(c), SOS_NOBODY, e->inception,
 					  null_shunk, /*background*/false, logger);
 			return;
 		case X(REVIVE, ROUTED_ONDEMAND, PERMANENT):
@@ -1362,14 +1362,14 @@ static void dispatch_1(enum routing_event event,
 					ldbg_routing(c->logger, "skipping NEGOTIATION=HOLD");
 					set_routing(event, c, RT_ROUTED_NEGOTIATION, NULL, where);
 					/* ipsecdoi_initiate may replace SOS_NOBODY with a state */
-					ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
+					ipsecdoi_initiate(c, child_sa_policy(c), SOS_NOBODY,
 							  e->inception, null_shunk,
 							  e->background, c->logger);
 					return;
 				}
 				ondemand_to_negotiation(event, c, where, "negotiating revival");
 				PEXPECT(logger, c->child.routing == RT_ROUTED_NEGOTIATION);
-				ipsecdoi_initiate(c, c->policy, SOS_NOBODY, e->inception,
+				ipsecdoi_initiate(c, child_sa_policy(c), SOS_NOBODY, e->inception,
 						  null_shunk, /*background*/false, logger);
 				return;
 			}
@@ -1383,7 +1383,7 @@ static void dispatch_1(enum routing_event event,
 				 * ikev2-tcp-05-transport-mode
 				 * ikev2-tcp-06-fail-ike-sa-init-redirect
 				 * ikev2-tcp-07-fail-ike-auth-redirect */
-				ipsecdoi_initiate(c, c->policy, SOS_NOBODY, e->inception,
+				ipsecdoi_initiate(c, child_sa_policy(c), SOS_NOBODY, e->inception,
 						  null_shunk, /*background*/false, logger);
 				return;
 			}
@@ -1393,7 +1393,7 @@ static void dispatch_1(enum routing_event event,
 				/* ikev2-32-nat-rw-rekey
 				 * ikev2-liveness-05 ikev2-liveness-07
 				 * ikev2-liveness-08 */
-				ipsecdoi_initiate(c, c->policy, SOS_NOBODY, e->inception,
+				ipsecdoi_initiate(c, child_sa_policy(c), SOS_NOBODY, e->inception,
 						  null_shunk, /*background*/false, logger);
 				return;
 			}
@@ -1401,7 +1401,7 @@ static void dispatch_1(enum routing_event event,
 		case X(REVIVE, UNROUTED_NEGOTIATION, PERMANENT):
 			if (BROKEN_TRANSITION) {
 				/* ikev2-x509-31-wifi-assist */
-				ipsecdoi_initiate(c, c->policy, SOS_NOBODY, e->inception,
+				ipsecdoi_initiate(c, child_sa_policy(c), SOS_NOBODY, e->inception,
 						  null_shunk, /*background*/false, logger);
 				return;
 			}
@@ -1409,7 +1409,7 @@ static void dispatch_1(enum routing_event event,
 		case X(REVIVE, ROUTED_TUNNEL, PERMANENT):
 			if (BROKEN_TRANSITION) {
 				/* ikev2-59-multiple-acquires-alias. */
-				ipsecdoi_initiate(c, c->policy, SOS_NOBODY, e->inception,
+				ipsecdoi_initiate(c, child_sa_policy(c), SOS_NOBODY, e->inception,
 						  null_shunk, /*background*/false, logger);
 				return;
 			}
@@ -1517,13 +1517,13 @@ static void dispatch_1(enum routing_event event,
 			    c->config->negotiation_shunt == SHUNT_HOLD) {
 				ldbg_routing(logger, "skipping NEGOTIATION=HOLD");
 				set_routing(event, c, RT_UNROUTED_NEGOTIATION, NULL, where);
-				ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
+				ipsecdoi_initiate(c, child_sa_policy(c), SOS_NOBODY,
 						  e->inception, null_shunk,
 						  e->background, logger);
 				return;
 			}
 			unrouted_instance_to_unrouted_negotiation(event, c, where);
-			ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
+			ipsecdoi_initiate(c, child_sa_policy(c), SOS_NOBODY,
 					  e->inception, null_shunk,
 					  e->background, logger);
 			return;
@@ -1554,13 +1554,13 @@ static void dispatch_1(enum routing_event event,
 			    c->config->negotiation_shunt == SHUNT_HOLD) {
 				ldbg_routing(logger, "skipping NEGOTIATION=HOLD");
 				set_routing(event, c, RT_UNROUTED_NEGOTIATION, NULL, where);
-				ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
+				ipsecdoi_initiate(c, child_sa_policy(c), SOS_NOBODY,
 						  e->inception, null_shunk,
 						  e->background, logger);
 				return;
 			}
 			unrouted_instance_to_unrouted_negotiation(event, c, where);
-			ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
+			ipsecdoi_initiate(c, child_sa_policy(c), SOS_NOBODY,
 					  e->inception, e->sec_label,
 					  e->background, logger);
 			return;
@@ -1976,7 +1976,7 @@ static void dispatch_1(enum routing_event event,
 		case X(ACQUIRE, UNROUTED, LABELED_PARENT):
 		case X(ACQUIRE, ROUTED_ONDEMAND, LABELED_PARENT):
 		case X(INITIATE, UNROUTED, LABELED_PARENT):
-			ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
+			ipsecdoi_initiate(c, child_sa_policy(c), SOS_NOBODY,
 					  e->inception, e->sec_label, e->background,
 					  logger);
 			return;

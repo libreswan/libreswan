@@ -863,7 +863,7 @@ bool ikev1_out_sa(pb_stream *outs,
 						    aggressive_mode,
 						    st->st_logger);
 	} else {
-		revised_sadb = v1_kernel_alg_makedb(c->policy,
+		revised_sadb = v1_kernel_alg_makedb(child_sa_policy(c),
 						    c->config->child_sa.proposals,
 						    true, st->st_logger);
 

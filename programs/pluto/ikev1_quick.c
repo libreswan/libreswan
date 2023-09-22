@@ -1217,7 +1217,7 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 	 * ISAKMP policy is water under the bridge, I think.  It will
 	 * reflect the ISAKMP SA that we are using.
 	 */
-	child->sa.st_policy = c->policy;
+	child->sa.st_policy = child_sa_policy(c);
 
 	if (parent->sa.hidden_variables.st_nat_traversal & NAT_T_DETECTED) {
 		/* ??? this partially overwrites what was done via hv */

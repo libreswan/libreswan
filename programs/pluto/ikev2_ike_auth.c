@@ -421,7 +421,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 	 */
 
 	/* Child Connection */
-	lset_t unused_policy = pc->policy; /* unused */
+	lset_t unused_policy = child_sa_policy(pc); /* unused */
 	struct fd *child_whackfd = null_fd; /* must-free */
 	struct connection *cc = first_pending(ike, &unused_policy, &child_whackfd);
 	if (cc == NULL) {

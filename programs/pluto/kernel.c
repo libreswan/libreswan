@@ -847,7 +847,7 @@ static enum routability connection_routability(struct connection *c,
 	     pri_shunk(c->config->sec_label));
 
 	/* it makes no sense to route a connection that is ISAKMP-only */
-	if (!never_negotiate(c) && !HAS_IPSEC_POLICY(c->policy)) {
+	if (!never_negotiate(c) && !HAS_IPSEC_POLICY(child_sa_policy(c))) {
 		llog(RC_ROUTE, logger,
 		     "cannot route an %s-only connection",
 		     c->config->ike_info->parent_name);

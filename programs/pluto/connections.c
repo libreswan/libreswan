@@ -4673,3 +4673,15 @@ const char *connection_sa_short_name(const struct connection *c, enum sa_type sa
 	bad_case(sa_type);
 }
 
+lset_t child_sa_policy(const struct connection *c)
+{
+	lset_t policy = LEMPTY;
+	policy |= (c->config->child_sa.ipcomp ? POLICY_COMPRESS : LEMPTY);
+	policy |= (c->config->child_sa.pfs ? POLICY_PFS : LEMPTY);
+	policy |= (c->config->child_sa.encap_proto == ENCAP_PROTO_ESP ? POLICY_ENCRYPT :
+		   c->config->child_sa.encap_proto == ENCAP_PROTO_AH ? POLICY_AUTHENTICATE :
+		   LEMPTY);
+	policy |= (c->config->child_sa.encap_mode == ENCAP_MODE_TUNNEL ? POLICY_TUNNEL :
+		   LEMPTY);
+	return policy;
+}
