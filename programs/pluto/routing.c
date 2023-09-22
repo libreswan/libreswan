@@ -1631,9 +1631,6 @@ static void dispatch_1(enum routing_event event,
 
 		case X(DELETE_IKE, UNROUTED_NEGOTIATION, PERMANENT):
 		case X(TIMEOUT_IKE, UNROUTED_NEGOTIATION, PERMANENT):
-			if (zap_connection_family(event, c, e->ike, where)) {
-				return;
-			}
 			/* ex, permanent+initiate */
 			if (should_revive_ike((*e->ike))) {
 				set_routing(event, c, RT_UNROUTED, NULL, where);
@@ -1659,10 +1656,6 @@ static void dispatch_1(enum routing_event event,
 			 * code below, and not zap_connection(), will
 			 * need to deal with revival et.al.
 			 */
-			if (zap_connection_family(event, c, e->ike, where)) {
-				/* will this happen? */
-				return;
-			}
 			/* ex, permanent+up */
 			if (should_revive_ike((*e->ike))) {
 				routed_negotiation_to_routed_ondemand(event, c, logger, where,
@@ -1689,11 +1682,6 @@ static void dispatch_1(enum routing_event event,
 
 		case X(TIMEOUT_IKE, ROUTED_NEGOTIATION, INSTANCE):
 		case X(TIMEOUT_IKE, UNROUTED_NEGOTIATION, INSTANCE):
-			if (BROKEN_TRANSITION) {
-				if (zap_connection_family(event, c, e->ike, where)) {
-					return;
-				}
-			}
 			if (BROKEN_TRANSITION &&
 			    should_revive_ike((*e->ike))) {
 				/* when ROUTED_NEGOTIATION should
@@ -1756,10 +1744,6 @@ static void dispatch_1(enum routing_event event,
 			 * Since there's no established Child SA
 			 * zap_connection_states() should always fail?
 			 */
-			if (zap_connection_family(event, c, e->ike, where)) {
-				pexpect(0); /* logger is invalid */
-				return;
-			}
 			delete_ike_sa(e->ike);
 			return;
 
@@ -1986,9 +1970,6 @@ static void dispatch_1(enum routing_event event,
 			 * has no Child SA (the Child SAs are part of
 			 * a different connection).
 			 */
-			if (zap_connection_family(event, c, e->ike, where)) {
-				return;
-			}
 			delete_ike_sa(e->ike);
 			/*
 			 * Assume LABELED_TEMPLATE owns the route?
