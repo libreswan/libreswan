@@ -451,7 +451,13 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 		ldbg(st->st_logger, "event crypto_failed on state #%lu, aborting",
 		     st->st_serialno);
 		pstat_sa_failed(st, REASON_CRYPTO_TIMEOUT);
-		delete_state(st);
+		if (IS_PARENT_SA(st)) {
+			struct ike_sa *ike = pexpect_ike_sa(st);
+			delete_state(&ike->sa);
+		} else {
+			struct child_sa *child = pexpect_child_sa(st);
+			connection_delete_child(&child, HERE);
+		}
 		/* note: no md->st to clear */
 		break;
 
