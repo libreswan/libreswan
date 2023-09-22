@@ -141,7 +141,7 @@ static void delete_v2_states(struct connection *c,
 		connection_delete_child(child, HERE);
 		return;
 	case WHACK_IKE:
-		connection_delete_ike(ike, HERE);
+		connection_delete_ike_family(ike, HERE);
 		return;
 	case WHACK_STOP_IKE:
 		delete_ike_sa(ike);

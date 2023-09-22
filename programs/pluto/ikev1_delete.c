@@ -470,15 +470,14 @@ bool accept_delete(struct state **stp,
 				nat_traversal_change_port_lookup(md, &dst->sa);
 				v1_maybe_natify_initiator_endpoints(&p1->sa, HERE);
 			}
-			if (dst == p1) {
+			bool self_inflicted = (dst == p1);
+			connection_delete_ike_family(&dst, HERE);
+			if (self_inflicted) {
 				/* bail; IKE SA no longer viable */
-				connection_delete_ike(&dst, HERE);
 				*stp = md->v1_st = NULL;
 				dst = p1 = NULL;
 				return true;
 			}
-
-			connection_delete_ike(&dst, HERE);
 		} else {
 			/*
 			 * IPSEC (ESP/AH)

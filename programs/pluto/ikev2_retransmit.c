@@ -68,7 +68,7 @@ void event_v2_retransmit(struct state *ike_sa, monotime_t now UNUSED)
 			  "suppressing retransmit because IKE SA was superseded #%lu; drop this negotiation",
 			  c->newest_ike_sa);
 		pstat_sa_failed(&ike->sa, REASON_SUPERSEDED_BY_NEW_SA);
-		connection_delete_ike(&ike, HERE);
+		connection_delete_ike_family(&ike, HERE);
 		return;
 	}
 

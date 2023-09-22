@@ -1032,6 +1032,11 @@ void connection_timeout_ike_family(struct ike_sa **ike, where_t where)
 	connection_zap_ike_family(ike, CONNECTION_TIMEOUT_IKE, where);
 }
 
+void connection_delete_ike_family(struct ike_sa **ike, where_t where)
+{
+	connection_zap_ike_family(ike, CONNECTION_DELETE_IKE, where);
+}
+
 void connection_delete_ike(struct ike_sa **ike, where_t where)
 {
 	struct connection *c = (*ike)->sa.st_connection;

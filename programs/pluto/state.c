@@ -2622,7 +2622,7 @@ void send_n_log_delete_ike_family_now(struct ike_sa **ike,
 		send_v1_delete(established_isakmp, &established_isakmp->sa, where);
 	}
 
-	connection_delete_ike(ike, where);
+	connection_delete_ike_family(ike, where);
 }
 
 /*
