@@ -950,6 +950,7 @@ bool can_have_child_sa(const struct connection *c);
 bool never_negotiate(const struct connection *c);
 
 bool is_group(const struct connection *c);
+bool is_group_instance(const struct connection *c); /* derived from group; tempate or instance */
 
 bool is_opportunistic(const struct connection *c);
 bool is_opportunistic_group(const struct connection *c);

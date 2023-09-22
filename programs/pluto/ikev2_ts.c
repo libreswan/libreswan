@@ -1496,7 +1496,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 		       pri_connection(cc, &cb), pri_so(cc->serialno),
 		       pri_connection(best.connection, &bcb), pri_so(best.connection->serialno),
 		       (is_template(best.connection) ? " needs instantiating!" : ""),
-		       (best.connection->policy & POLICY_GROUPINSTANCE ? " group-instance!" : ""));
+		       (is_group_instance(best.connection) ? " group-instance!" : ""));
 	}
 
 	/*
@@ -1567,7 +1567,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 
 	if (best.connection == NULL &&
 	    !is_labeled(cc) &&
-	    (cc->policy & POLICY_GROUPINSTANCE)) {
+	    is_group_instance(cc)) {
 		/*
 		 * Is there something better than the current
 		 * connection?
@@ -1616,7 +1616,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 			 * XXX: why does this matter; does it imply
 			 * t->foodgroup != NULL?
 			 */
-			if (!LIN(POLICY_GROUPINSTANCE, t->policy)) {
+			if (!is_group_instance(t)) {
 				dbg_ts("skipping; not a group instance");
 				continue;
 			}

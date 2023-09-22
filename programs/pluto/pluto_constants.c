@@ -122,7 +122,6 @@ static const char *const sa_policy_bit_name[] = {
 	P(POLICY_COMPRESS),
 	P(POLICY_TUNNEL),
 	P(POLICY_PFS),
-	P(POLICY_GROUPINSTANCE),
 	P(POLICY_ROUTE),
 	P(POLICY_UP),
 #undef P

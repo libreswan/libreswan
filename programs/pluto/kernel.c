@@ -128,7 +128,7 @@ kernel_priority_t calculate_kernel_priority(const struct connection *c)
 
 	/* Determine the base priority (2 bits) (0 is manual by user). */
 	unsigned base;
-	if (LIN(POLICY_GROUPINSTANCE, c->policy)) {
+	if (is_group_instance(c)) {
 		if (c->remote->host.config->authby.null) {
 			base = 3; /* opportunistic anonymous */
 		} else {
@@ -873,7 +873,7 @@ static enum routability connection_routability(struct connection *c,
 	if (is_template(c)) {
 		if (is_opportunistic(c)) {
 			ldbg(logger, "template-route-possible: opportunistic");
-		} else if (c->policy & POLICY_GROUPINSTANCE) {
+		} else if (is_group_instance(c)) {
 			ldbg(logger, "template-route-possible: groupinstance");
 		} else if (c->config->sec_label.len > 0) {
 			ldbg(logger, "template-route-possible: has sec-label");

@@ -235,7 +235,6 @@ struct connection *group_instantiate(struct connection *group,
 	 * When this template_group is instantiated the policy bit is
 	 * inherited resulting in instance+group aka GROUPINSTANCE
 	 * also. */
-	add_policy(t, POLICY_GROUPINSTANCE);
 	t->local->kind = t->remote->kind = CK_TEMPLATE;
 	t->child.reqid = (t->config->sa_reqid == 0 ? gen_reqid() :
 			  t->config->sa_reqid);

@@ -70,7 +70,7 @@ static bool match_v1_connection(struct connection *c, struct authby authby,
 		 * shunt match - stop the search for another conn if
 		 * we are groupinstance.
 		 */
-		if (c->policy & POLICY_GROUPINSTANCE) {
+		if (is_group_instance(c)) {
 			connection_buf cb;
 			dbg("  choosing "PRI_CONNECTION", never negotiate + group instance",
 			    pri_connection(c, &cb));

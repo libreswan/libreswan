@@ -92,7 +92,7 @@ static bool match_connection(const struct connection *c,
 		enum shunt_policy shunt = c->config->never_negotiate_shunt;
 		if (shunt == SHUNT_PASS/*clear*/ ||
 		    shunt == SHUNT_REJECT/*block*/) {
-			if (c->policy & POLICY_GROUPINSTANCE) {
+			if (is_group_instance(c)) {
 				pexpect(remote_authby.never);
 				*send_reject_response = false;
 			}
