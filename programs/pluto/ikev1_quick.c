@@ -655,7 +655,7 @@ void quick_outI1(struct fd *whack_sock,
 		 * use that group.
 		 * if not, fallback to old use-same-as-P1 behaviour
 		 */
-		child->sa.st_pfs_group = ikev1_quick_pfs(c->config->child_proposals);
+		child->sa.st_pfs_group = ikev1_quick_pfs(c->config->child_sa.proposals);
 		/* otherwise, use the same group as during Phase 1:
 		 * since no negotiation is possible, we pick one that is
 		 * very likely supported.
@@ -672,8 +672,8 @@ void quick_outI1(struct fd *whack_sock,
 		}
 		jam(buf, " {using isakmp#%lu msgid:%08" PRIx32 " proposal=",
 			isakmp->sa.st_serialno, child->sa.st_v1_msgid.id);
-		if (child->sa.st_connection->config->child_proposals.p != NULL) {
-			jam_proposals(buf, child->sa.st_connection->config->child_proposals.p);
+		if (child->sa.st_connection->config->child_sa.proposals.p != NULL) {
+			jam_proposals(buf, child->sa.st_connection->config->child_sa.proposals.p);
 		} else {
 			jam(buf, "defaults");
 		}

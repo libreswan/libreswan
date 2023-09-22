@@ -2091,7 +2091,7 @@ struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
 					       const struct dh_desc *default_dh,
 					       struct logger *logger)
 {
-	if (!pexpect(c->config->child_proposals.p != NULL)) {
+	if (!pexpect(c->config->child_sa.proposals.p != NULL)) {
 		return NULL;
 	}
 
@@ -2120,7 +2120,7 @@ struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
 	struct ikev2_proposals *v2_proposals = alloc_thing(struct ikev2_proposals,
 							   "ESP/AH proposals");
 	/* proposal[0] is empty so +1 */
-	int v2_proposals_roof = nr_proposals(c->config->child_proposals.p) + 1;
+	int v2_proposals_roof = nr_proposals(c->config->child_sa.proposals.p) + 1;
 	if (add_empty_msdh_duplicates) {
 		/* make space for everything duplicated; note +1 above */
 		v2_proposals_roof = v2_proposals_roof * 2 - 1;
@@ -2142,7 +2142,7 @@ struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
 	}
 
 	for (int dup = 0; dup < (add_empty_msdh_duplicates ? 2 : 1); dup++) {
-		FOR_EACH_PROPOSAL(c->config->child_proposals.p, esp_info) {
+		FOR_EACH_PROPOSAL(c->config->child_sa.proposals.p, esp_info) {
 			LDBGP_JAMBUF(DBG_BASE, &global_logger, log) {
 				jam(log, "converting proposal ");
 				jam_proposal(log, esp_info);

@@ -106,7 +106,7 @@ void show_kernel_alg_connection(struct show *s,
 #ifdef USE_IKEv1
 		case IKEv1:
 		{
-			const struct dh_desc *dh = ikev1_quick_pfs(c->config->child_proposals);
+			const struct dh_desc *dh = ikev1_quick_pfs(c->config->child_sa.proposals);
 			if (dh != NULL) {
 				pfsbuf = dh->common.fqn;
 			} else {
@@ -129,8 +129,8 @@ void show_kernel_alg_connection(struct show *s,
 	 * known).  Mainly so that test output doesn't get churned
 	 * (originally it wasn't shown because it wasn't known).
 	 */
-	if (c->config->child_proposals.p != NULL &&
-	    !default_proposals(c->config->child_proposals.p)) {
+	if (c->config->child_sa.proposals.p != NULL &&
+	    !default_proposals(c->config->child_sa.proposals.p)) {
 		SHOW_JAMBUF(RC_COMMENT, s, buf) {
 			/*
 			 * If DH (PFS) was specified in the esp= or
@@ -151,7 +151,7 @@ void show_kernel_alg_connection(struct show *s,
 			 */
 			jam(buf, "\"%s\"%s:   %s algorithms: ",
 			    c->name, instance, satype);
-			jam_proposals(buf, c->config->child_proposals.p);
+			jam_proposals(buf, c->config->child_sa.proposals.p);
 		}
 	}
 

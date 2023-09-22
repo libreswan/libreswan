@@ -967,7 +967,7 @@ static v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ik
 
 	n = process_v2_childs_sa_payload("IKE_AUTH responder matching remote ESP/AH proposals",
 					 ike, child, md,
-					 child->sa.st_connection->config->v2_ike_auth_child_proposals,
+					 child->sa.st_connection->config->child_sa.v2_ike_auth_proposals,
 					 /*expect-accepted-proposal?*/false);
 	ldbg(child->sa.st_logger, "process_v2_childs_sa_payload() returned %s",
 	     enum_name(&v2_notification_names, n));
@@ -1135,7 +1135,7 @@ v2_notification_t process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *
 
 	n = process_v2_childs_sa_payload("IKE_AUTH initiator accepting remote ESP/AH proposal",
 					 ike, child, response_md,
-					 child->sa.st_connection->config->v2_ike_auth_child_proposals,
+					 child->sa.st_connection->config->child_sa.v2_ike_auth_proposals,
 					 /*expect-accepted-proposal?*/true);
 	if (n != v2N_NOTHING_WRONG) {
 		return n;

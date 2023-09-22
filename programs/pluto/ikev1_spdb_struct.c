@@ -203,12 +203,12 @@ static bool ikev1_verify_esp(const struct connection *c,
 		return false;
 	}
 
-	if (c->config->child_proposals.p == NULL) {
+	if (c->config->child_sa.proposals.p == NULL) {
 		dbg("ESP IPsec Transform verified unconditionally; no alg_info to check against");
 		return true;
 	}
 
-	FOR_EACH_PROPOSAL(c->config->child_proposals.p, proposal) {
+	FOR_EACH_PROPOSAL(c->config->child_sa.proposals.p, proposal) {
 		struct v1_proposal algs = v1_proposal(proposal);
 		if (algs.encrypt == ta->ta_encrypt &&
 		    (algs.enckeylen == 0 ||
@@ -250,12 +250,12 @@ static bool ikev1_verify_ah(const struct connection *c,
 			     ta->ta_dh->common.fqn);
 		return false;
 	}
-	if (c->config->child_proposals.p == NULL) {
+	if (c->config->child_sa.proposals.p == NULL) {
 		dbg("AH IPsec Transform verified unconditionally; no alg_info to check against");
 		return true;
 	}
 
-	FOR_EACH_PROPOSAL(c->config->child_proposals.p, proposal) {	/* really AH */
+	FOR_EACH_PROPOSAL(c->config->child_sa.proposals.p, proposal) {	/* really AH */
 		struct v1_proposal algs = v1_proposal(proposal);
 		if (algs.integ == ta->ta_integ) {
 			dbg("ESP IPsec Transform verified; matches alg_info entry");
@@ -864,7 +864,7 @@ bool ikev1_out_sa(pb_stream *outs,
 						    st->st_logger);
 	} else {
 		revised_sadb = v1_kernel_alg_makedb(c->policy,
-						    c->config->child_proposals,
+						    c->config->child_sa.proposals,
 						    true, st->st_logger);
 
 		/* add IPcomp proposal if policy asks for it */

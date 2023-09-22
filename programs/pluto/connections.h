@@ -223,9 +223,7 @@ struct config {
 	 * initial negotiation.
 	 */
 	struct ike_proposals ike_proposals;
-	struct child_proposals child_proposals;
 	struct ikev2_proposals *v2_ike_proposals;
-	struct ikev2_proposals *v2_ike_auth_child_proposals;
 
 	enum offload_options nic_offload;
 	char *dnshostname;
@@ -307,6 +305,21 @@ struct config {
 		enum encap_proto encap_proto;	/* ESP or AH */
 		enum encap_mode encap_mode;	/* tunnel or transport */
 		bool pfs;			/* use DH */
+		/*
+		 * The child proposals specified in the config file,
+		 * and for IKEv2, that proposal converted to IKEv2
+		 * form.
+		 *
+		 * IKEv2 child proposals negotiated IKE_AUTH - Child
+		 * SA) can be computed ahead of time, and are stored
+		 * below.  However, proposals negotiated during
+		 * CREATE_CHILD_SA cannot.  For instance, the
+		 * CREATE_CHILD_SA may be re-keying the IKE SA and
+		 * it's DH is only determined during the initial
+		 * negotiation.
+		 */
+		struct child_proposals proposals; /* raw proposals */
+		struct ikev2_proposals *v2_ike_auth_proposals;
 	} child_sa;
 
 	struct {
