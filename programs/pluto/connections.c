@@ -2040,7 +2040,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	} else {
 		pfs = extract_yn(wm->pfs, true);
 	}
-	config->pfs = pfs;
+	config->child_sa.pfs = pfs;
 	c->policy |= (pfs ? POLICY_PFS : LEMPTY);
 
 	bool compress;
@@ -3663,7 +3663,7 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 	CS(c->config->child_sa.encap_mode != ENCAP_MODE_UNSET,
 	   enum_name_short(&encap_mode_names, c->config->child_sa.encap_mode));
 	policy &= ~POLICY_TUNNEL;
-	CN(c->config->pfs, PFS); policy &= ~POLICY_PFS;
+	CN(c->config->child_sa.pfs, PFS); policy &= ~POLICY_PFS;
 	CP(decap_dscp);
 	CP(nopmtudisc);
 	CP(ms_dh_downgrade);
