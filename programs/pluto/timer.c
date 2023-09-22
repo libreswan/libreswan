@@ -453,7 +453,7 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 		pstat_sa_failed(st, REASON_CRYPTO_TIMEOUT);
 		if (IS_PARENT_SA(st)) {
 			struct ike_sa *ike = pexpect_ike_sa(st);
-			delete_state(&ike->sa);
+			connection_delete_ike_family(&ike, HERE);
 		} else {
 			struct child_sa *child = pexpect_child_sa(st);
 			connection_delete_child(&child, HERE);
