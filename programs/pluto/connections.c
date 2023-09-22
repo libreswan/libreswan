@@ -2026,8 +2026,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 * Extract policy bits.
 	 */
 
-	c->policy = LEMPTY;
-
 	bool pfs;
 	if (never_negotiate_wm(wm)) {
 		if (wm->pfs != YN_UNSET) {
@@ -2041,7 +2039,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 		pfs = extract_yn(wm->pfs, true);
 	}
 	config->child_sa.pfs = pfs;
-	c->policy |= (pfs ? POLICY_PFS : LEMPTY);
 
 	bool compress;
 	if (never_negotiate_wm(wm)) {
@@ -2056,7 +2053,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 		compress = extract_yn(wm->compress, false);
 	}
 	config->child_sa.ipcomp = compress;
-	c->policy |= (compress ? POLICY_COMPRESS : LEMPTY);
 
 	/* sanity check?  done below */
 	enum encap_proto encap_proto;
@@ -2073,9 +2069,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 			       wm->phase2);
 	}
 	config->child_sa.encap_proto = encap_proto;
-	c->policy |= (encap_proto == ENCAP_PROTO_ESP ? POLICY_ENCRYPT :
-		      encap_proto == ENCAP_PROTO_AH ? POLICY_AUTHENTICATE :
-		      LEMPTY);
 
 	enum encap_mode mode;
 	if (never_negotiate_wm(wm)) {
@@ -2094,7 +2087,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 		mode = wm->encap_mode;
 	}
 	config->child_sa.encap_mode = mode;
-	c->policy |= (mode == ENCAP_MODE_TUNNEL ? POLICY_TUNNEL : LEMPTY);
 
 	if (mode == ENCAP_MODE_TRANSPORT) {
 		if (wm->vti_iface != NULL) {
