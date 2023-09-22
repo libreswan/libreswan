@@ -1,6 +1,5 @@
 Test west rekey based on ipsec-max-bytes, ignore soft expire and wait for the hard expire.
 
-When the pluto ignore soft expire, and do not attempt rekey, hard expire will trigger.
-Then only thing to do is delete the SA?
-
-Or should it re-initiate if the rekey=yes?
+When the pluto ignore soft expire, and do not attempt rekey, hard expire will trigger
+which then deletes the SA.  Since the SA should be up, this is quickly followed
+by a revival and re-established SA #3.

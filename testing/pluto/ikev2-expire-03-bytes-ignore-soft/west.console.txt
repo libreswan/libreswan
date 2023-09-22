@@ -49,6 +49,7 @@ west #
  # #2 will still around
 west #
  ipsec trafficstatus
+006 #3: "west", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2KiB, id='@east'
 west #
  # now trigger hard expire
 west #
@@ -86,10 +87,6 @@ src 192.1.2.45 dst 192.1.2.23
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
-src 192.0.1.254 dst 192.0.2.254
-	proto esp spi 0x00000000 reqid 0 mode transport
-	replay-window 0 
-	sel src 192.0.1.254/32 dst 192.0.2.254/32 proto icmp type 8 code 0 dev eth1 
 XFRM policy:
 src 192.0.1.0/24 dst 192.0.2.0/24
 	dir out priority PRIORITY ptype main
