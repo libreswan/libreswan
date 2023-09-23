@@ -61,7 +61,7 @@ static unsigned down_connection(struct connection *c, struct logger *logger)
 	connection_attach(c, logger);
 
 	llog(RC_LOG, c->logger, "terminating SAs using this connection");
-	del_policy(c, POLICY_UP);
+	del_policy(c, policy.up);
 	remove_connection_from_pending(c);
 
 	/*
@@ -125,7 +125,7 @@ static unsigned down_connection(struct connection *c, struct logger *logger)
 static unsigned whack_down_connection(const struct whack_message *m UNUSED,
 				      struct show *s, struct connection *c)
 {
-	del_policy(c, POLICY_UP); /* XXX: where to put this? */
+	del_policy(c, policy.up); /* XXX: where to put this? */
 
 	unsigned nr = 0;
 	switch (c->local->kind) {

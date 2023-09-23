@@ -228,7 +228,7 @@ struct connection *group_instantiate(struct connection *group,
 
 	set_end_selector(t->local, local_selector, t->logger);
 
-	del_policy(t, POLICY_ROUTE);
+	del_policy(t, policy.route);
 	/*
 	 * Mark as template+group aka GROUPINSTANCE for later.
 	 *
@@ -304,13 +304,6 @@ static struct connection *instantiate(struct connection *t,
 
 	struct connection *d = clone_connection(t->name, t, peer_id, where);
 	passert(t->name != d->name); /* see clone_connection() */
-
-	/*
-	 * It's a clone so policy bits, noteably POLICY_GROUPINSTANCE,
-	 * don't change.  i.e., if a the template is GROUPINSTANCE or
-	 * ROUTED or UP, so is the instance.
-	 */
-	PEXPECT(d->logger, t->policy == d->policy);
 
 	/*
 	 *  Update the .instance_serial.

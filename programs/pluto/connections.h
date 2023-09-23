@@ -631,20 +631,29 @@ struct connection {
 	char *name;
 	struct logger *logger;
 	char *foodgroup;
-	lset_t policy;
-#define add_policy(C, POLICY)						\
-	{								\
-		ldbg((C)->logger, "%s() "PRI_CO" %s %s:%s->%s",		\
-		     __func__, pri_connection_co(C), (C)->name, #POLICY, \
-		     bool_str((C)->policy & POLICY), bool_str(true));	\
-		(C)->policy |= POLICY;					\
+	struct {
+		bool up;		/* do we want to keep this
+					 * connection up? */
+		bool route;		/* do we want to keep this
+					 * connection routed? */
+	} policy;
+#define add_policy(C, POLICY)					\
+	{							\
+		pdbg((C)->logger, "%s:%s->%s "PRI_WHERE,	\
+		     #POLICY,					\
+		     bool_str((C)->POLICY),			\
+		     bool_str(true),				\
+		     pri_where(HERE));				\
+		(C)->POLICY = true;				\
 	}
-#define del_policy(C, POLICY)						\
-	{								\
-		ldbg((C)->logger, "%s() "PRI_CO" %s %s:%s->%s",		\
-		     __func__, pri_connection_co(C), (C)->name, #POLICY, \
-		     bool_str((C)->policy & POLICY), bool_str(false));	\
-		(C)->policy &= ~POLICY;					\
+#define del_policy(C, POLICY)					\
+	{							\
+		pdbg((C)->logger, "%s:%s->%s "PRI_WHERE,	\
+		     #POLICY,					\
+		     bool_str((C)->POLICY),			\
+		     bool_str(false),				\
+		     pri_where(HERE));				\
+		(C)->POLICY = false;				\
 	}
 	bool going_away;		/* Is the connection already
 					 * in the process of being

@@ -50,7 +50,7 @@ static unsigned whack_unroute_connection(const struct whack_message *m,
 	 * Functions such as connection_unroute() don't fiddle policy
 	 * bits as they are called as part of unroute/route sequences.
 	 */
-	del_policy(c, POLICY_ROUTE);
+	del_policy(c, policy.route);
 
 	switch (c->local->kind) {
 
@@ -84,7 +84,7 @@ static unsigned whack_unroute_connection(const struct whack_message *m,
 		return nr;
 
 	case CK_GROUP:
-		del_policy(c, POLICY_ROUTE);
+		del_policy(c, policy.route);
 		nr += unroute_instances(m, c, s);
 		return nr;
 

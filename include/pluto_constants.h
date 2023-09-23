@@ -921,16 +921,7 @@ enum sa_policy_bits {
 	POLICY_PFS_IX,
 
 #define POLICY_IPSEC_MASK	LRANGE(POLICY_ENCRYPT_IX, POLICY_PFS_IX)
-
-	/* connection policy
-	 * Other policies could vary per state object.  These live in connection.
-	 */
-	POLICY_ROUTE_IX,		/* do we want to keep this
-					 * connection routed? */
-	POLICY_UP_IX,			/* do we want to keep this
-					 * connection up? */
-
-#define POLICY_IX_LAST	POLICY_UP_IX
+#define POLICY_IX_LAST	POLICY_PFS_IX
 };
 
 #define POLICY_ENCRYPT	LELEM(POLICY_ENCRYPT_IX)	/* must be first of IPSEC policies */
@@ -938,8 +929,6 @@ enum sa_policy_bits {
 #define POLICY_COMPRESS	LELEM(POLICY_COMPRESS_IX)	/* must be third */
 #define POLICY_TUNNEL	LELEM(POLICY_TUNNEL_IX)
 #define POLICY_PFS	LELEM(POLICY_PFS_IX)
-#define POLICY_ROUTE	LELEM(POLICY_ROUTE_IX)	/* do we want to keep this connection routed? */
-#define POLICY_UP	LELEM(POLICY_UP_IX)	/* do we want to keep this connection up? */
 
 /*
  * RFC 7427 Signature Hash Algorithm exchang

@@ -202,7 +202,7 @@ static bool initiate_connection_2_address(struct connection *c,
 				     "cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=%s)",
 				     enum_show(&connection_kind_names, c->local->kind, &b));
 			}
-			add_policy(c, POLICY_UP);
+			add_policy(c, policy.up);
 			return true;
 		}
 
@@ -337,7 +337,7 @@ static bool initiate_connection_4_fab(struct connection *c,
 	}
 #endif
 
-	add_policy(c, POLICY_UP);
+	add_policy(c, policy.up);
 
 	/*
 	 * FOR IKEv2, when the sec_label template connection is
@@ -674,7 +674,7 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 	ldbg(c->logger, "  updating host pairs");
 	update_host_pairs(c);
 
-	if (!(c->policy & POLICY_UP)) {
+	if (!c->policy.up) {
 		connection_buf cib;
 		ldbg(c->logger,
 		     "pending ddns: connection "PRI_CONNECTION" was updated, but does not want to be up",

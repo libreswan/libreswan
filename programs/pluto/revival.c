@@ -109,7 +109,7 @@ static bool revival_plausable(struct connection *c, struct logger *logger)
 		return false;
 	}
 
-	if ((c->policy & POLICY_UP) == LEMPTY) {
+	if (!c->policy.up) {
 		ldbg(logger, "revival: skipping, POLICY_UP disabled");
 		return false;
 	}

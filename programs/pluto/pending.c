@@ -381,7 +381,7 @@ void connection_check_phase2(struct logger *logger)
 			continue;
 		}
 
-		if (!(c->policy & POLICY_UP)) {
+		if (!c->policy.up) {
 			connection_buf cib;
 			dbg("pending review: connection "PRI_CONNECTION" was not up, skipped",
 			    pri_connection(c, &cib));

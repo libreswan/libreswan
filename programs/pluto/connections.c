@@ -2444,7 +2444,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	case AUTOSTART_START:
 		ldbg(c->logger, "autostart=%s implies +POLICY_UP",
 		     enum_name_short(&autostart_names, wm->autostart));
-		add_policy(c, POLICY_UP);
+		add_policy(c, policy.up);
 		break;
 	case AUTOSTART_IGNORE:
 	case AUTOSTART_ADD:
@@ -3599,7 +3599,6 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 	const char *sep = "";
 	size_t s = 0;
 	enum shunt_policy shunt;
-	lset_t policy = c->policy;
 
 	if (c->config->ike_version > 0) {
 		s += jam_string(buf, c->config->ike_info->version_name);
@@ -3618,13 +3617,6 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 		s += jam_string(buf, sep);	\
 		s += jam_string(buf, S);	\
 		sep = "+";			\
-	}
-#define PP(P)					\
-	if (policy & POLICY_##P) {		\
-		s += jam_string(buf, sep);	\
-		s += jam_string(buf, #P);	\
-		sep = "+";			\
-		policy &= ~POLICY_##P;		\
 	}
 #define CP(C)						\
 	if (c->config->C) {				\
@@ -3649,13 +3641,11 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 	default:
 		break;
 	}
-	policy &= ~(POLICY_ENCRYPT|POLICY_AUTHENTICATE);
 
-	CN(c->config->child_sa.ipcomp, COMPRESS); policy &= ~POLICY_COMPRESS;
+	CN(c->config->child_sa.ipcomp, COMPRESS);
 	CS(c->config->child_sa.encap_mode != ENCAP_MODE_UNSET,
 	   enum_name_short(&encap_mode_names, c->config->child_sa.encap_mode));
-	policy &= ~POLICY_TUNNEL;
-	CN(c->config->child_sa.pfs, PFS); policy &= ~POLICY_PFS;
+	CN(c->config->child_sa.pfs, PFS);
 	CP(decap_dscp);
 	CP(nopmtudisc);
 	CP(ms_dh_downgrade);
@@ -3672,8 +3662,8 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 
 	CN(is_opportunistic(c), OPPORTUNISTIC);
 	CN(is_group_instance(c), GROUPINSTANCE);
-	PP(ROUTE);
-	PP(UP);
+	CN(c->policy.route, ROUTE);
+	CN(c->policy.up, UP);
 
 	CN(is_xauth(c), XAUTH);
 	CN(c->config->modecfg.pull, MODECFG_PULL);
@@ -3702,13 +3692,6 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 	CN(c->config->esn.yes, ESN_YES);
 	CP(intermediate);
 	CP(ignore_peer_dns);
-
-	/* just in case something was missed */
-	if (policy != LEMPTY) {
-		s += jam_string(buf, sep);
-		s += jam_lset_short(buf, &sa_policy_bit_names, "+", policy);
-		sep = "+";
-	}
 
 	if (is_group(c)) {
 		s += jam_string(buf, sep);

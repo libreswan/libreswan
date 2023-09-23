@@ -188,8 +188,8 @@ static unsigned whack_delete_one_connection(const struct whack_message *m UNUSED
 	 * Functions such as connection_unroute() don't fiddle policy
 	 * bits as they are called as part of unroute/route sequences.
 	 */
-	del_policy(c, POLICY_UP);
-	del_policy(c, POLICY_ROUTE);
+	del_policy(c, policy.up);
+	del_policy(c, policy.route);
 
 	if (never_negotiate(c)) {
 		ldbg(c->logger, "skipping as never-negotiate");

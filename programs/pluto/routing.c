@@ -519,7 +519,7 @@ static void down_routed_tunnel(enum routing_event event,
 	/*
 	 * Should this go back to on-demand?
 	 */
-	if (is_permanent(c) && c->policy & POLICY_ROUTE) {
+	if (is_permanent(c) && c->policy.route) {
 		ldbg_routing((*child)->sa.st_logger,
 			     "replacing connection kernel policy with on-demand");
 		replace_ipsec_with_bare_kernel_policies(event, *child,
@@ -983,7 +983,7 @@ void connection_route(struct connection *c, where_t where)
 void connection_unroute(struct connection *c, where_t where)
 {
 	/*
-	 * XXX: strip POLICY_ROUTE in whack code, not here (code
+	 * XXX: strip POLICY.ROUTE in whack code, not here (code
 	 * expects to be able to route/unroute without loosing the
 	 * policy bits).
 	 */
@@ -1203,7 +1203,7 @@ static void dispatch_1(enum routing_event event,
 
 		case X(ROUTE, UNROUTED, GROUP):
 			/* caller deals with recursion */
-			add_policy(c, POLICY_ROUTE); /* always */
+			add_policy(c, policy.route); /* always */
 			return;
 		case X(UNROUTE, UNROUTED, GROUP):
 			/* ROUTE+UP cleared by caller */
@@ -1211,7 +1211,7 @@ static void dispatch_1(enum routing_event event,
 
 		case X(ROUTE, UNROUTED, TEMPLATE):
 		case X(ROUTE, UNROUTED, PERMANENT):
-			add_policy(c, POLICY_ROUTE); /* always */
+			add_policy(c, policy.route); /* always */
 			if (never_negotiate(c)) {
 				if (!unrouted_to_routed_never_negotiate(event, c, where)) {
 					/* XXX: why whack only? */
@@ -1420,7 +1420,7 @@ static void dispatch_1(enum routing_event event,
 				/*
 				 * XXX: should install routing+policy!
 				 */
-				add_policy(c, POLICY_ROUTE);
+				add_policy(c, policy.route);
 				llog(RC_LOG_SERIOUS, logger,
 				     "policy ROUTE added to negotiating connection");
 				return;
@@ -1431,7 +1431,7 @@ static void dispatch_1(enum routing_event event,
 			return;
 
 		case X(ROUTE, ROUTED_NEGOTIATION, PERMANENT):
-			add_policy(c, POLICY_ROUTE);
+			add_policy(c, policy.route);
 			llog(RC_LOG_SERIOUS, logger, "connection already routed");
 			return;
 		case X(UNROUTE, ROUTED_NEGOTIATION, PERMANENT):
@@ -1455,7 +1455,7 @@ static void dispatch_1(enum routing_event event,
 			return;
 
 		case X(ROUTE, ROUTED_TUNNEL, PERMANENT):
-			add_policy(c, POLICY_ROUTE); /* always */
+			add_policy(c, policy.route); /* always */
 			llog(RC_LOG, logger, "policy ROUTE added to established connection");
 			return;
 		case X(UNROUTE, ROUTED_TUNNEL, PERMANENT):
@@ -1666,7 +1666,7 @@ static void dispatch_1(enum routing_event event,
 				delete_ike_sa(e->ike);
 				return;
 			}
-			if (c->policy & POLICY_ROUTE) {
+			if (c->policy.route) {
 				routed_negotiation_to_routed_ondemand(event, c, logger, where,
 								      "restoring ondemand, connection is routed");
 				PEXPECT(logger, c->child.routing == RT_ROUTED_ONDEMAND);
@@ -1920,7 +1920,7 @@ static void dispatch_1(enum routing_event event,
  */
 
 		case X(ROUTE, UNROUTED, LABELED_TEMPLATE):
-			add_policy(c, POLICY_ROUTE); /* always */
+			add_policy(c, policy.route); /* always */
 			if (never_negotiate(c)) {
 				if (!unrouted_to_routed_never_negotiate(event, c, where)) {
 					/* XXX: why whack only? */

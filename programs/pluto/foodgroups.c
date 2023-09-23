@@ -467,7 +467,7 @@ void load_groups(struct logger *logger)
 						PEXPECT(logger, (is_template(t) ||
 								 is_instance(t)));
 						/* route if group is routed */
-						if (g->policy & POLICY_ROUTE) {
+						if (g->policy.route) {
 							connection_attach(t, logger);
 							connection_route(t, HERE);
 							connection_detach(t, logger);

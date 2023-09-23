@@ -63,7 +63,7 @@ static void terminate_connection(struct connection *c)
 {
 	llog(RC_LOG, c->logger, "terminating SAs using this connection");
 
-	del_policy(c, POLICY_UP);
+	del_policy(c, policy.up);
 
 	/*
 	 * XXX: see ikev2-removed-iface-01
