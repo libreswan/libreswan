@@ -1026,6 +1026,34 @@ void connection_delete_child(struct child_sa **child, where_t where)
 	pexpect(*child == NULL);
 }
 
+void connection_timeout_child(struct child_sa **child, where_t where)
+{
+	struct connection *c = (*child)->sa.st_connection;
+
+	struct routing_annex annex = {
+		.child = child,
+	};
+
+	if ((*child)->sa.st_serialno != c->newest_routing_sa) {
+		ldbg_routing_event(c, "skip", CONNECTION_TIMEOUT_CHILD, where, &annex);
+		delete_child_sa(child);
+		return;
+	}
+
+	/*
+	 * Caller is responsible for generating any messages; suppress
+	 * delete_state()'s desire to send an out-of-band delete.
+	 */
+	on_delete(&(*child)->sa, skip_send_delete);
+	on_delete(&(*child)->sa, skip_revival);
+	/*
+	 * Let state machine figure out how to react.
+	 */
+	dispatch(CONNECTION_TIMEOUT_CHILD, &c,
+		 (*child)->sa.st_logger, where, annex);
+	pexpect(*child == NULL);
+}
+
 void connection_timeout_ike_family(struct ike_sa **ike, where_t where)
 {
 	pstat_sa_failed(&(*ike)->sa, REASON_TOO_MANY_RETRANSMITS);
@@ -1041,6 +1069,16 @@ void connection_delete_ike(struct ike_sa **ike, where_t where)
 {
 	struct connection *c = (*ike)->sa.st_connection;
 	dispatch(CONNECTION_DELETE_IKE, &c,
+		 (*ike)->sa.st_logger, where,
+		 (struct routing_annex) {
+			 .ike = ike,
+		 });
+}
+
+void connection_timeout_ike(struct ike_sa **ike, where_t where)
+{
+	struct connection *c = (*ike)->sa.st_connection;
+	dispatch(CONNECTION_TIMEOUT_IKE, &c,
 		 (*ike)->sa.st_logger, where,
 		 (struct routing_annex) {
 			 .ike = ike,

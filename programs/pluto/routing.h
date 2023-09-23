@@ -97,8 +97,12 @@ void connection_suspend(struct child_sa *child, where_t where);
 void connection_timeout_ike_family(struct ike_sa **ike, where_t where);
 void connection_delete_ike_family(struct ike_sa **ike, where_t where);
 
+void connection_timeout_child(struct child_sa **child, where_t where);
 void connection_delete_child(struct child_sa **child, where_t where);
+
+void connection_timeout_ike(struct ike_sa **ike, where_t where);
 void connection_delete_ike(struct ike_sa **ike, where_t where);
+
 
 /* fake a debug message for establish for now */
 void fake_connection_establish_inbound(struct ike_sa *ike, struct child_sa *child, where_t where);
