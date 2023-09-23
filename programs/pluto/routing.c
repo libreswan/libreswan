@@ -1187,10 +1187,19 @@ void connection_zap_ike_family(struct ike_sa **ike, enum routing_event ike_event
 
 	/* delete self */
 	struct connection *c = (*ike)->sa.st_connection;
-	dispatch(ike_event, &c, (*ike)->sa.st_logger, where,
-		 (struct routing_annex) {
-			 .ike = ike,
-		 });
+	if (c->newest_ike_sa == SOS_NOBODY ||
+	    c->newest_ike_sa == (*ike)->sa.st_serialno) {
+		/*
+		 * No IKE established yet, or this is the established
+		 * IKE.
+		 */
+		dispatch(ike_event, &c, (*ike)->sa.st_logger, where,
+			 (struct routing_annex) {
+				 .ike = ike,
+			 });
+	} else {
+		delete_ike_sa(ike);
+	}
 }
 
 /*
