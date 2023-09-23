@@ -68,7 +68,8 @@ void event_v1_retransmit(struct state *st, monotime_t now UNUSED)
 
 	pstat_sa_failed(st, REASON_TOO_MANY_RETRANSMITS);
 
-	/* placed here because IKEv1 doesn't do a proper state change to STF_FAIL_v1N/STF_FATAL */
+	/* placed here because IKEv1 doesn't do a proper state change
+	 * to STF_FAIL_v1N/STF_FATAL */
 	linux_audit_conn(st, IS_IKE_SA(st) ? LAK_PARENT_FAIL : LAK_CHILD_FAIL);
 	PEXPECT(st->st_logger, !st->st_on_delete.skip_revival);
 
@@ -78,15 +79,8 @@ void event_v1_retransmit(struct state *st, monotime_t now UNUSED)
 		return;
 	}
 
-	if (IS_IPSEC_SA_ESTABLISHED(st)) {
-		ldbg(st->st_logger, "unhandled established IPsec SA");
-	} else if (IS_CHILD_SA(st)) {
-		ldbg(st->st_logger, "unhandled larval IPsec SA");
-	} else {
-		llog_pexpect(st->st_logger, HERE, "unhandled");
-	}
-
-	delete_state(st);
+	struct child_sa *child = pexpect_child_sa(st);
+	connection_timeout_child(&child, HERE);
 	/* note: no md->st to clear */
 }
 #endif
