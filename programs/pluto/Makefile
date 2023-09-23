@@ -97,6 +97,7 @@ OBJS += whack_connection.o
 OBJS += whack_connectionstatus.o
 OBJS += whack_delete.o
 OBJS += whack_deleteid.o
+OBJS += whack_deletestate.o
 OBJS += whack_deleteuser.o
 OBJS += whack_down.o
 OBJS += whack_initiate.o

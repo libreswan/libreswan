@@ -74,6 +74,7 @@
 #include "whack_initiate.h"
 #include "whack_deleteuser.h"
 #include "whack_deleteid.h"
+#include "whack_deletestate.h"
 
 static void whack_rereadsecrets(struct show *s)
 {
@@ -96,17 +97,6 @@ static void whack_listcacerts(struct show *s)
 	struct root_certs *roots = root_certs_addref(show_logger(s));
 	list_cacerts(s, roots);
 	root_certs_delref(&roots, show_logger(s));
-}
-
-static struct logger merge_loggers(struct state *st, bool background, struct logger *logger)
-{
-	/* so errors go to whack and file regardless of BACKGROUND */
-	struct logger loggers = *st->st_logger;
-	loggers.global_whackfd = logger->global_whackfd;
-	if (!background) {
-		state_attach(st, logger);
-	}
-	return loggers;
 }
 
 static void do_whacklisten(struct logger *logger)
@@ -356,29 +346,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 
 	if (m->whack_deletestate) {
 		dbg_whack(s, "deletestate: start: #%lu", m->whack_deletestateno);
-		struct state *st = state_by_serialno(m->whack_deletestateno);
-
-		if (st == NULL) {
-			llog(RC_UNKNOWN_NAME, logger, "no state #%lu to delete",
-			     m->whack_deletestateno);
-		} else {
-			merge_loggers(st, m->whack_async/*background*/, logger);
-			llog(LOG_STREAM/*not-whack*/, st->st_logger,
-			     "received whack to delete %s state #%lu %s",
-			     st->st_connection->config->ike_info->version_name,
-			     st->st_serialno, st->st_state->name);
-
-			switch (st->st_ike_version) {
-			case IKEv1:
-				delete_state(st);
-				st = NULL;
-				break;
-			case IKEv2:
-				submit_v2_delete_exchange(ike_sa(st, HERE),
-							  IS_CHILD_SA(st) ? pexpect_child_sa(st) : NULL);
-				break;
-			}
-		}
+		whack_deletestate(m, s);
 		dbg_whack(s, "deletestate: stop: #%lu", m->whack_deletestateno);
 	}
 
