@@ -344,7 +344,16 @@ static bool initiate_connection_4_fab(struct connection *c,
 	 * initiated, there is no acquire and, hence, no Child SA to
 	 * establish.
 	 */
-	connection_initiate(c, &inception, background, HERE);
+
+	shunk_t sec_label = null_shunk;
+	struct logger *logger = c->logger;
+	so_serial_t replacing = SOS_NOBODY;
+	lset_t policy = child_sa_policy(c);
+
+	ipsecdoi_initiate(c, policy, replacing, &inception,
+			  sec_label, background, logger,
+			  /*update-routing*/true, HERE);
+
 	return true;
 }
 
@@ -353,10 +362,11 @@ void ipsecdoi_initiate(struct connection *c,
 		       so_serial_t replacing,
 		       const threadtime_t *inception,
 		       shunk_t sec_label,
-		       bool background, struct logger *logger)
+		       bool background, struct logger *logger,
+		       bool update_routing, where_t where)
 {
-	ldbg_connection(c, HERE, "%s() with sec_label "PRI_SHUNK,
-			__func__, pri_shunk(sec_label));
+	ldbg_connection(c, where, "%s() with update_routing=%s sec_label "PRI_SHUNK,
+			__func__, bool_str(update_routing), pri_shunk(sec_label));
 
 	/*
 	 * Try to find a viable IKE (parent) SA.  A viable IKE SA is
@@ -384,6 +394,9 @@ void ipsecdoi_initiate(struct connection *c,
 	 */
 
 	if (ike == NULL) {
+		if (update_routing) {
+			connection_initiate(c, inception, background, where);
+		}
 		switch (c->config->ike_version) {
 #ifdef USE_IKEv1
 		case IKEv1:
@@ -412,6 +425,9 @@ void ipsecdoi_initiate(struct connection *c,
 	 */
 
 	if (IS_PARENT_SA_ESTABLISHED(&ike->sa)) {
+		if (update_routing) {
+			connection_initiate(c, inception, background, where);
+		}
 		switch (c->config->ike_version) {
 #ifdef USE_IKEv1
 		case IKEv1:
@@ -452,6 +468,10 @@ void ipsecdoi_initiate(struct connection *c,
 	 * negotiated.  Append the connection to the IKE SA's pending
 	 * queue.
 	 */
+
+	if (update_routing) {
+		connection_initiate(c, inception, background, where);
+	}
 
 	switch (c->config->ike_version) {
 #ifdef USE_IKEv1

@@ -36,6 +36,7 @@ void ipsecdoi_initiate(struct connection *c,
 		       so_serial_t replacing,
 		       const threadtime_t *inception,
 		       shunk_t sec_label,
-		       bool background, struct logger *logger);
+		       bool background, struct logger *logger,
+		       bool update_routing, where_t where);
 
 #endif

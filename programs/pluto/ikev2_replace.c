@@ -78,7 +78,8 @@ void ikev2_replace(struct state *st)
 		lset_t policy = capture_child_rekey_policy(st);
 
 		ipsecdoi_initiate(st->st_connection, policy, st->st_serialno, &inception,
-				  null_shunk, /*background?*/false, st->st_logger);
+				  null_shunk, /*background?*/false, st->st_logger,
+				  /*update_routing*/false, HERE);
 	}
 }
 
