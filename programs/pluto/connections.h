@@ -655,11 +655,6 @@ struct connection {
 		     pri_where(HERE));				\
 		(C)->POLICY = false;				\
 	}
-	bool going_away;		/* Is the connection already
-					 * in the process of being
-					 * deleted and, hence,
-					 * delete_state() should leave
-					 * it alone? */
 
 	struct sa_marks sa_marks; /* contains a MARK values and MASK value for IPsec SA */
 	char *vti_iface;

@@ -1221,18 +1221,6 @@ void delete_states_dead_interfaces(struct logger *logger)
 void delete_v1_states_by_connection(struct connection *c)
 {
 	PASSERT(c->logger, c->config->ike_version == IKEv1);
-	/*
-	 * Must be careful to avoid circularity, something like:
-	 *
-	 *   delete_v1_states_by_connection() ->
-	 *   delete_connection().
-	 *   delete_states_by_connection() ->
-	 *
-	 * We mark c as going away so it won't get deleted
-	 * recursively.
-	 */
-	PASSERT(c->logger, !c->going_away);
-	c->going_away = true;
 
 	co_serial_t connection_serialno = c->serialno;
 
@@ -1267,8 +1255,6 @@ void delete_v1_states_by_connection(struct connection *c)
 		}
 	}
 
-	c->going_away = false;
-
 	/* Was (c), an instance, deleted? Can't trust c->logger */
 	passert(connection_by_serialno(connection_serialno) != NULL);
 
@@ -1296,18 +1282,6 @@ void delete_v1_states_by_connection(struct connection *c)
 void delete_v2_states_by_connection(struct connection *c)
 {
 	PASSERT(c->logger, c->config->ike_version == IKEv2);
-	/*
-	 * Must be careful to avoid circularity, something like:
-	 *
-	 *   delete_v2_states_by_connection() ->
-	 *   delete_connection().
-	 *   delete_states_by_connection() ->
-	 *
-	 * We mark c as going away so it won't get deleted
-	 * recursively.
-	 */
-	PASSERT(c->logger, !c->going_away);
-	c->going_away = true;
 
 	co_serial_t connection_serialno = c->serialno;
 
@@ -1344,8 +1318,6 @@ void delete_v2_states_by_connection(struct connection *c)
 		state_attach(st, st->st_connection->logger);
 		delete_state(st);
 	}
-
-	c->going_away = false;
 
 	/* Was (c), an instance, deleted? Can't trust c->logger */
 	passert(connection_by_serialno(connection_serialno) != NULL);
