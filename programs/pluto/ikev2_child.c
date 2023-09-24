@@ -1017,6 +1017,17 @@ bool process_any_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *ike,
 	return true;
 }
 
+/*
+ * Process the Child SA payloads from an IKE_AUTH response.
+ *
+ * Return value is quirky:
+ *
+ * NOTHING_WRONG: either child is ok, or peer rejected child and it has been deleted.
+ *
+ * v2N*: peer OKed child but this end did not, caller will initiate
+ * delete child exchange sending v2N.
+ */
+
 v2_notification_t process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *ike,
 								 struct msg_digest *response_md)
 {
@@ -1068,8 +1079,11 @@ v2_notification_t process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *
 	 * one notify and that is for the child?  Given notifies are
 	 * used to communicate compression I've my doubt.
 	 */
-	FOR_EACH_THING(pd, PD_v2N_NO_PROPOSAL_CHOSEN, PD_v2N_TS_UNACCEPTABLE,
-		       PD_v2N_SINGLE_PAIR_REQUIRED, PD_v2N_INTERNAL_ADDRESS_FAILURE,
+	FOR_EACH_THING(pd,
+		       PD_v2N_NO_PROPOSAL_CHOSEN,
+		       PD_v2N_TS_UNACCEPTABLE,
+		       PD_v2N_SINGLE_PAIR_REQUIRED,
+		       PD_v2N_INTERNAL_ADDRESS_FAILURE,
 		       PD_v2N_FAILED_CP_REQUIRED) {
 		if (response_md->pd[pd] != NULL) {
 			/* convert PD to N */
@@ -1088,7 +1102,7 @@ v2_notification_t process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *
 			    ike->sa.st_serialno, child->sa.st_serialno,
 			    pri_connection(child->sa.st_connection, &cb));
 			unpend(ike, child->sa.st_connection);
-			delete_state(&child->sa);
+			connection_delete_child(&child, HERE);
 			ike->sa.st_v2_msgid_windows.initiator.wip_sa = child = NULL;
 			/* handled */
 			return v2N_NOTHING_WRONG;
