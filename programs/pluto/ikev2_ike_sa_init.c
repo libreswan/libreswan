@@ -522,17 +522,17 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
  *
  */
 
-void initiate_v2_IKE_SA_INIT_request(struct connection *c,
-				     struct state *predecessor,
-				     lset_t policy,
-				     const threadtime_t *inception,
-				     shunk_t sec_label,
-				     bool background, struct logger *logger)
+struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
+					       struct state *predecessor,
+					       lset_t policy,
+					       const threadtime_t *inception,
+					       shunk_t sec_label,
+					       bool background, struct logger *logger)
 {
 	if (drop_new_exchanges()) {
 		/* Only drop outgoing opportunistic connections */
 		if (is_opportunistic(c)) {
-			return;
+			return NULL;
 		}
 	}
 
@@ -579,9 +579,10 @@ void initiate_v2_IKE_SA_INIT_request(struct connection *c,
 								   ike->sa.st_logger);
 		if (p == NULL) {
 			/* TCP: already logged? */
-			delete_state(&ike->sa);
-			return;
+			delete_ike_sa(&ike);
+			return NULL;
 		}
+
 		iface_endpoint_delref(&ike->sa.st_interface);
 		ike->sa.st_interface = iface_endpoint_addref(p);
 		PEXPECT(ike->sa.st_logger, ike->sa.st_interface->io->protocol == &ip_protocol_tcp);
@@ -692,8 +693,8 @@ void initiate_v2_IKE_SA_INIT_request(struct connection *c,
 		if (!initiator_fetch_idr_ipseckey(ike)) {
 			llog_sa(RC_LOG_SERIOUS, ike,
 				"fetching IDr IPsec key using DNS failed");
-			delete_state(&ike->sa);
-			return;
+			delete_ike_sa(&ike);
+			return NULL;
 		}
 	}
 
@@ -705,8 +706,8 @@ void initiate_v2_IKE_SA_INIT_request(struct connection *c,
 	ike->sa.st_oakley.ta_dh = ikev2_proposals_first_dh(ike_proposals);
 	if (ike->sa.st_oakley.ta_dh == NULL) {
 		llog_sa(RC_LOG, ike, "proposals do not contain a valid DH");
-		delete_state(&ike->sa);
-		return;
+		delete_ike_sa(&ike);
+		return NULL;
 	}
 
 	/*
@@ -715,6 +716,7 @@ void initiate_v2_IKE_SA_INIT_request(struct connection *c,
 	submit_ke_and_nonce(&ike->sa, ike->sa.st_oakley.ta_dh,
 			    initiate_v2_IKE_SA_INIT_request_continue, HERE);
 	statetime_stop(&start, "%s()", __func__);
+	return ike;
 }
 
 stf_status initiate_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
