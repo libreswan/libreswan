@@ -157,10 +157,10 @@ static void jam_event(struct jambuf *buf,
 	jam_routing(buf, c);
 }
 
-static void ldbg_routing_event(struct connection *c,
-			       const char *what,
+static void ldbg_routing_skip(struct connection *c,
 			       enum routing_event event,
-			       where_t where, const struct routing_annex *e)
+			       where_t where,
+			       const struct routing_annex *e)
 {
 	if (DBGP(DBG_BASE)) {
 		/*
@@ -168,10 +168,90 @@ static void ldbg_routing_event(struct connection *c,
 		 * is before the interesting stuff.
 		 */
 		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, c->logger, buf) {
-			jam_string(buf, "routing: ");
-			jam_string(buf, what);
-			jam_string(buf, " dispatch ");
+			jam_string(buf, "routing: skip ");
 			jam_event(buf, event, c, e);
+			jam_string(buf, " ");
+			jam_where(buf, where);
+		}
+	}
+}
+
+struct old_routing {
+	/* capture what can change */
+	const char *ike_name;
+	so_serial_t ike_so;
+	const char *child_name;
+	so_serial_t child_so;
+	so_serial_t routing_sa;
+	so_serial_t ipsec_sa;
+	so_serial_t ike_sa;
+	enum routing routing;
+};
+
+static struct old_routing ldbg_routing_start(struct connection *c,
+					     enum routing_event event,
+					     where_t where,
+					     struct routing_annex *e)
+{
+	struct old_routing old = {
+		/* capture what can change */
+		.ike_name = (e->ike == NULL || (*e->ike) == NULL ? SOS_NOBODY :
+			     state_sa_short_name(&(*e->ike)->sa)),
+		.ike_so = (e->ike == NULL || (*e->ike) == NULL ? SOS_NOBODY :
+			   (*e->ike)->sa.st_serialno),
+		.child_name = (e->child == NULL || (*e->child) == NULL ? SOS_NOBODY :
+			       state_sa_short_name(&(*e->child)->sa)),
+		.child_so = (e->child == NULL || (*e->child) == NULL ? SOS_NOBODY :
+			     (*e->child)->sa.st_serialno),
+		.ipsec_sa = c->newest_ipsec_sa,
+		.routing_sa = c->newest_routing_sa,
+		.ike_sa = c->newest_ike_sa,
+		.routing = c->child.routing,
+	};
+	if (DBGP(DBG_BASE)) {
+		/*
+		 * XXX: force ADD_PREFIX so that the connection name
+		 * is before the interesting stuff.
+		 */
+		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, c->logger, buf) {
+			jam_string(buf, "routing: start ");
+			jam_event(buf, event, c, e);
+			jam_string(buf, " ");
+			jam_where(buf, where);
+		}
+	}
+	return old;
+}
+
+static void ldbg_routing_stop(struct connection *c,
+			      enum routing_event event,
+			      where_t where,
+			      const struct routing_annex *e,
+			      const struct old_routing *old)
+{
+	if (DBGP(DBG_BASE)) {
+		/*
+		 * XXX: force ADD_PREFIX so that the connection name
+		 * is before the interesting stuff.
+		 */
+		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, c->logger, buf) {
+			jam_string(buf, "routing: stop dispatch ");
+			jam_enum_short(buf, &routing_event_names, event);
+			jam_sa_update(buf, old->ike_name, old->ike_so,
+				      (e->ike == NULL || (*e->ike) == NULL ? NULL : &(*e->ike)->sa));
+			jam_sa_update(buf, old->child_name, old->child_so,
+				      (e->child == NULL || (*e->child) == NULL ? NULL : &(*e->child)->sa));
+			jam_string(buf, "; ");
+			/* routing */
+			jam_routing_update(buf, old->routing, c->child.routing);
+			/* various SAs */
+			const char *newest = "; newest";
+			jam_so_update(buf, "routing",
+				      old->routing_sa, c->newest_routing_sa, &newest);
+			jam_so_update(buf, c->config->ike_info->child_name,
+				      old->ipsec_sa, c->newest_ipsec_sa, &newest);
+			jam_so_update(buf, c->config->ike_info->parent_name,
+				      old->ike_sa, c->newest_ike_sa, &newest);
 			jam_string(buf, " ");
 			jam_where(buf, where);
 		}
@@ -620,7 +700,7 @@ static void zap_child(struct child_sa **child,
 	};
 
 	if ((*child)->sa.st_serialno != cc->newest_routing_sa) {
-		ldbg_routing_event(cc, "skip", child_event, where, &annex);
+		ldbg_routing_skip(cc, child_event, where, &annex);
 		delete_child_sa(child);
 		return;
 	}
@@ -668,7 +748,7 @@ static void zap_ike(struct ike_sa **ike,
 		 * larval IKE SAs and this check doesn't filter them
 		 * out.
 		 */
-		ldbg_routing_event(c, "skip", ike_event, where, &annex);
+		ldbg_routing_skip(c, ike_event, where, &annex);
 		delete_ike_sa(ike);
 		return;
 	}
@@ -1872,50 +1952,9 @@ void dispatch(enum routing_event event,
 	}
 #endif
 
-	/* capture what can change */
-	const char *ike_name = (ee.ike == NULL || (*ee.ike) == NULL ? SOS_NOBODY :
-				state_sa_short_name(&(*ee.ike)->sa));
-	so_serial_t ike_so = (ee.ike == NULL || (*ee.ike) == NULL ? SOS_NOBODY :
-			      (*ee.ike)->sa.st_serialno);
-	const char *child_name = (ee.child == NULL || (*ee.child) == NULL ? SOS_NOBODY :
-				  state_sa_short_name(&(*ee.child)->sa));
-	so_serial_t child_so = (ee.child == NULL || (*ee.child) == NULL ? SOS_NOBODY :
-				(*ee.child)->sa.st_serialno);
-	so_serial_t old_ipsec_sa = c->newest_ipsec_sa;
-	so_serial_t old_routing_sa = c->newest_routing_sa;
-	so_serial_t old_ike_sa = c->newest_ike_sa;
-	enum routing old_routing = c->child.routing;
-
-	ldbg_routing_event(c, "start", event, where, &ee);
+	struct old_routing old = ldbg_routing_start(c, event, where, &ee);
 	dispatch_1(event, c, logger, where, &ee);
-
-	if (DBGP(DBG_BASE)) {
-		/*
-		 * XXX: force ADD_PREFIX so that the connection name
-		 * is before the interesting stuff.
-		 */
-		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, c->logger, buf) {
-			jam_string(buf, "routing: stop dispatch ");
-			jam_enum_short(buf, &routing_event_names, event);
-			jam_sa_update(buf, ike_name, ike_so,
-				      (ee.ike == NULL || (*ee.ike) == NULL ? NULL : &(*ee.ike)->sa));
-			jam_sa_update(buf, child_name, child_so,
-				      (ee.child == NULL || (*ee.child) == NULL ? NULL : &(*ee.child)->sa));
-			jam_string(buf, "; ");
-			/* routing */
-			jam_routing_update(buf, old_routing, c->child.routing);
-			/* various SAs */
-			const char *newest = "; newest";
-			jam_so_update(buf, "routing",
-				      old_routing_sa, c->newest_routing_sa, &newest);
-			jam_so_update(buf, c->config->ike_info->child_name,
-				      old_ipsec_sa, c->newest_ipsec_sa, &newest);
-			jam_so_update(buf, c->config->ike_info->parent_name,
-				      old_ike_sa, c->newest_ike_sa, &newest);
-			jam_string(buf, " ");
-			jam_where(buf, where);
-		}
-	}
+	ldbg_routing_stop(c, event, where,&ee, &old);
 
 	connection_delref_where(&c, c->logger, HERE);
 }
