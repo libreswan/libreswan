@@ -41,6 +41,11 @@ static const char *routing_event_name[] = {
 	S(CONNECTION_ESTABLISH_IKE),
 	S(CONNECTION_ESTABLISH_INBOUND),
 	S(CONNECTION_ESTABLISH_OUTBOUND),
+	S(CONNECTION_PENDING),
+	S(CONNECTION_INITIATE_IKE),
+	S(CONNECTION_INITIATE_CHILD),
+	S(CONNECTION_RESPOND_IKE),
+	S(CONNECTION_RESPOND_CHILD),
 	S(CONNECTION_DELETE_IKE),
 	S(CONNECTION_DELETE_CHILD),
 	S(CONNECTION_TIMEOUT_IKE),
@@ -900,6 +905,13 @@ void connection_initiated_child(struct ike_sa *ike, struct child_sa *child, wher
 			 .ike = &ike,
 			 .child = &child,
 		 });
+}
+
+void connection_pending(struct connection *c, where_t where)
+{
+	dispatch(CONNECTION_INITIATE, &c,
+		 c->logger, where,
+		 (struct routing_annex) {0});
 }
 
 void connection_establish_ike(struct ike_sa *ike, where_t where)

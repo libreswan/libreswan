@@ -87,6 +87,8 @@ void connection_initiated_child(struct ike_sa *ike, struct child_sa *child, wher
 
 void connection_establish_ike(struct ike_sa *ike, where_t where);
 
+void connection_pending(struct connection *c, where_t where);
+
 void connection_acquire(struct connection *c, threadtime_t *inception,
 			const struct kernel_acquire *b, where_t where);
 
@@ -122,6 +124,12 @@ enum routing_event {
 	/* start/stop a connection */
 	CONNECTION_INITIATE, /* also revive */
 	CONNECTION_ACQUIRE,
+	/* initiator/responder? */
+	CONNECTION_INITIATE_IKE,
+	CONNECTION_INITIATE_CHILD,
+	CONNECTION_RESPOND_IKE,
+	CONNECTION_RESPOND_CHILD,
+	CONNECTION_PENDING,
 	/* establish a connection (speculative) */
 	CONNECTION_ESTABLISH_IKE,
 	CONNECTION_ESTABLISH_INBOUND,
