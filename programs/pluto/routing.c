@@ -39,6 +39,7 @@ static const char *routing_event_name[] = {
 	S(CONNECTION_INITIATE),
 	S(CONNECTION_ACQUIRE),
 	S(CONNECTION_REVIVE),
+	S(CONNECTION_ESTABLISH_IKE),
 	S(CONNECTION_ESTABLISH_INBOUND),
 	S(CONNECTION_ESTABLISH_OUTBOUND),
 	S(CONNECTION_DELETE_IKE),
@@ -858,13 +859,19 @@ void connection_initiate(struct connection *c, const threadtime_t *inception,
 
 void connection_establish_ike(struct ike_sa *ike, where_t where)
 {
-	set_newest_sa_where(ike->sa.st_connection, newest_ike_sa, ike->sa.st_serialno, where);
+	struct connection *c = ike->sa.st_connection;
+	struct routing_annex e = {
+		.ike = &ike,
+	};
+	struct old_routing old = ldbg_routing_start(c, CONNECTION_ESTABLISH_IKE, where, &e);
+	set_newest_sa_where(c, newest_ike_sa, ike->sa.st_serialno, where);
 	ike->sa.st_viable_parent = true;
 	linux_audit_conn(&ike->sa, LAK_PARENT_START);
 	/* dump new keys */
 	if (DBGP(DBG_PRIVATE)) {
 		DBG_tcpdump_ike_sa_keys(&ike->sa);
 	}
+	ldbg_routing_stop(c, CONNECTION_ESTABLISH_IKE, where, &e, &old);
 }
 
 void connection_acquire(struct connection *c, threadtime_t *inception,

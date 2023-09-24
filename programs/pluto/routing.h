@@ -117,6 +117,7 @@ enum routing_event {
 	CONNECTION_ACQUIRE,
 	CONNECTION_REVIVE,
 	/* establish a connection (speculative) */
+	CONNECTION_ESTABLISH_IKE,
 	CONNECTION_ESTABLISH_INBOUND,
 	CONNECTION_ESTABLISH_OUTBOUND,
 	/* tear down a connection */
