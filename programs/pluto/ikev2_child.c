@@ -1003,8 +1003,7 @@ bool process_any_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *ike,
 	if (cn != v2N_NOTHING_WRONG) {
 		/* XXX: add delete_any_child_sa()? */
 		if (ike->sa.st_v2_msgid_windows.responder.wip_sa != NULL) {
-			delete_state(&ike->sa.st_v2_msgid_windows.responder.wip_sa->sa);
-			ike->sa.st_v2_msgid_windows.responder.wip_sa = NULL;
+			delete_child_sa(&ike->sa.st_v2_msgid_windows.responder.wip_sa);
 		}
 		if (v2_notification_fatal(cn)) {
 			record_v2N_response(ike->sa.st_logger, ike, md,
