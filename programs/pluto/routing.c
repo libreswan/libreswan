@@ -1666,11 +1666,13 @@ static void dispatch_1(enum routing_event event,
 			set_routing(event, c, RT_UNROUTED, NULL, where);
 			return;
 		case X(DELETE_IKE, ROUTED_ONDEMAND, PERMANENT):		/* ROUTED_NEGOTIATION!?! */
-			if (BROKEN_TRANSITION) {
-				delete_ike_family(e->ike, where);
-				return;
-			}
-			break;
+			/*
+			 * Happens after all children are killed, and
+			 * connection put into routed ondemand.  Just
+			 * need to delete IKE.
+			 */
+			delete_ike_sa(e->ike);
+			return;
 
 		case X(TIMEOUT_CHILD, ROUTED_TUNNEL, PERMANENT):
 		case X(DELETE_CHILD, ROUTED_TUNNEL, PERMANENT):
