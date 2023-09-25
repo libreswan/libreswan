@@ -380,7 +380,7 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 		}
 		case IKEv1:
 			state_attach(st, logger);
-			delete_state(st);
+			connection_delete_v1_sa(&st, HERE);
 			/* note: no md->st to clear */
 			/* st = NULL; */
 			break;
