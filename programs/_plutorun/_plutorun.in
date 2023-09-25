@@ -1,4 +1,4 @@
-#!@SHELL_BINARY@
+#!@@SHELL_BINARY@@
 # -*- mode: sh; sh-shell: sh -*-
 # Pluto control daemon
 # Copyright (C) 1998, 1999, 2001  Henry Spencer.

@@ -1,4 +1,4 @@
-#!@SHELL_BINARY@
+#!@@SHELL_BINARY@@
 # -*- mode: sh; sh-shell: sh -*-
 #
 # prefix command to run stuff from our programs directory
@@ -50,7 +50,7 @@ export EF_DISABLE_BANNER=1
 DONTMENTION='^(_.*|.*\.old|.*\.orig|.*~)$'
 
 # version numbering (details filled in by build)
-export IPSEC_VERSION="@IPSECVERSION@"
+export IPSEC_VERSION="@@IPSECVERSION@@"
 
 ipsec_add() {
     #

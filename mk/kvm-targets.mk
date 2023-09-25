@@ -1441,7 +1441,7 @@ kvm-rpm: $(KVM_POOLDIR_PREFIX)fedora
 	: NOTE: testing/packaging/// and NOT packaging/...
 	sed -e "s/@IPSECBASEVERSION@/$(RPM_VERSION)/g" \
 		-e "s/^Version:.*/Version: $(RPM_VERSION)/g" \
-		-e "s/@INITSYSTEM@/$(INITSYSTEM)/g" \
+		-e "s/@@INITSYSTEM@@/$(INITSYSTEM)/g" \
 		testing/packaging/fedora/libreswan-testing.spec \
 		> rpmbuild/SPECS/libreswan-testing.spec
 	mkdir -p rpmbuild/SOURCES

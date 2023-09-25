@@ -622,17 +622,17 @@ export WHACKLIB IPSECCONFLIB
 
 # how to do variable substitution in sed-transformed files
 TRANSFORM_VARIABLES = sed \
-			-e "s:@DOCKER_PLUTONOFORK@:$(DOCKER_PLUTONOFORK):g" \
-			-e "s:@INITSYSTEM@:$(INITSYSTEM):g" \
-			-e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
-			-e "s:@MODPROBEARGS@:$(MODPROBEARGS):g" \
-			-e "s:@MODPROBEBIN@:$(MODPROBEBIN):g" \
-			-e "s:@SD_PLUTO_OPTIONS@:$(SD_PLUTO_OPTIONS):g" \
-			-e "s:@SD_RESTART_TYPE@:$(SD_RESTART_TYPE):g" \
-			-e "s:@SD_TYPE@:$(SD_TYPE):g" \
-			-e "s:@SD_WATCHDOGSEC@:$(SD_WATCHDOGSEC):g" \
-			-e "s:@SHELL_BINARY@:$(SHELL_BINARY):g" \
-			-e "s:@USE_DEFAULT_CONNS@:$(USE_DEFAULT_CONNS):g" \
+			-e "s:@@DOCKER_PLUTONOFORK@@:$(DOCKER_PLUTONOFORK):g" \
+			-e "s:@@INITSYSTEM@@:$(INITSYSTEM):g" \
+			-e "s:@@IPSECVERSION@@:$(IPSECVERSION):g" \
+			-e "s:@@MODPROBEARGS@@:$(MODPROBEARGS):g" \
+			-e "s:@@MODPROBEBIN@@:$(MODPROBEBIN):g" \
+			-e "s:@@SD_PLUTO_OPTIONS@@:$(SD_PLUTO_OPTIONS):g" \
+			-e "s:@@SD_RESTART_TYPE@@:$(SD_RESTART_TYPE):g" \
+			-e "s:@@SD_TYPE@@:$(SD_TYPE):g" \
+			-e "s:@@SD_WATCHDOGSEC@@:$(SD_WATCHDOGSEC):g" \
+			-e "s:@@SHELL_BINARY@@:$(SHELL_BINARY):g" \
+			-e "s:@@USE_DEFAULT_CONNS@@:$(USE_DEFAULT_CONNS):g" \
 			-e "s:@@USE_IPTABLES@@:$(USE_IPTABLES):g" \
 			-e "s:@@USE_NFTABLES@@:$(USE_NFTABLES):g" \
 			$(patsubst %, -e %, $(TRANSFORMS))

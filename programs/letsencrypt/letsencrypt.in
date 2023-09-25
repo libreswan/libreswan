@@ -1,4 +1,4 @@
-#!@SHELL_BINARY@
+#!@@SHELL_BINARY@@
 # -*- mode: sh; sh-shell: sh -*-
 #
 # default letsencrypt script for OE utilities

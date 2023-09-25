@@ -1,4 +1,4 @@
-#!@SHELL_BINARY@
+#!@@SHELL_BINARY@@
 # -*- mode: sh; sh-shell: sh -*-
 # iproute2 version, default updown script
 #

@@ -1,4 +1,4 @@
-#!@SHELL_BINARY@
+#!@@SHELL_BINARY@@
 # -*- mode: sh; sh-shell: sh -*-
 # quick look at current connections and related information
 # Copyright (C) 1998, 1999  Henry Spencer.

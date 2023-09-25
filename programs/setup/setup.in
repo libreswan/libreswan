@@ -1,4 +1,4 @@
-#!@SHELL_BINARY@
+#!@@SHELL_BINARY@@
 # -*- mode: sh; sh-shell: sh -*-
 # IPsec startup and shutdown command
 # Copyright (C) 1998, 1999, 2001  Henry Spencer.
@@ -29,7 +29,7 @@ cd /
 LIBRESWAN_RESOLV_CONF=${rundir}/libreswan-resolv-conf-backup
 ORIG_RESOLV_CONF=@@SYSCONFDIR@@/resolv.conf
 
-initsystem="@INITSYSTEM@"
+initsystem="@@INITSYSTEM@@"
 
 # linux_START
 # The stock Fedora/RHEL RPM gets tested in side namespaces where

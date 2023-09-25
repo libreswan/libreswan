@@ -5,8 +5,8 @@ After=network-online.target
 Documentation=man:ipsec(8) man:pluto(8) man:ipsec.conf(5)
 
 [Service]
-Type=@SD_TYPE@
-Restart=@SD_RESTART_TYPE@
+Type=@@SD_TYPE@@
+Restart=@@SD_RESTART_TYPE@@
 # 12 is the shutdown while leaving kernel state. Restarting would still kill kernel state
 RestartPreventExitStatus=12
 
@@ -17,7 +17,7 @@ RestartPreventExitStatus=12
 # EVENT_SD_WATCHDOG updates the heartbeat every 15 seconds, recommended values
 # are 60, 90, 120. WatchdogSec=0 disables the action
 NotifyAccess=all
-WatchdogSec=@SD_WATCHDOGSEC@
+WatchdogSec=@@SD_WATCHDOGSEC@@
 
 # Check configuration file
 ExecStartPre=@@LIBEXECDIR@@/addconn --config @@IPSEC_CONF@@ --checkconfig
@@ -26,7 +26,7 @@ ExecStartPre=@@SBINDIR@@/ipsec checknss
 # Check for nflog setup
 ExecStartPre=@@SBINDIR@@/ipsec checknflog
 # Start the actual IKE daemon
-ExecStart=@@LIBEXECDIR@@/pluto @SD_PLUTO_OPTIONS@ --config @@IPSEC_CONF@@ --nofork
+ExecStart=@@LIBEXECDIR@@/pluto @@SD_PLUTO_OPTIONS@@ --config @@IPSEC_CONF@@ --nofork
 # Enable for portexcludes support
 # ExecStartPost=@@LIBEXECDIR@@/portexcludes
 ExecStop=@@LIBEXECDIR@@/whack --shutdown
