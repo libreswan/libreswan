@@ -1872,6 +1872,14 @@ static void dispatch_1(enum routing_event event,
 			}
 			set_routing(event, c, RT_ROUTED_ONDEMAND, NULL, where);
 			return;
+		case X(ROUTE, ROUTED_ONDEMAND, LABELED_PARENT):
+			/*
+			 * ikev2-labeled-ipsec-06-rekey-ike-acquire
+			 * where the rekey re-routes the existing
+			 * routed connection from IKE AUTH.
+			 */
+			set_routing(event, c, RT_ROUTED_ONDEMAND, NULL, where);
+			return;
 		case X(ROUTE, UNROUTED, LABELED_PARENT):
 			/*
 			 * The CK_LABELED_TEMPLATE connection may have
@@ -1921,15 +1929,8 @@ static void dispatch_1(enum routing_event event,
 					  logger);
 			return;
 		case X(DELETE_IKE, ROUTED_ONDEMAND, LABELED_PARENT):
-			/*
-			 * This returns false as IKE SA's connection
-			 * has no Child SA (the Child SAs are part of
-			 * a different connection).
-			 */
+		case X(DELETE_IKE, UNROUTED, LABELED_PARENT):
 			delete_ike_sa(e->ike);
-			/*
-			 * Assume LABELED_TEMPLATE owns the route?
-			 */
 			set_routing(event, c, RT_UNROUTED, NULL, where);
 			return;
 

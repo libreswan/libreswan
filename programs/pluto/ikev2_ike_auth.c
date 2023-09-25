@@ -1255,7 +1255,8 @@ bool v2_ike_sa_auth_responder_establish(struct ike_sa *ike, bool *send_redirecti
 		 * is_labeled_parent() have overlapping SPDs that seems
 		 * to do no harm.
 		 */
-		PEXPECT(c->logger, c->child.routing == RT_UNROUTED);
+		PEXPECT(ike->sa.st_logger, (c->child.routing == RT_UNROUTED ||
+					    c->child.routing == RT_ROUTED_ONDEMAND));
 		connection_route(c, HERE);
 		if (c->child.routing != RT_ROUTED_ONDEMAND) {
 			return false;
@@ -1543,7 +1544,8 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 		 * But what if the two have the same SPDs?  Then the
 		 * routing happens twice which seems to be harmless.
 		 */
-		PEXPECT(ike->sa.st_logger, c->child.routing == RT_UNROUTED);
+		PEXPECT(ike->sa.st_logger, (c->child.routing == RT_UNROUTED ||
+					    c->child.routing == RT_ROUTED_ONDEMAND));
 		connection_route(c, HERE);
 		if (c->child.routing != RT_ROUTED_ONDEMAND) {
 			return STF_FATAL;
