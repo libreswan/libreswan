@@ -273,26 +273,22 @@ void ldbg_routing(struct logger *logger, const char *fmt, ...)
 	}
 }
 
-void fake_connection_establish_inbound(struct ike_sa *ike, struct child_sa *child,
-				       where_t where)
+void fake_connection_establish_inbound(struct child_sa *child, where_t where)
 {
 	struct connection *cc = child->sa.st_connection;
 	dispatch(CONNECTION_ESTABLISH_INBOUND, &cc,
 		 child->sa.st_logger, where,
 		 (struct routing_annex) {
-			 .ike = &ike,
 			 .child = &child,
 		 });
 }
 
-void fake_connection_establish_outbound(struct ike_sa *ike, struct child_sa *child,
-					where_t where)
+void fake_connection_establish_outbound(struct child_sa *child, where_t where)
 {
 	struct connection *cc = child->sa.st_connection;
 	dispatch(CONNECTION_ESTABLISH_OUTBOUND, &cc,
 		 child->sa.st_logger, where,
 		 (struct routing_annex) {
-			 .ike = &ike,
 			 .child = &child,
 		 });
 }

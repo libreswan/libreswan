@@ -106,8 +106,8 @@ void connection_delete_ike(struct ike_sa **ike, where_t where);
 
 
 /* fake a debug message for establish for now */
-void fake_connection_establish_inbound(struct ike_sa *ike, struct child_sa *child, where_t where);
-void fake_connection_establish_outbound(struct ike_sa *ike, struct child_sa *child, where_t where);
+void fake_connection_establish_inbound(struct child_sa *child, where_t where);
+void fake_connection_establish_outbound(struct child_sa *child, where_t where);
 
 enum routing_event {
 	/* fiddle with the ROUTE bit */

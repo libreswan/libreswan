@@ -2402,8 +2402,7 @@ bool install_ipsec_sa(struct child_sa *child, lset_t direction, where_t where)
 			return false;
 		}
 
-		fake_connection_establish_inbound(ike_sa(&child->sa, HERE), child, HERE);
-		ldbg(logger, "kernel: %s() installed inbound kernel state+policy", __func__);
+		fake_connection_establish_inbound(child, HERE);
 
 		/*
 		 * We successfully installed an IPsec SA, meaning it
@@ -2424,7 +2423,7 @@ bool install_ipsec_sa(struct child_sa *child, lset_t direction, where_t where)
 			uninstall_kernel_states(child);
 			return false;
 		}
-		fake_connection_establish_outbound(ike_sa(&child->sa, HERE), child, HERE);
+		fake_connection_establish_outbound(child, HERE);
 	}
 
 	/*
