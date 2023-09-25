@@ -276,7 +276,7 @@ static void dpd_sched_timeout(struct ike_sa *p1, const monotime_t now, deltatime
  * @param p2st A state struct that is already in phase2
  * @return void
  */
-static void dpd_outI(struct ike_sa *p1, struct state *st, bool eroute_care,
+static void dpd_outI(struct ike_sa *p1, struct state *st,
 		     deltatime_t delay, deltatime_t timeout)
 {
 	uint32_t seqno;
@@ -330,10 +330,8 @@ static void dpd_outI(struct ike_sa *p1, struct state *st, bool eroute_care,
 	 * check the phase 2, if we are supposed to,
 	 * and return if it is active recently
 	 */
-	if (eroute_care &&
-	    st->hidden_variables.st_nat_traversal == LEMPTY &&
-	    !was_eroute_idle(pexpect_child_sa(st), delay))
-	{
+	if (st->hidden_variables.st_nat_traversal == LEMPTY &&
+	    !was_eroute_idle(pexpect_child_sa(st), delay)) {
 		dbg("DPD: out event not sent, phase 2 active");
 
 		/* update phase 2 time stamp only */
@@ -404,7 +402,7 @@ static void p1_dpd_outI1(struct ike_sa *p1)
 	deltatime_t delay = p1->sa.st_connection->config->dpd.delay;
 	deltatime_t timeout = p1->sa.st_connection->config->dpd.timeout;
 
-	dpd_outI(p1, &p1->sa, true, delay, timeout);
+	dpd_outI(p1, &p1->sa, delay, timeout);
 }
 
 static void p2_dpd_outI1(struct child_sa *p2)
@@ -426,7 +424,7 @@ static void p2_dpd_outI1(struct child_sa *p2)
 		return;
 	}
 
-	dpd_outI(p1, &p2->sa, true, delay, timeout);
+	dpd_outI(p1, &p2->sa, delay, timeout);
 }
 
 void event_v1_dpd(struct state *st)
