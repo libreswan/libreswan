@@ -1538,23 +1538,24 @@ stf_status send_isakmp_notification(struct state *st,
 }
 
 /*
- * Send a notification to the peer. We could decide
- * whether to send the notification, based on the type and the
- * destination, if we care to.
- * Note: some calls are from send_notification_from_md and
- * those calls pass a fake state as sndst.
+ * Send a notification to the peer. We could decide whether to send
+ * the notification, based on the type and the destination, if we care
+ * to.
+ *
  * Note: msgid is in different order here from other calls :/
  */
 static monotime_t last_malformed = MONOTIME_EPOCH;
 
 static void send_v1_notification(struct logger *logger,
-				 struct state *sndst /*possibly fake*/,
+				 struct state *sndst,
 				 v1_notification_t type,
-				 struct state *encst,
-				 msgid_t msgid, uint8_t *icookie, uint8_t *rcookie,
+				 struct ike_sa *isakmp_encrypt, /*possibly NULL*/
+				 msgid_t msgid,
+				 uint8_t *icookie,
+				 uint8_t *rcookie,
 				 uint8_t protoid)
 {
-	pb_stream r_hdr_pbs;
+	struct pbs_out r_hdr_pbs;
 	const monotime_t now = mononow();
 
 	switch (type) {
@@ -1591,26 +1592,31 @@ static void send_v1_notification(struct logger *logger,
 		}
 
 		/*
-		 * do not encrypt notification, since #1 reason for malformed
-		 * payload is that the keys are all messed up.
+		 * Do not encrypt notification, since #1 reason for
+		 * malformed payload is that the keys are all messed
+		 * up.
 		 */
-		encst = NULL;
+		isakmp_encrypt = NULL;
 		break;
 
 	case v1N_INVALID_FLAGS:
 		/*
-		 * invalid flags usually includes encryption flags, so do not
-		 * send encrypted.
+		 * Invalid flags usually includes encryption flags, so
+		 * do not send encrypted.
 		 */
-		encst = NULL;
+		isakmp_encrypt = NULL;
 		break;
+
 	default:
 		/* quiet GCC warning */
 		break;
 	}
 
-	if (encst != NULL && !IS_V1_ISAKMP_ENCRYPTED(encst->st_state->kind))
-		encst = NULL;
+	/* handled by caller? */
+	if (!PEXPECT(logger, (isakmp_encrypt == NULL ||
+			      IS_V1_ISAKMP_ENCRYPTED(isakmp_encrypt->sa.st_state->kind)))) {
+		return;
+	}
 
 	{
 		/*
@@ -1622,7 +1628,7 @@ static void send_v1_notification(struct logger *logger,
 		enum_buf nb;
 		llog(RC_NOTIFICATION + type, logger,
 		     "sending %snotification %s to %s",
-		     encst ? "encrypted " : "",
+		     (isakmp_encrypt != NULL ? "encrypted " : ""),
 		     str_enum_short(&v1_notification_names, type, &nb),
 		     str_endpoint(&sndst->st_remote_endpoint, &b));
 	}
@@ -1634,11 +1640,11 @@ static void send_v1_notification(struct logger *logger,
 	{
 		/* ??? "keep it around for TPM" */
 		struct isakmp_hdr hdr = {
-			.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
-				ISAKMP_MINOR_VERSION,
+			.isa_version = (ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
+					ISAKMP_MINOR_VERSION),
 			.isa_xchg = ISAKMP_XCHG_INFO,
 			.isa_msgid = msgid,
-			.isa_flags = encst ? ISAKMP_FLAGS_v1_ENCRYPTION : 0,
+			.isa_flags = (isakmp_encrypt != NULL ? ISAKMP_FLAGS_v1_ENCRYPTION : 0),
 		};
 		if (icookie != NULL)
 			memcpy(hdr.isa_ike_initiator_spi.bytes, icookie, COOKIE_SIZE);
@@ -1648,11 +1654,11 @@ static void send_v1_notification(struct logger *logger,
 	}
 
 	/* HASH -- value to be filled later */
-	struct v1_hash_fixup hash_fixup;
-	if (encst != NULL) {
+	struct v1_hash_fixup hash_fixup = {0};
+	if (isakmp_encrypt != NULL) {
 		if (!emit_v1_HASH(V1_HASH_1, "send notification",
 				  IMPAIR_v1_NOTIFICATION_EXCHANGE,
-				  encst, &hash_fixup, &r_hdr_pbs)) {
+				  &isakmp_encrypt->sa, &hash_fixup, &r_hdr_pbs)) {
 			/* return STF_INTERNAL_ERROR; */
 			return;
 		}
@@ -1678,25 +1684,23 @@ static void send_v1_notification(struct logger *logger,
 		close_output_pbs(&not_pbs);
 	}
 
-	/* calculate hash value and patch into Hash Payload */
-	if (encst != NULL) {
-		fixup_v1_HASH(encst, &hash_fixup, msgid, r_hdr_pbs.cur);
-	}
+	if (isakmp_encrypt != NULL) {
+		/* calculate hash value and patch into Hash Payload */
+		fixup_v1_HASH(&isakmp_encrypt->sa, &hash_fixup, msgid, r_hdr_pbs.cur);
 
-	if (encst != NULL) {
 		/* Encrypt message (preserve st_iv) */
 		/* ??? why not preserve st_new_iv? */
 		struct crypt_mac old_iv;
 
-		save_iv(encst, old_iv);
+		save_iv(&isakmp_encrypt->sa, old_iv);
 
-		if (!IS_V1_ISAKMP_SA_ESTABLISHED(encst)) {
-			update_iv(encst);
+		if (!IS_V1_ISAKMP_SA_ESTABLISHED(&isakmp_encrypt->sa)) {
+			update_iv(&isakmp_encrypt->sa);
 		}
-		init_phase2_iv(encst, &msgid);
-		passert(ikev1_encrypt_message(&r_hdr_pbs, encst));
+		init_phase2_iv(&isakmp_encrypt->sa, &msgid);
+		passert(ikev1_encrypt_message(&r_hdr_pbs, &isakmp_encrypt->sa));
 
-		restore_iv(encst, old_iv);
+		restore_iv(&isakmp_encrypt->sa, old_iv);
 	} else {
 		close_output_pbs(&r_hdr_pbs);
 	}
@@ -1714,34 +1718,48 @@ void send_v1_notification_from_state(struct state *st, enum state_kind from_stat
 
 	if (IS_V1_QUICK(from_state)) {
 		/*
-		 * Don't use established_isakmp_sa_for_state().  It
-		 * returns NULL when ST isn't established and here ST
-		 * is still larval.
+		 * Don't use established_isakmp_sa_for_state().
+		 *
+		 * It returns NULL when ST isn't established and here
+		 * ST is still larval.
 		 */
-		struct ike_sa *p1st = find_ike_sa_by_connection(st->st_connection,
-								V1_ISAKMP_SA_ESTABLISHED_STATES);
-		if (p1st == NULL) {
-			log_state(RC_LOG_SERIOUS, st,
-				  "no Phase1 state for Quick mode notification");
+		struct ike_sa *isakmp = find_ike_sa_by_connection(st->st_connection,
+								  V1_ISAKMP_SA_ESTABLISHED_STATES);
+		if (isakmp == NULL) {
+			llog(RC_LOG_SERIOUS, st->st_logger,
+			     "no ISAKMP SA for Quick mode notification");
 			return;
 		}
-		send_v1_notification(st->st_logger, st, type, &p1st->sa,
-				     generate_msgid(&p1st->sa),
+		if (!IS_V1_ISAKMP_ENCRYPTED(isakmp->sa.st_state->kind)) {
+			/*passert?*/
+			llog(RC_LOG_SERIOUS, st->st_logger,
+			     "ISAKMP SA for Quick mode notification is not encrypted");
+			return;
+		}
+		send_v1_notification(st->st_logger, st, type,
+				     isakmp, generate_msgid(&isakmp->sa),
 				     st->st_ike_spis.initiator.bytes,
 				     st->st_ike_spis.responder.bytes,
 				     PROTO_ISAKMP);
-	} else if (IS_V1_ISAKMP_ENCRYPTED(from_state)) {
-		send_v1_notification(st->st_logger, st, type, st, generate_msgid(st),
-				     st->st_ike_spis.initiator.bytes,
-				     st->st_ike_spis.responder.bytes,
-				     PROTO_ISAKMP);
-	} else {
-		/* no ISAKMP SA established - don't encrypt notification */
-		send_v1_notification(st->st_logger, st, type, NULL, v1_MAINMODE_MSGID,
-				     st->st_ike_spis.initiator.bytes,
-				     st->st_ike_spis.responder.bytes,
-				     PROTO_ISAKMP);
+		return;
 	}
+
+	if (IS_V1_ISAKMP_ENCRYPTED(from_state)) {
+		send_v1_notification(st->st_logger, st, type,
+				     pexpect_parent_sa(st),
+				     generate_msgid(st),
+				     st->st_ike_spis.initiator.bytes,
+				     st->st_ike_spis.responder.bytes,
+				     PROTO_ISAKMP);
+		return;
+	}
+
+	/* no ISAKMP SA established - don't encrypt notification */
+	send_v1_notification(st->st_logger, st, type,
+			     /*no-ISAKMP*/NULL, v1_MAINMODE_MSGID,
+			     st->st_ike_spis.initiator.bytes,
+			     st->st_ike_spis.responder.bytes,
+			     PROTO_ISAKMP);
 }
 
 void send_v1_notification_from_md(struct msg_digest *md, v1_notification_t type)
