@@ -622,13 +622,11 @@ export WHACKLIB IPSECCONFLIB
 
 # how to do variable substitution in sed-transformed files
 TRANSFORM_VARIABLES = sed \
-			-e "/@${OSDEP}_START@/,/@${OSDEP}_END@/d" \
 			-e "s:@DOCKER_PLUTONOFORK@:$(DOCKER_PLUTONOFORK):g" \
 			-e "s:@INITSYSTEM@:$(INITSYSTEM):g" \
 			-e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
 			-e "s:@MODPROBEARGS@:$(MODPROBEARGS):g" \
 			-e "s:@MODPROBEBIN@:$(MODPROBEBIN):g" \
-			-e "s:@OSDEP@:${OSDEP}:g" \
 			-e "s:@SD_PLUTO_OPTIONS@:$(SD_PLUTO_OPTIONS):g" \
 			-e "s:@SD_RESTART_TYPE@:$(SD_RESTART_TYPE):g" \
 			-e "s:@SD_TYPE@:$(SD_TYPE):g" \
