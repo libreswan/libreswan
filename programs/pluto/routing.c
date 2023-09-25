@@ -417,6 +417,17 @@ void set_routing(enum routing_event event,
 	set_newest_sa(c, newest_routing_sa, new_routing_sa);
 }
 
+static void set_established_child(enum routing_event event UNUSED,
+				  struct connection *c,
+				  enum routing routing,
+				  struct child_sa **child,
+				  where_t where UNUSED)
+{
+	c->child.routing = routing;
+	c->newest_ipsec_sa = c->newest_routing_sa =
+		(*child)->sa.st_serialno;
+}
+
 static bool unrouted_to_routed_ondemand(enum routing_event event, struct connection *c, where_t where)
 {
 	if (!unrouted_to_routed(c, SHUNT_KIND_ONDEMAND, where)) {
@@ -1714,15 +1725,12 @@ static void dispatch_1(enum routing_event event,
 			}
 			break;
 		case X(ESTABLISH_OUTBOUND, ROUTED_INBOUND, TEMPLATE): /* ikev1-l2tp-03-two-interfaces */
-			if (BROKEN_TRANSITION) {
-				/*
-				 * ikev1-l2tp-03-two-interfaces
-				 * github/693 github/1117
-				 */
-				set_routing(event, c, RT_ROUTED_TUNNEL, e->child, where);
-				return;
-			}
-			break;
+			/*
+			 * ikev1-l2tp-03-two-interfaces
+			 * github/693 github/1117
+			 */
+			set_established_child(event, c, RT_ROUTED_TUNNEL, e->child, where);
+			return;
 
 		case X(ESTABLISH_INBOUND, ROUTED_ONDEMAND, INSTANCE): /* ikev2-32-nat-rw-rekey */
 			if (BROKEN_TRANSITION) {
@@ -1774,14 +1782,26 @@ static void dispatch_1(enum routing_event event,
 		case X(ESTABLISH_OUTBOUND, UNROUTED_INBOUND, INSTANCE):
 		case X(ESTABLISH_OUTBOUND, ROUTED_INBOUND, PERMANENT):
 		case X(ESTABLISH_OUTBOUND, ROUTED_INBOUND, INSTANCE):
-			if (BROKEN_TRANSITION) {
-				set_routing(event, c, RT_ROUTED_TUNNEL, e->child, where);
-				return;
-			}
-			break;
+			set_established_child(event, c, RT_ROUTED_TUNNEL, e->child, where);
+			return;
 
 		case X(ESTABLISH_INBOUND, ROUTED_TUNNEL, PERMANENT):
 		case X(ESTABLISH_INBOUND, ROUTED_TUNNEL, INSTANCE):
+			/*
+			 * This happens when there's a re-key where
+			 * the state is re-established but not the
+			 * policy (that is left untouched).
+			 *
+			 * For instance ikev2-12-transport-psk and
+			 * ikev2-28-rw-server-rekey
+			 * ikev1-labeled-ipsec-01-permissive.
+			 *
+			 * XXX: suspect this is too early - for rekey
+			 * should only update after new child
+			 * establishes?
+			 */
+			set_routing(event, c, RT_ROUTED_TUNNEL, e->child, where);
+			return;
 		case X(ESTABLISH_OUTBOUND, ROUTED_TUNNEL, PERMANENT):
 		case X(ESTABLISH_OUTBOUND, ROUTED_TUNNEL, INSTANCE):
 			/*
@@ -1793,7 +1813,7 @@ static void dispatch_1(enum routing_event event,
 			 * ikev2-28-rw-server-rekey
 			 * ikev1-labeled-ipsec-01-permissive.
 			 */
-			set_routing(event, c, RT_ROUTED_TUNNEL, e->child, where);
+			set_established_child(event, c, RT_ROUTED_TUNNEL, e->child, where);
 			return;
 
 		case X(SUSPEND, ROUTED_TUNNEL, PERMANENT):
@@ -1895,15 +1915,18 @@ static void dispatch_1(enum routing_event event,
  */
 
 		case X(ESTABLISH_INBOUND, UNROUTED_TUNNEL, LABELED_CHILD):
-		case X(ESTABLISH_OUTBOUND, UNROUTED_TUNNEL, LABELED_CHILD):
 			/* rekey */
 			set_routing(event, c, RT_UNROUTED_TUNNEL, e->child, where);
+			return;
+		case X(ESTABLISH_OUTBOUND, UNROUTED_TUNNEL, LABELED_CHILD):
+			/* rekey */
+			set_established_child(event, c, RT_UNROUTED_TUNNEL, e->child, where);
 			return;
 		case X(ESTABLISH_INBOUND, UNROUTED, LABELED_CHILD):
 			set_routing(event, c, RT_UNROUTED_INBOUND, e->child, where);
 			return;
 		case X(ESTABLISH_OUTBOUND, UNROUTED_INBOUND, LABELED_CHILD):
-			set_routing(event, c, RT_UNROUTED_TUNNEL, e->child, where);
+			set_established_child(event, c, RT_UNROUTED_TUNNEL, e->child, where);
 			return;
 		case X(UNROUTE, UNROUTED_INBOUND, LABELED_CHILD):
 		case X(UNROUTE, UNROUTED_TUNNEL, LABELED_CHILD):

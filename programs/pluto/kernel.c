@@ -2423,7 +2423,6 @@ bool install_ipsec_sa(struct child_sa *child, lset_t direction, where_t where)
 			uninstall_kernel_states(child);
 			return false;
 		}
-		fake_connection_establish_outbound(child, HERE);
 	}
 
 	/*
@@ -2441,16 +2440,6 @@ bool install_ipsec_sa(struct child_sa *child, lset_t direction, where_t where)
 	 * should match the child.
 	 */
 	if (direction & DIRECTION_OUTBOUND) {
-		so_serial_t old_ipsec_sa = c->newest_ipsec_sa;
-		so_serial_t new_ipsec_sa = child->sa.st_serialno;
-		so_serial_t routing_sa = c->newest_routing_sa;
-		connection_buf cb;
-		ldbg(logger,
-		     "kernel: %s() .newest_ipsec_sa "PRI_SO"->"PRI_SO" (routing SA "PRI_SO") "PRI_CONNECTION" "PRI_WHERE,
-		     __func__, pri_so(old_ipsec_sa), pri_so(new_ipsec_sa),
-		     pri_so(routing_sa),
-		     pri_connection(c, &cb),
-		     pri_where(where));
 #if 0
 		/*
 		 * XXX: triggers when two peers initiate
@@ -2463,7 +2452,7 @@ bool install_ipsec_sa(struct child_sa *child, lset_t direction, where_t where)
 #if 0
 		PEXPECT(child->sa.st_logger, routing_sa == new_ipsec_sa);
 #endif
-		set_newest_sa(child->sa.st_connection, newest_ipsec_sa, new_ipsec_sa);
+		fake_connection_establish_outbound(child, HERE);
 	}
 
 	/* we only audit once for IPsec SA's, we picked the inbound SA */
