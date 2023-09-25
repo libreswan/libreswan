@@ -846,6 +846,34 @@ void connection_unrouted(struct connection *c)
 	c->child.routing = RT_UNROUTED;
 }
 
+void connection_routing_clear(struct state *st)
+{
+	struct connection *c = st->st_connection;
+#if 0
+	if (c->newest_routing_sa == st->st_serialno) {
+#if 0
+		llog_pexpect(st->st_logger, HERE,
+			     "newest_routing_sa");
+#endif
+		set_newest_sa(c, newest_routing_sa, SOS_NOBODY);
+	}
+#endif
+	if (c->newest_ipsec_sa == st->st_serialno) {
+#if 0
+		llog_pexpect(st->st_logger, HERE,
+			     "newest_ipsec_sa");
+#endif
+		set_newest_sa(c, newest_ipsec_sa, SOS_NOBODY);
+	}
+	if (c->newest_ike_sa == st->st_serialno) {
+#if 0
+		llog_pexpect(st->st_logger, HERE,
+			     "newest_ike_sa");
+#endif
+		set_newest_sa(c, newest_ike_sa, SOS_NOBODY);
+	}
+}
+
 void connection_initiate(struct connection *c, const threadtime_t *inception,
 			 bool background, where_t where)
 {
