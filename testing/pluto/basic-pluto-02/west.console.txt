@@ -129,32 +129,9 @@ west #
  echo done
 done
 west #
- ../../guestbin/ipsec-look.sh
-west NOW
-XFRM state:
-XFRM policy:
-XFRM done
-IPSEC mangle TABLES
-iptables filter TABLE
-Chain INPUT (policy ACCEPT)
-target     prot opt source               destination         
-Chain FORWARD (policy ACCEPT)
-target     prot opt source               destination         
-Chain OUTPUT (policy ACCEPT)
-target     prot opt source               destination         
-ROUTING TABLES
-default via 192.1.2.254 dev eth1
-25.1.0.0/16 via 192.0.1.254 dev eth0
-25.2.0.0/16 via 192.1.2.45 dev eth1
-192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
-192.0.2.0/24 via 192.1.2.23 dev eth1
-192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
-192.168.1.1 via 192.0.1.254 dev eth0
-192.168.1.2 via 192.1.2.45 dev eth1
-192.168.1.16/28 via 192.1.2.45 dev eth1
-NSS_CERTIFICATES
-Certificate Nickname                                         Trust Attributes
-                                                             SSL,S/MIME,JAR/XPI
+ ../../guestbin/ipsec-kernel-state.sh
+west #
+ ../../guestbin/ipsec-kernel-policy.sh
 west #
  ipsec whack --shutdown
 west #
