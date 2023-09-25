@@ -839,11 +839,11 @@ doroute() {
 }
 
 firewall_cmd() {
-    HAVE_IPTABLES=@HAVE_IPTABLES@
-    HAVE_NFTABLES=@HAVE_NFTABLES@
-    if [ "${HAVE_NFTABLES}" = true ]; then #nft has precedence over iptables
+    USE_IPTABLES=@@USE_IPTABLES@@
+    USE_NFTABLES=@@USE_NFTABLES@@
+    if [ "${USE_NFTABLES}" = true ]; then #nft has precedence over iptables
         FIREWALL=NFTABLES;
-    elif [ "${HAVE_IPTABLES}" = true ]; then
+    elif [ "${USE_IPTABLES}" = true ]; then
         FIREWALL=IPTABLES
     else
        FIREWALL=""

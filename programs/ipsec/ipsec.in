@@ -612,12 +612,12 @@ checknflog_nftables() {
 }
 
 firewall_cmd() {
-    HAVE_IPTABLES=@HAVE_IPTABLES@
-    HAVE_NFTABLES=@HAVE_NFTABLES@
+    USE_IPTABLES=@@USE_IPTABLES@@
+    USE_NFTABLES=@@USE_NFTABLES@@
 
-    if [ "${HAVE_NFTABLES}" = true ]; then
+    if [ "${USE_NFTABLES}" = true ]; then
 	FIREWALL=NFTABLES
-    elif [ "${HAVE_IPTABLES}" = true ]; then
+    elif [ "${USE_IPTABLES}" = true ]; then
 	FIREWALL=IPTABLES
     else
 	FIREWALL=""

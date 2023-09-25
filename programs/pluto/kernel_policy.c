@@ -660,7 +660,7 @@ void delete_cat_kernel_policies(struct connection *c,
 				where_t where)
 {
 
-#if defined(HAVE_NFTABLES)
+#if defined(USE_NFTABLES)
 	bool has_inbound = true;
 #else
 	bool has_inbound = false;
@@ -690,7 +690,7 @@ void install_inbound_ipsec_kernel_policy(struct child_sa *child,
 					    &kernel_policy.dst.client, &spb));
 
 
-#if defined(HAVE_NFTABLES)
+#if defined(USE_NFTABLES)
 	bool has_cat = spd->local->child->has_cat;
 #else
 	bool has_cat = false;

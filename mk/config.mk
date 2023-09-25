@@ -635,8 +635,8 @@ TRANSFORM_VARIABLES = sed \
 			-e "s:@SD_WATCHDOGSEC@:$(SD_WATCHDOGSEC):g" \
 			-e "s:@SHELL_BINARY@:$(SHELL_BINARY):g" \
 			-e "s:@USE_DEFAULT_CONNS@:$(USE_DEFAULT_CONNS):g" \
-			-e "s:@HAVE_IPTABLES@:$(HAVE_IPTABLES):g" \
-			-e "s:@HAVE_NFTABLES@:$(HAVE_NFTABLES):g" \
+			-e "s:@@USE_IPTABLES@@:$(USE_IPTABLES):g" \
+			-e "s:@@USE_NFTABLES@@:$(USE_NFTABLES):g" \
 			$(patsubst %, -e %, $(TRANSFORMS))
 
 # For KVM testing setup
@@ -888,15 +888,15 @@ USERLAND_CFLAGS += -DRETRANSMIT_INTERVAL_DEFAULT_MS="$(RETRANSMIT_INTERVAL_DEFAU
 endif
 
 # iptables for CAT, or NFLOG, look, barf, verify
-HAVE_IPTABLES ?= false
-ifeq ($(HAVE_IPTABLES),true)
-USERLAND_CFLAGS += -DHAVE_IPTABLES
+USE_IPTABLES ?= false
+ifeq ($(USE_IPTABLES),true)
+USERLAND_CFLAGS += -DUSE_IPTABLES
 endif
 
 # nft nflog-all(nflog not yet), look, barf, verfiy
-HAVE_NFTABLES ?= false
-ifeq ($(HAVE_NFTABLES),true)
-USERLAND_CFLAGS += -DHAVE_NFTABLES
+USE_NFTABLES ?= false
+ifeq ($(USE_NFTABLES),true)
+USERLAND_CFLAGS += -DUSE_NFTABLES
 endif
 
 ifeq ($(HAVE_BROKEN_POPEN),true)

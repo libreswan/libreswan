@@ -387,7 +387,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "max-halfopen-ike",  kv_config,  kt_number,  KBF_MAX_HALFOPEN_IKE, NULL, NULL, },
   { "ike-socket-bufsize",  kv_config,  kt_number,  KBF_IKEBUF, NULL, NULL, },
   { "ike-socket-errqueue",  kv_config,  kt_bool,  KBF_IKE_ERRQUEUE, NULL, NULL, },
-#if defined(HAVE_IPTABLES) || defined(HAVE_NFTABLES)
+#if defined(USE_IPTABLES) || defined(USE_NFTABLES)
   { "nflog-all",  kv_config,  kt_number,  KBF_NFLOG_ALL, NULL, NULL, },
 #endif
 #ifdef XFRM_LIFETIME_DEFAULT
@@ -439,7 +439,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "xauthusername",  kv_conn | kv_leftright,  kt_string,  KSCF_USERNAME, NULL, NULL, }, /* old alias */
   { "addresspool",  kv_conn | kv_leftright,  kt_range,  KSCF_ADDRESSPOOL, NULL, NULL, },
   { "auth",  kv_conn | kv_leftright, kt_enum,  KNCF_AUTH,  kw_auth_list, NULL, },
-#if defined(HAVE_IPTABLES) || defined(HAVE_NFTABLES)
+#if defined(USE_IPTABLES) || defined(USE_NFTABLES)
   { "cat",  kv_conn | kv_leftright,  kt_bool,  KNCF_CAT, NULL, NULL, },
 #endif
   { "protoport",  kv_conn | kv_leftright | kv_processed,  kt_string,  KSCF_PROTOPORT, NULL, NULL, },
@@ -574,7 +574,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "priority",  kv_conn,  kt_number,  KNCF_PRIORITY, NULL, NULL, },
   { "tfc",  kv_conn,  kt_number,  KNCF_TFC, NULL, NULL, },
   { "reqid",  kv_conn,  kt_number,  KNCF_REQID, NULL, NULL, },
-#if defined(HAVE_IPTABLES) || defined(HAVE_NFTABLES)
+#if defined(USE_IPTABLES) || defined(USE_NFTABLES)
   { "nflog",  kv_conn,  kt_number,  KNCF_NFLOG_CONN, NULL, NULL, },
 #endif
 

@@ -494,9 +494,9 @@ kvmplutotest	nflog-01-global				wip	github/1131
 kvmplutotest	nflog-02-conn				good
 kvmplutotest	nflog-03-conns				good
 
-kvmplutotest	nflog-01-global-nftables		skiptest	 #need a build with HAVE_NFTABLES=true
-kvmplutotest	nflog-02-conn-nftables			skiptest         #need a build with HAVE_NFTABLES=true
-kvmplutotest	ikev2-73-cat-nftables			skiptest         #need a build with HAVE_NFTABLES=true
+kvmplutotest	nflog-01-global-nftables		skiptest	 #need a build with USE_NFTABLES=true
+kvmplutotest	nflog-02-conn-nftables			skiptest         #need a build with USE_NFTABLES=true
+kvmplutotest	ikev2-73-cat-nftables			skiptest         #need a build with USE_NFTABLES=true
 
 
 kvmplutotest	netkey-vti-01				good

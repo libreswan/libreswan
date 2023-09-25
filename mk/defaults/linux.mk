@@ -115,6 +115,6 @@ endif
 USE_XFRM ?= true
 USE_XFRM_HEADER_COPY ?= true
 USE_DNSSEC ?= true
-ifneq ($(HAVE_NFTABLES), true)
-  HAVE_IPTABLES ?= true
+ifneq ($(USE_NFTABLES), true)
+  USE_IPTABLES ?= true
 endif

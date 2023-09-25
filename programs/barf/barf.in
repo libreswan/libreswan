@@ -256,11 +256,11 @@ do
     fi
 
 done
-HAVE_IPTABLES=@HAVE_IPTABLES@
-HAVE_NFTABLES=@HAVE_NFTABLES@
-if test "${HAVE_NFTABLES}" = true; then
+USE_IPTABLES=@@USE_IPTABLES@@
+USE_NFTABLES=@@USE_NFTABLES@@
+if test "${USE_NFTABLES}" = true; then
     nft list ruleset
-elif test "${HAVE_IPTABLES}" = true; then
+elif test "${USE_IPTABLES}" = true; then
     _________________________ iptables
     if [ -e /proc/net/ip_tables_names ]; then
         if [ -r /sbin/iptables-save -o -r /usr/sbin/iptables-save ]; then
