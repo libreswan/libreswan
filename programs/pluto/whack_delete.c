@@ -59,7 +59,7 @@ static void delete_v1_states(struct connection *c,
 		 */
 		state_attach(&(*child)->sa, c->logger);
 		struct ike_sa *isakmp = /* could be NULL */
-			established_isakmp_sa_for_state(&(*child)->sa);
+			established_isakmp_sa_for_state(&(*child)->sa, /*viable-parent*/false);
 		/* IKEv1 has cuckoos */
 		llog_n_maybe_send_v1_delete(isakmp, &(*child)->sa, HERE);
 		connection_delete_child(child, HERE);
@@ -90,7 +90,7 @@ static void delete_v1_states(struct connection *c,
 		 * semantics - deletes all siblings skipped above.
 		 */
 		struct ike_sa *isakmp =
-			established_isakmp_sa_for_state(&(*ike)->sa);
+			established_isakmp_sa_for_state(&(*ike)->sa, /*viable-parent*/false);
 		llog_n_maybe_send_v1_delete(isakmp, &(*ike)->sa, HERE);
 		delete_ike_sa(ike);
 		connection_unroute(c, HERE);

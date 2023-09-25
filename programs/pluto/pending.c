@@ -407,11 +407,16 @@ void connection_check_phase2(struct logger *logger)
 #ifdef USE_IKEv1
 		case IKEv1:
 			ike = find_ike_sa_by_connection(c, (V1_ISAKMP_SA_ESTABLISHED_STATES |
-							    V1_PHASE1_INITIATOR_STATES));
+							    V1_PHASE1_INITIATOR_STATES),
+							/*viable-parent*/true);
 			break;
 #endif
 		case IKEv2:
-			ike = find_ike_sa_by_connection(c, IKEV2_ISAKMP_INITIATOR_STATES);
+			/*
+			 * XXX: initiate uses STATE_V2_ESTABLISHED_IKE_SA also.
+			 */
+			ike = find_ike_sa_by_connection(c, IKEV2_ISAKMP_INITIATOR_STATES,
+							/*viable-parent*/true);
 			break;
 		default:
 			bad_case(c->config->ike_version);

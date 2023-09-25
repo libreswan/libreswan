@@ -68,7 +68,7 @@ bool ikev1_encrypt_message(pb_stream *pbs, struct state *st);
 bool ikev1_close_message(pb_stream *pbs, const struct state *st);
 
 /* Parent capable of sending messages.  */
-struct ike_sa *established_isakmp_sa_for_state(struct state *st);
+struct ike_sa *established_isakmp_sa_for_state(struct state *st, bool viable_parent);
 
 typedef stf_status ikev1_state_transition_fn(struct state *st, struct msg_digest *md);
 

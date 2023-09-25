@@ -1721,9 +1721,13 @@ void send_v1_notification_from_state(struct state *st, enum state_kind from_stat
 		 *
 		 * It returns NULL when ST isn't established and here
 		 * ST is still larval.
+		 *
+		 * Don't require a viable ISAKMP (i.e., can start new
+		 * quick mode exchanges), but does it really matter?
 		 */
 		struct ike_sa *isakmp = find_ike_sa_by_connection(st->st_connection,
-								  V1_ISAKMP_SA_ESTABLISHED_STATES);
+								  V1_ISAKMP_SA_ESTABLISHED_STATES,
+								  /*viable-parent*/false);
 		if (isakmp == NULL) {
 			llog(RC_LOG_SERIOUS, st->st_logger,
 			     "no ISAKMP SA for Quick mode notification");

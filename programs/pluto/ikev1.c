@@ -3091,7 +3091,8 @@ void ISAKMP_SA_established(struct ike_sa *ike)
  * Delete or DPD) for the established state.
  */
 
-struct ike_sa *established_isakmp_sa_for_state(struct state *st)
+struct ike_sa *established_isakmp_sa_for_state(struct state *st,
+					       bool viable_parent)
 {
 	PASSERT(st->st_logger, !st->st_on_delete.skip_send_delete);
 	PASSERT(st->st_logger, st->st_ike_version == IKEv1);
@@ -3124,7 +3125,9 @@ struct ike_sa *established_isakmp_sa_for_state(struct state *st)
 		return NULL;
 	}
 
-	struct ike_sa *isakmp = find_ike_sa_by_connection(st->st_connection, V1_ISAKMP_SA_ESTABLISHED_STATES);
+	struct ike_sa *isakmp = find_ike_sa_by_connection(st->st_connection,
+							  V1_ISAKMP_SA_ESTABLISHED_STATES,
+							  viable_parent);
 	if (isakmp == NULL) {
 		pdbg(st->st_logger,
 		     "send? no, IKEv1 IPsec SA in state %s is established but has no established ISAKMP SA",

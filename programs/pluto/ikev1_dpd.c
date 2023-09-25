@@ -410,7 +410,7 @@ static void p2_dpd_outI1(struct child_sa *p2)
 	deltatime_t delay = p2->sa.st_connection->config->dpd.delay;
 	deltatime_t timeout = p2->sa.st_connection->config->dpd.timeout;
 
-	struct ike_sa *p1 = established_isakmp_sa_for_state(&p2->sa);
+	struct ike_sa *p1 = established_isakmp_sa_for_state(&p2->sa, /*viable-parent*/true);
 	if (p1 == NULL) {
 		llog(RC_LOG_SERIOUS, p2->sa.st_logger,
 		     "DPD: could not find newest phase 1 state - initiating a new one");

@@ -794,7 +794,7 @@ void delete_state(struct state *st)
 		case IKEv1:
 		{
 			struct ike_sa *isakmp =
-				established_isakmp_sa_for_state(st);
+				established_isakmp_sa_for_state(st, /*viable-parent*/false);
 			llog_n_maybe_send_v1_delete(isakmp, st, HERE);
 			break;
 		}
@@ -1764,22 +1764,60 @@ bool ikev2_viable_parent(const struct ike_sa *ike)
  *
  * Also used to find an IKEv1 ISAKMP SA suitable for sending a delete.
  */
-struct ike_sa *find_ike_sa_by_connection(const struct connection *c, lset_t ok_states)
+struct ike_sa *find_ike_sa_by_connection(const struct connection *c,
+					 lset_t ok_states,
+					 bool viable_parent)
 {
 	struct ike_sa *best = NULL;
 
 	struct state_filter sf = { .where = HERE, };
 	while (next_state_new2old(&sf)) {
 		struct state *st = sf.st;
-		if (LHAS(ok_states, st->st_state->kind) &&
-		    c->config->ike_version == st->st_ike_version &&
-		    c->host_pair == st->st_connection->host_pair &&
-		    same_peer_ids(c, st->st_connection, NULL) &&
-		    endpoint_address_eq_address(st->st_remote_endpoint, c->remote->host.addr) &&
-		    IS_IKE_SA(st) &&
-		    (best == NULL || best->sa.st_serialno < st->st_serialno)) {
-			best = pexpect_ike_sa(st);
+		if (c->config->ike_version != st->st_ike_version) {
+			continue;
 		}
+		if (!IS_PARENT_SA(st)) {
+			continue;
+		}
+		if (!LHAS(ok_states, st->st_state->kind)) {
+			continue;
+		}
+		/*
+		 * Looking for something that can support new
+		 * children.
+		 *
+		 * A larval SA (not yet established) is considered
+		 * viable, even though .st_viable_parent hasn't yet
+		 * been set (that happens when the state establishes).
+		 */
+		if (IS_PARENT_SA_ESTABLISHED(st)) {
+			if (viable_parent) {
+				if (!st->st_viable_parent) {
+					continue;
+				}
+			}
+		}
+		/*
+		 * Do these two mean that a much faster host-pair
+		 * search could be used?
+		 */
+		if (c->host_pair != st->st_connection->host_pair) {
+			continue;
+		}
+		if (!endpoint_address_eq_address(st->st_remote_endpoint, c->remote->host.addr)) {
+			continue;
+		}
+		/*
+		 * i.e., connection and IKE SA have the same
+		 * authentication.
+		 */
+		if (!same_peer_ids(c, st->st_connection, NULL)) {
+			continue;
+		}
+		if (best != NULL && best->sa.st_serialno >= st->st_serialno) {
+			continue;
+		}
+		best = pexpect_ike_sa(st);
 	}
 
 	return best;
@@ -2492,7 +2530,7 @@ void delete_ike_family(struct ike_sa **ike, where_t where)
 			 * capable of sending delete.
 			 */
 			struct ike_sa *isakmp = /* could be NULL */
-				established_isakmp_sa_for_state(&child->sa);
+				established_isakmp_sa_for_state(&child->sa, /*viable-parent*/false);
 			llog_n_maybe_send_v1_delete(isakmp, &child->sa, where);
 			connection_delete_child(&child, where);
 			break;
