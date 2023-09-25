@@ -113,6 +113,8 @@ extern ikev1_state_transition_fn quick_inI2;
 
 void ISAKMP_SA_established(struct ike_sa *ike);
 
+void connection_delete_v1_sa(struct state **st, where_t where);
+
 extern pb_stream reply_stream;
 
 #endif

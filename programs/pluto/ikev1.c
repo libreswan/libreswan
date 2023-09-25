@@ -3139,6 +3139,19 @@ struct ike_sa *established_isakmp_sa_for_state(struct state *st)
 	return isakmp;
 }
 
+void connection_delete_v1_sa(struct state **st, where_t where)
+{
+	if (IS_PARENT_SA(*st)) {
+		struct ike_sa *ike = pexpect_parent_sa(*st);
+		connection_delete_ike(&ike, where);
+	} else {
+		struct child_sa *child = pexpect_child_sa(*st);
+		connection_delete_child(&child, where);
+	}
+	(*st) = NULL;
+}
+
+
 /*
  * Reply messages are built in this nasty evil global buffer.
  *

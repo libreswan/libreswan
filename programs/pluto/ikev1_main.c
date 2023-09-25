@@ -1574,11 +1574,10 @@ static void send_v1_notification(struct logger *logger,
 		 * must not be deleted).
 		 */
 		sndst->hidden_variables.st_malformed_sent++;
-		if (sndst->hidden_variables.st_malformed_sent >
-		    MAXIMUM_MALFORMED_NOTIFY) {
+		if (sndst->hidden_variables.st_malformed_sent > MAXIMUM_MALFORMED_NOTIFY) {
 			llog(RC_LOG, logger, "too many (%d) malformed payloads. Deleting state",
-				    sndst->hidden_variables.st_malformed_sent);
-			delete_state(sndst);
+			     sndst->hidden_variables.st_malformed_sent);
+			connection_delete_v1_sa(&sndst, HERE);
 			/* note: no md->v1_st to clear */
 			return;
 		}
