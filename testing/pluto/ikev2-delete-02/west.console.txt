@@ -93,7 +93,6 @@ west #
  ipsec whack --deletestate 1
 002 "west-east-delete1" #1: intiating delete
 002 "west-east-delete1" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
-002 "west-east-delete1" #1: event CONNECTION_REVIVAL already scheduled
 west #
  sleep 2
 west #

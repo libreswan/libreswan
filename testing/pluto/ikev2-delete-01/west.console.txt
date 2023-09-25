@@ -170,7 +170,6 @@ west #
 002 "westnet-eastnet-ipv4-psk-ikev2" #2: IMPAIR: revival: skip scheduling revival event
 005 "westnet-eastnet-ipv4-psk-ikev2" #2: ESP traffic information: in=84B out=84B
 002 "westnet-eastnet-ipv4-psk-ikev2" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
-002 "westnet-eastnet-ipv4-psk-ikev2" #1: event CONNECTION_REVIVAL already scheduled
 west #
  sleep 2
 west #
