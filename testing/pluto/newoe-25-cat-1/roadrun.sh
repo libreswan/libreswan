@@ -2,7 +2,8 @@
 sleep 5
 ipsec whack --trafficstatus
 ipsec whack --shuntstatus
-../../guestbin/ipsec-look.sh
+../../guestbin/ipsec-kernel-state.sh
+../../guestbin/ipsec-kernel-policy.sh
 # trigger OE
 ../../guestbin/ping-once.sh --down -I 192.1.3.209 192.1.2.23
 ../../guestbin/wait-for.sh --match '"private-or-clear#192.1.2.0/24"' -- ipsec whack --trafficstatus

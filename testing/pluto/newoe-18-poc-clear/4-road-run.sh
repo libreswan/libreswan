@@ -7,7 +7,8 @@ ip xfrm state
 # should show no bare shunts or tunnels
 ipsec whack --trafficstatus
 ipsec whack --shuntstatus
-../../guestbin/ipsec-look.sh
+../../guestbin/ipsec-kernel-state.sh
+../../guestbin/ipsec-kernel-policy.sh
 # ping should succeed in the clear
 ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
 # should show for our failed attempt at OE

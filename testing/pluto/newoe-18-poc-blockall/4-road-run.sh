@@ -5,7 +5,8 @@ ipsec whack --shuntstatus
 # wait on OE retransmits and rekeying to fail
 ../../guestbin/wait-for.sh --match oe-failing -- ipsec whack --shuntstatus
 ipsec whack --trafficstatus
-../../guestbin/ipsec-look.sh
+../../guestbin/ipsec-kernel-state.sh
+../../guestbin/ipsec-kernel-policy.sh
 # ping should fail due to remote block rule
 ../../guestbin/ping-once.sh --down -I 192.1.3.209 192.1.2.23
 # cleanup

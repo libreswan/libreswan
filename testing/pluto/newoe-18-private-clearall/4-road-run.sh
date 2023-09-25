@@ -4,7 +4,8 @@
 ../../guestbin/wait-for.sh --match oe-failing -- ipsec whack --shuntstatus
 # should show no tunnel or bare shunt
 ipsec whack --trafficstatus
-../../guestbin/ipsec-look.sh
+../../guestbin/ipsec-kernel-state.sh
+../../guestbin/ipsec-kernel-policy.sh
 killall ip > /dev/null 2> /dev/null
 cp /tmp/xfrm-monitor.out OUTPUT/road.xfrm-monitor.txt
 # should fail due to private failure resulting in hold policy

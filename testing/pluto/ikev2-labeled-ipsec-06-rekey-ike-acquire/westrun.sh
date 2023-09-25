@@ -1,7 +1,8 @@
 # Establish a childless IKE SA which will install the policy ready for
 # an acquire.
 ipsec auto --up labeled
-../../guestbin/ipsec-look.sh
+../../guestbin/ipsec-kernel-state.sh
+../../guestbin/ipsec-kernel-policy.sh
 
 # Initiate a rekey of the IKE SA but drop the initial CREATE_CHILD_SA
 # request.  This will cause the exchange to become stuck; the

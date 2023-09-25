@@ -2,7 +2,8 @@
 ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
 ../../guestbin/wait-for.sh --match oe-failing -- ipsec whack --shuntstatus
 ipsec whack --trafficstatus
-../../guestbin/ipsec-look.sh
+../../guestbin/ipsec-kernel-state.sh
+../../guestbin/ipsec-kernel-policy.sh
 killall ip > /dev/null 2> /dev/null
 cp /tmp/xfrm-monitor.out OUTPUT/road.xfrm-monitor.txt
 # should fail due to both private hold and remote block policy

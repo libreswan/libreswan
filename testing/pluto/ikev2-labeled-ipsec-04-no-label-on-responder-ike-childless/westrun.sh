@@ -1,6 +1,7 @@
 # should establish IKE SA and install two labels
 ipsec auto --up labeled
-../../guestbin/ipsec-look.sh
+../../guestbin/ipsec-kernel-state.sh
+../../guestbin/ipsec-kernel-policy.sh
 # trigger traffic using the predefined ping_t context; won't work
 ../../guestbin/ping-once.sh --runcon "system_u:system_r:ping_t:s0:c1.c256" --forget -I 192.1.2.45 192.1.2.23
 ../../guestbin/wait-for.sh --match '^[^|].*TS_UNACCEPTABLE' -- cat /tmp/pluto.log

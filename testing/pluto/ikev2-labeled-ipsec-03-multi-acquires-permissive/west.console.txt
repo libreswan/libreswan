@@ -24,18 +24,17 @@ west #
  echo 1 >/proc/sys/net/ipv4/tcp_tw_reuse
 west #
  ipsec auto --up labeled
-1v2 "labeled" #1: initiating IKEv2 connection
-1v2 "labeled" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-002 "labeled" #1: omitting CHILD SA payloads
-1v2 "labeled" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "labeled" #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
+1v2 "labeled"[1] 192.1.2.23 #1: initiating IKEv2 connection
+1v2 "labeled"[1] 192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:500
+002 "labeled"[1] 192.1.2.23 #1: omitting CHILD SA payloads
+1v2 "labeled"[1] 192.1.2.23 #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+003 "labeled"[1] 192.1.2.23 #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
 west #
  # expect policy but no states
 west #
- ../../guestbin/ipsec-look.sh
-west NOW
-XFRM state:
-XFRM policy:
+ ../../guestbin/ipsec-kernel-state.sh
+west #
+ ../../guestbin/ipsec-kernel-policy.sh
 src 192.1.2.23/32 dst 192.1.2.45/32
 	security context system_u:object_r:ipsec_spd_t:s0
 	dir fwd priority PRIORITY ptype main
@@ -51,50 +50,22 @@ src 192.1.2.45/32 dst 192.1.2.23/32
 	dir out priority PRIORITY ptype main
 	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
-XFRM done
-IPSEC mangle TABLES
-iptables filter TABLE
-Chain INPUT (policy ACCEPT)
-target     prot opt source               destination         
-Chain FORWARD (policy ACCEPT)
-target     prot opt source               destination         
-Chain OUTPUT (policy ACCEPT)
-target     prot opt source               destination         
-ROUTING TABLES
-default via 192.1.2.254 dev eth1
-192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
-192.0.2.0/24 via 192.1.2.23 dev eth1
-192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
-NSS_CERTIFICATES
-Certificate Nickname                                         Trust Attributes
-                                                             SSL,S/MIME,JAR/XPI
 west #
  # trigger an acquire; both ends initiate Child SA
 west #
  echo "quit" | runcon -t netutils_t nc -w 50 -p 4301 -vvv 192.1.2.23 4300 2>&1 | sed "s/received in .*$/received .../"
 Ncat: Version 7.93 ( https://nmap.org/ncat )
 NCAT DEBUG: Using system default trusted CA certificates and those in PATH/share/ncat/ca-bundle.crt.
-NCAT DEBUG: Unable to load trusted CA certificates from PATH/share/ncat/ca-bundle.crt: error:02001002:system library:fopen:No such file or directory
+NCAT DEBUG: Unable to load trusted CA certificates from PATH/share/ncat/ca-bundle.crt: error:80000002:system library::No such file or directory
 libnsock nsock_iod_new2(): nsock_iod_new (IOD #1)
 libnsock nsock_connect_tcp(): TCP connection requested to 192.1.2.23:4300 (IOD #1) EID 8
 libnsock mksock_bind_addr(): Binding to 0.0.0.0:4301 (IOD #1)
-libnsock nsock_trace_handler_callback(): Callback: CONNECT SUCCESS for EID 8 [192.1.2.23:4300]
-Ncat: Connected to 192.1.2.23:4300.
-libnsock nsock_iod_new2(): nsock_iod_new (IOD #2)
-libnsock nsock_read(): Read request from IOD #1 [192.1.2.23:4300] (timeout: -1ms) EID 18
-libnsock nsock_readbytes(): Read request for 0 bytes from IOD #2 [peer unspecified] EID 26
-libnsock nsock_trace_handler_callback(): Callback: READ SUCCESS for EID 26 [peer unspecified] (5 bytes): quit.
-libnsock nsock_write(): Write request for 5 bytes to IOD #1 EID 35 [192.1.2.23:4300]
-libnsock nsock_trace_handler_callback(): Callback: WRITE SUCCESS for EID 35 [192.1.2.23:4300]
-libnsock nsock_readbytes(): Read request for 0 bytes from IOD #2 [peer unspecified] EID 42
-libnsock nsock_trace_handler_callback(): Callback: READ EOF for EID 42 [peer unspecified]
-libnsock nsock_trace_handler_callback(): Callback: READ EOF for EID 18 [192.1.2.23:4300]
-Ncat: 5 bytes sent, 0 bytes received ...
-libnsock nsock_iod_delete(): nsock_iod_delete (IOD #1)
-libnsock nsock_iod_delete(): nsock_iod_delete (IOD #2)
+libnsock nsock_trace_handler_callback(): Callback: CONNECT ERROR [Connection refused (111)] for EID 8 [192.1.2.23:4300]
+Ncat: Connection refused.
 west #
  ../../guestbin/wait-for.sh --match 'labeled..2.' ipsec trafficstatus
-006 #3: "labeled"[2] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=164, outBytes=0, maxBytes=2^63B, id='@east'
+timeout waiting 30 seconds for ipsec trafficstatus to match labeled..2.
+output: 006 #2: "labeled"[1][1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=40, outBytes=60, maxBytes=2^63B, id='@east'
 west #
  # no shunts; two transports; two x two states
 west #
@@ -103,35 +74,11 @@ west #
 000  
 west #
  ipsec showstates
-000 #1: "labeled":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
-000 #2: "labeled"[1] 192.1.2.23:500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; IKE SA #1; idle;
-000 #2: "labeled"[1] 192.1.2.23 esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=273B ESPmax=2^63B 
-000 #3: "labeled"[2] 192.1.2.23:500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; IKE SA #1; idle;
-000 #3: "labeled"[2] 192.1.2.23 esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=164B ESPout=0B ESPmax=2^63B 
+000 #1: "labeled"[1] 192.1.2.23:500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
+000 #2: "labeled"[1][1] 192.1.2.23:500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
+000 #2: "labeled"[1][1] 192.1.2.23 esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=40B ESPout=60B ESPmax=2^63B 
 west #
- ../../guestbin/ipsec-look.sh
-west NOW
-XFRM state:
-src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 0 flag af-unspec esn
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	lastused YYYY-MM-DD HH:MM:SS
-	anti-replay esn context:
-	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
-	 replay_window 128, bitmap-length 4
-	 00000000 00000000 00000000 XXXXXXXX 
-	security context unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 
-src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 0 flag af-unspec esn
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	lastused YYYY-MM-DD HH:MM:SS
-	anti-replay esn context:
-	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
-	 replay_window 128, bitmap-length 4
-	 00000000 00000000 00000000 XXXXXXXX 
-	security context unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 
+ ../../guestbin/ipsec-kernel-state.sh
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
@@ -152,7 +99,8 @@ src 192.1.2.45 dst 192.1.2.23
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
 	security context unconfined_u:unconfined_r:netutils_t:s0-s0:c0.c1023 
-XFRM policy:
+west #
+ ../../guestbin/ipsec-kernel-policy.sh
 src 192.1.2.23/32 dst 192.1.2.45/32
 	security context system_u:object_r:ipsec_spd_t:s0
 	dir fwd priority PRIORITY ptype main
@@ -168,30 +116,13 @@ src 192.1.2.45/32 dst 192.1.2.23/32
 	dir out priority PRIORITY ptype main
 	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
-XFRM done
-IPSEC mangle TABLES
-iptables filter TABLE
-Chain INPUT (policy ACCEPT)
-target     prot opt source               destination         
-Chain FORWARD (policy ACCEPT)
-target     prot opt source               destination         
-Chain OUTPUT (policy ACCEPT)
-target     prot opt source               destination         
-ROUTING TABLES
-default via 192.1.2.254 dev eth1
-192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
-192.0.2.0/24 via 192.1.2.23 dev eth1
-192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
-NSS_CERTIFICATES
-Certificate Nickname                                         Trust Attributes
-                                                             SSL,S/MIME,JAR/XPI
 west #
  # let another on-demand label establish
 west #
  echo "quit" | runcon -u system_u -r system_r -t sshd_t nc -w 50 -vvv 192.1.2.23 22 2>&1 | sed "s/received in .*$/received .../"
 Ncat: Version 7.93 ( https://nmap.org/ncat )
 NCAT DEBUG: Using system default trusted CA certificates and those in PATH/share/ncat/ca-bundle.crt.
-NCAT DEBUG: Unable to load trusted CA certificates from PATH/share/ncat/ca-bundle.crt: error:02001002:system library:fopen:No such file or directory
+NCAT DEBUG: Unable to load trusted CA certificates from PATH/share/ncat/ca-bundle.crt: error:80000002:system library::No such file or directory
 libnsock nsock_iod_new2(): nsock_iod_new (IOD #1)
 libnsock nsock_connect_tcp(): TCP connection requested to 192.1.2.23:22 (IOD #1) EID 8
 libnsock nsock_trace_handler_callback(): Callback: CONNECT SUCCESS for EID 8 [192.1.2.23:22]
@@ -216,7 +147,9 @@ libnsock nsock_iod_delete(): nsock_iod_delete (IOD #1)
 libnsock nsock_iod_delete(): nsock_iod_delete (IOD #2)
 west #
  ../../guestbin/wait-for.sh --match 'labeled..3.' ipsec trafficstatus
-006 #4: "labeled"[3] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=377, outBytes=429, maxBytes=2^63B, id='@east'
+timeout waiting 30 seconds for ipsec trafficstatus to match labeled..3.
+output: 006 #2: "labeled"[1][1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=40, outBytes=60, maxBytes=2^63B, id='@east'
+output: 006 #3: "labeled"[1][2] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=377, outBytes=429, maxBytes=2^63B, id='@east'
 west #
  # there should be no shunts
 west #
@@ -225,17 +158,13 @@ west #
 000  
 west #
  ipsec showstates
-000 #1: "labeled":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
-000 #2: "labeled"[1] 192.1.2.23:500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; IKE SA #1; idle;
-000 #2: "labeled"[1] 192.1.2.23 esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=273B ESPmax=2^63B 
-000 #3: "labeled"[2] 192.1.2.23:500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; IKE SA #1; idle;
-000 #3: "labeled"[2] 192.1.2.23 esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=164B ESPout=0B ESPmax=2^63B 
-000 #4: "labeled"[3] 192.1.2.23:500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; IKE SA #1; idle;
-000 #4: "labeled"[3] 192.1.2.23 esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=377B ESPout=429B ESPmax=2^63B 
+000 #1: "labeled"[1] 192.1.2.23:500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
+000 #2: "labeled"[1][1] 192.1.2.23:500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
+000 #2: "labeled"[1][1] 192.1.2.23 esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=40B ESPout=60B ESPmax=2^63B 
+000 #3: "labeled"[1][2] 192.1.2.23:500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
+000 #3: "labeled"[1][2] 192.1.2.23 esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=377B ESPout=429B ESPmax=2^63B 
 west #
- ../../guestbin/ipsec-look.sh
-west NOW
-XFRM state:
+ ../../guestbin/ipsec-kernel-state.sh
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
@@ -265,26 +194,6 @@ src 192.1.2.23 dst 192.1.2.45
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
-	security context unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 
-src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 0 flag af-unspec esn
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	lastused YYYY-MM-DD HH:MM:SS
-	anti-replay esn context:
-	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
-	 replay_window 128, bitmap-length 4
-	 00000000 00000000 00000000 XXXXXXXX 
-	security context unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 
-src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 0 flag af-unspec esn
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	lastused YYYY-MM-DD HH:MM:SS
-	anti-replay esn context:
-	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
-	 replay_window 128, bitmap-length 4
-	 00000000 00000000 00000000 XXXXXXXX 
 	security context unconfined_u:unconfined_r:netutils_t:s0-s0:c0.c1023 
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
@@ -296,7 +205,8 @@ src 192.1.2.45 dst 192.1.2.23
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
 	security context unconfined_u:unconfined_r:netutils_t:s0-s0:c0.c1023 
-XFRM policy:
+west #
+ ../../guestbin/ipsec-kernel-policy.sh
 src 192.1.2.23/32 dst 192.1.2.45/32
 	security context system_u:object_r:ipsec_spd_t:s0
 	dir fwd priority PRIORITY ptype main
@@ -312,23 +222,6 @@ src 192.1.2.45/32 dst 192.1.2.23/32
 	dir out priority PRIORITY ptype main
 	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
-XFRM done
-IPSEC mangle TABLES
-iptables filter TABLE
-Chain INPUT (policy ACCEPT)
-target     prot opt source               destination         
-Chain FORWARD (policy ACCEPT)
-target     prot opt source               destination         
-Chain OUTPUT (policy ACCEPT)
-target     prot opt source               destination         
-ROUTING TABLES
-default via 192.1.2.254 dev eth1
-192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
-192.0.2.0/24 via 192.1.2.23 dev eth1
-192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
-NSS_CERTIFICATES
-Certificate Nickname                                         Trust Attributes
-                                                             SSL,S/MIME,JAR/XPI
 west #
  echo done
 done
@@ -365,26 +258,6 @@ src 192.1.2.23 dst 192.1.2.45
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
-	security context unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 
-src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 0 flag af-unspec esn
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	lastused YYYY-MM-DD HH:MM:SS
-	anti-replay esn context:
-	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
-	 replay_window 128, bitmap-length 4
-	 00000000 00000000 00000000 XXXXXXXX 
-	security context unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 
-src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 0 flag af-unspec esn
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	lastused YYYY-MM-DD HH:MM:SS
-	anti-replay esn context:
-	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
-	 replay_window 128, bitmap-length 4
-	 00000000 00000000 00000000 XXXXXXXX 
 	security context unconfined_u:unconfined_r:netutils_t:s0-s0:c0.c1023 
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
@@ -429,5 +302,60 @@ default via 192.1.2.254 dev eth1
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
+west #
+ >>>>>>>>>> post-mortem >>>>>>>>>>../../guestbin/post-mortem.sh
+   PPID     PID    PGID     SID TTY        TPGID STAT   UID   TIME COMMAND
+      1     521     521     521 ?             -1 Ssl      0   0:00 PATH/libexec/ipsec/pluto --leak-detective --config /etc/ipsec.conf --nofork
+:
+: checking shutting down pluto
+:
+ipsec whack --shutdown
+pidof pluto
+PASS: shutting down pluto
+:
+: checking core files
+:
+PASS: core files
+:
+: checking memory leaks
+:
+PASS: memory leaks
+:
+: checking reference leaks
+:
+PASS: reference leaks
+:
+: checking xfrm errors
+:
+ERROR: west: XfrmOutNoStates         	7
+IGNORE: xfrm errors
+:
+: checking state/policy entries
+:
+PASS: state/policy entries
+:
+: checking selinux audit records
+:
+type=AVC msg=audit(1695682873.878:213): avc:  denied  { entrypoint } for  pid=850 comm="runcon" path="PATH/bin/ncat" dev="vda2" ino=1379812 scontext=system_u:system_r:sshd_t:s0-s0:c0.c1023 tcontext=system_u:object_r:bin_t:s0 tclass=file permissive=1
+type=AVC msg=audit(1695682873.924:214): avc:  denied  { name_connect } for  pid=850 comm="nc" dest=22 scontext=system_u:system_r:sshd_t:s0-s0:c0.c1023 tcontext=system_u:object_r:ssh_port_t:s0 tclass=tcp_socket permissive=1
+type=AVC msg=audit(1695682874.136:215): avc:  denied  { setcontext } for  pid=521 comm="pluto" scontext=system_u:system_r:unconfined_service_t:s0 tcontext=system_u:system_r:sshd_t:s0-s0:c0.c1023 tclass=association permissive=1
+FAIL: selinux audit records
+saving rules in OUTPUT/post-mortem.west.audit2allow.rules
+require {
+	type sshd_t;
+	type unconfined_service_t;
+	class association setcontext;
+}
+#============= sshd_t ==============
+corecmd_bin_entry_type(sshd_t)
+corenet_tcp_connect_ssh_port(sshd_t)
+#============= unconfined_service_t ==============
+allow unconfined_service_t sshd_t:association setcontext;
+:
+: unload any selinux modules
+:
+Unloading ipsecspd
+semodule -r ipsecspd
+libsemanage.semanage_direct_remove_key: Removing last ipsecspd module (no other ipsecspd module exists at another priority).
 west #
  

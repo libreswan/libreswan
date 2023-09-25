@@ -2,7 +2,8 @@
 echo 1 >/proc/sys/net/ipv4/tcp_tw_reuse
 # route; should be two policies
 ipsec auto --route labeled
-../../guestbin/ipsec-look.sh
+../../guestbin/ipsec-kernel-state.sh
+../../guestbin/ipsec-kernel-policy.sh
 # trigger traffic
 echo "quit" | runcon -t netutils_t timeout 15 nc  -p 4301 -vv 192.0.2.254 4300 2>&1 | sed -e 's/received in .*$/received .../' -e 's/Version .*/Version .../'
 # there should be 2 tunnels - both inactive in one direction
