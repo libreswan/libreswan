@@ -2544,7 +2544,9 @@ void teardown_ipsec_kernel_policies(enum routing_event event, struct child_sa *c
 		     "kernel: %s() failure_shunt=%s; transitioning to ROUTED_FAILURE",
 		     __func__, str_enum_short(&shunt_policy_names,
 					      c->config->failure_shunt, &spb));
-		replace_ipsec_with_bare_kernel_policies(event, child, RT_ROUTED_FAILURE,
+		/* it's being stripped of the state, hence SOS_NOBODY */
+		set_routing(event, c, RT_ROUTED_FAILURE, NULL, HERE);
+		replace_ipsec_with_bare_kernel_policies(child, SHUNT_KIND_FAILURE,
 							EXPECT_KERNEL_POLICY_OK, HERE);
 		return;
 	}
@@ -2557,7 +2559,10 @@ void teardown_ipsec_kernel_policies(enum routing_event event, struct child_sa *c
 	ldbg(logger,
 	     "kernel: %s() failure_shunt==NONE; transitioning to ROUTED_ONDEMAND",
 	     __func__);
-	replace_ipsec_with_bare_kernel_policies(event, child, RT_ROUTED_ONDEMAND,
+
+	/* it's being stripped of the state, hence SOS_NOBODY */
+	set_routing(event, c, RT_ROUTED_ONDEMAND, NULL, HERE);
+	replace_ipsec_with_bare_kernel_policies(child, SHUNT_KIND_ONDEMAND,
 						EXPECT_KERNEL_POLICY_OK, HERE);
 }
 

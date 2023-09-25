@@ -595,8 +595,9 @@ static void down_routed_tunnel(enum routing_event event,
 	if (should_revive_child(*child)) {
 		ldbg_routing((*child)->sa.st_logger,
 			     "replacing TUNNEL with ONDEMAND; it will be revived");
-		replace_ipsec_with_bare_kernel_policies(event, *child,
-							RT_ROUTED_ONDEMAND,
+		/* it's being stripped of the state, hence SOS_NOBODY */
+		set_routing(event, c, RT_ROUTED_ONDEMAND, NULL, where);
+		replace_ipsec_with_bare_kernel_policies(*child, SHUNT_KIND_ONDEMAND,
 							EXPECT_KERNEL_POLICY_OK, HERE);
 		schedule_child_revival(*child, "received Delete/Notify");
 		/* covered by above; no!? */
@@ -610,8 +611,9 @@ static void down_routed_tunnel(enum routing_event event,
 	if (is_permanent(c) && c->policy.route) {
 		ldbg_routing((*child)->sa.st_logger,
 			     "replacing connection kernel policy with on-demand");
-		replace_ipsec_with_bare_kernel_policies(event, *child,
-							RT_ROUTED_ONDEMAND,
+		/* it's being stripped of the state, hence SOS_NOBODY */
+		set_routing(event, c, RT_ROUTED_ONDEMAND, NULL, where);
+		replace_ipsec_with_bare_kernel_policies(*child, SHUNT_KIND_ONDEMAND,
 							EXPECT_KERNEL_POLICY_OK, HERE);
 		delete_child_sa(child);
 		return;
@@ -623,8 +625,9 @@ static void down_routed_tunnel(enum routing_event event,
 	if (is_permanent(c) && c->config->failure_shunt != SHUNT_NONE) {
 		ldbg_routing((*child)->sa.st_logger,
 			     "replacing connection kernel policy with failure");
-		replace_ipsec_with_bare_kernel_policies(event, *child,
-							RT_ROUTED_FAILURE,
+		/* it's being stripped of the state, hence SOS_NOBODY */
+		set_routing(event, c, RT_ROUTED_FAILURE, NULL, where);
+		replace_ipsec_with_bare_kernel_policies(*child, SHUNT_KIND_FAILURE,
 							EXPECT_KERNEL_POLICY_OK, HERE);
 		delete_child_sa(child);
 		return;
