@@ -106,16 +106,19 @@ void event_v1_dpd_timeout(struct state *tbd_st)
 
 	struct ike_sa *ike = ike_sa_by_serialno(c->newest_ike_sa);
 	if (ike != NULL) {
+		pdbg(ike->sa.st_logger, "no longer viable");
+		ike->sa.st_viable_parent = false;
 		struct state_filter sf = {
 			.clonedfrom = ike->sa.st_serialno,
 			.where = HERE,
 		};
 		while (next_state_new2old(&sf)) {
-			struct state *st = sf.st;
-			pdbg(sf.st->st_logger, "pass 0: delete "PRI_SO" which is a sibling",
-			     st->st_serialno);
-			state_attach(st, c->logger);
-			delete_state(st);
+			struct child_sa *child = pexpect_child_sa(sf.st);
+			pdbg(child->sa.st_logger, "pass 0: delete "PRI_SO" which is a sibling",
+			     pri_so(child->sa.st_serialno));
+			state_attach(&child->sa, logger);
+			/* must be a child */
+			connection_delete_child(&child, HERE);
 		}
 	}
 
