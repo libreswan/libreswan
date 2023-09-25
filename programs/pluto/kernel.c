@@ -1353,8 +1353,14 @@ static void clear_narrow_holds(const ip_selector *src_client,
 	}
 }
 
-bool unrouted_to_routed_sec_label(enum routing_event event,
-				  struct connection *c, struct logger *logger, where_t where)
+/*
+ * Install inbound and outbound traps for the first SPD with sec_label
+ * attached.
+ *
+ * unrouted_to_routed_ondemand() installs multiple SPDs and only
+ * outbound.
+ */
+bool unrouted_to_routed_ondemand_sec_label(struct connection *c, struct logger *logger, where_t where)
 {
 	connection_buf cb;
 	ldbg(logger,
@@ -1419,8 +1425,6 @@ bool unrouted_to_routed_sec_label(enum routing_event event,
 		return false;
 	}
 
-	/* Success! */
-	set_routing(event, c, RT_ROUTED_ONDEMAND, NULL, where);
 	return true;
 }
 

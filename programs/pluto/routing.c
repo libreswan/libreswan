@@ -1864,14 +1864,34 @@ static void dispatch_1(enum routing_event event,
 					return;
 				}
 				PEXPECT(logger, c->child.routing == RT_ROUTED_NEVER_NEGOTIATE);
-			} else {
-				if (!unrouted_to_routed_sec_label(event, c, logger, where)) {
-					/* XXX: why whack only? */
-					llog(RC_ROUTE, logger, "could not route");
-					return;
-				}
-				PEXPECT(logger, c->child.routing == RT_ROUTED_ONDEMAND);
+				return;
 			}
+			if (!unrouted_to_routed_ondemand_sec_label(c, logger, where)) {
+				llog(RC_ROUTE, logger, "could not route");
+				return;
+			}
+			set_routing(event, c, RT_ROUTED_ONDEMAND, NULL, where);
+			return;
+		case X(ROUTE, UNROUTED, LABELED_PARENT):
+			/*
+			 * The CK_LABELED_TEMPLATE connection may have
+			 * been routed (i.e., route+ondemand), but not
+			 * this CK_LABELED_PARENT - it is still
+			 * negotiating.
+			 *
+			 * The negotiating LABELED_PARENT connection
+			 * should be in UNROUTED_NEGOTIATION but
+			 * ACQUIRE doesn't yet go through that path.
+			 *
+			 * But what if the two have the same SPDs?
+			 * Then the routing happens twice which seems
+			 * to be harmless.
+			 */
+			if (!unrouted_to_routed_ondemand_sec_label(c, logger, where)) {
+				llog(RC_ROUTE, logger, "could not route");
+				return;
+			}
+			set_routing(event, c, RT_ROUTED_ONDEMAND, NULL, where);
 			return;
 		case X(UNROUTE, UNROUTED, LABELED_TEMPLATE):
 			ldbg_routing(logger, "already unrouted");

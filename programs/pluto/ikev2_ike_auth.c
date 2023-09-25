@@ -1256,12 +1256,10 @@ bool v2_ike_sa_auth_responder_establish(struct ike_sa *ike, bool *send_redirecti
 		 * to do no harm.
 		 */
 		PEXPECT(c->logger, c->child.routing == RT_UNROUTED);
-		if (!unrouted_to_routed_sec_label(CONNECTION_ROUTE, c, ike->sa.st_logger, HERE)) {
-			/* just die */
+		connection_route(c, HERE);
+		if (c->child.routing != RT_ROUTED_ONDEMAND) {
 			return false;
 		}
-		/* Success! */
-		PEXPECT(c->logger, c->child.routing == RT_ROUTED_ONDEMAND);
 	}
 
 	return true;
@@ -1546,10 +1544,10 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 		 * routing happens twice which seems to be harmless.
 		 */
 		PEXPECT(ike->sa.st_logger, c->child.routing == RT_UNROUTED);
-		if (!unrouted_to_routed_sec_label(CONNECTION_ROUTE, c, ike->sa.st_logger, HERE)) {
+		connection_route(c, HERE);
+		if (c->child.routing != RT_ROUTED_ONDEMAND) {
 			return STF_FATAL;
 		}
-		pexpect(c->child.routing == RT_ROUTED_ONDEMAND);
 	}
 
 	/*
