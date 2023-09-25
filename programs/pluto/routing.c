@@ -1544,7 +1544,12 @@ static void dispatch_1(enum routing_event event,
 
 		case X(DELETE_IKE, UNROUTED, INSTANCE):			/* certoe-08-nat-packet-cop-restart */
 		case X(DELETE_IKE, UNROUTED_NEGOTIATION, INSTANCE):	/* dnsoe-01 ... */
-			delete_ike_family(e->ike, where);
+			delete_ike_sa(e->ike);
+			/*
+			 * XXX: huh? instance isn't routed so why
+			 * delete policies?  Instead just drop IKE and
+			 * let connection disappear?
+			 */
 			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
 						   c->logger, where, "unroute instance");
 			set_routing(event, c, RT_UNROUTED, NULL, where);
