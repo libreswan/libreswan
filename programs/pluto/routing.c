@@ -414,7 +414,7 @@ void set_routing(enum routing_event event,
 	}
 #endif
 	c->child.routing = new_routing;
-	set_newest_sa(c, newest_routing_sa, new_routing_sa);
+	c->newest_routing_sa = new_routing_sa;
 }
 
 static void set_established_child(enum routing_event event UNUSED,
@@ -847,9 +847,9 @@ static bool zap_connection_child(struct ike_sa **ike, enum routing_event child_e
 
 void connection_unrouted(struct connection *c)
 {
-	set_newest_sa(c, newest_routing_sa, SOS_NOBODY);
-	set_newest_sa(c, newest_ike_sa, SOS_NOBODY);
-	set_newest_sa(c, newest_ipsec_sa, SOS_NOBODY);
+	c->newest_routing_sa = SOS_NOBODY;
+	c->newest_ike_sa = SOS_NOBODY;
+	c->newest_ipsec_sa = SOS_NOBODY;
 	c->child.routing = RT_UNROUTED;
 }
 
@@ -862,7 +862,7 @@ void connection_routing_clear(struct state *st)
 		llog_pexpect(st->st_logger, HERE,
 			     "newest_routing_sa");
 #endif
-		set_newest_sa(c, newest_routing_sa, SOS_NOBODY);
+		c->newest_routing_sa = SOS_NOBODY;
 	}
 #endif
 	if (c->newest_ipsec_sa == st->st_serialno) {
@@ -870,14 +870,14 @@ void connection_routing_clear(struct state *st)
 		llog_pexpect(st->st_logger, HERE,
 			     "newest_ipsec_sa");
 #endif
-		set_newest_sa(c, newest_ipsec_sa, SOS_NOBODY);
+		c->newest_ipsec_sa = SOS_NOBODY;
 	}
 	if (c->newest_ike_sa == st->st_serialno) {
 #if 0
 		llog_pexpect(st->st_logger, HERE,
 			     "newest_ike_sa");
 #endif
-		set_newest_sa(c, newest_ike_sa, SOS_NOBODY);
+		c->newest_ike_sa = SOS_NOBODY;
 	}
 }
 
@@ -899,7 +899,7 @@ void connection_establish_ike(struct ike_sa *ike, where_t where)
 		.ike = &ike,
 	};
 	struct old_routing old = ldbg_routing_start(c, CONNECTION_ESTABLISH_IKE, where, &e);
-	set_newest_sa_where(c, newest_ike_sa, ike->sa.st_serialno, where);
+	c->newest_ike_sa = ike->sa.st_serialno;
 	ike->sa.st_viable_parent = true;
 	linux_audit_conn(&ike->sa, LAK_PARENT_START);
 	/* dump new keys */

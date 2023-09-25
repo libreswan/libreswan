@@ -698,18 +698,10 @@ struct connection {
 
 	struct ephemeral_variables temp_vars;
 
-#define set_newest_sa_where(C, NEWEST, SO, WHERE)			\
-	{								\
-		so_serial_t o_ = (C)->NEWEST;				\
-		so_serial_t n_ = SO;					\
-		pdbg((C)->logger, "routing: "#NEWEST" "PRI_SO"->"PRI_SO" "PRI_WHERE, \
-		     pri_so(o_), pri_so(n_), pri_where(WHERE));		\
-		(C)->NEWEST = SO;					\
-	}
-#define set_newest_sa(C, NEWEST, SO)				\
-	{							\
-		set_newest_sa_where(C, NEWEST, SO, HERE);	\
-	}
+	/*
+	 * Private variables for tracking routing.  Only updated by
+	 * routing.c.
+	 */
 	so_serial_t newest_routing_sa;
 	so_serial_t newest_ike_sa;
 	so_serial_t newest_ipsec_sa;
