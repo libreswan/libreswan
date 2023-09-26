@@ -2455,59 +2455,6 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 	return true;
 }
 
-void delete_ike_family(struct ike_sa **ike, where_t where)
-{
-	ldbg_sa((*ike), "no longer viable");
-	(*ike)->sa.st_viable_parent = false;
-
-	/*
-	 * We are a parent: delete our children and then prepare to
-	 * delete ourself.  Our children will be on the same hash
-	 * chain because we share IKE SPIs.
-	 */
-
-	struct state_filter cf = {
-		.clonedfrom = (*ike)->sa.st_serialno,
-		.where = HERE,
-	};
-	while(next_state_new2old(&cf)) {
-		struct child_sa *child = pexpect_child_sa(cf.st);
-
-		/*
-		 * Attach the IKE SA's whack to the child so that the
-		 * child can also log its demise.
-		 */
-		state_attach(&child->sa, (*ike)->sa.st_logger);
-
-		switch (child->sa.st_ike_version) {
-		case IKEv1:
-		{
-			/*
-			 * don't assume the ISAKMP SA is always
-			 * capable of sending delete.
-			 */
-			struct ike_sa *isakmp = /* could be NULL */
-				established_isakmp_sa_for_state(&child->sa, /*viable-parent*/false);
-			llog_n_maybe_send_v1_delete(isakmp, &child->sa, where);
-			connection_delete_child(&child, where);
-			break;
-		}
-		case IKEv2:
-			/*
-			 * The IKE SA is assumed to have already sent
-			 * the delete for the entire family.
-			 */
-			on_delete(&child->sa, skip_send_delete);
-			on_delete(&child->sa, skip_log_message);
-			connection_delete_child(&child, where);
-			break;
-		}
-	}
-
-	/* delete self */
-	delete_state(&(*ike)->sa); (*ike) = NULL;
-}
-
 /*
  * This is for panic situtations where the entire IKE family needs to
  * be blown away.

@@ -913,7 +913,6 @@ void delete_v1_states_by_connection(struct connection *c);
 void delete_v2_states_by_connection(struct connection *c);
 
 extern void rekey_p2states_by_connection(struct connection *c);
-extern void delete_ike_family(struct ike_sa **ike, where_t where);
 void send_n_log_delete_ike_family_now(struct ike_sa **ike,
 				      struct logger *logger,
 				      where_t where);
