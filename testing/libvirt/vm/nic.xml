@@ -20,11 +20,6 @@ You can load this machine definition into libvirt using:
   <on_poweroff>destroy</on_poweroff>
   <on_reboot>restart</on_reboot>
   <on_crash>restart</on_crash>
-  <!-- virtiofs requires memoryBacking -->
-  <memoryBacking>
-    <source type='memfd'/>
-    <access mode='shared'/>
-  </memoryBacking>
   <devices>
     <disk type='file' device='disk'>
       <driver name='qemu' type='qcow2' cache='writeback'/>
@@ -35,22 +30,19 @@ You can load this machine definition into libvirt using:
     </controller>
     <controller type='virtio-serial' index='0'>
     </controller>
-    <filesystem type='mount' accessmode='passthrough'>
-      <driver type='virtiofs'/>
+    <filesystem type='mount' accessmode='squash'>
       <source dir='@@TESTINGDIR@@'/>
       <target dir='testing'/>
     </filesystem>
-    <filesystem type='mount' accessmode='passthrough'>
-      <driver type='virtiofs'/>
+    <filesystem type='mount' accessmode='squash'>
       <source dir='@@SOURCEDIR@@'/>
       <target dir='source'/>
     </filesystem>
-    <filesystem type='mount' accessmode='passthrough'>
-      <driver type='virtiofs'/>
+    <filesystem type='mount' accessmode='squash'>
       <source dir='@@POOLDIR@@'/>
       <target dir='pool'/>
     </filesystem>
-    <filesystem type='mount' accessmode='passthrough'>
+    <filesystem type='mount' accessmode='squash'>
       <source dir='/tmp'/>
       <target dir='tmp'/>
     </filesystem>

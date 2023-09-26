@@ -157,7 +157,6 @@ KVM_MAKEFLAGS ?= $(strip \
 # that makes at least $(KVM_WORKERS)*2*512mb of ram being used by
 # tests VMs.  Boost build's memory by that amount.
 #
-#
 # XXX: Ignore KVM_PREFIXES, it is probably going away.
 
 VIRT_INSTALL ?= sudo virt-install
@@ -166,14 +165,10 @@ VIRT_DISK_SIZE_GB ?= 10
 VIRT_RND ?= --rng=type=random,device=/dev/random
 VIRT_SECURITY ?= --security=type=static,model=dac,label='$(KVM_UID):$(KVM_GID)',relabel=yes
 VIRT_GATEWAY ?= --network=network:$(KVM_GATEWAY_NAME),model=virtio
-
-# virtiofs needs memory backing; virtio only supports passthrough; ref
-# https://libvirt.org/kbase/virtiofs.html and virt-install --option=?
-VIRT_MEMORYBACKING ?= --memorybacking=source.type=memfd,access.mode=shared
-VIRT_BENCHDIR   ?= --filesystem=type=mount,driver.type=virtiofs,accessmode=passthrough,target=bench,source.dir=$(KVM_BENCHDIR)
-VIRT_POOLDIR    ?= --filesystem=type=mount,driver.type=virtiofs,accessmode=passthrough,target=pool,source.dir=$(KVM_POOLDIR)
-VIRT_SOURCEDIR  ?= --filesystem=type=mount,driver.type=virtiofs,accessmode=passthrough,target=source,source.dir=$(KVM_SOURCEDIR)
-VIRT_TESTINGDIR ?= --filesystem=type=mount,driver.type=virtiofs,accessmode=passthrough,target=testing,source.dir=$(KVM_TESTINGDIR)
+VIRT_BENCHDIR ?= --filesystem=target=bench,type=mount,accessmode=squash,source=$(KVM_BENCHDIR)
+VIRT_POOLDIR ?= --filesystem=target=pool,type=mount,accessmode=squash,source=$(KVM_POOLDIR)
+VIRT_SOURCEDIR ?= --filesystem=target=source,type=mount,accessmode=squash,source=$(KVM_SOURCEDIR)
+VIRT_TESTINGDIR ?= --filesystem=target=testing,type=mount,accessmode=squash,source=$(KVM_TESTINGDIR)
 
 VIRT_INSTALL_FLAGS = \
 	--connect=$(KVM_CONNECTION) \$(crlf)\
@@ -185,7 +180,6 @@ VIRT_INSTALL_FLAGS = \
 	$(VIRT_CPU) \$(crlf)\
 	$(VIRT_GATEWAY) \$(crlf)\
 	$(VIRT_RND) \$(crlf)\
-	$(VIRT_MEMORYBACKING) \$(crlf)\
 	$(VIRT_SECURITY)
 
 #

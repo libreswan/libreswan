@@ -26,12 +26,11 @@ title mount /source and /testing
 
 # /source and /testing are only pinned down during transmogrify.
 
-for mount in pool bench source testing ; do
-    sed -i -e '/'"${mount}"'/d' /etc/fstab
+for mount in source testing ; do
     cat <<EOF >>/etc/fstab
-${mount} /${mount} virtiofs defaults,context=system_u:object_r:usr_t:s0,x-systemd.automount 0 0
+${mount} /${mount} 9p defaults,trans=virtio,version=9p2000.L,context=system_u:object_r:usr_t:s0,x-systemd.automount 0 0
 EOF
-    mkdir -p /${mount}
+    mkdir /${mount}
 done
 
 
