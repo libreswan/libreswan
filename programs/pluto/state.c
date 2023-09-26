@@ -1750,6 +1750,21 @@ struct ike_sa *find_ike_sa_by_connection(const struct connection *c,
 	return best;
 }
 
+struct ike_sa *find_viable_parent_for_connection(const struct connection *c)
+{
+	switch (c->config->ike_info->version) {
+	case IKEv1:
+		return find_ike_sa_by_connection(c, (V1_ISAKMP_SA_ESTABLISHED_STATES |
+						     V1_PHASE1_INITIATOR_STATES),
+						 /*viable-parent*/true);
+	case IKEv2:
+		return find_ike_sa_by_connection(c, (LELEM(STATE_V2_ESTABLISHED_IKE_SA) |
+						     IKEV2_ISAKMP_INITIATOR_STATES),
+						 /*viable-parent*/true);
+	}
+	bad_enum(c->logger, &ike_version_names, c->config->ike_info->version);
+}
+
 void state_eroute_usage(const ip_selector *ours, const ip_selector *peers,
 			unsigned long count, monotime_t nw)
 {

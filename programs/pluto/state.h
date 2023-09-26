@@ -921,6 +921,7 @@ struct state *state_by_serialno(so_serial_t serialno);
 struct ike_sa *ike_sa_by_serialno(so_serial_t serialno);
 struct child_sa *child_sa_by_serialno(so_serial_t serialno);
 
+struct ike_sa *find_viable_parent_for_connection(const struct connection *c);
 struct ike_sa *find_ike_sa_by_connection(const struct connection *c,
 					 lset_t ok_states,
 					 bool viable_parent);

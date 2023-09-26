@@ -373,9 +373,7 @@ void ipsecdoi_initiate(struct connection *c,
 		 * Warrior.
 		 */
 		struct ike_sa *isakmp =
-			find_ike_sa_by_connection(c, (V1_ISAKMP_SA_ESTABLISHED_STATES |
-						      V1_PHASE1_INITIATOR_STATES),
-						  /*viable-parent*/true);
+			find_viable_parent_for_connection(c);
 		struct fd *whackfd = background ? null_fd : logger->global_whackfd;
 		if (isakmp == NULL && c->config->aggressive) {
 			aggr_outI1(whackfd, c, NULL, policy, inception, sec_label);
@@ -413,9 +411,7 @@ void ipsecdoi_initiate(struct connection *c,
 		 * Warrior.
 		 */
 		struct ike_sa *ike =
-			find_ike_sa_by_connection(c, (LELEM(STATE_V2_ESTABLISHED_IKE_SA) |
-						      IKEV2_ISAKMP_INITIATOR_STATES),
-						  /*viable-parent*/true);
+			find_viable_parent_for_connection(c);
 		if (ike != NULL) {
 			dbg("found #%lu in state %s established=%s viable=%s",
 			    ike->sa.st_serialno, ike->sa.st_state->name,
