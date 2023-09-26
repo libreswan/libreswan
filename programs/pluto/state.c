@@ -1686,36 +1686,6 @@ struct state *find_v1_info_state(const ike_spis_t *ike_spis, msgid_t msgid)
 #endif
 
 /*
- * to initiate a new IPsec SA or to rekey IPsec
- * the IKE SA must be around for while. If IKE rekeying itself no new IPsec SA.
- */
-bool ikev2_viable_parent(const struct ike_sa *ike)
-{
-	/* this check is defined only for an IKEv2 parent */
-	if (ike->sa.st_ike_version != IKEv2)
-		return true;
-
-	const monotime_t now = mononow();
-	const struct state_event *ev = ike->sa.st_v2_lifetime_event;
-	deltatime_t lifetime = monotimediff(ev->ev_time, now);
-
-	if (deltatime_cmp(lifetime, >, PARENT_MIN_LIFE_DELAY) &&
-	    /* in case st_margin == 0, insist minimum life */
-	    deltatime_cmp(lifetime, >, ike->sa.st_replace_margin)) {
-		return true;
-	}
-
-	deltatime_buf lb, rb;
-	llog_sa(RC_LOG_SERIOUS, ike,
-		  "no new CREATE_CHILD_SA exchange using #%lu. Parent lifetime %s < st_margin %s",
-		  ike->sa.st_serialno,
-		  str_deltatime(lifetime, &lb),
-		  str_deltatime(ike->sa.st_replace_margin, &rb));
-
-	return false;
-}
-
-/*
  * Find newest Phase 1 negotiation state object for suitable for
  * connection c.
  *

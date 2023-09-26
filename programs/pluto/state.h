@@ -974,7 +974,6 @@ extern bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest 
 
 extern void append_st_cfg_domain(struct state *st, char *dnsip);
 extern void append_st_cfg_dns(struct state *st, const char *dnsip);
-extern bool ikev2_viable_parent(const struct ike_sa *ike);
 
 extern bool uniqueIDs;  /* --uniqueids? */
 
