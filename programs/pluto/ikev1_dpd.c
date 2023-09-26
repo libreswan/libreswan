@@ -60,7 +60,7 @@
 #include "ikev1.h"			/* for established_isakmp_for_state() */
 #include "ikev1_dpd.h"
 #include "pluto_x509.h"
-
+#include "ikev1_delete.h"
 #include "pluto_stats.h"
 
 /**
@@ -90,7 +90,8 @@ void event_v1_dpd_timeout(struct state *tbd_st)
 	 * pointer.
 	 */
 	struct logger *logger = clone_logger(tbd_st->st_logger, HERE);
-	struct connection *c = tbd_st->st_connection;
+	struct connection *c = connection_addref(tbd_st->st_connection, logger);
+
 	tbd_st = NULL; /* kill TBD_ST; can no longer be trusted */
 	llog(RC_LOG, logger, "DPD action - putting connection into hold");
 
@@ -100,57 +101,80 @@ void event_v1_dpd_timeout(struct state *tbd_st)
 	 */
 
 	/*
-	 * Pass 0: any siblings, assuming the connection is bound to a
-	 * parent.
+	 * If the connection has an (established) ISAKMP SA, then use
+	 * that to find any siblings of TBD_ST.
+	 *
+	 * Of course this assumes that .newest_ike_sa is set.
 	 */
 
 	struct ike_sa *ike = ike_sa_by_serialno(c->newest_ike_sa);
 	if (ike != NULL) {
 		pdbg(ike->sa.st_logger, "no longer viable");
-		ike->sa.st_viable_parent = false;
+		ike->sa.st_viable_parent = false; /*needed?*/
 		struct state_filter sf = {
 			.clonedfrom = ike->sa.st_serialno,
 			.where = HERE,
 		};
 		while (next_state_new2old(&sf)) {
 			struct child_sa *child = pexpect_child_sa(sf.st);
-			pdbg(child->sa.st_logger, "pass 0: delete "PRI_SO" which is a sibling",
+			pdbg(logger, "delete IPsec SA "PRI_SO" which is a sibling",
 			     pri_so(child->sa.st_serialno));
 			state_attach(&child->sa, logger);
-			/* must be a child */
+			llog_n_maybe_send_v1_delete(ike, &child->sa, HERE);
 			connection_delete_child(&child, HERE);
 		}
 	}
 
 	/*
-	 * We take two passes so that we delete any ISAKMP SAs last.
-	 * This allows Delete Notifications to be sent.
-	 *
-	 * XXX: need to go through all states using the connection as,
-	 * in addition to .newest_ike_sa there could be larval or
-	 * dying states hanging around.
+	 * Now zap any childen.
 	 */
-	for (int pass = 1; pass <= 2; pass++) {
+	{
 		struct state_filter sf = {
 			.connection_serialno = c->serialno,
 			.where = HERE,
 		};
 		while (next_state_new2old(&sf)) {
-			struct state *this = sf.st;
 			/* on first pass, ignore established ISAKMP SA's */
-			if (pass == 1 &&
-			    IS_V1_ISAKMP_SA_ESTABLISHED(this)) {
+			if (IS_PARENT_SA(sf.st)) {
 				continue;
 			}
-			pdbg(sf.st->st_logger,
-			     "pass %d: delete "PRI_SO" which has connection",
-			     pass, this->st_serialno);
-			pexpect(this->st_connection == c);
-			state_attach(this, c->logger);
-			delete_state(this);
+			state_attach(sf.st, logger);
+			pdbg(logger,
+			     "delete IPsec SA "PRI_SO" which shares the connection",
+			     pri_so(sf.st->st_serialno));
+			struct ike_sa *isakmp = /* could be NULL */
+				established_isakmp_sa_for_state(sf.st, /*viable-parent*/false);
+			llog_n_maybe_send_v1_delete(isakmp, sf.st, HERE);
+			struct child_sa *child = pexpect_child_sa(sf.st);
+			connection_delete_child(&child, HERE);
 		}
 	}
 
+	/*
+	 * Finally zap any parents.
+	 */
+	{
+		struct state_filter sf = {
+			.connection_serialno = c->serialno,
+			.where = HERE,
+		};
+		while (next_state_new2old(&sf)) {
+			if (!PEXPECT(logger, IS_PARENT_SA(sf.st))) {
+				continue;
+			}
+			state_attach(sf.st, logger);
+			pdbg(logger,
+			     "delete ISAKMP SA "PRI_SO" which shares the connection",
+			     pri_so(sf.st->st_serialno));
+			struct ike_sa *isakmp = /* could be NULL */
+				established_isakmp_sa_for_state(sf.st, /*viable-parent*/false);
+			llog_n_maybe_send_v1_delete(isakmp, sf.st, HERE);
+			struct ike_sa *ike = pexpect_ike_sa(sf.st);
+			connection_delete_ike(&ike, HERE);
+		}
+	}
+
+	connection_delref(&c, logger);
 	free_logger(&logger, HERE);
 }
 
