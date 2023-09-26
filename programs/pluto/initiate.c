@@ -358,99 +358,128 @@ void ipsecdoi_initiate(struct connection *c,
 	ldbg_connection(c, HERE, "%s() with sec_label "PRI_SHUNK,
 			__func__, pri_shunk(sec_label));
 
-	switch (c->config->ike_version) {
+	/*
+	 * Try to find a viable IKE (parent) SA.  A viable IKE SA is
+	 * either: established; or negotiating the IKE SA as the
+	 * initiator.
+	 *
+	 * What is wrong with a larval responder?
+
+	 * Possible outcomes are: no IKE SA, so intiate a new one; IKE
+	 * SA is a larval initiator, so append connection to pending;
+	 * IKE SA is established, so append Child SA to IKE's exchange
+	 * queue.
+	 */
+
+	struct ike_sa *ike = find_viable_parent_for_connection(c);
+
+	/*
+	 * XXX: should be passing logger down to initiate and pending
+	 * code.  Not whackfd.
+	 */
+	struct fd *whackfd = background ? null_fd : logger->global_whackfd;
+
+	/*
+	 * There's no viable IKE (parent) SA, initiate a new one.
+	 */
+
+	if (ike == NULL) {
+		switch (c->config->ike_version) {
 #ifdef USE_IKEv1
-	case IKEv1:
-	{
-		/*
-		 * If there's already an IKEv1 ISAKMP SA established,
-		 * use that and go directly to Quick Mode.  We are
-		 * even willing to use one that is still being
-		 * negotiated, but only if we are the Initiator (thus
-		 * we can be sure that the IDs are not going to
-		 * change; other issues around intent might matter).
-		 * Note: there is no way to initiate with a Road
-		 * Warrior.
-		 */
-		struct ike_sa *isakmp =
-			find_viable_parent_for_connection(c);
-		struct fd *whackfd = background ? null_fd : logger->global_whackfd;
-		if (isakmp == NULL && c->config->aggressive) {
-			aggr_outI1(whackfd, c, NULL, policy, inception, sec_label);
-		} else if (isakmp == NULL) {
-			main_outI1(whackfd, c, NULL, policy, inception, sec_label);
-		} else if (IS_V1_ISAKMP_SA_ESTABLISHED(&isakmp->sa)) {
+		case IKEv1:
+			if (c->config->aggressive) {
+				aggr_outI1(whackfd, c, NULL, policy,
+					   inception, sec_label);
+			} else {
+				main_outI1(whackfd, c, NULL, policy,
+					   inception, sec_label);
+			}
+			break;
+#endif
+		case IKEv2:
+			ike = initiate_v2_IKE_SA_INIT_request(c, NULL, policy, inception,
+							      sec_label, background, logger);
+			break;
+		}
+		return;
+	}
+
+	/*
+	 * There is a viable IKE (parent) SA and it is established
+	 * (ready to negotiate for the connection's child).  Initiate
+	 * the child exchange.  For IKEv2 the child will be appended
+	 * to the exchange queue.
+	 */
+
+	if (IS_PARENT_SA_ESTABLISHED(&ike->sa)) {
+		switch (c->config->ike_version) {
+#ifdef USE_IKEv1
+		case IKEv1:
+		{
 			/*
 			 * ??? we assume that peer_nexthop_sin isn't
 			 * important: we already have it from when we
 			 * negotiated the ISAKMP SA!  It isn't clear
 			 * what to do with the error return.
 			 */
-			quick_outI1(whackfd, isakmp, c, policy,
+			quick_outI1(whackfd, ike, c, policy,
 				    replacing, sec_label);
-		} else {
-			/* leave our Phase 2 negotiation pending */
-			add_v1_pending(whackfd, isakmp, c, policy,
-				       replacing, sec_label,
-				       false /*part of initiate*/);
+			break;
 		}
-		break;
+#endif
+		case IKEv2:
+			if (!already_has_larval_v2_child(ike, c)) {
+				dbg("initiating child sa with "PRI_LOGGER, pri_logger(logger));
+				struct connection *cc;
+				if (c->config->sec_label.len > 0) {
+					cc = sec_label_child_instantiate(ike, sec_label, HERE);
+				} else {
+					cc = connection_addref(c, c->logger);
+				}
+				submit_v2_CREATE_CHILD_SA_new_child(ike, cc, policy,
+								    logger->global_whackfd);
+				connection_delref(&cc, cc->logger);
+			}
+			break;
+		default:
+			bad_enum(c->logger, &ike_version_names, c->config->ike_version);
+		}
+		return;
 	}
+
+	/*
+	 * There's a viable IKE (parent) SA except it is still being
+	 * negotiated.  Append the connection to the IKE SA's pending
+	 * queue.
+	 */
+
+	switch (c->config->ike_version) {
+#ifdef USE_IKEv1
+	case IKEv1:
+		/* leave our Phase 2 negotiation pending */
+		add_v1_pending(whackfd, ike, c, policy,
+			       replacing, sec_label,
+			       false /*part of initiate*/);
+		break;
 #endif
 	case IKEv2:
 	{
-		/*
-		 * If there's already an IKEv2 IKE SA established, use
-		 * that and go directly to a CHILD exchange.
-		 *
-		 * We are even willing to use one that is still being
-		 * established, but only if we are the Initiator (thus
-		 * we can be sure that the IDs are not going to
-		 * change; other issues around intent might matter).
-		 * Note: there is no way to initiate with a Road
-		 * Warrior.
-		 */
-		struct ike_sa *ike =
-			find_viable_parent_for_connection(c);
-		if (ike != NULL) {
-			dbg("found #%lu in state %s established=%s viable=%s",
-			    ike->sa.st_serialno, ike->sa.st_state->name,
-			    bool_str(IS_IKE_SA_ESTABLISHED(&ike->sa)),
-			    bool_str(ike->sa.st_viable_parent));
+		/* leave CHILD SA negotiation pending */
+		struct connection *cc;
+		if (c->config->sec_label.len > 0) {
+			/* sec-labels require a separate child connection */
+			cc = sec_label_child_instantiate(ike, sec_label, HERE);
+		} else {
+			cc = connection_addref(c, c->logger);
 		}
-		if (ike == NULL) {
-			initiate_v2_IKE_SA_INIT_request(c, NULL, policy, inception,
-							sec_label, background, logger);
-		} else if (!IS_IKE_SA_ESTABLISHED(&ike->sa)) {
-			/* leave CHILD SA negotiation pending */
-			struct connection *cc;
-			if (c->config->sec_label.len > 0) {
-				/* sec-labels require a separate child connection */
-				cc = sec_label_child_instantiate(ike, sec_label, HERE);
-			} else {
-				cc = connection_addref(c, c->logger);
-			}
-			add_v2_pending(background ? null_fd : logger->global_whackfd,
-				       ike, cc, policy,
-				       replacing, sec_label,
-				       false /*part of initiate*/);
-			connection_delref(&cc, cc->logger);
-		} else if (!already_has_larval_v2_child(ike, c)) {
-			dbg("initiating child sa with "PRI_LOGGER, pri_logger(logger));
-			struct connection *cc;
-			if (c->config->sec_label.len > 0) {
-				cc = sec_label_child_instantiate(ike, sec_label, HERE);
-			} else {
-				cc = connection_addref(c, c->logger);
-			}
-			submit_v2_CREATE_CHILD_SA_new_child(ike, cc, policy,
-							    logger->global_whackfd);
-			connection_delref(&cc, cc->logger);
-		}
+		add_v2_pending(whackfd, ike, cc, policy,
+			       replacing, sec_label,
+			       false /*part of initiate*/);
+		connection_delref(&cc, cc->logger);
 		break;
 	}
 	default:
-		bad_case(c->config->ike_version);
+		bad_enum(c->logger, &ike_version_names, c->config->ike_version);
 	}
 }
 
