@@ -690,7 +690,7 @@ static void llog_delete_n_send(lset_t rc_flags,
 		jam_string(buf, "s");
 		if (ike == NULL) {
 			jam_string(buf, " and NOT sending notification");
-			if (IS_ISAKMP_SA_ESTABLISHED(st)) {
+			if (IS_CHILD_SA_ESTABLISHED(st)) {
 				jam_string(buf, " (");
 				jam_string(buf, st->st_connection->config->ike_info->parent_sa_name);
 				jam_string(buf, " was ");
