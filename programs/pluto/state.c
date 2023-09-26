@@ -737,6 +737,15 @@ void delete_state(struct state *st)
 	     bool_str(st->st_on_delete.skip_send_delete),
 	     bool_str(st->st_on_delete.skip_log_message));
 
+#if 0
+	/*
+	 * Not yet: code that doesn't need to revive skips setting the
+	 * .skip_revival bit.  For instance an IKE SA that has been
+	 * replaced?
+	 */
+	PEXPECT(st->st_logger, st->st_on_delete.skip_revival);
+#endif
+
 	/*
 	 * WHen an IKEv2 IKE SA, there can be no children.
 	 */
@@ -966,58 +975,6 @@ void delete_state(struct state *st)
 	}
 
 	connection_routing_clear(st);
-
-	/*
-	 * If policy dictates, try to keep the state's connection
-	 * alive.  DONT_REKEY overrides UP.
-	 */
-	if (st->st_on_delete.skip_revival) {
-		ldbg(st->st_logger, "skipping revival (handled earlier)");
-	} else if (should_revive(st)) {
-#if 0
-		/*
-		 * Not yet so.  IKEv2 code still ends up here
-		 * occasionally.
-		 */
-		PEXPECT(st->st_logger, st->st_ike_version == IKEv1);
-#endif
-		/*
-		 * No clue as to why the state is being deleted so
-		 * make something up.  Caller, such as the IKEv1
-		 * timeout should have scheduled the revival already.
-		 */
-		schedule_revival(st, "received a Delete/Notify");
-		/*
-		 * Hack so that the code deleting a connection knows
-		 * that it needs to delete the revival.
-		 *
-		 * XXX: Should be handled in event_v1_retransmit() but
-		 * that scrambles test output.
-		 *
-		 * XXX: Should be sending event to the routing code,
-		 * but this is IKEv1.
-		 */
-		if (st->st_ike_version == IKEv1) {
-			enum routing new_rt;
-			switch (st->st_connection->child.routing) {
-			case RT_UNROUTED:
-			case RT_UNROUTED_NEGOTIATION:
-				new_rt = RT_UNROUTED;
-				break;
-			case RT_ROUTED_NEGOTIATION:
-				new_rt = RT_ROUTED_ONDEMAND;
-				break;
-			default:
-				new_rt = 0;
-			}
-			if (new_rt != 0) {
-				set_routing((IS_IKE_SA(st) ? CONNECTION_TIMEOUT_IKE :
-					     CONNECTION_TIMEOUT_CHILD),
-					    st->st_connection,
-					    new_rt, NULL, HERE);
-			}
-		}
-	}
 
 	/*
 	 * fake a state change here while we are still associated with a

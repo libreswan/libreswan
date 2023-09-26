@@ -151,47 +151,6 @@ static bool revival_plausable(struct connection *c, struct logger *logger)
 	return true;
 }
 
-bool should_revive(struct state *st)
-{
-	struct connection *c = st->st_connection;
-
-	if (st->st_on_delete.skip_revival) {
-		llog_pexpect(st->st_logger, HERE, "revival was handled earlier");
-		return false;
-	}
-
-	/*
-	 * XXX: now the weird ones.
-	 */
-
-	if (!IS_IKE_SA(st)) {
-		ldbg(st->st_logger, "revival: skipping, not an IKE SA");
-		return false;
-	}
-
-	so_serial_t newer_sa = get_newer_sa_from_connection(st);
-	if (state_by_serialno(newer_sa) != NULL) {
-		/*
-		 * Presumably this is an old state that has either
-		 * been rekeyed or replaced.
-		 *
-		 * XXX: Should not even be here though!  The old IKE
-		 * SA should be going through delete state transition
-		 * that, at the end, cleanly deletes it with none of
-		 * this guff.
-		 */
-		ldbg(st->st_logger, "revival: skipping, IKE delete_state() for #%lu and connection '%s' that is supposed to remain up;  not a problem - have newer #%lu",
-		    st->st_serialno, c->name, newer_sa);
-		return false;
-	}
-
-	if (!revival_plausable(c, st->st_logger)) {
-		return false;
-	}
-
-	return true;
-}
-
 bool should_revive_child(struct child_sa *child)
 {
 	struct connection *c = child->sa.st_connection;
@@ -313,19 +272,6 @@ static void schedule_revival_event(struct connection *c, struct logger *logger, 
 
 	schedule_connection_event(c, CONNECTION_REVIVAL, subplot, delay,
 				  (impair.revival ? "revival" : NULL), logger);
-}
-
-void schedule_revival(struct state *st, const char *subplot)
-{
-	if (st->st_on_delete.skip_revival) {
-		llog_pexpect(st->st_logger, HERE, "revival already scheduled");
-		return;
-	}
-	on_delete(st, skip_revival);
-
-	update_remote_port(st);
-	struct connection *c = st->st_connection;
-	schedule_revival_event(c, st->st_logger, subplot);
 }
 
 void schedule_child_revival(struct child_sa *child, const char *subplot)
