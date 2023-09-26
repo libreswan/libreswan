@@ -1,6 +1,6 @@
 # Minimal Kickstart file for fedora
 
-# Limit things to: basic network configuration; 9pfs mounts; setting
+# Limit things to: basic network configuration; mounts; setting
 # the password; et.al.
 
 # Everything interesting, such as installing packages, configuring and
@@ -87,18 +87,14 @@ The root password is "swan"
 EOD
 
 
-# load 9p modules in time for auto mounts
-
-cat << EOD > /etc/modules-load.d/9pnet_virtio.conf
-9pnet_virtio
-EOD
-
-
 # Mount /pool and /bench
 #
-# Full KVM snapshots (saves) don't work with NFS/9p mounts.  Hence use
-# automount so that things are only mounted after the VM has booted
-# and a snapshot has been taken.
+# Why automount?
+#
+# Full KVM snapshots (saves) don't work with NFS/9p mounts (and
+# presumably virtiofs mounts also).  Hence use automount so that
+# things are only mounted after the VM has booted and a snapshot has
+# been taken.
 #
 # Why use /etc/fstab?
 #
@@ -113,8 +109,8 @@ EOD
 
 mkdir /pool /bench
 cat <<EOF >>/etc/fstab
-pool  /pool  9p defaults,trans=virtio,version=9p2000.L,context=system_u:object_r:usr_t:s0,x-systemd.automount 0 0
-bench /bench 9p defaults,trans=virtio,version=9p2000.L,context=system_u:object_r:usr_t:s0,x-systemd.automount 0 0
+pool  /pool  virtiofs defaults,context=system_u:object_r:usr_t:s0,x-systemd.automount 0 0
+bench /bench virtiofs defaults,context=system_u:object_r:usr_t:s0,x-systemd.automount 0 0
 EOF
 
 

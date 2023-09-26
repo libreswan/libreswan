@@ -25,8 +25,13 @@ You can load this machine definition into libvirt using:
   <on_poweroff>destroy</on_poweroff>
   <on_reboot>restart</on_reboot>
   <on_crash>restart</on_crash>
+  <!-- virtiofs requires memoryBacking -->
+  <memoryBacking>
+    <source type='memfd'/>
+    <access mode='shared'/>
+  </memoryBacking>
   <devices>
-  	<emulator>/usr/bin/qemu-system-x86_64</emulator>
+    <emulator>/usr/bin/qemu-system-x86_64</emulator>
     <disk type='file' device='disk'>
       <driver name='qemu' type='qcow2'/>
       <source file='@@LOCALDIR@@/@@DOMAIN@@.qcow2'/>
@@ -37,14 +42,19 @@ You can load this machine definition into libvirt using:
     </controller>
     <controller type='virtio-serial' index='0'>
     </controller>
-    <!--OpenBSD uses NFS mount this filesystem is defined here just to hack some part of testing script to work-->
-    <filesystem type='mount' accessmode='squash'>
+    <!--
+	OpenBSD uses NFS mount this filesystem is defined here just to
+	hack some part of testing script to work
+    -->
+    <filesystem type='mount' accessmode='passthrough'>
+      <driver type='virtiofs'/>
       <source dir='@@TESTINGDIR@@'/>
       <target dir='testing'/>
     </filesystem>
     <!--
-      Keep the first interface pointing at the gateway (if it moves
-      first boot gets confused as the new interface isn't configured).
+	Keep the first interface pointing at the gateway (if it moves
+	first boot gets confused as the new interface isn't
+	configured).
     -->
     <interface type='network'>
       <source network='swandefault'/>
