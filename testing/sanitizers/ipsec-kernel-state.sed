@@ -74,6 +74,14 @@ b end
 
   s/lastused .*/lastused YYYY-MM-DD HH:MM:SS/
 
+  # ephemeral ports
+  # - according to IANA: 49152-65535
+  # - according to Linux: 32768-61000
+  # the below matches 30000-..  which is good enough
+  # but not good enough because fedora23 starts in the 29xxx range now :P
+  s/ sport [2-6][0-9][0-9][0-9][0-9] / sport EPHEM /g
+  s/ dport [2-6][0-9][0-9][0-9][0-9] / dport EPHEM /g;
+
 b match
 
 :end
