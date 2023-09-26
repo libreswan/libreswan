@@ -88,10 +88,12 @@ west #
  # trigger westnet-east
 west #
  ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.1.2.23
-down
+up UNEXPECTED
+# ping -n -c 1  -i 2 -w 1   -I 192.0.1.254 192.1.2.23
+PING 192.1.2.23 (192.1.2.23) from 192.0.1.254 : 56(84) bytes of data. 64 bytes from 192.1.2.23: icmp_seq=1 ttl=64 time=0.XXX ms --- 192.1.2.23 ping statistics --- 1 packets transmitted, 1 received, 0% packet loss, time XXXX rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
  ../../guestbin/wait-for.sh --match '"westnet-east"' -- ipsec whack --trafficstatus
-006 #7: "westnet-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+006 #8: "westnet-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.1.2.23
 up
@@ -102,10 +104,12 @@ west #
  # trigger west-eastnet
 west #
  ../../guestbin/ping-once.sh --down -I 192.1.2.45 192.0.2.254
-down
+up UNEXPECTED
+# ping -n -c 1  -i 2 -w 1   -I 192.1.2.45 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.1.2.45 : 56(84) bytes of data. 64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms --- 192.0.2.254 ping statistics --- 1 packets transmitted, 1 received, 0% packet loss, time XXXX rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
  ../../guestbin/wait-for.sh --match '"west-eastnet"' -- ipsec whack --trafficstatus
-006 #8: "west-eastnet", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+006 #7: "west-eastnet", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  ../../guestbin/ping-once.sh --up -I 192.1.2.45 192.0.2.254
 up
@@ -120,8 +124,8 @@ west #
 west #
  ipsec whack --trafficstatus
 006 #6: "west-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
-006 #8: "west-eastnet", type=ESP, add_time=1234567890, inBytes=252, outBytes=252, maxBytes=2^63B, id='@east'
-006 #7: "westnet-east", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@east'
+006 #7: "west-eastnet", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='@east'
+006 #8: "westnet-east", type=ESP, add_time=1234567890, inBytes=252, outBytes=252, maxBytes=2^63B, id='@east'
 west #
  echo done
 done
@@ -149,10 +153,6 @@ src 192.1.2.45 dst 192.1.2.23
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
-src 192.1.2.45 dst 192.0.2.254
-	proto esp spi 0x00000000 reqid 0 mode transport
-	replay-window 0 
-	sel src 192.1.2.45/32 dst 192.0.2.254/32 proto icmp type 8 code 0 dev eth1 
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
@@ -173,10 +173,6 @@ src 192.1.2.45 dst 192.1.2.23
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
-src 192.0.1.254 dst 192.1.2.23
-	proto esp spi 0x00000000 reqid 0 mode transport
-	replay-window 0 
-	sel src 192.0.1.254/32 dst 192.1.2.23/32 proto icmp type 8 code 0 dev eth1 
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
