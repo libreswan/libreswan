@@ -108,12 +108,12 @@
  * Note: this is not called from demux.c
  */
 
-void main_outI1(struct fd *whack_sock,
-		struct connection *c,
-		struct state *predecessor,
-		lset_t policy,
-		const threadtime_t *inception,
-		shunk_t sec_label)
+struct ike_sa *main_outI1(struct fd *whack_sock,
+			  struct connection *c,
+			  struct state *predecessor,
+			  lset_t policy,
+			  const threadtime_t *inception,
+			  shunk_t sec_label)
 {
 	struct ike_sa *ike = new_v1_istate(c, whack_sock);
 	struct state *st = &ike->sa;
@@ -158,7 +158,8 @@ void main_outI1(struct fd *whack_sock,
 
 		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream,
 				&rbody)) {
-			return;
+			/* leak!?! */
+			return NULL;
 		}
 	}
 
@@ -170,7 +171,8 @@ void main_outI1(struct fd *whack_sock,
 				  IKEv1_oakley_main_mode_db_sa(c),
 				  st, true, false)) {
 			log_state(RC_LOG, st, "outsa fail");
-			return;
+			/* leak!?! */
+			return NULL;
 		}
 
 		/* no leak! (MUST be first time) */
@@ -183,16 +185,16 @@ void main_outI1(struct fd *whack_sock,
 
 	/* send Vendor IDs */
 	if (!out_v1VID_set(&rbody, c)) {
-		return;
+		return NULL;
 	}
 
 	/* as Initiator, spray NAT VIDs */
 	if (!nat_traversal_insert_vid(&rbody, c)) {
-		return;
+		return NULL;
 	}
 
 	if (!ikev1_close_message(&rbody, st)) {
-		return;
+		return NULL;
 	}
 
 	close_output_pbs(&reply_stream);
@@ -217,6 +219,7 @@ void main_outI1(struct fd *whack_sock,
 	}
 
 	statetime_stop(&start, "%s()", __func__);
+	return ike;
 }
 
 /*

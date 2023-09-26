@@ -981,12 +981,12 @@ static ke_and_nonce_cb aggr_outI1_continue;	/* type assertion */
  * RFC 2409 5.3: --> HDR, SA, [ HASH(1),] <Ni_b>Pubkey_r, <KE_b>Ke_i, <IDii_b>Ke_i [, <Cert-I_b>Ke_i ]
  */
 
-void aggr_outI1(struct fd *whack_sock,
-		struct connection *c,
-		struct state *predecessor,
-		lset_t policy,
-		const threadtime_t *inception,
-		shunk_t sec_label)
+struct ike_sa *aggr_outI1(struct fd *whack_sock,
+			  struct connection *c,
+			  struct state *predecessor,
+			  lset_t policy,
+			  const threadtime_t *inception,
+			  shunk_t sec_label)
 {
 	/* set up new state */
 	struct ike_sa *ike = new_v1_istate(c, whack_sock);
@@ -1009,7 +1009,7 @@ void aggr_outI1(struct fd *whack_sock,
 		 */
 		llog_sa(RC_AGGRALGO, ike,
 			"no IKE proposal policy specified in config!  Cannot initiate aggressive mode.  A policy must be specified in the configuration and should contain at most one DH group (mod1024, mod1536, mod2048).  Only the first DH group will be honored.");
-		return;
+		return NULL;
 	}
 
 	if (HAS_IPSEC_POLICY(policy))
@@ -1032,6 +1032,7 @@ void aggr_outI1(struct fd *whack_sock,
 	submit_ke_and_nonce(&ike->sa, ike->sa.st_oakley.ta_dh,
 			    aggr_outI1_continue, HERE);
 	statetime_stop(&start, "%s()", __func__);
+	return ike;
 }
 
 static ke_and_nonce_cb aggr_outI1_continue_tail;
