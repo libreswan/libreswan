@@ -167,6 +167,7 @@
 #include "pending.h"
 #include "rekeyfuzz.h"
 #include "updown.h"
+#include "ikev1_delete.h"
 
 #ifdef HAVE_NM
 #include "kernel.h"
@@ -2841,6 +2842,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		break;
 
 	case STF_FATAL:
+	{
 		passert(st != NULL);
 		/* update the previous packet history */
 		remember_received_packet(st, md);
@@ -2857,9 +2859,13 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		}
 #endif
 		release_pending_whacks(st, "fatal error");
-		delete_state(st);
+		struct ike_sa *isakmp =
+			established_isakmp_sa_for_state(st, /*viable-parent*/false);
+		llog_n_maybe_send_v1_delete(isakmp, st, HERE);
+		connection_delete_v1_state(&st, HERE);
 		md->v1_st = st = NULL;
 		break;
+	}
 
 	case STF_FAIL_v1N:
 	default:
