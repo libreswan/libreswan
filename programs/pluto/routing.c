@@ -693,7 +693,6 @@ static void down_routed_tunnel(enum routing_event event,
 
 	remove_connection_from_pending(c);
 	delete_states_by_connection(c);
-	connection_unroute(c, HERE);
 }
 
 /*
