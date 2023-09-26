@@ -9,10 +9,17 @@ Order of Operations:
 1) East sets up for tunnel
 2) West initiates tunnel to east
 3) We idle for 20 seconds, to prove that DPD R_U_THERE/R_U_THERE_ACKs work.
-4) West blocks traffic on eth0
+4) West blocks the DPD probe on eth0
+
+   BY BLOCKING INCOMMING PACKETS
+   THIS MEANS DELETES CAN STILL REACH EAST!
+
 5) Both sides trigger a DPD Timeout:
 	East puts the eroute into %trap
 	West puts the eroute into %trap
+
+	AND SENDS DELETES WHICH REACH EAST!
+
 6) West removes the traffic block
 7) West sends icmp packets to east, triggering a renegotiation of the tunnel
 
