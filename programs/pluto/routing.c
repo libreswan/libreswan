@@ -1605,12 +1605,11 @@ static void dispatch_1(enum routing_event event,
 				 * when state/connection dies.
 				 */
 				set_routing(event, c, RT_UNROUTED, NULL, where);
+				delete_ike_sa(e->ike);
+				return;
 			}
 			delete_ike_sa(e->ike);
-
-			remove_connection_from_pending(c);
-			delete_states_by_connection(c);
-			connection_unroute(c, HERE);
+			set_routing(event, c, RT_UNROUTED, NULL, where);
 			return;
 
 		case X(DELETE_IKE, ROUTED_TUNNEL, PERMANENT):
