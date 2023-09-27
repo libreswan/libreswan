@@ -45,10 +45,10 @@ west #
 003 "west-east": both sides of the connection match the interface eth1: right 192.1.2.23; left 192.1.2.45
 002 "west-east": terminating SAs using this connection
 002 "west-east" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
+002 "west-east": connection no longer oriented - system interface change?
+002 "west-east" #2: unroute-host output: Device "NULL" does not exist.
 005 "west-east" #2: ESP traffic information: in=0B out=0B
 002 "west-east" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
-002 "west-east": connection no longer oriented - system interface change?
-002 "west-east": unroute-host output: Device "NULL" does not exist.
 002 forgetting secrets
 002 loading secrets from "/etc/ipsec.secrets"
 002 no secrets filename matched "/etc/ipsec.d/*.secrets"
