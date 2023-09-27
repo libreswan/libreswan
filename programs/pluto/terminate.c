@@ -78,7 +78,7 @@ static void terminate_connection(struct connection *c, struct logger *logger)
 	connection_delref(&c, logger);
 }
 
-void terminate_connections(struct connection **cp, struct logger *logger, where_t where)
+void terminate_and_down_connections(struct connection **cp, struct logger *logger, where_t where)
 {
 	switch ((*cp)->local->kind) {
 	case CK_INSTANCE:
@@ -104,7 +104,7 @@ void terminate_connections(struct connection **cp, struct logger *logger, where_
 			.where = HERE,
 		};
 		while (next_connection_old2new(&cq)) {
-			terminate_connections(&cq.c, logger, where);
+			terminate_and_down_connections(&cq.c, logger, where);
 		}
 		return;
 	}

@@ -256,7 +256,7 @@ enum left_right orient_1(struct connection **cp, struct logger *logger)
 			     "both sides of the connection match the interface %s %s",
 			     ifp->ip_dev->id_rname,
 			     str_address(&ifp->ip_dev->id_address, &ab));
-			terminate_connections(cp, logger, HERE);
+			terminate_and_down_connections(cp, logger, HERE);
 			connection_detach((*cp), logger);
 			return END_ROOF;
 		}
@@ -313,7 +313,7 @@ enum left_right orient_1(struct connection **cp, struct logger *logger)
 					jam_address(buf, &ifp->ip_dev->id_address);
 				}
 			}
-			terminate_connections(cp, logger, HERE);
+			terminate_and_down_connections(cp, logger, HERE);
 			connection_detach((*cp), logger);
 
 			return END_ROOF;

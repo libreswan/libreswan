@@ -547,7 +547,7 @@ void restart_connections_by_peer(struct connection *const c, struct logger *logg
 			 * This clears the UP bit; initiate below puts
 			 * it back.
 			 */
-			terminate_connections(&d, logger, HERE);
+			terminate_and_down_connections(&d, logger, HERE);
 		}
 		d = next;
 	}
