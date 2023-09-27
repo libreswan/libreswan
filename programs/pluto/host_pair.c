@@ -33,8 +33,7 @@
 #include "iface.h"
 #include "orient.h"
 #include "host_pair.h"
-
-#include "whack_delete.h"	/* for whack_delete_connection_states() */
+#include "terminate.h"	/* for terminate_connection_states() */
 
 /*
  * Table of host_pairs (local->remote endpoints/addresses).
@@ -313,7 +312,7 @@ void release_dead_interfaces(struct logger *logger)
 		 * What's needed is a variant that doesn't try to send
 		 * (it's pointless as the interface has gone).
 		 */
-		whack_delete_connection_states(c, HERE);
+		terminate_all_connection_states(c, HERE);
 		/*
 		 * ... and then disorient it, moving it to the
 		 * unoriented list.  Always do this - the delete code

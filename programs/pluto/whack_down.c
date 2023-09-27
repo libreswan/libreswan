@@ -31,6 +31,7 @@
 #include "ikev2_delete.h"
 #include "ikev1.h"			/* for established_isakmp_for_state() */
 #include "ikev1_delete.h"		/* for llog_n_maybe_send_v1_delete() */
+#include "terminate.h"			/* for terminate_connection_states() */
 
 /*
  * Is a connection in use by some state?
@@ -105,7 +106,7 @@ static unsigned down_connection(struct connection *c, struct logger *logger)
 		}
 	} else {
 		dbg("connection not shared - terminating IKE and IPsec SA");
-		whack_delete_connection_states(c, HERE);
+		terminate_all_connection_states(c, HERE);
 	}
 
 	/*

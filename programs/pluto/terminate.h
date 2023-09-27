@@ -16,13 +16,12 @@
 #ifndef TERMINATE_H
 #define TERMINATE_H
 
-#include <stdbool.h>
-
 #include "where.h"
 
 struct connection;
 struct logger;
 
+void terminate_all_connection_states(struct connection *c, where_t where);
 void terminate_and_down_connections(struct connection **cp, struct logger *logger, where_t where);
 
 #endif
