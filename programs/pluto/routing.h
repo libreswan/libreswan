@@ -127,7 +127,7 @@ enum routing_event {
 	/* mobike */
 	CONNECTION_SUSPEND,
 	CONNECTION_RESUME,
-#define CONNECTION_EVENT_ROOF (CONNECTION_RESUME+1)
+#define ROUTING_EVENT_ROOF (CONNECTION_RESUME+1)
 };
 
 struct routing_annex {

@@ -722,6 +722,8 @@ struct connection {
 		struct list_entry clonedfrom;
 	} connection_db_entries;
 
+	struct connection_event_event *events[CONNECTION_EVENT_ROOF];
+
 	/*
 	 * An extract of the original configuration information for
 	 * the connection's end sent over by whack.  This pointer is

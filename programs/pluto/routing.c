@@ -51,7 +51,7 @@ static const char *routing_event_name[] = {
 };
 
 static enum_names routing_event_names = {
-	0, CONNECTION_EVENT_ROOF-1,
+	0, ROUTING_EVENT_ROOF-1,
 	ARRAY_REF(routing_event_name),
 	"CONNECTION_",
 	NULL,
@@ -757,8 +757,8 @@ static enum routing_event zap_child_event(struct ike_sa **ike, enum routing_even
 				       event == CONNECTION_DELETE_IKE));
 	enum routing_event child_event = (event == CONNECTION_TIMEOUT_IKE ? CONNECTION_TIMEOUT_CHILD :
 					  event == CONNECTION_DELETE_IKE ? CONNECTION_DELETE_CHILD :
-					  CONNECTION_EVENT_ROOF);
-	PASSERT((*ike)->sa.st_logger, child_event != CONNECTION_EVENT_ROOF);
+					  ROUTING_EVENT_ROOF);
+	PASSERT((*ike)->sa.st_logger, child_event != ROUTING_EVENT_ROOF);
 	return child_event;
 }
 

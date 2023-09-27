@@ -216,9 +216,9 @@ enum global_timer {
  */
 
 enum connection_event {
-	CONNECTION_NONEVENT,
-	CONNECTION_REVIVAL,
+	CONNECTION_REVIVAL = 1,
 };
+#define CONNECTION_EVENT_ROOF (CONNECTION_REVIVAL+1)
 
 extern const struct enum_names connection_event_names;
 
