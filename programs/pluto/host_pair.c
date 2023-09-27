@@ -34,6 +34,8 @@
 #include "orient.h"
 #include "host_pair.h"
 
+#include "whack_delete.h"	/* for whack_delete_connection_states() */
+
 /*
  * Table of host_pairs (local->remote endpoints/addresses).
  */
@@ -291,36 +293,32 @@ void release_dead_interfaces(struct logger *logger)
 		pdbg(c->logger, "connection interface %s being deleted",
 		     str_endpoint(&c->interface->local_endpoint, &eb));
 
-		connection_attach(c, logger);
-
 		/*
-		 * This connection instance's interface is going away.
-		 *
-		 * Note: this used to pass relations as true, to
-		 * cleanup everything but that did not take into
-		 * account a site to site conn on right=%any also
-		 * being an instance.
+		 * This connection interface is going away.
 		 *
 		 * Since the search is new2old and a connection
 		 * instance's template is older, the connection's
 		 * template will only be processed after all instances
 		 * have been deleted.
+		 *
+		 * Since a reference is taken, deleting all states of
+		 * an instance can't delete the connection.
 		 */
-		remove_connection_from_pending(c);
-		delete_states_by_connection(c);
-		connection_unroute(c, HERE);
-		if (is_instance(c)) {
-			endpoint_buf eb;
-			pdbg(c->logger, "connection interface %s for instance",
-			     str_endpoint(&c->interface->local_endpoint, &eb));
-			delete_connection(&c);
-			pexpect(c == NULL);
-			continue;
-		}
-
+		c = connection_addref(c, logger);
+		connection_attach(c, logger);
+		/*
+		 * This is less bad than delete_states_by_connection()
+		 * which deletes things in the wrong order.
+		 *
+		 * What's needed is a variant that doesn't try to send
+		 * (it's pointless as the interface has gone).
+		 */
+		whack_delete_connection_states(c, HERE);
 		/*
 		 * ... and then disorient it, moving it to the
-		 * unoriented list.
+		 * unoriented list.  Always do this - the delete code
+		 * pexpect()s to find the connection on one of those
+		 * lists.
 		 */
 		pexpect(c->host_pair != NULL);
 		delete_oriented_hp(c);
@@ -330,6 +328,7 @@ void release_dead_interfaces(struct logger *logger)
 		pexpect(c->host_pair == NULL);
 
 		connection_detach(c, logger);
+		connection_delref(&c, logger);
 	}
 }
 
