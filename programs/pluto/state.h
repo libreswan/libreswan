@@ -947,7 +947,6 @@ extern void initialize_new_state(struct state *st);
 extern void show_brief_status(struct show *s);
 extern void show_states(struct show *s, const monotime_t now);
 
-extern void find_my_cpi_gap(cpi_t *latest_cpi, cpi_t *first_busy_cpi);
 extern ipsec_spi_t uniquify_peer_cpi(ipsec_spi_t cpi, const struct state *st, int tries);
 
 extern void delete_states_by_peer(struct show *s, const ip_address *peer);
