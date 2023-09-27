@@ -742,9 +742,9 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
  * CREATE_CHILD_SA create child request.
  */
 
-void submit_v2_CREATE_CHILD_SA_new_child(struct ike_sa *ike,
-					 struct connection *c, /* for child */
-					 lset_t policy, struct fd *whackfd)
+struct child_sa *submit_v2_CREATE_CHILD_SA_new_child(struct ike_sa *ike,
+						     struct connection *c, /* for child */
+						     lset_t policy, struct fd *whackfd)
 {
 	/* share the log! */
 	attach_fd(ike->sa.st_logger, whackfd);
@@ -783,6 +783,7 @@ void submit_v2_CREATE_CHILD_SA_new_child(struct ike_sa *ike,
 
 	submit_ke_and_nonce(&larval_child->sa, larval_child->sa.st_pfs_group /*possibly-null*/,
 			    queue_v2_CREATE_CHILD_SA_new_child_request, HERE);
+	return larval_child;
 }
 
 static void llog_v2_success_new_child_request(struct ike_sa *ike)
