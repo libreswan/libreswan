@@ -1691,6 +1691,40 @@ struct state *find_v1_info_state(const ike_spis_t *ike_spis, msgid_t msgid)
  *
  * Also used to find an IKEv1 ISAKMP SA suitable for sending a delete.
  */
+
+static bool parent_ok(const struct connection *c, const struct state *st)
+{
+	/*
+	 * Need matching version and parent for starters!
+	 */
+	if (c->config->ike_version != st->st_ike_version) {
+		return false;
+	}
+	if (!IS_PARENT_SA(st)) {
+		return false;
+	}
+
+	/*
+	 * Do these two mean that a much faster host-pair search could
+	 * be used?
+	 */
+	if (c->host_pair != st->st_connection->host_pair) {
+		return false;
+	}
+	if (!endpoint_address_eq_address(st->st_remote_endpoint, c->remote->host.addr)) {
+		return false;
+	}
+
+	/*
+	 * i.e., connection and IKE SA have the same authentication.
+	 */
+	if (!same_peer_ids(c, st->st_connection, NULL)) {
+		return false;
+	}
+
+	return true;
+}
+
 struct ike_sa *find_ike_sa_by_connection(const struct connection *c,
 					 lset_t ok_states,
 					 bool viable_parent)
@@ -1700,10 +1734,7 @@ struct ike_sa *find_ike_sa_by_connection(const struct connection *c,
 	struct state_filter sf = { .where = HERE, };
 	while (next_state_new2old(&sf)) {
 		struct state *st = sf.st;
-		if (c->config->ike_version != st->st_ike_version) {
-			continue;
-		}
-		if (!IS_PARENT_SA(st)) {
+		if (!parent_ok(c, st)) {
 			continue;
 		}
 		if (!LHAS(ok_states, st->st_state->kind)) {
@@ -1724,23 +1755,6 @@ struct ike_sa *find_ike_sa_by_connection(const struct connection *c,
 				}
 			}
 		}
-		/*
-		 * Do these two mean that a much faster host-pair
-		 * search could be used?
-		 */
-		if (c->host_pair != st->st_connection->host_pair) {
-			continue;
-		}
-		if (!endpoint_address_eq_address(st->st_remote_endpoint, c->remote->host.addr)) {
-			continue;
-		}
-		/*
-		 * i.e., connection and IKE SA have the same
-		 * authentication.
-		 */
-		if (!same_peer_ids(c, st->st_connection, NULL)) {
-			continue;
-		}
 		if (best != NULL && best->sa.st_serialno >= st->st_serialno) {
 			continue;
 		}
@@ -1752,17 +1766,58 @@ struct ike_sa *find_ike_sa_by_connection(const struct connection *c,
 
 struct ike_sa *find_viable_parent_for_connection(const struct connection *c)
 {
+	lset_t ok_states;
 	switch (c->config->ike_info->version) {
 	case IKEv1:
-		return find_ike_sa_by_connection(c, (V1_ISAKMP_SA_ESTABLISHED_STATES |
-						     V1_PHASE1_INITIATOR_STATES),
-						 /*viable-parent*/true);
+		ok_states = (V1_ISAKMP_SA_ESTABLISHED_STATES |
+			     V1_PHASE1_INITIATOR_STATES);
+		break;
 	case IKEv2:
-		return find_ike_sa_by_connection(c, (LELEM(STATE_V2_ESTABLISHED_IKE_SA) |
-						     IKEV2_ISAKMP_INITIATOR_STATES),
-						 /*viable-parent*/true);
+		ok_states = (LELEM(STATE_V2_ESTABLISHED_IKE_SA) |
+			     IKEV2_ISAKMP_INITIATOR_STATES);
+		break;
+	default:
+		bad_enum(c->logger, &ike_version_names, c->config->ike_info->version);
 	}
-	bad_enum(c->logger, &ike_version_names, c->config->ike_info->version);
+
+	struct ike_sa *best = NULL;
+
+	struct state_filter sf = { .where = HERE, };
+	while (next_state_new2old(&sf)) {
+		struct state *st = sf.st;
+		if (!parent_ok(c, st)) {
+			continue;
+		}
+		/*
+		 * Looking for something that can support new
+		 * children.
+		 *
+		 * A larval SA (not yet established) is considered
+		 * viable, even though .st_viable_parent hasn't yet
+		 * been set (that happens when the state establishes).
+		 */
+		if (IS_PARENT_SA_ESTABLISHED(st) &&
+		    !st->st_viable_parent) {
+			/* past it's use-by date */
+			continue;
+		}
+		if (!IS_PARENT_SA_ESTABLISHED(st)) {
+			if (st->st_sa_role != SA_INITIATOR) {
+				PEXPECT(st->st_logger,
+					!LHAS(ok_states, st->st_state->kind));
+				continue;
+			}
+			PEXPECT(st->st_logger,
+				LHAS(ok_states, st->st_state->kind));
+		}
+		/* better? */
+		if (best != NULL && best->sa.st_serialno >= st->st_serialno) {
+			continue;
+		}
+		best = pexpect_ike_sa(st);
+	}
+
+	return best;
 }
 
 void state_eroute_usage(const ip_selector *ours, const ip_selector *peers,
