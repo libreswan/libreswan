@@ -352,7 +352,7 @@ static bool initiate_connection_4_fab(struct connection *c,
 
 	ipsecdoi_initiate(c, policy, replacing, &inception,
 			  sec_label, background, logger,
-			  /*update-routing*/true, HERE);
+			  /*update-routing*/UPDATE_ALL, HERE);
 
 	return true;
 }
@@ -363,7 +363,7 @@ void ipsecdoi_initiate(struct connection *c,
 		       const threadtime_t *inception,
 		       shunk_t sec_label,
 		       bool background, struct logger *logger,
-		       bool update_routing, where_t where)
+		       lset_t update_routing, where_t where)
 {
 	ldbg_connection(c, where, "%s() with update_routing=%s sec_label "PRI_SHUNK,
 			__func__, bool_str(update_routing), pri_shunk(sec_label));
@@ -394,7 +394,7 @@ void ipsecdoi_initiate(struct connection *c,
 	 */
 
 	if (ike == NULL) {
-		if (update_routing) {
+		if (update_routing & UPDATE_IKE) {
 			connection_initiate(c, inception, background, where);
 		}
 		switch (c->config->ike_version) {
@@ -425,7 +425,7 @@ void ipsecdoi_initiate(struct connection *c,
 	 */
 
 	if (IS_PARENT_SA_ESTABLISHED(&ike->sa)) {
-		if (update_routing) {
+		if (update_routing & UPDATE_CHILD) {
 			connection_initiate(c, inception, background, where);
 		}
 		switch (c->config->ike_version) {
@@ -469,7 +469,7 @@ void ipsecdoi_initiate(struct connection *c,
 	 * queue.
 	 */
 
-	if (update_routing) {
+	if (update_routing & UPDATE_PENDING) {
 		connection_initiate(c, inception, background, where);
 	}
 
