@@ -665,34 +665,7 @@ static void down_routed_tunnel(enum routing_event event,
 				   (*child)->sa.st_logger,
 				   where, "delete");
 	set_routing(event, c, RT_UNROUTED, NULL, where);
-
-	/*
-	 * If the Child SA's IKE SA is also using the connection don't
-	 * delete it.
-	 */
-	if (c->newest_ike_sa == (*child)->sa.st_clonedfrom) {
-		ldbg_routing((*child)->sa.st_logger,
-			     "keeping connection; shared with IKE SA "PRI_SO,
-			     pri_so(c->newest_ike_sa));
-		delete_child_sa(child);
-		return;
-	}
-
-	ldbg_routing((*child)->sa.st_logger, "keeping connection; NO!");
 	delete_child_sa(child);
-
-#if 0
-	/*
-	 * This code path is triggered during shutdown (and/or by
-	 * <<ipsec delete>>).
-	 *
-	 * For instance, ikev1-connswitch-02.
-	 */
-	llog_pexpect(c->logger, HERE, "reaching unreachable code?");
-#endif
-
-	remove_connection_from_pending(c);
-	delete_states_by_connection(c);
 }
 
 /*
