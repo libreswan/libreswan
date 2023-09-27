@@ -613,12 +613,12 @@ void init_phase2_iv(struct state *st, const msgid_t *msgid)
 
 static ke_and_nonce_cb quick_outI1_continue;	/* type assertion */
 
-void quick_outI1(struct fd *whack_sock,
-		 struct ike_sa *isakmp,
-		 struct connection *c,
-		 lset_t policy,
-		 so_serial_t replacing,
-		 shunk_t sec_label)
+struct child_sa *quick_outI1(struct fd *whack_sock,
+			     struct ike_sa *isakmp,
+			     struct connection *c,
+			     lset_t policy,
+			     so_serial_t replacing,
+			     shunk_t sec_label)
 {
 	passert(c != NULL);
 	struct child_sa *child = new_v1_child_sa(c, isakmp, SA_INITIATOR, whack_sock);
@@ -696,6 +696,7 @@ void quick_outI1(struct fd *whack_sock,
 		submit_ke_and_nonce(&child->sa, NULL /* no-nonce*/,
 				    quick_outI1_continue, HERE);
 	}
+	return child;
 }
 
 static ke_and_nonce_cb quick_outI1_continue_tail;	/* type assertion */
