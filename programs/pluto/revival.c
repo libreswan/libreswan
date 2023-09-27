@@ -45,61 +45,20 @@
 #include "ikev1.h"	/* for established_isakmp_sa_for_state() */
 
 /*
- * Revival mechanism: keep track of connections
- * that should be kept up, even though all their
- * states have been deleted.
- *
- * We record the connection names.
- * Each name is recorded only once.
- *
- * XXX: This functionality totally overlaps both "initiate" and
- * "pending" and should be merged (however, this simple code might
- * prove to be a better starting point).
- *
- * XXX: during shutdown delete_all_connections() should flush any
- * outstanding revivals; hence no need to free revivals.
+ * This code path can't tell if the flush is due to an initiate or a
+ * revival (would need to pass bit into initiate).  Hence always
+ * silently flush.
  */
-
-static void delete_revival(const struct connection *c)
-{
-	if (!flush_connection_event(c, CONNECTION_REVIVAL)) {
-		if (impair.revival) {
-#if 0
-			/* XXX: should be log but messages with output */
-			llog(RC_LOG, c->logger, "IMPAIR: revival: no event to delete");
-#else
-			ldbg(c->logger, "IMPAIR: revival: no event to delete");
-#endif
-			return;
-		}
-
-		if (exiting_pluto) {
-			ldbg(c->logger, "revival: ignoring missing event, pluto is going down");
-			return;
-		}
-
-		llog_pexpect(c->logger, HERE, "revival: no event to delete");
-	}
-}
-
 void flush_routed_ondemand_revival(struct connection *c)
 {
 	PEXPECT(c->logger, c->child.routing == RT_ROUTED_ONDEMAND);
-	if (c->temp_vars.revival.attempt > 0) {
-		delete_revival(c);
-	} else {
-		PEXPECT(c->logger, !connection_event_is_scheduled(c, CONNECTION_REVIVAL));
-	}
+	flush_connection_event(c, CONNECTION_REVIVAL);
 }
 
 void flush_unrouted_revival(struct connection *c)
 {
 	PEXPECT(c->logger, c->child.routing == RT_UNROUTED);
-	if (c->temp_vars.revival.attempt > 0) {
-		delete_revival(c);
-	} else {
-		PEXPECT(c->logger, !connection_event_is_scheduled(c, CONNECTION_REVIVAL));
-	}
+	flush_connection_event(c, CONNECTION_REVIVAL);
 }
 
 static bool revival_plausable(struct connection *c, struct logger *logger)
@@ -314,5 +273,13 @@ void revive_connection(struct connection *c, const char *subplot,
 		return;
 	}
 
-	connection_revive(c, inception, HERE);
+	shunk_t sec_label = null_shunk;
+	struct logger *logger = c->logger;
+	so_serial_t replacing = SOS_NOBODY;
+	lset_t policy = child_sa_policy(c);
+	bool background = false;
+
+	ipsecdoi_initiate(c, policy, replacing, inception,
+			  sec_label, background, logger,
+			  /*update_routing*/UPDATE_ALL, HERE);
 }

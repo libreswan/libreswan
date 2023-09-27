@@ -38,7 +38,6 @@ static const char *routing_event_name[] = {
 	S(CONNECTION_UNROUTE),
 	S(CONNECTION_INITIATE),
 	S(CONNECTION_ACQUIRE),
-	S(CONNECTION_REVIVE),
 	S(CONNECTION_ESTABLISH_IKE),
 	S(CONNECTION_ESTABLISH_INBOUND),
 	S(CONNECTION_ESTABLISH_OUTBOUND),
@@ -518,8 +517,7 @@ static void ondemand_to_negotiation(enum routing_event event,
 	ldbg_routing(c->logger, "%s() %s", __func__, reason);
         PEXPECT(logger, !is_opportunistic(c));
 	PASSERT(logger, (event == CONNECTION_INITIATE ||
-			 event == CONNECTION_ACQUIRE ||
-			 event == CONNECTION_REVIVE));
+			 event == CONNECTION_ACQUIRE));
 	enum routing rt_negotiation = (c->child.routing == RT_ROUTED_ONDEMAND ? RT_ROUTED_NEGOTIATION :
 				       CONNECTION_ROUTING_ROOF);
 	PASSERT(logger, (rt_negotiation != CONNECTION_ROUTING_ROOF));
@@ -897,16 +895,6 @@ void connection_acquire(struct connection *c, threadtime_t *inception,
 		 });
 }
 
-void connection_revive(struct connection *c, const threadtime_t *inception, where_t where)
-{
-	dispatch(CONNECTION_REVIVE, &c,
-		 c->logger, where,
-		 (struct routing_annex) {
-			 .inception = inception,
-			 .background = true,
-		 });
-}
-
 void connection_route(struct connection *c, where_t where)
 {
 	if (!oriented(c)) {
@@ -1198,6 +1186,7 @@ static void dispatch_1(enum routing_event event,
 			return;
 
 		case X(INITIATE, ROUTED_ONDEMAND, PERMANENT):
+		case X(INITIATE, ROUTED_ONDEMAND, INSTANCE): /* from revival */
 			flush_routed_ondemand_revival(c);
 			ondemand_to_negotiation(event, c, where, "negotiating permanent");
 			PEXPECT(logger, c->child.routing == RT_ROUTED_NEGOTIATION);
@@ -1237,92 +1226,6 @@ static void dispatch_1(enum routing_event event,
 		case X(ACQUIRE, ROUTED_NEGOTIATION, PERMANENT):
 			llog(RC_LOG, c->logger, "connection already negotiating");
 			return;
-
-		case X(REVIVE, UNROUTED, INSTANCE):
-		case X(REVIVE, UNROUTED, PERMANENT):
-			/*
-			 * Same as INITIATE, UNROUTED_REVIVAL,
-			 * PERMANENT except slight initiate
-			 * difference.
-			 */
-			set_routing(event, c, RT_UNROUTED_NEGOTIATION, NULL, where);
-			ipsecdoi_initiate(c, child_sa_policy(c), SOS_NOBODY, e->inception,
-					  null_shunk, /*background*/false, logger,
-					  /*update_routing*/LEMPTY, HERE);
-			return;
-		case X(REVIVE, ROUTED_ONDEMAND, PERMANENT):
-		case X(REVIVE, ROUTED_ONDEMAND, INSTANCE):
-			if (BROKEN_TRANSITION) {
-				/*
-				 * ikev2-20-ikesa-reauth:
-				 *
-				 * The re-auth code still calls
-				 * delete_ike_family().
-				 *
-				 * others?
-				 */
-				if (c->config->negotiation_shunt == SHUNT_HOLD) {
-					ldbg_routing(c->logger, "skipping NEGOTIATION=HOLD");
-					set_routing(event, c, RT_ROUTED_NEGOTIATION, NULL, where);
-					/* ipsecdoi_initiate may replace SOS_NOBODY with a state */
-					ipsecdoi_initiate(c, child_sa_policy(c), SOS_NOBODY,
-							  e->inception, null_shunk,
-							  e->background, c->logger,
-							  /*update_routing*/LEMPTY, HERE);
-					return;
-				}
-				ondemand_to_negotiation(event, c, where, "negotiating revival");
-				PEXPECT(logger, c->child.routing == RT_ROUTED_NEGOTIATION);
-				ipsecdoi_initiate(c, child_sa_policy(c), SOS_NOBODY, e->inception,
-						  null_shunk, /*background*/false, logger,
-						  /*update_routing*/LEMPTY, HERE);
-				return;
-			}
-			break;
-
-		case X(REVIVE, UNROUTED_NEGOTIATION, INSTANCE):
-			if (BROKEN_TRANSITION) {
-				/* ikev2-redirect-01-global
-				 * ikev2-redirect-02-auth
-				 * ikev2-redirect-03-auth-loop
-				 * ikev2-tcp-05-transport-mode
-				 * ikev2-tcp-06-fail-ike-sa-init-redirect
-				 * ikev2-tcp-07-fail-ike-auth-redirect */
-				ipsecdoi_initiate(c, child_sa_policy(c), SOS_NOBODY, e->inception,
-						  null_shunk, /*background*/false, logger,
-						  /*update_routing*/LEMPTY, HERE);
-				return;
-			}
-			break;
-		case X(REVIVE, ROUTED_NEGOTIATION, INSTANCE):
-			if (BROKEN_TRANSITION) {
-				/* ikev2-32-nat-rw-rekey
-				 * ikev2-liveness-05 ikev2-liveness-07
-				 * ikev2-liveness-08 */
-				ipsecdoi_initiate(c, child_sa_policy(c), SOS_NOBODY, e->inception,
-						  null_shunk, /*background*/false, logger,
-						  /*update_routing*/LEMPTY, HERE);
-				return;
-			}
-			break;
-		case X(REVIVE, UNROUTED_NEGOTIATION, PERMANENT):
-			if (BROKEN_TRANSITION) {
-				/* ikev2-x509-31-wifi-assist */
-				ipsecdoi_initiate(c, child_sa_policy(c), SOS_NOBODY, e->inception,
-						  null_shunk, /*background*/false, logger,
-						  /*update_routing*/LEMPTY, HERE);
-				return;
-			}
-			break;
-		case X(REVIVE, ROUTED_TUNNEL, PERMANENT):
-			if (BROKEN_TRANSITION) {
-				/* ikev2-59-multiple-acquires-alias. */
-				ipsecdoi_initiate(c, child_sa_policy(c), SOS_NOBODY, e->inception,
-						  null_shunk, /*background*/false, logger,
-						  /*update_routing*/LEMPTY, HERE);
-				return;
-			}
-			break;
 
 		case X(ROUTE, UNROUTED_NEGOTIATION, PERMANENT):
 			if (BROKEN_TRANSITION) {
