@@ -58,11 +58,11 @@
 #include "nat_traversal.h"
 #include "terminate.h"
 #include "host_pair.h"
+#include "whack_delete.h"		/* for whack_delete_connection_states() */
 
-static void terminate_connection(struct connection *c)
+static void terminate_connection(struct connection *c, struct logger *logger)
 {
 	llog(RC_LOG, c->logger, "terminating SAs using this connection");
-
 	del_policy(c, policy.up);
 
 	/*
@@ -73,9 +73,9 @@ static void terminate_connection(struct connection *c)
 	 * +002 "test2": connection no longer oriented - system interface change?
 	 * +002 "test2": unroute-host output: Device "NULL" does not exist.
 	 */
-	remove_connection_from_pending(c);
-	delete_states_by_connection(c);
-	connection_unroute(c, HERE);
+	c = connection_addref(c, logger);
+	whack_delete_connection_states(c, HERE);
+	connection_delref(&c, logger);
 }
 
 void terminate_connections(struct connection **cp, struct logger *logger, where_t where)
@@ -84,14 +84,14 @@ void terminate_connections(struct connection **cp, struct logger *logger, where_
 	case CK_INSTANCE:
 	case CK_LABELED_CHILD: /* should not happen? */
 		connection_attach((*cp), logger);
-		terminate_connection((*cp));
+		terminate_connection((*cp), logger);
 		delete_connection(cp);
 		return;
 
 	case CK_PERMANENT:
 	case CK_LABELED_PARENT:
 		connection_attach((*cp), logger);
-		terminate_connection((*cp));
+		terminate_connection((*cp), logger);
 		connection_detach((*cp), logger);
 		return;
 

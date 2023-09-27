@@ -539,8 +539,14 @@ void restart_connections_by_peer(struct connection *const c, struct logger *logg
 
 		if (same_host(dnshostname, &host_addr,
 			      d->config->dnshostname, &d->remote->host.addr)) {
-			/* This might delete c if CK_INSTANCE */
-			/* ??? is there a chance hp becomes dangling? */
+			/*
+			 * This might delete c if CK_INSTANCE
+			 *
+			 * ??? is there a chance hp becomes dangling?
+			 *
+			 * This clears the UP bit; initiate below puts
+			 * it back.
+			 */
 			terminate_connections(&d, logger, HERE);
 		}
 		d = next;
