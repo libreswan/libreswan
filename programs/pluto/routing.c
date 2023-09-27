@@ -1699,17 +1699,11 @@ static void dispatch_1(enum routing_event event,
 			if (should_revive_child(*(e->child))) {
 				schedule_child_revival((*e->child), "timed out");
 				delete_child_sa(e->child);
+				set_routing(event, c, RT_UNROUTED, NULL, where);
 				return;
 			}
 			delete_child_sa(e->child);
-			if (is_instance(c) &&
-			    e->ike != NULL/*IKEv1?*/ &&
-			    c != (*e->ike)->sa.st_connection) {
-				llog_pexpect(c->logger, HERE, "reaching unreachable code?");
-				remove_connection_from_pending(c);
-				delete_states_by_connection(c);
-				connection_unroute(c, HERE);
-			}
+			set_routing(event, c, RT_UNROUTED, NULL, where);
 			return;
 
 		case X(ESTABLISH_INBOUND, ROUTED_ONDEMAND, TEMPLATE): /* ikev1-l2tp-03-two-interfaces */
