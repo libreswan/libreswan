@@ -494,10 +494,6 @@ void ipsecdoi_initiate(struct connection *c,
 	 * queue.
 	 */
 
-	if (update_routing & UPDATE_PENDING) {
-		connection_initiate(c, inception, background, where);
-	}
-
 	switch (c->config->ike_version) {
 #ifdef USE_IKEv1
 	case IKEv1:
@@ -506,6 +502,9 @@ void ipsecdoi_initiate(struct connection *c,
 		add_pending(ike, c, policy,
 			    replacing, sec_label,
 			    false /*part of initiate*/, background);
+		if (update_routing & UPDATE_PENDING) {
+			connection_pending(c, where);
+		}
 		break;
 	}
 #endif
@@ -522,6 +521,9 @@ void ipsecdoi_initiate(struct connection *c,
 		add_pending(ike, cc, policy,
 			    replacing, sec_label,
 			    false /*part of initiate*/, background);
+		if (update_routing) {
+			connection_pending(cc, where);
+		}
 		connection_delref(&cc, cc->logger);
 		break;
 	}
