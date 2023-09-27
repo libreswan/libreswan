@@ -1,3 +1,0 @@
-liveness test with dpdaction=hold
-
-west must install a %trap 

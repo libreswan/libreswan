@@ -1,0 +1,5 @@
+liveness test; west must install %trap and then revival must install a %hold
+
+The liveness code detects things are dead so changes the connection to
+routed-ondemand and then schedules revival.  The revival then changes
+the connection to routed-hold.
