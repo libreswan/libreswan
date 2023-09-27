@@ -427,9 +427,6 @@ void ipsecdoi_initiate(struct connection *c,
 	 */
 
 	if (IS_PARENT_SA_ESTABLISHED(&ike->sa)) {
-		if (update_routing & UPDATE_CHILD) {
-			connection_initiate(c, inception, background, where);
-		}
 		struct child_sa *child;
 		switch (c->config->ike_version) {
 #ifdef USE_IKEv1
@@ -472,6 +469,9 @@ void ipsecdoi_initiate(struct connection *c,
 		}
 		if (child == NULL) {
 			return;
+		}
+		if (update_routing & UPDATE_CHILD) {
+			connection_initiated_child(ike, child, where);
 		}
 		if (background) {
 			/*
