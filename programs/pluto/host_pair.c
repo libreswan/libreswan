@@ -274,23 +274,22 @@ void release_dead_interfaces(struct logger *logger)
 		struct connection *c = cf.c;
 
 		if (!oriented(c)) {
-			connection_buf cb;
-			dbg("connection interface un-oriented: "PRI_CONNECTION,
-			    pri_connection(c, &cb));
+			/* aka c->interface == NULL */
+			pdbg(c->logger, "connection interface un-oriented");
 			continue;
 		}
 
 		passert(c->interface != NULL); /* aka oriented() */
 		if (c->interface->ip_dev->ifd_change != IFD_DELETE) {
-			connection_buf cb;
-			dbg("connection interface safe: "PRI_CONNECTION,
-			    pri_connection(c, &cb));
+			endpoint_buf eb;
+			pdbg(c->logger, "connection interface %s safe",
+			     str_endpoint(&c->interface->local_endpoint, &eb));
 			continue;
 		}
 
-		connection_buf cb;
-		dbg("connection interface deleted: "PRI_CONNECTION,
-		    pri_connection(c, &cb));
+		endpoint_buf eb;
+		pdbg(c->logger, "connection interface %s being deleted",
+		     str_endpoint(&c->interface->local_endpoint, &eb));
 
 		connection_attach(c, logger);
 
@@ -311,6 +310,9 @@ void release_dead_interfaces(struct logger *logger)
 		delete_states_by_connection(c);
 		connection_unroute(c, HERE);
 		if (is_instance(c)) {
+			endpoint_buf eb;
+			pdbg(c->logger, "connection interface %s for instance",
+			     str_endpoint(&c->interface->local_endpoint, &eb));
 			delete_connection(&c);
 			pexpect(c == NULL);
 			continue;
