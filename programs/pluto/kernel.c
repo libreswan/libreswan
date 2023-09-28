@@ -87,6 +87,7 @@
 #include "kernel_alg.h"
 #include "updown.h"
 #include "pending.h"
+#include "terminate.h"
 
 static void delete_bare_shunt_kernel_policy(const struct bare_shunt *bsp,
 					    enum expect_kernel_policy expect_kernel_policy,
@@ -2074,6 +2075,7 @@ void show_kernel_interface(struct show *s)
  * The Responder will subsequently use install_ipsec_sa for the outbound.
  * The Initiator uses install_ipsec_sa to install both at once.
  */
+
 bool install_inbound_ipsec_sa(struct child_sa *child, where_t where)
 {
 	struct connection *c = child->sa.st_connection;
@@ -2132,17 +2134,18 @@ bool install_inbound_ipsec_sa(struct child_sa *child, where_t where)
 				str_address_sensitive(&co->remote->host.addr, &b));
 
 			if (is_instance(co)) {
-				/* NOTE: CO not C */
-				struct connection *cc = connection_addref(co, child->sa.st_logger);
-				remove_connection_from_pending(co);
-				delete_states_by_connection(co);
-				connection_unroute(co, HERE);
-				connection_delref(&cc, child->sa.st_logger);
+				/*
+				 * NOTE: CO not C.
+				 *
+				 * Presumably the instance CO looses
+				 * to the permanent connection C.
+				 */
+				terminate_all_connection_states(co, HERE);
 			} else {
-				/* NOTE: C not CO */
-				remove_connection_from_pending(c);
-				delete_states_by_connection(c);
-				connection_unroute(c, HERE);
+				/*
+				 * NOTE: C not CO; why?
+				 */
+				terminate_all_connection_states(c, HERE);
 			}
 		}
 	}
