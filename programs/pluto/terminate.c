@@ -122,15 +122,10 @@ static void delete_v1_states(struct connection *c,
 		return;
 	case WHACK_STOP_IKE:
 	{
-		/*
-		 * Can't use connection_delete_ike() as that has IKEv2
-		 * semantics - deletes all siblings skipped above.
-		 */
 		struct ike_sa *isakmp =
 			established_isakmp_sa_for_state(&(*ike)->sa, /*viable-parent*/false);
 		llog_n_maybe_send_v1_delete(isakmp, &(*ike)->sa, HERE);
-		delete_ike_sa(ike);
-		connection_unroute(c, HERE);
+		connection_delete_ike(ike, HERE);
 		return;
 	}
 	}
