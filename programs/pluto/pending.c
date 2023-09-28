@@ -295,8 +295,7 @@ void unpend(struct ike_sa *ike, struct connection *cc)
 #ifdef USE_IKEv1
 				quick_outI1(p->whack_sock, ike, p->connection,
 					    p->policy,
-					    p->replacing,
-					    null_shunk);
+					    p->replacing);
 #endif
 				break;
 			default:

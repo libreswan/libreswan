@@ -40,15 +40,13 @@ extern struct ike_sa *main_outI1(struct fd *whack_sock,
 				 struct connection *c,
 				 struct state *predecessor,
 				 lset_t policy,
-				 const threadtime_t *inception,
-				 shunk_t sec_label);
+				 const threadtime_t *inception);
 
 extern struct ike_sa *aggr_outI1(struct fd *whack_sock,
 				 struct connection *c,
 				 struct state *predecessor,
 				 lset_t policy,
-				 const threadtime_t *inception,
-				 shunk_t sec_label);
+				 const threadtime_t *inception);
 
 struct hash_signature v1_sign_hash_RSA(const struct connection *c,
 				       const struct crypt_mac *hash,

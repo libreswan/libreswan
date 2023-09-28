@@ -63,12 +63,10 @@ void ikev1_replace(struct state *st)
 
 		if (c->config->aggressive) {
 			aggr_outI1(st->st_logger->object_whackfd, c, st,
-				   policy, &inception,
-				   HUNK_AS_SHUNK(c->child.sec_label));
+				   policy, &inception);
 		} else {
 			main_outI1(st->st_logger->object_whackfd, c, st,
-				   policy, &inception,
-				   HUNK_AS_SHUNK(c->child.sec_label));
+				   policy, &inception);
 		}
 
 	} else {

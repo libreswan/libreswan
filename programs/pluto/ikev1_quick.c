@@ -617,24 +617,12 @@ struct child_sa *quick_outI1(struct fd *whack_sock,
 			     struct ike_sa *isakmp,
 			     struct connection *c,
 			     lset_t policy,
-			     so_serial_t replacing,
-			     shunk_t sec_label)
+			     so_serial_t replacing)
 {
 	passert(c != NULL);
 	struct child_sa *child = new_v1_child_sa(c, isakmp, SA_INITIATOR, whack_sock);
 
 	child->sa.st_policy = policy;
-
-	if (c->config->sec_label.len != 0) {
-		dbg("pending phase 2 with base security context '"PRI_SHUNK"'",
-		    pri_shunk(c->config->sec_label));
-		if (sec_label.len != 0) {
-			child->sa.st_v1_acquired_sec_label = clone_hunk(sec_label, "st_acquired_sec_label");
-			dbg("pending phase 2 with 'instance' security context '"PRI_SHUNK"'",
-			    pri_shunk(sec_label));
-		}
-	}
-
 
 	child->sa.st_v1_msgid.id = generate_msgid(&isakmp->sa);
 	change_v1_state(&child->sa, STATE_QUICK_I1); /* from STATE_UNDEFINED */

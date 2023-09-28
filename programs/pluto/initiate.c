@@ -401,11 +401,9 @@ void ipsecdoi_initiate(struct connection *c,
 #ifdef USE_IKEv1
 		case IKEv1:
 			if (c->config->aggressive) {
-				aggr_outI1(whackfd, c, NULL, policy,
-					   inception, sec_label);
+				aggr_outI1(whackfd, c, NULL, policy, inception);
 			} else {
-				main_outI1(whackfd, c, NULL, policy,
-					   inception, sec_label);
+				main_outI1(whackfd, c, NULL, policy, inception);
 			}
 			break;
 #endif
@@ -438,8 +436,7 @@ void ipsecdoi_initiate(struct connection *c,
 			 * negotiated the ISAKMP SA!  It isn't clear
 			 * what to do with the error return.
 			 */
-			quick_outI1(whackfd, ike, c, policy,
-				    replacing, sec_label);
+			quick_outI1(whackfd, ike, c, policy, replacing);
 			break;
 		}
 #endif

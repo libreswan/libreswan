@@ -112,8 +112,7 @@ struct ike_sa *main_outI1(struct fd *whack_sock,
 			  struct connection *c,
 			  struct state *predecessor,
 			  lset_t policy,
-			  const threadtime_t *inception,
-			  shunk_t sec_label)
+			  const threadtime_t *inception)
 {
 	struct ike_sa *ike = new_v1_istate(c, whack_sock);
 	struct state *st = &ike->sa;
@@ -128,7 +127,7 @@ struct ike_sa *main_outI1(struct fd *whack_sock,
 		add_v1_pending(whack_sock, ike, c, policy,
 			       predecessor == NULL ?
 			       SOS_NOBODY : predecessor->st_serialno,
-			       sec_label, true /* part of initiate */);
+			       null_shunk, true /* part of initiate */);
 	}
 
 	if (predecessor == NULL) {
