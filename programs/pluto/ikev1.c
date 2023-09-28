@@ -3030,78 +3030,99 @@ void ISAKMP_SA_established(struct ike_sa *ike)
 		 * Only do this for connections with the same name
 		 * (can be shared ike sa)
 		 */
-		struct connection_filter cf = { .where = HERE, };
+		struct connection_filter cf = {
+			.name = c->name,
+			.kind = c->local->kind,
+			.this_id_eq = &c->local->host.id,
+			.that_id_eq = &c->remote->host.id,
+			.where = HERE,
+		};
 		while (next_connection_new2old(&cf)) {
 			struct connection *d = cf.c;
 
-			/* if old IKE SA is same as new IKE sa and non-auth isn't overwrting auth */
-			if (c != d &&
-			    c->local->kind == d->local->kind &&
-			    streq(c->name, d->name) &&
-			    same_id(&c->local->host.id, &d->local->host.id) &&
-			    same_id(&c->remote->host.id, &d->remote->host.id)) {
-				bool old_uses_nullauth = d->remote->host.config->auth == AUTH_NULL;
-				bool same_remote_ip = sameaddr(&c->remote->host.addr, &d->remote->host.addr);
+			if (c == d) {
+				continue;
+			}
 
-				if (same_remote_ip &&
-				    !old_uses_nullauth && new_uses_authnull) {
-					llog_sa(RC_LOG, ike, "cannot replace old authenticated connection with authnull connection");
-				} else if (!same_remote_ip &&
-					   old_uses_nullauth && new_uses_authnull) {
-					llog_sa(RC_LOG, ike, "NULL auth ID for different IP's cannot replace each other");
-				} else {
-					dbg("unorienting old connection with same IDs");
-					/*
-					 * XXX: Assume this call
-					 * doesn't want to log to
-					 * whack?  Even though the IKE
-					 * SA may have whack attached,
-					 * don't transfer it to the
-					 * old connection.
-					 */
-					if (is_instance(d)) {
+			/*
+			 * If old IKE SA is same as new IKE sa and
+			 * non-auth isn't overwrting auth.
+			 */
 
-						/*
-						 * When replacing an
-						 * old existing
-						 * connection,
-						 * suppress sending
-						 * delete notify
-						 */
-						suppress_delete_notify(ike, IKE_SA, d->newest_ike_sa, HERE);
-						suppress_delete_notify(ike, IPSEC_SA, d->newest_ipsec_sa, HERE);
+			bool old_uses_nullauth = d->remote->host.config->auth == AUTH_NULL;
+			bool same_remote_ip = sameaddr(&c->remote->host.addr, &d->remote->host.addr);
 
-						/* NOTE: D not C */
+			if (same_remote_ip &&
+			    !old_uses_nullauth && new_uses_authnull) {
+				llog_sa(RC_LOG, ike, "cannot replace old authenticated connection with authnull connection");
+				continue;
+			}
 
-						struct connection *dd = connection_addref(d, ike->sa.st_logger);
-						remove_connection_from_pending(d);
-						delete_v1_states_by_connection(d);
-						connection_unroute(d, HERE);
-						connection_delref(&dd, ike->sa.st_logger);
+			if (!same_remote_ip &&
+				   old_uses_nullauth && new_uses_authnull) {
+				llog_sa(RC_LOG, ike, "NULL auth ID for different IP's cannot replace each other");
+				continue;
+			}
 
-					} else {
+			ldbg_sa(ike, "unorienting old connection with same IDs");
 
-						/*
-						 * When replacing an
-						 * old existing
-						 * connection,
-						 * suppress sending
-						 * delete notify.
-						 *
-						 * NOTE: D yet below
-						 * strips C!
-						 */
-						suppress_delete_notify(ike, IKE_SA, d->newest_ike_sa, HERE);
-						suppress_delete_notify(ike, IPSEC_SA, d->newest_ipsec_sa, HERE);
+			/*
+			 * Per lookup, C and D have the same kind,
+			 * which means that if one is an instance then
+			 * so is the other and conversely when one is
+			 * permanent then so too is the other.
+			 */
+			PEXPECT(ike->sa.st_logger, c->local->kind == d->local->kind);
+			PEXPECT(ike->sa.st_logger, is_instance(c) || is_permanent(c));
+			PEXPECT(ike->sa.st_logger, is_instance(c) == is_instance(d));
+			PEXPECT(ike->sa.st_logger, is_permanent(c) == is_permanent(d));
 
-						/* NOTE: C not D */
+			/*
+			 * XXX: Assume this call doesn't want to log
+			 * to whack?  Even though the IKE SA may have
+			 * whack attached, don't transfer it to the
+			 * old connection.
+			 */
 
-						/* this deletes the states */
-						remove_connection_from_pending(c);
-						delete_v1_states_by_connection(c);
-						connection_unroute(c, HERE);
-					}
-				}
+			if (is_instance(d)) {
+
+				/*
+				 * When replacing an old
+				 * existing connection,
+				 * suppress sending delete
+				 * notify
+				 */
+				suppress_delete_notify(ike, IKE_SA, d->newest_ike_sa, HERE);
+				suppress_delete_notify(ike, IPSEC_SA, d->newest_ipsec_sa, HERE);
+
+				/* NOTE: D not C */
+
+				struct connection *dd = connection_addref(d, ike->sa.st_logger);
+				remove_connection_from_pending(d);
+				delete_v1_states_by_connection(d);
+				connection_unroute(d, HERE);
+				connection_delref(&dd, ike->sa.st_logger);
+
+			} else {
+
+				/*
+				 * When replacing an old
+				 * existing connection,
+				 * suppress sending delete
+				 * notify.
+				 *
+				 * NOTE: D yet below strips C!
+				 */
+				suppress_delete_notify(ike, IKE_SA, d->newest_ike_sa, HERE);
+				suppress_delete_notify(ike, IPSEC_SA, d->newest_ipsec_sa, HERE);
+
+				/* NOTE: C not D */
+
+				/* this deletes the states */
+				remove_connection_from_pending(c);
+				delete_v1_states_by_connection(c);
+				connection_unroute(c, HERE);
+
 			}
 		}
 	}
