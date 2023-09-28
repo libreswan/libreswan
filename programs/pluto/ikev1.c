@@ -3106,19 +3106,12 @@ void ISAKMP_SA_established(struct ike_sa *ike)
 			} else {
 
 				/*
-				 * When replacing an old
-				 * existing connection,
-				 * suppress sending delete
-				 * notify.
+				 * NOTE: C not D
 				 *
-				 * NOTE: D yet below strips C!
+				 * The new permanent connection C is
+				 * deleted leaving D alone.
 				 */
-				suppress_delete_notify(ike, IKE_SA, d->newest_ike_sa, HERE);
-				suppress_delete_notify(ike, IPSEC_SA, d->newest_ipsec_sa, HERE);
 
-				/* NOTE: C not D */
-
-				/* this deletes the states */
 				remove_connection_from_pending(c);
 				delete_v1_states_by_connection(c);
 				connection_unroute(c, HERE);
