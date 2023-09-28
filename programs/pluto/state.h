@@ -1035,4 +1035,6 @@ const char *state_sa_name(const struct state *st);
 /* IKE | ISAKMP || Child | IPsec */
 const char *state_sa_short_name(const struct state *st);
 
+void wipe_old_connections(const struct ike_sa *ike);
+
 #endif /* STATE_H */
