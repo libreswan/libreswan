@@ -550,32 +550,6 @@ void free_logger(struct logger **logp, where_t where)
 	*logp = NULL;
 }
 
-/*
- * XXX: these were macros only older GCC's, seeing for some code
- * paths, OBJECT was always non-NULL and pexpect(OBJECT!=NULL) was
- * constant, would generate a -Werror=address:
- *
- * error: the comparison will always evaluate as 'true' for the
- * address of 'stack_md' will never be NULL [-Werror=address]
- */
-
-void log_pending(lset_t rc_flags, const struct pending *p, const char *msg, ...)
-{
-	passert(in_main_thread());
-	passert(p != NULL);
-	struct logger logger = {
-		.where = HERE,
-		.global_whackfd = null_fd,
-		.object_whackfd = p->whack_sock,
-		.object = p->connection,
-		.object_vec = &logger_connection_vec,
-	};
-	va_list ap;
-	va_start(ap, msg);
-	llog_va_list(rc_flags, &logger, msg, ap);
-	va_end(ap);
-}
-
 void log_state(lset_t rc_flags, const struct state *st,
 	       const char *msg, ...)
 {

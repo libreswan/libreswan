@@ -122,20 +122,6 @@ void free_logger(struct logger **logp, where_t where);
 	}
 
 /*
- * Log with a connection context.
- *
- * Unlike state and pending, connections do not have an attached
- * WHACKFD.  Instead connection operations only log to whack when
- * being called by the whack event handler (where WHACKFD is passed
- * down).  If whack needs to remain attached after the whack event
- * handler returns then the WHACKFD parameter is duped into to either
- * a state or pending struct.
- */
-
-void log_pending(lset_t rc_flags, const struct pending *p,
-		 const char *msg, ...) PRINTF_LIKE(3);
-
-/*
  * Log the state.
  *
  * PRI_STATE() / PRI_SA() try to match the llog_sa() prefix.

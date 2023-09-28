@@ -36,6 +36,7 @@ struct show;
  */
 
 struct pending {
+	struct logger *logger;
 	struct fd *whack_sock;
 	struct ike_sa *ike;
 	struct connection *connection;

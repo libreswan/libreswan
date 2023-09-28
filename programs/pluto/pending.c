@@ -87,9 +87,21 @@ static void add_pending(struct fd *whack_sock,
 	}
 
 	struct pending *p = alloc_thing(struct pending, "struct pending");
+
+	/*
+	 * Clone C's logger but strip it of any whack attached by the
+	 * caller (initiate_connection() say) that will be detached
+	 * after this code returns.  For the moment, instead use
+	 * .whack_sock for(at least for now).
+	 */
+	p->logger = clone_logger(c->logger, HERE);
+	fd_delref(&p->logger->global_whackfd);
+	fd_delref(&p->logger->object_whackfd);
+	attach_fd(p->logger, whack_sock);
+
 	p->whack_sock = fd_addref(whack_sock); /*on heap*/
 	p->ike = ike;
-	p->connection = connection_addref(c, &global_logger); /* no pending logger */
+	p->connection = connection_addref(c, p->logger); /* no pending logger */
 	p->policy = policy;
 	p->replacing = replacing;
 	p->pend_time = mononow();
@@ -104,14 +116,14 @@ static void add_pending(struct fd *whack_sock,
 	if (only != NO_STREAM) {
 		address_buf b;
 		state_buf sab;
-		log_pending(only | RC_COMMENT, p,
-			    "queue %s; waiting on %s "PRI_STATE" negotiating with %s",
-			    /* "Child SA" or "IPsec SA" */
-			    p->connection->config->ike_info->child_sa_name,
-			    /* "IKE SA" or "ISAKMP SA" */
-			    p->connection->config->ike_info->parent_sa_name,
-			    pri_state(&ike->sa, &sab),
-			    ipstr(&c->remote->host.addr, &b));
+		llog(only | RC_COMMENT, p->logger,
+		     "queue %s; waiting on %s "PRI_STATE" negotiating with %s",
+		     /* "Child SA" or "IPsec SA" */
+		     p->connection->config->ike_info->child_sa_name,
+		     /* "IKE SA" or "ISAKMP SA" */
+		     p->connection->config->ike_info->parent_sa_name,
+		     pri_state(&ike->sa, &sab),
+		     ipstr(&c->remote->host.addr, &b));
 	}
 	host_pair_enqueue_pending(c, p);
 }
@@ -190,6 +202,7 @@ void release_pending_whacks(struct state *st, err_t story)
 	/*
 	 * Now go through pending children and close the whack socket
 	 * of any that are going to be assigned this ST as the parent.
+	 *
 	 * XXX: Is this because the parent is dying so anything
 	 * waiting on it should be deleted.
 	 *
@@ -207,12 +220,14 @@ void release_pending_whacks(struct state *st, err_t story)
 		if (p->ike == ike_with_same_whack && fd_p(p->whack_sock)) {
 			if (!same_fd(st->st_logger->object_whackfd, p->whack_sock)) {
 				/* XXX: why not the log file? */
-				log_pending(WHACK_STREAM|RC_COMMENT, p,
-					    "%s for IKE SA, but releasing whack for pending %s",
-					    story,
-					    /* "IPsec SA" or "CHILD SA" */
-					    p->connection->config->ike_info->child_sa_name);
+				llog(WHACK_STREAM|RC_COMMENT, p->logger,
+				     "%s for IKE SA, but releasing whack for pending %s",
+				     story,
+				     /* "IPsec SA" or "CHILD SA" */
+				     p->connection->config->ike_info->child_sa_name);
 			}
+			fd_delref(&p->logger->global_whackfd);
+			fd_delref(&p->logger->object_whackfd);
 			fd_delref(&p->whack_sock);/*on-heap*/
 		}
 	}
@@ -245,6 +260,7 @@ static void delete_pending(struct pending **pp, const char *what)
 
 	connection_delref(&p->connection, &global_logger);
 	fd_delref(&p->whack_sock); /*on-heap*/
+	free_logger(&p->logger, HERE);
 	pfree(p);
 }
 
