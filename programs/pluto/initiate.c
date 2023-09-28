@@ -451,23 +451,26 @@ void ipsecdoi_initiate(struct connection *c,
 		}
 #endif
 		case IKEv2:
-			if (!already_has_larval_v2_child(ike, c)) {
-				dbg("initiating child sa with "PRI_LOGGER, pri_logger(logger));
-				struct connection *cc;
-				if (c->config->sec_label.len > 0) {
-					cc = sec_label_child_instantiate(ike, sec_label, HERE);
-				} else {
-					cc = connection_addref(c, c->logger);
-				}
-				/*
-				 * XXX: should be passing logger down to initiate and pending
-				 * code.  Not whackfd.
-				 */
-				struct fd *whackfd = logger->global_whackfd;
-				submit_v2_CREATE_CHILD_SA_new_child(ike, cc, policy, whackfd);
-				connection_delref(&cc, cc->logger);
+		{
+			if (already_has_larval_v2_child(ike, c)) {
+				break;
 			}
+			dbg("initiating child sa with "PRI_LOGGER, pri_logger(logger));
+			struct connection *cc;
+			if (c->config->sec_label.len > 0) {
+				cc = sec_label_child_instantiate(ike, sec_label, HERE);
+				/* propogate whack attached to C */
+				connection_attach(cc, c->logger);
+			} else {
+				cc = connection_addref(c, c->logger);
+			}
+			submit_v2_CREATE_CHILD_SA_new_child(ike, cc, policy);
+			if (c != cc) {
+				connection_detach(cc, c->logger);
+			}
+			connection_delref(&cc, cc->logger);
 			break;
+		}
 		default:
 			bad_enum(c->logger, &ike_version_names, c->config->ike_version);
 		}

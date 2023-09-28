@@ -743,13 +743,15 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
  */
 
 struct child_sa *submit_v2_CREATE_CHILD_SA_new_child(struct ike_sa *ike,
-						     struct connection *c, /* for child */
-						     lset_t policy, struct fd *whackfd)
+						     struct connection *cc, /* for child + whack */
+						     lset_t policy)
 {
 	/* share the log! */
-	attach_fd(ike->sa.st_logger, whackfd);
+	state_attach(&ike->sa, cc->logger);
 
-	struct child_sa *larval_child = new_v2_child_sa(c, ike, IPSEC_SA,
+	struct fd *whackfd = cc->logger->global_whackfd;
+
+	struct child_sa *larval_child = new_v2_child_sa(cc, ike, IPSEC_SA,
 							SA_INITIATOR,
 							STATE_V2_NEW_CHILD_I0,
 							whackfd);

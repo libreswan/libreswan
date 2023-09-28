@@ -302,9 +302,10 @@ void unpend(struct ike_sa *ike, struct connection *cc)
 					 */
 					what = "delete from";
 				} else if (!already_has_larval_v2_child(ike, p->connection)) {
+					connection_attach(p->connection, p->logger);
 					submit_v2_CREATE_CHILD_SA_new_child(ike, p->connection,
-									    p->policy,
-									    p->whack_sock);
+									    p->policy);
+					connection_detach(p->connection, p->logger);
 				}
 				break;
 			case IKEv1:
