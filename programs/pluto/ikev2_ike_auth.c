@@ -1165,15 +1165,6 @@ static void wipe_old_v2_connections(const struct ike_sa *ike)
 
 		} else {
 
-			/*
-			 * When replacing an old existing connection,
-			 * suppress sending delete notify.
-			 *
-			 * NOTE: D yet code below is stripping C!?!
-			 */
-			suppress_delete_notify(ike, IKE_SA, d->newest_ike_sa, HERE);
-			suppress_delete_notify(ike, IPSEC_SA, d->newest_ipsec_sa, HERE);
-
 			/* NOTE: C not D (github/1247) */
 
 			/* this only deletes the states */
