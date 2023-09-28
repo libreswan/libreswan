@@ -2710,19 +2710,19 @@ void append_st_cfg_domain(struct state *st, char *domain)
 }
 
 void suppress_delete_notify(const struct ike_sa *ike,
-			    const char *what, so_serial_t so)
+			    enum sa_type sa_type,
+			    so_serial_t so,
+			    where_t where)
 {
 	struct state *st = state_by_serialno(so);
 	if (st == NULL) {
 		llog_sa(RC_LOG, ike,
-			  "did not find old %s state #%lu to mark for suppressing delete",
-			  what, so);
+			"did not find old %s #%lu to mark for suppressing delete",
+			connection_sa_name(ike->sa.st_connection, sa_type), so);
 		return;
 	}
 
-	on_delete(st, skip_send_delete);
-	dbg("marked %s state #%lu to suppress sending delete notify",
-	    what, st->st_serialno);
+	on_delete_where(st, skip_send_delete, where);
 }
 
 static void list_state_event(struct show *s, struct state *st,

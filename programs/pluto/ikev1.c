@@ -3052,14 +3052,6 @@ void ISAKMP_SA_established(struct ike_sa *ike)
 				} else {
 					dbg("unorienting old connection with same IDs");
 					/*
-					 * When replacing an old
-					 * existing connection,
-					 * suppress sending delete
-					 * notify
-					 */
-					suppress_delete_notify(ike, "ISAKMP", d->newest_ike_sa);
-					suppress_delete_notify(ike, "IKE", d->newest_ipsec_sa);
-					/*
 					 * XXX: Assume this call
 					 * doesn't want to log to
 					 * whack?  Even though the IKE
@@ -3068,6 +3060,16 @@ void ISAKMP_SA_established(struct ike_sa *ike)
 					 * old connection.
 					 */
 					if (is_instance(d)) {
+
+						/*
+						 * When replacing an
+						 * old existing
+						 * connection,
+						 * suppress sending
+						 * delete notify
+						 */
+						suppress_delete_notify(ike, IKE_SA, d->newest_ike_sa, HERE);
+						suppress_delete_notify(ike, IPSEC_SA, d->newest_ipsec_sa, HERE);
 
 						/* NOTE: D not C */
 
@@ -3078,7 +3080,22 @@ void ISAKMP_SA_established(struct ike_sa *ike)
 						connection_delref(&dd, ike->sa.st_logger);
 
 					} else {
+
+						/*
+						 * When replacing an
+						 * old existing
+						 * connection,
+						 * suppress sending
+						 * delete notify.
+						 *
+						 * NOTE: D yet below
+						 * strips C!
+						 */
+						suppress_delete_notify(ike, IKE_SA, d->newest_ike_sa, HERE);
+						suppress_delete_notify(ike, IPSEC_SA, d->newest_ipsec_sa, HERE);
+
 						/* NOTE: C not D */
+
 						/* this deletes the states */
 						remove_connection_from_pending(c);
 						delete_v1_states_by_connection(c);

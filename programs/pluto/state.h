@@ -801,13 +801,17 @@ struct state {
 		bool skip_log_message;
 
 	} st_on_delete;
-#define on_delete(ST, S)				\
-	{						\
-		ldbg((ST)->st_logger,			\
-		     PRI_SO".st_on_delete."#S,		\
-		     pri_so((ST)->st_serialno));	\
-		(ST)->st_on_delete.S = true;		\
+#define on_delete_where(ST, S, WHERE)				\
+	{							\
+		struct state *s_ = (ST);			\
+		pdbg(s_->st_logger,				\
+		     ".st_on_delete."#S" %s->true "PRI_WHERE,	\
+		     bool_str(s_->st_on_delete.S),		\
+		     pri_where(WHERE));				\
+		s_->st_on_delete.S = true;			\
 	}
+#define on_delete(ST, S)			\
+	on_delete_where(ST, S, HERE)
 };
 
 void update_st_clonedfrom(struct state *st, so_serial_t clonedfrom);
@@ -978,7 +982,8 @@ extern void append_st_cfg_dns(struct state *st, const char *dnsip);
 extern bool uniqueIDs;  /* --uniqueids? */
 
 void suppress_delete_notify(const struct ike_sa *ike,
-			    const char *what, so_serial_t so);
+			    enum sa_type sa_type, so_serial_t so,
+			    where_t where);
 
 void list_state_events(struct show *s, const monotime_t now);
 struct child_sa *find_v2_child_sa_by_spi(ipsec_spi_t spi, int8_t protoid,
