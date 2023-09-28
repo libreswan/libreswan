@@ -1117,7 +1117,19 @@ static void wipe_old_v2_connections(const struct ike_sa *ike)
 			continue;
 		}
 
-		dbg("unorienting old connection with same IDs");
+		ldbg_sa(ike, "unorienting old connection with same IDs");
+
+		/*
+		 * Per lookup, C and D have the same kind, which means
+		 * that if one is an instance then so is the other and
+		 * conversely when one is permanent then so too is the
+		 * other.
+		 */
+		PEXPECT(ike->sa.st_logger, c->local->kind == d->local->kind);
+		PEXPECT(ike->sa.st_logger, is_instance(c) || is_permanent(c));
+		PEXPECT(ike->sa.st_logger, is_instance(c) == is_instance(d));
+		PEXPECT(ike->sa.st_logger, is_permanent(c) == is_permanent(d));
+
 		/*
 		 * XXX: Assume this call doesn't want to log to whack?
 		 * Even though the IKE SA may have whack attached,
@@ -1144,6 +1156,7 @@ static void wipe_old_v2_connections(const struct ike_sa *ike)
 			 * teardown_ipsec_kernel_policies() can leave
 			 * the connection in ROUTED_ONDEMAND.
 			 */
+
 			struct connection *dd = connection_addref(d, ike->sa.st_logger);
 			remove_connection_from_pending(dd);
 			delete_v2_states_by_connection(dd);
