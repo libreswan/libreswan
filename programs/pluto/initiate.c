@@ -384,12 +384,6 @@ void ipsecdoi_initiate(struct connection *c,
 	struct ike_sa *ike = find_viable_parent_for_connection(c);
 
 	/*
-	 * XXX: should be passing logger down to initiate and pending
-	 * code.  Not whackfd.
-	 */
-	struct fd *whackfd = background ? null_fd : logger->global_whackfd;
-
-	/*
 	 * There's no viable IKE (parent) SA, initiate a new one.
 	 */
 
@@ -401,8 +395,18 @@ void ipsecdoi_initiate(struct connection *c,
 #ifdef USE_IKEv1
 		case IKEv1:
 			if (c->config->aggressive) {
+				/*
+				 * XXX: should be passing logger down to initiate and pending
+				 * code.  Not whackfd.
+				 */
+				struct fd *whackfd = background ? null_fd : logger->global_whackfd;
 				aggr_outI1(whackfd, c, NULL, policy, inception);
 			} else {
+				/*
+				 * XXX: should be passing logger down to initiate and pending
+				 * code.  Not whackfd.
+				 */
+				struct fd *whackfd = background ? null_fd : logger->global_whackfd;
 				main_outI1(whackfd, c, NULL, policy, inception);
 			}
 			break;
@@ -430,6 +434,12 @@ void ipsecdoi_initiate(struct connection *c,
 #ifdef USE_IKEv1
 		case IKEv1:
 		{
+
+			/*
+			 * XXX: should be passing logger down to initiate and pending
+			 * code.  Not whackfd.
+			 */
+			struct fd *whackfd = background ? null_fd : logger->global_whackfd;
 			/*
 			 * ??? we assume that peer_nexthop_sin isn't
 			 * important: we already have it from when we
@@ -449,8 +459,12 @@ void ipsecdoi_initiate(struct connection *c,
 				} else {
 					cc = connection_addref(c, c->logger);
 				}
-				submit_v2_CREATE_CHILD_SA_new_child(ike, cc, policy,
-								    logger->global_whackfd);
+				/*
+				 * XXX: should be passing logger down to initiate and pending
+				 * code.  Not whackfd.
+				 */
+				struct fd *whackfd = logger->global_whackfd;
+				submit_v2_CREATE_CHILD_SA_new_child(ike, cc, policy, whackfd);
 				connection_delref(&cc, cc->logger);
 			}
 			break;
@@ -473,14 +487,26 @@ void ipsecdoi_initiate(struct connection *c,
 	switch (c->config->ike_version) {
 #ifdef USE_IKEv1
 	case IKEv1:
+	{
+		/*
+		 * XXX: should be passing logger down to initiate and pending
+		 * code.  Not whackfd.
+		 */
+		struct fd *whackfd = background ? null_fd : logger->global_whackfd;
 		/* leave our Phase 2 negotiation pending */
 		add_v1_pending(whackfd, ike, c, policy,
 			       replacing, sec_label,
 			       false /*part of initiate*/);
 		break;
+	}
 #endif
 	case IKEv2:
 	{
+		/*
+		 * XXX: should be passing logger down to initiate and pending
+		 * code.  Not whackfd.
+		 */
+		struct fd *whackfd = background ? null_fd : logger->global_whackfd;
 		/* leave CHILD SA negotiation pending */
 		struct connection *cc;
 		if (c->config->sec_label.len > 0) {
