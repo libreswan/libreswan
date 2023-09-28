@@ -310,9 +310,11 @@ void unpend(struct ike_sa *ike, struct connection *cc)
 				break;
 			case IKEv1:
 #ifdef USE_IKEv1
-				quick_outI1(p->whack_sock, ike, p->connection,
+				connection_attach(p->connection, p->logger);
+				quick_outI1(ike, p->connection,
 					    p->policy,
 					    p->replacing);
+				connection_detach(p->connection, p->logger);
 #endif
 				break;
 			default:

@@ -613,14 +613,14 @@ void init_phase2_iv(struct state *st, const msgid_t *msgid)
 
 static ke_and_nonce_cb quick_outI1_continue;	/* type assertion */
 
-struct child_sa *quick_outI1(struct fd *whack_sock,
-			     struct ike_sa *isakmp,
+struct child_sa *quick_outI1(struct ike_sa *isakmp,
 			     struct connection *c,
 			     lset_t policy,
 			     so_serial_t replacing)
 {
 	passert(c != NULL);
-	struct child_sa *child = new_v1_child_sa(c, isakmp, SA_INITIATOR, whack_sock);
+	struct child_sa *child = new_v1_child_sa(c, isakmp, SA_INITIATOR, null_fd);
+	state_attach(&child->sa, c->logger);
 
 	child->sa.st_policy = policy;
 

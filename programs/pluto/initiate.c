@@ -434,19 +434,13 @@ void ipsecdoi_initiate(struct connection *c,
 #ifdef USE_IKEv1
 		case IKEv1:
 		{
-
-			/*
-			 * XXX: should be passing logger down to initiate and pending
-			 * code.  Not whackfd.
-			 */
-			struct fd *whackfd = background ? null_fd : logger->global_whackfd;
 			/*
 			 * ??? we assume that peer_nexthop_sin isn't
 			 * important: we already have it from when we
 			 * negotiated the ISAKMP SA!  It isn't clear
 			 * what to do with the error return.
 			 */
-			quick_outI1(whackfd, ike, c, policy, replacing);
+			quick_outI1(ike, c, policy, replacing);
 			break;
 		}
 #endif

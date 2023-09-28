@@ -15,8 +15,7 @@
 
 #include "fd.h"
 
-struct child_sa *quick_outI1(struct fd *whack_sock,
-			     struct ike_sa *isakmp,
+struct child_sa *quick_outI1(struct ike_sa *isakmp,
 			     struct connection *c,
 			     lset_t policy,
 			     so_serial_t replacing);
