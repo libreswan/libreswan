@@ -67,11 +67,10 @@ west #
 002 shutting down interface eth1 192.1.2.66:4500
 002 shutting down interface eth1 192.1.2.66:500
 002 "float-east" #4: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #3
-003 ERROR: "float-east" #3: send on eth1 from 192.1.2.66:500 to 192.1.2.23:500 using UDP failed in delete notify [...]
-002 "float-east" #4: unroute-host output: RTNETLINK answers: Network is unreachable
 005 "float-east" #4: ESP traffic information: in=0B out=0B
 002 "float-east" #3: deleting ISAKMP SA (MAIN_I4) and sending notification
 003 ERROR: "float-east" #3: send on eth1 from 192.1.2.66:500 to 192.1.2.23:500 using UDP failed in delete notify [...]
+002 "float-east": unroute-host output: RTNETLINK answers: Network is unreachable
 002 forgetting secrets
 002 loading secrets from "/etc/ipsec.secrets"
 002 no secrets filename matched "/etc/ipsec.d/*.secrets"
