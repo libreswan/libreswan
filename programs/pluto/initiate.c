@@ -430,6 +430,7 @@ void ipsecdoi_initiate(struct connection *c,
 		if (update_routing & UPDATE_CHILD) {
 			connection_initiate(c, inception, background, where);
 		}
+		struct child_sa *child;
 		switch (c->config->ike_version) {
 #ifdef USE_IKEv1
 		case IKEv1:
@@ -440,13 +441,14 @@ void ipsecdoi_initiate(struct connection *c,
 			 * negotiated the ISAKMP SA!  It isn't clear
 			 * what to do with the error return.
 			 */
-			quick_outI1(ike, c, policy, replacing);
+			child = quick_outI1(ike, c, policy, replacing);
 			break;
 		}
 #endif
 		case IKEv2:
 		{
 			if (already_has_larval_v2_child(ike, c)) {
+				child = NULL;
 				break;
 			}
 			dbg("initiating child sa with "PRI_LOGGER, pri_logger(logger));
@@ -458,7 +460,7 @@ void ipsecdoi_initiate(struct connection *c,
 			} else {
 				cc = connection_addref(c, c->logger);
 			}
-			submit_v2_CREATE_CHILD_SA_new_child(ike, cc, policy);
+			child = submit_v2_CREATE_CHILD_SA_new_child(ike, cc, policy);
 			if (c != cc) {
 				connection_detach(cc, c->logger);
 			}
@@ -467,6 +469,22 @@ void ipsecdoi_initiate(struct connection *c,
 		}
 		default:
 			bad_enum(c->logger, &ike_version_names, c->config->ike_version);
+		}
+		if (child == NULL) {
+			return;
+		}
+		if (background) {
+			/*
+			 * Silence Children!
+			 *
+			 * What matters is the FDs attached to the
+			 * logger - the choice of C or CC(above) makes
+			 * no difference.
+			 *
+			 * Caller will then detach whack from the
+			 * connection.
+			 */
+			state_detach(&child->sa, c->logger);
 		}
 		return;
 	}
