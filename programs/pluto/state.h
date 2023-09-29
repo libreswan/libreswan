@@ -957,7 +957,6 @@ extern void delete_states_by_peer(struct show *s, const ip_address *peer);
 extern void replace_states_by_peer(const ip_address *peer);
 
 extern void delete_cryptographic_continuation(struct state *st);
-extern void delete_states_dead_interfaces(struct logger *logger);
 
 /*
  * Use this to change state, this gives us a handle on all state

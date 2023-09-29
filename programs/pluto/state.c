@@ -1132,36 +1132,6 @@ void delete_state(struct state *st)
 }
 
 /*
- * Delete all states that have somehow not ben deleted yet
- * but using interfaces that are going down
- */
-
-void delete_states_dead_interfaces(struct logger *logger)
-{
-	struct state_filter sf = { .where = HERE, };
-	while (next_state_new2old(&sf)) {
-		struct state *this = sf.st;
-		if (this->st_interface &&
-		    this->st_interface->ip_dev->ifd_change == IFD_DELETE) {
-			char *id_vname = NULL;
-			struct connection *c = this->st_connection;
-			if (c->xfrmi != NULL && c->xfrmi->name != NULL)
-				id_vname = c->xfrmi->name;
-			else
-				id_vname = this->st_interface->ip_dev->id_rname;
-			llog(RC_LOG, logger,
-				    "deleting lasting state #%lu on interface (%s) which is shutting down",
-				    this->st_serialno, id_vname);
-			/* XXX: better? */
-			fd_delref(&this->st_logger->global_whackfd);
-			this->st_logger->global_whackfd = fd_addref(logger->global_whackfd);
-			delete_state(this);
-			/* note: no md->v1_st to clear */
-		}
-	}
-}
-
-/*
  * Delete all states that were created for a given connection.
  *
  * In addition to the currently established Child/IKE SAs, this will

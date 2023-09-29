@@ -43,7 +43,6 @@
 #include "iface.h"
 #include "log.h"
 #include "host_pair.h"			/* for release_dead_interfaces() */
-#include "state.h"			/* for delete_states_dead_interfaces() */
 #include "server.h"			/* for *_pluto_event() */
 #include "kernel_iface.h"
 #include "demux.h"
@@ -177,7 +176,6 @@ static void free_dead_ifaces(struct logger *logger)
 		 * iface_dev.
 		 */
 		release_dead_interfaces(logger);
-		delete_states_dead_interfaces(logger);
 		for (struct iface_endpoint **pp = &interfaces; (p = *pp) != NULL; ) {
 			if (p->ip_dev->ifd_change == IFD_DELETE) {
 				*pp = p->next; /* advance *pp (skip p) */
