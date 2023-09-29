@@ -44,6 +44,7 @@
 #include "routing.h"
 #include "instantiate.h"
 #include "pending.h"
+#include "terminate.h"
 
 /* Targets is a list of pairs: subnet and its policy group.
  * This list is bulk-updated on whack --listen and
@@ -86,8 +87,6 @@ void remove_from_group(struct connection *c)
 
 static void delete_group_instantiation(co_serial_t serialno, struct logger *logger)
 {
-	ldbg(logger, "removing group instance "PRI_CO, pri_co(serialno));
-
 	/*
 	 * Get the template instantiated from the group.
 	 */
@@ -101,33 +100,19 @@ static void delete_group_instantiation(co_serial_t serialno, struct logger *logg
 		 * groups templates are deleted before the group).
 		 *
 		 * XXX: but is this still called during those cases?
+		 * Find out!
 		 */
+		llog_pexpect(logger, HERE, "group template "PRI_CO" not found",
+			     pri_co(serialno));
 		return;
-	}
-
-	/*
-	 * Now delete all instancess.
-	 */
-	struct connection_filter instance = {
-		.clonedfrom = template,
-		.where = HERE,
-	};
-	while (next_connection_new2old(&instance)) {
-		connection_attach(instance.c, logger);
-
-		remove_connection_from_pending(instance.c);
-		delete_v2_states_by_connection(instance.c);
-		connection_unroute(instance.c, HERE);
-
-		delete_connection(&instance.c);
 	}
 
 	/* and group instance */
 	connection_attach(template, logger);
+	ldbg(template->logger, "removing group template");
 
-	remove_connection_from_pending(template);
-	delete_v2_states_by_connection(template);
-	connection_unroute(template, HERE);
+	struct connection *tt = template;
+	terminate_and_down_connections(&tt, logger, HERE);
 
 	delete_connection(&template);
 }
