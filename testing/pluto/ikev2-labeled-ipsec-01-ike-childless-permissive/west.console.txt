@@ -79,59 +79,8 @@ west #
 west #
  # configured ipsec_spd_t label, and no outgoing %trap policy
 west #
- ../../guestbin/ipsec-look.sh
-west NOW
-XFRM state:
-src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPI reqid REQID mode transport
-	replay-window 0 flag esn
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	lastused YYYY-MM-DD HH:MM:SS
-	anti-replay esn context:
-	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
-	 replay_window 128, bitmap-length 4
-	 00000000 00000000 00000000 XXXXXXXX 
-	sel src 192.1.2.23/32 dst 192.1.2.45/32 
-	security context system_u:system_r:ping_t:s0:c1.c256 
-src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0xSPISPI reqid REQID mode transport
-	replay-window 0 flag esn
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	lastused YYYY-MM-DD HH:MM:SS
-	anti-replay esn context:
-	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
-	 replay_window 128, bitmap-length 4
-	 00000000 00000000 00000000 XXXXXXXX 
-	sel src 192.1.2.45/32 dst 192.1.2.23/32 
-	security context system_u:system_r:ping_t:s0:c1.c256 
-XFRM policy:
-src 192.1.2.23/32 dst 192.1.2.45/32
-	security context system_u:object_r:ipsec_spd_t:s0
-	dir in priority PRIORITY ptype main
-	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid REQID mode transport
-src 192.1.2.45/32 dst 192.1.2.23/32
-	security context system_u:object_r:ipsec_spd_t:s0
-	dir out priority PRIORITY ptype main
-	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid REQID mode transport
-XFRM done
-IPSEC mangle TABLES
-iptables filter TABLE
-Chain INPUT (policy ACCEPT)
-target     prot opt source               destination         
-Chain FORWARD (policy ACCEPT)
-target     prot opt source               destination         
-Chain OUTPUT (policy ACCEPT)
-target     prot opt source               destination         
-ROUTING TABLES
-default via 192.1.2.254 dev eth1
-192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
-192.0.2.0/24 via 192.1.2.23 dev eth1
-192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
-NSS_CERTIFICATES
-Certificate Nickname                                         Trust Attributes
-                                                             SSL,S/MIME,JAR/XPI
+ ../../guestbin/ipsec-kernel-state.sh\n../../guestbin/ipsec-kernel-policy.sh
+-bash: ../../guestbin/ipsec-kernel-state.shn../../guestbin/ipsec-kernel-policy.sh: No such file or directory
 west #
  # The IKE SA should be associated with the template connection
 west #
