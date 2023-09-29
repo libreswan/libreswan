@@ -313,18 +313,14 @@ void release_dead_interfaces(struct logger *logger)
 		 * (it's pointless as the interface has gone).
 		 */
 		terminate_all_connection_states(c, HERE);
+
 		/*
 		 * ... and then disorient it, moving it to the
 		 * unoriented list.  Always do this - the delete code
 		 * pexpect()s to find the connection on one of those
 		 * lists.
 		 */
-		pexpect(c->host_pair != NULL);
-		delete_oriented_hp(c);
-		iface_endpoint_delref(&c->interface);
-		c->hp_next = unoriented_connections;
-		unoriented_connections = c;
-		pexpect(c->host_pair == NULL);
+		disorient(c);
 
 		connection_detach(c, logger);
 		connection_delref(&c, logger);

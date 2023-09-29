@@ -33,6 +33,7 @@
 #include "server.h"		/* for listening; */
 #include "orient.h"
 #include "terminate.h"
+#include "host_pair.h"
 
 static enum left_right orient_1(struct connection **cp, struct logger *logger);
 
@@ -43,6 +44,20 @@ bool oriented(const struct connection *c)
 	}
 
 	return (c->interface != NULL);
+}
+
+void disorient(struct connection *c)
+{
+	if (oriented(c)) {
+		PEXPECT(c->logger, c->host_pair != NULL);
+		delete_oriented_hp(c);
+		PEXPECT(c->logger, c->host_pair == NULL);
+		iface_endpoint_delref(&c->interface);
+		/* Since it is unoriented, it will be connected to the
+		 * unoriented_connections list */
+		PASSERT(c->logger, !oriented(c));
+		connect_to_host_pair(c);
+	}
 }
 
 static bool add_new_iface_endpoint(struct connection *c, struct host_end *end)
