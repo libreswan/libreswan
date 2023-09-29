@@ -623,10 +623,9 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 		} else {
 			cc = connection_addref(c, ike->sa.st_logger);
 		}
-		add_v2_pending((background ? null_fd : c->logger->global_whackfd),
-			       ike, cc, policy,
-			       (predecessor == NULL ? SOS_NOBODY : predecessor->st_serialno),
-			       sec_label, true /*part of initiate*/);
+		add_pending(ike, cc, policy,
+			    (predecessor == NULL ? SOS_NOBODY : predecessor->st_serialno),
+			    sec_label, true/*part of initiate*/, background);
 		connection_delref(&cc, ike->sa.st_logger);
 	}
 

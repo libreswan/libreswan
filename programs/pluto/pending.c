@@ -60,14 +60,19 @@
  * suitable phase 1 (IKE SA)
  */
 
-static void add_pending(struct fd *whack_sock,
-			struct ike_sa *ike,
-			struct connection *c,
-			lset_t policy,
-			so_serial_t replacing,
-			const shunk_t sec_label,
-			bool part_of_initiate)
+void add_pending(struct ike_sa *ike,
+		 struct connection *c,
+		 lset_t policy,
+		 so_serial_t replacing,
+		 const shunk_t sec_label,
+		 bool part_of_initiate,
+		 bool background)
 {
+	/*
+	 * XXX: should be passing logger down to initiate and pending
+	 * code.  Not whackfd.
+	 */
+	struct fd *whack_sock = background ? null_fd : c->logger->global_whackfd;
 	/* look for duplicate pending IPsec SA's, skip add operation */
 	for (struct pending *p, **pp = host_pair_first_pending(c);
 	     pp != NULL && (p = *pp) != NULL; pp = &p->next) {
@@ -126,30 +131,6 @@ static void add_pending(struct fd *whack_sock,
 		     ipstr(&c->remote->host.addr, &b));
 	}
 	host_pair_enqueue_pending(c, p);
-}
-
-void add_v1_pending(struct fd *whackfd,
-		    struct ike_sa *ike,
-		    struct connection *c,
-		    lset_t policy,
-		    so_serial_t replacing,
-		    const shunk_t sec_label,
-		    bool part_of_initiate)
-{
-	passert(ike->sa.st_ike_version == IKEv1);
-	add_pending(whackfd, ike, c, policy, replacing, sec_label, part_of_initiate);
-}
-
-void add_v2_pending(struct fd *whackfd,
-		    struct ike_sa *ike,
-		    struct connection *c,
-		    lset_t policy,
-		    so_serial_t replacing,
-		    const shunk_t sec_label,
-		    bool part_of_initiate)
-{
-	passert(ike->sa.st_ike_version == IKEv2);
-	add_pending(whackfd, ike, c, policy, replacing, sec_label, part_of_initiate);
 }
 
 /*

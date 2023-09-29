@@ -1013,10 +1013,9 @@ struct ike_sa *aggr_outI1(struct connection *c,
 	}
 
 	if (HAS_IPSEC_POLICY(policy))
-		add_v1_pending((background ? null_fd : c->logger->global_whackfd),
-			       ike, c, policy,
-			       (predecessor == NULL ? SOS_NOBODY : predecessor->st_serialno),
-			       null_shunk, true /*part of initiate*/);
+		add_pending(ike, c, policy,
+			    (predecessor == NULL ? SOS_NOBODY : predecessor->st_serialno),
+			    null_shunk, true /*part of initiate*/, background);
 
 	if (predecessor == NULL) {
 		llog_sa(RC_LOG, ike, "initiating IKEv1 Aggressive Mode connection");

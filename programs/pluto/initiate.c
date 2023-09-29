@@ -502,25 +502,15 @@ void ipsecdoi_initiate(struct connection *c,
 #ifdef USE_IKEv1
 	case IKEv1:
 	{
-		/*
-		 * XXX: should be passing logger down to initiate and pending
-		 * code.  Not whackfd.
-		 */
-		struct fd *whackfd = background ? null_fd : logger->global_whackfd;
 		/* leave our Phase 2 negotiation pending */
-		add_v1_pending(whackfd, ike, c, policy,
-			       replacing, sec_label,
-			       false /*part of initiate*/);
+		add_pending(ike, c, policy,
+			    replacing, sec_label,
+			    false /*part of initiate*/, background);
 		break;
 	}
 #endif
 	case IKEv2:
 	{
-		/*
-		 * XXX: should be passing logger down to initiate and pending
-		 * code.  Not whackfd.
-		 */
-		struct fd *whackfd = background ? null_fd : logger->global_whackfd;
 		/* leave CHILD SA negotiation pending */
 		struct connection *cc;
 		if (c->config->sec_label.len > 0) {
@@ -529,9 +519,9 @@ void ipsecdoi_initiate(struct connection *c,
 		} else {
 			cc = connection_addref(c, c->logger);
 		}
-		add_v2_pending(whackfd, ike, cc, policy,
-			       replacing, sec_label,
-			       false /*part of initiate*/);
+		add_pending(ike, cc, policy,
+			    replacing, sec_label,
+			    false /*part of initiate*/, background);
 		connection_delref(&cc, cc->logger);
 		break;
 	}
