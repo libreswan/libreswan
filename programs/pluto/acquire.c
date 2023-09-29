@@ -123,10 +123,6 @@ void initiate_ondemand(const struct kernel_acquire *b)
 		return;
 	}
 
-	LLOG_JAMBUF(RC_LOG, b->logger, buf) {
-		jam_kernel_acquire(buf, b);
-	}
-
 	/*
 	 * addref() or instantiate() C creating CP.  CP must be
 	 * delref()ed.
@@ -141,12 +137,18 @@ void initiate_ondemand(const struct kernel_acquire *b)
 
 	if (cp == NULL) {
 		connection_attach(c, b->logger);
-		llog_pexpect(c->logger, HERE, "can't acquire (ondemand) connection");
+		LLOG_PEXPECT_JAMBUF(c->logger, HERE, buf) {
+			jam_string(buf, "can't acquire (on-demand): ");
+			jam_kernel_acquire(buf, b);
+		}
 		connection_detach(c, b->logger);
 		return;
 	}
 
 	connection_attach(cp, b->logger);
+	LLOG_JAMBUF(RC_LOG, cp->logger, buf) {
+		jam_kernel_acquire(buf, b);
+	}
 	connection_acquire(cp, &inception, b, HERE);
 	connection_detach(cp, b->logger);
 
