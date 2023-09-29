@@ -974,7 +974,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 					log_state(RC_LOG, st, "too many malformed payloads (we sent %u and received %u",
 						  st->hidden_variables.st_malformed_sent,
 						  st->hidden_variables.st_malformed_received);
-					delete_state(st);
+					connection_delete_state(&st, HERE);
 					md->v1_st = st = NULL;
 				}
 			}
@@ -2917,7 +2917,8 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		}
 #endif
 		if (IS_V1_QUICK(st->st_state->kind)) {
-			delete_state(st);
+			ldbg(st->st_logger, "quick delete");
+			connection_delete_state(&st, HERE);
 			/* wipe out dangling pointer to st */
 			md->v1_st = NULL;
 		} else if  (st->st_state->kind == STATE_AGGR_R0 ||
@@ -2936,7 +2937,9 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 			 * way to detect and ignore amplification
 			 * attacks.
 			 */
-			delete_state(st);
+			struct ike_sa *ike = pexpect_ike_sa(st);
+			ldbg_sa(ike, "r0 delete");
+			connection_delete_ike(&ike, HERE);
 			/* wipe out dangling pointer to st */
 			md->v1_st = NULL;
 		}
