@@ -341,6 +341,54 @@ void terminate_and_down_connections(struct connection *c,
 	bad_enum(c->logger, &connection_kind_names, c->local->kind);
 }
 
+void terminate_and_delete_connections(struct connection **cp,
+				      struct logger *logger, where_t where)
+{
+	switch ((*cp)->local->kind) {
+	case CK_LABELED_PARENT:
+	case CK_PERMANENT:
+	case CK_TEMPLATE:
+	case CK_LABELED_TEMPLATE:
+		/*
+		 * Template should remaining, however, terminating and
+		 * downing instances will make them go away.
+		 *
+		 * Worse, terminating and downing an IKE cuckold could
+		 * cause Child SA cuckoo connection to be deleted.
+		 * Hence, the keep getting first loop.
+		 */
+		terminate_and_down_connections((*cp), logger, where);
+		delete_connection(cp);
+		return;
+
+	case CK_GROUP:
+	{
+		/* should not disappear */
+		connection_attach((*cp), logger);
+		struct connection_filter cq = {
+			.clonedfrom = (*cp),
+			.where = where,
+		};
+		if (next_connection_old2new(&cq)) {
+			llog(RC_LOG, (*cp)->logger, "deleting group instances");
+			do {
+				terminate_and_delete_connections(&cq.c, logger, where);
+			} while (next_connection_old2new(&cq));
+		}
+		pmemory((*cp)); /* should not disappear */
+		connection_detach((*cp), logger);
+		delete_connection(cp);
+		return;
+	}
+
+	case CK_LABELED_CHILD: /* should not happen? */
+	case CK_INSTANCE:
+	case CK_INVALID:
+		break;
+	}
+	bad_enum((*cp)->logger, &connection_kind_names, (*cp)->local->kind);
+}
+
 /*
  * If the IKE SA's connection has a direct Child SA (shares
  * connection) that owns the route then send a delete/timeout to that

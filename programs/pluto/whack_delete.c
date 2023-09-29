@@ -118,29 +118,6 @@ static unsigned whack_delete_one_connection(const struct whack_message *m UNUSED
 	return 1; /* the connection counts */
 }
 
-void whack_delete_connection(struct connection **cp, struct logger *logger)
-{
-	/*
-	 * If it's a connection instance, grap a reference so
-	 * that this function holds the last reference
-	 * (permanent connections have a free reference).
-	 */
-
-	struct connection *c =
-		(is_instance(*cp) ? connection_addref(*cp, logger) :
-		 *cp);
-
-	del_policy((*cp), policy.route)
-	del_policy((*cp), policy.up)
-
-	terminate_all_connection_states(c, HERE);
-	connection_unroute(c, HERE); /* should be redundant */
-	remove_connection_from_pending(c);
-	flush_connection_events(c);
-
-	delete_connection(&c);
-}
-
 void whack_delete(const struct whack_message *m, struct show *s,
 		  bool log_unknown_name)
 {

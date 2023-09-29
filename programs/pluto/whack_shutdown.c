@@ -31,7 +31,6 @@
 #include <unistd.h>		/* for exit(2) */
 
 #include "whack_shutdown.h"
-#include "whack_delete.h"	/* for whack_delete_connection() */
 
 #include "constants.h"
 #include "lswconf.h"		/* for lsw_conf_free_oco() */
@@ -64,6 +63,7 @@
 #include "server_fork.h"	/* for check_server_fork() */
 #include "pending.h"
 #include "connection_event.h"
+#include "terminate.h"
 
 volatile bool exiting_pluto = false;
 static enum pluto_exit_code pluto_exit_code;
@@ -106,22 +106,38 @@ static void exit_prologue(enum pluto_exit_code exit_code)
  #endif
 }
 
-static void delete_every_connection(void)
+static void delete_every_connection(struct logger *logger)
 {
 	/*
-	 * Keep deleting the newest connection until there isn't one.
+	 * Keep deleting the oldest connection until there isn't one.
 	 *
-	 * Deleting new-to-old means that instances are deleted before
-	 * templates.  Picking away at the queue avoids the posability
-	 * of a cascading delete deleting multiple connections.
+	 * Picking away at the queue avoids the posability of a
+	 * cascading delete deleting the next entry in the list.
 	 */
+	const struct connection *last = NULL;
 	while (true) {
 		struct connection_filter cq = { .where = HERE, };
-		if (!next_connection_new2old(&cq)) {
+		if (!next_connection_old2new(&cq)) {
 			break;
 		}
 
-		whack_delete_connection(&cq.c, &global_logger);
+		/*
+		 * Always going forward, never in reverse.
+		 */
+		PASSERT(logger, last != cq.c);
+		last = cq.c;
+
+		/*
+		 * Only expect root connections; the terminate call
+		 * wipes out anything else.
+		 */
+
+		connection_attach(cq.c, logger);
+		PEXPECT(cq.c->logger, (cq.c->local->kind == CK_GROUP ||
+				       cq.c->local->kind == CK_PERMANENT ||
+				       cq.c->local->kind == CK_TEMPLATE ||
+				       cq.c->local->kind == CK_LABELED_TEMPLATE));
+		terminate_and_delete_connections(&cq.c, logger, HERE);
 	}
 }
 
@@ -149,10 +165,10 @@ void exit_epilogue(void)
 	check_server_fork(logger); /*pid_entry_db_check()*/
 
 	/*
-	 * This should wipe pretty much everything: states, revivals,
-	 * ...
+	 * This wipes out pretty much everything: connections, states,
+	 * revivals, ...
 	 */
-	delete_every_connection();
+	delete_every_connection(logger);
 
 	free_server_helper_jobs(logger);
 

@@ -38,6 +38,8 @@ void terminate_and_down_connections(struct connection *c, struct logger *logger,
 /* ditto, but don't recurse */
 void terminate_and_down_connection(struct connection *c, struct logger *logger, where_t where);
 
+void terminate_and_delete_connections(struct connection **cp, struct logger *logger, where_t where);
+
 void connection_timeout_ike_family(struct ike_sa **ike, where_t where);
 void connection_delete_ike_family(struct ike_sa **ike, where_t where);
 
