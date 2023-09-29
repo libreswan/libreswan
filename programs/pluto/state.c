@@ -72,6 +72,7 @@
 #include "ikev1_replace.h"
 #include "ikev2_replace.h"
 #include "routing.h"
+#include "terminate.h"
 
 bool uniqueIDs = false;
 
@@ -2975,9 +2976,9 @@ void wipe_old_connections(const struct ike_sa *ike)
 			 * alone.
 			 */
 
-			remove_connection_from_pending(c);
-			delete_states_by_connection(c);
-			connection_unroute(c, HERE);
+			llog_pexpect(ike->sa.st_logger, HERE,
+				     "why am I deleting the shiny new permanent IKE?");
+			terminate_all_connection_states(c, HERE);
 		}
 	}
 }
