@@ -1428,6 +1428,7 @@ static void dispatch_1(enum routing_event event,
 		case X(TIMEOUT_IKE, UNROUTED, PERMANENT):
 		case X(TIMEOUT_IKE, UNROUTED, INSTANCE):		/* ikev2-31-nat-rw-no-rekey */
 		case X(TIMEOUT_IKE, ROUTED_ONDEMAND, PERMANENT):	/* ikev2-child-ipsec-retransmit */
+		case X(TIMEOUT_IKE, ROUTED_ONDEMAND, INSTANCE):		/* ikev2-liveness-05 */
 		case X(DELETE_IKE, ROUTED_ONDEMAND, INSTANCE):		/* ikev2-30-rw-no-rekey */
 #if 0
 		case X(DELETE_IKE, UNROUTED, INSTANCE): /*duplicate!?!*/
