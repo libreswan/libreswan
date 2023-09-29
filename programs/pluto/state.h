@@ -981,10 +981,6 @@ extern void append_st_cfg_dns(struct state *st, const char *dnsip);
 
 extern bool uniqueIDs;  /* --uniqueids? */
 
-void suppress_delete_notify(const struct ike_sa *ike,
-			    enum sa_type sa_type, so_serial_t so,
-			    where_t where);
-
 void list_state_events(struct show *s, const monotime_t now);
 struct child_sa *find_v2_child_sa_by_spi(ipsec_spi_t spi, int8_t protoid,
 					 ip_address dst);

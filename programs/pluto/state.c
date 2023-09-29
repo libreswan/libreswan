@@ -2710,22 +2710,6 @@ void append_st_cfg_domain(struct state *st, char *domain)
 	}
 }
 
-void suppress_delete_notify(const struct ike_sa *ike,
-			    enum sa_type sa_type,
-			    so_serial_t so,
-			    where_t where)
-{
-	struct state *st = state_by_serialno(so);
-	if (st == NULL) {
-		llog_sa(RC_LOG, ike,
-			"did not find old %s #%lu to mark for suppressing delete",
-			connection_sa_name(ike->sa.st_connection, sa_type), so);
-		return;
-	}
-
-	on_delete_where(st, skip_send_delete, where);
-}
-
 static void list_state_event(struct show *s, struct state *st,
 			     struct state_event *pe, const monotime_t now)
 {
@@ -2941,13 +2925,6 @@ void wipe_old_connections(const struct ike_sa *ike)
 		if (is_instance(d)) {
 
 			/*
-			 * When replacing an old existing connection,
-			 * suppress sending delete notify.
-			 */
-			suppress_delete_notify(ike, IKE_SA, d->newest_ike_sa, HERE);
-			suppress_delete_notify(ike, IPSEC_SA, d->newest_ipsec_sa, HERE);
-
-			/*
 			 * NOTE: D not C (github/1247)
 			 *
 			 * Strip D of all states, and return it to
@@ -2960,11 +2937,7 @@ void wipe_old_connections(const struct ike_sa *ike)
 			 * the connection in ROUTED_ONDEMAND.
 			 */
 
-			struct connection *dd = connection_addref(d, ike->sa.st_logger);
-			remove_connection_from_pending(dd);
-			delete_states_by_connection(dd);
-			connection_unroute(dd, HERE);
-			connection_delref(&dd, ike->sa.st_logger);
+			terminate_all_connection_states(d, HERE);
 
 		} else {
 
