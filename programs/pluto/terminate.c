@@ -203,45 +203,40 @@ void terminate_all_connection_states(struct connection *c, where_t where)
 	whack_connection_states(c, delete_states, where);
 }
 
-static void terminate_and_down_connection(struct connection *c, struct logger *logger)
-{
-	llog(RC_LOG, c->logger, "terminating SAs using this connection");
-	del_policy(c, policy.up);
-
-	/*
-	 * XXX: see ikev2-removed-iface-01
-	 *
-	 * Extra output appears because of the unroute:
-	 *
-	 * +002 "test2": connection no longer oriented - system interface change?
-	 * +002 "test2": unroute-host output: Device "NULL" does not exist.
-	 */
-	c = connection_addref(c, logger);
-	terminate_all_connection_states(c, HERE);
-	connection_delref(&c, logger);
-}
-
 void terminate_and_down_connections(struct connection **cp, struct logger *logger, where_t where)
 {
+	del_policy((*cp), policy.up);
+
 	switch ((*cp)->local->kind) {
-	case CK_INSTANCE:
 	case CK_LABELED_CHILD: /* should not happen? */
+	case CK_INSTANCE:
 		connection_attach((*cp), logger);
-		terminate_and_down_connection((*cp), logger);
-		delete_connection(cp);
+		llog(RC_LOG, (*cp)->logger, "terminating SAs using this connection");
+		terminate_all_connection_states((*cp), HERE);
+		delete_connection(cp); /* should be last reference */
 		return;
 
 	case CK_PERMANENT:
+		connection_attach((*cp), logger);
+		llog(RC_LOG, (*cp)->logger, "terminating SAs using this connection");
+		terminate_all_connection_states((*cp), HERE);
+		pmemory((*cp)); /* should not disappear */
+		connection_detach((*cp), logger);
+		return;
+
 	case CK_LABELED_PARENT:
 		connection_attach((*cp), logger);
-		terminate_and_down_connection((*cp), logger);
-		connection_detach((*cp), logger);
+		llog(RC_LOG, (*cp)->logger, "terminating SAs using this connection");
+		terminate_all_connection_states((*cp), HERE);
+		delete_connection(cp); /* should be last reference */
 		return;
 
 	case CK_TEMPLATE:
 	case CK_GROUP:
 	case CK_LABELED_TEMPLATE:
 	{
+		/* should not disappear */
+		connection_attach((*cp), logger);
 		struct connection_filter cq = {
 			.clonedfrom = (*cp),
 			.where = HERE,
@@ -249,10 +244,13 @@ void terminate_and_down_connections(struct connection **cp, struct logger *logge
 		while (next_connection_old2new(&cq)) {
 			terminate_and_down_connections(&cq.c, logger, where);
 		}
+		pmemory((*cp)); /* should not disappear */
+		connection_detach((*cp), logger);
 		return;
 	}
+
 	case CK_INVALID:
 		break;
 	}
-	bad_case((*cp)->local->kind);
+	bad_enum((*cp)->logger, &connection_kind_names, (*cp)->local->kind);
 }
