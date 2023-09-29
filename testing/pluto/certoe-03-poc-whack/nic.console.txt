@@ -2,8 +2,7 @@ iptables -t nat -F
 nic #
  iptables -F
 nic #
- ../../guestbin/ipsec-kernel-state.sh\n../../guestbin/ipsec-kernel-policy.sh
--bash: ../../guestbin/ipsec-kernel-state.shn../../guestbin/ipsec-kernel-policy.sh: No such file or directory
+ ../../guestbin/ipsec-look.sh
 nic #
  hostname | grep nic > /dev/null || ipsec whack --trafficstatus
 nic #

@@ -1,3 +1,3 @@
-../../guestbin/ipsec-kernel-state.sh\n../../guestbin/ipsec-kernel-policy.sh
+../../guestbin/ipsec-look.sh
 # tunnel should have been established once - idleness check should prevent rekeying for OE
 grep "^[^|].* established Child SA" /tmp/pluto.log

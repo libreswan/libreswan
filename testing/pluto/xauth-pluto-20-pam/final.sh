@@ -1,2 +1,2 @@
-../../guestbin/ipsec-kernel-state.sh\n../../guestbin/ipsec-kernel-policy.sh
+../../guestbin/ipsec-look.sh
 if [ -f /etc/pam.d/pluto.stock ]; then mv /etc/pam.d/pluto.stock /etc/pam.d/pluto ; fi

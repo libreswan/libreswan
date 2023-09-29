@@ -1,4 +1,4 @@
 ipsec whack --shuntstatus
-../../guestbin/ipsec-kernel-state.sh\n../../guestbin/ipsec-kernel-policy.sh
+../../guestbin/ipsec-look.sh
 # should not show any hits
 grep "^[^|].* established Child SA" /tmp/pluto.log
