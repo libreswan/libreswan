@@ -22,6 +22,8 @@ west #
 initdone
 west #
  ipsec up --asynchronous west-cuckold
+002 "west-cuckold" #1: initiating IKEv1 Main Mode connection
+1v1 "west-cuckold" #1: sent Main Mode request
 west #
  ../../guestbin/wait-for.sh --match '#2:' -- ipsec trafficstatus
 006 #2: "west-cuckold", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
