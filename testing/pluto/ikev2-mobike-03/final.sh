@@ -1,5 +1,5 @@
 ipsec whack --trafficstatus
-../../guestbin/ipsec-kernel-state.sh\n../../guestbin/ipsec-kernel-policy.sh
+../../guestbin/ipsec-look.sh
 : ==== cut ====
 ipsec auto --status
 : ==== restore IPs to prevent leaking into other tests that dont reboot first ===
