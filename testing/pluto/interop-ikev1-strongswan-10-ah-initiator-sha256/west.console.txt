@@ -53,7 +53,10 @@ west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
- # cannot use ../../guestbin/ipsec-look.sh for strongswan
+ # cannot use ../../guestbin/ipsec-kernel-state.sh
+west #
+ ../../guestbin/ipsec-kernel-policy.sh for strongswan
+grep: strongswan: No such file or directory
 west #
  ip xfrm state
 src 192.1.2.45 dst 192.1.2.23

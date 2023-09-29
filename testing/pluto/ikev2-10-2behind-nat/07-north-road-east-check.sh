@@ -1,5 +1,6 @@
 ipsec trafficstatus
-../../guestbin/ipsec-look.sh
+../../guestbin/ipsec-kernel-state.sh
+../../guestbin/ipsec-kernel-policy.sh
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====

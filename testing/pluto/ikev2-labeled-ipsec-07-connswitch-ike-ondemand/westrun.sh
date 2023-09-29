@@ -1,6 +1,7 @@
 # IKE will be triggered by acquire; expect two labels
 ipsec auto --route west-to-east
-../../guestbin/ipsec-look.sh
+../../guestbin/ipsec-kernel-state.sh
+../../guestbin/ipsec-kernel-policy.sh
 # trigger acquire using the predefined ping_t context
 ../../guestbin/ping-once.sh --runcon "system_u:system_r:ping_t:s0:c1.c256" --forget -I 192.1.2.45 192.1.2.23
 ../../guestbin/wait-for.sh --match 192.1.2.23 -- ipsec trafficstatus
