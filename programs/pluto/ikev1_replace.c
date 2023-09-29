@@ -62,11 +62,9 @@ void ikev1_replace(struct state *st)
 		lset_t policy = LEMPTY;
 
 		if (c->config->aggressive) {
-			aggr_outI1(st->st_logger->object_whackfd, c, st,
-				   policy, &inception);
+			aggr_outI1(c, st, policy, &inception, /*background?*/false);
 		} else {
-			main_outI1(st->st_logger->object_whackfd, c, st,
-				   policy, &inception);
+			main_outI1(c, st, policy, &inception, /*background?*/false);
 		}
 
 	} else {

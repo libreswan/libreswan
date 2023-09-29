@@ -108,15 +108,16 @@
  * Note: this is not called from demux.c
  */
 
-struct ike_sa *main_outI1(struct fd *whack_sock,
-			  struct connection *c,
+struct ike_sa *main_outI1(struct connection *c,
 			  struct state *predecessor,
 			  lset_t policy,
-			  const threadtime_t *inception)
+			  const threadtime_t *inception,
+			  bool background)
 {
-	struct ike_sa *ike = new_v1_istate(c, whack_sock);
+	struct ike_sa *ike = new_v1_istate(c, null_fd);
 	struct state *st = &ike->sa;
 	statetime_t start = statetime_backdate(st, inception);
+	state_attach(&ike->sa, c->logger);
 
 	/* set up new state */
 	initialize_new_state(st);
@@ -124,9 +125,9 @@ struct ike_sa *main_outI1(struct fd *whack_sock,
 	change_v1_state(st, STATE_MAIN_I1);
 
 	if (HAS_IPSEC_POLICY(policy)) {
-		add_v1_pending(whack_sock, ike, c, policy,
-			       predecessor == NULL ?
-			       SOS_NOBODY : predecessor->st_serialno,
+		add_v1_pending((background ? null_fd : c->logger->global_whackfd),
+			       ike, c, policy,
+			       (predecessor == NULL ? SOS_NOBODY : predecessor->st_serialno),
 			       null_shunk, true /* part of initiate */);
 	}
 

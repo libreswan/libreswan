@@ -65,7 +65,7 @@ void ikev2_replace(struct state *st)
 			log_state(RC_LOG, st, "initiate reauthentication of IKE SA");
 		initiate_v2_IKE_SA_INIT_request(c, st, policy, &inception,
 						HUNK_AS_SHUNK(c->child.sec_label),
-						/*background?*/false, st->st_logger);
+						/*background?*/false);
 
 	} else {
 

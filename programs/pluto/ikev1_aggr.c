@@ -981,15 +981,16 @@ static ke_and_nonce_cb aggr_outI1_continue;	/* type assertion */
  * RFC 2409 5.3: --> HDR, SA, [ HASH(1),] <Ni_b>Pubkey_r, <KE_b>Ke_i, <IDii_b>Ke_i [, <Cert-I_b>Ke_i ]
  */
 
-struct ike_sa *aggr_outI1(struct fd *whack_sock,
-			  struct connection *c,
+struct ike_sa *aggr_outI1(struct connection *c,
 			  struct state *predecessor,
 			  lset_t policy,
-			  const threadtime_t *inception)
+			  const threadtime_t *inception,
+			  bool background)
 {
 	/* set up new state */
-	struct ike_sa *ike = new_v1_istate(c, whack_sock);
+	struct ike_sa *ike = new_v1_istate(c, null_fd);
 	statetime_t start = statetime_backdate(&ike->sa, inception);
+	state_attach(&ike->sa, c->logger);
 	change_v1_state(&ike->sa, STATE_AGGR_I1);
 	initialize_new_state(&ike->sa);
 
@@ -1012,8 +1013,9 @@ struct ike_sa *aggr_outI1(struct fd *whack_sock,
 	}
 
 	if (HAS_IPSEC_POLICY(policy))
-		add_v1_pending(whack_sock, ike, c, policy,
-			       predecessor == NULL ? SOS_NOBODY : predecessor->st_serialno,
+		add_v1_pending((background ? null_fd : c->logger->global_whackfd),
+			       ike, c, policy,
+			       (predecessor == NULL ? SOS_NOBODY : predecessor->st_serialno),
 			       null_shunk, true /*part of initiate*/);
 
 	if (predecessor == NULL) {

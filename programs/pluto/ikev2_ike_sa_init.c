@@ -527,7 +527,7 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 					       lset_t policy,
 					       const threadtime_t *inception,
 					       shunk_t sec_label,
-					       bool background, struct logger *logger)
+					       bool background)
 {
 	if (drop_new_exchanges()) {
 		/* Only drop outgoing opportunistic connections */
@@ -541,8 +541,9 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 	const struct v2_state_transition *transition = &fs->v2.transitions[0];
 	struct ike_sa *ike = new_v2_ike_sa(c, transition, SA_INITIATOR,
 					   ike_initiator_spi(), zero_ike_spi,
-					   logger->global_whackfd);
+					   null_fd);
 	statetime_t start = statetime_backdate(&ike->sa, inception);
+	state_attach(&ike->sa, c->logger);
 
 	/* set up new state */
 	passert(ike->sa.st_ike_version == IKEv2);
@@ -622,8 +623,9 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 		} else {
 			cc = connection_addref(c, ike->sa.st_logger);
 		}
-		add_v2_pending(background ? null_fd : logger->global_whackfd, ike, cc, policy,
-			       predecessor == NULL ? SOS_NOBODY : predecessor->st_serialno,
+		add_v2_pending((background ? null_fd : c->logger->global_whackfd),
+			       ike, cc, policy,
+			       (predecessor == NULL ? SOS_NOBODY : predecessor->st_serialno),
 			       sec_label, true /*part of initiate*/);
 		connection_delref(&cc, ike->sa.st_logger);
 	}

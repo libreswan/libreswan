@@ -36,17 +36,17 @@ extern void process_packet_tail(struct msg_digest *md);
 
 /* **MAIN MODE FUNCTIONS** in ikev1_main.c */
 
-extern struct ike_sa *main_outI1(struct fd *whack_sock,
-				 struct connection *c,
+extern struct ike_sa *main_outI1(struct connection *c,
 				 struct state *predecessor,
 				 lset_t policy,
-				 const threadtime_t *inception);
+				 const threadtime_t *inception,
+				 bool background);
 
-extern struct ike_sa *aggr_outI1(struct fd *whack_sock,
-				 struct connection *c,
+extern struct ike_sa *aggr_outI1(struct connection *c,
 				 struct state *predecessor,
 				 lset_t policy,
-				 const threadtime_t *inception);
+				 const threadtime_t *inception,
+				 bool background);
 
 struct hash_signature v1_sign_hash_RSA(const struct connection *c,
 				       const struct crypt_mac *hash,

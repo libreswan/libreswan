@@ -395,26 +395,25 @@ void ipsecdoi_initiate(struct connection *c,
 #ifdef USE_IKEv1
 		case IKEv1:
 			if (c->config->aggressive) {
-				/*
-				 * XXX: should be passing logger down to initiate and pending
-				 * code.  Not whackfd.
-				 */
-				struct fd *whackfd = background ? null_fd : logger->global_whackfd;
-				aggr_outI1(whackfd, c, NULL, policy, inception);
+				ike = aggr_outI1(c, NULL, policy,
+						 inception, background);
 			} else {
-				/*
-				 * XXX: should be passing logger down to initiate and pending
-				 * code.  Not whackfd.
-				 */
-				struct fd *whackfd = background ? null_fd : logger->global_whackfd;
-				main_outI1(whackfd, c, NULL, policy, inception);
+				ike = main_outI1(c, NULL, policy,
+						 inception, background);
 			}
 			break;
 #endif
 		case IKEv2:
-			ike = initiate_v2_IKE_SA_INIT_request(c, NULL, policy, inception,
-							      sec_label, background, logger);
+			ike = initiate_v2_IKE_SA_INIT_request(c, NULL, policy,
+							      inception, sec_label,
+							      background);
 			break;
+		}
+		if (ike == NULL) {
+			return;
+		}
+		if (background) {
+			state_detach(&ike->sa, c->logger);
 		}
 		return;
 	}
