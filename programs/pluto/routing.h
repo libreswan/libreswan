@@ -78,9 +78,13 @@ void connection_unroute(struct connection *c, where_t where);
 /*
  * These are closely related
  */
+
 void connection_initiate(struct connection *c, const threadtime_t *inception,
 			 bool background, where_t where);
+
+void connection_initiated_ike(struct ike_sa *ike, where_t where);
 void connection_initiated_child(struct ike_sa *ike, struct child_sa *child, where_t where);
+
 void connection_establish_ike(struct ike_sa *ike, where_t where);
 
 void connection_acquire(struct connection *c, threadtime_t *inception,

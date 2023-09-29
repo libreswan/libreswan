@@ -865,6 +865,16 @@ void connection_initiate(struct connection *c, const threadtime_t *inception,
 		 });
 }
 
+void connection_initiated_ike(struct ike_sa *ike, where_t where)
+{
+	struct connection *c = ike->sa.st_connection;
+	dispatch(CONNECTION_INITIATE, &c,
+		 ike->sa.st_logger, where,
+		 (struct routing_annex) {
+			 .ike = &ike,
+		 });
+}
+
 void connection_initiated_child(struct ike_sa *ike, struct child_sa *child, where_t where)
 {
 	struct connection *cc = child->sa.st_connection;
