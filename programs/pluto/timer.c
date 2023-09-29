@@ -402,7 +402,13 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 			llog(RC_LOG, st->st_logger,
 			     "deleting incomplete state after %s seconds",
 			     str_deltatime(event_delay, &dtb));
+		} else {
+			deltatime_buf dtb;
+			ldbg(st->st_logger, 
+			     "deleting incomplete state after %s seconds",
+			     str_deltatime(event_delay, &dtb));
 		}
+
 		/*
 		 * If no other reason has been given then this is a
 		 * timeout.
@@ -418,7 +424,7 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 		 * stop spontaneously sending messages (and hopefully
 		 * spontaneously deleting IKE families).
 		 */
-		delete_state(st);
+		connection_delete_state(&st, HERE);
 		break;
 
 #ifdef USE_IKEv1
