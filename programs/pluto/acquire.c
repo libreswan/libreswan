@@ -127,11 +127,16 @@ void initiate_ondemand(const struct kernel_acquire *b)
 		jam_kernel_acquire(buf, b);
 	}
 
+	/*
+	 * addref() or instantiate() C creating CP.  CP must be
+	 * delref()ed.
+	 */
+
 	struct connection *cp =
 		(is_labeled_template(c) ? sec_label_parent_instantiate(c, (c)->remote->host.addr, HERE) :
 		 is_opportunistic_template(c) ? oppo_initiator_instantiate(c, b->packet, HERE) :
 		 is_permanent(c) ? connection_addref(c, b->logger) :
-		 is_instance(c) ? connection_addref(c, b->logger) /*valid?*/:
+		 is_instance(c) ? connection_addref(c, b->logger) /*valid?!?*/:
 		 NULL);
 
 	if (cp == NULL) {
@@ -141,8 +146,9 @@ void initiate_ondemand(const struct kernel_acquire *b)
 		return;
 	}
 
-	/* (b->)logger has whack attached */
+	connection_attach(cp, b->logger);
 	connection_acquire(cp, &inception, b, HERE);
+	connection_detach(cp, b->logger);
 
 	connection_delref(&cp, b->logger);
 
