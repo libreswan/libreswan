@@ -58,7 +58,6 @@ void host_pair_remove_connection(struct connection *c, bool connection_valid);
 
 extern void update_host_pairs(struct connection *c);
 
-extern void release_dead_interfaces(struct logger *logger);
 extern void check_orientations(struct logger *logger);
 
 void host_pair_db_init(struct logger *logger);

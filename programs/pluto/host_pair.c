@@ -33,7 +33,6 @@
 #include "iface.h"
 #include "orient.h"
 #include "host_pair.h"
-#include "terminate.h"	/* for terminate_connection_states() */
 
 /*
  * Table of host_pairs (local->remote endpoints/addresses).
@@ -258,72 +257,6 @@ void connect_to_host_pair(struct connection *c)
 		c->host_pair = NULL;
 		c->hp_next = unoriented_connections;
 		unoriented_connections = c;
-	}
-}
-
-void release_dead_interfaces(struct logger *logger)
-{
-	/*
-	 * Release (and for instances, delete) any connections with a
-	 * dead interface.
-	 *
-	 * The connections are scanned new-to-old so that instances
-	 * are deleted before templates are released.
-	 */
-	struct connection_filter cf = { .where = HERE, };
-	while (next_connection_new2old(&cf)) {
-		struct connection *c = cf.c;
-
-		if (!oriented(c)) {
-			/* aka c->interface == NULL */
-			pdbg(c->logger, "connection interface un-oriented");
-			continue;
-		}
-
-		passert(c->interface != NULL); /* aka oriented() */
-		if (c->interface->ip_dev->ifd_change != IFD_DELETE) {
-			endpoint_buf eb;
-			pdbg(c->logger, "connection interface %s safe",
-			     str_endpoint(&c->interface->local_endpoint, &eb));
-			continue;
-		}
-
-		endpoint_buf eb;
-		pdbg(c->logger, "connection interface %s being deleted",
-		     str_endpoint(&c->interface->local_endpoint, &eb));
-
-		/*
-		 * This connection interface is going away.
-		 *
-		 * Since the search is new2old and a connection
-		 * instance's template is older, the connection's
-		 * template will only be processed after all instances
-		 * have been deleted.
-		 *
-		 * Since a reference is taken, deleting all states of
-		 * an instance can't delete the connection.
-		 */
-		c = connection_addref(c, logger);
-		connection_attach(c, logger);
-		/*
-		 * This is less bad than delete_states_by_connection()
-		 * which deletes things in the wrong order.
-		 *
-		 * What's needed is a variant that doesn't try to send
-		 * (it's pointless as the interface has gone).
-		 */
-		terminate_all_connection_states(c, HERE);
-
-		/*
-		 * ... and then disorient it, moving it to the
-		 * unoriented list.  Always do this - the delete code
-		 * pexpect()s to find the connection on one of those
-		 * lists.
-		 */
-		disorient(c);
-
-		connection_detach(c, logger);
-		connection_delref(&c, logger);
 	}
 }
 
