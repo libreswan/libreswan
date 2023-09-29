@@ -388,9 +388,6 @@ void ipsecdoi_initiate(struct connection *c,
 	 */
 
 	if (ike == NULL) {
-		if (update_routing & UPDATE_IKE) {
-			connection_initiate(c, inception, background, where);
-		}
 		switch (c->config->ike_version) {
 #ifdef USE_IKEv1
 		case IKEv1:
@@ -411,6 +408,9 @@ void ipsecdoi_initiate(struct connection *c,
 		}
 		if (ike == NULL) {
 			return;
+		}
+		if (update_routing & UPDATE_IKE) {
+			connection_initiated_ike(ike, HERE);
 		}
 		if (background) {
 			state_detach(&ike->sa, c->logger);
