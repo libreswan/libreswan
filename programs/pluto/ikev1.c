@@ -2862,7 +2862,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		struct ike_sa *isakmp =
 			established_isakmp_sa_for_state(st, /*viable-parent*/false);
 		llog_n_maybe_send_v1_delete(isakmp, st, HERE);
-		connection_delete_v1_state(&st, HERE);
+		connection_delete_state(&st, HERE);
 		md->v1_st = st = NULL;
 		break;
 	}
@@ -3062,20 +3062,6 @@ struct ike_sa *established_isakmp_sa_for_state(struct state *st,
 	     pri_so(isakmp->sa.st_serialno));
 	return isakmp;
 }
-
-void connection_delete_v1_state(struct state **st, where_t where)
-{
-	PASSERT((*st)->st_logger, (*st)->st_ike_version == IKEv1);
-	if (IS_PARENT_SA(*st)) {
-		struct ike_sa *ike = pexpect_parent_sa(*st);
-		connection_delete_ike(&ike, where);
-	} else {
-		struct child_sa *child = pexpect_child_sa(*st);
-		connection_delete_child(&child, where);
-	}
-	(*st) = NULL;
-}
-
 
 /*
  * Reply messages are built in this nasty evil global buffer.

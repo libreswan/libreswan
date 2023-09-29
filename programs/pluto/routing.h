@@ -108,6 +108,8 @@ void connection_delete_child(struct child_sa **child, where_t where);
 void connection_timeout_ike(struct ike_sa **ike, where_t where);
 void connection_delete_ike(struct ike_sa **ike, where_t where);
 
+void connection_delete_state(struct state **st, where_t where);
+
 
 /* fake a debug message for establish for now */
 void fake_connection_establish_inbound(struct child_sa *child, where_t where);

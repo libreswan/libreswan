@@ -742,6 +742,22 @@ void connection_delete_ike(struct ike_sa **ike, where_t where)
 	zap_ike(ike, CONNECTION_DELETE_IKE, where);
 }
 
+void connection_delete_state(struct state **st, where_t where)
+{
+	if (IS_PARENT_SA(*st)) {
+		struct ike_sa *ike = pexpect_parent_sa(*st);
+		if (ike->sa.st_ike_version == IKEv1) {
+			connection_delete_ike(&ike, where);
+		} else {
+			connection_delete_ike_family(&ike, where);
+		}
+	} else {
+		struct child_sa *child = pexpect_child_sa(*st);
+		connection_delete_child(&child, where);
+	}
+	(*st) = NULL;
+}
+
 void connection_timeout_ike(struct ike_sa **ike, where_t where)
 {
 	zap_ike(ike, CONNECTION_TIMEOUT_IKE, where);
