@@ -89,8 +89,6 @@
 #include "pending.h"
 #include "terminate.h"
 
-static void teardown_ipsec_kernel_policies(enum routing_event event, struct child_sa *child);
-
 static void delete_bare_shunt_kernel_policy(const struct bare_shunt *bsp,
 					    enum expect_kernel_policy expect_kernel_policy,
 					    struct logger *logger, where_t where);
@@ -2427,9 +2425,6 @@ bool install_ipsec_sa(struct child_sa *child, lset_t direction, where_t where)
 	if (PEXPECT(logger, r == ROUTEABLE)
 	    && (direction & DIRECTION_OUTBOUND)) {
 		if (!install_outbound_ipsec_kernel_policies(child)) {
-			/* make something up */
-			teardown_ipsec_kernel_policies(CONNECTION_ESTABLISH_OUTBOUND, child);
-			uninstall_kernel_states(child);
 			return false;
 		}
 	}
@@ -2470,110 +2465,6 @@ bool install_ipsec_sa(struct child_sa *child, lset_t direction, where_t where)
 	}
 
 	return true;
-}
-
-/*
- * Delete an IPSEC SA
- *
- * We may not succeed, but we bull ahead anyway because we cannot do
- * anything better by recognizing failure.
- *
- * This used to have a parameter inbound_only, but the saref code
- * changed to always install inbound before outbound so this it was
- * always false, and thus removed.  But this means that while there's
- * now always an outbound policy, there may not yet be an inbound
- * policy!  For instance, IKEv2 IKE AUTH initiator gets rejected.  So
- * what is there, and should this even be called?
- *
- * EXPECT_KERNEL_POLICY is trying to help sort this out.
- */
-
-static void teardown_ipsec_kernel_policies(enum routing_event event,
-					   struct child_sa *child)
-{
-	struct connection *c = child->sa.st_connection;
-	struct logger *logger = child->sa.st_logger;
-
-	if (c->child.routing != RT_ROUTED_TUNNEL) {
-		ldbg(logger,
-		     "kernel: %s() skipping, "PRI_SO" is not a routed tunnel",
-		     __func__, pri_so(child->sa.st_serialno));
-		return;
-	}
-
-	if (c->newest_routing_sa != child->sa.st_serialno) {
-		ldbg(logger,
-		     "kernel: %s() skipping, "PRI_SO" is not the routed owner "PRI_SO,
-		     __func__, pri_so(child->sa.st_serialno),
-		     pri_so(c->newest_routing_sa));
-		return;
-	}
-
-	struct spds spds = c->child.spds;
-	if (is_instance(c) && is_opportunistic(c)) {
-		ldbg(logger,
-		     "kernel: %s() instance with OPPORTUNISTIC; transitioning to UNROUTED",
-		     __func__);
-		do_updown_spds(UPDOWN_DOWN, c, &spds, &child->sa, child->sa.st_logger);
-		delete_spd_kernel_policies(&spds, EXPECT_KERNEL_POLICY_OK,
-					   child->sa.st_logger, HERE, "unroute");
-		/*
-		 * update routing; route_owner() will see this and not
-		 * think this route is the owner?
-		 */
-		set_routing(event, c, RT_UNROUTED, NULL, HERE);
-		do_updown_unroute(c, child);
-		return;
-	}
-
-	if (is_instance(c) && !c->config->rekey) {
-		ldbg(logger,
-		     "kernel: %s() instance with REKEY disabled; transitioning to UNROUTED",
-		     __func__);
-		do_updown_spds(UPDOWN_DOWN, c, &spds, &child->sa, child->sa.st_logger);
-		delete_spd_kernel_policies(&spds, EXPECT_KERNEL_POLICY_OK,
-					   child->sa.st_logger, HERE, "unroute");
-		/*
-		 * update routing; route_owner() will see this and not
-		 * think this route is the owner?
-		 */
-		set_routing(event, c, RT_UNROUTED, NULL, HERE);
-		do_updown_unroute(c, child);
-		return;
-	}
-
-	if (c->config->failure_shunt != SHUNT_NONE) {
-
-		/*
-		 * If the .failure_shunt!=SHUNT_NONE then the
-		 * .failure_shunt is chosen, and that isn't
-		 * SHUNT_NONE.
-		 */
-		enum_buf spb;
-		ldbg(logger,
-		     "kernel: %s() failure_shunt=%s; transitioning to ROUTED_FAILURE",
-		     __func__, str_enum_short(&shunt_policy_names,
-					      c->config->failure_shunt, &spb));
-		/* it's being stripped of the state, hence SOS_NOBODY */
-		set_routing(event, c, RT_ROUTED_FAILURE, NULL, HERE);
-		replace_ipsec_with_bare_kernel_policies(child, SHUNT_KIND_FAILURE,
-							EXPECT_KERNEL_POLICY_OK, HERE);
-		return;
-	}
-
-	/*
-	 * If the .failure_shunt==SHUNT_NONE then the
-	 * .ondemand_shunt==SHUNT_TRAP is chosen and, clearly, that
-	 * isn't SHUNT_NONE.
-	 */
-	ldbg(logger,
-	     "kernel: %s() failure_shunt==NONE; transitioning to ROUTED_ONDEMAND",
-	     __func__);
-
-	/* it's being stripped of the state, hence SOS_NOBODY */
-	set_routing(event, c, RT_ROUTED_ONDEMAND, NULL, HERE);
-	replace_ipsec_with_bare_kernel_policies(child, SHUNT_KIND_ONDEMAND,
-						EXPECT_KERNEL_POLICY_OK, HERE);
 }
 
 void uninstall_kernel_states(struct child_sa *child)
