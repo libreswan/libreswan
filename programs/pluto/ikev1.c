@@ -2839,6 +2839,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 			  "state transition function for %s had internal error",
 			  st->st_state->name);
 		release_pending_whacks(st, "internal error");
+		/* expire will eventually delete state? */
 		break;
 
 	case STF_FATAL:
