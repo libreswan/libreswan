@@ -3,7 +3,7 @@
 ../../guestbin/wait-for.sh --match ": initiate on-demand" -- cat /tmp/pluto.log
 ../../guestbin/ipsec-kernel-state.sh
 # wait on OE retransmits and rekeying, and larval state to timeout
-../../guestbin/wait-for.sh --no-match ' spi 0x00000000 ' -- ip xfrm state
+../../guestbin/wait-for.sh --no-match ' spi 0x00000000 ' -- ../../guestbin/ipsec-kernel-state.sh
 # should show no bare shunts or tunnels
 ipsec whack --trafficstatus
 ipsec whack --shuntstatus

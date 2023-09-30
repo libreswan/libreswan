@@ -1,13 +1,13 @@
 # confirm received delete was processed - should show no tunnel
 ipsec whack --trafficstatus
-../../guestbin/wait-for.sh --no-match ' spi 0x00000000 ' -- ip xfrm state
+../../guestbin/wait-for.sh --no-match ' spi 0x00000000 ' -- ../../guestbin/ipsec-kernel-state.sh
 # try triggering again, ondemand policy should re-trigger OE
 ../../guestbin/ipsec-kernel-state.sh
 ../../guestbin/ipsec-kernel-policy.sh
 ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
 ../../guestbin/wait-for.sh --match private-or-clear -- ipsec whack --trafficstatus
 # should show established tunnel and no bare shunts
-../../guestbin/wait-for.sh --no-match ' spi 0x00000000 ' -- ip xfrm state
+../../guestbin/wait-for.sh --no-match ' spi 0x00000000 ' -- ../../guestbin/ipsec-kernel-state.sh
 ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
 ../../guestbin/ipsec-kernel-state.sh
 ../../guestbin/ipsec-kernel-policy.sh

@@ -22,6 +22,6 @@ ipsec trafficstatus
 # there should be no bare shunts
 ipsec shuntstatus
 # let larval state expire
-../../guestbin/wait-for.sh --no-match ' spi 0x00000000 ' -- ip xfrm state
+../../guestbin/wait-for.sh --no-match ' spi 0x00000000 ' -- ../../guestbin/ipsec-kernel-state.sh
 
 echo done

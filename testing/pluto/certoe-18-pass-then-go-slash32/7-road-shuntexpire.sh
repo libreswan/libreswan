@@ -1,5 +1,5 @@
 # letting 60s shunt expire
-../../guestbin/wait-for.sh --no-match ' spi 0x00000000 ' -- ip xfrm state
+../../guestbin/wait-for.sh --no-match ' spi 0x00000000 ' -- ../../guestbin/ipsec-kernel-state.sh
 # we should have 1 or 2 tunnels, no shunts
 ipsec trafficstatus
 ipsec shuntstatus

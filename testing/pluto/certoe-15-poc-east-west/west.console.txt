@@ -65,7 +65,7 @@ west #
 west #
  # let the old acquire expire so it won't interfere with our new trigger
 west #
- ../../guestbin/wait-for.sh --no-match ' spi 0x00000000 ' -- ip xfrm state
+ ../../guestbin/wait-for.sh --no-match ' spi 0x00000000 ' -- ../../guestbin/ipsec-kernel-state.sh
 west #
  # try triggering again, ondemand policy should re-trigger OE
 west #
@@ -109,7 +109,7 @@ west #
 west #
  # wait on OE to re-establish IPsec SA
 west #
- ../../guestbin/wait-for.sh --no-match ' spi 0x00000000 ' -- ip xfrm state
+ ../../guestbin/wait-for.sh --no-match ' spi 0x00000000 ' -- ../../guestbin/ipsec-kernel-state.sh
 west #
  ../../guestbin/ping-once.sh --forget -I 192.1.2.45 192.1.2.23
 fired and forgotten

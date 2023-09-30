@@ -88,7 +88,7 @@ west #
 west #
  # let larval state expire
 west #
- ../../guestbin/wait-for.sh --no-match ' spi 0x00000000 ' -- ip xfrm state
+ ../../guestbin/wait-for.sh --no-match ' spi 0x00000000 ' -- ../../guestbin/ipsec-kernel-state.sh
 west #
  echo done
 done
