@@ -1,2 +1,3 @@
 # there should be no IPCOMP SAs
-../../guestbin/ipsec-look.sh
+../../guestbin/ipsec-kernel-state.sh
+../../guestbin/ipsec-kernel-policy.sh

@@ -12,7 +12,9 @@ PLAINTEXT
 nic #
  cp /tmp/nic.tcpdump.log OUTPUT/
 nic #
- ../../guestbin/ipsec-look.sh
+ ../../guestbin/ipsec-kernel-state.sh
+nic #
+ ../../guestbin/ipsec-kernel-policy.sh
 nic #
  # A tunnel should have established
 nic #

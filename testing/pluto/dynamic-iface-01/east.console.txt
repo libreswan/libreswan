@@ -17,9 +17,7 @@ east #
  echo "initdone"
 initdone
 east #
- ../../guestbin/ipsec-look.sh
-east NOW
-XFRM state:
+ ../../guestbin/ipsec-kernel-state.sh
 src 192.1.2.66 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
@@ -56,7 +54,8 @@ src 192.1.2.23 dst 192.1.2.45
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
-XFRM policy:
+east #
+ ../../guestbin/ipsec-kernel-policy.sh
 src 192.1.2.23/32 dst 192.1.2.45/32
 	dir out priority PRIORITY ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45
@@ -81,22 +80,5 @@ src 192.1.2.66/32 dst 192.1.2.23/32
 	dir in priority PRIORITY ptype main
 	tmpl src 192.1.2.66 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
-XFRM done
-IPSEC mangle TABLES
-iptables filter TABLE
-Chain INPUT (policy ACCEPT)
-target     prot opt source               destination         
-Chain FORWARD (policy ACCEPT)
-target     prot opt source               destination         
-Chain OUTPUT (policy ACCEPT)
-target     prot opt source               destination         
-ROUTING TABLES
-default via 192.1.2.254 dev eth1
-192.0.1.0/24 via 192.1.2.45 dev eth1
-192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254
-192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23
-NSS_CERTIFICATES
-Certificate Nickname                                         Trust Attributes
-                                                             SSL,S/MIME,JAR/XPI
 east #
  
