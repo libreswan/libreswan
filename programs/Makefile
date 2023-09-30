@@ -38,10 +38,6 @@ SUBDIRS += ecdsasigkey
 SUBDIRS += ipsec
 SUBDIRS += letsencrypt
 
-ifneq ($(LINUX_VARIANT),)
-SUBDIRS += look.linux
-endif
-
 SUBDIRS += newhostkey
 SUBDIRS += readwriteconf
 SUBDIRS += rsasigkey
