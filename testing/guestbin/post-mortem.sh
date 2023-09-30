@@ -154,22 +154,20 @@ fi
 CHECK state/policy entries
 
 # For the moment dump the tables so it is possible to access the
-# damage.  Can't use ipsec-look.sh as that screws around with
-# cut/paste?
+# damage.
 
 if ! ${pluto} ; then
     SKIP as pluto was not running
-elif test ! -r /proc/net/xfrm_stat ; then
-    SKIP as no xfrm
 else
-    log=OUTPUT/post-mortem.$(hostname).ip-xfrm.log
-    ip xfrm stat | tee -a ${log}
-    ip xfrm policy | tee -a ${log}
-    if test -s ${log} ; then
-	IGNORE # FAIL - ongoing research
-    else
-	PASS
-    fi
+    for what in ipsec-kernel-state ipsec-kernel-policy ; do
+	log=OUTPUT/post-mortem.$(hostname).${what}.log
+	$(dirname $0)/${what}.sh | tee -a ${log}
+	if test -s ${log} ; then
+	    IGNORE # FAIL - ongoing research
+	else
+	    PASS
+	fi
+    done
 fi
 
 
