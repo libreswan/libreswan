@@ -38,32 +38,8 @@ east #
  echo "initdone"
 initdone
 east #
- ../../guestbin/ipsec-look.sh
-east NOW
-XFRM state:
-XFRM policy:
-XFRM done
-IPSEC mangle TABLES
-iptables filter TABLE
-Chain INPUT (policy ACCEPT)
-target     prot opt source               destination         
-Chain FORWARD (policy ACCEPT)
-target     prot opt source               destination         
-Chain OUTPUT (policy ACCEPT)
-target     prot opt source               destination         
-ROUTING TABLES
-default via 192.1.2.254 dev eth1
-192.0.1.0/24 via 192.1.2.45 dev eth1
-192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254
-192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23
-NSS_CERTIFICATES
-Certificate Nickname                                         Trust Attributes
-                                                             SSL,S/MIME,JAR/XPI
-Libreswan test CA for mainca - Libreswan                     CT,, 
-east                                                         u,u,u
-hashsha1                                                     P,,  
-nic                                                          P,,  
-north                                                        P,,  
-road                                                         P,,  
+ ../../guestbin/ipsec-kernel-state.sh
+east #
+ ../../guestbin/ipsec-kernel-policy.sh
 east #
  
