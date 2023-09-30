@@ -30,6 +30,7 @@ v5.0 (Unreleased)
 * initsystem: Use documented ipsec sub-commands [Tuomo]
 * initsystem: Stop using _stackmanager [Tuomo]
 * documentation: update to docbook xml 4.5 [Tuomo]
+* ipsec look: command removed; use ip xfrm et.al.
 
 v4.12 (Aug 8, 2023)
 * SECURITY IKEv2: Fixes https://libreswan.org/security/CVE-2023-38710
