@@ -57,24 +57,25 @@
 #include "pluto_stats.h"		/* for clear_pluto_stats() et.al. */
 #include "server_fork.h"		/* for show_process_status() */
 
-#include "whack_connection.h"
-#include "whack_connectionstatus.h"
-#include "whack_rekey.h"
-#include "whack_delete.h"
-#include "whack_status.h"
-#include "whack_trafficstatus.h"
-#include "whack_down.h"
-#include "whack_route.h"
 #include "whack_add.h"
 #include "whack_addconn.h"
-#include "whack_impair.h"
+#include "whack_connection.h"
+#include "whack_connectionstatus.h"
+#include "whack_crash.h"
 #include "whack_debug.h"
-#include "whack_shutdown.h"
-#include "whack_unroute.h"
-#include "whack_initiate.h"
-#include "whack_deleteuser.h"
+#include "whack_delete.h"
 #include "whack_deleteid.h"
 #include "whack_deletestate.h"
+#include "whack_deleteuser.h"
+#include "whack_down.h"
+#include "whack_impair.h"
+#include "whack_initiate.h"
+#include "whack_rekey.h"
+#include "whack_route.h"
+#include "whack_shutdown.h"
+#include "whack_status.h"
+#include "whack_trafficstatus.h"
+#include "whack_unroute.h"
 
 static void whack_rereadsecrets(struct show *s)
 {
@@ -353,7 +354,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 	if (m->whack_crash) {
 		address_buf pb;
 		dbg_whack(s, "crash: start: %s", str_address(&m->whack_crash_peer, &pb));
-		delete_states_by_peer(s, &m->whack_crash_peer);
+		whack_crash(m, s);
 		dbg_whack(s, "crash: stop: %s", str_address(&m->whack_crash_peer, &pb));
 	}
 

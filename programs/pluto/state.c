@@ -1113,54 +1113,6 @@ void delete_state(struct state *st)
 }
 
 /*
- * Walk through the state table, and delete each state whose phase 1 (IKE)
- * peer is among those given.
- * This function is only called for ipsec whack --crash peer
- */
-void delete_states_by_peer(struct show *s, const ip_address *peer)
-{
-	address_buf peer_buf;
-	const char *peerstr = ipstr(peer, &peer_buf);
-
-	whack_log(RC_COMMENT, s, "restarting peer %s", peerstr);
-
-	/* first restart the phase1s */
-	for (int ph1 = 0; ph1 < 2; ph1++) {
-		struct state_filter sf = { .where = HERE, };
-		while (next_state_new2old(&sf)) {
-			struct state *st = sf.st;
-			const struct connection *c = st->st_connection;
-			endpoint_buf b;
-			dbg("comparing %s to %s",
-			    str_endpoint(&st->st_remote_endpoint, &b),
-			    peerstr);
-
-			if (peer != NULL /* ever false? */ &&
-			    endpoint_address_eq_address(st->st_remote_endpoint, *peer)) {
-				if (ph1 == 0 && IS_IKE_SA(st)) {
-					whack_log(RC_COMMENT, s,
-						  "peer %s for connection %s crashed; replacing",
-						  peerstr,
-						  c->name);
-					switch (st->st_ike_version) {
-#ifdef USE_IKEv1
-					case IKEv1:
-						ikev1_replace(st);
-						break;
-#endif
-					case IKEv2:
-						ikev2_replace(st);
-						break;
-					}
-				} else {
-					event_force(c->config->ike_info->replace_event, st);
-				}
-			}
-		}
-	}
-}
-
-/*
  * IKEv1: Duplicate a Phase 1 state object, to create a Phase 2 object.
  *
  * IKEv2: Duplicate an IKE SA state object, to create either a CHILD

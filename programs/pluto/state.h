@@ -939,9 +939,6 @@ extern void show_states(struct show *s, const monotime_t now);
 
 extern ipsec_spi_t uniquify_peer_cpi(ipsec_spi_t cpi, const struct state *st, int tries);
 
-extern void delete_states_by_peer(struct show *s, const ip_address *peer);
-extern void replace_states_by_peer(const ip_address *peer);
-
 extern void delete_cryptographic_continuation(struct state *st);
 
 /*

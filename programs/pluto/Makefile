@@ -95,11 +95,14 @@ OBJS += whack_add.o
 OBJS += whack_addconn.o
 OBJS += whack_connection.o
 OBJS += whack_connectionstatus.o
+OBJS += whack_crash.o
+OBJS += whack_debug.o
 OBJS += whack_delete.o
 OBJS += whack_deleteid.o
 OBJS += whack_deletestate.o
 OBJS += whack_deleteuser.o
 OBJS += whack_down.o
+OBJS += whack_impair.o
 OBJS += whack_initiate.o
 OBJS += whack_rekey.o
 OBJS += whack_route.o
@@ -107,8 +110,6 @@ OBJS += whack_shutdown.o
 OBJS += whack_status.o
 OBJS += whack_trafficstatus.o
 OBJS += whack_unroute.o
-OBJS += whack_impair.o
-OBJS += whack_debug.o
 
 # local (possibly more up to date) copy of <linux/xfrm.h>
 ifeq ($(USE_XFRM_HEADER_COPY),true)
