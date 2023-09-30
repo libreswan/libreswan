@@ -1,3 +1,3 @@
 ipsec auto --up westnet-eastnet-ipcomp
-ip xfrm state
+../../guestbin/ipsec-kernel-state.sh
 ipsec auto --down westnet-eastnet-ipcomp

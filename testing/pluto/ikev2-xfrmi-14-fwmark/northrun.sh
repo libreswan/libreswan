@@ -10,6 +10,6 @@ ip route show table 1
 # expect if_id and output-mark to be different in ip xfrm state output
 # output-mark 0x6/0xffffff
 # if_id 1
-ip xfrm state
+../../guestbin/ipsec-kernel-state.sh
 curl 192.0.2.254:8888
 echo done

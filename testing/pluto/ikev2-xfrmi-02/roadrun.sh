@@ -8,10 +8,10 @@ ip rule show
 ip route show table 50
 ip route
 # check if_id and mark in ip xfrm state
-ip xfrm state
+../../guestbin/ipsec-kernel-state.sh
 ipsec trafficstatus
 # check if delete removes all policies without errors
 ipsec auto --delete road
-ip xfrm state
+../../guestbin/ipsec-kernel-state.sh
 ip xfrm policy
 echo done

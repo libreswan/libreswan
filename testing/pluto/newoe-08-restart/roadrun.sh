@@ -2,7 +2,7 @@
 ping -n -q -c 4 -I 192.1.3.209 192.1.2.23 > /dev/null
 ipsec whack --trafficstatus | sed "s/add_time.*$//"
 ipsec stop
-ip xfrm state
+../../guestbin/ipsec-kernel-state.sh
 ipsec start
 ../../guestbin/wait-until-pluto-started
 # give OE policies time to load

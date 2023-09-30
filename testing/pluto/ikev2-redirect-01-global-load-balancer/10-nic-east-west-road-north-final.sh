@@ -1,7 +1,7 @@
 ipsec whack --trafficstatus
 : ==== cut ====
 ipsec auto --status
-ip xfrm state
+../../guestbin/ipsec-kernel-state.sh
 ip xfrm policy
 : ==== tuc ====
 ipsec whack --shutdown

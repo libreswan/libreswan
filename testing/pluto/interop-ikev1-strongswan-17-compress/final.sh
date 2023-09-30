@@ -1,2 +1,2 @@
-ip xfrm state
+../../guestbin/ipsec-kernel-state.sh
 ip xfrm policy

@@ -30,7 +30,7 @@ road #
  ipsec stop
 Redirecting to: [initsystem]
 road #
- ip xfrm state
+ ../../guestbin/ipsec-kernel-state.sh
 road #
  ipsec start
 Redirecting to: [initsystem]

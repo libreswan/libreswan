@@ -48,7 +48,7 @@ west #
  echo done
 done
 west #
- ip xfrm state
+ ../../guestbin/ipsec-kernel-state.sh
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec

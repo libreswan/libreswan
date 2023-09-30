@@ -1,7 +1,7 @@
 
 ipsec whack --trafficstatus
 # policies and state should be multiple
-ip xfrm state
+../../guestbin/ipsec-kernel-state.sh
 ip xfrm policy
 ipsec auto --status | grep west-east
 kill -9 $(cat /var/tmp/$(hostname)-perf.pid)

@@ -143,7 +143,7 @@ road #
  ipsec whack --trafficstatus
 006 #2: "road-eastnet"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=504, outBytes=504, maxBytes=2^63B, id='192.1.2.23', lease=192.0.3.10/32
 road #
- ip xfrm state
+ ../../guestbin/ipsec-kernel-state.sh
 src 192.1.2.23 dst 192.1.33.209
 	lastused YYYY-MM-DD HH:MM:SS
 	anti-replay esn context:

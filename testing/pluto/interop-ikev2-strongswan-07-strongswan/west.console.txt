@@ -83,7 +83,7 @@ src ::/0 dst ::/0
 src ::/0 dst ::/0 
 	socket out priority 0 ptype main 
 west #
- ip xfrm state
+ ../../guestbin/ipsec-kernel-state.sh
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 0 

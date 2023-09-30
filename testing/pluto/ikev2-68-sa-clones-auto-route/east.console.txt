@@ -81,7 +81,7 @@ east #
 east #
  # policies and state should be multiple
 east #
- ip xfrm state
+ ../../guestbin/ipsec-kernel-state.sh
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128

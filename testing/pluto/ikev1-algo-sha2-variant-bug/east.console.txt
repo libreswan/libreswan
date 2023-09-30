@@ -32,7 +32,7 @@ east #
  echo "initdone"
 initdone
 east #
- ip xfrm state
+ ../../guestbin/ipsec-kernel-state.sh
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec

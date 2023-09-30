@@ -2,7 +2,7 @@ strongswan up westnet-eastnet-ikev2
 ping -n -q -W 1 -c 2 -I 192.0.3.254 192.0.2.254
 strongswan status
 # note this end is 192.1.3.33
-ip xfrm state
+../../guestbin/ipsec-kernel-state.sh
 ip xfrm policy
 sleep 5
 # remove this end ip next one will take over

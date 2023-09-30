@@ -63,7 +63,7 @@ west #
 west #
  # should see ipcomp entries
 west #
- ip xfrm state
+ ../../guestbin/ipsec-kernel-state.sh
 src 2001:db8:1:2::23 dst 2001:db8:1:2::45
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 0 

@@ -1,7 +1,7 @@
 # there should be one tunnel, but there can be two. If two,
 # their reqid cannot be the same.
 ipsec trafficstatus
-ip xfrm state
+../../guestbin/ipsec-kernel-state.sh
 ip xfrm policy
 # test packet flow
 ip addr add 192.0.1.254/24 dev eth0

@@ -1,5 +1,5 @@
 ipsec whack --trafficstatus
 # policies and state should be multiple
-ip xfrm state
+../../guestbin/ipsec-kernel-state.sh
 ip xfrm policy
 ipsec auto --status | grep westnet-eastnet

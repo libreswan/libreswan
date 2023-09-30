@@ -4,7 +4,7 @@
 ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
 ipsec whack --trafficstatus
 ipsec stop
-ip xfrm state
+../../guestbin/ipsec-kernel-state.sh
 ipsec start
 ../../guestbin/wait-until-pluto-started
 # give OE policies time to load

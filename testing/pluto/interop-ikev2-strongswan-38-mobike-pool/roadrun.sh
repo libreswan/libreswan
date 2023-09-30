@@ -2,7 +2,7 @@ strongswan up road-east
 ping -n -q -W 1 -c 2 -I 192.0.3.10 192.0.2.254
 strongswan status
 # note this end should be 192.1.3.209
-ip xfrm state
+../../guestbin/ipsec-kernel-state.sh
 ip xfrm policy
 sleep 5
 # remove this end ip next one will take over
@@ -14,7 +14,7 @@ sleep 10
 # both ends updated MOBIKE ping should work
 # note this end should be 192.1.33.222
 strongswan status
-ip xfrm state
+../../guestbin/ipsec-kernel-state.sh
 ip xfrm policy
 ping -n -q -W 1 -c 2 -I 192.0.3.10 192.0.2.254
 grep "requesting address change using MOBIKE" /tmp/charon.log | sed "s/^.*road/road/"
