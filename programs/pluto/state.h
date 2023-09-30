@@ -766,16 +766,6 @@ struct state {
 		bool skip_revival;
 
 		/*
-		 * Skip any code fiddling with the installed kernel
-		 * policy (presumably caller has done this).
-		 *
-		 * IKEv2 updates kernel policy before calling
-		 * delete_state() (i.e., delete_state() should only
-		 * delete the kernel state).
-		 */
-		bool skip_kernel_policy;
-
-		/*
 		 * In delete_state(), as a last gasp, should a delete
 		 * message to delete the SA be sent?
 		 *

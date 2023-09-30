@@ -622,7 +622,6 @@ void delete_child_sa(struct child_sa **child)
 	*child = NULL;
 	on_delete(st, skip_revival);
 	on_delete(st, skip_send_delete);
-	on_delete(st, skip_kernel_policy);
 	delete_state(st);
 }
 
@@ -637,7 +636,6 @@ void delete_ike_sa(struct ike_sa **ike)
 	*ike = NULL;
 	on_delete(st, skip_revival);
 	on_delete(st, skip_send_delete);
-	on_delete(st, skip_kernel_policy); /* child thing but who cares */
 	delete_state(st);
 }
 
@@ -731,10 +729,9 @@ static void ldbg_sa_delete_n_send(struct ike_sa *ike, struct state *st)
 /* delete a state object */
 void delete_state(struct state *st)
 {
-	pdbg(st->st_logger, "%s() skipping revival:%s kernel_policy:%s send_delete:%s log_message:%s",
+	pdbg(st->st_logger, "%s() skipping revival:%s send_delete:%s log_message:%s",
 	     __func__,
 	     bool_str(st->st_on_delete.skip_revival),
-	     bool_str(st->st_on_delete.skip_kernel_policy),
 	     bool_str(st->st_on_delete.skip_send_delete),
 	     bool_str(st->st_on_delete.skip_log_message));
 
@@ -952,24 +949,13 @@ void delete_state(struct state *st)
 	delete_cryptographic_continuation(st);
 
 	/*
-	 * Tell kernel to uninstall any larval or established IPsecSA,
-	 * optionally replacing the kernel policy with a prospective
-	 * or failing policy.
+	 * Tell kernel to uninstall any kernel state.
 	 *
-	 * Note that ST could be either for a Child SA or an IKE SA.
-	 * For instance, when a state for an on-demand connection
-	 * fails during IKE_SA_INIT, it is the IKE SA that is downing
-	 * the connection.
+	 * Caller, via routing.[hc], is responsible for adding,
+	 * deleting or modifying kernel policy.
 	 */
 
 	if (IS_CHILD_SA(st)) {
-		if (st->st_on_delete.skip_kernel_policy) {
-			ldbg(st->st_logger, "skiping delete kernel policy (only deleting kernel state)");
-		} else {
-			/* this function just returns when the call is
-			 * invalid */
-			teardown_ipsec_kernel_policies(CONNECTION_DELETE_CHILD, pexpect_child_sa(st));
-		}
 		/* this function just returns when the call is
 		 * invalid */
 		teardown_ipsec_kernel_states(pexpect_child_sa(st));
