@@ -167,10 +167,6 @@ void connection_zap_ike_family(struct ike_sa **ike, enum routing_event event, wh
 
 void jam_routing_annex(struct jambuf *buf, const struct routing_annex *e);
 
-void set_routing(enum routing_event event,
-		 struct connection *c, enum routing routing,
-		 struct child_sa **child, where_t where);
-
 PRINTF_LIKE(2)
 void ldbg_routing(struct logger *logger, const char *fmt, ...);
 

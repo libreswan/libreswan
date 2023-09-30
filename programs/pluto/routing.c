@@ -364,11 +364,11 @@ bool kernel_policy_installed(const struct connection *c)
 	bad_case(c->child.routing);
 }
 
-void set_routing(enum routing_event event,
-		 struct connection *c,
-		 enum routing new_routing,
-		 struct child_sa **child,
-		 where_t where)
+static void set_routing(enum routing_event event,
+			struct connection *c,
+			enum routing new_routing,
+			struct child_sa **child,
+			where_t where)
 {
 	struct logger *logger = c->logger;
 	so_serial_t new_routing_sa = (child == NULL ? SOS_NOBODY :
