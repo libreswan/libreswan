@@ -380,7 +380,6 @@ bool install_inbound_ipsec_sa(struct child_sa *child, where_t where);
 bool install_ipsec_sa(struct child_sa *child, lset_t direction, where_t where);
 
 void teardown_ipsec_kernel_states(struct child_sa *child);
-void teardown_ipsec_kernel_policies(enum routing_event event, struct child_sa *child);
 void uninstall_kernel_states(struct child_sa *child);
 
 extern bool was_eroute_idle(struct child_sa *child, deltatime_t idle_max);
