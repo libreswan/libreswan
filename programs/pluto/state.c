@@ -745,7 +745,7 @@ void delete_state(struct state *st)
 #endif
 
 	/*
-	 * WHen an IKEv2 IKE SA, there can be no children.
+	 * An IKEv2 IKE SA can only be deleted after all children.
 	 */
 	if (st->st_connection->config->ike_version == IKEv2 &&
 	    IS_IKE_SA(st) &&
@@ -756,15 +756,10 @@ void delete_state(struct state *st)
 		};
 		while (next_state_old2new(&sf)) {
 			state_buf sb;
-#if 0
-			llog_passert(st->st_logger, HERE,
-				     "unexpected child state "PRI_STATE,
-				     pri_state(sf.st, &sb));
-#else
-			llog(DEBUG_STREAM|ADD_PREFIX, st->st_logger,
-			     "unexpected child state "PRI_STATE,
+			barf((DBGP(DBG_BASE) ? PASSERT_FLAGS : PEXPECT_FLAGS),
+			     st->st_logger, /*ignore-exit-code*/0, HERE,
+			     "unexpected Child SA "PRI_STATE,
 			     pri_state(sf.st, &sb));
-#endif
 		}
 	}
 
