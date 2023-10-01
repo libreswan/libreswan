@@ -100,9 +100,9 @@ void add_pending(struct ike_sa *ike,
 	 * .whack_sock for(at least for now).
 	 */
 	p->logger = clone_logger(c->logger, HERE);
-	fd_delref(&p->logger->global_whackfd);
-	fd_delref(&p->logger->object_whackfd);
-	attach_fd(p->logger, whack_sock);
+	if (background) {
+		release_whack(p->logger, HERE);
+	}
 
 	p->whack_sock = fd_addref(whack_sock); /*on heap*/
 	p->ike = ike;
@@ -207,8 +207,7 @@ void release_pending_whacks(struct state *st, err_t story)
 				     /* "IPsec SA" or "CHILD SA" */
 				     p->connection->config->ike_info->child_sa_name);
 			}
-			fd_delref(&p->logger->global_whackfd);
-			fd_delref(&p->logger->object_whackfd);
+			release_whack(p->logger, HERE);
 			fd_delref(&p->whack_sock);/*on-heap*/
 		}
 	}
