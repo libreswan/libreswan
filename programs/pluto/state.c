@@ -531,12 +531,12 @@ static struct state *new_state(struct connection *c,
 	return st;
 }
 
-struct ike_sa *new_v1_istate(struct connection *c, struct fd *whackfd)
+struct ike_sa *new_v1_istate(struct connection *c)
 {
 	struct ike_sa *parent =
 		pexpect_parent_sa(new_state(c, SOS_NOBODY,
 					    ike_initiator_spi(), zero_ike_spi,
-					    IKE_SA, SA_INITIATOR, whackfd, HERE));
+					    IKE_SA, SA_INITIATOR, null_fd, HERE));
 	return parent;
 }
 

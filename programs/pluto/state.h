@@ -857,7 +857,7 @@ extern bool states_use_connection(const struct connection *c);
 
 /* state functions */
 
-struct ike_sa *new_v1_istate(struct connection *c, struct fd *whackfd);
+struct ike_sa *new_v1_istate(struct connection *c);
 struct ike_sa *new_v1_rstate(struct connection *c, struct msg_digest *md);
 struct child_sa *new_v1_child_sa(struct connection *c, struct ike_sa *ike,
 				 enum sa_role sa_role, struct fd *whackfd);
