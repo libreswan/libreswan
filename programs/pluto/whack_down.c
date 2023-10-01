@@ -104,6 +104,9 @@ static unsigned down_connection(struct connection *c, struct logger *logger)
 				break;
 			}
 		}
+	} else if (ike != NULL && ike->sa.st_ike_version == IKEv2 && IS_PARENT_SA_ESTABLISHED(&ike->sa)) {
+		state_attach(&ike->sa, logger);
+		submit_v2_delete_exchange(ike, NULL);
 	} else {
 		dbg("connection not shared - terminating IKE and IPsec SA");
 		terminate_all_connection_states(c, HERE);
