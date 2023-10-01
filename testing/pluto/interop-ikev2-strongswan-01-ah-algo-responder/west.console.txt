@@ -33,8 +33,9 @@ west #
 004 "ah=md5" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {AH=>0xAHAH <0xAHAH xfrm=HMAC_MD5_96 DPD=passive}
 up
 002 "ah=md5": terminating SAs using this connection
-002 "ah=md5" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+002 "ah=md5" #1: intiating delete
 005 "ah=md5" #2: AH traffic information: in=84B out=84B
+002 "ah=md5" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 002 "ah=md5": terminating SAs using this connection
 west #
  ../../guestbin/libreswan-up-down.sh ah=sha1 -I 192.0.1.254 192.0.2.254
@@ -46,8 +47,9 @@ west #
 004 "ah=sha1" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {AH=>0xAHAH <0xAHAH xfrm=HMAC_SHA1_96 DPD=passive}
 up
 002 "ah=sha1": terminating SAs using this connection
-002 "ah=sha1" #3: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+002 "ah=sha1" #3: intiating delete
 005 "ah=sha1" #4: AH traffic information: in=84B out=84B
+002 "ah=sha1" #3: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 002 "ah=sha1": terminating SAs using this connection
 west #
  # Test rekey

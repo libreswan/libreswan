@@ -33,8 +33,9 @@ west #
 004 "esp=null-md5" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=NULL-HMAC_MD5_96 DPD=passive}
 up
 002 "esp=null-md5": terminating SAs using this connection
-002 "esp=null-md5" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+002 "esp=null-md5" #1: intiating delete
 005 "esp=null-md5" #2: ESP traffic information: in=84B out=84B
+002 "esp=null-md5" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 002 "esp=null-md5": terminating SAs using this connection
 west #
  ../../guestbin/libreswan-up-down.sh esp=null-sha1 -I 192.0.1.254 192.0.2.254
@@ -46,8 +47,9 @@ west #
 004 "esp=null-sha1" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=NULL-HMAC_SHA1_96 DPD=passive}
 up
 002 "esp=null-sha1": terminating SAs using this connection
-002 "esp=null-sha1" #3: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+002 "esp=null-sha1" #3: intiating delete
 005 "esp=null-sha1" #4: ESP traffic information: in=84B out=84B
+002 "esp=null-sha1" #3: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 002 "esp=null-sha1": terminating SAs using this connection
 west #
  ../../guestbin/libreswan-up-down.sh esp=null_auth_aes_gmac-null -I 192.0.1.254 192.0.2.254
@@ -59,8 +61,9 @@ west #
 004 "esp=null_auth_aes_gmac-null" #6: initiator established Child SA using #5; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=NULL_AUTH_AES_GMAC_128-NONE DPD=passive}
 up
 002 "esp=null_auth_aes_gmac-null": terminating SAs using this connection
-002 "esp=null_auth_aes_gmac-null" #5: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+002 "esp=null_auth_aes_gmac-null" #5: intiating delete
 005 "esp=null_auth_aes_gmac-null" #6: ESP traffic information: in=84B out=84B
+002 "esp=null_auth_aes_gmac-null" #5: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 002 "esp=null_auth_aes_gmac-null": terminating SAs using this connection
 west #
  modinfo chacha20poly1305 > /dev/null && ../../guestbin/libreswan-up-down.sh esp=chacha20_poly1305-null -I 192.0.1.254 192.0.2.254 || true
@@ -72,8 +75,9 @@ west #
 004 "esp=chacha20_poly1305-null" #8: initiator established Child SA using #7; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=CHACHA20_POLY1305-NONE DPD=passive}
 up
 002 "esp=chacha20_poly1305-null": terminating SAs using this connection
-002 "esp=chacha20_poly1305-null" #7: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+002 "esp=chacha20_poly1305-null" #7: intiating delete
 005 "esp=chacha20_poly1305-null" #8: ESP traffic information: in=84B out=84B
+002 "esp=chacha20_poly1305-null" #7: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 002 "esp=chacha20_poly1305-null": terminating SAs using this connection
 west #
  echo done

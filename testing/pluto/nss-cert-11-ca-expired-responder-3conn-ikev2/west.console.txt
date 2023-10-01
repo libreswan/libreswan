@@ -72,8 +72,9 @@ west #
 west #
  ipsec auto --down new-west
 002 "new-west": terminating SAs using this connection
-002 "new-west" #4: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+002 "new-west" #4: intiating delete
 005 "new-west" #5: ESP traffic information: in=0B out=0B
+002 "new-west" #4: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #
  ipsec auto --up hog-west
 1v2 "hog-west" #6: initiating IKEv2 connection
@@ -84,7 +85,8 @@ west #
 west #
  ipsec auto --down hog-west
 002 "hog-west": terminating SAs using this connection
-002 "hog-west" #6: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+002 "hog-west" #6: intiating delete
 005 "hog-west" #7: ESP traffic information: in=0B out=0B
+002 "hog-west" #6: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #
  

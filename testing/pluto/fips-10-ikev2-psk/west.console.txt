@@ -39,8 +39,9 @@ west #
 004 "ikev2-defaults" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 up
 002 "ikev2-defaults": terminating SAs using this connection
-002 "ikev2-defaults" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+002 "ikev2-defaults" #1: intiating delete
 005 "ikev2-defaults" #2: ESP traffic information: in=84B out=84B
+002 "ikev2-defaults" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 002 "ikev2-defaults": terminating SAs using this connection
 west #
  : other combinations
@@ -54,8 +55,9 @@ west #
 004 "ikev2-ike=aes128-sha2" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 up
 002 "ikev2-ike=aes128-sha2": terminating SAs using this connection
-002 "ikev2-ike=aes128-sha2" #3: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+002 "ikev2-ike=aes128-sha2" #3: intiating delete
 005 "ikev2-ike=aes128-sha2" #4: ESP traffic information: in=84B out=84B
+002 "ikev2-ike=aes128-sha2" #3: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 002 "ikev2-ike=aes128-sha2": terminating SAs using this connection
 west #
  echo done
