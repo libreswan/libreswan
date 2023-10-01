@@ -435,8 +435,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 		 */
 		struct child_sa *child = new_v2_child_sa(cc, ike, IPSEC_SA,
 							 SA_INITIATOR,
-							 STATE_V2_IKE_AUTH_CHILD_I0,
-							 null_fd);
+							 STATE_V2_IKE_AUTH_CHILD_I0);
 		state_attach(&child->sa, cc->logger);
 		release_whack(cc->logger, HERE);
 

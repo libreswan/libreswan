@@ -875,8 +875,7 @@ static v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ik
 		ike->sa.st_v2_msgid_windows.responder.wip_sa =
 		new_v2_child_sa(ike->sa.st_connection, ike,
 				IPSEC_SA, SA_RESPONDER,
-				STATE_V2_IKE_AUTH_CHILD_R0,
-				null_fd);
+				STATE_V2_IKE_AUTH_CHILD_R0);
 
 	/*
 	 * Parse the CP payloads if needed (need child so that rants

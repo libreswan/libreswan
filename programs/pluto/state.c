@@ -1224,14 +1224,14 @@ struct child_sa *new_v2_child_sa(struct connection *c,
 				 struct ike_sa *ike,
 				 enum sa_type sa_type,
 				 enum sa_role sa_role,
-				 enum state_kind kind, /* const struct v2_state_transition *transition */
-				 struct fd *whackfd)
+				 /* const struct v2_state_transition *transition */
+				 enum state_kind kind)
 {
 	/* XXX: transitions should be parameter */
 	const struct finite_state *fs = finite_states[kind];
 	passert(fs->nr_transitions == 1);
 	const struct v2_state_transition *transition = &fs->v2.transitions[0];
-	struct child_sa *child = duplicate_state(c, ike, sa_type, sa_role, whackfd);
+	struct child_sa *child = duplicate_state(c, ike, sa_type, sa_role, null_fd);
 	change_state(&child->sa, transition->state);
 	set_v2_transition(&child->sa, transition, HERE);
 	binlog_refresh_state(&child->sa);

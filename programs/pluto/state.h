@@ -872,8 +872,7 @@ struct child_sa *new_v2_child_sa(struct connection *c,
 				 struct ike_sa *ike,
 				 enum sa_type sa_type, /*where is this going?*/
 				 enum sa_role sa_role,
-				 enum state_kind kind,
-				 struct fd *whackfd);
+				 enum state_kind kind);
 
 void set_v1_transition(struct state *st, const struct state_v1_microcode *transition, where_t where);
 void set_v2_transition(struct state *st, const struct v2_state_transition *transition, where_t where);
