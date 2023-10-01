@@ -866,8 +866,7 @@ struct ike_sa *new_v2_ike_sa(struct connection *c,
 			     const struct v2_state_transition *transition,
 			     enum sa_role sa_role,
 			     const ike_spi_t ike_initiator_spi,
-			     const ike_spi_t ike_responder_spi,
-			     struct fd *whack_sock);
+			     const ike_spi_t ike_responder_spi);
 /* could eventually be IKE or CHILD SA */
 struct child_sa *new_v2_child_sa(struct connection *c,
 				 struct ike_sa *ike,

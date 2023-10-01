@@ -555,12 +555,12 @@ struct ike_sa *new_v2_ike_sa(struct connection *c,
 			     const struct v2_state_transition *transition,
 			     enum sa_role sa_role,
 			     const ike_spi_t ike_initiator_spi,
-			     const ike_spi_t ike_responder_spi,
-			     struct fd *whack_sock)
+			     const ike_spi_t ike_responder_spi)
 {
 	struct state *st = new_state(c, SOS_NOBODY,
 				     ike_initiator_spi, ike_responder_spi,
-				     IKE_SA, sa_role, whack_sock, HERE);
+				     IKE_SA, sa_role,
+				     null_fd, HERE);
 	struct ike_sa *ike = pexpect_ike_sa(st);
 	change_state(&ike->sa, transition->state);
 	set_v2_transition(&ike->sa, transition, HERE);
