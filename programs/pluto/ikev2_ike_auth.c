@@ -413,17 +413,16 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 
 	/*
 	 * Now that the AUTH payload is done(?), create and emit the
-	 * child using the first pending connection (or the IKE SA's
-	 * connection) if there isn't one.
+	 * child using the first pending connection (which could be
+	 * the IKE SAs connection).
 	 *
 	 * Then emit SA2i, TSi and TSr and NOTIFY payloads related to
 	 * the IPsec SA.
 	 */
 
 	/* Child Connection */
-	lset_t unused_policy = child_sa_policy(pc); /* unused */
-	struct fd *child_whackfd = null_fd; /* must-free */
-	struct connection *cc = first_pending(ike, &unused_policy, &child_whackfd);
+	lset_t unused_policy = LEMPTY; /* unused */
+	struct connection *cc = first_pending(ike, &unused_policy); /*pending owns ref*/
 	if (cc == NULL) {
 		llog_sa(RC_LOG, ike, "omitting CHILD SA payloads");
 	} else {
@@ -437,8 +436,10 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 		struct child_sa *child = new_v2_child_sa(cc, ike, IPSEC_SA,
 							 SA_INITIATOR,
 							 STATE_V2_IKE_AUTH_CHILD_I0,
-							 child_whackfd);
-		fd_delref(&child_whackfd);
+							 null_fd);
+		state_attach(&child->sa, cc->logger);
+		release_whack(cc->logger, HERE);
+
 		ike->sa.st_v2_msgid_windows.initiator.wip_sa = child;
 
 		if (cc != pc) {
