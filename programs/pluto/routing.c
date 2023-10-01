@@ -875,17 +875,6 @@ void connection_routing_clear(struct state *st)
 	}
 }
 
-void connection_initiate(struct connection *c, const threadtime_t *inception,
-			 bool background, where_t where)
-{
-	dispatch(CONNECTION_INITIATE, &c,
-		 c->logger, where,
-		 (struct routing_annex) {
-			 .inception = inception,
-			 .background = background,
-		 });
-}
-
 void connection_initiated_ike(struct ike_sa *ike, where_t where)
 {
 	struct connection *c = ike->sa.st_connection;
