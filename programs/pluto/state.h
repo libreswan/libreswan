@@ -312,7 +312,8 @@ struct state {
 	bool st_ikev2_anon;                     /* is this an anonymous IKEv2 state? */
 
 	struct connection *st_connection;       /* connection for this SA */
- 	struct logger *st_logger;
+ 	struct logger *logger;
+#define st_logger logger
 
 	struct trans_attrs st_oakley;
 

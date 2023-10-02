@@ -148,7 +148,8 @@ struct msg_digest {
 	const struct state_v1_microcode *smc;	/* (v1) microcode for initial state */
 	bool new_iv_set;			/* (v1) */
 	struct state *v1_st;			/* (v1) current state object */
-	struct logger *md_logger;		/* logger for this MD */
+	struct logger *logger;			/* logger for this MD */
+#define md_logger logger
 
 	threadtime_t md_inception;		/* when was this started */
 
