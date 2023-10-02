@@ -2859,7 +2859,6 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 				dbg("sending disconnect to NM failed, you may need to do it manually");
 		}
 #endif
-		release_pending_whacks(st, "fatal error");
 		struct ike_sa *isakmp =
 			established_isakmp_sa_for_state(st, /*viable-parent*/false);
 		llog_n_maybe_send_v1_delete(isakmp, st, HERE);
