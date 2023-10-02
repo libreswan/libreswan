@@ -231,7 +231,6 @@ static struct old_routing ldbg_routing_start(struct connection *c,
 static void ldbg_routing_stop(struct connection *c,
 			      enum routing_event event,
 			      where_t where,
-			      const struct routing_annex *e,
 			      const struct old_routing *old)
 {
 	if (DBGP(DBG_BASE)) {
@@ -240,12 +239,8 @@ static void ldbg_routing_stop(struct connection *c,
 		 * is before the interesting stuff.
 		 */
 		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, c->logger, buf) {
-			jam_string(buf, "routing: stop dispatch ");
+			jam_string(buf, "routing: stop ");
 			jam_enum_short(buf, &routing_event_names, event);
-			jam_sa_update(buf, old->ike_name, old->ike_so,
-				      (e->ike == NULL || (*e->ike) == NULL ? NULL : &(*e->ike)->sa));
-			jam_sa_update(buf, old->child_name, old->child_so,
-				      (e->child == NULL || (*e->child) == NULL ? NULL : &(*e->child)->sa));
 			jam_string(buf, "; ");
 			/* routing */
 			jam_routing_update(buf, old->routing, c->child.routing);
@@ -364,59 +359,15 @@ bool kernel_policy_installed(const struct connection *c)
 	bad_case(c->child.routing);
 }
 
-static void set_routing(enum routing_event event,
+static void set_routing(enum routing_event event UNUSED,
 			struct connection *c,
 			enum routing new_routing,
 			struct child_sa **child,
-			where_t where)
+			where_t where UNUSED)
 {
-	struct logger *logger = c->logger;
 	so_serial_t new_routing_sa = (child == NULL ? SOS_NOBODY :
 				      *child == NULL ? SOS_NOBODY :
 				      (*child)->sa.st_serialno);
-	if (DBGP(DBG_BASE)) {
-		/*
-		 * XXX: force ADD_PREFIX so that the connection name
-		 * is before the interesting stuff.
-		 */
-		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, logger, buf) {
-			jam_string(buf, "routing: change ");
-			jam_enum_short(buf, &routing_event_names, event);
-			jam_string(buf, " -> ");
-			jam_routing(buf, c);
-			jam_string(buf, " -> ");
-			jam_enum_short(buf, &routing_names, new_routing);
-			jam_string(buf, " ");
-			jam_so(buf, new_routing_sa);
-			jam_string(buf, " ");
-			jam_where(buf, where);
-		}
-	}
-
-#if 0
-	/*
-	 * Labed children are never routed and/or have a kernel
-	 * policy.  However, they do have a kernel state.  Hence they
-	 * get put into states such as UNROUTED_INBOUND, and
-	 * UNROUTED_TUNNEL.
-	 */
-	PEXPECT(logger, !is_labeled_child(c));
-#endif
-
-#if 0
-	/*
-	 * Always going forward; never in reverse.
-	 *
-	 * Well, except during teardown when the kernel policy is
-	 * pulled before kernel state.  Hence, when SO is nobody,
-	 * can't assert much about the ipsec_sa.
-	 */
-	PEXPECT(logger, old_routing_sa >= c->newest_ipsec_sa);
-	if (new_routing_sa != SOS_NOBODY) {
-		PEXPECT(c->logger, new_routing_sa >= c->newest_routing_sa);
-		PEXPECT(c->logger, new_routing_sa >= c->newest_ipsec_sa);
-	}
-#endif
 	c->child.routing = new_routing;
 	c->newest_routing_sa = new_routing_sa;
 }
@@ -917,7 +868,7 @@ void connection_establish_ike(struct ike_sa *ike, where_t where)
 	if (DBGP(DBG_PRIVATE)) {
 		DBG_tcpdump_ike_sa_keys(&ike->sa);
 	}
-	ldbg_routing_stop(c, CONNECTION_ESTABLISH_IKE, where, &e, &old);
+	ldbg_routing_stop(c, CONNECTION_ESTABLISH_IKE, where, &old);
 }
 
 void connection_acquire(struct connection *c, threadtime_t *inception,
@@ -1940,7 +1891,7 @@ void dispatch(enum routing_event event,
 
 	struct old_routing old = ldbg_routing_start(c, event, where, &ee);
 	dispatch_1(event, c, logger, where, &ee);
-	ldbg_routing_stop(c, event, where,&ee, &old);
+	ldbg_routing_stop(c, event, where, &old);
 
 	connection_delref_where(&c, c->logger, HERE);
 }
