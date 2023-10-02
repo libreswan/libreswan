@@ -1,0 +1,15 @@
+#!/usr/sbin/nft -f
+flush ruleset
+table ip filter {
+	chain input {
+		type filter hook input priority filter; policy accept;
+		meta ipsec exists ip saddr 192.0.2.0/24 ip daddr 192.0.3.0/24 accept
+		ip saddr 192.0.2.0/24 ip daddr 192.0.3.0/24 drop
+	}
+
+	chain output {
+		type filter hook output priority filter; policy accept;
+		rt ipsec exists ip saddr 192.0.3.0/24 ip daddr 192.0.2.0/24 accept
+		ip saddr 192.0.3.0/24 ip daddr 192.0.1.0/24 drop
+	}
+}
