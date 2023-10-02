@@ -481,7 +481,6 @@ static struct state *new_state(struct connection *c,
 			       const ike_spi_t ike_responder_spi,
 			       enum sa_type sa_type,
 			       enum sa_role sa_role,
-			       struct fd *whackfd,
 			       where_t where)
 {
 	union sas {
@@ -498,7 +497,6 @@ static struct state *new_state(struct connection *c,
 	st->st_logger = alloc_logger(st, &logger_state_vec,
 				     c->logger->debugging,
 				     where);
-	attach_fd(st->st_logger, whackfd);
 
 	/* Determine the serialno.  */
 	static so_serial_t state_serialno;
@@ -523,7 +521,9 @@ static struct state *new_state(struct connection *c,
 	st->hidden_variables.st_nat_oa = ipv4_info.address.unspec;
 	st->hidden_variables.st_natd = ipv4_info.address.unspec;
 
-	dbg("creating state object #%lu at %p", st->st_serialno, (void *) st);
+	ldbg(st->st_logger,
+	     "creating state object "PRI_SO" at %p",
+	     pri_so(st->st_serialno), (void *) st);
 
 	state_db_add(st);
 	pstat_sa_started(st, sa_type);
@@ -536,7 +536,7 @@ struct ike_sa *new_v1_istate(struct connection *c)
 	struct ike_sa *parent =
 		pexpect_parent_sa(new_state(c, SOS_NOBODY,
 					    ike_initiator_spi(), zero_ike_spi,
-					    IKE_SA, SA_INITIATOR, null_fd, HERE));
+					    IKE_SA, SA_INITIATOR, HERE));
 	return parent;
 }
 
@@ -546,7 +546,7 @@ struct ike_sa *new_v1_rstate(struct connection *c, struct msg_digest *md)
 		pexpect_parent_sa(new_state(c, SOS_NOBODY,
 					    md->hdr.isa_ike_spis.initiator,
 					    ike_responder_spi(&md->sender, md->md_logger),
-					    IKE_SA, SA_RESPONDER, null_fd, HERE));
+					    IKE_SA, SA_RESPONDER, HERE));
 	update_ike_endpoints(parent, md);
 	return parent;
 }
@@ -559,8 +559,7 @@ struct ike_sa *new_v2_ike_sa(struct connection *c,
 {
 	struct state *st = new_state(c, SOS_NOBODY,
 				     ike_initiator_spi, ike_responder_spi,
-				     IKE_SA, sa_role,
-				     null_fd, HERE);
+				     IKE_SA, sa_role, HERE);
 	struct ike_sa *ike = pexpect_ike_sa(st);
 	change_state(&ike->sa, transition->state);
 	set_v2_transition(&ike->sa, transition, HERE);
@@ -1124,8 +1123,7 @@ void delete_state(struct state *st)
 static struct child_sa *duplicate_state(struct connection *c,
 					struct ike_sa *ike,
 					enum sa_type sa_type,
-					enum sa_role sa_role,
-					struct fd *whackfd)
+					enum sa_role sa_role)
 {
 	if (sa_type == IPSEC_SA) {
 		/* record use of the Phase 1 / Parent state */
@@ -1137,7 +1135,7 @@ static struct child_sa *duplicate_state(struct connection *c,
 		pexpect_child_sa(new_state(c, ike->sa.st_serialno,
 					   ike->sa.st_ike_spis.initiator,
 					   ike->sa.st_ike_spis.responder,
-					   sa_type, sa_role, whackfd, HERE));
+					   sa_type, sa_role, HERE));
 
 	connection_buf cib;
 	dbg("duplicating state object #%lu "PRI_CONNECTION" as #%lu for %s",
@@ -1216,7 +1214,7 @@ struct child_sa *new_v1_child_sa(struct connection *c,
 				 struct ike_sa *isakmp,
 				 enum sa_role sa_role)
 {
-	return duplicate_state(c, isakmp, IPSEC_SA, sa_role, null_fd);
+	return duplicate_state(c, isakmp, IPSEC_SA, sa_role);
 }
 
 struct child_sa *new_v2_child_sa(struct connection *c,
@@ -1230,7 +1228,7 @@ struct child_sa *new_v2_child_sa(struct connection *c,
 	const struct finite_state *fs = finite_states[kind];
 	passert(fs->nr_transitions == 1);
 	const struct v2_state_transition *transition = &fs->v2.transitions[0];
-	struct child_sa *child = duplicate_state(c, ike, sa_type, sa_role, null_fd);
+	struct child_sa *child = duplicate_state(c, ike, sa_type, sa_role);
 	change_state(&child->sa, transition->state);
 	set_v2_transition(&child->sa, transition, HERE);
 	binlog_refresh_state(&child->sa);
