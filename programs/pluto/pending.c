@@ -72,7 +72,6 @@ void add_pending(struct ike_sa *ike,
 	 * XXX: should be passing logger down to initiate and pending
 	 * code.  Not whackfd.
 	 */
-	struct fd *whack_sock = background ? null_fd : c->logger->global_whackfd;
 	/* look for duplicate pending IPsec SA's, skip add operation */
 	for (struct pending *p, **pp = host_pair_first_pending(c);
 	     pp != NULL && (p = *pp) != NULL; pp = &p->next) {
@@ -96,15 +95,13 @@ void add_pending(struct ike_sa *ike,
 	/*
 	 * Clone C's logger but strip it of any whack attached by the
 	 * caller (initiate_connection() say) that will be detached
-	 * after this code returns.  For the moment, instead use
-	 * .whack_sock for(at least for now).
+	 * after this code returns.
 	 */
 	p->logger = clone_logger(c->logger, HERE);
 	if (background) {
 		release_whack(p->logger, HERE);
 	}
 
-	p->whack_sock = fd_addref(whack_sock); /*on heap*/
 	p->ike = ike;
 	p->connection = connection_addref(c, p->logger); /* no pending logger */
 	p->policy = policy;
@@ -141,16 +138,8 @@ void add_pending(struct ike_sa *ike,
 
 void release_pending_whacks(struct state *st, err_t story)
 {
-	/*
-	 * Use fstat() to uniquely identify the whack connection -
-	 * multiple sockets to the same whack will have similar
-	 * 'struct stat' values.
-	 *
-	 * If the socket is valid, close it.
-	 */
-	if (!fd_p(st->st_logger->object_whackfd)) {
-		dbg("%s: state #%lu has no whack fd",
-		     __func__, st->st_serialno);
+	if (!whack_attached(st->logger)) {
+		pdbg(st->logger, "%s: state has no whack fd", __func__);
 		return;
 	}
 
@@ -168,13 +157,13 @@ void release_pending_whacks(struct state *st, err_t story)
 	struct ike_sa *ike_with_same_whack = NULL;
 	if (IS_CHILD_SA(st)) {
 		struct ike_sa *ike = ike_sa(st, HERE);
-		if (same_fd(st->st_logger->object_whackfd, ike->sa.st_logger->object_whackfd)) {
-			ike_with_same_whack = ike;
-			release_whack(ike->sa.st_logger, HERE);
-		} else {
+		if (ike == NULL || !same_whack(st->logger, ike->sa.logger)) {
 			release_whack(st->st_logger, HERE);
 			return;
 		}
+
+		ike_with_same_whack = ike;
+		release_whack(ike->sa.st_logger, HERE);
 	} else {
 		ike_with_same_whack = pexpect_ike_sa(st);
 	}
@@ -185,7 +174,7 @@ void release_pending_whacks(struct state *st, err_t story)
 	 * of any that are going to be assigned this ST as the parent.
 	 *
 	 * XXX: Is this because the parent is dying so anything
-	 * waiting on it should be deleted.
+	 * waiting on it should be detached.
 	 *
 	 * SAME_FD() is used to identify whack sockets that are
 	 * different to ST - when found a further release message is
@@ -194,24 +183,41 @@ void release_pending_whacks(struct state *st, err_t story)
 
 	for (struct pending *p, **pp = host_pair_first_pending(st->st_connection);
 	     pp != NULL && (p = *pp) != NULL; pp = &p->next) {
-		dbg("%s: IKE SA #%lu "PRI_FD" has pending CHILD SA with socket "PRI_FD,
-		    __func__, p->ike->sa.st_serialno,
-		    pri_fd(p->ike->sa.st_logger->object_whackfd),
-		    pri_fd(p->whack_sock));
-		if (p->ike == ike_with_same_whack && fd_p(p->whack_sock)) {
-			if (!same_fd(st->st_logger->object_whackfd, p->whack_sock)) {
-				/* XXX: why not the log file? */
-				llog(WHACK_STREAM|RC_COMMENT, p->logger,
-				     "%s for IKE SA, but releasing whack for pending %s",
-				     story,
-				     /* "IPsec SA" or "CHILD SA" */
-				     p->connection->config->ike_info->child_sa_name);
-			}
-			release_whack(p->logger, HERE);
-			fd_delref(&p->whack_sock);/*on-heap*/
+
+		bool has_whack = whack_attached(p->logger);
+
+		pdbg(p->logger,
+		     "%s: %s SA "PRI_SO" "PRI_LOGGER" has pending %s SA with whack "PRI_LOGGER,
+		     __func__,
+		     p->ike->sa.st_connection->config->ike_info->parent_name,
+		     pri_so(p->ike->sa.st_serialno),
+		     pri_logger(p->ike->sa.st_logger),
+		     p->ike->sa.st_connection->config->ike_info->parent_name,
+		     pri_logger(p->logger));
+
+		if (p->ike != ike_with_same_whack) {
+			/* none of our business */
+			continue;
 		}
+
+		if (!has_whack) {
+			/* nothing to do */
+			continue;
+		}
+
+		if (!same_whack(st->logger, p->logger)) {
+			/* XXX: why not the log file? */
+			llog(WHACK_STREAM|RC_COMMENT, p->logger,
+			     "%s for IKE SA, but releasing whack for pending %s",
+			     story,
+			     /* "IPsec SA" or "CHILD SA" */
+			     p->connection->config->ike_info->child_sa_name);
+		}
+		release_whack(p->logger, HERE);
 	}
-	release_whack(st->st_logger, HERE);
+
+	/* last gasp */
+	release_whack(st->logger, HERE);
 }
 
 /*
@@ -239,7 +245,6 @@ static void delete_pending(struct pending **pp, const char *what)
 	*pp = p->next;
 
 	connection_delref(&p->connection, &global_logger);
-	fd_delref(&p->whack_sock); /*on-heap*/
 	free_logger(&p->logger, HERE);
 	pfree(p);
 }
