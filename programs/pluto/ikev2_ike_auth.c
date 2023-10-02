@@ -418,6 +418,10 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 	 *
 	 * Then emit SA2i, TSi and TSr and NOTIFY payloads related to
 	 * the IPsec SA.
+	 *
+	 * The returned connection may have whack attached; new*()
+	 * will copy it to the Child SA at which point it needs to be
+	 * released.
 	 */
 
 	/* Child Connection */
@@ -436,7 +440,8 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 		struct child_sa *child = new_v2_child_sa(cc, ike, IPSEC_SA,
 							 SA_INITIATOR,
 							 STATE_V2_IKE_AUTH_CHILD_I0);
-		state_attach(&child->sa, cc->logger);
+		/* whack's attached to CHILD, release from
+		 * connection */
 		release_whack(cc->logger, HERE);
 
 		ike->sa.st_v2_msgid_windows.initiator.wip_sa = child;

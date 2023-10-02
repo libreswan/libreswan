@@ -620,7 +620,6 @@ struct child_sa *quick_outI1(struct ike_sa *isakmp,
 {
 	passert(c != NULL);
 	struct child_sa *child = new_v1_child_sa(c, isakmp, SA_INITIATOR);
-	state_attach(&child->sa, c->logger);
 
 	child->sa.st_policy = policy;
 

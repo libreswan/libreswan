@@ -699,9 +699,11 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 }
 
 stf_status process_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
-							  struct child_sa *larval_child,
+							  struct child_sa *unused_child,
 							  struct msg_digest *md)
 {
+	pexpect(unused_child == NULL);
+
 	struct child_sa *predecessor = NULL;
 	if (!find_v2N_REKEY_SA_child(ike, md, &predecessor)) {
 		record_v2N_response(ike->sa.st_logger, ike, md, v2N_INVALID_SYNTAX,
@@ -714,11 +716,12 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 		return STF_OK; /*IKE*/
 	}
 
-	pexpect(larval_child == NULL);
-	larval_child = new_v2_child_sa(predecessor->sa.st_connection,
+	struct child_sa *larval_child =
+		ike->sa.st_v2_msgid_windows.responder.wip_sa =
+		new_v2_child_sa(predecessor->sa.st_connection,
 				       ike, IPSEC_SA, SA_RESPONDER,
 				       STATE_V2_REKEY_CHILD_R0);
-	ike->sa.st_v2_msgid_windows.responder.wip_sa = larval_child;
+
 	larval_child->sa.st_v2_rekey_pred = predecessor->sa.st_serialno;
 	larval_child->sa.st_v2_create_child_sa_proposals =
 		get_v2_CREATE_CHILD_SA_rekey_child_proposals(ike,
@@ -751,7 +754,6 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_new_child(struct ike_sa *ike,
 	struct child_sa *larval_child = new_v2_child_sa(cc, ike, IPSEC_SA,
 							SA_INITIATOR,
 							STATE_V2_NEW_CHILD_I0);
-	state_attach(&larval_child->sa, cc->logger);
 
 	free_chunk_content(&larval_child->sa.st_ni); /* this is from the parent. */
 	free_chunk_content(&larval_child->sa.st_nr); /* this is from the parent. */
@@ -905,14 +907,16 @@ stf_status initiate_v2_CREATE_CHILD_SA_new_child_request(struct ike_sa *ike,
 }
 
 stf_status process_v2_CREATE_CHILD_SA_new_child_request(struct ike_sa *ike,
-							struct child_sa *larval_child,
+							struct child_sa *unused_child,
 							struct msg_digest *md)
 {
-	pexpect(larval_child == NULL);
-	larval_child = new_v2_child_sa(ike->sa.st_connection,
-				       ike, IPSEC_SA, SA_RESPONDER,
-				       STATE_V2_NEW_CHILD_R0);
-	ike->sa.st_v2_msgid_windows.responder.wip_sa = larval_child;
+	pexpect(unused_child == NULL);
+	struct child_sa *larval_child =
+		ike->sa.st_v2_msgid_windows.responder.wip_sa =
+		new_v2_child_sa(ike->sa.st_connection,
+				ike, IPSEC_SA, SA_RESPONDER,
+				STATE_V2_NEW_CHILD_R0);
+
 	larval_child->sa.st_v2_create_child_sa_proposals =
 		get_v2_CREATE_CHILD_SA_new_child_proposals(ike, larval_child);
 
@@ -1473,16 +1477,18 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
 }
 
 stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
-							struct child_sa *larval_ike,
+							struct child_sa *unused_ike,
 							struct msg_digest *request_md)
 {
+	pexpect(unused_ike == NULL);
 	v2_notification_t n;
 
-	pexpect(larval_ike == NULL);
-	larval_ike = new_v2_child_sa(ike->sa.st_connection,
-				     ike, IKE_SA, SA_RESPONDER,
-				     STATE_V2_REKEY_IKE_R0);
-	ike->sa.st_v2_msgid_windows.responder.wip_sa = larval_ike;
+	struct child_sa *larval_ike =
+		ike->sa.st_v2_msgid_windows.responder.wip_sa =
+		new_v2_child_sa(ike->sa.st_connection,
+				ike, IKE_SA, SA_RESPONDER,
+				STATE_V2_REKEY_IKE_R0);
+
 	larval_ike->sa.st_v2_rekey_pred = ike->sa.st_serialno;
 
 	struct connection *c = larval_ike->sa.st_connection;

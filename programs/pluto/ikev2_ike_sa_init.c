@@ -541,7 +541,6 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 	struct ike_sa *ike = new_v2_ike_sa(c, transition, SA_INITIATOR,
 					   ike_initiator_spi(), zero_ike_spi);
 	statetime_t start = statetime_backdate(&ike->sa, inception);
-	state_attach(&ike->sa, c->logger);
 
 	/* set up new state */
 	passert(ike->sa.st_ike_version == IKEv2);

@@ -117,7 +117,6 @@ struct ike_sa *main_outI1(struct connection *c,
 	struct ike_sa *ike = new_v1_istate(c);
 	struct state *st = &ike->sa;
 	statetime_t start = statetime_backdate(st, inception);
-	state_attach(&ike->sa, c->logger);
 
 	/* set up new state */
 	initialize_new_state(st);

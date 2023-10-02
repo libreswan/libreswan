@@ -990,7 +990,7 @@ struct ike_sa *aggr_outI1(struct connection *c,
 	/* set up new state */
 	struct ike_sa *ike = new_v1_istate(c);
 	statetime_t start = statetime_backdate(&ike->sa, inception);
-	state_attach(&ike->sa, c->logger);
+
 	change_v1_state(&ike->sa, STATE_AGGR_I1);
 	initialize_new_state(&ike->sa);
 
