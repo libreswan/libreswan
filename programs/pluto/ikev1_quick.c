@@ -88,6 +88,7 @@
 #include "unpack.h"
 #include "orient.h"
 #include "instantiate.h"
+#include "terminate.h"
 
 #ifdef USE_XFRM_INTERFACE
 # include "kernel_xfrm_interface.h"
@@ -1337,6 +1338,87 @@ static bool echo_id(pb_stream *outs,
 	return true;
 }
 
+/*
+ * Note: install_inbound_ipsec_sa is only used by the Responder.
+ * The Responder will subsequently use install_ipsec_sa for the outbound.
+ * The Initiator uses install_ipsec_sa to install both at once.
+ */
+
+static void terminate_conflicts(struct child_sa *child)
+{
+	struct connection *c = child->sa.st_connection;
+
+	/*
+	 * If our peer has a fixed-address client, check if we already
+	 * have a route for that client that conflicts.  We will take
+	 * this as proof that that route and the connections using it
+	 * are obsolete and should be eliminated.  Interestingly, this
+	 * is the only case in which we can tell that a connection is
+	 * obsolete.
+	 *
+	 * XXX: can this make use of connection_routability() and / or
+	 * get_connection_spd_conflicts() below?
+	 */
+	passert(is_permanent(c) || is_instance(c));
+	if (c->remote->child.has_client) {
+		for (;; ) {
+			const struct spd_route *ro = route_owner(c->spd);
+
+			if (ro == NULL)
+				break; /* nobody interesting has a route */
+			struct connection *co = ro->connection;
+			if (co == c) {
+				break; /* nobody interesting has a route */
+			}
+
+			/* note: we ignore the client addresses at this end */
+			/* XXX: but compating interfaces doesn't ?!? */
+			if (sameaddr(&co->remote->host.addr,
+				     &c->remote->host.addr) &&
+			    co->interface == c->interface)
+				break;  /* existing route is compatible */
+
+			if (kernel_ops->overlap_supported) {
+				/*
+				 * Both are transport mode, allow overlapping.
+				 * [bart] not sure if this is actually
+				 * intended, but am leaving it in to make it
+				 * behave like before
+				 */
+				if (c->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT &&
+				    co->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT)
+					break;
+
+				/* Both declared that overlapping is OK. */
+				if (c->config->overlapip && co->config->overlapip)
+					break;
+			}
+
+			address_buf b;
+			connection_buf cib;
+			llog_sa(RC_LOG_SERIOUS, child,
+				"route to peer's client conflicts with "PRI_CONNECTION" %s; releasing old connection to free the route",
+				pri_connection(co, &cib),
+				str_address_sensitive(&co->remote->host.addr, &b));
+
+			if (is_instance(co)) {
+				/*
+				 * NOTE: CO not C.
+				 *
+				 * Presumably the instance CO looses
+				 * to the permanent connection C.
+				 */
+				terminate_all_connection_states(co, HERE);
+			} else {
+				/*
+				 * NOTE: C not CO; why?
+				 */
+				terminate_all_connection_states(c, HERE);
+			}
+		}
+	}
+}
+
 static stf_status quick_inI1_outR1_continue12_tail(struct state *st, struct msg_digest *md)
 {
 	struct payload_digest *const id_pd = md->chain[ISAKMP_NEXT_ID];
@@ -1479,8 +1561,12 @@ static stf_status quick_inI1_outR1_continue12_tail(struct state *st, struct msg_
 		if (!add_xfrm_interface(c, st->st_logger))
 			return STF_FATAL;
 #endif
-	if (!install_inbound_ipsec_sa(pexpect_child_sa(st), HERE))
+
+	terminate_conflicts(pexpect_child_sa(st));
+
+	if (!install_ipsec_sa(pexpect_child_sa(st), DIRECTION_INBOUND, HERE)) {
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
+	}
 
 	/* encrypt message, except for fixed part of header */
 	if (!ikev1_encrypt_message(&rbody, st)) {
