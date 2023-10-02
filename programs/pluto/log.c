@@ -577,6 +577,26 @@ static struct fd *logger_fd(const struct logger *logger)
 	return NULL;
 }
 
+bool whack_attached(const struct logger *logger)
+{
+	return logger_fd(logger) != NULL;
+}
+
+bool same_whack(const struct logger *lhs, const struct logger *rhs)
+{
+	FOR_EACH_THING(lfd, &lhs->global_whackfd, &lhs->object_whackfd) {
+		if (*lfd == NULL) {
+			continue;
+		}
+		FOR_EACH_THING(rfd, &rhs->global_whackfd, &rhs->object_whackfd) {
+			if (*lfd == *rfd) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
 void attach_fd_where(struct logger *dst, struct fd *src_fd, where_t where)
 {
 	/* do no harm? */

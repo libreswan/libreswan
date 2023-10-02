@@ -63,6 +63,8 @@ extern bool whack_prompt_for(struct state *st,
 
 void release_whack(struct logger *logger, where_t where);
 
+bool whack_attached(const struct logger *logger);
+bool same_whack(const struct logger *lhs, const struct logger *rhs);
 void whack_attach_where(struct logger *dst, const struct logger *src, where_t where);
 void whack_detach_where(struct logger *dst, const struct logger *src, where_t where);
 
