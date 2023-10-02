@@ -323,8 +323,6 @@ struct state {
 
 	reqid_t st_reqid;			/* bundle of 4 (out,in, compout,compin */
 
-	bool st_outbound_done;			/* if true, then outgoing SA already installed */
-
 	const struct dh_desc *st_pfs_group;   /*group for Phase 2 PFS */
 	lset_t st_policy;                       /* policy for IPsec SA */
 

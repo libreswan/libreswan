@@ -2214,21 +2214,11 @@ bool install_ipsec_sa(struct child_sa *child, lset_t direction, where_t where)
 
 	/* (attempt to) actually set up the SA group */
 
-
-	/*
-	 * Always setup the outgoing SA first, so that we can refer to
-	 * it in the incoming SA (this happens when installing SAs in
-	 * both directions and installing an incomming SA).
-	 *
-	 * XXX: what exactly is being refered to?
-	 */
-	if (!child->sa.st_outbound_done) {
+	if (direction & DIRECTION_OUTBOUND) {
 		if (!setup_half_kernel_state(&child->sa, DIRECTION_OUTBOUND)) {
 			ldbg(logger, "kernel: %s() failed to install outbound kernel state", __func__);
 			return false;
 		}
-		ldbg(logger, "kernel: %s() setup outbound SA (kernel policy installed earlier?)", __func__);
-		child->sa.st_outbound_done = true;
 	}
 
 	/* now setup inbound SA */
