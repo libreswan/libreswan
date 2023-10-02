@@ -823,79 +823,6 @@ const struct spd_route *route_owner(struct spd_route *spd)
 }
 
 /*
- * handle co-terminal attempt of the "near" kind
- *
- * Note: it mutates both inside and outside
- */
-
-enum routability {
-	ROUTE_IMPOSSIBLE,
-	ROUTE_UNNECESSARY,
-	ROUTEABLE,
-};
-
-static enum routability connection_routability(struct connection *c,
-					       struct logger *logger)
-{
-	esb_buf b;
-	ldbg(logger,
-	     "kernel: %s() kind=%s remote.has_client=%s oppo=%s local.host.port=%u sec_label="PRI_SHUNK,
-	     __func__,
-	     enum_show(&connection_kind_names, c->local->kind, &b),
-	     bool_str(c->remote->child.has_client),
-	     bool_str(is_opportunistic(c)),
-	     c->local->host.port,
-	     pri_shunk(c->config->sec_label));
-
-	/* it makes no sense to route a connection that is ISAKMP-only */
-	if (!never_negotiate(c) && !HAS_IPSEC_POLICY(child_sa_policy(c))) {
-		llog(RC_ROUTE, logger,
-		     "cannot route an %s-only connection",
-		     c->config->ike_info->parent_name);
-		return ROUTE_IMPOSSIBLE;
-	}
-
-	/*
-	 * if this is a transport SA, and overlapping SAs are supported, then
-	 * this route is not necessary at all.
-	 */
-	PEXPECT(logger, !kernel_ops->overlap_supported); /* still WIP */
-	if (kernel_ops->overlap_supported && c->config->child_sa.encap_mode == ENCAP_MODE_TUNNEL) {
-		ldbg(logger, "route-unnecessary: overlap and !tunnel");
-		return ROUTE_UNNECESSARY;
-	}
-
-	/*
-	 * If this is a template connection, we cannot route.
-	 *
-	 * However, opportunistic and sec_label templates can be
-	 * routed (as in install the policy).
-	 */
-	if (is_template(c)) {
-		if (is_opportunistic(c)) {
-			ldbg(logger, "template-route-possible: opportunistic");
-		} else if (is_group_instance(c)) {
-			ldbg(logger, "template-route-possible: groupinstance");
-		} else if (c->config->sec_label.len > 0) {
-			ldbg(logger, "template-route-possible: has sec-label");
-		} else if (c->local->config->child.virt != NULL) {
-			ldbg(logger, "template-route-possible: local is virtual");
-		} else if (c->remote->child.has_client) {
-			/* see extract_child_end() */
-			ldbg(logger, "template-route-possible: remote %s.child.has_client==true",
-			     c->remote->config->leftright);
-		} else {
-			policy_buf pb;
-			llog(RC_ROUTE, logger,
-			     "cannot route template policy of %s",
-			     str_connection_policies(c, &pb));
-			return ROUTE_IMPOSSIBLE;
-		}
-	}
-	return ROUTEABLE; /* aka keep looking */
-}
-
-/*
  * XXX: can this and/or route_owner() be merged?
  */
 
@@ -1091,14 +1018,14 @@ static void revert_kernel_policy(struct spd_route *spd,
 
 bool unrouted_to_routed(struct connection *c, enum shunt_kind shunt_kind, where_t where)
 {
-	enum routability r = connection_routability(c, c->logger);
-	switch (r) {
-	case ROUTE_IMPOSSIBLE:
-		return false;
-	case ROUTE_UNNECESSARY:
+	/*
+	 * If this is a transport SA, and overlapping SAs are
+	 * supported, then this route is not necessary at all.
+	 */
+	PEXPECT(c->logger, !kernel_ops->overlap_supported); /* still WIP */
+	if (kernel_ops->overlap_supported && c->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT) {
+		ldbg(c->logger, "route-unnecessary: overlap and transport");
 		return true;
-	case ROUTEABLE:
-		break;
 	}
 
 	/*
@@ -2354,25 +2281,13 @@ bool install_ipsec_sa(struct child_sa *child, lset_t direction, where_t where)
 	 * the structure is zeroed (sec_labels ignore conflicts).
 	 */
 
-	enum routability r = connection_routability(c, logger);
-
-	switch (r) {
-	case ROUTEABLE:
-		ldbg(logger, "kernel:    routing is easy");
-		break;
-	case ROUTE_UNNECESSARY:
-		ldbg(logger, "kernel:    routing unnecessary");
-		/*
-		 * in this situation, we should look and see if there
-		 * is a state that our connection references, that we
-		 * are in fact replacing.
-		 */
-		break;
-	case ROUTE_IMPOSSIBLE:
-		dbg("kernel:    impossible");
-		return false;
-	default:
-		bad_case(r);
+	/*
+	 * if this is a transport SA, and overlapping SAs are supported, then
+	 * this route is not necessary at all.
+	 */
+	PEXPECT(logger, !kernel_ops->overlap_supported); /* still WIP */
+	if (kernel_ops->overlap_supported && c->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT) {
+		ldbg(logger, "route-unnecessary: overlap and transport");
 	}
 
 	if (!get_connection_spd_conflicts(c, logger)) {
@@ -2422,8 +2337,7 @@ bool install_ipsec_sa(struct child_sa *child, lset_t direction, where_t where)
 		child->sa.st_connection->temp_vars.revival.delay = deltatime(0);
 	}
 
-	if (PEXPECT(logger, r == ROUTEABLE)
-	    && (direction & DIRECTION_OUTBOUND)) {
+	if (direction & DIRECTION_OUTBOUND) {
 		if (!install_outbound_ipsec_kernel_policies(child)) {
 			return false;
 		}

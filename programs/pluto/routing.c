@@ -892,6 +892,28 @@ void connection_route(struct connection *c, where_t where)
 		return;
 	}
 
+	if (is_template(c)) {
+		if (is_opportunistic(c)) {
+			ldbg(c->logger, "template-route-possible: opportunistic");
+		} else if (is_group_instance(c)) {
+			ldbg(c->logger, "template-route-possible: groupinstance");
+		} else if (is_labeled(c)) {
+			ldbg(c->logger, "template-route-possible: has sec-label");
+		} else if (c->local->config->child.virt != NULL) {
+			ldbg(c->logger, "template-route-possible: local is virtual");
+		} else if (c->remote->child.has_client) {
+			/* see extract_child_end() */
+			ldbg(c->logger, "template-route-possible: remote %s.child.has_client==true",
+			     c->remote->config->leftright);
+		} else {
+			policy_buf pb;
+			llog(RC_ROUTE, c->logger,
+			     "cannot route template policy of %s",
+			     str_connection_policies(c, &pb));
+			return;
+		}
+	}
+
 	dispatch(CONNECTION_ROUTE, &c, c->logger, where,
 		 (struct routing_annex) {
 			 0,
