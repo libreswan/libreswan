@@ -1571,25 +1571,6 @@ static void dispatch_1(enum routing_event event,
 			set_routing(event, c, RT_UNROUTED, NULL, where);
 			return;
 
-		case X(ESTABLISH_INBOUND, ROUTED_ONDEMAND, TEMPLATE): /* ikev1-l2tp-03-two-interfaces */
-			if (BROKEN_TRANSITION) {
-				flush_routed_ondemand_revival(c);
-				/*
-				 * ikev1-l2tp-03-two-interfaces
-				 * github/693 github/1117
-				 */
-				set_routing(event, c, RT_ROUTED_INBOUND, NULL, where);
-				return;
-			}
-			break;
-		case X(ESTABLISH_OUTBOUND, ROUTED_INBOUND, TEMPLATE): /* ikev1-l2tp-03-two-interfaces */
-			/*
-			 * ikev1-l2tp-03-two-interfaces
-			 * github/693 github/1117
-			 */
-			set_established_child(event, c, RT_ROUTED_TUNNEL, e->child, where);
-			return;
-
 		case X(ESTABLISH_INBOUND, ROUTED_ONDEMAND, INSTANCE): /* ikev2-32-nat-rw-rekey */
 			if (BROKEN_TRANSITION) {
 				flush_routed_ondemand_revival(c);
@@ -1610,13 +1591,6 @@ static void dispatch_1(enum routing_event event,
 			 * algo-ikev2-aes128-sha1-ecp256 et.al. */
 			set_routing(event, c, RT_UNROUTED_INBOUND, NULL, where);
 			return;
-		case X(ESTABLISH_INBOUND, UNROUTED, TEMPLATE): /* xauth-pluto-14 */
-			if (BROKEN_TRANSITION) {
-				/*  xauth-pluto-14 */
-				set_routing(event, c, RT_ROUTED_INBOUND, NULL, where);
-				return;
-			}
-			break;
 		case X(ESTABLISH_INBOUND, ROUTED_ONDEMAND, PERMANENT):
 			if (BROKEN_TRANSITION) {
 				/* instance was routed by routed-ondemand? */
