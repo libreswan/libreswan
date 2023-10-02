@@ -1214,10 +1214,9 @@ static struct child_sa *duplicate_state(struct connection *c,
 
 struct child_sa *new_v1_child_sa(struct connection *c,
 				 struct ike_sa *isakmp,
-				 enum sa_role sa_role,
-				 struct fd *whackfd)
+				 enum sa_role sa_role)
 {
-	return duplicate_state(c, isakmp, IPSEC_SA, sa_role, whackfd);
+	return duplicate_state(c, isakmp, IPSEC_SA, sa_role, null_fd);
 }
 
 struct child_sa *new_v2_child_sa(struct connection *c,

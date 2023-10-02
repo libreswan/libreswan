@@ -859,8 +859,9 @@ extern bool states_use_connection(const struct connection *c);
 
 struct ike_sa *new_v1_istate(struct connection *c);
 struct ike_sa *new_v1_rstate(struct connection *c, struct msg_digest *md);
-struct child_sa *new_v1_child_sa(struct connection *c, struct ike_sa *ike,
-				 enum sa_role sa_role, struct fd *whackfd);
+struct child_sa *new_v1_child_sa(struct connection *c,
+				 struct ike_sa *ike,
+				 enum sa_role sa_role);
 
 struct ike_sa *new_v2_ike_sa(struct connection *c,
 			     const struct v2_state_transition *transition,

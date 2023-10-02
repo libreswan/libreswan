@@ -619,7 +619,7 @@ struct child_sa *quick_outI1(struct ike_sa *isakmp,
 			     so_serial_t replacing)
 {
 	passert(c != NULL);
-	struct child_sa *child = new_v1_child_sa(c, isakmp, SA_INITIATOR, null_fd);
+	struct child_sa *child = new_v1_child_sa(c, isakmp, SA_INITIATOR);
 	state_attach(&child->sa, c->logger);
 
 	child->sa.st_policy = policy;
@@ -1176,7 +1176,7 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 
 	/* create our new state */
 
-	struct child_sa *child = new_v1_child_sa(c, parent, SA_RESPONDER, null_fd);
+	struct child_sa *child = new_v1_child_sa(c, parent, SA_RESPONDER);
 	/* delref stack reference */
 	struct connection *cc = c;
 	connection_delref(&cc, cc->logger);
