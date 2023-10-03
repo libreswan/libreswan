@@ -447,22 +447,31 @@ void load_groups(struct logger *logger)
 										 np->dport,
 										 HERE);
 					if (t != NULL) {
+						PEXPECT(logger, (whack_attached(g->logger) ==
+								 whack_attached(t->logger)));
 						/* instance when remote addr valid */
 						PEXPECT(logger, (is_template(t) ||
 								 is_instance(t)));
 						/* route if group is routed */
 						if (g->policy.route) {
-							connection_attach(t, logger);
 							connection_route(t, HERE);
-							connection_detach(t, logger);
 						}
 						ldbg(g->logger, "setting "PRI_CO, pri_co(t->serialno));
 						passert(np->serialno == UNSET_CO_SERIAL);
 						np->serialno = t->serialno;
 						/* advance new */
 						npp = &np->next;
+						connection_detach(t, logger);
 					} else {
-						/* XXX: is this really a pexpect()? */
+						/*
+						 * XXX: is this really
+						 * a pexpect()?
+						 *
+						 * No.  For instance,
+						 * the group-instance
+						 * name may already
+						 * exist.
+						 */
 						dbg("add group instance failed");
 						/* free new; advance new */
 						*npp = np->next;
