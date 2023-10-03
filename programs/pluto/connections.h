@@ -928,7 +928,8 @@ const char *str_spd(const struct spd_route *spd, spd_buf *buf);
 void finish_connection(struct connection *c, const char *name,
 		       struct connection *t,
 		       const struct config *config,
-		       lset_t debugging, struct fd *whackfd,
+		       lset_t debugging,
+		       struct logger *logger,
 		       where_t where);
 
 /*

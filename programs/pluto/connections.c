@@ -1885,13 +1885,14 @@ static diag_t extract_shunt(struct config *config,
 void finish_connection(struct connection *c, const char *name,
 		       struct connection *t,
 		       const struct config *config,
-		       lset_t debugging, struct fd *whackfd,
+		       lset_t debugging,
+		       struct logger *logger,
 		       where_t where)
 {
 	c->name = clone_str(name, __func__);
 	c->logger = alloc_logger(c, &logger_connection_vec,
 				 debugging, where);
-	attach_fd(c->logger, whackfd);
+	connection_attach(c, logger);
 
 	/*
 	 * Determine left/right vs local/remote.
@@ -1965,7 +1966,8 @@ static struct config *alloc_config(void)
 }
 
 static struct connection *alloc_connection(const char *name,
-					   lset_t debugging, struct fd *whackfd,
+					   lset_t debugging,
+					   struct logger *logger,
 					   where_t where)
 {
 	struct connection *c = refcnt_alloc(struct connection, where);
@@ -1979,7 +1981,9 @@ static struct connection *alloc_connection(const char *name,
 
 	finish_connection(c, name, NULL/*no template*/,
 			  c->root_config,
-			  debugging, whackfd, where);
+			  debugging,
+			  logger,
+			  where);
 
 	return c;
 }
@@ -3407,8 +3411,7 @@ bool add_connection(const struct whack_message *wm, struct logger *logger)
 	lset_t debugging = lmod(LEMPTY, wm->debugging);
 	struct connection *c = alloc_connection(wm->name,
 						debugging | wm->conn_debug,
-						logger->global_whackfd,
-						HERE);
+						logger, HERE);
 
 	diag_t d = extract_connection(wm, c);
 	if (d != NULL) {

@@ -76,7 +76,7 @@ struct connection *clone_connection(const char *name, struct connection *t,
 	zero_thing(c->connection_db_entries); /* keep init_list_entry() happy */
 	finish_connection(c, name, t, t->config,
 			  t->logger->debugging,
-			  t->logger->object_whackfd,
+			  t->logger,
 			  where);
 
 	/* caller responsible for re-building these */
