@@ -1779,7 +1779,7 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 			return STF_FATAL;
 #endif
 	struct child_sa *child = pexpect_child_sa(st);
-	if (!install_ipsec_sa(child, HERE))
+	if (!connection_establish_child(child, HERE))
 		return STF_INTERNAL_ERROR;
 
 	/* encrypt message, except for fixed part of header */

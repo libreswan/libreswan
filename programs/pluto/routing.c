@@ -299,6 +299,12 @@ void fake_connection_establish_outbound(struct child_sa *child, where_t where)
 		 });
 }
 
+bool connection_establish_child(struct child_sa *child, where_t where)
+{
+	return (install_inbound_ipsec_sa(child, where) &&
+		install_outbound_ipsec_sa(child, where));
+}
+
 enum shunt_kind routing_shunt_kind(enum routing routing)
 {
 	switch (routing) {

@@ -2178,12 +2178,6 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child)
 	return true;
 }
 
-bool install_ipsec_sa(struct child_sa *child, where_t where)
-{
-	return (install_inbound_ipsec_sa(child, where) &&
-		install_outbound_ipsec_sa(child, where));
-}
-
 bool install_inbound_ipsec_sa(struct child_sa *child, where_t where)
 {
 	struct logger *logger = child->sa.st_logger;
