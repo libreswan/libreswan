@@ -2215,13 +2215,6 @@ bool install_ipsec_sa(struct child_sa *child, where_t where)
 
 	/* (attempt to) actually set up the SA group */
 
-	if (direction & DIRECTION_OUTBOUND) {
-		if (!setup_half_kernel_state(&child->sa, DIRECTION_OUTBOUND)) {
-			ldbg(logger, "kernel: %s() failed to install outbound kernel state", __func__);
-			return false;
-		}
-	}
-
 	/* now setup inbound SA */
 	if (direction & DIRECTION_INBOUND) {
 		if (!setup_half_kernel_state(&child->sa, DIRECTION_INBOUND)) {
@@ -2247,6 +2240,14 @@ bool install_ipsec_sa(struct child_sa *child, where_t where)
 	}
 
 	if (direction & DIRECTION_OUTBOUND) {
+
+		if (direction & DIRECTION_OUTBOUND) {
+			if (!setup_half_kernel_state(&child->sa, DIRECTION_OUTBOUND)) {
+				ldbg(logger, "kernel: %s() failed to install outbound kernel state", __func__);
+				return false;
+			}
+		}
+
 		if (!install_outbound_ipsec_kernel_policies(child)) {
 			return false;
 		}
