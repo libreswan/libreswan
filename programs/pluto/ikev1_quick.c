@@ -1562,9 +1562,11 @@ static stf_status quick_inI1_outR1_continue12_tail(struct state *st, struct msg_
 			return STF_FATAL;
 #endif
 
-	terminate_conflicts(pexpect_child_sa(st));
+	struct child_sa *child = pexpect_child_sa(st);
 
-	if (!install_ipsec_sa(pexpect_child_sa(st), DIRECTION_INBOUND, HERE)) {
+	terminate_conflicts(child);
+
+	if (!install_inbound_ipsec_sa(child, HERE)) {
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 	}
 
@@ -1776,7 +1778,8 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 		if (!add_xfrm_interface(c, st->st_logger))
 			return STF_FATAL;
 #endif
-	if (!install_ipsec_sa(pexpect_child_sa(st), DIRECTION_INBOUND|DIRECTION_OUTBOUND, HERE))
+	struct child_sa *child = pexpect_child_sa(st);
+	if (!install_ipsec_sa(child, HERE))
 		return STF_INTERNAL_ERROR;
 
 	/* encrypt message, except for fixed part of header */
@@ -1811,7 +1814,8 @@ stf_status quick_inI2(struct state *st, struct msg_digest *md UNUSED)
 		if (!add_xfrm_interface(c, st->st_logger))
 			return STF_FATAL;
 #endif
-	if (!install_ipsec_sa(pexpect_child_sa(st), DIRECTION_OUTBOUND, HERE))
+	struct child_sa *child = pexpect_child_sa(st);
+	if (!install_outbound_ipsec_sa(child, HERE))
 		return STF_INTERNAL_ERROR;
 
 	update_iv(st);  /* not actually used, but tidy */
