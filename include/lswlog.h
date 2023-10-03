@@ -221,7 +221,10 @@ struct logger {
 };
 
 #define PRI_LOGGER "logger@%p/"PRI_FD"/"PRI_FD
-#define pri_logger(LOGGER) (LOGGER), (LOGGER) == NULL ? NULL : (LOGGER)->global_whackfd, (LOGGER) == NULL ? NULL : (LOGGER)->object_whackfd
+#define pri_logger(LOGGER)						\
+	(LOGGER),							\
+		pri_fd((LOGGER) == NULL ? NULL : (LOGGER)->global_whackfd), \
+		pri_fd((LOGGER) == NULL ? NULL : (LOGGER)->object_whackfd)
 
 void llog(lset_t rc_flags,
 	  const struct logger *log,
