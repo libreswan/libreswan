@@ -1815,7 +1815,7 @@ stf_status quick_inI2(struct state *st, struct msg_digest *md UNUSED)
 			return STF_FATAL;
 #endif
 	struct child_sa *child = pexpect_child_sa(st);
-	if (!install_outbound_ipsec_sa(child, HERE))
+	if (!connection_establish_outbound(child, HERE))
 		return STF_INTERNAL_ERROR;
 
 	update_iv(st);  /* not actually used, but tidy */

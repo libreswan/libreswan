@@ -289,20 +289,20 @@ bool connection_establish_inbound(struct child_sa *child, where_t where)
 			});
 }
 
-void fake_connection_establish_outbound(struct child_sa *child, where_t where)
+bool connection_establish_outbound(struct child_sa *child, where_t where)
 {
 	struct connection *cc = child->sa.st_connection;
-	dispatch(CONNECTION_ESTABLISH_OUTBOUND, &cc,
-		 child->sa.st_logger, where,
-		 (struct routing_annex) {
-			 .child = &child,
-		 });
+	return dispatch(CONNECTION_ESTABLISH_OUTBOUND, &cc,
+			child->sa.st_logger, where,
+			(struct routing_annex) {
+				.child = &child,
+			});
 }
 
 bool connection_establish_child(struct child_sa *child, where_t where)
 {
 	return (connection_establish_inbound(child, where) &&
-		install_outbound_ipsec_sa(child, where));
+		connection_establish_outbound(child, where));
 }
 
 enum shunt_kind routing_shunt_kind(enum routing routing)
@@ -1672,6 +1672,9 @@ static bool dispatch_1(enum routing_event event,
 		case X(ESTABLISH_OUTBOUND, UNROUTED_INBOUND, INSTANCE):
 		case X(ESTABLISH_OUTBOUND, ROUTED_INBOUND, PERMANENT):
 		case X(ESTABLISH_OUTBOUND, ROUTED_INBOUND, INSTANCE):
+			if (!install_outbound_ipsec_sa((*e->child), where)) {
+				return false;
+			}
 			set_established_child(event, c, RT_ROUTED_TUNNEL, e->child, where);
 			return true;
 
@@ -1686,6 +1689,9 @@ static bool dispatch_1(enum routing_event event,
 			 * ikev2-28-rw-server-rekey
 			 * ikev1-labeled-ipsec-01-permissive.
 			 */
+			if (!install_outbound_ipsec_sa((*e->child), where)) {
+				return false;
+			}
 			set_established_child(event, c, RT_ROUTED_TUNNEL, e->child, where);
 			return true;
 
@@ -1819,6 +1825,9 @@ static bool dispatch_1(enum routing_event event,
 			return true;
 		case X(ESTABLISH_OUTBOUND, UNROUTED_TUNNEL, LABELED_CHILD):
 			/* rekey */
+			if (!install_outbound_ipsec_sa((*e->child), where)) {
+				return false;
+			}
 			set_established_child(event, c, RT_UNROUTED_TUNNEL, e->child, where);
 			return true;
 		case X(ESTABLISH_INBOUND, UNROUTED, LABELED_CHILD):
@@ -1828,6 +1837,9 @@ static bool dispatch_1(enum routing_event event,
 			set_routing(event, c, RT_UNROUTED_INBOUND, e->child, where);
 			return true;
 		case X(ESTABLISH_OUTBOUND, UNROUTED_INBOUND, LABELED_CHILD):
+			if (!install_outbound_ipsec_sa((*e->child), where)) {
+				return false;
+			}
 			set_established_child(event, c, RT_UNROUTED_TUNNEL, e->child, where);
 			return true;
 		case X(UNROUTE, UNROUTED_INBOUND, LABELED_CHILD):

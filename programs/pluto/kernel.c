@@ -2289,7 +2289,6 @@ bool install_outbound_ipsec_sa(struct child_sa *child, where_t where)
 #if 0
 	PEXPECT(child->sa.st_logger, routing_sa == new_ipsec_sa);
 #endif
-	fake_connection_establish_outbound(child, HERE);
 
 	/*
 	 * We successfully installed an IPsec SA, meaning it

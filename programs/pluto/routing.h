@@ -111,9 +111,7 @@ void connection_delete_state(struct state **st, where_t where);
 
 bool connection_establish_child(struct child_sa *child, where_t where);
 bool connection_establish_inbound(struct child_sa *child, where_t where);
-
-/* fake a debug message for establish for now */
-void fake_connection_establish_outbound(struct child_sa *child, where_t where);
+bool connection_establish_outbound(struct child_sa *child, where_t where);
 
 enum routing_event {
 	/* fiddle with the ROUTE bit */
