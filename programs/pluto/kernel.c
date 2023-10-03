@@ -2227,20 +2227,6 @@ bool install_inbound_ipsec_sa(struct child_sa *child, where_t where)
 
 	fake_connection_establish_inbound(child, HERE);
 
-	/*
-	 * We successfully installed an IPsec SA, meaning it
-	 * is safe to clear our revival back-off delay. This
-	 * is based on the assumption that an unwilling
-	 * partner might complete an IKE SA to us, but won't
-	 * complete an IPsec SA to us.
-	 */
-	child->sa.st_connection->temp_vars.revival.attempt = 0;
-	child->sa.st_connection->temp_vars.revival.delay = deltatime(0);
-
-	/* we only audit once for IPsec SA's, we picked the inbound SA */
-
-	linux_audit_conn(&child->sa, LAK_CHILD_START);
-
 	return true;
 }
 
@@ -2312,6 +2298,20 @@ bool install_outbound_ipsec_sa(struct child_sa *child, where_t where)
 	PEXPECT(child->sa.st_logger, routing_sa == new_ipsec_sa);
 #endif
 	fake_connection_establish_outbound(child, HERE);
+
+	/*
+	 * We successfully installed an IPsec SA, meaning it
+	 * is safe to clear our revival back-off delay. This
+	 * is based on the assumption that an unwilling
+	 * partner might complete an IKE SA to us, but won't
+	 * complete an IPsec SA to us.
+	 */
+	child->sa.st_connection->temp_vars.revival.attempt = 0;
+	child->sa.st_connection->temp_vars.revival.delay = deltatime(0);
+
+	/* we only audit once for IPsec SA's, we picked the inbound SA */
+
+	linux_audit_conn(&child->sa, LAK_CHILD_START);
 
 	return true;
 }
