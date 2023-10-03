@@ -1997,7 +1997,7 @@ void show_kernel_interface(struct show *s)
 	}
 }
 
-static bool install_outbound_ipsec_kernel_policies(struct child_sa *child)
+static bool install_outbound_ipsec_kernel_policies(struct child_sa *child, bool up)
 {
 	struct logger *logger = child->sa.st_logger;
 	struct connection *c = child->sa.st_connection;
@@ -2013,11 +2013,12 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child)
 	}
 
 	ldbg(logger,
-	     "kernel: %s() installing IPsec policies for "PRI_SO": connection is currently "PRI_SO" %s",
-	    __func__,
-	    pri_so(child->sa.st_serialno),
-	    pri_so(c->newest_routing_sa),
-	    enum_name(&routing_names, c->child.routing));
+	     "kernel: %s() installing IPsec policies for "PRI_SO": connection is currently "PRI_SO" %s up=%s",
+	     __func__,
+	     pri_so(child->sa.st_serialno),
+	     pri_so(c->newest_routing_sa),
+	     enum_name(&routing_names, c->child.routing),
+	     bool_str(up));
 
 #ifdef IPSEC_CONNECTION_LIMIT
 	unsigned new_spds = 0;
@@ -2076,27 +2077,26 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child)
 	/*
 	 * Do we have to notify the firewall?
 	 *
+	 * Yes if this is the first time that the tunnel is
+	 * established (rekeys do not need to re-UP).
+	 *
 	 * Yes, if we are installing a tunnel eroute and the firewall
 	 * wasn't notified for a previous tunnel with the same
 	 * clients.  Any Previous tunnel would have to be for our
 	 * connection, so the actual test is simple.
 	 */
 
-	FOR_EACH_ITEM(spd, &c->child.spds) {
+	if (up) {
+		FOR_EACH_ITEM(spd, &c->child.spds) {
 
-		if (!ok) {
-			break;
-		}
+			if (!ok) {
+				break;
+			}
 
-		if (is_v1_cisco_split(spd)) {
-			continue;
-		}
+			if (is_v1_cisco_split(spd)) {
+				continue;
+			}
 
-		if (c->newest_routing_sa != SOS_NOBODY) {
-			/* skip as already installed */
-			spd->wip.installed.up = false;
-		} else {
-			/* go ahead and notify */
 			ok = spd->wip.installed.up =
 				do_updown(UPDOWN_UP, c, spd, &child->sa, logger);
 		}
@@ -2222,7 +2222,7 @@ bool install_inbound_ipsec_sa(struct child_sa *child, where_t where)
 	return true;
 }
 
-bool install_outbound_ipsec_sa(struct child_sa *child, where_t where)
+bool install_outbound_ipsec_sa(struct child_sa *child, bool up, where_t where)
 {
 	struct logger *logger = child->sa.st_logger;
 	struct connection *c = child->sa.st_connection;
@@ -2258,7 +2258,7 @@ bool install_outbound_ipsec_sa(struct child_sa *child, where_t where)
 		return false;
 	}
 
-	if (!install_outbound_ipsec_kernel_policies(child)) {
+	if (!install_outbound_ipsec_kernel_policies(child, up)) {
 		return false;
 	}
 

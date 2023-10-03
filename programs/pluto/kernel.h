@@ -377,7 +377,7 @@ extern ipsec_spi_t get_ipsec_cpi(const struct connection *c,
 bool unrouted_to_routed(struct connection *c, enum shunt_kind shunt_kind, where_t where);
 
 bool install_inbound_ipsec_sa(struct child_sa *child, where_t where);
-bool install_outbound_ipsec_sa(struct child_sa *child, where_t where);
+bool install_outbound_ipsec_sa(struct child_sa *child, bool up, where_t where);
 
 void teardown_ipsec_kernel_states(struct child_sa *child);
 void uninstall_kernel_states(struct child_sa *child);

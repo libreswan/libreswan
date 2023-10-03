@@ -1672,7 +1672,7 @@ static bool dispatch_1(enum routing_event event,
 		case X(ESTABLISH_OUTBOUND, UNROUTED_INBOUND, INSTANCE):
 		case X(ESTABLISH_OUTBOUND, ROUTED_INBOUND, PERMANENT):
 		case X(ESTABLISH_OUTBOUND, ROUTED_INBOUND, INSTANCE):
-			if (!install_outbound_ipsec_sa((*e->child), where)) {
+			if (!install_outbound_ipsec_sa((*e->child), /*up*/true, where)) {
 				return false;
 			}
 			set_established_child(event, c, RT_ROUTED_TUNNEL, e->child, where);
@@ -1689,7 +1689,7 @@ static bool dispatch_1(enum routing_event event,
 			 * ikev2-28-rw-server-rekey
 			 * ikev1-labeled-ipsec-01-permissive.
 			 */
-			if (!install_outbound_ipsec_sa((*e->child), where)) {
+			if (!install_outbound_ipsec_sa((*e->child), /*up*/false, where)) {
 				return false;
 			}
 			set_established_child(event, c, RT_ROUTED_TUNNEL, e->child, where);
@@ -1825,7 +1825,8 @@ static bool dispatch_1(enum routing_event event,
 			return true;
 		case X(ESTABLISH_OUTBOUND, UNROUTED_TUNNEL, LABELED_CHILD):
 			/* rekey */
-			if (!install_outbound_ipsec_sa((*e->child), where)) {
+			/* labeled IPsec ignores UP; no policy */
+			if (!install_outbound_ipsec_sa((*e->child), /*up*/false, where)) {
 				return false;
 			}
 			set_established_child(event, c, RT_UNROUTED_TUNNEL, e->child, where);
@@ -1837,7 +1838,8 @@ static bool dispatch_1(enum routing_event event,
 			set_routing(event, c, RT_UNROUTED_INBOUND, e->child, where);
 			return true;
 		case X(ESTABLISH_OUTBOUND, UNROUTED_INBOUND, LABELED_CHILD):
-			if (!install_outbound_ipsec_sa((*e->child), where)) {
+			/* labeled IPsec ignores UP; no policy */
+			if (!install_outbound_ipsec_sa((*e->child), /*up*/true, where)) {
 				return false;
 			}
 			set_established_child(event, c, RT_UNROUTED_TUNNEL, e->child, where);
