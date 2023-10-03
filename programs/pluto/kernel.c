@@ -2292,18 +2292,12 @@ bool install_ipsec_sa(struct child_sa *child, where_t where)
 
 bool install_inbound_ipsec_sa(struct child_sa *child, where_t where)
 {
-	lset_t direction = DIRECTION_INBOUND;
 	struct logger *logger = child->sa.st_logger;
 	struct connection *c = child->sa.st_connection;
-	ldbg(logger, "kernel: %s() for "PRI_SO": %s%s%s "PRI_WHERE,
-	     __func__, pri_so(child->sa.st_serialno),
-	     (direction & DIRECTION_INBOUND ? "inbound" : ""),
-	     (direction == (DIRECTION_INBOUND | DIRECTION_OUTBOUND) ? "+" : ""),
-	     (direction & DIRECTION_OUTBOUND ? "outbound" : ""),
-	     pri_where(where));
 
-	PASSERT(logger, (direction & (DIRECTION_INBOUND|DIRECTION_OUTBOUND)) != LEMPTY);
-	PASSERT(logger, (direction & ~(DIRECTION_INBOUND|DIRECTION_OUTBOUND)) == LEMPTY);
+	ldbg(logger, "kernel: %s() for "PRI_SO": inbound "PRI_WHERE,
+	     __func__, pri_so(child->sa.st_serialno),
+	     pri_where(where));
 
 	/*
 	 * Pass +0: Lookup the status of each SPD.
@@ -2325,97 +2319,45 @@ bool install_inbound_ipsec_sa(struct child_sa *child, where_t where)
 		return false;
 	}
 
-	/* (attempt to) actually set up the SA group */
-
-	if (direction & DIRECTION_OUTBOUND) {
-		if (!setup_half_kernel_state(&child->sa, DIRECTION_OUTBOUND)) {
-			ldbg(logger, "kernel: %s() failed to install outbound kernel state", __func__);
-			return false;
-		}
-	}
-
 	/* now setup inbound SA */
-	if (direction & DIRECTION_INBOUND) {
-		if (!setup_half_kernel_state(&child->sa, DIRECTION_INBOUND)) {
-			ldbg(logger, "kernel: %s() failed to install inbound kernel state", __func__);
-			return false;
-		}
-		if (!install_inbound_ipsec_kernel_policies(child)) {
-			ldbg(logger, "kernel: %s() failed to install inbound kernel policy", __func__);
-			return false;
-		}
 
-		fake_connection_establish_inbound(child, HERE);
-
-		/*
-		 * We successfully installed an IPsec SA, meaning it
-		 * is safe to clear our revival back-off delay. This
-		 * is based on the assumption that an unwilling
-		 * partner might complete an IKE SA to us, but won't
-		 * complete an IPsec SA to us.
-		 */
-		child->sa.st_connection->temp_vars.revival.attempt = 0;
-		child->sa.st_connection->temp_vars.revival.delay = deltatime(0);
+	if (!setup_half_kernel_state(&child->sa, DIRECTION_INBOUND)) {
+		ldbg(logger, "kernel: %s() failed to install inbound kernel state", __func__);
+		return false;
 	}
 
-	if (direction & DIRECTION_OUTBOUND) {
-		if (!install_outbound_ipsec_kernel_policies(child)) {
-			return false;
-		}
+	if (!install_inbound_ipsec_kernel_policies(child)) {
+		ldbg(logger, "kernel: %s() failed to install inbound kernel policy", __func__);
+		return false;
 	}
+
+	fake_connection_establish_inbound(child, HERE);
 
 	/*
-	 * Transfer ownership of the connection's IPsec SA (kernel
-	 * state) to the new Child.
-	 *
-	 * For IKEv2, both inbound and outbound IPsec SAs are
-	 * installed at the same time so direction doesn't matter.
-	 *
-	 * For IKEv1, on the responder during quick mode, inbound and
-	 * then outbound IPsec SAs are installed during separate
-	 * exchanges, hence direction does matter.
-	 *
-	 * Since the above code updates routing, the routing owner
-	 * should match the child.
+	 * We successfully installed an IPsec SA, meaning it
+	 * is safe to clear our revival back-off delay. This
+	 * is based on the assumption that an unwilling
+	 * partner might complete an IKE SA to us, but won't
+	 * complete an IPsec SA to us.
 	 */
-	if (direction & DIRECTION_OUTBOUND) {
-#if 0
-		/*
-		 * XXX: triggers when two peers initiate
-		 * simultaneously eventually finding themselves
-		 * fighting over the same Child SA, for instance in
-		 * ikev2-systemrole-04-mesh.
-		 */
-		PEXPECT(child->sa.st_logger, new_ipsec_sa >= old_ipsec_sa);
-#endif
-#if 0
-		PEXPECT(child->sa.st_logger, routing_sa == new_ipsec_sa);
-#endif
-		fake_connection_establish_outbound(child, HERE);
-	}
+	child->sa.st_connection->temp_vars.revival.attempt = 0;
+	child->sa.st_connection->temp_vars.revival.delay = deltatime(0);
 
 	/* we only audit once for IPsec SA's, we picked the inbound SA */
-	if (direction & DIRECTION_INBOUND) {
-		linux_audit_conn(&child->sa, LAK_CHILD_START);
-	}
+
+	linux_audit_conn(&child->sa, LAK_CHILD_START);
 
 	return true;
 }
 
 bool install_outbound_ipsec_sa(struct child_sa *child, where_t where)
 {
-	lset_t direction = DIRECTION_OUTBOUND;
 	struct logger *logger = child->sa.st_logger;
 	struct connection *c = child->sa.st_connection;
-	ldbg(logger, "kernel: %s() for "PRI_SO": %s%s%s "PRI_WHERE,
-	     __func__, pri_so(child->sa.st_serialno),
-	     (direction & DIRECTION_INBOUND ? "inbound" : ""),
-	     (direction == (DIRECTION_INBOUND | DIRECTION_OUTBOUND) ? "+" : ""),
-	     (direction & DIRECTION_OUTBOUND ? "outbound" : ""),
-	     pri_where(where));
 
-	PASSERT(logger, (direction & (DIRECTION_INBOUND|DIRECTION_OUTBOUND)) != LEMPTY);
-	PASSERT(logger, (direction & ~(DIRECTION_INBOUND|DIRECTION_OUTBOUND)) == LEMPTY);
+	ldbg(logger, "kernel: %s() for "PRI_SO": outbound "PRI_WHERE,
+	     __func__, pri_so(child->sa.st_serialno),
+	     pri_where(where));
 
 	/*
 	 * Pass +0: Lookup the status of each SPD.
@@ -2439,41 +2381,13 @@ bool install_outbound_ipsec_sa(struct child_sa *child, where_t where)
 
 	/* (attempt to) actually set up the SA group */
 
-	if (direction & DIRECTION_OUTBOUND) {
-		if (!setup_half_kernel_state(&child->sa, DIRECTION_OUTBOUND)) {
-			ldbg(logger, "kernel: %s() failed to install outbound kernel state", __func__);
-			return false;
-		}
+	if (!setup_half_kernel_state(&child->sa, DIRECTION_OUTBOUND)) {
+		ldbg(logger, "kernel: %s() failed to install outbound kernel state", __func__);
+		return false;
 	}
 
-	/* now setup inbound SA */
-	if (direction & DIRECTION_INBOUND) {
-		if (!setup_half_kernel_state(&child->sa, DIRECTION_INBOUND)) {
-			ldbg(logger, "kernel: %s() failed to install inbound kernel state", __func__);
-			return false;
-		}
-		if (!install_inbound_ipsec_kernel_policies(child)) {
-			ldbg(logger, "kernel: %s() failed to install inbound kernel policy", __func__);
-			return false;
-		}
-
-		fake_connection_establish_inbound(child, HERE);
-
-		/*
-		 * We successfully installed an IPsec SA, meaning it
-		 * is safe to clear our revival back-off delay. This
-		 * is based on the assumption that an unwilling
-		 * partner might complete an IKE SA to us, but won't
-		 * complete an IPsec SA to us.
-		 */
-		child->sa.st_connection->temp_vars.revival.attempt = 0;
-		child->sa.st_connection->temp_vars.revival.delay = deltatime(0);
-	}
-
-	if (direction & DIRECTION_OUTBOUND) {
-		if (!install_outbound_ipsec_kernel_policies(child)) {
-			return false;
-		}
+	if (!install_outbound_ipsec_kernel_policies(child)) {
+		return false;
 	}
 
 	/*
@@ -2490,26 +2404,20 @@ bool install_outbound_ipsec_sa(struct child_sa *child, where_t where)
 	 * Since the above code updates routing, the routing owner
 	 * should match the child.
 	 */
-	if (direction & DIRECTION_OUTBOUND) {
-#if 0
-		/*
-		 * XXX: triggers when two peers initiate
-		 * simultaneously eventually finding themselves
-		 * fighting over the same Child SA, for instance in
-		 * ikev2-systemrole-04-mesh.
-		 */
-		PEXPECT(child->sa.st_logger, new_ipsec_sa >= old_ipsec_sa);
-#endif
-#if 0
-		PEXPECT(child->sa.st_logger, routing_sa == new_ipsec_sa);
-#endif
-		fake_connection_establish_outbound(child, HERE);
-	}
 
-	/* we only audit once for IPsec SA's, we picked the inbound SA */
-	if (direction & DIRECTION_INBOUND) {
-		linux_audit_conn(&child->sa, LAK_CHILD_START);
-	}
+#if 0
+	/*
+	 * XXX: triggers when two peers initiate
+	 * simultaneously eventually finding themselves
+	 * fighting over the same Child SA, for instance in
+	 * ikev2-systemrole-04-mesh.
+	 */
+	PEXPECT(child->sa.st_logger, new_ipsec_sa >= old_ipsec_sa);
+#endif
+#if 0
+	PEXPECT(child->sa.st_logger, routing_sa == new_ipsec_sa);
+#endif
+	fake_connection_establish_outbound(child, HERE);
 
 	return true;
 }
