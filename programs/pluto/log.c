@@ -597,6 +597,8 @@ bool same_whack(const struct logger *lhs, const struct logger *rhs)
 
 void attach_fd_where(struct logger *dst, struct fd *src_fd, where_t where)
 {
+	const char *slot;
+
 	/* do no harm? */
 	if (src_fd == NULL) {
 		pdbg(dst, "no whack to attach");
@@ -604,25 +606,31 @@ void attach_fd_where(struct logger *dst, struct fd *src_fd, where_t where)
 	}
 
 	/* already attached? */
+	slot = "global";
 	FOR_EACH_THING(fdp, &dst->global_whackfd, &dst->object_whackfd) {
 		if (*fdp == src_fd) {
 			/* already attached */
-			pdbg(dst, "whack already attached");
+			pdbg(dst, "whack "PRI_FD" already attached to %s slot",
+			     pri_fd(src_fd), slot);
 			return;
 		}
+		slot = "object";
 	}
 
 	/* attach to spare slot */
+	slot = "global";
 	FOR_EACH_THING(fdp, &dst->global_whackfd, &dst->object_whackfd) {
 		if (*fdp == NULL) {
 			*fdp = fd_addref_where(src_fd, where);
-			pdbg(dst, "whack attached to spare slot");
+			pdbg(dst, "whack "PRI_FD" attached to empty %s slot",
+			     pri_fd(src_fd), slot);
 			return;
 		}
+		slot = "object";
 	}
 
 	/* replace global */
-	pdbg(dst, "whack attached to global slot");
+	pdbg(dst, "whack "PRI_FD" attached to global slot", pri_fd(src_fd));
 	fd_delref_where(&dst->global_whackfd, where);
 	dst->global_whackfd = fd_addref_where(src_fd, where);
 }
@@ -649,6 +657,8 @@ void state_attach_where(struct state *st, const struct logger *src, where_t wher
 
 void whack_detach_where(struct logger *dst, const struct logger *src, where_t where)
 {
+	const char *slot;
+
 	/* find a whack to detach */
 	struct fd *src_fd = logger_fd(src);
 	if (src_fd == NULL) {
@@ -657,12 +667,15 @@ void whack_detach_where(struct logger *dst, const struct logger *src, where_t wh
 	}
 
 	/* find where it is attached */
+	slot = "global";
 	FOR_EACH_THING(fdp, &dst->global_whackfd, &dst->object_whackfd) {
 		if (*fdp == src_fd) {
-			pdbg(dst, "detaching whack");
+			pdbg(dst, "whack "PRI_FD" detached from from %s slot",
+			     pri_fd((*fdp)), slot);
 			fd_delref_where(fdp, where);
 			return;
 		}
+		slot = "object";
 	}
 }
 
