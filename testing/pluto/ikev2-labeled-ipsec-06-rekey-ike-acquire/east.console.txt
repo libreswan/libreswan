@@ -30,17 +30,6 @@ east #
  # configured ipsec_spd_t label, and no outgoing %trap policy
 east #
  ../../guestbin/ipsec-kernel-state.sh
-src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0xSPISPI reqid REQID mode transport
-	replay-window 0 flag esn
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	lastused YYYY-MM-DD HH:MM:SS
-	anti-replay esn context:
-	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
-	 replay_window 128, bitmap-length 4
-	 00000000 00000000 00000000 XXXXXXXX 
-	sel src 192.1.2.45/32 dst 192.1.2.23/32 
-	security context system_u:system_r:ping_t:s0:c1.c256 
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 0 flag esn
@@ -51,6 +40,17 @@ src 192.1.2.23 dst 192.1.2.45
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
 	sel src 192.1.2.23/32 dst 192.1.2.45/32 
+	security context system_u:system_r:ping_t:s0:c1.c256 
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 0 flag esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+	sel src 192.1.2.45/32 dst 192.1.2.23/32 
 	security context system_u:system_r:ping_t:s0:c1.c256 
 east #
  ../../guestbin/ipsec-kernel-policy.sh

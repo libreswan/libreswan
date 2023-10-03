@@ -42,8 +42,8 @@ west #
 up
 west #
  ip -o -s xfrm state|grep "proto comp" | sed "s/^\(.*\)\(lifetime current:.*\)\(add .*$\)/\2/"
-lifetime current:\	  0(bytes), 0(packets)\	  
 lifetime current:\	  60(bytes), 1(packets)\	  
+lifetime current:\	  0(bytes), 0(packets)\	  
 west #
  # Finally, a packet that is both larger than the MTU and compression
 west #
@@ -53,8 +53,8 @@ west #
 up
 west #
  ip -o -s xfrm state|grep "proto comp" | sed "s/^\(.*\)\(lifetime current:.*\)\(add .*$\)/\2/"
-lifetime current:\	  8296(bytes), 6(packets)\	  
 lifetime current:\	  8356(bytes), 7(packets)\	  
+lifetime current:\	  8296(bytes), 6(packets)\	  
 west #
  # mangled traffic status
 west #
@@ -64,6 +64,25 @@ west #
  # should see ipcomp entries
 west #
  ../../guestbin/ipsec-kernel-state.sh
+src 2001:db8:1:2::45 dst 2001:db8:1:2::23
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 0 
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+	sel src ::/0 dst ::/0 
+src 2001:db8:1:2::45 dst 2001:db8:1:2::23
+	proto comp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec
+	comp deflate 
+	lastused YYYY-MM-DD HH:MM:SS
+src 2001:db8:1:2::45 dst 2001:db8:1:2::23
+	proto 41 spi 0xSPISPI reqid 0 mode tunnel
+	replay-window 0 
 src 2001:db8:1:2::23 dst 2001:db8:1:2::45
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 0 
@@ -84,25 +103,6 @@ src 2001:db8:1:2::23 dst 2001:db8:1:2::45
 	proto 41 spi 0xSPISPI reqid 0 mode tunnel
 	replay-window 0 
 	lastused YYYY-MM-DD HH:MM:SS
-src 2001:db8:1:2::45 dst 2001:db8:1:2::23
-	proto esp spi 0xSPISPI reqid REQID mode transport
-	replay-window 0 
-	auth-trunc hmac(sha1) 0xHASHKEY 96
-	enc cbc(aes) 0xENCKEY
-	lastused YYYY-MM-DD HH:MM:SS
-	anti-replay esn context:
-	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
-	 replay_window 128, bitmap-length 4
-	 00000000 00000000 00000000 XXXXXXXX 
-	sel src ::/0 dst ::/0 
-src 2001:db8:1:2::45 dst 2001:db8:1:2::23
-	proto comp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 0 flag af-unspec
-	comp deflate 
-	lastused YYYY-MM-DD HH:MM:SS
-src 2001:db8:1:2::45 dst 2001:db8:1:2::23
-	proto 41 spi 0xSPISPI reqid 0 mode tunnel
-	replay-window 0 
 west #
  ip xfrm policy
 src 2001:db8:0:1::/64 dst 2001:db8:0:2::/64 

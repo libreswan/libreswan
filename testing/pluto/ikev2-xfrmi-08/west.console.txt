@@ -67,7 +67,7 @@ west #
 006 #2: "west", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  ../../guestbin/ipsec-kernel-state.sh
-src 192.1.2.23 dst 192.1.2.45
+src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
 	output-mark 0x11/0xffffffff
@@ -78,7 +78,7 @@ src 192.1.2.23 dst 192.1.2.45
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
 	if_id 0x11
-src 192.1.2.45 dst 192.1.2.23
+src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
 	output-mark 0x11/0xffffffff

@@ -48,7 +48,7 @@ road #
 done
 road #
  ../../guestbin/ipsec-kernel-state.sh
-src 192.1.2.23 dst 192.1.3.209
+src 192.1.3.209 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
 	output-mark 0x1/0xffffffff
@@ -60,7 +60,7 @@ src 192.1.2.23 dst 192.1.3.209
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
 	if_id 0x1
-src 192.1.3.209 dst 192.1.2.23
+src 192.1.2.23 dst 192.1.3.209
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
 	output-mark 0x1/0xffffffff

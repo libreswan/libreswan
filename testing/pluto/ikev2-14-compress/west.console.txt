@@ -64,8 +64,8 @@ west #
 up
 west #
  ip -o -s xfrm state|grep "proto comp" | sed "s/^\(.*\)\(lifetime current:.*\)\(add .*$\)/\2/"
-lifetime current:\	  0(bytes), 0(packets)\	  
 lifetime current:\	  40(bytes), 1(packets)\	  
+lifetime current:\	  0(bytes), 0(packets)\	  
 west #
  # Finally test compression via large pings that can be compressed on
 west #
@@ -75,8 +75,8 @@ west #
 up
 west #
  ip -o -s xfrm state|grep "proto comp" | sed "s/^\(.*\)\(lifetime current:.*\)\(add .*$\)/\2/"
-lifetime current:\	  8028(bytes), 1(packets)\	  
 lifetime current:\	  8068(bytes), 2(packets)\	  
+lifetime current:\	  8028(bytes), 1(packets)\	  
 west #
  # Need to edit packets.
 west #
@@ -84,6 +84,24 @@ west #
 006 #2: "westnet-eastnet-ipcomp", type=ESP, add_time=1234567890, inBytes=1nn, outBytes=1nn, maxBytes=2^63B, id='@east'
 west #
  ../../guestbin/ipsec-kernel-state.sh
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 0 flag esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+	sel src 0.0.0.0/0 dst 0.0.0.0/0 
+src 192.1.2.45 dst 192.1.2.23
+	proto comp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec
+	comp deflate 
+	lastused YYYY-MM-DD HH:MM:SS
+src 192.1.2.45 dst 192.1.2.23
+	proto 4 spi 0xSPISPI reqid 0 mode tunnel
+	replay-window 0 flag af-unspec
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 0 flag esn
@@ -103,24 +121,6 @@ src 192.1.2.23 dst 192.1.2.45
 	proto 4 spi 0xSPISPI reqid 0 mode tunnel
 	replay-window 0 flag af-unspec
 	lastused YYYY-MM-DD HH:MM:SS
-src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0xSPISPI reqid REQID mode transport
-	replay-window 0 flag esn
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	lastused YYYY-MM-DD HH:MM:SS
-	anti-replay esn context:
-	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
-	 replay_window 128, bitmap-length 4
-	 00000000 00000000 00000000 XXXXXXXX 
-	sel src 0.0.0.0/0 dst 0.0.0.0/0 
-src 192.1.2.45 dst 192.1.2.23
-	proto comp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 0 flag af-unspec
-	comp deflate 
-	lastused YYYY-MM-DD HH:MM:SS
-src 192.1.2.45 dst 192.1.2.23
-	proto 4 spi 0xSPISPI reqid 0 mode tunnel
-	replay-window 0 flag af-unspec
 west #
  ../../guestbin/ipsec-kernel-policy.sh
 src 192.0.1.0/24 dst 192.0.2.0/24

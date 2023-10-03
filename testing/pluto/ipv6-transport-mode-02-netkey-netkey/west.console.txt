@@ -171,17 +171,6 @@ PING 2001:db8:1:2::23(2001:db8:1:2::23) from 2001:db8:1:2::45 : 56 data bytes
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
  ../../guestbin/ipsec-kernel-state.sh
-src 2001:db8:1:2::23 dst 2001:db8:1:2::45
-	proto esp spi 0xSPISPI reqid REQID mode transport
-	replay-window 0 
-	auth-trunc hmac(sha1) 0xHASHKEY 96
-	enc cbc(aes) 0xENCKEY
-	lastused YYYY-MM-DD HH:MM:SS
-	anti-replay esn context:
-	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
-	 replay_window 128, bitmap-length 4
-	 00000000 00000000 00000000 XXXXXXXX 
-	sel src 2001:db8:1:2::23/128 dst 2001:db8:1:2::45/128 
 src 2001:db8:1:2::45 dst 2001:db8:1:2::23
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 0 
@@ -193,6 +182,17 @@ src 2001:db8:1:2::45 dst 2001:db8:1:2::23
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
 	sel src 2001:db8:1:2::45/128 dst 2001:db8:1:2::23/128 
+src 2001:db8:1:2::23 dst 2001:db8:1:2::45
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 0 
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+	sel src 2001:db8:1:2::23/128 dst 2001:db8:1:2::45/128 
 west #
  ../../guestbin/ipsec-kernel-policy.sh
 src 2001:db8:1:2::23/128 dst 2001:db8:1:2::45/128
@@ -220,17 +220,6 @@ west #
 done
 west #
  ../../guestbin/ipsec-kernel-state.sh
-src 2001:db8:1:2::23 dst 2001:db8:1:2::45
-	proto esp spi 0xSPISPI reqid REQID mode transport
-	replay-window 0 
-	auth-trunc hmac(sha1) 0xHASHKEY 96
-	enc cbc(aes) 0xENCKEY
-	lastused YYYY-MM-DD HH:MM:SS
-	anti-replay esn context:
-	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
-	 replay_window 128, bitmap-length 4
-	 00000000 00000000 00000000 XXXXXXXX 
-	sel src 2001:db8:1:2::23/128 dst 2001:db8:1:2::45/128 
 src 2001:db8:1:2::45 dst 2001:db8:1:2::23
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 0 
@@ -242,6 +231,17 @@ src 2001:db8:1:2::45 dst 2001:db8:1:2::23
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
 	sel src 2001:db8:1:2::45/128 dst 2001:db8:1:2::23/128 
+src 2001:db8:1:2::23 dst 2001:db8:1:2::45
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 0 
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+	sel src 2001:db8:1:2::23/128 dst 2001:db8:1:2::45/128 
 west #
  ../../guestbin/ipsec-kernel-policy.sh
 src 2001:db8:1:2::23/128 dst 2001:db8:1:2::45/128
