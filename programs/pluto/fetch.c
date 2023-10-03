@@ -491,7 +491,7 @@ static void *fetch_thread(void *arg UNUSED)
 {
 	dbg("CRL: fetch thread started");
 	/* XXX: on thread so no whack */
-	struct logger *logger = string_logger(null_fd, HERE, "crl thread: "); /* must free */
+	struct logger *logger = string_logger(HERE, "crl thread: "); /* must free */
 	process_crl_fetch_requests(fetch_crl, logger);
 	free_logger(&logger, HERE);
 	dbg("CRL: fetch thread stopped");

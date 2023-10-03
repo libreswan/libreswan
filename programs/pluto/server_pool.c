@@ -533,7 +533,7 @@ void start_server_helpers(int nhelpers, struct logger *logger)
 		for (int n = 0; n < nhelpers; n++) {
 			struct helper_thread *w = &helper_threads[n];
 			w->helper_id = n + 1; /* i.e., not 0 */
-			w->logger = string_logger(null_fd, HERE, "helper(%d)", w->helper_id);
+			w->logger = string_logger(HERE, "helper(%d)", w->helper_id);
 			int thread_status = pthread_create(&w->pid, NULL,
 							   helper_thread, (void *)w);
 			if (thread_status != 0) {

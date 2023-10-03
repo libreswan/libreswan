@@ -497,7 +497,7 @@ struct logger *clone_logger(const struct logger *stack, where_t where)
 	return l;
 }
 
-struct logger *string_logger(struct fd *whackfd, where_t where, const char *fmt, ...)
+struct logger *string_logger(where_t where, const char *fmt, ...)
 {
 	/*
 	 * Convert the dynamicically generated OBJECT prefix into an
@@ -514,8 +514,6 @@ struct logger *string_logger(struct fd *whackfd, where_t where, const char *fmt,
 	}
 	/* construct the clone */
 	struct logger logger = {
-		.global_whackfd = fd_addref_where(whackfd, where),
-		.object_whackfd = null_fd,
 		.where = where,
 		.object_vec = &logger_string_vec,
 		.object = clone_str(prefix, "string logger prefix"),

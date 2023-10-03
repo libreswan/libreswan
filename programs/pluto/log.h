@@ -104,8 +104,8 @@ extern const struct logger_object_vec logger_message_vec;
 extern const struct logger_object_vec logger_connection_vec;
 extern const struct logger_object_vec logger_state_vec;
 
-struct logger *string_logger(struct fd *whackfd, where_t where, const char *fmt, ...)
-	PRINTF_LIKE(3) MUST_USE_RESULT; /* must free */
+struct logger *string_logger(where_t where, const char *fmt, ...)
+	PRINTF_LIKE(2) MUST_USE_RESULT; /* must free */
 
 struct logger logger_from(struct logger *outer, const ip_endpoint *endpoint); /*on-stack*/
 struct logger *alloc_logger(void *object, const struct logger_object_vec *vec,
