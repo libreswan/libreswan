@@ -210,8 +210,10 @@ extern struct logger global_logger;
 #endif
 
 struct logger {
-	struct fd *global_whackfd;
-	struct fd *object_whackfd;
+	/* support up to two whacks */
+	struct fd *whackfd[2];
+#define global_whackfd whackfd[0]
+#define object_whackfd whackfd[1]
 	const void *object;
 	const struct logger_object_vec *object_vec;
 	where_t where;
