@@ -2219,8 +2219,6 @@ bool install_inbound_ipsec_sa(struct child_sa *child, where_t where)
 		return false;
 	}
 
-	fake_connection_establish_inbound(child, HERE);
-
 	return true;
 }
 

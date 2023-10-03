@@ -279,14 +279,14 @@ void ldbg_routing(struct logger *logger, const char *fmt, ...)
 	}
 }
 
-void fake_connection_establish_inbound(struct child_sa *child, where_t where)
+bool connection_establish_inbound(struct child_sa *child, where_t where)
 {
 	struct connection *cc = child->sa.st_connection;
-	dispatch(CONNECTION_ESTABLISH_INBOUND, &cc,
-		 child->sa.st_logger, where,
-		 (struct routing_annex) {
-			 .child = &child,
-		 });
+	return dispatch(CONNECTION_ESTABLISH_INBOUND, &cc,
+			child->sa.st_logger, where,
+			(struct routing_annex) {
+				.child = &child,
+			});
 }
 
 void fake_connection_establish_outbound(struct child_sa *child, where_t where)
@@ -301,7 +301,7 @@ void fake_connection_establish_outbound(struct child_sa *child, where_t where)
 
 bool connection_establish_child(struct child_sa *child, where_t where)
 {
-	return (install_inbound_ipsec_sa(child, where) &&
+	return (connection_establish_inbound(child, where) &&
 		install_outbound_ipsec_sa(child, where));
 }
 
@@ -1606,50 +1606,45 @@ static bool dispatch_1(enum routing_event event,
 			set_routing(event, c, RT_UNROUTED, NULL, where);
 			return true;
 
-		case X(ESTABLISH_INBOUND, ROUTED_ONDEMAND, INSTANCE): /* ikev2-32-nat-rw-rekey */
-			if (BROKEN_TRANSITION) {
-				flush_routed_ondemand_revival(c);
-				/* ikev2-32-nat-rw-rekey */
-				set_routing(event, c, RT_ROUTED_INBOUND, NULL, where);
-				return true;
+		case X(ESTABLISH_INBOUND, ROUTED_ONDEMAND, INSTANCE):
+			/* ikev2-32-nat-rw-rekey */
+			flush_routed_ondemand_revival(c);
+			if (!install_inbound_ipsec_sa((*e->child), where)) {
+				return false;
 			}
-			break;
-		case X(ESTABLISH_INBOUND, ROUTED_INBOUND, PERMANENT): /* alias-01 */
-			if (BROKEN_TRANSITION) {
-				/* alias-01 */
-				set_routing(event, c, RT_ROUTED_INBOUND, NULL, where);
-				return true;
+			set_routing(event, c, RT_ROUTED_INBOUND, NULL, where);
+			return true;
+		case X(ESTABLISH_INBOUND, ROUTED_INBOUND, PERMANENT):
+			/* alias-01 */
+			if (!install_inbound_ipsec_sa((*e->child), where)) {
+				return false;
 			}
-			break;
+			set_routing(event, c, RT_ROUTED_INBOUND, NULL, where);
+			return true;
 		case X(ESTABLISH_INBOUND, UNROUTED_NEGOTIATION, PERMANENT):
 			/* addconn-05-bogus-left-interface
 			 * algo-ikev2-aes128-sha1-ecp256 et.al. */
+			if (!install_inbound_ipsec_sa((*e->child), where)) {
+				return false;
+			}
 			set_routing(event, c, RT_UNROUTED_INBOUND, NULL, where);
 			return true;
 		case X(ESTABLISH_INBOUND, ROUTED_ONDEMAND, PERMANENT):
-			if (BROKEN_TRANSITION) {
-				/* instance was routed by routed-ondemand? */
-				flush_routed_ondemand_revival(c);
-				set_routing(event, c, RT_ROUTED_INBOUND, NULL, where);
-				return true;
+			flush_routed_ondemand_revival(c);
+			if (!install_inbound_ipsec_sa((*e->child), where)) {
+				return false;
 			}
-			break;
+			set_routing(event, c, RT_ROUTED_INBOUND, NULL, where);
+			return true;
 		case X(ESTABLISH_INBOUND, ROUTED_NEGOTIATION, INSTANCE):
 		case X(ESTABLISH_INBOUND, ROUTED_NEGOTIATION, PERMANENT):
 		case X(ESTABLISH_INBOUND, UNROUTED, INSTANCE):
 		case X(ESTABLISH_INBOUND, UNROUTED, PERMANENT):
 		case X(ESTABLISH_INBOUND, UNROUTED_NEGOTIATION, INSTANCE):
-			if (BROKEN_TRANSITION) {
-				set_routing(event, c, RT_ROUTED_INBOUND, NULL, where);
-				return true;
+			if (!install_inbound_ipsec_sa((*e->child), where)) {
+				return false;
 			}
-			break;
-
-		case X(ESTABLISH_OUTBOUND, UNROUTED_INBOUND, PERMANENT):
-		case X(ESTABLISH_OUTBOUND, UNROUTED_INBOUND, INSTANCE):
-		case X(ESTABLISH_OUTBOUND, ROUTED_INBOUND, PERMANENT):
-		case X(ESTABLISH_OUTBOUND, ROUTED_INBOUND, INSTANCE):
-			set_established_child(event, c, RT_ROUTED_TUNNEL, e->child, where);
+			set_routing(event, c, RT_ROUTED_INBOUND, NULL, where);
 			return true;
 
 		case X(ESTABLISH_INBOUND, ROUTED_TUNNEL, PERMANENT):
@@ -1667,8 +1662,19 @@ static bool dispatch_1(enum routing_event event,
 			 * should only update after new child
 			 * establishes?
 			 */
+			if (!install_inbound_ipsec_sa((*e->child), where)) {
+				return false;
+			}
 			set_routing(event, c, RT_ROUTED_TUNNEL, e->child, where);
 			return true;
+
+		case X(ESTABLISH_OUTBOUND, UNROUTED_INBOUND, PERMANENT):
+		case X(ESTABLISH_OUTBOUND, UNROUTED_INBOUND, INSTANCE):
+		case X(ESTABLISH_OUTBOUND, ROUTED_INBOUND, PERMANENT):
+		case X(ESTABLISH_OUTBOUND, ROUTED_INBOUND, INSTANCE):
+			set_established_child(event, c, RT_ROUTED_TUNNEL, e->child, where);
+			return true;
+
 		case X(ESTABLISH_OUTBOUND, ROUTED_TUNNEL, PERMANENT):
 		case X(ESTABLISH_OUTBOUND, ROUTED_TUNNEL, INSTANCE):
 			/*
@@ -1806,6 +1812,9 @@ static bool dispatch_1(enum routing_event event,
 
 		case X(ESTABLISH_INBOUND, UNROUTED_TUNNEL, LABELED_CHILD):
 			/* rekey */
+			if (!install_inbound_ipsec_sa((*e->child), where)) {
+				return false;
+			}
 			set_routing(event, c, RT_UNROUTED_TUNNEL, e->child, where);
 			return true;
 		case X(ESTABLISH_OUTBOUND, UNROUTED_TUNNEL, LABELED_CHILD):
@@ -1813,6 +1822,9 @@ static bool dispatch_1(enum routing_event event,
 			set_established_child(event, c, RT_UNROUTED_TUNNEL, e->child, where);
 			return true;
 		case X(ESTABLISH_INBOUND, UNROUTED, LABELED_CHILD):
+			if (!install_inbound_ipsec_sa((*e->child), where)) {
+				return false;
+			}
 			set_routing(event, c, RT_UNROUTED_INBOUND, e->child, where);
 			return true;
 		case X(ESTABLISH_OUTBOUND, UNROUTED_INBOUND, LABELED_CHILD):

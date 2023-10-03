@@ -1566,7 +1566,7 @@ static stf_status quick_inI1_outR1_continue12_tail(struct state *st, struct msg_
 
 	terminate_conflicts(child);
 
-	if (!install_inbound_ipsec_sa(child, HERE)) {
+	if (!connection_establish_inbound(child, HERE)) {
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 	}
 
