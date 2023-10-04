@@ -43,11 +43,11 @@ struct connection *group_instantiate(struct connection *group,
 struct connection *rw_responder_instantiate(struct connection *t,
 					    const ip_address peer_addr,
 					    where_t where);
-extern struct connection *rw_responder_id_instantiate(struct connection *t,
-						      const ip_address peer_addr,
-						      const ip_selector *peer_subnet,
-						      const struct id *peer_id,
-						      where_t where);
+extern struct connection *rw_responder_refined_instantiate(struct connection *t,
+							   const ip_address peer_addr,
+							   const ip_selector *peer_subnet,
+							   const struct id *peer_id,
+							   where_t where);
 
 struct connection *oppo_initiator_instantiate(struct connection *t,
 					      ip_packet packet,

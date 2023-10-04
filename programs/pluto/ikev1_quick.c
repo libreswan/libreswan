@@ -1107,10 +1107,10 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 			 * Don't try to update the instantiated
 			 * template's address when it is already set.
 			 */
-			p = rw_responder_id_instantiate(p, c->remote->host.addr,
-							remote_client,
-							&c->remote->host.id,
-							HERE); /* must delref */
+			p = rw_responder_refined_instantiate(p, c->remote->host.addr,
+							     remote_client,
+							     &c->remote->host.id,
+							     HERE); /* must delref */
 		} else {
 			p = connection_addref(p, p->logger); /* must delref */
 		}

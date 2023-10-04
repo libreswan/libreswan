@@ -357,9 +357,9 @@ static struct connection *instantiate(struct connection *t,
 }
 
 /*
- * XXX: unlike set_connection_selectors_from_config() this must set
- * each selector to something valid?  For instance, of the end has
- * addresspool, ask for the entire adress range.
+ * XXX: unlike update_subnet_selectors() this must set each selector
+ * to something valid?  For instance, of the end has addresspool, ask
+ * for the entire adress range.
  */
 
 static void update_selectors(struct connection *d)
@@ -405,11 +405,11 @@ static void update_selectors(struct connection *d)
 }
 
 /*
- * XXX: unlike rw_responder_instantiate(), this code has to
- * handle the remote subnet
+ * XXX: unlike update_selectors(), this code has to handle the remote
+ * subnet
  */
-static void update_subnet_selectors(struct connection *d,
-				    const ip_selector *remote_subnet)
+static void update_refined_selectors(struct connection *d,
+				     const ip_selector *remote_subnet)
 {
 	FOR_EACH_ELEMENT(end, d->end) {
 		const char *leftright = end->config->leftright;
@@ -572,11 +572,11 @@ struct connection *rw_responder_instantiate(struct connection *t,
 	return d;
 }
 
-struct connection *rw_responder_id_instantiate(struct connection *t,
-					       const ip_address remote_addr,
-					       const ip_selector *remote_subnet,
-					       const struct id *remote_id,
-					       where_t where)
+struct connection *rw_responder_refined_instantiate(struct connection *t,
+						    const ip_address remote_addr,
+						    const ip_selector *remote_subnet,
+						    const struct id *remote_id,
+						    where_t where)
 {
 	PASSERT(t->logger, !is_opportunistic(t));
 	PASSERT(t->logger, !is_labeled(t));
@@ -588,7 +588,7 @@ struct connection *rw_responder_id_instantiate(struct connection *t,
 	struct connection *d = instantiate(t, remote_addr, remote_id,
 					   empty_shunk, __func__, where);
 
-	update_subnet_selectors(d, remote_subnet);
+	update_refined_selectors(d, remote_subnet);
 	add_connection_spds(d, address_info(d->local->host.addr));
 
 	connection_buf tb;
