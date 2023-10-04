@@ -89,6 +89,17 @@ USERLAND_CFLAGS += -pthread
 USERLAND_CFLAGS += -std=gnu99
 
 #
+# Error out on deprecated since 5.0 config variables.
+#
+ifdef HAVE_IPTABLES
+$(error ERROR: Deprecated HAVE_IPTABLES variable set, use USE_IPTABLES instead)
+endif
+
+ifdef HAVE_NFTABLES
+$(error ERROR: Deprecated HAVE_NFTABLES variable set, use USE_NFTABLES instead)
+endif
+
+#
 # Error out on deprecated since 4.0 config variables.
 #
 ifdef BINDIR
