@@ -70,6 +70,12 @@
 	     ENTRY < (LIST)->list + (LIST)->len;		\
 	     ENTRY++)
 
+#define pfree_list(LIST) {			\
+		typeof(LIST) list_ = LIST;	\
+		pfreeany(list_->list);		\
+		list_->len = 0;			\
+	}
+
 /* Remember, THING 1 and THING 2 are inseparable */
 #define FOR_EACH_THING(THING, THING1, THING2, ...)			\
 	for (typeof(THING1) things_[] = { THING1, THING2, ##__VA_ARGS__ }, \

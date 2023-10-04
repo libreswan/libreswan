@@ -234,7 +234,7 @@ void discard_connection_spds(struct connection *c)
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 		discard_spd_content(spd);
 	}
-	pfreeany(c->child.spds.list);
+	pfree_list(&c->child.spds);
 	c->spd = NULL;
 	c->child.spds = (struct spds) {0};
 }
@@ -457,7 +457,7 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 
 	FOR_EACH_ELEMENT(end, c->end) {
 		free_id_content(&end->host.id);
-		pfreeany(end->child.selectors.accepted.list);
+		pfree_list(&end->child.selectors.accepted);
 	}
 
 	remove_from_group(c);
@@ -491,7 +491,7 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 		free_ikev2_proposals(&config->child_sa.v2_ike_auth_proposals);
 		pfreeany(config->connalias);
 		pfreeany(config->dnshostname);
-		pfreeany(config->modecfg.dns.list);
+		pfree_list(&config->modecfg.dns);
 		pfreeany(config->modecfg.domains);
 		pfreeany(config->modecfg.banner);
 		pfreeany(config->ppk_ids);
@@ -509,11 +509,11 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 			pfreeany(end->host.ckaid);
 			pfreeany(end->host.xauth.username);
 			pfreeany(end->host.addr_name);
-			pfreeany(end->host.pool_ranges.list);
+			pfree_list(&end->host.pool_ranges);
 			/* child */
 			pfreeany(end->child.updown);
-			pfreeany(end->child.selectors.list);
-			pfreeany(end->child.sourceip.list);
+			pfree_list(&end->child.selectors);
+			pfree_list(&end->child.sourceip);
 			virtual_ip_delref(&end->child.virt);
 		}
 		pfree(c->root_config);
