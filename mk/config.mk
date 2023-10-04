@@ -891,7 +891,7 @@ ifeq ($(USE_IPTABLES),true)
 USERLAND_CFLAGS += -DUSE_IPTABLES
 endif
 
-# nft nflog-all(nflog not yet), look, barf, verfiy
+# nft for cat nflog cat linux specific
 USE_NFTABLES ?= false
 ifeq ($(USE_NFTABLES),true)
 USERLAND_CFLAGS += -DUSE_NFTABLES
