@@ -40,14 +40,13 @@ Architecture: any
 Pre-Depends:
  debconf | debconf-2.0,
 Depends:
- bsdmainutils,
  dns-root-data,
  bind9-host,
  iproute2,
- iptables,
  libnspr4,
  libnss3 (>= 3.16),
  libnss3-tools,
+ nftables
  ${misc:Depends},
  ${shlibs:Depends},
 Recommends:
