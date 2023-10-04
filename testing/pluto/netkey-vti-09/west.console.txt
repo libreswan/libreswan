@@ -41,28 +41,28 @@ west #
 1v2 "westnet-eastnet-vti-01" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "westnet-eastnet-vti-01" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "westnet-eastnet-vti-01" #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
-002 "westnet-eastnet-vti-01" #2: up-client output: net.ipv4.conf.ipsec0.disable_policy = 1
-002 "westnet-eastnet-vti-01" #2: up-client output: net.ipv4.conf.ipsec0.rp_filter = 0
-002 "westnet-eastnet-vti-01" #2: up-client output: net.ipv4.conf.ipsec0.forwarding = 1
-002 "westnet-eastnet-vti-01" #2: up-client output: done ip route
-002 "westnet-eastnet-vti-01" #2: prepare-client output: vti interface "ipsec0" already exists with conflicting setting
-002 "westnet-eastnet-vti-01" #2: prepare-client output: existing: ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit ikey 20 okey 21
-002 "westnet-eastnet-vti-01" #2: prepare-client output: wanted  : ipsec0: ip/ip  remote any  local 192.1.2.45  ttl inherit  key 21
+002 "westnet-eastnet-vti-01" #2: prepare-client output: net.ipv4.conf.ipsec0.disable_policy = 1
+002 "westnet-eastnet-vti-01" #2: prepare-client output: net.ipv4.conf.ipsec0.rp_filter = 0
+002 "westnet-eastnet-vti-01" #2: prepare-client output: net.ipv4.conf.ipsec0.forwarding = 1
 002 "westnet-eastnet-vti-01" #2: route-client output: done ip route
+002 "westnet-eastnet-vti-01" #2: up-client output: vti interface "ipsec0" already exists with conflicting setting
+002 "westnet-eastnet-vti-01" #2: up-client output: existing: ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit ikey 20 okey 21
+002 "westnet-eastnet-vti-01" #2: up-client output: wanted  : ipsec0: ip/ip  remote any  local 192.1.2.45  ttl inherit  key 21
+002 "westnet-eastnet-vti-01" #2: up-client output: done ip route
 004 "westnet-eastnet-vti-01" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ipsec auto --up westnet-eastnet-vti-02
 002 "westnet-eastnet-vti-02" #3: initiating Child SA using IKE SA #1
 1v2 "westnet-eastnet-vti-02" #3: sent CREATE_CHILD_SA request for new IPsec SA
-002 "westnet-eastnet-vti-02" #3: up-client output: vti interface "ipsec0" already exists with conflicting setting
-002 "westnet-eastnet-vti-02" #3: up-client output: existing: ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit ikey 20 okey 21
-002 "westnet-eastnet-vti-02" #3: up-client output: wanted  : ipsec0: ip/ip  remote any  local 192.1.2.45  ttl inherit  key 21
-002 "westnet-eastnet-vti-02" #3: up-client output: done ip route
 002 "westnet-eastnet-vti-02" #3: prepare-client output: vti interface "ipsec0" already exists with conflicting setting
 002 "westnet-eastnet-vti-02" #3: prepare-client output: existing: ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit ikey 20 okey 21
 002 "westnet-eastnet-vti-02" #3: prepare-client output: wanted  : ipsec0: ip/ip  remote any  local 192.1.2.45  ttl inherit  key 21
-002 "westnet-eastnet-vti-02" #3: route-client output: RTNETLINK answers: File exists
 002 "westnet-eastnet-vti-02" #3: route-client output: done ip route
+002 "westnet-eastnet-vti-02" #3: up-client output: vti interface "ipsec0" already exists with conflicting setting
+002 "westnet-eastnet-vti-02" #3: up-client output: existing: ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit ikey 20 okey 21
+002 "westnet-eastnet-vti-02" #3: up-client output: wanted  : ipsec0: ip/ip  remote any  local 192.1.2.45  ttl inherit  key 21
+002 "westnet-eastnet-vti-02" #3: up-client output: RTNETLINK answers: File exists
+002 "westnet-eastnet-vti-02" #3: up-client output: done ip route
 004 "westnet-eastnet-vti-02" #3: initiator established Child SA using #1; IPsec tunnel [10.0.1.0-10.0.1.255:0-65535 0] -> [10.0.2.0-10.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
