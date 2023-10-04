@@ -1584,13 +1584,25 @@ static bool dispatch_1(enum routing_event event,
 			delete_ike_sa(e->ike);
 			return true;
 
-		case X(TIMEOUT_CHILD, ROUTED_TUNNEL, PERMANENT):
+		case X(DELETE_CHILD, ROUTED_TUNNEL, INSTANCE):
 		case X(DELETE_CHILD, ROUTED_TUNNEL, PERMANENT):
+		case X(TIMEOUT_CHILD, ROUTED_TUNNEL, INSTANCE):
+		case X(TIMEOUT_CHILD, ROUTED_TUNNEL, PERMANENT):
 			/* permenant connections are never deleted */
 			down_routed_tunnel(event, c, e->child, where);
 			return true;
-		case X(TIMEOUT_CHILD, ROUTED_TUNNEL, INSTANCE):
-		case X(DELETE_CHILD, ROUTED_TUNNEL, INSTANCE):
+
+		case X(DELETE_CHILD, UNROUTED_INBOUND, INSTANCE):
+		case X(DELETE_CHILD, UNROUTED_INBOUND, PERMANENT):
+		case X(TIMEOUT_CHILD, UNROUTED_INBOUND, INSTANCE):
+		case X(TIMEOUT_CHILD, UNROUTED_INBOUND, PERMANENT):
+			/* ikev1-xfrmi-02-aggr */
+			/*
+			 * IKEv1 responder mid way through
+			 * establishing child gets a timeout.  Full
+			 * down_routed_tunnel is overkill - just
+			 * inbound needs to be pulled.
+			 */
 			down_routed_tunnel(event, c, e->child, where);
 			return true;
 
