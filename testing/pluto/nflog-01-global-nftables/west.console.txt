@@ -70,16 +70,15 @@ west #
  echo done
 done
 west #
- ../../guestbin/ipsec-look.sh
-west NOW
-XFRM state:
-XFRM policy:
+ ../../guestbin/ipsec-kernel-state.sh
+west #
+ ../../guestbin/ipsec-kernel-policy.sh
 src 192.0.1.0/24 dst 192.0.2.0/24
-	dir out priority PRIORITY ptype main
+	dir out action block priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
-XFRM done
-nft list ruleset
+west #
+ nft list ruleset
 table inet ipsec-log {
 	chain input {
 		type filter hook input priority filter; policy accept;
@@ -90,14 +89,6 @@ table inet ipsec-log {
 		rt ipsec exists log prefix "all-ipsec-output" group 50
 	}
 }
-ROUTING TABLES
-default via 192.1.2.254 dev eth1
-192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
-192.0.2.0/24 via 192.1.2.23 dev eth1
-192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
-NSS_CERTIFICATES
-Certificate Nickname                                         Trust Attributes
-                                                             SSL,S/MIME,JAR/XPI
 west #
  ipsec stop
 Redirecting to: [initsystem]
@@ -108,4 +99,4 @@ west #
 west #
  nft list ruleset
 west #
-
+ 

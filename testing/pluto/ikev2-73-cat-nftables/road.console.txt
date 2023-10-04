@@ -35,19 +35,7 @@ road #
  echo done
 done
 road #
- ../../guestbin/ipsec-look.sh
-road NOW
-XFRM state:
-src 192.1.2.23 dst 192.1.3.209
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 0 flag af-unspec esn
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
-	lastused YYYY-MM-DD HH:MM:SS
-	anti-replay esn context:
-	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
-	 replay_window 128, bitmap-length 4
-	 00000000 00000000 00000000 XXXXXXXX 
+ ../../guestbin/ipsec-kernel-state.sh
 src 192.1.3.209 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
@@ -58,7 +46,18 @@ src 192.1.3.209 dst 192.1.2.23
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
-XFRM policy:
+src 192.1.2.23 dst 192.1.3.209
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+road #
+ ../../guestbin/ipsec-kernel-policy.sh
 src 10.0.10.1/32 dst 192.0.2.0/24
 	dir out priority PRIORITY ptype main
 	tmpl src 192.1.3.209 dst 192.1.2.23
@@ -83,8 +82,8 @@ src 192.1.3.209/32 dst 192.0.2.0/24
 	dir out priority PRIORITY ptype main
 	tmpl src 192.1.3.209 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
-XFRM done
-nft list ruleset
+road #
+ nft list ruleset
 table inet ipsec-cat {
 	chain postrouting {
 		type filter hook postrouting priority srcnat; policy accept;
@@ -95,11 +94,5 @@ table inet ipsec-cat {
 		ipsec in reqid REQID ip saddr 192.0.2.0/24 ip daddr 10.0.10.1 ip daddr set 192.1.3.209 notrack counter packets 1 bytes 84
 	}
 }
-ROUTING TABLES
-default via 192.1.3.254 dev eth0
-192.1.3.0/24 dev eth0 proto kernel scope link src 192.1.3.209
-NSS_CERTIFICATES
-Certificate Nickname                                         Trust Attributes
-                                                             SSL,S/MIME,JAR/XPI
 road #
  

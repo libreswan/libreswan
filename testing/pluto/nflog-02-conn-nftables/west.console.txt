@@ -29,11 +29,11 @@ west #
 table inet ipsec-log {
 	chain input {
 		type filter hook input priority filter; policy accept;
-		ipsec in reqid 16389 ip saddr 192.0.2.0/24 ip daddr 192.0.1.0/24 counter packets 0 bytes 0 log group 50
+		ipsec in reqid REQID ip saddr 192.0.2.0/24 ip daddr 192.0.1.0/24 counter packets 0 bytes 0 log group 50
 	}
 	chain output {
 		type filter hook output priority filter; policy accept;
-		ipsec out reqid 16389 ip saddr 192.0.1.0/24 ip daddr 192.0.2.0/24 counter packets 0 bytes 0 log group 50
+		ipsec out reqid REQID ip saddr 192.0.1.0/24 ip daddr 192.0.2.0/24 counter packets 0 bytes 0 log group 50
 	}
 }
 west #
@@ -57,8 +57,9 @@ up
 west #
  ipsec auto --down westnet-eastnet-ikev2
 002 "westnet-eastnet-ikev2": terminating SAs using this connection
-002 "westnet-eastnet-ikev2" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+002 "westnet-eastnet-ikev2" #1: intiating delete
 005 "westnet-eastnet-ikev2" #2: ESP traffic information: in=168B out=168B
+002 "westnet-eastnet-ikev2" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #
  # wait for count to reach tcpdump then dump it
 west #
@@ -79,24 +80,11 @@ west #
  echo done
 done
 west #
- ../../guestbin/ipsec-look.sh
-west NOW
-XFRM state:
-XFRM policy:
-src 192.0.1.0/24 dst 192.0.2.0/24
-	dir out priority PRIORITY ptype main
-	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
-XFRM done
-nft list ruleset
-ROUTING TABLES
-default via 192.1.2.254 dev eth1
-192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
-192.0.2.0/24 via 192.1.2.23 dev eth1
-192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
-NSS_CERTIFICATES
-Certificate Nickname                                         Trust Attributes
-                                                             SSL,S/MIME,JAR/XPI
+ ../../guestbin/ipsec-kernel-state.sh
+west #
+ ../../guestbin/ipsec-kernel-policy.sh
+west #
+ nft list ruleset
 west #
  ipsec stop
 Redirecting to: [initsystem]
