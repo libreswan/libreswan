@@ -521,7 +521,7 @@ const chunk_t *get_connection_psk(const struct connection *c)
 /*
  * Find PPK, by its id (PPK_ID).
  */
-static const chunk_t *get_ppk_by_id(const chunk_t *ppk_id)
+static shunk_t get_ppk_by_id(const chunk_t *ppk_id)
 {
 	struct secret *s = lsw_get_ppk_by_id(pluto_secrets, *ppk_id);
 
@@ -531,17 +531,17 @@ static const chunk_t *get_ppk_by_id(const chunk_t *ppk_id)
 			DBG_dump_hunk("Found PPK:", pks->ppk);
 			DBG_dump_hunk("with PPK_ID:", *ppk_id);
 		}
-		return &pks->ppk;
+		return HUNK_AS_SHUNK(pks->ppk);
 	}
 	dbg("No PPK found with given PPK_ID");
-	return NULL;
+	return null_shunk;
 }
 
 /*
  * Get connection PPK and store ppk_id in *ppk_id. If ppk-ids conn option
  * was set, one of the listed PPK_IDs needs to be found in .secrets
  */
-const chunk_t *get_connection_ppk_initiator(const struct connection *c, chunk_t **ppk_id)
+shunk_t get_connection_ppk_initiator(const struct connection *c, chunk_t **ppk_id)
 {
 	struct shunks *ppk_ids_shunks = c->config->ppk_ids_shunks;
 
@@ -555,7 +555,7 @@ const chunk_t *get_connection_ppk_initiator(const struct connection *c, chunk_t 
 
 		if (s == NULL) {
 			*ppk_id = NULL;
-			return NULL;
+			return null_shunk;
 		}
 
 		struct secret_stuff *pks = get_secret_stuff(s);
@@ -565,7 +565,7 @@ const chunk_t *get_connection_ppk_initiator(const struct connection *c, chunk_t 
 			DBG_dump_hunk("PPK_ID:", **ppk_id);
 			DBG_dump_hunk("PPK:", pks->ppk);
 		}
-		return &pks->ppk;
+		return HUNK_AS_SHUNK(pks->ppk);
 	} else {
 		ldbg(c->logger, "ppk-ids conn option specified, iterate through list: %s",
 		     c->config->ppk_ids);
@@ -581,22 +581,22 @@ const chunk_t *get_connection_ppk_initiator(const struct connection *c, chunk_t 
 			ldbg(c->logger, "try to find PPK with PPK_ID:");
 			ldbg_hunk(c->logger, *ppk_id_shunk);
 
-			const chunk_t *ppk = get_ppk_by_id(&chunk);
+			const shunk_t ppk = get_ppk_by_id(&chunk);
 
-			if (ppk != NULL) {
+			if (ppk.ptr != NULL) {
 				*ppk_id = &chunk;
 				return ppk;
 			}
 		}
 	}
-	return NULL;
+	return null_shunk;
 }
 
 /*
  * Get connection PPK with PPK_ID ppk_id. If ppk-ids conn option was set,
  * ppk_id (that was received) needs to be in it. Used by responder.
  */
-const chunk_t *get_connection_ppk_responder(const struct connection *c, chunk_t *ppk_id)
+shunk_t get_connection_ppk_responder(const struct connection *c, chunk_t *ppk_id)
 {
 	struct shunks *ppk_ids_shunks = c->config->ppk_ids_shunks;
 
@@ -625,7 +625,7 @@ const chunk_t *get_connection_ppk_responder(const struct connection *c, chunk_t 
 			}
 		}
 	}
-	return NULL;
+	return null_shunk;
 }
 
 /*

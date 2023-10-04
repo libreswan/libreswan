@@ -257,17 +257,17 @@ static void ppk_recalc_one(PK11SymKey **sk /* updated */, PK11SymKey *ppk_key,
 	}
 }
 
-void ppk_recalculate(const chunk_t *ppk, const struct prf_desc *prf_desc,
+void ppk_recalculate(shunk_t ppk, const struct prf_desc *prf_desc,
 		     PK11SymKey **sk_d,	/* updated */
 		     PK11SymKey **sk_pi,	/* updated */
 		     PK11SymKey **sk_pr,	/* updated */
 		     struct logger *logger)
 {
-	PK11SymKey *ppk_key = symkey_from_hunk("PPK Keying material", *ppk, logger);
+	PK11SymKey *ppk_key = symkey_from_hunk("PPK Keying material", ppk, logger);
 
 	if (DBGP(DBG_CRYPT)) {
 		DBG_log("Starting to recalculate SK_d, SK_pi, SK_pr");
-		DBG_dump_hunk("PPK:", *ppk);
+		DBG_dump_hunk("PPK:", ppk);
 	}
 
 	ppk_recalc_one(sk_d, ppk_key, prf_desc, "sk_d", logger);

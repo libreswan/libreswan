@@ -119,9 +119,9 @@ stf_status initiate_v2_IKE_AUTH_request(struct ike_sa *ike, struct msg_digest *m
 	 */
 	if (pc->config->ppk.allow && ike->sa.st_seen_ppk) {
 		chunk_t *ppk_id;
-		const chunk_t *ppk = get_connection_ppk_initiator(ike->sa.st_connection, &ppk_id);
+		const shunk_t ppk = get_connection_ppk_initiator(ike->sa.st_connection, &ppk_id);
 
-		if (ppk != NULL) {
+		if (ppk.ptr != NULL) {
 			dbg("found PPK and PPK_ID for our connection");
 
 			pexpect(ike->sa.st_sk_d_no_ppk == NULL);
@@ -667,10 +667,10 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 			return STF_FATAL;
 		}
 
-		const chunk_t *ppk = get_connection_ppk_responder(ike->sa.st_connection,
-								  &payl.ppk_id);
+		const shunk_t ppk = get_connection_ppk_responder(ike->sa.st_connection,
+								 &payl.ppk_id);
 		free_chunk_content(&payl.ppk_id);
-		if (ppk != NULL) {
+		if (ppk.ptr != NULL) {
 			found_ppk = true;
 		}
 
