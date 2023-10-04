@@ -235,12 +235,26 @@ void set_debugging(lset_t deb)
 
 static void log_whacks(enum rc_type rc, const struct logger *logger, struct jambuf *buf)
 {
-	if (fd_p(logger->object_whackfd)) {
-		jambuf_to_whack(buf, logger->object_whackfd, rc);
-	}
-	if (fd_p(logger->global_whackfd) &&
-	    !same_fd(logger->object_whackfd, logger->global_whackfd)) {
-		jambuf_to_whack(buf, logger->global_whackfd, rc);
+	for (unsigned i = 0; i < elemsof(logger->whackfd); i++) {
+		if (logger->whackfd[i] == NULL) {
+			continue;
+		}
+		/*
+		 * This should not happen except there's still code
+		 * manipulating .global_whackfd and .object_whackfd
+		 * directly
+		 */
+		bool dup = false;
+		for (unsigned j = 0; j < i; j++) {
+			if (same_fd(logger->whackfd[i], logger->whackfd[j])) {
+				dup = true;
+				break;
+			}
+		}
+		if (dup) {
+			continue;
+		}
+		jambuf_to_whack(buf, logger->whackfd[i], rc);
 	}
 }
 
@@ -301,6 +315,12 @@ struct logger logger_from(struct logger *global, const ip_endpoint *from)
 		.object = from,
 		.object_vec = &logger_from_vec,
 	};
+	struct fd **fd = logger.whackfd;
+	FOR_EACH_ELEMENT(gfd, global->whackfd) {
+		if (*gfd != NULL) {
+			*fd++ = *gfd;
+		}
+	}
 	return logger;
 }
 
@@ -484,8 +504,6 @@ struct logger *clone_logger(const struct logger *stack, where_t where)
 	}
 	/* construct the clone */
 	struct logger heap = {
-		.global_whackfd = fd_addref_where(stack->global_whackfd, where),
-		.object_whackfd = fd_addref_where(stack->object_whackfd, where),
 		.where = stack->where,
 		.object_vec = object_vec,
 		.object = clone_str(prefix, "heap logger prefix"),
@@ -494,6 +512,15 @@ struct logger *clone_logger(const struct logger *stack, where_t where)
 	/* and clone it */
 	struct logger *l = clone_thing(heap, "heap logger");
 	dbg_alloc("clone logger", l, where);
+	/* copy over whacks */
+	unsigned h = 0;
+	FOR_EACH_ELEMENT(sfd, stack->whackfd) {
+		if (*sfd != NULL) {
+			pdbg(l, "attach whack "PRI_FD" to logger %p slot %u "PRI_WHERE,
+			     pri_fd(*sfd), l, h, pri_where(where));
+			l->whackfd[h++] = fd_addref_where(*sfd, where);
+		}
+	}
 	return l;
 }
 
@@ -526,10 +553,19 @@ struct logger *string_logger(where_t where, const char *fmt, ...)
 
 void release_whack(struct logger *logger, where_t where)
 {
-	ldbg(logger, "releasing whack "PRI_FD" for "PRI_WHERE,
-	     pri_fd(logger->object_whackfd), pri_where(where));
-	fd_delref_where(&logger->global_whackfd, where);
-	fd_delref_where(&logger->object_whackfd, where);
+	bool whacked = false;
+	for (unsigned i = 0; i < elemsof(logger->whackfd); i++) {
+		if (logger->whackfd[i] != NULL) {
+			whacked = true;
+			pdbg(logger, "detach whack "PRI_FD" from logger %p slot %u "PRI_WHERE,
+			     pri_fd(logger->whackfd[i]), logger, i, pri_where(where));
+			fd_delref_where(&logger->whackfd[i], where);
+		}
+	}
+	if (!whacked) {
+		pdbg(logger, "releasing whack (but there are none) "PRI_WHERE,
+		     pri_where(where));
+	}
 }
 
 void free_logger(struct logger **logp, where_t where)
@@ -567,7 +603,7 @@ void log_state(lset_t rc_flags, const struct state *st,
 static struct fd *logger_fd(const struct logger *logger)
 {
 	/* find a whack */
-	FOR_EACH_THING(fdp, &logger->global_whackfd, &logger->object_whackfd) {
+	FOR_EACH_ELEMENT(fdp, logger->whackfd) {
 		if (*fdp != NULL) {
 			return *fdp;
 		}
@@ -582,11 +618,11 @@ bool whack_attached(const struct logger *logger)
 
 bool same_whack(const struct logger *lhs, const struct logger *rhs)
 {
-	FOR_EACH_THING(lfd, &lhs->global_whackfd, &lhs->object_whackfd) {
+	FOR_EACH_ELEMENT(lfd, lhs->whackfd) {
 		if (*lfd == NULL) {
 			continue;
 		}
-		FOR_EACH_THING(rfd, &rhs->global_whackfd, &rhs->object_whackfd) {
+		FOR_EACH_ELEMENT(rfd, rhs->whackfd) {
 			if (*lfd == *rfd) {
 				return true;
 			}
@@ -597,8 +633,6 @@ bool same_whack(const struct logger *lhs, const struct logger *rhs)
 
 void attach_fd_where(struct logger *dst, struct fd *src_fd, where_t where)
 {
-	const char *slot;
-
 	/* do no harm? */
 	if (src_fd == NULL) {
 		pdbg(dst, "no whack to attach");
@@ -606,33 +640,30 @@ void attach_fd_where(struct logger *dst, struct fd *src_fd, where_t where)
 	}
 
 	/* already attached? */
-	slot = "global";
-	FOR_EACH_THING(fdp, &dst->global_whackfd, &dst->object_whackfd) {
-		if (*fdp == src_fd) {
+	for (unsigned i = 0; i < elemsof(dst->whackfd); i++) {
+		if (dst->whackfd[i] == src_fd) {
 			/* already attached */
-			pdbg(dst, "whack "PRI_FD" already attached to %s slot",
-			     pri_fd(src_fd), slot);
+			pdbg(dst, "whack "PRI_FD" already attached to logger %p slot %u",
+			     pri_fd(src_fd), dst, i);
 			return;
 		}
-		slot = "object";
 	}
 
 	/* attach to spare slot */
-	slot = "global";
-	FOR_EACH_THING(fdp, &dst->global_whackfd, &dst->object_whackfd) {
-		if (*fdp == NULL) {
-			*fdp = fd_addref_where(src_fd, where);
-			pdbg(dst, "whack "PRI_FD" attached to empty %s slot",
-			     pri_fd(src_fd), slot);
+	for (unsigned i = 0; i < elemsof(dst->whackfd); i++) {
+		if (dst->whackfd[i] == NULL) {
+			dst->whackfd[i] = fd_addref_where(src_fd, where);
+			pdbg(dst, "attach whack "PRI_FD" to empty logger %p slot %u",
+			     pri_fd(src_fd), dst, i);
 			return;
 		}
-		slot = "object";
 	}
 
-	/* replace global */
-	pdbg(dst, "whack "PRI_FD" attached to global slot", pri_fd(src_fd));
-	fd_delref_where(&dst->global_whackfd, where);
-	dst->global_whackfd = fd_addref_where(src_fd, where);
+	/* replace first aka global */
+	pdbg(dst, "attach whack "PRI_FD" to logger %p slot 0 (global)",
+	     pri_fd(src_fd), dst);
+	fd_delref_where(dst->whackfd, where);
+	dst->whackfd[0] = fd_addref_where(src_fd, where);
 }
 
 void whack_attach_where(struct logger *dst, const struct logger *src, where_t where)
@@ -657,8 +688,6 @@ void state_attach_where(struct state *st, const struct logger *src, where_t wher
 
 void whack_detach_where(struct logger *dst, const struct logger *src, where_t where)
 {
-	const char *slot;
-
 	/* find a whack to detach */
 	struct fd *src_fd = logger_fd(src);
 	if (src_fd == NULL) {
@@ -667,15 +696,13 @@ void whack_detach_where(struct logger *dst, const struct logger *src, where_t wh
 	}
 
 	/* find where it is attached */
-	slot = "global";
-	FOR_EACH_THING(fdp, &dst->global_whackfd, &dst->object_whackfd) {
-		if (*fdp == src_fd) {
-			pdbg(dst, "whack "PRI_FD" detached from from %s slot",
-			     pri_fd((*fdp)), slot);
-			fd_delref_where(fdp, where);
+	for (unsigned i = 0; i < elemsof(dst->whackfd); i++) {
+		if (dst->whackfd[i] == src_fd) {
+			pdbg(dst, "detach whack "PRI_FD" from logger %p slot %u",
+			     pri_fd(src_fd), dst, i);
+			fd_delref_where(&dst->whackfd[i], where);
 			return;
 		}
-		slot = "object";
 	}
 }
 
