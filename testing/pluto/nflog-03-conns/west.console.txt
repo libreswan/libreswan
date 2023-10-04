@@ -7,14 +7,14 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  # ensure that clear text does not get through
 west #
- iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j DROP
-west #
- iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
+ # ../../guestbin/nftable-westneteastnet-ipsec-only.nft
 west #
  # confirm clear text does not get through
 west #
  ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
-down
+up UNEXPECTED
+# ping -n -c 1  -i 2 -w 1   -I 192.0.1.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data. 64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms --- 192.0.2.254 ping statistics --- 1 packets transmitted, 1 received, 0% packet loss, time XXXX rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
  ipsec start
 Redirecting to: [initsystem]
@@ -30,15 +30,7 @@ west #
  echo "initdone"
 initdone
 west #
- iptables -L -n
-Chain INPUT (policy ACCEPT)
-target     prot opt source               destination         
-ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            policy match dir in pol ipsec
-DROP       all  --  192.0.2.0/24         0.0.0.0/0           
-Chain FORWARD (policy ACCEPT)
-target     prot opt source               destination         
-Chain OUTPUT (policy ACCEPT)
-target     prot opt source               destination         
+ nft list ruleset
 west #
  ipsec auto --up westnet-eastnet-nflog
 002 "westnet-eastnet-nflog" #1: initiating IKEv1 Main Mode connection
@@ -52,36 +44,36 @@ west #
 1v1 "westnet-eastnet-nflog" #2: sent Quick Mode request
 004 "westnet-eastnet-nflog" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
- iptables -L -n
-Chain INPUT (policy ACCEPT)
-target     prot opt source               destination         
-NFLOG      all  --  192.0.2.0/24         192.0.1.0/24         policy match dir in pol ipsec nflog-prefix  westnet-eastnet-nflog nflog-group 13
-ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            policy match dir in pol ipsec
-DROP       all  --  192.0.2.0/24         0.0.0.0/0           
-Chain FORWARD (policy ACCEPT)
-target     prot opt source               destination         
-Chain OUTPUT (policy ACCEPT)
-target     prot opt source               destination         
-NFLOG      all  --  192.0.1.0/24         192.0.2.0/24         policy match dir out pol ipsec nflog-prefix  westnet-eastnet-nflog nflog-group 13
+ nft list ruleset
+table inet ipsec-log {
+	chain input {
+		type filter hook input priority filter; policy accept;
+		ipsec in reqid REQID ip saddr 192.0.2.0/24 ip daddr 192.0.1.0/24 counter packets 0 bytes 0 log group 13
+	}
+	chain output {
+		type filter hook output priority filter; policy accept;
+		ipsec out reqid REQID ip saddr 192.0.1.0/24 ip daddr 192.0.2.0/24 counter packets 0 bytes 0 log group 13
+	}
+}
 west #
  ipsec auto --up west-east-nflog
 002 "west-east-nflog" #3: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 1v1 "west-east-nflog" #3: sent Quick Mode request
 004 "west-east-nflog" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
- iptables -L -n
-Chain INPUT (policy ACCEPT)
-target     prot opt source               destination         
-NFLOG      all  --  192.1.2.23           192.1.2.45           policy match dir in pol ipsec nflog-prefix  west-east-nflog nflog-group 50
-NFLOG      all  --  192.0.2.0/24         192.0.1.0/24         policy match dir in pol ipsec nflog-prefix  westnet-eastnet-nflog nflog-group 13
-ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            policy match dir in pol ipsec
-DROP       all  --  192.0.2.0/24         0.0.0.0/0           
-Chain FORWARD (policy ACCEPT)
-target     prot opt source               destination         
-Chain OUTPUT (policy ACCEPT)
-target     prot opt source               destination         
-NFLOG      all  --  192.1.2.45           192.1.2.23           policy match dir out pol ipsec nflog-prefix  west-east-nflog nflog-group 50
-NFLOG      all  --  192.0.1.0/24         192.0.2.0/24         policy match dir out pol ipsec nflog-prefix  westnet-eastnet-nflog nflog-group 13
+ nft list ruleset
+table inet ipsec-log {
+	chain input {
+		type filter hook input priority filter; policy accept;
+		ipsec in reqid REQID ip saddr 192.0.2.0/24 ip daddr 192.0.1.0/24 counter packets 0 bytes 0 log group 13
+		ipsec in reqid REQID ip saddr 192.1.2.23 ip daddr 192.1.2.45 counter packets 0 bytes 0 log group 50
+	}
+	chain output {
+		type filter hook output priority filter; policy accept;
+		ipsec out reqid REQID ip saddr 192.0.1.0/24 ip daddr 192.0.2.0/24 counter packets 0 bytes 0 log group 13
+		ipsec out reqid REQID ip saddr 192.1.2.45 ip daddr 192.1.2.23 counter packets 0 bytes 0 log group 50
+	}
+}
 west #
  # suppress job monitoring; specify packet count
 west #
@@ -113,32 +105,34 @@ west #
 002 "westnet-eastnet-nflog" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
 005 "westnet-eastnet-nflog" #2: ESP traffic information: in=168B out=168B
 west #
- iptables -L -n
-Chain INPUT (policy ACCEPT)
-target     prot opt source               destination         
-NFLOG      all  --  192.1.2.23           192.1.2.45           policy match dir in pol ipsec nflog-prefix  west-east-nflog nflog-group 50
-ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            policy match dir in pol ipsec
-DROP       all  --  192.0.2.0/24         0.0.0.0/0           
-Chain FORWARD (policy ACCEPT)
-target     prot opt source               destination         
-Chain OUTPUT (policy ACCEPT)
-target     prot opt source               destination         
-NFLOG      all  --  192.1.2.45           192.1.2.23           policy match dir out pol ipsec nflog-prefix  west-east-nflog nflog-group 50
+ nft list ruleset
+table inet ipsec-log {
+	chain input {
+		type filter hook input priority filter; policy accept;
+		ipsec in reqid REQID ip saddr 192.1.2.23 ip daddr 192.1.2.45 counter packets 2 bytes 168 log group 50
+	}
+	chain output {
+		type filter hook output priority filter; policy accept;
+		ipsec out reqid REQID ip saddr 192.1.2.45 ip daddr 192.1.2.23 counter packets 2 bytes 168 log group 50
+	}
+}
 west #
  ipsec auto --down west-east-nflog
 002 "west-east-nflog": terminating SAs using this connection
 002 "west-east-nflog" #3: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA "westnet-eastnet-nflog" #1
 005 "west-east-nflog" #3: ESP traffic information: in=168B out=168B
 west #
- iptables -L -n
-Chain INPUT (policy ACCEPT)
-target     prot opt source               destination         
-ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            policy match dir in pol ipsec
-DROP       all  --  192.0.2.0/24         0.0.0.0/0           
-Chain FORWARD (policy ACCEPT)
-target     prot opt source               destination         
-Chain OUTPUT (policy ACCEPT)
-target     prot opt source               destination         
+ nft list ruleset
+table inet ipsec-log {
+	chain input {
+		type filter hook input priority filter; policy accept;
+		ipsec in reqid REQID ip saddr 192.1.2.23 ip daddr 192.1.2.45 counter packets 2 bytes 168 log group 50
+	}
+	chain output {
+		type filter hook output priority filter; policy accept;
+		ipsec out reqid REQID ip saddr 192.1.2.45 ip daddr 192.1.2.23 counter packets 2 bytes 168 log group 50
+	}
+}
 west #
  # wait for count to reach tcpdump then dump it
 west #
@@ -167,8 +161,6 @@ west #
  iptables -L -n
 Chain INPUT (policy ACCEPT)
 target     prot opt source               destination         
-ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            policy match dir in pol ipsec
-DROP       all  --  192.0.2.0/24         0.0.0.0/0           
 Chain FORWARD (policy ACCEPT)
 target     prot opt source               destination         
 Chain OUTPUT (policy ACCEPT)

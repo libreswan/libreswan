@@ -7,9 +7,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  # ensure that clear text does not get through
 west #
- iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j DROP
-west #
- iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
+ ../../guestbin/nftable-westneteastnet-ipsec-only.nft
 west #
  # confirm clear text does not get through
 west #
@@ -29,15 +27,19 @@ west #
  echo "initdone"
 initdone
 west #
- iptables -L -n
-Chain INPUT (policy ACCEPT)
-target     prot opt source               destination         
-ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            policy match dir in pol ipsec
-DROP       all  --  192.0.2.0/24         0.0.0.0/0           
-Chain FORWARD (policy ACCEPT)
-target     prot opt source               destination         
-Chain OUTPUT (policy ACCEPT)
-target     prot opt source               destination         
+ nft list ruleset
+table ip filter {
+	chain input {
+		type filter hook input priority filter; policy accept;
+		meta ipsec exists ip saddr 192.0.2.0/24 ip daddr 192.0.1.0/24 accept
+		ip saddr 192.0.2.0/24 ip daddr 192.0.1.0/24 drop
+	}
+	chain output {
+		type filter hook output priority filter; policy accept;
+		rt ipsec exists ip saddr 192.0.1.0/24 ip daddr 192.0.2.0/24 accept
+		ip saddr 192.0.1.0/24 ip daddr 192.0.2.0/24 drop
+	}
+}
 west #
  ipsec auto --up westnet-eastnet-ikev2
 1v2 "westnet-eastnet-ikev2" #1: initiating IKEv2 connection
@@ -46,17 +48,29 @@ west #
 003 "westnet-eastnet-ikev2" #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
 004 "westnet-eastnet-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
- iptables -L -n
-Chain INPUT (policy ACCEPT)
-target     prot opt source               destination         
-NFLOG      all  --  192.0.2.0/24         192.0.1.0/24         policy match dir in pol ipsec nflog-prefix  westnet-eastnet-ikev2 nflog-group 50
-ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            policy match dir in pol ipsec
-DROP       all  --  192.0.2.0/24         0.0.0.0/0           
-Chain FORWARD (policy ACCEPT)
-target     prot opt source               destination         
-Chain OUTPUT (policy ACCEPT)
-target     prot opt source               destination         
-NFLOG      all  --  192.0.1.0/24         192.0.2.0/24         policy match dir out pol ipsec nflog-prefix  westnet-eastnet-ikev2 nflog-group 50
+ nft list ruleset
+table ip filter {
+	chain input {
+		type filter hook input priority filter; policy accept;
+		meta ipsec exists ip saddr 192.0.2.0/24 ip daddr 192.0.1.0/24 accept
+		ip saddr 192.0.2.0/24 ip daddr 192.0.1.0/24 drop
+	}
+	chain output {
+		type filter hook output priority filter; policy accept;
+		rt ipsec exists ip saddr 192.0.1.0/24 ip daddr 192.0.2.0/24 accept
+		ip saddr 192.0.1.0/24 ip daddr 192.0.2.0/24 drop
+	}
+}
+table inet ipsec-log {
+	chain input {
+		type filter hook input priority filter; policy accept;
+		ipsec in reqid REQID ip saddr 192.0.2.0/24 ip daddr 192.0.1.0/24 counter packets 0 bytes 0 log group 50
+	}
+	chain output {
+		type filter hook output priority filter; policy accept;
+		ipsec out reqid REQID ip saddr 192.0.1.0/24 ip daddr 192.0.2.0/24 counter packets 0 bytes 0 log group 50
+	}
+}
 west #
  # suppress job monitoring; specify packet count
 west #
@@ -82,15 +96,19 @@ west #
 005 "westnet-eastnet-ikev2" #2: ESP traffic information: in=168B out=168B
 002 "westnet-eastnet-ikev2" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #
- iptables -L -n
-Chain INPUT (policy ACCEPT)
-target     prot opt source               destination         
-ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            policy match dir in pol ipsec
-DROP       all  --  192.0.2.0/24         0.0.0.0/0           
-Chain FORWARD (policy ACCEPT)
-target     prot opt source               destination         
-Chain OUTPUT (policy ACCEPT)
-target     prot opt source               destination         
+ nft list ruleset
+table ip filter {
+	chain input {
+		type filter hook input priority filter; policy accept;
+		meta ipsec exists ip saddr 192.0.2.0/24 ip daddr 192.0.1.0/24 accept
+		ip saddr 192.0.2.0/24 ip daddr 192.0.1.0/24 drop
+	}
+	chain output {
+		type filter hook output priority filter; policy accept;
+		rt ipsec exists ip saddr 192.0.1.0/24 ip daddr 192.0.2.0/24 accept
+		ip saddr 192.0.1.0/24 ip daddr 192.0.2.0/24 drop
+	}
+}
 west #
  # wait for count to reach tcpdump then dump it
 west #
@@ -116,14 +134,18 @@ Redirecting to: [initsystem]
 west #
  # show no nflog left behind
 west #
- iptables -L -n
-Chain INPUT (policy ACCEPT)
-target     prot opt source               destination         
-ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            policy match dir in pol ipsec
-DROP       all  --  192.0.2.0/24         0.0.0.0/0           
-Chain FORWARD (policy ACCEPT)
-target     prot opt source               destination         
-Chain OUTPUT (policy ACCEPT)
-target     prot opt source               destination         
+ nft list ruleset
+table ip filter {
+	chain input {
+		type filter hook input priority filter; policy accept;
+		meta ipsec exists ip saddr 192.0.2.0/24 ip daddr 192.0.1.0/24 accept
+		ip saddr 192.0.2.0/24 ip daddr 192.0.1.0/24 drop
+	}
+	chain output {
+		type filter hook output priority filter; policy accept;
+		rt ipsec exists ip saddr 192.0.1.0/24 ip daddr 192.0.2.0/24 accept
+		ip saddr 192.0.1.0/24 ip daddr 192.0.2.0/24 drop
+	}
+}
 west #
  

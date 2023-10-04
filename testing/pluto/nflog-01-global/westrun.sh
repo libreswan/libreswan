@@ -1,5 +1,5 @@
 # show nflog global ipsec-all rules
-iptables -L -n
+nft list ruleset
 ipsec auto --up westnet-eastnet-ikev2
 
 # suppress job monitoring; specify packet count
