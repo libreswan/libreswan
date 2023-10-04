@@ -2076,34 +2076,6 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child, bool 
 	}
 
 	/*
-	 * Do we have to notify the firewall?
-	 *
-	 * Yes if this is the first time that the tunnel is
-	 * established (rekeys do not need to re-UP).
-	 *
-	 * Yes, if we are installing a tunnel eroute and the firewall
-	 * wasn't notified for a previous tunnel with the same
-	 * clients.  Any Previous tunnel would have to be for our
-	 * connection, so the actual test is simple.
-	 */
-
-	if (up) {
-		FOR_EACH_ITEM(spd, &c->child.spds) {
-
-			if (!ok) {
-				break;
-			}
-
-			if (is_v1_cisco_split(spd)) {
-				continue;
-			}
-
-			ok = spd->wip.installed.up =
-				do_updown(UPDOWN_UP, c, spd, &child->sa, logger);
-		}
-	}
-
-	/*
 	 * Do we have to make a mess of the routing?
 	 *
 	 * Probably.  This code path needs a re-think.
@@ -2139,6 +2111,34 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child, bool 
 			/* a new route: no deletion required, but preparation is */
 			ok = spd->wip.installed.route =
 				do_updown(UPDOWN_ROUTE, c, spd, &child->sa, logger);
+		}
+	}
+
+	/*
+	 * Do we have to notify the firewall?
+	 *
+	 * Yes if this is the first time that the tunnel is
+	 * established (rekeys do not need to re-UP).
+	 *
+	 * Yes, if we are installing a tunnel eroute and the firewall
+	 * wasn't notified for a previous tunnel with the same
+	 * clients.  Any Previous tunnel would have to be for our
+	 * connection, so the actual test is simple.
+	 */
+
+	if (up) {
+		FOR_EACH_ITEM(spd, &c->child.spds) {
+
+			if (!ok) {
+				break;
+			}
+
+			if (is_v1_cisco_split(spd)) {
+				continue;
+			}
+
+			ok = spd->wip.installed.up =
+				do_updown(UPDOWN_UP, c, spd, &child->sa, logger);
 		}
 	}
 
