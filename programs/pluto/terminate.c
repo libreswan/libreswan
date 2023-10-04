@@ -78,7 +78,7 @@ static void delete_v1_states(struct connection *c,
 		return;
 	case WHACK_LURKING_CHILD:
 		state_attach(&(*child)->sa, c->logger);
-		delete_child_sa(child);
+		connection_delete_child(child, HERE);
 		return;
 	case WHACK_LURKING_IKE:
 		state_attach(&(*ike)->sa, c->logger);
