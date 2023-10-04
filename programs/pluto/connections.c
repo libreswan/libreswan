@@ -327,7 +327,7 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 
 	unsigned refcnt = refcnt_peek(&c->refcnt);
 	if (refcnt != 0) {
-		llog_pexpect(c->logger, where,
+		llog_pexpect(logger, where,
 			     "connection "PRI_CO" [%p] still has %u references",
 			     pri_connection_co(c), c, refcnt);
 		ok_to_delete = false;
@@ -450,26 +450,25 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 	/* find and delete c from the host pair list */
 	host_pair_remove_connection(c, connection_valid);
 
+	remove_from_group(c);
+
 	if (connection_valid) {
 		connection_db_del(c);
 	}
 	discard_connection_spds(c);
+
+	/*
+	 * Freeing .clonedfrom breaks the logger's message.
+	 */
+
+	free_logger(&c->logger, where);
 
 	FOR_EACH_ELEMENT(end, c->end) {
 		free_id_content(&end->host.id);
 		pfree_list(&end->child.selectors.accepted);
 	}
 
-	remove_from_group(c);
-
-	/*
-	 * Freeing .clonedfrom breaks the logger's message.
-	 */
-
-	/* sever tie with parent */
 	connection_delref(&c->clonedfrom, logger);
-
-	free_logger(&c->logger, where);
 
 	pfreeany(c->foodgroup);
 	pfreeany(c->vti_iface);
