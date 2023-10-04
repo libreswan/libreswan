@@ -1612,39 +1612,39 @@ static bool dispatch_1(enum routing_event event,
 			if (!install_inbound_ipsec_sa((*e->child), where)) {
 				return false;
 			}
-			set_routing(event, c, RT_ROUTED_INBOUND, NULL, where);
+			set_routing(event, c, RT_ROUTED_INBOUND, e->child, where);
 			return true;
 		case X(ESTABLISH_INBOUND, ROUTED_INBOUND, PERMANENT):
 			/* alias-01 */
 			if (!install_inbound_ipsec_sa((*e->child), where)) {
 				return false;
 			}
-			set_routing(event, c, RT_ROUTED_INBOUND, NULL, where);
-			return true;
-		case X(ESTABLISH_INBOUND, UNROUTED_NEGOTIATION, PERMANENT):
-			/* addconn-05-bogus-left-interface
-			 * algo-ikev2-aes128-sha1-ecp256 et.al. */
-			if (!install_inbound_ipsec_sa((*e->child), where)) {
-				return false;
-			}
-			set_routing(event, c, RT_UNROUTED_INBOUND, NULL, where);
+			set_routing(event, c, RT_ROUTED_INBOUND, e->child, where);
 			return true;
 		case X(ESTABLISH_INBOUND, ROUTED_ONDEMAND, PERMANENT):
 			flush_routed_ondemand_revival(c);
 			if (!install_inbound_ipsec_sa((*e->child), where)) {
 				return false;
 			}
-			set_routing(event, c, RT_ROUTED_INBOUND, NULL, where);
+			set_routing(event, c, RT_ROUTED_INBOUND, e->child, where);
 			return true;
 		case X(ESTABLISH_INBOUND, ROUTED_NEGOTIATION, INSTANCE):
 		case X(ESTABLISH_INBOUND, ROUTED_NEGOTIATION, PERMANENT):
-		case X(ESTABLISH_INBOUND, UNROUTED, INSTANCE):
-		case X(ESTABLISH_INBOUND, UNROUTED, PERMANENT):
-		case X(ESTABLISH_INBOUND, UNROUTED_NEGOTIATION, INSTANCE):
+			/* addconn-05-bogus-left-interface
+			 * algo-ikev2-aes128-sha1-ecp256 et.al. */
 			if (!install_inbound_ipsec_sa((*e->child), where)) {
 				return false;
 			}
-			set_routing(event, c, RT_ROUTED_INBOUND, NULL, where);
+			set_routing(event, c, RT_ROUTED_INBOUND, e->child, where);
+			return true;
+		case X(ESTABLISH_INBOUND, UNROUTED, INSTANCE):
+		case X(ESTABLISH_INBOUND, UNROUTED, PERMANENT):
+		case X(ESTABLISH_INBOUND, UNROUTED_NEGOTIATION, INSTANCE):
+		case X(ESTABLISH_INBOUND, UNROUTED_NEGOTIATION, PERMANENT):
+			if (!install_inbound_ipsec_sa((*e->child), where)) {
+				return false;
+			}
+			set_routing(event, c, RT_UNROUTED_INBOUND, e->child, where);
 			return true;
 
 		case X(ESTABLISH_INBOUND, ROUTED_TUNNEL, PERMANENT):

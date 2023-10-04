@@ -2007,7 +2007,8 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child, bool 
 		return true;
 	}
 
-	if (c->newest_routing_sa == child->sa.st_serialno) {
+	if (c->newest_routing_sa != SOS_NOBODY &&
+	    c->newest_routing_sa != child->sa.st_serialno) {
 		ldbg(logger, "kernel: %s() skipping kernel policies as already owner", __func__);
 		return true;
 	}
