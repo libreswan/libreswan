@@ -25,7 +25,7 @@ west #
 000 "order-test":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "order-test":   our idtype: ID_IPV4_ADDR; our id=1.2.3.4; their idtype: ID_IPV4_ADDR; their id=2.3.4.5
 000 "order-test":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
-000 "order-test":   nat-traversal: encaps:no; keepalive:20s
+000 "order-test":   nat-traversal: encaps:auto; keepalive:20s
 000 "order-test":   newest IKE SA: #0; newest IPsec SA: #0; conn serial: $1;
 west #
  echo done
