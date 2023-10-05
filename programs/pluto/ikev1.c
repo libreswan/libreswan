@@ -2850,7 +2850,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		log_state(RC_FATAL, st, "encountered fatal error in state %s",
 			  st->st_state->name);
 #ifdef HAVE_NM
-		if (st->st_connection->remotepeertype == CISCO &&
+		if (st->st_connection->config->remote_peer_cisco &&
 		    st->st_connection->config->nm_configured) {
 			if (!do_updown(UPDOWN_DISCONNECT_NM,
 				       st->st_connection,
@@ -2907,7 +2907,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		    st->st_state->name, notify_name);
 
 #ifdef HAVE_NM
-		if (st->st_connection->remotepeertype == CISCO &&
+		if (st->st_connection->config->remote_peer_cisco &&
 		    st->st_connection->config->nm_configured) {
 			if (!do_updown(UPDOWN_DISCONNECT_NM,
 				       st->st_connection,

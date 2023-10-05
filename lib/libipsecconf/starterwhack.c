@@ -631,8 +631,7 @@ int starter_whack_add_conn(struct starter_config *cfg,
 		msg.fake_strongswan = conn->options[KNCF_VID_STRONGSWAN];
 
 	/* Active our Cisco interop code if set */
-	if (conn->options_set[KNCF_REMOTEPEERTYPE])
-		msg.remotepeertype = conn->options[KNCF_REMOTEPEERTYPE];
+	msg.remote_peer_type = conn->options[KNCF_REMOTE_PEER_TYPE];
 
 #ifdef HAVE_NM
 	/* Network Manager support */

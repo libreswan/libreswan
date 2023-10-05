@@ -535,7 +535,7 @@ enum option_enums {
 	CD_IKE_TCP_REMOTE_PORT,
 	CD_SEND_CA,
 	CD_PFSGROUP,
-	CD_REMOTEPEERTYPE,
+	CD_REMOTE_PEER_TYPE,
 	CD_SHA2_TRUNCBUG,
 	CD_NM_CONFIGURED,
 	CD_NO_NM_CONFIGURED,
@@ -878,7 +878,7 @@ static const struct option long_opts[] = {
 	{ "ikealg", required_argument, NULL, CD_IKE },
 	{ "pfsgroup", required_argument, NULL, CD_PFSGROUP },
 	{ "esp", required_argument, NULL, CD_ESP },
-	{ "remote-peer-type", required_argument, NULL, CD_REMOTEPEERTYPE },
+	{ "remote-peer-type", required_argument, NULL, CD_REMOTE_PEER_TYPE },
 	{ "nic-offload", required_argument, NULL, CD_NIC_OFFLOAD},
 
 #define AB(NAME, ENUM) { NAME, no_argument, NULL, OPT_AUTHBY_##ENUM, }
@@ -1089,7 +1089,6 @@ int main(int argc, char **argv)
 	msg.esp = NULL;
 	msg.ike = NULL;
 	msg.pfsgroup = NULL;
-	msg.remotepeertype = NON_CISCO;
 	msg.nat_keepalive = true;
 
 	msg.xauthby = XAUTHBY_FILE;
@@ -2143,11 +2142,12 @@ int main(int argc, char **argv)
 			msg.esp = optarg;
 			continue;
 
-		case CD_REMOTEPEERTYPE:	/* --remote-peer-type <cisco> */
-			if (streq(optarg, "cisco"))
-				msg.remotepeertype = CISCO;
-			else
-				msg.remotepeertype = NON_CISCO;
+		case CD_REMOTE_PEER_TYPE:	/* --remote-peer-type <cisco> */
+			if (streq(optarg, "cisco")) {
+				msg.remote_peer_type = REMOTE_PEER_CISCO;
+			} else {
+				diagw("--remote-peer-type options are 'cisco'");
+			}
 			continue;
 
 #ifdef HAVE_NM
@@ -2743,12 +2743,6 @@ int main(int argc, char **argv)
 	      msg.whack_rekey_ike || msg.whack_rekey_ipsec ||
 	      msg.whack_listpubkeys || msg.whack_checkpubkeys))
 		diagw("no action specified; try --help for hints");
-
-	if (msg.remotepeertype != CISCO &&
-	    msg.remotepeertype != NON_CISCO) {
-		diagw("remote-peer-type can only be \"CISCO\" or \"NON_CISCO\" - defaulting to non-cisco mode");
-		msg.remotepeertype = NON_CISCO;	/*NON_CISCO=0*/
-	}
 
 	/* pack strings for inclusion in message */
 	wp.msg = &msg;

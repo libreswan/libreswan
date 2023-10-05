@@ -259,7 +259,7 @@ enum keyword_numeric_conn_field {
 	KNCF_HOSTADDRFAMILY,
 	KNCF_CLIENTADDRFAMILY,
 	KNCF_OVERLAPIP,		/* Allow overlapping IPsec policies */
-	KNCF_REMOTEPEERTYPE,	/* Cisco interop: remote peer type */
+	KNCF_REMOTE_PEER_TYPE,	/* Cisco interop: remote peer type */
 	KNCF_NM_CONFIGURED,	/* Network Manager support */
 	KNCF_SAREFTRACK,	/* saref tracking parameter for _updown */
 	KNCF_WARNIGNORE,	/* to ignore obsoleted keywords */

@@ -238,7 +238,7 @@ struct whack_message {
 	char *dpd_timeout;	/* seconds */
 
 	/* Cisco interop:  remote peer type */
-	enum keyword_remotepeertype remotepeertype;
+	enum keyword_remote_peer_type remote_peer_type;
 
 	/* Force the use of NAT-T on a connection */
 	enum yna_options encaps;

@@ -295,6 +295,9 @@ struct config {
 	bool nm_configured;		/* Network Manager support */
 #endif
 
+	bool remote_peer_cisco;		/* Cisco interop: remote peer
+					 * type */
+
 	struct {
 		uintmax_t priority;
 		uintmax_t tfcpad;
@@ -666,9 +669,6 @@ struct connection {
 	struct pluto_xfrmi *xfrmi; /* pointer to possibly shared interface */
 
 	enum yna_options encaps; /* encapsulation mode of auto/yes/no - formerly forceencaps=yes/no */
-
-	/* Cisco interop: remote peer type */
-	enum keyword_remotepeertype remotepeertype;
 
 	char *log_file_name;			/* name of log file */
 	FILE *log_file;				/* possibly open FILE */
