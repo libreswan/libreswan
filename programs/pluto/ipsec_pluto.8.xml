@@ -223,6 +223,16 @@
 
       <arg choice="opt">--rsasig</arg>
 
+      <arg choice="opt">--encapsulate
+      <group choice="plain">
+        <arg choice="opt">yes</arg>
+
+        <arg choice="opt">no</arg>
+
+        <arg choice="opt">auto</arg>
+      </group>
+      </arg>
+
       <arg choice="opt">--encrypt</arg>
 
       <arg choice="opt">--authenticate</arg>

@@ -2765,6 +2765,18 @@ static diag_t extract_connection(const struct whack_message *wm,
 	}
 
 	if (never_negotiate_wm(wm)) {
+		if (wm->encapsulation != YNA_UNSET) {
+			sparse_buf sb;
+			return diag("encapsulation=%s is invalid for type=passthrough connection",
+				    str_sparse(yna_option_names, wm->encapsulation, &sb));
+
+		}
+	} else {
+		config->encapsulation = (wm->encapsulation == YNA_UNSET ? YNA_AUTO :
+					 wm->encapsulation);
+	}
+
+	if (never_negotiate_wm(wm)) {
 		dbg("skipping over misc settings as NEVER_NEGOTIATE");
 	} else {
 
@@ -2903,8 +2915,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 		config->child_sa.metric = wm->metric;
 		config->child_sa.mtu = wm->mtu;
-		config->encapsulation = (wm->encapsulation == YNA_UNSET ? YNA_AUTO :
-					 wm->encapsulation);
 		config->nat_keepalive = wm->nat_keepalive;
 		if (wm->nat_ikev1_method == 0) {
 			config->ikev1_natt = NATT_BOTH;

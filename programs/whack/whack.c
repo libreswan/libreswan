@@ -523,7 +523,7 @@ enum option_enums {
 	CD_SEND_REDIRECT,
 	CD_ACCEPT_REDIRECT,
 	CD_ACCEPT_REDIRECT_TO,
-	CD_ENCAPS,
+	CD_ENCAPSULATION,
 	CD_NO_NAT_KEEPALIVE,
 	CD_IKEV1_NATT,
 	CD_INITIAL_CONTACT,
@@ -809,7 +809,8 @@ static const struct option long_opts[] = {
 
 	{ "dontrekey", no_argument, NULL, CD_DONT_REKEY, },
 	{ "reauth", no_argument, NULL, CD_REAUTH, },
-	{ "encaps", required_argument, NULL, CD_ENCAPS },
+	{ "encaps", required_argument, NULL, CD_ENCAPSULATION },
+	{ "encapsulation", required_argument, NULL, CD_ENCAPSULATION },
 	{ "no-nat_keepalive", no_argument, NULL,  CD_NO_NAT_KEEPALIVE },
 	{ "ikev1_natt", required_argument, NULL, CD_IKEV1_NATT },	/* obsolete _ */
 	{ "ikev1-natt", required_argument, NULL, CD_IKEV1_NATT },
@@ -2037,7 +2038,7 @@ int main(int argc, char **argv)
 				msg.send_ca = CA_SEND_NONE;
 			continue;
 
-		case CD_ENCAPS:	/* --encaps */
+		case CD_ENCAPSULATION:	/* --encapsulation */
 		{
 			const struct sparse_name *sn = sparse_lookup(yna_option_names, optarg);
 			if (sn == NULL) {

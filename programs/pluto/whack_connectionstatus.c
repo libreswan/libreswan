@@ -689,7 +689,11 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		jam(buf, PRI_CONNECTION":   nat-traversal:",
 		    c->name, instance);
 		jam_string(buf, " encaps:");
-		jam_sparse(buf, yna_option_names, c->config->encapsulation);
+		if (never_negotiate(c)) {
+			jam_string(buf, "n/a");
+		} else {
+			jam_sparse(buf, yna_option_names, c->config->encapsulation);
+		}
 		jam_string(buf, "; keepalive:");
 		if (c->config->nat_keepalive) {
 			jam(buf, "%jds", deltasecs(nat_keepalive_period));
