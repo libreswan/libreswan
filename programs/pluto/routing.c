@@ -1458,7 +1458,9 @@ static bool dispatch_1(enum routing_event event,
 		delete_ike_sa(e->ike);
 		return true;
 
+	case X(DELETE_IKE, ROUTED_NEGOTIATION, INSTANCE):
 	case X(DELETE_IKE, ROUTED_NEGOTIATION, PERMANENT):
+	case X(TIMEOUT_IKE, ROUTED_NEGOTIATION, INSTANCE):
 	case X(TIMEOUT_IKE, ROUTED_NEGOTIATION, PERMANENT):
 		/*
 		 * For instance, this end initiated a Child SA for the
@@ -1481,6 +1483,19 @@ static bool dispatch_1(enum routing_event event,
 			delete_ike_sa(e->ike);
 			return true;
 		}
+		if (is_instance(c) && is_opportunistic(c)) {
+			/*
+			 * A failed OE initiator, make shunt bare.
+			 */
+			orphan_holdpass(c, c->spd, logger);
+			/*
+			 * Change routing so we don't get cleared out
+			 * when state/connection dies.
+			 */
+			set_routing(event, c, RT_UNROUTED, NULL, where);
+			delete_ike_sa(e->ike);
+			return true;
+		}
 		if (c->policy.route) {
 			routed_negotiation_to_routed_ondemand(event, c, logger, where,
 							      "restoring ondemand, connection is routed");
@@ -1495,7 +1510,6 @@ static bool dispatch_1(enum routing_event event,
 		/* connection lives to fight another day */
 		return true;
 
-	case X(TIMEOUT_IKE, ROUTED_NEGOTIATION, INSTANCE):
 	case X(TIMEOUT_IKE, UNROUTED_NEGOTIATION, INSTANCE):
 		if (BROKEN_TRANSITION &&
 		    should_revive_ike((*e->ike))) {
