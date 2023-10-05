@@ -630,7 +630,6 @@ struct connection {
 	struct connection *clonedfrom;
 	char *name;
 	struct logger *logger;
-	char *foodgroup;
 	struct {
 		bool up;		/* do we want to keep this
 					 * connection up? */

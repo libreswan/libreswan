@@ -1593,16 +1593,13 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 			LDBGP_JAMBUF(DBG_BASE, &global_logger, buf) {
 				jam(buf, TS_INDENT, ts_indent);
 				jam(buf, "investigating template \"%s\";",
-					t->name);
-				if (t->foodgroup != NULL) {
-					jam(buf, " food-group=\"%s\"", t->foodgroup);
-				}
+				    t->name);
 				jam(buf, " with policy <");
 				jam_connection_policies(buf, t);
 				jam(buf, ">");
 			}
 
-			indent.level++;
+			indent.level = 3;
 
 			/*
 			 * Is it worth looking at the template.
@@ -1613,16 +1610,24 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 			 */
 
 			/*
-			 * XXX: why does this matter; does it imply
-			 * t->foodgroup != NULL?
+			 * XXX: only replace is_group_instance(cc)
+			 * with another group instance.
+			 *
+			 * clonedfrom== test below makes this somewhat
+			 * redundant.
 			 */
 			if (!is_group_instance(t)) {
 				dbg_ts("skipping; not a group instance");
 				continue;
 			}
-			/* when OE, don't change food groups? */
-			if (!streq(cc->foodgroup, t->foodgroup)) {
-				dbg_ts("skipping; wrong foodgroup name");
+
+			/*
+			 * Group instances must have a parent group
+			 * and that group needs to be shared.
+			 */
+			PEXPECT(t->logger, t->clonedfrom != NULL);
+			if (cc->clonedfrom != t->clonedfrom) {
+				dbg_ts("skipping; wrong foodgroup");
 				continue;
 			}
 			/*

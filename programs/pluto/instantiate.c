@@ -90,7 +90,6 @@ struct connection *clone_connection(const char *name, struct connection *t,
 	c->next_instance_serial = 0;	/* restart count */
 	c->instance_serial = 0;		/* restart count */
 	c->root_config = NULL; /* block write access */
-	c->foodgroup = clone_str(t->foodgroup, "food groups");
 	c->vti_iface = clone_str(t->vti_iface, "connection vti_iface");
 	c->interface = iface_endpoint_addref(t->interface);
 
@@ -178,8 +177,6 @@ struct connection *group_instantiate(struct connection *group,
 	struct connection *t = clone_connection(namebuf, group, NULL/*id*/, HERE);
 
 	passert(t->name != namebuf); /* see clone_connection() */
-	PASSERT(group->logger, group->foodgroup == NULL);
-	t->foodgroup = clone_str(namebuf, "foodgroups");
 	pfreeany(namebuf);
 
 	/*

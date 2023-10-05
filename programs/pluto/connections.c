@@ -470,7 +470,6 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 
 	connection_delref(&c->clonedfrom, logger);
 
-	pfreeany(c->foodgroup);
 	pfreeany(c->vti_iface);
 	iface_endpoint_delref(&c->interface);
 
