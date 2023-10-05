@@ -206,7 +206,7 @@ static bool fmt_common_shell_out(char *buf,
 	JDuint("PLUTO_CFG_SERVER", sr->local->host->config->modecfg.server);
 	JDuint("PLUTO_CFG_CLIENT", sr->local->host->config->modecfg.client);
 #ifdef HAVE_NM
-	JDuint("PLUTO_NM_CONFIGURED", c->nmconfigured);
+	JDuint("PLUTO_NM_CONFIGURED", c->config->nm_configured);
 #endif
 
 	struct ipsec_proto_info *const first_ipsec_proto =

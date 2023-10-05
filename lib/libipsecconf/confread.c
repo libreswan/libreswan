@@ -139,11 +139,6 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 	DOPT(KNCF_ENABLE_TCP, 0); /* aka use default */
 	DOPT(KNCF_TCP_REMOTEPORT, 0);	/* aka use default */
 
-	/* Network Manager support */
-#ifdef HAVE_NM
-	DOPT(KNCF_NMCONFIGURED, false);
-#endif
-
 	DOPT(KNCF_XAUTHBY, XAUTHBY_FILE);
 	DOPT(KNCF_XAUTHFAIL, XAUTHFAIL_HARD);
 

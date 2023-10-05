@@ -2851,7 +2851,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 			  st->st_state->name);
 #ifdef HAVE_NM
 		if (st->st_connection->remotepeertype == CISCO &&
-		    st->st_connection->nmconfigured) {
+		    st->st_connection->config->nm_configured) {
 			if (!do_updown(UPDOWN_DISCONNECT_NM,
 				       st->st_connection,
 				       st->st_connection->spd,
@@ -2908,7 +2908,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 
 #ifdef HAVE_NM
 		if (st->st_connection->remotepeertype == CISCO &&
-		    st->st_connection->nmconfigured) {
+		    st->st_connection->config->nm_configured) {
 			if (!do_updown(UPDOWN_DISCONNECT_NM,
 				       st->st_connection,
 				       st->st_connection->spd,

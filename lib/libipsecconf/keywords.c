@@ -510,7 +510,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
 
   /* Network Manager support */
 #ifdef HAVE_NM
-  { "nm-configured",  kv_conn,  kt_bool,  KNCF_NMCONFIGURED, NULL, NULL, },
+  { "nm-configured",  kv_conn,  kt_enum,  KNCF_NM_CONFIGURED, yn_option_names, NULL, },
 #endif
 
   { "xauthby",  kv_conn,  kt_enum,  KNCF_XAUTHBY,  kw_xauthby_list, NULL, },

@@ -275,7 +275,7 @@ struct whack_message {
 	bool send_vendorid;
 
 	/* Checking if this connection is configured by Network Manager */
-	bool nmconfigured;
+	enum yn_options nm_configured;
 
 	/* XAUTH Authentication can be file (default) PAM or 'alwaysok' */
 	enum keyword_xauthby xauthby;

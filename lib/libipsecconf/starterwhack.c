@@ -636,9 +636,7 @@ int starter_whack_add_conn(struct starter_config *cfg,
 
 #ifdef HAVE_NM
 	/* Network Manager support */
-	if (conn->options_set[KNCF_NMCONFIGURED])
-		msg.nmconfigured = conn->options[KNCF_NMCONFIGURED];
-
+	msg.nm_configured = conn->options[KNCF_NM_CONFIGURED];
 #endif
 
 	if (conn->strings_set[KSCF_SEC_LABEL]) {

@@ -537,7 +537,8 @@ enum option_enums {
 	CD_PFSGROUP,
 	CD_REMOTEPEERTYPE,
 	CD_SHA2_TRUNCBUG,
-	CD_NMCONFIGURED,
+	CD_NM_CONFIGURED,
+	CD_NO_NM_CONFIGURED,
 	CD_LABELED_IPSEC,
 	CD_SEC_LABEL,
 	CD_XAUTHBY,
@@ -924,8 +925,9 @@ static const struct option long_opts[] = {
 	{ "tcp-remote-port", required_argument, NULL, CD_IKE_TCP_REMOTE_PORT },
 
 #ifdef HAVE_NM
-	{ "nm_configured", no_argument, NULL, CD_NMCONFIGURED }, /* backwards compat */
-	{ "nm-configured", no_argument, NULL, CD_NMCONFIGURED },
+	{ "nm_configured", no_argument, NULL, CD_NM_CONFIGURED }, /* backwards compat */
+	{ "nm-configured", no_argument, NULL, CD_NM_CONFIGURED },
+	{ "no-nm-configured", no_argument, NULL, CD_NO_NM_CONFIGURED },
 #endif
 
 	{ "policylabel", required_argument, NULL, CD_SEC_LABEL },
@@ -1089,11 +1091,6 @@ int main(int argc, char **argv)
 	msg.pfsgroup = NULL;
 	msg.remotepeertype = NON_CISCO;
 	msg.nat_keepalive = true;
-
-	/* Network Manager support */
-#ifdef HAVE_NM
-	msg.nmconfigured = false;
-#endif
 
 	msg.xauthby = XAUTHBY_FILE;
 	msg.xauthfail = XAUTHFAIL_HARD;
@@ -2154,8 +2151,11 @@ int main(int argc, char **argv)
 			continue;
 
 #ifdef HAVE_NM
-		case CD_NMCONFIGURED:	/* --nm-configured */
-			msg.nmconfigured = true;
+		case CD_NM_CONFIGURED:		/* --nm-configured */
+			msg.nm_configured = YN_YES;
+			continue;
+		case CD_NO_NM_CONFIGURED:	/* --no-nm-configured */
+			msg.nm_configured = YN_NO;
 			continue;
 #endif
 

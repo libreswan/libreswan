@@ -260,7 +260,7 @@ enum keyword_numeric_conn_field {
 	KNCF_CLIENTADDRFAMILY,
 	KNCF_OVERLAPIP,		/* Allow overlapping IPsec policies */
 	KNCF_REMOTEPEERTYPE,	/* Cisco interop: remote peer type */
-	KNCF_NMCONFIGURED,	/* Network Manager support */
+	KNCF_NM_CONFIGURED,	/* Network Manager support */
 	KNCF_SAREFTRACK,	/* saref tracking parameter for _updown */
 	KNCF_WARNIGNORE,	/* to ignore obsoleted keywords */
 	KNCF_XAUTHBY,		/* method of xauth user auth - file, pam or alwaysok */

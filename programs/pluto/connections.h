@@ -291,6 +291,10 @@ struct config {
 						 * VIDs */
 	bool opportunistic;		/* is this opportunistic? */
 
+#ifdef HAVE_NM
+	bool nm_configured;		/* Network Manager support */
+#endif
+
 	struct {
 		uintmax_t priority;
 		uintmax_t tfcpad;
@@ -662,11 +666,6 @@ struct connection {
 	struct pluto_xfrmi *xfrmi; /* pointer to possibly shared interface */
 
 	enum yna_options encaps; /* encapsulation mode of auto/yes/no - formerly forceencaps=yes/no */
-
-	/* Network Manager support */
-#ifdef HAVE_NM
-	bool nmconfigured;
-#endif
 
 	/* Cisco interop: remote peer type */
 	enum keyword_remotepeertype remotepeertype;

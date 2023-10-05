@@ -2996,7 +2996,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	}
 
 #ifdef HAVE_NM
-	c->nmconfigured = wm->nmconfigured;
+	config->nm_configured = extract_yn(wm->nm_configured, false);
 #endif
 
 	c->nflog_group = wm->nflog_group;
