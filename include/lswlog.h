@@ -212,8 +212,6 @@ extern struct logger global_logger;
 struct logger {
 	/* support up to two whacks */
 	struct fd *whackfd[2];
-#define global_whackfd whackfd[0]
-#define object_whackfd whackfd[1]
 	const void *object;
 	const struct logger_object_vec *object_vec;
 	where_t where;
@@ -225,8 +223,8 @@ struct logger {
 #define PRI_LOGGER "logger@%p/"PRI_FD"/"PRI_FD
 #define pri_logger(LOGGER)						\
 	(LOGGER),							\
-		pri_fd((LOGGER) == NULL ? NULL : (LOGGER)->global_whackfd), \
-		pri_fd((LOGGER) == NULL ? NULL : (LOGGER)->object_whackfd)
+		pri_fd((LOGGER) == NULL ? NULL : (LOGGER)->whackfd[0]), \
+		pri_fd((LOGGER) == NULL ? NULL : (LOGGER)->whackfd[1])
 
 void llog(lset_t rc_flags,
 	  const struct logger *log,

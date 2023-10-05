@@ -262,7 +262,7 @@ static void dbg_whack(struct show *s, const char *fmt, ...)
 			va_start(ap, fmt);
 			jam_va_list(buf, fmt, ap);
 			va_end(ap);
-			jam(buf, " ("PRI_FD")", logger->global_whackfd);
+			jam(buf, " ("PRI_LOGGER")", pri_logger(logger));
 		}
 	}
 }
@@ -729,10 +729,13 @@ void whack_handle_cb(int fd, void *arg UNUSED, struct logger *global_logger)
 		/*
 		 * Hack to get the whack fd attached to the initial
 		 * event handler logger.  With this done, everything
-		 * from here on everything can use attach_whack().
+		 * from here on can use attach_whack() et.al.
+		 *
+		 * See also whack_shutdown() which deliberately leaks
+		 * this fd.
 		 */
 		struct logger whack_logger = *global_logger;
-		whack_logger.global_whackfd = whackfd;
+		whack_logger.whackfd[0] = whackfd;
 		whack_logger.where = HERE;
 
 		whack_handle(whackfd, &whack_logger);

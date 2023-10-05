@@ -232,14 +232,20 @@ void whack_shutdown(struct logger *logger, enum pluto_exit_code exit_code)
 	}
 
 	/*
-	 * Leak the whack FD so that only when pluto finally exits the
-	 * attached whack that is waiting on the socket will be
-	 * released.
+	 * Leak (unlink but don't close aka delref) the currently
+	 * attached whackfd.
 	 *
-	 * Note that this means that the entire exit process is radio
-	 * silent.
+	 * Unlinking the whackfd from the logger stops any further log
+	 * messages reaching the attached whack (the entire exit
+	 * process is radio silent).
+	 *
+	 * Leaving whackfd open means that whack will remain attached
+	 * until pluto exits.
+	 *
+	 * See also whack_handle_cb() sets whackfd[0] to the current
+	 * whack's FD before, indirectly, calling this function.
 	 */
-	fd_leak(logger->global_whackfd, HERE);
+	fd_leak(logger->whackfd[0], HERE);
 
 	/*
 	 * Start the shutdown process.

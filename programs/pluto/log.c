@@ -311,7 +311,6 @@ struct logger logger_from(struct logger *global, const ip_endpoint *from)
 {
 	struct logger logger = {
 		.where = HERE,
-		.global_whackfd = global->global_whackfd,
 		.object = from,
 		.object_vec = &logger_from_vec,
 	};
