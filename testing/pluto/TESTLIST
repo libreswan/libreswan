@@ -1422,8 +1422,8 @@ kvmplutotest	ikev2-systemrole-04-mesh		good	github:534
 kvmplutotest	ikev1-policy-01-drop			good
 kvmplutotest	ikev1-policy-02-reject			good
 
-kvmplutotest	ikev2-revive-through-nat-01-down	good
-kvmplutotest	ikev2-revive-through-nat-02-cleanfail	wip	github/992
+kvmplutotest	ikev2-revival-through-nat-01-down	good
+kvmplutotest	ikev2-revival-through-nat-02-cleanfail	wip	github/992
 
 # crossing the stream race conditions
 kvmplutotest    crossing-streams-01-ikev2-github-1211	wip	github/1211
