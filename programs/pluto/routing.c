@@ -1105,7 +1105,8 @@ void connection_resume(struct child_sa *child, where_t where)
 
 static bool dispatch_1(enum routing_event event,
 		       struct connection *c,
-		       struct logger *logger, where_t where,
+		       struct logger *logger,
+		       where_t where,
 		       struct routing_annex *e)
 {
 #define XX(CONNECTION_EVENT, CONNECTION_ROUTING, CONNECTION_KIND)	\
@@ -1115,775 +1116,766 @@ static bool dispatch_1(enum routing_event event,
 #define X(EVENT, ROUTING, KIND)				\
 	XX(CONNECTION_##EVENT, RT_##ROUTING, CK_##KIND)
 
-	{
-		const enum routing routing = c->child.routing;
-		const enum connection_kind kind = c->local->kind;
+	const enum routing routing = c->child.routing;
+	const enum connection_kind kind = c->local->kind;
 
-		switch (XX(event, routing, kind)) {
+	switch (XX(event, routing, kind)) {
 
-		case X(ROUTE, UNROUTED, GROUP):
-			/* caller deals with recursion */
-			add_policy(c, policy.route); /* always */
-			return true;
-		case X(UNROUTE, UNROUTED, GROUP):
-			/* ROUTE+UP cleared by caller */
-			return true;
+	case X(ROUTE, UNROUTED, GROUP):
+		/* caller deals with recursion */
+		add_policy(c, policy.route); /* always */
+		return true;
+	case X(UNROUTE, UNROUTED, GROUP):
+		/* ROUTE+UP cleared by caller */
+		return true;
 
-		case X(ROUTE, UNROUTED, TEMPLATE):
-		case X(ROUTE, UNROUTED, PERMANENT):
-			add_policy(c, policy.route); /* always */
-			if (never_negotiate(c)) {
-				if (!unrouted_to_routed_never_negotiate(event, c, where)) {
-					/* XXX: why whack only? */
-					llog(RC_ROUTE, logger, "could not route");
-					return true;
-				}
-				PEXPECT(logger, c->child.routing == RT_ROUTED_NEVER_NEGOTIATE);
-			} else {
-				if (!unrouted_to_routed_ondemand(event, c, where)) {
-					/* XXX: why whack only? */
-					llog(RC_ROUTE, logger, "could not route");
-					return true;
-				}
-				PEXPECT(logger, c->child.routing == RT_ROUTED_ONDEMAND);
+	case X(ROUTE, UNROUTED, TEMPLATE):
+	case X(ROUTE, UNROUTED, PERMANENT):
+		add_policy(c, policy.route); /* always */
+		if (never_negotiate(c)) {
+			if (!unrouted_to_routed_never_negotiate(event, c, where)) {
+				/* XXX: why whack only? */
+				llog(RC_ROUTE, logger, "could not route");
+				return true;
 			}
-			return true;
+			PEXPECT(logger, c->child.routing == RT_ROUTED_NEVER_NEGOTIATE);
+		} else {
+			if (!unrouted_to_routed_ondemand(event, c, where)) {
+				/* XXX: why whack only? */
+				llog(RC_ROUTE, logger, "could not route");
+				return true;
+			}
+			PEXPECT(logger, c->child.routing == RT_ROUTED_ONDEMAND);
+		}
+		return true;
 
-		case X(UNROUTE, ROUTED_NEVER_NEGOTIATE, TEMPLATE):
-		case X(UNROUTE, ROUTED_NEVER_NEGOTIATE, PERMANENT):
-			PEXPECT(logger, never_negotiate(c));
+	case X(UNROUTE, ROUTED_NEVER_NEGOTIATE, TEMPLATE):
+	case X(UNROUTE, ROUTED_NEVER_NEGOTIATE, PERMANENT):
+		PEXPECT(logger, never_negotiate(c));
+		delete_spd_kernel_policies(&c->child.spds,
+					   EXPECT_KERNEL_POLICY_OK,
+					   c->logger, where, "unroute permanent");
+		/* stop updown_unroute() finding this
+		 * connection */
+		set_routing(event, c, RT_UNROUTED, NULL, where);
+		do_updown_unroute(c, NULL);
+		return true;
+
+	case X(UNROUTE, ROUTED_INBOUND, INSTANCE): /* xauth-pluto-25-lsw299 */
+	case X(UNROUTE, ROUTED_INBOUND, PERMANENT): /* ikev1-xfrmi-02-aggr */
+		if (BROKEN_TRANSITION) {
+			/* ikev1-xfrmi-02-aggr ikev1-xfrmi-02
+			 * ikev1-xfrmi-02-tcpdump */
 			delete_spd_kernel_policies(&c->child.spds,
 						   EXPECT_KERNEL_POLICY_OK,
 						   c->logger, where, "unroute permanent");
-			/* stop updown_unroute() finding this
-			 * connection */
 			set_routing(event, c, RT_UNROUTED, NULL, where);
 			do_updown_unroute(c, NULL);
 			return true;
+		}
+		break;
 
-		case X(UNROUTE, ROUTED_INBOUND, INSTANCE): /* xauth-pluto-25-lsw299 */
-		case X(UNROUTE, ROUTED_INBOUND, PERMANENT): /* ikev1-xfrmi-02-aggr */
-			if (BROKEN_TRANSITION) {
-				/* ikev1-xfrmi-02-aggr ikev1-xfrmi-02
-				 * ikev1-xfrmi-02-tcpdump */
-				delete_spd_kernel_policies(&c->child.spds,
-							   EXPECT_KERNEL_POLICY_OK,
-							   c->logger, where, "unroute permanent");
-				set_routing(event, c, RT_UNROUTED, NULL, where);
-				do_updown_unroute(c, NULL);
-				return true;
-			}
-			break;
-
-		case X(UNROUTE, ROUTED_INBOUND, TEMPLATE):
-			if (BROKEN_TRANSITION) {
-				/* xauth-pluto-25-lsw299
-				 * xauth-pluto-25-mixed-addresspool */
-				delete_spd_kernel_policies(&c->child.spds,
-							   EXPECT_KERNEL_POLICY_OK,
-							   c->logger, where, "unroute permanent");
-				set_routing(event, c, RT_UNROUTED, NULL, where);
-				do_updown_unroute(c, NULL);
-				return true;
-			}
-			break;
-
-		case X(UNROUTE, UNROUTED, PERMANENT):
-			ldbg_routing(logger, "already unrouted");
+	case X(UNROUTE, ROUTED_INBOUND, TEMPLATE):
+		if (BROKEN_TRANSITION) {
+			/* xauth-pluto-25-lsw299
+			 * xauth-pluto-25-mixed-addresspool */
+			delete_spd_kernel_policies(&c->child.spds,
+						   EXPECT_KERNEL_POLICY_OK,
+						   c->logger, where, "unroute permanent");
+			set_routing(event, c, RT_UNROUTED, NULL, where);
+			do_updown_unroute(c, NULL);
 			return true;
+		}
+		break;
 
-		case X(INITIATE, ROUTED_TUNNEL, PERMANENT):
-			if (BROKEN_TRANSITION) {
-				/*
-				 * Presumably no delete transition is
-				 * leaving this in the wrong state.
-				 *
-				 * See ikev2-13-ah.
-				 */
-				return true;
-			}
-			break;
+	case X(UNROUTE, UNROUTED, PERMANENT):
+		ldbg_routing(logger, "already unrouted");
+		return true;
 
-		case X(INITIATE, UNROUTED, PERMANENT):
-			flush_unrouted_revival(c);
+	case X(INITIATE, ROUTED_TUNNEL, PERMANENT):
+		if (BROKEN_TRANSITION) {
+			/*
+			 * Presumably no delete transition is leaving
+			 * this in the wrong state.
+			 *
+			 * See ikev2-13-ah.
+			 */
+			return true;
+		}
+		break;
+
+	case X(INITIATE, UNROUTED, PERMANENT):
+		flush_unrouted_revival(c);
+		set_routing(event, c, RT_UNROUTED_NEGOTIATION, NULL, where);
+		return true;
+
+	case X(INITIATE, ROUTED_ONDEMAND, PERMANENT):
+	case X(INITIATE, ROUTED_ONDEMAND, INSTANCE): /* from revival */
+		flush_routed_ondemand_revival(c);
+		ondemand_to_negotiation(event, c, where, "negotiating permanent");
+		PEXPECT(logger, c->child.routing == RT_ROUTED_NEGOTIATION);
+		return true;
+
+	case X(ACQUIRE, ROUTED_ONDEMAND, PERMANENT):
+		flush_routed_ondemand_revival(c);
+		ondemand_to_negotiation(event, c, where, "negotiating permanent");
+		PEXPECT(logger, c->child.routing == RT_ROUTED_NEGOTIATION);
+		/* ipsecdoi_initiate may replace SOS_NOBODY with a state */
+		ipsecdoi_initiate(c, child_sa_policy(c), SOS_NOBODY,
+				  e->inception, null_shunk,
+				  e->background, c->logger,
+				  /*update_routing*/LEMPTY, HERE);
+		return true;
+
+	case X(INITIATE, UNROUTED_NEGOTIATION, PERMANENT):
+		if (BROKEN_TRANSITION) {
+			/* ikev2-redirect-01-global-load-balancer
+			 * ikev2-redirect-01-global
+			 * ikev2-redirect-03-auth-loop
+			 * ikev2-tcp-07-fail-ike-auth-redirect */
+			return true;
+		}
+		break;
+	case X(INITIATE, ROUTED_NEGOTIATION, PERMANENT):
+		if (BROKEN_TRANSITION) {
+			/*
+			 * Because there is no delete yet.
+			 *
+			 * See ikev2-impair-10-nr-ts-selectors
+			 */
+			return true;
+		}
+		llog(RC_LOG, c->logger, "connection already negotiating");
+		return true;
+	case X(ACQUIRE, ROUTED_NEGOTIATION, PERMANENT):
+		llog(RC_LOG, c->logger, "connection already negotiating");
+		return true;
+
+	case X(ROUTE, UNROUTED_NEGOTIATION, PERMANENT):
+		if (BROKEN_TRANSITION) {
+			/*
+			 * XXX: should install routing+policy!
+			 */
+			add_policy(c, policy.route);
+			llog(RC_LOG_SERIOUS, logger,
+			     "policy ROUTE added to negotiating connection");
+			return true;
+		}
+		break;
+	case X(UNROUTE, UNROUTED_NEGOTIATION, PERMANENT):
+		set_routing(event, c, RT_UNROUTED, NULL, where);
+		return true;
+
+	case X(ROUTE, ROUTED_NEGOTIATION, PERMANENT):
+		add_policy(c, policy.route);
+		llog(RC_LOG_SERIOUS, logger, "connection already routed");
+		return true;
+	case X(UNROUTE, ROUTED_NEGOTIATION, PERMANENT):
+		delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
+					   c->logger, where, "unroute permanent");
+		/* do now so route_owner won't find us */
+		set_routing(event, c, RT_UNROUTED, NULL, where);
+		do_updown_unroute(c, NULL);
+		return true;
+
+	case X(UNROUTE, ROUTED_ONDEMAND, PERMANENT):
+		PEXPECT(logger, !never_negotiate(c));
+		flush_routed_ondemand_revival(c);
+		delete_spd_kernel_policies(&c->child.spds,
+					   EXPECT_NO_INBOUND,
+					   c->logger, where, "unroute permanent");
+		/* stop updown_unroute() finding this
+		 * connection */
+		set_routing(event, c, RT_UNROUTED, NULL, where);
+		do_updown_unroute(c, NULL);
+		return true;
+
+	case X(ROUTE, ROUTED_TUNNEL, PERMANENT):
+		add_policy(c, policy.route); /* always */
+		llog(RC_LOG, logger, "policy ROUTE added to established connection");
+		return true;
+	case X(UNROUTE, ROUTED_TUNNEL, PERMANENT):
+		llog(RC_RTBUSY, logger, "cannot unroute: route busy");
+		return true;
+
+	case X(UNROUTE, ROUTED_FAILURE, PERMANENT):
+		delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
+					   c->logger, where, "unroute permanent");
+		/* do now so route_owner won't find us */
+		set_routing(event, c, RT_UNROUTED, NULL, where);
+		do_updown_unroute(c, NULL);
+		return true;
+
+	case X(UNROUTE, UNROUTED_TUNNEL, PERMANENT):
+		delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
+					   c->logger, where, "unroute permanent");
+		set_routing(event, c, RT_UNROUTED, NULL, where);
+		return true;
+
+	case X(UNROUTE, UNROUTED, TEMPLATE):
+		ldbg_routing(logger, "already unrouted");
+		return true;
+	case X(UNROUTE, ROUTED_ONDEMAND, TEMPLATE):
+		flush_routed_ondemand_revival(c);
+		delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
+					   c->logger, where, "unroute template");
+		/* do now so route_owner won't find us */
+		set_routing(event, c, RT_UNROUTED, NULL, where);
+		do_updown_unroute(c, NULL);
+		return true;
+
+	case X(UNROUTE, UNROUTED, INSTANCE):
+		ldbg_routing(logger, "already unrouted");
+		return true;
+	case X(INITIATE, UNROUTED, INSTANCE):
+		/*
+		 * Triggered by whack against the template which is
+		 * then instantiated creating this connection.  The
+		 * template may or may not be routed.
+		 *
+		 * When the template is routed, should this instead
+		 * transition to routed_negotiation?
+		 *
+		 * When the template is routed, should the instance
+		 * start in ROUTED_UNINSTALLED?
+		 *
+		 * NO? because when it is pulled it shouldn't undo the
+		 * routing?
+		 *
+		 * YES? because the routing code has to deal with
+		 * that.
+		 *
+		 * MAYBE? but only when the template and instance have
+		 * the same SPDs.
+		 */
+		if (BROKEN_TRANSITION &&
+		    c->config->negotiation_shunt == SHUNT_HOLD) {
+			ldbg_routing(logger, "skipping NEGOTIATION=HOLD");
 			set_routing(event, c, RT_UNROUTED_NEGOTIATION, NULL, where);
 			return true;
+		}
+		unrouted_instance_to_unrouted_negotiation(event, c, where);
+		return true;
 
-		case X(INITIATE, ROUTED_ONDEMAND, PERMANENT):
-		case X(INITIATE, ROUTED_ONDEMAND, INSTANCE): /* from revival */
-			flush_routed_ondemand_revival(c);
-			ondemand_to_negotiation(event, c, where, "negotiating permanent");
-			PEXPECT(logger, c->child.routing == RT_ROUTED_NEGOTIATION);
-			return true;
-
-		case X(ACQUIRE, ROUTED_ONDEMAND, PERMANENT):
-			flush_routed_ondemand_revival(c);
-			ondemand_to_negotiation(event, c, where, "negotiating permanent");
-			PEXPECT(logger, c->child.routing == RT_ROUTED_NEGOTIATION);
-			/* ipsecdoi_initiate may replace SOS_NOBODY with a state */
+	case X(ACQUIRE, UNROUTED, INSTANCE):
+		/*
+		 * Triggered by acquire against the template which
+		 * then instantiated creating this connection.  The
+		 * template may or may not be routed.
+		 *
+		 * When the template is routed, should this instead
+		 * transition to routed_negotiation?
+		 *
+		 * NO? because when it is pulled it shouldn't undo the
+		 * routing?
+		 *
+		 * When the template is routed, should the instance
+		 * start in ROUTED_UNINSTALLED?
+		 *
+		 * YES? because the routing code has to deal with
+		 * that.
+		 *
+		 * MAYBE? but only when the template and instance have
+		 * the same SPDs.
+		 */
+		if (BROKEN_TRANSITION &&
+		    c->config->negotiation_shunt == SHUNT_HOLD) {
+			ldbg_routing(logger, "skipping NEGOTIATION=HOLD");
+			set_routing(event, c, RT_UNROUTED_NEGOTIATION, NULL, where);
 			ipsecdoi_initiate(c, child_sa_policy(c), SOS_NOBODY,
 					  e->inception, null_shunk,
-					  e->background, c->logger,
-					  /*update_routing*/LEMPTY, HERE);
-			return true;
-
-		case X(INITIATE, UNROUTED_NEGOTIATION, PERMANENT):
-			if (BROKEN_TRANSITION) {
-				/* ikev2-redirect-01-global-load-balancer
-				 * ikev2-redirect-01-global
-				 * ikev2-redirect-03-auth-loop
-				 * ikev2-tcp-07-fail-ike-auth-redirect */
-				return true;
-			}
-			break;
-		case X(INITIATE, ROUTED_NEGOTIATION, PERMANENT):
-			if (BROKEN_TRANSITION) {
-				/*
-				 * Because there is no delete yet.
-				 *
-				 * See ikev2-impair-10-nr-ts-selectors
-				 */
-				return true;
-			}
-			llog(RC_LOG, c->logger, "connection already negotiating");
-			return true;
-		case X(ACQUIRE, ROUTED_NEGOTIATION, PERMANENT):
-			llog(RC_LOG, c->logger, "connection already negotiating");
-			return true;
-
-		case X(ROUTE, UNROUTED_NEGOTIATION, PERMANENT):
-			if (BROKEN_TRANSITION) {
-				/*
-				 * XXX: should install routing+policy!
-				 */
-				add_policy(c, policy.route);
-				llog(RC_LOG_SERIOUS, logger,
-				     "policy ROUTE added to negotiating connection");
-				return true;
-			}
-			break;
-		case X(UNROUTE, UNROUTED_NEGOTIATION, PERMANENT):
-			set_routing(event, c, RT_UNROUTED, NULL, where);
-			return true;
-
-		case X(ROUTE, ROUTED_NEGOTIATION, PERMANENT):
-			add_policy(c, policy.route);
-			llog(RC_LOG_SERIOUS, logger, "connection already routed");
-			return true;
-		case X(UNROUTE, ROUTED_NEGOTIATION, PERMANENT):
-			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
-						   c->logger, where, "unroute permanent");
-			/* do now so route_owner won't find us */
-			set_routing(event, c, RT_UNROUTED, NULL, where);
-			do_updown_unroute(c, NULL);
-			return true;
-
-		case X(UNROUTE, ROUTED_ONDEMAND, PERMANENT):
-			PEXPECT(logger, !never_negotiate(c));
-			flush_routed_ondemand_revival(c);
-			delete_spd_kernel_policies(&c->child.spds,
-						   EXPECT_NO_INBOUND,
-						   c->logger, where, "unroute permanent");
-			/* stop updown_unroute() finding this
-			 * connection */
-			set_routing(event, c, RT_UNROUTED, NULL, where);
-			do_updown_unroute(c, NULL);
-			return true;
-
-		case X(ROUTE, ROUTED_TUNNEL, PERMANENT):
-			add_policy(c, policy.route); /* always */
-			llog(RC_LOG, logger, "policy ROUTE added to established connection");
-			return true;
-		case X(UNROUTE, ROUTED_TUNNEL, PERMANENT):
-			llog(RC_RTBUSY, logger, "cannot unroute: route busy");
-			return true;
-
-		case X(UNROUTE, ROUTED_FAILURE, PERMANENT):
-			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
-						   c->logger, where, "unroute permanent");
-			/* do now so route_owner won't find us */
-			set_routing(event, c, RT_UNROUTED, NULL, where);
-			do_updown_unroute(c, NULL);
-			return true;
-
-		case X(UNROUTE, UNROUTED_TUNNEL, PERMANENT):
-			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
-						   c->logger, where, "unroute permanent");
-			set_routing(event, c, RT_UNROUTED, NULL, where);
-			return true;
-
-		case X(UNROUTE, UNROUTED, TEMPLATE):
-			ldbg_routing(logger, "already unrouted");
-			return true;
-		case X(UNROUTE, ROUTED_ONDEMAND, TEMPLATE):
-			flush_routed_ondemand_revival(c);
-			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
-						   c->logger, where, "unroute template");
-			/* do now so route_owner won't find us */
-			set_routing(event, c, RT_UNROUTED, NULL, where);
-			do_updown_unroute(c, NULL);
-			return true;
-
-		case X(UNROUTE, UNROUTED, INSTANCE):
-			ldbg_routing(logger, "already unrouted");
-			return true;
-		case X(INITIATE, UNROUTED, INSTANCE):
-			/*
-			 * Triggered by whack against the template
-			 * which is then instantiated creating this
-			 * connection.  The template may or may not be
-			 * routed.
-			 *
-			 * When the template is routed, should this
-			 * instead transition to routed_negotiation?
-			 *
-			 * When the template is routed, should the
-			 * instance start in ROUTED_UNINSTALLED?
-			 *
-			 * NO? because when it is pulled it shouldn't
-			 * undo the routing?
-			 *
-			 * YES? because the routing code has to deal
-			 * with that.
-			 *
-			 * MAYBE? but only when the template and
-			 * instance have the same SPDs.
-			 */
-			if (BROKEN_TRANSITION &&
-			    c->config->negotiation_shunt == SHUNT_HOLD) {
-				ldbg_routing(logger, "skipping NEGOTIATION=HOLD");
-				set_routing(event, c, RT_UNROUTED_NEGOTIATION, NULL, where);
-				return true;
-			}
-			unrouted_instance_to_unrouted_negotiation(event, c, where);
-			return true;
-
-		case X(ACQUIRE, UNROUTED, INSTANCE):
-			/*
-			 * Triggered by acquire against the template
-			 * which then instantiated creating this
-			 * connection.  The template may or may not be
-			 * routed.
-			 *
-			 * When the template is routed, should this
-			 * instead transition to routed_negotiation?
-			 *
-			 * NO? because when it is pulled it shouldn't
-			 * undo the routing?
-			 *
-			 * When the template is routed, should the
-			 * instance start in ROUTED_UNINSTALLED?
-			 *
-			 * YES? because the routing code has to deal
-			 * with that.
-			 *
-			 * MAYBE? but only when the template and
-			 * instance have the same SPDs.
-			 */
-			if (BROKEN_TRANSITION &&
-			    c->config->negotiation_shunt == SHUNT_HOLD) {
-				ldbg_routing(logger, "skipping NEGOTIATION=HOLD");
-				set_routing(event, c, RT_UNROUTED_NEGOTIATION, NULL, where);
-				ipsecdoi_initiate(c, child_sa_policy(c), SOS_NOBODY,
-						  e->inception, null_shunk,
-						  e->background, logger,
-						  /*update_routing*/LEMPTY, HERE);
-				return true;
-			}
-			unrouted_instance_to_unrouted_negotiation(event, c, where);
-			ipsecdoi_initiate(c, child_sa_policy(c), SOS_NOBODY,
-					  e->inception, e->sec_label,
 					  e->background, logger,
 					  /*update_routing*/LEMPTY, HERE);
 			return true;
+		}
+		unrouted_instance_to_unrouted_negotiation(event, c, where);
+		ipsecdoi_initiate(c, child_sa_policy(c), SOS_NOBODY,
+				  e->inception, e->sec_label,
+				  e->background, logger,
+				  /*update_routing*/LEMPTY, HERE);
+		return true;
 
-		case X(UNROUTE, UNROUTED_NEGOTIATION, INSTANCE):
-			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
-						   c->logger, where, "unroute instance");
-			/* do now so route_owner won't find us */
-			set_routing(event, c, RT_UNROUTED, NULL, where);
-			return true;
+	case X(UNROUTE, UNROUTED_NEGOTIATION, INSTANCE):
+		delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
+					   c->logger, where, "unroute instance");
+		/* do now so route_owner won't find us */
+		set_routing(event, c, RT_UNROUTED, NULL, where);
+		return true;
 
-		case X(UNROUTE, ROUTED_NEGOTIATION, INSTANCE):
-			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
-						   c->logger, where, "unroute instance");
-			set_routing(event, c, RT_UNROUTED, NULL, where);
-			do_updown_unroute(c, NULL);
-			return true;
+	case X(UNROUTE, ROUTED_NEGOTIATION, INSTANCE):
+		delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
+					   c->logger, where, "unroute instance");
+		set_routing(event, c, RT_UNROUTED, NULL, where);
+		do_updown_unroute(c, NULL);
+		return true;
 
-		case X(UNROUTE, ROUTED_TUNNEL, INSTANCE):
-			llog(RC_RTBUSY, logger, "cannot unroute: route busy");
-			return true;
+	case X(UNROUTE, ROUTED_TUNNEL, INSTANCE):
+		llog(RC_RTBUSY, logger, "cannot unroute: route busy");
+		return true;
 
-		case X(UNROUTE, ROUTED_ONDEMAND, INSTANCE):
-			flush_routed_ondemand_revival(c);
-			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
-						   c->logger, where, "unroute instance");
-			/* do now so route_owner won't find us */
-			set_routing(event, c, RT_UNROUTED, NULL, where);
-			do_updown_unroute(c, NULL);
-			return true;
+	case X(UNROUTE, ROUTED_ONDEMAND, INSTANCE):
+		flush_routed_ondemand_revival(c);
+		delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
+					   c->logger, where, "unroute instance");
+		/* do now so route_owner won't find us */
+		set_routing(event, c, RT_UNROUTED, NULL, where);
+		do_updown_unroute(c, NULL);
+		return true;
 
-		case X(UNROUTE, ROUTED_FAILURE, INSTANCE):
-			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
-						   c->logger, where, "unroute instance");
-			/* do now so route_owner won't find us */
-			set_routing(event, c, RT_UNROUTED, NULL, where);
-			do_updown_unroute(c, NULL);
-			return true;
+	case X(UNROUTE, ROUTED_FAILURE, INSTANCE):
+		delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
+					   c->logger, where, "unroute instance");
+		/* do now so route_owner won't find us */
+		set_routing(event, c, RT_UNROUTED, NULL, where);
+		do_updown_unroute(c, NULL);
+		return true;
 
-		case X(UNROUTE, UNROUTED_TUNNEL, INSTANCE):
-			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
-						   c->logger, where, "unroute instance");
-			set_routing(event, c, RT_UNROUTED, NULL, where);
-			return true;
+	case X(UNROUTE, UNROUTED_TUNNEL, INSTANCE):
+		delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
+					   c->logger, where, "unroute instance");
+		set_routing(event, c, RT_UNROUTED, NULL, where);
+		return true;
 
-		case X(TIMEOUT_IKE, UNROUTED, PERMANENT):
-		case X(TIMEOUT_IKE, UNROUTED, INSTANCE):		/* ikev2-31-nat-rw-no-rekey */
-		case X(TIMEOUT_IKE, ROUTED_ONDEMAND, PERMANENT):	/* ikev2-child-ipsec-retransmit */
-		case X(TIMEOUT_IKE, ROUTED_ONDEMAND, INSTANCE):		/* ikev2-liveness-05 */
-		case X(DELETE_IKE, ROUTED_ONDEMAND, INSTANCE):		/* ikev2-30-rw-no-rekey */
+	case X(TIMEOUT_IKE, UNROUTED, PERMANENT):
+	case X(TIMEOUT_IKE, UNROUTED, INSTANCE):		/* ikev2-31-nat-rw-no-rekey */
+	case X(TIMEOUT_IKE, ROUTED_ONDEMAND, PERMANENT):	/* ikev2-child-ipsec-retransmit */
+	case X(TIMEOUT_IKE, ROUTED_ONDEMAND, INSTANCE):		/* ikev2-liveness-05 */
+	case X(DELETE_IKE, ROUTED_ONDEMAND, INSTANCE):		/* ikev2-30-rw-no-rekey */
 #if 0
-		case X(DELETE_IKE, UNROUTED, INSTANCE): /*duplicate!?!*/
+	case X(DELETE_IKE, UNROUTED, INSTANCE): /*duplicate!?!*/
 #endif
-			/*
-			 * ikev2-31-nat-rw-no-rekey:
-			 *
-			 * The established child unroutes the
-			 * connection; followed by this IKE timeout.
-			 *
-			 * ikev2-child-ipsec-retransmit:
-			 *
-			 * The UP and established child schedules
-			 * revival, putting the connection into
-			 * ROUTED_ONDEMAND, followed by this IKE
-			 * timeout.
-			 */
+		/*
+		 * ikev2-31-nat-rw-no-rekey:
+		 *
+		 * The established child unroutes the connection;
+		 * followed by this IKE timeout.
+		 *
+		 * ikev2-child-ipsec-retransmit:
+		 *
+		 * The UP and established child schedules revival,
+		 * putting the connection into ROUTED_ONDEMAND,
+		 * followed by this IKE timeout.
+		 */
+		delete_ike_sa(e->ike);
+		return true;
+
+	case X(DELETE_IKE, UNROUTED_NEGOTIATION, PERMANENT):
+	case X(TIMEOUT_IKE, UNROUTED_NEGOTIATION, PERMANENT):
+		/* ex, permanent+initiate */
+		if (should_revive_ike((*e->ike))) {
+			set_routing(event, c, RT_UNROUTED, NULL, where);
+			schedule_ike_revival((*e->ike), (event == CONNECTION_DELETE_IKE ? "delete IKE SA" :
+							 "timeout IKE SA"));
 			delete_ike_sa(e->ike);
 			return true;
+		}
+		set_routing(event, c, RT_UNROUTED, NULL, where);
+		delete_ike_sa(e->ike);
+		return true;
 
-		case X(DELETE_IKE, UNROUTED_NEGOTIATION, PERMANENT):
-		case X(TIMEOUT_IKE, UNROUTED_NEGOTIATION, PERMANENT):
-			/* ex, permanent+initiate */
-			if (should_revive_ike((*e->ike))) {
-				set_routing(event, c, RT_UNROUTED, NULL, where);
-				schedule_ike_revival((*e->ike), (event == CONNECTION_DELETE_IKE ? "delete IKE SA" :
-								 "timeout IKE SA"));
-				delete_ike_sa(e->ike);
-				return true;
-			}
+	case X(DELETE_IKE, ROUTED_NEGOTIATION, PERMANENT):
+	case X(TIMEOUT_IKE, ROUTED_NEGOTIATION, PERMANENT):
+		/*
+		 * For instance, this end initiated a Child SA for the
+		 * connection while at the same time the peer
+		 * initiated an IKE SA delete and/or the exchange
+		 * timed out.
+		 *
+		 * Because the Child SA is larval and, presumably,
+		 * there is no earlier child the code below, and not
+		 * zap_connection(), will need to deal with revival
+		 * et.al.
+		 */
+		/* ex, permanent+up */
+		if (should_revive_ike((*e->ike))) {
+			routed_negotiation_to_routed_ondemand(event, c, logger, where,
+							      "restoring ondemand, reviving");
+			PEXPECT(logger, c->child.routing == RT_ROUTED_ONDEMAND);
+			schedule_ike_revival((*e->ike), (event == CONNECTION_DELETE_IKE ? "delete IKE SA" :
+							 "timeout IKE SA"));
+			delete_ike_sa(e->ike);
+			return true;
+		}
+		if (c->policy.route) {
+			routed_negotiation_to_routed_ondemand(event, c, logger, where,
+							      "restoring ondemand, connection is routed");
+			PEXPECT(logger, c->child.routing == RT_ROUTED_ONDEMAND);
+			delete_ike_sa(e->ike);
+			return true;
+		}
+		/* is this reachable? */
+		routed_negotiation_to_unrouted(event, c, logger, where, "deleting");
+		PEXPECT(logger, c->child.routing == RT_UNROUTED);
+		delete_ike_sa(e->ike);
+		/* connection lives to fight another day */
+		return true;
+
+	case X(TIMEOUT_IKE, ROUTED_NEGOTIATION, INSTANCE):
+	case X(TIMEOUT_IKE, UNROUTED_NEGOTIATION, INSTANCE):
+		if (BROKEN_TRANSITION &&
+		    should_revive_ike((*e->ike))) {
+			/* when ROUTED_NEGOTIATION should
+			 * switch to ROUTED_REVIVAL */
+			schedule_ike_revival((*e->ike), "timed out");
+			delete_ike_sa(e->ike);
+			return true;
+		}
+		if (is_opportunistic(c)) {
+			/*
+			 * A failed OE initiator, make shunt bare.
+			 */
+			orphan_holdpass(c, c->spd, logger);
+			/*
+			 * Change routing so we don't get cleared out
+			 * when state/connection dies.
+			 */
 			set_routing(event, c, RT_UNROUTED, NULL, where);
 			delete_ike_sa(e->ike);
 			return true;
+		}
+		delete_ike_sa(e->ike);
+		set_routing(event, c, RT_UNROUTED, NULL, where);
+		return true;
 
-		case X(DELETE_IKE, ROUTED_NEGOTIATION, PERMANENT):
-		case X(TIMEOUT_IKE, ROUTED_NEGOTIATION, PERMANENT):
-			/*
-			 * For instance, this end initiated a Child SA
-			 * for the connection while at the same time
-			 * the peer initiated an IKE SA delete and/or
-			 * the exchange timed out.
-			 *
-			 * Because the Child SA is larval and,
-			 * presumably, there is no earlier child the
-			 * code below, and not zap_connection(), will
-			 * need to deal with revival et.al.
-			 */
-			/* ex, permanent+up */
-			if (should_revive_ike((*e->ike))) {
-				routed_negotiation_to_routed_ondemand(event, c, logger, where,
-								      "restoring ondemand, reviving");
-				PEXPECT(logger, c->child.routing == RT_ROUTED_ONDEMAND);
-				schedule_ike_revival((*e->ike), (event == CONNECTION_DELETE_IKE ? "delete IKE SA" :
-								 "timeout IKE SA"));
-				delete_ike_sa(e->ike);
-				return true;
-			}
-			if (c->policy.route) {
-				routed_negotiation_to_routed_ondemand(event, c, logger, where,
-								      "restoring ondemand, connection is routed");
-				PEXPECT(logger, c->child.routing == RT_ROUTED_ONDEMAND);
-				delete_ike_sa(e->ike);
-				return true;
-			}
-			/* is this reachable? */
-			routed_negotiation_to_unrouted(event, c, logger, where, "deleting");
-			PEXPECT(logger, c->child.routing == RT_UNROUTED);
-			delete_ike_sa(e->ike);
-			/* connection lives to fight another day */
-			return true;
+	case X(DELETE_IKE, ROUTED_TUNNEL, PERMANENT):
+	case X(TIMEOUT_IKE, ROUTED_TUNNEL, PERMANENT):
+	case X(DELETE_IKE, ROUTED_TUNNEL, INSTANCE):
+	case X(TIMEOUT_IKE, ROUTED_TUNNEL, INSTANCE):
+		PEXPECT(c->logger, (*e->ike)->sa.st_ike_version == IKEv1);
+		delete_ike_sa(e->ike);
+		return true;
 
-		case X(TIMEOUT_IKE, ROUTED_NEGOTIATION, INSTANCE):
-		case X(TIMEOUT_IKE, UNROUTED_NEGOTIATION, INSTANCE):
-			if (BROKEN_TRANSITION &&
-			    should_revive_ike((*e->ike))) {
-				/* when ROUTED_NEGOTIATION should
-				 * switch to ROUTED_REVIVAL */
-				schedule_ike_revival((*e->ike), "timed out");
-				delete_ike_sa(e->ike);
-				return true;
-			}
-			if (is_opportunistic(c)) {
-				/*
-				 * A failed OE initiator, make shunt bare.
-				 */
-				orphan_holdpass(c, c->spd, logger);
-				/*
-				 * Change routing so we don't get cleared out
-				 * when state/connection dies.
-				 */
-				set_routing(event, c, RT_UNROUTED, NULL, where);
-				delete_ike_sa(e->ike);
-				return true;
-			}
-			delete_ike_sa(e->ike);
-			set_routing(event, c, RT_UNROUTED, NULL, where);
-			return true;
+	case X(DELETE_IKE, UNROUTED, PERMANENT):
+		/*
+		 * fips-12-ikev2-esp-dh-wrong et.al.
+		 *
+		 * The IKE_SA_INIT responder rejects the initial
+		 * exchange and deletes the IKE SA.
+		 *
+		 * XXX: can this also happen during IKE_AUTH?
+		 *
+		 * Since there's no established Child SA
+		 * zap_connection_states() should always fail?
+		 */
+		delete_ike_sa(e->ike);
+		return true;
 
-		case X(DELETE_IKE, ROUTED_TUNNEL, PERMANENT):
-		case X(TIMEOUT_IKE, ROUTED_TUNNEL, PERMANENT):
-		case X(DELETE_IKE, ROUTED_TUNNEL, INSTANCE):
-		case X(TIMEOUT_IKE, ROUTED_TUNNEL, INSTANCE):
-			PEXPECT(c->logger, (*e->ike)->sa.st_ike_version == IKEv1);
-			delete_ike_sa(e->ike);
-			return true;
+	case X(DELETE_IKE, UNROUTED, INSTANCE):			/* certoe-08-nat-packet-cop-restart */
+	case X(DELETE_IKE, UNROUTED_NEGOTIATION, INSTANCE):	/* dnsoe-01 ... */
+		delete_ike_sa(e->ike);
+		/*
+		 * XXX: huh? instance isn't routed so why delete
+		 * policies?  Instead just drop IKE and let connection
+		 * disappear?
+		 */
+		delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
+					   c->logger, where, "unroute instance");
+		set_routing(event, c, RT_UNROUTED, NULL, where);
+		return true;
+	case X(DELETE_IKE, ROUTED_ONDEMAND, PERMANENT):		/* ROUTED_NEGOTIATION!?! */
+		/*
+		 * Happens after all children are killed, and
+		 * connection put into routed ondemand.  Just need to
+		 * delete IKE.
+		 */
+		delete_ike_sa(e->ike);
+		return true;
 
-		case X(DELETE_IKE, UNROUTED, PERMANENT):
-			/*
-			 * fips-12-ikev2-esp-dh-wrong et.al.
-			 *
-			 * The IKE_SA_INIT responder rejects the
-			 * initial exchange and deletes the IKE SA.
-			 *
-			 * XXX: can this also happen during IKE_AUTH?
-			 *
-			 * Since there's no established Child SA
-			 * zap_connection_states() should always fail?
-			 */
-			delete_ike_sa(e->ike);
-			return true;
+	case X(DELETE_CHILD, ROUTED_TUNNEL, INSTANCE):
+	case X(DELETE_CHILD, ROUTED_TUNNEL, PERMANENT):
+	case X(TIMEOUT_CHILD, ROUTED_TUNNEL, INSTANCE):
+	case X(TIMEOUT_CHILD, ROUTED_TUNNEL, PERMANENT):
+		/* permenant connections are never deleted */
+		down_routed_tunnel(event, c, e->child, where);
+		return true;
 
-		case X(DELETE_IKE, UNROUTED, INSTANCE):			/* certoe-08-nat-packet-cop-restart */
-		case X(DELETE_IKE, UNROUTED_NEGOTIATION, INSTANCE):	/* dnsoe-01 ... */
-			delete_ike_sa(e->ike);
-			/*
-			 * XXX: huh? instance isn't routed so why
-			 * delete policies?  Instead just drop IKE and
-			 * let connection disappear?
-			 */
-			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
-						   c->logger, where, "unroute instance");
-			set_routing(event, c, RT_UNROUTED, NULL, where);
-			return true;
-		case X(DELETE_IKE, ROUTED_ONDEMAND, PERMANENT):		/* ROUTED_NEGOTIATION!?! */
-			/*
-			 * Happens after all children are killed, and
-			 * connection put into routed ondemand.  Just
-			 * need to delete IKE.
-			 */
-			delete_ike_sa(e->ike);
-			return true;
+	case X(DELETE_CHILD, UNROUTED_TUNNEL, INSTANCE):
+	case X(DELETE_CHILD, UNROUTED_TUNNEL, PERMANENT):
+	case X(TIMEOUT_CHILD, UNROUTED_TUNNEL, INSTANCE):
+	case X(TIMEOUT_CHILD, UNROUTED_TUNNEL, PERMANENT):
+		ldbg_routing(logger, "OOPS: UNROUTED_TUNNEL isn't routed!");
+		down_routed_tunnel(event, c, e->child, where);
+		return true;
 
-		case X(DELETE_CHILD, ROUTED_TUNNEL, INSTANCE):
-		case X(DELETE_CHILD, ROUTED_TUNNEL, PERMANENT):
-		case X(TIMEOUT_CHILD, ROUTED_TUNNEL, INSTANCE):
-		case X(TIMEOUT_CHILD, ROUTED_TUNNEL, PERMANENT):
-			/* permenant connections are never deleted */
-			down_routed_tunnel(event, c, e->child, where);
-			return true;
+	case X(DELETE_CHILD, UNROUTED_INBOUND, INSTANCE):
+	case X(DELETE_CHILD, UNROUTED_INBOUND, PERMANENT):
+	case X(TIMEOUT_CHILD, UNROUTED_INBOUND, INSTANCE):
+	case X(TIMEOUT_CHILD, UNROUTED_INBOUND, PERMANENT):
+		/* ikev1-xfrmi-02-aggr */
+		/*
+		 * IKEv1 responder mid way through establishing child
+		 * gets a timeout.  Full down_routed_tunnel is
+		 * overkill - just inbound needs to be pulled.
+		 */
+		ldbg_routing(logger, "OOPS: UNROUTED_INBOUND isn't routed!");
+		ldbg_routing(logger, "OOPS: UNROUTED_INBOUND doesn't have outbound!");
+		down_routed_tunnel(event, c, e->child, where);
+		return true;
 
-		case X(DELETE_CHILD, UNROUTED_TUNNEL, INSTANCE):
-		case X(DELETE_CHILD, UNROUTED_TUNNEL, PERMANENT):
-		case X(TIMEOUT_CHILD, UNROUTED_TUNNEL, INSTANCE):
-		case X(TIMEOUT_CHILD, UNROUTED_TUNNEL, PERMANENT):
-			ldbg_routing(logger, "OOPS: UNROUTED_TUNNEL isn't routed!");
-			down_routed_tunnel(event, c, e->child, where);
-			return true;
-
-		case X(DELETE_CHILD, UNROUTED_INBOUND, INSTANCE):
-		case X(DELETE_CHILD, UNROUTED_INBOUND, PERMANENT):
-		case X(TIMEOUT_CHILD, UNROUTED_INBOUND, INSTANCE):
-		case X(TIMEOUT_CHILD, UNROUTED_INBOUND, PERMANENT):
-			/* ikev1-xfrmi-02-aggr */
-			/*
-			 * IKEv1 responder mid way through
-			 * establishing child gets a timeout.  Full
-			 * down_routed_tunnel is overkill - just
-			 * inbound needs to be pulled.
-			 */
-			ldbg_routing(logger, "OOPS: UNROUTED_INBOUND isn't routed!");
-			ldbg_routing(logger, "OOPS: UNROUTED_INBOUND doesn't have outbound!");
-			down_routed_tunnel(event, c, e->child, where);
-			return true;
-
-		case X(TIMEOUT_CHILD, UNROUTED_NEGOTIATION, INSTANCE):
-		case X(TIMEOUT_CHILD, UNROUTED, PERMANENT): /* permanent+up */
-			if (should_revive_child(*(e->child))) {
-				schedule_child_revival((*e->child), "timed out");
-				delete_child_sa(e->child);
-				set_routing(event, c, RT_UNROUTED, NULL, where);
-				return true;
-			}
+	case X(TIMEOUT_CHILD, UNROUTED_NEGOTIATION, INSTANCE):
+	case X(TIMEOUT_CHILD, UNROUTED, PERMANENT): /* permanent+up */
+		if (should_revive_child(*(e->child))) {
+			schedule_child_revival((*e->child), "timed out");
 			delete_child_sa(e->child);
 			set_routing(event, c, RT_UNROUTED, NULL, where);
 			return true;
+		}
+		delete_child_sa(e->child);
+		set_routing(event, c, RT_UNROUTED, NULL, where);
+		return true;
 
-		case X(ESTABLISH_INBOUND, ROUTED_ONDEMAND, INSTANCE):
-			/* ikev2-32-nat-rw-rekey */
-			flush_routed_ondemand_revival(c);
-			if (!install_inbound_ipsec_sa((*e->child), where)) {
-				return false;
-			}
-			set_routing(event, c, RT_ROUTED_INBOUND, e->child, where);
-			return true;
-		case X(ESTABLISH_INBOUND, ROUTED_INBOUND, PERMANENT):
-			/* alias-01 */
-			if (!install_inbound_ipsec_sa((*e->child), where)) {
-				return false;
-			}
-			set_routing(event, c, RT_ROUTED_INBOUND, e->child, where);
-			return true;
-		case X(ESTABLISH_INBOUND, ROUTED_ONDEMAND, PERMANENT):
-			flush_routed_ondemand_revival(c);
-			if (!install_inbound_ipsec_sa((*e->child), where)) {
-				return false;
-			}
-			set_routing(event, c, RT_ROUTED_INBOUND, e->child, where);
-			return true;
-		case X(ESTABLISH_INBOUND, ROUTED_NEGOTIATION, INSTANCE):
-		case X(ESTABLISH_INBOUND, ROUTED_NEGOTIATION, PERMANENT):
-			/* addconn-05-bogus-left-interface
-			 * algo-ikev2-aes128-sha1-ecp256 et.al. */
-			if (!install_inbound_ipsec_sa((*e->child), where)) {
-				return false;
-			}
-			set_routing(event, c, RT_ROUTED_INBOUND, e->child, where);
-			return true;
-		case X(ESTABLISH_INBOUND, UNROUTED, INSTANCE):
-		case X(ESTABLISH_INBOUND, UNROUTED, PERMANENT):
-		case X(ESTABLISH_INBOUND, UNROUTED_NEGOTIATION, INSTANCE):
-		case X(ESTABLISH_INBOUND, UNROUTED_NEGOTIATION, PERMANENT):
-			if (!install_inbound_ipsec_sa((*e->child), where)) {
-				return false;
-			}
-			set_routing(event, c, RT_UNROUTED_INBOUND, e->child, where);
-			return true;
+	case X(ESTABLISH_INBOUND, ROUTED_ONDEMAND, INSTANCE):
+		/* ikev2-32-nat-rw-rekey */
+		flush_routed_ondemand_revival(c);
+		if (!install_inbound_ipsec_sa((*e->child), where)) {
+			return false;
+		}
+		set_routing(event, c, RT_ROUTED_INBOUND, e->child, where);
+		return true;
+	case X(ESTABLISH_INBOUND, ROUTED_INBOUND, PERMANENT):
+		/* alias-01 */
+		if (!install_inbound_ipsec_sa((*e->child), where)) {
+			return false;
+		}
+		set_routing(event, c, RT_ROUTED_INBOUND, e->child, where);
+		return true;
+	case X(ESTABLISH_INBOUND, ROUTED_ONDEMAND, PERMANENT):
+		flush_routed_ondemand_revival(c);
+		if (!install_inbound_ipsec_sa((*e->child), where)) {
+			return false;
+		}
+		set_routing(event, c, RT_ROUTED_INBOUND, e->child, where);
+		return true;
+	case X(ESTABLISH_INBOUND, ROUTED_NEGOTIATION, INSTANCE):
+	case X(ESTABLISH_INBOUND, ROUTED_NEGOTIATION, PERMANENT):
+		/* addconn-05-bogus-left-interface
+		 * algo-ikev2-aes128-sha1-ecp256 et.al. */
+		if (!install_inbound_ipsec_sa((*e->child), where)) {
+			return false;
+		}
+		set_routing(event, c, RT_ROUTED_INBOUND, e->child, where);
+		return true;
+	case X(ESTABLISH_INBOUND, UNROUTED, INSTANCE):
+	case X(ESTABLISH_INBOUND, UNROUTED, PERMANENT):
+	case X(ESTABLISH_INBOUND, UNROUTED_NEGOTIATION, INSTANCE):
+	case X(ESTABLISH_INBOUND, UNROUTED_NEGOTIATION, PERMANENT):
+		if (!install_inbound_ipsec_sa((*e->child), where)) {
+			return false;
+		}
+		set_routing(event, c, RT_UNROUTED_INBOUND, e->child, where);
+		return true;
 
-		case X(ESTABLISH_INBOUND, ROUTED_TUNNEL, PERMANENT):
-		case X(ESTABLISH_INBOUND, ROUTED_TUNNEL, INSTANCE):
-			/*
-			 * This happens when there's a re-key where
-			 * the state is re-established but not the
-			 * policy (that is left untouched).
-			 *
-			 * For instance ikev2-12-transport-psk and
-			 * ikev2-28-rw-server-rekey
-			 * ikev1-labeled-ipsec-01-permissive.
-			 *
-			 * XXX: suspect this is too early - for rekey
-			 * should only update after new child
-			 * establishes?
-			 */
-			if (!install_inbound_ipsec_sa((*e->child), where)) {
-				return false;
-			}
-			set_routing(event, c, RT_ROUTED_TUNNEL, e->child, where);
-			return true;
+	case X(ESTABLISH_INBOUND, ROUTED_TUNNEL, PERMANENT):
+	case X(ESTABLISH_INBOUND, ROUTED_TUNNEL, INSTANCE):
+		/*
+		 * This happens when there's a re-key where the state
+		 * is re-established but not the policy (that is left
+		 * untouched).
+		 *
+		 * For instance ikev2-12-transport-psk and
+		 * ikev2-28-rw-server-rekey
+		 * ikev1-labeled-ipsec-01-permissive.
+		 *
+		 * XXX: suspect this is too early - for rekey should
+		 * only update after new child establishes?
+		 */
+		if (!install_inbound_ipsec_sa((*e->child), where)) {
+			return false;
+		}
+		set_routing(event, c, RT_ROUTED_TUNNEL, e->child, where);
+		return true;
 
-		case X(ESTABLISH_OUTBOUND, UNROUTED_INBOUND, PERMANENT):
-		case X(ESTABLISH_OUTBOUND, UNROUTED_INBOUND, INSTANCE):
-		case X(ESTABLISH_OUTBOUND, ROUTED_INBOUND, PERMANENT):
-		case X(ESTABLISH_OUTBOUND, ROUTED_INBOUND, INSTANCE):
-			if (!install_outbound_ipsec_sa((*e->child), /*up*/true, where)) {
-				return false;
-			}
-			set_established_child(event, c, RT_ROUTED_TUNNEL, e->child, where);
-			return true;
+	case X(ESTABLISH_OUTBOUND, UNROUTED_INBOUND, PERMANENT):
+	case X(ESTABLISH_OUTBOUND, UNROUTED_INBOUND, INSTANCE):
+	case X(ESTABLISH_OUTBOUND, ROUTED_INBOUND, PERMANENT):
+	case X(ESTABLISH_OUTBOUND, ROUTED_INBOUND, INSTANCE):
+		if (!install_outbound_ipsec_sa((*e->child), /*up*/true, where)) {
+			return false;
+		}
+		set_established_child(event, c, RT_ROUTED_TUNNEL, e->child, where);
+		return true;
 
-		case X(ESTABLISH_OUTBOUND, ROUTED_TUNNEL, PERMANENT):
-		case X(ESTABLISH_OUTBOUND, ROUTED_TUNNEL, INSTANCE):
-			/*
-			 * This happens when there's a re-key where
-			 * the state is re-established but not the
-			 * policy (that is left untouched).
-			 *
-			 * For instance ikev2-12-transport-psk and
-			 * ikev2-28-rw-server-rekey
-			 * ikev1-labeled-ipsec-01-permissive.
-			 */
-			if (!install_outbound_ipsec_sa((*e->child), /*up*/false, where)) {
-				return false;
-			}
-			set_established_child(event, c, RT_ROUTED_TUNNEL, e->child, where);
-			return true;
+	case X(ESTABLISH_OUTBOUND, ROUTED_TUNNEL, PERMANENT):
+	case X(ESTABLISH_OUTBOUND, ROUTED_TUNNEL, INSTANCE):
+		/*
+		 * This happens when there's a re-key where the state
+		 * is re-established but not the policy (that is left
+		 * untouched).
+		 *
+		 * For instance ikev2-12-transport-psk and
+		 * ikev2-28-rw-server-rekey
+		 * ikev1-labeled-ipsec-01-permissive.
+		 */
+		if (!install_outbound_ipsec_sa((*e->child), /*up*/false, where)) {
+			return false;
+		}
+		set_established_child(event, c, RT_ROUTED_TUNNEL, e->child, where);
+		return true;
 
-		case X(SUSPEND, ROUTED_TUNNEL, PERMANENT):
-		case X(SUSPEND, ROUTED_TUNNEL, INSTANCE):
-			/*
-			 * Update connection's routing so that
-			 * route_owner() won't find us.
-			 *
-			 * Only unroute when no other routed
-			 * connection shares the SPD.
-			 */
-			FOR_EACH_ITEM(spd, &c->child.spds) {
-				/* XXX: never finds SPD */
-				if (route_owner(spd) == NULL) {
-					do_updown(UPDOWN_DOWN, c, spd,
-						  &(*e->child)->sa, logger);
-					(*e->child)->sa.st_mobike_del_src_ip = true;
-					do_updown(UPDOWN_UNROUTE, c, spd,
-						  &(*e->child)->sa, logger);
-					(*e->child)->sa.st_mobike_del_src_ip = false;
-				}
+	case X(SUSPEND, ROUTED_TUNNEL, PERMANENT):
+	case X(SUSPEND, ROUTED_TUNNEL, INSTANCE):
+		/*
+		 * Update connection's routing so that route_owner()
+		 * won't find us.
+		 *
+		 * Only unroute when no other routed connection shares
+		 * the SPD.
+		 */
+		FOR_EACH_ITEM(spd, &c->child.spds) {
+			/* XXX: never finds SPD */
+			if (route_owner(spd) == NULL) {
+				do_updown(UPDOWN_DOWN, c, spd,
+					  &(*e->child)->sa, logger);
+				(*e->child)->sa.st_mobike_del_src_ip = true;
+				do_updown(UPDOWN_UNROUTE, c, spd,
+					  &(*e->child)->sa, logger);
+				(*e->child)->sa.st_mobike_del_src_ip = false;
 			}
-			set_routing(event, c, RT_UNROUTED_TUNNEL, e->child, where);
-			return true;
+		}
+		set_routing(event, c, RT_UNROUTED_TUNNEL, e->child, where);
+		return true;
 
-		case X(RESUME, UNROUTED_TUNNEL, PERMANENT):
-		case X(RESUME, UNROUTED_TUNNEL, INSTANCE):
-			set_routing(event, c, RT_ROUTED_TUNNEL, e->child, where);
-			FOR_EACH_ITEM(spd, &c->child.spds) {
-				do_updown(UPDOWN_UP, c, spd, &(*e->child)->sa, logger);
-				do_updown(UPDOWN_ROUTE, c, spd, &(*e->child)->sa, logger);
-			}
-			return true;
+	case X(RESUME, UNROUTED_TUNNEL, PERMANENT):
+	case X(RESUME, UNROUTED_TUNNEL, INSTANCE):
+		set_routing(event, c, RT_ROUTED_TUNNEL, e->child, where);
+		FOR_EACH_ITEM(spd, &c->child.spds) {
+			do_updown(UPDOWN_UP, c, spd, &(*e->child)->sa, logger);
+			do_updown(UPDOWN_ROUTE, c, spd, &(*e->child)->sa, logger);
+		}
+		return true;
 
 /*
  * Labeled IPsec.
  */
 
-		case X(ROUTE, UNROUTED, LABELED_TEMPLATE):
-			add_policy(c, policy.route); /* always */
-			if (never_negotiate(c)) {
-				if (!unrouted_to_routed_never_negotiate(event, c, where)) {
-					/* XXX: why whack only? */
-					llog(WHACK_STREAM|RC_ROUTE, logger, "could not route");
-					return true;
-				}
-				PEXPECT(logger, c->child.routing == RT_ROUTED_NEVER_NEGOTIATE);
+	case X(ROUTE, UNROUTED, LABELED_TEMPLATE):
+		add_policy(c, policy.route); /* always */
+		if (never_negotiate(c)) {
+			if (!unrouted_to_routed_never_negotiate(event, c, where)) {
+				/* XXX: why whack only? */
+				llog(WHACK_STREAM|RC_ROUTE, logger, "could not route");
 				return true;
 			}
-			if (!unrouted_to_routed_ondemand_sec_label(c, logger, where)) {
-				llog(RC_ROUTE, logger, "could not route");
-				return true;
-			}
-			set_routing(event, c, RT_ROUTED_ONDEMAND, NULL, where);
+			PEXPECT(logger, c->child.routing == RT_ROUTED_NEVER_NEGOTIATE);
 			return true;
-		case X(ROUTE, ROUTED_ONDEMAND, LABELED_PARENT):
-			/*
-			 * ikev2-labeled-ipsec-06-rekey-ike-acquire
-			 * where the rekey re-routes the existing
-			 * routed connection from IKE AUTH.
-			 */
-			set_routing(event, c, RT_ROUTED_ONDEMAND, NULL, where);
+		}
+		if (!unrouted_to_routed_ondemand_sec_label(c, logger, where)) {
+			llog(RC_ROUTE, logger, "could not route");
 			return true;
-		case X(ROUTE, UNROUTED, LABELED_PARENT):
-			/*
-			 * The CK_LABELED_TEMPLATE connection may have
-			 * been routed (i.e., route+ondemand), but not
-			 * this CK_LABELED_PARENT - it is still
-			 * negotiating.
-			 *
-			 * The negotiating LABELED_PARENT connection
-			 * should be in UNROUTED_NEGOTIATION but
-			 * ACQUIRE doesn't yet go through that path.
-			 *
-			 * But what if the two have the same SPDs?
-			 * Then the routing happens twice which seems
-			 * to be harmless.
-			 */
-			if (!unrouted_to_routed_ondemand_sec_label(c, logger, where)) {
-				llog(RC_ROUTE, logger, "could not route");
-				return true;
-			}
-			set_routing(event, c, RT_ROUTED_ONDEMAND, NULL, where);
+		}
+		set_routing(event, c, RT_ROUTED_ONDEMAND, NULL, where);
+		return true;
+	case X(ROUTE, ROUTED_ONDEMAND, LABELED_PARENT):
+		/*
+		 * ikev2-labeled-ipsec-06-rekey-ike-acquire where the
+		 * rekey re-routes the existing routed connection from
+		 * IKE AUTH.
+		 */
+		set_routing(event, c, RT_ROUTED_ONDEMAND, NULL, where);
+		return true;
+	case X(ROUTE, UNROUTED, LABELED_PARENT):
+		/*
+		 * The CK_LABELED_TEMPLATE connection may have been
+		 * routed (i.e., route+ondemand), but not this
+		 * CK_LABELED_PARENT - it is still negotiating.
+		 *
+		 * The negotiating LABELED_PARENT connection should be
+		 * in UNROUTED_NEGOTIATION but ACQUIRE doesn't yet go
+		 * through that path.
+		 *
+		 * But what if the two have the same SPDs?  Then the
+		 * routing happens twice which seems to be harmless.
+		 */
+		if (!unrouted_to_routed_ondemand_sec_label(c, logger, where)) {
+			llog(RC_ROUTE, logger, "could not route");
 			return true;
-		case X(UNROUTE, UNROUTED, LABELED_TEMPLATE):
-			ldbg_routing(logger, "already unrouted");
-			return true;
-		case X(UNROUTE, ROUTED_ONDEMAND, LABELED_TEMPLATE):
-			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
-						   c->logger, where, "unroute template");
-			/* do now so route_owner won't find us */
-			set_routing(event, c, RT_UNROUTED, NULL, where);
-			do_updown_unroute(c, NULL);
-			return true;
-		case X(UNROUTE, UNROUTED, LABELED_PARENT):
-			ldbg_routing(logger, "already unrouted");
-			return true;
-		case X(UNROUTE, ROUTED_ONDEMAND, LABELED_PARENT):
-			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
-						   c->logger, where, "unroute instance");
-			/* do now so route_owner won't find us */
-			set_routing(event, c, RT_UNROUTED, NULL, where);
-			do_updown_unroute(c, NULL);
-			return true;
-		case X(INITIATE, UNROUTED, LABELED_PARENT):
-			return true;
-		case X(ACQUIRE, UNROUTED, LABELED_PARENT):
-		case X(ACQUIRE, ROUTED_ONDEMAND, LABELED_PARENT):
-			ipsecdoi_initiate(c, child_sa_policy(c), SOS_NOBODY,
-					  e->inception, e->sec_label, e->background,
-					  logger,
-					  /*update_routing*/LEMPTY, HERE);
-			return true;
-		case X(DELETE_IKE, ROUTED_ONDEMAND, LABELED_PARENT):
-		case X(DELETE_IKE, UNROUTED, LABELED_PARENT):
-			delete_ike_sa(e->ike);
-			set_routing(event, c, RT_UNROUTED, NULL, where);
-			return true;
+		}
+		set_routing(event, c, RT_ROUTED_ONDEMAND, NULL, where);
+		return true;
+	case X(UNROUTE, UNROUTED, LABELED_TEMPLATE):
+		ldbg_routing(logger, "already unrouted");
+		return true;
+	case X(UNROUTE, ROUTED_ONDEMAND, LABELED_TEMPLATE):
+		delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
+					   c->logger, where, "unroute template");
+		/* do now so route_owner won't find us */
+		set_routing(event, c, RT_UNROUTED, NULL, where);
+		do_updown_unroute(c, NULL);
+		return true;
+	case X(UNROUTE, UNROUTED, LABELED_PARENT):
+		ldbg_routing(logger, "already unrouted");
+		return true;
+	case X(UNROUTE, ROUTED_ONDEMAND, LABELED_PARENT):
+		delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
+					   c->logger, where, "unroute instance");
+		/* do now so route_owner won't find us */
+		set_routing(event, c, RT_UNROUTED, NULL, where);
+		do_updown_unroute(c, NULL);
+		return true;
+	case X(INITIATE, UNROUTED, LABELED_PARENT):
+		return true;
+	case X(ACQUIRE, UNROUTED, LABELED_PARENT):
+	case X(ACQUIRE, ROUTED_ONDEMAND, LABELED_PARENT):
+		ipsecdoi_initiate(c, child_sa_policy(c), SOS_NOBODY,
+				  e->inception, e->sec_label, e->background,
+				  logger,
+				  /*update_routing*/LEMPTY, HERE);
+		return true;
+	case X(DELETE_IKE, ROUTED_ONDEMAND, LABELED_PARENT):
+	case X(DELETE_IKE, UNROUTED, LABELED_PARENT):
+		delete_ike_sa(e->ike);
+		set_routing(event, c, RT_UNROUTED, NULL, where);
+		return true;
 
 /*
  * Labeled IPsec child.
  */
 
-		case X(ESTABLISH_INBOUND, UNROUTED_TUNNEL, LABELED_CHILD):
-			/* rekey */
-			if (!install_inbound_ipsec_sa((*e->child), where)) {
-				return false;
-			}
-			set_routing(event, c, RT_UNROUTED_TUNNEL, e->child, where);
-			return true;
-		case X(ESTABLISH_OUTBOUND, UNROUTED_TUNNEL, LABELED_CHILD):
-			/* rekey */
-			/* labeled IPsec ignores UP; no policy */
-			if (!install_outbound_ipsec_sa((*e->child), /*up*/false, where)) {
-				return false;
-			}
-			set_established_child(event, c, RT_UNROUTED_TUNNEL, e->child, where);
-			return true;
-		case X(ESTABLISH_INBOUND, UNROUTED, LABELED_CHILD):
-			if (!install_inbound_ipsec_sa((*e->child), where)) {
-				return false;
-			}
-			set_routing(event, c, RT_UNROUTED_INBOUND, e->child, where);
-			return true;
-		case X(ESTABLISH_OUTBOUND, UNROUTED_INBOUND, LABELED_CHILD):
-			/* labeled IPsec ignores UP; no policy */
-			if (!install_outbound_ipsec_sa((*e->child), /*up*/true, where)) {
-				return false;
-			}
-			set_established_child(event, c, RT_UNROUTED_TUNNEL, e->child, where);
-			return true;
-		case X(UNROUTE, UNROUTED_INBOUND, LABELED_CHILD):
-		case X(UNROUTE, UNROUTED_TUNNEL, LABELED_CHILD):
-#if 0
-			/* currently done by caller */
-			delete_child_sa(e->child);
-#endif
-			set_routing(event, c, RT_UNROUTED, NULL, where);
-			return true;
-		case X(UNROUTE, UNROUTED, LABELED_CHILD):
-			ldbg_routing(logger, "already unrouted");
-			return true;
-		case X(DELETE_CHILD, UNROUTED_INBOUND, LABELED_CHILD):
-		case X(DELETE_CHILD, UNROUTED_TUNNEL, LABELED_CHILD):
-			delete_child_sa(e->child);
-			set_routing(event, c, RT_UNROUTED, NULL, where);
-			return true;
-
+	case X(ESTABLISH_INBOUND, UNROUTED_TUNNEL, LABELED_CHILD):
+		/* rekey */
+		if (!install_inbound_ipsec_sa((*e->child), where)) {
+			return false;
 		}
+		set_routing(event, c, RT_UNROUTED_TUNNEL, e->child, where);
+		return true;
+	case X(ESTABLISH_OUTBOUND, UNROUTED_TUNNEL, LABELED_CHILD):
+		/* rekey */
+		/* labeled IPsec ignores UP; no policy */
+		if (!install_outbound_ipsec_sa((*e->child), /*up*/false, where)) {
+			return false;
+		}
+		set_established_child(event, c, RT_UNROUTED_TUNNEL, e->child, where);
+		return true;
+	case X(ESTABLISH_INBOUND, UNROUTED, LABELED_CHILD):
+		if (!install_inbound_ipsec_sa((*e->child), where)) {
+			return false;
+		}
+		set_routing(event, c, RT_UNROUTED_INBOUND, e->child, where);
+		return true;
+	case X(ESTABLISH_OUTBOUND, UNROUTED_INBOUND, LABELED_CHILD):
+		/* labeled IPsec ignores UP; no policy */
+		if (!install_outbound_ipsec_sa((*e->child), /*up*/true, where)) {
+			return false;
+		}
+		set_established_child(event, c, RT_UNROUTED_TUNNEL, e->child, where);
+		return true;
+	case X(UNROUTE, UNROUTED_INBOUND, LABELED_CHILD):
+	case X(UNROUTE, UNROUTED_TUNNEL, LABELED_CHILD):
+#if 0
+		/* currently done by caller */
+		delete_child_sa(e->child);
+#endif
+		set_routing(event, c, RT_UNROUTED, NULL, where);
+		return true;
+	case X(UNROUTE, UNROUTED, LABELED_CHILD):
+		ldbg_routing(logger, "already unrouted");
+		return true;
+	case X(DELETE_CHILD, UNROUTED_INBOUND, LABELED_CHILD):
+	case X(DELETE_CHILD, UNROUTED_TUNNEL, LABELED_CHILD):
+		delete_child_sa(e->child);
+		set_routing(event, c, RT_UNROUTED, NULL, where);
+		return true;
+
 	}
 
 	BARF_JAMBUF((DBGP(DBG_BASE) ? PASSERT_FLAGS : PEXPECT_FLAGS),
@@ -1891,6 +1883,7 @@ static bool dispatch_1(enum routing_event event,
 		jam_string(buf, "routing: unhandled ");
 		jam_event(buf, event, c, e);
 	}
+
 	return false;
 }
 
