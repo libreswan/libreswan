@@ -1592,6 +1592,14 @@ static bool dispatch_1(enum routing_event event,
 			down_routed_tunnel(event, c, e->child, where);
 			return true;
 
+		case X(DELETE_CHILD, UNROUTED_TUNNEL, INSTANCE):
+		case X(DELETE_CHILD, UNROUTED_TUNNEL, PERMANENT):
+		case X(TIMEOUT_CHILD, UNROUTED_TUNNEL, INSTANCE):
+		case X(TIMEOUT_CHILD, UNROUTED_TUNNEL, PERMANENT):
+			ldbg_routing(logger, "OOPS: UNROUTED_TUNNEL isn't routed!");
+			down_routed_tunnel(event, c, e->child, where);
+			return true;
+
 		case X(DELETE_CHILD, UNROUTED_INBOUND, INSTANCE):
 		case X(DELETE_CHILD, UNROUTED_INBOUND, PERMANENT):
 		case X(TIMEOUT_CHILD, UNROUTED_INBOUND, INSTANCE):
@@ -1603,6 +1611,8 @@ static bool dispatch_1(enum routing_event event,
 			 * down_routed_tunnel is overkill - just
 			 * inbound needs to be pulled.
 			 */
+			ldbg_routing(logger, "OOPS: UNROUTED_INBOUND isn't routed!");
+			ldbg_routing(logger, "OOPS: UNROUTED_INBOUND doesn't have outbound!");
 			down_routed_tunnel(event, c, e->child, where);
 			return true;
 
