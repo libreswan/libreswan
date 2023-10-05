@@ -2043,7 +2043,7 @@ int main(int argc, char **argv)
 			if (sn == NULL) {
 				diagw("--encaps options are 'auto', 'yes' or 'no'");
 			}
-			msg.encaps = sn->value;
+			msg.encapsulation = sn->value;
 			continue;
 		}
 

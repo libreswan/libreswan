@@ -241,7 +241,7 @@ struct whack_message {
 	enum keyword_remote_peer_type remote_peer_type;
 
 	/* Force the use of NAT-T on a connection */
-	enum yna_options encaps;
+	enum yna_options encapsulation;
 
 	enum yn_options ikev2_allow_narrowing;
 	enum yn_options rekey;

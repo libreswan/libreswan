@@ -216,7 +216,7 @@ bool ikev1_nat_traversal_add_natd(pb_stream *outs,
 
 	unsigned remote_port = endpoint_hport(st->st_remote_endpoint);
 	unsigned short local_port = endpoint_hport(st->st_interface->local_endpoint);
-	if (st->st_connection->encaps == YNA_YES) {
+	if (st->st_connection->config->encapsulation == YNA_YES) {
 		dbg("NAT-T: encapsulation=yes, so mangling hash to force NAT-T detection");
 		local_port = remote_port = 0;
 	}

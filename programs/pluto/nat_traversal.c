@@ -118,7 +118,7 @@ void natd_lookup_common(struct state *st,
 	st->hidden_variables.st_natd = ipv4_info.address.unspec;
 
 	/* update NAT-T settings for local policy */
-	switch (st->st_connection->encaps) {
+	switch (st->st_connection->config->encapsulation) {
 	case YNA_UNSET:
 	case YNA_AUTO:
 		dbg("NAT_TRAVERSAL encaps using auto-detect");

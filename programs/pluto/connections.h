@@ -298,6 +298,10 @@ struct config {
 	bool remote_peer_cisco;		/* Cisco interop: remote peer
 					 * type */
 
+	enum yna_options encapsulation;	/* encapsulation mode of
+					 * auto/yes/no - formerly
+					 * forceencaps=yes/no */
+
 	struct {
 		uintmax_t priority;
 		uintmax_t tfcpad;
@@ -667,8 +671,6 @@ struct connection {
 	bool vti_routing; /* should updown perform routing into the vti device */
 	bool vti_shared; /* should updown leave remote empty and not cleanup device on down */
 	struct pluto_xfrmi *xfrmi; /* pointer to possibly shared interface */
-
-	enum yna_options encaps; /* encapsulation mode of auto/yes/no - formerly forceencaps=yes/no */
 
 	char *log_file_name;			/* name of log file */
 	FILE *log_file;				/* possibly open FILE */

@@ -602,10 +602,7 @@ int starter_whack_add_conn(struct starter_config *cfg,
 		msg.send_ca = CA_SEND_NONE;
 
 
-	if (conn->options_set[KNCF_ENCAPS])
-		msg.encaps = conn->options[KNCF_ENCAPS];
-	else
-		msg.encaps = YNA_AUTO;
+	msg.encapsulation = conn->options[KNCF_ENCAPSULATION];
 
 	if (conn->options_set[KNCF_NAT_KEEPALIVE])
 		msg.nat_keepalive = conn->options[KNCF_NAT_KEEPALIVE];

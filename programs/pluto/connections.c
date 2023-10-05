@@ -2903,7 +2903,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 		config->child_sa.metric = wm->metric;
 		config->child_sa.mtu = wm->mtu;
-		c->encaps = wm->encaps;
+		config->encapsulation = (wm->encapsulation == YNA_UNSET ? YNA_AUTO :
+					 wm->encapsulation);
 		config->nat_keepalive = wm->nat_keepalive;
 		if (wm->nat_ikev1_method == 0) {
 			config->ikev1_natt = NATT_BOTH;

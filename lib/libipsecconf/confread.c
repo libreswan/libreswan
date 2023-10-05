@@ -132,8 +132,6 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 	DOPT(KNCF_VID_STRONGSWAN, false);
 	DOPT(KNCF_SEND_VENDORID, false);
 
-	DOPT(KNCF_ENCAPS, YNA_AUTO);
-
 	DOPT(KNCF_ENABLE_TCP, 0); /* aka use default */
 	DOPT(KNCF_TCP_REMOTEPORT, 0);	/* aka use default */
 
