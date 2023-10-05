@@ -218,7 +218,7 @@ static struct old_routing ldbg_routing_start(struct connection *c,
 		.routing_sa = c->newest_routing_sa,
 		.ike_sa = c->newest_ike_sa,
 		.routing = c->child.routing,
-		.revival_attempt = c->temp_vars.revival.attempt,
+		.revival_attempt = c->revival.attempt,
 	};
 	if (DBGP(DBG_BASE)) {
 		/*
@@ -261,10 +261,10 @@ static void ldbg_routing_stop(struct connection *c,
 				      old->ipsec_sa, c->newest_ipsec_sa, &newest);
 			jam_so_update(buf, c->config->ike_info->parent_name,
 				      old->ike_sa, c->newest_ike_sa, &newest);
-			if (old->revival_attempt != c->temp_vars.revival.attempt) {
+			if (old->revival_attempt != c->revival.attempt) {
 				jam(buf, " revival %u->%u",
 				    old->revival_attempt,
-				    c->temp_vars.revival.attempt);
+				    c->revival.attempt);
 			}
 			jam_string(buf, " ");
 			jam_where(buf, where);

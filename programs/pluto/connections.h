@@ -634,10 +634,6 @@ struct sa_marks {
  */
 
 struct ephemeral_variables {
-	struct {
-		unsigned attempt;
-		deltatime_t delay;	 /* for next time */
-	} revival;
 	/* RFC 5685 - IKEv2 Redirect Mechanism */
 	int num_redirects;
 	realtime_t first_redirect_time;
@@ -702,6 +698,11 @@ struct connection {
 	unsigned long next_instance_serial;
 	unsigned long instance_serial;
 	struct iface_endpoint *interface;	/* filled in iff oriented */
+
+	struct {
+		unsigned attempt;
+		deltatime_t delay;	 /* for next time */
+	} revival;
 
 	struct ephemeral_variables temp_vars;
 

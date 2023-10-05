@@ -559,7 +559,7 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 		PEXPECT(ike->sa.st_logger, ike->sa.st_interface->io->protocol == &ip_protocol_udp);
 		ldbg_sa(ike, "TCP: sticking with UDP");
 	} else if ((c->config->iketcp == IKE_TCP_ONLY) ||
-		   (c->config->iketcp == IKE_TCP_FALLBACK && (c->temp_vars.revival.attempt % 2) == 1)) {
+		   (c->config->iketcp == IKE_TCP_FALLBACK && (c->revival.attempt % 2) == 1)) {
 		/*
 		 * Need to open a fresh TCP socket each time.
 		 */
@@ -584,12 +584,12 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 		iface_endpoint_delref(&ike->sa.st_interface);
 		ike->sa.st_interface = iface_endpoint_addref(p);
 		PEXPECT(ike->sa.st_logger, ike->sa.st_interface->io->protocol == &ip_protocol_tcp);
-	} else if (c->temp_vars.revival.attempt > 0) {
+	} else if (c->revival.attempt > 0) {
 		/*
 		 * At attempt 2, 4, et.al. (1, 3, 5 excluded above).
 		 */
 		ldbg_sa(ike, "TCP: forcing things back to UDP");
-		PEXPECT(ike->sa.st_logger, (c->temp_vars.revival.attempt % 2) == 0);
+		PEXPECT(ike->sa.st_logger, (c->revival.attempt % 2) == 0);
 		PEXPECT(ike->sa.st_logger, c->config->iketcp == IKE_TCP_FALLBACK);
 		PEXPECT(ike->sa.st_logger, ike->sa.st_interface->io->protocol == &ip_protocol_tcp);
 		PEXPECT(ike->sa.st_logger, c->interface->io->protocol == &ip_protocol_udp);

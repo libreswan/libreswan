@@ -217,16 +217,16 @@ static void update_remote_port(struct state *st)
 static void schedule_revival_event(struct connection *c, struct logger *logger, const char *subplot)
 {
 	deltatime_buf db;
-	deltatime_t delay = c->temp_vars.revival.delay;
+	deltatime_t delay = c->revival.delay;
 
-	c->temp_vars.revival.delay =
+	c->revival.delay =
 		deltatime_min(deltatime_add(delay, REVIVE_CONN_DELAY),
 			      REVIVE_CONN_DELAY_MAX);
-	c->temp_vars.revival.attempt++;
+	c->revival.attempt++;
 
 	llog(RC_LOG, logger,
 	     "connection is supposed to remain up; revival attempt %u scheduled in %s seconds",
-	     c->temp_vars.revival.attempt,
+	     c->revival.attempt,
 	     str_deltatime(delay, &db));
 
 	schedule_connection_event(c, CONNECTION_REVIVAL, subplot, delay,

@@ -2298,8 +2298,8 @@ bool install_outbound_ipsec_sa(struct child_sa *child, bool up, where_t where)
 	 * partner might complete an IKE SA to us, but won't
 	 * complete an IPsec SA to us.
 	 */
-	child->sa.st_connection->temp_vars.revival.attempt = 0;
-	child->sa.st_connection->temp_vars.revival.delay = deltatime(0);
+	child->sa.st_connection->revival.attempt = 0;
+	child->sa.st_connection->revival.delay = deltatime(0);
 
 	/* we only audit once for IPsec SA's, we picked the inbound SA */
 
