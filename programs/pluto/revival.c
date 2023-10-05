@@ -203,15 +203,13 @@ static void update_remote_port(struct state *st)
 	 * is why isn't the host_port updated once things have
 	 * established and nat has been detected.
 	 */
-	ldbg(st->st_logger, "revival: %s() %s.host_port: %u->%u (that)", __func__, c->remote->config->leftright,
-	     c->remote->host.port, st->st_remote_endpoint.hport);
-	c->remote->host.port = st->st_remote_endpoint.hport;
-	/*
-	 * Need to force the host to use the encap port.
-	 */
-	c->remote->host.encap =
-		(st->hidden_variables.st_nat_traversal & NAT_T_DETECTED ||
-		 st->st_interface->io->protocol == &ip_protocol_tcp);
+	c->revival.remote = st->st_remote_endpoint;
+	c->revival.local = iface_endpoint_addref(st->st_interface);
+
+	endpoint_pair_buf eb;
+	ldbg(st->st_logger, "revival: %s() %s",
+	     __func__,
+	     str_endpoint_pair(&c->revival.local->local_endpoint, &c->revival.remote, &eb));
 }
 
 static void schedule_revival_event(struct connection *c, struct logger *logger, const char *subplot)

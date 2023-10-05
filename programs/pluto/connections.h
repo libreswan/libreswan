@@ -701,7 +701,9 @@ struct connection {
 
 	struct {
 		unsigned attempt;
-		deltatime_t delay;	 /* for next time */
+		deltatime_t delay;		 /* for next time */
+		ip_endpoint remote;
+		struct iface_endpoint *local;
 	} revival;
 
 	struct ephemeral_variables temp_vars;

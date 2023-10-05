@@ -471,6 +471,7 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 	connection_delref(&c->clonedfrom, logger);
 
 	iface_endpoint_delref(&c->interface);
+	iface_endpoint_delref(&c->revival.local);
 
 	free_chunk_content(&c->child.sec_label);
 

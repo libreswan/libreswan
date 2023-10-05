@@ -536,7 +536,7 @@ static void initialize_new_ike_sa(struct ike_sa *ike)
 {
 	struct connection *c = ike->sa.st_connection;
 	PASSERT(ike->sa.logger, oriented(c));
-#if 1
+
 	/*
 	 * reset our choice of interface
 	 *
@@ -553,15 +553,23 @@ static void initialize_new_ike_sa(struct ike_sa *ike)
 	 *
 	 * See github/1094 and ikev2-revive-through-nat-01-down.
 	 */
-	iface_endpoint_delref(&c->interface);
-	orient(&c, ike->sa.logger); /*XXX: why*/
-	pexpect(ike->sa.st_interface == NULL); /* no-leak */
-#endif
-	ike->sa.st_interface = iface_endpoint_addref(c->interface);
-	PASSERT(ike->sa.logger, ike->sa.st_interface != NULL);
-	ike->sa.st_remote_endpoint = endpoint_from_address_protocol_port(c->remote->host.addr,
-								     c->interface->io->protocol,
-								     ip_hport(c->spd->remote->host->port));
+
+	if (c->revival.attempt > 0 &&
+	    c->revival.local != NULL &&
+	    c->revival.remote.is_set) {
+		/* transfer ... */
+		ike->sa.st_remote_endpoint = c->revival.remote;
+		c->revival.remote = unset_endpoint;
+		/* ... with some logging */
+		ike->sa.st_interface = iface_endpoint_addref(c->revival.local);
+		iface_endpoint_delref(&c->revival.local);
+	} else {
+		ike->sa.st_remote_endpoint = endpoint_from_address_protocol_port(c->remote->host.addr,
+										 c->interface->io->protocol,
+										 ip_hport(c->spd->remote->host->port));
+		ike->sa.st_interface = iface_endpoint_addref(c->interface);
+	}
+
 	endpoint_buf lb, rb;
 	ldbg(ike->sa.logger,
 	     "in %s with local endpoint %s and remote endpoint set to %s",
