@@ -130,6 +130,7 @@ kvmplutotest	addconn-31-pfs					good	github/1273
 kvmplutotest	addconn-32-compress				good
 kvmplutotest	addconn-33-encap-mode				good
 kvmplutotest	addconn-34-encap-proto				good
+kvmplutotest	addconn-35-encapsulation			good
 
 #################################################################
 # Whack UI tests
