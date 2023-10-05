@@ -1125,9 +1125,6 @@ static bool dispatch_1(enum routing_event event,
 		/* caller deals with recursion */
 		add_policy(c, policy.route); /* always */
 		return true;
-	case X(UNROUTE, UNROUTED, GROUP):
-		/* ROUTE+UP cleared by caller */
-		return true;
 
 	case X(ROUTE, UNROUTED, TEMPLATE):
 	case X(ROUTE, UNROUTED, PERMANENT):
@@ -1149,6 +1146,13 @@ static bool dispatch_1(enum routing_event event,
 		}
 		return true;
 
+	case X(UNROUTE, UNROUTED, GROUP):
+	case X(UNROUTE, UNROUTED, TEMPLATE):
+	case X(UNROUTE, UNROUTED, PERMANENT):
+	case X(UNROUTE, UNROUTED, INSTANCE):
+		ldbg_routing(logger, "already unrouted");
+		return true;
+
 	case X(UNROUTE, ROUTED_NEVER_NEGOTIATE, TEMPLATE):
 	case X(UNROUTE, ROUTED_NEVER_NEGOTIATE, PERMANENT):
 		PEXPECT(logger, never_negotiate(c));
@@ -1161,35 +1165,15 @@ static bool dispatch_1(enum routing_event event,
 		do_updown_unroute(c, NULL);
 		return true;
 
+	case X(UNROUTE, ROUTED_INBOUND, TEMPLATE): /* xauth-pluto-25-lsw299 xauth-pluto-25-mixed-addresspool */
 	case X(UNROUTE, ROUTED_INBOUND, INSTANCE): /* xauth-pluto-25-lsw299 */
 	case X(UNROUTE, ROUTED_INBOUND, PERMANENT): /* ikev1-xfrmi-02-aggr */
-		if (BROKEN_TRANSITION) {
-			/* ikev1-xfrmi-02-aggr ikev1-xfrmi-02
-			 * ikev1-xfrmi-02-tcpdump */
-			delete_spd_kernel_policies(&c->child.spds,
-						   EXPECT_KERNEL_POLICY_OK,
-						   c->logger, where, "unroute permanent");
-			set_routing(event, c, RT_UNROUTED, NULL, where);
-			do_updown_unroute(c, NULL);
-			return true;
-		}
-		break;
-
-	case X(UNROUTE, ROUTED_INBOUND, TEMPLATE):
-		if (BROKEN_TRANSITION) {
-			/* xauth-pluto-25-lsw299
-			 * xauth-pluto-25-mixed-addresspool */
-			delete_spd_kernel_policies(&c->child.spds,
-						   EXPECT_KERNEL_POLICY_OK,
-						   c->logger, where, "unroute permanent");
-			set_routing(event, c, RT_UNROUTED, NULL, where);
-			do_updown_unroute(c, NULL);
-			return true;
-		}
-		break;
-
-	case X(UNROUTE, UNROUTED, PERMANENT):
-		ldbg_routing(logger, "already unrouted");
+		ldbg_routing(logger, "OOPS: ROUTED_INBOUND has no outbound policy");
+		delete_spd_kernel_policies(&c->child.spds,
+					   EXPECT_KERNEL_POLICY_OK,
+					   c->logger, where, "unroute");
+		set_routing(event, c, RT_UNROUTED, NULL, where);
+		do_updown_unroute(c, NULL);
 		return true;
 
 	case X(INITIATE, ROUTED_TUNNEL, PERMANENT):
@@ -1312,9 +1296,6 @@ static bool dispatch_1(enum routing_event event,
 		set_routing(event, c, RT_UNROUTED, NULL, where);
 		return true;
 
-	case X(UNROUTE, UNROUTED, TEMPLATE):
-		ldbg_routing(logger, "already unrouted");
-		return true;
 	case X(UNROUTE, ROUTED_ONDEMAND, TEMPLATE):
 		flush_routed_ondemand_revival(c);
 		delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
@@ -1324,9 +1305,6 @@ static bool dispatch_1(enum routing_event event,
 		do_updown_unroute(c, NULL);
 		return true;
 
-	case X(UNROUTE, UNROUTED, INSTANCE):
-		ldbg_routing(logger, "already unrouted");
-		return true;
 	case X(INITIATE, UNROUTED, INSTANCE):
 		/*
 		 * Triggered by whack against the template which is
@@ -1793,6 +1771,7 @@ static bool dispatch_1(enum routing_event event,
 		set_routing(event, c, RT_ROUTED_ONDEMAND, NULL, where);
 		return true;
 	case X(UNROUTE, UNROUTED, LABELED_TEMPLATE):
+	case X(UNROUTE, UNROUTED, LABELED_PARENT):
 		ldbg_routing(logger, "already unrouted");
 		return true;
 	case X(UNROUTE, ROUTED_ONDEMAND, LABELED_TEMPLATE):
@@ -1801,9 +1780,6 @@ static bool dispatch_1(enum routing_event event,
 		/* do now so route_owner won't find us */
 		set_routing(event, c, RT_UNROUTED, NULL, where);
 		do_updown_unroute(c, NULL);
-		return true;
-	case X(UNROUTE, UNROUTED, LABELED_PARENT):
-		ldbg_routing(logger, "already unrouted");
 		return true;
 	case X(UNROUTE, ROUTED_ONDEMAND, LABELED_PARENT):
 		delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
