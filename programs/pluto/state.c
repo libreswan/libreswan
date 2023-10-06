@@ -585,12 +585,14 @@ static void initialize_new_ike_sa(struct ike_sa *ike)
 	binlog_refresh_state(&ike->sa);
 }
 
-struct ike_sa *new_v1_istate(struct connection *c)
+struct ike_sa *new_v1_istate(struct connection *c,
+			     enum state_kind new_state_kind)
 {
 	struct ike_sa *parent =
 		pexpect_parent_sa(new_state(c, SOS_NOBODY,
 					    ike_initiator_spi(), zero_ike_spi,
 					    IKE_SA, SA_INITIATOR, HERE));
+	change_v1_state(&parent->sa, new_state_kind);
 	initialize_new_ike_sa(parent);
 	return parent;
 }

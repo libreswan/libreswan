@@ -988,10 +988,8 @@ struct ike_sa *aggr_outI1(struct connection *c,
 			  bool background)
 {
 	/* set up new state */
-	struct ike_sa *ike = new_v1_istate(c);
+	struct ike_sa *ike = new_v1_istate(c, STATE_AGGR_I1);
 	statetime_t start = statetime_backdate(&ike->sa, inception);
-
-	change_v1_state(&ike->sa, STATE_AGGR_I1);
 
 	if (c->local->host.config->auth == AUTH_PSK &&
 	    c->config->aggressive) {
