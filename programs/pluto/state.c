@@ -568,8 +568,6 @@ static void initialize_new_ike_sa(struct ike_sa *ike)
 	     __func__,
 	     str_endpoint(&ike->sa.st_interface->local_endpoint, &lb),
 	     str_endpoint(&ike->sa.st_remote_endpoint, &rb));
-
-	binlog_refresh_state(&ike->sa);
 }
 
 struct ike_sa *new_v1_istate(struct connection *c,
@@ -1284,7 +1282,6 @@ struct child_sa *new_v2_child_sa(struct connection *c,
 	struct child_sa *child = duplicate_state(c, ike, sa_type, sa_role);
 	change_state(&child->sa, transition->state);
 	set_v2_transition(&child->sa, transition, HERE);
-	binlog_refresh_state(&child->sa);
 	return child;
 }
 
