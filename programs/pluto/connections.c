@@ -1986,14 +1986,70 @@ static struct connection *alloc_connection(const char *name,
 	return c;
 }
 
-static bool extract_yn(enum yn_options yn, bool unset)
+/* assume 0 is unset */
+
+static unsigned extract_sparse(const char *name,
+			       unsigned value,
+			       unsigned unset,
+			       unsigned never,
+			       const struct sparse_name *names,
+			       const struct whack_message *wm,
+			       struct logger *logger)
 {
+	if (never_negotiate_wm(wm)) {
+		if (value != 0) {
+			sparse_buf sb;
+			llog(RC_INFORMATIONAL, logger,
+			     "warning: %s=%s ignored for never-negotiate connection",
+			     name, str_sparse(names, value, &sb));
+		}
+		return never;
+	} else if (value == 0) {
+		return unset;
+	} else {
+		return value;
+	}
+}
+
+static bool extract_yn(const char *name,
+		       enum yn_options value,
+		       bool unset,
+		       const struct whack_message *wm, struct logger *logger)
+{
+	/* note that 0 gets mapped to YN_UNSET(0) and then UNSET */
+	enum yn_options yn = extract_sparse(name, value, YN_UNSET, YN_NO,
+					    yn_option_names,
+					    wm, logger);
 	switch (yn) {
 	case YN_NO: return false;
 	case YN_YES: return true;
 	case YN_UNSET: return unset;
 	}
-	bad_case(yn);
+	bad_sparse(logger, yn_option_names, yn);
+}
+
+static enum yna_options extract_yna(const char *name,
+				    enum yna_options yna,
+				    enum yna_options unset,
+				    enum yna_options never,
+				    const struct whack_message *wm,
+				    struct logger *logger)
+{
+	return extract_sparse(name, yna, unset, never, yna_option_names, wm, logger);
+}
+
+static char *extract_str(const char *name, const char *str,
+			 const struct whack_message *wm, struct logger *logger)
+{
+	if (never_negotiate_wm(wm)) {
+		if (str != NULL) {
+			llog(RC_LOG, logger,
+			     "warning: %s=%s ignored for never-negotiate connection",
+			     name, str);
+		}
+		return NULL;
+	}
+	return clone_str(str, name);
 }
 
 static diag_t extract_connection(const struct whack_message *wm,
@@ -2028,32 +2084,10 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 * Extract policy bits.
 	 */
 
-	bool pfs;
-	if (never_negotiate_wm(wm)) {
-		if (wm->pfs != YN_UNSET) {
-			sparse_buf sb;
-			llog(RC_INFORMATIONAL, c->logger,
-			     "warning: pfs=%s ignored for never-negotiate connection",
-			     str_sparse(yn_option_names, wm->pfs, &sb));
-		}
-		pfs = false;
-	} else {
-		pfs = extract_yn(wm->pfs, true);
-	}
+	bool pfs = extract_yn("pfs", wm->pfs, true, wm, c->logger);
 	config->child_sa.pfs = pfs;
 
-	bool compress;
-	if (never_negotiate_wm(wm)) {
-		if (wm->compress != YN_UNSET) {
-			sparse_buf sb;
-			llog(RC_INFORMATIONAL, c->logger,
-			     "warning: compress=%s ignored for never-negotiate connection",
-			     str_sparse(yn_option_names, wm->compress, &sb));
-		}
-		compress = false;
-	} else {
-		compress = extract_yn(wm->compress, false);
-	}
+	bool compress = extract_yn("compress", wm->compress, false, wm, c->logger);
 	config->child_sa.ipcomp = compress;
 
 	/* sanity check?  done below */
@@ -2191,22 +2225,22 @@ static diag_t extract_connection(const struct whack_message *wm,
 	}
 #endif
 
-	config->intermediate = extract_yn(wm->intermediate, /*default*/false);
+	config->intermediate = extract_yn("intermediate", wm->intermediate, /*default*/false,wm, c->logger);
 	if (config->intermediate) {
 		if (wm->ike_version < IKEv2) {
-			return diag("INTERMEDIATE requires IKEv2");
+			return diag("intermediate requires IKEv2");
 		}
 	}
 
-	config->sha2_truncbug = extract_yn(wm->sha2_truncbug, /*default*/false);
-	config->overlapip = extract_yn(wm->overlapip, /*default*/false);
-	config->ms_dh_downgrade = extract_yn(wm->ms_dh_downgrade, /*default*/false);
-	config->dns_match_id = extract_yn(wm->dns_match_id, /*default*/false);
-	config->ikev2_pam_authorize = extract_yn(wm->pam_authorize, /*default*/false);
-	config->ikepad = extract_yn(wm->ikepad, /*default*/true/*YES-TRUE*/);
-	config->require_id_on_certificate = extract_yn(wm->require_id_on_certificate,
-						       /*default*/true/*YES-TRUE*/);
-	config->modecfg.pull = extract_yn(wm->modecfgpull, /*default*/false);
+	config->sha2_truncbug = extract_yn("sha2-truncbug", wm->sha2_truncbug, /*default*/false,wm, c->logger);
+	config->overlapip = extract_yn("overlapip", wm->overlapip, /*default*/false,wm, c->logger);
+	config->ms_dh_downgrade = extract_yn("ms-do-downgrade", wm->ms_dh_downgrade, /*default*/false,wm, c->logger);
+	config->dns_match_id = extract_yn("dns-match-id", wm->dns_match_id, /*default*/false,wm, c->logger);
+	config->ikev2_pam_authorize = extract_yn("ikev2-pam-authorize", wm->pam_authorize, /*default*/false,wm, c->logger);
+	config->ikepad = extract_yn("ikepad", wm->ikepad, /*default*/true,wm, c->logger);
+	config->require_id_on_certificate = extract_yn("require-id-on-certificate", wm->require_id_on_certificate,
+						       /*default*/true/*YES-TRUE*/,wm, c->logger);
+	config->modecfg.pull = extract_yn("modecfg", wm->modecfgpull, /*default*/false,wm, c->logger);
 
 	if (wm->aggressive == YN_YES && wm->ike_version >= IKEv2) {
 		return diag("cannot specify aggressive mode with IKEv2");
@@ -2214,24 +2248,15 @@ static diag_t extract_connection(const struct whack_message *wm,
 	if (wm->aggressive == YN_YES && wm->ike == NULL) {
 		return diag("cannot specify aggressive mode without ike= to set algorithm");
 	}
-	config->aggressive = extract_yn(wm->aggressive, /*default*/false);
+	config->aggressive = extract_yn("aggressive", wm->aggressive, /*default*/false,wm, c->logger);
 
-	if (wm->decap_dscp == YN_YES && never_negotiate_wm(wm)) {
-		llog(RC_INFORMATIONAL, c->logger,
-		     "warning: decap-dscp=yes ignored for never-negotiate connection");
-	} else {
-		config->decap_dscp = extract_yn(wm->decap_dscp, /*default*/false);
-	}
+	config->decap_dscp = extract_yn("decap-dscp", wm->decap_dscp, /*default*/false,wm, c->logger);
 
-	if (wm->nopmtudisc == YN_YES && never_negotiate_wm(wm)) {
-		llog(RC_INFORMATIONAL, c->logger,
-		     "warning: nopmtudisc=yes ignored for never-negotiate connection");
-	} else {
-		config->nopmtudisc = extract_yn(wm->nopmtudisc, /*default*/false);
-	}
+	config->nopmtudisc = extract_yn("nopmtudisc", wm->nopmtudisc, /*default*/false,wm, c->logger);
 
-	config->mobike = extract_yn(wm->mobike, /*default*/false);
-	if (config->mobike) {
+	bool mobike = extract_yn("mobike", wm->mobike, /*default*/false, wm, c->logger);
+	config->mobike = mobike;
+	if (mobike) {
 		if (wm->ike_version < IKEv2) {
 			return diag("MOBIKE requires IKEv2");
 		}
@@ -2292,8 +2317,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 			     "warning: IKEv1 connection ignores accept-redirect=");
 		}
 	} else {
-		config->redirect.accept = extract_yn(wm->accept_redirect, /*default*/false);
-		ldbg(c->logger, "redirect %s", bool_str(config->redirect.accept));
+		config->redirect.accept = extract_yn("acceept-redirect", wm->accept_redirect, /*default*/false, wm, c->logger);
 	}
 
 	/* fragmentation */
@@ -2429,16 +2453,17 @@ static diag_t extract_connection(const struct whack_message *wm,
 	config->dnshostname = clone_str(wm->dnshostname, "connection dnshostname");
 
 	config->ikev2_allow_narrowing =
-		extract_yn(wm->ikev2_allow_narrowing,
+		extract_yn("ikev2-allow-narrowing", wm->ikev2_allow_narrowing,
 			   (wm->ike_version == IKEv2 && (wm->left.addresspool != NULL ||
-							 wm->right.addresspool != NULL)));
+							 wm->right.addresspool != NULL)),
+			   wm, c->logger);
 	if (config->ikev2_allow_narrowing &&
 	    wm->ike_version < IKEv2) {
 		return diag("narrowing=yes requires IKEv2");
 	}
 
-	config->rekey = extract_yn(wm->rekey, true);
-	config->reauth = extract_yn(wm->reauth, false);
+	config->rekey = extract_yn("rekey", wm->rekey, true, wm, c->logger);
+	config->reauth = extract_yn("reauth", wm->reauth, false, wm, c->logger);
 
 	config->autostart = wm->autostart;
 	switch (wm->autostart) {
@@ -2764,17 +2789,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 		}
 	}
 
-	if (never_negotiate_wm(wm)) {
-		if (wm->encapsulation != YNA_UNSET) {
-			sparse_buf sb;
-			return diag("encapsulation=%s is invalid for type=passthrough connection",
-				    str_sparse(yna_option_names, wm->encapsulation, &sb));
-
-		}
-	} else {
-		config->encapsulation = (wm->encapsulation == YNA_UNSET ? YNA_AUTO :
-					 wm->encapsulation);
-	}
+	config->encapsulation = extract_yna("encapsulation", wm->encapsulation,
+					    YNA_AUTO, YNA_NO, wm, c->logger);
 
 	if (never_negotiate_wm(wm)) {
 		dbg("skipping over misc settings as NEVER_NEGOTIATE");
@@ -2987,7 +3003,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 		if (wm->conn_mark_out != NULL)
 			mark_parse(wm->conn_mark_out, &c->sa_marks.out, c->logger);
 
-		c->vti_iface = clone_str(wm->vti_iface, "connection vti_iface");
+		c->vti_iface = extract_str("vti-iface", wm->vti_iface, wm, c->logger);
 		c->vti_routing = wm->vti_routing;
 		c->vti_shared = wm->vti_shared;
 #ifdef USE_XFRM_INTERFACE
@@ -3007,7 +3023,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	}
 
 #ifdef HAVE_NM
-	config->nm_configured = extract_yn(wm->nm_configured, false);
+	config->nm_configured = extract_yn("nm-configured", wm->nm_configured, false, wm, c->logger);
 #endif
 
 	c->nflog_group = wm->nflog_group;
