@@ -21,13 +21,16 @@ west #
 002 "addconn--type=passthrough": added passthrough connection
 west #
  ipsec add addconn--type=passthrough--encapsulation=no
-036 "addconn--type=passthrough--encapsulation=no": failed to add connection: encapsulation=no is invalid for type=passthrough connection
+005 "addconn--type=passthrough--encapsulation=no": warning: encapsulation=no ignored for never-negotiate connection
+002 "addconn--type=passthrough--encapsulation=no": added passthrough connection
 west #
  ipsec add addconn--type=passthrough--encapsulation=yes
-036 "addconn--type=passthrough--encapsulation=yes": failed to add connection: encapsulation=yes is invalid for type=passthrough connection
+005 "addconn--type=passthrough--encapsulation=yes": warning: encapsulation=yes ignored for never-negotiate connection
+002 "addconn--type=passthrough--encapsulation=yes": added passthrough connection
 west #
  ipsec add addconn--type=passthrough--encapsulation=auto
-036 "addconn--type=passthrough--encapsulation=auto": failed to add connection: encapsulation=auto is invalid for type=passthrough connection
+005 "addconn--type=passthrough--encapsulation=auto": warning: encapsulation=auto ignored for never-negotiate connection
+002 "addconn--type=passthrough--encapsulation=auto": added passthrough connection
 west #
  ipsec whack --name whack                                            --encrypt --host 1.2.3.4 --to --host 5.6.7.8
 002 "whack": added IKEv2 connection
@@ -48,28 +51,39 @@ west #
 002 "whack--passthrough": added passthrough connection
 west #
  ipsec whack --name whack--passthrough--encapsulation      --encapsulation      --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
-036 "whack--passthrough--encapsulation": failed to add connection: encapsulation=yes is invalid for type=passthrough connection
+005 "whack--passthrough--encapsulation": warning: encapsulation=yes ignored for never-negotiate connection
+002 "whack--passthrough--encapsulation": added passthrough connection
 west #
  ipsec whack --name whack--passthrough--encapsulation=no   --encapsulation=no   --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
-036 "whack--passthrough--encapsulation=no": failed to add connection: encapsulation=no is invalid for type=passthrough connection
+005 "whack--passthrough--encapsulation=no": warning: encapsulation=no ignored for never-negotiate connection
+002 "whack--passthrough--encapsulation=no": added passthrough connection
 west #
  ipsec whack --name whack--passthrough--encapsulation=yes  --encapsulation=yes  --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
-036 "whack--passthrough--encapsulation=yes": failed to add connection: encapsulation=yes is invalid for type=passthrough connection
+005 "whack--passthrough--encapsulation=yes": warning: encapsulation=yes ignored for never-negotiate connection
+002 "whack--passthrough--encapsulation=yes": added passthrough connection
 west #
  ipsec whack --name whack--passthrough--encapsulation=auto --encapsulation=auto --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
-036 "whack--passthrough--encapsulation=auto": failed to add connection: encapsulation=auto is invalid for type=passthrough connection
+005 "whack--passthrough--encapsulation=auto": warning: encapsulation=auto ignored for never-negotiate connection
+002 "whack--passthrough--encapsulation=auto": added passthrough connection
 west #
  ipsec connectionstatus | sed -n -e 's/\(^[^:]*:\).* \(encaps:[^;]*\);.*/\1 \2/p' | sort
 000 "addconn": encaps:auto
 000 "addconn--encapsulation=auto": encaps:auto
 000 "addconn--encapsulation=no": encaps:no
 000 "addconn--encapsulation=yes": encaps:yes
-000 "addconn--type=passthrough": encaps:n/a
+000 "addconn--type=passthrough": encaps:no
+000 "addconn--type=passthrough--encapsulation=auto": encaps:no
+000 "addconn--type=passthrough--encapsulation=no": encaps:no
+000 "addconn--type=passthrough--encapsulation=yes": encaps:no
 000 "whack": encaps:auto
 000 "whack--encapsulation=auto": encaps:auto
 000 "whack--encapsulation": encaps:yes
 000 "whack--encapsulation=no": encaps:no
 000 "whack--encapsulation=yes": encaps:yes
-000 "whack--passthrough": encaps:n/a
+000 "whack--passthrough": encaps:no
+000 "whack--passthrough--encapsulation=auto": encaps:no
+000 "whack--passthrough--encapsulation": encaps:no
+000 "whack--passthrough--encapsulation=no": encaps:no
+000 "whack--passthrough--encapsulation=yes": encaps:no
 west #
  
