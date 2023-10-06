@@ -131,6 +131,7 @@ kvmplutotest	addconn-32-compress				good
 kvmplutotest	addconn-33-encap-mode				good
 kvmplutotest	addconn-34-encap-proto				good
 kvmplutotest	addconn-35-encapsulation			good
+kvmplutotest	addconn-36-vti					good
 
 #################################################################
 # Whack UI tests
