@@ -119,7 +119,7 @@ struct ike_sa *main_outI1(struct connection *c,
 	statetime_t start = statetime_backdate(st, inception);
 
 	/* set up new state */
-	initialize_new_state(st);
+	initialize_new_ike_sa(ike);
 
 	change_v1_state(st, STATE_MAIN_I1);
 

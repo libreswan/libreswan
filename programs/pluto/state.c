@@ -532,10 +532,10 @@ static struct state *new_state(struct connection *c,
 	return st;
 }
 
-void initialize_new_state(struct state *st)
+void initialize_new_ike_sa(struct ike_sa *ike)
 {
-	struct connection *c = st->st_connection;
-	PASSERT(st->st_logger, oriented(c));
+	struct connection *c = ike->sa.st_connection;
+	PASSERT(ike->sa.logger, oriented(c));
 #if 1
 	/*
 	 * reset our choice of interface
@@ -554,35 +554,35 @@ void initialize_new_state(struct state *st)
 	 * See github/1094 and ikev2-revive-through-nat-01-down.
 	 */
 	iface_endpoint_delref(&c->interface);
-	orient(&c, st->st_logger); /*XXX: why*/
-	pexpect(st->st_interface == NULL); /* no-leak */
+	orient(&c, ike->sa.logger); /*XXX: why*/
+	pexpect(ike->sa.st_interface == NULL); /* no-leak */
 #endif
-	st->st_interface = iface_endpoint_addref(c->interface);
-	PASSERT(st->st_logger, st->st_interface != NULL);
-	st->st_remote_endpoint = endpoint_from_address_protocol_port(c->remote->host.addr,
+	ike->sa.st_interface = iface_endpoint_addref(c->interface);
+	PASSERT(ike->sa.logger, ike->sa.st_interface != NULL);
+	ike->sa.st_remote_endpoint = endpoint_from_address_protocol_port(c->remote->host.addr,
 								     c->interface->io->protocol,
 								     ip_hport(c->spd->remote->host->port));
 	endpoint_buf lb, rb;
-	ldbg(st->st_logger,
+	ldbg(ike->sa.logger,
 	     "in %s with local endpoint %s and remote endpoint set to %s",
 	     __func__,
-	     str_endpoint(&st->st_interface->local_endpoint, &lb),
-	     str_endpoint(&st->st_remote_endpoint, &rb));
+	     str_endpoint(&ike->sa.st_interface->local_endpoint, &lb),
+	     str_endpoint(&ike->sa.st_remote_endpoint, &rb));
 
-	st->st_policy = LEMPTY;        /* clear bits */
+	ike->sa.st_policy = LEMPTY;        /* clear bits */
 
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 		if (spd->local->host->config->xauth.client) {
 			if (spd->local->host->config->xauth.username != NULL) {
-				jam_str(st->st_xauth_username,
-					sizeof(st->st_xauth_username),
+				jam_str(ike->sa.st_xauth_username,
+					sizeof(ike->sa.st_xauth_username),
 					spd->local->host->config->xauth.username);
 				break;
 			}
 		}
 	}
 
-	binlog_refresh_state(st);
+	binlog_refresh_state(&ike->sa);
 }
 
 struct ike_sa *new_v1_istate(struct connection *c)
@@ -618,7 +618,7 @@ struct ike_sa *new_v2_ike_sa(struct connection *c,
 	change_state(&ike->sa, transition->state);
 	set_v2_transition(&ike->sa, transition, HERE);
 	v2_msgid_init_ike(ike);
-	initialize_new_state(&ike->sa);
+	initialize_new_ike_sa(ike);
 	event_schedule(EVENT_SA_DISCARD, EXCHANGE_TIMEOUT_DELAY, &ike->sa);
 	return ike;
 }
