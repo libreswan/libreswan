@@ -569,8 +569,6 @@ static void initialize_new_ike_sa(struct ike_sa *ike)
 	     str_endpoint(&ike->sa.st_interface->local_endpoint, &lb),
 	     str_endpoint(&ike->sa.st_remote_endpoint, &rb));
 
-	ike->sa.st_policy = LEMPTY;        /* clear bits */
-
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 		if (spd->local->host->config->xauth.client) {
 			if (spd->local->host->config->xauth.username != NULL) {
