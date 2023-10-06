@@ -172,6 +172,7 @@ OBJS += log_error.o
 OBJS += fatal.o
 OBJS += bad_enum_where.o
 OBJS += bad_case_where.o
+OBJS += bad_sparse_where.o
 
 OBJS += lswglob.o
 

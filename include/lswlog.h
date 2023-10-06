@@ -451,15 +451,22 @@ void lswbuf(struct jambuf *log)
 }
 #endif
 
-/* for a switch statement */
+/*
+ * For a switch statements
+ */
 
 void bad_case_where(const char *expression, long value, where_t where) NEVER_RETURNS;
 #define bad_case(N) bad_case_where(#N, (N), HERE)
 
-/* for enum switch statements */
-
-void bad_enum_where(const struct logger *logger, const struct enum_names *en, unsigned long val, where_t where) NEVER_RETURNS;
+void bad_enum_where(const struct logger *logger,
+		    const struct enum_names *en,
+		    unsigned long val, where_t where) NEVER_RETURNS;
 #define bad_enum(LOGGER, ENUM_NAMES, VALUE) bad_enum_where(LOGGER, ENUM_NAMES, VALUE, HERE)
+
+void bad_sparse_where(const struct logger *logger,
+		      const struct sparse_name *sn,
+		      unsigned long val, where_t where) NEVER_RETURNS;
+#define bad_sparse(LOGGER, SPARSE_NAMES, VALUE) bad_sparse_where(LOGGER, SPARSE_NAMES, VALUE, HERE)
 
 #define impaired_passert(BEHAVIOUR, LOGGER, ASSERTION)			\
 	{								\
