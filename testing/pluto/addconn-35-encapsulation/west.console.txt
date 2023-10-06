@@ -32,6 +32,9 @@ west #
  ipsec whack --name whack                                            --encrypt --host 1.2.3.4 --to --host 5.6.7.8
 002 "whack": added IKEv2 connection
 west #
+ ipsec whack --name whack--encapsulation       --encapsulation       --encrypt --host 1.2.3.4 --to --host 5.6.7.8
+002 "whack--encapsulation": added IKEv2 connection
+west #
  ipsec whack --name whack--encapsulation=no    --encapsulation=no    --encrypt --host 1.2.3.4 --to --host 5.6.7.8
 002 "whack--encapsulation=no": added IKEv2 connection
 west #
@@ -44,6 +47,9 @@ west #
  ipsec whack --name whack--passthrough                                          --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
 002 "whack--passthrough": added passthrough connection
 west #
+ ipsec whack --name whack--passthrough--encapsulation      --encapsulation      --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
+036 "whack--passthrough--encapsulation": failed to add connection: encapsulation=yes is invalid for type=passthrough connection
+west #
  ipsec whack --name whack--passthrough--encapsulation=no   --encapsulation=no   --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
 036 "whack--passthrough--encapsulation=no": failed to add connection: encapsulation=no is invalid for type=passthrough connection
 west #
@@ -53,7 +59,7 @@ west #
  ipsec whack --name whack--passthrough--encapsulation=auto --encapsulation=auto --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
 036 "whack--passthrough--encapsulation=auto": failed to add connection: encapsulation=auto is invalid for type=passthrough connection
 west #
- ipsec connectionstatus | sed -n -e 's/\(^[^:]*:\).* \(encaps:[^;]*\);.*/\1 \2/p'
+ ipsec connectionstatus | sed -n -e 's/\(^[^:]*:\).* \(encaps:[^;]*\);.*/\1 \2/p' | sort
 000 "addconn": encaps:auto
 000 "addconn--encapsulation=auto": encaps:auto
 000 "addconn--encapsulation=no": encaps:no
@@ -61,6 +67,7 @@ west #
 000 "addconn--type=passthrough": encaps:n/a
 000 "whack": encaps:auto
 000 "whack--encapsulation=auto": encaps:auto
+000 "whack--encapsulation": encaps:yes
 000 "whack--encapsulation=no": encaps:no
 000 "whack--encapsulation=yes": encaps:yes
 000 "whack--passthrough": encaps:n/a

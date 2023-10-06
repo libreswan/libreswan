@@ -13,13 +13,15 @@ ipsec add addconn--type=passthrough--encapsulation=yes
 ipsec add addconn--type=passthrough--encapsulation=auto
 
 ipsec whack --name whack                                            --encrypt --host 1.2.3.4 --to --host 5.6.7.8
+ipsec whack --name whack--encapsulation       --encapsulation       --encrypt --host 1.2.3.4 --to --host 5.6.7.8
 ipsec whack --name whack--encapsulation=no    --encapsulation=no    --encrypt --host 1.2.3.4 --to --host 5.6.7.8
 ipsec whack --name whack--encapsulation=yes   --encapsulation=yes   --encrypt --host 1.2.3.4 --to --host 5.6.7.8
 ipsec whack --name whack--encapsulation=auto  --encapsulation=auto  --encrypt --host 1.2.3.4 --to --host 5.6.7.8
 
 ipsec whack --name whack--passthrough                                          --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
+ipsec whack --name whack--passthrough--encapsulation      --encapsulation      --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
 ipsec whack --name whack--passthrough--encapsulation=no   --encapsulation=no   --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
 ipsec whack --name whack--passthrough--encapsulation=yes  --encapsulation=yes  --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
 ipsec whack --name whack--passthrough--encapsulation=auto --encapsulation=auto --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
 
-ipsec connectionstatus | sed -n -e 's/\(^[^:]*:\).* \(encaps:[^;]*\);.*/\1 \2/p'
+ipsec connectionstatus | sed -n -e 's/\(^[^:]*:\).* \(encaps:[^;]*\);.*/\1 \2/p' | sort

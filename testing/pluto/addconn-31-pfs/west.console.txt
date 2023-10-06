@@ -28,27 +28,35 @@ west #
  ipsec whack --name whack                     --encrypt --host 1.2.3.4 --to --host 5.6.7.8
 002 "whack": added IKEv2 connection
 west #
- ipsec whack --name whack--no-pfs   --no-pfs  --encrypt --host 1.2.3.4 --to --host 5.6.7.8
-002 "whack--no-pfs": added IKEv2 connection
-west #
  ipsec whack --name whack--pfs      --pfs     --encrypt --host 1.2.3.4 --to --host 5.6.7.8
 002 "whack--pfs": added IKEv2 connection
 west #
+ ipsec whack --name whack--pfs=no   --pfs=no  --encrypt --host 1.2.3.4 --to --host 5.6.7.8
+002 "whack--pfs=no": added IKEv2 connection
+west #
+ ipsec whack --name whack--pfs=yes  --pfs=yes --encrypt --host 1.2.3.4 --to --host 5.6.7.8
+002 "whack--pfs=yes": added IKEv2 connection
+west #
  ipsec whack --name whack--passthrough                     --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
 002 "whack--passthrough": added passthrough connection
-west #
- ipsec whack --name whack--passthrough--no-pfs   --no-pfs  --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
-005 "whack--passthrough--no-pfs": warning: pfs=no ignored for never-negotiate connection
-002 "whack--passthrough--no-pfs": added passthrough connection
 west #
  ipsec whack --name whack--passthrough--pfs      --pfs     --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
 005 "whack--passthrough--pfs": warning: pfs=yes ignored for never-negotiate connection
 002 "whack--passthrough--pfs": added passthrough connection
 west #
- ipsec connectionstatus | sed -n -e 's/\(.* policy:\) .*PFS.*/\1 PFS/p'
-000 "addconn":   policy: PFS
+ ipsec whack --name whack--passthrough--pfs=no   --pfs=no  --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
+005 "whack--passthrough--pfs=no": warning: pfs=no ignored for never-negotiate connection
+002 "whack--passthrough--pfs=no": added passthrough connection
+west #
+ ipsec whack --name whack--passthrough--pfs=yes  --pfs=yes --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
+005 "whack--passthrough--pfs=yes": warning: pfs=yes ignored for never-negotiate connection
+002 "whack--passthrough--pfs=yes": added passthrough connection
+west #
+ ipsec connectionstatus | sed -n -e 's/\(.* policy:\) .*PFS.*/\1 PFS/p' | sort
 000 "addconn--pfs=yes":   policy: PFS
-000 "whack":   policy: PFS
+000 "addconn":   policy: PFS
 000 "whack--pfs":   policy: PFS
+000 "whack--pfs=yes":   policy: PFS
+000 "whack":   policy: PFS
 west #
  
