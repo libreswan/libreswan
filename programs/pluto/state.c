@@ -569,17 +569,6 @@ static void initialize_new_ike_sa(struct ike_sa *ike)
 	     str_endpoint(&ike->sa.st_interface->local_endpoint, &lb),
 	     str_endpoint(&ike->sa.st_remote_endpoint, &rb));
 
-	FOR_EACH_ITEM(spd, &c->child.spds) {
-		if (spd->local->host->config->xauth.client) {
-			if (spd->local->host->config->xauth.username != NULL) {
-				jam_str(ike->sa.st_xauth_username,
-					sizeof(ike->sa.st_xauth_username),
-					spd->local->host->config->xauth.username);
-				break;
-			}
-		}
-	}
-
 	binlog_refresh_state(&ike->sa);
 }
 
@@ -591,6 +580,15 @@ struct ike_sa *new_v1_istate(struct connection *c,
 					    ike_initiator_spi(), zero_ike_spi,
 					    IKE_SA, SA_INITIATOR, HERE));
 	change_v1_state(&parent->sa, new_state_kind);
+
+	if (c->local->host.config->xauth.client) {
+		if (c->local->host.config->xauth.username != NULL) {
+			jam_str(parent->sa.st_xauth_username,
+				sizeof(parent->sa.st_xauth_username),
+				c->local->host.config->xauth.username);
+		}
+	}
+
 	initialize_new_ike_sa(parent);
 	return parent;
 }
