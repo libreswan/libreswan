@@ -532,7 +532,7 @@ static struct state *new_state(struct connection *c,
 	return st;
 }
 
-void initialize_new_ike_sa(struct ike_sa *ike)
+static void initialize_new_ike_sa(struct ike_sa *ike)
 {
 	struct connection *c = ike->sa.st_connection;
 	PASSERT(ike->sa.logger, oriented(c));
@@ -591,6 +591,7 @@ struct ike_sa *new_v1_istate(struct connection *c)
 		pexpect_parent_sa(new_state(c, SOS_NOBODY,
 					    ike_initiator_spi(), zero_ike_spi,
 					    IKE_SA, SA_INITIATOR, HERE));
+	initialize_new_ike_sa(parent);
 	return parent;
 }
 

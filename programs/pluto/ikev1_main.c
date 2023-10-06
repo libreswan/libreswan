@@ -118,9 +118,6 @@ struct ike_sa *main_outI1(struct connection *c,
 	struct state *st = &ike->sa;
 	statetime_t start = statetime_backdate(st, inception);
 
-	/* set up new state */
-	initialize_new_ike_sa(ike);
-
 	change_v1_state(st, STATE_MAIN_I1);
 
 	if (HAS_IPSEC_POLICY(policy)) {

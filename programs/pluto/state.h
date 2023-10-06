@@ -930,8 +930,6 @@ struct child_sa *find_v2_child_sa_by_outbound_spi(struct ike_sa *ike,
 extern struct state *find_v1_info_state(const ike_spis_t *ike_spis,
 					msgid_t msgid);
 
-extern void initialize_new_ike_sa(struct ike_sa *ike);
-
 extern void show_brief_status(struct show *s);
 extern void show_states(struct show *s, const monotime_t now);
 
