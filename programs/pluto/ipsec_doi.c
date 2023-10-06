@@ -115,59 +115,6 @@ lset_t capture_child_rekey_policy(struct state *st)
 	return policy;
 }
 
-void initialize_new_state(struct state *st)
-{
-	struct connection *c = st->st_connection;
-	PASSERT(st->st_logger, oriented(c));
-#if 1
-	/*
-	 * reset our choice of interface
-	 *
-	 * XXX: why? suspect this has the side effect of restoring /
-	 * updating connection's ends?
-	 *
-	 * No.  More evil.
-	 *
-	 * When NATed, the revival code updates the connection's
-	 * .local.host.port (to the NAT port) and .remote.host.encap
-	 * (to true).  The orient below then sees this causing the
-	 * connection to switch to the encapsulated interface so that
-	 * the first message goes out on that.
-	 *
-	 * See github/1094 and ikev2-revive-through-nat-01-down.
-	 */
-	iface_endpoint_delref(&c->interface);
-	orient(&c, st->st_logger); /*XXX: why*/
-	pexpect(st->st_interface == NULL); /* no-leak */
-#endif
-	st->st_interface = iface_endpoint_addref(c->interface);
-	PASSERT(st->st_logger, st->st_interface != NULL);
-	st->st_remote_endpoint = endpoint_from_address_protocol_port(c->remote->host.addr,
-								     c->interface->io->protocol,
-								     ip_hport(c->spd->remote->host->port));
-	endpoint_buf lb, rb;
-	ldbg(st->st_logger,
-	     "in %s with local endpoint %s and remote endpoint set to %s",
-	     __func__,
-	     str_endpoint(&st->st_interface->local_endpoint, &lb),
-	     str_endpoint(&st->st_remote_endpoint, &rb));
-
-	st->st_policy = LEMPTY;        /* clear bits */
-
-	FOR_EACH_ITEM(spd, &c->child.spds) {
-		if (spd->local->host->config->xauth.client) {
-			if (spd->local->host->config->xauth.username != NULL) {
-				jam_str(st->st_xauth_username,
-					sizeof(st->st_xauth_username),
-					spd->local->host->config->xauth.username);
-				break;
-			}
-		}
-	}
-
-	binlog_refresh_state(st);
-}
-
 void jam_child_sa_details(struct jambuf *buf, struct state *st)
 {
 	struct connection *const c = st->st_connection;
