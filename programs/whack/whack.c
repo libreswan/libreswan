@@ -94,7 +94,7 @@ static void help(void)
 		"		[ --auth-null] | [--auth-never] \\\n"
 		"	[--encrypt] [--authenticate] [--compress] [--sha2-truncbug] \\\n"
 		"	[--ms-dh-downgrade] \\\n"
-		"	[--overlapip] [--tunnel] [--no-pfs] \\\n"
+		"	[--overlapip] [--tunnel] \\\n"
 		"	[--allow-cert-without-san-id] [--dns-match-id] \\\n"
 		"	[--pfsgroup <modp1024 | modp1536 | modp2048 | \\\n"
 		"		modp3072 | modp4096 | modp6144 | modp8192 \\\n"
@@ -489,7 +489,6 @@ enum option_enums {
 	CD_PRIORITY,
 	CD_TFC,
 	CD_SEND_TFCPAD,
-	CD_NO_PFS,
 	CD_PFS,
 	CD_REQID,
 	CD_NFLOG_GROUP,
@@ -538,7 +537,6 @@ enum option_enums {
 	CD_REMOTE_PEER_TYPE,
 	CD_SHA2_TRUNCBUG,
 	CD_NM_CONFIGURED,
-	CD_NO_NM_CONFIGURED,
 	CD_LABELED_IPSEC,
 	CD_SEC_LABEL,
 	CD_XAUTHBY,
@@ -551,7 +549,7 @@ enum option_enums {
 	CD_MSDH_DOWNGRADE,
 	CD_DNS_MATCH_ID,
 	CD_IGNORE_PEER_DNS,
-	CD_NO_IKEPAD,
+	CD_IKEPAD,
 	CD_ALLOW_CERT_WITHOUT_SAN_ID,
 	CD_MODECFGPULL,
 	CD_AGGRESSIVE,
@@ -562,7 +560,6 @@ enum option_enums {
 	CD_FRAGMENTATION,
 	CD_NO_ESN,
 	CD_ESN,
-	CD_NO_COMPRESS,
 	CD_COMPRESS,
 	CD_TUNNEL,
 	CD_TRANSPORT,
@@ -775,12 +772,11 @@ static const struct option long_opts[] = {
 
 	/* option for cert rotation */
 
-	{ "intermediate", no_argument, NULL, CD_INTERMEDIATE },
+	{ "intermediate", optional_argument, NULL, CD_INTERMEDIATE },
 #define PS(o, p)	{ o, no_argument, NULL, CDP_SINGLETON + POLICY_##p##_IX }
 	{ "encrypt", no_argument, NULL, CD_ENCRYPT },
 	{ "authenticate", no_argument, NULL, CD_AUTHENTICATE },
-	{ "no-compress", no_argument, NULL, CD_NO_COMPRESS },
-	{ "compress", no_argument, NULL, CD_COMPRESS },
+	{ "compress", optional_argument, NULL, CD_COMPRESS },
 	{ "overlapip", no_argument, NULL, CD_OVERLAPIP },
 	{ "tunnel", no_argument, NULL, CD_TUNNEL, },
 	{ "transport", no_argument, NULL, CD_TRANSPORT, },
@@ -791,7 +787,7 @@ static const struct option long_opts[] = {
 	{ "allow-cert-without-san-id", no_argument, NULL, CD_ALLOW_CERT_WITHOUT_SAN_ID },
 	{ "sha2-truncbug", no_argument, NULL, CD_SHA2_TRUNCBUG },
 	{ "sha2_truncbug", no_argument, NULL, CD_SHA2_TRUNCBUG }, /* backwards compatibility */
-	{ "aggressive", no_argument, NULL, CD_AGGRESSIVE },
+	{ "aggressive", optional_argument, NULL, CD_AGGRESSIVE },
 	{ "aggrmode", no_argument, NULL, CD_AGGRESSIVE }, /*  backwards compatibility */
 
 	{ "initiateontraffic", no_argument, NULL, CD_INITIATEONTRAFFIC }, /* obsolete */
@@ -810,7 +806,7 @@ static const struct option long_opts[] = {
 	{ "dontrekey", no_argument, NULL, CD_DONT_REKEY, },
 	{ "reauth", no_argument, NULL, CD_REAUTH, },
 	{ "encaps", required_argument, NULL, CD_ENCAPSULATION },
-	{ "encapsulation", required_argument, NULL, CD_ENCAPSULATION },
+	{ "encapsulation", optional_argument, NULL, CD_ENCAPSULATION },
 	{ "no-nat_keepalive", no_argument, NULL,  CD_NO_NAT_KEEPALIVE },
 	{ "ikev1_natt", required_argument, NULL, CD_IKEV1_NATT },	/* obsolete _ */
 	{ "ikev1-natt", required_argument, NULL, CD_IKEV1_NATT },
@@ -847,8 +843,7 @@ static const struct option long_opts[] = {
 	{ "priority", required_argument, NULL, CD_PRIORITY },
 	{ "tfc", required_argument, NULL, CD_TFC },
 	{ "send-no-esp-tfc", no_argument, NULL, CD_SEND_TFCPAD },
-	{ "no-pfs", no_argument, NULL, CD_NO_PFS },
-	{ "pfs", no_argument, NULL, CD_PFS },
+	{ "pfs", optional_argument, NULL, CD_PFS },
 	{ "reqid", required_argument, NULL, CD_REQID },
 	{ "nflog-group", required_argument, NULL, CD_NFLOG_GROUP },
 	{ "conn-mark", required_argument, NULL, CD_CONN_MARK_BOTH },
@@ -913,10 +908,10 @@ static const struct option long_opts[] = {
 	{ "ikefrag-force", no_argument, NULL, CD_IKEFRAG_FORCE }, /* obsolete name */
 	{ "fragmentation", required_argument, NULL, CD_FRAGMENTATION },
 
-	{ "no-ikepad", no_argument, NULL, CD_NO_IKEPAD },
+	{ "ikepad", no_argument, NULL, CD_IKEPAD },
 
-	{ "no-esn", no_argument, NULL, CD_NO_ESN },
-	{ "esn", no_argument, NULL, CD_ESN },
+	{ "no-esn", no_argument, NULL, CD_NO_ESN }, /* obsolete */
+	{ "esn", optional_argument, NULL, CD_ESN },
 	{ "decap-dscp", no_argument, NULL, CD_DECAP_DSCP },
 	{ "nopmtudisc", no_argument, NULL, CD_NOPMTUDISC },
 	{ "ignore-peer-dns", no_argument, NULL, CD_IGNORE_PEER_DNS },
@@ -928,7 +923,6 @@ static const struct option long_opts[] = {
 #ifdef HAVE_NM
 	{ "nm_configured", no_argument, NULL, CD_NM_CONFIGURED }, /* backwards compat */
 	{ "nm-configured", no_argument, NULL, CD_NM_CONFIGURED },
-	{ "no-nm-configured", no_argument, NULL, CD_NO_NM_CONFIGURED },
 #endif
 
 	{ "policylabel", required_argument, NULL, CD_SEC_LABEL },
@@ -1029,8 +1023,11 @@ static uintmax_t optarg_uintmax(void)
 	return val;
 }
 
-static uintmax_t optarg_sparse(const struct sparse_name names[])
+static uintmax_t optarg_sparse(unsigned optional, const struct sparse_name names[])
 {
+	if (optarg == NULL) {
+		return optional;
+	}
 	const struct sparse_name *name = sparse_lookup(names, optarg);
 	if (name == NULL) {
 		diagq("unrecognized", optarg);
@@ -1842,10 +1839,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_COMPRESS:	/* --compress */
-			msg.compress = YN_YES;
-			continue;
-		case CD_NO_COMPRESS:	/* --no-compress */
-			msg.compress = YN_NO;
+			msg.compress = optarg_sparse(YN_YES, yn_option_names);
 			continue;
 
 		case CD_TUNNEL:		/* --tunnel */
@@ -1871,8 +1865,9 @@ int main(int argc, char **argv)
 			continue;
 		/* --esn */
 		case CD_ESN:
-			msg.esn = (msg.esn == YNE_EITHER ? YNE_EITHER :
-				   msg.esn == YNE_NO ? YNE_EITHER : YNE_YES);
+			msg.esn = optarg_sparse((msg.esn == YNE_EITHER ? YNE_EITHER :
+						 msg.esn == YNE_NO ? YNE_EITHER : YNE_YES),
+						yne_option_names);
 			continue;
 
 		/* --ikefrag-allow */
@@ -1890,10 +1885,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_FRAGMENTATION: /* --fragmentation {yes,no,force} */
-			if (msg.fragmentation != YNF_UNSET) {
-				diagw("duplicate fragmentation option");
-			}
-			msg.fragmentation = optarg_sparse(ynf_option_names);
+			msg.fragmentation = optarg_sparse(YNF_YES, ynf_option_names);
 			continue;
 
 		/* --nopmtudisc */
@@ -1908,7 +1900,7 @@ int main(int argc, char **argv)
 
 		/* --aggressive | --aggrmode */
 		case CD_AGGRESSIVE:
-			msg.aggressive = YN_YES;
+			msg.aggressive = optarg_sparse(YN_YES, yn_option_names);
 			continue;
 
 		/* --modecfgpull */
@@ -1922,8 +1914,8 @@ int main(int argc, char **argv)
 			continue;
 
 		/* --no-ikepad */
-		case CD_NO_IKEPAD:
-			msg.ikepad = YN_NO;
+		case CD_IKEPAD:
+			msg.ikepad = optarg_sparse(YN_YES, yn_option_names);
 			continue;
 
 		/* --ignore-peer-dns */
@@ -2039,14 +2031,8 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_ENCAPSULATION:	/* --encapsulation */
-		{
-			const struct sparse_name *sn = sparse_lookup(yna_option_names, optarg);
-			if (sn == NULL) {
-				diagw("--encaps options are 'auto', 'yes' or 'no'");
-			}
-			msg.encapsulation = sn->value;
+			msg.encapsulation = optarg_sparse(YNA_YES, yna_option_names);
 			continue;
-		}
 
 		case CD_NIC_OFFLOAD:  /* --nic-offload */
 			if (streq(optarg, "no"))
@@ -2066,7 +2052,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_IKEV1_NATT:	/* --ikev1-natt */
-			msg.nat_ikev1_method = optarg_sparse(nat_ikev1_method_option_names);
+			msg.nat_ikev1_method = optarg_sparse(0, nat_ikev1_method_option_names);
 			continue;
 
 		case CD_INITIAL_CONTACT:	/* --initialcontact */
@@ -2153,10 +2139,7 @@ int main(int argc, char **argv)
 
 #ifdef HAVE_NM
 		case CD_NM_CONFIGURED:		/* --nm-configured */
-			msg.nm_configured = YN_YES;
-			continue;
-		case CD_NO_NM_CONFIGURED:	/* --no-nm-configured */
-			msg.nm_configured = YN_NO;
+			msg.nm_configured = optarg_sparse(YN_YES, yn_option_names);
 			continue;
 #endif
 
@@ -2428,12 +2411,8 @@ int main(int argc, char **argv)
 			msg.send_no_esp_tfc = true;
 			continue;
 
-		case CD_NO_PFS:	/* --no-pfs */
-			msg.pfs = YN_NO;
-			continue;
-
 		case CD_PFS:	/* --pfs */
-			msg.pfs = YN_YES;
+			msg.pfs = optarg_sparse(YN_YES, yn_option_names);
 			continue;
 
 		case CD_NFLOG_GROUP:	/* --nflog-group */
