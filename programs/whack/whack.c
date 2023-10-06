@@ -58,7 +58,6 @@
 #include "timescale.h"
 
 #include "ipsecconf/confread.h" /* for DEFAULT_UPDOWN */
-#include <net/if.h> /* for IFNAMSIZ */
 /*
  * Print the 'ipsec --whack help' message
  */
@@ -141,7 +140,7 @@ static void help(void)
 		"	[--conn-mark <mark/mask>] [--conn-mark-in <mark/mask>] \\\n"
 		"	[--conn-mark-out <mark/mask>] \\\n"
 		"	[--ipsec-interface <num>] \\\n"
-		"	[--vti-iface <iface> ] [--vti-routing] [--vti-shared] \\\n"
+		"	[--vti-interface <iface> ] [--vti-routing] [--vti-shared] \\\n"
 		"	[--failnone | --failpass | --faildrop | --failreject] \\\n"
 		"	[--negopass ] \\\n"
 		"	[--donotrekey ] [--reauth ] \\\n"
@@ -495,7 +494,7 @@ enum option_enums {
 	CD_CONN_MARK_BOTH,
 	CD_CONN_MARK_IN,
 	CD_CONN_MARK_OUT,
-	CD_VTI_IFACE,
+	CD_VTI_INTERFACE,
 	CD_VTI_ROUTING,
 	CD_VTI_SHARED,
 	CD_IPSEC_IFACE,
@@ -849,9 +848,10 @@ static const struct option long_opts[] = {
 	{ "conn-mark", required_argument, NULL, CD_CONN_MARK_BOTH },
 	{ "conn-mark-in", required_argument, NULL, CD_CONN_MARK_IN },
 	{ "conn-mark-out", required_argument, NULL, CD_CONN_MARK_OUT },
-	{ "vti-iface", required_argument, NULL, CD_VTI_IFACE },
-	{ "vti-routing", no_argument, NULL, CD_VTI_ROUTING },
-	{ "vti-shared", no_argument, NULL, CD_VTI_SHARED },
+	{ "vti-iface", required_argument, NULL, CD_VTI_INTERFACE }, /* backward compat */
+	{ "vti-interface", required_argument, NULL, CD_VTI_INTERFACE },
+	{ "vti-routing", optional_argument, NULL, CD_VTI_ROUTING },
+	{ "vti-shared", optional_argument, NULL, CD_VTI_SHARED },
 	{ "ipsec-interface", required_argument, NULL, CD_IPSEC_IFACE },
 	{ "sendcert", required_argument, NULL, END_SENDCERT },
 	{ "sendca", required_argument, NULL, CD_SEND_CA },
@@ -2342,18 +2342,14 @@ int main(int argc, char **argv)
 			msg.conn_mark_out = strdup(optarg);
 			continue;
 
-		case CD_VTI_IFACE:      /* --vti-iface */
-			if (optarg != NULL && strlen(optarg) < IFNAMSIZ)
-				msg.vti_iface = strdup(optarg);
-			else
-				fprintf(stderr, "whack: invalid interface name '%s' ignored\n",
-					optarg);
+		case CD_VTI_INTERFACE:      /* --vti-interface=IFACE */
+			msg.vti_interface = strdup(optarg);
 			continue;
-		case CD_VTI_ROUTING:	/* --vti-routing */
-			msg.vti_routing = true;
+		case CD_VTI_ROUTING:	/* --vti-routing[=yes|no] */
+			msg.vti_routing = optarg_sparse(YN_YES, yn_option_names);
 			continue;
-		case CD_VTI_SHARED:	/* --vti-shared */
-			msg.vti_shared = true;
+		case CD_VTI_SHARED:	/* --vti-shared[=yes|no] */
+			msg.vti_shared = optarg_sparse(YN_YES, yn_option_names);
 			continue;
 
 		case CD_IPSEC_IFACE:      /* --ipsec-interface */

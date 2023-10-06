@@ -406,9 +406,11 @@ struct whack_message {
 	char *conn_mark_in;
 	char *conn_mark_out;
 
-	char *vti_iface;
-	bool vti_routing; /* perform routing into vti device or not */
-	bool vti_shared; /* use remote %any and skip cleanup on down? */
+	char *vti_interface;
+	enum yn_options vti_routing;	/* perform routing into vti
+					 * device or not */
+	enum yn_options vti_shared;	/* use remote %any and skip
+					 * cleanup on down? */
 
 	/* RFC 8784 and draft-smyslov-ipsecme-ikev2-qr-alt-07 */
 	char *ppk_ids;

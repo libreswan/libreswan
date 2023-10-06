@@ -90,7 +90,6 @@ struct connection *clone_connection(const char *name, struct connection *t,
 	c->next_instance_serial = 0;	/* restart count */
 	c->instance_serial = 0;		/* restart count */
 	c->root_config = NULL; /* block write access */
-	c->vti_iface = clone_str(t->vti_iface, "connection vti_iface");
 	c->interface = iface_endpoint_addref(t->interface);
 
 	/* Template can't yet have an assigned SEC_LABEL */

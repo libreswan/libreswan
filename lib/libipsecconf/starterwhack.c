@@ -657,12 +657,10 @@ int starter_whack_add_conn(struct starter_config *cfg,
 	msg.conn_mark_out = conn->conn_mark_out;
 	conn_log_val(conn, "mark-out", msg.conn_mark_out);
 
-	msg.vti_iface = conn->vti_iface;
-	conn_log_val(conn, "vti_iface", msg.vti_iface);
-	if (conn->options_set[KNCF_VTI_ROUTING])
-		msg.vti_routing = conn->options[KNCF_VTI_ROUTING];
-	if (conn->options_set[KNCF_VTI_SHARED])
-		msg.vti_shared = conn->options[KNCF_VTI_SHARED];
+	msg.vti_interface = conn->strings[KSCF_VTI_INTERFACE];
+	conn_log_val(conn, "vti-interface", msg.vti_interface);
+	msg.vti_routing = conn->options[KNCF_VTI_ROUTING];
+	msg.vti_shared = conn->options[KNCF_VTI_SHARED];
 
 	msg.ppk_ids = conn->ppk_ids;
 	conn_log_val(conn, "ppk-ids", msg.ppk_ids);

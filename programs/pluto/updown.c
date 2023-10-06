@@ -260,9 +260,9 @@ static bool fmt_common_shell_out(char *buf,
 			jam(&jb, "PLUTO_XFRMI_FWMARK='' ");
 		}
 	}
-	JDstr("VTI_IFACE", c->vti_iface ? c->vti_iface : "");
-	JDstr("VTI_ROUTING", bool_str(c->vti_routing));
-	JDstr("VTI_SHARED", bool_str(c->vti_shared));
+	JDstr("VTI_IFACE", (c->config->vti.interface == NULL ? "" : c->config->vti.interface));
+	JDstr("VTI_ROUTING", bool_str(c->config->vti.routing));
+	JDstr("VTI_SHARED", bool_str(c->config->vti.shared));
 
 	if (c->local->child.has_cat) {
 		jam_string(&jb, "CAT='YES' ");

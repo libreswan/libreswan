@@ -470,7 +470,6 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 
 	connection_delref(&c->clonedfrom, logger);
 
-	pfreeany(c->vti_iface);
 	iface_endpoint_delref(&c->interface);
 
 	free_chunk_content(&c->child.sec_label);
@@ -482,6 +481,7 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 	struct config *config = c->root_config;
 	if (config != NULL) {
 		passert(c->clonedfrom == NULL); /*i.e., root */
+		pfreeany(config->vti.interface);
 		free_chunk_content(&config->sec_label);
 		free_proposals(&config->ike_proposals.p);
 		free_proposals(&config->child_sa.proposals.p);
@@ -2125,7 +2125,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	config->child_sa.encap_mode = mode;
 
 	if (mode == ENCAP_MODE_TRANSPORT) {
-		if (wm->vti_iface != NULL) {
+		if (wm->vti_interface != NULL) {
 			return diag("VTI requires tunnel mode but connection specifies type=transport");
 		}
 	}
@@ -2792,6 +2792,18 @@ static diag_t extract_connection(const struct whack_message *wm,
 	config->encapsulation = extract_yna("encapsulation", wm->encapsulation,
 					    YNA_AUTO, YNA_NO, wm, c->logger);
 
+	config->vti.shared = extract_yn("vti-shared", wm->vti_shared, false,
+					wm, c->logger);
+	config->vti.routing = extract_yn("vti-routing", wm->vti_routing, false,
+					 wm, c->logger);
+	if (wm->vti_interface != NULL && strlen(wm->vti_interface) >= IFNAMSIZ) {
+		llog(RC_INFORMATIONAL, c->logger,
+		     "warning: length of vti-interface '%s' exceeds IFNAMSIZ (%u)",
+		     wm->vti_interface, (unsigned) IFNAMSIZ);
+	}
+	config->vti.interface = extract_str("vti-interface", wm->vti_interface,
+					    wm, c->logger);
+
 	if (never_negotiate_wm(wm)) {
 		dbg("skipping over misc settings as NEVER_NEGOTIATE");
 	} else {
@@ -3003,9 +3015,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 		if (wm->conn_mark_out != NULL)
 			mark_parse(wm->conn_mark_out, &c->sa_marks.out, c->logger);
 
-		c->vti_iface = extract_str("vti-iface", wm->vti_iface, wm, c->logger);
-		c->vti_routing = wm->vti_routing;
-		c->vti_shared = wm->vti_shared;
 #ifdef USE_XFRM_INTERFACE
 		if (wm->xfrm_if_id != UINT32_MAX) {
 			err_t err = xfrm_iface_supported(c->logger);

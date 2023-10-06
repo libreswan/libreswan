@@ -34,8 +34,6 @@
 #include "whack_connectionstatus.h"
 #include "whack_connection.h"
 
-#include <net/if.h>		/* for IFNAMSIZ */
-
 #include "ike_alg.h"
 
 #include "defs.h"
@@ -643,10 +641,10 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		}
 		jam_string(buf, ";");
 		/* ... */
-		jam(buf, " vti-iface:%s;", (c->vti_iface == NULL ? "unset" :
-					    c->vti_iface));
-		jam(buf, " vti-routing:%s;", bool_str(c->vti_routing));
-		jam(buf, " vti-shared:%s;", bool_str(c->vti_shared));
+		jam(buf, " vti-iface:%s;", (c->config->vti.interface == NULL ? "unset" :
+					    c->config->vti.interface));
+		jam(buf, " vti-routing:%s;", bool_str(c->config->vti.routing));
+		jam(buf, " vti-shared:%s;", bool_str(c->config->vti.shared));
 		jam(buf, " nic-offload:%s;", (c->config->nic_offload == offload_auto ? "auto" :
 					      c->config->nic_offload == offload_packet ? "packet" :
 					      c->config->nic_offload == offload_crypto ? "crypto" :

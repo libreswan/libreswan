@@ -139,10 +139,7 @@ struct starter_conn {
 	char *conn_mark_both;
 	char *conn_mark_in;
 	char *conn_mark_out;
-	char *vti_iface;
 	char *ppk_ids;
-	bool vti_routing;
-	bool vti_shared;
 	uint32_t xfrm_if_id;
 	char *dpd_delay;
 	char *dpd_timeout;

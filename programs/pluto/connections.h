@@ -303,6 +303,16 @@ struct config {
 					 * forceencaps=yes/no */
 
 	struct {
+		char *interface;
+		bool routing;		/* should updown perform
+					 * routing into the vti
+					 * device */
+		bool shared;		/* should updown leave remote
+					 * empty and not cleanup
+					 * device on down */
+	} vti;
+
+	struct {
 		uintmax_t priority;
 		uintmax_t tfcpad;
 		uintmax_t replay_window;	/* Usually 32, KLIPS
@@ -667,9 +677,6 @@ struct connection {
 	}
 
 	struct sa_marks sa_marks; /* contains a MARK values and MASK value for IPsec SA */
-	char *vti_iface;
-	bool vti_routing; /* should updown perform routing into the vti device */
-	bool vti_shared; /* should updown leave remote empty and not cleanup device on down */
 	struct pluto_xfrmi *xfrmi; /* pointer to possibly shared interface */
 
 	char *log_file_name;			/* name of log file */
