@@ -431,7 +431,7 @@ static bool unrouted_to_routed_never_negotiate(enum routing_event event, struct 
  * replace.
  */
 
-static void unrouted_instance_to_unrouted_negotiation(enum routing_event event,
+static void unrouted_instance_to_unrouted_negotiation(enum routing_event event UNUSED,
 						      struct connection *c, where_t where)
 {
 	struct logger *logger = c->logger;
@@ -448,7 +448,6 @@ static void unrouted_instance_to_unrouted_negotiation(enum routing_event event,
 				DIRECTION_OUTBOUND,
 				SHUNT_KIND_NEGOTIATION,
 				logger, where, reason);
-	set_routing(event, c, RT_UNROUTED_NEGOTIATION, NULL, where);
 }
 
 /*
@@ -1352,13 +1351,13 @@ static bool dispatch_1(enum routing_event event,
 		 * MAYBE? but only when the template and instance have
 		 * the same SPDs.
 		 */
-		if (BROKEN_TRANSITION &&
-		    c->config->negotiation_shunt == SHUNT_HOLD) {
-			ldbg_routing(logger, "skipping NEGOTIATION=HOLD");
-			set_routing(event, c, RT_UNROUTED_NEGOTIATION, NULL, where);
+		if (c->clonedfrom->child.routing == RT_UNROUTED) {
+			ldbg_routing(logger, "skipping hold as template is unrouted");
+			set_routing(event, c, RT_UNROUTED, NULL, where);
 			return true;
 		}
 		unrouted_instance_to_unrouted_negotiation(event, c, where);
+		set_routing(event, c, RT_UNROUTED_NEGOTIATION, e->child, where);
 		return true;
 
 	case X(ACQUIRE, UNROUTED, INSTANCE):
@@ -1395,6 +1394,7 @@ static bool dispatch_1(enum routing_event event,
 			return true;
 		}
 		unrouted_instance_to_unrouted_negotiation(event, c, where);
+		set_routing(event, c, RT_UNROUTED_NEGOTIATION, NULL, where);
 #if 0
 		ipsecdoi_initiate(c, child_sa_policy(c), SOS_NOBODY,
 				  e->inception, e->sec_label,
