@@ -467,7 +467,7 @@ bool redirect_ike_auth(struct ike_sa *ike, struct msg_digest *md, stf_status *re
 	 */
 
 	/* will use this when initiating in a callback */
-	ike->sa.st_connection->temp_vars.redirect_ip = redirect_ip;
+	ike->sa.st_connection->redirect.ip = redirect_ip;
 	schedule_callback("IKE_AUTH redirect", ike->sa.st_serialno,
 			  initiate_redirect, NULL);
 	*redirect_status = STF_SUSPEND;
@@ -482,7 +482,7 @@ static void initiate_redirect(const char *story, struct state *ike_sa, void *con
 {
 	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
 	struct connection *c = ike->sa.st_connection;
-	ip_address redirect_ip = c->temp_vars.redirect_ip;
+	ip_address redirect_ip = c->redirect.ip;
 	realtime_t now = realnow();
 
 	/*
@@ -501,8 +501,8 @@ static void initiate_redirect(const char *story, struct state *ike_sa, void *con
 
 	/* stuff for loop detection */
 
-	if (c->temp_vars.num_redirects >= MAX_REDIRECTS) {
-		if (deltatime_cmp(realtimediff(c->temp_vars.first_redirect_time, now),
+	if (c->redirect.num_redirects >= MAX_REDIRECTS) {
+		if (deltatime_cmp(realtimediff(c->redirect.first_redirect_time, now),
 				  <,
 				  deltatime(REDIRECT_LOOP_DETECT_PERIOD))) {
 			llog_sa(RC_LOG_SERIOUS, ike,
@@ -512,16 +512,16 @@ static void initiate_redirect(const char *story, struct state *ike_sa, void *con
 		}
 
 		/* restart count */
-		c->temp_vars.num_redirects = 0;
+		c->redirect.num_redirects = 0;
 	}
 
-	if (c->temp_vars.num_redirects == 0) {
-		  c->temp_vars.first_redirect_time = now;
+	if (c->redirect.num_redirects == 0) {
+		  c->redirect.first_redirect_time = now;
 	}
-	c->temp_vars.num_redirects++;
+	c->redirect.num_redirects++;
 
 	/* save old address for REDIRECTED_FROM notify */
-	c->temp_vars.old_gw_address = c->remote->host.addr;
+	c->redirect.old_gw_address = c->remote->host.addr;
 	/* update host_addr of other end, port stays the same */
 	c->remote->host.addr = redirect_ip;
 
@@ -652,7 +652,7 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_REDIRECT(struct ike_sa *ike,
 	 */
 
 	/* will use this when initiating in a callback */
-	ike->sa.st_connection->temp_vars.redirect_ip = redirect_ip;
+	ike->sa.st_connection->redirect.ip = redirect_ip;
 	schedule_callback("IKE_SA_INIT redirect", ike->sa.st_serialno,
 			  initiate_redirect, NULL);
 	return STF_SUSPEND;
@@ -676,7 +676,7 @@ void process_v2_INFORMATIONAL_request_v2N_REDIRECT(struct ike_sa *ike, struct ms
 	 * MAGIC: the initiate_redirect() callback initiates a new SA
 	 * with the new IP, and then deletes the old IKE SA.
 	 */
-	ike->sa.st_connection->temp_vars.redirect_ip = redirect_to;
+	ike->sa.st_connection->redirect.ip = redirect_to;
 	schedule_callback("active session redirect", ike->sa.st_serialno,
 			  initiate_redirect, NULL);
 }

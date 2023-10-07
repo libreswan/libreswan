@@ -627,26 +627,13 @@ struct sa_marks {
 	struct sa_mark out;
 };
 
-/* this struct will be used for
- * storing ephemeral stuff, that doesn't
- * need i.e. to be stored to connection
- * .conf files.
- */
-
-struct ephemeral_variables {
-	/* RFC 5685 - IKEv2 Redirect Mechanism */
-	int num_redirects;
-	realtime_t first_redirect_time;
-	ip_address redirect_ip;		/* where to redirect */
-	ip_address old_gw_address;	/* address of old gateway */
-};
-
 struct connection {
 	struct refcnt refcnt;
 	co_serial_t serialno;
 	struct connection *clonedfrom;
 	char *name;
 	struct logger *logger;
+
 	struct {
 		bool up;		/* do we want to keep this
 					 * connection up? */
@@ -672,8 +659,13 @@ struct connection {
 		(C)->POLICY = false;				\
 	}
 
-	struct sa_marks sa_marks; /* contains a MARK values and MASK value for IPsec SA */
-	struct pluto_xfrmi *xfrmi; /* pointer to possibly shared interface */
+	struct sa_marks sa_marks;	/* contains a MARK values and
+					 * MASK value for IPsec SA
+					 * (per-connection) */
+
+	struct pluto_xfrmi *xfrmi;	/* pointer to possibly shared
+					 * interface
+					 * (per-connection) */
 
 	char *log_file_name;			/* name of log file */
 	FILE *log_file;				/* possibly open FILE */
@@ -700,13 +692,19 @@ struct connection {
 	struct iface_endpoint *interface;	/* filled in iff oriented */
 
 	struct {
+		/* RFC 5685 - IKEv2 Redirect Mechanism */
+		int num_redirects;
+		realtime_t first_redirect_time;
+		ip_address ip;			/* where to redirect */
+		ip_address old_gw_address;	/* address of old gateway */
+	} redirect;
+
+	struct {
 		unsigned attempt;
 		deltatime_t delay;		 /* for next time */
 		ip_endpoint remote;
 		struct iface_endpoint *local;
 	} revival;
-
-	struct ephemeral_variables temp_vars;
 
 	/*
 	 * Private variables for tracking routing.  Only updated by

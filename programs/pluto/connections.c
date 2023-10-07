@@ -3265,7 +3265,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	c->interface = NULL; /* initializing */
 
 	connection_unrouted(c);
-	c->temp_vars.num_redirects = 0;
+	c->redirect.num_redirects = 0;
 
 	/* non configurable */
 	c->ike_window = IKE_V2_OVERLAPPING_WINDOW_SIZE;

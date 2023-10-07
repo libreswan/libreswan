@@ -1910,7 +1910,7 @@ static bool uninstall_kernel_state(struct child_sa *child, enum direction direct
 
 	ip_address effective_remote_address = c->remote->host.addr;
 	if (!endpoint_address_eq_address(child->sa.st_remote_endpoint, effective_remote_address) &&
-	    address_is_specified(c->temp_vars.redirect_ip)) {
+	    address_is_specified(c->redirect.ip)) {
 		effective_remote_address = endpoint_address(child->sa.st_remote_endpoint);
 	}
 
@@ -2465,7 +2465,7 @@ bool get_ipsec_traffic(struct child_sa *child,
 	 * XXX: why not just use redirect_ip?
 	 */
 	bool redirected = (!endpoint_address_eq_address(child->sa.st_remote_endpoint, c->remote->host.addr) &&
-			   address_is_specified(c->temp_vars.redirect_ip));
+			   address_is_specified(c->redirect.ip));
 	ip_address remote_ip = (redirected ?  endpoint_address(child->sa.st_remote_endpoint) :
 				c->remote->host.addr);
 
