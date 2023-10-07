@@ -122,12 +122,8 @@ static void jam_routing_update(struct jambuf *buf, enum routing old, enum routin
 static void jam_routing(struct jambuf *buf,
 			struct connection *c)
 {
-	if (c == NULL) {
-		jam_string(buf, "EXPECTATION FAILED: C is NULL");
-		return;
-	}
 	jam_enum_short(buf, &routing_names, c->child.routing);
-	jam_string(buf, " ");
+	jam_string(buf, ", ");
 	jam_enum_short(buf, &connection_kind_names, c->local->kind);
 	jam_string(buf, " ");
 	jam_connection_co(buf, c);
@@ -162,9 +158,9 @@ static void jam_event(struct jambuf *buf,
 		      const struct routing_annex *e)
 {
 	jam_enum_short(buf, &routing_event_names, event);
-	jam_routing_annex(buf, e);
-	jam_string(buf, " to ");
+	jam_string(buf, ", ");
 	jam_routing(buf, c);
+	jam_routing_annex(buf, e);
 }
 
 static void ldbg_routing_skip(struct connection *c,
