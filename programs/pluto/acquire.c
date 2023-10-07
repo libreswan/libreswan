@@ -33,6 +33,7 @@
 #include "kernel.h"
 #include "orient.h"
 #include "instantiate.h"
+#include "initiate.h"
 
 /* (Possibly) Opportunistic Initiation:
  *
@@ -149,9 +150,18 @@ void initiate_ondemand(const struct kernel_acquire *b)
 	LLOG_JAMBUF(RC_LOG, cp->logger, buf) {
 		jam_kernel_acquire(buf, b);
 	}
-	connection_acquire(cp, &inception, b, HERE);
-	connection_detach(cp, b->logger);
 
+#if 0
+	connection_acquire(cp, &inception, b, HERE);
+#else
+	ipsecdoi_initiate(cp, child_sa_policy(cp), SOS_NOBODY,
+			  &inception, b->sec_label,
+			  b->background, cp->logger,
+			  UPDATE_PENDING|UPDATE_ACQUIRE,
+			  HERE);
+#endif
+
+	connection_detach(cp, b->logger);
 	connection_delref(&cp, b->logger);
 
 }

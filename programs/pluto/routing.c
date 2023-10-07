@@ -863,6 +863,27 @@ void connection_initiated_child(struct ike_sa *ike, struct child_sa *child, wher
 		 });
 }
 
+void connection_acquired_ike(struct ike_sa *ike, where_t where)
+{
+	struct connection *c = ike->sa.st_connection;
+	dispatch(CONNECTION_ACQUIRE, &c,
+		 ike->sa.st_logger, where,
+		 (struct routing_annex) {
+			 .ike = &ike,
+		 });
+}
+
+void connection_acquired_child(struct ike_sa *ike, struct child_sa *child, where_t where)
+{
+	struct connection *cc = child->sa.st_connection;
+	dispatch(CONNECTION_ACQUIRE, &cc,
+		 child->sa.st_logger, where,
+		 (struct routing_annex) {
+			 .ike = &ike,
+			 .child = &child,
+		 });
+}
+
 void connection_pending(struct connection *c, where_t where)
 {
 	dispatch(CONNECTION_INITIATE, &c,
@@ -1207,11 +1228,13 @@ static bool dispatch_1(enum routing_event event,
 		flush_routed_ondemand_revival(c);
 		ondemand_to_negotiation(event, c, where, "negotiating permanent");
 		PEXPECT(logger, c->child.routing == RT_ROUTED_NEGOTIATION);
+#if 0
 		/* ipsecdoi_initiate may replace SOS_NOBODY with a state */
 		ipsecdoi_initiate(c, child_sa_policy(c), SOS_NOBODY,
 				  e->inception, null_shunk,
 				  e->background, c->logger,
 				  /*update_routing*/LEMPTY, HERE);
+#endif
 		return true;
 
 	case X(INITIATE, UNROUTED_NEGOTIATION, PERMANENT):
@@ -1363,17 +1386,21 @@ static bool dispatch_1(enum routing_event event,
 		    c->config->negotiation_shunt == SHUNT_HOLD) {
 			ldbg_routing(logger, "skipping NEGOTIATION=HOLD");
 			set_routing(event, c, RT_UNROUTED_NEGOTIATION, NULL, where);
+#if 0
 			ipsecdoi_initiate(c, child_sa_policy(c), SOS_NOBODY,
 					  e->inception, null_shunk,
 					  e->background, logger,
 					  /*update_routing*/LEMPTY, HERE);
+#endif
 			return true;
 		}
 		unrouted_instance_to_unrouted_negotiation(event, c, where);
+#if 0
 		ipsecdoi_initiate(c, child_sa_policy(c), SOS_NOBODY,
 				  e->inception, e->sec_label,
 				  e->background, logger,
 				  /*update_routing*/LEMPTY, HERE);
+#endif
 		return true;
 
 	case X(UNROUTE, UNROUTED_NEGOTIATION, INSTANCE):
@@ -1808,11 +1835,14 @@ static bool dispatch_1(enum routing_event event,
 	case X(INITIATE, UNROUTED, LABELED_PARENT):
 		return true;
 	case X(ACQUIRE, UNROUTED, LABELED_PARENT):
+	case X(ACQUIRE, UNROUTED, LABELED_CHILD):
 	case X(ACQUIRE, ROUTED_ONDEMAND, LABELED_PARENT):
+#if 0
 		ipsecdoi_initiate(c, child_sa_policy(c), SOS_NOBODY,
 				  e->inception, e->sec_label, e->background,
 				  logger,
 				  /*update_routing*/LEMPTY, HERE);
+#endif
 		return true;
 	case X(DELETE_IKE, ROUTED_ONDEMAND, LABELED_PARENT):
 	case X(DELETE_IKE, UNROUTED, LABELED_PARENT):

@@ -412,6 +412,9 @@ void ipsecdoi_initiate(struct connection *c,
 		if (update_routing & UPDATE_IKE) {
 			connection_initiated_ike(ike, HERE);
 		}
+		if (update_routing & UPDATE_ACQUIRE) {
+			connection_acquired_ike(ike, HERE);
+		}
 		if (background) {
 			state_detach(&ike->sa, c->logger);
 		}
@@ -471,6 +474,9 @@ void ipsecdoi_initiate(struct connection *c,
 		}
 		if (update_routing & UPDATE_CHILD) {
 			connection_initiated_child(ike, child, where);
+		}
+		if (update_routing & UPDATE_ACQUIRE) {
+			connection_acquired_child(ike, child, HERE);
 		}
 		if (background) {
 			/*

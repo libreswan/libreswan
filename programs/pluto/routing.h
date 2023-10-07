@@ -82,6 +82,9 @@ void connection_unroute(struct connection *c, where_t where);
 void connection_initiated_ike(struct ike_sa *ike, where_t where);
 void connection_initiated_child(struct ike_sa *ike, struct child_sa *child, where_t where);
 
+void connection_acquired_ike(struct ike_sa *ike, where_t where);
+void connection_acquired_child(struct ike_sa *ike, struct child_sa *child, where_t where);
+
 void connection_establish_ike(struct ike_sa *ike, where_t where);
 
 void connection_pending(struct connection *c, where_t where);

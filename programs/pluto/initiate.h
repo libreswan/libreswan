@@ -36,6 +36,7 @@ enum update_routing {
 	UPDATE_CHILD = 2,
 	UPDATE_PENDING = 4,
 	UPDATE_ALL = 7,
+	UPDATE_ACQUIRE,
 };
 
 void ipsecdoi_initiate(struct connection *c,
