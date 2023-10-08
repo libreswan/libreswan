@@ -3638,9 +3638,38 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 	size_t s = 0;
 	enum shunt_policy shunt;
 
+#define CS(S)					\
+	{					\
+		s += jam_string(buf, sep);	\
+		s += jam_string(buf, S);	\
+		sep = "+";			\
+	}
+#define CT(C, N)				\
+	if (!never_negotiate(c) &&		\
+	    c->config->C) {			\
+		/* show when true */		\
+		CS(#N);				\
+	}
+#define CF(C, N)				\
+	if (!never_negotiate(c) &&		\
+	    !c->config->C) {			\
+		/* show when false */		\
+		CS(#N);				\
+	}
+#define CP(P, N)				\
+	if (!never_negotiate(c) &&		\
+	    P) {				\
+		/* show when false */		\
+		CS(#N);				\
+	}
+#define CNN(C,N)				\
+	if (C) {				\
+		/* show when never-negotiate */	\
+		CS(#N);				\
+	}
+
 	if (c->config->ike_version > 0) {
-		s += jam_string(buf, c->config->ike_info->version_name);
-		sep = "+";
+		CS(c->config->ike_info->version_name);
 	}
 
 	struct authby authby = c->local->host.config->authby;
@@ -3650,92 +3679,72 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 		sep = "+";
 	}
 
-#define CS(C,S)					\
-	if (C) {				\
-		s += jam_string(buf, sep);	\
-		s += jam_string(buf, S);	\
-		sep = "+";			\
-	}
-#define CP(C)						\
-	if (c->config->C) {				\
-		s += jam_string(buf, sep);		\
-		s += jam_ucase_string(buf, #C);		\
-		sep = "+";				\
-	}
-#define CN(C,N)					\
-	if (C) {				\
-		s += jam_string(buf, sep);	\
-		s += jam_string(buf, #N);	\
-		sep = "+";			\
-	}
-
 	switch (c->config->child_sa.encap_proto) {
 	case ENCAP_PROTO_ESP:
-		CN(true, ENCRYPT);
+		CS("ENCRYPT");
 		break;
 	case ENCAP_PROTO_AH:
-		CN(true, AUTHENTICATE);
+		CS("AUTHENTICATE");
 		break;
 	default:
 		break;
 	}
 
-	CN(c->config->child_sa.ipcomp, COMPRESS);
-	CS(c->config->child_sa.encap_mode != ENCAP_MODE_UNSET,
-	   enum_name_short(&encap_mode_names, c->config->child_sa.encap_mode));
-	CN(c->config->child_sa.pfs, PFS);
-	CP(decap_dscp);
-	CP(nopmtudisc);
-	CP(ms_dh_downgrade);
+	CT(child_sa.ipcomp, COMPRESS);
+	if (!never_negotiate(c) &&
+	    c->config->child_sa.encap_mode != ENCAP_MODE_UNSET) {
+		CS(enum_name_short(&encap_mode_names, c->config->child_sa.encap_mode));
+	}
+	CT(child_sa.pfs, PFS);
+	CT(decap_dscp, DECAP_DSCP);
+	CT(nopmtudisc, NOPMTUDISC);
+	CT(ms_dh_downgrade, MS_DH_DOWNGRADE);
 
-	CN(!c->config->require_id_on_certificate, ALLOW_NO_SAN);
+	/* note reverse logic */
+	CF(require_id_on_certificate, ALLOW_NO_SAN);
 
-	CP(dns_match_id);
-	CP(sha2_truncbug);
+	CT(dns_match_id, DNS_MATCH_ID);
+	CT(sha2_truncbug, SHA2_TRUNCBUG);
 
 	/* note reversed logic */
-	CN(!c->config->rekey, DONT_REKEY);
+	CF(rekey, DONT_REKEY);
 
-	CP(reauth);
+	CT(reauth, REAUTH);
 
-	CN(is_opportunistic(c), OPPORTUNISTIC);
-	CN(is_group_instance(c), GROUPINSTANCE);
-	CN(c->policy.route, ROUTE);
-	CN(c->policy.up, UP);
+	CNN(is_opportunistic(c), OPPORTUNISTIC);
+	CNN(is_group_instance(c), GROUPINSTANCE);
+	CNN(c->policy.route, ROUTE);
+	CP(c->policy.up, UP);
 
-	CN(is_xauth(c), XAUTH);
-	CN(c->config->modecfg.pull, MODECFG_PULL);
+	CP(is_xauth(c), XAUTH);
+	CT(modecfg.pull, MODECFG_PULL);
 
-	CP(aggressive);
-	CP(overlapip);
+	CT(aggressive, AGGRESSIVE);
+	CT(overlapip, OVERLAPIP);
 
-	CP(ikev2_allow_narrowing);
+	CT(ikev2_allow_narrowing, IKEV2_ALLOW_NARROWING);
 
-	CP(ikev2_pam_authorize);
+	CT(ikev2_pam_authorize, IKEV2_PAM_AUTHORIZE);
 
-	CN(c->config->redirect.send_always, SEND_REDIRECT_ALWAYS);
-	CN(c->config->redirect.send_never, SEND_REDIRECT_NEVER);
-	CN(c->config->redirect.accept, ACCEPT_REDIRECT_YES);
+	CT(redirect.send_always, SEND_REDIRECT_ALWAYS);
+	CT(redirect.send_never, SEND_REDIRECT_NEVER);
+	CT(redirect.accept, ACCEPT_REDIRECT_YES);
 
-	CN(c->config->ike_frag.allow, IKE_FRAG_ALLOW);
-	CN(c->config->ike_frag.v1_force, IKE_FRAG_FORCE);
+	CT(ike_frag.allow, IKE_FRAG_ALLOW);
+	CT(ike_frag.v1_force, IKE_FRAG_FORCE);
 
 	/* need to flip parity */
-	CN(!c->config->ikepad, NO_IKEPAD);
+	CF(ikepad, NO_IKEPAD);
 
-	CP(mobike);
-	CN(c->config->ppk.allow, PPK_ALLOW);
-	CN(c->config->ppk.insist, PPK_INSIST);
-	CN(c->config->esn.no, ESN_NO);
-	CN(c->config->esn.yes, ESN_YES);
-	CP(intermediate);
-	CP(ignore_peer_dns);
+	CT(mobike, MOBIKE);
+	CT(ppk.allow, PPK_ALLOW);
+	CT(ppk.insist, PPK_INSIST);
+	CT(esn.no, ESN_NO);
+	CT(esn.yes, ESN_YES);
+	CT(intermediate, INTERMEDIATE);
+	CT(ignore_peer_dns, IGNORE_PEER_DNS);
 
-	if (is_group(c)) {
-		s += jam_string(buf, sep);
-		s += jam_string(buf, "GROUP");
-		sep = "+";
-	}
+	CNN(is_group(c), GROUP);
 
 	shunt = c->config->never_negotiate_shunt;
 	if (shunt != SHUNT_UNSET) {
@@ -3760,10 +3769,7 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 		sep = "+";
 	}
 
-	if (never_negotiate(c)) {
-		jam(buf, "%sNEVER_NEGOTIATE", sep);
-		sep = "+";
-	}
+	CNN(never_negotiate(c), NEVER_NEGOTIATE);
 
 	return s;
 }
