@@ -1227,13 +1227,6 @@ static bool dispatch_1(enum routing_event event,
 		flush_routed_ondemand_revival(c);
 		ondemand_to_negotiation(event, c, where, "negotiating permanent");
 		PEXPECT(logger, c->child.routing == RT_ROUTED_NEGOTIATION);
-#if 0
-		/* ipsecdoi_initiate may replace SOS_NOBODY with a state */
-		ipsecdoi_initiate(c, child_sa_policy(c), SOS_NOBODY,
-				  e->inception, null_shunk,
-				  e->background, c->logger,
-				  /*update_routing*/LEMPTY, HERE);
-#endif
 		return true;
 
 	case X(INITIATE, UNROUTED_NEGOTIATION, PERMANENT):
@@ -1385,22 +1378,10 @@ static bool dispatch_1(enum routing_event event,
 		    c->config->negotiation_shunt == SHUNT_HOLD) {
 			ldbg_routing(logger, "skipping NEGOTIATION=HOLD");
 			set_routing(event, c, RT_UNROUTED_NEGOTIATION, NULL, where);
-#if 0
-			ipsecdoi_initiate(c, child_sa_policy(c), SOS_NOBODY,
-					  e->inception, null_shunk,
-					  e->background, logger,
-					  /*update_routing*/LEMPTY, HERE);
-#endif
 			return true;
 		}
 		unrouted_instance_to_unrouted_negotiation(event, c, where);
 		set_routing(event, c, RT_UNROUTED_NEGOTIATION, NULL, where);
-#if 0
-		ipsecdoi_initiate(c, child_sa_policy(c), SOS_NOBODY,
-				  e->inception, e->sec_label,
-				  e->background, logger,
-				  /*update_routing*/LEMPTY, HERE);
-#endif
 		return true;
 
 	case X(UNROUTE, UNROUTED_NEGOTIATION, INSTANCE):
@@ -1449,9 +1430,6 @@ static bool dispatch_1(enum routing_event event,
 	case X(TIMEOUT_IKE, ROUTED_ONDEMAND, PERMANENT):	/* ikev2-child-ipsec-retransmit */
 	case X(TIMEOUT_IKE, ROUTED_ONDEMAND, INSTANCE):		/* ikev2-liveness-05 */
 	case X(DELETE_IKE, ROUTED_ONDEMAND, INSTANCE):		/* ikev2-30-rw-no-rekey */
-#if 0
-	case X(DELETE_IKE, UNROUTED, INSTANCE): /*duplicate!?!*/
-#endif
 		/*
 		 * ikev2-31-nat-rw-no-rekey:
 		 *
@@ -1837,12 +1815,6 @@ static bool dispatch_1(enum routing_event event,
 	case X(ACQUIRE, UNROUTED, LABELED_PARENT):
 	case X(ACQUIRE, UNROUTED, LABELED_CHILD):
 	case X(ACQUIRE, ROUTED_ONDEMAND, LABELED_PARENT):
-#if 0
-		ipsecdoi_initiate(c, child_sa_policy(c), SOS_NOBODY,
-				  e->inception, e->sec_label, e->background,
-				  logger,
-				  /*update_routing*/LEMPTY, HERE);
-#endif
 		return true;
 	case X(DELETE_IKE, ROUTED_ONDEMAND, LABELED_PARENT):
 	case X(DELETE_IKE, UNROUTED, LABELED_PARENT):
