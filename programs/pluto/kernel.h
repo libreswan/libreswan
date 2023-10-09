@@ -138,6 +138,7 @@ struct kernel_state {
 	enum direction direction;
 	bool esn;
 	bool decap_dscp;
+	bool dont_encap_dscp;
 	bool nopmtudisc;
 	uint32_t tfcpad;
 	ipsec_spi_t spi;

@@ -2253,6 +2253,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	config->decap_dscp = extract_yn("decap-dscp", wm->decap_dscp, /*default*/false,wm, c->logger);
 
+	config->dont_encap_dscp = extract_yn("dont-encap-dscp", wm->dont_encap_dscp, /*default*/false,wm, c->logger);
+
 	config->nopmtudisc = extract_yn("nopmtudisc", wm->nopmtudisc, /*default*/false,wm, c->logger);
 
 	bool mobike = extract_yn("mobike", wm->mobike, /*default*/false, wm, c->logger);
@@ -3697,6 +3699,7 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 	}
 	CT(child_sa.pfs, PFS);
 	CT(decap_dscp, DECAP_DSCP);
+	CT(dont_encap_dscp, DONT_ENCAP_DSCP);
 	CT(nopmtudisc, NOPMTUDISC);
 	CT(ms_dh_downgrade, MS_DH_DOWNGRADE);
 

@@ -280,6 +280,7 @@ struct config {
 	bool aggressive;		/* do we do aggressive
 					 * mode? */
 	bool decap_dscp;		/* decap ToS/DSCP bits */
+	bool dont_encap_dscp;		/* don't encap ToS/DSCP bits */
 	bool nopmtudisc;		/* ??? */
 
 	bool nat_keepalive;		/* Send NAT-T Keep-Alives if

@@ -251,6 +251,7 @@ enum keyword_numeric_conn_field {
 	KNCF_INTERMEDIATE,	/* enable support for Intermediate Exchange */
 	KNCF_ESN,
 	KNCF_DECAP_DSCP,
+	KNCF_DONT_ENCAP_DSCP,
 	KNCF_NOPMTUDISC,
 	KNCF_IKEv2_ALLOW_NARROWING,
 	KNCF_PAM_AUTHORIZE,
