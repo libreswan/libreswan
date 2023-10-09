@@ -144,15 +144,6 @@ enum routing_event {
 #define ROUTING_EVENT_ROOF (CONNECTION_RESUME+1)
 };
 
-struct routing_annex {
-	struct ike_sa **ike;
-	struct child_sa **child;
-	const threadtime_t *const inception;
-	ip_packet packet;
-	bool background;
-	shunk_t sec_label;
-};
-
 /*
  * Wrapper that zaps the IKE SA of any children before deleting the
  * IKE SA.
@@ -163,8 +154,6 @@ struct routing_annex {
  * IKEv2: all children are deleted.
  */
 void connection_zap_ike_family(struct ike_sa **ike, enum routing_event event, where_t where);
-
-void jam_routing_annex(struct jambuf *buf, const struct routing_annex *e);
 
 PRINTF_LIKE(2)
 void ldbg_routing(struct logger *logger, const char *fmt, ...);

@@ -62,6 +62,15 @@ static enum_names routing_event_names = {
 	NULL,
 };
 
+struct routing_annex {
+	struct ike_sa **ike;
+	struct child_sa **child;
+	const threadtime_t *const inception;
+	ip_packet packet;
+	bool background;
+	shunk_t sec_label;
+};
+
 static bool dispatch(const enum routing_event event,
 		     struct connection **cp,
 		     struct logger *logger, where_t where,
@@ -138,7 +147,7 @@ static void jam_routing(struct jambuf *buf,
 	jam_so_update(buf, c->config->ike_info->parent_name, c->newest_ike_sa, c->newest_ike_sa, &newest);
 }
 
-void jam_routing_annex(struct jambuf *buf, const struct routing_annex *e)
+static void jam_routing_annex(struct jambuf *buf, const struct routing_annex *e)
 {
 	if (e->ike != NULL && (*e->ike) != NULL) {
 		jam_event_sa(buf, &(*e->ike)->sa);
