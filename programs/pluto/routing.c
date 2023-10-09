@@ -391,12 +391,13 @@ bool kernel_policy_installed(const struct connection *c)
 static void set_routing(enum routing_event event UNUSED,
 			struct connection *c,
 			enum routing new_routing,
-			struct child_sa **child,
+			const struct routing_annex *e,
 			where_t where UNUSED)
 {
-	so_serial_t new_routing_sa = (child == NULL ? SOS_NOBODY :
-				      *child == NULL ? SOS_NOBODY :
-				      (*child)->sa.st_serialno);
+	so_serial_t new_routing_sa =
+		(e != NULL && e->child != NULL && (*e->child) != NULL ? (*e->child)->sa.st_serialno :
+		 /*e != NULL && e->ike != NULL && (*e->ike) != NULL ? (*e->ike)->sa.st_serialno :*/
+		 SOS_NOBODY);
 	c->child.routing = new_routing;
 	c->newest_routing_sa = new_routing_sa;
 }
@@ -1327,7 +1328,7 @@ static bool dispatch_1(enum routing_event event,
 			return true;
 		}
 		unrouted_instance_to_unrouted_negotiation(event, c, where);
-		set_routing(event, c, RT_UNROUTED_NEGOTIATION, e->child, where);
+		set_routing(event, c, RT_UNROUTED_NEGOTIATION, e, where);
 		return true;
 
 	case X(UNROUTE, UNROUTED_NEGOTIATION, INSTANCE):
@@ -1576,21 +1577,21 @@ static bool dispatch_1(enum routing_event event,
 		if (!install_inbound_ipsec_sa((*e->child), where)) {
 			return false;
 		}
-		set_routing(event, c, RT_ROUTED_INBOUND, e->child, where);
+		set_routing(event, c, RT_ROUTED_INBOUND, e, where);
 		return true;
 	case X(ESTABLISH_INBOUND, ROUTED_INBOUND, PERMANENT):
 		/* alias-01 */
 		if (!install_inbound_ipsec_sa((*e->child), where)) {
 			return false;
 		}
-		set_routing(event, c, RT_ROUTED_INBOUND, e->child, where);
+		set_routing(event, c, RT_ROUTED_INBOUND, e, where);
 		return true;
 	case X(ESTABLISH_INBOUND, ROUTED_ONDEMAND, PERMANENT):
 		flush_routed_ondemand_revival(c);
 		if (!install_inbound_ipsec_sa((*e->child), where)) {
 			return false;
 		}
-		set_routing(event, c, RT_ROUTED_INBOUND, e->child, where);
+		set_routing(event, c, RT_ROUTED_INBOUND, e, where);
 		return true;
 	case X(ESTABLISH_INBOUND, ROUTED_NEGOTIATION, INSTANCE):
 	case X(ESTABLISH_INBOUND, ROUTED_NEGOTIATION, PERMANENT):
@@ -1599,7 +1600,7 @@ static bool dispatch_1(enum routing_event event,
 		if (!install_inbound_ipsec_sa((*e->child), where)) {
 			return false;
 		}
-		set_routing(event, c, RT_ROUTED_INBOUND, e->child, where);
+		set_routing(event, c, RT_ROUTED_INBOUND, e, where);
 		return true;
 	case X(ESTABLISH_INBOUND, UNROUTED, INSTANCE):
 	case X(ESTABLISH_INBOUND, UNROUTED, PERMANENT):
@@ -1608,7 +1609,7 @@ static bool dispatch_1(enum routing_event event,
 		if (!install_inbound_ipsec_sa((*e->child), where)) {
 			return false;
 		}
-		set_routing(event, c, RT_UNROUTED_INBOUND, e->child, where);
+		set_routing(event, c, RT_UNROUTED_INBOUND, e, where);
 		return true;
 
 	case X(ESTABLISH_INBOUND, ROUTED_TUNNEL, PERMANENT):
@@ -1628,7 +1629,7 @@ static bool dispatch_1(enum routing_event event,
 		if (!install_inbound_ipsec_sa((*e->child), where)) {
 			return false;
 		}
-		set_routing(event, c, RT_ROUTED_TUNNEL, e->child, where);
+		set_routing(event, c, RT_ROUTED_TUNNEL, e, where);
 		return true;
 
 	case X(ESTABLISH_OUTBOUND, UNROUTED_INBOUND, PERMANENT):
@@ -1678,12 +1679,12 @@ static bool dispatch_1(enum routing_event event,
 				(*e->child)->sa.st_mobike_del_src_ip = false;
 			}
 		}
-		set_routing(event, c, RT_UNROUTED_TUNNEL, e->child, where);
+		set_routing(event, c, RT_UNROUTED_TUNNEL, e, where);
 		return true;
 
 	case X(RESUME, UNROUTED_TUNNEL, PERMANENT):
 	case X(RESUME, UNROUTED_TUNNEL, INSTANCE):
-		set_routing(event, c, RT_ROUTED_TUNNEL, e->child, where);
+		set_routing(event, c, RT_ROUTED_TUNNEL, e, where);
 		FOR_EACH_ITEM(spd, &c->child.spds) {
 			do_updown(UPDOWN_UP, c, spd, &(*e->child)->sa, logger);
 			do_updown(UPDOWN_ROUTE, c, spd, &(*e->child)->sa, logger);
@@ -1775,7 +1776,7 @@ static bool dispatch_1(enum routing_event event,
 		if (!install_inbound_ipsec_sa((*e->child), where)) {
 			return false;
 		}
-		set_routing(event, c, RT_UNROUTED_TUNNEL, e->child, where);
+		set_routing(event, c, RT_UNROUTED_TUNNEL, e, where);
 		return true;
 	case X(ESTABLISH_OUTBOUND, UNROUTED_TUNNEL, LABELED_CHILD):
 		/* rekey */
@@ -1789,7 +1790,7 @@ static bool dispatch_1(enum routing_event event,
 		if (!install_inbound_ipsec_sa((*e->child), where)) {
 			return false;
 		}
-		set_routing(event, c, RT_UNROUTED_INBOUND, e->child, where);
+		set_routing(event, c, RT_UNROUTED_INBOUND, e, where);
 		return true;
 	case X(ESTABLISH_OUTBOUND, UNROUTED_INBOUND, LABELED_CHILD):
 		/* labeled IPsec ignores UP; no policy */
