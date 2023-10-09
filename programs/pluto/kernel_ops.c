@@ -301,7 +301,7 @@ bool kernel_ops_add_sa(const struct kernel_state *sa, bool replace, struct logge
 
 		if (sa->esn) jam(buf, " +esn");
 		if (sa->decap_dscp) jam(buf, " +decap_dscp");
-		if (sa->dont_encap_dscp) jam(buf, " +dont_encap_dscp");
+		if (!sa->encap_dscp) jam(buf, " +dont_encap_dscp");
 		if (sa->nopmtudisc) jam(buf, " +nopmtudisc");
 
 		jam(buf, " replay_window=%d", sa->replay_window);

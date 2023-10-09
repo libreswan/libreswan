@@ -115,7 +115,7 @@ static void help(void)
 		"	[--allow-narrowing] \\\n"
 		"	[--fragmentation {yes,no,force}] [--no-ikepad]  \\\n"
 		"	[--ikefrag-allow | --ikefrag-force] \\\n"
-		"	[--esn ] [--no-esn] [--decap-dscp] [--dont-encap-dscp] [--nopmtudisc] [--mobike] \\\n"
+		"	[--esn ] [--no-esn] [--decap-dscp] [--encap-dscp] [--nopmtudisc] [--mobike] \\\n"
 		"	[--tcp <no|yes|fallback>] --tcp-remote-port <port>\\\n"
 #ifdef HAVE_NM
 		"	[--nm-configured] \\\n"
@@ -553,7 +553,7 @@ enum option_enums {
 	CD_MODECFGPULL,
 	CD_AGGRESSIVE,
 	CD_DECAP_DSCP,
-	CD_DONT_ENCAP_DSCP,
+	CD_ENCAP_DSCP,
 	CD_NOPMTUDISC,
 	CD_IKEFRAG_ALLOW,
 	CD_IKEFRAG_FORCE,
@@ -914,7 +914,7 @@ static const struct option long_opts[] = {
 	{ "no-esn", no_argument, NULL, CD_NO_ESN }, /* obsolete */
 	{ "esn", optional_argument, NULL, CD_ESN },
 	{ "decap-dscp", no_argument, NULL, CD_DECAP_DSCP },
-	{ "dont-encap-dscp", no_argument, NULL, CD_DONT_ENCAP_DSCP },
+	{ "encap-dscp", no_argument, NULL, CD_ENCAP_DSCP },
 	{ "nopmtudisc", no_argument, NULL, CD_NOPMTUDISC },
 	{ "ignore-peer-dns", no_argument, NULL, CD_IGNORE_PEER_DNS },
 #undef PS
@@ -1900,9 +1900,9 @@ int main(int argc, char **argv)
 			msg.decap_dscp = YN_YES;
 			continue;
 
-		/* --dont_encap-dscp */
-		case CD_DONT_ENCAP_DSCP:
-			msg.dont_encap_dscp = YN_YES;
+		/* --encap-dscp */
+		case CD_ENCAP_DSCP:
+			msg.encap_dscp = YN_YES;
 			continue;
 
 		/* --aggressive | --aggrmode */

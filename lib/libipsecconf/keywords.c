@@ -463,7 +463,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "intermediate",  kv_conn | kv_processed, kt_enum, KNCF_INTERMEDIATE, yn_option_names, NULL, },
   { "esn",  kv_conn | kv_processed,  kt_enum,  KNCF_ESN,  yne_option_names, NULL, },
   { "decap-dscp",  kv_conn | kv_processed,  kt_enum,  KNCF_DECAP_DSCP,  yn_option_names, NULL, },
-  { "dont-encap-dscp",  kv_conn | kv_processed,  kt_enum,  KNCF_DONT_ENCAP_DSCP,  yn_option_names, NULL, },
+  { "encap-dscp",  kv_conn | kv_processed,  kt_enum,  KNCF_ENCAP_DSCP,  yn_option_names, NULL, },
   { "nopmtudisc",  kv_conn | kv_processed,  kt_enum,  KNCF_NOPMTUDISC,  yn_option_names, NULL, },
   { "fragmentation",  kv_conn | kv_processed,  kt_enum,  KNCF_FRAGMENTATION,  ynf_option_names, NULL, },
   { "mobike",  kv_conn,  kt_enum,  KNCF_MOBIKE, yn_option_names, NULL, },

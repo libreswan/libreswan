@@ -203,7 +203,7 @@ struct whack_message {
 	enum yn_options aggressive;	/* do we do aggressive
 					 * mode? */
 	enum yn_options decap_dscp;	/* decap ToS/DSCP bits */
-	enum yn_options dont_encap_dscp;/* don't encap ToS/DSCP bits */
+	enum yn_options encap_dscp;	/* encap ToS/DSCP bits */
 	enum yn_options nopmtudisc;	/* ??? */
 	enum ynf_options fragmentation;	/* fragment IKE payload */
 	enum yne_options esn;		/* accept or request ESN{yes,no} */
