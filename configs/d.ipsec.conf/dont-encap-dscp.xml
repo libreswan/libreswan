@@ -1,0 +1,14 @@
+  <varlistentry>
+  <term><emphasis remap='B'>dont-encap-dscp</emphasis></term>
+  <listitem>
+<para>
+Disable encapsulating the Differentiated Services Code Point (DSCP, formerly
+known as Terms Of Service (TOS)) bits. The extra flag "dont-encap-dscp" prevents
+these bits from being copied from the unencrypted IP packets to the encrypted
+IP packets.
+Acceptable values are
+<emphasis remap='B'>no</emphasis> (the default) or <emphasis remap='B'>yes</emphasis>.
+Currently this feature is only implemented for the Linux XFRM stack.
+</para>
+  </listitem>
+  </varlistentry>
