@@ -1516,7 +1516,7 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 			ldbg(logger, "%s() enabling Decap DSCP", __func__);
 			req.p.flags |= XFRM_STATE_DECAP_DSCP;
 		}
-		if (!sa->encap_dscp) {
+		if (sa->dont_encap_dscp) {
 			ldbg(logger, "%s() disabling Encap DSCP", __func__);
 			__u32 extra_flags = XFRM_SA_XFLAG_DONT_ENCAP_DSCP;
 			attr->rta_type = XFRMA_SA_EXTRA_FLAGS;

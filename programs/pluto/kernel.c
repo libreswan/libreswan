@@ -1599,7 +1599,7 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 		}
 		if (!c->config->encap_dscp) {
 			ldbg(st->st_logger, "kernel: Disabling Encap ToS/DSCP bits");
-			said_next->encap_dscp = false;
+			said_next->dont_encap_dscp = true;
 		}
 		if (c->config->nopmtudisc) {
 			ldbg(st->st_logger, "kernel: Disabling Path MTU Discovery");
