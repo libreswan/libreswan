@@ -865,7 +865,7 @@ void connection_initiated_child(struct ike_sa *ike, struct child_sa *child, wher
 void connection_acquired_ike(struct ike_sa *ike, where_t where)
 {
 	struct connection *c = ike->sa.st_connection;
-	dispatch(CONNECTION_ACQUIRE, &c,
+	dispatch(CONNECTION_INITIATE, &c,
 		 ike->sa.st_logger, where,
 		 (struct routing_annex) {
 			 .ike = &ike,
@@ -875,7 +875,7 @@ void connection_acquired_ike(struct ike_sa *ike, where_t where)
 void connection_acquired_child(struct ike_sa *ike, struct child_sa *child, where_t where)
 {
 	struct connection *cc = child->sa.st_connection;
-	dispatch(CONNECTION_ACQUIRE, &cc,
+	dispatch(CONNECTION_INITIATE, &cc,
 		 child->sa.st_logger, where,
 		 (struct routing_annex) {
 			 .ike = &ike,
@@ -1810,11 +1810,12 @@ static bool dispatch_1(enum routing_event event,
 		set_routing(event, c, RT_UNROUTED, NULL, where);
 		do_updown_unroute(c, NULL);
 		return true;
-	case X(INITIATE, UNROUTED, LABELED_PARENT):
-		return true;
-	case X(ACQUIRE, UNROUTED, LABELED_PARENT):
-	case X(ACQUIRE, UNROUTED, LABELED_CHILD):
 	case X(ACQUIRE, ROUTED_ONDEMAND, LABELED_PARENT):
+	case X(ACQUIRE, UNROUTED, LABELED_CHILD):
+	case X(ACQUIRE, UNROUTED, LABELED_PARENT):
+	case X(INITIATE, ROUTED_ONDEMAND, LABELED_PARENT):
+	case X(INITIATE, UNROUTED, LABELED_CHILD):
+	case X(INITIATE, UNROUTED, LABELED_PARENT):
 		return true;
 	case X(DELETE_IKE, ROUTED_ONDEMAND, LABELED_PARENT):
 	case X(DELETE_IKE, UNROUTED, LABELED_PARENT):
