@@ -542,6 +542,7 @@ kvmplutotest	ikev2-xfrmi-15-interface-ip		wip
 kvmplutotest	ikev2-xfrmi-16-rekey			wip
 
 kvmplutotest	ikev2-decap-dscp-01			good
+kvmplutotest	ikev2-dont-encap-dscp-01		good
 kvmplutotest	ikev2-nopmtudisc-01			good
 
 kvmplutotest	ikev2-43-init-retransmit		good
