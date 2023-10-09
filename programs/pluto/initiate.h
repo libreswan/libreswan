@@ -23,6 +23,7 @@
 #include "shunk.h"
 #include "ip_packet.h"
 #include "pluto_timing.h"	/* for threadtime_t */
+#include "initiated_by.h"
 
 struct logger;
 struct kernel_acquire;
@@ -31,21 +32,13 @@ struct connection;
 bool initiate_connection(struct connection *c, const char *remote_host,
 			 bool background, struct logger *logger);
 
-enum update_routing {
-	UPDATE_IKE = 1,
-	UPDATE_CHILD = 2,
-	UPDATE_PENDING = 4,
-	UPDATE_ALL = 7,
-	UPDATE_ACQUIRE,
-};
-
 void ipsecdoi_initiate(struct connection *c,
 		       lset_t policy,
 		       so_serial_t replacing,
 		       const threadtime_t *inception,
 		       shunk_t sec_label,
 		       bool background, struct logger *logger,
-		       lset_t update_routing,
+		       enum initiated_by initiated_by,
 		       where_t where);
 
 #endif

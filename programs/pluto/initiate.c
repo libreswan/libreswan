@@ -352,7 +352,7 @@ static bool initiate_connection_4_fab(struct connection *c,
 
 	ipsecdoi_initiate(c, policy, replacing, &inception,
 			  sec_label, background, logger,
-			  /*update-routing*/UPDATE_ALL, HERE);
+			  INITIATED_BY_WHACK/*maybe?*/, HERE);
 
 	return true;
 }
@@ -363,10 +363,14 @@ void ipsecdoi_initiate(struct connection *c,
 		       const threadtime_t *inception,
 		       shunk_t sec_label,
 		       bool background, struct logger *logger,
-		       lset_t update_routing, where_t where)
+		       enum initiated_by initiated_by,
+		       where_t where)
 {
-	ldbg_connection(c, where, "%s() with update_routing=%s sec_label "PRI_SHUNK,
-			__func__, bool_str(update_routing), pri_shunk(sec_label));
+	enum_buf ifnb;
+	ldbg_connection(c, where, "%s() from %s sec_label "PRI_SHUNK,
+			__func__,
+			str_enum_short(&initiated_by_names, initiated_by, &ifnb),
+			pri_shunk(sec_label));
 
 	/*
 	 * Try to find a viable IKE (parent) SA.  A viable IKE SA is
@@ -409,11 +413,8 @@ void ipsecdoi_initiate(struct connection *c,
 		if (ike == NULL) {
 			return;
 		}
-		if (update_routing & UPDATE_IKE) {
-			connection_initiated_ike(ike, HERE);
-		}
-		if (update_routing & UPDATE_ACQUIRE) {
-			connection_acquired_ike(ike, HERE);
+		if (initiated_by != INITIATED_BY_NONE) {
+			connection_initiated_ike(ike, initiated_by, HERE);
 		}
 		if (background) {
 			state_detach(&ike->sa, c->logger);
@@ -472,11 +473,8 @@ void ipsecdoi_initiate(struct connection *c,
 		if (child == NULL) {
 			return;
 		}
-		if (update_routing & UPDATE_CHILD) {
-			connection_initiated_child(ike, child, where);
-		}
-		if (update_routing & UPDATE_ACQUIRE) {
-			connection_acquired_child(ike, child, HERE);
+		if (initiated_by != INITIATED_BY_NONE) {
+			connection_initiated_child(ike, child, initiated_by, where);
 		}
 		if (background) {
 			/*
@@ -508,8 +506,8 @@ void ipsecdoi_initiate(struct connection *c,
 		add_pending(ike, c, policy,
 			    replacing, sec_label,
 			    false /*part of initiate*/, background);
-		if (update_routing & UPDATE_PENDING) {
-			connection_pending(c, where);
+		if (initiated_by != INITIATED_BY_NONE) {
+			connection_pending(c, initiated_by, where);
 		}
 		break;
 	}
@@ -527,8 +525,8 @@ void ipsecdoi_initiate(struct connection *c,
 		add_pending(ike, cc, policy,
 			    replacing, sec_label,
 			    false /*part of initiate*/, background);
-		if (update_routing) {
-			connection_pending(cc, where);
+		if (initiated_by != INITIATED_BY_NONE) {
+			connection_pending(cc, initiated_by, where);
 		}
 		connection_delref(&cc, cc->logger);
 		break;

@@ -31,6 +31,7 @@ struct kernel_acquire;
 struct child_sa;
 struct ike_sa;
 enum direction;
+enum initiated_by;
 
 /*
  * Routing status.
@@ -79,18 +80,12 @@ void connection_unroute(struct connection *c, where_t where);
  * These are closely related
  */
 
-void connection_initiated_ike(struct ike_sa *ike, where_t where);
-void connection_initiated_child(struct ike_sa *ike, struct child_sa *child, where_t where);
-
-void connection_acquired_ike(struct ike_sa *ike, where_t where);
-void connection_acquired_child(struct ike_sa *ike, struct child_sa *child, where_t where);
+void connection_initiated_ike(struct ike_sa *ike, enum initiated_by, where_t where);
+void connection_initiated_child(struct ike_sa *ike, struct child_sa *child, enum initiated_by, where_t where);
 
 void connection_establish_ike(struct ike_sa *ike, where_t where);
 
-void connection_pending(struct connection *c, where_t where);
-
-void connection_acquire(struct connection *c, threadtime_t *inception,
-			const struct kernel_acquire *b, where_t where);
+void connection_pending(struct connection *c, enum initiated_by, where_t where);
 
 /*
  * Mobike
@@ -122,7 +117,6 @@ enum routing_event {
 	CONNECTION_UNROUTE,
 	/* start/stop a connection */
 	CONNECTION_INITIATE, /* also revive */
-	CONNECTION_ACQUIRE,
 	/* initiator/responder? */
 	CONNECTION_INITIATE_IKE,
 	CONNECTION_INITIATE_CHILD,

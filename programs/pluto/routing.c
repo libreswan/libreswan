@@ -27,7 +27,7 @@
 #include "pluto_stats.h"
 #include "foodgroups.h"			/* for connection_group_{route,unroute}() */
 #include "orient.h"
-#include "initiate.h"			/* for ipsecdoi_initiate() */
+#include "initiated_by.h"
 #include "updown.h"
 #include "instantiate.h"
 #include "connection_event.h"
@@ -37,7 +37,6 @@ static const char *routing_event_name[] = {
 	S(CONNECTION_ROUTE),
 	S(CONNECTION_UNROUTE),
 	S(CONNECTION_INITIATE),
-	S(CONNECTION_ACQUIRE),
 	S(CONNECTION_ESTABLISH_IKE),
 	S(CONNECTION_ESTABLISH_INBOUND),
 	S(CONNECTION_ESTABLISH_OUTBOUND),
@@ -69,6 +68,7 @@ struct routing_annex {
 	ip_packet packet;
 	bool background;
 	shunk_t sec_label;
+	enum initiated_by initiated_by;
 };
 
 static bool dispatch(const enum routing_event event,
@@ -158,6 +158,10 @@ static void jam_routing_annex(struct jambuf *buf, const struct routing_annex *e)
 	if (e->sec_label.len > 0) {
 		jam_string(buf, ", sec_label=");
 		jam_shunk(buf, e->sec_label);
+	}
+	if (e->initiated_by != INITIATED_BY_NONE) {
+		jam_string(buf, ", by=");
+		jam_enum_short(buf, &initiated_by_names, e->initiated_by);
 	}
 }
 
@@ -496,8 +500,7 @@ static void ondemand_to_negotiation(enum routing_event event,
         struct logger *logger = c->logger;
 	ldbg_routing(c->logger, "%s() %s", __func__, reason);
         PEXPECT(logger, !is_opportunistic(c));
-	PASSERT(logger, (event == CONNECTION_INITIATE ||
-			 event == CONNECTION_ACQUIRE));
+	PASSERT(logger, event == CONNECTION_INITIATE);
 	enum routing rt_negotiation = (c->child.routing == RT_ROUTED_ONDEMAND ? RT_ROUTED_NEGOTIATION :
 				       CONNECTION_ROUTING_ROOF);
 	PASSERT(logger, (rt_negotiation != CONNECTION_ROUTING_ROOF));
@@ -850,17 +853,22 @@ void connection_routing_clear(struct state *st)
 	}
 }
 
-void connection_initiated_ike(struct ike_sa *ike, where_t where)
+void connection_initiated_ike(struct ike_sa *ike,
+			      enum initiated_by initiated_by,
+			      where_t where)
 {
 	struct connection *c = ike->sa.st_connection;
 	dispatch(CONNECTION_INITIATE, &c,
 		 ike->sa.st_logger, where,
 		 (struct routing_annex) {
 			 .ike = &ike,
+			 .initiated_by = initiated_by,
 		 });
 }
 
-void connection_initiated_child(struct ike_sa *ike, struct child_sa *child, where_t where)
+void connection_initiated_child(struct ike_sa *ike, struct child_sa *child,
+				enum initiated_by initiated_by,
+				where_t where)
 {
 	struct connection *cc = child->sa.st_connection;
 	dispatch(CONNECTION_INITIATE, &cc,
@@ -868,35 +876,17 @@ void connection_initiated_child(struct ike_sa *ike, struct child_sa *child, wher
 		 (struct routing_annex) {
 			 .ike = &ike,
 			 .child = &child,
+			 .initiated_by = initiated_by,
 		 });
 }
 
-void connection_acquired_ike(struct ike_sa *ike, where_t where)
-{
-	struct connection *c = ike->sa.st_connection;
-	dispatch(CONNECTION_INITIATE, &c,
-		 ike->sa.st_logger, where,
-		 (struct routing_annex) {
-			 .ike = &ike,
-		 });
-}
-
-void connection_acquired_child(struct ike_sa *ike, struct child_sa *child, where_t where)
-{
-	struct connection *cc = child->sa.st_connection;
-	dispatch(CONNECTION_INITIATE, &cc,
-		 child->sa.st_logger, where,
-		 (struct routing_annex) {
-			 .ike = &ike,
-			 .child = &child,
-		 });
-}
-
-void connection_pending(struct connection *c, where_t where)
+void connection_pending(struct connection *c, enum initiated_by initiated_by, where_t where)
 {
 	dispatch(CONNECTION_INITIATE, &c,
 		 c->logger, where,
-		 (struct routing_annex) {0});
+		 (struct routing_annex) {
+			 .initiated_by = initiated_by,
+		 });
 }
 
 void connection_establish_ike(struct ike_sa *ike, where_t where)
@@ -914,19 +904,6 @@ void connection_establish_ike(struct ike_sa *ike, where_t where)
 		DBG_tcpdump_ike_sa_keys(&ike->sa);
 	}
 	ldbg_routing_stop(c, CONNECTION_ESTABLISH_IKE, where, &old, /*ok*/true);
-}
-
-void connection_acquire(struct connection *c, threadtime_t *inception,
-			const struct kernel_acquire *b, where_t where)
-{
-	dispatch(CONNECTION_ACQUIRE, &c,
-		 b->logger, where,
-		 (struct routing_annex) {
-			 .inception = inception,
-			 .background = b->background,
-			 .sec_label = b->sec_label,
-			 .packet = b->packet,
-		 });
 }
 
 void connection_route(struct connection *c, where_t where)
@@ -1232,12 +1209,6 @@ static bool dispatch_1(enum routing_event event,
 		PEXPECT(logger, c->child.routing == RT_ROUTED_NEGOTIATION);
 		return true;
 
-	case X(ACQUIRE, ROUTED_ONDEMAND, PERMANENT):
-		flush_routed_ondemand_revival(c);
-		ondemand_to_negotiation(event, c, where, "negotiating permanent");
-		PEXPECT(logger, c->child.routing == RT_ROUTED_NEGOTIATION);
-		return true;
-
 	case X(INITIATE, UNROUTED_NEGOTIATION, PERMANENT):
 		if (BROKEN_TRANSITION) {
 			/* ikev2-redirect-01-global-load-balancer
@@ -1256,9 +1227,6 @@ static bool dispatch_1(enum routing_event event,
 			 */
 			return true;
 		}
-		llog(RC_LOG, c->logger, "connection already negotiating");
-		return true;
-	case X(ACQUIRE, ROUTED_NEGOTIATION, PERMANENT):
 		llog(RC_LOG, c->logger, "connection already negotiating");
 		return true;
 
@@ -1360,37 +1328,6 @@ static bool dispatch_1(enum routing_event event,
 		}
 		unrouted_instance_to_unrouted_negotiation(event, c, where);
 		set_routing(event, c, RT_UNROUTED_NEGOTIATION, e->child, where);
-		return true;
-
-	case X(ACQUIRE, UNROUTED, INSTANCE):
-		/*
-		 * Triggered by acquire against the template which
-		 * then instantiated creating this connection.  The
-		 * template may or may not be routed.
-		 *
-		 * When the template is routed, should this instead
-		 * transition to routed_negotiation?
-		 *
-		 * NO? because when it is pulled it shouldn't undo the
-		 * routing?
-		 *
-		 * When the template is routed, should the instance
-		 * start in ROUTED_UNINSTALLED?
-		 *
-		 * YES? because the routing code has to deal with
-		 * that.
-		 *
-		 * MAYBE? but only when the template and instance have
-		 * the same SPDs.
-		 */
-		if (BROKEN_TRANSITION &&
-		    c->config->negotiation_shunt == SHUNT_HOLD) {
-			ldbg_routing(logger, "skipping NEGOTIATION=HOLD");
-			set_routing(event, c, RT_UNROUTED_NEGOTIATION, NULL, where);
-			return true;
-		}
-		unrouted_instance_to_unrouted_negotiation(event, c, where);
-		set_routing(event, c, RT_UNROUTED_NEGOTIATION, NULL, where);
 		return true;
 
 	case X(UNROUTE, UNROUTED_NEGOTIATION, INSTANCE):
@@ -1819,9 +1756,6 @@ static bool dispatch_1(enum routing_event event,
 		set_routing(event, c, RT_UNROUTED, NULL, where);
 		do_updown_unroute(c, NULL);
 		return true;
-	case X(ACQUIRE, ROUTED_ONDEMAND, LABELED_PARENT):
-	case X(ACQUIRE, UNROUTED, LABELED_CHILD):
-	case X(ACQUIRE, UNROUTED, LABELED_PARENT):
 	case X(INITIATE, ROUTED_ONDEMAND, LABELED_PARENT):
 	case X(INITIATE, UNROUTED, LABELED_CHILD):
 	case X(INITIATE, UNROUTED, LABELED_PARENT):

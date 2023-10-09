@@ -279,5 +279,5 @@ void revive_connection(struct connection *c, const char *subplot,
 
 	ipsecdoi_initiate(c, policy, replacing, inception,
 			  sec_label, background, logger,
-			  /*update_routing*/UPDATE_ALL, HERE);
+			  INITIATED_BY_REVIVE, HERE);
 }

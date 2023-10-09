@@ -79,7 +79,7 @@ void ikev2_replace(struct state *st)
 
 		ipsecdoi_initiate(st->st_connection, policy, st->st_serialno, &inception,
 				  null_shunk, /*background?*/false, st->st_logger,
-				  /*update_routing*/LEMPTY, HERE);
+				  INITIATED_BY_NONE, HERE);
 	}
 }
 
