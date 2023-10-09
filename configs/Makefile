@@ -164,6 +164,7 @@ XMLSOURCES += d.ipsec.conf/mobike.xml
 XMLSOURCES += d.ipsec.conf/intermediate.xml
 XMLSOURCES += d.ipsec.conf/esn.xml
 XMLSOURCES += d.ipsec.conf/decap-dscp.xml
+XMLSOURCES += d.ipsec.conf/encap-dscp.xml
 XMLSOURCES += d.ipsec.conf/nopmtudisc.xml
 XMLSOURCES += d.ipsec.conf/narrowing.xml
 XMLSOURCES += d.ipsec.conf/sareftrack.xml

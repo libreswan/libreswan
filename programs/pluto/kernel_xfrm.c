@@ -1516,6 +1516,15 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 			ldbg(logger, "%s() enabling Decap DSCP", __func__);
 			req.p.flags |= XFRM_STATE_DECAP_DSCP;
 		}
+		if (!sa->encap_dscp) {
+			ldbg(logger, "%s() disabling Encap DSCP", __func__);
+			__u32 extra_flags = XFRM_SA_XFLAG_DONT_ENCAP_DSCP;
+			attr->rta_type = XFRMA_SA_EXTRA_FLAGS;
+			attr->rta_len = RTA_LENGTH(sizeof(extra_flags));
+			memcpy(RTA_DATA(attr), &extra_flags, sizeof(extra_flags));
+			req.n.nlmsg_len += attr->rta_len;
+			attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
+		}
 		if (sa->nopmtudisc) {
 			ldbg(logger, "%s() disabling Path MTU Discovery", __func__);
 			req.p.flags |= XFRM_STATE_NOPMTUDISC;
