@@ -40,6 +40,7 @@
 #include "secrets.h"		/* for enum privae_key_kind */
 #include "encap_mode.h"
 #include "encap_proto.h"
+#include "initiated_by.h"
 
 const char *bool_str(bool b)
 {
@@ -2401,6 +2402,7 @@ static const enum_names *en_checklist[] = {
 	&encap_mode_story,
 	&encap_proto_names,
 	&encap_proto_story,
+	&initiated_by_names,
 #ifdef KERNEL_XFRM
 	&xfrm_policy_names,
 #endif
