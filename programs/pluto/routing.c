@@ -431,6 +431,25 @@ static bool unrouted_to_routed_never_negotiate(enum routing_event event, struct 
 	return true;
 }
 
+static void routed_tunnel_to_routed_ondemand(enum routing_event event,
+					     struct child_sa *child,
+					     where_t where)
+{
+	replace_ipsec_with_bare_kernel_policies(child, SHUNT_KIND_ONDEMAND,
+						EXPECT_KERNEL_POLICY_OK, where);
+	set_routing(event, child->sa.st_connection, RT_ROUTED_ONDEMAND, NULL, where);
+}
+
+static void routed_tunnel_to_routed_failure(enum routing_event event,
+					    struct child_sa *child,
+					    where_t where)
+{
+	/* it's being stripped of the state, hence SOS_NOBODY */
+	replace_ipsec_with_bare_kernel_policies(child, SHUNT_KIND_FAILURE,
+						EXPECT_KERNEL_POLICY_OK, where);
+	set_routing(event, child->sa.st_connection, RT_ROUTED_FAILURE, NULL, where);
+}
+
 /*
  * For instance:
  *
@@ -549,10 +568,10 @@ static void routed_negotiation_to_routed_ondemand(enum routing_event event,
  * Delete the ROUTED_TUNNEL, and possibly delete the connection.
  */
 
-static void down_routed_tunnel(enum routing_event event,
-			       struct connection *c,
-			       struct child_sa **child,
-			       where_t where)
+static void teardown_routed_tunnel(enum routing_event event,
+				   struct connection *c,
+				   struct child_sa **child,
+				   where_t where)
 {
 	PASSERT((*child)->sa.st_logger, c == (*child)->sa.st_connection);
 
@@ -574,15 +593,8 @@ static void down_routed_tunnel(enum routing_event event,
 		return;
 	}
 
-	if (should_revive_child(*child)) {
-		ldbg_routing((*child)->sa.st_logger,
-			     "replacing TUNNEL with ONDEMAND; it will be revived");
-		/* it's being stripped of the state, hence SOS_NOBODY */
-		set_routing(event, c, RT_ROUTED_ONDEMAND, NULL, where);
-		replace_ipsec_with_bare_kernel_policies(*child, SHUNT_KIND_ONDEMAND,
-							EXPECT_KERNEL_POLICY_OK, HERE);
-		schedule_child_revival(*child, "received Delete/Notify");
-		/* covered by above; no!? */
+	if (scheduled_child_revival(*child, "received Delete/Notify")) {
+		routed_tunnel_to_routed_ondemand(event, (*child), where);
 		delete_child_sa(child);
 		return;
 	}
@@ -591,12 +603,8 @@ static void down_routed_tunnel(enum routing_event event,
 	 * Should this go back to on-demand?
 	 */
 	if (is_permanent(c) && c->policy.route) {
-		ldbg_routing((*child)->sa.st_logger,
-			     "replacing connection kernel policy with on-demand");
 		/* it's being stripped of the state, hence SOS_NOBODY */
-		set_routing(event, c, RT_ROUTED_ONDEMAND, NULL, where);
-		replace_ipsec_with_bare_kernel_policies(*child, SHUNT_KIND_ONDEMAND,
-							EXPECT_KERNEL_POLICY_OK, HERE);
+		routed_tunnel_to_routed_ondemand(event, (*child), where);
 		delete_child_sa(child);
 		return;
 	}
@@ -605,12 +613,7 @@ static void down_routed_tunnel(enum routing_event event,
 	 * Is there a failure shunt?
 	 */
 	if (is_permanent(c) && c->config->failure_shunt != SHUNT_NONE) {
-		ldbg_routing((*child)->sa.st_logger,
-			     "replacing connection kernel policy with failure");
-		/* it's being stripped of the state, hence SOS_NOBODY */
-		set_routing(event, c, RT_ROUTED_FAILURE, NULL, where);
-		replace_ipsec_with_bare_kernel_policies(*child, SHUNT_KIND_FAILURE,
-							EXPECT_KERNEL_POLICY_OK, HERE);
+		routed_tunnel_to_routed_failure(event, (*child), where);
 		delete_child_sa(child);
 		return;
 	}
@@ -1533,7 +1536,7 @@ static bool dispatch_1(enum routing_event event,
 	case X(TIMEOUT_CHILD, ROUTED_TUNNEL, INSTANCE):
 	case X(TIMEOUT_CHILD, ROUTED_TUNNEL, PERMANENT):
 		/* permenant connections are never deleted */
-		down_routed_tunnel(event, c, e->child, where);
+		teardown_routed_tunnel(event, c, e->child, where);
 		return true;
 
 	case X(DELETE_CHILD, UNROUTED_TUNNEL, INSTANCE):
@@ -1541,7 +1544,7 @@ static bool dispatch_1(enum routing_event event,
 	case X(TIMEOUT_CHILD, UNROUTED_TUNNEL, INSTANCE):
 	case X(TIMEOUT_CHILD, UNROUTED_TUNNEL, PERMANENT):
 		ldbg_routing(logger, "OOPS: UNROUTED_TUNNEL isn't routed!");
-		down_routed_tunnel(event, c, e->child, where);
+		teardown_routed_tunnel(event, c, e->child, where);
 		return true;
 
 	case X(DELETE_CHILD, UNROUTED_INBOUND, INSTANCE):
@@ -1556,13 +1559,12 @@ static bool dispatch_1(enum routing_event event,
 		 */
 		ldbg_routing(logger, "OOPS: UNROUTED_INBOUND isn't routed!");
 		ldbg_routing(logger, "OOPS: UNROUTED_INBOUND doesn't have outbound!");
-		down_routed_tunnel(event, c, e->child, where);
+		teardown_routed_tunnel(event, c, e->child, where);
 		return true;
 
 	case X(TIMEOUT_CHILD, UNROUTED_NEGOTIATION, INSTANCE):
 	case X(TIMEOUT_CHILD, UNROUTED, PERMANENT): /* permanent+up */
-		if (should_revive_child(*(e->child))) {
-			schedule_child_revival((*e->child), "timed out");
+		if (scheduled_child_revival((*e->child), "timed out")) {
 			delete_child_sa(e->child);
 			set_routing(event, c, RT_UNROUTED, NULL, where);
 			return true;

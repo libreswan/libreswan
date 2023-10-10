@@ -110,7 +110,7 @@ static bool revival_plausable(struct connection *c, struct logger *logger)
 	return true;
 }
 
-bool should_revive_child(struct child_sa *child)
+static bool should_revive_child(struct child_sa *child)
 {
 	struct connection *c = child->sa.st_connection;
 
@@ -231,11 +231,21 @@ static void schedule_revival_event(struct connection *c, struct logger *logger, 
 				  (impair.revival ? "revival" : NULL), logger);
 }
 
-void schedule_child_revival(struct child_sa *child, const char *subplot)
+static void schedule_child_revival(struct child_sa *child, const char *subplot)
 {
 	update_remote_port(&child->sa);
 	struct connection *c = child->sa.st_connection;
 	schedule_revival_event(c, child->sa.st_logger, subplot);
+}
+
+bool scheduled_child_revival(struct child_sa *child, const char *subplot)
+{
+	if (!should_revive_child(child)) {
+		return false;
+	}
+
+	schedule_child_revival(child, subplot);
+	return true;
 }
 
 void schedule_ike_revival(struct ike_sa *ike, const char *subplot)
