@@ -513,17 +513,15 @@ static void routed_negotiation_to_unrouted(enum routing_event event,
  * instantiated instances do not take this code path).
  */
 
-static void ondemand_to_negotiation(enum routing_event event,
-				    struct connection *c, where_t where,
-				    const char *reason)
+static void routed_ondemand_to_routed_negotiation(enum routing_event event,
+						  struct connection *c,
+						  struct logger *logger,
+						  where_t where,
+						  struct routing_annex *e)
 {
-        struct logger *logger = c->logger;
-	ldbg_routing(c->logger, "%s() %s", __func__, reason);
         PEXPECT(logger, !is_opportunistic(c));
 	PASSERT(logger, event == CONNECTION_INITIATE);
-	enum routing rt_negotiation = (c->child.routing == RT_ROUTED_ONDEMAND ? RT_ROUTED_NEGOTIATION :
-				       CONNECTION_ROUTING_ROOF);
-	PASSERT(logger, (rt_negotiation != CONNECTION_ROUTING_ROOF));
+	enum routing rt_negotiation = RT_ROUTED_NEGOTIATION;
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 		if (!replace_spd_kernel_policy(spd, DIRECTION_OUTBOUND,
 					       rt_negotiation,
@@ -535,7 +533,7 @@ static void ondemand_to_negotiation(enum routing_event event,
 		}
 	}
 	/* the state isn't yet known */
-	set_routing(event, c, rt_negotiation, NULL, where);
+	set_routing(event, c, rt_negotiation, e, where);
 }
 
 /*
@@ -1256,7 +1254,7 @@ static bool dispatch_1(enum routing_event event,
 	case X(INITIATE, ROUTED_ONDEMAND, PERMANENT):
 	case X(INITIATE, ROUTED_ONDEMAND, INSTANCE): /* from revival */
 		flush_routed_ondemand_revival(c);
-		ondemand_to_negotiation(event, c, where, "negotiating permanent");
+		routed_ondemand_to_routed_negotiation(event, c, logger, where, e);
 		PEXPECT(logger, c->child.routing == RT_ROUTED_NEGOTIATION);
 		return true;
 
