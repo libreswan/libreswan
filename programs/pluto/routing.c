@@ -551,7 +551,9 @@ static void routed_negotiation_to_routed_ondemand(enum routing_event event,
 						  const char *reason)
 {
 	ldbg_routing(c->logger, "%s() %s", __func__, reason);
-	PASSERT(logger, (event == CONNECTION_TIMEOUT_IKE ||
+	PASSERT(logger, (event == CONNECTION_TIMEOUT_CHILD ||
+			 event == CONNECTION_DELETE_CHILD ||
+			 event == CONNECTION_TIMEOUT_IKE ||
 			 event == CONNECTION_DELETE_IKE));
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 		if (!replace_spd_kernel_policy(spd, DIRECTION_OUTBOUND,
@@ -650,6 +652,51 @@ static void teardown_routed_tunnel(enum routing_event event,
 				   (*child)->sa.st_logger,
 				   where, "delete");
 	set_routing(event, c, RT_UNROUTED, NULL, where);
+	delete_child_sa(child);
+}
+
+static void teardown_routed_negotiation(enum routing_event event,
+					struct connection *c,
+					struct child_sa **child,
+					struct logger *logger,
+					where_t where,
+					const char *reason)
+{
+	if (scheduled_child_revival((*child), reason)) {
+		routed_negotiation_to_routed_ondemand(event, c, logger, where,
+						      reason);
+		PEXPECT(logger, c->child.routing == RT_ROUTED_ONDEMAND);
+		delete_child_sa(child);
+		return;
+	}
+
+	if (is_instance(c) && is_opportunistic(c)) {
+		/*
+		 * A failed OE initiator, make shunt bare.
+		 */
+		orphan_holdpass(c, c->spd, logger);
+		/*
+		 * Change routing so we don't get cleared out
+		 * when state/connection dies.
+		 */
+		set_routing(event, c, RT_UNROUTED, NULL, where);
+		delete_child_sa(child);
+		return;
+	}
+
+	if (c->policy.route) {
+		routed_negotiation_to_routed_ondemand(event, c, logger, where,
+						      "restoring ondemand, connection is routed");
+		PEXPECT(logger, c->child.routing == RT_ROUTED_ONDEMAND);
+		delete_child_sa(child);
+		return;
+	}
+
+	/*
+	 * Should this instead install a failure shunt?
+	 */
+	routed_negotiation_to_unrouted(event, c, logger, where, "deleting");
+	PEXPECT(logger, c->child.routing == RT_UNROUTED);
 	delete_child_sa(child);
 }
 
@@ -1407,6 +1454,14 @@ static bool dispatch_1(enum routing_event event,
 		}
 		set_routing(event, c, RT_UNROUTED, NULL, where);
 		delete_ike_sa(e->ike);
+		return true;
+
+	case X(DELETE_CHILD, ROUTED_NEGOTIATION, PERMANENT):
+		/*
+		 * For instance, things fail during IKE_AUTH.
+		 */
+		teardown_routed_negotiation(event, c, e->child, logger, where,
+					    "delete Child SA");
 		return true;
 
 	case X(DELETE_IKE, ROUTED_NEGOTIATION, INSTANCE):
