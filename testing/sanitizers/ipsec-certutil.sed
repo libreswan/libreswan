@@ -1,14 +1,14 @@
 # match: certutil
 
-/^ certutil / b match
-/^ ipsec certutil / b match
-b end
+/^ certutil / b match-ipsec-certutil
+/^ ipsec certutil / b match-ipsec-certutil
+b end-ipsec-certutil
 
-:match
+:match-ipsec-certutil
 
   # print and read next line
   n
-  /^[a-z]* #/ b end
+  /^[a-z]* #/ b end-ipsec-certutil
 
   # f28 gets different NSS errors compared to f22
   s/: SEC_ERROR_UNRECOGNIZED_OID: Unrecognized Object Identifier./: SEC_ERROR_.../
@@ -18,6 +18,6 @@ b end
   s/east_chain_int_2.testing.libreswan.org - Libreswan/east_chain_int_2                                  /
   s/west_chain_int_2.testing.libreswan.org - Libreswan/west_chain_int_2                                  /
 
-b match
+b match-ipsec-certutil
 
-:end
+:end-ipsec-certutil

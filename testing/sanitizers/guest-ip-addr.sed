@@ -1,17 +1,17 @@
 # match: ip addr ...
 
-/^ ip addr/ b match
-b
+/^ ip addr/ b match-ip-addr
+b end-ip-addr
 
-:match
+:match-ip-addr
 
   # print current; read next
   n
 
-:next
+:next-ip-addr
 
   # next line; exit
-  /^[a-z]* #/ b
+  /^[a-z]* #/ b end-ip-addr
 
   # strip trailing spaces
   s/ $//
@@ -20,6 +20,12 @@ b
   s/ qlen 1000$//
 
   # append next line; delete current; try again
-  /altname / { N; s/^.*\n//; b next }
+  /altname / {
+  	   N
+	   s/^.*\n//
+	   b next-ip-addr
+  }
 
-b match
+b match-ip-addr
+
+:end-ip-addr

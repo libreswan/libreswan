@@ -1,16 +1,16 @@
 # match random policy output
 
-/guestbin\/ipsec-kernel-policy.sh/ b match
-/^ ip xfrm policy$/ b match
-/^ ip -4 xfrm policy$/ b match
-/^ ip -6 xfrm policy$/ b match
-b end
+/guestbin\/ipsec-kernel-policy.sh/ b match-ipsec-kernel-policy
+/^ ip xfrm policy$/ b match-ipsec-kernel-policy
+/^ ip -4 xfrm policy$/ b match-ipsec-kernel-policy
+/^ ip -6 xfrm policy$/ b match-ipsec-kernel-policy
+b end-ipsec-kernel-policy
 
-:match
+:match-ipsec-kernel-policy
 
   # print and read next line
   n
-  /^[a-z]* #/ b end
+  /^[a-z]* #/ b end-ipsec-kernel-policy
 
   # setkey -DP
 
@@ -34,6 +34,6 @@ b end
   # dir ... priority 2080718 ptype ...
   s/ priority [1-9][0-9]* ptype / priority PRIORITY ptype /
 
-b match
+b match-ipsec-kernel-policy
 
-:end
+:end-ipsec-kernel-policy

@@ -1,17 +1,17 @@
 # match: ip link ...
 
-/^ ip link/ b match
-/^ ip -d link/ b match
-b end
+/^ ip link/ b match-ip-link
+/^ ip -d link/ b match-ip-link
+b end-ip-link
 
-:match
+:match-ip-link
 
   # print current; read next
   n
 
-:next
+:next-ip-link
 
-  /^[a-z]* #/ b end
+  /^[a-z]* #/ b end-ip-link
 
   # strip trailing spaces
   s/ $//
@@ -19,8 +19,12 @@ b end
   s/ qlen 1000$//
 
   # append next line; delete current; try again
-  /altname / { N; s/^.*\n//; b next }
+  /altname / {
+  	   N
+	   s/^.*\n//
+	   b next-ip-link
+  }
 
-b match
+b match-ip-link
 
-:end
+:end-ip-link

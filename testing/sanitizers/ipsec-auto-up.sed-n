@@ -6,26 +6,30 @@
 # ipsec whack --xauthname 'xroad' --xauthpass 'use1pass' --name road-east --initiate
 # ipsec whack --oppohere 192.1.3.209 --oppothere 192.1.2.67
 
-/^ ipsec auto --up [[:alnum:]-]*$/ b match
-/^ ipsec whack --xauthname.*--initiate [[:alnum:]-]*$/ b match
-/^ ipsec whack --xauthname.*--initiate$/ b match
-/^ ipsec whack --oppohere.*[[:alnum:]-]*$/ b match
+/^ ipsec up / b match-ipsec-up
+/^ ipsec auto --up [[:alnum:]-]*$/ b match-ipsec-up
+/^ ipsec whack --xauthname.*--initiate [[:alnum:]-]*$/ b match-ipsec-up
+/^ ipsec whack --xauthname.*--initiate$/ b match-ipsec-up
+/^ ipsec whack --oppohere.*[[:alnum:]-]*$/ b match-ipsec-up
 
-b end
+b end-ipsec-up
 
-:match
- p
+:match-ipsec-up
 
-:noprint
+  p
 
- n
+:noprint-ipsec-up
 
- /^\(\(east\|west\|road\|north\|nic\) #\)$/ b end
+  n
 
- /retransmission; will wait/ b noprint
+  /^\(\(east\|west\|road\|north\|nic\) #\)$/ b end-ipsec-up
 
-b match
+  /retransmission; will wait/ b noprint-ipsec-up
 
-:end
+b match-ipsec-up
+
+:end-ipsec-up
 
 p
+
+:skip-ipsec-up

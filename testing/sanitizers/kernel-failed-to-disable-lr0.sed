@@ -8,19 +8,21 @@
     N
     /\[ 00.00\] netdevice: [^:]*: failed to disable LRO!/ {
         ## a FAILED TO DISABLE
-        b failed_to_disable
+        b match-failed-to-disable-lr0
     }
     # print two lines in pattern space, then start again
-    b
+    b end-failed-to-disable-lr0
 }
 
-b
+b end-failed-to-disable-lr0
 
-: failed_to_disable
-N
-/\[ 00.00\] ---\[ end trace [^ ]* \]---/ {
+:match-failed-to-disable-lr0
+  N
+  /\[ 00.00\] ---\[ end trace [^ ]* \]---/ {
     # drop this final line, start from scratch
     ## a END TRACE
     d
-}
-b failed_to_disable
+  }
+b match-failed-to-disable-lr0
+
+:end-failed-to-disable-lr0

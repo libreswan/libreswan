@@ -1,21 +1,22 @@
 # match: ip (|-[46]) route ...
 
-/^ ip route/ b match
-/^ ip -4 route/ b match
-/^ ip -6 route/ b match
-b end
+/^ ip route/ b match-ip-route
+/^ ip -4 route/ b match-ip-route
+/^ ip -6 route/ b match-ip-route
+b end-ip-route
 
-:match
+:match-ip-route
 
   # print and read
   n
-  /^[a-z]* #/ b end
+  /^[a-z]* #/ b end-ip-route
 
   # some versions embed spaces in the middle or end of the output
   s/  / /g
   s/ $//
 
-b match
+b match-ip-route
 
-:end
+:end-ip-route
+
 

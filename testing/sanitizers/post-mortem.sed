@@ -2,15 +2,15 @@
 # Should the end marker be missing (i.e., EOF reached) then
 # unsanitized contents of the "pattern space" get dumped to stdout.
 
-/>>>>>>>>>> post-mortem >>>>>>>>>>/ b post-mortem
-b skip
+/>>>>>>>>>> post-mortem >>>>>>>>>>/ b match-post-mortem
+b skip-post-mortem
 
-:post-mortem
+:match-post-mortem
   N
-  /<<<<<<<<<< post-mortem <<<<<<<<<</ b end
-  b post-mortem
+  /<<<<<<<<<< post-mortem <<<<<<<<<</ b end-post-mortem
+  b match-post-mortem
 
-:end
+:end-post-mortem
   s/>>>>>>>>>> post-mortem >>>>>>>>>>.*<<<<<<<<<< post-mortem <<<<<<<<<<//
 
-:skip
+:skip-post-mortem

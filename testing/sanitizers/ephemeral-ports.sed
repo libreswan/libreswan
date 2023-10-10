@@ -11,21 +11,21 @@ s/ \[\([0-9a-z:]*\)\]:[2-6][0-9][0-9][0-9][0-9]$/ \1:EPHEM/g
 s/ \[\([0-9a-z:]*\)\]:[2-6][0-9][0-9][0-9][0-9]\([: ]\)/ \1:EPHEM\2/g
 
 # match: ip (|-[46]) xfrm state ...
-/^ ip xfrm state/ b match
-/^ ip -4 xfrm state/ b match
-/^ ip -6 xfrm state/ b match
+/^ ip xfrm state/ b match-ephemeral-ports
+/^ ip -4 xfrm state/ b match-ephemeral-ports
+/^ ip -6 xfrm state/ b match-ephemeral-ports
 
 # match: ipsec look et.al.
-/^ ipsec look/ b match
-/^ .*ipsec-look.sh/ b match
+/^ ipsec look/ b match-ephemeral-ports
+/^ .*ipsec-look.sh/ b match-ephemeral-ports
 
-b end
+b end-ephemeral-ports
 
-:match
+:match-ephemeral-ports
 
   # print and read next line
   n
-  /^[a-z]* #/ b end
+  /^[a-z]* #/ b end-ephemeral-ports
 
   # ephemeral ports
   # - according to IANA: 49152-65535
@@ -35,6 +35,6 @@ b end
   s/ sport [2-6][0-9][0-9][0-9][0-9] / sport EPHEM /g
   s/ dport [2-6][0-9][0-9][0-9][0-9] / dport EPHEM /g;
 
-b match
+b match-ephemeral-ports
 
-:end
+:end-ephemeral-ports

@@ -1,19 +1,20 @@
 # note this script need sed -n
 # remove the random content of PEM output
 
-/^-----BEGIN / b begin
-b end
+/^-----BEGIN / b begin-pem
+b end-pem
 
-:begin
+:begin-pem
  p
  n
- /^-----END / b end
+ /^-----END / b end-pem
  s/.*/.../p
 
-:noprint
+:noprint-pem
  n
- /^-----END / b end
-b noprint
+ /^-----END / b end-pem
+b noprint-pem
 
-:end
- p
+:end-pem
+
+p

@@ -14,7 +14,7 @@ s/\[root@\([^ ]*\) .*\]# /\1 # /
 # leave it to guest-prompt-double.sed
 
 /^[a-z][a-z]* # [a-z][a-z]*# / {
-  b
+  b end-guest-prompt-sanitize
 }
 
 # if the line is blank, delete it
@@ -22,3 +22,5 @@ s/\[root@\([^ ]*\) .*\]# /\1 # /
 
 # ... else add in a new line; why?
 s/^\([^ ]*\) # /\1 #\n /
+
+:end-guest-prompt-sanitize

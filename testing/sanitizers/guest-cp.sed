@@ -1,13 +1,13 @@
 # match: cp .. ...
 
-/^ cp / b match
-b end
+/^ cp / b match-cp
+b end-cp
 
-:match
+:match-cp
 
   # print and read next line
   n
-  /^[a-z]* #/ b end
+  /^[a-z]* #/ b end-cp
 
   # f22: cp: cannot stat ‘/tmp/xfrm-monitor.out’: No such file or directory
   # f28: cp: cannot stat '/tmp/xfrm-monitor.out': No such file or directory
@@ -16,6 +16,6 @@ b end
   s/'/'/g
   s/`/'/g
 
-b match
+b match-cp
 
-:end
+:end-cp
