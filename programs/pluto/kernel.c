@@ -1812,7 +1812,8 @@ static bool install_inbound_ipsec_kernel_policies(struct child_sa *child)
 		return true;
 	}
 
-	if (c->newest_routing_sa != SOS_NOBODY) {
+	if (c->newest_routing_sa != SOS_NOBODY &&
+	    c->newest_routing_sa != child->sa.st_serialno) {
 		ldbg(logger, "kernel: %s() skipping as already has owner "PRI_SO,
 		     __func__, pri_so(c->newest_routing_sa));
 		return true;
