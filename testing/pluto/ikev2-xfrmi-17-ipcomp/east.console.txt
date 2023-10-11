@@ -1,0 +1,17 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec auto --add northnet-eastnet
+002 "northnet-eastnet": added IKEv2 connection
+east #
+ echo "initdone"
+initdone
+east #
+ ipsec whack --trafficstatus
+006 #2: "northnet-eastnet", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@north'
+east #
+ 
