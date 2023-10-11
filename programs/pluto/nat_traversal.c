@@ -221,7 +221,7 @@ static void nat_traversal_ka_event_state(struct state *st, unsigned *data)
 			return;
 		}
 
-		if (c->newest_ike_sa != st->st_serialno) {
+		if (c->established_ike_sa != st->st_serialno) {
 			dbg("skipping NAT-T KEEP-ALIVE: #%lu is not current IKE SA", st->st_serialno);
 			return;
 		}

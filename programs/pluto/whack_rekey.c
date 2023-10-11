@@ -81,7 +81,7 @@ static unsigned whack_rekey_ike(const struct whack_message *m,
 		return 0; /* the connection doesn't count */
 	}
 
-	return rekey_state(m, s, c, IKE_SA, c->newest_ike_sa);
+	return rekey_state(m, s, c, IKE_SA, c->established_ike_sa);
 }
 
 static unsigned whack_rekey_child(const struct whack_message *m,

@@ -127,7 +127,7 @@ static void jam_routing(struct jambuf *buf,
 	const char *sep = "; ";
 	jam_so_update(buf, "routing", c->newest_routing_sa, c->newest_routing_sa, &sep);
 	jam_so_update(buf, c->config->ike_info->child_name, c->newest_ipsec_sa, c->newest_ipsec_sa, &sep);
-	jam_so_update(buf, c->config->ike_info->parent_name, c->newest_ike_sa, c->newest_ike_sa, &sep);
+	jam_so_update(buf, c->config->ike_info->parent_name, c->established_ike_sa, c->established_ike_sa, &sep);
 }
 
 static void jam_routing_annex(struct jambuf *buf, const struct routing_annex *e)
@@ -211,7 +211,7 @@ struct old_routing {
 	so_serial_t child_so;
 	so_serial_t routing_sa;
 	so_serial_t ipsec_sa;
-	so_serial_t ike_sa;
+	so_serial_t established_ike_sa;
 	enum routing routing;
 	unsigned revival_attempt;
 };
@@ -233,7 +233,7 @@ static struct old_routing ldbg_routing_start(struct connection *c,
 			     (*e->child)->sa.st_serialno),
 		.ipsec_sa = c->newest_ipsec_sa,
 		.routing_sa = c->newest_routing_sa,
-		.ike_sa = c->newest_ike_sa,
+		.established_ike_sa = c->established_ike_sa,
 		.routing = c->child.routing,
 		.revival_attempt = c->revival.attempt,
 	};
@@ -277,7 +277,7 @@ static void ldbg_routing_stop(struct connection *c,
 			jam_so_update(buf, c->config->ike_info->child_name,
 				      old->ipsec_sa, c->newest_ipsec_sa, &sep);
 			jam_so_update(buf, c->config->ike_info->parent_name,
-				      old->ike_sa, c->newest_ike_sa, &sep);
+				      old->established_ike_sa, c->established_ike_sa, &sep);
 			if (old->revival_attempt != c->revival.attempt) {
 				jam_string(buf, sep); sep = " ";
 				jam(buf, "revival %u->%u",
@@ -763,8 +763,8 @@ static void zap_ike(struct ike_sa **ike,
 	};
 
 	struct connection *c = (*ike)->sa.st_connection;
-	if (c->newest_ike_sa != SOS_NOBODY &&
-	    c->newest_ike_sa != (*ike)->sa.st_serialno) {
+	if (c->established_ike_sa != SOS_NOBODY &&
+	    c->established_ike_sa != (*ike)->sa.st_serialno) {
 		/*
 		 * There's an established IKE SA and it isn't this
 		 * one; hence not the owner.
@@ -881,7 +881,7 @@ static bool zap_connection_child(struct ike_sa **ike, enum routing_event child_e
 void connection_unrouted(struct connection *c)
 {
 	c->newest_routing_sa = SOS_NOBODY;
-	c->newest_ike_sa = SOS_NOBODY;
+	c->established_ike_sa = SOS_NOBODY;
 	c->newest_ipsec_sa = SOS_NOBODY;
 	c->child.routing = RT_UNROUTED;
 }
@@ -905,12 +905,12 @@ void connection_routing_clear(struct state *st)
 #endif
 		c->newest_ipsec_sa = SOS_NOBODY;
 	}
-	if (c->newest_ike_sa == st->st_serialno) {
+	if (c->established_ike_sa == st->st_serialno) {
 #if 0
 		llog_pexpect(st->st_logger, HERE,
-			     "newest_ike_sa");
+			     "established_ike_sa");
 #endif
-		c->newest_ike_sa = SOS_NOBODY;
+		c->established_ike_sa = SOS_NOBODY;
 	}
 }
 
@@ -957,7 +957,7 @@ void connection_establish_ike(struct ike_sa *ike, where_t where)
 		.ike = &ike,
 	};
 	struct old_routing old = ldbg_routing_start(c, CONNECTION_ESTABLISH_IKE, where, &e);
-	c->newest_ike_sa = ike->sa.st_serialno;
+	c->established_ike_sa = ike->sa.st_serialno;
 	ike->sa.st_viable_parent = true;
 	linux_audit_conn(&ike->sa, LAK_PARENT_START);
 	/* dump new keys */

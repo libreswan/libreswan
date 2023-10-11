@@ -362,7 +362,7 @@ void whack_connection_states(struct connection *c,
 			     where_t where)
 {
 	pdbg(c->logger, "%s()", __func__);
-	struct ike_sa *ike = ike_sa_by_serialno(c->newest_ike_sa); /* could be NULL */
+	struct ike_sa *ike = ike_sa_by_serialno(c->established_ike_sa); /* could be NULL */
 	if (ike != NULL) {
 		pdbg(c->logger, "%s()  dispatching START to "PRI_SO,
 		     __func__, pri_so(ike->sa.st_serialno));
@@ -396,7 +396,7 @@ void whack_connection_states(struct connection *c,
 	unsigned nr_parents = 0;
 	unsigned nr_children = 0;
 	while (next_state_new2old(&weed)) {
-		if (weed.st->st_serialno == c->newest_ike_sa) {
+		if (weed.st->st_serialno == c->established_ike_sa) {
 			pdbg(c->logger, "%s()    skipping "PRI_SO" as newest IKE SA",
 			      __func__, pri_so(weed.st->st_serialno));
 			continue;
@@ -443,7 +443,7 @@ void whack_connection_states(struct connection *c,
 		pdbg(c->logger, "%s()  skipping Child SA, as no "PRI_SO,
 		     __func__, pri_so(c->newest_routing_sa));
 		whack_ike = true;
-	} else if (connection_child->sa.st_clonedfrom != c->newest_ike_sa) {
+	} else if (connection_child->sa.st_clonedfrom != c->established_ike_sa) {
 		/* st_clonedfrom can't be be SOS_NOBODY */
 		pdbg(c->logger, "%s()  dispatch cuckoo Child SA "PRI_SO,
 		     __func__,

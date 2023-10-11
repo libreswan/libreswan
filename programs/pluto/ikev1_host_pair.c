@@ -208,7 +208,7 @@ static struct connection *find_v1_host_connection(const ip_address local_address
 		 * which case we prefer to find the connection that
 		 * has the ISAKMP SA.
 		 */
-		if (d->newest_ike_sa != SOS_NOBODY) {
+		if (d->established_ike_sa != SOS_NOBODY) {
 			/* instant winner */
 			c = d;
 			break;

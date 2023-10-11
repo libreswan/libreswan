@@ -63,10 +63,10 @@ void event_v2_retransmit(struct state *ike_sa, monotime_t now UNUSED)
 	 */
 
 	struct connection *c = ike->sa.st_connection;
-	if (!IS_IKE_SA_ESTABLISHED(&ike->sa) && c->newest_ike_sa > ike->sa.st_serialno) {
+	if (!IS_IKE_SA_ESTABLISHED(&ike->sa) && c->established_ike_sa > ike->sa.st_serialno) {
 		llog_sa(RC_LOG, ike,
 			  "suppressing retransmit because IKE SA was superseded #%lu; drop this negotiation",
-			  c->newest_ike_sa);
+			  c->established_ike_sa);
 		pstat_sa_failed(&ike->sa, REASON_SUPERSEDED_BY_NEW_SA);
 		connection_delete_ike_family(&ike, HERE);
 		return;

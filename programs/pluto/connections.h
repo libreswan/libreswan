@@ -711,8 +711,8 @@ struct connection {
 	 * Private variables for tracking routing.  Only updated by
 	 * routing.c.
 	 */
+	so_serial_t established_ike_sa;
 	so_serial_t newest_routing_sa;
-	so_serial_t newest_ike_sa;
 	so_serial_t newest_ipsec_sa;
 
 	/* host_pair linkage */

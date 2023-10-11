@@ -684,10 +684,10 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 	}
 
 	/* do not touch what is not broken */
-	struct state *newest_ike_sa = state_by_serialno(c->newest_ike_sa);
-	if (newest_ike_sa != NULL &&
-	    (IS_IKE_SA_ESTABLISHED(newest_ike_sa) ||
-	     IS_V1_ISAKMP_SA_ESTABLISHED(newest_ike_sa))) {
+	struct state *established_ike_sa = state_by_serialno(c->established_ike_sa);
+	if (established_ike_sa != NULL &&
+	    (IS_IKE_SA_ESTABLISHED(established_ike_sa) ||
+	     IS_V1_ISAKMP_SA_ESTABLISHED(established_ike_sa))) {
 		connection_buf cib;
 		ldbg(c->logger,
 		     "pending ddns: connection "PRI_CONNECTION" is established",

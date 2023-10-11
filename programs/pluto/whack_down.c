@@ -75,7 +75,7 @@ static unsigned down_connection(struct connection *c, struct logger *logger)
 	 * XXX: should "down" down the routing_sa when ipsec_sa is
 	 * NULL?
 	 */
-	struct ike_sa *ike = ike_sa_by_serialno(c->newest_ike_sa);
+	struct ike_sa *ike = ike_sa_by_serialno(c->established_ike_sa);
 	struct child_sa *child = child_sa_by_serialno(c->newest_ipsec_sa);
 
 	if (shared_phase1_connection(ike)) {

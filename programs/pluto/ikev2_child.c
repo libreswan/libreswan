@@ -394,7 +394,7 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 #endif
 
 	/* re-check IKE, child about to be updated */
-	pexpect(ike->sa.st_connection->newest_ike_sa == ike->sa.st_serialno);
+	pexpect(ike->sa.st_connection->established_ike_sa == ike->sa.st_serialno);
 
 	/* install inbound and outbound SPI info */
 	if (!connection_establish_child(larval_child, HERE)) {

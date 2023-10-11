@@ -146,12 +146,12 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 		 * case we prefer to find the connection that has the
 		 * IKE SA
 		 */
-		if (d->newest_ike_sa != SOS_NOBODY) {
+		if (d->established_ike_sa != SOS_NOBODY) {
 			/* instant winner */
 			connection_buf cb;
 			ldbg(md->md_logger, "  instant winner with "PRI_CONNECTION" IKE SA "PRI_SO,
 			     pri_connection(d, &cb),
-			     pri_so(d->newest_ike_sa));
+			     pri_so(d->established_ike_sa));
 			c = d;
 			break;
 		}

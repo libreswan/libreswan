@@ -1348,7 +1348,7 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 	 */
 
 	if (c->config->remote_peer_cisco &&
-	    c->newest_ike_sa != SOS_NOBODY &&
+	    c->established_ike_sa != SOS_NOBODY &&
 	    c->local->host.config->xauth.client) {
 		dbg("Skipping XAUTH for rekey for Cisco Peer compatibility.");
 		st->hidden_variables.st_xauth_client_done = true;
@@ -1413,7 +1413,7 @@ stf_status main_inR3(struct state *st, struct msg_digest *md)
 	 * are not supposed to be performed again during rekey
 	 */
 	if (c->config->remote_peer_cisco &&
-		c->newest_ike_sa != SOS_NOBODY &&
+		c->established_ike_sa != SOS_NOBODY &&
 		c->local->host.config->xauth.client) {
 		dbg("Skipping XAUTH for rekey for Cisco Peer compatibility.");
 		st->hidden_variables.st_xauth_client_done = true;

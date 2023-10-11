@@ -144,12 +144,12 @@ bool should_revive_ike(struct ike_sa *ike)
 {
 	struct connection *c = ike->sa.st_connection;
 
-	if (c->newest_ike_sa != SOS_NOBODY &&
-	    c->newest_ike_sa != ike->sa.st_serialno) {
+	if (c->established_ike_sa != SOS_NOBODY &&
+	    c->established_ike_sa != ike->sa.st_serialno) {
 		/* should be covered by above */
 		llog_pexpect(ike->sa.st_logger, HERE,
 			     "revival: skipping, newest IKE SA "PRI_SO" is is not us",
-			     pri_so(c->newest_ike_sa));
+			     pri_so(c->established_ike_sa));
 		return false;
 	}
 

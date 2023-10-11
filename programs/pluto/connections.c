@@ -359,12 +359,12 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 	/*
 	 * Must have newest all cleared.
 	 */
-	if (c->newest_ike_sa != SOS_NOBODY) {
+	if (c->established_ike_sa != SOS_NOBODY) {
 		llog_pexpect(logger, where,
 			     "connection "PRI_CO" [%p] still has %s "PRI_SO,
 			     pri_connection_co(c), c,
 			     c->config->ike_info->parent_sa_name,
-			     pri_so(c->newest_ike_sa));
+			     pri_so(c->established_ike_sa));
 		ok_to_delete = false;
 	}
 	if (c->newest_ipsec_sa != SOS_NOBODY) {
@@ -4170,8 +4170,8 @@ so_serial_t get_newer_sa_from_connection(struct state *st)
 	so_serial_t newest;
 
 	if (IS_IKE_SA(st)) {
-		newest = c->newest_ike_sa;
-		dbg("picked newest_ike_sa #%lu for #%lu",
+		newest = c->established_ike_sa;
+		dbg("picked established_ike_sa #%lu for #%lu",
 		    newest, st->st_serialno);
 	} else {
 		newest = c->newest_ipsec_sa;

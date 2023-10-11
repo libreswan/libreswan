@@ -84,7 +84,7 @@ void show_ike_alg_connection(struct show *s,
 		}
 	}
 
-	const struct state *st = state_by_serialno(c->newest_ike_sa);
+	const struct state *st = state_by_serialno(c->established_ike_sa);
 
 	if (st != NULL) {
 		SHOW_JAMBUF(RC_COMMENT, s, buf) {

@@ -104,10 +104,10 @@ void event_v1_dpd_timeout(struct state *tbd_st)
 	 * If the connection has an (established) ISAKMP SA, then use
 	 * that to find any siblings of TBD_ST.
 	 *
-	 * Of course this assumes that .newest_ike_sa is set.
+	 * Of course this assumes that .established_ike_sa is set.
 	 */
 
-	struct ike_sa *ike = ike_sa_by_serialno(c->newest_ike_sa);
+	struct ike_sa *ike = ike_sa_by_serialno(c->established_ike_sa);
 	if (ike != NULL) {
 		pdbg(ike->sa.st_logger, "no longer viable");
 		ike->sa.st_viable_parent = false; /*needed?*/

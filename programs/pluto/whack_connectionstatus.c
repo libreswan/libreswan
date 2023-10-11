@@ -718,7 +718,7 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		jam(buf, PRI_CONNECTION":   newest %s: #%lu; newest IPsec SA: #%lu; conn serial: "PRI_CO"",
 		    c->name, instance,
 		    c->config->ike_info->parent_sa_name,
-		    c->newest_ike_sa,
+		    c->established_ike_sa,
 		    c->newest_ipsec_sa, /* IPsec SA or Child SA? */
 		    pri_co(c->serialno));
 		if (c->clonedfrom != UNSET_CO_SERIAL) {

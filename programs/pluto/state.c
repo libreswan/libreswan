@@ -1732,7 +1732,7 @@ static void show_state(struct show *s, struct state *st, const monotime_t now)
 			jam(buf, " in %jds;", delta);
 		}
 
-		if (c->newest_ike_sa == st->st_serialno ||
+		if (c->established_ike_sa == st->st_serialno ||
 		    c->newest_ipsec_sa == st->st_serialno) {
 			jam(buf, " newest;");
 		}
