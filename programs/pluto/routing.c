@@ -1262,7 +1262,6 @@ static bool dispatch_1(enum routing_event event,
 		return true;
 
 	case X(INITIATE, BARE_NEGOTIATION, PERMANENT):
-	case X(INITIATE, UNROUTED_NEGOTIATION, PERMANENT):
 		if (BROKEN_TRANSITION) {
 			/* ikev2-redirect-01-global-load-balancer
 			 * ikev2-redirect-01-global
@@ -1284,7 +1283,6 @@ static bool dispatch_1(enum routing_event event,
 		return true;
 
 	case X(ROUTE, BARE_NEGOTIATION, PERMANENT):
-	case X(ROUTE, UNROUTED_NEGOTIATION, PERMANENT):
 		if (BROKEN_TRANSITION) {
 			/*
 			 * XXX: should install routing+policy!
@@ -1296,7 +1294,6 @@ static bool dispatch_1(enum routing_event event,
 		}
 		break;
 	case X(UNROUTE, BARE_NEGOTIATION, PERMANENT):
-	case X(UNROUTE, UNROUTED_NEGOTIATION, PERMANENT):
 		set_routing(event, c, RT_UNROUTED, NULL, where);
 		return true;
 
@@ -1448,9 +1445,7 @@ static bool dispatch_1(enum routing_event event,
 		return true;
 
 	case X(DELETE_IKE, BARE_NEGOTIATION, PERMANENT):
-	case X(DELETE_IKE, UNROUTED_NEGOTIATION, PERMANENT):
 	case X(TIMEOUT_IKE, BARE_NEGOTIATION, PERMANENT):
-	case X(TIMEOUT_IKE, UNROUTED_NEGOTIATION, PERMANENT):
 		/* ex, permanent+initiate */
 		if (should_revive_ike((*e->ike))) {
 			set_routing(event, c, RT_UNROUTED, NULL, where);
@@ -1674,7 +1669,6 @@ static bool dispatch_1(enum routing_event event,
 	case X(ESTABLISH_INBOUND, BARE_NEGOTIATION, INSTANCE):
 	case X(ESTABLISH_INBOUND, UNROUTED_NEGOTIATION, INSTANCE):
 	case X(ESTABLISH_INBOUND, BARE_NEGOTIATION, PERMANENT):
-	case X(ESTABLISH_INBOUND, UNROUTED_NEGOTIATION, PERMANENT):
 		if (!install_inbound_ipsec_sa((*e->child), where)) {
 			return false;
 		}
