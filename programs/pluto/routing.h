@@ -50,8 +50,9 @@ enum routing {
 	RT_UNROUTED,			/* unrouted, no shunts */
 	RT_ROUTED_NEVER_NEGOTIATE,	/* routed, and .never_negotiate_shunt installed */
 	RT_ROUTED_ONDEMAND,		/* routed, and SHUNT_TRAP installed */
-	RT_UNROUTED_NEGOTIATION,	/* unrouted, but .negotiation_shunt installed */
-	RT_ROUTED_NEGOTIATION,		/* routed, and .negotiation_shunt installed */
+	RT_BARE_NEGOTIATION,		/* negotiating, unrouted, no .negotiation_shunt installed */
+	RT_UNROUTED_NEGOTIATION,	/* negotiating, unrouted, .negotiation_shunt installed */
+	RT_ROUTED_NEGOTIATION,		/* negotiating, routed, .negotiation_shunt installed */
 	RT_UNROUTED_FAILURE,      	/* unrouted, and .failure_shunt installed */
 	RT_ROUTED_FAILURE,      	/* routed, and .failure_shunt installed */
 	/* half established */
