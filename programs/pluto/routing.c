@@ -1066,7 +1066,7 @@ static void zap_v2_child(struct ike_sa **ike, struct child_sa *child,
 	on_delete(&child->sa, skip_log_message);
 	struct connection *cc = child->sa.st_connection;
 
-	if (cc->newest_routing_sa == child->sa.st_serialno) {
+	if (cc->newest_ipsec_sa == child->sa.st_serialno) {
 		PEXPECT((*ike)->sa.st_logger, IS_IPSEC_SA_ESTABLISHED(&child->sa));
 		/* will delete child and its logger */
 		ldbg_routing((*ike)->sa.st_logger, "    zapping Child SA "PRI_SO,
