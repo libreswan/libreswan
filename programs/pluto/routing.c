@@ -1268,7 +1268,7 @@ static bool dispatch_1(enum routing_event event,
 
 	case X(INITIATE, UNROUTED, PERMANENT):
 		flush_unrouted_revival(c);
-		set_routing(event, c, RT_BARE_NEGOTIATION, NULL, where);
+		set_routing(event, c, RT_BARE_NEGOTIATION, e, where);
 		return true;
 
 	case X(INITIATE, ROUTED_ONDEMAND, PERMANENT):
@@ -1473,6 +1473,20 @@ static bool dispatch_1(enum routing_event event,
 		}
 		set_routing(event, c, RT_UNROUTED, NULL, where);
 		delete_ike_sa(e->ike);
+		return true;
+
+	case X(DELETE_CHILD, BARE_NEGOTIATION, PERMANENT):
+	case X(TIMEOUT_CHILD, BARE_NEGOTIATION, PERMANENT):
+		/* ex, permanent+initiate */
+		if (scheduled_child_revival((*e->child),
+					    (event == CONNECTION_DELETE_CHILD ? "delete Child SA" :
+					     "timeout Child SA"))) {
+			set_routing(event, c, RT_UNROUTED, NULL, where);
+			delete_child_sa(e->child);
+			return true;
+		}
+		set_routing(event, c, RT_UNROUTED, NULL, where);
+		delete_child_sa(e->child);
 		return true;
 
 	case X(DELETE_CHILD, ROUTED_NEGOTIATION, PERMANENT):
