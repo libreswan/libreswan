@@ -417,6 +417,38 @@ static void set_routing(enum routing_event event UNUSED,
 	c->newest_routing_sa = new_routing_sa;
 }
 
+static void set_initiated(enum routing_event event UNUSED,
+			  struct connection *c,
+			  enum routing new_routing,
+			  const struct routing_annex *e,
+			  where_t where UNUSED)
+{
+	/*
+	 * The IKE and Child share the same initiate event but are
+	 * dispatched separately.
+	 *
+	 * A negotiating child connection using an existing IKE SA
+	 * doesn't have .established_ike_sa set.  Should it, and
+	 * should it set .negotiating_ike_sa.
+	 */
+	if ((e->child) != NULL && (*e->child) != NULL) {
+		PEXPECT((*e->child)->sa.logger, c->newest_routing_sa == SOS_NOBODY);
+		c->newest_routing_sa = (*e->child)->sa.st_serialno;
+		c->child.routing = new_routing;
+	} else if ((e->ike) != NULL && (*e->ike) != NULL) {
+		PEXPECT((*e->ike)->sa.logger, c->negotiating_ike_sa == SOS_NOBODY);
+		c->negotiating_ike_sa = (*e->ike)->sa.st_serialno;
+		c->child.routing = new_routing;
+	} else {
+		/*
+		 * For instance when the initiated connection is on
+		 * the pending queue.  Should such a connection get
+		 * its routing updated?
+		 */
+		ldbg_routing(c->logger, "no initiating IKE or Child SA");
+	}
+}
+
 static void set_established_child(enum routing_event event UNUSED,
 				  struct connection *c,
 				  enum routing routing,
@@ -1279,7 +1311,7 @@ static bool dispatch_1(enum routing_event event,
 
 	case X(INITIATE, UNROUTED, PERMANENT):
 		flush_unrouted_revival(c);
-		set_routing(event, c, RT_BARE_NEGOTIATION, e, where);
+		set_initiated(event, c, RT_BARE_NEGOTIATION, e, where);
 		return true;
 
 	case X(INITIATE, ROUTED_ONDEMAND, PERMANENT):
