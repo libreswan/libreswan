@@ -212,6 +212,7 @@ struct old_routing {
 	so_serial_t routing_sa;
 	so_serial_t ipsec_sa;
 	so_serial_t established_ike_sa;
+	so_serial_t negotiating_ike_sa;
 	enum routing routing;
 	unsigned revival_attempt;
 };
@@ -234,6 +235,7 @@ static struct old_routing ldbg_routing_start(struct connection *c,
 		.ipsec_sa = c->newest_ipsec_sa,
 		.routing_sa = c->newest_routing_sa,
 		.established_ike_sa = c->established_ike_sa,
+		.negotiating_ike_sa = c->negotiating_ike_sa,
 		.routing = c->child.routing,
 		.revival_attempt = c->revival.attempt,
 	};
@@ -278,6 +280,8 @@ static void ldbg_routing_stop(struct connection *c,
 				      old->ipsec_sa, c->newest_ipsec_sa, &sep);
 			jam_so_update(buf, c->config->ike_info->parent_name,
 				      old->established_ike_sa, c->established_ike_sa, &sep);
+			jam_so_update(buf, "negotiating",
+				      old->negotiating_ike_sa, c->negotiating_ike_sa, &sep);
 			if (old->revival_attempt != c->revival.attempt) {
 				jam_string(buf, sep); sep = " ";
 				jam(buf, "revival %u->%u",
@@ -408,7 +412,6 @@ static void set_routing(enum routing_event event UNUSED,
 {
 	so_serial_t new_routing_sa =
 		(e != NULL && e->child != NULL && (*e->child) != NULL ? (*e->child)->sa.st_serialno :
-		 /*e != NULL && e->ike != NULL && (*e->ike) != NULL ? (*e->ike)->sa.st_serialno :*/
 		 SOS_NOBODY);
 	c->child.routing = new_routing;
 	c->newest_routing_sa = new_routing_sa;
@@ -880,8 +883,9 @@ static bool zap_connection_child(struct ike_sa **ike, enum routing_event child_e
 
 void connection_unrouted(struct connection *c)
 {
-	c->newest_routing_sa = SOS_NOBODY;
+	c->negotiating_ike_sa = SOS_NOBODY;
 	c->established_ike_sa = SOS_NOBODY;
+	c->newest_routing_sa = SOS_NOBODY;
 	c->newest_ipsec_sa = SOS_NOBODY;
 	c->child.routing = RT_UNROUTED;
 }
@@ -911,6 +915,13 @@ void connection_routing_clear(struct state *st)
 			     "established_ike_sa");
 #endif
 		c->established_ike_sa = SOS_NOBODY;
+	}
+	if (c->negotiating_ike_sa == st->st_serialno) {
+#if 0
+		llog_pexpect(st->st_logger, HERE,
+			     "negotiating_ike_sa");
+#endif
+		c->negotiating_ike_sa = SOS_NOBODY;
 	}
 }
 
