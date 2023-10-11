@@ -87,11 +87,12 @@ static void jam_sa_update(struct jambuf *buf, const char *sa_name,
 	if (sa_name != NULL) {
 		jam_string(buf, " ");
 		jam_string(buf, sa_name);
+		jam_string(buf, " ");
 		jam_so(buf, sa_so);
 		if (st == NULL) {
-			jam_string(buf, "(deleted)");
+			jam_string(buf, " (deleted)");
 		} else {
-			jam_string(buf, "(");
+			jam_string(buf, " (");
 			jam_string(buf, st->st_state->short_name);
 			jam_string(buf, ")");
 		}
@@ -108,9 +109,9 @@ static void jam_so_update(struct jambuf *buf, const char *what,
 			  const char **prefix)
 {
 	if (old != SOS_NOBODY || new != SOS_NOBODY) {
-		jam_string(buf, (*prefix)); (*prefix) = "";
-		jam_string(buf, " ");
+		jam_string(buf, (*prefix)); (*prefix) = " ";
 		jam_string(buf, what);
+		jam_string(buf, " ");
 		jam_so(buf, old);
 		if (old != new) {
 			jam_string(buf, "->");
@@ -119,21 +120,9 @@ static void jam_so_update(struct jambuf *buf, const char *what,
 	}
 }
 
-static void jam_routing_update(struct jambuf *buf, enum routing old, enum routing new)
-{
-	jam_enum_short(buf, &routing_names, old);
-	if (old != new) {
-		jam_string(buf, "->");
-		jam_enum_short(buf, &routing_names, new);
-	}
-}
-
 static void jam_routing(struct jambuf *buf,
 			struct connection *c)
 {
-	jam_enum_short(buf, &routing_names, c->child.routing);
-	jam_string(buf, ", ");
-	jam_enum_short(buf, &connection_kind_names, c->local->kind);
 	jam_string(buf, " ");
 	jam_connection_co(buf, c);
 	jam(buf, "@%p", c);
@@ -141,39 +130,64 @@ static void jam_routing(struct jambuf *buf,
 		jam_string(buf, "; never-negotiate");
 	}
 	/* no actual update */
-	const char *newest = "; newest";
-	jam_so_update(buf, "routing", c->newest_routing_sa, c->newest_routing_sa, &newest);
-	jam_so_update(buf, c->config->ike_info->child_name, c->newest_ipsec_sa, c->newest_ipsec_sa, &newest);
-	jam_so_update(buf, c->config->ike_info->parent_name, c->newest_ike_sa, c->newest_ike_sa, &newest);
+	const char *sep = "; ";
+	jam_so_update(buf, "routing", c->newest_routing_sa, c->newest_routing_sa, &sep);
+	jam_so_update(buf, c->config->ike_info->child_name, c->newest_ipsec_sa, c->newest_ipsec_sa, &sep);
+	jam_so_update(buf, c->config->ike_info->parent_name, c->newest_ike_sa, c->newest_ike_sa, &sep);
 }
 
 static void jam_routing_annex(struct jambuf *buf, const struct routing_annex *e)
 {
+	const char *sep = "";
 	if (e->ike != NULL && (*e->ike) != NULL) {
+		jam_string(buf, sep); sep = " ";
 		jam_event_sa(buf, &(*e->ike)->sa);
 	}
 	if (e->child != NULL && (*e->child) != NULL) {
+		jam_string(buf, sep); sep = " ";
 		jam_event_sa(buf, &(*e->child)->sa);
 	}
 	if (e->sec_label.len > 0) {
-		jam_string(buf, ", sec_label=");
+		jam_string(buf, sep); sep = " ";
+		jam_string(buf, "sec_label=");
 		jam_shunk(buf, e->sec_label);
 	}
 	if (e->initiated_by != INITIATED_BY_NONE) {
-		jam_string(buf, ", by=");
+		jam_string(buf, sep); sep = " ";
+		jam_string(buf, "by=");
 		jam_enum_short(buf, &initiated_by_names, e->initiated_by);
 	}
+	jam_string(buf, ";");
 }
 
 static void jam_event(struct jambuf *buf,
-		      enum routing_event event,
 		      struct connection *c,
 		      const struct routing_annex *e)
 {
+	jam_routing_annex(buf, e);
+	jam_routing(buf, c);
+}
+
+static void jam_routing_prefix(struct jambuf *buf,
+			       const char *prefix,
+			       enum routing_event event,
+			       enum routing old_routing,
+			       enum routing new_routing,
+			       enum connection_kind kind)
+{
+	jam_string(buf, "routing: ");
+	jam_string(buf, prefix);
+	jam_string(buf, " ");
 	jam_enum_short(buf, &routing_event_names, event);
 	jam_string(buf, ", ");
-	jam_routing(buf, c);
-	jam_routing_annex(buf, e);
+	jam_enum_short(buf, &routing_names, old_routing);
+	if (old_routing != new_routing) {
+		jam_string(buf, "->");
+		jam_enum_short(buf, &routing_names, new_routing);
+	}
+	jam_string(buf, ", ");
+	jam_enum_short(buf, &connection_kind_names, kind);
+	jam_string(buf, ";");
 }
 
 static void ldbg_routing_skip(struct connection *c,
@@ -187,8 +201,10 @@ static void ldbg_routing_skip(struct connection *c,
 		 * is before the interesting stuff.
 		 */
 		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, c->logger, buf) {
-			jam_string(buf, "routing: skip ");
-			jam_event(buf, event, c, e);
+			jam_routing_prefix(buf, "skip", event,
+					   c->child.routing, c->child.routing,
+					   c->local->kind);
+			jam_event(buf, c, e);
 			jam_string(buf, " ");
 			jam_where(buf, where);
 		}
@@ -235,8 +251,10 @@ static struct old_routing ldbg_routing_start(struct connection *c,
 		 * is before the interesting stuff.
 		 */
 		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, c->logger, buf) {
-			jam_string(buf, "routing: start ");
-			jam_event(buf, event, c, e);
+			jam_routing_prefix(buf, "start", event,
+					   c->child.routing, c->child.routing,
+					   c->local->kind);
+			jam_event(buf, c, e);
 			jam_string(buf, " ");
 			jam_where(buf, where);
 		}
@@ -256,22 +274,21 @@ static void ldbg_routing_stop(struct connection *c,
 		 * is before the interesting stuff.
 		 */
 		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, c->logger, buf) {
-			jam_string(buf, "routing: stop ");
-			jam_enum_short(buf, &routing_event_names, event);
-			jam_string(buf, ";");
-			jam(buf, " ok=%s ", bool_str(ok));
-			/* routing */
-			jam_routing_update(buf, old->routing, c->child.routing);
+			jam_routing_prefix(buf, "stop", event,
+					   old->routing, c->child.routing,
+					   c->local->kind);
+			jam(buf, " ok=%s", bool_str(ok));
 			/* various SAs */
-			const char *newest = "; newest";
+			const char *sep = "; ";
 			jam_so_update(buf, "routing",
-				      old->routing_sa, c->newest_routing_sa, &newest);
+				      old->routing_sa, c->newest_routing_sa, &sep);
 			jam_so_update(buf, c->config->ike_info->child_name,
-				      old->ipsec_sa, c->newest_ipsec_sa, &newest);
+				      old->ipsec_sa, c->newest_ipsec_sa, &sep);
 			jam_so_update(buf, c->config->ike_info->parent_name,
-				      old->ike_sa, c->newest_ike_sa, &newest);
+				      old->ike_sa, c->newest_ike_sa, &sep);
 			if (old->revival_attempt != c->revival.attempt) {
-				jam(buf, " revival %u->%u",
+				jam_string(buf, sep); sep = " ";
+				jam(buf, "revival %u->%u",
 				    old->revival_attempt,
 				    c->revival.attempt);
 			}
@@ -1883,8 +1900,10 @@ static bool dispatch_1(enum routing_event event,
 
 	BARF_JAMBUF((DBGP(DBG_BASE) ? PASSERT_FLAGS : PEXPECT_FLAGS),
 		    c->logger, /*ignore-exit-code*/0, where, buf) {
-		jam_string(buf, "routing: unhandled ");
-		jam_event(buf, event, c, e);
+		jam_routing_prefix(buf, "unhandled", event,
+				   c->child.routing, c->child.routing,
+				   c->local->kind);
+		jam_event(buf, c, e);
 	}
 
 	return false;
@@ -1896,53 +1915,6 @@ bool dispatch(enum routing_event event,
 	      struct routing_annex ee)
 {
 	struct connection *c = connection_addref_where(*cp, logger, HERE);
-
-#if 0
-	/*
-	 * This isn't true for ONDEMAND when the connection is being
-	 * (re) attached to an existing IKE SA.
-	 *
-	 * For instance:
-	 *
-	 *   - permanent ike+child establish
-	 *   - large pings trigger hard expire of child, and then
-	 *   - ondemand request
-	 *
-	 * because the connection is permanent the IKE SA is set, but
-	 * ondemand doesn't think to pass in the existing IKE (and nor
-	 * should it?).
-	 *
-	 * See ikev2-expire-03-bytes-ignore-soft
-	 */
-	PEXPECT(logger, ((*c)->newest_ike_sa == SOS_NOBODY ||
-			 (e->ike != NULL &&
-			  (*e->ike)->sa.st_serialno == (*c)->newest_ike_sa)));
-#endif
-#if 0
-	/*
-	 * This isn't true when the child transitions from UNROUTED
-	 * NEGOTIATION to UNROUTED INBOUND, say.
-	 *
-	 * When there's a Child SA it must match the routing SA, but
-	 * not the reverse.
-	 *
-	 * For instance, a second acquire while a permanent connection
-	 * is still negotiating could find that there's an existing
-	 * routing SA.
-	 */
-	if (e->child != NULL &&
-	    (*e->child)->sa.st_serialno != (*c)->newest_routing_sa) {
-		LLOG_PEXPECT_JAMBUF(logger, where, buf) {
-			jam_string(buf, "Child SA ");
-			jam_so(buf, (*e->child)->sa.st_serialno);
-			jam_string(buf, " does not match routing SA ");
-			jam_so(buf, (*c)->newest_routing_sa);
-			jam_string(buf, " ");
-			jam_event(buf, event, c, e);
-		}
-	}
-#endif
-
 	struct old_routing old = ldbg_routing_start(c, event, where, &ee);
 	bool ok = dispatch_1(event, c, logger, where, &ee);
 	ldbg_routing_stop(c, event, where, &old, ok);
