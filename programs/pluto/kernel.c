@@ -1470,6 +1470,11 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 					    &ip_protocol_ipcomp,
 					    ipcomp_spi, &text_ipcomp);
 
+		if (c->xfrmi != NULL) {
+			said_next->xfrm_if_id = c->xfrmi->if_id;
+			said_next->mark_set = c->sa_marks.out;
+		}
+
 		if (!kernel_ops_add_sa(said_next, replace, st->st_logger)) {
 			log_state(RC_LOG, st, "add_sa ipcomp failed");
 			goto fail;
