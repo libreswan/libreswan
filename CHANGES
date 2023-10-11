@@ -17,6 +17,7 @@ v5.0 (Unreleased)
 * pluto: HW packet offload support [Raed Salem <raeds@nvidia.com>]
 * pluto: XFRM interface IP management with ref-counting [Brady Johnson]
 * pluto: Check return values of libcap-ng functions [Paul]
+* pluto: Fix IPcomp with XFRM interfaces [Wolfgang]
 * building: remove old copy of unbound headers [Andrew]
 * building: Use DESTDIR instead of FINAL* env vars [Andrew]
 * building: Fix "make git-rpm" [Paul/Tuomo]
