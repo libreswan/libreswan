@@ -32,5 +32,7 @@ west #
 002 "west-cuckoo" #3: initiating Child SA using IKE SA #1
 1v2 "west-cuckoo" #3: sent CREATE_CHILD_SA request for new IPsec SA
 003 "west-cuckoo" #3: CREATE_CHILD_SA failed with error notification INVALID_KE_PAYLOAD response suggesting MODP4096 instead of MODP8192
+002 "west-cuckoo" #3: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+002 "west-cuckoo" #3: IMPAIR: revival: skip scheduling revival event
 west #
  

@@ -8,6 +8,7 @@ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec whack --impair suppress-retransmits
+ipsec whack --impair revival
 ipsec auto --add westnet-eastnet-ikev2a
 ipsec auto --add westnet-eastnet-ikev2b
 ipsec auto --add westnet-eastnet-ikev2c

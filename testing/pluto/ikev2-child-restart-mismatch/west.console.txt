@@ -19,6 +19,8 @@ west #
 west #
  ipsec whack --impair suppress-retransmits
 west #
+ ipsec whack --impair revival
+west #
  ipsec auto --add westnet-eastnet-ikev2a
 002 "westnet-eastnet-ikev2a": added IKEv2 connection
 west #
@@ -52,11 +54,15 @@ west #
 002 "westnet-eastnet-ikev2b" #3: initiating Child SA using IKE SA #1
 1v2 "westnet-eastnet-ikev2b" #3: sent CREATE_CHILD_SA request for new IPsec SA
 003 "westnet-eastnet-ikev2b" #3: CREATE_CHILD_SA failed with error notification TS_UNACCEPTABLE
+002 "westnet-eastnet-ikev2b" #3: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+002 "westnet-eastnet-ikev2b" #3: IMPAIR: revival: skip scheduling revival event
 west #
  ipsec auto --up westnet-eastnet-ikev2c
 002 "westnet-eastnet-ikev2c" #4: initiating Child SA using IKE SA #1
 1v2 "westnet-eastnet-ikev2c" #4: sent CREATE_CHILD_SA request for new IPsec SA
 003 "westnet-eastnet-ikev2c" #4: CREATE_CHILD_SA failed with error notification TS_UNACCEPTABLE
+002 "westnet-eastnet-ikev2c" #4: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+002 "westnet-eastnet-ikev2c" #4: IMPAIR: revival: skip scheduling revival event
 west #
  #
 west #
@@ -70,7 +76,7 @@ west #
 005 "westnet-eastnet-ikev2a" #2: ESP traffic information: in=84B out=84B
 west #
  ipsec status | grep westnet-eastnet
-000 "westnet-eastnet-ikev2b": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.200.0/24; unrouted HOLD; eroute owner: #0
+000 "westnet-eastnet-ikev2b": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.200.0/24; unrouted; eroute owner: #0
 000 "westnet-eastnet-ikev2b":     oriented; my_ip=unset; their_ip=unset;
 000 "westnet-eastnet-ikev2b":   my_updown=ipsec _updown;
 000 "westnet-eastnet-ikev2b":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
@@ -88,7 +94,7 @@ west #
 000 "westnet-eastnet-ikev2b":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "westnet-eastnet-ikev2b":   nat-traversal: encaps:auto; keepalive:20s
 000 "westnet-eastnet-ikev2b":   newest IKE SA: #0; newest IPsec SA: #0; conn serial: $2;
-000 "westnet-eastnet-ikev2c": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.201.0/24; unrouted HOLD; eroute owner: #0
+000 "westnet-eastnet-ikev2c": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.201.0/24; unrouted; eroute owner: #0
 000 "westnet-eastnet-ikev2c":     oriented; my_ip=unset; their_ip=unset;
 000 "westnet-eastnet-ikev2c":   my_updown=ipsec _updown;
 000 "westnet-eastnet-ikev2c":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
