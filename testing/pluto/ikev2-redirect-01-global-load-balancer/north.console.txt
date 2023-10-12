@@ -23,6 +23,7 @@ north #
 1v2 "north-east" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 002 "north-east" #1: initiating IKE_SA_INIT redirect to new gateway (address: 192.1.2.44)
 1v2 "north-east" #2: initiating IKEv2 connection
+002 "north-east" #2: connection is already unrouted HOLD
 002 "north-east" #1: deleting IKE SA (PARENT_I1) and NOT sending notification
 002 "north-east" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 002 "north-east" #1: IMPAIR: revival: skip scheduling revival event
@@ -47,6 +48,7 @@ north #
 1v2 "north-east" #3: sent IKE_SA_INIT request to 192.1.2.23:500
 002 "north-east" #3: initiating IKE_SA_INIT redirect to new gateway (address: 192.1.2.46)
 1v2 "north-east" #4: initiating IKEv2 connection
+002 "north-east" #4: connection is already unrouted HOLD
 002 "north-east" #3: deleting IKE SA (PARENT_I1) and NOT sending notification
 002 "north-east" #3: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 002 "north-east" #3: IMPAIR: revival: skip scheduling revival event
@@ -71,6 +73,7 @@ north #
 1v2 "north-east" #5: sent IKE_SA_INIT request to 192.1.2.23:500
 002 "north-east" #5: initiating IKE_SA_INIT redirect to new gateway (address: 192.1.2.45)
 1v2 "north-east" #6: initiating IKEv2 connection
+002 "north-east" #6: connection is already unrouted HOLD
 002 "north-east" #5: deleting IKE SA (PARENT_I1) and NOT sending notification
 002 "north-east" #5: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 002 "north-east" #5: IMPAIR: revival: skip scheduling revival event

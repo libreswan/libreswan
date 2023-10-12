@@ -74,6 +74,7 @@ west #
 west #
  ipsec auto --up ah=sha1
 002 "ah=sha1" #7: initiating Child SA using IKE SA #5
+002 "ah=sha1" #7: connection is already erouted
 1v2 "ah=sha1" #7: sent CREATE_CHILD_SA request for new IPsec SA
 004 "ah=sha1" #7: initiator established Child SA using #5; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {AH=>0xAHAH <0xAHAH xfrm=HMAC_SHA1_96 DPD=passive}
 west #

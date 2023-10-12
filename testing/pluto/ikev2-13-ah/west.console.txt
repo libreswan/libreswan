@@ -46,6 +46,7 @@ west #
 west #
  ipsec auto --up westnet-eastnet-ipv4-psk-ikev2
 002 "westnet-eastnet-ipv4-psk-ikev2" #3: initiating Child SA using IKE SA #1
+002 "westnet-eastnet-ipv4-psk-ikev2" #3: connection is already erouted
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #3: sent CREATE_CHILD_SA request for new IPsec SA
 004 "westnet-eastnet-ipv4-psk-ikev2" #3: initiator established Child SA using #1; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {AH/ESN=>0xAHAH <0xAHAH xfrm=HMAC_SHA1_96 DPD=passive}
 west #
