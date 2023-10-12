@@ -86,6 +86,7 @@ if [ -f $testdir/testparams.sh ]; then
 else
     . $testingdir/default-testparams.sh
 fi
+
 # The per-host fixup.  Get hostname from the INPUT file name,
 # stripping of what is probably .console.verbose.txt
 host_fixups=$(basename ${input} | sed -e 's;\..*;;' | tr '[a-z]' '[A-Z]')_CONSOLE_FIXUPS
@@ -94,28 +95,50 @@ if test -z "$REF_CONSOLE_FIXUPS"; then
     echo "\$REF_CONSOLE_FIXUPS empty" 1>&2 ; exit 1
 fi
 
-cleanups="cat $input"
-# expand wildcards?
-for fixup in `echo $REF_CONSOLE_FIXUPS`; do
+cleanups="cat ${input}"
+sedup=
+for fixup in ${REF_CONSOLE_FIXUPS}; do
+    # Parameter list contains fixup directories; find the one
+    # containing the sanitizer script ${fixup}
     cleanup=
-    # Parameter list contains fixup directories.
     for fixupdir in "$@" ; do
-	if test -f $fixupdir/$fixup ; then
-	    case $fixup in
-		*.sed-n) cleanup="sed -n -f $fixupdir/$fixup" ;; # keep this first
-		*.sed) cleanup="sed -f $fixupdir/$fixup" ;;
-		*.pl)  cleanup="perl $fixupdir/$fixup" ;;
-		*.awk) cleanup="awk -f $fixupdir/$fixup" ;;
-		*) echo "Unknown fixup type: $fixup" 1>&2 ; exit 1 ;;
-	    esac
-	    break
+	if test -f ${fixupdir}/${fixup} ; then
+	    cleanup=${fixupdir}/${fixup}
+	    break;
 	fi
     done
     if test -z "$cleanup" ; then
-	echo "Fixup '$fixup' not found in $@" 1>&2 ; exit 1
+	echo "fixup '${fixup}' not found in $@" 1>&2 ; exit 1
     fi
-    cleanups="$cleanups | $cleanup"
+    # now add the fixup to the pipeline
+    case $fixup in
+	*.sed-n) # -n sanitizers suppress output
+	    cleanups="${cleanups}${sedup} | sed -n -f $fixupdir/$fixup"
+	    sedup=
+	    ;;
+	*.sed-f) # -f sanitizers can be merged
+	    if test -z "${sedup}" ; then
+		sedup=" | sed -f $fixupdir/$fixup"
+	    else
+		sedup="${sedup} -f $fixupdir/$fixup"
+	    fi
+	    ;;
+	*.sed)
+	    cleanups="${cleanups}${sedup} | sed -f $fixupdir/$fixup"
+	    sedup=
+	    ;;
+	*.awk)
+	    cleanups="${cleanups}${sedup} | awk -f $fixupdir/$fixup"
+	    sedup=
+	    ;;
+	*)
+	    echo "unknown fixup type: $fixup" 1>&2
+	    exit 1
+	    ;;
+    esac
 done
+cleanups="${cleanups}${sedup}"
+# echo "${cleanups}" 1>&2
 
 eval $cleanups
 status=$?
