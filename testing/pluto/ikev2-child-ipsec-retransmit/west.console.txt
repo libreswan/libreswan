@@ -42,7 +42,8 @@ west #
 002 "westnet-eastnet-ikev2a" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 002 "westnet-eastnet-ikev2a" #2: IMPAIR: revival: skip scheduling revival event
 005 "westnet-eastnet-ikev2a" #2: ESP traffic information: in=0B out=0B
-002 "westnet-eastnet-ikev2b" #3: deleting larval Child SA (TIMEOUT_CHILD)
+002 "westnet-eastnet-ikev2b" #3: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+002 "westnet-eastnet-ikev2b" #3: IMPAIR: revival: skip scheduling revival event
 002 "westnet-eastnet-ikev2a" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and NOT sending notification
 west #
  echo done
