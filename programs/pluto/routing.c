@@ -1030,17 +1030,45 @@ bool pexpect_connection_routing_unowned(struct connection *c, struct logger *log
 	return ok_to_delete;
 }
 
+static bool initiate_ok(struct connection *c,
+			enum routing_event event,
+			const struct routing_annex *e,
+			struct logger *logger,
+			where_t where)
+{
+	switch (c->child.routing) {
+	case RT_UNROUTED:
+	case RT_ROUTED_ONDEMAND:
+		return true;
+	default:
+		/*
+		 * Ignore stray initiates (presumably due to two
+		 * acquires triggering simultaneously).
+		 */
+		ldbg_routing_skip(c, event, where, e); /* breadcrumb */
+		enum_buf ib, rb;
+		llog(RC_LOG, logger, "%s ignored; connection is already %s",
+		     str_enum_short(&initiated_by_names, e->initiated_by, &ib),
+		     str_enum(&routing_story, c->child.routing, &rb));
+		return false;
+	}
+}
+
 void connection_initiated_ike(struct ike_sa *ike,
 			      enum initiated_by initiated_by,
 			      where_t where)
 {
 	struct connection *c = ike->sa.st_connection;
+	struct routing_annex annex = {
+		.ike = &ike,
+		.initiated_by = initiated_by,
+	};
+	if (!initiate_ok(c, CONNECTION_INITIATE, &annex, ike->sa.logger, where)) {
+		return;
+	}
 	dispatch(CONNECTION_INITIATE, &c,
 		 ike->sa.st_logger, where,
-		 (struct routing_annex) {
-			 .ike = &ike,
-			 .initiated_by = initiated_by,
-		 });
+		 annex);
 }
 
 void connection_initiated_child(struct ike_sa *ike, struct child_sa *child,
@@ -1048,13 +1076,17 @@ void connection_initiated_child(struct ike_sa *ike, struct child_sa *child,
 				where_t where)
 {
 	struct connection *cc = child->sa.st_connection;
+	struct routing_annex annex = {
+		.ike = &ike,
+		.child = &child,
+		.initiated_by = initiated_by,
+	};
+	if (!initiate_ok(cc, CONNECTION_INITIATE, &annex, child->sa.logger, where)) {
+		return;
+	}
 	dispatch(CONNECTION_INITIATE, &cc,
 		 child->sa.st_logger, where,
-		 (struct routing_annex) {
-			 .ike = &ike,
-			 .child = &child,
-			 .initiated_by = initiated_by,
-		 });
+		 annex);
 }
 
 void connection_pending(struct connection *c, enum initiated_by initiated_by, where_t where)
@@ -1370,18 +1402,6 @@ static bool dispatch_1(enum routing_event event,
 		do_updown_unroute(c, NULL);
 		return true;
 
-	case X(INITIATE, ROUTED_TUNNEL, PERMANENT):
-		if (BROKEN_TRANSITION) {
-			/*
-			 * Presumably no delete transition is leaving
-			 * this in the wrong state.
-			 *
-			 * See ikev2-13-ah.
-			 */
-			return true;
-		}
-		break;
-
 	case X(INITIATE, UNROUTED, PERMANENT):
 		flush_unrouted_revival(c);
 		set_initiated(event, c, RT_BARE_NEGOTIATION, e, where);
@@ -1394,26 +1414,32 @@ static bool dispatch_1(enum routing_event event,
 		PEXPECT(logger, c->child.routing == RT_ROUTED_NEGOTIATION);
 		return true;
 
-	case X(INITIATE, BARE_NEGOTIATION, PERMANENT):
-		if (BROKEN_TRANSITION) {
-			/* ikev2-redirect-01-global-load-balancer
-			 * ikev2-redirect-01-global
-			 * ikev2-redirect-03-auth-loop
-			 * ikev2-tcp-07-fail-ike-auth-redirect */
+	case X(INITIATE, UNROUTED, INSTANCE):
+		/*
+		 * Triggered by whack against the template which is
+		 * then instantiated creating this connection.  The
+		 * template may or may not be routed.
+		 */
+		if (c->clonedfrom->child.routing == RT_UNROUTED) {
+			/*
+			 * Since the template has no policy nor
+			 * routing, skip these in the instance.
+			 */
+			ldbg_routing(logger, "skipping hold as template is unrouted");
+			set_routing(event, c, RT_BARE_NEGOTIATION, e, where);
+			return true;
+		}
+		if (c->clonedfrom->child.routing == RT_ROUTED_ONDEMAND) {
+			/*
+			 * Need to override the template's policy with our own
+			 * (else things will keep acquiring). I's assumed that
+			 * the template's routing is sufficient for now.
+			 */
+			unrouted_instance_to_unrouted_negotiation(event, c, where);
+			set_routing(event, c, RT_UNROUTED_NEGOTIATION, e, where);
 			return true;
 		}
 		break;
-	case X(INITIATE, ROUTED_NEGOTIATION, PERMANENT):
-		if (BROKEN_TRANSITION) {
-			/*
-			 * Because there is no delete yet.
-			 *
-			 * See ikev2-impair-10-nr-ts-selectors
-			 */
-			return true;
-		}
-		llog(RC_LOG, c->logger, "connection already negotiating");
-		return true;
 
 	case X(ROUTE, BARE_NEGOTIATION, PERMANENT):
 		if (BROKEN_TRANSITION) {
@@ -1484,33 +1510,6 @@ static bool dispatch_1(enum routing_event event,
 		set_routing(event, c, RT_UNROUTED, NULL, where);
 		do_updown_unroute(c, NULL);
 		return true;
-
-	case X(INITIATE, UNROUTED, INSTANCE):
-		/*
-		 * Triggered by whack against the template which is
-		 * then instantiated creating this connection.  The
-		 * template may or may not be routed.
-		 */
-		if (c->clonedfrom->child.routing == RT_UNROUTED) {
-			/*
-			 * Since the template has no policy nor
-			 * routing, skip these in the instance.
-			 */
-			ldbg_routing(logger, "skipping hold as template is unrouted");
-			set_routing(event, c, RT_BARE_NEGOTIATION, e, where);
-			return true;
-		}
-		if (c->clonedfrom->child.routing == RT_ROUTED_ONDEMAND) {
-			/*
-			 * Need to override the template's policy with our own
-			 * (else things will keep acquiring). I's assumed that
-			 * the template's routing is sufficient for now.
-			 */
-			unrouted_instance_to_unrouted_negotiation(event, c, where);
-			set_routing(event, c, RT_UNROUTED_NEGOTIATION, e, where);
-			return true;
-		}
-		break;
 
 	case X(UNROUTE, BARE_NEGOTIATION, INSTANCE):
 	case X(UNROUTE, UNROUTED_NEGOTIATION, INSTANCE):
