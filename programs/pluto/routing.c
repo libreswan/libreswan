@@ -41,6 +41,7 @@ static const char *routing_event_name[] = {
 	S(CONNECTION_ESTABLISH_INBOUND),
 	S(CONNECTION_ESTABLISH_OUTBOUND),
 	S(CONNECTION_PENDING),
+	S(CONNECTION_DISOWN),
 	S(CONNECTION_INITIATE_IKE),
 	S(CONNECTION_INITIATE_CHILD),
 	S(CONNECTION_RESPOND_IKE),
@@ -1056,6 +1057,13 @@ void connection_pending(struct connection *c, enum initiated_by initiated_by, wh
 		 });
 }
 
+void connection_disown(struct connection *c, struct logger *logger, where_t where)
+{
+	dispatch(CONNECTION_DISOWN, &c,
+		 logger, where,
+		 (struct routing_annex) {0});
+}
+
 void connection_establish_ike(struct ike_sa *ike, where_t where)
 {
 	struct connection *c = ike->sa.st_connection;
@@ -1617,6 +1625,74 @@ static bool dispatch_1(enum routing_event event,
 		PEXPECT(logger, c->child.routing == RT_UNROUTED);
 		delete_ike_sa(e->ike);
 		/* connection lives to fight another day */
+		return true;
+
+	case X(DISOWN, ROUTED_NEGOTIATION, PERMANENT):
+		if (scheduled_connection_revival(c, "re-schedule", logger)) {
+			routed_negotiation_to_routed_ondemand(event, c, logger, where,
+							      "restoring ondemand, reviving");
+			PEXPECT(logger, c->child.routing == RT_ROUTED_ONDEMAND);
+			return true;
+		}
+		if (is_instance(c) && is_opportunistic(c)) {
+			/*
+			 * A failed OE initiator, make shunt bare.
+			 */
+			orphan_holdpass(c, c->spd, logger);
+			/*
+			 * Change routing so we don't get cleared out
+			 * when state/connection dies.
+			 */
+			set_routing(event, c, RT_UNROUTED, NULL, where);
+			return true;
+		}
+		if (c->policy.route) {
+			routed_negotiation_to_routed_ondemand(event, c, logger, where,
+							      "restoring ondemand, connection is routed");
+			PEXPECT(logger, c->child.routing == RT_ROUTED_ONDEMAND);
+			return true;
+		}
+		/* is this reachable? */
+		routed_negotiation_to_unrouted(event, c, logger, where, "deleting");
+		PEXPECT(logger, c->child.routing == RT_UNROUTED);
+		/* connection lives to fight another day */
+		return true;
+
+	case X(DISOWN, BARE_NEGOTIATION, INSTANCE):
+		if (scheduled_connection_revival(c, "re-schedule", logger)) {
+			set_routing(event, c, RT_UNROUTED, NULL, where);
+			return true;
+		}
+		set_routing(event, c, RT_UNROUTED, NULL, where);
+		return true;
+
+		/* very like DELETE_IKE, ROUTED_NEGOTIATION, INSTANCE above */
+		if (scheduled_connection_revival(c, "re-schedule", logger)) {
+			routed_negotiation_to_routed_ondemand(event, c, logger, where,
+							      "restoring ondemand, reviving");
+			PEXPECT(logger, c->child.routing == RT_ROUTED_ONDEMAND);
+			return true;
+		}
+		if (is_instance(c) && is_opportunistic(c)) {
+			/*
+			 * A failed OE initiator, make shunt bare.
+			 */
+			orphan_holdpass(c, c->spd, logger);
+			/*
+			 * Change routing so we don't get cleared out
+			 * when state/connection dies.
+			 */
+			set_routing(event, c, RT_UNROUTED, NULL, where);
+			return true;
+		}
+		if (c->policy.route) {
+			routed_negotiation_to_routed_ondemand(event, c, logger, where,
+							      "restoring ondemand, connection is routed");
+			PEXPECT(logger, c->child.routing == RT_ROUTED_ONDEMAND);
+			return true;
+		}
+		routed_negotiation_to_unrouted(event, c, logger, where, "deleting");
+		PEXPECT(logger, c->child.routing == RT_UNROUTED);
 		return true;
 
 	case X(TIMEOUT_IKE, BARE_NEGOTIATION, INSTANCE):

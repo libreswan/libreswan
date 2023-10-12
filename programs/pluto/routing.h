@@ -103,6 +103,7 @@ void connection_initiated_child(struct ike_sa *ike, struct child_sa *child, enum
 void connection_establish_ike(struct ike_sa *ike, where_t where);
 
 void connection_pending(struct connection *c, enum initiated_by, where_t where);
+void connection_disown(struct connection *c, struct logger *logger, where_t where);
 
 /*
  * Mobike
@@ -140,6 +141,7 @@ enum routing_event {
 	CONNECTION_RESPOND_IKE,
 	CONNECTION_RESPOND_CHILD,
 	CONNECTION_PENDING,
+	CONNECTION_DISOWN,
 	/* establish a connection (speculative) */
 	CONNECTION_ESTABLISH_IKE,
 	CONNECTION_ESTABLISH_INBOUND,
