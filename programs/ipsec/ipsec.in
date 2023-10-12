@@ -958,6 +958,46 @@ ipsec_nsscmd() {
     esac
 }
 
+ipsec_setup() {
+    #
+    # ipsec setup commands with per-command help
+    #
+    local cmd usage
+
+    while [ ${#} -gt 0 ]; do
+	case "${1}" in
+	    restart|--restart)
+		cmd="--restart"
+		usage="Usage: ipsec restart"
+		;;
+	    start|--start)
+		cmd="--start"
+		usage="Usage: ipsec start"
+		;;
+	    stop|--stop)
+		cmd="--stop"
+		usage="Usage: ipsec stop"
+		;;
+	    help|--help|-h)
+		echo "${usage}"
+		exit 0
+		;;
+	    --dry-run)
+		dry_run="echo"
+		;;
+	    -*)
+		echo "Unknown option \"${1}\"" >&2
+		echo >&2
+		echo "${usage}" >&2
+		exit 2
+		;;
+	esac
+	shift
+    done
+    ${dry_run} "${IPSEC_EXECDIR}/setup" ${cmd}
+    exit $?
+}
+
 # Check for no options at all and return usage.
 if [ -z "${1}" ]; then
     ipsec_usage
@@ -1038,17 +1078,17 @@ while [ ${#} -gt 0 ]; do
 	    ipsec_redirect "${@}"
 	    ;;
 	restart|--restart)
-	    exec "${IPSEC_EXECDIR}/setup" --restart
+	    ipsec_setup "${@}"
 	    ;;
 	start|--start)
 	    if [ -z "${2}" ]; then
-		exec "${IPSEC_EXECDIR}/setup" --start
+		ipsec_setup "${@}"
 	    else
 	        ipsec_combined "${@}"
 	    fi
 	    ;;
 	stop|--stop)
-	    exec "${IPSEC_EXECDIR}/setup" --stop
+	    ipsec_setup "${@}"
 	    ;;
 	letsencrypt)
 	    shift
