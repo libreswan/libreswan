@@ -615,7 +615,7 @@ bool same_whack(const struct logger *lhs, const struct logger *rhs)
 	return false;
 }
 
-void attach_fd_where(struct logger *dst, struct fd *src_fd, where_t where)
+static void attach_fd_where(struct logger *dst, struct fd *src_fd, where_t where)
 {
 	/* do no harm? */
 	if (src_fd == NULL) {

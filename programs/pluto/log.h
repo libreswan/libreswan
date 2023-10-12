@@ -89,9 +89,6 @@ void state_detach_where(struct state *st, const struct logger *src, where_t wher
 #define state_attach(ST, SRC) state_attach_where(ST, SRC, HERE)
 #define state_detach(ST, SRC) state_detach_where(ST, SRC, HERE)
 
-#define attach_fd(DST, WHACK_FD) attach_fd_where(DST, WHACK_FD, HERE)
-void attach_fd_where(struct logger *dst, struct fd *whack_fd, where_t where);
-
 /* for pushing state to other subsystems */
 #define binlog_refresh_state(st) binlog_state((st), (st)->st_state->kind)
 #define binlog_fake_state(st, new_state) binlog_state((st), (new_state))
