@@ -81,14 +81,13 @@ static bool dispatch_1(enum routing_event event,
 		       struct logger *logger, where_t where,
 		       struct routing_annex *e);
 
-static void jam_sa_update(struct jambuf *buf, const char *sa_name,
-			  so_serial_t sa_so, struct state *st)
+static void jam_sa(struct jambuf *buf, struct state *st, const char **sep)
 {
-	if (sa_name != NULL) {
+	if (st != NULL) {
+		jam_string(buf, (*sep)); (*sep) = " ";
+		jam_string(buf, state_sa_short_name(st));
 		jam_string(buf, " ");
-		jam_string(buf, sa_name);
-		jam_string(buf, " ");
-		jam_so(buf, sa_so);
+		jam_so(buf, st->st_serialno);
 		if (st == NULL) {
 			jam_string(buf, " (deleted)");
 		} else {
@@ -97,11 +96,6 @@ static void jam_sa_update(struct jambuf *buf, const char *sa_name,
 			jam_string(buf, ")");
 		}
 	}
-}
-
-static void jam_event_sa(struct jambuf *buf, struct state *st)
-{
-	jam_sa_update(buf, state_sa_short_name(st), st->st_serialno, st);
 }
 
 static void jam_so_update(struct jambuf *buf, const char *what,
@@ -138,14 +132,12 @@ static void jam_routing(struct jambuf *buf,
 
 static void jam_routing_annex(struct jambuf *buf, const struct routing_annex *e)
 {
-	const char *sep = "";
+	const char *sep = " ";
 	if (e->ike != NULL && (*e->ike) != NULL) {
-		jam_string(buf, sep); sep = " ";
-		jam_event_sa(buf, &(*e->ike)->sa);
+		jam_sa(buf, &(*e->ike)->sa, &sep);
 	}
 	if (e->child != NULL && (*e->child) != NULL) {
-		jam_string(buf, sep); sep = " ";
-		jam_event_sa(buf, &(*e->child)->sa);
+		jam_sa(buf, &(*e->child)->sa, &sep);
 	}
 	if (e->sec_label.len > 0) {
 		jam_string(buf, sep); sep = " ";
