@@ -925,7 +925,6 @@ void connection_routing_init(struct connection *c)
 void connection_routing_disown(struct state *st)
 {
 	struct connection *c = st->st_connection;
-#if 0
 	if (c->newest_routing_sa == st->st_serialno) {
 #if 0
 		llog_pexpect(st->st_logger, HERE,
@@ -933,7 +932,6 @@ void connection_routing_disown(struct state *st)
 #endif
 		c->newest_routing_sa = SOS_NOBODY;
 	}
-#endif
 	if (c->newest_ipsec_sa == st->st_serialno) {
 #if 0
 		llog_pexpect(st->st_logger, HERE,
