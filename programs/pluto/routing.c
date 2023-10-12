@@ -995,6 +995,14 @@ bool pexpect_connection_routing_unowned(struct connection *c, struct logger *log
 			     pri_so(c->newest_routing_sa));
 		ok_to_delete = false;
 	}
+	if (c->negotiating_ike_sa != SOS_NOBODY) {
+		llog_pexpect(logger, where,
+			     "connection "PRI_CO" [%p] still has .%s "PRI_SO,
+			     pri_connection_co(c), c,
+			     "negotiating_ike_sa",
+			     pri_so(c->negotiating_ike_sa));
+		ok_to_delete = false;
+	}
 	return ok_to_delete;
 }
 
