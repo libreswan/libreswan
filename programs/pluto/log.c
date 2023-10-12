@@ -239,21 +239,6 @@ static void log_whacks(enum rc_type rc, const struct logger *logger, struct jamb
 		if (logger->whackfd[i] == NULL) {
 			continue;
 		}
-		/*
-		 * This should not happen except there's still code
-		 * manipulating .global_whackfd and .object_whackfd
-		 * directly
-		 */
-		bool dup = false;
-		for (unsigned j = 0; j < i; j++) {
-			if (same_fd(logger->whackfd[i], logger->whackfd[j])) {
-				dup = true;
-				break;
-			}
-		}
-		if (dup) {
-			continue;
-		}
 		jambuf_to_whack(buf, logger->whackfd[i], rc);
 	}
 }
