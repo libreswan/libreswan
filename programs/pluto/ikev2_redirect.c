@@ -530,9 +530,28 @@ static void initiate_redirect(const char *story, struct state *ike_sa, void *con
 		"initiating %s to new gateway (address: %s)",
 		story, str_address_sensitive(&redirect_ip, &b));
 
-	/* XXX: only makes sense when IKE_SA_INIT / IKE_AUTH redirect? */
-	flush_pending_by_state(ike);
+	ike->sa.st_viable_parent = false; /* just to be sure */
 	on_delete(&ike->sa, skip_revival);
+	/*
+	 * XXX: hack, relinquish control of the connection.
+	 *
+	 * The problem is that initiate_connection() tries to take
+	 * ownership of the connection before this IKE SA has had a
+	 * chance to relinquish control.
+	 *
+	 * If the code instead used a revival like mechanism this
+	 * problem would go away.
+	 */
+	if (c->negotiating_ike_sa == ike->sa.st_serialno) {
+		pdbg(ike->sa.logger, "routing: releasing .negotiating_ike_sa in redirect");
+		c->negotiating_ike_sa = SOS_NOBODY;
+	}
+
+	/*
+	 * XXX: only makes sense when IKE_SA_INIT / IKE_AUTH
+	 * redirect?
+	 */
+	flush_pending_by_state(ike);
 
 	initiate_connection(c, /*remote-host-name*/NULL,
 			    /*background*/false /* try to keep it in the foreground */,
