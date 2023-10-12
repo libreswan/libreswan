@@ -913,7 +913,7 @@ static bool zap_connection_child(struct ike_sa **ike, enum routing_event child_e
 	return dispatched_to_child;
 }
 
-void connection_unrouted(struct connection *c)
+void connection_routing_init(struct connection *c)
 {
 	c->negotiating_ike_sa = SOS_NOBODY;
 	c->established_ike_sa = SOS_NOBODY;
@@ -922,7 +922,7 @@ void connection_unrouted(struct connection *c)
 	c->child.routing = RT_UNROUTED;
 }
 
-void connection_routing_clear(struct state *st)
+void connection_routing_disown(struct state *st)
 {
 	struct connection *c = st->st_connection;
 #if 0
@@ -955,6 +955,47 @@ void connection_routing_clear(struct state *st)
 #endif
 		c->negotiating_ike_sa = SOS_NOBODY;
 	}
+}
+
+/*
+ * Must be unrouted (i.e., all policies have been pulled).
+ */
+bool pexpect_connection_routing_unowned(struct connection *c, struct logger *logger, where_t where)
+{
+	bool ok_to_delete = true;
+	if (c->child.routing != RT_UNROUTED) {
+		enum_buf rn;
+		llog_pexpect(logger, where,
+			     "connection "PRI_CO" [%p] still in %s",
+			     pri_connection_co(c), c,
+			     str_enum_short(&routing_names, c->child.routing, &rn));
+		ok_to_delete = false;
+	}
+	if (c->established_ike_sa != SOS_NOBODY) {
+		llog_pexpect(logger, where,
+			     "connection "PRI_CO" [%p] still has .%s "PRI_SO,
+			     pri_connection_co(c), c,
+			     "established_ike_sa",
+			     pri_so(c->established_ike_sa));
+		ok_to_delete = false;
+	}
+	if (c->newest_ipsec_sa != SOS_NOBODY) {
+		llog_pexpect(logger, where,
+			     "connection "PRI_CO" [%p] still has .%s "PRI_SO,
+			     pri_connection_co(c), c,
+			     "newest_ipsec_sa",
+			     pri_so(c->newest_ipsec_sa));
+		ok_to_delete = false;
+	}
+	if (c->newest_routing_sa != SOS_NOBODY) {
+		llog_pexpect(logger, where,
+			     "connection "PRI_CO" [%p] still has .%s "PRI_SO,
+			     pri_connection_co(c), c,
+			     "newest_routing_sa",
+			     pri_so(c->newest_routing_sa));
+		ok_to_delete = false;
+	}
+	return ok_to_delete;
 }
 
 void connection_initiated_ike(struct ike_sa *ike,

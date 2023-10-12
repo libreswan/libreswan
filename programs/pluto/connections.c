@@ -334,18 +334,6 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 	}
 
 	/*
-	 * Must be unrouted (i.e., all policies have been pulled).
-	 */
-	if (c->child.routing != RT_UNROUTED) {
-		enum_buf rn;
-		llog_pexpect(logger, where,
-			     "connection "PRI_CO" [%p] still in %s",
-			     pri_connection_co(c), c,
-			     str_enum_short(&routing_names, c->child.routing, &rn));
-		ok_to_delete = false;
-	}
-
-	/*
 	 * Must not be pending (i.e., not on a queue waiting for an
 	 * IKE SA to establish).
 	 */
@@ -357,29 +345,9 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 	}
 
 	/*
-	 * Must have newest all cleared.
+	 * Must have all routing and all owners cleared.
 	 */
-	if (c->established_ike_sa != SOS_NOBODY) {
-		llog_pexpect(logger, where,
-			     "connection "PRI_CO" [%p] still has %s "PRI_SO,
-			     pri_connection_co(c), c,
-			     c->config->ike_info->parent_sa_name,
-			     pri_so(c->established_ike_sa));
-		ok_to_delete = false;
-	}
-	if (c->newest_ipsec_sa != SOS_NOBODY) {
-		llog_pexpect(logger, where,
-			     "connection "PRI_CO" [%p] still has %s "PRI_SO,
-			     pri_connection_co(c), c,
-			     c->config->ike_info->child_sa_name,
-			     pri_so(c->newest_ipsec_sa));
-		ok_to_delete = false;
-	}
-	if (c->newest_routing_sa != SOS_NOBODY) {
-		llog_pexpect(logger, where,
-			     "connection "PRI_CO" [%p] still has routing SA "PRI_SO,
-			     pri_connection_co(c), c,
-			     pri_so(c->newest_routing_sa));
+	if (!pexpect_connection_routing_unowned(c, logger, where)) {
 		ok_to_delete = false;
 	}
 
@@ -3266,7 +3234,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	c->instance_serial = 0;
 	c->interface = NULL; /* initializing */
 
-	connection_unrouted(c);
+	connection_routing_init(c);
 	c->redirect.num_redirects = 0;
 
 	/* non configurable */

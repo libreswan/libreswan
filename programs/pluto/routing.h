@@ -71,8 +71,9 @@ bool routed(const struct connection *c);
 enum shunt_kind routing_shunt_kind(enum routing routing);
 bool kernel_policy_installed(const struct connection *c);
 
-void connection_unrouted(struct connection *);
-void connection_routing_clear(struct state *st);
+void connection_routing_init(struct connection *);
+bool pexpect_connection_routing_unowned(struct connection *c, struct logger *, where_t where);
+void connection_routing_disown(struct state *st);
 
 void connection_route(struct connection *c, where_t where);
 void connection_unroute(struct connection *c, where_t where);

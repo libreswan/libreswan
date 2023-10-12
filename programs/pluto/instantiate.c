@@ -112,7 +112,7 @@ struct connection *clone_connection(const char *name, struct connection *t,
 		reference_xfrmi(c);
 	}
 
-	connection_unrouted(c);
+	connection_routing_init(c);
 
 	return c;
 }
@@ -332,7 +332,7 @@ static struct connection *instantiate(struct connection *t,
 	/*
 	 * Reset; sec_label templates will have set this.
 	 */
-	connection_unrouted(d);
+	connection_routing_init(d);
 
 	/* assumption: orientation is the same as c's */
 	connect_to_host_pair(d);
