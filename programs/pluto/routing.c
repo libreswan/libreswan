@@ -1366,30 +1366,27 @@ static bool dispatch_1(enum routing_event event,
 		 * Triggered by whack against the template which is
 		 * then instantiated creating this connection.  The
 		 * template may or may not be routed.
-		 *
-		 * When the template is routed, should this instead
-		 * transition to routed_negotiation?
-		 *
-		 * When the template is routed, should the instance
-		 * start in ROUTED_UNINSTALLED?
-		 *
-		 * NO? because when it is pulled it shouldn't undo the
-		 * routing?
-		 *
-		 * YES? because the routing code has to deal with
-		 * that.
-		 *
-		 * MAYBE? but only when the template and instance have
-		 * the same SPDs.
 		 */
 		if (c->clonedfrom->child.routing == RT_UNROUTED) {
+			/*
+			 * Since the template has no policy nor
+			 * routing, skip these in the instance.
+			 */
 			ldbg_routing(logger, "skipping hold as template is unrouted");
-			set_routing(event, c, RT_BARE_NEGOTIATION, NULL, where);
+			set_routing(event, c, RT_BARE_NEGOTIATION, e, where);
 			return true;
 		}
-		unrouted_instance_to_unrouted_negotiation(event, c, where);
-		set_routing(event, c, RT_UNROUTED_NEGOTIATION, e, where);
-		return true;
+		if (c->clonedfrom->child.routing == RT_ROUTED_ONDEMAND) {
+			/*
+			 * Need to override the template's policy with our own
+			 * (else things will keep acquiring). I's assumed that
+			 * the template's routing is sufficient for now.
+			 */
+			unrouted_instance_to_unrouted_negotiation(event, c, where);
+			set_routing(event, c, RT_UNROUTED_NEGOTIATION, e, where);
+			return true;
+		}
+		break;
 
 	case X(UNROUTE, BARE_NEGOTIATION, INSTANCE):
 	case X(UNROUTE, UNROUTED_NEGOTIATION, INSTANCE):
