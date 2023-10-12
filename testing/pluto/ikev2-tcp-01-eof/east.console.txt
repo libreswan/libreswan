@@ -17,7 +17,9 @@ east #
  echo "initdone"
 initdone
 east #
- ../../guestbin/ipsec-kernel-state.sh ; ../../guestbin/ipsec-kernel-policy.sh
+ ../../guestbin/ipsec-kernel-state.sh
+east #
+ ../../guestbin/ipsec-kernel-policy.sh
 east #
  grep '^connection from' /tmp/pluto.log
 connection from 192.1.2.45:EPHEM: IKETCP ACCEPTED: socket XX: accepted connection

@@ -92,7 +92,9 @@ west #
 west #
  send 'IKETCP\xff\xff'
 west #
- ../../guestbin/ipsec-kernel-state.sh ; ../../guestbin/ipsec-kernel-policy.sh
+ ../../guestbin/ipsec-kernel-state.sh
+west #
+ ../../guestbin/ipsec-kernel-policy.sh
 west #
  grep '^connection from' /tmp/pluto.log
 west #

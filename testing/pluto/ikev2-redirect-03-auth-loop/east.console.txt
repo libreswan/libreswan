@@ -16,7 +16,9 @@ initdone
 east #
  sleep 2
 east #
- ../../guestbin/ipsec-kernel-state.sh ; ../../guestbin/ipsec-kernel-policy.sh
+ ../../guestbin/ipsec-kernel-state.sh
+east #
+ ../../guestbin/ipsec-kernel-policy.sh
 east #
  # confirm east is in unrouted state again
 east #
