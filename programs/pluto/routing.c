@@ -1061,7 +1061,7 @@ static void zap_v2_child(struct ike_sa **ike, struct child_sa *child,
 	if (cc->newest_ipsec_sa == child->sa.st_serialno) {
 		PEXPECT((*ike)->sa.st_logger, IS_IPSEC_SA_ESTABLISHED(&child->sa));
 		/* will delete child and its logger */
-		ldbg_routing((*ike)->sa.st_logger, "    zapping Child SA "PRI_SO,
+		ldbg_routing((*ike)->sa.st_logger, "    zapping established Child SA "PRI_SO,
 			     pri_so(child->sa.st_serialno));
 		zap_child(&child, child_event, where);
 		return;
@@ -1077,6 +1077,14 @@ static void zap_v2_child(struct ike_sa **ike, struct child_sa *child,
 			child->sa.st_connection->config->ike_info->parent_sa_name,
 			str_enum_short(&routing_event_names, child_event, &ren));
 		delete_child_sa(&child);
+		return;
+	}
+
+	if (cc->newest_routing_sa == child->sa.st_serialno) {
+		/* will delete child and its logger */
+		ldbg_routing((*ike)->sa.st_logger, "    zapping larval Child SA "PRI_SO,
+			     pri_so(child->sa.st_serialno));
+		zap_child(&child, child_event, where);
 		return;
 	}
 
