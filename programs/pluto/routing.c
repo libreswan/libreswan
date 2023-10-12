@@ -1001,12 +1001,12 @@ static bool initiate_ok(struct connection *c,
 	default:
 		/*
 		 * Ignore stray initiates (presumably due to two
-		 * acquires triggering simultaneously).
+		 * acquires triggering simultaneously) or due to an
+		 * initiate being used to force a rekey.
 		 */
 		ldbg_routing_skip(c, event, where, e); /* breadcrumb */
-		enum_buf ib, rb;
-		llog(RC_LOG, logger, "%s ignored; connection is already %s",
-		     str_enum_short(&initiated_by_names, e->initiated_by, &ib),
+		enum_buf rb;
+		llog(RC_LOG, logger, "connection is already %s",
 		     str_enum(&routing_story, c->child.routing, &rb));
 		return false;
 	}
