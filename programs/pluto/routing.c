@@ -235,10 +235,7 @@ struct old_routing {
 	so_serial_t ike_so;
 	const char *child_name;
 	so_serial_t child_so;
-	so_serial_t routing_sa;
-	so_serial_t ipsec_sa;
-	so_serial_t established_sa;
-	so_serial_t negotiating_sa;
+	so_serial_t owner[CONNECTION_OWNER_ROOF];
 	enum routing routing;
 	unsigned revival_attempt;
 };
@@ -258,13 +255,13 @@ static struct old_routing ldbg_routing_start(struct connection *c,
 			       state_sa_short_name(&(*e->child)->sa)),
 		.child_so = (e->child == NULL || (*e->child) == NULL ? SOS_NOBODY :
 			     (*e->child)->sa.st_serialno),
-		.ipsec_sa = c->newest_ipsec_sa,
-		.routing_sa = c->newest_routing_sa,
-		.established_sa = c->established_ike_sa,
-		.negotiating_sa = c->negotiating_ike_sa,
 		.routing = c->child.routing,
 		.revival_attempt = c->revival.attempt,
 	};
+	for (unsigned i = 0; i < elemsof(old.owner); i++) {
+		old.owner[i] = c->owner[i];
+	}
+
 	if (DBGP(DBG_BASE)) {
 		/*
 		 * XXX: force ADD_PREFIX so that the connection name
@@ -300,14 +297,12 @@ static void ldbg_routing_stop(struct connection *c,
 			jam(buf, " ok=%s", bool_str(ok));
 			/* various SAs */
 			const char *sep = "; ";
-			jam_so_update(buf, "routing",
-				      old->routing_sa, c->newest_routing_sa, &sep);
-			jam_so_update(buf, c->config->ike_info->child_name,
-				      old->ipsec_sa, c->newest_ipsec_sa, &sep);
-			jam_so_update(buf, c->config->ike_info->parent_name,
-				      old->established_sa, c->established_ike_sa, &sep);
-			jam_so_update(buf, "negotiating",
-				      old->negotiating_sa, c->negotiating_ike_sa, &sep);
+			for (unsigned i = 0; i < elemsof(c->owner); i++) {
+				jam_so_update(buf,
+					      enum_name(&connection_owner_story, i),
+					      old->owner[i],
+					      c->owner[i], &sep);
+			}
 			if (old->revival_attempt != c->revival.attempt) {
 				jam_string(buf, sep); sep = " ";
 				jam(buf, "revival %u->%u",
@@ -941,43 +936,28 @@ static bool zap_connection_child(struct ike_sa **ike, enum routing_event child_e
 
 void connection_routing_init(struct connection *c)
 {
-	c->negotiating_ike_sa = SOS_NOBODY;
-	c->established_ike_sa = SOS_NOBODY;
-	c->newest_routing_sa = SOS_NOBODY;
-	c->newest_ipsec_sa = SOS_NOBODY;
 	c->child.routing = RT_UNROUTED;
+	for (unsigned i = 0; i < elemsof(c->owner); i++) {
+		c->owner[i] = SOS_NOBODY;
+	}
 }
 
 void connection_routing_disown(struct state *st)
 {
 	struct connection *c = st->st_connection;
-	if (c->newest_routing_sa == st->st_serialno) {
+	for (unsigned i = 0; i < elemsof(c->owner); i++) {
+		if (c->owner[i] == st->st_serialno) {
 #if 0
-		llog_pexpect(st->st_logger, HERE,
-			     "newest_routing_sa");
+			/* should already be clear? */
+			llog_pexpect(st->st_logger, HERE,
+				     connection_owner_names[i]);
+#else
+			pdbg(st->st_logger,
+			     "disown .%s",
+			     enum_name(&connection_owner_names, i));
 #endif
-		c->newest_routing_sa = SOS_NOBODY;
-	}
-	if (c->newest_ipsec_sa == st->st_serialno) {
-#if 0
-		llog_pexpect(st->st_logger, HERE,
-			     "newest_ipsec_sa");
-#endif
-		c->newest_ipsec_sa = SOS_NOBODY;
-	}
-	if (c->established_ike_sa == st->st_serialno) {
-#if 0
-		llog_pexpect(st->st_logger, HERE,
-			     "established_ike_sa");
-#endif
-		c->established_ike_sa = SOS_NOBODY;
-	}
-	if (c->negotiating_ike_sa == st->st_serialno) {
-#if 0
-		llog_pexpect(st->st_logger, HERE,
-			     "negotiating_ike_sa");
-#endif
-		c->negotiating_ike_sa = SOS_NOBODY;
+			c->owner[i] = SOS_NOBODY;
+		}
 	}
 }
 
@@ -995,37 +975,15 @@ bool pexpect_connection_routing_unowned(struct connection *c, struct logger *log
 			     str_enum_short(&routing_names, c->child.routing, &rn));
 		ok_to_delete = false;
 	}
-	if (c->established_ike_sa != SOS_NOBODY) {
-		llog_pexpect(logger, where,
-			     "connection "PRI_CO" [%p] still has .%s "PRI_SO,
-			     pri_connection_co(c), c,
-			     "established_ike_sa",
-			     pri_so(c->established_ike_sa));
-		ok_to_delete = false;
-	}
-	if (c->newest_ipsec_sa != SOS_NOBODY) {
-		llog_pexpect(logger, where,
-			     "connection "PRI_CO" [%p] still has .%s "PRI_SO,
-			     pri_connection_co(c), c,
-			     "newest_ipsec_sa",
-			     pri_so(c->newest_ipsec_sa));
-		ok_to_delete = false;
-	}
-	if (c->newest_routing_sa != SOS_NOBODY) {
-		llog_pexpect(logger, where,
-			     "connection "PRI_CO" [%p] still has .%s "PRI_SO,
-			     pri_connection_co(c), c,
-			     "newest_routing_sa",
-			     pri_so(c->newest_routing_sa));
-		ok_to_delete = false;
-	}
-	if (c->negotiating_ike_sa != SOS_NOBODY) {
-		llog_pexpect(logger, where,
-			     "connection "PRI_CO" [%p] still has .%s "PRI_SO,
-			     pri_connection_co(c), c,
-			     "negotiating_ike_sa",
-			     pri_so(c->negotiating_ike_sa));
-		ok_to_delete = false;
+	for (unsigned i = 0; i < elemsof(c->owner); i++) {
+		if (c->owner[i] != SOS_NOBODY) {
+			llog_pexpect(logger, where,
+				     "connection "PRI_CO" [%p] is owned by .%s "PRI_SO,
+				     pri_connection_co(c), c,
+				     enum_name(&connection_owner_names, i),
+				     pri_so(c->owner[i]));
+			ok_to_delete = false;
+		}
 	}
 	return ok_to_delete;
 }
