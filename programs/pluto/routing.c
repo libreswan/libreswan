@@ -54,6 +54,32 @@ static const char *routing_event_name[] = {
 #undef S
 };
 
+const char *connection_owner_name[] = {
+	[NEGOTIATING_IKE_SA] = "negotiating_ike_sa",
+	[ESTABLISHED_IKE_SA] = "established_ike_sa",
+	[NEWEST_ROUTING_SA] = "newest_routing_sa",
+	[NEWEST_IPSEC_SA] = "newest_ipsec_sa",
+};
+
+const struct enum_names connection_owner_names = {
+	0, CONNECTION_OWNER_ROOF-1,
+	ARRAY_REF(connection_owner_name),
+	.en_prefix = NULL,
+};
+
+const char *connection_owner_stories[] = {
+	[NEGOTIATING_IKE_SA] = "negotiating",
+	[ESTABLISHED_IKE_SA] = "IKE",
+	[NEWEST_ROUTING_SA] = "routing",
+	[NEWEST_IPSEC_SA] = "child",
+};
+
+const struct enum_names connection_owner_story = {
+	0, CONNECTION_OWNER_ROOF-1,
+	ARRAY_REF(connection_owner_stories),
+	.en_prefix = NULL,
+};
+
 static enum_names routing_event_names = {
 	0, ROUTING_EVENT_ROOF-1,
 	ARRAY_REF(routing_event_name),
@@ -211,8 +237,8 @@ struct old_routing {
 	so_serial_t child_so;
 	so_serial_t routing_sa;
 	so_serial_t ipsec_sa;
-	so_serial_t established_ike_sa;
-	so_serial_t negotiating_ike_sa;
+	so_serial_t established_sa;
+	so_serial_t negotiating_sa;
 	enum routing routing;
 	unsigned revival_attempt;
 };
@@ -234,8 +260,8 @@ static struct old_routing ldbg_routing_start(struct connection *c,
 			     (*e->child)->sa.st_serialno),
 		.ipsec_sa = c->newest_ipsec_sa,
 		.routing_sa = c->newest_routing_sa,
-		.established_ike_sa = c->established_ike_sa,
-		.negotiating_ike_sa = c->negotiating_ike_sa,
+		.established_sa = c->established_ike_sa,
+		.negotiating_sa = c->negotiating_ike_sa,
 		.routing = c->child.routing,
 		.revival_attempt = c->revival.attempt,
 	};
@@ -279,9 +305,9 @@ static void ldbg_routing_stop(struct connection *c,
 			jam_so_update(buf, c->config->ike_info->child_name,
 				      old->ipsec_sa, c->newest_ipsec_sa, &sep);
 			jam_so_update(buf, c->config->ike_info->parent_name,
-				      old->established_ike_sa, c->established_ike_sa, &sep);
+				      old->established_sa, c->established_ike_sa, &sep);
 			jam_so_update(buf, "negotiating",
-				      old->negotiating_ike_sa, c->negotiating_ike_sa, &sep);
+				      old->negotiating_sa, c->negotiating_ike_sa, &sep);
 			if (old->revival_attempt != c->revival.attempt) {
 				jam_string(buf, sep); sep = " ";
 				jam(buf, "revival %u->%u",

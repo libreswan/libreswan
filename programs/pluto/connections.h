@@ -711,10 +711,11 @@ struct connection {
 	 * Private variables for tracking routing.  Only updated by
 	 * routing.c.
 	 */
-	so_serial_t negotiating_ike_sa;
-	so_serial_t established_ike_sa;
-	so_serial_t newest_routing_sa;
-	so_serial_t newest_ipsec_sa;
+	so_serial_t owner[CONNECTION_OWNER_ROOF];
+#define negotiating_ike_sa owner[NEGOTIATING_IKE_SA]
+#define established_ike_sa owner[ESTABLISHED_IKE_SA]
+#define newest_routing_sa owner[NEWEST_ROUTING_SA]
+#define newest_ipsec_sa owner[NEWEST_IPSEC_SA]
 
 	/* host_pair linkage */
 	struct host_pair *host_pair;

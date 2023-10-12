@@ -34,6 +34,21 @@ enum direction;
 enum initiated_by;
 
 /*
+ * Number of ways a connection can be owned by a state.
+ */
+
+enum connection_owner {
+	NEGOTIATING_IKE_SA,
+	ESTABLISHED_IKE_SA,
+	NEWEST_ROUTING_SA,
+	NEWEST_IPSEC_SA,
+#define CONNECTION_OWNER_ROOF (NEWEST_IPSEC_SA+1)
+};
+
+extern const struct enum_names connection_owner_names;
+extern const struct enum_names connection_owner_story;
+
+/*
  * Routing status.
  *
  * Note: routing ignores the source address, but kernel policies do
