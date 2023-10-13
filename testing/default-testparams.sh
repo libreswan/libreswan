@@ -27,8 +27,6 @@ REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS systemd-fixup.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS initscripts-fixup.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS pluto-log-sanitize.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS retransmit-sanitize.sed"
-# always included so we can hot-swap libreswan for openswan in any test
-REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS openswan.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS misc-sanitize.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS tcpdump.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS ikev2-proposal-sanitize.sed"
