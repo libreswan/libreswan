@@ -185,16 +185,6 @@ static void schedule_revival_event(struct connection *c, struct logger *logger, 
 				  (impair.revival ? "revival" : NULL), logger);
 }
 
-bool scheduled_connection_revival(struct connection *c, const char *subplot, struct logger *logger)
-{
-	if (!revival_plausable(c, logger)) {
-		return false;
-	}
-
-	schedule_revival_event(c, logger, subplot);
-	return true;
-}
-
 bool scheduled_revival(struct connection *c, struct state *st, const char *subplot, struct logger *logger)
 {
 

@@ -136,6 +136,23 @@ static bool dispatch_1(enum routing_event event,
 		       struct logger *logger, where_t where,
 		       struct routing_annex *e);
 
+static bool connection_cannot_die(enum routing_event event,
+				  struct connection *c,
+				  struct logger *logger,
+				  struct routing_annex *e)
+{
+	struct state *st = (e->child != NULL && (*e->child) != NULL ? &(*e->child)->sa :
+			    e->ike != NULL && (*e->ike) != NULL ? &(*e->ike)->sa :
+			    NULL);
+	const char *subplot = (event == CONNECTION_DELETE_IKE ? "delete IKE SA" :
+			       event == CONNECTION_TIMEOUT_IKE ? "timeout IKE_SA" :
+			       event == CONNECTION_DELETE_CHILD ? "delete Child SA" :
+			       event == CONNECTION_TIMEOUT_CHILD ? "timeout Child_SA" :
+			       event == CONNECTION_DISOWN ? "re-schedule" :
+			       "???");
+	return scheduled_revival(c, st, subplot, logger);
+}
+
 static void jam_sa(struct jambuf *buf, struct state *st, const char **sep)
 {
 	if (st != NULL) {
@@ -1560,8 +1577,7 @@ static bool dispatch_1(enum routing_event event,
 	case X(DELETE_IKE, BARE_NEGOTIATION, PERMANENT):
 	case X(TIMEOUT_IKE, BARE_NEGOTIATION, PERMANENT):
 		/* ex, permanent+initiate */
-		if (scheduled_ike_revival((*e->ike),(event == CONNECTION_DELETE_IKE ? "delete IKE SA" :
-						     "timeout IKE SA"))) {
+		if (connection_cannot_die(event, c, logger, e)) {
 			set_routing(event, c, RT_UNROUTED, NULL, where);
 			return true;
 		}
@@ -1571,9 +1587,7 @@ static bool dispatch_1(enum routing_event event,
 	case X(DELETE_CHILD, BARE_NEGOTIATION, PERMANENT):
 	case X(TIMEOUT_CHILD, BARE_NEGOTIATION, PERMANENT):
 		/* ex, permanent+initiate */
-		if (scheduled_child_revival((*e->child),
-					    (event == CONNECTION_DELETE_CHILD ? "delete Child SA" :
-					     "timeout Child SA"))) {
+		if (connection_cannot_die(event, c, logger, e)) {
 			set_routing(event, c, RT_UNROUTED, NULL, where);
 			return true;
 		}
@@ -1604,8 +1618,7 @@ static bool dispatch_1(enum routing_event event,
 		 * et.al.
 		 */
 		/* ex, permanent+up */
-		if (scheduled_ike_revival((*e->ike), (event == CONNECTION_DELETE_IKE ? "delete IKE SA" :
-						      "timeout IKE SA"))) {
+		if (connection_cannot_die(event, c, logger, e)) {
 			routed_negotiation_to_routed_ondemand(event, c, logger, where,
 							      "restoring ondemand, reviving");
 			PEXPECT(logger, c->child.routing == RT_ROUTED_ONDEMAND);
@@ -1636,7 +1649,7 @@ static bool dispatch_1(enum routing_event event,
 		return true;
 
 	case X(DISOWN, ROUTED_NEGOTIATION, PERMANENT):
-		if (scheduled_connection_revival(c, "re-schedule", logger)) {
+		if (scheduled_revival(c, NULL, "re-schedule", logger)) {
 			routed_negotiation_to_routed_ondemand(event, c, logger, where,
 							      "restoring ondemand, reviving");
 			PEXPECT(logger, c->child.routing == RT_ROUTED_ONDEMAND);
@@ -1667,46 +1680,17 @@ static bool dispatch_1(enum routing_event event,
 		return true;
 
 	case X(DISOWN, BARE_NEGOTIATION, INSTANCE):
-		if (scheduled_connection_revival(c, "re-schedule", logger)) {
+		if (scheduled_revival(c, NULL, "re-schedule", logger)) {
 			set_routing(event, c, RT_UNROUTED, NULL, where);
 			return true;
 		}
 		set_routing(event, c, RT_UNROUTED, NULL, where);
 		return true;
 
-		/* very like DELETE_IKE, ROUTED_NEGOTIATION, INSTANCE above */
-		if (scheduled_connection_revival(c, "re-schedule", logger)) {
-			routed_negotiation_to_routed_ondemand(event, c, logger, where,
-							      "restoring ondemand, reviving");
-			PEXPECT(logger, c->child.routing == RT_ROUTED_ONDEMAND);
-			return true;
-		}
-		if (is_instance(c) && is_opportunistic(c)) {
-			/*
-			 * A failed OE initiator, make shunt bare.
-			 */
-			orphan_holdpass(c, c->spd, logger);
-			/*
-			 * Change routing so we don't get cleared out
-			 * when state/connection dies.
-			 */
-			set_routing(event, c, RT_UNROUTED, NULL, where);
-			return true;
-		}
-		if (c->policy.route) {
-			routed_negotiation_to_routed_ondemand(event, c, logger, where,
-							      "restoring ondemand, connection is routed");
-			PEXPECT(logger, c->child.routing == RT_ROUTED_ONDEMAND);
-			return true;
-		}
-		routed_negotiation_to_unrouted(event, c, logger, where, "deleting");
-		PEXPECT(logger, c->child.routing == RT_UNROUTED);
-		return true;
-
 	case X(TIMEOUT_IKE, BARE_NEGOTIATION, INSTANCE):
 	case X(TIMEOUT_IKE, UNROUTED_NEGOTIATION, INSTANCE):
 		if (BROKEN_TRANSITION &&
-		    scheduled_ike_revival((*e->ike), "timed out")) {
+		    connection_cannot_die(event, c, logger, e)) {
 			/* when ROUTED_NEGOTIATION should
 			 * switch to ROUTED_REVIVAL */
 			return true;
@@ -1801,7 +1785,7 @@ static bool dispatch_1(enum routing_event event,
 	case X(TIMEOUT_CHILD, BARE_NEGOTIATION, INSTANCE):
 	case X(TIMEOUT_CHILD, UNROUTED_NEGOTIATION, INSTANCE):
 	case X(TIMEOUT_CHILD, UNROUTED, PERMANENT): /* permanent+up */
-		if (scheduled_child_revival((*e->child), "timed out")) {
+		if (connection_cannot_die(event, c, logger, e)) {
 			set_routing(event, c, RT_UNROUTED, NULL, where);
 			return true;
 		}
