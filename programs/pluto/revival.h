@@ -28,13 +28,12 @@ void revive_connection(struct connection *c, const char *subplot,
 bool scheduled_connection_revival(struct connection *c, const char *subplot, struct logger *logger);
 
 /*
- * As in Child SA's connection should be kept up so a revival has just
- * been scheduled.  Caller should adjust routing accordingly.
+ * As in the SA's connection should be kept up so the call scheduled a
+ * revival.  Caller should adjust routing accordingly.
  */
-bool scheduled_child_revival(struct child_sa *child, const char *subplot);
 
-bool should_revive_ike(struct ike_sa *ike);
-void schedule_ike_revival(struct ike_sa *ike, const char *subplot);
+bool scheduled_child_revival(struct child_sa *child, const char *subplot);
+bool scheduled_ike_revival(struct ike_sa *ike, const char *subplot);
 
 void flush_routed_ondemand_revival(struct connection *c);
 void flush_unrouted_revival(struct connection *c);

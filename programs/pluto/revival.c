@@ -140,7 +140,7 @@ static bool should_revive_child(struct child_sa *child)
 	return true;
 }
 
-bool should_revive_ike(struct ike_sa *ike)
+static bool should_revive_ike(struct ike_sa *ike)
 {
 	struct connection *c = ike->sa.st_connection;
 
@@ -258,11 +258,21 @@ bool scheduled_child_revival(struct child_sa *child, const char *subplot)
 	return true;
 }
 
-void schedule_ike_revival(struct ike_sa *ike, const char *subplot)
+static void schedule_ike_revival(struct ike_sa *ike, const char *subplot)
 {
 	update_remote_port(&ike->sa);
 	struct connection *c = ike->sa.st_connection;
 	schedule_revival_event(c, ike->sa.st_logger, subplot);
+}
+
+bool scheduled_ike_revival(struct ike_sa *ike, const char *subplot)
+{
+	if (!should_revive_ike(ike)) {
+		return false;
+	}
+
+	schedule_ike_revival(ike, subplot);
+	return true;
 }
 
 void revive_connection(struct connection *c, const char *subplot,

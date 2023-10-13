@@ -1560,10 +1560,9 @@ static bool dispatch_1(enum routing_event event,
 	case X(DELETE_IKE, BARE_NEGOTIATION, PERMANENT):
 	case X(TIMEOUT_IKE, BARE_NEGOTIATION, PERMANENT):
 		/* ex, permanent+initiate */
-		if (should_revive_ike((*e->ike))) {
+		if (scheduled_ike_revival((*e->ike),(event == CONNECTION_DELETE_IKE ? "delete IKE SA" :
+						     "timeout IKE SA"))) {
 			set_routing(event, c, RT_UNROUTED, NULL, where);
-			schedule_ike_revival((*e->ike), (event == CONNECTION_DELETE_IKE ? "delete IKE SA" :
-							 "timeout IKE SA"));
 			return true;
 		}
 		set_routing(event, c, RT_UNROUTED, NULL, where);
@@ -1605,12 +1604,11 @@ static bool dispatch_1(enum routing_event event,
 		 * et.al.
 		 */
 		/* ex, permanent+up */
-		if (should_revive_ike((*e->ike))) {
+		if (scheduled_ike_revival((*e->ike), (event == CONNECTION_DELETE_IKE ? "delete IKE SA" :
+						      "timeout IKE SA"))) {
 			routed_negotiation_to_routed_ondemand(event, c, logger, where,
 							      "restoring ondemand, reviving");
 			PEXPECT(logger, c->child.routing == RT_ROUTED_ONDEMAND);
-			schedule_ike_revival((*e->ike), (event == CONNECTION_DELETE_IKE ? "delete IKE SA" :
-							 "timeout IKE SA"));
 			return true;
 		}
 		if (is_instance(c) && is_opportunistic(c)) {
@@ -1708,10 +1706,9 @@ static bool dispatch_1(enum routing_event event,
 	case X(TIMEOUT_IKE, BARE_NEGOTIATION, INSTANCE):
 	case X(TIMEOUT_IKE, UNROUTED_NEGOTIATION, INSTANCE):
 		if (BROKEN_TRANSITION &&
-		    should_revive_ike((*e->ike))) {
+		    scheduled_ike_revival((*e->ike), "timed out")) {
 			/* when ROUTED_NEGOTIATION should
 			 * switch to ROUTED_REVIVAL */
-			schedule_ike_revival((*e->ike), "timed out");
 			return true;
 		}
 		if (is_opportunistic(c)) {
