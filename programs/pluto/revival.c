@@ -205,8 +205,9 @@ bool scheduled_child_revival(struct child_sa *child, const char *subplot)
 		 * Presumably this is an old Child SA that is in the
 		 * process of being rekeyed or replaced.
 		 */
-		ldbg_sa(child, "revival: skipping, newest routing SA "PRI_SO" is newer than this Child SA "PRI_SO,
-			pri_so(c->newest_routing_sa), pri_so(child->sa.st_serialno));
+		llog_pexpect(child->sa.logger, HERE,
+			     "revival: skipping, newest routing SA "PRI_SO" is newer than this Child SA "PRI_SO,
+			     pri_so(c->newest_routing_sa), pri_so(child->sa.st_serialno));
 		return false;
 	}
 
