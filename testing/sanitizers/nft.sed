@@ -1,17 +1,18 @@
 # match: nft ...
 
-/^ nft / b nft-match
-b nft-end
+/^ nft / b match-nft
+b end-nft
 
-:nft-match
+:match-nft
 
   # print current; read next
   n
+  /^[a-z]* #/ b end-nft
 
-:nft-next
+:next-nft
 
   s/ reqid [1-9][0-9]* / reqid REQID /
 
-b nft-match
+b match-nft
 
-:nft-end
+:end-nft
