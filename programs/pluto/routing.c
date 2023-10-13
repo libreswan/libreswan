@@ -836,6 +836,7 @@ static void zap_ike(struct ike_sa **ike,
 	}
 
 	dispatch(ike_event, &c, (*ike)->sa.st_logger, where, annex);
+	delete_ike_sa(ike);
 }
 
 void connection_delete_ike(struct ike_sa **ike, where_t where)
@@ -1536,7 +1537,6 @@ static bool dispatch_1(enum routing_event event,
 		 * putting the connection into ROUTED_ONDEMAND,
 		 * followed by this IKE timeout.
 		 */
-		delete_ike_sa(e->ike);
 		return true;
 
 	case X(DELETE_IKE, BARE_NEGOTIATION, PERMANENT):
@@ -1546,11 +1546,9 @@ static bool dispatch_1(enum routing_event event,
 			set_routing(event, c, RT_UNROUTED, NULL, where);
 			schedule_ike_revival((*e->ike), (event == CONNECTION_DELETE_IKE ? "delete IKE SA" :
 							 "timeout IKE SA"));
-			delete_ike_sa(e->ike);
 			return true;
 		}
 		set_routing(event, c, RT_UNROUTED, NULL, where);
-		delete_ike_sa(e->ike);
 		return true;
 
 	case X(DELETE_CHILD, BARE_NEGOTIATION, PERMANENT):
@@ -1597,7 +1595,6 @@ static bool dispatch_1(enum routing_event event,
 			PEXPECT(logger, c->child.routing == RT_ROUTED_ONDEMAND);
 			schedule_ike_revival((*e->ike), (event == CONNECTION_DELETE_IKE ? "delete IKE SA" :
 							 "timeout IKE SA"));
-			delete_ike_sa(e->ike);
 			return true;
 		}
 		if (is_instance(c) && is_opportunistic(c)) {
@@ -1610,20 +1607,17 @@ static bool dispatch_1(enum routing_event event,
 			 * when state/connection dies.
 			 */
 			set_routing(event, c, RT_UNROUTED, NULL, where);
-			delete_ike_sa(e->ike);
 			return true;
 		}
 		if (c->policy.route) {
 			routed_negotiation_to_routed_ondemand(event, c, logger, where,
 							      "restoring ondemand, connection is routed");
 			PEXPECT(logger, c->child.routing == RT_ROUTED_ONDEMAND);
-			delete_ike_sa(e->ike);
 			return true;
 		}
 		/* is this reachable? */
 		routed_negotiation_to_unrouted(event, c, logger, where, "deleting");
 		PEXPECT(logger, c->child.routing == RT_UNROUTED);
-		delete_ike_sa(e->ike);
 		/* connection lives to fight another day */
 		return true;
 
@@ -1702,7 +1696,6 @@ static bool dispatch_1(enum routing_event event,
 			/* when ROUTED_NEGOTIATION should
 			 * switch to ROUTED_REVIVAL */
 			schedule_ike_revival((*e->ike), "timed out");
-			delete_ike_sa(e->ike);
 			return true;
 		}
 		if (is_opportunistic(c)) {
@@ -1715,10 +1708,8 @@ static bool dispatch_1(enum routing_event event,
 			 * when state/connection dies.
 			 */
 			set_routing(event, c, RT_UNROUTED, NULL, where);
-			delete_ike_sa(e->ike);
 			return true;
 		}
-		delete_ike_sa(e->ike);
 		set_routing(event, c, RT_UNROUTED, NULL, where);
 		return true;
 
@@ -1727,7 +1718,6 @@ static bool dispatch_1(enum routing_event event,
 	case X(DELETE_IKE, ROUTED_TUNNEL, INSTANCE):
 	case X(TIMEOUT_IKE, ROUTED_TUNNEL, INSTANCE):
 		PEXPECT(c->logger, (*e->ike)->sa.st_ike_version == IKEv1);
-		delete_ike_sa(e->ike);
 		return true;
 
 	case X(DELETE_IKE, UNROUTED, PERMANENT):
@@ -1742,13 +1732,11 @@ static bool dispatch_1(enum routing_event event,
 		 * Since there's no established Child SA
 		 * zap_connection_states() should always fail?
 		 */
-		delete_ike_sa(e->ike);
 		return true;
 
 	case X(DELETE_IKE, UNROUTED, INSTANCE):			/* certoe-08-nat-packet-cop-restart */
 	case X(DELETE_IKE, BARE_NEGOTIATION, INSTANCE):
 	case X(DELETE_IKE, UNROUTED_NEGOTIATION, INSTANCE):	/* dnsoe-01 ... */
-		delete_ike_sa(e->ike);
 		/*
 		 * XXX: huh? instance isn't routed so why delete
 		 * policies?  Instead just drop IKE and let connection
@@ -1764,7 +1752,6 @@ static bool dispatch_1(enum routing_event event,
 		 * connection put into routed ondemand.  Just need to
 		 * delete IKE.
 		 */
-		delete_ike_sa(e->ike);
 		return true;
 
 	case X(DELETE_CHILD, ROUTED_TUNNEL, INSTANCE):
@@ -2003,7 +1990,6 @@ static bool dispatch_1(enum routing_event event,
 		return true;
 	case X(DELETE_IKE, ROUTED_ONDEMAND, LABELED_PARENT):
 	case X(DELETE_IKE, UNROUTED, LABELED_PARENT):
-		delete_ike_sa(e->ike);
 		set_routing(event, c, RT_UNROUTED, NULL, where);
 		return true;
 
