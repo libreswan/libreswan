@@ -129,45 +129,6 @@ bool connection_establish_child(struct child_sa *child, where_t where);
 bool connection_establish_inbound(struct child_sa *child, where_t where);
 bool connection_establish_outbound(struct child_sa *child, where_t where);
 
-enum routing_event {
-	/* fiddle with the ROUTE bit */
-	CONNECTION_ROUTE,
-	CONNECTION_UNROUTE,
-	/* start/stop a connection */
-	CONNECTION_INITIATE, /* also revive */
-	/* initiator/responder? */
-	CONNECTION_INITIATE_IKE,
-	CONNECTION_INITIATE_CHILD,
-	CONNECTION_RESPOND_IKE,
-	CONNECTION_RESPOND_CHILD,
-	CONNECTION_PENDING,
-	CONNECTION_DISOWN,
-	/* establish a connection (speculative) */
-	CONNECTION_ESTABLISH_IKE,
-	CONNECTION_ESTABLISH_INBOUND,
-	CONNECTION_ESTABLISH_OUTBOUND,
-	/* tear down a connection */
-	CONNECTION_DELETE_IKE,
-	CONNECTION_DELETE_CHILD,
-	CONNECTION_TIMEOUT_IKE,
-	CONNECTION_TIMEOUT_CHILD,
-	/* mobike */
-	CONNECTION_SUSPEND,
-	CONNECTION_RESUME,
-#define ROUTING_EVENT_ROOF (CONNECTION_RESUME+1)
-};
-
-/*
- * Wrapper that zaps the IKE SA of any children before deleting the
- * IKE SA.
- *
- * IKEv1: any non-established children are deleted.  Established
- * children are set free.
- *
- * IKEv2: all children are deleted.
- */
-void connection_zap_ike_family(struct ike_sa **ike, enum routing_event event, where_t where);
-
 PRINTF_LIKE(2)
 void ldbg_routing(struct logger *logger, const char *fmt, ...);
 

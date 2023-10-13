@@ -32,6 +32,34 @@
 #include "instantiate.h"
 #include "connection_event.h"
 
+enum routing_event {
+	/* fiddle with the ROUTE bit */
+	CONNECTION_ROUTE,
+	CONNECTION_UNROUTE,
+	/* start/stop a connection */
+	CONNECTION_INITIATE, /* also revive */
+	/* initiator/responder? */
+	CONNECTION_INITIATE_IKE,
+	CONNECTION_INITIATE_CHILD,
+	CONNECTION_RESPOND_IKE,
+	CONNECTION_RESPOND_CHILD,
+	CONNECTION_PENDING,
+	CONNECTION_DISOWN,
+	/* establish a connection (speculative) */
+	CONNECTION_ESTABLISH_IKE,
+	CONNECTION_ESTABLISH_INBOUND,
+	CONNECTION_ESTABLISH_OUTBOUND,
+	/* tear down a connection */
+	CONNECTION_DELETE_IKE,
+	CONNECTION_DELETE_CHILD,
+	CONNECTION_TIMEOUT_IKE,
+	CONNECTION_TIMEOUT_CHILD,
+	/* mobike */
+	CONNECTION_SUSPEND,
+	CONNECTION_RESUME,
+#define ROUTING_EVENT_ROOF (CONNECTION_RESUME+1)
+};
+
 static const char *routing_event_name[] = {
 #define S(E) [E] = #E
 	S(CONNECTION_ROUTE),
@@ -1211,9 +1239,9 @@ static void zap_v2_child(struct ike_sa **ike, struct child_sa *child,
 	delete_child_sa(&child);
 }
 
-void connection_zap_ike_family(struct ike_sa **ike,
-			       enum routing_event ike_event,
-			       where_t where)
+static void connection_zap_ike_family(struct ike_sa **ike,
+				      enum routing_event ike_event,
+				      where_t where)
 {
 	ldbg_routing((*ike)->sa.st_logger, "%s()", __func__);
 	enum routing_event child_event = zap_child_event(ike, ike_event);
