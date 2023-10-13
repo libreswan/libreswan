@@ -218,6 +218,7 @@ kvmplutotest	ikev2-63-anyid-nat			good
 kvmplutotest	ikev2-64-same-route-twice		wip
 kvmplutotest	ikev2-67-parallel-sa			wip
 kvmplutotest	ikev2-67-esp-null-iperf			wip
+kvmplutotest	ikev2-68-sa-clones-auto-route		skiptest
 kvmplutotest	ikev2-70-src-address-selection		good
 kvmplutotest	ikev2-71-cp-resolve-name		good
 kvmplutotest 	ikev2-72-cp-resolve-both		good
