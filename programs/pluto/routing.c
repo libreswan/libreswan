@@ -1606,6 +1606,7 @@ static bool dispatch_1(enum routing_event event,
 	case X(DELETE_IKE, ROUTED_NEGOTIATION, PERMANENT):
 	case X(TIMEOUT_IKE, ROUTED_NEGOTIATION, INSTANCE):
 	case X(TIMEOUT_IKE, ROUTED_NEGOTIATION, PERMANENT):
+	case X(DISOWN, ROUTED_NEGOTIATION, PERMANENT):
 		/*
 		 * For instance, this end initiated a Child SA for the
 		 * connection while at the same time the peer
@@ -1646,45 +1647,6 @@ static bool dispatch_1(enum routing_event event,
 		routed_negotiation_to_unrouted(event, c, logger, where, "deleting");
 		PEXPECT(logger, c->child.routing == RT_UNROUTED);
 		/* connection lives to fight another day */
-		return true;
-
-	case X(DISOWN, ROUTED_NEGOTIATION, PERMANENT):
-		if (scheduled_revival(c, NULL, "re-schedule", logger)) {
-			routed_negotiation_to_routed_ondemand(event, c, logger, where,
-							      "restoring ondemand, reviving");
-			PEXPECT(logger, c->child.routing == RT_ROUTED_ONDEMAND);
-			return true;
-		}
-		if (is_instance(c) && is_opportunistic(c)) {
-			/*
-			 * A failed OE initiator, make shunt bare.
-			 */
-			orphan_holdpass(c, c->spd, logger);
-			/*
-			 * Change routing so we don't get cleared out
-			 * when state/connection dies.
-			 */
-			set_routing(event, c, RT_UNROUTED, NULL, where);
-			return true;
-		}
-		if (c->policy.route) {
-			routed_negotiation_to_routed_ondemand(event, c, logger, where,
-							      "restoring ondemand, connection is routed");
-			PEXPECT(logger, c->child.routing == RT_ROUTED_ONDEMAND);
-			return true;
-		}
-		/* is this reachable? */
-		routed_negotiation_to_unrouted(event, c, logger, where, "deleting");
-		PEXPECT(logger, c->child.routing == RT_UNROUTED);
-		/* connection lives to fight another day */
-		return true;
-
-	case X(DISOWN, BARE_NEGOTIATION, INSTANCE):
-		if (scheduled_revival(c, NULL, "re-schedule", logger)) {
-			set_routing(event, c, RT_UNROUTED, NULL, where);
-			return true;
-		}
-		set_routing(event, c, RT_UNROUTED, NULL, where);
 		return true;
 
 	case X(TIMEOUT_IKE, BARE_NEGOTIATION, INSTANCE):
@@ -1785,6 +1747,7 @@ static bool dispatch_1(enum routing_event event,
 	case X(TIMEOUT_CHILD, BARE_NEGOTIATION, INSTANCE):
 	case X(TIMEOUT_CHILD, UNROUTED_NEGOTIATION, INSTANCE):
 	case X(TIMEOUT_CHILD, UNROUTED, PERMANENT): /* permanent+up */
+	case X(DISOWN, BARE_NEGOTIATION, INSTANCE):
 		if (connection_cannot_die(event, c, logger, e)) {
 			set_routing(event, c, RT_UNROUTED, NULL, where);
 			return true;
