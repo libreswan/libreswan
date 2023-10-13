@@ -35,6 +35,7 @@ REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS all-date-sanitize.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS debug.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS impair.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS strongswan.sed"
+REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS linux-audit.sed"
 
 # The following sanitizers are written to only modify specific commands
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS ipsec-kernel-state.sed"		# includes ip xfrm state
