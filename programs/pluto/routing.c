@@ -649,7 +649,6 @@ static void teardown_routed_tunnel(enum routing_event event,
 		ldbg_routing((*child)->sa.st_logger,
 			     "keeping connection kernel policy; routing SA "PRI_SO" is newer",
 			     pri_so(c->newest_routing_sa));
-		delete_child_sa(child);
 		return;
 	}
 
@@ -658,13 +657,11 @@ static void teardown_routed_tunnel(enum routing_event event,
 		ldbg_routing((*child)->sa.st_logger,
 			     "keeping connection kernel policy; IPsec SA "PRI_SO" is newer",
 			     pri_so(c->newest_ipsec_sa));
-		delete_child_sa(child);
 		return;
 	}
 
 	if (scheduled_child_revival(*child, "received Delete/Notify")) {
 		routed_tunnel_to_routed_ondemand(event, (*child), where);
-		delete_child_sa(child);
 		return;
 	}
 
@@ -674,7 +671,6 @@ static void teardown_routed_tunnel(enum routing_event event,
 	if (is_permanent(c) && c->policy.route) {
 		/* it's being stripped of the state, hence SOS_NOBODY */
 		routed_tunnel_to_routed_ondemand(event, (*child), where);
-		delete_child_sa(child);
 		return;
 	}
 
@@ -683,7 +679,6 @@ static void teardown_routed_tunnel(enum routing_event event,
 	 */
 	if (is_permanent(c) && c->config->failure_shunt != SHUNT_NONE) {
 		routed_tunnel_to_routed_failure(event, (*child), where);
-		delete_child_sa(child);
 		return;
 	}
 
@@ -705,7 +700,6 @@ static void teardown_routed_tunnel(enum routing_event event,
 		 */
 		set_routing(event, c, RT_UNROUTED, NULL, HERE);
 		do_updown_unroute(c, *child);
-		delete_child_sa(child);
 		return;
 	}
 
@@ -719,7 +713,6 @@ static void teardown_routed_tunnel(enum routing_event event,
 				   (*child)->sa.st_logger,
 				   where, "delete");
 	set_routing(event, c, RT_UNROUTED, NULL, where);
-	delete_child_sa(child);
 }
 
 static void teardown_routed_negotiation(enum routing_event event,
@@ -733,7 +726,6 @@ static void teardown_routed_negotiation(enum routing_event event,
 		routed_negotiation_to_routed_ondemand(event, c, logger, where,
 						      reason);
 		PEXPECT(logger, c->child.routing == RT_ROUTED_ONDEMAND);
-		delete_child_sa(child);
 		return;
 	}
 
@@ -747,7 +739,6 @@ static void teardown_routed_negotiation(enum routing_event event,
 		 * when state/connection dies.
 		 */
 		set_routing(event, c, RT_UNROUTED, NULL, where);
-		delete_child_sa(child);
 		return;
 	}
 
@@ -755,7 +746,6 @@ static void teardown_routed_negotiation(enum routing_event event,
 		routed_negotiation_to_routed_ondemand(event, c, logger, where,
 						      "restoring ondemand, connection is routed");
 		PEXPECT(logger, c->child.routing == RT_ROUTED_ONDEMAND);
-		delete_child_sa(child);
 		return;
 	}
 
@@ -764,7 +754,6 @@ static void teardown_routed_negotiation(enum routing_event event,
 	 */
 	routed_negotiation_to_unrouted(event, c, logger, where, "deleting");
 	PEXPECT(logger, c->child.routing == RT_UNROUTED);
-	delete_child_sa(child);
 }
 
 /*
@@ -798,6 +787,7 @@ static void zap_child(struct child_sa **child,
 	 * Let state machine figure out how to react.
 	 */
 	dispatch(child_event, &cc, (*child)->sa.st_logger, where, annex);
+	delete_child_sa(child);
 	pexpect((*child) == NULL); /* no logger */
 }
 
@@ -1558,11 +1548,9 @@ static bool dispatch_1(enum routing_event event,
 					    (event == CONNECTION_DELETE_CHILD ? "delete Child SA" :
 					     "timeout Child SA"))) {
 			set_routing(event, c, RT_UNROUTED, NULL, where);
-			delete_child_sa(e->child);
 			return true;
 		}
 		set_routing(event, c, RT_UNROUTED, NULL, where);
-		delete_child_sa(e->child);
 		return true;
 
 	case X(DELETE_CHILD, ROUTED_NEGOTIATION, PERMANENT):
@@ -1789,11 +1777,9 @@ static bool dispatch_1(enum routing_event event,
 	case X(TIMEOUT_CHILD, UNROUTED_NEGOTIATION, INSTANCE):
 	case X(TIMEOUT_CHILD, UNROUTED, PERMANENT): /* permanent+up */
 		if (scheduled_child_revival((*e->child), "timed out")) {
-			delete_child_sa(e->child);
 			set_routing(event, c, RT_UNROUTED, NULL, where);
 			return true;
 		}
-		delete_child_sa(e->child);
 		set_routing(event, c, RT_UNROUTED, NULL, where);
 		return true;
 
@@ -2027,10 +2013,6 @@ static bool dispatch_1(enum routing_event event,
 		return true;
 	case X(UNROUTE, UNROUTED_INBOUND, LABELED_CHILD):
 	case X(UNROUTE, UNROUTED_TUNNEL, LABELED_CHILD):
-#if 0
-		/* currently done by caller */
-		delete_child_sa(e->child);
-#endif
 		set_routing(event, c, RT_UNROUTED, NULL, where);
 		return true;
 	case X(UNROUTE, UNROUTED, LABELED_CHILD):
@@ -2038,7 +2020,6 @@ static bool dispatch_1(enum routing_event event,
 		return true;
 	case X(DELETE_CHILD, UNROUTED_INBOUND, LABELED_CHILD):
 	case X(DELETE_CHILD, UNROUTED_TUNNEL, LABELED_CHILD):
-		delete_child_sa(e->child);
 		set_routing(event, c, RT_UNROUTED, NULL, where);
 		return true;
 
