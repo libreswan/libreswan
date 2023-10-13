@@ -195,59 +195,69 @@ bool scheduled_connection_revival(struct connection *c, const char *subplot, str
 	return true;
 }
 
+bool scheduled_revival(struct connection *c, struct state *st, const char *subplot, struct logger *logger)
+{
+
+	if (st != NULL) {
+		/*
+		 * pexpect() ST is the owner.  Routing should never
+		 * call when it isn't.
+		 */
+		if (IS_CHILD_SA(st)) {
+			if (c->newest_routing_sa > st->st_serialno) {
+				/*
+				 * There's a newer SA playing with the routing.
+				 * Presumably this is an old Child SA that is in the
+				 * process of being rekeyed or replaced.
+				 */
+				llog_pexpect(st->logger, HERE,
+					     "revival: skipping, .newest_routing_sa "PRI_SO" is newer than this Child SA",
+					     pri_so(c->newest_routing_sa));
+				return false;
+			}
+
+			if (c->newest_ipsec_sa > st->st_serialno) {
+				/* should be covered by above */
+				llog_pexpect(st->logger, HERE,
+					     "revival: skipping, .newest_ipsec_sa "PRI_SO" is newer than this Child SA",
+					     pri_so(c->newest_ipsec_sa));
+				return false;
+			}
+		}
+
+		if (IS_IKE_SA(st)) {
+			if (c->established_ike_sa != SOS_NOBODY &&
+			    c->established_ike_sa != st->st_serialno) {
+				/* should be covered by above */
+				llog_pexpect(st->logger, HERE,
+					     "revival: skipping, .established_ike_sa "PRI_SO" is is not us",
+					     pri_so(c->established_ike_sa));
+				return false;
+			}
+		}
+	}
+
+	if (!revival_plausable(c, logger)) {
+		return false;
+	}
+
+	if (st != NULL) {
+		update_remote_port(st);
+	}
+
+	schedule_revival_event(c, logger, subplot);
+	return true;
+
+}
+
 bool scheduled_child_revival(struct child_sa *child, const char *subplot)
 {
-	struct connection *c = child->sa.st_connection;
-
-	if (c->newest_routing_sa > child->sa.st_serialno) {
-		/*
-		 * There's a newer SA playing with the routing.
-		 * Presumably this is an old Child SA that is in the
-		 * process of being rekeyed or replaced.
-		 */
-		llog_pexpect(child->sa.logger, HERE,
-			     "revival: skipping, newest routing SA "PRI_SO" is newer than this Child SA "PRI_SO,
-			     pri_so(c->newest_routing_sa), pri_so(child->sa.st_serialno));
-		return false;
-	}
-
-	if (c->newest_ipsec_sa > child->sa.st_serialno) {
-		/* should be covered by above */
-		llog_pexpect(child->sa.st_logger, HERE,
-			     "revival: skipping, newest IPsec SA "PRI_SO" is newer than this Child SA "PRI_SO,
-			     pri_so(c->newest_ipsec_sa), pri_so(child->sa.st_serialno));
-		return false;
-	}
-
-	if (!revival_plausable(c, child->sa.st_logger)) {
-		return false;
-	}
-
-	update_remote_port(&child->sa);
-	schedule_revival_event(c, child->sa.st_logger, subplot);
-	return true;
+	return scheduled_revival(child->sa.st_connection, &child->sa, subplot, child->sa.logger);
 }
 
 bool scheduled_ike_revival(struct ike_sa *ike, const char *subplot)
 {
-	struct connection *c = ike->sa.st_connection;
-
-	if (c->established_ike_sa != SOS_NOBODY &&
-	    c->established_ike_sa != ike->sa.st_serialno) {
-		/* should be covered by above */
-		llog_pexpect(ike->sa.st_logger, HERE,
-			     "revival: skipping, newest IKE SA "PRI_SO" is is not us",
-			     pri_so(c->established_ike_sa));
-		return false;
-	}
-
-	if (!revival_plausable(c, ike->sa.st_logger)) {
-		return false;
-	}
-
-	update_remote_port(&ike->sa);
-	schedule_revival_event(c, ike->sa.st_logger, subplot);
-	return true;
+	return scheduled_revival(ike->sa.st_connection, &ike->sa, subplot, ike->sa.logger);
 }
 
 void revive_connection(struct connection *c, const char *subplot,
