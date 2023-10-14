@@ -610,7 +610,6 @@ static void unrouted_negotiation_to_unrouted(enum routing_event event,
 					     struct logger *logger, where_t where,
 					     const char *story)
 {
-	PEXPECT(logger, !is_opportunistic(c));
 	delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
 				   logger, where, story);
 	set_routing(event, c, RT_UNROUTED, NULL, where);
