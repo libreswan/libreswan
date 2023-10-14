@@ -1086,11 +1086,14 @@ void connection_initiated_child(struct ike_sa *ike, struct child_sa *child,
 
 void connection_pending(struct connection *c, enum initiated_by initiated_by, where_t where)
 {
+	struct routing_annex annex = {
+		.initiated_by = initiated_by,
+	};
+	if (!initiate_ok(c, CONNECTION_INITIATE, &annex, c->logger, where)) {
+		return;
+	}
 	dispatch(CONNECTION_INITIATE, &c,
-		 c->logger, where,
-		 (struct routing_annex) {
-			 .initiated_by = initiated_by,
-		 });
+		 c->logger, where, annex);
 }
 
 void connection_disown(struct connection *c, struct logger *logger, where_t where)
