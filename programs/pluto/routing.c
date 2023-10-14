@@ -605,6 +605,17 @@ static void unrouted_instance_to_unrouted_negotiation(enum routing_event event U
  * installed as KIND_NEGOTIATION.
  */
 
+static void unrouted_negotiation_to_unrouted(enum routing_event event,
+					     struct connection *c,
+					     struct logger *logger, where_t where,
+					     const char *story)
+{
+	PEXPECT(logger, !is_opportunistic(c));
+	delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
+				   logger, where, story);
+	set_routing(event, c, RT_UNROUTED, NULL, where);
+}
+
 static void routed_negotiation_to_unrouted(enum routing_event event,
 					   struct connection *c,
 					   struct logger *logger, where_t where,
@@ -1518,10 +1529,7 @@ static bool dispatch_1(enum routing_event event,
 
 	case X(UNROUTE, BARE_NEGOTIATION, INSTANCE):
 	case X(UNROUTE, UNROUTED_NEGOTIATION, INSTANCE):
-		delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
-					   c->logger, where, "unroute instance");
-		/* do now so route_owner won't find us */
-		set_routing(event, c, RT_UNROUTED, NULL, where);
+		unrouted_negotiation_to_unrouted(event, c, logger, where, "unroute");
 		return true;
 
 	case X(UNROUTE, ROUTED_NEGOTIATION, INSTANCE):
@@ -1704,9 +1712,7 @@ static bool dispatch_1(enum routing_event event,
 		 * policies?  Instead just drop IKE and let connection
 		 * disappear?
 		 */
-		delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
-					   c->logger, where, "unroute instance");
-		set_routing(event, c, RT_UNROUTED, NULL, where);
+		unrouted_negotiation_to_unrouted(event, c, logger, where, "delete");
 		return true;
 	case X(DELETE_IKE, ROUTED_ONDEMAND, PERMANENT):		/* ROUTED_NEGOTIATION!?! */
 		/*
