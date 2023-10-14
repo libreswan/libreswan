@@ -1566,8 +1566,17 @@ static bool dispatch_1(enum routing_event event,
 		set_routing(event, c, RT_UNROUTED, NULL, where);
 		return true;
 
+
+	case X(DELETE_IKE, UNROUTED, INSTANCE):
+	case X(DELETE_IKE, UNROUTED, PERMANENT):
+	case X(TIMEOUT_IKE, UNROUTED, INSTANCE):
 	case X(TIMEOUT_IKE, UNROUTED, PERMANENT):
-	case X(TIMEOUT_IKE, UNROUTED, INSTANCE):		/* ikev2-31-nat-rw-no-rekey */
+		/*
+		 * already -routed -policy; presumably the Child SA
+		 * deleted the policy earlier.
+		 */
+		return true;
+
 	case X(TIMEOUT_IKE, ROUTED_ONDEMAND, PERMANENT):	/* ikev2-child-ipsec-retransmit */
 	case X(TIMEOUT_IKE, ROUTED_ONDEMAND, INSTANCE):		/* ikev2-liveness-05 */
 	case X(DELETE_IKE, ROUTED_ONDEMAND, INSTANCE):		/* ikev2-30-rw-no-rekey */
@@ -1690,21 +1699,6 @@ static bool dispatch_1(enum routing_event event,
 		PEXPECT(c->logger, (*e->ike)->sa.st_ike_version == IKEv1);
 		return true;
 
-	case X(DELETE_IKE, UNROUTED, PERMANENT):
-		/*
-		 * fips-12-ikev2-esp-dh-wrong et.al.
-		 *
-		 * The IKE_SA_INIT responder rejects the initial
-		 * exchange and deletes the IKE SA.
-		 *
-		 * XXX: can this also happen during IKE_AUTH?
-		 *
-		 * Since there's no established Child SA
-		 * zap_connection_states() should always fail?
-		 */
-		return true;
-
-	case X(DELETE_IKE, UNROUTED, INSTANCE):			/* certoe-08-nat-packet-cop-restart */
 	case X(DELETE_IKE, BARE_NEGOTIATION, INSTANCE):
 	case X(DELETE_IKE, UNROUTED_NEGOTIATION, INSTANCE):	/* dnsoe-01 ... */
 		/*
