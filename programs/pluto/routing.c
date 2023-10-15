@@ -477,11 +477,14 @@ static void set_routing(enum routing_event event UNUSED,
 			const struct routing_annex *e,
 			where_t where UNUSED)
 {
-	so_serial_t new_routing_sa =
-		(e != NULL && e->child != NULL && (*e->child) != NULL ? (*e->child)->sa.st_serialno :
-		 SOS_NOBODY);
+	if (e != NULL && e->child != NULL && (*e->child) != NULL) {
+		c->newest_routing_sa = (*e->child)->sa.st_serialno;
+	} else {
+		c->newest_routing_sa =
+			c->newest_ipsec_sa =
+			SOS_NOBODY;
+	}
 	c->child.routing = new_routing;
-	c->newest_routing_sa = new_routing_sa;
 }
 
 static void set_initiated(enum routing_event event UNUSED,
