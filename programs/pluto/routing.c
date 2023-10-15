@@ -1653,6 +1653,7 @@ static bool dispatch_1(enum routing_event event,
 		}
 		set_routing(event, c, RT_ROUTED_INBOUND, e, where);
 		return true;
+
 	case X(ESTABLISH_INBOUND, ROUTED_NEGOTIATION, INSTANCE):
 	case X(ESTABLISH_INBOUND, ROUTED_NEGOTIATION, PERMANENT):
 		/* addconn-05-bogus-left-interface
@@ -1700,6 +1701,14 @@ static bool dispatch_1(enum routing_event event,
 
 	case X(ESTABLISH_INBOUND, UNROUTED, INSTANCE):
 	case X(ESTABLISH_INBOUND, UNROUTED, PERMANENT):
+		if (!install_inbound_ipsec_sa((*e->child), where)) {
+			return false;
+		}
+		set_routing(event, c, RT_UNROUTED_INBOUND, e, where);
+		return true;
+
+	case X(ESTABLISH_INBOUND, UNROUTED_INBOUND, PERMANENT):
+		/* alias-01 */
 		if (!install_inbound_ipsec_sa((*e->child), where)) {
 			return false;
 		}
