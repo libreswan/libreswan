@@ -1382,13 +1382,8 @@ static bool dispatch_1(enum routing_event event,
 		}
 		return true;
 
-	case X(INITIATE, UNROUTED, PERMANENT):
-		flush_unrouted_revival(c);
-		set_initiated(event, c, RT_BARE_NEGOTIATION, e, where);
-		return true;
-
-	case X(INITIATE, ROUTED_ONDEMAND, PERMANENT):
 	case X(INITIATE, ROUTED_ONDEMAND, INSTANCE): /* from revival */
+	case X(INITIATE, ROUTED_ONDEMAND, PERMANENT):
 		flush_routed_ondemand_revival(c);
 		routed_ondemand_to_routed_negotiation(event, c, logger, where, e);
 		PEXPECT(logger, c->child.routing == RT_ROUTED_NEGOTIATION);
@@ -1421,26 +1416,9 @@ static bool dispatch_1(enum routing_event event,
 		}
 		break;
 
-	case X(ROUTE, BARE_NEGOTIATION, PERMANENT):
-		if (BROKEN_TRANSITION) {
-			/*
-			 * XXX: should install routing+policy!
-			 */
-			add_policy(c, policy.route);
-			llog(RC_LOG_SERIOUS, logger,
-			     "policy ROUTE added to negotiating connection");
-			return true;
-		}
-		break;
-
-	case X(ROUTE, ROUTED_NEGOTIATION, PERMANENT):
-		add_policy(c, policy.route);
-		llog(RC_LOG_SERIOUS, logger, "connection already routed");
-		return true;
-
-	case X(ROUTE, ROUTED_TUNNEL, PERMANENT):
-		add_policy(c, policy.route); /* always */
-		llog(RC_LOG, logger, "policy ROUTE added to established connection");
+	case X(INITIATE, UNROUTED, PERMANENT):
+		flush_unrouted_revival(c);
+		set_initiated(event, c, RT_BARE_NEGOTIATION, e, where);
 		return true;
 
 	case X(DELETE_IKE, UNROUTED, INSTANCE):
@@ -1657,23 +1635,16 @@ static bool dispatch_1(enum routing_event event,
 		set_routing(event, c, RT_UNROUTED, NULL, where);
 		return true;
 
-	case X(ESTABLISH_INBOUND, ROUTED_ONDEMAND, INSTANCE):
-		/* ikev2-32-nat-rw-rekey */
-		flush_routed_ondemand_revival(c);
+	case X(ESTABLISH_INBOUND, BARE_NEGOTIATION, INSTANCE):
+	case X(ESTABLISH_INBOUND, BARE_NEGOTIATION, PERMANENT):
 		if (!install_inbound_ipsec_sa((*e->child), where)) {
 			return false;
 		}
-		set_routing(event, c, RT_ROUTED_INBOUND, e, where);
+		set_routing(event, c, RT_UNROUTED_INBOUND, e, where);
 		return true;
+
 	case X(ESTABLISH_INBOUND, ROUTED_INBOUND, PERMANENT):
 		/* alias-01 */
-		if (!install_inbound_ipsec_sa((*e->child), where)) {
-			return false;
-		}
-		set_routing(event, c, RT_ROUTED_INBOUND, e, where);
-		return true;
-	case X(ESTABLISH_INBOUND, ROUTED_ONDEMAND, PERMANENT):
-		flush_routed_ondemand_revival(c);
 		if (!install_inbound_ipsec_sa((*e->child), where)) {
 			return false;
 		}
@@ -1688,19 +1659,26 @@ static bool dispatch_1(enum routing_event event,
 		}
 		set_routing(event, c, RT_ROUTED_INBOUND, e, where);
 		return true;
-	case X(ESTABLISH_INBOUND, UNROUTED, INSTANCE):
-	case X(ESTABLISH_INBOUND, UNROUTED, PERMANENT):
-	case X(ESTABLISH_INBOUND, BARE_NEGOTIATION, INSTANCE):
-	case X(ESTABLISH_INBOUND, UNROUTED_NEGOTIATION, INSTANCE):
-	case X(ESTABLISH_INBOUND, BARE_NEGOTIATION, PERMANENT):
+
+	case X(ESTABLISH_INBOUND, ROUTED_ONDEMAND, INSTANCE):
+		/* ikev2-32-nat-rw-rekey */
+		flush_routed_ondemand_revival(c);
 		if (!install_inbound_ipsec_sa((*e->child), where)) {
 			return false;
 		}
-		set_routing(event, c, RT_UNROUTED_INBOUND, e, where);
+		set_routing(event, c, RT_ROUTED_INBOUND, e, where);
 		return true;
 
-	case X(ESTABLISH_INBOUND, ROUTED_TUNNEL, PERMANENT):
+	case X(ESTABLISH_INBOUND, ROUTED_ONDEMAND, PERMANENT):
+		flush_routed_ondemand_revival(c);
+		if (!install_inbound_ipsec_sa((*e->child), where)) {
+			return false;
+		}
+		set_routing(event, c, RT_ROUTED_INBOUND, e, where);
+		return true;
+
 	case X(ESTABLISH_INBOUND, ROUTED_TUNNEL, INSTANCE):
+	case X(ESTABLISH_INBOUND, ROUTED_TUNNEL, PERMANENT):
 		/*
 		 * This happens when there's a re-key where the state
 		 * is re-established but not the policy (that is left
@@ -1719,18 +1697,31 @@ static bool dispatch_1(enum routing_event event,
 		set_routing(event, c, RT_ROUTED_TUNNEL, e, where);
 		return true;
 
-	case X(ESTABLISH_OUTBOUND, UNROUTED_INBOUND, PERMANENT):
-	case X(ESTABLISH_OUTBOUND, UNROUTED_INBOUND, INSTANCE):
-	case X(ESTABLISH_OUTBOUND, ROUTED_INBOUND, PERMANENT):
+	case X(ESTABLISH_INBOUND, UNROUTED, INSTANCE):
+	case X(ESTABLISH_INBOUND, UNROUTED, PERMANENT):
+		if (!install_inbound_ipsec_sa((*e->child), where)) {
+			return false;
+		}
+		set_routing(event, c, RT_UNROUTED_INBOUND, e, where);
+		return true;
+
+	case X(ESTABLISH_INBOUND, UNROUTED_NEGOTIATION, INSTANCE):
+		if (!install_inbound_ipsec_sa((*e->child), where)) {
+			return false;
+		}
+		set_routing(event, c, RT_UNROUTED_INBOUND, e, where);
+		return true;
+
 	case X(ESTABLISH_OUTBOUND, ROUTED_INBOUND, INSTANCE):
+	case X(ESTABLISH_OUTBOUND, ROUTED_INBOUND, PERMANENT):
 		if (!install_outbound_ipsec_sa((*e->child), /*up*/true, where)) {
 			return false;
 		}
 		set_established_child(event, c, RT_ROUTED_TUNNEL, e->child, where);
 		return true;
 
-	case X(ESTABLISH_OUTBOUND, ROUTED_TUNNEL, PERMANENT):
 	case X(ESTABLISH_OUTBOUND, ROUTED_TUNNEL, INSTANCE):
+	case X(ESTABLISH_OUTBOUND, ROUTED_TUNNEL, PERMANENT):
 		/*
 		 * This happens when there's a re-key where the state
 		 * is re-established but not the policy (that is left
@@ -1741,6 +1732,14 @@ static bool dispatch_1(enum routing_event event,
 		 * ikev1-labeled-ipsec-01-permissive.
 		 */
 		if (!install_outbound_ipsec_sa((*e->child), /*up*/false, where)) {
+			return false;
+		}
+		set_established_child(event, c, RT_ROUTED_TUNNEL, e->child, where);
+		return true;
+
+	case X(ESTABLISH_OUTBOUND, UNROUTED_INBOUND, INSTANCE):
+	case X(ESTABLISH_OUTBOUND, UNROUTED_INBOUND, PERMANENT):
+		if (!install_outbound_ipsec_sa((*e->child), /*up*/true, where)) {
 			return false;
 		}
 		set_established_child(event, c, RT_ROUTED_TUNNEL, e->child, where);
@@ -1776,6 +1775,28 @@ static bool dispatch_1(enum routing_event event,
 			do_updown(UPDOWN_UP, c, spd, &(*e->child)->sa, logger);
 			do_updown(UPDOWN_ROUTE, c, spd, &(*e->child)->sa, logger);
 		}
+		return true;
+
+	case X(ROUTE, BARE_NEGOTIATION, PERMANENT):
+		if (BROKEN_TRANSITION) {
+			/*
+			 * XXX: should install routing+policy!
+			 */
+			add_policy(c, policy.route);
+			llog(RC_LOG_SERIOUS, logger,
+			     "policy ROUTE added to negotiating connection");
+			return true;
+		}
+		break;
+
+	case X(ROUTE, ROUTED_NEGOTIATION, PERMANENT):
+		add_policy(c, policy.route);
+		llog(RC_LOG_SERIOUS, logger, "connection already routed");
+		return true;
+
+	case X(ROUTE, ROUTED_TUNNEL, PERMANENT):
+		add_policy(c, policy.route); /* always */
+		llog(RC_LOG, logger, "policy ROUTE added to established connection");
 		return true;
 
 	case X(UNROUTE, BARE_NEGOTIATION, INSTANCE):
