@@ -480,17 +480,11 @@ void whack_connection_states(struct connection *c,
 		unsigned nr = 0;
 		while (next_state_new2old(&child_filter)) {
 			struct child_sa *child = pexpect_child_sa(child_filter.st);
-			if (child->sa.st_connection->newest_routing_sa != child->sa.st_serialno) {
-				llog_pexpect(child->sa.logger, HERE,
-					     ".newest_routing_sa "PRI_SO,
-					     pri_so(child->sa.st_connection->newest_routing_sa));
-				continue;
-			}
-			nr++;
 			state_buf sb;
 			pdbg(c->logger, "%s()    dispatching to sibling Child SA "PRI_STATE,
 			     __func__, pri_state(&child->sa, &sb));
 			whack_state(c, &ike, &child, WHACK_SIBLING);
+			nr++;
 		}
 		pdbg(c->logger, "%s()    poked %u siblings", __func__, nr);
 	}
