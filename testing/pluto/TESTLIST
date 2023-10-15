@@ -778,6 +778,7 @@ kvmplutotest	ikev2-ike-rekey-03		good
 kvmplutotest	ikev2-ike-rekey-04		good
 kvmplutotest	ikev2-ike-rekey-05		good
 kvmplutotest	ikev2-cp-rekey-01		wip
+kvmplutotest	ikev2-cp-rekey-02-up-up		wip	github/366
 
 kvmplutotest	delete-sa-01			good
 kvmplutotest	delete-sa-02			good
