@@ -1779,9 +1779,6 @@ static bool dispatch_1(enum routing_event event,
 		return true;
 
 	case X(UNROUTE, BARE_NEGOTIATION, INSTANCE):
-		unrouted_negotiation_to_unrouted(event, c, logger, where, "unroute");
-		return true;
-
 	case X(UNROUTE, BARE_NEGOTIATION, PERMANENT):
 		set_routing(event, c, RT_UNROUTED, NULL, where);
 		return true;
