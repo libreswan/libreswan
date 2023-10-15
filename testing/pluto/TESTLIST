@@ -323,7 +323,7 @@ kvmplutotest	ikev2-algo-esn-05			good
 kvmplutotest	ikev2-algo-esn-06			good
 kvmplutotest	ikev2-algo-esn-07			good
 kvmplutotest	ikev2-algo-esn-08			good
-kvmplutotest	ikev2-algo-esn-09-replay-zero		bad
+kvmplutotest	ikev2-algo-esn-09-replay-zero		wip
 kvmplutotest	interop-ikev2-strongswan-30-esn		good
 
 
