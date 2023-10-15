@@ -672,11 +672,6 @@ static void routed_negotiation_to_routed_ondemand(enum routing_event event,
 						  where_t where,
 						  const char *reason)
 {
-	ldbg_routing(c->logger, "%s() %s", __func__, reason);
-	PASSERT(logger, (event == CONNECTION_TIMEOUT_CHILD ||
-			 event == CONNECTION_DELETE_CHILD ||
-			 event == CONNECTION_TIMEOUT_IKE ||
-			 event == CONNECTION_DELETE_IKE));
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 		if (!replace_spd_kernel_policy(spd, DIRECTION_OUTBOUND,
 					       RT_ROUTED_ONDEMAND,
@@ -1666,6 +1661,29 @@ static bool dispatch_1(enum routing_event event,
 		routed_negotiation_to_unrouted(event, c, logger, where, "deleting");
 		PEXPECT(logger, c->child.routing == RT_UNROUTED);
 		/* connection lives to fight another day */
+		return true;
+
+	case X(DELETE_CHILD, UNROUTED_NEGOTIATION, INSTANCE):
+#if 0
+	case X(TIMEOUT_CHILD, UNROUTED_NEGOTIATION, INSTANCE):
+#endif
+		if (connection_cannot_die(event, c, logger, e)) {
+			unrouted_negotiation_to_unrouted(event, c, logger, where, "fail");
+			return true;
+		}
+		if (is_instance(c) && is_opportunistic(c)) {
+			/*
+			 * A failed OE initiator, make shunt bare.
+			 */
+			orphan_holdpass(c, c->spd, logger);
+			/*
+			 * Change routing so we don't get cleared out
+			 * when state/connection dies.
+			 */
+			set_routing(event, c, RT_UNROUTED, NULL, where);
+			return true;
+		}
+		unrouted_negotiation_to_unrouted(event, c, logger, where, "fail");
 		return true;
 
 	case X(TIMEOUT_IKE, BARE_NEGOTIATION, INSTANCE):
