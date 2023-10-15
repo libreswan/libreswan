@@ -1664,15 +1664,13 @@ static bool dispatch_1(enum routing_event event,
 		return true;
 
 	case X(ESTABLISH_INBOUND, ROUTED_ONDEMAND, INSTANCE):
-		/* ikev2-32-nat-rw-rekey */
-		flush_routed_ondemand_revival(c);
-		if (!install_inbound_ipsec_sa((*e->child), where)) {
-			return false;
-		}
-		set_routing(event, c, RT_ROUTED_INBOUND, e, where);
-		return true;
-
 	case X(ESTABLISH_INBOUND, ROUTED_ONDEMAND, PERMANENT):
+		/*
+		 * This transition (ignoring IKEv1 responder) is
+		 * immediately followed by an event to replace the
+		 * outbound on-demand policy.  Hence, don't bother
+		 * updating it to routed-negotiation.
+		 */
 		flush_routed_ondemand_revival(c);
 		if (!install_inbound_ipsec_sa((*e->child), where)) {
 			return false;
