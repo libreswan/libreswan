@@ -526,8 +526,7 @@ static void set_established_child(enum routing_event event UNUSED,
 				  where_t where UNUSED)
 {
 	c->child.routing = routing;
-	c->newest_ipsec_sa = c->newest_routing_sa =
-		(*child)->sa.st_serialno;
+	c->newest_ipsec_sa = c->newest_routing_sa = (*child)->sa.st_serialno;
 }
 
 static bool unrouted_to_routed_ondemand(enum routing_event event, struct connection *c, where_t where)
@@ -1118,7 +1117,8 @@ void connection_establish_ike(struct ike_sa *ike, where_t where)
 		.ike = &ike,
 	};
 	struct old_routing old = ldbg_routing_start(c, CONNECTION_ESTABLISH_IKE, where, &e);
-	c->established_ike_sa = ike->sa.st_serialno;
+	/* steal both the established and negotiating IKE SAs */
+	c->negotiating_ike_sa = c->established_ike_sa = ike->sa.st_serialno;
 	ike->sa.st_viable_parent = true;
 	linux_audit_conn(&ike->sa, LAK_PARENT_START);
 	/* dump new keys */
