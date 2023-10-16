@@ -1105,9 +1105,17 @@ void connection_pending(struct connection *c, enum initiated_by initiated_by, wh
 
 void connection_disown(struct connection *c, struct logger *logger, where_t where)
 {
+	struct routing_annex annex = {0};
+	/* skip when any hint of an owner */
+	for (unsigned i = 0; i < elemsof(c->owner); i++) {
+		if (c->owner[i] != SOS_NOBODY) {
+			ldbg_routing_skip(c, CONNECTION_DISOWN, where, &annex);
+			return;
+		}
+	}
+
 	dispatch(CONNECTION_DISOWN, &c,
-		 logger, where,
-		 (struct routing_annex) {0});
+		 logger, where, annex);
 }
 
 void connection_establish_ike(struct ike_sa *ike, where_t where)
