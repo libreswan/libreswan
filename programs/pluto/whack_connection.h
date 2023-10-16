@@ -86,20 +86,11 @@ enum whack_state {
 	 */
 	WHACK_START_IKE,
 	/*
-	 * Random stuff that gets in the way; typically just blown
-	 * away.  These are returned in no particular order.
-	 *
-	 * The lurking IKE includes the larval IKE SA from a failed
-	 * establish.
-	 */
-	WHACK_LURKING_IKE,
-	WHACK_LURKING_CHILD,
-	/*
 	 * The connection's Child SA.
 	 *
-	 * A child still has its IKE SA.  An orphan lost its IKE SA
-	 * (IKEv1) and a cuckoo is the child of someother IKE SA
-	 * (which may or may not exist).
+	 * A CHILD still has its IKE SA.  An ORPHAN lost its IKE SA
+	 * (IKEv1).  A CUCKOO is the Child SA of some other connection
+	 * and may (IKEv2) or may not (IKEv1) have an IKE SA.
 	 *
 	 * This is returned before any siblings so that it gets
 	 * priority for things like revival.
@@ -114,6 +105,15 @@ enum whack_state {
 	 * This is the reverse of a CUCKOO.
 	 */
 	WHACK_SIBLING,
+	/*
+	 * Random stuff that gets in the way; typically just blown
+	 * away.  These are returned in no particular order.
+	 *
+	 * The lurking IKE includes the larval IKE SA from a failed
+	 * establish.
+	 */
+	WHACK_LURKING_IKE,
+	WHACK_LURKING_CHILD,
 	/*
 	 * When the connection has no Child SA, or the connection's
 	 * Child SA is for another IKE SA (ever the case?).

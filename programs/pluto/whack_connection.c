@@ -379,6 +379,41 @@ void whack_connection_states(struct connection *c,
 	}
 
 	/*
+	 * Notify the connection's child.
+	 *
+	 * Do this before any siblings.  If this isn't done, the IKE
+	 * SAs children constantly swap the revival pole position.
+	 */
+
+	bool whack_ike;
+	struct child_sa *connection_child =
+		child_sa_by_serialno(c->newest_routing_sa);
+	if (connection_child == NULL) {
+		pdbg(c->logger, "%s()  skipping Child SA, as no "PRI_SO,
+		     __func__, pri_so(c->newest_routing_sa));
+		whack_ike = true;
+	} else if (connection_child->sa.st_clonedfrom != c->established_ike_sa) {
+		/* st_clonedfrom can't be be SOS_NOBODY */
+		pdbg(c->logger, "%s()  dispatch cuckoo Child SA "PRI_SO,
+		     __func__,
+		     pri_so(connection_child->sa.st_serialno));
+		whack_ike = true;
+		whack_state(c, NULL, &connection_child, WHACK_CUCKOO);
+	} else if (ike == NULL) {
+		pdbg(c->logger, "%s()  dispatch orphaned Child SA "PRI_SO,
+		     __func__,
+		     pri_so(connection_child->sa.st_serialno));
+		whack_ike = false;
+		whack_state(c, NULL, &connection_child, WHACK_ORPHAN);
+	} else {
+		pdbg(c->logger, "%s()  dispatch Child SA "PRI_SO,
+		     __func__,
+		     pri_so(connection_child->sa.st_serialno));
+		whack_ike = false;
+		whack_state(c, &ike, &connection_child, WHACK_CHILD);
+	}
+
+	/*
 	 * Weed out any larval or lingering SAs.
 	 *
 	 * These are SAs that are using the connection yet are not the
@@ -435,41 +470,6 @@ void whack_connection_states(struct connection *c,
 	}
 	pdbg(c->logger, "%s()    weeded %u parents and %u children",
 	     __func__, nr_parents, nr_children);
-
-	/*
-	 * Notify the connection's child.
-	 *
-	 * Do this before any siblings.  If this isn't done, the IKE
-	 * SAs children constantly swap the revival pole position.
-	 */
-
-	bool whack_ike;
-	struct child_sa *connection_child =
-		child_sa_by_serialno(c->newest_routing_sa);
-	if (connection_child == NULL) {
-		pdbg(c->logger, "%s()  skipping Child SA, as no "PRI_SO,
-		     __func__, pri_so(c->newest_routing_sa));
-		whack_ike = true;
-	} else if (connection_child->sa.st_clonedfrom != c->established_ike_sa) {
-		/* st_clonedfrom can't be be SOS_NOBODY */
-		pdbg(c->logger, "%s()  dispatch cuckoo Child SA "PRI_SO,
-		     __func__,
-		     pri_so(connection_child->sa.st_serialno));
-		whack_ike = true;
-		whack_state(c, NULL, &connection_child, WHACK_CUCKOO);
-	} else if (ike == NULL) {
-		pdbg(c->logger, "%s()  dispatch orphaned Child SA "PRI_SO,
-		     __func__,
-		     pri_so(connection_child->sa.st_serialno));
-		whack_ike = false;
-		whack_state(c, NULL, &connection_child, WHACK_ORPHAN);
-	} else {
-		pdbg(c->logger, "%s()  dispatch Child SA "PRI_SO,
-		     __func__,
-		     pri_so(connection_child->sa.st_serialno));
-		whack_ike = false;
-		whack_state(c, &ike, &connection_child, WHACK_CHILD);
-	}
 
 	/*
 	 * Now go through any remaining children.
