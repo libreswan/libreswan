@@ -4,11 +4,6 @@ set -xe ; exec < /dev/null
 
 PREFIX=@@PREFIX@@
 
-# dump network status, the "dnf makecache" command seems to sometimes
-# fail with no DNS?
-
-systemctl status systemd-resolved
-
 : disable useless repos
 
 for repo in fedora-modular updates-modular fedora-cisco-openh264 ; do

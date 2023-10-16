@@ -58,6 +58,8 @@ NetworkManager
 -cronie
 # eye candy
 -plymouth
+# tests use custom resolved; not needed for build
+-systemd-resolved
 
 %end
 

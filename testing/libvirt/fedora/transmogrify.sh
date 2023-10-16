@@ -58,7 +58,6 @@ EOF
 
 systemctl enable systemd-networkd.service
 systemctl enable systemd-networkd-wait-online.service
-systemctl disable systemd-resolved
 systemctl disable NetworkManager
 
 cp -v /bench/testing/libvirt/fedora/network/* /etc/systemd/network/
