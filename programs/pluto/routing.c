@@ -515,7 +515,7 @@ static void set_initiated(enum routing_event event UNUSED,
 		 * the pending queue.  Should such a connection get
 		 * its routing updated?
 		 */
-		ldbg_routing(c->logger, "no initiating IKE or Child SA");
+		ldbg_routing(c->logger, "no initiating IKE or Child SA; assumed to be pending; leaving routing alone");
 	}
 }
 
