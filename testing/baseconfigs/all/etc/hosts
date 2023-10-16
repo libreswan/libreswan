@@ -1,16 +1,7 @@
-127.0.0.1	localhost
-
-# The following lines are desirable for IPv6 capable hosts
-# (added automatically by netbase upgrade)
-
-::1     ip6-localhost ip6-loopback
-fe00::0 ip6-localnet
-ff00::0 ip6-mcastprefix
-ff02::1 ip6-allnodes
-ff02::2 ip6-allrouters
-ff02::3 ip6-allhosts
-192.1.2.45 west
-192.1.2.254	fakegate
-192.1.2.23 east
-192.1.2.254 nic nic.testing.libreswan.org
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+192.0.1.254 west
+192.0.2.254 east
+192.0.3.254 north
 192.1.3.209 road
+192.1.2.254 nic
