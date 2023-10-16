@@ -37,7 +37,6 @@ north #
 north #
  ../../guestbin/tcpdump.sh --start -i ipsec2
 tcpdump /tmp/north.ikev2-xfrmi-09-systemd-networkd.ipsec2.tcpdump.pid is not running
-[ 00.00] device ipsec2 entered promiscuous mode
 tcpdump started
 north #
  ../../guestbin/ping-once.sh --up  192.0.2.254
@@ -77,7 +76,6 @@ north #
  sleep 20 # wait for tcpdump to collect all events
 north #
  ../../guestbin/tcpdump.sh --stop -i ipsec2
-[ 00.00] device ipsec2 left promiscuous mode
 reading from file /tmp/north.ikev2-xfrmi-09-systemd-networkd.ipsec2.tcpdump.pcap, link-type RAW (Raw IP)
 IP 192.0.3.254 > 192.0.2.254: ICMP echo request, id XXXX, seq 1, length 64
 IP 192.0.2.254 > 192.0.3.254: ICMP echo reply, id XXXX, seq 1, length 64
