@@ -361,7 +361,14 @@ void whack_connection_states(struct connection *c,
 						enum whack_state),
 			     where_t where)
 {
-	pdbg(c->logger, "%s()", __func__);
+	pdbg(c->logger,
+	     "%s() .negotiating_ike_sa "PRI_SO" .established_ike_sa "PRI_SO" .newest_routing_sa "PRI_SO" .newest_ipsec_sa "PRI_SO,
+	     __func__,
+	     pri_so(c->negotiating_ike_sa),
+	     pri_so(c->established_ike_sa),
+	     pri_so(c->newest_routing_sa),
+	     pri_so(c->newest_ipsec_sa));
+
 	struct ike_sa *ike = ike_sa_by_serialno(c->established_ike_sa); /* could be NULL */
 	if (ike != NULL) {
 		pdbg(c->logger, "%s()  dispatching START to "PRI_SO,
