@@ -67,6 +67,7 @@ static unsigned down_connection(struct connection *c, struct logger *logger)
 
 	/*
 	 * Danger:
+	 *
 	 * Either of IKE and CHILD could be NULL.
 	 *
 	 * For IKEv1, when IKE is NULL the CHILD could have some other
@@ -104,7 +105,8 @@ static unsigned down_connection(struct connection *c, struct logger *logger)
 				break;
 			}
 		}
-	} else if (ike != NULL && ike->sa.st_ike_version == IKEv2 && IS_PARENT_SA_ESTABLISHED(&ike->sa)) {
+	} else if (ike != NULL && ike->sa.st_ike_version == IKEv2) {
+		PEXPECT(ike->sa.logger, IS_PARENT_SA_ESTABLISHED(&ike->sa));
 		state_attach(&ike->sa, logger);
 		submit_v2_delete_exchange(ike, NULL);
 	} else {
