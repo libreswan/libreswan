@@ -376,20 +376,21 @@ bool connection_establish_inbound(struct child_sa *child, where_t where)
 	return dispatch(CONNECTION_ESTABLISH_INBOUND, &cc, logger, where, &annex);
 }
 
-bool connection_establish_outbound(struct child_sa *child, where_t where)
+bool connection_establish_outbound(struct ike_sa *ike, struct child_sa *child, where_t where)
 {
 	struct connection *cc = child->sa.st_connection;
 	struct logger *logger = child->sa.logger;
 	struct routing_annex annex = {
 		.child = &child,
+		.ike = &ike,
 	};
 	return dispatch(CONNECTION_ESTABLISH_OUTBOUND, &cc, logger, where, &annex);
 }
 
-bool connection_establish_child(struct child_sa *child, where_t where)
+bool connection_establish_child(struct ike_sa *ike, struct child_sa *child, where_t where)
 {
 	return (connection_establish_inbound(child, where) &&
-		connection_establish_outbound(child, where));
+		connection_establish_outbound(ike, child, where));
 }
 
 enum shunt_kind routing_shunt_kind(enum routing routing)
@@ -518,11 +519,26 @@ static void set_initiated(enum routing_event event UNUSED,
 static void set_established_child(enum routing_event event UNUSED,
 				  struct connection *c,
 				  enum routing routing,
-				  struct child_sa **child,
+				  const struct routing_annex *e,
 				  where_t where UNUSED)
 {
+	struct child_sa *child = (*e->child);
+	struct ike_sa *ike = (e->ike != NULL ? (*e->ike) : NULL);
+	PEXPECT(c->logger, child->sa.st_connection == c);
+	if (ike != NULL) {
+		PEXPECT(c->logger, ike->sa.st_serialno == child->sa.st_clonedfrom);
+	}
+	if (ike != NULL && ike->sa.st_connection == c) {
+		/* fails when streams cross? */
+		PEXPECT(c->logger, ike->sa.st_serialno == c->established_ike_sa);
+	}
+	if (ike != NULL && ike->sa.st_connection != c) {
+		/* child is a cuckoo */
+		PEXPECT(c->logger, c->established_ike_sa == SOS_NOBODY);
+		PEXPECT(c->logger, c->negotiating_ike_sa == SOS_NOBODY);
+	}
 	c->child.routing = routing;
-	c->newest_ipsec_sa = c->newest_routing_sa = (*child)->sa.st_serialno;
+	c->newest_ipsec_sa = c->newest_routing_sa = (*e->child)->sa.st_serialno;
 }
 
 static bool unrouted_to_routed_ondemand(enum routing_event event, struct connection *c, where_t where)
@@ -1735,7 +1751,7 @@ static bool dispatch_1(enum routing_event event,
 		if (!install_outbound_ipsec_sa((*e->child), /*up*/true, where)) {
 			return false;
 		}
-		set_established_child(event, c, RT_ROUTED_TUNNEL, e->child, where);
+		set_established_child(event, c, RT_ROUTED_TUNNEL, e, where);
 		return true;
 
 	case X(ESTABLISH_OUTBOUND, ROUTED_TUNNEL, INSTANCE):
@@ -1752,7 +1768,7 @@ static bool dispatch_1(enum routing_event event,
 		if (!install_outbound_ipsec_sa((*e->child), /*up*/false, where)) {
 			return false;
 		}
-		set_established_child(event, c, RT_ROUTED_TUNNEL, e->child, where);
+		set_established_child(event, c, RT_ROUTED_TUNNEL, e, where);
 		return true;
 
 	case X(ESTABLISH_OUTBOUND, UNROUTED_INBOUND, INSTANCE):
@@ -1760,7 +1776,7 @@ static bool dispatch_1(enum routing_event event,
 		if (!install_outbound_ipsec_sa((*e->child), /*up*/true, where)) {
 			return false;
 		}
-		set_established_child(event, c, RT_ROUTED_TUNNEL, e->child, where);
+		set_established_child(event, c, RT_ROUTED_TUNNEL, e, where);
 		return true;
 
 	case X(SUSPEND, ROUTED_TUNNEL, PERMANENT):
@@ -1993,7 +2009,7 @@ static bool dispatch_1(enum routing_event event,
 		if (!install_outbound_ipsec_sa((*e->child), /*up*/false, where)) {
 			return false;
 		}
-		set_established_child(event, c, RT_UNROUTED_TUNNEL, e->child, where);
+		set_established_child(event, c, RT_UNROUTED_TUNNEL, e, where);
 		return true;
 	case X(ESTABLISH_INBOUND, UNROUTED, LABELED_CHILD):
 		if (!install_inbound_ipsec_sa((*e->child), where)) {
@@ -2006,7 +2022,7 @@ static bool dispatch_1(enum routing_event event,
 		if (!install_outbound_ipsec_sa((*e->child), /*up*/true, where)) {
 			return false;
 		}
-		set_established_child(event, c, RT_UNROUTED_TUNNEL, e->child, where);
+		set_established_child(event, c, RT_UNROUTED_TUNNEL, e, where);
 		return true;
 	case X(UNROUTE, UNROUTED_INBOUND, LABELED_CHILD):
 	case X(UNROUTE, UNROUTED_TUNNEL, LABELED_CHILD):

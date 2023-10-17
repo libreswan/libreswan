@@ -1778,8 +1778,16 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 		if (!add_xfrm_interface(c, st->st_logger))
 			return STF_FATAL;
 #endif
+
+	/*
+	 * IKE must still exist as how else could the quick message
+	 * have been decrypted?
+	 */
 	struct child_sa *child = pexpect_child_sa(st);
-	if (!connection_establish_child(child, HERE))
+	struct ike_sa *ike = ike_sa(st, HERE);
+	PEXPECT(child->sa.logger, ike != NULL);
+
+	if (!connection_establish_child(ike, child, HERE))
 		return STF_INTERNAL_ERROR;
 
 	/* encrypt message, except for fixed part of header */
@@ -1814,8 +1822,15 @@ stf_status quick_inI2(struct state *st, struct msg_digest *md UNUSED)
 		if (!add_xfrm_interface(c, st->st_logger))
 			return STF_FATAL;
 #endif
+	/*
+	 * IKE must still exist as how else could the quick message
+	 * have been decrypted?
+	 */
 	struct child_sa *child = pexpect_child_sa(st);
-	if (!connection_establish_outbound(child, HERE))
+	struct ike_sa *ike = ike_sa(st, HERE);
+	PEXPECT(child->sa.logger, ike != NULL);
+
+	if (!connection_establish_outbound(ike, child, HERE))
 		return STF_INTERNAL_ERROR;
 
 	update_iv(st);  /* not actually used, but tidy */

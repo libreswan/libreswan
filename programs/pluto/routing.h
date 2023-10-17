@@ -126,9 +126,9 @@ void connection_delete_ike(struct ike_sa **ike, where_t where);
 
 void connection_delete_state(struct state **st, where_t where);
 
-bool connection_establish_child(struct child_sa *child, where_t where);
+bool connection_establish_child(struct ike_sa *ike, struct child_sa *child, where_t where);
 bool connection_establish_inbound(struct child_sa *child, where_t where);
-bool connection_establish_outbound(struct child_sa *child, where_t where);
+bool connection_establish_outbound(struct ike_sa *ike, struct child_sa *child, where_t where);
 
 PRINTF_LIKE(2)
 void ldbg_routing(struct logger *logger, const char *fmt, ...);
