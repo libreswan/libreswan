@@ -21,11 +21,6 @@ sending packet: from 192.1.3.209[4500] to 192.1.2.23[4500] (XXX bytes)
 received packet: from 192.1.2.23[4500] to 192.1.3.209[4500] (XXX bytes)
 parsed IKE_AUTH response 1 [ IDr AUTH CPRP(ADDR DNS DNS) SA TSi TSr ]
 authentication of '192.1.2.23' with pre-shared key successful
-adding DNS server failed
-adding DNS server failed
-handling INTERNAL_IP4_DNS attribute failed
-adding DNS server failed
-handling INTERNAL_IP4_DNS attribute failed
 installing new virtual IP 192.0.1.254
 IKE_SA client[1] established between 192.1.3.209[192.1.3.209]...192.1.2.23[192.1.2.23]
 scheduling reauthentication in XXXs
