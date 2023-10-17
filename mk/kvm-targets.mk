@@ -927,8 +927,11 @@ $(KVM_DEBIAN_BASE_DOMAIN): | $(KVM_DEBIAN_KICKSTART_FILE)
 #
 # - since kickstart is used this is pretty straight forward
 #
+# For instance: Fedora-Server-dvd-x86_64-36-1.5.iso
 
-KVM_FEDORA_ISO_URL ?= https://download.fedoraproject.org/pub/fedora/linux/releases/36/Server/x86_64/iso/Fedora-Server-dvd-x86_64-36-1.5.iso
+KVM_FEDORA_RELEASE ?= 36
+KVM_FEDORA_BUILD ?= 1.5
+KVM_FEDORA_ISO_URL ?= https://download.fedoraproject.org/pub/fedora/linux/releases/$(KVM_FEDORA_RELEASE)/Server/x86_64/iso/Fedora-Server-dvd-x86_64-$(KVM_FEDORA_RELEASE)-$(KVM_FEDORA_BUILD).iso
 KVM_FEDORA_KICKSTART_FILE ?= testing/libvirt/fedora/base.ks
 KVM_FEDORA_ISO = $(KVM_POOLDIR)/$(notdir $(KVM_FEDORA_ISO_URL))
 kvm-iso: $(KVM_FEDORA_ISO)
