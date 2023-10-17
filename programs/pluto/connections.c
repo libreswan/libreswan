@@ -347,7 +347,10 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 	/*
 	 * Must have all routing and all owners cleared.
 	 */
-	if (!pexpect_connection_routing_unowned(c, logger, where)) {
+	if (!pexpect_connection_is_unrouted(c, logger, where)) {
+		ok_to_delete = false;
+	}
+	if (!pexpect_connection_is_disowned(c, logger, where)) {
 		ok_to_delete = false;
 	}
 

@@ -986,7 +986,7 @@ void connection_routing_init(struct connection *c)
 	}
 }
 
-void connection_routing_disown(struct state *st)
+void state_disowns_connection(struct state *st)
 {
 	struct connection *c = st->st_connection;
 	for (unsigned i = 0; i < elemsof(c->owner); i++) {
@@ -1005,10 +1005,8 @@ void connection_routing_disown(struct state *st)
 	}
 }
 
-/*
- * Must be unrouted (i.e., all policies have been pulled).
- */
-bool pexpect_connection_routing_unowned(struct connection *c, struct logger *logger, where_t where)
+
+bool pexpect_connection_is_unrouted(struct connection *c, struct logger *logger, where_t where)
 {
 	bool ok_to_delete = true;
 	if (c->child.routing != RT_UNROUTED) {
@@ -1019,6 +1017,15 @@ bool pexpect_connection_routing_unowned(struct connection *c, struct logger *log
 			     str_enum_short(&routing_names, c->child.routing, &rn));
 		ok_to_delete = false;
 	}
+	return ok_to_delete;
+}
+
+/*
+ * Must be unrouted (i.e., all policies have been pulled).
+ */
+bool pexpect_connection_is_disowned(struct connection *c, struct logger *logger, where_t where)
+{
+	bool ok_to_delete = true;
 	for (unsigned i = 0; i < elemsof(c->owner); i++) {
 		if (c->owner[i] != SOS_NOBODY) {
 			llog_pexpect(logger, where,

@@ -87,8 +87,9 @@ enum shunt_kind routing_shunt_kind(enum routing routing);
 bool kernel_policy_installed(const struct connection *c);
 
 void connection_routing_init(struct connection *);
-bool pexpect_connection_routing_unowned(struct connection *c, struct logger *, where_t where);
-void connection_routing_disown(struct state *st);
+bool pexpect_connection_is_unrouted(struct connection *c, struct logger *, where_t where);
+bool pexpect_connection_is_disowned(struct connection *c, struct logger *, where_t where);
+void state_disowns_connection(struct state *st);
 
 void connection_route(struct connection *c, where_t where);
 void connection_unroute(struct connection *c, where_t where);

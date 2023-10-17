@@ -1014,7 +1014,7 @@ void delete_state(struct state *st)
 		teardown_ipsec_kernel_states(pexpect_child_sa(st));
 	}
 
-	connection_routing_disown(st);
+	state_disowns_connection(st);
 
 	/*
 	 * fake a state change here while we are still associated with a
