@@ -496,18 +496,23 @@ static void set_initiated(enum routing_event event UNUSED,
 		PEXPECT((*e->child)->sa.logger, c->newest_routing_sa == SOS_NOBODY);
 		c->newest_routing_sa = (*e->child)->sa.st_serialno;
 		c->child.routing = new_routing;
-	} else if ((e->ike) != NULL && (*e->ike) != NULL) {
+		return;
+	}
+
+	if ((e->ike) != NULL && (*e->ike) != NULL) {
 		PEXPECT((*e->ike)->sa.logger, c->negotiating_ike_sa == SOS_NOBODY);
 		c->negotiating_ike_sa = (*e->ike)->sa.st_serialno;
 		c->child.routing = new_routing;
-	} else {
-		/*
-		 * For instance when the initiated connection is on
-		 * the pending queue.  Should such a connection get
-		 * its routing updated?
-		 */
-		ldbg_routing(c->logger, "no initiating IKE or Child SA; assumed to be pending; leaving routing alone");
+		return;
 	}
+
+	/*
+	 * For instance when the initiated connection is on the
+	 * pending queue.  Should such a connection get its owner
+	 * updated?  It definitely needs its routing updated so that
+	 * pending knows what to change when things progress.
+	 */
+	ldbg_routing(c->logger, "no initiating IKE or Child SA; assumed to be pending; leaving routing alone");
 }
 
 static void set_established_child(enum routing_event event UNUSED,
@@ -1038,6 +1043,8 @@ static bool initiate_ok(struct connection *c,
 {
 	switch (c->child.routing) {
 	case RT_UNROUTED:
+		pexpect_connection_is_disowned(c, logger, where);
+		return true;
 	case RT_ROUTED_ONDEMAND:
 		return true;
 	default:
