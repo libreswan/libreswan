@@ -1,5 +1,8 @@
 /testing/guestbin/swan-prep
 east #
+ ../../guestbin/mount-bind.sh /etc/hosts /etc/hosts
+/etc/hosts /tmp/hosts.east.dnssec-pluto-01 /etc/hosts
+east #
  ipsec start
 Redirecting to: [initsystem]
 east #

@@ -1,5 +1,6 @@
 /testing/guestbin/swan-prep
-grep right.libreswan.org /etc/hosts > /dev/null && echo "TEST FAILED - should not have /etc/hosts entry at start"
+../../guestbin/mount-bind.sh /etc/hosts /etc/hosts
+if grep right.libreswan.org /etc/hosts ; then echo "TEST FAILED - should not have /etc/hosts entry at start" ; false ; else : ; fi
 ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec whack --impair suppress-retransmits
