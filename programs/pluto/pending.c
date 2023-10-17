@@ -470,7 +470,7 @@ void flush_pending_by_state(struct ike_sa *ike)
 			 * do it for us.
 			 */
 			if (p->connection != ike->sa.st_connection) {
-				connection_disown((*pp)->connection, (*pp)->logger, HERE);
+				connection_unpend((*pp)->connection, (*pp)->logger, HERE);
 			}
 			delete_pending(pp, "flush");	/* in effect, advances pp */
 		} else {

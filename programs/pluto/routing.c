@@ -1103,7 +1103,7 @@ void connection_pending(struct connection *c, enum initiated_by initiated_by, wh
 		 c->logger, where, annex);
 }
 
-void connection_disown(struct connection *c, struct logger *logger, where_t where)
+void connection_unpend(struct connection *c, struct logger *logger, where_t where)
 {
 	struct routing_annex annex = {0};
 	/* skip when any hint of an owner */
