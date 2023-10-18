@@ -42,6 +42,7 @@
 #include "server_pool.h"
 #include "list_entry.h"
 #include "pluto_timing.h"
+#include "connections.h"
 
 #ifdef USE_SECCOMP
 # include "pluto_seccomp.h"
@@ -368,6 +369,21 @@ void submit_task(const struct logger *logger,
 		 * (hence SOS_NOBODY).
 		 */
 		schedule_callback("inline crypto", SOS_NOBODY, inline_worker, job);
+		return;
+	}
+
+	if (st->st_ike_version == IKEv1) {
+		/*
+		 * XXX: Danger:
+		 *
+		 * Clearing retransmits here is wrong, for instance:
+		 * crypto is being run in the background; crypto is
+		 * for the responder (IKEv2 retransmits are by the
+		 * initiator); the message may be dropped.
+		 */
+		delete_event(st);
+		clear_retransmits(st);
+		event_schedule(EVENT_CRYPTO_TIMEOUT, EVENT_CRYPTO_TIMEOUT_DELAY, st);
 	} else {
 		/*
 		 * XXX: Danger:
@@ -380,9 +396,10 @@ void submit_task(const struct logger *logger,
 		delete_event(st);
 		clear_retransmits(st);
 		event_schedule(EVENT_CRYPTO_TIMEOUT, EVENT_CRYPTO_TIMEOUT_DELAY, st);
-		/* add to backlog */
-		message_helpers(job);
 	}
+
+	/* add to backlog */
+	message_helpers(job);
 }
 
 void delete_cryptographic_continuation(struct state *st)
