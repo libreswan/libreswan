@@ -85,6 +85,7 @@
 #include "ikev2_delete.h"		/* for record_v2_delete() */
 #include "ikev2_child.h"		/* for jam_v2_child_sa_details() */
 #include "ikev2_eap.h"
+#include "terminate.h"
 
 static callback_cb reinitiate_v2_ike_sa_init;	/* type assertion */
 

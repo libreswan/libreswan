@@ -70,6 +70,7 @@
 #include "ikev2_delete.h"		/* for submit_v2_delete_exchange() */
 #include "ikev1_replace.h"
 #include "ikev2_replace.h"
+#include "terminate.h"
 
 static int state_event_cmp(const void *lp, const void *rp)
 {

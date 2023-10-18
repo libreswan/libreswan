@@ -35,6 +35,7 @@
 #include "ikev2.h"		/* for ikev2_retry_establishing_ike_sa() */
 #include "routing.h"
 #include "revival.h"
+#include "terminate.h"
 
 /*
  * XXX: it is the IKE SA that is responsible for all retransmits.

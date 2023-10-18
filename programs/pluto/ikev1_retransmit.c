@@ -32,6 +32,7 @@
 #include "ikev1_replace.h"
 #include "pluto_stats.h"
 #include "revival.h"
+#include "terminate.h"
 
 #ifdef USE_IKEv1
 /* Time to retransmit, or give up.

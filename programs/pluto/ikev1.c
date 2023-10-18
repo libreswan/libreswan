@@ -168,6 +168,7 @@
 #include "rekeyfuzz.h"
 #include "updown.h"
 #include "ikev1_delete.h"
+#include "terminate.h"
 
 #ifdef HAVE_NM
 #include "kernel.h"

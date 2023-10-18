@@ -101,6 +101,7 @@
 #include "lswnss.h"
 #include "ikev1_vendorid.h"
 #include "ikev1_cert.h"
+#include "terminate.h"
 
 /*
  * Initiate an Oakley Main Mode exchange.
