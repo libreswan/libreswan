@@ -779,30 +779,16 @@ void llog_sa_delete_n_send(struct ike_sa *ike, struct state *st)
 	on_delete(st, skip_log_message);
 }
 
-static void ldbg_sa_delete_n_send(struct ike_sa *ike, struct state *st)
-{
-	if (DBGP(DBG_BASE)) {
-		llog_delete_n_send(DEBUG_STREAM, ike, st);
-	}
-}
-
 /* delete a state object */
 void delete_state(struct state *st)
 {
-	pdbg(st->st_logger, "%s() skipping revival:%s send_delete:%s log_message:%s",
+	pdbg(st->st_logger, "%s() skipping log_message:%s",
 	     __func__,
-	     bool_str(st->st_on_delete.skip_revival),
-	     bool_str(st->st_on_delete.skip_send_delete),
 	     bool_str(st->st_on_delete.skip_log_message));
 
-#if 0
-	/*
-	 * Not yet: code that doesn't need to revive skips setting the
-	 * .skip_revival bit.  For instance an IKE SA that has been
-	 * replaced?
-	 */
+	/* must be as set by delete_{ike,child}_sa() */
 	PEXPECT(st->st_logger, st->st_on_delete.skip_revival);
-#endif
+	PEXPECT(st->st_logger, st->st_on_delete.skip_send_delete);
 
 	/*
 	 * An IKEv2 IKE SA can only be deleted after all children.
@@ -823,62 +809,9 @@ void delete_state(struct state *st)
 		}
 	}
 
-	if (st->st_ike_version == IKEv2 && IS_CHILD_SA(st)) {
-		/*
-		 * XXX:
-		 *
-		 * This should be a pexpect; as all callers
-		 * logging child sa delete should also set
-		 * .skip_log_message.
-		 *
-		 * IKEv2 children never send a delete
-		 * notification from delete_state() so logging
-		 * "and NOT sending delete" is redundant.
-		 * However, sometimes IKEv2 children should
-		 * log that they have been deleted.  Let the
-		 * caller decide.
-		 *
-		 * XXX: This should know the IKE SA, but often it's
-		 * already been deleted.  Ulgh!
-		 */
-		ldbg_sa_delete_n_send(NULL, st);
-	} else if (st->st_on_delete.skip_send_delete) {
-		if (st->st_on_delete.skip_log_message) {
-			ldbg_sa_delete_n_send(NULL, st);
-		} else {
-			PEXPECT(st->st_logger, (st->st_ike_version == IKEv1 ||
-						IS_PARENT_SA(st)));
-			llog_sa_delete_n_send(NULL, st);
-		}
-	} else {
-		switch (st->st_ike_version) {
-#ifdef USE_IKEv1
-		case IKEv1:
-		{
-			struct ike_sa *isakmp =
-				established_isakmp_sa_for_state(st, /*viable-parent*/false);
-			llog_n_maybe_send_v1_delete(isakmp, st, HERE);
-			break;
-		}
-#endif
-		case IKEv2:
-			PEXPECT(st->st_logger, IS_PARENT_SA(st));
-			if (IS_IKE_SA_ESTABLISHED(st)) {
-				/*
-				 * XXX: this should be a pexpect(),
-				 * caller should have already handled
-				 * logging and sending delete.
-				 *
-				 * ??? in IKEv2, we should not immediately
-				 * delete: we should use an Informational
-				 * Exchange to coordinate deletion.
-				 */
-				record_n_send_n_log_v2_delete(pexpect_ike_sa(st), HERE);
-			} else {
-				llog_sa_delete_n_send(pexpect_ike_sa(st), st);
-			}
-			break;
-		}
+	if (!st->st_on_delete.skip_log_message &&
+	    (st->st_ike_version == IKEv1 || IS_PARENT_SA(st))) {
+		llog_sa_delete_n_send(NULL, st);
 	}
 
 	pstat_sa_deleted(st);
