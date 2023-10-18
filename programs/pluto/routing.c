@@ -1135,22 +1135,32 @@ void connection_unpend(struct connection *c, struct logger *logger, where_t wher
 	dispatch(CONNECTION_DISOWN, &c, logger, where, &annex);
 }
 
-void connection_establish_ike(struct ike_sa *ike, where_t where)
+static void set_established_ike(enum routing_event event UNUSED,
+				struct connection *c,
+				enum routing routing,
+				const struct routing_annex *e,
+				where_t where UNUSED)
 {
-	struct connection *c = ike->sa.st_connection;
-	struct routing_annex e = {
-		.ike = &ike,
-	};
-	struct old_routing old = ldbg_routing_start(c, CONNECTION_ESTABLISH_IKE, where, &e);
 	/* steal both the established and negotiating IKE SAs */
+	struct ike_sa *ike = (*e->ike);
 	c->negotiating_ike_sa = c->established_ike_sa = ike->sa.st_serialno;
+	c->child.routing = routing; /* XXX: but this is IKE!?! */
 	ike->sa.st_viable_parent = true;
 	linux_audit_conn(&ike->sa, LAK_PARENT_START);
 	/* dump new keys */
 	if (DBGP(DBG_PRIVATE)) {
 		DBG_tcpdump_ike_sa_keys(&ike->sa);
 	}
-	ldbg_routing_stop(c, CONNECTION_ESTABLISH_IKE, where, &old, /*ok*/true);
+}
+
+void connection_establish_ike(struct ike_sa *ike, where_t where)
+{
+	struct connection *c = ike->sa.st_connection;
+	struct logger *logger = ike->sa.logger;
+	struct routing_annex annex = {
+		.ike = &ike,
+	};
+	dispatch(CONNECTION_ESTABLISH_IKE, &c, logger, where, &annex);
 }
 
 void connection_route(struct connection *c, where_t where)
@@ -1407,6 +1417,25 @@ static bool dispatch_1(enum routing_event event,
 			}
 			PEXPECT(logger, c->child.routing == RT_ROUTED_ONDEMAND);
 		}
+		return true;
+
+	case X(ESTABLISH_IKE, UNROUTED, INSTANCE):
+	case X(ESTABLISH_IKE, UNROUTED, PERMANENT):
+	case X(ESTABLISH_IKE, BARE_NEGOTIATION, INSTANCE):
+	case X(ESTABLISH_IKE, BARE_NEGOTIATION, PERMANENT):
+		set_established_ike(event, c, RT_BARE_NEGOTIATION, e, where);
+		return true;
+
+	case X(ESTABLISH_IKE, ROUTED_NEGOTIATION, INSTANCE):
+	case X(ESTABLISH_IKE, ROUTED_NEGOTIATION, PERMANENT):
+	case X(ESTABLISH_IKE, ROUTED_ONDEMAND, INSTANCE):
+	case X(ESTABLISH_IKE, ROUTED_ONDEMAND, PERMANENT):
+	case X(ESTABLISH_IKE, ROUTED_TUNNEL, INSTANCE):
+	case X(ESTABLISH_IKE, ROUTED_TUNNEL, PERMANENT):
+	case X(ESTABLISH_IKE, UNROUTED_NEGOTIATION, INSTANCE):
+	case X(ESTABLISH_IKE, UNROUTED_NEGOTIATION, PERMANENT):
+		/* unchanged; except to attach IKE */
+		set_established_ike(event, c, c->child.routing, e, where);
 		return true;
 
 	case X(INITIATE, ROUTED_ONDEMAND, INSTANCE): /* from revival */
@@ -1921,6 +1950,21 @@ static bool dispatch_1(enum routing_event event,
  * Labeled IPsec.
  */
 
+	case X(ESTABLISH_IKE, UNROUTED, LABELED_PARENT):
+		/*
+		 * Should this replace ROUTE, UNROUTED, LABELED_PARENT
+		 * below?
+		 */
+		set_established_ike(event, c, RT_BARE_NEGOTIATION, e, where);
+		return true;
+	case X(ESTABLISH_IKE, ROUTED_ONDEMAND, LABELED_PARENT):
+		/*
+		 * Should this replace ROUTE, UNROUTED, LABELED_PARENT
+		 * below?
+		 */
+		set_established_ike(event, c, RT_ROUTED_ONDEMAND, e, where);
+		return true;
+
 	case X(ROUTE, UNROUTED, LABELED_TEMPLATE):
 		add_policy(c, policy.route); /* always */
 		if (never_negotiate(c)) {
@@ -1946,6 +1990,7 @@ static bool dispatch_1(enum routing_event event,
 		 */
 		set_routing(event, c, RT_ROUTED_ONDEMAND, NULL, where);
 		return true;
+	case X(ROUTE, BARE_NEGOTIATION, LABELED_PARENT): /* see above */
 	case X(ROUTE, UNROUTED, LABELED_PARENT):
 		/*
 		 * The CK_LABELED_TEMPLATE connection may have been
