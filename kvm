@@ -182,6 +182,16 @@ pass2help()
 	  build domain: ${kvm_platform}
 	  base domain: ${basehosts}
 	  upgrade domain: ${upgradehosts}
+
+  Namespaces:
+
+    nsinstall
+	install namespaces
+    nsreinstall
+	re-install namespaces
+    nsrun [ <test-directory> ... ]
+	run testsuite using namespaces on the fedora domain
+
 EOF
 }
 
@@ -510,6 +520,16 @@ for op in "${ops[@]}" ; do
 	    host=${prefix}$1 ; shift
 	    echo "Connecting to ${host}" 1>&2
 	    exec testing/utils/kvmsh.py ${host} "$@"
+	    ;;
+	nsinstall )
+	    testing/utils/kvmsh.py --chdir /source ${prefix}fedora -- gmake nsinstall
+	    ;;
+	nsreinstall )
+	    testing/utils/kvmsh.py --chdir /source ${prefix}fedora -- gmake nsreinstall
+	    ;;
+	nsrun )
+	    testing/utils/kvmsh.py --chdir /source ${prefix}fedora -- gmake nsrun
+	    ;;
     esac
 done
 
