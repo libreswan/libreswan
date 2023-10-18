@@ -74,6 +74,8 @@
 #include "routing.h"
 #include "terminate.h"
 
+static void delete_state(struct state *st);
+
 bool uniqueIDs = false;
 
 /*

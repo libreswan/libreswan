@@ -900,8 +900,6 @@ void delete_child_sa(struct child_sa **child);
 
 void llog_sa_delete_n_send(struct ike_sa *ike, struct state *st);
 
-void delete_state(struct state *st);
-
 extern void rekey_p2states_by_connection(struct connection *c);
 void send_n_log_delete_ike_family_now(struct ike_sa **ike,
 				      struct logger *logger,

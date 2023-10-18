@@ -2275,7 +2275,7 @@ void process_protected_v2_message(struct ike_sa *ike, struct msg_digest *md)
 			pstat(ikev2_recv_notifies_e, ntfy->payload.v2n.isan_type);
 		}
 		pexpect(secured_payload_failed);
-		/* XXX: calls delete_state() */
+		/* XXX: calls delete_ike_sa() */
 		complete_protected_but_fatal_exchange(ike, md, v2N_INVALID_SYNTAX, NULL);
 		return;
 	}
