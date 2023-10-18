@@ -528,14 +528,33 @@ static void set_established_child(enum routing_event event UNUSED,
 	if (ike != NULL) {
 		PEXPECT(c->logger, ike->sa.st_serialno == child->sa.st_clonedfrom);
 	}
-	if (ike != NULL && ike->sa.st_connection == c) {
-		/* fails when streams cross? */
-		PEXPECT(c->logger, ike->sa.st_serialno == c->established_ike_sa);
-	}
-	if (ike != NULL && ike->sa.st_connection != c) {
-		/* child is a cuckoo */
-		PEXPECT(c->logger, c->established_ike_sa == SOS_NOBODY);
-		PEXPECT(c->logger, c->negotiating_ike_sa == SOS_NOBODY);
+	if (ike != NULL) {
+		for (enum connection_owner owner = IKE_SA_OWNER_FLOOR;
+		     owner < IKE_SA_OWNER_ROOF; owner++) {
+			if (ike->sa.st_connection == c) {
+				if (ike->sa.st_serialno != c->owner[owner]) {
+					/* child/ike have crossed streams */
+					enum_buf ob;
+					llog_pexpect(c->logger, HERE,
+						     "Child SA "PRI_SO" and IKE SA "PRI_SO" share the connection yet .%s is "PRI_SO,
+						     pri_so(child->sa.st_serialno),
+						     pri_so(ike->sa.st_serialno),
+						     str_enum(&connection_owner_names, owner, &ob),
+						     pri_so(c->owner[owner]));
+				}
+			} else {
+				if (c->owner[owner] != SOS_NOBODY) {
+					/* child is a cuckoo */
+					enum_buf ob;
+					llog_pexpect(c->logger, HERE,
+						     "Child SA "PRI_SO" and IKE SA "PRI_SO" do not share the connection yet .%s is "PRI_SO,
+						     pri_so(child->sa.st_serialno),
+						     pri_so(ike->sa.st_serialno),
+						     str_enum(&connection_owner_names, owner, &ob),
+						     pri_so(c->owner[owner]));
+				}
+			}
+		}
 	}
 	c->child.routing = routing;
 	c->newest_ipsec_sa = c->newest_routing_sa = (*e->child)->sa.st_serialno;
