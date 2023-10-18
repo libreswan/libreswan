@@ -320,23 +320,10 @@ static void v2_msgid_update_recv(struct ike_sa *ike, const struct msg_digest *md
 		/* this is what matters */
 		pexpect(new->initiator.wip != msgid);
 		/*
-		 * Clear the retransmits for the old message
-		 *
-		 * XXX:
-		 *
-		 * Whenever work (crypto) is off-loaded submit_task()
-		 * clears retransmits, hence the below check.
-		 *
-		 * This is bogus: the crypto could be for the
-		 * responder; a background task; or the message could
-		 * be rejected.  All reasons to continue retransmits.
+		 * Clear the retransmits for the old message.
 		 */
-		if (ike->sa.st_retransmit_event != NULL) {
-			dbg_v2_msgid(ike, "clearing EVENT_RETRANSMIT as response received");
-			clear_retransmits(&ike->sa);
-		} else {
-			dbg_v2_msgid(ike, "no EVENT_RETRANSMIT to clear; suspect submit_task()");
-		}
+		dbg_v2_msgid(ike, "clearing EVENT_RETRANSMIT as response received");
+		clear_retransmits(&ike->sa);
 		break;
 	}
 	case NO_MESSAGE:
