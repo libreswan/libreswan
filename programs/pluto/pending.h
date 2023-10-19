@@ -67,8 +67,7 @@ void show_pending_child_details(struct show *s,
 				const struct connection *c,
 				const struct ike_sa *ike);
 
-extern struct connection *first_pending(const struct ike_sa *ike,
-					lset_t *policy);
+extern struct connection *first_pending(const struct ike_sa *ike);
 
 void init_pending(void);
 

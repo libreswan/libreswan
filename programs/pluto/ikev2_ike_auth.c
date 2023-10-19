@@ -425,8 +425,8 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 	 */
 
 	/* Child Connection */
-	lset_t unused_policy = LEMPTY; /* unused */
-	struct connection *cc = first_pending(ike, &unused_policy); /*pending owns ref*/
+
+	struct connection *cc = first_pending(ike); /*pending owns ref*/
 	if (cc == NULL) {
 		llog_sa(RC_LOG, ike, "omitting CHILD SA payloads");
 	} else {

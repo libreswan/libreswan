@@ -312,14 +312,13 @@ void unpend(struct ike_sa *ike, struct connection *cc)
 	}
 }
 
-struct connection *first_pending(const struct ike_sa *ike, lset_t *policy)
+struct connection *first_pending(const struct ike_sa *ike)
 {
 	pdbg(ike->sa.st_logger, "getting first pending from state");
 
 	for (struct pending *p, **pp = host_pair_first_pending(ike->sa.st_connection);
 	     pp != NULL && (p = *pp) != NULL; pp = &p->next) {
 		if (p->ike == ike) {
-			*policy = p->policy;
 			connection_attach(p->connection, p->logger);
 			return p->connection;
 		}
