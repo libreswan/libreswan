@@ -21,7 +21,7 @@ north #
 1v2 "northnet-eastnet/0x2" #1: initiating IKEv2 connection
 000 "northnet-eastnet/0x1": queue Child SA; waiting on IKE SA "northnet-eastnet/0x2" #1 negotiating with 192.1.2.23
 1v2 "northnet-eastnet/0x2" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-002 "northnet-eastnet/0x2" #1: switching CHILD #2 to pending connection "northnet-eastnet/0x1"
+002 "northnet-eastnet/0x1" #2: Child SA initiating pending connection using IKE SA #1's IKE_AUTH exchange
 1v2 "northnet-eastnet/0x2" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "northnet-eastnet/0x2" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 004 "northnet-eastnet/0x1" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.0-192.0.3.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
