@@ -1546,12 +1546,17 @@ struct ike_sa *find_viable_parent_for_connection(const struct connection *c)
 		 * viable, even though .st_viable_parent hasn't yet
 		 * been set (that happens when the state establishes).
 		 */
-		if (IS_PARENT_SA_ESTABLISHED(st) &&
-		    !st->st_viable_parent) {
-			/* past it's use-by date */
-			continue;
-		}
-		if (!IS_PARENT_SA_ESTABLISHED(st)) {
+		PEXPECT(st->logger, IS_PARENT_SA(st)); /* by parent_ok() */
+		if (IS_PARENT_SA_ESTABLISHED(st)) {
+			if (!st->st_viable_parent) {
+				/* past it's use-by date */
+				continue;
+			}
+			if (st->st_connection->established_ike_sa != st->st_serialno) {
+				/* er, our connection was stolen */
+				continue;
+			}
+		} else {
 			if (st->st_sa_role != SA_INITIATOR) {
 				PEXPECT(st->st_logger,
 					!LHAS(ok_states, st->st_state->kind));
