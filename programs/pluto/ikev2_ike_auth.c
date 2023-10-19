@@ -440,18 +440,18 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 		struct child_sa *child = new_v2_child_sa(cc, ike, IPSEC_SA,
 							 SA_INITIATOR,
 							 STATE_V2_IKE_AUTH_CHILD_I0);
-		/* whack's attached to CHILD, release from
-		 * connection */
+		/*
+		 * whack has been attached to the Child SA, release
+		 * from the connection.
+		 */
 		release_whack(cc->logger, HERE);
 
 		ike->sa.st_v2_msgid_windows.initiator.wip_sa = child;
 
 		if (cc != pc) {
-			/* lie */
-			connection_buf cib;
-			llog_sa(RC_LOG, ike,
-				  "switching CHILD #%lu to pending connection "PRI_CONNECTION,
-				  child->sa.st_serialno, pri_connection(cc, &cib));
+			llog(RC_LOG, child->sa.logger,
+			     "Child SA initiating pending connection using IKE SA "PRI_SO"'s IKE_AUTH exchange",
+			     pri_so(ike->sa.st_serialno));
 		}
 
 		if (!prep_v2_child_for_request(child)) {
