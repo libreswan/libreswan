@@ -7,6 +7,7 @@ road #
  ../../guestbin/wait-until-pluto-started
 road #
  ipsec auto --add road-east-x509-ipv4
+002 "road-east-x509-ipv4": warning: IKEv2 ignores dpdtimeout= and dpdaction=; use dpddelay= and retransmit-timeout=
 002 "road-east-x509-ipv4": added IKEv2 connection
 road #
  ipsec whack --impair suppress-retransmits
@@ -20,7 +21,7 @@ road #
 1v2 "road-east-x509-ipv4"[1] 192.1.2.23 #1: initiating IKEv2 connection
 1v2 "road-east-x509-ipv4"[1] 192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "road-east-x509-ipv4"[1] 192.1.2.23 #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "road-east-x509-ipv4"[1] 192.1.2.23 #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+003 "road-east-x509-ipv4"[1] 192.1.2.23 #1: initiator established IKE SA; authenticated peer '3nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 002 "road-east-x509-ipv4"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 192.0.2.100
 004 "road-east-x509-ipv4"[1] 192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [192.0.2.100-192.0.2.100:0-65535 0] -> [0.0.0.0-255.255.255.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=active}
 road #
@@ -47,7 +48,6 @@ road #
  ipsec whack --shuntstatus
 000 Bare Shunt list:
 000  
-HOLD SHOULD BE HERE
 road #
  # Remove block
 road #
@@ -57,14 +57,14 @@ road #
 road #
  # wait for revival
 road #
- ../../guestbin/wait-for.sh --match '#04' -- ipsec whack --trafficstatus
-timeout waiting 30 seconds for ipsec whack --trafficstatus to match #04
-output: 006 #5: "road-east-x509-ipv4"[2] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=192.0.2.100/32
+ ../../guestbin/wait-for.sh --match '#4' -- ipsec whack --trafficstatus
+timeout waiting 30 seconds for ipsec whack --trafficstatus to match #4
+output: 006 #5: "road-east-x509-ipv4"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=192.0.2.100/32
 road #
  ../../guestbin/ping-once.sh --up -I 192.0.2.100 192.1.2.23
 up
 road #
  ipsec whack --trafficstatus
-006 #5: "road-east-x509-ipv4"[2] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=192.0.2.100/32
+006 #5: "road-east-x509-ipv4"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=192.0.2.100/32
 road #
  
