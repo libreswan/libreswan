@@ -384,17 +384,6 @@ void submit_task(const struct logger *logger,
 		delete_event(st);
 		clear_retransmits(st);
 		event_schedule(EVENT_CRYPTO_TIMEOUT, EVENT_CRYPTO_TIMEOUT_DELAY, st);
-	} else {
-		/*
-		 * XXX: Danger:
-		 *
-		 * Clearing retransmits here is wrong, for instance:
-		 * crypto is being run in the background; crypto is
-		 * for the responder (IKEv2 retransmits are by the
-		 * initiator); the message may be dropped.
-		 */
-		delete_event(st);
-		event_schedule(EVENT_CRYPTO_TIMEOUT, EVENT_CRYPTO_TIMEOUT_DELAY, st);
 	}
 
 	/* add to backlog */
