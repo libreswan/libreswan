@@ -2416,6 +2416,20 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		passert(md != NULL);
 		pexpect(md->v1_st == st);
 		suspend_any_md(md->v1_st, md);
+		/*
+		 * XXX: Clearing retransmits here is wrong (it is a
+		 * slight improvement on submit_task()).
+		 *
+		 * Retransmits should only be cleared after the
+		 * integrity of the packet has been proven and here
+		 * that is likely not the case.  For instance, the
+		 * exchange is suspended while the DH needed to prove
+		 * integrity is computed.
+		 *
+		 * A better location might be in STF_v1N, assuming the
+		 * packet's integrity was verified.
+		 */
+		clear_retransmits(st);
 		return;
 	case STF_IGNORE:
 		/* DANGER: MD might be NULL; ST might be NULL */

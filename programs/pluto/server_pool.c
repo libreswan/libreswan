@@ -382,7 +382,6 @@ void submit_task(const struct logger *logger,
 		 * initiator); the message may be dropped.
 		 */
 		delete_event(st);
-		clear_retransmits(st);
 		event_schedule(EVENT_CRYPTO_TIMEOUT, EVENT_CRYPTO_TIMEOUT_DELAY, st);
 	}
 
