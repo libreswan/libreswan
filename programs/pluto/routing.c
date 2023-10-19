@@ -524,34 +524,37 @@ static void set_established_child(enum routing_event event UNUSED,
 {
 	struct child_sa *child = (*e->child);
 	struct ike_sa *ike = (e->ike != NULL ? (*e->ike) : NULL);
-	PEXPECT(c->logger, child->sa.st_connection == c);
+	PEXPECT(child->sa.logger, child->sa.st_connection == c);
 	if (ike != NULL) {
-		PEXPECT(c->logger, ike->sa.st_serialno == child->sa.st_clonedfrom);
-	}
-	if (ike != NULL) {
+		/* by definition */
+		PEXPECT(child->sa.logger, ike->sa.st_serialno == child->sa.st_clonedfrom);
+		/*
+		 * Do we have star-crossed-streams?  When this happens
+		 * try to mitigate the damage.
+		 */
 		for (enum connection_owner owner = IKE_SA_OWNER_FLOOR;
 		     owner < IKE_SA_OWNER_ROOF; owner++) {
 			if (ike->sa.st_connection == c) {
 				if (ike->sa.st_serialno != c->owner[owner]) {
 					/* child/ike have crossed streams */
 					enum_buf ob;
-					llog_pexpect(c->logger, HERE,
-						     "Child SA "PRI_SO" and IKE SA "PRI_SO" share the connection yet .%s is "PRI_SO,
-						     pri_so(child->sa.st_serialno),
+					llog_pexpect(child->sa.logger, HERE,
+						     "Child SA sharing connection with IKE SA "PRI_SO" has incorrect .%s "PRI_SO", updating",
 						     pri_so(ike->sa.st_serialno),
 						     str_enum(&connection_owner_names, owner, &ob),
 						     pri_so(c->owner[owner]));
+					c->owner[owner] = ike->sa.st_serialno;
 				}
 			} else {
 				if (c->owner[owner] != SOS_NOBODY) {
 					/* child is a cuckoo */
 					enum_buf ob;
-					llog_pexpect(c->logger, HERE,
-						     "Child SA "PRI_SO" and IKE SA "PRI_SO" do not share the connection yet .%s is "PRI_SO,
-						     pri_so(child->sa.st_serialno),
+					llog_pexpect(child->sa.logger, HERE,
+						     "Child SA not sharing connection with IKE SA "PRI_SO" has incorrect .%s "PRI_SO", clearing",
 						     pri_so(ike->sa.st_serialno),
 						     str_enum(&connection_owner_names, owner, &ob),
 						     pri_so(c->owner[owner]));
+					c->owner[owner] = SOS_NOBODY;
 				}
 			}
 		}
