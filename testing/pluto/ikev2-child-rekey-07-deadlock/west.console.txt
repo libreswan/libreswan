@@ -101,7 +101,7 @@ west #
 |    exchange type: ISAKMP_v2_IKE_AUTH (..)
 |    Message ID: 1 (..)
 | Message ID: updating counters for #1
-| Message ID: IKE #1 no EVENT_RETRANSMIT to clear; suspect submit_task() (..)
+| Message ID: IKE #1 clearing EVENT_RETRANSMIT as response received (..)
 | Message ID: IKE #1 updating initiator received message response 0 (..)
 | Message ID: IKE #1 scheduling EVENT_RETRANSMIT (..)
 | Message ID: IKE #1 updating initiator sent message request 1 (..)
