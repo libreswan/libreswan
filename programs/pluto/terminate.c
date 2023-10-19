@@ -151,7 +151,7 @@ static void delete_v2_states(struct connection *c,
 		return;
 	case WHACK_LURKING_IKE:
 		state_attach(&(*ike)->sa, c->logger);
-		delete_ike_sa(ike);
+		connection_delete_ike_family(ike, HERE);
 		return;
 	case WHACK_CHILD:
 		state_attach(&(*child)->sa, c->logger);
