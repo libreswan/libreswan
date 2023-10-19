@@ -248,7 +248,6 @@ static void jam_routing_prefix(struct jambuf *buf,
 
 static void ldbg_routing_skip(struct connection *c,
 			       enum routing_event event,
-			       where_t where,
 			       const struct routing_annex *e)
 {
 	if (DBGP(DBG_BASE)) {
@@ -262,7 +261,7 @@ static void ldbg_routing_skip(struct connection *c,
 					   c->local->kind);
 			jam_event(buf, c, e);
 			jam_string(buf, " ");
-			jam_where(buf, where);
+			jam_where(buf, e->where);
 		}
 	}
 }
@@ -278,9 +277,8 @@ struct old_routing {
 	unsigned revival_attempt;
 };
 
-static struct old_routing ldbg_routing_start(struct connection *c,
-					     enum routing_event event,
-					     where_t where,
+static struct old_routing ldbg_routing_start(enum routing_event event,
+					     struct connection *c,
 					     const struct routing_annex *e)
 {
 	struct old_routing old = {
@@ -311,15 +309,15 @@ static struct old_routing ldbg_routing_start(struct connection *c,
 					   c->local->kind);
 			jam_event(buf, c, e);
 			jam_string(buf, " ");
-			jam_where(buf, where);
+			jam_where(buf, e->where);
 		}
 	}
 	return old;
 }
 
-static void ldbg_routing_stop(struct connection *c,
-			      enum routing_event event,
-			      where_t where,
+static void ldbg_routing_stop(enum routing_event event,
+			      struct connection *c,
+			      const struct routing_annex *e,
 			      const struct old_routing *old,
 			      bool ok)
 {
@@ -348,7 +346,7 @@ static void ldbg_routing_stop(struct connection *c,
 				    c->revival.attempt);
 			}
 			jam_string(buf, " ");
-			jam_where(buf, where);
+			jam_where(buf, e->where);
 		}
 	}
 }
@@ -676,7 +674,6 @@ static void routed_negotiation_to_unrouted(enum routing_event event,
 static void routed_ondemand_to_routed_negotiation(enum routing_event event,
 						  struct connection *c,
 						  struct logger *logger,
-						  where_t where,
 						  const struct routing_annex *e)
 {
         PEXPECT(logger, !is_opportunistic(c));
@@ -686,7 +683,7 @@ static void routed_ondemand_to_routed_negotiation(enum routing_event event,
 		if (!replace_spd_kernel_policy(spd, DIRECTION_OUTBOUND,
 					       rt_negotiation,
 					       SHUNT_KIND_NEGOTIATION,
-					       logger, where,
+					       logger, e->where,
 					       "ondemand->negotiation")) {
 			llog(RC_LOG, c->logger,
 			     "converting ondemand kernel policy to negotiation");
@@ -858,7 +855,7 @@ static void zap_child(struct child_sa **child,
 	};
 
 	if ((*child)->sa.st_serialno != cc->newest_routing_sa) {
-		ldbg_routing_skip(cc, child_event, where, &annex);
+		ldbg_routing_skip(cc, child_event, &annex);
 		delete_child_sa(child);
 		return;
 	}
@@ -908,7 +905,7 @@ static void zap_ike(struct ike_sa **ike,
 		 * larval IKE SAs and this check doesn't filter them
 		 * out.
 		 */
-		ldbg_routing_skip(c, ike_event, where, &annex);
+		ldbg_routing_skip(c, ike_event, &annex);
 		delete_ike_sa(ike);
 		return;
 	}
@@ -995,12 +992,11 @@ bool pexpect_connection_is_disowned(struct connection *c, struct logger *logger,
 static bool initiate_ok(struct connection *c,
 			enum routing_event event,
 			const struct routing_annex *e,
-			struct logger *logger,
-			where_t where)
+			struct logger *logger)
 {
 	switch (c->child.routing) {
 	case RT_UNROUTED:
-		pexpect_connection_is_disowned(c, logger, where);
+		pexpect_connection_is_disowned(c, logger, e->where);
 		return true;
 	case RT_ROUTED_ONDEMAND:
 		return true;
@@ -1010,7 +1006,7 @@ static bool initiate_ok(struct connection *c,
 		 * acquires triggering simultaneously) or due to an
 		 * initiate being used to force a rekey.
 		 */
-		ldbg_routing_skip(c, event, where, e); /* breadcrumb */
+		ldbg_routing_skip(c, event, e); /* breadcrumb */
 		enum_buf rb;
 		llog(RC_LOG, logger, "connection is already %s",
 		     str_enum(&routing_story, c->child.routing, &rb));
@@ -1029,7 +1025,7 @@ void connection_initiated_ike(struct ike_sa *ike,
 		.initiated_by = initiated_by,
 		.where = where,
 	};
-	if (!initiate_ok(c, CONNECTION_INITIATE, &annex, logger, where)) {
+	if (!initiate_ok(c, CONNECTION_INITIATE, &annex, logger)) {
 		return;
 	}
 	dispatch(CONNECTION_INITIATE, &c, logger, &annex);
@@ -1047,7 +1043,7 @@ void connection_initiated_child(struct ike_sa *ike, struct child_sa *child,
 		.initiated_by = initiated_by,
 		.where = where,
 	};
-	if (!initiate_ok(cc, CONNECTION_INITIATE, &annex, logger, where)) {
+	if (!initiate_ok(cc, CONNECTION_INITIATE, &annex, logger)) {
 		return;
 	}
 	dispatch(CONNECTION_INITIATE, &cc, logger, &annex);
@@ -1059,7 +1055,7 @@ void connection_pending(struct connection *c, enum initiated_by initiated_by, wh
 		.initiated_by = initiated_by,
 		.where = where,
 	};
-	if (!initiate_ok(c, CONNECTION_INITIATE, &annex, c->logger, where)) {
+	if (!initiate_ok(c, CONNECTION_INITIATE, &annex, c->logger)) {
 		return;
 	}
 	dispatch(CONNECTION_INITIATE, &c, c->logger, &annex);
@@ -1073,7 +1069,7 @@ void connection_unpend(struct connection *c, struct logger *logger, where_t wher
 	/* skip when any hint of an owner */
 	for (unsigned i = 0; i < elemsof(c->owner); i++) {
 		if (c->owner[i] != SOS_NOBODY) {
-			ldbg_routing_skip(c, CONNECTION_DISOWN, where, &annex);
+			ldbg_routing_skip(c, CONNECTION_DISOWN, &annex);
 			return;
 		}
 	}
@@ -1253,7 +1249,7 @@ static bool dispatch_1(enum routing_event event,
 	case X(INITIATE, ROUTED_ONDEMAND, INSTANCE): /* from revival */
 	case X(INITIATE, ROUTED_ONDEMAND, PERMANENT):
 		flush_routed_ondemand_revival(c);
-		routed_ondemand_to_routed_negotiation(event, c, logger, e->where, e);
+		routed_ondemand_to_routed_negotiation(event, c, logger, e);
 		PEXPECT(logger, c->child.routing == RT_ROUTED_NEGOTIATION);
 		return true;
 
@@ -1914,9 +1910,9 @@ bool dispatch(enum routing_event event,
 	PASSERT(logger, e->where != NULL);
 
 	struct connection *c = connection_addref_where(*cp, logger, HERE);
-	struct old_routing old = ldbg_routing_start(c, event, e->where, e);
+	struct old_routing old = ldbg_routing_start(event, c, e);
 	bool ok = dispatch_1(event, c, logger, e);
-	ldbg_routing_stop(c, event, e->where, &old, ok);
+	ldbg_routing_stop(event, c, e, &old, ok);
 
 	connection_delref_where(&c, c->logger, HERE);
 
