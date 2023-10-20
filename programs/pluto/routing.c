@@ -120,11 +120,13 @@ struct routing_annex {
 	struct ike_sa **ike;
 	struct child_sa **child;
 	enum initiated_by initiated_by;
+	bool (*dispatch_ok)(struct connection *c, struct logger *logger, const struct routing_annex *e);
+	void (*post_op)(const struct routing_annex *e);
 	where_t where;
 };
 
 static bool dispatch(const enum routing_event event,
-		     struct connection **cp,
+		     struct connection *c,
 		     struct logger *logger,
 		     const struct routing_annex *e);
 
@@ -246,26 +248,6 @@ static void jam_routing_prefix(struct jambuf *buf,
 	jam_string(buf, ";");
 }
 
-static void ldbg_routing_skip(struct connection *c,
-			       enum routing_event event,
-			       const struct routing_annex *e)
-{
-	if (DBGP(DBG_BASE)) {
-		/*
-		 * XXX: force ADD_PREFIX so that the connection name
-		 * is before the interesting stuff.
-		 */
-		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, c->logger, buf) {
-			jam_routing_prefix(buf, "skip", event,
-					   c->child.routing, c->child.routing,
-					   c->local->kind);
-			jam_event(buf, c, e);
-			jam_string(buf, " ");
-			jam_where(buf, e->where);
-		}
-	}
-}
-
 struct old_routing {
 	/* capture what can change */
 	const char *ike_name;
@@ -279,6 +261,7 @@ struct old_routing {
 
 static struct old_routing ldbg_routing_start(enum routing_event event,
 					     struct connection *c,
+					     struct logger *logger,
 					     const struct routing_annex *e)
 {
 	struct old_routing old = {
@@ -303,7 +286,7 @@ static struct old_routing ldbg_routing_start(enum routing_event event,
 		 * XXX: force ADD_PREFIX so that the connection name
 		 * is before the interesting stuff.
 		 */
-		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, c->logger, buf) {
+		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, logger, buf) {
 			jam_routing_prefix(buf, "start", event,
 					   c->child.routing, c->child.routing,
 					   c->local->kind);
@@ -317,6 +300,7 @@ static struct old_routing ldbg_routing_start(enum routing_event event,
 
 static void ldbg_routing_stop(enum routing_event event,
 			      struct connection *c,
+			      struct logger *logger,
 			      const struct routing_annex *e,
 			      const struct old_routing *old,
 			      bool ok)
@@ -326,7 +310,7 @@ static void ldbg_routing_stop(enum routing_event event,
 		 * XXX: force ADD_PREFIX so that the connection name
 		 * is before the interesting stuff.
 		 */
-		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, c->logger, buf) {
+		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, logger, buf) {
 			jam_routing_prefix(buf, "stop", event,
 					   old->routing, c->child.routing,
 					   c->local->kind);
@@ -373,7 +357,7 @@ bool connection_establish_inbound(struct child_sa *child, where_t where)
 		.child = &child,
 		.where = where,
 	};
-	return dispatch(CONNECTION_ESTABLISH_INBOUND, &cc, logger, &annex);
+	return dispatch(CONNECTION_ESTABLISH_INBOUND, cc, logger, &annex);
 }
 
 bool connection_establish_outbound(struct ike_sa *ike, struct child_sa *child, where_t where)
@@ -385,7 +369,7 @@ bool connection_establish_outbound(struct ike_sa *ike, struct child_sa *child, w
 		.ike = &ike,
 		.where = where,
 	};
-	return dispatch(CONNECTION_ESTABLISH_OUTBOUND, &cc, logger, &annex);
+	return dispatch(CONNECTION_ESTABLISH_OUTBOUND, cc, logger, &annex);
 }
 
 bool connection_establish_child(struct ike_sa *ike, struct child_sa *child, where_t where)
@@ -843,36 +827,45 @@ static void teardown_routed_negotiation(enum routing_event event,
  * Received a message telling us to delete the connection's Child.SA.
  */
 
+static bool child_dispatch_ok(struct connection *c, struct logger *logger, const struct routing_annex *e)
+{
+	if ((*e->child)->sa.st_serialno == c->newest_routing_sa) {
+		return true;
+	}
+	ldbg_routing(logger, "Child SA does not match .newest_routing_sa "PRI_SO,
+		     pri_so(c->newest_routing_sa));
+	return false;
+}
+
+static void child_delete_post_op(const struct routing_annex *e)
+{
+	delete_child_sa(e->child);
+}
+
 static void zap_child(struct child_sa **child,
 		      enum routing_event child_event,
 		      where_t where)
 {
 	struct connection *cc = (*child)->sa.st_connection;
+	struct logger *logger = clone_logger((*child)->sa.logger, HERE); /* must free */
 
 	struct routing_annex annex = {
 		.child = child,
 		.where = where,
+		/*
+		 * Does the child sa own the routing?
+		 */
+		.dispatch_ok = child_dispatch_ok,
+		.post_op = child_delete_post_op,
 	};
-
-	if ((*child)->sa.st_serialno != cc->newest_routing_sa) {
-		ldbg_routing_skip(cc, child_event, &annex);
-		delete_child_sa(child);
-		return;
-	}
-
-	/*
-	 * Caller is responsible for generating any messages; suppress
-	 * delete_state()'s desire to send an out-of-band delete.
-	 */
-	on_delete(&(*child)->sa, skip_send_delete);
-	on_delete(&(*child)->sa, skip_revival);
 
 	/*
 	 * Let state machine figure out how to react.
 	 */
-	dispatch(child_event, &cc, (*child)->sa.st_logger, &annex);
-	delete_child_sa(child);
-	pexpect((*child) == NULL); /* no logger */
+	dispatch(child_event, cc, logger, &annex);
+
+	PEXPECT(logger, (*child) == NULL);
+	free_logger(&logger, HERE);
 }
 
 void connection_delete_child(struct child_sa **child, where_t where)
@@ -885,33 +878,47 @@ void connection_timeout_child(struct child_sa **child, where_t where)
 	zap_child(child, CONNECTION_TIMEOUT_CHILD, where);
 }
 
+/*
+ * If there's an established IKE SA and it isn't this one (i.e., not
+ * owner) skip the route change.
+ *
+ * This isn't strong enough.  There could be multiple larval IKE SAs
+ * and this check doesn't filter them out.
+ */
+static bool ike_dispatch_ok(struct connection *c, struct logger *logger, const struct routing_annex *e)
+{
+	if (c->established_ike_sa == SOS_NOBODY ||
+	    c->established_ike_sa == (*e->ike)->sa.st_serialno) {
+		return true;
+	}
+
+	ldbg_routing(logger, "IKE SA does not match .newest_routing_sa "PRI_SO,
+		     pri_so(c->newest_routing_sa));
+	return false;
+}
+
+static void ike_delete_post_op(const struct routing_annex *e)
+{
+	delete_ike_sa(e->ike);
+}
+
 static void zap_ike(struct ike_sa **ike,
 		    enum routing_event ike_event,
 		    where_t where)
 {
+	struct connection *c = (*ike)->sa.st_connection;
+	struct logger *logger = clone_logger((*ike)->sa.logger, HERE);
 	struct routing_annex annex = {
 		.ike = ike,
 		.where = where,
+		.dispatch_ok = ike_dispatch_ok,
+		.post_op = ike_delete_post_op,
 	};
 
-	struct connection *c = (*ike)->sa.st_connection;
-	if (c->established_ike_sa != SOS_NOBODY &&
-	    c->established_ike_sa != (*ike)->sa.st_serialno) {
-		/*
-		 * There's an established IKE SA and it isn't this
-		 * one; hence not the owner.
-		 *
-		 * This isn't strong enough.  There could be multiple
-		 * larval IKE SAs and this check doesn't filter them
-		 * out.
-		 */
-		ldbg_routing_skip(c, ike_event, &annex);
-		delete_ike_sa(ike);
-		return;
-	}
+	dispatch(ike_event, c, logger, &annex);
 
-	dispatch(ike_event, &c, (*ike)->sa.st_logger, &annex);
-	delete_ike_sa(ike);
+	PEXPECT(logger, (*ike) == NULL); /* no logger */
+	free_logger(&logger, HERE);
 }
 
 void connection_delete_ike(struct ike_sa **ike, where_t where)
@@ -989,10 +996,9 @@ bool pexpect_connection_is_disowned(struct connection *c, struct logger *logger,
 	return ok_to_delete;
 }
 
-static bool initiate_ok(struct connection *c,
-			enum routing_event event,
-			const struct routing_annex *e,
-			struct logger *logger)
+static bool initiate_dispatch_ok(struct connection *c,
+				 struct logger *logger,
+				 const struct routing_annex *e)
 {
 	switch (c->child.routing) {
 	case RT_UNROUTED:
@@ -1006,7 +1012,6 @@ static bool initiate_ok(struct connection *c,
 		 * acquires triggering simultaneously) or due to an
 		 * initiate being used to force a rekey.
 		 */
-		ldbg_routing_skip(c, event, e); /* breadcrumb */
 		enum_buf rb;
 		llog(RC_LOG, logger, "connection is already %s",
 		     str_enum(&routing_story, c->child.routing, &rb));
@@ -1024,11 +1029,9 @@ void connection_initiated_ike(struct ike_sa *ike,
 		.ike = &ike,
 		.initiated_by = initiated_by,
 		.where = where,
+		.dispatch_ok = initiate_dispatch_ok,
 	};
-	if (!initiate_ok(c, CONNECTION_INITIATE, &annex, logger)) {
-		return;
-	}
-	dispatch(CONNECTION_INITIATE, &c, logger, &annex);
+	dispatch(CONNECTION_INITIATE, c, logger, &annex);
 }
 
 void connection_initiated_child(struct ike_sa *ike, struct child_sa *child,
@@ -1041,12 +1044,10 @@ void connection_initiated_child(struct ike_sa *ike, struct child_sa *child,
 		.ike = &ike,
 		.child = &child,
 		.initiated_by = initiated_by,
+		.dispatch_ok = initiate_dispatch_ok,
 		.where = where,
 	};
-	if (!initiate_ok(cc, CONNECTION_INITIATE, &annex, logger)) {
-		return;
-	}
-	dispatch(CONNECTION_INITIATE, &cc, logger, &annex);
+	dispatch(CONNECTION_INITIATE, cc, logger, &annex);
 }
 
 void connection_pending(struct connection *c, enum initiated_by initiated_by, where_t where)
@@ -1054,27 +1055,32 @@ void connection_pending(struct connection *c, enum initiated_by initiated_by, wh
 	struct routing_annex annex = {
 		.initiated_by = initiated_by,
 		.where = where,
+		.dispatch_ok = initiate_dispatch_ok,
 	};
-	if (!initiate_ok(c, CONNECTION_INITIATE, &annex, c->logger)) {
-		return;
+	dispatch(CONNECTION_INITIATE, c, c->logger, &annex);
+}
+
+static bool unpend_dispatch_ok(struct connection *c,
+			       struct logger *logger UNUSED,
+			       const struct routing_annex *e UNUSED)
+{
+	/* skip when any hint of an owner */
+	for (unsigned i = 0; i < elemsof(c->owner); i++) {
+		if (c->owner[i] != SOS_NOBODY) {
+			return false;
+		}
 	}
-	dispatch(CONNECTION_INITIATE, &c, c->logger, &annex);
+	return true;
 }
 
 void connection_unpend(struct connection *c, struct logger *logger, where_t where)
 {
 	struct routing_annex annex = {
 		.where = where,
+		.dispatch_ok = unpend_dispatch_ok,
 	};
-	/* skip when any hint of an owner */
-	for (unsigned i = 0; i < elemsof(c->owner); i++) {
-		if (c->owner[i] != SOS_NOBODY) {
-			ldbg_routing_skip(c, CONNECTION_DISOWN, &annex);
-			return;
-		}
-	}
 
-	dispatch(CONNECTION_DISOWN, &c, logger, &annex);
+	dispatch(CONNECTION_DISOWN, c, logger, &annex);
 }
 
 static void set_established_ike(enum routing_event event UNUSED,
@@ -1102,7 +1108,7 @@ void connection_establish_ike(struct ike_sa *ike, where_t where)
 		.ike = &ike,
 		.where = where,
 	};
-	dispatch(CONNECTION_ESTABLISH_IKE, &c, logger, &annex);
+	dispatch(CONNECTION_ESTABLISH_IKE, c, logger, &annex);
 }
 
 void connection_route(struct connection *c, where_t where)
@@ -1138,7 +1144,7 @@ void connection_route(struct connection *c, where_t where)
 	struct routing_annex annex =  {
 		.where = where,
 	};
-	dispatch(CONNECTION_ROUTE, &c, c->logger, &annex);
+	dispatch(CONNECTION_ROUTE, c, c->logger, &annex);
 
 }
 
@@ -1152,7 +1158,7 @@ void connection_unroute(struct connection *c, where_t where)
 	struct routing_annex annex =  {
 		.where = where,
 	};
-	dispatch(CONNECTION_UNROUTE, &c, c->logger, &annex);
+	dispatch(CONNECTION_UNROUTE, c, c->logger, &annex);
 }
 
 /*
@@ -1171,7 +1177,7 @@ void connection_suspend(struct child_sa *child, where_t where)
 		.child = &child,
 		.where = where,
 	};
-	dispatch(CONNECTION_SUSPEND, &cc, logger, &annex);
+	dispatch(CONNECTION_SUSPEND, cc, logger, &annex);
 }
 
 void connection_resume(struct child_sa *child, where_t where)
@@ -1182,7 +1188,7 @@ void connection_resume(struct child_sa *child, where_t where)
 		.child = &child,
 		.where = where,
 	};
-	dispatch(CONNECTION_RESUME, &cc, logger, &annex);
+	dispatch(CONNECTION_RESUME, cc, logger, &annex);
 }
 
 static bool dispatch_1(enum routing_event event,
@@ -1903,18 +1909,28 @@ static bool dispatch_1(enum routing_event event,
 }
 
 bool dispatch(enum routing_event event,
-	      struct connection **cp,
-	      struct logger *logger,
+	      struct connection *c,
+	      struct logger *logger, /* must out-live call */
 	      const struct routing_annex *e)
 {
 	PASSERT(logger, e->where != NULL);
+	bool ok = true;
 
-	struct connection *c = connection_addref_where(*cp, logger, HERE);
-	struct old_routing old = ldbg_routing_start(event, c, e);
-	bool ok = dispatch_1(event, c, logger, e);
-	ldbg_routing_stop(event, c, e, &old, ok);
-
-	connection_delref_where(&c, c->logger, HERE);
+	connection_addref_where(c, logger, HERE);
+	{
+		struct old_routing old = ldbg_routing_start(event, c, logger, e);
+		{
+			if (e->dispatch_ok == NULL ||
+			    e->dispatch_ok(c, logger, e)) {
+				ok = dispatch_1(event, c, logger, e);
+			}
+			if (ok && e->post_op != NULL) {
+				e->post_op(e);
+			}
+		}
+		ldbg_routing_stop(event, c, logger, e, &old, ok);
+	}
+	connection_delref_where(&c, logger, HERE);
 
 	return ok;
 }
