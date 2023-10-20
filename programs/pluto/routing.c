@@ -1016,7 +1016,7 @@ static bool initiate_dispatch_ok(struct connection *c,
 			enum_buf rb;
 
 			llog(RC_LOG, logger, "connection is already %s",
-			     str_enum(&routing_story, c->child.routing, &rb));
+			     str_enum(&routing_tails, c->child.routing, &rb));
 			return false;
 		}
 	}

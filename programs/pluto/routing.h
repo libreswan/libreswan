@@ -87,7 +87,7 @@ enum routing {
 };
 
 extern const struct enum_names routing_names;
-extern const struct enum_names routing_story;
+extern const struct enum_names routing_tails;
 
 bool routed(const struct connection *c);
 enum shunt_kind routing_shunt_kind(enum routing routing);

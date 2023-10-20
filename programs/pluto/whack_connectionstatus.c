@@ -316,7 +316,7 @@ static void show_one_spd(struct show *s,
 	show_comment(s, PRI_CONNECTION": %s; %s; eroute owner: #%lu",
 		     c->name, instance,
 		     str_spd(spd, &spdb),
-		     enum_name(&routing_story, c->child.routing),
+		     enum_name(&routing_tails, c->child.routing),
 		     c->newest_routing_sa);
 
 #define OPT_HOST(h, ipb)  (address_is_specified(h) ? str_address(&h, &ipb) : "unset")
