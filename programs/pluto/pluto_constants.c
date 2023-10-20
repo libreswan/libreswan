@@ -344,8 +344,6 @@ static const enum_names *pluto_enum_names_checklist[] = {
 	&shunt_policy_names,
 	&keyword_auth_names,
 	&keyword_host_names,
-	&connection_owner_names,
-	&connection_owner_story,
 };
 
 void init_pluto_constants(void) {

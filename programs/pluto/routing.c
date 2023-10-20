@@ -83,32 +83,6 @@ static const char *routing_event_name[] = {
 #undef S
 };
 
-const char *connection_owner_name[] = {
-	[NEGOTIATING_IKE_SA] = "negotiating_ike_sa",
-	[ESTABLISHED_IKE_SA] = "established_ike_sa",
-	[NEWEST_ROUTING_SA] = "newest_routing_sa",
-	[NEWEST_IPSEC_SA] = "newest_ipsec_sa",
-};
-
-const struct enum_names connection_owner_names = {
-	0, CONNECTION_OWNER_ROOF-1,
-	ARRAY_REF(connection_owner_name),
-	.en_prefix = NULL,
-};
-
-const char *connection_owner_stories[] = {
-	[NEGOTIATING_IKE_SA] = "negotiating",
-	[ESTABLISHED_IKE_SA] = "IKE",
-	[NEWEST_ROUTING_SA] = "routing",
-	[NEWEST_IPSEC_SA] = "child",
-};
-
-const struct enum_names connection_owner_story = {
-	0, CONNECTION_OWNER_ROOF-1,
-	ARRAY_REF(connection_owner_stories),
-	.en_prefix = NULL,
-};
-
 static enum_names routing_event_names = {
 	0, ROUTING_EVENT_ROOF-1,
 	ARRAY_REF(routing_event_name),
@@ -319,7 +293,7 @@ static void ldbg_routing_stop(enum routing_event event,
 			const char *sep = "; ";
 			for (unsigned i = 0; i < elemsof(c->owner); i++) {
 				jam_so_update(buf,
-					      enum_name(&connection_owner_story, i),
+					      enum_name(&connection_owner_stories, i),
 					      old->owner[i],
 					      c->owner[i], &sep);
 			}

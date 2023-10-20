@@ -23,6 +23,7 @@
 
 #include "ip_packet.h"
 #include "pluto_timing.h"	/* for threadtime_t */
+#include "connection_owner.h"
 
 struct connection;
 struct logger;
@@ -32,28 +33,6 @@ struct child_sa;
 struct ike_sa;
 enum direction;
 enum initiated_by;
-
-/*
- * Number of ways a connection can be owned by a state.
- */
-
-enum connection_owner {
-
-#define IKE_SA_OWNER_FLOOR NEGOTIATING_IKE_SA
-	NEGOTIATING_IKE_SA,
-	ESTABLISHED_IKE_SA,
-#define IKE_SA_OWNER_ROOF (ESTABLISHED_IKE_SA+1)
-
-#define CHILD_SA_OWNER_FLOOR NEWEST_ROUTING_SA
-	NEWEST_ROUTING_SA,
-	NEWEST_IPSEC_SA,
-#define CHILD_SA_OWNER_ROOF NEWEST_IPSEC_SA
-
-#define CONNECTION_OWNER_ROOF (NEWEST_IPSEC_SA+1)
-};
-
-extern const struct enum_names connection_owner_names;
-extern const struct enum_names connection_owner_story;
 
 /*
  * Routing status.

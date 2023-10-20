@@ -41,6 +41,7 @@
 #include "encap_mode.h"
 #include "encap_proto.h"
 #include "initiated_by.h"
+#include "connection_owner.h"
 
 const char *bool_str(bool b)
 {
@@ -2406,6 +2407,8 @@ static const enum_names *en_checklist[] = {
 #ifdef KERNEL_XFRM
 	&xfrm_policy_names,
 #endif
+	&connection_owner_names,
+	&connection_owner_stories,
 };
 
 void init_constants(void)
