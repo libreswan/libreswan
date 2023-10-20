@@ -69,20 +69,24 @@ extern const struct enum_names connection_owner_story;
  */
 
 enum routing {
-	RT_UNROUTED,			/* unrouted, no shunts */
-	RT_ROUTED_NEVER_NEGOTIATE,	/* routed, and .never_negotiate_shunt installed */
-	RT_ROUTED_ONDEMAND,		/* routed, and SHUNT_TRAP installed */
-	RT_BARE_NEGOTIATION,		/* negotiating, unrouted, no .negotiation_shunt installed */
-	RT_UNROUTED_NEGOTIATION,	/* negotiating, unrouted, .negotiation_shunt installed */
-	RT_ROUTED_NEGOTIATION,		/* negotiating, routed, .negotiation_shunt installed */
-	RT_UNROUTED_FAILURE,      	/* unrouted, and .failure_shunt installed */
-	RT_ROUTED_FAILURE,      	/* routed, and .failure_shunt installed */
+	RT_UNROUTED,				/* unrouted, inbound: none,        outbound: none */
+	RT_ROUTED_NEVER_NEGOTIATE,		/* routed,   inbound: ?,           outbound: never */
+	RT_ROUTED_ONDEMAND,			/* routed,   inbound: none,        outbound: ondemand */
+	RT_UNROUTED_BARE_NEGOTIATION,		/* unrouted, inbound: none,        outbound: none */
+	RT_UNROUTED_NEGOTIATION,		/* unrouted, inbound: none,        outbound: negotiation */
+	RT_ROUTED_NEGOTIATION,			/* routed,   inbound: none,        outbound: negotiation */
+	/* failed */
+	RT_UNROUTED_FAILURE,      		/* unrouted, inbound: ?,           outbound: failure */
+	RT_ROUTED_FAILURE,      		/* routed,   inbound: ?,           outbound: failure */
 	/* half established */
-	RT_UNROUTED_INBOUND,		/* unrouted, outbound: negotiation, inbound: installed */
-	RT_ROUTED_INBOUND,		/* routed, outbound: negotiate, inbound: installed */
+	RT_UNROUTED_INBOUND,			/* unrouted, inbound: established, outbound: none */
+#if 0
+	RT_UNROUTED_INBOUND_NEGOTIATION,	/* unrouted, inbound: established, outbound: negotiation */
+#endif
+	RT_ROUTED_INBOUND_NEGOTIATION,		/* routed,   inbound: established, outbound: negotiation */
 	/* fully established */
-	RT_ROUTED_TUNNEL,       	/* routed, and erouted to an IPSEC SA group */
-	RT_UNROUTED_TUNNEL,		/* unrouted, and established; used by MOBIKE */
+	RT_ROUTED_TUNNEL,       		/* routed,   inbound: established, outbound: established */
+	RT_UNROUTED_TUNNEL,			/* unrouted, inbound: established, outbound: established; used by MOBIKE */
 #define CONNECTION_ROUTING_ROOF (RT_UNROUTED_TUNNEL+1)
 };
 

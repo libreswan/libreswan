@@ -1143,7 +1143,7 @@ bool v2_ike_sa_auth_responder_establish(struct ike_sa *ike, bool *send_redirecti
 		 */
 		PEXPECT(ike->sa.st_logger, (c->child.routing == RT_UNROUTED ||
 					    c->child.routing == RT_ROUTED_ONDEMAND ||
-					    c->child.routing == RT_BARE_NEGOTIATION));
+					    c->child.routing == RT_UNROUTED_BARE_NEGOTIATION));
 		connection_route(c, HERE);
 		if (c->child.routing != RT_ROUTED_ONDEMAND) {
 			return false;
@@ -1433,7 +1433,7 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 		 */
 		PEXPECT(ike->sa.st_logger, (c->child.routing == RT_UNROUTED ||
 					    c->child.routing == RT_ROUTED_ONDEMAND ||
-					    c->child.routing == RT_BARE_NEGOTIATION));
+					    c->child.routing == RT_UNROUTED_BARE_NEGOTIATION));
 		connection_route(c, HERE);
 		if (c->child.routing != RT_ROUTED_ONDEMAND) {
 			return STF_FATAL;
