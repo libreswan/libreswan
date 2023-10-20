@@ -393,6 +393,7 @@ enum shunt_kind routing_shunt_kind(enum routing routing)
 	case RT_ROUTED_FAILURE:
 		return SHUNT_KIND_FAILURE;
 	case RT_UNROUTED_INBOUND:
+	case RT_UNROUTED_INBOUND_NEGOTIATION:
 	case RT_ROUTED_INBOUND_NEGOTIATION:
 		/*outbound;IPSEC?*/
 		return SHUNT_KIND_NEGOTIATION;
@@ -421,6 +422,7 @@ bool routed(const struct connection *c)
 	case RT_UNROUTED_NEGOTIATION:
 	case RT_UNROUTED_FAILURE:
 	case RT_UNROUTED_INBOUND:
+	case RT_UNROUTED_INBOUND_NEGOTIATION:
 	case RT_UNROUTED_TUNNEL:
 		return false;
 	}
@@ -437,6 +439,7 @@ bool kernel_policy_installed(const struct connection *c)
 	case RT_ROUTED_ONDEMAND:
 	case RT_ROUTED_NEGOTIATION:
 	case RT_UNROUTED_INBOUND:
+	case RT_UNROUTED_INBOUND_NEGOTIATION:
 	case RT_ROUTED_NEVER_NEGOTIATE:
 	case RT_ROUTED_INBOUND_NEGOTIATION:
 	case RT_ROUTED_TUNNEL:
@@ -1484,8 +1487,12 @@ static bool dispatch_1(enum routing_event event,
 
 	case X(DELETE_CHILD, UNROUTED_INBOUND, INSTANCE):
 	case X(DELETE_CHILD, UNROUTED_INBOUND, PERMANENT):
+	case X(DELETE_CHILD, UNROUTED_INBOUND_NEGOTIATION, INSTANCE):
+	case X(DELETE_CHILD, UNROUTED_INBOUND_NEGOTIATION, PERMANENT):
 	case X(TIMEOUT_CHILD, UNROUTED_INBOUND, INSTANCE):
 	case X(TIMEOUT_CHILD, UNROUTED_INBOUND, PERMANENT):
+	case X(TIMEOUT_CHILD, UNROUTED_INBOUND_NEGOTIATION, INSTANCE):
+	case X(TIMEOUT_CHILD, UNROUTED_INBOUND_NEGOTIATION, PERMANENT):
 		/* ikev1-xfrmi-02-aggr */
 		/*
 		 * IKEv1 responder mid way through establishing child
@@ -1585,11 +1592,19 @@ static bool dispatch_1(enum routing_event event,
 		set_routing(event, c, RT_UNROUTED_INBOUND, e);
 		return true;
 
+	case X(ESTABLISH_INBOUND, UNROUTED_INBOUND_NEGOTIATION, PERMANENT):
+		/* alias-01 */
+		if (!install_inbound_ipsec_sa((*e->child), e->where)) {
+			return false;
+		}
+		set_routing(event, c, RT_UNROUTED_INBOUND_NEGOTIATION, e);
+		return true;
+
 	case X(ESTABLISH_INBOUND, UNROUTED_NEGOTIATION, INSTANCE):
 		if (!install_inbound_ipsec_sa((*e->child), e->where)) {
 			return false;
 		}
-		set_routing(event, c, RT_UNROUTED_INBOUND, e);
+		set_routing(event, c, RT_UNROUTED_INBOUND_NEGOTIATION, e);
 		return true;
 
 	case X(ESTABLISH_OUTBOUND, ROUTED_INBOUND_NEGOTIATION, INSTANCE):
@@ -1619,6 +1634,8 @@ static bool dispatch_1(enum routing_event event,
 
 	case X(ESTABLISH_OUTBOUND, UNROUTED_INBOUND, INSTANCE):
 	case X(ESTABLISH_OUTBOUND, UNROUTED_INBOUND, PERMANENT):
+	case X(ESTABLISH_OUTBOUND, UNROUTED_INBOUND_NEGOTIATION, INSTANCE):
+	case X(ESTABLISH_OUTBOUND, UNROUTED_INBOUND_NEGOTIATION, PERMANENT):
 		if (!install_outbound_ipsec_sa((*e->child), /*up*/true, e->where)) {
 			return false;
 		}

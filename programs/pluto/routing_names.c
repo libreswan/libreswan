@@ -31,9 +31,7 @@ static const char *routing_name[] = {
 	S(RT_ROUTED_FAILURE),
 	/* half established */
 	S(RT_UNROUTED_INBOUND),
-#if 0
 	S(RT_UNROUTED_INBOUND_NEGOTIATION),
-#endif
 	S(RT_ROUTED_INBOUND_NEGOTIATION),
 	/* fully established */
 	S(RT_ROUTED_TUNNEL),

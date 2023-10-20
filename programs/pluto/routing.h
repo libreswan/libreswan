@@ -80,9 +80,7 @@ enum routing {
 	RT_ROUTED_FAILURE,      		/* routed,   inbound: ?,           outbound: failure */
 	/* half established */
 	RT_UNROUTED_INBOUND,			/* unrouted, inbound: established, outbound: none */
-#if 0
 	RT_UNROUTED_INBOUND_NEGOTIATION,	/* unrouted, inbound: established, outbound: negotiation */
-#endif
 	RT_ROUTED_INBOUND_NEGOTIATION,		/* routed,   inbound: established, outbound: negotiation */
 	/* fully established */
 	RT_ROUTED_TUNNEL,       		/* routed,   inbound: established, outbound: established */
