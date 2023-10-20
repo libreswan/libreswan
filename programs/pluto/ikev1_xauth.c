@@ -1193,6 +1193,7 @@ static void xauth_launch_authent(struct state *st,
 	delete_event(st);
 	clear_retransmits(st);
 	event_delete(EVENT_v1_SEND_XAUTH, st);
+	event_schedule(EVENT_v1_PAM_TIMEOUT, EVENT_v1_PAM_TIMEOUT_DELAY, st);
 
 	switch (st->st_connection->config->xauthby) {
 #ifdef USE_PAM_AUTH
@@ -1202,7 +1203,6 @@ static void xauth_launch_authent(struct state *st,
 			  arg_name);
 		pam_auth_fork_request(st, arg_name, arg_password,
 				      "XAUTH", ikev1_xauth_callback);
-		event_schedule(EVENT_v1_PAM_TIMEOUT, EVENT_v1_PAM_TIMEOUT_DELAY, st);
 		break;
 #endif
 

@@ -360,29 +360,25 @@ void submit_task(const struct logger *logger,
 	dbg(PRI_JOB": added to pending queue", pri_job(job));
 
 	/*
+	 * Schedule a timeout event to cap the suspend time.
+	 * STF_SUSPEND will be looking for this.
+	 */
+	delete_event(st);
+	event_schedule(EVENT_CRYPTO_TIMEOUT, EVENT_CRYPTO_TIMEOUT_DELAY, st);
+
+	/*
 	 * do it all ourselves?
 	 */
 	if (helper_threads == NULL) {
 		/*
 		 * Invoke the inline worker as if it is on a separate
 		 * thread - no resume (aka unsuspend) and no state
-		 * (hence SOS_NOBODY).
+		 * (hence SOS_NOBODY).  Caller will return
+		 * STF_SUSPEND, and then the event-loop will invoke
+		 * the callback.
 		 */
 		schedule_callback("inline crypto", SOS_NOBODY, inline_worker, job);
 		return;
-	}
-
-	if (st->st_ike_version == IKEv1) {
-		/*
-		 * XXX: Danger:
-		 *
-		 * Clearing retransmits here is wrong, for instance:
-		 * crypto is being run in the background; crypto is
-		 * for the responder (IKEv2 retransmits are by the
-		 * initiator); the message may be dropped.
-		 */
-		delete_event(st);
-		event_schedule(EVENT_CRYPTO_TIMEOUT, EVENT_CRYPTO_TIMEOUT_DELAY, st);
 	}
 
 	/* add to backlog */

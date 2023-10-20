@@ -470,6 +470,15 @@ bool redirect_ike_auth(struct ike_sa *ike, struct msg_digest *md, stf_status *re
 	ike->sa.st_connection->redirect.ip = redirect_ip;
 	schedule_callback("IKE_AUTH redirect", ike->sa.st_serialno,
 			  initiate_redirect, NULL);
+
+	/*
+	 * Schedule a timeout.  Mainly to keep a pexpect() in
+	 * STF_SUSPEND happy (but also for the very remote chance that
+	 * the callback gets lost).
+	 */
+	delete_event(&ike->sa);
+	event_schedule(EVENT_CRYPTO_TIMEOUT, EVENT_CRYPTO_TIMEOUT_DELAY, &ike->sa);
+
 	*redirect_status = STF_SUSPEND;
 	return true;
 }
@@ -674,6 +683,15 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_REDIRECT(struct ike_sa *ike,
 	ike->sa.st_connection->redirect.ip = redirect_ip;
 	schedule_callback("IKE_SA_INIT redirect", ike->sa.st_serialno,
 			  initiate_redirect, NULL);
+
+	/*
+	 * Schedule a timeout.  Mainly to keep a pexpect() in
+	 * STF_SUSPEND happy (but also for the very remote chance that
+	 * the callback gets lost).
+	 */
+	delete_event(&ike->sa);
+	event_schedule(EVENT_CRYPTO_TIMEOUT, EVENT_CRYPTO_TIMEOUT_DELAY, &ike->sa);
+
 	return STF_SUSPEND;
 }
 

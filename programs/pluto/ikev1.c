@@ -2430,6 +2430,13 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		 * packet's integrity was verified.
 		 */
 		clear_retransmits(st);
+		/*
+		 * Code off-loading work should have scheduled a
+		 * timeout.
+		 */
+		PEXPECT(st->logger, (st->st_event != NULL &&
+				     (st->st_event->ev_type == EVENT_CRYPTO_TIMEOUT ||
+				      st->st_event->ev_type == EVENT_v1_PAM_TIMEOUT)));
 		return;
 	case STF_IGNORE:
 		/* DANGER: MD might be NULL; ST might be NULL */

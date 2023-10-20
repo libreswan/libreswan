@@ -2690,6 +2690,12 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		 * incoming packet, save it.
 		 */
 		suspend_any_md(&ike->sa, md);
+		/*
+		 * Code off-loading work should have scheduled a
+		 * timeout.
+		 */
+		PEXPECT(ike->sa.logger, (ike->sa.st_event != NULL &&
+					 (ike->sa.st_event->ev_type == EVENT_CRYPTO_TIMEOUT)));
 		return;
 
 	case STF_IGNORE:
