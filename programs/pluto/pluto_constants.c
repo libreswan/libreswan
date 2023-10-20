@@ -110,8 +110,9 @@ static const enum_names *pluto_enum_names_checklist[] = {
 	&shunt_policy_names,
 	&keyword_auth_names,
 	&keyword_host_names,
+	NULL,
 };
 
 void init_pluto_constants(void) {
-	check_enum_names(ARRAY_REF(pluto_enum_names_checklist));
+	check_enum_names(pluto_enum_names_checklist);
 }

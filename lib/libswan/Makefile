@@ -299,4 +299,23 @@ $(abs_builddir)/version.c: $(srcdir)/version.in.c $(top_srcdir)/mk/version.mk
 	    > $@.tmp
 	mv $@.tmp $@
 
+# generate enum name checklists
+
+ENUM_INCLUDES += $(wildcard $(top_srcdir)/include/*.h)
+ENUM_INCLUDES += $(wildcard $(top_srcdir)/include/*/*.h)
+
+OBJS += $(abs_builddir)/enum_names_checklist.o
+
+$(abs_builddir)/enum_names_checklist.c: $(srcdir)/Makefile $(srcdir)/enum_checklist.sh
+	rm -f $@.tmp
+	$(srcdir)/enum_checklist.sh enum_names $(ENUM_INCLUDES) >$@.tmp
+	mv $@.tmp $@
+
+OBJS += $(abs_builddir)/enum_enum_names_checklist.o
+
+$(abs_builddir)/enum_enum_names_checklist.c: $(srcdir)/Makefile $(srcdir)/enum_checklist.sh
+	rm -f $@.tmp
+	$(srcdir)/enum_checklist.sh enum_enum_names $(ENUM_INCLUDES) >$@.tmp
+	mv $@.tmp $@
+
 include $(top_srcdir)/mk/library.mk

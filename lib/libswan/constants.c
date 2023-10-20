@@ -2580,87 +2580,8 @@ const enum_names event_type_names = {
 	&event_v2_names,
 };
 
-/* registry of enum_names: allows consistency checking at startup */
-static const enum_names *en_checklist[] = {
-	&version_names,
-	&doi_names,
-	&connection_kind_names,
-	&ikev1_payload_names,
-	&ikev2_payload_names,
-	&payload_names_ikev1orv2,
-	&ikev2_last_proposal_desc,
-	&ikev1_exchange_names,
-	&isakmp_xchg_type_names,
-	&ikev1_protocol_names,
-	&isakmp_transformid_names,
-	&ah_transformid_names,
-	&esp_transformid_names,
-	&ipsec_ipcomp_algo_names,
-	&ikev1_ike_id_type_names,
-	&ikev2_ike_id_type_names,
-	&ike_cert_type_names,
-	&ikev2_cert_type_names,
-	&certpolicy_type_names,
-	&oakley_attr_names,
-	&ipsec_attr_names,
-	&sa_lifetime_names,
-	&encapsulation_mode_names,
-	&auth_alg_names,
-	&xauth_type_names,
-	&modecfg_attr_names,
-	&oakley_lifetime_names,
-	&oakley_prf_names,
-	&oakley_enc_names,
-	&oakley_hash_names,
-	&oakley_auth_names,
-	&ikev2_cp_attribute_type_names,
-	&ikev2_cp_type_names,
-	&ikev2_auth_method_names,
-	&oakley_group_names,
-	&oakley_group_type_names,
-	&v1_notification_names,
-	&v2_notification_names,
-	&ikev2_ts_type_names,
-	&attr_msg_type_names,
-	&ikev2_proposal_protocol_id_names,
-	&ikev2_delete_protocol_id_names,
-	&ikev2_notify_protocol_id_names,
-	&ikev2_trans_type_encr_names,
-	&ikev2_trans_type_prf_names,
-	&ikev2_trans_type_integ_names,
-	&ikev2_trans_type_esn_names,
-	&ikev2_trans_type_names,
-	&ikev2_trans_attr_descs,
-	&secret_kind_names,
-	&ikev2_ppk_id_type_names,
-	&ikev2_redirect_gw_names,
-	&ip_protocol_id_names,
-	&ike_version_names,
-	&payload_flag_names,
-	&oakley_attr_bit_names,
-	&global_timer_names,
-	&event_type_names,
-	&eaptls_flag_names,
-	&pluto_exit_code_names,
-	&ipseckey_algorithm_type_names,
-	&ipseckey_algorithm_config_names,
-	&tcp_option_story,
-	&encap_mode_names,
-	&encap_mode_story,
-	&encap_proto_names,
-	&encap_proto_story,
-	&initiated_by_names,
-#ifdef KERNEL_XFRM
-	&xfrm_policy_names,
-#endif
-	&connection_owner_names,
-	&connection_owner_stories,
-};
-
 void init_constants(void)
 {
-	check_enum_names(ARRAY_REF(en_checklist));
-
-	/* check v2_transform_ID_enums, the only enum_enum_names */
-	(void) enum_enum_table(&v2_transform_ID_enums, -42UL);
+	check_enum_names(enum_names_checklist);
+	check_enum_enum_names(enum_enum_names_checklist);
 }

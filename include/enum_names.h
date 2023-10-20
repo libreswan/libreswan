@@ -30,7 +30,12 @@ struct enum_enum_names {
 	size_t een_checklen;	/* for checking: elemsof(een_names) == een_last-enfirst+1 */
 };
 
-/* to check that enum_names are consistent */
-extern void check_enum_names(const struct enum_names *checklist[], size_t tl);
+/* arrays are null terminated */
+
+extern const struct enum_names *enum_names_checklist[];
+extern const struct enum_enum_names *enum_enum_names_checklist[];
+
+extern void check_enum_names(const struct enum_names **checklist);
+extern void check_enum_enum_names(const struct enum_enum_names **checklist);
 
 #endif
