@@ -1012,10 +1012,13 @@ static bool initiate_dispatch_ok(struct connection *c,
 		 * acquires triggering simultaneously) or due to an
 		 * initiate being used to force a rekey.
 		 */
-		enum_buf rb;
-		llog(RC_LOG, logger, "connection is already %s",
-		     str_enum(&routing_story, c->child.routing, &rb));
-		return false;
+		{
+			enum_buf rb;
+
+			llog(RC_LOG, logger, "connection is already %s",
+			     str_enum(&routing_story, c->child.routing, &rb));
+			return false;
+		}
 	}
 }
 
