@@ -26,18 +26,6 @@
 
 static void connection_event_handler(void *arg, const struct timer_event *event);
 
-static const char *connection_event_name[] = {
-#define S(E) [E - 1] = #E
-	S(CONNECTION_REVIVAL),
-#undef S
-};
-
-const struct enum_names connection_event_names = {
-	1, CONNECTION_REVIVAL,
-	ARRAY_REF(connection_event_name),
-	"CONNECTION_", NULL,
-};
-
 struct connection_event_event {
 	enum connection_event event;
 	struct connection *connection;

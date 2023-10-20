@@ -135,6 +135,252 @@ char *add_str(char *buf, size_t size, char *hint, const char *src)
 	return jam_str(hint, size - (hint-buf), src);
 }
 
+static const char *const perspective_name[] = {
+	[NO_PERSPECTIVE] = "NO_PERSPECTIVE",
+	[LOCAL_PERSPECTIVE] = "LOCAL_PERSPECTIVE",
+	[REMOTE_PERSPECTIVE] = "REMOTE_PERSPECTIVE"
+};
+
+enum_names perspective_names = {
+	NO_PERSPECTIVE, REMOTE_PERSPECTIVE,
+	ARRAY_REF(perspective_name),
+	NULL, /* prefix */
+	NULL,
+};
+
+static const char *const shunt_policy_name[] = {
+#define A(S) [S] = #S
+	A(SHUNT_UNSET),
+	A(SHUNT_IPSEC),
+	A(SHUNT_HOLD),
+	A(SHUNT_NONE),
+	A(SHUNT_PASS),
+	A(SHUNT_DROP),
+	A(SHUNT_REJECT),
+	A(SHUNT_TRAP),
+#undef A
+};
+
+enum_names shunt_policy_names = {
+	SHUNT_UNSET, SHUNT_POLICY_ROOF-1,
+	ARRAY_REF(shunt_policy_name),
+	"SHUNT_", /* prefix */
+	NULL,
+};
+
+static const char *const shunt_kind_name[] = {
+#define A(S) [S] = #S
+	A(SHUNT_KIND_NEVER_NEGOTIATE),
+	A(SHUNT_KIND_ONDEMAND),
+	A(SHUNT_KIND_NEGOTIATION),
+	A(SHUNT_KIND_IPSEC),
+	A(SHUNT_KIND_FAILURE),
+	A(SHUNT_KIND_BLOCK),
+#undef A
+};
+
+enum_names shunt_kind_names = {
+	0, SHUNT_KIND_ROOF-1,
+	ARRAY_REF(shunt_kind_name),
+	"SHUNT_KIND_", /*PREFIX*/
+	NULL,
+};
+
+static const char *const shunt_policy_percent_name[] = {
+	[SHUNT_UNSET] = "<shunt-unset>",
+	[SHUNT_HOLD] = "%hold",
+	[SHUNT_NONE] = "%none",
+	[SHUNT_PASS] = "%pass",
+	[SHUNT_DROP] = "%drop",
+	[SHUNT_REJECT] = "%reject",
+	[SHUNT_TRAP] = "%trap",
+};
+
+enum_names shunt_policy_percent_names = {
+	SHUNT_UNSET, SHUNT_POLICY_ROOF-1,
+	ARRAY_REF(shunt_policy_percent_name),
+	"%"/*prefix*/,
+	NULL,
+};
+
+/* NAT methods */
+static const char *const natt_method_name[] = {
+	"none",
+	"draft-ietf-ipsec-nat-t-ike-02/03",
+	"draft-ietf-ipsec-nat-t-ike-05",
+	"RFC 3947 (NAT-Traversal)",
+
+	"I am behind NAT",
+	"peer behind NAT",
+};
+
+enum_names natt_method_names = {
+	NAT_TRAVERSAL_METHOD_none, NATED_PEER,
+	ARRAY_REF(natt_method_name),
+	NULL, /* prefix */
+	NULL
+};
+
+static const char *const allow_global_redirect_name[] = {
+	"no",
+	"yes",
+	"auto",
+};
+
+enum_names allow_global_redirect_names = {
+	GLOBAL_REDIRECT_NO,
+	GLOBAL_REDIRECT_AUTO,
+	ARRAY_REF(allow_global_redirect_name),
+	NULL,
+	NULL
+};
+
+static const char *const dns_auth_level_name[] = {
+	"PUBKEY_LOCAL",
+	"DNSSEC_INSECURE",
+	"DNSSEC_SECURE",
+};
+
+enum_names dns_auth_level_names = {
+	PUBKEY_LOCAL, DNSSEC_ROOF-1,
+	ARRAY_REF(dns_auth_level_name),
+	NULL, /* prefix */
+	NULL
+};
+
+static const char *connection_event_name[] = {
+#define S(E) [E - 1] = #E
+	S(CONNECTION_REVIVAL),
+#undef S
+};
+
+const struct enum_names connection_event_names = {
+	1, CONNECTION_REVIVAL,
+	ARRAY_REF(connection_event_name),
+	"CONNECTION_", NULL,
+};
+
+/*
+ * Names for sa_policy_bits.
+ */
+static const char *const sa_policy_bit_name[] = {
+#define P(N) [N##_IX] = #N
+	P(POLICY_ENCRYPT),
+	P(POLICY_AUTHENTICATE),
+	P(POLICY_COMPRESS),
+	P(POLICY_TUNNEL),
+	P(POLICY_PFS),
+#undef P
+};
+
+enum_names sa_policy_bit_names = {
+	0, POLICY_IX_LAST,
+	ARRAY_REF(sa_policy_bit_name),
+	"POLICY_", /* prefix */
+	NULL
+};
+
+/* DPD actions */
+static const char *const dpd_action_name[] = {
+	"action:unset",
+	"action:clear",
+	"action:hold",
+	"action:restart",
+};
+
+enum_names dpd_action_names = {
+	DPD_ACTION_UNSET, DPD_ACTION_RESTART,
+	ARRAY_REF(dpd_action_name),
+	"action:", /* prefix */
+	NULL
+};
+
+/* systemd watchdog action names */
+static const char *const sd_action_name[] = {
+	"action: exit", /* daemon exiting */
+	"action: start", /* daemon starting */
+	"action: watchdog", /* the keepalive watchdog ping */
+	"action: reloading", /* the keepalive watchdog ping */
+	"action: ready", /* the keepalive watchdog ping */
+	"action: stopping", /* the keepalive watchdog ping */
+};
+enum_names sd_action_names = {
+	PLUTO_SD_EXIT, PLUTO_SD_STOPPING,
+	ARRAY_REF(sd_action_name),
+	NULL, /* prefix */
+	NULL
+};
+
+static const char *const keyword_auth_name[] = {
+	"unset",
+	"never",
+	"secret",
+	"rsasig",
+	"ecdsa",
+	"null",
+	"eaponly",
+};
+
+enum_names keyword_auth_names = {
+	AUTH_UNSET, AUTH_EAPONLY,
+	ARRAY_REF(keyword_auth_name),
+	NULL, /* prefix */
+	NULL
+};
+
+static const char *const stf_status_strings[] = {
+#define A(S) [S] = #S
+	A(STF_SKIP_COMPLETE_STATE_TRANSITION),
+	A(STF_IGNORE),
+	A(STF_SUSPEND),
+	A(STF_OK),
+	A(STF_INTERNAL_ERROR),
+	A(STF_OK_INITIATOR_DELETE_IKE),
+	A(STF_OK_RESPONDER_DELETE_IKE),
+	A(STF_OK_INITIATOR_SEND_DELETE_IKE),
+	A(STF_FATAL),
+	A(STF_FAIL_v1N),
+#undef A
+};
+
+enum_names stf_status_names = {
+	0, elemsof(stf_status_strings)-1,
+	ARRAY_REF(stf_status_strings),
+	NULL, /* prefix */
+	NULL
+};
+
+static const char *const keyword_host_name_ipaddr[] = {
+	"KH_IPADDR",
+};
+
+static enum_names keyword_host_names_ipaddr = {
+	KH_IPADDR, KH_IPADDR,
+	ARRAY_REF(keyword_host_name_ipaddr),
+	"KH_", /* prefix */
+	NULL
+};
+
+static const char *const keyword_host_name[] = {
+#define P(N) [N] = #N
+	P(KH_NOTSET),
+	P(KH_DEFAULTROUTE),
+	P(KH_ANY),
+	P(KH_IFACE),
+	P(KH_OPPO),
+	P(KH_OPPOGROUP),
+	P(KH_GROUP),
+	P(KH_IPHOSTNAME),
+#undef P
+};
+
+enum_names keyword_host_names = {
+	KH_NOTSET, KH_IPHOSTNAME,
+	ARRAY_REF(keyword_host_name),
+	"KH_", /* prefix */
+	&keyword_host_names_ipaddr,
+};
+
 /* version */
 static const char *const version_name_1[] = {
 	"ISAKMP Version 1.0 (rfc2407)",
