@@ -20,7 +20,7 @@
 #include "routing.h"		/* for enum routing */
 
 /* routing status names */
-static const char *const routing_tail_strings[] = {
+static const char *const routing_tail[] = {
 	[RT_UNROUTED] = "unrouted",			  /* unrouted */
 	[RT_BARE_NEGOTIATION] = "unrouted HOLD",	/* negotiating, unrouted, .negotiation_shunt not installed */
 	[RT_UNROUTED_NEGOTIATION] = "unrouted HOLD",      /* unrouted, but HOLD shunt installed */
@@ -41,7 +41,7 @@ static const char *const routing_tail_strings[] = {
 
 const struct enum_names routing_tails = {
 	RT_UNROUTED, RT_UNROUTED_TUNNEL,
-	ARRAY_REF(routing_story_strings),
+	ARRAY_REF(routing_tail),
 	NULL, /* prefix */
 	NULL
 };
