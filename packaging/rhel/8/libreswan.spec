@@ -38,7 +38,7 @@ Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
 # version is generated in the release script
 Version: 4.9
 Release: %{?prever:0.}1%{?prever:.%{prever}}%{?dist}
-License: GPLv2
+License: GPL-2.0-or-later
 Url: https://libreswan.org/
 Source0: https://download.libreswan.org/%{?prever:with_development/}%{name}-%{version}%{?prever}.tar.gz
 %if 0%{with_cavstests}

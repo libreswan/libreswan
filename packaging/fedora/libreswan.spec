@@ -31,7 +31,7 @@ Summary: Internet Key Exchange (IKEv1 and IKEv2) implementation for IPsec
 # version is generated in the release script
 Version: 4.9
 Release: %{?prever:0.}1%{?prever:.%{prever}}%{?dist}
-License: GPLv2
+License: GPL-2.0-or-later
 Url: https://libreswan.org/
 Source0: https://download.libreswan.org/%{?prever:development/}%{name}-%{version}%{?prever}.tar.gz
 %if 0%{with_cavstests}
