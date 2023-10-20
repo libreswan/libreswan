@@ -20,7 +20,9 @@ endif
 
 include $(top_srcdir)/mk/config.mk
 
-SUBDIRS=libswan libwhack libipsecconf
+SUBDIRS += libswan
+SUBDIRS += libwhack
+SUBDIRS += libipsecconf
 SUBDIRS += liblswtool
 
 include $(top_srcdir)/mk/targets.mk
