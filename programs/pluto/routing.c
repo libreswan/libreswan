@@ -1312,7 +1312,9 @@ static bool dispatch_1(enum routing_event event,
 		 */
 		return true;
 
+	case X(DELETE_IKE, BARE_NEGOTIATION, INSTANCE):
 	case X(DELETE_IKE, BARE_NEGOTIATION, PERMANENT):
+	case X(TIMEOUT_IKE, BARE_NEGOTIATION, INSTANCE):
 	case X(TIMEOUT_IKE, BARE_NEGOTIATION, PERMANENT):
 		/* ex, permanent+initiate */
 		if (connection_cannot_die(event, c, logger, e)) {
@@ -1410,7 +1412,6 @@ static bool dispatch_1(enum routing_event event,
 		unrouted_negotiation_to_unrouted(event, c, logger, e->where, "fail");
 		return true;
 
-	case X(TIMEOUT_IKE, BARE_NEGOTIATION, INSTANCE):
 	case X(TIMEOUT_IKE, UNROUTED_NEGOTIATION, INSTANCE):
 		if (BROKEN_TRANSITION &&
 		    connection_cannot_die(event, c, logger, e)) {
@@ -1440,7 +1441,6 @@ static bool dispatch_1(enum routing_event event,
 		PEXPECT(c->logger, (*e->ike)->sa.st_ike_version == IKEv1);
 		return true;
 
-	case X(DELETE_IKE, BARE_NEGOTIATION, INSTANCE):
 	case X(DELETE_IKE, UNROUTED_NEGOTIATION, INSTANCE):	/* dnsoe-01 ... */
 		/*
 		 * XXX: huh? instance isn't routed so why delete
