@@ -907,7 +907,8 @@ $(KVM_ALPINE_BASE_DOMAIN): | $(KVM_ALPINE_KICKSTART_FILE)
 # Debian
 #
 
-KVM_DEBIAN_ISO_URL ?= https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/debian-11.7.0-amd64-netinst.iso
+KVM_DEBIAN_RELEASE = 12.2.0
+KVM_DEBIAN_ISO_URL ?= https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/debian-$(KVM_DEBIAN_RELEASE)-amd64-netinst.iso
 KVM_DEBIAN_ISO = $(KVM_POOLDIR)/$(notdir $(KVM_DEBIAN_ISO_URL))
 kvm-iso: $(KVM_DEBIAN_ISO)
 $(KVM_DEBIAN_ISO): | $(KVM_POOLDIR)
