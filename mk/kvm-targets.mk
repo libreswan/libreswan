@@ -1051,10 +1051,10 @@ $(KVM_NETBSD_BASE_ISO): testing/libvirt/netbsd/base.sh
 
 # Give the OpenBSD ISO a meaningful name.
 
-KVM_OPENBSD_ISO_RELEASE ?= 7.2
+KVM_OPENBSD_ISO_RELEASE ?= 7.4
 KVM_OPENBSD_ISO_URL_BASE ?= https://cdn.openbsd.org/pub/OpenBSD/$(KVM_OPENBSD_ISO_RELEASE)
 KVM_OPENBSD_ISO_URL ?= $(KVM_OPENBSD_ISO_URL_BASE)/amd64/install$(subst .,,$(KVM_OPENBSD_ISO_RELEASE)).iso
-KVM_OPENBSD_ISO_SHA256 ?= 0369ef40a3329efcb978c578c7fdc7bda71e502aecec930a74b44160928c91d3
+KVM_OPENBSD_ISO_SHA256 ?= a1001736ed9fe2307965b5fcdb426ae11f9b80d26eb21e404a705144a0a224a0
 # not openbsd... as gets deleted by rm openbsd.*
 KVM_OPENBSD_ISO = $(KVM_POOLDIR)/OpenBSD-$(KVM_OPENBSD_ISO_RELEASE)-install.iso
 
@@ -1065,7 +1065,9 @@ $(KVM_OPENBSD_ISO): | $(KVM_POOLDIR)
 	mv $@.tmp $@
 
 KVM_OPENBSD_BASE_ISO = $(KVM_OPENBSD_BASE_DOMAIN).iso
-KVM_OPENBSD_VIRT_INSTALL_FLAGS = --cdrom=$(KVM_OPENBSD_BASE_ISO)
+KVM_OPENBSD_VIRT_INSTALL_FLAGS = \
+	--disk path=$(KVM_OPENBSD_BASE_ISO),readonly=on,device=cdrom,target.bus=sata \
+	--install bootdev=cdrom
 
 $(KVM_OPENBSD_BASE_DOMAIN): | $(KVM_OPENBSD_BASE_ISO)
 
@@ -1089,19 +1091,6 @@ $(KVM_OPENBSD_BASE_ISO): testing/libvirt/openbsd/base.disk
 		/etc/boot.conf="testing/libvirt/openbsd/boot.conf" \
 		/base.sh=$(KVM_OPENBSD_BASE_DOMAIN).base.sh \
 		/base.disk=testing/libvirt/openbsd/base.disk
-	mv $@.tmp $@
-
-KVM_OPENBSD_IMG_RELEASE ?= 7.4
-KVM_OPENBSD_IMG_BASE ?= https://cdn.openbsd.org/pub/OpenBSD/$(KVM_OPENBSD_IMG_RELEASE)
-KVM_OPENBSD_IMG_URL ?= $(KVM_OPENBSD_IMG_BASE)/amd64/install$(subst .,,$(KVM_OPENBSD_IMG_RELEASE)).img
-KVM_OPENBSD_IMG_SHA256 ?= b8d1f05bbec440e58f2874fb0e9fe8bcdd4a2d3aadc7250678aeaf23a5225dc1
-# not openbsd... as gets deleted by rm openbsd.*
-KVM_OPENBSD_IMG = $(KVM_POOLDIR)/OpenBSD-$(KVM_OPENBSD_IMG_RELEASE)-install.img
-
-kvm-iso: $(KVM_OPENBSD_IMG)
-$(KVM_OPENBSD_IMG): | $(KVM_POOLDIR)
-	wget --output-document $@.tmp --no-clobber -- $(KVM_OPENBSD_IMG_URL)
-	echo 'SHA256 ($@.tmp) = $(KVM_OPENBSD_IMG_SHA256)' | cksum -c
 	mv $@.tmp $@
 
 ##
