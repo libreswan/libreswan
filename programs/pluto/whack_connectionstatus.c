@@ -723,6 +723,51 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		    c->newest_ipsec_sa);
 	}
 
+	/* routing */
+
+	SHOW_JAMBUF(RC_COMMENT, s, buf) {
+		jam(buf, PRI_CONNECTION":  ", c->name, instance);
+		jam_string(buf, " routing: ");
+		jam_enum_human(buf, &routing_names, c->child.routing);
+		jam_string(buf, ";");
+		/* owners */
+		for (enum connection_owner owner = CONNECTION_OWNER_FLOOR;
+		     owner < CONNECTION_OWNER_ROOF; owner++) {
+			if (c->owner[owner] == SOS_NOBODY) {
+				continue;
+			}
+			if (owner < CONNECTION_OWNER_ROOF - 1 &&
+			    c->owner[owner] == c->owner[owner+1]) {
+				continue;
+			}
+			jam_string(buf, " ");
+			switch (owner) {
+			case NEGOTIATING_IKE_SA:
+			case NEGOTIATING_CHILD_SA:
+				jam_string(buf, "negotiating");
+				break;
+			case ESTABLISHED_IKE_SA:
+			case ESTABLISHED_CHILD_SA:
+				jam_string(buf, "established");
+				break;
+			}
+			jam_string(buf, " ");
+			switch (owner) {
+			case NEGOTIATING_IKE_SA:
+			case ESTABLISHED_IKE_SA:
+				jam_string(buf, c->config->ike_info->parent_sa_name);
+				break;
+			case NEGOTIATING_CHILD_SA:
+			case ESTABLISHED_CHILD_SA:
+				jam_string(buf, c->config->ike_info->child_sa_name);
+				break;
+			}
+			jam_string(buf, ": ");
+			jam_so(buf, c->owner[owner]);
+			jam_string(buf, ";");
+		}
+	}
+
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
 		jam(buf, PRI_CONNECTION":  ", c->name, instance);
 		jam(buf, " conn serial: "PRI_CO,
