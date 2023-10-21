@@ -715,18 +715,19 @@ static void show_connection_status(struct show *s, const struct connection *c)
 	}
 
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
-		jam(buf, PRI_CONNECTION":   newest %s: #%lu; newest IPsec SA: #%lu; conn serial: "PRI_CO"",
-		    c->name, instance,
+		jam(buf, PRI_CONNECTION":  ", c->name, instance);
+		jam(buf, " newest %s: #%lu;",
 		    c->config->ike_info->parent_sa_name,
-		    c->established_ike_sa,
-		    c->newest_ipsec_sa, /* IPsec SA or Child SA? */
+		    c->established_ike_sa);
+		jam(buf, " newest IPsec SA: "PRI_SO";",
+		    c->newest_ipsec_sa);
+		jam(buf, " conn serial: "PRI_CO,
 		    pri_co(c->serialno));
 		if (c->clonedfrom != UNSET_CO_SERIAL) {
-			jam(buf, ", instantiated from: "PRI_CO";",
+			jam(buf, ", instantiated from: "PRI_CO,
 			    pri_connection_co(c->clonedfrom));
-		} else {
-			jam(buf, ";");
 		}
+		jam_string(buf, ";");
 	}
 
 	if (c->config->connalias != NULL) {
