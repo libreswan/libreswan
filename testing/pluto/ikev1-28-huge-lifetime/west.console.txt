@@ -126,7 +126,8 @@ west #
 000 "westnet-eastnet":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "westnet-eastnet":   dpd: passive; delay:0s; timeout:0s
 000 "westnet-eastnet":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
-000 "westnet-eastnet":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $1;
+000 "westnet-eastnet":   newest ISAKMP SA: #0; newest IPsec SA: #0;
+000 "westnet-eastnet":   conn serial: $1;
 000  
 000 Total IPsec connections: loaded 1, active 0
 000  

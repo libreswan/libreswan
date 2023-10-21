@@ -33,7 +33,8 @@ east #
 000 "roadnet-eastnet-ipv4-psk-ikev2":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org; their idtype: %fromcert; their id=%fromcert
 000 "roadnet-eastnet-ipv4-psk-ikev2":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "roadnet-eastnet-ipv4-psk-ikev2":   nat-traversal: encaps:auto; keepalive:20s
-000 "roadnet-eastnet-ipv4-psk-ikev2":   newest IKE SA: #0; newest IPsec SA: #0; conn serial: $1;
+000 "roadnet-eastnet-ipv4-psk-ikev2":   newest IKE SA: #0; newest IPsec SA: #0;
+000 "roadnet-eastnet-ipv4-psk-ikev2":   conn serial: $1;
 000 "roadnet-eastnet-ipv4-psk-ikev2"[1]: 192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org,MS+S=C]...192.1.2.254[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org,+MC+S=C]===192.0.2.1/32; erouted; eroute owner: #4
 000 "roadnet-eastnet-ipv4-psk-ikev2"[1]:     oriented; my_ip=unset; their_ip=192.0.2.1;
 000 "roadnet-eastnet-ipv4-psk-ikev2"[1]:   mycert=east; my_updown=ipsec _updown;
@@ -52,7 +53,8 @@ east #
 000 "roadnet-eastnet-ipv4-psk-ikev2"[1]:   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org
 000 "roadnet-eastnet-ipv4-psk-ikev2"[1]:   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "roadnet-eastnet-ipv4-psk-ikev2"[1]:   nat-traversal: encaps:auto; keepalive:20s
-000 "roadnet-eastnet-ipv4-psk-ikev2"[1]:   newest IKE SA: #3; newest IPsec SA: #4; conn serial: $2, instantiated from: $1;
+000 "roadnet-eastnet-ipv4-psk-ikev2"[1]:   newest IKE SA: #3; newest IPsec SA: #4;
+000 "roadnet-eastnet-ipv4-psk-ikev2"[1]:   conn serial: $2, instantiated from: $1;
 000 "roadnet-eastnet-ipv4-psk-ikev2"[1]:   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-MODP2048
 000 "roadnet-eastnet-ipv4-psk-ikev2"[1]:   ESP algorithm newest: AES_GCM_16_256-NONE; pfsgroup=<Phase1>
 000 #1: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:PORT STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; idle;

@@ -114,7 +114,8 @@ east #
 000 "northnet-westnet-ipv4-psk":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@north
 000 "northnet-westnet-ipv4-psk":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "northnet-westnet-ipv4-psk":   nat-traversal: encaps:auto; keepalive:20s
-000 "northnet-westnet-ipv4-psk":   newest IKE SA: #0; newest IPsec SA: #0; conn serial: $2;
+000 "northnet-westnet-ipv4-psk":   newest IKE SA: #0; newest IPsec SA: #0;
+000 "northnet-westnet-ipv4-psk":   conn serial: $2;
 000 "westnet-northnet-ipv4-psk": 192.0.3.0/24===192.1.2.23[@east]...192.1.2.45[@west]===192.0.1.0/24; unrouted; eroute owner: #0
 000 "westnet-northnet-ipv4-psk":     oriented; my_ip=unset; their_ip=unset;
 000 "westnet-northnet-ipv4-psk":   my_updown=ipsec _updown;
@@ -132,7 +133,8 @@ east #
 000 "westnet-northnet-ipv4-psk":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
 000 "westnet-northnet-ipv4-psk":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "westnet-northnet-ipv4-psk":   nat-traversal: encaps:auto; keepalive:20s
-000 "westnet-northnet-ipv4-psk":   newest IKE SA: #0; newest IPsec SA: #0; conn serial: $1;
+000 "westnet-northnet-ipv4-psk":   newest IKE SA: #0; newest IPsec SA: #0;
+000 "westnet-northnet-ipv4-psk":   conn serial: $1;
 000  
 000 Total IPsec connections: loaded 2, active 0
 000  

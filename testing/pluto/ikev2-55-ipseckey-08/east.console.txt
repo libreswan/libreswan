@@ -26,7 +26,8 @@ east #
 000 "east-any":   our idtype: ID_IPV4_ADDR; our id=192.1.2.23; their idtype: %none; their id=(none)
 000 "east-any":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "east-any":   nat-traversal: encaps:auto; keepalive:20s
-000 "east-any":   newest IKE SA: #0; newest IPsec SA: #0; conn serial: $1;
+000 "east-any":   newest IKE SA: #0; newest IPsec SA: #0;
+000 "east-any":   conn serial: $1;
 east #
  # east should have only one public key of its own
 east #

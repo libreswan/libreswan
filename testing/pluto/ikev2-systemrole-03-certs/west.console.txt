@@ -74,7 +74,8 @@ west #
 000 "192.1.2.45-to-192.1.2.23":   our idtype: ID_IPV4_ADDR; our id=192.1.2.45; their idtype: %fromcert; their id=%fromcert
 000 "192.1.2.45-to-192.1.2.23":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "192.1.2.45-to-192.1.2.23":   nat-traversal: encaps:auto; keepalive:20s
-000 "192.1.2.45-to-192.1.2.23":   newest IKE SA: #0; newest IPsec SA: #0; conn serial: $1;
+000 "192.1.2.45-to-192.1.2.23":   newest IKE SA: #0; newest IPsec SA: #0;
+000 "192.1.2.45-to-192.1.2.23":   conn serial: $1;
 west #
  # connection is ondemand, but we will --up so we can see X.509 auth
 west #

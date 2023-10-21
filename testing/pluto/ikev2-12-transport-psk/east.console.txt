@@ -26,7 +26,8 @@ east #
 000 "ipv4-psk-ikev2-transport":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
 000 "ipv4-psk-ikev2-transport":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "ipv4-psk-ikev2-transport":   nat-traversal: encaps:auto; keepalive:20s
-000 "ipv4-psk-ikev2-transport":   newest IKE SA: #0; newest IPsec SA: #0; conn serial: $1;
+000 "ipv4-psk-ikev2-transport":   newest IKE SA: #0; newest IPsec SA: #0;
+000 "ipv4-psk-ikev2-transport":   conn serial: $1;
 000 "ipv4-psk-ikev2-transport":   ESP algorithms: 3DES_CBC-HMAC_SHA2_256_128
 east #
  echo "initdone"

@@ -101,7 +101,8 @@ ipsec auto --status
 000 "road-eastnet-nonat":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "road-eastnet-nonat":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "road-eastnet-nonat":   nat-traversal: encaps:auto; keepalive:20s
-000 "road-eastnet-nonat":   newest IKE SA: #0; newest IPsec SA: #0; conn serial: $1;
+000 "road-eastnet-nonat":   newest IKE SA: #0; newest IPsec SA: #0;
+000 "road-eastnet-nonat":   conn serial: $1;
 000  
 000 Total IPsec connections: loaded 1, active 0
 000  

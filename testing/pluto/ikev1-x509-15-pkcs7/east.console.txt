@@ -31,7 +31,8 @@ east #
 000 "westnet-eastnet-x509":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org
 000 "westnet-eastnet-x509":   dpd: passive; delay:0s; timeout:0s
 000 "westnet-eastnet-x509":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
-000 "westnet-eastnet-x509":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $1;
+000 "westnet-eastnet-x509":   newest ISAKMP SA: #0; newest IPsec SA: #0;
+000 "westnet-eastnet-x509":   conn serial: $1;
 east #
  echo "initdone"
 initdone

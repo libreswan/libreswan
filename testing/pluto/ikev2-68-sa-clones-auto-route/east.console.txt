@@ -28,7 +28,8 @@ east #
 000 "westnet-eastnet-0":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
 000 "westnet-eastnet-0":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "westnet-eastnet-0":   nat-traversal: encaps:auto; keepalive:20s
-000 "westnet-eastnet-0":   newest IKE SA: #0; newest IPsec SA: #0; conn serial: $1;
+000 "westnet-eastnet-0":   newest IKE SA: #0; newest IPsec SA: #0;
+000 "westnet-eastnet-0":   conn serial: $1;
 000 "westnet-eastnet-0":   aliases: westnet-eastnet
 000 "westnet-eastnet-1": 192.0.2.0/24===192.1.2.23[@east]...192.1.2.45[@west]===192.0.1.0/24; unrouted; eroute owner: #0
 000 "westnet-eastnet-1":     oriented; my_ip=unset; their_ip=unset;
@@ -47,7 +48,8 @@ east #
 000 "westnet-eastnet-1":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
 000 "westnet-eastnet-1":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "westnet-eastnet-1":   nat-traversal: encaps:auto; keepalive:20s
-000 "westnet-eastnet-1":   newest IKE SA: #0; newest IPsec SA: #0; conn serial: $1;
+000 "westnet-eastnet-1":   newest IKE SA: #0; newest IPsec SA: #0;
+000 "westnet-eastnet-1":   conn serial: $1;
 000 "westnet-eastnet-1":   aliases: westnet-eastnet
 000 "westnet-eastnet-2": 192.0.2.0/24===192.1.2.23[@east]...192.1.2.45[@west]===192.0.1.0/24; unrouted; eroute owner: #0
 000 "westnet-eastnet-2":     oriented; my_ip=unset; their_ip=unset;
@@ -66,7 +68,8 @@ east #
 000 "westnet-eastnet-2":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
 000 "westnet-eastnet-2":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "westnet-eastnet-2":   nat-traversal: encaps:auto; keepalive:20s
-000 "westnet-eastnet-2":   newest IKE SA: #0; newest IPsec SA: #0; conn serial: $1;
+000 "westnet-eastnet-2":   newest IKE SA: #0; newest IPsec SA: #0;
+000 "westnet-eastnet-2":   conn serial: $1;
 000 "westnet-eastnet-2":   aliases: westnet-eastnet
 east #
  ipsec whack --impair suppress-retransmits

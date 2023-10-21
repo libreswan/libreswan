@@ -28,7 +28,8 @@ west #
 000 "nss-cert-chain":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west_chain_endcert.testing.libreswan.org, E=west_chain_endcert@testing.libreswan.org; their idtype: %fromcert; their id=%fromcert
 000 "nss-cert-chain":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "nss-cert-chain":   nat-traversal: encaps:auto; keepalive:20s
-000 "nss-cert-chain":   newest IKE SA: #0; newest IPsec SA: #0; conn serial: $1;
+000 "nss-cert-chain":   newest IKE SA: #0; newest IPsec SA: #0;
+000 "nss-cert-chain":   conn serial: $1;
 west #
  ipsec whack --impair suppress-retransmits
 west #

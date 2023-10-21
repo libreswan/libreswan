@@ -59,7 +59,8 @@ west #
 000 "westnet-eastnet-ikev2":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
 000 "westnet-eastnet-ikev2":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "westnet-eastnet-ikev2":   nat-traversal: encaps:auto; keepalive:20s
-000 "westnet-eastnet-ikev2":   newest IKE SA: #0; newest IPsec SA: #0; conn serial: $1;
+000 "westnet-eastnet-ikev2":   newest IKE SA: #0; newest IPsec SA: #0;
+000 "westnet-eastnet-ikev2":   conn serial: $1;
 west #
  echo "initdone"
 initdone

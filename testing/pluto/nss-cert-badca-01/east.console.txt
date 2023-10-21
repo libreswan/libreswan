@@ -36,7 +36,8 @@ east #
 000 "nss-cert":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=badeast.testing.libreswan.org, E=user-badeast@testing.libreswan.org; their idtype: %fromcert; their id=%fromcert
 000 "nss-cert":   dpd: passive; delay:0s; timeout:0s
 000 "nss-cert":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
-000 "nss-cert":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $1;
+000 "nss-cert":   newest ISAKMP SA: #0; newest IPsec SA: #0;
+000 "nss-cert":   conn serial: $1;
 east #
  echo "initdone"
 initdone
