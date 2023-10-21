@@ -45,7 +45,7 @@ road #
 road #
  # Wait for liveness to trigger
 road #
- ../../guestbin/wait-for.sh --match '#1: liveness action' -- cat /tmp/pluto.log
+ ../../guestbin/wait-for.sh --match '^".*#1: liveness action' -- cat /tmp/pluto.log
 "road-east-x509-ipv4"[1] 192.1.2.23 #1: liveness action - clearing connection kind CK_INSTANCE
 road #
  # Tunnel should be cleared, no trap/hold

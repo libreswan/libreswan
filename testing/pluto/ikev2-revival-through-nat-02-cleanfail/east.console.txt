@@ -30,7 +30,7 @@ east #
 east #
  # this is happening kernel-policy should still be in place
 east #
- ../../guestbin/wait-for.sh --match '#1: connection is supposed to remain up' -- cat /tmp/pluto.log
+ ../../guestbin/wait-for.sh --match '^".*#1: connection is supposed to remain up' -- cat /tmp/pluto.log
 "road-eastnet-ikev2"[1] 192.1.2.254 #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 east #
  ../../guestbin/ipsec-kernel-policy.sh
@@ -41,7 +41,7 @@ src 192.0.2.0/24 dst 192.1.3.209/32
 east #
  # but road is really down, so that fails; and everything is deleted
 east #
- ../../guestbin/wait-for.sh --match '#3: STATE_V2_PARENT_I1: 5 second timeout exceeded after 4 retransmits' -- cat /tmp/pluto.log
+ ../../guestbin/wait-for.sh --match '^".*#3: STATE_V2_PARENT_I1: 5 second timeout exceeded after 4 retransmits' -- cat /tmp/pluto.log
 "road-eastnet-ikev2"[1] 192.1.2.254 #3: STATE_V2_PARENT_I1: 5 second timeout exceeded after 4 retransmits.  No response (or no acceptable response) to our first IKEv2 message
 east #
  ../../guestbin/ipsec-kernel-policy.sh

@@ -26,7 +26,7 @@ north #
  ../../guestbin/ping-once.sh --forget -I 192.0.3.254 192.0.2.254
 fired and forgotten
 north #
- ../../guestbin/wait-for.sh --match '#1: sent IKE_SA_INIT request' -- cat /tmp/pluto.log
+ ../../guestbin/wait-for.sh --match '^".*#1: sent IKE_SA_INIT request' -- cat /tmp/pluto.log
 "north" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 north #
  ../../guestbin/ipsec-kernel-policy.sh
