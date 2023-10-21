@@ -721,6 +721,10 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		    c->established_ike_sa);
 		jam(buf, " newest IPsec SA: "PRI_SO";",
 		    c->newest_ipsec_sa);
+	}
+
+	SHOW_JAMBUF(RC_COMMENT, s, buf) {
+		jam(buf, PRI_CONNECTION":  ", c->name, instance);
 		jam(buf, " conn serial: "PRI_CO,
 		    pri_co(c->serialno));
 		if (c->clonedfrom != UNSET_CO_SERIAL) {
