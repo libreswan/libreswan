@@ -1051,13 +1051,12 @@ $(KVM_NETBSD_BASE_ISO): testing/libvirt/netbsd/base.sh
 
 # Give the OpenBSD ISO a meaningful name.
 
-KVM_OPENBSD_VERSION ?= 7.2
-KVM_OPENBSD_URL_BASE ?= https://cdn.openbsd.org/pub/OpenBSD/$(KVM_OPENBSD_VERSION)
-KVM_OPENBSD_ISO_URL ?= $(KVM_OPENBSD_URL_BASE)/amd64/install$(subst .,,$(KVM_OPENBSD_VERSION)).iso
+KVM_OPENBSD_ISO_RELEASE ?= 7.2
+KVM_OPENBSD_ISO_URL_BASE ?= https://cdn.openbsd.org/pub/OpenBSD/$(KVM_OPENBSD_ISO_RELEASE)
+KVM_OPENBSD_ISO_URL ?= $(KVM_OPENBSD_ISO_URL_BASE)/amd64/install$(subst .,,$(KVM_OPENBSD_ISO_RELEASE)).iso
 KVM_OPENBSD_ISO_SHA256 ?= 0369ef40a3329efcb978c578c7fdc7bda71e502aecec930a74b44160928c91d3
 # not openbsd... as gets deleted by rm openbsd.*
-KVM_OPENBSD_POOLPREFIX = $(KVM_POOLDIR)/OpenBSD-$(notdir $(KVM_OPENBSD_URL_BASE))
-KVM_OPENBSD_ISO = $(KVM_OPENBSD_POOLPREFIX)-install.iso
+KVM_OPENBSD_ISO = $(KVM_POOLDIR)/OpenBSD-$(KVM_OPENBSD_ISO_RELEASE)-install.iso
 
 kvm-iso: $(KVM_OPENBSD_ISO)
 $(KVM_OPENBSD_ISO): | $(KVM_POOLDIR)
@@ -1092,6 +1091,18 @@ $(KVM_OPENBSD_BASE_ISO): testing/libvirt/openbsd/base.disk
 		/base.disk=testing/libvirt/openbsd/base.disk
 	mv $@.tmp $@
 
+KVM_OPENBSD_IMG_RELEASE ?= 7.4
+KVM_OPENBSD_IMG_BASE ?= https://cdn.openbsd.org/pub/OpenBSD/$(KVM_OPENBSD_IMG_RELEASE)
+KVM_OPENBSD_IMG_URL ?= $(KVM_OPENBSD_IMG_BASE)/amd64/install$(subst .,,$(KVM_OPENBSD_IMG_RELEASE)).img
+KVM_OPENBSD_IMG_SHA256 ?= b8d1f05bbec440e58f2874fb0e9fe8bcdd4a2d3aadc7250678aeaf23a5225dc1
+# not openbsd... as gets deleted by rm openbsd.*
+KVM_OPENBSD_IMG = $(KVM_POOLDIR)/OpenBSD-$(KVM_OPENBSD_IMG_RELEASE)-install.img
+
+kvm-iso: $(KVM_OPENBSD_IMG)
+$(KVM_OPENBSD_IMG): | $(KVM_POOLDIR)
+	wget --output-document $@.tmp --no-clobber -- $(KVM_OPENBSD_IMG_URL)
+	echo 'SHA256 ($@.tmp) = $(KVM_OPENBSD_IMG_SHA256)' | cksum -c
+	mv $@.tmp $@
 
 ##
 ## Upgrade the base domain: create a clone, install any missing
