@@ -47,6 +47,7 @@
 #include "authby.h"
 #include "ip_index.h"
 #include "routing.h"
+#include "connection_owner.h"
 
 /*
  * Note that we include this even if not X509, because we do not want
@@ -714,8 +715,8 @@ struct connection {
 	so_serial_t owner[CONNECTION_OWNER_ROOF];
 #define negotiating_ike_sa owner[NEGOTIATING_IKE_SA]
 #define established_ike_sa owner[ESTABLISHED_IKE_SA]
-#define newest_routing_sa owner[NEWEST_ROUTING_SA]
-#define newest_ipsec_sa owner[NEWEST_IPSEC_SA]
+#define newest_routing_sa owner[NEGOTIATING_CHILD_SA]
+#define newest_ipsec_sa owner[ESTABLISHED_CHILD_SA]
 
 	/* host_pair linkage */
 	struct host_pair *host_pair;

@@ -143,13 +143,14 @@ static void jam_sa(struct jambuf *buf, struct state *st, const char **sep)
 	}
 }
 
-static void jam_so_update(struct jambuf *buf, const char *what,
+static void jam_so_update(struct jambuf *buf,
+			  enum connection_owner owner,
 			  so_serial_t old, so_serial_t new,
 			  const char **prefix)
 {
 	if (old != SOS_NOBODY || new != SOS_NOBODY) {
 		jam_string(buf, (*prefix)); (*prefix) = " ";
-		jam_string(buf, what);
+		jam_enum(buf, &connection_owner_names, owner);
 		jam_string(buf, " ");
 		jam_so(buf, old);
 		if (old != new) {
@@ -168,11 +169,11 @@ static void jam_routing(struct jambuf *buf,
 	if (never_negotiate(c)) {
 		jam_string(buf, "; never-negotiate");
 	}
-	/* no actual update */
 	const char *sep = "; ";
-	jam_so_update(buf, "routing", c->newest_routing_sa, c->newest_routing_sa, &sep);
-	jam_so_update(buf, c->config->ike_info->child_name, c->newest_ipsec_sa, c->newest_ipsec_sa, &sep);
-	jam_so_update(buf, c->config->ike_info->parent_name, c->established_ike_sa, c->established_ike_sa, &sep);
+	for (enum connection_owner owner = 0; owner < elemsof(c->owner); owner++) {
+		/* same value - no actual update */
+		jam_so_update(buf, owner, c->owner[owner], c->owner[owner], &sep);
+	}
 }
 
 static void jam_routing_annex(struct jambuf *buf, const struct routing_annex *e)
@@ -291,11 +292,11 @@ static void ldbg_routing_stop(enum routing_event event,
 			jam(buf, " ok=%s", bool_str(ok));
 			/* various SAs */
 			const char *sep = "; ";
-			for (unsigned i = 0; i < elemsof(c->owner); i++) {
-				jam_so_update(buf,
-					      enum_name(&connection_owner_stories, i),
-					      old->owner[i],
-					      c->owner[i], &sep);
+			for (enum connection_owner owner = 0;
+			     owner < elemsof(c->owner); owner++) {
+				jam_so_update(buf, owner,
+					      old->owner[owner],
+					      c->owner[owner], &sep);
 			}
 			if (old->revival_attempt != c->revival.attempt) {
 				jam_string(buf, sep); sep = " ";
