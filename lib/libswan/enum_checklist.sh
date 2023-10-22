@@ -50,14 +50,23 @@ cat <<EOF
 EOF
 
 echo
+echo '#include "constants.h" /* for typedef ${names} */'
 echo '#include "enum_names.h"'
 echo
 
-list "$@" | while read name ifdef ; do
-    test -z "${ifdef}" || echo "#ifdef ${ifdef}"
-    echo "extern struct ${names} ${name};"
-    test -z "${ifdef}" || echo "#endif"
-done
+grep -e "^extern ${names} " -e "^extern const struct ${names} " "$@" | \
+    cut -d: -f1 | \
+    cut -d/ -f4- | \
+    sort -u | \
+    while read h ; do
+	echo '#include "'${h}'"'
+    done
+
+#list "$@" | while read name ifdef ; do
+#    test -z "${ifdef}" || echo "#ifdef ${ifdef}"
+#    echo "extern struct ${names} ${name};"
+#    test -z "${ifdef}" || echo "#endif"
+3done
 
 echo
 
