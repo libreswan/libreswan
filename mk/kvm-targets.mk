@@ -111,23 +111,25 @@ KVM_FEDORA_USE_EFENCE ?= true
 KVM_FEDORA_USE_LABELED_IPSEC ?= true
 KVM_FEDORA_USE_SECCOMP ?= true
 
-kvm-os-flag = \
-	$(strip \
-		$(if $($(strip $(patsubst KVM_%, KVM_$($*)_%, $(1)))), \
-			$($(strip $(patsubst KVM_%, KVM_$($*)_%, $(1)))), \
-			$($(strip $(1)))))
+# On OpenBSD 7.4, GCC crashes, CLANG produces bad code (but does
+# build).  So go with the latter.
+KVM_OPENBSD_CC = cc
 
-kvm-opt-flag = \
-	$(if $(call kvm-os-flag, $(2)), \
-		$(strip $(1))=$(call kvm-os-flag, $(2)))
+# from <FLAG> return KVM_<OS>_<FLAG> or KVM_<FLAG>
+kvm-flag = \
+	$(firstword \
+		$(if $(KVM_$($*)_$(strip $(1))), KVM_$($*)_$(strip $(1))) \
+		$(if $(KVM_$(strip $(1))),       KVM_$(strip $(1))))
+
+kvm-flag-name = $(call kvm-flag, $(patsubst KVM_%, %, $(1)))
+kvm-flag-value = $($(call kvm-flag, $(patsubst KVM_%, %, $(1))))
 
 KVM-MAKEFLAG = \
-	$(call kvm-opt-flag, \
-		$(patsubst KVM_%, %, $(1)), \
-		$(1))
+	$(if $(call kvm-flag-name, $(1)), \
+		$(patsubst KVM_%, %, $(1))=$(call kvm-flag-value, $(1)))
 
 KVM_MAKEFLAGS ?= $(strip \
-	-j$(call kvm-os-flag, $(KVM_BUILD_CPUS)) \
+	-j$(call kvm-flag-value, KVM_BUILD_CPUS) \
 	$(call KVM-MAKEFLAG, KVM_ALL_ARGS) \
 	$(call KVM-MAKEFLAG, KVM_NSSDIR) \
 	$(call KVM-MAKEFLAG, KVM_NSS_CFLAGS) \
@@ -140,6 +142,7 @@ KVM_MAKEFLAGS ?= $(strip \
 	$(call KVM-MAKEFLAG, KVM_USE_SECCOMP) \
 	$(call KVM-MAKEFLAG, KVM_USE_CISCO_SPLIT) \
 	$(call KVM-MAKEFLAG, KVM_USE_IPSEC_CONNECTION_LIMIT) \
+	$(call KVM-MAKEFLAG, KVM_CC) \
 	)
 
 # Fine-tune the BASE and BUILD machines.
@@ -839,8 +842,8 @@ $(KVM_POOLDIR_PREFIX)%-base: | \
 	$(KVM_PYTHON) $@.py \
 		$(VIRT_INSTALL) \
 			$(VIRT_INSTALL_FLAGS) \
-			--vcpus=$(call kvm-os-flag, KVM_BASE_CPUS) \
-			--memory=$(call kvm-os-flag, KVM_BASE_MEMORY) \
+			--vcpus=$(call kvm-flag-value, KVM_BASE_CPUS) \
+			--memory=$(call kvm-flag-value, KVM_BASE_MEMORY) \
 			--name=$(notdir $@) \
 			--os-variant=$(KVM_$($*)_OS_VARIANT) \
 			--disk=path=$@.qcow2,size=$(VIRT_DISK_SIZE_GB),bus=virtio,format=qcow2 \
@@ -1124,8 +1127,8 @@ $(KVM_POOLDIR_PREFIX)%-upgrade: $(KVM_POOLDIR_PREFIX)%-base \
 	$(QEMU_IMG) create -f qcow2 -F qcow2 -b $<.qcow2 $@.qcow2
 	$(VIRT_INSTALL) \
 		$(VIRT_INSTALL_FLAGS) \
-		--vcpus=$(call kvm-os-flag, KVM_UPGRADE_CPUS) \
-		--memory=$(call kvm-os-flag, KVM_UPGRADE_MEMORY) \
+		--vcpus=$(call kvm-flag-value, KVM_UPGRADE_CPUS) \
+		--memory=$(call kvm-flag-value, KVM_UPGRADE_MEMORY) \
 		--name=$(notdir $@) \
 		--os-variant=$(KVM_$($*)_OS_VARIANT) \
 		--disk=cache=writeback,path=$@.qcow2 \
@@ -1179,8 +1182,8 @@ $(KVM_POOLDIR_PREFIX)%: $(KVM_POOLDIR_PREFIX)%-upgrade \
 	: fedora runs chcon TESTINGDIR
 	$(VIRT_INSTALL) \
 		$(VIRT_INSTALL_FLAGS) \
-		--vcpus=$(call kvm-os-flag, KVM_BUILD_CPUS) \
-		--memory=$(call kvm-os-flag, KVM_BUILD_MEMORY) \
+		--vcpus=$(call kvm-flag-value, KVM_BUILD_CPUS) \
+		--memory=$(call kvm-flag-value, KVM_BUILD_MEMORY) \
 		--name=$(notdir $@) \
 		--os-variant=$(KVM_$($*)_OS_VARIANT) \
 		--disk=cache=writeback,path=$@.qcow2 \
