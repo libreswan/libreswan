@@ -931,7 +931,6 @@ typedef struct {
 } spd_buf;
 
 void jam_spd(struct jambuf *buf, const struct spd_route *spd);
-const char *str_spd(const struct spd_route *spd, spd_buf *buf);
 
 #include "connections.h"
 

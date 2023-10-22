@@ -298,39 +298,52 @@ void jam_spd(struct jambuf *buf, const struct spd_route *spd)
 		    RIGHT_END, oriented(spd->connection));
 }
 
-const char *str_spd(const struct spd_route *spd, spd_buf *buf)
-{
-	struct jambuf jambuf = ARRAY_AS_JAMBUF(buf->buf);
-	jam_spd(&jambuf, spd);
-	return buf->buf;
-}
-
 static void show_one_spd(struct show *s,
 			 const struct connection *c,
 			 const struct spd_route *spd,
 			 const char *instance)
 {
-	spd_buf spdb;
-	ipstr_buf thisipb, thatipb;
-
-	show_comment(s, PRI_CONNECTION": %s; %s; eroute owner: #%lu",
-		     c->name, instance,
-		     str_spd(spd, &spdb),
-		     enum_name(&routing_tails, c->child.routing),
-		     c->newest_routing_sa);
-
-#define OPT_HOST(h, ipb)  (address_is_specified(h) ? str_address(&h, &ipb) : "unset")
+	SHOW_JAMBUF(RC_COMMENT, s, buf) {
+		jam(buf, PRI_CONNECTION":", c->name, instance);
+		/* one SPD */
+		jam_string(buf, " ");
+		jam_spd(buf, spd);
+		jam_string(buf, ";");
+		/* routing */
+		jam_string(buf, " ");
+		jam_enum(buf, &routing_tails, c->child.routing);
+		jam_string(buf, ";");
+		/* owner */
+		jam_string(buf, " eroute owner: ");
+		jam_so(buf, c->newest_routing_sa);
+		/* jam_string(buf, ";"); */
+	}
 
 	ip_address this_sourceip = spd_end_sourceip(spd->local);
 	ip_address that_sourceip = spd_end_sourceip(spd->remote);
 
-	show_comment(s, PRI_CONNECTION":     %s; my_ip=%s; their_ip=%s;",
-		     c->name, instance,
-		     oriented(c) ? "oriented" : "unoriented",
-		     OPT_HOST(this_sourceip, thisipb),
-		     OPT_HOST(that_sourceip, thatipb));
-
+	SHOW_JAMBUF(RC_COMMENT, s, buf) {
+		jam(buf, PRI_CONNECTION":    ", c->name, instance);
+		/* orientation */
+		jam_string(buf, " ");
+		jam_string(buf, (oriented(c) ? "oriented" : "unoriented"));
+		jam_string(buf, ";");
+#define OPT_HOST(H)					\
+		if (address_is_specified(H)) {		\
+			jam_address(buf, &(H));		\
+		} else {				\
+			jam_string(buf, "unset");	\
+		}
+		/* my_ip */
+		jam_string(buf, " my_ip=");
+		OPT_HOST(this_sourceip);
+		jam_string(buf, ";");
+		jam_string(buf, " their_ip=");
+		OPT_HOST(that_sourceip);
+		jam_string(buf, ";");
 #undef OPT_HOST
+	}
+
 
 }
 

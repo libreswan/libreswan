@@ -3461,8 +3461,13 @@ bool add_connection(const struct whack_message *wm, struct logger *logger)
 	     str_connection_policies(c, &pb),
 	     c->config->sa_ipsec_max_bytes,
 	     c->config->sa_ipsec_max_packets);
-	spd_buf spdb;
-	dbg("%s", str_spd(c->spd, &spdb));
+	if (DBGP(DBG_BASE)) {
+		FOR_EACH_ITEM(spd, &c->child.spds) {
+			LLOG_JAMBUF(DEBUG_STREAM, c->logger, buf) {
+				jam_spd(buf, spd);
+			}
+		}
+	}
 	release_whack(c->logger, HERE);
 	return true;
 }
