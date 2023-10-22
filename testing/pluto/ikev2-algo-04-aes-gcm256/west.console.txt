@@ -130,6 +130,7 @@ west #
 000 "westnet-eastnet-ipv4-psk-ikev2-gcm-c":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "westnet-eastnet-ipv4-psk-ikev2-gcm-c":   nat-traversal: encaps:auto; keepalive:20s
 000 "westnet-eastnet-ipv4-psk-ikev2-gcm-c":   newest IKE SA: #0; newest IPsec SA: #0;
+000 "westnet-eastnet-ipv4-psk-ikev2-gcm-c":   routing: unrouted;
 000 "westnet-eastnet-ipv4-psk-ikev2-gcm-c":   conn serial: $1;
 000 "westnet-eastnet-ipv4-psk-ikev2-gcm-c":   ESP algorithms: AES_GCM_16_256-NONE
 000  

@@ -32,6 +32,7 @@ west #
 000 "west-east":   dpd: passive; delay:0s; timeout:0s
 000 "west-east":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
 000 "west-east":   newest ISAKMP SA: #0; newest IPsec SA: #0;
+000 "west-east":   routing: unrouted;
 000 "west-east":   conn serial: $1;
 000 "westnet-eastnet": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; eroute owner: #0
 000 "westnet-eastnet":     oriented; my_ip=unset; their_ip=unset;
@@ -50,6 +51,7 @@ west #
 000 "westnet-eastnet":   dpd: passive; delay:0s; timeout:0s
 000 "westnet-eastnet":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
 000 "westnet-eastnet":   newest ISAKMP SA: #0; newest IPsec SA: #0;
+000 "westnet-eastnet":   routing: unrouted;
 000 "westnet-eastnet":   conn serial: $2;
 west #
  echo "initdone"

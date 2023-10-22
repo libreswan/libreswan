@@ -35,6 +35,7 @@ east #
 000 "westnet-eastnet":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "westnet-eastnet":   nat-traversal: encaps:auto; keepalive:20s
 000 "westnet-eastnet":   newest IKE SA: #0; newest IPsec SA: #0;
+000 "westnet-eastnet":   routing: unrouted;
 000 "westnet-eastnet":   conn serial: $1;
 east #
  echo "initdone"

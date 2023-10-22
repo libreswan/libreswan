@@ -32,6 +32,7 @@ west #
 000 "ipv4-psk-ikev2-transport":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "ipv4-psk-ikev2-transport":   nat-traversal: encaps:auto; keepalive:20s
 000 "ipv4-psk-ikev2-transport":   newest IKE SA: #0; newest IPsec SA: #0;
+000 "ipv4-psk-ikev2-transport":   routing: unrouted;
 000 "ipv4-psk-ikev2-transport":   conn serial: $1;
 west #
  echo "initdone"

@@ -35,6 +35,7 @@ west #
 000 "road-chain-B":   dpd: passive; delay:0s; timeout:0s
 000 "road-chain-B":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
 000 "road-chain-B":   newest ISAKMP SA: #0; newest IPsec SA: #0;
+000 "road-chain-B":   routing: unrouted;
 000 "road-chain-B":   conn serial: $1;
 west #
  ipsec certutil -L

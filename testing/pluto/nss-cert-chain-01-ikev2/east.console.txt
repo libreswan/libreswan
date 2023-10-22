@@ -29,6 +29,7 @@ east #
 000 "nss-cert-chain":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "nss-cert-chain":   nat-traversal: encaps:auto; keepalive:20s
 000 "nss-cert-chain":   newest IKE SA: #0; newest IPsec SA: #0;
+000 "nss-cert-chain":   routing: unrouted;
 000 "nss-cert-chain":   conn serial: $1;
 east #
  echo "initdone"

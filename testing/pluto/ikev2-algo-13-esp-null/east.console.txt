@@ -27,6 +27,7 @@ east #
 000 "westnet-eastnet-esp-null":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "westnet-eastnet-esp-null":   nat-traversal: encaps:auto; keepalive:20s
 000 "westnet-eastnet-esp-null":   newest IKE SA: #0; newest IPsec SA: #0;
+000 "westnet-eastnet-esp-null":   routing: unrouted;
 000 "westnet-eastnet-esp-null":   conn serial: $1;
 000 "westnet-eastnet-esp-null":   ESP algorithms: NULL-HMAC_MD5_96, NULL-HMAC_SHA1_96
 east #

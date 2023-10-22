@@ -39,6 +39,7 @@ east #
 000 "road-A":   dpd: passive; delay:0s; timeout:0s
 000 "road-A":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
 000 "road-A":   newest ISAKMP SA: #0; newest IPsec SA: #0;
+000 "road-A":   routing: unrouted;
 000 "road-A":   conn serial: $2;
 000 "road-chain-B": 192.0.2.254/32===192.1.2.23[@east.testing.libreswan.org]---192.1.2.45...%any[@west_chain_endcert.testing.libreswan.org]===192.0.1.254/32; unrouted; eroute owner: #0
 000 "road-chain-B":     oriented; my_ip=192.0.2.254; their_ip=unset;
@@ -58,6 +59,7 @@ east #
 000 "road-chain-B":   dpd: passive; delay:0s; timeout:0s
 000 "road-chain-B":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
 000 "road-chain-B":   newest ISAKMP SA: #0; newest IPsec SA: #0;
+000 "road-chain-B":   routing: unrouted;
 000 "road-chain-B":   conn serial: $1;
 east #
  ipsec certutil -L

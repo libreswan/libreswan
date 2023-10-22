@@ -94,6 +94,7 @@ west #
 000 "westnet-eastnet-ikev2b":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "westnet-eastnet-ikev2b":   nat-traversal: encaps:auto; keepalive:20s
 000 "westnet-eastnet-ikev2b":   newest IKE SA: #0; newest IPsec SA: #0;
+000 "westnet-eastnet-ikev2b":   routing: unrouted;
 000 "westnet-eastnet-ikev2b":   conn serial: $2;
 000 "westnet-eastnet-ikev2c": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.201.0/24; unrouted; eroute owner: #0
 000 "westnet-eastnet-ikev2c":     oriented; my_ip=unset; their_ip=unset;
@@ -113,6 +114,7 @@ west #
 000 "westnet-eastnet-ikev2c":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "westnet-eastnet-ikev2c":   nat-traversal: encaps:auto; keepalive:20s
 000 "westnet-eastnet-ikev2c":   newest IKE SA: #0; newest IPsec SA: #0;
+000 "westnet-eastnet-ikev2c":   routing: unrouted;
 000 "westnet-eastnet-ikev2c":   conn serial: $3;
 west #
  echo done

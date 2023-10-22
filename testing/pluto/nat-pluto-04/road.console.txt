@@ -26,6 +26,7 @@ road #
 000 "road-eastnet-nat":   dpd: passive; delay:0s; timeout:0s
 000 "road-eastnet-nat":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
 000 "road-eastnet-nat":   newest ISAKMP SA: #0; newest IPsec SA: #0;
+000 "road-eastnet-nat":   routing: unrouted;
 000 "road-eastnet-nat":   conn serial: $1;
 road #
  ipsec whack --impair suppress-retransmits

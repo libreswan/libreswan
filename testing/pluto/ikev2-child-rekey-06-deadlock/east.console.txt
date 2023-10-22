@@ -27,6 +27,7 @@ east #
 000 "east":   liveness: passive; dpddelay:0s; retransmit-timeout:15s
 000 "east":   nat-traversal: encaps:auto; keepalive:20s
 000 "east":   newest IKE SA: #0; newest IPsec SA: #0;
+000 "east":   routing: unrouted;
 000 "east":   conn serial: $1;
 east #
  ipsec whack --impair revival

@@ -128,6 +128,7 @@ west #
 000 "westnet-eastnet-ipv4-psk-ikev2":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "westnet-eastnet-ipv4-psk-ikev2":   nat-traversal: encaps:auto; keepalive:20s
 000 "westnet-eastnet-ipv4-psk-ikev2":   newest IKE SA: #0; newest IPsec SA: #0;
+000 "westnet-eastnet-ipv4-psk-ikev2":   routing: unrouted;
 000 "westnet-eastnet-ipv4-psk-ikev2":   conn serial: $1;
 000 "westnet-eastnet-ipv4-psk-ikev2":   IKE algorithms: AES_CBC_256-HMAC_SHA2_512-MODP1536
 000 "westnet-eastnet-ipv4-psk-ikev2":   ESP algorithms: AES_CBC_256-HMAC_SHA2_512_256

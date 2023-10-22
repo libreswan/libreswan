@@ -34,6 +34,7 @@ west #
 000 "westnet-eastnet-0":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "westnet-eastnet-0":   nat-traversal: encaps:auto; keepalive:20s
 000 "westnet-eastnet-0":   newest IKE SA: #0; newest IPsec SA: #0;
+000 "westnet-eastnet-0":   routing: unrouted;
 000 "westnet-eastnet-0":   conn serial: $1;
 000 "westnet-eastnet-0":   aliases: westnet-eastnet
 000 "westnet-eastnet-1": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; eroute owner: #0
@@ -54,6 +55,7 @@ west #
 000 "westnet-eastnet-1":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "westnet-eastnet-1":   nat-traversal: encaps:auto; keepalive:20s
 000 "westnet-eastnet-1":   newest IKE SA: #0; newest IPsec SA: #0;
+000 "westnet-eastnet-1":   routing: unrouted;
 000 "westnet-eastnet-1":   conn serial: $1;
 000 "westnet-eastnet-1":   aliases: westnet-eastnet
 000 "westnet-eastnet-2": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; eroute owner: #0
@@ -74,6 +76,7 @@ west #
 000 "westnet-eastnet-2":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "westnet-eastnet-2":   nat-traversal: encaps:auto; keepalive:20s
 000 "westnet-eastnet-2":   newest IKE SA: #0; newest IPsec SA: #0;
+000 "westnet-eastnet-2":   routing: unrouted;
 000 "westnet-eastnet-2":   conn serial: $1;
 000 "westnet-eastnet-2":   aliases: westnet-eastnet
 west #
@@ -192,6 +195,7 @@ west #
 000 "westnet-eastnet-0":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "westnet-eastnet-0":   nat-traversal: encaps:auto; keepalive:20s
 000 "westnet-eastnet-0":   newest ISAKMP SA: #1; newest IPsec SA: #2;
+000 "westnet-eastnet-0":   routing: routed-tunnel; established ISAKMP SA: #1; established IPsec SA: #2;
 000 "westnet-eastnet-0":   aliases: westnet-eastnet
 000 "westnet-eastnet-0":   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-MODP2048
 000 "westnet-eastnet-0":   ESP algorithm newest: AES_GCM_16_256-NONE; pfsgroup=<Phase1>
@@ -213,6 +217,7 @@ west #
 000 "westnet-eastnet-1":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "westnet-eastnet-1":   nat-traversal: encaps:auto; keepalive:20s
 000 "westnet-eastnet-1":   newest ISAKMP SA: #0; newest IPsec SA: #4;
+000 "westnet-eastnet-1":   routing: routed-tunnel; established IPsec SA: #4;
 000 "westnet-eastnet-1":   aliases: westnet-eastnet
 000 "westnet-eastnet-1":   ESP algorithm newest: AES_GCM_16_256-NONE; pfsgroup=<Phase1>
 000 "westnet-eastnet-2": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; erouted; eroute owner: #3
@@ -233,6 +238,7 @@ west #
 000 "westnet-eastnet-2":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "westnet-eastnet-2":   nat-traversal: encaps:auto; keepalive:20s
 000 "westnet-eastnet-2":   newest ISAKMP SA: #0; newest IPsec SA: #3;
+000 "westnet-eastnet-2":   routing: routed-tunnel; established IPsec SA: #3;
 000 "westnet-eastnet-2":   aliases: westnet-eastnet
 000 "westnet-eastnet-2":   ESP algorithm newest: AES_GCM_16_256-NONE; pfsgroup=<Phase1>
 000 #1: "westnet-eastnet-0":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;

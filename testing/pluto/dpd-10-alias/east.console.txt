@@ -29,6 +29,7 @@ east #
 000 "northnet-eastnets/0x1":   dpd: passive; delay:0s; timeout:0s
 000 "northnet-eastnets/0x1":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
 000 "northnet-eastnets/0x1":   newest ISAKMP SA: #0; newest IPsec SA: #0;
+000 "northnet-eastnets/0x1":   routing: unrouted;
 000 "northnet-eastnets/0x1":   conn serial: $1;
 000 "northnet-eastnets/0x1":   aliases: northnet-eastnets
 000 "northnet-eastnets/0x2": 192.0.22.0/24===192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]---192.1.2.254...192.1.3.33[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org]===192.0.3.0/24; unrouted; eroute owner: #0
@@ -49,6 +50,7 @@ east #
 000 "northnet-eastnets/0x2":   dpd: passive; delay:0s; timeout:0s
 000 "northnet-eastnets/0x2":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
 000 "northnet-eastnets/0x2":   newest ISAKMP SA: #0; newest IPsec SA: #0;
+000 "northnet-eastnets/0x2":   routing: unrouted;
 000 "northnet-eastnets/0x2":   conn serial: $2;
 000 "northnet-eastnets/0x2":   aliases: northnet-eastnets
 east #

@@ -24,6 +24,7 @@ west #
 000 "westnet-eastnet-ipv4-psk-ikev2":   liveness: passive; dpddelay:0s; retransmit-timeout:20s
 000 "westnet-eastnet-ipv4-psk-ikev2":   nat-traversal: encaps:auto; keepalive:20s
 000 "westnet-eastnet-ipv4-psk-ikev2":   newest IKE SA: #0; newest IPsec SA: #0;
+000 "westnet-eastnet-ipv4-psk-ikev2":   routing: unrouted-bare-negotiation; negotiating IKE SA: #1;
 000 "westnet-eastnet-ipv4-psk-ikev2":   conn serial: $1;
 000 #1: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_V2_PARENT_I1 (sent IKE_SA_INIT request); RETRANSMIT in XXs; idle;
 000 #1: pending CHILD SA for "westnet-eastnet-ipv4-psk-ikev2"
@@ -50,6 +51,7 @@ west #
 000 "westnet-eastnet-ipv4-psk-ikev2":   liveness: passive; dpddelay:0s; retransmit-timeout:20s
 000 "westnet-eastnet-ipv4-psk-ikev2":   nat-traversal: encaps:auto; keepalive:20s
 000 "westnet-eastnet-ipv4-psk-ikev2":   newest IKE SA: #0; newest IPsec SA: #0;
+000 "westnet-eastnet-ipv4-psk-ikev2":   routing: unrouted-bare-negotiation; negotiating IKE SA: #1;
 000 "westnet-eastnet-ipv4-psk-ikev2":   conn serial: $1;
 000 #1: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_V2_PARENT_I1 (sent IKE_SA_INIT request); RETRANSMIT in XXs; idle;
 000 #1: pending CHILD SA for "westnet-eastnet-ipv4-psk-ikev2"
@@ -78,6 +80,7 @@ west #
 000 "westnet-eastnet-ipv4-psk-ikev2":   liveness: passive; dpddelay:0s; retransmit-timeout:20s
 000 "westnet-eastnet-ipv4-psk-ikev2":   nat-traversal: encaps:auto; keepalive:20s
 000 "westnet-eastnet-ipv4-psk-ikev2":   newest IKE SA: #0; newest IPsec SA: #0;
+000 "westnet-eastnet-ipv4-psk-ikev2":   routing: unrouted-bare-negotiation; negotiating IKE SA: #2;
 000 "westnet-eastnet-ipv4-psk-ikev2":   conn serial: $1;
 000 #2: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_V2_PARENT_I1 (sent IKE_SA_INIT request); RETRANSMIT in XXs; idle;
 000 #2: pending CHILD SA for "westnet-eastnet-ipv4-psk-ikev2"

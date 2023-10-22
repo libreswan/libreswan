@@ -27,6 +27,7 @@ east #
 000 "road-eastnet-nonat":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "road-eastnet-nonat":   nat-traversal: encaps:auto; keepalive:20s
 000 "road-eastnet-nonat":   newest IKE SA: #0; newest IPsec SA: #0;
+000 "road-eastnet-nonat":   routing: unrouted;
 000 "road-eastnet-nonat":   conn serial: $1;
 east #
  echo "initdone"

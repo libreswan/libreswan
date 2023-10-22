@@ -30,6 +30,7 @@ east #
 000 "north-east-x509-pluto-02":   dpd: passive; delay:0s; timeout:0s
 000 "north-east-x509-pluto-02":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
 000 "north-east-x509-pluto-02":   newest ISAKMP SA: #0; newest IPsec SA: #0;
+000 "north-east-x509-pluto-02":   routing: unrouted;
 000 "north-east-x509-pluto-02":   conn serial: $1;
 east #
  echo "initdone"

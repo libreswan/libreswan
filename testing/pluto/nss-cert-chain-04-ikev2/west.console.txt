@@ -36,6 +36,7 @@ west #
 000 "road-chain-B":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "road-chain-B":   nat-traversal: encaps:auto; keepalive:20s
 000 "road-chain-B":   newest IKE SA: #0; newest IPsec SA: #0;
+000 "road-chain-B":   routing: unrouted;
 000 "road-chain-B":   conn serial: $1;
 west #
  ipsec certutil -L

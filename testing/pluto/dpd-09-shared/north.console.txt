@@ -75,6 +75,7 @@ north #
 000 "north-a-dpd":   dpd: action:restart; delay:3; timeout:10
 000 "north-a-dpd":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
 000 "north-a-dpd":   newest ISAKMP SA: #0; newest IPsec SA: #0;
+000 "north-a-dpd":   routing: unrouted;
 000 "north-a-dpd":   conn serial: $1;
 000 #3: pending Phase 2 for "north-a-dpd"
 north #

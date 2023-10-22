@@ -83,6 +83,7 @@ west #
 000 "westnet-eastnet":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "westnet-eastnet":   nat-traversal: encaps:auto; keepalive:20s
 000 "westnet-eastnet":   newest IKE SA: #1; newest IPsec SA: #3;
+000 "westnet-eastnet":   routing: routed-tunnel; established IKE SA: #1; established Child SA: #3;
 000 "westnet-eastnet":   conn serial: $1;
 000 "westnet-eastnet":   IKE algorithms: AES_CBC_256-HMAC_SHA2_512-MODP2048
 000 "westnet-eastnet":   IKEv2 algorithm newest: AES_CBC_256-HMAC_SHA2_512-MODP2048

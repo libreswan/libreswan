@@ -31,6 +31,7 @@ west #
 000 "westnet-eastnet-ipv4-psk-ppk":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "westnet-eastnet-ipv4-psk-ppk":   nat-traversal: encaps:auto; keepalive:20s
 000 "westnet-eastnet-ipv4-psk-ppk":   newest IKE SA: #0; newest IPsec SA: #0;
+000 "westnet-eastnet-ipv4-psk-ppk":   routing: unrouted;
 000 "westnet-eastnet-ipv4-psk-ppk":   conn serial: $1;
 west #
  ipsec whack --impair suppress-retransmits

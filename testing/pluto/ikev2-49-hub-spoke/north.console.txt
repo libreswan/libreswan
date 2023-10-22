@@ -121,6 +121,7 @@ north #
 000 "northnet-westnet-ipv4-psk":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "northnet-westnet-ipv4-psk":   nat-traversal: encaps:auto; keepalive:20s
 000 "northnet-westnet-ipv4-psk":   newest IKE SA: #1; newest IPsec SA: #2;
+000 "northnet-westnet-ipv4-psk":   routing: routed-tunnel; established IKE SA: #1; established Child SA: #2;
 000 "northnet-westnet-ipv4-psk":   conn serial: $1;
 000 "northnet-westnet-ipv4-psk":   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-MODP2048
 000 "northnet-westnet-ipv4-psk":   ESP algorithm newest: AES_GCM_16_256-NONE; pfsgroup=<Phase1>

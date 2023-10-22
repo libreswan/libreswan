@@ -33,6 +33,7 @@ east #
 000 "nss-cert":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "nss-cert":   nat-traversal: encaps:auto; keepalive:20s
 000 "nss-cert":   newest IKE SA: #0; newest IPsec SA: #0;
+000 "nss-cert":   routing: unrouted;
 000 "nss-cert":   conn serial: $1;
 east #
  ipsec whack --impair suppress-retransmits
