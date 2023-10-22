@@ -394,24 +394,36 @@ static void show_connection_status(struct show *s, const struct connection *c)
 	 (END).client ? "client" :			\
 	 "none")
 
-	show_comment(s, PRI_CONNECTION":   xauth us:%s, xauth them:%s, %s my_username=%s; their_username=%s",
-		     c->name, instance,
-		     /*
-		      * Both should not be set, but if they are, we
-		      * want to know.
-		      */
-		     COMBO(c->local->config->host.xauth),
-		     COMBO(c->remote->config->host.xauth),
-		     /* should really be an enum name */
-		     (c->local->config->host.xauth.server ?
-		      c->config->xauthby == XAUTHBY_FILE ? "xauthby:file;" :
-		      c->config->xauthby == XAUTHBY_PAM ? "xauthby:pam;" :
-		      "xauthby:alwaysok;" :
-		      ""),
-		     (c->local->config->host.xauth.username == NULL ? "[any]" :
-		      c->local->config->host.xauth.username),
-		     (c->remote->config->host.xauth.username == NULL ? "[any]" :
-		      c->remote->config->host.xauth.username));
+	SHOW_JAMBUF(RC_COMMENT, s, buf) {
+		jam(buf, PRI_CONNECTION":  ", c->name, instance);
+		/*
+		 * Both should not be set, but if they are, we
+		 * want to know.
+		 */
+		/* us */
+		jam_string(buf, " xauth us:");
+		jam_string(buf, COMBO(c->local->config->host.xauth));
+		jam_string(buf, ",");
+		/* them */
+		jam_string(buf, " xauth them:");
+		jam_string(buf, COMBO(c->remote->config->host.xauth));
+		jam_string(buf, ",");
+		/* should really be an enum name */
+		jam_string(buf, " ");
+		jam_string(buf, (c->local->config->host.xauth.server ?
+				 c->config->xauthby == XAUTHBY_FILE ? "xauthby:file;" :
+				 c->config->xauthby == XAUTHBY_PAM ? "xauthby:pam;" :
+				 "xauthby:alwaysok;" :
+				 ""));
+		jam_string(buf, " my_username=");
+		jam_string(buf, (c->local->config->host.xauth.username == NULL ? "[any]" :
+				 c->local->config->host.xauth.username));
+		jam_string(buf, ";");
+		jam_string(buf, " their_username=");
+		jam_string(buf, (c->remote->config->host.xauth.username == NULL ? "[any]" :
+				 c->remote->config->host.xauth.username));
+		/* jam_string(buf, ";"); */
+	}
 
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
 		const char *who;
