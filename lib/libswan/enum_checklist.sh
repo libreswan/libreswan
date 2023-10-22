@@ -18,9 +18,14 @@ names=$1 ; shift
 
 list()
 {
+    # the special comment /* #ifdef MACRO */, at the end of a declaration is
+    # used to flag that the declaration should be wrapped in #ifdef
+    # MACRO.
     sed -n \
-	-e 's/^extern enum_names \([a-z0-9_]*\);.*$/\1/p' \
-	-e 's/^extern const struct enum_names \([a-z0-9_]*\);.*$/\1/p' \
+	-e "s/^extern ${names} \([a-z0-9_]*\);.* #ifdef \([A-Z0-9_]*\).*$/\1 \2/p" \
+	-e "s/^extern ${names} \([a-z0-9_]*\);.*$/\1/p" \
+	-e "s/^extern const struct ${names} \([a-z0-9_]*\);.* #ifdef \([A-Z0-9_]*\).*$/\1 \2/p" \
+	-e "s/^extern const struct ${names} \([a-z0-9_]*\);.*$/\1/p" \
 	"$@"
 }
 
@@ -44,17 +49,23 @@ cat <<EOF
  */
 EOF
 
-cat <<EOF
-#include "enum_names.h"
-EOF
+echo
+echo '#include "enum_names.h"'
+echo
 
 list "$@" | while read name ifdef ; do
+    test -z "${ifdef}" || echo "#ifdef ${ifdef}"
     echo "extern struct ${names} ${name};"
+    test -z "${ifdef}" || echo "#endif"
 done
+
+echo
 
 echo "const struct ${names} *${names}_checklist[] = {"
 list "$@" | while read name ifdef ; do
+    test -z "${ifdef}" || echo "#ifdef ${ifdef}"
     echo "  &${name},"
+    test -z "${ifdef}" || echo "#endif"
 done
 echo "  NULL,"
 echo "};"
