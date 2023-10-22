@@ -12,9 +12,10 @@ IGNORE_OSVERSION=yes pkg bootstrap -y
 
 # Enable the cache
 
-mkdir -p /pool/pkg.freebsd
+pkgdir=/pool/pkg.freebsd.$(uname -r)
+mkdir -p "${pkgdir}"
 ed <<EOF /usr/local/etc/pkg.conf
-/PKG_CACHEDIR/ s;.*PKG_CACHEDIR.*;PKG_CACHEDIR = "/pool/pkg.freebsd";
+/PKG_CACHEDIR/ s;.*PKG_CACHEDIR.*;PKG_CACHEDIR = "${pkgdir}"
 w
 q
 EOF
