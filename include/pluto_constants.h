@@ -24,6 +24,9 @@
  *
  */
 
+#ifndef PLUTO_CONSTANTS_H
+#define PLUTO_CONSTANTS_H
+
 #include "lset.h"
 #include "sparse_names.h"
 
@@ -1075,3 +1078,5 @@ extern void init_pluto_constants(void);
 #define ISAKMP_V2_FRAG_MAXLEN_IPv4	(MIN_MAX_UDP_DATA_v4 - ISAKMP_V2_FRAG_OVERHEAD_IPv4)
 #define ISAKMP_V2_FRAG_OVERHEAD_IPv6	40	/* ??? !!! */
 #define ISAKMP_V2_FRAG_MAXLEN_IPv6	(MIN_MAX_UDP_DATA_v6 - ISAKMP_V1_FRAG_OVERHEAD_IPv6)
+
+#endif

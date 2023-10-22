@@ -1,3 +1,6 @@
+#ifndef NAMES_CONSTANT_H
+#define NAMES_CONSTANT_H
+
 /*
  * names_constant.h
  */
@@ -97,3 +100,5 @@ extern enum_names ikev2_ppk_id_type_names;
 
 /* natt traversal types */
 extern const char *const natt_type_bitnames[];
+
+#endif
