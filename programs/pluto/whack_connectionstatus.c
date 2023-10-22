@@ -714,15 +714,6 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		}
 	}
 
-	SHOW_JAMBUF(RC_COMMENT, s, buf) {
-		jam(buf, PRI_CONNECTION":  ", c->name, instance);
-		jam(buf, " newest %s: #%lu;",
-		    c->config->ike_info->parent_sa_name,
-		    c->established_ike_sa);
-		jam(buf, " newest IPsec SA: "PRI_SO";",
-		    c->newest_ipsec_sa);
-	}
-
 	/* routing */
 
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
