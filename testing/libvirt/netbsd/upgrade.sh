@@ -14,9 +14,10 @@ pkg_add pkgin
 
 # Next hack pkgin's cache to point at /pool
 
-mkdir -p /pool/pkg.netbsd
+pkgdir=/pool/pkg.netbsd.$(uname -r)
+mkdir -p "${pkgdir}"
 #rmdir /var/db/pkgin/cache
-ln -s /pool/pkg.netbsd /var/db/pkgin/cache
+ln -s "${pkgdir"} /var/db/pkgin/cache
 
 # finally install the packages
 
