@@ -113,7 +113,6 @@ east #
 000 "northnet-westnet-ipv4-psk":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@north
 000 "northnet-westnet-ipv4-psk":   dpd: passive; delay:0s; timeout:0s
 000 "northnet-westnet-ipv4-psk":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
-000 "northnet-westnet-ipv4-psk":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "northnet-westnet-ipv4-psk":   routing: unrouted;
 000 "northnet-westnet-ipv4-psk":   conn serial: $2;
 000 "westnet-northnet-ipv4-psk": 192.0.3.0/24===192.1.2.23[@east]...192.1.2.45[@west]===192.0.1.0/24; unrouted; eroute owner: #0
@@ -132,7 +131,6 @@ east #
 000 "westnet-northnet-ipv4-psk":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
 000 "westnet-northnet-ipv4-psk":   dpd: passive; delay:0s; timeout:0s
 000 "westnet-northnet-ipv4-psk":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
-000 "westnet-northnet-ipv4-psk":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "westnet-northnet-ipv4-psk":   routing: unrouted;
 000 "westnet-northnet-ipv4-psk":   conn serial: $1;
 000  

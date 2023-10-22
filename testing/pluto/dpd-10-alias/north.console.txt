@@ -74,7 +74,6 @@ north #
 000 "north-dpd/0x1":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
 000 "north-dpd/0x1":   dpd: action:restart; delay:3; timeout:10
 000 "north-dpd/0x1":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
-000 "north-dpd/0x1":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "north-dpd/0x1":   routing: unrouted;
 000 "north-dpd/0x1":   conn serial: $1;
 000 "north-dpd/0x1":   aliases: north-dpd
@@ -95,7 +94,6 @@ north #
 000 "north-dpd/0x2":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
 000 "north-dpd/0x2":   dpd: action:restart; delay:3; timeout:10
 000 "north-dpd/0x2":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
-000 "north-dpd/0x2":   newest ISAKMP SA: #1; newest IPsec SA: #0;
 000 "north-dpd/0x2":   conn serial: $2;
 000 "north-dpd/0x2":   aliases: north-dpd
 000 "north-dpd/0x2":   IKEv1 algorithm newest: AES_CBC_256-HMAC_SHA2_256-MODP2048

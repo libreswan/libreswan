@@ -31,7 +31,6 @@ east #
 000 "northnet-eastnets/0x1":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org
 000 "northnet-eastnets/0x1":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "northnet-eastnets/0x1":   nat-traversal: encaps:auto; keepalive:20s
-000 "northnet-eastnets/0x1":   newest IKE SA: #0; newest IPsec SA: #0;
 000 "northnet-eastnets/0x1":   routing: unrouted;
 000 "northnet-eastnets/0x1":   conn serial: $1;
 000 "northnet-eastnets/0x1":   aliases: northnet-eastnets
@@ -53,7 +52,6 @@ east #
 000 "northnet-eastnets/0x2":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org
 000 "northnet-eastnets/0x2":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "northnet-eastnets/0x2":   nat-traversal: encaps:auto; keepalive:20s
-000 "northnet-eastnets/0x2":   newest IKE SA: #0; newest IPsec SA: #0;
 000 "northnet-eastnets/0x2":   routing: unrouted;
 000 "northnet-eastnets/0x2":   conn serial: $2;
 000 "northnet-eastnets/0x2":   aliases: northnet-eastnets

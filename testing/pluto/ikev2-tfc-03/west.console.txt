@@ -42,7 +42,6 @@ west #
 000 "tfc":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "tfc":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "tfc":   nat-traversal: encaps:auto; keepalive:20s
-000 "tfc":   newest IKE SA: #0; newest IPsec SA: #0;
 000 "tfc":   routing: unrouted;
 000 "tfc":   conn serial: $1;
 west #

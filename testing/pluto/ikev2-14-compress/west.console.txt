@@ -44,7 +44,6 @@ west #
 000 "westnet-eastnet-ipcomp":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "westnet-eastnet-ipcomp":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "westnet-eastnet-ipcomp":   nat-traversal: encaps:auto; keepalive:20s
-000 "westnet-eastnet-ipcomp":   newest IKE SA: #0; newest IPsec SA: #0;
 000 "westnet-eastnet-ipcomp":   routing: unrouted;
 000 "westnet-eastnet-ipcomp":   conn serial: $1;
 west #

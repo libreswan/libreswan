@@ -117,7 +117,6 @@ east #
 000 "rw-eastnet-ipv6":   our idtype: ID_FQDN; our id=@east; their idtype: %none; their id=(none)
 000 "rw-eastnet-ipv6":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "rw-eastnet-ipv6":   nat-traversal: encaps:auto; keepalive:20s
-000 "rw-eastnet-ipv6":   newest IKE SA: #0; newest IPsec SA: #0;
 000 "rw-eastnet-ipv6":   routing: unrouted;
 000 "rw-eastnet-ipv6":   conn serial: $1;
 000  

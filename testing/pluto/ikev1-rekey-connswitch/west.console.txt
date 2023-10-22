@@ -91,13 +91,10 @@ west #
  #IKE sa will be on TUNNEL-A
 west #
  ipsec auto --status | grep ISAKMP
-000 "TUNNEL-A":   newest ISAKMP SA: #1; newest IPsec SA: #2;
 000 "TUNNEL-A":   routing: routed-tunnel; established ISAKMP SA: #1; established IPsec SA: #2;
 000 "TUNNEL-A":   conn serial: $2;
-000 "TUNNEL-B":   newest ISAKMP SA: #0; newest IPsec SA: #3;
 000 "TUNNEL-B":   routing: routed-tunnel; established IPsec SA: #3;
 000 "TUNNEL-B":   conn serial: $3;
-000 "TUNNEL-C":   newest ISAKMP SA: #0; newest IPsec SA: #4;
 000 "TUNNEL-C":   routing: routed-tunnel; established IPsec SA: #4;
 000 "TUNNEL-C":   conn serial: $1;
 000 #2: "TUNNEL-A":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
@@ -109,13 +106,10 @@ west #
  #IKE sa will be on TUNNEL-B
 west #
  ipsec auto --status | grep ISAKMP
-000 "TUNNEL-A":   newest ISAKMP SA: #0; newest IPsec SA: #2;
 000 "TUNNEL-A":   routing: routed-tunnel; established IPsec SA: #2;
 000 "TUNNEL-A":   conn serial: $2;
-000 "TUNNEL-B":   newest ISAKMP SA: #5; newest IPsec SA: #3;
 000 "TUNNEL-B":   routing: routed-tunnel; established ISAKMP SA: #5; established IPsec SA: #3;
 000 "TUNNEL-B":   conn serial: $3;
-000 "TUNNEL-C":   newest ISAKMP SA: #0; newest IPsec SA: #4;
 000 "TUNNEL-C":   routing: routed-tunnel; established IPsec SA: #4;
 000 "TUNNEL-C":   conn serial: $1;
 000 #2: "TUNNEL-A":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
@@ -148,7 +142,6 @@ west #
 000 "TUNNEL-A":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
 000 "TUNNEL-A":   dpd: passive; delay:0s; timeout:0s
 000 "TUNNEL-A":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
-000 "TUNNEL-A":   newest ISAKMP SA: #0; newest IPsec SA: #2;
 000 "TUNNEL-A":   routing: routed-tunnel; established IPsec SA: #2;
 000 "TUNNEL-A":   conn serial: $2;
 000 "TUNNEL-A":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
@@ -169,7 +162,6 @@ west #
 000 "TUNNEL-B":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
 000 "TUNNEL-B":   dpd: passive; delay:0s; timeout:0s
 000 "TUNNEL-B":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
-000 "TUNNEL-B":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "TUNNEL-B":   routing: unrouted;
 000 "TUNNEL-B":   conn serial: $3;
 000 "TUNNEL-C": 192.0.1.254/32===192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===192.0.2.234/32; erouted; eroute owner: #4
@@ -189,7 +181,6 @@ west #
 000 "TUNNEL-C":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
 000 "TUNNEL-C":   dpd: passive; delay:0s; timeout:0s
 000 "TUNNEL-C":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
-000 "TUNNEL-C":   newest ISAKMP SA: #0; newest IPsec SA: #4;
 000 "TUNNEL-C":   routing: routed-tunnel; established IPsec SA: #4;
 000 "TUNNEL-C":   conn serial: $1;
 000 "TUNNEL-C":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
@@ -221,7 +212,6 @@ west #
 000 "TUNNEL-A":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
 000 "TUNNEL-A":   dpd: passive; delay:0s; timeout:0s
 000 "TUNNEL-A":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
-000 "TUNNEL-A":   newest ISAKMP SA: #0; newest IPsec SA: #2;
 000 "TUNNEL-A":   routing: routed-tunnel; established IPsec SA: #2;
 000 "TUNNEL-A":   conn serial: $2;
 000 "TUNNEL-A":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
@@ -242,7 +232,6 @@ west #
 000 "TUNNEL-C":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
 000 "TUNNEL-C":   dpd: passive; delay:0s; timeout:0s
 000 "TUNNEL-C":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
-000 "TUNNEL-C":   newest ISAKMP SA: #0; newest IPsec SA: #4;
 000 "TUNNEL-C":   routing: routed-tunnel; established IPsec SA: #4;
 000 "TUNNEL-C":   conn serial: $1;
 000 "TUNNEL-C":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>

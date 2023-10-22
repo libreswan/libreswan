@@ -47,7 +47,6 @@ west #
 000 "westnet-eastnet-x509-cr":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org; their idtype: %fromcert; their id=%fromcert
 000 "westnet-eastnet-x509-cr":   dpd: passive; delay:0s; timeout:0s
 000 "westnet-eastnet-x509-cr":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
-000 "westnet-eastnet-x509-cr":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "westnet-eastnet-x509-cr":   routing: unrouted;
 000 "westnet-eastnet-x509-cr":   conn serial: $1;
 west #

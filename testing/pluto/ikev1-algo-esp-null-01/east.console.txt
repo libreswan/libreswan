@@ -25,7 +25,6 @@ east #
 000 "westnet-eastnet-null":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
 000 "westnet-eastnet-null":   dpd: passive; delay:0s; timeout:0s
 000 "westnet-eastnet-null":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
-000 "westnet-eastnet-null":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "westnet-eastnet-null":   routing: unrouted;
 000 "westnet-eastnet-null":   conn serial: $1;
 000 "westnet-eastnet-null":   ESP algorithms: NULL-HMAC_MD5_96

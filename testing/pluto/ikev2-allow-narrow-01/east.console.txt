@@ -26,7 +26,6 @@ east #
 000 "westnet-eastnet-ikev2":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
 000 "westnet-eastnet-ikev2":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "westnet-eastnet-ikev2":   nat-traversal: encaps:auto; keepalive:20s
-000 "westnet-eastnet-ikev2":   newest IKE SA: #0; newest IPsec SA: #0;
 000 "westnet-eastnet-ikev2":   routing: unrouted;
 000 "westnet-eastnet-ikev2":   conn serial: $1;
 east #

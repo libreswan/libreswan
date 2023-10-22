@@ -31,7 +31,6 @@ west #
 000 "nss-cert-crl":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=revoked.testing.libreswan.org, E=user-revoked@testing.libreswan.org; their idtype: %fromcert; their id=%fromcert
 000 "nss-cert-crl":   dpd: passive; delay:0s; timeout:0s
 000 "nss-cert-crl":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
-000 "nss-cert-crl":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "nss-cert-crl":   routing: unrouted;
 000 "nss-cert-crl":   conn serial: $1;
 west #

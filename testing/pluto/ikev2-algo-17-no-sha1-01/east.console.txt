@@ -111,7 +111,6 @@ east #
 000 "westnet-eastnet-no-sha1":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
 000 "westnet-eastnet-no-sha1":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "westnet-eastnet-no-sha1":   nat-traversal: encaps:auto; keepalive:20s
-000 "westnet-eastnet-no-sha1":   newest IKE SA: #0; newest IPsec SA: #0;
 000 "westnet-eastnet-no-sha1":   routing: unrouted;
 000 "westnet-eastnet-no-sha1":   conn serial: $1;
 000  

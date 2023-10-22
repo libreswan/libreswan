@@ -79,7 +79,6 @@ west #
 000 "westnet-eastnet-ikev2a":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "westnet-eastnet-ikev2a":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "westnet-eastnet-ikev2a":   nat-traversal: encaps:auto; keepalive:20s
-000 "westnet-eastnet-ikev2a":   newest IKE SA: #1; newest IPsec SA: #2;
 000 "westnet-eastnet-ikev2a":   routing: routed-tunnel; established IKE SA: #1; established Child SA: #2;
 000 "westnet-eastnet-ikev2a":   conn serial: $1;
 000 "westnet-eastnet-ikev2a":   IKE algorithms: 3DES_CBC-HMAC_MD5-MODP2048
@@ -103,7 +102,6 @@ west #
 000 "westnet-eastnet-ikev2b":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "westnet-eastnet-ikev2b":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "westnet-eastnet-ikev2b":   nat-traversal: encaps:auto; keepalive:20s
-000 "westnet-eastnet-ikev2b":   newest IKE SA: #0; newest IPsec SA: #3;
 000 "westnet-eastnet-ikev2b":   routing: routed-tunnel; established Child SA: #3;
 000 "westnet-eastnet-ikev2b":   conn serial: $2;
 000 "westnet-eastnet-ikev2b":   IKE algorithms: 3DES_CBC-HMAC_MD5-MODP2048
@@ -126,7 +124,6 @@ west #
 000 "westnet-eastnet-ikev2c":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "westnet-eastnet-ikev2c":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "westnet-eastnet-ikev2c":   nat-traversal: encaps:auto; keepalive:20s
-000 "westnet-eastnet-ikev2c":   newest IKE SA: #0; newest IPsec SA: #4;
 000 "westnet-eastnet-ikev2c":   routing: routed-tunnel; established Child SA: #4;
 000 "westnet-eastnet-ikev2c":   conn serial: $3;
 000 "westnet-eastnet-ikev2c":   IKE algorithms: 3DES_CBC-HMAC_MD5-MODP2048

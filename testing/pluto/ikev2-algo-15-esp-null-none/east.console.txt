@@ -28,7 +28,6 @@ east #
 000 "esp=null-none":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
 000 "esp=null-none":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "esp=null-none":   nat-traversal: encaps:auto; keepalive:20s
-000 "esp=null-none":   newest IKE SA: #0; newest IPsec SA: #0;
 000 "esp=null-none":   routing: unrouted;
 000 "esp=null-none":   conn serial: $1;
 000 "esp=null-none":   IKE algorithms: AES_CBC_128-HMAC_SHA1-MODP2048
