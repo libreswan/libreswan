@@ -67,14 +67,15 @@
  * result (length excludes NUL at end).
  */
 
-static void jam_end_host(struct jambuf *buf, const struct connection *c,
-			 const struct spd_end *this)
+static void jam_end_host(struct jambuf *buf,
+			 const struct connection *c,
+			 const struct host_end *end)
 {
 	/* HOST */
-	if (!address_is_specified(this->host->addr)) {
-		if (this->host->config->type == KH_IPHOSTNAME) {
+	if (!address_is_specified(end->addr)) {
+		if (end->config->type == KH_IPHOSTNAME) {
 			jam_string(buf, "%dns");
-			jam(buf, "<%s>", this->host->config->addr_name);
+			jam(buf, "<%s>", end->config->addr_name);
 		} else {
 			if (is_group(c)) {
 				if (is_opportunistic(c)) {
@@ -92,17 +93,8 @@ static void jam_end_host(struct jambuf *buf, const struct connection *c,
 		 * XXX: only print anomalies: since the host address
 		 * is zero, so too should be the port.
 		 */
-		if (this->host->port != 0) {
-			jam(buf, ":%u", this->host->port);
-		}
-	} else if (is_virtual_spd_end(this)) {
-		jam_string(buf, "%virtual");
-		/*
-		 * XXX: only print anomalies: the host is %virtual
-		 * (what ever that means), so too should be the port.
-		 */
-		if (this->host->port != 0) {
-			jam(buf, ":%u", this->host->port);
+		if (end->port != 0) {
+			jam(buf, ":%u", end->port);
 		}
 	} else {
 		/* ADDRESS[:PORT][<HOSTNAME>] */
@@ -111,25 +103,25 @@ static void jam_end_host(struct jambuf *buf, const struct connection *c,
 		 * valid, any hardwired IKEPORT or a port other than
 		 * IKE_UDP_PORT.
 		 */
-		bool include_port = (this->host->config->ikeport != 0 ||
-				     this->host->port != IKE_UDP_PORT);
+		bool include_port = (end->config->ikeport != 0 ||
+				     end->port != IKE_UDP_PORT);
 		if (!log_ip) {
 			/* ADDRESS(SENSITIVE) */
 			jam_string(buf, "<address>");
 		} else if (include_port) {
 			/* [ADDRESS]:PORT */
-			jam_address_wrapped(buf, &this->host->addr);
-			jam(buf, ":%u", this->host->port);
+			jam_address_wrapped(buf, &end->addr);
+			jam(buf, ":%u", end->port);
 		} else {
 			/* ADDRESS */
-			jam_address(buf, &this->host->addr);
+			jam_address(buf, &end->addr);
 		}
 		/* [<HOSTNAME>] */
 		address_buf ab;
-		if (this->host->config->addr_name != NULL &&
-		    !streq(str_address(&this->host->addr, &ab),
-			   this->host->config->addr_name)) {
-			jam(buf, "<%s>", this->host->config->addr_name);
+		if (end->config->addr_name != NULL &&
+		    !streq(str_address(&end->addr, &ab),
+			   end->config->addr_name)) {
+			jam(buf, "<%s>", end->config->addr_name);
 		}
 	}
 }
@@ -265,7 +257,7 @@ void jam_spd_end(struct jambuf *buf, const struct connection *c,
 		/* CLIENT/PROTOCOL:PORT=== */
 		jam_end_client(buf, c, this, left_right);
 		/* HOST */
-		jam_end_host(buf, c, this);
+		jam_end_host(buf, c, this->host);
 		/* [ID+OPTS] */
 		jam_end_id(buf, this);
 		/* ---NEXTHOP */
@@ -275,7 +267,7 @@ void jam_spd_end(struct jambuf *buf, const struct connection *c,
 		/* HOPNEXT--- */
 		jam_end_nexthop(buf, this, that, skip_next_hop, left_right);
 		/* HOST */
-		jam_end_host(buf, c, this);
+		jam_end_host(buf, c, this->host);
 		/* [ID+OPTS] */
 		jam_end_id(buf, this);
 		/* ===CLIENT/PROTOCOL:PORT */
