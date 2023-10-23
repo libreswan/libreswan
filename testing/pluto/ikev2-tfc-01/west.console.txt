@@ -25,8 +25,7 @@ west #
 002 "tfc": added IKEv2 connection
 west #
  ipsec auto --status | grep tfc
-000 "tfc": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; eroute owner: #0
-000 "tfc":     oriented; my_ip=unset; their_ip=unset;
+000 "tfc": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
 000 "tfc":   my_updown=ipsec _updown;
 000 "tfc":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "tfc":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;

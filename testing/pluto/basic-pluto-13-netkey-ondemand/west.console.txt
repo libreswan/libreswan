@@ -11,8 +11,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --status | grep westnet-eastnet-route
-000 "westnet-eastnet-route": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; prospective erouted; eroute owner: #0
-000 "westnet-eastnet-route":     oriented; my_ip=unset; their_ip=unset;
+000 "westnet-eastnet-route": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; prospective erouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
 000 "westnet-eastnet-route":   my_updown=ipsec _updown;
 000 "westnet-eastnet-route":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "westnet-eastnet-route":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;

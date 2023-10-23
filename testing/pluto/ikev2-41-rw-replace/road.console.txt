@@ -112,8 +112,7 @@ road #
 000  
 000 Connection list:
 000  
-000 "road-east-x509-ipv4": 0.0.0.0/0===192.1.3.209[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org,+MC+S=C]---192.1.3.254...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===0.0.0.0/0; unrouted; eroute owner: #0
-000 "road-east-x509-ipv4":     oriented; my_ip=unset; their_ip=unset;
+000 "road-east-x509-ipv4": 0.0.0.0/0===192.1.3.209[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org,+MC+S=C]---192.1.3.254...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===0.0.0.0/0; unrouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
 000 "road-east-x509-ipv4":   mycert=road; peercert=east; my_updown=ipsec _updown;
 000 "road-east-x509-ipv4":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "road-east-x509-ipv4":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
@@ -132,8 +131,7 @@ road #
 000 "road-east-x509-ipv4":   nat-traversal: encaps:auto; keepalive:20s
 000 "road-east-x509-ipv4":   routing: unrouted;
 000 "road-east-x509-ipv4":   conn serial: $1;
-000 "road-east-x509-ipv4"[1]: 192.0.2.100/32===192.1.3.209[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org,+MC+S=C]---192.1.3.254...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===0.0.0.0/0; erouted; eroute owner: #2
-000 "road-east-x509-ipv4"[1]:     oriented; my_ip=192.0.2.100; their_ip=unset;
+000 "road-east-x509-ipv4"[1]: 192.0.2.100/32===192.1.3.209[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org,+MC+S=C]---192.1.3.254...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===0.0.0.0/0; erouted; eroute owner: #2; oriented; my_ip=192.0.2.100; their_ip=unset;
 000 "road-east-x509-ipv4"[1]:   mycert=road; peercert=east; my_updown=ipsec _updown;
 000 "road-east-x509-ipv4"[1]:   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "road-east-x509-ipv4"[1]:   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
@@ -274,8 +272,7 @@ road #
 000  
 000 Connection list:
 000  
-000 "road-east-x509-ipv4": 0.0.0.0/0===192.1.3.209[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org,+MC+S=C]---192.1.3.254...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===0.0.0.0/0; unrouted; eroute owner: #0
-000 "road-east-x509-ipv4":     oriented; my_ip=unset; their_ip=unset;
+000 "road-east-x509-ipv4": 0.0.0.0/0===192.1.3.209[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org,+MC+S=C]---192.1.3.254...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===0.0.0.0/0; unrouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
 000 "road-east-x509-ipv4":   mycert=road; peercert=east; my_updown=ipsec _updown;
 000 "road-east-x509-ipv4":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "road-east-x509-ipv4":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
@@ -294,8 +291,7 @@ road #
 000 "road-east-x509-ipv4":   nat-traversal: encaps:auto; keepalive:20s
 000 "road-east-x509-ipv4":   routing: unrouted;
 000 "road-east-x509-ipv4":   conn serial: $1;
-000 "road-east-x509-ipv4"[1]: 192.0.2.100/32===192.1.3.209[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org,+MC+S=C]---192.1.3.254...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===0.0.0.0/0; erouted; eroute owner: #2
-000 "road-east-x509-ipv4"[1]:     oriented; my_ip=192.0.2.100; their_ip=unset;
+000 "road-east-x509-ipv4"[1]: 192.0.2.100/32===192.1.3.209[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org,+MC+S=C]---192.1.3.254...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===0.0.0.0/0; erouted; eroute owner: #2; oriented; my_ip=192.0.2.100; their_ip=unset;
 000 "road-east-x509-ipv4"[1]:   mycert=road; peercert=east; my_updown=ipsec _updown;
 000 "road-east-x509-ipv4"[1]:   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "road-east-x509-ipv4"[1]:   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;

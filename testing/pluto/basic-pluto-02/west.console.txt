@@ -51,18 +51,19 @@ west #
 002 "orient12": added IKEv1 connection
 west #
  ipsec auto --status |grep orient |grep "eroute owner"
-000 "orient1": 192.1.2.45---192.1.2.254...%any; unrouted; eroute owner: #0
-000 "orient10": 192.1.2.45---192.1.2.254...8.8.8.8; unrouted; eroute owner: #0
-000 "orient11": 192.1.2.45---192.1.2.254...8.8.8.8; unrouted; eroute owner: #0
-000 "orient12": 192.1.2.45---192.1.2.254...8.8.8.8; unrouted; eroute owner: #0
-000 "orient2": 192.1.2.45---192.1.2.254...%any; unrouted; eroute owner: #0
-000 "orient3": 192.1.2.45---192.1.2.254...%any; unrouted; eroute owner: #0
-000 "orient4": 192.1.2.45---192.1.2.254...%any; unrouted; eroute owner: #0
-000 "orient5": 192.1.2.45...8.8.8.8; unrouted; eroute owner: #0
-000 "orient6": 192.1.2.45---192.1.2.254...8.8.8.8; unrouted; eroute owner: #0
-000 "orient7": 192.1.2.45---192.1.2.254...8.8.8.8; unrouted; eroute owner: #0
-000 "orient8": 192.1.2.45...8.8.8.8; unrouted; eroute owner: #0
-000 "orient9": 192.1.2.45---192.1.2.254...8.8.8.8; unrouted; eroute owner: #0
+000 "orient1": 192.1.2.45---192.1.2.254...%any; unrouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
+000 "orient10": 192.1.2.45---192.1.2.254...8.8.8.8; unrouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
+000 "orient11": 192.1.2.45---192.1.2.254...8.8.8.8; unrouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
+000 "orient12": 192.1.2.45---192.1.2.254...8.8.8.8; unrouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
+000 "orient2": 192.1.2.45---192.1.2.254...%any; unrouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
+000 "orient3": 192.1.2.45---192.1.2.254...%any; unrouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
+000 "orient4": 192.1.2.45---192.1.2.254...%any; unrouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
+000 "orient5": 192.1.2.45...8.8.8.8; unrouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
+000 "orient6": 192.1.2.45---192.1.2.254...8.8.8.8; unrouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
+000 "orient7": 192.1.2.45---192.1.2.254...8.8.8.8; unrouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
+000 "orient8": 192.1.2.45...8.8.8.8; unrouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
+000 "orient9": 192.1.2.45---192.1.2.254...8.8.8.8; unrouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
+000 "westnet-all": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===0.0.0.0/0; unrouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
 west #
  ipsec whack --impair suppress-retransmits
 west #
@@ -108,8 +109,7 @@ west #
 002 "westnet-all": added IKEv1 connection
 west #
  ipsec auto --status |grep westnet
-000 "westnet-all": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===0.0.0.0/0; unrouted; eroute owner: #0
-000 "westnet-all":     oriented; my_ip=unset; their_ip=unset;
+000 "westnet-all": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===0.0.0.0/0; unrouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
 000 "westnet-all":   my_updown=ipsec _updown;
 000 "westnet-all":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "westnet-all":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;

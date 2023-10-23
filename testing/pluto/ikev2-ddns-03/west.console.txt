@@ -17,7 +17,7 @@ west #
 002 "named": added IKEv2 connection
 west #
  ipsec status | grep "===" # should show %dns for pending resolve
-000 "named": 192.0.1.0/24===192.1.2.45[@west]---192.1.2.23...%dns<right.libreswan.org>[@east]===192.0.2.0/24; unrouted; eroute owner: #0
+000 "named": 192.0.1.0/24===192.1.2.45[@west]---192.1.2.23...%dns<right.libreswan.org>[@east]===192.0.2.0/24; unrouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
 west #
  echo "initdone"
 initdone
@@ -36,7 +36,7 @@ west #
  ipsec showstates
 west #
  ipsec status | grep "===" # should no longer show %dns as resolving completed
-000 "named": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23<right.libreswan.org>[@east]===192.0.2.0/24; unrouted; eroute owner: #0
+000 "named": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23<right.libreswan.org>[@east]===192.0.2.0/24; unrouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
 west #
  # confirm it all resolved by bringing the conn up manually
 west #

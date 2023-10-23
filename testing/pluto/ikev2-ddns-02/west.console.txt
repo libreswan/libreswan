@@ -19,7 +19,7 @@ west #
  sleep 5
 west #
  ipsec status |grep "===" # should show %dns for pending resolving
-000 "named": 192.0.1.0/24===192.1.2.45[@west]---192.1.2.23...%dns<right.libreswan.org>[@east]===192.0.2.0/24; unrouted; eroute owner: #0
+000 "named": 192.0.1.0/24===192.1.2.45[@west]---192.1.2.23...%dns<right.libreswan.org>[@east]===192.0.2.0/24; unrouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
 west #
  unbound-control-setup > /dev/null 2>&1
 west #
