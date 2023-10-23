@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -eu
+
 # enum name checklist, for libreswan
 #
 # Copyright (C) 2023  Andrew Cagney
@@ -61,12 +63,6 @@ grep -e "^extern ${names} " -e "^extern const struct ${names} " "$@" | \
     while read h ; do
 	echo '#include "'${h}'"'
     done
-
-#list "$@" | while read name ifdef ; do
-#    test -z "${ifdef}" || echo "#ifdef ${ifdef}"
-#    echo "extern struct ${names} ${name};"
-#    test -z "${ifdef}" || echo "#endif"
-3done
 
 echo
 
