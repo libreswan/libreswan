@@ -50,7 +50,7 @@ west #
 002 "orient11": added IKEv1 connection
 002 "orient12": added IKEv1 connection
 west #
- ipsec auto --status |grep orient |grep "eroute owner"
+ ipsec auto --status |grep "[.][.][.]" |grep "eroute owner"
 000 "orient1": 192.1.2.45---192.1.2.254...%any; unrouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
 000 "orient10": 192.1.2.45---192.1.2.254...8.8.8.8; unrouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
 000 "orient11": 192.1.2.45---192.1.2.254...8.8.8.8; unrouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;

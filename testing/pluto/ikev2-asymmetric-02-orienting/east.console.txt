@@ -10,9 +10,8 @@ east #
 east #
  # should be unoriented
 east #
- ipsec auto --status | grep westnet-eastnet-ikev2 | grep orient
+ ipsec auto --status | grep westnet-eastnet-ikev2 | grep "[.][.][.]"
 000 "westnet-eastnet-ikev2": 192.0.1.0/24===192.1.2.46...192.1.2.24[@east]===192.0.2.0/24; unrouted; eroute owner: #0; unoriented; my_ip=unset; their_ip=unset;
-000 "westnet-eastnet-ikev2":   host: unoriented; left: 192.1.2.46; right: 192.1.2.24;
 east #
  ip addr add 192.1.2.24/24 dev eth1
 east #
@@ -26,9 +25,8 @@ east #
 east #
  # should be oriented
 east #
- ipsec auto --status | grep westnet-eastnet-ikev2 | grep orient
+ ipsec auto --status | grep westnet-eastnet-ikev2 | grep "[.][.][.]"
 000 "westnet-eastnet-ikev2": 192.0.2.0/24===192.1.2.24[@east]...192.1.2.46===192.0.1.0/24; unrouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
-000 "westnet-eastnet-ikev2":   host: oriented; local: 192.1.2.24; remote: 192.1.2.46;
 east #
  echo "initdone"
 initdone

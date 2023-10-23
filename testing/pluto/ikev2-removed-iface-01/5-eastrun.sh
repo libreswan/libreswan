@@ -1,3 +1,3 @@
 ip addr add 192.1.3.3/24 dev eth3
 ipsec auto --ready
-ipsec auto --status | grep orient
+ipsec auto --status | grep "[.][.][.]"

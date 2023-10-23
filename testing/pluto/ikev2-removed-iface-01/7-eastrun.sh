@@ -1,2 +1,2 @@
 ipsec auto --ready
-ipsec auto --status | grep orient
+ipsec auto --status | grep "[.][.][.]"

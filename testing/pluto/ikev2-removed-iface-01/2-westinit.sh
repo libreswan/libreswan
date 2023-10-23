@@ -8,4 +8,4 @@ ipsec auto --add test1
 ipsec auto --add test2
 ipsec auto --add test3
 ipsec auto --status | grep interface
-ipsec auto --status | grep orient
+ipsec auto --status | grep "[.][.][.]"
