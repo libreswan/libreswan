@@ -351,6 +351,29 @@ static void show_connection_status(struct show *s, const struct connection *c)
 
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
 		jam(buf, PRI_CONNECTION":  ", c->name, instance);
+		jam_string(buf, " host: ");
+		jam_string(buf, (oriented(c) ? "oriented" : "unoriented"));
+		jam_string(buf, ";");
+		/* details */
+		if (oriented(c)) {
+			jam_string(buf, " local: ");
+			jam_end_host(buf, c, &c->local->host);
+			jam_string(buf, ";");
+			jam_string(buf, " remote: ");
+			jam_end_host(buf, c, &c->remote->host);
+			jam_string(buf, ";");
+		} else {
+			jam_string(buf, " left: ");
+			jam_end_host(buf, c, &c->end[LEFT_END].host);
+			jam_string(buf, ";");
+			jam_string(buf, " right: ");
+			jam_end_host(buf, c, &c->end[RIGHT_END].host);
+			jam_string(buf, ";");
+		}
+	}
+
+	SHOW_JAMBUF(RC_COMMENT, s, buf) {
+		jam(buf, PRI_CONNECTION":  ", c->name, instance);
 		const char *local_cert = cert_nickname(&c->local->host.config->cert);
 		if (local_cert != NULL) {
 			jam(buf, " mycert=%s;", local_cert);
