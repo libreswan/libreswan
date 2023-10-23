@@ -266,9 +266,16 @@ const char *str_id_bytes(const struct id *id, jam_bytes_fn *jam_bytes, id_buf *d
 	return dst->buf;
 }
 
+size_t jam_id(struct jambuf *buf, const struct id *id)
+{
+	return jam_id_bytes(buf, id, jam_raw_bytes); /* see above */
+}
+
 const char *str_id(const struct id *id, id_buf *buf)
 {
-	return str_id_bytes(id, jam_raw_bytes, buf); /* see above */
+	struct jambuf b = ARRAY_AS_JAMBUF(buf->buf);
+	jam_id(&b, id); /* see above */
+	return buf->buf;
 }
 
 struct id clone_id(const struct id *src, const char *story)

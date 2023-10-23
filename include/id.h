@@ -70,13 +70,14 @@ err_t atoid(const char *src, struct id *id);
  * escaping.
  */
 
-size_t jam_id_bytes(struct jambuf *buf, const struct id *id, jam_bytes_fn *jam_bytes);
-
 typedef struct {
 	char buf[512];
 } id_buf;
 
+size_t jam_id_bytes(struct jambuf *buf, const struct id *id, jam_bytes_fn *jam_bytes);
 const char *str_id_bytes(const struct id *id, jam_bytes_fn *jam_bytes, id_buf *buf);
+
+size_t jam_id(struct jambuf *buf, const struct id *id);
 const char *str_id(const struct id *id, id_buf *buf);
 
 /*
