@@ -308,14 +308,7 @@ static void show_one_spd(struct show *s,
 		/* owner */
 		jam_string(buf, " eroute owner: ");
 		jam_so(buf, c->newest_routing_sa);
-		/* jam_string(buf, ";"); */
-	}
-
-	ip_address this_sourceip = spd_end_sourceip(spd->local);
-	ip_address that_sourceip = spd_end_sourceip(spd->remote);
-
-	SHOW_JAMBUF(RC_COMMENT, s, buf) {
-		jam(buf, PRI_CONNECTION":    ", c->name, instance);
+		jam_string(buf, ";");
 		/* orientation */
 		jam_string(buf, " ");
 		jam_string(buf, (oriented(c) ? "oriented" : "unoriented"));
@@ -327,11 +320,14 @@ static void show_one_spd(struct show *s,
 			jam_string(buf, "unset");	\
 		}
 		/* my_ip */
+		ip_address my_sourceip = spd_end_sourceip(spd->local);
 		jam_string(buf, " my_ip=");
-		OPT_HOST(this_sourceip);
+		OPT_HOST(my_sourceip);
 		jam_string(buf, ";");
+		/* their_ip */
+		ip_address their_sourceip = spd_end_sourceip(spd->remote);
 		jam_string(buf, " their_ip=");
-		OPT_HOST(that_sourceip);
+		OPT_HOST(their_sourceip);
 		jam_string(buf, ";");
 #undef OPT_HOST
 	}
