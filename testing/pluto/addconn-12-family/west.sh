@@ -31,4 +31,4 @@ ipsec auto --add 64family6
 ipsec auto --add 66family4
 ipsec auto --add 66family6
 
-ipsec status | grep unrouted
+ipsec status | grep '==='
