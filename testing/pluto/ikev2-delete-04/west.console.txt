@@ -12,6 +12,7 @@ west #
 west #
  ipsec auto --status | grep west-east
 000 "west-east-delete1": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
+000 "west-east-delete1":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
 000 "west-east-delete1":   my_updown=ipsec _updown;
 000 "west-east-delete1":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "west-east-delete1":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;

@@ -147,6 +147,7 @@ west #
 000 Connection list:
 000  
 000 "clear": 192.1.2.45---192.1.2.254...%group; unrouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
+000 "clear":   host: oriented; local: 192.1.2.45; remote: %group;
 000 "clear":   my_updown=ipsec _updown;
 000 "clear":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "clear":   our auth:never, their auth:never, our autheap:none, their autheap:none;
@@ -165,6 +166,7 @@ west #
 000 "clear":   routing: unrouted;
 000 "clear":   conn serial: $3;
 000 "clear#192.1.2.254/32": 192.1.2.45---192.1.2.254...%any===192.1.2.254/32; prospective erouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
+000 "clear#192.1.2.254/32":   host: oriented; local: 192.1.2.45; remote: %any;
 000 "clear#192.1.2.254/32":   my_updown=ipsec _updown;
 000 "clear#192.1.2.254/32":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "clear#192.1.2.254/32":   our auth:never, their auth:never, our autheap:none, their autheap:none;
@@ -183,6 +185,7 @@ west #
 000 "clear#192.1.2.254/32":   routing: routed-never-negotiate;
 000 "clear#192.1.2.254/32":   conn serial: $6, instantiated from: $3;
 000 "private": 192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]---192.1.2.254...%opportunisticgroup[%fromcert]; unrouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
+000 "private":   host: oriented; local: 192.1.2.45; remote: %opportunisticgroup;
 000 "private":   mycert=west; my_updown=ipsec _updown;
 000 "private":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "private":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
@@ -202,6 +205,7 @@ west #
 000 "private":   routing: unrouted;
 000 "private":   conn serial: $1;
 000 "private#10.1.0.0/24": 192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]---192.1.2.254...%opportunistic[%fromcert]===10.1.0.0/24; prospective erouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
+000 "private#10.1.0.0/24":   host: oriented; local: 192.1.2.45; remote: %opportunistic;
 000 "private#10.1.0.0/24":   mycert=west; my_updown=ipsec _updown;
 000 "private#10.1.0.0/24":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "private#10.1.0.0/24":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
@@ -221,6 +225,7 @@ west #
 000 "private#10.1.0.0/24":   routing: routed-ondemand;
 000 "private#10.1.0.0/24":   conn serial: $4, instantiated from: $1;
 000 "private-or-clear": 192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]---192.1.2.254...%opportunisticgroup[%fromcert]; unrouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
+000 "private-or-clear":   host: oriented; local: 192.1.2.45; remote: %opportunisticgroup;
 000 "private-or-clear":   mycert=west; my_updown=ipsec _updown;
 000 "private-or-clear":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "private-or-clear":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
@@ -240,6 +245,7 @@ west #
 000 "private-or-clear":   routing: unrouted;
 000 "private-or-clear":   conn serial: $2;
 000 "private-or-clear#192.1.2.0/24": 192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]---192.1.2.254...%opportunistic[%fromcert]===192.1.2.0/24; prospective erouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
+000 "private-or-clear#192.1.2.0/24":   host: oriented; local: 192.1.2.45; remote: %opportunistic;
 000 "private-or-clear#192.1.2.0/24":   mycert=west; my_updown=ipsec _updown;
 000 "private-or-clear#192.1.2.0/24":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "private-or-clear#192.1.2.0/24":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;

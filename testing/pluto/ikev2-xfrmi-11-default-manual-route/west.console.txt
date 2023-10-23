@@ -152,6 +152,7 @@ west #
 000 Connection list:
 000  
 000 "west": 0.0.0.0/0===192.1.2.45[@west]...192.1.2.23[@east]===0.0.0.0/0; erouted; eroute owner: #2; oriented; my_ip=unset; their_ip=unset;
+000 "west":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
 000 "west":   my_updown=ipsec _updown;
 000 "west":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "west":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;

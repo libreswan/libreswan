@@ -95,6 +95,7 @@ east #
 000 Connection list:
 000  
 000 "west-east-ikev2": 192.1.2.23:4500[@east]...192.1.2.45:2500[@west]; unrouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
+000 "west-east-ikev2":   host: oriented; local: 192.1.2.23:4500; remote: 192.1.2.45:2500;
 000 "west-east-ikev2":   my_updown=ipsec _updown;
 000 "west-east-ikev2":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "west-east-ikev2":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;

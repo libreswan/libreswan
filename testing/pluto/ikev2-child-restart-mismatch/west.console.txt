@@ -77,6 +77,7 @@ west #
 west #
  ipsec status | grep westnet-eastnet
 000 "westnet-eastnet-ikev2b": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.200.0/24; unrouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
+000 "westnet-eastnet-ikev2b":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
 000 "westnet-eastnet-ikev2b":   my_updown=ipsec _updown;
 000 "westnet-eastnet-ikev2b":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "westnet-eastnet-ikev2b":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
@@ -95,6 +96,7 @@ west #
 000 "westnet-eastnet-ikev2b":   routing: unrouted;
 000 "westnet-eastnet-ikev2b":   conn serial: $2;
 000 "westnet-eastnet-ikev2c": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.201.0/24; unrouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
+000 "westnet-eastnet-ikev2c":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
 000 "westnet-eastnet-ikev2c":   my_updown=ipsec _updown;
 000 "westnet-eastnet-ikev2c":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "westnet-eastnet-ikev2c":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;

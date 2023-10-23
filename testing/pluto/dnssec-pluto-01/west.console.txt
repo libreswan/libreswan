@@ -32,7 +32,9 @@ west #
 west #
  ipsec auto --status | grep -E "oriented|east-from-hosts"
 000 "westnet-eastnet-etc-hosts": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23<east-from-hosts-file>[@east]===192.0.2.0/24; unrouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
+000 "westnet-eastnet-etc-hosts":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23<east-from-hosts-file>;
 000 "westnet-eastnet-etc-hosts-auto-add": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23<east-from-hosts-file>[@east]===192.0.2.0/24; unrouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
+000 "westnet-eastnet-etc-hosts-auto-add":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23<east-from-hosts-file>;
 west #
  echo "initdone"
 initdone

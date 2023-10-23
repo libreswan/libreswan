@@ -13,6 +13,7 @@ west #
 west #
  ipsec auto --status |grep nss-cert
 000 "nss-cert": 192.0.1.254/32===192.1.2.45[@west.testing.libreswan.org]...192.1.2.23[%fromcert]===192.0.2.254/32; unrouted; eroute owner: #0; oriented; my_ip=192.0.1.254; their_ip=192.0.2.254;
+000 "nss-cert":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
 000 "nss-cert":   mycert=west; my_updown=ipsec _updown;
 000 "nss-cert":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "nss-cert":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;

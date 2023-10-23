@@ -99,6 +99,7 @@ east #
 000 Connection list:
 000  
 000 "failureshunt": 192.1.2.23...192.1.2.45; unrouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
+000 "failureshunt":   host: oriented; local: 192.1.2.23; remote: 192.1.2.45;
 000 "failureshunt":   my_updown=ipsec _updown;
 000 "failureshunt":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "failureshunt":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
@@ -117,6 +118,7 @@ east #
 000 "failureshunt":   routing: unrouted;
 000 "failureshunt":   conn serial: $1;
 000 "westnet-eastnet": 192.1.2.23...192.1.2.45; unrouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
+000 "westnet-eastnet":   host: oriented; local: 192.1.2.23; remote: 192.1.2.45;
 000 "westnet-eastnet":   my_updown=ipsec _updown;
 000 "westnet-eastnet":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "westnet-eastnet":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;

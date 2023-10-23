@@ -88,6 +88,7 @@ ipsec auto --status
 000 Connection list:
 000  
 000 "road-eastnet-nonat": 192.0.2.0/24===192.1.2.23[@east]...%any[@road]===192.0.2.219/32; unrouted; eroute owner: #0; oriented; my_ip=unset; their_ip=192.0.2.219;
+000 "road-eastnet-nonat":   host: oriented; local: 192.1.2.23; remote: %any;
 000 "road-eastnet-nonat":   my_updown=ipsec _updown;
 000 "road-eastnet-nonat":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "road-eastnet-nonat":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
