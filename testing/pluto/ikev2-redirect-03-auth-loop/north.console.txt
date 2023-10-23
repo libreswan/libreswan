@@ -21,6 +21,6 @@ north #
 north #
  # confirm east is in unrouted state again
 north #
- hostname | grep east > /dev/null && ipsec status |grep "eroute owner"
+ hostname | grep east > /dev/null && ipsec status | grep "[.][.][.]"
 north #
  

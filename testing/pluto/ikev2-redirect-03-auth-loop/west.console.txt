@@ -83,6 +83,6 @@ west #
 west #
  # confirm east is in unrouted state again
 west #
- hostname | grep east > /dev/null && ipsec status |grep "eroute owner"
+ hostname | grep east > /dev/null && ipsec status | grep "[.][.][.]"
 west #
  

@@ -12,6 +12,6 @@ ipsec start
 ipsec auto --add westnet-all
 ip route list
 for i in `seq 1 12`; do ipsec auto --add orient$i; done
-ipsec auto --status |grep "[.][.][.]" |grep "eroute owner"
+ipsec auto --status |grep "[.][.][.]"
 ipsec whack --impair suppress-retransmits
 echo "initdone"

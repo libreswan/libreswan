@@ -53,6 +53,6 @@ src 192.0.2.0/24 dst 192.0.1.0/24
 north #
  # confirm east is in unrouted state again
 north #
- hostname | grep east > /dev/null && ipsec status |grep "eroute owner"
+ hostname | grep east > /dev/null && ipsec status | grep "[.][.][.]"
 north #
  
