@@ -41,6 +41,7 @@ up
 west #
  ipsec auto --up westnet-eastnet-ikev2b
 002 "westnet-eastnet-ikev2b" #3: initiating Child SA using IKE SA #1
+002 "westnet-eastnet-ikev2b" #3: connection is already unrouted HOLD
 1v2 "westnet-eastnet-ikev2b" #3: sent CREATE_CHILD_SA request for new IPsec SA
 004 "westnet-eastnet-ikev2b" #3: initiator established Child SA using #1; IPsec tunnel [192.0.100.0-192.0.100.255:0-65535 0] -> [192.0.200.0-192.0.200.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #

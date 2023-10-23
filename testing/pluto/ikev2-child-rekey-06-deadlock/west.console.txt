@@ -34,7 +34,7 @@ west #
 initdone
 west #
  ipsec auto --status | grep west
-000 "west": 192.1.2.45[@west]...192.1.2.23[@east]; unrouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
+000 "west": 192.1.2.45[@west]...192.1.2.23[@east]; unrouted; my_ip=unset; their_ip=unset;
 000 "west":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
 000 "west":   my_updown=ipsec _updown;
 000 "west":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]

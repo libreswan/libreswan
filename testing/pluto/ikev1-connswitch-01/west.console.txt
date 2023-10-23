@@ -17,7 +17,7 @@ west #
 002 "westnet-eastnet-ikev1": added IKEv1 connection
 west #
  ipsec auto --status | grep westnet-eastnet-ikev1
-000 "westnet-eastnet-ikev1": 192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]...192.1.2.23[%fromcert]; unrouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
+000 "westnet-eastnet-ikev1": 192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]...192.1.2.23[%fromcert]; unrouted; my_ip=unset; their_ip=unset;
 000 "westnet-eastnet-ikev1":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
 000 "westnet-eastnet-ikev1":   mycert=west; my_updown=ipsec _updown;
 000 "westnet-eastnet-ikev1":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]

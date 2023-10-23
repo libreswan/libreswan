@@ -15,7 +15,7 @@ east #
 initdone
 east #
  ipsec status | grep eastnet
-000 "roadnet-eastnet-ipv4-psk-ikev1": 192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org,MS+XS+S=C]...%any[%fromcert,+MC+XS+S=C]; unrouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
+000 "roadnet-eastnet-ipv4-psk-ikev1": 192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org,MS+XS+S=C]...%any[%fromcert,+MC+XS+S=C]; unrouted; my_ip=unset; their_ip=unset;
 000 "roadnet-eastnet-ipv4-psk-ikev1":   host: oriented; local: 192.1.2.23; remote: %any;
 000 "roadnet-eastnet-ipv4-psk-ikev1":   mycert=east; my_updown=ipsec _updown;
 000 "roadnet-eastnet-ipv4-psk-ikev1":   xauth us:server, xauth them:server, xauthby:alwaysok; my_username=[any]; their_username=[any]
@@ -34,7 +34,7 @@ east #
 000 "roadnet-eastnet-ipv4-psk-ikev1":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
 000 "roadnet-eastnet-ipv4-psk-ikev1":   routing: unrouted;
 000 "roadnet-eastnet-ipv4-psk-ikev1":   conn serial: $1;
-000 "roadnet-eastnet-ipv4-psk-ikev1"[1]: 192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org,MS+XS+S=C]...192.1.2.254[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org,+MC+XS+S=C]===192.0.2.1/32; erouted; eroute owner: #4; oriented; my_ip=unset; their_ip=192.0.2.1;
+000 "roadnet-eastnet-ipv4-psk-ikev1"[1]: 192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org,MS+XS+S=C]...192.1.2.254[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org,+MC+XS+S=C]===192.0.2.1/32; routed-tunnel; my_ip=unset; their_ip=192.0.2.1;
 000 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   host: oriented; local: 192.1.2.23; remote: 192.1.2.254;
 000 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   mycert=east; my_updown=ipsec _updown;
 000 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   xauth us:server, xauth them:server, xauthby:alwaysok; my_username=[any]; their_username=[any]

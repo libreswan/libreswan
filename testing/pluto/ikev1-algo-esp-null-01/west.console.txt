@@ -27,7 +27,7 @@ west #
 002 "westnet-eastnet-null": added IKEv1 connection
 west #
  ipsec auto --status | grep westnet-eastnet-null
-000 "westnet-eastnet-null": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
+000 "westnet-eastnet-null": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
 000 "westnet-eastnet-null":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
 000 "westnet-eastnet-null":   my_updown=ipsec _updown;
 000 "westnet-eastnet-null":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]

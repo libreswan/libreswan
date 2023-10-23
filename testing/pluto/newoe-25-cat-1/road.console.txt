@@ -145,7 +145,7 @@ road #
 000 "clear":   nat-traversal: encaps:no; keepalive:no
 000 "clear":   routing: unrouted;
 000 "clear":   conn serial: $1;
-000 "clear#192.1.2.253/32": 192.1.3.209---192.1.3.254...%any===192.1.2.253/32; prospective erouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
+000 "clear#192.1.2.253/32": 192.1.3.209---192.1.3.254...%any===192.1.2.253/32; routed-ondemand; my_ip=unset; their_ip=unset;
 000 "clear#192.1.2.253/32":   my_updown=ipsec _updown;
 000 "clear#192.1.2.253/32":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "clear#192.1.2.253/32":   our auth:never, their auth:never, our autheap:none, their autheap:none;

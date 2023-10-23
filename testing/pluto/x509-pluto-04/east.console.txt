@@ -16,7 +16,7 @@ east #
 002 "westnet-eastnet-x509-cr": added IKEv1 connection
 east #
  ipsec auto --status | grep westnet-eastnet-x509-cr
-000 "westnet-eastnet-x509-cr": 192.0.2.0/24===192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]...192.1.2.45[%fromcert]===192.0.1.0/24; unrouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
+000 "westnet-eastnet-x509-cr": 192.0.2.0/24===192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]...192.1.2.45[%fromcert]===192.0.1.0/24; unrouted; my_ip=unset; their_ip=unset;
 000 "westnet-eastnet-x509-cr":   host: oriented; local: 192.1.2.23; remote: 192.1.2.45;
 000 "westnet-eastnet-x509-cr":   mycert=east; my_updown=ipsec _updown;
 000 "westnet-eastnet-x509-cr":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]

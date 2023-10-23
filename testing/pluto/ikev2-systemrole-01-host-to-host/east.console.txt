@@ -133,7 +133,7 @@ east #
 000  
 000 Connection list:
 000  
-000 "192.1.2.23-to-192.1.2.45": 192.1.2.23...192.1.2.45; prospective erouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
+000 "192.1.2.23-to-192.1.2.45": 192.1.2.23...192.1.2.45; routed-ondemand; my_ip=unset; their_ip=unset;
 000 "192.1.2.23-to-192.1.2.45":   host: oriented; local: 192.1.2.23; remote: 192.1.2.45;
 000 "192.1.2.23-to-192.1.2.45":   my_updown=ipsec _updown;
 000 "192.1.2.23-to-192.1.2.45":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]

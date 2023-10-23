@@ -110,7 +110,7 @@ west #
 000  
 000 Connection list:
 000  
-000 "westnet-eastnet-gcm": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
+000 "westnet-eastnet-gcm": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
 000 "westnet-eastnet-gcm":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
 000 "westnet-eastnet-gcm":   my_updown=ipsec _updown;
 000 "westnet-eastnet-gcm":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]

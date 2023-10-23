@@ -9,7 +9,7 @@ east #
 002 "westnet-eastnet-ah-sha1-pfs": added IKEv1 connection
 east #
  ipsec auto --status | grep westnet-eastnet-ah-sha1-pfs
-000 "westnet-eastnet-ah-sha1-pfs": 192.0.2.0/24===192.1.2.23[@east]...192.1.2.45[@west]===192.0.1.0/24; unrouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
+000 "westnet-eastnet-ah-sha1-pfs": 192.0.2.0/24===192.1.2.23[@east]...192.1.2.45[@west]===192.0.1.0/24; unrouted; my_ip=unset; their_ip=unset;
 000 "westnet-eastnet-ah-sha1-pfs":   host: oriented; local: 192.1.2.23; remote: 192.1.2.45;
 000 "westnet-eastnet-ah-sha1-pfs":   my_updown=ipsec _updown;
 000 "westnet-eastnet-ah-sha1-pfs":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]

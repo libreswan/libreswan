@@ -122,7 +122,7 @@ west #
 000  
 000 Connection list:
 000  
-000 "v6-transport": 2001:db8:1:2::45[@west]...2001:db8:1:2::23[@east]; unrouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
+000 "v6-transport": 2001:db8:1:2::45[@west]...2001:db8:1:2::23[@east]; unrouted; my_ip=unset; their_ip=unset;
 000 "v6-transport":   host: oriented; local: 2001:db8:1:2::45; remote: 2001:db8:1:2::23;
 000 "v6-transport":   my_updown=ipsec _updown;
 000 "v6-transport":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]

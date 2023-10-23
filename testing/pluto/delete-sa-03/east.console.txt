@@ -15,7 +15,7 @@ east #
 002 "west-east-c": added IKEv1 connection
 east #
  ipsec auto --status | grep west-
-000 "west-east": 192.1.2.23[@east]...192.1.2.45[@west]; unrouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
+000 "west-east": 192.1.2.23[@east]...192.1.2.45[@west]; unrouted; my_ip=unset; their_ip=unset;
 000 "west-east":   host: oriented; local: 192.1.2.23; remote: 192.1.2.45;
 000 "west-east":   my_updown=ipsec _updown;
 000 "west-east":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
@@ -33,7 +33,7 @@ east #
 000 "west-east":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
 000 "west-east":   routing: unrouted;
 000 "west-east":   conn serial: $1;
-000 "west-east-b": 198.51.100.2/32===192.1.2.23[@east]...192.1.2.45[@west]===198.51.100.1/32; unrouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
+000 "west-east-b": 198.51.100.2/32===192.1.2.23[@east]...192.1.2.45[@west]===198.51.100.1/32; unrouted; my_ip=unset; their_ip=unset;
 000 "west-east-b":   host: oriented; local: 192.1.2.23; remote: 192.1.2.45;
 000 "west-east-b":   my_updown=ipsec _updown;
 000 "west-east-b":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
@@ -51,7 +51,7 @@ east #
 000 "west-east-b":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
 000 "west-east-b":   routing: unrouted;
 000 "west-east-b":   conn serial: $2;
-000 "west-east-c": 198.51.100.4/32===192.1.2.23[@east]...192.1.2.45[@west]===198.51.100.3/32; unrouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
+000 "west-east-c": 198.51.100.4/32===192.1.2.23[@east]...192.1.2.45[@west]===198.51.100.3/32; unrouted; my_ip=unset; their_ip=unset;
 000 "west-east-c":   host: oriented; local: 192.1.2.23; remote: 192.1.2.45;
 000 "west-east-c":   my_updown=ipsec _updown;
 000 "west-east-c":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
@@ -76,7 +76,7 @@ east #
  # both east and west should still have one IKE SA #1
 east #
  ipsec status | grep west-east
-000 "west-east": 192.1.2.23[@east]...192.1.2.45[@west]; unrouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
+000 "west-east": 192.1.2.23[@east]...192.1.2.45[@west]; unrouted; my_ip=unset; their_ip=unset;
 000 "west-east":   host: oriented; local: 192.1.2.23; remote: 192.1.2.45;
 000 "west-east":   my_updown=ipsec _updown;
 000 "west-east":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
@@ -94,7 +94,7 @@ east #
 000 "west-east":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
 000 "west-east":   routing: unrouted;
 000 "west-east":   conn serial: $1;
-000 "west-east-b": 198.51.100.2/32===192.1.2.23[@east]...192.1.2.45[@west]===198.51.100.1/32; erouted; eroute owner: #3; oriented; my_ip=unset; their_ip=unset;
+000 "west-east-b": 198.51.100.2/32===192.1.2.23[@east]...192.1.2.45[@west]===198.51.100.1/32; routed-tunnel; my_ip=unset; their_ip=unset;
 000 "west-east-b":   host: oriented; local: 192.1.2.23; remote: 192.1.2.45;
 000 "west-east-b":   my_updown=ipsec _updown;
 000 "west-east-b":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
@@ -113,7 +113,7 @@ east #
 000 "west-east-b":   routing: routed-tunnel; established IPsec SA: #3;
 000 "west-east-b":   conn serial: $2;
 000 "west-east-b":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
-000 "west-east-c": 198.51.100.4/32===192.1.2.23[@east]...192.1.2.45[@west]===198.51.100.3/32; erouted; eroute owner: #4; oriented; my_ip=unset; their_ip=unset;
+000 "west-east-c": 198.51.100.4/32===192.1.2.23[@east]...192.1.2.45[@west]===198.51.100.3/32; routed-tunnel; my_ip=unset; their_ip=unset;
 000 "west-east-c":   host: oriented; local: 192.1.2.23; remote: 192.1.2.45;
 000 "west-east-c":   my_updown=ipsec _updown;
 000 "west-east-c":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]

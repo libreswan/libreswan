@@ -9,7 +9,7 @@ east #
 002 "east-any": added IKEv2 connection
 east #
  ipsec auto --status | grep east-any
-000 "east-any": 192.1.2.23...%any; unrouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
+000 "east-any": 192.1.2.23...%any; unrouted; my_ip=unset; their_ip=unset;
 000 "east-any":   host: oriented; local: 192.1.2.23; remote: %any;
 000 "east-any":   my_updown=ipsec _updown;
 000 "east-any":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]

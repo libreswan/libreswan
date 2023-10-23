@@ -10,7 +10,7 @@ west #
 002 "west-east-ikev2": added IKEv2 connection
 west #
  ipsec auto --status | grep west-east-ikev2
-000 "west-east-ikev2": 192.1.2.45:2500[@west]...192.1.2.23:4500[@east]; unrouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
+000 "west-east-ikev2": 192.1.2.45:2500[@west]...192.1.2.23:4500[@east]; unrouted; my_ip=unset; their_ip=unset;
 000 "west-east-ikev2":   host: oriented; local: 192.1.2.45:2500; remote: 192.1.2.23:4500;
 000 "west-east-ikev2":   my_updown=ipsec _updown;
 000 "west-east-ikev2":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]

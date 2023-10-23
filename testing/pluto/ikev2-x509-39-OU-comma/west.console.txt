@@ -30,9 +30,9 @@ west #
 initdone
 west #
  ipsec status |grep OU=
-000 "x509": 192.0.1.0/24===192.1.2.45[CN=client, OU=Global\, Support\, Services, O=Test Example, L=Brno, ST=Moravia, C=CZ]...192.1.2.23[CN=server, OU=Global\, Support\, Services, O=Test Example, L=Brno, ST=Moravia, C=CZ]===192.0.2.0/24; unrouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
+000 "x509": 192.0.1.0/24===192.1.2.45[CN=client, OU=Global\, Support\, Services, O=Test Example, L=Brno, ST=Moravia, C=CZ]...192.1.2.23[CN=server, OU=Global\, Support\, Services, O=Test Example, L=Brno, ST=Moravia, C=CZ]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
 000 "x509":   our idtype: ID_DER_ASN1_DN; our id=CN=client, OU=Global\, Support\, Services, O=Test Example, L=Brno, ST=Moravia, C=CZ; their idtype: ID_DER_ASN1_DN; their id=CN=server, OU=Global\, Support\, Services, O=Test Example, L=Brno, ST=Moravia, C=CZ
-000 "x509-comma-comma": 192.0.1.0/24===192.1.2.45[CN=client, OU=Global\, Support\, Services, O=Test Example, L=Brno, ST=Moravia, C=CZ]...192.1.2.23[CN=server, OU=Global\, Support\, Services, O=Test Example, L=Brno, ST=Moravia, C=CZ]===192.0.2.0/24; unrouted; eroute owner: #0; oriented; my_ip=unset; their_ip=unset;
+000 "x509-comma-comma": 192.0.1.0/24===192.1.2.45[CN=client, OU=Global\, Support\, Services, O=Test Example, L=Brno, ST=Moravia, C=CZ]...192.1.2.23[CN=server, OU=Global\, Support\, Services, O=Test Example, L=Brno, ST=Moravia, C=CZ]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
 000 "x509-comma-comma":   our idtype: ID_DER_ASN1_DN; our id=CN=client, OU=Global\, Support\, Services, O=Test Example, L=Brno, ST=Moravia, C=CZ; their idtype: ID_DER_ASN1_DN; their id=CN=server, OU=Global\, Support\, Services, O=Test Example, L=Brno, ST=Moravia, C=CZ
 west #
  ipsec auto --listall |grep OU=
