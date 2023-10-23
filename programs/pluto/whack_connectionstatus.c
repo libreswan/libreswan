@@ -301,17 +301,14 @@ static void show_one_spd(struct show *s,
 		jam_string(buf, " ");
 		jam_spd(buf, spd);
 		jam_string(buf, ";");
-		/* routing */
+		/* routing/orienting */
 		jam_string(buf, " ");
-		jam_enum(buf, &routing_tails, c->child.routing);
-		jam_string(buf, ";");
-		/* owner */
-		jam_string(buf, " eroute owner: ");
-		jam_so(buf, c->newest_routing_sa);
-		jam_string(buf, ";");
-		/* orientation */
-		jam_string(buf, " ");
-		jam_string(buf, (oriented(c) ? "oriented" : "unoriented"));
+		if (!oriented(c)) {
+			jam_string(buf, "unoriented");
+			PEXPECT(show_logger(s), c->child.routing == RT_UNROUTED);
+		} else {
+			jam_enum_human(buf, &routing_names, c->child.routing);
+		}
 		jam_string(buf, ";");
 #define OPT_HOST(H)					\
 		if (address_is_specified(H)) {		\
