@@ -1104,33 +1104,8 @@ static bool load_conn(struct starter_conn *conn,
 		}
 	}
 
-	if (conn->options_set[KNCF_NEGOTIATIONSHUNT]) {
-		switch (conn->options[KNCF_NEGOTIATIONSHUNT]) {
-		case KNS_NEGO_PASS:
-			conn->negotiation_shunt = SHUNT_PASS;
-			break;
-		case KNS_NEGO_HOLD:
-			conn->negotiation_shunt = SHUNT_HOLD;
-			break;
-		}
-	}
-
-	if (conn->options_set[KNCF_FAILURESHUNT]) {
-		switch (conn->options[KNCF_FAILURESHUNT]) {
-		case KFS_FAIL_NONE:
-			conn->failure_shunt = SHUNT_NONE;
-			break;
-		case KFS_FAIL_PASS:
-			conn->failure_shunt = SHUNT_PASS;
-			break;
-		case KFS_FAIL_DROP:
-			conn->failure_shunt = SHUNT_DROP;
-			break;
-		case KFS_FAIL_REJECT:
-			conn->failure_shunt = SHUNT_REJECT;
-			break;
-		}
-	}
+	conn->negotiation_shunt = conn->options[KNCF_NEGOTIATIONSHUNT];
+	conn->failure_shunt = conn->options[KNCF_FAILURESHUNT];
 
 	/* i.e., default is to have policy off */
 #define KW_POLICY_FLAG(val, fl)						\

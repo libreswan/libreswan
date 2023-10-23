@@ -43,11 +43,11 @@
  * Values for failureshunt={passthrough, drop, reject, none}
  */
 static const struct sparse_name kw_failureshunt_list[] = {
-	{ "none",        KFS_FAIL_NONE },
-	{ "passthrough", KFS_FAIL_PASS },
-	{ "drop",        KFS_FAIL_DROP },
-	{ "hold",        KFS_FAIL_DROP }, /* alias */
-	{ "reject",      KFS_FAIL_REJECT },
+	{ "none",        SHUNT_NONE },
+	{ "passthrough", SHUNT_PASS },
+	{ "drop",        SHUNT_DROP },
+	{ "hold",        SHUNT_DROP }, /* alias */
+	{ "reject",      SHUNT_REJECT },
 	SPARSE_NULL
 };
 
@@ -55,9 +55,9 @@ static const struct sparse_name kw_failureshunt_list[] = {
  * Values for negotiationshunt={passthrough, hold}
  */
 static const struct sparse_name kw_negotiationshunt_list[] = {
-	{ "passthrough", KNS_NEGO_PASS },
-	{ "drop",        KNS_NEGO_HOLD }, /* alias */
-	{ "hold",        KNS_NEGO_HOLD },
+	{ "passthrough", SHUNT_PASS },
+	{ "drop",        SHUNT_HOLD }, /* alias */
+	{ "hold",        SHUNT_HOLD },
 	SPARSE_NULL
 };
 

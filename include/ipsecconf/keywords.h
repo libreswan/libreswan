@@ -330,18 +330,6 @@ enum keyword_satype {
 	KS_REJECT    = 4,
 };
 
-enum keyword_failure_shunt {
-	KFS_FAIL_NONE,
-	KFS_FAIL_PASS,
-	KFS_FAIL_DROP,
-	KFS_FAIL_REJECT
-};
-
-enum keyword_negotiation_shunt {
-	KNS_NEGO_PASS,
-	KNS_NEGO_HOLD
-};
-
 enum keyword_type {
 	kt_string,              /* value is some string */
 	kt_appendstring,        /* value is some string, append duplicates */
