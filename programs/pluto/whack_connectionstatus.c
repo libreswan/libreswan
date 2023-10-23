@@ -511,32 +511,50 @@ static void show_connection_status(struct show *s, const struct connection *c)
 
 	/* the banner */
 	if (c->config->modecfg.banner != NULL) {
-		show_comment(s, PRI_CONNECTION":   banner:%s;",
-			     c->name, instance, c->config->modecfg.banner);
+		SHOW_JAMBUF(RC_COMMENT, s, buf) {
+			jam(buf, PRI_CONNECTION":  ", c->name, instance);
+			/* banner */
+			jam_string(buf, " banner:");
+			jam_string(buf, c->config->modecfg.banner);
+			jam_string(buf, ";");
+		}
 	}
 
 	/* The first valid sec_label. */
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
-		jam(buf, PRI_CONNECTION":   sec_label:", c->name, instance);
+		jam(buf, PRI_CONNECTION":  ", c->name, instance);
+		jam_string(buf, " sec_label:");
 		if (is_labeled_child(c)) {
 			/* negotiated (IKEv2) */
 			jam_shunk(buf, c->child.sec_label);
+			/* jam_string(buf, ";"); */
 		} else if (is_labeled_template(c) ||
 			   is_labeled_parent(c)) {
 			/* configured */
 			jam_shunk(buf, c->config->sec_label);
+			/* jam_string(buf, ";"); */
 		} else {
 			jam_string(buf, "unset;");
 		}
 	}
 
 	/* Show CAs */
-	if (c->local->host.config->ca.ptr != NULL || c->remote->host.config->ca.ptr != NULL) {
-		dn_buf this_ca, that_ca;
-		show_comment(s, PRI_CONNECTION":   CAs: '%s'...'%s'",
-			     c->name, instance,
-			     str_dn_or_null(ASN1(c->local->host.config->ca), "%any", &this_ca),
-			     str_dn_or_null(ASN1(c->remote->host.config->ca), "%any", &that_ca));
+	if (c->local->host.config->ca.ptr != NULL ||
+	    c->remote->host.config->ca.ptr != NULL) {
+		SHOW_JAMBUF(RC_COMMENT, s, buf) {
+			jam(buf, PRI_CONNECTION":  ", c->name, instance);
+			jam_string(buf, " CAs: ");
+			/* this */
+			jam_string(buf, "'");
+			jam_dn_or_null(buf, ASN1(c->local->host.config->ca), "%any", jam_sanitized_bytes);
+			jam_string(buf, "'");
+			/* sep */
+			jam_string(buf, "...");
+			/* that */
+			jam_string(buf, "'");
+			jam_dn_or_null(buf, ASN1(c->remote->host.config->ca), "%any", jam_sanitized_bytes);
+			jam_string(buf, "'");
+		}
 	}
 
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
@@ -550,12 +568,21 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		jam(buf, " rekey_fuzz: %lu%%;", c->config->sa_rekey_fuzz);
 	}
 
-	show_comment(s, PRI_CONNECTION":   retransmit-interval: %jdms; retransmit-timeout: %jds; iketcp:%s; iketcp-port:"PRI_HPORT";",
-		     c->name, instance,
-		     deltamillisecs(c->config->retransmit_interval),
-		     deltasecs(c->config->retransmit_timeout),
-		     enum_name_short(&tcp_option_story, c->config->iketcp),
-		     pri_hport(c->config->remote_tcpport));
+	SHOW_JAMBUF(RC_COMMENT, s, buf) {
+		jam(buf, PRI_CONNECTION":  ", c->name, instance);
+		jam(buf, " retransmit-interval: %jdms;",
+		    deltamillisecs(c->config->retransmit_interval));
+		jam(buf, " retransmit-timeout: %jds;",
+		    deltasecs(c->config->retransmit_timeout));
+		/* tcp? */
+		jam_string(buf, " iketcp:");
+		jam_enum_short(buf, &tcp_option_story, c->config->iketcp);
+		jam_string(buf, ";");
+		/* tcp-port */
+		jam_string(buf, " iketcp-port:");
+		jam_hport(buf, c->config->remote_tcpport);
+		jam_string(buf, ";");
+	}
 
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
 		jam(buf, PRI_CONNECTION":  ", c->name, instance);
@@ -593,11 +620,13 @@ static void show_connection_status(struct show *s, const struct connection *c)
 	}
 
 	if (c->config->ike_version == IKEv2) {
-		lset_buf hashpolbuf;
-		show_comment(s, PRI_CONNECTION":   v2-auth-hash-policy: %s;",
-			     c->name, instance,
-			     str_lset_short(&ikev2_hash_algorithm_names, "+",
-					    c->config->sighash_policy, &hashpolbuf));
+		SHOW_JAMBUF(RC_COMMENT, s, buf) {
+			jam(buf, PRI_CONNECTION":  ", c->name, instance);
+			jam_string(buf, " v2-auth-hash-policy: ");
+			jam_lset_short(buf, &ikev2_hash_algorithm_names, "+",
+				       c->config->sighash_policy);
+			jam_string(buf, ";");
+		}
 	}
 
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
@@ -676,34 +705,41 @@ static void show_connection_status(struct show *s, const struct connection *c)
 					      "no"));
 	}
 
-	{
-		id_buf thisidb;
-		id_buf thatidb;
 
-		show_comment(s, PRI_CONNECTION":   our idtype: %s; our id=%s; their idtype: %s; their id=%s",
-			     c->name, instance,
-			     enum_name(&ike_id_type_names, c->local->host.id.kind),
-			     str_id(&c->local->host.id, &thisidb),
-			     enum_name(&ike_id_type_names, c->remote->host.id.kind),
-			     str_id(&c->remote->host.id, &thatidb));
+	SHOW_JAMBUF(RC_COMMENT, s, buf) {
+		jam(buf, PRI_CONNECTION":  ", c->name, instance);
+		/* our id */
+		jam_string(buf, " our idtype: ");
+		jam_enum(buf, &ike_id_type_names, c->local->host.id.kind);
+		jam_string(buf, ";");
+		jam_string(buf, " our id=");
+		jam_id(buf, &c->local->host.id);
+		jam_string(buf, ";");
+		/* our id */
+		jam_string(buf, " their idtype: ");
+		jam_enum(buf, &ike_id_type_names, c->remote->host.id.kind);
+		jam_string(buf, ";");
+		jam_string(buf, " their id=");
+		jam_id(buf, &c->remote->host.id);
 	}
 
 	switch (c->config->ike_version) {
 	case IKEv1:
-		show_comment(s, PRI_CONNECTION":   dpd: %s; delay:%jds; timeout:%jds",
-			     c->name, instance,
-			     (deltasecs(c->config->dpd.delay) > 0 &&
-			      deltasecs(c->config->dpd.timeout) > 0 ? "active" : "passive"),
-			     deltasecs(c->config->dpd.delay),
-			     deltasecs(c->config->dpd.timeout));
+		SHOW_JAMBUF(RC_COMMENT, s, buf) {
+			jam(buf, PRI_CONNECTION":  ", c->name, instance);
+			jam(buf, " dpd: %s;", (deltasecs(c->config->dpd.delay) > 0 &&
+					       deltasecs(c->config->dpd.timeout) > 0 ? "active" : "passive"));
+			jam(buf, " delay:%jds;", deltasecs(c->config->dpd.delay));
+			jam(buf, " timeout:%jds", deltasecs(c->config->dpd.timeout));
+		}
 		break;
-
 	case IKEv2:
-		show_comment(s, PRI_CONNECTION":   liveness: %s; dpddelay:%jds; retransmit-timeout:%jds",
-			     c->name, instance,
-			     deltasecs(c->config->dpd.delay) > 0 ? "active" : "passive",
-			     deltasecs(c->config->dpd.delay),
-			     deltasecs(c->config->retransmit_timeout));
+		SHOW_JAMBUF(RC_COMMENT, s, buf) {
+			jam(buf, PRI_CONNECTION":  ", c->name, instance);
+			jam(buf, " liveness: %s;", (deltasecs(c->config->dpd.delay) > 0 ? "active" : "passive"));
+			jam(buf, " dpddelay:%jds;", deltasecs(c->config->dpd.delay));
+			jam(buf, " retransmit-timeout:%jds", deltasecs(c->config->retransmit_timeout));
+		}
 		break;
 
 	}
@@ -796,9 +832,11 @@ static void show_connection_status(struct show *s, const struct connection *c)
 	}
 
 	if (c->config->connalias != NULL) {
-		show_comment(s, PRI_CONNECTION":   aliases: %s",
-			     c->name, instance,
-			     c->config->connalias);
+		SHOW_JAMBUF(RC_COMMENT, s, buf) {
+			jam(buf, PRI_CONNECTION":  ", c->name, instance);
+			jam_string(buf, " aliases: ");
+			jam_string(buf, c->config->connalias);
+		}
 	}
 
 	show_ike_alg_connection(s, c, instance);
