@@ -9,3 +9,9 @@ Just add route to the subnet via dev ipsec0
 
 Also note output marks are not necessary, there will not be any routing loop,
 because that end IP address is outside the extruded subnet.
+
+This also tests for refcounting added connection that are re-added without
+having gotten up. This is to confirm this error no longer happens:
+
+002 "north": cannot delete ipsec-interface=ipsec1 if_id=1, not created by pluto
+

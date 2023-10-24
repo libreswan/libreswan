@@ -18,6 +18,12 @@ north #
  ipsec auto --add north
 002 "north": added IKEv2 connection
 north #
+ # test for refcounting when connection has never been up'ed yet
+north #
+ ipsec auto --add north
+002 "north": terminating SAs using this connection
+002 "north": added IKEv2 connection
+north #
  echo "initdone"
 initdone
 north #
