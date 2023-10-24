@@ -546,6 +546,7 @@ enum option_enums {
 	CD_INTERMEDIATE,
 	CD_OVERLAPIP,
 	CD_MS_DH_DOWNGRADE,
+	CD_PFS_REKEY_WORKAROUND,
 	CD_DNS_MATCH_ID,
 	CD_IGNORE_PEER_DNS,
 	CD_IKEPAD,
@@ -783,6 +784,7 @@ static const struct option long_opts[] = {
 	{ "tunnelipv4", no_argument, NULL, CD_TUNNELIPV4 },
 	{ "tunnelipv6", no_argument, NULL, CD_TUNNELIPV6 },
 	{ "ms-dh-downgrade", optional_argument, NULL, CD_MS_DH_DOWNGRADE },
+	{ "pfs-rekey-workaround", optional_argument, NULL, CD_PFS_REKEY_WORKAROUND, },
 	{ "dns-match-id", optional_argument, NULL, CD_DNS_MATCH_ID },
 	{ "allow-cert-without-san-id", no_argument, NULL, CD_ALLOW_CERT_WITHOUT_SAN_ID },
 	{ "sha2-truncbug", optional_argument, NULL, CD_SHA2_TRUNCBUG },
@@ -1936,6 +1938,10 @@ int main(int argc, char **argv)
 		/* --ms-dh-downgrade */
 		case CD_MS_DH_DOWNGRADE:
 			msg.ms_dh_downgrade = optarg_sparse(YN_YES, yn_option_names);
+			continue;
+
+		case CD_PFS_REKEY_WORKAROUND:	/* --pfs-rekey-workaround[=yes] */
+			msg.pfs_rekey_workaround = optarg_sparse(YN_YES, yn_option_names);
 			continue;
 
 		/* --overlapip */

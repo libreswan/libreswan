@@ -265,9 +265,13 @@ struct config {
 	bool overlapip;			/* can two conns that have
 					 * subnet=vhost: declare the
 					 * same IP? */
+
 	bool ms_dh_downgrade;		/* allow IKEv2 rekey to
 					 * downgrade DH group -
 					 * Microsoft bug */
+	bool pfs_rekey_workaround;	/* include original proposal
+					 * when rekeying */
+
 	bool dns_match_id;		/* perform reverse DNS lookup
 					 * on IP to confirm ID */
 	bool ikev2_pam_authorize;	/* non-standard, custom PAM

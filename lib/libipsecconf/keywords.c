@@ -475,6 +475,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "send-vendorid",  kv_conn,  kt_bool,  KNCF_SEND_VENDORID, NULL, NULL, },
   { "sha2-truncbug",  kv_conn,  kt_enum,  KNCF_SHA2_TRUNCBUG, yn_option_names, NULL, },
   { "ms-dh-downgrade",  kv_conn,  kt_enum,  KNCF_MS_DH_DOWNGRADE, yn_option_names, NULL, },
+  { "pfs-rekey-workaround",  kv_conn,  kt_enum,  KNCF_PFS_REKEY_WORKAROUND, yn_option_names, NULL, },
   { "require-id-on-certificate",  kv_conn,  kt_enum,  KNCF_REQUIRE_ID_ON_CERTIFICATE, yn_option_names, NULL, },
   { "dns-match-id,",  kv_conn,  kt_enum,  KNCF_DNS_MATCH_ID, yn_option_names, NULL, },
   { "ipsec-max-bytes",  kv_conn,  kt_byte,  KNCF_IPSEC_MAXBYTES, NULL, NULL, },

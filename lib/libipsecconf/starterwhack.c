@@ -676,6 +676,7 @@ int starter_whack_add_conn(struct starter_config *cfg,
 	msg.sha2_truncbug = conn->options[KNCF_SHA2_TRUNCBUG]; /*yn_options*/
 	msg.overlapip = conn->options[KNCF_OVERLAPIP]; /*yn_options*/
 	msg.ms_dh_downgrade = conn->options[KNCF_MS_DH_DOWNGRADE]; /*yn_options*/
+	msg.pfs_rekey_workaround = conn->options[KNCF_PFS_REKEY_WORKAROUND];
 	msg.dns_match_id = conn->options[KNCF_DNS_MATCH_ID]; /* yn_options */
 	msg.pam_authorize = conn->options[KNCF_PAM_AUTHORIZE]; /* yn_options */
 	msg.ignore_peer_dns = conn->options[KNCF_IGNORE_PEER_DNS]; /* yn_options */

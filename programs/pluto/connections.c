@@ -2206,6 +2206,9 @@ static diag_t extract_connection(const struct whack_message *wm,
 	config->sha2_truncbug = extract_yn("", "sha2-truncbug", wm->sha2_truncbug, /*default*/false,wm, c->logger);
 	config->overlapip = extract_yn("", "overlapip", wm->overlapip, /*default*/false,wm, c->logger);
 	config->ms_dh_downgrade = extract_yn("", "ms-do-downgrade", wm->ms_dh_downgrade, /*default*/false,wm, c->logger);
+	config->pfs_rekey_workaround = extract_yn("", "pfs-rekey-workaround", wm->pfs_rekey_workaround, /*unset*/false, wm, c->logger);
+
+
 	config->dns_match_id = extract_yn("", "dns-match-id", wm->dns_match_id, /*default*/false,wm, c->logger);
 	config->ikev2_pam_authorize = extract_yn("", "ikev2-pam-authorize", wm->pam_authorize, /*default*/false,wm, c->logger);
 	config->ikepad = extract_yn("", "ikepad", wm->ikepad, /*default*/true,wm, c->logger);
@@ -3682,6 +3685,7 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 	CF(encap_dscp, DONT_ENCAP_DSCP);
 	CT(nopmtudisc, NOPMTUDISC);
 	CT(ms_dh_downgrade, MS_DH_DOWNGRADE);
+	CT(pfs_rekey_workaround, PFS_REKEY_WORKAROUND);
 
 	/* note reverse logic */
 	CF(require_id_on_certificate, ALLOW_NO_SAN);

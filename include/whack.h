@@ -185,6 +185,9 @@ struct whack_message {
 						 * to downgrade DH
 						 * group - Microsoft
 						 * bug */
+	enum yn_options pfs_rekey_workaround;	/* during IKEv2 rekey
+						 * use full esp=
+						 * proposal */
 	enum yn_options dns_match_id;	/* perform reverse DNS lookup
 					 * on IP to confirm ID */
 	enum yn_options pam_authorize;	/* non-standard, custom PAM

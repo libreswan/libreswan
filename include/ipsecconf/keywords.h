@@ -202,6 +202,7 @@ enum keyword_numeric_conn_field {
 
 		KNCF_last_leftright = KNCF_EAP,
 
+	KNCF_PFS_REKEY_WORKAROUND,
 	KNCF_FIREWALL,
 	KNCF_IDTYPE,
 	KNCF_SPIBASE,
