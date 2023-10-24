@@ -630,6 +630,11 @@ int parser_find_keyword(const char *s, YYSTYPE *lval)
 	const struct keyword_def *k;
 	for (k = ipsec_conf_keywords; k->keyname != NULL; k++) {
 		if (strcaseeq(s, k->keyname)) {
+			if ((k->validity & kv_both) == kv_both) {
+				left = true;
+				right = true;
+				break;
+			}
 			if (k->validity & kv_leftright) {
 #if 0 /* see github#663 */
 				left = true;
