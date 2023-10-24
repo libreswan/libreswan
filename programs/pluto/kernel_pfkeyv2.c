@@ -1139,7 +1139,8 @@ static struct sadb_x_policy *put_sadb_x_policy(struct outbuf *req,
 		x_policy->sadb_x_policy_priority = kernel_policy->priority.value;
 #endif
 		if (kernel_policy->nr_rules > 0) {
-			pexpect(policy_type == IPSEC_POLICY_IPSEC);
+			PEXPECT(req->logger, (policy_type == IPSEC_POLICY_IPSEC ||
+					      policy_type == IPSEC_POLICY_DISCARD));
 			/*
 			 * XXX: Only the first rule gets the worm; er
 			 * tunnel flag.
