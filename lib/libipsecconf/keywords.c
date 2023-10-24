@@ -598,6 +598,28 @@ static const struct keyword_def ipsec_conf_keyword_comment =
  *
  */
 
+static bool parse_leftright(const char *s,
+			    const struct keyword_def *k,
+			    const char *leftright)
+{
+	size_t split = strlen(leftright);
+	if (!strncaseeq(s, leftright, strlen(leftright))) {
+		return false;
+	}
+
+	/* allow <leftright>-; s[split] could be '\0' */
+	if (s[split] == '-') {
+		split++;
+	}
+	/* keyword matches? */
+	if (!strcaseeq(s + split, k->keyname)) {
+		return false;
+	}
+
+	/* success */
+	return true;
+}
+
 /* type is really "token" type, which is actually int */
 int parser_find_keyword(const char *s, YYSTYPE *lval)
 {
@@ -618,14 +640,12 @@ int parser_find_keyword(const char *s, YYSTYPE *lval)
 		}
 
 		if (k->validity & kv_leftright) {
-			if (strncaseeq(s, "left", 4) &&
-			    strcaseeq(s + 4, k->keyname)) {
-				left = true;
+			left = parse_leftright(s, k, "left");
+			if (left) {
 				break;
 			}
-			if (strncaseeq(s, "right", 5) &&
-			    strcaseeq(s + 5, k->keyname)) {
-				right = true;
+			right = parse_leftright(s, k, "right");
+			if (right) {
 				break;
 			}
 		}
