@@ -392,7 +392,7 @@ enum option_enums {
 
 	OPT_GLOBAL_STATUS,
 	OPT_CLEAR_STATS,
-	OPT_SHUTDOWN_DIRTY,
+	OPT_LEAVE_STATE,
 	OPT_TRAFFICSTATUS,
 	OPT_SHUNT_STATUS,
 	OPT_SHOW_STATES,
@@ -545,7 +545,7 @@ enum option_enums {
 	CD_ESP,
 	CD_INTERMEDIATE,
 	CD_OVERLAPIP,
-	CD_MSDH_DOWNGRADE,
+	CD_MS_DH_DOWNGRADE,
 	CD_DNS_MATCH_ID,
 	CD_IGNORE_PEER_DNS,
 	CD_IKEPAD,
@@ -714,7 +714,7 @@ static const struct option long_opts[] = {
 	{ "seccomp-crashtest", no_argument, NULL, OPT_SECCOMP_CRASHTEST },
 #endif
 	{ "shutdown", no_argument, NULL, OPT_SHUTDOWN },
-	{ "leave-state", no_argument, NULL, OPT_SHUTDOWN_DIRTY },
+	{ "leave-state", no_argument, NULL, OPT_LEAVE_STATE },
 	{ "username", required_argument, NULL, OPT_USERNAME },
 	{ "xauthuser", required_argument, NULL, OPT_USERNAME }, /* old name */
 	{ "xauthname", required_argument, NULL, OPT_USERNAME }, /* old name */
@@ -777,15 +777,15 @@ static const struct option long_opts[] = {
 	{ "encrypt", no_argument, NULL, CD_ENCRYPT },
 	{ "authenticate", no_argument, NULL, CD_AUTHENTICATE },
 	{ "compress", optional_argument, NULL, CD_COMPRESS },
-	{ "overlapip", no_argument, NULL, CD_OVERLAPIP },
+	{ "overlapip", optional_argument, NULL, CD_OVERLAPIP },
 	{ "tunnel", no_argument, NULL, CD_TUNNEL, },
 	{ "transport", no_argument, NULL, CD_TRANSPORT, },
 	{ "tunnelipv4", no_argument, NULL, CD_TUNNELIPV4 },
 	{ "tunnelipv6", no_argument, NULL, CD_TUNNELIPV6 },
-	{ "ms-dh-downgrade", no_argument, NULL, CD_MSDH_DOWNGRADE },
-	{ "dns-match-id", no_argument, NULL, CD_DNS_MATCH_ID },
+	{ "ms-dh-downgrade", optional_argument, NULL, CD_MS_DH_DOWNGRADE },
+	{ "dns-match-id", optional_argument, NULL, CD_DNS_MATCH_ID },
 	{ "allow-cert-without-san-id", no_argument, NULL, CD_ALLOW_CERT_WITHOUT_SAN_ID },
-	{ "sha2-truncbug", no_argument, NULL, CD_SHA2_TRUNCBUG },
+	{ "sha2-truncbug", optional_argument, NULL, CD_SHA2_TRUNCBUG },
 	{ "sha2_truncbug", no_argument, NULL, CD_SHA2_TRUNCBUG }, /* backwards compatibility */
 	{ "aggressive", optional_argument, NULL, CD_AGGRESSIVE },
 	{ "aggrmode", no_argument, NULL, CD_AGGRESSIVE }, /*  backwards compatibility */
@@ -814,7 +814,7 @@ static const struct option long_opts[] = {
 	{ "cisco_unity", no_argument, NULL, CD_CISCO_UNITY },	/* obsolete _ */
 	{ "cisco-unity", no_argument, NULL, CD_CISCO_UNITY },
 	{ "fake-strongswan", no_argument, NULL, CD_FAKE_STRONGSWAN },
-	{ "mobike", no_argument, NULL, CD_MOBIKE },
+	{ "mobike", optional_argument, NULL, CD_MOBIKE },
 
 	{ "dpddelay", required_argument, NULL, CD_DPDDELAY },
 	{ "dpdtimeout", required_argument, NULL, CD_DPDTIMEOUT },
@@ -913,18 +913,18 @@ static const struct option long_opts[] = {
 
 	{ "no-esn", no_argument, NULL, CD_NO_ESN }, /* obsolete */
 	{ "esn", optional_argument, NULL, CD_ESN },
-	{ "decap-dscp", no_argument, NULL, CD_DECAP_DSCP },
-	{ "encap-dscp", no_argument, NULL, CD_ENCAP_DSCP },
-	{ "nopmtudisc", no_argument, NULL, CD_NOPMTUDISC },
-	{ "ignore-peer-dns", no_argument, NULL, CD_IGNORE_PEER_DNS },
+	{ "decap-dscp", optional_argument, NULL, CD_DECAP_DSCP },
+	{ "encap-dscp", optional_argument, NULL, CD_ENCAP_DSCP },
+	{ "nopmtudisc", optional_argument, NULL, CD_NOPMTUDISC },
+	{ "ignore-peer-dns", optional_argument, NULL, CD_IGNORE_PEER_DNS },
 #undef PS
 
 	{ "tcp", required_argument, NULL, CD_IKE_TCP },
 	{ "tcp-remote-port", required_argument, NULL, CD_IKE_TCP_REMOTE_PORT },
 
 #ifdef HAVE_NM
-	{ "nm_configured", no_argument, NULL, CD_NM_CONFIGURED }, /* backwards compat */
-	{ "nm-configured", no_argument, NULL, CD_NM_CONFIGURED },
+	{ "nm_configured", optional_argument, NULL, CD_NM_CONFIGURED }, /* backwards compat */
+	{ "nm-configured", optional_argument, NULL, CD_NM_CONFIGURED },
 #endif
 
 	{ "policylabel", required_argument, NULL, CD_SEC_LABEL },
@@ -1531,7 +1531,7 @@ int main(int argc, char **argv)
 			msg.whack_shutdown = true;
 			continue;
 
-		case OPT_SHUTDOWN_DIRTY:	/* --leave-state */
+		case OPT_LEAVE_STATE:	/* --leave-state */
 			msg.whack_leave_state = true;
 			continue;
 
@@ -1873,7 +1873,7 @@ int main(int argc, char **argv)
 			continue;
 
 		/* --ikefrag-allow */
-		case CD_IKEFRAG_ALLOW:
+		case CD_IKEFRAG_ALLOW: /* obsolete name */
 			if (msg.fragmentation == YNF_UNSET) {
 				msg.fragmentation = YNF_YES;
 			} else {
@@ -1882,7 +1882,7 @@ int main(int argc, char **argv)
 			}
 			continue;
 		/* --ikefrag-force */
-		case CD_IKEFRAG_FORCE:
+		case CD_IKEFRAG_FORCE: /* obsolete name */
 			msg.fragmentation = YNF_FORCE;
 			continue;
 
@@ -1892,17 +1892,17 @@ int main(int argc, char **argv)
 
 		/* --nopmtudisc */
 		case CD_NOPMTUDISC:
-			msg.nopmtudisc = YN_YES;
+			msg.nopmtudisc = optarg_sparse(YN_YES, yn_option_names);
 			continue;
 
 		/* --decap-dscp */
 		case CD_DECAP_DSCP:
-			msg.decap_dscp = YN_YES;
+			msg.decap_dscp = optarg_sparse(YN_YES, yn_option_names);
 			continue;
 
 		/* --encap-dscp */
 		case CD_ENCAP_DSCP:
-			msg.encap_dscp = YN_YES;
+			msg.encap_dscp = optarg_sparse(YN_YES, yn_option_names);
 			continue;
 
 		/* --aggressive | --aggrmode */
@@ -1927,37 +1927,36 @@ int main(int argc, char **argv)
 
 		/* --ignore-peer-dns */
 		case CD_IGNORE_PEER_DNS:
-			msg.ignore_peer_dns = YN_YES;
+			msg.ignore_peer_dns = optarg_sparse(YN_YES, yn_option_names);
 			continue;
 
 		/* --dns-match-id */
 		case CD_DNS_MATCH_ID:
-			msg.dns_match_id = YN_YES;
+			msg.dns_match_id = optarg_sparse(YN_YES, yn_option_names);
 			continue;
 
 		/* --ms-dh-downgrade */
-		case CD_MSDH_DOWNGRADE:
-			msg.ms_dh_downgrade = YN_YES;
+		case CD_MS_DH_DOWNGRADE:
+			msg.ms_dh_downgrade = optarg_sparse(YN_YES, yn_option_names);
 			continue;
 
 		/* --overlapip */
 		case CD_OVERLAPIP:
-			msg.overlapip = YN_YES;
+			msg.overlapip = optarg_sparse(YN_YES, yn_option_names);
 			continue;
 
 		/* --sha2-truncbug or --sha2_truncbug */
 		case CD_SHA2_TRUNCBUG:
-			msg.sha2_truncbug = YN_YES;
+			msg.sha2_truncbug = optarg_sparse(YN_YES, yn_option_names);
 			continue;
 
-		/* --intermediate */
-		case CD_INTERMEDIATE:
-			msg.intermediate = YN_YES;
+		case CD_INTERMEDIATE:		/* --intermediate[=yes] */
+			msg.intermediate = optarg_sparse(YN_YES, yn_option_names);
 			continue;
 
 		/* --mobike */
 		case CD_MOBIKE:
-			msg.mobike = YN_YES;
+			msg.mobike = optarg_sparse(YN_YES, yn_option_names);
 			continue;
 
 		case CD_INITIATEONTRAFFIC:		/* --initiateontraffic */
