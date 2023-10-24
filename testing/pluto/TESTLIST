@@ -1090,7 +1090,11 @@ kvmplutotest	interop-ikev2-strongswan-47-addresspool-ipv6	good
 
 # address pool tests
 kvmplutotest	ikev2-addresspool-46in4			good
+kvmplutotest	ikev2-addresspool-46in4-4only		good
+kvmplutotest	ikev2-addresspool-46in4-6only		good
 kvmplutotest	ikev2-addresspool-46in6			good
+kvmplutotest	ikev2-addresspool-46in6-4only		good
+kvmplutotest	ikev2-addresspool-46in6-6only		good
 kvmplutotest	ikev2-addresspool-4in4			good
 kvmplutotest	ikev2-addresspool-4in6			good
 kvmplutotest	ikev2-addresspool-6in4			good

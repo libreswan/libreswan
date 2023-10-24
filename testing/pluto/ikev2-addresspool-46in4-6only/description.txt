@@ -1,0 +1,3 @@
+ask for IPv4+IPv6 in IPv4 but addresspool has only IPv6
+
+
