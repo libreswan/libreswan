@@ -741,6 +741,11 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 	const char *policy_name = NULL;
 	/* shunt route */
 	switch (policy->shunt) {
+	case SHUNT_TRAP: /*ondemand*/
+		PASSERT(logger, dir == DIRECTION_OUTBOUND);
+		xfrm_action = XFRM_POLICY_ALLOW;
+		policy_name = "%trap(allow)";
+		break;
 	case SHUNT_IPSEC:
 		xfrm_action = XFRM_POLICY_ALLOW;
 		policy_name = (policy->mode == ENCAP_MODE_TUNNEL ? ip_protocol_ipip.name :
@@ -760,11 +765,6 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 		/* used with type=passthrough - can it not use SHUNT_PASS ?? */
 		xfrm_action = XFRM_POLICY_BLOCK;
 		policy_name = "%reject(block)";
-		break;
-	case SHUNT_TRAP: /*ondemand*/
-		PASSERT(logger, dir == DIRECTION_OUTBOUND);
-		xfrm_action = XFRM_POLICY_ALLOW;
-		policy_name = "%trap(allow)";
 		break;
 	case SHUNT_HOLD:
 		/* used with type=passthrough - can it not use SHUNT_PASS ?? */

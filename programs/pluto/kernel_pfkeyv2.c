@@ -1149,7 +1149,8 @@ static struct sadb_x_policy *put_sadb_x_policy(struct outbuf *req,
 			 */
 			enum ipsec_mode mode =
 				(kernel_policy->mode == ENCAP_MODE_TUNNEL ? IPSEC_MODE_TUNNEL :
-				 IPSEC_MODE_TRANSPORT);
+				 kernel_policy->mode == ENCAP_MODE_TRANSPORT ? IPSEC_MODE_TRANSPORT :
+				 pexpect(0));
 			for (unsigned i = 0; i < kernel_policy->nr_rules; i++) {
 				const struct kernel_policy_rule *rule = &kernel_policy->rule[i];
 				put_sadb_x_ipsecrequest(req, kernel_policy, mode, rule);
@@ -1238,6 +1239,10 @@ static bool kernel_pfkeyv2_policy_add(enum kernel_policy_op op,
 	enum sadb_x_flow_type policy_type = UINT_MAX;
 	const char *policy_name = NULL;
 	switch (policy->shunt) {
+	case SHUNT_TRAP:
+		policy_type = SADB_X_FLOW_TYPE_ACQUIRE;
+		policy_name = "%trap(acquire)";
+		break;
 	case SHUNT_IPSEC:
 		policy_type = SADB_X_FLOW_TYPE_REQUIRE;
 		policy_name = (policy->mode == ENCAP_MODE_TUNNEL ? ip_protocol_ipip.name :
@@ -1250,19 +1255,16 @@ static bool kernel_pfkeyv2_policy_add(enum kernel_policy_op op,
 		break;
 	case SHUNT_DROP:
 		policy_type = SADB_X_FLOW_TYPE_DENY;
-		policy_name = "%none(deny)";
+		policy_name = "%drop(deny)";
 		break;
 	case SHUNT_REJECT:
 		policy_type = SADB_X_FLOW_TYPE_DENY;
-		policy_name = "%none(deny)";
-		break;
-	case SHUNT_TRAP:
-		policy_type = SADB_X_FLOW_TYPE_ACQUIRE;
-		policy_name = "%trap(acquire)";
+		policy_name = "%reject(deny)";
 		break;
 	case SHUNT_HOLD:
 		policy_type = SADB_X_FLOW_TYPE_DENY;
 		policy_name = "%hold(deny)";
+		break;
 	case SHUNT_NONE:
 		/* FAILURE=NONE should have been turned into
 		 * NEGOTIATION */
@@ -1347,6 +1349,10 @@ static bool kernel_pfkeyv2_policy_add(enum kernel_policy_op op,
 	enum ipsec_policy policy_type = UINT_MAX;
 	const char *policy_name = NULL;
 	switch (policy->shunt) {
+	case SHUNT_TRAP:
+		policy_type = IPSEC_POLICY_IPSEC;
+		policy_name = "%trap(ipsec)";
+		break;
 	case SHUNT_IPSEC:
 		policy_type = IPSEC_POLICY_IPSEC;
 		policy_name = (policy->mode == ENCAP_MODE_TUNNEL ? ip_protocol_ipip.name :
@@ -1364,10 +1370,6 @@ static bool kernel_pfkeyv2_policy_add(enum kernel_policy_op op,
 	case SHUNT_REJECT:
 		policy_type = IPSEC_POLICY_DISCARD;
 		policy_name = "%reject(discard)";
-		break;
-	case SHUNT_TRAP:
-		policy_type = IPSEC_POLICY_IPSEC;
-		policy_name = "%trap(ipsec)";
 		break;
 	case SHUNT_HOLD:
 		policy_type = IPSEC_POLICY_DISCARD;
