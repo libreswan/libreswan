@@ -94,6 +94,7 @@ struct ikev2_proposals *ikev2_proposals_from_proposals(enum ikev2_sec_proto_id p
 
 struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
 					       const char *why,
+					       bool strip_dh,
 					       const struct dh_desc *default_dh,
 					       struct logger *logger);
 

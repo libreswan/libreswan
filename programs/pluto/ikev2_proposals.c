@@ -1952,6 +1952,7 @@ static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 static struct ikev2_proposal *ikev2_proposal_from_proposal_info(const struct proposal *proposal,
 								enum ikev2_sec_proto_id protoid,
 								struct ikev2_proposals *v2_proposals,
+								const struct dh_desc *force_dh,
 								const struct dh_desc *default_dh,
 								struct logger *logger)
 {
@@ -2001,15 +2002,26 @@ static struct ikev2_proposal *ikev2_proposal_from_proposal_info(const struct pro
 
 	/*
 	 * DH.
-	 *
-	 * DEFAULT_DH==UNSET_DH signals that DH should be excluded (as
-	 * happens during the AUTH exchange).  Otherwise use either
-	 * the proposed or default DH.
 	 */
-	if (default_dh == &unset_group) {
+	if (force_dh != NULL) {
+		/*
+		 * For instance, since the IKE_AUTH Child SA proposal
+		 * does not include DH it is forced to NONE (the emit
+		 * code then drops it).
+		 *
+		 * For instance, ms_dh_downgrade forces a proposal to
+		 * NONE.
+		 *
+		 * For instance, a rekey forces the proposal to the
+		 * previously negotiated DH.
+		 */
 		append_transform(v2_proposal, IKEv2_TRANS_TYPE_DH,
-				 ike_alg_dh_none.common.id[IKEv2_ALG_ID], 0);
+				 force_dh->common.id[IKEv2_ALG_ID], 0);
 	} else if (next_algorithm(proposal, PROPOSAL_dh, NULL) != NULL) {
+		/*
+		 * For instance, a CREATE_CHILD_SA(NEW) proposal where
+		 * DH was specified on the esp= line.
+		 */
 		FOR_EACH_ALGORITHM(proposal, dh, alg) {
 			const struct dh_desc *dh = dh_desc(alg->desc);
 			/*
@@ -2020,6 +2032,12 @@ static struct ikev2_proposal *ikev2_proposal_from_proposal_info(const struct pro
 					 dh->common.id[IKEv2_ALG_ID], 0);
 		}
 	} else if (default_dh != NULL) {
+		/*
+		 * For instance, either a CREATE_CHILD_SA(NEW) where
+		 * the esp= line does not specify DH, or a
+		 * CREATE_CHILD_SA(REKEY) for the IKE_AUTH child where
+		 * DH wasn't negotiated.
+		 */
 		append_transform(v2_proposal, IKEv2_TRANS_TYPE_DH,
 				 default_dh->common.id[IKEv2_ALG_ID], 0);
 	}
@@ -2062,6 +2080,7 @@ struct ikev2_proposals *ikev2_proposals_from_proposals(enum ikev2_sec_proto_id p
 			ikev2_proposal_from_proposal_info(proposal,
 							  protoid,
 							  v2_proposals,
+							  /*force_dh*/NULL,
 							  /*default_dh*/NULL,
 							  logger);
 		if (v2_proposal != NULL) {
@@ -2088,6 +2107,7 @@ static void add_esn_transforms(struct ikev2_proposal *proposal,
 
 struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
 					       const char *why,
+					       bool strip_dh,
 					       const struct dh_desc *default_dh,
 					       struct logger *logger)
 {
@@ -2095,38 +2115,28 @@ struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
 		return NULL;
 	}
 
-	LDBGP_JAMBUF(DBG_BASE, logger, buf) {
-		jam_string(buf, "constructing ESP/AH proposals with ");
-		if (default_dh == NULL) {
-			jam_string(buf, "no default DH");
-		} else if (default_dh == &unset_group) {
-			jam_string(buf, "all DH removed");
-		} else {
-			jam(buf, "default DH %s", default_dh->common.fqn);
-		}
-		jam(buf, "  for %s (%s)", c->name, why);
-	}
-
-	/*
-	 * If enabled, convert every proposal twice with the
-	 * second pass stripped of DH.
-	 *
-	 * Even when DEFAULT_DH is NULL, DH may be added
-	 * (found in alg-info).  Deal with that below.
-	 */
-	bool add_empty_msdh_duplicates = (c->config->ms_dh_downgrade &&
-					  default_dh != &unset_group);
+	ldbg(logger, "constructing ESP/AH proposals for %s with strip_dh=%s ms_dh_downgrade=%s default_dh=%s",
+	     why, bool_str(strip_dh), bool_str(c->config->ms_dh_downgrade),
+	     (default_dh == NULL ? "NONE": default_dh->common.fqn));
 
 	struct ikev2_proposals *v2_proposals = alloc_thing(struct ikev2_proposals,
 							   "ESP/AH proposals");
-	/* proposal[0] is empty so +1 */
-	int v2_proposals_roof = nr_proposals(c->config->child_sa.proposals.p) + 1;
-	if (add_empty_msdh_duplicates) {
-		/* make space for everything duplicated; note +1 above */
-		v2_proposals_roof = v2_proposals_roof * 2 - 1;
-	}
+	/*
+	 * If necessary, allocate space for two copies of all
+	 * proposals.  When MS_DH_DOWNGRADE, a second pass will add
+	 * any proposals with DH with DH removed.
+	 *
+	 * proposal[0] is empty so +1
+	 */
+	unsigned nr_passes = (strip_dh ? 1 :
+			      c->config->ms_dh_downgrade ? 2 :
+			      1);
+	int v2_proposals_roof =
+		1 + nr_passes * nr_proposals(c->config->child_sa.proposals.p);
 	v2_proposals->proposal = alloc_things(struct ikev2_proposal, v2_proposals_roof,
 					      "ESP/AH proposal");
+
+	/* start filling it on, from 1 */
 	v2_proposals->roof = 1;
 
 	enum ikev2_sec_proto_id protoid;
@@ -2138,34 +2148,52 @@ struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
 		protoid = IKEv2_SEC_PROTO_AH;
 		break;
 	default:
-		bad_enum(c->logger, &encap_proto_names, c->config->child_sa.encap_proto);
+		bad_enum(logger, &encap_proto_names, c->config->child_sa.encap_proto);
 	}
 
-	for (int dup = 0; dup < (add_empty_msdh_duplicates ? 2 : 1); dup++) {
-		FOR_EACH_PROPOSAL(c->config->child_sa.proposals.p, esp_info) {
+	/*
+	 * WHen MS_DH_DOWNGRADE, first pass adds proposals verbatim,
+	 * and the second pass adds proposals with NONE.
+	 */
+
+	for (unsigned pass = 1; pass <= nr_passes; pass++) {
+
+		FOR_EACH_PROPOSAL(c->config->child_sa.proposals.p, proposal) {
+
 			LDBGP_JAMBUF(DBG_BASE, &global_logger, log) {
 				jam(log, "converting proposal ");
-				jam_proposal(log, esp_info);
-				jam(log, " to ikev2 ...");
+				jam_proposal(log, proposal);
+				jam(log, " to ikev2 pass %u ...", pass);
 			}
 
+			PASSERT(logger, v2_proposals->roof < v2_proposals_roof);
+
 			/*
-			 * Get the next proposal with the basics
-			 * filled in.
+			 * If the pass=1 proposal no DH, then there's
+			 * no point duplicating it with no DH during
+			 * pass=2.
 			 */
-			passert(v2_proposals->roof < v2_proposals_roof);
-			if (dup && default_dh == NULL &&
-			    next_algorithm(esp_info, PROPOSAL_dh, NULL) == NULL) {
+			if (pass == 2 && default_dh == NULL &&
+			    next_algorithm(proposal, PROPOSAL_dh, NULL) == NULL) {
 				/*
 				 * First pass didn't include DH.
 				 */
 				continue;
 			}
+
+			/*
+			 * During the second pass, or when stripping
+			 * STRIP_DH, force the proposal's DH to NONE.
+			 */
+			const struct dh_desc *force_dh =
+				(pass == 2 || strip_dh ? &ike_alg_dh_none : NULL);
+
 			struct ikev2_proposal *v2_proposal =
-				ikev2_proposal_from_proposal_info(esp_info,
+				ikev2_proposal_from_proposal_info(proposal,
 								  protoid,
 								  v2_proposals,
-								  dup ? &unset_group : default_dh,
+								  force_dh,
+								  default_dh,
 								  logger);
 			if (v2_proposal != NULL) {
 				add_esn_transforms(v2_proposal, c);
@@ -2195,13 +2223,15 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_new_child_proposals(struct ike_sa
 {
 	struct connection *c = larval_child->sa.st_connection;
 	const struct dh_desc *default_dh =
-		c->config->child_sa.pfs ? ike->sa.st_oakley.ta_dh : NULL;
+		c->config->child_sa.pfs ? ike->sa.st_oakley.ta_dh : &ike_alg_dh_none;
 	struct ikev2_proposals *proposals =
 		get_v2_child_proposals(larval_child->sa.st_connection,
-				       "Child SA proposals (new child)", default_dh,
-				       larval_child->sa.st_logger);
+				       "Child SA proposals (new child)",
+				       /*strip-dh*/false,
+				       default_dh,
+				       larval_child->sa.logger);
 	llog_v2_proposals(LOG_STREAM/*not-whack*/|RC_LOG,
-			  larval_child->sa.st_logger, proposals,
+			  larval_child->sa.logger, proposals,
 			  "Child SA proposals (new child)");
 	return proposals;
 }
@@ -2336,7 +2366,9 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_rekey_child_proposals(struct ike_
 		 */
 		rekey_proposals = get_v2_child_proposals(larval_child->sa.st_connection,
 							 "Child SA proposals (initiating rekey)",
-							 &ike_alg_dh_none, larval_child->sa.st_logger);
+							 /*strip_dh*/false,
+							 /*default_dh*/&ike_alg_dh_none,
+							 larval_child->sa.logger);
 	}
 	return rekey_proposals;
 }

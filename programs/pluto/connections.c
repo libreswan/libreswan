@@ -101,6 +101,7 @@
 #include "routing.h"
 #include "timescale.h"
 #include "connection_event.h"
+#include "ike_alg_dh.h"		/* for ike_alg_dh_none; */
 
 static void discard_connection(struct connection **cp, bool connection_valid, where_t where);
 
@@ -2751,9 +2752,10 @@ static diag_t extract_connection(const struct whack_message *wm,
 		 * connection can be cached.
 		 */
 		if (c->config->ike_version == IKEv2) {
-			/* UNSET_GROUP means strip DH from the proposal. */
 			config->child_sa.v2_ike_auth_proposals =
-				get_v2_child_proposals(c, "loading config", &unset_group,
+				get_v2_child_proposals(c, "loading config",
+						       /*strip_dh*/true,
+						       /*default_dh*/&ike_alg_dh_none,
 						       c->logger);
 			llog_v2_proposals(LOG_STREAM/*not-whack*/|RC_LOG, c->logger,
 					  config->child_sa.v2_ike_auth_proposals,
