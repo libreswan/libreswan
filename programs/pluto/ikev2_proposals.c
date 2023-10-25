@@ -2266,12 +2266,36 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_rekey_child_proposals(struct ike_
 
 	struct connection *cc = larval_child->sa.st_connection;
 
-	struct ikev2_proposals *proposals;
+	bool full_proposal = false;
+
 	if (cc->config->pfs_rekey_workaround) {
+		/* don't argue */
+		full_proposal = true;
+	} else if (cc->config->child_sa.pfs &&
+		   ikev2_proposal_first_dh(accepted_proposal) == NULL) {
+		/*
+		 * Rekeying the IKE_AUTH's Child (has no PFS when it
+		 * should).
+		 */
+		struct proposal *proposal = next_proposal(cc->config->child_sa.proposals.p, NULL);
+		struct algorithm *dh = next_algorithm(proposal, PROPOSAL_dh, NULL);
+		if (dh != NULL) {
+			/*
+			 * When the esp= proposal specifies DH, that
+			 * must be proposed.  Can't assume that
+			 * ACCEPTED_PROPOSAL + IKE SA's will match
+			 * esp=.
+			 */
+			full_proposal = true;
+		}
+	}
+
+	struct ikev2_proposals *proposals;
+	if (full_proposal) {
 		/*
 		 * Re-propose the full ESP= line.  If necessary add DH
-		 * from the IKE SA.  When MS_DH_DOWNGRADE will also
-		 * add NONE-DH.
+		 * from the IKE SA.  When MS_DH_DOWNGRADE, it will
+		 * also add NONE-DH.
 		 */
 		const struct dh_desc *pfs_dh =
 			(cc->config->child_sa.pfs ? ike->sa.st_oakley.ta_dh : NULL);
