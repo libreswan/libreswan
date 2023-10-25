@@ -13,8 +13,7 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-# XXX: Hack to suppress the need for a manpage in this directory.
-PROGRAM_MANPAGE =
+PROGRAM_MANPAGE = ipsec_whack.8
 
 PROGRAM=whack
 OBJS += $(PROGRAM).o

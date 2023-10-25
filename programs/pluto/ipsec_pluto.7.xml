@@ -4,7 +4,7 @@
 <refentry id="pluto8">
   <refmeta>
     <refentrytitle>IPSEC_PLUTO</refentrytitle>
-    <manvolnum>8</manvolnum>
+    <manvolnum>7</manvolnum>
     <refmiscinfo class="date">29 June 2014</refmiscinfo>
     <refmiscinfo class="source">libreswan</refmiscinfo>
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
@@ -12,7 +12,6 @@
 
   <refnamediv id="name">
     <refname>ipsec pluto</refname>
-    <refname>pluto</refname>
     <refpurpose>ipsec pluto : IPsec IKE keying daemon</refpurpose>
   </refnamediv>
 

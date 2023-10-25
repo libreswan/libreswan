@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
                    "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
-<refentry id="pluto8">
+<refentry id="whack8">
   <refmeta>
-    <refentrytitle>IPSEC_PLUTO</refentrytitle>
+    <refentrytitle>IPSEC_WHACK</refentrytitle>
     <manvolnum>8</manvolnum>
     <refmiscinfo class="date">29 June 2014</refmiscinfo>
     <refmiscinfo class="source">libreswan</refmiscinfo>
@@ -11,9 +11,8 @@
   </refmeta>
 
   <refnamediv id="name">
-    <refname>ipsec pluto</refname>
-    <refname>pluto</refname>
-    <refpurpose>ipsec pluto : IPsec IKE keying daemon</refpurpose>
+    <refname>ipsec whack</refname>
+    <refpurpose>ipsec whack : IPsec IKE keying daemon control interface</refpurpose>
   </refnamediv>
 
   <!-- body begins here -->
