@@ -18,9 +18,11 @@
 XMLTO ?= xmlto
 
 # $(MANDIR$(suffix $(MANPAGE))) will expand one of the below, roughly:
-# 3 is libraries; 8 is for system programs; and 5 is for file formats.
+# 3 is libraries; 5 is file formats; 7 is overviews; 8 is system
+# programs.
 MANDIR.3 ?= $(MANDIR)/man3
 MANDIR.5 ?= $(MANDIR)/man5
+MANDIR.7 ?= $(MANDIR)/man7
 MANDIR.8 ?= $(MANDIR)/man8
 
 # List of the intermediate (transformed) man pages.  Don't let GNU
