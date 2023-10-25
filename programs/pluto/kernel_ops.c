@@ -145,10 +145,22 @@ bool kernel_ops_policy_add(enum kernel_policy_op op,
 
 	switch(policy->shunt) {
 	case SHUNT_IPSEC:
+		/*
+		 * For an IPsec tunnel to be useful it needs both
+		 * inbound and outbound policy.
+		 */
+		PASSERT(logger, (dir == DIRECTION_OUTBOUND ||
+				 dir == DIRECTION_INBOUND));
 		PASSERT(logger, policy->nr_rules > 0);
 		PASSERT(logger, (policy->kind == SHUNT_KIND_IPSEC));
 		break;
 	case SHUNT_PASS:
+		/*
+		 * For instance, in ikev2-33-clearport-01 both inbound
+		 * and outbound pass policy is installed.
+		 */
+		PASSERT(logger, (dir == DIRECTION_OUTBOUND ||
+				 dir == DIRECTION_INBOUND));
 		PASSERT(logger, policy->nr_rules == 0);
 		PASSERT(logger, (policy->kind == SHUNT_KIND_NEVER_NEGOTIATE ||
 				 policy->kind == SHUNT_KIND_NEGOTIATION ||
@@ -156,23 +168,35 @@ bool kernel_ops_policy_add(enum kernel_policy_op op,
 				 policy->kind == SHUNT_KIND_FAILURE));
 		break;
 	case SHUNT_DROP:
+		/*
+		 * For instance, in basic-pluto-19-seedbits, a
+		 * never-negotiate drop connection is added.
+		 */
+		PASSERT(logger, (dir == DIRECTION_OUTBOUND ||
+				 dir == DIRECTION_INBOUND));
 		PASSERT(logger, policy->nr_rules > 0);
 		PASSERT(logger, (policy->kind == SHUNT_KIND_FAILURE ||
 				 policy->kind == SHUNT_KIND_NEVER_NEGOTIATE ||
 				 policy->kind == SHUNT_KIND_BLOCK));
 		break;
 	case SHUNT_REJECT:
+		/*
+		 * For instance, in certoe-10-symmetric-cert-whack, a
+		 * block (reject) kernel policy is installed.
+		 */
+		PASSERT(logger, (dir == DIRECTION_OUTBOUND ||
+				 dir == DIRECTION_INBOUND));
 		PASSERT(logger, policy->nr_rules > 0);
 		PASSERT(logger, (policy->kind == SHUNT_KIND_NEVER_NEGOTIATE));
 		break;
 	case SHUNT_TRAP:
-		PASSERT(logger, policy->nr_rules > 0);
 		PASSERT(logger, (dir == DIRECTION_OUTBOUND));
+		PASSERT(logger, policy->nr_rules > 0);
 		PASSERT(logger, (policy->kind == SHUNT_KIND_ONDEMAND));
 		break;
 	case SHUNT_HOLD:
-		PASSERT(logger, policy->nr_rules > 0);
 		PASSERT(logger, (dir == DIRECTION_OUTBOUND));
+		PASSERT(logger, policy->nr_rules > 0);
 		PASSERT(logger, policy->kind == SHUNT_KIND_NEGOTIATION);
 		break;
 	case SHUNT_NONE:
@@ -180,8 +204,8 @@ bool kernel_ops_policy_add(enum kernel_policy_op op,
 		 * FAILURE=NONE should have been turned into
 		 * NEGOTIATION=...
 		 */
-		PASSERT(logger, policy->nr_rules > 0);
 		PASSERT(logger, (policy->kind == SHUNT_KIND_FAILURE));
+		PASSERT(logger, policy->nr_rules > 0);
 		bad_enum(logger, &shunt_policy_names, policy->shunt);
 	case SHUNT_UNSET:
 		bad_enum(logger, &shunt_policy_names, policy->shunt);
