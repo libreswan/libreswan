@@ -497,7 +497,7 @@ enum option_enums {
 	CD_VTI_INTERFACE,
 	CD_VTI_ROUTING,
 	CD_VTI_SHARED,
-	CD_IPSEC_IFACE,
+	CD_IPSEC_INTERFACE,
 	CD_TUNNELIPV4,
 	CD_TUNNELIPV6,
 	CD_CONNIPV4,
@@ -853,7 +853,7 @@ static const struct option long_opts[] = {
 	{ "vti-interface", required_argument, NULL, CD_VTI_INTERFACE },
 	{ "vti-routing", optional_argument, NULL, CD_VTI_ROUTING },
 	{ "vti-shared", optional_argument, NULL, CD_VTI_SHARED },
-	{ "ipsec-interface", required_argument, NULL, CD_IPSEC_IFACE },
+	{ "ipsec-interface", required_argument, NULL, CD_IPSEC_INTERFACE },
 	{ "sendcert", required_argument, NULL, END_SENDCERT },
 	{ "sendca", required_argument, NULL, CD_SEND_CA },
 	{ "ipv4", no_argument, NULL, CD_CONNIPV4 },
@@ -1116,8 +1116,6 @@ int main(int argc, char **argv)
 
 	msg.enable_tcp = 0; /* aka unset */;
 	msg.tcp_remoteport = 0; /* aka unset */
-
-	msg.xfrm_if_id = UINT32_MAX;
 
 	/* set defaults to ICMP PING request */
 	msg.oppo.ipproto = IPPROTO_ICMP;
@@ -2358,8 +2356,8 @@ int main(int argc, char **argv)
 			msg.vti_shared = optarg_sparse(YN_YES, yn_option_names);
 			continue;
 
-		case CD_IPSEC_IFACE:      /* --ipsec-interface */
-			msg.xfrm_if_id = optarg_uintmax();
+		case CD_IPSEC_INTERFACE:      /* --ipsec-interface=... */
+			msg.ipsec_interface = strdup(optarg);
 			continue;
 
 		case CD_XAUTHBY:	/* --xauthby */

@@ -1169,17 +1169,62 @@ static bool add_xfrm_interface_ip(struct connection *c, ip_cidr *conn_xfrmi_cidr
 	return true;
 }
 
-bool setup_xfrm_interface(struct connection *c, uint32_t xfrm_if_id)
+diag_t setup_xfrm_interface(struct connection *c, const char *ipsec_interface)
 {
-	if (xfrm_if_id == 0) {
-		dbg("remap ipsec0");
-		xfrm_if_id = PLUTO_XFRMI_REMAP_IF_ID_ZERO;
+	ldbg(c->logger, "parsing ipsec-interface=%s", ipsec_interface);
+
+	/*
+	 * Danger; yn_option_names includes "0" and "1" but that isn't
+	 * wanted here!  Hence yn_text_option_names.
+	 */
+	const struct sparse_name *yn = sparse_lookup(yn_text_option_names, ipsec_interface);
+	if (yn != NULL && yn->value == YN_NO) {
+		/* well that was pointless */
+		ldbg(c->logger, "ipsec-interface=%s is no!", ipsec_interface);
+		return NULL;
+	}
+
+	/* something other than ipsec-interface=no, check support */
+	err_t err = xfrm_iface_supported(c->logger);
+	if (err != NULL) {
+		return diag("ipsec-interface=%s not supported: %s",
+			    ipsec_interface, err);
+	}
+
+	uint32_t xfrm_if_id;
+	if (yn != NULL) {
+		PEXPECT(c->logger, yn->value == YN_YES);
+		xfrm_if_id = 1; /* YES means 1 */
+	} else {
+		uintmax_t value;
+		err_t e = shunk_to_uintmax(shunk1(ipsec_interface), /*cursor*/NULL,
+					   /*base*/10, &value);
+		if (e != NULL) {
+			return diag("ipsec-interface=%s invalid: %s", ipsec_interface, e);
+		}
+
+		if (value >= UINT32_MAX) {
+			return diag("ipsec-interface=%s is too big", ipsec_interface);
+		}
+
+		if (value == 0) {
+			ldbg(c->logger, "remap ipsec0");
+			/* XXX: why? */
+			xfrm_if_id = PLUTO_XFRMI_REMAP_IF_ID_ZERO;
+		} else {
+			xfrm_if_id = value;
+		}
 	}
 
 	bool shared = true;
+	ldbg(c->logger, "ipsec-interface=%s parsed to %"PRIu32, ipsec_interface, xfrm_if_id);
 
 	/* always success for now */
-	return (init_pluto_xfrmi(c, xfrm_if_id, shared) == XFRMI_SUCCESS);
+	if (init_pluto_xfrmi(c, xfrm_if_id, shared) != XFRMI_SUCCESS) {
+		return diag("setting up ipsec-interface=%s failed", ipsec_interface);
+	}
+
+	return NULL;
 }
 
 /* Return true on success, false on failure */

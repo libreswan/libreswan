@@ -231,7 +231,7 @@ struct whack_message {
 	deltatime_t retransmit_timeout;
 	deltatime_t retransmit_interval;
 	enum offload_options nic_offload;
-	uint32_t xfrm_if_id;
+	char *ipsec_interface;
 
 	/* For IKEv1 RFC 3706 - Dead Peer Detection / IKEv2 liveness */
 	enum dpd_action dpd_action; /* 0 implies unset */

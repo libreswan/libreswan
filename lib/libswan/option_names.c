@@ -43,17 +43,23 @@
        { "y",          YES },			\
        { "n",          NO }
 
-/* match <BOOLEAN_VALUE> in parser.lex */
+/* match <BOOLEAN_VALUE> in parser.lex; includes numbers 0/1 */
 const struct sparse_name yn_option_names[] = {
 	YES_NO(YN_YES, YN_NO),
 	/*
 	 * These are unique to YN, and probably should be dropped
-	 * completely.  Some keywords, such as yndev, interpret "1"
-	 * and "0".
+	 * completely.  Some keywords, such as ipsec-interface,
+	 * interpret "1" and "0".
 	 */
 	{ "1",          YN_YES, },
 	{ "0",          YN_NO, },
 	SPARSE_NULL,
+};
+
+/* Values for no/yes; excludes numeric values */
+const struct sparse_name yn_text_option_names[] = {
+	YES_NO(YN_YES, YN_NO),
+	SPARSE_NULL
 };
 
 /*

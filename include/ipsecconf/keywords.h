@@ -128,9 +128,8 @@ enum keyword_string_conn_field {
 	KSCF_RSASIGKEY,	/* loose_enum */ /* left/right */
 	KSCF_ECDSAKEY,	/* loose_enum */ /* left/right */
 	KSCF_PUBKEY,	/* loose_enum */ /* left/right */
-	KSCF_XFRM_IF_ID,
 
-	KSCF_last_loose = KSCF_XFRM_IF_ID,
+	KSCF_last_loose = KSCF_PUBKEY,
 
 	KSCF_GROUNDHOG,	/* left/right */
 	KSCF_UPDOWN,	/* left/right */
@@ -149,6 +148,7 @@ enum keyword_string_conn_field {
 
 	KSCF_last_leftright = KSCF_SUBNETS,
 
+	KSCF_IPSEC_INTERFACE,
 	KSCF_AUTHBY,
 	KSCF_PPKIDS,
 	KSCF_MODECFGDNS,
@@ -189,7 +189,6 @@ enum keyword_numeric_conn_field {
 	KNCF_RSASIGKEY	= KSCF_RSASIGKEY,	/* loose_enum */ /* left/right */
 	KNCF_ECDSAKEY	= KSCF_ECDSAKEY,	/* loose_enum */ /* left/right */
 	KNCF_PUBKEY	= KSCF_PUBKEY,	/* loose_enum */ /* left/right */
-	KNCF_XFRM_IF_ID =  KSCF_XFRM_IF_ID,
 
 	KNCF_XAUTHSERVER,	/* left/right */
 	KNCF_XAUTHCLIENT,	/* left/right */

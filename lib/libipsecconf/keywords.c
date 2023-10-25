@@ -120,15 +120,6 @@ static const struct sparse_name kw_ikev2_list[] = {
 	SPARSE_NULL
 };
 
-#ifdef USE_XFRM_INTERFACE
-/* Values for no/yes, used by ipsec-interface */
-static const struct sparse_name kw_yndev_list[] = {
-	YES_NO(1/*ipsec1*/, UINT32_MAX/*disabled*/),
-	/* any specified number becomes ipsecXXXX */
-	SPARSE_NULL
-};
-#endif
-
 static const struct sparse_name kw_offload_list[] = {
 	{ "no",         offload_no },
 	{ "auto",       offload_auto },
@@ -527,9 +518,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "vti-interface",  kv_conn,  kt_string,  KSCF_VTI_INTERFACE, NULL, NULL, },
   { "vti-routing",  kv_conn,  kt_enum,  KNCF_VTI_ROUTING, yn_option_names, NULL, },
   { "vti-shared",  kv_conn,  kt_enum,  KNCF_VTI_SHARED, yn_option_names, NULL, },
-#ifdef USE_XFRM_INTERFACE
-  { "ipsec-interface", kv_conn, kt_loose_enum, KNCF_XFRM_IF_ID, kw_yndev_list, NULL, },
-#endif
+  { "ipsec-interface", kv_conn, kt_string, KSCF_IPSEC_INTERFACE, NULL, NULL, },
 
   { "nic-offload",  kv_conn,  kt_enum,  KNCF_NIC_OFFLOAD,  kw_offload_list, NULL, },
 

@@ -154,7 +154,6 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 	DOPT(KNCF_CLIENTADDRFAMILY, AF_UNSPEC);
 
 	DOPT(KNCF_AUTO, AUTOSTART_IGNORE);
-	DOPT(KNCF_XFRM_IF_ID, UINT32_MAX);
 
 # undef DOPT
 

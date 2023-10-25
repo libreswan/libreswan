@@ -362,6 +362,7 @@ static bool pickle_whack_message(struct whackpacker *wp,
 		PICKLE_STRING(&wp->msg->conn_mark_in) &&
 		PICKLE_STRING(&wp->msg->conn_mark_out) &&
 		PICKLE_STRING(&wp->msg->vti_interface) &&
+		PICKLE_STRING(&wp->msg->ipsec_interface) &&
 		PICKLE_STRING(&wp->msg->remote_host) &&
 		PICKLE_STRING(&wp->msg->ppk_ids) &&
 		PICKLE_STRING(&wp->msg->global_redirect_to) &&

@@ -2986,20 +2986,24 @@ static diag_t extract_connection(const struct whack_message *wm,
 			mark_parse(wm->conn_mark_in, &c->sa_marks.in, c->logger);
 		if (wm->conn_mark_out != NULL)
 			mark_parse(wm->conn_mark_out, &c->sa_marks.out, c->logger);
+	}
 
-#ifdef USE_XFRM_INTERFACE
-		if (wm->xfrm_if_id != UINT32_MAX) {
-			err_t err = xfrm_iface_supported(c->logger);
-			if (err != NULL) {
-				return diag("ipsec-interface=%u not supported. %s",
-					    wm->xfrm_if_id, err);
-			}
-			if (!setup_xfrm_interface(c, (wm->xfrm_if_id == 0 ? PLUTO_XFRMI_REMAP_IF_ID_ZERO :
-						      wm->xfrm_if_id))) {
-				/* XXX: never happens?!? */
-				return diag("setup xfrmi interface failed");
-			}
+	/* ipsec-interface */
+
+	if (never_negotiate_wm(wm)) {
+		if (wm->ipsec_interface != NULL) {
+			llog(RC_INFORMATIONAL, c->logger,
+			     "warning: ipsec-interface=%s ignored for never-negotiate connection",
+			     wm->ipsec_interface);
 		}
+	} else if (wm->ipsec_interface != NULL) {
+#ifdef USE_XFRM_INTERFACE
+		diag_t d = setup_xfrm_interface(c, wm->ipsec_interface);
+		if (d != NULL) {
+			return d;
+		}
+#else
+		return diag("ipsec-interface= is not supported");
 #endif
 	}
 

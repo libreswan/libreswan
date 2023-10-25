@@ -812,7 +812,10 @@ enum yn_options {
 	YN_YES = 2,
 };
 
+/* includes things like 0/1 */
 extern const struct sparse_name yn_option_names[];
+/* excludes 0/1 */
+extern const struct sparse_name yn_text_option_names[];
 
 enum yna_options {
 	YNA_UNSET = 0,
