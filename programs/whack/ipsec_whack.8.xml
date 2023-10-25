@@ -12,50 +12,11 @@
 
   <refnamediv id="name">
     <refname>ipsec whack</refname>
-    <refpurpose>ipsec whack : IPsec IKE keying daemon control interface</refpurpose>
+    <refpurpose>ipsec whack : IPsec IKE keying daemon low-level control interface</refpurpose>
   </refnamediv>
 
   <!-- body begins here -->
   <refsynopsisdiv id="synopsis">
-    <cmdsynopsis>
-      <command>ipsec</command>
-
-      <arg choice="plain"><replaceable>pluto</replaceable></arg>
-      <arg choice="opt">--help</arg>
-      <arg choice="opt">--version</arg>
-      <arg choice="opt">--leak-detective</arg>
-      <arg choice="opt">--efence-protect</arg>
-      <arg choice="opt">--config <replaceable>filename</replaceable></arg>
-      <arg choice="opt">--vendorid <replaceable>VID</replaceable></arg>
-      <arg choice="opt">--nofork</arg>
-      <arg choice="opt">--stderrlog</arg>
-      <arg choice="opt">--logfile <replaceable>filename</replaceable></arg>
-      <arg choice="opt">--log-no-time</arg>
-      <arg choice="opt">--log-no-append</arg>
-      <arg choice="opt">--log-no-ip</arg>
-      <arg choice="opt">--log-no-audit</arg>
-      <arg choice="opt">--use-netkey</arg>
-      <arg choice="opt">--use-bsdkame</arg>
-      <arg choice="opt">--uniqueids</arg>
-      <arg choice="opt">--virtual-private <replaceable>network_list</replaceable></arg>
-      <arg choice="opt">--keep-alive <replaceable>delay_sec</replaceable></arg>
-      <arg choice="opt">--force-busy</arg>
-      <arg choice="opt">--crl-strict</arg>
-      <arg choice="opt">--crlcheckinterval</arg>
-      <arg choice="opt">--interface <replaceable>interfacename</replaceable></arg>
-      <arg choice="opt">--listen <replaceable>ipaddr</replaceable></arg>
-      <arg choice="opt">--ikeport <replaceable>portnumber</replaceable></arg>
-      <arg choice="opt">--natikeport <replaceable>portnumber</replaceable></arg>
-      <arg choice="opt">--rundir <replaceable>path</replaceable></arg>
-      <arg choice="opt">--secretsfile <replaceable>secrets-file</replaceable></arg>
-      <arg choice="opt">--nhelpers <replaceable>number</replaceable></arg>
-      <arg choice="opt">--seedbits <replaceable>numbits</replaceable></arg>
-      <arg choice="opt">--ipsecdir <replaceable>dirname</replaceable></arg>
-      <arg choice="opt">--nssdir <replaceable>dirname</replaceable></arg>
-      <arg choice="opt">--coredir <replaceable>dirname</replaceable></arg>
-      <arg choice="opt">--statsbin <replaceable>filename</replaceable></arg>
-      <arg choice="opt">--secctx-attr-type <replaceable>number</replaceable></arg>
-    </cmdsynopsis>
 
     <cmdsynopsis>
       <command>ipsec</command>
@@ -690,2179 +651,1693 @@
   </refsynopsisdiv>
 
   <refsect1 id="description">
+
     <title>DESCRIPTION</title>
 
     <para>
-      <emphasis remap="B">pluto</emphasis> is an IKE ("IPsec Key
-      Exchange") daemon. <emphasis remap="B">whack</emphasis> is an auxiliary
-      program to allow requests to be made to a running
-      <emphasis remap="B">pluto</emphasis>.
+      <emphasis remap="B">ipsec whack</emphasis> is an auxiliary
+      program to allow requests to be made to a running <emphasis
+      remap="B">pluto</emphasis>. <emphasis remap="B">whack</emphasis>
+      uses a UNIX domain socket to speak to <emphasis
+      remap="B">pluto</emphasis> (by default,
+      <filename>/var/pluto.ctl</filename>).
     </para>
 
     <para>
-      <emphasis remap="B">pluto</emphasis> is used to automatically build
-      shared "security associations" on a system that has IPsec, the secure IP
-      protocol. In other words, <emphasis remap="B">pluto</emphasis> can
-      eliminate much of the work of manual keying. The actual secure
-      transmission of packets is the responsibility of other parts of the system
-      - the kernel. Pluto can talk to various kernel implementations, such as the Linux
-      <emphasis remap="B">XFRM</emphasis> and BSD <emphasis remap="B">KAME</emphasis>
-      IPsec stacks.
-      <citerefentry><refentrytitle>ipsec</refentrytitle> <manvolnum>8</manvolnum></citerefentry>
-      provides a more convenient interface to <emphasis remap="B">pluto</emphasis>
-      and <emphasis remap="B">whack</emphasis>.
+      <emphasis remap="B">whack</emphasis> has an intricate argument
+      syntax. This syntax allows many different functions to be
+      specified. The help form shows the usage or version
+      information. The connection form gives <emphasis
+      remap="B">pluto</emphasis> a description of a potential
+      connection. The public key form informs <emphasis
+      remap="B">pluto</emphasis> of the RSA public key for a potential
+      peer.  The delete form deletes a connection description and all
+      SAs corresponding to it. The listen form tells <emphasis
+      remap="B">pluto</emphasis> to start or stop listening on the
+      public interfaces for IKE requests from peers. The route form
+      tells <emphasis remap="B">pluto</emphasis> to set up routing for
+      a connection; the unroute form undoes this. The initiate form
+      tells <emphasis remap="B">pluto</emphasis> to negotiate an SA
+      corresponding to a connection. The terminate form tells
+      <emphasis remap="B">pluto</emphasis> to remove all SAs
+      corresponding to a connection, including those being
+      negotiated. The status form displays the <emphasis
+      remap="B">pluto</emphasis>'s internal state. The debug form
+      tells <emphasis remap="B">pluto</emphasis> to change the
+      selection of debugging output "on the fly". The shutdown form
+      tells <emphasis remap="B">pluto</emphasis> to shut down,
+      deleting all SAs.
     </para>
 
-    <refsect2 id="ikes_job">
-      <title>IKE's Job</title>
-
-      <para>
-	A <emphasis remap="I">Security Association</emphasis> (<emphasis
-	remap="I">SA</emphasis>) is an agreement between two network nodes on
-	how to process certain traffic between them. This processing involves
-	encapsulation, authentication, encryption, or compression.
-      </para>
-
-      <para>
-	IKE can be deployed on a network node to negotiate Security
-	Associations for that node. These IKE implementations can only negotiate
-	with other IKE implementations, so IKE must be on each node that is to
-	be an endpoint of an IKE-negotiated Security Association. No other nodes
-	need to be running IKE.
-      </para>
-
-      <para>
-	An IKE instance (i.e. an IKE implementation on a particular
-	network node) communicates with another IKE instance using UDP IP
-	packets, so there must be a route between the nodes in each
-	direction.
-      </para>
-
-      <para>
-	The negotiation of Security Associations requires a number of
-	choices that involve tradeoffs between security, convenience, trust, and
-	efficiency. These are policy issues and are normally specified to the
-	IKE instance by the system administrator.
-      </para>
-
-      <para>
-	IKE deals with two kinds of Security Associations. The first part
-	of a negotiation between IKE instances is to build an ISAKMP SA. An
-	ISAKMP SA is used to protect communication between the two IKEs. IPsec
-	SAs can then be built by the IKEs - these are used to carry protected IP
-	traffic between the systems.
-      </para>
-
-      <para>
-	The negotiation of the ISAKMP SA is known as Phase 1. In theory,
-	Phase 1 can be accomplished by a couple of different exchange types.
-	Currently, Main Mode and Aggressive Mode are implemented.
-      </para>
-
-      <para>
-	Any negotiation under the protection of an ISAKMP SA, including
-	the negotiation of IPsec SAs, is part of Phase 2. The exchange type that
-	we use to negotiate an IPsec SA is called Quick Mode.
-      </para>
-
-      <para>
-	IKE instances must be able to authenticate each other as part of
-	their negotiation of an ISAKMP SA. This can be done by several
-	mechanisms described in the draft standards.
-      </para>
-
-      <para>
-	IKE negotiation can be initiated by any instance with any other.
-	If both can find an agreeable set of characteristics for a Security
-	Association, and both recognize each others authenticity, they can set
-	up a Security Association. The standards do not specify what causes an
-	IKE instance to initiate a negotiation.
-      </para>
-
-      <para>
-	In summary, an IKE instance is prepared to automate the management
-	of Security Associations in an IPsec environment, but a number of issues
-	are considered policy and are left in the system administrator's
-	hands.
-      </para>
-    </refsect2>
-
-    <refsect2 id="pluto">
-      <title>Pluto</title>
-
-      <para>
-	<emphasis remap="B">pluto</emphasis> is an implementation of IKE.
-	It runs as a daemon on a network node. Currently, this network node must
-	be a Linux system running the <emphasis remap="B">XFRM</emphasis> IPsec
-	stack, or a FreeBSD/NetBSD/Mac OSX system running the <emphasis
-	remap="B">KAME</emphasis> IPsec stack.
-      </para>
-
-      <para>
-	<emphasis remap="B">pluto</emphasis> implements a large subset of
-	IKEv1 and IKEv2.
-      </para>
-
-      <para>
-	The policy for acceptable characteristics for Security
-	Associations is mostly hardwired into the code of <emphasis
-	remap="B">pluto</emphasis> (spdb.c). Eventually this will be moved into
-	a security policy database with reasonable expressive power and more
-	convenience.
-      </para>
-
-      <para>
-	<emphasis remap="B">pluto</emphasis> uses shared secrets or RSA
-	signatures to authenticate peers with whom it is negotiating. These RSA
-	signatures can come from DNS(SEC), a configuration file, or from X.509
-	and CA certificates.
-      </para>
-
-      <para>
-	<emphasis remap="B">pluto</emphasis> initiates negotiation of a
-	Security Association when it is manually prodded: the program <emphasis
-	remap="B">whack</emphasis> is run to trigger this. It will also initiate
-	a negotiation when IPsec traps an outbound packet for Opportunistic Encryption.
-      </para>
-
-      <para>
-	<emphasis remap="B">pluto</emphasis> implements ISAKMP SAs itself.
-	After it has negotiated the characteristics of an IPsec SA, it directs
-	the <emphasis remap="B">kernel</emphasis> to implement it. If necessary,
-	it also invokes a script to adjust any firewall and issue
-	<citerefentry><refentrytitle>ip-route</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-	commands to direct IP packets.
-      </para>
-
-      <para>
-	When <emphasis remap="B">pluto</emphasis> shuts down, it closes
-	all Security Associations.
-      </para>
-    </refsect2>
-
-    <refsect2 id="before_running_pluto">
-      <title>Before Running Pluto</title>
-
-      <para>
-	<emphasis remap="B">pluto</emphasis> runs as a daemon with userid
-	root. Before running it, a few things must be set up.
-      </para>
-
-      <para>
-	<emphasis remap="B">pluto</emphasis> requires a working IPsec stack.
-      </para>
-
-      <para>
-	<emphasis remap="B">pluto</emphasis> supports multiple public
-	networks (that is, networks that are considered insecure and thus
-	need to have their traffic encrypted or authenticated). It discovers
-	the public interfaces to use by looking at all interfaces that are
-	configured (the <option>--interface</option> option can be used to limit
-	the interfaces considered). It does this only when <emphasis
-	remap="B">whack</emphasis> tells it to --listen, so the interfaces must
-	be configured by then. The <option>--listen</option> can be used to limit
-	listening on only 1 IP address of a certain interface.
-	<citerefentry><refentrytitle>ip</refentrytitle><manvolnum>8</manvolnum>
-        </citerefentry> with the <option>addr</option> option will show the name
-	and status of each network interface.
-      </para>
-
-      <para>
-	<emphasis remap="B">pluto</emphasis> requires a database of
-	preshared secrets and RSA private keys. This is described in the
-	<citerefentry>
-          <refentrytitle>ipsec.secrets</refentrytitle>
-          <manvolnum>5</manvolnum>
-        </citerefentry>. <emphasis remap="B">pluto</emphasis> is told of RSA
-	public keys via <emphasis remap="B">whack</emphasis> commands. If the
-	connection is Opportunistic, and no RSA public key is known, <emphasis
-	remap="B">pluto</emphasis> will attempt to fetch RSA keys using the
-	Domain Name System.
-      </para>
-    </refsect2>
-
-    <refsect2 id="setting_up_netkey_for_pluto">
-      <title>Setting up <emphasis remap="B">XFRM</emphasis> for <emphasis
-      remap="B">pluto</emphasis></title>
-
-      <para>
-	No special requirements are necessary to use XFRM - it ships
-	with all modern versions of Linux 2.4 and later.
-      </para>
-    </refsect2>
-
-    <refsect2 id="ipsecsecrets_file">
-      <title>ipsec.secrets file</title>
-
-      <para>
-	A <emphasis remap="B">pluto</emphasis> daemon and another IKE
-	daemon (for example, another instance of <emphasis
-	remap="B">pluto</emphasis>) must convince each other that they are who
-	they are supposed to be before any negotiation can succeed. This
-	authentication is accomplished by using either secrets that have been
-	shared beforehand (manually) or by using RSA signatures. There are other
-	techniques, but they have not been implemented in <emphasis
-	remap="B">pluto</emphasis>.
-      </para>
-
-      <para>
-	The file <filename>@IPSEC_SECRETS_FILE@</filename> is used
-	to keep preshared secret keys and XAUTH passwords. RSA private
-	keys, X.509 certificates, CRLs, OCSP and smartcards are handled
-	via NSS. For debugging, there is an argument to the <emphasis
-	remap="B">pluto</emphasis> command to use a different file. This
-	file is described in
-	<citerefentry>
-	  <refentrytitle>ipsec.secrets</refentrytitle>
-          <manvolnum>5</manvolnum>
-          </citerefentry>.
-      </para>
-    </refsect2>
-
-    <refsect2 id="running_pluto">
-      <title>Running Pluto</title>
-
-      <para>
-	To fire up the daemon, just type <emphasis
-	remap="B">pluto</emphasis> (be sure to be running as the superuser). The
-	default IKE port number is 500, the UDP port assigned by IANA for IKE
-	Daemons. <emphasis remap="B">pluto</emphasis> must be run by the
-	superuser to be able to use the UDP 500 port. If pluto is told to enable
-	NAT-Traversal, then UDP port 4500 is also taken by pluto to listen
-	on.
-      </para>
-
-      <para>
-	Pluto supports different IPstacks on different operating
-	systems.  This can be configured using one of the options
-	<option>--use-netkey</option> (Linux),
-	<option>--use-bsdkame</option> (BSD).  On startup, pluto might
-	also read the <option>protostack=</option> option to select
-	the IPsec stack to use if <option>--config
-	/etc/ipsec.conf</option> is given as argument to pluto.  If
-	both <option>--use-XXX</option> and <option>--config
-	/etc/ipsec.conf</option> are specified, the last command line
-	argument specified takes precedence.
-      </para>
-
-      <para>
-	Pluto supports RFC 3947 NAT-Traversal. The allowed range behind the NAT routers is submitted using the
-	<option>--virtual-private</option> option. See <citerefentry>
-        <refentrytitle>ipsec.conf</refentrytitle>
-        <manvolnum>5</manvolnum>
-        </citerefentry> for the syntax. The option
-	<option>--force-keepalive</option> forces the sending of the <emphasis
-	remap="I">keep-alive packets</emphasis>, which are send to prevent the
-	NAT router from closing its port when there is not enough traffic on the
-	IPsec connection. The <option>--keep-alive</option> sets the delay (in
-	seconds) of these keep-alive packets. The newer NAT-T standards support
-	<emphasis remap="I">port floating</emphasis>, and Libreswan enables this
-	per default.
-      </para>
-
-      <para>
-	Pluto supports the use of X.509 certificates and sends certificates
-	when needed. Pluto uses NSS for all X.509 related data, including CAcerts,
-	certs, CRLs and private keys. The <emphasis remap="I">Certificate Revocation Lists</emphasis>
-	can also be retrieved from an URL. The option <option>--crlcheckinterval</option>
-	sets the time between checking for CRL expiration and issuing new fetch commands.
-	The first attempt to update a CRL is started at <emphasis
-	remap="I">2*crlcheckinterval</emphasis> before the next update time.
-	Pluto logs a warning if no valid CRL was loaded or obtained for a
-	connection. If <option>--crl-strict</option> is given, the
-	connection will be rejected until a valid CRL has been loaded.
-      </para>
-
-      <para>
-	Pluto can also use helper children to off-load cryptographic
-	operations. This behavior can be fine tuned using the
-	<option>--nhelpers</option>. Pluto will start <emphasis
-	remap="I">(n-1)</emphasis> of them, where <emphasis
-	remap="I">n</emphasis> is the number of CPU's you have (including
-	hypherthreaded CPU's). A value of <emphasis remap="I">0</emphasis>
-	forces pluto to do all operations in the main process. A value of
-	<emphasis remap="I">-1</emphasis> tells pluto to perform the above
-	calculation. Any other value forces the number to that amount.
-      </para>
-
-      <para>
-	Pluto uses the NSS crypto library as its random source. Some
-	government Three Letter Agency requires that pluto reads 440 bits
-	from /dev/random and feed this into the NSS RNG before drawing
-	random from the NSS library, despite the NSS library itself
-	already seeding its internal state. As this process can block
-	pluto for an extended time, the default is to not perform this
-	redundant seeding. The <emphasis remap="B">--seedbits</emphasis>
-	option can be used to specify the number of bits that will be
-	pulled from /dev/random and seeded into the NSS RNG.  This can
-	also be accomplished by specifying seedbits in the "config setup"
-	section of ipsec.conf. This option should not be used by most people.
-      </para>
-
-      <para>
-	<emphasis remap="B">pluto</emphasis> attempts to create a lockfile
-	with the name <filename>@@RUNDIR@@/pluto.pid</filename>. If the
-	lockfile cannot be created, <emphasis remap="B">pluto</emphasis> exits -
-	this prevents multiple <emphasis remap="B">pluto</emphasis>s from
-	competing Any "leftover" lockfile must be removed before <emphasis
-	remap="B">pluto</emphasis> will run. <emphasis
-	remap="B">pluto</emphasis> writes its PID into this file so that scripts
-	can find it. This lock will not function properly if it is on an NFS
-	volume (but sharing locks on multiple machines doesn't make sense
-	anyway).
-      </para>
-
-      <para>
-	<emphasis remap="B">pluto</emphasis> then forks and the parent
-	exits. This is the conventional "daemon fork". It can make debugging
-	awkward, so there is an option to suppress this fork. In certain
-	configurations, pluto might also launch helper programs to assist with
-	DNS queries or to offload cryptographic operations.
-      </para>
-
-      <para>
-	All logging, including diagnostics, is sent to <citerefentry>
-        <refentrytitle>syslog</refentrytitle>
-        <manvolnum>3</manvolnum>
-        </citerefentry> with facility=authpriv; it decides where to put these
-	messages (possibly in /var/log/secure or /var/log/auth.log). Since this too can make
-	debugging awkward, the option <option>--stderrlog</option> is used to
-	steer logging to stderr.
-      </para>
-
-      <para>
-	Alternatively, <option>--logfile</option> can be used to send all logging
-	information to a specific file.
-      </para>
-
-      <para>
-	Once <emphasis remap="B">pluto</emphasis> is started, it waits for
-	requests from <emphasis remap="B">whack</emphasis>.
-      </para>
-    </refsect2>
-
-    <refsect2 id="plutos_internal_state">
-      <title>Pluto's Internal State</title>
-
-      <para>
-	To understand how to use <emphasis remap="B">pluto</emphasis>, it
-	is helpful to understand a little about its internal state. Furthermore,
-	the terminology is needed to decipher some of the diagnostic
-	messages.
-      </para>
-
-      <para>
-	Pluto supports <emphasis remap="B">food groups</emphasis> for Opportunistic
-	IPsec. The policies for these are located in /etc/ipsec.d/policies, or another
-	directory as specified by <option>--ipsecdir</option>.
-      </para>
-
-      <para>
-	Pluto supports X.509 Certificates. All certificate handling is done using
-	the NSS library and all certificate material is stored in an NSS database in
-	@@IPSEC_NSSDIR@@ or another directory as specified by <option>--nssdir</option>.
-      </para>
-
-      <para>
-	Pluto may core dump. It will normally do so into the current
-	working directory. You can specify the --coredir option for pluto, or
-	specify the dumpdir= option in ipsec.conf.
-      </para>
-
-      <para>
-	If you are investigating a potential memory leak in pluto,
-	start pluto with the --leak-detective option.  Before the leak
-	causes the system or pluto to die, shut down pluto in the regular
-	way. pluto will display a list of leaks it has detected.
-      </para>
-
-      <para>
-	If you are investigating a potential use-after-free or
-	double-free in pluto, first build pluto with USE_EFENCE=true
-	and then start pluto with --efence-protect.  See
-	<citerefentry> <refentrytitle>efence</refentrytitle>
-	<manvolnum>2</manvolnum> </citerefentry> and EF_PROTECT_BELOW
-	and EF_PROTECT_FREE.
-      </para>
-
-      <para>
-	The <emphasis remap="I">(potential) connection</emphasis> database
-	describes attributes of a connection. These include the IP addresses of
-	the hosts and client subnets and the security characteristics desired.
-	<emphasis remap="B">pluto</emphasis> requires this information (simply
-	called a connection) before it can respond to a request to build an SA.
-	Each connection is given a name when it is created, and all references
-	are made using this name.
-      </para>
-
-      <para>
-	During the IKE exchange to build an SA, the information about the
-	negotiation is represented in a <emphasis remap="I">state
-	object</emphasis>. Each state object reflects how far the negotiation
-	has reached. Once the negotiation is complete and the SA established,
-	the state object remains to represent the SA. When the SA is terminated,
-	the state object is discarded. Each State object is given a serial
-	number and this is used to refer to the state objects in logged
-	messages.
-      </para>
-
-      <para>
-	Each state object corresponds to a connection and can be thought
-	of as an instantiation of that connection. At any particular time, there
-	may be any number of state objects corresponding to a particular
-	connection. Often there is one representing an ISAKMP SA and another
-	representing an IPsec SA.
-      </para>
-
-      <para>
-	<emphasis remap="B">XFRM</emphasis> requires no special routing.
-      </para>
-
-      <para>
-	Each connection may be routed, and must be while it has an IPsec
-	SA. The connection specifies the characteristics of the route: the
-	interface on this machine, the "gateway" (the nexthop), and the peer's
-	client subnet. Two connections may not be simultaneously routed if they
-	are for the same peer's client subnet but use different interfaces or
-	gateways (<emphasis remap="B">pluto</emphasis>'s logic does not reflect
-	any advanced routing capabilities).
-      </para>
-
-      <para>
-	When <emphasis remap="B">pluto</emphasis> needs to install a route
-	for a connection, it must make sure that no conflicting route is in use.
-	If another connection has a conflicting route, that route will be taken
-	down, as long as there is no IPsec SA instantiating that connection. If
-	there is such an IPsec SA, the attempt to install a route will
-	fail.
-      </para>
-
-      <para>
-	There is an exception. If <emphasis remap="B">pluto</emphasis>, as
-	Responder, needs to install a route to a fixed client subnet for a
-	connection, and there is already a conflicting route, then the SAs using
-	the route are deleted to make room for the new SAs. The rationale is
-	that the new connection is probably more current. The need for this
-	usually is a product of Road Warrior connections (these are explained
-	later; they cannot be used to initiate).
-      </para>
-
-      <para>
-	When <emphasis remap="B">pluto</emphasis> needs to install an
-	eroute for an IPsec SA (for a state object), first the state object's
-	connection must be routed (if this cannot be done, the eroute and SA
-	will not be installed). If a conflicting eroute is already in place for
-	another connection, the eroute and SA will not be installed (but note
-	that the routing exception mentioned above may have already deleted
-	potentially conflicting SAs). If another IPsec SA for the same
-	connection already has an eroute, all its outgoing traffic is taken over
-	by the new eroute. The incoming traffic will still be processed. This
-	characteristic is exploited during rekeying.
-      </para>
-    </refsect2>
-
-    <refsect2 id="using_whack">
-      <title>Using whack</title>
-
-      <para>
-	<emphasis remap="B">whack</emphasis> is used to command a running
-	<emphasis remap="B">pluto</emphasis>. <emphasis
-	remap="B">whack</emphasis> uses a UNIX domain socket to speak to
-	<emphasis remap="B">pluto</emphasis> (by default,
-	<filename>/var/pluto.ctl</filename>).
-      </para>
-
-      <para>
-	<emphasis remap="B">whack</emphasis> has an intricate argument
-	syntax. This syntax allows many different functions to be specified. The
-	help form shows the usage or version information. The connection form
-	gives <emphasis remap="B">pluto</emphasis> a description of a potential
-	connection. The public key form informs <emphasis
-	remap="B">pluto</emphasis> of the RSA public key for a potential peer.
-	The delete form deletes a connection description and all SAs
-	corresponding to it. The listen form tells <emphasis
-	remap="B">pluto</emphasis> to start or stop listening on the public
-	interfaces for IKE requests from peers. The route form tells <emphasis
-	remap="B">pluto</emphasis> to set up routing for a connection; the
-	unroute form undoes this. The initiate form tells <emphasis
-	remap="B">pluto</emphasis> to negotiate an SA corresponding to a
-	connection. The terminate form tells <emphasis
-	remap="B">pluto</emphasis> to remove all SAs corresponding to a
-	connection, including those being negotiated. The status form displays
-	the <emphasis remap="B">pluto</emphasis>'s internal state. The debug
-	form tells <emphasis remap="B">pluto</emphasis> to change the selection
-	of debugging output "on the fly". The shutdown form tells <emphasis
-	remap="B">pluto</emphasis> to shut down, deleting all SAs.
-      </para>
-
-      <para>
-	The crash option asks pluto to consider a particularly target IP
-	to have crashed, and to attempt to restart all connections with that IP
-	address as a gateway. In general, you should use Dead Peer Detection to
-	detect this kind of situation automatically, but this is not always
-	possible.
-      </para>
-
-      <para>
-	Most options are specific to one of the forms, and will be
-	described with that form. There are three options that apply to all
-	forms.
-      </para>
-
-      <variablelist remap="TP">
-        <varlistentry>
-          <term>
-	    <option>--ctlsocket</option> <replaceable>path/file</replaceable>
-	  </term>
-          <listitem>
-            <para>
-	      <emphasis remap="I">file</emphasis> is used as the UNIX
-	      domain socket for talking to <emphasis
-	      remap="B">pluto</emphasis>.  Use either this option or
-	      <emphasis remap="B">--rundir</emphasis>, but not both.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--rundir</option> <replaceable>path</replaceable>
-	  </term>
-          <listitem>
-            <para>
-	      <emphasis remap="I">path</emphasis> where the UNIX
-	      domain socket for talking to the <emphasis
-	      remap="B">pluto</emphasis>, the <emphasis
-	      remap="B">pluto.pid</emphasis> file and the <emphasis
-	      remap="B">pluto.lock</emphasis> files are found.  Use
-	      either this option or <emphasis
-	      remap="B">--ctlsocket</emphasis>, but not both.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--label</option> <replaceable>string</replaceable>
-	  </term>
-          <listitem>
-            <para>
-	      Adds the string to all error messages generated by
-	      <emphasis remap="B">whack</emphasis>.
-	    </para>
-          </listitem>
-        </varlistentry>
-      </variablelist>
-
-      <para>
-	The help form of <emphasis remap="B">whack</emphasis> is
-	self-explanatory.
-      </para>
-
-      <variablelist remap="TP">
-
-        <varlistentry>
-          <term>
-	    <option>--help</option>
-	  </term>
-          <listitem>
-            <para>
-	      Display the usage message.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--version</option>
-	  </term>
-          <listitem>
-            <para>
-	      Display the version of <emphasis
-	      remap="B">whack</emphasis>.
-	    </para>
-          </listitem>
-        </varlistentry>
-      </variablelist>
-
-      <para>
-	The connection form describes a potential connection to
-	<emphasis remap="B">pluto</emphasis>. <emphasis
-	remap="B">pluto</emphasis> needs to know what connections can
-	and should be negotiated. When <emphasis
-	remap="B">pluto</emphasis> is the initiator, it needs to know
-	what to propose. When <emphasis remap="B">pluto</emphasis> is
-	the responder, it needs to know enough to decide whether is is
-	willing to set up the proposed connection.
-      </para>
-
-      <para>
-	The description of a potential connection can specify a large
-	number of details. Each connection has a unique name. This
-	name will appear in a updown shell command, so it should not
-	contain punctuation that would make the command ill-formed.
-      </para>
-
-      <variablelist remap="TP">
-
-        <varlistentry>
-          <term>
-	    <option>--name</option> <replaceable>connection-name</replaceable>
-	  </term>
-          <listitem>
-            <para>
-	      Sets the name of the connection.
-	    </para>
-          </listitem>
-        </varlistentry>
-      </variablelist>
-
-      <para>
-	The topology of a connection is symmetric, so to save space
-	here is half a picture:
-      </para>
-
-      <para>&nbsp;&nbsp;&nbsp;client_subnet&lt;--&gt;host:ikeport&lt;--&gt;nexthop&lt;---</para>
-
-      <para>
-	A similar trick is used in the flags. The same flag names are
-	used for both ends. Those before the <option>--to</option>
-	flag describe the left side and those afterwards describe the
-	right side. When <emphasis remap="B">pluto</emphasis> attempts
-	to use the connection, it decides whether it is the left side
-	or the right side of the connection, based on the IP numbers
-	of its interfaces.
-      </para>
-
-      <variablelist remap="TP">
-
-        <varlistentry>
-          <term>
-	    <option>--id</option> <replaceable>id</replaceable>
-	  </term>
-          <listitem>
-            <para>
-	      The identity of the end. Currently, this can be an IP
-	      address (specified as dotted quad or as a Fully
-	      Qualified Domain Name, which will be resolved
-	      immediately) or as a Fully Qualified Domain Name itself
-	      (prefixed by "@" to signify that it should not be
-	      resolved), or as user@FQDN, or an X.509 DN.  <emphasis
-	      remap="B">Pluto</emphasis> only authenticates the
-	      identity, and does not use it for addressing, so, for
-	      example, an IP address need not be the one to which
-	      packets are to be sent. If the option is absent, the
-	      identity defaults to the IP address specified by
-	      <option>--host</option>.
-	    </para>
-            <!-- The identity is transmitted in the IKE protocol, and
-                 is what is authenticated. -->
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--host</option> <replaceable>ip-address</replaceable>
-	  </term>
-          <term>
-	    <option>--host</option> <replaceable>%any</replaceable>
-	  </term>
-          <term>
-	    <option>--host</option> <replaceable>%opportunistic</replaceable>
-	  </term>
-          <listitem>
-            <para>
-	      The IP address of the end (generally the public
-	      interface).  If <emphasis remap="B">pluto</emphasis> is
-	      to act as a responder for IKE negotiations initiated
-	      from unknown IP addresses (the "Road Warrior" case), the
-	      IP address should be specified as <emphasis
-	      remap="B">%any</emphasis> (currently, the obsolete
-	      notation <literal>0.0.0.0</literal> is also accepted for
-	      this). If <emphasis remap="B">pluto</emphasis> is to
-	      opportunistically initiate the connection, use <emphasis
-	      remap="B">%opportunistic</emphasis>
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--cert</option> <replaceable>friendly_name</replaceable>
-	  </term>
-          <listitem>
-            <para>
-	      The friendly_name (or nickname) of the X.509 certificate
-	      that was used when imported the certificate into the NSS
-	      database. See <citerefentry>
-	      <refentrytitle>ipsec.conf</refentrytitle>
-	      <manvolnum>5</manvolnum> </citerefentry> on how to
-	      extract this from the PKCS#12 file.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--ckaid</option> <replaceable>CKAID</replaceable>
-	  </term>
-          <listitem>
-	    <para>
-	      The CKAID of the X.509 certificate or host key.
-	    </para>
-	    <para>
-	      For X.509 certificates, the CKAID is either the
-	      certificate's SubjectKeyIdentifier or the public key's
-	      SHA1 fingerprint (when the SubjectKeyIdentifier isn't
-	      specified).  For host keys the CKAID is the SHA1
-	      fingerprint of the public key.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--ca</option> <replaceable>distinguished name</replaceable>
-	  </term>
-          <listitem>
-            <para>
-	      The X.509 Certificate Authority's Distinguished Name
-	      (DN) used as trust anchor for this connection. This is
-	      the CA certificate that signed the host certificate, as
-	      well as the certificate of the incoming client.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--groups</option> <replaceable>access control groups</replaceable>
-	  </term>
-          <listitem>
-            <para>
-	      The access control groups used.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--sendcert</option> <emphasis remap="I">yes|forced|always|ifasked|no|never</emphasis>
-	  </term>
-          <listitem>
-            <para>
-	      Whether or not to send our X.509 certificate
-	      credentials.  This could potentially give an attacker
-	      too much information about which identities are allowed
-	      to connect to this host. The default is to use <emphasis
-	      remap="B">ifasked</emphasis> when we are a Responder,
-	      and to use <emphasis remap="B">yes</emphasis> (which is
-	      the same as <emphasis remap="B">forced</emphasis> and
-	      <emphasis remap="B">always</emphasis> if we are an
-	      Initiator. The values <emphasis remap="B">no</emphasis>
-	      and <emphasis remap="B">never</emphasis> are
-	      equivalent. NOTE: "forced" does not seem to be actually
-	      implemented - do not use it.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--sendca</option> <emphasis remap="I">none|issuer|all</emphasis>
-	  </term>
-          <listitem>
-	    <para>
-	      How much of our available X.509 trust chain to send with
-	      the end certificate, excluding any root CAs. Specifying
-	      <emphasis remap="B" >issuer</emphasis> sends just the
-	      issuing intermediate CA, while <emphasis remap="B">
-	      all</emphasis> will send the entire chain of
-	      intermediate CAs.<emphasis remap="B">none</emphasis>
-	      will not send any CA certs. The default is <emphasis
-	      remap="B">none</emphasis> which maintains the current
-	      libreswan behavior.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--certtype</option> <replaceable>number</replaceable>
-	  </term>
-          <listitem>
-            <para>
-	      The X.509 certificate type number.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--ikeport</option> <replaceable>port-number</replaceable>
-	  </term>
-          <listitem>
-            <para>
-	      The UDP port that IKE listens to on that host. The
-	      default is 500. (<emphasis remap="B">pluto</emphasis> on
-	      this machine uses the port specified by its own command
-	      line argument, so this only affects where <emphasis
-	      remap="B">pluto</emphasis> sends messages.)
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--nexthop</option>&nbsp;<replaceable>ip-address</replaceable>
-	  </term>
-          <listitem>
-            <para>
-	      Where to route packets for the peer's client (presumably
-	      for the peer too, but it will not be used for
-	      this). When <emphasis remap="B">pluto</emphasis>
-	      installs an IPsec SA, it issues a route command. It uses
-	      the nexthop as the gateway. The default is the peer's IP
-	      address (this can be explicitly written as <emphasis
-	      remap="B">%direct</emphasis>; the obsolete notation
-	      <literal>0.0.0.0</literal> is accepted). This option is
-	      necessary if <emphasis remap="B">pluto</emphasis>'s
-	      host's interface used for sending packets to the peer is
-	      neither point-to-point nor directly connected to the
-	      peer.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--subnet</option> <replaceable>subnet</replaceable>
-	  </term>
-          <term>
-	    <option>--client</option> <replaceable>subnet</replaceable>
-	  </term>
-          <listitem>
-            <para>
-	      The subnet for which the IPsec traffic will be destined.
-	      If not specified, the host will be the client.  The
-	      subnet can be specified using the general form
-	      <replaceable>address</replaceable>/<replaceable>mask</replaceable>.
-	      The most convenient form of the
-	      <replaceable>mask</replaceable> is a decimal integer,
-	      specifying the number of leading one bits in the mask.
-	      So, for example, 10.0.0.0/8 would specify the class A
-	      network "Net 10".
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--clientprotoport</option> <replaceable>protocol</replaceable>/<replaceable>port</replaceable>
-	  </term>
-          <listitem>
-            <para>
-	      Specify the Port Selectors (filters) to be used on this
-	      connection. The general form is <emphasis
-	      remap="I">protocol</emphasis>/<emphasis
-	      remap="I">port</emphasis>.  This is most commonly used
-	      to limit the connection to L2TP traffic only by
-	      specifying a value of <emphasis
-	      remap="I">17/1701</emphasis> for UDP (protocol 17) and
-	      port 1701.  The notation <emphasis
-	      remap="I">17/%any</emphasis> can be used to allow all
-	      UDP traffic and is needed for L2TP connections with
-	      Windows XP machines before Service Pack 2.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--sourceip</option> <replaceable>ip-address</replaceable>
-	  </term>
-          <term>
-	    <option>--srcip</option> <replaceable>ip-address</replaceable>
-	  </term>
-          <listitem>
-            <para>
-	      The IP address for this host to use when transmitting a
-	      packet to the remote IPsec gateway itself.  This option
-	      is used to make the gateway itself use its internal IP,
-	      which is part of the <option>--client
-	      <replaceable>subnet</replaceable></option>.  Otherwise
-	      it will use its nearest IP address, which is its public
-	      IP address, which is not part of the subnet-subnet IPsec
-	      tunnel, and would therefore not get encrypted.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--xauthserver</option>
-	  </term>
-          <listitem>
-            <para>
-	      This end is an xauthserver. It will lookup the xauth user
-              name and password and verify this before allowing the connection
-              to get established.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--xauthclient</option>
-	  </term>
-          <listitem>
-            <para>
-	      This end is an xauthclient. To bring this connection up
-	      with the <option>--initiate</option> also requires the
-	      client to specify <option>--xauthuser
-	      <replaceable>username</replaceable></option> and
-	      <option>--xauthpass
-	      <replaceable>password</replaceable></option>
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--xauthuser</option>
-	  </term>
-          <listitem>
-            <para>
-	      The username for the xauth authentication.This option is
-	      normally passed along by <citerefentry>
-	      <refentrytitle>ipsec_up</refentrytitle>
-	      <manvolnum>8</manvolnum> </citerefentry> when an xauth
-	      connection is started using <emphasis remap="I">ipsec
-	      up conn</emphasis>.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--xauthpass</option>
-	  </term>
-          <listitem>
-            <para>
-	      The password for the xauth authentication. This option
-	      is normally passed along by <citerefentry>
-	      <refentrytitle>ipsec_up</refentrytitle>
-	      <manvolnum>8</manvolnum> </citerefentry> when an xauth
-	      connection is started using <emphasis remap="I">ipsec
-	      up conn</emphasis>.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--modecfgserver</option>
-	  </term>
-          <listitem>
-            <para>
-	      This end is an Mode Config server.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--modecfgclient</option>
-	  </term>
-          <listitem>
-            <para>
-	      This end is an Mode Config client.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--modecfgdns</option>
-	  </term>
-          <listitem>
-            <para>
-	      A comma separated list of DNS server IP's to pass along
-	      to connecting clients.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--modecfgdomains</option>
-	  </term>
-          <listitem>
-            <para>
-	      A comma separated list of internal DNS domains to pass
-	      along to connecting clients.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--dnskeyondemand</option>
-	  </term>
-          <listitem>
-            <para>
-	      Specifies that when an RSA public key is needed to
-	      authenticate this host, and it isn't already known,
-	      fetch it from DNS.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--updown</option> <replaceable>updown</replaceable>
-	  </term>
-          <listitem>
-            <para>
-	      Specifies an external shell command to be run whenever
-	      <emphasis remap="B">pluto</emphasis> brings up or down a
-	      connection. The script is used to build a shell command,
-	      so it may contain positional parameters, but ought not
-	      to have punctuation that would cause the resulting
-	      command to be ill-formed. The default is <emphasis
-	      remap="I">ipsec _updown</emphasis>. Pluto passes a dozen
-	      environment variables to the script about the connection
-	      involved.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--to</option>
-	  </term>
-          <listitem>
-            <para>
-	      Separates the specification of the left and right ends
-	      of the connection. Pluto tries to decide whether it is
-	      <emphasis remap="I">left</emphasis> or <emphasis
-	      remap="I">right</emphasis> based on the information
-	      provided on both sides of this option.
-	    </para>
-          </listitem>
-        </varlistentry>
-      </variablelist>
-
-      <para>
-	The potential connection description also specifies
-	characteristics of rekeying and security.
-      </para>
-
-      <variablelist remap="TP">
-        <varlistentry>
-          <term>
-	    <option>--psk</option>
-	  </term>
-          <listitem>
-            <para>
-	      Propose and allow preshared secret authentication for
-	      IKE peers. This authentication requires that each side
-	      use the same secret. May be combined with
-	      <option>--rsasig</option>; at least one must be
-	      specified.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--rsasig</option>
-	  </term>
-          <listitem>
-            <para>
-	      Propose and allow RSA signatures for authentication of
-	      IKE peers. This authentication requires that each side
-	      have have a private key of its own and know the public
-	      key of its peer. May be combined with
-	      <option>--psk</option>; at least one must be
-	      specified.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--encrypt</option>
-	  </term>
-          <listitem>
-            <para>
-	      All proposed or accepted IPsec SAs will include non-null
-	      ESP. The actual choices of transforms are wired into
-	      <emphasis remap="B">pluto</emphasis>.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--authenticate</option>
-	  </term>
-          <listitem>
-            <para>
-	      All proposed IPsec SAs will include AH. All accepted
-	      IPsec SAs will include AH or ESP with
-	      authentication. The actual choices of transforms are
-	      wired into <emphasis remap="B">pluto</emphasis>.  Note
-	      that this has nothing to do with IKE
-	      authentication.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--compress</option>
-	  </term>
-          <listitem>
-            <para>
-	      All proposed IPsec SAs will include IPCOMP
-	      (compression).
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--tunnel</option>
-	  </term>
-          <listitem>
-            <para>
-	      The IPsec SA should use tunneling. Implicit if the SA is
-	      for clients. Must only be used with
-	      <option>--authenticate</option> or
-	      <option>--encrypt</option>.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--ipv4</option>
-	  </term>
-          <listitem>
-            <para>
-	      The host addresses will be interpreted as IPv4
-	      addresses.  This is the default. Note that for a
-	      connection, all host addresses must be of the same
-	      Address Family (IPv4 and IPv6 use different Address
-	      Families).
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--ipv6</option>
-	  </term>
-          <listitem>
-            <para>
-	      The host addresses (including nexthop) will be
-	      interpreted as IPv6 addresses. Note that for a
-	      connection, all host addresses must be of the same
-	      Address Family (IPv4 and IPv6 use different Address
-	      Families).
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--tunnelipv4</option>
-	  </term>
-          <listitem>
-            <para>
-	      The client addresses will be interpreted as IPv4
-	      addresses.  The default is to match what the host will
-	      be. This does not imply <option>--tunnel</option> so the
-	      flag can be safely used when no tunnel is actually
-	      specified. Note that for a connection, all tunnel
-	      addresses must be of the same Address Family.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--tunnelipv6</option>
-	  </term>
-          <listitem>
-            <para>
-	      The client addresses will be interpreted as IPv6
-	      addresses.  The default is to match what the host will
-	      be. This does not imply <option>--tunnel</option> so the
-	      flag can be safely used when no tunnel is actually
-	      specified. Note that for a connection, all tunnel
-	      addresses must be of the same Address Family.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--pfs</option>
-	  </term>
-          <listitem>
-            <para>
-	      There should be Perfect Forward Secrecy - new keying
-	      material will be generated for each IPsec SA when
-	      running Quick Mode in IKEv1 or Create Child in
-	      IKEv2. Without this option, the SAKMP SA keying material
-	      is used instead.  <emphasis remap="B">pluto</emphasis>
-	      will propose the same group that was used with the
-	      original IKE SA.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--pfsgroup</option> <replaceable>modp-group</replaceable>
-	  </term>
-          <listitem>
-            <para>
-	      Sets the Diffie-Hellman group used. Currently the
-	      following values are supported: <emphasis
-	      remap="B">modp1024</emphasis> (DHgroup 2), <emphasis
-	      remap="B">modp1536</emphasis> (DHgroup 5), <emphasis
-	      remap="B">modp2048</emphasis> (DHgroup 14), <emphasis
-	      remap="B">modp3072</emphasis> (DHgroup 15), <emphasis
-	      remap="B">modp4096</emphasis> (DHgroup 16), <emphasis
-	      remap="B">modp6144</emphasis> (DHgroup 17), and
-	      <emphasis remap="B">modp8192</emphasis> (DHgroup 18). It
-	      is possible to support the weak and broken <emphasis
-	      remap="B">modp768</emphasis> (DHgroup 1), but this
-	      requires a manual recompile and is strongly
-	      discouraged.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--esp</option> <replaceable>esp-algos</replaceable>
-	  </term>
-          <listitem>
-            <para>
-	      ESP encryption/authentication algorithm to be used for
-	      the connection (phase2 aka IPsec SA). The options must
-	      be suitable as a value of <citerefentry>
-	      <refentrytitle>ipsec_spi</refentrytitle>
-	      <manvolnum>8</manvolnum> </citerefentry>.  See
-	      <citerefentry> <refentrytitle>ipsec.conf</refentrytitle>
-	      <manvolnum>5</manvolnum> </citerefentry> for a detailed
-	      description of the algorithm format.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--aggrmode</option>
-	  </term>
-          <listitem>
-            <para>
-	      This tunnel is using aggressive mode ISAKMP
-	      negotiation. The default is main mode. Aggressive mode
-	      is less secure than main mode as it reveals your
-	      identity to an eavesdropper, but is needed to support
-	      road warriors using PSK keys or to interoperate with
-	      other buggy implementations insisting on using
-	      aggressive mode.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--modecfgpull</option>
-	  </term>
-          <listitem>
-            <para>
-	      Pull the Mode Config network information from the peer.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--dpddelay</option> <replaceable>seconds</replaceable>
-	  </term>
-          <listitem>
-            <para>
-	      Set the delay (in seconds) between Dead Peer Detection
-	      (RFC 3706) keepalives (R_U_THERE, R_U_THERE_ACK) that
-	      are sent for this connection (default 30
-	      seconds).
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--timeout</option> <replaceable>seconds</replaceable>
-	  </term>
-          <listitem>
-            <para>
-	      Set the length of time (in seconds) we will idle without
-	      hearing either an R_U_THERE poll from our peer, or an
-	      R_U_THERE_ACK reply. After this period has elapsed with
-	      no response and no traffic, we will declare the peer
-	      dead, and remove the SA (default 120 seconds).
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--forceencaps</option>
-	  </term>
-          <listitem>
-            <para>
-	      In some cases, for example when ESP packets are filtered
-	      or when a broken IPsec peer does not properly recognise
-	      NAT, it can be useful to force RFC-3948 encapsulation
-	      using this option. It causes pluto lie and tell the
-	      remote peer that RFC-3948 encapsulation (ESP in UDP port
-	      4500 packets) is required.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-      </variablelist>
-
-      <para>
-	If none of the <option>--encrypt</option>,
-	<option>--authenticate</option>, <option>--compress</option>,
-	or <option>--pfs</option> flags is given, the initiating the
-	connection will only build an ISAKMP SA. For such a
-	connection, client subnets have no meaning and must not be
-	specified.
-      </para>
-
-      <para>
-	Apart from initiating directly using the
-	<option>--initiate</option> option, a tunnel can be loaded
-	with a different policy.
-      </para>
-
-      <variablelist remap="TP">
-
-        <varlistentry>
-          <term>
-	    <option>--initiateontraffic</option>
-	  </term>
-          <listitem>
-            <para>
-	      Only initiate the connection when we have traffic to
-	      send over the connection.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--pass</option>
-	  </term>
-          <listitem>
-            <para>
-	      Allow <emphasis remap="B">unencrypted</emphasis> traffic
-	      to flow until the tunnel is initiated.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--drop</option>
-	  </term>
-          <listitem>
-            <para>
-	      Drop unencrypted traffic silently.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--reject</option>
-	  </term>
-          <listitem>
-            <para>
-	      Drop unencrypted traffic silently, but send an ICMP
-	      message notifying the other end.
-	    </para>
-          </listitem>
-        </varlistentry>
-      </variablelist>
-
-      <para>
-	These options need to be documented:
-      </para>
-
-      <variablelist remap="TP">
-        <varlistentry>
-          <term>
-	    <option>--failnone</option>
-	  </term>
-          <listitem>
-            <para>
-	      To be documented.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--failpass</option>
-	  </term>
-          <listitem>
-            <para>
-	      To be documented.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--faildrop</option>
-	  </term>
-          <listitem>
-            <para>
-	      To be documented.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--failreject</option>
-	  </term>
-          <listitem>
-            <para>
-	      To be documented.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-      </variablelist>
-
-      <para>
-	<emphasis remap="B">pluto</emphasis> supports various X.509
-	Certificate related options.
-      </para>
-
-      <variablelist remap="TP">
-
-        <varlistentry>
-          <term>
-	    <option>--utc</option>
-	  </term>
-          <listitem>
-            <para>
-	      Display all times in UTC.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--listall</option>
-	  </term>
-          <listitem>
-            <para>
-	      Lists all of the X.509 information known to pluto.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--listpubkeys</option>
-	  </term>
-          <listitem>
-            <para>
-	      List all the public keys that have been successfully
-	      loaded.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--listcerts</option>
-	  </term>
-          <listitem>
-            <para>
-	      List all the X.509 certificates that are currently
-	      loaded.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--checkpubkeys</option>
-	  </term>
-          <listitem>
-            <para>
-	      List all the loaded X.509 certificates that are about to
-	      expire or have expired.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--listcacerts</option>
-	  </term>
-          <listitem>
-            <para>
-	      List all the Certificate Authority X.509 certificates
-	      that are currently loaded.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--listcrls</option>
-	  </term>
-          <listitem>
-            <para>
-	      List all the loaded <emphasis remap="I">Certificate
-	      Revocation Lists</emphasis> (CRLs).
-	    </para>
-          </listitem>
-        </varlistentry>
-
-      </variablelist>
-
-      <para>
-	The corresponding options <option>--rereadsecrets</option>,
-	<option>--rereadall</option>, and
-	<option>--rereadcrls</option> options reread this information
-	from their respective sources, and purge all the online
-	obtained information. The option <option>--listevents</option>
-	lists all pending events, and the <option>--ddns</option>
-	triggers the Dynamic DNS update event that is normally
-	scheduled to run once every minute.
-      </para>
-
-      <variablelist remap="TP">
-
-        <varlistentry>
-          <term>
-	    <option>--ikelifetime</option> <replaceable>seconds</replaceable>
-	  </term>
-          <listitem>
-            <para>
-	      How long <emphasis remap="B">pluto</emphasis> will
-	      propose that an ISAKMP SA be allowed to live. The
-	      default is 3600 (one hour) and the maximum is 86400 (1
-	      day). This option will not affect what is
-	      accepted. <emphasis remap="B">pluto</emphasis> will
-	      reject proposals that exceed the maximum.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--ipseclifetime</option> <replaceable>seconds</replaceable>
-	  </term>
-          <listitem>
-            <para>
-	      How long <emphasis remap="B">pluto</emphasis> will
-	      propose that an IPsec SA be allowed to live. The default
-	      is 28800 (eight hours) and the maximum is 86400 (one
-	      day). This option will not affect what is
-	      accepted. <emphasis remap="B">pluto</emphasis> will
-	      reject proposals that exceed the maximum.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--rekeymargin</option> <replaceable>seconds</replaceable>
-	  </term>
-          <listitem>
-            <para>
-	      How long before an SA's expiration should <emphasis
-	      remap="B">pluto</emphasis> try to negotiate a
-	      replacement SA. This will only happen if <emphasis
-	      remap="B">pluto</emphasis> was the initiator. The
-	      default is 540 (nine minutes).
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--rekeyfuzz</option> <replaceable>percentage</replaceable>
-	  </term>
-          <listitem>
-            <para>
-	      Maximum size of random component to add to rekeymargin,
-	      expressed as a percentage of rekeymargin. <emphasis
-	      remap="B">pluto</emphasis> will select a delay uniformly
-	      distributed within this range. By default, the
-	      percentage will be 100. If greater determinism is
-	      desired, specify 0. It may be appropriate for the
-	      percentage to be much larger than 100.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--dontrekey</option>
-	  </term>
-          <listitem>
-            <para>
-	      A misnomer. Only rekey a connection if we were the
-	      Initiator and there was recent traffic on the existing
-	      connection. This applies to Phase 1 and Phase 2. This is
-	      currently the only automatic way for a connection to
-	      terminate. It may be useful with Road Warrior or
-	      Opportunistic connections. <!-- .br --> Since SA
-	      lifetime negotiation is take-it-or-leave it, a Responder
-	      normally uses the shorter of the negotiated or the
-	      configured lifetime.  This only works because if the
-	      lifetime is shorter than negotiated, the Responder will
-	      rekey in time so that everything works. This interacts
-	      badly with <option>--dontrekey</option>. In this case,
-	      the Responder will end up rekeying to rectify a
-	      shortfall in an IPsec SA lifetime; for an ISAKMP SA, the
-	      Responder will accept the negotiated lifetime.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--delete</option>
-	  </term>
-          <listitem>
-            <para>
-	      When used in the connection form, it causes any previous
-	      connection with this name to be deleted before this one
-	      is added.  Unlike a normal delete, no diagnostic is
-	      produced if there was no previous connection to
-	      delete. Any routing in place for the connection is
-	      undone.
-	    </para>
-          </listitem>
-        </varlistentry>
-      </variablelist>
-
-      <variablelist remap="TP">
-        <varlistentry>
-          <term>
-	    <option>--delete</option>
-	  </term>
-          <term>
-	    <option>--name</option> <replaceable>connection-name</replaceable>
-	  </term>
-          <listitem>
-            <para>
-	      The delete form deletes a named connection description
-	      and any SAs established or negotiations initiated using
-	      this connection. Any routing in place for the connection
-	      is undone.
-	    </para>
-          </listitem>
-        </varlistentry>
-      </variablelist>
-
-      <variablelist remap="TP">
-        <varlistentry>
-          <term>
-	    <option>--deletestate</option> <replaceable>state-number</replaceable>
-	  </term>
-          <listitem>
-            <para>
-	      The deletestate form deletes the state object with the
-	      specified serial number. This is useful for selectively
-	      deleting instances of connections.
-	    </para>
-          </listitem>
-        </varlistentry>
-      </variablelist>
-
-      <para>
-	The route form of the <emphasis remap="B">whack</emphasis>
-	command tells <emphasis remap="B">pluto</emphasis> to set up
-	routing for a connection. Although like a traditional route,
-	it uses an ipsec device as a virtual interface. Once routing
-	is set up, no packets will be sent "in the clear" to the
-	peer's client specified in the connection. A TRAP shunt eroute
-	will be installed; if outbound traffic is caught, Pluto will
-	initiate the connection. An explicit <emphasis
-	remap="B">whack</emphasis> route is not always needed: if it
-	hasn't been done when an IPsec SA is being installed, one will
-	be automatically attempted.
-      </para>
-
-      <variablelist remap="TP">
-        <varlistentry>
-          <term>
-	    <option>--route</option>
-	  </term>
-          <term>
-	    <option>--name</option> <replaceable>connection-name</replaceable>
-	  </term>
-          <listitem>
-            <para>
-	      When a routing is attempted for a connection, there must
-	      not already be a routing for a different connection with
-	      the same subnet but different interface or destination,
-	      or if there is, it must not be being used by an IPsec
-	      SA. Otherwise the attempt will fail.
-	    </para>
-          </listitem>
-        </varlistentry>
-      </variablelist>
-
-      <variablelist remap="TP">
-        <varlistentry>
-          <term>
-	    <option>--unroute</option>
-	  </term>
-          <term>
-	    <option>--name</option> <replaceable>connection-name</replaceable>
-	  </term>
-          <listitem>
-            <para>
-	      The unroute form of the <emphasis
-	      remap="B">whack</emphasis> command tells <emphasis
-	      remap="B">pluto</emphasis> to undo a routing. <emphasis
-	      remap="B">pluto</emphasis> will refuse if an IPsec SA is
-	      using the connection. If another connection is sharing
-	      the same routing, it will be left in place. Without a
-	      routing, packets will be sent without encryption or
-	      authentication.
-	    </para>
-          </listitem>
-        </varlistentry>
-      </variablelist>
-
-      <para>
-	The initiate form tells <emphasis remap="B">pluto</emphasis>
-	to initiate a negotiation with another <emphasis
-	remap="B">pluto</emphasis> (or other IKE daemon) according to
-	the named connection. Initiation requires a route that
-	<option>--route</option> would provide; if none is in place at
-	the time an IPsec SA is being installed, <emphasis
-	remap="B">pluto</emphasis> attempts to set one up.
-      </para>
-
-      <variablelist remap="TP">
-        <varlistentry>
-          <term>
-	    <option>--initiate</option>
-	  </term>
-          <term>
-	    <option>--name</option> <replaceable>connection-name</replaceable>
-	  </term>
-          <term>
-	    <option>--asynchronous</option>
-	  </term>
-          <listitem>
-            <para>
-	      The initiate form of the <emphasis
-	      remap="B">whack</emphasis> command will relay back from
-	      <emphasis remap="B">pluto</emphasis> status information
-	      via the UNIX domain socket (unless --asynchronous is
-	      specified). The status information is meant to look a
-	      bit like that from <emphasis
-	      remap="B">FTP</emphasis>. Currently <emphasis
-	      remap="B">whack</emphasis> simply copies this to
-	      stderr. When the request is finished (eg. the SAs are
-	      established or <emphasis remap="B">pluto</emphasis>
-	      gives up), <emphasis remap="B">pluto</emphasis> closes
-	      the channel, causing <emphasis
-	      remap="B">whack</emphasis> to terminate.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-      </variablelist>
-
-      <para>
-	The opportunistic initiate form is mainly used for debugging.
-      </para>
-
-      <variablelist remap="TP">
-
-        <varlistentry>
-          <term>
-	    <option>--tunnelipv4</option>
-	  </term>
-          <term>
-	    <option>--tunnelipv6</option>
-	  </term>
-          <term>
-	    <option>--oppohere</option> <replaceable>ip-address</replaceable>
-	  </term>
-          <term>
-	    <option>--oppothere</option> <replaceable>ip-address</replaceable>
-	  </term>
-          <term>
-	    <option>--opposport</option> <replaceable>port</replaceable>
-	  </term>
-          <term>
-	    <option>--oppodport</option> <replaceable>port</replaceable>
-	  </term>
-          <term>
-	    <option>--oppoproto</option> <replaceable>protocol</replaceable>
-	  </term>
-          <listitem>
-            <para>
-	      This will cause <emphasis remap="B">pluto</emphasis> to
-	      attempt to opportunistically initiate a connection from
-	      here to the there, even if a previous attempt had been
-	      made. The whack log will show the progress of this
-	      attempt.
-	    </para>
-          </listitem>
-        </varlistentry>
-      </variablelist>
-
-      <para>Rekeying a connection</para>
-
-      <variablelist remap="tp">
-
-        <varlistentry>
-          <term>
-	    <option>--rekey-ipsec</option>
-	  </term>
-          <term>
-	    <option>--name</option> <replaceable>connection-name</replaceable>
-	  </term>
-          <listitem>
-            <para>
-	      The rekey-ipsec form tells <emphasis
-	      remap="b">pluto</emphasis> to rekey the IPsec SA (child
-	      SA) of the specified connection. It does not affect the
-	      IKE SA (parent SA).
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--rekey-ike</option>
-	  </term>
-          <term>
-	    <option>--name</option> <replaceable>>connection-name</replaceable>
-	  </term>
-          <listitem>
-            <para>
-	      The rekey-ike form tells <emphasis
-	      remap="b">pluto</emphasis> to rekey the IKE SA (parent
-	      SA) of the specified connection. It does not affect the
-	      IPsec SAs (child SAs).
-	    </para>
-          </listitem>
-        </varlistentry>
-
-      </variablelist>
-
-      <para>
-	Ending a connection
-      </para>
-
-      <variablelist remap="tp">
-
-        <varlistentry>
-          <term>
-	    <option>--terminate</option>
-	  </term>
-          <term>
-	    <option>--name</option> <replaceable>connection-name</replaceable>
-	  </term>
-          <listitem>
-            <para>
-	      The terminate form tells <emphasis
-	      remap="b">pluto</emphasis> to delete any SAs that use
-	      the specified connection and to stop any negotiations in
-	      process. it does not prevent new negotiations from
-	      starting (the delete form has this effect).
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--crash</option> <replaceable>ip-address</replaceable>
-	  </term>
-          <listitem>
-            <para>
-	      If the remote peer has crashed, and therefore did not
-	      notify us, we keep sending encrypted traffic, and
-	      rejecting all plaintext (non-IKE) traffic from that
-	      remote peer. The <option>--crash</option> brings our end
-	      down as well for all the known connections to the
-	      specified <emphasis
-	      remap="i">ip-address</emphasis>.
-	    </para>
-          </listitem>
-        </varlistentry>
-      </variablelist>
-
-      <variablelist remap="tp">
-
-        <varlistentry>
-          <term>
-	    <replaceable>ip-address</replaceable>
-	  </term>
-          <listitem>
-            <para>
-	      If the remote peer has crashed, and therefore did not
-	      notify us, we keep sending encrypted traffic, and
-	      rejecting all plaintext (non-IKE) traffic from that
-	      remote peer. The <option>--crash</option> brings our end
-	      down as well for all the known connections to the
-	      specified <emphasis
-	      remap="i">ip-address</emphasis>.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-      </variablelist>
-
-      <para>
-	Redirecting clients can be done using IKEv2 redirect
-	mechanism.
-      </para>
-
-      <variablelist remap="TP">
-
-        <varlistentry>
-          <term>
-	    <option>--global-redirect</option> <emphasis remap="i">yes|no|auto</emphasis>
-	  </term>
-          <listitem>
-            <para>
-	      The --global-redirect option controls whether <emphasis
-	      remap="b">pluto</emphasis> will instruct remote peers to
-	      redirect IKE/IPsec SA's during IKE_SA_INIT. Valid
-	      options are <emphasis remap="b">no</emphasis>, <emphasis
-	      remap="b">yes</emphasis> and <emphasis
-	      remap="b">auto</emphasis>, where auto means remote peers
-	      will be redirected if DDoS mode is active.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--global-redirect-to</option> <replaceable>ip-address(es)</replaceable>
-	  </term>
-          <listitem>
-            <para>
-	      The destination, or a list of destinations, where the
-	      peers will be redirected.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--name</option> <replaceable>connection_name</replaceable>
-	  </term>
-          <term>
-	    <option>--redirect-to</option> <replaceable>ip-address(es)</replaceable>
-	  </term>
-          <listitem>
-            <para>
-	      The destination, or a list of destinations, where the
-	      peers will be redirected.  Specifying the connection
-	      name is optional. If not specified the mechanism will
-	      redirect all currently active peers.  If specified, only
-	      the peers from connection <emphasis
-	      remap="i">connection_name</emphasis> will be redirected.
-            </para>
-          </listitem>
-        </varlistentry>
-      </variablelist>
-
-      <para>
-	The public key for informs <emphasis
-	remap="B">pluto</emphasis> of the RSA public key for a
-	potential peer. Private keys must be kept secret, so they are
-	kept in <citerefentry>
-	<refentrytitle>ipsec.secrets</refentrytitle>
-	<manvolnum>5</manvolnum> </citerefentry>.
-      </para>
-
-      <variablelist remap="TP">
-
-        <varlistentry>
-          <term>
-	    <option>--keyid</option> <replaceable>id</replaceable>
-	  </term>
-          <listitem>
-            <para>
-	      Specififies the identity of the peer for which a public
-	      key should be used. Its form is identical to the
-	      identity in the connection. If no public key is
-	      specified, <emphasis remap="B">pluto</emphasis> attempts
-	      to find KEY records from DNS for the id (if a FQDN) or
-	      through reverse lookup (if an IP address). Note that
-	      there several interesting ways in which this is not
-	      secure.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--addkey</option>
-	  </term>
-          <listitem>
-            <para>
-	      Specifies that the new key is added to the collection;
-	      otherwise the new key replaces any old ones.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--pubkeyrsa</option> <replaceable>key</replaceable>
-	  </term>
-          <listitem>
-            <para>
-	      Specifies the value of the RSA public key. It is a
-	      sequence of bytes as described in RFC 2537 "RSA/MD5 KEYs
-	      and SIGs in the Domain Name System (DNS)". It is denoted
-	      in a way suitable for <citerefentry>
-	      <refentrytitle>ipsec_ttodata</refentrytitle>
-	      <manvolnum>3</manvolnum> </citerefentry>. For example, a
-	      base 64 numeral starts with 0s.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-      </variablelist>
-
-      <para>
-	The listen form tells <emphasis remap="B">pluto</emphasis> to
-	start listening for IKE requests on its public interfaces. To
-	avoid race conditions, it is normal to load the appropriate
-	connections into <emphasis remap="B">pluto</emphasis> before
-	allowing it to listen. If <emphasis remap="B">pluto</emphasis>
-	isn't listening, it is pointless to initiate negotiations, so
-	it will refuse requests to do so. Whenever the listen form is
-	used, <emphasis remap="B">pluto</emphasis> looks for public
-	interfaces and will notice when new ones have been added and
-	when old ones have been removed. This is also the trigger for
-	<emphasis remap="B">pluto</emphasis> to read the <emphasis
-	remap="I">ipsec.secrets</emphasis> file. So listen may useful
-	more than once.
-      </para>
-
-      <variablelist remap="TP">
-
-        <varlistentry>
-          <term>
-	    <option>--listen</option>
-	  </term>
-          <listitem>
-            <para>
-	      Start listening for IKE traffic on public interfaces.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--unlisten</option>
-	  </term>
-          <listitem>
-            <para>
-	      Stop listening for IKE traffic on public interfaces.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-      </variablelist>
-
-      <para>
-	The --ddos-auto, --ddos-busy and --ddos-unlimited options
-	tells <emphasis remap="B">pluto</emphasis> to update the DDoS
-	protection state. Normally, these measures are automatically
-	activated or deactivated based on the number of states inside
-	pluto. The busy and unlimited option tells pluto to activate
-	or deactivate the DDoS protection mode manually.  One of these
-	DDoS protection methods is to activate IKEv2 DCOOKIEs to
-	defend against spoofed IKE packets.
-      </para>
-
-      <variablelist remap="TP">
-
-        <varlistentry>
-          <term>
-	    <option>--ddos-busy</option>
-	  </term>
-          <listitem>
-            <para>
-	      Place pluto into busy mode and activate anti-DDoS measures.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--ddos-unlimited</option>
-	  </term>
-          <listitem>
-            <para>
-	      Pull pluto out of busy mode and deactivate anti-DDoS measures.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--ddos-auto</option>
-	  </term>
-          <listitem>
-            <para>
-	      Activate the built-in detection mechanism for the
-	      anti-DDoS measures.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-      </variablelist>
-
-      <para>
-	The status form will display information about the internal
-	state of <emphasis remap="B">pluto</emphasis>: information
-	about each potential connection, about each state object, and
-	about each shunt that <emphasis remap="B">pluto</emphasis> is
-	managing without an associated connection.
-      </para>
-
-      <para>
-	Statistics can be seen using <emphasis remap="B">ipsec whack
-	--globalstats</emphasis> and reset using <emphasis
-	remap="B">ipsec whack --clearstats</emphasis>.  This can be
-	used with the munin software to monitor VPN services.
-      </para>
+    <para>
+      The crash option asks pluto to consider a particularly target IP
+      to have crashed, and to attempt to restart all connections with
+      that IP address as a gateway. In general, you should use Dead
+      Peer Detection to detect this kind of situation automatically,
+      but this is not always possible.
+    </para>
+
+    <para>
+      Most options are specific to one of the forms, and will be
+      described with that form. There are three options that apply to
+      all forms.
+    </para>
+
+    <variablelist remap="TP">
+      <varlistentry>
+        <term>
+	  <option>--ctlsocket</option> <replaceable>path/file</replaceable>
+	</term>
+        <listitem>
+          <para>
+	    <emphasis remap="I">file</emphasis> is used as the UNIX
+	    domain socket for talking to <emphasis
+	    remap="B">pluto</emphasis>.  Use either this option or
+	    <emphasis remap="B">--rundir</emphasis>, but not both.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--rundir</option> <replaceable>path</replaceable>
+	</term>
+        <listitem>
+          <para>
+	    <emphasis remap="I">path</emphasis> where the UNIX
+	    domain socket for talking to the <emphasis
+	    remap="B">pluto</emphasis>, the <emphasis
+	    remap="B">pluto.pid</emphasis> file and the <emphasis
+	    remap="B">pluto.lock</emphasis> files are found.  Use
+	    either this option or <emphasis
+	    remap="B">--ctlsocket</emphasis>, but not both.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--label</option> <replaceable>string</replaceable>
+	</term>
+        <listitem>
+          <para>
+	    Adds the string to all error messages generated by
+	    <emphasis remap="B">whack</emphasis>.
+	  </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+
+    <para>
+      The help form of <emphasis remap="B">whack</emphasis> is
+      self-explanatory.
+    </para>
+
+    <variablelist remap="TP">
+
+      <varlistentry>
+        <term>
+	  <option>--help</option>
+	</term>
+        <listitem>
+          <para>
+	    Display the usage message.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--version</option>
+	</term>
+        <listitem>
+          <para>
+	    Display the version of <emphasis
+	    remap="B">whack</emphasis>.
+	  </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+
+    <para>
+      The connection form describes a potential connection to
+      <emphasis remap="B">pluto</emphasis>. <emphasis
+      remap="B">pluto</emphasis> needs to know what connections can
+      and should be negotiated. When <emphasis
+      remap="B">pluto</emphasis> is the initiator, it needs to know
+      what to propose. When <emphasis remap="B">pluto</emphasis> is
+      the responder, it needs to know enough to decide whether is is
+      willing to set up the proposed connection.
+    </para>
+
+    <para>
+      The description of a potential connection can specify a large
+      number of details. Each connection has a unique name. This name
+      will appear in a updown shell command, so it should not contain
+      punctuation that would make the command ill-formed.
+    </para>
+
+    <variablelist remap="TP">
+
+      <varlistentry>
+        <term>
+	  <option>--name</option> <replaceable>connection-name</replaceable>
+	</term>
+        <listitem>
+          <para>
+	    Sets the name of the connection.
+	  </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+
+    <para>
+      The topology of a connection is symmetric, so to save space
+      here is half a picture:
+    </para>
+
+    <para>&nbsp;&nbsp;&nbsp;client_subnet&lt;--&gt;host:ikeport&lt;--&gt;nexthop&lt;---</para>
+
+    <para>
+      A similar trick is used in the flags. The same flag names are
+      used for both ends. Those before the <option>--to</option> flag
+      describe the left side and those afterwards describe the right
+      side. When <emphasis remap="B">pluto</emphasis> attempts to use
+      the connection, it decides whether it is the left side or the
+      right side of the connection, based on the IP numbers of its
+      interfaces.
+    </para>
+
+    <variablelist remap="TP">
+
+      <varlistentry>
+        <term>
+	  <option>--id</option> <replaceable>id</replaceable>
+	</term>
+        <listitem>
+          <para>
+	    The identity of the end. Currently, this can be an IP
+	    address (specified as dotted quad or as a Fully Qualified
+	    Domain Name, which will be resolved immediately) or as a
+	    Fully Qualified Domain Name itself (prefixed by "@" to
+	    signify that it should not be resolved), or as user@FQDN,
+	    or an X.509 DN.  <emphasis remap="B">Pluto</emphasis> only
+	    authenticates the identity, and does not use it for
+	    addressing, so, for example, an IP address need not be the
+	    one to which packets are to be sent. If the option is
+	    absent, the identity defaults to the IP address specified
+	    by <option>--host</option>.
+	  </para>
+          <!-- The identity is transmitted in the IKE protocol, and
+               is what is authenticated. -->
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--host</option> <replaceable>ip-address</replaceable>
+	</term>
+        <term>
+	  <option>--host</option> <replaceable>%any</replaceable>
+	</term>
+        <term>
+	  <option>--host</option> <replaceable>%opportunistic</replaceable>
+	</term>
+        <listitem>
+          <para>
+	    The IP address of the end (generally the public
+	    interface).  If <emphasis remap="B">pluto</emphasis> is to
+	    act as a responder for IKE negotiations initiated from
+	    unknown IP addresses (the "Road Warrior" case), the IP
+	    address should be specified as <emphasis
+	    remap="B">%any</emphasis> (currently, the obsolete
+	    notation <literal>0.0.0.0</literal> is also accepted for
+	    this). If <emphasis remap="B">pluto</emphasis> is to
+	    opportunistically initiate the connection, use <emphasis
+	    remap="B">%opportunistic</emphasis>
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--cert</option> <replaceable>friendly_name</replaceable>
+	</term>
+        <listitem>
+          <para>
+	    The friendly_name (or nickname) of the X.509 certificate
+	    that was used when imported the certificate into the NSS
+	    database. See <citerefentry>
+	    <refentrytitle>ipsec.conf</refentrytitle>
+	    <manvolnum>5</manvolnum> </citerefentry> on how to
+	    extract this from the PKCS#12 file.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--ckaid</option> <replaceable>CKAID</replaceable>
+	</term>
+        <listitem>
+	  <para>
+	    The CKAID of the X.509 certificate or host key.
+	  </para>
+	  <para>
+	    For X.509 certificates, the CKAID is either the
+	    certificate's SubjectKeyIdentifier or the public key's
+	    SHA1 fingerprint (when the SubjectKeyIdentifier isn't
+	    specified).  For host keys the CKAID is the SHA1
+	    fingerprint of the public key.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--ca</option> <replaceable>distinguished name</replaceable>
+	</term>
+        <listitem>
+          <para>
+	    The X.509 Certificate Authority's Distinguished Name (DN)
+	    used as trust anchor for this connection. This is the CA
+	    certificate that signed the host certificate, as well as
+	    the certificate of the incoming client.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--groups</option> <replaceable>access control groups</replaceable>
+	</term>
+        <listitem>
+          <para>
+	    The access control groups used.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--sendcert</option> <emphasis remap="I">yes|forced|always|ifasked|no|never</emphasis>
+	</term>
+        <listitem>
+          <para>
+	    Whether or not to send our X.509 certificate credentials.
+	    This could potentially give an attacker too much
+	    information about which identities are allowed to connect
+	    to this host. The default is to use <emphasis
+	    remap="B">ifasked</emphasis> when we are a Responder, and
+	    to use <emphasis remap="B">yes</emphasis> (which is the
+	    same as <emphasis remap="B">forced</emphasis> and
+	    <emphasis remap="B">always</emphasis> if we are an
+	    Initiator. The values <emphasis remap="B">no</emphasis>
+	    and <emphasis remap="B">never</emphasis> are
+	    equivalent. NOTE: "forced" does not seem to be actually
+	    implemented - do not use it.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--sendca</option> <emphasis remap="I">none|issuer|all</emphasis>
+	</term>
+        <listitem>
+	  <para>
+	    How much of our available X.509 trust chain to send with
+	    the end certificate, excluding any root CAs. Specifying
+	    <emphasis remap="B" >issuer</emphasis> sends just the
+	    issuing intermediate CA, while <emphasis remap="B">
+	    all</emphasis> will send the entire chain of intermediate
+	    CAs.<emphasis remap="B">none</emphasis> will not send any
+	    CA certs. The default is <emphasis
+	    remap="B">none</emphasis> which maintains the current
+	    libreswan behavior.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--certtype</option> <replaceable>number</replaceable>
+	</term>
+        <listitem>
+          <para>
+	    The X.509 certificate type number.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--ikeport</option> <replaceable>port-number</replaceable>
+	</term>
+        <listitem>
+          <para>
+	    The UDP port that IKE listens to on that host. The default
+	    is 500. (<emphasis remap="B">pluto</emphasis> on this
+	    machine uses the port specified by its own command line
+	    argument, so this only affects where <emphasis
+	    remap="B">pluto</emphasis> sends messages.)
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--nexthop</option>&nbsp;<replaceable>ip-address</replaceable>
+	</term>
+        <listitem>
+          <para>
+	    Where to route packets for the peer's client (presumably
+	    for the peer too, but it will not be used for this). When
+	    <emphasis remap="B">pluto</emphasis> installs an IPsec SA,
+	    it issues a route command. It uses the nexthop as the
+	    gateway. The default is the peer's IP address (this can be
+	    explicitly written as <emphasis
+	    remap="B">%direct</emphasis>; the obsolete notation
+	    <literal>0.0.0.0</literal> is accepted). This option is
+	    necessary if <emphasis remap="B">pluto</emphasis>'s host's
+	    interface used for sending packets to the peer is neither
+	    point-to-point nor directly connected to the peer.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--subnet</option> <replaceable>subnet</replaceable>
+	</term>
+        <term>
+	  <option>--client</option> <replaceable>subnet</replaceable>
+	</term>
+        <listitem>
+          <para>
+	    The subnet for which the IPsec traffic will be destined.
+	    If not specified, the host will be the client.  The subnet
+	    can be specified using the general form
+	    <replaceable>address</replaceable>/<replaceable>mask</replaceable>.
+	    The most convenient form of the
+	    <replaceable>mask</replaceable> is a decimal integer,
+	    specifying the number of leading one bits in the mask.
+	    So, for example, 10.0.0.0/8 would specify the class A
+	    network "Net 10".
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--clientprotoport</option> <replaceable>protocol</replaceable>/<replaceable>port</replaceable>
+	</term>
+        <listitem>
+          <para>
+	    Specify the Port Selectors (filters) to be used on this
+	    connection. The general form is <emphasis
+	    remap="I">protocol</emphasis>/<emphasis
+	    remap="I">port</emphasis>.  This is most commonly used to
+	    limit the connection to L2TP traffic only by specifying a
+	    value of <emphasis remap="I">17/1701</emphasis> for UDP
+	    (protocol 17) and port 1701.  The notation <emphasis
+	    remap="I">17/%any</emphasis> can be used to allow all UDP
+	    traffic and is needed for L2TP connections with Windows XP
+	    machines before Service Pack 2.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--sourceip</option> <replaceable>ip-address</replaceable>
+	</term>
+        <term>
+	  <option>--srcip</option> <replaceable>ip-address</replaceable>
+	</term>
+        <listitem>
+          <para>
+	    The IP address for this host to use when transmitting a
+	    packet to the remote IPsec gateway itself.  This option
+	    is used to make the gateway itself use its internal IP,
+	    which is part of the <option>--client
+	    <replaceable>subnet</replaceable></option>.  Otherwise
+	    it will use its nearest IP address, which is its public
+	    IP address, which is not part of the subnet-subnet IPsec
+	    tunnel, and would therefore not get encrypted.  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--xauthserver</option>
+	</term>
+        <listitem>
+          <para>
+	    This end is an xauthserver. It will lookup the xauth user
+	    name and password and verify this before allowing the
+	    connection to get established.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--xauthclient</option>
+	</term>
+        <listitem>
+          <para>
+	    This end is an xauthclient. To bring this connection up
+	    with the <option>--initiate</option> also requires the
+	    client to specify <option>--xauthuser
+	    <replaceable>username</replaceable></option> and
+	    <option>--xauthpass
+	    <replaceable>password</replaceable></option>
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--xauthuser</option>
+	</term>
+        <listitem>
+          <para>
+	    The username for the xauth authentication.This option is
+	    normally passed along by <citerefentry>
+	    <refentrytitle>ipsec_up</refentrytitle>
+	    <manvolnum>8</manvolnum> </citerefentry> when an xauth
+	    connection is started using <emphasis remap="I">ipsec up
+	    conn</emphasis>.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--xauthpass</option>
+	</term>
+        <listitem>
+          <para>
+	    The password for the xauth authentication. This option
+	    is normally passed along by <citerefentry>
+	    <refentrytitle>ipsec_up</refentrytitle>
+	    <manvolnum>8</manvolnum> </citerefentry> when an xauth
+	    connection is started using <emphasis remap="I">ipsec up
+	    conn</emphasis>.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--modecfgserver</option>
+	</term>
+        <listitem>
+          <para>
+	    This end is an Mode Config server.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--modecfgclient</option>
+	</term>
+        <listitem>
+          <para>
+	    This end is an Mode Config client.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--modecfgdns</option>
+	</term>
+        <listitem>
+          <para>
+	    A comma separated list of DNS server IP's to pass along
+	    to connecting clients.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--modecfgdomains</option>
+	</term>
+        <listitem>
+          <para>
+	    A comma separated list of internal DNS domains to pass
+	    along to connecting clients.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--dnskeyondemand</option>
+	</term>
+        <listitem>
+          <para>
+	    Specifies that when an RSA public key is needed to
+	    authenticate this host, and it isn't already known, fetch
+	    it from DNS.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--updown</option> <replaceable>updown</replaceable>
+	</term>
+        <listitem>
+          <para>
+	    Specifies an external shell command to be run whenever
+	    <emphasis remap="B">pluto</emphasis> brings up or down a
+	    connection. The script is used to build a shell command,
+	    so it may contain positional parameters, but ought not to
+	    have punctuation that would cause the resulting command to
+	    be ill-formed. The default is <emphasis remap="I">ipsec
+	    _updown</emphasis>. Pluto passes a dozen environment
+	    variables to the script about the connection involved.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--to</option>
+	</term>
+        <listitem>
+          <para>
+	    Separates the specification of the left and right ends of
+	    the connection. Pluto tries to decide whether it is
+	    <emphasis remap="I">left</emphasis> or <emphasis
+	    remap="I">right</emphasis> based on the information
+	    provided on both sides of this option.
+	  </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+
+    <para>
+      The potential connection description also specifies
+      characteristics of rekeying and security.
+    </para>
+
+    <variablelist remap="TP">
+      <varlistentry>
+        <term>
+	  <option>--psk</option>
+	</term>
+        <listitem>
+          <para>
+	    Propose and allow preshared secret authentication for IKE
+	    peers. This authentication requires that each side use the
+	    same secret. May be combined with
+	    <option>--rsasig</option>; at least one must be specified.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--rsasig</option>
+	</term>
+        <listitem>
+          <para>
+	    Propose and allow RSA signatures for authentication of IKE
+	    peers. This authentication requires that each side have
+	    have a private key of its own and know the public key of
+	    its peer. May be combined with <option>--psk</option>; at
+	    least one must be specified.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--encrypt</option>
+	</term>
+        <listitem>
+          <para>
+	    All proposed or accepted IPsec SAs will include non-null
+	    ESP. The actual choices of transforms are wired into
+	    <emphasis remap="B">pluto</emphasis>.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--authenticate</option>
+	</term>
+        <listitem>
+          <para>
+	    All proposed IPsec SAs will include AH. All accepted IPsec
+	    SAs will include AH or ESP with authentication. The actual
+	    choices of transforms are wired into <emphasis
+	    remap="B">pluto</emphasis>.  Note that this has nothing to
+	    do with IKE authentication.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--compress</option>
+	</term>
+        <listitem>
+          <para>
+	    All proposed IPsec SAs will include IPCOMP
+	    (compression).
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--tunnel</option>
+	</term>
+        <listitem>
+          <para>
+	    The IPsec SA should use tunneling. Implicit if the SA is
+	    for clients. Must only be used with
+	    <option>--authenticate</option> or
+	    <option>--encrypt</option>.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--ipv4</option>
+	</term>
+        <listitem>
+          <para>
+	    The host addresses will be interpreted as IPv4 addresses.
+	    This is the default. Note that for a connection, all host
+	    addresses must be of the same Address Family (IPv4 and
+	    IPv6 use different Address Families).
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--ipv6</option>
+	</term>
+        <listitem>
+          <para>
+	    The host addresses (including nexthop) will be interpreted
+	    as IPv6 addresses. Note that for a connection, all host
+	    addresses must be of the same Address Family (IPv4 and
+	    IPv6 use different Address Families).
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--tunnelipv4</option>
+	</term>
+        <listitem>
+          <para>
+	    The client addresses will be interpreted as IPv4
+	    addresses.  The default is to match what the host will
+	    be. This does not imply <option>--tunnel</option> so the
+	    flag can be safely used when no tunnel is actually
+	    specified. Note that for a connection, all tunnel
+	    addresses must be of the same Address Family.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--tunnelipv6</option>
+	</term>
+        <listitem>
+          <para>
+	    The client addresses will be interpreted as IPv6
+	    addresses.  The default is to match what the host will
+	    be. This does not imply <option>--tunnel</option> so the
+	    flag can be safely used when no tunnel is actually
+	    specified. Note that for a connection, all tunnel
+	    addresses must be of the same Address Family.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--pfs</option>
+	</term>
+        <listitem>
+          <para>
+	    There should be Perfect Forward Secrecy - new keying
+	    material will be generated for each IPsec SA when running
+	    Quick Mode in IKEv1 or Create Child in IKEv2. Without this
+	    option, the SAKMP SA keying material is used instead.
+	    <emphasis remap="B">pluto</emphasis> will propose the same
+	    group that was used with the original IKE SA.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--pfsgroup</option> <replaceable>modp-group</replaceable>
+	</term>
+        <listitem>
+          <para>
+	    Sets the Diffie-Hellman group used. Currently the
+	    following values are supported: <emphasis
+	    remap="B">modp1024</emphasis> (DHgroup 2), <emphasis
+	    remap="B">modp1536</emphasis> (DHgroup 5), <emphasis
+	    remap="B">modp2048</emphasis> (DHgroup 14), <emphasis
+	    remap="B">modp3072</emphasis> (DHgroup 15), <emphasis
+	    remap="B">modp4096</emphasis> (DHgroup 16), <emphasis
+	    remap="B">modp6144</emphasis> (DHgroup 17), and <emphasis
+	    remap="B">modp8192</emphasis> (DHgroup 18). It is possible
+	    to support the weak and broken <emphasis
+	    remap="B">modp768</emphasis> (DHgroup 1), but this
+	    requires a manual recompile and is strongly discouraged.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--esp</option> <replaceable>esp-algos</replaceable>
+	</term>
+        <listitem>
+          <para>
+	    ESP encryption/authentication algorithm to be used for
+	    the connection (phase2 aka IPsec SA). The options must
+	    be suitable as a value of <citerefentry>
+	    <refentrytitle>ipsec_spi</refentrytitle>
+	    <manvolnum>8</manvolnum> </citerefentry>.  See
+	    <citerefentry> <refentrytitle>ipsec.conf</refentrytitle>
+	    <manvolnum>5</manvolnum> </citerefentry> for a detailed
+	    description of the algorithm format.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--aggrmode</option>
+	</term>
+        <listitem>
+          <para>
+	    This tunnel is using aggressive mode ISAKMP
+	    negotiation. The default is main mode. Aggressive mode is
+	    less secure than main mode as it reveals your identity to
+	    an eavesdropper, but is needed to support road warriors
+	    using PSK keys or to interoperate with other buggy
+	    implementations insisting on using aggressive mode.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--modecfgpull</option>
+	</term>
+        <listitem>
+          <para>
+	    Pull the Mode Config network information from the peer.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--dpddelay</option> <replaceable>seconds</replaceable>
+	</term>
+        <listitem>
+          <para>
+	    Set the delay (in seconds) between Dead Peer Detection
+	    (RFC 3706) keepalives (R_U_THERE, R_U_THERE_ACK) that are
+	    sent for this connection (default 30 seconds).
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--timeout</option> <replaceable>seconds</replaceable>
+	</term>
+        <listitem>
+          <para>
+	    Set the length of time (in seconds) we will idle without
+	    hearing either an R_U_THERE poll from our peer, or an
+	    R_U_THERE_ACK reply. After this period has elapsed with no
+	    response and no traffic, we will declare the peer dead,
+	    and remove the SA (default 120 seconds).
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--forceencaps</option>
+	</term>
+        <listitem>
+          <para>
+	    In some cases, for example when ESP packets are filtered
+	    or when a broken IPsec peer does not properly recognise
+	    NAT, it can be useful to force RFC-3948 encapsulation
+	    using this option. It causes pluto lie and tell the remote
+	    peer that RFC-3948 encapsulation (ESP in UDP port 4500
+	    packets) is required.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+    <para>
+      If none of the <option>--encrypt</option>,
+      <option>--authenticate</option>, <option>--compress</option>, or
+      <option>--pfs</option> flags is given, the initiating the
+      connection will only build an ISAKMP SA. For such a connection,
+      client subnets have no meaning and must not be specified.
+    </para>
+
+    <para>
+      Apart from initiating directly using the
+      <option>--initiate</option> option, a tunnel can be loaded with
+      a different policy.
+    </para>
+
+    <variablelist remap="TP">
+
+      <varlistentry>
+        <term>
+	  <option>--initiateontraffic</option>
+	</term>
+        <listitem>
+          <para>
+	    Only initiate the connection when we have traffic to
+	    send over the connection.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--pass</option>
+	</term>
+        <listitem>
+          <para>
+	    Allow <emphasis remap="B">unencrypted</emphasis> traffic
+	    to flow until the tunnel is initiated.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--drop</option>
+	</term>
+        <listitem>
+          <para>
+	    Drop unencrypted traffic silently.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--reject</option>
+	</term>
+        <listitem>
+          <para>
+	    Drop unencrypted traffic silently, but send an ICMP
+	    message notifying the other end.
+	  </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+
+    <para>
+      These options need to be documented:
+    </para>
+
+    <variablelist remap="TP">
+      <varlistentry>
+        <term>
+	  <option>--failnone</option>
+	</term>
+        <listitem>
+          <para>
+	    To be documented.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--failpass</option>
+	</term>
+        <listitem>
+          <para>
+	    To be documented.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--faildrop</option>
+	</term>
+        <listitem>
+          <para>
+	    To be documented.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--failreject</option>
+	</term>
+        <listitem>
+          <para>
+	    To be documented.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+    <para>
+      <emphasis remap="B">pluto</emphasis> supports various X.509
+      Certificate related options.
+    </para>
+
+    <variablelist remap="TP">
+
+      <varlistentry>
+        <term>
+	  <option>--utc</option>
+	</term>
+        <listitem>
+          <para>
+	    Display all times in UTC.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--listall</option>
+	</term>
+        <listitem>
+          <para>
+	    Lists all of the X.509 information known to pluto.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--listpubkeys</option>
+	</term>
+        <listitem>
+          <para>
+	    List all the public keys that have been successfully
+	    loaded.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--listcerts</option>
+	</term>
+        <listitem>
+          <para>
+	    List all the X.509 certificates that are currently
+	    loaded.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--checkpubkeys</option>
+	</term>
+        <listitem>
+          <para>
+	    List all the loaded X.509 certificates that are about to
+	    expire or have expired.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--listcacerts</option>
+	</term>
+        <listitem>
+          <para>
+	    List all the Certificate Authority X.509 certificates
+	    that are currently loaded.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--listcrls</option>
+	</term>
+        <listitem>
+          <para>
+	    List all the loaded <emphasis remap="I">Certificate
+	    Revocation Lists</emphasis> (CRLs).
+	  </para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+    <para>
+      The corresponding options <option>--rereadsecrets</option>,
+      <option>--rereadall</option>, and <option>--rereadcrls</option>
+      options reread this information from their respective sources,
+      and purge all the online obtained information. The option
+      <option>--listevents</option> lists all pending events, and the
+      <option>--ddns</option> triggers the Dynamic DNS update event
+      that is normally scheduled to run once every minute.
+    </para>
+
+    <variablelist remap="TP">
+
+      <varlistentry>
+        <term>
+	  <option>--ikelifetime</option> <replaceable>seconds</replaceable>
+	</term>
+        <listitem>
+          <para>
+	    How long <emphasis remap="B">pluto</emphasis> will propose
+	    that an ISAKMP SA be allowed to live. The default is 3600
+	    (one hour) and the maximum is 86400 (1 day). This option
+	    will not affect what is accepted. <emphasis
+	    remap="B">pluto</emphasis> will reject proposals that
+	    exceed the maximum.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--ipseclifetime</option> <replaceable>seconds</replaceable>
+	</term>
+        <listitem>
+          <para>
+	    How long <emphasis remap="B">pluto</emphasis> will propose
+	    that an IPsec SA be allowed to live. The default is 28800
+	    (eight hours) and the maximum is 86400 (one day). This
+	    option will not affect what is accepted. <emphasis
+	    remap="B">pluto</emphasis> will reject proposals that
+	    exceed the maximum.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--rekeymargin</option> <replaceable>seconds</replaceable>
+	</term>
+        <listitem>
+          <para>
+	    How long before an SA's expiration should <emphasis
+	    remap="B">pluto</emphasis> try to negotiate a replacement
+	    SA. This will only happen if <emphasis
+	    remap="B">pluto</emphasis> was the initiator. The default
+	    is 540 (nine minutes).
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--rekeyfuzz</option> <replaceable>percentage</replaceable>
+	</term>
+        <listitem>
+          <para>
+	    Maximum size of random component to add to rekeymargin,
+	    expressed as a percentage of rekeymargin. <emphasis
+	    remap="B">pluto</emphasis> will select a delay uniformly
+	    distributed within this range. By default, the percentage
+	    will be 100. If greater determinism is desired, specify
+	    0. It may be appropriate for the percentage to be much
+	    larger than 100.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--dontrekey</option>
+	</term>
+        <listitem>
+          <para>
+	    A misnomer. Only rekey a connection if we were the
+	    Initiator and there was recent traffic on the existing
+	    connection. This applies to Phase 1 and Phase 2. This is
+	    currently the only automatic way for a connection to
+	    terminate. It may be useful with Road Warrior or
+	    Opportunistic connections. <!-- .br --> Since SA lifetime
+	    negotiation is take-it-or-leave it, a Responder normally
+	    uses the shorter of the negotiated or the configured
+	    lifetime.  This only works because if the lifetime is
+	    shorter than negotiated, the Responder will rekey in time
+	    so that everything works. This interacts badly with
+	    <option>--dontrekey</option>. In this case, the Responder
+	    will end up rekeying to rectify a shortfall in an IPsec SA
+	    lifetime; for an ISAKMP SA, the Responder will accept the
+	    negotiated lifetime.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--delete</option>
+	</term>
+        <listitem>
+          <para>
+	    When used in the connection form, it causes any previous
+	    connection with this name to be deleted before this one is
+	    added.  Unlike a normal delete, no diagnostic is produced
+	    if there was no previous connection to delete. Any routing
+	    in place for the connection is undone.
+	  </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+
+    <variablelist remap="TP">
+      <varlistentry>
+        <term>
+	  <option>--delete</option>
+	</term>
+        <term>
+	  <option>--name</option> <replaceable>connection-name</replaceable>
+	</term>
+        <listitem>
+          <para>
+	    The delete form deletes a named connection description and
+	    any SAs established or negotiations initiated using this
+	    connection. Any routing in place for the connection is
+	    undone.
+	  </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+
+    <variablelist remap="TP">
+      <varlistentry>
+        <term>
+	  <option>--deletestate</option> <replaceable>state-number</replaceable>
+	</term>
+        <listitem>
+          <para>
+	    The deletestate form deletes the state object with the
+	    specified serial number. This is useful for selectively
+	    deleting instances of connections.
+	  </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+
+    <para>
+      The route form of the <emphasis remap="B">whack</emphasis>
+      command tells <emphasis remap="B">pluto</emphasis> to set up
+      routing for a connection. Although like a traditional route, it
+      uses an ipsec device as a virtual interface. Once routing is set
+      up, no packets will be sent "in the clear" to the peer's client
+      specified in the connection. A TRAP shunt eroute will be
+      installed; if outbound traffic is caught, Pluto will initiate
+      the connection. An explicit <emphasis remap="B">whack</emphasis>
+      route is not always needed: if it hasn't been done when an IPsec
+      SA is being installed, one will be automatically attempted.
+    </para>
+
+    <variablelist remap="TP">
+      <varlistentry>
+        <term>
+	  <option>--route</option>
+	</term>
+        <term>
+	  <option>--name</option> <replaceable>connection-name</replaceable>
+	</term>
+        <listitem>
+          <para>
+	    When a routing is attempted for a connection, there must
+	    not already be a routing for a different connection with
+	    the same subnet but different interface or destination, or
+	    if there is, it must not be being used by an IPsec
+	    SA. Otherwise the attempt will fail.
+	  </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+
+    <variablelist remap="TP">
+      <varlistentry>
+        <term>
+	  <option>--unroute</option>
+	</term>
+        <term>
+	  <option>--name</option> <replaceable>connection-name</replaceable>
+	</term>
+        <listitem>
+          <para>
+	    The unroute form of the <emphasis
+	    remap="B">whack</emphasis> command tells <emphasis
+	    remap="B">pluto</emphasis> to undo a routing. <emphasis
+	    remap="B">pluto</emphasis> will refuse if an IPsec SA is
+	    using the connection. If another connection is sharing the
+	    same routing, it will be left in place. Without a routing,
+	    packets will be sent without encryption or authentication.
+	  </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+
+    <para>
+      The initiate form tells <emphasis remap="B">pluto</emphasis> to
+      initiate a negotiation with another <emphasis
+      remap="B">pluto</emphasis> (or other IKE daemon) according to
+      the named connection. Initiation requires a route that
+      <option>--route</option> would provide; if none is in place at
+      the time an IPsec SA is being installed, <emphasis
+      remap="B">pluto</emphasis> attempts to set one up.
+    </para>
+
+    <variablelist remap="TP">
+      <varlistentry>
+        <term>
+	  <option>--initiate</option>
+	</term>
+        <term>
+	  <option>--name</option> <replaceable>connection-name</replaceable>
+	</term>
+        <term>
+	  <option>--asynchronous</option>
+	</term>
+        <listitem>
+          <para>
+	    The initiate form of the <emphasis
+	    remap="B">whack</emphasis> command will relay back from
+	    <emphasis remap="B">pluto</emphasis> status information
+	    via the UNIX domain socket (unless --asynchronous is
+	    specified). The status information is meant to look a bit
+	    like that from <emphasis
+	    remap="B">FTP</emphasis>. Currently <emphasis
+	    remap="B">whack</emphasis> simply copies this to
+	    stderr. When the request is finished (eg. the SAs are
+	    established or <emphasis remap="B">pluto</emphasis> gives
+	    up), <emphasis remap="B">pluto</emphasis> closes the
+	    channel, causing <emphasis remap="B">whack</emphasis> to
+	    terminate.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+    <para>
+      The opportunistic initiate form is mainly used for debugging.
+    </para>
+
+    <variablelist remap="TP">
+
+      <varlistentry>
+        <term>
+	  <option>--tunnelipv4</option>
+	</term>
+        <term>
+	  <option>--tunnelipv6</option>
+	</term>
+        <term>
+	  <option>--oppohere</option> <replaceable>ip-address</replaceable>
+	</term>
+        <term>
+	  <option>--oppothere</option> <replaceable>ip-address</replaceable>
+	</term>
+        <term>
+	  <option>--opposport</option> <replaceable>port</replaceable>
+	</term>
+        <term>
+	  <option>--oppodport</option> <replaceable>port</replaceable>
+	</term>
+        <term>
+	  <option>--oppoproto</option> <replaceable>protocol</replaceable>
+	</term>
+        <listitem>
+          <para>
+	    This will cause <emphasis remap="B">pluto</emphasis> to
+	    attempt to opportunistically initiate a connection from
+	    here to the there, even if a previous attempt had been
+	    made. The whack log will show the progress of this
+	    attempt.
+	  </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+
+    <para>Rekeying a connection</para>
+
+    <variablelist remap="tp">
+
+      <varlistentry>
+        <term>
+	  <option>--rekey-ipsec</option>
+	</term>
+        <term>
+	  <option>--name</option> <replaceable>connection-name</replaceable>
+	</term>
+        <listitem>
+          <para>
+	    The rekey-ipsec form tells <emphasis
+	    remap="b">pluto</emphasis> to rekey the IPsec SA (child
+	    SA) of the specified connection. It does not affect the
+	    IKE SA (parent SA).
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--rekey-ike</option>
+	</term>
+        <term>
+	  <option>--name</option> <replaceable>>connection-name</replaceable>
+	</term>
+        <listitem>
+          <para>
+	    The rekey-ike form tells <emphasis
+	    remap="b">pluto</emphasis> to rekey the IKE SA (parent SA)
+	    of the specified connection. It does not affect the IPsec
+	    SAs (child SAs).
+	  </para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+    <para>
+      Ending a connection
+    </para>
+
+    <variablelist remap="tp">
+
+      <varlistentry>
+        <term>
+	  <option>--terminate</option>
+	</term>
+        <term>
+	  <option>--name</option> <replaceable>connection-name</replaceable>
+	</term>
+        <listitem>
+          <para>
+	    The terminate form tells <emphasis
+	    remap="b">pluto</emphasis> to delete any SAs that use the
+	    specified connection and to stop any negotiations in
+	    process. it does not prevent new negotiations from
+	    starting (the delete form has this effect).
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--crash</option> <replaceable>ip-address</replaceable>
+	</term>
+        <listitem>
+          <para>
+	    If the remote peer has crashed, and therefore did not
+	    notify us, we keep sending encrypted traffic, and
+	    rejecting all plaintext (non-IKE) traffic from that remote
+	    peer. The <option>--crash</option> brings our end down as
+	    well for all the known connections to the specified
+	    <emphasis remap="i">ip-address</emphasis>.
+	  </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+
+    <variablelist remap="tp">
+
+      <varlistentry>
+        <term>
+	  <replaceable>ip-address</replaceable>
+	</term>
+        <listitem>
+          <para>
+	    If the remote peer has crashed, and therefore did not
+	    notify us, we keep sending encrypted traffic, and
+	    rejecting all plaintext (non-IKE) traffic from that
+	    remote peer. The <option>--crash</option> brings our end
+	    down as well for all the known connections to the
+	    specified <emphasis
+	    remap="i">ip-address</emphasis>.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+    <para>
+      Redirecting clients can be done using IKEv2 redirect
+      mechanism.
+    </para>
+
+    <variablelist remap="TP">
+
+      <varlistentry>
+        <term>
+	  <option>--global-redirect</option> <emphasis remap="i">yes|no|auto</emphasis>
+	</term>
+        <listitem>
+          <para>
+	    The --global-redirect option controls whether <emphasis
+	    remap="b">pluto</emphasis> will instruct remote peers to
+	    redirect IKE/IPsec SA's during IKE_SA_INIT. Valid
+	    options are <emphasis remap="b">no</emphasis>, <emphasis
+	    remap="b">yes</emphasis> and <emphasis
+	    remap="b">auto</emphasis>, where auto means remote peers
+	    will be redirected if DDoS mode is active.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--global-redirect-to</option> <replaceable>ip-address(es)</replaceable>
+	</term>
+        <listitem>
+          <para>
+	    The destination, or a list of destinations, where the
+	    peers will be redirected.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--name</option> <replaceable>connection_name</replaceable>
+	</term>
+        <term>
+	  <option>--redirect-to</option> <replaceable>ip-address(es)</replaceable>
+	</term>
+        <listitem>
+          <para>
+	    The destination, or a list of destinations, where the
+	    peers will be redirected.  Specifying the connection
+	    name is optional. If not specified the mechanism will
+	    redirect all currently active peers.  If specified, only
+	    the peers from connection <emphasis
+	    remap="i">connection_name</emphasis> will be redirected.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+
+    <para>
+      The public key for informs <emphasis
+      remap="B">pluto</emphasis> of the RSA public key for a
+      potential peer. Private keys must be kept secret, so they are
+      kept in <citerefentry>
+      <refentrytitle>ipsec.secrets</refentrytitle>
+      <manvolnum>5</manvolnum> </citerefentry>.
+    </para>
+
+    <variablelist remap="TP">
+
+      <varlistentry>
+        <term>
+	  <option>--keyid</option> <replaceable>id</replaceable>
+	</term>
+        <listitem>
+          <para>
+	    Specififies the identity of the peer for which a public
+	    key should be used. Its form is identical to the identity
+	    in the connection. If no public key is specified,
+	    <emphasis remap="B">pluto</emphasis> attempts to find KEY
+	    records from DNS for the id (if a FQDN) or through reverse
+	    lookup (if an IP address). Note that there several
+	    interesting ways in which this is not secure.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--addkey</option>
+	</term>
+        <listitem>
+          <para>
+	    Specifies that the new key is added to the collection;
+	    otherwise the new key replaces any old ones.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--pubkeyrsa</option> <replaceable>key</replaceable>
+	</term>
+        <listitem>
+          <para>
+	    Specifies the value of the RSA public key. It is a
+	    sequence of bytes as described in RFC 2537 "RSA/MD5 KEYs
+	    and SIGs in the Domain Name System (DNS)". It is denoted
+	    in a way suitable for <citerefentry>
+	    <refentrytitle>ipsec_ttodata</refentrytitle>
+	    <manvolnum>3</manvolnum> </citerefentry>. For example, a
+	    base 64 numeral starts with 0s.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+    <para>
+      The listen form tells <emphasis remap="B">pluto</emphasis> to
+      start listening for IKE requests on its public interfaces. To
+      avoid race conditions, it is normal to load the appropriate
+      connections into <emphasis remap="B">pluto</emphasis> before
+      allowing it to listen. If <emphasis remap="B">pluto</emphasis>
+      isn't listening, it is pointless to initiate negotiations, so
+      it will refuse requests to do so. Whenever the listen form is
+      used, <emphasis remap="B">pluto</emphasis> looks for public
+      interfaces and will notice when new ones have been added and
+      when old ones have been removed. This is also the trigger for
+      <emphasis remap="B">pluto</emphasis> to read the <emphasis
+      remap="I">ipsec.secrets</emphasis> file. So listen may useful
+      more than once.
+    </para>
+
+    <variablelist remap="TP">
+
+      <varlistentry>
+        <term>
+	  <option>--listen</option>
+	</term>
+        <listitem>
+          <para>
+	    Start listening for IKE traffic on public interfaces.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--unlisten</option>
+	</term>
+        <listitem>
+          <para>
+	    Stop listening for IKE traffic on public interfaces.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+    <para>
+      The --ddos-auto, --ddos-busy and --ddos-unlimited options tells
+      <emphasis remap="B">pluto</emphasis> to update the DDoS
+      protection state. Normally, these measures are automatically
+      activated or deactivated based on the number of states inside
+      pluto. The busy and unlimited option tells pluto to activate or
+      deactivate the DDoS protection mode manually.  One of these DDoS
+      protection methods is to activate IKEv2 DCOOKIEs to defend
+      against spoofed IKE packets.
+    </para>
+
+    <variablelist remap="TP">
+
+      <varlistentry>
+        <term>
+	  <option>--ddos-busy</option>
+	</term>
+        <listitem>
+          <para>
+	    Place pluto into busy mode and activate anti-DDoS
+	    measures.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--ddos-unlimited</option>
+	</term>
+        <listitem>
+          <para>
+	    Pull pluto out of busy mode and deactivate anti-DDoS
+	    measures.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--ddos-auto</option>
+	</term>
+        <listitem>
+          <para>
+	    Activate the built-in detection mechanism for the
+	    anti-DDoS measures.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+    <para>
+      The status form will display information about the internal
+      state of <emphasis remap="B">pluto</emphasis>: information about
+      each potential connection, about each state object, and about
+      each shunt that <emphasis remap="B">pluto</emphasis> is managing
+      without an associated connection.
+    </para>
+
+    <para>
+      Statistics can be seen using <emphasis remap="B">ipsec whack
+      --globalstats</emphasis> and reset using <emphasis
+      remap="B">ipsec whack --clearstats</emphasis>.  This can be used
+      with the munin software to monitor VPN services.
+    </para>
 
       <variablelist remap="TP">
 
@@ -2922,8 +2397,6 @@
           </listitem>
         </varlistentry>
       </variablelist>
-
-    </refsect2>
 
     <refsect2 id="examples">
       <title>Examples</title>
@@ -3973,55 +3446,18 @@
     </refsect2>
   </refsect1>
 
-  <refsect1 id="signals">
-    <title>SIGNALS</title>
-
-    <para><emphasis remap="B">Pluto</emphasis> responds to
-    <constant>SIGHUP</constant> by issuing a suggestion that ``<emphasis
-    remap="B">whack</emphasis> --listen'' might have been intended.</para>
-
-    <para><emphasis remap="B">Pluto</emphasis> exits when it receives
-    <constant>SIGTERM</constant>.</para>
-  </refsect1>
-
   <refsect1 id="exit_status">
     <title>EXIT STATUS</title>
 
-    <para><emphasis remap="B">pluto</emphasis> normally forks a daemon
-    process, so the exit status is normally a very preliminary result.</para>
-
-    <variablelist remap="TP">
-      <varlistentry>
-        <term>0</term>
-
-        <listitem>
-          <para>means that all is OK so far.</para>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry>
-        <term>1</term>
-
-        <listitem>
-          <para>means that something was wrong.</para>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry>
-        <term>10</term>
-
-        <listitem>
-          <para>means that the lock file already exists.</para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-
-    <para>If <emphasis remap="B">whack</emphasis> detects a problem, it will
-    return an exit status of 1. If it received progress messages from
-    <emphasis remap="B">pluto</emphasis>, it returns as status the value of
-    the numeric prefix from the last such message that was not a message sent
-    to syslog or a comment (but the prefix for success is treated as 0).
-    Otherwise, the exit status is 0.</para>
+    <para>
+      If <emphasis remap="B">ipsec whack</emphasis> detects a problem,
+      it will return an exit status of 1. If it received progress
+      messages from <emphasis remap="B">pluto</emphasis>, it returns
+      as status the value of the numeric prefix from the last such
+      message that was not a message sent to syslog or a comment (but
+      the prefix for success is treated as 0).  Otherwise, the exit
+      status is 0.
+    </para>
   </refsect1>
 
   <refsect1 id="files">
