@@ -2237,65 +2237,18 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_new_child_proposals(struct ike_sa
 }
 
 /*
- * Generate a single proposal for rekeying the Child SA using the
- * previously ACCEPTED PROPOSAL and specified DH.
+ * Construct a proposal suite for rekeying the Child SA using the ESP
+ * line, the previously ACCEPTED_PROPSAL, and the IKE SA's DH.
  *
- * The specified DH always overrides any DH value in
- * ACCEPTED_PROPOSAL.  For instance, with PFS, when rekeying an
- * IKE_AUTH offspring, the ACCEPTED_PROPOSAL's DH is NONE and the IKE
- * SA's DH needs to be used.
+ * Normally the previously ACCEPTED_PROPOSAL is used as the starting
+ * point.  When it does not contain PFS, the PFS from the IKE SA's DH
+ * is used.
  *
- * When MSDH_DOWNGRADE, and DH is non-NONE, send two proposals.  The
- * first contains the DH that should be accepted, and the second
- * contains dh-NONE.
- */
-
-static struct ikev2_proposals *get_v2_child_rekey_proposals(const char *story,
-							    const struct ikev2_proposal *accepted_proposal,
-							    const struct dh_desc *dh,
-							    bool msdh_downgrade)
-{
-	bool add_empty_msdh_duplicates = (msdh_downgrade && dh != &ike_alg_dh_none);
-	struct ikev2_proposals *proposals = alloc_thing(struct ikev2_proposals, story);
-	/* MSDH_DOWNGRADE adds a bonus proposal */
-	proposals->roof = 2 + (add_empty_msdh_duplicates ? 1 : 0);
-	proposals->proposal = alloc_things(struct ikev2_proposal, proposals->roof, story);
-	for (int p = 1; p < proposals->roof; p++) {
-		struct ikev2_proposal *proposal = &proposals->proposal[p];
-		/* copy ... */
-		*proposal = *accepted_proposal;
-		/* .. clearing some fields ... */
-		proposal->propnum = 0; /* auto assign */
-		zero_thing(proposal->remote_spi);
-		/* ... and forcing DH */
-		zero_thing(proposal->transforms[IKEv2_TRANS_TYPE_DH]);
-		append_transform(proposal, IKEv2_TRANS_TYPE_DH,
-				 (p == 1 ? dh->common.id[IKEv2_ALG_ID] :
-				  /*2:MSDH_DOWNGRADE*/ OAKLEY_GROUP_NONE),
-				 0);
-	}
-	LDBGP_JAMBUF(DBG_BASE, &global_logger, buf) {
-		jam_string(buf, story);
-		jam_v2_proposals(buf, proposals);
-	}
-	return proposals;
-}
-
-/*
- * Use the CREATE_CHILD_SA proposal suite - the
- * proposal generated during IKE_AUTH will have been
- * stripped of DH.
+ * When MS_DH_DOWNGRADE, all proposals with non-none DH are repeated
+ * with none dh.
  *
- * XXX: If the IKE SA's DH changes, then the child
- * proposals will be re-generated.  Should the child
- * proposals instead be somehow stored in state and
- * dragged around?
- *
- * XXX: this choice of default_dh is wrong: It should use the
- * Child SA's DH (assuming child was established using
- * CREATE_CHILD_SA and negotiated DH) or the IKE SA's DH
- * (assuming this is the child negotiated using IKE_AUTH), or
- * ?
+ * When PFS_REKEY_WORKAROUND, the original ESP= line, instead of the
+ * accepted_proposal, is used.
  */
 
 struct ikev2_proposals *get_v2_CREATE_CHILD_SA_rekey_child_proposals(struct ike_sa *ike,
@@ -2311,66 +2264,66 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_rekey_child_proposals(struct ike_
 	 * - the need possibly remove DH
 	 */
 
-	struct ikev2_proposals *rekey_proposals;
-	const struct dh_desc *accepted_dh = ikev2_proposal_first_dh(accepted_proposal);
-	bool msdh_downgrade = larval_child->sa.st_connection->config->ms_dh_downgrade;
-	if (accepted_dh != NULL/*i.e., non-NONE*/) {
+	struct connection *cc = larval_child->sa.st_connection;
+
+	struct ikev2_proposals *proposals;
+	if (cc->config->pfs_rekey_workaround) {
 		/*
-		 * The previous CREATE_CHILD_SA exchange for this
-		 * Child SA negotiated a non-NONE DH.  Re-negotiate
-		 * that same same DH.
-		 *
-		 * ++ it can't be an IKE_AUTH offspring as that would
-		 * have null-DH.
+		 * Re-propose the full ESP= line.  If necessary add DH
+		 * from the IKE SA.  When MS_DH_DOWNGRADE will also
+		 * add NONE-DH.
 		 */
-		rekey_proposals = get_v2_child_rekey_proposals("rekeying Child SA",
-							       accepted_proposal,
-							       accepted_dh,
-							       msdh_downgrade);
-	} else if (larval_child->sa.st_connection->config->child_sa.pfs) {
-		/*
-		 * This is an IKE_AUTH child being rekeyed for the
-		 * first time.  Since that exchange doesn't negotiate
-		 * DH and DH is required, use the IKE SA's DH.
-		 *
-		 * ++ it can't be a CREATE_CHILD_SA offspring as PFS
-		 * forces that exchange to negotiate DH.
-		 */
-		rekey_proposals = get_v2_child_rekey_proposals("rekeying Child SA with PFS",
-							       accepted_proposal,
-							       ike->sa.st_oakley.ta_dh,
-							       msdh_downgrade);
-#if 0
-	} else if (ikev2_proposals_first_dh(c->config->v2_child_proposals) == NULL) {
-		/*
-		 * The Child SA's proposals don't include DH and PFS
-		 * isn't a requirement, (pointlessly?) re-key with
-		 * DH=NONE.
-		 */
-		rekey_proposals = get_v2_child_rekey_proposals("rekeying Child SA",
-							       accepted_proposal,
-							       &ike_alg_dh_none,
-							       msdh_downgrade);
-#endif
+		const struct dh_desc *pfs_dh =
+			(cc->config->child_sa.pfs ? ike->sa.st_oakley.ta_dh : NULL);
+		proposals = get_v2_child_proposals(cc, "pfs-rekey-workaround",
+						   /*strip_dh*/false,
+						   /*default_dh*/pfs_dh,
+						   larval_child->sa.logger);
 	} else {
 		/*
-		 * This is a mess.  Presumably, the old
-		 * accepted_proposal contains no DH (perhaps because
-		 * it was from the IKE_AUTH exchange where the
-		 * offspring's DH isn't negotiated) yet the child's
-		 * proposals do include DH.  Just re-propose
-		 * everything.
-		 *
-		 * XXX: every rekey will generate new proposals, just
-		 * assume this isn't the common case.
+		 * Copy the old accepted proposals.  If necessary add
+		 * DH from IKE and/or duplicate with NONE-DH.
 		 */
-		rekey_proposals = get_v2_child_proposals(larval_child->sa.st_connection,
-							 "Child SA proposals (initiating rekey)",
-							 /*strip_dh*/false,
-							 /*default_dh*/&ike_alg_dh_none,
-							 larval_child->sa.logger);
+		const struct dh_desc *dh = ikev2_proposal_first_dh(accepted_proposal);
+		if (dh == NULL) {
+			dh = (cc->config->child_sa.pfs ? ike->sa.st_oakley.ta_dh :
+			      &ike_alg_dh_none);
+		}
+
+		bool add_empty_msdh_duplicates =
+			(cc->config->ms_dh_downgrade && dh != &ike_alg_dh_none);
+		proposals = alloc_thing(struct ikev2_proposals, "rekey");
+		/*
+		 * +1 for proposals[0]; +1 for accepted proposal;
+		 * optionally +1 for MS_DH_DOWNGRADE.
+		 */
+		proposals->roof = 1 + 1 + (add_empty_msdh_duplicates ? 1 : 0);
+		proposals->proposal = alloc_things(struct ikev2_proposal, proposals->roof, "rekey");
+		/*
+		 * Copy over the proposal; duplicating if necessary.
+		 */
+		for (int p = 1; p < proposals->roof; p++) {
+			struct ikev2_proposal *proposal = &proposals->proposal[p];
+			/* copy ... */
+			*proposal = *accepted_proposal;
+			/* .. clearing some fields ... */
+			proposal->propnum = 0; /* auto assign */
+			zero_thing(proposal->remote_spi);
+			/* ... and forcing DH */
+			zero_thing(proposal->transforms[IKEv2_TRANS_TYPE_DH]);
+			append_transform(proposal, IKEv2_TRANS_TYPE_DH,
+					 (p == 1 ? dh->common.id[IKEv2_ALG_ID] :
+					  p == 2 ? OAKLEY_GROUP_NONE :
+					  pexpect(0)),
+					 /*key-len:n/a*/0);
+		}
 	}
-	return rekey_proposals;
+
+	LDBGP_JAMBUF(DBG_BASE, &global_logger, buf) {
+		jam_string(buf, "rekey");
+		jam_v2_proposals(buf, proposals);
+	}
+	return proposals;
 }
 
 /*
