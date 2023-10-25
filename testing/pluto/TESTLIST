@@ -515,10 +515,10 @@ kvmplutotest	ikev2-tfc-01				good
 kvmplutotest	ikev2-tfc-02				good
 kvmplutotest	ikev2-tfc-03				good
 
-kvmplutotest	ikev2-xfrmi-01				good
+kvmplutotest	ikev2-xfrmi-01				wip	github/1346
 kvmplutotest	ikev2-xfrmi-02				good
 kvmplutotest	ikev2-xfrmi-02-responder		wip
-kvmplutotest	ikev2-xfrmi-18-responder-iface-check	good
+kvmplutotest	ikev2-xfrmi-18-responder-iface-check	wip	github/1346
 kvmplutotest	ikev2-xfrmi-03				good
 kvmplutotest	ikev2-xfrmi-04				good
 kvmplutotest	ikev2-xfrmi-05-remote-access-client	wip	github:541
