@@ -302,7 +302,6 @@ struct kernel_ops {
 	 */
 	err_t (*migrate_ipsec_sa_is_enabled)(struct logger *);
 	bool (*migrate_ipsec_sa)(struct child_sa *child);
-	void (*v6holes)(struct logger *logger);
 	bool (*poke_ipsec_policy_hole)(int fd, const struct ip_info *afi, struct logger *logger);
 	bool (*detect_offload)(const struct raw_iface *ifp, struct logger *logger);
 	bool (*poke_ipsec_offload_policy_hole)(struct nic_offload *nic_offload, struct logger *logger);

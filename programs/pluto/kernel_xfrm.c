@@ -118,6 +118,12 @@
 
 static void netlink_process_xfrm_messages(int fd, void *arg, struct logger *logger);
 static void netlink_process_rtm_messages(int fd, void *arg, struct logger *logger);
+static void poke_icmpv6_holes(struct logger *logger);
+
+static struct {
+	bool icmpv6;
+	bool offload;
+} hyperspace_bypass;
 
 static int nl_send_fd = NULL_FD; /* to send to NETLINK_XFRM */
 static int netlink_xfrm_fd = NULL_FD; /* listen to NETLINK_XFRM broadcast */
@@ -271,7 +277,7 @@ static void init_netlink_xfrm_fd(struct logger *logger)
  * init_netlink - Initialize the netlink interface.  Opens the sockets and
  * then binds to the broadcast socket.
  */
-static void init_netlink(struct logger *logger)
+static void kernel_xfrm_init(struct logger *logger)
 {
 #define XFRM_ACQ_EXPIRES "/proc/sys/net/core/xfrm_acq_expires"
 #define XFRM_STAT "/proc/net/xfrm_stat"
@@ -343,6 +349,11 @@ static void init_netlink(struct logger *logger)
 			kernel_integ_add(alg);
 		}
 	}
+
+	/* Add the port bypass polcies */
+
+	/* may not return */
+	poke_icmpv6_holes(logger);
 }
 
 /*
@@ -2573,13 +2584,50 @@ static bool xfrm_get_kernel_state(const struct kernel_state *sa, uint64_t *bytes
 	return true;
 }
 
-/* add bypass policies/holes icmp */
-static bool add_icmpv6_bypass_policy(int port, struct logger *logger)
+static struct xfrm_selector icmpv6_selector(int port)
 {
 	/* icmp is packed into [sd]port */
 	uint16_t icmp_type = port >> 8;
 	uint16_t icmp_code = port & 0xFF;
+	return (struct xfrm_selector) {
+		.proto = IPPROTO_ICMPV6,
+		.family = AF_INET6,
+		/* pack icmp into ports */
+		.sport = htons(icmp_type),
+		.dport = htons(icmp_code),
+		.sport_mask = 0xffff,
+	};
+}
 
+static bool fiddle_icmpv6_bypass(struct nlmsghdr *n, uint8_t *dir,
+				 const char *story, struct logger *logger)
+{
+
+	/*
+	 * EXPECT_NO_INBOUND means no fail on missing and/or
+	 * success.
+	 */
+	*dir = XFRM_POLICY_IN;
+	if (!sendrecv_xfrm_policy(n, EXPECT_KERNEL_POLICY_OK,
+				  story, "(in)", logger, __func__))
+		return false;
+
+	*dir = XFRM_POLICY_FWD;
+	if (!sendrecv_xfrm_policy(n, EXPECT_KERNEL_POLICY_OK,
+				  story, "(fwd)", logger, __func__))
+		return false;
+
+	*dir = XFRM_POLICY_OUT;
+	if (!sendrecv_xfrm_policy(n, EXPECT_KERNEL_POLICY_OK,
+				  story, "(out)", logger, __func__))
+		return false;
+
+	return true;
+}
+
+/* add bypass policies/holes icmp */
+static bool insert_icmpv6_bypass_policy(int port, const char *story, struct logger *logger)
+{
 	struct {
 		struct nlmsghdr n;
 		struct xfrm_userpolicy_info p;
@@ -2599,40 +2647,52 @@ static bool add_icmpv6_bypass_policy(int port, struct logger *logger)
 			.lft.hard_byte_limit = XFRM_INF,
 			.lft.hard_packet_limit = XFRM_INF,
 
-			.sel.proto = IPPROTO_ICMPV6,
-			.sel.family = AF_INET6,
-			/* pack icmp into ports */
-			.sel.sport = htons(icmp_type),
-			.sel.dport = htons(icmp_code),
-			.sel.sport_mask = 0xffff,
+			.sel = icmpv6_selector(port),
 		},
 	};
 
-	const char *text = "add port bypass";
-
-	/*
-	 * EXPECT_NO_INBOUND means no fail on missing and/or
-	 * success.
-	 */
-	req.p.dir = XFRM_POLICY_IN;
-	if (!sendrecv_xfrm_policy(&req.n, EXPECT_KERNEL_POLICY_OK,
-				  text, "(in)", logger, __func__))
-		return false;
-
-	req.p.dir = XFRM_POLICY_FWD;
-	if (!sendrecv_xfrm_policy(&req.n, EXPECT_KERNEL_POLICY_OK,
-				  text, "(fwd)", logger, __func__))
-		return false;
-
-	req.p.dir = XFRM_POLICY_OUT;
-	if (!sendrecv_xfrm_policy(&req.n, EXPECT_KERNEL_POLICY_OK,
-				  text, "(out)", logger, __func__))
-		return false;
-
-	return true;
+	return fiddle_icmpv6_bypass(&req.n, &req.p.dir, story, logger);
 }
 
-static void netlink_v6holes(struct logger *logger)
+static bool insert_icmpv6_bypass_policies(struct logger *logger)
+{
+	bool ok = true;
+	/* do both even when they fail */
+	ok &= insert_icmpv6_bypass_policy(ICMP_NEIGHBOR_DISCOVERY, "neighbour discovery", logger);
+	ok &= insert_icmpv6_bypass_policy(ICMP_NEIGHBOR_SOLICITATION, "neighbour solicitiation", logger);
+	return ok;
+}
+
+/* add bypass policies/holes icmp */
+static bool delete_icmpv6_bypass_policy(int port, const char *story, struct logger *logger)
+{
+	struct {
+		struct nlmsghdr n;
+		struct xfrm_userpolicy_id p;
+	} req = {
+		.n = {
+			.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK,
+			.nlmsg_type = XFRM_MSG_DELPOLICY,
+			.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.p))),
+		},
+		.p = {
+			.sel = icmpv6_selector(port),
+		},
+	};
+
+	return fiddle_icmpv6_bypass(&req.n, &req.p.dir, story, logger);
+}
+
+static bool delete_icmpv6_bypass_policies(struct logger *logger)
+{
+	bool ok = true;
+	/* do both even when they fail */
+	ok &= delete_icmpv6_bypass_policy(ICMP_NEIGHBOR_DISCOVERY, "neighbour discovery", logger);
+	ok &= delete_icmpv6_bypass_policy(ICMP_NEIGHBOR_SOLICITATION, "neighbour solicitiation", logger);
+	return ok;
+}
+
+static void poke_icmpv6_holes(struct logger *logger)
 {
 	/* this could be per interface specific too */
 	const char proc_f[] = "/proc/sys/net/ipv6/conf/all/disable_ipv6";
@@ -2675,14 +2735,11 @@ static void netlink_v6holes(struct logger *logger)
 		return;
 	}
 
-	if (!add_icmpv6_bypass_policy(ICMP_NEIGHBOR_DISCOVERY, logger)) {
-		fatal(PLUTO_EXIT_KERNEL_FAIL, logger,
-		      "kernel: could not insert ICMP_NEIGHBOUR_DISCOVERY bypass policy");
+	if (!insert_icmpv6_bypass_policies(logger)) {
+		fatal(PLUTO_EXIT_KERNEL_FAIL, logger, "kernel: could not insert bypass policies");
 	}
-	if (!add_icmpv6_bypass_policy(ICMP_NEIGHBOR_SOLICITATION, logger)) {
-		fatal(PLUTO_EXIT_KERNEL_FAIL, logger,
-		      "kernel: could not insert ICMP_NEIGHBOUR_SOLICITATION bypass policy");
-	}
+
+	hyperspace_bypass.icmpv6 = true;
 }
 
 static bool qry_xfrm_mirgrate_support(struct logger *logger)
@@ -2900,12 +2957,15 @@ static bool netlink_poke_ipsec_policy_hole(int fd, const struct ip_info *afi, st
 	return true;
 }
 
-static void xfrm_shutdown(struct logger *logger)
+static void kernel_xfrm_shutdown(struct logger *logger)
 {
+	if (hyperspace_bypass.icmpv6) {
+		delete_icmpv6_bypass_policies(logger);
+	}
 #ifdef USE_XFRM_INTERFACE
 	free_xfrmi_ipsec1(logger);
 #else
-	ldbg(logger, "%s() called; nothing to do", __func__);
+	ldbg(logger, "%s() USE_XFRM_INTERFACE disabled", __func__);
 #endif
 }
 
@@ -2919,8 +2979,8 @@ const struct kernel_ops xfrm_kernel_ops = {
 	.max_replay_window = UINT32_MAX & ~7,
 	.esn_supported = true,
 
-	.init = init_netlink,
-	.shutdown = xfrm_shutdown,
+	.init = kernel_xfrm_init,
+	.shutdown = kernel_xfrm_shutdown,
 
 	.policy_del = kernel_xfrm_policy_del,
 	.policy_add = kernel_xfrm_policy_add,
@@ -2933,7 +2993,6 @@ const struct kernel_ops xfrm_kernel_ops = {
 	.migrate_ipsec_sa = xfrm_migrate_ipsec_sa,
 	.overlap_supported = false,
 	.sha2_truncbug_support = true,
-	.v6holes = netlink_v6holes,
 	.poke_ipsec_policy_hole = netlink_poke_ipsec_policy_hole,
 	.detect_offload = xfrm_detect_offload,
 	.poke_ipsec_offload_policy_hole = netlink_poke_ipsec_offload_policy_hole,

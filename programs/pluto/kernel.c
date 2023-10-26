@@ -1985,15 +1985,8 @@ void init_kernel(struct logger *logger)
 	     "using %s %s kernel support code on %s",
 	     un.sysname, kernel_ops->interface_name, un.version);
 
-	passert(kernel_ops->init != NULL);
+	PASSERT(logger, kernel_ops->init != NULL);
 	kernel_ops->init(logger);
-
-	/* Add the port bypass polcies */
-
-	if (kernel_ops->v6holes != NULL) {
-		/* may not return */
-		kernel_ops->v6holes(logger);
-	}
 
 	enable_periodic_timer(EVENT_SHUNT_SCAN, kernel_scan_shunts,
 			      bare_shunt_interval);
