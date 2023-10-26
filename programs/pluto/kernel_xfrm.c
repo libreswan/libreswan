@@ -119,6 +119,11 @@
 static void netlink_process_xfrm_messages(int fd, void *arg, struct logger *logger);
 static void netlink_process_rtm_messages(int fd, void *arg, struct logger *logger);
 static void poke_icmpv6_holes(struct logger *logger);
+static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
+			      unsigned expected_resp_type, struct nlm_resp *rbuf,
+			      const char *description, const char *story,
+			      int *recv_errno,
+			      struct logger *logger);
 
 static struct {
 	bool icmpv6;
@@ -279,10 +284,6 @@ static void init_netlink_xfrm_fd(struct logger *logger)
  */
 static void kernel_xfrm_init(bool flush, struct logger *logger)
 {
-	if (flush) {
-		ldbg(logger, "linux can't flush");
-	}
-
 #define XFRM_ACQ_EXPIRES "/proc/sys/net/core/xfrm_acq_expires"
 #define XFRM_STAT "/proc/net/xfrm_stat"
 
@@ -330,6 +331,33 @@ static void kernel_xfrm_init(bool flush, struct logger *logger)
 
 	init_netlink_rtm_fd(logger);
 	init_netlink_xfrm_fd(logger);
+
+	if (flush) {
+		struct nlm_resp rsp;
+		int recv_errno;
+
+		struct nlmsghdr policy = {
+			.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK,
+			.nlmsg_type = XFRM_MSG_FLUSHPOLICY,
+			.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(0)),
+		};
+		sendrecv_xfrm_msg(&policy, NLMSG_ERROR, &rsp,
+				  "flush", "policy",
+				  &recv_errno, logger);
+
+		struct {
+			struct nlmsghdr n;
+			struct xfrm_usersa_flush f; /*protocol*/
+		} state = {
+			.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK,
+			.n.nlmsg_type = XFRM_MSG_FLUSHSA,
+			.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(state.f))),
+			.f.proto = 0,
+		};
+		sendrecv_xfrm_msg(&state.n, NLMSG_ERROR, &rsp,
+				  "flush", "state",
+				  &recv_errno, logger);
+	}
 
 	/*
 	 * Just assume any algorithm with a NETLINK_XFRM name works.
@@ -380,7 +408,7 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 {
 	size_t len = hdr->nlmsg_len;
 
-	ldbg(logger, "%s() sending %d", __func__, hdr->nlmsg_type);
+	ldbg(logger, "%s() sending %d %s %s", __func__, hdr->nlmsg_type, description, story);
 	if (DBGP(DBG_TMI)) {
 		LDBG_dump(logger, hdr, len);
 	}
