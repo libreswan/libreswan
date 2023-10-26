@@ -1348,8 +1348,8 @@ void unreference_xfrmi(struct connection *c)
 					     "delete ipsec-interface=%s if_id=%u added by pluto",
 					     xfrmi->name, xfrmi->if_id);
 				} else {
-					llog(RC_LOG, logger,
-					     "cannot delete ipsec-interface=%s if_id=%u, not created by pluto",
+					ldbg(logger,
+					     "skipping delete ipsec-interface=%s if_id=%u, never added pluto",
 					     xfrmi->name, xfrmi->if_id);
 				}
 				/* Free the IPs that were already on the interface (not added by pluto)
