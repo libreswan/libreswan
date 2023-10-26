@@ -111,10 +111,6 @@ KVM_FEDORA_USE_EFENCE ?= true
 KVM_FEDORA_USE_LABELED_IPSEC ?= true
 KVM_FEDORA_USE_SECCOMP ?= true
 
-# On OpenBSD 7.4, GCC crashes, CLANG produces bad code (but does
-# build).  So go with the latter.
-KVM_OPENBSD_CC = cc
-
 # from <FLAG> return KVM_<OS>_<FLAG> or KVM_<FLAG>
 kvm-flag = \
 	$(firstword \
