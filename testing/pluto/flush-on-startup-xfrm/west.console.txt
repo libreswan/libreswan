@@ -1,0 +1,71 @@
+../../guestbin/swan-prep --46
+west #
+ # https://www.sobyte.net/post/2022-10/ipsec-ip-xfrm/
+west #
+ # add a policy + state
+west #
+ ID=1000
+west #
+ KEY=0x1234567890123456789012345678901234567890
+west #
+ ip xfrm state add src 1.1.1.1 dst 2.2.2.2 proto esp spi $ID reqid $ID mode tunnel aead 'rfc4106(gcm(aes))' $KEY 128
+west #
+ ip xfrm state add src 2.2.2.2 dst 1.1.1.1 proto esp spi $ID reqid $ID mode tunnel aead 'rfc4106(gcm(aes))' $KEY 128
+west #
+ ip xfrm policy add src 10.0.1.0/24 dst 10.0.2.0/24 dir out tmpl src 1.1.1.1 dst 2.2.2.2 proto esp reqid $ID mode tunnel
+west #
+ ip xfrm policy add src 10.0.2.0/24 dst 10.0.1.0/24 dir fwd tmpl src 2.2.2.2 dst 1.1.1.1 proto esp reqid $ID mode tunnel
+west #
+ ip xfrm policy add src 10.0.2.0/24 dst 10.0.1.0/24 dir in tmpl src 2.2.2.2 dst 1.1.1.1 proto esp reqid $ID mode tunnel
+west #
+ ../../guestbin/ipsec-kernel-state.sh
+src 2.2.2.2 dst 1.1.1.1
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	sel src 0.0.0.0/0 dst 0.0.0.0/0 
+src 1.1.1.1 dst 2.2.2.2
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	sel src 0.0.0.0/0 dst 0.0.0.0/0 
+west #
+ ../../guestbin/ipsec-kernel-policy.sh
+src 10.0.1.0/24 dst 10.0.2.0/24
+	dir out priority 0 ptype main
+	tmpl src 1.1.1.1 dst 2.2.2.2
+		proto esp reqid REQID mode tunnel
+src 10.0.2.0/24 dst 10.0.1.0/24
+	dir fwd priority 0 ptype main
+	tmpl src 2.2.2.2 dst 1.1.1.1
+		proto esp reqid REQID mode tunnel
+src 10.0.2.0/24 dst 10.0.1.0/24
+	dir in priority 0 ptype main
+	tmpl src 2.2.2.2 dst 1.1.1.1
+		proto esp reqid REQID mode tunnel
+west #
+ # start pluto
+west #
+ ipsec pluto --config /etc/ipsec.conf --leak-detective
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ # check policy/state gone
+west #
+ ../../guestbin/ipsec-kernel-state.sh
+west #
+ ../../guestbin/ipsec-kernel-policy.sh
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir fwd priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir in priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir out priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir fwd priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir in priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir out priority PRIORITY ptype main
+west #
+ 

@@ -1,0 +1,1 @@
+Check that, when starting, pluto flushes existing kernel state/policy.
