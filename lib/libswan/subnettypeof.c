@@ -20,8 +20,7 @@
  * masktocount - convert a mask, expressed as an address, to a bit count
  */
 int	/* -1 if not valid mask */
-masktocount(src)
-const ip_address * src;
+masktocount(const ip_address *src)
 {
 	int b;
 	const unsigned char *p;
