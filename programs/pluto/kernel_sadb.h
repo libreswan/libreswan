@@ -80,6 +80,16 @@ enum sadb_type {
 #undef SADB_GETSPI
 #define SADB_GETSPI sadb_getspi
 
+#ifdef SADB_FLUSH
+	sadb_flush = SADB_FLUSH,
+#undef SADB_FLUSH
+#define SADB_FLUSH sadb_flush
+#endif
+
+	sadb_x_spdflush = SADB_X_SPDFLUSH,
+#undef SADB_X_SPDFLUSH
+#define SADB_X_SPDFLUSH sadb_x_spdflush
+
 	sadb_register = SADB_REGISTER,
 #undef SADB_REGISTER
 #define SADB_REGISTER sadb_register
