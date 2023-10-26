@@ -455,6 +455,20 @@ static struct sadb_msg *msg_base(struct outbuf *msg, const char *what,
 	return base;
 }
 
+static bool sadb_base_sendrecv(struct inbuf *resp,
+			      enum sadb_type type,
+			      enum sadb_satype satype,
+			      struct logger *logger)
+{
+	uint8_t reqbuf[SIZEOF_SADB_BASE];
+	struct outbuf req;
+	struct sadb_msg *base = msg_base(&req, __func__,
+					 chunk2(reqbuf, sizeof(reqbuf)),
+					 type, satype,
+					 logger);
+	return msg_sendrecv(&req, base, resp);
+}
+
 static enum sadb_satype sadb_satype_from_protocol(const struct ip_protocol *proto)
 {
 	return (proto == &ip_protocol_esp ? SADB_SATYPE_ESP :
@@ -505,16 +519,10 @@ static void register_satype(const struct ip_protocol *protocol, struct logger *l
 {
 	ldbg(logger, "sending %s request", protocol->name);
 
-	uint8_t reqbuf[SIZEOF_SADB_BASE];
-	struct outbuf req;
-	struct sadb_msg *base = msg_base(&req, __func__,
-					 chunk2(reqbuf, sizeof(reqbuf)),
-					 SADB_REGISTER,
-					 sadb_satype_from_protocol(protocol),
-					 logger);
-
 	struct inbuf resp;
-	if (!msg_sendrecv(&req, base, &resp)) {
+	if (!sadb_base_sendrecv(&resp, SADB_REGISTER,
+				sadb_satype_from_protocol(protocol),
+				logger)) {
 		return;
 	}
 
