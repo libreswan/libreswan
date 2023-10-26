@@ -582,7 +582,7 @@ static void register_satype(const struct ip_protocol *protocol, struct logger *l
 	}
 }
 
-static void pfkeyv2_init(struct logger *logger)
+static void kernel_pfkeyv2_init(bool flush, struct logger *logger)
 {
 	ldbg(logger, "initializing PFKEY V2");
 
@@ -604,6 +604,13 @@ static void pfkeyv2_init(struct logger *logger)
 	register_satype(&ip_protocol_ah, logger);
 	register_satype(&ip_protocol_esp, logger);
 	register_satype(&ip_protocol_ipcomp, logger);
+
+	/* flush if needed */
+	if (flush) {
+		struct inbuf resp;
+		sadb_base_sendrecv(&resp, SADB_FLUSH, SADB_SATYPE_UNSPEC, logger);
+		sadb_base_sendrecv(&resp, SADB_X_SPDFLUSH, SADB_SATYPE_UNSPEC, logger);
+	}
 }
 
 static ipsec_spi_t pfkeyv2_get_ipsec_spi(ipsec_spi_t avoid UNUSED,
@@ -1642,7 +1649,7 @@ static void pfkeyv2_process_msg(int fd UNUSED, void *arg UNUSED, struct logger *
 	process_pending_queue(logger);
 }
 
-static void pfkeyv2_shutdown(struct logger *logger)
+static void kernel_pfkeyv2_shutdown(struct logger *logger)
 {
 	ldbg(logger, "%s() called; nothing to do", __func__);
 }
@@ -1673,8 +1680,10 @@ const struct kernel_ops pfkeyv2_kernel_ops = {
 	/* .sadb_sa_replay is in bytes with 1 bit per packet */
 	.max_replay_window = UINT8_MAX * 8, /* packets */
 #endif
-	.init = pfkeyv2_init,
-	.shutdown = pfkeyv2_shutdown,
+
+	.init = kernel_pfkeyv2_init,
+	.shutdown = kernel_pfkeyv2_shutdown,
+
 	.get_ipsec_spi = pfkeyv2_get_ipsec_spi,
 	.del_ipsec_spi = pfkeyv2_del_ipsec_spi,
 	.add_sa = pfkeyv2_add_sa,

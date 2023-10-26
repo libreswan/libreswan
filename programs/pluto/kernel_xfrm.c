@@ -277,8 +277,12 @@ static void init_netlink_xfrm_fd(struct logger *logger)
  * init_netlink - Initialize the netlink interface.  Opens the sockets and
  * then binds to the broadcast socket.
  */
-static void kernel_xfrm_init(struct logger *logger)
+static void kernel_xfrm_init(bool flush, struct logger *logger)
 {
+	if (flush) {
+		ldbg(logger, "linux can't flush");
+	}
+
 #define XFRM_ACQ_EXPIRES "/proc/sys/net/core/xfrm_acq_expires"
 #define XFRM_STAT "/proc/net/xfrm_stat"
 

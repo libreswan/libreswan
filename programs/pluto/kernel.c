@@ -1986,7 +1986,7 @@ void init_kernel(struct logger *logger)
 	     un.sysname, kernel_ops->interface_name, un.version);
 
 	PASSERT(logger, kernel_ops->init != NULL);
-	kernel_ops->init(logger);
+	kernel_ops->init(/*flush*/true, logger);
 
 	enable_periodic_timer(EVENT_SHUNT_SCAN, kernel_scan_shunts,
 			      bare_shunt_interval);

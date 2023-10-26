@@ -232,7 +232,7 @@ struct kernel_ops {
 	bool esn_supported;
 	uintmax_t max_replay_window;
 
-	void (*init)(struct logger *logger);
+	void (*init)(bool flush, struct logger *logger);
 	void (*shutdown)(struct logger *logger);
 	bool (*policy_add)(enum kernel_policy_op op,
 			   enum direction dir,
