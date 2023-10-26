@@ -1503,5 +1503,5 @@ kvmplutotest	 android-be-happy			skiptest # ANDROID simulator
 
 # flush startup and teardown
 <<<<<<< HEAD
-kvmplutotest	flush-on-startup-pfkeyv2		wip	github/1285
+kvmplutotest	flush-on-startup-pfkeyv2		good	github/1285
 kvmplutotest	flush-on-shutdown-xfrm			good	github/1384

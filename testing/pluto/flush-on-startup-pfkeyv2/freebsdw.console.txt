@@ -48,7 +48,9 @@ west #
  # check policy/state gone
 west #
  ../../guestbin/ipsec-kernel-state.sh
+No SAD entries.
 west #
  ../../guestbin/ipsec-kernel-policy.sh
+No SPD entries.
 west #
  
