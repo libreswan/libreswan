@@ -66,7 +66,6 @@ west #
 002 "west": terminating SAs using this connection
 002 "west" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 005 "west" #2: ESP traffic information: in=84B out=84B
-002 "west": cannot delete ipsec-interface=ipsec17 if_id=17, not created by pluto
 west #
  ip -d link show ipsec17
 X: ipsec17@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
