@@ -1,0 +1,3 @@
+on a M/C with IPv6 start then stop pluto checking everything is cleaned up
+
+On Linux ICMPv6 holes should appear than disappear.

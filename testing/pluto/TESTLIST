@@ -515,6 +515,7 @@ kvmplutotest	ikev2-tfc-01				good
 kvmplutotest	ikev2-tfc-02				good
 kvmplutotest	ikev2-tfc-03				good
 
+kvmplutotest	ipsec-pluto-01-xfrm-ipv6-start-stop	wip	github/1384
 kvmplutotest	ikev2-xfrmi-01				wip	github/1346
 kvmplutotest	ikev2-xfrmi-02				good
 kvmplutotest	ikev2-xfrmi-02-responder		wip
