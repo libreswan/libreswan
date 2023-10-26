@@ -1,0 +1,35 @@
+<varlistentry>
+  <term><emphasis remap='B'>pfs-rekey-workaround</emphasis></term>
+  <listitem>
+    <para>
+      Force the re-negotiation of the Child SAs full crypto suite
+      during an IKEv2 rekey exchange.
+    </para>
+    <para>
+      Normally, during a rekey, pluto will only re-negotiate the
+      crypto suite (encryption, integrity, Diffie-Hellman) that was
+      agreed when the Child SA established.  For a Child SA created
+      during IKE_AUTH which has only negotiated encryption and
+      integrity and perfect forward privacy (<emphasis
+      remap='B'>pfs=yes</emphasis>) is required and <emphasis
+      remap='B'>esp=</emphasis> does not specify Diffie-Hellman
+      groups, the re-key proposal will include the IKE SA's
+      Diffie-Hellman group (if <emphasis remap='B'>esp=</emphasis>
+      does specify Diffie-Hellman groups then it is used for the
+      initial rekey of the IKE_AUTH Child SA).
+    </para>
+    <para>
+      Setting <emphasis remap='B'>pfs-rekey-workaround=yes</emphasis>
+      forces pluto to always re-negotiate the full set of proposals
+      specified by <emphasis remap='B'>esp=</emphasis> during the
+      rekey.  perfect forward privacy (<emphasis
+      remap='B'>pfs=yes</emphasis>) is required and <emphasis
+      remap='B'>esp=</emphasis> does not specify Diffie-Hellman
+      groups, IKE SA's Diffie-Hellman group will be added.
+    </para>
+    <para>
+      The accepted values are <emphasis remap='B'>no</emphasis>, (the
+      default) or <emphasis remap='B'>yes</emphasis>.
+    </para>
+  </listitem>
+</varlistentry>
