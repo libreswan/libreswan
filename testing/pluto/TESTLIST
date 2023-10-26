@@ -1501,3 +1501,6 @@ kvmplutotest	github-1188-lost-policy			wip
 # real world interop configurations
 kvmplutotest	 elvis-is-alive				skiptest # ELVIS-PLUS IPsec test server
 kvmplutotest	 android-be-happy			skiptest # ANDROID simulator
+
+# flush startup and teardown
+kvmplutotest	flush-on-startup-pfkeyv2		wip	github/1285

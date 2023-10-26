@@ -1,0 +1,5 @@
+flush ;
+spdflush ;
+add 10.1.1.1 20.1.1.1 esp 9876  -E aes-gcm-16 0x3ffe050148193ffe050148193ffe050148193ffe ;
+add 20.1.1.1 10.1.1.1 esp 10000 -E aes-gcm-16 0x1122334455667788990011223344556677889900 ;
+spdadd -4 10.1.1.1 20.1.1.1 any -P out ipsec esp/transport//use ;

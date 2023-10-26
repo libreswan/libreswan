@@ -1,0 +1,54 @@
+../../guestbin/netbsd-prep.sh #
+ note: swan-prep does not yet support BSD
+ipsec.conf -> PATH/etc/ipsec.conf
+ipsec.secrets -> PATH/etc/ipsec.secrets
+west #
+ ipsec initnss
+Initializing NSS database
+west #
+ # add a policy + state
+west #
+ setkey -f setkey.in
+west #
+ ../../guestbin/ipsec-kernel-state.sh
+20.1.1.1 10.1.1.1
+	esp mode=any spi=SPISPI(0xSPISPI) reqid=0(0x00000000)
+	E: aes-gcm-16  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+	seq=0x00000000 replay=0 flags=0x00000040 state=mature 
+	created: TIMESTAMP	current: TIMESTAMP
+	diff: N(s)	hard: 0(s)	soft: 0(s)
+	last:                     	hard: 0(s)	soft: 0(s)
+	current: 0(bytes)	hard: 0(bytes)	soft: 0(bytes)
+	allocated: 0	hard: 0	soft: 0
+	sadb_seq=1 pid=PID refcnt=1
+10.1.1.1 20.1.1.1
+	esp mode=any spi=SPISPI(0xSPISPI) reqid=0(0x00000000)
+	E: aes-gcm-16  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+	seq=0x00000000 replay=0 flags=0x00000040 state=mature 
+	created: TIMESTAMP	current: TIMESTAMP
+	diff: N(s)	hard: 0(s)	soft: 0(s)
+	last:                     	hard: 0(s)	soft: 0(s)
+	current: 0(bytes)	hard: 0(bytes)	soft: 0(bytes)
+	allocated: 0	hard: 0	soft: 0
+	sadb_seq=0 pid=PID refcnt=1
+west #
+ ../../guestbin/ipsec-kernel-policy.sh
+10.1.1.1[any] 20.1.1.1[any] any
+	out ipsec
+	esp/transport//use
+	spid=1 seq=0 pid=PID scope=global 
+	refcnt=1
+west #
+ # start pluto
+west #
+ ipsec pluto --config PATH/etc/ipsec.conf --leak-detective
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ # check policy/state gone
+west #
+ ../../guestbin/ipsec-kernel-state.sh
+west #
+ ../../guestbin/ipsec-kernel-policy.sh
+west #
+ 
