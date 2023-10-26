@@ -115,7 +115,6 @@ OBJS += fd.o
 OBJS += role.o
 
 OBJS += datatot.o
-OBJS += ultot.o
 
 OBJS += vendorid.o
 
