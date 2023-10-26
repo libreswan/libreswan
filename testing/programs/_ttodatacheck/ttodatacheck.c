@@ -109,10 +109,9 @@ int main(int argc, char *argv[])
 /*
  * hexout - output an arbitrary-length string in hex
  */
-static void hexout(s, len, f)
-const char *s;
-size_t len;
-FILE *f;
+static void hexout(const char *s,
+		   size_t len,
+		   FILE *f)
 {
 	size_t i;
 
