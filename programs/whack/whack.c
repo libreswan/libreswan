@@ -153,7 +153,7 @@ static void help(void)
 		"	--name <connection_name> [--asynchronous] \\\n"
 		"	[--username <name>] [--xauthpass <pass>]\n"
 		"\n"
-		"rekey: whack (--rekey-ike | --rekey-ipsec) \\\n"
+		"rekey: whack (--rekey-ike | --rekey-child) \\\n"
 		"	--name <connection_name> [--asynchronous] \\\n"
 		"\n"
 		"active redirect: whack [--name <connection_name>] \\\n"
@@ -370,7 +370,7 @@ enum option_enums {
 	OPT_IKEBUF,
 	OPT_IKE_MSGERR,
 	OPT_REKEY_IKE,
-	OPT_REKEY_IPSEC,
+	OPT_REKEY_CHILD,
 
 	OPT_REDIRECT_TO,	/* either active or for connection */
 	OPT_GLOBAL_REDIRECT,
@@ -730,7 +730,8 @@ static const struct option long_opts[] = {
 	{ "asynchronous", no_argument, NULL, OPT_ASYNC },
 
 	{ "rekey-ike", no_argument, NULL, OPT_REKEY_IKE },
-	{ "rekey-ipsec", no_argument, NULL, OPT_REKEY_IPSEC },
+	{ "rekey-child", no_argument, NULL, OPT_REKEY_CHILD },
+	{ "rekey-ipsec", no_argument, NULL, OPT_REKEY_CHILD },
 	/* list options */
 
 	{ "utc", no_argument, NULL, LST_UTC },
@@ -1364,7 +1365,7 @@ int main(int argc, char **argv)
 			msg.whack_rekey_ike = true;
 			continue;
 
-		case OPT_REKEY_IPSEC: /* --rekey-ipsec */
+		case OPT_REKEY_CHILD: /* --rekey-ipsec */
 			msg.whack_rekey_ipsec = true;
 			continue;
 
@@ -2679,7 +2680,7 @@ int main(int argc, char **argv)
 	    seen[OPT_DELETEID] ||
 	    seen[OPT_DELETEUSER] ||
 	    seen[OPT_REKEY_IKE] ||
-	    seen[OPT_REKEY_IPSEC] ||
+	    seen[OPT_REKEY_CHILD] ||
 	    (opts_seen & CONN_OPT_SEEN)) {
 		if (!seen[OPT_NAME]) {
 			diagw("missing --name <connection_name>");
