@@ -2057,7 +2057,7 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child, bool 
 			break;
 		}
 
-		if (is_v1_cisco_split(spd)) {
+		if (is_v1_cisco_split(spd, HERE)) {
 			/* XXX: why is CISCO skipped? */
 			continue;
 		}
@@ -2088,7 +2088,7 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child, bool 
 	if (ok) {
 		FOR_EACH_ITEM(spd, &c->child.spds) {
 
-			if (is_v1_cisco_split(spd)) {
+			if (is_v1_cisco_split(spd, HERE)) {
 				continue;
 			}
 
@@ -2106,7 +2106,7 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child, bool 
 			break;
 		}
 
-		if (is_v1_cisco_split(spd)) {
+		if (is_v1_cisco_split(spd, HERE)) {
 			continue;
 		}
 
@@ -2136,7 +2136,7 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child, bool 
 				break;
 			}
 
-			if (is_v1_cisco_split(spd)) {
+			if (is_v1_cisco_split(spd, HERE)) {
 				continue;
 			}
 
@@ -2159,7 +2159,7 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child, bool 
 
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 
-		if (is_v1_cisco_split(spd)) {
+		if (is_v1_cisco_split(spd, HERE)) {
 			continue;
 		}
 

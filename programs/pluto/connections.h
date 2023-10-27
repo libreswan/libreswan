@@ -985,7 +985,7 @@ bool is_opportunistic_instance(const struct connection *c);
 
 bool is_xauth(const struct connection *c);
 
-bool is_v1_cisco_split(const struct spd_route *spd);
+bool is_v1_cisco_split(const struct spd_route *spd, where_t where);
 
 /* IKE SA | ISAKMP SA || Child SA | IPsec SA */
 const char *connection_sa_name(const struct connection *c, enum sa_type sa_type);

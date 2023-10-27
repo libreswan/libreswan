@@ -4642,12 +4642,15 @@ bool is_xauth(const struct connection *c)
 		c->local->host.config->xauth.client || c->remote->host.config->xauth.client);
 }
 
-bool is_v1_cisco_split(const struct spd_route *spd UNUSED)
+bool is_v1_cisco_split(const struct spd_route *spd UNUSED, where_t where UNUSED)
 {
 #ifdef USE_CISCO_SPLIT
 	if (spd->connection->remotepeertype == CISCO &&
 	    spd->connection->child.spds.list == spd &&
 	    spd->connection->child.spds.len > 1) {
+		ldbg(spd->connection->logger,
+		     "kernel: skipping first SPD, remotepeertype is CISCO, damage done "PRI_WHERE,
+		     pri_where(were));
 		return true;
 	}
 #endif

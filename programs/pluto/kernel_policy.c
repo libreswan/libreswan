@@ -570,7 +570,7 @@ void delete_spd_kernel_policies(const struct spds *spds,
 		 * For sec_label, it's tearing down the route,
 		 * hence that is included.
 		 */
-		if (is_v1_cisco_split(spd)) {
+		if (is_v1_cisco_split(spd, HERE)) {
 			continue;
 		}
 
@@ -863,25 +863,9 @@ void replace_ipsec_with_bare_kernel_policies(struct child_sa *child,
 
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 
-#ifdef USE_CISCO_SPLIT
-		if (spd == c->spd && c->remotepeertype == CISCO) {
-			/*
-			 * XXX: this comment is out-of-date:
-			 *
-			 * XXX: this is currently the only reason for
-			 * spd_next walking.
-			 *
-			 * Routing should become RT_ROUTED_FAILURE,
-			 * but if POLICY_FAIL_NONE, then we just go
-			 * right back to RT_ROUTED_PROSPECTIVE as if
-			 * no failure happened.
-			 */
-			ldbg_sa(child,
-				"kernel: %s() skipping, first SPD and remotepeertype is CISCO, damage done",
-				__func__);
+		if (is_v1_cisco_split(spd, HERE)) {
 			continue;
 		}
-#endif
 
 		do_updown(UPDOWN_DOWN, c, spd, &child->sa, logger);
 	}
@@ -890,25 +874,9 @@ void replace_ipsec_with_bare_kernel_policies(struct child_sa *child,
 
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 
-#ifdef USE_CISCO_SPLIT
-		if (spd == c->spd && c->remotepeertype == CISCO) {
-			/*
-			 * XXX: this comment is out-of-date:
-			 *
-			 * XXX: this is currently the only reason for
-			 * spd_next walking.
-			 *
-			 * Routing should become RT_ROUTED_FAILURE,
-			 * but if POLICY_FAIL_NONE, then we just go
-			 * right back to RT_ROUTED_PROSPECTIVE as if
-			 * no failure happened.
-			 */
-			ldbg_sa(child,
-				"kernel: %s() skipping, first SPD and remotepeertype is CISCO, damage done",
-				__func__);
+		if (is_v1_cisco_split(spd, HERE)) {
 			continue;
 		}
-#endif
 
 		replace_ipsec_with_bare_kernel_policy(child, c, spd, shunt_kind,
 						      expect_inbound_policy,
