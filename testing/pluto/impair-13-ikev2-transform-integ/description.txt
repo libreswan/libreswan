@@ -1,0 +1,3 @@
+AEAD with INTEG=NONE omitted from initial proposal but added during rekey.
+
+See #1244

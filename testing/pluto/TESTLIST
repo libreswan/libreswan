@@ -376,7 +376,7 @@ kvmplutotest	impair-08-ikev1-key-length-attribute	good
 kvmplutotest	impair-08-ikev2-key-length-attribute	good
 kvmplutotest	impair-11-ikev2-transform		good
 kvmplutotest	impair-12-ikev2-transform-none		good
-
+kvmplutotest	impair-13-ikev2-transform-integ		wip	github/1244
 
 kvmplutotest	impair-09-protected-ikev1		good
 #kvmplutotest	impair-09-protected-ikev2		wip
