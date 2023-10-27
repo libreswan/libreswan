@@ -581,7 +581,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		dbg_whack(s, "status: stop:");
 	}
 
-	if (m->whack_global_status) {
+	if (m->whack_globalstatus) {
 		dbg_whack(s, "globalstatus: start:");
 		whack_globalstatus(s);
 		dbg_whack(s, "globalstatus: stop:");
@@ -599,43 +599,43 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		dbg_whack(s, "trafficstatus: stop: %s", (m->name == NULL ? "<null>" : m->name));
 	}
 
-	if (m->whack_shunt_status) {
+	if (m->whack_shuntstatus) {
 		dbg_whack(s, "shuntstatus: start");
 		show_shunt_status(s);
 		dbg_whack(s, "shuntstatus: stop");
 	}
 
-	if (m->whack_fips_status) {
+	if (m->whack_fipsstatus) {
 		dbg_whack(s, "fipsstatus: start:");
 		show_fips_status(s);
 		dbg_whack(s, "fipsstatus: stop:");
 	}
 
-	if (m->whack_brief_status) {
+	if (m->whack_briefstatus) {
 		dbg_whack(s, "briefstatus: start:");
 		show_brief_status(s);
 		dbg_whack(s, "briefstatus: stop:");
 	}
 
-	if (m->whack_process_status) {
+	if (m->whack_processstatus) {
 		dbg_whack(s, "processstatus: start:");
 		show_process_status(s);
 		dbg_whack(s, "processstatus: stop:");
 	}
 
-	if (m->whack_addresspool_status) {
+	if (m->whack_addresspoolstatus) {
 		dbg_whack(s, "addresspoolstatus: start:");
 		show_addresspool_status(s);
 		dbg_whack(s, "addresspoolstatus: stop:");
 	}
 
-	if (m->whack_connection_status) {
+	if (m->whack_connectionstatus) {
 		dbg_whack(s, "connectionstatus: start:");
 		whack_connectionstatus(m, s);
 		dbg_whack(s, "connectionstatus: stop:");
 	}
 
-	if (m->whack_show_states) {
+	if (m->whack_showstates) {
 		dbg_whack(s, "showstates: start:");
 		show_states(s, now);
 		dbg_whack(s, "showstates: stop:");

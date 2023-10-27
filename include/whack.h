@@ -128,15 +128,15 @@ struct whack_message {
 	unsigned int magic;
 
 	bool whack_status;
-	bool whack_global_status;
+	bool whack_globalstatus;
 	bool whack_clear_stats;
 	bool whack_trafficstatus;	/* match name to option/command  */
-	bool whack_shunt_status;
-	bool whack_fips_status;
-	bool whack_brief_status;
-	bool whack_addresspool_status;
-	bool whack_connection_status;
-	bool whack_show_states;
+	bool whack_shuntstatus;
+	bool whack_fipsstatus;
+	bool whack_briefstatus;
+	bool whack_addresspoolstatus;
+	bool whack_connectionstatus;
+	bool whack_showstates;
 	bool whack_seccomp_crashtest;
 
 	bool whack_shutdown;
@@ -148,7 +148,7 @@ struct whack_message {
 	bool from_whack;		/* i.e., not addconn; they
 					 * have different semantics */
 
-	bool whack_process_status; /* non-basic */
+	bool whack_processstatus; /* non-basic */
 
 	bool whack_leave_state; /* non-basic: dont send delete or  clean kernel state on shutdown */
 	/* name is used in connection and initiate */

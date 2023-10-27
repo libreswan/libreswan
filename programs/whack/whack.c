@@ -390,17 +390,17 @@ enum option_enums {
 
 	OPT_PURGEOCSP,
 
-	OPT_GLOBAL_STATUS,
+	OPT_GLOBALSTATUS,
 	OPT_CLEAR_STATS,
 	OPT_LEAVE_STATE,
 	OPT_TRAFFICSTATUS,
-	OPT_SHUNT_STATUS,
+	OPT_SHUNTSTATUS,
 	OPT_SHOW_STATES,
-	OPT_ADDRESSPOOL_STATUS,
-	OPT_CONNECTION_STATUS,
-	OPT_FIPS_STATUS,
-	OPT_BRIEF_STATUS,
-	OPT_PROCESS_STATUS,
+	OPT_ADDRESSPOOLSTATUS,
+	OPT_CONNECTIONSTATUS,
+	OPT_FIPSSTATUS,
+	OPT_BRIEFSTATUS,
+	OPT_PROCESSSTATUS,
 
 #ifdef USE_SECCOMP
 	OPT_SECCOMP_CRASHTEST,
@@ -700,14 +700,14 @@ static const struct option long_opts[] = {
 	{ "clearstats", no_argument, NULL, OPT_CLEAR_STATS },
 
 	{ "status", no_argument, NULL, OPT_STATUS },
-	{ "globalstatus", no_argument, NULL, OPT_GLOBAL_STATUS },
+	{ "globalstatus", no_argument, NULL, OPT_GLOBALSTATUS },
 	{ "trafficstatus", no_argument, NULL, OPT_TRAFFICSTATUS },
-	{ "shuntstatus", no_argument, NULL, OPT_SHUNT_STATUS },
-	{ "addresspoolstatus", no_argument, NULL, OPT_ADDRESSPOOL_STATUS },
-	{ "connectionstatus", no_argument, NULL, OPT_CONNECTION_STATUS },
-	{ "fipsstatus", no_argument, NULL, OPT_FIPS_STATUS },
-	{ "briefstatus", no_argument, NULL, OPT_BRIEF_STATUS },
-	{ "processstatus", no_argument, NULL, OPT_PROCESS_STATUS },
+	{ "shuntstatus", no_argument, NULL, OPT_SHUNTSTATUS },
+	{ "addresspoolstatus", no_argument, NULL, OPT_ADDRESSPOOLSTATUS },
+	{ "connectionstatus", no_argument, NULL, OPT_CONNECTIONSTATUS },
+	{ "fipsstatus", no_argument, NULL, OPT_FIPSSTATUS },
+	{ "briefstatus", no_argument, NULL, OPT_BRIEFSTATUS },
+	{ "processstatus", no_argument, NULL, OPT_PROCESSSTATUS },
 	{ "statestatus", no_argument, NULL, OPT_SHOW_STATES }, /* alias to catch typos */
 	{ "showstates", no_argument, NULL, OPT_SHOW_STATES },
 
@@ -1474,8 +1474,8 @@ int main(int argc, char **argv)
 			ignore_errors = true;
 			continue;
 
-		case OPT_GLOBAL_STATUS:	/* --global-status */
-			msg.whack_global_status = true;
+		case OPT_GLOBALSTATUS:	/* --globalstatus */
+			msg.whack_globalstatus = true;
 			ignore_errors = true;
 			continue;
 
@@ -1488,38 +1488,38 @@ int main(int argc, char **argv)
 			ignore_errors = true;
 			continue;
 
-		case OPT_SHUNT_STATUS:	/* --shuntstatus */
-			msg.whack_shunt_status = true;
+		case OPT_SHUNTSTATUS:	/* --shuntstatus */
+			msg.whack_shuntstatus = true;
 			ignore_errors = true;
 			continue;
 
-		case OPT_ADDRESSPOOL_STATUS:	/* --addresspoolstatus */
-			msg.whack_addresspool_status = true;
+		case OPT_ADDRESSPOOLSTATUS:	/* --addresspoolstatus */
+			msg.whack_addresspoolstatus = true;
 			ignore_errors = true;
 			continue;
 
-		case OPT_CONNECTION_STATUS:	/* --connectionstatus */
-			msg.whack_connection_status = true;
+		case OPT_CONNECTIONSTATUS:	/* --connectionstatus */
+			msg.whack_connectionstatus = true;
 			ignore_errors = true;
 			continue;
 
-		case OPT_FIPS_STATUS:	/* --fipsstatus */
-			msg.whack_fips_status = true;
+		case OPT_FIPSSTATUS:	/* --fipsstatus */
+			msg.whack_fipsstatus = true;
 			ignore_errors = true;
 			continue;
 
-		case OPT_BRIEF_STATUS:	/* --briefstatus */
-			msg.whack_brief_status = true;
+		case OPT_BRIEFSTATUS:	/* --briefstatus */
+			msg.whack_briefstatus = true;
 			ignore_errors = true;
 			continue;
 
-		case OPT_PROCESS_STATUS:	/* --processstatus */
-			msg.whack_process_status = true;
+		case OPT_PROCESSSTATUS:	/* --processstatus */
+			msg.whack_processstatus = true;
 			ignore_errors = true;
 			continue;
 
 		case OPT_SHOW_STATES:	/* --showstates */
-			msg.whack_show_states = true;
+			msg.whack_showstates = true;
 			ignore_errors = true;
 			continue;
 #ifdef USE_SECCOMP
@@ -2687,7 +2687,7 @@ int main(int argc, char **argv)
 		}
 	} else if (seen[OPT_NAME] &&
 		   !seen[OPT_TRAFFICSTATUS] &&
-		   !seen[OPT_CONNECTION_STATUS] &&
+		   !seen[OPT_CONNECTIONSTATUS] &&
 		   !seen[OPT_SHOW_STATES] &&
 		   !seen[OPT_REDIRECT_TO]) {
 		diagw("no reason for --name");
@@ -2705,30 +2705,48 @@ int main(int argc, char **argv)
 
 	if (!(msg.whack_add ||
 	      msg.whack_key ||
-	      msg.whack_delete ||msg.whack_deleteid || msg.whack_deletestate ||
+	      msg.whack_delete ||
+	      msg.whack_deleteid ||
+	      msg.whack_deletestate ||
 	      msg.whack_deleteuser ||
 	      msg.redirect_to != NULL ||
-	      msg.global_redirect || msg.global_redirect_to ||
-	      msg.whack_initiate || msg.whack_oppo_initiate ||
+	      msg.global_redirect ||
+	      msg.global_redirect_to ||
+	      msg.whack_initiate ||
+	      msg.whack_oppo_initiate ||
 	      msg.whack_down ||
-	      msg.whack_route || msg.whack_unroute || msg.whack_listen ||
-	      msg.whack_unlisten || msg.whack_list || msg.ike_buf_size ||
-	      msg.whack_ddos != DDOS_undefined || msg.whack_ddns ||
+	      msg.whack_route ||
+	      msg.whack_unroute ||
+	      msg.whack_listen ||
+	      msg.whack_unlisten ||
+	      msg.whack_list ||
+	      msg.ike_buf_size ||
+	      msg.whack_ddos != DDOS_undefined ||
+	      msg.whack_ddns ||
 	      msg.whack_rereadcerts ||
 	      msg.whack_fetchcrls ||
 	      msg.whack_rereadsecrets ||
-	      msg.whack_crash || msg.whack_shunt_status ||
-	      msg.whack_status || msg.whack_global_status ||
+	      msg.whack_crash ||
+	      msg.whack_shuntstatus ||
+	      msg.whack_status ||
+	      msg.whack_globalstatus ||
 	      msg.whack_trafficstatus ||
-	      msg.whack_addresspool_status ||
-	      msg.whack_connection_status ||
-	      msg.whack_process_status ||
-	      msg.whack_fips_status || msg.whack_brief_status || msg.whack_clear_stats ||
+	      msg.whack_addresspoolstatus ||
+	      msg.whack_connectionstatus ||
+	      msg.whack_processstatus ||
+	      msg.whack_fipsstatus ||
+	      msg.whack_briefstatus ||
+	      msg.whack_clear_stats ||
 	      !lmod_empty(msg.debugging) ||
 	      msg.nr_impairments > 0 ||
-	      msg.whack_shutdown || msg.whack_purgeocsp || msg.whack_seccomp_crashtest || msg.whack_show_states ||
-	      msg.whack_rekey_ike || msg.whack_rekey_ipsec ||
-	      msg.whack_listpubkeys || msg.whack_checkpubkeys))
+	      msg.whack_shutdown ||
+	      msg.whack_purgeocsp ||
+	      msg.whack_seccomp_crashtest ||
+	      msg.whack_showstates ||
+	      msg.whack_rekey_ike ||
+	      msg.whack_rekey_ipsec ||
+	      msg.whack_listpubkeys ||
+	      msg.whack_checkpubkeys))
 		diagw("no action specified; try --help for hints");
 
 	/* pack strings for inclusion in message */
