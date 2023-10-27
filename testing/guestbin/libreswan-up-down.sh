@@ -8,9 +8,9 @@ if test $# -eq 0 ; then
     cat <<EOF > /dev/stderr
 Usage:
 
-    $0 <config> [--up|--down|--alive] <ping-param>...
+    $0 <conn> [--rekey] [--up|--down|--alive] <ping-param>...
 
-Add, up, ping[s], down, delete <config>:
+Add, up, ping[s], down, delete <conn>:
 
    --up expect a single ping to work
    --down don't expect success (skip ping)
@@ -23,25 +23,30 @@ EOF
 fi
 
 bindir=$(dirname $0)
-config=$1 ; shift
+conn=$1 ; shift
 
 expect=
-case "$1" in
-    --up) expect=up ; shift ;;
-    --down) expect=down ; shift ;;
-    --alive) expect=alive ; shift ;;
-esac
+rekey=false
+while test $# -gt 0 ; do
+    case "$1" in
+	--rekey) rekey=true ; shift ;;
+	--up) expect=up ; shift ;;
+	--down) expect=down ; shift ;;
+	--alive) expect=alive ; shift ;;
+	*) break;;
+    esac
+done
 
-ipsec auto --add ${config}
+ipsec add ${conn}
 
 # Can't assume a 0 exit code code returned by --up means that the
 # connection is up; hence also look to see if there's traffic status.
 
 # down+delete is redundant; should always delete unconditionally
 
-if ipsec auto --up ${config} && ipsec whack --trafficstatus | grep "${config}" >/dev/null; then
+if ipsec up ${conn} && ipsec whack --trafficstatus | grep "${conn}" >/dev/null; then
     case "${expect}" in
-	"" | up )
+	"" | up | rekey )
 	    ${bindir}/ping-once.sh --up "$@"
 	    ;;
 	alive )
@@ -55,12 +60,16 @@ if ipsec auto --up ${config} && ipsec whack --trafficstatus | grep "${config}" >
 	    echo ${expect} UNEXPECTED
 	    ;;
     esac
-    ipsec auto --down ${config}
-    ipsec auto --delete ${config}
+    if ${rekey} ; then
+	ipsec whack --rekey-child --name ${conn}
+	${bindir}/ping-once.sh --up "$@"
+    fi
+    ipsec down ${conn}
+    ipsec delete ${conn}
 else
     case "${expect}" in
 	"" | down ) ;;
 	* ) echo ${expect} UNEXPECTED ;;
     esac
-    ipsec auto --delete ${config} > /dev/null # silent for now
+    ipsec delete ${conn} > /dev/null # silent for now
 fi
