@@ -908,6 +908,13 @@ ifeq ($(USE_NFTABLES),true)
 USERLAND_CFLAGS += -DUSE_NFTABLES
 endif
 
+# check for USE_NFTABLES and USE_IPTABLES - both can't be set
+ifeq ($(USE_NFTABLES),true)
+ifeq ($(USE_IPTABLES),true)
+$(error ERROR: Both USE_NFTABLES and USE_IPTABLES variables set, you can not set both)
+endif
+endif
+
 ifeq ($(HAVE_BROKEN_POPEN),true)
 USERLAND_CFLAGS += -DHAVE_BROKEN_POPEN
 endif
