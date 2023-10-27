@@ -659,20 +659,19 @@ void delete_cat_kernel_policies(struct connection *c,
 				struct logger *logger,
 				where_t where)
 {
-
-#if defined(USE_NFTABLES)
-	bool has_inbound = true;
-#else
-	bool has_inbound = false;
+#ifdef USE_NFTABLES
+	const char *delete_inbound_cat = "CAT: NFTABLES: removing inbound IPsec policy";
+#endif
+#ifdef USE_IPTABLES
+	const char *delete_inbound_cat = NULL;
 #endif
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 		if (spd->local->child->has_cat) {
 			delete_cat_kernel_policy(spd, DIRECTION_OUTBOUND, logger, where,
 						 "CAT: removing outbound IPsec policy");
-			if (has_inbound) {
+			if (delete_inbound_cat != NULL) {
 				delete_cat_kernel_policy(spd, DIRECTION_INBOUND,
-							 logger, where,
-							 "CAT: removing inbound IPsec policy");
+							 logger, where, delete_inbound_cat);
 			}
 		}
 	}
@@ -689,17 +688,18 @@ void install_inbound_ipsec_kernel_policy(struct child_sa *child,
 		__func__, str_selector_pair(&kernel_policy.src.client,
 					    &kernel_policy.dst.client, &spb));
 
-
-#if defined(USE_NFTABLES)
-	bool has_cat = spd->local->child->has_cat;
-#else
-	bool has_cat = false;
+#ifdef USE_NFTABLES
+	const char *add_inbound_cat =
+		(spd->local->child->has_cat ? "CAT: NFTABLES: add inbound IPsec policy" :
+		 NULL);
 #endif
-	if (has_cat) {
+#ifdef USE_IPTABLES
+	const char *add_inbound_cat = NULL;
+#endif
+	if (add_inbound_cat != NULL) {
 		add_cat_kernel_policy(child->sa.st_connection,
 				      &kernel_policy, DIRECTION_INBOUND,
-				      child->sa.st_logger, where,
-				      "CAT: add inbound IPsec policy");
+				      child->sa.st_logger, where, add_inbound_cat);
 	}
 
 	if (!kernel_ops_policy_add(KERNEL_POLICY_OP_ADD,
