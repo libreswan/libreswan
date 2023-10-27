@@ -200,8 +200,8 @@ static void help(void)
 		"reread: whack [--fetchcrls] [--rereadcerts] [--rereadsecrets] [--rereadall]\n"
 		"\n"
 		"status: whack [--status] | [--briefstatus] | \\\n"
-		"       [--addresspoolstatus] | [--connectionstatus] [--fipsstatus] | \\\n"
-		"       [--processstatus] | [--shuntstatus] | [--trafficstatus] | \\\n"
+		"       [--addresspoolstatus] | [--connectionstatus] | [--briefconnectionstatus] | \\\n"
+		"       [--fipsstatus] | [--processstatus] | [--shuntstatus] | [--trafficstatus] | \\\n"
 		"	[--showstates]\n"
 		"\n"
 		"statistics: [--globalstatus] | [--clearstats]\n"
@@ -397,6 +397,7 @@ enum option_enums {
 	OPT_SHUNTSTATUS,
 	OPT_SHOW_STATES,
 	OPT_ADDRESSPOOLSTATUS,
+	OPT_BRIEFCONNECTIONSTATUS,
 	OPT_CONNECTIONSTATUS,
 	OPT_FIPSSTATUS,
 	OPT_BRIEFSTATUS,
@@ -705,6 +706,7 @@ static const struct option long_opts[] = {
 	{ "shuntstatus", no_argument, NULL, OPT_SHUNTSTATUS },
 	{ "addresspoolstatus", no_argument, NULL, OPT_ADDRESSPOOLSTATUS },
 	{ "connectionstatus", no_argument, NULL, OPT_CONNECTIONSTATUS },
+	{ "briefconnectionstatus", no_argument, NULL, OPT_BRIEFCONNECTIONSTATUS },
 	{ "fipsstatus", no_argument, NULL, OPT_FIPSSTATUS },
 	{ "briefstatus", no_argument, NULL, OPT_BRIEFSTATUS },
 	{ "processstatus", no_argument, NULL, OPT_PROCESSSTATUS },
@@ -1500,6 +1502,11 @@ int main(int argc, char **argv)
 
 		case OPT_CONNECTIONSTATUS:	/* --connectionstatus */
 			msg.whack_connectionstatus = true;
+			ignore_errors = true;
+			continue;
+
+		case OPT_BRIEFCONNECTIONSTATUS:	/* --briefconnectionstatus */
+			msg.whack_briefconnectionstatus = true;
 			ignore_errors = true;
 			continue;
 
@@ -2688,6 +2695,7 @@ int main(int argc, char **argv)
 	} else if (seen[OPT_NAME] &&
 		   !seen[OPT_TRAFFICSTATUS] &&
 		   !seen[OPT_CONNECTIONSTATUS] &&
+		   !seen[OPT_BRIEFCONNECTIONSTATUS] &&
 		   !seen[OPT_SHOW_STATES] &&
 		   !seen[OPT_REDIRECT_TO]) {
 		diagw("no reason for --name");
@@ -2733,6 +2741,7 @@ int main(int argc, char **argv)
 	      msg.whack_trafficstatus ||
 	      msg.whack_addresspoolstatus ||
 	      msg.whack_connectionstatus ||
+	      msg.whack_briefconnectionstatus ||
 	      msg.whack_processstatus ||
 	      msg.whack_fipsstatus ||
 	      msg.whack_briefstatus ||

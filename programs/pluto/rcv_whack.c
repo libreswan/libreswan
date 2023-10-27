@@ -636,6 +636,12 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		dbg_whack(s, "connectionstatus: stop:");
 	}
 
+	if (m->whack_briefconnectionstatus) {
+		dbg_whack(s, "briefconnectionstatus: start:");
+		whack_briefconnectionstatus(m, s);
+		dbg_whack(s, "briefconnectionstatus: stop:");
+	}
+
 	if (m->whack_showstates) {
 		dbg_whack(s, "showstates: start:");
 		whack_showstates(s, now);

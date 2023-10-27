@@ -136,6 +136,7 @@ struct whack_message {
 	bool whack_briefstatus;
 	bool whack_addresspoolstatus;
 	bool whack_connectionstatus;
+	bool whack_briefconnectionstatus;
 	bool whack_showstates;
 	bool whack_seccomp_crashtest;
 

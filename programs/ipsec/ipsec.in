@@ -243,6 +243,10 @@ ipsec_whack() {
 		cmd="--connectionstatus"
 		usage="Usage: ipsec connectionstatus [connnectionname] [--ctlsocket ${CTLSOCKET}]"
 		;;
+	    briefconnectionstatus|--briefconnectionstatus)
+		cmd="--briefconnectionstatus"
+		usage="Usage: ipsec briefconnectionstatus [connnectionname] [--ctlsocket ${CTLSOCKET}]"
+		;;
 	    delete|--delete)
 		cmd="--delete"
 		usage="Usage: ipsec delete connectionname [--ctlsocket ${CTLSOCKET}]"
@@ -413,6 +417,7 @@ ipsec_help() {
 	checknflog \
 	checknss \
 	connectionstatus \
+	briefconnectionstatus \
 	delete \
 	down \
 	fetchcrls \
@@ -1047,6 +1052,7 @@ while [ ${#} -gt 0 ]; do
 	briefstatus|--briefstatus|\
 	checkpubkeys|--checkpubkeys|\
 	connectionstatus|--connectionstatus|\
+	briefconnectionstatus|--briefconnectionstatus|\
 	delete|--delete|\
 	down|--down|terminate|\
 	fetchcrls|--fetchcrls|crls|\
