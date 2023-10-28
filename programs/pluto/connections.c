@@ -2756,10 +2756,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 		 */
 		if (c->config->ike_version == IKEv2) {
 			config->child_sa.v2_ike_auth_proposals =
-				get_v2_child_proposals(c, "loading config",
-						       /*strip_dh*/true,
-						       /*default_dh*/&ike_alg_dh_none,
-						       c->logger);
+				get_v2_IKE_AUTH_new_child_proposals(c);
 			llog_v2_proposals(LOG_STREAM/*not-whack*/|RC_LOG, c->logger,
 					  config->child_sa.v2_ike_auth_proposals,
 					  "Child SA proposals (connection add)");

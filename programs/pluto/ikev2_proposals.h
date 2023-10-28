@@ -69,8 +69,6 @@ bool ikev2_proposal_to_proto_info(const struct ikev2_proposal *proposal,
 				  struct ipsec_proto_info *proto_info,
 				  struct logger *logger);
 
-struct ikev2_proposals *ikev2_proposals_from_proposal(const char *story, const struct ikev2_proposal *proposal);
-
 void free_ikev2_proposals(struct ikev2_proposals **proposals);
 
 void free_ikev2_proposal(struct ikev2_proposal **proposal);
@@ -92,17 +90,15 @@ struct ikev2_proposals *ikev2_proposals_from_proposals(enum ikev2_sec_proto_id p
  * Never returns NULL (see passert).
  */
 
-struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
-					       const char *why,
-					       bool strip_dh,
-					       const struct dh_desc *default_dh,
-					       struct logger *logger);
+struct ikev2_proposals *get_v2_IKE_AUTH_new_child_proposals(struct connection *c);
 
 struct ikev2_proposals *get_v2_CREATE_CHILD_SA_new_child_proposals(struct ike_sa *ike,
-								   struct child_sa *child);
+								   struct child_sa *larval_child);
 struct ikev2_proposals *get_v2_CREATE_CHILD_SA_rekey_child_proposals(struct ike_sa *ike,
-								     const struct ikev2_proposal *accepted_proposal,
-								     struct child_sa *child);
+								     struct child_sa *established_child,
+								     struct logger *logger);
+struct ikev2_proposals *get_v2_CREATE_CHILD_SA_rekey_ike_proposals(struct ike_sa *ike,
+								   struct logger *logger);
 
 /*
  * Return the first valid DH proposal that is supported.

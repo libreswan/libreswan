@@ -473,8 +473,8 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_child(struct ike_sa *ike,
 
 	larval_child->sa.st_v2_create_child_sa_proposals =
 		get_v2_CREATE_CHILD_SA_rekey_child_proposals(ike,
-							     child_being_replaced->sa.st_v2_accepted_proposal,
-							     larval_child);
+							     child_being_replaced,
+							     larval_child->sa.logger);
 	larval_child->sa.st_pfs_group =
 		ikev2_proposals_first_dh(larval_child->sa.st_v2_create_child_sa_proposals);
 
@@ -724,9 +724,8 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 
 	larval_child->sa.st_v2_rekey_pred = predecessor->sa.st_serialno;
 	larval_child->sa.st_v2_create_child_sa_proposals =
-		get_v2_CREATE_CHILD_SA_rekey_child_proposals(ike,
-							     predecessor->sa.st_v2_accepted_proposal,
-							     larval_child);
+		get_v2_CREATE_CHILD_SA_rekey_child_proposals(ike, predecessor,
+							     larval_child->sa.logger);
 
 	if (!verify_rekey_child_request_ts(larval_child, md)) {
 		record_v2N_response(ike->sa.st_logger, ike, md,
@@ -1370,7 +1369,7 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_ike(struct ike_sa *ike)
 	larval_ike->sa.st_v2_rekey_pred = ike->sa.st_serialno;
 	larval_ike->sa.st_policy = LEMPTY;
 	larval_ike->sa.st_v2_create_child_sa_proposals =
-		ikev2_proposals_from_proposal("rekeying ike", ike->sa.st_v2_accepted_proposal);
+		get_v2_CREATE_CHILD_SA_rekey_ike_proposals(ike, larval_ike->sa.logger);
 
 	free_chunk_content(&larval_ike->sa.st_ni); /* this is from the parent. */
 	free_chunk_content(&larval_ike->sa.st_nr); /* this is from the parent. */
