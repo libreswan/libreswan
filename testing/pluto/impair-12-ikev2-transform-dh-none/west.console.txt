@@ -1,0 +1,182 @@
+/testing/guestbin/swan-prep
+west #
+ # DROP
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec whack --impair v2-proposal-dh:drop-none
+west #
+ ipsec up dh
+1v2 "dh" #1: initiating IKEv2 connection
+1v2 "dh" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+002 "dh" #1: IMPAIR: proposal 1 transform DH=NONE excluded when counting transforms
+002 "dh" #1: IMPAIR: proposal 1 transform DH=NONE excluded when emitting proposal
+1v2 "dh" #1: sent IKE_AUTH request {cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 group=MODP2048}
+003 "dh" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+004 "dh" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE DPD=passive}
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
+west #
+ ipsec trafficstatus
+006 #2: "dh", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+west #
+ # ALLOW
+west #
+ ipsec whack --impair v2-proposal-dh:allow-none
+west #
+ ipsec whack --rekey-ike   --name dh
+002 "dh" #3: initiating rekey to replace IKE SA #1
+1v2 "dh" #3: sent CREATE_CHILD_SA request to rekey IKE SA
+004 "dh" #3: initiator rekeyed IKE SA #1 {cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 group=MODP2048}
+002 "dh" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+west #
+ ipsec whack --rekey-child --name dh
+002 "dh" #4: initiating rekey to replace Child SA #2
+002 "dh" #4: IMPAIR: proposal 1 transform DH=NONE included when counting transforms
+002 "dh" #4: IMPAIR: proposal 1 transform DH=NONE included when emitting proposal
+1v2 "dh" #4: sent CREATE_CHILD_SA request to rekey IPsec SA
+004 "dh" #4: initiator rekeyed Child SA #2 using #3; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE DPD=passive}
+002 "dh" #2: deleting established Child SA using IKE SA #3
+005 "dh" #2: ESP traffic information: in=84B out=84B
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
+west #
+ ipsec trafficstatus
+006 #4: "dh", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+west #
+ # DROP
+west #
+ ipsec whack --impair v2-proposal-dh:drop-none
+west #
+ ipsec whack --rekey-ike   --name dh
+002 "dh" #5: initiating rekey to replace IKE SA #3
+1v2 "dh" #5: sent CREATE_CHILD_SA request to rekey IKE SA
+004 "dh" #5: initiator rekeyed IKE SA #3 {cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 group=MODP2048}
+002 "dh" #3: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+west #
+ ipsec whack --rekey-child --name dh
+002 "dh" #6: initiating rekey to replace Child SA #4
+002 "dh" #6: IMPAIR: proposal 1 transform DH=NONE excluded when counting transforms
+002 "dh" #6: IMPAIR: proposal 1 transform DH=NONE excluded when emitting proposal
+1v2 "dh" #6: sent CREATE_CHILD_SA request to rekey IPsec SA
+004 "dh" #6: initiator rekeyed Child SA #4 using #5; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE DPD=passive}
+002 "dh" #4: deleting established Child SA using IKE SA #5
+005 "dh" #4: ESP traffic information: in=84B out=84B
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
+west #
+ ipsec trafficstatus
+006 #6: "dh", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+west #
+ ipsec stop
+Redirecting to: [initsystem]
+west #
+ # ALLOW
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec whack --impair v2-proposal-dh:allow-none
+west #
+ ipsec up dh
+1v2 "dh" #1: initiating IKEv2 connection
+1v2 "dh" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+002 "dh" #1: IMPAIR: proposal 1 transform DH=NONE included when counting transforms
+002 "dh" #1: IMPAIR: proposal 1 transform DH=NONE included when emitting proposal
+1v2 "dh" #1: sent IKE_AUTH request {cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 group=MODP2048}
+003 "dh" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+004 "dh" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE DPD=passive}
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
+west #
+ ipsec trafficstatus
+006 #2: "dh", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+west #
+ # DROP
+west #
+ ipsec whack --impair v2-proposal-dh:drop-none
+west #
+ ipsec whack --rekey-ike   --name dh
+002 "dh" #3: initiating rekey to replace IKE SA #1
+1v2 "dh" #3: sent CREATE_CHILD_SA request to rekey IKE SA
+004 "dh" #3: initiator rekeyed IKE SA #1 {cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 group=MODP2048}
+002 "dh" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+west #
+ ipsec whack --rekey-child --name dh
+002 "dh" #4: initiating rekey to replace Child SA #2
+002 "dh" #4: IMPAIR: proposal 1 transform DH=NONE excluded when counting transforms
+002 "dh" #4: IMPAIR: proposal 1 transform DH=NONE excluded when emitting proposal
+1v2 "dh" #4: sent CREATE_CHILD_SA request to rekey IPsec SA
+004 "dh" #4: initiator rekeyed Child SA #2 using #3; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE DPD=passive}
+002 "dh" #2: deleting established Child SA using IKE SA #3
+005 "dh" #2: ESP traffic information: in=84B out=84B
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
+west #
+ ipsec trafficstatus
+006 #4: "dh", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+west #
+ # ALLOW
+west #
+ ipsec whack --impair v2-proposal-dh:allow-none
+west #
+ ipsec whack --rekey-ike   --name dh
+002 "dh" #5: initiating rekey to replace IKE SA #3
+1v2 "dh" #5: sent CREATE_CHILD_SA request to rekey IKE SA
+004 "dh" #5: initiator rekeyed IKE SA #3 {cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 group=MODP2048}
+002 "dh" #3: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+west #
+ ipsec whack --rekey-child --name dh
+002 "dh" #6: initiating rekey to replace Child SA #4
+002 "dh" #6: IMPAIR: proposal 1 transform DH=NONE included when counting transforms
+002 "dh" #6: IMPAIR: proposal 1 transform DH=NONE included when emitting proposal
+1v2 "dh" #6: sent CREATE_CHILD_SA request to rekey IPsec SA
+004 "dh" #6: initiator rekeyed Child SA #4 using #5; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE DPD=passive}
+002 "dh" #4: deleting established Child SA using IKE SA #5
+005 "dh" #4: ESP traffic information: in=84B out=84B
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
+west #
+ ipsec trafficstatus
+006 #6: "dh", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+west #
+ ipsec stop
+Redirecting to: [initsystem]
+west #
+ ipsec stop
+Redirecting to: [initsystem]
+west #
+ # east shows what was sent across the wire; expect two lines for each
+west #
+ # of the three connections: default (missing); integ=none included;
+west #
+ # integ=none excluded
+west #
+ grep 'chosen from remote proposal' /tmp/pluto.log | sed -e 's/SPI=[0-9a-z]*/SPI=X/'
+west #
+ # west shows what came back, expect two lines for each of the three
+west #
+ # connections: default (missing); integ=none included; integ=none
+west #
+ # excluded
+west #
+ grep 'remote accepted' /tmp/pluto.log
+| remote accepted the proposal 1:IKE:ENCR=AES_GCM_C_128;PRF=HMAC_SHA1;DH=MODP2048[first-match]
+| remote accepted the proposal 1:ESP:ENCR=AES_GCM_C_128;DH=NONE;ESN=ENABLED[first-match]
+| remote accepted the proposal 1:IKE:ENCR=AES_GCM_C_128;PRF=HMAC_SHA1;DH=MODP2048[first-match]
+| remote accepted the proposal 1:ESP:ENCR=AES_GCM_C_128;ESN=ENABLED[first-match]
+| remote accepted the proposal 1:IKE:ENCR=AES_GCM_C_128;PRF=HMAC_SHA1;DH=MODP2048[first-match]
+| remote accepted the proposal 1:ESP:ENCR=AES_GCM_C_128;DH=NONE;ESN=ENABLED[first-match]
+west #
+ 
