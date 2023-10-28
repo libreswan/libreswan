@@ -67,6 +67,7 @@
 
 volatile bool exiting_pluto = false;
 static enum pluto_exit_code pluto_exit_code;
+static bool pluto_leave_state;
 
 /*
  * leave pluto, with status.
@@ -128,15 +129,15 @@ void exit_epilogue(void)
 {
 	struct logger logger[1] = { global_logger, };
 
-	if (pluto_exit_code == PLUTO_EXIT_LEAVE_STATE) {
+	if (pluto_leave_state) {
 		lsw_nss_shutdown();
 		free_preshared_secrets(logger);
 		delete_lock();	/* delete any lock files */
 		close_log();	/* close the logfiles */
 #ifdef USE_SYSTEMD_WATCHDOG
-		pluto_sd(PLUTO_SD_EXIT, PLUTO_EXIT_LEAVE_STATE);
+		pluto_sd(PLUTO_SD_EXIT, pluto_exit_code);
 #endif
-		exit(PLUTO_EXIT_LEAVE_STATE);
+		exit(pluto_exit_code);
 	}
 
 	/*
@@ -218,18 +219,11 @@ void exit_epilogue(void)
 	exit(pluto_exit_code);	/* exit, with our error code */
 }
 
-void whack_shutdown(struct logger *logger, enum pluto_exit_code exit_code)
+void whack_shutdown(struct logger *logger, bool leave_state)
 {
-	switch (exit_code) {
-	case PLUTO_EXIT_LEAVE_STATE:
-		llog(LOG_STREAM|RC_LOG, logger, "Pluto is shutting down (leaving state)");
-		break;
-	case PLUTO_EXIT_OK:
-		llog(LOG_STREAM|RC_LOG, logger, "Pluto is shutting down");
-		break;
-	default:
-		bad_enum(logger, &pluto_exit_code_names, exit_code);
-	}
+	pluto_leave_state = leave_state;
+	llog(LOG_STREAM|RC_LOG, logger, "Pluto is shutting down%s",
+	     (leave_state ? " (leaving state)" : ""));
 
 	/*
 	 * Leak (unlink but don't close aka delref) the currently
@@ -253,7 +247,7 @@ void whack_shutdown(struct logger *logger, enum pluto_exit_code exit_code)
 	 * Flag that things are going down and delete anything that
 	 * isn't asynchronous (or depends on something asynchronous).
 	 */
-	exit_prologue(exit_code);
+	exit_prologue(PLUTO_EXIT_OK);
 
 	/*
 	 * Wait for the crypto-helper threads to notice EXITING_PLUTO

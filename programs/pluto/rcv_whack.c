@@ -707,7 +707,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 	/* luckly last !?! */
 	if (m->whack_shutdown) {
 		dbg_whack(s, "shutdown: start: leave-state=%s", bool_str(m->whack_leave_state));
-		whack_shutdown(logger, (m->whack_leave_state ? PLUTO_EXIT_LEAVE_STATE : PLUTO_EXIT_OK));
+		whack_shutdown(logger, m->whack_leave_state);
 		dbg_whack(s, "shutdown: stop: leave-state=%s", bool_str(m->whack_leave_state));
 	}
 

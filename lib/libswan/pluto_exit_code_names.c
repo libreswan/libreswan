@@ -46,12 +46,11 @@ static const char *pluto_exit_code_name[] = {
 	S(PLUTO_EXIT_UNBOUND_FAIL),
 	S(PLUTO_EXIT_LOCK_FAIL),
 	S(PLUTO_EXIT_SELINUX_FAIL),
-	S(PLUTO_EXIT_LEAVE_STATE),
 #undef S
 };
 
 enum_names pluto_exit_code_names = {
-	PLUTO_EXIT_OK, PLUTO_EXIT_LEAVE_STATE,
+	PLUTO_EXIT_OK, PLUTO_EXIT_SELINUX_FAIL,
 	ARRAY_REF(pluto_exit_code_name),
 	"PLUTO_EXIT_", /* prefix */
 	&pluto_exit_code_names_hi,

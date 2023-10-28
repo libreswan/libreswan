@@ -19,7 +19,6 @@
 
 #include <stdbool.h>
 
-enum pluto_exit_code;
 struct logger;
 
 /*
@@ -51,6 +50,6 @@ extern volatile bool exiting_pluto;
  * shutdown state (rather than special abort paths).
  */
 
-void whack_shutdown(struct logger *logger, enum pluto_exit_code exit_code);
+void whack_shutdown(struct logger *logger, bool leave_state);
 
 #endif
