@@ -1776,6 +1776,102 @@ bool ikev2_proposal_to_proto_info(const struct ikev2_proposal *proposal,
 	return true;
 }
 
+static void add_missing_transform(struct ikev2_proposal *proposal,
+				  const struct ikev2_proposal *accepted_proposal,
+				  enum ikev2_trans_type trans_type,
+				  const struct ike_alg *transform)
+{
+	/* fill in DH=NULL when missing */
+	const struct ikev2_transform *accepted_transform =
+		&accepted_proposal->transforms[trans_type].transform[0];
+	if (accepted_transform->valid) {
+		dbg("XXX: transform already valid for %s", transform->fqn);
+		return;
+	}
+	dbg("XXX: adding transform %s", transform->fqn);
+	append_transform(proposal, trans_type, transform->id[IKEv2_ALG_ID], 0);
+}
+
+static void force_transform(struct ikev2_proposal *proposal,
+			    enum ikev2_trans_type trans_type,
+			    const struct ike_alg *transform)
+{
+	zero_thing(proposal->transforms[trans_type]);
+	append_transform(proposal, trans_type, transform->id[IKEv2_ALG_ID], 0);
+}
+
+static struct ikev2_proposals *proposals_from_accepted(const char *story,
+						       const struct ikev2_proposal *accepted_proposal,
+						       const struct dh_desc *default_dh,
+						       bool ms_dh_downgrade/*aka add none*/,
+						       struct logger *logger)
+{
+	struct ikev2_proposals *proposals = alloc_thing(struct ikev2_proposals, story);
+	const struct dh_desc *dh[3] = {NULL}; /*[0] is ignored*/
+
+	/*
+	 * Figure out the DH; or NONE when not specified.
+	 */
+	unsigned dhc = 0;
+	FOR_EACH_THING(d,
+		       ikev2_proposal_first_dh(accepted_proposal),
+		       default_dh, &ike_alg_dh_none) {
+		if (d != NULL) {
+			dhc++;
+			PASSERT(logger, dhc < elemsof(dh));
+			dh[dhc] = d;
+			ldbg(logger, "XXX: using DH[%u] %s", dhc, dh[dhc]->common.fqn);
+			break;
+		}
+	}
+
+	/* also add ms-downgrade if needed */
+	if (ms_dh_downgrade && dh[0] != &ike_alg_dh_none) {
+		/* space for duplicate proposal with none */
+		dhc++;
+		PASSERT(logger, dhc < elemsof(dh));
+		dh[dhc] = &ike_alg_dh_none;
+		ldbg(logger, "XXX: using DH[%u] %s", dhc, dh[dhc]->common.fqn);
+	}
+
+
+	/* +1 for empty proposal[0]; */
+	proposals->roof = 1 + dhc;
+	proposals->proposal = alloc_things(struct ikev2_proposal, proposals->roof, story);
+	/*
+	 * Copy over the proposal; duplicating if necessary.
+	 */
+	for (int p = 1; p < proposals->roof; p++) {
+		struct ikev2_proposal *proposal = &proposals->proposal[p];
+		/* copy ... */
+		*proposal = *accepted_proposal;
+		/* reset some fields */
+		proposal->propnum = 0; /* auto assign */
+		zero_thing(proposal->remote_spi); /* will negotiate */
+		/*
+		 * Fill in INTEG=NONE and DH=NONE when there are no
+		 * transforms of that type.
+		 *
+		 * By being present they can match a proposal that has
+		 * decided to include the optional and only NONE
+		 * transform (by default they are omitted when
+		 * emitting the proposal).
+		 */
+		dbg("XXX: adding missing integ?");
+		add_missing_transform(proposal, accepted_proposal,
+				      IKEv2_TRANS_TYPE_INTEG,
+				      &ike_alg_integ_none.common);
+		/* ... and forcing DH */
+		force_transform(proposal, IKEv2_TRANS_TYPE_DH, &dh[p]->common);
+	}
+	LDBGP_JAMBUF(DBG_BASE, logger, buf) {
+		jam_string(buf, story);
+		jam_string(buf, " ");
+		jam_v2_proposals(buf, proposals);
+	}
+	return proposals;
+}
+
 void free_ikev2_proposals(struct ikev2_proposals **proposals)
 {
 	if (proposals == NULL || *proposals == NULL) {
@@ -1977,8 +2073,9 @@ static struct ikev2_proposal *ikev2_proposal_from_proposal_info(const struct pro
 	FOR_EACH_ALGORITHM(proposal, integ, alg) {
 		const struct integ_desc *integ = integ_desc(alg->desc);
 		/*
-		 * While INTEG=NONE is included in the proposal it
-		 * omitted when emitted.
+		 * This includes INTEG=NONE which will then be omitted
+		 * when emitted, and treated as optional when
+		 * accepted.
 		 */
 		append_transform(v2_proposal, IKEv2_TRANS_TYPE_INTEG,
 				 integ->common.id[IKEv2_ALG_ID], 0);
@@ -2101,7 +2198,7 @@ static struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
 
 	ldbg(logger, "constructing ESP/AH proposals for %s with strip_dh=%s ms_dh_downgrade=%s default_dh=%s",
 	     why, bool_str(strip_dh), bool_str(c->config->ms_dh_downgrade),
-	     (default_dh == NULL ? "NONE": default_dh->common.fqn));
+	     default_dh->common.fqn);
 
 	struct ikev2_proposals *v2_proposals = alloc_thing(struct ikev2_proposals,
 							   "ESP/AH proposals");
@@ -2157,7 +2254,7 @@ static struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
 			 * no point duplicating it with no DH during
 			 * pass=2.
 			 */
-			if (pass == 2 && default_dh == NULL &&
+			if (pass == 2 && default_dh == &ike_alg_dh_none &&
 			    next_algorithm(proposal, PROPOSAL_dh, NULL) == NULL) {
 				/*
 				 * First pass didn't include DH.
@@ -2333,7 +2430,7 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_rekey_child_proposals(struct ike_
 	const struct ikev2_proposal *accepted_proposal =
 		established_child->sa.st_v2_accepted_proposal;
 
-	bool full_proposal = false;
+	bool full_proposal;
 
 	if (cc->config->pfs_rekey_workaround) {
 		/* don't argue */
@@ -2341,21 +2438,22 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_rekey_child_proposals(struct ike_
 	} else if (cc->config->child_sa.pfs &&
 		   ikev2_proposal_first_dh(accepted_proposal) == NULL) {
 		/*
-		 * Rekeying the IKE_AUTH's Child (has no PFS when it
-		 * should).
+		 * The child sa should have DH in the
+		 * accepted_proposal yet it doesn't -> must be the
+		 * first rekey of the IKE_AUTH's Child (has no PFS).
+		 *
+		 * If the ESP= line includes DH then propose the
+		 * entire ESP line again, else will use IKE SA's DH.
 		 */
 		struct proposal *proposal = next_proposal(cc->config->child_sa.proposals.p, NULL);
 		struct algorithm *dh = next_algorithm(proposal, PROPOSAL_dh, NULL);
-		if (dh != NULL) {
-			/*
-			 * When the esp= proposal specifies DH, that
-			 * must be proposed.  Can't assume that
-			 * ACCEPTED_PROPOSAL + IKE SA's will match
-			 * esp=.
-			 */
-			full_proposal = true;
-		}
+		full_proposal = (dh != NULL);
+	} else {
+		full_proposal = false;
 	}
+
+	const struct dh_desc *default_pfs_dh =
+		(cc->config->child_sa.pfs ? ike->sa.st_oakley.ta_dh : &ike_alg_dh_none);
 
 	struct ikev2_proposals *proposals;
 	if (full_proposal) {
@@ -2364,50 +2462,15 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_rekey_child_proposals(struct ike_
 		 * from the IKE SA.  When MS_DH_DOWNGRADE, it will
 		 * also add NONE-DH.
 		 */
-		const struct dh_desc *pfs_dh =
-			(cc->config->child_sa.pfs ? ike->sa.st_oakley.ta_dh : NULL);
 		proposals = get_v2_child_proposals(cc, "pfs-rekey-workaround",
 						   /*strip_dh*/false,
-						   /*default_dh*/pfs_dh,
+						   default_pfs_dh,
 						   logger);
 	} else {
-		/*
-		 * Copy the old accepted proposals.  If necessary add
-		 * DH from IKE and/or duplicate with NONE-DH.
-		 */
-		const struct dh_desc *dh = ikev2_proposal_first_dh(accepted_proposal);
-		if (dh == NULL) {
-			dh = (cc->config->child_sa.pfs ? ike->sa.st_oakley.ta_dh :
-			      &ike_alg_dh_none);
-		}
-
-		bool add_empty_msdh_duplicates =
-			(cc->config->ms_dh_downgrade && dh != &ike_alg_dh_none);
-		proposals = alloc_thing(struct ikev2_proposals, "rekey");
-		/*
-		 * +1 for proposals[0]; +1 for accepted proposal;
-		 * optionally +1 for MS_DH_DOWNGRADE.
-		 */
-		proposals->roof = 1 + 1 + (add_empty_msdh_duplicates ? 1 : 0);
-		proposals->proposal = alloc_things(struct ikev2_proposal, proposals->roof, "rekey");
-		/*
-		 * Copy over the proposal; duplicating if necessary.
-		 */
-		for (int p = 1; p < proposals->roof; p++) {
-			struct ikev2_proposal *proposal = &proposals->proposal[p];
-			/* copy ... */
-			*proposal = *accepted_proposal;
-			/* .. clearing some fields ... */
-			proposal->propnum = 0; /* auto assign */
-			zero_thing(proposal->remote_spi);
-			/* ... and forcing DH */
-			zero_thing(proposal->transforms[IKEv2_TRANS_TYPE_DH]);
-			append_transform(proposal, IKEv2_TRANS_TYPE_DH,
-					 (p == 1 ? dh->common.id[IKEv2_ALG_ID] :
-					  p == 2 ? OAKLEY_GROUP_NONE :
-					  pexpect(0)),
-					 /*key-len:n/a*/0);
-		}
+		proposals = proposals_from_accepted("rekey CHILD", accepted_proposal,
+						    default_pfs_dh,
+						    cc->config->ms_dh_downgrade,
+						    logger);
 	}
 
 	LDBGP_JAMBUF(DBG_BASE, logger, buf) {
@@ -2420,20 +2483,9 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_rekey_child_proposals(struct ike_
 struct ikev2_proposals *get_v2_CREATE_CHILD_SA_rekey_ike_proposals(struct ike_sa *established_ike,
 								   struct logger *logger)
 {
-	const struct ikev2_proposal *accepted_proposal =
-		established_ike->sa.st_v2_accepted_proposal;
-	struct ikev2_proposals *proposals =
-		alloc_thing(struct ikev2_proposals, "rekey IKE");
-	proposals->roof = 2;
-	proposals->proposal =
-		alloc_things(struct ikev2_proposal, proposals->roof, "rekey IKE");
-	/* reset some fields */
-	proposals->proposal[1] = *accepted_proposal;
-	proposals->proposal[1].propnum = 0; /* auto assign */
-	zero_thing(proposals->proposal[1].remote_spi);
-	LDBGP_JAMBUF(DBG_BASE, logger, buf) {
-		jam_string(buf, "rekey IKE ");
-		jam_v2_proposals(buf, proposals);
-	}
-	return proposals;
+	return proposals_from_accepted("rekey IKE",
+				       established_ike->sa.st_v2_accepted_proposal,
+				       /*default_dh*/&ike_alg_dh_none,
+				       /*ms_dh_downgrade*/false,
+				       logger);
 }
