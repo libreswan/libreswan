@@ -661,8 +661,8 @@ void delete_cat_kernel_policies(struct connection *c,
 {
 #ifdef USE_NFTABLES
 	const char *delete_inbound_cat = "CAT: NFTABLES: removing inbound IPsec policy";
-#endif
-#ifdef USE_IPTABLES
+#else
+	/* BSD; USE_IPTABLES; ... */
 	const char *delete_inbound_cat = NULL;
 #endif
 	FOR_EACH_ITEM(spd, &c->child.spds) {
@@ -692,8 +692,8 @@ void install_inbound_ipsec_kernel_policy(struct child_sa *child,
 	const char *add_inbound_cat =
 		(spd->local->child->has_cat ? "CAT: NFTABLES: add inbound IPsec policy" :
 		 NULL);
-#endif
-#ifdef USE_IPTABLES
+#else
+	/* BSD; USE_IPTABLES; ... */
 	const char *add_inbound_cat = NULL;
 #endif
 	if (add_inbound_cat != NULL) {
