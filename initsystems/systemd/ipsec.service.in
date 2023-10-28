@@ -30,8 +30,6 @@ ExecStart=@@LIBEXECDIR@@/pluto @@SD_PLUTO_OPTIONS@@ --config @@IPSEC_CONF@@ --no
 # Enable for portexcludes support
 # ExecStartPost=@@LIBEXECDIR@@/portexcludes
 ExecStop=@@LIBEXECDIR@@/whack --shutdown
-# 12 is the exit code of pluto for shutting down "leaving state"
-ExecStopPost=/bin/bash -c 'if test "$EXIT_STATUS" != "12"; then /sbin/ip xfrm policy flush; /sbin/ip xfrm state flush; fi'
 ExecStopPost=@@SBINDIR@@/ipsec stopnflog
 
 [Install]
