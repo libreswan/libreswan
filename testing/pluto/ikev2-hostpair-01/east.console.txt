@@ -36,7 +36,7 @@ east #
 000 "roadnet-eastnet-ipv4-psk-ikev2":   routing: unrouted;
 000 "roadnet-eastnet-ipv4-psk-ikev2":   conn serial: $1;
 000 "roadnet-eastnet-ipv4-psk-ikev2"[1]: 192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org,MS+S=C]...192.1.2.254[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org,+MC+S=C]===192.0.2.1/32; routed-tunnel; my_ip=unset; their_ip=192.0.2.1;
-000 "roadnet-eastnet-ipv4-psk-ikev2"[1]:   host: oriented; local: 192.1.2.23; remote: 192.1.2.254;
+000 "roadnet-eastnet-ipv4-psk-ikev2"[1]:   host: oriented; local: 192.1.2.23; remote: 192.1.2.254; established IKE SA: #3;
 000 "roadnet-eastnet-ipv4-psk-ikev2"[1]:   mycert=east; my_updown=ipsec _updown;
 000 "roadnet-eastnet-ipv4-psk-ikev2"[1]:   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "roadnet-eastnet-ipv4-psk-ikev2"[1]:   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
@@ -53,7 +53,7 @@ east #
 000 "roadnet-eastnet-ipv4-psk-ikev2"[1]:   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org
 000 "roadnet-eastnet-ipv4-psk-ikev2"[1]:   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "roadnet-eastnet-ipv4-psk-ikev2"[1]:   nat-traversal: encaps:auto; keepalive:20s
-000 "roadnet-eastnet-ipv4-psk-ikev2"[1]:   routing: routed-tunnel; established IKE SA: #3; established Child SA: #4;
+000 "roadnet-eastnet-ipv4-psk-ikev2"[1]:   routing: routed-tunnel; established Child SA: #4;
 000 "roadnet-eastnet-ipv4-psk-ikev2"[1]:   conn serial: $2, instantiated from: $1;
 000 "roadnet-eastnet-ipv4-psk-ikev2"[1]:   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-MODP2048
 000 "roadnet-eastnet-ipv4-psk-ikev2"[1]:   ESP algorithm newest: AES_GCM_16_256-NONE; pfsgroup=<Phase1>

@@ -63,7 +63,7 @@ west #
 west #
  ipsec status | grep westnet-eastnet-ikev2
 000 "westnet-eastnet-ikev2a": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; routed-tunnel; my_ip=unset; their_ip=unset;
-000 "westnet-eastnet-ikev2a":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
+000 "westnet-eastnet-ikev2a":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23; established IKE SA: #1;
 000 "westnet-eastnet-ikev2a":   my_updown=ipsec _updown;
 000 "westnet-eastnet-ikev2a":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "westnet-eastnet-ikev2a":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
@@ -79,7 +79,7 @@ west #
 000 "westnet-eastnet-ikev2a":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "westnet-eastnet-ikev2a":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "westnet-eastnet-ikev2a":   nat-traversal: encaps:auto; keepalive:20s
-000 "westnet-eastnet-ikev2a":   routing: routed-tunnel; established IKE SA: #1; established Child SA: #2;
+000 "westnet-eastnet-ikev2a":   routing: routed-tunnel; established Child SA: #2;
 000 "westnet-eastnet-ikev2a":   conn serial: $1;
 000 "westnet-eastnet-ikev2a":   IKE algorithms: 3DES_CBC-HMAC_MD5-MODP2048
 000 "westnet-eastnet-ikev2a":   IKEv2 algorithm newest: 3DES_CBC_192-HMAC_MD5-MODP2048

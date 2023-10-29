@@ -99,7 +99,7 @@ west #
 west #
  ipsec auto --status | grep west-
 000 "west-east": 192.1.2.45[@west]...192.1.2.23[@east]; routed-tunnel; my_ip=unset; their_ip=unset;
-000 "west-east":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
+000 "west-east":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23; established ISAKMP SA: #1;
 000 "west-east":   my_updown=ipsec _updown;
 000 "west-east":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "west-east":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
@@ -114,7 +114,7 @@ west #
 000 "west-east":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "west-east":   dpd: passive; delay:0s; timeout:0s
 000 "west-east":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
-000 "west-east":   routing: routed-tunnel; established ISAKMP SA: #1; established IPsec SA: #2;
+000 "west-east":   routing: routed-tunnel; established IPsec SA: #2;
 000 "west-east":   conn serial: $1;
 000 "west-east":   IKEv1 algorithm newest: AES_CBC_256-HMAC_SHA2_256-MODP2048
 000 "west-east":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
@@ -174,7 +174,7 @@ west #
 west #
  ipsec status |grep west-
 000 "west-east": 192.1.2.45[@west]...192.1.2.23[@east]; unrouted; my_ip=unset; their_ip=unset;
-000 "west-east":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
+000 "west-east":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23; established ISAKMP SA: #1;
 000 "west-east":   my_updown=ipsec _updown;
 000 "west-east":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "west-east":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
@@ -189,7 +189,7 @@ west #
 000 "west-east":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "west-east":   dpd: passive; delay:0s; timeout:0s
 000 "west-east":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
-000 "west-east":   routing: unrouted; established ISAKMP SA: #1;
+000 "west-east":   routing: unrouted;
 000 "west-east":   conn serial: $1;
 000 "west-east":   IKEv1 algorithm newest: AES_CBC_256-HMAC_SHA2_256-MODP2048
 000 "west-east-b": 198.51.100.1/32===192.1.2.45[@west]...192.1.2.23[@east]===198.51.100.2/32; routed-tunnel; my_ip=unset; their_ip=unset;
@@ -240,7 +240,7 @@ west #
 west #
  ipsec status | grep west-east
 000 "west-east": 192.1.2.45[@west]...192.1.2.23[@east]; unrouted; my_ip=unset; their_ip=unset;
-000 "west-east":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
+000 "west-east":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23; established ISAKMP SA: #1;
 000 "west-east":   my_updown=ipsec _updown;
 000 "west-east":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "west-east":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
@@ -255,7 +255,7 @@ west #
 000 "west-east":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "west-east":   dpd: passive; delay:0s; timeout:0s
 000 "west-east":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
-000 "west-east":   routing: unrouted; established ISAKMP SA: #1;
+000 "west-east":   routing: unrouted;
 000 "west-east":   conn serial: $1;
 000 "west-east":   IKEv1 algorithm newest: AES_CBC_256-HMAC_SHA2_256-MODP2048
 000 "west-east-b": 198.51.100.1/32===192.1.2.45[@west]...192.1.2.23[@east]===198.51.100.2/32; routed-tunnel; my_ip=unset; their_ip=unset;

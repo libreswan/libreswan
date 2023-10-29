@@ -131,7 +131,7 @@ west #
 000 Connection list:
 000  
 000 "westnet-eastnet-ipv4-psk-ikev2": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; routed-tunnel; my_ip=unset; their_ip=unset;
-000 "westnet-eastnet-ipv4-psk-ikev2":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
+000 "westnet-eastnet-ipv4-psk-ikev2":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23; established IKE SA: #1;
 000 "westnet-eastnet-ipv4-psk-ikev2":   my_updown=ipsec _updown;
 000 "westnet-eastnet-ipv4-psk-ikev2":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "westnet-eastnet-ipv4-psk-ikev2":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
@@ -147,7 +147,7 @@ west #
 000 "westnet-eastnet-ipv4-psk-ikev2":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "westnet-eastnet-ipv4-psk-ikev2":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "westnet-eastnet-ipv4-psk-ikev2":   nat-traversal: encaps:auto; keepalive:20s
-000 "westnet-eastnet-ipv4-psk-ikev2":   routing: routed-tunnel; established IKE SA: #1; established Child SA: #2;
+000 "westnet-eastnet-ipv4-psk-ikev2":   routing: routed-tunnel; established Child SA: #2;
 000 "westnet-eastnet-ipv4-psk-ikev2":   conn serial: $1;
 000 "westnet-eastnet-ipv4-psk-ikev2":   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-MODP2048
 000 "westnet-eastnet-ipv4-psk-ikev2":   ESP algorithm newest: AES_GCM_16_256-NONE; pfsgroup=<Phase1>

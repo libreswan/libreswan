@@ -220,7 +220,7 @@ west #
 000 "westnet-eastnet-subnets/2x1":   conn serial: $3;
 000 "westnet-eastnet-subnets/2x1":   aliases: westnet-eastnet-subnets
 000 "westnet-eastnet-subnets/2x2": 192.0.1.128/28===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.64/30; unrouted; my_ip=unset; their_ip=unset;
-000 "westnet-eastnet-subnets/2x2":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
+000 "westnet-eastnet-subnets/2x2":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23; established ISAKMP SA: #1;
 000 "westnet-eastnet-subnets/2x2":   my_updown=ipsec _updown;
 000 "westnet-eastnet-subnets/2x2":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "westnet-eastnet-subnets/2x2":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
@@ -235,7 +235,7 @@ west #
 000 "westnet-eastnet-subnets/2x2":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "westnet-eastnet-subnets/2x2":   dpd: passive; delay:0s; timeout:0s
 000 "westnet-eastnet-subnets/2x2":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
-000 "westnet-eastnet-subnets/2x2":   routing: unrouted; established ISAKMP SA: #1;
+000 "westnet-eastnet-subnets/2x2":   routing: unrouted;
 000 "westnet-eastnet-subnets/2x2":   conn serial: $4;
 000 "westnet-eastnet-subnets/2x2":   aliases: westnet-eastnet-subnets
 000 "westnet-eastnet-subnets/2x2":   IKEv1 algorithm newest: AES_CBC_256-HMAC_SHA2_256-MODP2048
