@@ -1462,12 +1462,8 @@ static bool dispatch_1(enum routing_event event,
 
 	case X(DELETE_CHILD, UNROUTED_INBOUND, INSTANCE):
 	case X(DELETE_CHILD, UNROUTED_INBOUND, PERMANENT):
-	case X(DELETE_CHILD, UNROUTED_INBOUND_NEGOTIATION, INSTANCE):
-	case X(DELETE_CHILD, UNROUTED_INBOUND_NEGOTIATION, PERMANENT):
 	case X(TIMEOUT_CHILD, UNROUTED_INBOUND, INSTANCE):
 	case X(TIMEOUT_CHILD, UNROUTED_INBOUND, PERMANENT):
-	case X(TIMEOUT_CHILD, UNROUTED_INBOUND_NEGOTIATION, INSTANCE):
-	case X(TIMEOUT_CHILD, UNROUTED_INBOUND_NEGOTIATION, PERMANENT):
 		/* ikev1-xfrmi-02-aggr */
 		/*
 		 * IKEv1 responder mid way through establishing child
@@ -1476,6 +1472,19 @@ static bool dispatch_1(enum routing_event event,
 		 */
 		ldbg_routing(logger, "OOPS: UNROUTED_INBOUND isn't routed!");
 		ldbg_routing(logger, "OOPS: UNROUTED_INBOUND doesn't have outbound!");
+		teardown_routed_tunnel(event, c, e->child, e->where);
+		return true;
+
+	case X(DELETE_CHILD, UNROUTED_INBOUND_NEGOTIATION, INSTANCE):
+	case X(DELETE_CHILD, UNROUTED_INBOUND_NEGOTIATION, PERMANENT):
+	case X(TIMEOUT_CHILD, UNROUTED_INBOUND_NEGOTIATION, INSTANCE):
+	case X(TIMEOUT_CHILD, UNROUTED_INBOUND_NEGOTIATION, PERMANENT):
+		/*
+		 * IKEv1 responder mid way through establishing child
+		 * gets a timeout.  Full down_routed_tunnel is
+		 * overkill - just inbound needs to be pulled.
+		 */
+		ldbg_routing(logger, "OOPS: UNROUTED_INBOUND_NEGOTIATION isn't routed!");
 		teardown_routed_tunnel(event, c, e->child, e->where);
 		return true;
 
