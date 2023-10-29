@@ -4993,5 +4993,5 @@ IKEv2 transforms:
 
 jam_enum_lset_short:
 
-  debug 12:
+  debug 24:
 	<<cpu-usage+crypt>>

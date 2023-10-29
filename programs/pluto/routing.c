@@ -256,7 +256,7 @@ static struct old_routing ldbg_routing_start(enum routing_event event,
 		old.owner[i] = c->owner[i];
 	}
 
-	if (DBGP(DBG_BASE)) {
+	if (DBGP(DBG_ROUTING)) {
 		/*
 		 * XXX: force ADD_PREFIX so that the connection name
 		 * is before the interesting stuff.
@@ -280,7 +280,7 @@ static void ldbg_routing_stop(enum routing_event event,
 			      const struct old_routing *old,
 			      bool ok)
 {
-	if (DBGP(DBG_BASE)) {
+	if (DBGP(DBG_ROUTING)) {
 		/*
 		 * XXX: force ADD_PREFIX so that the connection name
 		 * is before the interesting stuff.
@@ -313,7 +313,7 @@ static void ldbg_routing_stop(enum routing_event event,
 PRINTF_LIKE(2)
 void ldbg_routing(struct logger *logger, const char *fmt, ...)
 {
-	if (DBGP(DBG_BASE)) {
+	if (DBGP(DBG_ROUTING)) {
 		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, logger, buf) {
 			jam_string(buf, "routing:   ");
 			va_list ap;
@@ -1892,7 +1892,7 @@ static bool dispatch_1(enum routing_event event,
 
 	}
 
-	BARF_JAMBUF((DBGP(DBG_BASE) ? PASSERT_FLAGS : PEXPECT_FLAGS),
+	BARF_JAMBUF((DBGP(DBG_ROUTING) ? PASSERT_FLAGS : PEXPECT_FLAGS),
 		    c->logger, /*ignore-exit-code*/0, e->where, buf) {
 		jam_routing_prefix(buf, "unhandled", event,
 				   c->child.routing, c->child.routing,

@@ -420,13 +420,25 @@ enum {
 	DBG_floor_IX = 0,
 
 	DBG_BASE_IX = DBG_floor_IX,
+	DBG_ROUTING_IX,
+
+	DBG_base_IX = DBG_ROUTING_IX,
 
 	/* below are also enabled by debug=all */
+
 	DBG_CPU_USAGE_IX,
 	DBG_REFCNT_IX,
 
-	/* below are excluded from debug=base */
+	DBG_all_IX = DBG_REFCNT_IX,
+
+	/* below are also enabled by debug=tmi */
+
 	DBG_TMI_IX,
+
+	DBG_tmi_IX = DBG_TMI_IX,
+
+	/* below are excluded */
+
 	DBG_CRYPT_IX,
 	DBG_PRIVATE_IX,
 
@@ -439,17 +451,17 @@ enum {
 /* Sets of Debug items */
 
 #define DBG_MASK	LRANGE(DBG_floor_IX, DBG_roof_IX - 1)
-#define DBG_NONE        0                                       /* no options on, including impairments */
+#define DBG_NONE        LEMPTY                               /* no options on, including impairments */
 
 #define DBG_BASE        LELEM(DBG_BASE_IX)
+#define DBG_ROUTING	LELEM(DBG_ROUTING_IX)
 #define DBG_CPU_USAGE	LELEM(DBG_CPU_USAGE_IX)
 #define DBG_REFCNT	LELEM(DBG_REFCNT_IX)
-#define DBG_ALL         (DBG_BASE | DBG_CPU_USAGE | DBG_REFCNT)
 
-/* singleton sets: must be kept in sync with the items! */
+#define DBG_ALL		LRANGE(DBG_floor_IX, DBG_all_IX)
 
-/* These are not part of "base" debugging */
 #define DBG_TMI		LELEM(DBG_TMI_IX)
+
 #define DBG_CRYPT	LELEM(DBG_CRYPT_IX)
 #define DBG_PRIVATE	LELEM(DBG_PRIVATE_IX)
 

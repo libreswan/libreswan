@@ -40,10 +40,9 @@ bool kernel_ops_policy_add(enum kernel_policy_op op,
 	const struct ip_protocol *client_proto = selector_protocol(*src_client);
 	pexpect(client_proto == selector_protocol(*dst_client));
 
-	if (DBGP(DBG_BASE)) {
-
-		LDBGP_JAMBUF(DBG_BASE, logger, buf) {
-			jam(buf, "%s()", __func__);
+	if (DBGP(DBG_ROUTING)) {
+		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, logger, buf) {
+			jam(buf, "routing:  %s()", __func__);
 
 			jam_string(buf, " ");
 			jam_enum_short(buf, &kernel_policy_op_names, op);
@@ -54,11 +53,10 @@ bool kernel_ops_policy_add(enum kernel_policy_op op,
 			jam_string(buf, story);
 			jam_string(buf, " ");
 			jam_where(buf, where);
-
 		}
 
-		LDBGP_JAMBUF(DBG_BASE, logger, buf) {
-			jam(buf, "%s()  ", __func__);
+		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, logger, buf) {
+			jam(buf, "routing:  ");
 
 			jam(buf, " client=");
 			jam_selector_pair(buf, src_client, dst_client);
@@ -70,8 +68,8 @@ bool kernel_ops_policy_add(enum kernel_policy_op op,
 
 		if (policy->sa_marks != NULL ||
 		    policy->xfrmi != NULL) {
-			LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
-				jam(buf, "%s()  ", __func__);
+			LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, logger, buf) {
+				jam(buf, "routing:  ");
 
 				if (policy->sa_marks != NULL) {
 					jam(buf, " sa_marks=");
@@ -93,8 +91,8 @@ bool kernel_ops_policy_add(enum kernel_policy_op op,
 
 		}
 
-		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
-			jam(buf, "%s()  ", __func__);
+		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, logger, buf) {
+			jam(buf, "routing:  ");
 
 			jam_string(buf, " policy=");
 			jam_address(buf, &policy->src.host);
@@ -133,8 +131,8 @@ bool kernel_ops_policy_add(enum kernel_policy_op op,
 		}
 
 		if (policy->sec_label.len > 0) {
-			LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
-				jam(buf, "%s()  ", __func__);
+			LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, logger, buf) {
+				jam(buf, "routing:  ");
 				jam_string(buf, " sec_label=");
 				jam_sanitized_hunk(buf, policy->sec_label);
 			}
@@ -216,7 +214,12 @@ bool kernel_ops_policy_add(enum kernel_policy_op op,
 					 policy,
 					 use_lifetime,
 					 logger, __func__);
-	ldbg(logger, "%s() ... %s", __func__, bool_str(ok));
+
+	if (DBGP(DBG_ROUTING)) {
+		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, logger, buf) {
+			jam(buf, "routing:   ... %s", bool_str(ok));
+		}
+	}
 
 	return ok;
 }
@@ -234,10 +237,10 @@ bool kernel_ops_policy_del(enum direction dir,
 	const struct ip_protocol *client_proto = selector_protocol(*src_client);
 	pexpect(client_proto == selector_protocol(*dst_client));
 
-	if (DBGP(DBG_BASE)) {
+	if (DBGP(DBG_ROUTING)) {
 
-		LDBGP_JAMBUF(DBG_BASE, logger, buf) {
-			jam(buf, "%s()", __func__);
+		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, logger, buf) {
+			jam(buf, "routing:  %s()", __func__);
 
 			jam_string(buf, " ");
 			jam_enum_short(buf, &direction_names, dir);
@@ -252,16 +255,16 @@ bool kernel_ops_policy_del(enum direction dir,
 
 		}
 
-		LDBGP_JAMBUF(DBG_BASE, logger, buf) {
-			jam(buf, "%s()  ", __func__);
+		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, logger, buf) {
+			jam(buf, "routing:  ");
 
 			jam(buf, " client=");
 			jam_selector_pair(buf, src_client, dst_client);
 		}
 
 		if (sa_marks != NULL || xfrmi != NULL) {
-			LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
-				jam(buf, "%s()  ", __func__);
+			LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, logger, buf) {
+				jam(buf, "routing:  ");
 
 				if (sa_marks != NULL) {
 					jam(buf, " sa_marks=");
@@ -282,8 +285,8 @@ bool kernel_ops_policy_del(enum direction dir,
 		}
 
 		if (sec_label.len > 0) {
-			LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
-				jam(buf, "%s()  ", __func__);
+			LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, logger, buf) {
+				jam(buf, "routing:  ");
 				jam_string(buf, " sec_label=");
 				jam_sanitized_hunk(buf, sec_label);
 			}
@@ -295,51 +298,65 @@ bool kernel_ops_policy_del(enum direction dir,
 					 sa_marks, xfrmi, id, sec_label,
 					 logger, __func__);
 
-	ldbg(logger, "%s() ... %s", __func__, bool_str(ok));
+	if (DBGP(DBG_ROUTING)) {
+		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, logger, buf) {
+			jam(buf, "routing:   ... %s", bool_str(ok));
+		}
+	}
+
 	return ok;
 }
 
 bool kernel_ops_add_sa(const struct kernel_state *sa, bool replace, struct logger *logger)
 {
-	LDBGP_JAMBUF(DBG_BASE, logger, buf) {
+	if (DBGP(DBG_ROUTING)) {
+		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, logger, buf) {
+			jam(buf, "routing:  %s()", __func__);
 
-		jam(buf, "%s()", __func__);
-
-		jam(buf, " level=%d", sa->level);
-		jam_string(buf, " ");
-		jam_enum_short(buf, &direction_names, sa->direction);
-		jam(buf, " %s", (sa->tunnel ? "tunnel" : "transport"));
-
-		jam(buf, " ");
-		jam_selector(buf, &sa->src.route);
-		jam_string(buf, "->");
-		jam_address(buf, &sa->src.address);
-		jam(buf, "["PRI_IPSEC_SPI"]", pri_ipsec_spi(sa->spi));
-		if (sa->encap_type != NULL) {
-			jam(buf, "=%s", sa->encap_type->name);
+			jam(buf, " level=%d", sa->level);
+			jam_string(buf, " ");
+			jam_enum_short(buf, &direction_names, sa->direction);
+			jam(buf, " %s", (sa->tunnel ? "tunnel" : "transport"));
 		}
-		jam(buf, "==>");
-		jam_address(buf, &sa->dst.address);
-		jam_string(buf, "->");
-		jam_selector(buf, &sa->dst.route);
 
-		if (sa->esn) jam(buf, " +esn");
-		if (sa->decap_dscp) jam(buf, " +decap_dscp");
-		if (!sa->encap_dscp) jam(buf, " +dont_encap_dscp");
-		if (sa->nopmtudisc) jam(buf, " +nopmtudisc");
+		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, logger, buf) {
+			jam(buf, "routing:  ");
+			jam(buf, " (src) ");
+			jam_selector(buf, &sa->src.route);
+			jam_string(buf, " -> ");
+			jam_address(buf, &sa->src.address);
+			jam(buf, "["PRI_IPSEC_SPI"]", pri_ipsec_spi(sa->spi));
+			if (sa->encap_type != NULL) {
+				jam(buf, "=%s", sa->encap_type->name);
+			}
+			jam(buf, " ==> ");
+			jam_address(buf, &sa->dst.address);
+			jam_string(buf, " -> ");
+			jam_selector(buf, &sa->dst.route);
+			jam(buf, " (dst)");
+		}
 
-		jam(buf, " replay_window=%d", sa->replay_window);
+		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, logger, buf) {
+			jam(buf, "routing:  ");
 
-		if (sa->ipcomp != NULL) {
-			jam(buf, " %s", sa->ipcomp->common.fqn);
+			if (sa->ipcomp != NULL) {
+				jam(buf, " %s", sa->ipcomp->common.fqn);
+			}
+			if (sa->integ != NULL) {
+				jam(buf, " %s:%zu", sa->integ->common.fqn, sa->integ_key.len);
+			}
+			if (sa->encrypt != NULL) {
+				jam(buf, " %s:%zu", sa->encrypt->common.fqn, sa->encrypt_key.len);
+			}
+
+			jam(buf, " replay_window=%d", sa->replay_window);
+			if (sa->esn) jam(buf, " +esn");
+			if (sa->decap_dscp) jam(buf, " +decap_dscp");
+			if (!sa->encap_dscp) jam(buf, " +dont_encap_dscp");
+			if (sa->nopmtudisc) jam(buf, " +nopmtudisc");
+
+			jam_string(buf, " ...");
 		}
-		if (sa->integ != NULL) {
-			jam(buf, " %s:%zu", sa->integ->common.fqn, sa->integ_key.len);
-		}
-		if (sa->encrypt != NULL) {
-			jam(buf, " %s:%zu", sa->encrypt->common.fqn, sa->encrypt_key.len);
-		}
-		jam_string(buf, " ...");
 	}
 
 	if (!sa->tunnel/*i.e., transport-mode*/) {
@@ -357,7 +374,7 @@ bool kernel_ops_add_sa(const struct kernel_state *sa, bool replace, struct logge
 		const struct ip_info *afi = address_info(sa->src.address);
 		pexpect(selector_info(sa->src.route) == afi);
 		pexpect(selector_info(sa->dst.route) == afi);
-		if (DBGP(DBG_BASE)) {
+		if (DBGP(DBG_ROUTING)) {
 			/* XXX: no test triggers these!?! */
 			pexpect(selector_prefix_bits(sa->src.route) == afi->mask_cnt);
 			pexpect(selector_prefix_bits(sa->dst.route) == afi->mask_cnt);
@@ -369,7 +386,12 @@ bool kernel_ops_add_sa(const struct kernel_state *sa, bool replace, struct logge
 
 	bool ok = kernel_ops->add_sa(sa, replace, logger);
 
-	ldbg(logger, "%s() ... %s", __func__, bool_str(ok));
+	if (DBGP(DBG_ROUTING)) {
+		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, logger, buf) {
+			jam(buf, "routing:   ... %s", bool_str(ok));
+		}
+	}
+
 	return ok;
 }
 
@@ -398,24 +420,32 @@ ipsec_spi_t kernel_ops_get_ipsec_spi(ipsec_spi_t avoid,
 				     const char *story,	/* often SAID string */
 				     struct logger *logger)
 {
-	LDBGP_JAMBUF(DBG_BASE, logger, buf) {
-		jam(buf, "%s()", __func__);
-		jam_string(buf, " ");
-		jam_address(buf, src);
-		jam_string(buf, "-");
-		jam(buf, "%s", proto->name);
-		jam_string(buf, "->");
-		jam_address(buf, dst);
-		jam(buf, " reqid=%x", reqid);
-		jam(buf, " [%jx,%jx]", min, max);
-		jam(buf, " for %s ...", story);
+	if (DBGP(DBG_ROUTING)) {
+		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, logger, buf) {
+			jam(buf, "routing:  %s()", __func__);
+
+			jam_string(buf, " ");
+			jam_address(buf, src);
+			jam_string(buf, "-");
+			jam(buf, "%s", proto->name);
+			jam_string(buf, "->");
+			jam_address(buf, dst);
+			jam(buf, " reqid=%x", reqid);
+			jam(buf, " [%jx,%jx]", min, max);
+			jam(buf, " for %s ...", story);
+		}
 	}
 
 	passert(kernel_ops->get_ipsec_spi != NULL);
 	ipsec_spi_t spi = kernel_ops->get_ipsec_spi(avoid, src, dst, proto,
 						    reqid, min, max, story, logger);
-	ldbg(logger, "%s() ... allocated "PRI_IPSEC_SPI" for %s",
-	     __func__, pri_ipsec_spi(spi), story);
+
+	if (DBGP(DBG_ROUTING)) {
+		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, logger, buf) {
+			jam(buf, "routing:   ... allocated "PRI_IPSEC_SPI" for %s",
+			    pri_ipsec_spi(spi), story);
+		}
+	}
 
 	return spi;
 }
@@ -428,20 +458,29 @@ bool kernel_ops_del_ipsec_spi(ipsec_spi_t spi, const struct ip_protocol *proto,
 	said_buf sbuf;
 	const char *said_story = str_said(&said, &sbuf);
 
-	address_buf sb, db;
-	ldbg(logger, "%s() deleting sa %s-%s["PRI_IPSEC_SPI"]->%s for %s ...",
-	     __func__,
-	     str_address(src, &sb),
-	     proto == NULL ? "<NULL>" : proto->name,
-	     pri_ipsec_spi(spi),
-	     str_address(dst, &db),
-	     said_story);
+	if (DBGP(DBG_ROUTING)) {
+		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, logger, buf) {
+			address_buf sb, db;
+			jam(buf, "routing:  %s() deleting sa %s-%s["PRI_IPSEC_SPI"]->%s for %s ...",
+			    __func__,
+			    str_address(src, &sb),
+			    proto == NULL ? "<NULL>" : proto->name,
+			    pri_ipsec_spi(spi),
+			    str_address(dst, &db),
+			    said_story);
+		}
+	}
 
 	passert(kernel_ops->del_ipsec_spi != NULL);
 
-	bool ok =kernel_ops->del_ipsec_spi(spi, proto, src, dst, said_story, logger);
+	bool ok = kernel_ops->del_ipsec_spi(spi, proto, src, dst, said_story, logger);
 
-	ldbg(logger, "%s() ... %s", __func__, bool_str(ok));
+	if (DBGP(DBG_ROUTING)) {
+		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, logger, buf) {
+			jam(buf, "routing:   ... %s", bool_str(ok));
+		}
+	}
+
 	return ok;
 }
 
