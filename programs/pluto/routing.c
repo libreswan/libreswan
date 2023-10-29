@@ -1299,21 +1299,15 @@ static bool dispatch_1(enum routing_event event,
 		 */
 		return true;
 
+	case X(DELETE_CHILD, UNROUTED_BARE_NEGOTIATION, PERMANENT):
 	case X(DELETE_IKE, UNROUTED_BARE_NEGOTIATION, INSTANCE):
 	case X(DELETE_IKE, UNROUTED_BARE_NEGOTIATION, PERMANENT):
+	case X(DISOWN, UNROUTED_BARE_NEGOTIATION, INSTANCE):
+	case X(TIMEOUT_CHILD, UNROUTED, PERMANENT): /* permanent+up */
+	case X(TIMEOUT_CHILD, UNROUTED_BARE_NEGOTIATION, INSTANCE):
+	case X(TIMEOUT_CHILD, UNROUTED_BARE_NEGOTIATION, PERMANENT):
 	case X(TIMEOUT_IKE, UNROUTED_BARE_NEGOTIATION, INSTANCE):
 	case X(TIMEOUT_IKE, UNROUTED_BARE_NEGOTIATION, PERMANENT):
-		/* ex, permanent+initiate */
-		if (connection_cannot_die(event, c, logger, e)) {
-			set_routing(event, c, RT_UNROUTED, NULL);
-			return true;
-		}
-		set_routing(event, c, RT_UNROUTED, NULL);
-		return true;
-
-	case X(DELETE_CHILD, UNROUTED_BARE_NEGOTIATION, PERMANENT):
-	case X(TIMEOUT_CHILD, UNROUTED_BARE_NEGOTIATION, PERMANENT):
-		/* ex, permanent+initiate */
 		if (connection_cannot_die(event, c, logger, e)) {
 			set_routing(event, c, RT_UNROUTED, NULL);
 			return true;
@@ -1377,9 +1371,7 @@ static bool dispatch_1(enum routing_event event,
 		return true;
 
 	case X(DELETE_CHILD, UNROUTED_NEGOTIATION, INSTANCE):
-#if 0
 	case X(TIMEOUT_CHILD, UNROUTED_NEGOTIATION, INSTANCE):
-#endif
 		if (connection_cannot_die(event, c, logger, e)) {
 			unrouted_negotiation_to_unrouted(event, c, logger, e->where, "fail");
 			return true;
@@ -1486,17 +1478,6 @@ static bool dispatch_1(enum routing_event event,
 		 */
 		ldbg_routing(logger, "OOPS: UNROUTED_INBOUND_NEGOTIATION isn't routed!");
 		teardown_routed_tunnel(event, c, e->child, e->where);
-		return true;
-
-	case X(TIMEOUT_CHILD, UNROUTED_BARE_NEGOTIATION, INSTANCE):
-	case X(TIMEOUT_CHILD, UNROUTED_NEGOTIATION, INSTANCE):
-	case X(TIMEOUT_CHILD, UNROUTED, PERMANENT): /* permanent+up */
-	case X(DISOWN, UNROUTED_BARE_NEGOTIATION, INSTANCE):
-		if (connection_cannot_die(event, c, logger, e)) {
-			set_routing(event, c, RT_UNROUTED, NULL);
-			return true;
-		}
-		set_routing(event, c, RT_UNROUTED, NULL);
 		return true;
 
 	case X(ESTABLISH_INBOUND, UNROUTED_BARE_NEGOTIATION, INSTANCE):
