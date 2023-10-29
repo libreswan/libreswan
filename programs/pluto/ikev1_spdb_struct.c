@@ -2813,10 +2813,10 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 				 * ipsec_spi_t.  So we start a couple of bytes in.
 				 */
 				zero(&next_spi);
-				diag_t d = pbs_in_raw(&next_proposal_pbs,
-						      (uint8_t *)&next_spi + IPSEC_DOI_SPI_SIZE - IPCOMP_CPI_SIZE,
-						      IPCOMP_CPI_SIZE,
-						      "CPI");
+				diag_t d = pbs_in_bytes(&next_proposal_pbs,
+							(uint8_t *)&next_spi + IPSEC_DOI_SPI_SIZE - IPCOMP_CPI_SIZE,
+							IPCOMP_CPI_SIZE,
+							"CPI");
 				if (d != NULL) {
 					llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
 					return v1N_INVALID_SPI;	/* reject whole SA */

@@ -99,7 +99,8 @@ void process_v2CERTREQ_payload(struct ike_sa *ike, struct msg_digest *md)
 		 */
 		while (pbs_in_left(&pbs).len > 0) {
 			ckaid_t hash = { .len = SHA1_DIGEST_SIZE, /*see RFC*/};
-			diag_t d = pbs_in_raw(&pbs, hash.ptr, hash.len, "Certification Authority hash");
+			diag_t d = pbs_in_bytes(&pbs, hash.ptr, hash.len,
+						"Certification Authority hash");
 			if (d != NULL) {
 				llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d,
 					  "ignoring CERTREQ payload: ");

@@ -2306,7 +2306,7 @@ diag_t pbs_in_shunk(struct pbs_in *ins, size_t len, shunk_t *shunk, const char *
 	return NULL;
 }
 
-diag_t pbs_in_raw(struct pbs_in *ins, void *bytes, size_t len, const char *name)
+diag_t pbs_in_bytes(struct pbs_in *ins, void *bytes, size_t len, const char *name)
 {
 	shunk_t shunk = NULL_HUNK;
 	diag_t d = pbs_in_shunk(ins, len, &shunk, name);

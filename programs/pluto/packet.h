@@ -263,12 +263,12 @@ struct pbs_in pbs_in_from_shunk(shunk_t shunk, const char *name); /* XXX: hackis
 diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
 		     void *struct_ptr, size_t struct_size,
 		     struct pbs_in *obj_pbs) MUST_USE_RESULT;
-diag_t pbs_in_raw(struct pbs_in *pbs, void *bytes, size_t len,
-		  const char *name) MUST_USE_RESULT;
+diag_t pbs_in_bytes(struct pbs_in *pbs, void *bytes, size_t len,
+		    const char *name) MUST_USE_RESULT;
 diag_t pbs_in_shunk(struct pbs_in *pbs, size_t len, shunk_t *shunk,
 		    const char *name) MUST_USE_RESULT;
 #define pbs_in_thing(PBS, THING, NAME)		\
-	pbs_in_raw(PBS, &(THING), sizeof(THING), NAME)
+	pbs_in_bytes(PBS, &(THING), sizeof(THING), NAME)
 
 /*
  * Output PBS
