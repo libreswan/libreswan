@@ -767,69 +767,14 @@ static void teardown_unrouted_inbound(enum routing_event event,
 {
 	PASSERT((*child)->sa.st_logger, c == (*child)->sa.st_connection);
 
-	if (c->newest_routing_sa > (*child)->sa.st_serialno) {
-		/* no longer child's */
-		ldbg_routing((*child)->sa.st_logger,
-			     "keeping connection kernel policy; routing SA "PRI_SO" is newer",
-			     pri_so(c->newest_routing_sa));
-		return;
-	}
-
-	if (c->newest_ipsec_sa > (*child)->sa.st_serialno) {
-		/* covered by above; no!? */
-		ldbg_routing((*child)->sa.st_logger,
-			     "keeping connection kernel policy; IPsec SA "PRI_SO" is newer",
-			     pri_so(c->newest_ipsec_sa));
-		return;
-	}
-
 	if (scheduled_child_revival(*child, "received Delete/Notify")) {
-		routed_tunnel_to_routed_ondemand(event, (*child), where);
-		return;
-	}
-
-	/*
-	 * Should this go back to on-demand?
-	 */
-	if (is_permanent(c) && c->policy.route) {
-		/* it's being stripped of the state, hence SOS_NOBODY */
-		routed_tunnel_to_routed_ondemand(event, (*child), where);
-		return;
-	}
-
-	/*
-	 * Is there a failure shunt?
-	 */
-	if (is_permanent(c) && c->config->failure_shunt != SHUNT_NONE) {
-		routed_tunnel_to_routed_failure(event, (*child), where);
-		return;
-	}
-
-	/*
-	 * Never delete permanent connections.
-	 */
-	if (is_permanent(c)) {
-		ldbg_routing((*child)->sa.st_logger,
-			     "keeping connection; it is permanent");
-		do_updown_spds(UPDOWN_DOWN, c, &c->child.spds, &(*child)->sa,
-			       (*child)->sa.st_logger);
 		delete_spd_kernel_policies(&c->child.spds,
 					   EXPECT_KERNEL_POLICY_OK,
 					   (*child)->sa.st_logger,
 					   where, "delete");
-		/*
-		 * update routing; route_owner() will see this and not
-		 * think this route is the owner?
-		 */
 		set_routing(event, c, RT_UNROUTED, NULL);
-		do_updown_unroute(c, *child);
 		return;
 	}
-
-	PASSERT((*child)->sa.st_logger, is_instance(c));
-
-	do_updown_spds(UPDOWN_DOWN, c, &c->child.spds,
-		       &(*child)->sa, (*child)->sa.st_logger);
 
 	delete_spd_kernel_policies(&c->child.spds,
 				   EXPECT_KERNEL_POLICY_OK,
