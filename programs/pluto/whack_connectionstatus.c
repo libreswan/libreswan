@@ -332,6 +332,49 @@ static void show_one_spd(struct show *s,
 
 }
 
+static void jam_connection_owners(struct jambuf *buf,
+				  const struct connection *c,
+				  enum connection_owner owner_floor,
+				  enum connection_owner owner_roof)
+{
+	for (enum connection_owner owner = owner_floor;
+	     owner < owner_roof; owner++) {
+		if (c->owner[owner] == SOS_NOBODY) {
+			continue;
+		}
+		if (owner + 1 < owner_roof &&
+		    c->owner[owner] == c->owner[owner+1]) {
+			continue;
+		}
+
+		jam_string(buf, " ");
+		switch (owner) {
+		case NEGOTIATING_IKE_SA:
+		case NEGOTIATING_CHILD_SA:
+			jam_string(buf, "negotiating");
+			break;
+		case ESTABLISHED_IKE_SA:
+		case ESTABLISHED_CHILD_SA:
+			jam_string(buf, "established");
+			break;
+		}
+		jam_string(buf, " ");
+		switch (owner) {
+		case NEGOTIATING_IKE_SA:
+		case ESTABLISHED_IKE_SA:
+			jam_string(buf, c->config->ike_info->parent_sa_name);
+			break;
+		case NEGOTIATING_CHILD_SA:
+		case ESTABLISHED_CHILD_SA:
+			jam_string(buf, c->config->ike_info->child_sa_name);
+			break;
+		}
+		jam_string(buf, ": ");
+		jam_so(buf, c->owner[owner]);
+		jam_string(buf, ";");
+	}
+}
+
 static void show_connection_status(struct show *s, const struct connection *c)
 {
 	char instance[32];
@@ -367,6 +410,8 @@ static void show_connection_status(struct show *s, const struct connection *c)
 			jam_end_host(buf, c, &c->end[RIGHT_END].host);
 			jam_string(buf, ";");
 		}
+
+		jam_connection_owners(buf, c, IKE_SA_OWNER_FLOOR, IKE_SA_OWNER_ROOF);
 	}
 
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
@@ -790,42 +835,7 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		jam_string(buf, " routing: ");
 		jam_enum_human(buf, &routing_names, c->child.routing);
 		jam_string(buf, ";");
-		/* owners */
-		for (enum connection_owner owner = CONNECTION_OWNER_FLOOR;
-		     owner < CONNECTION_OWNER_ROOF; owner++) {
-			if (c->owner[owner] == SOS_NOBODY) {
-				continue;
-			}
-			if (owner < CONNECTION_OWNER_ROOF - 1 &&
-			    c->owner[owner] == c->owner[owner+1]) {
-				continue;
-			}
-			jam_string(buf, " ");
-			switch (owner) {
-			case NEGOTIATING_IKE_SA:
-			case NEGOTIATING_CHILD_SA:
-				jam_string(buf, "negotiating");
-				break;
-			case ESTABLISHED_IKE_SA:
-			case ESTABLISHED_CHILD_SA:
-				jam_string(buf, "established");
-				break;
-			}
-			jam_string(buf, " ");
-			switch (owner) {
-			case NEGOTIATING_IKE_SA:
-			case ESTABLISHED_IKE_SA:
-				jam_string(buf, c->config->ike_info->parent_sa_name);
-				break;
-			case NEGOTIATING_CHILD_SA:
-			case ESTABLISHED_CHILD_SA:
-				jam_string(buf, c->config->ike_info->child_sa_name);
-				break;
-			}
-			jam_string(buf, ": ");
-			jam_so(buf, c->owner[owner]);
-			jam_string(buf, ";");
-		}
+		jam_connection_owners(buf, c, CHILD_SA_OWNER_FLOOR, CHILD_SA_OWNER_ROOF);
 	}
 
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
