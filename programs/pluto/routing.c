@@ -699,8 +699,7 @@ static void teardown_routed_tunnel(enum routing_event event,
 				   struct child_sa **child,
 				   where_t where)
 {
-	do_updown_spds(UPDOWN_DOWN, c, &c->child.spds, &(*child)->sa,
-		       (*child)->sa.st_logger);
+	do_updown_child(UPDOWN_DOWN, (*child));
 
 	if (scheduled_child_revival(*child, "received Delete/Notify")) {
 		routed_tunnel_to_routed_ondemand(event, (*child), where);
@@ -732,8 +731,7 @@ static void teardown_unrouted_tunnel(enum routing_event event,
 				     struct child_sa **child,
 				     where_t where)
 {
-	do_updown_spds(UPDOWN_DOWN, c, &c->child.spds, &(*child)->sa,
-		       (*child)->sa.st_logger);
+	do_updown_child(UPDOWN_DOWN, (*child));
 
 	if (scheduled_child_revival(*child, "received Delete/Notify")) {
 		routed_tunnel_to_routed_ondemand(event, (*child), where);
