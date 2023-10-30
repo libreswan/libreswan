@@ -1670,10 +1670,8 @@ static bool dispatch_1(enum routing_event event,
 	case X(RESUME, UNROUTED_TUNNEL, PERMANENT):
 	case X(RESUME, UNROUTED_TUNNEL, INSTANCE):
 		set_routing(event, c, RT_ROUTED_TUNNEL, e);
-		FOR_EACH_ITEM(spd, &c->child.spds) {
-			do_updown(UPDOWN_UP, c, spd, &(*e->child)->sa, logger);
-			do_updown(UPDOWN_ROUTE, c, spd, &(*e->child)->sa, logger);
-		}
+		do_updown_child(UPDOWN_ROUTE, (*e->child));
+		do_updown_child(UPDOWN_UP, (*e->child));
 		return true;
 
 	case X(ROUTE, UNROUTED_BARE_NEGOTIATION, PERMANENT):
