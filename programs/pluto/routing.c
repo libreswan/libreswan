@@ -558,6 +558,23 @@ static void routed_tunnel_to_routed_failure(enum routing_event event,
 	set_routing(event, child->sa.st_connection, RT_ROUTED_FAILURE, NULL);
 }
 
+static void routed_tunnel_to_unrouted(enum routing_event event,
+				      struct child_sa *child,
+				      where_t where)
+{
+	struct connection *c = child->sa.st_connection;
+	delete_spd_kernel_policies(&c->child.spds,
+				   EXPECT_KERNEL_POLICY_OK,
+				   child->sa.st_logger,
+				   where, "delete");
+	/*
+	 * update routing; route_owner() will see this and not
+	 * think this route is the owner?
+	 */
+	set_routing(event, c, RT_UNROUTED, NULL);
+	do_updown_unroute(c, child);
+}
+
 /*
  * For instance:
  *
@@ -710,32 +727,7 @@ static void teardown_routed_tunnel(enum routing_event event,
 		return;
 	}
 
-	/*
-	 * Never delete permanent connections.
-	 */
-	if (is_permanent(c)) {
-		ldbg_routing((*child)->sa.st_logger,
-			     "keeping connection; it is permanent");
-		delete_spd_kernel_policies(&c->child.spds,
-					   EXPECT_KERNEL_POLICY_OK,
-					   (*child)->sa.st_logger,
-					   where, "delete");
-		/*
-		 * update routing; route_owner() will see this and not
-		 * think this route is the owner?
-		 */
-		set_routing(event, c, RT_UNROUTED, NULL);
-		do_updown_unroute(c, *child);
-		return;
-	}
-
-	PASSERT((*child)->sa.st_logger, is_instance(c));
-
-	delete_spd_kernel_policies(&c->child.spds,
-				   EXPECT_KERNEL_POLICY_OK,
-				   (*child)->sa.st_logger,
-				   where, "delete");
-	set_routing(event, c, RT_UNROUTED, NULL);
+	routed_tunnel_to_unrouted(event, (*child), where);
 }
 
 static void teardown_unrouted_tunnel(enum routing_event event,
