@@ -1471,11 +1471,11 @@ static bool dispatch_1(enum routing_event event,
 		unrouted_negotiation_to_unrouted(event, c, logger, e->where, "fail");
 		return true;
 
+	case X(DELETE_IKE, UNROUTED_NEGOTIATION, INSTANCE):	/* dnsoe-01 ... */
 	case X(TIMEOUT_IKE, UNROUTED_NEGOTIATION, INSTANCE):
-		if (BROKEN_TRANSITION &&
-		    connection_cannot_die(event, c, logger, e)) {
-			/* when ROUTED_NEGOTIATION should
-			 * switch to ROUTED_REVIVAL */
+		if (connection_cannot_die(event, c, logger, e)) {
+			unrouted_negotiation_to_unrouted(event, c, logger, e->where,
+							 e->story);
 			return true;
 		}
 		if (is_opportunistic(c)) {
@@ -1490,7 +1490,8 @@ static bool dispatch_1(enum routing_event event,
 			set_routing(event, c, RT_UNROUTED, NULL);
 			return true;
 		}
-		set_routing(event, c, RT_UNROUTED, NULL);
+		unrouted_negotiation_to_unrouted(event, c, logger, e->where,
+						 e->story);
 		return true;
 
 	case X(DELETE_IKE, ROUTED_TUNNEL, PERMANENT):
@@ -1500,14 +1501,6 @@ static bool dispatch_1(enum routing_event event,
 		PEXPECT(c->logger, (*e->ike)->sa.st_ike_version == IKEv1);
 		return true;
 
-	case X(DELETE_IKE, UNROUTED_NEGOTIATION, INSTANCE):	/* dnsoe-01 ... */
-		/*
-		 * XXX: huh? instance isn't routed so why delete
-		 * policies?  Instead just drop IKE and let connection
-		 * disappear?
-		 */
-		unrouted_negotiation_to_unrouted(event, c, logger, e->where, "delete");
-		return true;
 	case X(DELETE_IKE, ROUTED_ONDEMAND, PERMANENT):		/* ROUTED_NEGOTIATION!?! */
 		/*
 		 * Happens after all children are killed, and
