@@ -636,12 +636,8 @@ static void routed_negotiation_to_unrouted(enum routing_event event,
 	PEXPECT(logger, !is_opportunistic(c));
 	delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
 				   logger, where, story);
-	FOR_EACH_ITEM(spd, &c->child.spds) {
-		if (route_owner(spd) == NULL) {
-			do_updown(UPDOWN_ROUTE, c, spd, NULL/*state*/, c->logger);
-		}
-	}
 	set_routing(event, c, RT_UNROUTED, NULL);
+	do_updown_unroute(c, NULL);
 }
 
 /*
