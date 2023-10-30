@@ -50,8 +50,7 @@ enum routing_event {
 	CONNECTION_ESTABLISH_INBOUND,
 	CONNECTION_ESTABLISH_OUTBOUND,
 	/* tear down a connection */
-	CONNECTION_DELETE_IKE,
-	CONNECTION_TIMEOUT_IKE,
+	CONNECTION_TEARDOWN_IKE,
 	CONNECTION_TEARDOWN_CHILD,
 	/* mobike */
 	CONNECTION_SUSPEND,
@@ -73,9 +72,8 @@ static const char *routing_event_name[] = {
 	S(CONNECTION_INITIATE_CHILD),
 	S(CONNECTION_RESPOND_IKE),
 	S(CONNECTION_RESPOND_CHILD),
-	S(CONNECTION_DELETE_IKE),
+	S(CONNECTION_TEARDOWN_IKE),
 	S(CONNECTION_TEARDOWN_CHILD),
-	S(CONNECTION_TIMEOUT_IKE),
 	S(CONNECTION_SUSPEND),
 	S(CONNECTION_RESUME),
 #undef S
@@ -116,8 +114,7 @@ static bool connection_cannot_die(enum routing_event event,
 	struct state *st = (e->child != NULL && (*e->child) != NULL ? &(*e->child)->sa :
 			    e->ike != NULL && (*e->ike) != NULL ? &(*e->ike)->sa :
 			    NULL);
-	const char *subplot = (event == CONNECTION_DELETE_IKE ? "delete IKE SA" :
-			       event == CONNECTION_TIMEOUT_IKE ? "timeout IKE_SA" :
+	const char *subplot = (event == CONNECTION_TEARDOWN_IKE ? e->story :
 			       event == CONNECTION_TEARDOWN_CHILD ? e->story :
 			       event == CONNECTION_RESCHEDULE ? e->story :
 			       "???");
@@ -953,20 +950,19 @@ static void ike_delete_post_op(const struct routing_annex *e)
 	delete_ike_sa(e->ike);
 }
 
-static void zap_ike(struct ike_sa **ike,
-		    enum routing_event ike_event,
-		    where_t where)
+static void zap_ike(struct ike_sa **ike, const char *story, where_t where)
 {
 	struct connection *c = (*ike)->sa.st_connection;
 	struct logger *logger = clone_logger((*ike)->sa.logger, HERE);
 	struct routing_annex annex = {
+		.story = story,
 		.ike = ike,
 		.where = where,
 		.dispatch_ok = ike_dispatch_ok,
 		.post_op = ike_delete_post_op,
 	};
 
-	dispatch(ike_event, c, logger, &annex);
+	dispatch(CONNECTION_TEARDOWN_IKE, c, logger, &annex);
 
 	PEXPECT(logger, (*ike) == NULL); /* no logger */
 	free_logger(&logger, HERE);
@@ -974,12 +970,12 @@ static void zap_ike(struct ike_sa **ike,
 
 void connection_delete_ike(struct ike_sa **ike, where_t where)
 {
-	zap_ike(ike, CONNECTION_DELETE_IKE, where);
+	zap_ike(ike, "delete IKE SA", where);
 }
 
 void connection_timeout_ike(struct ike_sa **ike, where_t where)
 {
-	zap_ike(ike, CONNECTION_TIMEOUT_IKE, where);
+	zap_ike(ike, "timeout IKE SA", where);
 }
 
 /*
@@ -1346,20 +1342,16 @@ static bool dispatch_1(enum routing_event event,
 		set_initiated(event, c, RT_UNROUTED_BARE_NEGOTIATION, e);
 		return true;
 
-	case X(DELETE_IKE, UNROUTED, INSTANCE):
-	case X(DELETE_IKE, UNROUTED, PERMANENT):
-	case X(TIMEOUT_IKE, UNROUTED, INSTANCE):
-	case X(TIMEOUT_IKE, UNROUTED, PERMANENT):
+	case X(TEARDOWN_IKE, UNROUTED, INSTANCE):
+	case X(TEARDOWN_IKE, UNROUTED, PERMANENT):
 		/*
 		 * already -routed -policy; presumably the Child SA
 		 * deleted the policy earlier.
 		 */
 		return true;
 
-	case X(TIMEOUT_IKE, ROUTED_ONDEMAND, PERMANENT):	/* ikev2-child-ipsec-retransmit */
-	case X(TIMEOUT_IKE, ROUTED_ONDEMAND, INSTANCE):		/* ikev2-liveness-05 */
-	case X(DELETE_IKE, ROUTED_ONDEMAND, INSTANCE):		/* ikev2-30-rw-no-rekey */
-	case X(DELETE_IKE, ROUTED_ONDEMAND, PERMANENT):		/* ROUTED_NEGOTIATION!?! */
+	case X(TEARDOWN_IKE, ROUTED_ONDEMAND, INSTANCE):		/* ikev2-30-rw-no-rekey */
+	case X(TEARDOWN_IKE, ROUTED_ONDEMAND, PERMANENT):		/* ROUTED_NEGOTIATION!?! */
 		/*
 		 * Happens after all children are killed, and
 		 * connection put into routed ondemand.  Just need to
@@ -1378,14 +1370,12 @@ static bool dispatch_1(enum routing_event event,
 		 */
 		return true;
 
-	case X(DELETE_IKE, UNROUTED_BARE_NEGOTIATION, INSTANCE):
-	case X(DELETE_IKE, UNROUTED_BARE_NEGOTIATION, PERMANENT):
 	case X(RESCHEDULE, UNROUTED_BARE_NEGOTIATION, INSTANCE):
 	case X(TEARDOWN_CHILD, UNROUTED_BARE_NEGOTIATION, PERMANENT):
 	case X(TEARDOWN_CHILD, UNROUTED, PERMANENT): /* permanent+up */
 	case X(TEARDOWN_CHILD, UNROUTED_BARE_NEGOTIATION, INSTANCE):
-	case X(TIMEOUT_IKE, UNROUTED_BARE_NEGOTIATION, INSTANCE):
-	case X(TIMEOUT_IKE, UNROUTED_BARE_NEGOTIATION, PERMANENT):
+	case X(TEARDOWN_IKE, UNROUTED_BARE_NEGOTIATION, INSTANCE):
+	case X(TEARDOWN_IKE, UNROUTED_BARE_NEGOTIATION, PERMANENT):
 		if (connection_cannot_die(event, c, logger, e)) {
 			set_routing(event, c, RT_UNROUTED, NULL);
 			return true;
@@ -1401,10 +1391,8 @@ static bool dispatch_1(enum routing_event event,
 					    "delete Child SA");
 		return true;
 
-	case X(DELETE_IKE, ROUTED_NEGOTIATION, INSTANCE):
-	case X(DELETE_IKE, ROUTED_NEGOTIATION, PERMANENT):
-	case X(TIMEOUT_IKE, ROUTED_NEGOTIATION, INSTANCE):
-	case X(TIMEOUT_IKE, ROUTED_NEGOTIATION, PERMANENT):
+	case X(TEARDOWN_IKE, ROUTED_NEGOTIATION, INSTANCE):
+	case X(TEARDOWN_IKE, ROUTED_NEGOTIATION, PERMANENT):
 	case X(RESCHEDULE, ROUTED_NEGOTIATION, PERMANENT):
 		/*
 		 * For instance, this end initiated a Child SA for the
@@ -1468,8 +1456,7 @@ static bool dispatch_1(enum routing_event event,
 		unrouted_negotiation_to_unrouted(event, c, logger, e->where, "fail");
 		return true;
 
-	case X(DELETE_IKE, UNROUTED_NEGOTIATION, INSTANCE):	/* dnsoe-01 ... */
-	case X(TIMEOUT_IKE, UNROUTED_NEGOTIATION, INSTANCE):
+	case X(TEARDOWN_IKE, UNROUTED_NEGOTIATION, INSTANCE):
 		if (connection_cannot_die(event, c, logger, e)) {
 			unrouted_negotiation_to_unrouted(event, c, logger, e->where,
 							 e->story);
@@ -1491,10 +1478,8 @@ static bool dispatch_1(enum routing_event event,
 						 e->story);
 		return true;
 
-	case X(DELETE_IKE, ROUTED_TUNNEL, PERMANENT):
-	case X(TIMEOUT_IKE, ROUTED_TUNNEL, PERMANENT):
-	case X(DELETE_IKE, ROUTED_TUNNEL, INSTANCE):
-	case X(TIMEOUT_IKE, ROUTED_TUNNEL, INSTANCE):
+	case X(TEARDOWN_IKE, ROUTED_TUNNEL, PERMANENT):
+	case X(TEARDOWN_IKE, ROUTED_TUNNEL, INSTANCE):
 		PEXPECT(c->logger, (*e->ike)->sa.st_ike_version == IKEv1);
 		return true;
 
@@ -1885,8 +1870,8 @@ static bool dispatch_1(enum routing_event event,
 	case X(INITIATE, UNROUTED, LABELED_CHILD):
 	case X(INITIATE, UNROUTED, LABELED_PARENT):
 		return true;
-	case X(DELETE_IKE, ROUTED_ONDEMAND, LABELED_PARENT):
-	case X(DELETE_IKE, UNROUTED, LABELED_PARENT):
+	case X(TEARDOWN_IKE, ROUTED_ONDEMAND, LABELED_PARENT):
+	case X(TEARDOWN_IKE, UNROUTED, LABELED_PARENT):
 		set_routing(event, c, RT_UNROUTED, NULL);
 		return true;
 
