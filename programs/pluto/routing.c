@@ -1661,25 +1661,20 @@ static bool dispatch_1(enum routing_event event,
 
 	case X(SUSPEND, ROUTED_TUNNEL, PERMANENT):
 	case X(SUSPEND, ROUTED_TUNNEL, INSTANCE):
+		do_updown_child(UPDOWN_DOWN, (*e->child));
 		/*
 		 * Update connection's routing so that route_owner()
 		 * won't find us.
 		 *
 		 * Only unroute when no other routed connection shares
 		 * the SPD.
+		 *
+		 * XXX: no-op as SPD is still owned?
 		 */
-		FOR_EACH_ITEM(spd, &c->child.spds) {
-			/* XXX: never finds SPD */
-			if (route_owner(spd) == NULL) {
-				do_updown(UPDOWN_DOWN, c, spd,
-					  &(*e->child)->sa, logger);
-				(*e->child)->sa.st_mobike_del_src_ip = true;
-				do_updown(UPDOWN_UNROUTE, c, spd,
-					  &(*e->child)->sa, logger);
-				(*e->child)->sa.st_mobike_del_src_ip = false;
-			}
-		}
 		set_routing(event, c, RT_UNROUTED_TUNNEL, e);
+		(*e->child)->sa.st_mobike_del_src_ip = true;
+		do_updown_unroute(c, (*e->child));
+		(*e->child)->sa.st_mobike_del_src_ip = false;
 		return true;
 
 	case X(RESUME, UNROUTED_TUNNEL, PERMANENT):
