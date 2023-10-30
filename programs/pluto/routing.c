@@ -685,7 +685,8 @@ static void teardown_routed_tunnel(enum routing_event event,
 				   struct child_sa **child,
 				   where_t where)
 {
-	PASSERT((*child)->sa.st_logger, c == (*child)->sa.st_connection);
+	do_updown_spds(UPDOWN_DOWN, c, &c->child.spds, &(*child)->sa,
+		       (*child)->sa.st_logger);
 
 	if (scheduled_child_revival(*child, "received Delete/Notify")) {
 		routed_tunnel_to_routed_ondemand(event, (*child), where);
@@ -715,8 +716,6 @@ static void teardown_routed_tunnel(enum routing_event event,
 	if (is_permanent(c)) {
 		ldbg_routing((*child)->sa.st_logger,
 			     "keeping connection; it is permanent");
-		do_updown_spds(UPDOWN_DOWN, c, &c->child.spds, &(*child)->sa,
-			       (*child)->sa.st_logger);
 		delete_spd_kernel_policies(&c->child.spds,
 					   EXPECT_KERNEL_POLICY_OK,
 					   (*child)->sa.st_logger,
@@ -731,9 +730,6 @@ static void teardown_routed_tunnel(enum routing_event event,
 	}
 
 	PASSERT((*child)->sa.st_logger, is_instance(c));
-
-	do_updown_spds(UPDOWN_DOWN, c, &c->child.spds,
-		       &(*child)->sa, (*child)->sa.st_logger);
 
 	delete_spd_kernel_policies(&c->child.spds,
 				   EXPECT_KERNEL_POLICY_OK,
@@ -747,7 +743,8 @@ static void teardown_unrouted_tunnel(enum routing_event event,
 				     struct child_sa **child,
 				     where_t where)
 {
-	PASSERT((*child)->sa.st_logger, c == (*child)->sa.st_connection);
+	do_updown_spds(UPDOWN_DOWN, c, &c->child.spds, &(*child)->sa,
+		       (*child)->sa.st_logger);
 
 	if (scheduled_child_revival(*child, "received Delete/Notify")) {
 		routed_tunnel_to_routed_ondemand(event, (*child), where);
@@ -777,8 +774,6 @@ static void teardown_unrouted_tunnel(enum routing_event event,
 	if (is_permanent(c)) {
 		ldbg_routing((*child)->sa.st_logger,
 			     "keeping connection; it is permanent");
-		do_updown_spds(UPDOWN_DOWN, c, &c->child.spds, &(*child)->sa,
-			       (*child)->sa.st_logger);
 		delete_spd_kernel_policies(&c->child.spds,
 					   EXPECT_KERNEL_POLICY_OK,
 					   (*child)->sa.st_logger,
@@ -793,9 +788,6 @@ static void teardown_unrouted_tunnel(enum routing_event event,
 	}
 
 	PASSERT((*child)->sa.st_logger, is_instance(c));
-
-	do_updown_spds(UPDOWN_DOWN, c, &c->child.spds,
-		       &(*child)->sa, (*child)->sa.st_logger);
 
 	delete_spd_kernel_policies(&c->child.spds,
 				   EXPECT_KERNEL_POLICY_OK,
