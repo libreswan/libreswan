@@ -1359,7 +1359,12 @@ static bool dispatch_1(enum routing_event event,
 	case X(TIMEOUT_IKE, ROUTED_ONDEMAND, PERMANENT):	/* ikev2-child-ipsec-retransmit */
 	case X(TIMEOUT_IKE, ROUTED_ONDEMAND, INSTANCE):		/* ikev2-liveness-05 */
 	case X(DELETE_IKE, ROUTED_ONDEMAND, INSTANCE):		/* ikev2-30-rw-no-rekey */
+	case X(DELETE_IKE, ROUTED_ONDEMAND, PERMANENT):		/* ROUTED_NEGOTIATION!?! */
 		/*
+		 * Happens after all children are killed, and
+		 * connection put into routed ondemand.  Just need to
+		 * delete IKE.
+		 *
 		 * ikev2-31-nat-rw-no-rekey:
 		 *
 		 * The established child unroutes the connection;
@@ -1491,14 +1496,6 @@ static bool dispatch_1(enum routing_event event,
 	case X(DELETE_IKE, ROUTED_TUNNEL, INSTANCE):
 	case X(TIMEOUT_IKE, ROUTED_TUNNEL, INSTANCE):
 		PEXPECT(c->logger, (*e->ike)->sa.st_ike_version == IKEv1);
-		return true;
-
-	case X(DELETE_IKE, ROUTED_ONDEMAND, PERMANENT):		/* ROUTED_NEGOTIATION!?! */
-		/*
-		 * Happens after all children are killed, and
-		 * connection put into routed ondemand.  Just need to
-		 * delete IKE.
-		 */
 		return true;
 
 	case X(TEARDOWN_CHILD, ROUTED_TUNNEL, INSTANCE):
