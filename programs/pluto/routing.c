@@ -689,22 +689,6 @@ static void teardown_routed_tunnel(enum routing_event event,
 {
 	PASSERT((*child)->sa.st_logger, c == (*child)->sa.st_connection);
 
-	if (c->newest_routing_sa > (*child)->sa.st_serialno) {
-		/* no longer child's */
-		ldbg_routing((*child)->sa.st_logger,
-			     "keeping connection kernel policy; routing SA "PRI_SO" is newer",
-			     pri_so(c->newest_routing_sa));
-		return;
-	}
-
-	if (c->newest_ipsec_sa > (*child)->sa.st_serialno) {
-		/* covered by above; no!? */
-		ldbg_routing((*child)->sa.st_logger,
-			     "keeping connection kernel policy; IPsec SA "PRI_SO" is newer",
-			     pri_so(c->newest_ipsec_sa));
-		return;
-	}
-
 	if (scheduled_child_revival(*child, "received Delete/Notify")) {
 		routed_tunnel_to_routed_ondemand(event, (*child), where);
 		return;
@@ -766,22 +750,6 @@ static void teardown_unrouted_tunnel(enum routing_event event,
 				     where_t where)
 {
 	PASSERT((*child)->sa.st_logger, c == (*child)->sa.st_connection);
-
-	if (c->newest_routing_sa > (*child)->sa.st_serialno) {
-		/* no longer child's */
-		ldbg_routing((*child)->sa.st_logger,
-			     "keeping connection kernel policy; routing SA "PRI_SO" is newer",
-			     pri_so(c->newest_routing_sa));
-		return;
-	}
-
-	if (c->newest_ipsec_sa > (*child)->sa.st_serialno) {
-		/* covered by above; no!? */
-		ldbg_routing((*child)->sa.st_logger,
-			     "keeping connection kernel policy; IPsec SA "PRI_SO" is newer",
-			     pri_so(c->newest_ipsec_sa));
-		return;
-	}
 
 	if (scheduled_child_revival(*child, "received Delete/Notify")) {
 		routed_tunnel_to_routed_ondemand(event, (*child), where);
