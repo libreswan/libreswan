@@ -469,7 +469,12 @@ void flush_pending_by_state(struct ike_sa *ike)
 			 * do it for us.
 			 */
 			if (p->connection != ike->sa.st_connection) {
-				connection_unpend((*pp)->connection, (*pp)->logger, HERE);
+				/*
+				 * Find another IKE SA willing to care
+				 * for the CUCKOO, or initiate our
+				 * own.
+				 */
+				connection_reschedule((*pp)->connection, (*pp)->logger, HERE);
 			}
 			delete_pending(pp, "flush");	/* in effect, advances pp */
 		} else {

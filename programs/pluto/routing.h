@@ -92,7 +92,7 @@ void connection_initiated_child(struct ike_sa *ike, struct child_sa *child, enum
 void connection_establish_ike(struct ike_sa *ike, where_t where);
 
 void connection_pending(struct connection *c, enum initiated_by, where_t where);
-void connection_unpend(struct connection *c, struct logger *logger, where_t where);
+void connection_reschedule(struct connection *c, struct logger *logger, where_t where);
 
 /*
  * Mobike

@@ -44,7 +44,7 @@ enum routing_event {
 	CONNECTION_RESPOND_IKE,
 	CONNECTION_RESPOND_CHILD,
 	CONNECTION_PENDING,
-	CONNECTION_DISOWN,
+	CONNECTION_RESCHEDULE,
 	/* establish a connection (speculative) */
 	CONNECTION_ESTABLISH_IKE,
 	CONNECTION_ESTABLISH_INBOUND,
@@ -68,7 +68,7 @@ static const char *routing_event_name[] = {
 	S(CONNECTION_ESTABLISH_INBOUND),
 	S(CONNECTION_ESTABLISH_OUTBOUND),
 	S(CONNECTION_PENDING),
-	S(CONNECTION_DISOWN),
+	S(CONNECTION_RESCHEDULE),
 	S(CONNECTION_INITIATE_IKE),
 	S(CONNECTION_INITIATE_CHILD),
 	S(CONNECTION_RESPOND_IKE),
@@ -119,7 +119,7 @@ static bool connection_cannot_die(enum routing_event event,
 	const char *subplot = (event == CONNECTION_DELETE_IKE ? "delete IKE SA" :
 			       event == CONNECTION_TIMEOUT_IKE ? "timeout IKE_SA" :
 			       event == CONNECTION_TEARDOWN_CHILD ? e->story :
-			       event == CONNECTION_DISOWN ? "re-schedule" :
+			       event == CONNECTION_RESCHEDULE ? e->story :
 			       "???");
 	return scheduled_revival(c, st, subplot, logger);
 }
@@ -1135,14 +1135,15 @@ static bool unpend_dispatch_ok(struct connection *c,
 	return true;
 }
 
-void connection_unpend(struct connection *c, struct logger *logger, where_t where)
+void connection_reschedule(struct connection *c, struct logger *logger, where_t where)
 {
 	struct routing_annex annex = {
+		.story = "re-schedule",
 		.where = where,
 		.dispatch_ok = unpend_dispatch_ok,
 	};
 
-	dispatch(CONNECTION_DISOWN, c, logger, &annex);
+	dispatch(CONNECTION_RESCHEDULE, c, logger, &annex);
 }
 
 static void set_established_ike(enum routing_event event UNUSED,
@@ -1382,7 +1383,7 @@ static bool dispatch_1(enum routing_event event,
 
 	case X(DELETE_IKE, UNROUTED_BARE_NEGOTIATION, INSTANCE):
 	case X(DELETE_IKE, UNROUTED_BARE_NEGOTIATION, PERMANENT):
-	case X(DISOWN, UNROUTED_BARE_NEGOTIATION, INSTANCE):
+	case X(RESCHEDULE, UNROUTED_BARE_NEGOTIATION, INSTANCE):
 	case X(TEARDOWN_CHILD, UNROUTED_BARE_NEGOTIATION, PERMANENT):
 	case X(TEARDOWN_CHILD, UNROUTED, PERMANENT): /* permanent+up */
 	case X(TEARDOWN_CHILD, UNROUTED_BARE_NEGOTIATION, INSTANCE):
@@ -1407,7 +1408,7 @@ static bool dispatch_1(enum routing_event event,
 	case X(DELETE_IKE, ROUTED_NEGOTIATION, PERMANENT):
 	case X(TIMEOUT_IKE, ROUTED_NEGOTIATION, INSTANCE):
 	case X(TIMEOUT_IKE, ROUTED_NEGOTIATION, PERMANENT):
-	case X(DISOWN, ROUTED_NEGOTIATION, PERMANENT):
+	case X(RESCHEDULE, ROUTED_NEGOTIATION, PERMANENT):
 		/*
 		 * For instance, this end initiated a Child SA for the
 		 * connection while at the same time the peer
