@@ -540,6 +540,8 @@ static void routed_tunnel_to_routed_ondemand(enum routing_event event,
 					     struct child_sa *child,
 					     where_t where)
 {
+	/* currently up and routed */
+	do_updown_child(UPDOWN_DOWN, child);
 	replace_ipsec_with_bare_kernel_policies(child, SHUNT_KIND_ONDEMAND,
 						EXPECT_KERNEL_POLICY_OK, where);
 	set_routing(event, child->sa.st_connection, RT_ROUTED_ONDEMAND, NULL);
@@ -549,7 +551,8 @@ static void routed_tunnel_to_routed_failure(enum routing_event event,
 					    struct child_sa *child,
 					    where_t where)
 {
-	/* it's being stripped of the state, hence SOS_NOBODY */
+	/* currently up and routed */
+	do_updown_child(UPDOWN_DOWN, child);
 	replace_ipsec_with_bare_kernel_policies(child, SHUNT_KIND_FAILURE,
 						EXPECT_KERNEL_POLICY_OK, where);
 	set_routing(event, child->sa.st_connection, RT_ROUTED_FAILURE, NULL);
@@ -559,7 +562,9 @@ static void routed_tunnel_to_unrouted(enum routing_event event,
 				      struct child_sa *child,
 				      where_t where)
 {
+	/* currently up and routed */
 	struct connection *c = child->sa.st_connection;
+	do_updown_child(UPDOWN_DOWN, child);
 	delete_spd_kernel_policies(&c->child.spds,
 				   EXPECT_KERNEL_POLICY_OK,
 				   child->sa.st_logger,
@@ -699,8 +704,6 @@ static void teardown_routed_tunnel(enum routing_event event,
 				   struct child_sa **child,
 				   where_t where)
 {
-	do_updown_child(UPDOWN_DOWN, (*child));
-
 	if (scheduled_child_revival(*child, "received Delete/Notify")) {
 		routed_tunnel_to_routed_ondemand(event, (*child), where);
 		return;
