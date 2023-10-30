@@ -729,13 +729,52 @@ static void teardown_routed_tunnel(enum routing_event event,
 	routed_tunnel_to_unrouted(event, (*child), where);
 }
 
+static void unrouted_tunnel_to_routed_ondemand(enum routing_event event,
+					       struct child_sa *child,
+					       where_t where)
+{
+	/* currently down and unrouted */
+	replace_ipsec_with_bare_kernel_policies(child, SHUNT_KIND_ONDEMAND,
+						EXPECT_KERNEL_POLICY_OK, where);
+	do_updown_child(UPDOWN_ROUTE, child);
+	set_routing(event, child->sa.st_connection, RT_ROUTED_ONDEMAND, NULL);
+}
+
+static void unrouted_tunnel_to_routed_failure(enum routing_event event,
+					      struct child_sa *child,
+					      where_t where)
+{
+	/* currently down and unrouted */
+	replace_ipsec_with_bare_kernel_policies(child, SHUNT_KIND_FAILURE,
+						EXPECT_KERNEL_POLICY_OK, where);
+	do_updown_child(UPDOWN_ROUTE, child);
+	set_routing(event, child->sa.st_connection, RT_ROUTED_FAILURE, NULL);
+}
+
+static void unrouted_tunnel_to_unrouted(enum routing_event event,
+					struct child_sa *child,
+					where_t where)
+{
+	/* currently down and unrouted */
+	struct connection *c = child->sa.st_connection;
+	delete_spd_kernel_policies(&c->child.spds,
+				   EXPECT_KERNEL_POLICY_OK,
+				   child->sa.st_logger,
+				   where, "delete");
+	/*
+	 * update routing; route_owner() will see this and not
+	 * think this route is the owner?
+	 */
+	set_routing(event, c, RT_UNROUTED, NULL);
+}
+
 static void teardown_unrouted_tunnel(enum routing_event event,
 				     struct connection *c,
 				     struct child_sa **child,
 				     where_t where)
 {
 	if (scheduled_child_revival(*child, "received Delete/Notify")) {
-		routed_tunnel_to_routed_ondemand(event, (*child), where);
+		unrouted_tunnel_to_routed_ondemand(event, (*child), where);
 		return;
 	}
 
@@ -744,7 +783,7 @@ static void teardown_unrouted_tunnel(enum routing_event event,
 	 */
 	if (is_permanent(c) && c->policy.route) {
 		/* it's being stripped of the state, hence SOS_NOBODY */
-		routed_tunnel_to_routed_ondemand(event, (*child), where);
+		unrouted_tunnel_to_routed_ondemand(event, (*child), where);
 		return;
 	}
 
@@ -752,36 +791,11 @@ static void teardown_unrouted_tunnel(enum routing_event event,
 	 * Is there a failure shunt?
 	 */
 	if (is_permanent(c) && c->config->failure_shunt != SHUNT_NONE) {
-		routed_tunnel_to_routed_failure(event, (*child), where);
+		unrouted_tunnel_to_routed_failure(event, (*child), where);
 		return;
 	}
 
-	/*
-	 * Never delete permanent connections.
-	 */
-	if (is_permanent(c)) {
-		ldbg_routing((*child)->sa.st_logger,
-			     "keeping connection; it is permanent");
-		delete_spd_kernel_policies(&c->child.spds,
-					   EXPECT_KERNEL_POLICY_OK,
-					   (*child)->sa.st_logger,
-					   where, "delete");
-		/*
-		 * update routing; route_owner() will see this and not
-		 * think this route is the owner?
-		 */
-		set_routing(event, c, RT_UNROUTED, NULL);
-		do_updown_unroute(c, *child);
-		return;
-	}
-
-	PASSERT((*child)->sa.st_logger, is_instance(c));
-
-	delete_spd_kernel_policies(&c->child.spds,
-				   EXPECT_KERNEL_POLICY_OK,
-				   (*child)->sa.st_logger,
-				   where, "delete");
-	set_routing(event, c, RT_UNROUTED, NULL);
+	unrouted_tunnel_to_unrouted(event, *child, where);
 }
 
 static void teardown_unrouted_inbound(enum routing_event event,
