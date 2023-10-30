@@ -51,9 +51,8 @@ enum routing_event {
 	CONNECTION_ESTABLISH_OUTBOUND,
 	/* tear down a connection */
 	CONNECTION_DELETE_IKE,
-	CONNECTION_DELETE_CHILD,
 	CONNECTION_TIMEOUT_IKE,
-	CONNECTION_TIMEOUT_CHILD,
+	CONNECTION_TEARDOWN_CHILD,
 	/* mobike */
 	CONNECTION_SUSPEND,
 	CONNECTION_RESUME,
@@ -75,9 +74,8 @@ static const char *routing_event_name[] = {
 	S(CONNECTION_RESPOND_IKE),
 	S(CONNECTION_RESPOND_CHILD),
 	S(CONNECTION_DELETE_IKE),
-	S(CONNECTION_DELETE_CHILD),
+	S(CONNECTION_TEARDOWN_CHILD),
 	S(CONNECTION_TIMEOUT_IKE),
-	S(CONNECTION_TIMEOUT_CHILD),
 	S(CONNECTION_SUSPEND),
 	S(CONNECTION_RESUME),
 #undef S
@@ -94,6 +92,7 @@ struct routing_annex {
 	struct ike_sa **ike;
 	struct child_sa **child;
 	enum initiated_by initiated_by;
+	const char *story;
 	bool (*dispatch_ok)(struct connection *c, struct logger *logger, const struct routing_annex *e);
 	void (*post_op)(const struct routing_annex *e);
 	where_t where;
@@ -119,8 +118,7 @@ static bool connection_cannot_die(enum routing_event event,
 			    NULL);
 	const char *subplot = (event == CONNECTION_DELETE_IKE ? "delete IKE SA" :
 			       event == CONNECTION_TIMEOUT_IKE ? "timeout IKE_SA" :
-			       event == CONNECTION_DELETE_CHILD ? "delete Child SA" :
-			       event == CONNECTION_TIMEOUT_CHILD ? "timeout Child_SA" :
+			       event == CONNECTION_TEARDOWN_CHILD ? e->story :
 			       event == CONNECTION_DISOWN ? "re-schedule" :
 			       "???");
 	return scheduled_revival(c, st, subplot, logger);
@@ -912,9 +910,7 @@ static void child_delete_post_op(const struct routing_annex *e)
 	delete_child_sa(e->child);
 }
 
-static void zap_child(struct child_sa **child,
-		      enum routing_event child_event,
-		      where_t where)
+static void zap_child(struct child_sa **child, const char *story, where_t where)
 {
 	struct connection *cc = (*child)->sa.st_connection;
 	struct logger *logger = clone_logger((*child)->sa.logger, HERE); /* must free */
@@ -927,12 +923,13 @@ static void zap_child(struct child_sa **child,
 		 */
 		.dispatch_ok = child_dispatch_ok,
 		.post_op = child_delete_post_op,
+		.story = story,
 	};
 
 	/*
 	 * Let state machine figure out how to react.
 	 */
-	dispatch(child_event, cc, logger, &annex);
+	dispatch(CONNECTION_TEARDOWN_CHILD, cc, logger, &annex);
 
 	PEXPECT(logger, (*child) == NULL);
 	free_logger(&logger, HERE);
@@ -940,12 +937,12 @@ static void zap_child(struct child_sa **child,
 
 void connection_delete_child(struct child_sa **child, where_t where)
 {
-	zap_child(child, CONNECTION_DELETE_CHILD, where);
+	zap_child(child, "delete Child SA", where);
 }
 
 void connection_timeout_child(struct child_sa **child, where_t where)
 {
-	zap_child(child, CONNECTION_TIMEOUT_CHILD, where);
+	zap_child(child, "timeout Child SA", where);
 }
 
 /*
@@ -1391,13 +1388,12 @@ static bool dispatch_1(enum routing_event event,
 		 */
 		return true;
 
-	case X(DELETE_CHILD, UNROUTED_BARE_NEGOTIATION, PERMANENT):
 	case X(DELETE_IKE, UNROUTED_BARE_NEGOTIATION, INSTANCE):
 	case X(DELETE_IKE, UNROUTED_BARE_NEGOTIATION, PERMANENT):
 	case X(DISOWN, UNROUTED_BARE_NEGOTIATION, INSTANCE):
-	case X(TIMEOUT_CHILD, UNROUTED, PERMANENT): /* permanent+up */
-	case X(TIMEOUT_CHILD, UNROUTED_BARE_NEGOTIATION, INSTANCE):
-	case X(TIMEOUT_CHILD, UNROUTED_BARE_NEGOTIATION, PERMANENT):
+	case X(TEARDOWN_CHILD, UNROUTED_BARE_NEGOTIATION, PERMANENT):
+	case X(TEARDOWN_CHILD, UNROUTED, PERMANENT): /* permanent+up */
+	case X(TEARDOWN_CHILD, UNROUTED_BARE_NEGOTIATION, INSTANCE):
 	case X(TIMEOUT_IKE, UNROUTED_BARE_NEGOTIATION, INSTANCE):
 	case X(TIMEOUT_IKE, UNROUTED_BARE_NEGOTIATION, PERMANENT):
 		if (connection_cannot_die(event, c, logger, e)) {
@@ -1407,7 +1403,7 @@ static bool dispatch_1(enum routing_event event,
 		set_routing(event, c, RT_UNROUTED, NULL);
 		return true;
 
-	case X(DELETE_CHILD, ROUTED_NEGOTIATION, PERMANENT):
+	case X(TEARDOWN_CHILD, ROUTED_NEGOTIATION, PERMANENT):
 		/*
 		 * For instance, things fail during IKE_AUTH.
 		 */
@@ -1462,8 +1458,7 @@ static bool dispatch_1(enum routing_event event,
 		/* connection lives to fight another day */
 		return true;
 
-	case X(DELETE_CHILD, UNROUTED_NEGOTIATION, INSTANCE):
-	case X(TIMEOUT_CHILD, UNROUTED_NEGOTIATION, INSTANCE):
+	case X(TEARDOWN_CHILD, UNROUTED_NEGOTIATION, INSTANCE):
 		if (connection_cannot_die(event, c, logger, e)) {
 			unrouted_negotiation_to_unrouted(event, c, logger, e->where, "fail");
 			return true;
@@ -1528,26 +1523,20 @@ static bool dispatch_1(enum routing_event event,
 		 */
 		return true;
 
-	case X(DELETE_CHILD, ROUTED_TUNNEL, INSTANCE):
-	case X(DELETE_CHILD, ROUTED_TUNNEL, PERMANENT):
-	case X(TIMEOUT_CHILD, ROUTED_TUNNEL, INSTANCE):
-	case X(TIMEOUT_CHILD, ROUTED_TUNNEL, PERMANENT):
+	case X(TEARDOWN_CHILD, ROUTED_TUNNEL, INSTANCE):
+	case X(TEARDOWN_CHILD, ROUTED_TUNNEL, PERMANENT):
 		/* permenant connections are never deleted */
 		teardown_routed_tunnel(event, c, e->child, e->where);
 		return true;
 
-	case X(DELETE_CHILD, UNROUTED_TUNNEL, INSTANCE):
-	case X(DELETE_CHILD, UNROUTED_TUNNEL, PERMANENT):
-	case X(TIMEOUT_CHILD, UNROUTED_TUNNEL, INSTANCE):
-	case X(TIMEOUT_CHILD, UNROUTED_TUNNEL, PERMANENT):
+	case X(TEARDOWN_CHILD, UNROUTED_TUNNEL, INSTANCE):
+	case X(TEARDOWN_CHILD, UNROUTED_TUNNEL, PERMANENT):
 		ldbg_routing(logger, "OOPS: UNROUTED_TUNNEL isn't routed!");
 		teardown_unrouted_tunnel(event, c, e->child, e->where);
 		return true;
 
-	case X(DELETE_CHILD, UNROUTED_INBOUND, INSTANCE):
-	case X(DELETE_CHILD, UNROUTED_INBOUND, PERMANENT):
-	case X(TIMEOUT_CHILD, UNROUTED_INBOUND, INSTANCE):
-	case X(TIMEOUT_CHILD, UNROUTED_INBOUND, PERMANENT):
+	case X(TEARDOWN_CHILD, UNROUTED_INBOUND, INSTANCE):
+	case X(TEARDOWN_CHILD, UNROUTED_INBOUND, PERMANENT):
 		/* ikev1-xfrmi-02-aggr */
 		/*
 		 * IKEv1 responder mid way through establishing child
@@ -1559,10 +1548,8 @@ static bool dispatch_1(enum routing_event event,
 		teardown_unrouted_inbound(event, c, e->child, e->where);
 		return true;
 
-	case X(DELETE_CHILD, UNROUTED_INBOUND_NEGOTIATION, INSTANCE):
-	case X(DELETE_CHILD, UNROUTED_INBOUND_NEGOTIATION, PERMANENT):
-	case X(TIMEOUT_CHILD, UNROUTED_INBOUND_NEGOTIATION, INSTANCE):
-	case X(TIMEOUT_CHILD, UNROUTED_INBOUND_NEGOTIATION, PERMANENT):
+	case X(TEARDOWN_CHILD, UNROUTED_INBOUND_NEGOTIATION, INSTANCE):
+	case X(TEARDOWN_CHILD, UNROUTED_INBOUND_NEGOTIATION, PERMANENT):
 		/*
 		 * IKEv1 responder mid way through establishing child
 		 * gets a timeout.  Full down_routed_tunnel is
@@ -1967,8 +1954,8 @@ static bool dispatch_1(enum routing_event event,
 	case X(UNROUTE, UNROUTED, LABELED_CHILD):
 		ldbg_routing(logger, "already unrouted");
 		return true;
-	case X(DELETE_CHILD, UNROUTED_INBOUND, LABELED_CHILD):
-	case X(DELETE_CHILD, UNROUTED_TUNNEL, LABELED_CHILD):
+	case X(TEARDOWN_CHILD, UNROUTED_INBOUND, LABELED_CHILD):
+	case X(TEARDOWN_CHILD, UNROUTED_TUNNEL, LABELED_CHILD):
 		set_routing(event, c, RT_UNROUTED, NULL);
 		return true;
 
