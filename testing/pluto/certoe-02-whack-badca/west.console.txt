@@ -39,6 +39,8 @@ west #
  ../../guestbin/ipsec-kernel-state.sh
 west #
  ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.2.45/32 dst 192.1.2.23/32
+	dir out priority 0 ptype main
 src 127.0.0.1/32 dst 192.1.2.45/32
 	dir fwd priority PRIORITY ptype main
 src 127.0.0.1/32 dst 192.1.2.45/32
