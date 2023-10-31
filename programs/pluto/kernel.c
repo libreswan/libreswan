@@ -527,14 +527,50 @@ static void ldbg_spd(struct logger *logger, unsigned indent,
 	}
 }
 
-static const struct spd_route *raw_spd_owner(const ip_selector *local,
-					     const struct spd_route *c_spd,
-					     enum routing min_routing,
-					     struct logger *logger,
-					     where_t where,
-					     const char *func,
-					     unsigned indent)
+struct spd_owner {
+	const struct spd_route *policy;
+	const struct spd_route *route;
+};
+
+static void ldbg_owner(struct logger *logger, const struct spd_owner *owner,
+		       const ip_selector *local, const ip_selector *remote,
+		       enum routing min_routing, const char *who)
 {
+	if (owner->policy != NULL) {
+		selector_pair_buf spb;
+		ldbg_spd(logger, 0, owner->policy,
+			 "%s: is policy owner of %s with routing >= %s",
+			 who, str_selector_pair(local, remote, &spb),
+			 enum_name_short(&routing_names, min_routing));
+	} else {
+		selector_pair_buf spb;
+		ldbg(logger, "%s: no policy owner of %s with routing >= %s",
+		     who, str_selector_pair(local, remote, &spb),
+		     enum_name_short(&routing_names, min_routing));
+	}
+	if (owner->route != NULL) {
+		selector_pair_buf spb;
+		ldbg_spd(logger, 0, owner->policy,
+			 "%s: is route owner of %s with routing >= %s",
+			 who, str_selector_pair(local, remote, &spb),
+			 enum_name_short(&routing_names, min_routing));
+	} else {
+		selector_pair_buf spb;
+		ldbg(logger, "%s: no route owner of %s with routing >= %s",
+		     who, str_selector_pair(local, remote, &spb),
+		     enum_name_short(&routing_names, min_routing));
+	}
+}
+
+static struct spd_owner raw_spd_owner(const ip_selector *local,
+				      const struct spd_route *c_spd,
+				      enum routing min_routing,
+				      struct logger *logger,
+				      where_t where,
+				      const char *func,
+				      unsigned indent)
+{
+	const struct connection *c = c_spd->connection;
 	const ip_selector *remote = &c_spd->remote->client;
 
 	selector_pair_buf spb;
@@ -543,7 +579,7 @@ static const struct spd_route *raw_spd_owner(const ip_selector *local,
 	     str_selector_pair(local, remote, &spb),
 	     enum_name_short(&routing_names, min_routing));
 
-	const struct spd_route *owner = NULL;
+	struct spd_owner owner = {0};
 
 	struct spd_route_filter srf = {
 		.remote_client_range = remote,
@@ -576,6 +612,17 @@ static const struct spd_route *raw_spd_owner(const ip_selector *local,
 			continue;
 		}
 
+		if (c->clonedfrom == d) {
+			enum_buf rb;
+			ldbg_spd(logger, indent, d_spd,
+				 "[skipped]; is connection parent with routing >= %s %s",
+				 str_enum_short(&routing_names, min_routing, &rb),
+				 bool_str(d->child.routing >= min_routing));
+#if 0 /* spd_conflict() */
+			continue;
+#endif
+		}
+
 		if (d->child.routing < min_routing) {
 			ldbg_spd(logger, indent, d_spd, "skipped; %s is insufficient routing",
 				 enum_name_short(&routing_names, min_routing));
@@ -585,13 +632,9 @@ static const struct spd_route *raw_spd_owner(const ip_selector *local,
 		/* fast lookup did it's job! */
 		PEXPECT(logger, selector_range_eq_selector_range(*remote,
 								 d_spd->remote->client));
+
 		if (!selector_eq_selector(*remote, d_spd->remote->client)) {
 			ldbg_spd(logger, indent, d_spd, "skipped; different remote selectors");
-			continue;
-		}
-
-		if (!selector_eq_selector(*local, d_spd->local->client)) {
-			ldbg_spd(logger, indent, d_spd, "skipped; different local selectors");
 			continue;
 		}
 
@@ -600,37 +643,76 @@ static const struct spd_route *raw_spd_owner(const ip_selector *local,
 		 * out marks differ (after masking).
 		 */
 
-		const struct sa_marks *sa_marks = &c_spd->connection->sa_marks;
-		if ((sa_marks->in.val & sa_marks->in.mask) != (d->sa_marks.in.val & d->sa_marks.in.mask)) {
+		if ((c->sa_marks.in.val & c->sa_marks.in.mask) !=
+		    (d->sa_marks.in.val & d->sa_marks.in.mask)) {
 			ldbg_spd(logger, indent, d_spd,
 				 "skipped; marks.in %"PRIu32"/%#08"PRIx32" vs %"PRIu32"/%#08"PRIx32,
-				 sa_marks->in.val, sa_marks->in.mask,
+				 c->sa_marks.in.val, c->sa_marks.in.mask,
 				 d->sa_marks.in.val, d->sa_marks.in.mask);
 			continue;
 		}
-		if ((sa_marks->out.val & sa_marks->out.mask) != (d->sa_marks.out.val & d->sa_marks.out.mask)) {
+
+		if ((c->sa_marks.out.val & c->sa_marks.out.mask) !=
+		    (d->sa_marks.out.val & d->sa_marks.out.mask)) {
 			ldbg_spd(logger, indent, d_spd,
 				 "skipped; marks.out %"PRIu32"/%#08"PRIx32" vs %"PRIu32"/%#08"PRIx32,
-				 sa_marks->out.val, sa_marks->out.mask,
+				 c->sa_marks.out.val, c->sa_marks.out.mask,
 				 d->sa_marks.out.val, d->sa_marks.out.mask);
 			continue;
 		}
 
 		/*
-		 * Update head/hidden if it bests SPD
+		 * Finally selector/route specific checks.
 		 */
-		if (owner == NULL) {
-			ldbg_spd(logger, indent, d_spd, "policy saved; first match");
-			owner = d_spd;
-		} else if (owner->connection->child.routing < d->child.routing) {
-			ldbg_spd(logger, indent, d_spd, "policy saved; better match");
-			owner = d_spd;
+
+		if (!selector_eq_selector(*local, d_spd->local->client)) {
+			ldbg_spd(logger, indent, d_spd, "skipped policy; different local selectors");
+#if 0 /* spd_conflict() */
+		} else if (c->config->overlapip && d->config->overlapip) {
+			ldbg_spd(logger, indent, d_spd, "policy skipped;  both ends have POLICY_OVERLAPIP");
+#endif
 		} else {
-			ldbg_spd(logger, indent, d_spd, "skipped policy; not the best");
+			/* winner? */
+			if (owner.policy == NULL) {
+				ldbg_spd(logger, indent, d_spd, "policy saved; first match");
+				owner.policy = d_spd;
+			} else if (owner.policy->connection->child.routing < d->child.routing) {
+				ldbg_spd(logger, indent, d_spd, "policy saved; better match");
+				owner.policy = d_spd;
+			} else {
+				ldbg_spd(logger, indent, d_spd, "skipped policy; not the best");
+			}
 		}
 
+
+		/*
+		 * XXX: why?
+		 *
+		 * XXX: isn't host address comparison a routing and
+		 * not SPD thing?  Ignoring a conflicting SPD because
+		 * of the routing table seems wrong - the SPD still
+		 * conflicts so only one is allowed.
+		 */
+		if (!address_eq_address(c->local->host.addr,
+					d->local->host.addr)) {
+			ldbg_spd(logger, indent, d_spd, "route skipped; different local address?!?");
+		} else if (!routed(d)) {
+			ldbg_spd(logger, indent, d_spd, "route skipped; not routed");
+		} else {
+			/* winner? */
+			if (owner.route == NULL) {
+				ldbg_spd(logger, indent, d_spd, "saved route; first route match");
+				owner.route = d_spd;
+			} else if (owner.route->connection->child.routing < d->child.routing) {
+				ldbg_spd(logger, indent, d_spd, "saved route; better match");
+				owner.route = d_spd;
+			} else {
+				ldbg_spd(logger, indent, d_spd, "skipped route;  not the best");
+			}
+		}
 	}
 
+	ldbg_owner(logger, &owner, local, remote, min_routing, __func__);
 	return owner;
 }
 
@@ -639,14 +721,14 @@ const struct spd_route *bare_cat_owner(const ip_selector *local,
 				       struct logger *logger, where_t where)
 {
 	return raw_spd_owner(local, spd, RT_UNROUTED + 1,
-			     logger, where, __func__, 0);
+			     logger, where, __func__, 0).policy;
 }
 
 const struct spd_route *bare_spd_owner(const struct spd_route *spd,
 				       struct logger *logger, where_t where)
 {
 	return raw_spd_owner(&spd->local->client, spd, RT_UNROUTED + 1,
-			     logger, where, __func__, 0);
+			     logger, where, __func__, 0).policy;
 }
 
 const struct spd_route *spd_owner(const struct spd_route *spd,
@@ -654,7 +736,7 @@ const struct spd_route *spd_owner(const struct spd_route *spd,
 				  struct logger *logger, where_t where, unsigned indent)
 {
 	return raw_spd_owner(&spd->local->client, spd, new_routing,
-			     logger, where, __func__, indent);
+			     logger, where, __func__, indent).policy;
 }
 
 /*
@@ -662,38 +744,34 @@ const struct spd_route *spd_owner(const struct spd_route *spd,
  * SPD.
  */
 
-struct spd_owner {
-	const struct spd_route *policy;
-	const struct spd_route *route;
-};
-
-static const struct spd_owner null_spd_owner;
-
 static struct spd_owner spd_conflict(const struct spd_route *c_spd,
 				     unsigned indent)
 {
 	struct connection *c = c_spd->connection;
+	const ip_selector *local = &c_spd->local->client;
+	const ip_selector *remote = &c_spd->remote->client;
+	enum routing min_routing = RT_UNROUTED + 1;
+	const char *func = __func__;
 
 	struct logger *logger = c->logger;
 	if (!oriented(c)) {
 		llog(RC_LOG, logger,
 		     "connection no longer oriented - system interface change?");
-		return null_spd_owner;
+		return (struct spd_owner) {0};
 	}
 
 	selector_pair_buf spb;
-	ldbg(logger, "%*slooking for SPD owners of %s",
-	     indent, "",
-	     str_selector_pair(&c_spd->local->client, &c_spd->remote->client, &spb));
+	ldbg(logger, "%*s%s() looking for SPD owner of %s with routing >= %s",
+	     indent, "", func,
+	     str_selector_pair(local, remote, &spb),
+	     enum_name_short(&routing_names, min_routing));
 
-	struct spd_owner owner = null_spd_owner;
+	struct spd_owner owner = {0};
 
 	struct spd_route_filter srf = {
-		.remote_client_range = &c_spd->remote->client,
+		.remote_client_range = remote,
 		.where = HERE,
 	};
-
-	enum routing min_routing = RT_UNROUTED + 1;
 
 	indent += 2;
 	while (next_spd_route(NEW2OLD, &srf)) {
@@ -722,6 +800,15 @@ static struct spd_owner spd_conflict(const struct spd_route *c_spd,
 			continue;
 		}
 
+		if (c->clonedfrom == d) {
+			enum_buf rb;
+			ldbg_spd(logger, indent, d_spd,
+				 "skipped; is connection parent with routing >= %s %s",
+				 str_enum_short(&routing_names, min_routing, &rb),
+				 bool_str(d->child.routing >= min_routing));
+			continue;
+		}
+
 		if (d->child.routing < min_routing) {
 			ldbg_spd(logger, indent, d_spd, "skipped; %s is insufficient routing",
 				 enum_name_short(&routing_names, min_routing));
@@ -731,8 +818,8 @@ static struct spd_owner spd_conflict(const struct spd_route *c_spd,
 		/* fast lookup did it's job! */
 		PEXPECT(logger, selector_range_eq_selector_range(c_spd->remote->client,
 								 d_spd->remote->client));
-		if (!selector_eq_selector(c_spd->remote->client,
-					  d_spd->remote->client)) {
+
+		if (!selector_eq_selector(*remote, d_spd->remote->client)) {
 			ldbg_spd(logger, indent, d_spd, "skipped; different remote selectors");
 			continue;
 		}
@@ -742,27 +829,21 @@ static struct spd_owner spd_conflict(const struct spd_route *c_spd,
 		 * out marks differ (after masking).
 		 */
 
-		const struct sa_marks *sa_marks = &c->sa_marks;
-
-		if ((c->sa_marks.in.val & c->sa_marks.in.mask) != (d->sa_marks.in.val & d->sa_marks.in.mask)) {
+		if ((c->sa_marks.in.val & c->sa_marks.in.mask) !=
+		    (d->sa_marks.in.val & d->sa_marks.in.mask)) {
 			ldbg_spd(logger, indent, d_spd,
 				 "skipped; marks.in %"PRIu32"/%#08"PRIx32" vs %"PRIu32"/%#08"PRIx32,
-				 sa_marks->in.val, sa_marks->in.mask,
+				 c->sa_marks.in.val, c->sa_marks.in.mask,
 				 d->sa_marks.in.val, d->sa_marks.in.mask);
 			continue;
 		}
 
-		if ((c->sa_marks.out.val & c->sa_marks.out.mask) != (d->sa_marks.out.val & d->sa_marks.out.mask)) {
+		if ((c->sa_marks.out.val & c->sa_marks.out.mask) !=
+		    (d->sa_marks.out.val & d->sa_marks.out.mask)) {
 			ldbg_spd(logger, indent, d_spd,
 				 "skipped; marks.out %"PRIu32"/%#08"PRIx32" vs %"PRIu32"/%#08"PRIx32,
-				 sa_marks->out.val, sa_marks->out.mask,
+				 c->sa_marks.out.val, c->sa_marks.out.mask,
 				 d->sa_marks.out.val, d->sa_marks.out.mask);
-			continue;
-		}
-
-		if (c->clonedfrom == d) {
-			ldbg_spd(logger, indent, d_spd,
-				 "skipped; is connection parent");
 			continue;
 		}
 
@@ -814,6 +895,7 @@ static struct spd_owner spd_conflict(const struct spd_route *c_spd,
 		}
 	}
 
+	ldbg_owner(logger, &owner, local, remote, min_routing, __func__);
 	return owner;
 }
 
