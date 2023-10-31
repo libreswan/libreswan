@@ -170,6 +170,7 @@ enum_names shunt_policy_names = {
 
 static const char *const shunt_kind_name[] = {
 #define A(S) [S] = #S
+	A(SHUNT_KIND_NONE),
 	A(SHUNT_KIND_NEVER_NEGOTIATE),
 	A(SHUNT_KIND_ONDEMAND),
 	A(SHUNT_KIND_NEGOTIATION),

@@ -916,13 +916,14 @@ enum shunt_policy {
 
 enum shunt_kind {
 #define SHUNT_KIND_FLOOR 0
+	SHUNT_KIND_NONE,
 	SHUNT_KIND_IPSEC,		/* always SHUNT_IPSEC */
 	SHUNT_KIND_NEVER_NEGOTIATE,
 	SHUNT_KIND_NEGOTIATION,
 	SHUNT_KIND_ONDEMAND,		/* always SHUNT_TRAP */
 	SHUNT_KIND_FAILURE,
 	SHUNT_KIND_BLOCK,      		/* always SHUNT_DROP */
-#define never_negotiate_shunt shunt[SHUNT_KIND_NEVER_NEGOTIATE]	/* before */
+#define never_negotiate_shunt shunt[SHUNT_KIND_NEVER_NEGOTIATE]
 #define negotiation_shunt     shunt[SHUNT_KIND_NEGOTIATION]	/* during */
 #define failure_shunt         shunt[SHUNT_KIND_FAILURE]		/* after */
 #define SHUNT_KIND_ROOF (SHUNT_KIND_BLOCK+1)

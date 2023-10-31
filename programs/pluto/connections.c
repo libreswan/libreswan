@@ -1873,6 +1873,9 @@ static enum connection_kind extract_connection_end_kind(const struct whack_messa
 static bool shunt_ok(enum shunt_kind shunt_kind, enum shunt_policy shunt_policy)
 {
 	static const bool ok[SHUNT_KIND_ROOF][SHUNT_POLICY_ROOF] = {
+		[SHUNT_KIND_NONE] {
+			[SHUNT_UNSET] = true,
+		},
 		[SHUNT_KIND_NEVER_NEGOTIATE] = {
 			[SHUNT_UNSET] = true,
 			[SHUNT_NONE] = false, [SHUNT_HOLD] = false, [SHUNT_TRAP] = false, [SHUNT_PASS] = true,  [SHUNT_DROP] = true,  [SHUNT_REJECT] = true,
