@@ -359,27 +359,26 @@ bool connection_establish_child(struct ike_sa *ike, struct child_sa *child, wher
 enum shunt_kind routing_shunt_kind(enum routing routing)
 {
 	switch (routing) {
-	case RT_ROUTED_ONDEMAND:
-		return SHUNT_KIND_ONDEMAND;
+	case RT_UNROUTED:
+		return SHUNT_KIND_NONE;
 	case RT_ROUTED_NEVER_NEGOTIATE:
 		return SHUNT_KIND_NEVER_NEGOTIATE;
+	case RT_ROUTED_ONDEMAND:
+		return SHUNT_KIND_ONDEMAND;
 	case RT_UNROUTED_BARE_NEGOTIATION:
 	case RT_UNROUTED_NEGOTIATION:
 	case RT_ROUTED_NEGOTIATION:
 		return SHUNT_KIND_NEGOTIATION;
-	case RT_UNROUTED_FAILURE:
-	case RT_ROUTED_FAILURE:
-		return SHUNT_KIND_FAILURE;
 	case RT_UNROUTED_INBOUND:
 	case RT_UNROUTED_INBOUND_NEGOTIATION:
 	case RT_ROUTED_INBOUND_NEGOTIATION:
-		/*outbound;IPSEC?*/
-		return SHUNT_KIND_NEGOTIATION;
+		return SHUNT_KIND_NEGOTIATION; /*SHUNT_KIND_IPSEC?*/
 	case RT_UNROUTED_TUNNEL:
 	case RT_ROUTED_TUNNEL:
 		return SHUNT_KIND_IPSEC;
-	case RT_UNROUTED:
-		bad_case(routing);
+	case RT_UNROUTED_FAILURE:
+	case RT_ROUTED_FAILURE:
+		return SHUNT_KIND_FAILURE;
 	}
 	bad_case(routing);
 }
