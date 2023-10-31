@@ -744,9 +744,9 @@ const struct spd_route *bare_spd_owner(const struct spd_route *spd,
 			     logger, where, __func__, 0).policy;
 }
 
-const struct spd_route *spd_owner(const struct spd_route *spd,
-				  enum routing new_routing,
-				  struct logger *logger, where_t where, unsigned indent)
+const struct spd_route *spd_policy_owner(const struct spd_route *spd,
+					 enum routing new_routing,
+					 struct logger *logger, where_t where, unsigned indent)
 {
 	return raw_spd_owner(&spd->local->client, spd, new_routing,
 			     logger, where, __func__, indent).policy;
@@ -918,7 +918,7 @@ static struct spd_owner spd_conflict(const struct spd_route *c_spd,
 	return owner;
 }
 
-const struct spd_route *route_owner(struct spd_route *spd)
+const struct spd_route *spd_route_owner(struct spd_route *spd)
 {
 	return spd_conflict(spd, 0).route;
 }

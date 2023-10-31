@@ -427,10 +427,10 @@ const struct spd_route *bare_spd_owner(const struct spd_route *spd,
 const struct spd_route *bare_cat_owner(const ip_selector *local, const struct spd_route *spd,
 				       struct logger *logger, where_t where);
 
-const struct spd_route *spd_owner(const struct spd_route *spd,
-				  enum routing new_routing,
-				  struct logger *logger, where_t where, unsigned indent);
+const struct spd_route *spd_policy_owner(const struct spd_route *spd,
+					 enum routing new_routing,
+					 struct logger *logger, where_t where, unsigned indent);
 
-const struct spd_route *route_owner(struct spd_route *spd);
+const struct spd_route *spd_route_owner(struct spd_route *spd);
 
 #endif
