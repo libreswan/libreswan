@@ -516,7 +516,7 @@ static void ldbg_spd(struct logger *logger, unsigned indent,
 		jam_string(buf, " ");
 		jam_enum_short(buf, &routing_names, spd->connection->child.routing);
 		jam_string(buf, "[");
-		jam_enum_short(buf, &shunt_kind_names, routing_shunt_kind(spd->connection->child.routing));
+		jam_enum_short(buf, &shunt_kind_names, spd_shunt_kind(spd));
 		jam_string(buf, "] ");
 		jam_selector_pair(buf, &spd->local->client, &spd->remote->client);
 		jam_string(buf, " ");
@@ -622,7 +622,8 @@ static struct spd_owner raw_spd_owner(const ip_selector *c_local,
 			continue;
 		}
 
-		enum shunt_kind d_shunt_kind = routing_shunt_kind(d->child.routing);
+		enum shunt_kind d_shunt_kind = spd_shunt_kind(d_spd);
+
 		if (d_shunt_kind < c_shunt_kind) {
 			ldbg_spd(logger, indent, d_spd, "skipped; < %s[%s]",
 				 enum_name_short(&routing_names, c_routing),
@@ -682,21 +683,20 @@ static struct spd_owner raw_spd_owner(const ip_selector *c_local,
 			ldbg_spd(logger, indent, d_spd, "skipped policy; different local selectors");
 #if 0 /* spd_conflict() */
 		} else if (c->config->overlapip && d->config->overlapip) {
-			ldbg_spd(logger, indent, d_spd, "policy skipped;  both ends have POLICY_OVERLAPIP");
+			ldbg_spd(logger, indent, d_spd, "skipped policy;  both ends have POLICY_OVERLAPIP");
 #endif
 		} else {
 			/* winner? */
 			if (owner.policy == NULL) {
-				ldbg_spd(logger, indent, d_spd, "policy saved; first match");
+				ldbg_spd(logger, indent, d_spd, "saved policy; first match");
 				owner.policy = d_spd;
-			} else if (owner.policy->connection->child.routing < d->child.routing) {
-				ldbg_spd(logger, indent, d_spd, "policy saved; better match");
+			} else if (spd_shunt_kind(owner.policy) < d_shunt_kind) {
+				ldbg_spd(logger, indent, d_spd, "saved policy; better match");
 				owner.policy = d_spd;
 			} else {
 				ldbg_spd(logger, indent, d_spd, "skipped policy; not the best");
 			}
 		}
-
 
 		/*
 		 * XXX: why?
@@ -708,15 +708,15 @@ static struct spd_owner raw_spd_owner(const ip_selector *c_local,
 		 */
 		if (!address_eq_address(c->local->host.addr,
 					d->local->host.addr)) {
-			ldbg_spd(logger, indent, d_spd, "route skipped; different local address?!?");
+			ldbg_spd(logger, indent, d_spd, "skipped route; different local address?!?");
 		} else if (!routed(d)) {
-			ldbg_spd(logger, indent, d_spd, "route skipped; not routed");
+			ldbg_spd(logger, indent, d_spd, "skipped route; not routed");
 		} else {
 			/* winner? */
 			if (owner.route == NULL) {
-				ldbg_spd(logger, indent, d_spd, "saved route; first route match");
+				ldbg_spd(logger, indent, d_spd, "saved route; first match");
 				owner.route = d_spd;
-			} else if (owner.route->connection->child.routing < d->child.routing) {
+			} else if (spd_shunt_kind(owner.route) < d_shunt_kind) {
 				ldbg_spd(logger, indent, d_spd, "saved route; better match");
 				owner.route = d_spd;
 			} else {
@@ -815,7 +815,8 @@ static struct spd_owner spd_conflict(const struct spd_route *c_spd,
 			continue;
 		}
 
-		enum shunt_kind d_shunt_kind = routing_shunt_kind(d->child.routing);
+		enum shunt_kind d_shunt_kind = spd_shunt_kind(d_spd);
+
 		if (d_shunt_kind < c_shunt_kind) {
 			ldbg_spd(logger, indent, d_spd, "skipped; < %s[%s]",
 				 enum_name_short(&routing_names, c_routing),
@@ -878,7 +879,7 @@ static struct spd_owner spd_conflict(const struct spd_route *c_spd,
 			if (owner.policy == NULL) {
 				ldbg_spd(logger, indent, d_spd, "saved policy; first match");
 				owner.policy = d_spd;
-			} else if (owner.policy->connection->child.routing < d->child.routing) {
+			} else if (spd_shunt_kind(owner.policy) < d_shunt_kind) {
 				ldbg_spd(logger, indent, d_spd, "saved policy; better match");
 				owner.policy = d_spd;
 			} else {
@@ -896,15 +897,15 @@ static struct spd_owner spd_conflict(const struct spd_route *c_spd,
 		 */
 		if (!address_eq_address(c->local->host.addr,
 					d->local->host.addr)) {
-			ldbg_spd(logger, indent, d_spd, "route skipped; different local address?!?");
+			ldbg_spd(logger, indent, d_spd, "skipped route; different local address?!?");
 		} else if (!routed(d)) {
-			ldbg_spd(logger, indent, d_spd, "route skipped; not routed");
+			ldbg_spd(logger, indent, d_spd, "skipped route; not routed");
 		} else {
 			/* winner? */
 			if (owner.route == NULL) {
-				ldbg_spd(logger, indent, d_spd, "saved route; first route match");
+				ldbg_spd(logger, indent, d_spd, "saved route; first match");
 				owner.route = d_spd;
-			} else if (owner.route->connection->child.routing < d->child.routing) {
+			} else if (spd_shunt_kind(owner.route) < d_shunt_kind) {
 				ldbg_spd(logger, indent, d_spd, "saved route; better match");
 				owner.route = d_spd;
 			} else {

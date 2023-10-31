@@ -383,6 +383,11 @@ enum shunt_kind routing_shunt_kind(enum routing routing)
 	bad_case(routing);
 }
 
+enum shunt_kind spd_shunt_kind(const struct spd_route *spd)
+{
+	return routing_shunt_kind(spd->connection->child.routing);
+}
+
 bool routed(const struct connection *c)
 {
 	enum routing r = c->child.routing;

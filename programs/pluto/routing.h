@@ -33,6 +33,7 @@ struct child_sa;
 struct ike_sa;
 enum direction;
 enum initiated_by;
+struct spd_route;
 
 /*
  * Routing status.
@@ -72,6 +73,7 @@ extern const struct enum_names routing_tails;
 
 bool routed(const struct connection *c);
 enum shunt_kind routing_shunt_kind(enum routing routing);
+enum shunt_kind spd_shunt_kind(const struct spd_route *spd);
 bool kernel_policy_installed(const struct connection *c);
 
 void connection_routing_init(struct connection *);
