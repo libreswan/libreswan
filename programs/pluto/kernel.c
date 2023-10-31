@@ -550,7 +550,7 @@ static void ldbg_owner(struct logger *logger, const struct spd_owner *owner,
 	}
 	if (owner->route != NULL) {
 		selector_pair_buf spb;
-		ldbg_spd(logger, 0, owner->policy,
+		ldbg_spd(logger, 0, owner->route,
 			 "%s: is route owner of %s with routing >= %s",
 			 who, str_selector_pair(local, remote, &spb),
 			 enum_name_short(&routing_names, min_routing));
