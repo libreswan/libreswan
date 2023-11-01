@@ -231,6 +231,19 @@ bool orient(struct connection **cp, struct logger *logger)
 	return true;
 }
 
+static void jam_if(struct jambuf *buf, const struct iface_endpoint *ifp)
+{
+	jam_string(buf, ifp->ip_dev->id_rname);
+	jam_string(buf, " ");
+	if (ifp->io->protocol->prefix != NULL) {
+		jam_string_human(buf, ifp->io->protocol->prefix);
+	} else {
+		jam_string_human(buf, ifp->io->protocol->name);
+	}
+	jam_string(buf, ":");
+	jam_endpoint(buf, &ifp->local_endpoint);
+}
+
 enum left_right orient_1(struct connection **cp, struct logger *logger)
 {
 	if (DBGP(DBG_BASE)) {
@@ -257,20 +270,23 @@ enum left_right orient_1(struct connection **cp, struct logger *logger)
 
 		if (!left && !right) {
 			endpoint_buf eb;
-			ldbg((*cp)->logger, "    interface %s endpoint %s does not match left or right",
+			ldbg((*cp)->logger, "    interface %s %s:%s does not match left or right",
 			     ifp->ip_dev->id_rname,
+			     ifp->io->protocol->name,
 			     str_endpoint(&ifp->local_endpoint, &eb));
 			continue;
 		}
 
 		if (left && right) {
 			/* too many choices */
-			address_buf ab;
 			connection_attach((*cp), logger);
-			llog(RC_LOG_SERIOUS, (*cp)->logger,
-			     "both sides of the connection match the interface %s %s",
-			     ifp->ip_dev->id_rname,
-			     str_address(&ifp->ip_dev->id_address, &ab));
+			connection_attach((*cp), logger);
+			LLOG_JAMBUF(RC_LOG_SERIOUS, (*cp)->logger, buf) {
+				jam_string(buf, "connection matches both left ");
+				jam_if(buf, ifp);
+				jam_string(buf, " and right ");
+				jam_if(buf, ifp);
+			}
 			terminate_and_down_connections(cp, logger, HERE);
 			connection_detach((*cp), logger);
 			return END_ROOF;
@@ -298,35 +314,16 @@ enum left_right orient_1(struct connection **cp, struct logger *logger)
 			pexpect(end != matching_end);
 			connection_attach((*cp), logger);
 			LLOG_JAMBUF(RC_LOG_SERIOUS, (*cp)->logger, buf) {
-				jam_string(buf, "both sides of the connection match");
-				if (streq(matching_ifp->ip_dev->id_rname,
-					  ifp->ip_dev->id_rname)) {
-					jam_string(buf, " the interface ");
-					jam_string(buf, ifp->ip_dev->id_rname);
-					jam_string(buf, ": ");
-					/*matched*/
-					jam_string(buf, (*cp)->end[matching_end].config->leftright);
-					jam_string(buf, " ");
-					jam_address(buf, &matching_ifp->ip_dev->id_address);
-					jam_string(buf, "; ");
-					jam_string(buf, (*cp)->end[end].config->leftright);
-					jam_string(buf, " ");
-					jam_address(buf, &ifp->ip_dev->id_address);
-				} else {
-					/*matched*/
-					jam_string(buf, ": ");
-					jam_string(buf, (*cp)->end[matching_end].config->leftright);
-					jam_string(buf, " ");
-					jam_string(buf, matching_ifp->ip_dev->id_rname);
-					jam_string(buf, " ");
-					jam_address(buf, &matching_ifp->ip_dev->id_address);
-					jam_string(buf, "; ");
-					jam_string(buf, (*cp)->end[end].config->leftright);
-					jam_string(buf, " ");
-					jam_string(buf, ifp->ip_dev->id_rname);
-					jam_string(buf, " ");
-					jam_address(buf, &ifp->ip_dev->id_address);
-				}
+				jam_string(buf, "connection matches both ");
+				/*previous-match*/
+				jam_string(buf, (*cp)->end[matching_end].config->leftright);
+				jam_string(buf, " ");
+				jam_if(buf, matching_ifp);
+				jam_string(buf, " and ");
+				/* new match */
+				jam_string(buf, (*cp)->end[end].config->leftright);
+				jam_string(buf, " ");
+				jam_if(buf, ifp);
 			}
 			terminate_and_down_connections(cp, logger, HERE);
 			connection_detach((*cp), logger);
