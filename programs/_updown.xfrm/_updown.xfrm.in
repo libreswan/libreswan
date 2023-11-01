@@ -502,7 +502,7 @@ addsource() {
         return ${st}
     fi
     # XFRMi interface IPs are managed in Pluto
-    if [ "${PLUTO_XFRMI_ROUTE}" == "yes" ]; then
+    if [ "${PLUTO_XFRMI_ROUTE}" = "yes" ]; then
         return ${st}
     fi
 
@@ -542,7 +542,7 @@ delsource() {
         return ${st}
     fi
     # XFRMi interface IPs are managed in Pluto
-    if [ "${PLUTO_XFRMI_ROUTE}" == "yes" ]; then
+    if [ "${PLUTO_XFRMI_ROUTE}" = "yes" ]; then
         return ${st}
     fi
 
