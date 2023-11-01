@@ -311,6 +311,31 @@ static void ldbg_bare_shunt(const struct logger *logger, const char *op, const s
 	}
 }
 
+static void LDBG_cross_check(struct logger *logger,
+			     const char *what,
+			     const struct spd_route *lhs,
+			     const struct spd_route *rhs,
+			     where_t where)
+{
+	LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+		jam_string(buf, "cross check ");
+		if (lhs == NULL) {
+			jam_string(buf, "none");
+		} else {
+			jam_spd(buf, lhs);
+		}
+		jam_string(buf, " and ");
+		if (rhs == NULL) {
+			jam_string(buf, "none");
+		} else {
+			jam_spd(buf, rhs);
+		}
+		jam_string(buf, " ");
+		jam_string(buf, what);
+	}
+	PEXPECT_WHERE(logger, where, lhs == rhs);
+}
+
 /*
  * Note: "why" must be in stable storage (not auto, not heap) because
  * we use it indefinitely without copying or pfreeing.
@@ -534,41 +559,45 @@ static void ldbg_spd(struct logger *logger, unsigned indent,
 struct spd_owner {
 	const struct spd_route *policy;
 	const struct spd_route *route;
+	const struct spd_route *cat;
 };
+
+static void LDBG_owner(struct logger *logger, const char *what,
+		       const struct spd_route *owner,
+		       const ip_selector *local, const ip_selector *remote,
+		       enum routing routing,
+		       enum shunt_kind shunt_kind,
+		       const char *who)
+{
+	if (owner != NULL) {
+		selector_pair_buf spb;
+		ldbg_spd(logger, 0, owner,
+			 "%s: is %s owner of %s with routing >= %s[%s]",
+			 who, what, str_selector_pair(local, remote, &spb),
+			 enum_name_short(&routing_names, routing),
+			 enum_name_short(&shunt_kind_names, shunt_kind));
+	} else {
+		selector_pair_buf spb;
+		ldbg(logger, "%s: no %s owner of %s with routing >= %s[%s]",
+		     who, what, str_selector_pair(local, remote, &spb),
+		     enum_name_short(&routing_names, routing),
+		     enum_name_short(&shunt_kind_names, shunt_kind));
+	}
+}
 
 static void ldbg_owner(struct logger *logger, const struct spd_owner *owner,
 		       const ip_selector *local, const ip_selector *remote,
 		       enum routing routing, const char *who)
 {
-	enum shunt_kind shunt_kind = routing_shunt_kind(routing);
+	if (DBGP(DBG_BASE)) {
+		enum shunt_kind shunt_kind = routing_shunt_kind(routing);
 
-	if (owner->policy != NULL) {
-		selector_pair_buf spb;
-		ldbg_spd(logger, 0, owner->policy,
-			 "%s: is policy owner of %s with routing >= %s[%s]",
-			 who, str_selector_pair(local, remote, &spb),
-			 enum_name_short(&routing_names, routing),
-			 enum_name_short(&shunt_kind_names, shunt_kind));
-	} else {
-		selector_pair_buf spb;
-		ldbg(logger, "%s: no policy owner of %s with routing >= %s[%s]",
-		     who, str_selector_pair(local, remote, &spb),
-		     enum_name_short(&routing_names, routing),
-		     enum_name_short(&shunt_kind_names, shunt_kind));
-	}
-	if (owner->route != NULL) {
-		selector_pair_buf spb;
-		ldbg_spd(logger, 0, owner->route,
-			 "%s: is route owner of %s with routing >= %s[%s]",
-			 who, str_selector_pair(local, remote, &spb),
-			 enum_name_short(&routing_names, routing),
-			 enum_name_short(&shunt_kind_names, shunt_kind));
-	} else {
-		selector_pair_buf spb;
-		ldbg(logger, "%s: no route owner of %s with routing >= %s[%s]",
-		     who, str_selector_pair(local, remote, &spb),
-		     enum_name_short(&routing_names, routing),
-		     enum_name_short(&shunt_kind_names, shunt_kind));
+		LDBG_owner(logger, "policy", owner->policy,
+			   local, remote, routing, shunt_kind, who);
+		LDBG_owner(logger, "route", owner->route,
+			   local, remote, routing, shunt_kind, who);
+		LDBG_owner(logger, "cat", owner->cat,
+			   local, remote, routing, shunt_kind, who);
 	}
 }
 
@@ -677,6 +706,25 @@ static struct spd_owner raw_spd_owner(const ip_selector *c_local,
 		}
 
 		/*
+		 * .cat specific checks.
+		 *
+		 * XXX: forming the local CLIENT from the local HOST is
+		 * needed.  That is what CAT (client address translation) is
+		 * all about.
+		 */
+
+		ip_selector c_local_host = selector_from_address(c_spd->local->host->addr);
+		if (!selector_eq_selector(c_local_host, d_spd->local->client)) {
+			ldbg_spd(logger, indent, d_spd, "skipped cat; different local selectors");
+#if 0 /* needed? */
+		} else if (c->config->overlapip && d->config->overlapip) {
+			ldbg_spd(logger, indent, d_spd, "skipped policy;  both ends have POLICY_OVERLAPIP");
+#endif
+		} else {
+			save_spd_owner(&owner.cat, "cat", d_spd, logger, indent);
+		}
+
+		/*
 		 * .policy specific checks.
 		 *
 		 * XXX: in spd_conflict() the shunt_kind check is a
@@ -749,8 +797,12 @@ const struct spd_route *bare_cat_owner(const ip_selector *local,
 				       const struct spd_route *spd,
 				       struct logger *logger, where_t where)
 {
-	return raw_spd_owner(local, spd, RT_UNROUTED + 1,
-			     logger, where, __func__, 0).policy;
+	struct spd_owner owner = raw_spd_owner(local, spd, RT_UNROUTED + 1,
+					       logger, where, __func__, 0);
+	if (DBGP(DBG_BASE)) {
+		LDBG_cross_check(logger, "cat", owner.cat, owner.policy, HERE);
+	}
+	return owner.policy;
 }
 
 const struct spd_route *bare_spd_owner(const struct spd_route *spd,
@@ -768,37 +820,13 @@ const struct spd_route *spd_policy_owner(const struct spd_route *spd,
 			     logger, where, __func__, indent).policy;
 }
 
-static void LDBG_cross_check(struct logger *logger,
-			     const char *what,
-			     const struct spd_route *conflict,
-			     const struct spd_route *raw)
-{
-	LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
-		jam_string(buf, "cross check conflict ");
-		if (conflict == NULL) {
-			jam_string(buf, "none");
-		} else {
-			jam_spd(buf, conflict);
-		}
-		jam_string(buf, " and raw ");
-		if (raw == NULL) {
-			jam_string(buf, "none");
-		} else {
-			jam_spd(buf, raw);
-		}
-		jam_string(buf, " ");
-		jam_string(buf, what);
-	}
-	PEXPECT(logger, conflict == raw);
-}
-
 const struct spd_route *spd_route_owner(struct spd_route *spd)
 {
 	struct spd_owner conflict = spd_conflict(spd, 0);
 	if (DBGP(DBG_BASE)) {
 		struct spd_owner raw = raw_spd_owner(&spd->local->client, spd, RT_UNROUTED + 1,
 						     spd->connection->logger, HERE, __func__, 0);
-		LDBG_cross_check(spd->connection->logger, "route", conflict.route, raw.route);
+		LDBG_cross_check(spd->connection->logger, "route", conflict.route, raw.route, HERE);
 	}
 	return conflict.route;
 }
@@ -994,7 +1022,7 @@ static bool get_connection_spd_conflict(struct spd_route *spd, struct logger *lo
 	if (DBGP(DBG_BASE)) {
 		struct spd_owner raw = raw_spd_owner(&spd->local->client, spd, RT_UNROUTED + 1,
 						     logger, HERE, __func__, 0);
-		LDBG_cross_check(logger, "route", owner.route, raw.route);
+		LDBG_cross_check(logger, "route", owner.route, raw.route, HERE);
 	}
 
 	/*
