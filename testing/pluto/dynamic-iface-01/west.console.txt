@@ -40,7 +40,7 @@ west #
 002 listening for IKE messages
 002 adding UDP interface eth1 192.1.2.66:500
 002 adding UDP interface eth1 192.1.2.66:4500
-003 "west-float": both sides of the connection match the interface eth1: right 192.1.2.66; left 192.1.2.45
+003 "west-float": connection matches both right eth1 udp:192.1.2.66:500 and left eth1 udp:192.1.2.45:500
 002 "west-float": terminating SAs using this connection
 002 forgetting secrets
 002 loading secrets from "/etc/ipsec.secrets"
