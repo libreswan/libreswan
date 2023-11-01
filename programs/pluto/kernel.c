@@ -560,6 +560,7 @@ struct spd_owner {
 	const struct spd_route *policy;
 	const struct spd_route *route;
 	const struct spd_route *cat;
+	const struct spd_route *bare;
 };
 
 static void LDBG_owner(struct logger *logger, const char *what,
@@ -597,6 +598,8 @@ static void ldbg_owner(struct logger *logger, const struct spd_owner *owner,
 		LDBG_owner(logger, "route", owner->route,
 			   local, remote, routing, shunt_kind, who);
 		LDBG_owner(logger, "cat", owner->cat,
+			   local, remote, routing, shunt_kind, who);
+		LDBG_owner(logger, "bare", owner->bare,
 			   local, remote, routing, shunt_kind, who);
 	}
 }
@@ -725,6 +728,23 @@ static struct spd_owner raw_spd_owner(const ip_selector *c_local,
 		}
 
 		/*
+		 * .bare specific checks.
+		 *
+		 * Looking for any policy, regardless of routing that
+		 * owns the selection.
+		 */
+
+		if (!selector_eq_selector(*c_local, d_spd->local->client)) {
+			ldbg_spd(logger, indent, d_spd, "skipped bare; different local selectors");
+#if 0 /* needed? */
+		} else if (c->config->overlapip && d->config->overlapip) {
+			ldbg_spd(logger, indent, d_spd, "skipped bare;  both ends have POLICY_OVERLAPIP");
+#endif
+		} else {
+			save_spd_owner(&owner.bare, "bare", d_spd, logger, indent);
+		}
+
+		/*
 		 * .policy specific checks.
 		 *
 		 * XXX: in spd_conflict() the shunt_kind check is a
@@ -808,8 +828,12 @@ const struct spd_route *bare_cat_owner(const ip_selector *local,
 const struct spd_route *bare_spd_owner(const struct spd_route *spd,
 				       struct logger *logger, where_t where)
 {
-	return raw_spd_owner(&spd->local->client, spd, RT_UNROUTED + 1,
-			     logger, where, __func__, 0).policy;
+	struct spd_owner owner = raw_spd_owner(&spd->local->client, spd, RT_UNROUTED + 1,
+					       logger, where, __func__, 0);
+	if (DBGP(DBG_BASE)) {
+		LDBG_cross_check(logger, "bare", owner.bare, owner.policy, HERE);
+	}
+	return owner.bare;
 }
 
 const struct spd_route *spd_policy_owner(const struct spd_route *spd,
