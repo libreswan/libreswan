@@ -640,28 +640,13 @@ static struct spd_owner raw_spd_owner(const ip_selector *c_local,
 			continue;
 		}
 
-		enum shunt_kind d_shunt_kind = spd_shunt_kind(d_spd);
-
-		if (d_shunt_kind < c_shunt_kind) {
-			ldbg_spd(logger, indent, d_spd, "skipped; < %s[%s]",
-				 enum_name_short(&routing_names, c_routing),
-				 enum_name_short(&shunt_kind_names, c_shunt_kind));
+		if (d->child.routing == RT_UNROUTED) {
+			ldbg_spd(logger, indent, d_spd, "skipped; UNROUTED");
 			continue;
-		}
-
-		if (c->clonedfrom == d) {
-			enum_buf rb;
-			ldbg_spd(logger, indent, d_spd,
-				 "[skipped]; is connection parent with routing >= %s[%s] %s",
-				 str_enum_short(&routing_names, c_routing, &rb),
-				 enum_name_short(&shunt_kind_names, c_shunt_kind),
-				 bool_str(d->child.routing >= c_routing));
-#if 0 /* spd_conflict() */
-			continue;
-#endif
 		}
 
 		/* fast lookup did it's job! */
+
 		PEXPECT(logger, selector_range_eq_selector_range(*c_remote,
 								 d_spd->remote->client));
 
@@ -692,8 +677,34 @@ static struct spd_owner raw_spd_owner(const ip_selector *c_local,
 		}
 
 		/*
-		 * Finally selector/route specific checks.
+		 * .policy specific checks.
+		 *
+		 * XXX: in spd_conflict() the shunt_kind check is a
+		 * no-op as anything other than RT_UNROUTED will pass.
+		 *
+		 * XXX: in raw_spd_owner() the clonedfrom check is
+		 * skipped.  It's to handle parent and child covering
+		 * same selection with ROUTED_ONDEMAND.
 		 */
+
+		enum shunt_kind d_shunt_kind = spd_shunt_kind(d_spd);
+
+		if (d_shunt_kind < c_shunt_kind) {
+			ldbg_spd(logger, indent, d_spd, "skipped; < %s[%s]",
+				 enum_name_short(&routing_names, c_routing),
+				 enum_name_short(&shunt_kind_names, c_shunt_kind));
+			continue;
+		}
+
+		if (c->clonedfrom == d) {
+			enum_buf rb;
+			ldbg_spd(logger, indent, d_spd,
+				 "[skipped]; is connection parent with routing >= %s[%s] %s",
+				 str_enum_short(&routing_names, c_routing, &rb),
+				 enum_name_short(&shunt_kind_names, c_shunt_kind),
+				 bool_str(d->child.routing >= c_routing));
+			/* continue; spd_conflict() only */
+		}
 
 		if (!selector_eq_selector(*c_local, d_spd->local->client)) {
 			ldbg_spd(logger, indent, d_spd, "skipped policy; different local selectors");
@@ -706,13 +717,16 @@ static struct spd_owner raw_spd_owner(const ip_selector *c_local,
 		}
 
 		/*
-		 * XXX: why?
+		 * .route specific checks.
+		 *
+		 * XXX: why look at host address?
 		 *
 		 * XXX: isn't host address comparison a routing and
 		 * not SPD thing?  Ignoring a conflicting SPD because
 		 * of the routing table seems wrong - the SPD still
 		 * conflicts so only one is allowed.
 		 */
+
 		if (!routed(d)) {
 			ldbg_spd(logger, indent, d_spd, "skipped route; not routed");
 		} else if (c->clonedfrom == d) {
@@ -852,26 +866,13 @@ static struct spd_owner spd_conflict(const struct spd_route *c_spd,
 			continue;
 		}
 
-		enum shunt_kind d_shunt_kind = spd_shunt_kind(d_spd);
-
-		if (d_shunt_kind < c_shunt_kind) {
-			ldbg_spd(logger, indent, d_spd, "skipped; < %s[%s]",
-				 enum_name_short(&routing_names, c_routing),
-				 enum_name_short(&shunt_kind_names, c_shunt_kind));
-			continue;
-		}
-
-		if (c->clonedfrom == d) {
-			enum_buf rb;
-			ldbg_spd(logger, indent, d_spd,
-				 "skipped; is connection parent with routing >= %s[%s] %s",
-				 str_enum_short(&routing_names, c_routing, &rb),
-				 enum_name_short(&shunt_kind_names, c_shunt_kind),
-				 bool_str(d->child.routing >= c_routing));
+		if (d->child.routing == RT_UNROUTED) {
+			ldbg_spd(logger, indent, d_spd, "skipped; UNROUTED");
 			continue;
 		}
 
 		/* fast lookup did it's job! */
+
 		PEXPECT(logger, selector_range_eq_selector_range(c_spd->remote->client,
 								 d_spd->remote->client));
 
@@ -902,8 +903,36 @@ static struct spd_owner spd_conflict(const struct spd_route *c_spd,
 		}
 
 		/*
-		 * Finally selector/route specific checks.
+		 * .policy specific checks.
+		 *
+		 * XXX: in spd_conflict() the shunt_kind check is a
+		 * no-op as anything other than RT_UNROUTED will pass.
+		 *
+		 * XXX: in raw_spd_owner() the clonedfrom check is
+		 * skipped.  It's to handle parent and child covering
+		 * same selection with ROUTED_ONDEMAND.
 		 */
+
+		enum shunt_kind d_shunt_kind = spd_shunt_kind(d_spd);
+
+		/* c_routing and c_shunt_kind are constant here;
+		   and covered by above */
+		if (d_shunt_kind < c_shunt_kind) {
+			ldbg_spd(logger, indent, d_spd, "[skipped]; < %s[%s]",
+				 enum_name_short(&routing_names, c_routing),
+				 enum_name_short(&shunt_kind_names, c_shunt_kind));
+			/* continue; raw_spd_owner() only */
+		}
+
+		if (c->clonedfrom == d) {
+			enum_buf rb;
+			ldbg_spd(logger, indent, d_spd,
+				 "skipped; is connection parent with routing >= %s[%s] %s",
+				 str_enum_short(&routing_names, c_routing, &rb),
+				 enum_name_short(&shunt_kind_names, c_shunt_kind),
+				 bool_str(d->child.routing >= c_routing));
+			continue;
+		}
 
 		if (!selector_eq_selector(c_spd->local->client, d_spd->local->client)) {
 			ldbg_spd(logger, indent, d_spd, "policy skipped;  different local selectors");
@@ -914,18 +943,25 @@ static struct spd_owner spd_conflict(const struct spd_route *c_spd,
 		}
 
 		/*
-		 * XXX: why?
+		 * .route specific checks.
+		 *
+		 * XXX: why look at host address?
 		 *
 		 * XXX: isn't host address comparison a routing and
 		 * not SPD thing?  Ignoring a conflicting SPD because
 		 * of the routing table seems wrong - the SPD still
 		 * conflicts so only one is allowed.
 		 */
-		if (!address_eq_address(c->local->host.addr,
+
+		if (!routed(d)) {
+			ldbg_spd(logger, indent, d_spd, "skipped route; not routed");
+		} else if (c->clonedfrom == d) {
+			/* D, the parent, is already routed */
+			ldbg_spd(logger, indent, d_spd,
+				 "skipped route; is connection parent");
+		} else if (!address_eq_address(c->local->host.addr,
 					d->local->host.addr)) {
 			ldbg_spd(logger, indent, d_spd, "skipped route; different local address?!?");
-		} else if (!routed(d)) {
-			ldbg_spd(logger, indent, d_spd, "skipped route; not routed");
 		} else {
 			save_spd_owner(&owner.route, "route", d_spd, logger, indent);
 		}
