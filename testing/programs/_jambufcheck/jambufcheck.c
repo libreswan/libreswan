@@ -301,7 +301,7 @@ int main(int argc UNUSED, char *argv[])
 	check_sanitized("\1779", "\\1779");
 	check_sanitized("\177a", "\\177a");
 
-#define check_ucase(S, E) check_jam_bytes("ucase", jam_ucase_bytes, S, sizeof(S)-1, E)
+#define check_ucase(S, E) check_jam_bytes("ucase", jam_uppercase_bytes, S, sizeof(S)-1, E)
 
 	check_ucase("aBc", "ABC");
 	check_ucase("a_B", "A_B");

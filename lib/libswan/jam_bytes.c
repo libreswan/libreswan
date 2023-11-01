@@ -85,7 +85,7 @@ size_t jam_dump_bytes(struct jambuf *buf, const void *bytes, size_t size)
  *   hence need to pass to characters to jam_sanitized_char().
  */
 
-static size_t jam_sanitized_char(struct jambuf *buf, char c, char c1)
+static size_t jam_control(struct jambuf *buf, char c, char c1)
 {
 	switch (c) {
 	case '\0': return jam_string(buf, "\\0");
@@ -98,12 +98,8 @@ static size_t jam_sanitized_char(struct jambuf *buf, char c, char c1)
 	case '\r': return jam_string(buf, "\\r");
 	}
 
-	if (char_isprint(c)) {
-		return jam_char(buf, c);
-	}
-
 	if (char_isdigit(c1)) {
-		/* force OOO when next char is digit */
+		/* force \OOO when next char is digit */
 		return jam(buf, "\\%03o", c & 0xFF);
 	}
 
@@ -116,8 +112,13 @@ size_t jam_sanitized_bytes(struct jambuf *buf, const void *ptr, size_t size)
 	const char *chars = ptr;
 	for (unsigned i = 0; i < size; i++) {
 		char c = chars[i];
-		char c1 = (i + 1 == size ? '\0' : chars[i+1]);
-		n += jam_sanitized_char(buf, c, c1);
+		if (char_isprint(c)) {
+			n += jam_char(buf, c);
+		} else {
+			/* handle \0001 */
+			char c1 = (i + 1 == size ? '\0' : chars[i+1]);
+			n += jam_control(buf, c, c1);
+		}
 	}
 	return n;
 }
@@ -156,23 +157,48 @@ size_t jam_shell_quoted_bytes(struct jambuf *buf, const void *ptr, size_t size)
 	return n;
 }
 
-size_t jam_ucase_bytes(struct jambuf *buf, const void *ptr, size_t size)
+size_t jam_uppercase_bytes(struct jambuf *buf, const void *ptr, size_t size)
 {
 	size_t n = 0;
 	const char *chars = ptr;
 	for (unsigned i = 0; i < size; i++) {
 		char c = chars[i];
-		if (char_islower(c)) {
+		if (char_isprint(c)) {
 			n += jam_char(buf, char_toupper(c));
 		} else {
+			/* handles \0001 */
 			char c1 = (i + 1 == size ? '\0' : chars[i+1]);
-			n += jam_sanitized_char(buf, c, c1);
+			n += jam_control(buf, c, c1);
 		}
 	}
 	return n;
 }
 
-size_t jam_ucase_string(struct jambuf *buf, const char *string)
+size_t jam_string_uppercase(struct jambuf *buf, const char *string)
 {
-	return jam_ucase_bytes(buf, string, strlen(string));
+	return jam_uppercase_bytes(buf, string, strlen(string));
+}
+
+size_t jam_human_bytes(struct jambuf *buf, const void *ptr, size_t size)
+{
+	size_t n = 0;
+	const char *chars = ptr;
+	for (unsigned i = 0; i < size; i++) {
+		char c = chars[i];
+		if (c == '_') {
+			n += jam_char(buf, '-');
+		} else if (char_isprint(c)) {
+			n += jam_char(buf, char_tolower(c));
+		} else {
+			/* handles \0001 */
+			char c1 = (i + 1 == size ? '\0' : chars[i+1]);
+			n += jam_control(buf, c, c1);
+		}
+	}
+	return n;
+}
+
+size_t jam_string_human(struct jambuf *buf, const char *string)
+{
+	return jam_human_bytes(buf, string, strlen(string));
 }

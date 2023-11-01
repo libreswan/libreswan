@@ -186,14 +186,7 @@ size_t jam_enum_human(struct jambuf *buf, enum_names *en, unsigned long val)
 	if (name == NULL) {
 		s += jam_bad_enum(buf, en, val);
 	} else {
-		for (const char *cp = name; (*cp) != '\0'; cp++) {
-			char c = *cp;
-			if (c == '_') {
-				s += jam_char(buf, '-');
-			} else {
-				s += jam_char(buf, char_tolower(c));
-			}
-		}
+		jam_string_human(buf, name);
 	}
 	return s;
 }

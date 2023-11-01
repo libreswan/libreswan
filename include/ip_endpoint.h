@@ -92,7 +92,7 @@ ip_endpoint endpoint_from_address_protocol_port(const ip_address address,
  */
 
 typedef struct {
-	char buf[sizeof("[") + sizeof(address_buf) + sizeof("]:65535")];
+	char buf[sizeof("[") + sizeof(address_buf) + sizeof("]:65535") + sizeof("/65535")];
 } endpoint_buf;
 
 size_t jam_endpoint(struct jambuf *, const ip_endpoint*);

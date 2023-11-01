@@ -224,9 +224,15 @@ jam_bytes_fn jam_shell_quoted_bytes;
 		jam_shell_quoted_bytes(BUF, hunk_.ptr, hunk_.len);	\
 	})
 
-/* convert lowercase to upper case */
-jam_bytes_fn jam_ucase_bytes;
-size_t jam_ucase_string(struct jambuf *buf, const char *string);
+/* convert lowercase to uppercase, i.e., [a-z] [A-Z] */
+
+jam_bytes_fn jam_uppercase_bytes;
+size_t jam_string_uppercase(struct jambuf *buf, const char *string);
+
+/* convert [_A-Z] to [-a-z]; see jam_enum_human() */
+
+jam_bytes_fn jam_human_bytes;
+size_t jam_string_human(struct jambuf *buf, const char *string);
 
 /*
  * jam_humber():
