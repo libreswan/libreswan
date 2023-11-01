@@ -1093,40 +1093,6 @@ static bool get_connection_spd_conflict(struct spd_route *spd, struct logger *lo
 		return false;
 	}
 
-	/*
-	 * If there is already a ROUTE for peer's client subnet and it
-	 * disagrees about interface or nexthop, we cannot steal it.
-	 *
-	 * XXX: should route_owner() have filtered out this already?
-	 *
-	 * Note: if this connection is already routed (perhaps for
-	 * another state object), the route will agree.  This is as it
-	 * should be -- it will arise during rekeying.
-	 */
-	struct connection *ro = (spd->wip.conflicting.route == NULL ? NULL :
-				 spd->wip.conflicting.route->connection);
-	if (ro != NULL && (ro->interface->ip_dev != c->interface->ip_dev ||
-			   !address_eq_address(ro->local->host.nexthop, c->local->host.nexthop))) {
-		/*
-		 * Another connection is already using the eroute.
-		 *
-		 * TODO: XFRM supports this. For now, only allow this
-		 * for OE.
-		 */
-		if (!is_opportunistic(c)) {
-			connection_buf cib;
-			llog(RC_LOG_SERIOUS, logger,
-			     "cannot route -- route already in use for "PRI_CONNECTION"",
-			     pri_connection(ro, &cib));
-			return false;
-		}
-
-		connection_buf cib;
-		llog(RC_LOG_SERIOUS, logger,
-		     "cannot route -- route already in use for "PRI_CONNECTION" - but allowing anyway",
-		     pri_connection(ro, &cib));
-	}
-
 	spd->wip.conflicting.shunt = shunt;
 	spd->wip.conflicting.route = owner.route;
 	return true;
