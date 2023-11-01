@@ -89,6 +89,8 @@
 #include "pending.h"
 #include "terminate.h"
 
+static struct spd_owner spd_conflict(const struct spd_route *c_spd,
+				     unsigned indent);
 static void delete_bare_shunt_kernel_policy(const struct bare_shunt *bsp,
 					    enum expect_kernel_policy expect_kernel_policy,
 					    struct logger *logger, where_t where);
@@ -711,11 +713,15 @@ static struct spd_owner raw_spd_owner(const ip_selector *c_local,
 		 * of the routing table seems wrong - the SPD still
 		 * conflicts so only one is allowed.
 		 */
-		if (!address_eq_address(c->local->host.addr,
+		if (!routed(d)) {
+			ldbg_spd(logger, indent, d_spd, "skipped route; not routed");
+		} else if (c->clonedfrom == d) {
+			/* D, the parent, is already routed */
+			ldbg_spd(logger, indent, d_spd,
+				 "skipped route; is connection parent");
+		} else if (!address_eq_address(c->local->host.addr,
 					d->local->host.addr)) {
 			ldbg_spd(logger, indent, d_spd, "skipped route; different local address?!?");
-		} else if (!routed(d)) {
-			ldbg_spd(logger, indent, d_spd, "skipped route; not routed");
 		} else {
 			save_spd_owner(&owner.route, "route", d_spd, logger, indent);
 		}
@@ -746,6 +752,32 @@ const struct spd_route *spd_policy_owner(const struct spd_route *spd,
 {
 	return raw_spd_owner(&spd->local->client, spd, new_routing,
 			     logger, where, __func__, indent).policy;
+}
+
+const struct spd_route *spd_route_owner(struct spd_route *spd)
+{
+	struct spd_owner conflict = spd_conflict(spd, 0);
+	struct spd_owner raw = raw_spd_owner(&spd->local->client, spd, RT_UNROUTED + 1,
+					     spd->connection->logger, HERE, __func__, 0);
+	if (DBGP(DBG_BASE)) {
+		LLOG_JAMBUF(DEBUG_STREAM, spd->connection->logger, buf) {
+			jam_string(buf, "cross check conflict ");
+			if (conflict.route == NULL) {
+				jam_string(buf, "none");
+			} else {
+				jam_spd(buf, conflict.route);
+			}
+			jam_string(buf, " and raw ");
+			if (raw.route == NULL) {
+				jam_string(buf, "none");
+			} else {
+				jam_spd(buf, raw.route);
+			}
+			jam_string(buf, " routes");
+		}
+	}
+	PEXPECT(spd->connection->logger, conflict.route == raw.route);
+	return conflict.route;
 }
 
 /*
@@ -892,11 +924,6 @@ static struct spd_owner spd_conflict(const struct spd_route *c_spd,
 
 	ldbg_owner(logger, &owner, c_local, c_remote, c_routing, __func__);
 	return owner;
-}
-
-const struct spd_route *spd_route_owner(struct spd_route *spd)
-{
-	return spd_conflict(spd, 0).route;
 }
 
 /*
