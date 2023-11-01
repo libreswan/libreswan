@@ -754,29 +754,38 @@ const struct spd_route *spd_policy_owner(const struct spd_route *spd,
 			     logger, where, __func__, indent).policy;
 }
 
+static void LDBG_cross_check(struct logger *logger,
+			     const char *what,
+			     const struct spd_route *conflict,
+			     const struct spd_route *raw)
+{
+	LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+		jam_string(buf, "cross check conflict ");
+		if (conflict == NULL) {
+			jam_string(buf, "none");
+		} else {
+			jam_spd(buf, conflict);
+		}
+		jam_string(buf, " and raw ");
+		if (raw == NULL) {
+			jam_string(buf, "none");
+		} else {
+			jam_spd(buf, raw);
+		}
+		jam_string(buf, " ");
+		jam_string(buf, what);
+	}
+	PEXPECT(logger, conflict == raw);
+}
+
 const struct spd_route *spd_route_owner(struct spd_route *spd)
 {
 	struct spd_owner conflict = spd_conflict(spd, 0);
-	struct spd_owner raw = raw_spd_owner(&spd->local->client, spd, RT_UNROUTED + 1,
-					     spd->connection->logger, HERE, __func__, 0);
 	if (DBGP(DBG_BASE)) {
-		LLOG_JAMBUF(DEBUG_STREAM, spd->connection->logger, buf) {
-			jam_string(buf, "cross check conflict ");
-			if (conflict.route == NULL) {
-				jam_string(buf, "none");
-			} else {
-				jam_spd(buf, conflict.route);
-			}
-			jam_string(buf, " and raw ");
-			if (raw.route == NULL) {
-				jam_string(buf, "none");
-			} else {
-				jam_spd(buf, raw.route);
-			}
-			jam_string(buf, " routes");
-		}
+		struct spd_owner raw = raw_spd_owner(&spd->local->client, spd, RT_UNROUTED + 1,
+						     spd->connection->logger, HERE, __func__, 0);
+		LDBG_cross_check(spd->connection->logger, "route", conflict.route, raw.route);
 	}
-	PEXPECT(spd->connection->logger, conflict.route == raw.route);
 	return conflict.route;
 }
 
@@ -946,6 +955,11 @@ static bool get_connection_spd_conflict(struct spd_route *spd, struct logger *lo
 	 */
 
 	struct spd_owner owner = spd_conflict(spd, indent);
+	if (DBGP(DBG_BASE)) {
+		struct spd_owner raw = raw_spd_owner(&spd->local->client, spd, RT_UNROUTED + 1,
+						     logger, HERE, __func__, 0);
+		LDBG_cross_check(logger, "route", owner.route, raw.route);
+	}
 
 	/*
 	 * Double check that it really does own the SPD.
