@@ -635,7 +635,7 @@ static void delete_cat_kernel_policy(const struct spd_route *spd,
 	ip_selector local_client = selector_from_address(spd->local->host->addr);
 	if (direction == DIRECTION_OUTBOUND) {
 		const struct spd_route *owner =
-			bare_cat_owner(&local_client, spd, logger, where);
+			bare_cat_owner(spd, logger, where);
 		if (owner != NULL) {
 			if (!restore_spd_kernel_policy(owner, DIRECTION_OUTBOUND,
 						       logger, where, story)) {

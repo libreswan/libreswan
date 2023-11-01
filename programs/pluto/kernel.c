@@ -620,8 +620,7 @@ static void save_spd_owner(const struct spd_route **owner, const char *name,
 	}
 }
 
-static struct spd_owner raw_spd_owner(const ip_selector *c_local,
-				      const struct spd_route *c_spd,
+static struct spd_owner raw_spd_owner(const struct spd_route *c_spd,
 				      const enum routing c_routing,
 				      struct logger *logger,
 				      where_t where,
@@ -629,6 +628,7 @@ static struct spd_owner raw_spd_owner(const ip_selector *c_local,
 				      unsigned indent)
 {
 	const struct connection *c = c_spd->connection;
+	const ip_selector *c_local = &c_spd->local->client;
 	const ip_selector *c_remote = &c_spd->remote->client;
 	const enum shunt_kind c_shunt_kind = routing_shunt_kind(c_routing);
 
@@ -813,11 +813,10 @@ static struct spd_owner raw_spd_owner(const ip_selector *c_local,
 	return owner;
 }
 
-const struct spd_route *bare_cat_owner(const ip_selector *local,
-				       const struct spd_route *spd,
+const struct spd_route *bare_cat_owner(const struct spd_route *spd,
 				       struct logger *logger, where_t where)
 {
-	struct spd_owner owner = raw_spd_owner(local, spd, RT_UNROUTED + 1,
+	struct spd_owner owner = raw_spd_owner(spd, RT_UNROUTED + 1,
 					       logger, where, __func__, 0);
 	if (DBGP(DBG_BASE)) {
 		LDBG_cross_check(logger, "cat", owner.cat, owner.policy, HERE);
@@ -828,7 +827,7 @@ const struct spd_route *bare_cat_owner(const ip_selector *local,
 const struct spd_route *bare_spd_owner(const struct spd_route *spd,
 				       struct logger *logger, where_t where)
 {
-	struct spd_owner owner = raw_spd_owner(&spd->local->client, spd, RT_UNROUTED + 1,
+	struct spd_owner owner = raw_spd_owner(spd, RT_UNROUTED + 1,
 					       logger, where, __func__, 0);
 	if (DBGP(DBG_BASE)) {
 		LDBG_cross_check(logger, "bare", owner.bare, owner.policy, HERE);
@@ -840,7 +839,7 @@ const struct spd_route *spd_policy_owner(const struct spd_route *spd,
 					 enum routing new_routing,
 					 struct logger *logger, where_t where, unsigned indent)
 {
-	return raw_spd_owner(&spd->local->client, spd, new_routing,
+	return raw_spd_owner(spd, new_routing,
 			     logger, where, __func__, indent).policy;
 }
 
@@ -848,7 +847,7 @@ const struct spd_route *spd_route_owner(struct spd_route *spd)
 {
 	struct spd_owner conflict = spd_conflict(spd, 0);
 	if (DBGP(DBG_BASE)) {
-		struct spd_owner raw = raw_spd_owner(&spd->local->client, spd, RT_UNROUTED + 1,
+		struct spd_owner raw = raw_spd_owner(spd, RT_UNROUTED + 1,
 						     spd->connection->logger, HERE, __func__, 0);
 		LDBG_cross_check(spd->connection->logger, "route", conflict.route, raw.route, HERE);
 	}
@@ -1044,7 +1043,7 @@ static bool get_connection_spd_conflict(struct spd_route *spd, struct logger *lo
 
 	struct spd_owner owner = spd_conflict(spd, indent);
 	if (DBGP(DBG_BASE)) {
-		struct spd_owner raw = raw_spd_owner(&spd->local->client, spd, RT_UNROUTED + 1,
+		struct spd_owner raw = raw_spd_owner(spd, RT_UNROUTED + 1,
 						     logger, HERE, __func__, 0);
 		LDBG_cross_check(logger, "route", owner.route, raw.route, HERE);
 	}
