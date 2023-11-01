@@ -1,15 +1,12 @@
-/testing/guestbin/swan-prep --x509
-Preparing X.509 files
-east #
- ipsec certutil -D -n west
+/testing/guestbin/swan-prep
 east #
  ipsec start
 Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add ikev2-westnet-eastnet
-002 "ikev2-westnet-eastnet": added IKEv2 connection
+ ipsec add east
+002 "east": added IKEv2 connection
 east #
  # block IKE and ESP over UDP
 east #

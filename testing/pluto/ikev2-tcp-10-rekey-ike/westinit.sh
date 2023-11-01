@@ -8,6 +8,6 @@ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 # start ....
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec auto --add westnet-eastnet-ikev2
-ipsec auto --status | grep westnet-eastnet-ikev2
+ipsec add west
+ipsec connectionstatus west
 echo "initdone"

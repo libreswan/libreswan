@@ -21,12 +21,12 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add 6in6
+ ipsec add 6in6
 002 "6in6": added IKEv2 connection
 west #
  ipsec whack --impair suppress-retransmits
 west #
- ipsec auto --up 6in6
+ ipsec up 6in6
 1v2 "6in6" #1: initiating IKEv2 connection
 1v2 "6in6" #1: sent IKE_SA_INIT request to [2001:db8:1:2::23]:4500
 1v2 "6in6" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}

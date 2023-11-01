@@ -12,5 +12,5 @@ ip6tables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec auto --add 6in6
+ipsec add 6in6
 ipsec whack --impair suppress-retransmits

@@ -1,14 +1,13 @@
-/testing/guestbin/swan-prep --x509
-Preparing X.509 files
+/testing/guestbin/swan-prep
 east #
  ipsec start
 Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add ikev2-westnet-eastnet
-002 "ikev2-westnet-eastnet": adding TCP interface eth1 192.1.2.23:443
-002 "ikev2-westnet-eastnet": added IKEv2 connection
+ ipsec add east
+002 "east": adding TCP interface eth1 192.1.2.23:443
+002 "east": added IKEv2 connection
 east #
  # block all TCP and UDP port 500 and 4500
 east #

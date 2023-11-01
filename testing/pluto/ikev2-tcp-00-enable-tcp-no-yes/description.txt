@@ -1,0 +1,1 @@
+initiator has enable-tcp=no responder has enable-tcp=yes; should fail

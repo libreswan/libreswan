@@ -21,45 +21,45 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add westnet-eastnet-ikev2
-002 "westnet-eastnet-ikev2": added IKEv2 connection
+ ipsec add west
+002 "west": added IKEv2 connection
 west #
- ipsec auto --status | grep westnet-eastnet-ikev2
-000 "westnet-eastnet-ikev2": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
-000 "westnet-eastnet-ikev2":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
-000 "westnet-eastnet-ikev2":   my_updown=ipsec _updown;
-000 "westnet-eastnet-ikev2":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "westnet-eastnet-ikev2":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
-000 "westnet-eastnet-ikev2":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-000 "westnet-eastnet-ikev2":   sec_label:unset;
-000 "westnet-eastnet-ikev2":   ike_life: 28800s; ipsec_life: 60s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 10s; rekey_fuzz: 100%;
-000 "westnet-eastnet-ikev2":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:yes; iketcp-port:4500;
-000 "westnet-eastnet-ikev2":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "westnet-eastnet-ikev2":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-000 "westnet-eastnet-ikev2":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
-000 "westnet-eastnet-ikev2":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "westnet-eastnet-ikev2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
-000 "westnet-eastnet-ikev2":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
-000 "westnet-eastnet-ikev2":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
-000 "westnet-eastnet-ikev2":   nat-traversal: encaps:auto; keepalive:20s
-000 "westnet-eastnet-ikev2":   routing: unrouted;
-000 "westnet-eastnet-ikev2":   conn serial: $1;
+ ipsec connectionstatus west
+000 "west": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
+000 "west":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
+000 "west":   my_updown=ipsec _updown;
+000 "west":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+000 "west":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
+000 "west":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+000 "west":   sec_label:unset;
+000 "west":   ike_life: 28800s; ipsec_life: 60s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 10s; rekey_fuzz: 100%;
+000 "west":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:yes; iketcp-port:4500;
+000 "west":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+000 "west":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+000 "west":   v2-auth-hash-policy: none;
+000 "west":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+000 "west":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+000 "west":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
+000 "west":   liveness: passive; dpddelay:0s; retransmit-timeout:10s
+000 "west":   nat-traversal: encaps:auto; keepalive:20s
+000 "west":   routing: unrouted;
+000 "west":   conn serial: $1;
 west #
  echo "initdone"
 initdone
 west #
- ipsec auto --up  westnet-eastnet-ikev2
-1v2 "westnet-eastnet-ikev2" #1: initiating IKEv2 connection
-1v2 "westnet-eastnet-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:4500
-1v2 "westnet-eastnet-ikev2" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "westnet-eastnet-ikev2" #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
-004 "westnet-eastnet-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESPinTCP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+ ipsec up  west
+1v2 "west" #1: initiating IKEv2 connection
+1v2 "west" #1: sent IKE_SA_INIT request to 192.1.2.23:4500
+1v2 "west" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+003 "west" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+004 "west" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESPinTCP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
  ipsec whack --trafficstatus
-006 #2: "westnet-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+006 #2: "west", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  ../../guestbin/ipsec-kernel-state.sh
 src 192.1.2.45 dst 192.1.2.23
@@ -97,27 +97,23 @@ src 192.0.2.0/24 dst 192.0.1.0/24
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto esp reqid REQID mode tunnel
 west #
- # wait for rekey event
+ ipsec whack --rekey-ipsec --name west
+002 "west" #3: initiating rekey to replace Child SA #2
+1v2 "west" #3: sent CREATE_CHILD_SA request to rekey IPsec SA
+004 "west" #3: initiator rekeyed Child SA #2 using #1; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESPinTCP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
+002 "west" #2: deleting established Child SA using IKE SA #1
+005 "west" #2: ESP traffic information: in=84B out=84B
 west #
- sleep 5
-west #
- ipsec whack --rekey-ipsec --name westnet-eastnet-ikev2
-002 "westnet-eastnet-ikev2" #3: initiating rekey to replace Child SA #2
-1v2 "westnet-eastnet-ikev2" #3: sent CREATE_CHILD_SA request to rekey IPsec SA
-004 "westnet-eastnet-ikev2" #3: initiator rekeyed Child SA #2 using #1; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESPinTCP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
-002 "westnet-eastnet-ikev2" #2: deleting established Child SA using IKE SA #1
-005 "westnet-eastnet-ikev2" #2: ESP traffic information: in=84B out=84B
-west #
- # rekey of IPsec SA means traffic counters should be 0
+ # rekey of IPsec SA means traffic counters should go back to 0
 west #
  ipsec whack --trafficstatus
-006 #3: "westnet-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+006 #3: "west", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
  ipsec whack --trafficstatus
-006 #3: "westnet-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+006 #3: "west", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  ../../guestbin/ipsec-kernel-state.sh
 src 192.1.2.45 dst 192.1.2.23
@@ -154,8 +150,6 @@ src 192.0.2.0/24 dst 192.0.1.0/24
 	dir in priority PRIORITY ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto esp reqid REQID mode tunnel
-west #
- : done
 west #
  ../../guestbin/ipsec-kernel-state.sh
 src 192.1.2.45 dst 192.1.2.23

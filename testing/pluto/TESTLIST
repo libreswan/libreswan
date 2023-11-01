@@ -1398,8 +1398,9 @@ kvmplutotest	bad-nexthop-01		wip
 
 # TCP tests and UDP encap tests
 
-kvmplutotest	ikev2-tcp-00-yes					good
-kvmplutotest	ikev2-tcp-00-fallback					good
+kvmplutotest	ikev2-tcp-00-enable-tcp-yes-yes				good
+kvmplutotest	ikev2-tcp-00-enable-tcp-fallback-yes			good
+kvmplutotest	ikev2-tcp-00-enable-tcp-no-yes				good
 kvmplutotest	ikev2-tcp-01-eof					good
 kvmplutotest	ikev2-tcp-02-timeout					good
 kvmplutotest	ikev2-tcp-03-basic-rawrsa-blocking			wip	github/717

@@ -8,8 +8,8 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add ikev2-westnet-eastnet
-002 "ikev2-westnet-eastnet": added IKEv2 connection
+ ipsec add east
+002 "east": added IKEv2 connection
 east #
  # block IKE and ESP over UDP
 east #

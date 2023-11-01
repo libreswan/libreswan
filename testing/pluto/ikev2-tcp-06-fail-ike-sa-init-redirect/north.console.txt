@@ -7,8 +7,8 @@ Redirecting to: [initsystem]
 north #
  ../../guestbin/wait-until-pluto-started
 north #
- ipsec auto --add any-northnet-ipv4-psk-ikev2
-002 "any-northnet-ipv4-psk-ikev2": added IKEv2 connection
+ ipsec add north
+002 "north": added IKEv2 connection
 north #
  echo "initdone"
 initdone

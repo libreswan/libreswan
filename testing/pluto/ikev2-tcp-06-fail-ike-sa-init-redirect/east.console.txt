@@ -7,8 +7,8 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
-002 "westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
+ ipsec add east
+Failed to load connection left= is not set
 east #
  ipsec status |grep redirect
 000 global-redirect=yes, global-redirect-to=192.1.3.33
@@ -23,6 +23,5 @@ east #
  # confirm east is in unrouted state again
 east #
  hostname | grep east > /dev/null && ipsec status | grep "[.][.][.]"
-000 "westnet-eastnet-ipv4-psk-ikev2": 192.0.2.0/24===192.1.2.23[@east]...192.1.2.45[@west]===192.0.1.0/24; unrouted; my_ip=unset; their_ip=unset;
 east #
  

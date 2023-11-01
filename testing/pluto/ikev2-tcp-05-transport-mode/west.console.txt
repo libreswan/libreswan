@@ -5,7 +5,7 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add ikev2-west-east
+ ipsec add ikev2-west-east
 002 "ikev2-west-east": added IKEv2 connection
 west #
  echo "initdone"
@@ -13,7 +13,7 @@ initdone
 west #
  # unfortunately does not yet indicate it is using TCP
 west #
- ipsec auto --up ikev2-west-east
+ ipsec up ikev2-west-east
 1v2 "ikev2-west-east" #1: initiating IKEv2 connection
 1v2 "ikev2-west-east" #1: sent IKE_SA_INIT request to 192.1.2.23:4500
 1v2 "ikev2-west-east" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}

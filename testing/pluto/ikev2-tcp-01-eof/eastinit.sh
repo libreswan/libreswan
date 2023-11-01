@@ -4,5 +4,5 @@ dmesg -n 6
 # nohup dumpcap -i eth1 -w /tmp/east.pcap > OUTPUT/east.dumpcap & sleep 1 # wait for nohup msg
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec auto --add westnet-eastnet-ikev2
+ipsec add westnet-eastnet-ikev2
 echo "initdone"

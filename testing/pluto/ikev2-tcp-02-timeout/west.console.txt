@@ -31,7 +31,7 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add westnet-eastnet-ikev2
+ ipsec add westnet-eastnet-ikev2
 002 "westnet-eastnet-ikev2": added IKEv2 connection
 west #
  ipsec auto --status | grep westnet-eastnet-ikev2
