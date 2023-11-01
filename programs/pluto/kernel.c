@@ -570,6 +570,22 @@ static void ldbg_owner(struct logger *logger, const struct spd_owner *owner,
 	}
 }
 
+static void save_spd_owner(const struct spd_route **owner, const char *name,
+			    const struct spd_route *d_spd,
+			    struct logger *logger, unsigned indent)
+{
+	/* winner? */
+	if (*owner == NULL) {
+		ldbg_spd(logger, indent, d_spd, "saved %s; first match", name);
+		*owner = d_spd;
+	} else if (spd_shunt_kind(*owner) < spd_shunt_kind(d_spd)) {
+		ldbg_spd(logger, indent, d_spd, "saved %s; better match", name);
+		*owner = d_spd;
+	} else {
+		ldbg_spd(logger, indent, d_spd, "skipped %s; not the best", name);
+	}
+}
+
 static struct spd_owner raw_spd_owner(const ip_selector *c_local,
 				      const struct spd_route *c_spd,
 				      const enum routing c_routing,
@@ -686,16 +702,7 @@ static struct spd_owner raw_spd_owner(const ip_selector *c_local,
 			ldbg_spd(logger, indent, d_spd, "skipped policy;  both ends have POLICY_OVERLAPIP");
 #endif
 		} else {
-			/* winner? */
-			if (owner.policy == NULL) {
-				ldbg_spd(logger, indent, d_spd, "saved policy; first match");
-				owner.policy = d_spd;
-			} else if (spd_shunt_kind(owner.policy) < d_shunt_kind) {
-				ldbg_spd(logger, indent, d_spd, "saved policy; better match");
-				owner.policy = d_spd;
-			} else {
-				ldbg_spd(logger, indent, d_spd, "skipped policy; not the best");
-			}
+			save_spd_owner(&owner.policy, "policy", d_spd, logger, indent);
 		}
 
 		/*
@@ -712,16 +719,7 @@ static struct spd_owner raw_spd_owner(const ip_selector *c_local,
 		} else if (!routed(d)) {
 			ldbg_spd(logger, indent, d_spd, "skipped route; not routed");
 		} else {
-			/* winner? */
-			if (owner.route == NULL) {
-				ldbg_spd(logger, indent, d_spd, "saved route; first match");
-				owner.route = d_spd;
-			} else if (spd_shunt_kind(owner.route) < d_shunt_kind) {
-				ldbg_spd(logger, indent, d_spd, "saved route; better match");
-				owner.route = d_spd;
-			} else {
-				ldbg_spd(logger, indent, d_spd, "skipped route;  not the best");
-			}
+			save_spd_owner(&owner.route, "route", d_spd, logger, indent);
 		}
 	}
 
@@ -875,16 +873,7 @@ static struct spd_owner spd_conflict(const struct spd_route *c_spd,
 		} else if (c->config->overlapip && d->config->overlapip) {
 			ldbg_spd(logger, indent, d_spd, "policy skipped;  both ends have POLICY_OVERLAPIP");
 		} else {
-			/* winner? */
-			if (owner.policy == NULL) {
-				ldbg_spd(logger, indent, d_spd, "saved policy; first match");
-				owner.policy = d_spd;
-			} else if (spd_shunt_kind(owner.policy) < d_shunt_kind) {
-				ldbg_spd(logger, indent, d_spd, "saved policy; better match");
-				owner.policy = d_spd;
-			} else {
-				ldbg_spd(logger, indent, d_spd, "skipped policy;  not the best");
-			}
+			save_spd_owner(&owner.policy, "policy", d_spd, logger, indent);
 		}
 
 		/*
@@ -901,16 +890,7 @@ static struct spd_owner spd_conflict(const struct spd_route *c_spd,
 		} else if (!routed(d)) {
 			ldbg_spd(logger, indent, d_spd, "skipped route; not routed");
 		} else {
-			/* winner? */
-			if (owner.route == NULL) {
-				ldbg_spd(logger, indent, d_spd, "saved route; first match");
-				owner.route = d_spd;
-			} else if (spd_shunt_kind(owner.route) < d_shunt_kind) {
-				ldbg_spd(logger, indent, d_spd, "saved route; better match");
-				owner.route = d_spd;
-			} else {
-				ldbg_spd(logger, indent, d_spd, "skipped route;  not the best");
-			}
+			save_spd_owner(&owner.route, "route", d_spd, logger, indent);
 		}
 	}
 
