@@ -636,7 +636,7 @@ struct sa_marks {
 #define PRI_SA_MARK "%"PRIu32"/%#08"PRIx32"%s"
 #define pri_sa_mark(M)  (M).val, (M).mask, ((M).unique ? "/unique" : "")
 
-#define sa_mark_eq(L,R) (((L).val & (L).mask) != ((R).val & (R).mask))
+#define sa_mark_eq(L,R) (((L).val & (L).mask) == ((R).val & (R).mask))
 
 struct connection {
 	struct refcnt refcnt;
