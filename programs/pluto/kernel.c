@@ -673,21 +673,19 @@ static struct spd_owner raw_spd_owner(const ip_selector *c_local,
 		 * out marks differ (after masking).
 		 */
 
-		if ((c->sa_marks.in.val & c->sa_marks.in.mask) !=
-		    (d->sa_marks.in.val & d->sa_marks.in.mask)) {
+		if (!sa_mark_eq(c->sa_marks.in, d->sa_marks.in)) {
 			ldbg_spd(logger, indent, d_spd,
-				 "skipped; marks.in %"PRIu32"/%#08"PRIx32" vs %"PRIu32"/%#08"PRIx32,
-				 c->sa_marks.in.val, c->sa_marks.in.mask,
-				 d->sa_marks.in.val, d->sa_marks.in.mask);
+				 "skipped; marks.in "PRI_SA_MARK" vs "PRI_SA_MARK,
+				 pri_sa_mark(c->sa_marks.in),
+				 pri_sa_mark(d->sa_marks.in));
 			continue;
 		}
 
-		if ((c->sa_marks.out.val & c->sa_marks.out.mask) !=
-		    (d->sa_marks.out.val & d->sa_marks.out.mask)) {
+		if (!sa_mark_eq(c->sa_marks.out, d->sa_marks.out)) {
 			ldbg_spd(logger, indent, d_spd,
-				 "skipped; marks.out %"PRIu32"/%#08"PRIx32" vs %"PRIu32"/%#08"PRIx32,
-				 c->sa_marks.out.val, c->sa_marks.out.mask,
-				 d->sa_marks.out.val, d->sa_marks.out.mask);
+				 "skipped; marks.out "PRI_SA_MARK" vs "PRI_SA_MARK,
+				 pri_sa_mark(c->sa_marks.out),
+				 pri_sa_mark(d->sa_marks.out));
 			continue;
 		}
 
@@ -846,21 +844,19 @@ static struct spd_owner spd_conflict(const struct spd_route *c_spd,
 		 * out marks differ (after masking).
 		 */
 
-		if ((c->sa_marks.in.val & c->sa_marks.in.mask) !=
-		    (d->sa_marks.in.val & d->sa_marks.in.mask)) {
+		if (!sa_mark_eq(c->sa_marks.in, d->sa_marks.in)) {
 			ldbg_spd(logger, indent, d_spd,
-				 "skipped; marks.in %"PRIu32"/%#08"PRIx32" vs %"PRIu32"/%#08"PRIx32,
-				 c->sa_marks.in.val, c->sa_marks.in.mask,
-				 d->sa_marks.in.val, d->sa_marks.in.mask);
+				 "skipped; marks.in "PRI_SA_MARK" vs "PRI_SA_MARK,
+				 pri_sa_mark(c->sa_marks.in),
+				 pri_sa_mark(d->sa_marks.in));
 			continue;
 		}
 
-		if ((c->sa_marks.out.val & c->sa_marks.out.mask) !=
-		    (d->sa_marks.out.val & d->sa_marks.out.mask)) {
+		if (!sa_mark_eq(c->sa_marks.out, d->sa_marks.out)) {
 			ldbg_spd(logger, indent, d_spd,
-				 "skipped; marks.out %"PRIu32"/%#08"PRIx32" vs %"PRIu32"/%#08"PRIx32,
-				 c->sa_marks.out.val, c->sa_marks.out.mask,
-				 d->sa_marks.out.val, d->sa_marks.out.mask);
+				 "skipped; marks.out "PRI_SA_MARK" vs "PRI_SA_MARK,
+				 pri_sa_mark(c->sa_marks.out),
+				 pri_sa_mark(d->sa_marks.out));
 			continue;
 		}
 

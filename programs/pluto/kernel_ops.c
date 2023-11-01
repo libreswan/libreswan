@@ -77,9 +77,8 @@ bool kernel_ops_policy_add(enum kernel_policy_op op,
 					FOR_EACH_THING(mark,
 						       &policy->sa_marks->out,
 						       &policy->sa_marks->in) {
-						jam(buf, "%s%x/%x%s",
-						    dir, mark->val, mark->mask,
-						    mark->unique ? "/unique" : "");
+						jam(buf, "%s"PRI_SA_MARK,
+						    dir, pri_sa_mark(*mark));
 						dir = ",in:";
 					}
 				}
@@ -270,9 +269,8 @@ bool kernel_ops_policy_del(enum direction dir,
 					jam(buf, " sa_marks=");
 					const char *dir = "out:";
 					FOR_EACH_THING(mark, &sa_marks->out, &sa_marks->in) {
-						jam(buf, "%s%x/%x%s",
-						    dir, mark->val, mark->mask,
-						    mark->unique ? "/unique" : "");
+						jam(buf, "%s"PRI_SA_MARK,
+						    dir, pri_sa_mark(*mark));
 						dir = ",in:";
 					}
 				}
