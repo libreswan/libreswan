@@ -22,7 +22,6 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add west
-005 "west": warning: tcp-remoteport=4500 ignored for non-TCP connections
 002 "west": added IKEv2 connection
 west #
  echo "initdone"
