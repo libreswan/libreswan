@@ -800,7 +800,6 @@ struct connection *find_connection_for_packet(const ip_packet packet,
 					      struct logger *logger);
 
 /* publicly useful? */
-size_t jam_connection_instance(struct jambuf *buf, const struct connection *c);
 size_t jam_connection(struct jambuf *buf, const struct connection *c);
 
 size_t jam_connection_policies(struct jambuf *buf, const struct connection *c);

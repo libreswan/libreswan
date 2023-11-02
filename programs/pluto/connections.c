@@ -3572,7 +3572,7 @@ static size_t jam_connection_serials(struct jambuf *buf, const struct connection
 	return s;
 }
 
-size_t jam_connection_instance(struct jambuf *buf, const struct connection *c)
+static size_t jam_connection_instance(struct jambuf *buf, const struct connection *c)
 {
 	/*
 	 * Not PEXPECT(c->connection) as that will recursively call
