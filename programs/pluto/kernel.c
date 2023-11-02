@@ -89,8 +89,6 @@
 #include "pending.h"
 #include "terminate.h"
 
-static struct spd_owner spd_conflict(const struct spd_route *c_spd,
-				     unsigned indent);
 static void delete_bare_shunt_kernel_policy(const struct bare_shunt *bsp,
 					    enum expect_kernel_policy expect_kernel_policy,
 					    struct logger *logger, where_t where);
@@ -308,36 +306,6 @@ static void ldbg_bare_shunt(const struct logger *logger, const char *op, const s
 	LDBGP_JAMBUF(DBG_BASE, logger, buf) {
 		jam(buf, "%s ", op);
 		jam_bare_shunt(buf, bs);
-	}
-}
-
-static void LDBG_cross_check(const char *lhss,
-			     const struct spd_route *lhs,
-			     const char *rhss,
-			     const struct spd_route *rhs,
-			     struct logger *logger,
-			     where_t where)
-{
-	LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
-		jam_string(buf, "cross check ");
-		jam_string(buf, lhss);
-		jam_string(buf, " ");
-		if (lhs == NULL) {
-			jam_string(buf, "none");
-		} else {
-			jam_spd(buf, lhs);
-		}
-		jam_string(buf, " and ");
-		jam_string(buf, rhss);
-		jam_string(buf, " ");
-		if (rhs == NULL) {
-			jam_string(buf, "none");
-		} else {
-			jam_spd(buf, rhs);
-		}
-	}
-	if (lhs != rhs) {
-		llog_pexpect(logger, where, "%s == %s", lhss, rhss);
 	}
 }
 
@@ -811,11 +779,6 @@ const struct spd_route *bare_cat_owner(const struct spd_route *spd,
 {
 	struct spd_owner raw = raw_spd_owner(spd, RT_UNROUTED + 1,
 					     logger, where, __func__, 0);
-	if (DBGP(DBG_BASE)) {
-		LDBG_cross_check("raw.cat", raw.cat,
-				 "raw.raw", raw.raw,
-				 logger, HERE);
-	}
 	return raw.cat;
 }
 
@@ -840,163 +803,10 @@ const struct spd_route *spd_policy_owner(const struct spd_route *spd,
 
 const struct spd_route *spd_route_owner(struct spd_route *spd)
 {
-	struct spd_owner conflict = spd_conflict(spd, 0);
-	if (DBGP(DBG_BASE)) {
-		struct spd_owner raw = raw_spd_owner(spd, RT_UNROUTED + 1,
-						     spd->connection->logger, HERE, __func__, 0);
-		LDBG_cross_check("conflict.route", conflict.route,
-				 "raw.route", raw.route,
-				 spd->connection->logger, HERE);
-	}
-	return conflict.route;
-}
-
-/*
- * Find who currently owns the route and kernel policy matching the
- * SPD.
- */
-
-static struct spd_owner spd_conflict(const struct spd_route *c_spd,
-				     unsigned indent)
-{
-	struct connection *c = c_spd->connection;
-	const ip_selector *c_local = &c_spd->local->client;
-	const ip_selector *c_remote = &c_spd->remote->client;
-	const enum routing c_routing = RT_UNROUTED + 1;
-	const enum shunt_kind c_shunt_kind = routing_shunt_kind(c_routing);
-	const char *func = __func__;
-
-	struct logger *logger = c->logger;
-	if (!oriented(c)) {
-		llog(RC_LOG, logger,
-		     "connection no longer oriented - system interface change?");
-		return (struct spd_owner) {0};
-	}
-
-	selector_pair_buf spb;
-	ldbg(logger, "%*s%s() looking for SPD owner of %s with routing >= %s[%s]",
-	     indent, "", func,
-	     str_selector_pair(c_local, c_remote, &spb),
-	     enum_name_short(&routing_names, c_routing),
-	     enum_name_short(&shunt_kind_names, c_shunt_kind));
-
-	struct spd_owner owner = {0};
-
-	struct spd_route_filter srf = {
-		.remote_client_range = c_remote,
-		.where = HERE,
-	};
-
-	indent += 2;
-	while (next_spd_route(NEW2OLD, &srf)) {
-		struct spd_route *d_spd = srf.spd;
-		struct connection *d = d_spd->connection;
-
-		/*
-		 * Pprune out anything that isn't conflicting
-		 * according to selectors.
-		 *
-		 * Yes, conflicting is vague.  A good starting point
-		 * is to look at what the kernel needs when it is
-		 * deleting a policy.  For instance, the selectors
-		 * matter, the rules (templ) do not,
-		 */
-
-		if (!oriented(d)) {
-			/* can happen during shutdown */
-			ldbg_spd(logger, indent, d_spd, "skipped; not oriented");
-			continue;
-		}
-
-		if (c_spd == d_spd) {
-			/* can only be owner; handled above */
-			ldbg_spd(logger, indent, d_spd, "skipped; ignoring self");
-			continue;
-		}
-
-		if (d->child.routing == RT_UNROUTED) {
-			ldbg_spd(logger, indent, d_spd, "skipped; UNROUTED");
-			continue;
-		}
-
-		/* fast lookup did it's job! */
-
-		PEXPECT(logger, selector_range_eq_selector_range(c_spd->remote->client,
-								 d_spd->remote->client));
-
-		if (!selector_eq_selector(*c_remote, d_spd->remote->client)) {
-			ldbg_spd(logger, indent, d_spd, "skipped; different remote selectors");
-			continue;
-		}
-
-		/*
-		 * Consider SPDs to be different when the either in or
-		 * out marks differ (after masking).
-		 */
-
-		if (!sa_mark_eq(c->sa_marks.in, d->sa_marks.in)) {
-			ldbg_spd(logger, indent, d_spd,
-				 "skipped; marks.in "PRI_SA_MARK" vs "PRI_SA_MARK,
-				 pri_sa_mark(c->sa_marks.in),
-				 pri_sa_mark(d->sa_marks.in));
-			continue;
-		}
-
-		if (!sa_mark_eq(c->sa_marks.out, d->sa_marks.out)) {
-			ldbg_spd(logger, indent, d_spd,
-				 "skipped; marks.out "PRI_SA_MARK" vs "PRI_SA_MARK,
-				 pri_sa_mark(c->sa_marks.out),
-				 pri_sa_mark(d->sa_marks.out));
-			continue;
-		}
-
-		/*
-		 * .route specific checks.
-		 *
-		 * XXX: why look at host address?
-		 *
-		 * XXX: isn't host address comparison a routing and
-		 * not SPD thing?  Ignoring a conflicting SPD because
-		 * of the routing table seems wrong - the SPD still
-		 * conflicts so only one is allowed.
-		 */
-
-		if (!routed(d)) {
-			ldbg_spd(logger, indent, d_spd, "skipped route; not routed");
-		} else if (c->clonedfrom == d) {
-			/* D, the parent, is already routed */
-			ldbg_spd(logger, indent, d_spd,
-				 "skipped route; is connection parent");
-		} else if (!address_eq_address(c->local->host.addr,
-					       d->local->host.addr)) {
-			ldbg_spd(logger, indent, d_spd, "skipped route; different local address?!?");
-		} else {
-			save_spd_owner(&owner.route, "route", d_spd, logger, indent);
-		}
-
-		/*
-		 * .policy specific checks.
-		 */
-
-		if (c->clonedfrom == d) {
-			enum_buf rb;
-			ldbg_spd(logger, indent, d_spd,
-				 "skipped; is connection parent with routing >= %s[%s] %s",
-				 str_enum_short(&routing_names, c_routing, &rb),
-				 enum_name_short(&shunt_kind_names, c_shunt_kind),
-				 bool_str(d->child.routing >= c_routing));
-		} else if (!selector_eq_selector(c_spd->local->client,
-						 d_spd->local->client)) {
-			ldbg_spd(logger, indent, d_spd, "policy skipped;  different local selectors");
-		} else if (c->config->overlapip && d->config->overlapip) {
-			ldbg_spd(logger, indent, d_spd, "policy skipped;  both ends have POLICY_OVERLAPIP");
-		} else {
-			save_spd_owner(&owner.policy, "policy", d_spd, logger, indent);
-		}
-	}
-
-	ldbg_owner(logger, &owner, c_local, c_remote, c_routing, __func__);
-	return owner;
+	struct spd_owner raw = raw_spd_owner(spd, RT_UNROUTED + 1,
+					     spd->connection->logger,
+					     HERE, __func__, 0);
+	return raw.route;
 }
 
 /*
@@ -1018,17 +828,8 @@ static bool get_connection_spd_conflict(struct spd_route *spd, struct logger *lo
 	 * Find how owns the installed SPD (kernel policy).
 	 */
 
-	struct spd_owner owner = spd_conflict(spd, indent);
-	if (DBGP(DBG_BASE)) {
-		struct spd_owner raw = raw_spd_owner(spd, RT_UNROUTED + 1,
-						     logger, HERE, __func__, 0);
-		LDBG_cross_check("owner.route", owner.route,
-				 "raw.route", raw.route,
-				 logger, HERE);
-		LDBG_cross_check("owner.policy", owner.policy,
-				 "raw.policy", raw.policy,
-				 logger, HERE);
-	}
+	struct spd_owner owner = raw_spd_owner(spd, RT_UNROUTED + 1,
+					       logger, HERE, __func__, 0);
 
 	/*
 	 * Double check that it really does own the SPD.
