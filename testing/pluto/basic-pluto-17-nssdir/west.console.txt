@@ -13,22 +13,25 @@ west #
 Initializing NSS database
 Warning no default label for /tmp/TESTipsec.d
 west #
- ls ${IPSEC_DIR} | grep -E '*.db' # should show no db files
+ find ${IPSEC_DIR}      -name '*.db' # should show no db files
 west #
- ls ${IPSEC_TEST_DIR} | grep -E '*.db' # should show db files
-cert9.db
-key4.db
+ find ${IPSEC_TEST_DIR} -name '*.db' # should show db files
+/tmp/TESTipsec.d/key4.db
+/tmp/TESTipsec.d/cert9.db
 west #
  ipsec checknss --nssdir ${IPSEC_TEST_DIR}
 west #
- ls ${IPSEC_DIR} | grep -E '*.db' # should show no db files
+ find ${IPSEC_DIR}      -name '*.db' # should show no db files
 west #
- ls ${IPSEC_TEST_DIR} | grep -E '*.db' # should show db files
-cert9.db
-key4.db
+ find ${IPSEC_TEST_DIR} -name '*.db' # should show db files
+/tmp/TESTipsec.d/key4.db
+/tmp/TESTipsec.d/cert9.db
 west #
- ipsec newhostkey --nssdir ${IPSEC_TEST_DIR} > /dev/null 2> /dev/null
+ ipsec newhostkey --nssdir ${IPSEC_TEST_DIR}
+Generated RSA key pair with CKAID <<CKAID#1>> was stored in the NSS database
+The public key can be displayed using: ipsec showhostkey --left --ckaid <<CKAID#1>>
 west #
  rm -rf ${IPSEC_TEST_DIR}
 west #
  
+
