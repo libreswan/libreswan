@@ -118,3 +118,15 @@ const struct sparse_name yna_option_names[] = {
 	{ "auto",	YNA_AUTO },
 	SPARSE_NULL,
 };
+
+
+
+/*
+ * Values for enable-tcp={no, yes, fallback}
+ */
+
+const struct sparse_name tcp_option_names[] = {
+	YES_NO(IKE_TCP_ONLY, IKE_TCP_NO),
+	{ "fallback", IKE_TCP_FALLBACK },
+	SPARSE_NULL
+};

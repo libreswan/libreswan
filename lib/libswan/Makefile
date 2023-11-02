@@ -70,7 +70,6 @@ OBJS += pubkey_rsa.o
 OBJS += pubkey_ecdsa.o
 
 OBJS += sparse_names.o
-OBJS += tcp_option_story.o
 OBJS += ttoaddress_dns.o
 OBJS += ttoaddress_num.o
 OBJS += ttoaddresses_num.o

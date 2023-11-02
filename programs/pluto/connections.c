@@ -2334,10 +2334,10 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	if (never_negotiate_wm(wm)) {
 		if (wm->enable_tcp != 0) {
-			enum_buf eb;
+			sparse_buf eb;
 			llog(RC_INFORMATIONAL, c->logger,
 			     "warning: enable-tcp=%s ignored for type=passthrough connection",
-			     str_enum_short(&tcp_option_story, wm->enable_tcp, &eb));
+			     str_sparse(tcp_option_names, wm->enable_tcp, &eb));
 		}
 		/* cleanup inherited default; XXX: ? */
 		config->iketcp = IKE_TCP_NO;

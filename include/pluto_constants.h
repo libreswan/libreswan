@@ -853,7 +853,7 @@ enum tcp_options {
        IKE_TCP_FALLBACK = 3,
 };
 
-extern const struct enum_names tcp_option_story; /* "no", "yes", "fallback" */
+extern const struct sparse_name tcp_option_names[]; /* "no", "yes", "fallback" */
 
 enum eap_options {
 	IKE_EAP_NONE = 0, /* default */
