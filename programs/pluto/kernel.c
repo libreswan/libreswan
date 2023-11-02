@@ -311,29 +311,34 @@ static void ldbg_bare_shunt(const struct logger *logger, const char *op, const s
 	}
 }
 
-static void LDBG_cross_check(struct logger *logger,
-			     const char *what,
+static void LDBG_cross_check(const char *lhss,
 			     const struct spd_route *lhs,
+			     const char *rhss,
 			     const struct spd_route *rhs,
+			     struct logger *logger,
 			     where_t where)
 {
 	LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 		jam_string(buf, "cross check ");
+		jam_string(buf, lhss);
+		jam_string(buf, " ");
 		if (lhs == NULL) {
 			jam_string(buf, "none");
 		} else {
 			jam_spd(buf, lhs);
 		}
 		jam_string(buf, " and ");
+		jam_string(buf, rhss);
+		jam_string(buf, " ");
 		if (rhs == NULL) {
 			jam_string(buf, "none");
 		} else {
 			jam_spd(buf, rhs);
 		}
-		jam_string(buf, " ");
-		jam_string(buf, what);
 	}
-	PEXPECT_WHERE(logger, where, lhs == rhs);
+	if (lhs != rhs) {
+		llog_pexpect(logger, where, "%s == %s", lhss, rhss);
+	}
 }
 
 /*
@@ -816,23 +821,27 @@ static struct spd_owner raw_spd_owner(const struct spd_route *c_spd,
 const struct spd_route *bare_cat_owner(const struct spd_route *spd,
 				       struct logger *logger, where_t where)
 {
-	struct spd_owner owner = raw_spd_owner(spd, RT_UNROUTED + 1,
-					       logger, where, __func__, 0);
+	struct spd_owner raw = raw_spd_owner(spd, RT_UNROUTED + 1,
+					     logger, where, __func__, 0);
 	if (DBGP(DBG_BASE)) {
-		LDBG_cross_check(logger, "cat", owner.cat, owner.policy, HERE);
+		LDBG_cross_check("raw.cat", raw.cat,
+				 "raw.policy", raw.policy,
+				 logger, HERE);
 	}
-	return owner.policy;
+	return raw.policy;
 }
 
 const struct spd_route *bare_spd_owner(const struct spd_route *spd,
 				       struct logger *logger, where_t where)
 {
-	struct spd_owner owner = raw_spd_owner(spd, RT_UNROUTED + 1,
-					       logger, where, __func__, 0);
+	struct spd_owner raw = raw_spd_owner(spd, RT_UNROUTED + 1,
+					     logger, where, __func__, 0);
 	if (DBGP(DBG_BASE)) {
-		LDBG_cross_check(logger, "bare", owner.bare, owner.policy, HERE);
+		LDBG_cross_check("raw.bare", raw.bare,
+				 "raw.policy",raw.policy,
+				 logger, HERE);
 	}
-	return owner.bare;
+	return raw.bare;
 }
 
 const struct spd_route *spd_policy_owner(const struct spd_route *spd,
@@ -849,7 +858,9 @@ const struct spd_route *spd_route_owner(struct spd_route *spd)
 	if (DBGP(DBG_BASE)) {
 		struct spd_owner raw = raw_spd_owner(spd, RT_UNROUTED + 1,
 						     spd->connection->logger, HERE, __func__, 0);
-		LDBG_cross_check(spd->connection->logger, "route", conflict.route, raw.route, HERE);
+		LDBG_cross_check("conflict.route", conflict.route,
+				 "raw.route", raw.route,
+				 spd->connection->logger, HERE);
 	}
 	return conflict.route;
 }
@@ -1045,7 +1056,14 @@ static bool get_connection_spd_conflict(struct spd_route *spd, struct logger *lo
 	if (DBGP(DBG_BASE)) {
 		struct spd_owner raw = raw_spd_owner(spd, RT_UNROUTED + 1,
 						     logger, HERE, __func__, 0);
-		LDBG_cross_check(logger, "route", owner.route, raw.route, HERE);
+		LDBG_cross_check("owner.route", owner.route,
+				 "raw.route", raw.route,
+				 logger, HERE);
+#if 0
+		LDBG_cross_check("owner.policy", owner.policy,
+				 "raw.policy", raw.policy,
+				 logger, HERE);
+#endif
 	}
 
 	/*
