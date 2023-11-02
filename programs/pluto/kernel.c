@@ -566,28 +566,14 @@ struct spd_owner {
 	const struct spd_route *route;
 	const struct spd_route *cat;
 	const struct spd_route *bare;
+	const struct spd_route *raw;
 };
 
 static void LDBG_owner(struct logger *logger, const char *what,
-		       const struct spd_route *owner,
-		       const ip_selector *local, const ip_selector *remote,
-		       enum routing routing,
-		       enum shunt_kind shunt_kind,
-		       const char *who)
+		       const struct spd_route *owner)
 {
 	if (owner != NULL) {
-		selector_pair_buf spb;
-		ldbg_spd(logger, 0, owner,
-			 "%s: is %s owner of %s with routing >= %s[%s]",
-			 who, what, str_selector_pair(local, remote, &spb),
-			 enum_name_short(&routing_names, routing),
-			 enum_name_short(&shunt_kind_names, shunt_kind));
-	} else {
-		selector_pair_buf spb;
-		ldbg(logger, "%s: no %s owner of %s with routing >= %s[%s]",
-		     who, what, str_selector_pair(local, remote, &spb),
-		     enum_name_short(&routing_names, routing),
-		     enum_name_short(&shunt_kind_names, shunt_kind));
+		ldbg_spd(logger, 1, owner, "%s owner", what);
 	}
 }
 
@@ -596,16 +582,21 @@ static void ldbg_owner(struct logger *logger, const struct spd_owner *owner,
 		       enum routing routing, const char *who)
 {
 	if (DBGP(DBG_BASE)) {
+
 		enum shunt_kind shunt_kind = routing_shunt_kind(routing);
 
-		LDBG_owner(logger, "policy", owner->policy,
-			   local, remote, routing, shunt_kind, who);
-		LDBG_owner(logger, "route", owner->route,
-			   local, remote, routing, shunt_kind, who);
-		LDBG_owner(logger, "cat", owner->cat,
-			   local, remote, routing, shunt_kind, who);
-		LDBG_owner(logger, "bare", owner->bare,
-			   local, remote, routing, shunt_kind, who);
+		selector_pair_buf spb;
+		LDBG_log(logger,
+			 "%s: owners of %s routing >= %s[%s]",
+			 who, str_selector_pair(local, remote, &spb),
+			 enum_name_short(&routing_names, routing),
+			 enum_name_short(&shunt_kind_names, shunt_kind));
+
+		LDBG_owner(logger, "policy", owner->policy);
+		LDBG_owner(logger, "route", owner->route);
+		LDBG_owner(logger, "cat", owner->cat);
+		LDBG_owner(logger, "bare", owner->bare);
+		LDBG_owner(logger, "raw", owner->raw);
 	}
 }
 
@@ -750,46 +741,6 @@ static struct spd_owner raw_spd_owner(const struct spd_route *c_spd,
 		}
 
 		/*
-		 * .policy specific checks.
-		 *
-		 * XXX: in spd_conflict() the shunt_kind check is a
-		 * no-op as anything other than RT_UNROUTED will pass.
-		 *
-		 * XXX: in raw_spd_owner() the clonedfrom check is
-		 * skipped.  It's to handle parent and child covering
-		 * same selection with ROUTED_ONDEMAND.
-		 */
-
-		enum shunt_kind d_shunt_kind = spd_shunt_kind(d_spd);
-
-		if (d_shunt_kind < c_shunt_kind) {
-			ldbg_spd(logger, indent, d_spd, "skipped; < %s[%s]",
-				 enum_name_short(&routing_names, c_routing),
-				 enum_name_short(&shunt_kind_names, c_shunt_kind));
-			continue;
-		}
-
-		if (c->clonedfrom == d) {
-			enum_buf rb;
-			ldbg_spd(logger, indent, d_spd,
-				 "[skipped]; is connection parent with routing >= %s[%s] %s",
-				 str_enum_short(&routing_names, c_routing, &rb),
-				 enum_name_short(&shunt_kind_names, c_shunt_kind),
-				 bool_str(d->child.routing >= c_routing));
-			/* continue; spd_conflict() only */
-		}
-
-		if (!selector_eq_selector(*c_local, d_spd->local->client)) {
-			ldbg_spd(logger, indent, d_spd, "skipped policy; different local selectors");
-#if 0 /* spd_conflict() */
-		} else if (c->config->overlapip && d->config->overlapip) {
-			ldbg_spd(logger, indent, d_spd, "skipped policy;  both ends have POLICY_OVERLAPIP");
-#endif
-		} else {
-			save_spd_owner(&owner.policy, "policy", d_spd, logger, indent);
-		}
-
-		/*
 		 * .route specific checks.
 		 *
 		 * XXX: why look at host address?
@@ -807,10 +758,49 @@ static struct spd_owner raw_spd_owner(const struct spd_route *c_spd,
 			ldbg_spd(logger, indent, d_spd,
 				 "skipped route; is connection parent");
 		} else if (!address_eq_address(c->local->host.addr,
-					d->local->host.addr)) {
+					       d->local->host.addr)) {
 			ldbg_spd(logger, indent, d_spd, "skipped route; different local address?!?");
 		} else {
 			save_spd_owner(&owner.route, "route", d_spd, logger, indent);
+		}
+
+		/*
+		 * .policy specific checks
+		 */
+
+		if (c->clonedfrom == d) {
+			enum_buf rb;
+			ldbg_spd(logger, indent, d_spd,
+				 "skipped policy; is connection parent with routing >= %s[%s] %s",
+				 str_enum_short(&routing_names, c_routing, &rb),
+				 enum_name_short(&shunt_kind_names, c_shunt_kind),
+				 bool_str(d->child.routing >= c_routing));
+		} else if (!selector_eq_selector(c_spd->local->client,
+						 d_spd->local->client)) {
+			ldbg_spd(logger, indent, d_spd, "skipped policy; different local selectors");
+		} else if (c->config->overlapip && d->config->overlapip) {
+			ldbg_spd(logger, indent, d_spd, "skipped policy;  both ends have POLICY_OVERLAPIP");
+		} else {
+			save_spd_owner(&owner.policy, "policy", d_spd, logger, indent);
+		}
+
+		/*
+		 * .raw specific checks.
+		 */
+
+		enum shunt_kind d_shunt_kind = spd_shunt_kind(d_spd);
+
+		if (d_shunt_kind < c_shunt_kind) {
+			ldbg_spd(logger, indent, d_spd, "skipped raw; < %s[%s]",
+				 enum_name_short(&routing_names, c_routing),
+				 enum_name_short(&shunt_kind_names, c_shunt_kind));
+		} else if (!selector_eq_selector(c_spd->local->client,
+						 d_spd->local->client)) {
+			ldbg_spd(logger, indent, d_spd, "skipped raw; different local selectors");
+		} else if (c->config->overlapip && d->config->overlapip) {
+			ldbg_spd(logger, indent, d_spd, "skipped raw;  both ends have POLICY_OVERLAPIP");
+		} else {
+			save_spd_owner(&owner.raw, "raw", d_spd, logger, indent);
 		}
 	}
 
@@ -825,10 +815,10 @@ const struct spd_route *bare_cat_owner(const struct spd_route *spd,
 					     logger, where, __func__, 0);
 	if (DBGP(DBG_BASE)) {
 		LDBG_cross_check("raw.cat", raw.cat,
-				 "raw.policy", raw.policy,
+				 "raw.raw", raw.raw,
 				 logger, HERE);
 	}
-	return raw.policy;
+	return raw.cat;
 }
 
 const struct spd_route *bare_spd_owner(const struct spd_route *spd,
@@ -838,7 +828,7 @@ const struct spd_route *bare_spd_owner(const struct spd_route *spd,
 					     logger, where, __func__, 0);
 	if (DBGP(DBG_BASE)) {
 		LDBG_cross_check("raw.bare", raw.bare,
-				 "raw.policy",raw.policy,
+				 "raw.raw",raw.raw,
 				 logger, HERE);
 	}
 	return raw.bare;
@@ -849,7 +839,7 @@ const struct spd_route *spd_policy_owner(const struct spd_route *spd,
 					 struct logger *logger, where_t where, unsigned indent)
 {
 	return raw_spd_owner(spd, new_routing,
-			     logger, where, __func__, indent).policy;
+			     logger, where, __func__, indent).raw;
 }
 
 const struct spd_route *spd_route_owner(struct spd_route *spd)
@@ -965,46 +955,6 @@ static struct spd_owner spd_conflict(const struct spd_route *c_spd,
 		}
 
 		/*
-		 * .policy specific checks.
-		 *
-		 * XXX: in spd_conflict() the shunt_kind check is a
-		 * no-op as anything other than RT_UNROUTED will pass.
-		 *
-		 * XXX: in raw_spd_owner() the clonedfrom check is
-		 * skipped.  It's to handle parent and child covering
-		 * same selection with ROUTED_ONDEMAND.
-		 */
-
-		enum shunt_kind d_shunt_kind = spd_shunt_kind(d_spd);
-
-		/* c_routing and c_shunt_kind are constant here;
-		   and covered by above */
-		if (d_shunt_kind < c_shunt_kind) {
-			ldbg_spd(logger, indent, d_spd, "[skipped]; < %s[%s]",
-				 enum_name_short(&routing_names, c_routing),
-				 enum_name_short(&shunt_kind_names, c_shunt_kind));
-			/* continue; raw_spd_owner() only */
-		}
-
-		if (c->clonedfrom == d) {
-			enum_buf rb;
-			ldbg_spd(logger, indent, d_spd,
-				 "skipped; is connection parent with routing >= %s[%s] %s",
-				 str_enum_short(&routing_names, c_routing, &rb),
-				 enum_name_short(&shunt_kind_names, c_shunt_kind),
-				 bool_str(d->child.routing >= c_routing));
-			continue;
-		}
-
-		if (!selector_eq_selector(c_spd->local->client, d_spd->local->client)) {
-			ldbg_spd(logger, indent, d_spd, "policy skipped;  different local selectors");
-		} else if (c->config->overlapip && d->config->overlapip) {
-			ldbg_spd(logger, indent, d_spd, "policy skipped;  both ends have POLICY_OVERLAPIP");
-		} else {
-			save_spd_owner(&owner.policy, "policy", d_spd, logger, indent);
-		}
-
-		/*
 		 * .route specific checks.
 		 *
 		 * XXX: why look at host address?
@@ -1022,10 +972,30 @@ static struct spd_owner spd_conflict(const struct spd_route *c_spd,
 			ldbg_spd(logger, indent, d_spd,
 				 "skipped route; is connection parent");
 		} else if (!address_eq_address(c->local->host.addr,
-					d->local->host.addr)) {
+					       d->local->host.addr)) {
 			ldbg_spd(logger, indent, d_spd, "skipped route; different local address?!?");
 		} else {
 			save_spd_owner(&owner.route, "route", d_spd, logger, indent);
+		}
+
+		/*
+		 * .policy specific checks.
+		 */
+
+		if (c->clonedfrom == d) {
+			enum_buf rb;
+			ldbg_spd(logger, indent, d_spd,
+				 "skipped; is connection parent with routing >= %s[%s] %s",
+				 str_enum_short(&routing_names, c_routing, &rb),
+				 enum_name_short(&shunt_kind_names, c_shunt_kind),
+				 bool_str(d->child.routing >= c_routing));
+		} else if (!selector_eq_selector(c_spd->local->client,
+						 d_spd->local->client)) {
+			ldbg_spd(logger, indent, d_spd, "policy skipped;  different local selectors");
+		} else if (c->config->overlapip && d->config->overlapip) {
+			ldbg_spd(logger, indent, d_spd, "policy skipped;  both ends have POLICY_OVERLAPIP");
+		} else {
+			save_spd_owner(&owner.policy, "policy", d_spd, logger, indent);
 		}
 	}
 
@@ -1059,11 +1029,9 @@ static bool get_connection_spd_conflict(struct spd_route *spd, struct logger *lo
 		LDBG_cross_check("owner.route", owner.route,
 				 "raw.route", raw.route,
 				 logger, HERE);
-#if 0
 		LDBG_cross_check("owner.policy", owner.policy,
 				 "raw.policy", raw.policy,
 				 logger, HERE);
-#endif
 	}
 
 	/*
