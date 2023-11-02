@@ -95,7 +95,7 @@ static bool add_new_iface_endpoint(struct connection *c, struct host_end *end)
 	const bool float_nat_initiator = false;
 
 	struct iface_endpoint *ifp = NULL;
-	switch (c->config->iketcp) {
+	switch (c->local->config->host.iketcp) {
 	case IKE_TCP_NO:
 		if (pluto_listen_udp) {
 			ifp = bind_iface_endpoint(dev, &udp_iface_io,
@@ -137,7 +137,7 @@ static bool add_new_iface_endpoint(struct connection *c, struct host_end *end)
 		     end->config->leftright);
 		return false;
 	default:
-		bad_case(c->config->iketcp);
+		bad_sparse(c->logger, tcp_option_names, c->local->config->host.iketcp);
 	}
 
 	/* success */
@@ -192,7 +192,7 @@ static void LDBG_orient_end(struct connection *c, enum left_right end)
 		 pri_hport(end_host_port(this, that)),
 		 this->config->ikeport,
 		 bool_str(this->encap),
-		 str_sparse(tcp_option_names, c->config->iketcp, &tcpb));
+		 str_sparse(tcp_option_names, c->local->config->host.iketcp, &tcpb));
 }
 
 bool orient(struct connection **cp, struct logger *logger)

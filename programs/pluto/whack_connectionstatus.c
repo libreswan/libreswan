@@ -629,7 +629,7 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		    deltasecs(c->config->retransmit_timeout));
 		/* tcp? */
 		jam_string(buf, " iketcp:");
-		jam_sparse(buf, tcp_option_names, c->config->iketcp);
+		jam_sparse(buf, tcp_option_names, c->local->config->host.iketcp);
 		jam_string(buf, ";");
 		/* tcp-port */
 		jam_string(buf, " iketcp-port:");

@@ -90,6 +90,9 @@ struct host_end_config {
 
 	unsigned ikeport;
 	enum keyword_host type;
+	enum tcp_options iketcp;	/* Allow TCP as fallback,
+					 * insist on TCP(YES) or stick
+					 * to UDP(NO). */
 	/*
 	 * Proof of identity.
 	 */
@@ -252,9 +255,6 @@ struct config {
 	bool send_vid_fake_strongswan;		/* Send the unversioned strongswan VID */
 	bool send_vid_cisco_unity;		/* Send Unity VID for cisco compatibility */
 
-	enum tcp_options iketcp;	/* Allow TCP as fallback,
-					 * insist on TCP or stick to
-					 * UDP */
 	ip_port remote_tcpport;		/* TCP remote port to use -
 					 * local port will be
 					 * ephemeral */

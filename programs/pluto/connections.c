@@ -2332,6 +2332,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	/* RFC 8229 TCP encap*/
 
+	enum tcp_options iketcp;
 	if (never_negotiate_wm(wm)) {
 		if (wm->enable_tcp != 0) {
 			sparse_buf eb;
@@ -2340,20 +2341,21 @@ static diag_t extract_connection(const struct whack_message *wm,
 			     str_sparse(tcp_option_names, wm->enable_tcp, &eb));
 		}
 		/* cleanup inherited default; XXX: ? */
-		config->iketcp = IKE_TCP_NO;
+		iketcp = IKE_TCP_NO;
 	} else if (c->config->ike_version < IKEv2) {
 		if (wm->enable_tcp != 0 &&
 		    wm->enable_tcp != IKE_TCP_NO) {
 			return diag("enable-tcp= requires IKEv2");
 		}
-		config->iketcp = IKE_TCP_NO;
+		iketcp = IKE_TCP_NO;
 	} else if (wm->enable_tcp == 0) {
-		config->iketcp = IKE_TCP_NO; /* default */
+		iketcp = IKE_TCP_NO; /* default */
 	} else {
-		config->iketcp = wm->enable_tcp;
+		iketcp = wm->enable_tcp;
 	}
+	config->end[LEFT_END].host.iketcp = config->end[RIGHT_END].host.iketcp = iketcp;
 
-	switch (config->iketcp) {
+	switch (iketcp) {
 	case IKE_TCP_NO:
 		if (wm->tcp_remoteport != 0) {
 			llog(RC_INFORMATIONAL, c->logger,
@@ -2377,7 +2379,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 		break;
 	default:
 		/* must  have been set */
-		bad_case(config->iketcp);
+		bad_sparse(c->logger, tcp_option_names, iketcp);
 	}
 
 
