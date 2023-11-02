@@ -15,5 +15,5 @@ ipsec showstates
 # this is complex grep line susceptible to changes to log lines.
 # until we find better one keep this.
 # May be once the bug is fixed comment it out?
-grep -E  "Message ID:|emit IKEv2 Delete Payload|exchange type:|**emit ISAKMP Message|**parse ISAKMP Message" /tmp/pluto.log | sed -e 's/ (.*/ (..)/'
+grep -E  'Message ID:|emit IKEv2 Delete Payload|exchange type:|\*\*emit ISAKMP Message|\*\*parse ISAKMP Message' /tmp/pluto.log | sed -e 's/ (.*/ (..)/'
 echo done

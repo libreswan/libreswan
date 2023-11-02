@@ -83,7 +83,7 @@ west #
 west #
  # May be once the bug is fixed comment it out?
 west #
- grep -E  "Message ID:|emit IKEv2 Delete Payload|exchange type:|**emit ISAKMP Message|**parse ISAKMP Message" /tmp/pluto.log | sed -e 's/ (.*/ (..)/'
+ grep -E  'Message ID:|emit IKEv2 Delete Payload|exchange type:|\*\*emit ISAKMP Message|\*\*parse ISAKMP Message' /tmp/pluto.log | sed -e 's/ (.*/ (..)/'
 | Message ID: IKE #1 initializing (..)
 | **emit ISAKMP Message:
 |    exchange type: ISAKMP_v2_IKE_SA_INIT (..)
