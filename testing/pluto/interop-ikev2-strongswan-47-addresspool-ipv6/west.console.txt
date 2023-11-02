@@ -54,7 +54,6 @@ west #
 Shunted Connections:
 Bypass LAN 192.0.1.0/24:  192.0.1.0/24 === 192.0.1.0/24 PASS
 Bypass LAN 192.1.2.0/24:  192.1.2.0/24 === 192.1.2.0/24 PASS
-Bypass LAN ::1/128:  ::1/128 === ::1/128 PASS
 Bypass LAN 2001:db8:0:1::/64:  2001:db8:0:1::/64 === 2001:db8:0:1::/64 PASS
 Bypass LAN 2001:db8:1:2::/64:  2001:db8:1:2::/64 === 2001:db8:1:2::/64 PASS
 Bypass LAN fe80::/64:  fe80::/64 === fe80::/64 PASS

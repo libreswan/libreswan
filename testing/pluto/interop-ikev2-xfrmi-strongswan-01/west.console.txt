@@ -27,7 +27,7 @@ west #
 [NET] sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
 [NET] received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
 [ENC] parsed IKE_SA_INIT response 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) N(FRAG_SUP) N(HASH_ALG) N(CHDLESS_SUP) N(MULT_AUTH) ]
-[CFG] selected proposal: IKE:AES_CBC_128/HMAC_SHA2_256_128/PRF_HMAC_SHA2_256/CURVE_25519
+[CFG] selected proposal: IKE:AES_CBC_128/HMAC_SHA2_256_128/PRF_HMAC_SHA2_256/ECP_256
 [IKE] authentication of 'west' (myself) with pre-shared key
 [IKE] establishing CHILD_SA westnet-eastnet{1}
 [ENC] generating IKE_AUTH request 1 [ IDi N(INIT_CONTACT) IDr AUTH SA TSi TSr N(MULT_AUTH) N(EAP_ONLY) N(MSG_ID_SYN_SUP) ]

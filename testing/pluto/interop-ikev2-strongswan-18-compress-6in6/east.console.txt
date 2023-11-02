@@ -79,12 +79,6 @@ src 2001:db8:0:2::/64 dst 2001:db8:0:2::/64
 	dir in priority PRIORITY ptype main 
 src 2001:db8:0:2::/64 dst 2001:db8:0:2::/64 
 	dir out priority PRIORITY ptype main 
-src ::1/128 dst ::1/128 
-	dir fwd priority PRIORITY ptype main 
-src ::1/128 dst ::1/128 
-	dir in priority PRIORITY ptype main 
-src ::1/128 dst ::1/128 
-	dir out priority PRIORITY ptype main 
 src 192.1.2.0/24 dst 192.1.2.0/24 
 	dir fwd priority PRIORITY ptype main 
 src 192.1.2.0/24 dst 192.1.2.0/24 
