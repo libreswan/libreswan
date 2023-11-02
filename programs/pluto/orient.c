@@ -171,9 +171,21 @@ static bool host_end_matches_iface_endpoint(const struct connection *c, enum lef
 	 * which port?
 	 */
 	ip_port this_host_port = end_host_port(this, that);
+	const struct ip_protocol *this_host_protocol;
+	switch (c->local->config->host.iketcp) {
+	case IKE_TCP_NO:
+	case IKE_TCP_FALLBACK:
+		this_host_protocol = &ip_protocol_udp;
+		break;
+	case IKE_TCP_ONLY:
+		this_host_protocol = &ip_protocol_tcp;
+		break;
+	default:
+		bad_sparse(c->logger, tcp_option_names, c->local->config->host.iketcp);
+	}
 	ip_endpoint this_host_endpoint =
 		endpoint_from_address_protocol_port(this_host_addr,
-						    ifp->io->protocol,
+						    this_host_protocol,
 						    this_host_port);
 	return endpoint_eq_endpoint(this_host_endpoint, ifp->local_endpoint);
 }

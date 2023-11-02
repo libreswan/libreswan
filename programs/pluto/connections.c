@@ -520,6 +520,13 @@ ip_port end_host_port(const struct host_end *this, const struct host_end *that)
 		 * had a natted port and is being revived.
 		 */
 		port = NAT_IKE_UDP_PORT;
+	} else if (this->config->iketcp == IKE_TCP_ONLY) {
+		/*
+		 * RFC 8229: Implementations MUST support TCP
+		 * encapsulation on TCP port 4500, which is reserved
+		 * for IPsec NAT traversal.
+		*/
+		port = NAT_IKE_UDP_PORT;
 	} else {
 		port = IKE_UDP_PORT;
 	}
