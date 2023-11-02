@@ -715,10 +715,8 @@ static struct spd_owner raw_spd_owner(const struct spd_route *c_spd,
 		ip_selector c_local_host = selector_from_address(c_spd->local->host->addr);
 		if (!selector_eq_selector(c_local_host, d_spd->local->client)) {
 			ldbg_spd(logger, indent, d_spd, "skipped cat; different local selectors");
-#if 0 /* needed? */
 		} else if (c->config->overlapip && d->config->overlapip) {
 			ldbg_spd(logger, indent, d_spd, "skipped policy;  both ends have POLICY_OVERLAPIP");
-#endif
 		} else {
 			save_spd_owner(&owner.cat, "cat", d_spd, logger, indent);
 		}
@@ -732,10 +730,8 @@ static struct spd_owner raw_spd_owner(const struct spd_route *c_spd,
 
 		if (!selector_eq_selector(*c_local, d_spd->local->client)) {
 			ldbg_spd(logger, indent, d_spd, "skipped bare; different local selectors");
-#if 0 /* needed? */
 		} else if (c->config->overlapip && d->config->overlapip) {
 			ldbg_spd(logger, indent, d_spd, "skipped bare;  both ends have POLICY_OVERLAPIP");
-#endif
 		} else {
 			save_spd_owner(&owner.bare, "bare", d_spd, logger, indent);
 		}
