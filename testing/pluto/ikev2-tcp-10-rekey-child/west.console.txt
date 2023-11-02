@@ -25,8 +25,8 @@ west #
 002 "west": added IKEv2 connection
 west #
  ipsec connectionstatus west
-000 "west": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
-000 "west":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
+000 "west": 192.0.1.0/24===192.1.2.45:4500[@west]...192.1.2.23:4500[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
+000 "west":   host: oriented; local: 192.1.2.45:4500; remote: 192.1.2.23:4500;
 000 "west":   my_updown=ipsec _updown;
 000 "west":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "west":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
