@@ -766,12 +766,9 @@ static struct spd_owner raw_spd_owner(const struct spd_route *c_spd,
 	return owner;
 }
 
-const struct spd_route *bare_cat_owner(const struct spd_route *spd,
-				       struct logger *logger, where_t where)
+struct spd_owner spd_owner(const struct spd_route *spd, enum routing new_routing, where_t where)
 {
-	struct spd_owner raw = raw_spd_owner(spd, RT_UNROUTED + 1,
-					     logger, where, __func__, 0);
-	return raw.bare_cat;
+	return raw_spd_owner(spd, new_routing, spd->connection->logger, where, __func__, 0);
 }
 
 const struct spd_route *bare_spd_owner(const struct spd_route *spd,
@@ -780,7 +777,7 @@ const struct spd_route *bare_spd_owner(const struct spd_route *spd,
 	/*
 	 * .bare ignores RT_UNROUTED+1.
 	 */
-	struct spd_owner raw = raw_spd_owner(spd, RT_UNROUTED + 1,
+	struct spd_owner raw = raw_spd_owner(spd, /*ignored-for-bare*/RT_UNROUTED + 1,
 					     logger, where, __func__, 0);
 	return raw.bare;
 }
@@ -820,7 +817,7 @@ static bool get_connection_spd_conflict(struct spd_route *spd, struct logger *lo
 	 * Find how owns the installed SPD (kernel policy).
 	 */
 
-	struct spd_owner owner = raw_spd_owner(spd, RT_UNROUTED + 1,
+	struct spd_owner owner = raw_spd_owner(spd, /*ignored-for-policy*/RT_UNROUTED + 1,
 					       logger, HERE, __func__, 0);
 
 	/*

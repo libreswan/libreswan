@@ -617,6 +617,7 @@ void add_cat_kernel_policy(const struct connection *c,
 }
 
 static void delete_cat_kernel_policy(const struct spd_route *spd,
+				     const struct spd_owner *owner,
 				     enum direction direction,
 				     struct logger *logger,
 				     where_t where,
@@ -634,10 +635,9 @@ static void delete_cat_kernel_policy(const struct spd_route *spd,
 	 */
 	ip_selector local_client = selector_from_address(spd->local->host->addr);
 	if (direction == DIRECTION_OUTBOUND) {
-		const struct spd_route *owner =
-			bare_cat_owner(spd, logger, where);
-		if (owner != NULL) {
-			if (!restore_spd_kernel_policy(owner, DIRECTION_OUTBOUND,
+		if (owner->bare_cat != NULL) {
+			if (!restore_spd_kernel_policy(owner->bare_cat,
+						       DIRECTION_OUTBOUND,
 						       logger, where, story)) {
 				llog(RC_LOG, logger, "%s failed", story);
 			}
@@ -667,10 +667,11 @@ void delete_cat_kernel_policies(struct connection *c,
 #endif
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 		if (spd->local->child->has_cat) {
-			delete_cat_kernel_policy(spd, DIRECTION_OUTBOUND, logger, where,
+			struct spd_owner owner = spd_owner(spd, RT_UNROUTED/*ignored-for-cat*/, where);
+			delete_cat_kernel_policy(spd, &owner, DIRECTION_OUTBOUND, logger, where,
 						 "CAT: removing outbound IPsec policy");
 			if (delete_inbound_cat != NULL) {
-				delete_cat_kernel_policy(spd, DIRECTION_INBOUND,
+				delete_cat_kernel_policy(spd, &owner, DIRECTION_INBOUND,
 							 logger, where, delete_inbound_cat);
 			}
 		}
