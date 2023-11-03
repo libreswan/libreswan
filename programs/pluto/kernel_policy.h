@@ -203,6 +203,7 @@ bool replace_spd_kernel_policy(const struct spd_route *spd,
 			       where_t where, const char *what);
 
 bool delete_spd_kernel_policy(const struct spd_route *spd,
+			      const struct spd_owner *owner,
 			      enum direction direction,
 			      enum expect_kernel_policy existing_policy_expectation,
 			      struct logger *logger,

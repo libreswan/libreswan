@@ -523,6 +523,7 @@ bool delete_kernel_policy(enum direction direction,
 }
 
 bool delete_spd_kernel_policy(const struct spd_route *spd,
+			      const struct spd_owner *owner,
 			      enum direction direction,
 			      enum expect_kernel_policy existing_policy_expectation,
 			      struct logger *logger,
@@ -530,17 +531,16 @@ bool delete_spd_kernel_policy(const struct spd_route *spd,
 			      const char *story)
 {
 	if (direction == DIRECTION_OUTBOUND) {
-		const struct spd_route *owner =
-			bare_spd_owner(spd, logger, where);
-		if (owner != NULL) {
-			const struct connection *oc = owner->connection;
+		if (owner->bare_policy != NULL) {
+			const struct connection *oc = owner->bare_policy->connection;
 			if (BROKEN_TRANSITION &&
 			    oc->config->negotiation_shunt == SHUNT_HOLD &&
 			    oc->child.routing == RT_ROUTED_NEGOTIATION) {
-				ldbg(owner->connection->logger, "%s() skipping NEGOTIATION=HOLD", __func__);
+				ldbg(oc->logger, "%s() skipping NEGOTIATION=HOLD", __func__);
 				return true;
 			}
-			return restore_spd_kernel_policy(owner, DIRECTION_OUTBOUND,
+			return restore_spd_kernel_policy(owner->bare_policy,
+							 DIRECTION_OUTBOUND,
 							 logger, where, story);
 		}
 	}
@@ -574,10 +574,12 @@ void delete_spd_kernel_policies(const struct spds *spds,
 			continue;
 		}
 
-		delete_spd_kernel_policy(spd, DIRECTION_OUTBOUND,
+		struct spd_owner owner = spd_owner(spd, RT_UNROUTED/*ignored*/, where);
+
+		delete_spd_kernel_policy(spd, &owner, DIRECTION_OUTBOUND,
 					 EXPECT_KERNEL_POLICY_OK,
 					 logger, where, story);
-		delete_spd_kernel_policy(spd, DIRECTION_INBOUND,
+		delete_spd_kernel_policy(spd, &owner, DIRECTION_INBOUND,
 					 inbound_policy_expectation,
 					 logger, where, story);
 #ifdef IPSEC_CONNECTION_LIMIT
@@ -843,7 +845,8 @@ static void replace_ipsec_with_bare_kernel_policy(struct child_sa *child,
 	/*
 	 * Always zap inbound.
 	 */
-	if (!delete_spd_kernel_policy(spd, DIRECTION_INBOUND,
+	struct spd_owner owner = spd_owner(spd, RT_UNROUTED/*not-bare*/, where);
+	if (!delete_spd_kernel_policy(spd, &owner, DIRECTION_INBOUND,
 				      expect_inbound_policy,
 				      logger, where, "inbound")) {
 		llog(RC_LOG, logger,

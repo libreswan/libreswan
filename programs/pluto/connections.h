@@ -595,6 +595,7 @@ struct spd_end {
 struct spd_owner {
 	const struct spd_route *policy;
 	const struct spd_route *route;
+	const struct spd_route *raw;
 	/*
 	 * .bare_cat
 	 *
@@ -603,8 +604,16 @@ struct spd_owner {
 	 * this SPD will be restored.
 	 */
 	const struct spd_route *bare_cat;
-	const struct spd_route *bare;
-	const struct spd_route *raw;
+	/*
+	 * .bare_policy
+	 *
+	 * Assuming C_SPD doesn't exist (i.e., being deleted), look
+	 * for the highest priority policy that matches the selectors.
+	 *
+	 * Since C_SPD doesn't exist checks for matching .overlapip
+	 * and/or priority aren't needed.
+	 */
+	const struct spd_route *bare_policy;
 };
 
 struct spd_route {
