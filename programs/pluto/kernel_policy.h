@@ -232,8 +232,10 @@ void add_cat_kernel_policies(const struct connection *c,
 			     struct logger *logger, where_t where,
 			     const char *reason);
 
-void delete_cat_kernel_policies(struct connection *c,
-				struct logger *logger, where_t where);
+void delete_cat_kernel_policies(const struct spd_route *spd,
+				const struct spd_owner *owner,
+				struct logger *logger,
+				where_t where);
 
 void install_inbound_ipsec_kernel_policy(struct child_sa *child, struct spd_route *spd,
 					 where_t where);

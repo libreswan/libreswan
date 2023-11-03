@@ -655,7 +655,8 @@ static void delete_cat_kernel_policy(const struct spd_route *spd,
 	}
 }
 
-void delete_cat_kernel_policies(struct connection *c,
+void delete_cat_kernel_policies(const struct spd_route *spd,
+				const struct spd_owner *owner,
 				struct logger *logger,
 				where_t where)
 {
@@ -665,15 +666,12 @@ void delete_cat_kernel_policies(struct connection *c,
 	/* BSD; USE_IPTABLES; ... */
 	const char *delete_inbound_cat = NULL;
 #endif
-	FOR_EACH_ITEM(spd, &c->child.spds) {
-		if (spd->local->child->has_cat) {
-			struct spd_owner owner = spd_owner(spd, RT_UNROUTED/*ignored-for-cat*/, where);
-			delete_cat_kernel_policy(spd, &owner, DIRECTION_OUTBOUND, logger, where,
-						 "CAT: removing outbound IPsec policy");
-			if (delete_inbound_cat != NULL) {
-				delete_cat_kernel_policy(spd, &owner, DIRECTION_INBOUND,
-							 logger, where, delete_inbound_cat);
-			}
+	if (spd->local->child->has_cat) {
+		delete_cat_kernel_policy(spd, owner, DIRECTION_OUTBOUND, logger, where,
+					 "CAT: removing outbound IPsec policy");
+		if (delete_inbound_cat != NULL) {
+			delete_cat_kernel_policy(spd, owner, DIRECTION_INBOUND,
+						 logger, where, delete_inbound_cat);
 		}
 	}
 }
@@ -871,13 +869,14 @@ void replace_ipsec_with_bare_kernel_policies(struct child_sa *child,
 		do_updown(UPDOWN_DOWN, c, spd, &child->sa, logger);
 	}
 
-	delete_cat_kernel_policies(c, logger, where);
-
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 
 		if (is_v1_cisco_split(spd, HERE)) {
 			continue;
 		}
+
+		struct spd_owner owner = spd_owner(spd, RT_UNROUTED/*ignored-for-cat*/, where);
+		delete_cat_kernel_policies(spd, &owner, logger, where);
 
 		replace_ipsec_with_bare_kernel_policy(child, c, spd, shunt_kind,
 						      expect_inbound_policy,

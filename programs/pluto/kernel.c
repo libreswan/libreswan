@@ -2093,8 +2093,9 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child, bool 
 	 */
 
 	if (!ok) {
-		delete_cat_kernel_policies(child->sa.st_connection, child->sa.st_logger, HERE);
 		FOR_EACH_ITEM(spd, &c->child.spds) {
+			struct spd_owner owner = spd_owner(spd, RT_UNROUTED/*ignored-for-cat*/, HERE);
+			delete_cat_kernel_policies(spd, &owner, child->sa.st_logger, HERE);
 			revert_kernel_policy(spd, &child->sa, logger);
 		}
 		return false;
