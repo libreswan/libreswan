@@ -1401,8 +1401,6 @@ kvmplutotest	bad-nexthop-01		wip
 kvmplutotest	ikev2-tcp-00-enable-tcp-fallback			good
 kvmplutotest	ikev2-tcp-00-enable-tcp-no				good
 kvmplutotest	ikev2-tcp-00-enable-tcp-yes				good
-kvmplutotest	ikev2-tcp-01-eof					good
-kvmplutotest	ikev2-tcp-02-timeout					good
 kvmplutotest	ikev2-tcp-03-basic-rawrsa-blocking			wip	github/717
 kvmplutotest	ikev2-tcp-03-basic-rawrsa-nonblocking			wip	github/717
 kvmplutotest	ikev2-tcp-04-ikeport					good
@@ -1411,6 +1409,8 @@ kvmplutotest	ikev2-tcp-06-fail-ike-sa-init-invalid-ke		good
 kvmplutotest	ikev2-tcp-06-fail-ike-sa-init-redirect			good
 kvmplutotest	ikev2-tcp-07-fail-ike-auth-authentication		good
 kvmplutotest	ikev2-tcp-07-fail-ike-auth-redirect			good
+kvmplutotest	ikev2-tcp-08-fail-eof					good
+kvmplutotest	ikev2-tcp-09-fail-timeout				good
 kvmplutotest	ikev2-tcp-10-rekey-child				good
 kvmplutotest	ikev2-tcp-10-rekey-ike					good
 kvmplutotest	ikev2-tcp-25-rw-nat					good
