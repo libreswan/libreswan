@@ -29,8 +29,7 @@ struct connection;
 struct show;
 
 void show_ike_alg_connection(struct show *s,
-			     const struct connection *c,
-			     const char *instance);
+			     const struct connection *c);
 
 void show_ike_alg_status(struct show *s);
 

@@ -3579,6 +3579,15 @@ static size_t jam_connection_serials(struct jambuf *buf, const struct connection
 	return s;
 }
 
+const char *str_connection_serials(const struct connection *c, connection_buf *buf)
+{
+	struct jambuf p = ARRAY_AS_JAMBUF(buf->buf);
+	if (c->instance_serial > 0) {
+		jam_connection_serials(&p, c);
+	}
+	return buf->buf;
+}
+
 static size_t jam_connection_instance(struct jambuf *buf, const struct connection *c)
 {
 	/*
@@ -3613,6 +3622,16 @@ size_t jam_connection(struct jambuf *buf, const struct connection *c)
 	s += jam(buf, "\"%s\"", c->name);
 	if (c->instance_serial > 0) {
 		s += jam_connection_instance(buf, c);
+	}
+	return s;
+}
+
+size_t jam_connection_short(struct jambuf *buf, const struct connection *c)
+{
+	size_t s = 0;
+	s += jam(buf, "\"%s\"", c->name);
+	if (c->instance_serial > 0) {
+		s += jam_connection_serials(buf, c);
 	}
 	return s;
 }

@@ -799,8 +799,10 @@ struct connection *find_connection_for_packet(const ip_packet packet,
 					      shunk_t sec_label,
 					      struct logger *logger);
 
-/* publicly useful? */
+/* "name"[1]... OE-MAGIC */
 size_t jam_connection(struct jambuf *buf, const struct connection *c);
+/* "name"[1]... */
+size_t jam_connection_short(struct jambuf *buf, const struct connection *c);
 
 size_t jam_connection_policies(struct jambuf *buf, const struct connection *c);
 const char *str_connection_policies(const struct connection *c, policy_buf *buf);
@@ -829,6 +831,12 @@ const char *str_connection_instance(const struct connection *c,
 
 #define PRI_CONNECTION "\"%s\"%s"
 #define pri_connection(C,B) (C)->name, str_connection_instance(C, B)
+
+const char *str_connection_serials(const struct connection *c,
+				   connection_buf *buf);
+
+#define PRI_CONNECTION_SHORT PRI_CONNECTION
+#define pri_connection_short(C,B) (C)->name, str_connection_serial(C, B)
 
 struct connection **sort_connections(void);
 int connection_compare(const struct connection *ca,

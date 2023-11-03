@@ -72,8 +72,7 @@ void show_kernel_alg_status(struct show *s)
 }
 
 void show_kernel_alg_connection(struct show *s,
-				const struct connection *c,
-				const char *instance)
+				const struct connection *c)
 {
 	const char *satype;
 
@@ -149,8 +148,10 @@ void show_kernel_alg_connection(struct show *s,
 			 * The real PFS is displayed in the 'algorithm
 			 * newest' line further down.
 			 */
-			jam(buf, "\"%s\"%s:   %s algorithms: ",
-			    c->name, instance, satype);
+			jam_connection_short(buf, c);
+			jam_string(buf, ":  ");
+			/* algs */
+			jam(buf, " %s algorithms: ", satype);
 			jam_proposals(buf, c->config->child_sa.proposals.p);
 		}
 	}
@@ -158,22 +159,26 @@ void show_kernel_alg_connection(struct show *s,
 	const struct state *st = state_by_serialno(c->newest_ipsec_sa);
 
 	if (st != NULL && st->st_esp.present) {
-		show_comment(s,
-			  "\"%s\"%s:   %s algorithm newest: %s_%03d-%s; pfsgroup=%s",
-			  c->name,
-			  instance, satype,
-			  st->st_esp.attrs.transattrs.ta_encrypt->common.fqn,
-			  st->st_esp.attrs.transattrs.enckeylen,
-			  st->st_esp.attrs.transattrs.ta_integ->common.fqn,
-			  pfsbuf);
+		SHOW_JAMBUF(RC_COMMENT, s, buf) {
+			jam_connection_short(buf, c);
+			jam_string(buf, ":  ");
+			jam(buf, " %s algorithm newest: %s_%03d-%s;",
+			    satype,
+			    st->st_esp.attrs.transattrs.ta_encrypt->common.fqn,
+			    st->st_esp.attrs.transattrs.enckeylen,
+			    st->st_esp.attrs.transattrs.ta_integ->common.fqn);
+			jam(buf, " pfsgroup=%s", pfsbuf);
+		}
 	}
 
 	if (st != NULL && st->st_ah.present) {
-		show_comment(s,
-			  "\"%s\"%s:   %s algorithm newest: %s; pfsgroup=%s",
-			  c->name,
-			  instance, satype,
-			  st->st_ah.attrs.transattrs.ta_integ->common.fqn,
-			  pfsbuf);
+		SHOW_JAMBUF(RC_COMMENT, s, buf) {
+			jam_connection_short(buf, c);
+			jam_string(buf, ":  ");
+			jam(buf, " %s algorithm newest: %s;",
+			    satype,
+			    st->st_ah.attrs.transattrs.ta_integ->common.fqn);
+			jam(buf, " pfsgroup=%s", pfsbuf);
+		}
 	}
 }

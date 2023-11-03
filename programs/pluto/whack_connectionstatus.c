@@ -292,11 +292,11 @@ void jam_spd(struct jambuf *buf, const struct spd_route *spd)
 
 static void show_one_spd(struct show *s,
 			 const struct connection *c,
-			 const struct spd_route *spd,
-			 const char *instance)
+			 const struct spd_route *spd)
 {
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
-		jam(buf, PRI_CONNECTION":", c->name, instance);
+		jam_connection_short(buf, c);
+		jam_string(buf, ":");
 		/* one SPD */
 		jam_string(buf, " ");
 		jam_spd(buf, spd);
@@ -377,20 +377,14 @@ static void jam_connection_owners(struct jambuf *buf,
 
 static void show_connection_status(struct show *s, const struct connection *c)
 {
-	char instance[32];
-
-	instance[0] = '\0';
-	if (c->instance_serial > 0)
-		snprintf(instance, sizeof(instance), "[%lu]",
-			c->instance_serial);
-
 	/* Show topology. */
 	FOR_EACH_ITEM(spd, &c->child.spds) {
-		show_one_spd(s, c, spd, instance);
+		show_one_spd(s, c, spd);
 	}
 
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
-		jam(buf, PRI_CONNECTION":  ", c->name, instance);
+		jam_connection_short(buf, c);
+		jam_string(buf, ":  ");
 		jam_string(buf, " host: ");
 		jam_string(buf, (oriented(c) ? "oriented" : "unoriented"));
 		jam_string(buf, ";");
@@ -415,7 +409,8 @@ static void show_connection_status(struct show *s, const struct connection *c)
 	}
 
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
-		jam(buf, PRI_CONNECTION":  ", c->name, instance);
+		jam_connection_short(buf, c);
+		jam_string(buf, ":  ");
 		const char *local_cert = cert_nickname(&c->local->host.config->cert);
 		if (local_cert != NULL) {
 			jam(buf, " mycert=%s;", local_cert);
@@ -448,7 +443,8 @@ static void show_connection_status(struct show *s, const struct connection *c)
 	 "none")
 
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
-		jam(buf, PRI_CONNECTION":  ", c->name, instance);
+		jam_connection_short(buf, c);
+		jam_string(buf, ":  ");
 		/*
 		 * Both should not be set, but if they are, we
 		 * want to know.
@@ -479,8 +475,8 @@ static void show_connection_status(struct show *s, const struct connection *c)
 	}
 
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
-		const char *who;
-		jam(buf, PRI_CONNECTION":   ", c->name, instance);
+		jam_connection_short(buf, c);
+		jam_string(buf, ":   ");
 		/*
 		 * When showing the AUTH try to show just the AUTH=
 		 * text (and append the AUTHBY mask when things don't
@@ -494,7 +490,7 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		 * authenticating (at least for IKEv2) AUTH is
 		 * actually ignored - it's AUTHBY that counts.
 		 */
-		who = "our";
+		const char *who = "our";
 		FOR_EACH_THING(end, c->local->host.config, c->remote->host.config) {
 			jam(buf, "%s auth:", who);
 			/*
@@ -528,7 +524,10 @@ static void show_connection_status(struct show *s, const struct connection *c)
 	}
 
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
-		jam(buf, PRI_CONNECTION":   modecfg info:", c->name, instance);
+		jam_connection_short(buf, c);
+		jam_string(buf, ":  ");
+		/* mode config */
+		jam(buf, " modecfg info:");
 		jam(buf, " us:%s,", COMBO(c->local->config->host.modecfg));
 		jam(buf, " them:%s,", COMBO(c->remote->config->host.modecfg));
 		jam(buf, " modecfg policy:%s,", (c->config->modecfg.pull ? "pull" : "push"));
@@ -565,7 +564,8 @@ static void show_connection_status(struct show *s, const struct connection *c)
 	/* the banner */
 	if (c->config->modecfg.banner != NULL) {
 		SHOW_JAMBUF(RC_COMMENT, s, buf) {
-			jam(buf, PRI_CONNECTION":  ", c->name, instance);
+			jam_connection_short(buf, c);
+			jam_string(buf, ":  ");
 			/* banner */
 			jam_string(buf, " banner:");
 			jam_string(buf, c->config->modecfg.banner);
@@ -575,7 +575,8 @@ static void show_connection_status(struct show *s, const struct connection *c)
 
 	/* The first valid sec_label. */
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
-		jam(buf, PRI_CONNECTION":  ", c->name, instance);
+		jam_connection_short(buf, c);
+		jam_string(buf, ":  ");
 		jam_string(buf, " sec_label:");
 		if (is_labeled_child(c)) {
 			/* negotiated (IKEv2) */
@@ -595,7 +596,9 @@ static void show_connection_status(struct show *s, const struct connection *c)
 	if (c->local->host.config->ca.ptr != NULL ||
 	    c->remote->host.config->ca.ptr != NULL) {
 		SHOW_JAMBUF(RC_COMMENT, s, buf) {
-			jam(buf, PRI_CONNECTION":  ", c->name, instance);
+			jam_connection_short(buf, c);
+			jam_string(buf, ":  ");
+			/* CAs */
 			jam_string(buf, " CAs: ");
 			/* this */
 			jam_string(buf, "'");
@@ -611,7 +614,8 @@ static void show_connection_status(struct show *s, const struct connection *c)
 	}
 
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
-		jam(buf, PRI_CONNECTION":  ", c->name, instance);
+		jam_connection_short(buf, c);
+		jam_string(buf, ":  ");
 		jam(buf, " ike_life: %jds;", deltasecs(c->config->sa_ike_max_lifetime));
 		jam(buf, " ipsec_life: %jds;", deltasecs(c->config->sa_ipsec_max_lifetime));
 		jam_humber_uintmax(buf, " ipsec_max_bytes: ", c->config->sa_ipsec_max_bytes, "B;");
@@ -622,7 +626,8 @@ static void show_connection_status(struct show *s, const struct connection *c)
 	}
 
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
-		jam(buf, PRI_CONNECTION":  ", c->name, instance);
+		jam_connection_short(buf, c);
+		jam_string(buf, ":  ");
 		jam(buf, " retransmit-interval: %jdms;",
 		    deltamillisecs(c->config->retransmit_interval));
 		jam(buf, " retransmit-timeout: %jds;",
@@ -638,7 +643,8 @@ static void show_connection_status(struct show *s, const struct connection *c)
 	}
 
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
-		jam(buf, PRI_CONNECTION":  ", c->name, instance);
+		jam_connection_short(buf, c);
+		jam_string(buf, ":  ");
 		jam(buf, " initial-contact:%s;", bool_str(c->config->send_initial_contact));
 		jam(buf, " cisco-unity:%s;", bool_str(c->config->send_vid_cisco_unity));
 		jam(buf, " fake-strongswan:%s;", bool_str(c->config->send_vid_fake_strongswan));
@@ -647,7 +653,10 @@ static void show_connection_status(struct show *s, const struct connection *c)
 	}
 
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
-		jam(buf, PRI_CONNECTION":   policy: ", c->name, instance);
+		jam_connection_short(buf, c);
+		jam_string(buf, ":  ");
+		/* policy */
+		jam_string(buf, " policy: ");
 		jam_connection_policies(buf, c);
 		if (c->local->host.config->key_from_DNS_on_demand ||
 		    c->remote->host.config->key_from_DNS_on_demand) {
@@ -674,7 +683,9 @@ static void show_connection_status(struct show *s, const struct connection *c)
 
 	if (c->config->ike_version == IKEv2) {
 		SHOW_JAMBUF(RC_COMMENT, s, buf) {
-			jam(buf, PRI_CONNECTION":  ", c->name, instance);
+			jam_connection_short(buf, c);
+			jam_string(buf, ":  ");
+			/* policy */
 			jam_string(buf, " v2-auth-hash-policy: ");
 			jam_lset_short(buf, &ikev2_hash_algorithm_names, "+",
 				       c->config->sighash_policy);
@@ -684,9 +695,10 @@ static void show_connection_status(struct show *s, const struct connection *c)
 
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
 		connection_priority_buf prio;
-		jam(buf, PRI_CONNECTION":   conn_prio: %s;",
-		    c->name, instance,
-		    str_connection_priority(c, &prio));
+		jam_connection_short(buf, c);
+		jam_string(buf, ":  ");
+		/* priority */
+		jam(buf, " conn_prio: %s;", str_connection_priority(c, &prio));
 		/* .interface? id_rname@id_vname? */
 		jam_string(buf, " interface: ");
 		if (oriented(c)) {
@@ -727,8 +739,8 @@ static void show_connection_status(struct show *s, const struct connection *c)
 
 
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
-		jam(buf, PRI_CONNECTION":  ",
-		    c->name, instance);
+		jam_connection_short(buf, c);
+		jam_string(buf, ":  ");
 		/* .nflog_group */
 		jam_string(buf, " nflog-group: ");
 		if (c->nflog_group == 0) {
@@ -760,7 +772,8 @@ static void show_connection_status(struct show *s, const struct connection *c)
 
 
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
-		jam(buf, PRI_CONNECTION":  ", c->name, instance);
+		jam_connection_short(buf, c);
+		jam_string(buf, ":  ");
 		/* our id */
 		jam_string(buf, " our idtype: ");
 		jam_enum(buf, &ike_id_type_names, c->local->host.id.kind);
@@ -779,7 +792,9 @@ static void show_connection_status(struct show *s, const struct connection *c)
 	switch (c->config->ike_version) {
 	case IKEv1:
 		SHOW_JAMBUF(RC_COMMENT, s, buf) {
-			jam(buf, PRI_CONNECTION":  ", c->name, instance);
+			jam_connection_short(buf, c);
+			jam_string(buf, ":  ");
+			/* dpd */
 			jam(buf, " dpd: %s;", (deltasecs(c->config->dpd.delay) > 0 &&
 					       deltasecs(c->config->dpd.timeout) > 0 ? "active" : "passive"));
 			jam(buf, " delay:%jds;", deltasecs(c->config->dpd.delay));
@@ -788,18 +803,21 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		break;
 	case IKEv2:
 		SHOW_JAMBUF(RC_COMMENT, s, buf) {
-			jam(buf, PRI_CONNECTION":  ", c->name, instance);
+			jam_connection_short(buf, c);
+			jam_string(buf, ":  ");
+			/* liveness */
 			jam(buf, " liveness: %s;", (deltasecs(c->config->dpd.delay) > 0 ? "active" : "passive"));
 			jam(buf, " dpddelay:%jds;", deltasecs(c->config->dpd.delay));
 			jam(buf, " retransmit-timeout:%jds", deltasecs(c->config->retransmit_timeout));
 		}
 		break;
-
 	}
 
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
-		jam(buf, PRI_CONNECTION":   nat-traversal:",
-		    c->name, instance);
+		jam_connection_short(buf, c);
+		jam_string(buf, ":  ");
+		/* nat */
+		jam(buf, " nat-traversal:");
 		jam_string(buf, " encaps:");
 		jam_sparse(buf, yna_option_names, c->config->encapsulation);
 		jam_string(buf, "; keepalive:");
@@ -822,8 +840,10 @@ static void show_connection_status(struct show *s, const struct connection *c)
 
 	if (c->logger->debugging != LEMPTY) {
 		SHOW_JAMBUF(RC_COMMENT, s, buf) {
-			jam(buf, PRI_CONNECTION":   debug: ",
-			    c->name, instance);
+			jam_connection_short(buf, c);
+			jam_string(buf, ":  ");
+			/* debug */
+			jam(buf, " debug: ");
 			jam_lset_short(buf, &debug_names, "+", c->logger->debugging);
 		}
 	}
@@ -831,7 +851,9 @@ static void show_connection_status(struct show *s, const struct connection *c)
 	/* routing */
 
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
-		jam(buf, PRI_CONNECTION":  ", c->name, instance);
+		jam_connection_short(buf, c);
+		jam_string(buf, ":  ");
+		/* routing */
 		jam_string(buf, " routing: ");
 		jam_enum_human(buf, &routing_names, c->child.routing);
 		jam_string(buf, ";");
@@ -839,7 +861,9 @@ static void show_connection_status(struct show *s, const struct connection *c)
 	}
 
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
-		jam(buf, PRI_CONNECTION":  ", c->name, instance);
+		jam_connection_short(buf, c);
+		jam_string(buf, ":  ");
+		/* serial */
 		jam(buf, " conn serial: "PRI_CO,
 		    pri_co(c->serialno));
 		if (c->clonedfrom != UNSET_CO_SERIAL) {
@@ -851,14 +875,16 @@ static void show_connection_status(struct show *s, const struct connection *c)
 
 	if (c->config->connalias != NULL) {
 		SHOW_JAMBUF(RC_COMMENT, s, buf) {
-			jam(buf, PRI_CONNECTION":  ", c->name, instance);
+			jam_connection_short(buf, c);
+			jam_string(buf, ":  ");
+			/* aliases */
 			jam_string(buf, " aliases: ");
 			jam_string(buf, c->config->connalias);
 		}
 	}
 
-	show_ike_alg_connection(s, c, instance);
-	show_kernel_alg_connection(s, c, instance);
+	show_ike_alg_connection(s, c);
+	show_kernel_alg_connection(s, c);
 }
 
 void show_connection_statuses(struct show *s)

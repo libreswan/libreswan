@@ -44,8 +44,7 @@
  *      - newest SA
  */
 void show_ike_alg_connection(struct show *s,
-			     const struct connection *c,
-			     const char *instance)
+			     const struct connection *c)
 {
 	if (c->config->ike_proposals.p != NULL
 	    && !default_proposals(c->config->ike_proposals.p)) {
@@ -78,8 +77,10 @@ void show_ike_alg_connection(struct show *s,
 		 * impossible to parse)?
 		 */
 		SHOW_JAMBUF(RC_COMMENT, s, buf) {
-			jam(buf, "\"%s\"%s:   IKE algorithms: ",
-			    c->name, instance);
+			jam_connection_short(buf, c);
+			jam_string(buf, ":  ");
+			/* algs */
+			jam_string(buf, " IKE algorithms: ");
 			jam_proposals(buf, c->config->ike_proposals.p);
 		}
 	}
@@ -88,9 +89,10 @@ void show_ike_alg_connection(struct show *s,
 
 	if (st != NULL) {
 		SHOW_JAMBUF(RC_COMMENT, s, buf) {
-			jam(buf,
-			    "\"%s\"%s:   %s algorithm newest: ",
-			    c->name, instance,
+			jam_connection_short(buf, c);
+			jam_string(buf, ":  ");
+			/* algs */
+			jam(buf, " %s algorithm newest: ",
 			    st->st_connection->config->ike_info->version_name);
 			const struct trans_attrs *ta = &st->st_oakley;
 			const char *sep = "";
