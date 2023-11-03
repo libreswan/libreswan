@@ -60,23 +60,12 @@ void disorient(struct connection *c)
 	}
 }
 
-static bool add_new_iface_endpoint(struct connection *c, struct host_end *end)
+static struct iface_endpoint *new_iface_endpoint(bool listening,
+						 struct iface_dev *dev,
+						 const struct iface_io *io,
+						 const struct host_end_config *end,
+						 struct logger *logger)
 {
-	if (end->config->ikeport == 0) {
-		ldbg(c->logger, "  skipping %s interface; no ikeport", end->config->leftright);
-		return false;
-	}
-	if (!end->addr.is_set) {
-		ldbg(c->logger, "  skipping %s interface; no address", end->config->leftright);
-		return false;
-	}
-	struct iface_dev *dev = find_iface_dev_by_address(&end->addr);
-	if (dev == NULL) {
-		address_buf ab;
-		ldbg(c->logger, "  skipping %s interface; no device matches %s",
-		     end->config->leftright, str_address(&end->addr, &ab));
-		return false;
-	}
 	/*
 	 * A custom IKEPORT should not float away to port 4500.
 	 * Assume a custom port always has the prefix (like 4500 and
@@ -94,63 +83,78 @@ static bool add_new_iface_endpoint(struct connection *c, struct host_end *end)
 	const bool esp_encapsulation_enabled = true;
 	const bool float_nat_initiator = false;
 
-	struct iface_endpoint *ifp = NULL;
-	switch (c->local->config->host.iketcp) {
-	case IKE_TCP_NO:
-		if (pluto_listen_udp) {
-			ifp = bind_iface_endpoint(dev, &udp_iface_io,
-						  ip_hport(end->config->ikeport),
-						  esp_encapsulation_enabled,
-						  float_nat_initiator,
-						  c->logger);
-			if (ifp == NULL) {
-				ldbg(c->logger, "  skipping %s interface; UDP bind failed",
-				     end->config->leftright);
-				return false;
-			}
-		} else {
-			ldbg(c->logger, "  skipping %s interface; not listening to UDP",
-			     end->config->leftright);
-			return false;
-		}
-		break;
-	case IKE_TCP_ONLY:
-		if (pluto_listen_tcp) {
-			ifp = bind_iface_endpoint(dev, &iketcp_iface_io,
-						  ip_hport(end->config->ikeport),
-						  esp_encapsulation_enabled,
-						  float_nat_initiator,
-						  c->logger);
-			if (ifp == NULL) {
-				ldbg(c->logger, "  skipping %s interface; TCP bind failed",
-				     end->config->leftright);
-				return false;
-			}
-		} else {
-			ldbg(c->logger, "  skipping %s interface; not listening to TCP",
-			     end->config->leftright);
-			return false;
-		}
-		break;
-	case IKE_TCP_FALLBACK:
-		ldbg(c->logger, "  skipping %s interface; requires tcp-fallback",
-		     end->config->leftright);
-		return false;
-	default:
-		bad_sparse(c->logger, tcp_option_names, c->local->config->host.iketcp);
+	if (!listening) {
+		ldbg(logger, "  skipping %s interface; not listening to %s",
+		     end->leftright, io->protocol->name);
+		return NULL;
 	}
 
-	/* success */
-	pexpect(ifp != NULL);
+	struct iface_endpoint *ifp = bind_iface_endpoint(dev, io,
+							 ip_hport(end->ikeport),
+							 esp_encapsulation_enabled,
+							 float_nat_initiator,
+							 logger);
+	if (ifp == NULL) {
+		llog(RC_LOG_SERIOUS, logger,
+		     "skipping %s interface; %s bind failed",
+		     end->leftright, io->protocol->name);
+		return NULL;
+	}
 
-	ldbg(c->logger, "  adding %s interface",
-	     end->config->leftright);
+	ldbg(logger, "%s interface; %s created",
+	     end->leftright, io->protocol->name);
+
+	if (listening) {
+		listen_on_iface_endpoint(ifp, logger);
+	}
+
+	return ifp;
+}
+
+static bool add_new_iface_endpoints(struct connection *c, struct host_end *end)
+{
+	if (end->config->ikeport == 0) {
+		ldbg(c->logger, "  skipping %s interface; no ikeport", end->config->leftright);
+		return false;
+	}
+	if (!end->addr.is_set) {
+		ldbg(c->logger, "  skipping %s interface; no address", end->config->leftright);
+		return false;
+	}
+	struct iface_dev *dev = find_iface_dev_by_address(&end->addr);
+	if (dev == NULL) {
+		address_buf ab;
+		ldbg(c->logger, "  skipping %s interface; no device matches %s",
+		     end->config->leftright, str_address(&end->addr, &ab));
+		return false;
+	}
+
+	/*
+	 * Create both interfaces; but bind to only one.
+	 */
+
+	struct iface_endpoint *udp = new_iface_endpoint(pluto_listen_udp,
+							dev, &udp_iface_io,
+							end->config, c->logger);
+
+	struct iface_endpoint *tcp = new_iface_endpoint(pluto_listen_tcp,
+							dev, &iketcp_iface_io,
+							end->config, c->logger);
+
+	struct iface_endpoint *ifp = (udp != NULL ? udp :
+				      tcp != NULL ? tcp :
+				      NULL);
+	if (ifp == NULL) {
+		llog(RC_LOG_SERIOUS, c->logger, "no %s interface bound to port %d",
+		     end->config->leftright, end->config->ikeport);
+		return false;
+	}
 
 	pexpect(c->interface == NULL);	/* no leak */
 	c->interface = iface_endpoint_addref(ifp); /* from bind */
-	if (listening) {
-		listen_on_iface_endpoint(ifp, c->logger);
-	}
+
+	ldbg(c->logger, "  adding %s interface",
+	     end->config->leftright);
 
 	return true;
 }
@@ -363,11 +367,11 @@ enum left_right orient_1(struct connection **cp, struct logger *logger)
 	}
 
 	/*
-	 * No existing interface worked, try to create a new one.
+	 * No existing interface worked, try to create new ones.
 	 */
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
 		passert((*cp)->interface == NULL); /* wasn't updated */
-		if (add_new_iface_endpoint((*cp), &(*cp)->end[end].host)) {
+		if (add_new_iface_endpoints((*cp), &(*cp)->end[end].host)) {
 			passert((*cp)->interface != NULL); /* was updated */
 			return end;
 		}
