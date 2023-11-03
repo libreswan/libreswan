@@ -667,8 +667,9 @@ static void routed_ondemand_to_routed_negotiation(enum routing_event event,
 	PASSERT(logger, event == CONNECTION_INITIATE);
 	enum routing rt_negotiation = RT_ROUTED_NEGOTIATION;
 	FOR_EACH_ITEM(spd, &c->child.spds) {
-		if (!replace_spd_kernel_policy(spd, DIRECTION_OUTBOUND,
-					       rt_negotiation,
+		struct spd_owner owner = spd_owner(spd, rt_negotiation, HERE);
+		if (!replace_spd_kernel_policy(spd, &owner,
+					       DIRECTION_OUTBOUND,
 					       SHUNT_KIND_NEGOTIATION,
 					       logger, e->where,
 					       "ondemand->negotiation")) {
@@ -693,8 +694,9 @@ static void routed_negotiation_to_routed_ondemand(enum routing_event event,
 						  const char *reason)
 {
 	FOR_EACH_ITEM(spd, &c->child.spds) {
-		if (!replace_spd_kernel_policy(spd, DIRECTION_OUTBOUND,
-					       RT_ROUTED_ONDEMAND,
+		struct spd_owner owner = spd_owner(spd, RT_ROUTED_ONDEMAND, HERE);
+		if (!replace_spd_kernel_policy(spd, &owner,
+					       DIRECTION_OUTBOUND,
 					       SHUNT_KIND_ONDEMAND,
 					       logger, where, reason)) {
 			llog(RC_LOG, logger, "%s failed", reason);

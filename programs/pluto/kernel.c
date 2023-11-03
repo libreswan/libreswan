@@ -554,7 +554,7 @@ static void ldbg_owner(struct logger *logger, const struct spd_owner *owner,
 
 		LDBG_owner(logger, "policy", owner->policy);
 		LDBG_owner(logger, "route", owner->route);
-		LDBG_owner(logger, "raw", owner->raw);
+		LDBG_owner(logger, "eclipsing", owner->eclipsing);
 		LDBG_owner(logger, "bare_cat", owner->bare_cat);
 		LDBG_owner(logger, "bare_policy", owner->bare_policy);
 	}
@@ -743,22 +743,25 @@ static struct spd_owner raw_spd_owner(const struct spd_route *c_spd,
 		}
 
 		/*
-		 * .raw specific checks.
+		 * .eclipsing specific checks.
+		 *
+		 * Given an SPD and its new routing, return any SPD
+		 * that eclipses it.
 		 */
 
 		enum shunt_kind d_shunt_kind = spd_shunt_kind(d_spd);
 
 		if (d_shunt_kind < c_shunt_kind) {
-			ldbg_spd(logger, indent, d_spd, "skipped raw; < %s[%s]",
+			ldbg_spd(logger, indent, d_spd, "skipped eclipsing; < %s[%s]",
 				 enum_name_short(&routing_names, c_routing),
 				 enum_name_short(&shunt_kind_names, c_shunt_kind));
 		} else if (!selector_eq_selector(c_spd->local->client,
 						 d_spd->local->client)) {
-			ldbg_spd(logger, indent, d_spd, "skipped raw; different local selectors");
+			ldbg_spd(logger, indent, d_spd, "skipped eclipsing; different local selectors");
 		} else if (c->config->overlapip && d->config->overlapip) {
-			ldbg_spd(logger, indent, d_spd, "skipped raw;  both ends have POLICY_OVERLAPIP");
+			ldbg_spd(logger, indent, d_spd, "skipped eclipsing;  both ends have POLICY_OVERLAPIP");
 		} else {
-			save_spd_owner(&owner.raw, "raw", d_spd, logger, indent);
+			save_spd_owner(&owner.eclipsing, "eclipsing", d_spd, logger, indent);
 		}
 	}
 
@@ -769,14 +772,6 @@ static struct spd_owner raw_spd_owner(const struct spd_route *c_spd,
 struct spd_owner spd_owner(const struct spd_route *spd, enum routing new_routing, where_t where)
 {
 	return raw_spd_owner(spd, new_routing, spd->connection->logger, where, __func__, 0);
-}
-
-const struct spd_route *spd_policy_owner(const struct spd_route *spd,
-					 enum routing new_routing,
-					 struct logger *logger, where_t where, unsigned indent)
-{
-	return raw_spd_owner(spd, new_routing,
-			     logger, where, __func__, indent).raw;
 }
 
 const struct spd_route *spd_route_owner(struct spd_route *spd)
