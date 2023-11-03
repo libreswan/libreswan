@@ -592,10 +592,9 @@ static bool ikev2_set_internal_address(struct pbs_in *cp_a_pbs,
 			 * side should we also check the host_srcip.
 			 */
 			address_buf ipb;
-			ldbg_sa(child,
-				"CAT: #%lu %s[%lu] received INTERNAL_IP%d_ADDRESS that is same as this->client.addr %s. Will not add CAT iptable rules",
-				child->sa.st_serialno, cc->name, cc->instance_serial,
-				afi->ip_version, str_address(&ip, &ipb));
+			pdbg(child->sa.logger,
+			     "CAT: received INTERNAL_IP%d_ADDRESS that is same as this->client.addr %s. Will not add CAT iptable rules",
+			     afi->ip_version, str_address(&ip, &ipb));
 		} else {
 			update_end_selector(cc, cc->local->config->index,
 					    selector_from_address(ip),
@@ -619,8 +618,7 @@ bool process_v2CP_response_payload(struct ike_sa *ike UNUSED, struct child_sa *c
 	struct connection *c = child->sa.st_connection;
 	pb_stream *attrs = &cp_pd->pbs;
 
-	ldbg_sa(child, "#%lu %s[%lu] parsing ISAKMP_NEXT_v2CP payload",
-		child->sa.st_serialno, c->name, c->instance_serial);
+	pdbg(child->sa.logger, "parsing ISAKMP_NEXT_v2CP payload");
 
 	switch (child->sa.st_sa_role) {
 	case SA_INITIATOR:
