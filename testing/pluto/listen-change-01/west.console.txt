@@ -45,7 +45,6 @@ west #
 003 "west-east": connection matches both right eth1 udp:192.1.2.23:500 and left eth1 udp:192.1.2.45:500
 002 "west-east": terminating SAs using this connection
 002 "west-east" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
-002 "west-east": connection no longer oriented - system interface change?
 002 "west-east" #2: unroute-host output: Device "NULL" does not exist.
 005 "west-east" #2: ESP traffic information: in=0B out=0B
 002 "west-east" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
