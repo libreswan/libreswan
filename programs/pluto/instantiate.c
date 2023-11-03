@@ -50,9 +50,6 @@
 #define MINIMUM_IPSEC_SA_RANDOM_MARK 65536
 static uint32_t global_marks = MINIMUM_IPSEC_SA_RANDOM_MARK;
 
-static struct connection *clone_connection(const char *name, struct connection *t,
-					   const struct id *peer_id, where_t where);
-
 /*
  * unshare_connection: after a struct connection has been copied,
  * duplicate anything it references so that unshareable resources are
@@ -67,13 +64,27 @@ static struct connection *clone_connection(const char *name, struct connection *
  * problems.
  */
 
-struct connection *clone_connection(const char *name, struct connection *t,
-				    const struct id *peer_id, where_t where)
+static struct connection *clone_connection(const char *name, struct connection *t,
+					   const struct id *peer_id, where_t where)
 {
+	/*
+	 * XXX: This should use refcnt_alloc() and not clone.
+	 */
 	struct connection *c = clone_thing(*t, where->func);
 	zero_thing(c->refcnt);
 	refcnt_init(c, &c->refcnt, t->refcnt.base, where);
+
+	/*
+	 * Clear out as much as possible of the struct before calling
+	 * finish_connection().  Trying to make it look as close as
+	 * possible to a clone.
+	 */
+
 	zero_thing(c->connection_db_entries); /* keep init_list_entry() happy */
+
+	c->next_instance_serial = 0;
+	c->instance_serial = 0;
+
 	finish_connection(c, name, t, t->config,
 			  t->logger->debugging,
 			  t->logger,
@@ -87,8 +98,6 @@ struct connection *clone_connection(const char *name, struct connection *t,
 	c->log_file = NULL;
 	c->log_file_err = false;
 
-	c->next_instance_serial = 0;	/* restart count */
-	c->instance_serial = 0;		/* restart count */
 	c->root_config = NULL; /* block write access */
 	c->interface = iface_endpoint_addref(t->interface);
 
@@ -177,6 +186,12 @@ struct connection *group_instantiate(struct connection *group,
 
 	passert(t->name != namebuf); /* see clone_connection() */
 	pfreeany(namebuf);
+
+	/*
+	 * Start the template counter so that further instantiating
+	 * the group instance assigns serial numbers..
+	 */
+	t->next_instance_serial = 1;
 
 	/*
 	 * For the remote end, just use what ever the group specified
@@ -300,13 +315,6 @@ static struct connection *instantiate(struct connection *t,
 
 	struct connection *d = clone_connection(t->name, t, peer_id, where);
 	passert(t->name != d->name); /* see clone_connection() */
-
-	/*
-	 *  Update the .instance_serial.
-	 */
-	d->instance_serial = ++t->next_instance_serial;
-	ldbg(d->logger, "updating instance serial %lu next %lu",
-	     d->instance_serial, t->next_instance_serial);
 
 	d->local->kind = d->remote->kind =
 		(is_labeled_template(t) ? CK_LABELED_PARENT :

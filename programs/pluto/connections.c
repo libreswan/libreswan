@@ -492,6 +492,7 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 
 	/* connection's final gasp; need's c->name */
 	pfreeany(c->name);
+	pfreeany(c->prefix);
 	free_logger(&logger, where);
 	pfree(c);
 }
@@ -1923,21 +1924,57 @@ static diag_t extract_shunt(struct config *config,
 	return NULL;
 }
 
+static char *alloc_connection_prefix(const char *name, const struct connection *t/*could be NULL*/)
+{
+	if (t == NULL || t->next_instance_serial == 0) {
+		/* permanent; group; ... */
+		return alloc_printf("\"%s\"", name);
+	}
+
+	/*
+	 * Form new prefix by appending next serial to existing
+	 * prefix.
+	 */
+	return alloc_printf("%s[%lu]", t->prefix, t->next_instance_serial);
+}
+
 /*
  * Allocate connections.
  */
 
-void finish_connection(struct connection *c, const char *name,
+void finish_connection(struct connection *c,
+		       const char *name,
 		       struct connection *t,
 		       const struct config *config,
 		       lset_t debugging,
 		       struct logger *logger,
 		       where_t where)
 {
+	/* before alloc_logger(); can't use C */
 	c->name = clone_str(name, __func__);
+
+	/* before alloc_logger(); can't use C */
+	c->prefix = alloc_connection_prefix(name, t);
+
+	/* after .name and .name_prefix are set; needed by logger */
 	c->logger = alloc_logger(c, &logger_connection_vec,
 				 debugging, where);
+
+	/* after alloc_logger(); connection's first gasp */
 	connection_attach(c, logger);
+
+	/*
+	 *  Update the .instance_serial.
+	 */
+	if (t != NULL && t->next_instance_serial > 0) {
+		/* restart count in instance */
+		c->next_instance_serial = 1;
+		c->instance_serial = t->next_instance_serial;
+		t->next_instance_serial++;
+		pdbg(t->logger, "template .instance_serial_next updated to %lu; instance %lu",
+		     t->next_instance_serial,
+		     c->instance_serial);
+	}
 
 	/*
 	 * Determine left/right vs local/remote.
@@ -3249,8 +3286,15 @@ static diag_t extract_connection(const struct whack_message *wm,
 		}
 	}
 
-	/* set internal fields */
+	/*
+	 * For templates; start the instance counter.  Each time the
+	 * connection is instantiated this is updated; ditto for
+	 * instantiated instantiations such as is_labeled_child().
+	 */
 	c->instance_serial = 0;
+	c->next_instance_serial = (is_template(c) ? 1 : 0);
+
+	/* set internal fields */
 	c->interface = NULL; /* initializing */
 
 	connection_routing_init(c);
@@ -3567,38 +3611,9 @@ static size_t jam_connection_child(struct jambuf *b,
 	return s;
 }
 
-static size_t jam_connection_serials(struct jambuf *buf, const struct connection *c)
+static size_t jam_connection_suffix(struct jambuf *buf, const struct connection *c)
 {
 	size_t s = 0;
-	if (c->instance_serial > 0) {
-		if (c->clonedfrom != NULL) {
-			s += jam_connection_serials(buf, c->clonedfrom);
-		}
-		s += jam(buf, "[%lu]", c->instance_serial);
-	}
-	return s;
-}
-
-const char *str_connection_serials(const struct connection *c, connection_buf *buf)
-{
-	struct jambuf p = ARRAY_AS_JAMBUF(buf->buf);
-	if (c->instance_serial > 0) {
-		jam_connection_serials(&p, c);
-	}
-	return buf->buf;
-}
-
-static size_t jam_connection_instance(struct jambuf *buf, const struct connection *c)
-{
-	/*
-	 * Not PEXPECT(c->connection) as that will recursively call
-	 * this function when trying to log prefix.
-	 */
-	if (!pexpect(is_instance(c))) {
-		return 0;
-	}
-	size_t s = 0;
-	s += jam_connection_serials(buf, c);
 	if (is_opportunistic(c)) {
 		/*
 		 * XXX: print proposed or accepted selectors?
@@ -3619,28 +3634,28 @@ static size_t jam_connection_instance(struct jambuf *buf, const struct connectio
 size_t jam_connection(struct jambuf *buf, const struct connection *c)
 {
 	size_t s = 0;
-	s += jam(buf, "\"%s\"", c->name);
+	s += jam_connection_short(buf, c);
 	if (c->instance_serial > 0) {
-		s += jam_connection_instance(buf, c);
+		s += jam_connection_suffix(buf, c);
 	}
 	return s;
 }
 
 size_t jam_connection_short(struct jambuf *buf, const struct connection *c)
 {
-	size_t s = 0;
-	s += jam(buf, "\"%s\"", c->name);
-	if (c->instance_serial > 0) {
-		s += jam_connection_serials(buf, c);
-	}
-	return s;
+	return jam_string(buf, c->prefix);
 }
 
-const char *str_connection_instance(const struct connection *c, connection_buf *buf)
+const char *str_connection_short(const struct connection *c)
+{
+	return c->prefix;
+}
+
+const char *str_connection_suffix(const struct connection *c, connection_buf *buf)
 {
 	struct jambuf p = ARRAY_AS_JAMBUF(buf->buf);
 	if (c->instance_serial > 0) {
-		jam_connection_instance(&p, c);
+		jam_connection_suffix(&p, c);
 	}
 	return buf->buf;
 }

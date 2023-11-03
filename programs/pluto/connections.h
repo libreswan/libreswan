@@ -648,7 +648,8 @@ struct connection {
 	struct refcnt refcnt;
 	co_serial_t serialno;
 	struct connection *clonedfrom;
-	char *name;
+	char *name;			/* switch with .prefix? */
+	char *prefix;			/* "name"[0][1]; longer than .name!!! */
 	struct logger *logger;
 
 	struct {
@@ -807,8 +808,10 @@ struct connection *find_connection_for_packet(const ip_packet packet,
 
 /* "name"[1]... OE-MAGIC */
 size_t jam_connection(struct jambuf *buf, const struct connection *c);
+
 /* "name"[1]... */
 size_t jam_connection_short(struct jambuf *buf, const struct connection *c);
+const char *str_connection_short(const struct connection *c);
 
 size_t jam_connection_policies(struct jambuf *buf, const struct connection *c);
 const char *str_connection_policies(const struct connection *c, policy_buf *buf);
@@ -820,9 +823,6 @@ const char *str_connection_policies(const struct connection *c, policy_buf *buf)
 
 typedef struct {
 	char buf[/*why?*/ 1 +
-		 /*"["*/ 1 +
-		 /*<serialno>*/ 10 +
-		 /*"]"*/ 1 +
 		 /*<myclient*/sizeof(subnet_buf) +
 		 /*"=== ..."*/ 7 +
 		 /*<peer>*/sizeof(address_buf) +
@@ -832,17 +832,11 @@ typedef struct {
 		 /*<cookie>*/ 1];
 } connection_buf;
 
-const char *str_connection_instance(const struct connection *c,
+const char *str_connection_suffix(const struct connection *c,
 				    connection_buf *buf);
 
-#define PRI_CONNECTION "\"%s\"%s"
-#define pri_connection(C,B) (C)->name, str_connection_instance(C, B)
-
-const char *str_connection_serials(const struct connection *c,
-				   connection_buf *buf);
-
-#define PRI_CONNECTION_SHORT PRI_CONNECTION
-#define pri_connection_short(C,B) (C)->name, str_connection_serial(C, B)
+#define PRI_CONNECTION "%s%s"
+#define pri_connection(C,B) str_connection_short(C), str_connection_suffix(C, B)
 
 struct connection **sort_connections(void);
 int connection_compare(const struct connection *ca,
