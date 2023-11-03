@@ -529,14 +529,6 @@ static void ldbg_spd(struct logger *logger, unsigned indent,
 	}
 }
 
-struct spd_owner {
-	const struct spd_route *policy;
-	const struct spd_route *route;
-	const struct spd_route *cat;
-	const struct spd_route *bare;
-	const struct spd_route *raw;
-};
-
 static void LDBG_owner(struct logger *logger, const char *what,
 		       const struct spd_route *owner)
 {
@@ -876,7 +868,7 @@ static bool get_connection_spd_conflict(struct spd_route *spd, struct logger *lo
 	}
 
 	spd->wip.conflicting.shunt = shunt;
-	spd->wip.conflicting.route = owner.route;
+	spd->wip.conflicting.owner = owner;
 	return true;
 }
 
@@ -1043,7 +1035,7 @@ bool unrouted_to_routed(struct connection *c, enum shunt_kind shunt_kind, where_
 		if (!ok) {
 			break;
 		}
-		if (spd->wip.conflicting.route == NULL) {
+		if (spd->wip.conflicting.owner.route == NULL) {
 			/* a new route: no deletion required, but preparation is */
 			if (!do_updown(UPDOWN_PREPARE, c, spd, NULL/*state*/, c->logger))
 				ldbg(c->logger, "kernel: prepare command returned an error");
@@ -1055,7 +1047,7 @@ bool unrouted_to_routed(struct connection *c, enum shunt_kind shunt_kind, where_
 		if (!ok) {
 			break;
 		}
-		if (spd->wip.conflicting.route == NULL) {
+		if (spd->wip.conflicting.owner.route == NULL) {
 			ok &= spd->wip.installed.route =
 				do_updown(UPDOWN_ROUTE, c, spd, NULL/*state*/, c->logger);
 		}
@@ -2046,7 +2038,7 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child, bool 
 				continue;
 			}
 
-			if (spd->wip.conflicting.route == NULL) {
+			if (spd->wip.conflicting.owner.route == NULL) {
 				/* a new route: no deletion required, but preparation is */
 				if (!do_updown(UPDOWN_PREPARE, c, spd, &child->sa, logger))
 					ldbg(logger, "kernel: prepare command returned an error");
@@ -2064,7 +2056,7 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child, bool 
 			continue;
 		}
 
-		if (spd->wip.conflicting.route == NULL) {
+		if (spd->wip.conflicting.owner.route == NULL) {
 			/* a new route: no deletion required, but preparation is */
 			ok = spd->wip.installed.route =
 				do_updown(UPDOWN_ROUTE, c, spd, &child->sa, logger);

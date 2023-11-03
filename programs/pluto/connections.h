@@ -602,7 +602,13 @@ struct spd_route {
 
 	struct spd_wip {
 		struct {
-			const struct spd_route *route;
+			struct spd_owner {
+				const struct spd_route *policy;
+				const struct spd_route *route;
+				const struct spd_route *cat;
+				const struct spd_route *bare;
+				const struct spd_route *raw;
+			} owner;
 			struct bare_shunt **shunt;
 		} conflicting;
 		struct {
