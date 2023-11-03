@@ -554,7 +554,7 @@ static void ldbg_owner(struct logger *logger, const struct spd_owner *owner,
 
 		LDBG_owner(logger, "policy", owner->policy);
 		LDBG_owner(logger, "route", owner->route);
-		LDBG_owner(logger, "cat", owner->cat);
+		LDBG_owner(logger, "bare_cat", owner->bare_cat);
 		LDBG_owner(logger, "bare", owner->bare);
 		LDBG_owner(logger, "raw", owner->raw);
 	}
@@ -665,7 +665,7 @@ static struct spd_owner raw_spd_owner(const struct spd_route *c_spd,
 		}
 
 		/*
-		 * .cat specific checks.
+		 * .bare_cat specific checks.
 		 *
 		 * XXX: forming the local CLIENT from the local HOST is
 		 * needed.  That is what CAT (client address translation) is
@@ -678,7 +678,7 @@ static struct spd_owner raw_spd_owner(const struct spd_route *c_spd,
 		} else if (c->config->overlapip && d->config->overlapip) {
 			ldbg_spd(logger, indent, d_spd, "skipped policy;  both ends have POLICY_OVERLAPIP");
 		} else {
-			save_spd_owner(&owner.cat, "cat", d_spd, logger, indent);
+			save_spd_owner(&owner.bare_cat, "bare_cat", d_spd, logger, indent);
 		}
 
 		/*
@@ -771,7 +771,7 @@ const struct spd_route *bare_cat_owner(const struct spd_route *spd,
 {
 	struct spd_owner raw = raw_spd_owner(spd, RT_UNROUTED + 1,
 					     logger, where, __func__, 0);
-	return raw.cat;
+	return raw.bare_cat;
 }
 
 const struct spd_route *bare_spd_owner(const struct spd_route *spd,

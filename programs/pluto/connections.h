@@ -592,6 +592,21 @@ struct spd_end {
 	struct virtual_ip *virt;
 };
 
+struct spd_owner {
+	const struct spd_route *policy;
+	const struct spd_route *route;
+	/*
+	 * .bare_cat
+	 *
+	 * Any SPD matching LOCAL.HOST (aka client) <-> REMOTE.CLIENT
+	 * (ignoring current connection and SPD).  When deleting a CAT
+	 * this SPD will be restored.
+	 */
+	const struct spd_route *bare_cat;
+	const struct spd_route *bare;
+	const struct spd_route *raw;
+};
+
 struct spd_route {
 	struct spd_end end[END_ROOF];
 	/* point into above */
@@ -602,13 +617,7 @@ struct spd_route {
 
 	struct spd_wip {
 		struct {
-			struct spd_owner {
-				const struct spd_route *policy;
-				const struct spd_route *route;
-				const struct spd_route *cat;
-				const struct spd_route *bare;
-				const struct spd_route *raw;
-			} owner;
+			struct spd_owner owner;
 			struct bare_shunt **shunt;
 		} conflicting;
 		struct {
