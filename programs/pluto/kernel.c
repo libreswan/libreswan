@@ -724,14 +724,16 @@ static struct spd_owner raw_spd_owner(const struct spd_route *c_spd,
 		/*
 		 * .bare specific checks.
 		 *
-		 * Looking for any policy, regardless of routing that
-		 * owns the selection.
+		 * Assuming C_SPD doesn't exist (i.e., being deleted),
+		 * look for the highest priority policy that matches
+		 * the selectors.
+		 *
+		 * Since C_SPD doesn't exist checks for matching
+		 * .overlapip and/or priority aren't needed.
 		 */
 
 		if (!selector_eq_selector(*c_local, d_spd->local->client)) {
 			ldbg_spd(logger, indent, d_spd, "skipped bare; different local selectors");
-		} else if (c->config->overlapip && d->config->overlapip) {
-			ldbg_spd(logger, indent, d_spd, "skipped bare;  both ends have POLICY_OVERLAPIP");
 		} else {
 			save_spd_owner(&owner.bare, "bare", d_spd, logger, indent);
 		}
@@ -820,13 +822,11 @@ const struct spd_route *bare_cat_owner(const struct spd_route *spd,
 const struct spd_route *bare_spd_owner(const struct spd_route *spd,
 				       struct logger *logger, where_t where)
 {
+	/*
+	 * .bare ignores RT_UNROUTED+1.
+	 */
 	struct spd_owner raw = raw_spd_owner(spd, RT_UNROUTED + 1,
 					     logger, where, __func__, 0);
-	if (DBGP(DBG_BASE)) {
-		LDBG_cross_check("raw.bare", raw.bare,
-				 "raw.raw",raw.raw,
-				 logger, HERE);
-	}
 	return raw.bare;
 }
 
