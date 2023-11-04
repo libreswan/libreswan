@@ -1362,11 +1362,11 @@ static void terminate_conflicts(struct child_sa *child)
 	passert(is_permanent(c) || is_instance(c));
 	if (c->remote->child.has_client) {
 		for (;; ) {
-			const struct spd_route *ro = spd_route_owner(c->spd);
+			struct spd_owner owner = spd_owner(c->spd, RT_UNROUTED/*ignored*/, HERE);
 
-			if (ro == NULL)
+			if (owner.bare_route == NULL)
 				break; /* nobody interesting has a route */
-			struct connection *co = ro->connection;
+			struct connection *co = owner.bare_route->connection;
 			if (co == c) {
 				break; /* nobody interesting has a route */
 			}

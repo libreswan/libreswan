@@ -553,7 +553,7 @@ static void ldbg_owner(struct logger *logger, const struct spd_owner *owner,
 			 enum_name_short(&shunt_kind_names, shunt_kind));
 
 		LDBG_owner(logger, "policy", owner->policy);
-		LDBG_owner(logger, "route", owner->route);
+		LDBG_owner(logger, "bare_route", owner->bare_route);
 		LDBG_owner(logger, "eclipsing", owner->eclipsing);
 		LDBG_owner(logger, "bare_cat", owner->bare_cat);
 		LDBG_owner(logger, "bare_policy", owner->bare_policy);
@@ -699,7 +699,7 @@ static struct spd_owner raw_spd_owner(const struct spd_route *c_spd,
 		}
 
 		/*
-		 * .route specific checks.
+		 * .bare_route specific checks.
 		 *
 		 * XXX: why look at host address?
 		 *
@@ -719,7 +719,7 @@ static struct spd_owner raw_spd_owner(const struct spd_route *c_spd,
 					       d->local->host.addr)) {
 			ldbg_spd(logger, indent, d_spd, "skipped route; different local address?!?");
 		} else {
-			save_spd_owner(&owner.route, "route", d_spd, logger, indent);
+			save_spd_owner(&owner.bare_route, "bare_route", d_spd, logger, indent);
 		}
 
 		/*
@@ -772,14 +772,6 @@ static struct spd_owner raw_spd_owner(const struct spd_route *c_spd,
 struct spd_owner spd_owner(const struct spd_route *spd, enum routing new_routing, where_t where)
 {
 	return raw_spd_owner(spd, new_routing, spd->connection->logger, where, __func__, 0);
-}
-
-const struct spd_route *spd_route_owner(struct spd_route *spd)
-{
-	struct spd_owner raw = raw_spd_owner(spd, RT_UNROUTED + 1,
-					     spd->connection->logger,
-					     HERE, __func__, 0);
-	return raw.route;
 }
 
 /*
@@ -837,7 +829,7 @@ static bool get_connection_spd_conflict(struct spd_route *spd, struct logger *lo
 	     indent, "",
 	     __func__, str_selector_pair(&spd->local->client, &spd->remote->client, &sb),
 	     (owner.policy == NULL ? "<none>" : owner.policy->connection->name),
-	     (owner.route == NULL ? "<none>" : owner.route->connection->name),
+	     (owner.bare_route == NULL ? "<none>" : owner.bare_route->connection->name),
 	     (shunt == NULL ? "<none>" : (*shunt)->why));
 
 	if (owner.policy != NULL) {
@@ -1018,7 +1010,7 @@ bool unrouted_to_routed(struct connection *c, enum shunt_kind shunt_kind, where_
 		if (!ok) {
 			break;
 		}
-		if (spd->wip.conflicting.owner.route == NULL) {
+		if (spd->wip.conflicting.owner.bare_route == NULL) {
 			/* a new route: no deletion required, but preparation is */
 			if (!do_updown(UPDOWN_PREPARE, c, spd, NULL/*state*/, c->logger))
 				ldbg(c->logger, "kernel: prepare command returned an error");
@@ -1030,7 +1022,7 @@ bool unrouted_to_routed(struct connection *c, enum shunt_kind shunt_kind, where_
 		if (!ok) {
 			break;
 		}
-		if (spd->wip.conflicting.owner.route == NULL) {
+		if (spd->wip.conflicting.owner.bare_route == NULL) {
 			ok &= spd->wip.installed.route =
 				do_updown(UPDOWN_ROUTE, c, spd, NULL/*state*/, c->logger);
 		}
@@ -2025,7 +2017,7 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child, bool 
 				continue;
 			}
 
-			if (spd->wip.conflicting.owner.route == NULL) {
+			if (spd->wip.conflicting.owner.bare_route == NULL) {
 				/* a new route: no deletion required, but preparation is */
 				if (!do_updown(UPDOWN_PREPARE, c, spd, &child->sa, logger))
 					ldbg(logger, "kernel: prepare command returned an error");
@@ -2043,7 +2035,7 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child, bool 
 			continue;
 		}
 
-		if (spd->wip.conflicting.owner.route == NULL) {
+		if (spd->wip.conflicting.owner.bare_route == NULL) {
 			/* a new route: no deletion required, but preparation is */
 			ok = spd->wip.installed.route =
 				do_updown(UPDOWN_ROUTE, c, spd, &child->sa, logger);

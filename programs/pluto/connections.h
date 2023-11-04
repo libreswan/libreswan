@@ -594,8 +594,20 @@ struct spd_end {
 
 struct spd_owner {
 	const struct spd_route *policy;
-	const struct spd_route *route;
 	/*
+	 * .bare_route
+	 *
+	 * Return the owner of the SPD's route, but excluding the SPD.
+	 * When this is NULL it is assumed that SPD's route should be
+	 * unrouted.
+	 *
+	 * The check excludes SPDs of the connection's parent: this
+	 * seems very weak as the parent may still be routed.
+	 */
+	const struct spd_route *bare_route;
+	/*
+	 * .eclipsing
+	 *
 	 * Given an SPD and its new_routing (shunt_kind) return any
 	 * SPD that eclipses it.  If no SPD exclipses it return NULL.
 	 */

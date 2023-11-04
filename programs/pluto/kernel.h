@@ -423,6 +423,4 @@ void setup_esp_nic_offload(struct nic_offload *nic_offload, const struct connect
 
 struct spd_owner spd_owner(const struct spd_route *spd, enum routing new_routing, where_t where);
 
-const struct spd_route *spd_route_owner(struct spd_route *spd);
-
 #endif
