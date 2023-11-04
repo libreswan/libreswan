@@ -549,7 +549,8 @@ void do_updown_unroute(const struct connection *c, struct child_sa *child)
 	PEXPECT(logger, !routed(c));
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 		/* only unroute if no other connection shares it */
-		struct spd_owner owner = spd_owner(spd, RT_UNROUTED/*ignored*/, HERE);
+		struct spd_owner owner = spd_owner(spd, RT_UNROUTED/*ignored*/,
+						   logger, HERE);
 		if (owner.bare_route == NULL) {
 			do_updown(UPDOWN_UNROUTE, c, spd,
 				  (child != NULL ? &child->sa : NULL),

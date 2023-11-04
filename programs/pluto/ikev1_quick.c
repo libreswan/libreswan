@@ -1362,7 +1362,8 @@ static void terminate_conflicts(struct child_sa *child)
 	passert(is_permanent(c) || is_instance(c));
 	if (c->remote->child.has_client) {
 		for (;; ) {
-			struct spd_owner owner = spd_owner(c->spd, RT_UNROUTED/*ignored*/, HERE);
+			struct spd_owner owner = spd_owner(c->spd, RT_UNROUTED/*ignored*/,
+							   child->sa.logger, HERE);
 
 			if (owner.bare_route == NULL)
 				break; /* nobody interesting has a route */

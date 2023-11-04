@@ -576,21 +576,20 @@ static void save_spd_owner(const struct spd_route **owner, const char *name,
 	}
 }
 
-static struct spd_owner raw_spd_owner(const struct spd_route *c_spd,
-				      const enum routing c_routing,
-				      struct logger *logger,
-				      where_t where,
-				      const char *func,
-				      unsigned indent)
+struct spd_owner spd_owner(const struct spd_route *c_spd,
+			   const enum routing new_c_routing,
+			   struct logger *logger, where_t where)
 {
+	enum routing c_routing = new_c_routing;
 	const struct connection *c = c_spd->connection;
 	const ip_selector *c_local = &c_spd->local->client;
 	const ip_selector *c_remote = &c_spd->remote->client;
 	const enum shunt_kind c_shunt_kind = routing_shunt_kind(c_routing);
+	unsigned indent = 0;
 
 	selector_pair_buf spb;
 	ldbg(logger, "%*s%s() looking for SPD owner of %s with routing >= %s[%s]",
-	     indent, "", func,
+	     indent, "", __func__,
 	     str_selector_pair(c_local, c_remote, &spb),
 	     enum_name_short(&routing_names, c_routing),
 	     enum_name_short(&shunt_kind_names, c_shunt_kind));
@@ -769,11 +768,6 @@ static struct spd_owner raw_spd_owner(const struct spd_route *c_spd,
 	return owner;
 }
 
-struct spd_owner spd_owner(const struct spd_route *spd, enum routing new_routing, where_t where)
-{
-	return raw_spd_owner(spd, new_routing, spd->connection->logger, where, __func__, 0);
-}
-
 /*
  * XXX: can this and/or route_owner() be merged?
  */
@@ -788,8 +782,8 @@ static bool get_connection_spd_conflicts(struct connection *c, struct logger *lo
 			continue;
 		}
 		/* get who owns the SPD */
-		spd->wip.conflicting.owner = raw_spd_owner(spd, /*ignored-for-policy*/RT_UNROUTED + 1,
-							   logger, HERE, __func__, 0);
+		spd->wip.conflicting.owner = spd_owner(spd, /*ignored-for-policy*/RT_UNROUTED + 1,
+						       logger, HERE);
 		/* also check for bare shunts */
 		spd->wip.conflicting.shunt = bare_shunt_ptr(&spd->local->client, &spd->remote->client, __func__);
 		if (spd->wip.conflicting.shunt != NULL) {
@@ -871,7 +865,8 @@ static void revert_kernel_policy(struct spd_route *spd,
 		ldbg(logger, "kernel: %s() no previous kernel policy or shunt: delete whatever we installed",
 		     __func__);
 		/* go back to old routing */
-		struct spd_owner owner = spd_owner(spd, c->child.routing, HERE);
+		struct spd_owner owner = spd_owner(spd, c->child.routing,
+						   logger, HERE);
 		delete_spd_kernel_policy(spd, &owner, DIRECTION_OUTBOUND,
 					 EXPECT_KERNEL_POLICY_OK,
 					 c->logger, HERE,
@@ -1216,7 +1211,8 @@ bool unrouted_to_routed_ondemand_sec_label(struct connection *c, struct logger *
 				ldbg(logger, "pulling previously installed outbound policy");
 				pexpect(direction == DIRECTION_INBOUND);
 				/* go back to old routing */
-				struct spd_owner owner = spd_owner(c->spd, c->child.routing, where);
+				struct spd_owner owner = spd_owner(c->spd, c->child.routing,
+								   logger, where);
 				delete_spd_kernel_policy(c->spd, &owner, DIRECTION_OUTBOUND,
 							 EXPECT_KERNEL_POLICY_OK,
 							 /*logger*/logger,
@@ -1238,7 +1234,8 @@ bool unrouted_to_routed_ondemand_sec_label(struct connection *c, struct logger *
 			ldbg(logger, "kernel: down command returned an error");
 		}
 		/* go back to old routing */
-		struct spd_owner owner = spd_owner(c->spd, c->child.routing, where);
+		struct spd_owner owner = spd_owner(c->spd, c->child.routing,
+						   logger, where);
 		delete_spd_kernel_policy(c->spd, &owner, DIRECTION_OUTBOUND,
 					 EXPECT_KERNEL_POLICY_OK,
 					 logger, where, "failed security label");
@@ -2047,7 +2044,8 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child, bool 
 	if (!ok) {
 		FOR_EACH_ITEM(spd, &c->child.spds) {
 			/* go back to old routing */
-			struct spd_owner owner = spd_owner(spd, c->child.routing, HERE);
+			struct spd_owner owner = spd_owner(spd, c->child.routing,
+							   logger, HERE);
 			delete_cat_kernel_policies(spd, &owner, child->sa.st_logger, HERE);
 			revert_kernel_policy(spd, &child->sa, logger);
 		}

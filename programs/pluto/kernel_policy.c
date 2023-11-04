@@ -572,7 +572,8 @@ void delete_spd_kernel_policies(const struct spds *spds,
 			continue;
 		}
 
-		struct spd_owner owner = spd_owner(spd, RT_UNROUTED/*ignored*/, where);
+		struct spd_owner owner = spd_owner(spd, RT_UNROUTED/*ignored*/,
+						   logger, where);
 
 		delete_spd_kernel_policy(spd, &owner, DIRECTION_OUTBOUND,
 					 EXPECT_KERNEL_POLICY_OK,
@@ -843,7 +844,8 @@ static void replace_ipsec_with_bare_kernel_policy(struct child_sa *child,
 	/*
 	 * Always zap inbound.
 	 */
-	struct spd_owner owner = spd_owner(spd, RT_UNROUTED/*not-bare*/, where);
+	struct spd_owner owner = spd_owner(spd, RT_UNROUTED/*not-bare*/,
+					   logger, where);
 	if (!delete_spd_kernel_policy(spd, &owner, DIRECTION_INBOUND,
 				      expect_inbound_policy,
 				      logger, where, "inbound")) {
@@ -876,7 +878,8 @@ void replace_ipsec_with_bare_kernel_policies(struct child_sa *child,
 			continue;
 		}
 
-		struct spd_owner owner = spd_owner(spd, RT_UNROUTED/*ignored-for-cat*/, where);
+		struct spd_owner owner = spd_owner(spd, RT_UNROUTED/*ignored-for-cat*/,
+						   logger, where);
 		delete_cat_kernel_policies(spd, &owner, logger, where);
 
 		replace_ipsec_with_bare_kernel_policy(child, c, spd, shunt_kind,
