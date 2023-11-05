@@ -726,16 +726,16 @@ static struct spd_owner raw_spd_owner(const struct spd_route *c_spd,
 		 * .policy specific checks
 		 */
 
-		if (c->clonedfrom == d) {
+		if (!selector_eq_selector(c_spd->local->client,
+					  d_spd->local->client)) {
+			ldbg_spd(logger, indent, d_spd, "skipped policy; different local selectors");
+		} else if (c->clonedfrom == d) {
 			enum_buf rb;
 			ldbg_spd(logger, indent, d_spd,
 				 "skipped policy; is connection parent with routing >= %s[%s] %s",
 				 str_enum_short(&routing_names, c_routing, &rb),
 				 enum_name_short(&shunt_kind_names, c_shunt_kind),
 				 bool_str(d->child.routing >= c_routing));
-		} else if (!selector_eq_selector(c_spd->local->client,
-						 d_spd->local->client)) {
-			ldbg_spd(logger, indent, d_spd, "skipped policy; different local selectors");
 		} else if (c->config->overlapip && d->config->overlapip) {
 			ldbg_spd(logger, indent, d_spd, "skipped policy;  both ends have POLICY_OVERLAPIP");
 		} else {
@@ -751,13 +751,13 @@ static struct spd_owner raw_spd_owner(const struct spd_route *c_spd,
 
 		enum shunt_kind d_shunt_kind = spd_shunt_kind(d_spd);
 
-		if (d_shunt_kind < c_shunt_kind) {
+		if (!selector_eq_selector(c_spd->local->client,
+					  d_spd->local->client)) {
+			ldbg_spd(logger, indent, d_spd, "skipped eclipsing; different local selectors");
+		} else if (d_shunt_kind < c_shunt_kind) {
 			ldbg_spd(logger, indent, d_spd, "skipped eclipsing; < %s[%s]",
 				 enum_name_short(&routing_names, c_routing),
 				 enum_name_short(&shunt_kind_names, c_shunt_kind));
-		} else if (!selector_eq_selector(c_spd->local->client,
-						 d_spd->local->client)) {
-			ldbg_spd(logger, indent, d_spd, "skipped eclipsing; different local selectors");
 		} else if (c->config->overlapip && d->config->overlapip) {
 			ldbg_spd(logger, indent, d_spd, "skipped eclipsing;  both ends have POLICY_OVERLAPIP");
 		} else {
@@ -778,78 +778,48 @@ struct spd_owner spd_owner(const struct spd_route *spd, enum routing new_routing
  * XXX: can this and/or route_owner() be merged?
  */
 
-static bool get_connection_spd_conflict(struct spd_route *spd, struct logger *logger, unsigned indent)
-{
-	zero(&spd->wip);
-
-	struct connection *c = spd->connection;
-
-	if (c->config->sec_label.len > 0) {
-		/* sec-labels ignore conflicts */
-		return true;
-	}
-
-	/*
-	 * Find how owns the installed SPD (kernel policy).
-	 */
-
-	struct spd_owner owner = raw_spd_owner(spd, /*ignored-for-policy*/RT_UNROUTED + 1,
-					       logger, HERE, __func__, 0);
-
-	/*
-	 * Double check that it really does own the SPD.
-	 */
-	if (owner.policy != NULL) {
-		const struct connection *oc = owner.policy->connection;
-		if (!kernel_policy_installed(oc)) {
-			connection_buf ocb;
-			llog_pexpect(logger, HERE,
-				     "conflicting %s policy for "PRI_CONNECTION" is not installed",
-				     enum_name_short(&routing_names, oc->child.routing),
-				     pri_connection(oc, &ocb));
-		}
-	}
-
-	/*
-	 * If there's no SPD with a conflicting policy, perhaps
-	 * there's a bare one.
-	 *
-	 * XXX: why not add this to the above hash table?
-	 */
-
-	struct bare_shunt **shunt = bare_shunt_ptr(&spd->local->client, &spd->remote->client, __func__);
-
-	/*
-	 * Report what was found.
-	 */
-
-	selector_pair_buf sb;
-	ldbg(logger,
-	     "%*s kernel: %s() %s; conflicting: policy=%s route=%s shunt=%s",
-	     indent, "",
-	     __func__, str_selector_pair(&spd->local->client, &spd->remote->client, &sb),
-	     (owner.policy == NULL ? "<none>" : owner.policy->connection->name),
-	     (owner.bare_route == NULL ? "<none>" : owner.bare_route->connection->name),
-	     (shunt == NULL ? "<none>" : (*shunt)->why));
-
-	if (owner.policy != NULL) {
-		connection_buf cb;
-		llog(RC_LOG_SERIOUS, logger,
-		     "cannot install kernel policy -- it is in use for "PRI_CONNECTION,
-		     pri_connection(owner.policy->connection, &cb));
-		return false;
-	}
-
-	spd->wip.conflicting.shunt = shunt;
-	spd->wip.conflicting.owner = owner;
-	return true;
-}
-
 static bool get_connection_spd_conflicts(struct connection *c, struct logger *logger)
 {
 	ldbg(logger, "checking %s for conflicts", c->name);
 	FOR_EACH_ITEM(spd, &c->child.spds) {
-		if (!get_connection_spd_conflict(spd, logger, 2)) {
+		zero(&spd->wip);
+		/* sec-labels ignore conflicts (but still zero) */
+		if (spd->connection->config->sec_label.len > 0) {
+			continue;
+		}
+		/* get who owns the SPD */
+		spd->wip.conflicting.owner = raw_spd_owner(spd, /*ignored-for-policy*/RT_UNROUTED + 1,
+							   logger, HERE, __func__, 0);
+		/* also check for bare shunts */
+		spd->wip.conflicting.shunt = bare_shunt_ptr(&spd->local->client, &spd->remote->client, __func__);
+		if (spd->wip.conflicting.shunt != NULL) {
+			selector_pair_buf sb;
+			ldbg(logger,
+			     "kernel: %s() %s; conflicting: shunt=%s",
+			     __func__,
+			     str_selector_pair(&spd->local->client, &spd->remote->client, &sb),
+			     (*spd->wip.conflicting.shunt)->why);
+		}
+		/* is there a conflict */
+		if (spd->wip.conflicting.owner.policy != NULL) {
+			/*
+			 * Double check that it really does own the
+			 * SPD.  After all it is about to trigger a
+			 * reject.
+			 */
+			struct connection *d = spd->wip.conflicting.owner.policy->connection;
+			if (!kernel_policy_installed(d)) {
+				connection_buf ocb;
+				llog_pexpect(logger, HERE,
+					     "conflicting %s policy for "PRI_CONNECTION" %s is not installed",
+					     enum_name_short(&routing_names, c->child.routing),
+					     pri_connection(d, &ocb),
+					     enum_name_short(&routing_names, d->child.routing));
+			}
+			connection_buf cb;
+			llog(RC_LOG_SERIOUS, logger,
+			     "cannot install kernel policy -- it is in use for "PRI_CONNECTION,
+			     pri_connection(spd->wip.conflicting.owner.policy->connection, &cb));
 			return false;
 		}
 	}
