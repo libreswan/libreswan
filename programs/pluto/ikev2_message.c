@@ -1383,11 +1383,11 @@ static stf_status record_v2SK_message(struct pbs_out *msg,
 	return STF_OK;
 }
 
-struct ikev2_id build_v2_id_payload(const struct spd_end *end, shunk_t *body,
+struct ikev2_id build_v2_id_payload(const struct host_end *end, shunk_t *body,
 				    const char *what, struct logger *logger)
 {
 	struct ikev2_id id_header = {
-		.isai_type = id_to_payload(&end->host->id, &end->host->addr, body),
+		.isai_type = id_to_payload(&end->id, &end->addr, body),
 		.isai_critical = build_ikev2_critical(false, logger),
 	};
 	if (impair.send_nonzero_reserved_id) {

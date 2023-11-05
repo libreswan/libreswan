@@ -165,8 +165,9 @@ stf_status initiate_v2_IKE_AUTH_request(struct ike_sa *ike, struct msg_digest *m
 
 	{
 		shunk_t data;
-		ike->sa.st_v2_id_payload.header = build_v2_id_payload(pc->spd->local, &data,
-								      "my IDi", ike->sa.st_logger);
+		ike->sa.st_v2_id_payload.header =
+			build_v2_id_payload(&pc->local->host, &data,
+					    "my IDi", ike->sa.st_logger);
 		ike->sa.st_v2_id_payload.data = clone_hunk(data, "my IDi");
 	}
 
@@ -367,9 +368,9 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 		case ID_NULL:
 		{
 			shunk_t id_b;
-			struct ikev2_id r_id = build_v2_id_payload(pc->spd->remote, &id_b,
-								   "their IDr",
-								   ike->sa.st_logger);
+			struct ikev2_id r_id =
+				build_v2_id_payload(&pc->remote->host, &id_b,
+						    "their IDr", ike->sa.st_logger);
 			pb_stream r_id_pbs;
 			if (!out_struct(&r_id, &ikev2_id_r_desc, request.pbs,
 				&r_id_pbs) ||
@@ -908,9 +909,9 @@ stf_status generate_v2_responder_auth(struct ike_sa *ike, struct msg_digest *md,
 		ike->sa.st_v2_id_payload.data = empty_chunk;
 	} else {
 		shunk_t data;
-		ike->sa.st_v2_id_payload.header = build_v2_id_payload(c->spd->local, &data,
-								      "my IDr",
-								      ike->sa.st_logger);
+		ike->sa.st_v2_id_payload.header =
+			build_v2_id_payload(&c->local->host, &data,
+					    "my IDr", ike->sa.st_logger);
 		ike->sa.st_v2_id_payload.data = clone_hunk(data, "my IDr");
 	}
 

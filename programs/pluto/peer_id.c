@@ -50,22 +50,22 @@
  * This is to support certificates with SAN using wildcard, eg SAN
  * contains DNS:*.vpnservice.com where our leftid=*.vpnservice.com
  */
-static bool idr_wildmatch(const struct spd_end *this, const struct id *idr, struct logger *logger)
+static bool idr_wildmatch(const struct host_end *this, const struct id *idr, struct logger *logger)
 {
 	/* check if received IDr is a valid SAN of our cert */
 	/* cert_VerifySubjectAltName, if called, will [debug]log any errors */
 	/* XXX:  calling cert_VerifySubjectAltName with ID_DER_ASN1_DN futile? */
 	/* ??? if cert matches we don't actually do any further ID matching, wildcard or not */
-	if (this->host->config->cert.nss_cert != NULL &&
+	if (this->config->cert.nss_cert != NULL &&
 	    (idr->kind == ID_FQDN || idr->kind == ID_DER_ASN1_DN)) {
-		diag_t d = cert_verify_subject_alt_name(this->host->config->cert.nss_cert, idr);
+		diag_t d = cert_verify_subject_alt_name(this->config->cert.nss_cert, idr);
 		if (d == NULL) {
 			return true;
 		}
 		llog_diag(RC_LOG_SERIOUS, logger, &d, "%s", "");
 	}
 
-	const struct id *wild = &this->host->id;
+	const struct id *wild = &this->id;
 
 	/* if not both ID_FQDN, fall back to same_id (no wildcarding possible) */
 	if (idr->kind != ID_FQDN || wild->kind != ID_FQDN)
@@ -344,7 +344,7 @@ static struct connection *refine_host_connection_on_responder(int indent,
 				    str_id(&d->local->host.id, &usb),
 				    enum_show(&ike_id_type_names, d->local->host.id.kind, &usesb));
 				/* ??? pexpect(d->spd->spd_next == NULL); */
-				if (!idr_wildmatch(d->spd->local, tarzan_id, st->st_logger)) {
+				if (!idr_wildmatch(&d->local->host, tarzan_id, st->st_logger)) {
 					dbg_rhc("skipping because peer IDr payload does not match our expected ID");
 					continue;
 				}

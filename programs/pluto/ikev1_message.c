@@ -25,10 +25,10 @@
 #include "demux.h"
 #include "crypt_ke.h"
 
-struct isakmp_ipsec_id build_v1_id_payload(const struct spd_end *end, shunk_t *body)
+struct isakmp_ipsec_id build_v1_id_payload(const struct host_end *end, shunk_t *body)
 {
 	struct isakmp_ipsec_id id_hd = {
-		.isaiid_idtype = id_to_payload(&end->host->id, &end->host->addr, body),
+		.isaiid_idtype = id_to_payload(&end->id, &end->addr, body),
 	};
 	return id_hd;
 }

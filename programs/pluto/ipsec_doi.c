@@ -130,7 +130,7 @@ void jam_child_sa_details(struct jambuf *buf, struct state *st)
 
 		if (nat)
 			dbg("NAT-T: NAT Traversal detected - their IKE port is '%d'",
-			     c->spd->remote->host->port);
+			     c->remote->host.port);
 
 		jam(buf, "ESP%s%s%s=>0x%08" PRIx32 " <0x%08" PRIx32 "",
 		    tcp ? "inTCP" : nat ? "inUDP" : "",

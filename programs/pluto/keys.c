@@ -166,7 +166,7 @@ struct tac_state {
 	const struct hash_desc *hash_algo;
 	realtime_t now;
 	struct logger *logger;
-	const struct spd_end *remote;
+	const struct host_end *remote;
 	const char *cert_origin;
 
 	/*
@@ -203,7 +203,7 @@ static bool try_all_keys(const char *cert_origin,
 	id_buf thatid;
 	dbg("trying all '%s's for %s key using %s signature that matches ID: %s",
 	    cert_origin, s->signer->type->name, s->signer->name,
-	    str_id(&s->remote->host->id, &thatid));
+	    str_id(&s->remote->id, &thatid));
 	s->cert_origin = cert_origin;
 
 	bool described = false;
@@ -218,7 +218,7 @@ static bool try_all_keys(const char *cert_origin,
 		}
 
 		int wildcards; /* value ignored */
-		if (!match_id("  ", &key->id, &s->remote->host->id, &wildcards)) {
+		if (!match_id("  ", &key->id, &s->remote->id, &wildcards)) {
 			id_buf printkid;
 			dbg("  skipping '%s' with wrong ID",
 			    str_id(&key->id, &printkid));
@@ -226,7 +226,7 @@ static bool try_all_keys(const char *cert_origin,
 		}
 
 		int pl;	/* value ignored */
-		if (!trusted_ca(key->issuer, ASN1(s->remote->config->host.ca), &pl)) {
+		if (!trusted_ca(key->issuer, ASN1(s->remote->config->ca), &pl)) {
 			id_buf printkid;
 			dn_buf buf;
 			dbg("  skipping '%s' with untrusted CA '%s'",
@@ -308,7 +308,7 @@ diag_t authsig_and_log_using_pubkey(struct ike_sa *ike,
 		.now = realnow(),
 		.signature = signature,
 		.hash_algo = hash_algo,
-		.remote = c->spd->remote,
+		.remote = &c->remote->host,
 		/* out */
 		.tried_cnt = 0,
 		.key = NULL,

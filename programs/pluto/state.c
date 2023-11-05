@@ -566,9 +566,10 @@ static void initialize_new_ike_sa(struct ike_sa *ike)
 		ike->sa.st_interface = iface_endpoint_addref(c->revival.local);
 		iface_endpoint_delref(&c->revival.local);
 	} else {
-		ike->sa.st_remote_endpoint = endpoint_from_address_protocol_port(c->remote->host.addr,
-										 c->interface->io->protocol,
-										 ip_hport(c->spd->remote->host->port));
+		ike->sa.st_remote_endpoint =
+			endpoint_from_address_protocol_port(c->remote->host.addr,
+							    c->interface->io->protocol,
+							    ip_hport(c->remote->host.port));
 		ike->sa.st_interface = iface_endpoint_addref(c->interface);
 	}
 
@@ -2156,16 +2157,16 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 		/* MOBIKE initiator processing response */
 		c->local->host.addr = endpoint_address(child->sa.st_mobike_local_endpoint);
 		dbg("%s() %s.host_port: %u->%u", __func__, c->local->config->leftright,
-		    c->spd->local->host->port, endpoint_hport(child->sa.st_mobike_local_endpoint));
-		c->spd->local->host->port = endpoint_hport(child->sa.st_mobike_local_endpoint);
-		c->spd->local->host->nexthop = child->sa.st_mobike_host_nexthop;
+		    c->local->host.port, endpoint_hport(child->sa.st_mobike_local_endpoint));
+		c->local->host.port = endpoint_hport(child->sa.st_mobike_local_endpoint);
+		c->local->host.nexthop = child->sa.st_mobike_host_nexthop;
 		break;
 	case MESSAGE_REQUEST:
 		/* MOBIKE responder processing request */
 		c->remote->host.addr = endpoint_address(md->sender);
 		dbg("%s() %s.host_port: %u->%u", __func__, c->remote->config->leftright,
-		    c->spd->remote->host->port, endpoint_hport(md->sender));
-		c->spd->remote->host->port = endpoint_hport(md->sender);
+		    c->remote->host.port, endpoint_hport(md->sender));
+		c->remote->host.port = endpoint_hport(md->sender);
 
 		/* for the consistency, correct output in ipsec status */
 		child->sa.st_remote_endpoint = ike->sa.st_remote_endpoint = md->sender;
