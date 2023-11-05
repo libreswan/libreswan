@@ -39,7 +39,6 @@ REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS strongswan.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS linux-audit.sed"
 
 # The following sanitizers are written to only modify specific commands
-REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS ip-link.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS ipsec-kernel-state.sed"		# includes ip xfrm state
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS ipsec-kernel-policy.sed"	# includes ip xfrm policy
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS nft.sed"
