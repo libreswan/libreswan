@@ -53,19 +53,26 @@ mount -o async /dev/ld0a /targetroot
 touch /targetroot/.
 cd /targetroot
 
-sets=/mnt/i386/binary/sets
+sets=/mnt/$(uname -m)/binary/sets
+
+case $(uname -m) in
+    i386 ) tgz=tgz ;;
+    * ) tgz=tar.xz ;;
+esac
 
 ls ${sets}
-for f in ${sets}/[a-jl-z]*.tgz ; do
-    echo $f
-    tar xpf $f || break
+for f in ${sets}/[a-jl-z]*.${tgz} ${sets}/[a-jl-z]*.${tgz} ; do
+    if test -r "${f}" ; then
+	echo $f
+	tar xpf ${f}
+    fi
 done
 
 # Generating the ISO seems to, sometimes, corrupt the name.
-for f in kern-GENERIC.tgz kern_generic.tgz ; do
+for f in kern-GENERIC.${tgz} kern_generic.${tgz} ; do
     k=${sets}/${f}
     if test -r ${k} ; then
-	tar xpf ${k}
+	tar xpvf ${k}
 	break
     fi
 done
