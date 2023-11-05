@@ -2,7 +2,7 @@
 
 # pexpect script to Install FreeBSD base Domain
 #
-# Copyright (C) 2021-2022 Andrew Cagney
+# Copyright (C) 2021-2023 Andrew Cagney
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -14,49 +14,19 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-# Possibly useful reference:
-# http://meta.libera.cc/2020/12/quick-netbsd-serial-console-install-on.html
-
 import pexpect
 import sys
-import time
 import os
 
-domain = "@@DOMAIN@@"
-gateway = "@@GATEWAY@@"
-pooldir = "@@POOLDIR@@"
-command = sys.argv[1:]
+def freebsd(child, param):
 
-print("domain", domain)
-print("gateway", gateway)
-print("pooldir", pooldir)
-print("command", command)
+    # XXX: how to fix this? scribble on /etc/rc.local?
+    print("waiting for terminal type")
+    child.expect("terminal type", timeout=None)
+    print("hitting default")
+    child.send("\n")
 
-child = pexpect.spawn(command[0], command[1:], logfile=sys.stdout.buffer, echo=False)
-
-def i():
-    '''go interactive then quit'''
-    child.logfile = None
-    child.interact()
+    child.expect([pexpect.EOF, "uhub0: detached"], timeout=None, searchwindowsize=20)
+    os.system('sudo virsh destroy ' + param.domain + ' > /dev/null')
+    child.wait()
     sys.exit(0)
-
-def rs(r, s):
-    '''expect R then send S'''
-    child.expect(r, timeout=None)
-    for c in s:
-        child.send(c)
-
-def c(s):
-    child.expect('\n# ')
-    time.sleep(1)
-    for c in s:
-        child.send(c)
-    child.send('\n')
-
-# XXX: how to fix this? scribble on /etc/rc.local?
-rs("Console type", "\n")
-
-m = child.expect([pexpect.EOF, "uhub0: detached"], timeout=None, searchwindowsize=20)
-os.system('sudo virsh destroy ' + domain + ' > /dev/null')
-child.wait()
-sys.exit(0)

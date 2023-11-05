@@ -822,6 +822,7 @@ kvm-base-%:
 
 $(patsubst %, $(KVM_POOLDIR_PREFIX)%-base, $(KVM_PLATFORM)): \
 $(KVM_POOLDIR_PREFIX)%-base: | \
+		testing/libvirt/kvm-install-base.py \
 		testing/libvirt/%/base.py \
 		$(KVM_POOLDIR) \
 		$(KVM_HOST_OK) \
@@ -830,12 +831,13 @@ $(KVM_POOLDIR_PREFIX)%-base: | \
 	: clean up old domains
 	./testing/libvirt/kvm-uninstall-domain.sh $@
 	: use script to drive build of new domain
-	$(KVM_TRANSMOGRIFY) \
-		-e 's;@@DOMAIN@@;$(notdir $@);' \
-		testing/libvirt/$*/base.py \
-		> $@.py
-	chmod a+x $@.py
-	$(KVM_PYTHON) $@.py \
+	$(KVM_PYTHON) testing/libvirt/kvm-install-base.py \
+		os "$*" \
+		domain "$(notdir $@)" \
+		gateway $(KVM_GATEWAY_ADDRESS) \
+		benchdir $(KVM_BENCHDIR) \
+		pooldir $(KVM_POOLDIR) \
+		-- \
 		$(VIRT_INSTALL) \
 			$(VIRT_INSTALL_FLAGS) \
 			--vcpus=$(call kvm-flag-value, KVM_BASE_CPUS) \

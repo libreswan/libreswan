@@ -19,86 +19,57 @@ import sys
 import time
 import os
 
-command = sys.argv[1:]
-print("command", command)
-
-domain = "@@DOMAIN@@"
-gateway = "@@GATEWAY@@"
-pooldir = "@@POOLDIR@@"
-benchdir = "@@BENCHDIR@@"
-
-print("domain", domain)
-print("gateway", gateway)
-print("pooldir", pooldir)
-print("benchdir", benchdir)
-
-class LogFilter:
-    def __init__(self):
-        self.stream=sys.stdout.buffer
-    def write(self, record):
-        self.stream.write(record.replace(b'\33', b''))
-    def flush(self):
-        self.stream.flush()
-
-child = pexpect.spawn(command=command[0], args=command[1:],
-                      logfile=LogFilter(),
-                      echo=False)
-
-def i():
-    '''go interactive then quit'''
-    child.logfile = None
-    child.interact()
-    sys.exit(0)
-
-def rs(r, s):
+def rs(child, r, s):
     child.expect(r, timeout=None)
     for c in s:
         child.send(c)
 
-rs('login: ', 'root\n')
+def alpine(child, param):
 
-# run alpine's setup script; change this to an answer file or add -q?
+    rs(child, 'login: ', 'root\n')
 
-rs('# ', 'setup-alpine\n');
-rs('Enter system hostname', 'alpine\n')
-rs('Available interfaces are: eth0', '')
-rs('Which one do you want to initialize', 'eth0\n')
-rs('Ip address for eth0', 'dhcp\n')
-rs('Do you want to do any manual network configuration', 'n\n')
-rs('New password: ', 'swan\n')
-rs('Retype password: ', 'swan\n')
-rs('Which timezone are you in', 'UTC\n')
-rs('HTTP/FTP proxy URL', 'none\n')
-rs('Available mirrors:', '')
-rs('--More--', 'q')
-rs('Enter mirror number', '1\n')
-rs('Setup a user', 'no\n')
-rs('Which ssh server', 'none\n')
-rs('Which disk', 'vda\n')
-rs('How would you like to use it', 'sys\n')
-rs('Erase the above disk', 'y\n')
-rs('Installation is complete. Please reboot.', '')
+    # run alpine's setup script; change this to an answer file or add -q?
 
-# Now hack the new rootfs
+    rs(child, '# ', 'setup-alpine\n');
+    rs(child, 'Enter system hostname', 'alpine\n')
+    rs(child, 'Available interfaces are: eth0', '')
+    rs(child, 'Which one do you want to initialize', 'eth0\n')
+    rs(child, 'Ip address for eth0', 'dhcp\n')
+    rs(child, 'Do you want to do any manual network configuration', 'n\n')
+    rs(child, 'New password: ', 'swan\n')
+    rs(child, 'Retype password: ', 'swan\n')
+    rs(child, 'Which timezone are you in', 'UTC\n')
+    rs(child, 'HTTP/FTP proxy URL', 'none\n')
+    rs(child, 'Available mirrors:', '')
+    rs(child, '--More--', 'q')
+    rs(child, 'Enter mirror number', '1\n')
+    rs(child, 'Setup a user', 'no\n')
+    rs(child, 'Which ssh server', 'none\n')
+    rs(child, 'Which disk', 'vda\n')
+    rs(child, 'How would you like to use it', 'sys\n')
+    rs(child, 'Erase the above disk', 'y\n')
+    rs(child, 'Installation is complete. Please reboot.', '')
 
-rs('# ', 'mount /dev/vda3 /mnt\n')
-rs('# ', 'chroot /mnt\n')
+    # Now hack the new rootfs
 
-# fix the prompt
+    rs(child, '# ', 'mount /dev/vda3 /mnt\n')
+    rs(child, '# ', 'chroot /mnt\n')
 
-rs('# ', 'echo PS1=\\\'\'[\\u@\\h \\w $(echo $?)]\\$ \'\\\' | tee /root/.profile\n')
-rs('# ', 'cat /root/.profile\n')
+    # fix the prompt
 
-# setup NFS mounts of test directories
+    rs(child, '# ', 'echo PS1=\\\'\'[\\u@\\h \\w $(echo $?)]\\$ \'\\\' | tee /root/.profile\n')
+    rs(child, '# ', 'cat /root/.profile\n')
 
-rs('# ', 'echo '+gateway+':'+pooldir+' /pool nfs rw | tee -a /etc/fstab\n')
-rs('# ', 'echo '+gateway+':'+benchdir+' /bench nfs rw | tee -a /etc/fstab\n')
-rs('# ', 'cat /etc/fstab\n')
-rs('# ', 'mkdir -p /pool /bench\n')
+    # setup NFS mounts of test directories
 
-rs('# ', 'apk add nfs-utils\n')
-rs('# ', 'rc-update add nfsmount\n')
+    rs(child, '# ', 'echo '+param.gateway+':'+param.pooldir+' /pool nfs rw | tee -a /etc/fstab\n')
+    rs(child, '# ', 'echo '+param.gateway+':'+param.benchdir+' /bench nfs rw | tee -a /etc/fstab\n')
+    rs(child, '# ', 'cat /etc/fstab\n')
+    rs(child, '# ', 'mkdir -p /pool /bench\n')
 
-rs('# ', 'poweroff\n')
+    rs(child, '# ', 'apk add nfs-utils\n')
+    rs(child, '# ', 'rc-update add nfsmount\n')
 
-sys.exit(child.wait())
+    rs(child, '# ', 'poweroff\n')
+
+    sys.exit(child.wait())
