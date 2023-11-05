@@ -436,10 +436,10 @@ if hostname != "nic":
 
         # check version and spew all over test output
         output = subprocess.getoutput("strongswan version")
-        strongswan_version = "U5.9.9"
+        strongswan_version = "U5.9.11"
         if args.strongswan_version:
             strongswan_version = args.strongswan_version
-        if not strongswan_version in output and not "U5.9.11" in output:
+        if not strongswan_version in output:
             print("strongswan %s must be installed" % (strongswan_version))
             print("")
             print(output)
