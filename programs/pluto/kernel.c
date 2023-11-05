@@ -514,14 +514,14 @@ static void ldbg_spd(struct logger *logger, unsigned indent,
 	LDBGP_JAMBUF(DBG_BASE, logger, buf) {
 		jam(buf, "%*s", indent, "");
 		jam_string(buf, " ");
+		jam_connection(buf, spd->connection);
+		jam_string(buf, " ");
+		jam_selector_pair(buf, &spd->local->client, &spd->remote->client);
+		jam_string(buf, " ");
 		jam_enum_short(buf, &routing_names, spd->connection->child.routing);
 		jam_string(buf, "[");
 		jam_enum_short(buf, &shunt_kind_names, spd_shunt_kind(spd));
 		jam_string(buf, "] ");
-		jam_selector_pair(buf, &spd->local->client, &spd->remote->client);
-		jam_string(buf, " ");
-		jam_connection(buf, spd->connection);
-		jam_string(buf, " ");
 		va_list ap;
 		va_start(ap, fmt);
 		jam_va_list(buf, fmt, ap);
@@ -622,13 +622,13 @@ struct spd_owner spd_owner(const struct spd_route *c_spd,
 			continue;
 		}
 
-		if (c_spd == d_spd) {
-			ldbg_spd(logger, indent, d_spd, "skipped; ignoring self");
+		if (d->child.routing == RT_UNROUTED) {
+			ldbg_spd(logger, indent, d_spd, "skipped; UNROUTED");
 			continue;
 		}
 
-		if (d->child.routing == RT_UNROUTED) {
-			ldbg_spd(logger, indent, d_spd, "skipped; UNROUTED");
+		if (c_spd == d_spd) {
+			ldbg_spd(logger, indent, d_spd, "skipped; ignoring self");
 			continue;
 		}
 
@@ -664,6 +664,30 @@ struct spd_owner spd_owner(const struct spd_route *c_spd,
 		}
 
 		/*
+		 * .bare_route specific checks.
+		 *
+		 * XXX: why look at host address?
+		 *
+		 * XXX: isn't host address comparison a routing and
+		 * not SPD thing?  Ignoring a conflicting SPD because
+		 * of the routing table seems wrong - the SPD still
+		 * conflicts so only one is allowed.
+		 */
+
+		if (!routed(d)) {
+			ldbg_spd(logger, indent, d_spd, "skipped route; not routed");
+		} else if (c->clonedfrom == d) {
+			/* D, the parent, is already routed */
+			ldbg_spd(logger, indent, d_spd,
+				 "skipped route; is connection parent");
+		} else if (!address_eq_address(c->local->host.addr,
+					       d->local->host.addr)) {
+			ldbg_spd(logger, indent, d_spd, "skipped route; different local address?!?");
+		} else {
+			save_spd_owner(&owner.bare_route, "bare_route", d_spd, logger, indent);
+		}
+
+		/*
 		 * .bare_cat specific checks.
 		 *
 		 * XXX: forming the local CLIENT from the local HOST is
@@ -695,30 +719,6 @@ struct spd_owner spd_owner(const struct spd_route *c_spd,
 			ldbg_spd(logger, indent, d_spd, "skipped bare; different local selectors");
 		} else {
 			save_spd_owner(&owner.bare_policy, "bare_policy", d_spd, logger, indent);
-		}
-
-		/*
-		 * .bare_route specific checks.
-		 *
-		 * XXX: why look at host address?
-		 *
-		 * XXX: isn't host address comparison a routing and
-		 * not SPD thing?  Ignoring a conflicting SPD because
-		 * of the routing table seems wrong - the SPD still
-		 * conflicts so only one is allowed.
-		 */
-
-		if (!routed(d)) {
-			ldbg_spd(logger, indent, d_spd, "skipped route; not routed");
-		} else if (c->clonedfrom == d) {
-			/* D, the parent, is already routed */
-			ldbg_spd(logger, indent, d_spd,
-				 "skipped route; is connection parent");
-		} else if (!address_eq_address(c->local->host.addr,
-					       d->local->host.addr)) {
-			ldbg_spd(logger, indent, d_spd, "skipped route; different local address?!?");
-		} else {
-			save_spd_owner(&owner.bare_route, "bare_route", d_spd, logger, indent);
 		}
 
 		/*
