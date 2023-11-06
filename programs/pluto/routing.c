@@ -613,10 +613,9 @@ static void routed_tunnel_to_unrouted(enum routing_event event,
 	/* currently up and routed */
 	struct connection *c = child->sa.st_connection;
 	do_updown_child(UPDOWN_DOWN, child);
-	delete_spd_kernel_policies(&c->child.spds,
-				   EXPECT_KERNEL_POLICY_OK,
-				   child->sa.st_logger,
-				   where, "delete");
+	delete_connection_kernel_policies(c, EXPECT_KERNEL_POLICY_OK,
+					  child->sa.logger,
+					  where, "delete");
 	/*
 	 * update routing; route_owner() will see this and not
 	 * think this route is the owner?
@@ -671,8 +670,8 @@ static void unrouted_negotiation_to_unrouted(enum routing_event event,
 					     struct logger *logger, where_t where,
 					     const char *story)
 {
-	delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
-				   logger, where, story);
+	delete_connection_kernel_policies(c, EXPECT_NO_INBOUND,
+					  logger, where, story);
 	set_routing(event, c, RT_UNROUTED, NULL);
 }
 
@@ -682,8 +681,8 @@ static void routed_negotiation_to_unrouted(enum routing_event event,
 					   const char *story)
 {
 	PEXPECT(logger, !is_opportunistic(c));
-	delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
-				   logger, where, story);
+	delete_connection_kernel_policies(c, EXPECT_NO_INBOUND,
+					  logger, where, story);
 	set_routing(event, c, RT_UNROUTED, NULL);
 	do_updown_unroute(c, NULL);
 }
@@ -845,10 +844,9 @@ static void unrouted_tunnel_to_unrouted(enum routing_event event,
 {
 	/* currently down and unrouted */
 	struct connection *c = child->sa.st_connection;
-	delete_spd_kernel_policies(&c->child.spds,
-				   EXPECT_KERNEL_POLICY_OK,
-				   child->sa.st_logger,
-				   where, "delete");
+	delete_connection_kernel_policies(c, EXPECT_KERNEL_POLICY_OK,
+					  child->sa.logger,
+					  where, "delete");
 	/*
 	 * update routing; route_owner() will see this and not
 	 * think this route is the owner?
@@ -894,18 +892,16 @@ static void teardown_unrouted_inbound(enum routing_event event,
 	PASSERT((*child)->sa.st_logger, c == (*child)->sa.st_connection);
 
 	if (scheduled_child_revival(*child, "received Delete/Notify")) {
-		delete_spd_kernel_policies(&c->child.spds,
-					   EXPECT_KERNEL_POLICY_OK,
-					   (*child)->sa.st_logger,
-					   where, "delete");
+		delete_connection_kernel_policies(c, EXPECT_KERNEL_POLICY_OK,
+						  (*child)->sa.logger,
+						  where, "delete");
 		set_routing(event, c, RT_UNROUTED, NULL);
 		return;
 	}
 
-	delete_spd_kernel_policies(&c->child.spds,
-				   EXPECT_KERNEL_POLICY_OK,
-				   (*child)->sa.st_logger,
-				   where, "delete");
+	delete_connection_kernel_policies(c, EXPECT_KERNEL_POLICY_OK,
+					  (*child)->sa.logger,
+					  where, "delete");
 	set_routing(event, c, RT_UNROUTED, NULL);
 }
 
@@ -917,18 +913,16 @@ static void teardown_unrouted_inbound_negotiation(enum routing_event event,
 	PASSERT((*child)->sa.st_logger, c == (*child)->sa.st_connection);
 
 	if (scheduled_child_revival(*child, "received Delete/Notify")) {
-		delete_spd_kernel_policies(&c->child.spds,
-					   EXPECT_KERNEL_POLICY_OK,
-					   (*child)->sa.st_logger,
-					   where, "delete");
+		delete_connection_kernel_policies(c, EXPECT_KERNEL_POLICY_OK,
+						  (*child)->sa.logger,
+						  where, "delete");
 		set_routing(event, c, RT_UNROUTED, NULL);
 		return;
 	}
 
-	delete_spd_kernel_policies(&c->child.spds,
-				   EXPECT_KERNEL_POLICY_OK,
-				   (*child)->sa.st_logger,
-				   where, "delete");
+	delete_connection_kernel_policies(c, EXPECT_KERNEL_POLICY_OK,
+					  (*child)->sa.logger,
+					  where, "delete");
 	set_routing(event, c, RT_UNROUTED, NULL);
 }
 
@@ -1902,8 +1896,9 @@ static bool dispatch_1(enum routing_event event,
 
 	case X(UNROUTE, ROUTED_FAILURE, INSTANCE):
 	case X(UNROUTE, ROUTED_FAILURE, PERMANENT):
-		delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
-					   c->logger, e->where, "unroute");
+		delete_connection_kernel_policies(c, EXPECT_NO_INBOUND,
+						  logger, e->where,
+						  "unroute");
 		/* do now so route_owner won't find us */
 		set_routing(event, c, RT_UNROUTED, NULL);
 		do_updown_unroute(c, NULL);
@@ -1913,17 +1908,18 @@ static bool dispatch_1(enum routing_event event,
 	case X(UNROUTE, ROUTED_INBOUND_NEGOTIATION, PERMANENT): /* ikev1-xfrmi-02-aggr */
 	case X(UNROUTE, ROUTED_INBOUND_NEGOTIATION, TEMPLATE): /* xauth-pluto-25-lsw299 xauth-pluto-25-mixed-addresspool */
 		ldbg_routing(logger, "OOPS: ROUTED_INBOUND has no outbound policy");
-		delete_spd_kernel_policies(&c->child.spds,
-					   EXPECT_KERNEL_POLICY_OK,
-					   c->logger, e->where, "unroute");
+		delete_connection_kernel_policies(c, EXPECT_KERNEL_POLICY_OK,
+						  logger, e->where,
+						  "unroute");
 		set_routing(event, c, RT_UNROUTED, NULL);
 		do_updown_unroute(c, NULL);
 		return true;
 
 	case X(UNROUTE, ROUTED_NEGOTIATION, INSTANCE):
 	case X(UNROUTE, ROUTED_NEGOTIATION, PERMANENT):
-		delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
-					   c->logger, e->where, "unroute permanent");
+		delete_connection_kernel_policies(c, EXPECT_NO_INBOUND,
+						  logger, e->where,
+						  "unroute permanent");
 		/* do now so route_owner won't find us */
 		set_routing(event, c, RT_UNROUTED, NULL);
 		do_updown_unroute(c, NULL);
@@ -1931,9 +1927,9 @@ static bool dispatch_1(enum routing_event event,
 
 	case X(UNROUTE, ROUTED_NEVER_NEGOTIATE, TEMPLATE):
 	case X(UNROUTE, ROUTED_NEVER_NEGOTIATE, PERMANENT):
-		delete_spd_kernel_policies(&c->child.spds,
-					   EXPECT_KERNEL_POLICY_OK,
-					   c->logger, e->where, "unroute permanent");
+		delete_connection_kernel_policies(c, EXPECT_KERNEL_POLICY_OK,
+						  logger, e->where,
+						  "unroute permanent");
 		/* stop updown_unroute() finding this
 		 * connection */
 		set_routing(event, c, RT_UNROUTED, NULL);
@@ -1947,9 +1943,9 @@ static bool dispatch_1(enum routing_event event,
 		    c->local->kind == CK_PERMANENT) {
 			flush_routed_ondemand_revival(c);
 		}
-		delete_spd_kernel_policies(&c->child.spds,
-					   EXPECT_NO_INBOUND,
-					   c->logger, e->where, "unroute permanent");
+		delete_connection_kernel_policies(c, EXPECT_NO_INBOUND,
+						  logger, e->where,
+						  "unroute permanent");
 		/* stop updown_unroute() finding this
 		 * connection!?!?! */
 		set_routing(event, c, RT_UNROUTED, NULL);
@@ -1974,8 +1970,9 @@ static bool dispatch_1(enum routing_event event,
 
 	case X(UNROUTE, UNROUTED_TUNNEL, INSTANCE):
 	case X(UNROUTE, UNROUTED_TUNNEL, PERMANENT):
-		delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
-					   c->logger, e->where, "unroute permanent");
+		delete_connection_kernel_policies(c, EXPECT_NO_INBOUND,
+						  logger, e->where,
+						  "unroute permanent");
 		set_routing(event, c, RT_UNROUTED, NULL);
 		return true;
 
@@ -2048,15 +2045,17 @@ static bool dispatch_1(enum routing_event event,
 		ldbg_routing(logger, "already unrouted");
 		return true;
 	case X(UNROUTE, ROUTED_ONDEMAND, LABELED_TEMPLATE):
-		delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
-					   c->logger, e->where, "unroute template");
+		delete_connection_kernel_policies(c, EXPECT_NO_INBOUND,
+						  logger, e->where,
+						  "unroute template");
 		/* do now so route_owner won't find us */
 		set_routing(event, c, RT_UNROUTED, NULL);
 		do_updown_unroute(c, NULL);
 		return true;
 	case X(UNROUTE, ROUTED_ONDEMAND, LABELED_PARENT):
-		delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
-					   c->logger, e->where, "unroute instance");
+		delete_connection_kernel_policies(c, EXPECT_NO_INBOUND,
+						  logger, e->where,
+						  "unroute instance");
 		/* do now so route_owner won't find us */
 		set_routing(event, c, RT_UNROUTED, NULL);
 		do_updown_unroute(c, NULL);

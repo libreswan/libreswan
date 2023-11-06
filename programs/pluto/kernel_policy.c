@@ -552,12 +552,29 @@ bool delete_spd_kernel_policy(const struct spd_route *spd,
 				    logger, where, story);
 }
 
-void delete_spd_kernel_policies(const struct spds *spds,
+void delete_spd_kernel_policies(struct spd_route *spd,
+				const struct spd_owner *owner,
 				enum expect_kernel_policy inbound_policy_expectation,
 				struct logger *logger, where_t where,
 				const char *story)
 {
-	FOR_EACH_ITEM(spd, spds) {
+	delete_spd_kernel_policy(spd, owner, DIRECTION_OUTBOUND,
+				 EXPECT_KERNEL_POLICY_OK,
+				 logger, where, story);
+	delete_spd_kernel_policy(spd, owner, DIRECTION_INBOUND,
+				 inbound_policy_expectation,
+				 logger, where, story);
+#ifdef IPSEC_CONNECTION_LIMIT
+	num_ipsec_eroute--;
+#endif
+}
+
+void delete_connection_kernel_policies(const struct connection *c,
+				       enum expect_kernel_policy inbound_policy_expectation,
+				       struct logger *logger, where_t where,
+				       const char *story)
+{
+	FOR_EACH_ITEM(spd, &c->child.spds) {
 		/*
 		 * XXX: note the hack where missing inbound
 		 * policies are ignored.  The connection
@@ -575,15 +592,8 @@ void delete_spd_kernel_policies(const struct spds *spds,
 		struct spd_owner owner = spd_owner(spd, RT_UNROUTED/*ignored*/,
 						   logger, where);
 
-		delete_spd_kernel_policy(spd, &owner, DIRECTION_OUTBOUND,
-					 EXPECT_KERNEL_POLICY_OK,
-					 logger, where, story);
-		delete_spd_kernel_policy(spd, &owner, DIRECTION_INBOUND,
-					 inbound_policy_expectation,
-					 logger, where, story);
-#ifdef IPSEC_CONNECTION_LIMIT
-		num_ipsec_eroute--;
-#endif
+		delete_spd_kernel_policies(spd, &owner, inbound_policy_expectation,
+					   logger, where, story);
 	}
 }
 
