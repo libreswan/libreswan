@@ -1576,36 +1576,6 @@ struct ike_sa *find_viable_parent_for_connection(const struct connection *c)
 	return best;
 }
 
-void state_eroute_usage(const ip_selector *ours, const ip_selector *peers,
-			unsigned long count, monotime_t nw)
-{
-	struct state_filter sf = { .where = HERE, };
-	while (next_state_new2old(&sf)) {
-		struct state *st = sf.st;
-		struct connection *c = st->st_connection;
-
-		/* XXX spd-enum */
-		if (IS_IPSEC_SA_ESTABLISHED(st) &&
-		    c->newest_routing_sa == st->st_serialno &&
-		    c->child.routing == RT_ROUTED_TUNNEL &&
-		    selector_range_eq_selector_range(c->spd->local->client, *ours) &&
-		    selector_range_eq_selector_range(c->spd->remote->client, *peers)) {
-			if (st->st_outbound_count != count) {
-				st->st_outbound_count = count;
-				st->st_outbound_time = nw;
-			}
-			return;
-		}
-	}
-	if (DBGP(DBG_BASE)) {
-		selector_buf ourst;
-		selector_buf hist;
-		DBG_log("unknown tunnel eroute %s -> %s found in scan",
-			str_selector_subnet_port(ours, &ourst),
-			str_selector_subnet_port(peers, &hist));
-	}
-}
-
 void jam_humber_uintmax(struct jambuf *buf,
 			const char *prefix, uintmax_t val, const char *suffix)
 {
