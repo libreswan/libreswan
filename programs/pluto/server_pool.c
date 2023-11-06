@@ -168,16 +168,14 @@ static unsigned helper_threads_stopped = 0;
  * THREAD. Otherwise it is executed in the main (only) thread.
  */
 
-static int helper_thread_delay;
-
 static void do_job(struct job *job, helper_id_t helper_id)
 {
 	logtime_t start = logtime_start(job->logger);
 
-	if (helper_thread_delay > 0) {
+	if (impair.helper_thread_delay > 0) {
 		DBG_log(PRI_JOB": helper is pausing for %u seconds",
-			pri_job(job), helper_thread_delay);
-		sleep(helper_thread_delay);
+			pri_job(job), impair.helper_thread_delay);
+		sleep(impair.helper_thread_delay);
 	}
 
 	if (job->cancelled) {
@@ -459,29 +457,6 @@ static stf_status handle_helper_answer(struct state *st,
 }
 
 /*
- * Initialize helper debug delay value from environment variable.
- * This function is NOT thread safe (getenv).
- */
-static void init_helper_thread_delay(struct logger *logger)
-{
-	const char *envdelay;
-	unsigned long delay;
-	err_t error;
-
-	envdelay = getenv("PLUTO_CRYPTO_HELPER_DELAY");
-	if (envdelay == NULL)
-		return;
-
-	error = ttoulb(envdelay, 0, 0, secs_per_hour, &delay);
-	if (error != NULL)
-		llog(RC_LOG, logger,
-			    "$PLUTO_CRYPTO_HELPER_DELAY malformed: %s",
-			    error);
-	else
-		helper_thread_delay = (int)delay;
-}
-
-/*
  * initialize the helpers.
  *
  * Later we will have to make provisions for helpers that have hardware
@@ -495,8 +470,6 @@ void start_server_helpers(int nhelpers, struct logger *logger)
 	helper_threads = NULL;
 	helper_threads_started = 0;
 	helper_threads_stopped = 0;
-
-	init_helper_thread_delay(logger);
 
 	/* find out how many CPUs there are, if nhelpers is -1 */
 	/* if nhelpers == 0, then we do all the work ourselves */

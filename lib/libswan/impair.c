@@ -302,6 +302,8 @@ struct impairment impairments[] = {
 	U(v2n_rekey_sa_protoid, "corrupt the IKEv2 REKEY CHILD notify protocol ID"),
 	U(v2_proposal_protoid, "corrupt the IKEv2 proposal substructure protocol ID"),
 
+	U(helper_thread_delay, "pause <unsigned> seconds before starting each helper thread job"),
+
 #undef U
 #undef B
 #undef V

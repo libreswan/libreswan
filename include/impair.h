@@ -175,6 +175,8 @@ struct impair {
 	unsigned v2n_rekey_sa_protoid;
 	unsigned v2_proposal_protoid;
 
+	unsigned helper_thread_delay;
+
 	/*
 	 * add more here
 	 */
