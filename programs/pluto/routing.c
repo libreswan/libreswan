@@ -611,11 +611,24 @@ static void routed_tunnel_to_unrouted(enum routing_event event,
 				      where_t where)
 {
 	/* currently up and routed */
+
 	struct connection *c = child->sa.st_connection;
-	do_updown_child(UPDOWN_DOWN, child);
-	delete_connection_kernel_policies(c, EXPECT_KERNEL_POLICY_OK,
-					  child->sa.logger,
-					  where, "delete");
+
+	FOR_EACH_ITEM(spd, &c->child.spds) {
+
+		if (is_v1_cisco_split(spd, HERE)) {
+			continue;
+		}
+
+		do_updown(UPDOWN_DOWN, c, spd, &child->sa, logger);
+
+		struct spd_owner owner = spd_owner(spd, RT_UNROUTED/*ignored*/,
+						   logger, where);
+
+		delete_spd_kernel_policies(spd, &owner, EXPECT_KERNEL_POLICY_OK,
+					   child->sa.logger, where, "delete");
+	}
+
 	/*
 	 * update routing; route_owner() will see this and not
 	 * think this route is the owner?
