@@ -61,6 +61,6 @@ west #
 west #
  ../../guestbin/xfrmcheck.sh
 ERROR: west: XfrmOutNoStates         	4
-ERROR: west: XfrmOutPolBlock         	2
+ERROR: west: XfrmOutPolBlock         	4
 west #
  
