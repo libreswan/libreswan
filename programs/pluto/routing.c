@@ -938,12 +938,12 @@ static void teardown_unrouted_inbound_negotiation(enum routing_event event,
 
 static void teardown_routed_negotiation(enum routing_event event,
 					struct connection *c,
-					struct child_sa **child,
+					struct child_sa *child,
 					struct logger *logger,
 					where_t where,
 					const char *reason)
 {
-	if (scheduled_child_revival((*child), reason)) {
+	if (scheduled_child_revival(child, reason)) {
 		routed_negotiation_to_routed_ondemand(event, c, logger, where,
 						      reason);
 		PEXPECT(logger, c->child.routing == RT_ROUTED_ONDEMAND);
@@ -1492,8 +1492,8 @@ static bool dispatch_1(enum routing_event event,
 		/*
 		 * For instance, things fail during IKE_AUTH.
 		 */
-		teardown_routed_negotiation(event, c, e->child, logger, e->where,
-					    "delete Child SA");
+		teardown_routed_negotiation(event, c, (*e->child), logger,
+					    e->where, "delete Child SA");
 		return true;
 
 	case X(TEARDOWN_IKE, ROUTED_NEGOTIATION, INSTANCE):
