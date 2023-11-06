@@ -1,0 +1,20 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec add east
+002 "east": added IKEv2 connection
+east #
+ # block IKE and ESP over UDP
+east #
+ iptables -I INPUT -p udp --dport 500 -j DROP
+east #
+ iptables -I INPUT -p udp --dport 4500 -j DROP
+east #
+ echo "initdone"
+initdone
+east #
+ 

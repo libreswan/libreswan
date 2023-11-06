@@ -1398,6 +1398,7 @@ kvmplutotest	bad-nexthop-01		wip
 
 # TCP tests and UDP encap tests
 
+kvmplutotest	ikev2-tcp-00-enable-tcp-default				good
 kvmplutotest	ikev2-tcp-00-enable-tcp-fallback			good
 kvmplutotest	ikev2-tcp-00-enable-tcp-no				good
 kvmplutotest	ikev2-tcp-00-enable-tcp-yes				good
