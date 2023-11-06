@@ -400,12 +400,12 @@ extern void handle_sa_expire(ipsec_spi_t spi, uint8_t protoid, ip_address dst,
 			     bool hard, uint64_t bytes, uint64_t packets, uint64_t add_time,
 			     struct logger *logger);
 
-typedef struct { uint32_t value; } kernel_priority_t;
-#define PRI_KERNEL_PRIORITY PRIu32
-#define pri_kernel_priority(P) (P).value
+typedef struct { uint32_t value; } spd_priority_t;
+#define PRI_SPD_PRIORITY PRIu32
+#define pri_spd_priority(P) (P).value
 
-extern const kernel_priority_t highest_kernel_priority;
-kernel_priority_t calculate_kernel_priority(const struct connection *c);
+extern const spd_priority_t highest_spd_priority;
+spd_priority_t spd_priority(const struct spd_route *spd);
 
 struct kernel_acquire {
 	ip_packet packet;			/* that triggered the on-demand exchange */

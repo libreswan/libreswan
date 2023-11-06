@@ -99,21 +99,23 @@ static void delete_bare_shunt_kernel_policy(const struct bare_shunt *bsp,
  * Lowest wins.
  */
 
-const kernel_priority_t highest_kernel_priority = { .value = 0, };
+const spd_priority_t highest_spd_priority = { .value = 0, };
 
-kernel_priority_t calculate_kernel_priority(const struct connection *c)
+spd_priority_t spd_priority(const struct spd_route *spd)
 {
+	const struct connection *c = spd->connection;
+
 	if (c->config->child_sa.priority != 0) {
 		ldbg(c->logger,
 		     "priority calculation overruled by connection specification of %ju (0x%jx)",
 		     c->config->child_sa.priority, c->config->child_sa.priority);
-		return (kernel_priority_t) { c->config->child_sa.priority, };
+		return (spd_priority_t) { c->config->child_sa.priority, };
 	}
 
 	if (is_group(c)) {
 		llog_pexpect(c->logger, HERE,
 			     "priority calculation of connection skipped - group template does not install SPDs");
-		return highest_kernel_priority;
+		return highest_spd_priority;
 	}
 
 	/* XXX: assume unsigned >= 32-bits */
@@ -144,12 +146,12 @@ kernel_priority_t calculate_kernel_priority(const struct connection *c)
 
 	/* Penalize wildcard ports (2 bits). */
 	unsigned portsw =
-		((c->spd->local->client.hport == 0 ? 1 : 0) +
-		 (c->spd->remote->client.hport == 0 ? 1 : 0));
+		((spd->local->client.hport == 0 ? 1 : 0) +
+		 (spd->remote->client.hport == 0 ? 1 : 0));
 	prio = (prio << 2) | portsw;
 
 	/* Penalize wildcard protocol (1 bit). */
-	unsigned protow = c->spd->local->client.ipproto == 0 ? 1 : 0;
+	unsigned protow = spd->local->client.ipproto == 0 ? 1 : 0;
 	prio = (prio << 1) | protow;
 
 	/*
@@ -159,9 +161,9 @@ kernel_priority_t calculate_kernel_priority(const struct connection *c)
 	 * A longer prefix wins over a shorter prefix, hence the
 	 * reversal.  Value needs to fit 0-128, hence 8 bits.
 	 */
-	unsigned srcw = 128 - c->spd->local->client.maskbits;
+	unsigned srcw = 128 - spd->local->client.maskbits;
 	prio = (prio << 8) | srcw;
-	unsigned dstw = 128 - c->spd->remote->client.maskbits;
+	unsigned dstw = 128 - spd->remote->client.maskbits;
 	prio = (prio << 8) | dstw;
 
 	/*
@@ -176,7 +178,7 @@ kernel_priority_t calculate_kernel_priority(const struct connection *c)
 	ldbg(c->logger,
 	     "priority calculation of is %u (%#x) base=%u portsw=%u protow=%u, srcw=%u dstw=%u instw=%u",
 	     prio, prio, base, portsw, protow, srcw, dstw, instw);
-	return (kernel_priority_t) { prio, };
+	return (spd_priority_t) { prio, };
 }
 
 static global_timer_cb kernel_scan_shunts;

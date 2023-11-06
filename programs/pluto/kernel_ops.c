@@ -102,8 +102,8 @@ bool kernel_ops_policy_add(enum kernel_policy_op op,
 			jam_string(buf, "=");
 			jam_enum_short(buf, &shunt_policy_names, policy->shunt);
 			jam_string(buf, ",");
-			jam(buf, "priority=%"PRI_KERNEL_PRIORITY,
-			    pri_kernel_priority(policy->priority));
+			jam(buf, "priority=%"PRI_SPD_PRIORITY,
+			    pri_spd_priority(policy->priority));
 			/*
 			 * Print outer-to-inner and use paren to show
 			 * how each wrapps the next.

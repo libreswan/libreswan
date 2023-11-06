@@ -117,7 +117,7 @@ struct kernel_policy {
 	struct kernel_policy_end src;
 	struct kernel_policy_end dst;
 
-	kernel_priority_t priority;
+	spd_priority_t priority;
 	enum shunt_kind kind;
 	enum shunt_policy shunt;
 	where_t where;
