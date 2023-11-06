@@ -567,7 +567,7 @@ static void routed_tunnel_to_routed_ondemand(enum routing_event event,
 						   logger, where);
 
 		delete_cat_kernel_policies(spd, &owner, logger, where);
-		replace_ipsec_with_bare_kernel_policy(child, c, spd,
+		replace_ipsec_with_bare_kernel_policy(child, c, spd, &owner,
 						      SHUNT_KIND_ONDEMAND,
 						      EXPECT_KERNEL_POLICY_OK,
 						      logger, where);
@@ -597,7 +597,7 @@ static void routed_tunnel_to_routed_failure(enum routing_event event,
 						   logger, where);
 
 		delete_cat_kernel_policies(spd, &owner, logger, where);
-		replace_ipsec_with_bare_kernel_policy(child, c, spd,
+		replace_ipsec_with_bare_kernel_policy(child, c, spd, &owner,
 						      SHUNT_KIND_FAILURE,
 						      EXPECT_KERNEL_POLICY_OK,
 						      logger, where);
@@ -796,9 +796,9 @@ static void unrouted_tunnel_to_routed_ondemand(enum routing_event event,
 
 		struct spd_owner owner = spd_owner(spd, RT_ROUTED_ONDEMAND,
 						   logger, where);
-		delete_cat_kernel_policies(spd, &owner, logger, where);
 
-		replace_ipsec_with_bare_kernel_policy(child, c, spd,
+		delete_cat_kernel_policies(spd, &owner, logger, where);
+		replace_ipsec_with_bare_kernel_policy(child, c, spd, &owner,
 						      SHUNT_KIND_ONDEMAND,
 						      EXPECT_KERNEL_POLICY_OK,
 						      logger, where);
@@ -829,7 +829,7 @@ static void unrouted_tunnel_to_routed_failure(enum routing_event event,
 						   logger, where);
 
 		delete_cat_kernel_policies(spd, &owner, logger, where);
-		replace_ipsec_with_bare_kernel_policy(child, c, spd,
+		replace_ipsec_with_bare_kernel_policy(child, c, spd, &owner,
 						      SHUNT_KIND_FAILURE,
 						      EXPECT_KERNEL_POLICY_OK,
 						      logger, where);

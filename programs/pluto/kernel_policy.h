@@ -246,6 +246,7 @@ bool install_outbound_ipsec_kernel_policy(struct child_sa *child, struct spd_rou
 void replace_ipsec_with_bare_kernel_policy(struct child_sa *child,
 					   struct connection *c,
 					   struct spd_route *spd,
+					   const struct spd_owner *owner,
 					   enum shunt_kind shunt_kind,
 					   enum expect_kernel_policy expect_inbound_policy,
 					   struct logger *logger, where_t where);

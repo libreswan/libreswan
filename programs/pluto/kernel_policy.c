@@ -797,6 +797,7 @@ bool install_bare_kernel_policy(ip_selector src, ip_selector dst,
 void replace_ipsec_with_bare_kernel_policy(struct child_sa *child,
 					   struct connection *c,
 					   struct spd_route *spd,
+					   const struct spd_owner *owner,
 					   enum shunt_kind shunt_kind,
 					   enum expect_kernel_policy expect_inbound_policy,
 					   struct logger *logger, where_t where)
@@ -844,9 +845,8 @@ void replace_ipsec_with_bare_kernel_policy(struct child_sa *child,
 	/*
 	 * Always zap inbound.
 	 */
-	struct spd_owner owner = spd_owner(spd, RT_UNROUTED/*not-bare*/,
-					   logger, where);
-	if (!delete_spd_kernel_policy(spd, &owner, DIRECTION_INBOUND,
+
+	if (!delete_spd_kernel_policy(spd, owner, DIRECTION_INBOUND,
 				      expect_inbound_policy,
 				      logger, where, "inbound")) {
 		llog(RC_LOG, logger,
