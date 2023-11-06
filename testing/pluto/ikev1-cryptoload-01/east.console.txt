@@ -12,7 +12,7 @@ east #
 east #
  ifconfig eth1:6 192.1.2.29 netmask 255.255.255.0
 east #
- #export PLUTO_CRYPTO_HELPER_DELAY=10
+ #export ipsec pluto --impair helper_thread_delay:10 ...
 east #
  export EF_DISABLE_BANNER=1
 east #
