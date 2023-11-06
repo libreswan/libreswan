@@ -612,6 +612,7 @@ static void routed_tunnel_to_unrouted(enum routing_event event,
 {
 	/* currently up and routed */
 
+	struct logger *logger = child->sa.logger;
 	struct connection *c = child->sa.st_connection;
 
 	FOR_EACH_ITEM(spd, &c->child.spds) {
@@ -622,19 +623,15 @@ static void routed_tunnel_to_unrouted(enum routing_event event,
 
 		do_updown(UPDOWN_DOWN, c, spd, &child->sa, logger);
 
-		struct spd_owner owner = spd_owner(spd, RT_UNROUTED/*ignored*/,
+		struct spd_owner owner = spd_owner(spd, RT_UNROUTED,
 						   logger, where);
 
 		delete_spd_kernel_policies(spd, &owner, EXPECT_KERNEL_POLICY_OK,
-					   child->sa.logger, where, "delete");
+					   logger, where, "delete");
+		do_updown_unroute_spd(spd, &owner, child, logger);
 	}
 
-	/*
-	 * update routing; route_owner() will see this and not
-	 * think this route is the owner?
-	 */
 	set_routing(event, c, RT_UNROUTED, NULL);
-	do_updown_unroute(c, child);
 }
 
 /*

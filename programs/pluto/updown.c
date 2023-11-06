@@ -543,6 +543,16 @@ void do_updown_child(enum updown updown_verb, struct child_sa *child)
  * isn't shared.
  */
 
+void do_updown_unroute_spd(const struct spd_route *spd, const struct spd_owner *owner,
+			   struct child_sa *child, struct logger *logger)
+{
+	if (owner->bare_route == NULL) {
+		do_updown(UPDOWN_UNROUTE, spd->connection, spd,
+			  (child != NULL ? &child->sa : NULL),
+			  logger);
+	}
+}
+
 void do_updown_unroute(const struct connection *c, struct child_sa *child)
 {
 	struct logger *logger = (child != NULL ? child->sa.st_logger : c->logger);
@@ -551,10 +561,6 @@ void do_updown_unroute(const struct connection *c, struct child_sa *child)
 		/* only unroute if no other connection shares it */
 		struct spd_owner owner = spd_owner(spd, RT_UNROUTED/*ignored*/,
 						   logger, HERE);
-		if (owner.bare_route == NULL) {
-			do_updown(UPDOWN_UNROUTE, c, spd,
-				  (child != NULL ? &child->sa : NULL),
-				  logger);
-		}
+		do_updown_unroute_spd(spd, &owner, child, logger);
 	}
 }
