@@ -569,34 +569,6 @@ void delete_spd_kernel_policies(struct spd_route *spd,
 #endif
 }
 
-void delete_connection_kernel_policies(const struct connection *c,
-				       enum expect_kernel_policy inbound_policy_expectation,
-				       struct logger *logger, where_t where,
-				       const char *story)
-{
-	FOR_EACH_ITEM(spd, &c->child.spds) {
-		/*
-		 * XXX: note the hack where missing inbound
-		 * policies are ignored.  The connection
-		 * should know if there's an inbound policy,
-		 * in fact the connection shouldn't even have
-		 * inbound policies, just the state.
-		 *
-		 * For sec_label, it's tearing down the route,
-		 * hence that is included.
-		 */
-		if (is_v1_cisco_split(spd, HERE)) {
-			continue;
-		}
-
-		struct spd_owner owner = spd_owner(spd, RT_UNROUTED/*ignored*/,
-						   logger, where);
-
-		delete_spd_kernel_policies(spd, &owner, inbound_policy_expectation,
-					   logger, where, story);
-	}
-}
-
 /* CAT and it's kittens */
 
 static bool pexpect_cat(const struct connection *c, struct logger *logger)
