@@ -243,10 +243,12 @@ void install_inbound_ipsec_kernel_policy(struct child_sa *child, struct spd_rout
 bool install_outbound_ipsec_kernel_policy(struct child_sa *child, struct spd_route *spd,
 					  enum kernel_policy_op op, where_t where);
 
-void replace_ipsec_with_bare_kernel_policies(struct child_sa *child,
-					     enum shunt_kind shunt_kind,
-					     enum expect_kernel_policy expect_inbound_policy,
-					     where_t where);
+void replace_ipsec_with_bare_kernel_policy(struct child_sa *child,
+					   struct connection *c,
+					   struct spd_route *spd,
+					   enum shunt_kind shunt_kind,
+					   enum expect_kernel_policy expect_inbound_policy,
+					   struct logger *logger, where_t where);
 
 bool install_bare_kernel_policy(ip_selector src, ip_selector dst,
 				enum shunt_kind shunt_kind,

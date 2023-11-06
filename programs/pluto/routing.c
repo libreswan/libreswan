@@ -554,8 +554,36 @@ static void routed_tunnel_to_routed_ondemand(enum routing_event event,
 {
 	/* currently up and routed */
 	do_updown_child(UPDOWN_DOWN, child);
-	replace_ipsec_with_bare_kernel_policies(child, SHUNT_KIND_ONDEMAND,
-						EXPECT_KERNEL_POLICY_OK, where);
+
+	enum shunt_kind shunt_kind = SHUNT_KIND_ONDEMAND;
+	enum expect_kernel_policy expect_inbound_policy = EXPECT_KERNEL_POLICY_OK;
+
+	struct logger *logger = child->sa.st_logger;
+	struct connection *c = child->sa.st_connection;
+	PASSERT(logger, c->config->shunt[shunt_kind] != SHUNT_NONE);
+
+	FOR_EACH_ITEM(spd, &c->child.spds) {
+		if (is_v1_cisco_split(spd, HERE)) {
+			continue;
+		}
+		do_updown(UPDOWN_DOWN, c, spd, &child->sa, logger);
+	}
+
+	FOR_EACH_ITEM(spd, &c->child.spds) {
+
+		if (is_v1_cisco_split(spd, HERE)) {
+			continue;
+		}
+
+		struct spd_owner owner = spd_owner(spd, RT_UNROUTED/*ignored-for-cat*/,
+						   logger, where);
+		delete_cat_kernel_policies(spd, &owner, logger, where);
+
+		replace_ipsec_with_bare_kernel_policy(child, c, spd, shunt_kind,
+						      expect_inbound_policy,
+						      logger, where);
+	}
+
 	set_routing(event, child->sa.st_connection, RT_ROUTED_ONDEMAND, NULL);
 }
 
@@ -565,8 +593,38 @@ static void routed_tunnel_to_routed_failure(enum routing_event event,
 {
 	/* currently up and routed */
 	do_updown_child(UPDOWN_DOWN, child);
-	replace_ipsec_with_bare_kernel_policies(child, SHUNT_KIND_FAILURE,
-						EXPECT_KERNEL_POLICY_OK, where);
+
+	enum shunt_kind shunt_kind = SHUNT_KIND_FAILURE;
+	enum expect_kernel_policy expect_inbound_policy = EXPECT_KERNEL_POLICY_OK;
+
+	struct logger *logger = child->sa.st_logger;
+	struct connection *c = child->sa.st_connection;
+	PASSERT(logger, c->config->shunt[shunt_kind] != SHUNT_NONE);
+
+	FOR_EACH_ITEM(spd, &c->child.spds) {
+
+		if (is_v1_cisco_split(spd, HERE)) {
+			continue;
+		}
+
+		do_updown(UPDOWN_DOWN, c, spd, &child->sa, logger);
+	}
+
+	FOR_EACH_ITEM(spd, &c->child.spds) {
+
+		if (is_v1_cisco_split(spd, HERE)) {
+			continue;
+		}
+
+		struct spd_owner owner = spd_owner(spd, RT_UNROUTED/*ignored-for-cat*/,
+						   logger, where);
+		delete_cat_kernel_policies(spd, &owner, logger, where);
+
+		replace_ipsec_with_bare_kernel_policy(child, c, spd, shunt_kind,
+						      expect_inbound_policy,
+						      logger, where);
+	}
+
 	set_routing(event, child->sa.st_connection, RT_ROUTED_FAILURE, NULL);
 }
 
@@ -746,8 +804,38 @@ static void unrouted_tunnel_to_routed_ondemand(enum routing_event event,
 					       where_t where)
 {
 	/* currently down and unrouted */
-	replace_ipsec_with_bare_kernel_policies(child, SHUNT_KIND_ONDEMAND,
-						EXPECT_KERNEL_POLICY_OK, where);
+
+	enum shunt_kind shunt_kind = SHUNT_KIND_ONDEMAND;
+	enum expect_kernel_policy expect_inbound_policy = EXPECT_KERNEL_POLICY_OK;
+
+	struct logger *logger = child->sa.st_logger;
+	struct connection *c = child->sa.st_connection;
+	PASSERT(logger, c->config->shunt[shunt_kind] != SHUNT_NONE);
+
+	FOR_EACH_ITEM(spd, &c->child.spds) {
+
+		if (is_v1_cisco_split(spd, HERE)) {
+			continue;
+		}
+
+		do_updown(UPDOWN_DOWN, c, spd, &child->sa, logger);
+	}
+
+	FOR_EACH_ITEM(spd, &c->child.spds) {
+
+		if (is_v1_cisco_split(spd, HERE)) {
+			continue;
+		}
+
+		struct spd_owner owner = spd_owner(spd, RT_UNROUTED/*ignored-for-cat*/,
+						   logger, where);
+		delete_cat_kernel_policies(spd, &owner, logger, where);
+
+		replace_ipsec_with_bare_kernel_policy(child, c, spd, shunt_kind,
+						      expect_inbound_policy,
+						      logger, where);
+	}
+
 	do_updown_child(UPDOWN_ROUTE, child);
 	set_routing(event, child->sa.st_connection, RT_ROUTED_ONDEMAND, NULL);
 }
@@ -757,8 +845,38 @@ static void unrouted_tunnel_to_routed_failure(enum routing_event event,
 					      where_t where)
 {
 	/* currently down and unrouted */
-	replace_ipsec_with_bare_kernel_policies(child, SHUNT_KIND_FAILURE,
-						EXPECT_KERNEL_POLICY_OK, where);
+
+	enum shunt_kind shunt_kind = SHUNT_KIND_FAILURE;
+	enum expect_kernel_policy expect_inbound_policy = EXPECT_KERNEL_POLICY_OK;
+
+	struct logger *logger = child->sa.st_logger;
+	struct connection *c = child->sa.st_connection;
+	PASSERT(logger, c->config->shunt[shunt_kind] != SHUNT_NONE);
+
+	FOR_EACH_ITEM(spd, &c->child.spds) {
+
+		if (is_v1_cisco_split(spd, HERE)) {
+			continue;
+		}
+
+		do_updown(UPDOWN_DOWN, c, spd, &child->sa, logger);
+	}
+
+	FOR_EACH_ITEM(spd, &c->child.spds) {
+
+		if (is_v1_cisco_split(spd, HERE)) {
+			continue;
+		}
+
+		struct spd_owner owner = spd_owner(spd, RT_UNROUTED/*ignored-for-cat*/,
+						   logger, where);
+		delete_cat_kernel_policies(spd, &owner, logger, where);
+
+		replace_ipsec_with_bare_kernel_policy(child, c, spd, shunt_kind,
+						      expect_inbound_policy,
+						      logger, where);
+	}
+
 	do_updown_child(UPDOWN_ROUTE, child);
 	set_routing(event, child->sa.st_connection, RT_ROUTED_FAILURE, NULL);
 }

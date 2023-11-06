@@ -794,12 +794,12 @@ bool install_bare_kernel_policy(ip_selector src, ip_selector dst,
 				     logger, where, "install bare policy");
 }
 
-static void replace_ipsec_with_bare_kernel_policy(struct child_sa *child,
-						  struct connection *c,
-						  struct spd_route *spd,
-						  enum shunt_kind shunt_kind,
-						  enum expect_kernel_policy expect_inbound_policy,
-						  struct logger *logger, where_t where)
+void replace_ipsec_with_bare_kernel_policy(struct child_sa *child,
+					   struct connection *c,
+					   struct spd_route *spd,
+					   enum shunt_kind shunt_kind,
+					   enum expect_kernel_policy expect_inbound_policy,
+					   struct logger *logger, where_t where)
 {
 	PEXPECT(logger, c->config->shunt[shunt_kind] != SHUNT_NONE);
 	if (spd->local->child->has_cat) {
@@ -851,39 +851,5 @@ static void replace_ipsec_with_bare_kernel_policy(struct child_sa *child,
 				      logger, where, "inbound")) {
 		llog(RC_LOG, logger,
 		     "kernel: %s() inbound delete failed", __func__);
-	}
-}
-
-void replace_ipsec_with_bare_kernel_policies(struct child_sa *child,
-					     enum shunt_kind shunt_kind,
-					     enum expect_kernel_policy expect_inbound_policy,
-					     where_t where)
-{
-	struct logger *logger = child->sa.st_logger;
-	struct connection *c = child->sa.st_connection;
-	PASSERT(logger, c->config->shunt[shunt_kind] != SHUNT_NONE);
-
-	FOR_EACH_ITEM(spd, &c->child.spds) {
-
-		if (is_v1_cisco_split(spd, HERE)) {
-			continue;
-		}
-
-		do_updown(UPDOWN_DOWN, c, spd, &child->sa, logger);
-	}
-
-	FOR_EACH_ITEM(spd, &c->child.spds) {
-
-		if (is_v1_cisco_split(spd, HERE)) {
-			continue;
-		}
-
-		struct spd_owner owner = spd_owner(spd, RT_UNROUTED/*ignored-for-cat*/,
-						   logger, where);
-		delete_cat_kernel_policies(spd, &owner, logger, where);
-
-		replace_ipsec_with_bare_kernel_policy(child, c, spd, shunt_kind,
-						      expect_inbound_policy,
-						      logger, where);
 	}
 }
