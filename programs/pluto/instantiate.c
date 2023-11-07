@@ -67,12 +67,7 @@ static uint32_t global_marks = MINIMUM_IPSEC_SA_RANDOM_MARK;
 static struct connection *clone_connection(const char *name, struct connection *t,
 					   const struct id *peer_id, where_t where)
 {
-	/*
-	 * XXX: This should use refcnt_alloc() and not clone.
-	 */
-	struct connection *c = clone_thing(*t, where->func);
-	zero_thing(c->refcnt);
-	refcnt_init(c, &c->refcnt, t->refcnt.base, where);
+	struct connection *c = refcnt_alloc(struct connection, where);
 
 	/*
 	 * Clear out as much as possible of the struct before calling
