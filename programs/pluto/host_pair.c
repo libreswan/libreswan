@@ -253,7 +253,7 @@ void connect_to_host_pair(struct connection *c)
 		 * in the unoriented_connections list instead.
 		 */
 		pexpect(c->host_pair == NULL);
-		pexpect(c->interface == NULL);
+		pexpect(c->iface == NULL);
 		c->host_pair = NULL;
 		c->hp_next = unoriented_connections;
 		unoriented_connections = c;
@@ -265,7 +265,7 @@ void delete_oriented_hp(struct connection *c)
 	struct host_pair *hp = c->host_pair;
 
 	pexpect(c->host_pair != NULL);
-	pexpect(c->interface != NULL);
+	pexpect(c->iface != NULL);
 
 	LIST_RM(hp_next, c, hp->connections, true/*expected*/);
 
@@ -441,6 +441,7 @@ void check_orientations(struct logger *logger)
 					while (c != NULL) {
 						struct connection *nxt =
 							c->hp_next;
+						iface_delref(&c->iface);
 						iface_endpoint_delref(&c->interface);
 						c->host_pair = NULL;
 						c->hp_next = NULL;

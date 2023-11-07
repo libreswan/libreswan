@@ -1254,24 +1254,24 @@ void setup_esp_nic_offload(struct nic_offload *nic_offload, const struct connect
 		bool *nic_offload_fallback)
 {
 	if (c->config->nic_offload == offload_no ||
-	    c->interface == NULL || c->interface->ip_dev == NULL ||
-	    c->interface->ip_dev->real_device_name == NULL) {
+	    c->iface == NULL ||
+	    c->iface->real_device_name == NULL) {
 		dbg("kernel: NIC esp-hw-offload disabled for connection '%s'", c->name);
 		return;
 	}
 
 	if (c->config->nic_offload == offload_auto) {
-		if (!c->interface->ip_dev->nic_offload) {
+		if (!c->iface->nic_offload) {
 			dbg("kernel: NIC esp-hw-offload not for connection '%s' not available on interface %s",
-				c->name, c->interface->ip_dev->real_device_name);
+				c->name, c->iface->real_device_name);
 			return;
 		}
 		if (nic_offload_fallback)
 			*nic_offload_fallback = true;
 		dbg("kernel: NIC esp-hw-offload offload for connection '%s' enabled on interface %s",
-		    c->name, c->interface->ip_dev->real_device_name);
+		    c->name, c->iface->real_device_name);
 	}
-	nic_offload->dev = c->interface->ip_dev->real_device_name;
+	nic_offload->dev = c->iface->real_device_name;
 	nic_offload->type = (c->config->nic_offload == offload_packet) ?
 				OFFLOAD_PACKET : OFFLOAD_CRYPTO;
 }

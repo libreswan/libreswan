@@ -99,6 +99,7 @@ static struct connection *clone_connection(const char *name, struct connection *
 	c->log_file_err = false;
 
 	c->root_config = NULL; /* block write access */
+	c->iface = iface_addref(t->iface);
 	c->interface = iface_endpoint_addref(t->interface);
 
 	/* Template can't yet have an assigned SEC_LABEL */

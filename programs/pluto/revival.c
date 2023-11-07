@@ -85,7 +85,7 @@ static bool revival_plausable(struct connection *c, struct logger *logger)
 		return false;
 	}
 
-	if (c->interface->ip_dev->ifd_change == IFD_DELETE) {
+	if (c->iface->ifd_change == IFD_DELETE) {
 		/*
 		 * The oriented() isn't sufficient.
 		 *

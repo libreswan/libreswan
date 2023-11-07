@@ -1376,7 +1376,7 @@ static void terminate_conflicts(struct child_sa *child)
 			/* XXX: but compating interfaces doesn't ?!? */
 			if (sameaddr(&co->remote->host.addr,
 				     &c->remote->host.addr) &&
-			    co->interface == c->interface)
+			    co->iface == c->iface)
 				break;  /* existing route is compatible */
 
 			if (kernel_ops->overlap_supported) {

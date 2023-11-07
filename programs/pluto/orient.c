@@ -43,7 +43,8 @@ bool oriented(const struct connection *c)
 		return false;
 	}
 
-	return (c->interface != NULL);
+	PASSERT(c->logger, (c->interface == NULL) == (c->iface == NULL));
+	return (c->iface != NULL);
 }
 
 void disorient(struct connection *c)
@@ -52,6 +53,7 @@ void disorient(struct connection *c)
 		PEXPECT(c->logger, c->host_pair != NULL);
 		delete_oriented_hp(c);
 		PEXPECT(c->logger, c->host_pair == NULL);
+		iface_delref(&c->iface);
 		iface_endpoint_delref(&c->interface);
 		/* Since it is unoriented, it will be connected to the
 		 * unoriented_connections list */
@@ -153,7 +155,8 @@ static bool add_new_iface_endpoints(struct connection *c, struct host_end *end)
 		return false;
 	}
 
-	pexpect(c->interface == NULL);	/* no leak */
+	pexpect(c->iface == NULL);	/* no leak */
+	c->iface = iface_addref(ifp->ip_dev);
 	c->interface = iface_endpoint_addref(ifp); /* from bind */
 
 	ldbg(c->logger, "  adding %s interface",
@@ -273,7 +276,7 @@ enum left_right orient_1(struct connection **cp, struct logger *logger)
 		LDBG_orient_end((*cp), LEFT_END);
 		LDBG_orient_end((*cp), RIGHT_END);
 	}
-	passert((*cp)->interface == NULL); /* aka not oriented */
+	passert((*cp)->iface == NULL); /* aka not oriented */
 
 	/*
 	 * Save match; don't update the connection until all the
@@ -364,7 +367,8 @@ enum left_right orient_1(struct connection **cp, struct logger *logger)
 
 	if (matching_ifp != NULL) {
 		passert(matching_end != END_ROOF);
-		pexpect((*cp)->interface == NULL); /* wasn't updated */
+		pexpect((*cp)->iface == NULL); /* wasn't updated */
+		(*cp)->iface = iface_addref(matching_ifp->ip_dev);
 		(*cp)->interface = iface_endpoint_addref(matching_ifp);
 		return matching_end;
 	}
@@ -373,9 +377,9 @@ enum left_right orient_1(struct connection **cp, struct logger *logger)
 	 * No existing interface worked, try to create new ones.
 	 */
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		passert((*cp)->interface == NULL); /* wasn't updated */
+		passert((*cp)->iface == NULL); /* wasn't updated */
 		if (add_new_iface_endpoints((*cp), &(*cp)->end[end].host)) {
-			passert((*cp)->interface != NULL); /* was updated */
+			passert((*cp)->iface != NULL); /* was updated */
 			return end;
 		}
 	}

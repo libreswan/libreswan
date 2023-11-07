@@ -238,8 +238,9 @@ void binlog_state(struct state *st, enum state_kind new_state)
 		 "push ipsec-tunnel-%s phase2 %s",
 
 		 pluto_stats_binary,
-		 conn->interface ? "push" : "drop", conn->name,
-		 (conn->xfrmi != NULL && conn->xfrmi->name != NULL) ? conn->xfrmi->name : "",
+		 (conn->iface != NULL ? "push" : "drop"),
+		 conn->name,
+		 (conn->xfrmi != NULL && conn->xfrmi->name != NULL ? conn->xfrmi->name : ""),
 		 conn->name, tun,
 		 conn->name, p1,
 		 conn->name, p2);

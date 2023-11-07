@@ -159,22 +159,22 @@ static void release_dead_interfaces(struct logger *logger)
 		struct connection *c = cf.c;
 
 		if (!oriented(c)) {
-			/* aka c->interface == NULL */
+			/* aka c->iface == NULL */
 			pdbg(c->logger, "connection interface un-oriented");
 			continue;
 		}
 
-		passert(c->interface != NULL); /* aka oriented() */
-		if (c->interface->ip_dev->ifd_change != IFD_DELETE) {
-			endpoint_buf eb;
+		passert(c->iface != NULL); /* aka oriented() */
+		if (c->iface->ifd_change != IFD_DELETE) {
+			address_buf eb;
 			pdbg(c->logger, "connection interface %s safe",
-			     str_endpoint(&c->interface->local_endpoint, &eb));
+			     str_address(&c->iface->local_address, &eb));
 			continue;
 		}
 
-		endpoint_buf eb;
+		address_buf eb;
 		pdbg(c->logger, "connection interface %s being deleted",
-		     str_endpoint(&c->interface->local_endpoint, &eb));
+		     str_address(&c->iface->local_address, &eb));
 
 		/*
 		 * This connection interface is going away.
