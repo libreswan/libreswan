@@ -224,7 +224,7 @@ static struct connection *refine_host_connection_on_responder(int indent,
 	 * %any).
 	 */
 
-	ip_address local = c->interface->ip_dev->id_address;
+	ip_address local = c->interface->ip_dev->local_address;
 	FOR_EACH_THING(remote, endpoint_address(st->st_remote_endpoint), unset_address) {
 
 		indent = 1;

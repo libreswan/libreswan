@@ -1418,7 +1418,7 @@ static void netlink_find_offload_feature(const char *ifname,
 	}
 }
 
-static bool xfrm_detect_offload(const struct raw_iface *ifp, struct logger *logger)
+static bool xfrm_detect_offload(const struct kernel_iface *ifp, struct logger *logger)
 {
 	const char *ifname = ifp->name;
 	/*
@@ -2975,14 +2975,14 @@ static bool netlink_poke_ipsec_policy_hole(int fd, const struct ip_info *afi, st
 	policy.dir = XFRM_POLICY_IN;
 	if (setsockopt(fd, sol, opt, &policy, sizeof(policy)) < 0) {
 		llog_error(logger, errno,
-			   "setsockopt IP_XFRM_POLICY XFRM_POLICY_IN in process_raw_ifaces()");
+			   "setsockopt IP_XFRM_POLICY XFRM_POLICY_IN in process_kernel_ifaces()");
 		return false;
 	}
 
 	policy.dir = XFRM_POLICY_OUT;
 	if (setsockopt(fd, sol, opt, &policy, sizeof(policy)) < 0) {
 		llog_error(logger, errno,
-			   "setsockopt IP_XFRM_POLICY XFRM_POLICY_OUT in process_raw_ifaces()");
+			   "setsockopt IP_XFRM_POLICY XFRM_POLICY_OUT in process_kernel_ifaces()");
 		return false;
 	}
 

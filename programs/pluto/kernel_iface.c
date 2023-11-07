@@ -48,7 +48,7 @@
  * for any address so this should also work for IPv6.
  */
 
-struct raw_iface *find_raw_ifaces(const struct ip_info *afi, struct logger *logger)
+struct kernel_iface *find_kernel_ifaces(const struct ip_info *afi, struct logger *logger)
 {
 	/* Get a UDP socket */
 	dbg("finding raw interfaces of type %s", afi->ip_name);
@@ -95,7 +95,7 @@ struct raw_iface *find_raw_ifaces(const struct ip_info *afi, struct logger *logg
 	 * before 1024**2.
 	 *
 	 * Tricky: num is a static so that we won't have to start from
-	 * 64 in subsequent calls to find_raw_ifaces4.
+	 * 64 in subsequent calls to find_kernel_ifaces4.
 	 *
 	 * See netdevice(7) (linux) or netintro(4) (BSD).
 	 */
@@ -138,7 +138,7 @@ struct raw_iface *find_raw_ifaces(const struct ip_info *afi, struct logger *logg
 	/*
 	 * For each interesting interface, add an entry to rifaces.
 	 */
-	struct raw_iface *rifaces = NULL;
+	struct kernel_iface *rifaces = NULL;
 	const void *ifrp = buf;
 	while (ifrp < buf + ifconf.ifc_len) {
 
@@ -243,8 +243,8 @@ struct raw_iface *find_raw_ifaces(const struct ip_info *afi, struct logger *logg
 		}
 #endif
 
-		struct raw_iface *ri =
-			over_alloc_thing(struct raw_iface, strlen(ifname) + 1);
+		struct kernel_iface *ri =
+			over_alloc_thing(struct kernel_iface, strlen(ifname) + 1);
 		ri->addr = addr;
 		strcpy(ri->name, ifname);
 		ri->next = rifaces;

@@ -1311,7 +1311,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 	       pri_connection(cc, &cb), pri_co(cc->serialno),
 	       str_connection_policies(cc, &pb));
 
-	const ip_address local = md->iface->ip_dev->id_address;
+	const ip_address local = md->iface->ip_dev->local_address;
 	FOR_EACH_THING(remote, endpoint_address(md->sender), unset_address) {
 		indent.level = 1;
 

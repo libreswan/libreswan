@@ -293,7 +293,7 @@ static struct msg_digest *iketcp_read_packet(struct iface_endpoint **ifp,
 		}
 
 		if (kernel_ops->poke_ipsec_policy_hole != NULL &&
-		    !kernel_ops->poke_ipsec_policy_hole((*ifp)->fd, address_type(&(*ifp)->ip_dev->id_address), logger)) {
+		    !kernel_ops->poke_ipsec_policy_hole((*ifp)->fd, address_type(&(*ifp)->ip_dev->local_address), logger)) {
 			/* already logged */
 			iketcp_shutdown(ifp); /* i.e., delete IFP */
 			return NULL;
@@ -459,7 +459,7 @@ const struct iface_io iketcp_iface_io = {
  * sending the IKE-in-TCP magic word.
  */
 
-struct iface_endpoint *connect_to_tcp_endpoint(struct iface_dev *local_dev,
+struct iface_endpoint *connect_to_tcp_endpoint(struct iface *local_dev,
 					       ip_endpoint remote_endpoint,
 					       struct logger *logger)
 {

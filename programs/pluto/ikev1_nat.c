@@ -356,7 +356,7 @@ static bool emit_one_natoa(struct pbs_out *outs,
 
 bool v1_nat_traversal_add_initiator_natoa(pb_stream *outs, struct state *st)
 {
-	ip_address ipinit = st->st_interface->ip_dev->id_address;
+	ip_address ipinit = st->st_interface->ip_dev->local_address;
 	ip_address ipresp = endpoint_address(st->st_remote_endpoint);
 
 	struct_desc *pd = (st->hidden_variables.st_nat_traversal & NAT_T_WITH_RFC_VALUES ? &isakmp_nat_oa :
@@ -491,7 +491,7 @@ void v1_natify_initiator_endpoints(struct state *st, where_t where)
 		if (pexpect(i != NULL)) {
 			endpoint_buf b;
 			dbg("NAT: #%lu floating endpoint ended up on interface %s %s",
-			    st->st_serialno, i->ip_dev->id_rname,
+			    st->st_serialno, i->ip_dev->real_device_name,
 			    str_endpoint(&i->local_endpoint, &b));
 			iface_endpoint_delref(&st->st_interface);
 			st->st_interface = iface_endpoint_addref(i);

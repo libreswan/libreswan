@@ -276,7 +276,7 @@ void process_iface_packet(int fd, void *ifp_arg, struct logger *logger)
 			DBG_log("*received %d bytes from %s on %s %s using %s",
 				(int) pbs_room(&md->packet_pbs),
 				str_endpoint(&md->sender, &sb),
-				md->iface->ip_dev->id_rname,
+				md->iface->ip_dev->real_device_name,
 				str_endpoint(&md->iface->local_endpoint, &lb),
 				md->iface->io->protocol->name);
 			DBG_dump(NULL, md->packet_pbs.start, pbs_room(&md->packet_pbs));

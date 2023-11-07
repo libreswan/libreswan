@@ -34,8 +34,8 @@
 
 struct sa_marks;
 struct spd_route;
-struct iface_dev;
-struct raw_iface;
+struct iface;
+struct kernel_iface;
 struct show;
 struct kernel_policy;
 
@@ -303,11 +303,11 @@ struct kernel_ops {
 	err_t (*migrate_ipsec_sa_is_enabled)(struct logger *);
 	bool (*migrate_ipsec_sa)(struct child_sa *child);
 	bool (*poke_ipsec_policy_hole)(int fd, const struct ip_info *afi, struct logger *logger);
-	bool (*detect_offload)(const struct raw_iface *ifp, struct logger *logger);
+	bool (*detect_offload)(const struct kernel_iface *ifp, struct logger *logger);
 	bool (*poke_ipsec_offload_policy_hole)(struct nic_offload *nic_offload, struct logger *logger);
 };
 
-extern int create_socket(const struct raw_iface *ifp, const char *v_name, int port, int proto);
+extern int create_socket(const struct kernel_iface *ifp, const char *v_name, int port, int proto);
 
 extern const struct kernel_ops *kernel_ops;
 #ifdef KERNEL_XFRM
@@ -395,7 +395,7 @@ bool unrouted_to_routed_ondemand_sec_label(struct connection *c,
 
 extern deltatime_t bare_shunt_interval;
 
-extern bool kernel_ops_detect_offload(const struct raw_iface *ifp, struct logger *logger);
+extern bool kernel_ops_detect_offload(const struct kernel_iface *ifp, struct logger *logger);
 extern void handle_sa_expire(ipsec_spi_t spi, uint8_t protoid, ip_address dst,
 			     bool hard, uint64_t bytes, uint64_t packets, uint64_t add_time,
 			     struct logger *logger);

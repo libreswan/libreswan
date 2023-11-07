@@ -706,7 +706,7 @@ static void show_connection_status(struct show *s, const struct connection *c)
 				jam_string(buf, c->xfrmi->name);
 				jam_string(buf, "@");
 			}
-			jam_string(buf, c->interface->ip_dev->id_rname);
+			jam_string(buf, c->interface->ip_dev->real_device_name);
 		};
 		jam_string(buf, ";");
 		/* .metric */

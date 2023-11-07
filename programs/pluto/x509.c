@@ -289,7 +289,7 @@ void select_nss_cert_id(CERTCertificate *cert, struct id *end_id)
 generalName_t *collect_rw_ca_candidates(struct msg_digest *md)
 {
 	generalName_t *top = NULL;
-	FOR_EACH_HOST_PAIR_CONNECTION(md->iface->ip_dev->id_address, unset_address, d) {
+	FOR_EACH_HOST_PAIR_CONNECTION(md->iface->ip_dev->local_address, unset_address, d) {
 
 #if 0
 		/* REMOTE==%any so d can never be an instance */

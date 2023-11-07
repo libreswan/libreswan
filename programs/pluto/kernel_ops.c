@@ -482,7 +482,7 @@ bool kernel_ops_del_ipsec_spi(ipsec_spi_t spi, const struct ip_protocol *proto,
 	return ok;
 }
 
-bool kernel_ops_detect_offload(const struct raw_iface *ifp, struct logger *logger)
+bool kernel_ops_detect_offload(const struct kernel_iface *ifp, struct logger *logger)
 {
 	static bool no_offload;
 	if (no_offload) {

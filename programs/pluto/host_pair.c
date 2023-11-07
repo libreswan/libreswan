@@ -425,7 +425,7 @@ void check_orientations(struct logger *logger)
 				 * the port logic?
 				 */
 				if (sameaddr(&hp->remote,
-					     &i->ip_dev->id_address)) {
+					     &i->ip_dev->local_address)) {
 					/*
 					 * bad news: the whole chain
 					 * of connections hanging off

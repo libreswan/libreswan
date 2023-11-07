@@ -71,34 +71,39 @@ static struct list_head iface_endpoints = INIT_LIST_HEAD(&iface_endpoints,
  * The interfaces - eth0 ...
  */
 
-static size_t jam_iface_dev(struct jambuf *buf, const struct iface_dev *ifd)
+static size_t jam_iface(struct jambuf *buf, const struct iface *ifd)
 {
-	return jam_string(buf, ifd->id_rname);
+	return jam_string(buf, ifd->real_device_name);
 }
 
-LIST_INFO(iface_dev, ifd_entry, iface_dev_info, jam_iface_dev);
+LIST_INFO(iface, entry, iface_info, jam_iface);
 
 static struct list_head interface_dev = INIT_LIST_HEAD(&interface_dev,
-						       &iface_dev_info);
+						       &iface_info);
 
-static void add_iface_dev(const struct raw_iface *ifp, struct logger *logger)
+static void add_iface(const struct kernel_iface *ifp, struct logger *logger)
 {
-	struct iface_dev *ifd = refcnt_alloc(struct iface_dev, HERE);
-	ifd->id_rname = clone_str(ifp->name, "real device name");
-	ifd->id_nic_offload = kernel_ops_detect_offload(ifp, logger);
-	ifd->id_address = ifp->addr;
+	struct iface *ifd = refcnt_alloc(struct iface, HERE);
+	ifd->real_device_name = clone_str(ifp->name, "real device name");
+	ifd->nic_offload = kernel_ops_detect_offload(ifp, logger);
+	ifd->local_address = ifp->addr;
 	ifd->ifd_change = IFD_ADD;
-	init_list_entry(&iface_dev_info, ifd, &ifd->ifd_entry);
-	insert_list_entry(&interface_dev, &ifd->ifd_entry);
-	dbg("iface: marking %s add", ifd->id_rname);
+	init_list_entry(&iface_info, ifd, &ifd->entry);
+	insert_list_entry(&interface_dev, &ifd->entry);
+	dbg("iface: marking %s add", ifd->real_device_name);
 }
 
-struct iface_dev *find_iface_dev_by_address(const ip_address *address)
+struct iface *iface_addref_where(struct iface *iface, where_t where)
 {
-	struct iface_dev *ifd;
+	return addref_where(iface, where);
+}
+
+struct iface *find_iface_by_address(const ip_address *address)
+{
+	struct iface *ifd;
 	FOR_EACH_LIST_ENTRY_OLD2NEW(ifd, &interface_dev) {
-		if (sameaddr(address, &ifd->id_address)) {
-			return ifd;
+		if (sameaddr(address, &ifd->local_address)) {
+			return iface_addref(ifd);
 		}
 	}
 	return NULL;
@@ -106,36 +111,36 @@ struct iface_dev *find_iface_dev_by_address(const ip_address *address)
 
 static void mark_ifaces_dead(void)
 {
-	struct iface_dev *ifd;
+	struct iface *ifd;
 	FOR_EACH_LIST_ENTRY_OLD2NEW(ifd, &interface_dev) {
-		dbg("iface: marking %s dead", ifd->id_rname);
+		dbg("iface: marking %s dead", ifd->real_device_name);
 		ifd->ifd_change = IFD_DELETE;
 	}
 }
 
-static void add_or_keep_iface_dev(struct raw_iface *ifp, struct logger *logger)
+static void add_or_keep_iface_dev(struct kernel_iface *ifp, struct logger *logger)
 {
 	/* find the iface */
-	struct iface_dev *ifd;
+	struct iface *ifd;
 	FOR_EACH_LIST_ENTRY_OLD2NEW(ifd, &interface_dev) {
-		if (streq(ifd->id_rname, ifp->name) &&
-		    sameaddr(&ifd->id_address, &ifp->addr)) {
-			dbg("iface: marking %s keep", ifd->id_rname);
+		if (streq(ifd->real_device_name, ifp->name) &&
+		    sameaddr(&ifd->local_address, &ifp->addr)) {
+			dbg("iface: marking %s keep", ifd->real_device_name);
 			ifd->ifd_change = IFD_KEEP;
 			return;
 		}
 	}
-	add_iface_dev(ifp, logger);
+	add_iface(ifp, logger);
 }
 
-void release_iface_dev(struct iface_dev **ifdp)
+void iface_delref_where(struct iface **ifdp, where_t where)
 {
 	const struct logger *logger = &global_logger;
-	struct iface_dev *ifd = delref_where(ifdp, logger, HERE);
+	struct iface *ifd = delref_where(ifdp, logger, where);
 	if (ifd != NULL) {
 		/* i.e., last reference */
-		remove_list_entry(&ifd->ifd_entry);
-		pfree(ifd->id_rname);
+		remove_list_entry(&ifd->entry);
+		pfree(ifd->real_device_name);
 		pfree(ifd);
 	}
 }
@@ -223,7 +228,7 @@ static void free_dead_ifaces(struct logger *logger)
 			endpoint_buf b;
 			llog(RC_LOG, logger,
 			     "shutting down interface %s %s",
-			     p->ip_dev->id_rname,
+			     p->ip_dev->real_device_name,
 			     str_endpoint(&p->local_endpoint, &b));
 			some_dead = true;
 		} else if (p->ip_dev->ifd_change == IFD_ADD) {
@@ -258,10 +263,10 @@ static void free_dead_ifaces(struct logger *logger)
 		 * Finally, release the iface_dev, from its linked
 		 * list of iface devs.
 		 */
-		struct iface_dev *ifd;
+		struct iface *ifd;
 		FOR_EACH_LIST_ENTRY_OLD2NEW(ifd, &interface_dev) {
 			if (ifd->ifd_change == IFD_DELETE) {
-				release_iface_dev(&ifd);
+				iface_delref(&ifd);
 			}
 		}
 	}
@@ -280,7 +285,7 @@ static void free_dead_ifaces(struct logger *logger)
 }
 
 struct iface_endpoint *alloc_iface_endpoint(int fd,
-					    struct iface_dev *ifd,
+					    struct iface *ifd,
 					    const struct iface_io *io,
 					    bool esp_encapsulation_enabled,
 					    bool float_nat_initiator,
@@ -308,7 +313,7 @@ void iface_endpoint_delref_where(struct iface_endpoint **ifpp, where_t where)
 		remove_list_entry(&ifp->entry);
 		/* generic stuff */
 		ifp->io->cleanup(ifp);
-		release_iface_dev(&ifp->ip_dev);
+		iface_delref(&ifp->ip_dev);
 		/* XXX: after cleanup so code can log FD */
 		close(ifp->fd);
 		ifp->fd = -1;
@@ -321,8 +326,7 @@ struct iface_endpoint *iface_endpoint_addref_where(struct iface_endpoint *ifp, w
 	return addref_where(ifp, where);
 }
 
-
-struct iface_endpoint *bind_iface_endpoint(struct iface_dev *ifd,
+struct iface_endpoint *bind_iface_endpoint(struct iface *ifd,
 					   const struct iface_io *io,
 					   ip_port port,
 					   bool esp_encapsulation_enabled,
@@ -335,13 +339,13 @@ struct iface_endpoint *bind_iface_endpoint(struct iface_dev *ifd,
 		endpoint_buf eb;					\
 		llog_error(logger, e,					\
 			   "bind %s %s endpoint %s failed, "MSG,	\
-			   ifd->id_rname, io->protocol->name,		\
+			   ifd->real_device_name, io->protocol->name,		\
 			   str_endpoint(&local_endpoint, &eb),		\
 			   ##__VA_ARGS__);				\
 	}
 
-	const struct ip_info *afi = address_type(&ifd->id_address);
-	ip_endpoint local_endpoint = endpoint_from_address_protocol_port(ifd->id_address,
+	const struct ip_info *afi = address_type(&ifd->local_address);
+	ip_endpoint local_endpoint = endpoint_from_address_protocol_port(ifd->local_address,
 									 io->protocol, port);
 	if (esp_encapsulation_enabled &&
 	    io->protocol->encap_esp->encap_type == 0) {
@@ -477,7 +481,7 @@ struct iface_endpoint *bind_iface_endpoint(struct iface_dev *ifd,
 	endpoint_buf b;
 	llog(RC_LOG, logger,
 	     "adding %s interface %s %s",
-	     io->protocol->name, ifp->ip_dev->id_rname,
+	     io->protocol->name, ifp->ip_dev->real_device_name,
 	     str_endpoint(&ifp->local_endpoint, &b));
 
 	return ifp;
@@ -490,7 +494,7 @@ struct iface_endpoint *bind_iface_endpoint(struct iface_dev *ifd,
 
 static void add_new_ifaces(struct logger *logger)
 {
-	struct iface_dev *ifd;
+	struct iface *ifd;
 	FOR_EACH_LIST_ENTRY_OLD2NEW(ifd, &interface_dev) {
 		if (ifd->ifd_change != IFD_ADD)
 			continue;
@@ -548,9 +552,9 @@ static void add_new_ifaces(struct logger *logger)
 		 * per interface (that supports offload), this function is called
 		 * for port 500.
 		 */
-		if (ifd->id_nic_offload && kernel_ops->poke_ipsec_offload_policy_hole != NULL) {
+		if (ifd->nic_offload && kernel_ops->poke_ipsec_offload_policy_hole != NULL) {
 			struct nic_offload nic_offload = {
-				.dev = ifd->id_rname,
+				.dev = ifd->real_device_name,
 				.type = OFFLOAD_PACKET,
 			};
 
@@ -566,12 +570,12 @@ void listen_on_iface_endpoint(struct iface_endpoint *ifp, struct logger *logger)
 	ifp->io->listen(ifp, logger);
 	endpoint_buf b;
 	dbg("setup callback for interface %s %s fd %d on %s",
-	    ifp->ip_dev->id_rname,
+	    ifp->ip_dev->real_device_name,
 	    str_endpoint(&ifp->local_endpoint, &b),
 	    ifp->fd, ifp->io->protocol->name);
 }
 
-static void process_raw_ifaces(struct raw_iface *rifaces, struct logger *logger)
+static void process_kernel_ifaces(struct kernel_iface *rifaces, struct logger *logger)
 {
 	ip_address lip;	/* --listen filter option */
 
@@ -586,12 +590,12 @@ static void process_raw_ifaces(struct raw_iface *rifaces, struct logger *logger)
 		dbg("Only looking to listen on %s", str_address(&lip, &b));
 	}
 
-	struct raw_iface *ifp;
+	struct kernel_iface *ifp;
 
 	for (ifp = rifaces; ifp != NULL; ifp = ifp->next) {
 		bool after = false;	/* has vfp passed ifp on the list? */
 		bool bad = false;
-		struct raw_iface *vfp;
+		struct kernel_iface *vfp;
 
 		for (vfp = rifaces; vfp != NULL; vfp = vfp->next) {
 			if (vfp == ifp) {
@@ -636,7 +640,7 @@ static void process_raw_ifaces(struct raw_iface *rifaces, struct logger *logger)
 
 	/* delete the raw interfaces list */
 	while (rifaces != NULL) {
-		struct raw_iface *t = rifaces;
+		struct kernel_iface *t = rifaces;
 
 		rifaces = t->next;
 		pfree(t);
@@ -650,8 +654,8 @@ void find_ifaces(bool rm_dead, struct logger *logger)
 	 * or ADD.
 	 */
 	mark_ifaces_dead();
-	process_raw_ifaces(find_raw_ifaces4(logger), logger);
-	process_raw_ifaces(find_raw_ifaces6(logger), logger);
+	process_kernel_ifaces(find_kernel_ifaces4(logger), logger);
+	process_kernel_ifaces(find_kernel_ifaces6(logger), logger);
 	add_new_ifaces(logger);
 
 	if (rm_dead)
@@ -683,7 +687,7 @@ void show_ifaces_status(struct show *s)
 	for (struct iface_endpoint *p = interfaces; p != NULL; p = p->next) {
 		endpoint_buf b;
 		show_comment(s, "interface %s %s %s",
-			     p->ip_dev->id_rname,
+			     p->ip_dev->real_device_name,
 			     p->io->protocol->name,
 			     str_endpoint(&p->local_endpoint, &b));
 	}

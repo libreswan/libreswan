@@ -98,7 +98,7 @@ static bool fmt_common_shell_out(char *buf,
 	JDstr("PLUTO_CONNECTION_TYPE", (tunneling ? "tunnel" : "transport"));
 	JDstr("PLUTO_VIRT_INTERFACE", (c->xfrmi != NULL && c->xfrmi->name != NULL) ?
 		c->xfrmi->name : "NULL");
-	JDstr("PLUTO_INTERFACE", c->interface == NULL ? "NULL" : c->interface->ip_dev->id_rname);
+	JDstr("PLUTO_INTERFACE", c->interface == NULL ? "NULL" : c->interface->ip_dev->real_device_name);
 	JDstr("PLUTO_XFRMI_ROUTE",  (c->xfrmi != NULL && c->xfrmi->if_id > 0) ? "yes" : "");
 
 	if (address_is_specified(sr->local->host->nexthop)) {

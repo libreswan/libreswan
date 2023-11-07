@@ -70,10 +70,10 @@
 
 static int cmp_iface(const void *lv, const void *rv)
 {
-	const struct raw_iface *const *ll = lv;
-	const struct raw_iface *const *rr = rv;
-	const struct raw_iface *l = *ll;
-	const struct raw_iface *r = *rr;
+	const struct kernel_iface *const *ll = lv;
+	const struct kernel_iface *const *rr = rv;
+	const struct kernel_iface *l = *ll;
+	const struct kernel_iface *r = *rr;
 	/* return l - r */
 	int i;
 	/* protocol */
@@ -111,11 +111,11 @@ static int cmp_iface(const void *lv, const void *rv)
 	return 0;
 }
 
-static void sort_ifaces(struct raw_iface **rifaces)
+static void sort_ifaces(struct kernel_iface **rifaces)
 {
 	/* how many? */
 	unsigned nr_ifaces = 0;
-	for (struct raw_iface *i = *rifaces; i != NULL; i = i->next) {
+	for (struct kernel_iface *i = *rifaces; i != NULL; i = i->next) {
 		nr_ifaces++;
 	}
 	if (nr_ifaces == 0) {
@@ -123,7 +123,7 @@ static void sort_ifaces(struct raw_iface **rifaces)
 		return;
 	}
 	/* turn the list into an array */
-	struct raw_iface **ifaces = alloc_things(struct raw_iface *, nr_ifaces,
+	struct kernel_iface **ifaces = alloc_things(struct kernel_iface *, nr_ifaces,
 						 "ifaces for sorting");
 	ifaces[0] = *rifaces;
 	for (unsigned i = 1; i < nr_ifaces; i++) {
@@ -148,7 +148,7 @@ static void sort_ifaces(struct raw_iface **rifaces)
  * rtnetlink(7) should be used for IPv6.
  */
 
-struct raw_iface *find_raw_ifaces6(struct logger *unused_logger UNUSED)
+struct kernel_iface *find_kernel_ifaces6(struct logger *unused_logger UNUSED)
 {
 	/* Get list of interfaces with IPv6 addresses from system from /proc/net/if_inet6).
 	 *
@@ -164,7 +164,7 @@ struct raw_iface *find_raw_ifaces6(struct logger *unused_logger UNUSED)
 	 * - flags: 1 byte, in hex
 	 * - device name: string, followed by '\n'
 	 */
-	struct raw_iface *rifaces = NULL;
+	struct kernel_iface *rifaces = NULL;
 	static const char proc_name[] = "/proc/net/if_inet6";
 	FILE *proc_sock = fopen(proc_name, "r");
 
@@ -215,8 +215,8 @@ struct raw_iface *find_raw_ifaces6(struct logger *unused_logger UNUSED)
 			happy(ttoaddress_num(shunk1(sb), &ipv6_info, &ifaddr));
 
 			if (address_is_specified(ifaddr)) {
-				struct raw_iface *ri =
-					over_alloc_thing(struct raw_iface, strlen(ifname) + 1);
+				struct kernel_iface *ri =
+					over_alloc_thing(struct kernel_iface, strlen(ifname) + 1);
 				ri->addr = ifaddr;
 				strcpy(ri->name, ifname);
 				ri->next = rifaces;
@@ -241,7 +241,7 @@ struct raw_iface *find_raw_ifaces6(struct logger *unused_logger UNUSED)
 	return rifaces;
 }
 
-struct raw_iface *find_raw_ifaces4(struct logger *logger)
+struct kernel_iface *find_kernel_ifaces4(struct logger *logger)
 {
-	return find_raw_ifaces(&ipv4_info, logger);
+	return find_kernel_ifaces(&ipv4_info, logger);
 }

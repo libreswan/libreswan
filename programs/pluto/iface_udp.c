@@ -156,7 +156,7 @@ static struct msg_digest * udp_read_packet(struct iface_endpoint **ifpp,
 			/* technically it worked, but returned value was useless */
 			llog(RC_LOG, logger,
 			     "recvfrom on %s returned malformed source sockaddr: %s",
-			     ifp->ip_dev->id_rname, from_ugh);
+			     ifp->ip_dev->real_device_name, from_ugh);
 		} else if (from.len == sizeof(from) &&
 			   all_zero((const void *)&from, sizeof(from)) &&
 			   packet_errno == ECONNREFUSED) {
@@ -168,12 +168,12 @@ static struct msg_digest * udp_read_packet(struct iface_endpoint **ifpp,
 			 */
 			llog(RC_LOG, logger,
 			     "recvfrom on %s failed; some IKE message we sent has been rejected with ECONNREFUSED (kernel supplied no details)",
-			     ifp->ip_dev->id_rname);
+			     ifp->ip_dev->real_device_name);
 		} else {
 			/* if from==0, this prints "unspecified", not "undisclosed", oops */
 			llog_errno(RC_LOG, logger, packet_errno,
 				   "recvfrom on %s failed; cannot decode source sockaddr in rejection: %s: ",
-				   ifp->ip_dev->id_rname, from_ugh);
+				   ifp->ip_dev->real_device_name, from_ugh);
 		}
 		return false;
 	}
@@ -192,7 +192,7 @@ static struct msg_digest * udp_read_packet(struct iface_endpoint **ifpp,
 
 	if (packet_len < 0) {
 		llog_errno(RC_LOG, logger, packet_errno,
-			   "recvfrom on %s failed: ", ifp->ip_dev->id_rname);
+			   "recvfrom on %s failed: ", ifp->ip_dev->real_device_name);
 		return NULL;
 	}
 
@@ -529,12 +529,12 @@ static bool check_msg_errqueue(const struct iface_endpoint *ifp, short interest,
 				again_count++;
 				llog_error(logger, errno,
 					   "recvmsg(,, MSG_ERRQUEUE) on %s failed (noticed before %s) (attempt %d)",
-					   ifp->ip_dev->id_rname, before, again_count);
+					   ifp->ip_dev->real_device_name, before, again_count);
 				continue;
 			}
 			llog_error(logger, errno,
 				   "recvmsg(,, MSG_ERRQUEUE) on %s failed (noticed before %s)",
-				   ifp->ip_dev->id_rname, before);
+				   ifp->ip_dev->real_device_name, before);
 			break;
 		}
 		passert(packet_len >= 0);
@@ -546,7 +546,7 @@ static bool check_msg_errqueue(const struct iface_endpoint *ifp, short interest,
 		 */
 		if (DBGP(DBG_BASE) && (emh.msg_flags & MSG_TRUNC)) {
 			DBG_log("recvmsg(,, MSG_ERRQUEUE) on %s returned a truncated (IKE) datagram (MSG_TRUNC)",
-				ifp->ip_dev->id_rname);
+				ifp->ip_dev->real_device_name);
 		}
 
 		if (DBGP(DBG_BASE)) {
@@ -728,7 +728,7 @@ static bool check_msg_errqueue(const struct iface_endpoint *ifp, short interest,
 					endpoint_buf epb;
 					llog(log_to, (sender != NULL ? sender->st_logger : logger),
 						    "ERROR: asynchronous network error report on %s (%s)%s, complainant %s: %s [errno %" PRIu32 ", origin %s]",
-						    ifp->ip_dev->id_rname,
+						    ifp->ip_dev->real_device_name,
 						    str_endpoint(&ifp->local_endpoint, &epb),
 						    fromstr,
 						    offstr,

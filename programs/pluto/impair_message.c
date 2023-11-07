@@ -352,7 +352,7 @@ static void drip_outbound(const struct message *m, struct logger *logger)
 		endpoint_buf rb;
 		llog_error(logger, errno,
 			   "send on %s from %s to %s using %s failed",
-			   interface->ip_dev->id_rname,
+			   interface->ip_dev->real_device_name,
 			   str_endpoint(&interface->local_endpoint, &lb),
 			   str_endpoint_sensitive(&m->outbound.endpoint, &rb),
 			   interface->io->protocol->name);

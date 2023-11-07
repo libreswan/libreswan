@@ -1231,11 +1231,11 @@ diag_t setup_xfrm_interface(struct connection *c, const char *ipsec_interface)
 bool add_xfrm_interface(struct connection *c, struct logger *logger)
 {
 	passert(c->xfrmi->name != NULL);
-	passert(c->interface->ip_dev->id_rname != NULL);
+	passert(c->interface->ip_dev->real_device_name != NULL);
 
 	if (dev_exists_check(c->xfrmi->name) != XFRMI_SUCCESS) {
 		if (ip_link_add_xfrmi(c->xfrmi->name,
-				      c->interface->ip_dev->id_rname,
+				      c->interface->ip_dev->real_device_name,
 				      c->xfrmi->if_id,
 				      logger) != XFRMI_SUCCESS) {
 			return false;

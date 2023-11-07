@@ -232,7 +232,7 @@ struct connection *find_v1_aggr_mode_connection(struct msg_digest *md,
 	struct connection *c;
 
 	ip_address sender_address = endpoint_address(md->sender);
-	c = find_v1_host_connection(md->iface->ip_dev->id_address,
+	c = find_v1_host_connection(md->iface->ip_dev->local_address,
 				    sender_address, authby, policy_xauth,
 				    true/*POLICY_AGGRESSIVE*/,
 				    peer_id);
@@ -240,7 +240,7 @@ struct connection *find_v1_aggr_mode_connection(struct msg_digest *md,
 		return connection_addref(c, md->md_logger);
 	}
 
-	c = find_v1_host_connection(md->iface->ip_dev->id_address,
+	c = find_v1_host_connection(md->iface->ip_dev->local_address,
 				    unset_address, authby, policy_xauth,
 				    true/*POLICY_AGGRESSIVE*/,
 				    peer_id);
@@ -288,7 +288,7 @@ struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 	 * Why?
 	 */
 
-	c = find_v1_host_connection(md->iface->ip_dev->id_address,
+	c = find_v1_host_connection(md->iface->ip_dev->local_address,
 				    sender_address, authby, policy_xauth,
 				    false/*POLICY_AGGRESSIVE*/,
 				    NULL /* peer ID not known yet */);
@@ -323,7 +323,7 @@ struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 	 * Food Groups kind of assumes one.
 	 */
 
-	FOR_EACH_HOST_PAIR_CONNECTION(md->iface->ip_dev->id_address, unset_address, d) {
+	FOR_EACH_HOST_PAIR_CONNECTION(md->iface->ip_dev->local_address, unset_address, d) {
 
 		if (!match_v1_connection(d, authby, policy_xauth,
 					 false/*POLICY_AGGRESSIVE*/,

@@ -61,7 +61,7 @@ void disorient(struct connection *c)
 }
 
 static struct iface_endpoint *new_iface_endpoint(bool listening,
-						 struct iface_dev *dev,
+						 struct iface *dev,
 						 const struct iface_io *io,
 						 const struct host_end_config *end,
 						 struct logger *logger)
@@ -121,8 +121,9 @@ static bool add_new_iface_endpoints(struct connection *c, struct host_end *end)
 		ldbg(c->logger, "  skipping %s interface; no address", end->config->leftright);
 		return false;
 	}
-	struct iface_dev *dev = find_iface_dev_by_address(&end->addr);
-	if (dev == NULL) {
+
+	struct iface *iface = find_iface_by_address(&end->addr); /* must delref */
+	if (iface == NULL) {
 		address_buf ab;
 		ldbg(c->logger, "  skipping %s interface; no device matches %s",
 		     end->config->leftright, str_address(&end->addr, &ab));
@@ -134,12 +135,14 @@ static bool add_new_iface_endpoints(struct connection *c, struct host_end *end)
 	 */
 
 	struct iface_endpoint *udp = new_iface_endpoint(pluto_listen_udp,
-							dev, &udp_iface_io,
+							iface, &udp_iface_io,
 							end->config, c->logger);
 
 	struct iface_endpoint *tcp = new_iface_endpoint(pluto_listen_tcp,
-							dev, &iketcp_iface_io,
+							iface, &iketcp_iface_io,
 							end->config, c->logger);
+
+	iface_delref(&iface); /* all done */
 
 	struct iface_endpoint *ifp = (udp != NULL ? udp :
 				      tcp != NULL ? tcp :
@@ -251,7 +254,7 @@ bool orient(struct connection **cp, struct logger *logger)
 
 static void jam_if(struct jambuf *buf, const struct iface_endpoint *ifp)
 {
-	jam_string(buf, ifp->ip_dev->id_rname);
+	jam_string(buf, ifp->ip_dev->real_device_name);
 	jam_string(buf, " ");
 	if (ifp->io->protocol->prefix != NULL) {
 		jam_string_human(buf, ifp->io->protocol->prefix);
@@ -289,7 +292,7 @@ enum left_right orient_1(struct connection **cp, struct logger *logger)
 		if (!left && !right) {
 			endpoint_buf eb;
 			ldbg((*cp)->logger, "    interface %s %s:%s does not match left or right",
-			     ifp->ip_dev->id_rname,
+			     ifp->ip_dev->real_device_name,
 			     ifp->io->protocol->name,
 			     str_endpoint(&ifp->local_endpoint, &eb));
 			continue;
@@ -353,7 +356,7 @@ enum left_right orient_1(struct connection **cp, struct logger *logger)
 		matching_ifp = ifp;
 		endpoint_buf eb;
 		ldbg((*cp)->logger, "  interface %s endpoint %s matches '%s'; orienting",
-		     ifp->ip_dev->id_rname,
+		     ifp->ip_dev->real_device_name,
 		     str_endpoint(&ifp->local_endpoint, &eb),
 		     (*cp)->end[end].config->leftright);
 		matching_end = end;
