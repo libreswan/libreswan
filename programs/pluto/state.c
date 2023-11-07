@@ -644,7 +644,6 @@ static struct ike_sa *new_v2_ike_sa(struct connection *c,
 	change_state(&ike->sa, transition->state);
 	set_v2_transition(&ike->sa, transition, HERE);
 	v2_msgid_init_ike(ike);
-	initialize_new_ike_sa(ike);
 	event_schedule(EVENT_SA_DISCARD, EXCHANGE_TIMEOUT_DELAY, &ike->sa);
 	return ike;
 }
@@ -654,18 +653,21 @@ struct ike_sa *new_v2_ike_sa_initiator(struct connection *c)
 	const struct finite_state *fs = finite_states[STATE_V2_PARENT_I0];
 	pexpect(fs->nr_transitions == 1);
 	const struct v2_state_transition *transition = &fs->v2.transitions[0];
-	return new_v2_ike_sa(c, transition, SA_INITIATOR,
-			     ike_initiator_spi(), zero_ike_spi);
-
+	struct ike_sa *ike = new_v2_ike_sa(c, transition, SA_INITIATOR,
+					   ike_initiator_spi(), zero_ike_spi);
+	initialize_new_ike_sa(ike);
+	return ike;
 }
 
 struct ike_sa *new_v2_ike_sa_responder(struct connection *c,
 				       const struct v2_state_transition *transition,
 				       struct msg_digest *md)
 {
-	return new_v2_ike_sa(c, transition, SA_RESPONDER,
-			     md->hdr.isa_ike_spis.initiator,
-			     ike_responder_spi(&md->sender, md->md_logger));
+	 struct ike_sa *ike = new_v2_ike_sa(c, transition, SA_RESPONDER,
+					    md->hdr.isa_ike_spis.initiator,
+					    ike_responder_spi(&md->sender, md->md_logger));
+	update_ike_endpoints(ike, md);
+	return ike;
 }
 
 /*
