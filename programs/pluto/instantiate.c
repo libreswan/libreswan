@@ -104,7 +104,7 @@ static struct connection *clone_connection(const char *name, struct connection *
 			    c->child.sec_label.len == 0));
 
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		zero(&c->end[end].child.selectors);
+		zero(&c->end[end].child);
 	}
 
 	/*
