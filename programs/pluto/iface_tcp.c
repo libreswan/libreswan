@@ -582,11 +582,12 @@ struct iface_endpoint *connect_to_tcp_endpoint(struct iface *local_dev,
 				process_iface_packet, ifp);
 
 	pstats_iketcp_started[ifp->iketcp_server]++;
+
 	/*
-	 * XXX: caller, if it wants to save the pointer (which
-	 * presumably it does), must addref.
+	 * Return a newref.  Caller must either delref or save the
+	 * pointer.
 	 */
-	return ifp;
+	return iface_endpoint_addref(ifp);
 }
 
 void accept_ike_in_tcp_cb(int accepted_fd, ip_sockaddr *sa,

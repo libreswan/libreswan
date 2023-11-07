@@ -571,7 +571,7 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 		ldbg_sa(ike, "TCP: forcing "PRI_SO" to open TCP connection to %s",
 			pri_so(ike->sa.st_serialno),
 			str_endpoint_sensitive(&ike->sa.st_remote_endpoint, &eb));
-		/* create new-from-old first; must addref; blocking call */
+		/* create new-from-old first; must delref; blocking call */
 		struct iface_endpoint *p = connect_to_tcp_endpoint(ike->sa.st_iface_endpoint->ip_dev,
 								   ike->sa.st_remote_endpoint,
 								   ike->sa.st_logger);
@@ -582,7 +582,7 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 		}
 
 		iface_endpoint_delref(&ike->sa.st_iface_endpoint);
-		ike->sa.st_iface_endpoint = iface_endpoint_addref(p);
+		ike->sa.st_iface_endpoint = p;
 		PEXPECT(ike->sa.st_logger, ike->sa.st_iface_endpoint->io->protocol == &ip_protocol_tcp);
 	} else if (c->revival.attempt > 0) {
 		/*

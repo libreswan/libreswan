@@ -2870,7 +2870,7 @@ static void reinitiate_v2_ike_sa_init(const char *story, struct state *st, void 
 	if (ike->sa.st_iface_endpoint != NULL &&
 	    ike->sa.st_iface_endpoint->io->protocol == &ip_protocol_tcp) {
 		dbg("TCP: freeing interface as "PRI_SO" is restarting", ike->sa.st_serialno);
-		/* create new-from-old first; must addref */
+		/* create new-from-old first; must delref; blocking call */
 		struct iface_endpoint *p = connect_to_tcp_endpoint(ike->sa.st_iface_endpoint->ip_dev,
 								   ike->sa.st_remote_endpoint,
 								   ike->sa.st_logger);
@@ -2881,7 +2881,7 @@ static void reinitiate_v2_ike_sa_init(const char *story, struct state *st, void 
 		}
 		/* replace */
 		iface_endpoint_delref(&ike->sa.st_iface_endpoint);
-		ike->sa.st_iface_endpoint = iface_endpoint_addref(p);
+		ike->sa.st_iface_endpoint = p;
 	}
 
 	so_serial_t old_st = st->st_serialno;
