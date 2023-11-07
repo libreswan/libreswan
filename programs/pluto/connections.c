@@ -534,6 +534,11 @@ ip_port end_host_port(const struct host_end *this, const struct host_end *that)
 	return ip_hport(port);
 }
 
+ip_port local_host_port(const struct connection *c)
+{
+	return end_host_port(&c->local->host, &c->remote->host);
+}
+
 void update_hosts_from_end_host_addr(struct connection *c, enum left_right e,
 				     ip_address host_addr, where_t where)
 {

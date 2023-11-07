@@ -889,6 +889,7 @@ diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
 					    struct logger *logger);
 
 ip_port end_host_port(const struct host_end *this, const struct host_end *that);
+ip_port local_host_port(const struct connection *c);
 
 /*
  * For iterating over the connection DB.
