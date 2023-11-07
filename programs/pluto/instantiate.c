@@ -87,6 +87,10 @@ static struct connection *clone_connection(const char *name, struct connection *
 	c->next_instance_serial = 0;
 	c->instance_serial = 0;
 
+	zero(&c->redirect);
+	zero(&c->revival);
+	zero(&c->policy);
+
 	/* caller responsible for re-building these */
 	c->spd = NULL;
 	zero(&c->child.spds);
