@@ -107,6 +107,10 @@ static struct connection *clone_connection(const char *name, struct connection *
 		zero(&c->end[end].child);
 	}
 
+	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+		zero(&c->end[end].host);
+	}
+
 	/*
 	 * Set up the left/right pointer structures.
 	 */
@@ -137,6 +141,15 @@ static struct connection *clone_connection(const char *name, struct connection *
 	c->local->host.id = clone_id(&t->local->host.id, "unshare local connection id");
 	c->remote->host.id = clone_id((peer_id != NULL ? peer_id : &t->remote->host.id),
 				      "unshare remote connection id");
+
+	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+		struct host_end *ce = &c->end[end].host;
+		const struct host_end *te = &t->end[end].host;
+		ce->encap = te->encap;
+		ce->port = te->port;
+		ce->nexthop = te->nexthop;
+		ce->addr = te->addr;
+	}
 
 	FOR_EACH_ELEMENT(afi, ip_families) {
 		c->pool[afi->ip_index] = addresspool_addref(t->pool[afi->ip_index]);
