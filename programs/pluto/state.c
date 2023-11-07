@@ -556,32 +556,27 @@ static void initialize_new_ike_sa(struct ike_sa *ike)
 	 * See github/1094 and ikev2-revive-through-nat-01-down.
 	 */
 
+	PASSERT(ike->sa.logger, ike->sa.st_iface_endpoint == NULL);
+	PASSERT(ike->sa.logger, ike->sa.st_remote_endpoint.is_set == false);
+	/* 1,3,5,7-> 1; 0,2,4,6->0 */
+	unsigned mod_revival = (c->revival.attempt % 2);
+
 	if (c->revival.attempt > 0 &&
 	    c->revival.local != NULL &&
 	    c->revival.remote.is_set) {
-		/* transfer ... */
+
+		ldbg_sa(ike, "TCP: using revival revival endpoints");
+		/* transfer (with some logging) */
 		ike->sa.st_remote_endpoint = c->revival.remote;
 		c->revival.remote = unset_endpoint;
-		/* ... with some logging */
 		ike->sa.st_iface_endpoint = iface_endpoint_addref(c->revival.local);
 		iface_endpoint_delref(&c->revival.local);
-	} else {
-		/*
-		 * Choose the protocol to use when connecting to the
-		 * peer based on having TCP enabled.
-		 */
-		const struct ip_protocol *protocol;
-		switch (c->local->config->host.iketcp) {
-		case IKE_TCP_NO:
-		case IKE_TCP_FALLBACK:
-			protocol = &ip_protocol_udp;
-			break;
-		case IKE_TCP_ONLY:
-			protocol = &ip_protocol_tcp;
-			break;
-		default:
-			bad_sparse(c->logger, tcp_option_names, c->local->config->host.iketcp);
-		}
+
+	} else if ((c->local->config->host.iketcp == IKE_TCP_NO) ||
+		   (c->local->config->host.iketcp == IKE_TCP_FALLBACK && mod_revival == 0)) {
+
+		ldbg_sa(ike, "TCP: using UDP endpoints");
+		const struct ip_protocol *protocol = &ip_protocol_udp;
 		ike->sa.st_remote_endpoint =
 			endpoint_from_address_protocol_port(c->remote->host.addr, protocol,
 							    ip_hport(c->remote->host.port));
@@ -589,6 +584,27 @@ static void initialize_new_ike_sa(struct ike_sa *ike)
 			endpoint_from_address_protocol_port(c->iface->local_address,
 							    protocol, local_host_port(c));
 		ike->sa.st_iface_endpoint = find_iface_endpoint_by_local_endpoint(local_endpoint);
+
+	} else {
+
+		address_buf ab;
+		ldbg_sa(ike, "TCP: forcing "PRI_SO" to open TCP connection to TCP %s with port "PRI_HPORT,
+			pri_so(ike->sa.st_serialno),
+			str_address(&c->remote->host.addr, &ab),
+			pri_hport(c->config->remote_tcpport));
+		PEXPECT(ike->sa.logger, ((c->local->config->host.iketcp == IKE_TCP_ONLY) ||
+					 (c->local->config->host.iketcp == IKE_TCP_FALLBACK && mod_revival == 1)));
+		ip_endpoint remote_endpoint =
+			endpoint_from_address_protocol_port(c->remote->host.addr,
+							    &ip_protocol_tcp,
+							    c->config->remote_tcpport);
+
+		/* create new-from-old first; must delref; blocking call */
+		ike->sa.st_remote_endpoint = remote_endpoint;
+		ike->sa.st_iface_endpoint =
+			connect_to_tcp_endpoint(c->iface, remote_endpoint,
+						ike->sa.st_logger);
+		PASSERT(ike->sa.logger, ike->sa.st_iface_endpoint != NULL);
 	}
 
 	endpoint_buf lb, rb;
@@ -655,7 +671,9 @@ struct ike_sa *new_v2_ike_sa_initiator(struct connection *c)
 	const struct v2_state_transition *transition = &fs->v2.transitions[0];
 	struct ike_sa *ike = new_v2_ike_sa(c, transition, SA_INITIATOR,
 					   ike_initiator_spi(), zero_ike_spi);
+
 	initialize_new_ike_sa(ike);
+
 	return ike;
 }
 
