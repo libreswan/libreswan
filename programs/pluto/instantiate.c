@@ -167,6 +167,10 @@ static struct connection *clone_connection(const char *name, struct connection *
 	c->policy.up = t->policy.up;
 	c->policy.route = t->policy.route;
 
+	/* EWWW! */
+	c->host_pair = t->host_pair;
+	c->hp_next = t->hp_next;
+
 	connection_routing_init(c);
 
 	return c;
