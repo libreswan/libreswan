@@ -585,7 +585,10 @@ static void initialize_new_ike_sa(struct ike_sa *ike)
 		ike->sa.st_remote_endpoint =
 			endpoint_from_address_protocol_port(c->remote->host.addr, protocol,
 							    ip_hport(c->remote->host.port));
-		ike->sa.st_iface_endpoint = iface_endpoint_addref(c->interface);
+		ip_endpoint local_endpoint =
+			endpoint_from_address_protocol_port(c->interface->ip_dev->local_address,
+							    protocol, local_host_port(c));
+		ike->sa.st_iface_endpoint = find_iface_endpoint_by_local_endpoint(local_endpoint);
 	}
 
 	endpoint_buf lb, rb;
