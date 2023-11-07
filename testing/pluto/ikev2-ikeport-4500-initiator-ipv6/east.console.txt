@@ -32,6 +32,18 @@ src 2001:db8:1:2::45 dst 2001:db8:1:2::23
 	 00000000 00000000 00000000 XXXXXXXX 
 east #
  ../../guestbin/ipsec-kernel-policy.sh
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir fwd priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir in priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir out priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir fwd priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir in priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir out priority PRIORITY ptype main
 src 2001:db8:0:1::/64 dst 2001:db8:0:2::/64
 	dir fwd priority PRIORITY ptype main
 	tmpl src 2001:db8:1:2::45 dst 2001:db8:1:2::23
@@ -44,18 +56,6 @@ src 2001:db8:0:2::/64 dst 2001:db8:0:1::/64
 	dir out priority PRIORITY ptype main
 	tmpl src 2001:db8:1:2::23 dst 2001:db8:1:2::45
 		proto esp reqid REQID mode tunnel
-src ::/0 dst ::/0 proto ipv6-icmp type 135
-	dir fwd priority PRIORITY ptype main
-src ::/0 dst ::/0 proto ipv6-icmp type 135
-	dir in priority PRIORITY ptype main
-src ::/0 dst ::/0 proto ipv6-icmp type 135
-	dir out priority PRIORITY ptype main
-src ::/0 dst ::/0 proto ipv6-icmp type 136
-	dir fwd priority PRIORITY ptype main
-src ::/0 dst ::/0 proto ipv6-icmp type 136
-	dir in priority PRIORITY ptype main
-src ::/0 dst ::/0 proto ipv6-icmp type 136
-	dir out priority PRIORITY ptype main
 east #
  grep -e '| sending ' /tmp/pluto.log
 | sending 444 bytes for STATE_V2_PARENT_R0 through eth1 from [2001:db8:1:2::23]:4500 to [2001:db8:1:2::45]:4500 using UDP (for #1)

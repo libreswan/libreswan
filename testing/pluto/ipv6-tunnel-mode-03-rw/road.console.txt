@@ -99,6 +99,18 @@ src 2001:db8:1:2::23 dst 2001:db8:1:3::209
 	 00000000 00000000 00000000 XXXXXXXX 
 road #
  ../../guestbin/ipsec-kernel-policy.sh
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir fwd priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir in priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir out priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir fwd priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir in priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir out priority PRIORITY ptype main
 src 2001:db8:1:2::23/128 dst 2001:db8:1:3::209/128
 	dir fwd priority PRIORITY ptype main
 	tmpl src 2001:db8:1:2::23 dst 2001:db8:1:3::209
@@ -111,17 +123,5 @@ src 2001:db8:1:3::209/128 dst 2001:db8:1:2::23/128
 	dir out priority PRIORITY ptype main
 	tmpl src 2001:db8:1:3::209 dst 2001:db8:1:2::23
 		proto esp reqid REQID mode tunnel
-src ::/0 dst ::/0 proto ipv6-icmp type 135
-	dir fwd priority PRIORITY ptype main
-src ::/0 dst ::/0 proto ipv6-icmp type 135
-	dir in priority PRIORITY ptype main
-src ::/0 dst ::/0 proto ipv6-icmp type 135
-	dir out priority PRIORITY ptype main
-src ::/0 dst ::/0 proto ipv6-icmp type 136
-	dir fwd priority PRIORITY ptype main
-src ::/0 dst ::/0 proto ipv6-icmp type 136
-	dir in priority PRIORITY ptype main
-src ::/0 dst ::/0 proto ipv6-icmp type 136
-	dir out priority PRIORITY ptype main
 road #
  
