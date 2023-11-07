@@ -118,7 +118,9 @@ static struct connection *clone_connection(const char *name, struct connection *
 		c->pool[afi->ip_index] = addresspool_addref(t->pool[afi->ip_index]);
 	}
 
-	if (IS_XFRMI && c->xfrmi != NULL) {
+	c->sa_marks = t->sa_marks; /* no pointers? */
+	if (t->xfrmi != NULL) {
+		c->xfrmi = t->xfrmi;
 		reference_xfrmi(c);
 	}
 
