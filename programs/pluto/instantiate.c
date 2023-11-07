@@ -78,17 +78,14 @@ static struct connection *clone_connection(const char *name, struct connection *
 	 * Clear out as much as possible of the struct before calling
 	 * finish_connection().  Trying to make it look as close as
 	 * possible to a clone.
+	 *
+	 * Remember, c->logger is not valid!
 	 */
 
 	zero_thing(c->connection_db_entries); /* keep init_list_entry() happy */
 
 	c->next_instance_serial = 0;
 	c->instance_serial = 0;
-
-	finish_connection(c, name, t, t->config,
-			  t->logger->debugging,
-			  t->logger,
-			  where);
 
 	/* caller responsible for re-building these */
 	c->spd = NULL;
@@ -98,21 +95,35 @@ static struct connection *clone_connection(const char *name, struct connection *
 	c->log_file = NULL;
 	c->log_file_err = false;
 
-	c->root_config = NULL; /* block write access */
-	c->iface = iface_addref(t->iface);
-	c->interface = iface_endpoint_addref(t->interface);
-
 	/* Template can't yet have an assigned SEC_LABEL */
-	PASSERT(t->logger, t->child.sec_label.len == 0);
-	PASSERT(c->logger, c->child.sec_label.len == 0);
-
-	c->local->host.id = clone_id(&t->local->host.id, "unshare local connection id");
-	c->remote->host.id = clone_id((peer_id != NULL ? peer_id : &t->remote->host.id),
-				      "unshare remote connection id");
+	PASSERT(t->logger, (t->child.sec_label.len == 0 &&
+			    c->child.sec_label.len == 0));
 
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
 		zero(&c->end[end].child.selectors);
 	}
+
+	/*
+	 * Set up the left/right pointer structures.
+	 */
+
+	finish_connection(c, name, t, t->config,
+			  t->logger->debugging,
+			  t->logger,
+			  where);
+
+	/*
+	 * Now explicitly copy over anything needed from T into C.
+	 */
+
+	c->root_config = NULL; /* block write access */
+	c->iface = iface_addref(t->iface);
+	c->interface = iface_endpoint_addref(t->interface);
+
+
+	c->local->host.id = clone_id(&t->local->host.id, "unshare local connection id");
+	c->remote->host.id = clone_id((peer_id != NULL ? peer_id : &t->remote->host.id),
+				      "unshare remote connection id");
 
 	FOR_EACH_ELEMENT(afi, ip_families) {
 		c->pool[afi->ip_index] = addresspool_addref(t->pool[afi->ip_index]);
