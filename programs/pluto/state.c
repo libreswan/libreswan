@@ -566,9 +566,24 @@ static void initialize_new_ike_sa(struct ike_sa *ike)
 		ike->sa.st_iface_endpoint = iface_endpoint_addref(c->revival.local);
 		iface_endpoint_delref(&c->revival.local);
 	} else {
+		/*
+		 * Choose the protocol to use when connecting to the
+		 * peer based on having TCP enabled.
+		 */
+		const struct ip_protocol *protocol;
+		switch (c->local->config->host.iketcp) {
+		case IKE_TCP_NO:
+		case IKE_TCP_FALLBACK:
+			protocol = &ip_protocol_udp;
+			break;
+		case IKE_TCP_ONLY:
+			protocol = &ip_protocol_tcp;
+			break;
+		default:
+			bad_sparse(c->logger, tcp_option_names, c->local->config->host.iketcp);
+		}
 		ike->sa.st_remote_endpoint =
-			endpoint_from_address_protocol_port(c->remote->host.addr,
-							    c->interface->io->protocol,
+			endpoint_from_address_protocol_port(c->remote->host.addr, protocol,
 							    ip_hport(c->remote->host.port));
 		ike->sa.st_iface_endpoint = iface_endpoint_addref(c->interface);
 	}
