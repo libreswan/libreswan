@@ -61,7 +61,7 @@ xfrm_policy()
 	    -e 's/^0 \(.* priority \([0-9][0-9]*\)\)/\2 \1/' \
 	    \
 	    -e 's/^/4 /' \
-	    -e 's/^4 \(.* | src [0-9:/]* \)/6 \1/'
+	    -e 's/^4 \(.* | src [0-9a-f:/]* \)/6 \1/'
     } | {
 	# sort by each of the prefixes individually, and then by the
 	# rest of the line.  Shorter forms like -n and -k1,3n don't do
