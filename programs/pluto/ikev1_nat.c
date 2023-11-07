@@ -486,6 +486,8 @@ void v1_natify_initiator_endpoints(struct state *st, where_t where)
 		 * opened by server.c so the new endpoint using
 		 * :PLUTO_NAT_PORT should exist.  IPv6 nat isn't
 		 * supported.
+		 *
+		 * Returns a new reference.
 		 */
 		struct iface_endpoint *i = find_iface_endpoint_by_local_endpoint(new_local_endpoint);
 		if (pexpect(i != NULL)) {
@@ -494,7 +496,7 @@ void v1_natify_initiator_endpoints(struct state *st, where_t where)
 			    st->st_serialno, i->ip_dev->real_device_name,
 			    str_endpoint(&i->local_endpoint, &b));
 			iface_endpoint_delref(&st->st_iface_endpoint);
-			st->st_iface_endpoint = iface_endpoint_addref(i);
+			st->st_iface_endpoint = i;
 		}
 	}
 

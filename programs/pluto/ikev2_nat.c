@@ -179,7 +179,9 @@ bool v2_natify_initiator_endpoints(struct ike_sa *ike, where_t where)
 		 * supported.
 		 */
 		ip_endpoint new_local_endpoint = set_endpoint_port(ike->sa.st_iface_endpoint->local_endpoint, ip_hport(NAT_IKE_UDP_PORT));
-		struct iface_endpoint *i = find_iface_endpoint_by_local_endpoint(new_local_endpoint);
+		/* returns new reference */
+		struct iface_endpoint *i =
+			find_iface_endpoint_by_local_endpoint(new_local_endpoint);
 		if (i == NULL) {
 			endpoint_buf b2;
 			llog_sa(RC_LOG/*fatal!*/, ike,
@@ -194,7 +196,7 @@ bool v2_natify_initiator_endpoints(struct ike_sa *ike, where_t where)
 		    str_endpoint(&new_local_endpoint, &b2),
 		    pri_where(where));
 		iface_endpoint_delref(&ike->sa.st_iface_endpoint);
-		ike->sa.st_iface_endpoint = iface_endpoint_addref(i);
+		ike->sa.st_iface_endpoint = i;
 	} else {
 		endpoint_buf b1;
 		llog_sa(RC_LOG/*fatal!*/, ike,

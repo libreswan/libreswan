@@ -409,7 +409,8 @@ static struct iface_endpoint *find_new_iface(struct ike_sa *ike, ip_address new_
 	ip_endpoint local_endpoint = endpoint_from_address_protocol_port(new_src_addr,
 									 ike->sa.st_iface_endpoint->io->protocol,
 									 port);
-	struct iface_endpoint *iface = find_iface_endpoint_by_local_endpoint(local_endpoint);
+	struct iface_endpoint *iface =
+		find_iface_endpoint_by_local_endpoint(local_endpoint); /* must delref */
 	if (iface == NULL) {
 		endpoint_buf b;
 		dbg(PRI_SO" no interface for %s try to initialize",
@@ -446,9 +447,10 @@ void ikev2_addr_change(struct state *ike_sa)
 	switch (get_route(dest, &route, ike->sa.st_logger)) {
 	case ROUTE_SUCCESS:
 	{
-		struct iface_endpoint *iface = find_new_iface(ike, route.source);
+		struct iface_endpoint *iface = find_new_iface(ike, route.source); /* must delref */
 		if (iface != NULL) {
 			initiate_mobike_probe(ike, iface, route.gateway);
+			iface_endpoint_delref(&iface);
 		}
 		break;
 	}

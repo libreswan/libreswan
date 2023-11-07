@@ -675,7 +675,7 @@ struct iface_endpoint *find_iface_endpoint_by_local_endpoint(ip_endpoint local_e
 {
 	for (struct iface_endpoint *p = interfaces; p != NULL; p = p->next) {
 		if (endpoint_eq_endpoint(local_endpoint, p->local_endpoint)) {
-			return p;
+			return iface_endpoint_addref(p);
 		}
 	}
 	return NULL;
