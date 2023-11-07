@@ -238,7 +238,7 @@ bool send_shunks_using_state(struct state *st, const char *where,
 			     shunk_t shunk_a, shunk_t shunk_b)
 {
 	return send_shunks(where, false, st->st_serialno,
-			   st->st_interface, st->st_remote_endpoint,
+			   st->st_iface_endpoint, st->st_remote_endpoint,
 			   shunk_a, shunk_b,
 			   st->st_logger);
 }
@@ -263,7 +263,7 @@ bool send_keepalive_using_state(struct state *st, const char *where)
 {
 	static unsigned char ka_payload = 0xff;
 
-	return send_shunks(where, true, st->st_serialno, st->st_interface,
+	return send_shunks(where, true, st->st_serialno, st->st_iface_endpoint,
 			   st->st_remote_endpoint,
 			   THING_AS_SHUNK(ka_payload), null_shunk,
 			   st->st_logger);

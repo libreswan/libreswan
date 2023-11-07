@@ -353,21 +353,27 @@ struct state {
 	} st_v2_digsig;
 
 	/*
-	 * dhr 2013: why [.st_interface]? There was already
+	 * A connection is oriented to an interface (eth0 192.168.1.23
+	 * say) while a state has an endpoint on that interface
+	 * (192.168.1.23/tcp/433 say).
+	 *
+	 * History:
+	 *
+	 * dhr 2013: why [.st_iface_endpoint]? There was already
 	 * connection->interface
 	 *
-	 * XXX: It seems that .st_interface starts out the same as the
+	 * XXX: It seems that .st_iface_endpoint starts out the same as the
 	 * connection's interface but then be changed by NAT and/or
 	 * TCP.  For instance, when the initial request is sent on
 	 * :500 but the response comes back on :4500, and when
-	 * negotiation falls back to TCP, .st_interface will switch.
+	 * negotiation falls back to TCP, .st_iface_endpoint will switch.
 	 *
-	 * XXX: both .st_interface and iface_endpoint are misleading
+	 * XXX: both .st_iface_endpoint and iface_endpoint are misleading
 	 * names: a network interface can have more than one port but
 	 * this for just one; and iface_endpoint isn't really like a
 	 * simple ip_endpoint.
 	 */
-	struct iface_endpoint *st_interface;  /* where to send from */
+	struct iface_endpoint *st_iface_endpoint;  /* where to send from */
 
 	bool st_mobike_del_src_ip;		/* for mobike migrate unroute */
 	/* IKEv2 MOBIKE probe copies */

@@ -1254,7 +1254,7 @@ static bool record_outbound_fragments(const struct pbs_out *body,
 	 * this message for ESP, each message needs a non-ESP_Marker
 	 * prefix.
 	 */
-	if (sk->ike->sa.st_interface != NULL && sk->ike->sa.st_interface->esp_encapsulation_enabled)
+	if (sk->ike->sa.st_iface_endpoint != NULL && sk->ike->sa.st_iface_endpoint->esp_encapsulation_enabled)
 		len -= NON_ESP_MARKER_SIZE;
 
 	len -= NSIZEOF_isakmp_hdr + NSIZEOF_ikev2_skf;
@@ -1357,12 +1357,12 @@ static stf_status record_v2SK_message(struct pbs_out *msg,
 	 * this message for ESP, each message needs a non-ESP_Marker
 	 * prefix.
 	 */
-	if (!pexpect(sk->ike->sa.st_interface != NULL) &&
-	    sk->ike->sa.st_interface->esp_encapsulation_enabled)
+	if (!pexpect(sk->ike->sa.st_iface_endpoint != NULL) &&
+	    sk->ike->sa.st_iface_endpoint->esp_encapsulation_enabled)
 		len += NON_ESP_MARKER_SIZE;
 
 	/* IPv4 and IPv6 have different fragment sizes */
-	if (sk->ike->sa.st_interface->io->protocol == &ip_protocol_udp &&
+	if (sk->ike->sa.st_iface_endpoint->io->protocol == &ip_protocol_udp &&
 	    sk->ike->sa.st_connection->config->ike_frag.allow &&
 	    sk->ike->sa.st_seen_fragmentation_supported &&
 	    len >= endpoint_type(&sk->ike->sa.st_remote_endpoint)->ikev2_max_fragment_size) {

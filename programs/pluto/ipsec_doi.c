@@ -126,7 +126,7 @@ void jam_child_sa_details(struct jambuf *buf, struct state *st)
 		bool nat = (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) != 0;
 		bool tfc = c->config->child_sa.tfcpad != 0 && !st->st_seen_no_tfc;
 		bool esn = st->st_esp.attrs.transattrs.esn_enabled;
-		bool tcp = st->st_interface->io->protocol == &ip_protocol_tcp;
+		bool tcp = st->st_iface_endpoint->io->protocol == &ip_protocol_tcp;
 
 		if (nat)
 			dbg("NAT-T: NAT Traversal detected - their IKE port is '%d'",

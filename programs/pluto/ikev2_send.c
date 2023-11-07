@@ -49,7 +49,7 @@ bool send_recorded_v2_message(struct ike_sa *ike,
 			      enum message_role message)
 {
 	struct v2_outgoing_fragment *frags = ike->sa.st_v2_outgoing[message];
-	if (ike->sa.st_interface == NULL) {
+	if (ike->sa.st_iface_endpoint == NULL) {
 		llog_sa(RC_LOG, ike, "cannot send packet - interface vanished!");
 		return false;
 	}

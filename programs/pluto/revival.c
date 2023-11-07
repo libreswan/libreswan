@@ -158,7 +158,7 @@ static void update_remote_port(struct state *st)
 	 * established and nat has been detected.
 	 */
 	c->revival.remote = st->st_remote_endpoint;
-	c->revival.local = iface_endpoint_addref(st->st_interface);
+	c->revival.local = iface_endpoint_addref(st->st_iface_endpoint);
 
 	endpoint_pair_buf eb;
 	ldbg(st->st_logger, "revival: %s() %s",

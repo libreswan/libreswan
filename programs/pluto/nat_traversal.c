@@ -202,10 +202,10 @@ static void nat_traversal_ka_event_state(struct state *st, unsigned *data)
 		    c->name);
 		return;
 	}
-	/* XXX: .st_interface, not c.interface - can be different */
-	if (!st->st_interface->io->send_keepalive) {
+	/* XXX: .st_iface_endpoint, not c.interface - can be different */
+	if (!st->st_iface_endpoint->io->send_keepalive) {
 		dbg("skipping NAT-T KEEP-ALIVE: #%lu does not need it for %s protocol",
-		    st->st_serialno, st->st_interface->io->protocol->name);
+		    st->st_serialno, st->st_iface_endpoint->io->protocol->name);
 		return;
 	}
 
@@ -363,7 +363,7 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 	if (st == NULL)
 		return;
 
-	if (st->st_interface->io->protocol == &ip_protocol_tcp ||
+	if (st->st_iface_endpoint->io->protocol == &ip_protocol_tcp ||
 	    (md != NULL && md->iface->io->protocol == &ip_protocol_tcp)) {
 		/* XXX: when is MD NULL? */
 		return;
@@ -395,14 +395,14 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 		/*
 		 * If interface type has changed, update local port (500/4500)
 		 */
-		if (md->iface != st->st_interface) {
+		if (md->iface != st->st_iface_endpoint) {
 			endpoint_buf b1, b2;
 			dbg("NAT-T: #%lu updating local interface from %s to %s (using md->iface in %s())",
 			    st->st_serialno,
-			    str_endpoint(&st->st_interface->local_endpoint, &b1),
+			    str_endpoint(&st->st_iface_endpoint->local_endpoint, &b1),
 			    str_endpoint(&md->iface->local_endpoint, &b2), __func__);
-			iface_endpoint_delref(&st->st_interface);
-			st->st_interface = iface_endpoint_addref(md->iface);
+			iface_endpoint_delref(&st->st_iface_endpoint);
+			st->st_iface_endpoint = iface_endpoint_addref(md->iface);
 		}
 	}
 }

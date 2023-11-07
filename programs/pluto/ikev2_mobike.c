@@ -186,8 +186,8 @@ void mobike_possibly_send_recorded(struct ike_sa *ike, struct msg_digest *md)
 		ip_endpoint old_remote = ike->sa.st_remote_endpoint;
 		ike->sa.st_remote_endpoint = md->sender; /* tmp */
 		/* swap out the interface; restored below */
-		struct iface_endpoint *old_interface = ike->sa.st_interface;
-		ike->sa.st_interface = md->iface; /* tmp-new */
+		struct iface_endpoint *old_interface = ike->sa.st_iface_endpoint;
+		ike->sa.st_iface_endpoint = md->iface; /* tmp-new */
 		/*
 		 * XXX: hopefully this call doesn't muddle the IKE
 		 * Message IDs.
@@ -196,7 +196,7 @@ void mobike_possibly_send_recorded(struct ike_sa *ike, struct msg_digest *md)
 					 MESSAGE_RESPONSE);
 		/* restore established address and interface */
 		ike->sa.st_remote_endpoint = old_remote;
-		ike->sa.st_interface = old_interface; /* restore-old */
+		ike->sa.st_iface_endpoint = old_interface; /* restore-old */
 	}
 }
 
@@ -280,7 +280,7 @@ void record_deladdr(ip_address *ip, char *a_type)
 			continue;
 		}
 
-		ip_address local_address = endpoint_address(ike->sa.st_interface->local_endpoint);
+		ip_address local_address = endpoint_address(ike->sa.st_iface_endpoint->local_endpoint);
 		/* ignore port */
 		if (!sameaddr(ip, &local_address)) {
 			continue;
@@ -391,12 +391,12 @@ static void initiate_mobike_probe(struct ike_sa *ike,
 	ike->sa.st_mobike_host_nexthop = new_nexthop; /* for updown, after xfrm migration */
 
 	/* notice how it gets set back below */
-	struct iface_endpoint *old_iface = ike->sa.st_interface;
-	ike->sa.st_interface = new_iface; /* tmp-new */
+	struct iface_endpoint *old_iface = ike->sa.st_iface_endpoint;
+	ike->sa.st_iface_endpoint = new_iface; /* tmp-new */
 
 	record_n_send_v2_mobike_probe_request(ike);
 
-	ike->sa.st_interface = old_iface; /* restore-old */
+	ike->sa.st_iface_endpoint = old_iface; /* restore-old */
 }
 
 static struct iface_endpoint *find_new_iface(struct ike_sa *ike, ip_address new_src_addr)
@@ -405,9 +405,9 @@ static struct iface_endpoint *find_new_iface(struct ike_sa *ike, ip_address new_
 	 * Merge the old port in with the new interface address, and
 	 * then look at up.
 	 */
-	ip_port port = endpoint_port(ike->sa.st_interface->local_endpoint);
+	ip_port port = endpoint_port(ike->sa.st_iface_endpoint->local_endpoint);
 	ip_endpoint local_endpoint = endpoint_from_address_protocol_port(new_src_addr,
-									 ike->sa.st_interface->io->protocol,
+									 ike->sa.st_iface_endpoint->io->protocol,
 									 port);
 	struct iface_endpoint *iface = find_iface_endpoint_by_local_endpoint(local_endpoint);
 	if (iface == NULL) {

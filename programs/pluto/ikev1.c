@@ -2265,7 +2265,7 @@ void process_packet_tail(struct msg_digest *md)
 			if (impair.copy_v1_notify_response_SPIs_to_retransmission) {
 				ldbg(st->st_logger, "IMPAIR: copying notify response SPIs to recorded message and then resending it");
 				/* skip non-ESP marker if needed */
-				size_t skip = (st->st_interface->esp_encapsulation_enabled ? NON_ESP_MARKER_SIZE : 0);
+				size_t skip = (st->st_iface_endpoint->esp_encapsulation_enabled ? NON_ESP_MARKER_SIZE : 0);
 				size_t spis = sizeof(md->hdr.isa_ike_spis);
 				PASSERT(st->st_logger, st->st_v1_tpacket.len >= skip + spis);
 				memcpy(st->st_v1_tpacket.ptr + skip, &md->hdr.isa_ike_spis, spis);
@@ -2579,7 +2579,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 			endpoint_buf b2;
 			dbg("sending reply packet to %s (from %s)",
 			    str_endpoint(&st->st_remote_endpoint, &b),
-			    str_endpoint(&st->st_interface->local_endpoint, &b2));
+			    str_endpoint(&st->st_iface_endpoint->local_endpoint, &b2));
 
 			close_output_pbs(&reply_stream); /* good form, but actually a no-op */
 

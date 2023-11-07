@@ -1390,15 +1390,15 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 		ip_address natt_oa;
 
 		if (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED ||
-		    st->st_interface->io->protocol == &ip_protocol_tcp) {
-			encap_type = st->st_interface->io->protocol->encap_esp;
+		    st->st_iface_endpoint->io->protocol == &ip_protocol_tcp) {
+			encap_type = st->st_iface_endpoint->io->protocol->encap_esp;
 			switch (direction) {
 			case DIRECTION_INBOUND:
 				encap_sport = endpoint_hport(st->st_remote_endpoint);
-				encap_dport = endpoint_hport(st->st_interface->local_endpoint);
+				encap_dport = endpoint_hport(st->st_iface_endpoint->local_endpoint);
 				break;
 			case DIRECTION_OUTBOUND:
-				encap_sport = endpoint_hport(st->st_interface->local_endpoint);
+				encap_sport = endpoint_hport(st->st_iface_endpoint->local_endpoint);
 				encap_dport = endpoint_hport(st->st_remote_endpoint);
 				break;
 			default:

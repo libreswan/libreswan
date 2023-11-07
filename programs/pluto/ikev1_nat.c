@@ -215,7 +215,7 @@ bool ikev1_nat_traversal_add_natd(pb_stream *outs,
 	dbg("emitting NAT-D payloads");
 
 	unsigned remote_port = endpoint_hport(st->st_remote_endpoint);
-	unsigned short local_port = endpoint_hport(st->st_interface->local_endpoint);
+	unsigned short local_port = endpoint_hport(st->st_iface_endpoint->local_endpoint);
 	if (st->st_connection->config->encapsulation == YNA_YES) {
 		dbg("NAT-T: encapsulation=yes, so mangling hash to force NAT-T detection");
 		local_port = remote_port = 0;
@@ -356,7 +356,7 @@ static bool emit_one_natoa(struct pbs_out *outs,
 
 bool v1_nat_traversal_add_initiator_natoa(pb_stream *outs, struct state *st)
 {
-	ip_address ipinit = st->st_interface->ip_dev->local_address;
+	ip_address ipinit = st->st_iface_endpoint->ip_dev->local_address;
 	ip_address ipresp = endpoint_address(st->st_remote_endpoint);
 
 	struct_desc *pd = (st->hidden_variables.st_nat_traversal & NAT_T_WITH_RFC_VALUES ? &isakmp_nat_oa :
@@ -441,7 +441,7 @@ void v1_maybe_natify_initiator_endpoints(struct state *st, where_t where)
 	     st->st_state->kind == STATE_QUICK_I1 ||
 	     st->st_state->kind == STATE_AGGR_I2) &&
 	    (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) &&
-	    endpoint_hport(st->st_interface->local_endpoint) != NAT_IKE_UDP_PORT) {
+	    endpoint_hport(st->st_iface_endpoint->local_endpoint) != NAT_IKE_UDP_PORT) {
 		dbg("NAT-T: #%lu in %s floating IKEv1 ports to PLUTO_NAT_PORT %d",
 		    st->st_serialno, st->st_state->short_name,
 		    NAT_IKE_UDP_PORT);
@@ -471,16 +471,16 @@ void v1_natify_initiator_endpoints(struct state *st, where_t where)
 	 * exchanges use that port.
 	 */
 	endpoint_buf b1, b2;
-	ip_endpoint new_local_endpoint = set_endpoint_port(st->st_interface->local_endpoint, ip_hport(NAT_IKE_UDP_PORT));
+	ip_endpoint new_local_endpoint = set_endpoint_port(st->st_iface_endpoint->local_endpoint, ip_hport(NAT_IKE_UDP_PORT));
 	dbg("NAT: #%lu floating local endpoint from %s to %s using NAT_IKE_UDP_PORT "PRI_WHERE,
 	    st->st_serialno,
-	    str_endpoint(&st->st_interface->local_endpoint, &b1),
+	    str_endpoint(&st->st_iface_endpoint->local_endpoint, &b1),
 	    str_endpoint(&new_local_endpoint, &b2),
 	    pri_where(where));
 	/*
 	 * If not already ...
 	 */
-	if (!endpoint_eq_endpoint(new_local_endpoint, st->st_interface->local_endpoint)) {
+	if (!endpoint_eq_endpoint(new_local_endpoint, st->st_iface_endpoint->local_endpoint)) {
 		/*
 		 * For IPv4, both :PLUTO_PORT and :PLUTO_NAT_PORT are
 		 * opened by server.c so the new endpoint using
@@ -493,8 +493,8 @@ void v1_natify_initiator_endpoints(struct state *st, where_t where)
 			dbg("NAT: #%lu floating endpoint ended up on interface %s %s",
 			    st->st_serialno, i->ip_dev->real_device_name,
 			    str_endpoint(&i->local_endpoint, &b));
-			iface_endpoint_delref(&st->st_interface);
-			st->st_interface = iface_endpoint_addref(i);
+			iface_endpoint_delref(&st->st_iface_endpoint);
+			st->st_iface_endpoint = iface_endpoint_addref(i);
 		}
 	}
 

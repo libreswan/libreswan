@@ -563,21 +563,21 @@ static void initialize_new_ike_sa(struct ike_sa *ike)
 		ike->sa.st_remote_endpoint = c->revival.remote;
 		c->revival.remote = unset_endpoint;
 		/* ... with some logging */
-		ike->sa.st_interface = iface_endpoint_addref(c->revival.local);
+		ike->sa.st_iface_endpoint = iface_endpoint_addref(c->revival.local);
 		iface_endpoint_delref(&c->revival.local);
 	} else {
 		ike->sa.st_remote_endpoint =
 			endpoint_from_address_protocol_port(c->remote->host.addr,
 							    c->interface->io->protocol,
 							    ip_hport(c->remote->host.port));
-		ike->sa.st_interface = iface_endpoint_addref(c->interface);
+		ike->sa.st_iface_endpoint = iface_endpoint_addref(c->interface);
 	}
 
 	endpoint_buf lb, rb;
 	ldbg(ike->sa.logger,
 	     "in %s with local endpoint %s and remote endpoint set to %s",
 	     __func__,
-	     str_endpoint(&ike->sa.st_interface->local_endpoint, &lb),
+	     str_endpoint(&ike->sa.st_iface_endpoint->local_endpoint, &lb),
 	     str_endpoint(&ike->sa.st_remote_endpoint, &rb));
 }
 
@@ -959,7 +959,7 @@ void delete_state(struct state *st)
 	 */
 	binlog_fake_state(st, STATE_UNDEFINED);
 
-	iface_endpoint_delref(&st->st_interface);
+	iface_endpoint_delref(&st->st_iface_endpoint);
 
 	/*
 	 * Release stored IKE fragments. This is a union in st so only
@@ -1147,10 +1147,10 @@ static struct child_sa *duplicate_state(struct connection *c,
 	endpoint_buf eb;
 	dbg("#%lu setting local endpoint to %s from #%ld.st_localport "PRI_WHERE,
 	    child->sa.st_serialno,
-	    str_endpoint(&ike->sa.st_interface->local_endpoint, &eb),
+	    str_endpoint(&ike->sa.st_iface_endpoint->local_endpoint, &eb),
 	    ike->sa.st_serialno,pri_where(HERE));
-	pexpect(child->sa.st_interface == NULL);
-	child->sa.st_interface = iface_endpoint_addref(ike->sa.st_interface);
+	pexpect(child->sa.st_iface_endpoint == NULL);
+	child->sa.st_iface_endpoint = iface_endpoint_addref(ike->sa.st_iface_endpoint);
 	passert(child->sa.st_ike_version == ike->sa.st_ike_version);
 	child->sa.st_ikev2_anon = ike->sa.st_ikev2_anon;
 	child->sa.st_seen_fragmentation_supported = ike->sa.st_seen_fragmentation_supported;
@@ -1604,7 +1604,7 @@ static void show_state(struct show *s, struct state *st, const monotime_t now)
 		jam(buf, "#%lu: ", st->st_serialno);
 		jam_connection(buf, c);
 		jam(buf, ":%u", endpoint_hport(st->st_remote_endpoint));
-		if (st->st_interface->io->protocol == &ip_protocol_tcp) {
+		if (st->st_iface_endpoint->io->protocol == &ip_protocol_tcp) {
 			jam(buf, "(tcp)");
 		}
 		jam(buf, " %s (%s);", st->st_state->name, st->st_state->story);
@@ -2021,11 +2021,11 @@ void update_ike_endpoints(struct ike_sa *ike,
 	endpoint_buf eb1, eb2;
 	dbg("#%lu updating local interface from %s to %s using md->iface "PRI_WHERE,
 	    ike->sa.st_serialno,
-	    ike->sa.st_interface != NULL ? str_endpoint(&ike->sa.st_interface->local_endpoint, &eb1) : "<none>",
+	    ike->sa.st_iface_endpoint != NULL ? str_endpoint(&ike->sa.st_iface_endpoint->local_endpoint, &eb1) : "<none>",
 	    str_endpoint(&md->iface->local_endpoint, &eb2),
 	    pri_where(HERE));
-	iface_endpoint_delref(&ike->sa.st_interface);
-	ike->sa.st_interface = iface_endpoint_addref(md->iface);
+	iface_endpoint_delref(&ike->sa.st_iface_endpoint);
+	ike->sa.st_iface_endpoint = iface_endpoint_addref(md->iface);
 }
 
 /*
@@ -2072,7 +2072,7 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 	switch (md_role) {
 	case MESSAGE_RESPONSE:
 		/* MOBIKE inititor processing response */
-		old_endpoint = ike->sa.st_interface->local_endpoint;
+		old_endpoint = ike->sa.st_iface_endpoint->local_endpoint;
 
 		child->sa.st_mobike_local_endpoint = ike->sa.st_mobike_local_endpoint;
 		child->sa.st_mobike_host_nexthop = ike->sa.st_mobike_host_nexthop;
@@ -2144,10 +2144,10 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 	default:
 		bad_case(md_role);
 	}
-	iface_endpoint_delref(&ike->sa.st_interface);
-	iface_endpoint_delref(&child->sa.st_interface);
-	ike->sa.st_interface = iface_endpoint_addref(md->iface);
-	child->sa.st_interface = iface_endpoint_addref(md->iface);
+	iface_endpoint_delref(&ike->sa.st_iface_endpoint);
+	iface_endpoint_delref(&child->sa.st_iface_endpoint);
+	ike->sa.st_iface_endpoint = iface_endpoint_addref(md->iface);
+	child->sa.st_iface_endpoint = iface_endpoint_addref(md->iface);
 
 	delete_oriented_hp(c); /* hp list may have changed */
 	if (!orient(&c, ike->sa.st_logger)) {
