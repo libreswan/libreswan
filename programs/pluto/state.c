@@ -631,11 +631,11 @@ struct ike_sa *new_v1_rstate(struct connection *c, struct msg_digest *md)
 	return parent;
 }
 
-struct ike_sa *new_v2_ike_sa(struct connection *c,
-			     const struct v2_state_transition *transition,
-			     enum sa_role sa_role,
-			     const ike_spi_t ike_initiator_spi,
-			     const ike_spi_t ike_responder_spi)
+static struct ike_sa *new_v2_ike_sa(struct connection *c,
+				    const struct v2_state_transition *transition,
+				    enum sa_role sa_role,
+				    const ike_spi_t ike_initiator_spi,
+				    const ike_spi_t ike_responder_spi)
 {
 	struct state *st = new_state(c, SOS_NOBODY,
 				     ike_initiator_spi, ike_responder_spi,
@@ -647,6 +647,25 @@ struct ike_sa *new_v2_ike_sa(struct connection *c,
 	initialize_new_ike_sa(ike);
 	event_schedule(EVENT_SA_DISCARD, EXCHANGE_TIMEOUT_DELAY, &ike->sa);
 	return ike;
+}
+
+struct ike_sa *new_v2_ike_sa_initiator(struct connection *c)
+{
+	const struct finite_state *fs = finite_states[STATE_V2_PARENT_I0];
+	pexpect(fs->nr_transitions == 1);
+	const struct v2_state_transition *transition = &fs->v2.transitions[0];
+	return new_v2_ike_sa(c, transition, SA_INITIATOR,
+			     ike_initiator_spi(), zero_ike_spi);
+
+}
+
+struct ike_sa *new_v2_ike_sa_responder(struct connection *c,
+				       const struct v2_state_transition *transition,
+				       struct msg_digest *md)
+{
+	return new_v2_ike_sa(c, transition, SA_RESPONDER,
+			     md->hdr.isa_ike_spis.initiator,
+			     ike_responder_spi(&md->sender, md->md_logger));
 }
 
 /*

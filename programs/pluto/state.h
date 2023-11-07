@@ -870,11 +870,12 @@ struct child_sa *new_v1_child_sa(struct connection *c,
 				 struct ike_sa *ike,
 				 enum sa_role sa_role);
 
-struct ike_sa *new_v2_ike_sa(struct connection *c,
-			     const struct v2_state_transition *transition,
-			     enum sa_role sa_role,
-			     const ike_spi_t ike_initiator_spi,
-			     const ike_spi_t ike_responder_spi);
+struct ike_sa *new_v2_ike_sa_initiator(struct connection *c);
+
+struct ike_sa *new_v2_ike_sa_responder(struct connection *c,
+				       const struct v2_state_transition *transition,
+				       struct msg_digest *md);
+
 /* could eventually be IKE or CHILD SA */
 struct child_sa *new_v2_child_sa(struct connection *c,
 				 struct ike_sa *ike,
