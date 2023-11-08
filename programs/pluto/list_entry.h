@@ -150,4 +150,15 @@ void remove_list_entry(struct list_entry *entry);
 #define FOR_EACH_LIST_ENTRY_NEW2OLD(DATA, HEAD)		\
 	FOR_EACH_LIST_ENTRY_(DATA, HEAD, NEW2OLD)
 
+#define NEXT_LIST_ENTRY(LIST, DATA, FIELD, NEXT)			\
+	({								\
+		struct list_entry *next_;				\
+		if (DATA == NULL) {					\
+			next_ = (LIST)->head.next[NEXT];		\
+		} else {						\
+			next_ = DATA->FIELD.next[NEXT];			\
+		}							\
+		(typeof(DATA)) (next_ == NULL ? NULL : next_->data);	\
+	})
+
 #endif
