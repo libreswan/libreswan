@@ -25,13 +25,6 @@
 #include "refcnt.h"
 #include "ip_endpoint.h"
 
-#if defined(linux) && defined(KERNEL_XFRM) && defined(USE_XFRM_INTERFACE)
-/* how to check defined(XFRMA_IF_ID) && defined(IFLA_XFRM_LINK)? those are enums */
-# define IS_XFRMI true
-#else
-# define IS_XFRMI false
-#endif
-
 /* xfrmi interface format. start with ipsec1 IFNAMSIZ - 1 */
 #define XFRMI_DEV_FORMAT "ipsec%" PRIu32
 

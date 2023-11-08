@@ -416,8 +416,11 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 		}
 	}
 
-	if (IS_XFRMI && c->xfrmi != NULL)
+#ifdef USE_XFRM_INTERFACE
+	if (c->xfrmi != NULL) {
 		unreference_xfrmi(c);
+	}
+#endif
 
 	/* find and delete c from the host pair list */
 	host_pair_remove_connection(c, connection_valid);

@@ -143,10 +143,12 @@ static struct connection *clone_connection(const char *name, struct connection *
 	}
 
 	c->sa_marks = t->sa_marks; /* no pointers? */
+#ifdef USE_XFRM_INTERFACE
 	if (t->xfrmi != NULL) {
 		c->xfrmi = t->xfrmi;
 		reference_xfrmi(c);
 	}
+#endif
 
 	connection_routing_init(c);
 
