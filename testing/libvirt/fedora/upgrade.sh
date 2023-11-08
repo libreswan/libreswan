@@ -6,7 +6,7 @@ PREFIX=@@PREFIX@@
 
 : disable useless repos
 
-for repo in fedora-modular updates-modular fedora-cisco-openh264 ; do
+for repo in fedora-cisco-openh264 ; do
     echo disabling: ${repo}
     dnf config-manager --set-disable ${repo}
 done
