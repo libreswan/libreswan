@@ -123,6 +123,16 @@ static struct connection *clone_connection(const char *name, struct connection *
 	c->root_config = NULL; /* block write access */
 	c->iface = iface_addref(t->iface);
 
+	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+		/*
+		 * Need to propagate template's .has_client to
+		 * instance.  Should selector code setting up SPDs
+		 * instead handle this.
+		 */
+		bool has_client = t->end[end].child.has_client;
+		set_end_child_has_client(c, end, has_client);
+		PEXPECT(t->logger, (has_client == (t->end[end].child.config->selectors.len > 0)));
+	}
 
 	c->local->host.id = clone_id(&t->local->host.id, "unshare local connection id");
 	c->remote->host.id = clone_id((peer_id != NULL ? peer_id : &t->remote->host.id),

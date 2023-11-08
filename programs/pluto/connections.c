@@ -1573,6 +1573,7 @@ static void set_connection_selector_proposals(struct connection *c, const struct
 			ldbg(c->logger, "%s() %s selector from %d child.selectors",
 			     __func__, leftright, end->child.config->selectors.len);
 			end->child.selectors.proposed = end->child.config->selectors;
+			/* see also clone_connection */
 			set_end_child_has_client(c, end->config->index, true);
 		} else if (end->host.config->pool_ranges.len > 0) {
 			/*
