@@ -443,7 +443,6 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 	connection_delref(&c->clonedfrom, logger);
 
 	iface_delref(&c->iface);
-	iface_endpoint_delref(&c->interface);
 	iface_endpoint_delref(&c->revival.local);
 
 	free_chunk_content(&c->child.sec_label);
@@ -3302,7 +3301,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	/* set internal fields */
 	c->iface = NULL; /* initializing */
-	c->interface = NULL; /* initializing */
 
 	connection_routing_init(c);
 	c->redirect.num_redirects = 0;

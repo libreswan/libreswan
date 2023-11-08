@@ -43,7 +43,6 @@ bool oriented(const struct connection *c)
 		return false;
 	}
 
-	PASSERT(c->logger, (c->interface == NULL) == (c->iface == NULL));
 	return (c->iface != NULL);
 }
 
@@ -54,7 +53,6 @@ void disorient(struct connection *c)
 		delete_oriented_hp(c);
 		PEXPECT(c->logger, c->host_pair == NULL);
 		iface_delref(&c->iface);
-		iface_endpoint_delref(&c->interface);
 		/* Since it is unoriented, it will be connected to the
 		 * unoriented_connections list */
 		PASSERT(c->logger, !oriented(c));
@@ -157,7 +155,6 @@ static bool add_new_iface_endpoints(struct connection *c, struct host_end *end)
 
 	pexpect(c->iface == NULL);	/* no leak */
 	c->iface = iface_addref(ifp->ip_dev);
-	c->interface = iface_endpoint_addref(ifp); /* from bind */
 
 	ldbg(c->logger, "  adding %s interface",
 	     end->config->leftright);
@@ -369,7 +366,6 @@ enum left_right orient_1(struct connection **cp, struct logger *logger)
 		passert(matching_end != END_ROOF);
 		pexpect((*cp)->iface == NULL); /* wasn't updated */
 		(*cp)->iface = iface_addref(matching_ifp->ip_dev);
-		(*cp)->interface = iface_endpoint_addref(matching_ifp);
 		return matching_end;
 	}
 

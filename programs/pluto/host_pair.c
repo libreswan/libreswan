@@ -442,7 +442,6 @@ void check_orientations(struct logger *logger)
 						struct connection *nxt =
 							c->hp_next;
 						iface_delref(&c->iface);
-						iface_endpoint_delref(&c->interface);
 						c->host_pair = NULL;
 						c->hp_next = NULL;
 						orient(&c, logger);

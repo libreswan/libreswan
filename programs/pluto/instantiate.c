@@ -122,7 +122,6 @@ static struct connection *clone_connection(const char *name, struct connection *
 
 	c->root_config = NULL; /* block write access */
 	c->iface = iface_addref(t->iface);
-	c->interface = iface_endpoint_addref(t->interface);
 
 
 	c->local->host.id = clone_id(&t->local->host.id, "unshare local connection id");

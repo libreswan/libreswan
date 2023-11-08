@@ -742,7 +742,6 @@ struct connection {
 	unsigned long next_instance_serial;
 	unsigned long instance_serial;
 
-	struct iface_endpoint *interface;	/* filled in iff oriented */
 	struct iface *iface;			/* filled in iff oriented */
 
 	struct {
