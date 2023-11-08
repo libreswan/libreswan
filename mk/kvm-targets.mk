@@ -1005,13 +1005,13 @@ $(KVM_FREEBSD_BASE_ISO): testing/libvirt/freebsd/base.conf
 #
 
 KVM_NETBSD_MACHINE = amd64
-KVM_NETBSD_URL_PREFIX ?= https://nycdn.netbsd.org/pub/NetBSD-daily/netbsd-10/latest/$(KVM_NETBSD_MACHINE)
+KVM_NETBSD_URL_PREFIX ?= https://nycdn.netbsd.org/pub/NetBSD-daily/netbsd-10/latest/
 
-KVM_NETBSD_BOOT_ISO_URL ?= $(KVM_NETBSD_URL_PREFIX)/installation/cdrom/boot-com.iso
-KVM_NETBSD_BOOT_ISO ?= $(basename $(KVM_NETBSD_INSTALL_ISO))-boot.iso
-
-KVM_NETBSD_INSTALL_ISO_URL ?= $(KVM_NETBSD_URL_PREFIX)/images/NetBSD-10.0_BETA-$(KVM_NETBSD_MACHINE).iso
+KVM_NETBSD_INSTALL_ISO_URL ?= $(KVM_NETBSD_URL_PREFIX)/images/NetBSD-10.0_RC1-$(KVM_NETBSD_MACHINE).iso
 KVM_NETBSD_INSTALL_ISO ?= $(KVM_POOLDIR)/$(notdir $(KVM_NETBSD_INSTALL_ISO_URL))
+
+KVM_NETBSD_BOOT_ISO_URL ?= $(KVM_NETBSD_URL_PREFIX)/$(KVM_NETBSD_MACHINE)/installation/cdrom/boot-com.iso
+KVM_NETBSD_BOOT_ISO ?= $(basename $(KVM_NETBSD_INSTALL_ISO))-boot.iso
 
 kvm-iso: $(KVM_NETBSD_BOOT_ISO)
 kvm-iso: $(KVM_NETBSD_INSTALL_ISO)
