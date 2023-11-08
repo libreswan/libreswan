@@ -82,6 +82,8 @@ struct iface {
 	enum { IFD_ADD, IFD_KEEP, IFD_DELETE } ifd_change;
 };
 
+struct iface *next_iface(struct iface *);
+
 struct iface *find_iface_by_address(const ip_address *address);
 
 struct iface *iface_addref_where(struct iface *ifp, where_t where);

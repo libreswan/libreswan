@@ -98,6 +98,11 @@ struct iface *iface_addref_where(struct iface *iface, where_t where)
 	return addref_where(iface, where);
 }
 
+struct iface *next_iface(struct iface *iface)
+{
+	return NEXT_LIST_ENTRY(&interface_dev, iface, entry, OLD2NEW);
+}
+
 struct iface *find_iface_by_address(const ip_address *address)
 {
 	struct iface *ifd;
