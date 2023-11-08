@@ -534,10 +534,13 @@ static struct state *new_state(struct connection *c,
 	return st;
 }
 
-static void initialize_new_ike_sa(struct ike_sa *ike)
+static bool get_initiator_endpoints(struct connection *c,
+				    ip_endpoint *remote_endpoint,
+				    struct iface_endpoint **local_iface_endpoint)
 {
-	struct connection *c = ike->sa.st_connection;
-	PASSERT(ike->sa.logger, oriented(c));
+	PASSERT(c->logger, oriented(c));
+	(*remote_endpoint) = unset_endpoint;
+	(*local_iface_endpoint) = NULL;
 
 	/*
 	 * reset our choice of interface
@@ -556,8 +559,6 @@ static void initialize_new_ike_sa(struct ike_sa *ike)
 	 * See github/1094 and ikev2-revive-through-nat-01-down.
 	 */
 
-	PASSERT(ike->sa.logger, ike->sa.st_iface_endpoint == NULL);
-	PASSERT(ike->sa.logger, ike->sa.st_remote_endpoint.is_set == false);
 	/* 1,3,5,7-> 1; 0,2,4,6->0 */
 	unsigned mod_revival = (c->revival.attempt % 2);
 
@@ -565,54 +566,62 @@ static void initialize_new_ike_sa(struct ike_sa *ike)
 	    c->revival.local != NULL &&
 	    c->revival.remote.is_set) {
 
-		ldbg_sa(ike, "TCP: using revival revival endpoints");
+		ldbg(c->logger, "TCP: using revival revival endpoints");
 		/* transfer (with some logging) */
-		ike->sa.st_remote_endpoint = c->revival.remote;
+		(*remote_endpoint) = c->revival.remote;
 		c->revival.remote = unset_endpoint;
-		ike->sa.st_iface_endpoint = iface_endpoint_addref(c->revival.local);
+		(*local_iface_endpoint) = iface_endpoint_addref(c->revival.local);
 		iface_endpoint_delref(&c->revival.local);
 
 	} else if ((c->local->config->host.iketcp == IKE_TCP_NO) ||
 		   (c->local->config->host.iketcp == IKE_TCP_FALLBACK && mod_revival == 0)) {
 
-		ldbg_sa(ike, "TCP: using UDP endpoints");
+		ldbg(c->logger, "TCP: using UDP endpoints");
 		const struct ip_protocol *protocol = &ip_protocol_udp;
-		ike->sa.st_remote_endpoint =
+		(*remote_endpoint) =
 			endpoint_from_address_protocol_port(c->remote->host.addr, protocol,
 							    ip_hport(c->remote->host.port));
 		ip_endpoint local_endpoint =
 			endpoint_from_address_protocol_port(c->iface->local_address,
 							    protocol, local_host_port(c));
-		ike->sa.st_iface_endpoint = find_iface_endpoint_by_local_endpoint(local_endpoint);
+		(*local_iface_endpoint) = find_iface_endpoint_by_local_endpoint(local_endpoint);
 
 	} else {
 
 		address_buf ab;
-		ldbg_sa(ike, "TCP: forcing "PRI_SO" to open TCP connection to TCP %s with port "PRI_HPORT,
-			pri_so(ike->sa.st_serialno),
+		ldbg(c->logger, "TCP: open TCP connection to TCP %s with port "PRI_HPORT,
 			str_address(&c->remote->host.addr, &ab),
 			pri_hport(c->config->remote_tcpport));
-		PEXPECT(ike->sa.logger, ((c->local->config->host.iketcp == IKE_TCP_ONLY) ||
-					 (c->local->config->host.iketcp == IKE_TCP_FALLBACK && mod_revival == 1)));
-		ip_endpoint remote_endpoint =
+		PEXPECT(c->logger, ((c->local->config->host.iketcp == IKE_TCP_ONLY) ||
+				    (c->local->config->host.iketcp == IKE_TCP_FALLBACK && mod_revival == 1)));
+		(*remote_endpoint) =
 			endpoint_from_address_protocol_port(c->remote->host.addr,
 							    &ip_protocol_tcp,
 							    c->config->remote_tcpport);
 
 		/* create new-from-old first; must delref; blocking call */
-		ike->sa.st_remote_endpoint = remote_endpoint;
-		ike->sa.st_iface_endpoint =
-			connect_to_tcp_endpoint(c->iface, remote_endpoint,
-						ike->sa.st_logger);
-		PASSERT(ike->sa.logger, ike->sa.st_iface_endpoint != NULL);
+		(*local_iface_endpoint) =
+			connect_to_tcp_endpoint(c->iface, (*remote_endpoint), c->logger);
+		if ((*local_iface_endpoint) == NULL) {
+			return false;
+		}
 	}
 
 	endpoint_buf lb, rb;
-	ldbg(ike->sa.logger,
+	ldbg(c->logger,
 	     "in %s with local endpoint %s and remote endpoint set to %s",
 	     __func__,
-	     str_endpoint(&ike->sa.st_iface_endpoint->local_endpoint, &lb),
-	     str_endpoint(&ike->sa.st_remote_endpoint, &rb));
+	     str_endpoint(&(*local_iface_endpoint)->local_endpoint, &lb),
+	     str_endpoint(remote_endpoint, &rb));
+	return true;
+}
+
+static void get_responder_endpoints(const struct msg_digest *md,
+				    ip_endpoint *remote_endpoint,
+				    struct iface_endpoint **local_iface_endpoint)
+{
+	(*remote_endpoint) = md->sender;
+	(*local_iface_endpoint) = iface_endpoint_addref(md->iface);
 }
 
 struct ike_sa *new_v1_istate(struct connection *c,
@@ -632,7 +641,12 @@ struct ike_sa *new_v1_istate(struct connection *c,
 		}
 	}
 
-	initialize_new_ike_sa(parent);
+	if (!get_initiator_endpoints(c, &parent->sa.st_remote_endpoint, &parent->sa.st_iface_endpoint)) {
+		llog_pexpect(parent->sa.logger, HERE, "can't get endpoints");
+		delete_ike_sa(&parent);
+		return NULL;
+	}
+
 	return parent;
 }
 
@@ -643,13 +657,17 @@ struct ike_sa *new_v1_rstate(struct connection *c, struct msg_digest *md)
 					    md->hdr.isa_ike_spis.initiator,
 					    ike_responder_spi(&md->sender, md->md_logger),
 					    IKE_SA, SA_RESPONDER, HERE));
-	update_ike_endpoints(parent, md);
+
+	get_responder_endpoints(md, &parent->sa.st_remote_endpoint,
+				&parent->sa.st_iface_endpoint);
 	return parent;
 }
 
 static struct ike_sa *new_v2_ike_sa(struct connection *c,
 				    const struct v2_state_transition *transition,
 				    enum sa_role sa_role,
+				    struct iface_endpoint *local_iface_endpoint,
+				    ip_endpoint remote_endpoint,
 				    const ike_spi_t ike_initiator_spi,
 				    const ike_spi_t ike_responder_spi)
 {
@@ -660,6 +678,8 @@ static struct ike_sa *new_v2_ike_sa(struct connection *c,
 	change_state(&ike->sa, transition->state);
 	set_v2_transition(&ike->sa, transition, HERE);
 	v2_msgid_init_ike(ike);
+	ike->sa.st_remote_endpoint = remote_endpoint;
+	ike->sa.st_iface_endpoint = local_iface_endpoint; /* already reffed */
 	event_schedule(EVENT_SA_DISCARD, EXCHANGE_TIMEOUT_DELAY, &ike->sa);
 	return ike;
 }
@@ -669,10 +689,16 @@ struct ike_sa *new_v2_ike_sa_initiator(struct connection *c)
 	const struct finite_state *fs = finite_states[STATE_V2_PARENT_I0];
 	pexpect(fs->nr_transitions == 1);
 	const struct v2_state_transition *transition = &fs->v2.transitions[0];
-	struct ike_sa *ike = new_v2_ike_sa(c, transition, SA_INITIATOR,
-					   ike_initiator_spi(), zero_ike_spi);
 
-	initialize_new_ike_sa(ike);
+	ip_endpoint remote_endpoint;
+	struct iface_endpoint *local_iface_endpoint;
+	if (!get_initiator_endpoints(c, &remote_endpoint, &local_iface_endpoint)) {
+		return NULL;
+	}
+
+	struct ike_sa *ike = new_v2_ike_sa(c, transition, SA_INITIATOR,
+					   local_iface_endpoint, remote_endpoint,
+					   ike_initiator_spi(), zero_ike_spi);
 
 	return ike;
 }
@@ -681,11 +707,14 @@ struct ike_sa *new_v2_ike_sa_responder(struct connection *c,
 				       const struct v2_state_transition *transition,
 				       struct msg_digest *md)
 {
-	 struct ike_sa *ike = new_v2_ike_sa(c, transition, SA_RESPONDER,
-					    md->hdr.isa_ike_spis.initiator,
-					    ike_responder_spi(&md->sender, md->md_logger));
-	update_ike_endpoints(ike, md);
-	return ike;
+	ip_endpoint remote_endpoint;
+	struct iface_endpoint *local_iface_endpoint;
+	get_responder_endpoints(md, &remote_endpoint, &local_iface_endpoint);
+
+	return new_v2_ike_sa(c, transition, SA_RESPONDER,
+			     local_iface_endpoint, remote_endpoint,
+			     md->hdr.isa_ike_spis.initiator,
+			     ike_responder_spi(&md->sender, md->md_logger));
 }
 
 /*
