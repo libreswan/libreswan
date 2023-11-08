@@ -150,6 +150,10 @@ static struct connection *clone_connection(const char *name, struct connection *
 	}
 #endif
 
+	/* inherit UP and ROUTE */
+	c->policy.up = t->policy.up;
+	c->policy.route = t->policy.route;
+
 	connection_routing_init(c);
 
 	return c;
