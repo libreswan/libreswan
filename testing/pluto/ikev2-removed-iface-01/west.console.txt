@@ -60,7 +60,7 @@ west #
 002 listening for IKE messages
 002 adding UDP interface eth3 192.1.3.3:500
 002 adding UDP interface eth3 192.1.3.3:4500
-003 "test3": connection matches both left eth3 udp:192.1.3.3:500 and right eth3 udp:192.1.3.2:500
+003 "test3": connection matches both right eth3 192.1.3.2 and left eth3 192.1.3.3
 002 "test3": terminating SAs using this connection
 002 forgetting secrets
 002 loading secrets from "/etc/ipsec.secrets"
