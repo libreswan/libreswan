@@ -60,12 +60,31 @@ void disorient(struct connection *c)
 	}
 }
 
-static struct iface_endpoint *new_iface_endpoint(bool listening,
-						 struct iface *dev,
-						 const struct iface_io *io,
-						 const struct host_end_config *end,
-						 struct logger *logger)
+static void add_iface_endpoint(bool listening,
+			       struct connection *c,
+			       const struct iface_io *io)
 {
+	ip_port local_port = ip_hport(c->local->config->host.ikeport);
+
+	if (local_port.hport == 0) {
+		address_buf ab;
+		ldbg(c->logger, "  skipping %s %s; no custom %s port",
+		     c->iface->real_device_name,
+		     str_address(&c->iface->local_address, &ab),
+		     io->protocol->name);
+		return;
+	}
+
+	if (!listening) {
+		address_buf ab;
+		ldbg(c->logger, "  skipping %s %s "PRI_HPORT"; not listening to %s",
+		     c->iface->real_device_name,
+		     str_address(&c->iface->local_address, &ab),
+		     pri_hport(local_port),
+		     io->protocol->name);
+		return;
+	}
+
 	/*
 	 * A custom IKEPORT should not float away to port 4500.
 	 * Assume a custom port always has the prefix (like 4500 and
@@ -83,90 +102,69 @@ static struct iface_endpoint *new_iface_endpoint(bool listening,
 	const bool esp_encapsulation_enabled = true;
 	const bool float_nat_initiator = false;
 
-	if (!listening) {
-		ldbg(logger, "  skipping %s interface; not listening to %s",
-		     end->leftright, io->protocol->name);
-		return NULL;
-	}
-
-	struct iface_endpoint *ifp = bind_iface_endpoint(dev, io,
-							 ip_hport(end->ikeport),
-							 esp_encapsulation_enabled,
-							 float_nat_initiator,
-							 logger);
-	if (ifp == NULL) {
-		llog(RC_LOG_SERIOUS, logger,
-		     "skipping %s interface; %s bind failed",
-		     end->leftright, io->protocol->name);
-		return NULL;
-	}
-
-	ldbg(logger, "%s interface; %s created",
-	     end->leftright, io->protocol->name);
-
-	if (listening) {
-		listen_on_iface_endpoint(ifp, logger);
-	}
-
-	return ifp;
-}
-
-static bool add_new_iface_endpoints(struct connection *c, struct host_end *end)
-{
-	if (end->config->ikeport == 0) {
-		ldbg(c->logger, "  skipping %s interface; no ikeport", end->config->leftright);
-		return false;
-	}
-	if (!end->addr.is_set) {
-		ldbg(c->logger, "  skipping %s interface; no address", end->config->leftright);
-		return false;
-	}
-
-	struct iface *iface = find_iface_by_address(&end->addr); /* must delref */
-	if (iface == NULL) {
-		address_buf ab;
-		ldbg(c->logger, "  skipping %s interface; no device matches %s",
-		     end->config->leftright, str_address(&end->addr, &ab));
-		return false;
-	}
-
 	/*
-	 * Create both interfaces; but bind to only one.
+	 * See if it already exists.
 	 */
 
-	struct iface_endpoint *udp = new_iface_endpoint(pluto_listen_udp,
-							iface, &udp_iface_io,
-							end->config, c->logger);
+	ip_endpoint local_endpoint =
+		endpoint_from_address_protocol_port(c->local->host.addr,
+						    io->protocol,
+						    local_port);
 
-	struct iface_endpoint *tcp = new_iface_endpoint(pluto_listen_tcp,
-							iface, &iketcp_iface_io,
-							end->config, c->logger);
-
-	iface_delref(&iface); /* all done */
-
-	struct iface_endpoint *ifp = (udp != NULL ? udp :
-				      tcp != NULL ? tcp :
-				      NULL);
-	if (ifp == NULL) {
-		llog(RC_LOG_SERIOUS, c->logger, "no %s interface bound to port %d",
-		     end->config->leftright, end->config->ikeport);
-		return false;
+	struct iface_endpoint *ife = find_iface_endpoint_by_local_endpoint(local_endpoint); /* must delref */
+	if (ife != NULL) {
+		address_buf ab;
+		ldbg(c->logger, "  skipping %s %s; already bound to %s port "PRI_HPORT,
+		     c->iface->real_device_name,
+		     str_address(&c->iface->local_address, &ab),
+		     io->protocol->name,
+		     pri_hport(local_port));
+		iface_endpoint_delref(&ife);
+		return;
 	}
 
-	pexpect(c->iface == NULL);	/* no leak */
-	c->iface = iface_addref(ifp->ip_dev);
+	struct iface_endpoint *ifp = bind_iface_endpoint(c->iface, io,
+							 local_port,
+							 esp_encapsulation_enabled,
+							 float_nat_initiator,
+							 c->logger);
+	if (ifp == NULL) {
+		address_buf ab;
+		llog(RC_LOG_SERIOUS, c->logger,
+		     "  skipping %s %s; bind of %s port "PRI_HPORT" failed",
+		     c->iface->real_device_name,
+		     str_address(&c->iface->local_address, &ab),
+		     io->protocol->name,
+		     pri_hport(local_port));
+		return;
+	}
 
-	ldbg(c->logger, "  adding %s interface",
-	     end->config->leftright);
+	address_buf ab;
+	ldbg(c->logger, "  %s %s; bound to %s port "PRI_HPORT,
+	     c->iface->real_device_name,
+	     str_address(&c->iface->local_address, &ab),
+	     io->protocol->name,
+	     pri_hport(local_port));
 
-	return true;
+	if (listening) {
+		listen_on_iface_endpoint(ifp, c->logger);
+	}
 }
 
-static bool host_end_matches_iface_endpoint(const struct connection *c, enum left_right end,
-					    const struct iface_endpoint *ifp)
+/*
+ * Bind to any missing interfaces.
+ */
+
+static void add_iface_endpoints(struct connection *c)
+{
+	add_iface_endpoint(pluto_listen_udp, c, &udp_iface_io);
+	add_iface_endpoint(pluto_listen_tcp, c, &iketcp_iface_io);
+}
+
+static bool host_end_matches_iface(const struct connection *c, enum left_right end,
+				   const struct iface *iface)
 {
 	const struct host_end *this = &c->end[end].host;
-	const struct host_end *that = &c->end[!end].host;
 
 	ip_address this_host_addr = this->addr;
 	if (!address_is_specified(this_host_addr)) {
@@ -174,27 +172,7 @@ static bool host_end_matches_iface_endpoint(const struct connection *c, enum lef
 		return false;
 	}
 
-	/*
-	 * which port?
-	 */
-	ip_port this_host_port = end_host_port(this, that);
-	const struct ip_protocol *this_host_protocol;
-	switch (c->local->config->host.iketcp) {
-	case IKE_TCP_NO:
-	case IKE_TCP_FALLBACK:
-		this_host_protocol = &ip_protocol_udp;
-		break;
-	case IKE_TCP_ONLY:
-		this_host_protocol = &ip_protocol_tcp;
-		break;
-	default:
-		bad_sparse(c->logger, tcp_option_names, c->local->config->host.iketcp);
-	}
-	ip_endpoint this_host_endpoint =
-		endpoint_from_address_protocol_port(this_host_addr,
-						    this_host_protocol,
-						    this_host_port);
-	return endpoint_eq_endpoint(this_host_endpoint, ifp->local_endpoint);
+	return address_eq_address(this->addr, iface->local_address);
 }
 
 static void LDBG_orient_end(struct connection *c, enum left_right end)
@@ -249,20 +227,20 @@ bool orient(struct connection **cp, struct logger *logger)
 	FOR_EACH_ITEM(spd, &(*cp)->child.spds) {
 		spd_route_db_rehash_remote_client(spd);
 	}
+
+	/*
+	 * Add a listen for any missing interface endpoints.
+	 */
+	add_iface_endpoints((*cp));
+
 	return true;
 }
 
-static void jam_if(struct jambuf *buf, const struct iface_endpoint *ifp)
+static void jam_iface(struct jambuf *buf, const struct iface *iface)
 {
-	jam_string(buf, ifp->ip_dev->real_device_name);
+	jam_string(buf, iface->real_device_name);
 	jam_string(buf, " ");
-	if (ifp->io->protocol->prefix != NULL) {
-		jam_string_human(buf, ifp->io->protocol->prefix);
-	} else {
-		jam_string_human(buf, ifp->io->protocol->name);
-	}
-	jam_string(buf, ":");
-	jam_endpoint(buf, &ifp->local_endpoint);
+	jam_address(buf, &iface->local_address);
 }
 
 enum left_right orient_1(struct connection **cp, struct logger *logger)
@@ -281,20 +259,22 @@ enum left_right orient_1(struct connection **cp, struct logger *logger)
 	 * oops!
 	 */
 	enum left_right matching_end = END_ROOF;/*invalid*/
-	struct iface_endpoint *matching_ifp = NULL;
+	struct iface *matching_iface = NULL;
 
-	for (struct iface_endpoint *ifp = interfaces; ifp != NULL; ifp = ifp->next) {
+	for (struct iface *iface = next_iface(NULL); iface != NULL; iface = next_iface(iface)) {
 
 		/* XXX: check connection allows p->protocol? */
-		bool left = host_end_matches_iface_endpoint((*cp), LEFT_END, ifp);
-		bool right = host_end_matches_iface_endpoint((*cp), RIGHT_END, ifp);
+		bool left = host_end_matches_iface((*cp), LEFT_END, iface);
+		bool right = host_end_matches_iface((*cp), RIGHT_END, iface);
 
 		if (!left && !right) {
-			endpoint_buf eb;
-			ldbg((*cp)->logger, "    interface %s %s:%s does not match left or right",
-			     ifp->ip_dev->real_device_name,
-			     ifp->io->protocol->name,
-			     str_endpoint(&ifp->local_endpoint, &eb));
+			if (DBGP(DBG_BASE)) {
+				LLOG_JAMBUF(DEBUG_STREAM, (*cp)->logger, buf) {
+					jam_string(buf, "    interface ");
+					jam_iface(buf, iface);
+					jam_string(buf, " does not match left or right");
+				}
+			}
 			continue;
 		}
 
@@ -304,9 +284,9 @@ enum left_right orient_1(struct connection **cp, struct logger *logger)
 			connection_attach((*cp), logger);
 			LLOG_JAMBUF(RC_LOG_SERIOUS, (*cp)->logger, buf) {
 				jam_string(buf, "connection matches both left ");
-				jam_if(buf, ifp);
+				jam_iface(buf, iface);
 				jam_string(buf, " and right ");
-				jam_if(buf, ifp);
+				jam_iface(buf, iface);
 			}
 			terminate_and_down_connections(cp, logger, HERE);
 			connection_detach((*cp), logger);
@@ -319,9 +299,9 @@ enum left_right orient_1(struct connection **cp, struct logger *logger)
 				       END_ROOF);
 		passert(end != END_ROOF);
 
-		if (matching_ifp != NULL) {
+		if (matching_iface != NULL) {
 			/*
-			 * Oops there's already a MATCHING_IFP.  Try
+			 * Oops there's already a MATCHING_IFACE.  Try
 			 * to be helpful with the log line.
 			 *
 			 * Presumably the LHS(say) matched the first
@@ -339,12 +319,12 @@ enum left_right orient_1(struct connection **cp, struct logger *logger)
 				/*previous-match*/
 				jam_string(buf, (*cp)->end[matching_end].config->leftright);
 				jam_string(buf, " ");
-				jam_if(buf, matching_ifp);
+				jam_iface(buf, matching_iface);
 				jam_string(buf, " and ");
 				/* new match */
 				jam_string(buf, (*cp)->end[end].config->leftright);
 				jam_string(buf, " ");
-				jam_if(buf, ifp);
+				jam_iface(buf, iface);
 			}
 			terminate_and_down_connections(cp, logger, HERE);
 			connection_detach((*cp), logger);
@@ -353,32 +333,30 @@ enum left_right orient_1(struct connection **cp, struct logger *logger)
 		}
 
 		/* save match, and then continue search */
-		matching_ifp = ifp;
-		endpoint_buf eb;
-		ldbg((*cp)->logger, "  interface %s endpoint %s matches '%s'; orienting",
-		     ifp->ip_dev->real_device_name,
-		     str_endpoint(&ifp->local_endpoint, &eb),
-		     (*cp)->end[end].config->leftright);
+		if (DBGP(DBG_BASE)) {
+			LLOG_JAMBUF(DEBUG_STREAM, (*cp)->logger, buf) {
+				jam_string(buf, "    interface ");
+				jam_iface(buf, iface);
+				jam_string(buf, " matches '");
+				jam_string(buf, (*cp)->end[end].config->leftright);
+				jam_string(buf, "'; orienting");
+			}
+		}
+		matching_iface = iface;
 		matching_end = end;
 	}
 
-	if (matching_ifp != NULL) {
-		passert(matching_end != END_ROOF);
-		pexpect((*cp)->iface == NULL); /* wasn't updated */
-		(*cp)->iface = iface_addref(matching_ifp->ip_dev);
-		return matching_end;
+	if (matching_iface == NULL) {
+		return END_ROOF;
 	}
 
 	/*
-	 * No existing interface worked, try to create new ones.
+	 * Attach the interface (still not properly oriented).
 	 */
-	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		passert((*cp)->iface == NULL); /* wasn't updated */
-		if (add_new_iface_endpoints((*cp), &(*cp)->end[end].host)) {
-			passert((*cp)->iface != NULL); /* was updated */
-			return end;
-		}
-	}
+	PASSERT((*cp)->logger, matching_end != END_ROOF);
+	PEXPECT((*cp)->logger, (*cp)->iface == NULL); /* wasn't updated */
+	(*cp)->iface = iface_addref(matching_iface);
 
-	return END_ROOF;
+	return matching_end;
+
 }
