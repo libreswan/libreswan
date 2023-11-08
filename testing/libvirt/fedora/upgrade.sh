@@ -27,6 +27,10 @@ dnf config-manager --save --setopt=cachedir=${cachedir}
 
 #dnf config-manager --save --setopt=makecache=0
 
+: give DNS time to come online?
+
+sleep 5
+
 : explicitly build the cache
 
 dnf makecache
