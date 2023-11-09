@@ -382,7 +382,8 @@ RPM_BUILD_CLEAN ?= --rmsource --rmspec --clean
 #
 
 KVM_FRESH_BOOT_FILE = $(KVM_POOLDIR_PREFIX)boot.ok
-$(KVM_FRESH_BOOT_FILE): $(firstword $(wildcard /var/run/rc.log /var/log/boot.log)) | $(KVM_LOCALDIR)
+$(KVM_FRESH_BOOT_FILE): $(firstword $(wildcard /var/run/rc.log /var/log/boot.log))
+$(KVM_FRESH_BOOT_FILE): | $(KVM_POOLDIR)
 	touch $@
 
 #
@@ -425,7 +426,6 @@ KVM_HOST_OK += $(KVM_HOST_ENTROPY_OK)
 KVM_HOST_QEMUDIR ?= /var/lib/libvirt/qemu
 KVM_HOST_QEMUDIR_OK = $(KVM_POOLDIR_PREFIX)qemudir.ok
 $(KVM_HOST_QEMUDIR_OK): $(KVM_FRESH_BOOT_FILE)
-$(KVM_HOST_QEMUDIR_OK): | $(KVM_POOLDIR)
 $(KVM_HOST_QEMUDIR_OK): | $(KVM_POOLDIR)
 	@if ! test -w $(KVM_HOST_QEMUDIR) ; then			\
 		echo ;							\
