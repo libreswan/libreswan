@@ -56,7 +56,7 @@
 #include "terminate.h"
 
 char *pluto_listen = NULL;		/* from --listen flag */
-struct iface_endpoint *interfaces = NULL;  /* public interfaces */
+static struct iface_endpoint *interfaces = NULL;  /* public interfaces */
 
 static size_t jam_iface_endpoint(struct jambuf *buf, const struct iface_endpoint *ifp)
 {

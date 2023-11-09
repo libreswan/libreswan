@@ -185,8 +185,6 @@ struct iface_endpoint *iface_endpoint_addref_where(struct iface_endpoint *ifp, w
 void iface_endpoint_delref_where(struct iface_endpoint **ifp, where_t where);
 #define iface_endpoint_delref(IFP) iface_endpoint_delref_where(IFP, HERE)
 
-extern struct iface_endpoint *interfaces;   /* public interfaces */
-
 extern struct iface_endpoint *find_iface_endpoint_by_local_endpoint(ip_endpoint local_endpoint);
 extern void find_ifaces(bool rm_dead, struct logger *logger);
 extern void show_ifaces_status(struct show *s);

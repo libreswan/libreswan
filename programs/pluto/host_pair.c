@@ -412,10 +412,13 @@ void check_orientations(struct logger *logger)
 	 * In other words, the far side must not match one of our new
 	 * interfaces.
 	 */
-	for (struct iface_endpoint *i = interfaces; i != NULL; i = i->next) {
-		if (i->ip_dev->ifd_change != IFD_ADD) {
+	for (struct iface *iface = next_iface(NULL);
+	     iface != NULL; iface = next_iface(iface)) {
+
+		if (iface->ifd_change != IFD_ADD) {
 			continue;
 		}
+
 		for (unsigned u = 0; u < host_pair_addresses_hash_table.nr_slots; u++) {
 			struct list_head *bucket = &host_pair_addresses_hash_table.slots[u];
 			struct host_pair *hp = NULL;
@@ -424,37 +427,35 @@ void check_orientations(struct logger *logger)
 				 * XXX: what's with the maybe compare
 				 * the port logic?
 				 */
-				if (sameaddr(&hp->remote,
-					     &i->ip_dev->local_address)) {
-					/*
-					 * bad news: the whole chain
-					 * of connections hanging off
-					 * this host pair has both
-					 * sides matching an
-					 * interface.  We'll get rid
-					 * of them, using orient and
-					 * connect_to_host_pair.
-					 */
-					struct connection *c =
-						hp->connections;
-					hp->connections = NULL;
-					while (c != NULL) {
-						struct connection *nxt =
-							c->hp_next;
-						iface_delref(&c->iface);
-						c->host_pair = NULL;
-						c->hp_next = NULL;
-						orient(&c, logger);
-						connect_to_host_pair(c);
-						c = nxt;
-					}
-					/*
-					 * XXX: is this ever not the
-					 * case?
-					 */
-					if (hp->connections == NULL) {
-						free_host_pair(&hp, HERE);
-					}
+				if (!address_eq_address(hp->remote, iface->local_address)) {
+					continue;
+				}
+
+				/*
+				 * bad news: the whole chain of
+				 * connections hanging off this host
+				 * pair has both sides matching an
+				 * interface.  We'll get rid of them,
+				 * using orient and
+				 * connect_to_host_pair.
+				 */
+				struct connection *c = hp->connections;
+				hp->connections = NULL;
+				while (c != NULL) {
+					struct connection *nxt =
+						c->hp_next;
+					iface_delref(&c->iface);
+					c->host_pair = NULL;
+					c->hp_next = NULL;
+					orient(&c, logger);
+					connect_to_host_pair(c);
+					c = nxt;
+				}
+				/*
+				 * XXX: is this ever not the case?
+				 */
+				if (hp->connections == NULL) {
+					free_host_pair(&hp, HERE);
 				}
 			}
 		}
