@@ -308,6 +308,9 @@ struct config {
 					 * auto/yes/no - formerly
 					 * forceencaps=yes/no */
 
+	msgid_t ike_window;		/* IKE v2 window size
+					 * 7296#section-2.3 */
+
 	struct {
 		char *interface;
 		bool routing;		/* should updown perform
@@ -776,7 +779,6 @@ struct connection {
 	struct addresspool *pool[IP_INDEX_ROOF];
 
 	uint16_t nflog_group;	/* NFLOG group - 0 means disabled */
-	msgid_t ike_window;     /* IKE v2 window size 7296#section-2.3 */
 
 	struct {
 		struct list_entry list;

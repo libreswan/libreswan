@@ -516,7 +516,8 @@ static void initiate_next(const char *story, struct state *ike_sa, void *context
 	}
 	struct v2_msgid_window *initiator = &ike->sa.st_v2_msgid_windows.initiator;
 	for (intmax_t unack = (initiator->sent - initiator->recv);
-	     unack < ike->sa.st_connection->ike_window && ike->sa.st_v2_msgid_windows.pending_requests != NULL;
+	     unack < ike->sa.st_connection->config->ike_window
+		     && ike->sa.st_v2_msgid_windows.pending_requests != NULL;
 	     unack++) {
 
 		/*
@@ -586,7 +587,7 @@ void v2_msgid_schedule_next_initiator(struct ike_sa *ike)
 	if (pending != NULL) {
 		/* if this returns NULL, that's ok; will log "LOST" */
 		intmax_t unack = (initiator->sent - initiator->recv);
-		if (unack < ike->sa.st_connection->ike_window) {
+		if (unack < ike->sa.st_connection->config->ike_window) {
 			dbg_v2_msgid(ike,
 				     "wakeing IKE SA for next initiator "PRI_SO", (unack %jd)",
 				     pri_so(pending->who_for), unack);
