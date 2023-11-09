@@ -899,6 +899,7 @@ KVM_ALPINE_ISO = $(KVM_POOLDIR)/$(notdir $(KVM_ALPINE_ISO_URL))
 kvm-iso: $(KVM_ALPINE_ISO)
 $(KVM_ALPINE_ISO): | $(KVM_POOLDIR)
 	wget --output-document $@.tmp --no-clobber -- $(KVM_ALPINE_ISO_URL)
+	touch $@.tmp # wget preserves dates
 	mv $@.tmp $@
 
 KVM_ALPINE_VIRT_INSTALL_FLAGS = \
@@ -918,6 +919,7 @@ KVM_DEBIAN_ISO = $(KVM_POOLDIR)/$(notdir $(KVM_DEBIAN_ISO_URL))
 kvm-iso: $(KVM_DEBIAN_ISO)
 $(KVM_DEBIAN_ISO): | $(KVM_POOLDIR)
 	wget --output-document $@.tmp --no-clobber -- $(KVM_DEBIAN_ISO_URL)
+	touch $@.tmp # wget preserves dates
 	mv $@.tmp $@
 
 KVM_DEBIAN_VIRT_INSTALL_FLAGS = \
@@ -943,6 +945,7 @@ KVM_FEDORA_ISO = $(KVM_POOLDIR)/$(notdir $(KVM_FEDORA_ISO_URL))
 kvm-iso: $(KVM_FEDORA_ISO)
 $(KVM_FEDORA_ISO): | $(KVM_POOLDIR)
 	wget --output-document $@.tmp --no-clobber -- $(KVM_FEDORA_ISO_URL)
+	touch $@.tmp # wget preserves dates
 	mv $@.tmp $@
 
 KVM_FEDORA_VIRT_INSTALL_FLAGS = \
@@ -976,7 +979,9 @@ KVM_FREEBSD_ISO ?= $(KVM_POOLDIR)/$(notdir $(KVM_FREEBSD_ISO_URL))
 kvm-iso: $(KVM_FREEBSD_ISO)
 # For FreeBSD, download the compressed ISO
 $(KVM_FREEBSD_ISO).xz: | $(KVM_POOLDIR)
-	wget --output-document $@ --no-clobber -- $(KVM_FREEBSD_ISO_URL).xz
+	wget --output-document $@.tmp --no-clobber -- $(KVM_FREEBSD_ISO_URL).xz
+	touch $@.tmp # wget preserves dates
+	mv $@.tmp $@
 $(KVM_FREEBSD_ISO): | $(KVM_FREEBSD_ISO).xz
 	echo 'SHA256 ($@.xz) = $(KVM_FREEBSD_ISO_SHA256)' | cksum -c
 	xz --uncompress --keep $@.xz
@@ -1021,9 +1026,11 @@ kvm-iso: $(KVM_NETBSD_BOOT_ISO)
 kvm-iso: $(KVM_NETBSD_INSTALL_ISO)
 $(KVM_NETBSD_INSTALL_ISO): | $(KVM_POOLDIR)
 	wget --output-document $@.tmp --no-clobber -- $(KVM_NETBSD_INSTALL_ISO_URL)
+	touch $@.tmp # wget preserves dates
 	mv $@.tmp $@
 $(KVM_NETBSD_BOOT_ISO): | $(KVM_POOLDIR)
 	wget --output-document $@.tmp --no-clobber -- $(KVM_NETBSD_BOOT_ISO_URL)
+	touch $@.tmp # wget preserves dates
 	mv $@.tmp $@
 
 KVM_NETBSD_BASE_ISO = $(KVM_NETBSD_BASE_DOMAIN).iso
@@ -1067,6 +1074,7 @@ KVM_OPENBSD_ISO = $(KVM_POOLDIR)/OpenBSD-$(KVM_OPENBSD_ISO_RELEASE)-install.iso
 kvm-iso: $(KVM_OPENBSD_ISO)
 $(KVM_OPENBSD_ISO): | $(KVM_POOLDIR)
 	wget --output-document $@.tmp --no-clobber -- $(KVM_OPENBSD_ISO_URL)
+	touch $@.tmp # wget preserves dates
 	echo 'SHA256 ($@.tmp) = $(KVM_OPENBSD_ISO_SHA256)' | cksum -c
 	mv $@.tmp $@
 
