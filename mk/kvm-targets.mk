@@ -266,14 +266,17 @@ define domains
 KVM_$($(strip $1))_BASE_HOST_NAME    = $(strip $1)-base
 KVM_$($(strip $1))_UPGRADE_HOST_NAME = $(strip $1)-upgrade
 KVM_$($(strip $1))_BUILD_HOST_NAME   = $(strip $1)
+KVM_$($(strip $1))_HOST_NAME         = $(strip $1)
 
 KVM_$($(strip $1))_BASE_DOMAIN_NAME    = $$(addprefix $$(KVM_FIRST_PREFIX), $$(KVM_$($(strip $1))_BASE_HOST_NAME))
 KVM_$($(strip $1))_UPGRADE_DOMAIN_NAME = $$(addprefix $$(KVM_FIRST_PREFIX), $$(KVM_$($(strip $1))_UPGRADE_HOST_NAME))
 KVM_$($(strip $1))_BUILD_DOMAIN_NAME   = $$(addprefix $$(KVM_FIRST_PREFIX), $$(KVM_$($(strip $1))_BUILD_HOST_NAME))
+KVM_$($(strip $1))_DOMAIN_NAME         = $$(addprefix $$(KVM_FIRST_PREFIX), $$(KVM_$($(strip $1))_HOST_NAME))
 
 KVM_$($(strip $1))_BASE_DOMAIN    = $$(addprefix $$(KVM_POOLDIR)/, $$(KVM_$($(strip $1))_BASE_DOMAIN_NAME))
 KVM_$($(strip $1))_UPGRADE_DOMAIN = $$(addprefix $$(KVM_POOLDIR)/, $$(KVM_$($(strip $1))_UPGRADE_DOMAIN_NAME))
 KVM_$($(strip $1))_BUILD_DOMAIN   = $$(addprefix $$(KVM_POOLDIR)/, $$(KVM_$($(strip $1))_BUILD_DOMAIN_NAME))
+KVM_$($(strip $1))_DOMAIN         = $$(addprefix $$(KVM_POOLDIR)/, $$(KVM_$($(strip $1))_DOMAIN_NAME))
 
 KVM_$($(strip $1))_TEST_HOST_NAMES   = $$(addprefix $1, $$(KVM_OS_HOST_NAMES))
 KVM_$($(strip $1))_TEST_DOMAIN_NAMES = $$(call add-kvm-prefixes, $$(KVM_$($(strip $1))_TEST_HOST_NAMES))
@@ -821,7 +824,8 @@ kvm-base-%:
 	$(MAKE) $(KVM_POOLDIR_PREFIX)$(*)-base
 
 $(patsubst %, $(KVM_POOLDIR_PREFIX)%-base, $(KVM_PLATFORM)): \
-$(KVM_POOLDIR_PREFIX)%-base: | \
+$(KVM_POOLDIR_PREFIX)%-base: \
+		| \
 		testing/libvirt/kvm-install-base.py \
 		testing/libvirt/%/base.py \
 		$(KVM_POOLDIR) \
@@ -900,8 +904,8 @@ $(KVM_ALPINE_ISO): | $(KVM_POOLDIR)
 KVM_ALPINE_VIRT_INSTALL_FLAGS = \
 	--cdrom=$(KVM_ALPINE_ISO)
 
-$(KVM_ALPINE_BASE_DOMAIN): | $(KVM_ALPINE_ISO)
-$(KVM_ALPINE_BASE_DOMAIN): | $(KVM_ALPINE_KICKSTART_FILE)
+$(KVM_ALPINE_DOMAIN)-base: $(KVM_ALPINE_ISO)
+$(KVM_ALPINE_DOMAIN)-base: | $(KVM_ALPINE_KICKSTART_FILE)
 
 
 #
@@ -920,8 +924,8 @@ KVM_DEBIAN_VIRT_INSTALL_FLAGS = \
 	--cdrom=$(KVM_DEBIAN_ISO)
 	--extra-args="console=ttyS0,115200 net.ifnames=0 biosdevname=0"
 
-$(KVM_DEBIAN_BASE_DOMAIN): | $(KVM_DEBIAN_ISO)
-$(KVM_DEBIAN_BASE_DOMAIN): | $(KVM_DEBIAN_KICKSTART_FILE)
+$(KVM_DEBIAN_DOMAIN)-base: $(KVM_DEBIAN_ISO)
+$(KVM_DEBIAN_DOMAIN)-base: | $(KVM_DEBIAN_KICKSTART_FILE)
 
 
 #
@@ -946,9 +950,9 @@ KVM_FEDORA_VIRT_INSTALL_FLAGS = \
 	--initrd-inject=$(KVM_FEDORA_BASE_DOMAIN).ks \
 	--extra-args="inst.ks=file:/$(notdir $(KVM_FEDORA_BASE_DOMAIN).ks) console=ttyS0,115200 net.ifnames=0 biosdevname=0"
 
-$(KVM_FEDORA_BASE_DOMAIN): | $(KVM_FEDORA_ISO)
-$(KVM_FEDORA_BASE_DOMAIN): | $(KVM_FEDORA_KICKSTART_FILE)
-$(KVM_FEDORA_BASE_DOMAIN): | $(KVM_FEDORA_BASE_DOMAIN).ks
+$(KVM_FEDORA_DOMAIN)-base: $(KVM_FEDORA_ISO)
+$(KVM_FEDORA_DOMAIN)-base: | $(KVM_FEDORA_KICKSTART_FILE)
+$(KVM_FEDORA_DOMAIN)-base: | $(KVM_FEDORA_BASE_DOMAIN).ks
 
 $(KVM_FEDORA_BASE_DOMAIN).ks: | $(KVM_FEDORA_KICKSTART_FILE)
 	$(KVM_TRANSMOGRIFY) \
@@ -981,7 +985,7 @@ KVM_FREEBSD_BASE_ISO = $(KVM_FREEBSD_BASE_DOMAIN).iso
 KVM_FREEBSD_VIRT_INSTALL_FLAGS = \
        --cdrom=$(KVM_FREEBSD_BASE_ISO)
 
-$(KVM_FREEBSD_BASE_DOMAIN): | $(KVM_FREEBSD_BASE_ISO)
+$(KVM_FREEBSD_DOMAIN)-base: $(KVM_FREEBSD_BASE_ISO)
 
 $(KVM_FREEBSD_BASE_ISO): $(KVM_FREEBSD_ISO)
 $(KVM_FREEBSD_BASE_ISO): testing/libvirt/freebsd/loader.conf
@@ -1027,8 +1031,8 @@ KVM_NETBSD_VIRT_INSTALL_FLAGS = \
 	--cdrom=$(KVM_NETBSD_BOOT_ISO) \
 	--disk=path=$(KVM_NETBSD_BASE_ISO),readonly=on,device=cdrom
 
-$(KVM_NETBSD_BASE_DOMAIN): | $(KVM_NETBSD_BOOT_ISO)
-$(KVM_NETBSD_BASE_DOMAIN): | $(KVM_NETBSD_BASE_ISO)
+$(KVM_NETBSD_DOMAIN)-base: $(KVM_NETBSD_BOOT_ISO)
+$(KVM_NETBSD_DOMAIN)-base: $(KVM_NETBSD_BASE_ISO)
 
 $(KVM_NETBSD_BASE_ISO): $(KVM_NETBSD_INSTALL_ISO)
 $(KVM_NETBSD_BASE_ISO): testing/libvirt/netbsd/base.sh
@@ -1071,7 +1075,7 @@ KVM_OPENBSD_VIRT_INSTALL_FLAGS = \
 	--disk path=$(KVM_OPENBSD_BASE_ISO),readonly=on,device=cdrom,target.bus=sata \
 	--install bootdev=cdrom
 
-$(KVM_OPENBSD_BASE_DOMAIN): | $(KVM_OPENBSD_BASE_ISO)
+$(KVM_OPENBSD_DOMAIN)-base: $(KVM_OPENBSD_BASE_ISO)
 
 kvm-iso: $(KVM_OPENBSD_BASE_ISO)
 $(KVM_OPENBSD_BASE_ISO): $(KVM_OPENBSD_ISO)
@@ -1118,9 +1122,11 @@ kvm-upgrade-%:
 	$(MAKE) $(KVM_POOLDIR_PREFIX)$(*)-upgrade
 
 $(patsubst %, $(KVM_POOLDIR_PREFIX)%-upgrade, $(KVM_PLATFORM)): \
-$(KVM_POOLDIR_PREFIX)%-upgrade: $(KVM_POOLDIR_PREFIX)%-base \
+$(KVM_POOLDIR_PREFIX)%-upgrade: \
+		$(KVM_POOLDIR_PREFIX)%-base \
+		| \
 		testing/libvirt/%/upgrade.sh \
-		| $(KVM_HOST_OK)
+		$(KVM_HOST_OK)
 	: @=$@ *=$*
 	./testing/libvirt/kvm-uninstall-domain.sh $@
 	$(QEMU_IMG) create -f qcow2 -F qcow2 -b $<.qcow2 $@.qcow2
@@ -1171,7 +1177,8 @@ KVM_BUILD_CPUS = $(KVM_WORKERS)
 KVM_BUILD_MEMORY = $(shell expr 2048 + \( $(KVM_BUILD_CPUS) - 1 \) \* 256 )
 
 $(patsubst %, $(KVM_POOLDIR_PREFIX)%, $(KVM_PLATFORM)): \
-$(KVM_POOLDIR_PREFIX)%: $(KVM_POOLDIR_PREFIX)%-upgrade \
+$(KVM_POOLDIR_PREFIX)%: \
+		$(KVM_POOLDIR_PREFIX)%-upgrade \
 		| \
 		testing/libvirt/%/transmogrify.sh \
 		$(KVM_HOST_OK)
