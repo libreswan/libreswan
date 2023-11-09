@@ -15,33 +15,19 @@ west #
  echo "initdone"
 initdone
 west #
- export EF_DISABLE_BANNER=1
+ # everything as auto=start
 west #
- ipsec pluto --impair helper_thread_delay:1 --config /etc/ipsec.conf
+ EF_DISABLE_BANNER=1 ipsec pluto --impair helper_thread_delay:1 --config /etc/ipsec.conf
 PATH/libexec/ipsec/pluto: impair helper_thread_delay:1 (was 0)
 west #
- # expecting 2*16 + 5 = 37 tunnels to come up
+ # Expecting 2*16 + 5 = 37 tunnels to come up.  Each requires two 2 DH
 west #
- sleep 10
-west #
- # waiting
-west #
- sleep 10
-west #
- # waiting
-west #
- sleep 10
-west #
- # waiting
-west #
- sleep 10
-west #
- # waiting
+ # offloads (plus possible extra offloads for things like NONCE).
 west #
  ipsec status | grep Total
-000 Total IPsec connections: loaded 37, active 7
+000 Total IPsec connections: loaded 0, active 0
 west #
- echo done
-done
+ ../../guestbin/wait-for.sh --timeout 180 --match 'loaded 37, active 37' -- ipsec status
+000 Total IPsec connections: loaded 37, active 37
 west #
  
