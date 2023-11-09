@@ -1,5 +1,1 @@
-IKEv2 roadwarrior configured to start with TCP and skip UDP completely.
-
-east blocks UDP just in case.
-
-connection should establish with TCP.
+Initiate TCP with everything other than tcp=yes set to defaults.

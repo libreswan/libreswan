@@ -1402,11 +1402,11 @@ kvmplutotest	ikev2-tcp-00-enable-tcp-default				good
 kvmplutotest	ikev2-tcp-00-enable-tcp-fallback			good
 kvmplutotest	ikev2-tcp-00-enable-tcp-no				good
 kvmplutotest	ikev2-tcp-00-enable-tcp-yes				good
-kvmplutotest	ikev2-tcp-01-listen-default				wip
-kvmplutotest	ikev2-tcp-01-listen-tcp-no-udp-no			wip
-kvmplutotest	ikev2-tcp-01-listen-tcp-no-udp-yes			wip
-kvmplutotest	ikev2-tcp-01-listen-tcp-yes-udp-no			wip
-kvmplutotest	ikev2-tcp-01-listen-tcp-yes-udp-yes			wip
+kvmplutotest	ikev2-tcp-01-listen-default				good
+kvmplutotest	ikev2-tcp-01-listen-tcp-no-udp-no			good
+kvmplutotest	ikev2-tcp-01-listen-tcp-no-udp-yes			good
+kvmplutotest	ikev2-tcp-01-listen-tcp-yes-udp-no			good
+kvmplutotest	ikev2-tcp-01-listen-tcp-yes-udp-yes			good
 kvmplutotest	ikev2-tcp-03-basic-rawrsa-blocking			wip	github/717
 kvmplutotest	ikev2-tcp-03-basic-rawrsa-nonblocking			wip	github/717
 kvmplutotest	ikev2-tcp-04-ikeport					good
