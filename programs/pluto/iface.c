@@ -345,7 +345,7 @@ struct iface_endpoint *bind_iface_endpoint(struct iface *ifd,
 		llog_error(logger, e,					\
 			   "bind %s %s endpoint %s failed, "MSG,	\
 			   ifd->real_device_name, io->protocol->name,		\
-			   str_endpoint(&local_endpoint, &eb),		\
+ 			   str_endpoint(&local_endpoint, &eb),		\
 			   ##__VA_ARGS__);				\
 	}
 
@@ -703,9 +703,14 @@ void shutdown_ifaces(struct logger *logger)
 	/* clean up public interfaces */
 	mark_ifaces_dead();
 	free_dead_ifaces(logger);
-	/* clean up remaining hidden interfaces */
+	/* clean up remaining hidden interface endpoints */
 	struct iface_endpoint *ifp;
 	FOR_EACH_LIST_ENTRY_NEW2OLD(ifp, &iface_endpoints) {
 		iface_endpoint_delref(&ifp);
+	}
+	/* and remaining interfaces */
+	struct iface *iface;
+	FOR_EACH_LIST_ENTRY_NEW2OLD(iface, &interface_dev) {
+		iface_delref(&iface);
 	}
 }
