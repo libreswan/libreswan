@@ -56,7 +56,7 @@ void disorient(struct connection *c)
 		/* Since it is unoriented, it will be connected to the
 		 * unoriented_connections list */
 		PASSERT(c->logger, !oriented(c));
-		connect_to_host_pair(c);
+		connect_to_unoriented(c);
 	}
 }
 
