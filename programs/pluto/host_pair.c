@@ -268,15 +268,6 @@ void delete_oriented_hp(struct connection *c)
 	free_unused_host_pair(&hp, HERE);
 }
 
-void host_pair_remove_connection(struct connection *c, bool connection_valid)
-{
-	if (c->host_pair == NULL) {
-		delete_unoriented_hp(c, connection_valid);
-	} else {
-		delete_oriented_hp(c);
-	}
-}
-
 void delete_unoriented_hp(struct connection *c, bool connection_valid)
 {
 	/*

@@ -423,7 +423,8 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 #endif
 
 	/* find and delete c from the host pair list */
-	host_pair_remove_connection(c, connection_valid);
+	disorient(c);
+	delete_unoriented_hp(c, connection_valid);
 
 	remove_from_group(c);
 
@@ -445,7 +446,6 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 
 	connection_delref(&c->clonedfrom, logger);
 
-	iface_delref(&c->iface);
 	iface_endpoint_delref(&c->revival.local);
 
 	free_chunk_content(&c->child.sec_label);
