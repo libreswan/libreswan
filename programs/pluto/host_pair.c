@@ -221,42 +221,54 @@ struct connection *next_host_pair_connection(const ip_address local,
 	return c;
 }
 
-void connect_to_host_pair(struct connection *c)
+void connect_to_oriented(struct connection *c)
 {
-	if (oriented(c)) {
+	PASSERT(c->logger, oriented(c));
+	ip_address local = c->local->host.addr;
+	/* remote could be unset OR any */
+	ip_address remote = c->remote->host.addr;
+	address_buf lb, rb;
+	dbg("looking for host pair matching %s->%s",
+	    str_address(&remote, &rb), str_address(&local, &lb));
+	hash_t hash = hp_hasher(local, remote);
+	struct host_pair *hp = NULL;
+	struct list_head *bucket = hash_table_bucket(&host_pair_addresses_hash_table, hash);
+	FOR_EACH_LIST_ENTRY_NEW2OLD(hp, bucket) {
+		if (host_pair_matches_addresses(hp, local, remote)) {
+			break;
+		}
+	}
+	if (hp == NULL) {
+		/* no suitable host_pair -- build one */
 		ip_address local = c->local->host.addr;
 		/* remote could be unset OR any */
 		ip_address remote = c->remote->host.addr;
-		address_buf lb, rb;
-		dbg("looking for host pair matching %s->%s",
-		    str_address(&remote, &rb), str_address(&local, &lb));
-		hash_t hash = hp_hasher(local, remote);
-		struct host_pair *hp = NULL;
-		struct list_head *bucket = hash_table_bucket(&host_pair_addresses_hash_table, hash);
-		FOR_EACH_LIST_ENTRY_NEW2OLD(hp, bucket) {
-			if (host_pair_matches_addresses(hp, local, remote)) {
-				break;
-			}
-		}
-		if (hp == NULL) {
-			/* no suitable host_pair -- build one */
-			ip_address local = c->local->host.addr;
-			/* remote could be unset OR any */
-			ip_address remote = c->remote->host.addr;
-			hp = alloc_host_pair(local, remote, HERE);
-		}
-		c->host_pair = hp;
-		c->hp_next = hp->connections;
-		hp->connections = c;
+		hp = alloc_host_pair(local, remote, HERE);
+	}
+	c->host_pair = hp;
+	c->hp_next = hp->connections;
+	hp->connections = c;
+}
+
+void connect_to_unoriented(struct connection *c)
+{
+	PASSERT(c->logger, !oriented(c));
+	/* since this connection isn't oriented, we place it
+	 * in the unoriented_connections list instead.
+	 */
+	pexpect(c->host_pair == NULL);
+	pexpect(c->iface == NULL);
+	c->host_pair = NULL;
+	c->hp_next = unoriented_connections;
+	unoriented_connections = c;
+}
+
+void connect_to_host_pair(struct connection *c)
+{
+	if (oriented(c)) {
+		connect_to_oriented(c);
 	} else {
-		/* since this connection isn't oriented, we place it
-		 * in the unoriented_connections list instead.
-		 */
-		pexpect(c->host_pair == NULL);
-		pexpect(c->iface == NULL);
-		c->host_pair = NULL;
-		c->hp_next = unoriented_connections;
-		unoriented_connections = c;
+		connect_to_unoriented(c);
 	}
 }
 
