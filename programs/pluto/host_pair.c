@@ -122,10 +122,10 @@ static bool host_pair_matches_addresses(const struct host_pair *hp,
 					const ip_address remote)
 {
 	if (!address_eq_address(hp->local, local)) {
-		address_buf lb;
+		address_buf lb, rb;
 		connection_buf cb;
-		dbg("  host_pair: skipping %s->%s, local(RHS) does not match "PRI_CONNECTION,
-		    str_address(&remote, &lb), str_address(&local, &lb),
+		dbg("  host_pair: skipping %s->%s, local does not match "PRI_CONNECTION,
+		    str_address(&local, &lb), str_address(&remote, &rb),
 		    pri_connection(hp->connections, &cb));
 		return false;
 	}
@@ -139,8 +139,8 @@ static bool host_pair_matches_addresses(const struct host_pair *hp,
 	    !address_eq_address(remote, hp->remote)) {
 		connection_buf cb;
 		address_buf lb, rb;
-		dbg("  host_pair: skipping %s->%s, specified remote(RHS) does not match "PRI_CONNECTION,
-		    str_address(&remote, &lb), str_address(&local, &rb),
+		dbg("  host_pair: skipping %s->%s, remote does not match "PRI_CONNECTION,
+		    str_address(&local, &lb), str_address(&remote, &rb),
 		    pri_connection(hp->connections, &cb));
 		return false;
 	}
@@ -149,7 +149,7 @@ static bool host_pair_matches_addresses(const struct host_pair *hp,
 	    address_is_specified(hp->remote)) {
 		connection_buf cb;
 		address_buf lb, rb;
-		dbg("  host_pair: skipping %s->%s, unspecified remote(RHS) does not match "PRI_CONNECTION,
+		dbg("  host_pair: skipping %s->%s, unspecified remote does not match "PRI_CONNECTION,
 		    str_address(&local, &lb), str_address(&remote, &rb),
 		    pri_connection(hp->connections, &cb));
 		return false;
@@ -174,15 +174,26 @@ static struct host_pair *alloc_host_pair(ip_address local, ip_address remote, wh
 	return hp;
 }
 
-static void free_host_pair(struct host_pair **hp, where_t where)
+static void free_unused_host_pair(struct host_pair **hp, where_t where)
 {
-	/* ??? must deal with this! */
-	passert((*hp)->pending == NULL);
-	pexpect((*hp)->connections == NULL);
-	del_hash_table_entry(&host_pair_addresses_hash_table, *hp);
-	dbg_free("hp", *hp, where);
-	pfree(*hp);
-	*hp = NULL;
+	if ((*hp)->connections == NULL) {
+		if ((*hp)->pending != NULL) {
+			/* ??? must deal with this! */
+			/* can .pending be trusted? */
+			struct pending *p = (*hp)->pending;
+			address_buf lb, rb;
+			connection_buf cb;
+			llog_passert(p->logger, where,
+				     "host-pair %s->%s with no connections should have "PRI_CONNECTION" pending!",
+				     str_address(&(*hp)->local, &lb),
+				     str_address(&(*hp)->remote, &rb),
+				     pri_connection(p->connection, &cb));
+		}
+		del_hash_table_entry(&host_pair_addresses_hash_table, *hp);
+		dbg_free("hp", *hp, where);
+		pfree(*hp);
+		*hp = NULL;
+	}
 }
 
 struct connection *next_host_pair_connection(const ip_address local,
@@ -281,9 +292,7 @@ void delete_oriented_hp(struct connection *c)
 	 * haven't even made an initial contact, let's delete this guy
 	 * in case we were created by an attempted DOS attack.
 	 */
-	if (hp->connections == NULL) {
-		free_host_pair(&hp, HERE);
-	}
+	free_unused_host_pair(&hp, HERE);
 }
 
 void host_pair_remove_connection(struct connection *c, bool connection_valid)
@@ -397,9 +406,7 @@ void update_host_pairs(struct connection *c)
 		conn_list = nxt;
 	}
 
-	if (hp->connections == NULL) {
-		free_host_pair(&hp, HERE);
-	}
+	free_unused_host_pair(&hp, HERE);
 }
 
 /*
@@ -491,9 +498,7 @@ void check_orientations(struct logger *logger)
 				/*
 				 * XXX: is this ever not the case?
 				 */
-				if (hp->connections == NULL) {
-					free_host_pair(&hp, HERE);
-				}
+				free_unused_host_pair(&hp, HERE);
 			}
 		}
 	}
