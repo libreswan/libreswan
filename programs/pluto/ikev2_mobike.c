@@ -166,17 +166,25 @@ static bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest 
 	default:
 		bad_case(md_role);
 	}
+
 	iface_endpoint_delref(&ike->sa.st_iface_endpoint);
 	iface_endpoint_delref(&child->sa.st_iface_endpoint);
 	ike->sa.st_iface_endpoint = iface_endpoint_addref(md->iface);
 	child->sa.st_iface_endpoint = iface_endpoint_addref(md->iface);
 
-	delete_oriented_hp(c); /* hp list may have changed */
+	/*
+	 * Force a re-orientation which will rebuild much of the
+	 * host-pair DB
+	 */
+	disorient(c);
 	if (!orient(&c, ike->sa.st_logger)) {
 		llog_pexpect(ike->sa.st_logger, HERE,
 			     "%s after mobike failed", "orient");
+		return false;
 	}
+
 	/* assumption: orientation has not changed */
+	delete_unoriented_hp(c, true);
 	connect_to_host_pair(c); /* re-create hp listing */
 
 	if (md_role == MESSAGE_RESPONSE) {
