@@ -990,12 +990,12 @@ void jam_spd(struct jambuf *buf, const struct spd_route *spd);
 
 /* connections */
 
-void finish_connection(struct connection *c, const char *name,
-		       struct connection *t,
-		       const struct config *config,
-		       lset_t debugging,
-		       struct logger *logger,
-		       where_t where);
+struct connection *alloc_connection(const char *name,
+				    struct connection *t,
+				    const struct config *config,
+				    lset_t debugging,
+				    struct logger *logger,
+				    where_t where);
 
 /*
  * Three types of labels.

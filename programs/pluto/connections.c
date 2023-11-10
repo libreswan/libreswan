@@ -1947,18 +1947,34 @@ static char *alloc_connection_prefix(const char *name, const struct connection *
 	return alloc_printf("%s[%lu]", t->prefix, t->next_instance_serial);
 }
 
-/*
- * Allocate connections.
- */
-
-void finish_connection(struct connection *c,
-		       const char *name,
-		       struct connection *t,
-		       const struct config *config,
-		       lset_t debugging,
-		       struct logger *logger,
-		       where_t where)
+static struct config *alloc_config(void)
 {
+	struct config *config = alloc_thing(struct config, "root config");
+	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
+		/* "left" or "right" */
+		const char *leftright =
+			(lr == LEFT_END ? "left" :
+			 lr == RIGHT_END ? "right" :
+			 NULL);
+		passert(leftright != NULL);
+		struct config_end *end_config = &config->end[lr];
+		end_config->leftright = leftright;
+		end_config->index = lr;
+		end_config->host.leftright = leftright;
+		end_config->child.leftright = leftright;
+	}
+	return config;
+}
+
+struct connection *alloc_connection(const char *name,
+				    struct connection *t,
+				    const struct config *config,
+				    lset_t debugging,
+				    struct logger *logger,
+				    where_t where)
+{
+	struct connection *c = refcnt_alloc(struct connection, where);
+
 	/* before alloc_logger(); can't use C */
 	c->name = clone_str(name, __func__);
 
@@ -2035,52 +2051,13 @@ void finish_connection(struct connection *c,
 	passert(connection_serialno > 0); /* can't overflow */
 	c->serialno = connection_serialno;
 	c->clonedfrom = connection_addref(t, c->logger);
-}
-
-static struct config *alloc_config(void)
-{
-	struct config *config = alloc_thing(struct config, "root config");
-	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
-		/* "left" or "right" */
-		const char *leftright =
-			(lr == LEFT_END ? "left" :
-			 lr == RIGHT_END ? "right" :
-			 NULL);
-		passert(leftright != NULL);
-		struct config_end *end_config = &config->end[lr];
-		end_config->leftright = leftright;
-		end_config->index = lr;
-		end_config->host.leftright = leftright;
-		end_config->child.leftright = leftright;
-	}
-	return config;
-}
-
-static struct connection *alloc_connection(const char *name,
-					   lset_t debugging,
-					   struct logger *logger,
-					   where_t where)
-{
-	struct connection *c = refcnt_alloc(struct connection, where);
-
-	/*
-	 * Allocate the configuration - only allocated on root
-	 * connection; connection instances (clones) inherit these
-	 * pointers.
-	 */
-	c->root_config = alloc_config();
-
-	finish_connection(c, name, NULL/*no template*/,
-			  c->root_config,
-			  debugging,
-			  logger,
-			  where);
 
 	return c;
 }
 
 static diag_t extract_connection(const struct whack_message *wm,
-				 struct connection *c)
+				 struct connection *c,
+				 struct config *config)
 {
 	const struct whack_end *whack_ends[] = {
 		[LEFT_END] = &wm->left,
@@ -2104,7 +2081,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 	}
 
 	diag_t d;
-	struct config *config = c->root_config; /* writeable; root only */
 	passert(c->name != NULL); /* see alloc_connection() */
 
 	/*
@@ -3486,11 +3462,19 @@ bool add_connection(const struct whack_message *wm, struct logger *logger)
 {
 	/* will inherit defaults */
 	lset_t debugging = lmod(LEMPTY, wm->debugging);
-	struct connection *c = alloc_connection(wm->name,
+
+	/*
+	 * Allocate the configuration - only allocated on root
+	 * connection; connection instances (clones) inherit these
+	 * pointers.
+	 */
+	struct config *root_config = alloc_config();
+	struct connection *c = alloc_connection(wm->name, NULL, root_config,
 						debugging | wm->conn_debug,
 						logger, HERE);
+	c->root_config = root_config;
 
-	diag_t d = extract_connection(wm, c);
+	diag_t d = extract_connection(wm, c, root_config);
 	if (d != NULL) {
 		llog_diag(RC_FATAL, c->logger, &d, ADD_FAILED_PREFIX);
 		struct connection *cp = c;

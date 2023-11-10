@@ -64,62 +64,18 @@ static uint32_t global_marks = MINIMUM_IPSEC_SA_RANDOM_MARK;
  * problems.
  */
 
-static struct connection *clone_connection(const char *name, struct connection *t,
-					   const struct id *peer_id, where_t where)
+static struct connection *duplicate_connection(const char *name, struct connection *t,
+					       const struct id *peer_id, where_t where)
 {
-	struct connection *c = refcnt_alloc(struct connection, where);
-
-	/*
-	 * Clear out as much as possible of the struct before calling
-	 * finish_connection().  Trying to make it look as close as
-	 * possible to a clone.
-	 *
-	 * Remember, c->logger is not valid!
-	 */
-
-	zero_thing(c->connection_db_entries); /* keep init_list_entry() happy */
-
-	c->next_instance_serial = 0;
-	c->instance_serial = 0;
-
-	zero(&c->redirect);
-	zero(&c->revival);
-	zero(&c->policy);
-
-	/* caller responsible for re-building these */
-	c->spd = NULL;
-	zero(&c->child.spds);
-
-	c->log_file_name = NULL;
-	c->log_file = NULL;
-	c->log_file_err = false;
-
-	/* Template can't yet have an assigned SEC_LABEL */
-	PASSERT(t->logger, (t->child.sec_label.len == 0 &&
-			    c->child.sec_label.len == 0));
-
-	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		zero(&c->end[end].child);
-	}
-
-	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		zero(&c->end[end].host);
-	}
-
-	/*
-	 * Set up the left/right pointer structures.
-	 */
-
-	finish_connection(c, name, t, t->config,
-			  t->logger->debugging,
-			  t->logger,
-			  where);
+	struct connection *c = alloc_connection(name, t, t->config,
+						t->logger->debugging,
+						t->logger,
+						where);
 
 	/*
 	 * Now explicitly copy over anything needed from T into C.
 	 */
 
-	c->root_config = NULL; /* block write access */
 	c->iface = iface_addref(t->iface);
 
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
@@ -227,9 +183,9 @@ struct connection *group_instantiate(struct connection *group,
 		return NULL;
 	}
 
-	struct connection *t = clone_connection(namebuf, group, NULL/*id*/, HERE);
+	struct connection *t = duplicate_connection(namebuf, group, NULL/*id*/, HERE);
 
-	passert(t->name != namebuf); /* see clone_connection() */
+	passert(t->name != namebuf); /* see duplicate_connection() */
 	pfreeany(namebuf);
 
 	/*
@@ -301,7 +257,7 @@ struct connection *group_instantiate(struct connection *group,
 
 	/*
 	 * Same host_pair as parent: stick after parent on list.
-	 * t->hp_next = group->hp_next; // done by clone_connection
+	 * t->hp_next = group->hp_next; // done by duplicate_connection
 	 */
 	group->hp_next = t;
 
@@ -358,8 +314,8 @@ static struct connection *instantiate(struct connection *t,
 			match_id("", peer_id, &t->remote->host.id, &wildcards));
 	}
 
-	struct connection *d = clone_connection(t->name, t, peer_id, where);
-	passert(t->name != d->name); /* see clone_connection() */
+	struct connection *d = duplicate_connection(t->name, t, peer_id, where);
+	passert(t->name != d->name); /* see duplicate_connection() */
 
 	d->local->kind = d->remote->kind =
 		(is_labeled_template(t) ? CK_LABELED_PARENT :
