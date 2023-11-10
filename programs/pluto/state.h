@@ -958,7 +958,6 @@ extern bool drop_new_exchanges(void);
 extern bool require_ddos_cookies(void);
 extern void show_globalstate_status(struct show *s);
 extern void update_ike_endpoints(struct ike_sa *ike, const struct msg_digest *md);
-extern bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md);
 
 extern void append_st_cfg_domain(struct state *st, char *dnsip);
 extern void append_st_cfg_dns(struct state *st, const char *dnsip);
