@@ -69,10 +69,11 @@ static hash_t hash_host_pair_addresses(const struct host_pair *hp)
 
 HASH_TABLE(host_pair, addresses, , STATE_TABLE_SIZE);
 
-#define LIST_RM(ENEXT, E, EHEAD, EXPECTED)				\
+#define LIST_RM(ENEXT, E, EHEAD)					\
 	{								\
 		bool found_ = false;					\
-		for (typeof(*(EHEAD)) **ep_ = &(EHEAD); *ep_ != NULL; ep_ = &(*ep_)->ENEXT) { \
+		for (typeof(*(EHEAD)) **ep_ = &(EHEAD);			\
+		     *ep_ != NULL; ep_ = &(*ep_)->ENEXT) {		\
 			if (*ep_ == (E)) {				\
 				*ep_ = (E)->ENEXT;			\
 				found_ = true;				\
@@ -80,7 +81,7 @@ HASH_TABLE(host_pair, addresses, , STATE_TABLE_SIZE);
 			}						\
 		}							\
 		/* we must not come up empty-handed? */			\
-		pexpect(found_ || !(EXPECTED));				\
+		pexpect(found_);					\
 	}
 
 /* struct host_pair: a nexus of information about a pair of hosts.
@@ -279,7 +280,7 @@ void delete_oriented_hp(struct connection *c)
 	pexpect(c->host_pair != NULL);
 	pexpect(c->iface != NULL);
 
-	LIST_RM(hp_next, c, hp->connections, true/*expected*/);
+	LIST_RM(hp_next, c, hp->connections);
 
 	pexpect(c->host_pair != NULL);
 	c->host_pair = NULL;
@@ -297,15 +298,27 @@ void delete_oriented_hp(struct connection *c)
 void host_pair_remove_connection(struct connection *c, bool connection_valid)
 {
 	if (c->host_pair == NULL) {
-		/*
-		 * When CONNECTION_VALID expect to find/remove C from
-		 * the unoriented list.
-		 */
-		LIST_RM(hp_next, c, unoriented_connections,
-			connection_valid);
+		delete_unoriented_hp(c, connection_valid);
 	} else {
 		delete_oriented_hp(c);
 	}
+}
+
+void delete_unoriented_hp(struct connection *c, bool connection_valid)
+{
+	/*
+	 * When CONNECTION_VALID expect to find/remove C from
+	 * the unoriented list.
+	 */
+	for (struct connection **ep = &unoriented_connections;
+	     (*ep) != NULL; ep = &(*ep)->hp_next) {
+		if ((*ep) == c) {
+			(*ep) = c->hp_next;
+			return;
+		}
+	}
+	/* we must not come up empty-handed? */
+	PEXPECT(c->logger, !connection_valid);
 }
 
 /* update the host pairs with the latest DNS ip address */
@@ -369,7 +382,7 @@ void update_host_pairs(struct connection *c)
 			}
 
 			d->remote->host.addr = new_addr;
-			LIST_RM(hp_next, d, d->host_pair->connections, true);
+			LIST_RM(hp_next, d, d->host_pair->connections);
 
 			d->hp_next = conn_list;
 			conn_list = d;

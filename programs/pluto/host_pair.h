@@ -56,6 +56,7 @@ void connect_to_unoriented(struct connection *c);
 void connect_to_host_pair(struct connection *c);
 
 void delete_oriented_hp(struct connection *c);
+void delete_unoriented_hp(struct connection *c, bool connection_valid);
 void host_pair_remove_connection(struct connection *c, bool connection_valid);
 
 extern void update_host_pairs(struct connection *c);
