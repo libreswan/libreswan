@@ -3457,8 +3457,9 @@ static diag_t extract_connection(const struct whack_message *wm,
 	connection_db_add(c);
 
 	/*
-	 * Force orientation (currently neither?).  This triggers a
-	 * rehash of the SPDs.
+	 * Force orientation (currently kind of unoriented?).  If the
+	 * connection orients,the SPDs and host-pair hash tables are
+	 * updated.
 	 *
 	 * Then put C on either the unoriented or oriented list.
 	 */

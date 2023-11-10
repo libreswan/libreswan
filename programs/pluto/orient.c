@@ -51,8 +51,15 @@ void disorient(struct connection *c)
 		delete_oriented_hp(c);
 		PEXPECT(c->logger, c->host_pair == NULL);
 		iface_delref(&c->iface);
-		/* Since it is unoriented, it will be connected to the
-		 * unoriented_connections list */
+		/*
+		 * Move to a special disoriented hash.
+		 */
+		connection_db_rehash_host_pair(c);
+		/*
+		 * Since it the connection is unoriented,
+		 * connect_to_host_pair() will connect it to the
+		 * unoriented_connections list.
+		 */
 		PASSERT(c->logger, !oriented(c));
 		connect_to_unoriented(c);
 	}
@@ -336,6 +343,9 @@ bool orient(struct connection **cp, struct logger *logger)
 	FOR_EACH_ITEM(spd, &(*cp)->child.spds) {
 		spd_route_db_rehash_remote_client(spd);
 	}
+
+	/* the ends may have flipped */
+	connection_db_rehash_host_pair((*cp));
 
 	/*
 	 * Add a listen for any missing interface endpoints.

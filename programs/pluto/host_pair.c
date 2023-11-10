@@ -253,7 +253,7 @@ void delete_oriented_hp(struct connection *c)
 	struct host_pair *hp = c->host_pair;
 
 	pexpect(c->host_pair != NULL);
-	pexpect(c->iface != NULL);
+	pexpect(c->iface != NULL);	/* i.e., oriented() */
 
 	LIST_RM(hp_next, c, hp->connections);
 

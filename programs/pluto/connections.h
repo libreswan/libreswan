@@ -787,6 +787,7 @@ struct connection {
 		struct list_entry serialno;
 		struct list_entry that_id;
 		struct list_entry clonedfrom;
+		struct list_entry host_pair;
 	} connection_db_entries;
 
 	struct pending *pending;
@@ -910,8 +911,15 @@ struct connection_filter {
 	const struct id *this_id_eq; /* strict; not same_id() */
 	const struct id *that_id_eq; /* strict; not same_id() */
 	struct connection *clonedfrom;
-	/* current result (can be safely deleted) */
+	/* look for host-pair; set local=&unset_address to find
+	 * disoriented connections */
+	const ip_address *local, *remote;
+
+	/*
+	 * Current result (can be safely deleted).
+	 */
 	struct connection *c;
+
 	/* internal: handle on next entry */
 	struct list_entry *internal;
 	/* internal: total matches so far */
@@ -952,6 +960,7 @@ bool next_spd_route(enum chrono order, struct spd_route_filter *srf);
 
 void replace_connection_that_id(struct connection *c, const struct id *new_id);
 void connection_db_rehash_that_id(struct connection *c);
+void connection_db_rehash_host_pair(struct connection *c);
 
 void spd_route_db_rehash_remote_client(struct spd_route *sr);
 

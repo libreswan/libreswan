@@ -20,6 +20,8 @@
 #include "hash_table.h"
 #include "refcnt.h"
 #include "virtual_ip.h"		/* for virtual_ip_addref() */
+#include "orient.h"
+#include "iface.h"
 
 /*
  * A table hashed by serialno.
@@ -91,13 +93,55 @@ static hash_t hash_connection_clonedfrom(struct connection *const *cpp)
 HASH_TABLE(connection, clonedfrom, .clonedfrom, STATE_TABLE_SIZE);
 
 /*
+ * Host-pair hash table.
+ */
+
+static hash_t hash_host_pair(const ip_address *local,
+			     const ip_address *remote)
+{
+	hash_t hash = zero_hash;
+	FOR_EACH_THING(a, local, remote) {
+		if (a != NULL &&
+		    address_is_specified(*a)) {
+			/*
+			 * Don't include unset, ::0, and 0.0.0.0 in
+			 * the hash so that hash the same.
+			 */
+			hash = hash_hunk(address_as_shunk(a), hash);
+		}
+	}
+	return hash;
+}
+
+static hash_t hash_connection_host_pair(const struct connection *c)
+{
+	address_buf lb, rb;
+	pdbg(c->logger, "%s->%s oriented=%s",
+	     str_address(&c->local->host.addr, &lb),
+	     str_address(&c->remote->host.addr, &rb),
+	     bool_str(oriented(c)));
+	if (oriented(c)) {
+		PEXPECT(c->logger, address_eq_address(c->local->host.addr,
+						      c->iface->local_address));
+		return hash_host_pair(&c->local->host.addr, &c->remote->host.first_addr);
+	} else {
+		return hash_host_pair(&unset_address, &unset_address);
+	}
+}
+
+HASH_TABLE(connection, host_pair, , STATE_TABLE_SIZE);
+
+REHASH_DB_ENTRY(connection, host_pair, );
+
+/*
  * Maintain the contents of the hash tables.
  */
 
 HASH_DB(connection,
 	&connection_clonedfrom_hash_table,
 	&connection_serialno_hash_table,
-	&connection_that_id_hash_table);
+	&connection_that_id_hash_table,
+	&connection_host_pair_hash_table);
 
 /*
  * See also {new2old,old2new}_state()
@@ -118,6 +162,16 @@ static struct list_head *connection_filter_head(struct connection_filter *filter
 		    pri_connection_co(filter->clonedfrom), pri_where(filter->where));
 		hash_t hash = hash_connection_clonedfrom(&filter->clonedfrom);
 		return hash_table_bucket(&connection_clonedfrom_hash_table, hash);
+	}
+
+	if (filter->local != NULL) {
+		address_buf lb, rb;
+		dbg("FOR_EACH_CONNECTION[local=%s,remote=%s].... in "PRI_WHERE,
+		    str_address(filter->local, &lb),
+		    str_address(filter->remote, &rb),
+		    pri_where(filter->where));
+		hash_t hash = hash_host_pair(filter->local, filter->remote);
+		return hash_table_bucket(&connection_host_pair_hash_table, hash);
 	}
 
 	dbg("FOR_EACH_CONNECTION_.... in "PRI_WHERE, pri_where(filter->where));
@@ -144,6 +198,33 @@ static bool matches_connection_filter(struct connection *c, struct connection_fi
 	if (filter->that_id_eq != NULL && !id_eq(filter->that_id_eq, &c->remote->host.id)) {
 		return false;
 	}
+	if (filter->local != NULL) {
+		if (address_is_unset(filter->local)) {
+			if (oriented(c)) {
+				return false;
+			}
+		} else {
+			if (!oriented(c)) {
+				return false;
+			}
+			if (!address_eq_address(c->local->host.addr, *filter->local)) {
+				return false;
+			}
+			if (filter->remote != NULL &&
+			    address_is_specified(*filter->remote)) {
+				/* not any */
+				if (!address_eq_address(c->remote->host.addr, *filter->remote)) {
+					return false;
+				}
+			} else {
+				/* %any */
+				if (address_is_specified(c->remote->host.addr)) {
+					return false;
+				}
+			}
+		}
+	}
+
 	return true; /* sure */
 }
 
