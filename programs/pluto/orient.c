@@ -35,8 +35,6 @@
 #include "terminate.h"
 #include "host_pair.h"
 
-static enum left_right orient_1(struct connection **cp, struct logger *logger);
-
 bool oriented(const struct connection *c)
 {
 	if (!pexpect(c != NULL)) {
@@ -192,50 +190,6 @@ static void LDBG_orient_end(struct connection *c, enum left_right end)
 		 str_sparse(tcp_option_names, c->local->config->host.iketcp, &tcpb));
 }
 
-bool orient(struct connection **cp, struct logger *logger)
-{
-	if (oriented((*cp))) {
-		ldbg((*cp)->logger, "already oriented");
-		return true;
-	}
-
-	enum left_right end = orient_1(cp, logger);
-	if (end == END_ROOF) {
-		return false;
-	}
-
-	if (PBAD(logger, (*cp) == NULL)) {
-		return false;
-	}
-
-	struct connection_end *local = &(*cp)->end[end];
-	struct connection_end *remote = &(*cp)->end[!end];
-
-	ldbg((*cp)->logger, "  orienting %s=local %s=remote",
-	     local->config->leftright, remote->config->leftright);
-
-	(*cp)->local = local;
-	(*cp)->remote = remote;
-
-	FOR_EACH_ITEM(spd, &(*cp)->child.spds) {
-		spd->local = &spd->end[end];
-		spd->remote = &spd->end[!end];
-	}
-
-	/* rehash end dependent hashes */
-	connection_db_rehash_that_id((*cp));
-	FOR_EACH_ITEM(spd, &(*cp)->child.spds) {
-		spd_route_db_rehash_remote_client(spd);
-	}
-
-	/*
-	 * Add a listen for any missing interface endpoints.
-	 */
-	add_iface_endpoints((*cp));
-
-	return true;
-}
-
 static void jam_iface(struct jambuf *buf, const struct iface *iface)
 {
 	jam_string(buf, iface->real_device_name);
@@ -243,7 +197,7 @@ static void jam_iface(struct jambuf *buf, const struct iface *iface)
 	jam_address(buf, &iface->local_address);
 }
 
-enum left_right orient_1(struct connection **cp, struct logger *logger)
+bool orient(struct connection **cp, struct logger *logger)
 {
 	if (DBGP(DBG_BASE)) {
 		connection_buf cb;
@@ -251,7 +205,13 @@ enum left_right orient_1(struct connection **cp, struct logger *logger)
 		LDBG_orient_end((*cp), LEFT_END);
 		LDBG_orient_end((*cp), RIGHT_END);
 	}
-	passert((*cp)->iface == NULL); /* aka not oriented */
+
+	if (oriented((*cp))) {
+		ldbg((*cp)->logger, "already oriented");
+		return true;
+	}
+
+	PASSERT(logger, (*cp)->iface == NULL); /* aka not oriented */
 
 	/*
 	 * Save match; don't update the connection until all the
@@ -290,7 +250,7 @@ enum left_right orient_1(struct connection **cp, struct logger *logger)
 			}
 			terminate_and_down_connections(cp, logger, HERE);
 			connection_detach((*cp), logger);
-			return END_ROOF;
+			return false;
 		}
 
 		passert(left != right); /* only one */
@@ -329,7 +289,7 @@ enum left_right orient_1(struct connection **cp, struct logger *logger)
 			terminate_and_down_connections(cp, logger, HERE);
 			connection_detach((*cp), logger);
 
-			return END_ROOF;
+			return false;
 		}
 
 		/* save match, and then continue search */
@@ -347,7 +307,7 @@ enum left_right orient_1(struct connection **cp, struct logger *logger)
 	}
 
 	if (matching_iface == NULL) {
-		return END_ROOF;
+		return false;
 	}
 
 	/*
@@ -357,6 +317,30 @@ enum left_right orient_1(struct connection **cp, struct logger *logger)
 	PEXPECT((*cp)->logger, (*cp)->iface == NULL); /* wasn't updated */
 	(*cp)->iface = iface_addref(matching_iface);
 
-	return matching_end;
+	struct connection_end *local = &(*cp)->end[matching_end];
+	struct connection_end *remote = &(*cp)->end[!matching_end];
 
+	ldbg((*cp)->logger, "  orienting %s=local %s=remote",
+	     local->config->leftright, remote->config->leftright);
+
+	(*cp)->local = local;
+	(*cp)->remote = remote;
+
+	FOR_EACH_ITEM(spd, &(*cp)->child.spds) {
+		spd->local = &spd->end[matching_end];
+		spd->remote = &spd->end[!matching_end];
+	}
+
+	/* rehash end dependent hashes */
+	connection_db_rehash_that_id((*cp));
+	FOR_EACH_ITEM(spd, &(*cp)->child.spds) {
+		spd_route_db_rehash_remote_client(spd);
+	}
+
+	/*
+	 * Add a listen for any missing interface endpoints.
+	 */
+	add_iface_endpoints((*cp));
+
+	return true;
 }
