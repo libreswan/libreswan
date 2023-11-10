@@ -185,7 +185,7 @@ static bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest 
 
 	/* assumption: orientation has not changed */
 	delete_unoriented_hp(c, true);
-	connect_to_host_pair(c); /* re-create hp listing */
+	connect_to_oriented(c); /* re-create hp listing */
 
 	if (md_role == MESSAGE_RESPONSE) {
 		/* MOBIKE initiator processing response */

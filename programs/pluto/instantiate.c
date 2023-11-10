@@ -321,7 +321,6 @@ static struct connection *instantiate(struct connection *t,
 		(is_labeled_template(t) ? CK_LABELED_PARENT :
 		 is_labeled_parent(t) ? CK_LABELED_CHILD :
 		 CK_INSTANCE);
-	passert(oriented(d)); /*like parent like child*/
 
 	/* propogate remote address when set */
 	if (address_is_specified(d->remote->host.addr)) {
@@ -343,8 +342,13 @@ static struct connection *instantiate(struct connection *t,
 	 */
 	connection_routing_init(d);
 
-	/* assumption: orientation is the same as c's */
-	connect_to_host_pair(d);
+	/*
+	 * assumption: orientation is the same as c's - while the
+	 * remote endpoint may go from <unset> to <valid> the local
+	 * endpoint and iface are unchanged.
+	 */
+	passert(oriented(d));
+	connect_to_oriented(d);
 	connection_db_add(d);
 
 	/* XXX: could this use the connection number? */

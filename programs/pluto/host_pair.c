@@ -264,15 +264,6 @@ void connect_to_unoriented(struct connection *c)
 	unoriented_connections = c;
 }
 
-void connect_to_host_pair(struct connection *c)
-{
-	if (oriented(c)) {
-		connect_to_oriented(c);
-	} else {
-		connect_to_unoriented(c);
-	}
-}
-
 void delete_oriented_hp(struct connection *c)
 {
 	struct host_pair *hp = c->host_pair;
@@ -393,8 +384,16 @@ void update_host_pairs(struct connection *c)
 	while (conn_list != NULL) {
 		struct connection *nxt = conn_list->hp_next;
 
-		/* assumption: orientation is the same as before */
-		connect_to_host_pair(conn_list);
+		/*
+		 * assumption: orientation is the same as before.
+		 *
+		 * Put C back on unoriented, or add to a host pair.
+		 */
+		if (oriented(c)) {
+			connect_to_oriented(c);
+		} else {
+			connect_to_unoriented(c);
+		}
 		conn_list = nxt;
 	}
 
@@ -423,12 +422,16 @@ void check_orientations(struct logger *logger)
 	while (c != NULL) {
 		/* step off */
 		struct connection *nxt = c->hp_next;
-		orient(&c, logger);
+		bool oriented = orient(&c, logger);
 		/*
-		 * Either put C back on unoriented, or add to a host
-		 * pair.
+		 * Put C back on either the unoriented or oriented
+		 * list.
 		 */
-		connect_to_host_pair(c);
+		if (oriented) {
+			connect_to_oriented(c);
+		} else {
+			connect_to_unoriented(c);
+		}
 		c = nxt;
 	}
 
@@ -472,8 +475,17 @@ void check_orientations(struct logger *logger)
 					iface_delref(&c->iface);
 					c->host_pair = NULL;
 					c->hp_next = NULL;
-					orient(&c, logger);
-					connect_to_host_pair(c);
+					bool oriented = orient(&c, logger);
+					/*
+					 * Put C back on either the
+					 * unoriented or oriented
+					 * list.
+					 */
+					if (oriented) {
+						connect_to_oriented(c);
+					} else {
+						connect_to_unoriented(c);
+					}
 					c = nxt;
 				}
 				/*

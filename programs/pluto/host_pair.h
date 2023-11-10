@@ -53,7 +53,6 @@ struct pending **host_pair_first_pending(const struct connection *c);
 
 void connect_to_oriented(struct connection *c);
 void connect_to_unoriented(struct connection *c);
-void connect_to_host_pair(struct connection *c);
 
 void delete_oriented_hp(struct connection *c);
 void delete_unoriented_hp(struct connection *c, bool connection_valid);

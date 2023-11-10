@@ -3450,10 +3450,18 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 */
 	connection_db_add(c);
 
-	/* this triggers a rehash of the SPDs */
-	orient(&c, c->logger);
-
-	connect_to_host_pair(c);
+	/*
+	 * Force orientation (currently neither?).  This triggers a
+	 * rehash of the SPDs.
+	 *
+	 * Then put C on either the unoriented or oriented list.
+	 */
+	bool oriented = orient(&c, c->logger);
+	if (oriented) {
+		connect_to_oriented(c);
+	} else {
+		connect_to_unoriented(c);
+	}
 
 	return NULL;
 }
