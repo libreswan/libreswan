@@ -1,0 +1,3 @@
+west is (unauthenticated) redirected to north by east, but north is down
+
+west should flip-flop between east and north

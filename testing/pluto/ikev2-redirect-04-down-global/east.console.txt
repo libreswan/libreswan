@@ -1,0 +1,19 @@
+/testing/guestbin/swan-prep
+east #
+ ip route del 192.0.1.0/24
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
+002 "westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
+east #
+ ipsec status |grep redirect
+000 global-redirect=yes, global-redirect-to=192.1.3.33
+east #
+ echo "initdone"
+initdone
+east #
+ 
