@@ -184,7 +184,7 @@ static void free_unused_host_pair(struct host_pair **hp, where_t where)
 			address_buf lb, rb;
 			connection_buf cb;
 			llog_passert(p->logger, where,
-				     "host-pair %s->%s with no connections should have "PRI_CONNECTION" pending!",
+				     "host-pair %s->%s with no connections should NOT have "PRI_CONNECTION" pending!",
 				     str_address(&(*hp)->local, &lb),
 				     str_address(&(*hp)->remote, &rb),
 				     pri_connection(p->connection, &cb));
