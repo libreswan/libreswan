@@ -556,6 +556,7 @@ KVM_TEST_STATUS += good
 KVM_TEST_STATUS += $(if $(KVM_FREEBSD),freebsd)
 KVM_TEST_STATUS += $(if $(KVM_NETBSD),netbsd)
 KVM_TEST_STATUS += $(if $(KVM_OPENBSD),openbsd)
+KVM_RUN_POST_MORTEM ?=
 
 STRIPPED_KVM_TEST_STATUS = $(subst $(sp),|,$(sort $(KVM_TEST_STATUS)))
 
@@ -581,6 +582,7 @@ kvm-%: $(KVM_HOST_OK) kvm-keys-ok
 		$(if $(STRIPPED_KVM_TEST_NAME), --test-name '$(STRIPPED_KVM_TEST_NAME)') \
 		$(if $(KVM_SNAPSHOTDIR), --snapshot-directory $(KVM_SNAPSHOTDIR)) \
 		$(if $(filter kvm-re%, $@), --skip passed) \
+		$(if $(KVM_RUN_POST_MORTEM), --run-post-mortem) \
 		$(KVMRUNNER_FLAGS) \
 		$(KVM_TEST_FLAGS) \
 		$(STRIPPED_KVM_TESTS)
