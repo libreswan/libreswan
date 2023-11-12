@@ -63,9 +63,6 @@ void remove_connection_from_pending(const struct connection *c);
 void flush_pending_by_state(struct ike_sa *ike);
 
 bool connection_is_pending(const struct connection *c);
-void show_pending_child_details(struct show *s,
-				const struct connection *c,
-				const struct ike_sa *ike);
 
 extern struct connection *first_pending(const struct ike_sa *ike);
 

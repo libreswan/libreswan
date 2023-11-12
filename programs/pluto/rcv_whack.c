@@ -76,6 +76,7 @@
 #include "whack_status.h"
 #include "whack_trafficstatus.h"
 #include "whack_unroute.h"
+#include "whack_showstates.h"
 
 static void whack_rereadsecrets(struct show *s)
 {
@@ -637,7 +638,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 
 	if (m->whack_showstates) {
 		dbg_whack(s, "showstates: start:");
-		show_states(s, now);
+		whack_showstates(s, now);
 		dbg_whack(s, "showstates: stop:");
 	}
 

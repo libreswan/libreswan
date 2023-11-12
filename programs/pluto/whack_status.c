@@ -48,6 +48,7 @@
 #endif
 #include "whack_status.h"
 #include "whack_connectionstatus.h"	/* for show_connection_statuses() */
+#include "whack_showstates.h"
 
 static void show_system_security(struct show *s)
 {
@@ -87,7 +88,7 @@ void whack_status(struct show *s, const monotime_t now)
 	show_db_ops_status(s);
 	show_connection_statuses(s);
 	show_brief_status(s);
-	show_states(s, now);
+	whack_showstates(s, now);
 #if defined(KERNEL_XFRM)
 	show_shunt_status(s);
 #endif
