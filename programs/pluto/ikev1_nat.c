@@ -446,15 +446,6 @@ void v1_maybe_natify_initiator_endpoints(struct state *st, where_t where)
 		    st->st_serialno, st->st_state->short_name,
 		    NAT_IKE_UDP_PORT);
 		v1_natify_initiator_endpoints(st, where);
-		/*
-		 * Also update pending connections or they will be deleted if
-		 * uniqueids option is set.
-		 * THIS does NOTHING as, both arguments are "st"!
-		 *
-		 * XXX: so can it be deleted, it would kill the
-		 * function.
-		 */
-		update_pending(pexpect_ike_sa(st), pexpect_ike_sa(st));
 	}
 }
 
