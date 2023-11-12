@@ -168,9 +168,11 @@ static void show_state(struct show *s, struct state *st, const monotime_t now)
 
 		const struct connection *c = st->st_connection;
 
-		jam(buf, "#%lu: ", st->st_serialno);
+		jam_so(buf, st->st_serialno);
+		jam_string(buf, ": ");
 		jam_connection(buf, c);
 		jam(buf, ":%u", endpoint_hport(st->st_remote_endpoint));
+
 		if (st->st_iface_endpoint->io->protocol == &ip_protocol_tcp) {
 			jam(buf, "(tcp)");
 		}
@@ -388,21 +390,24 @@ static void show_established_child_details(struct show *s, struct child_sa *chil
 }
 
 static void show_pending_child_details(struct show *s,
-				       const struct connection *c,
 				       const struct ike_sa *ike)
 {
+	struct connection *c = ike->sa.st_connection;
 	for (struct pending *p, **pp = host_pair_first_pending(c);
 	     pp != NULL && (p = *pp) != NULL; pp = &p->next) {
-		if (p->ike == ike) {
-			/* connection-name state-number [replacing state-number] */
-			SHOW_JAMBUF(RC_COMMENT, s, buf) {
-				jam(buf, "#%lu: pending ", p->ike->sa.st_serialno);
-				jam_string(buf, (ike->sa.st_ike_version == IKEv2) ? "CHILD SA" : "Phase 2");
-				jam(buf, " for ");
-				jam_connection(buf, c);
-				if (p->replacing != SOS_NOBODY) {
-					jam(buf, " replacing #%lu", p->replacing);
-				}
+		if (p->ike != ike) {
+			continue;
+		}
+		/* connection-name state-number [replacing state-number] */
+		SHOW_JAMBUF(RC_COMMENT, s, buf) {
+			jam_so(buf, ike->sa.st_serialno);
+			jam_string(buf, ": pending ");
+			jam_string(buf, c->config->ike_info->child_sa_name);
+			jam(buf, " for ");
+			jam_connection(buf, p->connection);
+			if (p->replacing != SOS_NOBODY) {
+				jam_string(buf, " replacing ");
+				jam_so(buf, p->replacing);
 			}
 		}
 	}
@@ -421,11 +426,12 @@ void whack_showstates(struct show *s, const monotime_t now)
 			show_state(s, st, now);
 			if (IS_IPSEC_SA_ESTABLISHED(st)) {
 				/* print out SPIs if SAs are established */
-				show_established_child_details(s, pexpect_child_sa(st), now);
+				struct child_sa *child = pexpect_child_sa(st);
+				show_established_child_details(s, child, now);
 			}  else if (IS_IKE_SA(st)) {
 				/* show any associated pending Phase 2s */
-				show_pending_child_details(s, st->st_connection,
-							   pexpect_ike_sa(st));
+				struct ike_sa *ike = pexpect_ike_sa(st);
+				show_pending_child_details(s, ike);
 			}
 
 		}
