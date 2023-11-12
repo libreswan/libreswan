@@ -182,11 +182,9 @@ static void jam_routing_annex(struct jambuf *buf, const struct routing_annex *e)
 	if (e->child != NULL && (*e->child) != NULL) {
 		jam_sa(buf, &(*e->child)->sa, &sep);
 	}
-	if (e->initiated_by != INITIATED_BY_NONE) {
-		jam_string(buf, sep); sep = " ";
-		jam_string(buf, "by=");
-		jam_enum_short(buf, &initiated_by_names, e->initiated_by);
-	}
+	jam_string(buf, sep); sep = " ";
+	jam_string(buf, "by=");
+	jam_enum_short(buf, &initiated_by_names, e->initiated_by);
 	jam_string(buf, ";");
 }
 

@@ -79,7 +79,7 @@ void ikev1_replace(struct state *st)
 		passert(HAS_IPSEC_POLICY(policy));
 		ipsecdoi_initiate(st->st_connection, policy, st->st_serialno, &inception,
 				  null_shunk, /*background?*/false, st->st_logger,
-				  INITIATED_BY_NONE, HERE);
+				  INITIATED_BY_REPLACE, HERE);
 	}
 }
 

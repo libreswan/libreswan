@@ -19,7 +19,6 @@
 
 static const char *initiated_by_name[] = {
 #define S(E) [E] = #E
-	S(INITIATED_BY_NONE),
 	S(INITIATED_BY_WHACK),
 	S(INITIATED_BY_REVIVE),
 	S(INITIATED_BY_ACQUIRE),

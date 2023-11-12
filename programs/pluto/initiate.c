@@ -413,7 +413,7 @@ void ipsecdoi_initiate(struct connection *c,
 		if (ike == NULL) {
 			return;
 		}
-		if (initiated_by != INITIATED_BY_NONE) {
+		if (initiated_by != INITIATED_BY_REPLACE) {
 			connection_initiated_ike(ike, initiated_by, HERE);
 		}
 		if (background) {
@@ -473,7 +473,7 @@ void ipsecdoi_initiate(struct connection *c,
 		if (child == NULL) {
 			return;
 		}
-		if (initiated_by != INITIATED_BY_NONE) {
+		if (initiated_by != INITIATED_BY_REPLACE) {
 			connection_initiated_child(ike, child, initiated_by, where);
 		}
 		if (background) {
@@ -506,7 +506,7 @@ void ipsecdoi_initiate(struct connection *c,
 		add_pending(ike, c, policy,
 			    replacing, sec_label,
 			    false /*part of initiate*/, background);
-		if (initiated_by != INITIATED_BY_NONE) {
+		if (initiated_by != INITIATED_BY_REPLACE) {
 			connection_pending(c, initiated_by, where);
 		}
 		break;
@@ -525,7 +525,7 @@ void ipsecdoi_initiate(struct connection *c,
 		add_pending(ike, cc, policy,
 			    replacing, sec_label,
 			    false /*part of initiate*/, background);
-		if (initiated_by != INITIATED_BY_NONE) {
+		if (initiated_by != INITIATED_BY_REPLACE) {
 			connection_pending(cc, initiated_by, where);
 		}
 		connection_delref(&cc, cc->logger);
