@@ -745,7 +745,6 @@ void delete_child_sa(struct child_sa **child)
 
 	struct state *st = &(*child)->sa;
 	*child = NULL;
-	on_delete(st, skip_revival);
 	on_delete(st, skip_send_delete);
 	delete_state(st);
 }
@@ -759,7 +758,6 @@ void delete_ike_sa(struct ike_sa **ike)
 
 	struct state *st = &(*ike)->sa;
 	*ike = NULL;
-	on_delete(st, skip_revival);
 	on_delete(st, skip_send_delete);
 	delete_state(st);
 }
@@ -852,7 +850,6 @@ void delete_state(struct state *st)
 	     bool_str(st->st_on_delete.skip_log_message));
 
 	/* must be as set by delete_{ike,child}_sa() */
-	PEXPECT(st->st_logger, st->st_on_delete.skip_revival);
 	PEXPECT(st->st_logger, st->st_on_delete.skip_send_delete);
 
 	/*

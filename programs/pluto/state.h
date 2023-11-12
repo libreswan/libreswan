@@ -763,16 +763,6 @@ struct state {
 
 	struct {
 		/*
-		 * Has this state's connection been checked for
-		 * revival?
-		 *
-		 * IKEv2 checks for revival in connection_timeout()
-		 * before calling delete_state().  No point checking
-		 * it a second time.
-		 */
-		bool skip_revival;
-
-		/*
 		 * In delete_state(), as a last gasp, should a delete
 		 * message to delete the SA be sent?
 		 *

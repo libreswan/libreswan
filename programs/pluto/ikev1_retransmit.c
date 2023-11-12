@@ -72,7 +72,6 @@ void event_v1_retransmit(struct state *st, monotime_t now UNUSED)
 	/* placed here because IKEv1 doesn't do a proper state change
 	 * to STF_FAIL_v1N/STF_FATAL */
 	linux_audit_conn(st, IS_IKE_SA(st) ? LAK_PARENT_FAIL : LAK_CHILD_FAIL);
-	PEXPECT(st->st_logger, !st->st_on_delete.skip_revival);
 
 	if (IS_V1_ISAKMP_SA(st)) {
 		struct ike_sa *isakmp = pexpect_ike_sa(st);
