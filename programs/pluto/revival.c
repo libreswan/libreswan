@@ -185,37 +185,47 @@ static void schedule_revival_event(struct connection *c, struct logger *logger, 
 				  (impair.revival ? "revival" : NULL), logger);
 }
 
-bool scheduled_revival(struct connection *c, struct state *st, const char *subplot, struct logger *logger)
+bool scheduled_revival(struct connection *c, struct state *st/*can be NULL*/,
+		       const char *subplot, struct logger *logger)
 {
-
 	if (st != NULL) {
 		/*
 		 * pexpect() ST is the owner.  Routing should never
 		 * call when it isn't.
 		 */
 		if (IS_CHILD_SA(st)) {
-			if (c->newest_routing_sa > st->st_serialno) {
+			if (c->newest_routing_sa != SOS_NOBODY &&
+			    c->newest_routing_sa != st->st_serialno) {
 				/*
 				 * There's a newer SA playing with the routing.
 				 * Presumably this is an old Child SA that is in the
 				 * process of being rekeyed or replaced.
 				 */
 				llog_pexpect(st->logger, HERE,
-					     "revival: skipping, .newest_routing_sa "PRI_SO" is newer than this Child SA",
+					     "revival: skipping, .newest_routing_sa "PRI_SO" is not us",
 					     pri_so(c->newest_routing_sa));
 				return false;
 			}
 
-			if (c->newest_ipsec_sa > st->st_serialno) {
+			if (c->newest_ipsec_sa != SOS_NOBODY &&
+			    c->newest_ipsec_sa != st->st_serialno) {
 				/* should be covered by above */
 				llog_pexpect(st->logger, HERE,
-					     "revival: skipping, .newest_ipsec_sa "PRI_SO" is newer than this Child SA",
+					     "revival: skipping, .newest_ipsec_sa "PRI_SO" is not us",
 					     pri_so(c->newest_ipsec_sa));
 				return false;
 			}
 		}
 
 		if (IS_IKE_SA(st)) {
+			if (c->negotiating_ike_sa != SOS_NOBODY &&
+			    c->negotiating_ike_sa != st->st_serialno) {
+				/* should be covered by above */
+				llog_pexpect(st->logger, HERE,
+					     "revival: skipping, .negotiating_ike_sa "PRI_SO" is is not us",
+					     pri_so(c->negotiating_ike_sa));
+				return false;
+			}
 			if (c->established_ike_sa != SOS_NOBODY &&
 			    c->established_ike_sa != st->st_serialno) {
 				/* should be covered by above */
