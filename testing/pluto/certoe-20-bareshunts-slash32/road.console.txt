@@ -59,7 +59,7 @@ road #
 road #
  ipsec showstates
 000 #1: "private-or-clear#192.1.2.23/32"[1] ...192.1.2.23:500 STATE_V2_PARENT_I1 (sent IKE_SA_INIT request); RETRANSMIT in XXs; idle;
-000 #1: pending CHILD SA for "private-or-clear#192.1.2.23/32"[1] ...192.1.2.23
+000 #1: pending Child SA for "private-or-clear#192.1.2.23/32"[1] ...192.1.2.23
 road #
  # Since there's already an IKE_SA in-flight, pings at this point
 road #
@@ -70,7 +70,7 @@ down
 road #
  ipsec showstates
 000 #1: "private-or-clear#192.1.2.23/32"[1] ...192.1.2.23:500 STATE_V2_PARENT_I1 (sent IKE_SA_INIT request); RETRANSMIT in XXs; idle;
-000 #1: pending CHILD SA for "private-or-clear#192.1.2.23/32"[1] ...192.1.2.23
+000 #1: pending Child SA for "private-or-clear#192.1.2.23/32"[1] ...192.1.2.23
 road #
  # Now wait for the fatal timeout.  This triggers the deletion of both
 road #

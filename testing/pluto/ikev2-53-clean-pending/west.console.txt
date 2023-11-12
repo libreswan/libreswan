@@ -26,7 +26,7 @@ west #
 000 "westnet-eastnet-ipv4-psk-ikev2":   routing: unrouted-bare-negotiation;
 000 "westnet-eastnet-ipv4-psk-ikev2":   conn serial: $1;
 000 #1: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_V2_PARENT_I1 (sent IKE_SA_INIT request); RETRANSMIT in XXs; idle;
-000 #1: pending CHILD SA for "westnet-eastnet-ipv4-psk-ikev2"
+000 #1: pending Child SA for "westnet-eastnet-ipv4-psk-ikev2"
 west #
  echo "initdone"
 initdone
@@ -52,12 +52,12 @@ west #
 000 "westnet-eastnet-ipv4-psk-ikev2":   routing: unrouted-bare-negotiation;
 000 "westnet-eastnet-ipv4-psk-ikev2":   conn serial: $1;
 000 #1: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_V2_PARENT_I1 (sent IKE_SA_INIT request); RETRANSMIT in XXs; idle;
-000 #1: pending CHILD SA for "westnet-eastnet-ipv4-psk-ikev2"
+000 #1: pending Child SA for "westnet-eastnet-ipv4-psk-ikev2"
 west #
  # wait for the IKE SA to die
 west #
- ../../guestbin/wait-for.sh --timeout 40 --match '#2: pending CHILD SA' -- ipsec auto --status
-000 #2: pending CHILD SA for "westnet-eastnet-ipv4-psk-ikev2"
+ ../../guestbin/wait-for.sh --timeout 40 --match '#2: pending Child SA' -- ipsec auto --status
+000 #2: pending Child SA for "westnet-eastnet-ipv4-psk-ikev2"
 west #
  ipsec auto --status | grep westnet-eastnet-ipv4-psk-ikev2
 000 "westnet-eastnet-ipv4-psk-ikev2": 192.0.0.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted-bare-negotiation; my_ip=unset; their_ip=unset;
@@ -80,7 +80,7 @@ west #
 000 "westnet-eastnet-ipv4-psk-ikev2":   routing: unrouted-bare-negotiation;
 000 "westnet-eastnet-ipv4-psk-ikev2":   conn serial: $1;
 000 #2: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_V2_PARENT_I1 (sent IKE_SA_INIT request); RETRANSMIT in XXs; idle;
-000 #2: pending CHILD SA for "westnet-eastnet-ipv4-psk-ikev2"
+000 #2: pending Child SA for "westnet-eastnet-ipv4-psk-ikev2"
 west #
  ../../guestbin/ipsec-kernel-state.sh
 west #
