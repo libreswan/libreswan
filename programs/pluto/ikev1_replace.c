@@ -60,11 +60,11 @@ void ikev1_replace(struct state *st)
 
 		/* should this call capture_child_rekey_policy(st); */
 		lset_t policy = LEMPTY;
-
+		struct ike_sa *predecessor = pexpect_ike_sa(st);
 		if (c->config->aggressive) {
-			aggr_outI1(c, st, policy, &inception, /*background?*/false);
+			aggr_outI1(c, predecessor, policy, &inception, /*background?*/false);
 		} else {
-			main_outI1(c, st, policy, &inception, /*background?*/false);
+			main_outI1(c, predecessor, policy, &inception, /*background?*/false);
 		}
 
 	} else {
@@ -76,10 +76,7 @@ void ikev1_replace(struct state *st)
 		 * everything.
 		 */
 		lset_t policy = capture_child_rekey_policy(st);
-
-		if (st->st_ike_version == IKEv1)
-			passert(HAS_IPSEC_POLICY(policy));
-
+		passert(HAS_IPSEC_POLICY(policy));
 		ipsecdoi_initiate(st->st_connection, policy, st->st_serialno, &inception,
 				  null_shunk, /*background?*/false, st->st_logger,
 				  INITIATED_BY_NONE, HERE);

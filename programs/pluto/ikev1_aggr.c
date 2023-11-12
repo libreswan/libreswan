@@ -982,7 +982,7 @@ static ke_and_nonce_cb aggr_outI1_continue;	/* type assertion */
  */
 
 struct ike_sa *aggr_outI1(struct connection *c,
-			  struct state *predecessor,
+			  struct ike_sa *predecessor,
 			  lset_t policy,
 			  const threadtime_t *inception,
 			  bool background)
@@ -1011,16 +1011,17 @@ struct ike_sa *aggr_outI1(struct connection *c,
 
 	if (HAS_IPSEC_POLICY(policy))
 		add_pending(ike, c, policy,
-			    (predecessor == NULL ? SOS_NOBODY : predecessor->st_serialno),
+			    (predecessor == NULL ? SOS_NOBODY : predecessor->sa.st_serialno),
 			    null_shunk, true /*part of initiate*/, background);
 
 	if (predecessor == NULL) {
 		llog_sa(RC_LOG, ike, "initiating IKEv1 Aggressive Mode connection");
 	} else {
-		move_pending(pexpect_ike_sa(predecessor), ike);
+		move_pending(predecessor, ike);
 		llog_sa(RC_LOG, ike,
-			"initiating IKEv1 Aggressive Mode connection #%lu to replace #%lu",
-			ike->sa.st_serialno, predecessor->st_serialno);
+			"initiating IKEv1 Aggressive Mode connection "PRI_SO" to replace "PRI_SO,
+			pri_so(ike->sa.st_serialno),
+			pri_so(predecessor->sa.st_serialno));
 	}
 
 	/*

@@ -37,13 +37,13 @@ extern void process_packet_tail(struct msg_digest *md);
 /* **MAIN MODE FUNCTIONS** in ikev1_main.c */
 
 extern struct ike_sa *main_outI1(struct connection *c,
-				 struct state *predecessor,
+				 struct ike_sa *predecessor,
 				 lset_t policy,
 				 const threadtime_t *inception,
 				 bool background);
 
 extern struct ike_sa *aggr_outI1(struct connection *c,
-				 struct state *predecessor,
+				 struct ike_sa *predecessor,
 				 lset_t policy,
 				 const threadtime_t *inception,
 				 bool background);

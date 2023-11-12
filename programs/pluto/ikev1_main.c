@@ -110,7 +110,7 @@
  */
 
 struct ike_sa *main_outI1(struct connection *c,
-			  struct state *predecessor,
+			  struct ike_sa *predecessor,
 			  lset_t policy,
 			  const threadtime_t *inception,
 			  bool background)
@@ -121,7 +121,8 @@ struct ike_sa *main_outI1(struct connection *c,
 
 	if (HAS_IPSEC_POLICY(policy)) {
 		add_pending(ike, c, policy,
-			    (predecessor == NULL ? SOS_NOBODY : predecessor->st_serialno),
+			    (predecessor == NULL ? SOS_NOBODY :
+			     predecessor->sa.st_serialno),
 			    null_shunk, true /* part of initiate */, background);
 	}
 
@@ -129,7 +130,7 @@ struct ike_sa *main_outI1(struct connection *c,
 		llog_sa(RC_LOG, ike, "initiating IKEv1 Main Mode connection");
 	} else {
 		llog_sa(RC_LOG, ike, "initiating IKEv1 Main Mode connection to replace #%lu",
-			  predecessor->st_serialno);
+			  predecessor->sa.st_serialno);
 	}
 
 	/* set up reply */
@@ -202,11 +203,11 @@ struct ike_sa *main_outI1(struct connection *c,
 	start_retransmits(st);
 
 	if (predecessor != NULL) {
-		move_pending(pexpect_ike_sa(predecessor), pexpect_ike_sa(st));
+		move_pending(predecessor, pexpect_ike_sa(st));
 		llog_sa(RC_NEW_V1_STATE + st->st_state->kind, ike,
-			  "%s, replacing #%lu",
-			  st->st_state->story,
-			  predecessor->st_serialno);
+			"%s, replacing "PRI_SO,
+			st->st_state->story,
+			pri_so(predecessor->sa.st_serialno));
 	} else {
 		llog_sa(RC_NEW_V1_STATE + st->st_state->kind, ike,
 			  "%s", st->st_state->story);
