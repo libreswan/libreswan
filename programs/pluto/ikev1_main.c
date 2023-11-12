@@ -202,7 +202,7 @@ struct ike_sa *main_outI1(struct connection *c,
 	start_retransmits(st);
 
 	if (predecessor != NULL) {
-		update_pending(pexpect_ike_sa(predecessor), pexpect_ike_sa(st));
+		move_pending(pexpect_ike_sa(predecessor), pexpect_ike_sa(st));
 		llog_sa(RC_NEW_V1_STATE + st->st_state->kind, ike,
 			  "%s, replacing #%lu",
 			  st->st_state->story,

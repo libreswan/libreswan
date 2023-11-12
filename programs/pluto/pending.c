@@ -435,16 +435,22 @@ void connection_check_phase2(struct logger *logger)
 }
 
 /* a IKE SA negotiation has been replaced; update any pending */
-void update_pending(struct ike_sa *old_ike, struct ike_sa *new_ike)
-{
-	pexpect(old_ike != NULL);
-	if (old_ike == NULL)
-		return;
 
-	for (struct pending *p, **pp = host_pair_first_pending(old_ike->sa.st_connection);
+void move_pending(struct ike_sa *old, struct ike_sa *new)
+{
+	if (pbad(old == NULL)) {
+		return;
+	}
+
+	if (pbad(old == new)) {
+		return;
+	}
+
+	for (struct pending *p, **pp = host_pair_first_pending(old->sa.st_connection);
 	     pp != NULL && (p = *pp) != NULL; pp = &p->next) {
-		if (p->ike == old_ike)
-			p->ike = new_ike;
+		if (p->ike == old) {
+			p->ike = new;
+		}
 	}
 }
 

@@ -611,7 +611,7 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 		llog_sa(log_stream | (RC_NEW_V2_STATE + STATE_V2_PARENT_I1), ike,
 			  "initiating IKEv2 connection to replace %s #%lu",
 			  what, predecessor->st_serialno);
-		update_pending(ike_sa(predecessor, HERE), ike);
+		move_pending(ike_sa(predecessor, HERE), ike);
 	} else {
 		llog_sa(log_stream | (RC_NEW_V2_STATE + STATE_V2_PARENT_I1), ike,
 			  "initiating IKEv2 connection");

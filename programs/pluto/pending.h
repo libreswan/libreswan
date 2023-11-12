@@ -57,7 +57,7 @@ void add_pending(struct ike_sa *ike,
 
 void unpend(struct ike_sa *ike, struct connection *cc);
 void release_pending_whacks(struct state *st, err_t story);
-void update_pending(struct ike_sa *old_ike, struct ike_sa *new_ike);
+void move_pending(struct ike_sa *old, struct ike_sa *new);
 
 void remove_connection_from_pending(const struct connection *c);
 void flush_pending_by_state(struct ike_sa *ike);

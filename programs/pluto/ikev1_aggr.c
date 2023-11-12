@@ -1017,7 +1017,7 @@ struct ike_sa *aggr_outI1(struct connection *c,
 	if (predecessor == NULL) {
 		llog_sa(RC_LOG, ike, "initiating IKEv1 Aggressive Mode connection");
 	} else {
-		update_pending(pexpect_ike_sa(predecessor), ike);
+		move_pending(pexpect_ike_sa(predecessor), ike);
 		llog_sa(RC_LOG, ike,
 			"initiating IKEv1 Aggressive Mode connection #%lu to replace #%lu",
 			ike->sa.st_serialno, predecessor->st_serialno);
