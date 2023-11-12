@@ -241,6 +241,11 @@ bool scheduled_revival(struct connection *c, struct state *st/*can be NULL*/,
 		return false;
 	}
 
+	if (st != NULL && st->st_skip_revival_as_redirecting) {
+		ldbg(logger, "revival: skipping, hack to handle redirect");
+		return false;
+	}
+
 	if (st != NULL) {
 		update_remote_port(st);
 	}

@@ -540,6 +540,7 @@ static void initiate_redirect(const char *story, struct state *ike_sa, void *con
 		story, str_address_sensitive(&redirect_ip, &b));
 
 	ike->sa.st_viable_parent = false; /* just to be sure */
+	ike->sa.st_skip_revival_as_redirecting = true;
 	/*
 	 * XXX: hack, relinquish control of the connection.
 	 *
