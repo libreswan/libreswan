@@ -392,17 +392,13 @@ static void show_established_child_details(struct show *s, struct child_sa *chil
 static void show_pending_child_details(struct show *s,
 				       const struct ike_sa *ike)
 {
-	struct connection *c = ike->sa.st_connection;
-	for (struct pending *p, **pp = host_pair_first_pending(c);
-	     pp != NULL && (p = *pp) != NULL; pp = &p->next) {
-		if (p->ike != ike) {
-			continue;
-		}
+	for (struct pending *p = ike->sa.st_pending;
+	     p != NULL; p = p->next) {
 		/* connection-name state-number [replacing state-number] */
 		SHOW_JAMBUF(RC_COMMENT, s, buf) {
 			jam_so(buf, ike->sa.st_serialno);
 			jam_string(buf, ": pending ");
-			jam_string(buf, c->config->ike_info->child_sa_name);
+			jam_string(buf, p->connection->config->ike_info->child_sa_name);
 			jam(buf, " for ");
 			jam_connection(buf, p->connection);
 			if (p->replacing != SOS_NOBODY) {

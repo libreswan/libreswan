@@ -787,6 +787,8 @@ struct connection {
 		struct list_entry clonedfrom;
 	} connection_db_entries;
 
+	struct pending *pending;
+
 	struct connection_event_event *events[CONNECTION_EVENT_ROOF];
 
 	/*

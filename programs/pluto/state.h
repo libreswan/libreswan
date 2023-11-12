@@ -689,6 +689,8 @@ struct state {
 		struct list_entry ike_initiator_spi;
 	} state_db_entries;
 
+	struct pending *st_pending;
+
 	struct hidden_variables hidden_variables;
 
 	char st_xauth_username[MAX_XAUTH_USERNAME_LEN];	/* NUL-terminated */

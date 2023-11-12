@@ -40,16 +40,10 @@ struct host_pair {
 	ip_address local;
 	ip_address remote;
 	struct connection *connections;         /* connections with this pair */
-	struct pending *pending;                /* awaiting Keying Channel */
 	struct {
 		struct list_entry addresses;
 	} host_pair_db_entries;
 };
-
-/* export to pending.c */
-extern void host_pair_enqueue_pending(const struct connection *c,
-				      struct pending *p);
-struct pending **host_pair_first_pending(const struct connection *c);
 
 void connect_to_oriented(struct connection *c);
 void connect_to_unoriented(struct connection *c);

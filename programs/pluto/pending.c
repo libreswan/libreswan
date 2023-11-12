@@ -68,29 +68,22 @@ void add_pending(struct ike_sa *ike,
 		 bool part_of_initiate,
 		 bool background)
 {
-	/*
-	 * XXX: should be passing logger down to initiate and pending
-	 * code.  Not whackfd.
-	 */
-	/* look for duplicate pending IPsec SA's, skip add operation */
-	for (struct pending *p, **pp = host_pair_first_pending(c);
-	     pp != NULL && (p = *pp) != NULL; pp = &p->next) {
-		if (p->connection == c) {
-			address_buf b;
-			connection_buf cib;
-			bool duplicate = (p->ike == ike);
-			dbg("connection "PRI_CONNECTION" is already pending: waiting on IKE SA #%lu connecting to %s; %s",
-			    pri_connection(c, &cib),
-			    p->ike->sa.st_serialno,
-			    str_address(&c->remote->host.addr, &b),
-			    duplicate ? "ignoring duplicate" : "this IKE SA is different");
-			if (duplicate) {
-				return;
-			}
+	if (c->pending != NULL) {
+		address_buf b;
+		connection_buf cib;
+		bool duplicate = (c->pending->ike == ike);
+		ldbg_sa(ike, "connection "PRI_CONNECTION" is already pending: waiting on IKE SA #%lu connecting to %s; %s",
+			pri_connection(c, &cib),
+			c->pending->ike->sa.st_serialno,
+			str_address(&c->remote->host.addr, &b),
+			duplicate ? "ignoring duplicate" : "this IKE SA is different");
+		if (duplicate) {
+			return;
 		}
 	}
 
 	struct pending *p = alloc_thing(struct pending, "struct pending");
+	c->pending = p;
 
 	/*
 	 * Clone C's logger but strip it of any whack attached by the
@@ -114,20 +107,29 @@ void add_pending(struct ike_sa *ike,
 	 * If this is part of an initiate then there's already enough
 	 * going on; no need to log this action.
 	 */
-	enum stream only = part_of_initiate ? (DBGP(DBG_BASE) ? DEBUG_STREAM : NO_STREAM) : ALL_STREAMS;
+	enum stream only = (!part_of_initiate ? ALL_STREAMS :
+			    DBGP(DBG_BASE) ? DEBUG_STREAM :
+			    NO_STREAM);
+
 	if (only != NO_STREAM) {
 		address_buf b;
 		state_buf sab;
 		llog(only | RC_COMMENT, p->logger,
 		     "queue %s; waiting on %s "PRI_STATE" negotiating with %s",
 		     /* "Child SA" or "IPsec SA" */
-		     p->connection->config->ike_info->child_sa_name,
+		     c->config->ike_info->child_sa_name,
 		     /* "IKE SA" or "ISAKMP SA" */
-		     p->connection->config->ike_info->parent_sa_name,
+		     c->config->ike_info->parent_sa_name,
 		     pri_state(&ike->sa, &sab),
 		     ipstr(&c->remote->host.addr, &b));
 	}
-	host_pair_enqueue_pending(c, p);
+
+	p->next = ike->sa.st_pending;
+	ike->sa.st_pending = p;
+	ldbg_sa(ike, "pending: %s() ike %p pending %p connection %p ike %p",
+		__func__, ike, ike->sa.st_pending,
+		ike->sa.st_pending->connection,
+		ike->sa.st_pending->ike);
 }
 
 /*
@@ -181,13 +183,15 @@ void release_pending_whacks(struct state *st, err_t story)
 	 * printed.
 	 */
 
-	for (struct pending *p, **pp = host_pair_first_pending(st->st_connection);
-	     pp != NULL && (p = *pp) != NULL; pp = &p->next) {
+	for (struct pending *p = st->st_pending; p != NULL; p = p->next) {
+
+		ldbg(st->logger, "pending: %s() ike %p pending %p connection %p ike %p",
+		     __func__, st, p, p->connection, p->ike);
 
 		bool has_whack = whack_attached(p->logger);
 
 		pdbg(p->logger,
-		     "%s: %s SA "PRI_SO" "PRI_LOGGER" has pending %s SA with whack "PRI_LOGGER,
+		     "pending: %s: %s SA "PRI_SO" "PRI_LOGGER" has %s SA with whack "PRI_LOGGER,
 		     __func__,
 		     p->ike->sa.st_connection->config->ike_info->parent_name,
 		     pri_so(p->ike->sa.st_serialno),
@@ -233,16 +237,17 @@ void release_pending_whacks(struct state *st, err_t story)
 
 static void delete_pending(struct pending **pp, const char *what)
 {
-	const struct connection *c = (*pp)->connection;
-	connection_buf cib;
-	ldbg(c->logger,
-	     "%s removing pending {%p} %s connection "PRI_CONNECTION"",
-	     what, (*pp), (c->config->ike_version == IKEv2 ? "Child SA" : "Quick Mode"),
-	     pri_connection(c, &cib));
-
 	/* remove from list */
 	struct pending *p = *pp;
 	*pp = p->next;
+	struct connection *c = p->connection;
+	c->pending = NULL;
+
+	connection_buf cib;
+	ldbg(c->logger,
+	     "pending: %s pending [%p] %s connection "PRI_CONNECTION" [%p]",
+	     what, p, (c->config->ike_version == IKEv2 ? "Child SA" : "Quick Mode"),
+	     pri_connection(c, &cib), c);
 
 	connection_delref(&p->connection, &global_logger);
 	free_logger(&p->logger, HERE);
@@ -264,65 +269,68 @@ static void delete_pending(struct pending **pp, const char *what)
 void unpend(struct ike_sa *ike, struct connection *cc)
 {
 	if (cc == NULL) {
-		dbg("unpending state #%lu", ike->sa.st_serialno);
+		ldbg_sa(ike, "pending: unpending state %p #%lu pending %p",
+			ike, ike->sa.st_serialno, ike->sa.st_pending);
 	} else {
 		connection_buf cib;
-		dbg("unpending state #%lu connection "PRI_CONNECTION"",
-		    ike->sa.st_serialno, pri_connection(cc, &cib));
+		ldbg_sa(ike, "pending: unpending state #%lu connection "PRI_CONNECTION"",
+			ike->sa.st_serialno, pri_connection(cc, &cib));
 	}
 
-	for (struct pending *p, **pp = host_pair_first_pending(ike->sa.st_connection);
-	     pp != NULL && (p = *pp) != NULL; /*see-below*/) {
-		if (p->ike == ike) {
-			p->pend_time = mononow();
-			char *what ="unqueuing";
-			switch (ike->sa.st_ike_version) {
-			case IKEv2:
-				if (cc == p->connection) {
-					/*
-					 * IKEv2 AUTH negotiation
-					 * include child.  nothing to
-					 * upend, like in IKEv1,
-					 * delete it
-					 */
-					what = "delete from";
-				} else if (!already_has_larval_v2_child(ike, p->connection)) {
-					connection_attach(p->connection, p->logger);
-					submit_v2_CREATE_CHILD_SA_new_child(ike, p->connection,
-									    p->policy);
-					connection_detach(p->connection, p->logger);
-				}
-				break;
-			case IKEv1:
-#ifdef USE_IKEv1
+	struct pending **pp = &ike->sa.st_pending;
+	while ((*pp) != NULL) {
+
+		struct pending *p = (*pp);
+
+		ldbg_sa(ike, "pending: %s() ike %p pending %p connection %p ike %p",
+			__func__, ike, p, p->connection, p->ike);
+
+		p->pend_time = mononow();
+		char *what ="unqueuing";
+		switch (ike->sa.st_ike_version) {
+		case IKEv2:
+			if (cc == p->connection) {
+				/*
+				 * IKEv2 AUTH negotiation
+				 * include child.  nothing to
+				 * upend, like in IKEv1,
+				 * delete it
+				 */
+				what = "delete from";
+			} else if (!already_has_larval_v2_child(ike, p->connection)) {
 				connection_attach(p->connection, p->logger);
-				quick_outI1(ike, p->connection,
-					    p->policy,
-					    p->replacing);
+				submit_v2_CREATE_CHILD_SA_new_child(ike, p->connection,
+								    p->policy);
 				connection_detach(p->connection, p->logger);
-#endif
-				break;
-			default:
-				bad_case(ike->sa.st_ike_version);
 			}
-			delete_pending(pp, what);	/* in effect, advances pp */
-		} else {
-			pp = &p->next;
+			break;
+		case IKEv1:
+#ifdef USE_IKEv1
+			connection_attach(p->connection, p->logger);
+			quick_outI1(ike, p->connection,
+				    p->policy,
+				    p->replacing);
+			connection_detach(p->connection, p->logger);
+#endif
+			break;
+		default:
+			bad_case(ike->sa.st_ike_version);
 		}
+
+		delete_pending(pp, what);	/* in effect, advances pp */
 	}
 }
 
 struct connection *first_pending(const struct ike_sa *ike)
 {
-	pdbg(ike->sa.st_logger, "getting first pending from state");
-
-	for (struct pending *p, **pp = host_pair_first_pending(ike->sa.st_connection);
-	     pp != NULL && (p = *pp) != NULL; pp = &p->next) {
-		if (p->ike == ike) {
-			connection_attach(p->connection, p->logger);
-			return p->connection;
-		}
+	struct pending *p = ike->sa.st_pending;
+	if (p != NULL) {
+		connection_attach(p->connection, p->logger);
+		ldbg_sa(ike, "pending: %s() ike %p pending %p connection %p ike %p",
+			__func__, ike, p, p->connection, p->ike);
+		return p->connection;
 	}
+	ldbg_sa(ike, "pending: no first pending from state");
 	return NULL;
 }
 
@@ -336,26 +344,26 @@ struct connection *first_pending(const struct ike_sa *ike)
 static bool pending_check_timeout(const struct connection *c)
 {
 	const monotime_t now = mononow();
-	for (struct pending *p, **pp = host_pair_first_pending(c);
-	     pp != NULL && (p = *pp) != NULL; /*see-below*/) {
-		deltatime_t waited = monotimediff(mononow(), p->pend_time);
-		connection_buf cib;
-		dbg("checking connection "PRI_CONNECTION" for stuck phase 2s (waited %jd, patience 3*%jd)",
-		    pri_connection(c, &cib), deltasecs(waited),
-		    deltasecs(c->config->dpd.timeout));
-		if (deltasecs(c->config->dpd.timeout) > 0) {
-			/* patience = 3 * c->config->dpd.timeout */
-			deltatime_t patience = deltatime_scale(c->config->dpd.timeout, 3, 1);
-			monotime_t pending_patience = monotime_add(p->pend_time, patience);
-			/* run out of patience? */
-			if (monotime_cmp(now, >=, pending_patience)) {
-				connection_buf cib;
-				dbg("connection "PRI_CONNECTION" stuck, restarting",
-				    pri_connection(c, &cib));
-				return true;
-			}
+	struct pending *p = c->pending;
+	if (p == NULL) {
+		return false;
+	}
+	deltatime_t waited = monotimediff(mononow(), p->pend_time);
+	connection_buf cib;
+	ldbg(c->logger, "pending: checking connection "PRI_CONNECTION" for stuck phase 2s (waited %jd, patience 3*%jd)",
+	     pri_connection(c, &cib), deltasecs(waited),
+	     deltasecs(c->config->dpd.timeout));
+	if (deltasecs(c->config->dpd.timeout) > 0) {
+		/* patience = 3 * c->config->dpd.timeout */
+		deltatime_t patience = deltatime_scale(c->config->dpd.timeout, 3, 1);
+		monotime_t pending_patience = monotime_add(p->pend_time, patience);
+		/* run out of patience? */
+		if (monotime_cmp(now, >=, pending_patience)) {
+			connection_buf cib;
+			ldbg(c->logger, "pending: connection "PRI_CONNECTION" stuck, restarting",
+			    pri_connection(c, &cib));
+			return true;
 		}
-		pp = &p->next;
 	}
 	return false;
 }
@@ -446,12 +454,17 @@ void move_pending(struct ike_sa *old, struct ike_sa *new)
 		return;
 	}
 
-	for (struct pending *p, **pp = host_pair_first_pending(old->sa.st_connection);
-	     pp != NULL && (p = *pp) != NULL; pp = &p->next) {
-		if (p->ike == old) {
-			p->ike = new;
-		}
+	ldbg(old->sa.st_logger, "pending: update ike %p pending %p -> ike %p pending %p",
+	     old, old->sa.st_pending,
+	     new, new->sa.st_pending);
+
+	struct pending **pp = &new->sa.st_pending;
+	while ((*pp) != NULL) {
+		pp = &(*pp)->next;
 	}
+
+	(*pp) = old->sa.st_pending;
+	old->sa.st_pending = NULL;
 }
 
 /*
@@ -461,31 +474,35 @@ void move_pending(struct ike_sa *old, struct ike_sa *new)
  */
 void flush_pending_by_state(struct ike_sa *ike)
 {
-	for (struct pending *p, **pp = host_pair_first_pending(ike->sa.st_connection);
-	     pp != NULL && (p = *pp) != NULL; /*see-below*/ ) {
-		if (p->ike == ike) {
+	ldbg(ike->sa.st_logger, "pending: %s() ike %p pending %p",
+	     __func__, ike, ike->sa.st_pending);
+
+	struct pending **pp = &ike->sa.st_pending;
+	while ((*pp) != NULL) {
+		struct pending *p = (*pp);
+
+		ldbg_sa(ike, "pending: %s() ike %p pending %p connection %p ike %p",
+			__func__, ike, p, p->connection, p->ike);
+
+		/*
+		 * We don't have to worry about deref to
+		 * free'ed *pp, because delete_pending updates
+		 * pp to point to the next element before it
+		 * frees *pp
+		 *
+		 * We don't need to worry about delrefing
+		 * .connection because delete_pending() will
+		 * do it for us.
+		 */
+		if ((*pp)->connection != ike->sa.st_connection) {
 			/*
-			 * We don't have to worry about deref to
-			 * free'ed *pp, because delete_pending updates
-			 * pp to point to the next element before it
-			 * frees *pp
-			 *
-			 * We don't need to worry about delrefing
-			 * .connection because delete_pending() will
-			 * do it for us.
+			 * Find another IKE SA willing to care
+			 * for the CUCKOO, or initiate our
+			 * own.
 			 */
-			if (p->connection != ike->sa.st_connection) {
-				/*
-				 * Find another IKE SA willing to care
-				 * for the CUCKOO, or initiate our
-				 * own.
-				 */
-				connection_reschedule((*pp)->connection, (*pp)->logger, HERE);
-			}
-			delete_pending(pp, "flush");	/* in effect, advances pp */
-		} else {
-			pp = &p->next;
+			connection_reschedule((*pp)->connection, (*pp)->logger, HERE);
 		}
+		delete_pending(pp, "flush");	/* in effect, advances pp */
 	}
 }
 
@@ -501,29 +518,30 @@ void flush_pending_by_state(struct ike_sa *ike)
 
 void remove_connection_from_pending(const struct connection *c)
 {
-	unsigned found = 0;	/* should appear at most once */
-	for (struct pending *p, **pp = host_pair_first_pending(c);
-	     pp != NULL && (p = *pp) != NULL; /*see-below*/) {
-		if (p->connection == c) {
-			found++;
-			delete_pending(pp, "flush");	/* in effect, advances pp */
-		} else {
-			pp = &p->next;
-		}
+	if (c->pending == NULL) {
+		return;
 	}
-	PEXPECT(c->logger, found <= 1);
+
+	struct ike_sa *ike = c->pending->ike;
+	ldbg_sa(ike, "pending: %s() ike %p pending %p connection %p connection %p",
+		__func__, ike, c->pending, c->pending->connection, c);
+
+	struct pending **pp = &c->pending->ike->sa.st_pending;
+	while ((*pp) != NULL && (*pp) != c->pending) {
+		pp = &(*pp)->next;
+	}
+
+	/* should have been found */
+	if (PBAD(c->logger, (*pp) == NULL)) {
+		return;
+	}
+
+	delete_pending(pp, "flush");
 }
 
 bool connection_is_pending(const struct connection *c)
 {
-	/* see if it is being used by a pending */
-	for (struct pending *p, **pp = host_pair_first_pending(c);
-	     pp != NULL && (p = *pp) != NULL; pp = &p->next) {
-		if (p->connection == c)
-			return true; /* in use, so we're done */
-	}
-
-	return false;
+	return (c->pending != NULL);
 }
 
 void init_pending(void)

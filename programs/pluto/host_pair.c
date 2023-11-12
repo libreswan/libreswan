@@ -96,21 +96,6 @@ HASH_TABLE(host_pair, addresses, , STATE_TABLE_SIZE);
 
 static struct connection *unoriented_connections = NULL;
 
-void host_pair_enqueue_pending(const struct connection *c,
-			       struct pending *p)
-{
-	p->next = c->host_pair->pending;
-	c->host_pair->pending = p;
-}
-
-struct pending **host_pair_first_pending(const struct connection *c)
-{
-	if (c->host_pair == NULL)
-		return NULL;
-
-	return &c->host_pair->pending;
-}
-
 /*
  * Returns a host-pair based upon addresses.
  *
@@ -177,18 +162,6 @@ static struct host_pair *alloc_host_pair(ip_address local, ip_address remote, wh
 static void free_unused_host_pair(struct host_pair **hp, where_t where)
 {
 	if ((*hp)->connections == NULL) {
-		if ((*hp)->pending != NULL) {
-			/* ??? must deal with this! */
-			/* can .pending be trusted? */
-			struct pending *p = (*hp)->pending;
-			address_buf lb, rb;
-			connection_buf cb;
-			llog_passert(p->logger, where,
-				     "host-pair %s->%s with no connections should NOT have "PRI_CONNECTION" pending!",
-				     str_address(&(*hp)->local, &lb),
-				     str_address(&(*hp)->remote, &rb),
-				     pri_connection(p->connection, &cb));
-		}
 		del_hash_table_entry(&host_pair_addresses_hash_table, *hp);
 		dbg_free("hp", *hp, where);
 		pfree(*hp);
