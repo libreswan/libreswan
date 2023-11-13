@@ -1,0 +1,71 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec auto --add westnet-eastnet
+"westnet-eastnet": added IKEv2 connection
+east #
+ ipsec auto --status | grep westnet-eastnet
+"westnet-eastnet": 192.0.2.0/24===192.1.2.23[@east]...192.1.2.45[@west]===192.0.1.0/24; unrouted; my_ip=unset; their_ip=unset;
+"westnet-eastnet":   host: oriented; local: 192.1.2.23; remote: 192.1.2.45;
+"westnet-eastnet":   my_updown=ipsec _updown;
+"westnet-eastnet":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"westnet-eastnet":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
+"westnet-eastnet":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"westnet-eastnet":   sec_label:unset;
+"westnet-eastnet":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"westnet-eastnet":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+"westnet-eastnet":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"westnet-eastnet":   policy: IKEv2+PSK+ENCRYPT+IPTFS+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"westnet-eastnet":   v2-auth-hash-policy: none;
+"westnet-eastnet":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"westnet-eastnet":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+"westnet-eastnet":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
+"westnet-eastnet":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
+"westnet-eastnet":   nat-traversal: encaps:auto; keepalive:20s
+"westnet-eastnet":   routing: unrouted;
+"westnet-eastnet":   conn serial: $1;
+east #
+ echo "initdone"
+initdone
+east #
+ ../../guestbin/ipsec-kernel-state.sh
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode iptfs
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+	iptfs-opts pkt-size 0 max-queue-size 1048576 drop-time 1000000 reorder-window 3 init-delay 0
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode iptfs
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+	iptfs-opts pkt-size 0 max-queue-size 1048576 drop-time 1000000 reorder-window 3 init-delay 0
+east #
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.0.1.0/24 dst 192.0.2.0/24
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode iptfs
+src 192.0.1.0/24 dst 192.0.2.0/24
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode iptfs
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode iptfs
+east #
+ 
