@@ -2744,16 +2744,7 @@ void complete_v2_state_transition(struct ike_sa *ike,
 	case STF_OK_INITIATOR_DELETE_IKE:
 		/*
 		 * Initiator processing response, finish current
-		 * exchange and then record'n'send a fire'n'forget
-		 * delete.
-		 *
-		 * For instance, when the IKE_AUTH response's
-		 * authentication fails the initiator needs to quickly
-		 * send out a delete (this is IKEv2's documented
-		 * violation to the don't respond to a response rule).
-		 *
-		 * XXX: this should instead jump to a new transition
-		 * that performs a proper delete exchange.
+		 * exchange and then delete the IKE SA.
 		 */
 		dbg_v2_msgid(ike, "finishing old exchange (STF_OK_INITIATOR_DELETE_IKE)");
 		pexpect(transition->recv_role == MESSAGE_RESPONSE);
