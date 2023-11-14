@@ -1764,7 +1764,7 @@ static unsigned append_teardown(struct dead_sa *dead, enum direction direction,
 		dead->protocol = proto->protocol;
 		switch (direction) {
 		case DIRECTION_INBOUND:
-			if (proto->inbound.kernel_sa_expired & SA_HARD_EXPIRED) {
+			if (proto->inbound.expired[SA_HARD_EXPIRED]) {
 				dbg("kernel expired SPI 0x%x skip deleting",
 				    ntohl(proto->inbound.spi));
 				return 0;
@@ -1774,7 +1774,7 @@ static unsigned append_teardown(struct dead_sa *dead, enum direction direction,
 			dead->dst = host_addr;
 			break;
 		case DIRECTION_OUTBOUND:
-			if (proto->outbound.kernel_sa_expired & SA_HARD_EXPIRED) {
+			if (proto->outbound.expired[SA_HARD_EXPIRED]) {
 				dbg("kernel hard expired SPI 0x%x skip deleting",
 				    ntohl(proto->outbound.spi));
 				return 0;
@@ -2386,7 +2386,7 @@ bool get_ipsec_traffic(struct child_sa *child,
 		bad_case(direction);
 	}
 
-	if (flow->kernel_sa_expired & SA_HARD_EXPIRED) {
+	if (flow->expired[SA_HARD_EXPIRED]) {
 		ldbg_sa(child,
 			"kernel: %s() expired %s SA SPI "PRI_IPSEC_SPI" get_sa_info()",
 			__func__, enum_name_short(&direction_names, direction),
@@ -2621,11 +2621,11 @@ void handle_sa_expire(ipsec_spi_t spi, uint8_t protoid, ip_address dst,
 				       st->st_ipcomp.present ? &st->st_ipcomp :
 				       NULL);
 
-	bool already_softexpired = ((pr->inbound.kernel_sa_expired & SA_SOFT_EXPIRED) ||
-				    (pr->outbound.kernel_sa_expired & SA_SOFT_EXPIRED));
+	bool already_softexpired = ((pr->inbound.expired[SA_SOFT_EXPIRED]) ||
+				    (pr->outbound.expired[SA_SOFT_EXPIRED]));
 
-	bool already_hardexpired = ((pr->inbound.kernel_sa_expired & SA_HARD_EXPIRED) ||
-				    (pr->outbound.kernel_sa_expired & SA_HARD_EXPIRED));
+	bool already_hardexpired = ((pr->inbound.expired[SA_HARD_EXPIRED]) ||
+				    (pr->outbound.expired[SA_HARD_EXPIRED]));
 
 	enum sa_expire_kind expire = hard ? SA_HARD_EXPIRED : SA_SOFT_EXPIRED;
 
@@ -2656,22 +2656,22 @@ void handle_sa_expire(ipsec_spi_t spi, uint8_t protoid, ip_address dst,
 		 */
 	} else if (!already_hardexpired && expire == SA_HARD_EXPIRED) {
 		if (inbound) {
-			pr->inbound.kernel_sa_expired |= expire;
+			pr->inbound.expired[expire] = true;
 			set_sa_info(pr, bytes, add_time, true /* inbound */, NULL);
 		} else {
-			pr->outbound.kernel_sa_expired |= expire;
+			pr->outbound.expired[expire] = true;
 			set_sa_info(pr, bytes, add_time, false /* outbound */, NULL);
 		}
-		set_sa_expire_next_event(EVENT_SA_EXPIRE, &child->sa);
+		set_sa_expire_next_event(SA_HARD_EXPIRED, child);
 	} else if (newest && rekey && !already_hardexpired && !already_softexpired && expire == SA_SOFT_EXPIRED) {
 		if (inbound) {
-			pr->inbound.kernel_sa_expired |= expire;
+			pr->inbound.expired[expire] = true;
 			set_sa_info(pr, bytes, add_time, true /* inbound */, NULL);
 		} else {
-			pr->outbound.kernel_sa_expired |= expire;
+			pr->outbound.expired[expire] = true;
 			set_sa_info(pr, bytes, add_time, false /* outbound */, NULL);
 		}
-		set_sa_expire_next_event(EVENT_NULL/*either v2 REKEY or v1 REPLACE*/, &child->sa);
+		set_sa_expire_next_event(SA_SOFT_EXPIRED, child);
 	} else {
 		/*
 		 * 'if' and multiple 'else if's are using multiple variables.

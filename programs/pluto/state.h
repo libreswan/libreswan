@@ -144,7 +144,7 @@ struct ipsec_trans_attrs {
  */
 
 struct ipsec_flow {
-	lset_t kernel_sa_expired;
+	bool expired[SA_EXPIRE_KIND_ROOF];
 	uint64_t bytes;
 	realtime_t last_used;
 	chunk_t keymat;
@@ -996,7 +996,7 @@ struct state_filter {
 bool next_state_new2old(struct state_filter *query);
 bool next_state_old2new(struct state_filter *query);
 
-extern void set_sa_expire_next_event(enum event_type next_event, struct state *st);
+extern void set_sa_expire_next_event(enum sa_expire_kind expire, struct child_sa *child);
 
 void jam_humber_uintmax(struct jambuf *buf,
 			const char *prefix, uintmax_t val, const char *suffix);

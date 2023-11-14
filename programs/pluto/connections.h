@@ -169,6 +169,7 @@ struct ike_info {
 	const char *child_name;			/* Child | IPsec */
 	const char *parent_sa_name;		/* IKE SA | ISAKMP SA */
 	const char *child_sa_name;		/* Child SA | IPsec SA */
+	enum event_type expire_event[SA_EXPIRE_KIND_ROOF];
 	enum event_type replace_event;
 };
 

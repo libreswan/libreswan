@@ -2333,25 +2333,13 @@ void DBG_tcpdump_ike_sa_keys(const struct state *st)
 		encalgo, tekl, ter);
 }
 
-void set_sa_expire_next_event(enum event_type next_event, struct state *st)
+void set_sa_expire_next_event(enum sa_expire_kind expire, struct child_sa *child)
 {
-	switch (st->st_ike_version) {
-	case IKEv2:
-		event_delete(EVENT_v2_LIVENESS, st);
-		if (next_event == EVENT_NULL)
-			next_event = EVENT_v2_REKEY;
-
-		break;
-	case IKEv1:
-		event_delete(EVENT_v1_DPD, st);
-		if (next_event == EVENT_NULL)
-			next_event = EVENT_v1_REPLACE;
-		break;
-	default:
-		bad_case(st->st_ike_version);
-	}
-
-	event_force(next_event, st);
+	const struct ike_info *ike_info = child->sa.st_connection->config->ike_info;
+	PASSERT(child->sa.logger, expire < elemsof(ike_info->expire_event));
+	enum event_type event = ike_info->expire_event[expire];
+	event_delete(event, &child->sa);
+	event_force(event, &child->sa);
 }
 
 /* IKE SA | ISAKMP SA || Child SA | IPsec SA */

@@ -1036,11 +1036,11 @@ extern const struct enum_names pluto_exit_code_names;
  */
 
 enum sa_expire_kind {
-	/* 0 reserved */
-	SA_ACTIVE = 1 << 1,
-	SA_SOFT_EXPIRED = 1 << 2,
-	SA_HARD_EXPIRED = 1 << 3,
+	SA_SOFT_EXPIRED,
+	SA_HARD_EXPIRED,
+#define SA_EXPIRE_KIND_ROOF (SA_HARD_EXPIRED+1)
 };
+
 
 #define SWAN_MAX_DOMAIN_LEN 256 /* includes nul termination */
 
