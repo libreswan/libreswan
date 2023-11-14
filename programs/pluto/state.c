@@ -540,6 +540,9 @@ static bool get_initiator_endpoints(struct connection *c,
 	/* 1,3,5,7-> 1; 0,2,4,6->0 */
 	unsigned mod_revival = (c->revival.attempt % 2);
 
+	ip_address remote_addr = (c->redirect.attempt > 0 ? c->redirect.ip :
+				  c->remote->host.first_addr);
+
 	if (c->revival.attempt > 0 &&
 	    c->revival.local != NULL &&
 	    c->revival.remote.is_set) {
@@ -555,26 +558,24 @@ static bool get_initiator_endpoints(struct connection *c,
 		   (c->local->config->host.iketcp == IKE_TCP_FALLBACK && mod_revival == 0)) {
 
 		ldbg(c->logger, "TCP: using UDP endpoints");
-		const struct ip_protocol *protocol = &ip_protocol_udp;
 		(*remote_endpoint) =
-			endpoint_from_address_protocol_port(c->remote->host.addr, protocol,
+			endpoint_from_address_protocol_port(remote_addr, &ip_protocol_udp,
 							    ip_hport(c->remote->host.port));
 		ip_endpoint local_endpoint =
 			endpoint_from_address_protocol_port(c->iface->local_address,
-							    protocol, local_host_port(c));
+							    &ip_protocol_udp, local_host_port(c));
 		(*local_iface_endpoint) = find_iface_endpoint_by_local_endpoint(local_endpoint);
 
 	} else {
 
 		address_buf ab;
 		ldbg(c->logger, "TCP: open TCP connection to TCP %s with port "PRI_HPORT,
-			str_address(&c->remote->host.addr, &ab),
+			str_address(&c->remote->host.first_addr, &ab),
 			pri_hport(c->config->remote_tcpport));
 		PEXPECT(c->logger, ((c->local->config->host.iketcp == IKE_TCP_ONLY) ||
 				    (c->local->config->host.iketcp == IKE_TCP_FALLBACK && mod_revival == 1)));
 		(*remote_endpoint) =
-			endpoint_from_address_protocol_port(c->remote->host.addr,
-							    &ip_protocol_tcp,
+			endpoint_from_address_protocol_port(remote_addr, &ip_protocol_tcp,
 							    c->config->remote_tcpport);
 
 		/* create new-from-old first; must delref; blocking call */

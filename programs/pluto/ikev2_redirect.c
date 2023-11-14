@@ -37,8 +37,6 @@
 #include "pending.h"
 #include "pluto_stats.h"
 
-static callback_cb initiate_redirect;
-
 enum allow_global_redirect global_redirect = GLOBAL_REDIRECT_NO;
 
 struct redirect_dests {
@@ -436,6 +434,39 @@ static err_t parse_redirect_payload(const struct pbs_in *notify_pbs,
 	return NULL;
 }
 
+static void save_redirect(struct ike_sa *ike, struct msg_digest *md, ip_address to)
+{
+	struct connection *c = ike->sa.st_connection;
+	const char *xchg = enum_name_short(&ikev2_exchange_names, md->hdr.isa_xchg);
+
+	ike->sa.st_viable_parent = false; /* just to be sure */
+
+	c->redirect.attempt++;
+	if (c->redirect.attempt > MAX_REDIRECTS) {
+		llog_sa(RC_LOG_SERIOUS, ike, "%s redirect exceeds limit; assuming redirect loop", xchg);
+		/*
+		 * Clear redirect.counter, revival code will see this
+		 * and, instead, schedule a revival.
+		 *
+		 * Per RFC force the revival delay to 5 minutes!!!.
+		 */
+		c->redirect.attempt = 0;
+		c->revival.delay = deltatime_min(REVIVE_CONN_DELAY_MAX,
+						 deltatime(REDIRECT_LOOP_DETECT_PERIOD));
+		return;
+	}
+
+	/* will use this when initiating in a callback */
+	c->redirect.ip = to;
+	c->redirect.old_gw_address = c->remote->host.addr;
+	c->remote->host.addr = to;
+	ike->sa.st_skip_revival_as_redirecting = true;
+
+	address_buf b;
+	llog_sa(RC_LOG, ike, "%s response redirecting to new gateway %s",
+		xchg, str_address_sensitive(&to, &b));
+}
+
 bool redirect_ike_auth(struct ike_sa *ike, struct msg_digest *md, stf_status *redirect_status)
 {
 	if (md->pd[PD_v2N_REDIRECT] == NULL) {
@@ -460,111 +491,9 @@ bool redirect_ike_auth(struct ike_sa *ike, struct msg_digest *md, stf_status *re
 		return false;
 	}
 
-	/*
-	 * MAGIC: the IKE SA is put into limbo (STF_SUSPEND), and then
-	 * the initiate_redirect() callback initiates a new SA with
-	 * the new IP, and then deletes the old in-limbo IKE SA.
-	 */
-
-	/* will use this when initiating in a callback */
-	ike->sa.st_connection->redirect.ip = redirect_ip;
-	schedule_callback("IKE_AUTH redirect", ike->sa.st_serialno,
-			  initiate_redirect, NULL);
-
-	/*
-	 * Schedule a timeout.  Mainly to keep a pexpect() in
-	 * STF_SUSPEND happy (but also for the very remote chance that
-	 * the callback gets lost).
-	 */
-	delete_event(&ike->sa);
-	event_schedule(EVENT_CRYPTO_TIMEOUT, EVENT_CRYPTO_TIMEOUT_DELAY, &ike->sa);
-
-	*redirect_status = STF_SUSPEND;
+	save_redirect(ike, md, redirect_ip);
+	*redirect_status = STF_OK_INITIATOR_DELETE_IKE;
 	return true;
-}
-
-/*
- * Initiate via initiate_connection new IKE_SA_INIT exchange.
- */
-
-static void initiate_redirect(const char *story, struct state *ike_sa, void *context UNUSED)
-{
-	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
-	struct connection *c = ike->sa.st_connection;
-	ip_address redirect_ip = c->redirect.ip;
-	realtime_t now = realnow();
-
-	/*
-	 * Schedule event to wipe this SA family and do it first.
-	 * Remember, it won't run until after this function returns,
-	 * however, it will run before any connections have had a
-	 * chance to initiate vis:
-	 *
-	 * - code below queues up pending connections
-	 * - IKE SA is expired (skips revival as connections are pending)
-	 * - connections initiate
-	 *
-	 * This event also deletes any larval children.
-	 */
-	event_force(EVENT_SA_EXPIRE, &ike->sa);
-
-	/* stuff for loop detection */
-
-	if (c->redirect.num_redirects >= MAX_REDIRECTS) {
-		if (deltatime_cmp(realtimediff(c->redirect.first_redirect_time, now),
-				  <,
-				  deltatime(REDIRECT_LOOP_DETECT_PERIOD))) {
-			llog_sa(RC_LOG_SERIOUS, ike,
-				"%s loop, stop initiating IKEv2 exchanges",
-				story);
-			return;
-		}
-
-		/* restart count */
-		c->redirect.num_redirects = 0;
-	}
-
-	if (c->redirect.num_redirects == 0) {
-		  c->redirect.first_redirect_time = now;
-	}
-	c->redirect.num_redirects++;
-
-	/* save old address for REDIRECTED_FROM notify */
-	c->redirect.old_gw_address = c->remote->host.addr;
-	/* update host_addr of other end, port stays the same */
-	c->remote->host.addr = redirect_ip;
-
-	address_buf b;
-	llog_sa(RC_LOG, ike,
-		"initiating %s to new gateway (address: %s)",
-		story, str_address_sensitive(&redirect_ip, &b));
-
-	ike->sa.st_viable_parent = false; /* just to be sure */
-	ike->sa.st_skip_revival_as_redirecting = true;
-	/*
-	 * XXX: hack, relinquish control of the connection.
-	 *
-	 * The problem is that initiate_connection() tries to take
-	 * ownership of the connection before this IKE SA has had a
-	 * chance to relinquish control.
-	 *
-	 * If the code instead used a revival like mechanism this
-	 * problem would go away.
-	 */
-	if (c->negotiating_ike_sa == ike->sa.st_serialno) {
-		pdbg(ike->sa.logger, "routing: releasing .negotiating_ike_sa in redirect");
-		c->negotiating_ike_sa = SOS_NOBODY;
-	}
-
-	/*
-	 * XXX: only makes sense when IKE_SA_INIT / IKE_AUTH
-	 * redirect?
-	 */
-	flush_pending_by_state(ike);
-
-	initiate_connection(c, /*remote-host-name*/NULL,
-			    /*background*/false /* try to keep it in the foreground */,
-			    ike->sa.st_logger);
 }
 
 /* helper function for send_v2_informational_request() */
@@ -650,7 +579,6 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_REDIRECT(struct ike_sa *ike,
 		return STF_INTERNAL_ERROR;
 	}
 	struct pbs_in redirect_pbs = md->pd[PD_v2N_REDIRECT]->pbs;
-
 	if (!ike->sa.st_connection->config->redirect.accept) {
 		llog_sa(RC_LOG, ike,
 			"ignoring v2N_REDIRECT, we don't accept being redirected");
@@ -669,30 +597,8 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_REDIRECT(struct ike_sa *ike,
 		return STF_IGNORE;
 	}
 
-	/*
-	 * MAGIC: the IKE SA is put into limbo (STF_SUSPEND), and then
-	 * the initiate_redirect() callback initiates a new SA with
-	 * the new IP, and then deletes the old in-limbo IKE SA.
-	 *
-	 * XXX: could this, like for COOKIE and INVALID_KE_PAYLOAD,
-	 * use schedule_reinitiate_v2_ike_sa_init() and continue with
-	 * the current state?
-	 */
-
-	/* will use this when initiating in a callback */
-	ike->sa.st_connection->redirect.ip = redirect_ip;
-	schedule_callback("IKE_SA_INIT redirect", ike->sa.st_serialno,
-			  initiate_redirect, NULL);
-
-	/*
-	 * Schedule a timeout.  Mainly to keep a pexpect() in
-	 * STF_SUSPEND happy (but also for the very remote chance that
-	 * the callback gets lost).
-	 */
-	delete_event(&ike->sa);
-	event_schedule(EVENT_CRYPTO_TIMEOUT, EVENT_CRYPTO_TIMEOUT_DELAY, &ike->sa);
-
-	return STF_SUSPEND;
+	save_redirect(ike, md, redirect_ip);
+	return STF_OK_INITIATOR_DELETE_IKE;
 }
 
 void process_v2_INFORMATIONAL_request_v2N_REDIRECT(struct ike_sa *ike, struct msg_digest *md)
@@ -713,7 +619,13 @@ void process_v2_INFORMATIONAL_request_v2N_REDIRECT(struct ike_sa *ike, struct ms
 	 * MAGIC: the initiate_redirect() callback initiates a new SA
 	 * with the new IP, and then deletes the old IKE SA.
 	 */
-	ike->sa.st_connection->redirect.ip = redirect_to;
-	schedule_callback("active session redirect", ike->sa.st_serialno,
-			  initiate_redirect, NULL);
+	save_redirect(ike, md, redirect_to);
+
+	/*
+	 * Schedule event to wipe this SA family and do it first.
+	 * Remember, it won't run until after this function returns,
+	 * however, it will run before any connections have had a
+	 * chance to initiate.
+	 */
+	event_force(EVENT_SA_EXPIRE, &ike->sa);
 }

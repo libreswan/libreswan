@@ -482,6 +482,7 @@ struct host_end {
 	ip_address nexthop;		/* identifes interface to send packets */
 	struct id id;
 	ip_address addr;
+	ip_address first_addr;		/* for redirect */
 };
 
 struct child_end {
@@ -749,7 +750,7 @@ struct connection {
 
 	struct {
 		/* RFC 5685 - IKEv2 Redirect Mechanism */
-		int num_redirects;
+		unsigned attempt;
 		realtime_t first_redirect_time;
 		ip_address ip;			/* where to redirect */
 		ip_address old_gw_address;	/* address of old gateway */

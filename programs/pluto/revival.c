@@ -241,10 +241,24 @@ bool scheduled_revival(struct connection *c, struct state *st/*can be NULL*/,
 		return false;
 	}
 
-	if (st != NULL && st->st_skip_revival_as_redirecting) {
-		ldbg(logger, "revival: skipping, hack to handle redirect");
-		return false;
+	if (st != NULL && st->st_ike_version == IKEv2) {
+		struct ike_sa *ike = ike_sa(st, HERE);
+		if (PEXPECT(logger, ike != NULL) &&
+		    ike->sa.st_skip_revival_as_redirecting) {
+			address_buf ab;
+			llog(RC_LOG, logger,
+			     "scheduling redirect %u to %s",
+			     c->redirect.attempt,
+			     str_address_sensitive(&c->redirect.ip, &ab));
+
+			schedule_connection_event(c, CONNECTION_REVIVAL, subplot, deltatime_zero,
+						  (impair.revival ? "redirect" : NULL), logger);
+			return true;
+		}
 	}
+
+	/* revival means start redirects from scratch */
+	c->redirect.attempt = 0;
 
 	if (st != NULL) {
 		update_remote_port(st);
@@ -268,9 +282,13 @@ bool scheduled_ike_revival(struct ike_sa *ike, const char *subplot)
 void revive_connection(struct connection *c, const char *subplot,
 		       const threadtime_t *inception)
 {
-	llog(RC_LOG, c->logger,
-	     "reviving connection which %s but must remain up per local policy (serial "PRI_CO")",
-	     subplot, pri_co(c->serialno));
+	if (c->redirect.attempt > 0) {
+		ldbg(c->logger, "redirecting connection %s", subplot);
+	} else {
+		llog(RC_LOG, c->logger,
+		     "reviving connection which %s but must remain up per local policy (serial "PRI_CO")",
+		     subplot, pri_co(c->serialno));
+	}
 
 	/*
 	 * See ikev2-removed-iface-01

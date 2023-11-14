@@ -560,6 +560,7 @@ void update_hosts_from_end_host_addr(struct connection *c, enum left_right e,
 	PASSERT_WHERE(c->logger, where, afi != NULL); /* since specified */
 
 	end->addr = host_addr;
+	end->first_addr = host_addr;
 	if (!address_is_specified(host_addr)) {
 		return;
 	}
@@ -3283,7 +3284,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	c->iface = NULL; /* initializing */
 
 	connection_routing_init(c);
-	c->redirect.num_redirects = 0;
+	c->redirect.attempt = 0;
 
 	/* non configurable */
 	config->ike_window = IKE_V2_OVERLAPPING_WINDOW_SIZE;

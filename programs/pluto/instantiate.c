@@ -100,6 +100,7 @@ static struct connection *duplicate_connection(const char *name, struct connecti
 		ce->port = te->port;
 		ce->nexthop = te->nexthop;
 		ce->addr = te->addr;
+		ce->first_addr = te->first_addr;
 	}
 
 	FOR_EACH_ELEMENT(afi, ip_families) {
