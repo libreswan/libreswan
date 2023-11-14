@@ -9,8 +9,6 @@ north #
  ipsec auto --add north-east
 002 "north-east": added IKEv2 connection
 north #
- ipsec whack --impair revival
-north #
  echo initdone
 initdone
 north #

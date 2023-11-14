@@ -1,0 +1,26 @@
+/testing/guestbin/swan-prep
+north #
+ ifconfig eth0:1 192.0.2.254
+north #
+ ipsec start
+Redirecting to: [initsystem]
+north #
+ ../../guestbin/wait-until-pluto-started
+north #
+ ipsec auto --add any-northnet-ipv4-psk-ikev2
+002 "any-northnet-ipv4-psk-ikev2": added IKEv2 connection
+north #
+ echo "initdone"
+initdone
+north #
+ sleep 2
+north #
+ ../../guestbin/ipsec-kernel-state.sh
+north #
+ ../../guestbin/ipsec-kernel-policy.sh
+north #
+ # confirm east is in unrouted state again
+north #
+ hostname | grep east > /dev/null && ipsec status | grep "[.][.][.]"
+north #
+ 

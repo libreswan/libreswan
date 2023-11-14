@@ -2,6 +2,7 @@
 ipsec whack --impair none
 ipsec whack --impair revival --impair suppress-retransmits
 ipsec auto --up road-east
+ipsec whack --impair trigger-revival:1
 ../../guestbin/ping-once.sh --up 192.0.2.254
 ipsec whack --trafficstatus
 ipsec auto --delete road-east

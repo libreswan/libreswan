@@ -3,3 +3,4 @@ ipsec whack --impair none
 ipsec whack --impair revival --impair timeout-on-retransmit
 ipsec auto --add road-east
 ipsec auto --up road-east
+ipsec whack --impair trigger-revival:2

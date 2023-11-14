@@ -1377,11 +1377,12 @@ kvmplutotest	ikev2-ppk-static-09-no_ppk-initiator		good
 kvmplutotest	ikev2-ppk-static-10-yes-no			good
 
 # REDIRECT
-kvmplutotest	ikev2-redirect-01-global			good
 kvmplutotest	ikev2-redirect-02-auth				good
+kvmplutotest	ikev2-redirect-01-global			good
 kvmplutotest	ikev2-redirect-03-auth-loop			good	github/1078
-kvmplutotest	ikev2-redirect-04-down-global			wip	github/1396
-kvmplutotest	ikev2-redirect-04-down-auth			wip	github/1396
+kvmplutotest	ikev2-redirect-03-global-loop			good	github/1078
+kvmplutotest	ikev2-redirect-04-auth-down			good	github/1396
+kvmplutotest	ikev2-redirect-04-global-down			good	github/1396
 kvmplutotest	ikev2-redirect-06-roadwarriors			good
 kvmplutotest	ikev2-redirect-01-global-load-balancer		good
 
