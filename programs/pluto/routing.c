@@ -2179,6 +2179,9 @@ static bool dispatch_1(enum routing_event event,
 	case X(TEARDOWN_CHILD, UNROUTED_TUNNEL, LABELED_CHILD):
 		set_routing(event, c, RT_UNROUTED, NULL);
 		return true;
+	case X(RESCHEDULE, UNROUTED, LABELED_CHILD):
+		/* drop it on the floor; ike died */
+		return true;
 
 	}
 
