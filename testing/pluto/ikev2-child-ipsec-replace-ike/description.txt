@@ -1,5 +1,11 @@
 Test Reauthentication of CREATE_CHILD_SA IPsec SA sharing IKE SA.
 
-West has two connections to east. Both will share one IKE SA. 
-And IKE will expire and Reauthentiate -- create new IKE and Child SAs.
-When the IKE SA EXPIRE it will delete its Child SAs along with it.
+West establishes 3 connections (1 IKE, with 3 Child SAs) to east.
+
+Because west is configured with reauth=yes it triggers a full teardown
+after 40s.
+
+Since verything is +UP though it should all come back.
+
+(it should also delay the teardown until after the new IKE SA is
+online; later)
