@@ -632,18 +632,3 @@ void v2_event_sa_rekey(struct state *st)
 		"initiating rekey to replace %s SA #%lu",
 		satype, st->st_serialno);
 }
-
-void v2_event_sa_reauth(struct state *st)
-{
-	if (v2_state_is_expired(st, "re-authenticating")) {
-		return;
-	}
-
-	const char *satype = IS_IKE_SA(st) ? "IKE" : "Child";
-	dbg("re-authenticating %s SA", satype);
-
-	/*
-	 * XXX: For a CHILD SA, will this result in a re-key attempt?
-	 */
-	ikev2_replace(st);
-}

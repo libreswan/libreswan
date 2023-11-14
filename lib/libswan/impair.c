@@ -243,8 +243,6 @@ struct impairment impairments[] = {
 
 	A("trigger-v2-rekey", STATE_EVENT_HANDLER, EVENT_v2_REKEY,
 	  "trigger the rekey event", "#SA"),
-	A("trigger-v2-reauth", STATE_EVENT_HANDLER, EVENT_v2_REAUTH,
-	  "trigger the reauthenticate event", "#SA"),
 	A("trigger-v2-liveness", STATE_EVENT_HANDLER, EVENT_v2_LIVENESS,
 	  "trigger the liveness event", "#SA"),
 	A("trigger-v1-replace", STATE_EVENT_HANDLER, EVENT_v1_REPLACE,

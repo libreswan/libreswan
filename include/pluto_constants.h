@@ -257,7 +257,6 @@ enum event_type {
 
 	EVENT_v2_REKEY,			/* SA rekey event */
 	EVENT_v2_REPLACE,		/* v2 IKE/Child SA replacement event */
-	EVENT_v2_REAUTH,		/* SA re-authenticate event */
 	EVENT_v2_LIVENESS,		/* for dead peer detection */
 	EVENT_v2_ADDR_CHANGE,		/* process IP address deletion */
 

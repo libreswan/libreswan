@@ -116,7 +116,6 @@ struct state_event **state_event_slot(struct state *st, enum event_type type)
 		return &st->st_v2_addr_change_event;
 
 	case EVENT_v2_REKEY:
-	case EVENT_v2_REAUTH:
 		return &st->st_v2_refresh_event;
 
 	case EVENT_RETRANSMIT:
@@ -284,11 +283,6 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 	case EVENT_v2_REKEY:
 		pexpect(st->st_ike_version == IKEv2);
 		v2_event_sa_rekey(st);
-		break;
-
-	case EVENT_v2_REAUTH:
-		pexpect(st->st_ike_version == IKEv2);
-		v2_event_sa_reauth(st);
 		break;
 
 #ifdef USE_IKEv1
