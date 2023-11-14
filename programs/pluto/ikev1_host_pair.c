@@ -197,7 +197,15 @@ static struct connection *find_v1_host_connection(const ip_address local_address
 	    bool_str(policy_aggressive));
 
 	struct connection *c = NULL;
-	FOR_EACH_HOST_PAIR_CONNECTION(local_address, remote_address, d) {
+
+	struct connection_filter hpf = {
+		.local = &local_address,
+		.remote = &remote_address,
+		.where = HERE,
+	};
+	while (next_connection_new2old(&hpf)) {
+		struct connection *d = hpf.c;
+
 		if (!match_v1_connection(d, authby, policy_xauth,
 					 policy_aggressive, peer_id)) {
 			continue;
@@ -323,7 +331,13 @@ struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 	 * Food Groups kind of assumes one.
 	 */
 
-	FOR_EACH_HOST_PAIR_CONNECTION(md->iface->ip_dev->local_address, unset_address, d) {
+	struct connection_filter hpf = {
+		.local = &md->iface->ip_dev->local_address,
+		.remote = &unset_address,
+		.where = HERE,
+	};
+	while (next_connection_new2old(&hpf)) {
+		struct connection *d = hpf.c;
 
 		if (!match_v1_connection(d, authby, policy_xauth,
 					 false/*POLICY_AGGRESSIVE*/,

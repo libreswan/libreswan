@@ -1319,7 +1319,13 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 		dbg_ts("searching host_pair %s->%s",
 		       str_address(&remote, &rab), str_address(&local, &lab));
 
-		FOR_EACH_HOST_PAIR_CONNECTION(local, remote, d) {
+		struct connection_filter hpf = {
+			.local = &local,
+			.remote = &remote,
+			.where = HERE,
+		};
+		while (next_connection_new2old(&hpf)) {
+			struct connection *d = hpf.c;
 			indent.level = 2;
 
 			/* XXX: sec_label connections all look a-like, include CO */

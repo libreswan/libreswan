@@ -232,7 +232,13 @@ static struct connection *refine_host_connection_on_responder(int indent,
 		dbg_rhc("trying connections matching %s->%s",
 			str_address(&local, &lb), str_address(&remote, &rb));
 
-		FOR_EACH_HOST_PAIR_CONNECTION(local, remote, d) {
+		struct connection_filter hpf = {
+			.local = &local,
+			.remote = &remote,
+			.where = HERE,
+		};
+		while (next_connection_new2old(&hpf)) {
+			struct connection *d = hpf.c;
 
 			connection_buf b1, b2;
 			indent = 2;

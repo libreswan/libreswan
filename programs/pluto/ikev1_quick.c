@@ -2031,7 +2031,13 @@ static struct connection *fc_try(const struct connection *c,
 							c->remote->host.addr);
 
 	err_t virtualwhy = NULL;
-	FOR_EACH_HOST_PAIR_CONNECTION(local_address, remote_address, d) {
+	struct connection_filter hpf = {
+		.local = &local_address,
+		.remote = &remote_address,
+		.where = HERE,
+	};
+	while (next_connection_new2old(&hpf)) {
+		struct connection *d = hpf.c;
 
 		if (d->config->ike_version != IKEv1) {
 			continue;
@@ -2304,8 +2310,13 @@ struct connection *find_v1_client_connection(struct connection *const c,
 			if (address_is_specified(local_address)) {
 				break;
 			}
-			FOR_EACH_HOST_PAIR_CONNECTION(spd->local->host->addr,
-						      unset_address, ignore) {
+			struct connection_filter hpf = {
+				.local = &spd->local->host->addr,
+				.remote = &unset_address,
+				.where = HERE,
+			};
+			while (next_connection_new2old(&hpf)) {
+				/* found something */
 				local_address = spd->local->host->addr;
 				selector_buf s2;
 				selector_buf d2;

@@ -134,7 +134,13 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 	 * match.
 	 */
 	struct connection *c = NULL;
-	FOR_EACH_HOST_PAIR_CONNECTION(local_address, remote_address, d) {
+	struct connection_filter hpf_remote = {
+		.local = &local_address,
+		.remote = &remote_address,
+		.where = HERE,
+	};
+	while (next_connection_new2old(&hpf_remote)) {
+		struct connection *d = hpf_remote.c;
 
 		if (!match_connection(d, remote_authby, send_reject_response,
 				      md->md_logger)) {
@@ -202,7 +208,14 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 	 * between an Initiator's address and that of its client, but
 	 * Food Groups kind of assumes one.
 	 */
-	FOR_EACH_HOST_PAIR_CONNECTION(local_address, unset_address, d) {
+
+	struct connection_filter hpf_unset = {
+		.local = &local_address,
+		.remote = &unset_address,
+		.where = HERE,
+	};
+	while (next_connection_new2old(&hpf_unset)) {
+		struct connection *d = hpf_unset.c;
 
 		if (!match_connection(d, remote_authby, send_reject_response,
 				      md->md_logger)) {
