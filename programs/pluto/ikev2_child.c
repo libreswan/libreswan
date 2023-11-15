@@ -49,7 +49,6 @@
 #include "timer.h"
 #include "whack.h"      /* requires connections.h */
 #include "server.h"
-#include "host_pair.h"
 #include "addresspool.h"
 #include "rnd.h"
 #include "ip_address.h"

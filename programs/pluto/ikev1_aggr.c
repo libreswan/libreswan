@@ -40,7 +40,6 @@
 #include "ikev1_nat.h"
 #include "pluto_x509.h"
 #include "fd.h"
-#include "host_pair.h"
 #include "ikev1_message.h"
 #include "pending.h"
 #include "iface.h"

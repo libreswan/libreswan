@@ -46,7 +46,6 @@
 #include "iface.h"
 #include "timer.h"		/* for state_event_sort() */
 #include "kernel.h"		/* for get_ipsec_traffic() */
-#include "host_pair.h"		/* for host_pair_first_pending() */
 #include "pending.h"
 
 /*

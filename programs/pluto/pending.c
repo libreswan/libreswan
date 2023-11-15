@@ -50,7 +50,6 @@
 #include "timer.h"
 #include "ikev2.h"
 #include "ip_address.h"
-#include "host_pair.h"
 #include "ikev2_create_child_sa.h"		/* for initiate_v2_CREATE_CHILD_SA_create_child() */
 #include "initiate.h"
 #include "show.h"

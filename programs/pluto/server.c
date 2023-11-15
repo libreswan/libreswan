@@ -91,7 +91,6 @@
 #include "pluto_stats.h"
 #include "hash_table.h"
 #include "ip_address.h"
-#include "host_pair.h"
 #include "ip_info.h"
 
 /*

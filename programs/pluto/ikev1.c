@@ -155,7 +155,6 @@
 #include "ikev1_nat.h"
 #include "ikev1_vendorid.h"
 #include "ikev1_dpd.h"
-#include "host_pair.h"
 #include "ip_address.h"
 #include "ikev1_hash.h"
 #include "ike_alg_encrypt_ops.h"	/* XXX: oops */

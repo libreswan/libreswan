@@ -29,6 +29,7 @@
 
 struct id;
 struct authby;
+struct msg_digest;
 
 struct connection *find_v1_main_mode_connection(struct msg_digest *md);
 

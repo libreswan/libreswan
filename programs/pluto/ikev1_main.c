@@ -63,7 +63,6 @@
 #include "asn1.h"
 #include "pending.h"
 #include "ikev1_hash.h"
-#include "host_pair.h"
 #include "crypt_symkey.h"		/* for release_symkey() */
 
 #include "crypto.h"

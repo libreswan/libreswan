@@ -57,7 +57,6 @@
 #include "ikev1_xauth.h"
 #include "nat_traversal.h"
 #include "terminate.h"
-#include "host_pair.h"
 #include "whack_connection.h"		/* for whack_connection() */
 #include "ikev1_delete.h"
 #include "ikev2_delete.h"
