@@ -123,14 +123,12 @@ struct state_event **state_event_slot(struct state *st, enum event_type type)
 
 	case EVENT_v2_REPLACE:
 		return &st->st_v2_lifetime_event;
-		break;
 
-	case EVENT_SA_EXPIRE:
-		switch (st->st_ike_version) {
-		case IKEv1: return &st->st_event;
-		case IKEv2: return &st->st_v2_lifetime_event;
-		}
-		break;
+	case EVENT_v1_EXPIRE:
+		return &st->st_event;
+
+	case EVENT_v2_EXPIRE:
+		return &st->st_v2_lifetime_event;
 
 	case EVENT_SA_DISCARD:
 	case EVENT_v1_REPLACE:
@@ -295,7 +293,7 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 		event_v2_replace(st, now);
 		break;
 
-	case EVENT_SA_EXPIRE:
+	case EVENT_v1_EXPIRE:
 	{
 		struct connection *c = st->st_connection;
 		const char *satype = IS_IKE_SA(st) ? "IKE" : "CHILD";
@@ -316,68 +314,79 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 			     (c->config->rekey ? "LATEST!" : "--dontrekey"));
 		}
 
-		/* Delete this state object.  It must be in the hash table. */
-		switch (st->st_ike_version) {
-		case IKEv2:
-		{
-			struct ike_sa *ike = ike_sa(st, HERE);
-			if (ike == NULL) {
-				/*
-				 * XXX: SNAFU with IKE SA replacing
-				 * itself (but not deleting its
-				 * children?)  simultaneous to a CHILD
-				 * SA failing to establish and
-				 * attempting to delete / replace
-				 * itself?
-				 *
-				 * ST must be a Child SA (if it were
-				 * an IKE SA then ike_sa() would have
-				 * found itself).
-				 *
-				 * Because these things are
-				 * not serialized it is hard
-				 * to say.
-				 */
-				struct child_sa *child = pexpect_child_sa(st);
-				state_attach(&child->sa, logger);
-				llog_pexpect(child->sa.st_logger, HERE,
-					     "Child SA lost its IKE SA #%lu",
-					     child->sa.st_clonedfrom);
-				connection_delete_child(&child, HERE);
-				st = NULL;
-			} else if (IS_IKE_SA_ESTABLISHED(st)) {
-				/* IKEv2 parent, delete children too */
-				ldbg(st->st_logger, "IKEv2 SA expired, delete whole family");
-				send_n_log_delete_ike_family_now(&ike, ike->sa.st_logger, HERE);
-				/* note: no md->st to clear */
-				st = NULL;
-			} else if (IS_IKE_SA(st)) {
-				/* IKEv2 parent, delete children too */
-				ldbg(st->st_logger, "IKEv2 SA expired, delete whole family");
-				passert(&ike->sa == st);
-				send_n_log_delete_ike_family_now(&ike, ike->sa.st_logger, HERE);
-				/* note: no md->st to clear */
-				st = NULL;
-			} else if (IS_IKE_SA_ESTABLISHED(&ike->sa)) {
-				/* note: no md->st to clear */
-				submit_v2_delete_exchange(ike, pexpect_child_sa(st));
-				st = NULL;
-			} else {
-				struct child_sa *child = pexpect_child_sa(st);
-				state_attach(&child->sa, logger);
-				connection_delete_child(&child, HERE);
-				st = NULL;
-			}
-			break;
+		state_attach(st, logger);
+		connection_delete_state(&st, HERE);
+		break;
+	}
+
+	case EVENT_v2_EXPIRE:
+	{
+		struct connection *c = st->st_connection;
+		const char *satype = IS_IKE_SA(st) ? "IKE" : "CHILD";
+		so_serial_t newer_sa = get_newer_sa_from_connection(st);
+
+		if (newer_sa != SOS_NOBODY) {
+			/* not very interesting: already superseded */
+			ldbg(st->st_logger, "%s SA expired (superseded by #%lu)",
+			     satype, newer_sa);
+		} else if (!IS_IKE_SA_ESTABLISHED(st) &&
+			   !IS_V1_ISAKMP_SA_ESTABLISHED(st)) {
+			/* not very interesting: failed IKE attempt */
+			ldbg(st->st_logger, "un-established partial Child SA timeout (SA expired)");
+			pstat_sa_failed(st, REASON_EXCHANGE_TIMEOUT);
+		} else {
+			llog(RC_LOG, st->st_logger,
+			     "%s SA expired (%s)", satype,
+			     (c->config->rekey ? "LATEST!" : "--dontrekey"));
 		}
-		case IKEv1:
-			state_attach(st, logger);
-			connection_delete_state(&st, HERE);
+
+		struct ike_sa *ike = ike_sa(st, HERE);
+		if (ike == NULL) {
+			/*
+			 * XXX: SNAFU with IKE SA replacing
+			 * itself (but not deleting its
+			 * children?)  simultaneous to a CHILD
+			 * SA failing to establish and
+			 * attempting to delete / replace
+			 * itself?
+			 *
+			 * ST must be a Child SA (if it were
+			 * an IKE SA then ike_sa() would have
+			 * found itself).
+			 *
+			 * Because these things are
+			 * not serialized it is hard
+			 * to say.
+			 */
+			struct child_sa *child = pexpect_child_sa(st);
+			state_attach(&child->sa, logger);
+			llog_pexpect(child->sa.st_logger, HERE,
+				     "Child SA lost its IKE SA #%lu",
+				     child->sa.st_clonedfrom);
+			connection_delete_child(&child, HERE);
+			st = NULL;
+		} else if (IS_IKE_SA_ESTABLISHED(st)) {
+			/* IKEv2 parent, delete children too */
+			ldbg(st->st_logger, "IKEv2 SA expired, delete whole family");
+			send_n_log_delete_ike_family_now(&ike, ike->sa.st_logger, HERE);
 			/* note: no md->st to clear */
-			/* st = NULL; */
-			break;
-		default:
-			bad_case(st->st_ike_version);
+			st = NULL;
+		} else if (IS_IKE_SA(st)) {
+			/* IKEv2 parent, delete children too */
+			ldbg(st->st_logger, "IKEv2 SA expired, delete whole family");
+			passert(&ike->sa == st);
+			send_n_log_delete_ike_family_now(&ike, ike->sa.st_logger, HERE);
+			/* note: no md->st to clear */
+			st = NULL;
+		} else if (IS_IKE_SA_ESTABLISHED(&ike->sa)) {
+			/* note: no md->st to clear */
+			submit_v2_delete_exchange(ike, pexpect_child_sa(st));
+			st = NULL;
+		} else {
+			struct child_sa *child = pexpect_child_sa(st);
+			state_attach(&child->sa, logger);
+			connection_delete_child(&child, HERE);
+			st = NULL;
 		}
 		break;
 	}

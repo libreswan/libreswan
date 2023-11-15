@@ -126,5 +126,5 @@ void event_v1_replace(struct state *st, monotime_t now)
 	}
 
 	event_delete(EVENT_v1_DPD, st);
-	event_schedule(EVENT_SA_EXPIRE, st->st_replace_margin, st);
+	event_schedule(EVENT_v1_EXPIRE, st->st_replace_margin, st);
 }

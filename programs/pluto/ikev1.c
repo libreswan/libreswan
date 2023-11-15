@@ -2685,7 +2685,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 			if (agreed_time && !c->config->rekey &&
 			    (smc->flags & SMF_INITIATOR) == LEMPTY) {
 				/* per above, don't re-key responder */
-				event_type = EVENT_SA_EXPIRE;
+				event_type = EVENT_v1_EXPIRE;
 			} else {
 				deltatime_t marg = fuzz_rekey_margin(st->st_sa_role,
 								     c->config->sa_rekey_margin,

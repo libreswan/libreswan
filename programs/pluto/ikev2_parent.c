@@ -394,8 +394,8 @@ void ikev2_rekey_expire_predecessor(const struct child_sa *larval, so_serial_t p
 	if (deltatime_cmp(lifetime, >, EXPIRE_OLD_SA_DELAY)) {
 		/* replace the REPLACE/EXPIRE event */
 		delete_state_event(&rst->st_v2_lifetime_event, HERE);
-		event_schedule(EVENT_SA_EXPIRE, EXPIRE_OLD_SA_DELAY, rst);
-		pexpect(rst->st_v2_lifetime_event->ev_type == EVENT_SA_EXPIRE);
+		event_schedule(EVENT_v2_EXPIRE, EXPIRE_OLD_SA_DELAY, rst);
+		pexpect(rst->st_v2_lifetime_event->ev_type == EVENT_v2_EXPIRE);
 	}
 	/*
 	 * else it should be on its way to expire, no need to kick
@@ -497,10 +497,10 @@ void schedule_v2_replace_event(struct state *st)
 	const char *story;
 	if (is_opportunistic(c) &&
 	    nr_child_leases(st->st_connection->remote) > 0) {
-		kind = EVENT_SA_EXPIRE;
+		kind = EVENT_v2_EXPIRE;
 		story = "always expire opportunistic SA with lease";
 	} else if (!c->config->rekey) {
-		kind = EVENT_SA_EXPIRE;
+		kind = EVENT_v2_EXPIRE;
 		story = "policy doesn't allow re-key";
 	} else if (IS_IKE_SA(st) && st->st_connection->config->reauth) {
 		kind = EVENT_v2_REPLACE;
@@ -535,11 +535,11 @@ void schedule_v2_replace_event(struct state *st)
 	/*
 	 * This is the drop-dead event.
 	 */
-	passert(kind == EVENT_v2_REPLACE || kind == EVENT_SA_EXPIRE);
+	passert(kind == EVENT_v2_REPLACE || kind == EVENT_v2_EXPIRE);
 	deltatime_buf lb;
 	dbg(PRI_SO" will %s in %s seconds (%s)",
 	    st->st_serialno,
-	    kind == EVENT_SA_EXPIRE ? "expire" : "be replaced",
+	    kind == EVENT_v2_EXPIRE ? "expire" : "be replaced",
 	    str_deltatime(lifetime, &lb), story);
 
 	/*
@@ -565,13 +565,13 @@ bool v2_state_is_expired(struct state *st, const char *verb)
 		llog_pexpect(st->st_logger, HERE,
 			     "not %s Child SA #%lu; as IKE SA #%lu has diasppeared",
 			     verb, st->st_serialno, st->st_clonedfrom);
-		event_force(EVENT_SA_EXPIRE, st);
+		event_force(EVENT_v2_EXPIRE, st);
 		return true;
 	}
 
 	if (expire_ike_because_child_not_used(st)) {
 		struct ike_sa *ike = ike_sa(st, HERE);
-		event_force(EVENT_SA_EXPIRE, &ike->sa);
+		event_force(EVENT_v2_EXPIRE, &ike->sa);
 		return true;
 	}
 
@@ -604,7 +604,7 @@ bool v2_state_is_expired(struct state *st, const char *verb)
 			  "not %s stale %s SA #%lu; as already got a newer #%lu",
 			  verb, satype, st->st_serialno, newer_sa);
 #endif
-		event_force(EVENT_SA_EXPIRE, st);
+		event_force(EVENT_v2_EXPIRE, st);
 		return true;
 	}
 

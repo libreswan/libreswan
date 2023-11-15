@@ -627,5 +627,5 @@ void process_v2_INFORMATIONAL_request_v2N_REDIRECT(struct ike_sa *ike, struct ms
 	 * however, it will run before any connections have had a
 	 * chance to initiate.
 	 */
-	event_force(EVENT_SA_EXPIRE, &ike->sa);
+	event_force(EVENT_v2_EXPIRE, &ike->sa);
 }

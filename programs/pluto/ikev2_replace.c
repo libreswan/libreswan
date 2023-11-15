@@ -93,5 +93,5 @@ void event_v2_replace(struct state *st, monotime_t now UNUSED)
 	ldbg(st->st_logger, "replacing stale %s SA", satype);
 
 	ikev2_replace(st);
-	event_force(EVENT_SA_EXPIRE, st);
+	event_force(EVENT_v2_EXPIRE, st);
 }
