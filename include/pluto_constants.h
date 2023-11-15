@@ -200,7 +200,6 @@ enum global_timer {
 	EVENT_SHUNT_SCAN,		/* scan shunt eroutes known to kernel */
 	EVENT_PENDING_DDNS,		/* try to start connections where DNS failed at init */
 	EVENT_SD_WATCHDOG,		/* update systemd's watchdog interval */
-	EVENT_PENDING_PHASE2,		/* do not make pending phase2 wait forever */
 	EVENT_CHECK_CRLS,		/* check/update CRLS */
 
 	EVENT_FREE_ROOT_CERTS,

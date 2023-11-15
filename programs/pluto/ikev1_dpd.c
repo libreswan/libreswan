@@ -82,9 +82,6 @@
 void event_v1_dpd_timeout(struct state *tbd_st)
 {
 	/*
-	 * XXX: Danger! These connection calls, notably
-	 * restart_connections_by_peer(), can end up deleting TBD_ST
-	 *
 	 * So that the logger is valid after TBD_ST's been deleted,
 	 * create a clone of TBD_ST's logger and kill the TBD_ST
 	 * pointer.

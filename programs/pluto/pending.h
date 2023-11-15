@@ -66,6 +66,4 @@ bool connection_is_pending(const struct connection *c);
 
 extern struct connection *first_pending(const struct ike_sa *ike);
 
-void init_pending(void);
-
 #endif

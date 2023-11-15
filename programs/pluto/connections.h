@@ -824,7 +824,6 @@ bool add_connection(const struct whack_message *wm, struct logger *logger);
 
 void update_hosts_from_end_host_addr(struct connection *c, enum left_right end,
 				     ip_address host_addr, where_t where);
-extern void restart_connections_by_peer(struct connection *c, struct logger *logger);
 
 void delete_connection_where(struct connection **cp, where_t where);
 #define delete_connection(CP) delete_connection_where(CP, HERE)
@@ -883,7 +882,6 @@ int connection_compare(const struct connection *ca,
 		       const struct connection *cb);
 
 void connection_check_ddns(struct logger *logger);
-void connection_check_phase2(struct logger *logger);
 void init_connections_timer(void);
 
 so_serial_t get_newer_sa_from_connection(struct state *st);

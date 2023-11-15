@@ -74,7 +74,6 @@
 #include "ikev2.h"		/* for init_ikev2() */
 #include "crypt_symkey.h"	/* for init_crypt_symkey() */
 #include "crl_queue.h"		/* for free_crl_queue() */
-#include "pending.h"		/* for init_pending() */
 #include "iface.h"		/* for pluto_listen; */
 #include "server_pool.h"
 #include "show.h"
@@ -1785,7 +1784,6 @@ int main(int argc, char **argv)
 	init_log_limiter();
 	init_nat_traversal_timer(keep_alive, logger);
 	init_connections_timer();
-	init_pending();
 
 	init_virtual_ip(virtual_private, logger);
 
