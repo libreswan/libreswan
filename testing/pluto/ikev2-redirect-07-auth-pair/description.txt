@@ -1,0 +1,1 @@
+west initiates two shared connections, both are redirected

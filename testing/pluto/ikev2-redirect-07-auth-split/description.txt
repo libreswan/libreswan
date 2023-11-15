@@ -1,0 +1,3 @@
+initiates two shared connections, one allows redirection, one does not
+
+the one that does not allow redirection fails - east rejects its TS

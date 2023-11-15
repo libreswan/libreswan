@@ -1,0 +1,15 @@
+/testing/guestbin/swan-prep
+north #
+ ipsec start
+Redirecting to: [initsystem]
+north #
+ ../../guestbin/wait-until-pluto-started
+north #
+ ipsec auto --add north
+002 "north/0x1": added IKEv2 connection
+002 "north/0x2": added IKEv2 connection
+north #
+ echo "initdone"
+initdone
+north #
+ 
