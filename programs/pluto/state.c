@@ -1530,7 +1530,7 @@ static bool parent_ok(const struct connection *c, const struct state *st)
 	/*
 	 * i.e., connection and IKE SA have the same authentication.
 	 */
-	if (!same_peer_ids(c, st->st_connection, NULL)) {
+	if (!same_peer_ids(c, st->st_connection)) {
 		return false;
 	}
 

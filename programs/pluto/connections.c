@@ -4220,12 +4220,10 @@ so_serial_t get_newer_sa_from_connection(struct state *st)
 }
 
 /* check to see that Ids of peers match */
-bool same_peer_ids(const struct connection *c, const struct connection *d,
-		   const struct id *peer_id)
+bool same_peer_ids(const struct connection *c, const struct connection *d)
 {
-	return same_id(&c->local->host.id, &d->local->host.id) &&
-	       same_id(peer_id == NULL ? &c->remote->host.id : peer_id,
-		       &d->remote->host.id);
+	return (same_id(&c->local->host.id, &d->local->host.id) &&
+		same_id(&c->remote->host.id, &d->remote->host.id));
 }
 
 /* seems to be a good spot for now */

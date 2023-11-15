@@ -293,7 +293,7 @@ static struct child_sa *find_phase2_state_to_delete(const struct ike_sa *p1,
 		if (p1->sa.st_connection->host_pair != p2->sa.st_connection->host_pair) {
 			continue;
 		}
-		if (!same_peer_ids(p1->sa.st_connection, p2->sa.st_connection, NULL)) {
+		if (!same_peer_ids(p1->sa.st_connection, p2->sa.st_connection)) {
 			continue;
 		}
 		const struct ipsec_proto_info *pr =
@@ -450,8 +450,7 @@ bool accept_delete(struct state **stp,
 			struct ike_sa *dst = pexpect_ike_sa(st);
 
 			if (!same_peer_ids(p1->sa.st_connection,
-					   dst->sa.st_connection,
-					   NULL)) {
+					   dst->sa.st_connection)) {
 				/*
 				 * we've not authenticated the relevant
 				 * identities

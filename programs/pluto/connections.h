@@ -816,7 +816,7 @@ struct connection {
 };
 
 extern bool same_peer_ids(const struct connection *c,
-			  const struct connection *d, const struct id *peers_id);
+			  const struct connection *d);
 
 #define ADD_FAILED_PREFIX "failed to add connection: "
 #define CONNECTION_ADD_FAILED(WM, FMT)			\
