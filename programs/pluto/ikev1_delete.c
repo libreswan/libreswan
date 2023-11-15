@@ -290,10 +290,8 @@ static struct child_sa *find_phase2_state_to_delete(const struct ike_sa *p1,
 		if (!IS_IPSEC_SA_ESTABLISHED(&p2->sa)) {
 			continue;
 		}
-		if (p1->sa.st_connection->host_pair != p2->sa.st_connection->host_pair) {
-			continue;
-		}
-		if (!same_peer_ids(p1->sa.st_connection, p2->sa.st_connection)) {
+		if (!connections_can_share_parent(p1->sa.st_connection,
+						  p2->sa.st_connection)) {
 			continue;
 		}
 		const struct ipsec_proto_info *pr =

@@ -99,9 +99,9 @@ static void connection_state(struct state *st, struct log_conn_info *lc)
 		return;
 
 	if (st->st_connection != lc->conn) {
-		if (lc->conn->host_pair != st->st_connection->host_pair ||
-		    !same_peer_ids(lc->conn, st->st_connection))
+		if (!connections_can_share_parent(lc->conn, st->st_connection)) {
 			return;
+		}
 		/* phase1 is shared with another connection */
 	}
 

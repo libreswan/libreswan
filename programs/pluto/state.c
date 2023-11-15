@@ -1497,46 +1497,6 @@ struct state *find_v1_info_state(const ike_spis_t *ike_spis, msgid_t msgid)
 }
 #endif
 
-/*
- * Find newest Phase 1 negotiation state object for suitable for
- * connection c.
- *
- * Also used to find an IKEv1 ISAKMP SA suitable for sending a delete.
- */
-
-static bool parent_ok(const struct connection *c, const struct state *st)
-{
-	/*
-	 * Need matching version and parent for starters!
-	 */
-	if (c->config->ike_version != st->st_ike_version) {
-		return false;
-	}
-	if (!IS_PARENT_SA(st)) {
-		return false;
-	}
-
-	/*
-	 * Do these two mean that a much faster host-pair search could
-	 * be used?
-	 */
-	if (c->host_pair != st->st_connection->host_pair) {
-		return false;
-	}
-	if (!endpoint_address_eq_address(st->st_remote_endpoint, c->remote->host.addr)) {
-		return false;
-	}
-
-	/*
-	 * i.e., connection and IKE SA have the same authentication.
-	 */
-	if (!same_peer_ids(c, st->st_connection)) {
-		return false;
-	}
-
-	return true;
-}
-
 struct ike_sa *find_ike_sa_by_connection(const struct connection *c,
 					 lset_t ok_states,
 					 bool viable_parent)
@@ -1546,7 +1506,10 @@ struct ike_sa *find_ike_sa_by_connection(const struct connection *c,
 	struct state_filter sf = { .where = HERE, };
 	while (next_state_new2old(&sf)) {
 		struct state *st = sf.st;
-		if (!parent_ok(c, st)) {
+		if (!IS_PARENT_SA(st)) {
+			continue;
+		}
+		if (!connections_can_share_parent(c, st->st_connection)) {
 			continue;
 		}
 		if (!LHAS(ok_states, st->st_state->kind)) {
@@ -1597,7 +1560,10 @@ struct ike_sa *find_viable_parent_for_connection(const struct connection *c)
 	struct state_filter sf = { .where = HERE, };
 	while (next_state_new2old(&sf)) {
 		struct state *st = sf.st;
-		if (!parent_ok(c, st)) {
+		if (!IS_PARENT_SA(st)) {
+			continue;
+		}
+		if (!connections_can_share_parent(c, st->st_connection)) {
 			continue;
 		}
 		/*

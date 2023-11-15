@@ -4741,3 +4741,51 @@ lset_t child_sa_policy(const struct connection *c)
 		   LEMPTY);
 	return policy;
 }
+
+/*
+ * Find newest Phase 1 negotiation state object for suitable for
+ * connection c.
+ *
+ * Also used to find an IKEv1 ISAKMP SA suitable for sending a delete.
+ */
+
+bool connections_can_share_parent(const struct connection *c, const struct connection *d)
+{
+	/*
+	 * Need matching version and parent for starters!
+	 */
+	if (c->config->ike_version != d->config->ike_version) {
+		return false;
+	}
+
+	/*
+	 * Check the initial host-pair.  Do these two mean that a much
+	 * faster host-pair search could be used?
+	 *
+	 * Not really, it's called when searching for an IKE SA, and
+	 * not a connection.  However, a connection search that uses
+	 * .negotiating_ike_sa and/or .established_ike_sa, might?
+	 */
+	if (!address_eq_address(c->local->host.addr, d->local->host.addr)) {
+		return false;
+	}
+	if (!address_eq_address(c->remote->host.first_addr, d->remote->host.first_addr)) {
+		return false;
+	}
+
+	/*
+	 * Also check any redirection.
+	 */
+	if (!address_eq_address(c->remote->host.addr, d->remote->host.addr)) {
+		return false;
+	}
+
+	/*
+	 * i.e., connection and IKE SA have the same authentication.
+	 */
+	if (!same_peer_ids(c, d)) {
+		return false;
+	}
+
+	return true;
+}
