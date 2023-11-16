@@ -59,6 +59,7 @@
 
 #include "whack_add.h"
 #include "whack_addconn.h"
+#include "whack_briefconnectionstatus.h"
 #include "whack_connection.h"
 #include "whack_connectionstatus.h"
 #include "whack_crash.h"

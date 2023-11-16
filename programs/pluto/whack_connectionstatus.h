@@ -18,9 +18,22 @@
 
 struct whack_message;
 struct show;
+enum left_right;
+struct jambuf;
+struct spd_end;
+struct connection;
+struct host_end;
 
 void whack_connectionstatus(const struct whack_message *m, struct show *s);
-void whack_briefconnectionstatus(const struct whack_message *m, struct show *s);
 void show_connection_statuses(struct show *s);
+
+/* Shared with <<ipsec briefconnectionstatus>> */
+void jam_end_host(struct jambuf *buf,
+		  const struct connection *c,
+		  const struct host_end *end);
+void jam_end_client(struct jambuf *buf, const struct connection *c,
+		    const struct spd_end *this, enum left_right left_right,
+		    const char *separator);
+
 
 #endif
