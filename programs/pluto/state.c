@@ -658,7 +658,7 @@ static struct ike_sa *new_v2_ike_sa(struct connection *c,
 	v2_msgid_init_ike(ike);
 	ike->sa.st_remote_endpoint = remote_endpoint;
 	ike->sa.st_iface_endpoint = local_iface_endpoint; /* already reffed */
-	event_schedule(EVENT_SA_DISCARD, EXCHANGE_TIMEOUT_DELAY, &ike->sa);
+	event_schedule(EVENT_v2_DISCARD, EXCHANGE_TIMEOUT_DELAY, &ike->sa);
 	return ike;
 }
 

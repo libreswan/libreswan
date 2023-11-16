@@ -2519,19 +2519,6 @@ static const enum_names event_names = {
 	NULL
 };
 
-static const char *const event_sa_name[] = {
-#define E(EVENT) [EVENT - EVENT_SA_DISCARD] = #EVENT
-	E(EVENT_SA_DISCARD),
-#undef E
-};
-
-static const enum_names event_sa_names = {
-	EVENT_SA_DISCARD, EVENT_SA_DISCARD,
-	ARRAY_REF(event_sa_name),
-	"EVENT_SA_", /* prefix */
-	&event_names,
-};
-
 static const char *const event_v1_name[] = {
 #define E(EVENT) [EVENT - EVENT_v1_SEND_XAUTH] = #EVENT
 	E(EVENT_v1_SEND_XAUTH),
@@ -2539,6 +2526,7 @@ static const char *const event_v1_name[] = {
 	E(EVENT_v1_DPD_TIMEOUT),
 	E(EVENT_v1_PAM_TIMEOUT),
 	E(EVENT_v1_REPLACE),
+	E(EVENT_v1_DISCARD),
 	E(EVENT_v1_EXPIRE),
 #undef E
 };
@@ -2547,13 +2535,14 @@ static const enum_names event_v1_names = {
 	EVENT_v1_SEND_XAUTH, EVENT_v1_REPLACE,
 	ARRAY_REF(event_v1_name),
 	"EVENT_v1_", /* prefix */
-	&event_sa_names
+	&event_names
 };
 
 static const char *const event_v2_name[] = {
 #define E(EVENT) [EVENT - EVENT_v2_REKEY] = #EVENT
 	E(EVENT_v2_REKEY),
 	E(EVENT_v2_REPLACE),
+	E(EVENT_v2_DISCARD),
 	E(EVENT_v2_LIVENESS),
 	E(EVENT_v2_ADDR_CHANGE),
 	E(EVENT_v2_EXPIRE),

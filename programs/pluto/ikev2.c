@@ -302,7 +302,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .message_payloads.notification = v2N_COOKIE,
 	  .processor  = process_v2_IKE_SA_INIT_response_v2N_COOKIE,
 	  .llog_success = ldbg_v2_success,
-	  .timeout_event = EVENT_SA_DISCARD, },
+	  .timeout_event = EVENT_v2_DISCARD, },
 
 	{ .story      = "received INVALID_KE_PAYLOAD response; resending IKE_SA_INIT with new KE payload",
 	  .state      = STATE_V2_PARENT_I1,
@@ -315,7 +315,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .message_payloads.notification = v2N_INVALID_KE_PAYLOAD,
 	  .processor  = process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_PAYLOAD,
 	  .llog_success = ldbg_v2_success,
-	  .timeout_event = EVENT_SA_DISCARD, },
+	  .timeout_event = EVENT_v2_DISCARD, },
 
 	{ .story      = "received REDIRECT response; resending IKE_SA_INIT request to new destination",
 	  .state      = STATE_V2_PARENT_I1,
@@ -328,7 +328,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .message_payloads.notification = v2N_REDIRECT,
 	  .processor  = process_v2_IKE_SA_INIT_response_v2N_REDIRECT,
 	  .llog_success = ldbg_v2_success,
-	  .timeout_event = EVENT_SA_DISCARD,
+	  .timeout_event = EVENT_v2_DISCARD,
 	},
 
 	/* STATE_V2_PARENT_I1: R1 --> I2
@@ -412,7 +412,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .req_clear_payloads = P(SA) | P(KE) | P(Ni),
 	  .processor  = process_v2_IKE_SA_INIT_request,
 	  .llog_success = llog_v2_success_story_details,
-	  .timeout_event = EVENT_SA_DISCARD, },
+	  .timeout_event = EVENT_v2_DISCARD, },
 
 	/* STATE_V2_PARENT_R1: I2 --> R2
 	 *                  <-- HDR, SK {IDi, [CERT,] [CERTREQ,]
@@ -436,7 +436,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .opt_enc_payloads = LEMPTY,
 	  .processor  = process_v2_IKE_INTERMEDIATE_request,
 	  .llog_success = llog_v2_success_exchange,
-	  .timeout_event = EVENT_SA_DISCARD, },
+	  .timeout_event = EVENT_v2_DISCARD, },
 
 	/*
 	 * These two transitions should be merged; the no-child
@@ -469,7 +469,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .opt_enc_payloads = P(CERTREQ) | P(IDr) | P(CP) | P(SA) | P(TSi) | P(TSr),
 	  .processor  = process_v2_IKE_AUTH_request_EAP_start,
 	  .llog_success = llog_v2_success_story,
-	  .timeout_event = EVENT_SA_DISCARD, },
+	  .timeout_event = EVENT_v2_DISCARD, },
 
 	{ .story      = "Responder: process IKE_AUTH/EAP, continue EAP",
 	  .state      = STATE_V2_PARENT_R_EAP,
@@ -482,7 +482,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .req_enc_payloads = P(EAP),
 	  .processor  = process_v2_IKE_AUTH_request_EAP_continue,
 	  .llog_success = llog_v2_success_story,
-	  .timeout_event = EVENT_SA_DISCARD, },
+	  .timeout_event = EVENT_v2_DISCARD, },
 
 	{ .story      = "Responder: process final IKE_AUTH/EAP",
 	  .state      = STATE_V2_PARENT_R_EAP,
@@ -2509,9 +2509,9 @@ static void success_v2_state_transition(struct ike_sa *ike,
 		schedule_v2_replace_event(&ike->sa);
 		break;
 
-	case EVENT_SA_DISCARD:
+	case EVENT_v2_DISCARD:
 		delete_event(&ike->sa);
-		event_schedule(EVENT_SA_DISCARD, EXCHANGE_TIMEOUT_DELAY, &ike->sa);
+		event_schedule(EVENT_v2_DISCARD, EXCHANGE_TIMEOUT_DELAY, &ike->sa);
 		break;
 
 	case EVENT_NULL:

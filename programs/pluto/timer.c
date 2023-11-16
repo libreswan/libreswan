@@ -130,7 +130,8 @@ struct state_event **state_event_slot(struct state *st, enum event_type type)
 	case EVENT_v2_EXPIRE:
 		return &st->st_v2_lifetime_event;
 
-	case EVENT_SA_DISCARD:
+	case EVENT_v2_DISCARD:
+	case EVENT_v1_DISCARD:
 	case EVENT_v1_REPLACE:
 	case EVENT_CRYPTO_TIMEOUT:
 	case EVENT_v1_PAM_TIMEOUT:
@@ -391,7 +392,47 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 		break;
 	}
 
-	case EVENT_SA_DISCARD:
+	case EVENT_v1_DISCARD:
+		/*
+		 * The state failed to complete within a reasonable
+		 * time, or the state failed but was left to live for
+		 * a while so re-transmits could work, or the state is
+		 * being garbage collected.  Either way, time to
+		 * delete it.
+		 */
+		state_attach(st, logger);
+		if (deltatime_cmp(event_delay, >, deltatime_zero)) {
+			/* Don't bother logging 0 delay */
+			deltatime_buf dtb;
+			llog(RC_LOG, st->st_logger,
+			     "deleting incomplete state after %s seconds",
+			     str_deltatime(event_delay, &dtb));
+		} else {
+			deltatime_buf dtb;
+			ldbg(st->st_logger, 
+			     "deleting incomplete state after %s seconds",
+			     str_deltatime(event_delay, &dtb));
+		}
+
+		/*
+		 * If no other reason has been given then this is a
+		 * timeout.
+		 */
+		pstat_sa_failed(st, REASON_EXCHANGE_TIMEOUT);
+		/*
+		 * XXX: this is scary overkill - delete_state() likes
+		 * to resurect things and/or send messages.  What's
+		 * needed is a lower-level discard_state() that just
+		 * does its job.
+		 *
+		 * XXX: for IKEv2, it looks like delete_state() will
+		 * stop spontaneously sending messages (and hopefully
+		 * spontaneously deleting IKE families).
+		 */
+		connection_delete_state(&st, HERE);
+		break;
+
+	case EVENT_v2_DISCARD:
 		/*
 		 * The state failed to complete within a reasonable
 		 * time, or the state failed but was left to live for

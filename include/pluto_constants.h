@@ -245,18 +245,19 @@ enum event_type {
 	 * For IKEv2 'replace' is really either a re-key a full
 	 * replace, or expire.  IKEv1 should be the same but isn't.
 	 */
-	EVENT_SA_DISCARD,		/* v1/v2 discard unfinished state object */
 
 	EVENT_v1_SEND_XAUTH,		/* v1 send xauth request */
 	EVENT_v1_DPD,			/* v1 dead peer detection */
 	EVENT_v1_DPD_TIMEOUT,		/* v1 dead peer detection timeout */
 	EVENT_v1_PAM_TIMEOUT,		/* v1 give up on PAM helper */
 	EVENT_v1_EXPIRE,		/* v1 SA expiration event */
+	EVENT_v1_DISCARD,		/* v1 discard unfinished state object */
 	EVENT_v1_REPLACE,		/* v1 replacement event */
 
 	EVENT_v2_REKEY,			/* SA rekey event */
 	EVENT_v2_REPLACE,		/* v2 IKE/Child SA replacement event */
 	EVENT_v2_EXPIRE,		/* v2 SA expiration (drop-dead) event */
+	EVENT_v2_DISCARD,		/* v2 discard unfinished state object */
 	EVENT_v2_LIVENESS,		/* for dead peer detection */
 	EVENT_v2_ADDR_CHANGE,		/* process IP address deletion */
 

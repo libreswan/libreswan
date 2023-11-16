@@ -291,7 +291,7 @@ static const struct state_v1_microcode v1_state_microcode_table[] = {
 	{ STATE_MAIN_R0, STATE_MAIN_R1,
 	  SMF_ALL_AUTH | SMF_REPLY,
 	  P(SA), P(VID) | P(CR),
-	  EVENT_SA_DISCARD,
+	  EVENT_v1_DISCARD,
 	  FM(main_inI1_outR1),
 	  .hash_type = V1_HASH_NONE, },
 
@@ -486,7 +486,7 @@ static const struct state_v1_microcode v1_state_microcode_table[] = {
 	{ STATE_AGGR_R0, STATE_AGGR_R1,
 	  SMF_PSK_AUTH | SMF_DS_AUTH | SMF_REPLY,
 	  P(SA) | P(KE) | P(NONCE) | P(ID), P(VID) | P(NATD_RFC),
-	  EVENT_SA_DISCARD,
+	  EVENT_v1_DISCARD,
 	  FM(aggr_inI1_outR1),
 	  /* N/A */
 	  .hash_type = V1_HASH_NONE, },
@@ -1062,11 +1062,11 @@ static bool ikev1_duplicate(struct state *st, struct msg_digest *md)
 			(st->st_state->v1.flags & SMF_RETRANSMIT_ON_DUPLICATE);
 		if (replied && retransmit_on_duplicate) {
 			/*
-			 * Transitions with EVENT_SA_DISCARD should
+			 * Transitions with EVENT_v1_DISCARD should
 			 * always respond to re-transmits (why?); else
 			 * cap.
 			 */
-			if (st->st_v1_last_transition->timeout_event == EVENT_SA_DISCARD ||
+			if (st->st_v1_last_transition->timeout_event == EVENT_v1_DISCARD ||
 			    count_duplicate(st, MAXIMUM_v1_ACCEPTED_DUPLICATES)) {
 				log_state(RC_RETRANSMISSION, st,
 					  "retransmitting in response to duplicate packet; already %s",
@@ -2700,8 +2700,8 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 			event_schedule(event_type, event_delay, st);
 			break;
 		}
-		case EVENT_SA_DISCARD:
-			event_schedule(EVENT_SA_DISCARD, c->config->retransmit_timeout, st);
+		case EVENT_v1_DISCARD:
+			event_schedule(EVENT_v1_DISCARD, c->config->retransmit_timeout, st);
 			break;
 
 		default:

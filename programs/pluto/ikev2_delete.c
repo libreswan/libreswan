@@ -143,7 +143,7 @@ static stf_status initiate_v2_delete_child_request(struct ike_sa *ike,
 		 * Hence signal the Child SA that it should delete
 		 * itself.
 		 */
-		event_force(EVENT_SA_DISCARD, &child->sa);
+		event_force(EVENT_v2_DISCARD, &child->sa);
 	}
 	return STF_OK;
 }
