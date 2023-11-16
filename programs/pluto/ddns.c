@@ -217,10 +217,6 @@ void connection_check_ddns(struct logger *logger)
 		connection_check_ddns1(c, logger);
 	}
 
-	ldbg(logger, "DDNS: checking orientations");
-	/* useful? connection_check_dns1() has already oriented */
-	check_orientations(logger);
-
 	threadtime_stop(&start, SOS_NOBODY, "in %s for hostname lookup", __func__);
 }
 
