@@ -1128,29 +1128,6 @@ bool v2_ike_sa_auth_responder_establish(struct ike_sa *ike, bool *send_redirecti
 		}
 	}
 
-	if (is_labeled_parent(c)) {
-		/*
-		 * For SEC_LABELs install a trap for any outgoing
-		 * connection so that it will trigger an acquire which
-		 * will then negotiate the child.
-		 *
-		 * Because the is_labeled_parent() connection was
-		 * instantiated from the is_labeled_template() the parent
-		 * is unrouted.
-		 *
-		 * There's a chance that the is_labeled_template() and
-		 * is_labeled_parent() have overlapping SPDs that seems
-		 * to do no harm.
-		 */
-		PEXPECT(ike->sa.st_logger, (c->child.routing == RT_UNROUTED ||
-					    c->child.routing == RT_ROUTED_ONDEMAND ||
-					    c->child.routing == RT_UNROUTED_BARE_NEGOTIATION));
-		connection_route(c, HERE);
-		if (c->child.routing != RT_ROUTED_ONDEMAND) {
-			return false;
-		}
-	}
-
 	return true;
 }
 
@@ -1420,24 +1397,6 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 			 * instead?  There's no hurry right?
 			 */
 			nat_traversal_ka_event(ike->sa.st_logger);
-		}
-	}
-
-	if (is_labeled_parent(c)) {
-		/*
-		 * The CK_LABELED_TEMPLATE connection may have been
-		 * routed (i.e., route+ondemand), but not this
-		 * CK_LABELED_PARENT - it is still negotiating.
-		 *
-		 * But what if the two have the same SPDs?  Then the
-		 * routing happens twice which seems to be harmless.
-		 */
-		PEXPECT(ike->sa.st_logger, (c->child.routing == RT_UNROUTED ||
-					    c->child.routing == RT_ROUTED_ONDEMAND ||
-					    c->child.routing == RT_UNROUTED_BARE_NEGOTIATION));
-		connection_route(c, HERE);
-		if (c->child.routing != RT_ROUTED_ONDEMAND) {
-			return STF_FATAL;
 		}
 	}
 

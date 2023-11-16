@@ -2064,15 +2064,27 @@ static bool dispatch_1(enum routing_event event,
 
 	case X(ESTABLISH_IKE_SA, UNROUTED, LABELED_PARENT):
 		/*
-		 * Should this replace ROUTE, UNROUTED, LABELED_PARENT
-		 * below?
+		 * For SEC_LABELs install a trap for any outgoing
+		 * connection so that it will trigger an acquire which
+		 * will then negotiate the child.
+		 *
+		 * Because the is_labeled_parent() connection was
+		 * instantiated from the is_labeled_template() the
+		 * parent is unrouted.
+		 *
+		 * There's a chance that the is_labeled_template() and
+		 * is_labeled_parent() have overlapping SPDs that
+		 * seems to do no harm.
 		 */
-		set_established_ike(event, c, RT_UNROUTED_BARE_NEGOTIATION, e);
+		if (!unrouted_to_routed_ondemand_sec_label(c, logger, e->where)) {
+			llog(RC_ROUTE, logger, "could not route");
+			return true;
+		}
+		set_established_ike(event, c, RT_ROUTED_ONDEMAND, e);
 		return true;
 	case X(ESTABLISH_IKE_SA, ROUTED_ONDEMAND, LABELED_PARENT):
 		/*
-		 * Should this replace ROUTE, UNROUTED, LABELED_PARENT
-		 * below?
+		 * Presumably a rekey?
 		 */
 		set_established_ike(event, c, RT_ROUTED_ONDEMAND, e);
 		return true;
