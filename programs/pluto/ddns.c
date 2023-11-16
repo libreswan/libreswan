@@ -89,7 +89,19 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 		return;
 	}
 
+	/* do not touch what is not broken */
+	struct ike_sa *established_ike = ike_sa_by_serialno(c->established_ike_sa);
+	if (established_ike != NULL) {
+		/* also require viable? */
+		PEXPECT(established_ike->sa.logger, (IS_IKE_SA_ESTABLISHED(&established_ike->sa) ||
+						     IS_V1_ISAKMP_SA_ESTABLISHED(&established_ike->sa)));
+		pdbg(c->logger,
+		     "pending ddns: connection is established");
+		return;
+	}
+
 	/* XXX: blocking call */
+
 	ip_address new_remote_addr;
 	e = ttoaddress_dns(shunk1(c->config->dnshostname), NULL/*UNSPEC*/, &new_remote_addr);
 	if (e != NULL) {
@@ -105,17 +117,6 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 		ldbg(c->logger,
 		     "pending ddns: connection "PRI_CONNECTION" still no address for \"%s\"",
 		     pri_connection(c, &cib), c->config->dnshostname);
-		return;
-	}
-
-	/* do not touch what is not broken */
-	struct ike_sa *established_ike = ike_sa_by_serialno(c->established_ike_sa);
-	if (established_ike != NULL) {
-		/* also require viable? */
-		PEXPECT(established_ike->sa.logger, (IS_IKE_SA_ESTABLISHED(&established_ike->sa) ||
-						     IS_V1_ISAKMP_SA_ESTABLISHED(&established_ike->sa)));
-		pdbg(c->logger,
-		     "pending ddns: connection is established");
 		return;
 	}
 
