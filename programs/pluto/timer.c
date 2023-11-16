@@ -316,7 +316,7 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 		}
 
 		state_attach(st, logger);
-		connection_delete_state(&st, HERE);
+		connection_delete_v1_state(&st, HERE);
 		break;
 	}
 
@@ -429,7 +429,7 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 		 * stop spontaneously sending messages (and hopefully
 		 * spontaneously deleting IKE families).
 		 */
-		connection_delete_state(&st, HERE);
+		connection_delete_v1_state(&st, HERE);
 		break;
 
 	case EVENT_v2_DISCARD:
@@ -453,23 +453,21 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 			     "deleting incomplete state after %s seconds",
 			     str_deltatime(event_delay, &dtb));
 		}
-
 		/*
-		 * If no other reason has been given then this is a
-		 * timeout.
+		 * Just assume this is a timeout.
 		 */
 		pstat_sa_failed(st, REASON_EXCHANGE_TIMEOUT);
 		/*
-		 * XXX: this is scary overkill - delete_state() likes
-		 * to resurect things and/or send messages.  What's
-		 * needed is a lower-level discard_state() that just
-		 * does its job.
-		 *
-		 * XXX: for IKEv2, it looks like delete_state() will
-		 * stop spontaneously sending messages (and hopefully
-		 * spontaneously deleting IKE families).
+		 * An IKEv2 IKE SA must delete all offspring.
 		 */
-		connection_delete_state(&st, HERE);
+		if (IS_IKE_SA(st)) {
+			struct ike_sa *ike = pexpect_ike_sa(st);
+			connection_delete_ike_family(&ike, HERE);
+		} else {
+			struct child_sa *child = pexpect_child_sa(st);
+			connection_delete_child(&child, HERE);
+		}
+		st = NULL;
 		break;
 
 #ifdef USE_IKEv1

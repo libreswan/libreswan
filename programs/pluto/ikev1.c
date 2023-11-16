@@ -974,7 +974,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 					log_state(RC_LOG, st, "too many malformed payloads (we sent %u and received %u",
 						  st->hidden_variables.st_malformed_sent,
 						  st->hidden_variables.st_malformed_received);
-					connection_delete_state(&st, HERE);
+					connection_delete_v1_state(&st, HERE);
 					md->v1_st = st = NULL;
 				}
 			}
@@ -2883,7 +2883,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		struct ike_sa *isakmp =
 			established_isakmp_sa_for_state(st, /*viable-parent*/false);
 		llog_n_maybe_send_v1_delete(isakmp, st, HERE);
-		connection_delete_state(&st, HERE);
+		connection_delete_v1_state(&st, HERE);
 		md->v1_st = st = NULL;
 		break;
 	}
@@ -2939,7 +2939,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 #endif
 		if (IS_V1_QUICK(st->st_state->kind)) {
 			ldbg(st->st_logger, "quick delete");
-			connection_delete_state(&st, HERE);
+			connection_delete_v1_state(&st, HERE);
 			/* wipe out dangling pointer to st */
 			md->v1_st = NULL;
 		} else if  (st->st_state->kind == STATE_AGGR_R0 ||

@@ -435,15 +435,12 @@ void connection_delete_ike_family(struct ike_sa **ike, where_t where)
 	connection_zap_ike_family(ike, connection_delete_ike, connection_delete_child, where);
 }
 
-void connection_delete_state(struct state **st, where_t where)
+void connection_delete_v1_state(struct state **st, where_t where)
 {
+	PEXPECT((*st)->st_logger, (*st)->st_ike_version == IKEv1);
 	if (IS_PARENT_SA(*st)) {
 		struct ike_sa *ike = pexpect_parent_sa(*st);
-		if (ike->sa.st_ike_version == IKEv1) {
-			connection_delete_ike(&ike, where);
-		} else {
-			connection_delete_ike_family(&ike, where);
-		}
+		connection_delete_ike(&ike, where);
 	} else {
 		struct child_sa *child = pexpect_child_sa(*st);
 		connection_delete_child(&child, where);

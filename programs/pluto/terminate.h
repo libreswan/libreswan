@@ -27,6 +27,6 @@ void terminate_and_down_connections(struct connection **cp, struct logger *logge
 void connection_timeout_ike_family(struct ike_sa **ike, where_t where);
 void connection_delete_ike_family(struct ike_sa **ike, where_t where);
 
-void connection_delete_state(struct state **st, where_t where);
+void connection_delete_v1_state(struct state **st, where_t where);
 
 #endif
