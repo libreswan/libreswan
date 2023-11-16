@@ -244,6 +244,7 @@ OBJS += routing_story.o
 
 OBJS += acquire.o
 OBJS += initiate.o
+OBJS += ddns.o
 OBJS += terminate.o
 OBJS += pending.o crypto.o defs.o
 OBJS += ike_spi.o

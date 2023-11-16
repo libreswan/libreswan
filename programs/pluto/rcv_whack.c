@@ -56,6 +56,7 @@
 #include "addresspool.h"		/* for show_addresspool_status() */
 #include "pluto_stats.h"		/* for clear_pluto_stats() et.al. */
 #include "server_fork.h"		/* for show_process_status() */
+#include "ddns.h"			/* for connection_check_ddns() */
 
 #include "whack_add.h"
 #include "whack_addconn.h"

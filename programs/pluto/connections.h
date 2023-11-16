@@ -882,9 +882,6 @@ struct connection **sort_connections(void);
 int connection_compare(const struct connection *ca,
 		       const struct connection *cb);
 
-void connection_check_ddns(struct logger *logger);
-void init_connections_timer(void);
-
 so_serial_t get_newer_sa_from_connection(struct state *st);
 
 diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,

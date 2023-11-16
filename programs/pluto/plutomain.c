@@ -73,6 +73,7 @@
 #include "ikev1.h"		/* for init_ikev1() */
 #include "ikev2.h"		/* for init_ikev2() */
 #include "crypt_symkey.h"	/* for init_crypt_symkey() */
+#include "ddns.h"		/* for init_ddns() */
 #include "crl_queue.h"		/* for free_crl_queue() */
 #include "iface.h"		/* for pluto_listen; */
 #include "server_pool.h"
@@ -1783,7 +1784,7 @@ int main(int argc, char **argv)
 	/* server initialized; timers can follow */
 	init_log_limiter();
 	init_nat_traversal_timer(keep_alive, logger);
-	init_connections_timer();
+	init_ddns();
 
 	init_virtual_ip(virtual_private, logger);
 
