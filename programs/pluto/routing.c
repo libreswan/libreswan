@@ -2149,8 +2149,11 @@ static bool dispatch_1(enum routing_event event,
 	case X(INITIATE, UNROUTED, LABELED_PARENT):
 		return true;
 	case X(TEARDOWN_IKE, ROUTED_ONDEMAND, LABELED_PARENT):
+		/* labeled ipsec installs both inbound and outbound */
+		routed_kernel_policy_to_unrouted(event, c, DIRECTION_INBOUND|DIRECTION_OUTBOUND,
+						 logger, e->where, "unroute");
+		return true;
 	case X(TEARDOWN_IKE, UNROUTED, LABELED_PARENT):
-		set_routing(event, c, RT_UNROUTED, NULL);
 		return true;
 
 /*
