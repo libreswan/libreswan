@@ -2041,6 +2041,8 @@ struct connection *alloc_connection(const char *name,
 	/* somewhat oriented can start hashing */
 	connection_db_init_connection(c);
 
+	connection_routing_init(c);
+
 	/*
 	 * Update counter, set serialno and add to serialno list.
 	 *
@@ -3287,7 +3289,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 	/* set internal fields */
 	c->iface = NULL; /* initializing */
 
-	connection_routing_init(c);
 	c->redirect.attempt = 0;
 
 	/* non configurable */

@@ -123,8 +123,6 @@ static struct connection *duplicate_connection(const char *name, struct connecti
 	c->host_pair = t->host_pair;
 	c->hp_next = t->hp_next;
 
-	connection_routing_init(c);
-
 	return c;
 }
 
@@ -337,11 +335,6 @@ static struct connection *instantiate(struct connection *t,
 	dbg("%s .child.reqid=%d because t.config.sa_requid=%d (%s)",
 	    d->name, d->child.reqid, t->config->sa_reqid,
 	    (t->config->sa_reqid == 0 ? "generate" : "use"));
-
-	/*
-	 * Reset; sec_label templates will have set this.
-	 */
-	connection_routing_init(d);
 
 	/*
 	 * assumption: orientation is the same as c's - while the
