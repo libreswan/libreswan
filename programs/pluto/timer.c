@@ -98,10 +98,14 @@ struct state_event **state_event_slot(struct state *st, enum event_type type)
 	 * XXX: why not just have an array and index it by KIND?
 	 *
 	 * Because events come in groups.  For instance, for IKEv2,
-	 * only one of REPLACE / EXPIRE or REKEY / REAUTH are ever
-	 * scheduled.
+	 * only one of REPLACE / EXPIRE are ever scheduled.
+	 *
+	 * XXX: but most don't.
 	 */
 	switch (type) {
+
+	case EVENT_RETRANSMIT:
+		return &st->st_retransmit_event;
 
 	case EVENT_v1_SEND_XAUTH:
 		return &st->st_v1_send_xauth_event;
@@ -109,36 +113,27 @@ struct state_event **state_event_slot(struct state *st, enum event_type type)
 	case EVENT_v1_DPD_TIMEOUT:
 		return &st->st_v1_dpd_event;
 
-	case EVENT_v2_LIVENESS:
-		return &st->st_v2_liveness_event;
-
-	case EVENT_v2_ADDR_CHANGE:
-		return &st->st_v2_addr_change_event;
-
-	case EVENT_v2_REKEY:
-		return &st->st_v2_refresh_event;
-
-	case EVENT_RETRANSMIT:
-		return &st->st_retransmit_event;
-
-	case EVENT_v2_REPLACE:
-		return &st->st_v2_lifetime_event;
-
-	case EVENT_v1_EXPIRE:
-		return &st->st_event;
-
-	case EVENT_v2_EXPIRE:
-		return &st->st_v2_lifetime_event;
-
-	case EVENT_v2_DISCARD:
-	case EVENT_v1_DISCARD:
-	case EVENT_v1_REPLACE:
 	case EVENT_CRYPTO_TIMEOUT:
+	case EVENT_v1_DISCARD:
+	case EVENT_v1_EXPIRE:
 	case EVENT_v1_PAM_TIMEOUT:
+	case EVENT_v1_REPLACE:
 		/*
 		 * Many of these don't make sense - however that's
 		 * what happens when (the replaced) default: is used.
 		 */
+		return &st->st_event;
+
+	case EVENT_v2_LIVENESS:
+		return &st->st_v2_liveness_event;
+	case EVENT_v2_ADDR_CHANGE:
+		return &st->st_v2_addr_change_event;
+	case EVENT_v2_REKEY:
+		return &st->st_v2_refresh_event;
+	case EVENT_v2_REPLACE:
+	case EVENT_v2_EXPIRE:
+		return &st->st_v2_lifetime_event;
+	case EVENT_v2_DISCARD:
 		return &st->st_event;
 
 	case EVENT_RETAIN:
