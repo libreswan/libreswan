@@ -51,8 +51,6 @@ void connect_to_unoriented(struct connection *c);
 void delete_oriented_hp(struct connection *c);
 void delete_unoriented_hp(struct connection *c, bool connection_valid);
 
-extern void update_host_pairs(struct connection *c);
-
 extern void check_orientations(struct logger *logger);
 
 void host_pair_db_init(struct logger *logger);

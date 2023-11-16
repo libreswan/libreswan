@@ -285,94 +285,6 @@ void delete_unoriented_hp(struct connection *c, bool connection_valid)
 	PEXPECT(c->logger, !connection_valid);
 }
 
-/* update the host pairs with the latest DNS ip address */
-void update_host_pairs(struct connection *c)
-{
-	struct host_pair *hp = c->host_pair;
-	const char *dnshostname = c->config->dnshostname;
-
-	/* ??? perhaps we should return early if dnshostname == NULL */
-
-	if (hp == NULL)
-		return;
-
-	struct connection *d = hp->connections;
-
-	/* ??? looks as if addr_family is not allowed to change.  Bug? */
-	/* ??? why are we using d->config->dnshostname instead of (c->)dnshostname? */
-	/* ??? code used to test for d == NULL, but that seems impossible. */
-
-	pexpect(dnshostname == d->config->dnshostname || streq(dnshostname, d->config->dnshostname));
-
-	ip_address new_addr;
-
-	if (d->config->dnshostname == NULL ||
-	    ttoaddress_dns(shunk1(d->config->dnshostname),
-			      address_type(&d->remote->host.addr), &new_addr) != NULL ||
-	    sameaddr(&new_addr, &hp->remote))
-		return;
-
-	struct connection *conn_list = NULL;
-
-	while (d != NULL) {
-		struct connection *nxt = d->hp_next;
-
-		/*
-		 * ??? this test used to assume that dnshostname != NULL
-		 * if d->config->dnshostname != NULL.  Is that true?
-		 */
-		if (d->config->dnshostname != NULL && dnshostname != NULL &&
-		    streq(d->config->dnshostname, dnshostname)) {
-			/*
-			 * If there is a dnshostname and it is the same as
-			 * the one that has changed, then change
-			 * the connection's remote host address and remove
-			 * the connection from the host pair.
-			 */
-
-			/*
-			 * Unroute the old connection before changing the ip
-			 * address.
-			 */
-			connection_unroute(d, HERE);
-
-			/*
-			 * If the client is the peer, also update the
-			 * client info
-			 */
-			if (!d->remote->child.has_client) {
-				update_first_selector(d, remote, selector_from_address(new_addr));
-				spd_route_db_rehash_remote_client(d->spd);
-			}
-
-			d->remote->host.addr = new_addr;
-			LIST_RM(hp_next, d, d->host_pair->connections);
-
-			d->hp_next = conn_list;
-			conn_list = d;
-		}
-		d = nxt;
-	}
-
-	while (conn_list != NULL) {
-		struct connection *nxt = conn_list->hp_next;
-
-		/*
-		 * assumption: orientation is the same as before.
-		 *
-		 * Put C back on unoriented, or add to a host pair.
-		 */
-		if (oriented(c)) {
-			connect_to_oriented(c);
-		} else {
-			connect_to_unoriented(c);
-		}
-		conn_list = nxt;
-	}
-
-	free_unused_host_pair(&hp, HERE);
-}
-
 /*
  * Adjust orientations of connections to reflect newly added
  * interfaces.
@@ -411,6 +323,7 @@ void check_orientations(struct logger *logger)
 	 * In other words, the far side must not match one of our new
 	 * interfaces.
 	 */
+	dbg("FOR_EACH_IFACE_... in %s", __func__);
 	for (struct iface *iface = next_iface(NULL);
 	     iface != NULL; iface = next_iface(iface)) {
 

@@ -34,6 +34,7 @@
 #include "timer.h"
 #include "initiate.h"
 #include "host_pair.h"
+#include "orient.h"
 
 /* time before retrying DDNS host lookup for phase 1 */
 #define PENDING_DDNS_INTERVAL secs_per_minute
@@ -134,6 +135,20 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 
 	pexpect(!address_is_specified(c->remote->host.addr)); /* per above */
 
+	/*
+	 * Pull any existing routing based on current SPDs.  Remember,
+	 * per above, the connection isn't established.
+	 */
+	pdbg(c->logger, "  unrouting");
+	connection_unroute(c, HERE);
+
+	if (oriented(c)) {
+		pdbg(c->logger, "  disorienting");
+		disorient(c);
+	} else {
+		pdbg(c->logger, "  already disoriented");
+	}
+
 	/* propogate remote address */
 	pdbg(c->logger, "  updating hosts");
 	update_hosts_from_end_host_addr(c, c->remote->config->index, new_remote_addr, HERE); /* from DNS */
@@ -167,22 +182,29 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 	pdbg(c->logger, "  adding SPDs");
 	add_connection_spds(c, address_info(c->local->host.addr));
 
-	/*
-	 * reduce the work we do by updating all connections waiting for this
-	 * lookup
-	 */
-	pdbg(c->logger, "  updating host pairs");
-	update_host_pairs(c);
+	pdbg(c->logger, "  orienting?");
+	if (orient(&c, logger)) {
+		delete_unoriented_hp(c, true);
+		connect_to_oriented(c);
+	}
 
-	if (!c->policy.up) {
-		pdbg(c->logger, "pending ddns: connection was updated, but does not want to be up");
+	if (!oriented(c)) {
+		pdbg(c->logger, "pending ddns: connection was updated, but is not oriented");
 		return;
 	}
 
-	pdbg(c->logger, "pending ddns: re-initiating connection");
-	initiate_connection(c, /*remote-host-name*/NULL,
-			    /*background*/true,
-			    logger);
+	if (c->policy.route) {
+		ldbg(c->logger, "pending ddns: connection was updated, restoring route");
+		connection_route(c, HERE);
+	}
+
+	if (c->policy.up) {
+		ldbg(c->logger,
+		     "pending ddns: connection was updated, (re-)initiating");
+		initiate_connection(c, /*remote-host-name*/NULL,
+				    /*background*/true,
+				    logger);
+	}
 }
 
 void connection_check_ddns(struct logger *logger)
@@ -196,6 +218,7 @@ void connection_check_ddns(struct logger *logger)
 	}
 
 	ldbg(logger, "DDNS: checking orientations");
+	/* useful? connection_check_dns1() has already oriented */
 	check_orientations(logger);
 
 	threadtime_stop(&start, SOS_NOBODY, "in %s for hostname lookup", __func__);
