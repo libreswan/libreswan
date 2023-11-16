@@ -119,10 +119,6 @@ static struct connection *duplicate_connection(const char *name, struct connecti
 	c->policy.up = t->policy.up;
 	c->policy.route = t->policy.route;
 
-	/* EWWW! */
-	c->host_pair = t->host_pair;
-	c->hp_next = t->hp_next;
-
 	return c;
 }
 
@@ -254,17 +250,11 @@ struct connection *group_instantiate(struct connection *group,
 	     t->name, t->child.reqid, t->config->sa_reqid,
 	     (t->config->sa_reqid == 0 ? "generate" : "use"));
 
-	/*
-	 * Same host_pair as parent: stick after parent on list.
-	 * t->hp_next = group->hp_next; // done by duplicate_connection
-	 */
-	group->hp_next = t;
-
-	/* all done */
+	PEXPECT(t->logger, oriented(t));
+	connect_to_oriented(t);
 	connection_db_add(t);
 
 	/* fill in the SPDs */
-	PEXPECT(t->logger, oriented(t));
 	add_connection_spds(t, address_info(t->local->host.addr));
 
 	connection_buf gb;
