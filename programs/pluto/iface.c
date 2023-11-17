@@ -42,7 +42,6 @@
 
 #include "iface.h"
 #include "log.h"
-#include "host_pair.h"			/* for check_orientations() */
 #include "server.h"			/* for *_pluto_event() */
 #include "kernel_iface.h"
 #include "demux.h"
@@ -52,7 +51,7 @@
 #include "kernel.h"			/* for kernel_ops_detect_offload() */
 #include "nat_traversal.h"		/* for nat_traversal_enabled which seems like a broken idea */
 #include "show.h"
-#include "orient.h"
+#include "orient.h"			/* for check_orientations() */
 #include "terminate.h"
 
 char *pluto_listen = NULL;		/* from --listen flag */

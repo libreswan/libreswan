@@ -344,3 +344,32 @@ bool orient(struct connection **cp, struct logger *logger)
 
 	return true;
 }
+
+/*
+ * Adjust orientations of connections to reflect newly added
+ * interfaces.
+ */
+
+void check_orientations(struct logger *logger)
+{
+	/*
+	 * Try to orient unoriented connections by re-building the
+	 * unoriented connections list.
+	 *
+	 * The list is emptied, then as each connection fails to
+	 * orient it goes back on the list.
+	 */
+	struct connection_filter cf = {
+		.where = HERE,
+	};
+	while (next_connection_new2old(&cf)) {
+		struct connection *c = cf.c;
+		if (oriented(c)) {
+			disorient(c);
+		}
+		if (orient(&c, logger)) {
+			delete_unoriented_hp(c, true);
+			connect_to_oriented(c);
+		}
+	}
+}
