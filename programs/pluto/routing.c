@@ -503,11 +503,12 @@ static void set_established_child(enum routing_event event UNUSED,
 				if (ike->sa.st_serialno != c->owner[owner]) {
 					/* child/ike have crossed streams */
 					enum_buf ob;
-					llog_pexpect(child->sa.logger, HERE,
-						     "Child SA sharing connection with IKE SA "PRI_SO" has incorrect .%s "PRI_SO", updating",
-						     pri_so(ike->sa.st_serialno),
-						     str_enum(&connection_owner_names, owner, &ob),
-						     pri_so(c->owner[owner]));
+					llog(RC_LOG_SERIOUS, child->sa.logger,
+					     "Child SA with IKE SA "PRI_SO" share their connection, .%s "PRI_SO" should be the IKE SA, updating "PRI_WHERE,
+					     pri_so(ike->sa.st_serialno),
+					     str_enum(&connection_owner_names, owner, &ob),
+					     pri_so(c->owner[owner]),
+					     pri_where(e->where));
 					c->owner[owner] = ike->sa.st_serialno;
 				}
 			} else {
@@ -515,10 +516,11 @@ static void set_established_child(enum routing_event event UNUSED,
 					/* child is a cuckoo */
 					enum_buf ob;
 					llog_pexpect(child->sa.logger, HERE,
-						     "Child SA not sharing connection with IKE SA "PRI_SO" has incorrect .%s "PRI_SO", clearing",
+						     "Child SA with IKE SA "PRI_SO" do not share their connection, .%s "PRI_SO" should be unset, clearing "PRI_WHERE,
 						     pri_so(ike->sa.st_serialno),
 						     str_enum(&connection_owner_names, owner, &ob),
-						     pri_so(c->owner[owner]));
+						     pri_so(c->owner[owner]),
+						     pri_where(e->where));
 					c->owner[owner] = SOS_NOBODY;
 				}
 			}
