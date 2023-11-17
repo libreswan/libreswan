@@ -46,10 +46,6 @@ SUBDIRS += setup
 SUBDIRS += showhostkey
 SUBDIRS += showroute
 
-ifeq ($(USE_PORTEXCLUDES),true)
-SUBDIRS += portexcludes
-endif
-
 ifeq ($(USE_XFRM),true)
 SUBDIRS +=  _updown.xfrm
 endif
