@@ -33,7 +33,6 @@
 #include "pending.h"
 #include "timer.h"
 #include "log.h"
-#include "host_pair.h"
 #include "orient.h"
 #include "ikev1.h"			/* for aggr_outI1() and main_outI1() */
 #include "ikev1_spdb.h"

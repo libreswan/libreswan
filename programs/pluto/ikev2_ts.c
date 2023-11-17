@@ -29,7 +29,6 @@
 #include "ikev2_ts.h"
 #include "connections.h"
 #include "demux.h"
-#include "host_pair.h"
 #include "ip_info.h"
 #include "ip_selector.h"
 #include "labeled_ipsec.h"

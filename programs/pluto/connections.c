@@ -82,7 +82,6 @@
 #include "nss_cert_load.h"
 #include "ikev2.h"
 #include "virtual_ip.h"	/* needs connections.h */
-#include "host_pair.h"
 #include "lswfips.h"
 #include "crypto.h"
 #include "kernel_xfrm.h"
@@ -424,7 +423,6 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 
 	/* find and delete c from the host pair list */
 	disorient(c);
-	delete_unoriented_hp(c, connection_valid);
 
 	remove_from_group(c);
 
@@ -3460,15 +3458,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 * Force orientation (currently kind of unoriented?).  If the
 	 * connection orients,the SPDs and host-pair hash tables are
 	 * updated.
-	 *
-	 * Then put C on either the unoriented or oriented list.
 	 */
-	bool oriented = orient(&c, c->logger);
-	if (oriented) {
-		connect_to_oriented(c);
-	} else {
-		connect_to_unoriented(c);
-	}
+	orient(&c, c->logger);
 
 	return NULL;
 }

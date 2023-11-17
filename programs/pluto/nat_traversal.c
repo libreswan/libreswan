@@ -41,7 +41,6 @@
 #include "iface.h"
 #include "state_db.h"		/* for state_by_ike_spis() */
 #include "show.h"
-#include "host_pair.h"
 
 /* As per https://tools.ietf.org/html/rfc3948#section-4 */
 #define DEFAULT_KEEP_ALIVE_SECS  20
@@ -348,8 +347,6 @@ static bool nat_traversal_update_family_mapp_state(struct state *st, void *data)
 			/* update remote */
 			c->remote->host.addr = endpoint_address(nfo->new_remote_endpoint);
 			/* then rebuild local<>remote host-pair */
-			delete_oriented_hp(c);
-			connect_to_oriented(c);
 		}
 	}
 	return false; /* search for more */

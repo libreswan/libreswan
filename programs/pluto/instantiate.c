@@ -43,7 +43,6 @@
 #include "connection_db.h"	/* for finish_connection() */
 #include "addresspool.h"
 #include "kernel_xfrm_interface.h"
-#include "host_pair.h"
 #include "virtual_ip.h"
 #include "kernel.h"
 
@@ -251,7 +250,6 @@ struct connection *group_instantiate(struct connection *group,
 	     (t->config->sa_reqid == 0 ? "generate" : "use"));
 
 	PEXPECT(t->logger, oriented(t));
-	connect_to_oriented(t);
 	connection_db_add(t);
 
 	/* fill in the SPDs */
@@ -332,7 +330,6 @@ static struct connection *instantiate(struct connection *t,
 	 * endpoint and iface are unchanged.
 	 */
 	passert(oriented(d));
-	connect_to_oriented(d);
 	connection_db_add(d);
 
 	/* XXX: could this use the connection number? */

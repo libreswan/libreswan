@@ -69,7 +69,6 @@
 #include "ike_alg.h"
 #include "ikev2_redirect.h"
 #include "root_certs.h"		/* for init_root_certs() */
-#include "host_pair.h"		/* for init_host_pair_db() */
 #include "ikev1.h"		/* for init_ikev1() */
 #include "ikev2.h"		/* for init_ikev2() */
 #include "crypt_symkey.h"	/* for init_crypt_symkey() */
@@ -1598,7 +1597,6 @@ int main(int argc, char **argv)
 	state_db_init(logger);
 	connection_db_init(logger);
 	spd_route_db_init(logger);
-	host_pair_db_init(logger);
 
 	pluto_init_nss(oco->nssdir, logger);
 	if (libreswan_fipsmode()) {

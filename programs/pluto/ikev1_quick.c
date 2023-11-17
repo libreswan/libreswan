@@ -68,7 +68,6 @@
 #include "ikev1.h"
 #include "ikev1_quick.h"
 #include "ikev1_continuations.h"
-#include "host_pair.h"
 #include "ikev1_xauth.h"
 
 #include "nat_traversal.h"

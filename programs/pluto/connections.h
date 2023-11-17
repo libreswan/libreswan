@@ -59,7 +59,6 @@
 #include "state.h"
 #include "whack.h"
 
-struct host_pair;	/* opaque type */
 struct kernel_acquire;
 
 /*
@@ -773,10 +772,6 @@ struct connection {
 #define established_ike_sa owner[ESTABLISHED_IKE_SA]
 #define newest_routing_sa owner[NEGOTIATING_CHILD_SA]
 #define newest_ipsec_sa owner[ESTABLISHED_CHILD_SA]
-
-	/* host_pair linkage */
-	struct host_pair *host_pair;
-	struct connection *hp_next;
 
 	struct addresspool *pool[IP_INDEX_ROOF];
 

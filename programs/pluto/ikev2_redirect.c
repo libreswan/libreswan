@@ -37,7 +37,6 @@
 #include "pending.h"
 #include "pluto_stats.h"
 #include "orient.h"
-#include "host_pair.h"
 
 enum allow_global_redirect global_redirect = GLOBAL_REDIRECT_NO;
 

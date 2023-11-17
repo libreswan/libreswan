@@ -22,7 +22,6 @@
  *
  */
 
-#include "host_pair.h"
 #include "ikev1_host_pair.h"
 #include "log.h"
 #include "connections.h"

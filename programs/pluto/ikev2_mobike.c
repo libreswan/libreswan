@@ -44,7 +44,6 @@
 #include "ikev2_message.h"
 #include "routing.h"
 #include "ikev2_mobike.h"
-#include "host_pair.h"		/* for delete_oriented_hp() */
 #include "orient.h"
 
 static bool add_mobike_response_payloads(shunk_t cookie2, struct msg_digest *md,
@@ -182,10 +181,6 @@ static bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest 
 			     "%s after mobike failed", "orient");
 		return false;
 	}
-
-	/* assumption: orientation has not changed */
-	delete_unoriented_hp(c, true);
-	connect_to_oriented(c); /* re-create hp listing */
 
 	if (md_role == MESSAGE_RESPONSE) {
 		/* MOBIKE initiator processing response */

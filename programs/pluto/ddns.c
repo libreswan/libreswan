@@ -33,7 +33,6 @@
 #include "log.h"
 #include "timer.h"
 #include "initiate.h"
-#include "host_pair.h"
 #include "orient.h"
 
 /* time before retrying DDNS host lookup for phase 1 */
@@ -183,13 +182,9 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 	add_connection_spds(c, address_info(c->local->host.addr));
 
 	pdbg(c->logger, "  orienting?");
-	if (orient(&c, logger)) {
-		delete_unoriented_hp(c, true);
-		connect_to_oriented(c);
-	}
-
-	if (!oriented(c)) {
-		pdbg(c->logger, "pending ddns: connection was updated, but is not oriented");
+	PASSERT(logger, !oriented(c));	/* see above */
+	if (!orient(&c, logger)) {
+		pdbg(c->logger, "pending ddns: connection was updated, but did not orient");
 		return;
 	}
 

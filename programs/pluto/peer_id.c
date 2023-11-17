@@ -40,7 +40,6 @@
 #include "log.h"
 #include "secrets.h"
 #include "iface.h"
-#include "host_pair.h"
 #include "keys.h"
 #include "nss_cert_verify.h"
 #include "pluto_x509.h"

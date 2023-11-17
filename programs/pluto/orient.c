@@ -33,7 +33,6 @@
 #include "server.h"		/* for listening; */
 #include "orient.h"
 #include "terminate.h"
-#include "host_pair.h"
 
 bool oriented(const struct connection *c)
 {
@@ -47,21 +46,12 @@ bool oriented(const struct connection *c)
 void disorient(struct connection *c)
 {
 	if (oriented(c)) {
-		PEXPECT(c->logger, c->host_pair != NULL);
-		delete_oriented_hp(c);
-		PEXPECT(c->logger, c->host_pair == NULL);
 		iface_delref(&c->iface);
+		PASSERT(c->logger, !oriented(c));
 		/*
 		 * Move to a special disoriented hash.
 		 */
 		connection_db_rehash_host_pair(c);
-		/*
-		 * Since it the connection is unoriented,
-		 * connect_to_host_pair() will connect it to the
-		 * unoriented_connections list.
-		 */
-		PASSERT(c->logger, !oriented(c));
-		connect_to_unoriented(c);
 	}
 }
 
@@ -377,9 +367,7 @@ void check_orientations(struct logger *logger)
 		if (oriented(c)) {
 			disorient(c);
 		}
-		if (orient(&c, logger)) {
-			delete_unoriented_hp(c, true);
-			connect_to_oriented(c);
-		}
+		/* just try */
+		orient(&c, logger);
 	}
 }
