@@ -456,6 +456,8 @@ struct child_sa *pexpect_child_sa_where(struct state *st, where_t where)
 
 static struct state *new_state(struct connection *c,
 			       so_serial_t clonedfrom,
+			       struct iface_endpoint *local_iface_endpoint,
+			       ip_endpoint remote_endpoint,
 			       const ike_spi_t ike_initiator_spi,
 			       const ike_spi_t ike_responder_spi,
 			       enum sa_type sa_type,
@@ -500,6 +502,8 @@ static struct state *new_state(struct connection *c,
 	st->st_ipcomp.protocol = &ip_protocol_ipcomp;
 	st->hidden_variables.st_nat_oa = ipv4_info.address.unspec;
 	st->hidden_variables.st_natd = ipv4_info.address.unspec;
+	st->st_remote_endpoint = remote_endpoint;
+	st->st_iface_endpoint = local_iface_endpoint;
 
 	ldbg(st->st_logger,
 	     "creating state object "PRI_SO" at %p",
@@ -557,6 +561,12 @@ static bool get_initiator_endpoints(struct connection *c,
 		   (c->local->config->host.iketcp == IKE_TCP_FALLBACK && mod_revival == 0)) {
 
 		ldbg(c->logger, "TCP: using UDP endpoints");
+		if (!pluto_listen_udp) {
+			llog(RC_LOG_SERIOUS, c->logger,
+			     "initiating UDP requires listen-udp=yes");
+			return false;
+		}
+
 		(*remote_endpoint) =
 			endpoint_from_address_protocol_port(remote_addr, &ip_protocol_udp,
 							    ip_hport(c->remote->host.port));
@@ -605,8 +615,15 @@ static void get_responder_endpoints(const struct msg_digest *md,
 struct ike_sa *new_v1_istate(struct connection *c,
 			     enum state_kind new_state_kind)
 {
+	ip_endpoint remote_endpoint;
+	struct iface_endpoint *local_iface_endpoint;
+	if (!get_initiator_endpoints(c, &remote_endpoint, &local_iface_endpoint)) {
+		return NULL;
+	}
+
 	struct ike_sa *parent =
 		pexpect_parent_sa(new_state(c, SOS_NOBODY,
+					    local_iface_endpoint, remote_endpoint,
 					    ike_initiator_spi(), zero_ike_spi,
 					    IKE_SA, SA_INITIATOR, HERE));
 	change_v1_state(&parent->sa, new_state_kind);
@@ -619,25 +636,21 @@ struct ike_sa *new_v1_istate(struct connection *c,
 		}
 	}
 
-	if (!get_initiator_endpoints(c, &parent->sa.st_remote_endpoint, &parent->sa.st_iface_endpoint)) {
-		llog_pexpect(parent->sa.logger, HERE, "can't get endpoints");
-		delete_ike_sa(&parent);
-		return NULL;
-	}
-
 	return parent;
 }
 
 struct ike_sa *new_v1_rstate(struct connection *c, struct msg_digest *md)
 {
+	ip_endpoint remote_endpoint;
+	struct iface_endpoint *local_iface_endpoint;
+	get_responder_endpoints(md, &remote_endpoint, &local_iface_endpoint);
 	struct ike_sa *parent =
 		pexpect_parent_sa(new_state(c, SOS_NOBODY,
+					    local_iface_endpoint, remote_endpoint,
 					    md->hdr.isa_ike_spis.initiator,
 					    ike_responder_spi(&md->sender, md->md_logger),
 					    IKE_SA, SA_RESPONDER, HERE));
 
-	get_responder_endpoints(md, &parent->sa.st_remote_endpoint,
-				&parent->sa.st_iface_endpoint);
 	return parent;
 }
 
@@ -650,14 +663,13 @@ static struct ike_sa *new_v2_ike_sa(struct connection *c,
 				    const ike_spi_t ike_responder_spi)
 {
 	struct state *st = new_state(c, SOS_NOBODY,
+				     local_iface_endpoint, remote_endpoint,
 				     ike_initiator_spi, ike_responder_spi,
 				     IKE_SA, sa_role, HERE);
 	struct ike_sa *ike = pexpect_ike_sa(st);
 	change_state(&ike->sa, transition->state);
 	set_v2_transition(&ike->sa, transition, HERE);
 	v2_msgid_init_ike(ike);
-	ike->sa.st_remote_endpoint = remote_endpoint;
-	ike->sa.st_iface_endpoint = local_iface_endpoint; /* already reffed */
 	event_schedule(EVENT_v2_DISCARD, EXCHANGE_TIMEOUT_DELAY, &ike->sa);
 	return ike;
 }
@@ -1187,8 +1199,13 @@ static struct child_sa *duplicate_state(struct connection *c,
 		ike->sa.st_outbound_time = mononow();
 	}
 
+	struct iface_endpoint *local_iface_endpoint =
+		iface_endpoint_addref(ike->sa.st_iface_endpoint);
+	ip_endpoint remote_endpoint = ike->sa.st_remote_endpoint;
+
 	struct child_sa *child =
 		pexpect_child_sa(new_state(c, ike->sa.st_serialno,
+					   local_iface_endpoint, remote_endpoint,
 					   ike->sa.st_ike_spis.initiator,
 					   ike->sa.st_ike_spis.responder,
 					   sa_type, sa_role, HERE));
@@ -1204,14 +1221,11 @@ static struct child_sa *duplicate_state(struct connection *c,
 
 	child->sa.quirks = ike->sa.quirks;
 	child->sa.hidden_variables = ike->sa.hidden_variables;
-	child->sa.st_remote_endpoint = ike->sa.st_remote_endpoint;
 	endpoint_buf eb;
 	dbg("#%lu setting local endpoint to %s from #%ld.st_localport "PRI_WHERE,
 	    child->sa.st_serialno,
 	    str_endpoint(&ike->sa.st_iface_endpoint->local_endpoint, &eb),
 	    ike->sa.st_serialno,pri_where(HERE));
-	pexpect(child->sa.st_iface_endpoint == NULL);
-	child->sa.st_iface_endpoint = iface_endpoint_addref(ike->sa.st_iface_endpoint);
 	passert(child->sa.st_ike_version == ike->sa.st_ike_version);
 	child->sa.st_ikev2_anon = ike->sa.st_ikev2_anon;
 	child->sa.st_seen_fragmentation_supported = ike->sa.st_seen_fragmentation_supported;

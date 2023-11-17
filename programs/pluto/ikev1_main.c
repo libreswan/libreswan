@@ -115,6 +115,10 @@ struct ike_sa *main_outI1(struct connection *c,
 			  bool background)
 {
 	struct ike_sa *ike = new_v1_istate(c, STATE_MAIN_I1);
+	if (ike == NULL) {
+		return NULL;
+	}
+
 	struct state *st = &ike->sa;
 	statetime_t start = statetime_backdate(st, inception);
 

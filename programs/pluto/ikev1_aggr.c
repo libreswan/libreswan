@@ -988,6 +988,10 @@ struct ike_sa *aggr_outI1(struct connection *c,
 {
 	/* set up new state */
 	struct ike_sa *ike = new_v1_istate(c, STATE_AGGR_I1);
+	if (ike == NULL) {
+		return NULL;
+	}
+
 	statetime_t start = statetime_backdate(&ike->sa, inception);
 
 	if (c->local->host.config->auth == AUTH_PSK &&
