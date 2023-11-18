@@ -13,7 +13,7 @@ east #
 002 "east-west": added IKEv2 connection
 east #
  ipsec up --asynchronous east-west
-1v2 "east-west" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+1v2 "east-west" #1: initiating IKEv2 connection to 192.1.2.45 using UDP
 east #
  ipsec showstates
 000 #1: "east-west":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
