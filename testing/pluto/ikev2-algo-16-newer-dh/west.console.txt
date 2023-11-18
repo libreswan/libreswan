@@ -48,7 +48,7 @@ west #
 002 "westnet-eastnet-ikev2-dh20-fallback": added IKEv2 connection
 west #
  ipsec auto --up westnet-eastnet-ikev2-modp2048
-1v2 "westnet-eastnet-ikev2-modp2048" #1: initiating IKEv2 connection
+1v2 "westnet-eastnet-ikev2-modp2048" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 1v2 "westnet-eastnet-ikev2-modp2048" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "westnet-eastnet-ikev2-modp2048" #1: sent IKE_AUTH request {cipher=AES_CBC_256 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=MODP2048}
 003 "westnet-eastnet-ikev2-modp2048" #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
@@ -60,7 +60,7 @@ west #
 005 "westnet-eastnet-ikev2-modp2048" #2: ESP traffic information: in=0B out=0B
 west #
  ipsec auto --up westnet-eastnet-ikev2-modp3072
-1v2 "westnet-eastnet-ikev2-modp3072" #3: initiating IKEv2 connection
+1v2 "westnet-eastnet-ikev2-modp3072" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
 1v2 "westnet-eastnet-ikev2-modp3072" #3: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "westnet-eastnet-ikev2-modp3072" #3: sent IKE_AUTH request {cipher=AES_CBC_256 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=MODP3072}
 003 "westnet-eastnet-ikev2-modp3072" #3: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
@@ -72,7 +72,7 @@ west #
 005 "westnet-eastnet-ikev2-modp3072" #4: ESP traffic information: in=0B out=0B
 west #
  ipsec auto --up westnet-eastnet-ikev2-modp4096
-1v2 "westnet-eastnet-ikev2-modp4096" #5: initiating IKEv2 connection
+1v2 "westnet-eastnet-ikev2-modp4096" #5: initiating IKEv2 connection to 192.1.2.23 using UDP
 1v2 "westnet-eastnet-ikev2-modp4096" #5: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "westnet-eastnet-ikev2-modp4096" #5: sent IKE_AUTH request {cipher=AES_CBC_256 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=MODP4096}
 003 "westnet-eastnet-ikev2-modp4096" #5: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
@@ -84,7 +84,7 @@ west #
 005 "westnet-eastnet-ikev2-modp4096" #6: ESP traffic information: in=0B out=0B
 west #
  ipsec auto --up westnet-eastnet-ikev2-modp8192
-1v2 "westnet-eastnet-ikev2-modp8192" #7: initiating IKEv2 connection
+1v2 "westnet-eastnet-ikev2-modp8192" #7: initiating IKEv2 connection to 192.1.2.23 using UDP
 1v2 "westnet-eastnet-ikev2-modp8192" #7: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "westnet-eastnet-ikev2-modp8192" #7: sent IKE_AUTH request {cipher=AES_CBC_256 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=MODP8192}
 003 "westnet-eastnet-ikev2-modp8192" #7: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
@@ -96,7 +96,7 @@ west #
 005 "westnet-eastnet-ikev2-modp8192" #8: ESP traffic information: in=0B out=0B
 west #
  ipsec auto --up westnet-eastnet-ikev2-dh19
-1v2 "westnet-eastnet-ikev2-dh19" #9: initiating IKEv2 connection
+1v2 "westnet-eastnet-ikev2-dh19" #9: initiating IKEv2 connection to 192.1.2.23 using UDP
 1v2 "westnet-eastnet-ikev2-dh19" #9: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "westnet-eastnet-ikev2-dh19" #9: sent IKE_AUTH request {cipher=AES_CBC_256 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=DH19}
 003 "westnet-eastnet-ikev2-dh19" #9: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
@@ -108,7 +108,7 @@ west #
 005 "westnet-eastnet-ikev2-dh19" #10: ESP traffic information: in=0B out=0B
 west #
  ipsec auto --up westnet-eastnet-ikev2-dh20
-1v2 "westnet-eastnet-ikev2-dh20" #11: initiating IKEv2 connection
+1v2 "westnet-eastnet-ikev2-dh20" #11: initiating IKEv2 connection to 192.1.2.23 using UDP
 1v2 "westnet-eastnet-ikev2-dh20" #11: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "westnet-eastnet-ikev2-dh20" #11: sent IKE_AUTH request {cipher=AES_CBC_256 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=DH20}
 003 "westnet-eastnet-ikev2-dh20" #11: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
@@ -120,7 +120,7 @@ west #
 005 "westnet-eastnet-ikev2-dh20" #12: ESP traffic information: in=0B out=0B
 west #
  ipsec auto --up westnet-eastnet-ikev2-dh21
-1v2 "westnet-eastnet-ikev2-dh21" #13: initiating IKEv2 connection
+1v2 "westnet-eastnet-ikev2-dh21" #13: initiating IKEv2 connection to 192.1.2.23 using UDP
 1v2 "westnet-eastnet-ikev2-dh21" #13: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "westnet-eastnet-ikev2-dh21" #13: sent IKE_AUTH request {cipher=AES_CBC_256 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=DH21}
 003 "westnet-eastnet-ikev2-dh21" #13: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
@@ -132,7 +132,7 @@ west #
 005 "westnet-eastnet-ikev2-dh21" #14: ESP traffic information: in=0B out=0B
 west #
  ipsec auto --up westnet-eastnet-ikev2-dh31
-1v2 "westnet-eastnet-ikev2-dh31" #15: initiating IKEv2 connection
+1v2 "westnet-eastnet-ikev2-dh31" #15: initiating IKEv2 connection to 192.1.2.23 using UDP
 1v2 "westnet-eastnet-ikev2-dh31" #15: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "westnet-eastnet-ikev2-dh31" #15: sent IKE_AUTH request {cipher=AES_CBC_256 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=DH31}
 003 "westnet-eastnet-ikev2-dh31" #15: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
@@ -158,7 +158,7 @@ west #
  ipsec whack --impair timeout-on-retransmit
 west #
  ipsec auto --up westnet-eastnet-ikev2-modp1536
-1v2 "westnet-eastnet-ikev2-modp1536" #17: initiating IKEv2 connection
+1v2 "westnet-eastnet-ikev2-modp1536" #17: initiating IKEv2 connection to 192.1.2.23 using UDP
 1v2 "westnet-eastnet-ikev2-modp1536" #17: sent IKE_SA_INIT request to 192.1.2.23:500
 003 "westnet-eastnet-ikev2-modp1536" #17: dropping unexpected IKE_SA_INIT message containing NO_PROPOSAL_CHOSEN notification; message payloads: N; missing payloads: SA,KE,Ni
 002 "westnet-eastnet-ikev2-modp1536" #17: IMPAIR: retransmit so timing out SA (may retry)

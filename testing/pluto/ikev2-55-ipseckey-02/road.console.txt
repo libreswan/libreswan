@@ -25,7 +25,7 @@ road #
 000        ID_FQDN '@road.testing.libreswan.org'
 road #
  ipsec auto --up road-east-1
-1v2 "road-east-1" #1: initiating IKEv2 connection
+1v2 "road-east-1" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 1v2 "road-east-1" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "road-east-1" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "road-east-1" #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
@@ -70,7 +70,7 @@ road #
 002 "road-east-2": added IKEv2 connection
 road #
  ipsec auto --up road-east-2
-1v2 "road-east-2" #1: initiating IKEv2 connection
+1v2 "road-east-2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 1v2 "road-east-2" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "road-east-2" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "road-east-2" #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'

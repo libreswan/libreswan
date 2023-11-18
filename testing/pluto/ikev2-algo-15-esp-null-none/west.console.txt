@@ -41,7 +41,7 @@ west #
 west #
  ../../guestbin/libreswan-up-down.sh esp=null-none -I 192.0.1.254 192.0.2.254
 002 "esp=null-none": added IKEv2 connection
-1v2 "esp=null-none" #1: initiating IKEv2 connection
+1v2 "esp=null-none" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 1v2 "esp=null-none" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 002 "esp=null-none" #1: IMPAIR: proposal 1 transform INTEG=NONE included when counting transforms
 002 "esp=null-none" #1: IMPAIR: proposal 1 transform INTEG=NONE included when emitting proposal
@@ -61,7 +61,7 @@ west #
 west #
  ../../guestbin/libreswan-up-down.sh esp=null-none -I 192.0.1.254 192.0.2.254
 002 "esp=null-none": added IKEv2 connection
-1v2 "esp=null-none" #3: initiating IKEv2 connection
+1v2 "esp=null-none" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
 1v2 "esp=null-none" #3: sent IKE_SA_INIT request to 192.1.2.23:500
 002 "esp=null-none" #3: IMPAIR: proposal 1 transform INTEG=NONE excluded when counting transforms
 002 "esp=null-none" #3: IMPAIR: proposal 1 transform INTEG=NONE excluded when emitting proposal

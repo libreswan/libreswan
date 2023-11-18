@@ -33,7 +33,7 @@ west #
  # Should not re-use the existing ikev1 IKE SA, but a start a new ikev2 IKE SA
 west #
  ipsec auto --up westnet-eastnet2
-1v2 "westnet-eastnet2" #3: initiating IKEv2 connection
+1v2 "westnet-eastnet2" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
 1v2 "westnet-eastnet2" #3: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "westnet-eastnet2" #3: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "westnet-eastnet2" #3: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'

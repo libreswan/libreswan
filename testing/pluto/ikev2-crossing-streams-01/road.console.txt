@@ -9,7 +9,7 @@ road #
 002 "static": added IKEv2 connection
 road #
  ipsec auto --asynchronous --up static
-1v2 "static" #1: initiating IKEv2 connection
+1v2 "static" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 road #
  # there should be one tunnel, but there can be two. If two,
 road #

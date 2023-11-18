@@ -30,7 +30,7 @@ west #
 initdone
 west #
  ipsec up tcp && ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254 && ipsec down tcp || true
-1v2 "tcp" #1: initiating IKEv2 connection
+1v2 "tcp" #1: initiating IKEv2 connection to 192.1.2.23 using TCP
 1v2 "tcp" #1: sent IKE_SA_INIT request to 192.1.2.23:4500
 1v2 "tcp" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "tcp" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
@@ -42,7 +42,7 @@ up
 002 "tcp" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #
  ipsec up udp && ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254 && ipsec down udp || true
-1v2 "udp" #3: initiating IKEv2 connection
+1v2 "udp" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
 1v2 "udp" #3: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "udp" #3: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "udp" #3: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'

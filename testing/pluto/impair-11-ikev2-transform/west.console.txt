@@ -14,7 +14,7 @@ west #
 west #
  ../../guestbin/libreswan-up-down.sh conf --up -I 192.0.1.254 192.0.2.254
 002 "conf": added IKEv2 connection
-1v2 "conf" #1: initiating IKEv2 connection
+1v2 "conf" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 1v2 "conf" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "conf" #1: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 003 "conf" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
@@ -36,7 +36,7 @@ west #
 west #
  ../../guestbin/libreswan-up-down.sh conf --up -I 192.0.1.254 192.0.2.254
 002 "conf": added IKEv2 connection
-1v2 "conf" #3: initiating IKEv2 connection
+1v2 "conf" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
 002 "conf" #3: IMPAIR: adding transform type 6?? (0x6) id 0?? (0x0)
 1v2 "conf" #3: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "conf" #3: sent IKE_AUTH request {cipher=3DES_CBC_192 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
@@ -59,7 +59,7 @@ west #
 west #
  ../../guestbin/libreswan-up-down.sh conf --up -I 192.0.1.254 192.0.2.254
 002 "conf": added IKEv2 connection
-1v2 "conf" #5: initiating IKEv2 connection
+1v2 "conf" #5: initiating IKEv2 connection to 192.1.2.23 using UDP
 002 "conf" #5: IMPAIR: adding transform type INTEG (0x3) id 65535?? (0xffff)
 1v2 "conf" #5: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "conf" #5: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
@@ -82,7 +82,7 @@ west #
 west #
  ../../guestbin/libreswan-up-down.sh conf --up -I 192.0.1.254 192.0.2.254
 002 "conf": added IKEv2 connection
-1v2 "conf" #7: initiating IKEv2 connection
+1v2 "conf" #7: initiating IKEv2 connection to 192.1.2.23 using UDP
 1v2 "conf" #7: sent IKE_SA_INIT request to 192.1.2.23:500
 002 "conf" #7: IMPAIR: adding transform type 6?? (0x6) id 0?? (0x0)
 1v2 "conf" #7: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
@@ -105,7 +105,7 @@ west #
 west #
  ../../guestbin/libreswan-up-down.sh conf --up -I 192.0.1.254 192.0.2.254
 002 "conf": added IKEv2 connection
-1v2 "conf" #9: initiating IKEv2 connection
+1v2 "conf" #9: initiating IKEv2 connection to 192.1.2.23 using UDP
 1v2 "conf" #9: sent IKE_SA_INIT request to 192.1.2.23:500
 002 "conf" #9: IMPAIR: adding transform type INTEG (0x3) id 65535?? (0xffff)
 1v2 "conf" #9: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}

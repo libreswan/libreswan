@@ -23,7 +23,7 @@ west #
 initdone
 west #
  ipsec auto --up westnet-eastnet-ikev2-major
-1v2 "westnet-eastnet-ikev2-major" #1: initiating IKEv2 connection
+1v2 "westnet-eastnet-ikev2-major" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 1v2 "westnet-eastnet-ikev2-major" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 003 "westnet-eastnet-ikev2-major" #1: dropping unexpected IKE_SA_INIT message containing INVALID_MAJOR_VERSION notification; message payloads: N; missing payloads: SA,KE,Ni
 002 "westnet-eastnet-ikev2-major" #1: IMPAIR: retransmit so timing out SA (may retry)

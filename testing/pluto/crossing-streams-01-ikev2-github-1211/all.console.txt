@@ -41,7 +41,7 @@ west# ipsec auto --add east-west
 
 east# ipsec up --asynchronous east-west
 
-1v2 "east-west" #1: initiating IKEv2 connection
+1v2 "east-west" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 
 west# ../../guestbin/wait-for.sh --match 'IMPAIR: blocking inbound message 1' -- cat /tmp/pluto.log
 
@@ -54,7 +54,7 @@ packet from 192.1.2.23:500: IMPAIR: blocking inbound message 1
 
 west# ipsec up --asynchronous east-west
 
-1v2 "east-west" #1: initiating IKEv2 connection
+1v2 "east-west" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 
 west# ../../guestbin/wait-for.sh --match '^".*#1: sent IKE_SA_INIT request' -- cat /tmp/pluto.log
 

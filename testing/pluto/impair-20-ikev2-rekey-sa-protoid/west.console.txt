@@ -22,7 +22,7 @@ west #
  # bring up west and then immediately re-key
 west #
  ipsec auto --up west
-1v2 "west" #1: initiating IKEv2 connection
+1v2 "west" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 1v2 "west" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "west" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "west" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
@@ -51,7 +51,7 @@ west #
  # protoid=none
 west #
  ipsec auto --up west
-1v2 "west" #4: initiating IKEv2 connection
+1v2 "west" #4: initiating IKEv2 connection to 192.1.2.23 using UDP
 1v2 "west" #4: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "west" #4: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "west" #4: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
@@ -76,7 +76,7 @@ west #
  # protoid=IKE
 west #
  ipsec auto --up west
-1v2 "west" #7: initiating IKEv2 connection
+1v2 "west" #7: initiating IKEv2 connection to 192.1.2.23 using UDP
 1v2 "west" #7: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "west" #7: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "west" #7: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
@@ -101,7 +101,7 @@ west #
  # protoid=unknown
 west #
  ipsec auto --up west
-1v2 "west" #10: initiating IKEv2 connection
+1v2 "west" #10: initiating IKEv2 connection to 192.1.2.23 using UDP
 1v2 "west" #10: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "west" #10: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "west" #10: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'

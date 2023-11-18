@@ -22,7 +22,7 @@ west #
 initdone
 west #
  ipsec up --asynchronous west-cuckold
-1v2 "west-cuckold" #1: initiating IKEv2 connection
+1v2 "west-cuckold" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 west #
  ../../guestbin/wait-for.sh --match '#2:' -- ipsec trafficstatus
 006 #2: "west-cuckold", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'

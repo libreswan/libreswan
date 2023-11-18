@@ -20,7 +20,7 @@ west #
  ipsec whack --impair timeout-on-retransmit
 west #
  ipsec auto --up westnet-eastnet-ipv4-psk-ikev2
-1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 connection
+1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: sending an empty KE value
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 003 "westnet-eastnet-ipv4-psk-ikev2" #1: dropping unexpected IKE_SA_INIT message containing INVALID_SYNTAX notification; message payloads: N; missing payloads: SA,KE,Ni
@@ -38,7 +38,7 @@ west #
  ipsec whack --impair suppress-retransmits
 west #
  ipsec auto --up westnet-eastnet-ipv4-psk-ikev2
-1v2 "westnet-eastnet-ipv4-psk-ikev2" #2: initiating IKEv2 connection
+1v2 "westnet-eastnet-ipv4-psk-ikev2" #2: initiating IKEv2 connection to 192.1.2.23 using UDP
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #2: sent IKE_SA_INIT request to 192.1.2.23:500
 003 "westnet-eastnet-ipv4-psk-ikev2" #2: KE has 0 byte DH public value; 256 required
 036 "westnet-eastnet-ipv4-psk-ikev2" #2: encountered fatal error in state STATE_V2_PARENT_I1

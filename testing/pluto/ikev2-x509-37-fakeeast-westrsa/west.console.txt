@@ -37,7 +37,7 @@ west #
  ipsec whack --impair revival
 west #
  ipsec auto --up ikev2-westnet-eastnet-x509-cr
-1v2 "ikev2-westnet-eastnet-x509-cr" #1: initiating IKEv2 connection
+1v2 "ikev2-westnet-eastnet-x509-cr" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 1v2 "ikev2-westnet-eastnet-x509-cr" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "ikev2-westnet-eastnet-x509-cr" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "ikev2-westnet-eastnet-x509-cr" #1: NSS: ERROR: IPsec certificate E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA invalid: SEC_ERROR_BAD_SIGNATURE: Peer's certificate has an invalid signature.

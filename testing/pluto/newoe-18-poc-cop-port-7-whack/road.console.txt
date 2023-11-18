@@ -25,7 +25,7 @@ initdone
 road #
  ipsec whack --oppohere 192.1.3.209 --oppothere 192.1.2.23 --oppoproto 6 --oppodport 7
 002 "private-or-clear#192.1.2.0/24-(0--6--7)"[1] ...192.1.2.23: initiate on-demand for packet 192.1.3.209:8-TCP->192.1.2.23:7 by whack
-1v2 "private-or-clear#192.1.2.0/24-(0--6--7)"[1] ...192.1.2.23 #1: initiating IKEv2 connection
+1v2 "private-or-clear#192.1.2.0/24-(0--6--7)"[1] ...192.1.2.23 #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 003 "private-or-clear#192.1.2.0/24-(0--6--7)"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and ID_NULL 'ID_NULL'
 004 "private-or-clear#192.1.2.0/24-(0--6--7)"[1] ...192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.209-192.1.3.209:0-65535 6] -> [192.1.2.23-192.1.2.23:7-7 6] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 road #

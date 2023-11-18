@@ -30,7 +30,7 @@ west #
  # unfortunately does not yet indicate it is using TCP
 west #
  ipsec up west
-1v2 "west" #1: initiating IKEv2 connection
+1v2 "west" #1: initiating IKEv2 connection to 192.1.2.23 using TCP
 1v2 "west" #1: sent IKE_SA_INIT request to 192.1.2.23:4500
 002 "west" #1: received anti-DDOS COOKIE response, resending IKE_SA_INIT request with COOKIE payload
 1v2 "west" #1: sent IKE_SA_INIT request to 192.1.2.23:4500

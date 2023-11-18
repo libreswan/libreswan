@@ -18,7 +18,7 @@ north #
 north #
  ipsec auto --up northnet-eastnet
 000 initiating all connections with alias="northnet-eastnet"
-1v2 "northnet-eastnet/0x2" #1: initiating IKEv2 connection
+1v2 "northnet-eastnet/0x2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 000 "northnet-eastnet/0x1": queue Child SA; waiting on IKE SA "northnet-eastnet/0x2" #1 negotiating with 192.1.2.23
 1v2 "northnet-eastnet/0x2" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 002 "northnet-eastnet/0x1" #2: Child SA initiating pending connection using IKE SA #1's IKE_AUTH exchange

@@ -20,7 +20,7 @@ road #
 initdone
 road #
  ipsec auto --up rw-lte
-1v2 "rw-lte"[1] 192.1.2.23 #1: initiating IKEv2 connection
+1v2 "rw-lte"[1] 192.1.2.23 #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 1v2 "rw-lte"[1] 192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "rw-lte"[1] 192.1.2.23 #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "rw-lte"[1] 192.1.2.23 #1: initiator established IKE SA; authenticated peer '3nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate '@east.testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
@@ -37,7 +37,7 @@ road #
 006 #2: "rw-lte"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east.testing.libreswan.org', lease=100.64.0.1/32
 road #
  ipsec auto --up rw-wifi
-1v2 "rw-wifi"[1] 192.1.2.23 #3: initiating IKEv2 connection
+1v2 "rw-wifi"[1] 192.1.2.23 #3: initiating IKEv2 connection to 192.1.2.23 using UDP
 1v2 "rw-wifi"[1] 192.1.2.23 #3: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "rw-wifi"[1] 192.1.2.23 #3: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "rw-wifi"[1] 192.1.2.23 #3: initiator established IKE SA; authenticated peer '3nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate '@east.testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'

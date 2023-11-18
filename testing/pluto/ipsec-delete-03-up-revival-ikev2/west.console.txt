@@ -19,7 +19,7 @@ west #
  # should go into revival
 west #
  ipsec up west
-1v2 "west" #1: initiating IKEv2 connection
+1v2 "west" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 1v2 "west" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 002 "west" #1: IMPAIR: retransmit so timing out SA (may retry)
 002 "west" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds

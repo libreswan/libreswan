@@ -27,7 +27,7 @@ west #
  ipsec whack --impair suppress-retransmits
 west #
  ipsec up 6in6
-1v2 "6in6" #1: initiating IKEv2 connection
+1v2 "6in6" #1: initiating IKEv2 connection to 2001:db8:1:2::23 using TCP
 1v2 "6in6" #1: sent IKE_SA_INIT request to [2001:db8:1:2::23]:4500
 1v2 "6in6" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "6in6" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@west'

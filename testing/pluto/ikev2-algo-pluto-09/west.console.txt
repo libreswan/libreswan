@@ -53,7 +53,7 @@ west #
 initdone
 west #
  ipsec auto --up westnet-eastnet-dh19
-1v2 "westnet-eastnet-dh19" #1: initiating IKEv2 connection
+1v2 "westnet-eastnet-dh19" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 1v2 "westnet-eastnet-dh19" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "westnet-eastnet-dh19" #1: sent IKE_AUTH request {cipher=AES_CBC_256 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=DH19}
 003 "westnet-eastnet-dh19" #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'

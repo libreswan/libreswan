@@ -19,7 +19,7 @@ west #
 002 "westnet-eastnet-propnum": added IKEv2 connection
 west #
  ipsec auto --up westnet-eastnet-propnum
-1v2 "westnet-eastnet-propnum" #1: initiating IKEv2 connection
+1v2 "westnet-eastnet-propnum" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 1v2 "westnet-eastnet-propnum" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "westnet-eastnet-propnum" #1: sent IKE_AUTH request {cipher=3DES_CBC_192 integ=HMAC_MD5_96 prf=HMAC_MD5 group=MODP2048}
 003 "westnet-eastnet-propnum" #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'

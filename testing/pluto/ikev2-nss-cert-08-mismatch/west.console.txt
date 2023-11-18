@@ -28,7 +28,7 @@ west #
  # should succeed
 west #
  ipsec auto --up nss-cert-correct
-1v2 "nss-cert-correct" #1: initiating IKEv2 connection
+1v2 "nss-cert-correct" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 1v2 "nss-cert-correct" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "nss-cert-correct" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "nss-cert-correct" #1: initiator established IKE SA; authenticated peer '3nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
@@ -43,7 +43,7 @@ west #
  # should fail on mismatched ID
 west #
  ipsec auto --up nss-cert-incorrect
-1v2 "nss-cert-incorrect" #3: initiating IKEv2 connection
+1v2 "nss-cert-incorrect" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
 1v2 "nss-cert-incorrect" #3: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "nss-cert-incorrect" #3: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "nss-cert-incorrect" #3: X509: authentication failed; peer ID_DER_ASN1_DN 'E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA' does not match expected 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org'

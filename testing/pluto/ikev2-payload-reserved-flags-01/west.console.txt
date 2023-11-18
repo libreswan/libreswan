@@ -32,7 +32,7 @@ west #
 initdone
 west #
  ipsec auto --up westnet-eastnet-ikev2
-1v2 "westnet-eastnet-ikev2" #1: initiating IKEv2 connection
+1v2 "westnet-eastnet-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 002 "westnet-eastnet-ikev2" #1: IMPAIR: adding bogus bit to critical octet
 002 "westnet-eastnet-ikev2" #1: IMPAIR: adding bogus bit to critical octet
 002 "westnet-eastnet-ikev2" #1: IMPAIR: adding bogus bit to critical octet

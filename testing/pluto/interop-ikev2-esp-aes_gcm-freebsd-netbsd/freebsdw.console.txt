@@ -13,7 +13,7 @@ west #
 002 "interop": added IKEv2 connection
 west #
  ipsec up interop
-1v2 "interop" #1: initiating IKEv2 connection
+1v2 "interop" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 1v2 "interop" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "interop" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "interop" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'

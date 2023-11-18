@@ -30,7 +30,7 @@ default via 192.1.3.254 dev eth0
 192.1.3.0/24 dev eth0 proto kernel scope link src 192.1.3.209
 road #
  ipsec auto --up road-east-x509-ipv4
-1v2 "road-east-x509-ipv4"[1] 192.1.2.23 #1: initiating IKEv2 connection
+1v2 "road-east-x509-ipv4"[1] 192.1.2.23 #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 1v2 "road-east-x509-ipv4"[1] 192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "road-east-x509-ipv4"[1] 192.1.2.23 #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "road-east-x509-ipv4"[1] 192.1.2.23 #1: initiator established IKE SA; authenticated peer '3nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
@@ -51,7 +51,7 @@ road #
  # now bring up second connection to west with CP request as well
 road #
  ipsec auto --up road-west-x509-ipv4
-1v2 "road-west-x509-ipv4"[1] 192.1.2.45 #3: initiating IKEv2 connection
+1v2 "road-west-x509-ipv4"[1] 192.1.2.45 #3: initiating IKEv2 connection to 192.1.2.45 using UDP
 1v2 "road-west-x509-ipv4"[1] 192.1.2.45 #3: sent IKE_SA_INIT request to 192.1.2.45:500
 1v2 "road-west-x509-ipv4"[1] 192.1.2.45 #3: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "road-west-x509-ipv4"[1] 192.1.2.45 #3: initiator established IKE SA; authenticated peer '3nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'

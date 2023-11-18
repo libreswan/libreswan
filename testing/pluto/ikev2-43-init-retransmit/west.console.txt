@@ -34,7 +34,7 @@ west #
  ipsec whack --impair jacob-two-two
 west #
  ipsec auto --up westnet-eastnet-ipv4-psk-ikev2
-1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 connection
+1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: JACOB 2-2: resending 828 bytes for STATE_V2_PARENT_I0 through eth1 from 192.1.2.45:500 to 192.1.2.23:500:
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: JACOB 2-2: resending 397 bytes for STATE_V2_PARENT_I1 through eth1 from 192.1.2.45:500 to 192.1.2.23:500:

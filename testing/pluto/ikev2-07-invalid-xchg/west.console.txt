@@ -16,7 +16,7 @@ west #
  #expected to fail, since west is sending a impaired bad IKE_AUTH
 west #
  ipsec auto --up westnet-eastnet-ipv4-psk-ikev2
-1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 connection
+1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "westnet-eastnet-ipv4-psk-ikev2" #1: no useful state microcode entry found for incoming packet

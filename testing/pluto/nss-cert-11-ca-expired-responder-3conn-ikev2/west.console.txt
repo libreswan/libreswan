@@ -51,7 +51,7 @@ west #
 002 "hog-west": added IKEv2 connection
 west #
  ipsec auto --up old-west
-1v2 "old-west" #1: initiating IKEv2 connection
+1v2 "old-west" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 1v2 "old-west" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "old-west" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "old-west" #1: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
@@ -64,7 +64,7 @@ west #
 002 "old-west" #3: deleting IKE SA (PARENT_I1) and NOT sending notification
 west #
  ipsec auto --up new-west
-1v2 "new-west" #4: initiating IKEv2 connection
+1v2 "new-west" #4: initiating IKEv2 connection to 192.1.2.23 using UDP
 1v2 "new-west" #4: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "new-west" #4: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "new-west" #4: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate 'CN=east' issued by CA 'CN=west-ca'
@@ -77,7 +77,7 @@ west #
 002 "new-west" #4: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #
  ipsec auto --up hog-west
-1v2 "hog-west" #6: initiating IKEv2 connection
+1v2 "hog-west" #6: initiating IKEv2 connection to 192.1.2.23 using UDP
 1v2 "hog-west" #6: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "hog-west" #6: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "hog-west" #6: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate 'CN=east' issued by CA 'CN=west-ca'

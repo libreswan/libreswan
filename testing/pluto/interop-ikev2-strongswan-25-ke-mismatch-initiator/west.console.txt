@@ -28,7 +28,7 @@ west #
 initdone
 west #
  ipsec auto --up westnet-eastnet-ikev2 | grep -v libcurl
-1v2 "westnet-eastnet-ikev2" #1: initiating IKEv2 connection
+1v2 "westnet-eastnet-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 1v2 "westnet-eastnet-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 002 "westnet-eastnet-ikev2" #1: Received unauthenticated INVALID_KE_PAYLOAD response to DH MODP1536; resending with suggested DH MODP2048
 1v2 "westnet-eastnet-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:500

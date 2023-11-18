@@ -42,7 +42,7 @@ west #
 initdone
 west #
  ipsec auto --up westnet-eastnet-ikev2
-1v2 "westnet-eastnet-ikev2" #1: initiating IKEv2 connection
+1v2 "westnet-eastnet-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 002 "westnet-eastnet-ikev2" #1: IMPAIR: omitting the SIGNATURE_HASH_ALGORITHM notification in IKE_SA_INIT request
 1v2 "westnet-eastnet-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 002 "westnet-eastnet-ikev2" #1: IMPAIR: forcing auth method IKEv2_AUTH_ECDSA_SHA2_384_P384

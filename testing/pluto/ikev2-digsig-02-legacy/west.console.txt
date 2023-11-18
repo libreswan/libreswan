@@ -31,7 +31,7 @@ west #
 initdone
 west #
  ipsec auto --up westnet-eastnet-ikev2
-1v2 "westnet-eastnet-ikev2" #1: initiating IKEv2 connection
+1v2 "westnet-eastnet-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 1v2 "westnet-eastnet-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "westnet-eastnet-ikev2" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "westnet-eastnet-ikev2" #1: initiator established IKE SA; authenticated peer '3072-bit PKCS#1 1.5 RSA with SHA1' signature using peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'

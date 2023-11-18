@@ -30,7 +30,7 @@ west #
 initdone
 west #
  ipsec auto --up westnet-eastnet-ikev2
-1v2 "westnet-eastnet-ikev2" #1: initiating IKEv2 connection
+1v2 "westnet-eastnet-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 1v2 "westnet-eastnet-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 002 "westnet-eastnet-ikev2" #1: received anti-DDOS COOKIE response, resending IKE_SA_INIT request with COOKIE payload
 1v2 "westnet-eastnet-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:500

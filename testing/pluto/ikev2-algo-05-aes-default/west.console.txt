@@ -19,7 +19,7 @@ west #
 002 "westnet-eastnet-aes-default": added IKEv2 connection
 west #
  ipsec auto --up westnet-eastnet-aes-default
-1v2 "westnet-eastnet-aes-default" #1: initiating IKEv2 connection
+1v2 "westnet-eastnet-aes-default" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 1v2 "westnet-eastnet-aes-default" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "westnet-eastnet-aes-default" #1: sent IKE_AUTH request {cipher=AES_CBC_256 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 003 "westnet-eastnet-aes-default" #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
@@ -36,7 +36,7 @@ west #
 002 "westnet-eastnet-aes-128": added IKEv2 connection
 west #
  ipsec auto --up westnet-eastnet-aes-128
-1v2 "westnet-eastnet-aes-128" #3: initiating IKEv2 connection
+1v2 "westnet-eastnet-aes-128" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
 1v2 "westnet-eastnet-aes-128" #3: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "westnet-eastnet-aes-128" #3: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 003 "westnet-eastnet-aes-128" #3: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
@@ -53,7 +53,7 @@ west #
 002 "westnet-eastnet-aes-256": added IKEv2 connection
 west #
  ipsec auto --up westnet-eastnet-aes-256
-1v2 "westnet-eastnet-aes-256" #5: initiating IKEv2 connection
+1v2 "westnet-eastnet-aes-256" #5: initiating IKEv2 connection to 192.1.2.23 using UDP
 1v2 "westnet-eastnet-aes-256" #5: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "westnet-eastnet-aes-256" #5: sent IKE_AUTH request {cipher=AES_CBC_256 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 003 "westnet-eastnet-aes-256" #5: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
@@ -70,7 +70,7 @@ west #
 002 "westnet-eastnet-aes-mix-1": added IKEv2 connection
 west #
  ipsec auto --up westnet-eastnet-aes-mix-1
-1v2 "westnet-eastnet-aes-mix-1" #7: initiating IKEv2 connection
+1v2 "westnet-eastnet-aes-mix-1" #7: initiating IKEv2 connection to 192.1.2.23 using UDP
 1v2 "westnet-eastnet-aes-mix-1" #7: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "westnet-eastnet-aes-mix-1" #7: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 003 "westnet-eastnet-aes-mix-1" #7: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
@@ -87,7 +87,7 @@ west #
 002 "westnet-eastnet-aes-mix-2": added IKEv2 connection
 west #
  ipsec auto --up westnet-eastnet-aes-mix-2
-1v2 "westnet-eastnet-aes-mix-2" #9: initiating IKEv2 connection
+1v2 "westnet-eastnet-aes-mix-2" #9: initiating IKEv2 connection to 192.1.2.23 using UDP
 1v2 "westnet-eastnet-aes-mix-2" #9: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "westnet-eastnet-aes-mix-2" #9: sent IKE_AUTH request {cipher=AES_CBC_256 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 003 "westnet-eastnet-aes-mix-2" #9: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'

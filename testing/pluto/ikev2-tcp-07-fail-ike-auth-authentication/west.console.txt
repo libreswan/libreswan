@@ -33,7 +33,7 @@ west #
  # expected to fail
 west #
  ipsec up west
-1v2 "west" #1: initiating IKEv2 connection
+1v2 "west" #1: initiating IKEv2 connection to 192.1.2.23 using TCP
 1v2 "west" #1: sent IKE_SA_INIT request to 192.1.2.23:4500
 003 "west" #1: legacy RSA-SHA1 is not allowed but peer supports nothing else
 002 "west" #1: authentication method IKEv2_AUTH_RESERVED not supported
