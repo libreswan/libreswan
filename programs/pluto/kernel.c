@@ -947,10 +947,6 @@ bool unrouted_to_routed(struct connection *c, enum shunt_kind shunt_kind, where_
 	bool ok = true;
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 
-		if (!ok) {
-			break;
-		}
-
 		/*
 		 * When overlap isn't supported, the old clashing bare
 		 * shunt needs to be deleted before the new one can be
@@ -973,6 +969,9 @@ bool unrouted_to_routed(struct connection *c, enum shunt_kind shunt_kind, where_
 		ok &= spd->wip.installed.kernel_policy =
 			install_prospective_kernel_policies(spd, shunt_kind,
 							    c->logger, where);
+		if (!ok) {
+			break;
+		}
 
 		PEXPECT(c->logger, spd->wip.ok);
 		if (spd->wip.conflicting.shunt != NULL &&
@@ -982,34 +981,28 @@ bool unrouted_to_routed(struct connection *c, enum shunt_kind shunt_kind, where_
 							c->logger, where);
 			/* if everything succeeds, delete below */
 		}
-	}
 
-	/*
-	 * Pass +2: add the route.
-	 */
+		/*
+		 * Pass +2: add the route.
+		 */
 
-	ldbg(c->logger, "kernel: %s() running updown-prepare when needed", __func__);
-	FOR_EACH_ITEM(spd, &c->child.spds) {
-		if (!ok) {
-			break;
-		}
+		ldbg(c->logger, "kernel: %s() running updown-prepare when needed", __func__);
 		PEXPECT(c->logger, spd->wip.ok);
 		if (spd->wip.conflicting.owner.bare_route == NULL) {
 			/* a new route: no deletion required, but preparation is */
 			if (!do_updown(UPDOWN_PREPARE, c, spd, NULL/*state*/, c->logger))
 				ldbg(c->logger, "kernel: prepare command returned an error");
 		}
-	}
 
-	ldbg(c->logger, "kernel: %s() running updown-route when needed", __func__);
-	FOR_EACH_ITEM(spd, &c->child.spds) {
-		if (!ok) {
-			break;
-		}
+		ldbg(c->logger, "kernel: %s() running updown-route when needed", __func__);
 		if (spd->wip.conflicting.owner.bare_route == NULL) {
 			ok &= spd->wip.installed.route =
 				do_updown(UPDOWN_ROUTE, c, spd, NULL/*state*/, c->logger);
 		}
+		if (!ok) {
+			break;
+		}
+
 	}
 
 	/*
@@ -1968,10 +1961,6 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child, bool 
 
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 
-		if (!ok) {
-			break;
-		}
-
 		if (is_v1_cisco_split(spd, HERE)) {
 			/* XXX: why is CISCO skipped? */
 			continue;
@@ -1992,75 +1981,55 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child, bool 
 			ok = spd->wip.installed.kernel_policy =
 				install_outbound_ipsec_kernel_policy(child, spd, op, HERE);
 		}
-	}
-
-	/*
-	 * Do we have to make a mess of the routing?
-	 *
-	 * Probably.  This code path needs a re-think.
-	 */
-
-	ldbg(logger, "kernel: %s() running updown-prepare", __func__);
-	if (ok) {
-		FOR_EACH_ITEM(spd, &c->child.spds) {
-
-			if (is_v1_cisco_split(spd, HERE)) {
-				continue;
-			}
-
-			PEXPECT(logger, spd->wip.ok);
-			if (spd->wip.conflicting.owner.bare_route == NULL) {
-				/* a new route: no deletion required, but preparation is */
-				if (!do_updown(UPDOWN_PREPARE, c, spd, &child->sa, logger))
-					ldbg(logger, "kernel: prepare command returned an error");
-			}
-		}
-	}
-
-	ldbg(logger, "kernel: %s() running updown-route", __func__);
-	FOR_EACH_ITEM(spd, &c->child.spds) {
 		if (!ok) {
 			break;
 		}
 
-		if (is_v1_cisco_split(spd, HERE)) {
-			continue;
+		/*
+		 * Do we have to make a mess of the routing?
+		 *
+		 * Probably.  This code path needs a re-think.
+		 */
+
+		ldbg(logger, "kernel: %s() running updown-prepare", __func__);
+		PEXPECT(logger, spd->wip.ok);
+		if (spd->wip.conflicting.owner.bare_route == NULL) {
+			/* a new route: no deletion required, but preparation is */
+			if (!do_updown(UPDOWN_PREPARE, c, spd, &child->sa, logger))
+				ldbg(logger, "kernel: prepare command returned an error");
 		}
 
+		ldbg(logger, "kernel: %s() running updown-route", __func__);
 		PEXPECT(logger, spd->wip.ok);
 		if (spd->wip.conflicting.owner.bare_route == NULL) {
 			/* a new route: no deletion required, but preparation is */
 			ok = spd->wip.installed.route =
 				do_updown(UPDOWN_ROUTE, c, spd, &child->sa, logger);
 		}
-	}
+		if (!ok) {
+			break;
+		}
 
-	/*
-	 * Do we have to notify the firewall?
-	 *
-	 * Yes if this is the first time that the tunnel is
-	 * established (rekeys do not need to re-UP).
-	 *
-	 * Yes, if we are installing a tunnel eroute and the firewall
-	 * wasn't notified for a previous tunnel with the same
-	 * clients.  Any Previous tunnel would have to be for our
-	 * connection, so the actual test is simple.
-	 */
+		/*
+		 * Do we have to notify the firewall?
+		 *
+		 * Yes if this is the first time that the tunnel is
+		 * established (rekeys do not need to re-UP).
+		 *
+		 * Yes, if we are installing a tunnel eroute and the
+		 * firewall wasn't notified for a previous tunnel with
+		 * the same clients.  Any Previous tunnel would have
+		 * to be for our connection, so the actual test is
+		 * simple.
+		 */
 
-	if (up) {
-		FOR_EACH_ITEM(spd, &c->child.spds) {
-
-			if (!ok) {
-				break;
-			}
-
-			if (is_v1_cisco_split(spd, HERE)) {
-				continue;
-			}
-
+		if (up) {
 			PEXPECT(logger, spd->wip.ok);
 			ok = spd->wip.installed.up =
 				do_updown(UPDOWN_UP, c, spd, &child->sa, logger);
+		}
+		if (!ok) {
+			break;
 		}
 	}
 
