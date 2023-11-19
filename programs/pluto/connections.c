@@ -3084,12 +3084,13 @@ static diag_t extract_connection(const struct whack_message *wm,
 			    wm->ike_version != IKEv2 ? /*generated later*/0 :
 			    wm->sec_label != NULL ? gen_reqid() :
 			    /*generated later*/0);
-	dbg(PRI_CONNECTION" c->sa_reqid=%d because wm->sa_reqid=%d and sec-label=%s",
-	    pri_connection(c, &cb),
-	    config->sa_reqid, wm->sa_reqid,
-	    (wm->ike_version != IKEv2 ? "not-IKEv2" :
-	     wm->sec_label != NULL ? wm->sec_label :
-	     "n/a"));
+	ldbg(c->logger,
+	     "c->sa_reqid="PRI_REQID" because wm->sa_reqid="PRI_REQID" and sec-label=%s",
+	     pri_reqid(config->sa_reqid),
+	     pri_reqid(wm->sa_reqid),
+	     (wm->ike_version != IKEv2 ? "not-IKEv2" :
+	      wm->sec_label != NULL ? wm->sec_label :
+	      "n/a"));
 
 	/*
 	 * Set both end's sec_label to the same value.
@@ -3427,8 +3428,9 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 * CK_PERMANENT need one.  Does CK_TEMPLATE need one?
 	 */
 	c->child.reqid = (c->config->sa_reqid == 0 ? gen_reqid() : c->config->sa_reqid);
-	ldbg(c->logger, "child.reqid=%d because c->sa_reqid=%d (%s)",
-	     c->child.reqid, c->config->sa_reqid,
+	ldbg(c->logger, "child.reqid="PRI_REQID" because c->sa_reqid="PRI_REQID" (%s)",
+	     pri_reqid(c->child.reqid),
+	     pri_reqid(c->config->sa_reqid),
 	     (c->config->sa_reqid == 0 ? "generate" : "use"));
 
 	/*

@@ -117,7 +117,7 @@ bool kernel_ops_policy_add(enum kernel_policy_op op,
 			for (unsigned i = policy->nr_rules; i > 0; i--) {
 				const struct kernel_policy_rule *rule = &policy->rule[i-1];
 				const struct ip_protocol *rule_proto = protocol_from_ipproto(rule->proto);
-				jam(buf, "%s@%d(", rule_proto->name, rule->reqid);
+				jam(buf, "%s@"PRI_REQID"(", rule_proto->name, rule->reqid);
 			}
 			if (policy->nr_rules > 0) {
 				/* XXX: should use stuff from selector */

@@ -245,8 +245,10 @@ struct connection *group_instantiate(struct connection *group,
 	t->child.reqid = (t->config->sa_reqid == 0 ? gen_reqid() :
 			  t->config->sa_reqid);
 	ldbg(t->logger,
-	     "%s t.child.reqid=%d because group->sa_reqid=%d (%s)",
-	     t->name, t->child.reqid, t->config->sa_reqid,
+	     "%s t.child.reqid="PRI_REQID" because group->sa_reqid="PRI_REQID" (%s)",
+	     t->name,
+	     pri_reqid(t->child.reqid),
+	     pri_reqid(t->config->sa_reqid),
 	     (t->config->sa_reqid == 0 ? "generate" : "use"));
 
 	PEXPECT(t->logger, oriented(t));
@@ -320,9 +322,12 @@ static struct connection *instantiate(struct connection *t,
 	}
 
 	d->child.reqid = (t->config->sa_reqid == 0 ? gen_reqid() : t->config->sa_reqid);
-	dbg("%s .child.reqid=%d because t.config.sa_requid=%d (%s)",
-	    d->name, d->child.reqid, t->config->sa_reqid,
-	    (t->config->sa_reqid == 0 ? "generate" : "use"));
+	pdbg(d->logger,
+	     "%s .child.reqid="PRI_REQID" because t.config.sa_requid="PRI_REQID" (%s)",
+	     d->name,
+	     pri_reqid(d->child.reqid),
+	     pri_reqid(t->config->sa_reqid),
+	     (t->config->sa_reqid == 0 ? "generate" : "use"));
 
 	/*
 	 * assumption: orientation is the same as c's - while the

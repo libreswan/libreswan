@@ -39,6 +39,9 @@
 
 typedef uint32_t reqid_t;
 
+#define PRI_REQID "%"PRIu32
+#define pri_reqid(ID) ID
+
 #define IPSEC_MANUAL_REQID_MAX  0x3fff
 
 reqid_t gen_reqid(void);

@@ -109,7 +109,7 @@ static void show_one_spd_brief(struct show *s,
 		jam_humber_uintmax(buf, "/", get_child_bytes(c, DIRECTION_OUTBOUND), "B)\t");
 
 		jam_connection_short(buf, c);
-		jam(buf, ", reqid=%"PRIu32, c->child.reqid);
+		jam(buf, ", reqid="PRI_REQID, pri_reqid(c->child.reqid));
 	}
 }
 
