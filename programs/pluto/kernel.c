@@ -2161,10 +2161,6 @@ bool install_outbound_ipsec_sa(struct child_sa *child, bool up, where_t where)
 		ldbg(logger, "route-unnecessary: overlap and transport");
 	}
 
-	if (!get_connection_spd_conflicts(c, logger)) {
-		return false;
-	}
-
 	/* (attempt to) actually set up the SA group */
 
 	if (!setup_half_kernel_state(&child->sa, DIRECTION_OUTBOUND)) {
@@ -2172,9 +2168,15 @@ bool install_outbound_ipsec_sa(struct child_sa *child, bool up, where_t where)
 		return false;
 	}
 
+	if (!get_connection_spd_conflicts(c, logger)) {
+		return false;
+	}
+
 	if (!install_outbound_ipsec_kernel_policies(child, up)) {
 		return false;
 	}
+
+	clear_connection_spd_conflicts(c);
 
 	/*
 	 * Transfer ownership of the connection's IPsec SA (kernel
