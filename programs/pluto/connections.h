@@ -645,6 +645,7 @@ struct spd_route {
 	bool block;
 
 	struct spd_wip {
+		bool ok;
 		struct {
 			struct spd_owner owner;
 			struct bare_shunt **shunt;

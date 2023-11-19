@@ -774,11 +774,19 @@ struct spd_owner spd_owner(const struct spd_route *c_spd,
  * XXX: can this and/or route_owner() be merged?
  */
 
+static void clear_connection_spd_conflicts(struct connection *c)
+{
+	FOR_EACH_ITEM(spd, &c->child.spds) {
+		zero(&spd->wip);
+	}
+}
+
 static bool get_connection_spd_conflicts(struct connection *c, struct logger *logger)
 {
 	ldbg(logger, "checking %s for conflicts", c->name);
+	clear_connection_spd_conflicts(c);
 	FOR_EACH_ITEM(spd, &c->child.spds) {
-		zero(&spd->wip);
+		spd->wip.ok = true;
 		/* sec-labels ignore conflicts (but still zero) */
 		if (spd->connection->config->sec_label.len > 0) {
 			continue;
@@ -834,6 +842,8 @@ static void revert_kernel_policy(struct spd_route *spd,
 	/*
 	 * Kill the firewall if just installed.
 	 */
+
+	PEXPECT(logger, spd->wip.ok);
 	if (spd->wip.installed.up) {
 		PEXPECT(logger, st != NULL);
 		ldbg(logger, "kernel: %s() reverting the firewall", __func__);
@@ -850,6 +860,7 @@ static void revert_kernel_policy(struct spd_route *spd,
 	 * installed, there's nothing to do.
 	 */
 
+	PEXPECT(logger, spd->wip.ok);
 	if (!spd->wip.installed.kernel_policy) {
 		ldbg(logger, "kernel: %s() no kernel policy to revert", __func__);
 		return;
@@ -863,6 +874,7 @@ static void revert_kernel_policy(struct spd_route *spd,
 	 * template?
 	 */
 
+	PEXPECT(logger, spd->wip.ok);
 	if (spd->wip.conflicting.shunt == NULL) {
 		ldbg(logger, "kernel: %s() no previous kernel policy or shunt: delete whatever we installed",
 		     __func__);
@@ -881,6 +893,7 @@ static void revert_kernel_policy(struct spd_route *spd,
 	}
 
 	/* only one - shunt set when no policy */
+	PEXPECT(logger, spd->wip.ok);
 	PASSERT(logger, spd->wip.conflicting.shunt != NULL);
 
 	/*
@@ -947,6 +960,7 @@ bool unrouted_to_routed(struct connection *c, enum shunt_kind shunt_kind, where_
 		 * uniquely.
 		 */
 
+		PEXPECT(c->logger, spd->wip.ok);
 		if (spd->wip.conflicting.shunt != NULL &&
 		    PEXPECT(c->logger, !kernel_ops->overlap_supported)) {
 			delete_bare_shunt_kernel_policy(*spd->wip.conflicting.shunt,
@@ -955,10 +969,12 @@ bool unrouted_to_routed(struct connection *c, enum shunt_kind shunt_kind, where_
 			/* if everything succeeds, delete below */
 		}
 
+		PEXPECT(c->logger, spd->wip.ok);
 		ok &= spd->wip.installed.kernel_policy =
 			install_prospective_kernel_policies(spd, shunt_kind,
 							    c->logger, where);
 
+		PEXPECT(c->logger, spd->wip.ok);
 		if (spd->wip.conflicting.shunt != NULL &&
 		    PBAD(c->logger, kernel_ops->overlap_supported)) {
 			delete_bare_shunt_kernel_policy(*spd->wip.conflicting.shunt,
@@ -977,6 +993,7 @@ bool unrouted_to_routed(struct connection *c, enum shunt_kind shunt_kind, where_
 		if (!ok) {
 			break;
 		}
+		PEXPECT(c->logger, spd->wip.ok);
 		if (spd->wip.conflicting.owner.bare_route == NULL) {
 			/* a new route: no deletion required, but preparation is */
 			if (!do_updown(UPDOWN_PREPARE, c, spd, NULL/*state*/, c->logger))
@@ -1003,6 +1020,7 @@ bool unrouted_to_routed(struct connection *c, enum shunt_kind shunt_kind, where_
 		FOR_EACH_ITEM(spd, &c->child.spds) {
 			revert_kernel_policy(spd, NULL/*st*/, c->logger);
 		}
+		clear_connection_spd_conflicts(c);
 		return false;
 	}
 
@@ -1011,12 +1029,14 @@ bool unrouted_to_routed(struct connection *c, enum shunt_kind shunt_kind, where_
 	 */
 
 	FOR_EACH_ITEM(spd, &c->child.spds) {
+		PEXPECT(c->logger, spd->wip.ok);
 		struct bare_shunt **bspp = spd->wip.conflicting.shunt;
 		if (bspp != NULL) {
 			free_bare_shunt(bspp);
 		}
 	}
 
+	clear_connection_spd_conflicts(c);
 	return true;
 }
 
@@ -1927,6 +1947,7 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child, bool 
 			continue;
 		}
 
+		PEXPECT(logger, spd->wip.ok);
 		if (spd->wip.conflicting.shunt == NULL) {
 			new_spds++;
 		}
@@ -1956,6 +1977,7 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child, bool 
 			continue;
 		}
 
+		PEXPECT(logger, spd->wip.ok);
 		enum kernel_policy_op op =
 			(spd->wip.conflicting.shunt != NULL ? KERNEL_POLICY_OP_REPLACE :
 			 KERNEL_POLICY_OP_ADD);
@@ -1986,6 +2008,7 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child, bool 
 				continue;
 			}
 
+			PEXPECT(logger, spd->wip.ok);
 			if (spd->wip.conflicting.owner.bare_route == NULL) {
 				/* a new route: no deletion required, but preparation is */
 				if (!do_updown(UPDOWN_PREPARE, c, spd, &child->sa, logger))
@@ -2004,6 +2027,7 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child, bool 
 			continue;
 		}
 
+		PEXPECT(logger, spd->wip.ok);
 		if (spd->wip.conflicting.owner.bare_route == NULL) {
 			/* a new route: no deletion required, but preparation is */
 			ok = spd->wip.installed.route =
@@ -2034,6 +2058,7 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child, bool 
 				continue;
 			}
 
+			PEXPECT(logger, spd->wip.ok);
 			ok = spd->wip.installed.up =
 				do_updown(UPDOWN_UP, c, spd, &child->sa, logger);
 		}
@@ -2060,6 +2085,7 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child, bool 
 			continue;
 		}
 
+		PEXPECT(logger, spd->wip.ok);
 		struct bare_shunt **bspp = spd->wip.conflicting.shunt;
 		if (bspp != NULL) {
 			free_bare_shunt(bspp);
@@ -2112,14 +2138,17 @@ bool install_inbound_ipsec_sa(struct child_sa *child, where_t where)
 
 	if (!setup_half_kernel_state(&child->sa, DIRECTION_INBOUND)) {
 		ldbg(logger, "kernel: %s() failed to install inbound kernel state", __func__);
+		clear_connection_spd_conflicts(c);
 		return false;
 	}
 
 	if (!install_inbound_ipsec_kernel_policies(child)) {
 		ldbg(logger, "kernel: %s() failed to install inbound kernel policy", __func__);
+		clear_connection_spd_conflicts(c);
 		return false;
 	}
 
+	clear_connection_spd_conflicts(c);
 	return true;
 }
 
