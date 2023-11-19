@@ -2115,13 +2115,6 @@ bool install_inbound_ipsec_sa(struct child_sa *child, where_t where)
 	     pri_where(where));
 
 	/*
-	 * Pass +0: Lookup the status of each SPD.
-	 *
-	 * Still call find_spd_conflicts() when a sec_label so that
-	 * the structure is zeroed (sec_labels ignore conflicts).
-	 */
-
-	/*
 	 * if this is a transport SA, and overlapping SAs are supported, then
 	 * this route is not necessary at all.
 	 */
@@ -2130,25 +2123,16 @@ bool install_inbound_ipsec_sa(struct child_sa *child, where_t where)
 		ldbg(logger, "route-unnecessary: overlap and transport");
 	}
 
-	if (!get_connection_spd_conflicts(c, logger)) {
-		return false;
-	}
-
-	/* now setup inbound SA */
-
 	if (!setup_half_kernel_state(&child->sa, DIRECTION_INBOUND)) {
 		ldbg(logger, "kernel: %s() failed to install inbound kernel state", __func__);
-		clear_connection_spd_conflicts(c);
 		return false;
 	}
 
 	if (!install_inbound_ipsec_kernel_policies(child)) {
 		ldbg(logger, "kernel: %s() failed to install inbound kernel policy", __func__);
-		clear_connection_spd_conflicts(c);
 		return false;
 	}
 
-	clear_connection_spd_conflicts(c);
 	return true;
 }
 
