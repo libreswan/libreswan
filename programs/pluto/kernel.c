@@ -831,13 +831,13 @@ static bool get_connection_spd_conflicts(struct connection *c, struct logger *lo
 }
 
 static void revert_kernel_policy(struct spd_route *spd,
-				 struct state *st/*could be NULL*/,
+				 struct child_sa *child/*could be NULL*/,
 				 struct logger *logger)
 {
 	struct connection *c = spd->connection;
-	PEXPECT(logger, st == NULL || st->st_connection == c);
+	PEXPECT(logger, child == NULL || child->sa.st_connection == c);
 	PEXPECT(logger, (logger == c->logger ||
-			 logger == st->st_logger));
+			 logger == child->sa.logger));
 
 	/*
 	 * Kill the firewall if just installed.
@@ -845,9 +845,9 @@ static void revert_kernel_policy(struct spd_route *spd,
 
 	PEXPECT(logger, spd->wip.ok);
 	if (spd->wip.installed.up) {
-		PEXPECT(logger, st != NULL);
+		PEXPECT(logger, child != NULL);
 		ldbg(logger, "kernel: %s() reverting the firewall", __func__);
-		if (!do_updown(UPDOWN_DOWN, c, spd, st, logger)) {
+		if (!do_updown(UPDOWN_DOWN, c, spd, &child->sa, logger)) {
 			dbg("kernel: down command returned an error");
 		}
 		spd->wip.installed.up = false;
@@ -911,7 +911,7 @@ static void revert_kernel_policy(struct spd_route *spd,
 	if (!install_bare_kernel_policy(bs->our_client, bs->peer_client,
 					bs->shunt_kind, bs->shunt_policy,
 					&nic_offload, logger, HERE)) {
-		llog(RC_LOG, st->st_logger,
+		llog(RC_LOG, child->sa.logger,
 		     "%s() failed to restore/replace SA",
 		     __func__);
 	}
@@ -2043,7 +2043,7 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child, bool 
 			struct spd_owner owner = spd_owner(spd, c->child.routing,
 							   logger, HERE);
 			delete_cat_kernel_policies(spd, &owner, child->sa.st_logger, HERE);
-			revert_kernel_policy(spd, &child->sa, logger);
+			revert_kernel_policy(spd, child, logger);
 		}
 		return false;
 	}
