@@ -922,7 +922,7 @@ static void revert_kernel_policy(struct spd_route *spd,
 	}
 }
 
-bool unrouted_to_routed(struct connection *c, enum shunt_kind shunt_kind, where_t where)
+bool unrouted_to_routed(struct connection *c, enum routing new_routing, where_t where)
 {
 	/*
 	 * If this is a transport SA, and overlapping SAs are
@@ -978,7 +978,7 @@ bool unrouted_to_routed(struct connection *c, enum shunt_kind shunt_kind, where_
 
 		PEXPECT(c->logger, spd->wip.ok);
 		ok &= spd->wip.installed.kernel_policy =
-			install_prospective_kernel_policies(spd, shunt_kind,
+			install_prospective_kernel_policies(spd, routing_shunt_kind(new_routing),
 							    c->logger, where);
 		if (!ok) {
 			break;

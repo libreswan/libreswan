@@ -532,7 +532,7 @@ static void set_established_child(enum routing_event event UNUSED,
 
 static bool unrouted_to_routed_ondemand(enum routing_event event, struct connection *c, where_t where)
 {
-	if (!unrouted_to_routed(c, SHUNT_KIND_ONDEMAND, where)) {
+	if (!unrouted_to_routed(c, RT_ROUTED_ONDEMAND, where)) {
 		return false;
 	}
 	set_routing(event, c, RT_ROUTED_ONDEMAND, NULL);
@@ -541,7 +541,7 @@ static bool unrouted_to_routed_ondemand(enum routing_event event, struct connect
 
 static bool unrouted_to_routed_never_negotiate(enum routing_event event, struct connection *c, where_t where)
 {
-	if (!unrouted_to_routed(c, SHUNT_KIND_NEVER_NEGOTIATE, where)) {
+	if (!unrouted_to_routed(c, RT_ROUTED_NEVER_NEGOTIATE, where)) {
 		return false;
 	}
 	set_routing(event, c, RT_ROUTED_NEVER_NEGOTIATE, NULL);
