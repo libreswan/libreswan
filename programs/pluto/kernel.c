@@ -2067,6 +2067,10 @@ static bool connection_has_policy_conflicts(const struct connection *c,
 					    struct logger *logger, where_t where)
 {
 	ldbg(logger, "checking %s for conflicts", c->name);
+	/* sec-labels ignore conflicts */
+	if (c->config->sec_label.len > 0) {
+		return false;
+	}
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 		struct spd_owner owner = spd_owner(spd,  /*ignored-for-policy*/RT_UNROUTED + 1, logger, where);
 		/* is there a conflict */
