@@ -782,6 +782,7 @@ static void clear_connection_spd_conflicts(struct connection *c)
 }
 
 static bool get_connection_spd_conflict(const struct spd_route *spd,
+					const enum routing new_routing,
 					struct spd_owner *owner,
 					struct bare_shunt ***bare_shunt,
 					struct logger *logger)
@@ -796,7 +797,7 @@ static bool get_connection_spd_conflict(const struct spd_route *spd,
 	}
 
 	/* get who owns the SPD */
-	*owner = spd_owner(spd, /*ignored-for-policy*/RT_UNROUTED + 1, logger, HERE);
+	*owner = spd_owner(spd, /*ignored-for-policy*/new_routing, logger, HERE);
 
 	/* also check for bare shunts */
 	*bare_shunt = bare_shunt_ptr(&spd->local->client, &spd->remote->client, __func__);
@@ -950,8 +951,10 @@ bool unrouted_to_routed(struct connection *c, enum routing new_routing, where_t 
 		 * the structure is zeroed (sec_labels ignore conflicts).
 		 */
 
-		ok = get_connection_spd_conflict(spd, &spd->wip.conflicting.owner,
-						 &spd->wip.conflicting.shunt, c->logger);
+		ok = get_connection_spd_conflict(spd, new_routing,
+						 &spd->wip.conflicting.owner,
+						 &spd->wip.conflicting.shunt,
+						 c->logger);
 		if (!ok) {
 			break;
 		}
@@ -1888,7 +1891,9 @@ void show_kernel_interface(struct show *s)
 	}
 }
 
-static bool install_outbound_ipsec_kernel_policies(struct child_sa *child, bool up)
+static bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
+						   enum routing new_routing,
+						   bool up)
 {
 	struct logger *logger = child->sa.st_logger;
 	struct connection *c = child->sa.st_connection;
@@ -1942,8 +1947,10 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child, bool 
 
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 
-		ok = get_connection_spd_conflict(spd, &spd->wip.conflicting.owner,
-						 &spd->wip.conflicting.shunt, c->logger);
+		ok = get_connection_spd_conflict(spd, new_routing,
+						 &spd->wip.conflicting.owner,
+						 &spd->wip.conflicting.shunt,
+						 c->logger);
 		if (!ok) {
 			break;
 		}
@@ -2144,7 +2151,7 @@ bool install_inbound_ipsec_sa(struct child_sa *child, enum routing new_routing, 
 	return true;
 }
 
-bool install_outbound_ipsec_sa(struct child_sa *child, bool up, where_t where)
+bool install_outbound_ipsec_sa(struct child_sa *child, enum routing new_routing, bool up, where_t where)
 {
 	struct logger *logger = child->sa.st_logger;
 	struct connection *c = child->sa.st_connection;
@@ -2178,7 +2185,7 @@ bool install_outbound_ipsec_sa(struct child_sa *child, bool up, where_t where)
 
 	clear_connection_spd_conflicts(c);
 
-	if (!install_outbound_ipsec_kernel_policies(child, up)) {
+	if (!install_outbound_ipsec_kernel_policies(child, new_routing, up)) {
 		return false;
 	}
 
