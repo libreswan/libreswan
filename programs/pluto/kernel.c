@@ -835,22 +835,6 @@ static bool get_connection_spd_conflict(const struct spd_route *spd,
 	return true;
 }
 
-static bool get_connection_spd_conflicts(struct connection *c, struct logger *logger)
-{
-	ldbg(logger, "checking %s for conflicts", c->name);
-	FOR_EACH_ITEM(spd, &c->child.spds) {
-		zero(&spd->wip);
-		if (!get_connection_spd_conflict(spd, &spd->wip.conflicting.owner,
-						 &spd->wip.conflicting.shunt,
-						 logger)) {
-			return false;
-		}
-
-		spd->wip.ok = true;
-	}
-	return true;
-}
-
 static void revert_kernel_policy(struct spd_route *spd,
 				 struct child_sa *child/*could be NULL*/,
 				 struct logger *logger)
@@ -2079,6 +2063,38 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child, bool 
 	return true;
 }
 
+static bool connection_has_policy_conflicts(const struct connection *c,
+					    struct logger *logger, where_t where)
+{
+	ldbg(logger, "checking %s for conflicts", c->name);
+	FOR_EACH_ITEM(spd, &c->child.spds) {
+		struct spd_owner owner = spd_owner(spd,  /*ignored-for-policy*/RT_UNROUTED + 1, logger, where);
+		/* is there a conflict */
+		if (owner.policy != NULL) {
+			/*
+			 * Double check that it really does own the
+			 * SPD.  After all it is about to trigger a
+			 * reject.
+			 */
+			struct connection *d = owner.policy->connection;
+			if (!kernel_policy_installed(d)) {
+				connection_buf ocb;
+				llog_pexpect(logger, HERE,
+					     "conflicting %s policy for "PRI_CONNECTION" %s is not installed",
+					     enum_name_short(&routing_names, c->child.routing),
+					     pri_connection(d, &ocb),
+					     enum_name_short(&routing_names, d->child.routing));
+			}
+			connection_buf cb;
+			llog(RC_LOG_SERIOUS, logger,
+			     "cannot install kernel policy -- it is in use for "PRI_CONNECTION,
+			     pri_connection(d, &cb));
+			return true;
+		}
+	}
+	return false;
+}
+
 bool install_inbound_ipsec_sa(struct child_sa *child, where_t where)
 {
 	struct logger *logger = child->sa.st_logger;
@@ -2098,19 +2114,17 @@ bool install_inbound_ipsec_sa(struct child_sa *child, where_t where)
 	}
 
 	/*
-	 * In the IKEv1 alias-01 test triggers a pexpect() because the
-	 * claimed route owner hasn't yet been installed
+	 * The IKEv1 alias-01 test triggers a pexpect() because the
+	 * claimed route owner hasn't been installed
 	 *
 	 * OTOH if the test is removed, this triggers a passert()
-	 * because the overlapping routes don't get properly cleanedup
-	 * leaving a hanging connection ref.
+	 * because the overlapping routes don't get properly cleaned
+	 * up leaving a hanging connection reference.
 	 */
 
-	if (!get_connection_spd_conflicts(c, logger)) {
-		clear_connection_spd_conflicts(c);
+	if (connection_has_policy_conflicts(c, logger, HERE)) {
 		return false;
 	}
-	clear_connection_spd_conflicts(c);
 
 	if (!setup_half_kernel_state(&child->sa, DIRECTION_INBOUND)) {
 		ldbg(logger, "kernel: %s() failed to install inbound kernel state", __func__);
