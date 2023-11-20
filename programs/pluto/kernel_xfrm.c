@@ -3018,7 +3018,6 @@ const struct kernel_ops xfrm_kernel_ops = {
 	.policy_add = kernel_xfrm_policy_add,
 	.add_sa = netlink_add_sa,
 	.get_kernel_state = xfrm_get_kernel_state,
-	.grp_sa = NULL,
 	.get_ipsec_spi = xfrm_get_ipsec_spi,
 	.del_ipsec_spi = xfrm_del_ipsec_spi,
 	.migrate_ipsec_sa_is_enabled = xfrm_migrate_ipsec_sa_is_enabled,

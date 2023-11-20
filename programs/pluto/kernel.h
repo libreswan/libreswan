@@ -259,8 +259,6 @@ struct kernel_ops {
 	bool (*add_sa)(const struct kernel_state *sa,
 		       bool replace,
 		       struct logger *logger);
-	bool (*grp_sa)(const struct kernel_state *sa_outer,
-		       const struct kernel_state *sa_inner);
 	bool (*get_kernel_state)(const struct kernel_state *sa,
 				 uint64_t *bytes,
 				 uint64_t *add_time,
