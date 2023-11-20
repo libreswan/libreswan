@@ -2092,6 +2092,21 @@ bool install_inbound_ipsec_sa(struct child_sa *child, where_t where)
 		ldbg(logger, "route-unnecessary: overlap and transport");
 	}
 
+	/*
+	 * In the IKEv1 alias-01 test triggers a pexpect() because the
+	 * claimed route owner hasn't yet been installed
+	 *
+	 * OTOH if the test is removed, this triggers a passert()
+	 * because the overlapping routes don't get properly cleanedup
+	 * leaving a hanging connection ref.
+	 */
+
+	if (!get_connection_spd_conflicts(c, logger)) {
+		clear_connection_spd_conflicts(c);
+		return false;
+	}
+	clear_connection_spd_conflicts(c);
+
 	if (!setup_half_kernel_state(&child->sa, DIRECTION_INBOUND)) {
 		ldbg(logger, "kernel: %s() failed to install inbound kernel state", __func__);
 		return false;
