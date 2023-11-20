@@ -781,51 +781,72 @@ static void clear_connection_spd_conflicts(struct connection *c)
 	}
 }
 
+static bool get_connection_spd_conflict(const struct spd_route *spd,
+					struct spd_owner *owner,
+					struct bare_shunt ***bare_shunt,
+					struct logger *logger)
+{
+	*owner = (struct spd_owner) {0};
+	*bare_shunt = NULL;
+
+	const struct connection *c = spd->connection;
+	/* sec-labels ignore conflicts (but still zero) */
+	if (c->config->sec_label.len > 0) {
+		return true;
+	}
+
+	/* get who owns the SPD */
+	*owner = spd_owner(spd, /*ignored-for-policy*/RT_UNROUTED + 1, logger, HERE);
+
+	/* also check for bare shunts */
+	*bare_shunt = bare_shunt_ptr(&spd->local->client, &spd->remote->client, __func__);
+	if (*bare_shunt != NULL) {
+		selector_pair_buf sb;
+		ldbg(logger,
+		     "kernel: %s() %s; conflicting: shunt=%s",
+		     __func__,
+		     str_selector_pair(&spd->local->client, &spd->remote->client, &sb),
+		     (**bare_shunt)->why);
+	}
+
+	/* is there a conflict */
+	if (owner->policy != NULL) {
+		/*
+		 * Double check that it really does own the
+		 * SPD.  After all it is about to trigger a
+		 * reject.
+		 */
+		struct connection *d = spd->wip.conflicting.owner.policy->connection;
+		if (!kernel_policy_installed(d)) {
+			connection_buf ocb;
+			llog_pexpect(logger, HERE,
+				     "conflicting %s policy for "PRI_CONNECTION" %s is not installed",
+				     enum_name_short(&routing_names, c->child.routing),
+				     pri_connection(d, &ocb),
+				     enum_name_short(&routing_names, d->child.routing));
+		}
+		connection_buf cb;
+		llog(RC_LOG_SERIOUS, logger,
+		     "cannot install kernel policy -- it is in use for "PRI_CONNECTION,
+		     pri_connection(d, &cb));
+		return false;
+	}
+
+	return true;
+}
+
 static bool get_connection_spd_conflicts(struct connection *c, struct logger *logger)
 {
 	ldbg(logger, "checking %s for conflicts", c->name);
-	clear_connection_spd_conflicts(c);
 	FOR_EACH_ITEM(spd, &c->child.spds) {
-		spd->wip.ok = true;
-		/* sec-labels ignore conflicts (but still zero) */
-		if (spd->connection->config->sec_label.len > 0) {
-			continue;
-		}
-		/* get who owns the SPD */
-		spd->wip.conflicting.owner = spd_owner(spd, /*ignored-for-policy*/RT_UNROUTED + 1,
-						       logger, HERE);
-		/* also check for bare shunts */
-		spd->wip.conflicting.shunt = bare_shunt_ptr(&spd->local->client, &spd->remote->client, __func__);
-		if (spd->wip.conflicting.shunt != NULL) {
-			selector_pair_buf sb;
-			ldbg(logger,
-			     "kernel: %s() %s; conflicting: shunt=%s",
-			     __func__,
-			     str_selector_pair(&spd->local->client, &spd->remote->client, &sb),
-			     (*spd->wip.conflicting.shunt)->why);
-		}
-		/* is there a conflict */
-		if (spd->wip.conflicting.owner.policy != NULL) {
-			/*
-			 * Double check that it really does own the
-			 * SPD.  After all it is about to trigger a
-			 * reject.
-			 */
-			struct connection *d = spd->wip.conflicting.owner.policy->connection;
-			if (!kernel_policy_installed(d)) {
-				connection_buf ocb;
-				llog_pexpect(logger, HERE,
-					     "conflicting %s policy for "PRI_CONNECTION" %s is not installed",
-					     enum_name_short(&routing_names, c->child.routing),
-					     pri_connection(d, &ocb),
-					     enum_name_short(&routing_names, d->child.routing));
-			}
-			connection_buf cb;
-			llog(RC_LOG_SERIOUS, logger,
-			     "cannot install kernel policy -- it is in use for "PRI_CONNECTION,
-			     pri_connection(spd->wip.conflicting.owner.policy->connection, &cb));
+		zero(&spd->wip);
+		if (!get_connection_spd_conflict(spd, &spd->wip.conflicting.owner,
+						 &spd->wip.conflicting.shunt,
+						 logger)) {
 			return false;
 		}
+
+		spd->wip.ok = true;
 	}
 	return true;
 }
