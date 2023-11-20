@@ -2064,6 +2064,7 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child, bool 
 }
 
 static bool connection_has_policy_conflicts(const struct connection *c,
+					    enum routing new_routing,
 					    struct logger *logger, where_t where)
 {
 	ldbg(logger, "checking %s for conflicts", c->name);
@@ -2072,7 +2073,7 @@ static bool connection_has_policy_conflicts(const struct connection *c,
 		return false;
 	}
 	FOR_EACH_ITEM(spd, &c->child.spds) {
-		struct spd_owner owner = spd_owner(spd,  /*ignored-for-policy*/RT_UNROUTED + 1, logger, where);
+		struct spd_owner owner = spd_owner(spd,  /*ignored-for-policy*/new_routing, logger, where);
 		/* is there a conflict */
 		if (owner.policy != NULL) {
 			/*
@@ -2099,7 +2100,7 @@ static bool connection_has_policy_conflicts(const struct connection *c,
 	return false;
 }
 
-bool install_inbound_ipsec_sa(struct child_sa *child, where_t where)
+bool install_inbound_ipsec_sa(struct child_sa *child, enum routing new_routing, where_t where)
 {
 	struct logger *logger = child->sa.st_logger;
 	struct connection *c = child->sa.st_connection;
@@ -2126,7 +2127,7 @@ bool install_inbound_ipsec_sa(struct child_sa *child, where_t where)
 	 * up leaving a hanging connection reference.
 	 */
 
-	if (connection_has_policy_conflicts(c, logger, HERE)) {
+	if (connection_has_policy_conflicts(c, new_routing, logger, HERE)) {
 		return false;
 	}
 

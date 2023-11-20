@@ -1725,7 +1725,7 @@ static bool dispatch_1(enum routing_event event,
 
 	case X(ESTABLISH_CHILD_SA, UNROUTED_BARE_NEGOTIATION, INSTANCE):
 	case X(ESTABLISH_CHILD_SA, UNROUTED_BARE_NEGOTIATION, PERMANENT):
-		if (!install_inbound_ipsec_sa((*e->child), e->where)) {
+		if (!install_inbound_ipsec_sa((*e->child), RT_UNROUTED_INBOUND, e->where)) {
 			return false;
 		}
  		set_routing(event, c, RT_UNROUTED_INBOUND, e);
@@ -1739,7 +1739,7 @@ static bool dispatch_1(enum routing_event event,
 	case X(ESTABLISH_CHILD_SA, ROUTED_NEGOTIATION, PERMANENT):
 		/* addconn-05-bogus-left-interface
 		 * algo-ikev2-aes128-sha1-ecp256 et.al. */
-		if (!install_inbound_ipsec_sa((*e->child), e->where)) {
+		if (!install_inbound_ipsec_sa((*e->child), RT_ROUTED_INBOUND_NEGOTIATION, e->where)) {
 			return false;
 		}
 		set_routing(event, c, RT_ROUTED_INBOUND_NEGOTIATION, e);
@@ -1758,7 +1758,7 @@ static bool dispatch_1(enum routing_event event,
 		 * updating it to routed-negotiation.
 		 */
 		flush_routed_ondemand_revival(c);
-		if (!install_inbound_ipsec_sa((*e->child), e->where)) {
+		if (!install_inbound_ipsec_sa((*e->child), RT_ROUTED_INBOUND_NEGOTIATION, e->where)) {
 			return false;
 		}
 		set_routing(event, c, RT_ROUTED_INBOUND_NEGOTIATION, e);
@@ -1782,7 +1782,7 @@ static bool dispatch_1(enum routing_event event,
 		 * XXX: suspect this is too early - for rekey should
 		 * only update after new child establishes?
 		 */
-		if (!install_inbound_ipsec_sa((*e->child), e->where)) {
+		if (!install_inbound_ipsec_sa((*e->child), RT_ROUTED_TUNNEL, e->where)) {
 			return false;
 		}
 		set_routing(event, c, RT_ROUTED_TUNNEL, e);
@@ -1803,7 +1803,7 @@ static bool dispatch_1(enum routing_event event,
 
 	case X(ESTABLISH_CHILD_SA, UNROUTED, INSTANCE):
 	case X(ESTABLISH_CHILD_SA, UNROUTED, PERMANENT):
-		if (!install_inbound_ipsec_sa((*e->child), e->where)) {
+		if (!install_inbound_ipsec_sa((*e->child), RT_UNROUTED_INBOUND, e->where)) {
 			return false;
 		}
 		set_routing(event, c, RT_UNROUTED_INBOUND, e);
@@ -1814,7 +1814,7 @@ static bool dispatch_1(enum routing_event event,
 		return true;
 
 	case X(ESTABLISH_CHILD_SA, UNROUTED_NEGOTIATION, INSTANCE):
-		if (!install_inbound_ipsec_sa((*e->child), e->where)) {
+		if (!install_inbound_ipsec_sa((*e->child), RT_UNROUTED_INBOUND_NEGOTIATION, e->where)) {
 			return false;
 		}
 		set_routing(event, c, RT_UNROUTED_INBOUND_NEGOTIATION, e);
@@ -1826,7 +1826,7 @@ static bool dispatch_1(enum routing_event event,
 
 	case X(ESTABLISH_INBOUND, UNROUTED_BARE_NEGOTIATION, INSTANCE):
 	case X(ESTABLISH_INBOUND, UNROUTED_BARE_NEGOTIATION, PERMANENT):
-		if (!install_inbound_ipsec_sa((*e->child), e->where)) {
+		if (!install_inbound_ipsec_sa((*e->child), RT_UNROUTED_INBOUND, e->where)) {
 			return false;
 		}
 		set_routing(event, c, RT_UNROUTED_INBOUND, e);
@@ -1834,7 +1834,7 @@ static bool dispatch_1(enum routing_event event,
 
 	case X(ESTABLISH_INBOUND, ROUTED_INBOUND_NEGOTIATION, PERMANENT):
 		/* alias-01 */
-		if (!install_inbound_ipsec_sa((*e->child), e->where)) {
+		if (!install_inbound_ipsec_sa((*e->child), RT_ROUTED_INBOUND_NEGOTIATION, e->where)) {
 			return false;
 		}
 		set_routing(event, c, RT_ROUTED_INBOUND_NEGOTIATION, e);
@@ -1844,7 +1844,7 @@ static bool dispatch_1(enum routing_event event,
 	case X(ESTABLISH_INBOUND, ROUTED_NEGOTIATION, PERMANENT):
 		/* addconn-05-bogus-left-interface
 		 * algo-ikev2-aes128-sha1-ecp256 et.al. */
-		if (!install_inbound_ipsec_sa((*e->child), e->where)) {
+		if (!install_inbound_ipsec_sa((*e->child), RT_ROUTED_INBOUND_NEGOTIATION, e->where)) {
 			return false;
 		}
 		set_routing(event, c, RT_ROUTED_INBOUND_NEGOTIATION, e);
@@ -1859,7 +1859,7 @@ static bool dispatch_1(enum routing_event event,
 		 * updating it to routed-negotiation.
 		 */
 		flush_routed_ondemand_revival(c);
-		if (!install_inbound_ipsec_sa((*e->child), e->where)) {
+		if (!install_inbound_ipsec_sa((*e->child), RT_ROUTED_INBOUND_NEGOTIATION, e->where)) {
 			return false;
 		}
 		set_routing(event, c, RT_ROUTED_INBOUND_NEGOTIATION, e);
@@ -1879,7 +1879,7 @@ static bool dispatch_1(enum routing_event event,
 		 * XXX: suspect this is too early - for rekey should
 		 * only update after new child establishes?
 		 */
-		if (!install_inbound_ipsec_sa((*e->child), e->where)) {
+		if (!install_inbound_ipsec_sa((*e->child), RT_ROUTED_TUNNEL, e->where)) {
 			return false;
 		}
 		set_routing(event, c, RT_ROUTED_TUNNEL, e);
@@ -1887,7 +1887,7 @@ static bool dispatch_1(enum routing_event event,
 
 	case X(ESTABLISH_INBOUND, UNROUTED, INSTANCE):
 	case X(ESTABLISH_INBOUND, UNROUTED, PERMANENT):
-		if (!install_inbound_ipsec_sa((*e->child), e->where)) {
+		if (!install_inbound_ipsec_sa((*e->child), RT_UNROUTED_INBOUND, e->where)) {
 			return false;
 		}
 		set_routing(event, c, RT_UNROUTED_INBOUND, e);
@@ -1895,7 +1895,7 @@ static bool dispatch_1(enum routing_event event,
 
 	case X(ESTABLISH_INBOUND, UNROUTED_INBOUND, PERMANENT):
 		/* alias-01 */
-		if (!install_inbound_ipsec_sa((*e->child), e->where)) {
+		if (!install_inbound_ipsec_sa((*e->child), RT_UNROUTED_INBOUND, e->where)) {
 			return false;
 		}
 		set_routing(event, c, RT_UNROUTED_INBOUND, e);
@@ -1903,14 +1903,14 @@ static bool dispatch_1(enum routing_event event,
 
 	case X(ESTABLISH_INBOUND, UNROUTED_INBOUND_NEGOTIATION, PERMANENT):
 		/* alias-01 */
-		if (!install_inbound_ipsec_sa((*e->child), e->where)) {
+		if (!install_inbound_ipsec_sa((*e->child), RT_UNROUTED_INBOUND_NEGOTIATION, e->where)) {
 			return false;
 		}
 		set_routing(event, c, RT_UNROUTED_INBOUND_NEGOTIATION, e);
 		return true;
 
 	case X(ESTABLISH_INBOUND, UNROUTED_NEGOTIATION, INSTANCE):
-		if (!install_inbound_ipsec_sa((*e->child), e->where)) {
+		if (!install_inbound_ipsec_sa((*e->child), RT_UNROUTED_INBOUND_NEGOTIATION, e->where)) {
 			return false;
 		}
 		set_routing(event, c, RT_UNROUTED_INBOUND_NEGOTIATION, e);
@@ -2164,7 +2164,7 @@ static bool dispatch_1(enum routing_event event,
 
 	case X(ESTABLISH_CHILD_SA, UNROUTED_TUNNEL, LABELED_CHILD):
 		/* rekey */
-		if (!install_inbound_ipsec_sa((*e->child), e->where)) {
+		if (!install_inbound_ipsec_sa((*e->child), RT_UNROUTED_TUNNEL, e->where)) {
 			return false;
 		}
 		set_routing(event, c, RT_UNROUTED_TUNNEL, e);
@@ -2175,7 +2175,7 @@ static bool dispatch_1(enum routing_event event,
 		set_established_child(event, c, RT_UNROUTED_TUNNEL, e);
 		return true;
 	case X(ESTABLISH_CHILD_SA, UNROUTED, LABELED_CHILD):
-		if (!install_inbound_ipsec_sa((*e->child), e->where)) {
+		if (!install_inbound_ipsec_sa((*e->child), RT_UNROUTED_INBOUND, e->where)) {
 			return false;
 		}
 		set_routing(event, c, RT_UNROUTED_INBOUND, e);
