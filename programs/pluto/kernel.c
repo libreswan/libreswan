@@ -950,16 +950,7 @@ bool unrouted_to_routed(struct connection *c, enum shunt_kind shunt_kind, where_
 		return true;
 	}
 
-	/*
-	 * Pass +0: Lookup the status of each SPD.
-	 *
-	 * Still call find_spd_conflicts() when a sec_label so that
-	 * the structure is zeroed (sec_labels ignore conflicts).
-	 */
-
-	if (!get_connection_spd_conflicts(c, c->logger)) {
-		return false;
-	}
+	clear_connection_spd_conflicts(c);
 
 	/*
 	 * Pass +1: install / replace kernel policy where needed.
@@ -967,6 +958,21 @@ bool unrouted_to_routed(struct connection *c, enum shunt_kind shunt_kind, where_
 
 	bool ok = true;
 	FOR_EACH_ITEM(spd, &c->child.spds) {
+
+		/*
+		 * Pass +0: Lookup the status of each SPD.
+		 *
+		 * Still call find_spd_conflicts() when a sec_label so that
+		 * the structure is zeroed (sec_labels ignore conflicts).
+		 */
+
+		ok = get_connection_spd_conflict(spd, &spd->wip.conflicting.owner,
+						 &spd->wip.conflicting.shunt, c->logger);
+		if (!ok) {
+			break;
+		}
+
+		spd->wip.ok = true;
 
 		/*
 		 * When overlap isn't supported, the old clashing bare
@@ -1982,6 +1988,14 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child, bool 
 
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 
+		ok = get_connection_spd_conflict(spd, &spd->wip.conflicting.owner,
+						 &spd->wip.conflicting.shunt, c->logger);
+		if (!ok) {
+			break;
+		}
+
+		spd->wip.ok = true;
+
 		if (is_v1_cisco_split(spd, HERE)) {
 			/* XXX: why is CISCO skipped? */
 			continue;
@@ -2173,9 +2187,7 @@ bool install_outbound_ipsec_sa(struct child_sa *child, bool up, where_t where)
 		return false;
 	}
 
-	if (!get_connection_spd_conflicts(c, logger)) {
-		return false;
-	}
+	clear_connection_spd_conflicts(c);
 
 	if (!install_outbound_ipsec_kernel_policies(child, up)) {
 		return false;
