@@ -591,7 +591,7 @@ static void routed_tunnel_to_routed_failure(enum routing_event event,
 			continue;
 		}
 
-		do_updown(UPDOWN_DOWN, c, spd, &child->sa, logger);
+		do_updown(UPDOWN_DOWN, c, spd, child, logger);
 
 		struct spd_owner owner = spd_owner(spd, RT_ROUTED_FAILURE,
 						   logger, where);
@@ -695,7 +695,7 @@ static void routed_tunnel_to_unrouted(enum routing_event event,
 			continue;
 		}
 
-		do_updown(UPDOWN_DOWN, c, spd, &child->sa, logger);
+		do_updown(UPDOWN_DOWN, c, spd, child, logger);
 
 		struct spd_owner owner = spd_owner(spd, RT_UNROUTED,
 						   logger, where);
@@ -845,7 +845,7 @@ static void unrouted_tunnel_to_routed_ondemand(enum routing_event event,
 			continue;
 		}
 
-		do_updown(UPDOWN_DOWN, c, spd, &child->sa, logger);
+		do_updown(UPDOWN_DOWN, c, spd, child, logger);
 
 		struct spd_owner owner = spd_owner(spd, RT_ROUTED_ONDEMAND,
 						   logger, where);
@@ -876,7 +876,7 @@ static void unrouted_tunnel_to_routed_failure(enum routing_event event,
 			continue;
 		}
 
-		do_updown(UPDOWN_DOWN, c, spd, &child->sa, logger);
+		do_updown(UPDOWN_DOWN, c, spd, child, logger);
 
 		struct spd_owner owner = spd_owner(spd, RT_ROUTED_FAILURE,
 						   logger, where);

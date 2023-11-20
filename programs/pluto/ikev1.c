@@ -2876,7 +2876,8 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 			if (!do_updown(UPDOWN_DISCONNECT_NM,
 				       st->st_connection,
 				       st->st_connection->spd,
-				       st, st->st_logger))
+				       pexpect_child_sa(st),
+				       st->st_logger))
 				dbg("sending disconnect to NM failed, you may need to do it manually");
 		}
 #endif
@@ -2933,7 +2934,8 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 			if (!do_updown(UPDOWN_DISCONNECT_NM,
 				       st->st_connection,
 				       st->st_connection->spd,
-				       st, st->st_logger))
+				       pexpect_child_sa(st),
+				       st->st_logger))
 				dbg("sending disconnect to NM failed, you may need to do it manually");
 		}
 #endif

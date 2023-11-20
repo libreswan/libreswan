@@ -51,7 +51,7 @@ enum updown {
 
 bool do_updown(enum updown updown_verb,
 	       const struct connection *c, const struct spd_route *sr,
-	       struct state *st, struct logger *logger);
+	       struct child_sa *child, struct logger *logger);
 
 void do_updown_child(enum updown updown_verb, struct child_sa *child);
 

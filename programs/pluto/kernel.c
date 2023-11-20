@@ -847,7 +847,7 @@ static void revert_kernel_policy(struct spd_route *spd,
 	if (spd->wip.installed.up) {
 		PEXPECT(logger, child != NULL);
 		ldbg(logger, "kernel: %s() reverting the firewall", __func__);
-		if (!do_updown(UPDOWN_DOWN, c, spd, &child->sa, logger)) {
+		if (!do_updown(UPDOWN_DOWN, c, spd, child, logger)) {
 			dbg("kernel: down command returned an error");
 		}
 		spd->wip.installed.up = false;
@@ -1995,7 +1995,7 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child, bool 
 		PEXPECT(logger, spd->wip.ok);
 		if (spd->wip.conflicting.owner.bare_route == NULL) {
 			/* a new route: no deletion required, but preparation is */
-			if (!do_updown(UPDOWN_PREPARE, c, spd, &child->sa, logger))
+			if (!do_updown(UPDOWN_PREPARE, c, spd, child, logger))
 				ldbg(logger, "kernel: prepare command returned an error");
 		}
 
@@ -2004,7 +2004,7 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child, bool 
 		if (spd->wip.conflicting.owner.bare_route == NULL) {
 			/* a new route: no deletion required, but preparation is */
 			ok = spd->wip.installed.route =
-				do_updown(UPDOWN_ROUTE, c, spd, &child->sa, logger);
+				do_updown(UPDOWN_ROUTE, c, spd, child, logger);
 		}
 		if (!ok) {
 			break;
@@ -2026,7 +2026,7 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child, bool 
 		if (up) {
 			PEXPECT(logger, spd->wip.ok);
 			ok = spd->wip.installed.up =
-				do_updown(UPDOWN_UP, c, spd, &child->sa, logger);
+				do_updown(UPDOWN_UP, c, spd, child, logger);
 		}
 		if (!ok) {
 			break;

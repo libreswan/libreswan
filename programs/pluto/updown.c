@@ -82,7 +82,7 @@ static bool fmt_common_shell_out(char *buf,
 				 size_t blen,
 				 const struct connection *c,
 				 const struct spd_route *sr,
-				 struct state *st)
+				 struct child_sa *child)
 {
 	struct jambuf jb = array_as_jambuf(buf, blen);
 	const bool tunneling = (c->config->child_sa.encap_mode == ENCAP_MODE_TUNNEL);
@@ -122,25 +122,25 @@ static bool fmt_common_shell_out(char *buf,
 
 	JDuint("PLUTO_MY_PORT", sr->local->client.hport);
 	JDuint("PLUTO_MY_PROTOCOL", sr->local->client.ipproto);
-	JDuint("PLUTO_SA_REQID", st == NULL ? c->child.reqid :
-		st->st_esp.present ? reqid_esp(c->child.reqid) :
-		st->st_ah.present ? reqid_ah(c->child.reqid) :
-		st->st_ipcomp.present ? reqid_ipcomp(c->child.reqid) :
-		c->child.reqid);
+	JDuint("PLUTO_SA_REQID", (child == NULL ? c->child.reqid :
+				  child->sa.st_esp.present ? reqid_esp(c->child.reqid) :
+				  child->sa.st_ah.present ? reqid_ah(c->child.reqid) :
+				  child->sa.st_ipcomp.present ? reqid_ipcomp(c->child.reqid) :
+				  c->child.reqid));
 
-	JDstr("PLUTO_SA_TYPE",
-		st == NULL ? "none" :
-		st->st_esp.present ? "ESP" :
-		st->st_ah.present ? "AH" :
-		st->st_ipcomp.present ? "IPCOMP" :
-		"unknown?");
+	JDstr("PLUTO_SA_TYPE", (child == NULL ? "none" :
+				child->sa.st_esp.present ? "ESP" :
+				child->sa.st_ah.present ? "AH" :
+				child->sa.st_ipcomp.present ? "IPCOMP" :
+				"unknown?"));
 
 	JDipaddr("PLUTO_PEER", sr->remote->host->addr);
 	JDemitter("PLUTO_PEER_ID", jam_id_bytes(&jb, &c->remote->host.id, jam_shell_quoted_bytes));
 
 	/* for transport mode, things are complicated */
 	jam_string(&jb, "PLUTO_PEER_CLIENT='");
-	if (!tunneling && st != NULL && LHAS(st->hidden_variables.st_nat_traversal, NATED_PEER)) {
+	if (!tunneling && child != NULL &&
+	    LHAS(child->sa.hidden_variables.st_nat_traversal, NATED_PEER)) {
 		/* pexpect(selector_eq_address(sr->remote->client, sr->remote->host->addr)); */
 		jam_address(&jb, &sr->remote->host->addr);
 		jam(&jb, "/%d", address_type(&sr->local->host->addr)->mask_cnt/*32 or 128*/);
@@ -150,8 +150,9 @@ static bool fmt_common_shell_out(char *buf,
 	jam_string(&jb, "' ");
 
 	JDipaddr("PLUTO_PEER_CLIENT_NET",
-		(!tunneling && st != NULL && LHAS(st->hidden_variables.st_nat_traversal, NATED_PEER)) ?
-			sr->remote->host->addr : selector_prefix(sr->remote->client));
+		 (!tunneling && child != NULL &&
+		  LHAS(child->sa.hidden_variables.st_nat_traversal, NATED_PEER)) ?
+		 sr->remote->host->addr : selector_prefix(sr->remote->client));
 
 	JDipaddr("PLUTO_PEER_CLIENT_MASK", selector_prefix_mask(sr->remote->client));
 	JDuint("PLUTO_PEER_PORT", sr->remote->client.hport);
@@ -180,29 +181,29 @@ static bool fmt_common_shell_out(char *buf,
 		jam(&jb, "PLUTO_MTU=%d ", c->config->child_sa.mtu);
 	}
 
-	JDuint64("PLUTO_ADDTIME", st == NULL ? (uint64_t)0 : st->st_esp.add_time);
+	JDuint64("PLUTO_ADDTIME", (child == NULL ? (uint64_t)0 : child->sa.st_esp.add_time));
 	JDemitter("PLUTO_CONN_POLICY",	jam_connection_policies(&jb, c));
 	JDemitter("PLUTO_CONN_KIND", jam_enum(&jb, &connection_kind_names, c->local->kind));
 	jam(&jb, "PLUTO_CONN_ADDRFAMILY='ipv%d' ", address_type(&sr->local->host->addr)->ip_version);
-	JDuint("XAUTH_FAILED", (st != NULL && st->st_xauth_soft) ? 1 : 0);
+	JDuint("XAUTH_FAILED", (child != NULL && child->sa.st_xauth_soft ? 1 : 0));
 
-	if (st != NULL && st->st_xauth_username[0] != '\0') {
-		JDemitter("PLUTO_USERNAME", jam_clean_xauth_username(&jb, st->st_xauth_username, st->st_logger));
+	if (child != NULL && child->sa.st_xauth_username[0] != '\0') {
+		JDemitter("PLUTO_USERNAME", jam_clean_xauth_username(&jb, child->sa.st_xauth_username, child->sa.st_logger));
 	}
 
 	ip_address sourceip = spd_end_sourceip(sr->local);
 	if (sourceip.is_set) {
 		JDipaddr("PLUTO_MY_SOURCEIP", sourceip);
-		if (st != NULL) {
+		if (child != NULL) {
 			JDstr("PLUTO_MOBIKE_EVENT",
-			      st->st_mobike_del_src_ip ? "yes" : "");
+			      (child->sa.st_mobike_del_src_ip ? "yes" : ""));
 		}
 	}
 
 	JDuint("PLUTO_IS_PEER_CISCO", c->config->remote_peer_cisco);
-	JDstr("PLUTO_PEER_DNS_INFO", (st != NULL && st->st_seen_cfg_dns != NULL) ? st->st_seen_cfg_dns : "");
-	JDstr("PLUTO_PEER_DOMAIN_INFO", (st != NULL && st->st_seen_cfg_domains != NULL) ? st->st_seen_cfg_domains : "");
-	JDstr("PLUTO_PEER_BANNER", (st != NULL && st->st_seen_cfg_banner != NULL) ? st->st_seen_cfg_banner : "");
+	JDstr("PLUTO_PEER_DNS_INFO", (child != NULL && child->sa.st_seen_cfg_dns != NULL ? child->sa.st_seen_cfg_dns : ""));
+	JDstr("PLUTO_PEER_DOMAIN_INFO", (child != NULL && child->sa.st_seen_cfg_domains != NULL ? child->sa.st_seen_cfg_domains : ""));
+	JDstr("PLUTO_PEER_BANNER", (child != NULL && child->sa.st_seen_cfg_banner != NULL ? child->sa.st_seen_cfg_banner : ""));
 	JDuint("PLUTO_CFG_SERVER", sr->local->host->config->modecfg.server);
 	JDuint("PLUTO_CFG_CLIENT", sr->local->host->config->modecfg.client);
 #ifdef HAVE_NM
@@ -210,10 +211,10 @@ static bool fmt_common_shell_out(char *buf,
 #endif
 
 	struct ipsec_proto_info *const first_ipsec_proto =
-		(st == NULL ? NULL :
-		 st->st_esp.present ? &st->st_esp :
-		 st->st_ah.present ? &st->st_ah :
-		 st->st_ipcomp.present ? &st->st_ipcomp :
+		(child == NULL ? NULL :
+		 child->sa.st_esp.present ? &child->sa.st_esp :
+		 child->sa.st_ah.present ? &child->sa.st_ah :
+		 child->sa.st_ipcomp.present ? &child->sa.st_ipcomp :
 		 NULL);
 
 	if (first_ipsec_proto != NULL) {
@@ -223,10 +224,10 @@ static bool fmt_common_shell_out(char *buf,
 		 * XXX: does the get_sa_bundle_info() call order matter? Should this
 		 * be a single "atomic" call?
 		 */
-		if (get_ipsec_traffic(pexpect_child_sa(st), first_ipsec_proto, DIRECTION_INBOUND)) {
+		if (get_ipsec_traffic(child, first_ipsec_proto, DIRECTION_INBOUND)) {
 			JDuint64("PLUTO_INBYTES", first_ipsec_proto->inbound.bytes);
 		}
-		if (get_ipsec_traffic(pexpect_child_sa(st), first_ipsec_proto, DIRECTION_OUTBOUND)) {
+		if (get_ipsec_traffic(child, first_ipsec_proto, DIRECTION_OUTBOUND)) {
 			JDuint64("PLUTO_OUTBYTES", first_ipsec_proto->outbound.bytes);
 		}
 	}
@@ -398,7 +399,7 @@ static bool invoke_command(const char *verb, const char *verb_suffix, const char
 static bool do_updown_verb(const char *verb,
 			   const struct connection *c,
 			   const struct spd_route *sr,
-			   struct state *st,
+			   struct child_sa *child,
 			   /* either st, or c's logger */
 			   struct logger *logger)
 {
@@ -447,7 +448,7 @@ static bool do_updown_verb(const char *verb,
 	char common_shell_out_str[2048];
 	if (!fmt_common_shell_out(common_shell_out_str,
 				  sizeof(common_shell_out_str), c, sr,
-				  st)) {
+				  child)) {
 		llog(RC_LOG_SERIOUS, logger,
 			    "%s%s command too long!", verb,
 			    verb_suffix);
@@ -477,7 +478,7 @@ static bool do_updown_verb(const char *verb,
 bool do_updown(enum updown updown_verb,
 	       const struct connection *c,
 	       const struct spd_route *spd,
-	       struct state *st,
+	       struct child_sa *child,
 	       /* either st, or c's logger */
 	       struct logger *logger)
 {
@@ -527,14 +528,14 @@ bool do_updown(enum updown updown_verb,
 		ldbg(logger, "kernel: running updown command \"%s\" for verb %s ", updown, verb);
 	}
 
-	return do_updown_verb(verb, c, spd, st, logger);
+	return do_updown_verb(verb, c, spd, child, logger);
 }
 
 void do_updown_child(enum updown updown_verb, struct child_sa *child)
 {
 	struct connection *c = child->sa.st_connection;
 	FOR_EACH_ITEM(spd, &c->child.spds) {
-		do_updown(updown_verb, c, spd, &child->sa, child->sa.logger);
+		do_updown(updown_verb, c, spd, child, child->sa.logger);
 	}
 }
 
@@ -547,9 +548,8 @@ void do_updown_unroute_spd(const struct spd_route *spd, const struct spd_owner *
 			   struct child_sa *child, struct logger *logger)
 {
 	if (owner->bare_route == NULL) {
-		do_updown(UPDOWN_UNROUTE, spd->connection, spd,
-			  (child != NULL ? &child->sa : NULL),
-			  logger);
+		do_updown(UPDOWN_UNROUTE, spd->connection,
+			  spd, child, logger);
 	}
 }
 
