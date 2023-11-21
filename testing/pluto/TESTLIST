@@ -91,8 +91,8 @@ kvmplutotest	basic-pluto-01-nokey		good
 #################################################################
 
 kvmplutotest	connalias-01-conflict				wip
-kvmplutotest	connalias-02-twoconn-ikev1			wip
-kvmplutotest	connalias-02-twoconn-ikev2			wip
+kvmplutotest	connalias-02-twoconn-ikev1			good
+kvmplutotest	connalias-02-twoconn-ikev2			good
 
 kvmplutotest	readwriteconf-01				wip
 
