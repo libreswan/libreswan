@@ -125,7 +125,14 @@ static bool whack_connections_by_alias(const struct whack_message *m,
 	if (next_connection_new2old(&by_alias)) {
 		/* header */
 		if (each->future_tense != NULL) {
-			llog(RC_COMMENT, logger, "%s all connections with alias=\"%s\"",
+			/*
+			 * The config option is connalias= but, given
+			 * we wan't this to go away, better to not
+			 * tell any one and instead use something
+			 * closer to connectionstatus which logs
+			 * "aliases: ...".
+			 */
+			llog(RC_COMMENT, logger, "%s all connections with alias \"%s\"",
 			     each->future_tense, m->name);
 		}
 		unsigned nr = 0;
