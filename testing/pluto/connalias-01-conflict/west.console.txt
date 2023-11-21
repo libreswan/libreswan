@@ -1,97 +1,138 @@
-west:~#
- ping -n -c 4 192.0.2.254
-PING 192.0.2.254 (192.0.2.254): 56 data bytes
-64 bytes from 192.0.2.254: icmp_seq=0 ttl=257 time=999 ms
-64 bytes from 192.0.2.254: icmp_seq=1 ttl=257 time=999 ms
-64 bytes from 192.0.2.254: icmp_seq=2 ttl=257 time=999 ms
-64 bytes from 192.0.2.254: icmp_seq=3 ttl=257 time=999 ms
-
---- 192.0.2.254 ping statistics ---
-4 packets transmitted, 4 packets received, 0% packet loss
-round-trip min/avg/max = 3.1/4.5/9.26 ms
-west:~#
+/testing/guestbin/swan-prep
+west #
+ # confirm that the network is alive
+west #
+ ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
+destination -I 192.0.1.254 192.0.2.254 is alive
+west #
+ # ensure that clear text does not get through
+west #
  iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j DROP
-west:~#
- ping -n -c 4 192.0.2.254
-PING 192.0.2.254 (192.0.2.254): 56 data bytes
-
---- 192.0.2.254 ping statistics ---
-4 packets transmitted, 0 packets received, 100% packet loss
-west:~#
- TESTNAME=alias-01
-west:~#
- source /testing/pluto/bin/westlocal.sh
-west:~#
- ipsec setup start
-ipsec_setup: Starting Openswan IPsec VERSION
-west:~#
+west #
+ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
+west #
+ # confirm clear text does not get through
+west #
+ ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
+down
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
  ipsec auto --add westnet-eastnet-alias
-west:~#
+002 "westnet-eastnet-alias": added IKEv1 connection
+west #
  ipsec auto --add westnet-eastnet-second
-west:~#
+002 "westnet-eastnet-second": added IKEv1 connection
+west #
  ipsec whack --status | grep westnet-eastnet
-000 "westnet-eastnet-alias": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; eroute owner: #0
-000 "westnet-eastnet-alias":     myip=unset; hisip=unset;
-000 "westnet-eastnet-alias":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 3
-000 "westnet-eastnet-alias":   policy: RSASIG+ENCRYPT+TUNNEL+PFS; prio: 24,24; interface: eth1; 
-000 "westnet-eastnet-alias":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
-000 "westnet-eastnet-alias":   aliases: franklin 
-000 "westnet-eastnet-second": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; eroute owner: #0
-000 "westnet-eastnet-second":     myip=unset; hisip=unset;
-000 "westnet-eastnet-second":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 3
-000 "westnet-eastnet-second":   policy: RSASIG+ENCRYPT+TUNNEL+PFS; prio: 24,24; interface: eth1; 
-000 "westnet-eastnet-second":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
-000 "westnet-eastnet-second":   aliases: abigail franklin 
-west:~#
+000 "westnet-eastnet-alias": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
+000 "westnet-eastnet-alias":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
+000 "westnet-eastnet-alias":   my_updown=ipsec _updown;
+000 "westnet-eastnet-alias":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+000 "westnet-eastnet-alias":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
+000 "westnet-eastnet-alias":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+000 "westnet-eastnet-alias":   sec_label:unset;
+000 "westnet-eastnet-alias":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+000 "westnet-eastnet-alias":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+000 "westnet-eastnet-alias":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+000 "westnet-eastnet-alias":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+000 "westnet-eastnet-alias":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+000 "westnet-eastnet-alias":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+000 "westnet-eastnet-alias":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
+000 "westnet-eastnet-alias":   dpd: passive; delay:0s; timeout:0s
+000 "westnet-eastnet-alias":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
+000 "westnet-eastnet-alias":   routing: unrouted;
+000 "westnet-eastnet-alias":   conn serial: $1;
+000 "westnet-eastnet-alias":   aliases: franklin
+000 "westnet-eastnet-second": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
+000 "westnet-eastnet-second":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
+000 "westnet-eastnet-second":   my_updown=ipsec _updown;
+000 "westnet-eastnet-second":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+000 "westnet-eastnet-second":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
+000 "westnet-eastnet-second":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+000 "westnet-eastnet-second":   sec_label:unset;
+000 "westnet-eastnet-second":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+000 "westnet-eastnet-second":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+000 "westnet-eastnet-second":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+000 "westnet-eastnet-second":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+000 "westnet-eastnet-second":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+000 "westnet-eastnet-second":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+000 "westnet-eastnet-second":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
+000 "westnet-eastnet-second":   dpd: passive; delay:0s; timeout:0s
+000 "westnet-eastnet-second":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
+000 "westnet-eastnet-second":   routing: unrouted;
+000 "westnet-eastnet-second":   conn serial: $2;
+000 "westnet-eastnet-second":   aliases: abigail franklin
+west #
+ echo "initdone"
+initdone
+west #
+ # use the connalias
+west #
+ ipsec auto --up franklin
+000 initiating all connections with alias "franklin"
+002 "westnet-eastnet-second" #1: initiating IKEv1 Main Mode connection
+1v1 "westnet-eastnet-second" #1: sent Main Mode request
+000 "westnet-eastnet-alias": queue IPsec SA; waiting on ISAKMP SA "westnet-eastnet-second" #1 negotiating with 192.1.2.23
+000 initiating 2 connections
+1v1 "westnet-eastnet-second" #1: sent Main Mode I2
+1v1 "westnet-eastnet-second" #1: sent Main Mode I3
+002 "westnet-eastnet-second" #1: Peer ID is ID_FQDN: '@east'
+003 "westnet-eastnet-second" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+004 "westnet-eastnet-second" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+002 "westnet-eastnet-alias" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+002 "westnet-eastnet-second" #3: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+1v1 "westnet-eastnet-alias" #2: sent Quick Mode request
+1v1 "westnet-eastnet-second" #3: sent Quick Mode request
+003 "westnet-eastnet-alias" #2: cannot install kernel policy 192.0.1.0/24->192.0.2.0/24; it is in use by unrouted-bare-negotiation connection "westnet-eastnet-second"
+032 "westnet-eastnet-alias" #2: state transition function for STATE_QUICK_I1 had internal error
+004 "westnet-eastnet-second" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+west #
+ ipsec whack --trafficstatus
+006 #3: "westnet-eastnet-second", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+west #
  echo done
 done
-west:~#
- /testing/pluto/bin/wait-until-pluto-started
-west:~#
- ipsec auto --up  franklin
-000 initiating all conn alias='franklin' 
-104 "westnet-eastnet-alias" #1: STATE_MAIN_I1: initiate
-003 "westnet-eastnet-alias" #1: received Vendor ID payload [Openswan 
-003 "westnet-eastnet-alias" #1: received Vendor ID payload [Dead Peer Detection]
-106 "westnet-eastnet-alias" #1: STATE_MAIN_I2: sent MI2, expecting MR2
-108 "westnet-eastnet-alias" #1: STATE_MAIN_I3: sent MI3, expecting MR3
-004 "westnet-eastnet-alias" #1: STATE_MAIN_I4: ISAKMP SA established {auth=OAKLEY_RSA_SIG cipher=aes_128 prf=oakley_sha group=modp1536}
-117 "westnet-eastnet-alias" #2: STATE_QUICK_I1: initiate
-004 "westnet-eastnet-alias" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode
-west:~#
- ipsec look
-west NOW
-192.0.1.0/24       -> 192.0.2.0/24       => tun0xIPIP@192.1.2.23 esp0xESPSPI@192.1.2.23
-ipsec0->eth1 mtu=16260(9999)->1500
-tun0xTUN#@192.1.2.23 IPIP: dir=out src=192.1.2.45 natencap=none natsport=0 natdport=0  
-esp0xKLIPSPIK@192.1.2.23 ESP_AES_HMAC_SHA1: dir=out src=192.1.2.45 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64 alen=160 aklen=160 eklen=128 natencap=none natsport=0 natdport=0  
-esp0xKLIPSPIK@192.1.2.45 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64 alen=160 aklen=160 eklen=128 natencap=none natsport=0 natdport=0  
-tun0xTUN#@192.1.2.45 IPIP: dir=in  src=192.1.2.23 policy=192.0.2.0/24->192.0.1.0/24 flags=0x8<> natencap=none natsport=0 natdport=0  
-ROUTING TABLE
-192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.45 
-192.1.2.0/24 dev ipsec0  proto kernel  scope link  src 192.1.2.45 
-192.0.2.0/24 dev ipsec0  scope link 
-default via 192.1.2.254 dev eth1 
-west:~#
- echo done
-done
-west:~#
+west #
+ ../../guestbin/ipsec-kernel-state.sh
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 0 
+	sel src 192.1.2.23/32 dst 192.1.2.45/32 
+west #
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.0.1.0/24 dst 192.0.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+west #
  
-
-west:~#
- ipsec look
-west NOW
-192.0.1.0/24       -> 192.0.2.0/24       => tun0xIPIP@192.1.2.23 esp0xESPSPI@192.1.2.23
-ipsec0->eth1 mtu=16260(9999)->1500
-tun0xTUN#@192.1.2.23 IPIP: dir=out src=192.1.2.45 natencap=none natsport=0 natdport=0  
-esp0xKLIPSPIK@192.1.2.23 ESP_AES_HMAC_SHA1: dir=out src=192.1.2.45 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64 alen=160 aklen=160 eklen=128 natencap=none natsport=0 natdport=0  
-tun0xTUN#@192.1.2.23 IPIP: dir=out src=192.1.2.45 natencap=none natsport=0 natdport=0  
-esp0xKLIPSPIK@192.1.2.23 ESP_AES_HMAC_SHA1: dir=out src=192.1.2.45 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64 alen=160 aklen=160 eklen=128 natencap=none natsport=0 natdport=0  
-esp0xKLIPSPIK@192.1.2.45 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64   alen=160 aklen=160 eklen=128  natencap=none natsport=0 natdport=0  
-tun0xTUN#@192.1.2.45 IPIP: dir=in  src=192.1.2.23 policy=192.0.2.0/24->192.0.1.0/24 flags=0x8<>  natencap=none natsport=0 natdport=0  
-ROUTING TABLE
-192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.45 
-192.1.2.0/24 dev ipsec0  proto kernel  scope link  src 192.1.2.45 
-192.0.2.0/24 dev ipsec0  scope link 
-default via 192.1.2.254 dev eth1 
-
