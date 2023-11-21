@@ -1247,9 +1247,9 @@ bool pexpect_connection_is_disowned(struct connection *c, struct logger *logger,
 	return ok_to_delete;
 }
 
-static bool initiate_dispatch_ok(struct connection *c,
-				 struct logger *logger,
-				 const struct routing_annex *e)
+static bool initiated_ike_dispatch_ok(struct connection *c,
+				      struct logger *logger,
+				      const struct routing_annex *e)
 {
 	switch (c->child.routing) {
 	case RT_UNROUTED:
@@ -1283,9 +1283,70 @@ void connection_initiated_ike(struct ike_sa *ike,
 		.ike = &ike,
 		.initiated_by = initiated_by,
 		.where = where,
-		.dispatch_ok = initiate_dispatch_ok,
+		.dispatch_ok = initiated_ike_dispatch_ok,
 	};
 	dispatch(CONNECTION_INITIATE, c, logger, &annex);
+}
+
+static bool initiated_child_dispatch_ok(struct connection *c,
+					struct logger *logger,
+					const struct routing_annex *e)
+{
+	switch (c->child.routing) {
+	case RT_ROUTED_ONDEMAND:
+		return true;
+	case RT_UNROUTED:
+		/*
+		 * An UNROUTED connection (i.e., no Child SA) can
+		 * still have an IKE SA, just as long as that IKE SA
+		 * matches what is negotiating the connection?
+		 *
+		 * For instance:
+		 *
+		 *    up cuckold     -- #1, #2
+		 *    up cuckoo      -- #3 (uses #1)
+		 *    down cuckold   -- only deletes #2, #1 is in use
+		 *
+		 * followed by:
+		 *
+		 *    up cuckold
+		 *
+		 * will initiate the connection cuckold with IKE SA
+		 * still set to #1.
+		 *
+		 * Have to wonder what happens when there's a replace?
+		 */
+		for (enum connection_owner owner = CONNECTION_OWNER_FLOOR;
+		     owner < CONNECTION_OWNER_ROOF; owner++) {
+			if (c->owner[owner] == SOS_NOBODY) {
+				continue;
+			}
+			if (owner >= IKE_SA_OWNER_FLOOR &&
+			    owner < IKE_SA_OWNER_ROOF &&
+			    c->owner[owner] == (*e->ike)->sa.st_serialno) {
+				pdbg(logger, "connection already has IKE SA");
+				continue;
+			}
+			llog_pexpect(logger, e->where,
+				     "connection "PRI_CO" [%p] is already owned by .%s "PRI_SO,
+				     pri_connection_co(c), c,
+				     enum_name(&connection_owner_names, owner),
+				     pri_so(c->owner[owner]));
+		}
+		return true;
+	default:
+	{
+		/*
+		 * Ignore stray initiates (presumably due to two
+		 * acquires triggering simultaneously) or due to an
+		 * initiate being used to force a rekey.
+		 */
+		enum_buf rb;
+		llog(RC_LOG, logger, "connection is already %s",
+		     str_enum(&routing_tails, c->child.routing, &rb));
+		return false;
+	}
+	}
 }
 
 void connection_initiated_child(struct ike_sa *ike, struct child_sa *child,
@@ -1298,7 +1359,7 @@ void connection_initiated_child(struct ike_sa *ike, struct child_sa *child,
 		.ike = &ike,
 		.child = &child,
 		.initiated_by = initiated_by,
-		.dispatch_ok = initiate_dispatch_ok,
+		.dispatch_ok = initiated_child_dispatch_ok,
 		.where = where,
 	};
 	dispatch(CONNECTION_INITIATE, cc, logger, &annex);
@@ -1309,7 +1370,7 @@ void connection_pending(struct connection *c, enum initiated_by initiated_by, wh
 	struct routing_annex annex = {
 		.initiated_by = initiated_by,
 		.where = where,
-		.dispatch_ok = initiate_dispatch_ok,
+		.dispatch_ok = initiated_child_dispatch_ok,
 	};
 	dispatch(CONNECTION_INITIATE, c, c->logger, &annex);
 }
