@@ -675,18 +675,20 @@ struct spd_owner spd_owner(const struct spd_route *c_spd,
 		 * of the routing table seems wrong - the SPD still
 		 * conflicts so only one is allowed.
 		 */
-
-		if (!routed(d)) {
-			ldbg_spd(logger, indent, d_spd, "skipped route; not routed");
-		} else if (c->clonedfrom == d) {
-			/* D, the parent, is already routed */
-			ldbg_spd(logger, indent, d_spd,
-				 "skipped route; is connection parent");
-		} else if (!address_eq_address(c->local->host.addr,
-					       d->local->host.addr)) {
-			ldbg_spd(logger, indent, d_spd, "skipped route; different local address?!?");
-		} else {
-			save_spd_owner(&owner.bare_route, "bare_route", d_spd, logger, indent);
+		{
+			const char *checking = "bare_route";
+			if (!routed(d)) {
+				ldbg_spd(logger, indent, d_spd, "skipped %s; not routed", checking);
+			} else if (c->clonedfrom == d) {
+				/* D, the parent, is already routed */
+				ldbg_spd(logger, indent, d_spd,
+					 "skipped %s; is connection parent", checking);
+			} else if (!address_eq_address(c->local->host.addr,
+						       d->local->host.addr)) {
+				ldbg_spd(logger, indent, d_spd, "skipped %s; different local address?!?", checking);
+			} else {
+				save_spd_owner(&owner.bare_route, checking, d_spd, logger, indent);
+			}
 		}
 
 		/*
@@ -696,14 +698,16 @@ struct spd_owner spd_owner(const struct spd_route *c_spd,
 		 * needed.  That is what CAT (client address translation) is
 		 * all about.
 		 */
-
-		ip_selector c_local_host = selector_from_address(c_spd->local->host->addr);
-		if (!selector_eq_selector(c_local_host, d_spd->local->client)) {
-			ldbg_spd(logger, indent, d_spd, "skipped cat; different local selectors");
-		} else if (c->config->overlapip && d->config->overlapip) {
-			ldbg_spd(logger, indent, d_spd, "skipped policy;  both ends have POLICY_OVERLAPIP");
-		} else {
-			save_spd_owner(&owner.bare_cat, "bare_cat", d_spd, logger, indent);
+		{
+			const char *checking = "bare_cat";
+			ip_selector c_local_host = selector_from_address(c_spd->local->host->addr);
+			if (!selector_eq_selector(c_local_host, d_spd->local->client)) {
+				ldbg_spd(logger, indent, d_spd, "skipped %s; different local selectors", checking);
+			} else if (c->config->overlapip && d->config->overlapip) {
+				ldbg_spd(logger, indent, d_spd, "skipped %s;  both ends have POLICY_OVERLAPIP", checking);
+			} else {
+				save_spd_owner(&owner.bare_cat, checking, d_spd, logger, indent);
+			}
 		}
 
 		/*
@@ -716,31 +720,35 @@ struct spd_owner spd_owner(const struct spd_route *c_spd,
 		 * Since C_SPD doesn't exist checks for matching
 		 * .overlapip and/or priority aren't needed.
 		 */
-
-		if (!selector_eq_selector(*c_local, d_spd->local->client)) {
-			ldbg_spd(logger, indent, d_spd, "skipped bare; different local selectors");
-		} else {
-			save_spd_owner(&owner.bare_policy, "bare_policy", d_spd, logger, indent);
+		{
+			const char *checking = "bare_policy";
+			if (!selector_eq_selector(*c_local, d_spd->local->client)) {
+				ldbg_spd(logger, indent, d_spd, "skipped %s; different local selectors", checking);
+			} else {
+				save_spd_owner(&owner.bare_policy, checking, d_spd, logger, indent);
+			}
 		}
 
 		/*
 		 * .policy specific checks
 		 */
-
-		if (!selector_eq_selector(c_spd->local->client,
-					  d_spd->local->client)) {
-			ldbg_spd(logger, indent, d_spd, "skipped policy; different local selectors");
-		} else if (c->clonedfrom == d) {
-			enum_buf rb;
-			ldbg_spd(logger, indent, d_spd,
-				 "skipped policy; is connection parent with routing >= %s[%s] %s",
-				 str_enum_short(&routing_names, c_routing, &rb),
-				 enum_name_short(&shunt_kind_names, c_shunt_kind),
-				 bool_str(d->child.routing >= c_routing));
-		} else if (c->config->overlapip && d->config->overlapip) {
-			ldbg_spd(logger, indent, d_spd, "skipped policy;  both ends have POLICY_OVERLAPIP");
-		} else {
-			save_spd_owner(&owner.policy, "policy", d_spd, logger, indent);
+		{
+			const char *checking = "policy";
+			if (!selector_eq_selector(c_spd->local->client,
+						  d_spd->local->client)) {
+				ldbg_spd(logger, indent, d_spd, "skipped %s; different local selectors", checking);
+			} else if (c->clonedfrom == d) {
+				enum_buf rb;
+				ldbg_spd(logger, indent, d_spd,
+					 "skipped %s; is connection parent with routing >= %s[%s] %s",
+					 checking, str_enum_short(&routing_names, c_routing, &rb),
+					 enum_name_short(&shunt_kind_names, c_shunt_kind),
+					 bool_str(d->child.routing >= c_routing));
+			} else if (c->config->overlapip && d->config->overlapip) {
+				ldbg_spd(logger, indent, d_spd, "skipped %s;  both ends have POLICY_OVERLAPIP", checking);
+			} else {
+				save_spd_owner(&owner.policy, checking, d_spd, logger, indent);
+			}
 		}
 
 		/*
@@ -749,22 +757,30 @@ struct spd_owner spd_owner(const struct spd_route *c_spd,
 		 * Given an SPD and its new routing, return any SPD
 		 * that eclipses it.
 		 */
+		{
+			enum shunt_kind d_shunt_kind = spd_shunt_kind(d_spd);
+			const char *checking = "eclipsing";
 
-		enum shunt_kind d_shunt_kind = spd_shunt_kind(d_spd);
-
-		if (!selector_eq_selector(c_spd->local->client,
-					  d_spd->local->client)) {
-			ldbg_spd(logger, indent, d_spd, "skipped eclipsing; different local selectors");
-		} else if (d_shunt_kind < c_shunt_kind) {
-			ldbg_spd(logger, indent, d_spd, "skipped eclipsing; < %s[%s]",
-				 enum_name_short(&routing_names, c_routing),
-				 enum_name_short(&shunt_kind_names, c_shunt_kind));
-		} else if (c->config->overlapip && d->config->overlapip) {
-			ldbg_spd(logger, indent, d_spd, "skipped eclipsing;  both ends have POLICY_OVERLAPIP");
-		} else {
-			save_spd_owner(&owner.eclipsing, "eclipsing", d_spd, logger, indent);
+			if (!selector_eq_selector(c_spd->local->client,
+						  d_spd->local->client)) {
+				ldbg_spd(logger, indent, d_spd, "skipped %s; different local selectors", checking);
+			} else if (d_shunt_kind < c_shunt_kind) {
+				ldbg_spd(logger, indent, d_spd, "skipped %s; < %s[%s]",
+					 checking,
+					 enum_name_short(&routing_names, c_routing),
+					 enum_name_short(&shunt_kind_names, c_shunt_kind));
+			} else if (c->config->overlapip && d->config->overlapip) {
+				ldbg_spd(logger, indent, d_spd, "skipped %s;  both ends have POLICY_OVERLAPIP", checking);
+			} else {
+				save_spd_owner(&owner.eclipsing, checking, d_spd, logger, indent);
+			}
 		}
 	}
+
+#if 0
+	PEXPECT(logger, owner.policy == owner.bare_policy);
+	PEXPECT(logger, owner.policy == owner.eclipsing);
+#endif
 
 	ldbg_owner(logger, &owner, c_local, c_remote, c_routing, __func__);
 	return owner;
