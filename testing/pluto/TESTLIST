@@ -90,7 +90,10 @@ kvmplutotest	basic-pluto-01-nokey		good
 # add connection parser and semantic checker tests
 #################################################################
 
-kvmplutotest	alias-01					wip
+kvmplutotest	connalias-01-conflict				wip
+kvmplutotest	connalias-02-twoconn-ikev1			wip
+kvmplutotest	connalias-02-twoconn-ikev2			wip
+
 kvmplutotest	readwriteconf-01				wip
 
 kvmplutotest	algparse-01					good
