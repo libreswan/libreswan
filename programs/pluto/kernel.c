@@ -797,6 +797,20 @@ static void clear_connection_spd_conflicts(struct connection *c)
 	}
 }
 
+static void llog_spd_conflict(struct logger *logger, const struct spd_route *spd,
+			      const struct spd_route *conflict)
+{
+	struct connection *d = conflict->connection;
+	LLOG_JAMBUF(RC_LOG_SERIOUS, logger, buf) {
+		jam_string(buf, "cannot install kernel policy ");
+		jam_selector_pair(buf, &spd->local->client, &spd->remote->client);
+		jam_string(buf, "; it is in use by the ");
+		jam_enum_human(buf, &routing_names, d->child.routing);
+		jam_string(buf, " connection ");
+		jam_connection(buf, d);
+	}
+}
+
 static bool get_connection_spd_conflict(const struct spd_route *spd,
 					const enum routing new_routing,
 					struct spd_owner *owner,
@@ -828,24 +842,7 @@ static bool get_connection_spd_conflict(const struct spd_route *spd,
 
 	/* is there a conflict */
 	if (owner->policy != NULL) {
-		/*
-		 * Double check that it really does own the
-		 * SPD.  After all it is about to trigger a
-		 * reject.
-		 */
-		struct connection *d = spd->wip.conflicting.owner.policy->connection;
-		if (!kernel_policy_installed(d)) {
-			connection_buf ocb;
-			llog_pexpect(logger, HERE,
-				     "conflicting %s policy for "PRI_CONNECTION" %s is not installed",
-				     enum_name_short(&routing_names, c->child.routing),
-				     pri_connection(d, &ocb),
-				     enum_name_short(&routing_names, d->child.routing));
-		}
-		connection_buf cb;
-		llog(RC_LOG_SERIOUS, logger,
-		     "cannot install kernel policy -- it is in use for "PRI_CONNECTION,
-		     pri_connection(d, &cb));
+		llog_spd_conflict(logger, spd, owner->policy);
 		return false;
 	}
 
@@ -2099,24 +2096,7 @@ static bool connection_has_policy_conflicts(const struct connection *c,
 		struct spd_owner owner = spd_owner(spd,  /*ignored-for-policy*/new_routing, logger, where);
 		/* is there a conflict */
 		if (owner.policy != NULL) {
-			/*
-			 * Double check that it really does own the
-			 * SPD.  After all it is about to trigger a
-			 * reject.
-			 */
-			struct connection *d = owner.policy->connection;
-			if (!kernel_policy_installed(d)) {
-				connection_buf ocb;
-				llog_pexpect(logger, HERE,
-					     "conflicting %s policy for "PRI_CONNECTION" %s is not installed",
-					     enum_name_short(&routing_names, c->child.routing),
-					     pri_connection(d, &ocb),
-					     enum_name_short(&routing_names, d->child.routing));
-			}
-			connection_buf cb;
-			llog(RC_LOG_SERIOUS, logger,
-			     "cannot install kernel policy -- it is in use for "PRI_CONNECTION,
-			     pri_connection(d, &cb));
+			llog_spd_conflict(logger, spd, owner.policy);
 			return true;
 		}
 	}
