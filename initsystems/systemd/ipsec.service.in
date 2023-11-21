@@ -7,8 +7,6 @@ Documentation=man:ipsec(8) man:pluto(8) man:ipsec.conf(5)
 [Service]
 Type=@@SD_TYPE@@
 Restart=@@SD_RESTART_TYPE@@
-# 12 is the shutdown while leaving kernel state. Restarting would still kill kernel state
-RestartPreventExitStatus=12
 
 #RestartPreventExitStatus=137 143 SIGTERM SIGKILL
 
