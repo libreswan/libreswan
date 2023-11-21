@@ -96,10 +96,40 @@ static void show_one_spd_brief(struct show *s,
 			 const struct connection *c,
 			 const struct spd_route *spd)
 {
+	bool local_client_eq_host = false;
+	bool remote_client_eq_host = false;
+
+	// jam_end_client() will do nothing if client == host
+	if (selector_eq_address(spd->local->client, spd->local->host->addr)) {
+		local_client_eq_host = true;
+	}
+	if (selector_eq_address(spd->remote->client, spd->remote->host->addr)) {
+		remote_client_eq_host = true;
+	}
+
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
-		jam_end_client(buf, c, spd->local, LEFT_END, NULL);
-		jam_string(buf, " <==> ");
-		jam_end_client(buf, c, spd->remote, RIGHT_END, NULL);
+		if (local_client_eq_host == false && remote_client_eq_host == false) {
+			// subnet-to-subnet
+			jam_end_client(buf, c, spd->local, LEFT_END, NULL);
+			jam_string(buf, " <==> ");
+			jam_end_client(buf, c, spd->remote, RIGHT_END, NULL);
+		} else if (local_client_eq_host == false) {
+			// subnet-to-host
+			jam_end_client(buf, c, spd->local, LEFT_END, NULL);
+			jam_string(buf, " <==> ");
+			jam_end_host(buf, c, spd->remote->host);
+		} else if (remote_client_eq_host == false) {
+			// host-to-subnet
+			jam_end_host(buf, c, spd->local->host);
+			jam_string(buf, " <==> ");
+			jam_end_client(buf, c, spd->remote, RIGHT_END, NULL);
+		} else {
+			// if local_client_eq_host == true && remote_client_eq_host == true
+			// then its a host-to-host transport tunnel
+			jam_end_host(buf, c, spd->local->host);
+			jam_string(buf, " <==> ");
+			jam_end_host(buf, c, spd->remote->host);
+		}
 
 		jam_string(buf, "\tfrom ");
 		jam_end_host(buf, c, spd->local->host);
