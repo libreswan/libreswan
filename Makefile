@@ -150,7 +150,7 @@ git-rpm:
 	rm $(MAIN_RPMBUILD_SOURCES)/version.mk
 	gzip -f $(MAIN_RPMBUILD_SOURCES)/$(MAIN_RPM_PREFIX).tar
 	# get IKE test vectors if needed
-	rpmdev-spectool --get-files $(MAIN_RPMBUILD_SPEC)/libreswan.spec --directory $(MAIN_RPMBUILD_SOURCES);
+	spectool --get-files $(MAIN_RPMBUILD_SPEC)/libreswan.spec --directory $(MAIN_RPMBUILD_SOURCES);
 	rpmbuild -ba $(MAIN_RPMBUILD_SPEC)/libreswan.spec
 
 tarpkg:
