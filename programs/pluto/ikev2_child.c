@@ -606,22 +606,6 @@ v2_notification_t process_v2_childs_sa_payload(const char *what,
 	return v2N_NOTHING_WRONG;
 }
 
-static void jam_end_selector(struct jambuf *buf, ip_selector s)
-{
-	const struct ip_protocol *proto = selector_protocol(s);
-	const ip_range r = selector_range(s);
-	jam_string(buf, "[");
-	jam_range(buf, &r);
-	jam_string(buf, ":");
-	if (s.hport == 0) {
-		jam_string(buf, "0-65535");
-	} else {
-		jam(buf, "%d-%d", s.hport, s.hport);
-	}
-	jam(buf, " %d", proto->ipproto);
-	jam_string(buf, "]");
-}
-
 void llog_v2_child_sa_established(struct ike_sa *ike UNUSED, struct child_sa *child)
 {
 	struct connection *c = child->sa.st_connection;
@@ -631,26 +615,22 @@ void llog_v2_child_sa_established(struct ike_sa *ike UNUSED, struct child_sa *ch
 		case SA_RESPONDER: jam_string(buf, "responder"); break;
 		}
 		if (child->sa.st_v2_rekey_pred == SOS_NOBODY) {
-			jam(buf, " established Child SA");
+			jam_string(buf, " established Child SA");
 		} else {
-			jam(buf, " rekeyed Child SA "PRI_SO"",
-			    pri_so(child->sa.st_v2_rekey_pred));
+			jam_string(buf, " rekeyed Child SA ");
+			jam_so(buf, child->sa.st_v2_rekey_pred);
 		}
-		jam(buf, " using "PRI_SO"; ", pri_so(child->sa.st_clonedfrom));
+		jam_string(buf, " using ");
+		jam_so(buf, child->sa.st_clonedfrom);
+		jam_string(buf, "; IPsec ");
 		/* log Child SA Traffic Selector details for admin's pleasure */
-		jam(buf, "IPsec %s", (child_sa_policy(c) & POLICY_TUNNEL ? "tunnel" : "transport"));
+		jam_string(buf, (child_sa_policy(c) & POLICY_TUNNEL ? "tunnel" : "transport"));
 		FOR_EACH_ITEM(spd, &c->child.spds) {
 			jam_string(buf, " ");
-			if (connection_requires_tss(c) == NULL) {
-				jam_end_selector(buf, spd->local->client);
-				jam_string(buf, " -> ");
-				jam_end_selector(buf, spd->remote->client);
-			} else {
-				jam_string(buf, "[");
-				jam_selector_pair(buf, &spd->local->client,
-						  &spd->remote->client);
-				jam_string(buf, "]");
-			}
+			jam_string(buf, "[");
+			jam_selector_pair(buf, &spd->local->client,
+					  &spd->remote->client);
+			jam_string(buf, "]");
 		}
 		jam_string(buf, " ");
 		jam_child_sa_details(buf, &child->sa);
