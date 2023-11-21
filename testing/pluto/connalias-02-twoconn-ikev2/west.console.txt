@@ -16,7 +16,7 @@ west #
 initdone
 west #
  ipsec up west
-000 initiating all connections with alias="west"
+000 initiating all connections with alias "west"
 1v2 "west-cuckoo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 000 "west-cuckold": queue Child SA; waiting on IKE SA "west-cuckoo" #1 negotiating with 192.1.2.23
 000 initiating 2 connections
@@ -30,7 +30,7 @@ west #
 004 "west-cuckoo" #3: initiator established Child SA using #1; IPsec tunnel [192.0.3.0-192.0.3.255:0-65535 0] -> [192.0.20.0-192.0.20.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
 west #
  ipsec down west
-000 terminating all connections with alias="west"
+000 terminating all connections with alias "west"
 002 "west-cuckoo": terminating SAs using this connection
 002 "west-cuckoo": IKE SA is shared - only terminating Child SA
 002 "west-cuckold": terminating SAs using this connection
@@ -40,14 +40,14 @@ west #
 005 "west-cuckoo" #3: ESP traffic information: in=0B out=0B
 west #
  ipsec up cuckold
-000 initiating all connections with alias="cuckold"
+000 initiating all connections with alias "cuckold"
 002 "west-cuckold" #4: initiating Child SA using IKE SA #1
 000 initiating 1 connection
 1v2 "west-cuckold" #4: sent CREATE_CHILD_SA request for new IPsec SA
 004 "west-cuckold" #4: initiator established Child SA using #1; IPsec tunnel [192.0.3.0-192.0.3.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
 west #
  ipsec up cuckoo
-000 initiating all connections with alias="cuckoo"
+000 initiating all connections with alias "cuckoo"
 002 "west-cuckoo" #5: initiating Child SA using IKE SA #1
 003 EXPECTATION FAILED: "west-cuckoo" #5: connection $2 [0x7f2e192c9a88] is owned by .negotiating_ike_sa #1 (initiate_connection_4_fab() +354 programs/pluto/initiate.c)
 003 EXPECTATION FAILED: "west-cuckoo" #5: connection $2 [0x7f2e192c9a88] is owned by .established_ike_sa #1 (initiate_connection_4_fab() +354 programs/pluto/initiate.c)
@@ -56,7 +56,7 @@ west #
 004 "west-cuckoo" #5: initiator established Child SA using #1; IPsec tunnel [192.0.3.0-192.0.3.255:0-65535 0] -> [192.0.20.0-192.0.20.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
 west #
  ipsec down west
-000 terminating all connections with alias="west"
+000 terminating all connections with alias "west"
 002 "west-cuckoo": terminating SAs using this connection
 002 "west-cuckoo": IKE SA is shared - only terminating Child SA
 002 "west-cuckold": terminating SAs using this connection

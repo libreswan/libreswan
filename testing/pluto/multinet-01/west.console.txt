@@ -111,7 +111,7 @@ west #
  ipsec whack --impair suppress-retransmits
 west #
  ipsec auto --up westnet-eastnet-subnets
-000 initiating all connections with alias="westnet-eastnet-subnets"
+000 initiating all connections with alias "westnet-eastnet-subnets"
 002 "westnet-eastnet-subnets/2x2" #1: initiating IKEv1 Main Mode connection
 1v1 "westnet-eastnet-subnets/2x2" #1: sent Main Mode request
 000 "westnet-eastnet-subnets/2x1": queue IPsec SA; waiting on ISAKMP SA "westnet-eastnet-subnets/2x2" #1 negotiating with 192.1.2.23
@@ -145,7 +145,7 @@ west #
  # test return code for --down when using aliases
 west #
  ipsec auto --down westnet-eastnet-subnets || echo "return code failed - should be 0"
-000 terminating all connections with alias="westnet-eastnet-subnets"
+000 terminating all connections with alias "westnet-eastnet-subnets"
 002 "westnet-eastnet-subnets/2x2": terminating SAs using this connection
 002 "westnet-eastnet-subnets/2x2": ISAKMP SA is shared - only terminating IPsec SA
 002 "westnet-eastnet-subnets/2x2" #5: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1

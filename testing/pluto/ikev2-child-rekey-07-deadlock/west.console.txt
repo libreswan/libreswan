@@ -23,7 +23,7 @@ west #
  # IKE: #1 CHILD: #2, #3, #4, and #5
 west #
  ipsec auto --up west-east
-000 initiating all connections with alias="west-east"
+000 initiating all connections with alias "west-east"
 1v2 "west-east/4x0" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 000 "west-east/3x0": queue Child SA; waiting on IKE SA "west-east/4x0" #1 negotiating with 192.1.2.23
 000 "west-east/2x0": queue Child SA; waiting on IKE SA "west-east/4x0" #1 negotiating with 192.1.2.23

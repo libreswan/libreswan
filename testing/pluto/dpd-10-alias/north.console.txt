@@ -16,7 +16,7 @@ north #
  # brings up both north-dpd/0x[12]
 north #
  ipsec auto --up north-dpd
-000 initiating all connections with alias="north-dpd"
+000 initiating all connections with alias "north-dpd"
 002 "north-dpd/0x2" #1: initiating IKEv1 Main Mode connection
 1v1 "north-dpd/0x2" #1: sent Main Mode request
 000 "north-dpd/0x1": queuing pending IPsec SA negotiating with 192.1.2.23 IKE SA #1 "north-dpd/0x2"

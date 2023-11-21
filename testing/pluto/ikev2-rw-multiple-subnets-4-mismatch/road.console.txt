@@ -22,7 +22,7 @@ road #
 initdone
 road #
  ipsec auto --up road
-000 initiating all connections with alias="road"
+000 initiating all connections with alias "road"
 1v2 "road/0x8" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 000 "road/0x7": queue Child SA; waiting on IKE SA "road/0x8" #1 negotiating with 192.1.2.23
 000 "road/0x6": queue Child SA; waiting on IKE SA "road/0x8" #1 negotiating with 192.1.2.23

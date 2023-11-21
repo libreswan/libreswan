@@ -16,7 +16,7 @@ west #
 initdone
 west #
  ipsec up west
-000 initiating all connections with alias="west"
+000 initiating all connections with alias "west"
 002 "west-cuckoo" #1: initiating IKEv1 Main Mode connection
 1v1 "west-cuckoo" #1: sent Main Mode request
 000 "west-cuckold": queue IPsec SA; waiting on ISAKMP SA "west-cuckoo" #1 negotiating with 192.1.2.23
@@ -33,7 +33,7 @@ west #
 004 "west-cuckoo" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
  ipsec down west
-000 terminating all connections with alias="west"
+000 terminating all connections with alias "west"
 002 "west-cuckoo": terminating SAs using this connection
 002 "west-cuckoo": ISAKMP SA is shared - only terminating IPsec SA
 002 "west-cuckoo" #3: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
@@ -44,14 +44,14 @@ west #
 000 terminated 2 connections
 west #
  ipsec up cuckold
-000 initiating all connections with alias="cuckold"
+000 initiating all connections with alias "cuckold"
 002 "west-cuckold" #4: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 000 initiating 1 connection
 1v1 "west-cuckold" #4: sent Quick Mode request
 004 "west-cuckold" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
  ipsec up cuckoo
-000 initiating all connections with alias="cuckoo"
+000 initiating all connections with alias "cuckoo"
 002 "west-cuckoo" #5: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 003 EXPECTATION FAILED: "west-cuckoo" #5: connection $2 [0x7f9d22432a88] is owned by .negotiating_ike_sa #1 (initiate_connection_4_fab() +354 programs/pluto/initiate.c)
 003 EXPECTATION FAILED: "west-cuckoo" #5: connection $2 [0x7f9d22432a88] is owned by .established_ike_sa #1 (initiate_connection_4_fab() +354 programs/pluto/initiate.c)
@@ -60,7 +60,7 @@ west #
 004 "west-cuckoo" #5: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
  ipsec down west
-000 terminating all connections with alias="west"
+000 terminating all connections with alias "west"
 002 "west-cuckoo": terminating SAs using this connection
 002 "west-cuckoo": ISAKMP SA is shared - only terminating IPsec SA
 002 "west-cuckoo" #5: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
