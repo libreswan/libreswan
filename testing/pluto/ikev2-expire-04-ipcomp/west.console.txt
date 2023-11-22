@@ -11,7 +11,7 @@ west #
  # confirm max bytes for IPsec SA is set
 west #
  ipsec status |grep ipsec_max_bytes
-000 "west":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2KiB; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"west":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2KiB; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
 west #
  echo "initdone"
 initdone
@@ -43,7 +43,7 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
  ipsec trafficstatus
-000 #2: "west", type=ESP, add_time=1234567890, inBytes=504, outBytes=504, maxBytes=2KiB, id='@east'
+#2: "west", type=ESP, add_time=1234567890, inBytes=504, outBytes=504, maxBytes=2KiB, id='@east'
 west #
  # next pings will go over and initiate a rekey expect only #3 IPsec
 west #
@@ -58,7 +58,7 @@ west #
  sleep 5
 west #
  ipsec trafficstatus
-000 #3: "west", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2KiB, id='@east'
+#3: "west", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2KiB, id='@east'
 west #
  # expect only #4 IPsec second rekeyed Child SA
 west #
@@ -71,7 +71,7 @@ west #
  sleep 5
 west #
  ipsec trafficstatus
-000 #4: "west", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2KiB, id='@east'
+#4: "west", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2KiB, id='@east'
 west #
  echo done
 done

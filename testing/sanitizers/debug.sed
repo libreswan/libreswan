@@ -1,1 +1,1 @@
-s/^000 debug:.*/000 debug .../
+s/^debug:.*/debug .../

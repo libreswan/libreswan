@@ -25,7 +25,7 @@ west #
 002 "netkey": added IKEv2 connection
 west #
  ipsec auto --status | grep DONT_ENCAP_DSCP
-000 "netkey":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+DONT_ENCAP_DSCP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"netkey":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+DONT_ENCAP_DSCP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 west #
  ipsec whack --impair suppress-retransmits
 west #
@@ -43,7 +43,7 @@ west #
 up
 west #
  ipsec whack --trafficstatus
-000 #2: "netkey", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+#2: "netkey", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  ip -statistics xfrm state |grep dscp
 	replay-window 0 seq 0x00000000 flag af-unspec esnextra_flag dont-encap-dscp (0x10100000)

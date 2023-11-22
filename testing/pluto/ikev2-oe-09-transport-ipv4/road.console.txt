@@ -10,7 +10,7 @@ road #
  # give OE policies time to load
 road #
  ../../guestbin/wait-for.sh --match 'loaded 13' -- ipsec auto --status
-000 Total IPsec connections: loaded 13, active 0
+Total IPsec connections: loaded 13, active 0
 road #
  ip -s xfrm monitor > /tmp/xfrm-monitor.out & sleep 1
 [x] PID
@@ -24,13 +24,13 @@ road #
 fired and forgotten
 road #
  ../../guestbin/wait-for.sh --match private-or-clear -- ipsec whack --trafficstatus
-000 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='ID_NULL'
+#2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='ID_NULL'
 road #
  ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
 up
 road #
  ipsec whack --trafficstatus
-000 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=64, outBytes=64, maxBytes=2^63B, id='ID_NULL'
+#2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=64, outBytes=64, maxBytes=2^63B, id='ID_NULL'
 road #
  # confirm we got transport mode, not tunnel mode
 road #

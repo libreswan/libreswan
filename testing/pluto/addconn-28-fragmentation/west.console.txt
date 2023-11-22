@@ -51,37 +51,37 @@ west #
 002 "whack--ikev2--fragmentation-force": added IKEv2 connection
 west #
  ipsec connectionstatus | sed -n -e 's/\(.* policy:\) .*\(IKEv[12]\).*/\1 \2/p'
-000 "addconn--ikev1":   policy: IKEv1
-000 "addconn--ikev1--fragmentation-force":   policy: IKEv1
-000 "addconn--ikev2":   policy: IKEv2
-000 "addconn--ikev2--fragmentation-force":   policy: IKEv2
-000 "addconn--ikev2--fragmentation-no":   policy: IKEv2
-000 "addconn--ikev2--fragmentation-yes":   policy: IKEv2
-000 "whack--ikev1":   policy: IKEv1
-000 "whack--ikev1--fragmentation-force":   policy: IKEv1
-000 "whack--ikev2":   policy: IKEv2
-000 "whack--ikev2--fragmentation-force":   policy: IKEv2
-000 "whack--ikev2--fragmentation-no":   policy: IKEv2
-000 "whack--ikev2--fragmentation-yes":   policy: IKEv2
-000 "whack--ikev2--ikefrag-allow":   policy: IKEv2
-000 "whack--ikev2--ikefrag-force":   policy: IKEv2
+"addconn--ikev1":   policy: IKEv1
+"addconn--ikev1--fragmentation-force":   policy: IKEv1
+"addconn--ikev2":   policy: IKEv2
+"addconn--ikev2--fragmentation-force":   policy: IKEv2
+"addconn--ikev2--fragmentation-no":   policy: IKEv2
+"addconn--ikev2--fragmentation-yes":   policy: IKEv2
+"whack--ikev1":   policy: IKEv1
+"whack--ikev1--fragmentation-force":   policy: IKEv1
+"whack--ikev2":   policy: IKEv2
+"whack--ikev2--fragmentation-force":   policy: IKEv2
+"whack--ikev2--fragmentation-no":   policy: IKEv2
+"whack--ikev2--fragmentation-yes":   policy: IKEv2
+"whack--ikev2--ikefrag-allow":   policy: IKEv2
+"whack--ikev2--ikefrag-force":   policy: IKEv2
 west #
  ipsec connectionstatus | sed -n -e 's/\(.* policy:\) .*IKE_FRAG_ALLOW.*/\1 IKE_FRAG_ALLOW/p'
-000 "addconn--ikev1":   policy: IKE_FRAG_ALLOW
-000 "addconn--ikev1--fragmentation-force":   policy: IKE_FRAG_ALLOW
-000 "addconn--ikev2":   policy: IKE_FRAG_ALLOW
-000 "addconn--ikev2--fragmentation-force":   policy: IKE_FRAG_ALLOW
-000 "addconn--ikev2--fragmentation-yes":   policy: IKE_FRAG_ALLOW
-000 "whack--ikev1":   policy: IKE_FRAG_ALLOW
-000 "whack--ikev1--fragmentation-force":   policy: IKE_FRAG_ALLOW
-000 "whack--ikev2":   policy: IKE_FRAG_ALLOW
-000 "whack--ikev2--fragmentation-force":   policy: IKE_FRAG_ALLOW
-000 "whack--ikev2--fragmentation-yes":   policy: IKE_FRAG_ALLOW
-000 "whack--ikev2--ikefrag-allow":   policy: IKE_FRAG_ALLOW
-000 "whack--ikev2--ikefrag-force":   policy: IKE_FRAG_ALLOW
+"addconn--ikev1":   policy: IKE_FRAG_ALLOW
+"addconn--ikev1--fragmentation-force":   policy: IKE_FRAG_ALLOW
+"addconn--ikev2":   policy: IKE_FRAG_ALLOW
+"addconn--ikev2--fragmentation-force":   policy: IKE_FRAG_ALLOW
+"addconn--ikev2--fragmentation-yes":   policy: IKE_FRAG_ALLOW
+"whack--ikev1":   policy: IKE_FRAG_ALLOW
+"whack--ikev1--fragmentation-force":   policy: IKE_FRAG_ALLOW
+"whack--ikev2":   policy: IKE_FRAG_ALLOW
+"whack--ikev2--fragmentation-force":   policy: IKE_FRAG_ALLOW
+"whack--ikev2--fragmentation-yes":   policy: IKE_FRAG_ALLOW
+"whack--ikev2--ikefrag-allow":   policy: IKE_FRAG_ALLOW
+"whack--ikev2--ikefrag-force":   policy: IKE_FRAG_ALLOW
 west #
  ipsec connectionstatus | sed -n -e 's/\(.* policy:\) .*IKE_FRAG_FORCE.*/\1 IKE_FRAG_FORCE/p'
-000 "addconn--ikev1--fragmentation-force":   policy: IKE_FRAG_FORCE
-000 "whack--ikev1--fragmentation-force":   policy: IKE_FRAG_FORCE
+"addconn--ikev1--fragmentation-force":   policy: IKE_FRAG_FORCE
+"whack--ikev1--fragmentation-force":   policy: IKE_FRAG_FORCE
 west #
  

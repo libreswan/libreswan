@@ -30,24 +30,24 @@ road #
 002 "v6-tunnel-east-road": added IKEv1 connection
 road #
  ipsec auto --status | grep v6-tunnel-east-road
-000 "v6-tunnel-east-road": 2001:db8:1:3::209[@road]---2001:db8:1:3::254...2001:db8:1:2::23[@east]; unrouted; my_ip=unset; their_ip=unset;
-000 "v6-tunnel-east-road":   host: oriented; local: 2001:db8:1:3::209; remote: 2001:db8:1:2::23;
-000 "v6-tunnel-east-road":   my_updown=ipsec _updown;
-000 "v6-tunnel-east-road":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "v6-tunnel-east-road":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
-000 "v6-tunnel-east-road":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-000 "v6-tunnel-east-road":   sec_label:unset;
-000 "v6-tunnel-east-road":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
-000 "v6-tunnel-east-road":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
-000 "v6-tunnel-east-road":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "v6-tunnel-east-road":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-000 "v6-tunnel-east-road":   conn_prio: 128,128; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "v6-tunnel-east-road":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
-000 "v6-tunnel-east-road":   our idtype: ID_FQDN; our id=@road; their idtype: ID_FQDN; their id=@east
-000 "v6-tunnel-east-road":   dpd: passive; delay:0s; timeout:0s
-000 "v6-tunnel-east-road":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
-000 "v6-tunnel-east-road":   routing: unrouted;
-000 "v6-tunnel-east-road":   conn serial: $1;
+"v6-tunnel-east-road": 2001:db8:1:3::209[@road]---2001:db8:1:3::254...2001:db8:1:2::23[@east]; unrouted; my_ip=unset; their_ip=unset;
+"v6-tunnel-east-road":   host: oriented; local: 2001:db8:1:3::209; remote: 2001:db8:1:2::23;
+"v6-tunnel-east-road":   my_updown=ipsec _updown;
+"v6-tunnel-east-road":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"v6-tunnel-east-road":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
+"v6-tunnel-east-road":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"v6-tunnel-east-road":   sec_label:unset;
+"v6-tunnel-east-road":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"v6-tunnel-east-road":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+"v6-tunnel-east-road":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"v6-tunnel-east-road":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"v6-tunnel-east-road":   conn_prio: 128,128; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"v6-tunnel-east-road":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+"v6-tunnel-east-road":   our idtype: ID_FQDN; our id=@road; their idtype: ID_FQDN; their id=@east
+"v6-tunnel-east-road":   dpd: passive; delay:0s; timeout:0s
+"v6-tunnel-east-road":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
+"v6-tunnel-east-road":   routing: unrouted;
+"v6-tunnel-east-road":   conn serial: $1;
 road #
  echo "initdone"
 initdone
@@ -71,7 +71,7 @@ PING 2001:db8:1:2::23(2001:db8:1:2::23) 56 data bytes
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 road #
  ipsec whack --trafficstatus
-000 #2: "v6-tunnel-east-road", type=ESP, add_time=1234567890, inBytes=416, outBytes=416, maxBytes=2^63B, id='@east'
+#2: "v6-tunnel-east-road", type=ESP, add_time=1234567890, inBytes=416, outBytes=416, maxBytes=2^63B, id='@east'
 road #
  echo done
 done

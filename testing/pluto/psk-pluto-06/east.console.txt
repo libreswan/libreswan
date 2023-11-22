@@ -11,7 +11,7 @@ east #
  # confirm loaded exclude entry
 east #
  ipsec status |grep exclude
-000 - excluded subnet: 192.1.3.0/24
+- excluded subnet: 192.1.3.0/24
 east #
  echo "initdone"
 initdone

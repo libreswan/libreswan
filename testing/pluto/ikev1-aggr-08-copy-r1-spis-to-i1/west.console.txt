@@ -85,7 +85,7 @@ west #
 003 "westnet-eastnet-aggr" #1: ignoring informational payload NO_PROPOSAL_CHOSEN, msgid=00000000, length=12
 003 "westnet-eastnet-aggr" #1: received and ignored notification payload: NO_PROPOSAL_CHOSEN
 002 "westnet-eastnet-aggr" #1: IMPAIR: retransmit so timing out SA (may retry)
-000 "westnet-eastnet-aggr" #1: starting keying attempt 2 of an unlimited number, but releasing whack
+"westnet-eastnet-aggr" #1: starting keying attempt 2 of an unlimited number, but releasing whack
 west #
  echo done
 done

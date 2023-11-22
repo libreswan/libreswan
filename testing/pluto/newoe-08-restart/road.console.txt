@@ -12,7 +12,7 @@ road #
  # give OE policies time to load
 road #
  ../../guestbin/wait-for.sh --match 'loaded 12' -- ipsec auto --status
-000 Total IPsec connections: loaded 12, active 0
+Total IPsec connections: loaded 12, active 0
 road #
  ip -s xfrm monitor > /tmp/xfrm-monitor.out & sleep 1
 [x] PID
@@ -25,7 +25,7 @@ road #
  ping -n -q -c 4 -I 192.1.3.209 192.1.2.23 > /dev/null
 road #
  ipsec whack --trafficstatus | sed "s/add_time.*$//"
-000 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, 
+#2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, 
 road #
  ipsec stop
 Redirecting to: [initsystem]
@@ -40,14 +40,14 @@ road #
  # give OE policies time to load
 road #
  ../../guestbin/wait-for.sh --match 'loaded 12' -- ipsec auto --status
-000 Total IPsec connections: loaded 12, active 0
+Total IPsec connections: loaded 12, active 0
 road #
  # bring up OE again
 road #
  ping -n -q -c 4 -I 192.1.3.209 192.1.2.23 > /dev/null
 road #
  ipsec whack --trafficstatus | sed "s/add_time.*$//"
-000 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, 
+#2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, 
 road #
  killall ip > /dev/null 2> /dev/null
 road #

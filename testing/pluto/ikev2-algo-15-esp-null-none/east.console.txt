@@ -11,27 +11,27 @@ east #
 002 "esp=null-none": added IKEv2 connection
 east #
  ipsec auto --status | grep esp=null-none
-000 "esp=null-none": 192.0.2.0/24===192.1.2.23[@east]...192.1.2.45[@west]===192.0.1.0/24; unrouted; my_ip=unset; their_ip=unset;
-000 "esp=null-none":   host: oriented; local: 192.1.2.23; remote: 192.1.2.45;
-000 "esp=null-none":   my_updown=ipsec _updown;
-000 "esp=null-none":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "esp=null-none":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
-000 "esp=null-none":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-000 "esp=null-none":   sec_label:unset;
-000 "esp=null-none":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
-000 "esp=null-none":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
-000 "esp=null-none":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "esp=null-none":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-000 "esp=null-none":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
-000 "esp=null-none":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "esp=null-none":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
-000 "esp=null-none":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
-000 "esp=null-none":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
-000 "esp=null-none":   nat-traversal: encaps:auto; keepalive:20s
-000 "esp=null-none":   routing: unrouted;
-000 "esp=null-none":   conn serial: $1;
-000 "esp=null-none":   IKE algorithms: AES_CBC_128-HMAC_SHA1-MODP2048
-000 "esp=null-none":   ESP algorithms: NULL-NONE
+"esp=null-none": 192.0.2.0/24===192.1.2.23[@east]...192.1.2.45[@west]===192.0.1.0/24; unrouted; my_ip=unset; their_ip=unset;
+"esp=null-none":   host: oriented; local: 192.1.2.23; remote: 192.1.2.45;
+"esp=null-none":   my_updown=ipsec _updown;
+"esp=null-none":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"esp=null-none":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
+"esp=null-none":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"esp=null-none":   sec_label:unset;
+"esp=null-none":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"esp=null-none":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+"esp=null-none":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"esp=null-none":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"esp=null-none":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
+"esp=null-none":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"esp=null-none":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+"esp=null-none":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
+"esp=null-none":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
+"esp=null-none":   nat-traversal: encaps:auto; keepalive:20s
+"esp=null-none":   routing: unrouted;
+"esp=null-none":   conn serial: $1;
+"esp=null-none":   IKE algorithms: AES_CBC_128-HMAC_SHA1-MODP2048
+"esp=null-none":   ESP algorithms: NULL-NONE
 east #
  echo "initdone"
 initdone

@@ -19,7 +19,7 @@ road #
  # give OE policies time to load
 road #
  ../../guestbin/wait-for.sh --match 'loaded 2' -- ipsec auto --status
-000 Total IPsec connections: loaded 2, active 0
+Total IPsec connections: loaded 2, active 0
 road #
  # establish a baseline: one trap, no state and nothing up
 road #
@@ -34,8 +34,8 @@ road #
  ipsec whack --trafficstatus
 road #
  ipsec whack --shuntstatus
-000 Bare Shunt list:
-000  
+Bare Shunt list:
+ 
 road #
  echo "initdone"
 initdone
@@ -46,7 +46,7 @@ road #
 fired and forgotten
 road #
  ../../guestbin/wait-for.sh --match private-or-clear -- ipsec whack --trafficstatus
-000 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=10.0.10.1/32
+#2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=10.0.10.1/32
 road #
  # ping should succeed through tunnel
 road #
@@ -106,11 +106,11 @@ src 192.1.3.209 dst 192.1.2.23
 	 00000000 00000000 00000000 XXXXXXXX 
 road #
  ipsec whack --trafficstatus
-000 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=10.0.10.1/32
+#2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=10.0.10.1/32
 road #
  ipsec whack --shuntstatus
-000 Bare Shunt list:
-000  
+Bare Shunt list:
+ 
 road #
  # east crashed; wait for DPD on road to trigger down
 road #
@@ -131,8 +131,8 @@ road #
  ipsec whack --trafficstatus
 road #
  ipsec whack --shuntstatus
-000 Bare Shunt list:
-000  
+Bare Shunt list:
+ 
 road #
  # ping again to trigger OE. packet is lost
 road #
@@ -144,7 +144,7 @@ road #
  # is installed.  Wait for that.
 road #
  ../../guestbin/wait-for.sh --match %pass -- ipsec whack --shuntstatus
-000 192.1.3.209/32 -0-> 192.1.2.23/32 => %pass    oe-failing
+192.1.3.209/32 -0-> 192.1.2.23/32 => %pass    oe-failing
 road #
  # With %pass installed, there's no tunnel yet pings work
 road #
@@ -168,9 +168,9 @@ road #
  ipsec whack --trafficstatus
 road #
  ipsec whack --shuntstatus
-000 Bare Shunt list:
-000  
-000 192.1.3.209/32 -0-> 192.1.2.23/32 => %pass    oe-failing
+Bare Shunt list:
+ 
+192.1.3.209/32 -0-> 192.1.2.23/32 => %pass    oe-failing
 road #
  ../../guestbin/ipsec-kernel-policy.sh
 src 192.1.3.209/32 dst 192.1.2.23/32

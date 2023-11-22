@@ -13,7 +13,7 @@ road #
  # give OE policies time to load
 road #
  ../../guestbin/wait-for.sh --match 'loaded 7' -- ipsec auto --status
-000 Total IPsec connections: loaded 7, active 0
+Total IPsec connections: loaded 7, active 0
 road #
  ping -n -q -c 2 -I 192.1.3.209 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
@@ -27,11 +27,11 @@ road #
  ipsec whack --trafficstatus
 road #
  ipsec whack --shuntstatus
-000 Bare Shunt list:
-000  
+Bare Shunt list:
+ 
 road #
  ipsec status |grep STATE_
-000 #5: "private#192.1.2.23/32"[1] ...192.1.2.23:500 STATE_V2_PARENT_I1 (sent IKE_SA_INIT request); RETRANSMIT in -1s; idle;
+#5: "private#192.1.2.23/32"[1] ...192.1.2.23:500 STATE_V2_PARENT_I1 (sent IKE_SA_INIT request); RETRANSMIT in -1s; idle;
 road #
  # east triggered OE, we still have our #1 which is now obsoleted
 road #
@@ -40,14 +40,14 @@ road #
  # state #1 should be gone by now. State #2 and #3 should be there.
 road #
  ipsec status |grep STATE_
-000 #7: "private#192.1.2.23/32"[1] ...192.1.2.23:500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
-000 #8: "private#192.1.2.23/32"[1] ...192.1.2.23:500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #7; idle;
+#7: "private#192.1.2.23/32"[1] ...192.1.2.23:500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
+#8: "private#192.1.2.23/32"[1] ...192.1.2.23:500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #7; idle;
 road #
  # confirm it didn't create a shunt and did not nuke out policy
 road #
  ipsec shuntstatus
-000 Bare Shunt list:
-000  
+Bare Shunt list:
+ 
 road #
  ip xfrm policy
 src 192.1.3.209/32 dst 192.1.2.23/32 
@@ -110,8 +110,8 @@ road #
  # show shuntlife= was reached - it should not have slaughtered the IPsec SA
 road #
  ipsec shuntstatus
-000 Bare Shunt list:
-000  
+Bare Shunt list:
+ 
 road #
  ip xfrm policy
 src 192.1.3.209/32 dst 192.1.2.23/32 

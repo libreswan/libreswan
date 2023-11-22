@@ -53,10 +53,10 @@ west #
 002 "whack--passthrough--pfs=yes": added passthrough connection
 west #
  ipsec connectionstatus | sed -n -e 's/\(.* policy:\) .*PFS.*/\1 PFS/p' | sort
-000 "addconn--pfs=yes":   policy: PFS
-000 "addconn":   policy: PFS
-000 "whack--pfs":   policy: PFS
-000 "whack--pfs=yes":   policy: PFS
-000 "whack":   policy: PFS
+"addconn--pfs=yes":   policy: PFS
+"addconn":   policy: PFS
+"whack--pfs":   policy: PFS
+"whack--pfs=yes":   policy: PFS
+"whack":   policy: PFS
 west #
  

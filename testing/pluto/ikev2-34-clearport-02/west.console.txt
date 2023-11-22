@@ -77,7 +77,7 @@ west #
  # counters should be zero
 west #
  ipsec trafficstatus
-000 #2: "west-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+#2: "west-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
 west #
  # send packet over the 'tunnel' should get encrypted
 west #
@@ -85,7 +85,7 @@ west #
 Ncat: Connection refused.
 west #
  ipsec trafficstatus
-000 #2: "west-east", type=ESP, add_time=1234567890, inBytes=40, outBytes=60, maxBytes=2^63B, id='@east'
+#2: "west-east", type=ESP, add_time=1234567890, inBytes=40, outBytes=60, maxBytes=2^63B, id='@east'
 west #
  # counters should be zero
 west #

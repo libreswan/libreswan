@@ -48,18 +48,18 @@ west #
 up
 west #
  ipsec whack --trafficstatus
-000 #2: "westnet-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CH, O=strongSwan, CN=strongEast'
+#2: "westnet-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CH, O=strongSwan, CN=strongEast'
 west #
  ipsec whack --listpubkeys
-000  
-000 List of Public Keys:
-000  
-000 TIMESTAMP,  384 ECDSA Key BXXXXXXXX (has private key), until TIMESTAMP ok
-000        ID_DER_ASN1_DN 'C=CH, O=strongSwan, CN=strongWest'
-000        Issuer 'C=CH, O=strongSwan, CN=strongSwan CA'
-000 TIMESTAMP,  384 ECDSA Key BXXXXXXXX (has private key), until TIMESTAMP ok
-000        ID_FQDN '@west.testing.libreswan.org'
-000        Issuer 'C=CH, O=strongSwan, CN=strongSwan CA'
+ 
+List of Public Keys:
+ 
+TIMESTAMP,  384 ECDSA Key BXXXXXXXX (has private key), until TIMESTAMP ok
+       ID_DER_ASN1_DN 'C=CH, O=strongSwan, CN=strongWest'
+       Issuer 'C=CH, O=strongSwan, CN=strongSwan CA'
+TIMESTAMP,  384 ECDSA Key BXXXXXXXX (has private key), until TIMESTAMP ok
+       ID_FQDN '@west.testing.libreswan.org'
+       Issuer 'C=CH, O=strongSwan, CN=strongSwan CA'
 west #
  # test delete/free
 west #

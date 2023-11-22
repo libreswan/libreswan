@@ -19,7 +19,7 @@ north #
 000 initiating all connections with alias "north-dpd"
 002 "north-dpd/0x2" #1: initiating IKEv1 Main Mode connection
 1v1 "north-dpd/0x2" #1: sent Main Mode request
-000 "north-dpd/0x1": queuing pending IPsec SA negotiating with 192.1.2.23 IKE SA #1 "north-dpd/0x2"
+"north-dpd/0x1": queuing pending IPsec SA negotiating with 192.1.2.23 IKE SA #1 "north-dpd/0x2"
 1v1 "north-dpd/0x2" #1: sent Main Mode I2
 002 "north-dpd/0x2" #1: I am sending my cert
 002 "north-dpd/0x2" #1: I am sending a certificate request
@@ -43,8 +43,8 @@ north #
 up
 north #
  ipsec whack --trafficstatus
-000 #2: "north-dpd/0x1", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
-000 #3: "north-dpd/0x2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+#2: "north-dpd/0x1", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+#3: "north-dpd/0x2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 north #
  #
 north #
@@ -57,49 +57,49 @@ north #
  sleep 20
 north #
  ipsec status | grep north-dpd
-000 "north-dpd/0x1": 192.0.3.0/24===192.1.3.33[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org]---192.1.3.254...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===192.0.2.0/24; routed-ondemand; my_ip=unset; their_ip=unset;
-000 "north-dpd/0x1":   host: oriented; local: 192.1.3.33; remote: 192.1.2.23;
-000 "north-dpd/0x1":   mycert=north; peercert=east; my_updown=ipsec _updown;
-000 "north-dpd/0x1":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "north-dpd/0x1":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
-000 "north-dpd/0x1":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-000 "north-dpd/0x1":   sec_label:unset;
-000 "north-dpd/0x1":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-000 "north-dpd/0x1":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
-000 "north-dpd/0x1":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
-000 "north-dpd/0x1":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "north-dpd/0x1":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-000 "north-dpd/0x1":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "north-dpd/0x1":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
-000 "north-dpd/0x1":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
-000 "north-dpd/0x1":   dpd: action:restart; delay:3; timeout:10
-000 "north-dpd/0x1":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
-000 "north-dpd/0x1":   routing: unrouted;
-000 "north-dpd/0x1":   conn serial: $1;
-000 "north-dpd/0x1":   aliases: north-dpd
-000 "north-dpd/0x2": 192.0.3.0/24===192.1.3.33[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org]---192.1.3.254...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===192.0.22.0/24; prospective erouted; eroute owner: #0
-000 "north-dpd/0x2":     oriented; my_ip=unset; their_ip=unset;
-000 "north-dpd/0x2":   mycert=north; peercert=east; my_updown=ipsec _updown;
-000 "north-dpd/0x2":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "north-dpd/0x2":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
-000 "north-dpd/0x2":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-000 "north-dpd/0x2":   sec_label:unset;
-000 "north-dpd/0x2":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-000 "north-dpd/0x2":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
-000 "north-dpd/0x2":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
-000 "north-dpd/0x2":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "north-dpd/0x2":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-000 "north-dpd/0x2":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "north-dpd/0x2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
-000 "north-dpd/0x2":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
-000 "north-dpd/0x2":   dpd: action:restart; delay:3; timeout:10
-000 "north-dpd/0x2":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
-000 "north-dpd/0x2":   conn serial: $2;
-000 "north-dpd/0x2":   aliases: north-dpd
-000 "north-dpd/0x2":   IKEv1 algorithm newest: AES_CBC_256-HMAC_SHA2_256-MODP2048
-000 #5: "north-dpd/0x1":500 STATE_QUICK_I1 (sent Quick Mode request); RETRANSMIT in XXs; lastdpd=-1s(seq in:0 out:0); idle;
-000 #1: "north-dpd/0x2":500 STATE_MAIN_I4 (ISAKMP SA established); REPLACE in XXs; newest; lastdpd=30s(seq in:XXXXX out:YYYYY); idle;
-000 #4: "north-dpd/0x2":500 STATE_QUICK_I1 (sent Quick Mode request); RETRANSMIT in XXs; lastdpd=-1s(seq in:0 out:0); idle;
+"north-dpd/0x1": 192.0.3.0/24===192.1.3.33[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org]---192.1.3.254...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===192.0.2.0/24; routed-ondemand; my_ip=unset; their_ip=unset;
+"north-dpd/0x1":   host: oriented; local: 192.1.3.33; remote: 192.1.2.23;
+"north-dpd/0x1":   mycert=north; peercert=east; my_updown=ipsec _updown;
+"north-dpd/0x1":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"north-dpd/0x1":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
+"north-dpd/0x1":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"north-dpd/0x1":   sec_label:unset;
+"north-dpd/0x1":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"north-dpd/0x1":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"north-dpd/0x1":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+"north-dpd/0x1":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"north-dpd/0x1":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"north-dpd/0x1":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"north-dpd/0x1":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+"north-dpd/0x1":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
+"north-dpd/0x1":   dpd: action:restart; delay:3; timeout:10
+"north-dpd/0x1":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
+"north-dpd/0x1":   routing: unrouted;
+"north-dpd/0x1":   conn serial: $1;
+"north-dpd/0x1":   aliases: north-dpd
+"north-dpd/0x2": 192.0.3.0/24===192.1.3.33[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org]---192.1.3.254...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===192.0.22.0/24; prospective erouted; eroute owner: #0
+"north-dpd/0x2":     oriented; my_ip=unset; their_ip=unset;
+"north-dpd/0x2":   mycert=north; peercert=east; my_updown=ipsec _updown;
+"north-dpd/0x2":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"north-dpd/0x2":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
+"north-dpd/0x2":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"north-dpd/0x2":   sec_label:unset;
+"north-dpd/0x2":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"north-dpd/0x2":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"north-dpd/0x2":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+"north-dpd/0x2":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"north-dpd/0x2":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"north-dpd/0x2":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"north-dpd/0x2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+"north-dpd/0x2":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
+"north-dpd/0x2":   dpd: action:restart; delay:3; timeout:10
+"north-dpd/0x2":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
+"north-dpd/0x2":   conn serial: $2;
+"north-dpd/0x2":   aliases: north-dpd
+"north-dpd/0x2":   IKEv1 algorithm newest: AES_CBC_256-HMAC_SHA2_256-MODP2048
+#5: "north-dpd/0x1":500 STATE_QUICK_I1 (sent Quick Mode request); RETRANSMIT in XXs; lastdpd=-1s(seq in:0 out:0); idle;
+#1: "north-dpd/0x2":500 STATE_MAIN_I4 (ISAKMP SA established); REPLACE in XXs; newest; lastdpd=30s(seq in:XXXXX out:YYYYY); idle;
+#4: "north-dpd/0x2":500 STATE_QUICK_I1 (sent Quick Mode request); RETRANSMIT in XXs; lastdpd=-1s(seq in:0 out:0); idle;
 north #
  ip route del unreachable 192.1.2.23
 north #
@@ -112,8 +112,8 @@ north #
  # state number should be higher than the previous one
 north #
  ipsec whack --trafficstatus
-000 #6: "north-dpd/0x1", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
-000 #7: "north-dpd/0x2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+#6: "north-dpd/0x1", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+#7: "north-dpd/0x2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 north #
  echo done
 done

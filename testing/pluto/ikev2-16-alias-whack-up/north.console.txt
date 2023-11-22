@@ -30,56 +30,56 @@ north #
 004 "northnet-eastnets/0x2" #3: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.22.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
 north #
  ipsec auto --status | grep northnet-eastnets
-000 "northnet-eastnets/0x1": 192.0.3.0/24===192.1.3.33[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org]---192.1.3.254...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===192.0.2.0/24; routed-tunnel; my_ip=unset; their_ip=unset;
-000 "northnet-eastnets/0x1":   host: oriented; local: 192.1.3.33; remote: 192.1.2.23;
-000 "northnet-eastnets/0x1":   mycert=north; peercert=east; my_updown=ipsec _updown;
-000 "northnet-eastnets/0x1":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "northnet-eastnets/0x1":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
-000 "northnet-eastnets/0x1":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-000 "northnet-eastnets/0x1":   sec_label:unset;
-000 "northnet-eastnets/0x1":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-000 "northnet-eastnets/0x1":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
-000 "northnet-eastnets/0x1":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
-000 "northnet-eastnets/0x1":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "northnet-eastnets/0x1":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-000 "northnet-eastnets/0x1":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
-000 "northnet-eastnets/0x1":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "northnet-eastnets/0x1":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
-000 "northnet-eastnets/0x1":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
-000 "northnet-eastnets/0x1":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
-000 "northnet-eastnets/0x1":   nat-traversal: encaps:auto; keepalive:20s
-000 "northnet-eastnets/0x1":   routing: routed-tunnel; established Child SA: #2;
-000 "northnet-eastnets/0x1":   conn serial: $1;
-000 "northnet-eastnets/0x1":   aliases: northnet-eastnets
-000 "northnet-eastnets/0x1":   ESP algorithm newest: AES_GCM_16_256-NONE; pfsgroup=<Phase1>
-000 "northnet-eastnets/0x2": 192.0.3.0/24===192.1.3.33[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org]---192.1.3.254...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===192.0.22.0/24; routed-tunnel; my_ip=unset; their_ip=unset;
-000 "northnet-eastnets/0x2":   host: oriented; local: 192.1.3.33; remote: 192.1.2.23; established IKE SA: #1;
-000 "northnet-eastnets/0x2":   mycert=north; peercert=east; my_updown=ipsec _updown;
-000 "northnet-eastnets/0x2":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "northnet-eastnets/0x2":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
-000 "northnet-eastnets/0x2":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-000 "northnet-eastnets/0x2":   sec_label:unset;
-000 "northnet-eastnets/0x2":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-000 "northnet-eastnets/0x2":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
-000 "northnet-eastnets/0x2":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
-000 "northnet-eastnets/0x2":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "northnet-eastnets/0x2":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-000 "northnet-eastnets/0x2":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
-000 "northnet-eastnets/0x2":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "northnet-eastnets/0x2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
-000 "northnet-eastnets/0x2":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
-000 "northnet-eastnets/0x2":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
-000 "northnet-eastnets/0x2":   nat-traversal: encaps:auto; keepalive:20s
-000 "northnet-eastnets/0x2":   routing: routed-tunnel; established Child SA: #3;
-000 "northnet-eastnets/0x2":   conn serial: $2;
-000 "northnet-eastnets/0x2":   aliases: northnet-eastnets
-000 "northnet-eastnets/0x2":   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-MODP2048
-000 "northnet-eastnets/0x2":   ESP algorithm newest: AES_GCM_16_256-NONE; pfsgroup=<Phase1>
-000 #2: "northnet-eastnets/0x1":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
-000 #2: "northnet-eastnets/0x1" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.3.33 tun.0@192.1.2.23 tun.0@192.1.3.33 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
-000 #1: "northnet-eastnets/0x2":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
-000 #3: "northnet-eastnets/0x2":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
-000 #3: "northnet-eastnets/0x2" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.3.33 tun.0@192.1.2.23 tun.0@192.1.3.33 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
+"northnet-eastnets/0x1": 192.0.3.0/24===192.1.3.33[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org]---192.1.3.254...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===192.0.2.0/24; routed-tunnel; my_ip=unset; their_ip=unset;
+"northnet-eastnets/0x1":   host: oriented; local: 192.1.3.33; remote: 192.1.2.23;
+"northnet-eastnets/0x1":   mycert=north; peercert=east; my_updown=ipsec _updown;
+"northnet-eastnets/0x1":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"northnet-eastnets/0x1":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
+"northnet-eastnets/0x1":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"northnet-eastnets/0x1":   sec_label:unset;
+"northnet-eastnets/0x1":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"northnet-eastnets/0x1":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"northnet-eastnets/0x1":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+"northnet-eastnets/0x1":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"northnet-eastnets/0x1":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"northnet-eastnets/0x1":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
+"northnet-eastnets/0x1":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"northnet-eastnets/0x1":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+"northnet-eastnets/0x1":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
+"northnet-eastnets/0x1":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
+"northnet-eastnets/0x1":   nat-traversal: encaps:auto; keepalive:20s
+"northnet-eastnets/0x1":   routing: routed-tunnel; established Child SA: #2;
+"northnet-eastnets/0x1":   conn serial: $1;
+"northnet-eastnets/0x1":   aliases: northnet-eastnets
+"northnet-eastnets/0x1":   ESP algorithm newest: AES_GCM_16_256-NONE; pfsgroup=<Phase1>
+"northnet-eastnets/0x2": 192.0.3.0/24===192.1.3.33[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org]---192.1.3.254...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===192.0.22.0/24; routed-tunnel; my_ip=unset; their_ip=unset;
+"northnet-eastnets/0x2":   host: oriented; local: 192.1.3.33; remote: 192.1.2.23; established IKE SA: #1;
+"northnet-eastnets/0x2":   mycert=north; peercert=east; my_updown=ipsec _updown;
+"northnet-eastnets/0x2":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"northnet-eastnets/0x2":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
+"northnet-eastnets/0x2":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"northnet-eastnets/0x2":   sec_label:unset;
+"northnet-eastnets/0x2":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"northnet-eastnets/0x2":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"northnet-eastnets/0x2":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+"northnet-eastnets/0x2":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"northnet-eastnets/0x2":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"northnet-eastnets/0x2":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
+"northnet-eastnets/0x2":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"northnet-eastnets/0x2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+"northnet-eastnets/0x2":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
+"northnet-eastnets/0x2":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
+"northnet-eastnets/0x2":   nat-traversal: encaps:auto; keepalive:20s
+"northnet-eastnets/0x2":   routing: routed-tunnel; established Child SA: #3;
+"northnet-eastnets/0x2":   conn serial: $2;
+"northnet-eastnets/0x2":   aliases: northnet-eastnets
+"northnet-eastnets/0x2":   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-MODP2048
+"northnet-eastnets/0x2":   ESP algorithm newest: AES_GCM_16_256-NONE; pfsgroup=<Phase1>
+#2: "northnet-eastnets/0x1":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
+#2: "northnet-eastnets/0x1" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.3.33 tun.0@192.1.2.23 tun.0@192.1.3.33 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
+#1: "northnet-eastnets/0x2":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
+#3: "northnet-eastnets/0x2":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
+#3: "northnet-eastnets/0x2" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.3.33 tun.0@192.1.2.23 tun.0@192.1.3.33 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
 north #
  ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.0.2.254
 up
@@ -88,8 +88,8 @@ north #
 up
 north #
  ipsec whack --trafficstatus
-000 #2: "northnet-eastnets/0x1", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
-000 #3: "northnet-eastnets/0x2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+#2: "northnet-eastnets/0x1", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+#3: "northnet-eastnets/0x2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 north #
  echo done
 done

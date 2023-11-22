@@ -12,7 +12,7 @@ east #
  # give OE policies time to load
 east #
  ../../guestbin/wait-for.sh --match 'loaded 10,' -- ipsec auto --status
-000 Total IPsec connections: loaded 10, active 0
+Total IPsec connections: loaded 10, active 0
 east #
  ipsec whack --impair send-no-ikev2-auth
 east #

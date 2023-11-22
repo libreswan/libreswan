@@ -15,7 +15,7 @@ east #
 initdone
 east #
  ipsec trafficstatus
-000 #2: "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.45, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@west'
-000 #3: "westnet-eastnet-ipv4-psk-ikev2-b"[1] 192.1.2.45, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@west'
+#2: "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.45, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@west'
+#3: "westnet-eastnet-ipv4-psk-ikev2-b"[1] 192.1.2.45, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@west'
 east #
  

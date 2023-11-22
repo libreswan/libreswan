@@ -28,25 +28,25 @@ road #
 002 "v6-transport": added IKEv2 connection
 road #
  ipsec auto --status |grep v6-transport
-000 "v6-transport": 2001:db8:1:3::209[@road]---2001:db8:1:3::254...2001:db8:1:2::23[@east]; unrouted; my_ip=unset; their_ip=unset;
-000 "v6-transport":   host: oriented; local: 2001:db8:1:3::209; remote: 2001:db8:1:2::23;
-000 "v6-transport":   my_updown=ipsec _updown;
-000 "v6-transport":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "v6-transport":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
-000 "v6-transport":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-000 "v6-transport":   sec_label:unset;
-000 "v6-transport":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
-000 "v6-transport":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
-000 "v6-transport":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "v6-transport":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TRANSPORT+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-000 "v6-transport":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
-000 "v6-transport":   conn_prio: 128,128; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "v6-transport":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
-000 "v6-transport":   our idtype: ID_FQDN; our id=@road; their idtype: ID_FQDN; their id=@east
-000 "v6-transport":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
-000 "v6-transport":   nat-traversal: encaps:auto; keepalive:20s
-000 "v6-transport":   routing: unrouted;
-000 "v6-transport":   conn serial: $1;
+"v6-transport": 2001:db8:1:3::209[@road]---2001:db8:1:3::254...2001:db8:1:2::23[@east]; unrouted; my_ip=unset; their_ip=unset;
+"v6-transport":   host: oriented; local: 2001:db8:1:3::209; remote: 2001:db8:1:2::23;
+"v6-transport":   my_updown=ipsec _updown;
+"v6-transport":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"v6-transport":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
+"v6-transport":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"v6-transport":   sec_label:unset;
+"v6-transport":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"v6-transport":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+"v6-transport":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"v6-transport":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TRANSPORT+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"v6-transport":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
+"v6-transport":   conn_prio: 128,128; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"v6-transport":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+"v6-transport":   our idtype: ID_FQDN; our id=@road; their idtype: ID_FQDN; their id=@east
+"v6-transport":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
+"v6-transport":   nat-traversal: encaps:auto; keepalive:20s
+"v6-transport":   routing: unrouted;
+"v6-transport":   conn serial: $1;
 road #
  echo "initdone"
 initdone

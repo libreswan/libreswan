@@ -34,7 +34,7 @@ road #
 Ncat: Connection refused.
 road #
  ipsec trafficstatus
-000 #2: "road-east-7", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+#2: "road-east-7", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
 road #
  # port 7 goes over ipsec, traffic counters should be non-zero
 road #
@@ -42,7 +42,7 @@ road #
 Ncat: Connection refused.
 road #
  ipsec trafficstatus
-000 #2: "road-east-7", type=ESP, add_time=1234567890, inBytes=20, outBytes=40, maxBytes=2^63B, id='@east'
+#2: "road-east-7", type=ESP, add_time=1234567890, inBytes=20, outBytes=40, maxBytes=2^63B, id='@east'
 road #
  echo done
 done

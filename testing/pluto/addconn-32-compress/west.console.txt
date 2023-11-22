@@ -53,8 +53,8 @@ west #
 002 "whack--passthrough--compress=yes": added passthrough connection
 west #
  ipsec connectionstatus | sed -n -e 's/\(.* policy:\) .*COMPRESS.*/\1 COMPRESS/p' | sort
-000 "addconn--compress=yes":   policy: COMPRESS
-000 "whack--compress":   policy: COMPRESS
-000 "whack--compress=yes":   policy: COMPRESS
+"addconn--compress=yes":   policy: COMPRESS
+"whack--compress":   policy: COMPRESS
+"whack--compress=yes":   policy: COMPRESS
 west #
  

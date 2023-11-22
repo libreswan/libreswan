@@ -28,44 +28,44 @@ west #
 002 "westnet-eastnet-second": added IKEv1 connection
 west #
  ipsec whack --status | grep westnet-eastnet
-000 "westnet-eastnet-alias": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
-000 "westnet-eastnet-alias":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
-000 "westnet-eastnet-alias":   my_updown=ipsec _updown;
-000 "westnet-eastnet-alias":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "westnet-eastnet-alias":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
-000 "westnet-eastnet-alias":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-000 "westnet-eastnet-alias":   sec_label:unset;
-000 "westnet-eastnet-alias":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
-000 "westnet-eastnet-alias":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
-000 "westnet-eastnet-alias":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "westnet-eastnet-alias":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-000 "westnet-eastnet-alias":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "westnet-eastnet-alias":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
-000 "westnet-eastnet-alias":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
-000 "westnet-eastnet-alias":   dpd: passive; delay:0s; timeout:0s
-000 "westnet-eastnet-alias":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
-000 "westnet-eastnet-alias":   routing: unrouted;
-000 "westnet-eastnet-alias":   conn serial: $1;
-000 "westnet-eastnet-alias":   aliases: franklin
-000 "westnet-eastnet-second": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
-000 "westnet-eastnet-second":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
-000 "westnet-eastnet-second":   my_updown=ipsec _updown;
-000 "westnet-eastnet-second":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "westnet-eastnet-second":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
-000 "westnet-eastnet-second":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-000 "westnet-eastnet-second":   sec_label:unset;
-000 "westnet-eastnet-second":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
-000 "westnet-eastnet-second":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
-000 "westnet-eastnet-second":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "westnet-eastnet-second":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-000 "westnet-eastnet-second":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "westnet-eastnet-second":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
-000 "westnet-eastnet-second":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
-000 "westnet-eastnet-second":   dpd: passive; delay:0s; timeout:0s
-000 "westnet-eastnet-second":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
-000 "westnet-eastnet-second":   routing: unrouted;
-000 "westnet-eastnet-second":   conn serial: $2;
-000 "westnet-eastnet-second":   aliases: abigail franklin
+"westnet-eastnet-alias": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
+"westnet-eastnet-alias":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
+"westnet-eastnet-alias":   my_updown=ipsec _updown;
+"westnet-eastnet-alias":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"westnet-eastnet-alias":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
+"westnet-eastnet-alias":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"westnet-eastnet-alias":   sec_label:unset;
+"westnet-eastnet-alias":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"westnet-eastnet-alias":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+"westnet-eastnet-alias":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"westnet-eastnet-alias":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"westnet-eastnet-alias":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"westnet-eastnet-alias":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+"westnet-eastnet-alias":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
+"westnet-eastnet-alias":   dpd: passive; delay:0s; timeout:0s
+"westnet-eastnet-alias":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
+"westnet-eastnet-alias":   routing: unrouted;
+"westnet-eastnet-alias":   conn serial: $1;
+"westnet-eastnet-alias":   aliases: franklin
+"westnet-eastnet-second": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
+"westnet-eastnet-second":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
+"westnet-eastnet-second":   my_updown=ipsec _updown;
+"westnet-eastnet-second":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"westnet-eastnet-second":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
+"westnet-eastnet-second":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"westnet-eastnet-second":   sec_label:unset;
+"westnet-eastnet-second":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"westnet-eastnet-second":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+"westnet-eastnet-second":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"westnet-eastnet-second":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"westnet-eastnet-second":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"westnet-eastnet-second":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+"westnet-eastnet-second":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
+"westnet-eastnet-second":   dpd: passive; delay:0s; timeout:0s
+"westnet-eastnet-second":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
+"westnet-eastnet-second":   routing: unrouted;
+"westnet-eastnet-second":   conn serial: $2;
+"westnet-eastnet-second":   aliases: abigail franklin
 west #
  echo "initdone"
 initdone
@@ -92,7 +92,7 @@ west #
 004 "westnet-eastnet-second" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
  ipsec whack --trafficstatus
-000 #3: "westnet-eastnet-second", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+#3: "westnet-eastnet-second", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
 west #
  echo done
 done

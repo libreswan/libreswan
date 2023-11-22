@@ -61,8 +61,8 @@ west #
  # there should be no bare shunts
 west #
  ipsec shuntstatus
-000 Bare Shunt list:
-000  
+Bare Shunt list:
+ 
 west #
  # let larval state expire
 west #

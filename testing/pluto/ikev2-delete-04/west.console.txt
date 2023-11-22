@@ -11,25 +11,25 @@ west #
 002 "west-east-delete1": added IKEv2 connection
 west #
  ipsec auto --status | grep west-east
-000 "west-east-delete1": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
-000 "west-east-delete1":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
-000 "west-east-delete1":   my_updown=ipsec _updown;
-000 "west-east-delete1":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "west-east-delete1":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
-000 "west-east-delete1":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-000 "west-east-delete1":   sec_label:unset;
-000 "west-east-delete1":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
-000 "west-east-delete1":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
-000 "west-east-delete1":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "west-east-delete1":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-000 "west-east-delete1":   v2-auth-hash-policy: none;
-000 "west-east-delete1":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "west-east-delete1":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
-000 "west-east-delete1":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
-000 "west-east-delete1":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
-000 "west-east-delete1":   nat-traversal: encaps:auto; keepalive:20s
-000 "west-east-delete1":   routing: unrouted;
-000 "west-east-delete1":   conn serial: $1;
+"west-east-delete1": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
+"west-east-delete1":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
+"west-east-delete1":   my_updown=ipsec _updown;
+"west-east-delete1":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"west-east-delete1":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
+"west-east-delete1":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"west-east-delete1":   sec_label:unset;
+"west-east-delete1":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"west-east-delete1":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+"west-east-delete1":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"west-east-delete1":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"west-east-delete1":   v2-auth-hash-policy: none;
+"west-east-delete1":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"west-east-delete1":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+"west-east-delete1":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
+"west-east-delete1":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
+"west-east-delete1":   nat-traversal: encaps:auto; keepalive:20s
+"west-east-delete1":   routing: unrouted;
+"west-east-delete1":   conn serial: $1;
 west #
  echo "initdone"
 initdone
@@ -45,9 +45,9 @@ west #
 up
 west #
  ipsec showstates
-000 #1: "west-east-delete1":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
-000 #2: "west-east-delete1":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
-000 #2: "west-east-delete1" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=84B ESPout=84B ESPmax=2^63B 
+#1: "west-east-delete1":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
+#2: "west-east-delete1":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
+#2: "west-east-delete1" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=84B ESPout=84B ESPmax=2^63B 
 west #
  echo "sleeping a bit.. 2"
 sleeping a bit.. 2
@@ -65,12 +65,12 @@ west #
  sleep 2
 west #
  ipsec showstates
-000 #1: "west-east-delete1":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
-000 #3: "west-east-delete1":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
-000 #3: "west-east-delete1" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
+#1: "west-east-delete1":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
+#3: "west-east-delete1":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
+#3: "west-east-delete1" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
 west #
  ipsec whack --trafficstatus
-000 #3: "west-east-delete1", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+#3: "west-east-delete1", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
 west #
  echo done
 done

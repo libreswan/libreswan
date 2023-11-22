@@ -16,7 +16,7 @@ road #
  # give OE policies time to load
 road #
  ../../guestbin/wait-for.sh --match 'loaded 10,' -- ipsec auto --status
-000 Total IPsec connections: loaded 10, active 0
+Total IPsec connections: loaded 10, active 0
 road #
  ip -s xfrm monitor > /tmp/xfrm-monitor.out & sleep 1
 [x] PID
@@ -32,13 +32,13 @@ road #
  ipsec whack --trafficstatus
 road #
  ipsec whack --shuntstatus
-000 Bare Shunt list:
-000  
+Bare Shunt list:
+ 
 road #
  # wait on OE retransmits and rekeying to fail
 road #
  ../../guestbin/wait-for.sh --match oe-failing -- ipsec whack --shuntstatus
-000 192.1.3.209/32 -0-> 192.1.2.23/32 => %pass    oe-failing
+192.1.3.209/32 -0-> 192.1.2.23/32 => %pass    oe-failing
 road #
  ipsec whack --trafficstatus
 road #

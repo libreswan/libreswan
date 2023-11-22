@@ -10,8 +10,8 @@ west #
 002 "westnet-eastnet-ikev2": added IKEv2 connection
 west #
  ipsec status | grep westnet-eastnet-ikev2 | grep policy: | grep -v modecfg
-000 "westnet-eastnet-ikev2":   policy: IKEv2+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-000 "westnet-eastnet-ikev2":   v2-auth-hash-policy: none;
+"westnet-eastnet-ikev2":   policy: IKEv2+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"westnet-eastnet-ikev2":   v2-auth-hash-policy: none;
 west #
  echo "initdone"
 initdone

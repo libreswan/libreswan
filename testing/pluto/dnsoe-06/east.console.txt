@@ -16,16 +16,16 @@ east #
  ipsec whack --impair suppress-retransmits
 east #
  ipsec whack --listpubkeys | sed "s/Key AQ[^ ]* /Key AQXXXX /"
-000  
-000 List of Public Keys:
-000  
-000 TIMESTAMP, 2192 RSA Key AQXXXX (loaded private key), until --- -- --:--:-- ---- ok (expires never)
-000        ID_IPV4_ADDR '192.1.2.67'
+ 
+List of Public Keys:
+ 
+TIMESTAMP, 2192 RSA Key AQXXXX (loaded private key), until --- -- --:--:-- ---- ok (expires never)
+       ID_IPV4_ADDR '192.1.2.67'
 east #
  # give OE policies time to load
 east #
  ../../guestbin/wait-for.sh --match 'loaded 6' -- ipsec auto --status
-000 Total IPsec connections: loaded 6, active 0
+Total IPsec connections: loaded 6, active 0
 east #
  echo "initdone"
 initdone

@@ -20,20 +20,20 @@ west #
 002 "whack--ikev2-default": added IKEv2 connection
 west #
  ipsec connectionstatus | grep "policy:" | grep rsasig | grep TUNNEL
-000 "parser---rsasig":   policy: IKEv2+RSASIG+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-000 "whack----rsasig":   policy: IKEv2+RSASIG+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO;
+"parser---rsasig":   policy: IKEv2+RSASIG+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"whack----rsasig":   policy: IKEv2+RSASIG+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO;
 west #
  ipsec connectionstatus | grep "policy:" | grep defaults | grep TUNNEL
-000 "parser-defaults":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-000 "whack--defaults":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO;
+"parser-defaults":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"whack--defaults":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO;
 west #
  ipsec connectionstatus | grep "hash-policy:" | grep rsasig
-000 "parser---rsasig":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
-000 "whack----rsasig":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
+"parser---rsasig":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
+"whack----rsasig":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 west #
  ipsec connectionstatus | grep "hash-policy:" | grep defaults
-000 "parser-defaults":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
-000 "whack--defaults":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
+"parser-defaults":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
+"whack--defaults":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 west #
  ipsec connectionstatus | grep "TUNNEL" | grep ikev2-default | sed "s/^.*policy: \(IKEv.\).*$/\1/"
 IKEv2

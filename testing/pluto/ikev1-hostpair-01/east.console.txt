@@ -15,52 +15,52 @@ east #
 initdone
 east #
  ipsec status | grep eastnet
-000 "roadnet-eastnet-ipv4-psk-ikev1": 192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org,MS+XS+S=C]...%any[%fromcert,+MC+XS+S=C]; unrouted; my_ip=unset; their_ip=unset;
-000 "roadnet-eastnet-ipv4-psk-ikev1":   host: oriented; local: 192.1.2.23; remote: %any;
-000 "roadnet-eastnet-ipv4-psk-ikev1":   mycert=east; my_updown=ipsec _updown;
-000 "roadnet-eastnet-ipv4-psk-ikev1":   xauth us:server, xauth them:server, xauthby:alwaysok; my_username=[any]; their_username=[any]
-000 "roadnet-eastnet-ipv4-psk-ikev1":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
-000 "roadnet-eastnet-ipv4-psk-ikev1":   modecfg info: us:server, them:client, modecfg policy:push, dns:1.2.3.4, 8.8.8.8, domains:unset, cat:unset;
-000 "roadnet-eastnet-ipv4-psk-ikev1":   sec_label:unset;
-000 "roadnet-eastnet-ipv4-psk-ikev1":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
-000 "roadnet-eastnet-ipv4-psk-ikev1":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
-000 "roadnet-eastnet-ipv4-psk-ikev1":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
-000 "roadnet-eastnet-ipv4-psk-ikev1":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "roadnet-eastnet-ipv4-psk-ikev1":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+XAUTH+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-000 "roadnet-eastnet-ipv4-psk-ikev1":   conn_prio: 32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "roadnet-eastnet-ipv4-psk-ikev1":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
-000 "roadnet-eastnet-ipv4-psk-ikev1":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org; their idtype: %fromcert; their id=%fromcert
-000 "roadnet-eastnet-ipv4-psk-ikev1":   dpd: passive; delay:0s; timeout:0s
-000 "roadnet-eastnet-ipv4-psk-ikev1":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
-000 "roadnet-eastnet-ipv4-psk-ikev1":   routing: unrouted;
-000 "roadnet-eastnet-ipv4-psk-ikev1":   conn serial: $1;
-000 "roadnet-eastnet-ipv4-psk-ikev1"[1]: 192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org,MS+XS+S=C]...192.1.2.254[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org,+MC+XS+S=C]===192.0.2.1/32; routed-tunnel; my_ip=unset; their_ip=192.0.2.1;
-000 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   host: oriented; local: 192.1.2.23; remote: 192.1.2.254; established ISAKMP SA: #3;
-000 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   mycert=east; my_updown=ipsec _updown;
-000 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   xauth us:server, xauth them:server, xauthby:alwaysok; my_username=[any]; their_username=[any]
-000 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
-000 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   modecfg info: us:server, them:client, modecfg policy:push, dns:1.2.3.4, 8.8.8.8, domains:unset, cat:unset;
-000 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   sec_label:unset;
-000 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
-000 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
-000 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
-000 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+XAUTH+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-000 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
-000 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org
-000 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   dpd: passive; delay:0s; timeout:0s
-000 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
-000 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   routing: routed-tunnel; established IPsec SA: #4;
-000 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   conn serial: $2, instantiated from: $1;
-000 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   IKEv1 algorithm newest: AES_CBC_256-HMAC_SHA2_256-MODP2048
-000 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
-000 #1: "roadnet-eastnet-ipv4-psk-ikev1"[1] 192.1.2.254:EPHEM STATE_MAIN_R3 (ISAKMP SA established); REPLACE in XXs; lastdpd=-1s(seq in:0 out:0); idle;
-000 #2: "roadnet-eastnet-ipv4-psk-ikev1"[1] 192.1.2.254:EPHEM STATE_QUICK_R2 (IPsec SA established); REPLACE in XXs; ISAKMP SA #1; idle;
-000 #2: "roadnet-eastnet-ipv4-psk-ikev1"[1] 192.1.2.254 esp.ESPSPIi@192.1.2.254 esp.ESPSPIi@192.1.2.23 tun.0@192.1.2.254 tun.0@192.1.2.23 Traffic: ESPin=84B ESPout=84B ESPmax=2^63B username=use3
-000 #3: "roadnet-eastnet-ipv4-psk-ikev1"[1] 192.1.2.254:EPHEM STATE_MAIN_R3 (ISAKMP SA established); REPLACE in XXs; newest; lastdpd=-1s(seq in:0 out:0); idle;
-000 #4: "roadnet-eastnet-ipv4-psk-ikev1"[1] 192.1.2.254:EPHEM STATE_QUICK_R2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #3; idle;
-000 #4: "roadnet-eastnet-ipv4-psk-ikev1"[1] 192.1.2.254 esp.ESPSPIi@192.1.2.254 esp.ESPSPIi@192.1.2.23 tun.0@192.1.2.254 tun.0@192.1.2.23 Traffic: ESPin=84B ESPout=84B ESPmax=2^63B username=use3
+"roadnet-eastnet-ipv4-psk-ikev1": 192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org,MS+XS+S=C]...%any[%fromcert,+MC+XS+S=C]; unrouted; my_ip=unset; their_ip=unset;
+"roadnet-eastnet-ipv4-psk-ikev1":   host: oriented; local: 192.1.2.23; remote: %any;
+"roadnet-eastnet-ipv4-psk-ikev1":   mycert=east; my_updown=ipsec _updown;
+"roadnet-eastnet-ipv4-psk-ikev1":   xauth us:server, xauth them:server, xauthby:alwaysok; my_username=[any]; their_username=[any]
+"roadnet-eastnet-ipv4-psk-ikev1":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
+"roadnet-eastnet-ipv4-psk-ikev1":   modecfg info: us:server, them:client, modecfg policy:push, dns:1.2.3.4, 8.8.8.8, domains:unset, cat:unset;
+"roadnet-eastnet-ipv4-psk-ikev1":   sec_label:unset;
+"roadnet-eastnet-ipv4-psk-ikev1":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
+"roadnet-eastnet-ipv4-psk-ikev1":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"roadnet-eastnet-ipv4-psk-ikev1":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+"roadnet-eastnet-ipv4-psk-ikev1":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"roadnet-eastnet-ipv4-psk-ikev1":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+XAUTH+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"roadnet-eastnet-ipv4-psk-ikev1":   conn_prio: 32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"roadnet-eastnet-ipv4-psk-ikev1":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+"roadnet-eastnet-ipv4-psk-ikev1":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org; their idtype: %fromcert; their id=%fromcert
+"roadnet-eastnet-ipv4-psk-ikev1":   dpd: passive; delay:0s; timeout:0s
+"roadnet-eastnet-ipv4-psk-ikev1":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
+"roadnet-eastnet-ipv4-psk-ikev1":   routing: unrouted;
+"roadnet-eastnet-ipv4-psk-ikev1":   conn serial: $1;
+"roadnet-eastnet-ipv4-psk-ikev1"[1]: 192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org,MS+XS+S=C]...192.1.2.254[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org,+MC+XS+S=C]===192.0.2.1/32; routed-tunnel; my_ip=unset; their_ip=192.0.2.1;
+"roadnet-eastnet-ipv4-psk-ikev1"[1]:   host: oriented; local: 192.1.2.23; remote: 192.1.2.254; established ISAKMP SA: #3;
+"roadnet-eastnet-ipv4-psk-ikev1"[1]:   mycert=east; my_updown=ipsec _updown;
+"roadnet-eastnet-ipv4-psk-ikev1"[1]:   xauth us:server, xauth them:server, xauthby:alwaysok; my_username=[any]; their_username=[any]
+"roadnet-eastnet-ipv4-psk-ikev1"[1]:   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
+"roadnet-eastnet-ipv4-psk-ikev1"[1]:   modecfg info: us:server, them:client, modecfg policy:push, dns:1.2.3.4, 8.8.8.8, domains:unset, cat:unset;
+"roadnet-eastnet-ipv4-psk-ikev1"[1]:   sec_label:unset;
+"roadnet-eastnet-ipv4-psk-ikev1"[1]:   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
+"roadnet-eastnet-ipv4-psk-ikev1"[1]:   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"roadnet-eastnet-ipv4-psk-ikev1"[1]:   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+"roadnet-eastnet-ipv4-psk-ikev1"[1]:   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"roadnet-eastnet-ipv4-psk-ikev1"[1]:   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+XAUTH+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"roadnet-eastnet-ipv4-psk-ikev1"[1]:   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"roadnet-eastnet-ipv4-psk-ikev1"[1]:   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+"roadnet-eastnet-ipv4-psk-ikev1"[1]:   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org
+"roadnet-eastnet-ipv4-psk-ikev1"[1]:   dpd: passive; delay:0s; timeout:0s
+"roadnet-eastnet-ipv4-psk-ikev1"[1]:   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
+"roadnet-eastnet-ipv4-psk-ikev1"[1]:   routing: routed-tunnel; established IPsec SA: #4;
+"roadnet-eastnet-ipv4-psk-ikev1"[1]:   conn serial: $2, instantiated from: $1;
+"roadnet-eastnet-ipv4-psk-ikev1"[1]:   IKEv1 algorithm newest: AES_CBC_256-HMAC_SHA2_256-MODP2048
+"roadnet-eastnet-ipv4-psk-ikev1"[1]:   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
+#1: "roadnet-eastnet-ipv4-psk-ikev1"[1] 192.1.2.254:EPHEM STATE_MAIN_R3 (ISAKMP SA established); REPLACE in XXs; lastdpd=-1s(seq in:0 out:0); idle;
+#2: "roadnet-eastnet-ipv4-psk-ikev1"[1] 192.1.2.254:EPHEM STATE_QUICK_R2 (IPsec SA established); REPLACE in XXs; ISAKMP SA #1; idle;
+#2: "roadnet-eastnet-ipv4-psk-ikev1"[1] 192.1.2.254 esp.ESPSPIi@192.1.2.254 esp.ESPSPIi@192.1.2.23 tun.0@192.1.2.254 tun.0@192.1.2.23 Traffic: ESPin=84B ESPout=84B ESPmax=2^63B username=use3
+#3: "roadnet-eastnet-ipv4-psk-ikev1"[1] 192.1.2.254:EPHEM STATE_MAIN_R3 (ISAKMP SA established); REPLACE in XXs; newest; lastdpd=-1s(seq in:0 out:0); idle;
+#4: "roadnet-eastnet-ipv4-psk-ikev1"[1] 192.1.2.254:EPHEM STATE_QUICK_R2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #3; idle;
+#4: "roadnet-eastnet-ipv4-psk-ikev1"[1] 192.1.2.254 esp.ESPSPIi@192.1.2.254 esp.ESPSPIi@192.1.2.23 tun.0@192.1.2.254 tun.0@192.1.2.23 Traffic: ESPin=84B ESPout=84B ESPmax=2^63B username=use3
 east #
  # should show no hits
 east #

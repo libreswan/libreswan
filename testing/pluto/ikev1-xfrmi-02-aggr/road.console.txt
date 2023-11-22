@@ -59,6 +59,6 @@ road #
 done
 road #
  ipsec whack --trafficstatus
-000 #2: "road", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='@east'
+#2: "road", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='@east'
 road #
  

@@ -30,25 +30,25 @@ west #
 002 "westnet-eastnet-x509-cr": added IKEv1 connection
 west #
  ipsec auto --status | grep westnet-eastnet-x509-cr
-000 "westnet-eastnet-x509-cr": 192.0.1.0/24===192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]...192.1.2.23[%fromcert]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
-000 "westnet-eastnet-x509-cr":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
-000 "westnet-eastnet-x509-cr":   mycert=west; my_updown=ipsec _updown;
-000 "westnet-eastnet-x509-cr":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "westnet-eastnet-x509-cr":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
-000 "westnet-eastnet-x509-cr":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-000 "westnet-eastnet-x509-cr":   sec_label:unset;
-000 "westnet-eastnet-x509-cr":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-000 "westnet-eastnet-x509-cr":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
-000 "westnet-eastnet-x509-cr":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
-000 "westnet-eastnet-x509-cr":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "westnet-eastnet-x509-cr":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-000 "westnet-eastnet-x509-cr":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "westnet-eastnet-x509-cr":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
-000 "westnet-eastnet-x509-cr":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org; their idtype: %fromcert; their id=%fromcert
-000 "westnet-eastnet-x509-cr":   dpd: passive; delay:0s; timeout:0s
-000 "westnet-eastnet-x509-cr":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
-000 "westnet-eastnet-x509-cr":   routing: unrouted;
-000 "westnet-eastnet-x509-cr":   conn serial: $1;
+"westnet-eastnet-x509-cr": 192.0.1.0/24===192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]...192.1.2.23[%fromcert]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
+"westnet-eastnet-x509-cr":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
+"westnet-eastnet-x509-cr":   mycert=west; my_updown=ipsec _updown;
+"westnet-eastnet-x509-cr":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"westnet-eastnet-x509-cr":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
+"westnet-eastnet-x509-cr":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"westnet-eastnet-x509-cr":   sec_label:unset;
+"westnet-eastnet-x509-cr":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"westnet-eastnet-x509-cr":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"westnet-eastnet-x509-cr":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+"westnet-eastnet-x509-cr":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"westnet-eastnet-x509-cr":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"westnet-eastnet-x509-cr":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"westnet-eastnet-x509-cr":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+"westnet-eastnet-x509-cr":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org; their idtype: %fromcert; their id=%fromcert
+"westnet-eastnet-x509-cr":   dpd: passive; delay:0s; timeout:0s
+"westnet-eastnet-x509-cr":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
+"westnet-eastnet-x509-cr":   routing: unrouted;
+"westnet-eastnet-x509-cr":   conn serial: $1;
 west #
  echo "initdone"
 initdone
@@ -71,7 +71,7 @@ west #
 up
 west #
  ipsec whack --trafficstatus
-000 #2: "westnet-eastnet-x509-cr", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+#2: "westnet-eastnet-x509-cr", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 west #
  echo done
 done

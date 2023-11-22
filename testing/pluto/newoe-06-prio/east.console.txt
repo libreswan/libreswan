@@ -15,19 +15,19 @@ east #
  # give OE policies time to load
 east #
  ../../guestbin/wait-for.sh --match 'loaded 11' -- ipsec auto --status
-000 Total IPsec connections: loaded 11, active 0
+Total IPsec connections: loaded 11, active 0
 east #
  echo "initdone"
 initdone
 east #
  hostname | grep nic > /dev/null || ipsec whack --trafficstatus
-000 #2: "road-east-ikev2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@road'
+#2: "road-east-ikev2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@road'
 east #
  # this should show IKE and IPsec state for "road-east-ikev2" and not an OE group
 east #
  ipsec status | grep road-east | sed 's/"road-east-ikev2".*/"road-east-ikev2" --- cut ---/' | grep "#"
-000 #1: "road-east-ikev2" --- cut ---
-000 #2: "road-east-ikev2" --- cut ---
-000 #2: "road-east-ikev2" --- cut ---
+#1: "road-east-ikev2" --- cut ---
+#2: "road-east-ikev2" --- cut ---
+#2: "road-east-ikev2" --- cut ---
 east #
  

@@ -1,3 +1,3 @@
-s/^000 seccomp=disabled/000 seccomp=OFF/
-s/^000 seccomp=unsupported/000 seccomp=OFF/
+s/^seccomp=disabled/seccomp=OFF/
+s/^seccomp=unsupported/seccomp=OFF/
 s/Stopping logging [  OK  ].*/Stopping logging [  OK  ]/

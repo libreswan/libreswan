@@ -22,7 +22,7 @@ east #
  # give OE policies time to load
 east #
  ../../guestbin/wait-for.sh --match 'loaded 7' -- ipsec auto --status
-000 Total IPsec connections: loaded 7, active 0
+Total IPsec connections: loaded 7, active 0
 east #
  iptables -D INPUT -p UDP --dport 500 -j DROP
 east #
@@ -40,7 +40,7 @@ east #
  sleep 3
 east #
  ipsec trafficstatus
-000 #2: "private#192.1.3.209/32"[1] ...192.1.3.209, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org'
+#2: "private#192.1.3.209/32"[1] ...192.1.3.209, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org'
 east #
  # a tunnel should have established
 east #

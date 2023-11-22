@@ -9,25 +9,25 @@ east #
 002 "road-eastnet-nonat": added IKEv2 connection
 east #
  ipsec auto --status | grep road-eastnet-nonat
-000 "road-eastnet-nonat": 192.0.2.0/24===192.1.2.23[@east]---192.1.2.254...%any[@road]===192.0.2.219/32; unrouted; my_ip=unset; their_ip=192.0.2.219;
-000 "road-eastnet-nonat":   host: oriented; local: 192.1.2.23; remote: %any;
-000 "road-eastnet-nonat":   my_updown=ipsec _updown;
-000 "road-eastnet-nonat":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "road-eastnet-nonat":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
-000 "road-eastnet-nonat":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-000 "road-eastnet-nonat":   sec_label:unset;
-000 "road-eastnet-nonat":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
-000 "road-eastnet-nonat":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
-000 "road-eastnet-nonat":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "road-eastnet-nonat":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-000 "road-eastnet-nonat":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
-000 "road-eastnet-nonat":   conn_prio: 24,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "road-eastnet-nonat":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
-000 "road-eastnet-nonat":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@road
-000 "road-eastnet-nonat":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
-000 "road-eastnet-nonat":   nat-traversal: encaps:auto; keepalive:20s
-000 "road-eastnet-nonat":   routing: unrouted;
-000 "road-eastnet-nonat":   conn serial: $1;
+"road-eastnet-nonat": 192.0.2.0/24===192.1.2.23[@east]---192.1.2.254...%any[@road]===192.0.2.219/32; unrouted; my_ip=unset; their_ip=192.0.2.219;
+"road-eastnet-nonat":   host: oriented; local: 192.1.2.23; remote: %any;
+"road-eastnet-nonat":   my_updown=ipsec _updown;
+"road-eastnet-nonat":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"road-eastnet-nonat":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
+"road-eastnet-nonat":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"road-eastnet-nonat":   sec_label:unset;
+"road-eastnet-nonat":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"road-eastnet-nonat":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+"road-eastnet-nonat":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"road-eastnet-nonat":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"road-eastnet-nonat":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
+"road-eastnet-nonat":   conn_prio: 24,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"road-eastnet-nonat":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+"road-eastnet-nonat":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@road
+"road-eastnet-nonat":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
+"road-eastnet-nonat":   nat-traversal: encaps:auto; keepalive:20s
+"road-eastnet-nonat":   routing: unrouted;
+"road-eastnet-nonat":   conn serial: $1;
 east #
  echo "initdone"
 initdone

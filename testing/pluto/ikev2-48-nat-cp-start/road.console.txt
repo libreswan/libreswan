@@ -13,7 +13,7 @@ road #
  # wait for autostart to complete
 road #
  ../../guestbin/wait-for.sh --match 192.0.2.1 -- ipsec whack --trafficstatus
-000 #2: "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east', lease=192.0.2.1/32
+#2: "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east', lease=192.0.2.1/32
 road #
  # ipsec will configure 192.0.2.1->192.1.2.23 on eth0
 road #

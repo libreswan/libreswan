@@ -22,7 +22,7 @@ east #
  # give OE policies time to load
 east #
  ../../guestbin/wait-for.sh --match 'loaded 11,' -- ipsec auto --status
-000 Total IPsec connections: loaded 11, active 0
+Total IPsec connections: loaded 11, active 0
 east #
  # trigger OE; traffic minus first packet should have flown through tunnel
 east #
@@ -30,7 +30,7 @@ east #
 fired and forgotten
 east #
  ../../guestbin/wait-for.sh --match private-or-clear -- ipsec trafficstatus
-000 #2: "private-or-clear#192.1.3.0/24"[1] ...192.1.3.209, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org'
+#2: "private-or-clear#192.1.3.0/24"[1] ...192.1.3.209, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org'
 east #
  ../../guestbin/ping-once.sh --up -I 192.1.2.23 192.1.3.209
 up
@@ -42,23 +42,23 @@ east #
 up
 east #
  ipsec trafficstatus
-000 #2: "private-or-clear#192.1.3.0/24"[1] ...192.1.3.209, type=ESP, add_time=1234567890, inBytes=252, outBytes=252, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org'
+#2: "private-or-clear#192.1.3.0/24"[1] ...192.1.3.209, type=ESP, add_time=1234567890, inBytes=252, outBytes=252, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org'
 east #
  # OE has been triggered.
 east #
  # there should be no %pass shunts on either side and an active tunnel and no partial IKE states
 east #
  ipsec showstates
-000 #1: "private-or-clear#192.1.3.0/24"[1] ...192.1.3.209:500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
-000 #2: "private-or-clear#192.1.3.0/24"[1] ...192.1.3.209:500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
-000 #2: "private-or-clear#192.1.3.0/24"[1] ...192.1.3.209 esp.ESPSPIi@192.1.3.209 esp.ESPSPIi@192.1.2.23 tun.0@192.1.3.209 tun.0@192.1.2.23 Traffic: ESPin=252B ESPout=252B ESPmax=2^63B 
+#1: "private-or-clear#192.1.3.0/24"[1] ...192.1.3.209:500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
+#2: "private-or-clear#192.1.3.0/24"[1] ...192.1.3.209:500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
+#2: "private-or-clear#192.1.3.0/24"[1] ...192.1.3.209 esp.ESPSPIi@192.1.3.209 esp.ESPSPIi@192.1.2.23 tun.0@192.1.3.209 tun.0@192.1.2.23 Traffic: ESPin=252B ESPout=252B ESPmax=2^63B 
 east #
  ipsec trafficstatus
-000 #2: "private-or-clear#192.1.3.0/24"[1] ...192.1.3.209, type=ESP, add_time=1234567890, inBytes=252, outBytes=252, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org'
+#2: "private-or-clear#192.1.3.0/24"[1] ...192.1.3.209, type=ESP, add_time=1234567890, inBytes=252, outBytes=252, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org'
 east #
  ipsec shuntstatus
-000 Bare Shunt list:
-000  
+Bare Shunt list:
+ 
 east #
  ../../guestbin/ipsec-kernel-state.sh
 src 192.1.2.23 dst 192.1.3.209

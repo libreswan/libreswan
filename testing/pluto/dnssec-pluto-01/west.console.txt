@@ -31,10 +31,10 @@ west #
 002 "westnet-eastnet-etc-hosts": added IKEv1 connection
 west #
  ipsec auto --status | grep -E "oriented|east-from-hosts"
-000 "westnet-eastnet-etc-hosts": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23<east-from-hosts-file>[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
-000 "westnet-eastnet-etc-hosts":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23<east-from-hosts-file>;
-000 "westnet-eastnet-etc-hosts-auto-add": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23<east-from-hosts-file>[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
-000 "westnet-eastnet-etc-hosts-auto-add":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23<east-from-hosts-file>;
+"westnet-eastnet-etc-hosts": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23<east-from-hosts-file>[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
+"westnet-eastnet-etc-hosts":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23<east-from-hosts-file>;
+"westnet-eastnet-etc-hosts-auto-add": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23<east-from-hosts-file>[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
+"westnet-eastnet-etc-hosts-auto-add":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23<east-from-hosts-file>;
 west #
  echo "initdone"
 initdone
@@ -55,7 +55,7 @@ west #
 up
 west #
  ipsec whack --trafficstatus
-000 #2: "westnet-eastnet-etc-hosts", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+#2: "westnet-eastnet-etc-hosts", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  echo done
 done

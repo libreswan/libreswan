@@ -12,7 +12,7 @@ east #
  # give OE policies time to load
 east #
  ../../guestbin/wait-for.sh --match 'loaded 10,' -- ipsec auto --status
-000 Total IPsec connections: loaded 10, active 0
+Total IPsec connections: loaded 10, active 0
 east #
  echo "initdone"
 initdone
@@ -26,8 +26,8 @@ east #
 east #
  hostname | grep east && ipsec status | grep "SAs: total"
 east
-000 IKE SAs: total(1), half-open(0), open(0), authenticated(0), anonymous(1)
-000 IPsec SAs: total(1), authenticated(0), anonymous(1)
+IKE SAs: total(1), half-open(0), open(0), authenticated(0), anonymous(1)
+IPsec SAs: total(1), authenticated(0), anonymous(1)
 east #
  sleep 10
 east #
@@ -41,7 +41,7 @@ east #
  # should show 0 states left
 east #
  ipsec status | grep "SAs: total"
-000 IKE SAs: total(0), half-open(0), open(0), authenticated(0), anonymous(0)
-000 IPsec SAs: total(0), authenticated(0), anonymous(0)
+IKE SAs: total(0), half-open(0), open(0), authenticated(0), anonymous(0)
+IPsec SAs: total(0), authenticated(0), anonymous(0)
 east #
  

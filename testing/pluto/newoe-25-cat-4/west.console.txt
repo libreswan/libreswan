@@ -14,7 +14,7 @@ west #
  # give OE policies time to load
 west #
  ../../guestbin/wait-for.sh --match 'loaded 9,' -- ipsec auto --status
-000 Total IPsec connections: loaded 9, active 0
+Total IPsec connections: loaded 9, active 0
 west #
  # in the clear?
 west #
@@ -30,7 +30,7 @@ west #
 up
 west #
  ipsec whack --trafficstatus
-000 #2: "clear-or-private#192.1.2.0/24"[1] ...192.1.2.254===10.0.10.1/32, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='ID_NULL', lease=10.0.10.1/32
+#2: "clear-or-private#192.1.2.0/24"[1] ...192.1.2.254===10.0.10.1/32, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='ID_NULL', lease=10.0.10.1/32
 west #
  iptables -t nat -L -n
 Chain PREROUTING (policy ACCEPT)

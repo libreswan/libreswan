@@ -26,8 +26,8 @@ s/^Protocol mismatch\.$/Invalid SSH identification string./g
 /^.* for token "OpenDNSSEC".*$/d
 /^Relabeled \/testing.*$/d
 # some things are different on Debian/Ubuntu, and we dont really need to see those for testing
-/000 nssdir=.*$/d
-/000 dnssec-rootkey-file=.*$/d
+/^nssdir=.*$/d
+/^dnssec-rootkey-file=.*$/d
 
 # timing info from the log
 s/last_contact=0->[0-9]*\.[0-9]*/last_contact=0->XX.XXX/g

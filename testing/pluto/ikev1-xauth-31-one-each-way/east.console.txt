@@ -27,7 +27,7 @@ east #
 002 "east-to-road-on-east" #3: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 1v1 "east-to-road-on-east" #3: sent Quick Mode request
 031 "east-to-road-on-east" #3: STATE_QUICK_I1: 60 second timeout exceeded after 7 retransmits.  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal
-000 "east-to-road-on-east" #3: starting keying attempt 2 of an unlimited number, but releasing whack
+"east-to-road-on-east" #3: starting keying attempt 2 of an unlimited number, but releasing whack
 east #
  ../../guestbin/ipsec-look.sh
 east NOW

@@ -12,7 +12,7 @@ road #
  # give OE policies time to load
 road #
  ../../guestbin/wait-for.sh --match 'loaded 12' -- ipsec auto --status
-000 Total IPsec connections: loaded 12, active 0
+Total IPsec connections: loaded 12, active 0
 road #
  echo "initdone"
 initdone
@@ -35,8 +35,8 @@ road #
  sleep 3
 road #
  ipsec whack --shuntstatus
-000 Bare Shunt list:
-000  
+Bare Shunt list:
+ 
 road #
  echo done
 done

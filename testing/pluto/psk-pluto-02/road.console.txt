@@ -11,25 +11,25 @@ road #
 002 "road-eastnet-psk": added IKEv1 connection
 road #
  ipsec auto --status | grep road-eastnet-psk
-000 "road-eastnet-psk": 192.1.3.209[@roadrandom]---192.1.3.254...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
-000 "road-eastnet-psk":   host: oriented; local: 192.1.3.209; remote: 192.1.2.23;
-000 "road-eastnet-psk":   my_updown=ipsec _updown;
-000 "road-eastnet-psk":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "road-eastnet-psk":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
-000 "road-eastnet-psk":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-000 "road-eastnet-psk":   sec_label:unset;
-000 "road-eastnet-psk":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
-000 "road-eastnet-psk":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
-000 "road-eastnet-psk":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "road-eastnet-psk":   policy: IKEv1+PSK+ENCRYPT+TUNNEL+PFS+AGGRESSIVE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-000 "road-eastnet-psk":   conn_prio: 32,24; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "road-eastnet-psk":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
-000 "road-eastnet-psk":   our idtype: ID_FQDN; our id=@roadrandom; their idtype: ID_FQDN; their id=@east
-000 "road-eastnet-psk":   dpd: passive; delay:0s; timeout:0s
-000 "road-eastnet-psk":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
-000 "road-eastnet-psk":   routing: unrouted;
-000 "road-eastnet-psk":   conn serial: $1;
-000 "road-eastnet-psk":   IKE algorithms: 3DES_CBC-HMAC_SHA1-MODP2048, 3DES_CBC-HMAC_SHA1-MODP1536
+"road-eastnet-psk": 192.1.3.209[@roadrandom]---192.1.3.254...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
+"road-eastnet-psk":   host: oriented; local: 192.1.3.209; remote: 192.1.2.23;
+"road-eastnet-psk":   my_updown=ipsec _updown;
+"road-eastnet-psk":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"road-eastnet-psk":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
+"road-eastnet-psk":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"road-eastnet-psk":   sec_label:unset;
+"road-eastnet-psk":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"road-eastnet-psk":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+"road-eastnet-psk":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"road-eastnet-psk":   policy: IKEv1+PSK+ENCRYPT+TUNNEL+PFS+AGGRESSIVE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"road-eastnet-psk":   conn_prio: 32,24; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"road-eastnet-psk":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+"road-eastnet-psk":   our idtype: ID_FQDN; our id=@roadrandom; their idtype: ID_FQDN; their id=@east
+"road-eastnet-psk":   dpd: passive; delay:0s; timeout:0s
+"road-eastnet-psk":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
+"road-eastnet-psk":   routing: unrouted;
+"road-eastnet-psk":   conn serial: $1;
+"road-eastnet-psk":   IKE algorithms: 3DES_CBC-HMAC_SHA1-MODP2048, 3DES_CBC-HMAC_SHA1-MODP1536
 road #
  echo "initdone"
 initdone

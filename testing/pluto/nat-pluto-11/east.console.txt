@@ -9,7 +9,7 @@ east #
 002 "road-eastnet": added IKEv1 connection
 east #
  ipsec status |grep encaps:
-000 "road-eastnet":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
+"road-eastnet":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
 east #
  echo "initdone"
 initdone

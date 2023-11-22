@@ -53,7 +53,7 @@ east #
  # there should be no instance connections
 east #
  ipsec status | grep "conn serial"
-000 "road-eastnet-ikev2":   routing: unrouted;
-000 "road-eastnet-ikev2":   conn serial: $1;
+"road-eastnet-ikev2":   routing: unrouted;
+"road-eastnet-ikev2":   conn serial: $1;
 east #
  

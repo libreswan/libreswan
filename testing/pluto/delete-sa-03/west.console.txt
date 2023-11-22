@@ -15,60 +15,60 @@ west #
 002 "west-east-c": added IKEv1 connection
 west #
  ipsec auto --status | grep west-
-000 "west-east": 192.1.2.45[@west]...192.1.2.23[@east]; unrouted; my_ip=unset; their_ip=unset;
-000 "west-east":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
-000 "west-east":   my_updown=ipsec _updown;
-000 "west-east":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "west-east":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
-000 "west-east":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-000 "west-east":   sec_label:unset;
-000 "west-east":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
-000 "west-east":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
-000 "west-east":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "west-east":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-000 "west-east":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "west-east":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
-000 "west-east":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
-000 "west-east":   dpd: passive; delay:0s; timeout:0s
-000 "west-east":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
-000 "west-east":   routing: unrouted;
-000 "west-east":   conn serial: $1;
-000 "west-east-b": 198.51.100.1/32===192.1.2.45[@west]...192.1.2.23[@east]===198.51.100.2/32; unrouted; my_ip=unset; their_ip=unset;
-000 "west-east-b":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
-000 "west-east-b":   my_updown=ipsec _updown;
-000 "west-east-b":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "west-east-b":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
-000 "west-east-b":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-000 "west-east-b":   sec_label:unset;
-000 "west-east-b":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
-000 "west-east-b":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
-000 "west-east-b":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "west-east-b":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-000 "west-east-b":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "west-east-b":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
-000 "west-east-b":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
-000 "west-east-b":   dpd: passive; delay:0s; timeout:0s
-000 "west-east-b":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
-000 "west-east-b":   routing: unrouted;
-000 "west-east-b":   conn serial: $2;
-000 "west-east-c": 198.51.100.3/32===192.1.2.45[@west]...192.1.2.23[@east]===198.51.100.4/32; unrouted; my_ip=unset; their_ip=unset;
-000 "west-east-c":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
-000 "west-east-c":   my_updown=ipsec _updown;
-000 "west-east-c":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "west-east-c":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
-000 "west-east-c":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-000 "west-east-c":   sec_label:unset;
-000 "west-east-c":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
-000 "west-east-c":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
-000 "west-east-c":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "west-east-c":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-000 "west-east-c":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "west-east-c":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
-000 "west-east-c":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
-000 "west-east-c":   dpd: passive; delay:0s; timeout:0s
-000 "west-east-c":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
-000 "west-east-c":   routing: unrouted;
-000 "west-east-c":   conn serial: $3;
+"west-east": 192.1.2.45[@west]...192.1.2.23[@east]; unrouted; my_ip=unset; their_ip=unset;
+"west-east":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
+"west-east":   my_updown=ipsec _updown;
+"west-east":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"west-east":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
+"west-east":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"west-east":   sec_label:unset;
+"west-east":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"west-east":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+"west-east":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"west-east":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"west-east":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"west-east":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+"west-east":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
+"west-east":   dpd: passive; delay:0s; timeout:0s
+"west-east":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
+"west-east":   routing: unrouted;
+"west-east":   conn serial: $1;
+"west-east-b": 198.51.100.1/32===192.1.2.45[@west]...192.1.2.23[@east]===198.51.100.2/32; unrouted; my_ip=unset; their_ip=unset;
+"west-east-b":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
+"west-east-b":   my_updown=ipsec _updown;
+"west-east-b":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"west-east-b":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
+"west-east-b":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"west-east-b":   sec_label:unset;
+"west-east-b":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"west-east-b":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+"west-east-b":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"west-east-b":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"west-east-b":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"west-east-b":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+"west-east-b":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
+"west-east-b":   dpd: passive; delay:0s; timeout:0s
+"west-east-b":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
+"west-east-b":   routing: unrouted;
+"west-east-b":   conn serial: $2;
+"west-east-c": 198.51.100.3/32===192.1.2.45[@west]...192.1.2.23[@east]===198.51.100.4/32; unrouted; my_ip=unset; their_ip=unset;
+"west-east-c":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
+"west-east-c":   my_updown=ipsec _updown;
+"west-east-c":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"west-east-c":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
+"west-east-c":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"west-east-c":   sec_label:unset;
+"west-east-c":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"west-east-c":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+"west-east-c":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"west-east-c":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"west-east-c":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"west-east-c":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+"west-east-c":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
+"west-east-c":   dpd: passive; delay:0s; timeout:0s
+"west-east-c":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
+"west-east-c":   routing: unrouted;
+"west-east-c":   conn serial: $3;
 west #
  ipsec whack --impair suppress-retransmits
 west #
@@ -98,71 +98,71 @@ west #
 004 "west-east-c" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
  ipsec auto --status | grep west-
-000 "west-east": 192.1.2.45[@west]...192.1.2.23[@east]; routed-tunnel; my_ip=unset; their_ip=unset;
-000 "west-east":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23; established ISAKMP SA: #1;
-000 "west-east":   my_updown=ipsec _updown;
-000 "west-east":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "west-east":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
-000 "west-east":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-000 "west-east":   sec_label:unset;
-000 "west-east":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
-000 "west-east":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
-000 "west-east":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "west-east":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-000 "west-east":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "west-east":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
-000 "west-east":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
-000 "west-east":   dpd: passive; delay:0s; timeout:0s
-000 "west-east":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
-000 "west-east":   routing: routed-tunnel; established IPsec SA: #2;
-000 "west-east":   conn serial: $1;
-000 "west-east":   IKEv1 algorithm newest: AES_CBC_256-HMAC_SHA2_256-MODP2048
-000 "west-east":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
-000 "west-east-b": 198.51.100.1/32===192.1.2.45[@west]...192.1.2.23[@east]===198.51.100.2/32; routed-tunnel; my_ip=unset; their_ip=unset;
-000 "west-east-b":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
-000 "west-east-b":   my_updown=ipsec _updown;
-000 "west-east-b":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "west-east-b":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
-000 "west-east-b":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-000 "west-east-b":   sec_label:unset;
-000 "west-east-b":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
-000 "west-east-b":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
-000 "west-east-b":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "west-east-b":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-000 "west-east-b":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "west-east-b":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
-000 "west-east-b":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
-000 "west-east-b":   dpd: passive; delay:0s; timeout:0s
-000 "west-east-b":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
-000 "west-east-b":   routing: routed-tunnel; established IPsec SA: #3;
-000 "west-east-b":   conn serial: $2;
-000 "west-east-b":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
-000 "west-east-c": 198.51.100.3/32===192.1.2.45[@west]...192.1.2.23[@east]===198.51.100.4/32; routed-tunnel; my_ip=unset; their_ip=unset;
-000 "west-east-c":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
-000 "west-east-c":   my_updown=ipsec _updown;
-000 "west-east-c":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "west-east-c":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
-000 "west-east-c":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-000 "west-east-c":   sec_label:unset;
-000 "west-east-c":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
-000 "west-east-c":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
-000 "west-east-c":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "west-east-c":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-000 "west-east-c":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "west-east-c":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
-000 "west-east-c":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
-000 "west-east-c":   dpd: passive; delay:0s; timeout:0s
-000 "west-east-c":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
-000 "west-east-c":   routing: routed-tunnel; established IPsec SA: #4;
-000 "west-east-c":   conn serial: $3;
-000 "west-east-c":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
-000 #1: "west-east":500 STATE_MAIN_I4 (ISAKMP SA established); REPLACE in XXs; newest; lastdpd=-1s(seq in:0 out:0); idle;
-000 #2: "west-east":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
-000 #2: "west-east" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
-000 #3: "west-east-b":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
-000 #3: "west-east-b" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
-000 #4: "west-east-c":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
-000 #4: "west-east-c" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
+"west-east": 192.1.2.45[@west]...192.1.2.23[@east]; routed-tunnel; my_ip=unset; their_ip=unset;
+"west-east":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23; established ISAKMP SA: #1;
+"west-east":   my_updown=ipsec _updown;
+"west-east":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"west-east":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
+"west-east":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"west-east":   sec_label:unset;
+"west-east":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"west-east":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+"west-east":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"west-east":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"west-east":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"west-east":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+"west-east":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
+"west-east":   dpd: passive; delay:0s; timeout:0s
+"west-east":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
+"west-east":   routing: routed-tunnel; established IPsec SA: #2;
+"west-east":   conn serial: $1;
+"west-east":   IKEv1 algorithm newest: AES_CBC_256-HMAC_SHA2_256-MODP2048
+"west-east":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
+"west-east-b": 198.51.100.1/32===192.1.2.45[@west]...192.1.2.23[@east]===198.51.100.2/32; routed-tunnel; my_ip=unset; their_ip=unset;
+"west-east-b":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
+"west-east-b":   my_updown=ipsec _updown;
+"west-east-b":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"west-east-b":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
+"west-east-b":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"west-east-b":   sec_label:unset;
+"west-east-b":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"west-east-b":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+"west-east-b":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"west-east-b":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"west-east-b":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"west-east-b":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+"west-east-b":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
+"west-east-b":   dpd: passive; delay:0s; timeout:0s
+"west-east-b":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
+"west-east-b":   routing: routed-tunnel; established IPsec SA: #3;
+"west-east-b":   conn serial: $2;
+"west-east-b":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
+"west-east-c": 198.51.100.3/32===192.1.2.45[@west]...192.1.2.23[@east]===198.51.100.4/32; routed-tunnel; my_ip=unset; their_ip=unset;
+"west-east-c":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
+"west-east-c":   my_updown=ipsec _updown;
+"west-east-c":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"west-east-c":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
+"west-east-c":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"west-east-c":   sec_label:unset;
+"west-east-c":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"west-east-c":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+"west-east-c":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"west-east-c":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"west-east-c":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"west-east-c":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+"west-east-c":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
+"west-east-c":   dpd: passive; delay:0s; timeout:0s
+"west-east-c":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
+"west-east-c":   routing: routed-tunnel; established IPsec SA: #4;
+"west-east-c":   conn serial: $3;
+"west-east-c":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
+#1: "west-east":500 STATE_MAIN_I4 (ISAKMP SA established); REPLACE in XXs; newest; lastdpd=-1s(seq in:0 out:0); idle;
+#2: "west-east":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
+#2: "west-east" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
+#3: "west-east-b":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
+#3: "west-east-b" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
+#4: "west-east-c":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
+#4: "west-east-c" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
 west #
  # This down should not delete #1 because that IKE SA is also used by b and c
 west #
@@ -173,133 +173,133 @@ west #
 005 "west-east" #2: ESP traffic information: in=0B out=0B
 west #
  ipsec status |grep west-
-000 "west-east": 192.1.2.45[@west]...192.1.2.23[@east]; unrouted; my_ip=unset; their_ip=unset;
-000 "west-east":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23; established ISAKMP SA: #1;
-000 "west-east":   my_updown=ipsec _updown;
-000 "west-east":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "west-east":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
-000 "west-east":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-000 "west-east":   sec_label:unset;
-000 "west-east":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
-000 "west-east":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
-000 "west-east":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "west-east":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-000 "west-east":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "west-east":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
-000 "west-east":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
-000 "west-east":   dpd: passive; delay:0s; timeout:0s
-000 "west-east":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
-000 "west-east":   routing: unrouted;
-000 "west-east":   conn serial: $1;
-000 "west-east":   IKEv1 algorithm newest: AES_CBC_256-HMAC_SHA2_256-MODP2048
-000 "west-east-b": 198.51.100.1/32===192.1.2.45[@west]...192.1.2.23[@east]===198.51.100.2/32; routed-tunnel; my_ip=unset; their_ip=unset;
-000 "west-east-b":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
-000 "west-east-b":   my_updown=ipsec _updown;
-000 "west-east-b":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "west-east-b":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
-000 "west-east-b":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-000 "west-east-b":   sec_label:unset;
-000 "west-east-b":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
-000 "west-east-b":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
-000 "west-east-b":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "west-east-b":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-000 "west-east-b":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "west-east-b":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
-000 "west-east-b":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
-000 "west-east-b":   dpd: passive; delay:0s; timeout:0s
-000 "west-east-b":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
-000 "west-east-b":   routing: routed-tunnel; established IPsec SA: #3;
-000 "west-east-b":   conn serial: $2;
-000 "west-east-b":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
-000 "west-east-c": 198.51.100.3/32===192.1.2.45[@west]...192.1.2.23[@east]===198.51.100.4/32; routed-tunnel; my_ip=unset; their_ip=unset;
-000 "west-east-c":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
-000 "west-east-c":   my_updown=ipsec _updown;
-000 "west-east-c":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "west-east-c":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
-000 "west-east-c":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-000 "west-east-c":   sec_label:unset;
-000 "west-east-c":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
-000 "west-east-c":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
-000 "west-east-c":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "west-east-c":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-000 "west-east-c":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "west-east-c":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
-000 "west-east-c":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
-000 "west-east-c":   dpd: passive; delay:0s; timeout:0s
-000 "west-east-c":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
-000 "west-east-c":   routing: routed-tunnel; established IPsec SA: #4;
-000 "west-east-c":   conn serial: $3;
-000 "west-east-c":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
-000 #1: "west-east":500 STATE_MAIN_I4 (ISAKMP SA established); REPLACE in XXs; newest; lastdpd=-1s(seq in:0 out:0); idle;
-000 #3: "west-east-b":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
-000 #3: "west-east-b" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
-000 #4: "west-east-c":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
-000 #4: "west-east-c" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
+"west-east": 192.1.2.45[@west]...192.1.2.23[@east]; unrouted; my_ip=unset; their_ip=unset;
+"west-east":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23; established ISAKMP SA: #1;
+"west-east":   my_updown=ipsec _updown;
+"west-east":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"west-east":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
+"west-east":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"west-east":   sec_label:unset;
+"west-east":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"west-east":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+"west-east":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"west-east":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"west-east":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"west-east":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+"west-east":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
+"west-east":   dpd: passive; delay:0s; timeout:0s
+"west-east":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
+"west-east":   routing: unrouted;
+"west-east":   conn serial: $1;
+"west-east":   IKEv1 algorithm newest: AES_CBC_256-HMAC_SHA2_256-MODP2048
+"west-east-b": 198.51.100.1/32===192.1.2.45[@west]...192.1.2.23[@east]===198.51.100.2/32; routed-tunnel; my_ip=unset; their_ip=unset;
+"west-east-b":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
+"west-east-b":   my_updown=ipsec _updown;
+"west-east-b":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"west-east-b":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
+"west-east-b":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"west-east-b":   sec_label:unset;
+"west-east-b":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"west-east-b":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+"west-east-b":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"west-east-b":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"west-east-b":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"west-east-b":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+"west-east-b":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
+"west-east-b":   dpd: passive; delay:0s; timeout:0s
+"west-east-b":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
+"west-east-b":   routing: routed-tunnel; established IPsec SA: #3;
+"west-east-b":   conn serial: $2;
+"west-east-b":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
+"west-east-c": 198.51.100.3/32===192.1.2.45[@west]...192.1.2.23[@east]===198.51.100.4/32; routed-tunnel; my_ip=unset; their_ip=unset;
+"west-east-c":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
+"west-east-c":   my_updown=ipsec _updown;
+"west-east-c":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"west-east-c":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
+"west-east-c":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"west-east-c":   sec_label:unset;
+"west-east-c":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"west-east-c":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+"west-east-c":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"west-east-c":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"west-east-c":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"west-east-c":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+"west-east-c":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
+"west-east-c":   dpd: passive; delay:0s; timeout:0s
+"west-east-c":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
+"west-east-c":   routing: routed-tunnel; established IPsec SA: #4;
+"west-east-c":   conn serial: $3;
+"west-east-c":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
+#1: "west-east":500 STATE_MAIN_I4 (ISAKMP SA established); REPLACE in XXs; newest; lastdpd=-1s(seq in:0 out:0); idle;
+#3: "west-east-b":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
+#3: "west-east-b" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
+#4: "west-east-c":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
+#4: "west-east-c" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
 west #
  # both east and west should still have one IKE SA #1
 west #
  ipsec status | grep west-east
-000 "west-east": 192.1.2.45[@west]...192.1.2.23[@east]; unrouted; my_ip=unset; their_ip=unset;
-000 "west-east":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23; established ISAKMP SA: #1;
-000 "west-east":   my_updown=ipsec _updown;
-000 "west-east":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "west-east":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
-000 "west-east":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-000 "west-east":   sec_label:unset;
-000 "west-east":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
-000 "west-east":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
-000 "west-east":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "west-east":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-000 "west-east":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "west-east":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
-000 "west-east":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
-000 "west-east":   dpd: passive; delay:0s; timeout:0s
-000 "west-east":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
-000 "west-east":   routing: unrouted;
-000 "west-east":   conn serial: $1;
-000 "west-east":   IKEv1 algorithm newest: AES_CBC_256-HMAC_SHA2_256-MODP2048
-000 "west-east-b": 198.51.100.1/32===192.1.2.45[@west]...192.1.2.23[@east]===198.51.100.2/32; routed-tunnel; my_ip=unset; their_ip=unset;
-000 "west-east-b":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
-000 "west-east-b":   my_updown=ipsec _updown;
-000 "west-east-b":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "west-east-b":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
-000 "west-east-b":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-000 "west-east-b":   sec_label:unset;
-000 "west-east-b":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
-000 "west-east-b":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
-000 "west-east-b":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "west-east-b":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-000 "west-east-b":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "west-east-b":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
-000 "west-east-b":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
-000 "west-east-b":   dpd: passive; delay:0s; timeout:0s
-000 "west-east-b":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
-000 "west-east-b":   routing: routed-tunnel; established IPsec SA: #3;
-000 "west-east-b":   conn serial: $2;
-000 "west-east-b":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
-000 "west-east-c": 198.51.100.3/32===192.1.2.45[@west]...192.1.2.23[@east]===198.51.100.4/32; routed-tunnel; my_ip=unset; their_ip=unset;
-000 "west-east-c":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
-000 "west-east-c":   my_updown=ipsec _updown;
-000 "west-east-c":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "west-east-c":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
-000 "west-east-c":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-000 "west-east-c":   sec_label:unset;
-000 "west-east-c":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
-000 "west-east-c":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
-000 "west-east-c":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "west-east-c":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-000 "west-east-c":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "west-east-c":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
-000 "west-east-c":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
-000 "west-east-c":   dpd: passive; delay:0s; timeout:0s
-000 "west-east-c":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
-000 "west-east-c":   routing: routed-tunnel; established IPsec SA: #4;
-000 "west-east-c":   conn serial: $3;
-000 "west-east-c":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
-000 #1: "west-east":500 STATE_MAIN_I4 (ISAKMP SA established); REPLACE in XXs; newest; lastdpd=-1s(seq in:0 out:0); idle;
-000 #3: "west-east-b":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
-000 #3: "west-east-b" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
-000 #4: "west-east-c":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
-000 #4: "west-east-c" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
+"west-east": 192.1.2.45[@west]...192.1.2.23[@east]; unrouted; my_ip=unset; their_ip=unset;
+"west-east":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23; established ISAKMP SA: #1;
+"west-east":   my_updown=ipsec _updown;
+"west-east":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"west-east":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
+"west-east":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"west-east":   sec_label:unset;
+"west-east":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"west-east":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+"west-east":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"west-east":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"west-east":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"west-east":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+"west-east":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
+"west-east":   dpd: passive; delay:0s; timeout:0s
+"west-east":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
+"west-east":   routing: unrouted;
+"west-east":   conn serial: $1;
+"west-east":   IKEv1 algorithm newest: AES_CBC_256-HMAC_SHA2_256-MODP2048
+"west-east-b": 198.51.100.1/32===192.1.2.45[@west]...192.1.2.23[@east]===198.51.100.2/32; routed-tunnel; my_ip=unset; their_ip=unset;
+"west-east-b":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
+"west-east-b":   my_updown=ipsec _updown;
+"west-east-b":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"west-east-b":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
+"west-east-b":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"west-east-b":   sec_label:unset;
+"west-east-b":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"west-east-b":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+"west-east-b":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"west-east-b":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"west-east-b":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"west-east-b":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+"west-east-b":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
+"west-east-b":   dpd: passive; delay:0s; timeout:0s
+"west-east-b":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
+"west-east-b":   routing: routed-tunnel; established IPsec SA: #3;
+"west-east-b":   conn serial: $2;
+"west-east-b":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
+"west-east-c": 198.51.100.3/32===192.1.2.45[@west]...192.1.2.23[@east]===198.51.100.4/32; routed-tunnel; my_ip=unset; their_ip=unset;
+"west-east-c":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
+"west-east-c":   my_updown=ipsec _updown;
+"west-east-c":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"west-east-c":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
+"west-east-c":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"west-east-c":   sec_label:unset;
+"west-east-c":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"west-east-c":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+"west-east-c":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"west-east-c":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"west-east-c":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"west-east-c":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+"west-east-c":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
+"west-east-c":   dpd: passive; delay:0s; timeout:0s
+"west-east-c":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
+"west-east-c":   routing: routed-tunnel; established IPsec SA: #4;
+"west-east-c":   conn serial: $3;
+"west-east-c":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
+#1: "west-east":500 STATE_MAIN_I4 (ISAKMP SA established); REPLACE in XXs; newest; lastdpd=-1s(seq in:0 out:0); idle;
+#3: "west-east-b":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
+#3: "west-east-b" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
+#4: "west-east-c":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
+#4: "west-east-c" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
 west #
  

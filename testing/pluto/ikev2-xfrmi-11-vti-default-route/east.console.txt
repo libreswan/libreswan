@@ -12,7 +12,7 @@ east #
 initdone
 east #
  ipsec whack --trafficstatus
-000 #2: "north-east-default", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='@north'
+#2: "north-east-default", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='@north'
 east #
  ../../guestbin/xfrmcheck.sh
 ERROR: east: XfrmInTmplMismatch      	4

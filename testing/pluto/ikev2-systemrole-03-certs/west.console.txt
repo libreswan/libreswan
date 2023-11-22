@@ -54,28 +54,28 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec status | grep 192.1.2
-000 interface eth1 UDP 192.1.2.45:4500
-000 interface eth1 UDP 192.1.2.45:500
-000 "192.1.2.45-to-192.1.2.23": 192.1.2.45...192.1.2.23[%fromcert]; routed-ondemand; my_ip=unset; their_ip=unset;
-000 "192.1.2.45-to-192.1.2.23":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
-000 "192.1.2.45-to-192.1.2.23":   mycert=west; my_updown=ipsec _updown;
-000 "192.1.2.45-to-192.1.2.23":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "192.1.2.45-to-192.1.2.23":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
-000 "192.1.2.45-to-192.1.2.23":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-000 "192.1.2.45-to-192.1.2.23":   sec_label:unset;
-000 "192.1.2.45-to-192.1.2.23":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
-000 "192.1.2.45-to-192.1.2.23":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
-000 "192.1.2.45-to-192.1.2.23":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
-000 "192.1.2.45-to-192.1.2.23":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "192.1.2.45-to-192.1.2.23":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+ROUTE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-000 "192.1.2.45-to-192.1.2.23":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
-000 "192.1.2.45-to-192.1.2.23":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "192.1.2.45-to-192.1.2.23":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
-000 "192.1.2.45-to-192.1.2.23":   our idtype: ID_IPV4_ADDR; our id=192.1.2.45; their idtype: %fromcert; their id=%fromcert
-000 "192.1.2.45-to-192.1.2.23":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
-000 "192.1.2.45-to-192.1.2.23":   nat-traversal: encaps:auto; keepalive:20s
-000 "192.1.2.45-to-192.1.2.23":   routing: routed-ondemand;
-000 "192.1.2.45-to-192.1.2.23":   conn serial: $1;
+interface eth1 UDP 192.1.2.45:4500
+interface eth1 UDP 192.1.2.45:500
+"192.1.2.45-to-192.1.2.23": 192.1.2.45...192.1.2.23[%fromcert]; routed-ondemand; my_ip=unset; their_ip=unset;
+"192.1.2.45-to-192.1.2.23":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
+"192.1.2.45-to-192.1.2.23":   mycert=west; my_updown=ipsec _updown;
+"192.1.2.45-to-192.1.2.23":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"192.1.2.45-to-192.1.2.23":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
+"192.1.2.45-to-192.1.2.23":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"192.1.2.45-to-192.1.2.23":   sec_label:unset;
+"192.1.2.45-to-192.1.2.23":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
+"192.1.2.45-to-192.1.2.23":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"192.1.2.45-to-192.1.2.23":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+"192.1.2.45-to-192.1.2.23":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"192.1.2.45-to-192.1.2.23":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+ROUTE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"192.1.2.45-to-192.1.2.23":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
+"192.1.2.45-to-192.1.2.23":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"192.1.2.45-to-192.1.2.23":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+"192.1.2.45-to-192.1.2.23":   our idtype: ID_IPV4_ADDR; our id=192.1.2.45; their idtype: %fromcert; their id=%fromcert
+"192.1.2.45-to-192.1.2.23":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
+"192.1.2.45-to-192.1.2.23":   nat-traversal: encaps:auto; keepalive:20s
+"192.1.2.45-to-192.1.2.23":   routing: routed-ondemand;
+"192.1.2.45-to-192.1.2.23":   conn serial: $1;
 west #
  # connection is ondemand, but we will --up so we can see X.509 auth
 west #
@@ -99,7 +99,7 @@ west #
  # show non-zero IPsec traffic counters
 west #
  ipsec whack --trafficstatus
-000 #2: "192.1.2.45-to-192.1.2.23", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+#2: "192.1.2.45-to-192.1.2.23", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 west #
  echo done
 done

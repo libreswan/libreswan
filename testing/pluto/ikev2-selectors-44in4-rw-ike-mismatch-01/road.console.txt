@@ -121,6 +121,6 @@ road #
  # non-zero counts confirm encrypted traffic flowing
 road #
  ipsec trafficstatus
-000 #2: "road", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@east'
+#2: "road", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@east'
 road #
  

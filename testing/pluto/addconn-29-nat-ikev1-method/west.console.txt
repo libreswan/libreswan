@@ -36,15 +36,15 @@ west #
 002 "whack--none": added IKEv1 connection
 west #
  ipsec connectionstatus | sed -n -e 's/^\([^:]*:\) .* \(ikev1-method:\)[ ]*\([^ ;]*\).*/\1 \2 \3/p' | sort
-000 "addconn--both": ikev1-method: rfc+drafts
-000 "addconn--default": ikev1-method: rfc+drafts
-000 "addconn--drafts": ikev1-method: drafts
-000 "addconn--none": ikev1-method: none
-000 "addconn--rfc": ikev1-method: rfc
-000 "whack--both": ikev1-method: rfc+drafts
-000 "whack--default": ikev1-method: rfc+drafts
-000 "whack--drafts": ikev1-method: drafts
-000 "whack--none": ikev1-method: none
-000 "whack--rfc": ikev1-method: rfc
+"addconn--both": ikev1-method: rfc+drafts
+"addconn--default": ikev1-method: rfc+drafts
+"addconn--drafts": ikev1-method: drafts
+"addconn--none": ikev1-method: none
+"addconn--rfc": ikev1-method: rfc
+"whack--both": ikev1-method: rfc+drafts
+"whack--default": ikev1-method: rfc+drafts
+"whack--drafts": ikev1-method: drafts
+"whack--none": ikev1-method: none
+"whack--rfc": ikev1-method: rfc
 west #
  

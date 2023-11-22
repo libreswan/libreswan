@@ -9,25 +9,25 @@ west #
 002 "order-test": added IKEv2 connection
 west #
  ipsec whack --connectionstatus --name order-test
-000 "order-test": fe80::1/128===1.2.3.4[+S?C]...2.3.4.5[+S?C]===fe80::2/128; unoriented; my_ip=unset; their_ip=unset;
-000 "order-test":   host: unoriented; left: 1.2.3.4; right: 2.3.4.5;
-000 "order-test":   my_updown=ipsec _updown;
-000 "order-test":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "order-test":   our auth:rsasig(RSASIG+ECDSA+RSASIG_v1_5), their auth:rsasig(RSASIG+ECDSA+RSASIG_v1_5), our autheap:none, their autheap:none;
-000 "order-test":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-000 "order-test":   sec_label:unset;
-000 "order-test":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
-000 "order-test":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
-000 "order-test":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "order-test":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-000 "order-test":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
-000 "order-test":   conn_prio: 128,128; interface: ; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "order-test":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
-000 "order-test":   our idtype: ID_IPV4_ADDR; our id=1.2.3.4; their idtype: ID_IPV4_ADDR; their id=2.3.4.5
-000 "order-test":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
-000 "order-test":   nat-traversal: encaps:auto; keepalive:20s
-000 "order-test":   routing: unrouted;
-000 "order-test":   conn serial: $1;
+"order-test": fe80::1/128===1.2.3.4[+S?C]...2.3.4.5[+S?C]===fe80::2/128; unoriented; my_ip=unset; their_ip=unset;
+"order-test":   host: unoriented; left: 1.2.3.4; right: 2.3.4.5;
+"order-test":   my_updown=ipsec _updown;
+"order-test":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"order-test":   our auth:rsasig(RSASIG+ECDSA+RSASIG_v1_5), their auth:rsasig(RSASIG+ECDSA+RSASIG_v1_5), our autheap:none, their autheap:none;
+"order-test":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"order-test":   sec_label:unset;
+"order-test":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"order-test":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+"order-test":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"order-test":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"order-test":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
+"order-test":   conn_prio: 128,128; interface: ; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"order-test":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+"order-test":   our idtype: ID_IPV4_ADDR; our id=1.2.3.4; their idtype: ID_IPV4_ADDR; their id=2.3.4.5
+"order-test":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
+"order-test":   nat-traversal: encaps:auto; keepalive:20s
+"order-test":   routing: unrouted;
+"order-test":   conn serial: $1;
 west #
  echo done
 done

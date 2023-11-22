@@ -78,15 +78,15 @@ west #
 002 "66family6": added IKEv2 connection
 west #
  ipsec status | grep '==='
-000 "44family4": 0.0.0.0/0===10.11.12.13...20.21.22.23===0.0.0.0/0; unoriented; my_ip=unset; their_ip=unset;
-000 "4in4-base": 1.2.3.0/24===10.11.12.13...20.21.22.23; unoriented; my_ip=unset; their_ip=unset;
-000 "4in4-good": 1.2.3.0/24===10.11.12.13...20.21.22.23===0.0.0.0/0; unoriented; my_ip=unset; their_ip=unset;
-000 "4in4-protoport": 1.2.3.0/24===10.11.12.13...20.21.22.23===20.21.22.23/32/TCP/22; unoriented; my_ip=unset; their_ip=unset;
-000 "4in6-good": 1.2.3.0/24===10:11:12:13::...20:21:22:23::===0.0.0.0/0; unoriented; my_ip=unset; their_ip=unset;
-000 "66family6": ::/0===10.11.12.13...20.21.22.23===::/0; unoriented; my_ip=unset; their_ip=unset;
-000 "6in4-good": 1:2:3::/64===10.11.12.13...20.21.22.23===::/0; unoriented; my_ip=unset; their_ip=unset;
-000 "6in6-base": 1:2:3::/64===10:11:12:13::...20:21:22:23::; unoriented; my_ip=unset; their_ip=unset;
-000 "6in6-good": 1:2:3::/64===10:11:12:13::...20:21:22:23::===::/0; unoriented; my_ip=unset; their_ip=unset;
-000 "6in6-protoport": 1:2:3::/64===10:11:12:13::...20:21:22:23::===20:21:22:23::/128/TCP/22; unoriented; my_ip=unset; their_ip=unset;
+"44family4": 0.0.0.0/0===10.11.12.13...20.21.22.23===0.0.0.0/0; unoriented; my_ip=unset; their_ip=unset;
+"4in4-base": 1.2.3.0/24===10.11.12.13...20.21.22.23; unoriented; my_ip=unset; their_ip=unset;
+"4in4-good": 1.2.3.0/24===10.11.12.13...20.21.22.23===0.0.0.0/0; unoriented; my_ip=unset; their_ip=unset;
+"4in4-protoport": 1.2.3.0/24===10.11.12.13...20.21.22.23===20.21.22.23/32/TCP/22; unoriented; my_ip=unset; their_ip=unset;
+"4in6-good": 1.2.3.0/24===10:11:12:13::...20:21:22:23::===0.0.0.0/0; unoriented; my_ip=unset; their_ip=unset;
+"66family6": ::/0===10.11.12.13...20.21.22.23===::/0; unoriented; my_ip=unset; their_ip=unset;
+"6in4-good": 1:2:3::/64===10.11.12.13...20.21.22.23===::/0; unoriented; my_ip=unset; their_ip=unset;
+"6in6-base": 1:2:3::/64===10:11:12:13::...20:21:22:23::; unoriented; my_ip=unset; their_ip=unset;
+"6in6-good": 1:2:3::/64===10:11:12:13::...20:21:22:23::===::/0; unoriented; my_ip=unset; their_ip=unset;
+"6in6-protoport": 1:2:3::/64===10:11:12:13::...20:21:22:23::===20:21:22:23::/128/TCP/22; unoriented; my_ip=unset; their_ip=unset;
 west #
  

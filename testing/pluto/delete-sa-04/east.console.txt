@@ -10,16 +10,16 @@ east #
  # waiting until we are within the last 50s of the IPsec SA lifetime
 east #
  while (ipsec status |grep STATE_QUICK_I2 |grep "EVENT_v1_REPLACE in 5"); ret=$?; [ $ret -ne 0 ]; do sleep 1; done
-000 #2: "west-east-auto":500 STATE_QUICK_I2 (sent QI2, IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
+#2: "west-east-auto":500 STATE_QUICK_I2 (sent QI2, IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
 east #
  ipsec status |grep STATE_QUICK_I2 |grep "EVENT_v1_REPLACE in"
-000 #2: "west-east-auto":500 STATE_QUICK_I2 (sent QI2, IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
+#2: "west-east-auto":500 STATE_QUICK_I2 (sent QI2, IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
 east #
  # Connection should be up, and there should be NO log message about "already replacing"
 east #
  ipsec trafficstatus
-000 #2: "west-east-auto", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@west'
-000 #4: "west-east-auto", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='@west'
+#2: "west-east-auto", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@west'
+#4: "west-east-auto", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='@west'
 east #
  grep "already replacing" /tmp/pluto.log && echo "bug triggered"
 "west-east-auto" #1: received Delete SA payload: already replacing IPsec State #2 in 54 seconds

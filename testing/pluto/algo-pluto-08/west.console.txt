@@ -25,26 +25,26 @@ west #
 002 "westnet-eastnet-dh15": added IKEv1 connection
 west #
  ipsec auto --status | grep westnet-eastnet-dh15
-000 "westnet-eastnet-dh15": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
-000 "westnet-eastnet-dh15":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
-000 "westnet-eastnet-dh15":   my_updown=ipsec _updown;
-000 "westnet-eastnet-dh15":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "westnet-eastnet-dh15":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
-000 "westnet-eastnet-dh15":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-000 "westnet-eastnet-dh15":   sec_label:unset;
-000 "westnet-eastnet-dh15":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
-000 "westnet-eastnet-dh15":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
-000 "westnet-eastnet-dh15":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "westnet-eastnet-dh15":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-000 "westnet-eastnet-dh15":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "westnet-eastnet-dh15":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
-000 "westnet-eastnet-dh15":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
-000 "westnet-eastnet-dh15":   dpd: passive; delay:0s; timeout:0s
-000 "westnet-eastnet-dh15":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
-000 "westnet-eastnet-dh15":   routing: unrouted;
-000 "westnet-eastnet-dh15":   conn serial: $1;
-000 "westnet-eastnet-dh15":   IKE algorithms: 3DES_CBC-HMAC_SHA1-MODP3072
-000 "westnet-eastnet-dh15":   ESP algorithms: 3DES_CBC-HMAC_SHA1_96-MODP3072
+"westnet-eastnet-dh15": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
+"westnet-eastnet-dh15":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
+"westnet-eastnet-dh15":   my_updown=ipsec _updown;
+"westnet-eastnet-dh15":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"westnet-eastnet-dh15":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
+"westnet-eastnet-dh15":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"westnet-eastnet-dh15":   sec_label:unset;
+"westnet-eastnet-dh15":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"westnet-eastnet-dh15":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+"westnet-eastnet-dh15":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"westnet-eastnet-dh15":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"westnet-eastnet-dh15":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"westnet-eastnet-dh15":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+"westnet-eastnet-dh15":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
+"westnet-eastnet-dh15":   dpd: passive; delay:0s; timeout:0s
+"westnet-eastnet-dh15":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
+"westnet-eastnet-dh15":   routing: unrouted;
+"westnet-eastnet-dh15":   conn serial: $1;
+"westnet-eastnet-dh15":   IKE algorithms: 3DES_CBC-HMAC_SHA1-MODP3072
+"westnet-eastnet-dh15":   ESP algorithms: 3DES_CBC-HMAC_SHA1_96-MODP3072
 west #
  ipsec whack --impair suppress-retransmits
 west #
@@ -67,7 +67,7 @@ west #
 up
 west #
  ipsec whack --trafficstatus
-000 #2: "westnet-eastnet-dh15", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+#2: "westnet-eastnet-dh15", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  echo done
 done

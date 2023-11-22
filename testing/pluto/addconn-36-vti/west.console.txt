@@ -86,53 +86,53 @@ west #
 002 "whack--passthrough--vti-routing=yes": added passthrough connection
 west #
  ipsec connectionstatus | sed -n -e 's/\(^[^:]*:\).* \(vti-routing:[^;]*\);.*/\1 \2/p' | sort
-000 "addconn--vti-interface=long": vti-routing:no
-000 "addconn--vti-interface=short": vti-routing:no
-000 "addconn": vti-routing:no
-000 "addconn--vti-routing=no": vti-routing:no
-000 "addconn--vti-routing=yes": vti-routing:yes
-000 "addconn--vti-shared=no": vti-routing:no
-000 "addconn--vti-shared=yes": vti-routing:no
-000 "whack--passthrough": vti-routing:no
-000 "whack--passthrough--vti-routing=no": vti-routing:no
-000 "whack--passthrough--vti-routing": vti-routing:no
-000 "whack--passthrough--vti-routing=yes": vti-routing:no
-000 "whack--passthrough--vti-shared=no": vti-routing:no
-000 "whack--passthrough--vti-shared": vti-routing:no
-000 "whack--passthrough--vti-shared=yes": vti-routing:no
-000 "whack--vti-interface=long": vti-routing:no
-000 "whack--vti-interface=short": vti-routing:no
-000 "whack": vti-routing:no
-000 "whack--vti-routing=no": vti-routing:no
-000 "whack--vti-routing": vti-routing:yes
-000 "whack--vti-routing=yes": vti-routing:yes
-000 "whack--vti-shared=no": vti-routing:no
-000 "whack--vti-shared": vti-routing:no
-000 "whack--vti-shared=yes": vti-routing:no
+"addconn--vti-interface=long": vti-routing:no
+"addconn--vti-interface=short": vti-routing:no
+"addconn": vti-routing:no
+"addconn--vti-routing=no": vti-routing:no
+"addconn--vti-routing=yes": vti-routing:yes
+"addconn--vti-shared=no": vti-routing:no
+"addconn--vti-shared=yes": vti-routing:no
+"whack--passthrough": vti-routing:no
+"whack--passthrough--vti-routing=no": vti-routing:no
+"whack--passthrough--vti-routing": vti-routing:no
+"whack--passthrough--vti-routing=yes": vti-routing:no
+"whack--passthrough--vti-shared=no": vti-routing:no
+"whack--passthrough--vti-shared": vti-routing:no
+"whack--passthrough--vti-shared=yes": vti-routing:no
+"whack--vti-interface=long": vti-routing:no
+"whack--vti-interface=short": vti-routing:no
+"whack": vti-routing:no
+"whack--vti-routing=no": vti-routing:no
+"whack--vti-routing": vti-routing:yes
+"whack--vti-routing=yes": vti-routing:yes
+"whack--vti-shared=no": vti-routing:no
+"whack--vti-shared": vti-routing:no
+"whack--vti-shared=yes": vti-routing:no
 west #
  ipsec connectionstatus | sed -n -e 's/\(^[^:]*:\).* \(vti-shared:[^;]*\);.*/\1 \2/p' | sort
-000 "addconn--vti-interface=long": vti-shared:no
-000 "addconn--vti-interface=short": vti-shared:no
-000 "addconn--vti-routing=no": vti-shared:no
-000 "addconn--vti-routing=yes": vti-shared:no
-000 "addconn": vti-shared:no
-000 "addconn--vti-shared=no": vti-shared:no
-000 "addconn--vti-shared=yes": vti-shared:yes
-000 "whack--passthrough--vti-routing=no": vti-shared:no
-000 "whack--passthrough--vti-routing": vti-shared:no
-000 "whack--passthrough--vti-routing=yes": vti-shared:no
-000 "whack--passthrough": vti-shared:no
-000 "whack--passthrough--vti-shared=no": vti-shared:no
-000 "whack--passthrough--vti-shared": vti-shared:no
-000 "whack--passthrough--vti-shared=yes": vti-shared:no
-000 "whack--vti-interface=long": vti-shared:no
-000 "whack--vti-interface=short": vti-shared:no
-000 "whack--vti-routing=no": vti-shared:no
-000 "whack--vti-routing": vti-shared:no
-000 "whack--vti-routing=yes": vti-shared:no
-000 "whack": vti-shared:no
-000 "whack--vti-shared=no": vti-shared:no
-000 "whack--vti-shared": vti-shared:yes
-000 "whack--vti-shared=yes": vti-shared:yes
+"addconn--vti-interface=long": vti-shared:no
+"addconn--vti-interface=short": vti-shared:no
+"addconn--vti-routing=no": vti-shared:no
+"addconn--vti-routing=yes": vti-shared:no
+"addconn": vti-shared:no
+"addconn--vti-shared=no": vti-shared:no
+"addconn--vti-shared=yes": vti-shared:yes
+"whack--passthrough--vti-routing=no": vti-shared:no
+"whack--passthrough--vti-routing": vti-shared:no
+"whack--passthrough--vti-routing=yes": vti-shared:no
+"whack--passthrough": vti-shared:no
+"whack--passthrough--vti-shared=no": vti-shared:no
+"whack--passthrough--vti-shared": vti-shared:no
+"whack--passthrough--vti-shared=yes": vti-shared:no
+"whack--vti-interface=long": vti-shared:no
+"whack--vti-interface=short": vti-shared:no
+"whack--vti-routing=no": vti-shared:no
+"whack--vti-routing": vti-shared:no
+"whack--vti-routing=yes": vti-shared:no
+"whack": vti-shared:no
+"whack--vti-shared=no": vti-shared:no
+"whack--vti-shared": vti-shared:yes
+"whack--vti-shared=yes": vti-shared:yes
 west #
  

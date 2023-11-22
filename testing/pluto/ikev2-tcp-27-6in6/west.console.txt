@@ -37,6 +37,6 @@ west #
 up
 west #
  ipsec whack --trafficstatus
-000 #2: "6in6", type=ESP, add_time=1234567890, inBytes=104, outBytes=104, maxBytes=2^63B, id='@west'
+#2: "6in6", type=ESP, add_time=1234567890, inBytes=104, outBytes=104, maxBytes=2^63B, id='@west'
 west #
  

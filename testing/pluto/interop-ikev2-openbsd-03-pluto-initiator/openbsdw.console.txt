@@ -32,7 +32,7 @@ west #
 up
 west #
  ipsec trafficstatus
-000 #2: "eastnet-westnet-ikev2", type=ESP, add_time=1234567890, id='@east'
+#2: "eastnet-westnet-ikev2", type=ESP, add_time=1234567890, id='@east'
 west #
  ../../guestbin/ipsec-kernel-state.sh
 @0 esp tunnel from 192.1.2.23 to 192.1.2.45 spi 0xSPISPI auth hmac-sha2-256 enc null \

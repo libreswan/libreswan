@@ -11,7 +11,7 @@ west #
  # wait for the connection to come up
 west #
  ../../guestbin/wait-for.sh --match westnet-eastnet-auto -- ipsec whack --trafficstatus
-000 #2: "westnet-eastnet-auto", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+#2: "westnet-eastnet-auto", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
 west #
  # ensure that clear text does not get through
 west #
@@ -27,7 +27,7 @@ west #
 up
 west #
  ipsec whack --trafficstatus
-000 #2: "westnet-eastnet-auto", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+#2: "westnet-eastnet-auto", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  # sending delete/notify should cause east to re-initiate
 west #
@@ -42,7 +42,7 @@ west #
  # should be 0
 west #
  ../../guestbin/wait-for.sh --match 'westnet-eastnet-auto.*inBytes=0' -- ipsec whack --trafficstatus
-000 #4: "westnet-eastnet-auto", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+#4: "westnet-eastnet-auto", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
 west #
  # A new IPsec SA should be established (older versions would be dead for 30 seconds)
 west #
@@ -50,6 +50,6 @@ west #
 up
 west #
  ipsec whack --trafficstatus
-000 #4: "westnet-eastnet-auto", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+#4: "westnet-eastnet-auto", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  

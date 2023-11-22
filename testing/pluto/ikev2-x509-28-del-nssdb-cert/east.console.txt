@@ -9,8 +9,8 @@ east #
  # list certs in NSS DB
 east #
  ipsec whack --listcerts | grep east
-000 End certificate "east" - SN: 0xXX
-000   subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
+End certificate "east" - SN: 0xXX
+  subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
 east #
  # add / remove 'test'
 east #

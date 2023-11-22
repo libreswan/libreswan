@@ -9,26 +9,26 @@ east #
 002 "ipv4-psk-ikev2-transport": added IKEv2 connection
 east #
  ipsec auto --status | grep ipv4-psk-ikev2-transport
-000 "ipv4-psk-ikev2-transport": 192.1.2.23[@east]...192.1.2.45[@west]; unrouted; my_ip=unset; their_ip=unset;
-000 "ipv4-psk-ikev2-transport":   host: oriented; local: 192.1.2.23; remote: 192.1.2.45;
-000 "ipv4-psk-ikev2-transport":   my_updown=ipsec _updown;
-000 "ipv4-psk-ikev2-transport":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "ipv4-psk-ikev2-transport":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
-000 "ipv4-psk-ikev2-transport":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-000 "ipv4-psk-ikev2-transport":   sec_label:unset;
-000 "ipv4-psk-ikev2-transport":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
-000 "ipv4-psk-ikev2-transport":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
-000 "ipv4-psk-ikev2-transport":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "ipv4-psk-ikev2-transport":   policy: IKEv2+PSK+ENCRYPT+TRANSPORT+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-000 "ipv4-psk-ikev2-transport":   v2-auth-hash-policy: none;
-000 "ipv4-psk-ikev2-transport":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "ipv4-psk-ikev2-transport":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
-000 "ipv4-psk-ikev2-transport":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
-000 "ipv4-psk-ikev2-transport":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
-000 "ipv4-psk-ikev2-transport":   nat-traversal: encaps:auto; keepalive:20s
-000 "ipv4-psk-ikev2-transport":   routing: unrouted;
-000 "ipv4-psk-ikev2-transport":   conn serial: $1;
-000 "ipv4-psk-ikev2-transport":   ESP algorithms: 3DES_CBC-HMAC_SHA2_256_128
+"ipv4-psk-ikev2-transport": 192.1.2.23[@east]...192.1.2.45[@west]; unrouted; my_ip=unset; their_ip=unset;
+"ipv4-psk-ikev2-transport":   host: oriented; local: 192.1.2.23; remote: 192.1.2.45;
+"ipv4-psk-ikev2-transport":   my_updown=ipsec _updown;
+"ipv4-psk-ikev2-transport":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"ipv4-psk-ikev2-transport":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
+"ipv4-psk-ikev2-transport":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"ipv4-psk-ikev2-transport":   sec_label:unset;
+"ipv4-psk-ikev2-transport":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"ipv4-psk-ikev2-transport":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+"ipv4-psk-ikev2-transport":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"ipv4-psk-ikev2-transport":   policy: IKEv2+PSK+ENCRYPT+TRANSPORT+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"ipv4-psk-ikev2-transport":   v2-auth-hash-policy: none;
+"ipv4-psk-ikev2-transport":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"ipv4-psk-ikev2-transport":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+"ipv4-psk-ikev2-transport":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
+"ipv4-psk-ikev2-transport":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
+"ipv4-psk-ikev2-transport":   nat-traversal: encaps:auto; keepalive:20s
+"ipv4-psk-ikev2-transport":   routing: unrouted;
+"ipv4-psk-ikev2-transport":   conn serial: $1;
+"ipv4-psk-ikev2-transport":   ESP algorithms: 3DES_CBC-HMAC_SHA2_256_128
 east #
  echo "initdone"
 initdone

@@ -17,10 +17,10 @@ west #
  # conn second should inherit the conn %default values with 3des-md5
 west #
  ipsec status |grep "algorithms:"
-000 "first":   IKE algorithms: AES_CBC-HMAC_SHA2_256-MODP2048+MODP3072+MODP4096+MODP8192+DH19+DH20+DH21+DH31
-000 "first":   ESP algorithms: AES_CBC-HMAC_SHA2_256_128
-000 "second":   IKE algorithms: 3DES_CBC-HMAC_SHA1-MODP2048+MODP3072+MODP4096+MODP8192+DH19+DH20+DH21+DH31
-000 "second":   ESP algorithms: 3DES_CBC-HMAC_SHA1_96
+"first":   IKE algorithms: AES_CBC-HMAC_SHA2_256-MODP2048+MODP3072+MODP4096+MODP8192+DH19+DH20+DH21+DH31
+"first":   ESP algorithms: AES_CBC-HMAC_SHA2_256_128
+"second":   IKE algorithms: 3DES_CBC-HMAC_SHA1-MODP2048+MODP3072+MODP4096+MODP8192+DH19+DH20+DH21+DH31
+"second":   ESP algorithms: 3DES_CBC-HMAC_SHA1_96
 west #
  # connection should fail to load - don't accept %fromcert without cert
 west #

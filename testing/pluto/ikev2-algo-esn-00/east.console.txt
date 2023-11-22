@@ -9,7 +9,7 @@ east #
 002 "replay": added IKEv2 connection
 east #
  ipsec auto --status | grep replay_window
-000 "replay":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"replay":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
 east #
  echo "initdone"
 initdone
@@ -17,7 +17,7 @@ east #
  # both ESN_NO and ESN_YES should show up
 east #
  ipsec status | grep ESN_
-000 "replay":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"replay":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 east #
  # replay-window will show up as 0 when ESN is enabled, while replay_window shows the real value
 east #

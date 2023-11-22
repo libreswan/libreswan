@@ -25,25 +25,25 @@ west #
 002 "tfc": added IKEv2 connection
 west #
  ipsec auto --status | grep tfc
-000 "tfc": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
-000 "tfc":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
-000 "tfc":   my_updown=ipsec _updown;
-000 "tfc":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "tfc":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
-000 "tfc":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-000 "tfc":   sec_label:unset;
-000 "tfc":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
-000 "tfc":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
-000 "tfc":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "tfc":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-000 "tfc":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
-000 "tfc":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:1500;
-000 "tfc":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
-000 "tfc":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
-000 "tfc":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
-000 "tfc":   nat-traversal: encaps:auto; keepalive:20s
-000 "tfc":   routing: unrouted;
-000 "tfc":   conn serial: $1;
+"tfc": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
+"tfc":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
+"tfc":   my_updown=ipsec _updown;
+"tfc":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"tfc":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
+"tfc":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"tfc":   sec_label:unset;
+"tfc":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"tfc":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+"tfc":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"tfc":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"tfc":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
+"tfc":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:1500;
+"tfc":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+"tfc":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
+"tfc":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
+"tfc":   nat-traversal: encaps:auto; keepalive:20s
+"tfc":   routing: unrouted;
+"tfc":   conn serial: $1;
 west #
  ipsec whack --impair suppress-retransmits
 west #
@@ -63,7 +63,7 @@ west #
  # byte counters appear for unencrypted size, not encrypted/padded size
 west #
  ipsec whack --trafficstatus
-000 #2: "tfc", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+#2: "tfc", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  echo done
 done

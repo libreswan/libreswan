@@ -16,13 +16,13 @@ east #
  # give OE policies time to load
 east #
  ../../guestbin/wait-for.sh --match 'loaded 11,' -- ipsec auto --status
-000 Total IPsec connections: loaded 11, active 0
+Total IPsec connections: loaded 11, active 0
 east #
  echo "initdone"
 initdone
 east #
  hostname | grep east > /dev/null && ipsec whack --trafficstatus
-000 #2: "clear-or-private#192.1.3.0/24"[1] ...192.1.3.209, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL'
+#2: "clear-or-private#192.1.3.0/24"[1] ...192.1.3.209, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL'
 east #
  # A tunnel should have established
 east #

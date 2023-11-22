@@ -14,7 +14,7 @@ west #
  # rekey_margin: should be less than rekey interval
 west #
  ipsec status | grep margin
-000 "percentage-good":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 10%;
+"percentage-good":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 10%;
 west #
  # output is unpredictable, include ephemeral values
 west #
@@ -32,8 +32,8 @@ resolving family=IPv4 src=192.1.2.23 gateway=<not-set> peer 192.1.2.45
 002 "percentage-wip": added IKEv2 connection
 west #
  ipsec status | grep margin
-000 "percentage-good":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 10%;
-000 "percentage-wip":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"percentage-good":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 10%;
+"percentage-wip":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
 west #
  ipsec addconn --verbose percentage-wip
 opening file: /etc/ipsec.conf
@@ -50,7 +50,7 @@ resolving family=IPv4 src=192.1.2.23 gateway=<not-set> peer 192.1.2.45
 002 "percentage-wip": added IKEv2 connection
 west #
  ipsec status | grep margin
-000 "percentage-good":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 10%;
-000 "percentage-wip":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"percentage-good":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 10%;
+"percentage-wip":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
 west #
  

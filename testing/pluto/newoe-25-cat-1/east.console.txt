@@ -14,13 +14,13 @@ east #
  # give OE policies time to load
 east #
  ../../guestbin/wait-for.sh --match 'loaded 9,' -- ipsec auto --status
-000 Total IPsec connections: loaded 9, active 0
+Total IPsec connections: loaded 9, active 0
 east #
  echo "initdone"
 initdone
 east #
  hostname | grep nic > /dev/null || ipsec whack --trafficstatus
-000 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.254===10.0.10.1/32, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL', lease=10.0.10.1/32
+#2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.254===10.0.10.1/32, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL', lease=10.0.10.1/32
 east #
  iptables -t nat -L -n
 Chain PREROUTING (policy ACCEPT)

@@ -20,13 +20,13 @@ west #
 fired and forgotten
 west #
  ../../guestbin/wait-for.sh --match west -- ipsec whack --trafficstatus
-000 #2: "west", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+#2: "west", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
 west #
  ../../guestbin/ping-once.sh --up -I 192.1.2.45 192.1.2.23
 up
 west #
  ipsec whack --trafficstatus
-000 #2: "west", type=ESP, add_time=1234567890, inBytes=64, outBytes=64, maxBytes=2^63B, id='@east'
+#2: "west", type=ESP, add_time=1234567890, inBytes=64, outBytes=64, maxBytes=2^63B, id='@east'
 west #
  # wait for larval state to clear; hack
 west #

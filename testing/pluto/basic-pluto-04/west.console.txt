@@ -15,7 +15,7 @@ west #
  # this should show phase2alg picked is aes128-sha1, not null-sha1
 west #
  ipsec status |grep good |grep ESP
-000 "good":   ESP algorithms: AES_CBC_128-HMAC_SHA1_96
+"good":   ESP algorithms: AES_CBC_128-HMAC_SHA1_96
 west #
  echo done
 done

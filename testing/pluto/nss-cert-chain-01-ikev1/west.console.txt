@@ -10,25 +10,25 @@ west #
 002 "nss-cert-chain": added IKEv1 connection
 west #
  ipsec auto --status |grep nss-cert-chain
-000 "nss-cert-chain": 192.0.1.254/32===192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west_chain_endcert.testing.libreswan.org, E=west_chain_endcert@testing.libreswan.org]...192.1.2.23[%fromcert]===192.0.2.254/32; unrouted; my_ip=192.0.1.254; their_ip=192.0.2.254;
-000 "nss-cert-chain":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
-000 "nss-cert-chain":   mycert=west_chain_endcert; my_updown=ipsec _updown;
-000 "nss-cert-chain":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "nss-cert-chain":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
-000 "nss-cert-chain":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-000 "nss-cert-chain":   sec_label:unset;
-000 "nss-cert-chain":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-000 "nss-cert-chain":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
-000 "nss-cert-chain":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
-000 "nss-cert-chain":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "nss-cert-chain":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-000 "nss-cert-chain":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "nss-cert-chain":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
-000 "nss-cert-chain":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west_chain_endcert.testing.libreswan.org, E=west_chain_endcert@testing.libreswan.org; their idtype: %fromcert; their id=%fromcert
-000 "nss-cert-chain":   dpd: passive; delay:0s; timeout:0s
-000 "nss-cert-chain":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
-000 "nss-cert-chain":   routing: unrouted;
-000 "nss-cert-chain":   conn serial: $1;
+"nss-cert-chain": 192.0.1.254/32===192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west_chain_endcert.testing.libreswan.org, E=west_chain_endcert@testing.libreswan.org]...192.1.2.23[%fromcert]===192.0.2.254/32; unrouted; my_ip=192.0.1.254; their_ip=192.0.2.254;
+"nss-cert-chain":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
+"nss-cert-chain":   mycert=west_chain_endcert; my_updown=ipsec _updown;
+"nss-cert-chain":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"nss-cert-chain":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
+"nss-cert-chain":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"nss-cert-chain":   sec_label:unset;
+"nss-cert-chain":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"nss-cert-chain":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"nss-cert-chain":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+"nss-cert-chain":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"nss-cert-chain":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"nss-cert-chain":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"nss-cert-chain":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+"nss-cert-chain":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west_chain_endcert.testing.libreswan.org, E=west_chain_endcert@testing.libreswan.org; their idtype: %fromcert; their id=%fromcert
+"nss-cert-chain":   dpd: passive; delay:0s; timeout:0s
+"nss-cert-chain":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
+"nss-cert-chain":   routing: unrouted;
+"nss-cert-chain":   conn serial: $1;
 west #
  ipsec whack --impair suppress-retransmits
 west #

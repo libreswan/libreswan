@@ -42,9 +42,9 @@ west #
  # show it is running
 west #
  ipsec whack --rundir /var/cache/otheruser/var/run/pluto --briefstatus
-000 State Information: DDoS cookies not required, Accepting new IKE connections
-000 IKE SAs: total(0), half-open(0), open(0), authenticated(0), anonymous(0)
-000 IPsec SAs: total(0), authenticated(0), anonymous(0)
+State Information: DDoS cookies not required, Accepting new IKE connections
+IKE SAs: total(0), half-open(0), open(0), authenticated(0), anonymous(0)
+IPsec SAs: total(0), authenticated(0), anonymous(0)
 west #
  # shut it down
 west #

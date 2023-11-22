@@ -18,7 +18,7 @@ west #
 up
 west #
  ipsec whack --trafficstatus
-000 #2: "west-east-auto", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+#2: "west-east-auto", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  # sending delete/notify should cause east to re-initiate
 west #
@@ -33,7 +33,7 @@ west #
  # A new IPsec SA should be established (without patch takes 30 seconds)
 west #
  ipsec whack --trafficstatus
-000 #4: "west-east-auto", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+#4: "west-east-auto", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
 west #
  # traffic flow should still work
 west #
@@ -43,6 +43,6 @@ west #
  sleep 20
 west #
  ipsec whack --trafficstatus
-000 #4: "west-east-auto", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+#4: "west-east-auto", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  

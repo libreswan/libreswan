@@ -30,24 +30,24 @@ west #
 002 "westnet-eastnet-6in4": added IKEv1 connection
 west #
  ipsec status | grep westnet-eastnet-6in4
-000 "westnet-eastnet-6in4": 2001:db8:0:1::/64===192.1.2.45[@west]...192.1.2.23[@east]===2001:db8:0:2::/64; unrouted; my_ip=unset; their_ip=unset;
-000 "westnet-eastnet-6in4":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
-000 "westnet-eastnet-6in4":   my_updown=ipsec _updown;
-000 "westnet-eastnet-6in4":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "westnet-eastnet-6in4":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
-000 "westnet-eastnet-6in4":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-000 "westnet-eastnet-6in4":   sec_label:unset;
-000 "westnet-eastnet-6in4":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
-000 "westnet-eastnet-6in4":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
-000 "westnet-eastnet-6in4":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "westnet-eastnet-6in4":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-000 "westnet-eastnet-6in4":   conn_prio: 64,64; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "westnet-eastnet-6in4":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
-000 "westnet-eastnet-6in4":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
-000 "westnet-eastnet-6in4":   dpd: passive; delay:0s; timeout:0s
-000 "westnet-eastnet-6in4":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
-000 "westnet-eastnet-6in4":   routing: unrouted;
-000 "westnet-eastnet-6in4":   conn serial: $1;
+"westnet-eastnet-6in4": 2001:db8:0:1::/64===192.1.2.45[@west]...192.1.2.23[@east]===2001:db8:0:2::/64; unrouted; my_ip=unset; their_ip=unset;
+"westnet-eastnet-6in4":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
+"westnet-eastnet-6in4":   my_updown=ipsec _updown;
+"westnet-eastnet-6in4":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"westnet-eastnet-6in4":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
+"westnet-eastnet-6in4":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"westnet-eastnet-6in4":   sec_label:unset;
+"westnet-eastnet-6in4":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"westnet-eastnet-6in4":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+"westnet-eastnet-6in4":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"westnet-eastnet-6in4":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"westnet-eastnet-6in4":   conn_prio: 64,64; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"westnet-eastnet-6in4":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+"westnet-eastnet-6in4":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
+"westnet-eastnet-6in4":   dpd: passive; delay:0s; timeout:0s
+"westnet-eastnet-6in4":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
+"westnet-eastnet-6in4":   routing: unrouted;
+"westnet-eastnet-6in4":   conn serial: $1;
 west #
  ipsec whack --impair suppress-retransmits
 west #
@@ -76,6 +76,6 @@ west #
 done
 west #
  ipsec whack --trafficstatus
-000 #2: "westnet-eastnet-6in4", type=ESP, add_time=1234567890, inBytes=416, outBytes=416, maxBytes=2^63B, id='@east'
+#2: "westnet-eastnet-6in4", type=ESP, add_time=1234567890, inBytes=416, outBytes=416, maxBytes=2^63B, id='@east'
 west #
  

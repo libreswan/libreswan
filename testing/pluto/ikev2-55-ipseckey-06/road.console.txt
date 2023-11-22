@@ -17,11 +17,11 @@ road #
  # road should have only one public key of its own
 road #
  ipsec auto --listpubkeys
-000  
-000 List of Public Keys:
-000  
-000 TIMESTAMP, 2192 RSA Key AQPl33O2P (has private key), until --- -- --:--:-- ---- ok (expires never)
-000        ID_FQDN '@north.testing.libreswan.org'
+ 
+List of Public Keys:
+ 
+TIMESTAMP, 2192 RSA Key AQPl33O2P (has private key), until --- -- --:--:-- ---- ok (expires never)
+       ID_FQDN '@north.testing.libreswan.org'
 road #
  ipsec whack --trafficstatus
 road #
@@ -31,11 +31,11 @@ road #
  # there should be only one pub key not road.
 road #
  ipsec auto --listpubkeys
-000  
-000 List of Public Keys:
-000  
-000 TIMESTAMP, 2192 RSA Key AQPl33O2P (has private key), until --- -- --:--:-- ---- ok (expires never)
-000        ID_FQDN '@north.testing.libreswan.org'
+ 
+List of Public Keys:
+ 
+TIMESTAMP, 2192 RSA Key AQPl33O2P (has private key), until --- -- --:--:-- ---- ok (expires never)
+       ID_FQDN '@north.testing.libreswan.org'
 road #
  ipsec auto --up road-east-ikev2
 1v2 "road-east-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -61,13 +61,13 @@ road #
  # both ends should have two public keys.The second from reverse dns
 road #
  ipsec auto --listpubkeys
-000  
-000 List of Public Keys:
-000  
-000 TIMESTAMP, 2192 RSA Key AQO9bJbr3 (no private key), until TIMESTAMP warning (expires in X days)
-000        ID_IPV4_ADDR '192.1.2.23'
-000 TIMESTAMP, 2192 RSA Key AQPl33O2P (has private key), until --- -- --:--:-- ---- ok (expires never)
-000        ID_FQDN '@north.testing.libreswan.org'
+ 
+List of Public Keys:
+ 
+TIMESTAMP, 2192 RSA Key AQO9bJbr3 (no private key), until TIMESTAMP warning (expires in X days)
+       ID_IPV4_ADDR '192.1.2.23'
+TIMESTAMP, 2192 RSA Key AQPl33O2P (has private key), until --- -- --:--:-- ---- ok (expires never)
+       ID_FQDN '@north.testing.libreswan.org'
 road #
  ipsec whack --trafficstatus
 road #

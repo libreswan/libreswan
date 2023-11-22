@@ -9,25 +9,25 @@ east #
 002 "east": added IKEv2 connection
 east #
  ipsec auto --status | grep east
-000 "east": 2001:db8:0:2::/64===2001:db8:1:2::23[@east,MS+S=C]...%any[+MC+S=C]; unrouted; my_ip=unset; their_ip=unset;
-000 "east":   host: oriented; local: 2001:db8:1:2::23; remote: %any;
-000 "east":   my_updown=ipsec _updown;
-000 "east":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "east":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
-000 "east":   modecfg info: us:server, them:client, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-000 "east":   sec_label:unset;
-000 "east":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
-000 "east":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
-000 "east":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "east":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW_NARROWING+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-000 "east":   v2-auth-hash-policy: none;
-000 "east":   conn_prio: 64,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "east":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
-000 "east":   our idtype: ID_FQDN; our id=@east; their idtype: %none; their id=(none)
-000 "east":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
-000 "east":   nat-traversal: encaps:auto; keepalive:20s
-000 "east":   routing: unrouted;
-000 "east":   conn serial: $1;
+"east": 2001:db8:0:2::/64===2001:db8:1:2::23[@east,MS+S=C]...%any[+MC+S=C]; unrouted; my_ip=unset; their_ip=unset;
+"east":   host: oriented; local: 2001:db8:1:2::23; remote: %any;
+"east":   my_updown=ipsec _updown;
+"east":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"east":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
+"east":   modecfg info: us:server, them:client, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"east":   sec_label:unset;
+"east":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"east":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+"east":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"east":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW_NARROWING+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"east":   v2-auth-hash-policy: none;
+"east":   conn_prio: 64,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"east":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+"east":   our idtype: ID_FQDN; our id=@east; their idtype: %none; their id=(none)
+"east":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
+"east":   nat-traversal: encaps:auto; keepalive:20s
+"east":   routing: unrouted;
+"east":   conn serial: $1;
 east #
  echo "initdone"
 initdone

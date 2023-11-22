@@ -12,25 +12,25 @@ east #
 002 "north-east-x509-pluto-02": added IKEv1 connection
 east #
  ipsec auto --status | grep north-east-x509-pluto-02
-000 "north-east-x509-pluto-02": 192.0.2.0/24===192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]---192.1.2.254...192.1.3.33[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=*, E=*]===192.0.3.0/24; unrouted; my_ip=unset; their_ip=unset;
-000 "north-east-x509-pluto-02":   host: oriented; local: 192.1.2.23; remote: 192.1.3.33;
-000 "north-east-x509-pluto-02":   mycert=east; my_updown=ipsec _updown;
-000 "north-east-x509-pluto-02":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "north-east-x509-pluto-02":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
-000 "north-east-x509-pluto-02":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-000 "north-east-x509-pluto-02":   sec_label:unset;
-000 "north-east-x509-pluto-02":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-000 "north-east-x509-pluto-02":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
-000 "north-east-x509-pluto-02":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
-000 "north-east-x509-pluto-02":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "north-east-x509-pluto-02":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-000 "north-east-x509-pluto-02":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "north-east-x509-pluto-02":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
-000 "north-east-x509-pluto-02":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=*, E=*
-000 "north-east-x509-pluto-02":   dpd: passive; delay:0s; timeout:0s
-000 "north-east-x509-pluto-02":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
-000 "north-east-x509-pluto-02":   routing: unrouted;
-000 "north-east-x509-pluto-02":   conn serial: $1;
+"north-east-x509-pluto-02": 192.0.2.0/24===192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]---192.1.2.254...192.1.3.33[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=*, E=*]===192.0.3.0/24; unrouted; my_ip=unset; their_ip=unset;
+"north-east-x509-pluto-02":   host: oriented; local: 192.1.2.23; remote: 192.1.3.33;
+"north-east-x509-pluto-02":   mycert=east; my_updown=ipsec _updown;
+"north-east-x509-pluto-02":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"north-east-x509-pluto-02":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
+"north-east-x509-pluto-02":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"north-east-x509-pluto-02":   sec_label:unset;
+"north-east-x509-pluto-02":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"north-east-x509-pluto-02":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"north-east-x509-pluto-02":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+"north-east-x509-pluto-02":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"north-east-x509-pluto-02":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"north-east-x509-pluto-02":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"north-east-x509-pluto-02":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+"north-east-x509-pluto-02":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=*, E=*
+"north-east-x509-pluto-02":   dpd: passive; delay:0s; timeout:0s
+"north-east-x509-pluto-02":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
+"north-east-x509-pluto-02":   routing: unrouted;
+"north-east-x509-pluto-02":   conn serial: $1;
 east #
  echo "initdone"
 initdone

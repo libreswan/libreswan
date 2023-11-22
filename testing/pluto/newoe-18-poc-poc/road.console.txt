@@ -16,7 +16,7 @@ road #
  # give OE policies time to load
 road #
  ../../guestbin/wait-for.sh --match 'loaded 10,' -- ipsec auto --status
-000 Total IPsec connections: loaded 10, active 0
+Total IPsec connections: loaded 10, active 0
 road #
  ip -s xfrm monitor > /tmp/xfrm-monitor.out & sleep 1
 [x] PID
@@ -30,11 +30,11 @@ road #
 fired and forgotten
 road #
  ../../guestbin/wait-for.sh --match private-or-clear -- ipsec whack --trafficstatus
-000 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='ID_NULL'
+#2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='ID_NULL'
 road #
  ipsec whack --shuntstatus
-000 Bare Shunt list:
-000  
+Bare Shunt list:
+ 
 road #
  ../../guestbin/ipsec-kernel-state.sh
 src 192.1.3.209 dst 192.1.2.23
@@ -110,11 +110,11 @@ road #
 up
 road #
  ipsec whack --trafficstatus
-000 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL'
+#2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL'
 road #
  ipsec status | grep "SAs: total"
-000 IKE SAs: total(1), half-open(0), open(0), authenticated(0), anonymous(1)
-000 IPsec SAs: total(1), authenticated(0), anonymous(1)
+IKE SAs: total(1), half-open(0), open(0), authenticated(0), anonymous(1)
+IPsec SAs: total(1), authenticated(0), anonymous(1)
 road #
  echo done
 done
@@ -137,7 +137,7 @@ road #
  # should show 0 states left
 road #
  ipsec status | grep "SAs: total"
-000 IKE SAs: total(0), half-open(0), open(0), authenticated(0), anonymous(0)
-000 IPsec SAs: total(0), authenticated(0), anonymous(0)
+IKE SAs: total(0), half-open(0), open(0), authenticated(0), anonymous(0)
+IPsec SAs: total(0), authenticated(0), anonymous(0)
 road #
  

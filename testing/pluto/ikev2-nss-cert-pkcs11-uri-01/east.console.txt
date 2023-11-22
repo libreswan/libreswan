@@ -76,43 +76,43 @@ east #
 002 "westnet-eastnet-ikev2": added IKEv2 connection
 east #
  ipsec auto --listall
-000  
-000 List of Public Keys:
-000  
-000 TIMESTAMP, 3072 RSA Key AwXXXXXXX (has private key), until TIMESTAMP ok
-000        ID_DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
-000        Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-000 TIMESTAMP, 3072 RSA Key AwXXXXXXX (has private key), until TIMESTAMP ok
-000        ID_USER_FQDN 'user-east@testing.libreswan.org'
-000        Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-000 TIMESTAMP, 3072 RSA Key AwXXXXXXX (has private key), until TIMESTAMP ok
-000        ID_FQDN '@east.testing.libreswan.org'
-000        Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-000 TIMESTAMP, 3072 RSA Key AwXXXXXXX (has private key), until TIMESTAMP ok
-000        ID_USER_FQDN 'east@testing.libreswan.org'
-000        Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-000 TIMESTAMP, 3072 RSA Key AwXXXXXXX (has private key), until TIMESTAMP ok
-000        ID_IPV4_ADDR '192.1.2.23'
-000        Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-000  
-000 List of Pre-shared secrets (from /etc/ipsec.secrets)
-000  
-000     0: RSA (none) (none)
-000        ckaid: 01
-000  
-000 List of X.509 End Certificates:
-000  
-000 List of X.509 CA Certificates:
-000  
-000 Root CA certificate "eastCA" - SN: 0xXX
-000   subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
-000   issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
-000   not before: TIMESTAMP
-000   not after: TIMESTAMP
-000   2048 bit RSA
-000  
-000 List of CRLs:
-000  
+ 
+List of Public Keys:
+ 
+TIMESTAMP, 3072 RSA Key AwXXXXXXX (has private key), until TIMESTAMP ok
+       ID_DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+       Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+TIMESTAMP, 3072 RSA Key AwXXXXXXX (has private key), until TIMESTAMP ok
+       ID_USER_FQDN 'user-east@testing.libreswan.org'
+       Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+TIMESTAMP, 3072 RSA Key AwXXXXXXX (has private key), until TIMESTAMP ok
+       ID_FQDN '@east.testing.libreswan.org'
+       Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+TIMESTAMP, 3072 RSA Key AwXXXXXXX (has private key), until TIMESTAMP ok
+       ID_USER_FQDN 'east@testing.libreswan.org'
+       Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+TIMESTAMP, 3072 RSA Key AwXXXXXXX (has private key), until TIMESTAMP ok
+       ID_IPV4_ADDR '192.1.2.23'
+       Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+ 
+List of Pre-shared secrets (from /etc/ipsec.secrets)
+ 
+    0: RSA (none) (none)
+       ckaid: 01
+ 
+List of X.509 End Certificates:
+ 
+List of X.509 CA Certificates:
+ 
+Root CA certificate "eastCA" - SN: 0xXX
+  subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
+  issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
+  not before: TIMESTAMP
+  not after: TIMESTAMP
+  2048 bit RSA
+ 
+List of CRLs:
+ 
 east #
  echo "initdone"
 initdone

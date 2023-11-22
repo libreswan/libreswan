@@ -24,13 +24,13 @@ west #
 002 "whack--transport": added IKEv2 connection
 west #
  ipsec connectionstatus | sed -n -e 's/\(.* policy:\) .*TUNNEL.*/\1 TUNNEL/p'
-000 "addconn":   policy: TUNNEL
-000 "addconn--type=tunnel":   policy: TUNNEL
-000 "whack":   policy: TUNNEL
-000 "whack--tunnel":   policy: TUNNEL
+"addconn":   policy: TUNNEL
+"addconn--type=tunnel":   policy: TUNNEL
+"whack":   policy: TUNNEL
+"whack--tunnel":   policy: TUNNEL
 west #
  ipsec connectionstatus | sed -n -e 's/\(.* policy:\) .*TRANSPORT.*/\1 TRANSPORT/p'
-000 "addconn--type=transport":   policy: TRANSPORT
-000 "whack--transport":   policy: TRANSPORT
+"addconn--type=transport":   policy: TRANSPORT
+"whack--transport":   policy: TRANSPORT
 west #
  

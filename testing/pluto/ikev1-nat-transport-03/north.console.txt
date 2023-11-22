@@ -34,7 +34,7 @@ north #
 Ncat: Connection refused.
 north #
  ipsec trafficstatus
-000 #2: "north-east-7", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+#2: "north-east-7", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
 north #
  # port 7 goes over ipsec, traffic counters should be non-zero
 north #
@@ -42,7 +42,7 @@ north #
 Ncat: Connection refused.
 north #
  ipsec trafficstatus
-000 #2: "north-east-7", type=ESP, add_time=1234567890, inBytes=20, outBytes=40, maxBytes=2^63B, id='@east'
+#2: "north-east-7", type=ESP, add_time=1234567890, inBytes=20, outBytes=40, maxBytes=2^63B, id='@east'
 north #
  echo done
 done
@@ -50,7 +50,7 @@ north #
  # confirm tunnel of first client still works after second client established
 north #
  ipsec trafficstatus
-000 #2: "north-east-7", type=ESP, add_time=1234567890, inBytes=20, outBytes=40, maxBytes=2^63B, id='@east'
+#2: "north-east-7", type=ESP, add_time=1234567890, inBytes=20, outBytes=40, maxBytes=2^63B, id='@east'
 north #
  # port 7 goes over ipsec, traffic counters should increase
 north #
@@ -61,6 +61,6 @@ north #
 Ncat: Connection timed out.
 north #
  ipsec trafficstatus
-000 #2: "north-east-7", type=ESP, add_time=1234567890, inBytes=20, outBytes=200, maxBytes=2^63B, id='@east'
+#2: "north-east-7", type=ESP, add_time=1234567890, inBytes=20, outBytes=200, maxBytes=2^63B, id='@east'
 north #
  

@@ -20,12 +20,12 @@ road #
  # give OE policies time to load
 road #
  ../../guestbin/wait-for.sh --match 'loaded 6' -- ipsec auto --status
-000 Total IPsec connections: loaded 6, active 0
+Total IPsec connections: loaded 6, active 0
 road #
  ipsec whack --listpubkeys
-000  
-000 List of Public Keys:
-000  
+ 
+List of Public Keys:
+ 
 road #
  echo "initdone"
 initdone
@@ -44,13 +44,13 @@ road #
  # should show large set of keys in pluto cache from IPSECKEY records
 road #
  ipsec whack --listpubkeys
-000  
-000 List of Public Keys:
-000  
-000 TIMESTAMP, 2192 RSA Key AQAAAAAAA (no private key), until TIMESTAMP warning (expires in X days)
-000        ID_IPV4_ADDR '192.1.2.67'
-000 TIMESTAMP, 2192 RSA Key AQBBBBBBB (no private key), until TIMESTAMP warning (expires in X days)
-000        ID_IPV4_ADDR '192.1.2.67'
+ 
+List of Public Keys:
+ 
+TIMESTAMP, 2192 RSA Key AQAAAAAAA (no private key), until TIMESTAMP warning (expires in X days)
+       ID_IPV4_ADDR '192.1.2.67'
+TIMESTAMP, 2192 RSA Key AQBBBBBBB (no private key), until TIMESTAMP warning (expires in X days)
+       ID_IPV4_ADDR '192.1.2.67'
 road #
  echo done
 done

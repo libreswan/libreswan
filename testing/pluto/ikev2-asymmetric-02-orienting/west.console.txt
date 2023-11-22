@@ -27,7 +27,7 @@ west #
  # should be unoriented
 west #
  ipsec auto --status | grep westnet-eastnet-ikev2 | grep "[.][.][.]"
-000 "westnet-eastnet-ikev2": 192.0.1.0/24===192.1.2.46...192.1.2.24[@east]===192.0.2.0/24; unoriented; my_ip=unset; their_ip=unset;
+"westnet-eastnet-ikev2": 192.0.1.0/24===192.1.2.46...192.1.2.24[@east]===192.0.2.0/24; unoriented; my_ip=unset; their_ip=unset;
 west #
  ip addr add 192.1.2.46/24 dev eth1
 west #
@@ -42,7 +42,7 @@ west #
  # should be oriented
 west #
  ipsec auto --status | grep westnet-eastnet-ikev2 | grep "[.][.][.]"
-000 "westnet-eastnet-ikev2": 192.0.1.0/24===192.1.2.46...192.1.2.24[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
+"westnet-eastnet-ikev2": 192.0.1.0/24===192.1.2.46...192.1.2.24[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
 west #
  echo "initdone"
 initdone
@@ -58,7 +58,7 @@ west #
 up
 west #
  ipsec whack --trafficstatus
-000 #2: "westnet-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+#2: "westnet-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  echo done
 done

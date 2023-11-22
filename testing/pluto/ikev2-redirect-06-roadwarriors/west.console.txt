@@ -17,7 +17,7 @@ west #
 initdone
 west #
  ipsec whack --trafficstatus | sed -e 's/#[0-9]/#N/' -e 's/\[[0-9]\]/[N]/' -e 's/192.0.2.10[0-9]/192.0.2.10x/' | sort
-000 #N: "east-any"[N] 192.1.3.209, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org', lease=192.0.2.10x/32
-000 #N: "east-any"[N] 192.1.3.33, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org', lease=192.0.2.10x/32
+#N: "east-any"[N] 192.1.3.209, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org', lease=192.0.2.10x/32
+#N: "east-any"[N] 192.1.3.33, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org', lease=192.0.2.10x/32
 west #
 

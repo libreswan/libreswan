@@ -11,13 +11,13 @@ west #
 west #
  ipsec whack --listen > /dev/null
 west #
- ipsec status | grep "000 interface"
-000 interface lo UDP 127.0.0.1:4500
-000 interface lo UDP 127.0.0.1:500
-000 interface eth0 UDP 192.0.1.254:4500
-000 interface eth0 UDP 192.0.1.254:500
-000 interface eth1 UDP 192.1.2.45:4500
-000 interface eth1 UDP 192.1.2.45:500
+ ipsec status | grep "^interface"
+interface lo UDP 127.0.0.1:4500
+interface lo UDP 127.0.0.1:500
+interface eth0 UDP 192.0.1.254:4500
+interface eth0 UDP 192.0.1.254:500
+interface eth1 UDP 192.1.2.45:4500
+interface eth1 UDP 192.1.2.45:500
 west #
  ipsec whack --shutdown
 west #
@@ -29,9 +29,9 @@ west #
 west #
  # It should only listen on 192.1.2.45 and not on 192.0.1.254
 west #
- ipsec status | grep "000 interface"
-000 interface eth1 UDP 192.1.2.45:4500
-000 interface eth1 UDP 192.1.2.45:500
+ ipsec status | grep "^interface"
+interface eth1 UDP 192.1.2.45:4500
+interface eth1 UDP 192.1.2.45:500
 west #
  ipsec whack --shutdown
 west #

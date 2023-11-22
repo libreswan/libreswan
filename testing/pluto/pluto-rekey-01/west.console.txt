@@ -51,7 +51,7 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2" #3: initiating IKEv1 Main Mode connection to replace #1
 west #
  ../../guestbin/wait-for.sh --match '#3: .* SA established' -- ipsec whack --showstates
-000 #3: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_MAIN_I4 (ISAKMP SA established); REPLACE in XXs; newest; lastdpd=-1s(seq in:0 out:0); idle;
+#3: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_MAIN_I4 (ISAKMP SA established); REPLACE in XXs; newest; lastdpd=-1s(seq in:0 out:0); idle;
 west #
  # because both ends are fighting over who is establishing the ISAKMP
 west #

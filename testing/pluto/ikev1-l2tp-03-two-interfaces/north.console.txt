@@ -55,7 +55,7 @@ north #
 up
 north #
  ipsec whack --trafficstatus | grep -v "inBytes=0" | sed "s/type=ESP.*$/[...]/"
-000 #2: "l2tp-north-to-east-on-north", [...]
+#2: "l2tp-north-to-east-on-north", [...]
 north #
  ../../guestbin/ipsec-kernel-state.sh
 src 192.1.3.33 dst 192.1.2.23
