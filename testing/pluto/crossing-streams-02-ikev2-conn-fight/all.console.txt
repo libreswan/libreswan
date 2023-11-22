@@ -112,7 +112,7 @@ west# ipsec whack --impair drip-inbound:3
 
 west# ../../guestbin/wait-for.sh --match 'established Child SA using #2'  -- cat /tmp/pluto.log
 
-"east-west" #4: responder established Child SA using #2; IPsec tunnel [192.0.1.0/24->192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"east-west" #4: responder established Child SA using #2; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 
 #
 # on west, process east's IKE_SA_AUTH response (message 4)
@@ -126,6 +126,6 @@ west# ipsec whack --impair drip-inbound:4
 
 west# ../../guestbin/wait-for.sh --match 'established Child SA using #1' -- cat /tmp/pluto.log
 
-"east-west" #3: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24->192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"east-west" #3: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 
 echo how to show crossed connection?

@@ -34,7 +34,7 @@ west #
 1v2 "ike=chacha20poly1305-sha2-dh19" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "ike=chacha20poly1305-sha2-dh19" #1: sent IKE_AUTH request {cipher=CHACHA20_POLY1305_256 integ=n/a prf=HMAC_SHA2_256 group=DH19}
 003 "ike=chacha20poly1305-sha2-dh19" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "ike=chacha20poly1305-sha2-dh19" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24->192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
+004 "ike=chacha20poly1305-sha2-dh19" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
 up
 002 "ike=chacha20poly1305-sha2-dh19": terminating SAs using this connection
 002 "ike=chacha20poly1305-sha2-dh19" #1: intiating delete
@@ -48,7 +48,7 @@ west #
 1v2 "ike=aes128-sha2-dh19" #3: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "ike=aes128-sha2-dh19" #3: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=DH19}
 003 "ike=aes128-sha2-dh19" #3: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "ike=aes128-sha2-dh19" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0/24->192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
+004 "ike=aes128-sha2-dh19" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
 up
 002 "ike=aes128-sha2-dh19": terminating SAs using this connection
 002 "ike=aes128-sha2-dh19" #3: intiating delete
@@ -62,7 +62,7 @@ west #
 1v2 "ike=aes128-sha2-dh20" #5: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "ike=aes128-sha2-dh20" #5: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=DH20}
 003 "ike=aes128-sha2-dh20" #5: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "ike=aes128-sha2-dh20" #6: initiator established Child SA using #5; IPsec tunnel [192.0.1.0/24->192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
+004 "ike=aes128-sha2-dh20" #6: initiator established Child SA using #5; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
 up
 002 "ike=aes128-sha2-dh20": terminating SAs using this connection
 002 "ike=aes128-sha2-dh20" #5: intiating delete
@@ -76,7 +76,7 @@ west #
 1v2 "ike=aes128-sha2-dh21" #7: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "ike=aes128-sha2-dh21" #7: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=DH21}
 003 "ike=aes128-sha2-dh21" #7: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "ike=aes128-sha2-dh21" #8: initiator established Child SA using #7; IPsec tunnel [192.0.1.0/24->192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
+004 "ike=aes128-sha2-dh21" #8: initiator established Child SA using #7; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
 up
 002 "ike=aes128-sha2-dh21": terminating SAs using this connection
 002 "ike=aes128-sha2-dh21" #7: intiating delete
@@ -90,7 +90,7 @@ west #
 1v2 "ike=aes128-sha1-dh19" #9: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "ike=aes128-sha1-dh19" #9: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=DH19}
 003 "ike=aes128-sha1-dh19" #9: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "ike=aes128-sha1-dh19" #10: initiator established Child SA using #9; IPsec tunnel [192.0.1.0/24->192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
+004 "ike=aes128-sha1-dh19" #10: initiator established Child SA using #9; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
 up
 002 "ike=aes128-sha1-dh19": terminating SAs using this connection
 002 "ike=aes128-sha1-dh19" #9: intiating delete
@@ -104,7 +104,7 @@ west #
 1v2 "ike=aes128-sha1-dh20" #11: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "ike=aes128-sha1-dh20" #11: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=DH20}
 003 "ike=aes128-sha1-dh20" #11: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "ike=aes128-sha1-dh20" #12: initiator established Child SA using #11; IPsec tunnel [192.0.1.0/24->192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
+004 "ike=aes128-sha1-dh20" #12: initiator established Child SA using #11; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
 up
 002 "ike=aes128-sha1-dh20": terminating SAs using this connection
 002 "ike=aes128-sha1-dh20" #11: intiating delete
@@ -118,7 +118,7 @@ west #
 1v2 "ike=aes128-sha1-dh21" #13: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "ike=aes128-sha1-dh21" #13: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=DH21}
 003 "ike=aes128-sha1-dh21" #13: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "ike=aes128-sha1-dh21" #14: initiator established Child SA using #13; IPsec tunnel [192.0.1.0/24->192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
+004 "ike=aes128-sha1-dh21" #14: initiator established Child SA using #13; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
 up
 002 "ike=aes128-sha1-dh21": terminating SAs using this connection
 002 "ike=aes128-sha1-dh21" #13: intiating delete
@@ -132,7 +132,7 @@ west #
 1v2 "ike=aes_ctr128-sha1-dh21" #15: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "ike=aes_ctr128-sha1-dh21" #15: sent IKE_AUTH request {cipher=AES_CTR_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=DH21}
 003 "ike=aes_ctr128-sha1-dh21" #15: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "ike=aes_ctr128-sha1-dh21" #16: initiator established Child SA using #15; IPsec tunnel [192.0.1.0/24->192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
+004 "ike=aes_ctr128-sha1-dh21" #16: initiator established Child SA using #15; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
 up
 002 "ike=aes_ctr128-sha1-dh21": terminating SAs using this connection
 002 "ike=aes_ctr128-sha1-dh21" #15: intiating delete
@@ -146,7 +146,7 @@ west #
 1v2 "ike=3des-sha2-modp2048" #17: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "ike=3des-sha2-modp2048" #17: sent IKE_AUTH request {cipher=3DES_CBC_192 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=MODP2048}
 003 "ike=3des-sha2-modp2048" #17: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "ike=3des-sha2-modp2048" #18: initiator established Child SA using #17; IPsec tunnel [192.0.1.0/24->192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
+004 "ike=3des-sha2-modp2048" #18: initiator established Child SA using #17; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
 up
 002 "ike=3des-sha2-modp2048": terminating SAs using this connection
 002 "ike=3des-sha2-modp2048" #17: intiating delete
@@ -160,7 +160,7 @@ west #
 1v2 "ike=aes128-aes_xcbc-modp2048" #19: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "ike=aes128-aes_xcbc-modp2048" #19: sent IKE_AUTH request {cipher=AES_CBC_128 integ=AES_XCBC_96 prf=AES_XCBC group=MODP2048}
 003 "ike=aes128-aes_xcbc-modp2048" #19: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "ike=aes128-aes_xcbc-modp2048" #20: initiator established Child SA using #19; IPsec tunnel [192.0.1.0/24->192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
+004 "ike=aes128-aes_xcbc-modp2048" #20: initiator established Child SA using #19; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
 up
 002 "ike=aes128-aes_xcbc-modp2048": terminating SAs using this connection
 002 "ike=aes128-aes_xcbc-modp2048" #19: intiating delete

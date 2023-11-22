@@ -32,7 +32,7 @@ west #
 1v2 "westnet-eastnet-esp-null-md5" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "westnet-eastnet-esp-null-md5" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "westnet-eastnet-esp-null-md5" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "westnet-eastnet-esp-null-md5" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24->192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=NULL-HMAC_MD5_96 DPD=passive}
+004 "westnet-eastnet-esp-null-md5" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=NULL-HMAC_MD5_96 DPD=passive}
 up
 002 "westnet-eastnet-esp-null-md5": terminating SAs using this connection
 002 "westnet-eastnet-esp-null-md5" #1: intiating delete
@@ -46,7 +46,7 @@ west #
 1v2 "westnet-eastnet-esp-null-sha1" #3: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "westnet-eastnet-esp-null-sha1" #3: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "westnet-eastnet-esp-null-sha1" #3: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "westnet-eastnet-esp-null-sha1" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0/24->192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=NULL-HMAC_SHA1_96 DPD=passive}
+004 "westnet-eastnet-esp-null-sha1" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=NULL-HMAC_SHA1_96 DPD=passive}
 up
 002 "westnet-eastnet-esp-null-sha1": terminating SAs using this connection
 002 "westnet-eastnet-esp-null-sha1" #3: intiating delete

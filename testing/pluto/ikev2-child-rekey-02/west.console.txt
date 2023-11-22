@@ -44,7 +44,7 @@ west #
 1v2 "westnet-eastnet-ikev2a" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "westnet-eastnet-ikev2a" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "westnet-eastnet-ikev2a" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "westnet-eastnet-ikev2a" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24->192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+004 "westnet-eastnet-ikev2a" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
@@ -54,7 +54,7 @@ west #
  ipsec auto --up westnet-eastnet-ikev2b
 002 "westnet-eastnet-ikev2b" #3: initiating Child SA using IKE SA #1
 1v2 "westnet-eastnet-ikev2b" #3: sent CREATE_CHILD_SA request for new IPsec SA
-004 "westnet-eastnet-ikev2b" #3: initiator established Child SA using #1; IPsec tunnel [192.0.100.0/24->192.0.200.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+004 "westnet-eastnet-ikev2b" #3: initiator established Child SA using #1; IPsec tunnel [192.0.100.0/24===192.0.200.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.100.254 192.0.200.254
 up
@@ -64,7 +64,7 @@ west #
  ipsec auto --up westnet-eastnet-ikev2c
 002 "westnet-eastnet-ikev2c" #4: initiating Child SA using IKE SA #1
 1v2 "westnet-eastnet-ikev2c" #4: sent CREATE_CHILD_SA request for new IPsec SA
-004 "westnet-eastnet-ikev2c" #4: initiator established Child SA using #1; IPsec tunnel [192.0.101.0/24->192.0.201.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+004 "westnet-eastnet-ikev2c" #4: initiator established Child SA using #1; IPsec tunnel [192.0.101.0/24===192.0.201.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.101.254 192.0.201.254
 up
@@ -79,13 +79,13 @@ west #
  # rekey to Child #5 #6 #7
 west #
  ../../guestbin/wait-for.sh --match '^".*#5: initiator rekeyed Child SA' -- cat /tmp/pluto.log
-"westnet-eastnet-ikev2a" #5: initiator rekeyed Child SA #2 using #1; IPsec tunnel [192.0.1.0/24->192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"westnet-eastnet-ikev2a" #5: initiator rekeyed Child SA #2 using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ../../guestbin/wait-for.sh --match '^".*#6: initiator rekeyed Child SA' -- cat /tmp/pluto.log
-"westnet-eastnet-ikev2b" #6: initiator rekeyed Child SA #3 using #1; IPsec tunnel [192.0.100.0/24->192.0.200.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"westnet-eastnet-ikev2b" #6: initiator rekeyed Child SA #3 using #1; IPsec tunnel [192.0.100.0/24===192.0.200.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ../../guestbin/wait-for.sh --match '^".*#7: initiator rekeyed Child SA' -- cat /tmp/pluto.log
-"westnet-eastnet-ikev2c" #7: initiator rekeyed Child SA #4 using #1; IPsec tunnel [192.0.101.0/24->192.0.201.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"westnet-eastnet-ikev2c" #7: initiator rekeyed Child SA #4 using #1; IPsec tunnel [192.0.101.0/24===192.0.201.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
@@ -117,13 +117,13 @@ west #
  # rekey to Child #8 #9 #10
 west #
  ../../guestbin/wait-for.sh --match '^".*#8: initiator rekeyed Child SA' -- cat /tmp/pluto.log
-"westnet-eastnet-ikev2a" #8: initiator rekeyed Child SA #5 using #1; IPsec tunnel [192.0.1.0/24->192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"westnet-eastnet-ikev2a" #8: initiator rekeyed Child SA #5 using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ../../guestbin/wait-for.sh --match '^".*#9: initiator rekeyed Child SA' -- cat /tmp/pluto.log
-"westnet-eastnet-ikev2b" #9: initiator rekeyed Child SA #6 using #1; IPsec tunnel [192.0.100.0/24->192.0.200.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"westnet-eastnet-ikev2b" #9: initiator rekeyed Child SA #6 using #1; IPsec tunnel [192.0.100.0/24===192.0.200.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ../../guestbin/wait-for.sh --match '^".*#10: initiator rekeyed Child SA' -- cat /tmp/pluto.log
-"westnet-eastnet-ikev2c" #10: initiator rekeyed Child SA #7 using #1; IPsec tunnel [192.0.101.0/24->192.0.201.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"westnet-eastnet-ikev2c" #10: initiator rekeyed Child SA #7 using #1; IPsec tunnel [192.0.101.0/24===192.0.201.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up

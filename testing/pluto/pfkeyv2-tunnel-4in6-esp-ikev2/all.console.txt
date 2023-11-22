@@ -32,7 +32,7 @@ netbsdw# ipsec auto --up eastnet-westnet-ikev2
 1v2 "eastnet-westnet-ikev2" #1: sent IKE_SA_INIT request to [2001:db8:1:2::23]:500
 1v2 "eastnet-westnet-ikev2" #1: sent IKE_AUTH request {cipher=AES_CBC_256 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 003 "eastnet-westnet-ikev2" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "eastnet-westnet-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24->192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+004 "eastnet-westnet-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 netbsdw# ../../guestbin/ipsec-kernel-policy.sh
 192.0.2.0/24[any] 192.0.1.0/24[any] 255(reserved)
 	in ipsec

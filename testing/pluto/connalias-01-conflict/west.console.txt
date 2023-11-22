@@ -87,7 +87,7 @@ west #
 002 "westnet-eastnet-second" #3: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 1v1 "westnet-eastnet-alias" #2: sent Quick Mode request
 1v1 "westnet-eastnet-second" #3: sent Quick Mode request
-003 "westnet-eastnet-alias" #2: cannot install kernel policy 192.0.1.0/24->192.0.2.0/24; it is in use by the unrouted-bare-negotiation connection "westnet-eastnet-second"
+003 "westnet-eastnet-alias" #2: cannot install kernel policy 192.0.1.0/24===192.0.2.0/24; it is in use by the unrouted-bare-negotiation connection "westnet-eastnet-second"
 032 "westnet-eastnet-alias" #2: state transition function for STATE_QUICK_I1 had internal error
 004 "westnet-eastnet-second" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #

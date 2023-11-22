@@ -39,7 +39,7 @@ road #
 1v2 "road-eastnet"[1] 192.1.2.23 #1: sent IKE_AUTH request {cipher=AES_CBC_256 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=DH19}
 003 "road-eastnet"[1] 192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 002 "road-eastnet"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 192.0.3.1
-004 "road-eastnet"[1] 192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.1/32->192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
+004 "road-eastnet"[1] 192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.1/32===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
 road #
  ping -n -q -W 1 -c 2 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) 56(84) bytes of data.

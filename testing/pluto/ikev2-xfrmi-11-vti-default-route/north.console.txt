@@ -29,7 +29,7 @@ north #
 002 "north-east" #2: prepare-client output: net.ipv4.conf.vti0.rp_filter = 0
 002 "north-east" #2: prepare-client output: net.ipv4.conf.vti0.forwarding = 1
 002 "north-east" #2: up-client output: vti interface "vti0" already exists with conflicting setting (perhaps need vti-shared=yes ?
-004 "north-east" #2: initiator established Child SA using #1; IPsec tunnel [0.0.0.0/0->0.0.0.0/0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+004 "north-east" #2: initiator established Child SA using #1; IPsec tunnel [0.0.0.0/0===0.0.0.0/0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 north #
  ping -n -q -w 4 -c 4 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) 56(84) bytes of data.

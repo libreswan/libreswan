@@ -60,7 +60,7 @@ west #
 002 IMPAIR: stop processing inbound drip packet 2
 west #
  ../../guestbin/wait-for.sh --match 'established Child SA using #1'  -- cat /tmp/pluto.log
-"east-west" #3: responder established Child SA using #1; IPsec tunnel [192.0.1.0/24->192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"east-west" #3: responder established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  # on west, process east's IKE_SA_INIT response (message 3);
 west #

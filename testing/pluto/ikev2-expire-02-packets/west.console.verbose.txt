@@ -20,7 +20,7 @@ initdone
 182 "west" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "west" #1: initiator established IKE SA; authenticated using authby=secret and peer ID_FQDN '@east'
 002 "west" #2: route-client output: Error: Peer netns reference is invalid.
-004 "west" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0x75cd8d5e <0xbba19740 xfrm=AES_GCM_16_256-NONE DPD=passive}
+004 "west" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] === [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0x75cd8d5e <0xbba19740 xfrm=AES_GCM_16_256-NONE DPD=passive}
 ]0;root@swantest:/home/build/libreswan/testing/pluto/ikev2-expire-02-packets[root@west ikev2-expire-02-packets]# # pings will not trigger rekey
 ]0;root@swantest:/home/build/libreswan/testing/pluto/ikev2-expire-02-packets[root@west ikev2-expire-02-packets]# ping -n -q -c 16 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.

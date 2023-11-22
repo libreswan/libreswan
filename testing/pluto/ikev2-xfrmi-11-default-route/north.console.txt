@@ -27,7 +27,7 @@ north #
 1v2 "north-east" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "north-east" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 002 "north-east" #2: route-client output: leftsubnet == rightsubnet = 0.0.0.0/0 cannot add route
-004 "north-east" #2: initiator established Child SA using #1; IPsec tunnel [0.0.0.0/0->0.0.0.0/0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+004 "north-east" #2: initiator established Child SA using #1; IPsec tunnel [0.0.0.0/0===0.0.0.0/0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 north #
  ping -n -q -w 4 -c 4 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) 56(84) bytes of data.
