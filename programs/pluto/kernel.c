@@ -552,7 +552,6 @@ static void ldbg_owner(struct logger *logger, const struct spd_owner *owner,
 
 		LDBG_owner(logger, "policy", owner->policy);
 		LDBG_owner(logger, "bare_route", owner->bare_route);
-		LDBG_owner(logger, "eclipsing", owner->eclipsing);
 		LDBG_owner(logger, "bare_cat", owner->bare_cat);
 		LDBG_owner(logger, "bare_policy", owner->bare_policy);
 	}
@@ -752,36 +751,7 @@ struct spd_owner spd_owner(const struct spd_route *c_spd,
 				save_spd_owner(&owner.policy, checking, d_spd, logger, indent);
 			}
 		}
-
-		/*
-		 * .eclipsing specific checks.
-		 *
-		 * Given an SPD and its new routing, return any SPD
-		 * that eclipses it.
-		 */
-		{
-			const char *checking = "eclipsing";
-
-			if (!selector_eq_selector(c_spd->local->client,
-						  d_spd->local->client)) {
-				ldbg_spd(logger, indent, d_spd, "skipped %s; different local selectors", checking);
-			} else if (d_shunt_kind < c_shunt_kind) {
-				ldbg_spd(logger, indent, d_spd, "skipped %s; < %s[%s]",
-					 checking,
-					 enum_name_short(&routing_names, c_routing),
-					 enum_name_short(&shunt_kind_names, c_shunt_kind));
-			} else if (c->config->overlapip && d->config->overlapip) {
-				ldbg_spd(logger, indent, d_spd, "skipped %s;  both ends have POLICY_OVERLAPIP", checking);
-			} else {
-				save_spd_owner(&owner.eclipsing, checking, d_spd, logger, indent);
-			}
-		}
 	}
-
-#if 0
-	PEXPECT(logger, owner.policy == owner.bare_policy);
-	PEXPECT(logger, owner.policy == owner.eclipsing);
-#endif
 
 	ldbg_owner(logger, &owner, c_local, c_remote, c_routing, __func__);
 	return owner;

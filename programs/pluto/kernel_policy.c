@@ -421,10 +421,10 @@ bool replace_spd_kernel_policy(const struct spd_route *spd,
 	selector_pair_buf spb;
 	ldbg(logger, " replacing %s",
 	     str_selector_pair(&spd->local->client, &spd->remote->client, &spb));
-	if (owner->eclipsing != NULL) {
+	if (owner->policy != NULL) {
 		connection_buf cb;
 		ldbg(logger, "  no! owner is "PRI_CONNECTION,
-		     pri_connection(owner->eclipsing->connection, &cb));
+		     pri_connection(owner->policy->connection, &cb));
 		return true;
 	}
 

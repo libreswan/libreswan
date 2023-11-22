@@ -596,7 +596,6 @@ struct spd_end {
 };
 
 struct spd_owner {
-	const struct spd_route *policy;
 	/*
 	 * .bare_route
 	 *
@@ -608,13 +607,6 @@ struct spd_owner {
 	 * seems very weak as the parent may still be routed.
 	 */
 	const struct spd_route *bare_route;
-	/*
-	 * .eclipsing
-	 *
-	 * Given an SPD and its new_routing (shunt_kind) return any
-	 * SPD that eclipses it.  If no SPD exclipses it return NULL.
-	 */
-	const struct spd_route *eclipsing;
 	/*
 	 * .bare_cat
 	 *
@@ -633,6 +625,17 @@ struct spd_owner {
 	 * and/or priority aren't needed.
 	 */
 	const struct spd_route *bare_policy;
+	/*
+	 * .policy
+	 *
+	 * Given an SPD and its new_routing (shunt_kind) return any
+	 * SPD that still trumps that SPD.
+	 *
+	 * An SPD is trumped when there's other SPD with equal or
+	 * higher new_routing (shunt_kind).  As a special exception,
+	 * an instance isn't trumped when its template is identical.
+	 */
+	const struct spd_route *policy;
 };
 
 struct spd_route {
