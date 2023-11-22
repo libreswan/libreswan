@@ -602,6 +602,7 @@ struct spd_owner spd_owner(const struct spd_route *c_spd,
 	indent += 2;
 	while (next_spd_route(NEW2OLD, &srf)) {
 		struct spd_route *d_spd = srf.spd;
+		enum shunt_kind d_shunt_kind = spd_shunt_kind(d_spd);
 		struct connection *d = d_spd->connection;
 
 		/*
@@ -733,10 +734,15 @@ struct spd_owner spd_owner(const struct spd_route *c_spd,
 			if (!selector_eq_selector(c_spd->local->client,
 						  d_spd->local->client)) {
 				ldbg_spd(logger, indent, d_spd, "skipped %s; different local selectors", checking);
-			} else if (c->clonedfrom == d) {
+			} else if (d_shunt_kind < c_shunt_kind) {
+				ldbg_spd(logger, indent, d_spd, "skipped %s; < %s[%s]",
+					 checking,
+					 enum_name_short(&routing_names, c_routing),
+					 enum_name_short(&shunt_kind_names, c_shunt_kind));
+			} else if (d_shunt_kind == c_shunt_kind && c->clonedfrom == d) {
 				enum_buf rb;
 				ldbg_spd(logger, indent, d_spd,
-					 "skipped %s; is connection parent with routing >= %s[%s] %s",
+					 "skipped %s; is connection parent with routing = %s[%s] %s",
 					 checking, str_enum_short(&routing_names, c_routing, &rb),
 					 enum_name_short(&shunt_kind_names, c_shunt_kind),
 					 bool_str(d->child.routing >= c_routing));
@@ -754,7 +760,6 @@ struct spd_owner spd_owner(const struct spd_route *c_spd,
 		 * that eclipses it.
 		 */
 		{
-			enum shunt_kind d_shunt_kind = spd_shunt_kind(d_spd);
 			const char *checking = "eclipsing";
 
 			if (!selector_eq_selector(c_spd->local->client,
