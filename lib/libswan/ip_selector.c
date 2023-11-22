@@ -178,7 +178,7 @@ size_t jam_selector_pair(struct jambuf *buf,
 	size_t s = 0;
 	const char *sep = "";
 	FOR_EACH_THING(selector, src, dst) {
-		s += jam_string(buf, sep); sep = "->";
+		s += jam_string(buf, sep); sep = "===";
 		jam_selector(buf, selector);
 	}
 	return s;

@@ -59,7 +59,9 @@ bool kernel_ops_policy_add(enum kernel_policy_op op,
 			jam(buf, "routing:  ");
 
 			jam(buf, " client=");
-			jam_selector_pair(buf, src_client, dst_client);
+			jam_selector(buf, src_client);
+			jam_string(buf, "=>"); /* directional */
+			jam_selector(buf, dst_client);
 
 			jam(buf, " lifetime=");
 			jam_deltatime(buf, use_lifetime);
@@ -258,7 +260,9 @@ bool kernel_ops_policy_del(enum direction dir,
 			jam(buf, "routing:  ");
 
 			jam(buf, " client=");
-			jam_selector_pair(buf, src_client, dst_client);
+			jam_selector(buf, src_client);
+			jam_string(buf, "=>"); /* directional */
+			jam_selector(buf, dst_client);
 		}
 
 		if (sa_marks != NULL || xfrmi != NULL) {

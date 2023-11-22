@@ -665,10 +665,11 @@ void install_inbound_ipsec_kernel_policy(struct child_sa *child,
 {
 	struct kernel_policy kernel_policy =
 		kernel_policy_from_state(child, spd, DIRECTION_INBOUND, where);
-	selector_pair_buf spb;
-	ldbg_sa(child, "kernel: %s() is installing SPD for %s",
-		__func__, str_selector_pair(&kernel_policy.src.client,
-					    &kernel_policy.dst.client, &spb));
+	selector_buf sb,db;
+	ldbg_sa(child, "kernel: %s() is installing SPD for %s=>%s",
+		__func__,
+		str_selector(&kernel_policy.src.client, &sb),
+		str_selector(&kernel_policy.dst.client, &db));
 
 #ifdef USE_NFTABLES
 	const char *add_inbound_cat =
@@ -691,11 +692,12 @@ void install_inbound_ipsec_kernel_policy(struct child_sa *child,
 				   &kernel_policy,			/* " */
 				   deltatime(0),		/* lifetime */
 				   child->sa.st_logger, where, "add inbound Child SA")) {
-		selector_pair_buf spb;
+		selector_buf sb, db;
 		llog_sa(RC_LOG, child,
-			"kernel: %s() failed to add SPD for %s",
+			"kernel: %s() failed to add SPD for %s=>%s",
 			__func__,
-			str_selector_pair(&kernel_policy.src.client, &kernel_policy.dst.client, &spb));
+			str_selector(&kernel_policy.src.client, &sb),
+			str_selector(&kernel_policy.dst.client, &db));
 	}
 }
 

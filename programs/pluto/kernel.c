@@ -1737,9 +1737,12 @@ static bool install_inbound_ipsec_kernel_policies(struct child_sa *child)
 	}
 
 	FOR_EACH_ITEM(spd, &c->child.spds) {
-		selector_pair_buf spb;
-		ldbg(logger, "kernel: %s() is installing SPD for %s",
-		     __func__, str_selector_pair(&spd->remote->client, &spd->local->client, &spb));
+		selector_buf sb, db;
+		ldbg(logger, "kernel: %s() is installing SPD for %s=>%s",
+		     __func__,
+		     /* inbound */
+		     str_selector(&spd->remote->client, &sb),
+		     str_selector(&spd->local->client, &db));
 		install_inbound_ipsec_kernel_policy(child, spd, HERE);
 	}
 
