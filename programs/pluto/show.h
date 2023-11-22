@@ -40,9 +40,9 @@ struct logger *show_logger(struct show *s);
 
 struct jambuf *show_jambuf(struct show *s, enum rc_type rc);
 void show_to_logger(struct show *s);
-#define SHOW_JAMBUF(S, BUF)				\
-	for (struct jambuf *BUF = show_jambuf(S, RC_COMMENT);	\
-	     BUF != NULL;				\
+#define SHOW_JAMBUF(S, BUF)					\
+	for (struct jambuf *BUF = show_jambuf(S, RC_RAW);	\
+	     BUF != NULL;					\
 	     show_to_logger(S), BUF = NULL)
 
 /*

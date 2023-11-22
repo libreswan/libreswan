@@ -77,7 +77,7 @@ static void blank_line(struct show *s)
 	char blank_buf[sizeof(" "/*\0*/) + 1/*canary*/ + 1/*why-not*/];
 	struct jambuf buf = ARRAY_AS_JAMBUF(blank_buf);
 	jam_string(&buf, " ");
-	jambuf_to_logger(&buf, s->logger, RC_COMMENT|WHACK_STREAM);
+	jambuf_to_logger(&buf, s->logger, RC_RAW|WHACK_STREAM);
 }
 
 void free_show(struct show **sp)
@@ -163,7 +163,7 @@ void show_comment(struct show *s, const char *message, ...)
 {
 	va_list ap;
 	va_start(ap, message);
-	show_rc_va_list(s, RC_COMMENT, message, ap);
+	show_rc_va_list(s, RC_RAW, message, ap);
 	va_end(ap);
 }
 
