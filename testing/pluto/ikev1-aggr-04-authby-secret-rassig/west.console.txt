@@ -6,7 +6,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-aggr
-036 "westnet-eastnet-aggr": failed to add connection: additional PSK in authby=PSK+RSASIG is not supported by IKEv1
+"westnet-eastnet-aggr": failed to add connection: additional PSK in authby=PSK+RSASIG is not supported by IKEv1
 west #
  ../../guestbin/ipsec-kernel-state.sh
 west #

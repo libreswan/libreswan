@@ -12,7 +12,7 @@ east #
  ip xfrm policy add src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 7 dport 7 ptype main priority 1440 dir fwd
 east #
  ipsec auto --add west-east
-002 "west-east": added IKEv1 connection
+"west-east": added IKEv1 connection
 east #
  ../../guestbin/echod.sh
 listening on IPv4 port 7

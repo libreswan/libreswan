@@ -6,10 +6,10 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet1
-002 "westnet-eastnet1": added IKEv1 connection
+"westnet-eastnet1": added IKEv1 connection
 west #
  ipsec auto --add westnet-eastnet2
-002 "westnet-eastnet2": added IKEv2 connection
+"westnet-eastnet2": added IKEv2 connection
 west #
  ipsec whack --impair suppress-retransmits
 west #
@@ -19,25 +19,25 @@ west #
  # Should bring up ikev1 connection
 west #
  ipsec auto --up westnet-eastnet1
-002 "westnet-eastnet1" #1: initiating IKEv1 Main Mode connection
-1v1 "westnet-eastnet1" #1: sent Main Mode request
-1v1 "westnet-eastnet1" #1: sent Main Mode I2
-1v1 "westnet-eastnet1" #1: sent Main Mode I3
-002 "westnet-eastnet1" #1: Peer ID is ID_FQDN: '@east'
-003 "westnet-eastnet1" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
-004 "westnet-eastnet1" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "westnet-eastnet1" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-1v1 "westnet-eastnet1" #2: sent Quick Mode request
-004 "westnet-eastnet1" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+"westnet-eastnet1" #1: initiating IKEv1 Main Mode connection
+"westnet-eastnet1" #1: sent Main Mode request
+"westnet-eastnet1" #1: sent Main Mode I2
+"westnet-eastnet1" #1: sent Main Mode I3
+"westnet-eastnet1" #1: Peer ID is ID_FQDN: '@east'
+"westnet-eastnet1" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet1" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"westnet-eastnet1" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"westnet-eastnet1" #2: sent Quick Mode request
+"westnet-eastnet1" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
  # Should not re-use the existing ikev1 IKE SA, but a start a new ikev2 IKE SA
 west #
  ipsec auto --up westnet-eastnet2
-1v2 "westnet-eastnet2" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "westnet-eastnet2" #3: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "westnet-eastnet2" #3: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "westnet-eastnet2" #3: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
-004 "westnet-eastnet2" #4: initiator established Child SA using #3; IPsec tunnel [10.0.1.0/24===10.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"westnet-eastnet2" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
+"westnet-eastnet2" #3: sent IKE_SA_INIT request to 192.1.2.23:500
+"westnet-eastnet2" #3: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"westnet-eastnet2" #3: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
+"westnet-eastnet2" #4: initiator established Child SA using #3; IPsec tunnel [10.0.1.0/24===10.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  echo done
 done

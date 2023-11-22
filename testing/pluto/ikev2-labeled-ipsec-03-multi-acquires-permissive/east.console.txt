@@ -18,7 +18,7 @@ east #
  echo 1 > /proc/sys/net/core/xfrm_acq_expires
 east #
  ipsec auto --add labeled
-002 "labeled": added IKEv2 connection
+"labeled": added IKEv2 connection
 east #
  ipsec getpeercon_server -d 4300
 PATH/sbin/ipsec: unknown IPsec command "getpeercon_server" ("ipsec help" for list)

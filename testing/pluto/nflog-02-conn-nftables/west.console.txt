@@ -9,7 +9,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-ikev2
-002 "westnet-eastnet-ikev2": added IKEv2 connection
+"westnet-eastnet-ikev2": added IKEv2 connection
 west #
  ipsec whack --impair suppress-retransmits
 west #
@@ -19,11 +19,11 @@ west #
  nft list ruleset
 west #
  ipsec auto --up westnet-eastnet-ikev2
-1v2 "westnet-eastnet-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "westnet-eastnet-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "westnet-eastnet-ikev2" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "westnet-eastnet-ikev2" #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
-004 "westnet-eastnet-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"westnet-eastnet-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"westnet-eastnet-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"westnet-eastnet-ikev2" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"westnet-eastnet-ikev2" #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
+"westnet-eastnet-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  nft list ruleset
 table inet ipsec-log {
@@ -56,10 +56,10 @@ west #
 up
 west #
  ipsec auto --down westnet-eastnet-ikev2
-002 "westnet-eastnet-ikev2": terminating SAs using this connection
-002 "westnet-eastnet-ikev2" #1: intiating delete
-005 "westnet-eastnet-ikev2" #2: ESP traffic information: in=168B out=168B
-002 "westnet-eastnet-ikev2" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
+"westnet-eastnet-ikev2": terminating SAs using this connection
+"westnet-eastnet-ikev2" #1: intiating delete
+"westnet-eastnet-ikev2" #2: ESP traffic information: in=168B out=168B
+"westnet-eastnet-ikev2" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #
  # wait for count to reach tcpdump then dump it
 west #

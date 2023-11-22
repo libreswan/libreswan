@@ -6,10 +6,10 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-nflog
-002 "westnet-eastnet-nflog": added IKEv1 connection
+"westnet-eastnet-nflog": added IKEv1 connection
 east #
  ipsec auto --add west-east-nflog
-002 "west-east-nflog": added IKEv1 connection
+"west-east-nflog": added IKEv1 connection
 east #
  echo "initdone"
 initdone

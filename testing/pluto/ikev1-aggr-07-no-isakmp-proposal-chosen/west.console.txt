@@ -6,7 +6,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-aggr
-002 "westnet-eastnet-aggr": added IKEv1 connection
+"westnet-eastnet-aggr": added IKEv1 connection
 west #
  ipsec whack --impair timeout-on-retransmit
 west #
@@ -18,14 +18,14 @@ west #
  ipsec whack --impair revival
 west #
  ipsec auto --up westnet-eastnet-aggr
-002 "westnet-eastnet-aggr" #1: initiating IKEv1 Aggressive Mode connection
-1v1 "westnet-eastnet-aggr" #1: sent Aggressive Mode request
-003 "westnet-eastnet-aggr" #1: ignoring informational payload NO_PROPOSAL_CHOSEN, msgid=00000000, length=12
-003 "westnet-eastnet-aggr" #1: received and ignored notification payload: NO_PROPOSAL_CHOSEN
-002 "westnet-eastnet-aggr" #1: IMPAIR: retransmit so timing out SA (may retry)
-002 "westnet-eastnet-aggr" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-002 "westnet-eastnet-aggr" #1: IMPAIR: revival: skip scheduling revival event
-002 "westnet-eastnet-aggr" #1: deleting ISAKMP SA (AGGR_I1) and NOT sending notification
+"westnet-eastnet-aggr" #1: initiating IKEv1 Aggressive Mode connection
+"westnet-eastnet-aggr" #1: sent Aggressive Mode request
+"westnet-eastnet-aggr" #1: ignoring informational payload NO_PROPOSAL_CHOSEN, msgid=00000000, length=12
+"westnet-eastnet-aggr" #1: received and ignored notification payload: NO_PROPOSAL_CHOSEN
+"westnet-eastnet-aggr" #1: IMPAIR: retransmit so timing out SA (may retry)
+"westnet-eastnet-aggr" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"westnet-eastnet-aggr" #1: IMPAIR: revival: skip scheduling revival event
+"westnet-eastnet-aggr" #1: deleting ISAKMP SA (AGGR_I1) and NOT sending notification
 west #
  echo done
 done

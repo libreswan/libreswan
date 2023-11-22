@@ -10,18 +10,18 @@ Initializing NSS database
 Starting pluto.
 west #
  ipsec auto --add eastnet-westnet-ikev2
-002 "eastnet-westnet-ikev2": warning: PF_KEY v2 kernel interface does not support ESN so disabling
-002 "eastnet-westnet-ikev2": added IKEv2 connection
+"eastnet-westnet-ikev2": warning: PF_KEY v2 kernel interface does not support ESN so disabling
+"eastnet-westnet-ikev2": added IKEv2 connection
 west #
  echo "initdone"
 initdone
 west #
  ipsec auto --up eastnet-westnet-ikev2
-1v2 "eastnet-westnet-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "eastnet-westnet-ikev2" #1: sent IKE_SA_INIT request to [2001:db8:1:2::23]:500
-1v2 "eastnet-westnet-ikev2" #1: sent IKE_AUTH request {cipher=AES_CBC_256 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
-003 "eastnet-westnet-ikev2" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "eastnet-westnet-ikev2" #2: initiator established Child SA using #1; IPsec transport [2001:db8:1:2::45-2001:db8:1:2::45:0-65535 0===2001:db8:1:2::23/128] {AH=>0xAHAH <0xAHAH xfrm=HMAC_SHA1_96 IPCOMP=>0xESPESP <0xESPESP DPD=passive}
+"eastnet-westnet-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"eastnet-westnet-ikev2" #1: sent IKE_SA_INIT request to [2001:db8:1:2::23]:500
+"eastnet-westnet-ikev2" #1: sent IKE_AUTH request {cipher=AES_CBC_256 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
+"eastnet-westnet-ikev2" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"eastnet-westnet-ikev2" #2: initiator established Child SA using #1; IPsec transport [2001:db8:1:2::45-2001:db8:1:2::45:0-65535 0===2001:db8:1:2::23/128] {AH=>0xAHAH <0xAHAH xfrm=HMAC_SHA1_96 IPCOMP=>0xESPESP <0xESPESP DPD=passive}
 west #
  ../../guestbin/ipsec-kernel-policy.sh
 2001:db8:1:2::23[any] 2001:db8:1:2::45[any] 255(reserved)

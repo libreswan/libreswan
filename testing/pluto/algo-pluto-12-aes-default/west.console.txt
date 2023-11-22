@@ -16,117 +16,117 @@ west #
 initdone
 west #
  ipsec auto --add westnet-eastnet-aes-default
-002 "westnet-eastnet-aes-default": added IKEv1 connection
+"westnet-eastnet-aes-default": added IKEv1 connection
 west #
  ipsec auto --up westnet-eastnet-aes-default
-002 "westnet-eastnet-aes-default" #1: initiating IKEv1 Main Mode connection
-1v1 "westnet-eastnet-aes-default" #1: sent Main Mode request
-1v1 "westnet-eastnet-aes-default" #1: sent Main Mode I2
-1v1 "westnet-eastnet-aes-default" #1: sent Main Mode I3
-002 "westnet-eastnet-aes-default" #1: Peer ID is ID_FQDN: '@east'
-003 "westnet-eastnet-aes-default" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
-004 "westnet-eastnet-aes-default" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA1 group=MODP2048}
-002 "westnet-eastnet-aes-default" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-1v1 "westnet-eastnet-aes-default" #2: sent Quick Mode request
-004 "westnet-eastnet-aes-default" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+"westnet-eastnet-aes-default" #1: initiating IKEv1 Main Mode connection
+"westnet-eastnet-aes-default" #1: sent Main Mode request
+"westnet-eastnet-aes-default" #1: sent Main Mode I2
+"westnet-eastnet-aes-default" #1: sent Main Mode I3
+"westnet-eastnet-aes-default" #1: Peer ID is ID_FQDN: '@east'
+"westnet-eastnet-aes-default" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet-aes-default" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA1 group=MODP2048}
+"westnet-eastnet-aes-default" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"westnet-eastnet-aes-default" #2: sent Quick Mode request
+"westnet-eastnet-aes-default" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
  ipsec auto --delete westnet-eastnet-aes-default
-002 "westnet-eastnet-aes-default": terminating SAs using this connection
-002 "westnet-eastnet-aes-default" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
-005 "westnet-eastnet-aes-default" #2: ESP traffic information: in=0B out=0B
-002 "westnet-eastnet-aes-default" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
+"westnet-eastnet-aes-default": terminating SAs using this connection
+"westnet-eastnet-aes-default" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
+"westnet-eastnet-aes-default" #2: ESP traffic information: in=0B out=0B
+"westnet-eastnet-aes-default" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
 west #
  #
 west #
  ipsec auto --add westnet-eastnet-aes-128
-002 "westnet-eastnet-aes-128": added IKEv1 connection
+"westnet-eastnet-aes-128": added IKEv1 connection
 west #
  ipsec auto --up westnet-eastnet-aes-128
-002 "westnet-eastnet-aes-128" #3: initiating IKEv1 Main Mode connection
-1v1 "westnet-eastnet-aes-128" #3: sent Main Mode request
-1v1 "westnet-eastnet-aes-128" #3: sent Main Mode I2
-1v1 "westnet-eastnet-aes-128" #3: sent Main Mode I3
-002 "westnet-eastnet-aes-128" #3: Peer ID is ID_FQDN: '@east'
-003 "westnet-eastnet-aes-128" #3: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
-004 "westnet-eastnet-aes-128" #3: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
-002 "westnet-eastnet-aes-128" #4: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-1v1 "westnet-eastnet-aes-128" #4: sent Quick Mode request
-004 "westnet-eastnet-aes-128" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+"westnet-eastnet-aes-128" #3: initiating IKEv1 Main Mode connection
+"westnet-eastnet-aes-128" #3: sent Main Mode request
+"westnet-eastnet-aes-128" #3: sent Main Mode I2
+"westnet-eastnet-aes-128" #3: sent Main Mode I3
+"westnet-eastnet-aes-128" #3: Peer ID is ID_FQDN: '@east'
+"westnet-eastnet-aes-128" #3: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet-aes-128" #3: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
+"westnet-eastnet-aes-128" #4: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"westnet-eastnet-aes-128" #4: sent Quick Mode request
+"westnet-eastnet-aes-128" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
  ipsec auto --delete westnet-eastnet-aes-128
-002 "westnet-eastnet-aes-128": terminating SAs using this connection
-002 "westnet-eastnet-aes-128" #4: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #3
-005 "westnet-eastnet-aes-128" #4: ESP traffic information: in=0B out=0B
-002 "westnet-eastnet-aes-128" #3: deleting ISAKMP SA (MAIN_I4) and sending notification
+"westnet-eastnet-aes-128": terminating SAs using this connection
+"westnet-eastnet-aes-128" #4: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #3
+"westnet-eastnet-aes-128" #4: ESP traffic information: in=0B out=0B
+"westnet-eastnet-aes-128" #3: deleting ISAKMP SA (MAIN_I4) and sending notification
 west #
  #
 west #
  ipsec auto --add westnet-eastnet-aes-256
-002 "westnet-eastnet-aes-256": added IKEv1 connection
+"westnet-eastnet-aes-256": added IKEv1 connection
 west #
  ipsec auto --up westnet-eastnet-aes-256
-002 "westnet-eastnet-aes-256" #5: initiating IKEv1 Main Mode connection
-1v1 "westnet-eastnet-aes-256" #5: sent Main Mode request
-1v1 "westnet-eastnet-aes-256" #5: sent Main Mode I2
-1v1 "westnet-eastnet-aes-256" #5: sent Main Mode I3
-002 "westnet-eastnet-aes-256" #5: Peer ID is ID_FQDN: '@east'
-003 "westnet-eastnet-aes-256" #5: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
-004 "westnet-eastnet-aes-256" #5: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA1 group=MODP2048}
-002 "westnet-eastnet-aes-256" #6: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-1v1 "westnet-eastnet-aes-256" #6: sent Quick Mode request
-004 "westnet-eastnet-aes-256" #6: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA1_96 DPD=passive}
+"westnet-eastnet-aes-256" #5: initiating IKEv1 Main Mode connection
+"westnet-eastnet-aes-256" #5: sent Main Mode request
+"westnet-eastnet-aes-256" #5: sent Main Mode I2
+"westnet-eastnet-aes-256" #5: sent Main Mode I3
+"westnet-eastnet-aes-256" #5: Peer ID is ID_FQDN: '@east'
+"westnet-eastnet-aes-256" #5: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet-aes-256" #5: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA1 group=MODP2048}
+"westnet-eastnet-aes-256" #6: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"westnet-eastnet-aes-256" #6: sent Quick Mode request
+"westnet-eastnet-aes-256" #6: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA1_96 DPD=passive}
 west #
  ipsec auto --delete westnet-eastnet-aes-256
-002 "westnet-eastnet-aes-256": terminating SAs using this connection
-002 "westnet-eastnet-aes-256" #6: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #5
-005 "westnet-eastnet-aes-256" #6: ESP traffic information: in=0B out=0B
-002 "westnet-eastnet-aes-256" #5: deleting ISAKMP SA (MAIN_I4) and sending notification
+"westnet-eastnet-aes-256": terminating SAs using this connection
+"westnet-eastnet-aes-256" #6: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #5
+"westnet-eastnet-aes-256" #6: ESP traffic information: in=0B out=0B
+"westnet-eastnet-aes-256" #5: deleting ISAKMP SA (MAIN_I4) and sending notification
 west #
  #
 west #
  ipsec auto --add westnet-eastnet-aes-mix-1
-002 "westnet-eastnet-aes-mix-1": added IKEv1 connection
+"westnet-eastnet-aes-mix-1": added IKEv1 connection
 west #
  ipsec auto --up westnet-eastnet-aes-mix-1
-002 "westnet-eastnet-aes-mix-1" #7: initiating IKEv1 Main Mode connection
-1v1 "westnet-eastnet-aes-mix-1" #7: sent Main Mode request
-1v1 "westnet-eastnet-aes-mix-1" #7: sent Main Mode I2
-1v1 "westnet-eastnet-aes-mix-1" #7: sent Main Mode I3
-002 "westnet-eastnet-aes-mix-1" #7: Peer ID is ID_FQDN: '@east'
-003 "westnet-eastnet-aes-mix-1" #7: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
-004 "westnet-eastnet-aes-mix-1" #7: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
-002 "westnet-eastnet-aes-mix-1" #8: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-1v1 "westnet-eastnet-aes-mix-1" #8: sent Quick Mode request
-004 "westnet-eastnet-aes-mix-1" #8: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA1_96 DPD=passive}
+"westnet-eastnet-aes-mix-1" #7: initiating IKEv1 Main Mode connection
+"westnet-eastnet-aes-mix-1" #7: sent Main Mode request
+"westnet-eastnet-aes-mix-1" #7: sent Main Mode I2
+"westnet-eastnet-aes-mix-1" #7: sent Main Mode I3
+"westnet-eastnet-aes-mix-1" #7: Peer ID is ID_FQDN: '@east'
+"westnet-eastnet-aes-mix-1" #7: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet-aes-mix-1" #7: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
+"westnet-eastnet-aes-mix-1" #8: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"westnet-eastnet-aes-mix-1" #8: sent Quick Mode request
+"westnet-eastnet-aes-mix-1" #8: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA1_96 DPD=passive}
 west #
  ipsec auto --delete  westnet-eastnet-aes-mix-1
-002 "westnet-eastnet-aes-mix-1": terminating SAs using this connection
-002 "westnet-eastnet-aes-mix-1" #8: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #7
-005 "westnet-eastnet-aes-mix-1" #8: ESP traffic information: in=0B out=0B
-002 "westnet-eastnet-aes-mix-1" #7: deleting ISAKMP SA (MAIN_I4) and sending notification
+"westnet-eastnet-aes-mix-1": terminating SAs using this connection
+"westnet-eastnet-aes-mix-1" #8: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #7
+"westnet-eastnet-aes-mix-1" #8: ESP traffic information: in=0B out=0B
+"westnet-eastnet-aes-mix-1" #7: deleting ISAKMP SA (MAIN_I4) and sending notification
 west #
  #
 west #
  ipsec auto --add westnet-eastnet-aes-mix-2
-002 "westnet-eastnet-aes-mix-2": added IKEv1 connection
+"westnet-eastnet-aes-mix-2": added IKEv1 connection
 west #
  ipsec auto --up westnet-eastnet-aes-mix-2
-002 "westnet-eastnet-aes-mix-2" #9: initiating IKEv1 Main Mode connection
-1v1 "westnet-eastnet-aes-mix-2" #9: sent Main Mode request
-1v1 "westnet-eastnet-aes-mix-2" #9: sent Main Mode I2
-1v1 "westnet-eastnet-aes-mix-2" #9: sent Main Mode I3
-002 "westnet-eastnet-aes-mix-2" #9: Peer ID is ID_FQDN: '@east'
-003 "westnet-eastnet-aes-mix-2" #9: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
-004 "westnet-eastnet-aes-mix-2" #9: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA1 group=MODP2048}
-002 "westnet-eastnet-aes-mix-2" #10: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-1v1 "westnet-eastnet-aes-mix-2" #10: sent Quick Mode request
-004 "westnet-eastnet-aes-mix-2" #10: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+"westnet-eastnet-aes-mix-2" #9: initiating IKEv1 Main Mode connection
+"westnet-eastnet-aes-mix-2" #9: sent Main Mode request
+"westnet-eastnet-aes-mix-2" #9: sent Main Mode I2
+"westnet-eastnet-aes-mix-2" #9: sent Main Mode I3
+"westnet-eastnet-aes-mix-2" #9: Peer ID is ID_FQDN: '@east'
+"westnet-eastnet-aes-mix-2" #9: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet-aes-mix-2" #9: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA1 group=MODP2048}
+"westnet-eastnet-aes-mix-2" #10: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"westnet-eastnet-aes-mix-2" #10: sent Quick Mode request
+"westnet-eastnet-aes-mix-2" #10: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
  ipsec auto --delete  westnet-eastnet-aes-mix-2
-002 "westnet-eastnet-aes-mix-2": terminating SAs using this connection
-002 "westnet-eastnet-aes-mix-2" #10: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #9
-005 "westnet-eastnet-aes-mix-2" #10: ESP traffic information: in=0B out=0B
-002 "westnet-eastnet-aes-mix-2" #9: deleting ISAKMP SA (MAIN_I4) and sending notification
+"westnet-eastnet-aes-mix-2": terminating SAs using this connection
+"westnet-eastnet-aes-mix-2" #10: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #9
+"westnet-eastnet-aes-mix-2" #10: ESP traffic information: in=0B out=0B
+"westnet-eastnet-aes-mix-2" #9: deleting ISAKMP SA (MAIN_I4) and sending notification
 west #
  echo done
 done

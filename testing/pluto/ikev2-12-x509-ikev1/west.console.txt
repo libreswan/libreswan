@@ -17,7 +17,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-ikev2
-002 "westnet-eastnet-ikev2": added IKEv1 connection
+"westnet-eastnet-ikev2": added IKEv1 connection
 west #
  ipsec auto --status | grep westnet-eastnet-ikev2
 "westnet-eastnet-ikev2": 192.0.1.0/24===192.1.2.45[%fromcert]...192.1.2.23[%fromcert]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
@@ -43,18 +43,18 @@ west #
 initdone
 west #
  ipsec auto --up westnet-eastnet-ikev2 #retransmits
-002 "westnet-eastnet-ikev2" #1: initiating IKEv1 Main Mode connection
-1v1 "westnet-eastnet-ikev2" #1: sent Main Mode request
-010 "westnet-eastnet-ikev2" #1: STATE_MAIN_I1: retransmission; will wait 0.5 seconds for response
-010 "westnet-eastnet-ikev2" #1: STATE_MAIN_I1: retransmission; will wait 1 seconds for response
-010 "westnet-eastnet-ikev2" #1: STATE_MAIN_I1: retransmission; will wait 2 seconds for response
-010 "westnet-eastnet-ikev2" #1: STATE_MAIN_I1: retransmission; will wait 4 seconds for response
-010 "westnet-eastnet-ikev2" #1: STATE_MAIN_I1: retransmission; will wait 8 seconds for response
-010 "westnet-eastnet-ikev2" #1: STATE_MAIN_I1: retransmission; will wait 16 seconds for response
-010 "westnet-eastnet-ikev2" #1: STATE_MAIN_I1: retransmission; will wait 32 seconds for response
-031 "westnet-eastnet-ikev2" #1: STATE_MAIN_I1: 60 second timeout exceeded after 7 retransmits.  No response (or no acceptable response) to our first IKEv1 message
-002 "westnet-eastnet-ikev2" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-002 "westnet-eastnet-ikev2" #1: deleting ISAKMP SA (MAIN_I1) and NOT sending notification
+"westnet-eastnet-ikev2" #1: initiating IKEv1 Main Mode connection
+"westnet-eastnet-ikev2" #1: sent Main Mode request
+"westnet-eastnet-ikev2" #1: STATE_MAIN_I1: retransmission; will wait 0.5 seconds for response
+"westnet-eastnet-ikev2" #1: STATE_MAIN_I1: retransmission; will wait 1 seconds for response
+"westnet-eastnet-ikev2" #1: STATE_MAIN_I1: retransmission; will wait 2 seconds for response
+"westnet-eastnet-ikev2" #1: STATE_MAIN_I1: retransmission; will wait 4 seconds for response
+"westnet-eastnet-ikev2" #1: STATE_MAIN_I1: retransmission; will wait 8 seconds for response
+"westnet-eastnet-ikev2" #1: STATE_MAIN_I1: retransmission; will wait 16 seconds for response
+"westnet-eastnet-ikev2" #1: STATE_MAIN_I1: retransmission; will wait 32 seconds for response
+"westnet-eastnet-ikev2" #1: STATE_MAIN_I1: 60 second timeout exceeded after 7 retransmits.  No response (or no acceptable response) to our first IKEv1 message
+"westnet-eastnet-ikev2" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"westnet-eastnet-ikev2" #1: deleting ISAKMP SA (MAIN_I1) and NOT sending notification
 west #
  ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
 down

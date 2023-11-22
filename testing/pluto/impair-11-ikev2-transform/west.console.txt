@@ -13,18 +13,18 @@ west #
  ipsec whack --impair suppress-retransmits
 west #
  ../../guestbin/libreswan-up-down.sh conf --up -I 192.0.1.254 192.0.2.254
-002 "conf": added IKEv2 connection
-1v2 "conf" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "conf" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "conf" #1: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
-003 "conf" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "conf" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+"conf": added IKEv2 connection
+"conf" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"conf" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"conf" #1: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
+"conf" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"conf" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 up
-002 "conf": terminating SAs using this connection
-002 "conf" #1: intiating delete
-005 "conf" #2: ESP traffic information: in=84B out=84B
-002 "conf" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
-002 "conf": terminating SAs using this connection
+"conf": terminating SAs using this connection
+"conf" #1: intiating delete
+"conf" #2: ESP traffic information: in=84B out=84B
+"conf" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
+"conf": terminating SAs using this connection
 west #
  ipsec whack --impair none
 west #
@@ -35,19 +35,19 @@ west #
  ipsec whack --impair ikev2-add-ike-transform:0x60000
 west #
  ../../guestbin/libreswan-up-down.sh conf --up -I 192.0.1.254 192.0.2.254
-002 "conf": added IKEv2 connection
-1v2 "conf" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
-002 "conf" #3: IMPAIR: adding transform type 6?? (0x6) id 0?? (0x0)
-1v2 "conf" #3: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "conf" #3: sent IKE_AUTH request {cipher=3DES_CBC_192 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
-003 "conf" #3: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "conf" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+"conf": added IKEv2 connection
+"conf" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
+"conf" #3: IMPAIR: adding transform type 6?? (0x6) id 0?? (0x0)
+"conf" #3: sent IKE_SA_INIT request to 192.1.2.23:500
+"conf" #3: sent IKE_AUTH request {cipher=3DES_CBC_192 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
+"conf" #3: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"conf" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 up
-002 "conf": terminating SAs using this connection
-002 "conf" #3: intiating delete
-005 "conf" #4: ESP traffic information: in=84B out=84B
-002 "conf" #3: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
-002 "conf": terminating SAs using this connection
+"conf": terminating SAs using this connection
+"conf" #3: intiating delete
+"conf" #4: ESP traffic information: in=84B out=84B
+"conf" #3: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
+"conf": terminating SAs using this connection
 west #
  ipsec whack --impair none
 west #
@@ -58,19 +58,19 @@ west #
  ipsec whack --impair ikev2-add-ike-transform:0x3ffff
 west #
  ../../guestbin/libreswan-up-down.sh conf --up -I 192.0.1.254 192.0.2.254
-002 "conf": added IKEv2 connection
-1v2 "conf" #5: initiating IKEv2 connection to 192.1.2.23 using UDP
-002 "conf" #5: IMPAIR: adding transform type INTEG (0x3) id 65535?? (0xffff)
-1v2 "conf" #5: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "conf" #5: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
-003 "conf" #5: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "conf" #6: initiator established Child SA using #5; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+"conf": added IKEv2 connection
+"conf" #5: initiating IKEv2 connection to 192.1.2.23 using UDP
+"conf" #5: IMPAIR: adding transform type INTEG (0x3) id 65535?? (0xffff)
+"conf" #5: sent IKE_SA_INIT request to 192.1.2.23:500
+"conf" #5: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
+"conf" #5: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"conf" #6: initiator established Child SA using #5; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 up
-002 "conf": terminating SAs using this connection
-002 "conf" #5: intiating delete
-005 "conf" #6: ESP traffic information: in=84B out=84B
-002 "conf" #5: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
-002 "conf": terminating SAs using this connection
+"conf": terminating SAs using this connection
+"conf" #5: intiating delete
+"conf" #6: ESP traffic information: in=84B out=84B
+"conf" #5: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
+"conf": terminating SAs using this connection
 west #
  ipsec whack --impair none
 west #
@@ -81,19 +81,19 @@ west #
  ipsec whack --impair ikev2-add-child-transform:0x60000
 west #
  ../../guestbin/libreswan-up-down.sh conf --up -I 192.0.1.254 192.0.2.254
-002 "conf": added IKEv2 connection
-1v2 "conf" #7: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "conf" #7: sent IKE_SA_INIT request to 192.1.2.23:500
-002 "conf" #7: IMPAIR: adding transform type 6?? (0x6) id 0?? (0x0)
-1v2 "conf" #7: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
-003 "conf" #7: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "conf" #8: initiator established Child SA using #7; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 DPD=passive}
+"conf": added IKEv2 connection
+"conf" #7: initiating IKEv2 connection to 192.1.2.23 using UDP
+"conf" #7: sent IKE_SA_INIT request to 192.1.2.23:500
+"conf" #7: IMPAIR: adding transform type 6?? (0x6) id 0?? (0x0)
+"conf" #7: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
+"conf" #7: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"conf" #8: initiator established Child SA using #7; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 DPD=passive}
 up
-002 "conf": terminating SAs using this connection
-002 "conf" #7: intiating delete
-005 "conf" #8: ESP traffic information: in=84B out=84B
-002 "conf" #7: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
-002 "conf": terminating SAs using this connection
+"conf": terminating SAs using this connection
+"conf" #7: intiating delete
+"conf" #8: ESP traffic information: in=84B out=84B
+"conf" #7: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
+"conf": terminating SAs using this connection
 west #
  ipsec whack --impair none
 west #
@@ -104,19 +104,19 @@ west #
  ipsec whack --impair ikev2-add-child-transform:0x3ffff
 west #
  ../../guestbin/libreswan-up-down.sh conf --up -I 192.0.1.254 192.0.2.254
-002 "conf": added IKEv2 connection
-1v2 "conf" #9: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "conf" #9: sent IKE_SA_INIT request to 192.1.2.23:500
-002 "conf" #9: IMPAIR: adding transform type INTEG (0x3) id 65535?? (0xffff)
-1v2 "conf" #9: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
-003 "conf" #9: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "conf" #10: initiator established Child SA using #9; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+"conf": added IKEv2 connection
+"conf" #9: initiating IKEv2 connection to 192.1.2.23 using UDP
+"conf" #9: sent IKE_SA_INIT request to 192.1.2.23:500
+"conf" #9: IMPAIR: adding transform type INTEG (0x3) id 65535?? (0xffff)
+"conf" #9: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
+"conf" #9: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"conf" #10: initiator established Child SA using #9; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 up
-002 "conf": terminating SAs using this connection
-002 "conf" #9: intiating delete
-005 "conf" #10: ESP traffic information: in=84B out=84B
-002 "conf" #9: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
-002 "conf": terminating SAs using this connection
+"conf": terminating SAs using this connection
+"conf" #9: intiating delete
+"conf" #10: ESP traffic information: in=84B out=84B
+"conf" #9: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
+"conf": terminating SAs using this connection
 west #
  ipsec whack --impair none
 west #

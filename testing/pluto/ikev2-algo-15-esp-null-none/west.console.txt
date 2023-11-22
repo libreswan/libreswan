@@ -29,7 +29,7 @@ west #
  # should be rejected by the parser (requires allow-null-none)
 west #
  ! ipsec auto --add esp=null-none
-036 "esp=null-none": failed to add connection: non-AEAD ESP encryption algorithm NULL cannot have 'NONE' as the integrity algorithm
+"esp=null-none": failed to add connection: non-AEAD ESP encryption algorithm NULL cannot have 'NONE' as the integrity algorithm
 west #
  # get esp=null-none past the parser
 west #
@@ -40,40 +40,40 @@ west #
  ipsec whack --impair v2-proposal-integ:allow-none
 west #
  ../../guestbin/libreswan-up-down.sh esp=null-none -I 192.0.1.254 192.0.2.254
-002 "esp=null-none": added IKEv2 connection
-1v2 "esp=null-none" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "esp=null-none" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-002 "esp=null-none" #1: IMPAIR: proposal 1 transform INTEG=NONE included when counting transforms
-002 "esp=null-none" #1: IMPAIR: proposal 1 transform INTEG=NONE included when emitting proposal
-1v2 "esp=null-none" #1: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
-003 "esp=null-none" #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
-004 "esp=null-none" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=NULL-NONE DPD=passive}
+"esp=null-none": added IKEv2 connection
+"esp=null-none" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"esp=null-none" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"esp=null-none" #1: IMPAIR: proposal 1 transform INTEG=NONE included when counting transforms
+"esp=null-none" #1: IMPAIR: proposal 1 transform INTEG=NONE included when emitting proposal
+"esp=null-none" #1: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
+"esp=null-none" #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
+"esp=null-none" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=NULL-NONE DPD=passive}
 up
-002 "esp=null-none": terminating SAs using this connection
-002 "esp=null-none" #1: intiating delete
-005 "esp=null-none" #2: ESP traffic information: in=84B out=84B
-002 "esp=null-none" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
-002 "esp=null-none": terminating SAs using this connection
+"esp=null-none": terminating SAs using this connection
+"esp=null-none" #1: intiating delete
+"esp=null-none" #2: ESP traffic information: in=84B out=84B
+"esp=null-none" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
+"esp=null-none": terminating SAs using this connection
 west #
  # exclude INTEG=NONE in the proposal
 west #
  ipsec whack --impair v2-proposal-integ:drop-none
 west #
  ../../guestbin/libreswan-up-down.sh esp=null-none -I 192.0.1.254 192.0.2.254
-002 "esp=null-none": added IKEv2 connection
-1v2 "esp=null-none" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "esp=null-none" #3: sent IKE_SA_INIT request to 192.1.2.23:500
-002 "esp=null-none" #3: IMPAIR: proposal 1 transform INTEG=NONE excluded when counting transforms
-002 "esp=null-none" #3: IMPAIR: proposal 1 transform INTEG=NONE excluded when emitting proposal
-1v2 "esp=null-none" #3: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
-003 "esp=null-none" #3: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
-004 "esp=null-none" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=NULL-NONE DPD=passive}
+"esp=null-none": added IKEv2 connection
+"esp=null-none" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
+"esp=null-none" #3: sent IKE_SA_INIT request to 192.1.2.23:500
+"esp=null-none" #3: IMPAIR: proposal 1 transform INTEG=NONE excluded when counting transforms
+"esp=null-none" #3: IMPAIR: proposal 1 transform INTEG=NONE excluded when emitting proposal
+"esp=null-none" #3: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
+"esp=null-none" #3: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
+"esp=null-none" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=NULL-NONE DPD=passive}
 up
-002 "esp=null-none": terminating SAs using this connection
-002 "esp=null-none" #3: intiating delete
-005 "esp=null-none" #4: ESP traffic information: in=84B out=84B
-002 "esp=null-none" #3: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
-002 "esp=null-none": terminating SAs using this connection
+"esp=null-none": terminating SAs using this connection
+"esp=null-none" #3: intiating delete
+"esp=null-none" #4: ESP traffic information: in=84B out=84B
+"esp=null-none" #3: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
+"esp=null-none": terminating SAs using this connection
 west #
  echo done
 done

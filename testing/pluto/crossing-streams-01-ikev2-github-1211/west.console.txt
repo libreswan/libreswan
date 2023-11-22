@@ -22,7 +22,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
-002 "westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
+"westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
 west #
  ipsec whack --impair suppress-retransmits
 west #
@@ -30,41 +30,41 @@ west #
 initdone
 west #
  ipsec whack --impair block-inbound:yes
-002 IMPAIR: block all inbound messages: yes
+IMPAIR: block all inbound messages: yes
 west #
  ipsec whack --impair block-outbound:yes
-002 IMPAIR: block all outbound messages: yes
+IMPAIR: block all outbound messages: yes
 west #
  ipsec auto --asynchronous --up westnet-eastnet-ipv4-psk-ikev2
-1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 west #
  ../../guestbin/wait-for.sh --match 'IMPAIR: blocking outbound message 1' -- cat /tmp/pluto.log
 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: blocking outbound message 1
 west #
  ipsec whack --impair drip-outbound:1
-002 IMPAIR: start processing outbound drip packet 1
-002 IMPAIR: stop processing outbound drip packet 1
+IMPAIR: start processing outbound drip packet 1
+IMPAIR: stop processing outbound drip packet 1
 west #
  ../../guestbin/wait-for.sh --match 'IMPAIR: blocking inbound message 1' -- cat /tmp/pluto.log
 packet from 192.1.2.23:500: IMPAIR: blocking inbound message 1
 west #
  ipsec whack --impair drip-inbound:1
-002 IMPAIR: start processing inbound drip packet 1
-002 IMPAIR: stop processing inbound drip packet 1
+IMPAIR: start processing inbound drip packet 1
+IMPAIR: stop processing inbound drip packet 1
 west #
  ../../guestbin/wait-for.sh --match 'IMPAIR: blocking outbound message 2' -- cat /tmp/pluto.log
 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: blocking outbound message 2
 west #
  ipsec whack --impair drip-outbound:2
-002 IMPAIR: start processing outbound drip packet 2
-002 IMPAIR: stop processing outbound drip packet 2
+IMPAIR: start processing outbound drip packet 2
+IMPAIR: stop processing outbound drip packet 2
 west #
  ../../guestbin/wait-for.sh --match 'IMPAIR: blocking inbound message 2' -- cat /tmp/pluto.log
 packet from 192.1.2.23:500: IMPAIR: blocking inbound message 2
 west #
  ipsec whack --impair drip-inbound:2
-002 IMPAIR: start processing inbound drip packet 2
-002 IMPAIR: stop processing inbound drip packet 2
+IMPAIR: start processing inbound drip packet 2
+IMPAIR: stop processing inbound drip packet 2
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up

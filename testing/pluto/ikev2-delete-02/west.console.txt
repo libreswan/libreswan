@@ -22,7 +22,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add west-east-delete1
-002 "west-east-delete1": added IKEv2 connection
+"west-east-delete1": added IKEv2 connection
 west #
  ipsec whack --impair suppress-retransmits
 west #
@@ -32,11 +32,11 @@ west #
 initdone
 west #
  ipsec auto --up west-east-delete1
-1v2 "west-east-delete1" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "west-east-delete1" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "west-east-delete1" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "west-east-delete1" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "west-east-delete1" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"west-east-delete1" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west-east-delete1" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"west-east-delete1" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"west-east-delete1" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"west-east-delete1" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
@@ -69,10 +69,10 @@ west #
  sleep 2
 west #
  ipsec whack --deletestate 2
-002 "west-east-delete1" #2: deleting established Child SA using IKE SA #1
-002 "west-east-delete1" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-002 "west-east-delete1" #2: IMPAIR: revival: skip scheduling revival event
-005 "west-east-delete1" #2: ESP traffic information: in=84B out=84B
+"west-east-delete1" #2: deleting established Child SA using IKE SA #1
+"west-east-delete1" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"west-east-delete1" #2: IMPAIR: revival: skip scheduling revival event
+"west-east-delete1" #2: ESP traffic information: in=84B out=84B
 west #
  sleep 2
 west #
@@ -91,8 +91,8 @@ west #
  sleep 2
 west #
  ipsec whack --deletestate 1
-002 "west-east-delete1" #1: intiating delete
-002 "west-east-delete1" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
+"west-east-delete1" #1: intiating delete
+"west-east-delete1" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #
  sleep 2
 west #
@@ -105,6 +105,6 @@ west #
  ipsec auto --showstates
 west #
  ipsec delete west-east-delete1
-002 "west-east-delete1": terminating SAs using this connection
+"west-east-delete1": terminating SAs using this connection
 west #
  

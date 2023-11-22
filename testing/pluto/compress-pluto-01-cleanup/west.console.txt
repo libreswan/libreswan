@@ -22,7 +22,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-compress
-002 "westnet-eastnet-compress": added IKEv1 connection
+"westnet-eastnet-compress": added IKEv1 connection
 west #
  ipsec whack --connectionstatus --name westnet-eastnet-compress
 "westnet-eastnet-compress": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
@@ -48,16 +48,16 @@ west #
 initdone
 west #
  ipsec auto --up westnet-eastnet-compress
-002 "westnet-eastnet-compress" #1: initiating IKEv1 Main Mode connection
-1v1 "westnet-eastnet-compress" #1: sent Main Mode request
-1v1 "westnet-eastnet-compress" #1: sent Main Mode I2
-1v1 "westnet-eastnet-compress" #1: sent Main Mode I3
-002 "westnet-eastnet-compress" #1: Peer ID is ID_FQDN: '@east'
-003 "westnet-eastnet-compress" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
-004 "westnet-eastnet-compress" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "westnet-eastnet-compress" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+COMPRESS+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-1v1 "westnet-eastnet-compress" #2: sent Quick Mode request
-004 "westnet-eastnet-compress" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 IPCOMP=>0xESPESP <0xESPESP DPD=passive}
+"westnet-eastnet-compress" #1: initiating IKEv1 Main Mode connection
+"westnet-eastnet-compress" #1: sent Main Mode request
+"westnet-eastnet-compress" #1: sent Main Mode I2
+"westnet-eastnet-compress" #1: sent Main Mode I3
+"westnet-eastnet-compress" #1: Peer ID is ID_FQDN: '@east'
+"westnet-eastnet-compress" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet-compress" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"westnet-eastnet-compress" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+COMPRESS+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"westnet-eastnet-compress" #2: sent Quick Mode request
+"westnet-eastnet-compress" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 IPCOMP=>0xESPESP <0xESPESP DPD=passive}
 west #
  ../../guestbin/ipsec-kernel-state.sh
 src 192.1.2.23 dst 192.1.2.45
@@ -215,11 +215,11 @@ src 192.0.2.0/24 dst 192.0.1.0/24
 		proto esp reqid REQID mode transport
 west #
  ipsec auto --down westnet-eastnet-compress | sed -e 's/=6[0-9][0-9]B/=6nnB/g'
-002 "westnet-eastnet-compress": terminating SAs using this connection
-002 "westnet-eastnet-compress" #2: deleting IPsec SA (QUICK_I2) and sending notification
-005 "westnet-eastnet-compress" #2: ESP traffic information: in=6nnB out=6nnB
-005 "westnet-eastnet-compress" #2: IPCOMP traffic information: in=31KiB out=31KiB
-002 "westnet-eastnet-compress" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
+"westnet-eastnet-compress": terminating SAs using this connection
+"westnet-eastnet-compress" #2: deleting IPsec SA (QUICK_I2) and sending notification
+"westnet-eastnet-compress" #2: ESP traffic information: in=6nnB out=6nnB
+"westnet-eastnet-compress" #2: IPCOMP traffic information: in=31KiB out=31KiB
+"westnet-eastnet-compress" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
 west #
  echo ping
 ping

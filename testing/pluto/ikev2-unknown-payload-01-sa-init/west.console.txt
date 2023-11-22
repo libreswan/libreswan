@@ -19,20 +19,20 @@ west #
  : good
 west #
  ../../guestbin/libreswan-up-down.sh westnet-eastnet-ipv4-psk-ikev2 -I 192.0.1.254 192.0.2.254
-002 "westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
-1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: adding an unknown payload of type 255 to IKE_SA_INIT request
-1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-000 "westnet-eastnet-ipv4-psk-ikev2" #1: non-critical payload ignored because it contains an unknown or unexpected payload type (255??) at the outermost level
-1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "westnet-eastnet-ipv4-psk-ikev2" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "westnet-eastnet-ipv4-psk-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
+"westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: adding an unknown payload of type 255 to IKE_SA_INIT request
+"westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"westnet-eastnet-ipv4-psk-ikev2" #1: non-critical payload ignored because it contains an unknown or unexpected payload type (255??) at the outermost level
+"westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"westnet-eastnet-ipv4-psk-ikev2" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"westnet-eastnet-ipv4-psk-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 up
-002 "westnet-eastnet-ipv4-psk-ikev2": terminating SAs using this connection
-002 "westnet-eastnet-ipv4-psk-ikev2" #1: intiating delete
-005 "westnet-eastnet-ipv4-psk-ikev2" #2: ESP traffic information: in=84B out=84B
-002 "westnet-eastnet-ipv4-psk-ikev2" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
-002 "westnet-eastnet-ipv4-psk-ikev2": terminating SAs using this connection
+"westnet-eastnet-ipv4-psk-ikev2": terminating SAs using this connection
+"westnet-eastnet-ipv4-psk-ikev2" #1: intiating delete
+"westnet-eastnet-ipv4-psk-ikev2" #2: ESP traffic information: in=84B out=84B
+"westnet-eastnet-ipv4-psk-ikev2" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
+"westnet-eastnet-ipv4-psk-ikev2": terminating SAs using this connection
 west #
  : bad
 west #
@@ -47,17 +47,17 @@ west #
  ipsec whack --impair unknown-v2-payload-critical
 west #
  ../../guestbin/libreswan-up-down.sh westnet-eastnet-ipv4-psk-ikev2 -I 192.0.1.254 192.0.2.254
-002 "westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
-1v2 "westnet-eastnet-ipv4-psk-ikev2" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
-002 "westnet-eastnet-ipv4-psk-ikev2" #3: IMPAIR: adding an unknown critical payload of type 255 to IKE_SA_INIT request
-002 "westnet-eastnet-ipv4-psk-ikev2" #3: IMPAIR: setting (should be off) critical payload bit
-1v2 "westnet-eastnet-ipv4-psk-ikev2" #3: sent IKE_SA_INIT request to 192.1.2.23:500
-000 "westnet-eastnet-ipv4-psk-ikev2" #3: non-critical payload ignored because it contains an unknown or unexpected payload type (255??) at the outermost level
-003 "westnet-eastnet-ipv4-psk-ikev2" #3: dropping unexpected IKE_SA_INIT message containing UNSUPPORTED_CRITICAL_PAYLOAD notification; message payloads: N; missing payloads: SA,KE,Ni
-002 "westnet-eastnet-ipv4-psk-ikev2" #3: IMPAIR: retransmit so timing out SA (may retry)
-002 "westnet-eastnet-ipv4-psk-ikev2" #3: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-002 "westnet-eastnet-ipv4-psk-ikev2" #3: IMPAIR: revival: skip scheduling revival event
-002 "westnet-eastnet-ipv4-psk-ikev2" #3: deleting IKE SA (PARENT_I1) and NOT sending notification
+"westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
+"westnet-eastnet-ipv4-psk-ikev2" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
+"westnet-eastnet-ipv4-psk-ikev2" #3: IMPAIR: adding an unknown critical payload of type 255 to IKE_SA_INIT request
+"westnet-eastnet-ipv4-psk-ikev2" #3: IMPAIR: setting (should be off) critical payload bit
+"westnet-eastnet-ipv4-psk-ikev2" #3: sent IKE_SA_INIT request to 192.1.2.23:500
+"westnet-eastnet-ipv4-psk-ikev2" #3: non-critical payload ignored because it contains an unknown or unexpected payload type (255??) at the outermost level
+"westnet-eastnet-ipv4-psk-ikev2" #3: dropping unexpected IKE_SA_INIT message containing UNSUPPORTED_CRITICAL_PAYLOAD notification; message payloads: N; missing payloads: SA,KE,Ni
+"westnet-eastnet-ipv4-psk-ikev2" #3: IMPAIR: retransmit so timing out SA (may retry)
+"westnet-eastnet-ipv4-psk-ikev2" #3: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"westnet-eastnet-ipv4-psk-ikev2" #3: IMPAIR: revival: skip scheduling revival event
+"westnet-eastnet-ipv4-psk-ikev2" #3: deleting IKE SA (PARENT_I1) and NOT sending notification
 west #
  echo done
 done

@@ -6,6 +6,6 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add labeled
-036 "labeled": failed to add connection: IKEv1 does not support Labeled IPsec
+"labeled": failed to add connection: IKEv1 does not support Labeled IPsec
 west #
  

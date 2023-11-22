@@ -6,7 +6,7 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add road-eastnet-psk
-002 "road-eastnet-psk": added IKEv1 connection
+"road-eastnet-psk": added IKEv1 connection
 east #
  echo "initdone"
 initdone
@@ -23,12 +23,12 @@ east #
 whack error: missing --name <connection_name>
 east #
  ipsec whack --deleteid --name @madeup
-002 no connections matching peer id '@madeup' found
+no connections matching peer id '@madeup' found
 east #
  ipsec whack --deleteid --name @roadrandom
-002 "road-eastnet-psk"[1] 192.1.3.209 #2: deleting IPsec SA (QUICK_R2) and sending notification using ISAKMP SA #1
-005 "road-eastnet-psk"[1] 192.1.3.209 #2: ESP traffic information: in=84B out=84B
-002 "road-eastnet-psk"[1] 192.1.3.209 #1: deleting ISAKMP SA (AGGR_R2) and sending notification
+"road-eastnet-psk"[1] 192.1.3.209 #2: deleting IPsec SA (QUICK_R2) and sending notification using ISAKMP SA #1
+"road-eastnet-psk"[1] 192.1.3.209 #2: ESP traffic information: in=84B out=84B
+"road-eastnet-psk"[1] 192.1.3.209 #1: deleting ISAKMP SA (AGGR_R2) and sending notification
 east #
  ipsec showstates
 east #

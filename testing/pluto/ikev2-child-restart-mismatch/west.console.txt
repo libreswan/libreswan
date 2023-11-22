@@ -22,23 +22,23 @@ west #
  ipsec whack --impair revival
 west #
  ipsec auto --add westnet-eastnet-ikev2a
-002 "westnet-eastnet-ikev2a": added IKEv2 connection
+"westnet-eastnet-ikev2a": added IKEv2 connection
 west #
  ipsec auto --add westnet-eastnet-ikev2b
-002 "westnet-eastnet-ikev2b": added IKEv2 connection
+"westnet-eastnet-ikev2b": added IKEv2 connection
 west #
  ipsec auto --add westnet-eastnet-ikev2c
-002 "westnet-eastnet-ikev2c": added IKEv2 connection
+"westnet-eastnet-ikev2c": added IKEv2 connection
 west #
  echo "initdone"
 initdone
 west #
  ipsec auto --up westnet-eastnet-ikev2a
-1v2 "westnet-eastnet-ikev2a" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "westnet-eastnet-ikev2a" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "westnet-eastnet-ikev2a" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "westnet-eastnet-ikev2a" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "westnet-eastnet-ikev2a" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"westnet-eastnet-ikev2a" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"westnet-eastnet-ikev2a" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"westnet-eastnet-ikev2a" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"westnet-eastnet-ikev2a" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"westnet-eastnet-ikev2a" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ping -n -q -w 1 -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
@@ -51,18 +51,18 @@ west #
  # The whack should release the socket on receiving NO_PROPOSAL_CHOSEN
 west #
  ipsec auto --up westnet-eastnet-ikev2b
-002 "westnet-eastnet-ikev2b" #3: initiating Child SA using IKE SA #1
-1v2 "westnet-eastnet-ikev2b" #3: sent CREATE_CHILD_SA request for new IPsec SA
-003 "westnet-eastnet-ikev2b" #3: CREATE_CHILD_SA failed with error notification TS_UNACCEPTABLE
-002 "westnet-eastnet-ikev2b" #3: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-002 "westnet-eastnet-ikev2b" #3: IMPAIR: revival: skip scheduling revival event
+"westnet-eastnet-ikev2b" #3: initiating Child SA using IKE SA #1
+"westnet-eastnet-ikev2b" #3: sent CREATE_CHILD_SA request for new IPsec SA
+"westnet-eastnet-ikev2b" #3: CREATE_CHILD_SA failed with error notification TS_UNACCEPTABLE
+"westnet-eastnet-ikev2b" #3: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"westnet-eastnet-ikev2b" #3: IMPAIR: revival: skip scheduling revival event
 west #
  ipsec auto --up westnet-eastnet-ikev2c
-002 "westnet-eastnet-ikev2c" #4: initiating Child SA using IKE SA #1
-1v2 "westnet-eastnet-ikev2c" #4: sent CREATE_CHILD_SA request for new IPsec SA
-003 "westnet-eastnet-ikev2c" #4: CREATE_CHILD_SA failed with error notification TS_UNACCEPTABLE
-002 "westnet-eastnet-ikev2c" #4: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-002 "westnet-eastnet-ikev2c" #4: IMPAIR: revival: skip scheduling revival event
+"westnet-eastnet-ikev2c" #4: initiating Child SA using IKE SA #1
+"westnet-eastnet-ikev2c" #4: sent CREATE_CHILD_SA request for new IPsec SA
+"westnet-eastnet-ikev2c" #4: CREATE_CHILD_SA failed with error notification TS_UNACCEPTABLE
+"westnet-eastnet-ikev2c" #4: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"westnet-eastnet-ikev2c" #4: IMPAIR: revival: skip scheduling revival event
 west #
  #
 west #
@@ -71,9 +71,9 @@ west #
  # should see westnet-eastnet-ikev2c replacing
 west #
  ipsec auto --delete westnet-eastnet-ikev2a
-002 "westnet-eastnet-ikev2a": terminating SAs using this connection
-002 "westnet-eastnet-ikev2a" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
-005 "westnet-eastnet-ikev2a" #2: ESP traffic information: in=84B out=84B
+"westnet-eastnet-ikev2a": terminating SAs using this connection
+"westnet-eastnet-ikev2a" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"westnet-eastnet-ikev2a" #2: ESP traffic information: in=84B out=84B
 west #
  ipsec status | grep westnet-eastnet
 "westnet-eastnet-ikev2b": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.200.0/24; unrouted; my_ip=unset; their_ip=unset;

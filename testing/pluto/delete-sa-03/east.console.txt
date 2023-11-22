@@ -6,13 +6,13 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add west-east
-002 "west-east": added IKEv1 connection
+"west-east": added IKEv1 connection
 east #
  ipsec auto --add west-east-b
-002 "west-east-b": added IKEv1 connection
+"west-east-b": added IKEv1 connection
 east #
  ipsec auto --add west-east-c
-002 "west-east-c": added IKEv1 connection
+"west-east-c": added IKEv1 connection
 east #
  ipsec auto --status | grep west-
 "west-east": 192.1.2.23[@east]...192.1.2.45[@west]; unrouted; my_ip=unset; their_ip=unset;

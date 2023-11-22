@@ -6,10 +6,10 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-port666
-002 "westnet-eastnet-port666": added IKEv1 connection
+"westnet-eastnet-port666": added IKEv1 connection
 east #
  ipsec auto --add westnet-eastnet-port667
-002 "westnet-eastnet-port667": added IKEv1 connection
+"westnet-eastnet-port667": added IKEv1 connection
 east #
  echo "initdone"
 initdone

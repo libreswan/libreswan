@@ -12,10 +12,10 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add ikev1-failtest
-002 "ikev1-failtest": added IKEv1 connection
+"ikev1-failtest": added IKEv1 connection
 west #
  ipsec auto --add ikev1-aggr-failtest
-002 "ikev1-aggr-failtest": added IKEv1 connection
+"ikev1-aggr-failtest": added IKEv1 connection
 west #
  ipsec whack --impair revival
 west #
@@ -25,36 +25,36 @@ west #
  # IKEv1 fail tests
 west #
  ipsec auto --up ikev1-failtest # sanitze-retransmits
-002 "ikev1-failtest" #1: initiating IKEv1 Main Mode connection
-1v1 "ikev1-failtest" #1: sent Main Mode request
-003 "ikev1-failtest" #1: ignoring informational payload NO_PROPOSAL_CHOSEN, msgid=00000000, length=12
-003 "ikev1-failtest" #1: received and ignored notification payload: NO_PROPOSAL_CHOSEN
-010 "ikev1-failtest" #1: STATE_MAIN_I1: retransmission; will wait 0.5 seconds for response
-003 "ikev1-failtest" #1: ignoring informational payload NO_PROPOSAL_CHOSEN, msgid=00000000, length=12
-003 "ikev1-failtest" #1: received and ignored notification payload: NO_PROPOSAL_CHOSEN
-010 "ikev1-failtest" #1: STATE_MAIN_I1: retransmission; will wait 1 seconds for response
-003 "ikev1-failtest" #1: ignoring informational payload NO_PROPOSAL_CHOSEN, msgid=00000000, length=12
-003 "ikev1-failtest" #1: received and ignored notification payload: NO_PROPOSAL_CHOSEN
-031 "ikev1-failtest" #1: STATE_MAIN_I1: 2 second timeout exceeded after 2 retransmits.  No response (or no acceptable response) to our first IKEv1 message
-002 "ikev1-failtest" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-002 "ikev1-failtest" #1: IMPAIR: revival: skip scheduling revival event
-002 "ikev1-failtest" #1: deleting ISAKMP SA (MAIN_I1) and NOT sending notification
+"ikev1-failtest" #1: initiating IKEv1 Main Mode connection
+"ikev1-failtest" #1: sent Main Mode request
+"ikev1-failtest" #1: ignoring informational payload NO_PROPOSAL_CHOSEN, msgid=00000000, length=12
+"ikev1-failtest" #1: received and ignored notification payload: NO_PROPOSAL_CHOSEN
+"ikev1-failtest" #1: STATE_MAIN_I1: retransmission; will wait 0.5 seconds for response
+"ikev1-failtest" #1: ignoring informational payload NO_PROPOSAL_CHOSEN, msgid=00000000, length=12
+"ikev1-failtest" #1: received and ignored notification payload: NO_PROPOSAL_CHOSEN
+"ikev1-failtest" #1: STATE_MAIN_I1: retransmission; will wait 1 seconds for response
+"ikev1-failtest" #1: ignoring informational payload NO_PROPOSAL_CHOSEN, msgid=00000000, length=12
+"ikev1-failtest" #1: received and ignored notification payload: NO_PROPOSAL_CHOSEN
+"ikev1-failtest" #1: STATE_MAIN_I1: 2 second timeout exceeded after 2 retransmits.  No response (or no acceptable response) to our first IKEv1 message
+"ikev1-failtest" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"ikev1-failtest" #1: IMPAIR: revival: skip scheduling revival event
+"ikev1-failtest" #1: deleting ISAKMP SA (MAIN_I1) and NOT sending notification
 west #
  ipsec auto --delete ikev1-failtest
-002 "ikev1-failtest": terminating SAs using this connection
+"ikev1-failtest": terminating SAs using this connection
 west #
  ipsec auto --up ikev1-aggr-failtest  # sanitize-retransmits
-002 "ikev1-aggr-failtest" #2: initiating IKEv1 Aggressive Mode connection
-1v1 "ikev1-aggr-failtest" #2: sent Aggressive Mode request
-002 "ikev1-aggr-failtest" #2: Peer ID is ID_FQDN: '@east-v1'
-003 "ikev1-aggr-failtest" #2: authentication failed: using RSA with SHA1 for '@east-v1' tried preloaded: *000000000
-217 "ikev1-aggr-failtest" #2: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
-002 "ikev1-aggr-failtest" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-002 "ikev1-aggr-failtest" #2: IMPAIR: revival: skip scheduling revival event
-002 "ikev1-aggr-failtest" #2: deleting ISAKMP SA (AGGR_I1) and NOT sending notification
+"ikev1-aggr-failtest" #2: initiating IKEv1 Aggressive Mode connection
+"ikev1-aggr-failtest" #2: sent Aggressive Mode request
+"ikev1-aggr-failtest" #2: Peer ID is ID_FQDN: '@east-v1'
+"ikev1-aggr-failtest" #2: authentication failed: using RSA with SHA1 for '@east-v1' tried preloaded: *000000000
+"ikev1-aggr-failtest" #2: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
+"ikev1-aggr-failtest" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"ikev1-aggr-failtest" #2: IMPAIR: revival: skip scheduling revival event
+"ikev1-aggr-failtest" #2: deleting ISAKMP SA (AGGR_I1) and NOT sending notification
 west #
  ipsec auto --delete ikev1-aggr-failtest
-002 "ikev1-aggr-failtest": terminating SAs using this connection
+"ikev1-aggr-failtest": terminating SAs using this connection
 west #
  echo done
 done

@@ -6,7 +6,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
-002 "westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
+"westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
 west #
  ipsec whack --impair suppress-retransmits
 west #
@@ -16,34 +16,34 @@ west #
  # all is normal
 west #
  ipsec auto --up westnet-eastnet-ipv4-psk-ikev2
-1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_256 group=MODP2048}
-003 "westnet-eastnet-ipv4-psk-ikev2" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "westnet-eastnet-ipv4-psk-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE DPD=passive}
+"westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_256 group=MODP2048}
+"westnet-eastnet-ipv4-psk-ikev2" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"westnet-eastnet-ipv4-psk-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE DPD=passive}
 west #
  ipsec auto --down westnet-eastnet-ipv4-psk-ikev2
-002 "westnet-eastnet-ipv4-psk-ikev2": terminating SAs using this connection
-002 "westnet-eastnet-ipv4-psk-ikev2" #1: intiating delete
-005 "westnet-eastnet-ipv4-psk-ikev2" #2: ESP traffic information: in=0B out=0B
-002 "westnet-eastnet-ipv4-psk-ikev2" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
+"westnet-eastnet-ipv4-psk-ikev2": terminating SAs using this connection
+"westnet-eastnet-ipv4-psk-ikev2" #1: intiating delete
+"westnet-eastnet-ipv4-psk-ikev2" #2: ESP traffic information: in=0B out=0B
+"westnet-eastnet-ipv4-psk-ikev2" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #
  # TSi
 west #
  ipsec whack --impair number-of-TSi-selectors:0
 west #
  ipsec auto --up westnet-eastnet-ipv4-psk-ikev2
-1v2 "westnet-eastnet-ipv4-psk-ikev2" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "westnet-eastnet-ipv4-psk-ikev2" #3: sent IKE_SA_INIT request to 192.1.2.23:500
-002 "westnet-eastnet-ipv4-psk-ikev2" #3: IMPAIR: forcing number of local TSi selectors from 1 to 0
-1v2 "westnet-eastnet-ipv4-psk-ikev2" #3: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_256 group=MODP2048}
-003 "westnet-eastnet-ipv4-psk-ikev2" #3: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-003 "westnet-eastnet-ipv4-psk-ikev2" #4: IKE_AUTH response rejected Child SA with TS_UNACCEPTABLE
+"westnet-eastnet-ipv4-psk-ikev2" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
+"westnet-eastnet-ipv4-psk-ikev2" #3: sent IKE_SA_INIT request to 192.1.2.23:500
+"westnet-eastnet-ipv4-psk-ikev2" #3: IMPAIR: forcing number of local TSi selectors from 1 to 0
+"westnet-eastnet-ipv4-psk-ikev2" #3: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_256 group=MODP2048}
+"westnet-eastnet-ipv4-psk-ikev2" #3: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"westnet-eastnet-ipv4-psk-ikev2" #4: IKE_AUTH response rejected Child SA with TS_UNACCEPTABLE
 west #
  ipsec auto --down westnet-eastnet-ipv4-psk-ikev2
-002 "westnet-eastnet-ipv4-psk-ikev2": terminating SAs using this connection
-002 "westnet-eastnet-ipv4-psk-ikev2" #3: intiating delete
-002 "westnet-eastnet-ipv4-psk-ikev2" #3: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
+"westnet-eastnet-ipv4-psk-ikev2": terminating SAs using this connection
+"westnet-eastnet-ipv4-psk-ikev2" #3: intiating delete
+"westnet-eastnet-ipv4-psk-ikev2" #3: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #
  ipsec whack --impair number-of-TSi-selectors:no
 west #
@@ -52,17 +52,17 @@ west #
  ipsec whack --impair number-of-TSr-selectors:2
 west #
  ipsec auto --up westnet-eastnet-ipv4-psk-ikev2
-1v2 "westnet-eastnet-ipv4-psk-ikev2" #5: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "westnet-eastnet-ipv4-psk-ikev2" #5: sent IKE_SA_INIT request to 192.1.2.23:500
-002 "westnet-eastnet-ipv4-psk-ikev2" #5: IMPAIR: forcing number of remote TSr selectors from 1 to 2
-1v2 "westnet-eastnet-ipv4-psk-ikev2" #5: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_256 group=MODP2048}
-003 "westnet-eastnet-ipv4-psk-ikev2" #5: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-003 "westnet-eastnet-ipv4-psk-ikev2" #6: IKE_AUTH response rejected Child SA with TS_UNACCEPTABLE
+"westnet-eastnet-ipv4-psk-ikev2" #5: initiating IKEv2 connection to 192.1.2.23 using UDP
+"westnet-eastnet-ipv4-psk-ikev2" #5: sent IKE_SA_INIT request to 192.1.2.23:500
+"westnet-eastnet-ipv4-psk-ikev2" #5: IMPAIR: forcing number of remote TSr selectors from 1 to 2
+"westnet-eastnet-ipv4-psk-ikev2" #5: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_256 group=MODP2048}
+"westnet-eastnet-ipv4-psk-ikev2" #5: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"westnet-eastnet-ipv4-psk-ikev2" #6: IKE_AUTH response rejected Child SA with TS_UNACCEPTABLE
 west #
  ipsec auto --down westnet-eastnet-ipv4-psk-ikev2
-002 "westnet-eastnet-ipv4-psk-ikev2": terminating SAs using this connection
-002 "westnet-eastnet-ipv4-psk-ikev2" #5: intiating delete
-002 "westnet-eastnet-ipv4-psk-ikev2" #5: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
+"westnet-eastnet-ipv4-psk-ikev2": terminating SAs using this connection
+"westnet-eastnet-ipv4-psk-ikev2" #5: intiating delete
+"westnet-eastnet-ipv4-psk-ikev2" #5: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #
  ipsec whack --impair number-of-TSr-selectors:no
 west #

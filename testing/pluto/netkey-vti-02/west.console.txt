@@ -26,10 +26,10 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-vti-01
-002 "westnet-eastnet-vti-01": added IKEv1 connection
+"westnet-eastnet-vti-01": added IKEv1 connection
 west #
  ipsec auto --add westnet-eastnet-vti-02
-002 "westnet-eastnet-vti-02": added IKEv1 connection
+"westnet-eastnet-vti-02": added IKEv1 connection
 west #
  # remove the regular route for 192.0.2.0/24
 west #
@@ -39,38 +39,38 @@ west #
 initdone
 west #
  ipsec auto --up westnet-eastnet-vti-01
-002 "westnet-eastnet-vti-01" #1: initiating IKEv1 Main Mode connection
-1v1 "westnet-eastnet-vti-01" #1: sent Main Mode request
-1v1 "westnet-eastnet-vti-01" #1: sent Main Mode I2
-1v1 "westnet-eastnet-vti-01" #1: sent Main Mode I3
-002 "westnet-eastnet-vti-01" #1: Peer ID is ID_FQDN: '@east'
-003 "westnet-eastnet-vti-01" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
-004 "westnet-eastnet-vti-01" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "westnet-eastnet-vti-01" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-1v1 "westnet-eastnet-vti-01" #2: sent Quick Mode request
-002 "westnet-eastnet-vti-01" #2: prepare-client output: net.ipv4.conf.ipsec0.disable_policy = 1
-002 "westnet-eastnet-vti-01" #2: prepare-client output: net.ipv4.conf.ipsec0.rp_filter = 0
-002 "westnet-eastnet-vti-01" #2: prepare-client output: net.ipv4.conf.ipsec0.forwarding = 1
-002 "westnet-eastnet-vti-01" #2: route-client output: done ip route
-002 "westnet-eastnet-vti-01" #2: up-client output: vti interface "ipsec0" already exists with conflicting setting
-002 "westnet-eastnet-vti-01" #2: up-client output: existing: ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit ikey 20 okey 21
-002 "westnet-eastnet-vti-01" #2: up-client output: wanted  : ipsec0: ip/ip  remote any  local 192.1.2.45  ttl inherit  key 21
-002 "westnet-eastnet-vti-01" #2: up-client output: done ip route
-004 "westnet-eastnet-vti-01" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+"westnet-eastnet-vti-01" #1: initiating IKEv1 Main Mode connection
+"westnet-eastnet-vti-01" #1: sent Main Mode request
+"westnet-eastnet-vti-01" #1: sent Main Mode I2
+"westnet-eastnet-vti-01" #1: sent Main Mode I3
+"westnet-eastnet-vti-01" #1: Peer ID is ID_FQDN: '@east'
+"westnet-eastnet-vti-01" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet-vti-01" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"westnet-eastnet-vti-01" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"westnet-eastnet-vti-01" #2: sent Quick Mode request
+"westnet-eastnet-vti-01" #2: prepare-client output: net.ipv4.conf.ipsec0.disable_policy = 1
+"westnet-eastnet-vti-01" #2: prepare-client output: net.ipv4.conf.ipsec0.rp_filter = 0
+"westnet-eastnet-vti-01" #2: prepare-client output: net.ipv4.conf.ipsec0.forwarding = 1
+"westnet-eastnet-vti-01" #2: route-client output: done ip route
+"westnet-eastnet-vti-01" #2: up-client output: vti interface "ipsec0" already exists with conflicting setting
+"westnet-eastnet-vti-01" #2: up-client output: existing: ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit ikey 20 okey 21
+"westnet-eastnet-vti-01" #2: up-client output: wanted  : ipsec0: ip/ip  remote any  local 192.1.2.45  ttl inherit  key 21
+"westnet-eastnet-vti-01" #2: up-client output: done ip route
+"westnet-eastnet-vti-01" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
  ipsec auto --up westnet-eastnet-vti-02
-002 "westnet-eastnet-vti-02" #3: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-1v1 "westnet-eastnet-vti-02" #3: sent Quick Mode request
-002 "westnet-eastnet-vti-02" #3: prepare-client output: vti interface "ipsec0" already exists with conflicting setting
-002 "westnet-eastnet-vti-02" #3: prepare-client output: existing: ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit ikey 20 okey 21
-002 "westnet-eastnet-vti-02" #3: prepare-client output: wanted  : ipsec0: ip/ip  remote any  local 192.1.2.45  ttl inherit  key 21
-002 "westnet-eastnet-vti-02" #3: route-client output: done ip route
-002 "westnet-eastnet-vti-02" #3: up-client output: vti interface "ipsec0" already exists with conflicting setting
-002 "westnet-eastnet-vti-02" #3: up-client output: existing: ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit ikey 20 okey 21
-002 "westnet-eastnet-vti-02" #3: up-client output: wanted  : ipsec0: ip/ip  remote any  local 192.1.2.45  ttl inherit  key 21
-002 "westnet-eastnet-vti-02" #3: up-client output: RTNETLINK answers: File exists
-002 "westnet-eastnet-vti-02" #3: up-client output: done ip route
-004 "westnet-eastnet-vti-02" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+"westnet-eastnet-vti-02" #3: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"westnet-eastnet-vti-02" #3: sent Quick Mode request
+"westnet-eastnet-vti-02" #3: prepare-client output: vti interface "ipsec0" already exists with conflicting setting
+"westnet-eastnet-vti-02" #3: prepare-client output: existing: ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit ikey 20 okey 21
+"westnet-eastnet-vti-02" #3: prepare-client output: wanted  : ipsec0: ip/ip  remote any  local 192.1.2.45  ttl inherit  key 21
+"westnet-eastnet-vti-02" #3: route-client output: done ip route
+"westnet-eastnet-vti-02" #3: up-client output: vti interface "ipsec0" already exists with conflicting setting
+"westnet-eastnet-vti-02" #3: up-client output: existing: ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit ikey 20 okey 21
+"westnet-eastnet-vti-02" #3: up-client output: wanted  : ipsec0: ip/ip  remote any  local 192.1.2.45  ttl inherit  key 21
+"westnet-eastnet-vti-02" #3: up-client output: RTNETLINK answers: File exists
+"westnet-eastnet-vti-02" #3: up-client output: done ip route
+"westnet-eastnet-vti-02" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up

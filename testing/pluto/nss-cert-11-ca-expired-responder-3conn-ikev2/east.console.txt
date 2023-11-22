@@ -124,13 +124,13 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add new-ca
-002 "new-ca": added IKEv2 connection
+"new-ca": added IKEv2 connection
 east #
  ipsec auto --add old-ca
-002 "old-ca": added IKEv2 connection
+"old-ca": added IKEv2 connection
 east #
  ipsec auto --add hog-ca
-003 "hog-ca": WARNING: left is a groundhog
-002 "hog-ca": added IKEv2 connection
+"hog-ca": WARNING: left is a groundhog
+"hog-ca": added IKEv2 connection
 east #
  

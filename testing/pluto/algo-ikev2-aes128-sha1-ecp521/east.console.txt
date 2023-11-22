@@ -29,7 +29,7 @@ conn algo
 @west @east : PSK "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
 starting pluto ...
 Redirecting to: [initsystem]
-002 "algo": added IKEv2 connection
+"algo": added IKEv2 connection
 east #
  ../../guestbin/wait-for.sh --match '^".*#2: .* established' -- cat /tmp/pluto.log
 "algo" #2: responder established Child SA using #1; IPsec tunnel [192.0.2.0/24===192.0.1.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}

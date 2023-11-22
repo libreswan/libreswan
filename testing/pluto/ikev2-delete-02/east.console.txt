@@ -6,7 +6,7 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add west-east-delete1
-002 "west-east-delete1": added IKEv2 connection
+"west-east-delete1": added IKEv2 connection
 east #
  echo "initdone"
 initdone

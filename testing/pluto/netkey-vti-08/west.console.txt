@@ -22,22 +22,22 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-vti
-002 "westnet-eastnet-vti": added IKEv1 connection
+"westnet-eastnet-vti": added IKEv1 connection
 west #
  echo "initdone"
 initdone
 west #
  ipsec auto --up westnet-eastnet-vti
-002 "westnet-eastnet-vti" #1: initiating IKEv1 Main Mode connection
-1v1 "westnet-eastnet-vti" #1: sent Main Mode request
-1v1 "westnet-eastnet-vti" #1: sent Main Mode I2
-1v1 "westnet-eastnet-vti" #1: sent Main Mode I3
-002 "westnet-eastnet-vti" #1: Peer ID is ID_FQDN: '@east'
-003 "westnet-eastnet-vti" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
-004 "westnet-eastnet-vti" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "westnet-eastnet-vti" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-1v1 "westnet-eastnet-vti" #2: sent Quick Mode request
-004 "westnet-eastnet-vti" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+"westnet-eastnet-vti" #1: initiating IKEv1 Main Mode connection
+"westnet-eastnet-vti" #1: sent Main Mode request
+"westnet-eastnet-vti" #1: sent Main Mode I2
+"westnet-eastnet-vti" #1: sent Main Mode I3
+"westnet-eastnet-vti" #1: Peer ID is ID_FQDN: '@east'
+"westnet-eastnet-vti" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet-vti" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"westnet-eastnet-vti" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"westnet-eastnet-vti" #2: sent Quick Mode request
+"westnet-eastnet-vti" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
  # ping should work with east using unique marks
 west #

@@ -25,8 +25,8 @@ west #
  # trigger DDNS event (saves us from waiting)
 west #
  ipsec whack --ddns
-002 updating pending dns lookups
-1v2 "named" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+updating pending dns lookups
+"named" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 west #
  # give conn time to establish by itself
 west #

@@ -14,14 +14,14 @@ road #
  ipsec whack --impair suppress-retransmits
 road #
  ipsec auto --add road1
-002 "road1": added IKEv2 connection
+"road1": added IKEv2 connection
 road #
  ipsec auto --up road1
-1v2 "road1" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "road1" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "road1" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "road1" #1: initiator established IKE SA; authenticated peer '3nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-004 "road1" #2: initiator established Child SA using #1; IPsec tunnel [1.2.3.4/32===192.0.2.0/24] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATD=192.1.2.23:4500 DPD=passive}
+"road1" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"road1" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"road1" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"road1" #1: initiator established IKE SA; authenticated peer '3nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"road1" #2: initiator established Child SA using #1; IPsec tunnel [1.2.3.4/32===192.0.2.0/24] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATD=192.1.2.23:4500 DPD=passive}
 road #
  ipsec whack --impair send-no-delete
 road #
@@ -33,14 +33,14 @@ road #
  ipsec whack --impair suppress-retransmits
 road #
  ipsec auto --add road2
-002 "road2": added IKEv2 connection
+"road2": added IKEv2 connection
 road #
  ipsec auto --up road2
-1v2 "road2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "road2" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "road2" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "road2" #1: initiator established IKE SA; authenticated peer '3nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-004 "road2" #2: initiator established Child SA using #1; IPsec tunnel [1.2.3.4/32===192.0.2.0/24] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATD=192.1.2.23:4500 DPD=passive}
+"road2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"road2" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"road2" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"road2" #1: initiator established IKE SA; authenticated peer '3nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"road2" #2: initiator established Child SA using #1; IPsec tunnel [1.2.3.4/32===192.0.2.0/24] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATD=192.1.2.23:4500 DPD=passive}
 road #
  echo done
 done

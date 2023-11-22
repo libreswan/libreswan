@@ -10,10 +10,10 @@ west #
  ipsec whack --impair suppress-retransmits
 west #
  ipsec whack --impair block-inbound:yes
-002 IMPAIR: block all inbound messages: yes
+IMPAIR: block all inbound messages: yes
 west #
  ipsec auto --add east-west
-002 "east-west": added IKEv2 connection
+"east-west": added IKEv2 connection
 west #
  # east initiated sending an IKE_SA_INIT request;
 west #
@@ -29,8 +29,8 @@ west #
  # hold east's IKE_AUTH request as inbound message 2
 west #
  ipsec whack --impair drip-inbound:1
-002 IMPAIR: start processing inbound drip packet 1
-002 IMPAIR: stop processing inbound drip packet 1
+IMPAIR: start processing inbound drip packet 1
+IMPAIR: stop processing inbound drip packet 1
 west #
  ../../guestbin/wait-for.sh --match '^".*#1: sent IKE_SA_INIT' -- cat /tmp/pluto.log
 "east-west" #1: sent IKE_SA_INIT (or IKE_INTERMEDIATE) response {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
@@ -43,7 +43,7 @@ west #
  # hold east's IKE_SA_INIT response as inbound message 3
 west #
  ipsec up --asynchronous east-west
-1v2 "east-west" #2: initiating IKEv2 connection to 192.1.2.23 using UDP
+"east-west" #2: initiating IKEv2 connection to 192.1.2.23 using UDP
 west #
  ../../guestbin/wait-for.sh --match '^".*#2: sent IKE_SA_INIT request' -- cat /tmp/pluto.log
 "east-west" #2: sent IKE_SA_INIT request to 192.1.2.23:500
@@ -56,8 +56,8 @@ west #
  # establish east's IKE SA #1 and create east's Child SA #3
 west #
  ipsec whack --impair drip-inbound:2
-002 IMPAIR: start processing inbound drip packet 2
-002 IMPAIR: stop processing inbound drip packet 2
+IMPAIR: start processing inbound drip packet 2
+IMPAIR: stop processing inbound drip packet 2
 west #
  ../../guestbin/wait-for.sh --match 'established Child SA using #1'  -- cat /tmp/pluto.log
 "east-west" #3: responder established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
@@ -69,8 +69,8 @@ west #
  # hold east's IKE_AUTH response as inbound message 4
 west #
  ipsec whack --impair drip-inbound:3
-002 IMPAIR: start processing inbound drip packet 3
-002 IMPAIR: stop processing inbound drip packet 3
+IMPAIR: start processing inbound drip packet 3
+IMPAIR: stop processing inbound drip packet 3
 west #
  ../../guestbin/wait-for.sh --match '^".*#2: sent IKE_AUTH request'  -- cat /tmp/pluto.log
 ???
@@ -83,7 +83,7 @@ west #
  # establish west's Child SA #3
 west #
  ipsec whack --impair drip-inbound:4
-002 IMPAIR: inbound message 4 not found
+IMPAIR: inbound message 4 not found
 west #
  ../../guestbin/wait-for.sh --match 'established Child SA using #2' -- cat /tmp/pluto.log
 ???

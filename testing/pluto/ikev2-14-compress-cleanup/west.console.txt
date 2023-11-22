@@ -11,17 +11,17 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-ipcomp
-002 "westnet-eastnet-ipcomp": added IKEv2 connection
+"westnet-eastnet-ipcomp": added IKEv2 connection
 west #
  echo "initdone"
 initdone
 west #
  ipsec auto --up westnet-eastnet-ipcomp
-1v2 "westnet-eastnet-ipcomp" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "westnet-eastnet-ipcomp" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "westnet-eastnet-ipcomp" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "westnet-eastnet-ipcomp" #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
-004 "westnet-eastnet-ipcomp" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE IPCOMP=>0xESPESP <0xESPESP DPD=passive}
+"westnet-eastnet-ipcomp" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"westnet-eastnet-ipcomp" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"westnet-eastnet-ipcomp" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"westnet-eastnet-ipcomp" #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
+"westnet-eastnet-ipcomp" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE IPCOMP=>0xESPESP <0xESPESP DPD=passive}
 west #
  ../../guestbin/ipsec-kernel-state.sh
 src 192.1.2.23 dst 192.1.2.45
@@ -60,10 +60,10 @@ src 192.1.2.45 dst 192.1.2.23
 	replay-window 0 flag af-unspec
 west #
  ipsec auto --down westnet-eastnet-ipcomp
-002 "westnet-eastnet-ipcomp": terminating SAs using this connection
-002 "westnet-eastnet-ipcomp" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
-005 "westnet-eastnet-ipcomp" #2: ESP traffic information: in=0B out=0B
-005 "westnet-eastnet-ipcomp" #2: IPCOMP traffic information: in=0B out=0B
+"westnet-eastnet-ipcomp": terminating SAs using this connection
+"westnet-eastnet-ipcomp" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"westnet-eastnet-ipcomp" #2: ESP traffic information: in=0B out=0B
+"westnet-eastnet-ipcomp" #2: IPCOMP traffic information: in=0B out=0B
 west #
  # XFRM state and policy should be empty of of 192/8 policies and states
 west #

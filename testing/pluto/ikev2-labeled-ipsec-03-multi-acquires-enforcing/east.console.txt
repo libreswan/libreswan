@@ -25,7 +25,7 @@ east #
  echo 1 > /proc/sys/net/core/xfrm_acq_expires
 east #
  ipsec auto --add labeled
-002 "labeled": added IKEv2 connection
+"labeled": added IKEv2 connection
 east #
  echo "initdone"
 initdone

@@ -11,7 +11,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-ikev2
-002 "westnet-eastnet-ikev2": added IKEv2 connection
+"westnet-eastnet-ikev2": added IKEv2 connection
 west #
  echo "initdone"
 initdone
@@ -19,13 +19,13 @@ west #
  ipsec whack --impair suppress-retransmits
 west #
  ipsec auto --up westnet-eastnet-ikev2
-1v2 "westnet-eastnet-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "westnet-eastnet-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "westnet-eastnet-ikev2" #1: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
-003 "westnet-eastnet-ikev2" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-003 "westnet-eastnet-ikev2" #2: local policy requires Transport Mode but peer requires required Tunnel Mode
-003 "westnet-eastnet-ikev2" #1: IKE SA established but initiator rejected Child SA response
-002 "westnet-eastnet-ikev2" #2: deleting larval Child SA using IKE SA #1
+"westnet-eastnet-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"westnet-eastnet-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"westnet-eastnet-ikev2" #1: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
+"westnet-eastnet-ikev2" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"westnet-eastnet-ikev2" #2: local policy requires Transport Mode but peer requires required Tunnel Mode
+"westnet-eastnet-ikev2" #1: IKE SA established but initiator rejected Child SA response
+"westnet-eastnet-ikev2" #2: deleting larval Child SA using IKE SA #1
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up

@@ -10,7 +10,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add west
-002 "west": added IKEv2 connection
+"west": added IKEv2 connection
 west #
  echo "initdone"
 initdone
@@ -18,23 +18,23 @@ west #
  ipsec whack --impair revival
 west #
  ipsec up west
-1v2 "west" #1: initiating IKEv2 connection to 192.1.2.23 using TCP
-1v2 "west" #1: sent IKE_SA_INIT request to 192.1.2.23:4500
-1v2 "west" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "west" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-002 "west" #1: IKE_AUTH response redirecting to new gateway 192.1.3.33
-002 "west" #2: deleting larval Child SA
-002 "west" #1: scheduling redirect 1 to 192.1.3.33
-002 "west" #1: IMPAIR: redirect: skip scheduling redirect event
-002 "west" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and NOT sending notification
+"west" #1: initiating IKEv2 connection to 192.1.2.23 using TCP
+"west" #1: sent IKE_SA_INIT request to 192.1.2.23:4500
+"west" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"west" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"west" #1: IKE_AUTH response redirecting to new gateway 192.1.3.33
+"west" #2: deleting larval Child SA
+"west" #1: scheduling redirect 1 to 192.1.3.33
+"west" #1: IMPAIR: redirect: skip scheduling redirect event
+"west" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and NOT sending notification
 west #
  ipsec whack --impair trigger-revival:1
-000 "west": dispatch REVIVAL event
-1v2 "west" #3: initiating IKEv2 connection to 192.1.3.33 using TCP
-1v2 "west" #3: sent IKE_SA_INIT request to 192.1.3.33:4500
-1v2 "west" #3: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "west" #3: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "west" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESPinTCP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"west": dispatch REVIVAL event
+"west" #3: initiating IKEv2 connection to 192.1.3.33 using TCP
+"west" #3: sent IKE_SA_INIT request to 192.1.3.33:4500
+"west" #3: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"west" #3: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"west" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESPinTCP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up

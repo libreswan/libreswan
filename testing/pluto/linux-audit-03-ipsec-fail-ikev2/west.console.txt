@@ -8,7 +8,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add ikev2-ipsec-fail
-002 "ikev2-ipsec-fail": added IKEv2 connection
+"ikev2-ipsec-fail": added IKEv2 connection
 west #
  #ipsec whack --impair timeout-on-retransmit
 west #
@@ -20,15 +20,15 @@ west #
  # See description of limitations of this test
 west #
  ipsec auto --up ikev2-ipsec-fail
-1v2 "ikev2-ipsec-fail" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "ikev2-ipsec-fail" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "ikev2-ipsec-fail" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "ikev2-ipsec-fail" #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east-v2'
-003 "ikev2-ipsec-fail" #2: IKE_AUTH response rejected Child SA with TS_UNACCEPTABLE
+"ikev2-ipsec-fail" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"ikev2-ipsec-fail" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"ikev2-ipsec-fail" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"ikev2-ipsec-fail" #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east-v2'
+"ikev2-ipsec-fail" #2: IKE_AUTH response rejected Child SA with TS_UNACCEPTABLE
 west #
  ipsec auto --delete ikev2-ipsec-fail
-002 "ikev2-ipsec-fail": terminating SAs using this connection
-002 "ikev2-ipsec-fail" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"ikev2-ipsec-fail": terminating SAs using this connection
+"ikev2-ipsec-fail" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 west #
  echo done
 done

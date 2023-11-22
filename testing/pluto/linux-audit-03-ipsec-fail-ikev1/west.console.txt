@@ -8,10 +8,10 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add ikev1-ipsec-fail
-002 "ikev1-ipsec-fail": added IKEv1 connection
+"ikev1-ipsec-fail": added IKEv1 connection
 west #
  ipsec auto --add ikev1-aggr-ipsec-fail
-002 "ikev1-aggr-ipsec-fail": added IKEv1 connection
+"ikev1-aggr-ipsec-fail": added IKEv1 connection
 west #
  #ipsec whack --impair timeout-on-retransmit
 west #
@@ -23,40 +23,40 @@ west #
  # See description of limitations of this test
 west #
  ipsec auto --up ikev1-ipsec-fail #retransmits
-002 "ikev1-ipsec-fail" #1: initiating IKEv1 Main Mode connection
-1v1 "ikev1-ipsec-fail" #1: sent Main Mode request
-1v1 "ikev1-ipsec-fail" #1: sent Main Mode I2
-1v1 "ikev1-ipsec-fail" #1: sent Main Mode I3
-002 "ikev1-ipsec-fail" #1: Peer ID is ID_FQDN: '@east-v1'
-003 "ikev1-ipsec-fail" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east-v1'
-004 "ikev1-ipsec-fail" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA1 group=MODP1536}
-002 "ikev1-ipsec-fail" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+COMPRESS+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-1v1 "ikev1-ipsec-fail" #2: sent Quick Mode request
-010 "ikev1-ipsec-fail" #2: STATE_QUICK_I1: retransmission; will wait 0.5 seconds for response
-010 "ikev1-ipsec-fail" #2: STATE_QUICK_I1: retransmission; will wait 1 seconds for response
-031 "ikev1-ipsec-fail" #2: STATE_QUICK_I1: 2 second timeout exceeded after 2 retransmits.  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal
-002 "ikev1-ipsec-fail" #2: deleting IPsec SA (QUICK_I1) and NOT sending notification
+"ikev1-ipsec-fail" #1: initiating IKEv1 Main Mode connection
+"ikev1-ipsec-fail" #1: sent Main Mode request
+"ikev1-ipsec-fail" #1: sent Main Mode I2
+"ikev1-ipsec-fail" #1: sent Main Mode I3
+"ikev1-ipsec-fail" #1: Peer ID is ID_FQDN: '@east-v1'
+"ikev1-ipsec-fail" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east-v1'
+"ikev1-ipsec-fail" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA1 group=MODP1536}
+"ikev1-ipsec-fail" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+COMPRESS+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"ikev1-ipsec-fail" #2: sent Quick Mode request
+"ikev1-ipsec-fail" #2: STATE_QUICK_I1: retransmission; will wait 0.5 seconds for response
+"ikev1-ipsec-fail" #2: STATE_QUICK_I1: retransmission; will wait 1 seconds for response
+"ikev1-ipsec-fail" #2: STATE_QUICK_I1: 2 second timeout exceeded after 2 retransmits.  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal
+"ikev1-ipsec-fail" #2: deleting IPsec SA (QUICK_I1) and NOT sending notification
 west #
  ipsec auto --delete ikev1-ipsec-fail
-002 "ikev1-ipsec-fail": terminating SAs using this connection
-002 "ikev1-ipsec-fail" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
+"ikev1-ipsec-fail": terminating SAs using this connection
+"ikev1-ipsec-fail" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
 west #
  ipsec auto --up ikev1-aggr-ipsec-fail #retransmits
-002 "ikev1-aggr-ipsec-fail" #3: initiating IKEv1 Aggressive Mode connection
-1v1 "ikev1-aggr-ipsec-fail" #3: sent Aggressive Mode request
-002 "ikev1-aggr-ipsec-fail" #3: Peer ID is ID_FQDN: '@east-v1'
-003 "ikev1-aggr-ipsec-fail" #3: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east-v1'
-004 "ikev1-aggr-ipsec-fail" #3: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA1 group=MODP1536}
-002 "ikev1-aggr-ipsec-fail" #4: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+COMPRESS+TUNNEL+PFS+UP+AGGRESSIVE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-1v1 "ikev1-aggr-ipsec-fail" #4: sent Quick Mode request
-010 "ikev1-aggr-ipsec-fail" #4: STATE_QUICK_I1: retransmission; will wait 0.5 seconds for response
-010 "ikev1-aggr-ipsec-fail" #4: STATE_QUICK_I1: retransmission; will wait 1 seconds for response
-031 "ikev1-aggr-ipsec-fail" #4: STATE_QUICK_I1: 2 second timeout exceeded after 2 retransmits.  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal
-002 "ikev1-aggr-ipsec-fail" #4: deleting IPsec SA (QUICK_I1) and NOT sending notification
+"ikev1-aggr-ipsec-fail" #3: initiating IKEv1 Aggressive Mode connection
+"ikev1-aggr-ipsec-fail" #3: sent Aggressive Mode request
+"ikev1-aggr-ipsec-fail" #3: Peer ID is ID_FQDN: '@east-v1'
+"ikev1-aggr-ipsec-fail" #3: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east-v1'
+"ikev1-aggr-ipsec-fail" #3: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA1 group=MODP1536}
+"ikev1-aggr-ipsec-fail" #4: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+COMPRESS+TUNNEL+PFS+UP+AGGRESSIVE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"ikev1-aggr-ipsec-fail" #4: sent Quick Mode request
+"ikev1-aggr-ipsec-fail" #4: STATE_QUICK_I1: retransmission; will wait 0.5 seconds for response
+"ikev1-aggr-ipsec-fail" #4: STATE_QUICK_I1: retransmission; will wait 1 seconds for response
+"ikev1-aggr-ipsec-fail" #4: STATE_QUICK_I1: 2 second timeout exceeded after 2 retransmits.  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal
+"ikev1-aggr-ipsec-fail" #4: deleting IPsec SA (QUICK_I1) and NOT sending notification
 west #
  ipsec auto --delete ikev1-aggr-ipsec-fail
-002 "ikev1-aggr-ipsec-fail": terminating SAs using this connection
-002 "ikev1-aggr-ipsec-fail" #3: deleting ISAKMP SA (AGGR_I2) and sending notification
+"ikev1-aggr-ipsec-fail": terminating SAs using this connection
+"ikev1-aggr-ipsec-fail" #3: deleting ISAKMP SA (AGGR_I2) and sending notification
 west #
  echo done
 done

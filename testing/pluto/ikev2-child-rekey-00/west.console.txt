@@ -6,73 +6,73 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add rekey
-002 "rekey": added IKEv2 connection
+"rekey": added IKEv2 connection
 west #
  ipsec auto --add rekey1
-002 "rekey1": added IKEv2 connection
+"rekey1": added IKEv2 connection
 west #
  ipsec auto --add rekey2
-002 "rekey2": added IKEv2 connection
+"rekey2": added IKEv2 connection
 west #
  echo "initdone"
 initdone
 west #
  ipsec auto --up rekey
-1v2 "rekey" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "rekey" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "rekey" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "rekey" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "rekey" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"rekey" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"rekey" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"rekey" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"rekey" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"rekey" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ipsec auto --up rekey1
-002 "rekey1" #3: initiating Child SA using IKE SA #1
-1v2 "rekey1" #3: sent CREATE_CHILD_SA request for new IPsec SA
-004 "rekey1" #3: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
+"rekey1" #3: initiating Child SA using IKE SA #1
+"rekey1" #3: sent CREATE_CHILD_SA request for new IPsec SA
+"rekey1" #3: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
 west #
  ipsec auto --up rekey2
-002 "rekey2" #4: initiating Child SA using IKE SA #1
-1v2 "rekey2" #4: sent CREATE_CHILD_SA request for new IPsec SA
-004 "rekey2" #4: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
+"rekey2" #4: initiating Child SA using IKE SA #1
+"rekey2" #4: sent CREATE_CHILD_SA request for new IPsec SA
+"rekey2" #4: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
 west #
  sleep 3
 west #
  # do an ike rekey
 west #
  ipsec whack --rekey-ike --name rekey
-002 "rekey" #5: initiating rekey to replace IKE SA #1
-1v2 "rekey" #5: sent CREATE_CHILD_SA request to rekey IKE SA
-004 "rekey" #5: initiator rekeyed IKE SA #1 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "rekey" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"rekey" #5: initiating rekey to replace IKE SA #1
+"rekey" #5: sent CREATE_CHILD_SA request to rekey IKE SA
+"rekey" #5: initiator rekeyed IKE SA #1 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"rekey" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 west #
  # do an ike rekey - but pick the conn that does not have the actual IKE SA
 west #
  # is the error what we really want? Or would we want it to find the shared IKE SA?
 west #
  ipsec whack --rekey-ike --name rekey2
-002 "rekey2": connection does not have IKE SA
+"rekey2": connection does not have IKE SA
 west #
  # rekey should not trigger IKE_SA_INIT exchanges but CREATE_CHIKD_SA exchanges
 west #
  ipsec whack --rekey-ipsec --name rekey1
-002 "rekey1" #6: initiating rekey to replace Child SA #3
-1v2 "rekey1" #6: sent CREATE_CHILD_SA request to rekey IPsec SA
-004 "rekey1" #6: initiator rekeyed Child SA #3 using #5; IPsec tunnel [192.0.1.0/24===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
-002 "rekey1" #3: deleting established Child SA using IKE SA #5
-005 "rekey1" #3: ESP traffic information: in=0B out=0B
+"rekey1" #6: initiating rekey to replace Child SA #3
+"rekey1" #6: sent CREATE_CHILD_SA request to rekey IPsec SA
+"rekey1" #6: initiator rekeyed Child SA #3 using #5; IPsec tunnel [192.0.1.0/24===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
+"rekey1" #3: deleting established Child SA using IKE SA #5
+"rekey1" #3: ESP traffic information: in=0B out=0B
 west #
  ipsec whack --rekey-ipsec --name rekey
-002 "rekey" #7: initiating rekey to replace Child SA #2
-1v2 "rekey" #7: sent CREATE_CHILD_SA request to rekey IPsec SA
-004 "rekey" #7: initiator rekeyed Child SA #2 using #5; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
-002 "rekey" #2: deleting established Child SA using IKE SA #5
-005 "rekey" #2: ESP traffic information: in=0B out=0B
+"rekey" #7: initiating rekey to replace Child SA #2
+"rekey" #7: sent CREATE_CHILD_SA request to rekey IPsec SA
+"rekey" #7: initiator rekeyed Child SA #2 using #5; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
+"rekey" #2: deleting established Child SA using IKE SA #5
+"rekey" #2: ESP traffic information: in=0B out=0B
 west #
  ipsec whack --rekey-ipsec --name rekey2
-002 "rekey2" #8: initiating rekey to replace Child SA #4
-1v2 "rekey2" #8: sent CREATE_CHILD_SA request to rekey IPsec SA
-004 "rekey2" #8: initiator rekeyed Child SA #4 using #5; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
-002 "rekey2" #4: deleting established Child SA using IKE SA #5
-005 "rekey2" #4: ESP traffic information: in=0B out=0B
+"rekey2" #8: initiating rekey to replace Child SA #4
+"rekey2" #8: sent CREATE_CHILD_SA request to rekey IPsec SA
+"rekey2" #8: initiator rekeyed Child SA #4 using #5; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
+"rekey2" #4: deleting established Child SA using IKE SA #5
+"rekey2" #4: ESP traffic information: in=0B out=0B
 west #
  echo done
 done

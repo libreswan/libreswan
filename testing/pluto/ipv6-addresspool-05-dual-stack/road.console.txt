@@ -93,18 +93,18 @@ conn: "road" redirect-to=<unset>
 conn: "road" accept-redirect-to=<unset>
 conn: "road" esp=<unset>
 conn: "road" ike=<unset>
-002 "road": added IKEv2 connection
+"road": added IKEv2 connection
 road #
  echo "initdone"
 initdone
 road #
  ipsec auto --up road
-1v2 "road"[1] 2001:db8:1:2::23 #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "road"[1] 2001:db8:1:2::23 #1: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "road"[1] 2001:db8:1:2::23 #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "road"[1] 2001:db8:1:2::23 #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate '@east.testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-002 "road"[1] 2001:db8:1:2::23 #2: received INTERNAL_IP6_ADDRESS 2001:db8:0:3:1::
-004 "road"[1] 2001:db8:1:2::23 #2: initiator established Child SA using #1; IPsec tunnel [2001:db8:0:3:1::/128===::/0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"road"[1] 2001:db8:1:2::23 #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"road"[1] 2001:db8:1:2::23 #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"road"[1] 2001:db8:1:2::23 #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"road"[1] 2001:db8:1:2::23 #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate '@east.testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"road"[1] 2001:db8:1:2::23 #2: received INTERNAL_IP6_ADDRESS 2001:db8:0:3:1::
+"road"[1] 2001:db8:1:2::23 #2: initiator established Child SA using #1; IPsec tunnel [2001:db8:0:3:1::/128===::/0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 road #
  ping6 -n -q -w 5 -c 2 -I 2001:db8:0:3:1::0 2001:db8:0:2::254
 PING 2001:db8:0:2::254(2001:db8:0:2::254) from 2001:db8:0:3:1:: : 56 data bytes

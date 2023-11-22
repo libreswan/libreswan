@@ -11,33 +11,33 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-foo
-002 "westnet-eastnet-foo": added IKEv2 connection
+"westnet-eastnet-foo": added IKEv2 connection
 west #
  ipsec auto --add westnet-eastnet-bar
-002 "westnet-eastnet-bar": added IKEv2 connection
+"westnet-eastnet-bar": added IKEv2 connection
 west #
  echo "initdone"
 initdone
 west #
  ipsec auto --up westnet-eastnet-foo
-1v2 "westnet-eastnet-foo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "westnet-eastnet-foo" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "westnet-eastnet-foo" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "westnet-eastnet-foo" #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@eastfoo'
-004 "westnet-eastnet-foo" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"westnet-eastnet-foo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"westnet-eastnet-foo" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"westnet-eastnet-foo" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"westnet-eastnet-foo" #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@eastfoo'
+"westnet-eastnet-foo" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  # expected to fail
 west #
  ipsec whack --impair timeout-on-retransmit
 west #
  ipsec auto --up westnet-eastnet-bar
-1v2 "westnet-eastnet-bar" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "westnet-eastnet-bar" #3: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "westnet-eastnet-bar" #3: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "westnet-eastnet-bar" #3: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
-036 "westnet-eastnet-bar" #3: encountered fatal error in state STATE_V2_PARENT_I2
-002 "westnet-eastnet-bar" #3: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-002 "westnet-eastnet-bar" #3: deleting IKE SA (PARENT_I2) and NOT sending notification
+"westnet-eastnet-bar" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
+"westnet-eastnet-bar" #3: sent IKE_SA_INIT request to 192.1.2.23:500
+"westnet-eastnet-bar" #3: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"westnet-eastnet-bar" #3: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
+"westnet-eastnet-bar" #3: encountered fatal error in state STATE_V2_PARENT_I2
+"westnet-eastnet-bar" #3: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"westnet-eastnet-bar" #3: deleting IKE SA (PARENT_I2) and NOT sending notification
 west #
  echo done
 done

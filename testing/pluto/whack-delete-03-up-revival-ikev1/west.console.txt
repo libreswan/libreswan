@@ -11,7 +11,7 @@ west #
  ipsec whack --impair timeout-on-retransmit
 west #
  ipsec add west
-002 "west": added IKEv1 connection
+"west": added IKEv1 connection
 west #
  echo "initdone"
 initdone
@@ -19,14 +19,14 @@ west #
  # should go into revival
 west #
  ipsec up west
-002 "west" #1: initiating IKEv1 Main Mode connection
-1v1 "west" #1: sent Main Mode request
-002 "west" #1: IMPAIR: retransmit so timing out SA (may retry)
-002 "west" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-002 "west" #1: IMPAIR: revival: skip scheduling revival event
-002 "west" #1: deleting ISAKMP SA (MAIN_I1) and NOT sending notification
+"west" #1: initiating IKEv1 Main Mode connection
+"west" #1: sent Main Mode request
+"west" #1: IMPAIR: retransmit so timing out SA (may retry)
+"west" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"west" #1: IMPAIR: revival: skip scheduling revival event
+"west" #1: deleting ISAKMP SA (MAIN_I1) and NOT sending notification
 west #
  ipsec delete west
-002 "west": terminating SAs using this connection
+"west": terminating SAs using this connection
 west #
  

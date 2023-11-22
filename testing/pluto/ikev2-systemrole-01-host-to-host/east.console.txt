@@ -30,8 +30,8 @@ east #
  # test secrets reading for early warning of syntax errors
 east #
  ipsec secrets
-002 loading secrets from "/etc/ipsec.secrets"
-002 no secrets filename matched "/etc/ipsec.d/*.secrets"
+loading secrets from "/etc/ipsec.secrets"
+no secrets filename matched "/etc/ipsec.d/*.secrets"
 east #
  ../../guestbin/if-namespace.sh PATH/sbin/sshd -o PidFile=/var/run/pluto/sshd.pid
 east #

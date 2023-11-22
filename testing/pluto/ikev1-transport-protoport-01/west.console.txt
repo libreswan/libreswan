@@ -6,7 +6,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add ipv4-psk-ikev2-transport
-002 "ipv4-psk-ikev2-transport": added IKEv1 connection
+"ipv4-psk-ikev2-transport": added IKEv1 connection
 west #
  ipsec whack --impair suppress-retransmits
 west #
@@ -14,15 +14,15 @@ west #
 initdone
 west #
  ipsec auto --up ipv4-psk-ikev2-transport
-002 "ipv4-psk-ikev2-transport" #1: initiating IKEv1 Main Mode connection
-1v1 "ipv4-psk-ikev2-transport" #1: sent Main Mode request
-1v1 "ipv4-psk-ikev2-transport" #1: sent Main Mode I2
-1v1 "ipv4-psk-ikev2-transport" #1: sent Main Mode I3
-002 "ipv4-psk-ikev2-transport" #1: Peer ID is ID_FQDN: '@east'
-004 "ipv4-psk-ikev2-transport" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "ipv4-psk-ikev2-transport" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TRANSPORT+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-1v1 "ipv4-psk-ikev2-transport" #2: sent Quick Mode request
-004 "ipv4-psk-ikev2-transport" #2: IPsec SA established transport mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+"ipv4-psk-ikev2-transport" #1: initiating IKEv1 Main Mode connection
+"ipv4-psk-ikev2-transport" #1: sent Main Mode request
+"ipv4-psk-ikev2-transport" #1: sent Main Mode I2
+"ipv4-psk-ikev2-transport" #1: sent Main Mode I3
+"ipv4-psk-ikev2-transport" #1: Peer ID is ID_FQDN: '@east'
+"ipv4-psk-ikev2-transport" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"ipv4-psk-ikev2-transport" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TRANSPORT+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"ipv4-psk-ikev2-transport" #2: sent Quick Mode request
+"ipv4-psk-ikev2-transport" #2: IPsec SA established transport mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
  echo done
 done

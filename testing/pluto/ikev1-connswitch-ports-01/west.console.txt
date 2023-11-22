@@ -6,10 +6,10 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-port666
-002 "westnet-eastnet-port666": added IKEv1 connection
+"westnet-eastnet-port666": added IKEv1 connection
 west #
  ipsec auto --add westnet-eastnet-port667
-002 "westnet-eastnet-port667": added IKEv1 connection
+"westnet-eastnet-port667": added IKEv1 connection
 west #
  ipsec whack --impair suppress-retransmits
 west #
@@ -17,21 +17,21 @@ west #
 initdone
 west #
  ipsec auto --up westnet-eastnet-port666
-002 "westnet-eastnet-port666" #1: initiating IKEv1 Main Mode connection
-1v1 "westnet-eastnet-port666" #1: sent Main Mode request
-1v1 "westnet-eastnet-port666" #1: sent Main Mode I2
-1v1 "westnet-eastnet-port666" #1: sent Main Mode I3
-002 "westnet-eastnet-port666" #1: Peer ID is ID_FQDN: '@east'
-003 "westnet-eastnet-port666" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
-004 "westnet-eastnet-port666" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "westnet-eastnet-port666" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-1v1 "westnet-eastnet-port666" #2: sent Quick Mode request
-004 "westnet-eastnet-port666" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_MD5_96 DPD=passive}
+"westnet-eastnet-port666" #1: initiating IKEv1 Main Mode connection
+"westnet-eastnet-port666" #1: sent Main Mode request
+"westnet-eastnet-port666" #1: sent Main Mode I2
+"westnet-eastnet-port666" #1: sent Main Mode I3
+"westnet-eastnet-port666" #1: Peer ID is ID_FQDN: '@east'
+"westnet-eastnet-port666" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet-port666" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"westnet-eastnet-port666" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"westnet-eastnet-port666" #2: sent Quick Mode request
+"westnet-eastnet-port666" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_MD5_96 DPD=passive}
 west #
  ipsec auto --up westnet-eastnet-port667
-002 "westnet-eastnet-port667" #3: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-1v1 "westnet-eastnet-port667" #3: sent Quick Mode request
-004 "westnet-eastnet-port667" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+"westnet-eastnet-port667" #3: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"westnet-eastnet-port667" #3: sent Quick Mode request
+"westnet-eastnet-port667" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
  echo done
 done

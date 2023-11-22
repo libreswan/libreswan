@@ -16,27 +16,27 @@ north #
  ipsec whack --impair revival --impair timeout-on-retransmit
 north #
  ipsec auto --add north-east
-002 "north-east": added IKEv2 connection
+"north-east": added IKEv2 connection
 north #
  ipsec auto --up north-east
-1v2 "north-east" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "north-east" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-002 "north-east" #1: IKE_SA_INIT response redirecting to new gateway 192.1.2.44
-002 "north-east" #1: scheduling redirect 1 to 192.1.2.44
-002 "north-east" #1: IMPAIR: redirect: skip scheduling redirect event
-002 "north-east" #1: deleting IKE SA (PARENT_I1) and NOT sending notification
+"north-east" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"north-east" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"north-east" #1: IKE_SA_INIT response redirecting to new gateway 192.1.2.44
+"north-east" #1: scheduling redirect 1 to 192.1.2.44
+"north-east" #1: IMPAIR: redirect: skip scheduling redirect event
+"north-east" #1: deleting IKE SA (PARENT_I1) and NOT sending notification
 north #
  ipsec whack --impair trigger-revival:1
-000 "north-east": dispatch REVIVAL event
-1v2 "north-east" #2: initiating IKEv2 connection to 192.1.2.44 using UDP
-1v2 "north-east" #2: sent IKE_SA_INIT request to 192.1.2.44:500
-002 "north-east" #2: IMPAIR: retransmit so timing out SA (may retry)
-002 "north-east" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-002 "north-east" #2: IMPAIR: revival: skip scheduling revival event
-002 "north-east" #2: deleting IKE SA (PARENT_I1) and NOT sending notification
+"north-east": dispatch REVIVAL event
+"north-east" #2: initiating IKEv2 connection to 192.1.2.44 using UDP
+"north-east" #2: sent IKE_SA_INIT request to 192.1.2.44:500
+"north-east" #2: IMPAIR: retransmit so timing out SA (may retry)
+"north-east" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"north-east" #2: IMPAIR: revival: skip scheduling revival event
+"north-east" #2: deleting IKE SA (PARENT_I1) and NOT sending notification
 north #
  ipsec auto --delete north-east
-002 "north-east": terminating SAs using this connection
+"north-east": terminating SAs using this connection
 north #
  # north is redirected to 3 - 192.1.2.46 - which is down
 north #
@@ -45,27 +45,27 @@ north #
  ipsec whack --impair revival --impair timeout-on-retransmit
 north #
  ipsec auto --add north-east
-002 "north-east": added IKEv2 connection
+"north-east": added IKEv2 connection
 north #
  ipsec auto --up north-east
-1v2 "north-east" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "north-east" #3: sent IKE_SA_INIT request to 192.1.2.23:500
-002 "north-east" #3: IKE_SA_INIT response redirecting to new gateway 192.1.2.46
-002 "north-east" #3: scheduling redirect 1 to 192.1.2.46
-002 "north-east" #3: IMPAIR: redirect: skip scheduling redirect event
-002 "north-east" #3: deleting IKE SA (PARENT_I1) and NOT sending notification
+"north-east" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
+"north-east" #3: sent IKE_SA_INIT request to 192.1.2.23:500
+"north-east" #3: IKE_SA_INIT response redirecting to new gateway 192.1.2.46
+"north-east" #3: scheduling redirect 1 to 192.1.2.46
+"north-east" #3: IMPAIR: redirect: skip scheduling redirect event
+"north-east" #3: deleting IKE SA (PARENT_I1) and NOT sending notification
 north #
  ipsec whack --impair trigger-revival:2
-000 "north-east": dispatch REVIVAL event
-1v2 "north-east" #4: initiating IKEv2 connection to 192.1.2.46 using UDP
-1v2 "north-east" #4: sent IKE_SA_INIT request to 192.1.2.46:500
-002 "north-east" #4: IMPAIR: retransmit so timing out SA (may retry)
-002 "north-east" #4: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-002 "north-east" #4: IMPAIR: revival: skip scheduling revival event
-002 "north-east" #4: deleting IKE SA (PARENT_I1) and NOT sending notification
+"north-east": dispatch REVIVAL event
+"north-east" #4: initiating IKEv2 connection to 192.1.2.46 using UDP
+"north-east" #4: sent IKE_SA_INIT request to 192.1.2.46:500
+"north-east" #4: IMPAIR: retransmit so timing out SA (may retry)
+"north-east" #4: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"north-east" #4: IMPAIR: revival: skip scheduling revival event
+"north-east" #4: deleting IKE SA (PARENT_I1) and NOT sending notification
 north #
  ipsec auto --delete north-east
-002 "north-east": terminating SAs using this connection
+"north-east": terminating SAs using this connection
 north #
  # north is redirected to 2 - 192.1.2.45 - which is up
 north #
@@ -74,27 +74,27 @@ north #
  ipsec whack --impair revival --impair suppress-retransmits
 north #
  ipsec auto --add north-east
-002 "north-east": added IKEv2 connection
+"north-east": added IKEv2 connection
 north #
  ipsec auto --up north-east
-1v2 "north-east" #5: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "north-east" #5: sent IKE_SA_INIT request to 192.1.2.23:500
-002 "north-east" #5: IKE_SA_INIT response redirecting to new gateway 192.1.2.45
-002 "north-east" #5: scheduling redirect 1 to 192.1.2.45
-002 "north-east" #5: IMPAIR: redirect: skip scheduling redirect event
-002 "north-east" #5: deleting IKE SA (PARENT_I1) and NOT sending notification
+"north-east" #5: initiating IKEv2 connection to 192.1.2.23 using UDP
+"north-east" #5: sent IKE_SA_INIT request to 192.1.2.23:500
+"north-east" #5: IKE_SA_INIT response redirecting to new gateway 192.1.2.45
+"north-east" #5: scheduling redirect 1 to 192.1.2.45
+"north-east" #5: IMPAIR: redirect: skip scheduling redirect event
+"north-east" #5: deleting IKE SA (PARENT_I1) and NOT sending notification
 north #
  ipsec whack --impair trigger-revival:3
-000 "north-east": dispatch REVIVAL event
-1v2 "north-east" #6: initiating IKEv2 connection to 192.1.2.45 using UDP
-1v2 "north-east" #6: sent IKE_SA_INIT request to 192.1.2.45:500
-1v2 "north-east" #6: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "north-east" #6: initiator established IKE SA; authenticated peer '3nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-002 "north-east" #7: received INTERNAL_IP4_ADDRESS 192.0.2.101
-002 "north-east" #7: received INTERNAL_IP4_DNS 1.2.3.4
-002 "north-east" #7: received INTERNAL_IP4_DNS 5.6.7.8
-002 "north-east" #7: up-client output: updating resolvconf
-004 "north-east" #7: initiator established Child SA using #6; IPsec tunnel [192.0.2.101/32===0.0.0.0/0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"north-east": dispatch REVIVAL event
+"north-east" #6: initiating IKEv2 connection to 192.1.2.45 using UDP
+"north-east" #6: sent IKE_SA_INIT request to 192.1.2.45:500
+"north-east" #6: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"north-east" #6: initiator established IKE SA; authenticated peer '3nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"north-east" #7: received INTERNAL_IP4_ADDRESS 192.0.2.101
+"north-east" #7: received INTERNAL_IP4_DNS 1.2.3.4
+"north-east" #7: received INTERNAL_IP4_DNS 5.6.7.8
+"north-east" #7: up-client output: updating resolvconf
+"north-east" #7: initiator established Child SA using #6; IPsec tunnel [192.0.2.101/32===0.0.0.0/0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 north #
  ../../guestbin/ping-once.sh --up 192.0.2.254
 up
@@ -103,10 +103,10 @@ north #
 #7: "north-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=192.0.2.101/32
 north #
  ipsec auto --delete north-east
-002 "north-east": terminating SAs using this connection
-002 "north-east" #6: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
-002 "north-east" #7: down-client output: restoring resolvconf
-005 "north-east" #7: ESP traffic information: in=84B out=84B
+"north-east": terminating SAs using this connection
+"north-east" #6: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"north-east" #7: down-client output: restoring resolvconf
+"north-east" #7: ESP traffic information: in=84B out=84B
 north #
  ipsec whack --trafficstatus
 north #

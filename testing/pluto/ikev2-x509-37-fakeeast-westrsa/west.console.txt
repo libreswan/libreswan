@@ -27,7 +27,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add ikev2-westnet-eastnet-x509-cr
-002 "ikev2-westnet-eastnet-x509-cr": added IKEv2 connection
+"ikev2-westnet-eastnet-x509-cr": added IKEv2 connection
 west #
  ipsec whack --impair suppress-retransmits
 west #
@@ -37,15 +37,15 @@ west #
  ipsec whack --impair revival
 west #
  ipsec auto --up ikev2-westnet-eastnet-x509-cr
-1v2 "ikev2-westnet-eastnet-x509-cr" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "ikev2-westnet-eastnet-x509-cr" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "ikev2-westnet-eastnet-x509-cr" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "ikev2-westnet-eastnet-x509-cr" #1: NSS: ERROR: IPsec certificate E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA invalid: SEC_ERROR_BAD_SIGNATURE: Peer's certificate has an invalid signature.
-002 "ikev2-westnet-eastnet-x509-cr" #1: X509: certificate payload rejected for this connection
-036 "ikev2-westnet-eastnet-x509-cr" #1: encountered fatal error in state STATE_V2_PARENT_I2
-002 "ikev2-westnet-eastnet-x509-cr" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-002 "ikev2-westnet-eastnet-x509-cr" #1: IMPAIR: revival: skip scheduling revival event
-002 "ikev2-westnet-eastnet-x509-cr" #1: deleting IKE SA (PARENT_I2) and NOT sending notification
+"ikev2-westnet-eastnet-x509-cr" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"ikev2-westnet-eastnet-x509-cr" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"ikev2-westnet-eastnet-x509-cr" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"ikev2-westnet-eastnet-x509-cr" #1: NSS: ERROR: IPsec certificate E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA invalid: SEC_ERROR_BAD_SIGNATURE: Peer's certificate has an invalid signature.
+"ikev2-westnet-eastnet-x509-cr" #1: X509: certificate payload rejected for this connection
+"ikev2-westnet-eastnet-x509-cr" #1: encountered fatal error in state STATE_V2_PARENT_I2
+"ikev2-westnet-eastnet-x509-cr" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"ikev2-westnet-eastnet-x509-cr" #1: IMPAIR: revival: skip scheduling revival event
+"ikev2-westnet-eastnet-x509-cr" #1: deleting IKE SA (PARENT_I2) and NOT sending notification
 west #
  echo "done"
 done

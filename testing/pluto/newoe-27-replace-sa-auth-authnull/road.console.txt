@@ -10,7 +10,7 @@ road #
  ../../guestbin/wait-until-pluto-started
 road #
  ipsec auto --add authenticated
-002 "authenticated": added IKEv2 connection
+"authenticated": added IKEv2 connection
 road #
  # ensure for tests acquires expire before our failureshunt=2m
 road #
@@ -31,11 +31,11 @@ road #
  # ping should succeed through tunnel
 road #
  ipsec auto --up authenticated
-1v2 "authenticated" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "authenticated" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "authenticated" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "authenticated" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "authenticated" #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.209/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"authenticated" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"authenticated" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"authenticated" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"authenticated" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"authenticated" #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.209/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 road #
  ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
 up
@@ -114,10 +114,10 @@ road #
  ipsec whack --impair send-no-delete
 road #
  ipsec auto --delete authenticated
-002 "authenticated": terminating SAs using this connection
-002 "authenticated" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
-002 "authenticated" #1: IMPAIR: impair-send-no-delete set - not sending Delete/Notify
-005 "authenticated" #2: ESP traffic information: in=84B out=84B
+"authenticated": terminating SAs using this connection
+"authenticated" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"authenticated" #1: IMPAIR: impair-send-no-delete set - not sending Delete/Notify
+"authenticated" #2: ESP traffic information: in=84B out=84B
 road #
  # the ping triggers an OE authnull attempt. It should fail because
 road #

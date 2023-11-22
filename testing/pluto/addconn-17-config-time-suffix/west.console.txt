@@ -9,7 +9,7 @@ west #
 initdone
 west #
  ipsec auto --add time-good
-002 "time-good": added IKEv2 connection
+"time-good": added IKEv2 connection
 west #
  # rekey_margin: should be less than rekey interval
 west #
@@ -19,13 +19,13 @@ west #
  # output is unpredictable, include ephemeral values
 west #
  ipsec addconn time-wip
-002 "time-wip": added IKEv2 connection
+"time-wip": added IKEv2 connection
 west #
  ipsec status | grep time-wip | grep margin
 "time-wip":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 0s; rekey_fuzz: 100%;
 west #
  ipsec addconn time-wip-hex
-002 "time-wip-hex": added IKEv2 connection
+"time-wip-hex": added IKEv2 connection
 west #
  ipsec status | grep time-wip-hex | grep margin
 "time-wip-hex":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 0s; rekey_fuzz: 100%;

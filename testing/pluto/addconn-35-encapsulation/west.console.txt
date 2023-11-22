@@ -6,65 +6,65 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add addconn
-002 "addconn": added IKEv2 connection
+"addconn": added IKEv2 connection
 west #
  ipsec add addconn--encapsulation=no
-002 "addconn--encapsulation=no": added IKEv2 connection
+"addconn--encapsulation=no": added IKEv2 connection
 west #
  ipsec add addconn--encapsulation=yes
-002 "addconn--encapsulation=yes": added IKEv2 connection
+"addconn--encapsulation=yes": added IKEv2 connection
 west #
  ipsec add addconn--encapsulation=auto
-002 "addconn--encapsulation=auto": added IKEv2 connection
+"addconn--encapsulation=auto": added IKEv2 connection
 west #
  ipsec add addconn--type=passthrough
-002 "addconn--type=passthrough": added passthrough connection
+"addconn--type=passthrough": added passthrough connection
 west #
  ipsec add addconn--type=passthrough--encapsulation=no
-005 "addconn--type=passthrough--encapsulation=no": warning: encapsulation=no ignored for never-negotiate connection
-002 "addconn--type=passthrough--encapsulation=no": added passthrough connection
+"addconn--type=passthrough--encapsulation=no": warning: encapsulation=no ignored for never-negotiate connection
+"addconn--type=passthrough--encapsulation=no": added passthrough connection
 west #
  ipsec add addconn--type=passthrough--encapsulation=yes
-005 "addconn--type=passthrough--encapsulation=yes": warning: encapsulation=yes ignored for never-negotiate connection
-002 "addconn--type=passthrough--encapsulation=yes": added passthrough connection
+"addconn--type=passthrough--encapsulation=yes": warning: encapsulation=yes ignored for never-negotiate connection
+"addconn--type=passthrough--encapsulation=yes": added passthrough connection
 west #
  ipsec add addconn--type=passthrough--encapsulation=auto
-005 "addconn--type=passthrough--encapsulation=auto": warning: encapsulation=auto ignored for never-negotiate connection
-002 "addconn--type=passthrough--encapsulation=auto": added passthrough connection
+"addconn--type=passthrough--encapsulation=auto": warning: encapsulation=auto ignored for never-negotiate connection
+"addconn--type=passthrough--encapsulation=auto": added passthrough connection
 west #
  ipsec whack --name whack                                            --encrypt --host 1.2.3.4 --to --host 5.6.7.8
-002 "whack": added IKEv2 connection
+"whack": added IKEv2 connection
 west #
  ipsec whack --name whack--encapsulation       --encapsulation       --encrypt --host 1.2.3.4 --to --host 5.6.7.8
-002 "whack--encapsulation": added IKEv2 connection
+"whack--encapsulation": added IKEv2 connection
 west #
  ipsec whack --name whack--encapsulation=no    --encapsulation=no    --encrypt --host 1.2.3.4 --to --host 5.6.7.8
-002 "whack--encapsulation=no": added IKEv2 connection
+"whack--encapsulation=no": added IKEv2 connection
 west #
  ipsec whack --name whack--encapsulation=yes   --encapsulation=yes   --encrypt --host 1.2.3.4 --to --host 5.6.7.8
-002 "whack--encapsulation=yes": added IKEv2 connection
+"whack--encapsulation=yes": added IKEv2 connection
 west #
  ipsec whack --name whack--encapsulation=auto  --encapsulation=auto  --encrypt --host 1.2.3.4 --to --host 5.6.7.8
-002 "whack--encapsulation=auto": added IKEv2 connection
+"whack--encapsulation=auto": added IKEv2 connection
 west #
  ipsec whack --name whack--passthrough                                          --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
-002 "whack--passthrough": added passthrough connection
+"whack--passthrough": added passthrough connection
 west #
  ipsec whack --name whack--passthrough--encapsulation      --encapsulation      --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
-005 "whack--passthrough--encapsulation": warning: encapsulation=yes ignored for never-negotiate connection
-002 "whack--passthrough--encapsulation": added passthrough connection
+"whack--passthrough--encapsulation": warning: encapsulation=yes ignored for never-negotiate connection
+"whack--passthrough--encapsulation": added passthrough connection
 west #
  ipsec whack --name whack--passthrough--encapsulation=no   --encapsulation=no   --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
-005 "whack--passthrough--encapsulation=no": warning: encapsulation=no ignored for never-negotiate connection
-002 "whack--passthrough--encapsulation=no": added passthrough connection
+"whack--passthrough--encapsulation=no": warning: encapsulation=no ignored for never-negotiate connection
+"whack--passthrough--encapsulation=no": added passthrough connection
 west #
  ipsec whack --name whack--passthrough--encapsulation=yes  --encapsulation=yes  --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
-005 "whack--passthrough--encapsulation=yes": warning: encapsulation=yes ignored for never-negotiate connection
-002 "whack--passthrough--encapsulation=yes": added passthrough connection
+"whack--passthrough--encapsulation=yes": warning: encapsulation=yes ignored for never-negotiate connection
+"whack--passthrough--encapsulation=yes": added passthrough connection
 west #
  ipsec whack --name whack--passthrough--encapsulation=auto --encapsulation=auto --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
-005 "whack--passthrough--encapsulation=auto": warning: encapsulation=auto ignored for never-negotiate connection
-002 "whack--passthrough--encapsulation=auto": added passthrough connection
+"whack--passthrough--encapsulation=auto": warning: encapsulation=auto ignored for never-negotiate connection
+"whack--passthrough--encapsulation=auto": added passthrough connection
 west #
  ipsec connectionstatus | sed -n -e 's/\(^[^:]*:\).* \(encaps:[^;]*\);.*/\1 \2/p' | sort
 "addconn": encaps:auto

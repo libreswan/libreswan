@@ -9,21 +9,21 @@ north #
  ipsec whack --impair suppress-retransmits
 north #
  ipsec auto --add rw
-002 "rw": added IKEv2 connection
+"rw": added IKEv2 connection
 north #
  echo "initdone"
 initdone
 north #
  ipsec auto --up rw
-1v2 "rw"[1] 192.1.2.23 #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "rw"[1] 192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "rw"[1] 192.1.2.23 #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "rw"[1] 192.1.2.23 #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate '@east.testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-002 "rw"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 100.64.0.2
-002 "rw"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS 1.2.3.4
-002 "rw"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS 8.8.8.8
-002 "rw"[1] 192.1.2.23 #2: up-client output: updating resolvconf
-004 "rw"[1] 192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [100.64.0.2/32===192.0.2.0/24] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATD=192.1.2.23:4500 DPD=passive}
+"rw"[1] 192.1.2.23 #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"rw"[1] 192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"rw"[1] 192.1.2.23 #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"rw"[1] 192.1.2.23 #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate '@east.testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"rw"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 100.64.0.2
+"rw"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS 1.2.3.4
+"rw"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS 8.8.8.8
+"rw"[1] 192.1.2.23 #2: up-client output: updating resolvconf
+"rw"[1] 192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [100.64.0.2/32===192.0.2.0/24] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATD=192.1.2.23:4500 DPD=passive}
 north #
  echo done
 done

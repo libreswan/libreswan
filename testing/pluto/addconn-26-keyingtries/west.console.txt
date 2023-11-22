@@ -13,38 +13,38 @@ west #
  ipsec whack --impair revival  # give up after N retry attempts
 west #
  ipsec auto --add  westnet-eastnet
-002 "westnet-eastnet": added IKEv2 connection
+"westnet-eastnet": added IKEv2 connection
 west #
  ipsec auto --add  westnet-eastnet-k0
-002 "westnet-eastnet-k0": warning: keyingtries=0 ignored, UP connection will attempt to establish until marked DOWN
-002 "westnet-eastnet-k0": added IKEv2 connection
+"westnet-eastnet-k0": warning: keyingtries=0 ignored, UP connection will attempt to establish until marked DOWN
+"westnet-eastnet-k0": added IKEv2 connection
 west #
  ipsec auto --add  westnet-eastnet-k1
-002 "westnet-eastnet-k1": warning: keyingtries=1 ignored, UP connection will attempt to establish until marked DOWN
-002 "westnet-eastnet-k1": added IKEv2 connection
+"westnet-eastnet-k1": warning: keyingtries=1 ignored, UP connection will attempt to establish until marked DOWN
+"westnet-eastnet-k1": added IKEv2 connection
 west #
  ipsec auto --add  westnet-eastnet-k2
-002 "westnet-eastnet-k2": warning: keyingtries=2 ignored, UP connection will attempt to establish until marked DOWN
-002 "westnet-eastnet-k2": added IKEv2 connection
+"westnet-eastnet-k2": warning: keyingtries=2 ignored, UP connection will attempt to establish until marked DOWN
+"westnet-eastnet-k2": added IKEv2 connection
 west #
  ipsec auto --add  nevernegotiate
-002 "nevernegotiate": warning: keyingtries=0 ignored, connection will never negotiate
-002 "nevernegotiate": added passthrough connection
+"nevernegotiate": warning: keyingtries=0 ignored, connection will never negotiate
+"nevernegotiate": added passthrough connection
 west #
  ipsec auto --up westnet-eastnet-k2
-1v2 "westnet-eastnet-k2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-002 "westnet-eastnet-k2" #1: IMPAIR: omitting KE payload
-1v2 "westnet-eastnet-k2" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-003 "westnet-eastnet-k2" #1: dropping unexpected IKE_SA_INIT message containing INVALID_SYNTAX notification; message payloads: N; missing payloads: SA,KE,Ni
-003 "westnet-eastnet-k2" #1: dropping unexpected IKE_SA_INIT message containing INVALID_SYNTAX notification; message payloads: N; missing payloads: SA,KE,Ni
-003 "westnet-eastnet-k2" #1: dropping unexpected IKE_SA_INIT message containing INVALID_SYNTAX notification; message payloads: N; missing payloads: SA,KE,Ni
-031 "westnet-eastnet-k2" #1: STATE_V2_PARENT_I1: 3 second timeout exceeded after 2 retransmits.  No response (or no acceptable response) to our first IKEv2 message
-002 "westnet-eastnet-k2" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-002 "westnet-eastnet-k2" #1: IMPAIR: revival: skip scheduling revival event
-002 "westnet-eastnet-k2" #1: deleting IKE SA (PARENT_I1) and NOT sending notification
+"westnet-eastnet-k2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"westnet-eastnet-k2" #1: IMPAIR: omitting KE payload
+"westnet-eastnet-k2" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"westnet-eastnet-k2" #1: dropping unexpected IKE_SA_INIT message containing INVALID_SYNTAX notification; message payloads: N; missing payloads: SA,KE,Ni
+"westnet-eastnet-k2" #1: dropping unexpected IKE_SA_INIT message containing INVALID_SYNTAX notification; message payloads: N; missing payloads: SA,KE,Ni
+"westnet-eastnet-k2" #1: dropping unexpected IKE_SA_INIT message containing INVALID_SYNTAX notification; message payloads: N; missing payloads: SA,KE,Ni
+"westnet-eastnet-k2" #1: STATE_V2_PARENT_I1: 3 second timeout exceeded after 2 retransmits.  No response (or no acceptable response) to our first IKEv2 message
+"westnet-eastnet-k2" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"westnet-eastnet-k2" #1: IMPAIR: revival: skip scheduling revival event
+"westnet-eastnet-k2" #1: deleting IKE SA (PARENT_I1) and NOT sending notification
 west #
  ipsec auto --delete westnet-eastnet-k2
-002 "westnet-eastnet-k2": terminating SAs using this connection
+"westnet-eastnet-k2": terminating SAs using this connection
 west #
  echo done
 done

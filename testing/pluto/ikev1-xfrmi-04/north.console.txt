@@ -10,21 +10,21 @@ north #
  ../../guestbin/wait-until-pluto-started
 north #
  ipsec auto --add northnet-eastnet
-002 "northnet-eastnet": added IKEv1 connection
+"northnet-eastnet": added IKEv1 connection
 north #
  echo "initdone"
 initdone
 north #
  ipsec auto --up northnet-eastnet
-002 "northnet-eastnet" #1: initiating IKEv1 Main Mode connection
-1v1 "northnet-eastnet" #1: sent Main Mode request
-1v1 "northnet-eastnet" #1: sent Main Mode I2
-1v1 "northnet-eastnet" #1: sent Main Mode I3
-002 "northnet-eastnet" #1: Peer ID is ID_FQDN: '@east'
-004 "northnet-eastnet" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "northnet-eastnet" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-1v1 "northnet-eastnet" #2: sent Quick Mode request
-004 "northnet-eastnet" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+"northnet-eastnet" #1: initiating IKEv1 Main Mode connection
+"northnet-eastnet" #1: sent Main Mode request
+"northnet-eastnet" #1: sent Main Mode I2
+"northnet-eastnet" #1: sent Main Mode I3
+"northnet-eastnet" #1: Peer ID is ID_FQDN: '@east'
+"northnet-eastnet" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"northnet-eastnet" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"northnet-eastnet" #2: sent Quick Mode request
+"northnet-eastnet" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 north #
  ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.0.22.254
 up

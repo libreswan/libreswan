@@ -11,8 +11,8 @@ west #
  cp PATH/share/crypto-policies/back-ends/DEFAULT/libreswan.config /tmp/west-add.conf
 west #
  ipsec auto --add test
-005 "test": ikev2=yes has been replaced by keyexchange=ikev2
-002 "test": added IKEv2 connection
+"test": ikev2=yes has been replaced by keyexchange=ikev2
+"test": added IKEv2 connection
 west #
  ipsec status | grep algorithms: # DEFAULT
 "test":   IKE algorithms: AES_GCM_16_256-HMAC_SHA2_512+HMAC_SHA2_256-DH19+MODP2048+DH31+DH21+DH20+MODP3072+MODP4096+MODP8192, CHACHA20_POLY1305-HMAC_SHA2_512+HMAC_SHA2_256-DH19+MODP2048+DH31+DH21+DH20+MODP3072+MODP4096+MODP8192, AES_CBC_256-HMAC_SHA2_512+HMAC_SHA2_256-DH19+MODP2048+DH31+DH21+DH20+MODP3072+MODP4096+MODP8192, AES_GCM_16_128-HMAC_SHA2_512+HMAC_SHA2_256-DH19+MODP2048+DH31+DH21+DH20+MODP3072+MODP4096+MODP8192, AES_CBC_128-HMAC_SHA2_256-DH19+MODP2048+DH31+DH21+DH20+MODP3072+MODP4096+MODP8192
@@ -25,9 +25,9 @@ west #
  cp PATH/share/crypto-policies/back-ends/FIPS/libreswan.config /tmp/west-add.conf
 west #
  ipsec auto --add test
-002 "test": terminating SAs using this connection
-005 "test": ikev2=yes has been replaced by keyexchange=ikev2
-002 "test": added IKEv2 connection
+"test": terminating SAs using this connection
+"test": ikev2=yes has been replaced by keyexchange=ikev2
+"test": added IKEv2 connection
 west #
  ipsec status | grep algorithms: # FIPS
 "test":   IKE algorithms: AES_GCM_16_256-HMAC_SHA2_512+HMAC_SHA2_256-DH19+MODP2048+DH21+DH20+MODP3072+MODP4096+MODP8192, AES_CBC_256-HMAC_SHA2_512+HMAC_SHA2_256-DH19+MODP2048+DH21+DH20+MODP3072+MODP4096+MODP8192, AES_GCM_16_128-HMAC_SHA2_512+HMAC_SHA2_256-DH19+MODP2048+DH21+DH20+MODP3072+MODP4096+MODP8192, AES_CBC_128-HMAC_SHA2_256-DH19+MODP2048+DH21+DH20+MODP3072+MODP4096+MODP8192
@@ -40,9 +40,9 @@ west #
  cp PATH/share/crypto-policies/back-ends/FUTURE/libreswan.config /tmp/west-add.conf
 west #
  ipsec auto --add test
-002 "test": terminating SAs using this connection
-005 "test": ikev2=yes has been replaced by keyexchange=ikev2
-002 "test": added IKEv2 connection
+"test": terminating SAs using this connection
+"test": ikev2=yes has been replaced by keyexchange=ikev2
+"test": added IKEv2 connection
 west #
  ipsec status | grep algorithms: # FUTURE
 "test":   IKE algorithms: AES_GCM_16_256-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH31+DH21+DH20+MODP3072+MODP4096+MODP8192, CHACHA20_POLY1305-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH31+DH21+DH20+MODP3072+MODP4096+MODP8192, AES_CBC_256-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH31+DH21+DH20+MODP3072+MODP4096+MODP8192
@@ -55,9 +55,9 @@ west #
  cp PATH/share/crypto-policies/back-ends/LEGACY/libreswan.config /tmp/west-add.conf
 west #
  ipsec auto --add test
-002 "test": terminating SAs using this connection
-005 "test": ikev2=yes has been replaced by keyexchange=ikev2
-002 "test": added IKEv2 connection
+"test": terminating SAs using this connection
+"test": ikev2=yes has been replaced by keyexchange=ikev2
+"test": added IKEv2 connection
 west #
  ipsec status | grep algorithms: # LEGACY
 "test":   IKE algorithms: AES_GCM_16_256-HMAC_SHA2_512+HMAC_SHA2_256-DH19+MODP2048+DH31+DH21+DH20+MODP3072+MODP4096+MODP8192+MODP1536, CHACHA20_POLY1305-HMAC_SHA2_512+HMAC_SHA2_256-DH19+MODP2048+DH31+DH21+DH20+MODP3072+MODP4096+MODP8192+MODP1536, AES_CBC_256-HMAC_SHA2_512+HMAC_SHA2_256-DH19+MODP2048+DH31+DH21+DH20+MODP3072+MODP4096+MODP8192+MODP1536, AES_GCM_16_128-HMAC_SHA2_512+HMAC_SHA2_256-DH19+MODP2048+DH31+DH21+DH20+MODP3072+MODP4096+MODP8192+MODP1536, AES_CBC_128-HMAC_SHA2_256-DH19+MODP2048+DH31+DH21+DH20+MODP3072+MODP4096+MODP8192+MODP1536

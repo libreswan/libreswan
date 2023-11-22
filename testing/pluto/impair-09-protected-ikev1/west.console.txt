@@ -22,7 +22,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet
-002 "westnet-eastnet": added IKEv1 connection
+"westnet-eastnet": added IKEv1 connection
 west #
  echo "initdone"
 initdone
@@ -34,24 +34,24 @@ west #
  ipsec whack --impair suppress-retransmits
 west #
  ../../guestbin/libreswan-up-down.sh westnet-eastnet --alive -I 192.0.1.254 192.0.2.254
-002 "westnet-eastnet": terminating SAs using this connection
-002 "westnet-eastnet": added IKEv1 connection
-002 "westnet-eastnet" #1: initiating IKEv1 Main Mode connection
-1v1 "westnet-eastnet" #1: sent Main Mode request
-1v1 "westnet-eastnet" #1: sent Main Mode I2
-1v1 "westnet-eastnet" #1: sent Main Mode I3
-002 "westnet-eastnet" #1: Peer ID is ID_FQDN: '@east'
-003 "westnet-eastnet" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
-004 "westnet-eastnet" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "westnet-eastnet" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-1v1 "westnet-eastnet" #2: sent Quick Mode request
-004 "westnet-eastnet" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+"westnet-eastnet": terminating SAs using this connection
+"westnet-eastnet": added IKEv1 connection
+"westnet-eastnet" #1: initiating IKEv1 Main Mode connection
+"westnet-eastnet" #1: sent Main Mode request
+"westnet-eastnet" #1: sent Main Mode I2
+"westnet-eastnet" #1: sent Main Mode I3
+"westnet-eastnet" #1: Peer ID is ID_FQDN: '@east'
+"westnet-eastnet" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"westnet-eastnet" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"westnet-eastnet" #2: sent Quick Mode request
+"westnet-eastnet" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
-002 "westnet-eastnet": terminating SAs using this connection
-002 "westnet-eastnet" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
-005 "westnet-eastnet" #2: ESP traffic information: in=84B out=84B
-002 "westnet-eastnet" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
-002 "westnet-eastnet": terminating SAs using this connection
+"westnet-eastnet": terminating SAs using this connection
+"westnet-eastnet" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
+"westnet-eastnet" #2: ESP traffic information: in=84B out=84B
+"westnet-eastnet" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
+"westnet-eastnet": terminating SAs using this connection
 west #
  # Quick:
 west #
@@ -68,57 +68,57 @@ west #
  ipsec whack --impair v1-hash-payload:omit
 west #
  ../../guestbin/libreswan-up-down.sh westnet-eastnet --down -I 192.0.1.254 192.0.2.254
-002 "westnet-eastnet": added IKEv1 connection
-002 "westnet-eastnet" #3: initiating IKEv1 Main Mode connection
-1v1 "westnet-eastnet" #3: sent Main Mode request
-1v1 "westnet-eastnet" #3: sent Main Mode I2
-1v1 "westnet-eastnet" #3: sent Main Mode I3
-002 "westnet-eastnet" #3: Peer ID is ID_FQDN: '@east'
-003 "westnet-eastnet" #3: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
-004 "westnet-eastnet" #3: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "westnet-eastnet" #4: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-002 "westnet-eastnet" #4: IMPAIR: omitting HASH payload for outI1
-1v1 "westnet-eastnet" #4: sent Quick Mode request
-031 "westnet-eastnet" #4: STATE_QUICK_I1: 60 second timeout exceeded after 0 retransmits.  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal
-002 "westnet-eastnet" #4: deleting IPsec SA (QUICK_I1) and NOT sending notification
+"westnet-eastnet": added IKEv1 connection
+"westnet-eastnet" #3: initiating IKEv1 Main Mode connection
+"westnet-eastnet" #3: sent Main Mode request
+"westnet-eastnet" #3: sent Main Mode I2
+"westnet-eastnet" #3: sent Main Mode I3
+"westnet-eastnet" #3: Peer ID is ID_FQDN: '@east'
+"westnet-eastnet" #3: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet" #3: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"westnet-eastnet" #4: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"westnet-eastnet" #4: IMPAIR: omitting HASH payload for outI1
+"westnet-eastnet" #4: sent Quick Mode request
+"westnet-eastnet" #4: STATE_QUICK_I1: 60 second timeout exceeded after 0 retransmits.  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal
+"westnet-eastnet" #4: deleting IPsec SA (QUICK_I1) and NOT sending notification
 west #
  # HASH payload empty - should fail
 west #
  ipsec whack --impair v1-hash-payload:empty
 west #
  ../../guestbin/libreswan-up-down.sh westnet-eastnet --down -I 192.0.1.254 192.0.2.254
-002 "westnet-eastnet": added IKEv1 connection
-002 "westnet-eastnet" #5: initiating IKEv1 Main Mode connection
-1v1 "westnet-eastnet" #5: sent Main Mode request
-1v1 "westnet-eastnet" #5: sent Main Mode I2
-1v1 "westnet-eastnet" #5: sent Main Mode I3
-002 "westnet-eastnet" #5: Peer ID is ID_FQDN: '@east'
-003 "westnet-eastnet" #5: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
-004 "westnet-eastnet" #5: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "westnet-eastnet" #6: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-002 "westnet-eastnet" #6: IMPAIR: sending HASH payload with no data for outI1
-1v1 "westnet-eastnet" #6: sent Quick Mode request
-031 "westnet-eastnet" #6: STATE_QUICK_I1: 60 second timeout exceeded after 0 retransmits.  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal
-002 "westnet-eastnet" #6: deleting IPsec SA (QUICK_I1) and NOT sending notification
+"westnet-eastnet": added IKEv1 connection
+"westnet-eastnet" #5: initiating IKEv1 Main Mode connection
+"westnet-eastnet" #5: sent Main Mode request
+"westnet-eastnet" #5: sent Main Mode I2
+"westnet-eastnet" #5: sent Main Mode I3
+"westnet-eastnet" #5: Peer ID is ID_FQDN: '@east'
+"westnet-eastnet" #5: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet" #5: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"westnet-eastnet" #6: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"westnet-eastnet" #6: IMPAIR: sending HASH payload with no data for outI1
+"westnet-eastnet" #6: sent Quick Mode request
+"westnet-eastnet" #6: STATE_QUICK_I1: 60 second timeout exceeded after 0 retransmits.  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal
+"westnet-eastnet" #6: deleting IPsec SA (QUICK_I1) and NOT sending notification
 west #
  # HASH payload badly calculated - should fail
 west #
  ipsec whack --impair v1-hash-payload:0
 west #
  ../../guestbin/libreswan-up-down.sh westnet-eastnet --down -I 192.0.1.254 192.0.2.254
-002 "westnet-eastnet": added IKEv1 connection
-002 "westnet-eastnet" #7: initiating IKEv1 Main Mode connection
-1v1 "westnet-eastnet" #7: sent Main Mode request
-1v1 "westnet-eastnet" #7: sent Main Mode I2
-1v1 "westnet-eastnet" #7: sent Main Mode I3
-002 "westnet-eastnet" #7: Peer ID is ID_FQDN: '@east'
-003 "westnet-eastnet" #7: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
-004 "westnet-eastnet" #7: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "westnet-eastnet" #8: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-002 "westnet-eastnet" #8: IMPAIR: setting HASH payload bytes to 00
-1v1 "westnet-eastnet" #8: sent Quick Mode request
-031 "westnet-eastnet" #8: STATE_QUICK_I1: 60 second timeout exceeded after 0 retransmits.  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal
-002 "westnet-eastnet" #8: deleting IPsec SA (QUICK_I1) and NOT sending notification
+"westnet-eastnet": added IKEv1 connection
+"westnet-eastnet" #7: initiating IKEv1 Main Mode connection
+"westnet-eastnet" #7: sent Main Mode request
+"westnet-eastnet" #7: sent Main Mode I2
+"westnet-eastnet" #7: sent Main Mode I3
+"westnet-eastnet" #7: Peer ID is ID_FQDN: '@east'
+"westnet-eastnet" #7: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet" #7: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"westnet-eastnet" #8: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"westnet-eastnet" #8: IMPAIR: setting HASH payload bytes to 00
+"westnet-eastnet" #8: sent Quick Mode request
+"westnet-eastnet" #8: STATE_QUICK_I1: 60 second timeout exceeded after 0 retransmits.  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal
+"westnet-eastnet" #8: deleting IPsec SA (QUICK_I1) and NOT sending notification
 west #
  echo done
 done
@@ -138,75 +138,75 @@ west #
  ipsec whack --impair v1-hash-payload:omit
 west #
  ../../guestbin/libreswan-up-down.sh westnet-eastnet --alive -I 192.0.1.254 192.0.2.254
-002 "westnet-eastnet": added IKEv1 connection
-002 "westnet-eastnet" #9: initiating IKEv1 Main Mode connection
-1v1 "westnet-eastnet" #9: sent Main Mode request
-1v1 "westnet-eastnet" #9: sent Main Mode I2
-1v1 "westnet-eastnet" #9: sent Main Mode I3
-002 "westnet-eastnet" #9: Peer ID is ID_FQDN: '@east'
-003 "westnet-eastnet" #9: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
-004 "westnet-eastnet" #9: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "westnet-eastnet" #10: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-1v1 "westnet-eastnet" #10: sent Quick Mode request
-004 "westnet-eastnet" #10: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+"westnet-eastnet": added IKEv1 connection
+"westnet-eastnet" #9: initiating IKEv1 Main Mode connection
+"westnet-eastnet" #9: sent Main Mode request
+"westnet-eastnet" #9: sent Main Mode I2
+"westnet-eastnet" #9: sent Main Mode I3
+"westnet-eastnet" #9: Peer ID is ID_FQDN: '@east'
+"westnet-eastnet" #9: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet" #9: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"westnet-eastnet" #10: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"westnet-eastnet" #10: sent Quick Mode request
+"westnet-eastnet" #10: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
-002 "westnet-eastnet": terminating SAs using this connection
-002 "westnet-eastnet" #10: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #9
-002 "westnet-eastnet" #10: IMPAIR: omitting HASH payload for send delete
-005 "westnet-eastnet" #10: ESP traffic information: in=84B out=84B
-002 "westnet-eastnet" #9: deleting ISAKMP SA (MAIN_I4) and sending notification
-002 "westnet-eastnet" #9: IMPAIR: omitting HASH payload for send delete
-002 "westnet-eastnet": terminating SAs using this connection
+"westnet-eastnet": terminating SAs using this connection
+"westnet-eastnet" #10: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #9
+"westnet-eastnet" #10: IMPAIR: omitting HASH payload for send delete
+"westnet-eastnet" #10: ESP traffic information: in=84B out=84B
+"westnet-eastnet" #9: deleting ISAKMP SA (MAIN_I4) and sending notification
+"westnet-eastnet" #9: IMPAIR: omitting HASH payload for send delete
+"westnet-eastnet": terminating SAs using this connection
 west #
  # HASH payload empty - delete should fail
 west #
  ipsec whack --impair v1-hash-payload:empty
 west #
  ../../guestbin/libreswan-up-down.sh westnet-eastnet --alive -I 192.0.1.254 192.0.2.254
-002 "westnet-eastnet": added IKEv1 connection
-002 "westnet-eastnet" #11: initiating IKEv1 Main Mode connection
-1v1 "westnet-eastnet" #11: sent Main Mode request
-1v1 "westnet-eastnet" #11: sent Main Mode I2
-1v1 "westnet-eastnet" #11: sent Main Mode I3
-002 "westnet-eastnet" #11: Peer ID is ID_FQDN: '@east'
-003 "westnet-eastnet" #11: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
-004 "westnet-eastnet" #11: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "westnet-eastnet" #12: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-1v1 "westnet-eastnet" #12: sent Quick Mode request
-004 "westnet-eastnet" #12: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+"westnet-eastnet": added IKEv1 connection
+"westnet-eastnet" #11: initiating IKEv1 Main Mode connection
+"westnet-eastnet" #11: sent Main Mode request
+"westnet-eastnet" #11: sent Main Mode I2
+"westnet-eastnet" #11: sent Main Mode I3
+"westnet-eastnet" #11: Peer ID is ID_FQDN: '@east'
+"westnet-eastnet" #11: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet" #11: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"westnet-eastnet" #12: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"westnet-eastnet" #12: sent Quick Mode request
+"westnet-eastnet" #12: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
-002 "westnet-eastnet": terminating SAs using this connection
-002 "westnet-eastnet" #12: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #11
-002 "westnet-eastnet" #12: IMPAIR: sending HASH payload with no data for send delete
-005 "westnet-eastnet" #12: ESP traffic information: in=84B out=84B
-002 "westnet-eastnet" #11: deleting ISAKMP SA (MAIN_I4) and sending notification
-002 "westnet-eastnet" #11: IMPAIR: sending HASH payload with no data for send delete
-002 "westnet-eastnet": terminating SAs using this connection
+"westnet-eastnet": terminating SAs using this connection
+"westnet-eastnet" #12: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #11
+"westnet-eastnet" #12: IMPAIR: sending HASH payload with no data for send delete
+"westnet-eastnet" #12: ESP traffic information: in=84B out=84B
+"westnet-eastnet" #11: deleting ISAKMP SA (MAIN_I4) and sending notification
+"westnet-eastnet" #11: IMPAIR: sending HASH payload with no data for send delete
+"westnet-eastnet": terminating SAs using this connection
 west #
  # HASH payload badly calculated - delete should fail
 west #
  ipsec whack --impair v1-hash-payload:0
 west #
  ../../guestbin/libreswan-up-down.sh westnet-eastnet --alive -I 192.0.1.254 192.0.2.254
-002 "westnet-eastnet": added IKEv1 connection
-002 "westnet-eastnet" #13: initiating IKEv1 Main Mode connection
-1v1 "westnet-eastnet" #13: sent Main Mode request
-1v1 "westnet-eastnet" #13: sent Main Mode I2
-1v1 "westnet-eastnet" #13: sent Main Mode I3
-002 "westnet-eastnet" #13: Peer ID is ID_FQDN: '@east'
-003 "westnet-eastnet" #13: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
-004 "westnet-eastnet" #13: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "westnet-eastnet" #14: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-1v1 "westnet-eastnet" #14: sent Quick Mode request
-004 "westnet-eastnet" #14: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+"westnet-eastnet": added IKEv1 connection
+"westnet-eastnet" #13: initiating IKEv1 Main Mode connection
+"westnet-eastnet" #13: sent Main Mode request
+"westnet-eastnet" #13: sent Main Mode I2
+"westnet-eastnet" #13: sent Main Mode I3
+"westnet-eastnet" #13: Peer ID is ID_FQDN: '@east'
+"westnet-eastnet" #13: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet" #13: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"westnet-eastnet" #14: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"westnet-eastnet" #14: sent Quick Mode request
+"westnet-eastnet" #14: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
-002 "westnet-eastnet": terminating SAs using this connection
-002 "westnet-eastnet" #14: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #13
-002 "westnet-eastnet" #14: IMPAIR: setting HASH payload bytes to 00
-005 "westnet-eastnet" #14: ESP traffic information: in=84B out=84B
-002 "westnet-eastnet" #13: deleting ISAKMP SA (MAIN_I4) and sending notification
-002 "westnet-eastnet" #13: IMPAIR: setting HASH payload bytes to 00
-002 "westnet-eastnet": terminating SAs using this connection
+"westnet-eastnet": terminating SAs using this connection
+"westnet-eastnet" #14: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #13
+"westnet-eastnet" #14: IMPAIR: setting HASH payload bytes to 00
+"westnet-eastnet" #14: ESP traffic information: in=84B out=84B
+"westnet-eastnet" #13: deleting ISAKMP SA (MAIN_I4) and sending notification
+"westnet-eastnet" #13: IMPAIR: setting HASH payload bytes to 00
+"westnet-eastnet": terminating SAs using this connection
 west #
  echo done
 done
@@ -226,69 +226,69 @@ west #
  ipsec whack --impair v1-hash-payload:omit
 west #
  ../../guestbin/libreswan-up-down.sh westnet-eastnet --alive -I 192.0.1.254 192.0.2.254
-002 "westnet-eastnet": added IKEv1 connection
-002 "westnet-eastnet" #15: initiating IKEv1 Main Mode connection
-1v1 "westnet-eastnet" #15: sent Main Mode request
-1v1 "westnet-eastnet" #15: sent Main Mode I2
-1v1 "westnet-eastnet" #15: sent Main Mode I3
-002 "westnet-eastnet" #15: Peer ID is ID_FQDN: '@east'
-003 "westnet-eastnet" #15: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
-004 "westnet-eastnet" #15: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "westnet-eastnet" #16: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-1v1 "westnet-eastnet" #16: sent Quick Mode request
-004 "westnet-eastnet" #16: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+"westnet-eastnet": added IKEv1 connection
+"westnet-eastnet" #15: initiating IKEv1 Main Mode connection
+"westnet-eastnet" #15: sent Main Mode request
+"westnet-eastnet" #15: sent Main Mode I2
+"westnet-eastnet" #15: sent Main Mode I3
+"westnet-eastnet" #15: Peer ID is ID_FQDN: '@east'
+"westnet-eastnet" #15: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet" #15: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"westnet-eastnet" #16: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"westnet-eastnet" #16: sent Quick Mode request
+"westnet-eastnet" #16: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
-002 "westnet-eastnet": terminating SAs using this connection
-002 "westnet-eastnet" #16: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #15
-005 "westnet-eastnet" #16: ESP traffic information: in=84B out=84B
-002 "westnet-eastnet" #15: deleting ISAKMP SA (MAIN_I4) and sending notification
-002 "westnet-eastnet": terminating SAs using this connection
+"westnet-eastnet": terminating SAs using this connection
+"westnet-eastnet" #16: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #15
+"westnet-eastnet" #16: ESP traffic information: in=84B out=84B
+"westnet-eastnet" #15: deleting ISAKMP SA (MAIN_I4) and sending notification
+"westnet-eastnet": terminating SAs using this connection
 west #
  # HASH payload empty - XAUTH should fail
 west #
  ipsec whack --impair v1-hash-payload:empty
 west #
  ../../guestbin/libreswan-up-down.sh westnet-eastnet --alive -I 192.0.1.254 192.0.2.254
-002 "westnet-eastnet": added IKEv1 connection
-002 "westnet-eastnet" #17: initiating IKEv1 Main Mode connection
-1v1 "westnet-eastnet" #17: sent Main Mode request
-1v1 "westnet-eastnet" #17: sent Main Mode I2
-1v1 "westnet-eastnet" #17: sent Main Mode I3
-002 "westnet-eastnet" #17: Peer ID is ID_FQDN: '@east'
-003 "westnet-eastnet" #17: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
-004 "westnet-eastnet" #17: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "westnet-eastnet" #18: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-1v1 "westnet-eastnet" #18: sent Quick Mode request
-004 "westnet-eastnet" #18: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+"westnet-eastnet": added IKEv1 connection
+"westnet-eastnet" #17: initiating IKEv1 Main Mode connection
+"westnet-eastnet" #17: sent Main Mode request
+"westnet-eastnet" #17: sent Main Mode I2
+"westnet-eastnet" #17: sent Main Mode I3
+"westnet-eastnet" #17: Peer ID is ID_FQDN: '@east'
+"westnet-eastnet" #17: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet" #17: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"westnet-eastnet" #18: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"westnet-eastnet" #18: sent Quick Mode request
+"westnet-eastnet" #18: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
-002 "westnet-eastnet": terminating SAs using this connection
-002 "westnet-eastnet" #18: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #17
-005 "westnet-eastnet" #18: ESP traffic information: in=84B out=84B
-002 "westnet-eastnet" #17: deleting ISAKMP SA (MAIN_I4) and sending notification
-002 "westnet-eastnet": terminating SAs using this connection
+"westnet-eastnet": terminating SAs using this connection
+"westnet-eastnet" #18: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #17
+"westnet-eastnet" #18: ESP traffic information: in=84B out=84B
+"westnet-eastnet" #17: deleting ISAKMP SA (MAIN_I4) and sending notification
+"westnet-eastnet": terminating SAs using this connection
 west #
  # HASH payload badly calculated - XAUTH should fail
 west #
  ipsec whack --impair v1-hash-payload:0
 west #
  ../../guestbin/libreswan-up-down.sh westnet-eastnet --alive -I 192.0.1.254 192.0.2.254
-002 "westnet-eastnet": added IKEv1 connection
-002 "westnet-eastnet" #19: initiating IKEv1 Main Mode connection
-1v1 "westnet-eastnet" #19: sent Main Mode request
-1v1 "westnet-eastnet" #19: sent Main Mode I2
-1v1 "westnet-eastnet" #19: sent Main Mode I3
-002 "westnet-eastnet" #19: Peer ID is ID_FQDN: '@east'
-003 "westnet-eastnet" #19: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
-004 "westnet-eastnet" #19: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "westnet-eastnet" #20: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-1v1 "westnet-eastnet" #20: sent Quick Mode request
-004 "westnet-eastnet" #20: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+"westnet-eastnet": added IKEv1 connection
+"westnet-eastnet" #19: initiating IKEv1 Main Mode connection
+"westnet-eastnet" #19: sent Main Mode request
+"westnet-eastnet" #19: sent Main Mode I2
+"westnet-eastnet" #19: sent Main Mode I3
+"westnet-eastnet" #19: Peer ID is ID_FQDN: '@east'
+"westnet-eastnet" #19: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet" #19: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"westnet-eastnet" #20: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"westnet-eastnet" #20: sent Quick Mode request
+"westnet-eastnet" #20: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
-002 "westnet-eastnet": terminating SAs using this connection
-002 "westnet-eastnet" #20: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #19
-005 "westnet-eastnet" #20: ESP traffic information: in=84B out=84B
-002 "westnet-eastnet" #19: deleting ISAKMP SA (MAIN_I4) and sending notification
-002 "westnet-eastnet": terminating SAs using this connection
+"westnet-eastnet": terminating SAs using this connection
+"westnet-eastnet" #20: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #19
+"westnet-eastnet" #20: ESP traffic information: in=84B out=84B
+"westnet-eastnet" #19: deleting ISAKMP SA (MAIN_I4) and sending notification
+"westnet-eastnet": terminating SAs using this connection
 west #
  echo done
 done
@@ -308,69 +308,69 @@ west #
  ipsec whack --impair v1-hash-payload:omit
 west #
  ../../guestbin/libreswan-up-down.sh westnet-eastnet --alive -I 192.0.1.254 192.0.2.254
-002 "westnet-eastnet": added IKEv1 connection
-002 "westnet-eastnet" #21: initiating IKEv1 Main Mode connection
-1v1 "westnet-eastnet" #21: sent Main Mode request
-1v1 "westnet-eastnet" #21: sent Main Mode I2
-1v1 "westnet-eastnet" #21: sent Main Mode I3
-002 "westnet-eastnet" #21: Peer ID is ID_FQDN: '@east'
-003 "westnet-eastnet" #21: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
-004 "westnet-eastnet" #21: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "westnet-eastnet" #22: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-1v1 "westnet-eastnet" #22: sent Quick Mode request
-004 "westnet-eastnet" #22: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+"westnet-eastnet": added IKEv1 connection
+"westnet-eastnet" #21: initiating IKEv1 Main Mode connection
+"westnet-eastnet" #21: sent Main Mode request
+"westnet-eastnet" #21: sent Main Mode I2
+"westnet-eastnet" #21: sent Main Mode I3
+"westnet-eastnet" #21: Peer ID is ID_FQDN: '@east'
+"westnet-eastnet" #21: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet" #21: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"westnet-eastnet" #22: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"westnet-eastnet" #22: sent Quick Mode request
+"westnet-eastnet" #22: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
-002 "westnet-eastnet": terminating SAs using this connection
-002 "westnet-eastnet" #22: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #21
-005 "westnet-eastnet" #22: ESP traffic information: in=84B out=84B
-002 "westnet-eastnet" #21: deleting ISAKMP SA (MAIN_I4) and sending notification
-002 "westnet-eastnet": terminating SAs using this connection
+"westnet-eastnet": terminating SAs using this connection
+"westnet-eastnet" #22: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #21
+"westnet-eastnet" #22: ESP traffic information: in=84B out=84B
+"westnet-eastnet" #21: deleting ISAKMP SA (MAIN_I4) and sending notification
+"westnet-eastnet": terminating SAs using this connection
 west #
  # HASH payload empty - INFO should fail
 west #
  ipsec whack --impair v1-hash-payload:empty
 west #
  ../../guestbin/libreswan-up-down.sh westnet-eastnet --alive -I 192.0.1.254 192.0.2.254
-002 "westnet-eastnet": added IKEv1 connection
-002 "westnet-eastnet" #23: initiating IKEv1 Main Mode connection
-1v1 "westnet-eastnet" #23: sent Main Mode request
-1v1 "westnet-eastnet" #23: sent Main Mode I2
-1v1 "westnet-eastnet" #23: sent Main Mode I3
-002 "westnet-eastnet" #23: Peer ID is ID_FQDN: '@east'
-003 "westnet-eastnet" #23: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
-004 "westnet-eastnet" #23: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "westnet-eastnet" #24: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-1v1 "westnet-eastnet" #24: sent Quick Mode request
-004 "westnet-eastnet" #24: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+"westnet-eastnet": added IKEv1 connection
+"westnet-eastnet" #23: initiating IKEv1 Main Mode connection
+"westnet-eastnet" #23: sent Main Mode request
+"westnet-eastnet" #23: sent Main Mode I2
+"westnet-eastnet" #23: sent Main Mode I3
+"westnet-eastnet" #23: Peer ID is ID_FQDN: '@east'
+"westnet-eastnet" #23: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet" #23: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"westnet-eastnet" #24: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"westnet-eastnet" #24: sent Quick Mode request
+"westnet-eastnet" #24: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
-002 "westnet-eastnet": terminating SAs using this connection
-002 "westnet-eastnet" #24: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #23
-005 "westnet-eastnet" #24: ESP traffic information: in=84B out=84B
-002 "westnet-eastnet" #23: deleting ISAKMP SA (MAIN_I4) and sending notification
-002 "westnet-eastnet": terminating SAs using this connection
+"westnet-eastnet": terminating SAs using this connection
+"westnet-eastnet" #24: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #23
+"westnet-eastnet" #24: ESP traffic information: in=84B out=84B
+"westnet-eastnet" #23: deleting ISAKMP SA (MAIN_I4) and sending notification
+"westnet-eastnet": terminating SAs using this connection
 west #
  # HASH payload badly calculated - INFO should fail
 west #
  ipsec whack --impair v1-hash-payload:0
 west #
  ../../guestbin/libreswan-up-down.sh westnet-eastnet --alive -I 192.0.1.254 192.0.2.254
-002 "westnet-eastnet": added IKEv1 connection
-002 "westnet-eastnet" #25: initiating IKEv1 Main Mode connection
-1v1 "westnet-eastnet" #25: sent Main Mode request
-1v1 "westnet-eastnet" #25: sent Main Mode I2
-1v1 "westnet-eastnet" #25: sent Main Mode I3
-002 "westnet-eastnet" #25: Peer ID is ID_FQDN: '@east'
-003 "westnet-eastnet" #25: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
-004 "westnet-eastnet" #25: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "westnet-eastnet" #26: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-1v1 "westnet-eastnet" #26: sent Quick Mode request
-004 "westnet-eastnet" #26: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+"westnet-eastnet": added IKEv1 connection
+"westnet-eastnet" #25: initiating IKEv1 Main Mode connection
+"westnet-eastnet" #25: sent Main Mode request
+"westnet-eastnet" #25: sent Main Mode I2
+"westnet-eastnet" #25: sent Main Mode I3
+"westnet-eastnet" #25: Peer ID is ID_FQDN: '@east'
+"westnet-eastnet" #25: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet" #25: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"westnet-eastnet" #26: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"westnet-eastnet" #26: sent Quick Mode request
+"westnet-eastnet" #26: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
-002 "westnet-eastnet": terminating SAs using this connection
-002 "westnet-eastnet" #26: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #25
-005 "westnet-eastnet" #26: ESP traffic information: in=84B out=84B
-002 "westnet-eastnet" #25: deleting ISAKMP SA (MAIN_I4) and sending notification
-002 "westnet-eastnet": terminating SAs using this connection
+"westnet-eastnet": terminating SAs using this connection
+"westnet-eastnet" #26: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #25
+"westnet-eastnet" #26: ESP traffic information: in=84B out=84B
+"westnet-eastnet" #25: deleting ISAKMP SA (MAIN_I4) and sending notification
+"westnet-eastnet": terminating SAs using this connection
 west #
  echo done
 done

@@ -14,7 +14,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add road-chain-B
-002 "road-chain-B": added IKEv2 connection
+"road-chain-B": added IKEv2 connection
 west #
  ipsec auto --status |grep road-chain-B
 "road-chain-B": 192.0.1.254/32===192.1.2.45[@west_chain_endcert.testing.libreswan.org]...192.1.2.23[@east.testing.libreswan.org]===192.0.2.254/32; unrouted; my_ip=192.0.1.254; their_ip=unset;
@@ -53,11 +53,11 @@ west #
 initdone
 west #
  ipsec auto --up road-chain-B
-1v2 "road-chain-B" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "road-chain-B" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "road-chain-B" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "road-chain-B" #1: initiator established IKE SA; authenticated peer '3nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate '@east.testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-004 "road-chain-B" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.254/32===192.0.2.254/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"road-chain-B" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"road-chain-B" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"road-chain-B" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"road-chain-B" #1: initiator established IKE SA; authenticated peer '3nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate '@east.testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"road-chain-B" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.254/32===192.0.2.254/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  echo done
 done

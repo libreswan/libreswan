@@ -6,12 +6,12 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add west-east-passthrough
-002 "west-east-passthrough": added passthrough connection
+"west-east-passthrough": added passthrough connection
 east #
  ipsec auto --route west-east-passthrough
 east #
  ipsec auto --add west-east
-002 "west-east": added IKEv1 connection
+"west-east": added IKEv1 connection
 east #
  ../../guestbin/echod.sh
 listening on IPv4 port 7

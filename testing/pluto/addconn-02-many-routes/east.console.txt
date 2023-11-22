@@ -52,7 +52,7 @@ resolving family=IPv4 src=<defaultroute> gateway=178.62.192.1 peer <any>
   success: src=178.62.253.21 gateway=178.62.192.1
 resolving family=IPv4 src=<any> gateway=<not-set> peer 178.62.253.21
   seeking NOTHING
-002 "test": added IKEv2 connection
+"test": added IKEv2 connection
 east #
  echo "initdone"
 initdone

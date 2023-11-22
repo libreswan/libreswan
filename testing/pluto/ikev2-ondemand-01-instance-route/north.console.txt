@@ -6,7 +6,7 @@ north #
  ../../guestbin/wait-until-pluto-started
 north #
  ipsec auto --add initiator
-002 "initiator": added IKEv2 connection
+"initiator": added IKEv2 connection
 north #
  echo "initdone"
 initdone
@@ -92,10 +92,10 @@ north #
  # down before unroute; everything but trap cleared
 north #
  ipsec auto --down initiator
-002 "initiator": terminating SAs using this connection
-002 "initiator" #1: intiating delete
-005 "initiator" #2: ESP traffic information: in=84B out=84B
-002 "initiator" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
+"initiator": terminating SAs using this connection
+"initiator" #1: intiating delete
+"initiator" #2: ESP traffic information: in=84B out=84B
+"initiator" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 north #
  ../../guestbin/ipsec-kernel-policy.sh
 src 192.0.3.254/32 dst 192.0.2.0/24

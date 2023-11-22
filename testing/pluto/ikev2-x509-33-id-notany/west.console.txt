@@ -9,7 +9,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add ikev2-westnet-eastnet-x509-cr
-002 "ikev2-westnet-eastnet-x509-cr": added IKEv2 connection
+"ikev2-westnet-eastnet-x509-cr": added IKEv2 connection
 west #
  ipsec status | grep idtype
 "ikev2-westnet-eastnet-x509-cr":   our idtype: ID_IPV4_ADDR; our id=192.1.2.45; their idtype: ID_FQDN; their id=@right
@@ -22,12 +22,12 @@ west #
  # expected to fail
 west #
  ipsec auto --up ikev2-westnet-eastnet-x509-cr
-1v2 "ikev2-westnet-eastnet-x509-cr" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "ikev2-westnet-eastnet-x509-cr" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "ikev2-westnet-eastnet-x509-cr" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "ikev2-westnet-eastnet-x509-cr" #1: X509: authentication failed; peer certificate contains no subjectAltName extension to match ID_FQDN '@right'
-002 "ikev2-westnet-eastnet-x509-cr" #1: deleting IKE SA (PARENT_I2) and sending notification
-002 "ikev2-westnet-eastnet-x509-cr" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"ikev2-westnet-eastnet-x509-cr" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"ikev2-westnet-eastnet-x509-cr" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"ikev2-westnet-eastnet-x509-cr" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"ikev2-westnet-eastnet-x509-cr" #1: X509: authentication failed; peer certificate contains no subjectAltName extension to match ID_FQDN '@right'
+"ikev2-westnet-eastnet-x509-cr" #1: deleting IKE SA (PARENT_I2) and sending notification
+"ikev2-westnet-eastnet-x509-cr" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 west #
  echo "done"
 done

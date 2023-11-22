@@ -49,7 +49,7 @@ conn hostkey
 	leftrsasigkey=0s<<RAW-PUBKEY#2>>
 east #
  ipsec auto --add hostkey
-002 "hostkey": added IKEv1 connection
+"hostkey": added IKEv1 connection
 east #
  
 

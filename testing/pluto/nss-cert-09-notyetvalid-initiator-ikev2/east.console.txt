@@ -9,7 +9,7 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add nss-cert
-002 "nss-cert": added IKEv2 connection
+"nss-cert": added IKEv2 connection
 east #
  echo "initdone"
 initdone

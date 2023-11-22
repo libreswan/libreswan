@@ -10,7 +10,7 @@ north #
  ../../guestbin/wait-until-pluto-started
 north #
  ipsec auto --add northnet-eastnet-nat
-002 "northnet-eastnet-nat": added IKEv1 connection
+"northnet-eastnet-nat": added IKEv1 connection
 north #
  ipsec whack --impair suppress-retransmits
 north #
@@ -18,61 +18,61 @@ north #
 initdone
 north #
  ipsec auto --up northnet-eastnet-nat
-002 "northnet-eastnet-nat" #1: initiating IKEv1 Main Mode connection
-1v1 "northnet-eastnet-nat" #1: sent Main Mode request
-1v1 "northnet-eastnet-nat" #1: sent Main Mode I2
-1v1 "northnet-eastnet-nat" #1: sent Main Mode I3
-002 "northnet-eastnet-nat" #1: Peer ID is ID_FQDN: '@east'
-003 "northnet-eastnet-nat" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
-004 "northnet-eastnet-nat" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "northnet-eastnet-nat" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-1v1 "northnet-eastnet-nat" #2: sent Quick Mode request
-004 "northnet-eastnet-nat" #2: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATD=192.1.2.23:4500 DPD=passive}
+"northnet-eastnet-nat" #1: initiating IKEv1 Main Mode connection
+"northnet-eastnet-nat" #1: sent Main Mode request
+"northnet-eastnet-nat" #1: sent Main Mode I2
+"northnet-eastnet-nat" #1: sent Main Mode I3
+"northnet-eastnet-nat" #1: Peer ID is ID_FQDN: '@east'
+"northnet-eastnet-nat" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"northnet-eastnet-nat" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"northnet-eastnet-nat" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"northnet-eastnet-nat" #2: sent Quick Mode request
+"northnet-eastnet-nat" #2: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATD=192.1.2.23:4500 DPD=passive}
 north #
  echo one
 one
 north #
  ipsec auto --replace northnet-eastnet-nat
-002 "northnet-eastnet-nat": terminating SAs using this connection
-002 "northnet-eastnet-nat" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
-005 "northnet-eastnet-nat" #2: ESP traffic information: in=0B out=0B
-002 "northnet-eastnet-nat" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
-002 "northnet-eastnet-nat": added IKEv1 connection
+"northnet-eastnet-nat": terminating SAs using this connection
+"northnet-eastnet-nat" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
+"northnet-eastnet-nat" #2: ESP traffic information: in=0B out=0B
+"northnet-eastnet-nat" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
+"northnet-eastnet-nat": added IKEv1 connection
 north #
  ipsec auto --up northnet-eastnet-nat
-002 "northnet-eastnet-nat" #3: initiating IKEv1 Main Mode connection
-1v1 "northnet-eastnet-nat" #3: sent Main Mode request
-1v1 "northnet-eastnet-nat" #3: sent Main Mode I2
-1v1 "northnet-eastnet-nat" #3: sent Main Mode I3
-002 "northnet-eastnet-nat" #3: Peer ID is ID_FQDN: '@east'
-003 "northnet-eastnet-nat" #3: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
-004 "northnet-eastnet-nat" #3: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "northnet-eastnet-nat" #4: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-1v1 "northnet-eastnet-nat" #4: sent Quick Mode request
-004 "northnet-eastnet-nat" #4: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATD=192.1.2.23:4500 DPD=passive}
+"northnet-eastnet-nat" #3: initiating IKEv1 Main Mode connection
+"northnet-eastnet-nat" #3: sent Main Mode request
+"northnet-eastnet-nat" #3: sent Main Mode I2
+"northnet-eastnet-nat" #3: sent Main Mode I3
+"northnet-eastnet-nat" #3: Peer ID is ID_FQDN: '@east'
+"northnet-eastnet-nat" #3: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"northnet-eastnet-nat" #3: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"northnet-eastnet-nat" #4: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"northnet-eastnet-nat" #4: sent Quick Mode request
+"northnet-eastnet-nat" #4: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATD=192.1.2.23:4500 DPD=passive}
 north #
  echo two
 two
 north #
  ipsec auto --down northnet-eastnet-nat
-002 "northnet-eastnet-nat": terminating SAs using this connection
-002 "northnet-eastnet-nat" #4: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #3
-005 "northnet-eastnet-nat" #4: ESP traffic information: in=0B out=0B
-002 "northnet-eastnet-nat" #3: deleting ISAKMP SA (MAIN_I4) and sending notification
+"northnet-eastnet-nat": terminating SAs using this connection
+"northnet-eastnet-nat" #4: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #3
+"northnet-eastnet-nat" #4: ESP traffic information: in=0B out=0B
+"northnet-eastnet-nat" #3: deleting ISAKMP SA (MAIN_I4) and sending notification
 north #
  sleep 2
 north #
  ipsec auto --up northnet-eastnet-nat
-002 "northnet-eastnet-nat" #5: initiating IKEv1 Main Mode connection
-1v1 "northnet-eastnet-nat" #5: sent Main Mode request
-1v1 "northnet-eastnet-nat" #5: sent Main Mode I2
-1v1 "northnet-eastnet-nat" #5: sent Main Mode I3
-002 "northnet-eastnet-nat" #5: Peer ID is ID_FQDN: '@east'
-003 "northnet-eastnet-nat" #5: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
-004 "northnet-eastnet-nat" #5: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "northnet-eastnet-nat" #6: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-1v1 "northnet-eastnet-nat" #6: sent Quick Mode request
-004 "northnet-eastnet-nat" #6: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATD=192.1.2.23:4500 DPD=passive}
+"northnet-eastnet-nat" #5: initiating IKEv1 Main Mode connection
+"northnet-eastnet-nat" #5: sent Main Mode request
+"northnet-eastnet-nat" #5: sent Main Mode I2
+"northnet-eastnet-nat" #5: sent Main Mode I3
+"northnet-eastnet-nat" #5: Peer ID is ID_FQDN: '@east'
+"northnet-eastnet-nat" #5: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"northnet-eastnet-nat" #5: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"northnet-eastnet-nat" #6: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"northnet-eastnet-nat" #6: sent Quick Mode request
+"northnet-eastnet-nat" #6: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATD=192.1.2.23:4500 DPD=passive}
 north #
  echo three
 three

@@ -19,10 +19,10 @@ west #
  # delete instead of down so it won't re-establish due to east auto=start
 west #
  ipsec auto --delete west-east-auto
-002 "west-east-auto": terminating SAs using this connection
-002 "west-east-auto" #3: deleting IPsec SA (QUICK_R2) and sending notification using ISAKMP SA #1
-005 "west-east-auto" #3: ESP traffic information: in=0B out=0B
-002 "west-east-auto" #1: deleting ISAKMP SA (MAIN_R3) and sending notification
+"west-east-auto": terminating SAs using this connection
+"west-east-auto" #3: deleting IPsec SA (QUICK_R2) and sending notification using ISAKMP SA #1
+"west-east-auto" #3: ESP traffic information: in=0B out=0B
+"west-east-auto" #1: deleting ISAKMP SA (MAIN_R3) and sending notification
 west #
  # wait for revival of IPsec then IKE
 west #

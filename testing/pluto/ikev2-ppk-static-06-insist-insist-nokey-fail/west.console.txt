@@ -10,7 +10,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-ipv4-psk-ppk
-002 "westnet-eastnet-ipv4-psk-ppk": added IKEv2 connection
+"westnet-eastnet-ipv4-psk-ppk": added IKEv2 connection
 west #
  ipsec auto --status | grep westnet-eastnet-ipv4-psk-ppk
 "westnet-eastnet-ipv4-psk-ppk": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
@@ -45,15 +45,15 @@ west #
  # expected to fail
 west #
  ipsec auto --up westnet-eastnet-ipv4-psk-ppk
-1v2 "westnet-eastnet-ipv4-psk-ppk" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "westnet-eastnet-ipv4-psk-ppk" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-002 "westnet-eastnet-ipv4-psk-ppk" #1: PPK AUTH calculated as initiator
-1v2 "westnet-eastnet-ipv4-psk-ppk" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "westnet-eastnet-ipv4-psk-ppk" #1: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
-036 "westnet-eastnet-ipv4-psk-ppk" #1: encountered fatal error in state STATE_V2_PARENT_I2
-002 "westnet-eastnet-ipv4-psk-ppk" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-002 "westnet-eastnet-ipv4-psk-ppk" #1: IMPAIR: revival: skip scheduling revival event
-002 "westnet-eastnet-ipv4-psk-ppk" #1: deleting IKE SA (PARENT_I2) and NOT sending notification
+"westnet-eastnet-ipv4-psk-ppk" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"westnet-eastnet-ipv4-psk-ppk" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"westnet-eastnet-ipv4-psk-ppk" #1: PPK AUTH calculated as initiator
+"westnet-eastnet-ipv4-psk-ppk" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"westnet-eastnet-ipv4-psk-ppk" #1: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
+"westnet-eastnet-ipv4-psk-ppk" #1: encountered fatal error in state STATE_V2_PARENT_I2
+"westnet-eastnet-ipv4-psk-ppk" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"westnet-eastnet-ipv4-psk-ppk" #1: IMPAIR: revival: skip scheduling revival event
+"westnet-eastnet-ipv4-psk-ppk" #1: deleting IKE SA (PARENT_I2) and NOT sending notification
 west #
  echo done
 done

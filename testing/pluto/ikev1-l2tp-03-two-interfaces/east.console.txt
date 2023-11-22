@@ -7,10 +7,10 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add l2tp-north-to-east-on-east
-002 "l2tp-north-to-east-on-east": added IKEv1 connection
+"l2tp-north-to-east-on-east": added IKEv1 connection
 east #
  ipsec auto --add l2tp-distraction-on-east
-002 "l2tp-distraction-on-east": added IKEv1 connection
+"l2tp-distraction-on-east": added IKEv1 connection
 east #
  # ensure that clear text does not get through
 east #

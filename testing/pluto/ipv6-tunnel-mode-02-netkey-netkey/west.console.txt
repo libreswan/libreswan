@@ -27,7 +27,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add v6-tunnel
-002 "v6-tunnel": added IKEv1 connection
+"v6-tunnel": added IKEv1 connection
 west #
  ipsec auto --status
 using kernel interface: xfrm
@@ -153,16 +153,16 @@ west #
 initdone
 west #
  ipsec auto --up v6-tunnel
-002 "v6-tunnel" #1: initiating IKEv1 Main Mode connection
-1v1 "v6-tunnel" #1: sent Main Mode request
-1v1 "v6-tunnel" #1: sent Main Mode I2
-1v1 "v6-tunnel" #1: sent Main Mode I3
-002 "v6-tunnel" #1: Peer ID is ID_FQDN: '@east'
-003 "v6-tunnel" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
-004 "v6-tunnel" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "v6-tunnel" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-1v1 "v6-tunnel" #2: sent Quick Mode request
-004 "v6-tunnel" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+"v6-tunnel" #1: initiating IKEv1 Main Mode connection
+"v6-tunnel" #1: sent Main Mode request
+"v6-tunnel" #1: sent Main Mode I2
+"v6-tunnel" #1: sent Main Mode I3
+"v6-tunnel" #1: Peer ID is ID_FQDN: '@east'
+"v6-tunnel" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"v6-tunnel" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"v6-tunnel" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"v6-tunnel" #2: sent Quick Mode request
+"v6-tunnel" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
  ping6 -n -q -c 4 -I 2001:db8:1:2::45 2001:db8:1:2::23
 PING 2001:db8:1:2::23(2001:db8:1:2::23) from 2001:db8:1:2::45 : 56 data bytes

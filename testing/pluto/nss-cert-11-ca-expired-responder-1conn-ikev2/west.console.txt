@@ -39,32 +39,32 @@ west #
  ipsec whack --impair revival
 west #
  ipsec auto --add old-west
-002 "old-west": added IKEv2 connection
+"old-west": added IKEv2 connection
 west #
  ipsec auto --add new-west
-002 "new-west": added IKEv2 connection
+"new-west": added IKEv2 connection
 west #
  # out with the old
 west #
  ipsec auto --up new-west
-1v2 "new-west" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "new-west" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "new-west" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "new-west" #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate 'CN=east' issued by CA 'CN=west-ca'
-004 "new-west" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"new-west" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"new-west" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"new-west" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"new-west" #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate 'CN=east' issued by CA 'CN=west-ca'
+"new-west" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ipsec auto --delete new-west
-002 "new-west": terminating SAs using this connection
-002 "new-west" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
-005 "new-west" #2: ESP traffic information: in=0B out=0B
+"new-west": terminating SAs using this connection
+"new-west" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"new-west" #2: ESP traffic information: in=0B out=0B
 west #
  # in with the new
 west #
  ipsec auto --up old-west
-1v2 "old-west" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "old-west" #3: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "old-west" #3: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "old-west" #3: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate 'CN=east' issued by CA 'CN=west-ca'
-004 "old-west" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"old-west" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
+"old-west" #3: sent IKE_SA_INIT request to 192.1.2.23:500
+"old-west" #3: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"old-west" #3: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate 'CN=east' issued by CA 'CN=west-ca'
+"old-west" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  

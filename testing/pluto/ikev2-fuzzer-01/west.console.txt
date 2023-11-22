@@ -6,80 +6,80 @@ west #
  count_max=20 ./ikev2-fuzzing-scanner.sh
 ./ikev2-fuzzing-scanner.sh run 20 times
 Redirecting to: [initsystem]
-002 "test": terminating SAs using this connection
-002 "test": added IKEv2 connection
+"test": terminating SAs using this connection
+"test": added IKEv2 connection
 Redirecting to: [initsystem]
 Redirecting to: [initsystem]
-002 "test": terminating SAs using this connection
-002 "test": added IKEv2 connection
+"test": terminating SAs using this connection
+"test": added IKEv2 connection
 Redirecting to: [initsystem]
 Redirecting to: [initsystem]
-002 "test": terminating SAs using this connection
-002 "test": added IKEv2 connection
+"test": terminating SAs using this connection
+"test": added IKEv2 connection
 Redirecting to: [initsystem]
 Redirecting to: [initsystem]
-002 "test": terminating SAs using this connection
-002 "test": added IKEv2 connection
+"test": terminating SAs using this connection
+"test": added IKEv2 connection
 Redirecting to: [initsystem]
 Redirecting to: [initsystem]
-002 "test": terminating SAs using this connection
-002 "test": added IKEv2 connection
+"test": terminating SAs using this connection
+"test": added IKEv2 connection
 Redirecting to: [initsystem]
 Redirecting to: [initsystem]
-002 "test": terminating SAs using this connection
-002 "test": added IKEv2 connection
+"test": terminating SAs using this connection
+"test": added IKEv2 connection
 Redirecting to: [initsystem]
 Redirecting to: [initsystem]
-002 "test": terminating SAs using this connection
-002 "test": added IKEv2 connection
+"test": terminating SAs using this connection
+"test": added IKEv2 connection
 Redirecting to: [initsystem]
 Redirecting to: [initsystem]
-002 "test": terminating SAs using this connection
-002 "test": added IKEv2 connection
+"test": terminating SAs using this connection
+"test": added IKEv2 connection
 Redirecting to: [initsystem]
 Redirecting to: [initsystem]
-002 "test": terminating SAs using this connection
-002 "test": added IKEv2 connection
+"test": terminating SAs using this connection
+"test": added IKEv2 connection
 Redirecting to: [initsystem]
 Redirecting to: [initsystem]
-002 "test": terminating SAs using this connection
-002 "test": added IKEv2 connection
+"test": terminating SAs using this connection
+"test": added IKEv2 connection
 Redirecting to: [initsystem]
 Redirecting to: [initsystem]
-002 "test": terminating SAs using this connection
-002 "test": added IKEv2 connection
+"test": terminating SAs using this connection
+"test": added IKEv2 connection
 Redirecting to: [initsystem]
 Redirecting to: [initsystem]
-002 "test": terminating SAs using this connection
-002 "test": added IKEv2 connection
+"test": terminating SAs using this connection
+"test": added IKEv2 connection
 Redirecting to: [initsystem]
 Redirecting to: [initsystem]
-002 "test": terminating SAs using this connection
-002 "test": added IKEv2 connection
+"test": terminating SAs using this connection
+"test": added IKEv2 connection
 Redirecting to: [initsystem]
 Redirecting to: [initsystem]
-002 "test": terminating SAs using this connection
-002 "test": added IKEv2 connection
+"test": terminating SAs using this connection
+"test": added IKEv2 connection
 Redirecting to: [initsystem]
 Redirecting to: [initsystem]
-002 "test": terminating SAs using this connection
-002 "test": added IKEv2 connection
+"test": terminating SAs using this connection
+"test": added IKEv2 connection
 Redirecting to: [initsystem]
 Redirecting to: [initsystem]
-002 "test": terminating SAs using this connection
-002 "test": added IKEv2 connection
+"test": terminating SAs using this connection
+"test": added IKEv2 connection
 Redirecting to: [initsystem]
 Redirecting to: [initsystem]
-002 "test": terminating SAs using this connection
-002 "test": added IKEv2 connection
+"test": terminating SAs using this connection
+"test": added IKEv2 connection
 Redirecting to: [initsystem]
 Redirecting to: [initsystem]
-002 "test": terminating SAs using this connection
-002 "test": added IKEv2 connection
+"test": terminating SAs using this connection
+"test": added IKEv2 connection
 Redirecting to: [initsystem]
 Redirecting to: [initsystem]
-002 "test": terminating SAs using this connection
-002 "test": added IKEv2 connection
+"test": terminating SAs using this connection
+"test": added IKEv2 connection
 Redirecting to: [initsystem]
 ran 20 times
 west #

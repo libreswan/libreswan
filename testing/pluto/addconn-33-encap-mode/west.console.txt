@@ -6,22 +6,22 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add addconn
-002 "addconn": added IKEv2 connection
+"addconn": added IKEv2 connection
 west #
  ipsec add addconn--type=transport
-002 "addconn--type=transport": added IKEv2 connection
+"addconn--type=transport": added IKEv2 connection
 west #
  ipsec add addconn--type=tunnel
-002 "addconn--type=tunnel": added IKEv2 connection
+"addconn--type=tunnel": added IKEv2 connection
 west #
  ipsec whack --name whack                           --encrypt --host 1.2.3.4 --to --host 5.6.7.8
-002 "whack": added IKEv2 connection
+"whack": added IKEv2 connection
 west #
  ipsec whack --name whack--tunnel     --tunnel      --encrypt --host 1.2.3.4 --to --host 5.6.7.8
-002 "whack--tunnel": added IKEv2 connection
+"whack--tunnel": added IKEv2 connection
 west #
  ipsec whack --name whack--transport  --transport   --encrypt --host 1.2.3.4 --to --host 5.6.7.8
-002 "whack--transport": added IKEv2 connection
+"whack--transport": added IKEv2 connection
 west #
  ipsec connectionstatus | sed -n -e 's/\(.* policy:\) .*TUNNEL.*/\1 TUNNEL/p'
 "addconn":   policy: TUNNEL

@@ -24,7 +24,7 @@ west #
  ipsec whack --impair suppress-retransmits
 west #
  ipsec auto --add westnet-eastnet-aes256
-002 "westnet-eastnet-aes256": added IKEv1 connection
+"westnet-eastnet-aes256": added IKEv1 connection
 west #
  ipsec auto --status | grep westnet-eastnet-aes256
 "westnet-eastnet-aes256": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
@@ -52,16 +52,16 @@ west #
 initdone
 west #
  ipsec auto --up westnet-eastnet-aes256
-002 "westnet-eastnet-aes256" #1: initiating IKEv1 Main Mode connection
-1v1 "westnet-eastnet-aes256" #1: sent Main Mode request
-1v1 "westnet-eastnet-aes256" #1: sent Main Mode I2
-1v1 "westnet-eastnet-aes256" #1: sent Main Mode I3
-002 "westnet-eastnet-aes256" #1: Peer ID is ID_FQDN: '@east'
-003 "westnet-eastnet-aes256" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
-004 "westnet-eastnet-aes256" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA1 group=MODP2048}
-002 "westnet-eastnet-aes256" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-1v1 "westnet-eastnet-aes256" #2: sent Quick Mode request
-004 "westnet-eastnet-aes256" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA1_96 DPD=passive}
+"westnet-eastnet-aes256" #1: initiating IKEv1 Main Mode connection
+"westnet-eastnet-aes256" #1: sent Main Mode request
+"westnet-eastnet-aes256" #1: sent Main Mode I2
+"westnet-eastnet-aes256" #1: sent Main Mode I3
+"westnet-eastnet-aes256" #1: Peer ID is ID_FQDN: '@east'
+"westnet-eastnet-aes256" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet-aes256" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA1 group=MODP2048}
+"westnet-eastnet-aes256" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"westnet-eastnet-aes256" #2: sent Quick Mode request
+"westnet-eastnet-aes256" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA1_96 DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up

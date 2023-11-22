@@ -46,7 +46,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add ikev2-westnet-eastnet-x509-cr
-002 "ikev2-westnet-eastnet-x509-cr": added IKEv2 connection
+"ikev2-westnet-eastnet-x509-cr": added IKEv2 connection
 west #
  ipsec whack --impair suppress-retransmits
 west #
@@ -54,11 +54,11 @@ west #
 initdone
 west #
  ipsec auto --up ikev2-westnet-eastnet-x509-cr
-1v2 "ikev2-westnet-eastnet-x509-cr" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "ikev2-westnet-eastnet-x509-cr" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "ikev2-westnet-eastnet-x509-cr" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "ikev2-westnet-eastnet-x509-cr" #1: initiator established IKE SA; authenticated peer RSASSA-PSS with SHA2_512
-004 "ikev2-westnet-eastnet-x509-cr" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"ikev2-westnet-eastnet-x509-cr" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"ikev2-westnet-eastnet-x509-cr" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"ikev2-westnet-eastnet-x509-cr" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"ikev2-westnet-eastnet-x509-cr" #1: initiator established IKE SA; authenticated peer RSASSA-PSS with SHA2_512
+"ikev2-westnet-eastnet-x509-cr" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ping -n -q -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
@@ -70,69 +70,69 @@ west #
 #2: "ikev2-westnet-eastnet-x509-cr", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 west #
  ipsec auto --down ikev2-westnet-eastnet-x509-cr
-002 "ikev2-westnet-eastnet-x509-cr": terminating SAs using this connection
-005 "ikev2-westnet-eastnet-x509-cr" #2: ESP traffic information: in=336B out=336B
-002 "ikev2-westnet-eastnet-x509-cr" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"ikev2-westnet-eastnet-x509-cr": terminating SAs using this connection
+"ikev2-westnet-eastnet-x509-cr" #2: ESP traffic information: in=336B out=336B
+"ikev2-westnet-eastnet-x509-cr" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 west #
  ipsec auto --up ikev2-westnet-eastnet-x509-cr
-1v2 "ikev2-westnet-eastnet-x509-cr" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "ikev2-westnet-eastnet-x509-cr" #3: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "ikev2-westnet-eastnet-x509-cr" #3: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "ikev2-westnet-eastnet-x509-cr" #3: initiator established IKE SA; authenticated peer RSASSA-PSS with SHA2_512
-004 "ikev2-westnet-eastnet-x509-cr" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"ikev2-westnet-eastnet-x509-cr" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
+"ikev2-westnet-eastnet-x509-cr" #3: sent IKE_SA_INIT request to 192.1.2.23:500
+"ikev2-westnet-eastnet-x509-cr" #3: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"ikev2-westnet-eastnet-x509-cr" #3: initiator established IKE SA; authenticated peer RSASSA-PSS with SHA2_512
+"ikev2-westnet-eastnet-x509-cr" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ipsec auto --down ikev2-westnet-eastnet-x509-cr
-002 "ikev2-westnet-eastnet-x509-cr": terminating SAs using this connection
-005 "ikev2-westnet-eastnet-x509-cr" #4: ESP traffic information: in=0B out=0B
-002 "ikev2-westnet-eastnet-x509-cr" #3: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"ikev2-westnet-eastnet-x509-cr": terminating SAs using this connection
+"ikev2-westnet-eastnet-x509-cr" #4: ESP traffic information: in=0B out=0B
+"ikev2-westnet-eastnet-x509-cr" #3: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 west #
  ipsec auto --up ikev2-westnet-eastnet-x509-cr
-1v2 "ikev2-westnet-eastnet-x509-cr" #5: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "ikev2-westnet-eastnet-x509-cr" #5: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "ikev2-westnet-eastnet-x509-cr" #5: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "ikev2-westnet-eastnet-x509-cr" #5: initiator established IKE SA; authenticated peer RSASSA-PSS with SHA2_512
-004 "ikev2-westnet-eastnet-x509-cr" #6: initiator established Child SA using #5; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"ikev2-westnet-eastnet-x509-cr" #5: initiating IKEv2 connection to 192.1.2.23 using UDP
+"ikev2-westnet-eastnet-x509-cr" #5: sent IKE_SA_INIT request to 192.1.2.23:500
+"ikev2-westnet-eastnet-x509-cr" #5: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"ikev2-westnet-eastnet-x509-cr" #5: initiator established IKE SA; authenticated peer RSASSA-PSS with SHA2_512
+"ikev2-westnet-eastnet-x509-cr" #6: initiator established Child SA using #5; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ipsec auto --down ikev2-westnet-eastnet-x509-cr
-002 "ikev2-westnet-eastnet-x509-cr": terminating SAs using this connection
-005 "ikev2-westnet-eastnet-x509-cr" #6: ESP traffic information: in=0B out=0B
-002 "ikev2-westnet-eastnet-x509-cr" #5: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"ikev2-westnet-eastnet-x509-cr": terminating SAs using this connection
+"ikev2-westnet-eastnet-x509-cr" #6: ESP traffic information: in=0B out=0B
+"ikev2-westnet-eastnet-x509-cr" #5: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 west #
  ipsec auto --up ikev2-westnet-eastnet-x509-cr
-1v2 "ikev2-westnet-eastnet-x509-cr" #7: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "ikev2-westnet-eastnet-x509-cr" #7: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "ikev2-westnet-eastnet-x509-cr" #7: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "ikev2-westnet-eastnet-x509-cr" #7: initiator established IKE SA; authenticated peer RSASSA-PSS with SHA2_512
-004 "ikev2-westnet-eastnet-x509-cr" #8: initiator established Child SA using #7; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"ikev2-westnet-eastnet-x509-cr" #7: initiating IKEv2 connection to 192.1.2.23 using UDP
+"ikev2-westnet-eastnet-x509-cr" #7: sent IKE_SA_INIT request to 192.1.2.23:500
+"ikev2-westnet-eastnet-x509-cr" #7: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"ikev2-westnet-eastnet-x509-cr" #7: initiator established IKE SA; authenticated peer RSASSA-PSS with SHA2_512
+"ikev2-westnet-eastnet-x509-cr" #8: initiator established Child SA using #7; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ipsec auto --down ikev2-westnet-eastnet-x509-cr
-002 "ikev2-westnet-eastnet-x509-cr": terminating SAs using this connection
-005 "ikev2-westnet-eastnet-x509-cr" #8: ESP traffic information: in=0B out=0B
-002 "ikev2-westnet-eastnet-x509-cr" #7: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"ikev2-westnet-eastnet-x509-cr": terminating SAs using this connection
+"ikev2-westnet-eastnet-x509-cr" #8: ESP traffic information: in=0B out=0B
+"ikev2-westnet-eastnet-x509-cr" #7: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 west #
  ipsec auto --up ikev2-westnet-eastnet-x509-cr
-1v2 "ikev2-westnet-eastnet-x509-cr" #9: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "ikev2-westnet-eastnet-x509-cr" #9: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "ikev2-westnet-eastnet-x509-cr" #9: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "ikev2-westnet-eastnet-x509-cr" #9: initiator established IKE SA; authenticated peer RSASSA-PSS with SHA2_512
-004 "ikev2-westnet-eastnet-x509-cr" #10: initiator established Child SA using #9; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"ikev2-westnet-eastnet-x509-cr" #9: initiating IKEv2 connection to 192.1.2.23 using UDP
+"ikev2-westnet-eastnet-x509-cr" #9: sent IKE_SA_INIT request to 192.1.2.23:500
+"ikev2-westnet-eastnet-x509-cr" #9: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"ikev2-westnet-eastnet-x509-cr" #9: initiator established IKE SA; authenticated peer RSASSA-PSS with SHA2_512
+"ikev2-westnet-eastnet-x509-cr" #10: initiator established Child SA using #9; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ipsec auto --down ikev2-westnet-eastnet-x509-cr
-002 "ikev2-westnet-eastnet-x509-cr": terminating SAs using this connection
-005 "ikev2-westnet-eastnet-x509-cr" #10: ESP traffic information: in=0B out=0B
-002 "ikev2-westnet-eastnet-x509-cr" #9: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"ikev2-westnet-eastnet-x509-cr": terminating SAs using this connection
+"ikev2-westnet-eastnet-x509-cr" #10: ESP traffic information: in=0B out=0B
+"ikev2-westnet-eastnet-x509-cr" #9: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 west #
  ipsec auto --up ikev2-westnet-eastnet-x509-cr
-1v2 "ikev2-westnet-eastnet-x509-cr" #11: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "ikev2-westnet-eastnet-x509-cr" #11: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "ikev2-westnet-eastnet-x509-cr" #11: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "ikev2-westnet-eastnet-x509-cr" #11: initiator established IKE SA; authenticated peer RSASSA-PSS with SHA2_512
-004 "ikev2-westnet-eastnet-x509-cr" #12: initiator established Child SA using #11; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"ikev2-westnet-eastnet-x509-cr" #11: initiating IKEv2 connection to 192.1.2.23 using UDP
+"ikev2-westnet-eastnet-x509-cr" #11: sent IKE_SA_INIT request to 192.1.2.23:500
+"ikev2-westnet-eastnet-x509-cr" #11: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"ikev2-westnet-eastnet-x509-cr" #11: initiator established IKE SA; authenticated peer RSASSA-PSS with SHA2_512
+"ikev2-westnet-eastnet-x509-cr" #12: initiator established Child SA using #11; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ipsec auto --down ikev2-westnet-eastnet-x509-cr
-002 "ikev2-westnet-eastnet-x509-cr": terminating SAs using this connection
-005 "ikev2-westnet-eastnet-x509-cr" #12: ESP traffic information: in=0B out=0B
-002 "ikev2-westnet-eastnet-x509-cr" #11: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"ikev2-westnet-eastnet-x509-cr": terminating SAs using this connection
+"ikev2-westnet-eastnet-x509-cr" #12: ESP traffic information: in=0B out=0B
+"ikev2-westnet-eastnet-x509-cr" #11: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 west #
  echo "done"
 done

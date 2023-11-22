@@ -8,7 +8,7 @@ north #
  ../../guestbin/wait-until-pluto-started
 north #
  ipsec add north
-002 "north": added IKEv2 connection
+"north": added IKEv2 connection
 north #
  echo "initdone"
 initdone

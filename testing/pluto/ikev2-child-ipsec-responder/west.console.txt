@@ -20,10 +20,10 @@ west #
  ipsec whack --impair suppress-retransmits
 west #
  ipsec auto --add westnet-eastnet-ikev2a
-002 "westnet-eastnet-ikev2a": added IKEv2 connection
+"westnet-eastnet-ikev2a": added IKEv2 connection
 west #
  ipsec auto --add westnet-eastnet-ikev2b
-002 "westnet-eastnet-ikev2b": added IKEv2 connection
+"westnet-eastnet-ikev2b": added IKEv2 connection
 west #
  echo "initdone"
 initdone
@@ -40,10 +40,10 @@ west #
 up
 west #
  ipsec auto --up westnet-eastnet-ikev2b
-002 "westnet-eastnet-ikev2b" #3: initiating Child SA using IKE SA #1
-002 "westnet-eastnet-ikev2b" #3: connection is already unrouted HOLD
-1v2 "westnet-eastnet-ikev2b" #3: sent CREATE_CHILD_SA request for new IPsec SA
-004 "westnet-eastnet-ikev2b" #3: initiator established Child SA using #1; IPsec tunnel [192.0.100.0/24===192.0.200.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"westnet-eastnet-ikev2b" #3: initiating Child SA using IKE SA #1
+"westnet-eastnet-ikev2b" #3: connection is already unrouted HOLD
+"westnet-eastnet-ikev2b" #3: sent CREATE_CHILD_SA request for new IPsec SA
+"westnet-eastnet-ikev2b" #3: initiator established Child SA using #1; IPsec tunnel [192.0.100.0/24===192.0.200.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.100.254 192.0.200.254
 up

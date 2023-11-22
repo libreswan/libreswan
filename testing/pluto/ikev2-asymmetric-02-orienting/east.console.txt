@@ -6,7 +6,7 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-ikev2
-002 "westnet-eastnet-ikev2": added IKEv2 connection
+"westnet-eastnet-ikev2": added IKEv2 connection
 east #
  # should be unoriented
 east #
@@ -16,12 +16,12 @@ east #
  ip addr add 192.1.2.24/24 dev eth1
 east #
  ipsec whack --listen
-002 listening for IKE messages
-002 adding UDP interface eth1 192.1.2.24:500
-002 adding UDP interface eth1 192.1.2.24:4500
-002 forgetting secrets
-002 loading secrets from "/etc/ipsec.secrets"
-002 no secrets filename matched "/etc/ipsec.d/*.secrets"
+listening for IKE messages
+adding UDP interface eth1 192.1.2.24:500
+adding UDP interface eth1 192.1.2.24:4500
+forgetting secrets
+loading secrets from "/etc/ipsec.secrets"
+no secrets filename matched "/etc/ipsec.d/*.secrets"
 east #
  # should be oriented
 east #

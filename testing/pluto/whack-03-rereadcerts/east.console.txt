@@ -7,10 +7,10 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-ikev2
-002 "westnet-eastnet-ikev2": added IKEv2 connection
+"westnet-eastnet-ikev2": added IKEv2 connection
 east #
  ipsec auto --add distraction
-002 "distraction": added IKEv2 connection
+"distraction": added IKEv2 connection
 east #
  ipsec auto --status | grep westnet-eastnet-ikev2
 "westnet-eastnet-ikev2": 192.0.2.0/24===192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]...192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]===192.0.1.0/24; unrouted; my_ip=unset; their_ip=unset;
@@ -38,14 +38,14 @@ east #
 initdone
 east #
  ipsec whack --rereadcerts
-000 "distraction": reloaded leftcert='west'
-000 "distraction": reloaded rightcert='east'
-000 "westnet-eastnet-ikev2": reloaded leftcert='west'
-000 "westnet-eastnet-ikev2": reloaded rightcert='east'
-002 freeing root certificate cache
+"distraction": reloaded leftcert='west'
+"distraction": reloaded rightcert='east'
+"westnet-eastnet-ikev2": reloaded leftcert='west'
+"westnet-eastnet-ikev2": reloaded rightcert='east'
+freeing root certificate cache
 east #
  ipsec whack --listcacerts
-002 adding the CA+root cert E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+adding the CA+root cert E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
  
 List of X.509 CA Certificates:
  

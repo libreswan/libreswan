@@ -21,25 +21,25 @@ west #
  ipsec whack --impair revival
 west #
  ipsec add tcp
-002 "tcp": added IKEv2 connection
+"tcp": added IKEv2 connection
 west #
  ipsec add udp
-002 "udp": added IKEv2 connection
+"udp": added IKEv2 connection
 west #
  echo "initdone"
 initdone
 west #
  ipsec up tcp && ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254 && ipsec down tcp || true
-003 ERROR: "tcp": TCP: socket XX: connecting to 192.1.2.23:4500: Connection refused (errno 111)
+ERROR: "tcp": TCP: socket XX: connecting to 192.1.2.23:4500: Connection refused (errno 111)
 down
-002 "tcp": terminating SAs using this connection
+"tcp": terminating SAs using this connection
 west #
  ipsec up udp && ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254 && ipsec down udp || true
-1v2 "udp" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "udp" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-031 "udp" #1: STATE_V2_PARENT_I1: 10 second timeout exceeded after 5 retransmits.  No response (or no acceptable response) to our first IKEv2 message
-002 "udp" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-002 "udp" #1: IMPAIR: revival: skip scheduling revival event
-002 "udp" #1: deleting IKE SA (PARENT_I1) and NOT sending notification
+"udp" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"udp" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"udp" #1: STATE_V2_PARENT_I1: 10 second timeout exceeded after 5 retransmits.  No response (or no acceptable response) to our first IKEv2 message
+"udp" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"udp" #1: IMPAIR: revival: skip scheduling revival event
+"udp" #1: deleting IKE SA (PARENT_I1) and NOT sending notification
 west #
  

@@ -6,7 +6,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add west
-002 "west": added IKEv2 connection
+"west": added IKEv2 connection
 west #
  ipsec auto --route west
 west #
@@ -103,10 +103,10 @@ west #
  # confirm shutdown/cleanup
 west #
  ipsec auto --down west
-002 "west": terminating SAs using this connection
-002 "west" #2: intiating delete
-005 "west" #3: ESP traffic information: in=64B out=64B
-002 "west" #2: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
+"west": terminating SAs using this connection
+"west" #2: intiating delete
+"west" #3: ESP traffic information: in=64B out=64B
+"west" #2: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #
  ../../guestbin/ipsec-kernel-policy.sh
 src 192.1.2.45/32 dst 192.1.2.23/32

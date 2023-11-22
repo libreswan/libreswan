@@ -6,7 +6,7 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add netkey
-002 "netkey": added IKEv2 connection
+"netkey": added IKEv2 connection
 east #
  echo "initdone"
 initdone

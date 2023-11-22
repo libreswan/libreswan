@@ -6,7 +6,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-east-sourceip
-002 "westnet-east-sourceip": added IKEv1 connection
+"westnet-east-sourceip": added IKEv1 connection
 west #
  ipsec whack --impair suppress-retransmits
 west #
@@ -14,16 +14,16 @@ west #
 initdone
 west #
  ipsec auto --up westnet-east-sourceip
-002 "westnet-east-sourceip" #1: initiating IKEv1 Main Mode connection
-1v1 "westnet-east-sourceip" #1: sent Main Mode request
-1v1 "westnet-east-sourceip" #1: sent Main Mode I2
-1v1 "westnet-east-sourceip" #1: sent Main Mode I3
-002 "westnet-east-sourceip" #1: Peer ID is ID_FQDN: '@east'
-003 "westnet-east-sourceip" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
-004 "westnet-east-sourceip" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "westnet-east-sourceip" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-1v1 "westnet-east-sourceip" #2: sent Quick Mode request
-004 "westnet-east-sourceip" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+"westnet-east-sourceip" #1: initiating IKEv1 Main Mode connection
+"westnet-east-sourceip" #1: sent Main Mode request
+"westnet-east-sourceip" #1: sent Main Mode I2
+"westnet-east-sourceip" #1: sent Main Mode I3
+"westnet-east-sourceip" #1: Peer ID is ID_FQDN: '@east'
+"westnet-east-sourceip" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-east-sourceip" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"westnet-east-sourceip" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"westnet-east-sourceip" #2: sent Quick Mode request
+"westnet-east-sourceip" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
  ip route list
 default via 192.1.2.254 dev eth1

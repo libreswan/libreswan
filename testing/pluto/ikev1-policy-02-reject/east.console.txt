@@ -11,12 +11,12 @@ east #
  # should fail
 east #
  ipsec auto --add ikev1
-036 "ikev1": failed to add connection: global ikev1-policy does not allow IKEv1 connections
+"ikev1": failed to add connection: global ikev1-policy does not allow IKEv1 connections
 east #
  # should work but unused
 east #
  ipsec auto --add ikev2
-002 "ikev2": added IKEv2 connection
+"ikev2": added IKEv2 connection
 east #
  echo "initdone"
 initdone

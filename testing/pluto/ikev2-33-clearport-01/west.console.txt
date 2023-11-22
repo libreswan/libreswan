@@ -6,10 +6,10 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add west-east
-002 "west-east": added IKEv2 connection
+"west-east": added IKEv2 connection
 west #
  ipsec auto --add pass-7
-002 "pass-7": added passthrough connection
+"pass-7": added passthrough connection
 west #
  echo "initdone"
 initdone

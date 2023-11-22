@@ -11,14 +11,14 @@ west #
  ipsec whack --impair suppress-retransmits
 west #
  ../../guestbin/libreswan-up-down.sh westnet-eastnet-ipv4-psk-ikev2 -I 192.0.1.254 192.0.2.254
-002 "westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
-1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "westnet-eastnet-ipv4-psk-ikev2" #1: message response contained an unknown critical payload type (255??)
-031 "westnet-eastnet-ipv4-psk-ikev2" #1: STATE_V2_PARENT_I2: 10 second timeout exceeded after 0 retransmits.  Possible authentication failure: no acceptable response to our first encrypted message
-002 "westnet-eastnet-ipv4-psk-ikev2" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-002 "westnet-eastnet-ipv4-psk-ikev2" #1: deleting IKE SA (PARENT_I2) and NOT sending notification
+"westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
+"westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"westnet-eastnet-ipv4-psk-ikev2" #1: message response contained an unknown critical payload type (255??)
+"westnet-eastnet-ipv4-psk-ikev2" #1: STATE_V2_PARENT_I2: 10 second timeout exceeded after 0 retransmits.  Possible authentication failure: no acceptable response to our first encrypted message
+"westnet-eastnet-ipv4-psk-ikev2" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"westnet-eastnet-ipv4-psk-ikev2" #1: deleting IKE SA (PARENT_I2) and NOT sending notification
 west #
  echo done
 done

@@ -12,7 +12,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add west
-002 "west": added IKEv2 connection
+"west": added IKEv2 connection
 west #
  echo "initdone"
 initdone
@@ -22,11 +22,11 @@ west #
  # bring up west and then immediately re-key
 west #
  ipsec auto --up west
-1v2 "west" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "west" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "west" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "west" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "west" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"west" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"west" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"west" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"west" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
@@ -43,19 +43,19 @@ west #
 "west" #2: ESP traffic information: in=84B out=84B
 west #
  ipsec auto --down west
-002 "west": terminating SAs using this connection
-002 "west" #1: intiating delete
-005 "west" #3: ESP traffic information: in=0B out=0B
-002 "west" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
+"west": terminating SAs using this connection
+"west" #1: intiating delete
+"west" #3: ESP traffic information: in=0B out=0B
+"west" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #
  # protoid=none
 west #
  ipsec auto --up west
-1v2 "west" #4: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "west" #4: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "west" #4: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "west" #4: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "west" #5: initiator established Child SA using #4; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"west" #4: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west" #4: sent IKE_SA_INIT request to 192.1.2.23:500
+"west" #4: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"west" #4: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"west" #5: initiator established Child SA using #4; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
@@ -71,16 +71,16 @@ west #
 "west" #6: CREATE_CHILD_SA failed with error notification INVALID_SYNTAX
 west #
  ipsec auto --down west
-002 "west": terminating SAs using this connection
+"west": terminating SAs using this connection
 west #
  # protoid=IKE
 west #
  ipsec auto --up west
-1v2 "west" #7: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "west" #7: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "west" #7: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "west" #7: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "west" #8: initiator established Child SA using #7; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"west" #7: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west" #7: sent IKE_SA_INIT request to 192.1.2.23:500
+"west" #7: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"west" #7: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"west" #8: initiator established Child SA using #7; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
@@ -96,16 +96,16 @@ west #
 "west" #9: CREATE_CHILD_SA failed with error notification INVALID_SYNTAX
 west #
  ipsec auto --down west
-002 "west": terminating SAs using this connection
+"west": terminating SAs using this connection
 west #
  # protoid=unknown
 west #
  ipsec auto --up west
-1v2 "west" #10: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "west" #10: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "west" #10: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "west" #10: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "west" #11: initiator established Child SA using #10; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"west" #10: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west" #10: sent IKE_SA_INIT request to 192.1.2.23:500
+"west" #10: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"west" #10: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"west" #11: initiator established Child SA using #10; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
@@ -121,7 +121,7 @@ west #
 "west" #12: CREATE_CHILD_SA failed with error notification INVALID_SYNTAX
 west #
  ipsec auto --down west
-002 "west": terminating SAs using this connection
+"west": terminating SAs using this connection
 west #
  ipsec whack --trafficstatus
 west #

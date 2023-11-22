@@ -18,12 +18,12 @@ east #
 Total IPsec connections: loaded 10, active 0
 east #
  ipsec auto --add passthrough-in
-002 "passthrough-in": added passthrough connection
+"passthrough-in": added passthrough connection
 east #
  ipsec auto --route passthrough-in
 east #
  ipsec auto --add passthrough-out
-002 "passthrough-out": added passthrough connection
+"passthrough-out": added passthrough connection
 east #
  ipsec auto --route passthrough-out
 east #

@@ -6,7 +6,7 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add east
-002 "east": added IKEv2 connection
+"east": added IKEv2 connection
 east #
  echo "initdone"
 initdone
@@ -27,8 +27,8 @@ east #
  # check with connection removed
 east #
  ipsec auto --delete east
-002 "east": terminating SAs using this connection
-002 "east": delete ipsec-interface=ipsec1 if_id=1 added by pluto
+"east": terminating SAs using this connection
+"east": delete ipsec-interface=ipsec1 if_id=1 added by pluto
 east #
  ip link show dev ipsec1
 Device "ipsec1" does not exist.

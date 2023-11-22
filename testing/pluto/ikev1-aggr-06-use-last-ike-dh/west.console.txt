@@ -22,7 +22,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-aggr
-002 "westnet-eastnet-aggr": added IKEv1 connection
+"westnet-eastnet-aggr": added IKEv1 connection
 west #
  ipsec auto --status | grep westnet-eastnet-aggr
 "westnet-eastnet-aggr": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
@@ -49,18 +49,18 @@ west #
 initdone
 west #
  ipsec auto --up westnet-eastnet-aggr
-003 "westnet-eastnet-aggr" #1: multiple DH groups in aggressive mode can cause interop failure
-003 "westnet-eastnet-aggr" #1: Deleting previous proposal in the hopes of selecting DH 2 or DH 5
-002 "westnet-eastnet-aggr" #1: initiating IKEv1 Aggressive Mode connection
-003 "westnet-eastnet-aggr" #1: multiple DH groups in aggressive mode can cause interop failure
-003 "westnet-eastnet-aggr" #1: Deleting previous proposal in the hopes of selecting DH 2 or DH 5
-1v1 "westnet-eastnet-aggr" #1: sent Aggressive Mode request
-002 "westnet-eastnet-aggr" #1: Peer ID is ID_FQDN: '@east'
-003 "westnet-eastnet-aggr" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
-004 "westnet-eastnet-aggr" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP1536}
-002 "westnet-eastnet-aggr" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+AGGRESSIVE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-1v1 "westnet-eastnet-aggr" #2: sent Quick Mode request
-004 "westnet-eastnet-aggr" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+"westnet-eastnet-aggr" #1: multiple DH groups in aggressive mode can cause interop failure
+"westnet-eastnet-aggr" #1: Deleting previous proposal in the hopes of selecting DH 2 or DH 5
+"westnet-eastnet-aggr" #1: initiating IKEv1 Aggressive Mode connection
+"westnet-eastnet-aggr" #1: multiple DH groups in aggressive mode can cause interop failure
+"westnet-eastnet-aggr" #1: Deleting previous proposal in the hopes of selecting DH 2 or DH 5
+"westnet-eastnet-aggr" #1: sent Aggressive Mode request
+"westnet-eastnet-aggr" #1: Peer ID is ID_FQDN: '@east'
+"westnet-eastnet-aggr" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet-aggr" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP1536}
+"westnet-eastnet-aggr" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+AGGRESSIVE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"westnet-eastnet-aggr" #2: sent Quick Mode request
+"westnet-eastnet-aggr" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up

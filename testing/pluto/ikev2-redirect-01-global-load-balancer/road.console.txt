@@ -7,7 +7,7 @@ road #
  ../../guestbin/wait-until-pluto-started
 road #
  ipsec auto --add road-east
-002 "road-east": added IKEv2 connection
+"road-east": added IKEv2 connection
 road #
  echo initdone
 initdone
@@ -19,24 +19,24 @@ road #
  ipsec whack --impair revival --impair suppress-retransmits
 road #
  ipsec auto --up road-east
-1v2 "road-east" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "road-east" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-002 "road-east" #1: IKE_SA_INIT response redirecting to new gateway 192.1.2.45
-002 "road-east" #1: scheduling redirect 1 to 192.1.2.45
-002 "road-east" #1: IMPAIR: redirect: skip scheduling redirect event
-002 "road-east" #1: deleting IKE SA (PARENT_I1) and NOT sending notification
+"road-east" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"road-east" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"road-east" #1: IKE_SA_INIT response redirecting to new gateway 192.1.2.45
+"road-east" #1: scheduling redirect 1 to 192.1.2.45
+"road-east" #1: IMPAIR: redirect: skip scheduling redirect event
+"road-east" #1: deleting IKE SA (PARENT_I1) and NOT sending notification
 road #
  ipsec whack --impair trigger-revival:1
-000 "road-east": dispatch REVIVAL event
-1v2 "road-east" #2: initiating IKEv2 connection to 192.1.2.45 using UDP
-1v2 "road-east" #2: sent IKE_SA_INIT request to 192.1.2.45:500
-1v2 "road-east" #2: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "road-east" #2: initiator established IKE SA; authenticated peer '3nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-002 "road-east" #3: received INTERNAL_IP4_ADDRESS 192.0.2.101
-002 "road-east" #3: received INTERNAL_IP4_DNS 1.2.3.4
-002 "road-east" #3: received INTERNAL_IP4_DNS 5.6.7.8
-002 "road-east" #3: up-client output: updating resolvconf
-004 "road-east" #3: initiator established Child SA using #2; IPsec tunnel [192.0.2.101/32===0.0.0.0/0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"road-east": dispatch REVIVAL event
+"road-east" #2: initiating IKEv2 connection to 192.1.2.45 using UDP
+"road-east" #2: sent IKE_SA_INIT request to 192.1.2.45:500
+"road-east" #2: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"road-east" #2: initiator established IKE SA; authenticated peer '3nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"road-east" #3: received INTERNAL_IP4_ADDRESS 192.0.2.101
+"road-east" #3: received INTERNAL_IP4_DNS 1.2.3.4
+"road-east" #3: received INTERNAL_IP4_DNS 5.6.7.8
+"road-east" #3: up-client output: updating resolvconf
+"road-east" #3: initiator established Child SA using #2; IPsec tunnel [192.0.2.101/32===0.0.0.0/0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 road #
  ../../guestbin/ping-once.sh --up 192.0.2.254
 up
@@ -45,10 +45,10 @@ road #
 #3: "road-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=192.0.2.101/32
 road #
  ipsec auto --delete road-east
-002 "road-east": terminating SAs using this connection
-002 "road-east" #2: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
-002 "road-east" #3: down-client output: restoring resolvconf
-005 "road-east" #3: ESP traffic information: in=84B out=84B
+"road-east": terminating SAs using this connection
+"road-east" #2: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"road-east" #3: down-client output: restoring resolvconf
+"road-east" #3: ESP traffic information: in=84B out=84B
 road #
  # road is redirected to 1 - 192.1.2.44 - which is down
 road #
@@ -57,24 +57,24 @@ road #
  ipsec whack --impair revival --impair timeout-on-retransmit
 road #
  ipsec auto --add road-east
-002 "road-east": added IKEv2 connection
+"road-east": added IKEv2 connection
 road #
  ipsec auto --up road-east
-1v2 "road-east" #4: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "road-east" #4: sent IKE_SA_INIT request to 192.1.2.23:500
-002 "road-east" #4: IKE_SA_INIT response redirecting to new gateway 192.1.2.44
-002 "road-east" #4: scheduling redirect 1 to 192.1.2.44
-002 "road-east" #4: IMPAIR: redirect: skip scheduling redirect event
-002 "road-east" #4: deleting IKE SA (PARENT_I1) and NOT sending notification
+"road-east" #4: initiating IKEv2 connection to 192.1.2.23 using UDP
+"road-east" #4: sent IKE_SA_INIT request to 192.1.2.23:500
+"road-east" #4: IKE_SA_INIT response redirecting to new gateway 192.1.2.44
+"road-east" #4: scheduling redirect 1 to 192.1.2.44
+"road-east" #4: IMPAIR: redirect: skip scheduling redirect event
+"road-east" #4: deleting IKE SA (PARENT_I1) and NOT sending notification
 road #
  ipsec whack --impair trigger-revival:2
-000 "road-east": dispatch REVIVAL event
-1v2 "road-east" #5: initiating IKEv2 connection to 192.1.2.44 using UDP
-1v2 "road-east" #5: sent IKE_SA_INIT request to 192.1.2.44:500
-002 "road-east" #5: IMPAIR: retransmit so timing out SA (may retry)
-002 "road-east" #5: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-002 "road-east" #5: IMPAIR: revival: skip scheduling revival event
-002 "road-east" #5: deleting IKE SA (PARENT_I1) and NOT sending notification
+"road-east": dispatch REVIVAL event
+"road-east" #5: initiating IKEv2 connection to 192.1.2.44 using UDP
+"road-east" #5: sent IKE_SA_INIT request to 192.1.2.44:500
+"road-east" #5: IMPAIR: retransmit so timing out SA (may retry)
+"road-east" #5: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"road-east" #5: IMPAIR: revival: skip scheduling revival event
+"road-east" #5: deleting IKE SA (PARENT_I1) and NOT sending notification
 road #
  ipsec whack --trafficstatus
 road #

@@ -6,7 +6,7 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add road-eastnet-nat
-002 "road-eastnet-nat": added IKEv1 connection
+"road-eastnet-nat": added IKEv1 connection
 east #
  echo "initdone"
 initdone

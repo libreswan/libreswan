@@ -6,8 +6,8 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add east
-002 "east": connection is using multiple addresspools
-002 "east": added IKEv2 connection
+"east": connection is using multiple addresspools
+"east": added IKEv2 connection
 east #
  echo "initdone"
 initdone

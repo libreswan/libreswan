@@ -19,7 +19,7 @@ west #
  #ipsec auto --add distraction
 west #
  ipsec auto --add west-to-east
-002 "west-to-east": added IKEv2 connection
+"west-to-east": added IKEv2 connection
 west #
  # IKE will be triggered by acquire; expect two labels
 west #

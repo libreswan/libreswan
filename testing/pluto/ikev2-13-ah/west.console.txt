@@ -22,7 +22,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
-002 "westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
+"westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
 west #
  ipsec whack --impair suppress-retransmits
 west #
@@ -30,11 +30,11 @@ west #
 initdone
 west #
  ipsec auto --up westnet-eastnet-ipv4-psk-ikev2
-1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "westnet-eastnet-ipv4-psk-ikev2" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "westnet-eastnet-ipv4-psk-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {AH/ESN=>0xAHAH <0xAHAH xfrm=HMAC_SHA1_96 DPD=passive}
+"westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"westnet-eastnet-ipv4-psk-ikev2" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"westnet-eastnet-ipv4-psk-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {AH/ESN=>0xAHAH <0xAHAH xfrm=HMAC_SHA1_96 DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
@@ -45,10 +45,10 @@ west #
  # test rekey
 west #
  ipsec auto --up westnet-eastnet-ipv4-psk-ikev2
-002 "westnet-eastnet-ipv4-psk-ikev2" #3: initiating Child SA using IKE SA #1
-002 "westnet-eastnet-ipv4-psk-ikev2" #3: connection is already erouted
-1v2 "westnet-eastnet-ipv4-psk-ikev2" #3: sent CREATE_CHILD_SA request for new IPsec SA
-004 "westnet-eastnet-ipv4-psk-ikev2" #3: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {AH/ESN=>0xAHAH <0xAHAH xfrm=HMAC_SHA1_96 DPD=passive}
+"westnet-eastnet-ipv4-psk-ikev2" #3: initiating Child SA using IKE SA #1
+"westnet-eastnet-ipv4-psk-ikev2" #3: connection is already erouted
+"westnet-eastnet-ipv4-psk-ikev2" #3: sent CREATE_CHILD_SA request for new IPsec SA
+"westnet-eastnet-ipv4-psk-ikev2" #3: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {AH/ESN=>0xAHAH <0xAHAH xfrm=HMAC_SHA1_96 DPD=passive}
 west #
  echo done
 done

@@ -3,7 +3,7 @@ east# ipsec start
 Redirecting to: [initsystem]
 east# ../../guestbin/wait-until-pluto-started
 east# ipsec auto --add eastnet-westnet-ikev2
-002 "eastnet-westnet-ikev2": added IKEv2 connection
+"eastnet-westnet-ikev2": added IKEv2 connection
 east# ipsec whack --impair suppress-retransmits
 netbsdw# ../../guestbin/netbsd-prep.sh # note: swan-prep does not yet support BSD
 ipsec.conf -> PATH/etc/ipsec.conf
@@ -13,16 +13,16 @@ Redirecting to: [initsystem]
 Initializing NSS database
 Starting pluto.
 netbsdw# ipsec auto --add eastnet-westnet-ikev2
-002 "eastnet-westnet-ikev2": warning: PF_KEY v2 kernel interface does not support ESN so disabling
-002 "eastnet-westnet-ikev2": added IKEv2 connection
+"eastnet-westnet-ikev2": warning: PF_KEY v2 kernel interface does not support ESN so disabling
+"eastnet-westnet-ikev2": added IKEv2 connection
 netbsdw# echo "initdone"
 initdone
 netbsdw# ipsec auto --up eastnet-westnet-ikev2
-1v2 "eastnet-westnet-ikev2" #1: initiating IKEv2 connection to 2001:db8:1:2::23 using UDP
-1v2 "eastnet-westnet-ikev2" #1: sent IKE_SA_INIT request to [2001:db8:1:2::23]:500
-1v2 "eastnet-westnet-ikev2" #1: sent IKE_AUTH request {cipher=AES_CBC_256 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
-003 "eastnet-westnet-ikev2" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "eastnet-westnet-ikev2" #2: initiator established Child SA using #1; IPsec transport [2001:db8:1:2::45/128===2001:db8:1:2::23/128] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+"eastnet-westnet-ikev2" #1: initiating IKEv2 connection to 2001:db8:1:2::23 using UDP
+"eastnet-westnet-ikev2" #1: sent IKE_SA_INIT request to [2001:db8:1:2::23]:500
+"eastnet-westnet-ikev2" #1: sent IKE_AUTH request {cipher=AES_CBC_256 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
+"eastnet-westnet-ikev2" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"eastnet-westnet-ikev2" #2: initiator established Child SA using #1; IPsec transport [2001:db8:1:2::45/128===2001:db8:1:2::23/128] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 netbsdw# ../../guestbin/ipsec-kernel-policy.sh
 2001:db8:1:2::23[any] 2001:db8:1:2::45[any] 255(reserved)
 	in ipsec

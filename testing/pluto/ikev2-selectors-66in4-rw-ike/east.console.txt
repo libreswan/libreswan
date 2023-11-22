@@ -13,8 +13,8 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add east
-002 "east": connection is using multiple subnets
-002 "east": added IKEv2 connection
+"east": connection is using multiple subnets
+"east": added IKEv2 connection
 east #
  echo "initdone"
 initdone

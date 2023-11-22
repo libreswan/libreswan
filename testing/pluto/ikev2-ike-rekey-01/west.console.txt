@@ -12,7 +12,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add west
-002 "west": added IKEv2 connection
+"west": added IKEv2 connection
 west #
  echo "initdone"
 initdone
@@ -20,11 +20,11 @@ west #
  # IKE #1 CHILD #2
 west #
  ipsec auto --up west
-1v2 "west" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "west" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "west" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "west" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "west" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"west" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"west" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"west" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"west" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
@@ -39,10 +39,10 @@ west #
  # IKE #3 CHILD #2
 west #
  ipsec whack --rekey-ike --name west
-002 "west" #3: initiating rekey to replace IKE SA #1
-1v2 "west" #3: sent CREATE_CHILD_SA request to rekey IKE SA
-004 "west" #3: initiator rekeyed IKE SA #1 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "west" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"west" #3: initiating rekey to replace IKE SA #1
+"west" #3: sent CREATE_CHILD_SA request to rekey IKE SA
+"west" #3: initiator rekeyed IKE SA #1 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"west" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
@@ -62,10 +62,10 @@ west #
  # IKE #4 CHILD #2
 west #
  ipsec whack --rekey-ike --name west
-002 "west" #4: initiating rekey to replace IKE SA #3
-1v2 "west" #4: sent CREATE_CHILD_SA request to rekey IKE SA
-004 "west" #4: initiator rekeyed IKE SA #3 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "west" #3: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"west" #4: initiating rekey to replace IKE SA #3
+"west" #4: sent CREATE_CHILD_SA request to rekey IKE SA
+"west" #4: initiator rekeyed IKE SA #3 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"west" #3: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up

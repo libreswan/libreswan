@@ -22,7 +22,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add west
-002 "west": added IKEv2 connection
+"west": added IKEv2 connection
 west #
  echo "initdone"
 initdone
@@ -30,13 +30,13 @@ west #
  # look for ESPinTCP
 west #
  ipsec up west
-1v2 "west" #1: initiating IKEv2 connection to 192.1.2.23 using TCP
-1v2 "west" #1: sent IKE_SA_INIT request to 192.1.2.23:4500
-002 "west" #1: Received unauthenticated INVALID_KE_PAYLOAD response to DH MODP1536; resending with suggested DH MODP2048
-1v2 "west" #1: sent IKE_SA_INIT request to 192.1.2.23:4500
-1v2 "west" #1: sent IKE_AUTH request {cipher=AES_CBC_256 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=MODP2048}
-003 "west" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "west" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESPinTCP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"west" #1: initiating IKEv2 connection to 192.1.2.23 using TCP
+"west" #1: sent IKE_SA_INIT request to 192.1.2.23:4500
+"west" #1: Received unauthenticated INVALID_KE_PAYLOAD response to DH MODP1536; resending with suggested DH MODP2048
+"west" #1: sent IKE_SA_INIT request to 192.1.2.23:4500
+"west" #1: sent IKE_AUTH request {cipher=AES_CBC_256 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=MODP2048}
+"west" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"west" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESPinTCP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up

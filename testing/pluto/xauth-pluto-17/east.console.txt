@@ -6,8 +6,8 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add xauth-road-eastnet-psk
-002 "xauth-road-eastnet-psk": warning: IKEv1 ignores dpdaction=
-002 "xauth-road-eastnet-psk": added IKEv1 connection
+"xauth-road-eastnet-psk": warning: IKEv1 ignores dpdaction=
+"xauth-road-eastnet-psk": added IKEv1 connection
 east #
  echo "initdone"
 initdone

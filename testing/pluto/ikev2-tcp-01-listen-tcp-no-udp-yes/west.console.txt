@@ -21,29 +21,29 @@ west #
  ipsec whack --impair revival
 west #
  ipsec add tcp
-002 "tcp": added IKEv2 connection
+"tcp": added IKEv2 connection
 west #
  ipsec add udp
-002 "udp": added IKEv2 connection
+"udp": added IKEv2 connection
 west #
  echo "initdone"
 initdone
 west #
  ipsec up tcp && ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254 && ipsec down tcp || true
-003 ERROR: "tcp": TCP: socket XX: connecting to 192.1.2.23:4500: Connection refused (errno 111)
+ERROR: "tcp": TCP: socket XX: connecting to 192.1.2.23:4500: Connection refused (errno 111)
 down
-002 "tcp": terminating SAs using this connection
+"tcp": terminating SAs using this connection
 west #
  ipsec up udp && ../../guestbin/ping-once.sh --up   -I 192.0.1.254 192.0.2.254 && ipsec down udp || true
-1v2 "udp" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "udp" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "udp" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "udp" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "udp" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"udp" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"udp" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"udp" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"udp" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"udp" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 up
-002 "udp": terminating SAs using this connection
-002 "udp" #1: intiating delete
-005 "udp" #2: ESP traffic information: in=84B out=84B
-002 "udp" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
+"udp": terminating SAs using this connection
+"udp" #1: intiating delete
+"udp" #2: ESP traffic information: in=84B out=84B
+"udp" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #
  

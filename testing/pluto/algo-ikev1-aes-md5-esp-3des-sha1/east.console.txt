@@ -29,7 +29,7 @@ conn algo
 @west @east : PSK "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
 starting pluto ...
 Redirecting to: [initsystem]
-002 "algo": added IKEv1 connection
+"algo": added IKEv1 connection
 east #
  ../../guestbin/wait-for.sh --match '^".*#2: .* established' -- cat /tmp/pluto.log
 "algo" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 DPD=passive}

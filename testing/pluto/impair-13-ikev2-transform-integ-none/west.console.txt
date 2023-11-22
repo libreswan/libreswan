@@ -10,15 +10,15 @@ west #
  ipsec whack --impair v2-proposal-integ:drop-none
 west #
  ipsec up integ
-1v2 "integ" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-002 "integ" #1: IMPAIR: proposal 1 transform INTEG=NONE excluded when counting transforms
-002 "integ" #1: IMPAIR: proposal 1 transform INTEG=NONE excluded when emitting proposal
-1v2 "integ" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-002 "integ" #1: IMPAIR: proposal 1 transform INTEG=NONE excluded when counting transforms
-002 "integ" #1: IMPAIR: proposal 1 transform INTEG=NONE excluded when emitting proposal
-1v2 "integ" #1: sent IKE_AUTH request {cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 group=MODP2048}
-003 "integ" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "integ" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE DPD=passive}
+"integ" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"integ" #1: IMPAIR: proposal 1 transform INTEG=NONE excluded when counting transforms
+"integ" #1: IMPAIR: proposal 1 transform INTEG=NONE excluded when emitting proposal
+"integ" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"integ" #1: IMPAIR: proposal 1 transform INTEG=NONE excluded when counting transforms
+"integ" #1: IMPAIR: proposal 1 transform INTEG=NONE excluded when emitting proposal
+"integ" #1: sent IKE_AUTH request {cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 group=MODP2048}
+"integ" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"integ" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
@@ -31,21 +31,21 @@ west #
  ipsec whack --impair v2-proposal-integ:allow-none
 west #
  ipsec whack --rekey-ike   --name integ
-002 "integ" #3: initiating rekey to replace IKE SA #1
-002 "integ" #3: IMPAIR: proposal 1 transform INTEG=NONE included when counting transforms
-002 "integ" #3: IMPAIR: proposal 1 transform INTEG=NONE included when emitting proposal
-1v2 "integ" #3: sent CREATE_CHILD_SA request to rekey IKE SA
-004 "integ" #3: initiator rekeyed IKE SA #1 {cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 group=MODP2048}
-002 "integ" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"integ" #3: initiating rekey to replace IKE SA #1
+"integ" #3: IMPAIR: proposal 1 transform INTEG=NONE included when counting transforms
+"integ" #3: IMPAIR: proposal 1 transform INTEG=NONE included when emitting proposal
+"integ" #3: sent CREATE_CHILD_SA request to rekey IKE SA
+"integ" #3: initiator rekeyed IKE SA #1 {cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 group=MODP2048}
+"integ" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 west #
  ipsec whack --rekey-child --name integ
-002 "integ" #4: initiating rekey to replace Child SA #2
-002 "integ" #4: IMPAIR: proposal 1 transform INTEG=NONE included when counting transforms
-002 "integ" #4: IMPAIR: proposal 1 transform INTEG=NONE included when emitting proposal
-1v2 "integ" #4: sent CREATE_CHILD_SA request to rekey IPsec SA
-004 "integ" #4: initiator rekeyed Child SA #2 using #3; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE-MODP2048 DPD=passive}
-002 "integ" #2: deleting established Child SA using IKE SA #3
-005 "integ" #2: ESP traffic information: in=84B out=84B
+"integ" #4: initiating rekey to replace Child SA #2
+"integ" #4: IMPAIR: proposal 1 transform INTEG=NONE included when counting transforms
+"integ" #4: IMPAIR: proposal 1 transform INTEG=NONE included when emitting proposal
+"integ" #4: sent CREATE_CHILD_SA request to rekey IPsec SA
+"integ" #4: initiator rekeyed Child SA #2 using #3; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE-MODP2048 DPD=passive}
+"integ" #2: deleting established Child SA using IKE SA #3
+"integ" #2: ESP traffic information: in=84B out=84B
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
@@ -58,21 +58,21 @@ west #
  ipsec whack --impair v2-proposal-integ:drop-none
 west #
  ipsec whack --rekey-ike   --name integ
-002 "integ" #5: initiating rekey to replace IKE SA #3
-002 "integ" #5: IMPAIR: proposal 1 transform INTEG=NONE excluded when counting transforms
-002 "integ" #5: IMPAIR: proposal 1 transform INTEG=NONE excluded when emitting proposal
-1v2 "integ" #5: sent CREATE_CHILD_SA request to rekey IKE SA
-004 "integ" #5: initiator rekeyed IKE SA #3 {cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 group=MODP2048}
-002 "integ" #3: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"integ" #5: initiating rekey to replace IKE SA #3
+"integ" #5: IMPAIR: proposal 1 transform INTEG=NONE excluded when counting transforms
+"integ" #5: IMPAIR: proposal 1 transform INTEG=NONE excluded when emitting proposal
+"integ" #5: sent CREATE_CHILD_SA request to rekey IKE SA
+"integ" #5: initiator rekeyed IKE SA #3 {cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 group=MODP2048}
+"integ" #3: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 west #
  ipsec whack --rekey-child --name integ
-002 "integ" #6: initiating rekey to replace Child SA #4
-002 "integ" #6: IMPAIR: proposal 1 transform INTEG=NONE excluded when counting transforms
-002 "integ" #6: IMPAIR: proposal 1 transform INTEG=NONE excluded when emitting proposal
-1v2 "integ" #6: sent CREATE_CHILD_SA request to rekey IPsec SA
-004 "integ" #6: initiator rekeyed Child SA #4 using #5; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE-MODP2048 DPD=passive}
-002 "integ" #4: deleting established Child SA using IKE SA #5
-005 "integ" #4: ESP traffic information: in=84B out=84B
+"integ" #6: initiating rekey to replace Child SA #4
+"integ" #6: IMPAIR: proposal 1 transform INTEG=NONE excluded when counting transforms
+"integ" #6: IMPAIR: proposal 1 transform INTEG=NONE excluded when emitting proposal
+"integ" #6: sent CREATE_CHILD_SA request to rekey IPsec SA
+"integ" #6: initiator rekeyed Child SA #4 using #5; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE-MODP2048 DPD=passive}
+"integ" #4: deleting established Child SA using IKE SA #5
+"integ" #4: ESP traffic information: in=84B out=84B
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
@@ -93,15 +93,15 @@ west #
  ipsec whack --impair v2-proposal-integ:allow-none
 west #
  ipsec up integ
-1v2 "integ" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-002 "integ" #1: IMPAIR: proposal 1 transform INTEG=NONE included when counting transforms
-002 "integ" #1: IMPAIR: proposal 1 transform INTEG=NONE included when emitting proposal
-1v2 "integ" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-002 "integ" #1: IMPAIR: proposal 1 transform INTEG=NONE included when counting transforms
-002 "integ" #1: IMPAIR: proposal 1 transform INTEG=NONE included when emitting proposal
-1v2 "integ" #1: sent IKE_AUTH request {cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 group=MODP2048}
-003 "integ" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "integ" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE DPD=passive}
+"integ" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"integ" #1: IMPAIR: proposal 1 transform INTEG=NONE included when counting transforms
+"integ" #1: IMPAIR: proposal 1 transform INTEG=NONE included when emitting proposal
+"integ" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"integ" #1: IMPAIR: proposal 1 transform INTEG=NONE included when counting transforms
+"integ" #1: IMPAIR: proposal 1 transform INTEG=NONE included when emitting proposal
+"integ" #1: sent IKE_AUTH request {cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 group=MODP2048}
+"integ" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"integ" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
@@ -114,21 +114,21 @@ west #
  ipsec whack --impair v2-proposal-integ:drop-none
 west #
  ipsec whack --rekey-ike   --name integ
-002 "integ" #3: initiating rekey to replace IKE SA #1
-002 "integ" #3: IMPAIR: proposal 1 transform INTEG=NONE excluded when counting transforms
-002 "integ" #3: IMPAIR: proposal 1 transform INTEG=NONE excluded when emitting proposal
-1v2 "integ" #3: sent CREATE_CHILD_SA request to rekey IKE SA
-004 "integ" #3: initiator rekeyed IKE SA #1 {cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 group=MODP2048}
-002 "integ" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"integ" #3: initiating rekey to replace IKE SA #1
+"integ" #3: IMPAIR: proposal 1 transform INTEG=NONE excluded when counting transforms
+"integ" #3: IMPAIR: proposal 1 transform INTEG=NONE excluded when emitting proposal
+"integ" #3: sent CREATE_CHILD_SA request to rekey IKE SA
+"integ" #3: initiator rekeyed IKE SA #1 {cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 group=MODP2048}
+"integ" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 west #
  ipsec whack --rekey-child --name integ
-002 "integ" #4: initiating rekey to replace Child SA #2
-002 "integ" #4: IMPAIR: proposal 1 transform INTEG=NONE excluded when counting transforms
-002 "integ" #4: IMPAIR: proposal 1 transform INTEG=NONE excluded when emitting proposal
-1v2 "integ" #4: sent CREATE_CHILD_SA request to rekey IPsec SA
-004 "integ" #4: initiator rekeyed Child SA #2 using #3; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE-MODP2048 DPD=passive}
-002 "integ" #2: deleting established Child SA using IKE SA #3
-005 "integ" #2: ESP traffic information: in=84B out=84B
+"integ" #4: initiating rekey to replace Child SA #2
+"integ" #4: IMPAIR: proposal 1 transform INTEG=NONE excluded when counting transforms
+"integ" #4: IMPAIR: proposal 1 transform INTEG=NONE excluded when emitting proposal
+"integ" #4: sent CREATE_CHILD_SA request to rekey IPsec SA
+"integ" #4: initiator rekeyed Child SA #2 using #3; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE-MODP2048 DPD=passive}
+"integ" #2: deleting established Child SA using IKE SA #3
+"integ" #2: ESP traffic information: in=84B out=84B
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
@@ -141,21 +141,21 @@ west #
  ipsec whack --impair v2-proposal-integ:allow-none
 west #
  ipsec whack --rekey-ike   --name integ
-002 "integ" #5: initiating rekey to replace IKE SA #3
-002 "integ" #5: IMPAIR: proposal 1 transform INTEG=NONE included when counting transforms
-002 "integ" #5: IMPAIR: proposal 1 transform INTEG=NONE included when emitting proposal
-1v2 "integ" #5: sent CREATE_CHILD_SA request to rekey IKE SA
-004 "integ" #5: initiator rekeyed IKE SA #3 {cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 group=MODP2048}
-002 "integ" #3: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"integ" #5: initiating rekey to replace IKE SA #3
+"integ" #5: IMPAIR: proposal 1 transform INTEG=NONE included when counting transforms
+"integ" #5: IMPAIR: proposal 1 transform INTEG=NONE included when emitting proposal
+"integ" #5: sent CREATE_CHILD_SA request to rekey IKE SA
+"integ" #5: initiator rekeyed IKE SA #3 {cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 group=MODP2048}
+"integ" #3: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 west #
  ipsec whack --rekey-child --name integ
-002 "integ" #6: initiating rekey to replace Child SA #4
-002 "integ" #6: IMPAIR: proposal 1 transform INTEG=NONE included when counting transforms
-002 "integ" #6: IMPAIR: proposal 1 transform INTEG=NONE included when emitting proposal
-1v2 "integ" #6: sent CREATE_CHILD_SA request to rekey IPsec SA
-004 "integ" #6: initiator rekeyed Child SA #4 using #5; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE-MODP2048 DPD=passive}
-002 "integ" #4: deleting established Child SA using IKE SA #5
-005 "integ" #4: ESP traffic information: in=84B out=84B
+"integ" #6: initiating rekey to replace Child SA #4
+"integ" #6: IMPAIR: proposal 1 transform INTEG=NONE included when counting transforms
+"integ" #6: IMPAIR: proposal 1 transform INTEG=NONE included when emitting proposal
+"integ" #6: sent CREATE_CHILD_SA request to rekey IPsec SA
+"integ" #6: initiator rekeyed Child SA #4 using #5; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE-MODP2048 DPD=passive}
+"integ" #4: deleting established Child SA using IKE SA #5
+"integ" #4: ESP traffic information: in=84B out=84B
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up

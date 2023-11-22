@@ -6,7 +6,7 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-all
-002 "westnet-all": added IKEv1 connection
+"westnet-all": added IKEv1 connection
 east #
  echo "initdone"
 initdone

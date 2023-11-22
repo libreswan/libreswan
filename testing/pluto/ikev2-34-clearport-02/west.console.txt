@@ -6,20 +6,20 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add west-east
-002 "west-east": added IKEv2 connection
+"west-east": added IKEv2 connection
 west #
  ipsec auto --add pass-7
-002 "pass-7": added passthrough connection
+"pass-7": added passthrough connection
 west #
  echo "initdone"
 initdone
 west #
  ipsec auto --up west-east
-1v2 "west-east" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "west-east" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "west-east" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "west-east" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "west-east" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"west-east" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west-east" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"west-east" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"west-east" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"west-east" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  # poke a hole to port 7, those packets will be allowed cleartext
 west #

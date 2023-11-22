@@ -11,43 +11,43 @@ west #
  # these should load properly
 west #
  ipsec auto --add default-implicit-authby
-002 "default-implicit-authby": added IKEv2 connection
+"default-implicit-authby": added IKEv2 connection
 west #
  ipsec auto --add default-specified-authby
-002 "default-specified-authby": added IKEv2 connection
+"default-specified-authby": added IKEv2 connection
 west #
  ipsec auto --add ecdsa-rsa
-002 "ecdsa-rsa": added IKEv2 connection
+"ecdsa-rsa": added IKEv2 connection
 west #
  ipsec auto --add ecdsa
-002 "ecdsa": added IKEv2 connection
+"ecdsa": added IKEv2 connection
 west #
  ipsec auto --add ecdsa-sha2
-002 "ecdsa-sha2": added IKEv2 connection
+"ecdsa-sha2": added IKEv2 connection
 west #
  ipsec auto --add ecdsa-sha2_256
-002 "ecdsa-sha2_256": added IKEv2 connection
+"ecdsa-sha2_256": added IKEv2 connection
 west #
  ipsec auto --add ecdsa-sha2_384
-002 "ecdsa-sha2_384": added IKEv2 connection
+"ecdsa-sha2_384": added IKEv2 connection
 west #
  ipsec auto --add ecdsa-sha2_512
-002 "ecdsa-sha2_512": added IKEv2 connection
+"ecdsa-sha2_512": added IKEv2 connection
 west #
  ipsec auto --add rsa-sha1
-002 "rsa-sha1": added IKEv2 connection
+"rsa-sha1": added IKEv2 connection
 west #
  ipsec auto --add rsa-sha2
-002 "rsa-sha2": added IKEv2 connection
+"rsa-sha2": added IKEv2 connection
 west #
  ipsec auto --add rsa-sha2_256
-002 "rsa-sha2_256": added IKEv2 connection
+"rsa-sha2_256": added IKEv2 connection
 west #
  ipsec auto --add rsa-sha2_384
-002 "rsa-sha2_384": added IKEv2 connection
+"rsa-sha2_384": added IKEv2 connection
 west #
  ipsec auto --add rsa-sha2_512
-002 "rsa-sha2_512": added IKEv2 connection
+"rsa-sha2_512": added IKEv2 connection
 west #
  ipsec status |grep policy: | grep -v modecfg
 "default-implicit-authby":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;

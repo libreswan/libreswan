@@ -8,7 +8,7 @@ west #
  # this should add, subnet= silently ignored
 west #
  ipsec auto --add first
-002 "first": added IKEv2 connection
+"first": added IKEv2 connection
 west #
  # now append a second conn; should also add
 west #
@@ -19,8 +19,8 @@ west #
  echo '        right=5.6.7.8' >> /etc/ipsec.conf
 west #
  ipsec auto --add first
-002 "first": terminating SAs using this connection
-002 "first": added IKEv2 connection
+"first": terminating SAs using this connection
+"first": added IKEv2 connection
 west #
  echo "initdone"
 initdone

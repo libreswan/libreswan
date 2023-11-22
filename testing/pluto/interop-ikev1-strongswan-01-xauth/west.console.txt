@@ -22,29 +22,29 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-ikev1
-002 "westnet-eastnet-ikev1": warning: IKEv1 ignores dpdaction=
-002 "westnet-eastnet-ikev1": added IKEv1 connection
+"westnet-eastnet-ikev1": warning: IKEv1 ignores dpdaction=
+"westnet-eastnet-ikev1": added IKEv1 connection
 west #
  echo "initdone"
 initdone
 west #
  ipsec auto --up westnet-eastnet-ikev1
-002 "westnet-eastnet-ikev1" #1: initiating IKEv1 Main Mode connection
-1v1 "westnet-eastnet-ikev1" #1: sent Main Mode request
-1v1 "westnet-eastnet-ikev1" #1: sent Main Mode I2
-1v1 "westnet-eastnet-ikev1" #1: sent Main Mode I3
-002 "westnet-eastnet-ikev1" #1: Peer ID is ID_FQDN: '@east'
-004 "westnet-eastnet-ikev1" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
-002 "westnet-eastnet-ikev1" #1: XAUTH: Answering XAUTH challenge with user='use3'
-004 "westnet-eastnet-ikev1" #1: XAUTH client - possibly awaiting CFG_set {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
-002 "westnet-eastnet-ikev1" #1: XAUTH: Successfully Authenticated
-004 "westnet-eastnet-ikev1" #1: XAUTH client - possibly awaiting CFG_set {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
-002 "westnet-eastnet-ikev1" #1: modecfg: Sending IP request (MODECFG_I1)
-005 "westnet-eastnet-ikev1" #1: Received IPv4 address: 192.0.1.254/32
-004 "westnet-eastnet-ikev1" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
-002 "westnet-eastnet-ikev1" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+XAUTH+MODECFG_PULL+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-1v1 "westnet-eastnet-ikev1" #2: sent Quick Mode request
-004 "westnet-eastnet-ikev1" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=active username=use3}
+"westnet-eastnet-ikev1" #1: initiating IKEv1 Main Mode connection
+"westnet-eastnet-ikev1" #1: sent Main Mode request
+"westnet-eastnet-ikev1" #1: sent Main Mode I2
+"westnet-eastnet-ikev1" #1: sent Main Mode I3
+"westnet-eastnet-ikev1" #1: Peer ID is ID_FQDN: '@east'
+"westnet-eastnet-ikev1" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
+"westnet-eastnet-ikev1" #1: XAUTH: Answering XAUTH challenge with user='use3'
+"westnet-eastnet-ikev1" #1: XAUTH client - possibly awaiting CFG_set {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
+"westnet-eastnet-ikev1" #1: XAUTH: Successfully Authenticated
+"westnet-eastnet-ikev1" #1: XAUTH client - possibly awaiting CFG_set {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
+"westnet-eastnet-ikev1" #1: modecfg: Sending IP request (MODECFG_I1)
+"westnet-eastnet-ikev1" #1: Received IPv4 address: 192.0.1.254/32
+"westnet-eastnet-ikev1" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
+"westnet-eastnet-ikev1" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+XAUTH+MODECFG_PULL+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"westnet-eastnet-ikev1" #2: sent Quick Mode request
+"westnet-eastnet-ikev1" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=active username=use3}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
@@ -58,10 +58,10 @@ west #
  # confirm --down is processed properly too
 west #
  ipsec auto --down westnet-eastnet-ikev1
-002 "westnet-eastnet-ikev1": terminating SAs using this connection
-002 "westnet-eastnet-ikev1" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
-005 "westnet-eastnet-ikev1" #2: ESP traffic information: in=84B out=84B XAUTHuser=use3
-002 "westnet-eastnet-ikev1" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
+"westnet-eastnet-ikev1": terminating SAs using this connection
+"westnet-eastnet-ikev1" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
+"westnet-eastnet-ikev1" #2: ESP traffic information: in=84B out=84B XAUTHuser=use3
+"westnet-eastnet-ikev1" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
 west #
  echo done
 done

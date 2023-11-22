@@ -17,22 +17,22 @@ west #
  ipsec whack --impair suppress-retransmits
 west #
  ../../guestbin/libreswan-up-down.sh aes128 --alive -I 192.0.1.254 192.0.2.254
-002 "aes128": added IKEv1 connection
-002 "aes128" #1: initiating IKEv1 Main Mode connection
-1v1 "aes128" #1: sent Main Mode request
-1v1 "aes128" #1: sent Main Mode I2
-1v1 "aes128" #1: sent Main Mode I3
-002 "aes128" #1: Peer ID is ID_FQDN: '@east'
-004 "aes128" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
-002 "aes128" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-1v1 "aes128" #2: sent Quick Mode request
-004 "aes128" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+"aes128": added IKEv1 connection
+"aes128" #1: initiating IKEv1 Main Mode connection
+"aes128" #1: sent Main Mode request
+"aes128" #1: sent Main Mode I2
+"aes128" #1: sent Main Mode I3
+"aes128" #1: Peer ID is ID_FQDN: '@east'
+"aes128" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
+"aes128" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"aes128" #2: sent Quick Mode request
+"aes128" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
-002 "aes128": terminating SAs using this connection
-002 "aes128" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
-005 "aes128" #2: ESP traffic information: in=84B out=84B
-002 "aes128" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
-002 "aes128": terminating SAs using this connection
+"aes128": terminating SAs using this connection
+"aes128" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
+"aes128" #2: ESP traffic information: in=84B out=84B
+"aes128" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
+"aes128": terminating SAs using this connection
 west #
  ipsec whack --impair none
 west #
@@ -45,17 +45,17 @@ west #
  ipsec whack --impair ike-key-length-attribute:duplicate
 west #
  ../../guestbin/libreswan-up-down.sh aes128 --down -I 192.0.1.254 192.0.2.254
-002 "aes128": added IKEv1 connection
-002 "aes128" #3: initiating IKEv1 Main Mode connection
-002 "aes128" #3: IMPAIR: stripping key-length
-002 "aes128" #3: IMPAIR: duplicating key-length
-1v1 "aes128" #3: sent Main Mode request
-003 "aes128" #3: ignoring informational payload BAD_PROPOSAL_SYNTAX, msgid=00000000, length=12
-003 "aes128" #3: received and ignored notification payload: BAD_PROPOSAL_SYNTAX
-002 "aes128" #3: IMPAIR: retransmit so timing out SA (may retry)
-002 "aes128" #3: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-002 "aes128" #3: IMPAIR: revival: skip scheduling revival event
-002 "aes128" #3: deleting ISAKMP SA (MAIN_I1) and NOT sending notification
+"aes128": added IKEv1 connection
+"aes128" #3: initiating IKEv1 Main Mode connection
+"aes128" #3: IMPAIR: stripping key-length
+"aes128" #3: IMPAIR: duplicating key-length
+"aes128" #3: sent Main Mode request
+"aes128" #3: ignoring informational payload BAD_PROPOSAL_SYNTAX, msgid=00000000, length=12
+"aes128" #3: received and ignored notification payload: BAD_PROPOSAL_SYNTAX
+"aes128" #3: IMPAIR: retransmit so timing out SA (may retry)
+"aes128" #3: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"aes128" #3: IMPAIR: revival: skip scheduling revival event
+"aes128" #3: deleting ISAKMP SA (MAIN_I1) and NOT sending notification
 west #
  ipsec whack --impair none
 west #
@@ -66,19 +66,19 @@ west #
  ipsec whack --impair child-key-length-attribute:duplicate
 west #
  ../../guestbin/libreswan-up-down.sh aes128 --down -I 192.0.1.254 192.0.2.254
-002 "aes128": added IKEv1 connection
-002 "aes128" #4: initiating IKEv1 Main Mode connection
-1v1 "aes128" #4: sent Main Mode request
-1v1 "aes128" #4: sent Main Mode I2
-1v1 "aes128" #4: sent Main Mode I3
-002 "aes128" #4: Peer ID is ID_FQDN: '@east'
-004 "aes128" #4: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
-002 "aes128" #5: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-002 "aes128" #5: IMPAIR: stripping key-length
-002 "aes128" #5: IMPAIR: duplicating key-length
-1v1 "aes128" #5: sent Quick Mode request
-002 "aes128" #5: IMPAIR: retransmit so timing out SA (may retry)
-002 "aes128" #5: deleting IPsec SA (QUICK_I1) and NOT sending notification
+"aes128": added IKEv1 connection
+"aes128" #4: initiating IKEv1 Main Mode connection
+"aes128" #4: sent Main Mode request
+"aes128" #4: sent Main Mode I2
+"aes128" #4: sent Main Mode I3
+"aes128" #4: Peer ID is ID_FQDN: '@east'
+"aes128" #4: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
+"aes128" #5: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"aes128" #5: IMPAIR: stripping key-length
+"aes128" #5: IMPAIR: duplicating key-length
+"aes128" #5: sent Quick Mode request
+"aes128" #5: IMPAIR: retransmit so timing out SA (may retry)
+"aes128" #5: deleting IPsec SA (QUICK_I1) and NOT sending notification
 west #
  ipsec whack --impair none
 west #
@@ -91,17 +91,17 @@ west #
  ipsec whack --impair ike-key-length-attribute:0
 west #
  ../../guestbin/libreswan-up-down.sh aes128 --down -I 192.0.1.254 192.0.2.254
-002 "aes128": added IKEv1 connection
-002 "aes128" #6: initiating IKEv1 Main Mode connection
-002 "aes128" #6: IMPAIR: stripping key-length
-002 "aes128" #6: IMPAIR: sending key-length attribute value 0
-1v1 "aes128" #6: sent Main Mode request
-003 "aes128" #6: ignoring informational payload NO_PROPOSAL_CHOSEN, msgid=00000000, length=12
-003 "aes128" #6: received and ignored notification payload: NO_PROPOSAL_CHOSEN
-002 "aes128" #6: IMPAIR: retransmit so timing out SA (may retry)
-002 "aes128" #6: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-002 "aes128" #6: IMPAIR: revival: skip scheduling revival event
-002 "aes128" #6: deleting ISAKMP SA (MAIN_I1) and NOT sending notification
+"aes128": added IKEv1 connection
+"aes128" #6: initiating IKEv1 Main Mode connection
+"aes128" #6: IMPAIR: stripping key-length
+"aes128" #6: IMPAIR: sending key-length attribute value 0
+"aes128" #6: sent Main Mode request
+"aes128" #6: ignoring informational payload NO_PROPOSAL_CHOSEN, msgid=00000000, length=12
+"aes128" #6: received and ignored notification payload: NO_PROPOSAL_CHOSEN
+"aes128" #6: IMPAIR: retransmit so timing out SA (may retry)
+"aes128" #6: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"aes128" #6: IMPAIR: revival: skip scheduling revival event
+"aes128" #6: deleting ISAKMP SA (MAIN_I1) and NOT sending notification
 west #
  ipsec whack --impair none
 west #
@@ -112,19 +112,19 @@ west #
  ipsec whack --impair child-key-length-attribute:0
 west #
  ../../guestbin/libreswan-up-down.sh aes128 --down -I 192.0.1.254 192.0.2.254
-002 "aes128": added IKEv1 connection
-002 "aes128" #7: initiating IKEv1 Main Mode connection
-1v1 "aes128" #7: sent Main Mode request
-1v1 "aes128" #7: sent Main Mode I2
-1v1 "aes128" #7: sent Main Mode I3
-002 "aes128" #7: Peer ID is ID_FQDN: '@east'
-004 "aes128" #7: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
-002 "aes128" #8: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-002 "aes128" #8: IMPAIR: stripping key-length
-002 "aes128" #8: IMPAIR: sending key-length attribute value 0
-1v1 "aes128" #8: sent Quick Mode request
-002 "aes128" #8: IMPAIR: retransmit so timing out SA (may retry)
-002 "aes128" #8: deleting IPsec SA (QUICK_I1) and NOT sending notification
+"aes128": added IKEv1 connection
+"aes128" #7: initiating IKEv1 Main Mode connection
+"aes128" #7: sent Main Mode request
+"aes128" #7: sent Main Mode I2
+"aes128" #7: sent Main Mode I3
+"aes128" #7: Peer ID is ID_FQDN: '@east'
+"aes128" #7: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
+"aes128" #8: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"aes128" #8: IMPAIR: stripping key-length
+"aes128" #8: IMPAIR: sending key-length attribute value 0
+"aes128" #8: sent Quick Mode request
+"aes128" #8: IMPAIR: retransmit so timing out SA (may retry)
+"aes128" #8: deleting IPsec SA (QUICK_I1) and NOT sending notification
 west #
  ipsec whack --impair none
 west #
@@ -137,24 +137,24 @@ west #
  ipsec whack --impair ike-key-length-attribute:omit
 west #
  ../../guestbin/libreswan-up-down.sh aes128 --alive -I 192.0.1.254 192.0.2.254
-002 "aes128": added IKEv1 connection
-002 "aes128" #9: initiating IKEv1 Main Mode connection
-002 "aes128" #9: IMPAIR: stripping key-length
-002 "aes128" #9: IMPAIR: not sending key-length attribute
-1v1 "aes128" #9: sent Main Mode request
-1v1 "aes128" #9: sent Main Mode I2
-1v1 "aes128" #9: sent Main Mode I3
-002 "aes128" #9: Peer ID is ID_FQDN: '@east'
-004 "aes128" #9: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
-002 "aes128" #10: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-1v1 "aes128" #10: sent Quick Mode request
-004 "aes128" #10: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+"aes128": added IKEv1 connection
+"aes128" #9: initiating IKEv1 Main Mode connection
+"aes128" #9: IMPAIR: stripping key-length
+"aes128" #9: IMPAIR: not sending key-length attribute
+"aes128" #9: sent Main Mode request
+"aes128" #9: sent Main Mode I2
+"aes128" #9: sent Main Mode I3
+"aes128" #9: Peer ID is ID_FQDN: '@east'
+"aes128" #9: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
+"aes128" #10: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"aes128" #10: sent Quick Mode request
+"aes128" #10: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
-002 "aes128": terminating SAs using this connection
-002 "aes128" #10: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #9
-005 "aes128" #10: ESP traffic information: in=84B out=84B
-002 "aes128" #9: deleting ISAKMP SA (MAIN_I4) and sending notification
-002 "aes128": terminating SAs using this connection
+"aes128": terminating SAs using this connection
+"aes128" #10: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #9
+"aes128" #10: ESP traffic information: in=84B out=84B
+"aes128" #9: deleting ISAKMP SA (MAIN_I4) and sending notification
+"aes128": terminating SAs using this connection
 west #
  ipsec whack --impair none
 west #
@@ -165,19 +165,19 @@ west #
  ipsec whack --impair child-key-length-attribute:omit
 west #
  ../../guestbin/libreswan-up-down.sh aes128 --down -I 192.0.1.254 192.0.2.254
-002 "aes128": added IKEv1 connection
-002 "aes128" #11: initiating IKEv1 Main Mode connection
-1v1 "aes128" #11: sent Main Mode request
-1v1 "aes128" #11: sent Main Mode I2
-1v1 "aes128" #11: sent Main Mode I3
-002 "aes128" #11: Peer ID is ID_FQDN: '@east'
-004 "aes128" #11: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
-002 "aes128" #12: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-002 "aes128" #12: IMPAIR: stripping key-length
-002 "aes128" #12: IMPAIR: not sending key-length attribute
-1v1 "aes128" #12: sent Quick Mode request
-002 "aes128" #12: IMPAIR: retransmit so timing out SA (may retry)
-002 "aes128" #12: deleting IPsec SA (QUICK_I1) and NOT sending notification
+"aes128": added IKEv1 connection
+"aes128" #11: initiating IKEv1 Main Mode connection
+"aes128" #11: sent Main Mode request
+"aes128" #11: sent Main Mode I2
+"aes128" #11: sent Main Mode I3
+"aes128" #11: Peer ID is ID_FQDN: '@east'
+"aes128" #11: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
+"aes128" #12: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"aes128" #12: IMPAIR: stripping key-length
+"aes128" #12: IMPAIR: not sending key-length attribute
+"aes128" #12: sent Quick Mode request
+"aes128" #12: IMPAIR: retransmit so timing out SA (may retry)
+"aes128" #12: deleting IPsec SA (QUICK_I1) and NOT sending notification
 west #
  ipsec whack --impair none
 west #
@@ -192,24 +192,24 @@ west #
  ipsec whack --impair ike-key-length-attribute:empty
 west #
  ../../guestbin/libreswan-up-down.sh aes128 --alive -I 192.0.1.254 192.0.2.254
-002 "aes128": added IKEv1 connection
-002 "aes128" #13: initiating IKEv1 Main Mode connection
-002 "aes128" #13: IMPAIR: stripping key-length
-002 "aes128" #13: IMPAIR: key-length-attribute:empty not implemented
-1v1 "aes128" #13: sent Main Mode request
-1v1 "aes128" #13: sent Main Mode I2
-1v1 "aes128" #13: sent Main Mode I3
-002 "aes128" #13: Peer ID is ID_FQDN: '@east'
-004 "aes128" #13: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
-002 "aes128" #14: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-1v1 "aes128" #14: sent Quick Mode request
-004 "aes128" #14: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+"aes128": added IKEv1 connection
+"aes128" #13: initiating IKEv1 Main Mode connection
+"aes128" #13: IMPAIR: stripping key-length
+"aes128" #13: IMPAIR: key-length-attribute:empty not implemented
+"aes128" #13: sent Main Mode request
+"aes128" #13: sent Main Mode I2
+"aes128" #13: sent Main Mode I3
+"aes128" #13: Peer ID is ID_FQDN: '@east'
+"aes128" #13: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
+"aes128" #14: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"aes128" #14: sent Quick Mode request
+"aes128" #14: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
-002 "aes128": terminating SAs using this connection
-002 "aes128" #14: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #13
-005 "aes128" #14: ESP traffic information: in=84B out=84B
-002 "aes128" #13: deleting ISAKMP SA (MAIN_I4) and sending notification
-002 "aes128": terminating SAs using this connection
+"aes128": terminating SAs using this connection
+"aes128" #14: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #13
+"aes128" #14: ESP traffic information: in=84B out=84B
+"aes128" #13: deleting ISAKMP SA (MAIN_I4) and sending notification
+"aes128": terminating SAs using this connection
 west #
  ipsec whack --impair none
 west #
@@ -222,19 +222,19 @@ west #
  ipsec whack --impair child-key-length-attribute:empty
 west #
  ../../guestbin/libreswan-up-down.sh aes128 --down -I 192.0.1.254 192.0.2.254
-002 "aes128": added IKEv1 connection
-002 "aes128" #15: initiating IKEv1 Main Mode connection
-1v1 "aes128" #15: sent Main Mode request
-1v1 "aes128" #15: sent Main Mode I2
-1v1 "aes128" #15: sent Main Mode I3
-002 "aes128" #15: Peer ID is ID_FQDN: '@east'
-004 "aes128" #15: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
-002 "aes128" #16: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-002 "aes128" #16: IMPAIR: stripping key-length
-002 "aes128" #16: IMPAIR: key-length-attribute:empty not implemented
-1v1 "aes128" #16: sent Quick Mode request
-002 "aes128" #16: IMPAIR: retransmit so timing out SA (may retry)
-002 "aes128" #16: deleting IPsec SA (QUICK_I1) and NOT sending notification
+"aes128": added IKEv1 connection
+"aes128" #15: initiating IKEv1 Main Mode connection
+"aes128" #15: sent Main Mode request
+"aes128" #15: sent Main Mode I2
+"aes128" #15: sent Main Mode I3
+"aes128" #15: Peer ID is ID_FQDN: '@east'
+"aes128" #15: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
+"aes128" #16: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"aes128" #16: IMPAIR: stripping key-length
+"aes128" #16: IMPAIR: key-length-attribute:empty not implemented
+"aes128" #16: sent Quick Mode request
+"aes128" #16: IMPAIR: retransmit so timing out SA (may retry)
+"aes128" #16: deleting IPsec SA (QUICK_I1) and NOT sending notification
 west #
  ipsec whack --impair none
 west #
@@ -251,22 +251,22 @@ west #
  ipsec whack --impair suppress-retransmits
 west #
  ../../guestbin/libreswan-up-down.sh 3des --alive -I 192.0.1.254 192.0.2.254
-002 "3des": added IKEv1 connection
-002 "3des" #17: initiating IKEv1 Main Mode connection
-1v1 "3des" #17: sent Main Mode request
-1v1 "3des" #17: sent Main Mode I2
-1v1 "3des" #17: sent Main Mode I3
-002 "3des" #17: Peer ID is ID_FQDN: '@east'
-004 "3des" #17: ISAKMP SA established {auth=PRESHARED_KEY cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP2048}
-002 "3des" #18: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-1v1 "3des" #18: sent Quick Mode request
-004 "3des" #18: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 DPD=passive}
+"3des": added IKEv1 connection
+"3des" #17: initiating IKEv1 Main Mode connection
+"3des" #17: sent Main Mode request
+"3des" #17: sent Main Mode I2
+"3des" #17: sent Main Mode I3
+"3des" #17: Peer ID is ID_FQDN: '@east'
+"3des" #17: ISAKMP SA established {auth=PRESHARED_KEY cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP2048}
+"3des" #18: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"3des" #18: sent Quick Mode request
+"3des" #18: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
-002 "3des": terminating SAs using this connection
-002 "3des" #18: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #17
-005 "3des" #18: ESP traffic information: in=84B out=84B
-002 "3des" #17: deleting ISAKMP SA (MAIN_I4) and sending notification
-002 "3des": terminating SAs using this connection
+"3des": terminating SAs using this connection
+"3des" #18: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #17
+"3des" #18: ESP traffic information: in=84B out=84B
+"3des" #17: deleting ISAKMP SA (MAIN_I4) and sending notification
+"3des": terminating SAs using this connection
 west #
  ipsec whack --impair none
 west #
@@ -279,16 +279,16 @@ west #
  ipsec whack --impair ike-key-length-attribute:0
 west #
  ../../guestbin/libreswan-up-down.sh 3des --down -I 192.0.1.254 192.0.2.254
-002 "3des": added IKEv1 connection
-002 "3des" #19: initiating IKEv1 Main Mode connection
-002 "3des" #19: IMPAIR: sending key-length attribute value 0
-1v1 "3des" #19: sent Main Mode request
-003 "3des" #19: ignoring informational payload NO_PROPOSAL_CHOSEN, msgid=00000000, length=12
-003 "3des" #19: received and ignored notification payload: NO_PROPOSAL_CHOSEN
-002 "3des" #19: IMPAIR: retransmit so timing out SA (may retry)
-002 "3des" #19: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-002 "3des" #19: IMPAIR: revival: skip scheduling revival event
-002 "3des" #19: deleting ISAKMP SA (MAIN_I1) and NOT sending notification
+"3des": added IKEv1 connection
+"3des" #19: initiating IKEv1 Main Mode connection
+"3des" #19: IMPAIR: sending key-length attribute value 0
+"3des" #19: sent Main Mode request
+"3des" #19: ignoring informational payload NO_PROPOSAL_CHOSEN, msgid=00000000, length=12
+"3des" #19: received and ignored notification payload: NO_PROPOSAL_CHOSEN
+"3des" #19: IMPAIR: retransmit so timing out SA (may retry)
+"3des" #19: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"3des" #19: IMPAIR: revival: skip scheduling revival event
+"3des" #19: deleting ISAKMP SA (MAIN_I1) and NOT sending notification
 west #
  ipsec whack --impair none
 west #
@@ -301,23 +301,23 @@ west #
  ipsec whack --impair ike-key-length-attribute:192
 west #
  ../../guestbin/libreswan-up-down.sh 3des --alive -I 192.0.1.254 192.0.2.254
-002 "3des": added IKEv1 connection
-002 "3des" #20: initiating IKEv1 Main Mode connection
-002 "3des" #20: IMPAIR: sending key-length attribute value 192
-1v1 "3des" #20: sent Main Mode request
-1v1 "3des" #20: sent Main Mode I2
-1v1 "3des" #20: sent Main Mode I3
-002 "3des" #20: Peer ID is ID_FQDN: '@east'
-004 "3des" #20: ISAKMP SA established {auth=PRESHARED_KEY cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP2048}
-002 "3des" #21: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-1v1 "3des" #21: sent Quick Mode request
-004 "3des" #21: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 DPD=passive}
+"3des": added IKEv1 connection
+"3des" #20: initiating IKEv1 Main Mode connection
+"3des" #20: IMPAIR: sending key-length attribute value 192
+"3des" #20: sent Main Mode request
+"3des" #20: sent Main Mode I2
+"3des" #20: sent Main Mode I3
+"3des" #20: Peer ID is ID_FQDN: '@east'
+"3des" #20: ISAKMP SA established {auth=PRESHARED_KEY cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP2048}
+"3des" #21: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"3des" #21: sent Quick Mode request
+"3des" #21: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
-002 "3des": terminating SAs using this connection
-002 "3des" #21: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #20
-005 "3des" #21: ESP traffic information: in=84B out=84B
-002 "3des" #20: deleting ISAKMP SA (MAIN_I4) and sending notification
-002 "3des": terminating SAs using this connection
+"3des": terminating SAs using this connection
+"3des" #21: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #20
+"3des" #21: ESP traffic information: in=84B out=84B
+"3des" #20: deleting ISAKMP SA (MAIN_I4) and sending notification
+"3des": terminating SAs using this connection
 west #
  ipsec whack --impair none
 west #

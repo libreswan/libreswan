@@ -6,8 +6,8 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add west-east
-002 "west-east": warning: IKEv1 ignores dpdaction=
-002 "west-east": added IKEv1 connection
+"west-east": warning: IKEv1 ignores dpdaction=
+"west-east": added IKEv1 connection
 east #
  echo "initdone"
 initdone

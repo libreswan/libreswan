@@ -6,20 +6,20 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add one
-002 "one": added IKEv2 connection
+"one": added IKEv2 connection
 west #
  ipsec auto --add two
-002 "two": added IKEv2 connection
+"two": added IKEv2 connection
 west #
  echo "initdone"
 initdone
 west #
  ipsec auto --up one
-1v2 "one" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "one" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "one" #1: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
-003 "one" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "one" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0-192.0.1.255:80-80 6===192.0.2.0/24/TCP] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+"one" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"one" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"one" #1: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
+"one" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"one" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0-192.0.1.255:80-80 6===192.0.2.0/24/TCP] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
  sleep 10
 west #
@@ -27,9 +27,9 @@ west #
 done
 west #
  ipsec auto --up two
-002 "two" #4: initiating Child SA using IKE SA #1
-1v2 "two" #4: sent CREATE_CHILD_SA request for new IPsec SA
-004 "two" #4: initiator established Child SA using #1; IPsec tunnel [192.0.11.0-192.0.11.255:0-65535 6===192.0.22.0-192.0.22.255:88-88 6] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96-MODP2048 DPD=passive}
+"two" #4: initiating Child SA using IKE SA #1
+"two" #4: sent CREATE_CHILD_SA request for new IPsec SA
+"two" #4: initiator established Child SA using #1; IPsec tunnel [192.0.11.0-192.0.11.255:0-65535 6===192.0.22.0-192.0.22.255:88-88 6] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96-MODP2048 DPD=passive}
 west #
  sleep 10
 west #

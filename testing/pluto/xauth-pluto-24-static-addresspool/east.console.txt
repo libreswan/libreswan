@@ -12,7 +12,7 @@ east #
  ipsec whack --impair timeout-on-retransmit
 east #
  ipsec auto --add east-any
-002 "east-any": added IKEv1 connection
+"east-any": added IKEv1 connection
 east #
  echo initdone
 initdone

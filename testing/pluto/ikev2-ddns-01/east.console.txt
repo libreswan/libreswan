@@ -6,8 +6,8 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add named
-002 "named": adding UDP interface eth1 192.1.2.23:443
-002 "named": added IKEv2 connection
+"named": adding UDP interface eth1 192.1.2.23:443
+"named": added IKEv2 connection
 east #
  echo "initdone"
 initdone

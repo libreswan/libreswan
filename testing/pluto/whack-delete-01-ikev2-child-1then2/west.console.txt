@@ -13,25 +13,25 @@ west #
  ipsec whack --impair revival
 west #
  ipsec add west-cuckold
-002 "west-cuckold": added IKEv2 connection
+"west-cuckold": added IKEv2 connection
 west #
  ipsec add west-cuckoo
-002 "west-cuckoo": added IKEv2 connection
+"west-cuckoo": added IKEv2 connection
 west #
  echo "initdone"
 initdone
 west #
  ipsec up west-cuckold
-1v2 "west-cuckold" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "west-cuckold" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "west-cuckold" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "west-cuckold" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "west-cuckold" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"west-cuckold" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west-cuckold" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"west-cuckold" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"west-cuckold" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"west-cuckold" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ipsec up west-cuckoo
-002 "west-cuckoo" #3: initiating Child SA using IKE SA #1
-1v2 "west-cuckoo" #3: sent CREATE_CHILD_SA request for new IPsec SA
-004 "west-cuckoo" #3: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.20.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
+"west-cuckoo" #3: initiating Child SA using IKE SA #1
+"west-cuckoo" #3: sent CREATE_CHILD_SA request for new IPsec SA
+"west-cuckoo" #3: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.20.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up 192.0.2.254
 up
@@ -44,15 +44,15 @@ west #
 #3: "west-cuckoo", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  ipsec delete west-cuckold
-002 "west-cuckold": terminating SAs using this connection
-002 "west-cuckold" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
-005 "west-cuckold" #2: ESP traffic information: in=84B out=84B
-002 "west-cuckoo" #3: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-002 "west-cuckoo" #3: IMPAIR: revival: skip scheduling revival event
-005 "west-cuckoo" #3: ESP traffic information: in=84B out=84B
+"west-cuckold": terminating SAs using this connection
+"west-cuckold" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"west-cuckold" #2: ESP traffic information: in=84B out=84B
+"west-cuckoo" #3: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"west-cuckoo" #3: IMPAIR: revival: skip scheduling revival event
+"west-cuckoo" #3: ESP traffic information: in=84B out=84B
 west #
  ipsec delete west-cuckoo
-002 "west-cuckoo": terminating SAs using this connection
+"west-cuckoo": terminating SAs using this connection
 west #
  # non-zero counts confirm encrypted traffic flowing
 west #

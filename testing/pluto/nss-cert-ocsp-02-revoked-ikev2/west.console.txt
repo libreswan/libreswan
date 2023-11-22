@@ -13,7 +13,7 @@ west #
  ipsec whack --impair revival
 west #
  ipsec auto --add nss-cert-ocsp
-002 "nss-cert-ocsp": added IKEv2 connection
+"nss-cert-ocsp": added IKEv2 connection
 west #
  ipsec auto --status |grep nss-cert-ocsp
 "nss-cert-ocsp": 192.0.1.254/32===192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=revoked.testing.libreswan.org, E=user-revoked@testing.libreswan.org]...192.1.2.23[%fromcert]===192.0.2.254/32; unrouted; my_ip=192.0.1.254; their_ip=192.0.2.254;
@@ -41,14 +41,14 @@ west #
 initdone
 west #
  ipsec auto --up nss-cert-ocsp
-1v2 "nss-cert-ocsp" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "nss-cert-ocsp" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "nss-cert-ocsp" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "nss-cert-ocsp" #1: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
-036 "nss-cert-ocsp" #1: encountered fatal error in state STATE_V2_PARENT_I2
-002 "nss-cert-ocsp" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-002 "nss-cert-ocsp" #1: IMPAIR: revival: skip scheduling revival event
-002 "nss-cert-ocsp" #1: deleting IKE SA (PARENT_I2) and NOT sending notification
+"nss-cert-ocsp" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"nss-cert-ocsp" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"nss-cert-ocsp" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"nss-cert-ocsp" #1: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
+"nss-cert-ocsp" #1: encountered fatal error in state STATE_V2_PARENT_I2
+"nss-cert-ocsp" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"nss-cert-ocsp" #1: IMPAIR: revival: skip scheduling revival event
+"nss-cert-ocsp" #1: deleting IKE SA (PARENT_I2) and NOT sending notification
 west #
  echo done
 done

@@ -8,30 +8,30 @@ west #
  # don't use tabs, guest things it is tab completion
 west #
  ipsec auto --add ikev1-dpdtimeout=10s            # requires dpddelay
-002 "ikev1-dpdtimeout=10s": warning: IKEv1 dpd settings are ignored unless both dpdtimeout= and dpddelay= are set
-002 "ikev1-dpdtimeout=10s": added IKEv1 connection
+"ikev1-dpdtimeout=10s": warning: IKEv1 dpd settings are ignored unless both dpdtimeout= and dpddelay= are set
+"ikev1-dpdtimeout=10s": added IKEv1 connection
 west #
  ipsec auto --add ikev1-dpddelay=10s              # requires dpdtimeout
-002 "ikev1-dpddelay=10s": warning: IKEv1 dpd settings are ignored unless both dpdtimeout= and dpddelay= are set
-002 "ikev1-dpddelay=10s": added IKEv1 connection
+"ikev1-dpddelay=10s": warning: IKEv1 dpd settings are ignored unless both dpdtimeout= and dpddelay= are set
+"ikev1-dpddelay=10s": added IKEv1 connection
 west #
  ipsec auto --add ikev1-dpdaction=clear           # requires dpddelay+dpdtimeout
-002 "ikev1-dpdaction=clear": warning: IKEv1 ignores dpdaction=, use dpdtimeout= and dpddelay=
-002 "ikev1-dpdaction=clear": added IKEv1 connection
+"ikev1-dpdaction=clear": warning: IKEv1 ignores dpdaction=, use dpdtimeout= and dpddelay=
+"ikev1-dpdaction=clear": added IKEv1 connection
 west #
  ipsec auto --add ikev1-dpdaction=clear-dpdtimeout=10s # requires dpddelay
-002 "ikev1-dpdaction=clear-dpdtimeout=10s": warning: IKEv1 ignores dpdaction=, use dpdtimeout= and dpddelay=
-002 "ikev1-dpdaction=clear-dpdtimeout=10s": added IKEv1 connection
+"ikev1-dpdaction=clear-dpdtimeout=10s": warning: IKEv1 ignores dpdaction=, use dpdtimeout= and dpddelay=
+"ikev1-dpdaction=clear-dpdtimeout=10s": added IKEv1 connection
 west #
  ipsec auto --add ikev1-dpddelay=10s-dpdtimeout=0s # requires dpdtimeout!=0
-002 "ikev1-dpddelay=10s-dpdtimeout=0s": added IKEv1 connection
+"ikev1-dpddelay=10s-dpdtimeout=0s": added IKEv1 connection
 west #
  ipsec auto --add ikev2-dpdtimeout=10s            # ignore dpdtimeout
-002 "ikev2-dpdtimeout=10s": warning: IKEv2 ignores dpdtimeout= and dpdaction=; use dpddelay= and retransmit-timeout=
-002 "ikev2-dpdtimeout=10s": added IKEv2 connection
+"ikev2-dpdtimeout=10s": warning: IKEv2 ignores dpdtimeout= and dpdaction=; use dpddelay= and retransmit-timeout=
+"ikev2-dpdtimeout=10s": added IKEv2 connection
 west #
  ipsec auto --add ikev2-dpdaction=clear           # requires dpddelay
-002 "ikev2-dpdaction=clear": warning: IKEv2 ignores dpdtimeout= and dpdaction=; use dpddelay= and retransmit-timeout=
-002 "ikev2-dpdaction=clear": added IKEv2 connection
+"ikev2-dpdaction=clear": warning: IKEv2 ignores dpdtimeout= and dpdaction=; use dpddelay= and retransmit-timeout=
+"ikev2-dpdaction=clear": added IKEv2 connection
 west #
  

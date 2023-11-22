@@ -13,29 +13,29 @@ west #
  ipsec whack --impair revival
 west #
  ipsec add west-cuckold
-002 "west-cuckold": added IKEv1 connection
+"west-cuckold": added IKEv1 connection
 west #
  ipsec add west-cuckoo
-002 "west-cuckoo": added IKEv1 connection
+"west-cuckoo": added IKEv1 connection
 west #
  echo "initdone"
 initdone
 west #
  ipsec up west-cuckold
-002 "west-cuckold" #1: initiating IKEv1 Main Mode connection
-1v1 "west-cuckold" #1: sent Main Mode request
-1v1 "west-cuckold" #1: sent Main Mode I2
-1v1 "west-cuckold" #1: sent Main Mode I3
-002 "west-cuckold" #1: Peer ID is ID_FQDN: '@east'
-004 "west-cuckold" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "west-cuckold" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-1v1 "west-cuckold" #2: sent Quick Mode request
-004 "west-cuckold" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+"west-cuckold" #1: initiating IKEv1 Main Mode connection
+"west-cuckold" #1: sent Main Mode request
+"west-cuckold" #1: sent Main Mode I2
+"west-cuckold" #1: sent Main Mode I3
+"west-cuckold" #1: Peer ID is ID_FQDN: '@east'
+"west-cuckold" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"west-cuckold" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"west-cuckold" #2: sent Quick Mode request
+"west-cuckold" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
  ipsec up west-cuckoo
-002 "west-cuckoo" #3: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-1v1 "west-cuckoo" #3: sent Quick Mode request
-004 "west-cuckoo" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+"west-cuckoo" #3: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"west-cuckoo" #3: sent Quick Mode request
+"west-cuckoo" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up 192.0.2.254
 up
@@ -48,15 +48,15 @@ west #
 #3: "west-cuckoo", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  ipsec down west-cuckold
-002 "west-cuckold": terminating SAs using this connection
-002 "west-cuckold": ISAKMP SA is shared - only terminating IPsec SA
-002 "west-cuckold" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
-005 "west-cuckold" #2: ESP traffic information: in=84B out=84B
+"west-cuckold": terminating SAs using this connection
+"west-cuckold": ISAKMP SA is shared - only terminating IPsec SA
+"west-cuckold" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
+"west-cuckold" #2: ESP traffic information: in=84B out=84B
 west #
  ipsec down west-cuckoo
-002 "west-cuckoo": terminating SAs using this connection
-002 "west-cuckoo" #3: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA "west-cuckold" #1
-005 "west-cuckoo" #3: ESP traffic information: in=84B out=84B
+"west-cuckoo": terminating SAs using this connection
+"west-cuckoo" #3: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA "west-cuckold" #1
+"west-cuckoo" #3: ESP traffic information: in=84B out=84B
 west #
  # non-zero counts confirm encrypted traffic flowing
 west #

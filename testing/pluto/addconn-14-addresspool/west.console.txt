@@ -6,95 +6,95 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add comma-4
-036 "comma-4": failed to add connection: leftaddresspool=,192.168.1.0/24 invalid, empty field
+"comma-4": failed to add connection: leftaddresspool=,192.168.1.0/24 invalid, empty field
 west #
  ipsec auto --add comma-6
-036 "comma-6": failed to add connection: leftaddresspool=,2001:db8:0:3:1::/97 invalid, empty field
+"comma-6": failed to add connection: leftaddresspool=,2001:db8:0:3:1::/97 invalid, empty field
 west #
  ipsec auto --add comma-4-comma
-036 "comma-4-comma": failed to add connection: leftaddresspool=,192.168.1.0/24, invalid, empty field
+"comma-4-comma": failed to add connection: leftaddresspool=,192.168.1.0/24, invalid, empty field
 west #
  ipsec auto --add comma-6-comma
-036 "comma-6-comma": failed to add connection: leftaddresspool=,2001:db8:0:3:1::/97, invalid, empty field
+"comma-6-comma": failed to add connection: leftaddresspool=,2001:db8:0:3:1::/97, invalid, empty field
 west #
  ipsec auto --add 4-comma
-036 "4-comma": failed to add connection: leftaddresspool=192.168.1.0/24, invalid, empty field
+"4-comma": failed to add connection: leftaddresspool=192.168.1.0/24, invalid, empty field
 west #
  ipsec auto --add 6-comma
-036 "6-comma": failed to add connection: leftaddresspool=2001:db8:0:3:1::/97, invalid, empty field
+"6-comma": failed to add connection: leftaddresspool=2001:db8:0:3:1::/97, invalid, empty field
 west #
  ipsec auto --add 4toXin4
-002 "4toXin4": added IKEv2 connection
+"4toXin4": added IKEv2 connection
 west #
  ipsec auto --add 4toXin6
-036 "4toXin6": failed to add connection: address family of leftaddresspool=192.168.1.0/24 conflicts with right=2001:db8:1:2::23
+"4toXin6": failed to add connection: address family of leftaddresspool=192.168.1.0/24 conflicts with right=2001:db8:1:2::23
 west #
  ipsec auto --add 6toXin4
-036 "6toXin4": failed to add connection: address family of leftaddresspool=2001:db8:0:3:1::/97 conflicts with right=192.1.2.23
+"6toXin4": failed to add connection: address family of leftaddresspool=2001:db8:0:3:1::/97 conflicts with right=192.1.2.23
 west #
  ipsec auto --add 6toXin6
-002 "6toXin6": added IKEv2 connection
+"6toXin6": added IKEv2 connection
 west #
  ipsec auto --add 4to4in4
-002 "4to4in4": added IKEv2 connection
+"4to4in4": added IKEv2 connection
 west #
  ipsec auto --add 4to4in6
-002 "4to4in6": added IKEv2 connection
+"4to4in6": added IKEv2 connection
 west #
  ipsec auto --add 4to6in4
-036 "4to6in4": failed to add connection: address family of leftaddresspool=192.168.1.0/24 conflicts with rightsubnet=2001:db8:2::/64
+"4to6in4": failed to add connection: address family of leftaddresspool=192.168.1.0/24 conflicts with rightsubnet=2001:db8:2::/64
 west #
  ipsec auto --add 4to6in6
-036 "4to6in6": failed to add connection: address family of leftaddresspool=192.168.1.0/24 conflicts with rightsubnet=2001:db8:2::/64
+"4to6in6": failed to add connection: address family of leftaddresspool=192.168.1.0/24 conflicts with rightsubnet=2001:db8:2::/64
 west #
  ipsec auto --add 6to4in4
-036 "6to4in4": failed to add connection: address family of leftaddresspool=2001:db8:0:3:1::/97 conflicts with rightsubnet=192.168.2.0/24
+"6to4in4": failed to add connection: address family of leftaddresspool=2001:db8:0:3:1::/97 conflicts with rightsubnet=192.168.2.0/24
 west #
  ipsec auto --add 6to4in6
-036 "6to4in6": failed to add connection: address family of leftaddresspool=2001:db8:0:3:1::/97 conflicts with rightsubnet=192.168.2.0/24
+"6to4in6": failed to add connection: address family of leftaddresspool=2001:db8:0:3:1::/97 conflicts with rightsubnet=192.168.2.0/24
 west #
  ipsec auto --add 6to6in4
-002 "6to6in4": added IKEv2 connection
+"6to6in4": added IKEv2 connection
 west #
  ipsec auto --add 6to6in6
-002 "6to6in6": added IKEv2 connection
+"6to6in6": added IKEv2 connection
 west #
  ipsec auto --add 46to4in4
-036 "46to4in4": failed to add connection: address family of leftaddresspool=192.168.1.0/24,2001:db8:1::/64 conflicts with rightsubnet=192.168.2.0/24
+"46to4in4": failed to add connection: address family of leftaddresspool=192.168.1.0/24,2001:db8:1::/64 conflicts with rightsubnet=192.168.2.0/24
 west #
  ipsec auto --add 64to4in4
-036 "64to4in4": failed to add connection: address family of leftaddresspool=2001:db8:1::/64,192.168.1.0/24 conflicts with rightsubnet=192.168.2.0/24
+"64to4in4": failed to add connection: address family of leftaddresspool=2001:db8:1::/64,192.168.1.0/24 conflicts with rightsubnet=192.168.2.0/24
 west #
  ipsec auto --add 46to6in6
-036 "46to6in6": failed to add connection: address family of leftaddresspool=192.168.1.0/24,2001:db8:1::/64 conflicts with rightsubnet=2001:db8:2::/64
+"46to6in6": failed to add connection: address family of leftaddresspool=192.168.1.0/24,2001:db8:1::/64 conflicts with rightsubnet=2001:db8:2::/64
 west #
  ipsec auto --add 64to6in6
-036 "64to6in6": failed to add connection: address family of leftaddresspool=2001:db8:1::/64,192.168.1.0/24 conflicts with rightsubnet=2001:db8:2::/64
+"64to6in6": failed to add connection: address family of leftaddresspool=2001:db8:1::/64,192.168.1.0/24 conflicts with rightsubnet=2001:db8:2::/64
 west #
  ipsec auto --add 46to64in4
-002 "46to64in4": connection is using multiple addresspools
-002 "46to64in4": added IKEv2 connection
+"46to64in4": connection is using multiple addresspools
+"46to64in4": added IKEv2 connection
 west #
  ipsec auto --add 64to46in6
-002 "64to46in6": connection is using multiple addresspools
-002 "64to46in6": added IKEv2 connection
+"64to46in6": connection is using multiple addresspools
+"64to46in6": added IKEv2 connection
 west #
  ipsec auto --add good-cat
-002 "good-cat": added IKEv2 connection
+"good-cat": added IKEv2 connection
 west #
  ipsec auto --add bad-cat
-036 "bad-cat": failed to add connection: both rightcat=yes and leftaddresspool= defined
+"bad-cat": failed to add connection: both rightcat=yes and leftaddresspool= defined
 west #
  ipsec auto --add good-client
-002 "good-client": added IKEv2 connection
+"good-client": added IKEv2 connection
 west #
  ipsec auto --add bad-client
-036 "bad-client": failed to add connection: both rightmodecfgclient=yes and leftaddresspool= defined
+"bad-client": failed to add connection: both rightmodecfgclient=yes and leftaddresspool= defined
 west #
  ipsec auto --add good-server
-002 "good-server": added IKEv2 connection
+"good-server": added IKEv2 connection
 west #
  ipsec auto --add bad-server
-036 "bad-server": failed to add connection: leftmodecfgserver=yes expects rightaddresspool= and not leftaddresspool=
+"bad-server": failed to add connection: leftmodecfgserver=yes expects rightaddresspool= and not leftaddresspool=
 west #
  

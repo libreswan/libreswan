@@ -10,17 +10,17 @@ north #
  ../../guestbin/wait-until-pluto-started
 north #
  ipsec auto --add northnet-eastnet
-002 "northnet-eastnet": added IKEv2 connection
+"northnet-eastnet": added IKEv2 connection
 north #
  echo "initdone"
 initdone
 north #
  ipsec auto --up northnet-eastnet
-1v2 "northnet-eastnet" #1: initiating IKEv2 connection to 192.0.2.254 using UDP
-1v2 "northnet-eastnet" #1: sent IKE_SA_INIT request to 192.0.2.254:500
-1v2 "northnet-eastnet" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "northnet-eastnet" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "northnet-eastnet" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.22.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"northnet-eastnet" #1: initiating IKEv2 connection to 192.0.2.254 using UDP
+"northnet-eastnet" #1: sent IKE_SA_INIT request to 192.0.2.254:500
+"northnet-eastnet" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"northnet-eastnet" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"northnet-eastnet" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.22.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 north #
  ping -n -q -w 4 -c 2 -I 192.0.3.254 192.0.22.254
 PING 192.0.22.254 (192.0.22.254) from 192.0.3.254 : 56(84) bytes of data.

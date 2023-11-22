@@ -14,7 +14,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add labeled
-002 "labeled": added IKEv2 connection
+"labeled": added IKEv2 connection
 west #
  echo "initdone"
 initdone
@@ -24,11 +24,11 @@ west #
  # expected to fail
 west #
  ipsec auto --up labeled
-1v2 "labeled" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "labeled" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "labeled" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "labeled" #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
-003 "labeled" #2: IKE_AUTH response rejected Child SA with TS_UNACCEPTABLE
+"labeled" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"labeled" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"labeled" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"labeled" #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
+"labeled" #2: IKE_AUTH response rejected Child SA with TS_UNACCEPTABLE
 west #
  echo done
 done

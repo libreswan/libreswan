@@ -11,7 +11,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add replay
-002 "replay": added IKEv2 connection
+"replay": added IKEv2 connection
 west #
  ipsec whack --impair suppress-retransmits
 west #
@@ -23,11 +23,11 @@ west #
  ipsec whack --impair suppress-retransmits
 west #
  ipsec auto --up replay
-1v2 "replay" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "replay" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "replay" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "replay" #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
-003 "replay" #2: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
+"replay" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"replay" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"replay" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"replay" #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
+"replay" #2: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
 west #
  echo done
 done

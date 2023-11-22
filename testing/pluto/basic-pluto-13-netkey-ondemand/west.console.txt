@@ -86,10 +86,10 @@ src 192.0.2.0/24 dst 192.0.1.0/24
 		proto esp reqid REQID mode tunnel
 west #
  ipsec down westnet-eastnet-route
-002 "westnet-eastnet-route": terminating SAs using this connection
-002 "westnet-eastnet-route" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
-005 "westnet-eastnet-route" #2: ESP traffic information: in=84B out=84B
-002 "westnet-eastnet-route" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
+"westnet-eastnet-route": terminating SAs using this connection
+"westnet-eastnet-route" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
+"westnet-eastnet-route" #2: ESP traffic information: in=84B out=84B
+"westnet-eastnet-route" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
 west #
  ../../guestbin/ipsec-kernel-state.sh
 src 192.0.1.254 dst 192.0.2.254

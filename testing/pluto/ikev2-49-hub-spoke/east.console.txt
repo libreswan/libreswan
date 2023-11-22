@@ -6,10 +6,10 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-northnet-ipv4-psk
-002 "westnet-northnet-ipv4-psk": added IKEv2 connection
+"westnet-northnet-ipv4-psk": added IKEv2 connection
 east #
  ipsec auto --add northnet-westnet-ipv4-psk
-002 "northnet-westnet-ipv4-psk": added IKEv2 connection
+"northnet-westnet-ipv4-psk": added IKEv2 connection
 east #
  ipsec auto --status
 using kernel interface: xfrm

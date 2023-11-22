@@ -11,7 +11,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add east-any
-002 "east-any": added IKEv2 connection
+"east-any": added IKEv2 connection
 west #
  echo initdone
 initdone

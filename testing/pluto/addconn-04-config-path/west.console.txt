@@ -22,7 +22,7 @@ west #
  # rhbz#1645137 test
 west #
  ipsec addconn --config /tmp/test.conf longike
-002 "longike": added IKEv2 connection
+"longike": added IKEv2 connection
 west #
  ipsec whack --shutdown # stop will cause reading /etc/ipsec.conf
 west #

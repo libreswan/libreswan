@@ -73,19 +73,19 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add old-east
-002 "old-east": added IKEv2 connection
+"old-east": added IKEv2 connection
 east #
  ipsec auto --add new-east
-002 "new-east": added IKEv2 connection
+"new-east": added IKEv2 connection
 east #
  ipsec auto --delete new-east
 east #
  ipsec auto --delete old-east
 east #
  ipsec auto --add new-east
-002 "new-east": added IKEv2 connection
+"new-east": added IKEv2 connection
 east #
  ipsec auto --add old-east
-002 "old-east": added IKEv2 connection
+"old-east": added IKEv2 connection
 east #
  

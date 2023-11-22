@@ -6,49 +6,49 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add addconn--ikev1
-002 "addconn--ikev1": added IKEv1 connection
+"addconn--ikev1": added IKEv1 connection
 west #
  ipsec add addconn--ikev1--fragmentation-force
-002 "addconn--ikev1--fragmentation-force": added IKEv1 connection
+"addconn--ikev1--fragmentation-force": added IKEv1 connection
 west #
  ipsec add addconn--ikev2
-002 "addconn--ikev2": added IKEv2 connection
+"addconn--ikev2": added IKEv2 connection
 west #
  ipsec add addconn--ikev2--fragmentation-no
-002 "addconn--ikev2--fragmentation-no": added IKEv2 connection
+"addconn--ikev2--fragmentation-no": added IKEv2 connection
 west #
  ipsec add addconn--ikev2--fragmentation-yes
-002 "addconn--ikev2--fragmentation-yes": added IKEv2 connection
+"addconn--ikev2--fragmentation-yes": added IKEv2 connection
 west #
  ipsec add addconn--ikev2--fragmentation-force
-005 "addconn--ikev2--fragmentation-force": warning: IKEv1 only fragmentation=force ignored; using fragmentation=yes
-002 "addconn--ikev2--fragmentation-force": added IKEv2 connection
+"addconn--ikev2--fragmentation-force": warning: IKEv1 only fragmentation=force ignored; using fragmentation=yes
+"addconn--ikev2--fragmentation-force": added IKEv2 connection
 west #
  ipsec whack --name whack--ikev1                      --host 1.2.3.4                       --no-esn --pfs --tunnel --encrypt --ikev1 --ipv4 --to --host 5.6.7.8
-002 "whack--ikev1": added IKEv1 connection
+"whack--ikev1": added IKEv1 connection
 west #
  ipsec whack --name whack--ikev1--fragmentation-force --host 1.2.3.4 --fragmentation force --no-esn --pfs --tunnel --encrypt --ikev1 --ipv4 --to --host 5.6.7.8
-002 "whack--ikev1--fragmentation-force": added IKEv1 connection
+"whack--ikev1--fragmentation-force": added IKEv1 connection
 west #
  ipsec whack --name whack--ikev2                      --host 1.2.3.4                       --no-esn --pfs --tunnel --encrypt --ikev2 --ipv4 --to --host 5.6.7.8
-002 "whack--ikev2": added IKEv2 connection
+"whack--ikev2": added IKEv2 connection
 west #
  ipsec whack --name whack--ikev2--ikefrag-allow       --host 1.2.3.4 --ikefrag-allow       --no-esn --pfs --tunnel --encrypt --ikev2 --ipv4 --to --host 5.6.7.8
-002 "whack--ikev2--ikefrag-allow": added IKEv2 connection
+"whack--ikev2--ikefrag-allow": added IKEv2 connection
 west #
  ipsec whack --name whack--ikev2--ikefrag-force       --host 1.2.3.4 --ikefrag-force       --no-esn --pfs --tunnel --encrypt --ikev2 --ipv4 --to --host 5.6.7.8
-005 "whack--ikev2--ikefrag-force": warning: IKEv1 only fragmentation=force ignored; using fragmentation=yes
-002 "whack--ikev2--ikefrag-force": added IKEv2 connection
+"whack--ikev2--ikefrag-force": warning: IKEv1 only fragmentation=force ignored; using fragmentation=yes
+"whack--ikev2--ikefrag-force": added IKEv2 connection
 west #
  ipsec whack --name whack--ikev2--fragmentation-no    --host 1.2.3.4 --fragmentation no    --no-esn --pfs --tunnel --encrypt --ikev2 --ipv4 --to --host 5.6.7.8
-002 "whack--ikev2--fragmentation-no": added IKEv2 connection
+"whack--ikev2--fragmentation-no": added IKEv2 connection
 west #
  ipsec whack --name whack--ikev2--fragmentation-yes   --host 1.2.3.4 --fragmentation yes   --no-esn --pfs --tunnel --encrypt --ikev2 --ipv4 --to --host 5.6.7.8
-002 "whack--ikev2--fragmentation-yes": added IKEv2 connection
+"whack--ikev2--fragmentation-yes": added IKEv2 connection
 west #
  ipsec whack --name whack--ikev2--fragmentation-force --host 1.2.3.4 --fragmentation force --no-esn --pfs --tunnel --encrypt --ikev2 --ipv4 --to --host 5.6.7.8
-005 "whack--ikev2--fragmentation-force": warning: IKEv1 only fragmentation=force ignored; using fragmentation=yes
-002 "whack--ikev2--fragmentation-force": added IKEv2 connection
+"whack--ikev2--fragmentation-force": warning: IKEv1 only fragmentation=force ignored; using fragmentation=yes
+"whack--ikev2--fragmentation-force": added IKEv2 connection
 west #
  ipsec connectionstatus | sed -n -e 's/\(.* policy:\) .*\(IKEv[12]\).*/\1 \2/p'
 "addconn--ikev1":   policy: IKEv1

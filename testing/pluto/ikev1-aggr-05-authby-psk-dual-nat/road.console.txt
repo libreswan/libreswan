@@ -13,17 +13,17 @@ road #
  # bring up server behind NAT "road"
 road #
  ipsec auto --add road-east
-002 "road-east": added IKEv1 connection
+"road-east": added IKEv1 connection
 road #
  ipsec auto --up road-east
-003 "road-east" #1: IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's
-002 "road-east" #1: initiating IKEv1 Aggressive Mode connection
-1v1 "road-east" #1: sent Aggressive Mode request
-002 "road-east" #1: Peer ID is ID_FQDN: '@east'
-004 "road-east" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "road-east" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+AGGRESSIVE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-1v1 "road-east" #2: sent Quick Mode request
-004 "road-east" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_256_128 DPD=passive}
+"road-east" #1: IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's
+"road-east" #1: initiating IKEv1 Aggressive Mode connection
+"road-east" #1: sent Aggressive Mode request
+"road-east" #1: Peer ID is ID_FQDN: '@east'
+"road-east" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"road-east" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+AGGRESSIVE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"road-east" #2: sent Quick Mode request
+"road-east" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_256_128 DPD=passive}
 road #
  # sleep 3
 road #
@@ -35,25 +35,25 @@ road #
  ipsec whack --impair send-no-delete
 road #
  ipsec auto --delete road-east
-002 "road-east": terminating SAs using this connection
-002 "road-east" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
-002 "road-east" #2: IMPAIR: impair-send-no-delete set - not sending Delete/Notify
-005 "road-east" #2: ESP traffic information: in=0B out=0B
-002 "road-east" #1: deleting ISAKMP SA (AGGR_I2) and sending notification
-002 "road-east" #1: IMPAIR: impair-send-no-delete set - not sending Delete/Notify
+"road-east": terminating SAs using this connection
+"road-east" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
+"road-east" #2: IMPAIR: impair-send-no-delete set - not sending Delete/Notify
+"road-east" #2: ESP traffic information: in=0B out=0B
+"road-east" #1: deleting ISAKMP SA (AGGR_I2) and sending notification
+"road-east" #1: IMPAIR: impair-send-no-delete set - not sending Delete/Notify
 road #
  ipsec auto --add runner-east
-002 "runner-east": added IKEv1 connection
+"runner-east": added IKEv1 connection
 road #
  ipsec auto --up runner-east
-003 "runner-east" #3: IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's
-002 "runner-east" #3: initiating IKEv1 Aggressive Mode connection
-1v1 "runner-east" #3: sent Aggressive Mode request
-002 "runner-east" #3: Peer ID is ID_FQDN: '@east'
-004 "runner-east" #3: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "runner-east" #4: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+AGGRESSIVE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-1v1 "runner-east" #4: sent Quick Mode request
-004 "runner-east" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_256_128 DPD=passive}
+"runner-east" #3: IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's
+"runner-east" #3: initiating IKEv1 Aggressive Mode connection
+"runner-east" #3: sent Aggressive Mode request
+"runner-east" #3: Peer ID is ID_FQDN: '@east'
+"runner-east" #3: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"runner-east" #4: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+AGGRESSIVE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"runner-east" #4: sent Quick Mode request
+"runner-east" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_256_128 DPD=passive}
 road #
  echo done
 done

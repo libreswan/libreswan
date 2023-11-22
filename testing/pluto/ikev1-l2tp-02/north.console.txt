@@ -24,7 +24,7 @@ north #
  ../../guestbin/wait-until-pluto-started
 north #
  ipsec auto --add north-east-l2tp
-002 "north-east-l2tp": added IKEv1 connection
+"north-east-l2tp": added IKEv1 connection
 north #
  ../../guestbin/l2tpd.sh
 north #
@@ -34,16 +34,16 @@ north #
 done
 north #
  ipsec auto --up north-east-l2tp
-002 "north-east-l2tp" #1: initiating IKEv1 Main Mode connection
-1v1 "north-east-l2tp" #1: sent Main Mode request
-1v1 "north-east-l2tp" #1: sent Main Mode I2
-1v1 "north-east-l2tp" #1: sent Main Mode I3
-002 "north-east-l2tp" #1: Peer ID is ID_FQDN: '@east'
-003 "north-east-l2tp" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
-004 "north-east-l2tp" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "north-east-l2tp" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TRANSPORT+PFS+ROUTE+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-1v1 "north-east-l2tp" #2: sent Quick Mode request
-004 "north-east-l2tp" #2: IPsec SA established transport mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATD=192.1.2.23:4500 DPD=passive}
+"north-east-l2tp" #1: initiating IKEv1 Main Mode connection
+"north-east-l2tp" #1: sent Main Mode request
+"north-east-l2tp" #1: sent Main Mode I2
+"north-east-l2tp" #1: sent Main Mode I3
+"north-east-l2tp" #1: Peer ID is ID_FQDN: '@east'
+"north-east-l2tp" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"north-east-l2tp" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"north-east-l2tp" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TRANSPORT+PFS+ROUTE+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"north-east-l2tp" #2: sent Quick Mode request
+"north-east-l2tp" #2: IPsec SA established transport mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATD=192.1.2.23:4500 DPD=passive}
 north #
  # give the kernel messages time to appear
 north #

@@ -18,9 +18,9 @@ west #
  # use delete, not down - because east has auto=start
 west #
  ipsec auto --delete west-east-auto
-002 "west-east-auto": terminating SAs using this connection
-002 "west-east-auto" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
-005 "west-east-auto" #2: ESP traffic information: in=0B out=0B
+"west-east-auto": terminating SAs using this connection
+"west-east-auto" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"west-east-auto" #2: ESP traffic information: in=0B out=0B
 west #
  # give Delete/Notify some time
 west #

@@ -6,10 +6,10 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add static
-002 "static": added IKEv2 connection
+"static": added IKEv2 connection
 east #
  ipsec auto --asynchronous --up static
-1v2 "static" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"static" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 east #
  ipsec status |grep STATE_
 #1: "static":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;

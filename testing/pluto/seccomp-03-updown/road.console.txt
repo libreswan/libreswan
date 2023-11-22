@@ -14,7 +14,7 @@ road #
  ../../guestbin/wait-until-pluto-started
 road #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
-002 "westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
+"westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
 road #
  ipsec whack --impair suppress-retransmits
 road #
@@ -22,19 +22,19 @@ road #
 initdone
 road #
  ipsec auto --up westnet-eastnet-ipv4-psk-ikev2
-1v2 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 100.64.0.1
-002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS 1.2.3.4
-002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS 8.8.8.8
-005 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: Received INTERNAL_DNS_DOMAIN: test.tld
-002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: up-client output: updating local nameserver for test.tld with 1.2.3.4 8.8.8.8
-002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: up-client output: ok
-002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: up-client output: ok removed 0 rrsets, 0 messages and 0 key entries
-002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: up-client output: ok
-004 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [100.64.0.1/32===0.0.0.0/0] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATD=192.1.2.23:4500 DPD=passive}
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 100.64.0.1
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS 1.2.3.4
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS 8.8.8.8
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: Received INTERNAL_DNS_DOMAIN: test.tld
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: up-client output: updating local nameserver for test.tld with 1.2.3.4 8.8.8.8
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: up-client output: ok
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: up-client output: ok removed 0 rrsets, 0 messages and 0 key entries
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: up-client output: ok
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [100.64.0.1/32===0.0.0.0/0] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATD=192.1.2.23:4500 DPD=passive}
 road #
  ipsec whack --trafficstatus
 #2: "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east', lease=100.64.0.1/32
@@ -49,14 +49,14 @@ road #
 test.tld. IN forward 8.8.8.8 1.2.3.4
 road #
  ipsec auto --down westnet-eastnet-ipv4-psk-ikev2
-002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23: terminating SAs using this connection
-002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
-005 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: ESP traffic information: in=0B out=0B
-002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: down-client output: flushing local nameserver of test.tld
-002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: down-client output: ok
-002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: down-client output: ok removed 0 rrsets, 0 messages and 0 key entries
-002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: down-client output: ok
-002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23: deleting connection instance with peer 192.1.2.23
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23: terminating SAs using this connection
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: ESP traffic information: in=0B out=0B
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: down-client output: flushing local nameserver of test.tld
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: down-client output: ok
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: down-client output: ok removed 0 rrsets, 0 messages and 0 key entries
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: down-client output: ok
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23: deleting connection instance with peer 192.1.2.23
 road #
  # try some things to trigger new syscalls
 road #
@@ -93,8 +93,8 @@ road #
 road #
  ipsec whack --seccomp-crashtest & sleep 2
 [x] PID
-003 pluto is running with seccomp=enabled! pluto is expected to die!
-003 Performing seccomp security test using getsid() syscall
+pluto is running with seccomp=enabled! pluto is expected to die!
+Performing seccomp security test using getsid() syscall
 road #
  # should show 1 entry of pluto crashing now
 road #

@@ -26,39 +26,39 @@ west #
  ipsec whack --debug-all --impair suppress-retransmits
 west #
  ipsec auto --add westnet-eastnet-a
-002 "westnet-eastnet-a": added IKEv2 connection
+"westnet-eastnet-a": added IKEv2 connection
 west #
  ipsec auto --add westnet-eastnet-b
-002 "westnet-eastnet-b": added IKEv2 connection
+"westnet-eastnet-b": added IKEv2 connection
 west #
  ipsec auto --add westnet-eastnet-c
-002 "westnet-eastnet-c": added IKEv2 connection
+"westnet-eastnet-c": added IKEv2 connection
 west #
  echo "initdone"
 initdone
 west #
  ipsec auto --up westnet-eastnet-a
-1v2 "westnet-eastnet-a" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "westnet-eastnet-a" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "westnet-eastnet-a" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "westnet-eastnet-a" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "westnet-eastnet-a" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"westnet-eastnet-a" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"westnet-eastnet-a" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"westnet-eastnet-a" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"westnet-eastnet-a" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"westnet-eastnet-a" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
  ipsec auto --up westnet-eastnet-b
-002 "westnet-eastnet-b" #3: initiating Child SA using IKE SA #1
-1v2 "westnet-eastnet-b" #3: sent CREATE_CHILD_SA request for new IPsec SA
-004 "westnet-eastnet-b" #3: initiator established Child SA using #1; IPsec tunnel [192.0.100.0/24===192.0.200.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
+"westnet-eastnet-b" #3: initiating Child SA using IKE SA #1
+"westnet-eastnet-b" #3: sent CREATE_CHILD_SA request for new IPsec SA
+"westnet-eastnet-b" #3: initiator established Child SA using #1; IPsec tunnel [192.0.100.0/24===192.0.200.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.100.254 192.0.200.254
 up
 west #
  ipsec auto --up westnet-eastnet-c
-002 "westnet-eastnet-c" #4: initiating Child SA using IKE SA #1
-1v2 "westnet-eastnet-c" #4: sent CREATE_CHILD_SA request for new IPsec SA
-004 "westnet-eastnet-c" #4: initiator established Child SA using #1; IPsec tunnel [192.0.101.0/24===192.0.201.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
+"westnet-eastnet-c" #4: initiating Child SA using IKE SA #1
+"westnet-eastnet-c" #4: sent CREATE_CHILD_SA request for new IPsec SA
+"westnet-eastnet-c" #4: initiator established Child SA using #1; IPsec tunnel [192.0.101.0/24===192.0.201.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.101.254 192.0.201.254
 up

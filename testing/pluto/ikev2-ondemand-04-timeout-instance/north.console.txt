@@ -6,7 +6,7 @@ north #
  ../../guestbin/wait-until-pluto-started
 north #
  ipsec auto --add north
-002 "north": added IKEv2 connection
+"north": added IKEv2 connection
 north #
  ipsec auto --route north
 north #
@@ -105,10 +105,10 @@ north #
  # confirm shutdown/cleanup
 north #
  ipsec auto --down north
-002 "north": terminating SAs using this connection
-002 "north" #2: intiating delete
-005 "north" #3: ESP traffic information: in=84B out=84B
-002 "north" #2: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
+"north": terminating SAs using this connection
+"north" #2: intiating delete
+"north" #3: ESP traffic information: in=84B out=84B
+"north" #2: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 north #
  ../../guestbin/ipsec-kernel-policy.sh
 src 192.0.3.254/32 dst 192.0.2.0/24

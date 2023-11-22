@@ -6,34 +6,34 @@ road #
  ../../guestbin/wait-until-pluto-started
 road #
  ipsec auto --add modecfg-road-eastnet-psk
-002 "modecfg-road-eastnet-psk": added IKEv1 connection
+"modecfg-road-eastnet-psk": added IKEv1 connection
 road #
  echo "initdone"
 initdone
 road #
  ipsec whack --xauthname 'use3' --xauthpass 'use1pass' --name modecfg-road-eastnet-psk --initiate
-003 "modecfg-road-eastnet-psk" #1: IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's
-003 "modecfg-road-eastnet-psk" #1: multiple DH groups in aggressive mode can cause interop failure
-003 "modecfg-road-eastnet-psk" #1: Deleting previous proposal in the hopes of selecting DH 2 or DH 5
-002 "modecfg-road-eastnet-psk" #1: initiating IKEv1 Aggressive Mode connection
-003 "modecfg-road-eastnet-psk" #1: multiple DH groups in aggressive mode can cause interop failure
-003 "modecfg-road-eastnet-psk" #1: Deleting previous proposal in the hopes of selecting DH 2 or DH 5
-1v1 "modecfg-road-eastnet-psk" #1: sent Aggressive Mode request
-002 "modecfg-road-eastnet-psk" #1: Peer ID is ID_FQDN: '@east'
-004 "modecfg-road-eastnet-psk" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP1536}
-041 "modecfg-road-eastnet-psk" #1: prompt for Username:
-040 "modecfg-road-eastnet-psk" #1: prompt for Password:
-002 "modecfg-road-eastnet-psk" #1: XAUTH: Answering XAUTH challenge with user='use3'
-004 "modecfg-road-eastnet-psk" #1: XAUTH client - possibly awaiting CFG_set {auth=PRESHARED_KEY cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP1536}
-002 "modecfg-road-eastnet-psk" #1: XAUTH: Successfully Authenticated
-004 "modecfg-road-eastnet-psk" #1: XAUTH client - possibly awaiting CFG_set {auth=PRESHARED_KEY cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP1536}
-002 "modecfg-road-eastnet-psk" #1: modecfg: Sending IP request (MODECFG_I1)
-005 "modecfg-road-eastnet-psk" #1: Received IPv4 address: 192.0.2.209/32
-005 "modecfg-road-eastnet-psk" #1: received and ignored CISCO_SPLIT_INC subnet 192.0.2.0/24
-004 "modecfg-road-eastnet-psk" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP1536}
-002 "modecfg-road-eastnet-psk" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+XAUTH+MODECFG_PULL+AGGRESSIVE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-1v1 "modecfg-road-eastnet-psk" #2: sent Quick Mode request
-004 "modecfg-road-eastnet-psk" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=active username=use3}
+"modecfg-road-eastnet-psk" #1: IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's
+"modecfg-road-eastnet-psk" #1: multiple DH groups in aggressive mode can cause interop failure
+"modecfg-road-eastnet-psk" #1: Deleting previous proposal in the hopes of selecting DH 2 or DH 5
+"modecfg-road-eastnet-psk" #1: initiating IKEv1 Aggressive Mode connection
+"modecfg-road-eastnet-psk" #1: multiple DH groups in aggressive mode can cause interop failure
+"modecfg-road-eastnet-psk" #1: Deleting previous proposal in the hopes of selecting DH 2 or DH 5
+"modecfg-road-eastnet-psk" #1: sent Aggressive Mode request
+"modecfg-road-eastnet-psk" #1: Peer ID is ID_FQDN: '@east'
+"modecfg-road-eastnet-psk" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP1536}
+"modecfg-road-eastnet-psk" #1: prompt for Username:
+"modecfg-road-eastnet-psk" #1: prompt for Password:
+"modecfg-road-eastnet-psk" #1: XAUTH: Answering XAUTH challenge with user='use3'
+"modecfg-road-eastnet-psk" #1: XAUTH client - possibly awaiting CFG_set {auth=PRESHARED_KEY cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP1536}
+"modecfg-road-eastnet-psk" #1: XAUTH: Successfully Authenticated
+"modecfg-road-eastnet-psk" #1: XAUTH client - possibly awaiting CFG_set {auth=PRESHARED_KEY cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP1536}
+"modecfg-road-eastnet-psk" #1: modecfg: Sending IP request (MODECFG_I1)
+"modecfg-road-eastnet-psk" #1: Received IPv4 address: 192.0.2.209/32
+"modecfg-road-eastnet-psk" #1: received and ignored CISCO_SPLIT_INC subnet 192.0.2.0/24
+"modecfg-road-eastnet-psk" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP1536}
+"modecfg-road-eastnet-psk" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+XAUTH+MODECFG_PULL+AGGRESSIVE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"modecfg-road-eastnet-psk" #2: sent Quick Mode request
+"modecfg-road-eastnet-psk" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=active username=use3}
 road #
  ipsec whack --trafficstatus
 #2: "modecfg-road-eastnet-psk", username=use3, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, lease=192.0.2.209/32

@@ -42,51 +42,51 @@ west #
  ipsec whack --impair suppress-retransmits
 west #
  ipsec auto --add old-west
-002 "old-west": added IKEv2 connection
+"old-west": added IKEv2 connection
 west #
  ipsec auto --add new-west
-002 "new-west": added IKEv2 connection
+"new-west": added IKEv2 connection
 west #
  ipsec auto --add hog-west
-002 "hog-west": added IKEv2 connection
+"hog-west": added IKEv2 connection
 west #
  ipsec auto --up old-west
-1v2 "old-west" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "old-west" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "old-west" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "old-west" #1: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
-036 "old-west" #1: encountered fatal error in state STATE_V2_PARENT_I2
-002 "old-west" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-002 "old-west" #1: deleting IKE SA (PARENT_I2) and NOT sending notification
+"old-west" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"old-west" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"old-west" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"old-west" #1: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
+"old-west" #1: encountered fatal error in state STATE_V2_PARENT_I2
+"old-west" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"old-west" #1: deleting IKE SA (PARENT_I2) and NOT sending notification
 west #
  ipsec auto --down old-west
-002 "old-west": terminating SAs using this connection
-002 "old-west" #3: deleting IKE SA (PARENT_I1) and NOT sending notification
+"old-west": terminating SAs using this connection
+"old-west" #3: deleting IKE SA (PARENT_I1) and NOT sending notification
 west #
  ipsec auto --up new-west
-1v2 "new-west" #4: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "new-west" #4: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "new-west" #4: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "new-west" #4: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate 'CN=east' issued by CA 'CN=west-ca'
-004 "new-west" #5: initiator established Child SA using #4; IPsec tunnel [192.0.2.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"new-west" #4: initiating IKEv2 connection to 192.1.2.23 using UDP
+"new-west" #4: sent IKE_SA_INIT request to 192.1.2.23:500
+"new-west" #4: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"new-west" #4: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate 'CN=east' issued by CA 'CN=west-ca'
+"new-west" #5: initiator established Child SA using #4; IPsec tunnel [192.0.2.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ipsec auto --down new-west
-002 "new-west": terminating SAs using this connection
-002 "new-west" #4: intiating delete
-005 "new-west" #5: ESP traffic information: in=0B out=0B
-002 "new-west" #4: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
+"new-west": terminating SAs using this connection
+"new-west" #4: intiating delete
+"new-west" #5: ESP traffic information: in=0B out=0B
+"new-west" #4: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #
  ipsec auto --up hog-west
-1v2 "hog-west" #6: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "hog-west" #6: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "hog-west" #6: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "hog-west" #6: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate 'CN=east' issued by CA 'CN=west-ca'
-004 "hog-west" #7: initiator established Child SA using #6; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"hog-west" #6: initiating IKEv2 connection to 192.1.2.23 using UDP
+"hog-west" #6: sent IKE_SA_INIT request to 192.1.2.23:500
+"hog-west" #6: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"hog-west" #6: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate 'CN=east' issued by CA 'CN=west-ca'
+"hog-west" #7: initiator established Child SA using #6; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ipsec auto --down hog-west
-002 "hog-west": terminating SAs using this connection
-002 "hog-west" #6: intiating delete
-005 "hog-west" #7: ESP traffic information: in=0B out=0B
-002 "hog-west" #6: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
+"hog-west": terminating SAs using this connection
+"hog-west" #6: intiating delete
+"hog-west" #7: ESP traffic information: in=0B out=0B
+"hog-west" #6: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #
  

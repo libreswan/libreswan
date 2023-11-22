@@ -6,9 +6,9 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec add east
-002 "east": adding UDP interface eth1 192.1.2.23:443
-002 "east": adding TCP interface eth1 192.1.2.23:443
-002 "east": added IKEv2 connection
+"east": adding UDP interface eth1 192.1.2.23:443
+"east": adding TCP interface eth1 192.1.2.23:443
+"east": added IKEv2 connection
 east #
  # block all TCP and UDP port 500 and 4500
 east #

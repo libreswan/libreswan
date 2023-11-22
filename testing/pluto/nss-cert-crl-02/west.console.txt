@@ -11,7 +11,7 @@ west #
  ipsec whack --impair timeout-on-retransmit
 west #
  ipsec auto --add nss-cert-crl
-002 "nss-cert-crl": added IKEv1 connection
+"nss-cert-crl": added IKEv1 connection
 west #
  ipsec auto --status |grep nss-cert-crl
 "nss-cert-crl": 192.0.1.254/32===192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=revoked.testing.libreswan.org, E=user-revoked@testing.libreswan.org]...192.1.2.23[%fromcert]===192.0.2.254/32; unrouted; my_ip=192.0.1.254; their_ip=192.0.2.254;
@@ -38,17 +38,17 @@ west #
 initdone
 west #
  ipsec auto --up nss-cert-crl
-002 "nss-cert-crl" #1: initiating IKEv1 Main Mode connection
-1v1 "nss-cert-crl" #1: sent Main Mode request
-1v1 "nss-cert-crl" #1: sent Main Mode I2
-002 "nss-cert-crl" #1: I am sending my cert
-002 "nss-cert-crl" #1: I am sending a certificate request
-1v1 "nss-cert-crl" #1: sent Main Mode I3
-003 "nss-cert-crl" #1: ignoring informational payload INVALID_ID_INFORMATION, msgid=00000000, length=12
-003 "nss-cert-crl" #1: received and ignored notification payload: INVALID_ID_INFORMATION
-002 "nss-cert-crl" #1: IMPAIR: retransmit so timing out SA (may retry)
-002 "nss-cert-crl" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-002 "nss-cert-crl" #1: deleting ISAKMP SA (MAIN_I3) and NOT sending notification
+"nss-cert-crl" #1: initiating IKEv1 Main Mode connection
+"nss-cert-crl" #1: sent Main Mode request
+"nss-cert-crl" #1: sent Main Mode I2
+"nss-cert-crl" #1: I am sending my cert
+"nss-cert-crl" #1: I am sending a certificate request
+"nss-cert-crl" #1: sent Main Mode I3
+"nss-cert-crl" #1: ignoring informational payload INVALID_ID_INFORMATION, msgid=00000000, length=12
+"nss-cert-crl" #1: received and ignored notification payload: INVALID_ID_INFORMATION
+"nss-cert-crl" #1: IMPAIR: retransmit so timing out SA (may retry)
+"nss-cert-crl" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"nss-cert-crl" #1: deleting ISAKMP SA (MAIN_I3) and NOT sending notification
 west #
  echo done
 done

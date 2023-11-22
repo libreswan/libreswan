@@ -11,7 +11,7 @@ west #
  # add a connection to test adddconn as well
 west #
  ipsec auto --add west
-002 "west": added IKEv1 connection
+"west": added IKEv1 connection
 west #
  # there should be something to shutdown, proving we started properly
 west #

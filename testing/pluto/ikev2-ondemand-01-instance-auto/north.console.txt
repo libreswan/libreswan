@@ -73,10 +73,10 @@ src 192.1.2.23 dst 192.1.3.33
 	 00000000 00000000 00000000 XXXXXXXX 
 north #
  ipsec auto --down north
-002 "north": terminating SAs using this connection
-002 "north" #1: intiating delete
-005 "north" #2: ESP traffic information: in=84B out=84B
-002 "north" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
+"north": terminating SAs using this connection
+"north" #1: intiating delete
+"north" #2: ESP traffic information: in=84B out=84B
+"north" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 north #
  #everything but trap cleared
 north #

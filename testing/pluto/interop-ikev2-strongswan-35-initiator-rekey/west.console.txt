@@ -27,17 +27,17 @@ west #
  ipsec whack --impair revival
 west #
  ipsec auto --add westnet-eastnet
-002 "westnet-eastnet": added IKEv2 connection
+"westnet-eastnet": added IKEv2 connection
 west #
  echo "initdone"
 initdone
 west #
  ipsec auto --up westnet-eastnet
-1v2 "westnet-eastnet" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "westnet-eastnet" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "westnet-eastnet" #1: sent IKE_AUTH request {cipher=AES_CBC_256 integ=HMAC_SHA2_512_256 prf=HMAC_SHA2_512 group=MODP2048}
-003 "westnet-eastnet" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "westnet-eastnet" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_512_256 DPD=passive}
+"westnet-eastnet" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"westnet-eastnet" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"westnet-eastnet" #1: sent IKE_AUTH request {cipher=AES_CBC_256 integ=HMAC_SHA2_512_256 prf=HMAC_SHA2_512 group=MODP2048}
+"westnet-eastnet" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"westnet-eastnet" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_512_256 DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
@@ -48,11 +48,11 @@ west #
  # does not work on 3.29 for now leave it timer based rekey
 west #
  ipsec whack --rekey-ipsec --name westnet-eastnet
-002 "westnet-eastnet" #3: initiating rekey to replace Child SA #2
-1v2 "westnet-eastnet" #3: sent CREATE_CHILD_SA request to rekey IPsec SA
-004 "westnet-eastnet" #3: initiator rekeyed Child SA #2 using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_512_256-MODP2048 DPD=passive}
-002 "westnet-eastnet" #2: deleting established Child SA using IKE SA #1
-005 "westnet-eastnet" #2: ESP traffic information: in=84B out=84B
+"westnet-eastnet" #3: initiating rekey to replace Child SA #2
+"westnet-eastnet" #3: sent CREATE_CHILD_SA request to rekey IPsec SA
+"westnet-eastnet" #3: initiator rekeyed Child SA #2 using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_512_256-MODP2048 DPD=passive}
+"westnet-eastnet" #2: deleting established Child SA using IKE SA #1
+"westnet-eastnet" #2: ESP traffic information: in=84B out=84B
 west #
  sleep 15
 west #

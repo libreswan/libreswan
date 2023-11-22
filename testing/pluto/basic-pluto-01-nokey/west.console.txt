@@ -12,7 +12,7 @@ west #
  ipsec whack --impair revival
 west #
  ipsec auto --add westnet-eastnet
-002 "westnet-eastnet": added IKEv1 connection
+"westnet-eastnet": added IKEv1 connection
 west #
  echo "initdone"
 initdone
@@ -22,30 +22,30 @@ west #
  # this is expected to fail to our own misconfigured key
 west #
  ipsec auto --up westnet-eastnet
-002 "westnet-eastnet" #1: initiating IKEv1 Main Mode connection
-1v1 "westnet-eastnet" #1: sent Main Mode request
-1v1 "westnet-eastnet" #1: sent Main Mode I2
-003 "westnet-eastnet" #1: private key matching CKAID '4651cb327d8ee9c2a0f71f176c7d172f33205dc2' not found: can't find the private key matching the NSS CKAID
-003 "westnet-eastnet" #1: unable to locate my private key for RSA Signature
-224 "westnet-eastnet" #1: sending notification AUTHENTICATION_FAILED to 192.1.2.23:500
-003 "westnet-eastnet" #1: private key matching CKAID '4651cb327d8ee9c2a0f71f176c7d172f33205dc2' not found: can't find the private key matching the NSS CKAID
-003 "westnet-eastnet" #1: unable to locate my private key for RSA Signature
-224 "westnet-eastnet" #1: sending notification AUTHENTICATION_FAILED to 192.1.2.23:500
-003 "westnet-eastnet" #1: private key matching CKAID '4651cb327d8ee9c2a0f71f176c7d172f33205dc2' not found: can't find the private key matching the NSS CKAID
-003 "westnet-eastnet" #1: unable to locate my private key for RSA Signature
-224 "westnet-eastnet" #1: sending notification AUTHENTICATION_FAILED to 192.1.2.23:500
-003 "westnet-eastnet" #1: private key matching CKAID '4651cb327d8ee9c2a0f71f176c7d172f33205dc2' not found: can't find the private key matching the NSS CKAID
-003 "westnet-eastnet" #1: unable to locate my private key for RSA Signature
-224 "westnet-eastnet" #1: sending notification AUTHENTICATION_FAILED to 192.1.2.23:500
-003 "westnet-eastnet" #1: private key matching CKAID '4651cb327d8ee9c2a0f71f176c7d172f33205dc2' not found: can't find the private key matching the NSS CKAID
-003 "westnet-eastnet" #1: unable to locate my private key for RSA Signature
-224 "westnet-eastnet" #1: sending notification AUTHENTICATION_FAILED to 192.1.2.23:500
-003 "westnet-eastnet" #1: private key matching CKAID '4651cb327d8ee9c2a0f71f176c7d172f33205dc2' not found: can't find the private key matching the NSS CKAID
-003 "westnet-eastnet" #1: unable to locate my private key for RSA Signature
-224 "westnet-eastnet" #1: sending notification AUTHENTICATION_FAILED to 192.1.2.23:500
-002 "westnet-eastnet" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-002 "westnet-eastnet" #1: IMPAIR: revival: skip scheduling revival event
-002 "westnet-eastnet" #1: deleting ISAKMP SA (MAIN_I2) and NOT sending notification
+"westnet-eastnet" #1: initiating IKEv1 Main Mode connection
+"westnet-eastnet" #1: sent Main Mode request
+"westnet-eastnet" #1: sent Main Mode I2
+"westnet-eastnet" #1: private key matching CKAID '4651cb327d8ee9c2a0f71f176c7d172f33205dc2' not found: can't find the private key matching the NSS CKAID
+"westnet-eastnet" #1: unable to locate my private key for RSA Signature
+"westnet-eastnet" #1: sending notification AUTHENTICATION_FAILED to 192.1.2.23:500
+"westnet-eastnet" #1: private key matching CKAID '4651cb327d8ee9c2a0f71f176c7d172f33205dc2' not found: can't find the private key matching the NSS CKAID
+"westnet-eastnet" #1: unable to locate my private key for RSA Signature
+"westnet-eastnet" #1: sending notification AUTHENTICATION_FAILED to 192.1.2.23:500
+"westnet-eastnet" #1: private key matching CKAID '4651cb327d8ee9c2a0f71f176c7d172f33205dc2' not found: can't find the private key matching the NSS CKAID
+"westnet-eastnet" #1: unable to locate my private key for RSA Signature
+"westnet-eastnet" #1: sending notification AUTHENTICATION_FAILED to 192.1.2.23:500
+"westnet-eastnet" #1: private key matching CKAID '4651cb327d8ee9c2a0f71f176c7d172f33205dc2' not found: can't find the private key matching the NSS CKAID
+"westnet-eastnet" #1: unable to locate my private key for RSA Signature
+"westnet-eastnet" #1: sending notification AUTHENTICATION_FAILED to 192.1.2.23:500
+"westnet-eastnet" #1: private key matching CKAID '4651cb327d8ee9c2a0f71f176c7d172f33205dc2' not found: can't find the private key matching the NSS CKAID
+"westnet-eastnet" #1: unable to locate my private key for RSA Signature
+"westnet-eastnet" #1: sending notification AUTHENTICATION_FAILED to 192.1.2.23:500
+"westnet-eastnet" #1: private key matching CKAID '4651cb327d8ee9c2a0f71f176c7d172f33205dc2' not found: can't find the private key matching the NSS CKAID
+"westnet-eastnet" #1: unable to locate my private key for RSA Signature
+"westnet-eastnet" #1: sending notification AUTHENTICATION_FAILED to 192.1.2.23:500
+"westnet-eastnet" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"westnet-eastnet" #1: IMPAIR: revival: skip scheduling revival event
+"westnet-eastnet" #1: deleting ISAKMP SA (MAIN_I2) and NOT sending notification
 west #
  # we should not see any leftover states
 west #

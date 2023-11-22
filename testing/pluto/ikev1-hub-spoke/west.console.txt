@@ -6,7 +6,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-northnet-ipv4-psk
-002 "westnet-northnet-ipv4-psk": added IKEv1 connection
+"westnet-northnet-ipv4-psk": added IKEv1 connection
 west #
  ipsec auto --status
 using kernel interface: xfrm
@@ -130,15 +130,15 @@ west #
  sleep 20
 west #
  ipsec auto --up westnet-northnet-ipv4-psk
-002 "westnet-northnet-ipv4-psk" #1: initiating IKEv1 Main Mode connection
-1v1 "westnet-northnet-ipv4-psk" #1: sent Main Mode request
-1v1 "westnet-northnet-ipv4-psk" #1: sent Main Mode I2
-1v1 "westnet-northnet-ipv4-psk" #1: sent Main Mode I3
-002 "westnet-northnet-ipv4-psk" #1: Peer ID is ID_FQDN: '@east'
-004 "westnet-northnet-ipv4-psk" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "westnet-northnet-ipv4-psk" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-1v1 "westnet-northnet-ipv4-psk" #2: sent Quick Mode request
-004 "westnet-northnet-ipv4-psk" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+"westnet-northnet-ipv4-psk" #1: initiating IKEv1 Main Mode connection
+"westnet-northnet-ipv4-psk" #1: sent Main Mode request
+"westnet-northnet-ipv4-psk" #1: sent Main Mode I2
+"westnet-northnet-ipv4-psk" #1: sent Main Mode I3
+"westnet-northnet-ipv4-psk" #1: Peer ID is ID_FQDN: '@east'
+"westnet-northnet-ipv4-psk" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"westnet-northnet-ipv4-psk" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"westnet-northnet-ipv4-psk" #2: sent Quick Mode request
+"westnet-northnet-ipv4-psk" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
  ping -n -q -c 4 -I 192.0.1.254 192.0.3.254
 PING 192.0.3.254 (192.0.3.254) from 192.0.1.254 : 56(84) bytes of data.

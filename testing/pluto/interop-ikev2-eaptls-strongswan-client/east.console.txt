@@ -5,7 +5,7 @@ east #
 Redirecting to: [initsystem]
 east #
  ipsec auto --add rw-eap
-002 "rw-eap": added IKEv2 connection
+"rw-eap": added IKEv2 connection
 east #
  echo "initdone"
 initdone

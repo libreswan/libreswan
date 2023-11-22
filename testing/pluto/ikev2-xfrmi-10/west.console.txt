@@ -36,17 +36,17 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add west
-002 "west": added IKEv2 connection
+"west": added IKEv2 connection
 west #
  echo "initdone"
 initdone
 west #
  ipsec auto --up west
-1v2 "west" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "west" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "west" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "west" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "west" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"west" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"west" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"west" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"west" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
@@ -63,9 +63,9 @@ X: ipsec17@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     xfrm if_id 0x11 addrgenmode eui64 numtxqueues 1 numrxqueues 1 gso_max_size 65536 gso_max_segs 65535 tso_max_size 65536 tso_max_segs 65535 gro_max_size 65536 gso_ipv4_max_size 65536 gro_ipv4_max_size 65536
 west #
  ipsec auto --delete west
-002 "west": terminating SAs using this connection
-002 "west" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
-005 "west" #2: ESP traffic information: in=84B out=84B
+"west": terminating SAs using this connection
+"west" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"west" #2: ESP traffic information: in=84B out=84B
 west #
  ip -d link show ipsec17
 X: ipsec17@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN

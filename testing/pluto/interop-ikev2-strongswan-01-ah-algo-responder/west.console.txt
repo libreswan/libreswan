@@ -25,44 +25,44 @@ west #
 initdone
 west #
  ../../guestbin/libreswan-up-down.sh ah=md5 -I 192.0.1.254 192.0.2.254
-002 "ah=md5": added IKEv2 connection
-1v2 "ah=md5" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "ah=md5" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "ah=md5" #1: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
-003 "ah=md5" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "ah=md5" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {AH=>0xAHAH <0xAHAH xfrm=HMAC_MD5_96 DPD=passive}
+"ah=md5": added IKEv2 connection
+"ah=md5" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"ah=md5" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"ah=md5" #1: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
+"ah=md5" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"ah=md5" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {AH=>0xAHAH <0xAHAH xfrm=HMAC_MD5_96 DPD=passive}
 up
-002 "ah=md5": terminating SAs using this connection
-002 "ah=md5" #1: intiating delete
-005 "ah=md5" #2: AH traffic information: in=84B out=84B
-002 "ah=md5" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
-002 "ah=md5": terminating SAs using this connection
+"ah=md5": terminating SAs using this connection
+"ah=md5" #1: intiating delete
+"ah=md5" #2: AH traffic information: in=84B out=84B
+"ah=md5" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
+"ah=md5": terminating SAs using this connection
 west #
  ../../guestbin/libreswan-up-down.sh ah=sha1 -I 192.0.1.254 192.0.2.254
-002 "ah=sha1": added IKEv2 connection
-1v2 "ah=sha1" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "ah=sha1" #3: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "ah=sha1" #3: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
-003 "ah=sha1" #3: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "ah=sha1" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {AH=>0xAHAH <0xAHAH xfrm=HMAC_SHA1_96 DPD=passive}
+"ah=sha1": added IKEv2 connection
+"ah=sha1" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
+"ah=sha1" #3: sent IKE_SA_INIT request to 192.1.2.23:500
+"ah=sha1" #3: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
+"ah=sha1" #3: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"ah=sha1" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {AH=>0xAHAH <0xAHAH xfrm=HMAC_SHA1_96 DPD=passive}
 up
-002 "ah=sha1": terminating SAs using this connection
-002 "ah=sha1" #3: intiating delete
-005 "ah=sha1" #4: AH traffic information: in=84B out=84B
-002 "ah=sha1" #3: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
-002 "ah=sha1": terminating SAs using this connection
+"ah=sha1": terminating SAs using this connection
+"ah=sha1" #3: intiating delete
+"ah=sha1" #4: AH traffic information: in=84B out=84B
+"ah=sha1" #3: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
+"ah=sha1": terminating SAs using this connection
 west #
  # Test rekey
 west #
  ipsec auto --add ah=sha1
-002 "ah=sha1": added IKEv2 connection
+"ah=sha1": added IKEv2 connection
 west #
  ipsec auto --up ah=sha1
-1v2 "ah=sha1" #5: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "ah=sha1" #5: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "ah=sha1" #5: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
-003 "ah=sha1" #5: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "ah=sha1" #6: initiator established Child SA using #5; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {AH=>0xAHAH <0xAHAH xfrm=HMAC_SHA1_96 DPD=passive}
+"ah=sha1" #5: initiating IKEv2 connection to 192.1.2.23 using UDP
+"ah=sha1" #5: sent IKE_SA_INIT request to 192.1.2.23:500
+"ah=sha1" #5: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
+"ah=sha1" #5: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"ah=sha1" #6: initiator established Child SA using #5; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {AH=>0xAHAH <0xAHAH xfrm=HMAC_SHA1_96 DPD=passive}
 west #
  ping -n -q -c 2 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
@@ -73,10 +73,10 @@ west #
  sleep 1
 west #
  ipsec auto --up ah=sha1
-002 "ah=sha1" #7: initiating Child SA using IKE SA #5
-002 "ah=sha1" #7: connection is already erouted
-1v2 "ah=sha1" #7: sent CREATE_CHILD_SA request for new IPsec SA
-004 "ah=sha1" #7: initiator established Child SA using #5; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {AH=>0xAHAH <0xAHAH xfrm=HMAC_SHA1_96 DPD=passive}
+"ah=sha1" #7: initiating Child SA using IKE SA #5
+"ah=sha1" #7: connection is already erouted
+"ah=sha1" #7: sent CREATE_CHILD_SA request for new IPsec SA
+"ah=sha1" #7: initiator established Child SA using #5; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {AH=>0xAHAH <0xAHAH xfrm=HMAC_SHA1_96 DPD=passive}
 west #
  sleep 1
 west #

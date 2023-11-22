@@ -10,17 +10,17 @@ road #
  ipsec whack --impair suppress-retransmits
 road #
  ipsec auto --add road
-002 "road": added IKEv2 connection
+"road": added IKEv2 connection
 road #
  echo "initdone"
 initdone
 road #
  ipsec auto --up road
-1v2 "road" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "road" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "road" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "road" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "road" #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.209/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"road" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"road" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"road" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"road" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"road" #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.209/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 road #
  # ip rule add prio 100 to 192.1.2.23/32 not fwmark 1/0xffffffff lookup 50
 road #
@@ -84,10 +84,10 @@ road #
  # check if delete removes all policies without errors
 road #
  ipsec auto --delete road
-002 "road": terminating SAs using this connection
-002 "road" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
-005 "road" #2: ESP traffic information: in=84B out=84B
-002 "road": delete ipsec-interface=ipsec0 if_id=16384 added by pluto
+"road": terminating SAs using this connection
+"road" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"road" #2: ESP traffic information: in=84B out=84B
+"road": delete ipsec-interface=ipsec0 if_id=16384 added by pluto
 road #
  ../../guestbin/ipsec-kernel-state.sh
 road #

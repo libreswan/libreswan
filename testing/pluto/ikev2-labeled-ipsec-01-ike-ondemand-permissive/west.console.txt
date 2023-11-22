@@ -16,7 +16,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add labeled
-002 "labeled": added IKEv2 connection
+"labeled": added IKEv2 connection
 west #
  echo "initdone"
 initdone

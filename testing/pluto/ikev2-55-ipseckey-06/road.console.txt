@@ -10,7 +10,7 @@ road #
  ../../guestbin/wait-until-pluto-started
 road #
  ipsec auto --add road-east-ikev2
-002 "road-east-ikev2": added IKEv2 connection
+"road-east-ikev2": added IKEv2 connection
 road #
  ipsec whack --impair suppress-retransmits
 road #
@@ -38,13 +38,13 @@ TIMESTAMP, 2192 RSA Key AQPl33O2P (has private key), until --- -- --:--:-- ---- 
        ID_FQDN '@north.testing.libreswan.org'
 road #
  ipsec auto --up road-east-ikev2
-1v2 "road-east-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "road-east-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "road-east-ikev2" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "road-east-ikev2" #1: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
-036 "road-east-ikev2" #1: encountered fatal error in state STATE_V2_PARENT_I2
-002 "road-east-ikev2" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-002 "road-east-ikev2" #1: deleting IKE SA (PARENT_I2) and NOT sending notification
+"road-east-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"road-east-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"road-east-ikev2" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"road-east-ikev2" #1: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
+"road-east-ikev2" #1: encountered fatal error in state STATE_V2_PARENT_I2
+"road-east-ikev2" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"road-east-ikev2" #1: deleting IKE SA (PARENT_I2) and NOT sending notification
 road #
  # there should be two public keys. including road
 road #

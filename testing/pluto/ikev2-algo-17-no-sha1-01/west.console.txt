@@ -6,7 +6,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-no-sha1
-002 "westnet-eastnet-no-sha1": added IKEv2 connection
+"westnet-eastnet-no-sha1": added IKEv2 connection
 west #
  ipsec auto --status
 using kernel interface: xfrm
@@ -132,11 +132,11 @@ west #
  ipsec whack --impair timeout-on-retransmit
 west #
  ipsec auto --up westnet-eastnet-no-sha1
-1v2 "westnet-eastnet-no-sha1" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "westnet-eastnet-no-sha1" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "westnet-eastnet-no-sha1" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "westnet-eastnet-no-sha1" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-003 "westnet-eastnet-no-sha1" #2: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
+"westnet-eastnet-no-sha1" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"westnet-eastnet-no-sha1" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"westnet-eastnet-no-sha1" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"westnet-eastnet-no-sha1" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"westnet-eastnet-no-sha1" #2: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
 west #
  echo done
 done

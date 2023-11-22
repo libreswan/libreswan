@@ -6,8 +6,8 @@ road #
  ../../guestbin/wait-until-pluto-started
 road #
  ipsec auto --add road-eastnet-ikev2
-002 "road-eastnet-ikev2": adding UDP interface eth0 192.1.3.209:6666
-002 "road-eastnet-ikev2": added IKEv2 connection
+"road-eastnet-ikev2": adding UDP interface eth0 192.1.3.209:6666
+"road-eastnet-ikev2": added IKEv2 connection
 road #
  ipsec whack --impair suppress-retransmits
 road #
@@ -15,11 +15,11 @@ road #
 initdone
 road #
  ipsec auto --up road-eastnet-ikev2
-1v2 "road-eastnet-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "road-eastnet-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:4500
-1v2 "road-eastnet-ikev2" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "road-eastnet-ikev2" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "road-eastnet-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.209/32===192.0.2.0/24] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATD=192.1.2.23:4500 DPD=passive}
+"road-eastnet-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"road-eastnet-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:4500
+"road-eastnet-ikev2" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"road-eastnet-ikev2" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"road-eastnet-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.209/32===192.0.2.0/24] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATD=192.1.2.23:4500 DPD=passive}
 road #
  ../../guestbin/ping-once.sh --up 192.0.2.254
 up
@@ -28,9 +28,9 @@ road #
 #2: "road-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 road #
  ipsec auto --delete road-eastnet-ikev2
-002 "road-eastnet-ikev2": terminating SAs using this connection
-002 "road-eastnet-ikev2" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
-005 "road-eastnet-ikev2" #2: ESP traffic information: in=84B out=84B
+"road-eastnet-ikev2": terminating SAs using this connection
+"road-eastnet-ikev2" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"road-eastnet-ikev2" #2: ESP traffic information: in=84B out=84B
 road #
  # should be empty for east and road
 road #

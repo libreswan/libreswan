@@ -6,33 +6,33 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-one
-002 "westnet-eastnet-one": added IKEv2 connection
+"westnet-eastnet-one": added IKEv2 connection
 west #
  ipsec auto --add westnet-eastnet-two
-002 "westnet-eastnet-two": added IKEv2 connection
+"westnet-eastnet-two": added IKEv2 connection
 west #
  ipsec auto --add westnet-eastnet-three
-002 "westnet-eastnet-three": added IKEv2 connection
+"westnet-eastnet-three": added IKEv2 connection
 west #
  echo "initdone"
 initdone
 west #
  ipsec auto --up westnet-eastnet-two
-1v2 "westnet-eastnet-two" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "westnet-eastnet-two" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "westnet-eastnet-two" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "westnet-eastnet-two" #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
-004 "westnet-eastnet-two" #2: initiator established Child SA using #1; IPsec tunnel [192.1.1.0/24===192.1.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"westnet-eastnet-two" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"westnet-eastnet-two" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"westnet-eastnet-two" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"westnet-eastnet-two" #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
+"westnet-eastnet-two" #2: initiator established Child SA using #1; IPsec tunnel [192.1.1.0/24===192.1.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ipsec auto --up westnet-eastnet-one
-002 "westnet-eastnet-one" #3: initiating Child SA using IKE SA #1
-1v2 "westnet-eastnet-one" #3: sent CREATE_CHILD_SA request for new IPsec SA
-004 "westnet-eastnet-one" #3: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
+"westnet-eastnet-one" #3: initiating Child SA using IKE SA #1
+"westnet-eastnet-one" #3: sent CREATE_CHILD_SA request for new IPsec SA
+"westnet-eastnet-one" #3: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
 west #
  ipsec auto --up westnet-eastnet-three
-002 "westnet-eastnet-three" #4: initiating Child SA using IKE SA #1
-1v2 "westnet-eastnet-three" #4: sent CREATE_CHILD_SA request for new IPsec SA
-004 "westnet-eastnet-three" #4: initiator established Child SA using #1; IPsec tunnel [192.2.1.0/24===192.2.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
+"westnet-eastnet-three" #4: initiating Child SA using IKE SA #1
+"westnet-eastnet-three" #4: sent CREATE_CHILD_SA request for new IPsec SA
+"westnet-eastnet-three" #4: initiator established Child SA using #1; IPsec tunnel [192.2.1.0/24===192.2.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
 west #
  echo done
 done

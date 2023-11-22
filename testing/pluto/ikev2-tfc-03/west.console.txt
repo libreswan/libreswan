@@ -22,7 +22,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add tfc
-002 "tfc": added IKEv2 connection
+"tfc": added IKEv2 connection
 west #
  ipsec auto --status | grep tfc
 "tfc": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
@@ -51,11 +51,11 @@ west #
 initdone
 west #
  ipsec auto --up tfc
-1v2 "tfc" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "tfc" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "tfc" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "tfc" #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
-004 "tfc" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN/TFC=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"tfc" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"tfc" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"tfc" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"tfc" #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
+"tfc" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN/TFC=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up

@@ -6,7 +6,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec whack --name order-test --tunnel --encrypt --ipv4 --tunnelipv6  --host 1.2.3.4 --id foo --client fe80::1/128 --to --host 2.3.4.5 --id bar --client fe80::2/128
-002 "order-test": added IKEv2 connection
+"order-test": added IKEv2 connection
 west #
  ipsec whack --connectionstatus --name order-test
 "order-test": fe80::1/128===1.2.3.4[+S?C]...2.3.4.5[+S?C]===fe80::2/128; unoriented; my_ip=unset; their_ip=unset;

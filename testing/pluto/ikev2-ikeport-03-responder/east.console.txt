@@ -6,8 +6,8 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-ikev2
-002 "westnet-eastnet-ikev2": adding UDP interface eth1 192.1.2.23:2500
-002 "westnet-eastnet-ikev2": added IKEv2 connection
+"westnet-eastnet-ikev2": adding UDP interface eth1 192.1.2.23:2500
+"westnet-eastnet-ikev2": added IKEv2 connection
 east #
  ipsec auto --status
 using kernel interface: xfrm

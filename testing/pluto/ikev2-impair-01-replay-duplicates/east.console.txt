@@ -8,7 +8,7 @@ east #
  ipsec whack --impair replay-duplicates
 east #
  ipsec auto --add westnet-eastnet
-002 "westnet-eastnet": added IKEv2 connection
+"westnet-eastnet": added IKEv2 connection
 east #
  echo "initdone"
 initdone

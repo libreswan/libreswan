@@ -72,8 +72,8 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-ikev2
-002 "westnet-eastnet-ikev2": NSS Password from file "/etc/ipsec.d/nsspassword" for token "libreswan" with length 6 passed to NSS
-002 "westnet-eastnet-ikev2": added IKEv2 connection
+"westnet-eastnet-ikev2": NSS Password from file "/etc/ipsec.d/nsspassword" for token "libreswan" with length 6 passed to NSS
+"westnet-eastnet-ikev2": added IKEv2 connection
 east #
  ipsec auto --listall
  

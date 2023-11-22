@@ -10,10 +10,10 @@ Initializing NSS database
 Starting pluto.
 west #
  ipsec auto --add overflow # should fail
-036 "overflow": failed to add connection: replay-window=4294967294 exceeds PF_KEY v2 kernel interface limit of 4294967263
+"overflow": failed to add connection: replay-window=4294967294 exceeds PF_KEY v2 kernel interface limit of 4294967263
 west #
  ipsec auto --add eastnet-westnet-ikev2
-002 "eastnet-westnet-ikev2": added IKEv2 connection
+"eastnet-westnet-ikev2": added IKEv2 connection
 west #
  echo "initdone"
 initdone
@@ -22,11 +22,11 @@ west #
 down
 west #
  ipsec auto --up eastnet-westnet-ikev2
-1v2 "eastnet-westnet-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "eastnet-westnet-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "eastnet-westnet-ikev2" #1: sent IKE_AUTH request {cipher=AES_CBC_256 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
-003 "eastnet-westnet-ikev2" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "eastnet-westnet-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+"eastnet-westnet-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"eastnet-westnet-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"eastnet-westnet-ikev2" #1: sent IKE_AUTH request {cipher=AES_CBC_256 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
+"eastnet-westnet-ikev2" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"eastnet-westnet-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
  ../../guestbin/ipsec-kernel-policy.sh
 192.0.2.0/24[any] 192.0.1.0/24[any] any

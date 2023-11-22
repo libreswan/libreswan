@@ -36,8 +36,8 @@ west #
  # test secrets reading for early warning of syntax errors
 west #
  ipsec secrets
-002 loading secrets from "/etc/ipsec.secrets"
-002 no secrets filename matched "/etc/ipsec.d/*.secrets"
+loading secrets from "/etc/ipsec.secrets"
+no secrets filename matched "/etc/ipsec.d/*.secrets"
 west #
  ../../guestbin/if-namespace.sh PATH/sbin/sshd -o PidFile=/var/run/pluto/sshd.pid
 west #
@@ -84,11 +84,11 @@ west #
  ipsec whack --impair suppress-retransmits
 west #
  ipsec auto --up 192.1.2.45-to-192.1.2.23
-1v2 "192.1.2.45-to-192.1.2.23" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "192.1.2.45-to-192.1.2.23" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "192.1.2.45-to-192.1.2.23" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "192.1.2.45-to-192.1.2.23" #1: initiator established IKE SA; authenticated peer '3nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-004 "192.1.2.45-to-192.1.2.23" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"192.1.2.45-to-192.1.2.23" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"192.1.2.45-to-192.1.2.23" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"192.1.2.45-to-192.1.2.23" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"192.1.2.45-to-192.1.2.23" #1: initiator established IKE SA; authenticated peer '3nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"192.1.2.45-to-192.1.2.23" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ping -n -q -c 4 -I 192.1.2.45 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.1.2.45 : 56(84) bytes of data.

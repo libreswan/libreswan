@@ -8,7 +8,7 @@ west #
  ipsec whack --impair send-bogus-dcookie
 west #
  ipsec auto --add westnet-eastnet-ikev2
-002 "westnet-eastnet-ikev2": added IKEv2 connection
+"westnet-eastnet-ikev2": added IKEv2 connection
 west #
  echo "initdone"
 initdone
@@ -16,14 +16,14 @@ west #
  # expected to fail due to bad dcookie
 west #
  ipsec auto --up westnet-eastnet-ikev2 #retransmits
-1v2 "westnet-eastnet-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "westnet-eastnet-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-010 "westnet-eastnet-ikev2" #1: STATE_V2_PARENT_I1: retransmission; will wait 1 seconds for response
-010 "westnet-eastnet-ikev2" #1: STATE_V2_PARENT_I1: retransmission; will wait 2 seconds for response
-010 "westnet-eastnet-ikev2" #1: STATE_V2_PARENT_I1: retransmission; will wait 4 seconds for response
-031 "westnet-eastnet-ikev2" #1: STATE_V2_PARENT_I1: 5 second timeout exceeded after 3 retransmits.  No response (or no acceptable response) to our first IKEv2 message
-002 "westnet-eastnet-ikev2" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-002 "westnet-eastnet-ikev2" #1: deleting IKE SA (PARENT_I1) and NOT sending notification
+"westnet-eastnet-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"westnet-eastnet-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"westnet-eastnet-ikev2" #1: STATE_V2_PARENT_I1: retransmission; will wait 1 seconds for response
+"westnet-eastnet-ikev2" #1: STATE_V2_PARENT_I1: retransmission; will wait 2 seconds for response
+"westnet-eastnet-ikev2" #1: STATE_V2_PARENT_I1: retransmission; will wait 4 seconds for response
+"westnet-eastnet-ikev2" #1: STATE_V2_PARENT_I1: 5 second timeout exceeded after 3 retransmits.  No response (or no acceptable response) to our first IKEv2 message
+"westnet-eastnet-ikev2" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"westnet-eastnet-ikev2" #1: deleting IKE SA (PARENT_I1) and NOT sending notification
 west #
  echo done
 done

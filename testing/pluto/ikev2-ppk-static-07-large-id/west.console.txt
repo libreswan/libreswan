@@ -21,7 +21,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-ipv4-psk-ppk
-002 "westnet-eastnet-ipv4-psk-ppk": added IKEv2 connection
+"westnet-eastnet-ipv4-psk-ppk": added IKEv2 connection
 west #
  ipsec auto --status | grep westnet-eastnet-ipv4-psk-ppk
 "westnet-eastnet-ipv4-psk-ppk": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
@@ -50,12 +50,12 @@ west #
 initdone
 west #
  ipsec auto --up westnet-eastnet-ipv4-psk-ppk
-1v2 "westnet-eastnet-ipv4-psk-ppk" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-1v2 "westnet-eastnet-ipv4-psk-ppk" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-002 "westnet-eastnet-ipv4-psk-ppk" #1: PPK AUTH calculated as initiator
-1v2 "westnet-eastnet-ipv4-psk-ppk" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "westnet-eastnet-ipv4-psk-ppk" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "westnet-eastnet-ipv4-psk-ppk" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"westnet-eastnet-ipv4-psk-ppk" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"westnet-eastnet-ipv4-psk-ppk" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"westnet-eastnet-ipv4-psk-ppk" #1: PPK AUTH calculated as initiator
+"westnet-eastnet-ipv4-psk-ppk" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"westnet-eastnet-ipv4-psk-ppk" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"westnet-eastnet-ipv4-psk-ppk" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
@@ -64,13 +64,13 @@ west #
 #2: "westnet-eastnet-ipv4-psk-ppk", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  ipsec auto --down westnet-eastnet-ipv4-psk-ppk
-002 "westnet-eastnet-ipv4-psk-ppk": terminating SAs using this connection
-002 "westnet-eastnet-ipv4-psk-ppk" #1: intiating delete
-005 "westnet-eastnet-ipv4-psk-ppk" #2: ESP traffic information: in=84B out=84B
-002 "westnet-eastnet-ipv4-psk-ppk" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
+"westnet-eastnet-ipv4-psk-ppk": terminating SAs using this connection
+"westnet-eastnet-ipv4-psk-ppk" #1: intiating delete
+"westnet-eastnet-ipv4-psk-ppk" #2: ESP traffic information: in=84B out=84B
+"westnet-eastnet-ipv4-psk-ppk" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #
  ipsec auto --delete westnet-eastnet-ipv4-psk-ppk
-002 "westnet-eastnet-ipv4-psk-ppk": terminating SAs using this connection
+"westnet-eastnet-ipv4-psk-ppk": terminating SAs using this connection
 west #
  echo done
 done

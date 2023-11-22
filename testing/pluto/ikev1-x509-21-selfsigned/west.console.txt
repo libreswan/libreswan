@@ -21,44 +21,44 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add west-x509
-002 "west-x509": added IKEv1 connection
+"west-x509": added IKEv1 connection
 west #
  ipsec auto --add road-x509
-002 "road-x509": added IKEv1 connection
+"road-x509": added IKEv1 connection
 west #
  echo "initdone"
 initdone
 west #
  ipsec auto --up west-x509
-002 "west-x509" #1: initiating IKEv1 Main Mode connection
-1v1 "west-x509" #1: sent Main Mode request
-1v1 "west-x509" #1: sent Main Mode I2
-002 "west-x509" #1: I am sending my cert
-002 "west-x509" #1: I am sending a certificate request
-1v1 "west-x509" #1: sent Main Mode I3
-002 "west-x509" #1: Peer ID is ID_DER_ASN1_DN: 'CN=east-selfsigned.testing.libreswan.org'
-003 "west-x509" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate 'CN=east-selfsigned.testing.libreswan.org' issued by CA 'CN=east-selfsigned.testing.libreswan.org'
-004 "west-x509" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "west-x509" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-1v1 "west-x509" #2: sent Quick Mode request
-004 "west-x509" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+"west-x509" #1: initiating IKEv1 Main Mode connection
+"west-x509" #1: sent Main Mode request
+"west-x509" #1: sent Main Mode I2
+"west-x509" #1: I am sending my cert
+"west-x509" #1: I am sending a certificate request
+"west-x509" #1: sent Main Mode I3
+"west-x509" #1: Peer ID is ID_DER_ASN1_DN: 'CN=east-selfsigned.testing.libreswan.org'
+"west-x509" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate 'CN=east-selfsigned.testing.libreswan.org' issued by CA 'CN=east-selfsigned.testing.libreswan.org'
+"west-x509" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"west-x509" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"west-x509" #2: sent Quick Mode request
+"west-x509" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
  ipsec whack --impair timeout-on-retransmit
 west #
  # this one should fail, as east is only expecting selfsigned cert of west, not road
 west #
  ipsec auto --up road-x509
-002 "road-x509" #3: initiating IKEv1 Main Mode connection
-1v1 "road-x509" #3: sent Main Mode request
-1v1 "road-x509" #3: sent Main Mode I2
-002 "road-x509" #3: I am sending my cert
-002 "road-x509" #3: I am sending a certificate request
-1v1 "road-x509" #3: sent Main Mode I3
-003 "road-x509" #3: ignoring informational payload INVALID_ID_INFORMATION, msgid=00000000, length=12
-003 "road-x509" #3: received and ignored notification payload: INVALID_ID_INFORMATION
-002 "road-x509" #3: IMPAIR: retransmit so timing out SA (may retry)
-002 "road-x509" #3: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-002 "road-x509" #3: deleting ISAKMP SA (MAIN_I3) and NOT sending notification
+"road-x509" #3: initiating IKEv1 Main Mode connection
+"road-x509" #3: sent Main Mode request
+"road-x509" #3: sent Main Mode I2
+"road-x509" #3: I am sending my cert
+"road-x509" #3: I am sending a certificate request
+"road-x509" #3: sent Main Mode I3
+"road-x509" #3: ignoring informational payload INVALID_ID_INFORMATION, msgid=00000000, length=12
+"road-x509" #3: received and ignored notification payload: INVALID_ID_INFORMATION
+"road-x509" #3: IMPAIR: retransmit so timing out SA (may retry)
+"road-x509" #3: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"road-x509" #3: deleting ISAKMP SA (MAIN_I3) and NOT sending notification
 west #
  echo "done"
 done

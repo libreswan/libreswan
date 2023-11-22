@@ -6,10 +6,10 @@ road #
  ../../guestbin/wait-until-pluto-started
 road #
  ipsec auto --add static
-002 "static": added IKEv2 connection
+"static": added IKEv2 connection
 road #
  ipsec auto --asynchronous --up static
-1v2 "static" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"static" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 road #
  # there should be one tunnel, but there can be two. If two,
 road #
@@ -83,7 +83,7 @@ road #
  # delete one of the two identical conns
 road #
  ipsec whack --deletestate 1
-021 no state #1 to delete
+no state #1 to delete
 road #
  ipsec trafficstatus
 #3: "static", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'

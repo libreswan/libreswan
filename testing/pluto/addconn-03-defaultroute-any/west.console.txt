@@ -41,7 +41,7 @@ resolving family=IPv4 src=<defaultroute> gateway=192.1.2.254 peer <any>
   success: src=192.1.2.45 gateway=192.1.2.254
 resolving family=IPv4 src=<any> gateway=<not-set> peer 192.1.2.45
   seeking NOTHING
-002 "test": added IKEv2 connection
+"test": added IKEv2 connection
 west #
  # base line check - remove routes and try again
 west #

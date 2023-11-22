@@ -25,13 +25,13 @@ west #
 initdone
 west #
  ipsec auto --up west1
-021 no connection or alias named "west1"'
+no connection or alias named "west1"'
 west #
  ipsec auto --up west2
-021 no connection or alias named "west2"'
+no connection or alias named "west2"'
 west #
  ipsec auto --up west3
-021 no connection or alias named "west3"'
+no connection or alias named "west3"'
 west #
  # ping will fail until we fix  up-client-v6 and add source address.
 west #
