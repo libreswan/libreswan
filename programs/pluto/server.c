@@ -890,7 +890,7 @@ void list_timers(struct show *s, const monotime_t now)
 
 	for (struct fd_read_listener *ev = pluto_events_head;
 	     ev != NULL; ev = ev->next) {
-		SHOW_JAMBUF(RC_COMMENT, s, buf) {
+		SHOW_JAMBUF(s, buf) {
 			show_comment(s, "event %s is not timer based", ev->name);
 		}
 	}
@@ -898,7 +898,7 @@ void list_timers(struct show *s, const monotime_t now)
 
 void show_debug_status(struct show *s)
 {
-	SHOW_JAMBUF(RC_COMMENT, s, buf) {
+	SHOW_JAMBUF(s, buf) {
 		jam(buf, "debug:");
 		if (cur_debugging & DBG_MASK) {
 			jam(buf, " ");

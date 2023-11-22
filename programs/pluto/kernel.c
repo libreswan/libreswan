@@ -1124,7 +1124,7 @@ void show_shunt_status(struct show *s)
 
 	for (const struct bare_shunt *bs = bare_shunts; bs != NULL; bs = bs->next) {
 		/* Print interesting fields.  Ignore count and last_active. */
-		SHOW_JAMBUF(RC_COMMENT, s, buf) {
+		SHOW_JAMBUF(s, buf) {
 			jam_selector_subnet_port(buf, &(bs)->our_client);
 			jam(buf, " -%d-> ", bs->transport_proto->ipproto);
 			jam_selector_subnet_port(buf, &(bs)->peer_client);

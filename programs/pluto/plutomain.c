@@ -1860,7 +1860,7 @@ void show_setup_plutomain(struct show *s)
 		pluto_vendorid,
 		bool_str(log_to_audit));
 
-	SHOW_JAMBUF(RC_COMMENT, s, buf) {
+	SHOW_JAMBUF(s, buf) {
 		jam(buf, "nhelpers=%d", nhelpers);
 		jam(buf, ", uniqueids=%s", bool_str(uniqueIDs));
 		jam(buf, ", dnssec-enable=%s", bool_str(do_dnssec));

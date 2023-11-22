@@ -107,7 +107,7 @@ static void show_one_spd_brief(struct show *s,
 		remote_client_eq_host = true;
 	}
 
-	SHOW_JAMBUF(RC_COMMENT, s, buf) {
+	SHOW_JAMBUF(s, buf) {
 		if (local_client_eq_host == false && remote_client_eq_host == false) {
 			// subnet-to-subnet
 			jam_end_client(buf, c, spd->local, LEFT_END, NULL);

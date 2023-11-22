@@ -76,7 +76,7 @@ void show_ike_alg_connection(struct show *s,
 		 * AES_CBC_256+AES_CBC_128-... (which we hope is not
 		 * impossible to parse)?
 		 */
-		SHOW_JAMBUF(RC_COMMENT, s, buf) {
+		SHOW_JAMBUF(s, buf) {
 			jam_connection_short(buf, c);
 			jam_string(buf, ":  ");
 			/* algs */
@@ -88,7 +88,7 @@ void show_ike_alg_connection(struct show *s,
 	const struct state *st = state_by_serialno(c->established_ike_sa);
 
 	if (st != NULL) {
-		SHOW_JAMBUF(RC_COMMENT, s, buf) {
+		SHOW_JAMBUF(s, buf) {
 			jam_connection_short(buf, c);
 			jam_string(buf, ":  ");
 			/* algs */

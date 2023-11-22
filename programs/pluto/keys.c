@@ -108,7 +108,7 @@ static int print_secrets(struct secret *secret,
 	struct id_list *ids = lsw_get_idlist(secret);
 
 	int indent = 0;
-	SHOW_JAMBUF(RC_COMMENT, s, buf) {
+	SHOW_JAMBUF(s, buf) {
 		indent = jam(buf, "%5d:", pks->line);
 		jam(buf, " %s ", kind);
 		if (ids == NULL) {
@@ -127,7 +127,7 @@ static int print_secrets(struct secret *secret,
 
 	const ckaid_t *ckaid = secret_ckaid(secret); /* may be NULL */
 	if (ckaid != NULL) {
-		SHOW_JAMBUF(RC_COMMENT, s, buf) {
+		SHOW_JAMBUF(s, buf) {
 			jam(buf, "%*s ckaid: ", indent, "");
 			jam_ckaid(buf, ckaid);
 		}
@@ -821,7 +821,7 @@ static void show_pubkey(struct show *s, struct pubkey *pubkey, bool utc, const c
 	err_t load_err = preload_private_key_by_ckaid(&pubkey->content.ckaid,
 						      &load_needed,
 						      show_logger(s));
-	SHOW_JAMBUF(RC_COMMENT, s, buf) {
+	SHOW_JAMBUF(s, buf) {
 		jam_realtime(buf, pubkey->installed_time, utc);
 		jam(buf, ",");
 		jam(buf, " %4zd", pubkey_strength_in_bits(pubkey));

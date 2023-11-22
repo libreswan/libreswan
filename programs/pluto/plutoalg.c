@@ -130,7 +130,7 @@ void show_kernel_alg_connection(struct show *s,
 	 */
 	if (c->config->child_sa.proposals.p != NULL &&
 	    !default_proposals(c->config->child_sa.proposals.p)) {
-		SHOW_JAMBUF(RC_COMMENT, s, buf) {
+		SHOW_JAMBUF(s, buf) {
 			/*
 			 * If DH (PFS) was specified in the esp= or
 			 * ah= line then the below will display it
@@ -159,7 +159,7 @@ void show_kernel_alg_connection(struct show *s,
 	const struct state *st = state_by_serialno(c->newest_ipsec_sa);
 
 	if (st != NULL && st->st_esp.present) {
-		SHOW_JAMBUF(RC_COMMENT, s, buf) {
+		SHOW_JAMBUF(s, buf) {
 			jam_connection_short(buf, c);
 			jam_string(buf, ":  ");
 			jam(buf, " %s algorithm newest: %s_%03d-%s;",
@@ -172,7 +172,7 @@ void show_kernel_alg_connection(struct show *s,
 	}
 
 	if (st != NULL && st->st_ah.present) {
-		SHOW_JAMBUF(RC_COMMENT, s, buf) {
+		SHOW_JAMBUF(s, buf) {
 			jam_connection_short(buf, c);
 			jam_string(buf, ":  ");
 			jam(buf, " %s algorithm newest: %s;",

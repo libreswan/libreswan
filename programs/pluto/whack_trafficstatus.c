@@ -150,7 +150,7 @@ static unsigned whack_trafficstatus_connection(const struct whack_message *m UNU
 
 		/* whack-log-global - no prefix */
 		nr++;
-		SHOW_JAMBUF(RC_COMMENT, s, buf) {
+		SHOW_JAMBUF(s, buf) {
 			/* note: this mutates *st by calling
 			 * get_sa_bundle_info */
 			jam_child_sa_traffic(buf, pexpect_child_sa(st));

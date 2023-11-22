@@ -299,7 +299,7 @@ static void show_one_spd(struct show *s,
 			 const struct connection *c,
 			 const struct spd_route *spd)
 {
-	SHOW_JAMBUF(RC_COMMENT, s, buf) {
+	SHOW_JAMBUF(s, buf) {
 		jam_connection_short(buf, c);
 		jam_string(buf, ":");
 		/* one SPD */
@@ -387,7 +387,7 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		show_one_spd(s, c, spd);
 	}
 
-	SHOW_JAMBUF(RC_COMMENT, s, buf) {
+	SHOW_JAMBUF(s, buf) {
 		jam_connection_short(buf, c);
 		jam_string(buf, ":  ");
 		jam_string(buf, " host: ");
@@ -413,7 +413,7 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		jam_connection_owners(buf, c, IKE_SA_OWNER_FLOOR, IKE_SA_OWNER_ROOF);
 	}
 
-	SHOW_JAMBUF(RC_COMMENT, s, buf) {
+	SHOW_JAMBUF(s, buf) {
 		jam_connection_short(buf, c);
 		jam_string(buf, ":  ");
 		const char *local_cert = cert_nickname(&c->local->host.config->cert);
@@ -447,7 +447,7 @@ static void show_connection_status(struct show *s, const struct connection *c)
 	 (END).client ? "client" :			\
 	 "none")
 
-	SHOW_JAMBUF(RC_COMMENT, s, buf) {
+	SHOW_JAMBUF(s, buf) {
 		jam_connection_short(buf, c);
 		jam_string(buf, ":  ");
 		/*
@@ -479,7 +479,7 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		/* jam_string(buf, ";"); */
 	}
 
-	SHOW_JAMBUF(RC_COMMENT, s, buf) {
+	SHOW_JAMBUF(s, buf) {
 		jam_connection_short(buf, c);
 		jam_string(buf, ":   ");
 		/*
@@ -528,7 +528,7 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		jam_string(buf, ";");
 	}
 
-	SHOW_JAMBUF(RC_COMMENT, s, buf) {
+	SHOW_JAMBUF(s, buf) {
 		jam_connection_short(buf, c);
 		jam_string(buf, ":  ");
 		/* mode config */
@@ -568,7 +568,7 @@ static void show_connection_status(struct show *s, const struct connection *c)
 
 	/* the banner */
 	if (c->config->modecfg.banner != NULL) {
-		SHOW_JAMBUF(RC_COMMENT, s, buf) {
+		SHOW_JAMBUF(s, buf) {
 			jam_connection_short(buf, c);
 			jam_string(buf, ":  ");
 			/* banner */
@@ -579,7 +579,7 @@ static void show_connection_status(struct show *s, const struct connection *c)
 	}
 
 	/* The first valid sec_label. */
-	SHOW_JAMBUF(RC_COMMENT, s, buf) {
+	SHOW_JAMBUF(s, buf) {
 		jam_connection_short(buf, c);
 		jam_string(buf, ":  ");
 		jam_string(buf, " sec_label:");
@@ -600,7 +600,7 @@ static void show_connection_status(struct show *s, const struct connection *c)
 	/* Show CAs */
 	if (c->local->host.config->ca.ptr != NULL ||
 	    c->remote->host.config->ca.ptr != NULL) {
-		SHOW_JAMBUF(RC_COMMENT, s, buf) {
+		SHOW_JAMBUF(s, buf) {
 			jam_connection_short(buf, c);
 			jam_string(buf, ":  ");
 			/* CAs */
@@ -618,7 +618,7 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		}
 	}
 
-	SHOW_JAMBUF(RC_COMMENT, s, buf) {
+	SHOW_JAMBUF(s, buf) {
 		jam_connection_short(buf, c);
 		jam_string(buf, ":  ");
 		jam(buf, " ike_life: %jds;", deltasecs(c->config->sa_ike_max_lifetime));
@@ -630,7 +630,7 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		jam(buf, " rekey_fuzz: %lu%%;", c->config->sa_rekey_fuzz);
 	}
 
-	SHOW_JAMBUF(RC_COMMENT, s, buf) {
+	SHOW_JAMBUF(s, buf) {
 		jam_connection_short(buf, c);
 		jam_string(buf, ":  ");
 		jam(buf, " retransmit-interval: %jdms;",
@@ -647,7 +647,7 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		jam_string(buf, ";");
 	}
 
-	SHOW_JAMBUF(RC_COMMENT, s, buf) {
+	SHOW_JAMBUF(s, buf) {
 		jam_connection_short(buf, c);
 		jam_string(buf, ":  ");
 		jam(buf, " initial-contact:%s;", bool_str(c->config->send_initial_contact));
@@ -657,7 +657,7 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		jam(buf, " send-no-esp-tfc:%s;", bool_str(c->config->send_no_esp_tfc));
 	}
 
-	SHOW_JAMBUF(RC_COMMENT, s, buf) {
+	SHOW_JAMBUF(s, buf) {
 		jam_connection_short(buf, c);
 		jam_string(buf, ":  ");
 		/* policy */
@@ -687,7 +687,7 @@ static void show_connection_status(struct show *s, const struct connection *c)
 	}
 
 	if (c->config->ike_version == IKEv2) {
-		SHOW_JAMBUF(RC_COMMENT, s, buf) {
+		SHOW_JAMBUF(s, buf) {
 			jam_connection_short(buf, c);
 			jam_string(buf, ":  ");
 			/* policy */
@@ -698,7 +698,7 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		}
 	}
 
-	SHOW_JAMBUF(RC_COMMENT, s, buf) {
+	SHOW_JAMBUF(s, buf) {
 		connection_priority_buf prio;
 		jam_connection_short(buf, c);
 		jam_string(buf, ":  ");
@@ -743,7 +743,7 @@ static void show_connection_status(struct show *s, const struct connection *c)
 	}
 
 
-	SHOW_JAMBUF(RC_COMMENT, s, buf) {
+	SHOW_JAMBUF(s, buf) {
 		jam_connection_short(buf, c);
 		jam_string(buf, ":  ");
 		/* .nflog_group */
@@ -776,7 +776,7 @@ static void show_connection_status(struct show *s, const struct connection *c)
 	}
 
 
-	SHOW_JAMBUF(RC_COMMENT, s, buf) {
+	SHOW_JAMBUF(s, buf) {
 		jam_connection_short(buf, c);
 		jam_string(buf, ":  ");
 		/* our id */
@@ -796,7 +796,7 @@ static void show_connection_status(struct show *s, const struct connection *c)
 
 	switch (c->config->ike_version) {
 	case IKEv1:
-		SHOW_JAMBUF(RC_COMMENT, s, buf) {
+		SHOW_JAMBUF(s, buf) {
 			jam_connection_short(buf, c);
 			jam_string(buf, ":  ");
 			/* dpd */
@@ -807,7 +807,7 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		}
 		break;
 	case IKEv2:
-		SHOW_JAMBUF(RC_COMMENT, s, buf) {
+		SHOW_JAMBUF(s, buf) {
 			jam_connection_short(buf, c);
 			jam_string(buf, ":  ");
 			/* liveness */
@@ -818,7 +818,7 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		break;
 	}
 
-	SHOW_JAMBUF(RC_COMMENT, s, buf) {
+	SHOW_JAMBUF(s, buf) {
 		jam_connection_short(buf, c);
 		jam_string(buf, ":  ");
 		/* nat */
@@ -844,7 +844,7 @@ static void show_connection_status(struct show *s, const struct connection *c)
 	}
 
 	if (c->logger->debugging != LEMPTY) {
-		SHOW_JAMBUF(RC_COMMENT, s, buf) {
+		SHOW_JAMBUF(s, buf) {
 			jam_connection_short(buf, c);
 			jam_string(buf, ":  ");
 			/* debug */
@@ -855,7 +855,7 @@ static void show_connection_status(struct show *s, const struct connection *c)
 
 	/* routing */
 
-	SHOW_JAMBUF(RC_COMMENT, s, buf) {
+	SHOW_JAMBUF(s, buf) {
 		jam_connection_short(buf, c);
 		jam_string(buf, ":  ");
 		/* routing */
@@ -865,7 +865,7 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		jam_connection_owners(buf, c, CHILD_SA_OWNER_FLOOR, CHILD_SA_OWNER_ROOF);
 	}
 
-	SHOW_JAMBUF(RC_COMMENT, s, buf) {
+	SHOW_JAMBUF(s, buf) {
 		jam_connection_short(buf, c);
 		jam_string(buf, ":  ");
 		/* serial */
@@ -879,7 +879,7 @@ static void show_connection_status(struct show *s, const struct connection *c)
 	}
 
 	if (c->config->connalias != NULL) {
-		SHOW_JAMBUF(RC_COMMENT, s, buf) {
+		SHOW_JAMBUF(s, buf) {
 			jam_connection_short(buf, c);
 			jam_string(buf, ":  ");
 			/* aliases */

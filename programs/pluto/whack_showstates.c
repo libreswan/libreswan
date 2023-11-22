@@ -163,7 +163,7 @@ static size_t jam_readable_humber(struct jambuf *buf, uint64_t num, bool kilos)
 static void show_state(struct show *s, struct state *st, const monotime_t now)
 {
 	/* what the heck is interesting about a state? */
-	SHOW_JAMBUF(RC_COMMENT, s, buf) {
+	SHOW_JAMBUF(s, buf) {
 
 		const struct connection *c = st->st_connection;
 
@@ -261,7 +261,7 @@ static void show_state(struct show *s, struct state *st, const monotime_t now)
 static void show_established_child_details(struct show *s, struct child_sa *child,
 					   const monotime_t now)
 {
-	SHOW_JAMBUF(RC_COMMENT, s, buf) {
+	SHOW_JAMBUF(s, buf) {
 		const struct connection *c = child->sa.st_connection;
 
 		jam_so(buf, child->sa.st_serialno);
@@ -394,7 +394,7 @@ static void show_pending_child_details(struct show *s,
 	for (struct pending *p = ike->sa.st_pending;
 	     p != NULL; p = p->next) {
 		/* connection-name state-number [replacing state-number] */
-		SHOW_JAMBUF(RC_COMMENT, s, buf) {
+		SHOW_JAMBUF(s, buf) {
 			jam_so(buf, ike->sa.st_serialno);
 			jam_string(buf, ": pending ");
 			jam_string(buf, p->connection->config->ike_info->child_sa_name);

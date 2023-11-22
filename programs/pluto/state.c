@@ -1995,7 +1995,7 @@ static void list_state_event(struct show *s, struct state *st,
 {
 	if (pe != NULL) {
 		pexpect(st == pe->ev_state);
-		SHOW_JAMBUF(RC_COMMENT, s, buf) {
+		SHOW_JAMBUF(s, buf) {
 			jam(buf, "event ");
 			jam_enum_short(buf, &event_type_names, pe->ev_type);
 			jam(buf, "schd: %jd (in %jds)",
