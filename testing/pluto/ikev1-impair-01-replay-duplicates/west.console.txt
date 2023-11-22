@@ -159,7 +159,7 @@ west #
 up
 west #
  ipsec whack --trafficstatus
-006 #2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+000 #2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  ipsec auto --down  westnet-eastnet
 002 "westnet-eastnet": terminating SAs using this connection

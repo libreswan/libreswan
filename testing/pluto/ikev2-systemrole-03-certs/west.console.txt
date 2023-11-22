@@ -99,7 +99,7 @@ west #
  # show non-zero IPsec traffic counters
 west #
  ipsec whack --trafficstatus
-006 #2: "192.1.2.45-to-192.1.2.23", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+000 #2: "192.1.2.45-to-192.1.2.23", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 west #
  echo done
 done

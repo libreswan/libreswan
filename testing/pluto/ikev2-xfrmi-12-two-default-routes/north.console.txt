@@ -49,7 +49,7 @@ X: ipsec2@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
            336       4      0       0       0       0 
 north #
  ipsec trafficstatus
-006 #2: "north-west", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='@west'
+000 #2: "north-west", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='@west'
 north #
  # second connection will fail
 north #
@@ -83,14 +83,14 @@ X: ipsec3@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
            336       4      0       0       0       0 
 north #
  ipsec trafficstatus
-006 #4: "north-east", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='@east'
-006 #2: "north-west", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='@west'
+000 #4: "north-east", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='@east'
+000 #2: "north-west", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='@west'
 north #
  echo "initdone"
 initdone
 north #
  ipsec whack --trafficstatus
-006 #4: "north-east", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='@east'
-006 #2: "north-west", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='@west'
+000 #4: "north-east", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='@east'
+000 #2: "north-west", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='@west'
 north #
  

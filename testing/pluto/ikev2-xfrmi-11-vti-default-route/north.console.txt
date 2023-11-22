@@ -37,7 +37,7 @@ PING 192.0.2.254 (192.0.2.254) 56(84) bytes of data.
 4 packets transmitted, 0 received, 100% packet loss, time XXXX
 north #
  ipsec trafficstatus
-006 #2: "north-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+000 #2: "north-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
 north #
  ip -s link show vti0
 5: vti0@NONE: <POINTOPOINT,NOARP,UP,LOWER_UP> mtu 1480 state UNKNOWN
@@ -71,13 +71,13 @@ north #
            336       4      0       0       0       0 
 north #
  ipsec trafficstatus
-006 #2: "north-east", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='@east'
+000 #2: "north-east", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='@east'
 north #
  echo "initdone"
 initdone
 north #
  ipsec whack --trafficstatus
-006 #2: "north-east", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='@east'
+000 #2: "north-east", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='@east'
 north #
  ../../guestbin/xfrmcheck.sh
 north #

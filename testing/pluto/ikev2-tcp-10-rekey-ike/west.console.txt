@@ -59,7 +59,7 @@ west #
 up
 west #
  ipsec whack --trafficstatus
-006 #2: "west", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+000 #2: "west", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  ../../guestbin/ipsec-kernel-state.sh
 src 192.1.2.45 dst 192.1.2.23
@@ -108,13 +108,13 @@ west #
  # rekey of IKE SA leaves traffic counts unchanged
 west #
  ipsec whack --trafficstatus
-006 #2: "west", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+000 #2: "west", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
  ipsec whack --trafficstatus
-006 #2: "west", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@east'
+000 #2: "west", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@east'
 west #
  ../../guestbin/ipsec-kernel-state.sh
 src 192.1.2.45 dst 192.1.2.23

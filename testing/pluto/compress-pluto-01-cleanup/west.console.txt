@@ -149,7 +149,7 @@ west #
 up
 west #
  ipsec whack --trafficstatus | sed -e 's/Bytes=6[0-9][0-9],/Bytes=6nn,/g'
-006 #2: "westnet-eastnet-compress", type=ESP, add_time=1234567890, inBytes=6nn, outBytes=6nn, maxBytes=2^63B, id='@east'
+000 #2: "westnet-eastnet-compress", type=ESP, add_time=1234567890, inBytes=6nn, outBytes=6nn, maxBytes=2^63B, id='@east'
 west #
  ../../guestbin/ipsec-kernel-state.sh
 src 192.1.2.23 dst 192.1.2.45

@@ -41,13 +41,13 @@ north #
 fired and forgotten
 north #
  ../../guestbin/wait-for.sh --match initiator -- ipsec whack --trafficstatus
-006 #2: "initiator", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+000 #2: "initiator", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
 north #
  ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.0.2.254
 up
 north #
  ipsec whack --trafficstatus
-006 #2: "initiator", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+000 #2: "initiator", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 north #
  # wait for larval state to clear; hack
 north #

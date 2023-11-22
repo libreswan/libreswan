@@ -49,7 +49,7 @@ west #
  # ideally trafficstatus would show IPsec SA like eroute did
 west #
  ipsec whack --trafficstatus
-006 #2: "westnet-eastnet-ikev2"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+000 #2: "westnet-eastnet-ikev2"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
 west #
  echo done
 done

@@ -40,7 +40,7 @@ road #
  # traffic should be 0 bytes in both directions
 road #
  ipsec whack --trafficstatus
-006 #2: "road", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+000 #2: "road", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
 road #
  hostname | grep east > /dev/null && ../../guestbin/tcpdump.sh --stop -i eth1
 road #

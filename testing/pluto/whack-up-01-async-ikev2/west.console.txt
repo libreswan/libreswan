@@ -25,13 +25,13 @@ west #
 1v2 "west-cuckold" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 west #
  ../../guestbin/wait-for.sh --match '#2:' -- ipsec trafficstatus
-006 #2: "west-cuckold", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+000 #2: "west-cuckold", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
 west #
  ipsec up --asynchronous west-cuckoo
 002 "west-cuckoo" #3: initiating Child SA using IKE SA #1
 west #
  ../../guestbin/wait-for.sh --match '#3:' -- ipsec trafficstatus
-006 #3: "west-cuckoo", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+000 #3: "west-cuckoo", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
 west #
  ../../guestbin/ping-once.sh --up 192.0.2.254
 up
@@ -40,13 +40,13 @@ west #
 up
 west #
  ipsec trafficstatus
-006 #2: "west-cuckold", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
-006 #3: "west-cuckoo", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+000 #2: "west-cuckold", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+000 #3: "west-cuckoo", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  # non-zero counts confirm encrypted traffic flowing
 west #
  ipsec trafficstatus
-006 #2: "west-cuckold", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
-006 #3: "west-cuckoo", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+000 #2: "west-cuckold", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+000 #3: "west-cuckoo", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  

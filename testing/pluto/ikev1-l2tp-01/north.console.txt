@@ -54,7 +54,7 @@ north #
  # workaround for diff err msg between fedora versions resulting in diff byte count
 north #
  ipsec whack --trafficstatus | grep -v "inBytes=0" | sed "s/type=ESP.*$/[...]/"
-006 #2: "north-east-l2tp", [...]
+000 #2: "north-east-l2tp", [...]
 north #
  # testing passthrough of non-l2tp/ipsec traffic
 north #

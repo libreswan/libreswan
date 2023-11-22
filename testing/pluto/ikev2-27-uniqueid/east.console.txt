@@ -19,6 +19,6 @@ east #
  # should only show 1 connection
 east #
  ipsec whack --trafficstatus
-006 #4: "road-eastnet-ikev2"[2] 192.1.3.34, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org'
+000 #4: "road-eastnet-ikev2"[2] 192.1.3.34, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org'
 east #
  

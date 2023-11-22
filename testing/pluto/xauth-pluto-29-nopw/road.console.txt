@@ -66,7 +66,7 @@ PING 192.0.2.254 (192.0.2.254) 56(84) bytes of data.
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 road #
  ipsec whack --trafficstatus
-006 #3: "xauth-road-eastnet-psk", username=nopw, type=ESP, add_time=1234567890, inBytes=336, outBytes=336
+000 #3: "xauth-road-eastnet-psk", username=nopw, type=ESP, add_time=1234567890, inBytes=336, outBytes=336
 road #
  # note there should NOT be any incomplete IKE SA attempting to do ModeCFG or EVENT_RETRANSMIT
 road #

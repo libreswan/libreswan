@@ -24,7 +24,7 @@ west #
 up
 west #
  ipsec trafficstatus
-006 #2: "integ", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+000 #2: "integ", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  # ALLOW
 west #
@@ -51,7 +51,7 @@ west #
 up
 west #
  ipsec trafficstatus
-006 #4: "integ", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+000 #4: "integ", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  # DROP
 west #
@@ -78,7 +78,7 @@ west #
 up
 west #
  ipsec trafficstatus
-006 #6: "integ", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+000 #6: "integ", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  ipsec stop
 Redirecting to: [initsystem]
@@ -107,7 +107,7 @@ west #
 up
 west #
  ipsec trafficstatus
-006 #2: "integ", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+000 #2: "integ", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  # DROP
 west #
@@ -134,7 +134,7 @@ west #
 up
 west #
  ipsec trafficstatus
-006 #4: "integ", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+000 #4: "integ", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  # ALLOW
 west #
@@ -161,7 +161,7 @@ west #
 up
 west #
  ipsec trafficstatus
-006 #6: "integ", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+000 #6: "integ", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  ipsec stop
 Redirecting to: [initsystem]

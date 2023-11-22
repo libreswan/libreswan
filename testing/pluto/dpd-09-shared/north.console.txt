@@ -44,7 +44,7 @@ PING 192.0.22.254 (192.0.22.254) from 192.0.3.254 : 56(84) bytes of data.
 2 packets transmitted, 0 received, 100% packet loss, time XXXX
 north #
  ipsec whack --trafficstatus
-006 #2: "north-a-dpd", type=ESP, add_time=1234567890, inBytes=0, outBytes=168, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+000 #2: "north-a-dpd", type=ESP, add_time=1234567890, inBytes=0, outBytes=168, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 north #
  #
 north #
@@ -93,8 +93,8 @@ north #
  # state number should be higher than the previous one
 north #
  ipsec whack --trafficstatus
-006 #4: "north-a-dpd", type=ESP, add_time=1234567890, inBytes=0, outBytes=168, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
-006 #5: "northnet-eastnet-b", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+000 #4: "north-a-dpd", type=ESP, add_time=1234567890, inBytes=0, outBytes=168, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+000 #5: "northnet-eastnet-b", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 north #
  echo done
 done

@@ -49,7 +49,7 @@ road #
  # east will have stablished a connection
 road #
  ipsec trafficstatus
-006 #3: "private#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@id'
+000 #3: "private#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@id'
 road #
  ipsec showstates
 000 #1: "private#192.1.2.0/24"[1] ...192.1.2.23:500 STATE_V2_PARENT_I1 (sent IKE_SA_INIT request); RETRANSMIT in XXs; idle;

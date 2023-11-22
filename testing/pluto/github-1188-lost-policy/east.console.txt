@@ -28,7 +28,7 @@ east #
 fired and forgotten
 east #
  ../../guestbin/wait-for.sh --match private -- ipsec trafficstatus
-006 #2: "private#192.1.3.0/24"[1] ...192.1.3.209, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@id'
+000 #2: "private#192.1.3.0/24"[1] ...192.1.3.209, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@id'
 east #
  # check the policy
 east #

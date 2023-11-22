@@ -24,8 +24,8 @@ east #
 "east-any"[2] 192.1.3.209 #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive username=xroad}
 east #
  hostname | grep east > /dev/null && ipsec whack --trafficstatus
-006 #2: "east-any"[1] 192.1.3.33, username=xnorth, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, lease=192.0.2.101/32
-006 #4: "east-any"[2] 192.1.3.209, username=xroad, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, lease=192.0.2.100/32
+000 #2: "east-any"[1] 192.1.3.33, username=xnorth, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, lease=192.0.2.101/32
+000 #4: "east-any"[2] 192.1.3.209, username=xroad, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, lease=192.0.2.100/32
 east #
  hostname | grep east > /dev/null && ipsec stop
 Redirecting to: [initsystem]

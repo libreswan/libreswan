@@ -30,13 +30,13 @@ west #
 fired and forgotten
 west #
  ../../guestbin/wait-for.sh --match v6-transport -- ipsec whack --trafficstatus
-006 #2: "v6-transport", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+000 #2: "v6-transport", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
 west #
  ../../guestbin/ping-once.sh --up -I 2001:db8:1:2::45 2001:db8:1:2::23
 up
 west #
  ipsec whack --trafficstatus
-006 #2: "v6-transport", type=ESP, add_time=1234567890, inBytes=64, outBytes=64, maxBytes=2^63B, id='@east'
+000 #2: "v6-transport", type=ESP, add_time=1234567890, inBytes=64, outBytes=64, maxBytes=2^63B, id='@east'
 west #
  ../../guestbin/ipsec-kernel-state.sh
 src 2001:db8:1:2::45 dst 2001:db8:1:2::23

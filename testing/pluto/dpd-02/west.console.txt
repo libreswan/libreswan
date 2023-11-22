@@ -36,7 +36,7 @@ west #
 up
 west #
  ipsec whack --trafficstatus
-006 #2: "west-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+000 #2: "west-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  # wait for at least one R_U_THERE packet
 west #
@@ -52,7 +52,7 @@ west #
  # Tunnel should be still be up because this end doesn't do DPD
 west #
  ipsec whack --trafficstatus
-006 #2: "west-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+000 #2: "west-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  # Remove the Blockage
 west #
@@ -65,13 +65,13 @@ west #
  # - responder has dpdactin=clear
 west #
  ipsec whack --trafficstatus
-006 #2: "west-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+000 #2: "west-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  ../../guestbin/ping-once.sh --down 192.1.2.23
 down
 west #
  ipsec whack --trafficstatus
-006 #2: "west-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=168, maxBytes=2^63B, id='@east'
+000 #2: "west-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=168, maxBytes=2^63B, id='@east'
 west #
  ../../guestbin/ipsec-look.sh
 west NOW

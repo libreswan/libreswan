@@ -56,7 +56,7 @@ north #
 fired and forgotten
 north #
  ../../guestbin/wait-for.sh --match north -- ipsec trafficstatus
-006 #3: "north", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+000 #3: "north", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
 north #
  # let larval state expire
 north #
@@ -100,7 +100,7 @@ north #
 up
 north #
  ipsec trafficstatus
-006 #3: "north", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+000 #3: "north", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 north #
  # confirm shutdown/cleanup
 north #

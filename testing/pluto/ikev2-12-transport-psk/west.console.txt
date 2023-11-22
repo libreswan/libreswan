@@ -62,7 +62,7 @@ west #
 up
 west #
  ipsec whack --trafficstatus
-006 #2: "ipv4-psk-ikev2-transport", type=ESP, add_time=1234567890, inBytes=64, outBytes=64, maxBytes=2^63B, id='@east'
+000 #2: "ipv4-psk-ikev2-transport", type=ESP, add_time=1234567890, inBytes=64, outBytes=64, maxBytes=2^63B, id='@east'
 west #
  # test rekey
 west #

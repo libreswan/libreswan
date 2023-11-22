@@ -65,7 +65,7 @@ west #
 up
 west #
  ipsec trafficstatus
-006 #2: "west", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+000 #2: "west", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  # This rekey, #2->#3, should succeed
 west #

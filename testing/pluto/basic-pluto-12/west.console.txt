@@ -33,7 +33,7 @@ west #
  # counters are zero
 west #
  ipsec whack --trafficstatus
-006 #2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+000 #2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
 west #
  echo take-passthrough-unencrpted | nc -s 192.0.1.254 192.0.2.254 7
 take-passthrough-unencrpted
@@ -41,7 +41,7 @@ west #
  # still zero
 west #
  ipsec whack --trafficstatus
-006 #2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+000 #2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
 west #
  echo take-conn-encrypted | nc -s 192.0.1.254 192.0.2.254 222
 Ncat: Connection refused.
@@ -51,7 +51,7 @@ west #
  # workaround for diff err msg between fedora versions resulting in diff byte count
 west #
  ipsec whack --trafficstatus | grep -v "inBytes=0" | sed "s/type=ESP.*$/[...]/"
-006 #2: "westnet-eastnet", [...]
+000 #2: "westnet-eastnet", [...]
 west #
  echo done
 done

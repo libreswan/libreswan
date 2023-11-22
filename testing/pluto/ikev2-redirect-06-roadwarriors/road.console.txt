@@ -27,7 +27,7 @@ road #
 up
 road #
  ipsec whack --trafficstatus
-006 #2: "road-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=192.0.2.101/32
+000 #2: "road-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=192.0.2.101/32
 road #
  echo done
 done
@@ -35,7 +35,7 @@ road #
  # wait for it to re-establish
 road #
  ../../guestbin/wait-for.sh --match east -- ipsec whack --trafficstatus | sed -e 's/192.0.2.10[1-2]/192.0.2.10x/'
-006 #4: "road-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=192.0.2.10x/32
+000 #4: "road-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=192.0.2.10x/32
 road #
  ../../guestbin/ping-once.sh --up 192.0.2.254
 up
@@ -44,6 +44,6 @@ road #
 really done
 road #
  ipsec whack --trafficstatus | sed -e 's/#[0-9]/#N/' -e 's/\[[0-9]\]/[N]/' -e 's/192.0.2.10[0-9]/192.0.2.10x/' | sort
-006 #N: "road-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=192.0.2.10x/32
+000 #N: "road-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=192.0.2.10x/32
 road #
 

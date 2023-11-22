@@ -31,7 +31,7 @@ PING 192.0.2.254 (192.0.2.254) 56(84) bytes of data.
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 road #
  ipsec whack --trafficstatus
-006 #2: "road"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@east', lease=192.0.2.1/32
+000 #2: "road"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@east', lease=192.0.2.1/32
 road #
  ipsec auto --down westnet-eastnet-ipv4-psk-ikev2
 021 no connection or alias named "westnet-eastnet-ipv4-psk-ikev2"'

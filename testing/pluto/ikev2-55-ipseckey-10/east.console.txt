@@ -55,6 +55,6 @@ east #
 000        ID_FQDN '@east'
 east #
  ipsec whack --trafficstatus
-006 #2: "road-east-ikev2", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='@road.testing.libreswan.org'
+000 #2: "road-east-ikev2", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='@road.testing.libreswan.org'
 east #
  

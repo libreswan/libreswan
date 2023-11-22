@@ -22,7 +22,7 @@ east #
  # traffic should be 0 bytes in both directions
 east #
  ipsec whack --trafficstatus
-006 #6: "east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@road'
+000 #6: "east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@road'
 east #
  # on east eth1 should not have ESP packets
 east #

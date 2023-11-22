@@ -22,6 +22,6 @@ east #
 000 #3: "east-west":500 STATE_V2_PARENT_R1 (sent IKE_SA_INIT (or IKE_INTERMEDIATE) response); DISCARD in XXs; idle;
 east #
  ipsec trafficstatus
-006 #2: "east-west", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@west'
+000 #2: "east-west", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@west'
 east #
  

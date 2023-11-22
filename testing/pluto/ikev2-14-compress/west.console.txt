@@ -82,7 +82,7 @@ west #
  # Need to edit packets.
 west #
  ipsec whack --trafficstatus | sed -e 's/Bytes=\([0-9]\)[0-9][0-9],/Bytes=\1nn,/g'
-006 #2: "westnet-eastnet-ipcomp", type=ESP, add_time=1234567890, inBytes=1nn, outBytes=1nn, maxBytes=2^63B, id='@east'
+000 #2: "westnet-eastnet-ipcomp", type=ESP, add_time=1234567890, inBytes=1nn, outBytes=1nn, maxBytes=2^63B, id='@east'
 west #
  ../../guestbin/ipsec-kernel-state.sh
 src 192.1.2.45 dst 192.1.2.23

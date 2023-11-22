@@ -56,6 +56,6 @@ west #
 003 "west-cuckold" #6: IKE_AUTH response rejected Child SA with TS_UNACCEPTABLE
 west #
  ipsec trafficstatus
-006 #4: "west-cuckoo", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+000 #4: "west-cuckoo", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
 west #
  

@@ -98,8 +98,8 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.3.254 : 56(84) bytes of data.
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 north #
  ipsec whack --trafficstatus
-006 #2: "north-eastnets/0x1", type=ESP, add_time=1234567890, inBytes=756, outBytes=756, maxBytes=2^63B, id='@east'
-006 #3: "north-eastnets/0x2", type=ESP, add_time=1234567890, inBytes=420, outBytes=420, maxBytes=2^63B, id='@east'
+000 #2: "north-eastnets/0x1", type=ESP, add_time=1234567890, inBytes=756, outBytes=756, maxBytes=2^63B, id='@east'
+000 #3: "north-eastnets/0x2", type=ESP, add_time=1234567890, inBytes=420, outBytes=420, maxBytes=2^63B, id='@east'
 north #
  echo done
 done

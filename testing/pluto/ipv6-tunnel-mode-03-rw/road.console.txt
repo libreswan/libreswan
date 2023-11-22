@@ -71,7 +71,7 @@ PING 2001:db8:1:2::23(2001:db8:1:2::23) 56 data bytes
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 road #
  ipsec whack --trafficstatus
-006 #2: "v6-tunnel-east-road", type=ESP, add_time=1234567890, inBytes=416, outBytes=416, maxBytes=2^63B, id='@east'
+000 #2: "v6-tunnel-east-road", type=ESP, add_time=1234567890, inBytes=416, outBytes=416, maxBytes=2^63B, id='@east'
 road #
  echo done
 done

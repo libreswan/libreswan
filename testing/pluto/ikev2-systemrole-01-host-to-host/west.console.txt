@@ -170,7 +170,7 @@ west #
 down
 west #
  ../../guestbin/wait-for.sh --match 192.1.2.45-to-192.1.2.23 -- ipsec whack --trafficstatus
-006 #2: "192.1.2.45-to-192.1.2.23", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='192.1.2.23'
+000 #2: "192.1.2.45-to-192.1.2.23", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='192.1.2.23'
 west #
  ../../guestbin/ping-once.sh --up -I 192.1.2.45 192.1.2.23
 up
@@ -178,7 +178,7 @@ west #
  # show non-zero IPsec traffic counters
 west #
  ipsec whack --trafficstatus
-006 #2: "192.1.2.45-to-192.1.2.23", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='192.1.2.23'
+000 #2: "192.1.2.45-to-192.1.2.23", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='192.1.2.23'
 west #
  echo done
 done
