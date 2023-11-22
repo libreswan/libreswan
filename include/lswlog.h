@@ -50,13 +50,15 @@ extern bool log_to_stderr;          /* should log go to stderr? */
  */
 
 enum rc_type {
-	RC_COMMENT,		/* non-commital utterance with 000 prefix(does not affect exit status) */
-	RC_RAW,			/* ditto, but also suppresses the 000 prefix */
-	RC_LOG,			/* message aimed at log (does not affect exit status) */
-	RC_LOG_SERIOUS,		/* serious message aimed at log (does not affect exit status) */
-	RC_SUCCESS,		/* success (exit status 0) */
-	RC_INFORMATIONAL,	/* should get relayed to user - if there is one */
-	RC_INFORMATIONAL_TRAFFIC, /* status of an established IPSEC (aka Phase 2) state */
+	RC_COMMENT = 0,		/* non-commital utterance with 000 prefix(does not affect exit status) */
+	RC_RAW = 1,			/* ditto, but also suppresses the 000 prefix */
+	RC_LOG = 2,			/* message aimed at log (does not affect exit status) */
+	RC_LOG_SERIOUS = 3,		/* serious message aimed at log (does not affect exit status) */
+	RC_SUCCESS = 4,		/* success (exit status 0) */
+	RC_INFORMATIONAL = 5,	/* should get relayed to user - if there is one */
+	RC_RESERVED_6 = 6,	/* was RC_INFORMATIONAL_TRAFFIC;
+				 * status of an established IPSEC (aka
+				 * Phase 2) state */
 
 	/* failure, but not definitive */
 	RC_RETRANSMISSION = 10,

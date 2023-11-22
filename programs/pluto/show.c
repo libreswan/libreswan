@@ -123,7 +123,6 @@ struct jambuf *show_jambuf(struct show *s, enum rc_type rc)
 {
 	pexpect(rc == RC_RAW ||
 		rc == RC_COMMENT ||
-		rc == RC_INFORMATIONAL_TRAFFIC/*show_state_traffic()*/ ||
 		rc == RC_UNKNOWN_NAME/*show_traffic_status()*/);
 	return jambuf_from_logjam(&s->logjam, s->logger,
 				  /*pluto_exit_code*/0,

@@ -2907,7 +2907,6 @@ int main(int argc, char **argv)
 			case RC_COMMENT:
 			case RC_RAW:
 			case RC_INFORMATIONAL:
-			case RC_INFORMATIONAL_TRAFFIC:
 			case RC_LOG:
 			/* RC_LOG_SERIOUS is supposed to be here according to lswlog.h, but seems oudated? */
 				/* ignore */

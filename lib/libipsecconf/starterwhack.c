@@ -127,7 +127,6 @@ static int starter_whack_read_reply(int sock,
 				case RC_RAW:
 				case RC_LOG:
 				case RC_INFORMATIONAL:
-				case RC_INFORMATIONAL_TRAFFIC:
 					/* ignore */
 					break;
 
