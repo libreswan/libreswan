@@ -982,16 +982,6 @@ void jam_spd_end(struct jambuf *buf, const struct connection *c,
 		 const struct spd_end *this, const struct spd_end *that,
 		 enum left_right left_right, bool filter_rnh);
 
-#define SPD_END_BUF (sizeof(subnet_buf) + sizeof(address_buf) + sizeof(id_buf) + sizeof(subnet_buf) + 10)
-
-typedef struct {
-	char buf[SPD_END_BUF + /*...*/ SPD_END_BUF + 1/*canary*/];
-} spd_buf;
-
-void jam_spd(struct jambuf *buf, const struct spd_route *spd);
-
-#include "connections.h"
-
 /* connections */
 
 struct connection *alloc_connection(const char *name,

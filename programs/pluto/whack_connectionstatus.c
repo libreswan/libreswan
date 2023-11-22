@@ -286,7 +286,7 @@ void jam_spd_end(struct jambuf *buf, const struct connection *c,
  * Two symmetric ends separated by ...
  */
 
-void jam_spd(struct jambuf *buf, const struct spd_route *spd)
+static void jam_spd_topology(struct jambuf *buf, const struct spd_route *spd)
 {
 	jam_spd_end(buf, spd->connection, spd->local, spd->remote,
 		    LEFT_END, false);
@@ -304,7 +304,7 @@ static void show_one_spd(struct show *s,
 		jam_string(buf, ":");
 		/* one SPD */
 		jam_string(buf, " ");
-		jam_spd(buf, spd);
+		jam_spd_topology(buf, spd);
 		jam_string(buf, ";");
 		/* routing/orienting */
 		jam_string(buf, " ");
