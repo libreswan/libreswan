@@ -2890,9 +2890,8 @@ int main(int argc, char **argv)
 				exit(RC_WHACK_PROBLEM);
 #endif
 			}
-			if (s == RC_RAW) {
-				ls = lpe + 1; /* skip NNN_ */
-			}
+
+			ls = lpe + 1; /* skip NNN_ */
 
 			if (write(STDOUT_FILENO, ls, le - ls) != (le - ls)) {
 				int e = errno;
