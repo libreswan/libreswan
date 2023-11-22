@@ -48,7 +48,7 @@ west #
 1v2 "old-west" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "old-west" #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate 'CN=east' issued by CA 'CN=west-ca'
 002 "old-west" #2: received INTERNAL_IP4_ADDRESS 192.0.1.0
-004 "old-west" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0-192.0.1.0:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+004 "old-west" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/32->192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ipsec auto --down old-west
 002 "old-west": terminating SAs using this connection
@@ -62,7 +62,7 @@ west #
 1v2 "new-west" #3: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "new-west" #3: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate 'CN=east' issued by CA 'CN=west-ca'
 002 "new-west" #4: received INTERNAL_IP4_ADDRESS 192.0.1.0
-004 "new-west" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0-192.0.1.0:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+004 "new-west" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0/32->192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ipsec auto --down new-west
 002 "new-west": terminating SAs using this connection
@@ -76,7 +76,7 @@ west #
 1v2 "old-west" #5: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "old-west" #5: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate 'CN=east' issued by CA 'CN=west-ca'
 002 "old-west" #6: received INTERNAL_IP4_ADDRESS 192.0.1.0
-004 "old-west" #6: initiator established Child SA using #5; IPsec tunnel [192.0.1.0-192.0.1.0:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+004 "old-west" #6: initiator established Child SA using #5; IPsec tunnel [192.0.1.0/32->192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ipsec auto --down old-west
 002 "old-west": terminating SAs using this connection
@@ -90,7 +90,7 @@ west #
 1v2 "new-west" #7: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "new-west" #7: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate 'CN=east' issued by CA 'CN=west-ca'
 002 "new-west" #8: received INTERNAL_IP4_ADDRESS 192.0.1.0
-004 "new-west" #8: initiator established Child SA using #7; IPsec tunnel [192.0.1.0-192.0.1.0:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+004 "new-west" #8: initiator established Child SA using #7; IPsec tunnel [192.0.1.0/32->192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ipsec auto --down new-west
 002 "new-west": terminating SAs using this connection

@@ -29,13 +29,13 @@ west #
 1v2 "west-east/4x0" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "west-east/4x0" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "west-east/4x0" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "west-east/1x0" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.254-192.0.1.254:0-65535 0] -> [192.0.2.254-192.0.2.254:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+004 "west-east/1x0" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.254/32->192.0.2.254/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 1v2 "west-east/2x0" #3: sent IPsec Child req wait response
-004 "west-east/2x0" #3: initiator established Child SA using #1; IPsec tunnel [192.0.1.253-192.0.1.253:0-65535 0] -> [192.0.2.254-192.0.2.254:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+004 "west-east/2x0" #3: initiator established Child SA using #1; IPsec tunnel [192.0.1.253/32->192.0.2.254/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 1v2 "west-east/3x0" #4: sent IPsec Child req wait response
-004 "west-east/3x0" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.252-192.0.1.252:0-65535 0] -> [192.0.2.254-192.0.2.254:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+004 "west-east/3x0" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.252/32->192.0.2.254/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 1v2 "west-east/4x0" #5: sent IPsec Child req wait response
-004 "west-east/4x0" #5: initiator established Child SA; IPsec tunnel [192.0.1.251-192.0.1.251:0-65535 0] -> [192.0.2.254-192.0.2.254:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+004 "west-east/4x0" #5: initiator established Child SA; IPsec tunnel [192.0.1.251/32->192.0.2.254/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  # state #1(STATE_V2_ESTABLISHED_IKE_SA), #2, #3, #4, and #5
 west #

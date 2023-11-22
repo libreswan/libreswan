@@ -36,7 +36,7 @@ road #
 002 "road/0x1" #2: Child SA initiating pending connection using IKE SA #1's IKE_AUTH exchange
 1v2 "road/0x8" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "road/0x8" #1: initiator established IKE SA; authenticated peer '3nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-004 "road/0x1" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.0-192.0.3.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATD=192.1.2.23:4500 DPD=passive}
+004 "road/0x1" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24->192.0.2.0/24] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATD=192.1.2.23:4500 DPD=passive}
 002 "road/0x2" #3: initiating Child SA using IKE SA #1
 002 "road/0x3" #4: initiating Child SA using IKE SA #1
 002 "road/0x4" #5: initiating Child SA using IKE SA #1
@@ -47,15 +47,15 @@ road #
 1v2 "road/0x2" #3: sent CREATE_CHILD_SA request for new IPsec SA
 003 "road/0x2" #3: CREATE_CHILD_SA failed with error notification TS_UNACCEPTABLE
 1v2 "road/0x5" #6: sent CREATE_CHILD_SA request for new IPsec SA
-004 "road/0x5" #6: initiator established Child SA using #1; IPsec tunnel [192.0.3.0-192.0.3.255:0-65535 0] -> [10.0.1.0-10.0.1.255:0-65535 0] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATD=192.1.2.23:4500 DPD=passive}
+004 "road/0x5" #6: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24->10.0.1.0/24] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATD=192.1.2.23:4500 DPD=passive}
 1v2 "road/0x7" #8: sent CREATE_CHILD_SA request for new IPsec SA
-004 "road/0x7" #8: initiator established Child SA using #1; IPsec tunnel [192.0.3.0-192.0.3.255:0-65535 0] -> [10.0.3.0-10.0.3.255:0-65535 0] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATD=192.1.2.23:4500 DPD=passive}
+004 "road/0x7" #8: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24->10.0.3.0/24] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATD=192.1.2.23:4500 DPD=passive}
 1v2 "road/0x3" #4: sent CREATE_CHILD_SA request for new IPsec SA
-004 "road/0x3" #4: initiator established Child SA using #1; IPsec tunnel [192.0.3.0-192.0.3.255:0-65535 0] -> [192.0.20.0-192.0.20.255:0-65535 0] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATD=192.1.2.23:4500 DPD=passive}
+004 "road/0x3" #4: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24->192.0.20.0/24] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATD=192.1.2.23:4500 DPD=passive}
 1v2 "road/0x8" #9: sent CREATE_CHILD_SA request for new IPsec SA
-004 "road/0x8" #9: initiator established Child SA using #1; IPsec tunnel [192.0.3.0-192.0.3.255:0-65535 0] -> [10.0.4.0-10.0.4.255:0-65535 0] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATD=192.1.2.23:4500 DPD=passive}
+004 "road/0x8" #9: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24->10.0.4.0/24] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATD=192.1.2.23:4500 DPD=passive}
 1v2 "road/0x6" #7: sent CREATE_CHILD_SA request for new IPsec SA
-004 "road/0x6" #7: initiator established Child SA using #1; IPsec tunnel [192.0.3.0-192.0.3.255:0-65535 0] -> [10.0.2.0-10.0.2.255:0-65535 0] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATD=192.1.2.23:4500 DPD=passive}
+004 "road/0x6" #7: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24->10.0.2.0/24] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATD=192.1.2.23:4500 DPD=passive}
 1v2 "road/0x4" #5: sent CREATE_CHILD_SA request for new IPsec SA
 003 "road/0x4" #5: CREATE_CHILD_SA failed with error notification TS_UNACCEPTABLE
 road #

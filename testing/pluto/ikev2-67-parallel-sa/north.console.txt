@@ -24,10 +24,10 @@ north #
 002 "northnet-eastnet/0x1" #2: Child SA initiating pending connection using IKE SA #1's IKE_AUTH exchange
 1v2 "northnet-eastnet/0x2" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "northnet-eastnet/0x2" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "northnet-eastnet/0x1" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.0-192.0.3.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+004 "northnet-eastnet/0x1" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24->192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 002 "northnet-eastnet/0x2" #3: initiating Child SA using IKE SA #1
 1v2 "northnet-eastnet/0x2" #3: sent CREATE_CHILD_SA request for new IPsec SA
-004 "northnet-eastnet/0x2" #3: initiator established Child SA using #1; IPsec tunnel [192.0.3.0-192.0.3.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
+004 "northnet-eastnet/0x2" #3: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24->192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
 north #
  taskset 0x1 ping -n -q -c 2 -I 192.0.3.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.3.254 : 56(84) bytes of data.

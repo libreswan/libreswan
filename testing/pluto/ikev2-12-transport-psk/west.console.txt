@@ -56,7 +56,7 @@ west #
 1v2 "ipv4-psk-ikev2-transport" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "ipv4-psk-ikev2-transport" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "ipv4-psk-ikev2-transport" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "ipv4-psk-ikev2-transport" #2: initiator established Child SA using #1; IPsec transport [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA2_256_128 DPD=passive}
+004 "ipv4-psk-ikev2-transport" #2: initiator established Child SA using #1; IPsec transport [192.1.2.45/32->192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA2_256_128 DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.1.2.45 192.1.2.23
 up
@@ -69,7 +69,7 @@ west #
  ipsec whack --rekey-ipsec --name ipv4-psk-ikev2-transport
 002 "ipv4-psk-ikev2-transport" #3: initiating rekey to replace Child SA #2
 1v2 "ipv4-psk-ikev2-transport" #3: sent CREATE_CHILD_SA request to rekey IPsec SA
-004 "ipv4-psk-ikev2-transport" #3: initiator rekeyed Child SA #2 using #1; IPsec transport [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA2_256_128-MODP2048 DPD=passive}
+004 "ipv4-psk-ikev2-transport" #3: initiator rekeyed Child SA #2 using #1; IPsec transport [192.1.2.45/32->192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA2_256_128-MODP2048 DPD=passive}
 002 "ipv4-psk-ikev2-transport" #2: deleting established Child SA using IKE SA #1
 005 "ipv4-psk-ikev2-transport" #2: ESP traffic information: in=64B out=64B
 west #

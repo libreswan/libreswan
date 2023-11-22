@@ -34,7 +34,7 @@ west #
 1v2 "westnet-eastnet-6in6" #1: sent IKE_SA_INIT request to [2001:db8:1:2::23]:500
 1v2 "westnet-eastnet-6in6" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "westnet-eastnet-6in6" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "westnet-eastnet-6in6" #2: initiator established Child SA using #1; IPsec tunnel [2001:db8:0:1::-2001:db8:0:1:ffff:ffff:ffff:ffff:0-65535 0] -> [2001:db8:0:2::-2001:db8:0:2:ffff:ffff:ffff:ffff:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+004 "westnet-eastnet-6in6" #2: initiator established Child SA using #1; IPsec tunnel [2001:db8:0:1::/64->2001:db8:0:2::/64] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 2001:db8:0:1::254 2001:db8:0:2::254
 up

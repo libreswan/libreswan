@@ -23,7 +23,7 @@ road #
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS 1.2.3.4
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS 8.8.8.8
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: up-client output: updating resolvconf
-004 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [192.0.2.1-192.0.2.1:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATD=192.1.2.23:4500 DPD=passive}
+004 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [192.0.2.1/32->192.1.2.23/32] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATD=192.1.2.23:4500 DPD=passive}
 road #
  ../../guestbin/ping-once.sh --up -I 192.0.2.1 192.1.2.23
 up
@@ -51,7 +51,7 @@ road #
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #4: received INTERNAL_IP4_ADDRESS 192.0.2.1
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #4: received INTERNAL_IP4_DNS 1.2.3.4
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #4: up-client output: updating resolvconf
-004 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #4: initiator established Child SA using #3; IPsec tunnel [192.0.2.1-192.0.2.1:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATD=192.1.2.23:4500 DPD=passive}
+004 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #4: initiator established Child SA using #3; IPsec tunnel [192.0.2.1/32->192.1.2.23/32] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATD=192.1.2.23:4500 DPD=passive}
 road #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23: terminating SAs using this connection
@@ -69,7 +69,7 @@ road #
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #6: received INTERNAL_IP4_ADDRESS 192.0.2.1
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #6: received INTERNAL_IP4_DNS 1.2.3.4
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #6: up-client output: updating resolvconf
-004 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #6: initiator established Child SA using #5; IPsec tunnel [192.0.2.1-192.0.2.1:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATD=192.1.2.23:4500 DPD=passive}
+004 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #6: initiator established Child SA using #5; IPsec tunnel [192.0.2.1/32->192.1.2.23/32] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATD=192.1.2.23:4500 DPD=passive}
 road #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23: terminating SAs using this connection
@@ -87,7 +87,7 @@ road #
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #8: received INTERNAL_IP4_ADDRESS 192.0.2.1
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #8: received INTERNAL_IP4_DNS 1.2.3.4
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #8: up-client output: updating resolvconf
-004 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #8: initiator established Child SA using #7; IPsec tunnel [192.0.2.1-192.0.2.1:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATD=192.1.2.23:4500 DPD=passive}
+004 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #8: initiator established Child SA using #7; IPsec tunnel [192.0.2.1/32->192.1.2.23/32] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATD=192.1.2.23:4500 DPD=passive}
 road #
  ../../guestbin/ping-once.sh --up -I 192.0.2.1 192.1.2.23
 up

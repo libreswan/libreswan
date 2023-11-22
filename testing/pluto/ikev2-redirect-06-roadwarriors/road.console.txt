@@ -21,7 +21,7 @@ road #
 002 "road-east" #2: received INTERNAL_IP4_DNS 1.2.3.4
 002 "road-east" #2: received INTERNAL_IP4_DNS 5.6.7.8
 002 "road-east" #2: up-client output: updating resolvconf
-004 "road-east" #2: initiator established Child SA using #1; IPsec tunnel [192.0.2.101-192.0.2.101:0-65535 0] -> [0.0.0.0-255.255.255.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+004 "road-east" #2: initiator established Child SA using #1; IPsec tunnel [192.0.2.101/32->0.0.0.0/0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 road #
  ../../guestbin/ping-once.sh --up 192.0.2.254
 up
