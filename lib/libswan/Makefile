@@ -42,6 +42,7 @@ OBJS += x509dn.o asn1.o oid.o
 OBJS += authby.o
 OBJS += rnd.o
 OBJS += option_names.o
+OBJS += encap_type_names.o
 OBJS += encap_mode_names.o
 OBJS += encap_proto_names.o
 OBJS += initiated_by_names.o
