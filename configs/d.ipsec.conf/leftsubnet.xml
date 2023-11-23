@@ -1,21 +1,36 @@
-  <varlistentry>
-  <term><emphasis remap='B'>leftsubnet</emphasis></term>
+<varlistentry>
+  <term>
+    <emphasis remap='B'>leftsubnet</emphasis>
+  </term>
   <listitem>
-<para>private subnet behind the left participant, expressed as
-<emphasis remap='I'>network</emphasis><emphasis remap='B'>/</emphasis><emphasis remap='I'>netmask</emphasis>
-(actually, any form acceptable to
-<citerefentry><refentrytitle>ipsec_ttosubnet</refentrytitle><manvolnum>3</manvolnum></citerefentry>); Currently, IPv4 and IPv6 ranges are supported.
-if omitted, essentially assumed to be <emphasis remap='I'>left</emphasis><filename>/32</filename>,
-signifying that the left end of the connection goes to the left participant only</para>
-<para>It supports two magic shorthands <emphasis remap='I'>vhost:</emphasis> and
-<emphasis remap='I'>vnet:</emphasis>, which can list subnets in the same syntax as
-<emphasis remap='I'>virtual-private</emphasis>. The value <emphasis remap='I'>%priv</emphasis>
-expands to the networks specified in <emphasis remap='I'>virtual-private</emphasis>. The value
-<emphasis remap='I'>%no</emphasis> means no subnet. A common use for allowing roadwarriors to
-come in on public IPs or via accepted NATed networks from RFC1918 is to use
-<emphasis remap='I'>leftsubnet=vhost:%no,%priv</emphasis>. The <emphasis remap='I'>vnet:</emphasis>
-option can be used to allow RFC1918 subnets without hardcoding them. When using vnet the
-connection will instantiate, allowing for multiple tunnels with different subnets.
-</para>
+    <para>
+      private subnet behind the left participant, expressed as
+      <emphasis remap='I'>network</emphasis><emphasis
+      remap='B'>/</emphasis><emphasis remap='I'>netmask</emphasis>
+      (actually, any form acceptable to
+      <citerefentry><refentrytitle>ipsec_ttosubnet</refentrytitle><manvolnum>3</manvolnum></citerefentry>);
+      Currently, IPv4 and IPv6 ranges are supported.  if omitted,
+      essentially assumed to be <emphasis
+      remap='I'>left</emphasis><filename>/32</filename>, signifying
+      that the left end of the connection goes to the left participant
+      only
+    </para>
+    <para>
+      It supports two magic shorthands <emphasis
+      remap='I'>vhost:</emphasis> and <emphasis
+      remap='I'>vnet:</emphasis>, which can list subnets in the same
+      syntax as <emphasis remap='I'>virtual-private</emphasis>. The
+      value <emphasis remap='I'>%priv</emphasis> expands to the
+      networks specified in <emphasis
+      remap='I'>virtual-private</emphasis>. The value <emphasis
+      remap='I'>%no</emphasis> means no subnet. A common use for
+      allowing roadwarriors to come in on public IPs or via accepted
+      NATed networks from RFC1918 is to use <emphasis
+      remap='I'>leftsubnet=vhost:%no,%priv</emphasis>. The <emphasis
+      remap='I'>vnet:</emphasis> option can be used to allow RFC1918
+      subnets without hardcoding them. When using vnet the connection
+      will instantiate, allowing for multiple tunnels with different
+      subnets.
+    </para>
   </listitem>
-  </varlistentry>
+</varlistentry>
