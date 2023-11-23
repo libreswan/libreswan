@@ -33,6 +33,7 @@ v5.0 (Unreleased)
 * documentation: update to docbook xml 4.5 [Tuomo]
 * ipsec look: command removed; use ip xfrm et.al.
 * ipsec portexcludes: script moved to contrib/
+* output: drop NNN_ prefix from all output [Andrew]
 
 v4.12 (Aug 8, 2023)
 * SECURITY IKEv2: Fixes https://libreswan.org/security/CVE-2023-38710
