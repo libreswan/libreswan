@@ -649,7 +649,6 @@ struct spd_route {
 	struct spd_wip {
 		bool ok;
 		struct {
-			struct spd_owner owner;
 			struct bare_shunt **shunt;
 		} conflicting;
 		struct {

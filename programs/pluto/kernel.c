@@ -935,8 +935,8 @@ bool unrouted_to_routed(struct connection *c, enum routing new_routing, where_t 
 		 * the structure is zeroed (sec_labels ignore conflicts).
 		 */
 
-		ok = get_connection_spd_conflict(spd, new_routing,
-						 &spd->wip.conflicting.owner,
+		struct spd_owner owner;
+		ok = get_connection_spd_conflict(spd, new_routing, &owner,
 						 &spd->wip.conflicting.shunt,
 						 c->logger);
 		if (!ok) {
@@ -986,14 +986,14 @@ bool unrouted_to_routed(struct connection *c, enum routing new_routing, where_t 
 
 		ldbg(c->logger, "kernel: %s() running updown-prepare when needed", __func__);
 		PEXPECT(c->logger, spd->wip.ok);
-		if (spd->wip.conflicting.owner.bare_route == NULL) {
+		if (owner.bare_route == NULL) {
 			/* a new route: no deletion required, but preparation is */
 			if (!do_updown(UPDOWN_PREPARE, c, spd, NULL/*state*/, c->logger))
 				ldbg(c->logger, "kernel: prepare command returned an error");
 		}
 
 		ldbg(c->logger, "kernel: %s() running updown-route when needed", __func__);
-		if (spd->wip.conflicting.owner.bare_route == NULL) {
+		if (owner.bare_route == NULL) {
 			ok &= spd->wip.installed.route =
 				do_updown(UPDOWN_ROUTE, c, spd, NULL/*state*/, c->logger);
 		}
@@ -1912,8 +1912,8 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 
-		ok = get_connection_spd_conflict(spd, new_routing,
-						 &spd->wip.conflicting.owner,
+		struct spd_owner owner;
+		ok = get_connection_spd_conflict(spd, new_routing, &owner,
 						 &spd->wip.conflicting.shunt,
 						 c->logger);
 		if (!ok) {
@@ -1954,7 +1954,7 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 
 		ldbg(logger, "kernel: %s() running updown-prepare", __func__);
 		PEXPECT(logger, spd->wip.ok);
-		if (spd->wip.conflicting.owner.bare_route == NULL) {
+		if (owner.bare_route == NULL) {
 			/* a new route: no deletion required, but preparation is */
 			if (!do_updown(UPDOWN_PREPARE, c, spd, child, logger))
 				ldbg(logger, "kernel: prepare command returned an error");
@@ -1962,7 +1962,7 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 
 		ldbg(logger, "kernel: %s() running updown-route", __func__);
 		PEXPECT(logger, spd->wip.ok);
-		if (spd->wip.conflicting.owner.bare_route == NULL) {
+		if (owner.bare_route == NULL) {
 			/* a new route: no deletion required, but preparation is */
 			ok = spd->wip.installed.route =
 				do_updown(UPDOWN_ROUTE, c, spd, child, logger);
