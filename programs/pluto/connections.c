@@ -2242,9 +2242,14 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	config->sha2_truncbug = extract_yn("", "sha2-truncbug", wm->sha2_truncbug, /*default*/false,wm, c->logger);
 	config->overlapip = extract_yn("", "overlapip", wm->overlapip, /*default*/false,wm, c->logger);
-	config->ms_dh_downgrade = extract_yn("", "ms-do-downgrade", wm->ms_dh_downgrade, /*default*/false,wm, c->logger);
-	config->pfs_rekey_workaround = extract_yn("", "pfs-rekey-workaround", wm->pfs_rekey_workaround, /*unset*/false, wm, c->logger);
 
+	bool ms_dh_downgrade = extract_yn("", "ms-dh-downgrade", wm->ms_dh_downgrade, /*default*/false,wm, c->logger);
+	bool pfs_rekey_workaround = extract_yn("", "pfs-rekey-workaround", wm->pfs_rekey_workaround, /*unset*/false, wm, c->logger);
+	if (ms_dh_downgrade && pfs_rekey_workaround) {
+		return diag("cannot specify both ms-dh-downgrade=yes and pfs-rekey-workaround=yes");
+	}
+	config->ms_dh_downgrade = ms_dh_downgrade;
+	config->pfs_rekey_workaround = pfs_rekey_workaround;
 
 	config->dns_match_id = extract_yn("", "dns-match-id", wm->dns_match_id, /*default*/false,wm, c->logger);
 	config->ikev2_pam_authorize = extract_yn("", "ikev2-pam-authorize", wm->pam_authorize, /*default*/false,wm, c->logger);
