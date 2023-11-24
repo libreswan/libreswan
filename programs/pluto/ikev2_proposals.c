@@ -2210,9 +2210,10 @@ static struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
 	 *
 	 * proposal[0] is empty so +1
 	 */
-	unsigned nr_passes = (strip_dh ? 1 :
-			      c->config->ms_dh_downgrade ? 2 :
-			      1);
+	unsigned nr_passes =
+		(strip_dh && default_dh == &ike_alg_dh_none ? 1 :
+		 c->config->ms_dh_downgrade ? 2 :
+		 1);
 	int v2_proposals_roof =
 		1 + nr_passes * nr_proposals(c->config->child_sa.proposals.p);
 	v2_proposals->proposal = alloc_things(struct ikev2_proposal, v2_proposals_roof,
@@ -2264,11 +2265,17 @@ static struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
 			}
 
 			/*
-			 * During the second pass, or when stripping
-			 * STRIP_DH, force the proposal's DH to NONE.
+			 * The first pass, when strip_dh, forces DH to
+			 * the default (it is probably the IKE SAs
+			 * DH).
+			 *
+			 * The second pass (for ms-dh-downgrade)
+			 * forces the DH to &ike_alg_none.
 			 */
 			const struct dh_desc *force_dh =
-				(pass == 2 || strip_dh ? &ike_alg_dh_none : NULL);
+				(pass == 2 ? &ike_alg_dh_none :
+				 strip_dh ? default_dh :
+				 NULL);
 
 			struct ikev2_proposal *v2_proposal =
 				ikev2_proposal_from_proposal_info(proposal,
@@ -2387,13 +2394,50 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_new_child_proposals(struct ike_sa
 	struct connection *cc = larval_child->sa.st_connection; /*not IKE's connection*/
 	struct logger *logger = larval_child->sa.logger;
 
-	const struct dh_desc *default_dh =
-		(cc->config->child_sa.pfs ? ike->sa.st_oakley.ta_dh : &ike_alg_dh_none);
-	struct ikev2_proposals *proposals =
-		get_v2_child_proposals(cc, "Child SA proposals (new child)",
-				       /*strip-dh*/false,
-				       default_dh,
-				       logger);
+	const struct dh_desc *ike_dh = ike->sa.st_oakley.ta_dh;
+
+	struct ikev2_proposals *proposals;
+	if (cc->config->pfs_rekey_workaround &&
+	    cc->config->child_sa.pfs) {
+		/*
+		 * Alternate behaviour for 5.0.
+		 *
+		 * When PFS, force the Child SA to use the IKE SA's
+		 * DH.
+		 */
+		proposals = get_v2_child_proposals(cc, "new Child SA",
+						   /*strip-dh*/true,
+						   ike_dh, logger);
+	} else if (cc->config->child_sa.pfs) {
+		/*
+		 * Propose the full ESP= line.  If the proposal
+		 * contains no DH, use the IKE SA's DH.
+		 *
+		 * When the connection with PFS=YES is loaded, the
+		 * proposal parser requires that all or no proposals
+		 * contain DH.  This means that the below will add IKE
+		 * DH to all or no proposals.
+		 *
+		 * This is the old 4.x behaviour.
+		 */
+		proposals = get_v2_child_proposals(cc, "pfs-rekey-workaround",
+						   /*strip_dh*/false,
+						   ike_dh, logger);
+	} else {
+		/*
+		 * Propose the full ESP= line with no PFS.
+		 *
+		 * When a connection with PFS=NO is loaded, the
+		 * proposal parser rejects any proposal with DH.
+		 * Hence there should be none.  Regardless, explicitly
+		 * strip the proposals.
+		 */
+		proposals = get_v2_child_proposals(cc, "new Child SA",
+						   /*strip-dh*/true,
+						   &ike_alg_dh_none,
+						   logger);
+	}
+
 	llog_v2_proposals(LOG_STREAM/*not-whack*/|RC_LOG, logger, proposals,
 			  "Child SA proposals (new child)");
 	return proposals;
@@ -2418,58 +2462,105 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_rekey_child_proposals(struct ike_
 								     struct child_sa *established_child,
 								     struct logger *logger)
 {
+	struct connection *cc = established_child->sa.st_connection;
+
 	/*
-	 * A rekeing Child SA should use the proposals accepted
-	 * earlier (possibly with DH added).
-	 *
-	 * Two things complicate this:
-	 * - the need possibly add DH
-	 * - the need possibly remove DH
+	 * The IKE SA's DH, when DH is required by PFS=YES, and the
+	 * proposal does not specify DH, this will be used.
 	 */
 
-	struct connection *cc = established_child->sa.st_connection;
+	const struct dh_desc *ike_dh = ike->sa.st_oakley.ta_dh;
+
+	/*
+	 * A rekeing Child SA should use the proposals accepted
+	 * earlier (possibly with DH added).  Extract that as
+	 * ACCEPTED_DH.
+	 *
+	 * Two things complicate this:
+	 * - the need to possibly add DH
+	 * - the need to possibly remove DH
+	 */
+
 	const struct ikev2_proposal *accepted_proposal =
 		established_child->sa.st_v2_accepted_proposal;
+	const struct dh_desc *accepted_dh = ikev2_proposal_first_dh(accepted_proposal);
 
-	bool full_proposal;
+	/*
+	 * Normally, with PFS=YES, the Child SA's previously accepted
+	 * proposal has ACCEPTED_DH.  The only exception is the Child
+	 * SA created during IKE_AUTH.  Since DH isn't negotiated it
+	 * is NULL.
+	 *
+	 * Since such a Child SA has PFS=YES, the proposal must ensure
+	 * that DH is included when rekeying.
+	 */
+	bool ike_auth_child_rekey_needs_dh = (cc->config->child_sa.pfs &&
+					      accepted_dh == NULL);
 
-	if (cc->config->pfs_rekey_workaround) {
-		/* don't argue */
-		full_proposal = true;
-	} else if (cc->config->child_sa.pfs &&
-		   ikev2_proposal_first_dh(accepted_proposal) == NULL) {
-		/*
-		 * The child sa should have DH in the
-		 * accepted_proposal yet it doesn't -> must be the
-		 * first rekey of the IKE_AUTH's Child (has no PFS).
-		 *
-		 * If the ESP= line includes DH then propose the
-		 * entire ESP line again, else will use IKE SA's DH.
-		 */
-		struct proposal *proposal = next_proposal(cc->config->child_sa.proposals.p, NULL);
-		struct algorithm *dh = next_algorithm(proposal, PROPOSAL_dh, NULL);
-		full_proposal = (dh != NULL);
-	} else {
-		full_proposal = false;
-	}
-
-	const struct dh_desc *default_pfs_dh =
-		(cc->config->child_sa.pfs ? ike->sa.st_oakley.ta_dh : &ike_alg_dh_none);
+	/*
+	 * See if the proposal contains DH.
+	 *
+	 * During connection load, when PFS=YES, the proposal parser
+	 * requires that either ALL or NO proposals have DH.  Hence
+	 * the need to only look at the first proposal.
+	 */
+	struct proposal *proposal = next_proposal(cc->config->child_sa.proposals.p, NULL);
+	const struct algorithm *proposal_dh = next_algorithm(proposal, PROPOSAL_dh, NULL);
 
 	struct ikev2_proposals *proposals;
-	if (full_proposal) {
+	if (ike_auth_child_rekey_needs_dh && cc->config->pfs_rekey_workaround) {
 		/*
-		 * Re-propose the full ESP= line.  If necessary add DH
-		 * from the IKE SA.  When MS_DH_DOWNGRADE, it will
-		 * also add NONE-DH.
+		 * Use the accepted proposal but with the IKE SA's DH
+		 * forced.
+		 *
+		 * This was >=4.6 behaviour and is off by default.
 		 */
+		proposals = proposals_from_accepted("rekey IKE SA CHILD",
+						    accepted_proposal,
+						    ike_dh,
+						    cc->config->ms_dh_downgrade,
+						    logger);
+	} else if (ike_auth_child_rekey_needs_dh && proposal_dh == NULL) {
+		/*
+		 * The proposal does not include DH, but DH needs to
+		 * be added as part of the rekey.
+		 *
+		 * Re-propose the accepted proposal but with the
+		 * mising DH filled in by the IKE SA's DH.
+		 *
+		 * The alternative would be to re-send all the
+		 * original proposals with IKE SA DH added (which was
+		 * <=4.5 behaviour).
+		 *
+		 * This was part of >=4.6 behaviour.
+		 */
+		proposals = proposals_from_accepted("rekey IKE SA CHILD", accepted_proposal,
+						    ike_dh,
+						    cc->config->ms_dh_downgrade,
+						    logger);
+	} else if (ike_auth_child_rekey_needs_dh) {
+		/*
+		 * Since the proposals include DH, and there's no easy
+		 * way of figuring out which of the proposals and DH
+		 * were chosen, just re-send everything.
+		 */
+		PEXPECT(logger, proposal_dh != NULL);
 		proposals = get_v2_child_proposals(cc, "pfs-rekey-workaround",
 						   /*strip_dh*/false,
-						   default_pfs_dh,
+						   /*default-ignored*/&ike_alg_dh_none,
 						   logger);
 	} else {
-		proposals = proposals_from_accepted("rekey CHILD", accepted_proposal,
-						    default_pfs_dh,
+		/*
+		 * Use the previously accepted proposal.  If the
+		 * previous proposal included DH then so too will this
+		 * rekey.
+		 *
+		 * This behaviour is unchanged.
+		 */
+		PEXPECT(logger, (cc->config->child_sa.pfs == (accepted_dh != NULL)));
+		proposals = proposals_from_accepted("rekey CHILD",
+						    accepted_proposal,
+						    &ike_alg_dh_none,
 						    cc->config->ms_dh_downgrade,
 						    logger);
 	}
@@ -2486,7 +2577,7 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_rekey_ike_proposals(struct ike_sa
 {
 	return proposals_from_accepted("rekey IKE",
 				       established_ike->sa.st_v2_accepted_proposal,
-				       /*default_dh*/&ike_alg_dh_none,
+				       /*default_dh-ignored*/&ike_alg_dh_none,
 				       /*ms_dh_downgrade*/false,
 				       logger);
 }

@@ -27,17 +27,17 @@
       include the DH algorithm negotiated during the IKE exchange.
     </para>
     <para>
-      AEAD algorithms such as AES_GCM and AES_CCM no not require a
+      AEAD algorithms such as AES_GCM and AES_CCM do not not require a
       separate integrity algorithm.  For example <emphasis
       remap='I'>esp=aes_gcm256</emphasis> or <emphasis
       remap='I'>esp=aes_ccm</emphasis>.
     </para>
     <para>
-     Note that AES_GCM and AES_CCM for ESP come in 8, 12 and 16 byte ICV versions.
-     RFC 8221 only requires AES_GCM with 16 byte ICV and AES_CCM with 8 byte ICV
-     to be implemented, and "aes_gcm" and "aes_ccm" refer to these variants. The
-     other variants can be specified using an _a (8), _b(12) or _c(16) postfix,
-     eg esp=aes_gcm_a for the 8 byte ICV and esp=aes_gcm_b for the 12 byte ICV.
+      Note that AES_GCM and AES_CCM for ESP come in 8, 12 and 16 byte ICV versions.
+      RFC 8221 only requires AES_GCM with 16 byte ICV and AES_CCM with 8 byte ICV
+      to be implemented, and "aes_gcm" and "aes_ccm" refer to these variants. The
+      other variants can be specified using an _a (8), _b(12) or _c(16) postfix,
+      eg esp=aes_gcm_a for the 8 byte ICV and esp=aes_gcm_b for the 12 byte ICV.
     </para>
     <para>
       For instance:
@@ -46,11 +46,15 @@
 	esp=aes128-sha2_512-dh14+dh19
       </programlisting>
       If not specified, a secure set of defaults will be used.  The
-      program:
+      program
+      <citerefentry>
+	<refentrytitle>ipsec_algparse</refentrytitle>
+	<manvolnum>8</manvolnum>
+      </citerefentry>
+      can be used to query these defaults for instance:
       <programlisting>
-	ipsec algparse esp=...
+	ipsec algparse esp=
       </programlisting>
-      can be used to query these defaults.
     </para>
   </listitem>
 </varlistentry>

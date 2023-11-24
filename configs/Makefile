@@ -186,7 +186,6 @@ XMLSOURCES += d.ipsec.conf/leftmodecfgclient.xml
 XMLSOURCES += d.ipsec.conf/xauthby.xml
 XMLSOURCES += d.ipsec.conf/xauthfail.xml
 XMLSOURCES += d.ipsec.conf/pam-authorize.xml
-XMLSOURCES += d.ipsec.conf/pfs-rekey-workaround.xml
 XMLSOURCES += d.ipsec.conf/modecfgpull.xml
 XMLSOURCES += d.ipsec.conf/modecfgoptions.xml
 XMLSOURCES += d.ipsec.conf/remote-peer-type.xml
