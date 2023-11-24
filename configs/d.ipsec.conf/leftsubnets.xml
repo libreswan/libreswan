@@ -17,5 +17,17 @@
       aware that when using spaces as separator, that the entire
       option value needs to be in double quotes.
     </para>
+
+    <important>
+      <title>
+	<code>leftsubnet</code>
+      </title>
+      <para>
+	Combining a <code>leftsubnet</code> specifying either multiple
+	selectors or selectors that specify the protocol and port with
+	<code>leftsubnets</code> is not supported.
+      </para>
+    </important>
+
   </listitem>
 </varlistentry>

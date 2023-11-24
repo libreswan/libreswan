@@ -55,5 +55,17 @@
       clients, most notably OSX, uses a random high port, instead of
       port 1701 for L2TP.
     </para>
+
+    <important>
+      <title>
+	<code>use with leftsubnet</code>
+      </title>
+      <para>
+	With IKEv2, the <code>leftsubnet</code> specification can
+	include the protocol and port.  Combining that syntax with
+	<code>protoport</code> is not supported.
+      </para>
+    </important>
+
   </listitem>
 </varlistentry>
