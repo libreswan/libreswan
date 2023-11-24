@@ -16,10 +16,22 @@
       <code>leftsubnet=1.2.3.4/31/tcp/22,1:2::/128/tcp/22</code>.
     </para>
     <para>
+      If both <code>leftsubnet=</code> and <code>rightsubnet=</code>
+      are specified, all combinations will be established as a single
+      IPsec tunnel.
+    </para>
+    <para>
       When omitted, essentially assumed to be <code>left</code>,
       signifying that the left end of the connection goes to the left
       participant only.
     </para>
+
+    <note>
+      <para>
+	Support for specifying multiple selectors and the protocol and
+	port was added in Libreswan version 5.
+      </para>
+    </note>
 
     <important>
       <title>
@@ -55,25 +67,17 @@
 
     <important>
       <title>
-	<code>leftprotport</code>
-      </title>
-      <para>
-	Combining <code>leftsubnet</code> specifying either multiple
-	selectors or selectors that include the protocol and port with
-	<code>leftprotoport</code> is not supported.
-      </para>
-    </important>
-
-    <important>
-      <title>
+	Use with <code>leftprotport</code> and
 	<code>leftsubnets</code>
       </title>
       <para>
-	Combining <code>leftsubnet</code> specifying either multiple
-	selectors or selectors that specify the protocol and port with
-	<code>leftsubnets</code> is not supported.
+	Compatibile with libreswan version 4, a simple
+	<code>leftsubnet</code> (specifying a single network prefix
+	and netmask) may be combined with <code>leftprotoport</code>
+	and <code>leftsubnets</code>.  Anything more complicated
+	should be converted to use the selector syntax.
       </para>
     </important>
-
+ 
   </listitem>
 </varlistentry>
