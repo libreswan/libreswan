@@ -2275,7 +2275,7 @@ static bool dispatch_1(enum routing_event event,
 	return false;
 }
 
-bool dispatch(enum routing_event event,
+static bool dispatch(enum routing_event event,
 	      struct connection *c,
 	      struct logger *logger, /* must out-live call */
 	      const struct routing_annex *e)
