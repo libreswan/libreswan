@@ -52,3 +52,6 @@ s/\t seq-hi 0x0, seq [^,]*, oseq-hi 0x0, oseq .*$/\t seq-hi 0x0, seq 0xXX, oseq-
 
 # filter out ipsec auto deprecation warning
 /^WARNING: ipsec auto has been deprecated/d
+
+# debug details aren't interesting
+s/^debug:.*/debug .../
