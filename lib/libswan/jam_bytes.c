@@ -200,5 +200,10 @@ size_t jam_human_bytes(struct jambuf *buf, const void *ptr, size_t size)
 
 size_t jam_string_human(struct jambuf *buf, const char *string)
 {
+	if (string == NULL) {
+		/* will inject "(null)" or error */
+		return jam_string(buf, NULL);
+	}
+
 	return jam_human_bytes(buf, string, strlen(string));
 }
