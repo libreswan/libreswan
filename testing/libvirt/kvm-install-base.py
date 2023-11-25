@@ -23,11 +23,12 @@ import sys
 import pexpect
 import re
 
+from alpine.base import alpine
+from debian.base import debian
 from fedora.base import fedora
 from freebsd.base import freebsd
 from netbsd.base import netbsd
 from openbsd.base import openbsd
-from alpine.base import alpine
 
 args = sys.argv[1:]
 
@@ -49,10 +50,11 @@ print("command", command)
 
 #argv[0] is this script
 OS = {
+    "alpine": alpine,
+    "debian": debian,
     "fedora": fedora,
     "freebsd": freebsd,
     "netbsd": netbsd,
-    "alpine": alpine,
     "openbsd": openbsd,
 }
 

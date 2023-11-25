@@ -19,25 +19,18 @@ import sys
 import time
 import os
 
-command = sys.argv[1:]
-print("command", command)
-
-child = pexpect.spawn(command=command[0], args=command[1:],
-                      logfile=sys.stdout.buffer,
-                      echo=False)
-
-def i():
+def i(child):
     '''go interactive then quit'''
     child.logfile = None
     child.interact()
     sys.exit(0)
 
-def rs(r, s):
+def rs(child, r, s):
     child.expect(r, timeout=None)
     for c in s:
         child.send(c)
 
-def c(s):
+def c(child, s):
     child.expect('\n# ', timeout=None)
     time.sleep(1)
     for c in s:
@@ -46,21 +39,11 @@ def c(s):
 
 # boot in single user mode (/ is RO)
 
-i()
+def debian(child, param):
 
+    #i(child)
+    #sys.exit(child.wait())
 
-
-rs('seconds', '2')
-rs('Enter pathname of shell or RETURN for /bin/sh:', '\n')
-# the above has only 4 seconds
-
-# Configure the created system using base.sh
-
-c('mount -rt cd9660 /dev/cd1 /mnt')
-c('/bin/sh -x /mnt/base.sh')
-
-c('umount /targetroot')
-c('umount /mnt')
-c('halt -p')
-
-sys.exit(child.wait())
+    print("waiting on child");
+    child.expect([pexpect.EOF], timeout=None, searchwindowsize=1)
+    sys.exit(child.wait())

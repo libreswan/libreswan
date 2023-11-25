@@ -51,6 +51,7 @@ KVM_TESTINGDIR ?= $(KVM_RUTDIR)/testing
 KVM_POOLDIR ?= $(abspath $(abs_top_srcdir)/../pool)
 KVM_LOCALDIR ?= $(KVM_POOLDIR)
 KVM_SNAPSHOTDIR ?=
+KVM_WGET ?= wget
 
 # While KVM_PREFIX might be empty, KVM_PREFIXES is never empty.
 KVM_PREFIX ?=
@@ -205,14 +206,14 @@ openbsd = OPENBSD
 
 # this is what works
 KVM_PLATFORM += alpine
-#KVM_PLATFORM += debian
+KVM_PLATFORM += debian
 KVM_PLATFORM += fedora
 KVM_PLATFORM += freebsd
 KVM_PLATFORM += netbsd
 KVM_PLATFORM += openbsd
 
 # this is what is enabled
-KVM_OS += $(if $(KVM_DEBIAN),  alpine)
+KVM_OS += $(if $(KVM_ALPINE),  alpine)
 KVM_OS += $(if $(KVM_DEBIAN),  debian)
 KVM_OS += $(if $(KVM_FEDORA),  fedora)
 KVM_OS += $(if $(KVM_FREEBSD), freebsd)
@@ -900,7 +901,7 @@ KVM_ALPINE_ISO_URL ?= https://dl-cdn.alpinelinux.org/alpine/v3.18/releases/x86_6
 KVM_ALPINE_ISO = $(KVM_POOLDIR)/$(notdir $(KVM_ALPINE_ISO_URL))
 kvm-iso: $(KVM_ALPINE_ISO)
 $(KVM_ALPINE_ISO): | $(KVM_POOLDIR)
-	wget --output-document $@.tmp --no-clobber -- $(KVM_ALPINE_ISO_URL)
+	$(KVM_WGET) --output-document $@.tmp --continue -- $(KVM_ALPINE_ISO_URL)
 	touch $@.tmp # wget preserves dates
 	mv $@.tmp $@
 
@@ -908,7 +909,6 @@ KVM_ALPINE_VIRT_INSTALL_FLAGS = \
 	--cdrom=$(KVM_ALPINE_ISO)
 
 $(KVM_ALPINE_DOMAIN)-base: $(KVM_ALPINE_ISO)
-$(KVM_ALPINE_DOMAIN)-base: | $(KVM_ALPINE_KICKSTART_FILE)
 
 
 #
@@ -916,20 +916,33 @@ $(KVM_ALPINE_DOMAIN)-base: | $(KVM_ALPINE_KICKSTART_FILE)
 #
 
 KVM_DEBIAN_RELEASE = 12.2.0
-KVM_DEBIAN_ISO_URL ?= https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/debian-$(KVM_DEBIAN_RELEASE)-amd64-netinst.iso
+KVM_DEBIAN_URL ?= https://cdimage.debian.org/debian-cd/current/amd64/iso-dvd
+KVM_DEBIAN_ISO_URL ?= $(KVM_DEBIAN_URL)/debian-$(KVM_DEBIAN_RELEASE)-amd64-DVD-1.iso
 KVM_DEBIAN_ISO = $(KVM_POOLDIR)/$(notdir $(KVM_DEBIAN_ISO_URL))
 kvm-iso: $(KVM_DEBIAN_ISO)
 $(KVM_DEBIAN_ISO): | $(KVM_POOLDIR)
-	wget --output-document $@.tmp --no-clobber -- $(KVM_DEBIAN_ISO_URL)
+	$(KVM_WGET) --output-document $@.tmp --continue -- $(KVM_DEBIAN_ISO_URL)
 	touch $@.tmp # wget preserves dates
 	mv $@.tmp $@
 
-KVM_DEBIAN_VIRT_INSTALL_FLAGS = \
-	--cdrom=$(KVM_DEBIAN_ISO)
-	--extra-args="console=ttyS0,115200 net.ifnames=0 biosdevname=0"
+$(KVM_DEBIAN_DOMAIN)-base.iso: $(KVM_DEBIAN_ISO)
+$(KVM_DEBIAN_DOMAIN)-base.iso: | testing/libvirt/debian/base.sh
+	cp $(KVM_DEBIAN_ISO) $@.tmp
+	$(KVM_TRANSMOGRIFY) \
+		testing/libvirt/debian/base.sh \
+		> $(KVM_DEBIAN_DOMAIN)-base.sh
+	growisofs -M $@.tmp -l -R \
+		-input-charset utf-8 \
+		-graft-points \
+		/base.sh=$(KVM_DEBIAN_DOMAIN)-base.sh
+	mv $@.tmp $@
 
-$(KVM_DEBIAN_DOMAIN)-base: $(KVM_DEBIAN_ISO)
-$(KVM_DEBIAN_DOMAIN)-base: | $(KVM_DEBIAN_KICKSTART_FILE)
+$(KVM_DEBIAN_DOMAIN)-base: $(KVM_DEBIAN_DOMAIN)-base.iso
+
+KVM_DEBIAN_VIRT_INSTALL_FLAGS = \
+	--location=$(KVM_DEBIAN_DOMAIN)-base.iso \
+	--initrd-inject=testing/libvirt/debian/preseed.cfg \
+	--extra-args="console=ttyS0,115200 net.ifnames=0 biosdevname=0"
 
 
 #
@@ -946,20 +959,20 @@ KVM_FEDORA_KICKSTART_FILE ?= testing/libvirt/fedora/base.ks
 KVM_FEDORA_ISO = $(KVM_POOLDIR)/$(notdir $(KVM_FEDORA_ISO_URL))
 kvm-iso: $(KVM_FEDORA_ISO)
 $(KVM_FEDORA_ISO): | $(KVM_POOLDIR)
-	wget --output-document $@.tmp --no-clobber -- $(KVM_FEDORA_ISO_URL)
+	$(KVM_WGET) --output-document $@.tmp --continue -- $(KVM_FEDORA_ISO_URL)
 	touch $@.tmp # wget preserves dates
 	mv $@.tmp $@
 
 KVM_FEDORA_VIRT_INSTALL_FLAGS = \
 	--location=$(KVM_FEDORA_ISO) \
-	--initrd-inject=$(KVM_FEDORA_BASE_DOMAIN).ks \
-	--extra-args="inst.ks=file:/$(notdir $(KVM_FEDORA_BASE_DOMAIN).ks) console=ttyS0,115200 net.ifnames=0 biosdevname=0"
+	--initrd-inject=$(KVM_FEDORA_DOMAIN)-base.ks \
+	--extra-args="inst.ks=file:/$(notdir $(KVM_FEDORA_DOMAIN)-base.ks) console=ttyS0,115200 net.ifnames=0 biosdevname=0"
 
 $(KVM_FEDORA_DOMAIN)-base: $(KVM_FEDORA_ISO)
 $(KVM_FEDORA_DOMAIN)-base: | $(KVM_FEDORA_KICKSTART_FILE)
-$(KVM_FEDORA_DOMAIN)-base: | $(KVM_FEDORA_BASE_DOMAIN).ks
+$(KVM_FEDORA_DOMAIN)-base: | $(KVM_FEDORA_DOMAIN)-base.ks
 
-$(KVM_FEDORA_BASE_DOMAIN).ks: | $(KVM_FEDORA_KICKSTART_FILE)
+$(KVM_FEDORA_DOMAIN)-base.ks: | $(KVM_FEDORA_KICKSTART_FILE)
 	$(KVM_TRANSMOGRIFY) \
 		$(KVM_FEDORA_KICKSTART_FILE) \
 		> $@.tmp
@@ -981,31 +994,30 @@ KVM_FREEBSD_ISO ?= $(KVM_POOLDIR)/$(notdir $(KVM_FREEBSD_ISO_URL))
 kvm-iso: $(KVM_FREEBSD_ISO)
 # For FreeBSD, download the compressed ISO
 $(KVM_FREEBSD_ISO).xz: | $(KVM_POOLDIR)
-	wget --output-document $@.tmp --no-clobber -- $(KVM_FREEBSD_ISO_URL).xz
+	$(KVM_WGET) --output-document $@.tmp --continue -- $(KVM_FREEBSD_ISO_URL).xz
 	touch $@.tmp # wget preserves dates
 	mv $@.tmp $@
 $(KVM_FREEBSD_ISO): | $(KVM_FREEBSD_ISO).xz
 	echo 'SHA256 ($@.xz) = $(KVM_FREEBSD_ISO_SHA256)' | cksum -c
 	xz --uncompress --keep $@.xz
 
-KVM_FREEBSD_BASE_ISO = $(KVM_FREEBSD_BASE_DOMAIN).iso
 KVM_FREEBSD_VIRT_INSTALL_FLAGS = \
-       --cdrom=$(KVM_FREEBSD_BASE_ISO)
+       --cdrom=$(KVM_FREEBSD_DOMAIN)-base.iso
 
-$(KVM_FREEBSD_DOMAIN)-base: $(KVM_FREEBSD_BASE_ISO)
+$(KVM_FREEBSD_DOMAIN)-base: $(KVM_FREEBSD_DOMAIN)-base.iso
 
-$(KVM_FREEBSD_BASE_ISO): $(KVM_FREEBSD_ISO)
-$(KVM_FREEBSD_BASE_ISO): testing/libvirt/freebsd/loader.conf
-$(KVM_FREEBSD_BASE_ISO): testing/libvirt/freebsd/base.conf
+$(KVM_FREEBSD_DOMAIN)-base.iso: $(KVM_FREEBSD_ISO)
+$(KVM_FREEBSD_DOMAIN)-base.iso: | testing/libvirt/freebsd/loader.conf
+$(KVM_FREEBSD_DOMAIN)-base.iso: | testing/libvirt/freebsd/base.conf
 	cp $(KVM_FREEBSD_ISO) $@.tmp
 	$(KVM_TRANSMOGRIFY) \
 		testing/libvirt/freebsd/base.conf \
-		> $(KVM_FREEBSD_BASE_DOMAIN).base.conf
+		> $(KVM_FREEBSD_DOMAIN)-base.conf
 	growisofs -M $@.tmp -l -R \
 		-input-charset utf-8 \
 		-graft-points \
 		/boot/loader.conf=testing/libvirt/freebsd/loader.conf \
-		/etc/installerconfig=$(KVM_FREEBSD_BASE_DOMAIN).base.conf
+		/etc/installerconfig=$(KVM_FREEBSD_DOMAIN)-base.conf
 	mv $@.tmp $@
 
 
@@ -1027,33 +1039,32 @@ KVM_NETBSD_BOOT_ISO ?= $(basename $(KVM_NETBSD_INSTALL_ISO))-boot.iso
 kvm-iso: $(KVM_NETBSD_BOOT_ISO)
 kvm-iso: $(KVM_NETBSD_INSTALL_ISO)
 $(KVM_NETBSD_INSTALL_ISO): | $(KVM_POOLDIR)
-	wget --output-document $@.tmp --no-clobber -- $(KVM_NETBSD_INSTALL_ISO_URL)
+	$(KVM_WGET) --output-document $@.tmp --continue -- $(KVM_NETBSD_INSTALL_ISO_URL)
 	touch $@.tmp # wget preserves dates
 	mv $@.tmp $@
 $(KVM_NETBSD_BOOT_ISO): | $(KVM_POOLDIR)
-	wget --output-document $@.tmp --no-clobber -- $(KVM_NETBSD_BOOT_ISO_URL)
+	$(KVM_WGET) --output-document $@.tmp --continue -- $(KVM_NETBSD_BOOT_ISO_URL)
 	touch $@.tmp # wget preserves dates
 	mv $@.tmp $@
 
-KVM_NETBSD_BASE_ISO = $(KVM_NETBSD_BASE_DOMAIN).iso
 KVM_NETBSD_VIRT_INSTALL_FLAGS = \
 	--cdrom=$(KVM_NETBSD_BOOT_ISO) \
-	--disk=path=$(KVM_NETBSD_BASE_ISO),readonly=on,device=cdrom
+	--disk=path=$(KVM_NETBSD_DOMAIN)-base.iso,readonly=on,device=cdrom
 
 $(KVM_NETBSD_DOMAIN)-base: $(KVM_NETBSD_BOOT_ISO)
-$(KVM_NETBSD_DOMAIN)-base: $(KVM_NETBSD_BASE_ISO)
+$(KVM_NETBSD_DOMAIN)-base: $(KVM_NETBSD_DOMAIN)-base.iso
 
-$(KVM_NETBSD_BASE_ISO): $(KVM_NETBSD_INSTALL_ISO)
-$(KVM_NETBSD_BASE_ISO): testing/libvirt/netbsd/base.sh
+$(KVM_NETBSD_DOMAIN)-base.iso: $(KVM_NETBSD_INSTALL_ISO)
+$(KVM_NETBSD_DOMAIN)-base.iso: | testing/libvirt/netbsd/base.sh
 	cp $(KVM_NETBSD_INSTALL_ISO) $@.tmp
 	$(KVM_TRANSMOGRIFY) \
 		testing/libvirt/netbsd/base.sh \
-		> $(KVM_NETBSD_BASE_DOMAIN).base.sh
+		> $(KVM_NETBSD_DOMAIN)-base.sh
 	: this mangles file/directory names
 	growisofs -M $@.tmp -l \
 		-input-charset utf-8 \
 		-graft-points \
-		/base.sh=$(KVM_NETBSD_BASE_DOMAIN).base.sh
+		/base.sh=$(KVM_NETBSD_DOMAIN)-base.sh
 	mv $@.tmp $@
 
 
@@ -1075,37 +1086,36 @@ KVM_OPENBSD_ISO = $(KVM_POOLDIR)/OpenBSD-$(KVM_OPENBSD_ISO_RELEASE)-install.iso
 
 kvm-iso: $(KVM_OPENBSD_ISO)
 $(KVM_OPENBSD_ISO): | $(KVM_POOLDIR)
-	wget --output-document $@.tmp --no-clobber -- $(KVM_OPENBSD_ISO_URL)
+	$(KVM_WGET) --output-document $@.tmp --continue -- $(KVM_OPENBSD_ISO_URL)
 	touch $@.tmp # wget preserves dates
 	echo 'SHA256 ($@.tmp) = $(KVM_OPENBSD_ISO_SHA256)' | cksum -c
 	mv $@.tmp $@
 
-KVM_OPENBSD_BASE_ISO = $(KVM_OPENBSD_BASE_DOMAIN).iso
 KVM_OPENBSD_VIRT_INSTALL_FLAGS = \
-	--disk path=$(KVM_OPENBSD_BASE_ISO),readonly=on,device=cdrom,target.bus=sata \
+	--disk path=$(KVM_OPENBSD_DOMAIN)-base.iso,readonly=on,device=cdrom,target.bus=sata \
 	--install bootdev=cdrom
 
-$(KVM_OPENBSD_DOMAIN)-base: $(KVM_OPENBSD_BASE_ISO)
+$(KVM_OPENBSD_DOMAIN)-base: $(KVM_OPENBSD_DOMAIN)-base.iso
 
-kvm-iso: $(KVM_OPENBSD_BASE_ISO)
-$(KVM_OPENBSD_BASE_ISO): $(KVM_OPENBSD_ISO)
-$(KVM_OPENBSD_BASE_ISO): testing/libvirt/openbsd/base.conf
-$(KVM_OPENBSD_BASE_ISO): testing/libvirt/openbsd/boot.conf
-$(KVM_OPENBSD_BASE_ISO): testing/libvirt/openbsd/base.sh
-$(KVM_OPENBSD_BASE_ISO): testing/libvirt/openbsd/base.disk
+kvm-iso: $(KVM_OPENBSD_DOMAIN)-base.iso
+$(KVM_OPENBSD_DOMAIN)-base.iso: $(KVM_OPENBSD_ISO)
+$(KVM_OPENBSD_DOMAIN)-base.iso: | testing/libvirt/openbsd/base.conf
+$(KVM_OPENBSD_DOMAIN)-base.iso: | testing/libvirt/openbsd/boot.conf
+$(KVM_OPENBSD_DOMAIN)-base.iso: | testing/libvirt/openbsd/base.sh
+$(KVM_OPENBSD_DOMAIN)-base.iso: | testing/libvirt/openbsd/base.disk
 	cp $(KVM_OPENBSD_ISO) $@.tmp
 	$(KVM_TRANSMOGRIFY) \
 		testing/libvirt/openbsd/base.sh \
-		> $(KVM_OPENBSD_BASE_DOMAIN).base.sh
+		> $(KVM_OPENBSD_DOMAIN)-base.sh
 	: boot.conf sets up a serial console
 	: base.conf configures the installer
 	: base.sh gets run by base.py after boot
 	growisofs -M $@.tmp -l -R \
 		-input-charset utf-8 \
 		-graft-points \
-		/base.conf="testing/libvirt/openbsd/base.conf" \
-		/etc/boot.conf="testing/libvirt/openbsd/boot.conf" \
-		/base.sh=$(KVM_OPENBSD_BASE_DOMAIN).base.sh \
+		/base.conf=testing/libvirt/openbsd/base.conf \
+		/etc/boot.conf=testing/libvirt/openbsd/boot.conf \
+		/base.sh=$(KVM_OPENBSD_DOMAIN)-base.sh \
 		/base.disk=testing/libvirt/openbsd/base.disk
 	mv $@.tmp $@
 

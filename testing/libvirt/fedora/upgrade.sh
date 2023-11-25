@@ -21,7 +21,7 @@ done
 : Point the cache at /pool, but not /pool/fedora.pkg as that matches
 : /pool/fedora.*
 
-cachedir=$( . /etc/os-release ; echo /pool/pkg.${ID}${VERSION_ID} )
+cachedir=$( . /etc/os-release ; echo /pool/pkg.${ID}.${VERSION_ID} )
 dnf config-manager --save --setopt=keepcache=True
 dnf config-manager --save --setopt=cachedir=${cachedir}
 
