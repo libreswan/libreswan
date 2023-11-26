@@ -14,8 +14,8 @@ ls --indicator-style=file-type *.xml | \
     sed -n -e 's/\.xml$//p' | \
     while read h ; do
 	case ${h} in
-	    e | w )
-		for os in netbsd freebsd openbsd debian ; do
+	    [a-z] )
+		for os in alpine debian fedora freebsd netbsd openbsd ; do
 		    echo ${os}${h}
 		done
 		;;

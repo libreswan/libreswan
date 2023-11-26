@@ -257,7 +257,7 @@ add-kvm-prefixes = \
 		$(addprefix $(call strip-prefix,$(prefix)),$(1)))
 KVM_FIRST_PREFIX = $(call strip-prefix,$(firstword $(KVM_PREFIXES)))
 
-KVM_OS_HOST_NAMES = e w
+KVM_OS_HOST_NAMES = e w n
 
 # expand anything using $1 (such as make variable names and values)
 # immediately, but delay everything else by using $$.
