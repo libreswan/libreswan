@@ -15,7 +15,7 @@ ls --indicator-style=file-type *.xml | \
     while read h ; do
 	case ${h} in
 	    e | w )
-		for os in netbsd freebsd openbsd ; do
+		for os in netbsd freebsd openbsd debian ; do
 		    echo ${os}${h}
 		done
 		;;
