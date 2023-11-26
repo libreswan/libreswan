@@ -1,0 +1,12 @@
+[Unit]
+  Description=hostnamer: who-am-i
+  #not-file-not-empty == file empty
+  # ConditionFileNotEmpty=|!/etc/hostname
+  # need interfaces configured
+  After=systemd-networkd-wait-online.service
+  Before=network.target
+[Service]
+  Type=oneshot
+  ExecStart=/usr/local/sbin/hostnamer.sh
+[Install]
+  WantedBy=multi-user.target
