@@ -4,13 +4,13 @@ set -xe
 
 PREFIX=@@PREFIX@@
 
-#cachedir=$( . /etc/os-release ; echo /pool/pkg.${ID}.${VERSION_ID} )
+cachedir=$( . /etc/os-release ; echo /pool/pkg.${ID}.${VERSION_ID} )
 
-#mkdir -p ${cachedir}
+mkdir -p ${cachedir}
 
-#cat <<EOF > /etc/apt/apt.conf
-#Dir::Cache ${cachedir};
-#EOF
+cat <<EOF > /etc/apt/apt.conf
+Dir::Cache ${cachedir};
+EOF
 
 apt-config dump | grep Dir::Cache
 apt-get update
