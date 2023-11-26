@@ -34,29 +34,13 @@ EOF
 done
 
 
-title systemd-networkd
+:
+: systemd-networkd
+:
 
-# Provide a default network configuration for "fedora".
+. /bench/testing/libvirt/systemd/transmogrify.sh
 
-# Since systemd-networkd matches .network files in lexographical
-# order, this zzz.*.network file is only matched when all else fails.
-
-cat > /etc/systemd/network/zzz.eth0.network << EOF
-[Match]
-Name=eth0
-Host=fedora
-[Network]
-Description=fallback for when no other interface matches
-DHCP=yes
-EOF
-
-systemctl enable systemd-networkd.service
-systemctl enable systemd-networkd-wait-online.service
 systemctl disable NetworkManager
-
-cp -v /bench/testing/libvirt/fedora/network/* /etc/systemd/network/
-restorecon -R /etc/systemd/network
-
 
 title /etc/hosts
 
@@ -69,50 +53,6 @@ cat <<EOF >> /etc/hosts
 192.1.3.209 road
 192.1.2.254 nic
 EOF
-
-
-title hostnamer
-
-rm -f /etc/hostname # hostnamectl set-hostname ""
-cat <<EOF > /etc/systemd/system/hostnamer.service
-[Unit]
-  Description=hostnamer: who-am-i
-  #not-file-not-empty == file empty
-  ConditionFileNotEmpty=|!/etc/hostname
-  # need interfaces configured
-  After=systemd-networkd-wait-online.service
-  Before=network.target
-[Service]
-  Type=oneshot
-  ExecStart=/usr/local/sbin/hostnamer.sh
-[Install]
-  WantedBy=multi-user.target
-EOF
-cat <<EOF > /usr/local/sbin/hostnamer.sh
-#!/bin/sh
-# per hostnamer.service, only run when /etc/hostname is empty
-echo hostnamer: determining hostname | tee /dev/console
-host()
-{
-	echo hostnamer hostname: \$1 | tee /dev/console
-	hostnamectl set-hostname \$1
-	exit 0
-}
-for mac in \$(ip address show | awk '\$1 == "link/ether" { print \$2 }') ; do
-    echo hostnamer mac: \${mac} | tee /dev/console
-    case \${mac} in
-    	 #   eth0                 eth1               eth2
-	                     12:00:00:de:ad:ba | 12:00:00:32:64:ba ) host nic ;;
-	 12:00:00:dc:bc:ff | 12:00:00:64:64:23                     ) host east ;;
-	 12:00:00:ab:cd:ff | 12:00:00:64:64:45                     ) host west ;;
-	 12:00:00:ab:cd:02                                         ) host road ;;
-	 12:00:00:de:cd:49 | 12:00:00:96:96:49                     ) host north ;;
-     esac
-done
-EOF
-chmod a+x /usr/local/sbin/hostnamer.sh
-restorecon -R /etc/systemd/system
-systemctl enable hostnamer.service
 
 
 title add swan to paths
