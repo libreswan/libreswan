@@ -34,12 +34,6 @@ EOF
 done
 
 
-title limit kernel to two installs
-
-# https://ask.fedoraproject.org/t/old-kernels-removal/7026/2
-sudo sed -i 's/installonly_limit=3/installonly_limit=2/' /etc/dnf/dnf.conf
-
-
 title systemd-networkd
 
 # Provide a default network configuration for "fedora".

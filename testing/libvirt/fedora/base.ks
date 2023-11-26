@@ -47,7 +47,7 @@ part / --asprimary --grow
 
 # don't confuse things
 -libreswan
-# Temporary; will install systemd-networkd after reboot
+# Temporary; will install systemd-networkd during upgrade.sh
 NetworkManager
 -network-scripts
 # misc
