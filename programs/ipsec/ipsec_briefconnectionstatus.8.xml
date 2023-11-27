@@ -3,35 +3,32 @@
                    "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
 <refentry>
   <refmeta>
-    <refentrytitle>IPSEC_CHECKNSS</refentrytitle>
+    <refentrytitle>IPSEC_BRIEFCONNECTIONSTATUS</refentrytitle>
     <manvolnum>8</manvolnum>
-    <refmiscinfo class='date'>14 April 2023</refmiscinfo>
+    <refmiscinfo class='date'>27 Nov 2023</refmiscinfo>
     <refmiscinfo class="source">libreswan</refmiscinfo>
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
-    <refname>ipsec checknss</refname>
-    <refpurpose>Check or initialize the IPsec NSS database</refpurpose>
+    <refname>ipsec briefconnectionstatus</refname>
+    <refpurpose>Get brief connection status from IPsec service</refpurpose>
   </refnamediv>
   <!-- body begins here -->
   <refsynopsisdiv id='synopsis'>
     <cmdsynopsis>
       <command>ipsec</command>
-      <arg choice='plain'>checknss</arg>
-      <arg choice='opt'>--nssdir <replaceable>@@IPSEC_NSSDIR@@</replaceable></arg>
-      <arg choice='opt'>--settrusts </arg>
+      <arg choice='plain'>briefconnectionstatus</arg>
+      <arg choice='opt'>--ctlsocket <replaceable>@@RUNDIR@@/pluto.ctl</replaceable></arg>
       <sbr/>
     </cmdsynopsis>
   </refsynopsisdiv>
 
+
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>Checknss</emphasis> checks or initialises the NSS
-      database where all private keys for RSA and certificate keypairs are
-      stored. To remove an existing IPsec NSS database, remove all the *.db
-      files and pkcs11.txt from the NSS data directory (default: @@IPSEC_NSSDIR@@).
-      If database exists returns successfully.
+      <emphasis remap='I'>Briefconnectionstatus</emphasis> list brief connection status
+      from the pluto daemon. Get complete status with <option>ipsec status</option>.
     </para>
   </refsect1>
 
@@ -43,11 +40,11 @@
       <citerefentry><refentrytitle>ipsec_add</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_algparse</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_barf</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-      <citerefentry><refentrytitle>ipsec_briefconnectionstatus</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_briefstatus</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_certutil</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_checkconfig</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_checknflog</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+      <citerefentry><refentrytitle>ipsec_checknss</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_connectionstatus</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_crlutil</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_delete</refentrytitle><manvolnum>8</manvolnum></citerefentry>,

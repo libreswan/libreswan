@@ -22,6 +22,7 @@ PROGRAM_MANPAGE = # suppress default
 
 MANPAGES += ipsec.8
 MANPAGES += ipsec_add.8
+MANPAGES += ipsec_briefconnectionstatus.8
 MANPAGES += ipsec_briefstatus.8
 MANPAGES += ipsec_certutil.8
 MANPAGES += ipsec_checkconfig.8
