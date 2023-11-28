@@ -967,7 +967,7 @@ $(KVM_FEDORA_ISO): | $(KVM_POOLDIR)
 KVM_FEDORA_VIRT_INSTALL_FLAGS = \
 	--location=$(KVM_FEDORA_ISO) \
 	--initrd-inject=$(KVM_FEDORA_DOMAIN)-base.ks \
-	--extra-args="inst.ks=file:/$(notdir $(KVM_FEDORA_DOMAIN)-base.ks) console=ttyS0,115200 net.ifnames=0 biosdevname=0"
+	--extra-args="inst.ks=file:/$(notdir $(KVM_FEDORA_DOMAIN)-base.ks) console=ttyS0,115200 net.ifnames=0 biosdevname=0 inst.notmux"
 
 $(KVM_FEDORA_DOMAIN)-base: $(KVM_FEDORA_ISO)
 $(KVM_FEDORA_DOMAIN)-base: | $(KVM_FEDORA_KICKSTART_FILE)
