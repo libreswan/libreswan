@@ -7,8 +7,8 @@ set -e
 # possible hostnames, always implies first
 
 # gmake isn't on debian?
-gnumake="make"
-quietmake="${gnumake} -C $(realpath $(dirname $0)) --no-print-directory"
+gnumake="make -C $(realpath $(dirname $0))/testing/libvirt"
+quietmake="${gnumake} --no-print-directory"
 
 kvm_platform=$(${quietmake} print-kvm-platform)
 kvm_testingdir=$(${quietmake} print-kvm-testingdir)
