@@ -42,7 +42,7 @@ def c(child, s):
 
 # boot in single user mode (/ is RO)
 
-def netbsd(child, param):
+def install_base(child, param):
     rs(child, 'seconds', '2')
     rs(child, 'Enter pathname of shell or RETURN for /bin/sh:', '\n')
     # the above has only 4 seconds

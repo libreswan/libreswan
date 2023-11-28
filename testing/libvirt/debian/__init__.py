@@ -39,7 +39,7 @@ def c(child, s):
 
 # boot in single user mode (/ is RO)
 
-def debian(child, param):
+def install_base(child, param):
 
     #i(child)
     #sys.exit(child.wait())

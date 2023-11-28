@@ -23,12 +23,12 @@ import sys
 import pexpect
 import re
 
-from alpine.base import alpine
-from debian.base import debian
-from fedora.base import fedora
-from freebsd.base import freebsd
-from netbsd.base import netbsd
-from openbsd.base import openbsd
+import alpine
+import debian
+import fedora
+import freebsd
+import netbsd
+import openbsd
 
 args = sys.argv[1:]
 
@@ -49,18 +49,19 @@ command = args[1:]
 print("command", command)
 
 #argv[0] is this script
-OS = {
-    "alpine": alpine,
-    "debian": debian,
-    "fedora": fedora,
-    "freebsd": freebsd,
-    "netbsd": netbsd,
-    "openbsd": openbsd,
+INSTALL_BASE = {
+    "alpine": alpine.install_base,
+    "debian": debian.install_base,
+    "fedora": fedora.install_base,
+    "freebsd": freebsd.install_base,
+    "netbsd": netbsd.install_base,
+    "openbsd": openbsd.install_base,
 }
 
-install = OS[param.os]
+install_base = INSTALL_BASE[param.os]
 
-# Strip output of any escape sequences.  See
+# Strip output of any escape sequences.  This does the stripping on
+# the input side but seems to cause pexpect to hang.  See
 # https://web.archive.org/web/20200805075926/http://ascii-table.com/ansi-escape-sequences.php
 
 class AsciiDecoder(object):
@@ -80,6 +81,9 @@ class AsciiDecoder(object):
                 print(">", e, "<")
             return e
         return b''
+
+# This strips things on the output side, problem is that it often
+# doesn't see the full escape sequence so would get things wrong.
 
 class LogFilter:
     def __init__(self):
@@ -104,4 +108,4 @@ child = pexpect.spawn(command=command[0],
 
 # child._decoder = AsciiDecoder() # used by SpawnBase.read_nonblocking()
 
-install(child, param)
+install_base(child, param)

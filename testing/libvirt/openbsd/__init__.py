@@ -31,7 +31,7 @@ def es(child, expect, send, t=60):
         print("==> Error <==\n"+child.before+"\n ==========")
         sys.exit(1)
 
-def openbsd(child, param):
+def install_base(child, param):
 
     print("waiting for boot");
     child.expect('boot>', timeout=180)

@@ -24,7 +24,7 @@ def rs(child, r, s):
     for c in s:
         child.send(c)
 
-def alpine(child, param):
+def install_base(child, param):
 
     rs(child, 'login: ', 'root\n')
 

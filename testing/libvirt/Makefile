@@ -832,7 +832,6 @@ $(patsubst %, $(KVM_POOLDIR_PREFIX)%-base, $(KVM_PLATFORM)): \
 $(KVM_POOLDIR_PREFIX)%-base: \
 		| \
 		./kvm-install-base.py \
-		%/base.py \
 		$(KVM_POOLDIR) \
 		$(KVM_HOST_OK) \
 		$(KVM_GATEWAY)

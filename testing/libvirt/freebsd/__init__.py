@@ -18,7 +18,7 @@ import pexpect
 import sys
 import os
 
-def freebsd(child, param):
+def install_base(child, param):
 
     # XXX: how to fix this? scribble on /etc/rc.local?
     print("waiting for terminal type")

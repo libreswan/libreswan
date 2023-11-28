@@ -20,7 +20,7 @@
 import pexpect
 import sys
 
-def fedora(child, param):
+def install_base(child, param):
 
     print("waiting on child");
     child.expect([pexpect.EOF], timeout=None, searchwindowsize=1)
