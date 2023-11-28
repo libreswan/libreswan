@@ -1,18 +1,22 @@
-  <varlistentry>
+<varlistentry>
   <term><emphasis remap='B'>compress</emphasis></term>
   <listitem>
-<para>whether IPComp compression of content is proposed on the connection
-(link-level compression does not work on encrypted data,
-so to be effective, compression must be done <emphasis remap='I'>before</emphasis> encryption);
-acceptable values are <emphasis remap='B'>yes</emphasis> and <emphasis remap='B'>no</emphasis>
-(the default).
-</para>
-<para>
-For IKEv1, compress settings on both peers must match. For IKEv2, compression can only be
-suggested and a mismatched compress setting results in connection without compression.
-</para>
-<para>When set to yes, compression is negotiated for the DEFLATE compression algorithm.</para>
+    <para>
+      whether IPComp compression of content is proposed on the
+      connection (link-level compression does not work on encrypted
+      data, so to be effective, compression must be done <emphasis
+      remap='I'>before</emphasis> encryption); acceptable values are
+      <emphasis remap='B'>yes</emphasis> and <emphasis
+      remap='B'>no</emphasis> (the default).
+    </para>
+    <para>
+      For IKEv1, compress settings on both peers must match. For
+      IKEv2, compression can only be suggested and a mismatched
+      compress setting results in connection without compression.
+    </para>
+    <para>
+      When set to yes, compression is negotiated for the DEFLATE
+      compression algorithm.
+    </para>
   </listitem>
-  </varlistentry>
-
-
+</varlistentry>

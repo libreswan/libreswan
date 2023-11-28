@@ -1,10 +1,14 @@
-  <varlistentry>
-  <term><emphasis remap='B'>dpddelay</emphasis></term>
+<varlistentry>
+  <term>
+    <emphasis remap='B'>dpddelay</emphasis>
+  </term>
   <listitem>
-<para>Set the delay (in time units, defaults to seconds) between Dead Peer
-Detection (IKEv1 RFC 3706) or IKEv2 Liveness keepalives that are sent for
-this connection (default <literal>0</literal> seconds). Set to enable
-checking. If dpddelay is set, dpdtimeout also needs to be set.</para>
+    <para>
+      Set the delay (in time units, defaults to seconds) between Dead
+      Peer Detection (IKEv1 RFC 3706) or IKEv2 Liveness keepalives
+      that are sent for this connection (default <literal>0</literal>
+      seconds). Set to enable checking. If dpddelay is set, dpdtimeout
+      also needs to be set.
+    </para>
   </listitem>
-  </varlistentry>
-
+</varlistentry>

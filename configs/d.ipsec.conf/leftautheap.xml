@@ -1,15 +1,21 @@
-  <varlistentry>
-  <term><emphasis remap='B'>leftautheap</emphasis></term>
+<varlistentry>
+  <term>
+    <emphasis remap='B'>leftautheap</emphasis>
+  </term>
   <listitem>
-<para>Whether the security gateways will authenticate uing an EAP method.
-Acceptable values are <emphasis remap='B'>none</emphasis> (the default)
-and <emphasis remap='B'>tls</emphasis> for EAPTLS. If EAP is the only authentication
-method, set <emphasis remap='B'>leftauth=none</emphasis> in addition to
-<emphasis remap='B'>leftautheap=tls=</emphasis>.
-</para>
+    <para>
+      Whether the security gateways will authenticate uing an EAP
+      method.  Acceptable values are <emphasis
+      remap='B'>none</emphasis> (the default) and <emphasis
+      remap='B'>tls</emphasis> for EAPTLS. If EAP is the only
+      authentication method, set <emphasis
+      remap='B'>leftauth=none</emphasis> in addition to <emphasis
+      remap='B'>leftautheap=tls=</emphasis>.
+    </para>
 
-<para>
-The EAP authentication mechanisms are only available for IKEv2 based connections.
-</para>
+    <para>
+      The EAP authentication mechanisms are only available for IKEv2
+      based connections.
+    </para>
   </listitem>
-  </varlistentry>
+</varlistentry>

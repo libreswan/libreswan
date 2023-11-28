@@ -1,52 +1,78 @@
 <varlistentry>
-<term><emphasis remap='B'>ipsec-interface</emphasis></term>
-<listitem>
-<para>
-Create or use an existing virtual interface <emphasis remap='I'>ipsecXXX</emphasis> for "Routing
-based VPNs" (as opposed to "Policy based VPNs"). Valid options are <emphasis remap='I'>yes</emphasis>,
-<emphasis remap='I'>no</emphasis> or a number. When using a number, the IPsec interface created
-and/or used will use that number as part of the interface name. For example setting
-<emphasis remap='I'>ipsec-interface=5</emphasis> will create and/or use the <emphasis>ipsec5</emphasis>
-interface. The value <emphasis remap='I'>0</emphasis> cannot be used and is interpreted as
-<emphasis remap='I'>no</emphasis>. The value <emphasis remap='I'>yes</emphasis> is interpreted as the
-number 1, and thus will use the interface named <emphasis>ipsec1</emphasis>. An IP address can be
-configured for this interface via the <emphasis remap='I'>interface-ip=</emphasis> option.
-</para>
-<para>
-The ipsec-interface is used to route outbound traffic that needs to be encrypted, and will decrypt
-inbound traffic that arrives on this interface. All traffic that is routed to this interface will
-be automatically encrypted providing the IPsec SA policy covers this traffic. Traffic not matching
-the IPsec SA will be dropped. Tools such as tcpdump, iptables, ifconfig and tools that need traffic
-counters can be used on all cleartext pre-encrypt and post-decrypt traffic on the device. When
-<emphasis remap='I'>leftsubnet=</emphasis> is equal to <emphasis remap='I'>rightsubnet=</emphasis>,
-the routing needs to be manged by an external routing daemon or manually by the administrator.
-</para>
-<para>
-This option is currently only supported on Linux kernels 4.19 or later when compiled with XFRMi support
-(<emphasis>CONFIG_XFRM_INTERFACE</emphasis>). The number of the ipsecX device corresponds with the
-<emphasis>XFRM IF_ID</emphasis> policy option of the IPsec SA in the Linux kernel. On Linux, XFRMi
-interfaces can be managed by libreswan automatically or can be preconfigured on the system using
-the existing init system or via networking tools such as systemd-networkd and NetworkManager. The
-_updown script handles certain Linux specific interfaces settings required for proper functioning,
-such as forwarding and routing rules for IPsec traffic.
-</para>
-<para>
-The ipsec-interface=0 will create an interface with the same name as the old KLIPS interface, ipsec0.
-This interface name should only be used when required for migration from KLIPS to XFRM interfaces.
-Since XFRM IF_ID and marking cannot use 0, this is mapped to 16384. This means that the
-devices ipsec0 and ipsec16384 cannot both be in use.
-</para>
-</listitem>
+  <term>
+    <emphasis remap='B'>ipsec-interface</emphasis>
+  </term>
+  <listitem>
+    <para>
+      Create or use an existing virtual interface <emphasis
+      remap='I'>ipsecXXX</emphasis> for "Routing based VPNs" (as
+      opposed to "Policy based VPNs"). Valid options are <emphasis
+      remap='I'>yes</emphasis>, <emphasis remap='I'>no</emphasis> or a
+      number. When using a number, the IPsec interface created and/or
+      used will use that number as part of the interface name. For
+      example setting <emphasis remap='I'>ipsec-interface=5</emphasis>
+      will create and/or use the <emphasis>ipsec5</emphasis>
+      interface. The value <emphasis remap='I'>0</emphasis> cannot be
+      used and is interpreted as <emphasis
+      remap='I'>no</emphasis>. The value <emphasis
+      remap='I'>yes</emphasis> is interpreted as the number 1, and
+      thus will use the interface named
+      <emphasis>ipsec1</emphasis>. An IP address can be configured for
+      this interface via the <emphasis
+      remap='I'>interface-ip=</emphasis> option.
+    </para>
+    <para>
+      The ipsec-interface is used to route outbound traffic that needs
+      to be encrypted, and will decrypt inbound traffic that arrives
+      on this interface. All traffic that is routed to this interface
+      will be automatically encrypted providing the IPsec SA policy
+      covers this traffic. Traffic not matching the IPsec SA will be
+      dropped. Tools such as tcpdump, iptables, ifconfig and tools
+      that need traffic counters can be used on all cleartext
+      pre-encrypt and post-decrypt traffic on the device. When
+      <emphasis remap='I'>leftsubnet=</emphasis> is equal to <emphasis
+      remap='I'>rightsubnet=</emphasis>, the routing needs to be
+      manged by an external routing daemon or manually by the
+      administrator.
+    </para>
+    <para>
+      This option is currently only supported on Linux kernels 4.19 or
+      later when compiled with XFRMi support
+      (<emphasis>CONFIG_XFRM_INTERFACE</emphasis>). The number of the
+      ipsecX device corresponds with the <emphasis>XFRM
+      IF_ID</emphasis> policy option of the IPsec SA in the Linux
+      kernel. On Linux, XFRMi interfaces can be managed by libreswan
+      automatically or can be preconfigured on the system using the
+      existing init system or via networking tools such as
+      systemd-networkd and NetworkManager. The _updown script handles
+      certain Linux specific interfaces settings required for proper
+      functioning, such as forwarding and routing rules for IPsec
+      traffic.
+    </para>
+    <para>
+      The ipsec-interface=0 will create an interface with the same
+      name as the old KLIPS interface, ipsec0.  This interface name
+      should only be used when required for migration from KLIPS to
+      XFRM interfaces.  Since XFRM IF_ID and marking cannot use 0,
+      this is mapped to 16384. This means that the devices ipsec0 and
+      ipsec16384 cannot both be in use.
+    </para>
+  </listitem>
 </varlistentry>
 
 <varlistentry>
-<term><emphasis remap='B'>interface-ip=</emphasis></term>
-<listitem>
-<para>
-The IP address and netmask to configure on a virtual device (eg ipsecXXX). This is often
-used when building Routing based IPsec tunnels using transport mode and GRE, but can also be useful in
-other scenarios. Currently requires <emphasis remap='I'>ipsec-interface=</emphasis>. See also
-<emphasis remap='I'>leftvti=</emphasis> for cnofiguring IP addresses when using VTI.
-</para>
-</listitem>
+  <term>
+    <emphasis remap='B'>interface-ip=</emphasis>
+  </term>
+  <listitem>
+    <para>
+      The IP address and netmask to configure on a virtual device (eg
+      ipsecXXX). This is often used when building Routing based IPsec
+      tunnels using transport mode and GRE, but can also be useful in
+      other scenarios. Currently requires <emphasis
+      remap='I'>ipsec-interface=</emphasis>. See also <emphasis
+      remap='I'>leftvti=</emphasis> for cnofiguring IP addresses when
+      using VTI.
+    </para>
+  </listitem>
 </varlistentry>

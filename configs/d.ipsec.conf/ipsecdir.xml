@@ -1,56 +1,81 @@
-  <varlistentry>
-  <term><emphasis remap='B'>ipsecdir</emphasis></term>
+<varlistentry>
+  <term>
+    <emphasis remap='B'>ipsecdir</emphasis>
+  </term>
   <listitem>
-    <para>Specifies a directory for administrator-controlled
-    configuration files and directories.  The default value is
-    <emphasis remap='I'>/etc/ipsec.d</emphasis>.  It may contain
-    the following files and directories:</para>
+    <para>
+      Specifies a directory for administrator-controlled configuration
+      files and directories.  The default value is <emphasis
+      remap='I'>/etc/ipsec.d</emphasis>.  It may contain the following
+      files and directories:
+    </para>
     <variablelist remap='IP'>
       <varlistentry>
-        <term>passwd</term>
-        <listitem><para>
-          (optional) for XAUTH support if not using PAM (this file
-          should not be world-readable). See README.XAUTH for more
-          information.
-        </para></listitem>
+        <term>
+	  passwd
+	</term>
+        <listitem>
+	  <para>
+            (optional) for XAUTH support if not using PAM (this file
+            should not be world-readable). See README.XAUTH for more
+            information.
+          </para>
+	</listitem>
       </varlistentry>
       <varlistentry>
-        <term>nsspassword</term>
-        <listitem><para>
-          (optional) passwords needed to unlock the NSS database
-          in @@IPSEC_NSSDIR@@ (this file should not be
-          world-readable).  See README.nss for more information.
-        </para></listitem>
+        <term>
+	  nsspassword
+	</term>
+        <listitem>
+	  <para>
+            (optional) passwords needed to unlock the NSS database in
+            @@IPSEC_NSSDIR@@ (this file should not be world-readable).
+            See README.nss for more information.
+          </para>
+	</listitem>
       </varlistentry>
       <varlistentry>
-        <term>policies/</term>
-        <listitem><para>
-          a directory containing policy group configuration
-          information.  See <emphasis remap='B'>POLICY GROUP
-          FILES</emphasis> in this document for more information.
-        </para></listitem>
+        <term>
+	  policies/
+	</term>
+        <listitem>
+	  <para>
+            a directory containing policy group configuration
+            information.  See <emphasis remap='B'>POLICY GROUP
+            FILES</emphasis> in this document for more information.
+          </para>
+	</listitem>
       </varlistentry>
       <varlistentry>
-        <term>cacerts/</term>
-        <listitem><para>
-          DEPRECATED: a directory to store trust anchors (root
-          certificate authority certificates).  The preferred (and
-          default) approach is to store CA certs in the NSS database
-          instead.  See README.nss for more information.
-        </para></listitem>
+        <term>
+	  cacerts/
+	</term>
+        <listitem>
+	  <para>
+            DEPRECATED: a directory to store trust anchors (root
+            certificate authority certificates).  The preferred (and
+            default) approach is to store CA certs in the NSS database
+            instead.  See README.nss for more information.
+          </para>
+	</listitem>
       </varlistentry>
       <varlistentry>
-        <term>crls/</term>
-        <listitem><para>
-          DEPRECATED: a directory to store certificate revocation
-          lists. The preferred (and default) approach is to store CRLs
-          in the NSS database instead. See README.nss for more information.
-        </para></listitem>
+        <term>
+	  crls/
+	</term>
+        <listitem>
+	  <para>
+	    DEPRECATED: a directory to store certificate revocation
+	    lists. The preferred (and default) approach is to store
+	    CRLs in the NSS database instead. See README.nss for more
+	    information.
+        </para>
+	</listitem>
       </varlistentry>
     </variablelist>
     <para>
-      When SELinux runs in enforced mode, changing this requires a similar
-      change in the SELinux policy for the pluto daemon.
+      When SELinux runs in enforced mode, changing this requires a
+      similar change in the SELinux policy for the pluto daemon.
     </para>
   </listitem>
-  </varlistentry>
+</varlistentry>

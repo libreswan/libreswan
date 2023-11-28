@@ -1,15 +1,20 @@
-  <varlistentry>
-  <term><emphasis remap='B'>cisco-unity</emphasis></term>
+<varlistentry>
+  <term>
+    <emphasis remap='B'>cisco-unity</emphasis>
+  </term>
   <listitem>
-<para>whether to send a CISCO_UNITY payload to the peer.
-Acceptable values are: <emphasis remap='B'>no</emphasis> (the default) and
-<emphasis remap='B'>yes</emphasis>.
-
-It is recommended to leave this option unset, unless the remote peer
-(Cisco client or server) requires it. This option does not modify local
-behaviour. It can be needed to connect as a client to a Cisco server. It
-can also be needed to act as a server for a Cisco client, which otherwise
-might send back an error DEL_REASON_NON_UNITY_PEER.
-</para>
+    <para>
+      whether to send a CISCO_UNITY payload to the peer.  Acceptable
+      values are: <emphasis remap='B'>no</emphasis> (the default) and
+      <emphasis remap='B'>yes</emphasis>.
+    </para>
+    <para>
+      It is recommended to leave this option unset, unless the remote
+      peer (Cisco client or server) requires it. This option does not
+      modify local behaviour. It can be needed to connect as a client
+      to a Cisco server. It can also be needed to act as a server for
+      a Cisco client, which otherwise might send back an error
+      DEL_REASON_NON_UNITY_PEER.
+    </para>
   </listitem>
-  </varlistentry>
+</varlistentry>

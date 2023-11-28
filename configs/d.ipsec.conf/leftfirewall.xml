@@ -1,7 +1,11 @@
-  <varlistentry>
-  <term><emphasis remap='B'>leftfirewall</emphasis></term>
+<varlistentry>
+  <term>
+    <emphasis remap='B'>leftfirewall</emphasis>
+  </term>
   <listitem>
-<para>This option is obsolete and should not used anymore. </para>
+    <para>
+      This option is obsolete and should not used anymore.
+    </para>
   </listitem>
-  </varlistentry>
+</varlistentry>
 

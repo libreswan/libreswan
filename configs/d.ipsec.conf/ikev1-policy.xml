@@ -1,15 +1,18 @@
-  <varlistentry>
-  <term><emphasis remap='B'>ikev1-policy</emphasis></term>
+<varlistentry>
+  <term>
+    <emphasis remap='B'>ikev1-policy</emphasis>
+  </term>
   <listitem>
-<para>
-What to do with received IKEv1 packets. Valid options are
-<emphasis remap='B'>drop</emphasis> (default) which will silently drop
-any received IKEv1 packet, <emphasis remap='B'>accept</emphasis>, and
-<emphasis remap='B'>reject</emphasis> which will reply with an error.
-If this option is set to drop or reject, an attempt to load an
-IKEv1 connection will fail, as these connections would never be able to receive a packet
-for processing.
-</para>
+    <para>
+      What to do with received IKEv1 packets. Valid options are
+      <emphasis remap='B'>drop</emphasis> (default) which will
+      silently drop any received IKEv1 packet, <emphasis
+      remap='B'>accept</emphasis>, and <emphasis
+      remap='B'>reject</emphasis> which will reply with an error.  If
+      this option is set to drop or reject, an attempt to load an
+      IKEv1 connection will fail, as these connections would never be
+      able to receive a packet for processing.
+    </para>
   </listitem>
-  </varlistentry>
+</varlistentry>
 

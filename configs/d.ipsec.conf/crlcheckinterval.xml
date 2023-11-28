@@ -1,14 +1,18 @@
-  <varlistentry>
-  <term><emphasis remap='B'>crlcheckinterval</emphasis></term>
+<varlistentry>
+  <term>
+    <emphasis remap='B'>crlcheckinterval</emphasis>
+  </term>
   <listitem>
-<para>interval expressed in second units, for example crlcheckinterval=8h
-for 8 hours, after which pluto will fetch new Certificate Revocation List (CRL)
-from crl distribution points. List of used CRL distribution points are
-collected from CA certificates and end certificates. Loaded X.509 CRL's are
-verified to be valid and updates are imported to NSS database.
-If set to <emphasis remap='B'>0</emphasis>, which is also the default value
-if this option is not specified, CRL updating is disabled.
-</para>
+    <para>
+      interval expressed in second units, for example
+      crlcheckinterval=8h for 8 hours, after which pluto will fetch
+      new Certificate Revocation List (CRL) from crl distribution
+      points. List of used CRL distribution points are collected from
+      CA certificates and end certificates. Loaded X.509 CRL's are
+      verified to be valid and updates are imported to NSS database.
+      If set to <emphasis remap='B'>0</emphasis>, which is also the
+      default value if this option is not specified, CRL updating is
+      disabled.
+    </para>
   </listitem>
-  </varlistentry>
-
+</varlistentry>

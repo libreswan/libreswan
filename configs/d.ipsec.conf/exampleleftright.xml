@@ -1,12 +1,13 @@
-<refsect1 id='conn_sections'><title>CONN SECTIONS</title>
-<para>A
-<emphasis remap='B'>conn</emphasis>
-section contains a
-<emphasis remap='I'>connection specification</emphasis>,
-defining a network connection to be made using IPsec.
-The name given is arbitrary, and is used to identify the connection to
-<citerefentry><refentrytitle>ipsec_auto</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-Here's a simple example:</para>
+<refsect1 id='conn_sections'>
+  <title>CONN SECTIONS</title>
+  <para>
+    A <emphasis remap='B'>conn</emphasis> section contains a <emphasis
+    remap='I'>connection specification</emphasis>, defining a network
+    connection to be made using IPsec.  The name given is arbitrary,
+    and is used to identify the connection to
+    <citerefentry><refentrytitle>ipsec_auto</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+    Here's a simple example:
+  </para>
 
 <!-- .ne 10 -->
 <literallayout remap='.nf'>
@@ -24,14 +25,13 @@ conn snt
 </emphasis>
 </literallayout> <!-- .fi -->
 
-<para>A note on terminology...
-In automatic keying, there are two kinds of communications going on:
-transmission of user IP packets, and gateway-to-gateway negotiations for
-keying, rekeying, and general control.
-The data path (a set of &ldquo;IPsec SAs&rdquo;) used for user packets is herein
-referred to as the &ldquo;connection&rdquo;;
-the path used for negotiations (built with &ldquo;ISAKMP SAs&rdquo;) is referred to as
-the &ldquo;keying channel&rdquo;.</para>
+<para> A note on terminology...  In automatic keying, there are two
+kinds of communications going on: transmission of user IP packets, and
+gateway-to-gateway negotiations for keying, rekeying, and general
+control.  The data path (a set of &ldquo;IPsec SAs&rdquo;) used for
+user packets is herein referred to as the &ldquo;connection&rdquo;;
+the path used for negotiations (built with &ldquo;ISAKMP SAs&rdquo;)
+is referred to as the &ldquo;keying channel&rdquo;.</para>
 
 <para>To avoid trivial editing of the configuration file to suit it to each system
 involved in a connection,

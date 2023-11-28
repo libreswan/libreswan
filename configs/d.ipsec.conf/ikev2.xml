@@ -1,15 +1,20 @@
-  <varlistentry>
-  <term><emphasis remap='B'>ikev2</emphasis></term>
+<varlistentry>
+  <term>
+    <emphasis remap='B'>ikev2</emphasis>
+  </term>
   <listitem>
-<para>Whether to use IKEv2 (RFC 7296) or IKEv1 (RFC 4301).
-Currently the accepted values are <emphasis remap='B'>yes</emphasis> (the default),
-signifying only IKEv2 is accepted, or <emphasis remap='B'>no</emphasis>,
-signifying only IKEv1 is accepted. Previous versions allowed the keywords
-<emphasis remap='B'>propose</emphasis> or <emphasis remap='B'>permit</emphasis>
-that would allow either IKEv1 or IKEv2, but this is no longer supported. The
-permit option is interpreted as no and the propose option is interpreted as
-yes. Older versions also supported keyword
-<emphasis remap='B'>insist</emphasis> which is now interpreted as yes.
-</para>
+    <para>
+      Whether to use IKEv2 (RFC 7296) or IKEv1 (RFC 4301).  Currently
+      the accepted values are <emphasis remap='B'>yes</emphasis> (the
+      default), signifying only IKEv2 is accepted, or <emphasis
+      remap='B'>no</emphasis>, signifying only IKEv1 is
+      accepted. Previous versions allowed the keywords <emphasis
+      remap='B'>propose</emphasis> or <emphasis
+      remap='B'>permit</emphasis> that would allow either IKEv1 or
+      IKEv2, but this is no longer supported. The permit option is
+      interpreted as no and the propose option is interpreted as
+      yes. Older versions also supported keyword <emphasis
+      remap='B'>insist</emphasis> which is now interpreted as yes.
+    </para>
   </listitem>
-  </varlistentry>
+</varlistentry>

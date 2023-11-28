@@ -1,30 +1,33 @@
-<refsect1 id='config_sections'><title>CONFIG SECTIONS</title>
-<para>At present, the only
-<emphasis remap='B'>config</emphasis>
-section known to the IPsec software is the one named
-<emphasis remap='B'>setup</emphasis>,
-which contains information used when the software is being started
-(see
-<citerefentry><refentrytitle>ipsec_setup</refentrytitle><manvolnum>8</manvolnum></citerefentry>).
-Here's an example:</para>
+<refsect1 id='config_sections'>
+  <title>
+    CONFIG SECTIONS
+  </title>
+  <para>
+    At present, the only <emphasis remap='B'>config</emphasis> section
+    known to the IPsec software is the one named <emphasis
+    remap='B'>setup</emphasis>, which contains information used when
+    the software is being started (see
+    <citerefentry><refentrytitle>ipsec_setup</refentrytitle><manvolnum>8</manvolnum></citerefentry>).
+    Here's an example:</para>
 
-<!-- .ne 8 -->
-<literallayout remap='.nf'>
-<!-- .ta 1c -->
-<emphasis remap='B'>
-config setup
-	logfile=/var/log/pluto.log
-	plutodebug=all
-</emphasis>
-</literallayout> <!-- .fi -->
+  <!-- .ne 8 -->
+  <literallayout remap='.nf'>
+    <!-- .ta 1c -->
+    <emphasis remap='B'>
+      config setup
+      logfile=/var/log/pluto.log
+      plutodebug=all
+    </emphasis>
+  </literallayout> <!-- .fi -->
 
-<para>Parameters are optional unless marked &ldquo;(required)&rdquo;.</para>
+  <para>
+    Parameters are optional unless marked &ldquo;(required)&rdquo;.
+  </para>
 
-<para>The currently-accepted
-<emphasis remap='I'>parameter</emphasis>
-names in a
-<emphasis remap='B'>config setup</emphasis>
-section are:</para>
+  <para>
+    The currently-accepted <emphasis remap='I'>parameter</emphasis>
+    names in a <emphasis remap='B'>config setup</emphasis> section
+    are:
+  </para>
 
-<variablelist remap='TP'>
-
+  <variablelist remap='TP'>

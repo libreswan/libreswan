@@ -1,52 +1,63 @@
-  <varlistentry>
-  <term><emphasis remap='B'>authby</emphasis></term>
+<varlistentry>
+  <term>
+    <emphasis remap='B'>authby</emphasis>
+  </term>
   <listitem>
-<para>how the two security gateways should authenticate each other;
-the default value is <emphasis remap='B'>rsasig,ecdsa</emphasis> which allows
-ECDSA with SHA-2 and RSA with SHA2 or SHA1. To limit this further, there are
-the options of
-<emphasis remap='B'>ecdsa</emphasis> for ECDSA digital signatures using SHA-2,
-<emphasis remap='B'>rsa-sha2</emphasis> for RSASSA-PSS digital signatures based
-authentication with SHA2-256,
-<emphasis remap='B'>rsa-sha2_384</emphasis> for RSASSA-PSS digital signatures based
-authentication with SHA2-384,
-<emphasis remap='B'>rsa-sha2_512</emphasis> for RSASSA-PSS digital signatures based
-authentication with SHA2-512,
-<emphasis remap='B'>rsa-sha1</emphasis> for RSA-PKCSv1.5 digital signatures based
-authentication with SHA1,
-<emphasis remap='B'>secret</emphasis> for shared secrets (PSK) authentication,
-<emphasis remap='B'>secret|rsasig</emphasis> for either,
-<emphasis remap='B'>never</emphasis> if negotiation is never to be attempted
-or accepted (useful for shunt-only conns), and
-<emphasis remap='B'>null</emphasis> for null-authentication.
-</para>
-<para>
-If asymmetric authentication is requested, IKEv2 must be enabled, and the
-options <emphasis remap='B'>leftauth=</emphasis> and <emphasis remap='B'>rightauth=</emphasis>
-should be used instead of authby.
-</para>
-<para>
-For IKEv1, SHA2 based signatures are not defined and ECDSA is not implemented, so the
-default authby= value is rsa-sha1. Using authby=rsasig results in only rsa-sha1 as well.
-For IKEv2, using authby=rsasig means using rsa-sha2_512, rsa-sha2_384, rsa-sha2_256 and rsa-sha1,
-where rsa-sha1 will used only if RFC 7427 is not supported by the peer.
-</para>
-<para>
-As per RFC 8221, authby=rsa-sha1 is only supported in the old style, meaning RSA-PKCSv1.5.
-The SHA2 variants are only supported for the new style of RFC 7427, so authby=rsa-sha2 will
-use the new style. The default authby= will remove rsa-sha1 in the near future. It is strongly
-recommended that if certificates are used, the certificates and the authby= signature methods
-used are the same, as it increases interoperability and keeps the authentication of everything
-within one digital signature system.
-</para>
-<para>
-Digital signatures are superior in every way to shared secrets. Especially
-IKEv1 in Aggressive Mode is vulnerable to offline dictionary attacks and
-is performed routinely by at least the NSA on monitored internet traffic
-globally. The never option is only used for connections that do not actually
-start an IKE negotiation, such as type=passthrough connections. The auth
-method null is used for "anonymous opportunistic IPsec" and should not be
-used for regular pre-configured IPsec VPNs.
- </para>
+    <para>
+      how the two security gateways should authenticate each other;
+      the default value is <emphasis remap='B'>rsasig,ecdsa</emphasis>
+      which allows ECDSA with SHA-2 and RSA with SHA2 or SHA1. To
+      limit this further, there are the options of <emphasis
+      remap='B'>ecdsa</emphasis> for ECDSA digital signatures using
+      SHA-2, <emphasis remap='B'>rsa-sha2</emphasis> for RSASSA-PSS
+      digital signatures based authentication with SHA2-256, <emphasis
+      remap='B'>rsa-sha2_384</emphasis> for RSASSA-PSS digital
+      signatures based authentication with SHA2-384, <emphasis
+      remap='B'>rsa-sha2_512</emphasis> for RSASSA-PSS digital
+      signatures based authentication with SHA2-512, <emphasis
+      remap='B'>rsa-sha1</emphasis> for RSA-PKCSv1.5 digital
+      signatures based authentication with SHA1, <emphasis
+      remap='B'>secret</emphasis> for shared secrets (PSK)
+      authentication, <emphasis remap='B'>secret|rsasig</emphasis> for
+      either, <emphasis remap='B'>never</emphasis> if negotiation is
+      never to be attempted or accepted (useful for shunt-only conns),
+      and <emphasis remap='B'>null</emphasis> for null-authentication.
+    </para>
+    <para>
+      If asymmetric authentication is requested, IKEv2 must be
+      enabled, and the options <emphasis
+      remap='B'>leftauth=</emphasis> and <emphasis
+      remap='B'>rightauth=</emphasis> should be used instead of
+      authby.
+    </para>
+    <para>
+      For IKEv1, SHA2 based signatures are not defined and ECDSA is
+      not implemented, so the default authby= value is rsa-sha1. Using
+      authby=rsasig results in only rsa-sha1 as well.  For IKEv2,
+      using authby=rsasig means using rsa-sha2_512, rsa-sha2_384,
+      rsa-sha2_256 and rsa-sha1, where rsa-sha1 will used only if RFC
+      7427 is not supported by the peer.
+    </para>
+    <para>
+      As per RFC 8221, authby=rsa-sha1 is only supported in the old
+      style, meaning RSA-PKCSv1.5.  The SHA2 variants are only
+      supported for the new style of RFC 7427, so authby=rsa-sha2 will
+      use the new style. The default authby= will remove rsa-sha1 in
+      the near future. It is strongly recommended that if certificates
+      are used, the certificates and the authby= signature methods
+      used are the same, as it increases interoperability and keeps
+      the authentication of everything within one digital signature
+      system.
+    </para>
+    <para>
+      Digital signatures are superior in every way to shared
+      secrets. Especially IKEv1 in Aggressive Mode is vulnerable to
+      offline dictionary attacks and is performed routinely by at
+      least the NSA on monitored internet traffic globally. The never
+      option is only used for connections that do not actually start
+      an IKE negotiation, such as type=passthrough connections. The
+      auth method null is used for "anonymous opportunistic IPsec" and
+      should not be used for regular pre-configured IPsec VPNs.
+    </para>
   </listitem>
-  </varlistentry>
+</varlistentry>
