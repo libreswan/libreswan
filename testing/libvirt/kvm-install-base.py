@@ -89,11 +89,12 @@ class LogFilter:
     def __init__(self):
         self.stream=sys.stdout.buffer
     def write(self, record):
-        for b in record:
-            if (b >= 32 and b < 0x7f) \
-               or b == 0x0a \
-               or b == 0x0d:
-                self.stream.write(b.to_bytes())
+        #print(record)
+        c = record
+        d = re.sub(rb'\x1b\[[0-9;=?]*[HfABCDsuJKmhlr]', b'', c)
+        # exclude all but 0x0a, 0x0d, ' '-DEL-1
+        e = re.sub(rb'[\x00-\x09\x0b-\x0c\x0e-\x1f\x7f-\xff]', b'', d)
+        self.stream.write(e);
     def flush(self):
         self.stream.flush()
 
