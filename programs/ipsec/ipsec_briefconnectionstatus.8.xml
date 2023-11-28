@@ -18,17 +18,20 @@
     <cmdsynopsis>
       <command>ipsec</command>
       <arg choice='plain'>briefconnectionstatus</arg>
+      <arg choice='opt'>connectionname</arg>
       <arg choice='opt'>--ctlsocket <replaceable>@@RUNDIR@@/pluto.ctl</replaceable></arg>
       <sbr/>
     </cmdsynopsis>
   </refsynopsisdiv>
 
-
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>Briefconnectionstatus</emphasis> list brief connection status
-      from the pluto daemon. Get complete status with <option>ipsec status</option>.
+      <emphasis remap='I'>Briefconnectionstatus</emphasis> list brief connection
+      status from the pluto daemon for all connections or optionally specified
+      <option>connectionname</option>. Displays one line per connection showing
+      client and host IPs, bytes, connection name, and reqid. Get complete
+      connection status with <option>ipsec connectionstatus</option>.
     </para>
   </refsect1>
 
@@ -102,7 +105,7 @@
   <refsect1 id='author'>
     <title>AUTHOR</title>
     <para>
-      <emphasis role='strong' remap='B'>Tuomo Soini</emphasis>
+      <emphasis role='strong' remap='B'>Brady Johnson</emphasis>
     </para>
   </refsect1>
 </refentry>
