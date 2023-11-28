@@ -20,6 +20,8 @@
 import pexpect
 import sys
 
+FILTER_OUTPUT = False
+
 def i(child):
     '''go interactive then quit'''
     child.logfile = None
@@ -27,9 +29,6 @@ def i(child):
     sys.exit(0)
 
 def install_base(child, param):
-
-    i(child)
-    return
 
     print("waiting on child");
     child.expect([pexpect.EOF], timeout=None, searchwindowsize=1)

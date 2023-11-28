@@ -18,6 +18,8 @@ import pexpect
 import sys
 import os
 
+FILTER_OUTPUT = True
+
 def install_base(child, param):
 
     # XXX: how to fix this? scribble on /etc/rc.local?

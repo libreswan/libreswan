@@ -49,16 +49,21 @@ command = args[1:]
 print("command", command)
 
 #argv[0] is this script
-INSTALL_BASE = {
-    "alpine": alpine.install_base,
-    "debian": debian.install_base,
-    "fedora": fedora.install_base,
-    "freebsd": freebsd.install_base,
-    "netbsd": netbsd.install_base,
-    "openbsd": openbsd.install_base,
+OS = {
+    "alpine": alpine,
+    "debian": debian,
+    "fedora": fedora,
+    "freebsd": freebsd,
+    "netbsd": netbsd,
+    "openbsd": openbsd
 }
 
-install_base = INSTALL_BASE[param.os]
+for os in OS:
+    for attr in ["install_base", "FILTER_OUTPUT"]:
+        # will barf when missing
+        getattr(OS[os], attr)
+
+os = OS[param.os]
 
 # Strip output of any escape sequences.  This does the stripping on
 # the input side but seems to cause pexpect to hang.  See
@@ -85,7 +90,7 @@ class AsciiDecoder(object):
 # This strips things on the output side, problem is that it often
 # doesn't see the full escape sequence so would get things wrong.
 
-class LogFilter:
+class Filter:
     def __init__(self):
         self.stream=sys.stdout.buffer
     def write(self, record):
@@ -98,15 +103,22 @@ class LogFilter:
     def flush(self):
         self.stream.flush()
 
+class Raw:
+    def __init__(self):
+        self.stream=sys.stdout.buffer
+    def write(self, record):
+        self.stream.write(record);
+    def flush(self):
+        self.stream.flush()
 
-# Two ways to manipulate the output from command wrap
-# child.read_nonblocking()
+if os.FILTER_OUTPUT:
+    logfile = Filter()
+else:
+    logfile = Raw()
 
 child = pexpect.spawn(command=command[0],
                       args=command[1:],
-                      logfile=LogFilter(),
+                      logfile=logfile,
                       echo=False)
 
-# child._decoder = AsciiDecoder() # used by SpawnBase.read_nonblocking()
-
-install_base(child, param)
+os.install_base(child, param)

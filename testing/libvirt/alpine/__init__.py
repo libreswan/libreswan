@@ -19,6 +19,8 @@ import sys
 import time
 import os
 
+FILTER_OUTPUT = True
+
 def rs(child, r, s):
     child.expect(r, timeout=None)
     for c in s:
