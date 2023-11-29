@@ -1,6 +1,6 @@
 #!/bin/sh
 ipsec auto --up road-east-x509-ipv4
-ping -n -q -w 6 -c 4 -I 192.0.2.100 192.1.2.23
+../../guestbin/ping-once.sh --up -I 192.0.2.100 192.1.2.23
 # Tunnel should be up
 ipsec whack --trafficstatus
 # Let R_U_THERE packets flow
@@ -16,5 +16,5 @@ iptables -D OUTPUT -d 192.1.2.23/32 -s 0/0 -j DROP
 sleep 30
 # Tunnel should be back up now even without triggering traffic
 ipsec whack --trafficstatus
-ping -n -q -w 6 -c 4 -I 192.0.2.100 192.1.2.23
+../../guestbin/ping-once.sh --up -I 192.0.2.100 192.1.2.23
 echo done

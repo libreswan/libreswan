@@ -10,7 +10,7 @@ collect_diag () {
 	ipsec status >> $DIAG_OUT_FILE
 	ip xfrm policy >> $DIAG_OUT_FILE
 	ip xfrm state >> $DIAG_OUT_FILE
-	ping -q -n -c 4 -I 192.0.1.254 192.0.2.254 2>&1 >> $DIAG_OUT_FILE
+	../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254 2>&1 >> $DIAG_OUT_FILE
 	ipsec whack --trafficstatus >> $DIAG_OUT_FILE
 	echo "=== end of diagnostics ==="
 }
@@ -48,7 +48,7 @@ for ((i = 1; i < $iMax; i++));
 	do
 	ipsec restart;
 	echo "Restart attempt $i/$iMax"
-	ping -q -n -c 4 -I 192.0.1.254 192.0.2.254 2>&1 > /dev/null || hit_bug $i;
+	../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254 2>&1 > /dev/null || hit_bug $i;
 	SA_COUNT=`ipsec whack --trafficstatus |wc -l`
 	if [ "$SA_COUNT" -gt "1" ]; then
 		# interesting case to diagnose

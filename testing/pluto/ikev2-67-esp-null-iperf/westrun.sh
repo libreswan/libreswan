@@ -1,6 +1,6 @@
 ipsec auto --status | grep west-east
 ipsec auto --up west-east
-# taskset 0x1 ping -n -q -c 2 192.1.2.23
+# taskset 0x1 ../../guestbin/ping-once.sh --up 192.1.2.23
 ipsec trafficstatus
 # base line single flow
 taskset 0x1 iperf3 -t 45 -i 2 -c 192.1.2.23 -p 5001

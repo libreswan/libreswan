@@ -7,6 +7,6 @@ ipsec start
 iptables -D INPUT -p UDP --dport 500 -j DROP
 # trigger OE
 ../../guestbin/ping-once.sh --forget 192.1.3.209
-ping -n -q -c 2 192.1.3.209
+../../guestbin/ping-once.sh --up 192.1.3.209
 sleep 3
 ipsec trafficstatus
