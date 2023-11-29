@@ -39,6 +39,7 @@ MANPAGES += ipsec_import.8
 MANPAGES += ipsec_initnss.8
 MANPAGES += ipsec_listall.8
 MANPAGES += ipsec_listcacerts.8
+MANPAGES += ipsec_listcerts.8
 MANPAGES += ipsec_listcrls.8
 MANPAGES += ipsec_listen.8
 MANPAGES += ipsec_listpubkeys.8
