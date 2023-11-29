@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
-  
-  <!-- Ignore spaces between elements (without this, the URL is "pluto.8 .html" -->
-  <xsl:strip-space elements="*"/>
 
   <!-- Turn citerefentry elements into HTML links -->
   <xsl:param name="citerefentry.link" select="1"/>

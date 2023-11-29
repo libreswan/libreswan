@@ -93,4 +93,4 @@ $(builddir)/%.man: $(builddir)/%.tmp
 	touch $@
 
 $(top_builddir)/html/%.html: $(builddir)/%.tmp
-	$(XMLTO) html-nochunks -m $(top_srcdir)/mk/man-html-links.xsl $< -o $(top_builddir)/html
+	$(XMLTO) html-nochunks -m $(top_srcdir)/mk/man-html-link.xsl $< -o $(top_builddir)/html
