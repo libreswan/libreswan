@@ -1395,7 +1395,7 @@ kvmplutotest	ikev2-redirect-07-auth-split			good	github/1405
 # MOBIKE tests
 kvmplutotest	ikev2-mobike-01				good
 kvmplutotest	ikev2-mobike-02				good
-kvmplutotest	ikev2-mobike-03					wip	github:527
+kvmplutotest	ikev2-mobike-03				good	github/527
 kvmplutotest	ikev2-mobike-04				good
 kvmplutotest	ikev2-mobike-05-gcm			good
 kvmplutotest	ikev2-mobike-06				good
