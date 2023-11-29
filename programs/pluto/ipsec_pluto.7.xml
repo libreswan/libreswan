@@ -2076,10 +2076,7 @@
             <para>
 	      Specifies the value of the RSA public key. It is a
 	      sequence of bytes as described in RFC 2537 "RSA/MD5 KEYs
-	      and SIGs in the Domain Name System (DNS)". It is denoted
-	      in a way suitable for <citerefentry>
-	      <refentrytitle>ipsec_ttodata</refentrytitle>
-	      <manvolnum>3</manvolnum> </citerefentry>. For example, a
+	      and SIGs in the Domain Name System (DNS)". For example, a
 	      base 64 numeral starts with 0s.
 	    </para>
           </listitem>
