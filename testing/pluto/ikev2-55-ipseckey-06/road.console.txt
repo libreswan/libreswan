@@ -48,10 +48,8 @@ road #
 road #
  # there should be two public keys. including road
 road #
- ping -n -q -c 4 -I 192.1.3.209 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-4 packets transmitted, 0 received, 100% packet loss, time XXXX
+ ../../guestbin/ping-once.sh --down -I 192.1.3.209 192.1.2.23
+down
 road #
  ipsec whack --trafficstatus
 road #

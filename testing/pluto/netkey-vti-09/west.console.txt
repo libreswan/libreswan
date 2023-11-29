@@ -68,8 +68,8 @@ west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
- ping -n -q -c 4 -I 10.0.1.254 10.0.2.254
-ping: bind: Cannot assign requested address
+ ../../guestbin/ping-once.sh --error -I 10.0.1.254 10.0.2.254
+bind: Cannot assign requested address
 west #
  ipsec whack --trafficstatus
 #2: "westnet-eastnet-vti-01", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
