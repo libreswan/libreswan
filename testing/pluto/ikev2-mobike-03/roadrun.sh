@@ -13,5 +13,5 @@ ip addr del 192.1.3.209/24 dev eth0
 sleep 10
 # both ends updated MOBIKE ping should work
 # note this end should be 192.1.33.222
-ping -n -q -W 1 -c 4 192.0.2.254
+../../guestbin/ping-once.sh --up 192.0.2.254
 echo done
