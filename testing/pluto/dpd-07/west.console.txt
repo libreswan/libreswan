@@ -14,11 +14,8 @@ initdone
 west #
  # we can transmit in the clear
 west #
- ping -n -q -c 4 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up 192.1.2.23
+up
 west #
  # bring up the tunnel
 west #
@@ -38,11 +35,8 @@ west #
 west #
  # use the tunnel
 west #
- ping -n -q -c 4 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up 192.1.2.23
+up
 west #
  # show the tunnel!
 west #
@@ -50,7 +44,7 @@ west #
 Tunnel should be up
 west #
  ipsec whack --trafficstatus
-#2: "west-east", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='@east'
+#2: "west-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  # Let R_U_THERE packets flow
 west #
@@ -86,11 +80,8 @@ west #
 west #
  sleep 20
 west #
- ping -n -q -c 4 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up 192.1.2.23
+up
 west #
  # Tunnel should be back up now
 west #
@@ -98,7 +89,7 @@ west #
 Tunnel should be up
 west #
  ipsec whack --trafficstatus
-#4: "west-east", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='@east'
+#4: "west-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  echo done
 done

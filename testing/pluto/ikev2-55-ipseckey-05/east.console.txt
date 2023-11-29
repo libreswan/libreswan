@@ -57,6 +57,6 @@ TIMESTAMP, 2192 RSA Key AQO9bJbr3 (has private key), until --- -- --:--:-- ---- 
        ID_IPV4_ADDR '192.1.2.23'
 east #
  ipsec whack --trafficstatus
-#2: "road-east-ikev2", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='@road.testing.libreswan.org'
+#2: "road-east-ikev2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@road.testing.libreswan.org'
 east #
  

@@ -4,7 +4,7 @@ ifconfig eth0:1 192.0.1.254/24
 ifconfig eth0:11 192.0.11.254/24
 # confirm that the network is alive
 ping6 -n -q -c 4 2001:db8:1:2::23
-ping -n -q -c 4 -I 192.0.1.254 192.0.2.254
+../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec auto --add road-east-ipv4-psk-ikev2

@@ -3,7 +3,7 @@ ipsec whack --xauthname 'use2' --xauthpass '' --name xauth-road-eastnet-psk --in
 # pass
 ipsec whack --xauthname 'nopw' --xauthpass '' --name xauth-road-eastnet-psk --initiate
 sleep 5
-ping -n -q -c 4 192.0.2.254
+../../guestbin/ping-once.sh --up 192.0.2.254
 ipsec whack --trafficstatus
 # note there should NOT be any incomplete IKE SA attempting to do ModeCFG or EVENT_RETRANSMIT
 ipsec showstates

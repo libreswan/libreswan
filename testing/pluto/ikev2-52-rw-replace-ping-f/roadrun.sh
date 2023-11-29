@@ -1,7 +1,7 @@
 #!/bin/sh
-ping -n -q -c 4 192.1.2.23
+../../guestbin/ping-once.sh --up 192.1.2.23
 ipsec auto --up road-east-x509-ipv4
-ping -n -q -c 4 -I 192.0.2.100 192.1.2.23
+../../guestbin/ping-once.sh --up -I 192.0.2.100 192.1.2.23
 ipsec whack --trafficstatus
 ping -n -q -c 1230000 -f -I 192.0.2.100 192.1.2.23 &
 sleep 60

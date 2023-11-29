@@ -2,7 +2,7 @@
 west #
  # confirm that the network is alive
 west #
- ## ping -n -q -c 4 -I 192.1.2.45 192.1.2.23
+ ## ../../guestbin/ping-once.sh --up -I 192.1.2.45 192.1.2.23
 west #
  # ensure that clear text does not get through
 west #
@@ -12,7 +12,7 @@ west #
 west #
  # confirm clear text does not get through
 west #
- ## ping -n -q -c 4 -I 192.1.2.45 192.1.2.23
+ ## ../../guestbin/ping-once.sh --up -I 192.1.2.45 192.1.2.23
 west #
  ipsec start
 Redirecting to: [initsystem]

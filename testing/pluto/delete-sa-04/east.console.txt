@@ -19,7 +19,7 @@ east #
 east #
  ipsec trafficstatus
 #2: "west-east-auto", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@west'
-#4: "west-east-auto", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='@west'
+#4: "west-east-auto", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@west'
 east #
  grep "already replacing" /tmp/pluto.log && echo "bug triggered"
 "west-east-auto" #1: received Delete SA payload: already replacing IPsec State #2 in 54 seconds

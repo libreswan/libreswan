@@ -1,9 +1,9 @@
 # we can transmit in the clear
-ping -n -q -c 4 192.1.2.23
+../../guestbin/ping-once.sh --up 192.1.2.23
 # bring up the tunnel
 ipsec auto --up west-east
 # use the tunnel
-ping -n -q -c 4 192.1.2.23
+../../guestbin/ping-once.sh --up 192.1.2.23
 # show the tunnel!
 echo "Tunnel should be up"
 ipsec whack --trafficstatus
@@ -29,7 +29,7 @@ iptables -D INPUT -s 192.1.2.23/32 -d 0/0 -j DROP
 iptables -D OUTPUT -d 192.1.2.23/32 -s 0/0 -j DROP
 sleep 20
 sleep 20
-ping -n -q -c 4 192.1.2.23
+../../guestbin/ping-once.sh --up 192.1.2.23
 # Tunnel should be back up now
 echo "Tunnel should be up"
 ipsec whack --trafficstatus

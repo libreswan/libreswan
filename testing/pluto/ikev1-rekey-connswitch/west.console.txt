@@ -70,19 +70,19 @@ west #
 "TUNNEL-C" #4: sent Quick Mode request
 "TUNNEL-C" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
- ping -n -q -c 4 -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 --- 192.0.2.254 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
- ping -n -q -c 4 -I 192.0.1.254 192.0.2.244
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.244
 PING 192.0.2.244 (192.0.2.244) from 192.0.1.254 : 56(84) bytes of data.
 --- 192.0.2.244 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
- ping -n -q -c 4 -I 192.0.1.254 192.0.2.234
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.234
 PING 192.0.2.234 (192.0.2.234) from 192.0.1.254 : 56(84) bytes of data.
 --- 192.0.2.234 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
@@ -119,7 +119,7 @@ west #
  ipsec auto --down TUNNEL-B
 "TUNNEL-B": terminating SAs using this connection
 "TUNNEL-B" #3: deleting IPsec SA (QUICK_I2) and sending notification
-"TUNNEL-B" #3: ESP traffic information: in=336B out=336B
+"TUNNEL-B" #3: ESP traffic information: in=84B out=84B
 "TUNNEL-B" #5: deleting ISAKMP SA (MAIN_R3) and sending notification
 west #
  #One IKE will remain on TUNNEL-B

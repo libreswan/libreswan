@@ -60,18 +60,18 @@ west #
 "ikev2-westnet-eastnet-x509-cr" #1: initiator established IKE SA; authenticated peer RSASSA-PSS with SHA2_512
 "ikev2-westnet-eastnet-x509-cr" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
- ping -n -q -c 4 -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 --- 192.0.2.254 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
  ipsec whack --trafficstatus
-#2: "ikev2-westnet-eastnet-x509-cr", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+#2: "ikev2-westnet-eastnet-x509-cr", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 west #
  ipsec auto --down ikev2-westnet-eastnet-x509-cr
 "ikev2-westnet-eastnet-x509-cr": terminating SAs using this connection
-"ikev2-westnet-eastnet-x509-cr" #2: ESP traffic information: in=336B out=336B
+"ikev2-westnet-eastnet-x509-cr" #2: ESP traffic information: in=84B out=84B
 "ikev2-westnet-eastnet-x509-cr" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 west #
  ipsec auto --up ikev2-westnet-eastnet-x509-cr

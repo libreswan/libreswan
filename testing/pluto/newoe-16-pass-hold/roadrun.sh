@@ -13,7 +13,7 @@ ipsec whack --shuntstatus
 sleep 30
 ipsec whack --shuntstatus
 # ping should go out in the clear now and get a reply
-ping -n -q -c 4 -I 192.1.3.209 192.1.2.23
+../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
 ipsec whack --trafficstatus
 ipsec whack --shuntstatus
 ../../guestbin/ipsec-kernel-state.sh

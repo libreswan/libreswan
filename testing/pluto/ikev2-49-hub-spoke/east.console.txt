@@ -149,8 +149,8 @@ east #
 initdone
 east #
  hostname | grep nic > /dev/null || ipsec whack --trafficstatus
-#2: "northnet-westnet-ipv4-psk", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='@north'
-#4: "westnet-northnet-ipv4-psk", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='@west'
+#2: "northnet-westnet-ipv4-psk", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@north'
+#4: "westnet-northnet-ipv4-psk", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@west'
 east #
  ../../guestbin/ipsec-kernel-state.sh
 src 192.1.2.23 dst 192.1.2.45

@@ -15,7 +15,7 @@ ipsec showstates
 ../../guestbin/ipsec-kernel-policy.sh
 
 # let another on-demand label establish
-ping -n -q -c 4 -I 192.1.2.45 192.0.2.254
+../../guestbin/ping-once.sh --up -I 192.1.2.45 192.0.2.254
 ../../guestbin/wait-for.sh --match 'labeled..4.' ipsec trafficstatus
 # there should be no shunts
 ipsec shuntstatus

@@ -1,6 +1,6 @@
 # unfortunately does not yet indicate it is using TCP
 ipsec up ikev2-west-east
-ping -n -q -c 4 192.1.2.23
+../../guestbin/ping-once.sh --up 192.1.2.23
 ipsec whack --trafficstatus
 # should show tcp being used
 ../../guestbin/ipsec-kernel-state.sh

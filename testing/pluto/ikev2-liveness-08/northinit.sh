@@ -3,7 +3,7 @@ ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec auto --add north-east-x509-ipv4
 ipsec auto --up north-east-x509-ipv4
-ping -n -q -c 4 -I 192.0.2.100 192.1.2.23
+../../guestbin/ping-once.sh --up -I 192.0.2.100 192.1.2.23
 ipsec whack --trafficstatus
 #block all traffic to east. tunnel will clear
 iptables -I INPUT -s 192.1.2.23/32 -d 0/0 -j DROP

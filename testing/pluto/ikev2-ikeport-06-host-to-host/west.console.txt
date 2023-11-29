@@ -42,14 +42,11 @@ west #
 "west-east-ikev2" #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
 "west-east-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
- ping -n -q -c 4 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up 192.1.2.23
+up
 west #
  ipsec whack --trafficstatus
-#2: "west-east-ikev2", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='@east'
+#2: "west-east-ikev2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  # double check IKE messages still work by sending rekey request
 west #
@@ -58,7 +55,7 @@ west #
 "west-east-ikev2" #3: sent CREATE_CHILD_SA request to rekey IPsec SA
 "west-east-ikev2" #3: initiator rekeyed Child SA #2 using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
 "west-east-ikev2" #2: deleting established Child SA using IKE SA #1
-"west-east-ikev2" #2: ESP traffic information: in=336B out=336B
+"west-east-ikev2" #2: ESP traffic information: in=84B out=84B
 west #
  echo done
 done

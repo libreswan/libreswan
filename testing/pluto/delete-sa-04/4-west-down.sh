@@ -5,4 +5,4 @@ sleep 5
 # east should have brought up tunnel again
 ipsec trafficstatus
 # confirm traffic flow over proper IPsec SA
-ping -n -q -c 4 -I 192.1.2.45 192.1.2.23
+../../guestbin/ping-once.sh --up -I 192.1.2.45 192.1.2.23

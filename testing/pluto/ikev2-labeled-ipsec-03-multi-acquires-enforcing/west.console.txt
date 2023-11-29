@@ -121,7 +121,7 @@ src 192.1.2.45/32 dst 192.1.2.23/32
 west #
  # let another on-demand label establish
 west #
- ping -n -q -c 4 -I 192.1.2.45 192.0.2.254
+ ../../guestbin/ping-once.sh --up -I 192.1.2.45 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.1.2.45 : 56(84) bytes of data.
 --- 192.0.2.254 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX

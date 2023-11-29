@@ -40,14 +40,11 @@ road #
 road #
  # there should be two public keys. including road
 road #
- ping -n -q -c 4 -I 192.1.3.209 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
+up
 road #
  ipsec whack --trafficstatus
-#2: "road-east-ikev2", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='192.1.2.23'
+#2: "road-east-ikev2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='192.1.2.23'
 road #
  echo done
 done
@@ -66,6 +63,6 @@ TIMESTAMP, 3104 RSA Key AQPHFfpyJ (has private key), until --- -- --:--:-- ---- 
        ID_FQDN '@road.testing.libreswan.org'
 road #
  ipsec whack --trafficstatus
-#2: "road-east-ikev2", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='192.1.2.23'
+#2: "road-east-ikev2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='192.1.2.23'
 road #
  

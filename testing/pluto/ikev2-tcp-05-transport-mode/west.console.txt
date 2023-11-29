@@ -20,14 +20,14 @@ west #
 "ikev2-west-east" #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
 "ikev2-west-east" #2: initiator established Child SA using #1; IPsec transport [192.1.2.45/32===192.1.2.23/32] {ESPinTCP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
- ping -n -q -c 4 192.1.2.23
+ ../../guestbin/ping-once.sh --up 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) 56(84) bytes of data.
 --- 192.1.2.23 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
  ipsec whack --trafficstatus
-#2: "ikev2-west-east", type=ESP, add_time=1234567890, inBytes=256, outBytes=256, maxBytes=2^63B, id='@east'
+#2: "ikev2-west-east", type=ESP, add_time=1234567890, inBytes=64, outBytes=64, maxBytes=2^63B, id='@east'
 west #
  # should show tcp being used
 west #
@@ -72,7 +72,7 @@ west #
  ipsec auto --down ikev2-west-east
 "ikev2-west-east": terminating SAs using this connection
 "ikev2-west-east" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
-"ikev2-west-east" #2: ESP traffic information: in=256B out=256B
+"ikev2-west-east" #2: ESP traffic information: in=64B out=64B
 west #
  echo "done"
 done

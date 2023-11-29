@@ -73,7 +73,7 @@ road #
 road #
  ip addr add 192.0.1.254/24 dev eth0
 road #
- ping -n -q -c 4 -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 --- 192.0.2.254 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
@@ -82,7 +82,7 @@ road #
  # did it split over two IPsec SA's or not? just curious
 road #
  ipsec trafficstatus
-#2: "static", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='@east'
+#2: "static", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 road #
  # stop ipsec for a bit, then restart. see what happens
 road #
@@ -96,14 +96,14 @@ Redirecting to: [initsystem]
 road #
  sleep 3
 road #
- ping -n -q -c 4 -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 --- 192.0.2.254 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 road #
  ipsec trafficstatus
-#2: "static", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='@east'
+#2: "static", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 road #
  ipsec status |grep STATE_
 #1: "static":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;

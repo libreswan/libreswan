@@ -24,7 +24,7 @@ west #
 west #
  # confirm traffic flow over proper IPsec SA
 west #
- ping -n -q -c 4 -I 192.1.2.45 192.1.2.23
+ ../../guestbin/ping-once.sh --up -I 192.1.2.45 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.1.2.45 : 56(84) bytes of data.
 --- 192.1.2.23 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
