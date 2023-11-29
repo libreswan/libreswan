@@ -23,7 +23,7 @@
  */
 
 #include <string.h>
-#include <netdb.h>		/* for gethostbyname2() */
+#include <netdb.h>		/* for freeaddrinfo(), getaddrinfo() */
 #include <sys/socket.h>		/* for AF_INET/AF_INET6/AF_UNSPEC */
 
 #include "passert.h"
