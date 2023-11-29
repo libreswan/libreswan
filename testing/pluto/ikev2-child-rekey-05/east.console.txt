@@ -6,13 +6,12 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add east
-002 "east": added IKEv2 connection
+"east": added IKEv2 connection
 east #
  echo "initdone"
 initdone
 east #
  ipsec whack --trafficstatus
-006 #4: "east", type=ESP, add_time=1234567890, inBytes=588, outBytes=588, maxBytes=2^63B, id='@west'
-006 #7: "east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@west'
+#4: "east", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@west'
 east #
  
