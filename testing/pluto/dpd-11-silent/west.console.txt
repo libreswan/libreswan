@@ -52,43 +52,43 @@ west #
 west #
  sleep 1
 west #
- ping -n -q -c 1 192.1.2.23 >/dev/null
+ ../../guestbin/ping-once.sh --up 192.1.2.23 >/dev/null
 west #
  sleep 1
 west #
- ping -n -q -c 1 192.1.2.23 >/dev/null
+ ../../guestbin/ping-once.sh --up 192.1.2.23 >/dev/null
 west #
  sleep 1
 west #
- ping -n -q -c 1 192.1.2.23 >/dev/null
+ ../../guestbin/ping-once.sh --up 192.1.2.23 >/dev/null
 west #
  sleep 1
 west #
- ping -n -q -c 1 192.1.2.23 >/dev/null
+ ../../guestbin/ping-once.sh --up 192.1.2.23 >/dev/null
 west #
  sleep 1
 west #
- ping -n -q -c 1 192.1.2.23 >/dev/null
+ ../../guestbin/ping-once.sh --up 192.1.2.23 >/dev/null
 west #
  sleep 1
 west #
- ping -n -q -c 1 192.1.2.23 >/dev/null
+ ../../guestbin/ping-once.sh --up 192.1.2.23 >/dev/null
 west #
  sleep 1
 west #
- ping -n -q -c 1 192.1.2.23 >/dev/null
+ ../../guestbin/ping-once.sh --up 192.1.2.23 >/dev/null
 west #
  sleep 1
 west #
- ping -n -q -c 1 192.1.2.23 >/dev/null
+ ../../guestbin/ping-once.sh --up 192.1.2.23 >/dev/null
 west #
  sleep 1
 west #
- ping -n -q -c 1 192.1.2.23 >/dev/null
+ ../../guestbin/ping-once.sh --up 192.1.2.23 >/dev/null
 west #
  sleep 1
 west #
- ping -n -q -c 1 192.1.2.23 >/dev/null
+ ../../guestbin/ping-once.sh --up 192.1.2.23 >/dev/null
 west #
  # force a rekey
 west #
@@ -100,35 +100,35 @@ west #
 west #
  sleep 1
 west #
- ping -n -q -c 1 192.1.2.23 >/dev/null
+ ../../guestbin/ping-once.sh --up 192.1.2.23 >/dev/null
 west #
  sleep 1
 west #
- ping -n -q -c 1 192.1.2.23 >/dev/null
+ ../../guestbin/ping-once.sh --up 192.1.2.23 >/dev/null
 west #
  sleep 1
 west #
- ping -n -q -c 1 192.1.2.23 >/dev/null
+ ../../guestbin/ping-once.sh --up 192.1.2.23 >/dev/null
 west #
  sleep 1
 west #
- ping -n -q -c 1 192.1.2.23 >/dev/null
+ ../../guestbin/ping-once.sh --up 192.1.2.23 >/dev/null
 west #
  sleep 1
 west #
- ping -n -q -c 1 192.1.2.23 >/dev/null
+ ../../guestbin/ping-once.sh --up 192.1.2.23 >/dev/null
 west #
  sleep 1
 west #
- ping -n -q -c 1 192.1.2.23 >/dev/null
+ ../../guestbin/ping-once.sh --up 192.1.2.23 >/dev/null
 west #
  sleep 1
 west #
- ping -n -q -c 1 192.1.2.23 >/dev/null
+ ../../guestbin/ping-once.sh --up 192.1.2.23 >/dev/null
 west #
  sleep 1
 west #
- ping -n -q -c 1 192.1.2.23 >/dev/null
+ ../../guestbin/ping-once.sh --up 192.1.2.23 >/dev/null
 west #
  echo done
 done

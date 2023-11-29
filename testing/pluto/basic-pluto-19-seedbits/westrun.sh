@@ -13,7 +13,7 @@ ipsec start
 ../../guestbin/wait-until-pluto-started
 sleep 10
 # this ping should fail due to the type=block connection
-ping -n -q -c 1 192.1.2.23
+../../guestbin/ping-once.sh --error 192.1.2.23
 ipsec stop
 grep -E "bits random|bytes from|seeded" /tmp/pluto.log
 test -f /usr/local/libexec/ipsec/pluto && PLUTOBIN="/usr/local/libexec/ipsec/pluto"
