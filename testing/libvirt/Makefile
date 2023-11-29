@@ -369,10 +369,10 @@ add-kvm-localdir-prefixes = \
 #
 
 QEMU_IMG ?= sudo qemu-img
-KVMSH ?= $(KVM_PYTHON) $(top_srcdir)/testing/utils/kvmsh.py
-KVMRUNNER ?= $(KVM_PYTHON) $(top_srcdir)/testing/utils/kvmrunner.py
-KVMRESULTS ?= $(KVM_PYTHON) $(top_srcdir)/testing/utils/kvmresults.py
-KVMTEST ?= $(KVM_PYTHON) $(top_srcdir)/testing/utils/kvmtest.py
+
+KVMSH      ?= cd $(abs_top_srcdir) && $(KVM_PYTHON) testing/utils/kvmsh.py
+KVMRUNNER  ?= cd $(abs_top_srcdir) && $(KVM_PYTHON) testing/utils/kvmrunner.py
+KVMRESULTS ?= cd $(abs_top_srcdir) && $(KVM_PYTHON) testing/utils/kvmresults.py
 
 RPM_VERSION = $(shell $(MAKE) --no-print-directory showrpmversion)
 RPM_PREFIX  = libreswan-$(RPM_VERSION)
