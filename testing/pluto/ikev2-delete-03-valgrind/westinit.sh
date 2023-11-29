@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep
 # confirm that the network is alive
-ping -n -q -c 2 -I 192.0.1.254 192.0.2.254
+../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 # ensure that clear text does not get through
 iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j DROP
 # confirm clear text does not get through
