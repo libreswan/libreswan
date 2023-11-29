@@ -78,7 +78,7 @@
       /proc/net/*
       /var/log/*
       @@IPSEC_CONF@@
-      @@IPSEC_SECRETS_FILE@@
+      @@IPSEC_SECRETS@@
     </literallayout>
   </refsect1>
 
