@@ -1,5 +1,5 @@
 ipsec auto --up northnet-eastnet
-ping -n -q -W 1 -c 2 -I 192.0.3.254  192.0.2.254
+../../guestbin/ping-once.sh --up -I 192.0.3.254  192.0.2.254
 ipsec whack --trafficstatus
 # note this end should be 192.1.3.33
 ../../guestbin/ipsec-kernel-state.sh
@@ -15,5 +15,5 @@ ip route show scope global | grep 192.1.8.254 || ip route add default via 192.1.
 sleep 8
 # MOBIKE update and ping should work
 # note this end should be 192.1.8.22
-ping -n -q -W 1 -c 2 -I 192.0.3.254  192.0.2.254
+../../guestbin/ping-once.sh --up -I 192.0.3.254  192.0.2.254
 echo done

@@ -1,5 +1,5 @@
 strongswan up road-east
-ping -n -q -W 1 -c 2 -I 192.0.3.10 192.0.2.254
+../../guestbin/ping-once.sh --up -I 192.0.3.10 192.0.2.254
 strongswan status
 # note this end should be 192.1.3.209
 ../../guestbin/ipsec-kernel-state.sh
@@ -16,6 +16,6 @@ sleep 10
 strongswan status
 ../../guestbin/ipsec-kernel-state.sh
 ip xfrm policy
-ping -n -q -W 1 -c 2 -I 192.0.3.10 192.0.2.254
+../../guestbin/ping-once.sh --up -I 192.0.3.10 192.0.2.254
 grep "requesting address change using MOBIKE" /tmp/charon.log | sed "s/^.*road/road/"
 echo done
