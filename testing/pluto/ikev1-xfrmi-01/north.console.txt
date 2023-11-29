@@ -44,18 +44,15 @@ north #
 north #
  sleep  2
 north #
- ping -n -q -w 4 -c 4 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) 56(84) bytes of data.
---- 192.0.2.254 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up 192.0.2.254
+up
 north #
  ip -s link show ipsec1
 X: ipsec1@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     RX:  bytes packets errors dropped  missed   mcast           
-           336       4      0       0       0       0 
+            84       1      0       0       0       0 
     TX:  bytes packets errors dropped carrier collsns           
-           336       4      0       0       0       0 
+            84       1      0       0       0       0 
 north #
  #kill -9 $(cat /tmp/tcpdump.pid)
 north #
@@ -76,6 +73,6 @@ north #
 done
 north #
  ipsec whack --trafficstatus
-#2: "north", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='@east'
+#2: "north", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 north #
  
