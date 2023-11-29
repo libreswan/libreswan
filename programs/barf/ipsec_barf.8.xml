@@ -77,8 +77,8 @@
     <literallayout remap='.nf'>
       /proc/net/*
       /var/log/*
-      /etc/ipsec.conf
-      @IPSEC_SECRETS_FILE@
+      @@IPSEC_CONF@@
+      @@IPSEC_SECRETS_FILE@@
     </literallayout>
   </refsect1>
 
