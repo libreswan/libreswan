@@ -1,0 +1,297 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+"http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
+
+<refentry id='algparse8'>
+
+  <refmeta>
+    <refentrytitle>IPSEC_ALGPARSE</refentrytitle>
+    <manvolnum>8</manvolnum>
+    <refmiscinfo class='date'>30 November 2023</refmiscinfo>
+    <refmiscinfo class="source">libreswan</refmiscinfo>
+    <refmiscinfo class="manual">Executable programs</refmiscinfo>
+  </refmeta>
+
+  <refnamediv id='name'>
+    <refname>ipsec algparse</refname>
+    <refpurpose>
+      utility for verifying IKE and IPsec cryptographic proposal syntax
+    </refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv id='synopsis'>
+    <cmdsynopsis>
+      <command>ipsec algparse</command>
+      <group>
+	<arg choice="plain">-v1</arg>
+	<arg choice="plain">-v2</arg>
+	<arg choice="plain">-v</arg>
+	<arg choice="plain">-verbose</arg>
+	<arg choice="plain">-debug</arg>
+	<arg choice="plain">-p1</arg>
+	<arg choice="plain">-p2</arg>
+	<arg choice="plain">
+	  -pfs
+	  <group choice="req">
+	    <arg choice="plain">yes</arg>
+	    <arg choice="plain">no</arg>
+	  </group>
+	</arg>
+	<arg choice="plain">
+	  -fips
+	  <group choice="req">
+	    <arg choice="plain">yes</arg>
+	    <arg choice="plain">no</arg>
+	  </group>
+	</arg>
+	<arg choice="plain">-ignore</arg>
+	<arg choice="plain">-impair</arg>
+	<arg choice="plain">
+	  -nsspw
+	  <replaceable>password</replaceable>
+	</arg>
+      </group>
+      <sbr/>
+      <group choice="req">
+	<arg choice="plain">-tp</arg>
+	<arg choice="plain">-ta</arg>
+	<arg choice="plain">ike=<replaceable>proposals</replaceable></arg>
+	<arg choice="plain">esp=<replaceable>proposals</replaceable></arg>
+	<arg choice="plain">ah=<replaceable>proposals</replaceable></arg>
+	<arg choice="plain"><replaceable>proposals</replaceable></arg>
+      </group>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsect1 id='description'>
+    <title>
+      DESCRIPTION
+    </title>
+
+    <para>
+      <command>ipsec algparse</command> is a utility that parses and
+      expands and Internet Key Exchange cryptographic proposals using
+      the same syntax as used in the file
+      <filename>ipsec.conf</filename> (see the description of
+      <command>ike=</command> and <command>esp=</command> in
+      <citerefentry><refentrytitle><filename>ipsec.conf</filename></refentrytitle>
+      <manvolnum>5</manvolnum></citerefentry> for details).  In
+      addition, <command>ipsec algparse</command> can be used to run
+      the proposal parser or the cryptographic algorithm testsuites.
+    </para>
+
+    <para>
+      The following options control what <command>ipsec
+      algparse</command> will parse:
+    </para>
+
+    <variablelist>
+
+      <varlistentry>
+	<term>
+	  <option>ike=<optional><replaceable>proposals</replaceable></optional></option>
+	</term>
+	<term>
+	  <option>esp=<optional><replaceable>proposals</replaceable></optional></option>
+	</term>
+	<term>
+	  <option>ah=<optional><replaceable>proposals</replaceable></optional></option>
+	</term>
+	<listitem>
+	  <para>
+	    Parse the <replaceable>proposals</replaceable> using the
+	    IKE, ESP, or AH proposal parser.  When
+	    <replaceable>proposals</replaceable> is omitted, display
+	    the default IKE, ESP, or AH proposals.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>
+	  <option>proposal</option>
+	</term>
+	<listitem>
+	  <para>
+	    Try to parse the proposal using all three of the IKE, ESP,
+	    and AH proposal parsers.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>
+	  <option>-tp</option>
+	</term>
+	<listitem>
+	  <para>
+	    run the proposal testsuite
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>
+	  <option>-ta</option>
+	</term>
+	<listitem>
+	  <para>
+	    run the algorithm testsuite
+	  </para>
+	</listitem>
+      </varlistentry>
+
+    </variablelist>
+
+    <para>
+      The following options alter the parser behaviour:
+    </para>
+
+    <variablelist>
+
+      <varlistentry>
+	<term>
+	  <option>-v1</option>
+	</term>
+	<term>
+	  <option>-v2</option>
+	</term>
+	<listitem>
+	  <para>
+	    Parse the <replaceable>proposals</replaceable> using
+	    either the IKEv1 or IKEv2 proposal syntax.
+	  </para>
+	  <para>
+	    The default is IKEv2.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>
+	  <option>-pfs=yes|no</option>
+	</term>
+	<listitem>
+	  <para>
+	    Specify PFS (Perfect Forward Privicy).  When
+	    <command>yes</command> Diffi-Helman algorithms will be
+	    included in the proposal.
+	  </para>
+	  <para>
+	    The default is <command>--pfs=no</command>.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>
+	  <option>-fips=yes|no</option>
+	</term>
+	<listitem>
+	  <para>
+	    Force NSS into FIPS mode.
+	  </para>
+	  <para>
+	    The default is determined by the system environment.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>
+	  <option>-p1</option>
+	</term>
+	<term>
+	  <option>-p2</option>
+	</term>
+	<listitem>
+	  <para>
+	    Specify the parser to use.
+	  </para>
+	  <para>
+	    By default, IKEv1 uses the simple (p1) parser, and IKEv2
+	    uses the more complex (p2) parser.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>
+	  <option>-nsspw</option>
+	</term>
+	<listitem>
+	  <para>
+	    Specify the NSS database password.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>
+	  <option>-impair</option>
+	</term>
+	<listitem>
+	  <para>
+	    Impair the parser, disabling all algorithm checks.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>
+	  <option>-ignore</option>
+	</term>
+	<listitem>
+	  <para>
+	    Ignore parser errors.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>
+	  <option>-v</option>
+	</term>
+	<term>
+	  <option>-verbose</option>
+	</term>
+	<listitem>
+	  <para>
+	    Be more verbose when invoking proposal parser.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>
+	  <option>-d</option>
+	</term>
+	<term>
+	  <option>-debug</option>
+	</term>
+	<listitem>
+	  <para>
+	    Enable full debug-logging when invoking the proposal parser.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+    </variablelist>
+
+  </refsect1>
+
+  <refsect1 id='history'>
+    <title>HISTORY</title>
+    <para>
+      Written for the <application>Libreswan</application> project by
+      <author><personname><firstname>Andrew</firstname><surname>Cagney</surname></personname></author>.
+    </para>
+  </refsect1>
+
+  <refsect1 id='author'>
+    <title>AUTHOR</title>
+    <para>
+      <author><personname><firstname>Andrew</firstname><surname>Cagney</surname></personname></author>
+    </para>
+  </refsect1>
+</refentry>

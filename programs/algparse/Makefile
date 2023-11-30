@@ -12,9 +12,6 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-# XXX: Hack to suppress the man page.  Should one be added?
-PROGRAM_MANPAGE =
-
 PROGRAM = algparse
 OBJS += $(PROGRAM).o
 OBJS += $(LIBRESWANLIB)
