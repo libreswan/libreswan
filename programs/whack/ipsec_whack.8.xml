@@ -2995,7 +2995,7 @@
           <listitem>
             <para>
 	      Specifies the file for authentication secrets (default:
-	      <filename>@IPSEC_SECRETS_FILE@</filename>). This name is
+	      <filename>@@IPSEC_SECRETS@@</filename>). This name is
 	      subject to "globbing" as in <citerefentry>
 	      <refentrytitle>sh</refentrytitle>
 	      <manvolnum>1</manvolnum> </citerefentry>, so every file
@@ -3465,7 +3465,7 @@
 
     <para><filename>@@RUNDIR@@/pluto.pid</filename>
     <filename>@@RUNDIR@@/pluto.ctl</filename>
-    <filename>@IPSEC_SECRETS_FILE@</filename>
+    <filename>@@IPSEC_SECRETS@@</filename>
     <filename>/dev/urandom</filename></para>
   </refsect1>
 

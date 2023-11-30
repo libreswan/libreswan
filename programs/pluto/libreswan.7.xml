@@ -235,7 +235,7 @@
       </para>
 
       <para>
-	The file <filename>@IPSEC_SECRETS_FILE@</filename> is used
+	The file <filename>@@IPSEC_SECRETS@@</filename> is used
 	to keep preshared secret keys and XAUTH passwords. RSA private
 	keys, X.509 certificates, CRLs, OCSP and smartcards are handled
 	via NSS. For debugging, there is an argument to the <emphasis
@@ -2848,7 +2848,7 @@
           <listitem>
             <para>
 	      Specifies the file for authentication secrets (default:
-	      <filename>@IPSEC_SECRETS_FILE@</filename>). This name is
+	      <filename>@@IPSEC_SECRETS@@</filename>). This name is
 	      subject to "globbing" as in <citerefentry>
 	      <refentrytitle>sh</refentrytitle>
 	      <manvolnum>1</manvolnum> </citerefentry>, so every file
@@ -3355,7 +3355,7 @@
 
     <para><filename>@@RUNDIR@@/pluto.pid</filename>
     <filename>@@RUNDIR@@/pluto.ctl</filename>
-    <filename>@IPSEC_SECRETS_FILE@</filename>
+    <filename>@@IPSEC_SECRETS@@</filename>
     <filename>/dev/urandom</filename></para>
   </refsect1>
 

@@ -640,7 +640,7 @@
 
     <para><filename>@@RUNDIR@@/pluto.pid</filename>
     <filename>@@RUNDIR@@/pluto.ctl</filename>
-    <filename>@IPSEC_SECRETS_FILE@</filename>
+    <filename>@@IPSEC_SECRETS@@</filename>
     <filename>/dev/urandom</filename></para>
   </refsect1>
 
