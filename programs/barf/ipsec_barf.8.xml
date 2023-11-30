@@ -74,11 +74,12 @@
 
   <refsect1 id='files'>
     <title>FILES</title>
-    <literallayout remap='.nf'>
-/proc/net/*
-/var/log/*
-@@IPSEC_CONF@@
-@@IPSEC_SECRETS@@</literallayout>
+    <para>
+      <filename>/proc/net/*</filename>
+      <filename>/var/log/*</filename>
+      <filename>@@IPSEC_CONF@@</filename>
+      <filename>@@IPSEC_SECRETS@@</filename>
+    </para>
   </refsect1>
 
   <refsect1 id='history'>
