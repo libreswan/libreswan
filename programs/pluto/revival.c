@@ -97,6 +97,13 @@ static bool revival_plausable(struct connection *c, struct logger *logger)
 		return false;
 	}
 
+	if (c->config->autostart == AUTOSTART_KEEP &&
+	    c->revival.attempt == 1/*note: not yet incremented*/) {
+		ldbg(logger, "revival: skipping, auto=keep and made one attempt");
+		return false;
+	}
+
+
 	/*
 	 * XXX: should this be a pexpect()?
 	 */
