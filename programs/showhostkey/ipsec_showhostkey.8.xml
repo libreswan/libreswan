@@ -316,7 +316,7 @@ IN    IPSECKEY  10 1 2 10.11.12.13  AQOF8tZ2...+buFuFn/"
   <refsect1 id='author'>
     <title>AUTHOR</title>
     <para>
-      <emphasis role='strong' remap='B'>Paul Wouters</emphasis>
+      <author><personname><firstname>Paul</firstname><surname>Wouters</surname></personname></author>
     </para>
   </refsect1>
 </refentry>

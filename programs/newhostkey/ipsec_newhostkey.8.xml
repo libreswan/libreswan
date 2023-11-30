@@ -179,7 +179,7 @@
   <refsect1 id='author'>
     <title>AUTHOR</title>
     <para>
-      <emphasis role='strong' remap='B'>Paul Wouters</emphasis>
+      <author><personname><firstname>Paul</firstname><surname>Wouters</surname></personname></author>
     </para>
   </refsect1>
 </refentry>
