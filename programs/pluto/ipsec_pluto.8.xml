@@ -143,7 +143,7 @@
       random from the NSS library, despite the NSS library itself
       already seeding its internal state. As this process can block
       pluto for an extended time, the default is to not perform this
-      redundant seeding. The <emphasis>--seedbits</emphasis>
+      redundant seeding. The <option>--seedbits</option>
       option can be used to specify the number of bits that will be
       pulled from /dev/random and seeded into the NSS RNG.  This can
       also be accomplished by specifying seedbits in the "config setup"
