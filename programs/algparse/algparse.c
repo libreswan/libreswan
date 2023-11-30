@@ -567,7 +567,7 @@ static void usage(void)
 		"    -v --verbose: be more verbose\n"
 		"    --debug: enable debug logging\n"
 		/* -d <NSSDB> is reserved */
-		/* -P <password> | -nsspw <password> | -password <password> are reserved */
+		"    -P <password> | -nsspw <password> | -password <password>: NSS password\n"
 		"    --impair: disable all algorithm parser checks\n"
 		"    --ignore: ignore parser errors (or at least some)\n"
 		"    -p1: simple parser\n"
