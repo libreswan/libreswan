@@ -210,7 +210,7 @@
       arguments are needed. To run in manually, the superuser can simply
       type</para>
 
-      <para>&nbsp;&nbsp;&nbsp;ipsec pluto</para>
+      <para>ipsec pluto</para>
 
       <para>The command will immediately return, but a <emphasis
       remap="B">pluto</emphasis> process will be left running, waiting
@@ -225,10 +225,10 @@
       <!-- .na -->
 
       <para>
-	&nbsp;&nbsp;&nbsp;ipsec whack --name&nbsp;silly
-	--host&nbsp;127.0.0.1 --to --host&nbsp;127.0.0.2
-	--ikelifetime&nbsp;900 --ipseclifetime&nbsp;800
-	--keyingtries&nbsp;3
+	ipsec whack --namesilly
+	--host127.0.0.1 --to --host127.0.0.2
+	--ikelifetime900 --ipseclifetime800
+	--keyingtries3
       </para>
 
       <!-- .ad -->
@@ -242,9 +242,9 @@
       <!-- .na -->
 
       <para>
-	&nbsp;&nbsp;&nbsp;ipsec whack --name&nbsp;conn_name
-	--host&nbsp;10.0.0.1 --client&nbsp;10.0.1.0/24 --to
-	--host&nbsp;10.0.0.2 --client&nbsp;10.0.2.0/24 --encrypt
+	ipsec whack --nameconn_name
+	--host10.0.0.1 --client10.0.1.0/24 --to
+	--host10.0.0.2 --client10.0.2.0/24 --encrypt
       </para>
 
       <!-- .ad -->
@@ -265,7 +265,7 @@
       </para>
 
       <para>
-	&nbsp;&nbsp;&nbsp;ipsec whack --listen
+	ipsec whack --listen
       </para>
 
       <para>
@@ -278,7 +278,7 @@
       </para>
 
       <para>
-	&nbsp;&nbsp;&nbsp;ipsec whack --route conn_name
+	ipsec whack --route conn_name
       </para>
 
       <para>
@@ -288,8 +288,8 @@
       </para>
 
       <para>
-	&nbsp;&nbsp;&nbsp;ipsec whack
-	--initiate&nbsp;--name&nbsp;conn_name
+	ipsec whack
+	--initiate--nameconn_name
       </para>
 
       <para>
@@ -304,7 +304,7 @@
       </para>
 
       <para>
-	&nbsp;&nbsp;&nbsp;ipsec whack --shutdown
+	ipsec whack --shutdown
       </para>
 
       <para>
@@ -329,11 +329,11 @@
 
       <para>
 	For testing purposes, the options
-	<option>--xauthuser&nbsp;</option>
+	<option>--xauthuser</option>
 	<replaceable>user</replaceable>
-	<option>--xauthpass&nbsp;</option>
+	<option>--xauthpass</option>
 	<replaceable>pass</replaceable> may be be given prior to the
-	<option>--initiate&nbsp;</option> to provide responses to the
+	<option>--initiate</option> to provide responses to the
 	username and password prompts.
       </para>
     </refsect2>
@@ -482,7 +482,7 @@
 	classes of debugging output, and <emphasis
 	remap="B">pluto</emphasis> may be directed to produce a
 	selection of them.  All lines of debugging output are prefixed
-	with "|&nbsp;" to distinguish them from normal diagnostic
+	with "|" to distinguish them from normal diagnostic
 	messages.
       </para>
 
