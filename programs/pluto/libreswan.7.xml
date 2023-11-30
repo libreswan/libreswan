@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
                    "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
-<refentry id="pluto7">
+<refentry id="libreswan7">
   <refmeta>
-    <refentrytitle>IPSEC_PLUTO</refentrytitle>
+    <refentrytitle>LIBRESWAN</refentrytitle>
     <manvolnum>7</manvolnum>
     <refmiscinfo class="date">29 June 2014</refmiscinfo>
     <refmiscinfo class="source">libreswan</refmiscinfo>
@@ -11,35 +11,48 @@
   </refmeta>
 
   <refnamediv id="name">
-    <refname>ipsec pluto</refname>
-    <refpurpose>ipsec pluto : IPsec IKE keying daemon</refpurpose>
+    <refname>libreswan</refname>
+    <refpurpose>
+      Libreswan: Internet Key Exchange Manager for IPsec
+    </refpurpose>
   </refnamediv>
-
-  <!-- body begins here -->
 
   <refsect1 id="description">
 
-    <title>DESCRIPTION</title>
+    <title>
+      DESCRIPTION
+    </title>
 
     <para>
-      <command>pluto</command> is an IKE ("IPsec Key
-      Exchange") daemon. <command>whack</command> is an auxiliary
-      program to allow requests to be made to a running
-      <command>pluto</command>.
+      <application>Libreswan</application> is an Internet Key Exchange
+      (IKE) manager.  It consists of the Internet Key Exchange Daemon
+      <citerefentry><refentrytitle><command>pluto</command></refentrytitle>
+      <manvolnum>8</manvolnum></citerefentry>, the auxiliary
+      command <citerefentry><refentrytitle><command>ipsec</command></refentrytitle>
+      <manvolnum>8</manvolnum></citerefentry> that provides a way to
+      manipulate <command>pluto</command>, and the configuration file
+      <citerefentry><refentrytitle><filename>ipsec.conf</filename></refentrytitle>
+      <manvolnum>5</manvolnum></citerefentry>.  In addition, an
+      <application>NSS</application> trust store is needed when using
+      either <application>X.509</application> or raw private keys.
     </para>
 
     <para>
-      <command>pluto</command> is used to automatically build
-      shared "security associations" on a system that has IPsec, the secure IP
-      protocol. In other words, <command>pluto</command> can
-      eliminate much of the work of manual keying. The actual secure
-      transmission of packets is the responsibility of other parts of the system
-      - the kernel. Pluto can talk to various kernel implementations, such as the Linux
-      <emphasis remap="B">XFRM</emphasis> and BSD <emphasis remap="B">KAME</emphasis>
-      IPsec stacks.
-      <citerefentry><refentrytitle>ipsec</refentrytitle> <manvolnum>8</manvolnum></citerefentry>
-      provides a more convenient interface to <command>pluto</command>
-      and <command>whack</command>.
+      <application>Libreswan</application> is used to automatically
+      build shared "Security Associations" on a system that has IPsec,
+      the secure IP protocol. In other words,
+      <application>Libreswan</application> can eliminate much of the
+      work of manual keying.  The actual secure transmission of
+      packets is the responsibility of the kernel.
+      <application>Libreswan</application> can talk to various kernel
+      implementations, such as the <application>Linux
+      XFRM</application> and <application>BSD KAME</application> IPsec
+      stacks.
+    </para>
+
+    <para>
+      <application>Libreswan</application> implements version 1 and 2
+      of the Internet Key Exchange Protocol.
     </para>
 
     <refsect2 id="ikes_job">
@@ -120,52 +133,50 @@
       <title>Pluto</title>
 
       <para>
-	<command>pluto</command> is an implementation of IKE.
-	It runs as a daemon on a network node. Currently, this network node must
-	be a Linux system running the <emphasis remap="B">XFRM</emphasis> IPsec
-	stack, or a FreeBSD/NetBSD/Mac OSX system running the <emphasis
+	<command>pluto</command> is an implementation of IKE.  It runs
+	as a daemon on a network node. Currently, this network node
+	must be a Linux system running the <emphasis
+	remap="B">XFRM</emphasis> IPsec stack, or a
+	FreeBSD/NetBSD/OpenBSD system running the <emphasis
 	remap="B">KAME</emphasis> IPsec stack.
       </para>
 
       <para>
-	<command>pluto</command> implements a large subset of
-	IKEv1 and IKEv2.
-      </para>
-
-      <para>
 	The policy for acceptable characteristics for Security
-	Associations is mostly hardwired into the code of <emphasis
-	remap="B">pluto</emphasis> (spdb.c). Eventually this will be moved into
-	a security policy database with reasonable expressive power and more
-	convenience.
+	Associations is mostly hardwired into the code of
+	<command>pluto</command>.  Eventually this will be moved into
+	a security policy database with reasonable expressive power
+	and more convenience.
       </para>
 
       <para>
-	<command>pluto</command> uses shared secrets or RSA
-	signatures to authenticate peers with whom it is negotiating. These RSA
-	signatures can come from DNS(SEC), a configuration file, or from X.509
-	and CA certificates.
+	<command>pluto</command> uses shared secrets or RSA signatures
+	to authenticate peers with whom it is negotiating. These RSA
+	signatures can come from DNS(SEC), a configuration file, or
+	from X.509 and CA certificates.
       </para>
 
       <para>
-	<command>pluto</command> initiates negotiation of a
-	Security Association when it is manually prodded: the program <emphasis
-	remap="B">whack</emphasis> is run to trigger this. It will also initiate
-	a negotiation when IPsec traps an outbound packet for Opportunistic Encryption.
+	<command>pluto</command> initiates negotiation of a Security
+	Association when it is manually prodded: the program <emphasis
+	remap="B">whack</emphasis> is run to trigger this. It will
+	also initiate a negotiation when IPsec traps an outbound
+	packet for Opportunistic Encryption.
       </para>
 
       <para>
-	<command>pluto</command> implements ISAKMP SAs itself.
-	After it has negotiated the characteristics of an IPsec SA, it directs
-	the <emphasis remap="B">kernel</emphasis> to implement it. If necessary,
-	it also invokes a script to adjust any firewall and issue
+	<command>pluto</command> implements ISAKMP SAs itself.  After
+	it has negotiated the characteristics of an IPsec SA, it
+	directs the <emphasis remap="B">kernel</emphasis> to implement
+	it. If necessary, it also invokes a script to adjust any
+	firewall and issue
 	<citerefentry><refentrytitle>ip-route</refentrytitle><manvolnum>8</manvolnum></citerefentry>
 	commands to direct IP packets.
       </para>
 
       <para>
-	When <command>pluto</command> shuts down, it closes
-	all Security Associations.
+	When <command>pluto</command> shuts down, it closes all
+	Security Associations.
       </para>
     </refsect2>
 
@@ -3451,7 +3462,7 @@
     <title>AUTHOR</title>
     <para>
       <author><personname><firstname>Paul</firstname><surname>Wouters</surname></personname></author>
+      <author><personname><firstname>Andrew</firstname><surname>Cagney</surname></personname></author>
     </para>
   </refsect1>
 </refentry>
-
