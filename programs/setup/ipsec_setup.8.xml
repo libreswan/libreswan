@@ -18,7 +18,7 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>setup</emphasis>
+      <command>setup</command>
       is called (via <emphasis remap='I'>ipsec setup</emphasis>) by the system
       administrator to perform init system related tasks to Libreswan, such as
       start, stop, status, reload, etc for the Internet Keying Exchange (IKE)

@@ -64,10 +64,10 @@
     <title>DESCRIPTION</title>
 
     <para>
-      <emphasis>pluto</emphasis> is an IKE ("IPsec Key
+      <command>pluto</command> is an IKE ("IPsec Key
       Exchange") daemon. It is used to automatically build shared
       "security associations" on a system that has IPsec, the secure
-      IP protocol. In other words, <emphasis>pluto</emphasis>
+      IP protocol. In other words, <command>pluto</command>
       can eliminate much of the work of manual keying. The actual secure
       transmission of packets is the responsibility of other parts of
       the system - the kernel. Pluto can talk to various kernel implementations,
@@ -78,7 +78,7 @@
     <para>
       <citerefentry><refentrytitle>ipsec</refentrytitle>
       <manvolnum>8</manvolnum></citerefentry> provides a convenient
-      interface to <emphasis>pluto</emphasis>.
+      interface to <command>pluto</command>.
     </para>
 
     <para>
@@ -151,20 +151,20 @@
     </para>
 
     <para>
-      <emphasis>pluto</emphasis> attempts to create a
+      <command>pluto</command> attempts to create a
       lockfile with the name
       <filename>@@RUNDIR@@/pluto.pid</filename>. If the lockfile
-      cannot be created, <emphasis>pluto</emphasis> exits -
-      this prevents multiple <emphasis>pluto</emphasis>s
+      cannot be created, <command>pluto</command> exits -
+      this prevents multiple <command>pluto</command>s
       from competing Any "leftover" lockfile must be removed before
-      <emphasis>pluto</emphasis> will run. <emphasis>pluto</emphasis>
+      <command>pluto</command> will run. <emphasis>pluto</emphasis>
       writes its PID into this file so that scripts can find it. This
       lockwill not function properly if it is on an NFS volume (but sharing
       locks on multiple machines doesn't make sense anyway).
     </para>
 
     <para>
-      <emphasis>pluto</emphasis> then forks and the parent
+      <command>pluto</command> then forks and the parent
       exits. This is the conventional "daemon fork". It can make
       debugging awkward, so there is an option to suppress this
       fork. In certain configurations, pluto might also launch helper
@@ -188,8 +188,8 @@
     </para>
 
     <para>
-      Once <emphasis>pluto</emphasis> is started, it waits
-      for requests from <emphasis>whack</emphasis>.
+      Once <command>pluto</command> is started, it waits
+      for requests from <command>whack</command>.
     </para>
 
   </refsect1>
@@ -200,19 +200,19 @@
     <refsect2 id="starting">
       <title>Starting pluto</title>
 
-      <para>It would be normal to start <emphasis>pluto</emphasis>
+      <para>It would be normal to start <command>pluto</command>
       in one of the system initialization scripts. It needs to be run
       by the superuser. Generally, no arguments are needed. To run in
       manually, the superuser can simply type</para>
 
       <para>ipsec pluto</para>
 
-      <para>The command will immediately return, but a <emphasis>pluto</emphasis>
-      process will be left running, waiting for requests from <emphasis>whack</emphasis>
+      <para>The command will immediately return, but a <command>pluto</command>
+      process will be left running, waiting for requests from <command>whack</command>
       or a peer.</para>
 
       <para>
-	Using <emphasis>whack</emphasis>, several potential
+	Using <command>whack</command>, several potential
 	connections would be described:
       </para>
 
@@ -245,14 +245,14 @@
 
       <para>
 	This is something that must be done on both sides. If the
-	other side is <emphasis>pluto</emphasis>, the same
-	<emphasis>whack</emphasis> command could be used on
+	other side is <command>pluto</command>, the same
+	<command>whack</command> command could be used on
 	it (the command syntax is designed to not distinguish which
 	end is ours).
       </para>
 
       <para>
-	Now that the connections are specified, <emphasis>pluto</emphasis>
+	Now that the connections are specified, <command>pluto</command>
 	is ready to handle requests and replies via the public interfaces.
 	We must tell it to discover those interfaces and start accepting
 	messages from peers:
@@ -265,7 +265,7 @@
       <para>
 	If we don't immediately wish to bring up a secure connection
 	between the two clients, we might wish to prevent insecure
-	traffic. The routing form asks <emphasis>pluto</emphasis>
+	traffic. The routing form asks <command>pluto</command>
 	to cause the packets sent from our client to the peer's client
 	to be routed through the ipsec0 device; if there is no SA, they
 	will be discarded:
@@ -276,7 +276,7 @@
       </para>
 
       <para>
-	Finally, we are ready to get <emphasis>pluto</emphasis>
+	Finally, we are ready to get <command>pluto</command>
 	to initiate negotiation for an Child SA (and implicitly, an IKE SA):
       </para>
 
@@ -291,8 +291,8 @@
       </para>
 
       <para>
-	<emphasis>whack</emphasis> can also be used to
-	terminate <emphasis>pluto</emphasis> cleanly,
+	<command>whack</command> can also be used to
+	terminate <command>pluto</command> cleanly,
 	tearing down all SAs that it has negotiated.
       </para>
 
@@ -303,7 +303,7 @@
       <para>
 	Notification of any IPsec SA deletion, but not ISAKMP SA
 	deletion is sent to the peer. Unfortunately, such Notification
-	is not reliable.  Furthermore, <emphasis>pluto</emphasis>
+	is not reliable.  Furthermore, <command>pluto</command>
 	itself ignores Notifications.
       </para>
 
@@ -312,11 +312,11 @@
     <refsect2 id="xauth">
       <title>XAUTH</title>
 
-      <para>If <emphasis>pluto</emphasis> needs additional
+      <para>If <command>pluto</command> needs additional
       authentication, such as defined by the XAUTH specifications, then
-      it may ask <emphasis>whack</emphasis> to prompt the
+      it may ask <command>whack</command> to prompt the
       operator for username or passwords. Typically, these will be
-      entered interactively. A GUI that wraps around <emphasis>whack</emphasis>
+      entered interactively. A GUI that wraps around <command>whack</command>
       may look for the 041 (username) or 040
       (password) prompts, and display them to the user.</para>
 
@@ -335,7 +335,7 @@
       <title>DEBUGGING</title>
 
       <para>
-	<emphasis>pluto</emphasis> accepts several optional
+	<command>pluto</command> accepts several optional
 	arguments, useful mostly for debugging. Except for
 	<option>--interface</option>, each should appear at most once.
       </para>
@@ -365,7 +365,7 @@
 	  </term>
           <listitem>
             <para>
-	      Changes the UDP port that <emphasis>pluto</emphasis> will use
+	      Changes the UDP port that <command>pluto</command> will use
 	      (default, specified by IANA: 500).
 	    </para>
           </listitem>
@@ -378,10 +378,10 @@
           <listitem>
             <para>
 	      Basename for control files. <emphasis>path</emphasis>.ctl
-	      is the socket through which <emphasis>whack</emphasis>
-	      communicates with <emphasis>pluto</emphasis>.
+	      is the socket through which <command>whack</command>
+	      communicates with <command>pluto</command>.
 	      <emphasis>path</emphasis>.pid is the lockfile to prevent
-	      multiple <emphasis>pluto</emphasis>
+	      multiple <command>pluto</command>
 	      instances. The default is
 	      <filename>/var/run/pluto/pluto</filename>).
 	    </para>
@@ -467,16 +467,16 @@
       </variablelist>
 
       <para>
-	<emphasis>pluto</emphasis> is willing to produce a
+	<command>pluto</command> is willing to produce a
 	prodigious amount of debugging information.  There are several
-	classes of debugging output, and <emphasis>pluto</emphasis>
+	classes of debugging output, and <command>pluto</command>
 	may be directed to produce a selection of them.  All lines of
 	debugging output are prefixed with "|" to distinguish them from
 	normal diagnostic messages.
       </para>
 
       <para>
-	When <emphasis>pluto</emphasis> is invoked, it may
+	When <command>pluto</command> is invoked, it may
 	be given arguments to specify which debug classes to output.
 	The current options are:
       </para>
@@ -543,7 +543,7 @@
 	      Enable (disable) logging of the specified debugging
 	      <replaceable>class</replaceable> (<option>--debug
 	      help</option> lists debugging classes supported by this
-	      version of <emphasis>pluto</emphasis>).
+	      version of <command>pluto</command>).
 	    </para>
           </listitem>
 	</varlistentry>
@@ -551,16 +551,16 @@
       </variablelist>
 
       <para>
-	The debug form of the <emphasis>whack</emphasis>
-	command will change the selection in a running <emphasis>pluto</emphasis>.
+	The debug form of the <command>whack</command>
+	command will change the selection in a running <command>pluto</command>.
 	If a connection name is specified, the flags are added whenever
-	<emphasis>pluto</emphasis> has identified that it is dealing
+	<command>pluto</command> has identified that it is dealing
 	with that connection.  Unfortunately, this is often part way
 	into the operation being observed.
       </para>
 
       <para>
-	For example, to start <emphasis>pluto</emphasis>
+	For example, to start <command>pluto</command>
 	with both <emphasis>base</emphasis> and
 	<emphasis>cpu-usage</emphasis> debug-logging enabled:
       </para>
@@ -570,7 +570,7 @@
       </programlisting>
 
       <para>
-	To later change this <emphasis>pluto</emphasis> to
+	To later change this <command>pluto</command> to
 	disable <emphasis>base</emphasis> debug-logging use either:
       </para>
 
@@ -594,7 +594,7 @@
     <para>
       <emphasis>Pluto</emphasis> responds to
       <constant>SIGHUP</constant> by issuing a suggestion that
-      ``<emphasis>whack</emphasis> --listen'' might have been intended.
+      ``<command>whack</command> --listen'' might have been intended.
     </para>
 
     <para><emphasis>Pluto</emphasis> exits when it receives
@@ -604,7 +604,7 @@
   <refsect1 id="exit_status">
     <title>EXIT STATUS</title>
 
-    <para><emphasis>pluto</emphasis> normally forks a daemon
+    <para><command>pluto</command> normally forks a daemon
     process, so the exit status is normally a very preliminary result.</para>
 
     <variablelist>
@@ -661,7 +661,7 @@
         <refentrytitle>ipsec</refentrytitle>
         <manvolnum>8</manvolnum>
       </citerefentry>
-      is designed to make using <emphasis>pluto</emphasis>
+      is designed to make using <command>pluto</command>
       more pleasant. Use it!
     </para>
 

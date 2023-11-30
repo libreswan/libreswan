@@ -18,8 +18,8 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>_import_crl</emphasis> is spawned by
-      <emphasis remap='B'>pluto</emphasis>
+      <command>_import_crl</command> is spawned by
+      <command>pluto</command>
       in order to add or update a CRL in the NSS database
       (default: @@IPSEC_NSSDIR@@)
     </para>

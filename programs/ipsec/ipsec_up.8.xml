@@ -33,7 +33,7 @@
     </para>
     <para>
       <emphasis remap='I'>Up</emphasis> operation asks
-      <emphasis remap='I'>pluto</emphasis> to establish a connection
+      <command>pluto</command> to establish a connection
       specified in internal database.
     </para>
     <para>

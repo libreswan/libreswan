@@ -35,7 +35,7 @@
     <title>DESCRIPTION</title>
 
     <para>
-      <emphasis remap='I'>newhostkey</emphasis> generates an RSA
+      <command>newhostkey</command> generates an RSA
       public/private key pair suitable for authenticating this host is
       generated and stored in the NSS database.
     </para>
@@ -55,7 +55,7 @@
 	  <listitem>
 	    <para>
 	      The <option>--quiet</option> option suppresses both
-	      the <emphasis remap='I'>rsasigkey</emphasis> narrative and
+	      the <command>rsasigkey</command> narrative and
 	      the existing-file warning message.
 	    </para>
 	  </listitem>
@@ -167,7 +167,7 @@
   <refsect1 id='bugs'>
     <title>BUGS</title>
     <para>
-      As with <emphasis remap='I'>rsasigkey</emphasis>, the run time is
+      As with <command>rsasigkey</command>, the run time is
       difficult to predict, since depletion of the system's randomness pool
       can cause arbitrarily long waits for random bits for seeding the NSS
       library, and the prime-number searches can also take unpredictable

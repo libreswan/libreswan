@@ -22,24 +22,24 @@
     <title>DESCRIPTION</title>
 
     <para>
-      <emphasis remap="B">pluto</emphasis> is an IKE ("IPsec Key
-      Exchange") daemon. <emphasis remap="B">whack</emphasis> is an auxiliary
+      <command>pluto</command> is an IKE ("IPsec Key
+      Exchange") daemon. <command>whack</command> is an auxiliary
       program to allow requests to be made to a running
-      <emphasis remap="B">pluto</emphasis>.
+      <command>pluto</command>.
     </para>
 
     <para>
-      <emphasis remap="B">pluto</emphasis> is used to automatically build
+      <command>pluto</command> is used to automatically build
       shared "security associations" on a system that has IPsec, the secure IP
-      protocol. In other words, <emphasis remap="B">pluto</emphasis> can
+      protocol. In other words, <command>pluto</command> can
       eliminate much of the work of manual keying. The actual secure
       transmission of packets is the responsibility of other parts of the system
       - the kernel. Pluto can talk to various kernel implementations, such as the Linux
       <emphasis remap="B">XFRM</emphasis> and BSD <emphasis remap="B">KAME</emphasis>
       IPsec stacks.
       <citerefentry><refentrytitle>ipsec</refentrytitle> <manvolnum>8</manvolnum></citerefentry>
-      provides a more convenient interface to <emphasis remap="B">pluto</emphasis>
-      and <emphasis remap="B">whack</emphasis>.
+      provides a more convenient interface to <command>pluto</command>
+      and <command>whack</command>.
     </para>
 
     <refsect2 id="ikes_job">
@@ -120,7 +120,7 @@
       <title>Pluto</title>
 
       <para>
-	<emphasis remap="B">pluto</emphasis> is an implementation of IKE.
+	<command>pluto</command> is an implementation of IKE.
 	It runs as a daemon on a network node. Currently, this network node must
 	be a Linux system running the <emphasis remap="B">XFRM</emphasis> IPsec
 	stack, or a FreeBSD/NetBSD/Mac OSX system running the <emphasis
@@ -128,7 +128,7 @@
       </para>
 
       <para>
-	<emphasis remap="B">pluto</emphasis> implements a large subset of
+	<command>pluto</command> implements a large subset of
 	IKEv1 and IKEv2.
       </para>
 
@@ -141,21 +141,21 @@
       </para>
 
       <para>
-	<emphasis remap="B">pluto</emphasis> uses shared secrets or RSA
+	<command>pluto</command> uses shared secrets or RSA
 	signatures to authenticate peers with whom it is negotiating. These RSA
 	signatures can come from DNS(SEC), a configuration file, or from X.509
 	and CA certificates.
       </para>
 
       <para>
-	<emphasis remap="B">pluto</emphasis> initiates negotiation of a
+	<command>pluto</command> initiates negotiation of a
 	Security Association when it is manually prodded: the program <emphasis
 	remap="B">whack</emphasis> is run to trigger this. It will also initiate
 	a negotiation when IPsec traps an outbound packet for Opportunistic Encryption.
       </para>
 
       <para>
-	<emphasis remap="B">pluto</emphasis> implements ISAKMP SAs itself.
+	<command>pluto</command> implements ISAKMP SAs itself.
 	After it has negotiated the characteristics of an IPsec SA, it directs
 	the <emphasis remap="B">kernel</emphasis> to implement it. If necessary,
 	it also invokes a script to adjust any firewall and issue
@@ -164,7 +164,7 @@
       </para>
 
       <para>
-	When <emphasis remap="B">pluto</emphasis> shuts down, it closes
+	When <command>pluto</command> shuts down, it closes
 	all Security Associations.
       </para>
     </refsect2>
@@ -173,16 +173,16 @@
       <title>Before Running Pluto</title>
 
       <para>
-	<emphasis remap="B">pluto</emphasis> runs as a daemon with userid
+	<command>pluto</command> runs as a daemon with userid
 	root. Before running it, a few things must be set up.
       </para>
 
       <para>
-	<emphasis remap="B">pluto</emphasis> requires a working IPsec stack.
+	<command>pluto</command> requires a working IPsec stack.
       </para>
 
       <para>
-	<emphasis remap="B">pluto</emphasis> supports multiple public
+	<command>pluto</command> supports multiple public
 	networks (that is, networks that are considered insecure and thus
 	need to have their traffic encrypted or authenticated). It discovers
 	the public interfaces to use by looking at all interfaces that are
@@ -197,13 +197,13 @@
       </para>
 
       <para>
-	<emphasis remap="B">pluto</emphasis> requires a database of
+	<command>pluto</command> requires a database of
 	preshared secrets and RSA private keys. This is described in the
 	<citerefentry>
           <refentrytitle>ipsec.secrets</refentrytitle>
           <manvolnum>5</manvolnum>
-        </citerefentry>. <emphasis remap="B">pluto</emphasis> is told of RSA
-	public keys via <emphasis remap="B">whack</emphasis> commands. If the
+        </citerefentry>. <command>pluto</command> is told of RSA
+	public keys via <command>whack</command> commands. If the
 	connection is Opportunistic, and no RSA public key is known, <emphasis
 	remap="B">pluto</emphasis> will attempt to fetch RSA keys using the
 	Domain Name System.
@@ -224,7 +224,7 @@
       <title>ipsec.secrets file</title>
 
       <para>
-	A <emphasis remap="B">pluto</emphasis> daemon and another IKE
+	A <command>pluto</command> daemon and another IKE
 	daemon (for example, another instance of <emphasis
 	remap="B">pluto</emphasis>) must convince each other that they are who
 	they are supposed to be before any negotiation can succeed. This
@@ -255,7 +255,7 @@
 	To fire up the daemon, just type <emphasis
 	remap="B">pluto</emphasis> (be sure to be running as the superuser). The
 	default IKE port number is 500, the UDP port assigned by IANA for IKE
-	Daemons. <emphasis remap="B">pluto</emphasis> must be run by the
+	Daemons. <command>pluto</command> must be run by the
 	superuser to be able to use the UDP 500 port. If pluto is told to enable
 	NAT-Traversal, then UDP port 4500 is also taken by pluto to listen
 	on.
@@ -329,10 +329,10 @@
       </para>
 
       <para>
-	<emphasis remap="B">pluto</emphasis> attempts to create a lockfile
+	<command>pluto</command> attempts to create a lockfile
 	with the name <filename>@@RUNDIR@@/pluto.pid</filename>. If the
-	lockfile cannot be created, <emphasis remap="B">pluto</emphasis> exits -
-	this prevents multiple <emphasis remap="B">pluto</emphasis>s from
+	lockfile cannot be created, <command>pluto</command> exits -
+	this prevents multiple <command>pluto</command>s from
 	competing Any "leftover" lockfile must be removed before <emphasis
 	remap="B">pluto</emphasis> will run. <emphasis
 	remap="B">pluto</emphasis> writes its PID into this file so that scripts
@@ -342,7 +342,7 @@
       </para>
 
       <para>
-	<emphasis remap="B">pluto</emphasis> then forks and the parent
+	<command>pluto</command> then forks and the parent
 	exits. This is the conventional "daemon fork". It can make debugging
 	awkward, so there is an option to suppress this fork. In certain
 	configurations, pluto might also launch helper programs to assist with
@@ -365,8 +365,8 @@
       </para>
 
       <para>
-	Once <emphasis remap="B">pluto</emphasis> is started, it waits for
-	requests from <emphasis remap="B">whack</emphasis>.
+	Once <command>pluto</command> is started, it waits for
+	requests from <command>whack</command>.
       </para>
     </refsect2>
 
@@ -374,7 +374,7 @@
       <title>Pluto's Internal State</title>
 
       <para>
-	To understand how to use <emphasis remap="B">pluto</emphasis>, it
+	To understand how to use <command>pluto</command>, it
 	is helpful to understand a little about its internal state. Furthermore,
 	the terminology is needed to decipher some of the diagnostic
 	messages.
@@ -418,7 +418,7 @@
 	The <emphasis remap="I">(potential) connection</emphasis> database
 	describes attributes of a connection. These include the IP addresses of
 	the hosts and client subnets and the security characteristics desired.
-	<emphasis remap="B">pluto</emphasis> requires this information (simply
+	<command>pluto</command> requires this information (simply
 	called a connection) before it can respond to a request to build an SA.
 	Each connection is given a name when it is created, and all references
 	are made using this name.
@@ -453,12 +453,12 @@
 	interface on this machine, the "gateway" (the nexthop), and the peer's
 	client subnet. Two connections may not be simultaneously routed if they
 	are for the same peer's client subnet but use different interfaces or
-	gateways (<emphasis remap="B">pluto</emphasis>'s logic does not reflect
+	gateways (<command>pluto</command>'s logic does not reflect
 	any advanced routing capabilities).
       </para>
 
       <para>
-	When <emphasis remap="B">pluto</emphasis> needs to install a route
+	When <command>pluto</command> needs to install a route
 	for a connection, it must make sure that no conflicting route is in use.
 	If another connection has a conflicting route, that route will be taken
 	down, as long as there is no IPsec SA instantiating that connection. If
@@ -467,7 +467,7 @@
       </para>
 
       <para>
-	There is an exception. If <emphasis remap="B">pluto</emphasis>, as
+	There is an exception. If <command>pluto</command>, as
 	Responder, needs to install a route to a fixed client subnet for a
 	connection, and there is already a conflicting route, then the SAs using
 	the route are deleted to make room for the new SAs. The rationale is
@@ -477,7 +477,7 @@
       </para>
 
       <para>
-	When <emphasis remap="B">pluto</emphasis> needs to install an
+	When <command>pluto</command> needs to install an
 	eroute for an IPsec SA (for a state object), first the state object's
 	connection must be routed (if this cannot be done, the eroute and SA
 	will not be installed). If a conflicting eroute is already in place for
@@ -494,18 +494,18 @@
       <title>Using whack</title>
 
       <para>
-	<emphasis remap="B">whack</emphasis> is used to command a running
-	<emphasis remap="B">pluto</emphasis>. <emphasis
+	<command>whack</command> is used to command a running
+	<command>pluto</command>. <emphasis
 	remap="B">whack</emphasis> uses a UNIX domain socket to speak to
-	<emphasis remap="B">pluto</emphasis> (by default,
+	<command>pluto</command> (by default,
 	<filename>/var/pluto.ctl</filename>).
       </para>
 
       <para>
-	<emphasis remap="B">whack</emphasis> has an intricate argument
+	<command>whack</command> has an intricate argument
 	syntax. This syntax allows many different functions to be specified. The
 	help form shows the usage or version information. The connection form
-	gives <emphasis remap="B">pluto</emphasis> a description of a potential
+	gives <command>pluto</command> a description of a potential
 	connection. The public key form informs <emphasis
 	remap="B">pluto</emphasis> of the RSA public key for a potential peer.
 	The delete form deletes a connection description and all SAs
@@ -518,8 +518,8 @@
 	connection. The terminate form tells <emphasis
 	remap="B">pluto</emphasis> to remove all SAs corresponding to a
 	connection, including those being negotiated. The status form displays
-	the <emphasis remap="B">pluto</emphasis>'s internal state. The debug
-	form tells <emphasis remap="B">pluto</emphasis> to change the selection
+	the <command>pluto</command>'s internal state. The debug
+	form tells <command>pluto</command> to change the selection
 	of debugging output "on the fly". The shutdown form tells <emphasis
 	remap="B">pluto</emphasis> to shut down, deleting all SAs.
       </para>
@@ -577,14 +577,14 @@
           <listitem>
             <para>
 	      Adds the string to all error messages generated by
-	      <emphasis remap="B">whack</emphasis>.
+	      <command>whack</command>.
 	    </para>
           </listitem>
         </varlistentry>
       </variablelist>
 
       <para>
-	The help form of <emphasis remap="B">whack</emphasis> is
+	The help form of <command>whack</command> is
 	self-explanatory.
       </para>
 
@@ -616,11 +616,11 @@
 
       <para>
 	The connection form describes a potential connection to
-	<emphasis remap="B">pluto</emphasis>. <emphasis
+	<command>pluto</command>. <emphasis
 	remap="B">pluto</emphasis> needs to know what connections can
 	and should be negotiated. When <emphasis
 	remap="B">pluto</emphasis> is the initiator, it needs to know
-	what to propose. When <emphasis remap="B">pluto</emphasis> is
+	what to propose. When <command>pluto</command> is
 	the responder, it needs to know enough to decide whether is is
 	willing to set up the proposed connection.
       </para>
@@ -657,7 +657,7 @@
 	A similar trick is used in the flags. The same flag names are
 	used for both ends. Those before the <option>--to</option>
 	flag describe the left side and those afterwards describe the
-	right side. When <emphasis remap="B">pluto</emphasis> attempts
+	right side. When <command>pluto</command> attempts
 	to use the connection, it decides whether it is the left side
 	or the right side of the connection, based on the IP numbers
 	of its interfaces.
@@ -702,13 +702,13 @@
           <listitem>
             <para>
 	      The IP address of the end (generally the public
-	      interface).  If <emphasis remap="B">pluto</emphasis> is
+	      interface).  If <command>pluto</command> is
 	      to act as a responder for IKE negotiations initiated
 	      from unknown IP addresses (the "Road Warrior" case), the
 	      IP address should be specified as <emphasis
 	      remap="B">%any</emphasis> (currently, the obsolete
 	      notation <literal>0.0.0.0</literal> is also accepted for
-	      this). If <emphasis remap="B">pluto</emphasis> is to
+	      this). If <command>pluto</command> is to
 	      opportunistically initiate the connection, use <emphasis
 	      remap="B">%opportunistic</emphasis>
 	    </para>
@@ -833,7 +833,7 @@
           <listitem>
             <para>
 	      The UDP port that IKE listens to on that host. The
-	      default is 500. (<emphasis remap="B">pluto</emphasis> on
+	      default is 500. (<command>pluto</command> on
 	      this machine uses the port specified by its own command
 	      line argument, so this only affects where <emphasis
 	      remap="B">pluto</emphasis> sends messages.)
@@ -849,13 +849,13 @@
             <para>
 	      Where to route packets for the peer's client (presumably
 	      for the peer too, but it will not be used for
-	      this). When <emphasis remap="B">pluto</emphasis>
+	      this). When <command>pluto</command>
 	      installs an IPsec SA, it issues a route command. It uses
 	      the nexthop as the gateway. The default is the peer's IP
 	      address (this can be explicitly written as <emphasis
 	      remap="B">%direct</emphasis>; the obsolete notation
 	      <literal>0.0.0.0</literal> is accepted). This option is
-	      necessary if <emphasis remap="B">pluto</emphasis>'s
+	      necessary if <command>pluto</command>'s
 	      host's interface used for sending packets to the peer is
 	      neither point-to-point nor directly connected to the
 	      peer.
@@ -1054,7 +1054,7 @@
           <listitem>
             <para>
 	      Specifies an external shell command to be run whenever
-	      <emphasis remap="B">pluto</emphasis> brings up or down a
+	      <command>pluto</command> brings up or down a
 	      connection. The script is used to build a shell command,
 	      so it may contain positional parameters, but ought not
 	      to have punctuation that would cause the resulting
@@ -1127,7 +1127,7 @@
             <para>
 	      All proposed or accepted IPsec SAs will include non-null
 	      ESP. The actual choices of transforms are wired into
-	      <emphasis remap="B">pluto</emphasis>.
+	      <command>pluto</command>.
 	    </para>
           </listitem>
         </varlistentry>
@@ -1141,7 +1141,7 @@
 	      All proposed IPsec SAs will include AH. All accepted
 	      IPsec SAs will include AH or ESP with
 	      authentication. The actual choices of transforms are
-	      wired into <emphasis remap="B">pluto</emphasis>.  Note
+	      wired into <command>pluto</command>.  Note
 	      that this has nothing to do with IKE
 	      authentication.
 	    </para>
@@ -1246,7 +1246,7 @@
 	      material will be generated for each IPsec SA when
 	      running Quick Mode in IKEv1 or Create Child in
 	      IKEv2. Without this option, the SAKMP SA keying material
-	      is used instead.  <emphasis remap="B">pluto</emphasis>
+	      is used instead.  <command>pluto</command>
 	      will propose the same group that was used with the
 	      original IKE SA.
 	    </para>
@@ -1486,7 +1486,7 @@
       </variablelist>
 
       <para>
-	<emphasis remap="B">pluto</emphasis> supports various X.509
+	<command>pluto</command> supports various X.509
 	Certificate related options.
       </para>
 
@@ -1595,11 +1595,11 @@
 	  </term>
           <listitem>
             <para>
-	      How long <emphasis remap="B">pluto</emphasis> will
+	      How long <command>pluto</command> will
 	      propose that an ISAKMP SA be allowed to live. The
 	      default is 3600 (one hour) and the maximum is 86400 (1
 	      day). This option will not affect what is
-	      accepted. <emphasis remap="B">pluto</emphasis> will
+	      accepted. <command>pluto</command> will
 	      reject proposals that exceed the maximum.
 	    </para>
           </listitem>
@@ -1611,11 +1611,11 @@
 	  </term>
           <listitem>
             <para>
-	      How long <emphasis remap="B">pluto</emphasis> will
+	      How long <command>pluto</command> will
 	      propose that an IPsec SA be allowed to live. The default
 	      is 28800 (eight hours) and the maximum is 86400 (one
 	      day). This option will not affect what is
-	      accepted. <emphasis remap="B">pluto</emphasis> will
+	      accepted. <command>pluto</command> will
 	      reject proposals that exceed the maximum.
 	    </para>
           </listitem>
@@ -1730,8 +1730,8 @@
       </variablelist>
 
       <para>
-	The route form of the <emphasis remap="B">whack</emphasis>
-	command tells <emphasis remap="B">pluto</emphasis> to set up
+	The route form of the <command>whack</command>
+	command tells <command>pluto</command> to set up
 	routing for a connection. Although like a traditional route,
 	it uses an ipsec device as a virtual interface. Once routing
 	is set up, no packets will be sent "in the clear" to the
@@ -1787,7 +1787,7 @@
       </variablelist>
 
       <para>
-	The initiate form tells <emphasis remap="B">pluto</emphasis>
+	The initiate form tells <command>pluto</command>
 	to initiate a negotiation with another <emphasis
 	remap="B">pluto</emphasis> (or other IKE daemon) according to
 	the named connection. Initiation requires a route that
@@ -1811,15 +1811,15 @@
             <para>
 	      The initiate form of the <emphasis
 	      remap="B">whack</emphasis> command will relay back from
-	      <emphasis remap="B">pluto</emphasis> status information
+	      <command>pluto</command> status information
 	      via the UNIX domain socket (unless --asynchronous is
 	      specified). The status information is meant to look a
 	      bit like that from <emphasis
 	      remap="B">FTP</emphasis>. Currently <emphasis
 	      remap="B">whack</emphasis> simply copies this to
 	      stderr. When the request is finished (eg. the SAs are
-	      established or <emphasis remap="B">pluto</emphasis>
-	      gives up), <emphasis remap="B">pluto</emphasis> closes
+	      established or <command>pluto</command>
+	      gives up), <command>pluto</command> closes
 	      the channel, causing <emphasis
 	      remap="B">whack</emphasis> to terminate.
 	    </para>
@@ -1858,7 +1858,7 @@
 	  </term>
           <listitem>
             <para>
-	      This will cause <emphasis remap="B">pluto</emphasis> to
+	      This will cause <command>pluto</command> to
 	      attempt to opportunistically initiate a connection from
 	      here to the there, even if a previous attempt had been
 	      made. The whack log will show the progress of this
@@ -2047,7 +2047,7 @@
 	      Specififies the identity of the peer for which a public
 	      key should be used. Its form is identical to the
 	      identity in the connection. If no public key is
-	      specified, <emphasis remap="B">pluto</emphasis> attempts
+	      specified, <command>pluto</command> attempts
 	      to find KEY records from DNS for the id (if a FQDN) or
 	      through reverse lookup (if an IP address). Note that
 	      there several interesting ways in which this is not
@@ -2085,17 +2085,17 @@
       </variablelist>
 
       <para>
-	The listen form tells <emphasis remap="B">pluto</emphasis> to
+	The listen form tells <command>pluto</command> to
 	start listening for IKE requests on its public interfaces. To
 	avoid race conditions, it is normal to load the appropriate
-	connections into <emphasis remap="B">pluto</emphasis> before
-	allowing it to listen. If <emphasis remap="B">pluto</emphasis>
+	connections into <command>pluto</command> before
+	allowing it to listen. If <command>pluto</command>
 	isn't listening, it is pointless to initiate negotiations, so
 	it will refuse requests to do so. Whenever the listen form is
-	used, <emphasis remap="B">pluto</emphasis> looks for public
+	used, <command>pluto</command> looks for public
 	interfaces and will notice when new ones have been added and
 	when old ones have been removed. This is also the trigger for
-	<emphasis remap="B">pluto</emphasis> to read the <emphasis
+	<command>pluto</command> to read the <emphasis
 	remap="I">ipsec.secrets</emphasis> file. So listen may useful
 	more than once.
       </para>
@@ -2128,7 +2128,7 @@
 
       <para>
 	The --ddos-auto, --ddos-busy and --ddos-unlimited options
-	tells <emphasis remap="B">pluto</emphasis> to update the DDoS
+	tells <command>pluto</command> to update the DDoS
 	protection state. Normally, these measures are automatically
 	activated or deactivated based on the number of states inside
 	pluto. The busy and unlimited option tells pluto to activate
@@ -2177,9 +2177,9 @@
 
       <para>
 	The status form will display information about the internal
-	state of <emphasis remap="B">pluto</emphasis>: information
+	state of <command>pluto</command>: information
 	about each potential connection, about each state object, and
-	about each shunt that <emphasis remap="B">pluto</emphasis> is
+	about each shunt that <command>pluto</command> is
 	managing without an associated connection.
       </para>
 
@@ -2228,7 +2228,7 @@
       <para>
 	The shutdown form is the proper way to shut down <emphasis
 	remap="B">pluto</emphasis>. It will tear down the SAs on this
-	machine that <emphasis remap="B">pluto</emphasis> has
+	machine that <command>pluto</command> has
 	negotiated. If the <emphasis
 	remap="B">--leave-state</emphasis> option is given, it does
 	not delete any connections, and leaves the kernel state in the
@@ -2254,7 +2254,7 @@
     <refsect2 id="examples">
       <title>Examples</title>
 
-      <para>It would be normal to start <emphasis remap="B">pluto</emphasis>
+      <para>It would be normal to start <command>pluto</command>
       in one of the system initialization scripts. It needs to be run by the
       superuser. Generally, no arguments are needed. To run in manually, the
       superuser can simply type</para>
@@ -2263,9 +2263,9 @@
 
       <para>The command will immediately return, but a <emphasis
       remap="B">pluto</emphasis> process will be left running, waiting for
-      requests from <emphasis remap="B">whack</emphasis> or a peer.</para>
+      requests from <command>whack</command> or a peer.</para>
 
-      <para>Using <emphasis remap="B">whack</emphasis>, several potential
+      <para>Using <command>whack</command>, several potential
       connections would be described:</para>
 
       <!-- .na -->
@@ -2289,7 +2289,7 @@
       <!-- .ad -->
 
       <para>This is something that must be done on both sides. If the other
-      side is <emphasis remap="B">pluto</emphasis>, the same <emphasis
+      side is <command>pluto</command>, the same <emphasis
       remap="B">whack</emphasis> command could be used on it (the command
       syntax is designed to not distinguish which end is ours).</para>
 
@@ -2302,13 +2302,13 @@
 
       <para>If we don't immediately wish to bring up a secure connection
       between the two clients, we might wish to prevent insecure traffic. The
-      routing form asks <emphasis remap="B">pluto</emphasis> to cause the
+      routing form asks <command>pluto</command> to cause the
       packets sent from our client to the peer's client to be routed through
       the ipsec0 device; if there is no SA, they will be discarded:</para>
 
       <para>&nbsp;&nbsp;&nbsp;ipsec whack --route conn_name</para>
 
-      <para>Finally, we are ready to get <emphasis remap="B">pluto</emphasis>
+      <para>Finally, we are ready to get <command>pluto</command>
       to initiate negotiation for an IPsec SA (and implicitly, an ISAKMP
       SA):</para>
 
@@ -2318,26 +2318,26 @@
       <para>A small log of interesting events will appear on standard output
       (other logging is sent to syslog).</para>
 
-      <para><emphasis remap="B">whack</emphasis> can also be used to terminate
-      <emphasis remap="B">pluto</emphasis> cleanly, tearing down all SAs that
+      <para><command>whack</command> can also be used to terminate
+      <command>pluto</command> cleanly, tearing down all SAs that
       it has negotiated.</para>
 
       <para>&nbsp;&nbsp;&nbsp;ipsec whack --shutdown</para>
 
       <para>Notification of any IPSEC SA deletion, but not ISAKMP SA deletion
       is sent to the peer. Unfortunately, such Notification is not reliable.
-      Furthermore, <emphasis remap="B">pluto</emphasis> itself ignores
+      Furthermore, <command>pluto</command> itself ignores
       Notifications.</para>
     </refsect2>
 
     <refsect2 id="xauth">
       <title>XAUTH</title>
 
-      <para>If <emphasis remap="B">pluto</emphasis> needs additional
+      <para>If <command>pluto</command> needs additional
       authentication, such as defined by the XAUTH specifications, then it may
-      ask <emphasis remap="B">whack</emphasis> to prompt the operator for
+      ask <command>whack</command> to prompt the operator for
       username or passwords. Typically, these will be entered interactively. A
-      GUI that wraps around <emphasis remap="B">whack</emphasis> may look for
+      GUI that wraps around <command>whack</command> may look for
       the 041 (username) or 040 (password) prompts, and display them to the
       user.</para>
 
@@ -2355,7 +2355,7 @@
     <refsect2 id="the_updown_command">
       <title>The updown command</title>
 
-      <para>Whenever <emphasis remap="B">pluto</emphasis> brings a connection
+      <para>Whenever <command>pluto</command> brings a connection
       up or down, it invokes the updown command. This command is specified
       using the <option>--updown</option> option. This allows for customized
       control over routing and firewall manipulation.</para>
@@ -2373,7 +2373,7 @@
             connection with the same clients is up. Generally, this is useful
             for deleting a route that might have been set up before <emphasis
             remap="B">pluto</emphasis> was run or perhaps by some agent not
-            known to <emphasis remap="B">pluto</emphasis>.</para>
+            known to <command>pluto</command>.</para>
           </listitem>
         </varlistentry>
 
@@ -2609,12 +2609,12 @@
       script should return an exit status of 0 if and only if it
       succeeds.</para>
 
-      <para><emphasis remap="B">Pluto</emphasis> waits for the script to
+      <para><command>pluto</command> waits for the script to
       finish and will not do any other processing while it is waiting. The
-      script may assume that <emphasis remap="B">pluto</emphasis> will not
+      script may assume that <command>pluto</command> will not
       change anything while the script runs. The script should avoid doing
       anything that takes much time and it should not issue any command that
-      requires processing by <emphasis remap="B">pluto</emphasis>. Either of
+      requires processing by <command>pluto</command>. Either of
       these activities could be performed by a background subprocess of the
       script.</para>
     </refsect2>
@@ -2630,7 +2630,7 @@
       percentage, between 0 and rekeyfuzz, of the rekeymargin.</para>
 
       <para>Similarly, when an SA that was initiated by the peer has only a
-      bit of lifetime left, <emphasis remap="B">pluto</emphasis> will try to
+      bit of lifetime left, <command>pluto</command> will try to
       initiate the creation of a replacement. To give preference to the
       initiator, this rekeying will only be initiated when the SA's remaining
       lifetime is half of rekeymargin. If rekeying is done by the responder,
@@ -2646,7 +2646,7 @@
       taken from the old SA (this is the case even if the former initiator is
       initiating). These may be stricter than those of the connection.</para>
 
-      <para><emphasis remap="B">pluto</emphasis> will not rekey an SA if that
+      <para><command>pluto</command> will not rekey an SA if that
       SA is not the most recent of its type (IPsec or ISAKMP) for its
       potential connection. This avoids creating redundant SAs.</para>
 
@@ -2671,7 +2671,7 @@
       <title>Selecting a Connection When Responding: Road Warrior
       Support</title>
 
-      <para>When <emphasis remap="B">pluto</emphasis> receives an initial Main
+      <para>When <command>pluto</command> receives an initial Main
       Mode message, it needs to decide which connection this message is for.
       It picks based solely on the source and destination IP addresses of the
       message. There might be several connections with suitable IP addresses,
@@ -2702,7 +2702,7 @@
       address from the packet; if there was no identity specified for the
       peer, the new IP address will be used.</para>
 
-      <para>When <emphasis remap="B">pluto</emphasis> is using one of these
+      <para>When <command>pluto</command> is using one of these
       temporary connections and needs to find the preshared secret or RSA
       private key in <emphasis remap="I">ipsec.secrets</emphasis>, and the
       connection specified no identity for the peer, <emphasis
@@ -2713,14 +2713,14 @@
       <para>Part way into the Phase 1 (Main Mode) negotiation using one of
       these temporary connection descriptions, <emphasis
       remap="B">pluto</emphasis> will receive an Identity Payload. At this
-      point, <emphasis remap="B">pluto</emphasis> checks for a more
+      point, <command>pluto</command> checks for a more
       appropriate connection, one with an identity for the peer that matches
       the payload and would use the same keys as so far used for
       authentication. If it finds one, it will switch to using this better
       connection (or a temporary one derived from this, if it has <emphasis
       remap="B">%any</emphasis> for the peer's IP address). It may even turn
       out that no connection matches the newly discovered identity, including
-      the current connection; if so, <emphasis remap="B">pluto</emphasis>
+      the current connection; if so, <command>pluto</command>
       terminates negotiation.</para>
 
       <para>Unfortunately, if preshared secret authentication is being used,
@@ -2732,7 +2732,7 @@
       after the initiator's Identity Payload is decoded (using the responder's
       private key, so that must be preselected).</para>
 
-      <para>When <emphasis remap="B">pluto</emphasis> is responding to a Quick
+      <para>When <command>pluto</command> is responding to a Quick
       Mode negotiation via one of these temporary connection descriptions, it
       may well find that the subnets specified by the initiator don't match
       those in the temporary connection description. If so, it will look for a
@@ -2740,16 +2740,16 @@
       of <emphasis remap="B">%any</emphasis> and matching identities. If it
       finds one, a new temporary connection is derived from this one and used
       for the Quick Mode negotiation of IPsec SAs. If it does not find one,
-      <emphasis remap="B">pluto</emphasis> terminates negotiation.</para>
+      <command>pluto</command> terminates negotiation.</para>
 
       <para>Be sure to specify an appropriate nexthop for the responder to
-      send a message to the initiator: <emphasis remap="B">pluto</emphasis>
+      send a message to the initiator: <command>pluto</command>
       has no way of guessing it (if forwarding isn't required, use an explicit
       <emphasis remap="B">%direct</emphasis> as the nexthop and the IP address
       of the initiator will be filled in; the obsolete notation
       <literal>0.0.0.0</literal> is still accepted).</para>
 
-      <para><emphasis remap="B">pluto</emphasis> has no special provision for
+      <para><command>pluto</command> has no special provision for
       the initiator side. The current (possibly dynamic) IP address and
       nexthop must be used in defining connections. These must be properly
       configured each time the initiator's IP address changes. <emphasis
@@ -2784,7 +2784,7 @@
       <title>Debugging</title>
 
       <para>
-	<emphasis remap="B">pluto</emphasis> accepts several optional
+	<command>pluto</command> accepts several optional
 	arguments, useful mostly for debugging. Except for
 	<option>--interface</option>, each should appear at most
 	once.
@@ -2831,10 +2831,10 @@
             <para>
 	      Basename for control files. <emphasis
 	      remap="I">path</emphasis>.ctl is the socket through
-	      which <emphasis remap="B">whack</emphasis> communicates
-	      with <emphasis remap="B">pluto</emphasis>. <emphasis
+	      which <command>whack</command> communicates
+	      with <command>pluto</command>. <emphasis
 	      remap="I">path</emphasis>.pid is the lockfile to prevent
-	      multiple <emphasis remap="B">pluto</emphasis>
+	      multiple <command>pluto</command>
 	      instances. The default is
 	      <filename>/var/run/pluto/pluto</filename>).
 	    </para>
@@ -2921,7 +2921,7 @@
       </variablelist>
 
       <para>
-	<emphasis remap="B">pluto</emphasis> is willing to produce a
+	<command>pluto</command> is willing to produce a
 	prodigious amount of debugging information.  There are several
 	classes of debugging output, and <emphasis
 	remap="B">pluto</emphasis> may be directed to produce a
@@ -2931,7 +2931,7 @@
       </para>
 
       <para>
-	When <emphasis remap="B">pluto</emphasis> is invoked, it may
+	When <command>pluto</command> is invoked, it may
 	be given arguments to specify which debug classes to output.
 	The current options are:
       </para>
@@ -2998,7 +2998,7 @@
 	      Enable (disable) logging of the specified debugging
 	      <replaceable>class</replaceable> (<option>--debug
 	      help</option> lists debugging classes supported by this
-	      version of <emphasis remap="B">pluto</emphasis>).
+	      version of <command>pluto</command>).
 	    </para>
           </listitem>
         </varlistentry>
@@ -3006,7 +3006,7 @@
       </variablelist>
 
       <para>
-	The debug form of the <emphasis remap="B">whack</emphasis>
+	The debug form of the <command>whack</command>
 	command will change the selection in a running <emphasis
 	remap="B">pluto</emphasis>. If a connection name is specified,
 	the flags are added whenever <emphasis
@@ -3016,7 +3016,7 @@
       </para>
 
       <para>
-	For example, to start <emphasis remap="B">pluto</emphasis>
+	For example, to start <command>pluto</command>
 	with both <emphasis>base</emphasis> and
 	<emphasis>cpu-usage</emphasis> debug-logging enabled:
       </para>
@@ -3026,7 +3026,7 @@
       </programlisting>
 
       <para>
-	To later change this <emphasis remap="B">pluto</emphasis> to
+	To later change this <command>pluto</command> to
 	disable <emphasis>base</emphasis> debug-logging use either:
       </para>
 
@@ -3046,13 +3046,13 @@
       <title>Impairing</title>
 
       <para>
-	<emphasis remap="B">pluto</emphasis> and <emphasis
+	<command>pluto</command> and <emphasis
 	remap="B">whack</emphasis> accept several optional arguments
 	that alter (impair) correct behaviour.
       </para>
       <para>
 	These options are solely intended for use by developers when
-	testing <emphasis remap="B">pluto</emphasis>.
+	testing <command>pluto</command>.
       </para>
 
       <variablelist remap="TP">
@@ -3103,7 +3103,7 @@
 	  </term>
           <listitem>
             <para>
-	      Alter (impair) <emphasis remap="B">pluto</emphasis>
+	      Alter (impair) <command>pluto</command>
 	      inducing the (possibly erroneous)
 	      <replaceable>behaviour</replaceable>.
 	    </para>
@@ -3118,7 +3118,7 @@
       <title>Pluto's Behaviour When Things Go Wrong</title>
 
       <para>
-	When <emphasis remap="B">pluto</emphasis> doesn't understand or
+	When <command>pluto</command> doesn't understand or
 	accept a message, it just ignores the message. It is not yet capable of
 	communicating the problem to the other IKE daemon (in the future it
 	might use Notifications to accomplish this in many cases). It does log a
@@ -3126,7 +3126,7 @@
       </para>
 
       <para>
-	When <emphasis remap="B">pluto</emphasis> gets no response from a
+	When <command>pluto</command> gets no response from a
 	message, it resends the same message (a message will be sent at most
 	three times). This is appropriate: UDP is unreliable.
       </para>
@@ -3139,9 +3139,9 @@
 
       <para>
 	Combine these three rules, and you can explain many apparently
-	mysterious behaviours. In a <emphasis remap="B">pluto</emphasis> log,
+	mysterious behaviours. In a <command>pluto</command> log,
 	retrying isn't usually the interesting event. The critical thing is
-	either earlier (<emphasis remap="B">pluto</emphasis> got a message that
+	either earlier (<command>pluto</command> got a message that
 	it didn't like and so ignored, so it was still awaiting an acceptable
 	message and got impatient) or on the other system (<emphasis
 	remap="B">pluto</emphasis> didn't send a reply because it wasn't happy
@@ -3158,7 +3158,7 @@
 	The range 0 to 0xFF is reserved for IANA. <emphasis
 	remap="B">Pluto</emphasis> also avoids choosing an SPI in the range
 	0x100 to 0xFFF, leaving these SPIs free for manual keying. Remember that
-	the peer, if not <emphasis remap="B">pluto</emphasis>, may well chose
+	the peer, if not <command>pluto</command>, may well chose
 	SPIs in this range.
       </para>
     </refsect2>
@@ -3168,7 +3168,7 @@
 
       <para>
 	This catalogue of policies may be of use when trying to configure
-	<emphasis remap="B">Pluto</emphasis> and another IKE implementation to
+	<command>pluto</command> and another IKE implementation to
 	interoperate.
       </para>
 
@@ -3282,7 +3282,7 @@
             <para>When responding to an IPSEC SA proposal, the maximum
             acceptable lifetime is one day. The default is eight hours. There
             is no minimum. The --ipseclifetime flag controls this when
-            <emphasis remap="B">pluto</emphasis> is initiating.</para>
+            <command>pluto</command> is initiating.</para>
           </listitem>
         </varlistentry>
 
@@ -3302,18 +3302,18 @@
   <refsect1 id="signals">
     <title>SIGNALS</title>
 
-    <para><emphasis remap="B">Pluto</emphasis> responds to
+    <para><command>pluto</command> responds to
     <constant>SIGHUP</constant> by issuing a suggestion that ``<emphasis
     remap="B">whack</emphasis> --listen'' might have been intended.</para>
 
-    <para><emphasis remap="B">Pluto</emphasis> exits when it receives
+    <para><command>pluto</command> exits when it receives
     <constant>SIGTERM</constant>.</para>
   </refsect1>
 
   <refsect1 id="exit_status">
     <title>EXIT STATUS</title>
 
-    <para><emphasis remap="B">pluto</emphasis> normally forks a daemon
+    <para><command>pluto</command> normally forks a daemon
     process, so the exit status is normally a very preliminary result.</para>
 
     <variablelist remap="TP">
@@ -3342,9 +3342,9 @@
       </varlistentry>
     </variablelist>
 
-    <para>If <emphasis remap="B">whack</emphasis> detects a problem, it will
+    <para>If <command>whack</command> detects a problem, it will
     return an exit status of 1. If it received progress messages from
-    <emphasis remap="B">pluto</emphasis>, it returns as status the value of
+    <command>pluto</command>, it returns as status the value of
     the numeric prefix from the last such message that was not a message sent
     to syslog or a comment (but the prefix for success is treated as 0).
     Otherwise, the exit status is 0.</para>
@@ -3376,7 +3376,7 @@
         <refentrytitle>ipsec</refentrytitle>
         <manvolnum>8</manvolnum>
       </citerefentry>
-      is designed to make using <emphasis remap="B">pluto</emphasis>
+      is designed to make using <command>pluto</command>
       more pleasant. Use it!
     </para>
 

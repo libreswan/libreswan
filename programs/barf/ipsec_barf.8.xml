@@ -26,7 +26,7 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>Barf</emphasis>
+      <command>barf</command>
       outputs (on standard output) a collection of debugging information
       (contents of files, selections from logs, etc.)
       related to the IPsec encryption/authentication system.
@@ -38,7 +38,7 @@
 
     <para>
       The <option>--short</option> option limits the length of the log
-      portion of <emphasis remap='I'>barf</emphasis>'s output, which
+      portion of <command>barf</command>'s output, which
       can otherwise be extremely voluminous
       if debug logging is turned on.
     </para>
@@ -50,7 +50,7 @@
     </para>
 
     <para>
-      <emphasis remap='I'>Barf</emphasis> censors its output, replacing keys
+      <command>barf</command> censors its output, replacing keys
       and secrets with brief checksums to avoid revealing sensitive information.
     </para>
 
@@ -60,7 +60,7 @@
     </para>
 
     <para>
-      <emphasis remap='I'>Barf</emphasis> has to figure out which files in
+      <command>barf</command> has to figure out which files in
       <filename>/var/log</filename> contain the IPsec log messages. It looks for
       general log messages first in <emphasis remap='I'>messages</emphasis>
       and <emphasis remap='I'>syslog</emphasis>, and for Pluto messages first in
@@ -93,17 +93,17 @@
   <refsect1 id='bugs'>
     <title>BUGS</title>
     <para>
-      <emphasis remap='I'>Barf</emphasis> uses heuristics to try to pick
+      <command>barf</command> uses heuristics to try to pick
       relevant material out of the logs, and relevant messages
       that are not labelled with any of the tags that
-      <emphasis remap='I'>barf</emphasis> looks for will be lost.
+      <command>barf</command> looks for will be lost.
       We think we've eliminated the last such case, but one never knows...
     </para>
 
     <para>
       Finding <emphasis remap='I'>updown</emphasis>
       scripts (so they can be included in output) is, in general, difficult.
-      <emphasis remap='I'>Barf</emphasis>
+      <command>barf</command>
       uses a very simple heuristic that is easily fooled.
     </para>
 

@@ -32,7 +32,7 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>rsasigkey</emphasis> generates an RSA public/private
+      <command>rsasigkey</command> generates an RSA public/private
       key pair, suitable for digital signatures, of (exactly)
       <emphasis remap='I'>nbits</emphasis> bits (that is, two primes each of exactly
       <emphasis remap='I'>nbits</emphasis>/2 bits, and related numbers) and
@@ -157,7 +157,7 @@
       currently 20000.
     </para>
     <para>
-      <emphasis remap='I'>rsasigkey</emphasis>'s run time is difficult
+      <command>rsasigkey</command>'s run time is difficult
       to predict, since <filename>/dev/random</filename> output can
       be arbitrarily delayed if the system's entropy pool is low on
       randomness, and  the time taken by the search for primes is also somewhat

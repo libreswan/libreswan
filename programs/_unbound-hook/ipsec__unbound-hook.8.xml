@@ -16,7 +16,7 @@
   <!-- body begins here -->
   <refsynopsisdiv id='synopsis'>
     <para>
-      <emphasis remap='I'>_unbound-hook</emphasis>
+      <command>_unbound-hook</command>
       is invoked by the unbound DNS server to inform pluto of a new hostname, IP
       address and public key, so that pluto can opportunistically initiate an
       IPsec connection. Please see the libreswan wiki for more information about

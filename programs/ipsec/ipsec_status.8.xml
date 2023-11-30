@@ -27,7 +27,7 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>Status</emphasis> operation asks <emphasis remap='I'>pluto</emphasis>
+      <emphasis remap='I'>Status</emphasis> operation asks <command>pluto</command>
       for current connections status information.
     </para>
   </refsect1>
