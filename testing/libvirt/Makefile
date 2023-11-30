@@ -13,6 +13,7 @@
 # for more details.
 
 include ../../mk/dirs.mk
+include ../../mk/config.mk
 
 # Note: GNU Make doesn't let you combine pattern targets (e.x.,
 # kvm-install-%: kvm-reboot-%) with .PHONY.  Consequently, so that
