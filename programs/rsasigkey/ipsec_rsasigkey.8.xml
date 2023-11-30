@@ -140,11 +140,11 @@
       by Henry Spencer. Updated for the Libreswan Project by Paul Wouters.
     </para>
     <para>
-      The <emphasis remap='I'>--round</emphasis> and <emphasis remap='I'>--noopt</emphasis>
+      The <option>--round</option> and <emphasis remap='I'>--noopt</emphasis>
       options were obsoleted as these were only used with the old non-library crypto code
     </para>
     <para>
-      The <emphasis remap='I'>--random</emphasis> device is only used for seeding the crypto library,
+      The <option>--random</option> device is only used for seeding the crypto library,
       not for direct random to generate keys
     </para>
   </refsect1>
