@@ -8,7 +8,7 @@
       startup; currently-accepted values are <emphasis
       remap='B'>add</emphasis> (signifying an <emphasis
       remap='B'>ipsec auto</emphasis> <option>--add</option>),
-      <emphasis remap='B'>ondemand</emphasis> (signifying that plus an
+      <command>ondemand</command> (signifying that plus an
       <emphasis remap='B'>ipsec auto</emphasis>
       <option>--ondemand</option>), <emphasis
       remap='B'>start</emphasis> (signifying that plus an <emphasis
@@ -24,8 +24,8 @@
       to ensure that any reboot causes immediate renegotiation).
     </para>
     <para>
-      The option <emphasis remap='B'>ondemand</emphasis> used to be
-      called <emphasis remap='B'>route</emphasis>
+      The option <command>ondemand</command> used to be
+      called <command>route</command>
     </para>
   </listitem>
 </varlistentry>

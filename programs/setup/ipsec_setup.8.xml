@@ -19,7 +19,7 @@
     <title>DESCRIPTION</title>
     <para>
       <command>setup</command>
-      is called (via <emphasis remap='I'>ipsec setup</emphasis>) by the system
+      is called (via <command>ipsec setup</command>) by the system
       administrator to perform init system related tasks to Libreswan, such as
       start, stop, status, reload, etc for the Internet Keying Exchange (IKE)
       daemon pluto. It is available for backwards compatibility with Openswan

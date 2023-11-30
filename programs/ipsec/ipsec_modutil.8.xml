@@ -26,7 +26,7 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>modutil</emphasis> is a helper to run NSS modutil
+      <command>modutil</command> is a helper to run NSS modutil
       on IPsec NSS database with <option>-dbdir @@IPSEC_NSSDIR@@</option> option.
       See <option>modutil</option>(1) for other options.
     </para>

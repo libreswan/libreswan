@@ -26,7 +26,7 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>vfychain</emphasis> is a helper to run NSS vfychain
+      <command>vfychain</command> is a helper to run NSS vfychain
       on IPsec NSS database with <option>-d @@IPSEC_NSSDIR@@</option> option.
     </para>
   </refsect1>

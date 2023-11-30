@@ -30,7 +30,7 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>ipsec _stackmanager</emphasis> is called
+      <command>ipsec _stackmanager</command> is called
       from within the init sub-system (systemd, upstart, sysv initscripts)
       to bring up the Libreswan kernel component as configured via the
       <emphasis remap='I'>protostack=</emphasis> option in the <emphasis

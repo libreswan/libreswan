@@ -6,7 +6,7 @@
     <para>
       Whether pluto should produce Linux Auditing System log
       messages. If enabled, pluto will log <emphasis
-      remap='I'>start</emphasis>, <emphasis remap='I'>stop</emphasis>
+      remap='I'>start</emphasis>, <command>stop</command>
       and <emphasis remap='I'>fail</emphasis> for the negotiation of
       IKE and IPsec SA's. The kernel will also log success and
       failures for actually adding and removing IPsec SA's from the

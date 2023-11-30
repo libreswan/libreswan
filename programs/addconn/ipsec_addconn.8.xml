@@ -96,7 +96,7 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>ipsec addconn</emphasis>
+      <command>ipsec addconn</command>
       takes a config file (or stdin) containing the format of ipsec.conf,
       or the format of individual "conn" sections, and uses that information
       to load named or all connections defined in that configuration file
@@ -113,8 +113,8 @@
 
     <para>
       When addcon is run, connections that have the <emphasis remap='I'>auto=</emphasis>
-      option set to <emphasis remap='I'>add</emphasis>, <emphasis remap='I'>start</emphasis>
-      or <emphasis remap='I'>route</emphasis> will be loaded, routed or initiated.
+      option set to <command>add</command>, <command>start</command>
+      or <command>route</command> will be loaded, routed or initiated.
       If a connection was loaded or initiated already, it will be replaced.
     </para>
 

@@ -3,7 +3,7 @@
   <listitem>
 <para>what "updown" script to run to adjust routing and/or
 firewalling when the status of the connection changes (default
-<emphasis remap='B'>ipsec _updown</emphasis>).
+<command>ipsec _updown</command>).
 May include positional parameters separated by white space
 (although this requires enclosing the whole string in quotes);
 including shell metacharacters is unwise. An example to enable

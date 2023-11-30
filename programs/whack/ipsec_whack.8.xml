@@ -655,7 +655,7 @@
     <title>DESCRIPTION</title>
 
     <para>
-      <emphasis remap="B">ipsec whack</emphasis> is an auxiliary
+      <command>ipsec whack</command> is an auxiliary
       program to allow requests to be made to a running <emphasis
       remap="B">pluto</emphasis>. <command>whack</command>
       uses a UNIX domain socket to speak to <emphasis
@@ -3450,7 +3450,7 @@
     <title>EXIT STATUS</title>
 
     <para>
-      If <emphasis remap="B">ipsec whack</emphasis> detects a problem,
+      If <command>ipsec whack</command> detects a problem,
       it will return an exit status of 1. If it received progress
       messages from <command>pluto</command>, it returns
       as status the value of the numeric prefix from the last such
