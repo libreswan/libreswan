@@ -33,7 +33,7 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>showroute</emphasis> outputs (on standard
+      <command>showroute</command> outputs (on standard
       output) the source, gateway, and destination address for the
       specified IP address.
     </para>

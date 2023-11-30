@@ -19,7 +19,7 @@
 
   <refsynopsisdiv id="synopsis">
     <para>
-      <emphasis remap="I">_updown</emphasis> is invoked by pluto when it
+      <command>_updown</command> is invoked by pluto when it
       has brought up a new connection. This script is used to insert the
       appropriate routing entries for IPsec operation. The BSD version of this
       script does very little at present, and does not support the sourceip=

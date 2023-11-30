@@ -38,7 +38,7 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>ipsec</emphasis> invokes any of several utilities
+      <command>ipsec</command> invokes any of several utilities
       involved in controlling the IPsec encryption/authentication system,
       running the specified <emphasis remap='I'>command</emphasis> with the
       specified <emphasis remap='I'>argument</emphasis>s as if it had been

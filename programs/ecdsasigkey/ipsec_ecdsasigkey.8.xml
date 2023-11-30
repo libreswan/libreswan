@@ -32,7 +32,7 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>ecdsasigkey</emphasis>
+      <command>ecdsasigkey</command>
       generates an ECDSA public/private key pair, suitable for digital signatures, on a named curve specified with
       <emphasis remap='I'>curvename</emphasis>. Currently it only accepts <emphasis remap='I'>secp256r1</emphasis>,
       <emphasis remap='I'>secp384r1</emphasis>, and <emphasis remap='I'>secp521r1</emphasis>.
@@ -147,7 +147,7 @@
   <refsect1 id='bugs'>
     <title>BUGS</title>
     <para>
-      <emphasis remap='I'>ecdsasigkey</emphasis>'s run time is difficult
+      <command>ecdsasigkey</command>'s run time is difficult
       to predict, since <filename>/dev/random</filename> output can
       be arbitrarily delayed if the system's entropy pool is low on
       randomness, and  the time taken by the search for primes is also somewhat

@@ -305,7 +305,7 @@ IN    IPSECKEY  10 1 2 10.11.12.13  AQOF8tZ2...+buFuFn/"
     <title>BUGS</title>
     <para>
       Arguably, rather than just reporting the no-IN-KEY-line-found
-      problem, <emphasis remap='I'>showhostkey</emphasis> should be
+      problem, <command>showhostkey</command> should be
       smart enough to run the existing key through <emphasis
       remap='I'>rsasigkey</emphasis> with the
       <option>--oldkey</option> option, to generate a suitable output

@@ -157,7 +157,7 @@
       cannot be created, <command>pluto</command> exits -
       this prevents multiple <command>pluto</command>s
       from competing Any "leftover" lockfile must be removed before
-      <command>pluto</command> will run. <emphasis>pluto</emphasis>
+      <command>pluto</command> will run. <command>pluto</command>
       writes its PID into this file so that scripts can find it. This
       lockwill not function properly if it is on an NFS volume (but sharing
       locks on multiple machines doesn't make sense anyway).
