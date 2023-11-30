@@ -25,7 +25,7 @@ PROGRAM = pluto
 
 # XXX: Pluto doesn't include mk/program.mk and define PROGRAM
 PROGRAM_MANPAGE = # suppress default
-MANPAGES += ipsec_pluto.7
+MANPAGES += libreswan.7
 MANPAGES += ipsec_pluto.8
 
 #
