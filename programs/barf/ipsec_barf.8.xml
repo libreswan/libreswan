@@ -75,11 +75,10 @@
   <refsect1 id='files'>
     <title>FILES</title>
     <literallayout remap='.nf'>
-      /proc/net/*
-      /var/log/*
-      @@IPSEC_CONF@@
-      @@IPSEC_SECRETS@@
-    </literallayout>
+/proc/net/*
+/var/log/*
+@@IPSEC_CONF@@
+@@IPSEC_SECRETS@@</literallayout>
   </refsect1>
 
   <refsect1 id='history'>
