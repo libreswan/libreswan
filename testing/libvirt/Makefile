@@ -868,7 +868,7 @@ $(KVM_POOLDIR_PREFIX)%-base: \
 	:     [user@host pwd 0]#
 	:
 	$(KVMSH) $(notdir $@) -- true
-	! $(KVMSH) $(notdir $@) -- false
+	! ( $(KVMSH) $(notdir $@) -- false )
 	:
 	: Check that /pool - KVM_POOLDIR - is mounted.
 	:
