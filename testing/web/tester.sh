@@ -211,16 +211,18 @@ while true ; do
 
     targets="distclean html" # NATIVE!
     finished=""
-    oss="+fedora ~freebsd ~netbsd ~openbsd ~alpine -debian"
+    oss="+fedora ~freebsd ~netbsd ~openbsd ~alpine ~debian"
 
     if ${build_kvms} ; then
 	targets="${targets} kvm-purge"
 	for os in $oss ; do
+	    # i.e., kvm-upgrade+OS and kvm-upgrade~OS
 	    targets="${targets} kvm-upgrade${os}"
 	    targets="${targets} kvm-transmogrify${os}"
 	done
     else
 	for os in $oss ; do
+	    # i.e., kvm-shutdown+OS and kvm-shutdown~OS
 	    targets="${targets} kvm-shutdown${os}"
 	    targets="${targets} kvm-transmogrify${os}"
 	done
@@ -268,9 +270,12 @@ while true ; do
 	    case ${target} in
 		html )
 		    mkdir -p ${resultsdir}/documentation
-		    # does make html generate index.html?
-		    # cp ${webdir}/documentation.html ${resultsdir}/documentation/index.html
-		    cp -rv ${repodir}/OBJ.*/html/*.html ${resultsdir}/documentation
+		    rm -f ${resultsdir}/documentation/*.html
+		    cp -v ${repodir}/OBJ.*/html/*.html ${resultsdir}/documentation/
+		    # Use libreswan.7 as the index page since that
+		    # should be the starting point for someone reading
+		    # about libreswan.
+		    cp -v ${repodir}/OBJ.*/html/libreswan.7.html ${resultsdir}/documentation/index.html
 		    ;;
 		kvm-check )
 		    # should only update when latest
