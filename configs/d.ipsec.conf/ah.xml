@@ -7,12 +7,16 @@
       A comma separated list of AH algorithms that will be
       offered/accepted when negotiating the Child SA.  The general
       syntax is:
-      <programlisting>
-	AH = PROPOSAL[,PROPOSAL...]
-	PROPOSAL = INTEG_ALGS[-DH_ALGS]
-	INTEG_ALGS = INTEG_ALG[+INTEG_ALG...]
-	DH_ALGS = DH_ALG[+DH_ALG...]
-      </programlisting>
+    </para>
+    <para>
+      <simplelist columns='1'>
+	<member>AH = PROPOSAL[,PROPOSAL...]</member>
+	<member>PROPOSAL = INTEG_ALGS[-DH_ALGS]</member>
+	<member>INTEG_ALGS = INTEG_ALG[+INTEG_ALG...]</member>
+	<member>DH_ALGS = DH_ALG[+DH_ALG...]</member>
+      </simplelist>
+    </para>
+    <para>
       During startup,
       <citerefentry>
 	<refentrytitle>ipsec_pluto</refentrytitle>
@@ -33,16 +37,17 @@
     </para>
     <para>
       For instance:
-      <programlisting>
-	ah=sha2_256+sha2_512
-	ah=sha2_256+sha2_512-dh14+dh19
-      </programlisting>
+    </para>
+    <para>
+      <simplelist columns='1'>
+	<member><computeroutput>ah=sha2_256+sha2_512</computeroutput></member>
+	<member><computeroutput>ah=sha2_256+sha2_512-dh14+dh19</computeroutput></member>
+      </simplelist>
+    </para>
+    <para>
       If not specified, a secure set of defaults will be used.  The
-      program:
-      <programlisting>
-	ipsec algparse ah=...
-      </programlisting>
-      can be used to query these defaults.
+      command <command>ipsec algparse ah=...</command> can be used to
+      query these defaults.
     </para>
   </listitem>
 </varlistentry>

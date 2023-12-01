@@ -3034,24 +3034,26 @@
 	<emphasis>cpu-usage</emphasis> debug-logging enabled:
       </para>
 
-      <programlisting>
-	pluto --debug base --debug cpu-usage
-      </programlisting>
+      <para>
+	<userinput>ipsec pluto --debug base --debug cpu-usage</userinput>
+      </para>
 
       <para>
 	To later change this <command>pluto</command> to
 	disable <emphasis>base</emphasis> debug-logging use either:
       </para>
 
-      <programlisting>
-	whack --no-debug base
-      </programlisting>
+      <para>
+	<userinput>ipsec whack --no-debug base</userinput>
+      </para>
+
       <para>
 	or:
       </para>
-      <programlisting>
-	whack --debug none --debug cpu-usage
-      </programlisting>
+
+      <para>
+	<userinput>ipsec whack --debug none --debug cpu-usage</userinput>
+      </para>
 
     </refsect2>
 
