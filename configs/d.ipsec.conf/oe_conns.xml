@@ -8,58 +8,55 @@
     special named conns that are used to implement the default policy
     groups. Currently, these names cannot be changed.
   </para>
-
-<!-- .ne 8 -->
-<literallayout remap='.nf'>
-
-conn clear
-	type=passthrough
-	authby=never
-	left=%defaultroute
-	right=%group
-	auto=ondemand
-
-conn clear-or-private
-	type=tunnel
-	left=%defaultroute
-	authby=null
-	leftid=%null
-	rightid=%null
-	right=%opportunisticgroup
-	failureshunt=passthrough
-	negotiationshunt=passthrough
-	auto=add
-
-conn private-or-clear
-	type=tunnel
-	left=%defaultroute
-	authby=null
-	leftid=%null
-	rightid=%null
-	right=%opportunisticgroup
-	failureshunt=passthrough
-	negotiationshunt=passthrough
-	auto=ondemand
-
-conn private
-	type=tunnel
-	left=%defaultroute
-	leftid=%null
-	rightid=%null
-	right=%opportunisticgroup
-	negotiationshunt=hold
-	failureshunt=drop
-	auto=ondemand
-
-conn block
-	type=reject
-	authby=never
-	left=%defaultroute
-	right=%group
-	auto=ondemand
-
-</literallayout> <!-- .fi -->
-
+  <para>
+    <simplelist>
+      <member><computeroutput>conn clear</computeroutput></member>
+      <member><computeroutput> type=passthrough</computeroutput></member>
+      <member><computeroutput> authby=never</computeroutput></member>
+      <member><computeroutput> left=%defaultroute</computeroutput></member>
+      <member><computeroutput> right=%group</computeroutput></member>
+      <member><computeroutput> auto=ondemand</computeroutput></member>
+      <member><computeroutput> </computeroutput></member>
+      <member><computeroutput>conn clear-or-private</computeroutput></member>
+      <member><computeroutput> type=tunnel</computeroutput></member>
+      <member><computeroutput> left=%defaultroute</computeroutput></member>
+      <member><computeroutput> authby=null</computeroutput></member>
+      <member><computeroutput> leftid=%null</computeroutput></member>
+      <member><computeroutput> rightid=%null</computeroutput></member>
+      <member><computeroutput> right=%opportunisticgroup</computeroutput></member>
+      <member><computeroutput> failureshunt=passthrough</computeroutput></member>
+      <member><computeroutput> negotiationshunt=passthrough</computeroutput></member>
+      <member><computeroutput> auto=add</computeroutput></member>
+      <member><computeroutput> </computeroutput></member>
+      <member><computeroutput>conn private-or-clear</computeroutput></member>
+      <member><computeroutput> type=tunnel</computeroutput></member>
+      <member><computeroutput> left=%defaultroute</computeroutput></member>
+      <member><computeroutput> authby=null</computeroutput></member>
+      <member><computeroutput> leftid=%null</computeroutput></member>
+      <member><computeroutput> rightid=%null</computeroutput></member>
+      <member><computeroutput> right=%opportunisticgroup</computeroutput></member>
+      <member><computeroutput> failureshunt=passthrough</computeroutput></member>
+      <member><computeroutput> negotiationshunt=passthrough</computeroutput></member>
+      <member><computeroutput> auto=ondemand</computeroutput></member>
+      <member><computeroutput> </computeroutput></member>
+      <member><computeroutput>conn private</computeroutput></member>
+      <member><computeroutput> type=tunnel</computeroutput></member>
+      <member><computeroutput> left=%defaultroute</computeroutput></member>
+      <member><computeroutput> leftid=%null</computeroutput></member>
+      <member><computeroutput> rightid=%null</computeroutput></member>
+      <member><computeroutput> right=%opportunisticgroup</computeroutput></member>
+      <member><computeroutput> negotiationshunt=hold</computeroutput></member>
+      <member><computeroutput> failureshunt=drop</computeroutput></member>
+      <member><computeroutput> auto=ondemand</computeroutput></member>
+      <member><computeroutput> </computeroutput></member>
+      <member><computeroutput>conn block</computeroutput></member>
+      <member><computeroutput> type=reject</computeroutput></member>
+      <member><computeroutput> authby=never</computeroutput></member>
+      <member><computeroutput> left=%defaultroute</computeroutput></member>
+      <member><computeroutput> right=%group</computeroutput></member>
+      <member><computeroutput> auto=ondemand</computeroutput></member>
+    </simplelist>
+  </para>
 </refsect1>
 
 <refsect1 id='policy_group_files'>
@@ -71,20 +68,18 @@ conn block
     <filename>/etc/ipsec.d/policies</filename>,
     including
   </para>
-<literallayout remap='.nf'>
-
-/etc/ipsec.d/policies/clear
-/etc/ipsec.d/policies/clear-or-private
-/etc/ipsec.d/policies/private-or-clear
-/etc/ipsec.d/policies/private
-/etc/ipsec.d/policies/block
-
-</literallayout> <!-- .fi -->
-<para>
-  may contain policy group configuration information to supplement
-  <emphasis remap='I'>ipsec.conf</emphasis>.  Their contents are not
-  security-sensitive.
-</para>
+  <para>
+    <filename>/etc/ipsec.d/policies/clear</filename>
+    <filename>/etc/ipsec.d/policies/clear-or-private</filename>
+    <filename>/etc/ipsec.d/policies/private-or-clear</filename>
+    <filename>/etc/ipsec.d/policies/private</filename>
+    <filename>/etc/ipsec.d/policies/block</filename>
+  </para>
+  <para>
+    may contain policy group configuration information to supplement
+    <emphasis remap='I'>ipsec.conf</emphasis>.  Their contents are not
+    security-sensitive.
+  </para>
 
 <para>
   These files are text files.  Each consists of a list of CIDR blocks,

@@ -202,9 +202,11 @@
 	      respectively.  For example, <option>--left</option> might
 	      give (with the key data trimmed down for clarity):
 	    </para>
-	    <literallayout>
-leftrsasigkey=0sAQOF8tZ2...+buFuFn/
-	    </literallayout>
+	    <para>
+	      <simplelist columns='1'>
+		<member><computeroutput>leftrsasigkey=0sAQOF8tZ2...+buFuFn/</computeroutput></member>
+	      </simplelist>
+	    </para>
 	  </listitem>
 	</varlistentry>
 
@@ -227,9 +229,11 @@ leftrsasigkey=0sAQOF8tZ2...+buFuFn/
 	      10.11.12.13</option> might give (with the key data trimmed
 	      for clarity):
 	    </para>
-	    <literallayout>
-IN    IPSECKEY  10 1 2 10.11.12.13  AQOF8tZ2...+buFuFn/"
-	    </literallayout>
+	    <para>
+	      <simplelist columns='1'>
+		<member><computeroutput>IN    IPSECKEY  10 1 2 10.11.12.13  AQOF8tZ2...+buFuFn/"</computeroutput></member>
+	      </simplelist>
+	    </para>
 
 	  </listitem>
 	</varlistentry>

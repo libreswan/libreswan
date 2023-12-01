@@ -8,18 +8,15 @@
     remap='B'>setup</emphasis>, which contains information used when
     the software is being started (see
     <citerefentry><refentrytitle>ipsec_setup</refentrytitle><manvolnum>8</manvolnum></citerefentry>).
-    Here's an example:</para>
-
-  <!-- .ne 8 -->
-  <literallayout remap='.nf'>
-    <!-- .ta 1c -->
-    <emphasis remap='B'>
-      config setup
-      logfile=/var/log/pluto.log
-      plutodebug=all
-    </emphasis>
-  </literallayout> <!-- .fi -->
-
+    Here's an example:
+  </para>
+  <para>
+    <simplelist columns='1'>
+      <member><computeroutput>config setup</computeroutput></member>
+      <member><computeroutput>    logfile=/var/log/pluto.log</computeroutput></member>
+      <member><computeroutput>    plutodebug=all</computeroutput></member>
+    </simplelist>
+  </para>
   <para>
     Parameters are optional unless marked &ldquo;(required)&rdquo;.
   </para>

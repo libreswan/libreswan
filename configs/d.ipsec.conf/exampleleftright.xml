@@ -9,24 +9,22 @@
     Here's a simple example:
   </para>
 
-<!-- .ne 10 -->
-<literallayout remap='.nf'>
-<!-- .ta 1c -->
-<emphasis remap='B'>
-conn snt
-	left=10.11.11.1
-	leftsubnet=10.0.1.0/24
-	leftnexthop=172.16.55.66
-	leftsourceip=10.0.1.1
-	right=192.168.22.1
-	rightsubnet=10.0.2.0/24
-	rightnexthop=172.16.88.99
-	rightsourceip=10.0.2.1
-</emphasis>
-</literallayout> <!-- .fi -->
+  <para>
+    <simplelist columns='1'>
+      <member><computeroutput>conn snt</computeroutput></member>
+      <member><computeroutput> left=10.11.11.1</computeroutput></member>
+      <member><computeroutput> leftsubnet=10.0.1.0/24</computeroutput></member>
+      <member><computeroutput> leftnexthop=172.16.55.66</computeroutput></member>
+      <member><computeroutput> leftsourceip=10.0.1.1</computeroutput></member>
+      <member><computeroutput> right=192.168.22.1</computeroutput></member>
+      <member><computeroutput> rightsubnet=10.0.2.0/24</computeroutput></member>
+      <member><computeroutput> rightnexthop=172.16.88.99</computeroutput></member>
+      <member><computeroutput> rightsourceip=10.0.2.1</computeroutput></member>
+    </simplelist>
+  </para>
 
-<para> A note on terminology...  In automatic keying, there are two
-kinds of communications going on: transmission of user IP packets, and
+    <para> A note on terminology...  In automatic keying, there are two
+    kinds of communications going on: transmission of user IP packets, and
 gateway-to-gateway negotiations for keying, rekeying, and general
 control.  The data path (a set of &ldquo;IPsec SAs&rdquo;) used for
 user packets is herein referred to as the &ldquo;connection&rdquo;;
