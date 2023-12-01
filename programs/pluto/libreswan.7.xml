@@ -26,13 +26,15 @@
     <para>
       <application>Libreswan</application> is an Internet Key Exchange
       (IKE) manager.  It consists of the Internet Key Exchange Daemon <command>pluto</command> (see
-      <citerefentry><refentrytitle><command>ipsec pluto</command></refentrytitle>
+      <citerefentry><refentrytitle>ipsec_pluto</refentrytitle>
       <manvolnum>8</manvolnum></citerefentry>), the auxiliary command
-      <citerefentry><refentrytitle><command>ipsec</command></refentrytitle>
-      <manvolnum>8</manvolnum></citerefentry> that provides a way to
-      manipulate <command>pluto</command>, and the configuration file
-      <citerefentry><refentrytitle><filename>ipsec.conf</filename></refentrytitle>
-      <manvolnum>5</manvolnum></citerefentry>.  In addition, an
+      <command>ipsec</command> that provides a way to
+      manipulate <command>pluto</command> (see
+      <citerefentry><refentrytitle>ipsec</refentrytitle>
+      <manvolnum>8</manvolnum></citerefentry>), and the configuration
+      file <filename>ipsec.conf</filename> (see 
+      <citerefentry><refentrytitle>ipsec.conf</refentrytitle>
+      <manvolnum>5</manvolnum></citerefentry>).  In addition, an
       <application>NSS</application> trust store is needed when using
       either <application>X.509</application> or raw private keys.
     </para>
