@@ -27,12 +27,10 @@ SUBDIRS += whack
 
 SUBDIRS += _import_crl
 SUBDIRS += _plutorun
-SUBDIRS += _secretcensor
 SUBDIRS += _unbound-hook
 SUBDIRS += _updown
 SUBDIRS += addconn
 SUBDIRS += algparse
-SUBDIRS += barf
 SUBDIRS += cavp
 SUBDIRS += ecdsasigkey
 SUBDIRS += ipsec

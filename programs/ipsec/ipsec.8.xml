@@ -86,18 +86,6 @@
 
       <varlistentry>
 	<term>
-	  <citerefentry><refentrytitle><command>ipsec barf</command></refentrytitle><manvolnum>8</manvolnum></citerefentry>
-	</term>
-	<listitem>
-	  <para>
-	    Used to dumps the internal system status to stdout for
-	    debugging.
-	  </para>
-	</listitem>
-      </varlistentry>
-
-      <varlistentry>
-	<term>
 	  <citerefentry><refentrytitle><command>ipsec add</command></refentrytitle><manvolnum>8</manvolnum></citerefentry>
 	</term>
 	<term>
@@ -248,7 +236,6 @@
       <citerefentry><refentrytitle>ipsec.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_add</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_algparse</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-      <citerefentry><refentrytitle>ipsec_barf</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_briefconnectionstatus</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_briefstatus</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_certutil</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
