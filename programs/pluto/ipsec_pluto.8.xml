@@ -13,7 +13,7 @@
   <refnamediv id="name">
     <refname>ipsec pluto</refname>
     <refname>pluto</refname>
-    <refpurpose>ipsec pluto : IPsec IKE keying daemon</refpurpose>
+    <refpurpose>Internet Key Exchange daemon</refpurpose>
   </refnamediv>
 
   <!-- body begins here -->
@@ -64,21 +64,31 @@
     <title>DESCRIPTION</title>
 
     <para>
-      <command>pluto</command> is an IKE ("IPsec Key
-      Exchange") daemon. It is used to automatically build shared
+      <command>pluto</command> is
+      <application>Libreswan's</application> Internet Key Exchange
+      (IKE) daemon.  It is used to automatically build shared
       "security associations" on a system that has IPsec, the secure
-      IP protocol. In other words, <command>pluto</command>
-      can eliminate much of the work of manual keying. The actual secure
+      IP protocol. In other words, <command>pluto</command> can
+      eliminate much of the work of manual keying.  The actual secure
       transmission of packets is the responsibility of other parts of
-      the system - the kernel. Pluto can talk to various kernel implementations,
-      such as the Linux <emphasis>XFRM</emphasis> and BSD <emphasis>KAME</emphasis>
-      IPsec stacks.
+      the system - the kernel. Pluto can talk to various kernel
+      implementations, such as the Linux <emphasis>XFRM</emphasis> and
+      BSD <emphasis>KAME</emphasis> IPsec stacks.
     </para>
 
+    <important>
+      <para>
+	<command>pluto</command> is not normally run directly.
+	Instead the daemon is started and manipulated using the hosts
+	init system (such as systemd or rc), and the command
+	<citerefentry><refentrytitle>ipsec</refentrytitle>
+	<manvolnum>8</manvolnum></citerefentry>.
+      </para>
+    </important>
+
     <para>
-      <citerefentry><refentrytitle>ipsec</refentrytitle>
-      <manvolnum>8</manvolnum></citerefentry> provides a convenient
-      interface to <command>pluto</command>.
+      To run <command>pluto</command> directly use <command>ipsec
+      pluto</command>.
     </para>
 
     <para>
@@ -95,18 +105,18 @@
     </para>
 
     <para>
-      Pluto supports RFC 3947 NAT-Traversal. The allowed range behind the NAT routers is submitted using the
+      Pluto supports RFC 3947 NAT-Traversal.  The allowed range behind the NAT routers is submitted using the
       <option>--virtual-private</option> option. See <citerefentry>
       <refentrytitle>ipsec.conf</refentrytitle>
       <manvolnum>5</manvolnum> </citerefentry> for the syntax. The
       option <option>--force-keepalive</option> forces the sending of
-      the <emphasis>keep-alive packets</emphasis>, which are
-      send to prevent the NAT router from closing its port when there
-      is not enough traffic on the IPsec connection. The
+      the <emphasis>keep-alive packets</emphasis>, which are send to
+      prevent the NAT router from closing its port when there is not
+      enough traffic on the IPsec connection. The
       <option>--keep-alive</option> sets the delay (in seconds) of
       these keep-alive packets. The newer NAT-T standards support
-      <emphasis>port floating</emphasis>, and Libreswan
-      enables this per default.
+      <emphasis>port floating</emphasis>, and Libreswan enables this
+      per default.
     </para>
 
     <para>
@@ -200,143 +210,25 @@
     <refsect2 id="starting">
       <title>Starting pluto</title>
 
-      <para>It would be normal to start <command>pluto</command>
-      in one of the system initialization scripts. It needs to be run
-      by the superuser. Generally, no arguments are needed. To run in
-      manually, the superuser can simply type</para>
-
-      <para>ipsec pluto</para>
-
-      <para>The command will immediately return, but a <command>pluto</command>
-      process will be left running, waiting for requests from <command>whack</command>
-      or a peer.</para>
-
       <para>
-	Using <command>whack</command>, several potential
-	connections would be described:
-      </para>
-
-      <!-- .na -->
-
-      <para>
-	ipsec whack --namesilly
-	--host127.0.0.1 --to --host127.0.0.2
-	--ikelifetime900 --ipseclifetime800
-	--keyingtries3
-      </para>
-
-      <!-- .ad -->
-
-      <para>
-	Since this silly connection description specifies neither
-	encryption, authentication, nor tunneling, it could only be
-	used to establish an ISAKMP SA.
-      </para>
-
-      <!-- .na -->
-
-      <para>
-	ipsec whack --nameconn_name
-	--host10.0.0.1 --client10.0.1.0/24 --to
-	--host10.0.0.2 --client10.0.2.0/24 --encrypt
-      </para>
-
-      <!-- .ad -->
-
-      <para>
-	This is something that must be done on both sides. If the
-	other side is <command>pluto</command>, the same
-	<command>whack</command> command could be used on
-	it (the command syntax is designed to not distinguish which
-	end is ours).
+	It would be normal to start <command>pluto</command> in one of
+	the system initialization scripts. It needs to be run by the
+	superuser. Generally, no arguments are needed. To run in
+	manually, the superuser can simply type:
       </para>
 
       <para>
-	Now that the connections are specified, <command>pluto</command>
-	is ready to handle requests and replies via the public interfaces.
-	We must tell it to discover those interfaces and start accepting
-	messages from peers:
+	<command>ipsec pluto</command>
       </para>
 
-      <para>
-	ipsec whack --listen
-      </para>
-
-      <para>
-	If we don't immediately wish to bring up a secure connection
-	between the two clients, we might wish to prevent insecure
-	traffic. The routing form asks <command>pluto</command>
-	to cause the packets sent from our client to the peer's client
-	to be routed through the ipsec0 device; if there is no SA, they
-	will be discarded:
-      </para>
-
-      <para>
-	ipsec whack --route conn_name
-      </para>
-
-      <para>
-	Finally, we are ready to get <command>pluto</command>
-	to initiate negotiation for an Child SA (and implicitly, an IKE SA):
-      </para>
-
-      <para>
-	ipsec whack
-	--initiate --name conn_name
-      </para>
-
-      <para>
-	A small log of interesting events will appear on standard
-	output (other logging is sent to syslog).
-      </para>
-
-      <para>
-	<command>whack</command> can also be used to
-	terminate <command>pluto</command> cleanly,
-	tearing down all SAs that it has negotiated.
-      </para>
-
-      <para>
-	ipsec whack --shutdown
-      </para>
-
-      <para>
-	Notification of any IPsec SA deletion, but not ISAKMP SA
-	deletion is sent to the peer. Unfortunately, such Notification
-	is not reliable.  Furthermore, <command>pluto</command>
-	itself ignores Notifications.
-      </para>
-
-    </refsect2>
-
-    <refsect2 id="xauth">
-      <title>XAUTH</title>
-
-      <para>If <command>pluto</command> needs additional
-      authentication, such as defined by the XAUTH specifications, then
-      it may ask <command>whack</command> to prompt the
-      operator for username or passwords. Typically, these will be
-      entered interactively. A GUI that wraps around <command>whack</command>
-      may look for the 041 (username) or 040
-      (password) prompts, and display them to the user.</para>
-
-      <para>
-	For testing purposes, the options
-	<option>--xauthuser</option>
-	<replaceable>user</replaceable>
-	<option>--xauthpass</option>
-	<replaceable>pass</replaceable> may be be given prior to the
-	<option>--initiate</option> to provide responses to the
-	username and password prompts.
-      </para>
     </refsect2>
 
     <refsect2 id="debugging">
       <title>DEBUGGING</title>
 
       <para>
-	<command>pluto</command> accepts several optional
-	arguments, useful mostly for debugging. Except for
+	<command>pluto</command> accepts several optional arguments,
+	useful mostly for debugging.  Except for
 	<option>--interface</option>, each should appear at most once.
       </para>
 
@@ -638,10 +530,12 @@
   <refsect1 id="files">
     <title>FILES</title>
 
-    <para><filename>@@RUNDIR@@/pluto.pid</filename>
+    <para>
+<filename>@@RUNDIR@@/pluto.pid</filename>
     <filename>@@RUNDIR@@/pluto.ctl</filename>
     <filename>@@IPSEC_SECRETS@@</filename>
-    <filename>/dev/urandom</filename></para>
+<filename>/dev/urandom</filename>
+</para>
   </refsect1>
 
   <refsect1 id="environment">
