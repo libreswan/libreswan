@@ -21,17 +21,13 @@
       <arg choice='opt' rep='repeat'><replaceable>argument</replaceable></arg>
     </cmdsynopsis>
     <cmdsynopsis>
-      <command>ipsec</command>
-      <arg choice='plain'><replaceable>help</replaceable></arg>
+      <command>ipsec help</command>
     </cmdsynopsis>
     <cmdsynopsis>
-      <command>ipsec</command>
-      <arg choice='plain'><replaceable>version</replaceable></arg>
+      <command>ipsec version</command>
     </cmdsynopsis>
     <cmdsynopsis>
-      <command>ipsec</command>
-      <arg choice='plain'><replaceable>directory</replaceable></arg>
-      <sbr/>
+      <command>ipsec directory</command>
     </cmdsynopsis>
   </refsynopsisdiv>
 
@@ -39,11 +35,12 @@
     <title>DESCRIPTION</title>
     <para>
       <command>ipsec</command> invokes any of several utilities
-      involved in controlling the IPsec encryption/authentication system,
-      running the specified <emphasis remap='I'>command</emphasis> with the
-      specified <emphasis remap='I'>argument</emphasis>s as if it had been
-      invoked directly. This largely eliminates possible name collisions
-      with other software, and also permits some centralized services.
+      involved in controlling the IPsec encryption/authentication
+      system, running the specified <replaceable>command</replaceable>
+      with the specified <replaceable>argument</replaceable> as if it
+      had been invoked directly.  This largely eliminates possible
+      name collisions with other software, and also permits some
+      centralized services.
     </para>
     <para>
       <userinput>ipsec help</userinput> lists the available commands.
@@ -53,66 +50,177 @@
       <userinput>ipsec version</userinput> outputs the software version.
     </para>
     <para>
-      <userinput>ipsec directory</userinput> reports where
-      <command>ipsec</command> thinks the IPsec commands are stored.
+      <userinput>ipsec directory</userinput> reports where the
+      <command>ipsec</command> sub-commands are stored.
     </para>
   </refsect1>
 
   <refsect1 id='commands'>
     <title>COMMANDS</title>
     <para>
-      To get a list of supported commands, use ipsec --help. A few of the
-      commonly used commands are described below
+      To get a list of supported commands, use the command
+      <command>ipsec --help</command>.  The full set of commands are
+      listed below:
     </para>
 
-    <para>
-      <userinput>ipsec start|stop|restart</userinput> maps to the
-      host init system. Supported init systems are sysv, systemd, upstart and openrc.
-    </para>
+    <variablelist>
 
-    <para>
-      <userinput>ipsec barf</userinput> dumps the internal system status
-      to stdout for debugging
-    </para>
+      <varlistentry>
+	<term>
+	  <citerefentry><refentrytitle><command>ipsec start</command></refentrytitle><manvolnum>8</manvolnum></citerefentry>
+	</term>
+	<term>
+	  <citerefentry><refentrytitle><command>ipsec stop</command></refentrytitle><manvolnum>8</manvolnum></citerefentry>
+	</term>
+	<term>
+	  <citerefentry><refentrytitle><command>ipsec restart</command></refentrytitle><manvolnum>8</manvolnum></citerefentry>
+	</term>
+	<listitem>
+	  <para>
+	    Used to control the <command>pluto</command> daemon using
+	    the host init system. Supported init systems are sysv,
+	    systemd, upstart and openrc.
+	  </para>
+	</listitem>
+      </varlistentry>
 
-    <para>
-      <userinput>ipsec {add|up|start|route|ondemand|down|delete}</userinput> are used
-      to manually add, remove, up or down connections.
-    </para>
+      <varlistentry>
+	<term>
+	  <citerefentry><refentrytitle><command>ipsec barf</command></refentrytitle><manvolnum>8</manvolnum></citerefentry>
+	</term>
+	<listitem>
+	  <para>
+	    Used to dumps the internal system status to stdout for
+	    debugging.
+	  </para>
+	</listitem>
+      </varlistentry>
 
-    <para>
-      <userinput>ipsec whack</userinput> is used to communicate direct commands
-      to the pluto daemon using the whack interface. For more information see
-      'man ipsec_pluto'
-    </para>
+      <varlistentry>
+	<term>
+	  <citerefentry><refentrytitle><command>ipsec add</command></refentrytitle><manvolnum>8</manvolnum></citerefentry>
+	</term>
+	<term>
+	  <citerefentry><refentrytitle><command>ipsec up</command></refentrytitle><manvolnum>8</manvolnum></citerefentry>
+	</term>
+	<term>
+	  <citerefentry><refentrytitle><command>ipsec start</command></refentrytitle><manvolnum>8</manvolnum></citerefentry>
+	</term>
+	<term>
+	  <citerefentry><refentrytitle><command>ipsec route</command></refentrytitle><manvolnum>8</manvolnum></citerefentry>
+	</term>
+	<term>
+	  <citerefentry><refentrytitle><command>ipsec ondemand</command></refentrytitle><manvolnum>8</manvolnum></citerefentry>
+	</term>
+	<term>
+	  <citerefentry><refentrytitle><command>ipsec down</command></refentrytitle><manvolnum>8</manvolnum></citerefentry>
+	</term>
+	<term>
+	  <citerefentry><refentrytitle><command>ipsec delete</command></refentrytitle><manvolnum>8</manvolnum></citerefentry>
+	</term>
+	<listitem>
+	  <para>
+	    Used to manually add, remove, up or down connections.
+	  </para>
+	</listitem>
+      </varlistentry>
 
-    <para>
-      <userinput>ipsec initnss</userinput> initialises the NSS database that contains all the X.509 certificate information and private RSA keys
-    </para>
+      <varlistentry>
+	<term>
+	  <citerefentry><refentrytitle><command>ipsec whack</command></refentrytitle><manvolnum>8</manvolnum></citerefentry>
+	</term>
+	<listitem>
+	  <para>
+	    Used to communicate direct commands to the pluto daemon
+	    using the whack interface.
+	  </para>
+	</listitem>
+      </varlistentry>
 
-    <para>
-      <userinput>ipsec checknss [--settrusts]</userinput> is used to check the NSS database and initialize it when it is not present and optionally set trust bits for CA certificates.
-    </para>
+      <varlistentry>
+	<term>
+	  <citerefentry><refentrytitle><command>ipsec initnss</command></refentrytitle><manvolnum>8</manvolnum></citerefentry>
+	</term>
+	<listitem>
+	  <para>
+	    Used to initialise the NSS database that contains all the
+	    X.509 certificate information and private RSA keys
+	  </para>
+	</listitem>
+      </varlistentry>
 
-    <para>
-      <userinput>ipsec import</userinput> is used to import PKCS#12 X.509 files into the NSS database
-    </para>
+      <varlistentry>
+	<term>
+	  <citerefentry><refentrytitle><command>ipsec checknss</command></refentrytitle><manvolnum>8</manvolnum></citerefentry>
+	</term>
+	<listitem>
+	  <para>
+	    Used to check the NSS database and initialize it when it
+	    is not present and optionally set trust bits for CA
+	    certificates.
+	  </para>
+	</listitem>
+      </varlistentry>
 
-    <para>
-      <userinput>ipsec checkconfig</userinput> is used to validate ipsec configuration (default @@IPSEC_CONF@@).
-    </para>
+      <varlistentry>
+	<term>
+	  <citerefentry><refentrytitle><command>ipsec import</command></refentrytitle><manvolnum>8</manvolnum></citerefentry>
+	</term>
+	<listitem>
+	  <para>
+	    Used to import PKCS#12 X.509 files into the NSS database
+	  </para>
+	</listitem>
+      </varlistentry>
 
-    <para>
-      <userinput>ipsec checknflog</userinput> is used to initialise rules for the nflog devices when specified via the nflog= or nflog-all= configuration options.
-    </para>
+      <varlistentry>
+	<term>
+	  <citerefentry><refentrytitle><command>ipsec checkconfig</command></refentrytitle><manvolnum>8</manvolnum></citerefentry>
+	</term>
+	<listitem>
+	  <para>
+	    Used to validate ipsec configuration (default
+	    @@IPSEC_CONF@@).
+	  </para>
+	</listitem>
+      </varlistentry>
 
-    <para>
-      <userinput>ipsec stopnflog</userinput> is used to delete iptables rules for the nflog devices.
-    </para>
+      <varlistentry>
+	<term>
+	  <citerefentry><refentrytitle><command>ipsec checknflog</command></refentrytitle><manvolnum>8</manvolnum></citerefentry>
+	</term>
+	<listitem>
+	  <para>
+	    Used to initialise rules for the nflog devices when
+	    specified via the nflog= or nflog-all= configuration
+	    options.
+	  </para>
+	</listitem>
+      </varlistentry>
 
-    <para>
-      <userinput>ipsec trafficstatus [connectionname]</userinput> is used to get tunnel traffic status.
-    </para>
+      <varlistentry>
+	<term>
+	  <citerefentry><refentrytitle><command>ipsec stopnflog</command></refentrytitle><manvolnum>8</manvolnum></citerefentry>
+	</term>
+	<listitem>
+	  <para>
+	    Used to delete iptables rules for the nflog devices.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>
+	  <citerefentry><refentrytitle><command>ipsec trafficstatus</command></refentrytitle><manvolnum>8</manvolnum></citerefentry>
+	</term>
+	<listitem>
+	  <para>
+	    Used to get tunnel traffic status.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+    </variablelist>
 
   </refsect1>
 
@@ -197,6 +305,7 @@
     <title>AUTHOR</title>
     <para>
       <author><personname><firstname>Tuomo</firstname><surname>Soini</surname></personname></author>
+      <author><personname><firstname>Andrew</firstname><surname>Cagney</surname></personname></author>
     </para>
   </refsect1>
 </refentry>
