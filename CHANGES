@@ -32,8 +32,8 @@ v5.0 (Unreleased)
 * initsystem: Stop using _stackmanager [Tuomo]
 * documentation: update to docbook xml 4.5 [Tuomo]
 * output: drop NNN_ prefix from all output [Andrew]
-* ipsec look: command removed; use ip xfrm et.al.
-* ipsec portexcludes: script moved to contrib/
+* ipsec look: script moved to contrib/; use ip xfrm et.al. [Andrew]
+* ipsec portexcludes: script moved to contrib/ [Andrew]
 * ipsec barf: script moved to contrib/ [Andrew]
 * ipsec _secretsensor: script moved to contrib/ [Andrew]
 
