@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
 
 	if (argc != 1) {
 		fprintf(stderr, ("usage:\n"
-				 "\tipsec vendorid\n"
+				 "\tipsec _vendoridcheck\n"
 				 "list known Vendor IDs\n"));
 		exit(1);
 	}
