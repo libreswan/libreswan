@@ -1,19 +1,31 @@
-  <varlistentry>
+<varlistentry>
   <term><emphasis remap='B'>leftupdown</emphasis></term>
   <listitem>
-<para>what "updown" script to run to adjust routing and/or
-firewalling when the status of the connection changes (default
-<command>ipsec _updown</command>).
-May include positional parameters separated by white space
-(although this requires enclosing the whole string in quotes);
-including shell metacharacters is unwise. An example to enable
-routing when using the XFRM stack, one can use:</para>
-<para>leftupdown="ipsec _updown --route yes"</para>
-<para>To disable calling an updown script, set it to the empty string, eg
-leftupdown="" or leftupdown="%disabled".</para>
-<para>See
-<citerefentry><refentrytitle>ipsec_pluto</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-for details.
-Relevant only locally, other end need not agree on it.</para>
+    <para>
+      The script to run to adjust routing and/or firewalling when the
+      status of the connection changes (default <command>ipsec
+      _updown</command>).  May include positional parameters separated
+      by white space (although this requires enclosing the whole
+      string in quotes); including shell metacharacters is unwise.  An
+      example to enable routing when using the XFRM stack, one can
+      use:
+    </para>
+    <para>
+      <simplelist columns='1'>
+	<member><computeroutput>updown="ipsec _updown --route yes"</computeroutput></member>
+      </simplelist>
+    </para>
+    <para>
+      To disable calling an updown script, set it to the empty string,
+      eg leftupdown="" or leftupdown="%disabled".
+    </para>
+    <para>
+      See
+      <citerefentry><refentrytitle>libreswan</refentrytitle><manvolnum>7</manvolnum></citerefentry>
+      for details.
+    </para>
+    <para>
+      Relevant only locally, other end need not agree on it.
+    </para>
   </listitem>
-  </varlistentry>
+</varlistentry>

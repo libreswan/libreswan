@@ -57,6 +57,346 @@
       of the Internet Key Exchange Protocol.
     </para>
 
+    <refsect2 id="the_updown_command">
+      <title>
+	The <command>updown</command> command
+      </title>
+
+      <para>
+	Whenever <application>libreswan</application> brings a
+	connection up or down, it invokes the
+	<command>updown</command> command.  This command is specified
+	either using <filename>ipsec.conf</filename> configuration
+	file option <computeroutput>leftupdown=</computeroutput> or
+	the <command>ipsec whack</command> option
+	<option>--updown</option> option.  This allows for customized
+	control over routing and firewall manipulation.
+      </para>
+
+      <para>
+	The <command>updown</command> script is invoked for five
+	different operations.  The operation name, with
+	<literal>-host</literal>, <literal>-client</literal> and
+	<literal>-v6</literal>, appended is passed to the
+	<command>updown</command> script using the environment
+	variable <varname>PLUTO_VERB</varname> (see below) The
+	operations, in the order they are normally invoked, are as
+	follows:
+      </para>
+
+      <variablelist>
+        <varlistentry>
+          <term><literal>prepare</literal></term>
+          <listitem>
+            <para>
+	      is run before bringing up a new connection if no other
+	      connection with the same clients is up.  Generally, this
+	      is useful for deleting a route that might have been set
+	      up before <application>libreswan</application> was
+	      started or perhaps by some agent not known to
+	      <application>libreswan</application>.
+	    </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><literal>route</literal></term>
+          <listitem>
+            <para>
+	      is run when bringing up a connection for a new peer
+	      client subnet (even if <literal>prepare</literal> was
+	      run).  The command should install a suitable route.
+	      Routing decisions are based only on the destination
+	      (peer's client) subnet address, unlike kernel policy
+	      (SPDs) which discriminate based on source too.
+	    </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><literal>up</literal></term>
+          <listitem>
+            <para>
+	      is run when first bringing up the IPsec tunnel for a
+	      pair of client subnets.  This command should install
+	      firewall rules as appropriate. It is generally a good
+	      idea to allow IKE messages (UDP port 500) travel between
+	      the hosts.
+	    </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><literal>down</literal></term>
+          <listitem>
+            <para>
+	      is run when bringing down the IPsec tunnel for a pair of
+	      client subnets.  This command should delete firewall
+	      rules as appropriate.  Note that there may remain some
+	      inbound IPsec SAs with these client subnets.
+	    </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><literal>unroute</literal></term>
+          <listitem>
+            <para>
+	      is run when bringing down the last connection for a
+	      particular peer client subnet.  It should undo what
+	      <literal>route</literal> did.
+	    </para>
+          </listitem>
+        </varlistentry>
+
+      </variablelist>
+
+      <para>
+	The script is passed a large number of environment variables
+	to specify what needs to be done:
+      </para>
+
+      <variablelist>
+
+        <varlistentry>
+          <term><varname>PLUTO_VERB</varname></term>
+          <listitem>
+            <para>
+	      specifies the name of the operation to be performed (
+	      <literal>prepare-host</literal> ,
+	      <literal>prepare-client</literal> ,
+	      <literal>prepare-host-v6</literal> ,
+	      <literal>prepare-client-v6</literal> ;
+	      <literal>route-host</literal> ,
+	      <literal>route-client</literal> ,
+	      <literal>route-host-v6</literal> ,
+	      <literal>route-client-v6</literal> ;
+	      <literal>up-host</literal> ,
+	      <literal>up-client</literal> ,
+	      <literal>up-host-v6</literal> ,
+	      <literal>up-client-v6</literal> ;
+	      <literal>down-host</literal> ,
+	      <literal>down-client</literal> ,
+	      <literal>down-host-v6</literal> ,
+	      <literal>down-client-v6</literal> ;
+	      <literal>unroute-host</literal> ,
+	      <literal>unroute-client</literal> ,
+	      <literal>unroute-host-v6</literal> ,
+	      <literal>unroute-client-v6</literal> ).  If the address
+	      family for security gateway to security gateway
+	      communications is IPv6, then a suffix of -v6 is added to
+	      the verb.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><varname>PLUTO_CONNECTION</varname></term>
+          <listitem>
+            <para>
+	      is the name of the connection for which we are
+              routing.
+	    </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><varname>PLUTO_NEXT_HOP</varname></term>
+          <listitem>
+            <para>
+	      is the next hop to which packets bound for the peer must be
+              sent.
+	    </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><varname>PLUTO_INTERFACE</varname></term>
+          <listitem>
+            <para>
+	      is the name of the ipsec interface to be used.
+	    </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><varname>PLUTO_ME</varname></term>
+          <listitem>
+            <para>
+	      is the IP address of our host.
+	    </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><varname>PLUTO_MY_CLIENT</varname></term>
+          <listitem>
+            <para>
+	      is the IP address / count of our client subnet. If the
+	      client is just the host, this will be the host's own IP
+	      address / max (where max is 32 for IPv4 and 128 for
+	      IPv6).
+	    </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><varname>PLUTO_MY_CLIENT_NET</varname></term>
+          <listitem>
+            <para>
+	      is the IP address of our client net. If the client is
+	      just the host, this will be the host's own IP
+	      address.
+	    </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><varname>PLUTO_MY_CLIENT_MASK</varname></term>
+          <listitem>
+            <para>
+	      is the mask for our client net. If the client is just
+	      the host, this will be 255.255.255.255.
+	    </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><varname>PLUTO_PEER</varname></term>
+          <listitem>
+            <para>
+	      is the IP address of our peer.
+	    </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><varname>PLUTO_PEER_CLIENT</varname></term>
+          <listitem>
+            <para>
+	      is the IP address / count of the peer's client
+	      subnet. If the client is just the peer, this will be the
+	      peer's own IP address / max (where max is 32 for IPv4
+	      and 128 for IPv6).
+	    </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><varname>PLUTO_PEER_CLIENT_NET</varname></term>
+          <listitem>
+            <para>
+	      is the IP address of the peer's client net. If the
+	      client is just the peer, this will be the peer's own IP
+	      address.
+	    </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><varname>PLUTO_PEER_CLIENT_MASK</varname></term>
+          <listitem>
+            <para>
+	      is the mask for the peer's client net. If the client is
+	      just the peer, this will be 255.255.255.255.
+	    </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><varname>PLUTO_MY_PROTOCOL</varname></term>
+          <listitem>
+            <para>
+	      lists the protocols allowed over this IPsec SA.
+	    </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><varname>PLUTO_PEER_PROTOCOL</varname></term>
+          <listitem>
+            <para>
+	      lists the protocols the peer allows over this IPsec SA.
+	    </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><varname>PLUTO_MY_PORT</varname></term>
+          <listitem>
+            <para>
+	      lists the ports allowed over this IPsec SA.
+	    </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><varname>PLUTO_PEER_PORT</varname></term>
+          <listitem>
+            <para>
+	      lists the ports the peer allows over this IPsec SA.
+	    </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><varname>PLUTO_MY_ID</varname></term>
+          <listitem>
+            <para>
+	      lists our id.
+	    </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><varname>PLUTO_PEER_ID</varname></term>
+          <listitem>
+            <para>
+	      lists our peer's id.
+	    </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><varname>PLUTO_PEER_CA</varname></term>
+          <listitem>
+            <para>
+	      lists the peer's CA.
+	    </para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+
+      <para>
+	All output sent by the script to stderr or stdout is
+	logged. The script should return an exit status of 0 if and
+	only if it succeeds.
+      </para>
+
+      <para>
+	<command>pluto</command> waits for the script to finish and
+	will not do any other processing while it is waiting. The
+	script may assume that <command>pluto</command> will not
+	change anything while the script runs. The script should avoid
+	doing anything that takes much time and it should not issue
+	any command that requires processing by
+	<command>pluto</command>.  Either of these activities could be
+	performed by a background subprocess of the script.
+      </para>
+
+    </refsect2>
+
+  </refsect1>
+
+  <refsect1>
+    <title>
+      OLD DESCRIPTION
+    </title>
+
+    <para>
+      What follows is older documentation.  It is retained for
+      reference.
+    </para>
+
     <refsect2 id="ikes_job">
       <title>IKE's Job</title>
 
@@ -2363,273 +2703,6 @@
 	<option>--initiate&nbsp;</option> to provide responses to the
 	username and password prompts.
       </para>
-    </refsect2>
-
-    <refsect2 id="the_updown_command">
-      <title>The updown command</title>
-
-      <para>Whenever <command>pluto</command> brings a connection
-      up or down, it invokes the updown command. This command is specified
-      using the <option>--updown</option> option. This allows for customized
-      control over routing and firewall manipulation.</para>
-
-      <para>The updown is invoked for five different operations. Each of these
-      operations can be for our client subnet or for our host itself.</para>
-
-      <variablelist remap="TP">
-        <varlistentry>
-          <term><emphasis remap="B">prepare-host</emphasis> or <emphasis
-          remap="B">prepare-client</emphasis></term>
-
-          <listitem>
-            <para>is run before bringing up a new connection if no other
-            connection with the same clients is up. Generally, this is useful
-            for deleting a route that might have been set up before <emphasis
-            remap="B">pluto</emphasis> was run or perhaps by some agent not
-            known to <command>pluto</command>.</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><emphasis remap="B">route-host</emphasis> or <emphasis
-          remap="B">route-client</emphasis></term>
-
-          <listitem>
-            <para>is run when bringing up a connection for a new peer client
-            subnet (even if <emphasis remap="B">prepare-host</emphasis> or
-            <emphasis remap="B">prepare-client</emphasis> was run). The
-            command should install a suitable route. Routing decisions are
-            based only on the destination (peer's client) subnet address,
-            unlike eroutes which discriminate based on source too.</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><emphasis remap="B">unroute-host</emphasis> or <emphasis
-          remap="B">unroute-client</emphasis></term>
-
-          <listitem>
-            <para>is run when bringing down the last connection for a
-            particular peer client subnet. It should undo what the <emphasis
-            remap="B">route-host</emphasis> or <emphasis
-            remap="B">route-client</emphasis> did.</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><emphasis remap="B">up-host</emphasis> or <emphasis
-          remap="B">up-client</emphasis></term>
-
-          <listitem>
-            <para>is run when bringing up a tunnel eroute with a pair of
-            client subnets that does not already have a tunnel eroute. This
-            command should install firewall rules as appropriate. It is
-            generally a good idea to allow IKE messages (UDP port 500) travel
-            between the hosts.</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><emphasis remap="B">down-host</emphasis> or <emphasis
-          remap="B">down-client</emphasis></term>
-
-          <listitem>
-            <para>is run when bringing down the eroute for a pair of client
-            subnets. This command should delete firewall rules as appropriate.
-            Note that there may remain some inbound IPsec SAs with these
-            client subnets.</para>
-          </listitem>
-        </varlistentry>
-      </variablelist>
-
-      <para>The script is passed a large number of environment variables to
-      specify what needs to be done.</para>
-
-      <variablelist remap="TP">
-        <varlistentry>
-          <term><emphasis remap="B">PLUTO_VERB</emphasis></term>
-
-          <listitem>
-            <para>specifies the name of the operation to be performed
-            (<emphasis remap="B">prepare-host</emphasis>,r <emphasis
-            remap="B">prepare-client</emphasis>, <emphasis
-            remap="B">up-host</emphasis>, <emphasis
-            remap="B">up-client</emphasis>, <emphasis
-            remap="B">down-host</emphasis>, or <emphasis
-            remap="B">down-client</emphasis>). If the address family for
-            security gateway to security gateway communications is IPv6, then
-            a suffix of -v6 is added to the verb.</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><emphasis remap="B">PLUTO_CONNECTION</emphasis></term>
-
-          <listitem>
-            <para>is the name of the connection for which we are
-            routing.</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><emphasis remap="B">PLUTO_NEXT_HOP</emphasis></term>
-
-          <listitem>
-            <para>is the next hop to which packets bound for the peer must be
-            sent.</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><emphasis remap="B">PLUTO_INTERFACE</emphasis></term>
-
-          <listitem>
-            <para>is the name of the ipsec interface to be used.</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><emphasis remap="B">PLUTO_ME</emphasis></term>
-
-          <listitem>
-            <para>is the IP address of our host.</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><emphasis remap="B">PLUTO_MY_CLIENT</emphasis></term>
-
-          <listitem>
-            <para>is the IP address / count of our client subnet. If the
-            client is just the host, this will be the host's own IP address /
-            max (where max is 32 for IPv4 and 128 for IPv6).</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><emphasis remap="B">PLUTO_MY_CLIENT_NET</emphasis></term>
-
-          <listitem>
-            <para>is the IP address of our client net. If the client is just
-            the host, this will be the host's own IP address.</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><emphasis remap="B">PLUTO_MY_CLIENT_MASK</emphasis></term>
-
-          <listitem>
-            <para>is the mask for our client net. If the client is just the
-            host, this will be 255.255.255.255.</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><emphasis remap="B">PLUTO_PEER</emphasis></term>
-
-          <listitem>
-            <para>is the IP address of our peer.</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><emphasis remap="B">PLUTO_PEER_CLIENT</emphasis></term>
-
-          <listitem>
-            <para>is the IP address / count of the peer's client subnet. If
-            the client is just the peer, this will be the peer's own IP
-            address / max (where max is 32 for IPv4 and 128 for IPv6).</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><emphasis remap="B">PLUTO_PEER_CLIENT_NET</emphasis></term>
-
-          <listitem>
-            <para>is the IP address of the peer's client net. If the client is
-            just the peer, this will be the peer's own IP address.</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><emphasis remap="B">PLUTO_PEER_CLIENT_MASK</emphasis></term>
-
-          <listitem>
-            <para>is the mask for the peer's client net. If the client is just
-            the peer, this will be 255.255.255.255.</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><emphasis remap="B">PLUTO_MY_PROTOCOL</emphasis></term>
-
-          <listitem>
-            <para>lists the protocols allowed over this IPsec SA.</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><emphasis remap="B">PLUTO_PEER_PROTOCOL</emphasis></term>
-
-          <listitem>
-            <para>lists the protocols the peer allows over this IPsec
-            SA.</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><emphasis remap="B">PLUTO_MY_PORT</emphasis></term>
-
-          <listitem>
-            <para>lists the ports allowed over this IPsec SA.</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><emphasis remap="B">PLUTO_PEER_PORT</emphasis></term>
-
-          <listitem>
-            <para>lists the ports the peer allows over this IPsec SA.</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><emphasis remap="B">PLUTO_MY_ID</emphasis></term>
-
-          <listitem>
-            <para>lists our id.</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><emphasis remap="B">PLUTO_PEER_ID</emphasis></term>
-
-          <listitem>
-            <para>lists our peer's id.</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><emphasis remap="B">PLUTO_PEER_CA</emphasis></term>
-
-          <listitem>
-            <para>lists the peer's CA.</para>
-          </listitem>
-        </varlistentry>
-      </variablelist>
-
-      <para>All output sent by the script to stderr or stdout is logged. The
-      script should return an exit status of 0 if and only if it
-      succeeds.</para>
-
-      <para><command>pluto</command> waits for the script to
-      finish and will not do any other processing while it is waiting. The
-      script may assume that <command>pluto</command> will not
-      change anything while the script runs. The script should avoid doing
-      anything that takes much time and it should not issue any command that
-      requires processing by <command>pluto</command>. Either of
-      these activities could be performed by a background subprocess of the
-      script.</para>
     </refsect2>
 
     <refsect2 id="rekeying">
