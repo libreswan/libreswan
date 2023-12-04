@@ -5,15 +5,14 @@
   <refmeta>
     <refentrytitle>LIBRESWAN</refentrytitle>
     <manvolnum>7</manvolnum>
-    <refmiscinfo class="date">29 June 2014</refmiscinfo>
+    <refmiscinfo class="date">4 December 2023</refmiscinfo>
     <refmiscinfo class="source">libreswan</refmiscinfo>
-    <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
 
   <refnamediv id="name">
     <refname>libreswan</refname>
     <refpurpose>
-      Libreswan: Internet Key Exchange Manager for IPsec
+      Internet Key Exchange Manager for IPsec
     </refpurpose>
   </refnamediv>
 
@@ -25,7 +24,10 @@
 
     <para>
       <application>Libreswan</application> is an Internet Key Exchange
-      (IKE) manager.  It consists of the Internet Key Exchange Daemon <command>pluto</command> (see
+      (IKE) manager.
+
+      It consists of the Internet Key Exchange Daemon
+      <command>pluto</command> (see
       <citerefentry><refentrytitle>ipsec_pluto</refentrytitle>
       <manvolnum>8</manvolnum></citerefentry>), the auxiliary command
       <command>ipsec</command> that provides a way to
@@ -34,9 +36,12 @@
       <manvolnum>8</manvolnum></citerefentry>), and the configuration
       file <filename>ipsec.conf</filename> (see 
       <citerefentry><refentrytitle>ipsec.conf</refentrytitle>
-      <manvolnum>5</manvolnum></citerefentry>).  In addition, an
-      <application>NSS</application> trust store is needed when using
-      either <application>X.509</application> or raw private keys.
+      <manvolnum>5</manvolnum></citerefentry>).
+
+      For authentication, <application>Libreswan</application> can use
+      an <application>NSS</application> trust store containing  <application>X.509</application> or raw private
+      keys, or a preshared secret (see <citerefentry><refentrytitle>ipsec.secrets</refentrytitle>
+      <manvolnum>5</manvolnum></citerefentry>).
     </para>
 
     <para>
@@ -56,6 +61,96 @@
       <application>Libreswan</application> implements version 1 and 2
       of the Internet Key Exchange Protocol.
     </para>
+
+    <refsect2 id="ike_overview">
+      <title>Internet Key Exchange Protocol version 2</title>
+
+      <para>
+	A <emphasis>Security Association</emphasis>
+	(<emphasis>SA</emphasis>) is an agreement between two network
+	nodes on how to process certain traffic between them. This
+	processing may involve encapsulation, authentication,
+	encryption, and compression.  Given that manually establishing
+	these associations does not scale, the <application>Internet
+	Key Exchange Protocol</application>
+	(<application>IKE</application>) provides a way to establish
+	these associations dynamically.
+      </para>
+
+      <para>
+	<application>IKE</application> can be deployed on a network
+	node to negotiate Security Associations for that node.  These
+	<application>IKE</application> implementations can only
+	negotiate with other <application>IKE</application>
+	implementations, so <application>IKE</application> must be on
+	each node that is to be an endpoint of an
+	<application>IKE</application>-negotiated Security
+	Association.  No other nodes need to be running
+	<application>IKE</application>.
+      </para>
+
+      <para>
+	An <application>IKE</application> instance (i.e. an IKE
+	implementation on a particular network node) communicates with
+	other <application>IKE</application> instance using either UDP
+	or TCP IP packets, so there must be a route between the nodes
+	in each direction.
+      </para>
+
+      <para>
+	The negotiation of Security Associations requires a number of
+	choices that involve tradeoffs between security, convenience,
+	trust, and efficiency. These are policy issues and are
+	normally specified to the IKE instance by the system
+	administrator.
+      </para>
+
+      <para>
+	<application>IKE</application> deals with two kinds of
+	Security Associations.  The first part of a negotiation
+	between IKE instances is to build an IKE SA.  An IKE SA is
+	used to protect communication between the two IKEs.  Child SAs
+	(for IPsec) can then be built by the IKEs - these are used to
+	carry protected IP traffic between the systems.
+      </para>
+
+      <para>
+	Negotiating an IKE SA (refered to as the The Initial
+	Exchanges) consists of at least the IKE_SA_INIT exchange to
+	establish a secured channel, and the IKE_AUTH exchange to
+	prove identity.  Extensions, such as EAP and INTERMEDIATE, may
+	add further exchanges.
+      </para>
+
+      <para>
+	Negotiating a Child SA requires a single CREATE_CHILD_SA
+	exchange.  As an optimization, the first Child SA's
+	negotiation may be piggybacked on the IKE_AUTH exchange.
+      </para>
+
+      <para>
+	IKE instances must be able to authenticate each other as part
+	of their negotiation of an ISAKMP SA. This can be done by
+	several mechanisms described in the draft standards.
+      </para>
+
+      <para>
+	IKE negotiation can be initiated by any instance with any
+	other.  If both can find an agreeable set of characteristics
+	for a Security Association, and both recognize each others
+	authenticity, they can set up a Security Association.  The
+	standards do not specify what causes an IKE instance to
+	initiate a negotiation.
+      </para>
+
+      <para>
+	In summary, an IKE instance is prepared to automate the
+	management of Security Associations in an IPsec environment,
+	but a number of issues are considered policy and are left in
+	the system administrator's hands.
+      </para>
+
+    </refsect2>
 
     <refsect2 id="the_updown_command">
       <title>
@@ -162,27 +257,27 @@
           <term><varname>PLUTO_VERB</varname></term>
           <listitem>
             <para>
-	      specifies the name of the operation to be performed (
-	      <literal>prepare-host</literal> ,
-	      <literal>prepare-client</literal> ,
-	      <literal>prepare-host-v6</literal> ,
-	      <literal>prepare-client-v6</literal> ;
-	      <literal>route-host</literal> ,
-	      <literal>route-client</literal> ,
-	      <literal>route-host-v6</literal> ,
-	      <literal>route-client-v6</literal> ;
-	      <literal>up-host</literal> ,
-	      <literal>up-client</literal> ,
-	      <literal>up-host-v6</literal> ,
-	      <literal>up-client-v6</literal> ;
-	      <literal>down-host</literal> ,
-	      <literal>down-client</literal> ,
-	      <literal>down-host-v6</literal> ,
-	      <literal>down-client-v6</literal> ;
-	      <literal>unroute-host</literal> ,
-	      <literal>unroute-client</literal> ,
-	      <literal>unroute-host-v6</literal> ,
-	      <literal>unroute-client-v6</literal> ).  If the address
+	      specifies the name of the operation to be performed
+	      (<literal>prepare-host</literal>,
+	      <literal>prepare-client</literal>,
+	      <literal>prepare-host-v6</literal>,
+	      <literal>prepare-client-v6</literal>;
+	      <literal>route-host</literal>,
+	      <literal>route-client</literal>,
+	      <literal>route-host-v6</literal>,
+	      <literal>route-client-v6</literal>;
+	      <literal>up-host</literal>,
+	      <literal>up-client</literal>,
+	      <literal>up-host-v6</literal>,
+	      <literal>up-client-v6</literal>;
+	      <literal>down-host</literal>,
+	      <literal>down-client</literal>,
+	      <literal>down-host-v6</literal>,
+	      <literal>down-client-v6</literal>;
+	      <literal>unroute-host</literal>,
+	      <literal>unroute-client</literal>,
+	      <literal>unroute-host-v6</literal>,
+	      <literal>unroute-client-v6</literal>).  If the address
 	      family for security gateway to security gateway
 	      communications is IPv6, then a suffix of -v6 is added to
 	      the verb.</para>
@@ -387,89 +482,29 @@
 
   </refsect1>
 
+<!--
+  <refsect1>
+    <title>
+      EXAMPLES
+    </title>
+    <refsect2>
+      <title>
+      </title>
+      <para>
+      </para>
+    </refsect2>
+    </refsect1>
+-->
+
   <refsect1>
     <title>
       OLD DESCRIPTION
     </title>
 
     <para>
-      What follows is older documentation.  It is retained for
-      reference.
+      What follows is older documentation.  Patches to overhaul it
+      welcome.
     </para>
-
-    <refsect2 id="ikes_job">
-      <title>IKE's Job</title>
-
-      <para>
-	A <emphasis remap="I">Security Association</emphasis> (<emphasis
-	remap="I">SA</emphasis>) is an agreement between two network nodes on
-	how to process certain traffic between them. This processing involves
-	encapsulation, authentication, encryption, or compression.
-      </para>
-
-      <para>
-	IKE can be deployed on a network node to negotiate Security
-	Associations for that node. These IKE implementations can only negotiate
-	with other IKE implementations, so IKE must be on each node that is to
-	be an endpoint of an IKE-negotiated Security Association. No other nodes
-	need to be running IKE.
-      </para>
-
-      <para>
-	An IKE instance (i.e. an IKE implementation on a particular
-	network node) communicates with another IKE instance using UDP IP
-	packets, so there must be a route between the nodes in each
-	direction.
-      </para>
-
-      <para>
-	The negotiation of Security Associations requires a number of
-	choices that involve tradeoffs between security, convenience, trust, and
-	efficiency. These are policy issues and are normally specified to the
-	IKE instance by the system administrator.
-      </para>
-
-      <para>
-	IKE deals with two kinds of Security Associations. The first part
-	of a negotiation between IKE instances is to build an ISAKMP SA. An
-	ISAKMP SA is used to protect communication between the two IKEs. IPsec
-	SAs can then be built by the IKEs - these are used to carry protected IP
-	traffic between the systems.
-      </para>
-
-      <para>
-	The negotiation of the ISAKMP SA is known as Phase 1. In theory,
-	Phase 1 can be accomplished by a couple of different exchange types.
-	Currently, Main Mode and Aggressive Mode are implemented.
-      </para>
-
-      <para>
-	Any negotiation under the protection of an ISAKMP SA, including
-	the negotiation of IPsec SAs, is part of Phase 2. The exchange type that
-	we use to negotiate an IPsec SA is called Quick Mode.
-      </para>
-
-      <para>
-	IKE instances must be able to authenticate each other as part of
-	their negotiation of an ISAKMP SA. This can be done by several
-	mechanisms described in the draft standards.
-      </para>
-
-      <para>
-	IKE negotiation can be initiated by any instance with any other.
-	If both can find an agreeable set of characteristics for a Security
-	Association, and both recognize each others authenticity, they can set
-	up a Security Association. The standards do not specify what causes an
-	IKE instance to initiate a negotiation.
-      </para>
-
-      <para>
-	In summary, an IKE instance is prepared to automate the management
-	of Security Associations in an IPsec environment, but a number of issues
-	are considered policy and are left in the system administrator's
-	hands.
-      </para>
-    </refsect2>
 
     <refsect2 id="pluto">
       <title>Pluto</title>
@@ -2605,7 +2640,7 @@
     </refsect2>
 
     <refsect2 id="examples">
-      <title>Examples</title>
+      <title>Old Examples</title>
 
       <para>It would be normal to start <command>pluto</command>
       in one of the system initialization scripts. It needs to be run by the
