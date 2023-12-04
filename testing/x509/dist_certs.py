@@ -223,11 +223,11 @@ def set_cert_extensions(cert, issuer, isCA=False, isRoot=False, ocsp=False, ocsp
             if ee == "west" or ee == "east" or ee == "semiroad":
                 SAN += ", email:%s@testing.libreswan.org"%ee
                 if ee == "west":
-                    SAN += ", IP:192.1.2.45"
+                    SAN += ", IP:192.1.2.45, IP:2001:db8:1:2::45"
                 if ee == "east":
-                    SAN += ", IP:192.1.2.23"
+                    SAN += ", IP:192.1.2.23, IP:2001:db8:1:2::23"
                 if ee == "semiroad":
-                    SAN += ", IP:192.1.3.209"
+                    SAN += ", IP:192.1.3.209, IP:2001:db8:1:3::209"
             if ee == "otherwest" or ee == "othereast":
                 SAN += ", email:%s@other.libreswan.org"%ee
         if 'sanCritical' in cnstr:
