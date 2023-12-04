@@ -28,20 +28,22 @@
 
       It consists of the Internet Key Exchange Daemon
       <command>pluto</command> (see
-      <citerefentry><refentrytitle>ipsec_pluto</refentrytitle>
-      <manvolnum>8</manvolnum></citerefentry>), the auxiliary command
+      <citerefentry> <refentrytitle>ipsec_pluto</refentrytitle>
+      <manvolnum>8</manvolnum> </citerefentry>), the auxiliary command
       <command>ipsec</command> that provides a way to
       manipulate <command>pluto</command> (see
-      <citerefentry><refentrytitle>ipsec</refentrytitle>
-      <manvolnum>8</manvolnum></citerefentry>), and the configuration
+      <citerefentry> <refentrytitle>ipsec</refentrytitle>
+      <manvolnum>8</manvolnum> </citerefentry>), and the configuration
       file <filename>ipsec.conf</filename> (see 
-      <citerefentry><refentrytitle>ipsec.conf</refentrytitle>
-      <manvolnum>5</manvolnum></citerefentry>).
+      <citerefentry> <refentrytitle>ipsec.conf</refentrytitle>
+      <manvolnum>5</manvolnum> </citerefentry>).
 
       For authentication, <application>Libreswan</application> can use
-      an <application>NSS</application> trust store containing  <application>X.509</application> or raw private
-      keys, or a preshared secret (see <citerefentry><refentrytitle>ipsec.secrets</refentrytitle>
-      <manvolnum>5</manvolnum></citerefentry>).
+      an <application>NSS</application> trust store containing
+      <application>X.509</application> or raw private keys, or a
+      preshared secret (see <citerefentry>
+      <refentrytitle>ipsec.secrets</refentrytitle>
+      <manvolnum>5</manvolnum> </citerefentry>).
     </para>
 
     <para>
@@ -150,6 +152,92 @@
 	the system administrator's hands.
       </para>
 
+    </refsect2>
+
+    <refsect2 id="libreswan">
+      <title>Libreswan</title>
+
+      <para>
+	<application>Libreswan</application> implements the Internet
+	Key Exchange (both versions 1 and 2).  It runs as a daemon
+	(called <command>pluto</command>) on a network node.
+	Currently, this network node must be a
+	<application>Linux</application>,
+	<application>NetBSD</application>,
+	<application>FreeBSD</application>, or
+	<application>OpenBSD</application> system.
+      </para>
+
+      <para>
+	The policy for acceptable characteristics for Security
+	Associations are specified using the configuration file
+	<filename>ipsec.conf</filename> (see <citerefentry>
+	<refentrytitle>ipsec.conf</refentrytitle>
+        <manvolnum>5</manvolnum> </citerefentry>).
+      </para>
+
+      <para>
+	<application>Libreswan</application> can be configured to
+	authenticate its peer using shared secrets or using public and
+	private keys (see <citerefentry>
+	<refentrytitle>ipsec.conf</refentrytitle>
+	<manvolnum>5</manvolnum> </citerefentry>).  Shared secrets are
+	stored in the file <filename>ipsec.secrets</filename> (see
+	<citerefentry> <refentrytitle>ipsec.secrets</refentrytitle>
+	<manvolnum>5</manvolnum> </citerefentry>).  Public keys (for
+	instance, X.509 certificates) are stored in either
+	<application>Libreswan's</application>
+	<application>NSS</application> trust store, obtained from the
+	peer, or using DNS(SEC).  Corresponding Private keys are
+	always stored in the <application>Libreswan's</application>
+	<application>NSS</application> trust store.
+      </para>
+
+      <para>
+	<application>Libreswan</application> initiates negotiation of a
+	Security Association when:
+      </para>
+
+      <itemizedlist>
+	<listitem>
+	  <para>
+	    it is manually prodded (see <citerefentry>
+	    <refentrytitle>ipsec_up</refentrytitle>
+            <manvolnum>8</manvolnum> </citerefentry>)
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	    it is configured to negotiate on-demand and traffic
+	    flow (see <citerefentry>
+	    <refentrytitle>ipsec_route</refentrytitle>
+            <manvolnum>8</manvolnum> </citerefentry>)
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	    it is configured to negotate from startup (see
+	    <computeroutput>auto=up</computeroutput> in <citerefentry>
+	    <refentrytitle>ipsec.conf</refentrytitle>
+            <manvolnum>5</manvolnum> </citerefentry>)
+	  </para>
+	</listitem>
+      </itemizedlist>
+
+      <para>
+	<command>Libreswan</command> implements IKE SAs itself.  After
+	it has negotiated the characteristics for a Child SA (IPsec
+	SA), it directs the <application>kernel</application> to
+	install the association.  If necessary, it also invokes a
+	script to adjust any firewall or routing rules (see
+	<citerefentry> <refentrytitle>ipsec_updown</refentrytitle>
+	<manvolnum>5</manvolnum> </citerefentry>).
+      </para>
+
+      <para>
+	When <application>Libreswan</application> shuts down, it
+	closes all Security Associations.
+      </para>
     </refsect2>
 
     <refsect2 id="the_updown_command">
@@ -506,57 +594,6 @@
       welcome.
     </para>
 
-    <refsect2 id="pluto">
-      <title>Pluto</title>
-
-      <para>
-	<command>pluto</command> is an implementation of IKE.  It runs
-	as a daemon on a network node. Currently, this network node
-	must be a Linux system running the <emphasis
-	remap="B">XFRM</emphasis> IPsec stack, or a
-	FreeBSD/NetBSD/OpenBSD system running the <emphasis
-	remap="B">KAME</emphasis> IPsec stack.
-      </para>
-
-      <para>
-	The policy for acceptable characteristics for Security
-	Associations is mostly hardwired into the code of
-	<command>pluto</command>.  Eventually this will be moved into
-	a security policy database with reasonable expressive power
-	and more convenience.
-      </para>
-
-      <para>
-	<command>pluto</command> uses shared secrets or RSA signatures
-	to authenticate peers with whom it is negotiating. These RSA
-	signatures can come from DNS(SEC), a configuration file, or
-	from X.509 and CA certificates.
-      </para>
-
-      <para>
-	<command>pluto</command> initiates negotiation of a Security
-	Association when it is manually prodded: the program <emphasis
-	remap="B">whack</emphasis> is run to trigger this. It will
-	also initiate a negotiation when IPsec traps an outbound
-	packet for Opportunistic Encryption.
-      </para>
-
-      <para>
-	<command>pluto</command> implements ISAKMP SAs itself.  After
-	it has negotiated the characteristics of an IPsec SA, it
-	directs the <emphasis remap="B">kernel</emphasis> to implement
-	it. If necessary, it also invokes a script to adjust any
-	firewall and issue
-	<citerefentry><refentrytitle>ip-route</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-	commands to direct IP packets.
-      </para>
-
-      <para>
-	When <command>pluto</command> shuts down, it closes all
-	Security Associations.
-      </para>
-    </refsect2>
-
     <refsect2 id="before_running_pluto">
       <title>Before Running Pluto</title>
 
@@ -570,31 +607,32 @@
       </para>
 
       <para>
-	<command>pluto</command> supports multiple public
-	networks (that is, networks that are considered insecure and thus
-	need to have their traffic encrypted or authenticated). It discovers
-	the public interfaces to use by looking at all interfaces that are
-	configured (the <option>--interface</option> option can be used to limit
-	the interfaces considered). It does this only when <emphasis
-	remap="B">whack</emphasis> tells it to --listen, so the interfaces must
-	be configured by then. The <option>--listen</option> can be used to limit
-	listening on only 1 IP address of a certain interface.
-	<citerefentry><refentrytitle>ip</refentrytitle><manvolnum>8</manvolnum>
-        </citerefentry> with the <option>addr</option> option will show the name
-	and status of each network interface.
+	<command>pluto</command> supports multiple public networks
+	(that is, networks that are considered insecure and thus need
+	to have their traffic encrypted or authenticated). It
+	discovers the public interfaces to use by looking at all
+	interfaces that are configured (the
+	<option>--interface</option> option can be used to limit the
+	interfaces considered). It does this only when <emphasis
+	remap="B">whack</emphasis> tells it to --listen, so the
+	interfaces must be configured by then. The
+	<option>--listen</option> can be used to limit listening on
+	only 1 IP address of a certain interface.  <citerefentry>
+	<refentrytitle>ip</refentrytitle> <manvolnum>8</manvolnum>
+	</citerefentry> with the <option>addr</option> option will
+	show the name and status of each network interface.
       </para>
 
       <para>
-	<command>pluto</command> requires a database of
-	preshared secrets and RSA private keys. This is described in the
-	<citerefentry>
-          <refentrytitle>ipsec.secrets</refentrytitle>
-          <manvolnum>5</manvolnum>
-        </citerefentry>. <command>pluto</command> is told of RSA
-	public keys via <command>whack</command> commands. If the
-	connection is Opportunistic, and no RSA public key is known, <emphasis
-	remap="B">pluto</emphasis> will attempt to fetch RSA keys using the
-	Domain Name System.
+	<command>pluto</command> requires a database of preshared
+	secrets and RSA private keys. This is described in the
+	<citerefentry> <refentrytitle>ipsec.secrets</refentrytitle>
+	<manvolnum>5</manvolnum> </citerefentry>.
+	<command>pluto</command> is told of RSA public keys via
+	<command>whack</command> commands. If the connection is
+	Opportunistic, and no RSA public key is known, <emphasis
+	remap="B">pluto</emphasis> will attempt to fetch RSA keys
+	using the Domain Name System.
       </para>
     </refsect2>
 
@@ -623,16 +661,14 @@
       </para>
 
       <para>
-	The file <filename>@@IPSEC_SECRETS@@</filename> is used
-	to keep preshared secret keys and XAUTH passwords. RSA private
-	keys, X.509 certificates, CRLs, OCSP and smartcards are handled
-	via NSS. For debugging, there is an argument to the <emphasis
-	remap="B">pluto</emphasis> command to use a different file. This
-	file is described in
-	<citerefentry>
-	  <refentrytitle>ipsec.secrets</refentrytitle>
-          <manvolnum>5</manvolnum>
-          </citerefentry>.
+	The file <filename>@@IPSEC_SECRETS@@</filename> is used to
+	keep preshared secret keys and XAUTH passwords. RSA private
+	keys, X.509 certificates, CRLs, OCSP and smartcards are
+	handled via NSS. For debugging, there is an argument to the
+	<emphasis remap="B">pluto</emphasis> command to use a
+	different file. This file is described in <citerefentry>
+	<refentrytitle>ipsec.secrets</refentrytitle>
+	<manvolnum>5</manvolnum> </citerefentry>.
       </para>
     </refsect2>
 
@@ -663,18 +699,19 @@
       </para>
 
       <para>
-	Pluto supports RFC 3947 NAT-Traversal. The allowed range behind the NAT routers is submitted using the
+	Pluto supports RFC 3947 NAT-Traversal.  The allowed range
+	behind the NAT routers is submitted using the
 	<option>--virtual-private</option> option. See <citerefentry>
-        <refentrytitle>ipsec.conf</refentrytitle>
-        <manvolnum>5</manvolnum>
-        </citerefentry> for the syntax. The option
-	<option>--force-keepalive</option> forces the sending of the <emphasis
-	remap="I">keep-alive packets</emphasis>, which are send to prevent the
-	NAT router from closing its port when there is not enough traffic on the
-	IPsec connection. The <option>--keep-alive</option> sets the delay (in
-	seconds) of these keep-alive packets. The newer NAT-T standards support
-	<emphasis remap="I">port floating</emphasis>, and Libreswan enables this
-	per default.
+	<refentrytitle>ipsec.conf</refentrytitle>
+	<manvolnum>5</manvolnum> </citerefentry> for the syntax. The
+	option <option>--force-keepalive</option> forces the sending
+	of the <emphasis remap="I">keep-alive packets</emphasis>,
+	which are send to prevent the NAT router from closing its port
+	when there is not enough traffic on the IPsec connection. The
+	<option>--keep-alive</option> sets the delay (in seconds) of
+	these keep-alive packets. The newer NAT-T standards support
+	<emphasis remap="I">port floating</emphasis>, and Libreswan
+	enables this per default.
       </para>
 
       <para>
@@ -739,12 +776,12 @@
 
       <para>
 	All logging, including diagnostics, is sent to <citerefentry>
-        <refentrytitle>syslog</refentrytitle>
-        <manvolnum>3</manvolnum>
-        </citerefentry> with facility=authpriv; it decides where to put these
-	messages (possibly in /var/log/secure or /var/log/auth.log). Since this too can make
-	debugging awkward, the option <option>--stderrlog</option> is used to
-	steer logging to stderr.
+	<refentrytitle>syslog</refentrytitle> <manvolnum>3</manvolnum>
+	</citerefentry> with facility=authpriv; it decides where to
+	put these messages (possibly in /var/log/secure or
+	/var/log/auth.log). Since this too can make debugging awkward,
+	the option <option>--stderrlog</option> is used to steer
+	logging to stderr.
       </para>
 
       <para>
