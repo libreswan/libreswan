@@ -1,0 +1,22 @@
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
+east #
+ ipsec certutil -D -n west
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec auto --add san
+"san": added IKEv2 connection
+east #
+ echo "initdone"
+initdone
+east #
+ # confirm the right ID types were sent/received
+east #
+ grep "ID type" /tmp/pluto.log | sort | uniq
+|    ID type: ID_IPV4_ADDR (0x1)
+east #
+ 
