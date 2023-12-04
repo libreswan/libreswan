@@ -13,7 +13,7 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-PROGRAM_MANPAGE = ipsec_whack.8
+PROGRAM_MANPAGE = ipsec-whack.8
 
 PROGRAM=whack
 OBJS += $(PROGRAM).o

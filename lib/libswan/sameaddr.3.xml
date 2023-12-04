@@ -4,7 +4,7 @@
 <!-- lifted from troff+man by doclifter -->
 <refentry id='sameaddr3'>
 <refmeta>
-<refentrytitle>IPSEC_SAMEADDR</refentrytitle>
+<refentrytitle>IPSEC-SAMEADDR</refentrytitle>
 <manvolnum>3</manvolnum>
 <refmiscinfo class='date'>28 Nov 2000</refmiscinfo>
 <refmiscinfo class="source">libreswan</refmiscinfo>
@@ -209,7 +209,7 @@ otherwise.</para>
 </refsect1>
 
 <refsect1 id='see_also'><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>inet</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec_initaddr</refentrytitle><manvolnum>3</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle>inet</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec-initaddr</refentrytitle><manvolnum>3</manvolnum></citerefentry></para>
 </refsect1>
 
 <refsect1 id='history'><title>HISTORY</title>

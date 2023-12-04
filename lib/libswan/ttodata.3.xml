@@ -6,7 +6,7 @@
   <author><firstname>Paul</firstname><surname>Wouters</surname><authorblurb><para>placeholder to suppress warning</para> </authorblurb></author>
 </refentryinfo>
 <refmeta>
-<refentrytitle>IPSEC_TTODATA</refentrytitle>
+<refentrytitle>IPSEC-TTODATA</refentrytitle>
 <manvolnum>3</manvolnum>
 <refmiscinfo class='date'>16 August 2003</refmiscinfo>
 <refmiscinfo class="source">libreswan</refmiscinfo>
@@ -302,7 +302,7 @@ and its needed-size return value includes space for the terminating NUL.</para>
 
 </refsect1>
 <refsect1 id='see_also'><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>sprintf</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec_atoaddr</refentrytitle><manvolnum>3</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle>sprintf</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec-atoaddr</refentrytitle><manvolnum>3</manvolnum></citerefentry></para>
 </refsect1>
 
 <refsect1 id='diagnostics'><title>DIAGNOSTICS</title>

@@ -28,7 +28,7 @@
 
       It consists of the Internet Key Exchange Daemon
       <command>pluto</command> (see
-      <citerefentry> <refentrytitle>ipsec_pluto</refentrytitle>
+      <citerefentry> <refentrytitle>ipsec-pluto</refentrytitle>
       <manvolnum>8</manvolnum> </citerefentry>), the auxiliary command
       <command>ipsec</command> that provides a way to
       manipulate <command>pluto</command> (see
@@ -202,7 +202,7 @@
 	<listitem>
 	  <para>
 	    it is manually prodded (see <citerefentry>
-	    <refentrytitle>ipsec_up</refentrytitle>
+	    <refentrytitle>ipsec-up</refentrytitle>
             <manvolnum>8</manvolnum> </citerefentry>)
 	  </para>
 	</listitem>
@@ -210,7 +210,7 @@
 	  <para>
 	    it is configured to negotiate on-demand and traffic
 	    flow (see <citerefentry>
-	    <refentrytitle>ipsec_route</refentrytitle>
+	    <refentrytitle>ipsec-route</refentrytitle>
             <manvolnum>8</manvolnum> </citerefentry>)
 	  </para>
 	</listitem>
@@ -230,7 +230,7 @@
 	SA), it directs the <application>kernel</application> to
 	install the association.  If necessary, it also invokes a
 	script to adjust any firewall or routing rules (see
-	<citerefentry> <refentrytitle>ipsec_updown</refentrytitle>
+	<citerefentry> <refentrytitle>ipsec-updown</refentrytitle>
 	<manvolnum>5</manvolnum> </citerefentry>).
       </para>
 
@@ -1382,7 +1382,7 @@
             <para>
 	      The username for the xauth authentication.This option is
 	      normally passed along by <citerefentry>
-	      <refentrytitle>ipsec_up</refentrytitle>
+	      <refentrytitle>ipsec-up</refentrytitle>
 	      <manvolnum>8</manvolnum> </citerefentry> when an xauth
 	      connection is started using <emphasis>ipsec
 	      up conn</emphasis>.
@@ -1398,7 +1398,7 @@
             <para>
 	      The password for the xauth authentication. This option
 	      is normally passed along by <citerefentry>
-	      <refentrytitle>ipsec_up</refentrytitle>
+	      <refentrytitle>ipsec-up</refentrytitle>
 	      <manvolnum>8</manvolnum> </citerefentry> when an xauth
 	      connection is started using <emphasis>ipsec
 	      up conn</emphasis>.
@@ -1702,7 +1702,7 @@
 	      ESP encryption/authentication algorithm to be used for
 	      the connection (phase2 aka IPsec SA). The options must
 	      be suitable as a value of <citerefentry>
-	      <refentrytitle>ipsec_spi</refentrytitle>
+	      <refentrytitle>ipsec-spi</refentrytitle>
 	      <manvolnum>8</manvolnum> </citerefentry>.  See
 	      <citerefentry> <refentrytitle>ipsec.conf</refentrytitle>
 	      <manvolnum>5</manvolnum> </citerefentry> for a detailed

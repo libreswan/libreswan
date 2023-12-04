@@ -4,7 +4,7 @@
 <!-- lifted from troff+man by doclifter -->
 <refentry id='initsubnet3'>
 <refmeta>
-<refentrytitle>IPSEC_INITSUBNET</refentrytitle>
+<refentrytitle>IPSEC-INITSUBNET</refentrytitle>
 <manvolnum>3</manvolnum>
 <refmiscinfo class='date'>12 March 2002</refmiscinfo>
 <refmiscinfo class="source">libreswan</refmiscinfo>
@@ -156,7 +156,7 @@ expressed as an address.</para>
 </refsect1>
 
 <refsect1 id='see_also'><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>inet</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec_ttosubnet</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec_rangetosubnet</refentrytitle><manvolnum>3</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle>inet</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec-ttosubnet</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec-rangetosubnet</refentrytitle><manvolnum>3</manvolnum></citerefentry></para>
 </refsect1>
 
 <refsect1 id='diagnostics'><title>DIAGNOSTICS</title>

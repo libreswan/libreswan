@@ -15,54 +15,54 @@
 
 PROGRAM=ipsec
 PROGRAMDIR=$(DESTDIR)$(SBINDIR)
-# Do not prefix $(PROGRAM) man page with "ipsec_"
+# Do not prefix $(PROGRAM) man page with "ipsec-"
 MANPROGPREFIX=
 
 PROGRAM_MANPAGE = # suppress default
 
 MANPAGES += ipsec.8
-MANPAGES += ipsec_add.8
-MANPAGES += ipsec_briefconnectionstatus.8
-MANPAGES += ipsec_briefstatus.8
-MANPAGES += ipsec_certutil.8
-MANPAGES += ipsec_checkconfig.8
-MANPAGES += ipsec_checknflog.8
-MANPAGES += ipsec_checknss.8
-MANPAGES += ipsec_connectionstatus.8
-MANPAGES += ipsec_crlutil.8
-MANPAGES += ipsec_delete.8
-MANPAGES += ipsec_down.8
-MANPAGES += ipsec_fetchcrls.8
-MANPAGES += ipsec_fipsstatus.8
-MANPAGES += ipsec_globalstatus.8
-MANPAGES += ipsec_import.8
-MANPAGES += ipsec_initnss.8
-MANPAGES += ipsec_listall.8
-MANPAGES += ipsec_listcacerts.8
-MANPAGES += ipsec_listcerts.8
-MANPAGES += ipsec_listcrls.8
-MANPAGES += ipsec_listen.8
-MANPAGES += ipsec_listpubkeys.8
-MANPAGES += ipsec_modutil.8
-MANPAGES += ipsec_ondemand.8
-MANPAGES += ipsec_pk12util.8
-MANPAGES += ipsec_purgeocsp.8
-MANPAGES += ipsec_redirect.8
-MANPAGES += ipsec_replace.8
-MANPAGES += ipsec_rereadall.8
-MANPAGES += ipsec_rereadcerts.8
-MANPAGES += ipsec_rereadsecrets.8
-MANPAGES += ipsec_restart.8
-MANPAGES += ipsec_route.8
-MANPAGES += ipsec_showstates.8
-MANPAGES += ipsec_shuntstatus.8
-MANPAGES += ipsec_start.8
-MANPAGES += ipsec_status.8
-MANPAGES += ipsec_stop.8
-MANPAGES += ipsec_trafficstatus.8
-MANPAGES += ipsec_unroute.8
-MANPAGES += ipsec_up.8
-MANPAGES += ipsec_vfychain.8
+MANPAGES += ipsec-add.8
+MANPAGES += ipsec-briefconnectionstatus.8
+MANPAGES += ipsec-briefstatus.8
+MANPAGES += ipsec-certutil.8
+MANPAGES += ipsec-checkconfig.8
+MANPAGES += ipsec-checknflog.8
+MANPAGES += ipsec-checknss.8
+MANPAGES += ipsec-connectionstatus.8
+MANPAGES += ipsec-crlutil.8
+MANPAGES += ipsec-delete.8
+MANPAGES += ipsec-down.8
+MANPAGES += ipsec-fetchcrls.8
+MANPAGES += ipsec-fipsstatus.8
+MANPAGES += ipsec-globalstatus.8
+MANPAGES += ipsec-import.8
+MANPAGES += ipsec-initnss.8
+MANPAGES += ipsec-listall.8
+MANPAGES += ipsec-listcacerts.8
+MANPAGES += ipsec-listcerts.8
+MANPAGES += ipsec-listcrls.8
+MANPAGES += ipsec-listen.8
+MANPAGES += ipsec-listpubkeys.8
+MANPAGES += ipsec-modutil.8
+MANPAGES += ipsec-ondemand.8
+MANPAGES += ipsec-pk12util.8
+MANPAGES += ipsec-purgeocsp.8
+MANPAGES += ipsec-redirect.8
+MANPAGES += ipsec-replace.8
+MANPAGES += ipsec-rereadall.8
+MANPAGES += ipsec-rereadcerts.8
+MANPAGES += ipsec-rereadsecrets.8
+MANPAGES += ipsec-restart.8
+MANPAGES += ipsec-route.8
+MANPAGES += ipsec-showstates.8
+MANPAGES += ipsec-shuntstatus.8
+MANPAGES += ipsec-start.8
+MANPAGES += ipsec-status.8
+MANPAGES += ipsec-stop.8
+MANPAGES += ipsec-trafficstatus.8
+MANPAGES += ipsec-unroute.8
+MANPAGES += ipsec-up.8
+MANPAGES += ipsec-vfychain.8
 
 ifdef top_srcdir
 include $(top_srcdir)/mk/program.mk

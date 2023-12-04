@@ -1,0 +1,637 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
+<refentry id="pluto8">
+  <refmeta>
+    <refentrytitle>IPSEC-PLUTO</refentrytitle>
+    <manvolnum>8</manvolnum>
+    <refmiscinfo class="date">29 June 2014</refmiscinfo>
+    <refmiscinfo class="source">libreswan</refmiscinfo>
+    <refmiscinfo class="manual">Executable programs</refmiscinfo>
+  </refmeta>
+
+  <refnamediv id="name">
+    <refname>ipsec pluto</refname>
+    <refname>pluto</refname>
+    <refpurpose>Internet Key Exchange daemon</refpurpose>
+  </refnamediv>
+
+  <!-- body begins here -->
+  <refsynopsisdiv id="synopsis">
+
+    <cmdsynopsis>
+
+      <command>ipsec pluto</command>
+      <arg choice="opt">--help</arg>
+      <arg choice="opt">--version</arg>
+      <arg choice="opt">--leak-detective</arg>
+      <arg choice="opt">--efence-protect</arg>
+      <arg choice="opt">--config <replaceable>filename</replaceable></arg>
+      <arg choice="opt">--vendorid <replaceable>VID</replaceable></arg>
+      <arg choice="opt">--nofork</arg>
+      <arg choice="opt">--stderrlog</arg>
+      <arg choice="opt">--logfile <replaceable>filename</replaceable></arg>
+      <arg choice="opt">--log-no-time</arg>
+      <arg choice="opt">--log-no-append</arg>
+      <arg choice="opt">--log-no-ip</arg>
+      <arg choice="opt">--log-no-audit</arg>
+      <arg choice="opt">--use-netkey</arg>
+      <arg choice="opt">--use-bsdkame</arg>
+      <arg choice="opt">--uniqueids</arg>
+      <arg choice="opt">--virtual-private <replaceable>network_list</replaceable></arg>
+      <arg choice="opt">--keep-alive <replaceable>delay_sec</replaceable></arg>
+      <arg choice="opt">--force-busy</arg>
+      <arg choice="opt">--crl-strict</arg>
+      <arg choice="opt">--crlcheckinterval</arg>
+      <arg choice="opt">--interface <replaceable>interfacename</replaceable></arg>
+      <arg choice="opt">--listen <replaceable>ipaddr</replaceable></arg>
+      <arg choice="opt">--ikeport <replaceable>portnumber</replaceable></arg>
+      <arg choice="opt">--natikeport <replaceable>portnumber</replaceable></arg>
+      <arg choice="opt">--rundir <replaceable>path</replaceable></arg>
+      <arg choice="opt">--secretsfile <replaceable>secrets-file</replaceable></arg>
+      <arg choice="opt">--nhelpers <replaceable>number</replaceable></arg>
+      <arg choice="opt">--seedbits <replaceable>numbits</replaceable></arg>
+      <arg choice="opt">--ipsecdir <replaceable>dirname</replaceable></arg>
+      <arg choice="opt">--nssdir <replaceable>dirname</replaceable></arg>
+      <arg choice="opt">--coredir <replaceable>dirname</replaceable></arg>
+      <arg choice="opt">--statsbin <replaceable>filename</replaceable></arg>
+      <arg choice="opt">--secctx-attr-type <replaceable>number</replaceable></arg>
+    </cmdsynopsis>
+
+  </refsynopsisdiv>
+
+  <refsect1 id="description">
+    <title>DESCRIPTION</title>
+
+    <para>
+      <command>pluto</command> is
+      <application>Libreswan's</application> Internet Key Exchange
+      (IKE) daemon.  It is used to automatically build shared
+      "security associations" on a system that has IPsec, the secure
+      IP protocol. In other words, <command>pluto</command> can
+      eliminate much of the work of manual keying.  The actual secure
+      transmission of packets is the responsibility of other parts of
+      the system - the kernel. Pluto can talk to various kernel
+      implementations, such as the Linux <emphasis>XFRM</emphasis> and
+      BSD <emphasis>KAME</emphasis> IPsec stacks.
+    </para>
+
+    <important>
+      <para>
+	<command>pluto</command> is not normally run directly.
+	Instead the daemon is started and manipulated using the hosts
+	init system (such as systemd or rc), and the command
+	<citerefentry><refentrytitle>ipsec</refentrytitle>
+	<manvolnum>8</manvolnum></citerefentry>.
+      </para>
+    </important>
+
+    <para>
+      To run <command>pluto</command> directly use <command>ipsec
+      pluto</command>.
+    </para>
+
+    <para>
+      Pluto supports different IPstacks on different operating
+      systems.  This can be configured using one of the options
+      <option>--use-netkey</option> (Linux),
+      <option>--use-bsdkame</option> (BSD).  On startup, pluto might
+      also read the <option>protostack=</option> option to select the
+      IPsec stack to use if <option>--config /etc/ipsec.conf</option>
+      is given as argument to pluto.  If both
+      <option>--use-XXX</option> and <option>--config
+      /etc/ipsec.conf</option> are specified, the last command line
+      argument specified takes precedence.
+    </para>
+
+    <para>
+      Pluto supports RFC 3947 NAT-Traversal.  The allowed range behind the NAT routers is submitted using the
+      <option>--virtual-private</option> option. See <citerefentry>
+      <refentrytitle>ipsec.conf</refentrytitle>
+      <manvolnum>5</manvolnum> </citerefentry> for the syntax. The
+      option <option>--force-keepalive</option> forces the sending of
+      the <emphasis>keep-alive packets</emphasis>, which are send to
+      prevent the NAT router from closing its port when there is not
+      enough traffic on the IPsec connection. The
+      <option>--keep-alive</option> sets the delay (in seconds) of
+      these keep-alive packets. The newer NAT-T standards support
+      <emphasis>port floating</emphasis>, and Libreswan enables this
+      per default.
+    </para>
+
+    <para>
+      Pluto supports the use of X.509 certificates and sends
+      certificates when needed. Pluto uses NSS for all X.509 related
+      data, including CAcerts, certs, CRLs and private keys. The
+      <emphasis>Certificate Revocation Lists</emphasis> can
+      also be retrieved from an URL. The option
+      <option>--crlcheckinterval</option> sets the time between
+      checking for CRL expiration and issuing new fetch commands.  The
+      first attempt to update a CRL is started at <emphasis>2*crlcheckinterval</emphasis>
+      before the next update time.  Pluto logs a warning if no valid CRL
+      was loaded or obtained for a connection. If <option>--crl-strict</option> is
+      given, the connection will be rejected until a valid CRL has
+      been loaded.
+    </para>
+
+    <para>
+      Pluto can also use helper children to off-load cryptographic
+      operations. This behavior can be fine tuned using the
+      <option>--nhelpers</option>. Pluto will start <emphasis>(n-1)</emphasis>
+      of them, where <emphasis>n</emphasis> is the number of CPU's you have
+      (including hypherthreaded CPU's). A value of <emphasis>0</emphasis>
+      forces pluto to do all operations in the
+      main process. A value of <emphasis>-1</emphasis> tells
+      pluto to perform the above calculation. Any other value forces
+      the number to that amount.
+    </para>
+
+    <para>
+      Pluto uses the NSS crypto library as its random source. Some
+      government Three Letter Agency requires that pluto reads 440 bits
+      from /dev/random and feed this into the NSS RNG before drawing
+      random from the NSS library, despite the NSS library itself
+      already seeding its internal state. As this process can block
+      pluto for an extended time, the default is to not perform this
+      redundant seeding. The <option>--seedbits</option>
+      option can be used to specify the number of bits that will be
+      pulled from /dev/random and seeded into the NSS RNG.  This can
+      also be accomplished by specifying seedbits in the "config setup"
+      section of ipsec.conf. This option should not be used by most people.
+    </para>
+
+    <para>
+      <command>pluto</command> attempts to create a
+      lockfile with the name
+      <filename>@@RUNDIR@@/pluto.pid</filename>. If the lockfile
+      cannot be created, <command>pluto</command> exits -
+      this prevents multiple <command>pluto</command>s
+      from competing Any "leftover" lockfile must be removed before
+      <command>pluto</command> will run. <command>pluto</command>
+      writes its PID into this file so that scripts can find it. This
+      lockwill not function properly if it is on an NFS volume (but sharing
+      locks on multiple machines doesn't make sense anyway).
+    </para>
+
+    <para>
+      <command>pluto</command> then forks and the parent
+      exits. This is the conventional "daemon fork". It can make
+      debugging awkward, so there is an option to suppress this
+      fork. In certain configurations, pluto might also launch helper
+      programs to assist with DNS queries or to offload cryptographic
+      operations.
+    </para>
+
+    <para>
+      All logging, including diagnostics, is sent to <citerefentry>
+      <refentrytitle>syslog</refentrytitle>
+      <manvolnum>3</manvolnum> </citerefentry> with facility=authpriv;
+      it decides where to put these messages (possibly in
+      /var/log/secure or /var/log/auth.log). Since this too can make
+      debugging awkward, the option <option>--stderrlog</option> is
+      used to steer logging to stderr.
+    </para>
+
+    <para>
+      Alternatively, <option>--logfile</option> can be used to send
+      all logging information to a specific file.
+    </para>
+
+    <para>
+      Once <command>pluto</command> is started, it waits
+      for requests from <command>whack</command>.
+    </para>
+
+  </refsect1>
+
+  <refsect1 id="examples">
+    <title>EXAMPLES</title>
+
+    <refsect2 id="starting">
+      <title>Starting pluto</title>
+
+      <para>
+	It would be normal to start <command>pluto</command> in one of
+	the system initialization scripts. It needs to be run by the
+	superuser. Generally, no arguments are needed. To run in
+	manually, the superuser can simply type:
+      </para>
+
+      <para>
+	<command>ipsec pluto</command>
+      </para>
+
+    </refsect2>
+
+    <refsect2 id="debugging">
+      <title>DEBUGGING</title>
+
+      <para>
+	<command>pluto</command> accepts several optional arguments,
+	useful mostly for debugging.  Except for
+	<option>--interface</option>, each should appear at most once.
+      </para>
+
+      <variablelist remap="TP">
+
+	<varlistentry>
+          <term>
+	    <option>--interface</option> <replaceable>interfacename</replaceable>
+	  </term>
+          <listitem>
+            <para>
+	      Specifies that the named real public network interface
+	      should be considered. The interface name specified
+	      should not be <command>ipsec</command><emphasis>N</emphasis>.
+	      If the option doesn't appear, all interfaces are considered.
+	      To specify several interfaces, use the option once for each.
+	      One use of this option is to specify which interface should be
+	      used when two or more share the same IP address.
+	    </para>
+          </listitem>
+	</varlistentry>
+
+	<varlistentry>
+          <term>
+	    <option>--ikeport</option> <replaceable>port-number</replaceable>
+	  </term>
+          <listitem>
+            <para>
+	      Changes the UDP port that <command>pluto</command> will use
+	      (default, specified by IANA: 500).
+	    </para>
+          </listitem>
+	</varlistentry>
+
+	<varlistentry>
+          <term>
+	    <option>--ctlbase</option> <replaceable>path</replaceable>
+	  </term>
+          <listitem>
+            <para>
+	      Basename for control files. <emphasis>path</emphasis>.ctl
+	      is the socket through which <command>whack</command>
+	      communicates with <command>pluto</command>.
+	      <emphasis>path</emphasis>.pid is the lockfile to prevent
+	      multiple <command>pluto</command>
+	      instances. The default is
+	      <filename>/var/run/pluto/pluto</filename>).
+	    </para>
+          </listitem>
+	</varlistentry>
+
+	<varlistentry>
+          <term>
+	    <option>--secretsfile</option> <replaceable>file</replaceable>
+	  </term>
+          <listitem>
+            <para>
+	      Specifies the file for authentication secrets (default:
+	      <filename>@@IPSEC_SECRETS@@</filename>). This name is
+	      subject to "globbing" as in <citerefentry>
+	      <refentrytitle>sh</refentrytitle>
+	      <manvolnum>1</manvolnum> </citerefentry>, so every file
+	      with a matching name is processed. Quoting is generally
+	      needed to prevent the shell from doing the globbing.
+	    </para>
+          </listitem>
+	</varlistentry>
+
+	<varlistentry>
+          <term>
+	    <option>--nofork</option>
+	  </term>
+          <listitem>
+            <para>
+	      Disable "daemon fork" (default is to fork). In addition,
+	      after the lock file and control socket are created,
+	      print the line "Pluto initialized" to standard out.
+	    </para>
+          </listitem>
+	</varlistentry>
+
+	<varlistentry>
+          <term>
+	    <option>--uniqueids</option>
+	  </term>
+          <listitem>
+            <para>
+	      If this option has been selected, whenever a new ISAKMP
+	      SA is established, any connection with the same Peer ID
+	      but a different Peer IP address is unoriented (causing
+	      all its SAs to be deleted). This helps clean up dangling
+	      SAs when a connection is lost and then regained at
+	      another IP address.
+	    </para>
+          </listitem>
+	</varlistentry>
+
+	<varlistentry>
+          <term>
+	    <option>--force-busy</option>
+	  </term>
+          <listitem>
+            <para>
+	      If this option has been selected, pluto will be forced
+	      to be "busy". In this state, which happens when there is
+	      a Denial of Service attack, will force pluto to use
+	      cookies before accepting new incoming IKE
+	      packets. Cookies are send and required in ikev1
+	      Aggressive Mode and in ikev2.  This option is mostly
+	      used for testing purposes, but can be selected by
+	      paranoid administrators as well.
+	    </para>
+          </listitem>
+	</varlistentry>
+
+	<varlistentry>
+          <term>
+	    <option>--stderrlog</option>
+	  </term>
+          <listitem>
+            <para>
+	      Log goes to standard out (default is to use
+	      <citerefentry> <refentrytitle>syslogd</refentrytitle>
+	      <manvolnum>8</manvolnum> </citerefentry>).
+	    </para>
+          </listitem>
+	</varlistentry>
+      </variablelist>
+
+      <para>
+	<command>pluto</command> is willing to produce a
+	prodigious amount of debugging information.  There are several
+	classes of debugging output, and <command>pluto</command>
+	may be directed to produce a selection of them.  All lines of
+	debugging output are prefixed with "|" to distinguish them from
+	normal diagnostic messages.
+      </para>
+
+      <para>
+	When <command>pluto</command> is invoked, it may
+	be given arguments to specify which debug classes to output.
+	The current options are:
+      </para>
+
+      <variablelist>
+
+	<varlistentry>
+          <term>
+	    <option>--debug help</option> (whack only)
+	  </term>
+          <listitem>
+            <para>
+	      List the debugging classes recognised by <emphasis
+	     >pluto</emphasis>.
+	    </para>
+          </listitem>
+	</varlistentry>
+
+	<varlistentry>
+          <term>
+	    <option>--debug none</option>
+	  </term>
+          <listitem>
+            <para>
+	      Disable logging for all debugging classes.
+	    </para>
+          </listitem>
+	</varlistentry>
+
+	<varlistentry>
+          <term>
+	    <option>--debug base</option>
+	  </term>
+          <listitem>
+            <para>
+	      Enable debug-logging.
+	    </para>
+          </listitem>
+	</varlistentry>
+
+	<varlistentry>
+          <term>
+	    <option>--debug cpu-usage</option>
+	  </term>
+          <listitem>
+            <para>
+	      Enable cpu-usage logging.
+	    </para>
+          </listitem>
+	</varlistentry>
+
+	<varlistentry>
+          <term>
+	    <option>--debug <replaceable>class</replaceable></option>
+	  </term>
+          <term>
+	    <option>--no-debug <replaceable>class</replaceable></option>
+	  </term>
+          <term>
+	    <option>--debug no-<replaceable>class</replaceable></option>
+	  </term>
+          <listitem>
+            <para>
+	      Enable (disable) logging of the specified debugging
+	      <replaceable>class</replaceable> (<option>--debug
+	      help</option> lists debugging classes supported by this
+	      version of <command>pluto</command>).
+	    </para>
+          </listitem>
+	</varlistentry>
+
+      </variablelist>
+
+      <para>
+	The debug form of the <command>whack</command>
+	command will change the selection in a running <command>pluto</command>.
+	If a connection name is specified, the flags are added whenever
+	<command>pluto</command> has identified that it is dealing
+	with that connection.  Unfortunately, this is often part way
+	into the operation being observed.
+      </para>
+
+      <para>
+	For example, to start <command>pluto</command>
+	with both <emphasis>base</emphasis> and
+	<emphasis>cpu-usage</emphasis> debug-logging enabled:
+      </para>
+
+      <para><simplelist columns='1'>
+	<member><computeroutput>ipsec pluto --debug base --debug cpu-usage</computeroutput></member>
+      </simplelist></para>
+
+      <para>
+	To later change this <command>pluto</command> to
+	disable <emphasis>base</emphasis> debug-logging use either:
+      </para>
+
+      <para><simplelist columns='1'>
+	<member><computeroutput>ipsec whack --no-debug base</computeroutput></member>
+      </simplelist></para>
+
+      <para>
+	or:
+      </para>
+
+      <para><simplelist columns='1'>
+	<member><computeroutput>ipsec whack --debug none --debug cpu-usage</computeroutput></member>
+      </simplelist></para>
+
+    </refsect2>
+
+  </refsect1>
+
+  <refsect1 id="signals">
+    <title>SIGNALS</title>
+
+    <para>
+      <emphasis>Pluto</emphasis> responds to
+      <constant>SIGHUP</constant> by issuing a suggestion that
+      ``<command>whack</command> --listen'' might have been intended.
+    </para>
+
+    <para><emphasis>Pluto</emphasis> exits when it receives
+    <constant>SIGTERM</constant>.</para>
+  </refsect1>
+
+  <refsect1 id="exit_status">
+    <title>EXIT STATUS</title>
+
+    <para><command>pluto</command> normally forks a daemon
+    process, so the exit status is normally a very preliminary result.</para>
+
+    <variablelist>
+      <varlistentry>
+        <term>0</term>
+
+        <listitem>
+          <para>means that all is OK so far.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>1</term>
+
+        <listitem>
+          <para>means that something was wrong.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>10</term>
+
+        <listitem>
+          <para>means that the lock file already exists.</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+
+  </refsect1>
+
+  <refsect1 id="files">
+    <title>FILES</title>
+
+    <para>
+<filename>@@RUNDIR@@/pluto.pid</filename>
+    <filename>@@RUNDIR@@/pluto.ctl</filename>
+    <filename>@@IPSEC_SECRETS@@</filename>
+<filename>/dev/urandom</filename>
+</para>
+  </refsect1>
+
+  <refsect1 id="environment">
+    <title>ENVIRONMENT</title>
+
+    <para>pluto does not use any environment variables</para>
+  </refsect1>
+
+  <refsect1 id="see_also">
+    <title>SEE ALSO</title>
+
+    <para>The rest of the Libreswan distribution, in particular
+    <citerefentry><refentrytitle>ipsec</refentrytitle><manvolnum>8</manvolnum></citerefentry>.</para>
+
+    <para>
+      <citerefentry>
+        <refentrytitle>ipsec</refentrytitle>
+        <manvolnum>8</manvolnum>
+      </citerefentry>
+      is designed to make using <command>pluto</command>
+      more pleasant. Use it!
+    </para>
+
+    <para>
+      <citerefentry>
+        <refentrytitle>ipsec.secrets</refentrytitle>
+        <manvolnum>5</manvolnum>
+      </citerefentry>
+      describes the format of the secrets file.
+    </para>
+
+    <para>
+      For more information on IPsec, the mailing list, and the relevant
+      documents, see:
+    </para>
+
+    <para>
+      <emphasis><ulink url="https://datatracker.ietf.org/wg/ipsecme/charter/">https://datatracker.ietf.org/wg/ipsecme/charter/</ulink></emphasis>
+    </para>
+
+    <para>
+      At the time of writing, the latest IETF IKE RFC is:
+    </para>
+
+    <para>
+      RFC 7296 Internet Key Exchange Protocol Version 2 (IKEv2)
+    </para>
+
+    <para>
+      The Libreswan web site <emphasis><ulink url="https://libreswan.org">https://libreswan.org</ulink></emphasis> and the mailing
+      lists described there.
+    </para>
+
+    <para>
+      The Libreswan wiki <emphasis><ulink url="https://libreswan.org/wiki">https://libreswan.org/wiki</ulink></emphasis> includes documentation.
+    </para>
+
+    <para>
+      The Libreswan list of implemented RFCs <emphasis><ulink url="https://libreswan.org/wiki/Implemented_Standards">https://libreswan.org/wiki/Implemented_Standards</ulink></emphasis>.
+    </para>
+  </refsect1>
+
+  <refsect1 id="history">
+    <title>HISTORY</title>
+
+    <para>
+      This code is released under the GPL terms. See the accompanying
+      files CHANGES COPYING and CREDITS.* for more details.
+    </para>
+
+    <para>
+      Detailed history (including FreeS/WAN and Openswan) can be found in the docs/ directory.
+    </para>
+
+  </refsect1>
+
+  <refsect1 id="bugs">
+    <title>BUGS</title>
+
+    <para>Please see
+    &lt;<ulink url="https://github.com/libreswan/libreswan/issues">https://github.com/libreswan/libreswan/issues</ulink>&gt;
+    for a list of currently known bugs and missing features.</para>
+
+    <para>
+      Bugs should be reported to the &lt;swan-dev@lists.libreswan.org&gt;
+      mailing list.
+    </para>
+  </refsect1>
+
+  <refsect1 id='author'>
+    <title>AUTHOR</title>
+    <para>
+      <author><personname><firstname>Paul</firstname><surname>Wouters</surname></personname></author>
+    </para>
+  </refsect1>
+</refentry>
+

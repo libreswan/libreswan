@@ -3,7 +3,7 @@
                    "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
 <refentry>
 <refmeta>
-<refentrytitle>IPSEC_LSW_INIT_OPTIONS</refentrytitle>
+<refentrytitle>IPSEC-LSW_INIT_OPTIONS</refentrytitle>
 <manvolnum>3</manvolnum>
 <refmiscinfo class='date'>4 December 2005</refmiscinfo>
 <refmiscinfo class="source">libreswan</refmiscinfo>
@@ -264,7 +264,7 @@ and its needed-size return value includes space for the terminating NUL.</para>
 </refsect1>
 
 <refsect1 id='see_also'><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>sprintf</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec_atoaddr</refentrytitle><manvolnum>3</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle>sprintf</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec-atoaddr</refentrytitle><manvolnum>3</manvolnum></citerefentry></para>
 </refsect1>
 
 <refsect1 id='diagnostics'><title>DIAGNOSTICS</title>

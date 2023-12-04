@@ -4,7 +4,7 @@
 <!-- lifted from troff+man by doclifter -->
 <refentry id='goodmask3'>
 <refmeta>
-<refentrytitle>IPSEC_GOODMASK</refentrytitle>
+<refentrytitle>IPSEC-GOODMASK</refentrytitle>
 <manvolnum>3</manvolnum>
 <refmiscinfo class='date'>11 June 2001</refmiscinfo>
 <refmiscinfo class="source">libreswan</refmiscinfo>
@@ -44,7 +44,7 @@
 <refsect1 id='description'><title>DESCRIPTION</title>
 <para>These functions are obsolete;
 see
-<citerefentry><refentrytitle>ipsec_masktocount</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+<citerefentry><refentrytitle>ipsec-masktocount</refentrytitle><manvolnum>3</manvolnum></citerefentry>
 for a partial replacement.</para>
 
 <para><emphasis remap='I'>Goodmask</emphasis>
@@ -68,7 +68,7 @@ returning the subnet mask corresponding to bit count
 </refsect1>
 
 <refsect1 id='see_also'><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>inet</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec_atosubnet</refentrytitle><manvolnum>3</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle>inet</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec-atosubnet</refentrytitle><manvolnum>3</manvolnum></citerefentry></para>
 </refsect1>
 
 <refsect1 id='diagnostics'><title>DIAGNOSTICS</title>

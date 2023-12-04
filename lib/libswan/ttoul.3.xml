@@ -6,7 +6,7 @@
   <author><firstname>Paul</firstname><surname>Wouters</surname><authorblurb><para>placeholder to suppress warning</para> </authorblurb></author>
 </refentryinfo>
 <refmeta>
-<refentrytitle>IPSEC_TTOUL</refentrytitle>
+<refentrytitle>IPSEC-TTOUL</refentrytitle>
 <manvolnum>3</manvolnum>
 <refmiscinfo class='date'>16 Aug 2000</refmiscinfo>
 <refmiscinfo class="source">libreswan</refmiscinfo>

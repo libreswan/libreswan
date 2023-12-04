@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
+<refentry id='barf8'>
+  <refmeta>
+    <refentrytitle>IPSEC-BARF</refentrytitle>
+    <manvolnum>8</manvolnum>
+    <refmiscinfo class='date'>4 September 2016</refmiscinfo>
+    <refmiscinfo class="source">libreswan</refmiscinfo>
+    <refmiscinfo class="manual">Executable programs</refmiscinfo>
+  </refmeta>
+  <refnamediv id='name'>
+    <refname>ipsec barf</refname>
+    <refpurpose>spew out collected IPsec debugging information</refpurpose>
+  </refnamediv>
+  <!-- body begins here -->
+  <refsynopsisdiv id='synopsis'>
+    <cmdsynopsis>
+      <command>ipsec</command>
+      <arg choice='plain'><replaceable>barf</replaceable></arg>
+      <arg choice='opt'><arg choice='plain'>--short</arg></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+
+  <refsect1 id='description'>
+    <title>DESCRIPTION</title>
+    <para>
+      <command>barf</command>
+      outputs (on standard output) a collection of debugging information
+      (contents of files, selections from logs, etc.)
+      related to the IPsec encryption/authentication system.
+      It is primarily a convenience for remote debugging,
+      a single command that packages up (and labels) all information
+      that might be relevant to diagnosing a problem in IPsec.
+    </para>
+
+
+    <para>
+      The <option>--short</option> option limits the length of the log
+      portion of <command>barf</command>'s output, which
+      can otherwise be extremely voluminous
+      if debug logging is turned on.
+    </para>
+
+    <para>
+      On systems with systemd, ipsec barf will look for logs
+      using the journalctl command. If the logfile= option is used,
+      logs will also not be found by the ipsec barf command.
+    </para>
+
+    <para>
+      <command>barf</command> censors its output, replacing keys
+      and secrets with brief checksums to avoid revealing sensitive information.
+    </para>
+
+    <para>
+      Beware that the output of both commands is aimed at humans,
+      not programs, and the output format is subject to change without warning.
+    </para>
+
+    <para>
+      <command>barf</command> has to figure out which files in
+      <filename>/var/log</filename> contain the IPsec log messages. It looks for
+      general log messages first in <emphasis remap='I'>messages</emphasis>
+      and <emphasis remap='I'>syslog</emphasis>, and for Pluto messages first in
+      <emphasis remap='I'>secure</emphasis>, <emphasis remap='I'>auth.log</emphasis>,
+      and <emphasis remap='I'>debug</emphasis>. In both cases, if it does not find
+      what it is looking for in one of those &ldquo;likely&rdquo; places,
+      it will resort to a brute-force search of most (non-compressed) files in
+      <filename>/var/log</filename>.
+    </para>
+  </refsect1>
+
+  <refsect1 id='files'>
+    <title>FILES</title>
+    <para>
+      <filename>/proc/net/*</filename>
+      <filename>/var/log/*</filename>
+      <filename>@@IPSEC_CONF@@</filename>
+      <filename>@@IPSEC_SECRETS@@</filename>
+    </para>
+  </refsect1>
+
+  <refsect1 id='history'>
+    <title>HISTORY</title>
+    <para>
+      Written for the Linux FreeS/WAN project
+      &lt;<ulink url='https://www.freeswan.org'>https://www.freeswan.org</ulink>&gt;
+    by Henry Spencer.</para>
+  </refsect1>
+
+  <refsect1 id='bugs'>
+    <title>BUGS</title>
+    <para>
+      <command>barf</command> uses heuristics to try to pick
+      relevant material out of the logs, and relevant messages
+      that are not labelled with any of the tags that
+      <command>barf</command> looks for will be lost.
+      We think we've eliminated the last such case, but one never knows...
+    </para>
+
+    <para>
+      Finding <emphasis remap='I'>updown</emphasis>
+      scripts (so they can be included in output) is, in general, difficult.
+      <command>barf</command>
+      uses a very simple heuristic that is easily fooled.
+    </para>
+
+    <para>
+      The brute-force search for the right log files can get expensive on
+      systems with a lot of clutter in <filename>/var/log</filename>.</para>
+  </refsect1>
+
+  <refsect1 id='author'>
+    <title>AUTHOR</title>
+    <para>
+      <author><personname><firstname>Paul</firstname><surname>Wouters</surname></personname></author>
+    </para>
+  </refsect1>
+</refentry>

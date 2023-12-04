@@ -8,7 +8,7 @@ endif
 # only to suppress its man page), force MANPAGES to include a MANPAGE
 # for this program.
 
-PROGRAM_MANPAGE ?= $(addprefix ipsec_, $(addsuffix .8, $(PROGRAM)))
+PROGRAM_MANPAGE ?= $(addprefix ipsec-, $(addsuffix .8, $(PROGRAM)))
 MANPAGES += $(PROGRAM_MANPAGE)
 
 include $(top_srcdir)/mk/config.mk

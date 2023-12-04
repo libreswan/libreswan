@@ -3,7 +3,7 @@
                    "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
 <refentry id='initaddr3'>
 <refmeta>
-<refentrytitle>IPSEC_INITADDR</refentrytitle>
+<refentrytitle>IPSEC-INITADDR</refentrytitle>
 <manvolnum>3</manvolnum>
 <refmiscinfo class='date'>11 Sept 2000</refmiscinfo>
 <refmiscinfo class="source">libreswan</refmiscinfo>
@@ -151,7 +151,7 @@ for a failure.</para>
 </refsect1>
 
 <refsect1 id='see_also'><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>inet</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec_ttoaddr</refentrytitle><manvolnum>3</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle>inet</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec-ttoaddr</refentrytitle><manvolnum>3</manvolnum></citerefentry></para>
 </refsect1>
 
 <refsect1 id='diagnostics'><title>DIAGNOSTICS</title>

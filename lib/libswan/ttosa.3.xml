@@ -6,7 +6,7 @@
   <author><firstname>Paul</firstname><surname>Wouters</surname><authorblurb><para>placeholder to suppress warning</para> </authorblurb></author>
 </refentryinfo>
 <refmeta>
-<refentrytitle>IPSEC_TTOSA</refentrytitle>
+<refentrytitle>IPSEC-TTOSA</refentrytitle>
 <manvolnum>3</manvolnum>
 <refmiscinfo class='date'>26 Nov 2001</refmiscinfo>
 <refmiscinfo class="source">libreswan</refmiscinfo>
@@ -88,7 +88,7 @@ an unsigned integer SPI number in hexadecimal (with no
 prefix),
 and an IP address.
 The IP address can be any form accepted by
-<citerefentry><refentrytitle>ipsec_ttoaddr</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>ipsec-ttoaddr</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
 e.g. dotted-decimal IPv4 address,
 colon-hex IPv6 address,
 or DNS name.</para>
@@ -126,7 +126,7 @@ signify special &ldquo;magic&rdquo; SAs used to indicate that packets should be
 passed, dropped, rejected (dropped with ICMP notification),
 held,
 and trapped (sent up to
-<citerefentry><refentrytitle>ipsec_pluto</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>ipsec-pluto</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 with either of two forms of
 <emphasis remap='B'>%hold</emphasis>
 automatically installed)
@@ -271,7 +271,7 @@ forms of SA specifier that lack the address-family indicator.</para>
 </refsect1>
 
 <refsect1 id='see_also'><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>ipsec_ttoul</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec_ttoaddr</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec_samesaid</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>inet</refentrytitle><manvolnum>3</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle>ipsec-ttoul</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec-ttoaddr</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec-samesaid</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>inet</refentrytitle><manvolnum>3</manvolnum></citerefentry></para>
 </refsect1>
 
 <refsect1 id='diagnostics'><title>DIAGNOSTICS</title>

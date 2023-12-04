@@ -3,7 +3,7 @@
                    "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
 <refentry id='subnetof3'>
 <refmeta>
-<refentrytitle>IPSEC_SUBNETOF</refentrytitle>
+<refentrytitle>IPSEC-SUBNETOF</refentrytitle>
 <manvolnum>3</manvolnum>
 <refmiscinfo class='date'>11 June 2001</refmiscinfo>
 <refmiscinfo class="source">libreswan</refmiscinfo>
@@ -45,7 +45,7 @@
 
 <refsect1 id='description'><title>DESCRIPTION</title>
 <para>These functions are obsolete; see
-<citerefentry><refentrytitle>ipsec_networkof</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+<citerefentry><refentrytitle>ipsec-networkof</refentrytitle><manvolnum>3</manvolnum></citerefentry>
 for their replacements.</para>
 
 <para><emphasis remap='I'>Subnetof</emphasis>
@@ -65,7 +65,7 @@ an API, in hopes of easing the eventual transition to IPv6.</para>
 </refsect1>
 
 <refsect1 id='see_also'><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>inet</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec_atosubnet</refentrytitle><manvolnum>3</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle>inet</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec-atosubnet</refentrytitle><manvolnum>3</manvolnum></citerefentry></para>
 </refsect1>
 
 <refsect1 id='history'><title>HISTORY</title>

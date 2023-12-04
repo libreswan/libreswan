@@ -3,7 +3,7 @@
                    "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
 <refentry id='atoaddr3'>
 <refmeta>
-<refentrytitle>IPSEC_ATOADDR</refentrytitle>
+<refentrytitle>IPSEC-ATOADDR</refentrytitle>
 <manvolnum>3</manvolnum>
 <refmiscinfo class='date'>25 February 2008</refmiscinfo>
 <refmiscinfo class="source">libreswan</refmiscinfo>
@@ -59,7 +59,7 @@
 
 <refsect1 id='description'><title>DESCRIPTION</title>
 <para>These functions are obsolete; see
-<citerefentry><refentrytitle>ipsec_ttoaddr</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+<citerefentry><refentrytitle>ipsec-ttoaddr</refentrytitle><manvolnum>3</manvolnum></citerefentry>
 for their replacements.
 <function>atoaddr</function> and <function>atosubnet</function> have already been deleted.</para>
 
