@@ -7,6 +7,7 @@ ipsec add ikev2=yes
 ipsec add ikev2=always
 ipsec add ikev2=never
 
+ipsec add keyexchange=default
 ipsec add keyexchange=ike
 ipsec add keyexchange=ikev1
 ipsec add keyexchange=ikev2

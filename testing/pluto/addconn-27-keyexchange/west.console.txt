@@ -21,6 +21,9 @@ west #
 "ikev2=never": ikev2=no has been replaced by keyexchange=ikev1
 "ikev2=never": added IKEv1 connection
 west #
+ ipsec add keyexchange=default
+"keyexchange=default": added IKEv2 connection
+west #
  ipsec add keyexchange=ike
 "keyexchange=ike": added IKEv2 connection
 west #
