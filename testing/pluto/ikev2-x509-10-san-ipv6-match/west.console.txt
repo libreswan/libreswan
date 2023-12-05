@@ -1,4 +1,4 @@
-/testing/guestbin/swan-prep --x509
+/testing/guestbin/swan-prep --x509 --46
 Preparing X.509 files
 west #
  ipsec certutil -D -n east
@@ -8,8 +8,35 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add san
+ ipsec add san
 "san": added IKEv2 connection
+west #
+ ipsec listpubkeys
+ 
+List of Public Keys:
+ 
+TIMESTAMP, 3072 RSA Key AwXXXXXXX (has private key), until TIMESTAMP ok
+       ID_IPV6_ADDR '2001:db8:1:2::45'
+       Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+TIMESTAMP, 3072 RSA Key AwXXXXXXX (has private key), until TIMESTAMP ok
+       ID_DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org'
+       Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+TIMESTAMP, 3072 RSA Key AwXXXXXXX (has private key), until TIMESTAMP ok
+       ID_USER_FQDN 'user-west@testing.libreswan.org'
+       Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+TIMESTAMP, 3072 RSA Key AwXXXXXXX (has private key), until TIMESTAMP ok
+       ID_FQDN '@west.testing.libreswan.org'
+       Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+TIMESTAMP, 3072 RSA Key AwXXXXXXX (has private key), until TIMESTAMP ok
+       ID_USER_FQDN 'west@testing.libreswan.org'
+       Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+TIMESTAMP, 3072 RSA Key AwXXXXXXX (has private key), until TIMESTAMP ok
+       ID_IPV4_ADDR '192.1.2.45'
+       Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+west #
+ ipsec certutil -L west -n west | grep 'IP Address:'
+            IP Address: 192.1.2.45
+            IP Address: 2001:db8:1:2::45
 west #
  echo "initdone"
 initdone
@@ -19,11 +46,11 @@ west #
  # this should succeed
 west #
  ipsec auto --up san
-"san" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-"san" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"san" #1: initiating IKEv2 connection to 2001:db8:1:2::23 using UDP
+"san" #1: sent IKE_SA_INIT request to [2001:db8:1:2::23]:500
 "san" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-"san" #1: initiator established IKE SA; authenticated peer '3nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate '192.1.2.23' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-"san" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"san" #1: initiator established IKE SA; authenticated peer '3nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate '2001:db8:1:2::23' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"san" #2: initiator established Child SA using #1; IPsec tunnel [2001:db8:1:2::45/128===2001:db8:1:2::23/128] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  echo "done"
 done
@@ -31,6 +58,6 @@ west #
  # confirm the right ID types were sent/received
 west #
  grep "ID type" /tmp/pluto.log | sort | uniq
-|    ID type: ID_IPV4_ADDR (0x1)
+|    ID type: ID_IPV6_ADDR (0x5)
 west #
  
