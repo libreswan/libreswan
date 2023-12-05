@@ -336,7 +336,7 @@ generalName_t *collect_rw_ca_candidates(struct msg_digest *md)
  */
 static void gntoid(struct id *id, const generalName_t *gn, struct logger *logger)
 {
-	*id = empty_id;
+	*id = empty_id; /* aka ID_NONE */
 
 	switch (gn->kind) {
 	case GN_DNS_NAME:	/* ID type: ID_FQDN */
@@ -345,18 +345,37 @@ static void gntoid(struct id *id, const generalName_t *gn, struct logger *logger
 		break;
 	case GN_IP_ADDRESS:	/* ID type: ID_IPV4_ADDR */
 	{
+		const struct ip_info *afi = NULL;
+		for (enum ip_index i = 0; i < IP_INDEX_ROOF; i++) {
+			if (ip_families[i].ip_size == gn->name.len) {
+				afi = &ip_families[i];
+				break;
+			}
+		}
+		if (afi == NULL) {
+			llog(RC_LOG, logger,
+			     "warning: invalid IP_ADDRESS general name: %zu byte length is not valid",
+			     gn->name.len);
+			PEXPECT(logger, id->kind == ID_NONE);
+			return;
+		}
+
 		/*
 		 * XXX: why could this fail; and what happens when it
 		 * is ignored?
 		 */
-		const struct ip_info *afi = &ipv4_info;
-		id->kind = afi->id_ip_addr;
-		err_t ugh = hunk_to_address(gn->name, afi, &id->ip_addr);
+		ip_address addr;
+		err_t ugh = hunk_to_address(gn->name, afi, &addr);
 		if (ugh != NULL) {
 			llog(RC_LOG, logger,
-				    "warning: gntoid() failed to initaddr(): %s",
-				    ugh);
+			     "warning: invalid IP_ADDRESS general name: %s",
+			     ugh);
+			PEXPECT(logger, id->kind == ID_NONE);
+			return;
 		}
+
+		id->kind = afi->id_ip_addr;
+		id->ip_addr = addr;
 		break;
 	}
 	case GN_RFC822_NAME:	/* ID type: ID_USER_FQDN */
@@ -464,14 +483,18 @@ bool add_pubkey_from_nss_cert(struct pubkey_list **pubkey_db,
 		return false;
 	}
 
+	ldbg(logger, "adding cert using subject name");
 	replace_public_key(pubkey_db, &pk);
 	passert(pk == NULL); /*stolen*/
 
+	ldbg(logger, "adding cert using general names");
 	add_cert_san_pubkeys(pubkey_db, cert, logger);
 
 	if (keyid != NULL && keyid->kind != ID_DER_ASN1_DN &&
 			     keyid->kind != ID_NONE &&
 			     keyid->kind != ID_FROMCERT) {
+		id_buf idb;
+		ldbg(logger, "adding cert using keyid %s", str_id(keyid, &idb));
 		struct pubkey *pk2 = NULL;
 		diag_t d = create_pubkey_from_cert(keyid, cert, &pk2, logger);
 		if (d != NULL) {
