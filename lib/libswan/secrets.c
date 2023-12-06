@@ -1365,14 +1365,19 @@ static diag_t create_pubkey_from_cert_1(const struct id *id,
 {
 	const struct pubkey_type *type = pubkey_type_nss(pubkey_nss);
 	if (type == NULL) {
-		return diag("NSS: certificate key kind is unknown; not creating pubkey");
+		id_buf idb;
+		return diag("NSS: could not create public key with ID '%s': certificate '%s' has an unknown key kind",
+			    str_id(id, &idb),
+			    cert->nickname);
 	}
 
 	SECItem *ckaid_nss = PK11_GetLowLevelKeyIDForCert(NULL, cert,
 							  lsw_nss_get_password_context(logger)); /* must free */
 	if (ckaid_nss == NULL) {
 		/* someone deleted CERT from the NSS DB */
-		return diag("NSS: could not extract CKAID from RSA certificate '%s'",
+		id_buf idb;
+		return diag("NSS: could not create public key with ID '%s': extract CKAID from certificate '%s' failed",
+			    str_id(id, &idb),
 			    cert->nickname);
 	}
 
@@ -1380,7 +1385,10 @@ static diag_t create_pubkey_from_cert_1(const struct id *id,
 	err_t err = type->extract_pubkey_content(&pkc, pubkey_nss, ckaid_nss);
 	if (err != NULL) {
 		SECITEM_FreeItem(ckaid_nss, PR_TRUE);
-		return diag("NSS: could not extract pubkey content: %s", err);
+		id_buf idb;
+		return diag("NSS: could not create public key with ID '%s': %s",
+			    str_id(id, &idb),
+			    err);
 	}
 	passert(pkc.type != NULL);
 
@@ -1402,11 +1410,15 @@ static diag_t create_pubkey_from_cert_1(const struct id *id,
 }
 
 diag_t create_pubkey_from_cert(const struct id *id,
-			       CERTCertificate *cert, struct pubkey **pk, struct logger *logger)
+			       CERTCertificate *cert, struct pubkey **pk,
+			       struct logger *logger)
 {
 	if (!pexpect(cert != NULL)) {
 		return NULL;
 	}
+
+	id_buf idb;
+	ldbg(logger, "creating pubkey for ID %s", str_id(id, &idb));
 
 	/*
 	 * Try to convert CERT to an internal PUBKEY object.  If
@@ -1415,8 +1427,9 @@ diag_t create_pubkey_from_cert(const struct id *id,
 	 */
 	SECKEYPublicKey *pubkey_nss = SECKEY_ExtractPublicKey(&cert->subjectPublicKeyInfo); /* must free */
 	if (pubkey_nss == NULL) {
-		return diag("NSS: could not extract public key from certificate '%s'",
-			    cert->nickname);
+		id_buf idb;
+		return diag("NSS: could not create public key with ID '%s': extracting public key from certificate '%s' failed",
+			    str_id(id, &idb), cert->nickname);
 	}
 
 	diag_t d = create_pubkey_from_cert_1(id, cert, pubkey_nss, pk, logger);
