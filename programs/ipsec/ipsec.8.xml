@@ -147,7 +147,6 @@
 	<term><command>ipsec initnss</command></term>
 	<term><command>ipsec checknss</command></term>
 	<term><command>ipsec import</command></term>
-	<term><command>ipsec vfychain</command></term>
 	<term><command>ipsec listall</command></term>
 	<term><command>ipsec listcerts</command></term>
 	<term><command>ipsec rereadsecrets</command></term>
@@ -173,7 +172,6 @@
 	    <citerefentry><refentrytitle>ipsec-rereadcerts</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 	    <citerefentry><refentrytitle>ipsec-listcerts</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 	    <citerefentry><refentrytitle>ipsec-listcacerts</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-	    <citerefentry><refentrytitle>ipsec-vfychain</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 	    <citerefentry><refentrytitle>ipsec-fips</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 	    <citerefentry><refentrytitle>ipsec-rereadsecrets</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 	    <citerefentry><refentrytitle>ipsec-listpubkeys</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
@@ -200,10 +198,11 @@
       </varlistentry>
 
       <varlistentry>
-	<term><command>ipsec pk12util</command></term>
-	<term><command>ipsec modutil</command></term>
-	<term><command>ipsec crlutil</command></term>
 	<term><command>ipsec certutil</command></term>
+	<term><command>ipsec crlutil</command></term>
+	<term><command>ipsec modutil</command></term>
+	<term><command>ipsec pk12util</command></term>
+	<term><command>ipsec vfychain</command></term>
 	<listitem>
 	  <para>
 	    Wrappers around the <application>NSS</application>
@@ -215,11 +214,12 @@
 	  </para>
 	  <para>
 	    See
+	    <citerefentry><refentrytitle>ipsec-certutil</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+	    <citerefentry><refentrytitle>ipsec-crlutil</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
 	    <citerefentry><refentrytitle>ipsec-modutil</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 	    <citerefentry><refentrytitle>ipsec-pk12util</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-	    <citerefentry><refentrytitle>ipsec-certutil</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 	    and
-	    <citerefentry><refentrytitle>ipsec-crlutil</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
+	    <citerefentry><refentrytitle>ipsec-vfychain</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
 	  </para>
 	</listitem>
       </varlistentry>
