@@ -10,7 +10,7 @@
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
-    <refname>ipsec _updown.xfrm</refname>
+    <refname>ipsec-_updown.xfrm</refname>
     <refpurpose>routing manipulation script</refpurpose>
   </refnamediv>
   <!-- body begins here -->

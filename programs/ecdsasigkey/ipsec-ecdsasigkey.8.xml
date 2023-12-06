@@ -10,7 +10,7 @@
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
-    <refname>ipsec ecdsasigkey</refname>
+    <refname>ipsec-ecdsasigkey</refname>
     <refpurpose>generate ECDSA signature key</refpurpose>
   </refnamediv>
   <!-- body begins here -->

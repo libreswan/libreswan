@@ -10,7 +10,7 @@
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
-    <refname>ipsec _import_crl</refname>
+    <refname>ipsec-_import_crl</refname>
     <refpurpose>helper program for importing a crl to the NSS database</refpurpose>
   </refnamediv>
   <!-- body begins here -->

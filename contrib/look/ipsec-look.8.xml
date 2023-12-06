@@ -10,7 +10,7 @@
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
-    <refname>ipsec look</refname>
+    <refname>ipsec-look</refname>
     <refpurpose>get a quick summary of Libreswan status</refpurpose>
   </refnamediv>
   <!-- body begins here -->

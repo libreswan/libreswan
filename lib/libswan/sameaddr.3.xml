@@ -11,15 +11,15 @@
 <refmiscinfo class="manual">Executable programs</refmiscinfo>
 </refmeta>
 <refnamediv id='name'>
-<refname>ipsec sameaddr</refname>
-<refname>ipsec addrcmp</refname>
-<refname>ipsec samesubnet</refname>
-<refname>ipsec addrinsubnet</refname>
-<refname>ipsec subnetinsubnet</refname>
-<refname>ipsec subnetishost</refname>
-<refname>ipsec samesaid</refname>
-<refname>ipsec sameaddrtype</refname>
-<refname>ipsec samesubnettype</refname>
+<refname>ipsec-sameaddr</refname>
+<refname>ipsec-addrcmp</refname>
+<refname>ipsec-samesubnet</refname>
+<refname>ipsec-addrinsubnet</refname>
+<refname>ipsec-subnetinsubnet</refname>
+<refname>ipsec-subnetishost</refname>
+<refname>ipsec-samesaid</refname>
+<refname>ipsec-sameaddrtype</refname>
+<refname>ipsec-samesubnettype</refname>
 <refpurpose>do comparisons for addresses, subnets, SA IDs and address families</refpurpose>
 </refnamediv>
 <!-- body begins here -->

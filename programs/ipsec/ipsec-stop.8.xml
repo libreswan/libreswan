@@ -10,7 +10,7 @@
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
-    <refname>ipsec stop</refname>
+    <refname>ipsec-stop</refname>
     <refpurpose>Stop the ipsec service via initsystem</refpurpose>
   </refnamediv>
   <!-- body begins here -->

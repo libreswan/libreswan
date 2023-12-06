@@ -10,7 +10,7 @@
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
-    <refname>ipsec redirect</refname>
+    <refname>ipsec-redirect</refname>
     <refpurpose>Redirect a connection definition with one from @@IPSEC_CONF@@</refpurpose>
   </refnamediv>
   <!-- body begins here -->

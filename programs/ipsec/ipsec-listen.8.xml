@@ -10,7 +10,7 @@
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
-    <refname>ipsec listen</refname>
+    <refname>ipsec-listen</refname>
     <refpurpose>Force pluto to re-listen all interfaces</refpurpose>
   </refnamediv>
   <!-- body begins here -->

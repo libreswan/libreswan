@@ -10,10 +10,10 @@
 <refmiscinfo class="manual">Executable programs</refmiscinfo>
 </refmeta>
 <refnamediv id='name'>
-<refname>ipsec portof</refname>
-<refname>ipsec setportof</refname>
-<refname>ipsec sockaddrof</refname>
-<refname>ipsec sockaddrlenof</refname>
+<refname>ipsec-portof</refname>
+<refname>ipsec-setportof</refname>
+<refname>ipsec-sockaddrof</refname>
+<refname>ipsec-sockaddrlenof</refname>
 <refpurpose>get port field of an ip_address, set port field of an ip_address, get pointer to internal sockaddr of an ip_address, get length of internal sockaddr of an ip_address</refpurpose>
 </refnamediv>
 <!-- body begins here -->

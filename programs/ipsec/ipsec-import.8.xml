@@ -10,7 +10,7 @@
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
-    <refname>ipsec import</refname>
+    <refname>ipsec-import</refname>
     <refpurpose>Import PKCS#12 (*.p12) files into the IPsec NSS database</refpurpose>
   </refnamediv>
   <!-- body begins here -->

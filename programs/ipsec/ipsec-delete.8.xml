@@ -10,7 +10,7 @@
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
-    <refname>ipsec delete</refname>
+    <refname>ipsec-delete</refname>
     <refpurpose>Delete a connection definition from IPsec service</refpurpose>
   </refnamediv>
   <!-- body begins here -->

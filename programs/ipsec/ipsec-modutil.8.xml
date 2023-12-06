@@ -10,7 +10,7 @@
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
-    <refname>ipsec modutil</refname>
+    <refname>ipsec-modutil</refname>
     <refpurpose>Helper to run NSS modutil on IPsec NSS database</refpurpose>
   </refnamediv>
   <!-- body begins here -->

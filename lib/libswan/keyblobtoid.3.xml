@@ -10,8 +10,8 @@
 <refmiscinfo class="manual">Library functions</refmiscinfo>
 </refmeta>
 <refnamediv id='name'>
-<refname>ipsec keyblobtoid</refname>
-<refname>ipsec splitkeytoid</refname>
+<refname>ipsec-keyblobtoid</refname>
+<refname>ipsec-splitkeytoid</refname>
 <refpurpose>generate key IDs from RSA keys</refpurpose>
 </refnamediv>
 <!-- body begins here -->

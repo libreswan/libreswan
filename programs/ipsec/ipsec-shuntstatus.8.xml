@@ -10,7 +10,7 @@
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
-    <refname>ipsec shuntstatus</refname>
+    <refname>ipsec-shuntstatus</refname>
     <refpurpose>Show current IPsec negotiation shunts</refpurpose>
   </refnamediv>
   <!-- body begins here -->

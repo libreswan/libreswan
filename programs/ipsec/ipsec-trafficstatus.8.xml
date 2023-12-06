@@ -10,7 +10,7 @@
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
-    <refname>ipsec trafficstatus</refname>
+    <refname>ipsec-trafficstatus</refname>
     <refpurpose>Show current Child SA states with traffic counters</refpurpose>
   </refnamediv>
   <!-- body begins here -->

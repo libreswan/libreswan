@@ -10,7 +10,7 @@
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
-    <refname>ipsec _unbound-hook</refname>
+    <refname>ipsec-_unbound-hook</refname>
     <refpurpose>Opportunistic IPsec DNS unbound hook script</refpurpose>
   </refnamediv>
   <!-- body begins here -->

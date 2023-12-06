@@ -10,7 +10,7 @@
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
-    <refname>ipsec replace</refname>
+    <refname>ipsec-replace</refname>
     <refpurpose>Replace a connection definition with one from @@IPSEC_CONF@@</refpurpose>
   </refnamediv>
   <!-- body begins here -->

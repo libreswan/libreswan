@@ -10,12 +10,12 @@
 <refmiscinfo class="manual">Executable programs</refmiscinfo>
 </refmeta>
 <refnamediv id='name'>
-<refname>ipsec initaddr</refname>
-<refname>ipsec addrtypeof</refname>
-<refname>ipsec addrlenof</refname>
-<refname>ipsec addrbytesof</refname>
-<refname>ipsec addrbytesptr_read</refname>
-<refname>ipsec addrbytesptr_write</refname>
+<refname>ipsec-initaddr</refname>
+<refname>ipsec-addrtypeof</refname>
+<refname>ipsec-addrlenof</refname>
+<refname>ipsec-addrbytesof</refname>
+<refname>ipsec-addrbytesptr_read</refname>
+<refname>ipsec-addrbytesptr_write</refname>
 <refpurpose>initialize an ip_address, get address type of an ip_address, get length of address within an ip_address, get copy of address within an ip_address, get pointer to address within an ip_address</refpurpose>
 </refnamediv>
 <!-- body begins here -->

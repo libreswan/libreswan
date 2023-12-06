@@ -10,7 +10,7 @@
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
-    <refname>ipsec add</refname>
+    <refname>ipsec-add</refname>
     <refpurpose>Add a connection specification to pluto internal database from @@IPSEC_CONF@@</refpurpose>
   </refnamediv>
   <!-- body begins here -->

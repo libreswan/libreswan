@@ -10,9 +10,9 @@
 <refmiscinfo class="manual">Executable programs</refmiscinfo>
 </refmeta>
 <refnamediv id='name'>
-<refname>ipsec subnetof</refname>
-<refname>ipsec hostof</refname>
-<refname>ipsec broadcastof</refname>
+<refname>ipsec-subnetof</refname>
+<refname>ipsec-hostof</refname>
+<refname>ipsec-broadcastof</refname>
 <refpurpose>given Internet address and subnet mask return subnet number, host part, broadcast address</refpurpose>
 </refnamediv>
 <!-- body begins here -->

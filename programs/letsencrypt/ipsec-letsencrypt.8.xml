@@ -10,7 +10,7 @@
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
-    <refname>ipsec letsencrypt</refname>
+    <refname>ipsec-letsencrypt</refname>
     <refpurpose>invoke Opportunistic Encryption utilities</refpurpose>
   </refnamediv>
   <!-- body begins here -->

@@ -10,7 +10,7 @@
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
-    <refname>ipsec globalstatus</refname>
+    <refname>ipsec-globalstatus</refname>
     <refpurpose>Get global status information from IPsec daemon (pluto)</refpurpose>
   </refnamediv>
   <!-- body begins here -->

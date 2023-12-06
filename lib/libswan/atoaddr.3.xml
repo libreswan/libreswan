@@ -10,10 +10,10 @@
 <refmiscinfo class="manual">Executable programs</refmiscinfo>
 </refmeta>
 <refnamediv id='name'>
-<refname>ipsec atoaddr</refname>
-<refname>ipsec addrtoa</refname>
-<refname>ipsec atosubnet</refname>
-<refname>ipsec subnettoa</refname>
+<refname>ipsec-atoaddr</refname>
+<refname>ipsec-addrtoa</refname>
+<refname>ipsec-atosubnet</refname>
+<refname>ipsec-subnettoa</refname>
 <refpurpose>convert Internet addresses and Subnet masks to and from ASCII</refpurpose>
 </refnamediv>
 <!-- body begins here -->

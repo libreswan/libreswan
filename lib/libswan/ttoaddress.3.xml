@@ -13,11 +13,11 @@
 <refmiscinfo class="manual">Executable programs</refmiscinfo>
 </refmeta>
 <refnamediv id='name'>
-<refname>ipsec ttoaddr</refname>
-<refname>ipsec tnatoaddr</refname>
-<refname>ipsec addrtot</refname>
-<refname>ipsec ttosubnet</refname>
-<refname>ipsec subnettot</refname>
+<refname>ipsec-ttoaddr</refname>
+<refname>ipsec-tnatoaddr</refname>
+<refname>ipsec-addrtot</refname>
+<refname>ipsec-ttosubnet</refname>
+<refname>ipsec-subnettot</refname>
 <refpurpose>convert Internet addresses and Subnet masks to and from text</refpurpose>
 </refnamediv>
 <!-- body begins here -->

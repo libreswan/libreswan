@@ -10,7 +10,7 @@
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
-    <refname>ipsec status</refname>
+    <refname>ipsec-status</refname>
     <refpurpose>Show connection status</refpurpose>
   </refnamediv>
   <!-- body begins here -->

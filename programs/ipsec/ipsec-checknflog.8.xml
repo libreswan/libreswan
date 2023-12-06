@@ -10,7 +10,7 @@
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
-    <refname>ipsec checknflog</refname>
+    <refname>ipsec-checknflog</refname>
     <refpurpose>Initialise nftables or iptables rules for the nflog devices</refpurpose>
   </refnamediv>
   <!-- body begins here -->

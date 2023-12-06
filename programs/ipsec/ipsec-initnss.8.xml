@@ -10,7 +10,7 @@
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
-    <refname>ipsec initnss</refname>
+    <refname>ipsec-initnss</refname>
     <refpurpose>Initialise the IPsec NSS database</refpurpose>
   </refnamediv>
   <!-- body begins here -->

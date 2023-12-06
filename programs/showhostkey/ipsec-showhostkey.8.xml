@@ -10,7 +10,7 @@
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
-    <refname>ipsec showhostkey</refname>
+    <refname>ipsec-showhostkey</refname>
     <refpurpose>show host's authentication key</refpurpose>
   </refnamediv>
 

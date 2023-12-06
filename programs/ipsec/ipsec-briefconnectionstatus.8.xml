@@ -10,7 +10,7 @@
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
-    <refname>ipsec briefconnectionstatus</refname>
+    <refname>ipsec-briefconnectionstatus</refname>
     <refpurpose>Get brief connection status from IPsec service</refpurpose>
   </refnamediv>
   <!-- body begins here -->

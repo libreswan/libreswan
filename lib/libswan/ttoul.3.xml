@@ -13,9 +13,9 @@
 <refmiscinfo class="manual">Library functions</refmiscinfo>
 </refmeta>
 <refnamediv id='name'>
-<refname>ipsec ttoul</refname>
-<refname>ipsec ttoulb</refname>
-<refname>ipsec ultot</refname>
+<refname>ipsec-ttoul</refname>
+<refname>ipsec-ttoulb</refname>
+<refname>ipsec-ultot</refname>
 <refpurpose>convert unsigned-long numbers to and from text</refpurpose>
 </refnamediv>
 <!-- body begins here -->

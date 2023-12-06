@@ -10,7 +10,7 @@
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
-    <refname>ipsec unroute</refname>
+    <refname>ipsec-unroute</refname>
     <refpurpose>unroute a connection</refpurpose>
   </refnamediv>
   <!-- body begins here -->

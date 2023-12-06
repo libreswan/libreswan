@@ -10,7 +10,7 @@
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
-    <refname>ipsec purgeocsp</refname>
+    <refname>ipsec-purgeocsp</refname>
     <refpurpose>Purgeocsp purges the NSS OCSP cache.</refpurpose>
   </refnamediv>
   <!-- body begins here -->

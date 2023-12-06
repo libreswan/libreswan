@@ -10,7 +10,7 @@
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
-    <refname>ipsec showstates</refname>
+    <refname>ipsec-showstates</refname>
     <refpurpose>Show current IKE SA and Child SA states</refpurpose>
   </refnamediv>
   <!-- body begins here -->

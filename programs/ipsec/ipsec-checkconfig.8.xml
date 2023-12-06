@@ -10,7 +10,7 @@
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
-    <refname>ipsec checkconfig</refname>
+    <refname>ipsec-checkconfig</refname>
     <refpurpose>Validate ipsec configuration file, @@IPSEC_CONF@@</refpurpose>
   </refnamediv>
   <!-- body begins here -->

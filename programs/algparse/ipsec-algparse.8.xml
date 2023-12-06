@@ -13,7 +13,7 @@
   </refmeta>
 
   <refnamediv id='name'>
-    <refname>ipsec algparse</refname>
+    <refname>ipsec-algparse</refname>
     <refpurpose>
       utility for verifying IKE and IPsec cryptographic proposal syntax
     </refpurpose>

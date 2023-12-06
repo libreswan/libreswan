@@ -10,7 +10,7 @@
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
-    <refname>ipsec listall</refname>
+    <refname>ipsec-listall</refname>
     <refpurpose>List all public key information from IPsec daemon (pluto)</refpurpose>
   </refnamediv>
   <!-- body begins here -->

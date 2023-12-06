@@ -10,7 +10,7 @@
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
-    <refname>ipsec fipsstatus</refname>
+    <refname>ipsec-fipsstatus</refname>
     <refpurpose>Show IPsec daemon (pluto) FIPS status</refpurpose>
   </refnamediv>
   <!-- body begins here -->

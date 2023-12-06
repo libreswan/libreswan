@@ -11,7 +11,7 @@
   </refmeta>
 
   <refnamediv id="name">
-    <refname>ipsec pluto</refname>
+    <refname>ipsec-pluto</refname>
     <refname>pluto</refname>
     <refpurpose>Internet Key Exchange daemon</refpurpose>
   </refnamediv>

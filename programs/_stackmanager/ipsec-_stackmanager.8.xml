@@ -10,7 +10,7 @@
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
-    <refname>ipsec _stackmanager</refname>
+    <refname>ipsec-_stackmanager</refname>
     <refpurpose>internal script to bring up kernel components for Libreswan</refpurpose>
   </refnamediv>
   <!-- body begins here -->

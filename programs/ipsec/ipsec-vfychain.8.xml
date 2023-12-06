@@ -10,7 +10,7 @@
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
-    <refname>ipsec vfychain</refname>
+    <refname>ipsec-vfychain</refname>
     <refpurpose>Helper to run NSS vfychain on IPsec NSS database</refpurpose>
   </refnamediv>
   <!-- body begins here -->

@@ -10,7 +10,7 @@
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
-    <refname>ipsec listcacerts</refname>
+    <refname>ipsec-listcacerts</refname>
     <refpurpose>List x.509 Certificate Authority (CA) certificates</refpurpose>
   </refnamediv>
   <!-- body begins here -->

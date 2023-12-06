@@ -10,7 +10,7 @@
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
-    <refname>ipsec certutil</refname>
+    <refname>ipsec-certutil</refname>
     <refpurpose>Helper to run NSS certutil on IPsec NSS database</refpurpose>
   </refnamediv>
   <!-- body begins here -->

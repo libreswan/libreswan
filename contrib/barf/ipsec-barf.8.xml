@@ -10,7 +10,7 @@
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
-    <refname>ipsec barf</refname>
+    <refname>ipsec-barf</refname>
     <refpurpose>spew out collected IPsec debugging information</refpurpose>
   </refnamediv>
   <!-- body begins here -->

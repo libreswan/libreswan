@@ -12,7 +12,7 @@
   </refmeta>
 
   <refnamediv id='name'>
-    <refname>ipsec showroute</refname>
+    <refname>ipsec-showroute</refname>
     <refpurpose>show route to given address</refpurpose>
   </refnamediv>
   <!-- body begins here -->

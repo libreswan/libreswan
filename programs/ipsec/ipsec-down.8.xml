@@ -10,7 +10,7 @@
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
-    <refname>ipsec down</refname>
+    <refname>ipsec-down</refname>
     <refpurpose>Down all tunnels sharing same IPsec connection.</refpurpose>
   </refnamediv>
   <!-- body begins here -->

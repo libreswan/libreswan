@@ -11,7 +11,7 @@
   </refmeta>
 
   <refnamediv id="name">
-    <refname>ipsec portexcludes</refname>
+    <refname>ipsec-portexcludes</refname>
     <refpurpose>insert and delete port exclusion policies into the kernel SPD </refpurpose>
   </refnamediv>
 

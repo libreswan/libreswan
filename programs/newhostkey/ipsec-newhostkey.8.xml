@@ -10,7 +10,7 @@
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
-    <refname>ipsec newhostkey</refname>
+    <refname>ipsec-newhostkey</refname>
     <refpurpose>generate a new raw RSA authentication key for a host</refpurpose>
   </refnamediv>
   <!-- body begins here -->

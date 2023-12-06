@@ -10,7 +10,7 @@
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
-    <refname>ipsec rereadcerts</refname>
+    <refname>ipsec-rereadcerts</refname>
     <refpurpose>Reread IPsec certificates from IPsec NSS database</refpurpose>
   </refnamediv>
   <!-- body begins here -->

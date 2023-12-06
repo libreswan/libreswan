@@ -11,7 +11,7 @@
   </refmeta>
 
   <refnamediv id="name">
-    <refname>ipsec whack</refname>
+    <refname>ipsec-whack</refname>
     <refpurpose>ipsec whack : IPsec IKE keying daemon low-level control interface</refpurpose>
   </refnamediv>
 

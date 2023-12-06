@@ -10,7 +10,7 @@
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
-    <refname>ipsec start</refname>
+    <refname>ipsec-start</refname>
     <refpurpose>Add, route, and up a connection</refpurpose>
   </refnamediv>
   <!-- body begins here -->

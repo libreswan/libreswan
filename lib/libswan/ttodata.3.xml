@@ -13,8 +13,8 @@
 <refmiscinfo class="manual">Library functions</refmiscinfo>
 </refmeta>
 <refnamediv id='name'>
-<refname>ipsec ttodata</refname>
-<refname>ipsec datatot</refname>
+<refname>ipsec-ttodata</refname>
+<refname>ipsec-datatot</refname>
 <refpurpose>convert binary data bytes from and to text formats</refpurpose>
 </refnamediv>
 <!-- body begins here -->

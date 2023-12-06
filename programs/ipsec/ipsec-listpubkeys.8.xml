@@ -10,7 +10,7 @@
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
-    <refname>ipsec listpubkeys</refname>
+    <refname>ipsec-listpubkeys</refname>
     <refpurpose>List all public keys from pluto internal database.</refpurpose>
   </refnamediv>
   <!-- body begins here -->

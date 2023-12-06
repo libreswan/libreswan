@@ -13,9 +13,9 @@
 <refmiscinfo class="manual">Library functions</refmiscinfo>
 </refmeta>
 <refnamediv id='name'>
-<refname>ipsec ttosa</refname>
-<refname>ipsec satot</refname>
-<refname>ipsec initsaid</refname>
+<refname>ipsec-ttosa</refname>
+<refname>ipsec-satot</refname>
+<refname>ipsec-initsaid</refname>
 <refpurpose>convert IPsec Security Association IDs to and from text, initialize an SA ID</refpurpose>
 </refnamediv>
 <!-- body begins here -->

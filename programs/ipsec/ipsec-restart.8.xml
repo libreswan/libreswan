@@ -10,7 +10,7 @@
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
-    <refname>ipsec restart</refname>
+    <refname>ipsec-restart</refname>
     <refpurpose>Restart the ipsec service via initsystem</refpurpose>
   </refnamediv>
   <!-- body begins here -->

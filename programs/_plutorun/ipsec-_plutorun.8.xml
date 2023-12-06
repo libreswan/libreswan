@@ -10,7 +10,7 @@
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
-    <refname>ipsec _plutorun</refname>
+    <refname>ipsec-_plutorun</refname>
     <refpurpose>internal script to (re)start pluto on old SYSV initscript systems</refpurpose>
   </refnamediv>
   <!-- body begins here -->

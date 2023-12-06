@@ -11,12 +11,12 @@
 <refmiscinfo class="manual">Library functions</refmiscinfo>
 </refmeta>
 <refnamediv id='name'>
-<refname>ipsec initsubnet</refname>
-<refname>ipsec addrtosubnet</refname>
-<refname>ipsec subnettypeof</refname>
-<refname>ipsec masktocount</refname>
-<refname>ipsec networkof</refname>
-<refname>ipsec maskof</refname>
+<refname>ipsec-initsubnet</refname>
+<refname>ipsec-addrtosubnet</refname>
+<refname>ipsec-subnettypeof</refname>
+<refname>ipsec-masktocount</refname>
+<refname>ipsec-networkof</refname>
+<refname>ipsec-maskof</refname>
 <refpurpose>initialize an ip_subnet, initialize a singleton ip_subnet, get address type of an ip_subnet, convert subnet mask to bit count, get base address of an ip_subnet, get subnet mask of an ip_subnet</refpurpose>
 </refnamediv>
 <!-- body begins here -->

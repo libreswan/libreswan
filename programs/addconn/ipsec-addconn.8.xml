@@ -10,7 +10,7 @@
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
-    <refname>ipsec addconn</refname>
+    <refname>ipsec-addconn</refname>
     <refpurpose>load a given policy into the pluto IKE daemon</refpurpose>
   </refnamediv>
   <!-- body begins here -->
