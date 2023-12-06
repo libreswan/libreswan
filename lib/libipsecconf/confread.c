@@ -1077,7 +1077,10 @@ static bool load_conn(struct starter_conn *conn,
 	conn->alsos = alsos;
 
 	if (conn->options_set[KNCF_TYPE]) {
-		switch ((enum keyword_satype)conn->options[KNCF_TYPE]) {
+		switch ((enum type_options)conn->options[KNCF_TYPE]) {
+		case KS_UNSET:
+			bad_case(KS_UNSET);
+
 		case KS_TUNNEL:
 			break;
 

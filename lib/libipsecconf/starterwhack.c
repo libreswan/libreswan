@@ -553,7 +553,8 @@ int starter_whack_add_conn(struct starter_config *cfg,
 	msg.ikev2 = conn->options[KNCF_IKEv2];
 	msg.pfs = conn->options[KNCF_PFS];
 	msg.compress = conn->options[KNCF_COMPRESS];
-	enum keyword_satype satype = conn->options[KNCF_TYPE];
+	msg.type = conn->options[KNCF_TYPE];
+	enum type_options satype = conn->options[KNCF_TYPE];
 	msg.encap_mode = (satype == KS_TUNNEL ? ENCAP_MODE_TUNNEL :
 			  satype == KS_TRANSPORT ? ENCAP_MODE_TRANSPORT :
 			  ENCAP_MODE_UNSET);

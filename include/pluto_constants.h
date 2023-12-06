@@ -990,6 +990,17 @@ enum keyword_host {
 	KH_IPADDR       = LOOSE_ENUM_OTHER,
 };
 
+enum type_options {
+	KS_UNSET,
+	KS_TUNNEL,
+	KS_TRANSPORT,
+	KS_PASSTHROUGH,
+	KS_DROP,
+	KS_REJECT,
+};
+
+extern const struct sparse_name type_option_names[];
+
 /*
  * related(???) libunbound enumerated types
  *

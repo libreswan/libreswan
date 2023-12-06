@@ -214,6 +214,7 @@ struct whack_message {
 	enum nppi_options ppk;		/* pre-shared post-quantum key */
 	enum yn_options pfs;
 	enum yn_options compress;
+	enum type_options type;		/* type=tunnel|transport|SHUNT */
 	enum encap_mode encap_mode;	/* outer mode: TUNNEL|TRANSPORT */
 	enum encap_proto phase2;	/* outer protocol: ESP|AH */
 

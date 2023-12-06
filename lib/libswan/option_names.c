@@ -131,7 +131,6 @@ const struct sparse_name tcp_option_names[] = {
 	SPARSE_NULL
 };
 
-
 const struct sparse_name nic_offload_option_names[] = {
 	{ "no",         NIC_OFFLOAD_NO },
 	{ "auto",       NIC_OFFLOAD_AUTO },
@@ -140,5 +139,19 @@ const struct sparse_name nic_offload_option_names[] = {
 	{ "yes",        NIC_OFFLOAD_CRYPTO }, /* backwards
 					       * compat. PACKET has
 					       * complications */
+	SPARSE_NULL
+};
+
+/*
+ * Values for type={tunnel,transport,etc}
+ */
+
+const struct sparse_name type_option_names[] = {
+	{ "tunnel",    KS_TUNNEL },
+	{ "transport", KS_TRANSPORT },
+	{ "pass",      KS_PASSTHROUGH },
+	{ "passthrough", KS_PASSTHROUGH },
+	{ "reject",    KS_REJECT },
+	{ "drop",      KS_DROP },
 	SPARSE_NULL
 };

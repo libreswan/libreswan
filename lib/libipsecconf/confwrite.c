@@ -452,7 +452,7 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 	    conn->options[KNCF_PHASE2] != 0) {
 		enum encap_proto encap_proto = conn->options[KNCF_PHASE2];
 		enum shunt_policy shunt_policy = conn->never_negotiate_shunt;
-		enum keyword_satype satype = conn->options[KNCF_TYPE];
+		enum type_options satype = conn->options[KNCF_TYPE];
 		static const char *const noyes[2 /*bool*/] = {"no", "yes"};
 		/*
 		 * config-write-policy-bit: short-cut for writing out a field that is a policy

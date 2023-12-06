@@ -189,19 +189,6 @@ static const struct sparse_name kw_addrfamily_list[] = {
 };
 
 /*
- * Values for type={tunnel,transport,etc}
- */
-static const struct sparse_name kw_type_list[] = {
-	{ "tunnel",    KS_TUNNEL },
-	{ "transport", KS_TRANSPORT },
-	{ "pass",      KS_PASSTHROUGH },
-	{ "passthrough", KS_PASSTHROUGH },
-	{ "reject",    KS_REJECT },
-	{ "drop",      KS_DROP },
-	SPARSE_NULL
-};
-
-/*
  * Values for {rsasigkey,ecdsakey,pubkey}={ %cert, %dnsondemand, %dns, literal }
  */
 static const struct sparse_name kw_pubkey_list[] = {
@@ -426,7 +413,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "ike",  kv_conn,  kt_string,  KSCF_IKE, NULL, NULL, },
   { "hostaddrfamily",  kv_conn,  kt_enum,  KNCF_HOSTADDRFAMILY,  kw_addrfamily_list, NULL, },
   { "clientaddrfamily",  kv_conn,  kt_enum,  KNCF_CLIENTADDRFAMILY,  kw_addrfamily_list, NULL, },
-  { "type",  kv_conn,  kt_enum,  KNCF_TYPE,  kw_type_list, NULL, },
+  { "type",  kv_conn,  kt_enum,  KNCF_TYPE,  type_option_names, NULL, },
   { "authby",  kv_conn,  kt_string,  KSCF_AUTHBY, NULL, NULL, },
   { "keyexchange",  kv_conn,  kt_enum,  KNCF_KEYEXCHANGE,  kw_keyexchange_list, NULL, },
   { "ikev2",  kv_conn | kv_processed,  kt_enum,  KNCF_IKEv2,  kw_ikev2_list, NULL, },

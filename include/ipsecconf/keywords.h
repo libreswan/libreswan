@@ -324,14 +324,6 @@ enum keyword_pubkey {
 	PUBKEY_PREEXCHANGED = LOOSE_ENUM_OTHER,
 };
 
-enum keyword_satype {
-	KS_TUNNEL    = 0,
-	KS_TRANSPORT = 1,
-	KS_PASSTHROUGH=2,
-	KS_DROP      = 3,
-	KS_REJECT    = 4,
-};
-
 enum keyword_type {
 	kt_string,              /* value is some string */
 	kt_appendstring,        /* value is some string, append duplicates */
