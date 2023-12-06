@@ -12,6 +12,7 @@
 # for more details.
 
 PROGRAM=_unbound-hook
+PROGRAM_MANPAGE =
 
 ifdef top_srcdir
 include $(top_srcdir)/mk/program.mk
