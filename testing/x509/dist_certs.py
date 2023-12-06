@@ -459,9 +459,6 @@ def create_mainca_end_certs(mainca_end_certs):
         if name == 'notyetvalid':
             startdate = dates['FUTURE']
             enddate = dates['FUTURE_END']
-        elif name == 'notvalidanymore':
-            startdate = dates['OLD']
-            enddate = dates['OLD_END']
         else:
             startdate = dates['OK_NOW']
             enddate = dates['FUTURE_END']
@@ -893,7 +890,7 @@ def run_dist_certs():
                         'usage-server', 'usage-client', 'usage-both',
                         'nic-noext', 'nic-nourl',
                         'smallkey', 'mediumkey', 'key2032', 'key4096',
-                        'notyetvalid','notvalidanymore',
+                        'notyetvalid',
                         'signedbyother','otherwest','othereast','wrongdnorg',
                         'unwisechar','spaceincn','hashsha1',
                         'cnofca','revoked', 'badwest', 'badeast', 'semiroad')
