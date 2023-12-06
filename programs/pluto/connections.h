@@ -38,6 +38,7 @@
 #include "ip_protoport.h"
 #include "ip_packet.h"
 #include "refcnt.h"
+#include "encap_mode.h"
 
 #include "defs.h"
 #include "proposals.h"

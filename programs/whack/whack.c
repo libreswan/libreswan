@@ -1622,18 +1622,18 @@ int main(int argc, char **argv)
 				end->host_type = KH_ANY;
 			} else if (streq(optarg, "%opportunistic")) {
 				/* always use tunnel mode; mark as opportunistic */
-				msg.encap_mode = ENCAP_MODE_TUNNEL;
+				msg.type = KS_TUNNEL;
 				end->host_type = KH_OPPO;
 				end->host_addr = get_address_any(&host_family);
 				end->key_from_DNS_on_demand = true;
 			} else if (streq(optarg, "%group")) {
 				/* always use tunnel mode; mark as group */
-				msg.encap_mode = ENCAP_MODE_TUNNEL;
+				msg.type = KS_TUNNEL;
 				end->host_type = KH_GROUP;
 				end->host_addr = get_address_any(&host_family);
 			} else if (streq(optarg, "%opportunisticgroup")) {
 				/* always use tunnel mode; mark as opportunistic */
-				msg.encap_mode = ENCAP_MODE_TUNNEL;
+				msg.type = KS_TUNNEL;
 				end->host_type = KH_OPPOGROUP;
 				end->host_addr = get_address_any(&host_family);
 				end->key_from_DNS_on_demand = true;
@@ -1791,7 +1791,7 @@ int main(int argc, char **argv)
 			} else {
 				end->subnet = optarg;	/* decoded by Pluto */
 			}
-			msg.encap_mode = ENCAP_MODE_TUNNEL;	/* client => tunnel */
+			msg.type = KS_TUNNEL;	/* client => tunnel */
 			continue;
 
 		/* --clientprotoport <protocol>/<port> */
@@ -1856,11 +1856,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_TUNNEL:		/* --tunnel */
-			msg.encap_mode = ENCAP_MODE_TUNNEL;
+			msg.type = KS_TUNNEL;
 			continue;
 
 		case CD_TRANSPORT:	/* --transport */
-			msg.encap_mode = ENCAP_MODE_TRANSPORT;
+			msg.type = KS_TRANSPORT;
 			continue;
 
 		case CD_ENCRYPT:	/* --encrypt */

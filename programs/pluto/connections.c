@@ -2122,20 +2122,20 @@ static diag_t extract_connection(const struct whack_message *wm,
 	config->child_sa.encap_proto = encap_proto;
 
 	enum encap_mode mode;
-	if (never_negotiate_wm(wm)) {
-		if (wm->encap_mode != ENCAP_MODE_UNSET) {
-			enum_buf sb;
-			/* XXX: type= is an overloaded field that
-			 * includes mode! */
-			llog(RC_INFORMATIONAL, c->logger,
-			     "warning: type=%s ignored for never-negotiate connection",
-			     str_enum_short(&encap_mode_story, wm->encap_mode, &sb));
+	if (wm->type == KS_UNSET) {
+		mode = ENCAP_MODE_TUNNEL;
+	} else if (wm->type == KS_TUNNEL) {
+		mode = ENCAP_MODE_TUNNEL;
+	} else if (wm->type == KS_TRANSPORT) {
+		mode = ENCAP_MODE_TRANSPORT;
+	} else {
+		if (!never_negotiate_wm(wm)) {
+			sparse_buf sb;
+			llog_pexpect(c->logger, HERE,
+				     "type=%s should be never-negotiate",
+				     str_sparse(type_option_names, wm->type, &sb));
 		}
 		mode = ENCAP_MODE_UNSET;
-	} else if (wm->encap_mode == ENCAP_MODE_UNSET) {
-		mode = ENCAP_MODE_TUNNEL;
-	} else {
-		mode = wm->encap_mode;
 	}
 	config->child_sa.encap_mode = mode;
 

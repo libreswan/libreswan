@@ -37,7 +37,6 @@
 #include "ip_protoport.h"
 #include "ip_cidr.h"
 #include "authby.h"
-#include "encap_mode.h"
 #include "encap_proto.h"
 
 #ifndef DEFAULT_CTL_SOCKET
@@ -215,7 +214,6 @@ struct whack_message {
 	enum yn_options pfs;
 	enum yn_options compress;
 	enum type_options type;		/* type=tunnel|transport|SHUNT */
-	enum encap_mode encap_mode;	/* outer mode: TUNNEL|TRANSPORT */
 	enum encap_proto phase2;	/* outer protocol: ESP|AH */
 
 	uintmax_t sa_ipsec_max_bytes;

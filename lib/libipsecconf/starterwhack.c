@@ -554,10 +554,6 @@ int starter_whack_add_conn(struct starter_config *cfg,
 	msg.pfs = conn->options[KNCF_PFS];
 	msg.compress = conn->options[KNCF_COMPRESS];
 	msg.type = conn->options[KNCF_TYPE];
-	enum type_options satype = conn->options[KNCF_TYPE];
-	msg.encap_mode = (satype == KS_TUNNEL ? ENCAP_MODE_TUNNEL :
-			  satype == KS_TRANSPORT ? ENCAP_MODE_TRANSPORT :
-			  ENCAP_MODE_UNSET);
 	msg.phase2 = conn->options[KNCF_PHASE2];
 	msg.authby = conn->authby;
 	msg.sighash_policy = conn->sighash_policy;
