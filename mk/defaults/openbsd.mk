@@ -34,6 +34,8 @@ INITSYSTEM=rc.d
 
 # not /run/pluto
 RUNDIR=/var/run/pluto
+# Not $(PREFIX)/share/man
+MANDIR=$(PREFIX)/man
 
 # PREFIX = /usr/local from mk/config.mk
 SYSCONFDIR=$(PREFIX)/etc
@@ -42,3 +44,4 @@ EXAMPLE_IPSEC_SYSCONFDIR=$(PREFIX)/share/examples/libreswan
 
 # LTO seems either broken or confused
 USE_LTO ?= false
+

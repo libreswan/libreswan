@@ -32,6 +32,7 @@ RUNDIR=/var/run/pluto
 SYSCONFDIR=$(PREFIX)/etc
 NSSDIR=$(PREFIX)/etc/ipsec.d
 EXAMPLE_IPSEC_SYSCONFDIR=$(PREFIX)/share/examples/libreswan
+# Not $(PREFIX)/share/man
 MANDIR=$(PREFIX)/man
 
 # LTO seems either broken or confused
