@@ -9,6 +9,7 @@
     <manvolnum>8</manvolnum>
     <refmiscinfo class='date'>30 November 2023</refmiscinfo>
     <refmiscinfo class="source">Libreswan</refmiscinfo>
+    <refmiscinfo class="version">@@IPSECVERSION@@</refmiscinfo>
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
 

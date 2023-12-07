@@ -7,6 +7,7 @@
     <manvolnum>5</manvolnum>
     <refmiscinfo class='date'>24 Apr 2023</refmiscinfo>
     <refmiscinfo class="source">Libreswan</refmiscinfo>
+    <refmiscinfo class="version">@@IPSECVERSION@@</refmiscinfo>
     <refmiscinfo class="manual">File formats and conventions</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>

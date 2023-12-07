@@ -7,6 +7,7 @@
     <manvolnum>8</manvolnum>
     <refmiscinfo class='date'>12 Dec 2012</refmiscinfo>
     <refmiscinfo class="source">Libreswan</refmiscinfo>
+    <refmiscinfo class="version">@@IPSECVERSION@@</refmiscinfo>
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
 
