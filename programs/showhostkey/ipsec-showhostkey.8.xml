@@ -6,7 +6,7 @@
     <refentrytitle>IPSEC-SHOWHOSTKEY</refentrytitle>
     <manvolnum>8</manvolnum>
     <refmiscinfo class='date'>29 April 2012</refmiscinfo>
-    <refmiscinfo class="source">libreswan</refmiscinfo>
+    <refmiscinfo class="source">Libreswan</refmiscinfo>
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>

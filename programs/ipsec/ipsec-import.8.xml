@@ -6,7 +6,7 @@
     <refentrytitle>IPSEC-IMPORT</refentrytitle>
     <manvolnum>8</manvolnum>
     <refmiscinfo class='date'>14 April 2023</refmiscinfo>
-    <refmiscinfo class="source">libreswan</refmiscinfo>
+    <refmiscinfo class="source">Libreswan</refmiscinfo>
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
