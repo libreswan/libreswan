@@ -9,19 +9,8 @@
     Here's a simple example:
   </para>
 
-  <para>
-    <simplelist columns='1'>
-      <member><computeroutput>conn snt</computeroutput></member>
-      <member><computeroutput> left=10.11.11.1</computeroutput></member>
-      <member><computeroutput> leftsubnet=10.0.1.0/24</computeroutput></member>
-      <member><computeroutput> leftnexthop=172.16.55.66</computeroutput></member>
-      <member><computeroutput> leftsourceip=10.0.1.1</computeroutput></member>
-      <member><computeroutput> right=192.168.22.1</computeroutput></member>
-      <member><computeroutput> rightsubnet=10.0.2.0/24</computeroutput></member>
-      <member><computeroutput> rightnexthop=172.16.88.99</computeroutput></member>
-      <member><computeroutput> rightsourceip=10.0.2.1</computeroutput></member>
-    </simplelist>
-  </para>
+  <programlisting><xi:include  href="exampleleftright.example"  parse="text"
+  xmlns:xi="http://www.w3.org/2001/XInclude"/></programlisting>
 
     <para> A note on terminology...  In automatic keying, there are two
     kinds of communications going on: transmission of user IP packets, and

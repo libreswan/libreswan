@@ -15,6 +15,8 @@
 MANPAGES += ipsec.conf.5
 MANPAGES += ipsec.secrets.5
 
+XMLTO_FLAGS = --searchpath $(abs_srcdir)/d.ipsec.conf:$(abs_srcdir)
+
 # different mode
 ipsec.secrets.INSTFLAGS = -m 0600
 

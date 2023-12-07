@@ -83,7 +83,7 @@ $(builddir)/%.tmp: $(srcdir)/%.xml | $(builddir)
 # containing spaces instead of underscores.  Hack around this.
 
 $(builddir)/%.man: $(builddir)/%.tmp
-	$(XMLTO) man $< -o $(builddir)
+	$(XMLTO) $(XMLTO_FLAGS) man $< -o $(builddir)
 	set -e ; for r in $$($(top_srcdir)/packaging/utils/refnames.sh "$(builddir)/$*.tmp") ; do \
 		o=$$(echo "$${r}" | tr '_' ' ') ; \
 		if test "$${o}" != "$${r}" -a -r "$(builddir)/$${o}" ; then \
@@ -93,4 +93,4 @@ $(builddir)/%.man: $(builddir)/%.tmp
 	touch $@
 
 $(top_builddir)/html/%.html: $(builddir)/%.tmp
-	$(XMLTO) html-nochunks -m $(top_srcdir)/mk/man-html-link.xsl $< -o $(top_builddir)/html
+	$(XMLTO) $(XMLTO_FLAGS) html-nochunks -m $(top_srcdir)/mk/man-html-link.xsl $< -o $(top_builddir)/html

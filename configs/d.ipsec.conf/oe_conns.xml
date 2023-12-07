@@ -8,55 +8,10 @@
     special named conns that are used to implement the default policy
     groups. Currently, these names cannot be changed.
   </para>
-  <para>
-    <simplelist>
-      <member><computeroutput>conn clear</computeroutput></member>
-      <member><computeroutput> type=passthrough</computeroutput></member>
-      <member><computeroutput> authby=never</computeroutput></member>
-      <member><computeroutput> left=%defaultroute</computeroutput></member>
-      <member><computeroutput> right=%group</computeroutput></member>
-      <member><computeroutput> auto=ondemand</computeroutput></member>
-      <member><computeroutput> </computeroutput></member>
-      <member><computeroutput>conn clear-or-private</computeroutput></member>
-      <member><computeroutput> type=tunnel</computeroutput></member>
-      <member><computeroutput> left=%defaultroute</computeroutput></member>
-      <member><computeroutput> authby=null</computeroutput></member>
-      <member><computeroutput> leftid=%null</computeroutput></member>
-      <member><computeroutput> rightid=%null</computeroutput></member>
-      <member><computeroutput> right=%opportunisticgroup</computeroutput></member>
-      <member><computeroutput> failureshunt=passthrough</computeroutput></member>
-      <member><computeroutput> negotiationshunt=passthrough</computeroutput></member>
-      <member><computeroutput> auto=add</computeroutput></member>
-      <member><computeroutput> </computeroutput></member>
-      <member><computeroutput>conn private-or-clear</computeroutput></member>
-      <member><computeroutput> type=tunnel</computeroutput></member>
-      <member><computeroutput> left=%defaultroute</computeroutput></member>
-      <member><computeroutput> authby=null</computeroutput></member>
-      <member><computeroutput> leftid=%null</computeroutput></member>
-      <member><computeroutput> rightid=%null</computeroutput></member>
-      <member><computeroutput> right=%opportunisticgroup</computeroutput></member>
-      <member><computeroutput> failureshunt=passthrough</computeroutput></member>
-      <member><computeroutput> negotiationshunt=passthrough</computeroutput></member>
-      <member><computeroutput> auto=ondemand</computeroutput></member>
-      <member><computeroutput> </computeroutput></member>
-      <member><computeroutput>conn private</computeroutput></member>
-      <member><computeroutput> type=tunnel</computeroutput></member>
-      <member><computeroutput> left=%defaultroute</computeroutput></member>
-      <member><computeroutput> leftid=%null</computeroutput></member>
-      <member><computeroutput> rightid=%null</computeroutput></member>
-      <member><computeroutput> right=%opportunisticgroup</computeroutput></member>
-      <member><computeroutput> negotiationshunt=hold</computeroutput></member>
-      <member><computeroutput> failureshunt=drop</computeroutput></member>
-      <member><computeroutput> auto=ondemand</computeroutput></member>
-      <member><computeroutput> </computeroutput></member>
-      <member><computeroutput>conn block</computeroutput></member>
-      <member><computeroutput> type=reject</computeroutput></member>
-      <member><computeroutput> authby=never</computeroutput></member>
-      <member><computeroutput> left=%defaultroute</computeroutput></member>
-      <member><computeroutput> right=%group</computeroutput></member>
-      <member><computeroutput> auto=ondemand</computeroutput></member>
-    </simplelist>
-  </para>
+
+  <programlisting><xi:include  href="oe_conns.example"  parse="text"
+  xmlns:xi="http://www.w3.org/2001/XInclude"/></programlisting>
+
 </refsect1>
 
 <refsect1 id='policy_group_files'>

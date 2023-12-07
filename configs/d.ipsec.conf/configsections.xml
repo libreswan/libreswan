@@ -10,13 +10,10 @@
     <citerefentry><refentrytitle>ipsec_setup</refentrytitle><manvolnum>8</manvolnum></citerefentry>).
     Here's an example:
   </para>
-  <para>
-    <simplelist columns='1'>
-      <member><computeroutput>config setup</computeroutput></member>
-      <member><computeroutput>    logfile=/var/log/pluto.log</computeroutput></member>
-      <member><computeroutput>    plutodebug=all</computeroutput></member>
-    </simplelist>
-  </para>
+
+  <programlisting><xi:include  href="configsections.example"  parse="text"
+  xmlns:xi="http://www.w3.org/2001/XInclude"/></programlisting>
+
   <para>
     Parameters are optional unless marked &ldquo;(required)&rdquo;.
   </para>
