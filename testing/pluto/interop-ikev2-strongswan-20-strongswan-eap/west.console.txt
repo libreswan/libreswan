@@ -68,7 +68,7 @@ sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
 received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
 parsed IKE_AUTH response 3 [ AUTH SA TSi TSr N(AUTH_LFT) N(MOBIKE_SUP) N(ADD_4_ADDR) ]
 authentication of 'east.testing.libreswan.org' with EAP successful
-received AUTH_LIFETIME of XXXXs, scheduling reauthentication in XXXXs
+received AUTH_LIFETIME of XXXXs, scheduling reauthentication in XXXs
 peer supports MOBIKE
 IKE_SA rw-eap[1] established between 192.1.2.45[user1@testing.libreswan.org]...192.1.2.23[east.testing.libreswan.org]
 reauthentication already scheduled in XXXs
