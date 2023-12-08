@@ -303,27 +303,10 @@ void connection_delref_where(struct connection **cp, const struct logger *owner,
 	discard_connection(&c, true/*connection_valid*/, where);
 }
 
-static void discard_connection(struct connection **cp, bool connection_valid, where_t where)
+static bool connection_ok_to_delete(struct connection *c, where_t where)
 {
 	bool ok_to_delete = true;
-	struct connection *c = *cp;
-	*cp = NULL;
-
-	/*
-	 * Preserve the original logger's text.  Things like
-	 * delref(.clonedfrom) affect the prefix.
-	 */
-	struct logger *logger = clone_logger(c->logger, where);  /* must free */
-
-	/*
-	 * XXX: don't use "@%p".  The refcnt tracker will see it and
-	 * report a use-after-free (since refcnt loggs the pointer as
-	 * free before calling this code).
-	 */
-	ldbg(logger, "%s() %s "PRI_CO" [%p] cloned from "PRI_CO,
-	     __func__, c->name,
-	     pri_connection_co(c), c,
-	     pri_connection_co(c->clonedfrom));
+	struct logger *logger = c->logger;
 
 	unsigned refcnt = refcnt_peek(&c->refcnt);
 	if (refcnt != 0) {
@@ -364,9 +347,11 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 	while (next_connection_old2new(&instance)) {
 		connection_buf cb;
 		llog_pexpect(logger, where,
-			     "connection "PRI_CO" [%p] still instantiated as "PRI_CONNECTION,
+			     "connection "PRI_CO" [%p] still instantiated as "PRI_CONNECTION" [%p]",
 			     pri_connection_co(c), c,
-			     pri_connection(instance.c, &cb));
+			     pri_connection(instance.c, &cb),
+			     instance.c);
+		connection_ok_to_delete(instance.c, where);
 		ok_to_delete = false;
 	}
 
@@ -398,7 +383,31 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 		ok_to_delete = false;
 	}
 
-	if (!ok_to_delete) {
+	return ok_to_delete;
+}
+
+static void discard_connection(struct connection **cp, bool connection_valid, where_t where)
+{
+	struct connection *c = *cp;
+	*cp = NULL;
+
+	/*
+	 * Preserve the original logger's text.  Things like
+	 * delref(.clonedfrom) affect the prefix.
+	 */
+	struct logger *logger = clone_logger(c->logger, where);  /* must free */
+
+	/*
+	 * XXX: don't use "@%p".  The refcnt tracker will see it and
+	 * report a use-after-free (since refcnt loggs the pointer as
+	 * free before calling this code).
+	 */
+	ldbg(logger, "%s() %s "PRI_CO" [%p] cloned from "PRI_CO,
+	     __func__, c->name,
+	     pri_connection_co(c), c,
+	     pri_connection_co(c->clonedfrom));
+
+	if (!connection_ok_to_delete(c, where)) {
 		llog_passert(logger, where,
 			     "connection "PRI_CO" [%p] still in use",
 			     pri_connection_co(c), c);
