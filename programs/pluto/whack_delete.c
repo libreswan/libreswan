@@ -30,92 +30,12 @@
  * Terminate and then delete connections with the specified name.
  */
 
-static unsigned whack_delete_one_connection(const struct whack_message *m UNUSED,
-					    struct show *s,
-					    struct connection *c)
+static unsigned whack_delete_connections(const struct whack_message *m UNUSED,
+					 struct show *s,
+					 struct connection *c)
 {
-	struct logger *logger = show_logger(s);
-	connection_attach(c, logger);
-
-	/*
-	 * Let code know of intent.
-	 *
-	 * Functions such as connection_unroute() don't fiddle policy
-	 * bits as they are called as part of unroute/route sequences.
-	 */
-	del_policy(c, policy.up);
-	del_policy(c, policy.route);
-
-	if (never_negotiate(c)) {
-		ldbg(c->logger, "skipping as never-negotiate");
-		connection_unroute(c, HERE); /* some times redundant */
-	} else {
-		/* announce the change */
-		switch (c->local->kind) {
-		case CK_INSTANCE:
-		case CK_PERMANENT:
-		case CK_LABELED_PARENT:
-			llog(RC_LOG, c->logger, "terminating SAs using this connection");
-			break;
-		default:
-			break;
-		}
-
-		/* flush things */
-		switch (c->local->kind) {
-		case CK_PERMANENT:
-		case CK_INSTANCE:
-		case CK_LABELED_PARENT:
-		case CK_LABELED_CHILD:
-			remove_connection_from_pending(c);
-			terminate_all_connection_states(c, HERE);
-			break;
-		default:
-			break;
-		}
-
-		/*
-		 * Above remove from pending and delete connection
-		 * states calls, and below flush event call, should be
-		 * folded into connection_unroute().
-		 *
-		 * See github/1197
-		 */
-		connection_unroute(c, HERE); /* some times redundant */
-
-		/*
-		 * Flush any lurking revivals.
-		 *
-		 * Work-around github/1255 and ikev2-delete-02 where:
-		 *
-		 * teardown_ipsec_kernel_policies() doesn't schedule a
-		 * revival for the Child SA but should, and then a
-		 * later delete_ike schedules a revival but shouldn't
-		 * (revival is tied to the Child SA not the IKE SA).
-		 */
-		switch (c->local->kind) {
-		case CK_PERMANENT:
-		case CK_INSTANCE:
-			if (flush_connection_events(c)) {
-				ldbg(logger, "flushed bogus pending events");
-			}
-			break;
-		default:
-			break;
-		}
-	}
-
-	/*
-	 * A non-instance connection has a floating reference; need to
-	 * delete that so that the caller is left with the only
-	 * reference to the connection.
-	 */
-	struct connection *cc = c;
-	if (!is_instance(cc)) {
-		connection_delref(&cc, cc->logger);
-	}
-	PEXPECT(c->logger, refcnt_peek(&c->refcnt) == 1);
-	return 1; /* the connection counts */
+	terminate_and_delete_connections(&c, show_logger(s), HERE);
+	return 1;
 }
 
 void whack_delete(const struct whack_message *m, struct show *s,
@@ -131,8 +51,8 @@ void whack_delete(const struct whack_message *m, struct show *s,
 	 * This is new-to-old which means that instances are processed
 	 * before templates.
 	 */
-	whack_connections_bottom_up(m, s, whack_delete_one_connection,
-				    (struct each) {
-					    .log_unknown_name = log_unknown_name,
-				    });
+	whack_connection(m, s, whack_delete_connections,
+			 (struct each) {
+				 .log_unknown_name = log_unknown_name,
+			 });
 }
