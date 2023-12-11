@@ -989,12 +989,15 @@ $(KVM_FEDORA_DOMAIN)-base.ks: | $(KVM_FEDORA_KICKSTART_FILE)
 #   packages; they will be downloaded later
 #
 
-KVM_FREEBSD_ISO_SHA256 ?= 52a1420db86802cfab8bafa36eccaa78c8b65b59673cbdf690e4b57f9d80f01f
-KVM_FREEBSD_ISO_URL ?= https://download.freebsd.org/ftp/releases/ISO-IMAGES/13.2/FreeBSD-13.2-RELEASE-amd64-disc1.iso
+KVM_FREEBSD_RELEASE ?= 14.0
+KVM_FREEBSD_ISO_SHA256 ?= 6af37170b4616a49f4b9b43fe0c4ef051749d13650a159dd75a0a890a595eac4
+KVM_FREEBSD_ISO_PREFIX ?= https://download.freebsd.org/ftp/releases/ISO-IMAGES/$(KVM_FREEBSD_RELEASE)
+KVM_FREEBSD_ISO_URL ?= $(KVM_FREEBSD_ISO_PREFIX)/FreeBSD-$(KVM_FREEBSD_RELEASE)-RELEASE-amd64-disc1.iso
 KVM_FREEBSD_ISO ?= $(KVM_POOLDIR)/$(notdir $(KVM_FREEBSD_ISO_URL))
 
 kvm-iso: $(KVM_FREEBSD_ISO)
 # For FreeBSD, download the compressed ISO
+.PRECIOUS: $(KVM_FREEBSD_ISO).xz  $(KVM_FREEBSD_ISO)
 $(KVM_FREEBSD_ISO).xz: | $(KVM_POOLDIR)
 	$(KVM_WGET) --output-document $@.tmp --continue -- $(KVM_FREEBSD_ISO_URL).xz
 	touch $@.tmp # wget preserves dates
