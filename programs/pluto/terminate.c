@@ -208,9 +208,9 @@ void terminate_all_connection_states(struct connection *c, where_t where)
  * Caller must hold a reference; hence all the pmemory(C) calls.
  */
 
-static void terminate_and_down_connection(struct connection *c,
-					  struct logger *logger,
-					  where_t where)
+void terminate_and_down_connection(struct connection *c,
+				   struct logger *logger,
+				   where_t where)
 {
 	connection_attach(c, logger);
 	llog(RC_LOG, c->logger, "terminating SAs using this connection");

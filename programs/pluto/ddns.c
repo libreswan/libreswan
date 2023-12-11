@@ -181,9 +181,12 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 	pdbg(c->logger, "  adding SPDs");
 	add_connection_spds(c, address_info(c->local->host.addr));
 
+	/*
+	 * Caller holds reference.
+	 */
 	pdbg(c->logger, "  orienting?");
 	PASSERT(logger, !oriented(c));	/* see above */
-	if (!orient(&c, logger)) {
+	if (!orient(c, logger)) {
 		pdbg(c->logger, "pending ddns: connection was updated, but did not orient");
 		return;
 	}
@@ -206,10 +209,14 @@ void connection_check_ddns(struct logger *logger)
 {
 	threadtime_t start = threadtime_start();
 
-	struct connection_filter cf = { .where = HERE, };
+	struct connection_filter cf = {
+		.where = HERE,
+	};
 	while (next_connection_new2old(&cf)) {
-		struct connection *c = cf.c;
+		/* addref, delref is probably over kill */
+		struct connection *c = connection_addref(cf.c, logger);
 		connection_check_ddns1(c, logger);
+		connection_delref(&c, logger);
 	}
 
 	threadtime_stop(&start, SOS_NOBODY, "in %s for hostname lookup", __func__);

@@ -3478,8 +3478,10 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 * Force orientation (currently kind of unoriented?).  If the
 	 * connection orients,the SPDs and host-pair hash tables are
 	 * updated.
+	 *
+	 * This function holds the just allocated reference.
 	 */
-	orient(&c, c->logger);
+	orient(c, c->logger);
 
 	return NULL;
 }

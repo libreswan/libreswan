@@ -173,10 +173,12 @@ static bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest 
 
 	/*
 	 * Force a re-orientation which will rebuild much of the
-	 * host-pair DB
+	 * host-pair DB.
+	 *
+	 * Since IKE holds a reference to C, C can't be deleted.
 	 */
 	disorient(c);
-	if (!orient(&c, ike->sa.logger)) {
+	if (!orient(c, ike->sa.logger)) {
 		llog_pexpect(ike->sa.logger, HERE,
 			     "%s after mobike failed", "orient");
 		return false;

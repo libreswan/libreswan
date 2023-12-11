@@ -194,21 +194,21 @@ static void jam_iface(struct jambuf *buf, const struct iface *iface)
 	jam_address(buf, &iface->local_address);
 }
 
-bool orient(struct connection **cp, struct logger *logger)
+bool orient(struct connection *c, struct logger *logger)
 {
 	if (DBGP(DBG_BASE)) {
 		connection_buf cb;
-		LDBG_log((*cp)->logger, "orienting "PRI_CONNECTION, pri_connection((*cp), &cb));
-		LDBG_orient_end((*cp), LEFT_END);
-		LDBG_orient_end((*cp), RIGHT_END);
+		LDBG_log(c->logger, "orienting "PRI_CONNECTION, pri_connection(c, &cb));
+		LDBG_orient_end(c, LEFT_END);
+		LDBG_orient_end(c, RIGHT_END);
 	}
 
-	if (oriented((*cp))) {
-		ldbg((*cp)->logger, "already oriented");
+	if (oriented(c)) {
+		ldbg(c->logger, "already oriented");
 		return true;
 	}
 
-	PASSERT(logger, (*cp)->iface == NULL); /* aka not oriented */
+	PASSERT(logger, c->iface == NULL); /* aka not oriented */
 
 	/*
 	 * Save match; don't update the connection until all the
@@ -221,12 +221,12 @@ bool orient(struct connection **cp, struct logger *logger)
 	for (struct iface *iface = next_iface(NULL); iface != NULL; iface = next_iface(iface)) {
 
 		/* XXX: check connection allows p->protocol? */
-		bool left = host_end_matches_iface((*cp), LEFT_END, iface);
-		bool right = host_end_matches_iface((*cp), RIGHT_END, iface);
+		bool left = host_end_matches_iface(c, LEFT_END, iface);
+		bool right = host_end_matches_iface(c, RIGHT_END, iface);
 
 		if (!left && !right) {
 			if (DBGP(DBG_BASE)) {
-				LLOG_JAMBUF(DEBUG_STREAM, (*cp)->logger, buf) {
+				LLOG_JAMBUF(DEBUG_STREAM, c->logger, buf) {
 					jam_string(buf, "    interface ");
 					jam_iface(buf, iface);
 					jam_string(buf, " does not match left or right");
@@ -237,17 +237,15 @@ bool orient(struct connection **cp, struct logger *logger)
 
 		if (left && right) {
 			/* too many choices */
-			connection_addref((*cp), logger);
-			connection_attach((*cp), logger);
-			LLOG_JAMBUF(RC_LOG_SERIOUS, (*cp)->logger, buf) {
+			connection_attach(c, logger);
+			LLOG_JAMBUF(RC_LOG_SERIOUS, c->logger, buf) {
 				jam_string(buf, "connection matches both left ");
 				jam_iface(buf, iface);
 				jam_string(buf, " and right ");
 				jam_iface(buf, iface);
 			}
-			terminate_and_down_connections((*cp), logger, HERE);
-			connection_detach((*cp), logger);
-			connection_delref(cp, logger);
+			terminate_and_down_connection(c, logger, HERE);
+			connection_detach(c, logger);
 			return false;
 		}
 
@@ -271,33 +269,31 @@ bool orient(struct connection **cp, struct logger *logger)
 			 * log line doesn't differentiate.
 			 */
 			pexpect(end != matching_end);
-			connection_addref((*cp), logger);
-			connection_attach((*cp), logger);
-			LLOG_JAMBUF(RC_LOG_SERIOUS, (*cp)->logger, buf) {
+			connection_attach(c, logger);
+			LLOG_JAMBUF(RC_LOG_SERIOUS, c->logger, buf) {
 				jam_string(buf, "connection matches both ");
 				/*previous-match*/
-				jam_string(buf, (*cp)->end[matching_end].config->leftright);
+				jam_string(buf, c->end[matching_end].config->leftright);
 				jam_string(buf, " ");
 				jam_iface(buf, matching_iface);
 				jam_string(buf, " and ");
 				/* new match */
-				jam_string(buf, (*cp)->end[end].config->leftright);
+				jam_string(buf, c->end[end].config->leftright);
 				jam_string(buf, " ");
 				jam_iface(buf, iface);
 			}
-			terminate_and_down_connections((*cp), logger, HERE);
-			connection_detach((*cp), logger);
-			connection_delref(cp, logger);
+			terminate_and_down_connection(c, logger, HERE);
+			connection_detach(c, logger);
 			return false;
 		}
 
 		/* save match, and then continue search */
 		if (DBGP(DBG_BASE)) {
-			LLOG_JAMBUF(DEBUG_STREAM, (*cp)->logger, buf) {
+			LLOG_JAMBUF(DEBUG_STREAM, c->logger, buf) {
 				jam_string(buf, "    interface ");
 				jam_iface(buf, iface);
 				jam_string(buf, " matches '");
-				jam_string(buf, (*cp)->end[end].config->leftright);
+				jam_string(buf, c->end[end].config->leftright);
 				jam_string(buf, "'; orienting");
 			}
 		}
@@ -312,37 +308,37 @@ bool orient(struct connection **cp, struct logger *logger)
 	/*
 	 * Attach the interface (still not properly oriented).
 	 */
-	PASSERT((*cp)->logger, matching_end != END_ROOF);
-	PEXPECT((*cp)->logger, (*cp)->iface == NULL); /* wasn't updated */
-	(*cp)->iface = iface_addref(matching_iface);
+	PASSERT(c->logger, matching_end != END_ROOF);
+	PEXPECT(c->logger, c->iface == NULL); /* wasn't updated */
+	c->iface = iface_addref(matching_iface);
 
-	struct connection_end *local = &(*cp)->end[matching_end];
-	struct connection_end *remote = &(*cp)->end[!matching_end];
+	struct connection_end *local = &c->end[matching_end];
+	struct connection_end *remote = &c->end[!matching_end];
 
-	ldbg((*cp)->logger, "  orienting %s=local %s=remote",
+	ldbg(c->logger, "  orienting %s=local %s=remote",
 	     local->config->leftright, remote->config->leftright);
 
-	(*cp)->local = local;
-	(*cp)->remote = remote;
+	c->local = local;
+	c->remote = remote;
 
-	FOR_EACH_ITEM(spd, &(*cp)->child.spds) {
+	FOR_EACH_ITEM(spd, &c->child.spds) {
 		spd->local = &spd->end[matching_end];
 		spd->remote = &spd->end[!matching_end];
 	}
 
 	/* rehash end dependent hashes */
-	connection_db_rehash_that_id((*cp));
-	FOR_EACH_ITEM(spd, &(*cp)->child.spds) {
+	connection_db_rehash_that_id(c);
+	FOR_EACH_ITEM(spd, &c->child.spds) {
 		spd_route_db_rehash_remote_client(spd);
 	}
 
 	/* the ends may have flipped */
-	connection_db_rehash_host_pair((*cp));
+	connection_db_rehash_host_pair(c);
 
 	/*
 	 * Add a listen for any missing interface endpoints.
 	 */
-	add_iface_endpoints((*cp));
+	add_iface_endpoints(c);
 
 	return true;
 }
@@ -370,6 +366,6 @@ void check_orientations(struct logger *logger)
 			disorient(c);
 		}
 		/* just try */
-		orient(&c, logger);
+		orient(c, logger);
 	}
 }
