@@ -103,8 +103,8 @@ ifeq ($(INSTALL_CONFIGS),true)
 		echo "This can cause software failures if selinux is running in Enforcing mode"; \
 		echo -e "unless selinux policies are updated manually to allow this.\n" ; \
 		echo "The following commands fix a common issue of /usr/local/ being mislabeled"; \
-		echo "    restorecon /usr/local/sbin -Rv"; \
-		echo "    restorecon /usr/local/libexec/ipsec -Rv"; \
+		echo "    sudo restorecon /usr/local/sbin -Rv"; \
+		echo "    sudo restorecon /usr/local/libexec/ipsec -Rv"; \
 		if test -x /usr/sbin/getenforce ; then \
 			echo -e "\nSElinux is currently running in `/usr/sbin/getenforce` mode" ; \
 		fi ; \
