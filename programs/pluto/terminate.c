@@ -61,6 +61,7 @@
 #include "ikev1_delete.h"
 #include "ikev2_delete.h"
 #include "pluto_stats.h"
+#include "revival.h"
 
 static void delete_v1_states(struct connection *c,
 			     struct ike_sa **ike,
@@ -203,56 +204,141 @@ void terminate_all_connection_states(struct connection *c, where_t where)
 	whack_connection_states(c, delete_states, where);
 }
 
-void terminate_and_down_connections(struct connection **cp, struct logger *logger, where_t where)
+/*
+ * Caller must hold a reference; hence all the pmemory(C) calls.
+ */
+
+static void terminate_and_down_connection(struct connection *c,
+					  struct logger *logger,
+					  where_t where)
 {
-	del_policy((*cp), policy.up);
+	connection_attach(c, logger);
+	llog(RC_LOG, c->logger, "terminating SAs using this connection");
 
-	switch ((*cp)->local->kind) {
-	case CK_LABELED_CHILD: /* should not happen? */
+	/* see callers */
+	PEXPECT(logger, (c->local->kind == CK_INSTANCE ||
+			 c->local->kind == CK_PERMANENT ||
+			 c->local->kind == CK_LABELED_PARENT));
+
+	/*
+	 * Strip the +UP bit so that the connection (when its state is
+	 * deleted say) doesn't end up on the revival queue.
+	 *
+	 * Note that the connection could already be lurking on the
+	 * pending / revival queue.  That's handled once the states
+	 * are deleted (although the order shouldn't matter)..
+	 */
+	del_policy(c, policy.up);
+	/*
+	 * If there are states, delete them.  Since the +UP bit is
+	 * stripped, this won't trigger a revival.  However, this
+	 * doesn't preclude the connection already sitting on the
+	 * pending or revival queue.
+	 */
+	terminate_all_connection_states(c, HERE);
+	pmemory(c); /* should not disappear; caller holds ref */
+	/*
+	 * For instance, a connection with no states but waiting on
+	 * revival or pending can have on-demand or negotiating kernel
+	 * policy installed (else it is a no-op).
+	 */
+	connection_unroute(c, where);
+	pmemory(c); /* should not disappear; caller holds ref */
+	/*
+	 * For instance, a connection with no states when trying to terminate a connection that is
+	 * trying to revive (i.e., no states).
+	 */
+	flush_unrouted_revival(c);
+	pmemory(c); /* should not disappear; caller holds ref */
+	/*
+	 * For instance, conn/1x1 and conn/1x2 where the latter is on
+	 * the former's pending queue (i.e., no states).
+	 */
+	remove_connection_from_pending(c);
+	pmemory(c); /* should not disappear; caller holds ref */
+
+	connection_detach(c, logger);
+}
+
+void terminate_and_down_connections(struct connection *c,
+				    struct logger *logger, where_t where)
+{
+	switch (c->local->kind) {
 	case CK_INSTANCE:
-		connection_attach((*cp), logger);
-		llog(RC_LOG, (*cp)->logger, "terminating SAs using this connection");
-		terminate_all_connection_states((*cp), HERE);
-		delete_connection(cp); /* should be last reference */
-		return;
-
 	case CK_PERMANENT:
-		connection_attach((*cp), logger);
-		llog(RC_LOG, (*cp)->logger, "terminating SAs using this connection");
-		terminate_all_connection_states((*cp), HERE);
-		pmemory((*cp)); /* should not disappear */
-		connection_detach((*cp), logger);
-		return;
-
 	case CK_LABELED_PARENT:
-		connection_attach((*cp), logger);
-		llog(RC_LOG, (*cp)->logger, "terminating SAs using this connection");
-		terminate_all_connection_states((*cp), HERE);
-		delete_connection(cp); /* should be last reference */
+		/* caller holds ref */
+		terminate_and_down_connection(c, logger, where);
+		pmemory(c); /* should not disappear; caller holds ref */
 		return;
 
 	case CK_TEMPLATE:
-	case CK_GROUP:
 	case CK_LABELED_TEMPLATE:
 	{
-		/* should not disappear */
-		connection_attach((*cp), logger);
-		struct connection_filter cq = {
-			.clonedfrom = (*cp),
-			.where = HERE,
-		};
-		while (next_connection_old2new(&cq)) {
-			terminate_and_down_connections(&cq.c, logger, where);
+		/*
+		 * Template should remaining, however, terminating and
+		 * downing instances will make them go away.
+		 *
+		 * Worse, terminating and downing an IKE cuckold could
+		 * cause Child SA cuckoo connection to be deleted.
+		 * Hence, the loop picks away at the first instance.
+		 */
+		connection_attach(c, logger);
+		del_policy(c, policy.up);
+		/* pick away at instances */
+		const struct connection *last = NULL;
+		while (true) {
+			struct connection_filter cq = {
+				.clonedfrom = c,
+				.where = where,
+			};
+			if (!next_connection_old2new(&cq)) {
+				break;
+			}
+			if (last == NULL) {
+				llog(RC_LOG, c->logger, "terminating connection instances");
+			}
+			/* always going forward */
+			PASSERT(logger, last != cq.c);
+			last = cq.c;
+			/* should disappear */
+			connection_addref(cq.c, logger);
+			terminate_and_down_connection(cq.c, logger, where);
+			delete_connection(&cq.c);
 		}
-		pmemory((*cp)); /* should not disappear */
-		connection_detach((*cp), logger);
+		pmemory(c); /* should not disappear */
+		/* to be sure */
+		connection_unroute(c, where);
+		connection_detach(c, logger);
 		return;
 	}
 
+	case CK_GROUP:
+	{
+		/* should not disappear */
+		connection_attach(c, logger);
+		del_policy(c, policy.up);
+		struct connection_filter cq = {
+			.clonedfrom = c,
+			.where = where,
+		};
+		if (next_connection_old2new(&cq)) {
+			llog(RC_LOG, c->logger, "terminating group instances");
+			do {
+				terminate_and_down_connections(cq.c, logger, where);
+				pmemory(cq.c); /* should not disappear */
+			} while (next_connection_old2new(&cq));
+		}
+		pmemory(c); /* should not disappear */
+		connection_detach(c, logger);
+		return;
+	}
+
+	case CK_LABELED_CHILD: /* should not happen? */
 	case CK_INVALID:
 		break;
 	}
-	bad_enum((*cp)->logger, &connection_kind_names, (*cp)->local->kind);
+	bad_enum(c->logger, &connection_kind_names, c->local->kind);
 }
 
 /*
