@@ -153,10 +153,6 @@ static void show_brief_connection_status(struct show *s, const struct connection
 
 static void show_brief_connection_statuses(struct show *s)
 {
-	show_separator(s);
-	show_comment(s, "Connection list:");
-	show_separator(s);
-
 	int count = 0;
 	int active = 0;
 
@@ -172,10 +168,9 @@ static void show_brief_connection_statuses(struct show *s)
 			}
 		}
 		pfree(connections);
-		show_separator(s);
 	}
 
-	show_comment(s, "Total IPsec connections: loaded %d, active %d",
+	show_comment(s, "# Total IPsec connections: loaded %d, active %d",
 		     count, active);
 }
 
