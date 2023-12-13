@@ -31,12 +31,12 @@
     USE_SECCOMP=true \\\
 %{nil}
 
-#global prever dr1
+%global prever rc1
 
 Name: libreswan
 Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
 # version is generated in the release script
-Version: 4.9
+Version: 5.0
 Release: %{?prever:0.}1%{?prever:.%{prever}}%{?dist}
 License: GPL-2.0-or-later
 Url: https://libreswan.org/
@@ -199,5 +199,5 @@ certutil -N -d sql:$tmpdir --empty-password
 %attr(0644,root,root) %doc %{_mandir}/*/*
 
 %changelog
-* Thu Oct 13 2022 Team Libreswan <team@libreswan.org> - 4.9-1
+* Tue Dec 12 2023 Team Libreswan <team@libreswan.org> - 5.0-0.rc1
 - Automated build from release tar ball
