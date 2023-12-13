@@ -237,7 +237,7 @@ bool orient(struct connection **cp, struct logger *logger)
 
 		if (left && right) {
 			/* too many choices */
-			connection_attach((*cp), logger);
+			connection_addref((*cp), logger);
 			connection_attach((*cp), logger);
 			LLOG_JAMBUF(RC_LOG_SERIOUS, (*cp)->logger, buf) {
 				jam_string(buf, "connection matches both left ");
@@ -245,8 +245,9 @@ bool orient(struct connection **cp, struct logger *logger)
 				jam_string(buf, " and right ");
 				jam_iface(buf, iface);
 			}
-			terminate_and_down_connections(cp, logger, HERE);
+			terminate_and_down_connections((*cp), logger, HERE);
 			connection_detach((*cp), logger);
+			connection_delref(cp, logger);
 			return false;
 		}
 
@@ -270,6 +271,7 @@ bool orient(struct connection **cp, struct logger *logger)
 			 * log line doesn't differentiate.
 			 */
 			pexpect(end != matching_end);
+			connection_addref((*cp), logger);
 			connection_attach((*cp), logger);
 			LLOG_JAMBUF(RC_LOG_SERIOUS, (*cp)->logger, buf) {
 				jam_string(buf, "connection matches both ");
@@ -283,9 +285,9 @@ bool orient(struct connection **cp, struct logger *logger)
 				jam_string(buf, " ");
 				jam_iface(buf, iface);
 			}
-			terminate_and_down_connections(cp, logger, HERE);
+			terminate_and_down_connections((*cp), logger, HERE);
 			connection_detach((*cp), logger);
-
+			connection_delref(cp, logger);
 			return false;
 		}
 

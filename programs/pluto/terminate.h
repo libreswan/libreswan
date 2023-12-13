@@ -22,7 +22,19 @@ struct connection;
 struct logger;
 
 void terminate_all_connection_states(struct connection *c, where_t where);
-void terminate_and_down_connections(struct connection **cp, struct logger *logger, where_t where);
+
+/*
+ * Traverse the connection tree DOWN-ing all connections (remove +UP
+ * bit), delete states, and eliminate anything on either the pending
+ * or revival queue.
+ *
+ * Caller must take a reference C to stop it being deleted - as will
+ * happen when C is an INSTANCE or LABELED_PARENT.
+ *
+ * If C is a TEMPLATE or LABELED_TEMPLATE this will delete any
+ * INSTANCE, LABELED_PARENT or LABELED_CHILD.
+ */
+void terminate_and_down_connections(struct connection *c, struct logger *logger, where_t where);
 
 void connection_timeout_ike_family(struct ike_sa **ike, where_t where);
 void connection_delete_ike_family(struct ike_sa **ike, where_t where);
