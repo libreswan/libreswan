@@ -53,7 +53,7 @@ road #
 road #
  ip addr show dev ipsec1
 X: ipsec1@eth0: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
-    inet 192.0.2.1/32 scope 50 ipsec1
+    inet 192.0.2.1/32 scope global ipsec1
        valid_lft forever preferred_lft forever
 road #
  ip -s link show ipsec1

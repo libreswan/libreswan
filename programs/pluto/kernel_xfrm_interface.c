@@ -71,7 +71,7 @@
 
 #define IPSEC1_XFRM_IF_ID (1U)
 #define IFINFO_REPLY_BUFFER_SIZE (32768 + NL_BUFMARGIN)
-static const int IP_ADDR_GLOBAL_SCOPE = 50;
+static const int IP_ADDR_GLOBAL_SCOPE = 0;
 
 
 static struct pluto_xfrmi *pluto_xfrm_interfaces;
