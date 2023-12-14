@@ -33,7 +33,7 @@ road #
 road #
  ip addr show dev ipsec1
 X: ipsec1@eth0: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
-    inet 100.64.13.2/32 scope 50 ipsec1
+    inet 100.64.13.2/32 scope global ipsec1
        valid_lft forever preferred_lft forever
 road #
  ../../guestbin/ping-once.sh --up 192.0.2.254
