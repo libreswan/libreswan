@@ -8,12 +8,7 @@ mkdir -p ${cachedir}
 
 # enable the community repo that contains NSS
 
-ed /etc/apk/repositories <<EOF
-/comunity/
-s/#//
-w
-q
-EOF
+sed -i -e '/community/ s/#//' /etc/apk/repositories
 
 apk update --cache-dir ${cachedir}
 
