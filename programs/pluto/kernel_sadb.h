@@ -86,9 +86,11 @@ enum sadb_type {
 #define SADB_FLUSH sadb_flush
 #endif
 
+#ifdef SADB_X_SPDFLUSH
 	sadb_x_spdflush = SADB_X_SPDFLUSH,
 #undef SADB_X_SPDFLUSH
 #define SADB_X_SPDFLUSH sadb_x_spdflush
+#endif
 
 	sadb_register = SADB_REGISTER,
 #undef SADB_REGISTER

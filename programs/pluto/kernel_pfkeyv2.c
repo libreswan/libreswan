@@ -609,7 +609,11 @@ static void kernel_pfkeyv2_init(bool flush, struct logger *logger)
 	if (flush) {
 		struct inbuf resp;
 		sadb_base_sendrecv(&resp, SADB_FLUSH, SADB_SATYPE_UNSPEC, logger);
+#ifdef SADB_X_SPDFLUSH /* FreeBSD NetBSD */
 		sadb_base_sendrecv(&resp, SADB_X_SPDFLUSH, SADB_SATYPE_UNSPEC, logger);
+#else /* OpenBSD */
+		ldbg(logger, "OpenBSD SADB_FLUSH does everything; SADB_X_SPDFLUSH not needed");
+#endif
 	}
 }
 
