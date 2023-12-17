@@ -40,7 +40,7 @@ _VIRSH = ["sudo", "virsh", "--connect", "qemu:///system"]
 START_TIMEOUT = 60
 # Can be anything as it either matches immediately or dies with EOF.
 CONSOLE_TIMEOUT = 20
-SHUTDOWN_TIMEOUT = 20
+SHUTDOWN_TIMEOUT = 30
 DESTROY_TIMEOUT = 20
 TIMEOUT = 10
 
