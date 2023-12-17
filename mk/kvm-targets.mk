@@ -1269,8 +1269,9 @@ kvm-make-install-base-%: $(KVM_POOLDIR_PREFIX)%
 		--chdir /source \
 		$(notdir $<) \
 		-- \
-		'ls > /dev/null' \; \
-		'time gmake install-base $(KVM_MAKEFLAGS) $(KVM_$($*)_MAKEFLAGS)'
+		ls \> /dev/null \&\& \
+		time gmake install-base $(KVM_MAKEFLAGS) $(KVM_$($*)_MAKEFLAGS) \&\& \
+		sync \&\& sync \&\& sync
 
 $(patsubst %, kvm-make-install-all-%, $(KVM_INSTALL_PLATFORM)): \
 kvm-make-install-all-%: $(KVM_POOLDIR_PREFIX)%
@@ -1279,8 +1280,9 @@ kvm-make-install-all-%: $(KVM_POOLDIR_PREFIX)%
 		--chdir /source \
 		$(notdir $<) \
 		-- \
-		'ls > /dev/null' \; \
-		'time gmake install $(KVM_MAKEFLAGS) $(KVM_$($*)_MAKEFLAGS)'
+		ls \> /dev/null \&\& \
+		time gmake install $(KVM_MAKEFLAGS) $(KVM_$($*)_MAKEFLAGS) \&\& \
+		sync \&\& sync \&\& sync
 
 $(patsubst %, kvm-install-%, $(KVM_PLATFORM)): \
 kvm-install-%:
