@@ -32,3 +32,6 @@ add bash
 # stem with branch, see pkg_add
 add gcc%11
 add llvm%16
+
+sync ; sync ; sync
+
