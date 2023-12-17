@@ -918,7 +918,7 @@ $(KVM_ALPINE_DOMAIN)-base: $(KVM_ALPINE_ISO)
 #
 
 KVM_DEBIAN_RELEASE = 12.2.0
-KVM_DEBIAN_URL ?= https://cdimage.debian.org/debian-cd/current/amd64/iso-dvd
+KVM_DEBIAN_URL ?= https://cdimage.debian.org/mirror/cdimage/archive/$(KVM_DEBIAN_RELEASE)/amd64/iso-dvd
 KVM_DEBIAN_ISO_URL ?= $(KVM_DEBIAN_URL)/debian-$(KVM_DEBIAN_RELEASE)-amd64-DVD-1.iso
 KVM_DEBIAN_ISO = $(KVM_POOLDIR)/$(notdir $(KVM_DEBIAN_ISO_URL))
 kvm-iso: $(KVM_DEBIAN_ISO)
