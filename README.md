@@ -69,20 +69,28 @@ Runtime requirements (usually already present on the system)
 
 Install requirements for rpm package building:
 
-      dnf install rpm-build rpmdevtools
+   dnf install rpm-build rpmdevtools
 
 The packaging/ directory is used to find the proper spce file for your
-distribution. Simply issue the command: make rpm
+distribution. Simply issue the command:
+
+   make rpm
+
 You can also pick a specific spec file. For example, to build for CentOS8,
-use: rpmbuild -ba packaging/centos/8/libreswan.spec
+use:
+
+   rpmbuild -ba packaging/centos/8/libreswan.spec
 
 ## Building for DEB based systems
+
 The packaging/debian directory is used to build deb files. Simply issue the
-command: make deb
+command:
+
+    make deb
 
 ## Compiling the userland and IKE daemon manually in /usr/local
 
-    make programs
+    make
     sudo make install
 
 If you want to build without creating and installing manual pages, run:
