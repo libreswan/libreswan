@@ -110,7 +110,7 @@ If you want to build without creating and installing manual pages, run:
 ## Starting Libreswan
 The install will detect the init system used (systemd, upstart, sysvinit,
 openrc) and should integrate with the linux distribution. The service
-name is called "ipsec".  For example, on RHEL8, one would use:
+name is called "ipsec".  For example, on CentOS Stream 9, one would use:
 
     systemctl enable ipsec.service
     systemctl start ipsec.service
@@ -147,11 +147,9 @@ See README.NSS and `certutil --help` for more details on using NSS and
 migrating from the old Openswan `/etc/ipsec.d/` directories to using NSS.
 
 ## Upgrading
-If you are upgrading from FreeS/WAN 1.x, Openswan 2.x or older Libreswan
-versions to Libreswan 4.x, you might need to adjust your config files,
-although great care has been put into making the configuration files full
-backwards compatible. See also:
-https://libreswan.org/wiki/HOWTO:_openswan_to_libreswan_migration
+If you are upgrading from older Libreswan versions, Libreswan 5.x you might
+need to adjust your config files, although great care has been put into
+making the configuration files full backwards compatible.
 
 See 'man ipsec.conf' for the list of options to find any new features.
 
@@ -209,5 +207,4 @@ and the wiki at https://libreswan.org/wiki/
 ## KLIPS IPsec stack
 The KLIPS IPsec stack has been removed. Please use the XFRM stack.
 If you wish to have network interfaces like KLIPS had, please use the XFRMi
-interfaces via the ipsec-interface= keyword, or use the less capable VTI
-interface support.
+interfaces via the ipsec-interface= keyword.
