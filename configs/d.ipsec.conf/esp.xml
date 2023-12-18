@@ -62,7 +62,7 @@
 	<manvolnum>8</manvolnum> </citerefentry>).
     </para>
     <para>
-      This option replaces phase2alg= option.
+      This option replaces phase2alg= option for esp.
     </para>
   </listitem>
 </varlistentry>
