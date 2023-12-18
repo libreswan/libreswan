@@ -207,7 +207,6 @@ XMLSOURCES += d.ipsec.conf/reqid.xml
 XMLSOURCES += d.ipsec.conf/dpddelay.xml
 XMLSOURCES += d.ipsec.conf/ikev1-dpdtimeout.xml
 XMLSOURCES += d.ipsec.conf/pfs.xml
-XMLSOURCES += d.ipsec.conf/pfsgroup.xml
 XMLSOURCES += d.ipsec.conf/aggressive.xml
 XMLSOURCES += d.ipsec.conf/salifetime.xml
 XMLSOURCES += d.ipsec.conf/ipsec-max-bytes.xml
