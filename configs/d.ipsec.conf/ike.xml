@@ -57,7 +57,7 @@
       it does require a PRF function, so the second argument to an
       AEAD algorithm denotes the PRF. So ike=aes_gcm-sha2_256 means
       propose AES_GCM with SHA2_256 as the prf. Note that for
-      phase2alg, there is no prf, so AES-GCM is specified for ESP as
+      esp, there is no prf, so AES-GCM is specified for ESP as
       esp=aes_gcm. The AES-GCM and AES-CCM algorithms support 8,12 and
       16 byte ICV's.  These can be specified using a postfix, for
       example aes_gcm_a (for 8), aes_gcm_b (for 12) and aes_gcm_c (for

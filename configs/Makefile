@@ -149,7 +149,6 @@ XMLSOURCES += d.ipsec.conf/auto.xml
 XMLSOURCES += d.ipsec.conf/authby.xml
 XMLSOURCES += d.ipsec.conf/ike.xml
 XMLSOURCES += d.ipsec.conf/phase2.xml
-XMLSOURCES += d.ipsec.conf/phase2alg.xml
 XMLSOURCES += d.ipsec.conf/sha2-truncbug.xml
 XMLSOURCES += d.ipsec.conf/ms-dh-downgrade.xml
 XMLSOURCES += d.ipsec.conf/dns-match-id.xml

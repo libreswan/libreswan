@@ -61,5 +61,8 @@
 	<refentrytitle>ipsec_algparse</refentrytitle>
 	<manvolnum>8</manvolnum> </citerefentry>).
     </para>
+    <para>
+      This option replaces phase2alg= option.
+    </para>
   </listitem>
 </varlistentry>
