@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <emphasis remap='B'>ikev1-dpdtimeout</emphasis>
+    <emphasis remap='B'>dpdtimeout</emphasis>
   </term>
   <listitem>
     <para>
@@ -17,9 +17,6 @@
       always the same as the retransmit-timeout, as IKEv2 is blocked
       from sending further IKE messages if an answer is not
       received.
-    </para>
-    <para>
-      This option used to be called dpdtimeout=
     </para>
   </listitem>
 </varlistentry>
