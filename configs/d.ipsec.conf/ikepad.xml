@@ -1,12 +1,12 @@
 <varlistentry>
   <term>
-    <emphasis remap='B'>ikepad</emphasis>
+    <emphasis>ikepad</emphasis>
   </term>
   <listitem>
     <para>
       Whether or not to pad IKEv1 messages to a multiple of 4
-      bytes. Valid values are <emphasis remap='B'>yes</emphasis>, (the
-      default) and <emphasis remap='B'>no</emphasis>.
+      bytes. Valid values are <emphasis>yes</emphasis>, (the
+      default) and <emphasis>no</emphasis>.
     </para>
     <para>
       IKE padding is allowed in IKEv1 but has been known to cause

@@ -1,23 +1,23 @@
   <varlistentry>
-  <term><emphasis remap='B'>plutodebug</emphasis></term>
+  <term><emphasis>plutodebug</emphasis></term>
   <listitem>
 <para>how much Pluto debugging output should be logged. An empty value,
-or the magic value <emphasis remap='B'>none</emphasis>, means no debug
+or the magic value <emphasis>none</emphasis>, means no debug
 output (the default). Otherwise only the specified types of output
 (a quoted list, names without the <option>--debug-</option> prefix,
 separated by white space) are enabled;
 </para>
-<para>The current option values are <emphasis remap='B'>base</emphasis>
+<para>The current option values are <emphasis>base</emphasis>
 that represents moderate amounts of information, 
-<emphasis remap='B'>cpu-usage</emphasis> for getting timing/load based
+<emphasis>cpu-usage</emphasis> for getting timing/load based
 information (best used without any other debugging options),
-<emphasis remap='B'>crypt</emphasis> for all crypto related operations and
-<emphasis remap='B'>tmi</emphasis> (Too Much Information) for excessive
+<emphasis>crypt</emphasis> for all crypto related operations and
+<emphasis>tmi</emphasis> (Too Much Information) for excessive
 logging. To log any sensitive private key or password material, use the
-special <emphasis remap='B'>private</emphasis> value.
+special <emphasis>private</emphasis> value.
 </para>
 <para>The old plutodebug options (control, controlmore, x509, kernel,
-etc) are mapped to either base or tmi. Note that <emphasis remap='B'>all</emphasis> maps to <emphasis remap='B'>base</emphasis> and not <emphasis remap='B'>tmi</emphasis>.
+etc) are mapped to either base or tmi. Note that <emphasis>all</emphasis> maps to <emphasis>base</emphasis> and not <emphasis>tmi</emphasis>.
 </para>
   </listitem>
   </varlistentry>

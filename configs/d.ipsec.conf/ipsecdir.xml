@@ -1,22 +1,22 @@
 <varlistentry>
   <term>
-    <emphasis remap='B'>ipsecdir</emphasis>
+    <emphasis>ipsecdir</emphasis>
   </term>
   <listitem>
     <para>
       Specifies a directory for administrator-controlled configuration
-      files and directories.  The default value is <emphasis
-      remap='I'>/etc/ipsec.d</emphasis>.  It may contain the following
+      files and directories.  The default value is
+      <emphasis>@@IPSEC_CONFDDIR@@</emphasis>. It may contain the following
       files and directories:
     </para>
-    <variablelist remap='IP'>
+    <variablelist>
       <varlistentry>
         <term>
 	  passwd
 	</term>
         <listitem>
 	  <para>
-            (optional) for XAUTH support if not using PAM (this file
+            (optional) for IKEv1 XAUTH support if not using PAM (this file
             should not be world-readable). See README.XAUTH for more
             information.
           </para>
@@ -41,35 +41,9 @@
         <listitem>
 	  <para>
             a directory containing policy group configuration
-            information.  See <emphasis remap='B'>POLICY GROUP
+            information.  See <emphasis>POLICY GROUP
             FILES</emphasis> in this document for more information.
           </para>
-	</listitem>
-      </varlistentry>
-      <varlistentry>
-        <term>
-	  cacerts/
-	</term>
-        <listitem>
-	  <para>
-            DEPRECATED: a directory to store trust anchors (root
-            certificate authority certificates).  The preferred (and
-            default) approach is to store CA certs in the NSS database
-            instead.  See README.nss for more information.
-          </para>
-	</listitem>
-      </varlistentry>
-      <varlistentry>
-        <term>
-	  crls/
-	</term>
-        <listitem>
-	  <para>
-	    DEPRECATED: a directory to store certificate revocation
-	    lists. The preferred (and default) approach is to store
-	    CRLs in the NSS database instead. See README.nss for more
-	    information.
-        </para>
 	</listitem>
       </varlistentry>
     </variablelist>

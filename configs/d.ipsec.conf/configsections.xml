@@ -3,12 +3,9 @@
     CONFIG SECTIONS
   </title>
   <para>
-    At present, the only <emphasis remap='B'>config</emphasis> section
-    known to the IPsec software is the one named <emphasis
-    remap='B'>setup</emphasis>, which contains information used when
-    the software is being started (see
-    <citerefentry><refentrytitle>ipsec_setup</refentrytitle><manvolnum>8</manvolnum></citerefentry>).
-    Here's an example:
+    At present, the only <emphasis>config</emphasis> section
+    known to the IPsec software is the one named <emphasis>setup</emphasis>,
+    which contains information used when the software is being started.
   </para>
 
   <programlisting><xi:include  href="configsections.example"  parse="text"
@@ -19,9 +16,9 @@
   </para>
 
   <para>
-    The currently-accepted <emphasis remap='I'>parameter</emphasis>
-    names in a <emphasis remap='B'>config setup</emphasis> section
+    The currently-accepted <emphasis>parameter</emphasis>
+    names in a <emphasis>config setup</emphasis> section
     are:
   </para>
 
-  <variablelist remap='TP'>
+  <variablelist>

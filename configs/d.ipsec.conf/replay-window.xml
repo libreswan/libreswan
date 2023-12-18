@@ -1,5 +1,5 @@
 <varlistentry>
-  <term><emphasis remap='B'>replay-window</emphasis></term>
+  <term><emphasis>replay-window</emphasis></term>
   <listitem>
     <para>
       The size of the IPsec SA replay window protection in packets.

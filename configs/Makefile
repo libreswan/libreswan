@@ -161,7 +161,6 @@ XMLSOURCES += d.ipsec.conf/esp.xml
 XMLSOURCES += d.ipsec.conf/ah.xml
 XMLSOURCES += d.ipsec.conf/fragmentation.xml
 XMLSOURCES += d.ipsec.conf/ikepad.xml
-XMLSOURCES += d.ipsec.conf/ikev2.xml
 XMLSOURCES += d.ipsec.conf/mobike.xml
 XMLSOURCES += d.ipsec.conf/intermediate.xml
 XMLSOURCES += d.ipsec.conf/esn.xml

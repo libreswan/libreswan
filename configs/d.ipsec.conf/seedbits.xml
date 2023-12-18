@@ -1,5 +1,5 @@
   <varlistentry>
-  <term><emphasis remap='B'>seedbits</emphasis></term>
+  <term><emphasis>seedbits</emphasis></term>
   <listitem>
 <para>
 Pluto uses the NSS crypto library as its random source. Some government

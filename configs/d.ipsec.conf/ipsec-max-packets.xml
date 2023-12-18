@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <emphasis remap='B'>ipsec-max-packets</emphasis>
+    <emphasis>ipsec-max-packets</emphasis>
   </term>
   <listitem>
     <para>
@@ -9,8 +9,8 @@
       user packets) , from successful negotiation to expiry.
     </para>
     <para>
-      Default values and caveats are the same as for <emphasis
-      remap='B'>ipsec-max-bytes</emphasis>.  This option uses a prefix
+      Default values and caveats are the same as for
+      <emphasis>ipsec-max-bytes</emphasis>. This option uses a prefix
       without "B" for bytes.
     </para>
   </listitem>

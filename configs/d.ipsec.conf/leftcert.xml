@@ -1,12 +1,11 @@
 <varlistentry>
   <term>
-    <emphasis remap='B'>leftcert</emphasis>
+    <emphasis>leftcert</emphasis>
   </term>
   <listitem>
     <para>
-      If you are using <emphasis
-      remap='B'>leftrsasigkey=%cert</emphasis> this defines the
-      certificate nickname of your certificate in the NSS
+      If you are using <emphasis>leftrsasigkey=%cert</emphasis>
+      this defines the certificate nickname of your certificate in the NSS
       database. This can be on software or hardware security device.
     </para>
   </listitem>

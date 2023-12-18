@@ -4,7 +4,7 @@
   </title>
   <para>
     When choosing a connection to apply to an outbound packet caught
-    with a <emphasis remap='B'>%trap,</emphasis> the system prefers
+    with a <emphasis>%trap,</emphasis> the system prefers
     the one with the most specific eroute that includes the packet's
     source and destination IP addresses.  Source subnets are examined
     before destination subnets.  For initiating, only routed
@@ -66,32 +66,29 @@
   </para>
 
   <para>
-    When <emphasis remap='B'>type</emphasis> or <emphasis
-    remap='B'>failureshunt</emphasis> is set to <emphasis
-    remap='B'>drop</emphasis> or <emphasis
-    remap='B'>reject,</emphasis> Libreswan blocks outbound packets
-    using eroutes, but assumes inbound blocking is handled by the
-    firewall. Libreswan offers firewall hooks via an
-    &ldquo;updown&rdquo; script.  However, the default <emphasis
-    remap='B'>ipsec _updown</emphasis> provides no help in controlling
+    When <emphasis>type</emphasis> or <emphasis>failureshunt</emphasis> is set
+    to <emphasis>drop</emphasis> or <emphasis>reject,</emphasis> Libreswan
+    blocks outbound packets using eroutes, but assumes inbound blocking is
+    handled by the firewall. Libreswan offers firewall hooks via an
+    &ldquo;updown&rdquo; script.  However, the default
+    <emphasis>ipsec _updown</emphasis> provides no help in controlling
     a modern firewall.
   </para>
 
   <para>
     Including attributes of the keying channel (authentication
-    methods, <emphasis remap='B'>ikelifetime</emphasis>, etc.) as an
+    methods, <emphasis>ikelifetime</emphasis>, etc.) as an
     attribute of a connection, rather than of a participant pair, is
     dubious and incurs limitations.
   </para>
 
   <para>
-    The use of <emphasis remap='B'>%any</emphasis> with the <emphasis
-    remap='I'>protoport=</emphasis> option is ambiguous. Should the SA
-    permits any port through or should the SA negotiate any single
-    port through?  The first is a basic conn with a wildcard. The
-    second is a template. The second is the current behaviour, and
-    it's wrong for quite a number of uses involving TCP. The keyword
-    <emphasis remap='B'>%one</emphasis> may be introduced in the
+    The use of <emphasis>%any</emphasis> with the <emphasis>protoport=</emphasis>
+    option is ambiguous. Should the SA permits any port through or should
+    the SA negotiate any single port through?  The first is a basic conn with
+    a wildcard. The second is a template. The second is the current behaviour,
+    and it's wrong for quite a number of uses involving TCP. The keyword
+    <emphasis>%one</emphasis> may be introduced in the
     future to separate these two cases.
   </para>
 
@@ -101,23 +98,20 @@
   </para>
 
   <para>
-    The ability to specify different identities, <emphasis
-    remap='B'>authby</emphasis>, and public keys for different
-    automatic-keyed connections between the same participants is
-    misleading; this doesn't work dependably because the identity of
-    the participants is not known early enough.  This is especially
-    awkward for the &ldquo;Road Warrior&rdquo; case, where the remote
-    IP address is specified as <literal>0.0.0.0</literal>, and that is
-    considered to be the &ldquo;participant&rdquo; for such
+    The ability to specify different identities, <emphasis>authby</emphasis>,
+    and public keys for different automatic-keyed connections between
+    the same participants is misleading; this doesn't work dependably
+    because the identity of the participants is not known early enough.
+    This is especially awkward for the &ldquo;Road Warrior&rdquo; case,
+    where the remote IP address is specified as <literal>0.0.0.0</literal>,
+    and that is considered to be the &ldquo;participant&rdquo; for such
     connections.
   </para>
 
   <para>
-    If conns are to be added before DNS is available, <emphasis
-    remap='B'>left=</emphasis><emphasis remap='I'>FQDN</emphasis>,
-    <emphasis remap='B'>leftnextop=</emphasis><emphasis
-    remap='I'>FQDN</emphasis>, and <emphasis
-    remap='B'>leftrsasigkey=%dnsonload</emphasis> will fail.
+    If conns are to be added before DNS is available, <emphasis>left=</emphasis>
+    <emphasis>FQDN</emphasis>, <emphasis>leftnextop=</emphasis><emphasis>FQDN</emphasis>,
+    and <emphasis>leftrsasigkey=%dnsonload</emphasis> will fail.
     <citerefentry><refentrytitle>ipsec_pluto</refentrytitle><manvolnum>8</manvolnum></citerefentry>
     does not actually use the public key for our side of a conn but it
     isn't generally known at a add-time which side is ours (Road

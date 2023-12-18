@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <emphasis remap='B'>esn</emphasis>
+    <emphasis>esn</emphasis>
   </term>
   <listitem>
     <para>
@@ -9,13 +9,12 @@
       typically used for very high-speed links (10Gbps or faster)
       where the standard 32 bit sequence number is exhausted too
       quickly, causing IPsec SA's rekeys to happen too often. Accepted
-      values are <emphasis remap='B'>either</emphasis> (the default),
-      <emphasis remap='B'>yes</emphasis> and <emphasis
-      remap='B'>no</emphasis>.  If <emphasis
-      remap='I'>either</emphasis> is specified as an initiator, the
-      responder will make the choice. As a responder, if <emphasis
-      remap='I'>either</emphasis> is received, <emphasis
-      remap='I'>yes</emphasis> is picked.
+      values are <emphasis>either</emphasis> (the default),
+      <emphasis>yes</emphasis> and <emphasis>no</emphasis>.
+      If <emphasis>either</emphasis> is specified as an initiator,
+      the responder will make the choice. As a responder,
+      if <emphasis>either</emphasis> is received,
+      <emphasis>yes</emphasis> is picked.
     </para>
     <para>
       If replay-window is set to 0, ESN is disabled as some (most?)

@@ -1,19 +1,19 @@
   <varlistentry>
-  <term><emphasis remap='B'>rekey</emphasis></term>
+  <term><emphasis>rekey</emphasis></term>
   <listitem>
 <para>whether a connection should be renegotiated when it is about to expire;
 acceptable values are
-<emphasis remap='B'>yes</emphasis>
+<emphasis>yes</emphasis>
 (the default)
 and
-<emphasis remap='B'>no</emphasis>.
+<emphasis>no</emphasis>.
 The two ends need not agree,
 but while a value of
-<emphasis remap='B'>no</emphasis>
+<emphasis>no</emphasis>
 prevents Pluto from requesting renegotiation,
 it does not prevent responding to renegotiation requested from the other end,
 so
-<emphasis remap='B'>no</emphasis>
+<emphasis>no</emphasis>
 will be largely ineffective unless both ends agree on it.</para>
   </listitem>
   </varlistentry>

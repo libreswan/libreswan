@@ -1,13 +1,13 @@
 <varlistentry>
   <term>
-    <emphasis remap='B'>failureshunt</emphasis>
+    <emphasis>failureshunt</emphasis>
   </term>
   <listitem>
     <para>
       what to do with packets when negotiation fails.  The default is
-      <emphasis remap='B'>none</emphasis>: no shunt; <emphasis
-      remap='B'>passthrough</emphasis>, <emphasis
-      remap='B'>drop</emphasis>, and <emphasis
-      remap='B'>reject</emphasis> have the obvious meanings.</para>
+      <emphasis>none</emphasis>: no shunt;
+      <emphasis>passthrough</emphasis>,
+      <emphasis>drop</emphasis>,
+      and <emphasis>reject</emphasis> have the obvious meanings.</para>
   </listitem>
 </varlistentry>

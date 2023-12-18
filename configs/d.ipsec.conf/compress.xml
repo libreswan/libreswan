@@ -1,13 +1,12 @@
 <varlistentry>
-  <term><emphasis remap='B'>compress</emphasis></term>
+  <term><emphasis>compress</emphasis></term>
   <listitem>
     <para>
       whether IPComp compression of content is proposed on the
       connection (link-level compression does not work on encrypted
-      data, so to be effective, compression must be done <emphasis
-      remap='I'>before</emphasis> encryption); acceptable values are
-      <emphasis remap='B'>yes</emphasis> and <emphasis
-      remap='B'>no</emphasis> (the default).
+      data, so to be effective, compression must be done
+      <emphasis>before</emphasis> encryption); acceptable values are
+      <emphasis>yes</emphasis> and <emphasis>no</emphasis> (the default).
     </para>
     <para>
       For IKEv1, compress settings on both peers must match. For

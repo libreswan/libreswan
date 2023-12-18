@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <emphasis remap='B'>retransmit-interval
+    <emphasis>retransmit-interval
     </emphasis>
   </term>
   <listitem>
@@ -10,11 +10,11 @@
       doubled for each attempt (exponential back-off).  The default
       set by
       <citerefentry><refentrytitle>ipsec_pluto</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-      currently is <emphasis remap='B'>500</emphasis>.
+      currently is <emphasis>500</emphasis>.
     </para>
     <para>
-      See also: <emphasis remap='I'>retransmit-timeout</emphasis> and
-      <emphasis remap='I'>rekey</emphasis>
+      See also: <emphasis>retransmit-timeout</emphasis> and
+      <emphasis>rekey</emphasis>
     </para>
   </listitem>
 </varlistentry>

@@ -1,9 +1,9 @@
   <varlistentry>
-  <term><emphasis remap='B'>uniqueids</emphasis></term>
+  <term><emphasis>uniqueids</emphasis></term>
   <listitem>
 <para> Whether IDs should be considered identifying remote parties
-uniquely. Acceptable values are <emphasis remap='B'>yes</emphasis> (the
-default) and <emphasis remap='B'>no</emphasis>.  Participant IDs normally
+uniquely. Acceptable values are <emphasis>yes</emphasis> (the
+default) and <emphasis>no</emphasis>.  Participant IDs normally
 are unique, so a new connection instance using the same remote ID is
 almost invariably intended to replace an old existing connection.
 </para>

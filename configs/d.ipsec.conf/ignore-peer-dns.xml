@@ -1,12 +1,12 @@
 <varlistentry>
   <term>
-    <emphasis remap='B'>ignore-peer-dns</emphasis>
+    <emphasis>ignore-peer-dns</emphasis>
   </term>
   <listitem>
     <para>
       whether to ignore received DNS configuration.  Acceptable values
-      are: <emphasis remap='B'>no</emphasis> (the default) and
-      <emphasis remap='B'>yes</emphasis>.  Normally, when a
+      are: <emphasis>no</emphasis> (the default) and
+      <emphasis>yes</emphasis>.  Normally, when a
       roadwarrior connects to a remote VPN, the remote VPN server
       sends a list of DNS domains and DNS nameserver IP addresses that
       the roadwarrior can use to reach internal only resources through

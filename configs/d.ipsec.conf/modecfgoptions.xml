@@ -1,7 +1,7 @@
   <varlistentry>
-  <term><emphasis remap='B'>modecfgdns</emphasis></term>
-  <term><emphasis remap='B'>modecfgdomains</emphasis></term>
-  <term><emphasis remap='B'>modecfgbanner</emphasis></term>
+  <term><emphasis>modecfgdns</emphasis></term>
+  <term><emphasis>modecfgdomains</emphasis></term>
+  <term><emphasis>modecfgbanner</emphasis></term>
   <listitem>
 <para>
 When configured as IKEv1 ModeCFG or IKEv2 server, specifying any of these options will

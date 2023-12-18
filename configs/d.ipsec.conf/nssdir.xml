@@ -1,10 +1,10 @@
   <varlistentry>
-  <term><emphasis remap='B'>nssdir</emphasis></term>
+  <term><emphasis>nssdir</emphasis></term>
   <listitem>
     <para>Specifies a directory for NSS database files. The default value is
-    <emphasis remap='I'>@@IPSEC_NSSDIR@@</emphasis>.  It may contain
+    <emphasis>@@IPSEC_NSSDIR@@</emphasis>.  It may contain
     the following files:</para>
-    <variablelist remap='IP'>
+    <variablelist>
       <varlistentry>
         <term>pkcs11.txt</term>
         <listitem><para>

@@ -3,7 +3,7 @@
     DESCRIPTION
   </title>
   <para>
-    The <emphasis remap='I'>ipsec.conf</emphasis> file specifies most
+    The <emphasis>ipsec.conf</emphasis> file specifies most
     configuration and control information for the Libreswan IPsec
     subsystem.  (The major exception is secrets for authentication;
     see
@@ -16,15 +16,15 @@
   </para>
 
   <para>
-    <emphasis remap='I'>ipsec.conf</emphasis> is a text file,
-    consisting of one or more <emphasis remap='I'>sections</emphasis>.
-    White space followed by <emphasis remap='B'>#</emphasis> followed
+    <emphasis>ipsec.conf</emphasis> is a text file,
+    consisting of one or more <emphasis>sections</emphasis>.
+    White space followed by <emphasis>#</emphasis> followed
     by anything to the end of the line is a comment and is ignored, as
     are empty lines that are not within a section.
   </para>
 
   <para>
-    A line that contains <emphasis remap='B'>include</emphasis> and a
+    A line that contains <emphasis>include</emphasis> and a
     file name, separated by white space, is replaced by the contents
     of that file, preceded and followed by empty lines.  If the file
     name is not a full pathname, it is considered to be relative to
@@ -36,7 +36,7 @@
   </para>
 
   <para>
-    <emphasis remap='B'>include </emphasis> <emphasis remap='B'>/etc/ipsec.d/*.conf</emphasis>
+    <emphasis>include </emphasis> <emphasis>/etc/ipsec.d/*.conf</emphasis>
   </para>
 
   <para>
@@ -46,10 +46,10 @@
     descriptions to be changed, copied to the other security gateways
     involved, etc., without having to constantly extract them from the
     configuration file and then insert them back into it.  Note also
-    the <emphasis remap='B'>also</emphasis> and <emphasis
-    remap='B'>alsoflip</emphasis> parameters (described below) which
-    permit splitting a single logical section (e.g. a connection
-    description) into several distinct sections.
+    the <emphasis>also</emphasis> and <emphasis>alsoflip</emphasis>
+    parameters (described below) which permit splitting a single
+    logical section (e.g. a connection description) into several
+    distinct sections.
   </para>
 
   <para>
@@ -60,7 +60,7 @@
   </para>
 
   <para>
-    <emphasis remap='B'>version 2</emphasis>
+    <emphasis>version 2</emphasis>
   </para>
 
   <para>
@@ -68,12 +68,12 @@
   </para>
 
   <para>
-    <emphasis remap='I'>type</emphasis> <emphasis remap='I'>name</emphasis>
+    <emphasis>type</emphasis> <emphasis>name</emphasis>
   </para>
 
   <para>
-    where <emphasis remap='I'>type</emphasis> indicates what type of
-    section follows, and <emphasis remap='I'>name</emphasis> is an
+    where <emphasis>type</emphasis> indicates what type of
+    section follows, and <emphasis>name</emphasis> is an
     arbitrary name that distinguishes the section from others of the
     same type.  (Names must start with a letter and may contain only
     letters, digits, periods, underscores, and hyphens.)  All
@@ -88,12 +88,12 @@
   </para>
 
   <para>
-    <emphasis remap='I'>parameter</emphasis><emphasis remap='B'>=</emphasis><emphasis remap='I'>value</emphasis>
+    <emphasis>parameter</emphasis><emphasis>=</emphasis><emphasis>value</emphasis>
   </para>
 
   <para>
     (note the mandatory preceding white space).  There can be white
-    space on either side of the <emphasis remap='B'>=</emphasis>.
+    space on either side of the <emphasis>=</emphasis>.
     Parameter names follow the same syntax as section names, and are
     specific to a section type.  Unless otherwise explicitly
     specified, no parameter name may appear more than once in a
@@ -101,14 +101,14 @@
   </para>
 
   <para>
-    An empty <emphasis remap='I'>value</emphasis> stands for the
+    An empty <emphasis>value</emphasis> stands for the
     system default value (if any) of the parameter, i.e. it is roughly
-    equivalent to omitting the parameter line entirely.  A <emphasis
-    remap='I'>value</emphasis> may contain white space only if the
-    entire <emphasis remap='I'>value</emphasis> is enclosed in double
-    quotes (<emphasis remap='B'>"</emphasis>); a <emphasis
-    remap='I'>value</emphasis> cannot itself contain a double quote,
-    nor may it be continued across more than one line.
+    equivalent to omitting the parameter line entirely.
+    A <emphasis>value</emphasis> may contain white space only if the
+    entire <emphasis>value</emphasis> is enclosed in double
+    quotes (<emphasis>"</emphasis>); a <emphasis>value</emphasis>
+    cannot itself contain a double quote, nor may it be continued
+    across more than one line.
   </para>
 
   <para>
@@ -122,9 +122,9 @@
     There is currently one parameter that is available in any type of
     section:
   </para>
-  <variablelist remap='TP'>
+  <variablelist>
     <varlistentry>
-      <term><emphasis remap='B'>also</emphasis></term>
+      <term><emphasis>also</emphasis></term>
       <listitem>
 	<para>
 	  the value is a section name; the parameters of that section
@@ -132,63 +132,59 @@
 	  part of it.  The specified section must exist, must follow
 	  the current one, and must have the same section type.
 	  (Nesting is permitted, and there may be more than one
-	  <emphasis remap='B'>also</emphasis> in a single section,
+	  <emphasis>also</emphasis> in a single section,
 	  although it is forbidden to append the same section more
 	  than once.)  This allows, for example, keeping the
 	  encryption keys for a connection in a separate file from the
-	  rest of the description, by using both an <emphasis
-	  remap='B'>also</emphasis> parameter and an <emphasis
-	  remap='B'>include</emphasis> line.  (Caution, see BUGS below
-	  for some restrictions.)
+	  rest of the description, by using both an <emphasis>also</emphasis>
+	  parameter and an <emphasis>include</emphasis> line.
+	  (Caution, see BUGS below for some restrictions.)
 	</para>
       </listitem>
     </varlistentry>
     <varlistentry>
       <term>
-	<emphasis remap='B'>alsoflip</emphasis>
+	<emphasis>alsoflip</emphasis>
       </term>
       <listitem>
 	<para>
-	  can be used in a <emphasis remap='B'>conn</emphasis>
-	  section.  It acts like an <emphasis
-	  remap='B'>also</emphasis> that flips the referenced
-	  section's entries left-for-right.
+	  can be used in a <emphasis>conn</emphasis>
+	  section.  It acts like an <emphasis>also</emphasis> that flips
+	  the referenced section's entries left-for-right.
 	</para>
       </listitem>
     </varlistentry>
   </variablelist>
 
   <para>
-    Parameter names beginning with <emphasis remap='B'>x-</emphasis>
-    (or <emphasis remap='B'>X-</emphasis>, or <emphasis
-    remap='B'>x_</emphasis>, or <emphasis remap='B'>X_</emphasis>) are
-    reserved for user extensions and will never be assigned meanings
-    by IPsec.  Parameters with such names must still observe the
-    syntax rules (limits on characters used in the name; no white
-    space in a non-quoted value; no newlines or double quotes within
-    the value).  All other as-yet-unused parameter names are reserved
-    for future IPsec improvements.
+    Parameter names beginning with <emphasis>x-</emphasis>
+    (or <emphasis>X-</emphasis>, or <emphasis>x_</emphasis>,
+    or <emphasis>X_</emphasis>) are reserved for user extensions
+    and will never be assigned meanings by IPsec.
+    Parameters with such names must still observe the syntax rules
+    (limits on characters used in the name; no white space in
+    a non-quoted value; no newlines or double quotes within the value).
+    All other as-yet-unused parameter names are reserved for future IPsec
+    improvements.
   </para>
 
   <para>
-    A section with name <emphasis remap='B'>%default</emphasis>
+    A section with name <emphasis>%default</emphasis>
     specifies defaults for sections of the same type.  For each
     parameter in it, any section of that type that does not have a
     parameter of the same name gets a copy of the one from the
-    <emphasis remap='B'>%default</emphasis> section.  There may be
-    multiple <emphasis remap='B'>%default</emphasis> sections of a
+    <emphasis>%default</emphasis> section.  There may be
+    multiple <emphasis>%default</emphasis> sections of a
     given type, but only one default may be supplied for any specific
-    parameter name.  <emphasis remap='B'>%default</emphasis> sections
-    may not contain <emphasis remap='B'>also</emphasis> or <emphasis
-    remap='B'>alsoflip</emphasis> parameters.
+    parameter name.  <emphasis>%default</emphasis> sections
+    may not contain <emphasis>also</emphasis> or <emphasis>alsoflip</emphasis>
+    parameters.
   </para>
 
   <para>
-    Currently there are two types of section: a <emphasis
-    remap='B'>config</emphasis> section specifies general
-    configuration information for IPsec, while a <emphasis
-    remap='B'>conn</emphasis> section specifies an IPsec
-    connection.
+    Currently there are two types of section: a <emphasis>config</emphasis>
+    section specifies general configuration information for IPsec,
+    while a <emphasis>conn</emphasis> section specifies an IPsec connection.
   </para>
 </refsect1>
 

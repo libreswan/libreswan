@@ -1,6 +1,6 @@
   <varlistentry>
-  <term><emphasis remap='B'>phase2alg</emphasis></term>
+  <term><emphasis>phase2alg</emphasis></term>
   <listitem>
-    <para>This option is alias to <emphasis remap='B'>esp</emphasis>.</para>
+    <para>This option is alias to <emphasis>esp</emphasis>.</para>
   </listitem>
   </varlistentry>

@@ -1,11 +1,11 @@
 <varlistentry>
   <term>
-    <emphasis remap='B'>leftmodecfgclient</emphasis>
+    <emphasis>leftmodecfgclient</emphasis>
   </term>
   <listitem>
     <para>Left is a Mode Config client. It can receive network
-    configuration from the server.  Acceptable values are <emphasis
-    remap='B'>yes</emphasis> or <emphasis remap='B'>no</emphasis> (the
+    configuration from the server.  Acceptable values are
+    <emphasis>yes</emphasis> or <emphasis>no</emphasis> (the
     default).</para>
   </listitem>
 </varlistentry>

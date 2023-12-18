@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <emphasis remap='B'>ike-socket-bufsize</emphasis>
+    <emphasis>ike-socket-bufsize</emphasis>
   </term>
   <listitem>
     <para>
@@ -11,7 +11,7 @@
       SO_RCVBUFFORCE and SO_SNDBUFFORCE so that it can override
       rmem_max/wmem_max values of the OS. This requires CAP_NET_ADMIN
       (which is also required for other tasks). This option can also
-      be toggled on a running system using <emphasis remap='I'>ipsec
+      be toggled on a running system using <emphasis>ipsec
       whack --ike-socket-bufsize bufsize</emphasis>.
     </para>
   </listitem>
@@ -19,7 +19,7 @@
 
 <varlistentry>
   <term>
-    <emphasis remap='B'>ike-socket-errqueue</emphasis>
+    <emphasis>ike-socket-errqueue</emphasis>
   </term>
   <listitem>
     <para>
@@ -29,7 +29,7 @@
       unreachable messages or Connection Refused messages. Disabling
       this only makes sense on very busy servers, and even then it
       might not make much of a difference. This option can also be
-      toggled on a running system using <emphasis remap='I'>ipsec
+      toggled on a running system using <emphasis>ipsec
       whack --ike-socket-errqueue-toggle</emphasis>.
     </para>
   </listitem>

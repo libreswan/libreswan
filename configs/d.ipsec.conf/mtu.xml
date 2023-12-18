@@ -1,5 +1,5 @@
   <varlistentry>
-  <term><emphasis remap='B'>mtu</emphasis></term>
+  <term><emphasis>mtu</emphasis></term>
   <listitem>
 <para>
 Set the MTU for the route(s) to the remote endpoint and/or subnets. This is sometimes

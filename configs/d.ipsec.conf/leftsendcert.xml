@@ -1,21 +1,21 @@
   <varlistentry>
-  <term><emphasis remap='B'>leftsendcert</emphasis></term>
+  <term><emphasis>leftsendcert</emphasis></term>
   <listitem>
 <para>This option configures when Libreswan will send X.509 certificates to the remote
 host. Acceptable values are
-<emphasis remap='B'>yes|always</emphasis>
+<emphasis>yes|always</emphasis>
 (signifying that we should always send a certificate),
-<emphasis remap='B'>sendifasked</emphasis>
+<emphasis>sendifasked</emphasis>
 (signifying that we should send a certificate if the remote end asks for it), and
-<emphasis remap='B'>no|never</emphasis>
+<emphasis>no|never</emphasis>
 (signifying that we will never send a X.509 certificate).
 The default for this option is
-<emphasis remap='B'>sendifasked</emphasis>
+<emphasis>sendifasked</emphasis>
 which may break compatibility with other vendor's IPsec implementations, such as
 Cisco and SafeNet. If you find that you are getting errors about no ID/Key found,
 you likely need to set this to
-<emphasis remap='B'>always</emphasis>.
-This per-conn option replaces the obsolete global <emphasis remap='B'>nocrsend</emphasis>
+<emphasis>always</emphasis>.
+This per-conn option replaces the obsolete global <emphasis>nocrsend</emphasis>
 option.
 </para>
   </listitem>

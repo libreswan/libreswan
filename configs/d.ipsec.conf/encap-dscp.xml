@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <emphasis remap='B'>encap-dscp</emphasis>
+    <emphasis>encap-dscp</emphasis>
   </term>
   <listitem>
     <para>
@@ -8,10 +8,9 @@
       (DSCP, formerly known as Terms Of Service (TOS)) bits. The extra
       xfrm flag "dont-encap-dscp" prevents these bits from being
       copied from the unencrypted IP packets to the encrypted IP
-      packets.  Acceptable values are <emphasis
-      remap='B'>yes</emphasis> (the default) or <emphasis
-      remap='B'>no</emphasis>.  Currently this feature is only
-      implemented for the Linux XFRM stack.
+      packets.  Acceptable values are <emphasis>yes</emphasis>
+      (the default) or <emphasis>no</emphasis>.
+      Currently this feature is only implemented for the Linux XFRM stack.
     </para>
   </listitem>
 </varlistentry>

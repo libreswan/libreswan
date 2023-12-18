@@ -1,26 +1,24 @@
 <varlistentry>
   <term>
-    <emphasis remap='B'>auto</emphasis>
+    <emphasis>auto</emphasis>
   </term>
   <listitem>
     <para>
       what operation, if any, should be done automatically at IPsec
-      startup; currently-accepted values are <emphasis
-      remap='B'>add</emphasis> (signifying an <emphasis
-      remap='B'>ipsec auto</emphasis> <option>--add</option>),
+      startup; currently-accepted values are <emphasis>add</emphasis>
+      (signifying an <emphasis>ipsec</emphasis> <option>add</option>),
       <command>ondemand</command> (signifying that plus an
-      <emphasis remap='B'>ipsec auto</emphasis>
-      <option>--ondemand</option>), <emphasis
-      remap='B'>start</emphasis> (signifying that plus an <emphasis
-      remap='B'>ipsec auto</emphasis> <option>--up</option>), and
-      <emphasis remap='B'>ignore</emphasis> (also the default)
-      (signifying no automatic startup operation), and <emphasis
-      remap='B'>keep</emphasis> (signifying an add plus an attempt to
+      <emphasis>ipsec</emphasis><option>--ondemand</option>),
+      <emphasis>start</emphasis> (signifying that plus an
+      <emphasis>ipsec</emphasis> <option>start</option>), and
+      <emphasis>ignore</emphasis> (also the default)
+      (signifying no automatic startup operation), and
+      <emphasis>keep</emphasis> (signifying an add plus an attempt to
       keep the connection up once the remote peer brought it up).  See
-      the <emphasis remap='B'>config setup</emphasis> discussion
+      the <emphasis>config setup</emphasis> discussion
       below.  Relevant only locally, other end need not agree on it
       (but in general, for an intended-to-be-permanent connection,
-      both ends should use <emphasis remap='B'>auto=start</emphasis>
+      both ends should use <emphasis>auto=start</emphasis>
       to ensure that any reboot causes immediate renegotiation).
     </para>
     <para>

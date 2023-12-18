@@ -1,9 +1,9 @@
   <varlistentry>
-    <term><emphasis remap='B'>leftvti</emphasis></term>
+    <term><emphasis>leftvti</emphasis></term>
     <listitem>
       <para>
-	the address/mask to configure on the VTI interface when <emphasis remap='I'>vti-interface</emphasis> is set.
-	It takes the form of <emphasis remap='I'>network</emphasis><emphasis remap='B'>/</emphasis><emphasis remap='I'>netmask</emphasis>
+	the address/mask to configure on the VTI interface when <emphasis>vti-interface</emphasis> is set.
+	It takes the form of <emphasis>network</emphasis><emphasis>/</emphasis><emphasis>netmask</emphasis>
 	Currently, IPv4 and IPv6 addresses with cidr netmask are supported.
 	This option is often used in combination with routed based VPNs.
       </para>

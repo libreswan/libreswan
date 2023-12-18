@@ -1,5 +1,5 @@
   <varlistentry>
-  <term><emphasis remap='B'>left</emphasis></term>
+  <term><emphasis>left</emphasis></term>
   <listitem>
 <para>(required)
 the IP address or DNS hostname of the left participant's public-network interface,
@@ -9,44 +9,44 @@ rekeying or restarting (such as when restarted via a DPD failure detection). Thi
 allows one to use a DNS hostname when the endpoint is on a dynamic IP address.</para>
 <para>
 There are several magic values.  If it is
-<emphasis remap='B'>%defaultroute</emphasis>,
-<emphasis remap='B'>left</emphasis>
+<emphasis>%defaultroute</emphasis>,
+<emphasis>left</emphasis>
 will be filled in automatically with the local address
 of the default-route interface (as determined at IPsec startup time);
 this also overrides any value supplied for
-<emphasis remap='B'>leftnexthop</emphasis>.
+<emphasis>leftnexthop</emphasis>.
 (Either
-<emphasis remap='B'>left</emphasis>
+<emphasis>left</emphasis>
 or
-<emphasis remap='B'>right</emphasis>
+<emphasis>right</emphasis>
 may be
-<emphasis remap='B'>%defaultroute</emphasis>,
+<emphasis>%defaultroute</emphasis>,
 but not both.)
 The value
-<emphasis remap='B'>%any</emphasis>
+<emphasis>%any</emphasis>
 signifies an address to be filled in (by automatic keying) during
 negotiation.
 The value
-<emphasis remap='B'>%opportunistic</emphasis>
+<emphasis>%opportunistic</emphasis>
 signifies that both
-<emphasis remap='B'>left</emphasis>
+<emphasis>left</emphasis>
 and
-<emphasis remap='B'>leftnexthop</emphasis>
+<emphasis>leftnexthop</emphasis>
 are to be filled in (by automatic keying) from DNS data for
-<emphasis remap='B'>left</emphasis>'s
+<emphasis>left</emphasis>'s
 client.
 The value can also contain the interface name, which will then later be
 used to obtain the IP address from to fill in. For example
-<emphasis remap='B'>%ppp0</emphasis>.
+<emphasis>%ppp0</emphasis>.
 
-The values <emphasis remap='B'>%group</emphasis> and
-<emphasis remap='B'>%opportunisticgroup</emphasis>
+The values <emphasis>%group</emphasis> and
+<emphasis>%opportunisticgroup</emphasis>
 makes this a policy group conn: one that will be instantiated
 into a regular or opportunistic conn for each CIDR block listed in the
 policy group file with the same name as the conn.</para>
 <para>If using IP addresses in combination with NAT, always use the
 actual local machine's (NATed) IP address, and if the remote (eg right=)
-is NATed as well, the remote's public (<emphasis remap='B'>not</emphasis>
+is NATed as well, the remote's public (<emphasis>not</emphasis>
 NATed) IP address. Note that this makes the configuration no longer
 symmetrical on both sides, so you cannot use an identical configuration
 file on both hosts.</para>

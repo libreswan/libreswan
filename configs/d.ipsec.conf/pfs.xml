@@ -1,15 +1,14 @@
 <varlistentry>
   <term>
-    <emphasis remap='B'>pfs</emphasis>
+    <emphasis>pfs</emphasis>
   </term>
   <listitem>
     <para>
       whether Perfect Forward Secrecy of keys is desired on the
       connection's keying channel (with PFS, penetration of the
       key-exchange protocol does not compromise keys negotiated
-      earlier); Acceptable values are <emphasis
-      remap='B'>yes</emphasis> (the default) and <emphasis
-      remap='B'>no</emphasis>.
+      earlier); Acceptable values are <emphasis>yes</emphasis>
+      (the default) and <emphasis>no</emphasis>.
     </para>
   </listitem>
 </varlistentry>

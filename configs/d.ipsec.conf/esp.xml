@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <emphasis remap='B'>esp</emphasis>
+    <emphasis>esp</emphasis>
   </term>
   <listitem>
     <para>
@@ -33,9 +33,8 @@
     </para>
     <para>
       AEAD algorithms such as AES_GCM and AES_CCM do not not require a
-      separate integrity algorithm.  For example <emphasis
-      remap='I'>esp=aes_gcm256</emphasis> or <emphasis
-      remap='I'>esp=aes_ccm</emphasis>.
+      separate integrity algorithm.  For example <emphasis>esp=aes_gcm256</emphasis>
+      or <emphasis>esp=aes_ccm</emphasis>.
     </para>
     <para>
       Note that AES_GCM and AES_CCM for ESP come in 8, 12 and 16 byte ICV versions.
@@ -49,8 +48,8 @@
     </para>
     <para>
       <simplelist columns='1'>
-	<member><computeroutput>esp=aes_gcm,aes128+aes256-sha2_512+sha2_256-dh14+dh19</computeroutput></member>
-	<member><computeroutput>esp=aes128-sha2_512-dh14+dh19</computeroutput></member>
+	<member><computeroutput>esp=aes_gcm;aes128+aes256-sha2_512+sha2_256</computeroutput></member>
+	<member><computeroutput>esp=aes128-sha2_512;dh19</computeroutput></member>
       </simplelist>
     </para>
     <para>

@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <emphasis remap='B'>policy-label</emphasis>
+    <emphasis>policy-label</emphasis>
   </term>
   <listitem>
     <para>
@@ -9,8 +9,7 @@
       for use with Labeled IPsec.
     </para>
     <para>
-      For example, <emphasis
-      remap='I'>policy-label=system_u:object_r:ipsec_spd_t:s0-s15:c0.c1023</emphasis>
+      For example, <emphasis>policy-label=system_u:object_r:ipsec_spd_t:s0-s15:c0.c1023</emphasis>
     </para>
     <para>
       Labeled IPsec support is IKEv2 only.

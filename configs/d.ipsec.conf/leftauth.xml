@@ -1,31 +1,28 @@
 <varlistentry>
   <term>
-    <emphasis remap='B'>leftauth</emphasis>
+    <emphasis>leftauth</emphasis>
   </term>
   <listitem>
     <para>
       How the security gateways will authenticate to the other side in
       the case of asymmetric authentication; acceptable values are
-      <emphasis remap='B'>rsasig</emphasis> or <emphasis
-      remap='B'>rsa</emphasis> for RSA Authentication with SHA-1,
-      <emphasis remap='B'>rsa-sha2</emphasis> for RSA-PSS digital
-      signatures based authentication with SHA2-256, <emphasis
-      remap='B'>rsa-sha2_384</emphasis> for RSA-PSS digital signatures
-      based authentication with SHA2-384, <emphasis
-      remap='B'>rsa-sha2_512</emphasis> for RSA-PSS digital signatures
-      based authentication with SHA2-512, <emphasis
-      remap='B'>ecdsa</emphasis> for ECDSA digital signatures based
-      authentication, <emphasis remap='B'>secret</emphasis> for shared
-      secrets (PSK) authentication and <emphasis
-      remap='B'>null</emphasis> for null-authentication. There is no
-      default value - if unset, the symmetrical <emphasis
-      remap='B'>authby=</emphasis> keyword is used to determine the
-      authentication policy of the connection.
+      <emphasis>rsasig</emphasis> or <emphasis>rsa</emphasis>
+      for RSA Authentication with SHA-1, <emphasis>rsa-sha2</emphasis>
+      for RSA-PSS digital signatures based authentication with SHA2-256,
+      <emphasis>rsa-sha2_384</emphasis> for RSA-PSS digital signatures
+      based authentication with SHA2-384, <emphasis>rsa-sha2_512</emphasis>
+      for RSA-PSS digital signatures based authentication with SHA2-512,
+      <emphasis>ecdsa</emphasis> for ECDSA digital signatures based
+      authentication, <emphasis>secret</emphasis> for shared
+      secrets (PSK) authentication and <emphasis>null</emphasis> for
+      null-authentication. There is no default value - if unset, the
+      symmetrical <emphasis>authby=</emphasis> keyword is used to
+      determine the authentication policy of the connection.
     </para>
 
     <para>
       Asymmetric authentication is only supported with IKEv2. If symmetric
-      authentication is required, use <emphasis remap='B'>authby=</emphasis> instead
+      authentication is required, use <emphasis>authby=</emphasis> instead
       of leftauth and rightauth. If leftauth is set, rightauth must also be set and
       authby= must not be set. Asymmetric authentication cannot use secret (psk) on one
       side and null on the other side - use psk on both ends instead.
@@ -33,13 +30,12 @@
     <para>
       When using EAPONLY authentication, which omits the regular IKEv2
       AUTH payload, leftauth= (or rightauth=) should be set to
-      <emphasis remap='B'>eaponly</emphasis>.
+      <emphasis>eaponly</emphasis>.
     </para>
     <para>
-      Be aware that the symmetric keyword is <emphasis
-      remap='B'>authby=</emphasis> but the asymmetric keyword is
-      <emphasis remap='B'>leftauth</emphasis> and <emphasis
-      remap='B'>rightauth</emphasis> (without the "by").
+      Be aware that the symmetric keyword is <emphasis>authby=</emphasis>
+      but the asymmetric keyword is <emphasis>leftauth</emphasis> and
+      <emphasis>rightauth</emphasis> (without the "by").
     </para>
   </listitem>
 </varlistentry>

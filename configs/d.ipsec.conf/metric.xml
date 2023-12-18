@@ -1,11 +1,11 @@
   <varlistentry>
-  <term><emphasis remap='B'>metric</emphasis></term>
+  <term><emphasis>metric</emphasis></term>
   <listitem>
 <para>
 Set the metric for added routes. This value is passed to the _updown scripts as
 PLUTO_METRIC.
 
-Acceptable values are positive numbers, with the default being <emphasis remap='B'>1</emphasis>.
+Acceptable values are positive numbers, with the default being <emphasis>1</emphasis>.
 </para>
   </listitem>
   </varlistentry>

@@ -1,12 +1,12 @@
   <varlistentry>
-  <term><emphasis remap='B'>nic-offload</emphasis></term>
+  <term><emphasis>nic-offload</emphasis></term>
   <listitem>
 <para>Set the method of Network Interface Controller (NIC)
 hardware offload for ESP/AH packet processing.  Acceptable values
-are <emphasis remap='B'>auto</emphasis> (the default),
-<emphasis remap='B'>crypto</emphasis>, <emphasis remap='B'>packet</emphasis>
-or <emphasis remap='B'>no</emphasis>. The value <emphasis remap='B'>yes</emphasis>
-is a backwards compatible value for <emphasis remap='B'>crypto</emphasis>.
+are <emphasis>auto</emphasis> (the default),
+<emphasis>crypto</emphasis>, <emphasis>packet</emphasis>
+or <emphasis>no</emphasis>. The value <emphasis>yes</emphasis>
+is a backwards compatible value for <emphasis>crypto</emphasis>.
 This option is separate from any CPU hardware offload available.
 The crypto value offloads the crypto operations to the NIC card and is
 available on Linux 4.13+ using the XFRM IPsec stack, when the kernel is

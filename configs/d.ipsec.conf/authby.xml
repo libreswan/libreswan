@@ -1,33 +1,31 @@
 <varlistentry>
   <term>
-    <emphasis remap='B'>authby</emphasis>
+    <emphasis>authby</emphasis>
   </term>
   <listitem>
     <para>
       how the two security gateways should authenticate each other;
-      the default value is <emphasis remap='B'>rsasig,ecdsa</emphasis>
+      the default value is <emphasis>rsasig,ecdsa</emphasis>
       which allows ECDSA with SHA-2 and RSA with SHA2 or SHA1. To
-      limit this further, there are the options of <emphasis
-      remap='B'>ecdsa</emphasis> for ECDSA digital signatures using
-      SHA-2, <emphasis remap='B'>rsa-sha2</emphasis> for RSASSA-PSS
-      digital signatures based authentication with SHA2-256, <emphasis
-      remap='B'>rsa-sha2_384</emphasis> for RSASSA-PSS digital
-      signatures based authentication with SHA2-384, <emphasis
-      remap='B'>rsa-sha2_512</emphasis> for RSASSA-PSS digital
-      signatures based authentication with SHA2-512, <emphasis
-      remap='B'>rsa-sha1</emphasis> for RSA-PKCSv1.5 digital
-      signatures based authentication with SHA1, <emphasis
-      remap='B'>secret</emphasis> for shared secrets (PSK)
-      authentication, <emphasis remap='B'>secret|rsasig</emphasis> for
-      either, <emphasis remap='B'>never</emphasis> if negotiation is
+      limit this further, there are the options of <emphasis>ecdsa</emphasis>
+      for ECDSA digital signatures using
+      SHA-2, <emphasis>rsa-sha2</emphasis> for RSASSA-PSS
+      digital signatures based authentication with SHA2-256,
+      <emphasis>rsa-sha2_384</emphasis> for RSASSA-PSS digital
+      signatures based authentication with SHA2-384,
+      <emphasis>rsa-sha2_512</emphasis> for RSASSA-PSS digital
+      signatures based authentication with SHA2-512, <emphasis>rsa-sha1</emphasis>
+      for RSA-PKCSv1.5 digital signatures based authentication with SHA1,
+      <emphasis>secret</emphasis> for shared secrets (PSK)
+      authentication, <emphasis>secret|rsasig</emphasis> for
+      either, <emphasis>never</emphasis> if negotiation is
       never to be attempted or accepted (useful for shunt-only conns),
-      and <emphasis remap='B'>null</emphasis> for null-authentication.
+      and <emphasis>null</emphasis> for null-authentication.
     </para>
     <para>
       If asymmetric authentication is requested, IKEv2 must be
-      enabled, and the options <emphasis
-      remap='B'>leftauth=</emphasis> and <emphasis
-      remap='B'>rightauth=</emphasis> should be used instead of
+      enabled, and the options <emphasis>leftauth=</emphasis> and
+      <emphasis>rightauth=</emphasis> should be used instead of
       authby.
     </para>
     <para>

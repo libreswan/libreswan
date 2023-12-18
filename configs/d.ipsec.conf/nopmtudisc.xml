@@ -1,9 +1,9 @@
   <varlistentry>
-  <term><emphasis remap='B'>nopmtudisc</emphasis></term>
+  <term><emphasis>nopmtudisc</emphasis></term>
   <listitem>
 <para>
 Disable Path MTU discovery for the IPsec SA. Acceptable values are
-<emphasis remap='B'>no</emphasis> (the default) or <emphasis remap='B'>yes</emphasis>.
+<emphasis>no</emphasis> (the default) or <emphasis>yes</emphasis>.
 Currently this feature is only implemented for the Linux XFRM stack.
 </para>
   </listitem>

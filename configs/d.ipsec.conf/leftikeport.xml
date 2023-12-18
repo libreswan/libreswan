@@ -1,12 +1,11 @@
 <varlistentry>
   <term>
-    <emphasis remap='B'>leftikeport</emphasis>
+    <emphasis>leftikeport</emphasis>
   </term>
   <listitem>
     <para>
       The UDP IKE port to listen on or send data to. This port cannot
-      be 0 or 500. For TCP, see <emphasis
-      remap='B'>tcp-remoteport=</emphasis>
+      be 0 or 500. For TCP, see <emphasis>tcp-remoteport=</emphasis>
     </para>
   </listitem>
 </varlistentry>

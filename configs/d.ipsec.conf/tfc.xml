@@ -1,5 +1,5 @@
   <varlistentry>
-  <term><emphasis remap='B'>tfc</emphasis></term>
+  <term><emphasis>tfc</emphasis></term>
   <listitem>
 <para>
 Enable Traffic Flow Confidentiality ("TFC") (RFC-4303) for outgoing ESP
@@ -17,14 +17,14 @@ future.
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>send-no-esp-tfc</emphasis></term>
+  <term><emphasis>send-no-esp-tfc</emphasis></term>
   <listitem>
 <para>
 Whether or not to tell the remote peer that we do not support Traffic Flow Confidentiality ("TFC")
-(RFC-4303). Possible values are <emphasis remap='B'>no</emphasis> (the default) which allows the
-peer to use TFC or <emphasis remap='B'>yes</emphasis> which prevents to peer from using TFC.
+(RFC-4303). Possible values are <emphasis>no</emphasis> (the default) which allows the
+peer to use TFC or <emphasis>yes</emphasis> which prevents to peer from using TFC.
 This does not affect whether this endpoint uses TFC, which only depends on the
-local <emphasis remap='B'>tfc</emphasis> setting. This option is only valid for IKEv2.
+local <emphasis>tfc</emphasis> setting. This option is only valid for IKEv2.
 </para>
   </listitem>
   </varlistentry>

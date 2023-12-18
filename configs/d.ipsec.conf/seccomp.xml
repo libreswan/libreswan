@@ -1,13 +1,13 @@
   <varlistentry>
-  <term><emphasis remap='B'>seccomp</emphasis></term>
+  <term><emphasis>seccomp</emphasis></term>
   <listitem>
 <para>Set the seccomp kernel syscall whitelisting feature. When set to
-<emphasis remap='I'>enabled</emphasis>, if pluto calls a syscall that is
+<emphasis>enabled</emphasis>, if pluto calls a syscall that is
 not on the compiled-in whitelist, the kernel will assume an exploit is
 attempting to use pluto for malicious access to the system and terminate
-the pluto daemon. When set to <emphasis remap='I'>tolerant</emphasis>,
+the pluto daemon. When set to <emphasis>tolerant</emphasis>,
 the kernel will only block the rogue syscall and pluto will attempt to
-continue. If set to <emphasis remap='I'>disabled</emphasis>, pluto is
+continue. If set to <emphasis>disabled</emphasis>, pluto is
 allowed to call any syscall offered by the kernel, although it might be
 restricted via other security mechanisms, such as capabilities, SElinux,
 AppArmor or other OS security features.</para>
@@ -18,12 +18,12 @@ systems. Similarly, it is expected that further privilege separation
 will reduce the allowed syscalls - for example for the crypto helpers
 or DNS helpers.</para>
 
-<para><emphasis remap='B'>Warning:</emphasis> The restrictions of pluto
+<para><emphasis>Warning:</emphasis> The restrictions of pluto
 are inherited by the updown scripts, so these scripts are also not
 allowed to use syscalls that are forbidden for pluto.</para>
 
-<para>This feature can be tested using <emphasis remap='I'>ipsec whack
---seccomp-crashtest</emphasis>. <emphasis remap='B'>Warning: </emphasis>
+<para>This feature can be tested using <emphasis>ipsec whack
+--seccomp-crashtest</emphasis>. <emphasis>Warning: </emphasis>
 With seccomp=enabled, pluto will be terminated by the kernel. With
 seccomp=tolerant or seccomp=disabled, pluto will report the results of
 the seccomp test. SECCOMP will log the forbidden syscall numbers to the
