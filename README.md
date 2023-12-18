@@ -1,11 +1,12 @@
 # Libreswan
+
 The Libreswan Project   https://libreswan.org/
 
-Libreswan is an Internet Key Exchange (IKE) implementation for Linux.
-It supports IKEv1 and IKEv2 and has support for most of the extensions
-(RFC + IETF drafts) related to IPsec, including IKEv2, X.509 Digital
-Certificates, NAT Traversal, and many others.  Libreswan uses the native
-Linux XFRM IPsec stack.
+Libreswan is an Internet Key Exchange (IKE) implementation for Linux,
+FreeBSD, NetBSD and OpenBSD.  It supports IKEv1 and IKEv2 and has
+support for most of the extensions (RFC + IETF drafts) related to
+IPsec, including IKEv2, X.509 Digital Certificates, NAT Traversal, and
+many others.
 
 Libreswan was forked from Openswan 2.6.38, which was forked from
 FreeS/WAN 2.04. See the CREDITS files for contributor acknowledgments.
@@ -19,18 +20,17 @@ A Git repository is available at:
     https://github.com/libreswan/libreswan/
 
 ## License
+
 The bulk of libreswan is licensed under the GNU General Public License
 version 2; see the LICENSE and CREDIT.* files. Some smaller parts have
 a different license.
 
 ## Requirements
-Recent Linux distributions based on kernel 2.x to 5.x, as well as NetBSD
-and FreeBSD are supported platforms. Libreswan has been ported to
-Windows and OSX in the past as well. With effort, it can be compiled
-to run on Linux no-mmu systems as well.
 
-Most distributions have native packaged support for Libreswan. Libreswan is
-available for RHEL, Fedora, CentOS, Ubuntu, Debian, Arch, OpenWrt and more.
+Most distributions have native packaged support for Libreswan.
+Libreswan is available for the Linux distributions RHEL, Fedora,
+CentOS, Ubuntu, Debian, Arch, Apline, OpenWrt as well as FreeBSD
+(ports) and NetBSD (pkgsrc/wip).
 
 Unless a source-based build is truly needed,  it is often best to use
 the pre-built version of the distribution you are using.
@@ -39,31 +39,40 @@ There are a few packages required for Libreswan to compile from source:
 
 For Debian/Ubuntu
 
-	apt-get install libnss3-dev libnspr4-dev pkg-config libpam-dev \
-		libcap-ng-dev libcap-ng-utils libselinux-dev \
-		libcurl3-nss-dev flex bison gcc make libldns-dev \
-		libunbound-dev libnss3-tools libevent-dev xmlto \
-		libsystemd-dev
-
-	(unbound is build without event api, set USE_DNSSEC=false)
+   apt-get install net-tools make build-essential libnss3-dev \
+     pkg-config libevent-dev libunbound-dev bison \
+     flex libsystemd-dev libcurl4-nss-dev \
+     libpam0g-dev libcap-ng-dev libldns-dev xmlto
 
 For Fedora/CentOS-Stream/RHEL/AlmaLinux/RockyLinux etc.
 
-	yum install audit-libs-devel bison curl-devel flex \
-		gcc ldns-devel libcap-ng-devel libevent-devel \
-		libseccomp-devel libselinux-devel make nspr-devel nss-devel \
-		pam-devel pkgconfig systemd-devel unbound-devel xmlto
+   dnf install audit-libs-devel bison curl-devel flex \
+     gcc ldns-devel libcap-ng-devel libevent-devel \
+     libseccomp-devel libselinux-devel make nspr-devel nss-devel \
+     pam-devel pkgconfig systemd-devel unbound-devel xmlto
 
-Runtime requirements (usually already present on the system)
+Alpine Linux:
 
-	nss, iproute2, iptables, sed, awk, bash, cut, procps-ng, which
+   aph add mandoc mandoc-doc apk-tools-doc bison \
+     bison-doc bsd-compat-headers coreutils coreutils-doc curl-dev \
+     curl-doc flex flex-doc gcc gcc-doc git git-doc gmp-dev gmp-doc \
+     ldns-dev ldns-doc libcap-ng-dev libcap-ng-doc libevent-dev \
+     linux-pam-dev linux-pam-doc make make-doc musl-dev nspr-dev \
+     nss-dev nss-tools pkgconfig sed sed-doc unbound-doc unbound-dev \
+     xmlto xmlto-doc
 
-	(note: the Busybox version of "ip" does not support 'ip xfrm', so
-	       ensure you enable the iproute(2) package for busybox)
+FreeBSD:
 
-	Python is used for "ipsec verify", which helps debugging problems
-	python-ipaddress is used for "ipsec show", which shows tunnels
+   pkg install gmake git pkgconf nss libevent unbound bison \
+     flex ldns xmlto gcc
 
+NetBSD:
+
+   pkgin install git gmake nss unbound bison flex ldns xmlto pkgconf
+
+OpenBSD:
+
+   pkg_add gmake nss libevent libunbound bison libldns xmlto curl git llvm%16
 
 ## Building for RPM based systems
 
@@ -97,11 +106,6 @@ If you want to build without creating and installing manual pages, run:
 
     make base
     sudo make install-base
-
-Note: For Linux, the ipsec-tools package or setkey is not needed. Instead
-the iproute2 packakge (>= 2.6.8) is required. Run `ipsec verify` to determine
-if your system misses any of the requirements. This will also tell you if any
-of the kernel sysctl values needs changing.
 
 ## Starting Libreswan
 The install will detect the init system used (systemd, upstart, sysvinit,
