@@ -1,49 +1,84 @@
 <varlistentry>
-  <term><emphasis>leftrsasigkey</emphasis></term>
+  <term>
+    <emphasis>leftrsasigkey</emphasis>
+  </term>
   <listitem>
-<para>the left participant's
-public key for RSA signature authentication,
-in RFC 2537 format using
-<citerefentry><refentrytitle>ipsec_ttodata</refentrytitle><manvolnum>3</manvolnum></citerefentry>
-encoding.
-The magic value
-<emphasis>%none</emphasis>
-means the same as not specifying a value (useful to override a default).
-The value
-<emphasis>%dnsondemand</emphasis>
-(the default)
-means the key is to be fetched from DNS at the time it is needed.
-The value
-<emphasis>%dnsonload</emphasis>
-means the key is to be fetched from DNS at the time
-the connection description is read from
-<emphasis>ipsec.conf</emphasis>;
-currently this will be treated as
-<emphasis>%none</emphasis>
-if
-<emphasis>right=%any</emphasis>
-or
-<emphasis>right=%opportunistic</emphasis>.
-The value
-<emphasis>%dns</emphasis>
-is currently treated as
-<emphasis>%dnsonload</emphasis>
-but will change to
-<emphasis>%dnsondemand</emphasis>
-in the future.
-The identity used for the left participant
-must be a specific host, not
-<emphasis>%any</emphasis>
-or another magic value.
-The value
-<emphasis>%cert</emphasis>
-will load the information required from a certificate defined in
-<emphasis>%leftcert</emphasis>
-and automatically define leftid for you.
-<emphasis>Caution:</emphasis>
-if two connection descriptions
-specify different public keys for the same
-<emphasis>leftid</emphasis>,
-confusion and madness will ensue.</para>
+    <para>
+      the left participant's public key for RSA signature
+      authentication, in base-64 encoded RFC 2537 format (with 0s
+      prepended), or one of the following:
+      <variablelist>
+	<varlistentry>
+	  <term>
+	    <emphasis>%none</emphasis>
+	  </term>
+	  <listitem>
+	    <para>
+	      the same as not specifying a value (useful to override a
+	      default)
+	    </para>
+	  </listitem>
+	</varlistentry>
+	<varlistentry>
+	  <term>
+	    <emphasis>%dnsondemand</emphasis>
+	  </term>
+	  <listitem>
+	    <para>
+	      (the default) the key is to be fetched from DNS at the
+	      time it is needed.
+	    </para>
+	  </listitem>
+	</varlistentry>
+	<varlistentry>
+	  <term>
+	    <emphasis>%dnsonload</emphasis>
+	  </term>
+	  <listitem>
+	    <para>
+	      the key is to be fetched from DNS at the time the
+	      connection description is read from
+	      <emphasis>ipsec.conf</emphasis>; currently this will be
+	      treated as <emphasis>%none</emphasis> if
+	      <emphasis>right=%any</emphasis> or
+	      <emphasis>right=%opportunistic</emphasis>.
+	    </para>
+	  </listitem>
+	</varlistentry>
+	<varlistentry>
+	  <term>
+	    <emphasis>%dns</emphasis>
+	  </term>
+	  <listitem>
+	    <para>
+	      currently treated as <emphasis>%dnsonload</emphasis> but
+	      will change to <emphasis>%dnsondemand</emphasis> in the
+	      future.  The identity used for the left participant must
+	      be a specific host, not <emphasis>%any</emphasis> or
+	      another magic value.
+	    </para>
+	  </listitem>
+	</varlistentry>
+	<varlistentry>
+	  <term>
+	    <emphasis>%cert</emphasis>
+	  </term>
+	  <listitem>
+	    <para>
+	      the information required from a certificate defined in
+	      <emphasis>%leftcert</emphasis> and automatically define
+	      leftid for you
+	    </para>
+	  </listitem>
+	</varlistentry>
+      </variablelist>
+    </para>
+    <caution>
+      <para>
+	If two connection descriptions specify different public keys
+	for the same <emphasis>leftid</emphasis>, confusion and
+	madness will ensue.
+      </para>
+    </caution>
   </listitem>
-  </varlistentry>
+</varlistentry>
