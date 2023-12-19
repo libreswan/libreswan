@@ -86,17 +86,17 @@ OpenBSD:
 
 Install requirements for rpm package building:
 
-   dnf install rpm-build rpmdevtools
+    dnf install rpm-build rpmdevtools
 
 The packaging/ directory is used to find the proper spec file for your
 distribution.  Simply issue the command:
 
-   make rpm
+    make rpm
 
 You can also pick a specific spec file.  For example, to build for
 CentOS8, use:
 
-   rpmbuild -ba packaging/centos/8/libreswan.spec
+    rpmbuild -ba packaging/centos/8/libreswan.spec
 
 ### Building for DEB based systems
 
@@ -191,29 +191,25 @@ Note that for rpm based systems, the NSS directory changed from
 
 Mailing lists:
 
-The mailing lists, including archives are at:
-
-    https://lists.libreswan.org/
+The mailing lists, including archives are at
+https://lists.libreswan.org/
 
 Wiki:
 
-is home to the Libreswan wiki.  it contains documentation, interop
-guides and other useful information.
-
-    https://libreswan.org
+Libreswan's wiki is at https://libreswan.org/wiki/Main_Page.  It
+contains documentation, interop guides and other useful information.
 
 IRC:
 
 Libreswan developers and users can be found on IRC, on
-
-    irc.libera.chat #libreswan
+irc.libera.chat #libreswan
 
 ## Bugs
 
 Bugs can be reported on the mailing list swan-dev@lists.libreswan.org
 or using our bug tracking system, at:
 
-  https://github.com/libreswan/libreswan/issues
+    https://github.com/libreswan/libreswan/issues
 
 ## Security Information
 
