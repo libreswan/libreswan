@@ -2221,11 +2221,8 @@
           <para>
 	    Specifies the value of the RSA public key. It is a
 	    sequence of bytes as described in RFC 2537 "RSA/MD5 KEYs
-	    and SIGs in the Domain Name System (DNS)". It is denoted
-	    in a way suitable for <citerefentry>
-	    <refentrytitle>ipsec-ttodata</refentrytitle>
-	    <manvolnum>3</manvolnum> </citerefentry>. For example, a
-	    base 64 numeral starts with 0s.
+	    and SIGs in the Domain Name System (DNS)".  It is base-64
+	    encoded with the prefix 0s prepended.
 	  </para>
         </listitem>
       </varlistentry>
