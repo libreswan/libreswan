@@ -1,4 +1,4 @@
-</variablelist>
+
 <para>
   If one or both security gateways are doing forwarding firewalling
   (possibly including masquerading), and this is specified using the
@@ -18,4 +18,4 @@
   <emphasis>updown</emphasis> script, which makes the
   appropriate adjustments for his system.
 </para>
-</refsect2>
+

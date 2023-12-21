@@ -1,4 +1,3 @@
-<refsect1 id='config_sections'>
   <title>
     CONFIG SECTIONS
   </title>
@@ -20,5 +19,3 @@
     names in a <emphasis>config setup</emphasis> section
     are:
   </para>
-
-  <variablelist>

@@ -1,0 +1,348 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+   this should use the more direct:
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"  href="intro.xml" />
+
+   per http://sagehill.net/docbookxsl/ModularDoc.html but that means
+   putting something like:
+
+   <?xml version="1.0" encoding="UTF-8"?>
+   <!DOCTYPE refsect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
+
+   at the head of each file; sigh.
+-->
+
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+"http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+<!ENTITY aggressive SYSTEM "d.ipsec.conf/aggressive.xml">
+<!ENTITY ah SYSTEM "d.ipsec.conf/ah.xml">
+<!ENTITY audit-log SYSTEM "d.ipsec.conf/audit-log.xml">
+<!ENTITY authby SYSTEM "d.ipsec.conf/authby.xml">
+<!ENTITY auto SYSTEM "d.ipsec.conf/auto.xml">
+<!ENTITY cisco-unity SYSTEM "d.ipsec.conf/cisco-unity.xml">
+<!ENTITY clientaddrfamily SYSTEM "d.ipsec.conf/clientaddrfamily.xml">
+<!ENTITY compress SYSTEM "d.ipsec.conf/compress.xml">
+<!ENTITY configsections SYSTEM "d.ipsec.conf/configsections.xml">
+<!ENTITY connauto SYSTEM "d.ipsec.conf/connauto.xml">
+<!ENTITY conngeneral SYSTEM "d.ipsec.conf/conngeneral.xml">
+<!ENTITY conngeneralend SYSTEM "d.ipsec.conf/conngeneralend.xml">
+<!ENTITY connsections SYSTEM "d.ipsec.conf/connsections.xml">
+<!ENTITY crl-strict SYSTEM "d.ipsec.conf/crl-strict.xml">
+<!ENTITY crlcheckinterval SYSTEM "d.ipsec.conf/crlcheckinterval.xml">
+<!ENTITY curl-iface SYSTEM "d.ipsec.conf/curl-iface.xml">
+<!ENTITY curl-timeout SYSTEM "d.ipsec.conf/curl-timeout.xml">
+<!ENTITY ddos-ike-threshold SYSTEM "d.ipsec.conf/ddos-ike-threshold.xml">
+<!ENTITY ddos-mode SYSTEM "d.ipsec.conf/ddos-mode.xml">
+<!ENTITY decap-dscp SYSTEM "d.ipsec.conf/decap-dscp.xml">
+<!ENTITY dns-match-id SYSTEM "d.ipsec.conf/dns-match-id.xml">
+<!ENTITY dnssec SYSTEM "d.ipsec.conf/dnssec.xml">
+<!ENTITY dpddelay SYSTEM "d.ipsec.conf/dpddelay.xml">
+<!ENTITY dpdtimeout SYSTEM "d.ipsec.conf/dpdtimeout.xml">
+<!ENTITY dumpdir SYSTEM "d.ipsec.conf/dumpdir.xml">
+<!ENTITY enable-tcp SYSTEM "d.ipsec.conf/enable-tcp.xml">
+<!ENTITY encap-dscp SYSTEM "d.ipsec.conf/encap-dscp.xml">
+<!ENTITY encapsulation SYSTEM "d.ipsec.conf/encapsulation.xml">
+<!ENTITY esn SYSTEM "d.ipsec.conf/esn.xml">
+<!ENTITY esp SYSTEM "d.ipsec.conf/esp.xml">
+<!ENTITY exampleleftright SYSTEM "d.ipsec.conf/exampleleftright.xml">
+<!ENTITY failureshunt SYSTEM "d.ipsec.conf/failureshunt.xml">
+<!ENTITY fake-strongswan SYSTEM "d.ipsec.conf/fake-strongswan.xml">
+<!ENTITY fragmentation SYSTEM "d.ipsec.conf/fragmentation.xml">
+<!ENTITY global-redirect SYSTEM "d.ipsec.conf/global-redirect.xml">
+<!ENTITY hostaddrfamily SYSTEM "d.ipsec.conf/hostaddrfamily.xml">
+<!ENTITY ignore-peer-dns SYSTEM "d.ipsec.conf/ignore-peer-dns.xml">
+<!ENTITY ike SYSTEM "d.ipsec.conf/ike.xml">
+<!ENTITY ike-socket SYSTEM "d.ipsec.conf/ike-socket.xml">
+<!ENTITY ikelifetime SYSTEM "d.ipsec.conf/ikelifetime.xml">
+<!ENTITY ikepad SYSTEM "d.ipsec.conf/ikepad.xml">
+<!ENTITY ikev1-policy SYSTEM "d.ipsec.conf/ikev1-policy.xml">
+<!ENTITY initial-contact SYSTEM "d.ipsec.conf/initial-contact.xml">
+<!ENTITY intermediate SYSTEM "d.ipsec.conf/intermediate.xml">
+<!ENTITY ipsec-interface SYSTEM "d.ipsec.conf/ipsec-interface.xml">
+<!ENTITY ipsec-max-bytes SYSTEM "d.ipsec.conf/ipsec-max-bytes.xml">
+<!ENTITY ipsec-max-packets SYSTEM "d.ipsec.conf/ipsec-max-packets.xml">
+<!ENTITY ipsecdir SYSTEM "d.ipsec.conf/ipsecdir.xml">
+<!ENTITY keep-alive SYSTEM "d.ipsec.conf/keep-alive.xml">
+<!ENTITY keyexchange SYSTEM "d.ipsec.conf/keyexchange.xml">
+<!ENTITY left SYSTEM "d.ipsec.conf/left.xml">
+<!ENTITY leftaddresspool SYSTEM "d.ipsec.conf/leftaddresspool.xml">
+<!ENTITY leftauth SYSTEM "d.ipsec.conf/leftauth.xml">
+<!ENTITY leftautheap SYSTEM "d.ipsec.conf/leftautheap.xml">
+<!ENTITY leftca SYSTEM "d.ipsec.conf/leftca.xml">
+<!ENTITY leftcat SYSTEM "d.ipsec.conf/leftcat.xml">
+<!ENTITY leftcert SYSTEM "d.ipsec.conf/leftcert.xml">
+<!ENTITY leftckaid SYSTEM "d.ipsec.conf/leftckaid.xml">
+<!ENTITY leftfirewall SYSTEM "d.ipsec.conf/leftfirewall.xml">
+<!ENTITY leftid SYSTEM "d.ipsec.conf/leftid.xml">
+<!ENTITY leftikeport SYSTEM "d.ipsec.conf/leftikeport.xml">
+<!ENTITY leftmodecfgclient SYSTEM "d.ipsec.conf/leftmodecfgclient.xml">
+<!ENTITY leftmodecfgserver SYSTEM "d.ipsec.conf/leftmodecfgserver.xml">
+<!ENTITY leftnexthop SYSTEM "d.ipsec.conf/leftnexthop.xml">
+<!ENTITY leftprotoport SYSTEM "d.ipsec.conf/leftprotoport.xml">
+<!ENTITY leftrsasigkey SYSTEM "d.ipsec.conf/leftrsasigkey.xml">
+<!ENTITY leftsendcert SYSTEM "d.ipsec.conf/leftsendcert.xml">
+<!ENTITY leftsourceip SYSTEM "d.ipsec.conf/leftsourceip.xml">
+<!ENTITY leftsubnet SYSTEM "d.ipsec.conf/leftsubnet.xml">
+<!ENTITY leftsubnets SYSTEM "d.ipsec.conf/leftsubnets.xml">
+<!ENTITY leftupdown SYSTEM "d.ipsec.conf/leftupdown.xml">
+<!ENTITY leftusername SYSTEM "d.ipsec.conf/leftusername.xml">
+<!ENTITY leftvti SYSTEM "d.ipsec.conf/leftvti.xml">
+<!ENTITY leftxauthclient SYSTEM "d.ipsec.conf/leftxauthclient.xml">
+<!ENTITY leftxauthserver SYSTEM "d.ipsec.conf/leftxauthserver.xml">
+<!ENTITY listen SYSTEM "d.ipsec.conf/listen.xml">
+<!ENTITY listen-tcp SYSTEM "d.ipsec.conf/listen-tcp.xml">
+<!ENTITY listen-udp SYSTEM "d.ipsec.conf/listen-udp.xml">
+<!ENTITY logappend SYSTEM "d.ipsec.conf/logappend.xml">
+<!ENTITY logfile SYSTEM "d.ipsec.conf/logfile.xml">
+<!ENTITY logip SYSTEM "d.ipsec.conf/logip.xml">
+<!ENTITY logtime SYSTEM "d.ipsec.conf/logtime.xml">
+<!ENTITY mark SYSTEM "d.ipsec.conf/mark.xml">
+<!ENTITY max-halfopen-ike SYSTEM "d.ipsec.conf/max-halfopen-ike.xml">
+<!ENTITY metric SYSTEM "d.ipsec.conf/metric.xml">
+<!ENTITY mobike SYSTEM "d.ipsec.conf/mobike.xml">
+<!ENTITY modecfgoptions SYSTEM "d.ipsec.conf/modecfgoptions.xml">
+<!ENTITY modecfgpull SYSTEM "d.ipsec.conf/modecfgpull.xml">
+<!ENTITY ms-dh-downgrade SYSTEM "d.ipsec.conf/ms-dh-downgrade.xml">
+<!ENTITY mtu SYSTEM "d.ipsec.conf/mtu.xml">
+<!ENTITY myvendorid SYSTEM "d.ipsec.conf/myvendorid.xml">
+<!ENTITY narrowing SYSTEM "d.ipsec.conf/narrowing.xml">
+<!ENTITY nat-ikev1-method SYSTEM "d.ipsec.conf/nat-ikev1-method.xml">
+<!ENTITY nat-keepalive SYSTEM "d.ipsec.conf/nat-keepalive.xml">
+<!ENTITY negotiationshunt SYSTEM "d.ipsec.conf/negotiationshunt.xml">
+<!ENTITY nflog SYSTEM "d.ipsec.conf/nflog.xml">
+<!ENTITY nflog-all SYSTEM "d.ipsec.conf/nflog-all.xml">
+<!ENTITY nhelpers SYSTEM "d.ipsec.conf/nhelpers.xml">
+<!ENTITY nic-offload SYSTEM "d.ipsec.conf/nic-offload.xml">
+<!ENTITY nm-configured SYSTEM "d.ipsec.conf/nm-configured.xml">
+<!ENTITY nopmtudisc SYSTEM "d.ipsec.conf/nopmtudisc.xml">
+<!ENTITY nssdir SYSTEM "d.ipsec.conf/nssdir.xml">
+<!ENTITY ocsp-global SYSTEM "d.ipsec.conf/ocsp-global.xml">
+<!ENTITY oe_conns SYSTEM "d.ipsec.conf/oe_conns.xml">
+<!ENTITY overlapip SYSTEM "d.ipsec.conf/overlapip.xml">
+<!ENTITY pam-authorize SYSTEM "d.ipsec.conf/pam-authorize.xml">
+<!ENTITY pfs SYSTEM "d.ipsec.conf/pfs.xml">
+<!ENTITY phase2 SYSTEM "d.ipsec.conf/phase2.xml">
+<!ENTITY plutodebug SYSTEM "d.ipsec.conf/plutodebug.xml">
+<!ENTITY policy-label SYSTEM "d.ipsec.conf/policy-label.xml">
+<!ENTITY ppk SYSTEM "d.ipsec.conf/ppk.xml">
+<!ENTITY ppk-ids SYSTEM "d.ipsec.conf/ppk-ids.xml">
+<!ENTITY priority SYSTEM "d.ipsec.conf/priority.xml">
+<!ENTITY protostack SYSTEM "d.ipsec.conf/protostack.xml">
+<!ENTITY redirect SYSTEM "d.ipsec.conf/redirect.xml">
+<!ENTITY rekey SYSTEM "d.ipsec.conf/rekey.xml">
+<!ENTITY rekeyfuzz SYSTEM "d.ipsec.conf/rekeyfuzz.xml">
+<!ENTITY rekeymargin SYSTEM "d.ipsec.conf/rekeymargin.xml">
+<!ENTITY remote-peer-type SYSTEM "d.ipsec.conf/remote-peer-type.xml">
+<!ENTITY replay-window SYSTEM "d.ipsec.conf/replay-window.xml">
+<!ENTITY reqid SYSTEM "d.ipsec.conf/reqid.xml">
+<!ENTITY require-id-on-certificate SYSTEM "d.ipsec.conf/require-id-on-certificate.xml">
+<!ENTITY retransmit-interval SYSTEM "d.ipsec.conf/retransmit-interval.xml">
+<!ENTITY retransmit-timeout SYSTEM "d.ipsec.conf/retransmit-timeout.xml">
+<!ENTITY salifetime SYSTEM "d.ipsec.conf/salifetime.xml">
+<!ENTITY sareftrack SYSTEM "d.ipsec.conf/sareftrack.xml">
+<!ENTITY seccomp SYSTEM "d.ipsec.conf/seccomp.xml">
+<!ENTITY secretsfile SYSTEM "d.ipsec.conf/secretsfile.xml">
+<!ENTITY seedbits SYSTEM "d.ipsec.conf/seedbits.xml">
+<!ENTITY send-vendorid SYSTEM "d.ipsec.conf/send-vendorid.xml">
+<!ENTITY sendca SYSTEM "d.ipsec.conf/sendca.xml">
+<!ENTITY sha2-truncbug SYSTEM "d.ipsec.conf/sha2-truncbug.xml">
+<!ENTITY shuntlifetime SYSTEM "d.ipsec.conf/shuntlifetime.xml">
+<!ENTITY statsbin SYSTEM "d.ipsec.conf/statsbin.xml">
+<!ENTITY syslog SYSTEM "d.ipsec.conf/syslog.xml">
+<!ENTITY tail SYSTEM "d.ipsec.conf/tail.xml">
+<!ENTITY tcp-remoteport SYSTEM "d.ipsec.conf/tcp-remoteport.xml">
+<!ENTITY tfc SYSTEM "d.ipsec.conf/tfc.xml">
+<!ENTITY type SYSTEM "d.ipsec.conf/type.xml">
+<!ENTITY uniqueids SYSTEM "d.ipsec.conf/uniqueids.xml">
+<!ENTITY virtual-private SYSTEM "d.ipsec.conf/virtual-private.xml">
+<!ENTITY vti SYSTEM "d.ipsec.conf/vti.xml">
+<!ENTITY xauthby SYSTEM "d.ipsec.conf/xauthby.xml">
+<!ENTITY xauthfail SYSTEM "d.ipsec.conf/xauthfail.xml">
+<!ENTITY xfrmlifetime SYSTEM "d.ipsec.conf/xfrmlifetime.xml">
+]>
+
+<refentry>
+  <refmeta>
+    <refentrytitle>IPSEC.CONF</refentrytitle>
+    <manvolnum>5</manvolnum>
+    <refmiscinfo class='date'>24 Apr 2023</refmiscinfo>
+    <refmiscinfo class="source">Libreswan</refmiscinfo>
+    <refmiscinfo class="version">@@IPSECVERSION@@</refmiscinfo>
+    <refmiscinfo class="manual">File formats and conventions</refmiscinfo>
+  </refmeta>
+  <refnamediv id='name'>
+    <refname>ipsec.conf</refname>
+    <refpurpose>IPsec configuration and connections</refpurpose>
+  </refnamediv>
+
+  &connsections;
+  <refsect1 id='conn_sections'>
+    &exampleleftright;
+    <refsect2 id='conn_parameters__general'>
+      &conngeneral;
+      <variablelist>
+	&keyexchange;
+	&hostaddrfamily;
+	&clientaddrfamily;
+	&type;
+	&left;
+	&leftsubnet;
+	&leftsubnets;
+	&leftvti;
+	&leftaddresspool;
+	&leftprotoport;
+	&leftnexthop;
+	&leftsourceip;
+	&leftupdown;
+	&leftcat;
+	&leftfirewall;
+      </variablelist>
+      &conngeneralend;
+    </refsect2>
+    <refsect2 id='conn_parameters__automatic_keying'>
+      &connauto;
+      <variablelist>
+	&auto;
+	&authby;
+	&ike;
+	&phase2;
+	&sha2-truncbug;
+	&ms-dh-downgrade;
+	&dns-match-id;
+	&require-id-on-certificate;
+	&ppk;
+	&ppk-ids;
+	&nat-ikev1-method;
+	&esp;
+	&ah;
+	&fragmentation;
+	&ikepad;
+	&mobike;
+	&intermediate;
+	&esn;
+	&decap-dscp;
+	&encap-dscp;
+	&nopmtudisc;
+	&narrowing;
+	&sareftrack;
+	&nic-offload;
+	&leftid;
+	&leftrsasigkey;
+	&leftcert;
+	&leftckaid;
+	&leftauth;
+	&leftautheap;
+	&leftca;
+	&leftikeport;
+	&leftsendcert;
+	&leftxauthserver;
+	&leftxauthclient;
+	&leftusername;
+	&leftmodecfgserver;
+	&leftmodecfgclient;
+	&xauthby;
+	&xauthfail;
+	&pam-authorize;
+	&modecfgpull;
+	&modecfgoptions;
+	&remote-peer-type;
+	&nm-configured;
+	&encapsulation;
+	&enable-tcp;
+	&tcp-remoteport;
+	&nat-keepalive;
+	&initial-contact;
+	&cisco-unity;
+	&ignore-peer-dns;
+	&redirect;
+	&fake-strongswan;
+	&send-vendorid;
+	&overlapip;
+	&reqid;
+	&dpddelay;
+	&dpdtimeout;
+	&pfs;
+	&aggressive;
+	&salifetime;
+	&ipsec-max-bytes;
+	&ipsec-max-packets;
+	&replay-window;
+	&rekey;
+	&rekeymargin;
+	&rekeyfuzz;
+	&ikelifetime;
+	&retransmit-timeout;
+	&retransmit-interval;
+	&compress;
+	&metric;
+	&mtu;
+	&tfc;
+	&nflog;
+	&mark;
+	&vti;
+	&ipsec-interface;
+	&priority;
+	&sendca;
+	&policy-label;
+	&failureshunt;
+	&negotiationshunt;
+      </variablelist>
+    </refsect2>
+  </refsect1>
+  <refsect1 id='config_sections'>
+    &configsections;
+    <variablelist>
+      &protostack;
+      &listen;
+      &ike-socket;
+      &listen-udp;
+      &listen-tcp;
+      &nflog-all;
+      &keep-alive;
+      &virtual-private;
+      &myvendorid;
+      &nhelpers;
+      &seedbits;
+      &ikev1-policy;
+      &crlcheckinterval;
+      &crl-strict;
+      &curl-iface;
+      &curl-timeout;
+      &ocsp-global;
+      &syslog;
+      &plutodebug;
+      &uniqueids;
+      &logfile;
+      &logappend;
+      &logip;
+      &audit-log;
+      &logtime;
+      &ddos-mode;
+      &ddos-ike-threshold;
+      &global-redirect;
+      &max-halfopen-ike;
+      &shuntlifetime;
+      &xfrmlifetime;
+      &dumpdir;
+      &statsbin;
+      &ipsecdir;
+      &nssdir;
+      &secretsfile;
+      &seccomp;
+      &dnssec;
+    </variablelist>
+  </refsect1>
+
+  &oe_conns;
+  &tail;
+
+  <refsect1 id='author'>
+    <title>AUTHOR</title>
+    <para>
+      <author><personname><firstname>Paul</firstname><surname>Wouters</surname></personname></author>
+    </para>
+  </refsect1>
+</refentry>

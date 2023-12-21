@@ -1,4 +1,4 @@
-<refsect2 id='conn_parameters__automatic_keying'>
+
   <title>
     CONN PARAMETERS:  AUTOMATIC KEYING
   </title>
@@ -8,4 +8,3 @@
     necessary for the two ends to agree exactly on the values of these
     parameters.
   </para>
-  <variablelist>
