@@ -40,7 +40,7 @@ refnames = $(shell $(top_srcdir)/packaging/utils/refnames.sh $(1))
 # page has been generated.
 
 local-manpages: $(addprefix $(builddir)/, $(addsuffix .man, $(MANPAGES)))
-local-html: $(addprefix $(top_builddir)/html/, $(addsuffix .html, $(MANPAGES)))
+local-html:     $(addprefix $(builddir)/, $(addsuffix .html, $(MANPAGES)))
 
 local-install-manpages: local-manpages
 	@set -eu $(foreach manpage,$(MANPAGES), \
@@ -59,6 +59,7 @@ local-clean-manpages:
 	rm -f $(builddir)/*.[1-8]
 	rm -f $(builddir)/*.[1-8].tmp
 	rm -f $(builddir)/*.[1-8].man
+	rm -f $(builddir)/*.[1-8].html
 
 # Default rule for creating the TRANSFORMED_MANPAGES.
 #
@@ -92,5 +93,7 @@ $(builddir)/%.man: $(builddir)/%.tmp
 	done
 	touch $@
 
-$(top_builddir)/html/%.html: $(builddir)/%.tmp
+$(builddir)/%.html: $(srcdir)/%.xml
 	$(XMLTO) $(XMLTO_FLAGS) html-nochunks -m $(top_srcdir)/mk/man-html-link.xsl $< -o $(top_builddir)/html
+	$(TRANSFORM_VARIABLES) -i $(top_builddir)/html/$*.html
+	touch $@

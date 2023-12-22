@@ -150,7 +150,4 @@ $(builddir)/ipsec.conf.5.man: $(srcdir)/ipsec.conf.5.xml $(srcdir)/d.ipsec.conf/
 	done
 	touch $@
 
-$(top_builddir)/html/ipsec.conf.5.html: $(srcdir)/ipsec.conf.5.xml $(srcdir)/d.ipsec.conf/*.xml
-	$(XMLTO) $(XMLTO_FLAGS) html-nochunks -m $(top_srcdir)/mk/man-html-link.xsl $< -o $(builddir)/
-	${TRANSFORM_VARIABLES} -i $(builddir)/ipsec.conf.5.html
-	mv $(builddir)/ipsec.conf.5.html $@
+$(top_builddir)/html/ipsec.conf.5.html: $(srcdir)/d.ipsec.conf/*.xml
