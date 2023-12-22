@@ -433,7 +433,7 @@
 	      <command>pluto</command> abort
 	    </para>
 	    <para>
-	      Default is <filename>@@IPSEC_RUNDIR@@</filename>.
+	      Default is <filename>@@RUNDIR@@</filename>.
 	    </para>
 	  </listitem>
 	</varlistentry>
