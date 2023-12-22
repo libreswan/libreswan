@@ -406,7 +406,7 @@
 	      the directory containing additional configuration files
 	    </para>
 	    <para>
-	      Default is <filename>@@IPSEC_CONFDIR@@</filename>.
+	      Default is <filename>@@IPSEC_CONFDDIR@@</filename>.
 	    </para>
 	  </listitem>
 	</varlistentry>
