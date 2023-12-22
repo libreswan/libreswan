@@ -20,15 +20,15 @@
   </title>
   <para>
     The optional files under
-    <filename>@@IPSEC__CONFDDIR@@/policies</filename>,
+    <filename>@@IPSEC_CONFDDIR@@/policies</filename>,
     including
   </para>
   <para>
-    <filename>@@IPSEC__CONFDDIR@@/policies/clear</filename>
-    <filename>@@IPSEC__CONFDDIR@@/policies/clear-or-private</filename>
-    <filename>@@IPSEC__CONFDDIR@@/policies/private-or-clear</filename>
-    <filename>@@IPSEC__CONFDDIR@@/policies/private</filename>
-    <filename>@@IPSEC__CONFDDIR@@/policies/block</filename>
+    <filename>@@IPSEC_CONFDDIR@@/policies/clear</filename>
+    <filename>@@IPSEC_CONFDDIR@@/policies/clear-or-private</filename>
+    <filename>@@IPSEC_CONFDDIR@@/policies/private-or-clear</filename>
+    <filename>@@IPSEC_CONFDDIR@@/policies/private</filename>
+    <filename>@@IPSEC_CONFDDIR@@/policies/block</filename>
   </para>
   <para>
     may contain policy group configuration information to supplement
@@ -54,7 +54,7 @@
 
 <para>
   For example, given a suitable connection definition <emphasis>private</emphasis>,
-  and the file <filename>@@IPSEC__CONFDDIR@@/policies/private</filename> with an entry
+  and the file <filename>@@IPSEC_CONFDDIR@@/policies/private</filename> with an entry
   192.0.2.3, the system creates a connection instance <emphasis>private#192.0.2.3.</emphasis>
   This connection inherits all details from <emphasis>private</emphasis>,
   except that its right client is 192.0.2.3.
