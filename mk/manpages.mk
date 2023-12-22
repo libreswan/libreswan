@@ -25,11 +25,6 @@ MANDIR.5 ?= $(MANDIR)/man5
 MANDIR.7 ?= $(MANDIR)/man7
 MANDIR.8 ?= $(MANDIR)/man8
 
-# List of the intermediate (transformed) man pages.  Don't let GNU
-# make delete these.
-TRANSFORMED_MANPAGES = $(addprefix $(builddir)/,$(addsuffix .tmp,$(MANPAGES)))
-.PRECIOUS: $(TRANSFORMED_MANPAGES)
-
 # Given the file MANPAGE.[0-9].{xml,tmp}, generate a list of
 # <refname/> entries, including the section number.
 
@@ -44,15 +39,15 @@ local-html:     $(addprefix $(builddir)/, $(addsuffix .html, $(MANPAGES)))
 
 local-install-manpages: local-manpages
 	@set -eu $(foreach manpage,$(MANPAGES), \
-		$(foreach refname,$(call refnames,$(builddir)/$(manpage).tmp), \
+		$(foreach refname,$(call refnames,$(srcdir)/$(manpage).xml), \
 		$(foreach destdir,$(DESTDIR)$(MANDIR$(suffix $(refname))), \
 		; echo '$(builddir)/$(refname)' '->' $(destdir) \
 		; mkdir -p $(destdir) \
 		; $(INSTALL) $(INSTMANFLAGS) '$(builddir)/$(refname)' '$(destdir)')))
 
-list-local-manpages: $(TRANSFORMED_MANPAGES)
+list-local-manpages:
 	@set -eu $(foreach manpage,$(MANPAGES), \
-		$(foreach refname,$(call refnames,$(builddir)/$(manpage).tmp), \
+		$(foreach refname,$(call refnames,$(srcdir)/$(manpage).xml), \
 		; echo $(DESTDIR)$(MANDIR$(suffix $(refname)))/$(refname)))
 
 local-clean-manpages:
@@ -61,36 +56,24 @@ local-clean-manpages:
 	rm -f $(builddir)/*.[1-8].man
 	rm -f $(builddir)/*.[1-8].html
 
-# Default rule for creating the TRANSFORMED_MANPAGES.
+# Default rule for creating the man pages.
 #
-# Directories, such as configs/, that generate the man page
-# source, should provide a custom equivalent of this rule.
-
-$(builddir)/%.tmp: $(srcdir)/%.xml | $(builddir)
-	${TRANSFORM_VARIABLES} < $< > $@.tmp
-	mv $@.tmp $@
-
-# Default rule for creating the man pages from the intermediate
-# (transformed) input.
-#
-# Danger: XMLTO will barf run on 9p (it tries to update ownership and
-# fails).  The test KVMs point OBJDIR at /var/tmp to avoid this
+# Danger: XMLTO will barf when run on 9p (it tries to update ownership
+# and fails).  The test KVMs point OBJDIR at /var/tmp to avoid this
 # problem.
 #
 # Use a dummy target since the generated man pages probably don't
 # match the target name.
-#
-# OpenBSD (same xmlto as everyone else) generates file names
-# containing spaces instead of underscores.  Hack around this.
 
-$(builddir)/%.man: $(builddir)/%.tmp
+define transform-doc
+	$(TRANSFORM_VARIABLES) -i $(1)
+
+endef
+
+$(builddir)/%.man: $(srcdir)/%.xml
 	$(XMLTO) $(XMLTO_FLAGS) man $< -o $(builddir)
-	set -e ; for r in $$($(top_srcdir)/packaging/utils/refnames.sh "$(builddir)/$*.tmp") ; do \
-		o=$$(echo "$${r}" | tr '_' ' ') ; \
-		if test "$${o}" != "$${r}" -a -r "$(builddir)/$${o}" ; then \
-			mv -v "$(builddir)/$${o}" "$(builddir)/$${r}" ; \
-		fi ; \
-	done
+	$(foreach r, $(shell $(top_srcdir)/packaging/utils/refnames.sh $<), \
+		$(call transform-doc, $(builddir)/$(r)))
 	touch $@
 
 $(builddir)/%.html: $(srcdir)/%.xml

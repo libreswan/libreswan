@@ -128,6 +128,8 @@ list-local-base:
 # mimic this behaviour.
 
 $(builddir)/ipsec.conf.5.man: $(srcdir)/ipsec.conf.5.xml $(srcdir)/d.ipsec.conf/*.xml
+$(builddir)/ipsec.conf.5.man: $(builddir)/ipsec.conf.5.ok
+$(builddir)/ipsec.conf.5.ok:  $(srcdir)/d.ipsec.conf/*.xml
 	: do all d.ipsec.conf/*.xml files appear in ipsec.conf.5.xml?
 	for x in d.ipsec.conf/*.xml ; do \
 		b=$$(basename $${x} .xml) ; \
@@ -139,14 +141,6 @@ $(builddir)/ipsec.conf.5.man: $(srcdir)/ipsec.conf.5.xml $(srcdir)/d.ipsec.conf/
 			echo $${b} missing ; \
 			exit 1 ; \
 		fi ; \
-	done
-	$(XMLTO) $(XMLTO_FLAGS) man $< -o $(builddir)
-	set -e ; for r in $$($(top_srcdir)/packaging/utils/refnames.sh "$(srcdir)/ipsec.conf.5.xml") ; do \
-		o=$$(echo "$${r}" | tr '_' ' ') ; \
-		if test "$${o}" != "$${r}" -a -r "$(builddir)/$${o}" ; then \
-			mv -v "$(builddir)/$${o}" "$(builddir)/$${r}" ; \
-		fi ; \
-		${TRANSFORM_VARIABLES} -i "$(builddir)/$${r}" ; \
 	done
 	touch $@
 
