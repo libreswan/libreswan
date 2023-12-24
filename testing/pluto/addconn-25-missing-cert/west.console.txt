@@ -20,4 +20,9 @@ west #
 "missing": failed to add connection: left certificate 'west' not found in the NSS database
 no connection or alias named "missing"'
 west #
+ grep "failed to add" /tmp/pluto.log
+"missing": failed to add connection: left certificate 'west' not found in the NSS database
+"missing": failed to add connection: left certificate 'west' not found in the NSS database
+"missing": failed to add connection: left certificate 'west' not found in the NSS database
+west #
  

@@ -5,3 +5,4 @@ ipsec auto --ondemand missing
 ipsec auto --ondemand missing
 ipsec auto --ondemand missing > OUTPUT/ondemand.log 2>&1
 cat OUTPUT/ondemand.log
+grep "failed to add" /tmp/pluto.log
