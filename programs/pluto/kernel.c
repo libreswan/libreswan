@@ -448,6 +448,7 @@ static struct kernel_route kernel_route_from_state(const struct child_sa *child,
 	const ip_selectors *remote = &c->remote->child.selectors.accepted;
 	switch (kernel_mode) {
 	case KERNEL_MODE_TUNNEL:
+	case KERNEL_MODE_IPTFS:
 		local_route = unset_selector;	/* XXX: kernel_policy has spd->client */
 		remote_route = unset_selector;	/* XXX: kernel_policy has spd->client */
 		break;
@@ -1501,6 +1502,9 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 		}
 
 		setup_esp_nic_offload(&said_next->nic_offload, c, child->sa.logger);
+
+		if (said_next->mode == KERNEL_MODE_IPTFS)
+			said_next->iptfs = c->config->child_sa.iptfs;
 
 		bool ret = kernel_ops_add_sa(said_next, replace, child->sa.logger);
 
@@ -2636,4 +2640,8 @@ void shutdown_kernel(struct logger *logger)
 		kernel_ops->flush(logger);
 		kernel_ops->shutdown(logger);
 	}
+}
+err_t kernel_iptfs_query(void)
+{
+	return kernel_ops->iptfs_is_enabled();
 }
