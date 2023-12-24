@@ -745,8 +745,6 @@ USERLAND_CFLAGS += -DLIBCURL
 CURL_LDFLAGS ?= -lcurl
 endif
 
-# Build support for the Linux Audit system
-
 USE_LINUX_AUDIT ?= false
 ifeq ($(USE_LINUX_AUDIT),true)
 USERLAND_CFLAGS += -DUSE_LINUX_AUDIT
@@ -765,6 +763,14 @@ endif
 
 ifeq ($(USE_NM),true)
 USERLAND_CFLAGS+=-DHAVE_NM
+endif
+
+ifeq ($(USE_CAT),true)
+USERLAND_CFLAGS += -DUSE_CAT
+endif
+
+ifeq ($(USE_NFLOG),true)
+USERLAND_CFLAGS += -DUSE_NFLOG
 endif
 
 # Link with -lrt (only for glibc versions before 2.17)

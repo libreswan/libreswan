@@ -251,6 +251,12 @@ static const char compile_time_interop_options[] = ""
 #ifdef USE_NFTABLES
 	" NFTABLES"
 #endif
+#ifdef USE_CAT
+	" CAT"
+#endif
+#ifdef USE_NFLOG
+	" NFLOG"
+#endif
 #ifdef USE_CISCO_SPLIT
 	" CISCO_SPLIT"
 #endif
@@ -526,7 +532,9 @@ static const struct option long_opts[] = {
 	{ "no-listen-udp\0", no_argument, NULL, 'p' },
 	{ "ike-socket-bufsize\0<buf-size>", required_argument, NULL, 'W' },
 	{ "ike-socket-no-errqueue\0", no_argument, NULL, '1' },
+#ifdef USE_NFLOG
 	{ "nflog-all\0<group-number>", required_argument, NULL, 'G' },
+#endif
 	{ "rundir\0<path>", required_argument, NULL, 'b' }, /* was ctlbase */
 	{ "secretsfile\0<secrets-file>", required_argument, NULL, 's' },
 	{ "global-redirect\0", required_argument, NULL, 'Q'},
@@ -1278,12 +1286,13 @@ int main(int argc, char **argv)
 			pluto_listen_tcp = cfg->setup.options[KBF_LISTEN_TCP];
 			pluto_listen_udp = cfg->setup.options[KBF_LISTEN_UDP];
 
+#ifdef USE_NFLOG
 			/* nflog-all= */
 			/* only causes nflog nmber to show in ipsec status */
 			pluto_nflog_group = cfg->setup.options[KBF_NFLOG_ALL];
+#endif
 
 #ifdef XFRM_LIFETIME_DEFAULT
-			/* only causes nflog nmber to show in ipsec status */
 			pluto_xfrmlifetime = cfg->setup.options[KBF_XFRMLIFETIME];
 #endif
 

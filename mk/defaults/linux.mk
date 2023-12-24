@@ -118,3 +118,11 @@ USE_DNSSEC ?= true
 ifneq ($(USE_IPTABLES), true)
   USE_NFTABLES ?= true
 endif
+
+# Opportunistic Encryption with NAT (Client Address Translation) support
+# currenty only supported on Linux
+USE_CAT ?= true
+
+# Linux NFLOG support
+USE_NFLOG ?= true
+

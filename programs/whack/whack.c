@@ -136,7 +136,9 @@ static void help(void)
 		"	[--modecfgdomains <dns-domain, dns-domain, ..>] \\\n"
 		"	[--modecfgbanner <login banner>] \\\n"
 		"	[--metric <metric>] \\\n"
+#ifdef USE_NFLOG
 		"	[--nflog-group <groupnum>] \\\n"
+#endif
 		"	[--conn-mark <mark/mask>] [--conn-mark-in <mark/mask>] \\\n"
 		"	[--conn-mark-out <mark/mask>] \\\n"
 		"	[--ipsec-interface <num>] \\\n"
@@ -850,7 +852,9 @@ static const struct option long_opts[] = {
 	{ "send-no-esp-tfc", no_argument, NULL, CD_SEND_TFCPAD },
 	{ "pfs", optional_argument, NULL, CD_PFS },
 	{ "reqid", required_argument, NULL, CD_REQID },
+#ifdef USE_NFLOG
 	{ "nflog-group", required_argument, NULL, CD_NFLOG_GROUP },
+#endif
 	{ "conn-mark", required_argument, NULL, CD_CONN_MARK_BOTH },
 	{ "conn-mark-in", required_argument, NULL, CD_CONN_MARK_IN },
 	{ "conn-mark-out", required_argument, NULL, CD_CONN_MARK_OUT },

@@ -3066,7 +3066,9 @@ static diag_t extract_connection(const struct whack_message *wm,
 	config->nm_configured = extract_yn("", "nm-configured", wm->nm_configured, false, wm, c->logger);
 #endif
 
+#ifdef USE_NFLOG
 	c->nflog_group = wm->nflog_group;
+#endif
 
 	if (wm->priority > UINT32_MAX) {
 		return diag("priority=%ju exceeds upper bound of %"PRIu32,

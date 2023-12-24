@@ -579,6 +579,7 @@ static bool ikev2_set_internal_address(struct pbs_in *cp_a_pbs,
 	set_child_has_client(cc, local, true);
 	local->lease[afi->ip_index] = ip;
 
+#if defined(USE_CAT)
 	if (local->config->has_client_address_translation) {
 		address_buf ipb;
 		ldbg_sa(child,
@@ -600,7 +601,9 @@ static bool ikev2_set_internal_address(struct pbs_in *cp_a_pbs,
 					    selector_from_address(ip),
 					    "CAT: scribbling on end while ignoring TS");
 		}
-	} else if (connection_requires_tss(cc) == NULL) {
+	} else
+#endif
+	if (connection_requires_tss(cc) == NULL) {
 		update_end_selector(cc, cc->local->config->index,
 				    selector_from_address(ip),
 				    "CP scribbling on end while ignoring TS");
