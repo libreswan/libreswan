@@ -13,19 +13,7 @@ west #
  # should not show: addconn, in config '/etc/ipsec.conf', duplicate public key
 west #
  ipsec auto --add test1
-while loading 'test1': duplicate public key
-while loading 'test2': duplicate public key
-duplicate public key
-addconn, in config '/etc/ipsec.conf', duplicate public key
-duplicate public key
-conn test1 did not load properly
 west #
  ipsec auto --add test2
-while loading 'test1': duplicate public key
-while loading 'test2': duplicate public key
-duplicate public key
-addconn, in config '/etc/ipsec.conf', duplicate public key
-duplicate public key
-conn test2 did not load properly
 west #
  
