@@ -28,6 +28,7 @@ pkg install -y pkgconf # aka pkg-config; grrr
 pkg install -y nss
 pkg install -y libevent
 pkg install -y unbound
+pkg install -y gsed		# so that sed -i (in-place) works
 pkg install -y bison
 pkg install -y flex
 pkg install -y ldns
@@ -37,3 +38,4 @@ pkg install -y strongswan
 pkg install -y fping
 pkg install -y gdb
 pkg install -y gcc
+

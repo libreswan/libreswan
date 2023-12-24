@@ -37,3 +37,6 @@ EXAMPLE_IPSEC_SYSCONFDIR=$(PREFIX)/share/examples/libreswan
 
 # LTO seems either broken or confused
 USE_LTO ?= false
+
+# FreeBSD's default SED doesn't support -i (in-place)
+SED = gsed

@@ -632,7 +632,12 @@ export LIBRESWANLIB LSWTOOLLIB
 export WHACKLIB IPSECCONFLIB
 
 # how to do variable substitution in sed-transformed files
-TRANSFORM_VARIABLES = sed \
+#
+# Most SEDs support -i (in-place) but FreeBSD does not and gets to
+# override this with gsed.
+
+SED ?= sed
+TRANSFORM_VARIABLES = $(SED) \
 			-e "s:@@DOCKER_PLUTONOFORK@@:$(DOCKER_PLUTONOFORK):g" \
 			-e "s:@@INITSYSTEM@@:$(INITSYSTEM):g" \
 			-e "s:@@IPSECVERSION@@:$(IPSECVERSION):g" \
