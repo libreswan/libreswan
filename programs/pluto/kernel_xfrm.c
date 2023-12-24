@@ -939,6 +939,7 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 		passert(policy->nr_rules <= (int)elemsof(tmpls));
 		/* only the first rule gets the worm; er tunnel flag */
 		unsigned mode = (policy->mode == KERNEL_MODE_TUNNEL ? XFRM_MODE_TUNNEL :
+				 policy->mode == KERNEL_MODE_IPTFS ? XFRM_MODE_IPTFS :
 				 XFRM_MODE_TRANSPORT);
 		for (unsigned i = 0; i < policy->nr_rules; i++) {
 			const struct kernel_policy_rule *rule = &policy->rule[i];
@@ -952,7 +953,7 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 
 			/* set mode (tunnel or transport); then switch to transport */
 			tmpl->mode = mode;
-			if (mode == XFRM_MODE_TUNNEL) {
+			if (mode == XFRM_MODE_TUNNEL || mode == XFRM_MODE_IPTFS) {
 				/* tunnel mode needs addresses */
 				tmpl->saddr = xfrm_from_address(&policy->src.host);
 				tmpl->id.daddr = xfrm_from_address(&policy->dst.host);
@@ -1154,6 +1155,7 @@ struct kernel_migrate {
 	const struct ip_protocol *proto;	/* ESP, AH, IPCOMP */
 	const struct ip_encap *encap_type;	/* ESP-in-TCP, ESP-in-UDP; or NULL(transport?) */
 	reqid_t reqid;
+	enum encap_mode mode;
 
 	/*
 	 * size of buffer needed for "story"
@@ -1171,7 +1173,6 @@ static bool init_xfrm_kernel_migrate(struct child_sa *child,
 				     struct kernel_migrate *migrate)
 {
 	const struct connection *const c = child->sa.st_connection;
-	pexpect(c->config->child_sa.encap_mode == ENCAP_MODE_TUNNEL);
 
 	const struct ip_encap *encap_type =
 		(child->sa.st_iface_endpoint->io->protocol == &ip_protocol_tcp) ? &ip_encap_esp_in_tcp :
@@ -1246,6 +1247,9 @@ static bool init_xfrm_kernel_migrate(struct child_sa *child,
 			.client = dst->end->client,
 			.encap_port = endpoint_hport(dst->endpoint),	/* may change */
 		},
+		.mode = c->config->child_sa.encap_mode == ENCAP_MODE_TUNNEL ? XFRM_MODE_TUNNEL:
+			c->config->child_sa.encap_mode == ENCAP_MODE_IPTFS ? XFRM_MODE_IPTFS :
+			pexpect(0),
 		/* WWW what about sec_label? */
 	};
 
@@ -1323,7 +1327,7 @@ static bool migrate_xfrm_sa(const struct kernel_migrate *sa, struct logger *logg
 		migrate.old_daddr = xfrm_from_address(&sa->dst.address);
 		migrate.new_saddr = xfrm_from_address(&sa->src.new_address);
 		migrate.new_daddr = xfrm_from_address(&sa->dst.new_address);
-		migrate.mode = XFRM_MODE_TUNNEL;
+		migrate.mode = sa->mode;
 		migrate.proto = sa->proto->ipproto;
 		migrate.reqid = sa->reqid;
 		migrate.old_family = migrate.new_family = address_info(sa->src.address)->af;
@@ -1561,6 +1565,19 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 			req.p.mode = XFRM_MODE_TRANSPORT;
 		}
 		break;
+	case KERNEL_MODE_IPTFS:
+		/* FIXME for IPTFS */
+		/* Only the innermost SA gets the "tunnel" flag. */
+		if (sa->level == 0) {
+			ldbg(logger, "%s() tunnel enabling inner-most iptfs mode", __func__);
+			req.p.mode = XFRM_MODE_IPTFS;
+			req.p.flags |= XFRM_STATE_AF_UNSPEC;
+		} else {
+			ldbg(logger, "%s() tunnel enabling non-inner transport mode", __func__);
+			req.p.mode = XFRM_MODE_TRANSPORT;
+		}
+		break;
+
 	case KERNEL_MODE_TRANSPORT:
 		ldbg(logger, "%s() transport enabling transport mode", __func__);
 		req.p.mode = XFRM_MODE_TRANSPORT;
@@ -1578,6 +1595,7 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 	 * traffic selectors. Caller function will inform us if we
 	 * need or don't need selectors.
 	 */
+
 	if (sa->mode == KERNEL_MODE_TRANSPORT) {
 		set_xfrm_selectors(&req.p.sel, &sa->src.route, &sa->dst.route, logger);
 	}
@@ -1593,6 +1611,7 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 		req.p.lft.hard_byte_limit = sa->sa_ipsec_max_bytes;
 		req.p.lft.hard_packet_limit = sa->sa_ipsec_max_packets;
 		req.p.lft.soft_packet_limit = sa->sa_max_soft_packets;
+		req.p.lft.hard_add_expires_seconds = sa->sa_lifetime.dt.tv_sec <= 2 ? sa->sa_lifetime.dt.tv_sec : 00; // hack for IPTFS test. fix me
 	} else {
 		/* This has further FIPS implications :/ */
 		req.p.lft.soft_byte_limit = XFRM_INF;
@@ -1815,7 +1834,6 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 
 			req.n.nlmsg_len += attr->rta_len;
 			attr = (struct rtattr *)((char *)attr + attr->rta_len);
-
 		}
 		/*
 		 * Traffic Flow Confidentiality is only for
@@ -1827,7 +1845,6 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 		    sa->level == 0) {
 			ldbg(logger, "%s() setting TFC to %" PRIu32 " (up to PMTU)",
 			     __func__, sa->tfcpad);
-
 			attr->rta_type = XFRMA_TFCPAD;
 			attr->rta_len = RTA_LENGTH(sizeof(sa->tfcpad));
 			memcpy(RTA_DATA(attr), &sa->tfcpad, sizeof(sa->tfcpad));
@@ -1932,6 +1949,41 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 
 		/* attr not subsequently used */
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
+	}
+
+	if (sa->level == 0 && sa->mode == KERNEL_MODE_IPTFS) {
+		unsigned short maxlen = sizeof(req.data);
+		if (sa->direction == DIRECTION_OUTBOUND && sa->iptfs.out_size != IPTFS_UNSET)
+			nl_addattr32(&req.n, maxlen, XFRMA_IPTFS_PKT_SIZE, sa->iptfs.out_size);
+		if (sa->direction == DIRECTION_OUTBOUND && sa->iptfs.out_max_delay != IPTFS_UNSET)
+			nl_addattr32(&req.n, maxlen, XFRMA_IPTFS_INIT_DELAY, sa->iptfs.out_max_delay);
+		if (sa->direction == DIRECTION_OUTBOUND && sa->iptfs.out_queue != IPTFS_UNSET)
+			nl_addattr32(&req.n, maxlen, XFRMA_IPTFS_MAX_QSIZE, sa->iptfs.out_queue);
+		if (sa->direction == DIRECTION_OUTBOUND && sa->iptfs.out_frag != YN_NO &&
+		    sa->iptfs.out_frag != YN_YES)
+			nl_addattr_l(&req.n, maxlen, XFRMA_IPTFS_DONT_FRAG, NULL, 0);
+		if (sa->direction == DIRECTION_INBOUND && sa->iptfs.in_rewin != IPTFS_UNSET)
+			nl_addattr16(&req.n, maxlen, XFRMA_IPTFS_REORDER_WINDOW, sa->iptfs.in_rewin);
+		if (sa->direction == DIRECTION_INBOUND && sa->iptfs.in_drop_time != IPTFS_UNSET)
+			nl_addattr32(&req.n, maxlen, XFRMA_IPTFS_DROP_TIME, sa->iptfs.in_drop_time);
+
+		LDBGP_JAMBUF(DBG_BASE, logger, buf) {
+			jam(buf, "%s() enabling iptfs mode", __func__);
+			if (sa->iptfs.out_size != IPTFS_UNSET)
+				jam(buf, " iptfs-out-size=%u", sa->iptfs.out_size);
+			if (sa->iptfs.out_max_delay != IPTFS_UNSET)
+				jam(buf, " iptfs-out-max-delaye=%u usec ", sa->iptfs.out_max_delay);
+			if (sa->iptfs.out_queue != IPTFS_UNSET)
+				jam(buf, " iptfs-out-queue=%u", sa->iptfs.out_queue);
+			if (sa->iptfs.out_frag == YN_YES)
+				jam(buf, " iptfs-out-frag=yes");
+			if (sa->iptfs.out_frag == YN_NO)
+				jam(buf, " iptfs-out-frag=no");
+			if (sa->iptfs.in_rewin != IPTFS_UNSET)
+				jam(buf, " iptfs-in-rewin-delaye=%u", sa->iptfs.in_rewin);
+			if (sa->iptfs.in_drop_time != IPTFS_UNSET)
+				jam(buf, " iptfs-in-drop-time=%u usec", sa->iptfs.in_drop_time);
+		}
 	}
 
 	int recv_errno;
@@ -2884,6 +2936,31 @@ static void kernel_xfrm_poke_holes(struct logger *logger)
 
 	hyperspace_bypass.icmpv6 = true;
 }
+static bool qry_xfrm_iptfs_support(const struct kernel_state *sa, struct logger *logger)
+{
+
+	return netlink_add_sa(sa, false, logger);
+}
+
+static err_t xfrm_iptfs_is_enabled(const struct kernel_state *sa, struct logger *logger)
+{
+	static const char disabled_message[] = "Missing IP-TFS support: requires Kernel option CONFIG_XFRM_IPTFS enabled.";
+	static enum { UNKNOWN, ENABLED, DISABLED, } state = UNKNOWN;
+
+	switch (state) {
+		case UNKNOWN:
+			state = (qry_xfrm_iptfs_support(sa, logger) ? ENABLED : DISABLED);
+			return state == ENABLED ? NULL : disabled_message;
+		case ENABLED:
+			return NULL;
+		case DISABLED:
+			return disabled_message;
+		default:
+			bad_case(state);
+	}
+
+	return NULL;
+}
 
 static void kernel_xfrm_plug_holes(struct logger *logger)
 {
@@ -2927,7 +3004,7 @@ static bool qry_xfrm_mirgrate_support(struct logger *logger)
 
 	if (nl_fd < 0) {
 		llog_error(logger, errno,
-			   "socket() in qry_xfrm_mirgrate_support()");
+				"socket() in qry_xfrm_mirgrate_support()");
 		return false;
 	}
 
@@ -2939,15 +3016,15 @@ static bool qry_xfrm_mirgrate_support(struct logger *logger)
 
 	if (r < 0) {
 		llog_error(logger, errno,
-			   "netlink write() xfrm_migrate_support lookup");
+				"netlink write() xfrm_migrate_support lookup");
 		close(nl_fd);
 		return false;
 	}
 
 	if ((size_t)r != len) {
 		llog_error(logger, 0/*no-errno*/,
-			   "netlink write() xfrm_migrate_support message truncated: %zd instead of %zu",
-			    r, len);
+				"netlink write() xfrm_migrate_support message truncated: %zd instead of %zu",
+				r, len);
 		close(nl_fd);
 		return false;
 	}
@@ -3145,4 +3222,5 @@ const struct kernel_ops xfrm_kernel_ops = {
 	.poke_ipsec_policy_hole = netlink_poke_ipsec_policy_hole,
 	.detect_nic_offload = xfrm_detect_nic_offload,
 	.poke_ipsec_offload_policy_hole = netlink_poke_ipsec_offload_policy_hole,
+	.iptfs_is_enabled = xfrm_iptfs_is_enabled,
 };

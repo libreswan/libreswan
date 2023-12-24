@@ -2347,7 +2347,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 					kernel_ops->interface_name);
 		}
 		/* probe the IP-TFS support in the running kernel*/
-		err_t err = kernel_iptfs_query();
+		err_t err = kernel_iptfs_query(c->logger);
 		if (err != NULL) {
 			return diag("IP-TFS support is not enabled for %s kernel interface: %s",
 					kernel_ops->interface_name, err);

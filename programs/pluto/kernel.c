@@ -448,6 +448,7 @@ static struct kernel_route kernel_route_from_state(const struct child_sa *child,
 	const ip_selectors *remote = &c->remote->child.selectors.accepted;
 	switch (kernel_mode) {
 	case KERNEL_MODE_TUNNEL:
+	case KERNEL_MODE_IPTFS:
 		local_route = unset_selector;	/* XXX: kernel_policy has spd->client */
 		remote_route = unset_selector;	/* XXX: kernel_policy has spd->client */
 		break;
@@ -1501,6 +1502,9 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 		}
 
 		setup_esp_nic_offload(&said_next->nic_offload, c, child->sa.logger);
+
+		if (said_next->mode == KERNEL_MODE_IPTFS)
+			said_next->iptfs = c->config->child_sa.iptfs;
 
 		bool ret = kernel_ops_add_sa(said_next, replace, child->sa.logger);
 
@@ -2636,4 +2640,44 @@ void shutdown_kernel(struct logger *logger)
 		kernel_ops->flush(logger);
 		kernel_ops->shutdown(logger);
 	}
+}
+
+err_t kernel_iptfs_query(struct logger *logger)
+{
+	ip_address loopback;
+	char loopback_addr[] = "127.0.0.1";
+	const struct ip_info *type = NULL;
+	err_t err = ttoaddress_num(shunk1(loopback_addr), type, &loopback);
+	pexpect(err == NULL);
+
+	shunk_t encrypt_key = {
+		.ptr = "012345678900123456789001234567890012345",
+		.len = 36
+	};
+	shunk_t integ_key = { .ptr = "",
+		.len = 0
+	};
+
+	struct kernel_state sa = {
+		.src.address = loopback,
+		.dst.address = loopback,
+		.mode = KERNEL_MODE_IPTFS,
+		.sa_lifetime = deltatime(1), /* let the SA expire instead of deleting it  */
+		.sa_max_soft_bytes = 1,
+		.sa_max_soft_packets = 1,
+		.sa_ipsec_max_bytes = 1,
+		.sa_ipsec_max_packets = 2,
+		.spi = 0x1, /* is there a test sa spi ? */
+		.proto = &ip_protocol_esp,
+		.direction = DIRECTION_INBOUND,
+		.replay_window = 1,
+		.reqid = 1,
+		.encrypt = &ike_alg_encrypt_aes_gcm_16,
+		.integ = &ike_alg_integ_none,
+		.encrypt_key = encrypt_key,
+		.integ_key = integ_key,
+		.story = "esp.1@127.0.0.1",
+	};
+
+	return kernel_ops->iptfs_is_enabled(&sa, logger);
 }
