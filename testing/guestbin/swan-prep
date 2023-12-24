@@ -270,7 +270,9 @@ if not os.path.isdir(testpath):
 
 testname = os.path.basename(testpath)
 
-if not args.no_eth0:
+# dnssec is only run on nic, but nic isn't supposed to run swan-prep ever :/
+# when using namespaces, nic has no eth0
+if not args.no_eth0 and not args.dnssec:
     o = subprocess.run(['ip' , '-o', 'link' , 'show', 'dev', 'eth0'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="ascii")
     ifname = o.stdout.split(' ')[1]
     if o.returncode:
@@ -674,7 +676,6 @@ if args.nsd or args.dnssec:
         cmd = "../../guestbin/nsd-start.sh start"
         output = subprocess.check_output(cmd, shell=True, timeout=20, stderr=subprocess.STDOUT)
     else:
-        subprocess.getoutput("systemctl start nsd-keygen")
         subprocess.getoutput("systemctl start nsd")
 
     # now unbound
