@@ -21,7 +21,7 @@
 static const char *kernel_mode_name[] = {
 #define S(E) [E-KERNEL_MODE_TRANSPORT] = #E
 	S(KERNEL_MODE_TRANSPORT),
-	S(KERNEL_MODE_TUNNEL),
+	S(KERNEL_MODE_IPTFS),
 #undef S
 };
 
@@ -34,7 +34,7 @@ const struct enum_names kernel_mode_names = {
 static const char *kernel_mode_story[] = {
 #define S(E,T) [E-KERNEL_MODE_TRANSPORT] = T
 	S(KERNEL_MODE_TRANSPORT, "Transport Mode"),
-	S(KERNEL_MODE_TUNNEL, "Tunnel Mode"),
+	S(KERNEL_MODE_IPTFS, "Tunnel Mode"),
 #undef S
 };
 
