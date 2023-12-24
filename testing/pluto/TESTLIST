@@ -652,7 +652,7 @@ kvmplutotest	certoe-08-nat-packet-cop-restart	wip	github/896
 kvmplutotest	certoe-09-packet-host			good
 kvmplutotest	certoe-09-packet-host-2			good
 kvmplutotest	certoe-10-symmetric-cert-whack		good
-kvmplutotest	certoe-11-symmetric-cert-nat		wip	github/1302
+kvmplutotest	certoe-11-symmetric-cert-nat		wip	github:1302
 kvmplutotest	certoe-12-nat-server			good
 kvmplutotest	certoe-13-poc-del-slash24		wip	github:577
 kvmplutotest	certoe-14-poc-del-slash32		good	github/528
@@ -660,11 +660,11 @@ kvmplutotest	certoe-15-poc-east-west			good	github/528
 
 kvmplutotest	certoe-16-rhbz1724200-halfopen-shunt	wip
 
-kvmplutotest	certoe-17-asymmetric-cert-nat				wip	github/1302
+kvmplutotest	certoe-17-asymmetric-cert-nat				wip github/1302
 kvmplutotest	certoe-17-asymmetric-cert-nat-testing-client-crash	good
 kvmplutotest	certoe-17-asymmetric-cert-nat-testing-server-restarts	good
 kvmplutotest	certoe-17-asymmetric-cert-nat-testing-client-restart	good
-kvmplutotest	certoe-17-asymmetric-cert-nat-testing-server-crash	wip	github/1056
+kvmplutotest	certoe-17-asymmetric-cert-nat-testing-server-crash	wip	github/1110
 kvmplutotest	certoe-17-asymmetric-dual-clients-behind-nat-01		good
 # the non-keyingtries1 now fail because we enforce keyingtries=1 for OE
 kvmplutotest	certoe-18-pass-then-go-slash24		wip

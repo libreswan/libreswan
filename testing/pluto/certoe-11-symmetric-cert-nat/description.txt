@@ -1,0 +1,9 @@
+Mutual X.509 based Opportunistic Encryption with NAT.
+
+There should be a tunnel with the addresspool IP as inside
+tunnel policy. There should also be the /24 trap policy.
+
+There is also a Client Address Translation (CAT) policy
+with road's external IP. CAT='yes' shows in the updown
+output. This means one extra out policy but it should
+not have an extra in/fwd policy

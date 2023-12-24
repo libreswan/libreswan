@@ -1,3 +1,6 @@
 Testing roadwarrior with OE using authnull to cert with real certificate
 
+This uses Client Address Translation (CAT) and so shows two IPsec SA's
+on road. One for its external IP and once for its addresspool IP.
+
 road has the CA of east
