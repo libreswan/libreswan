@@ -781,6 +781,7 @@ ifeq ($(USE_CAT),true)
 $(error ERROR: USE_CAT is set but neither USE_NFTABLES nor USE_IPTABLES is set)
 endif
 endif
+endif
 
 ifeq ($(USE_NFLOG),true)
 USERLAND_CFLAGS += -DUSE_NFLOG
@@ -791,6 +792,7 @@ ifeq ($(USE_NFTABLES),false)
 ifeq ($(USE_IPTABLES),false)
 ifeq ($(USE_NFLOG),true)
 $(error ERROR: USE_NFLOG is set but neither USE_NFTABLES nor USE_IPTABLES is set)
+endif
 endif
 endif
 
