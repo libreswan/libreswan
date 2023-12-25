@@ -20,8 +20,6 @@ freebsdw# ipsec auto --add eastnet-westnet-ikev2
 "eastnet-westnet-ikev2": added IKEv2 connection
 freebsdw# echo "initdone"
 initdone
-freebsdw# ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
-down
 freebsdw# ipsec auto --up eastnet-westnet-ikev2
 "eastnet-westnet-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "eastnet-westnet-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:500
