@@ -841,12 +841,12 @@ doroute() {
 firewall_cmd() {
     USE_IPTABLES=@@USE_IPTABLES@@
     USE_NFTABLES=@@USE_NFTABLES@@
-    if [ "${USE_NFTABLES}" = true ]; then #nft has precedence over iptables
-        FIREWALL=NFTABLES;
+    if [ "${USE_NFTABLES}" = true ]; then
+	FIREWALL=NFTABLES;
     elif [ "${USE_IPTABLES}" = true ]; then
-        FIREWALL=IPTABLES
+	FIREWALL=IPTABLES
     else
-       FIREWALL=""
+	FIREWALL=
     fi
 }
 

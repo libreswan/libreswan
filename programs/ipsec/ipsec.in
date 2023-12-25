@@ -29,6 +29,7 @@ IPSEC_RUNDIR="${IPSEC_RUNDIR:-@@RUNDIR@@}"
 IPSEC_NSSDIR="${IPSEC_NSSDIR:-@@IPSEC_NSSDIR@@}"
 IPSEC_NSSDIR_SQL="sql:${IPSEC_NSSDIR}"
 IPSEC_NSSPW="${IPSEC_CONFDDIR}/nsspassword"
+USE_NFLOG="${USE_NFLOG:-@@USE_NFLOG@@}"
 DBPW=""
 CACERTDIR="${IPSEC_CONFDDIR}/cacerts"
 CRLDIR="${IPSEC_CONFDDIR}/crls"
@@ -534,6 +535,10 @@ nflog_iptables_delete() {
 }
 
 ipsec_stopnflog() {
+    if [ "${USE_NFLOG}" != "true" ]; then
+	echo "NFLOG support has been disabled" >&2
+	exit 0
+    fi
     local usage
     usage="Usage: ipsec stopnflog"
     while [ ${#} -gt 0 ]; do
@@ -556,14 +561,13 @@ ipsec_stopnflog() {
     if [ -z "${NFGROUP}" ]; then
 	exit 0
     fi
+
     firewall_cmd
 
     if [ "${FIREWALL}" = IPTABLES ]; then
 	nflog_iptables_delete "${NFGROUP}"
     elif [ "${FIREWALL}" = NFTABLES ]; then
 	nflog_nftables_delete
-    else
-	echo "WARNING unknown firewall comaand ${FIREWALL} expect IPTABLES or NFTABLES"
     fi
 
     exit 0
@@ -625,11 +629,15 @@ firewall_cmd() {
     elif [ "${USE_IPTABLES}" = true ]; then
 	FIREWALL=IPTABLES
     else
-	FIREWALL=""
+	FIREWALL=
     fi
 }
 
 ipsec_checknflog() {
+    if [ "${USE_NFLOG}" != "true" ]; then
+	echo "NFLOG support has been disabled" >&2
+	exit 0
+    fi
     local usage
     usage="Usage: ipsec checknflog"
     while [ ${#} -gt 0 ]; do
@@ -656,16 +664,16 @@ ipsec_checknflog() {
 	checknflog_iptables
     elif [ "${FIREWALL}" = NFTABLES ]; then
 	checknflog_nftables
-    else
-	FIREWALL=""
-	echo "unknown firewall command ${FIREWALL} expect IPTABLES or NFTABLES" >&2
-	exit 1
     fi
 
     exit 0
 }
 
 ipsec_sniff() {
+    if [ "${USE_NFLOG}" != "true" ]; then
+	echo "NFLOG support has been disabled" >&2
+	exit 0
+    fi
     local usage
     usage="Usage: ipsec sniff"
     while [ ${#} -gt 0 ]; do

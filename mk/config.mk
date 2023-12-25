@@ -651,6 +651,7 @@ TRANSFORM_VARIABLES = $(SED) \
 			-e "s:@@USE_DEFAULT_CONNS@@:$(USE_DEFAULT_CONNS):g" \
 			-e "s:@@USE_IPTABLES@@:$(USE_IPTABLES):g" \
 			-e "s:@@USE_NFTABLES@@:$(USE_NFTABLES):g" \
+			-e "s:@@USE_NFLOG@@:$(USE_NFLOG):g" \
 			$(patsubst %, -e %, $(TRANSFORMS))
 
 # For KVM testing setup
@@ -770,6 +771,7 @@ ifeq ($(USE_NM),true)
 USERLAND_CFLAGS+=-DHAVE_NM
 endif
 
+USE_CAT ?= false
 ifeq ($(USE_CAT),true)
 USERLAND_CFLAGS += -DUSE_CAT
 endif
@@ -783,6 +785,7 @@ endif
 endif
 endif
 
+USE_NFLOG ?= false
 ifeq ($(USE_NFLOG),true)
 USERLAND_CFLAGS += -DUSE_NFLOG
 endif
