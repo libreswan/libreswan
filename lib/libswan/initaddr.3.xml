@@ -67,17 +67,17 @@
 
 <refsect1 id='description'><title>DESCRIPTION</title>
 <para>The
-<emphasis remap='B'>&lt;libreswan.h&gt;</emphasis>
+<emphasis>&lt;libreswan.h&gt;</emphasis>
 library uses an internal type
-<emphasis remap='I'>ip_address</emphasis>
+<emphasis>ip_address</emphasis>
 to contain one of the (currently two) types of IP address.
 These functions provide basic tools for creating and examining this type.</para>
 
-<para><emphasis remap='I'>initaddr</emphasis>
+<para><emphasis>initaddr</emphasis>
 initializes a variable
-<emphasis remap='I'>*dst</emphasis>
+<emphasis>*dst</emphasis>
 of type
-<emphasis remap='I'>ip_address</emphasis>
+<emphasis>ip_address</emphasis>
 from an address
 (in network byte order,
 indicated by a pointer
@@ -87,30 +87,30 @@ and a length
 and an address family
 <varname role='parameter'>af</varname>
 (typically
-<emphasis remap='B'>AF_INET</emphasis>
+<emphasis>AF_INET</emphasis>
 or
-<emphasis remap='B'>AF_INET6</emphasis>).
+<emphasis>AF_INET6</emphasis>).
 The length must be consistent with the address family.</para>
 
-<para><emphasis remap='I'>addrtypeof</emphasis>
+<para><emphasis>addrtypeof</emphasis>
 returns the address type of an address,
 normally
-<emphasis remap='B'>AF_INET</emphasis>
+<emphasis>AF_INET</emphasis>
 or
-<emphasis remap='B'>AF_INET6</emphasis>.
+<emphasis>AF_INET6</emphasis>.
 (The
-<emphasis remap='B'>&lt;libreswan.h&gt;</emphasis>
+<emphasis>&lt;libreswan.h&gt;</emphasis>
 header file arranges to include the necessary headers for these
 names to be known.)</para>
 
-<para><emphasis remap='I'>addrlenof</emphasis>
+<para><emphasis>addrlenof</emphasis>
 returns the size (in bytes) of the address within an
-<emphasis remap='I'>ip_address</emphasis>,
+<emphasis>ip_address</emphasis>,
 to permit storage allocation etc.</para>
 
-<para><emphasis remap='I'>addrbytesof</emphasis>
+<para><emphasis>addrbytesof</emphasis>
 copies the address within the
-<emphasis remap='I'>ip_address</emphasis>
+<emphasis>ip_address</emphasis>
 <varname role='parameter'>src</varname>
 to the buffer indicated by the pointer
 <varname role='parameter'>dst</varname>
@@ -123,22 +123,22 @@ the returned length is still the full length.
 It is the caller's responsibility to check the
 returned value to ensure that there was enough room.</para>
 
-<para><emphasis remap='I'>addrbytesptr_read</emphasis> and <emphasis remap='I'>addrbytesptr_write</emphasis> and
+<para><emphasis>addrbytesptr_read</emphasis> and <emphasis>addrbytesptr_write</emphasis> and
 set
-<emphasis remap='I'>*dst</emphasis>
+<emphasis>*dst</emphasis>
 to a pointer to the internal address within the
-<emphasis remap='I'>ip_address</emphasis>,
+<emphasis>ip_address</emphasis>,
 and returns the address length (in bytes).
 If
 <varname role='parameter'>dst</varname>
 is
-<emphasis remap='B'>NULL</emphasis>,
+<emphasis>NULL</emphasis>,
 it just returns the address length.
 </para>
 
-<para><emphasis remap='I'>initaddr</emphasis>
+<para><emphasis>initaddr</emphasis>
 returns
-<emphasis remap='B'>NULL</emphasis>
+<emphasis>NULL</emphasis>
 for success and
 a pointer to a string-literal error message for failure;
 see DIAGNOSTICS.</para>
@@ -167,14 +167,14 @@ An address-size mismatch is a fatal error for
 </refsect1>
 
 <refsect1 id='bugs'><title>BUGS</title>
-<para><emphasis remap='I'>addrtypeof</emphasis>
+<para><emphasis>addrtypeof</emphasis>
 should probably have been named
-<emphasis remap='I'>addrfamilyof</emphasis>.</para>
+<emphasis>addrfamilyof</emphasis>.</para>
 </refsect1>
   <refsect1 id='author'>
     <title>AUTHOR</title>
     <para>
-      <emphasis role='strong' remap='B'>Paul Wouters</emphasis>
+      <emphasis role='strong'>Paul Wouters</emphasis>
     </para>
   </refsect1>
 </refentry>

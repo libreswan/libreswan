@@ -30,7 +30,7 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>Ondemand</emphasis> operation is equivalent
+      <emphasis>Ondemand</emphasis> operation is equivalent
       to running first <option>ipsec add connectionname</option> and
       then <option>ipsec route connectionname</option>, causing the same
       effect as connection configuration option

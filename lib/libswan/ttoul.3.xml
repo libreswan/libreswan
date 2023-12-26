@@ -58,16 +58,16 @@
 
 
 <refsect1 id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Ttoul</emphasis>
+<para><emphasis>Ttoul</emphasis>
 converts a text-string number into a binary
-<emphasis remap='B'>unsigned long</emphasis>
+<emphasis>unsigned long</emphasis>
 value.
-<emphasis remap='I'>Ttoulb</emphasis>
-does the same as <emphasis remap='I'>Ttoul</emphasis> with the addition of a bounds check.
+<emphasis>Ttoulb</emphasis>
+does the same as <emphasis>Ttoul</emphasis> with the addition of a bounds check.
 converts a text-string number into a binary
-<emphasis remap='B'>unsigned long</emphasis>
+<emphasis>unsigned long</emphasis>
 value.
-<emphasis remap='I'>Ultot</emphasis>
+<emphasis>Ultot</emphasis>
 does the reverse conversion, back to a text version.</para>
 
 <para>Numbers are specified in text as
@@ -77,9 +77,9 @@ octal with a leading zero (e.g.
 <literal>012</literal>,
 which has value 10),
 or hexadecimal with a leading
-<emphasis remap='B'>0x</emphasis>
+<emphasis>0x</emphasis>
 (e.g.
-<emphasis remap='B'>0x1f</emphasis>,
+<emphasis>0x1f</emphasis>,
 which has value 31)
 in either upper or lower case.</para>
 
@@ -98,7 +98,7 @@ a
 value of
 <literal>0</literal>
 is taken to mean
-<emphasis remap='B'>strlen(src)</emphasis>.</para>
+<emphasis>strlen(src)</emphasis>.</para>
 
 <para>The
 <varname role='parameter'>base</varname>
@@ -113,13 +113,13 @@ in which case the number supplied is assumed to be of that form
 (and in the case of
 <literal>16</literal>,
 to lack any
-<emphasis remap='B'>0x</emphasis>
+<emphasis>0x</emphasis>
 prefix).
 It can also be
 <literal>0</literal>,
 in which case the number is examined for a leading zero
 or a leading
-<emphasis remap='B'>0x</emphasis>
+<emphasis>0x</emphasis>
 to determine its base.</para>
 
 <para>The
@@ -134,16 +134,16 @@ under no circumstances are more than
 bytes written to
 <varname role='parameter'>dst</varname>.
 A result that will not fit is truncated.
-<emphasis remap='I'>Dstlen</emphasis>
+<emphasis>Dstlen</emphasis>
 can be zero, in which case
 <varname role='parameter'>dst</varname>
 need not be valid and no result is written,
 but the return value is unaffected;
 in all other cases, the (possibly truncated) result is NUL-terminated.
 The
-<emphasis remap='I'>libreswan.h</emphasis>
+<emphasis>libreswan.h</emphasis>
 header file defines a constant,
-<emphasis remap='B'>ULTOT_BUF</emphasis>,
+<emphasis>ULTOT_BUF</emphasis>,
 which is the size of a buffer just large enough for worst-case results.</para>
 
 <para>The
@@ -152,23 +152,23 @@ parameter of
 <function>ultot</function>
 must be one of:</para>
 <!-- .RS -->
-<variablelist remap='IP'>
+<variablelist>
   <varlistentry>
-  <term><emphasis remap='B'>'o'</emphasis></term>
+  <term><emphasis>'o'</emphasis></term>
   <listitem>
 <para>octal conversion with leading
 <literal>0</literal></para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>&nbsp;8</emphasis></term>
+  <term><emphasis>&nbsp;8</emphasis></term>
   <listitem>
 <para>octal conversion with no leading
 <literal>0</literal></para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>'d'</emphasis></term>
+  <term><emphasis>'d'</emphasis></term>
   <listitem>
 <para>decimal conversion</para>
   </listitem>
@@ -177,21 +177,21 @@ must be one of:</para>
   <term><literal>10</literal></term>
   <listitem>
 <para>same as
-<emphasis remap='B'>d</emphasis></para>
+<emphasis>d</emphasis></para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>'x'</emphasis></term>
+  <term><emphasis>'x'</emphasis></term>
   <listitem>
 <para>hexadecimal conversion, including leading
-<emphasis remap='B'>0x</emphasis></para>
+<emphasis>0x</emphasis></para>
   </listitem>
   </varlistentry>
   <varlistentry>
   <term><literal>16</literal></term>
   <listitem>
 <para>hexadecimal conversion with no leading
-<emphasis remap='B'>0x</emphasis></para>
+<emphasis>0x</emphasis></para>
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -207,11 +207,11 @@ to eight digits (full width of a 32-bit number)</para>
 </variablelist>
 <!-- .RE -->
 
-<para><emphasis remap='I'>Ttoul</emphasis>
+<para><emphasis>Ttoul</emphasis>
 returns NULL for success and
 a pointer to a string-literal error message for failure;
 see DIAGNOSTICS.
-<emphasis remap='I'>Ultot</emphasis>
+<emphasis>Ultot</emphasis>
 returns
 <literal>0</literal>
 for a failure, and otherwise
@@ -235,7 +235,7 @@ unknown
 <varname role='parameter'>base</varname>;
 non-digit character found;
 number too large for an
-<emphasis remap='B'>unsigned long</emphasis>.</para>
+<emphasis>unsigned long</emphasis>.</para>
 
 <para><function>Ttoulb</function> adds an error for exceeding the upper bound.</para>
 
@@ -254,11 +254,11 @@ unknown
 <para>Conversion of
 <literal>0</literal>
 with format
-<emphasis remap='B'>o</emphasis>
+<emphasis>o</emphasis>
 yields
 <literal>00</literal>.</para>
 
-<para><emphasis remap='I'>Ultot</emphasis>
+<para><emphasis>Ultot</emphasis>
 format
 <literal>17</literal>
 is a bit of a kludge.</para>
@@ -272,18 +272,18 @@ because many readers will not think of NULL as signifying success.
 A good way to make it clearer is to write something like:</para>
 
 <!-- .RS -->
-<literallayout remap='.nf'>
-<emphasis remap='B'>const char *error;</emphasis>
+<literallayout>
+<emphasis>const char *error;</emphasis>
 
-<emphasis remap='B'>error = ttoul( /* ... */ );</emphasis>
-<emphasis remap='B'>if (error != NULL) {</emphasis>
-<emphasis remap='B'>        /* something went wrong */</emphasis>
+<emphasis>error = ttoul( /* ... */ );</emphasis>
+<emphasis>if (error != NULL) {</emphasis>
+<emphasis>        /* something went wrong */</emphasis>
 </literallayout> <!-- .fi -->
 </refsect1>
   <refsect1 id='author'>
     <title>AUTHOR</title>
     <para>
-      <emphasis role='strong' remap='B'>Paul Wouters</emphasis>
+      <emphasis role='strong'>Paul Wouters</emphasis>
     </para>
   </refsect1>
 </refentry>

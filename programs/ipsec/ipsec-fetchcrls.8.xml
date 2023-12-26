@@ -28,7 +28,7 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>Fetchcrls</emphasis> signals IPsec daemon (pluto)
+      <emphasis>Fetchcrls</emphasis> signals IPsec daemon (pluto)
       to fetch new crls (certificate revocation lists) from distribution URIs.
     </para>
   </refsect1>

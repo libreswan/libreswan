@@ -28,7 +28,7 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>Showstates</emphasis> operation list current IKE SA
+      <emphasis>Showstates</emphasis> operation list current IKE SA
       and Child SA states.
     </para>
   </refsect1>

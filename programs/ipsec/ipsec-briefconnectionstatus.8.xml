@@ -28,7 +28,7 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>Briefconnectionstatus</emphasis> list brief connection
+      <emphasis>Briefconnectionstatus</emphasis> list brief connection
       status from the pluto daemon for all connections or optionally specified
       <option>connectionname</option>. Displays one line per connection showing
       client and host IPs, bytes, connection name, and reqid. Get complete

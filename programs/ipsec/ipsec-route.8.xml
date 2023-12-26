@@ -30,7 +30,7 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>Route</emphasis> operation changes previously
+      <emphasis>Route</emphasis> operation changes previously
       <option>add</option>ed connection to routed state. This
       cause pluto to add necessary IPsec policies and routes on
       system to cause connection to be <option>on demand</option>,

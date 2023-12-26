@@ -66,18 +66,18 @@
 
 <refsect1 id='description'><title>DESCRIPTION</title>
 <para>The
-<emphasis remap='B'>&lt;libreswan.h&gt;</emphasis>
+<emphasis>&lt;libreswan.h&gt;</emphasis>
 library uses an internal type
-<emphasis remap='I'>ip_subnet</emphasis>
+<emphasis>ip_subnet</emphasis>
 to contain a description of an IP subnet
 (base address plus mask).
 These functions provide basic tools for creating and examining this type.</para>
 
-<para><emphasis remap='I'>Initsubnet</emphasis>
+<para><emphasis>Initsubnet</emphasis>
 initializes a variable
-<emphasis remap='I'>*dst</emphasis>
+<emphasis>*dst</emphasis>
 of type
-<emphasis remap='I'>ip_subnet</emphasis>
+<emphasis>ip_subnet</emphasis>
 from a base address and
 a count of mask bits.
 The
@@ -86,8 +86,8 @@ parameter specifies what to do if the base address includes
 <literal>1</literal>
 bits outside the prefix specified by the mask
 (that is, in the &ldquo;host number&rdquo; part of the address):</para>
-  <blockquote remap='RS'>
-  <variablelist remap='IP'>
+  <blockquote>
+  <variablelist>
     <varlistentry>
     <term>'0'</term>
     <listitem>
@@ -101,39 +101,39 @@ bits outside the prefix specified by the mask
     </listitem>
     </varlistentry>
   </variablelist>
-  </blockquote> <!-- remap='RE' -->
+  </blockquote> <!-- -->
 
-<para><emphasis remap='I'>Initsubnet</emphasis>
+<para><emphasis>Initsubnet</emphasis>
 returns
-<emphasis remap='B'>NULL</emphasis>
+<emphasis>NULL</emphasis>
 for success and
 a pointer to a string-literal error message for failure;
 see DIAGNOSTICS.</para>
 
-<para><emphasis remap='I'>Addrtosubnet</emphasis>
+<para><emphasis>Addrtosubnet</emphasis>
 initializes an
-<emphasis remap='I'>ip_subnet</emphasis>
+<emphasis>ip_subnet</emphasis>
 variable
-<emphasis remap='I'>*dst</emphasis>
+<emphasis>*dst</emphasis>
 to a &ldquo;singleton subnet&rdquo; containing the single address
-<emphasis remap='I'>*addr</emphasis>.
+<emphasis>*addr</emphasis>.
 It returns
-<emphasis remap='B'>NULL</emphasis>
+<emphasis>NULL</emphasis>
 for success and
 a pointer to a string-literal error message for failure.</para>
 
-<para><emphasis remap='I'>Subnettypeof</emphasis>
+<para><emphasis>Subnettypeof</emphasis>
 returns the address type of a subnet,
 normally
-<emphasis remap='B'>AF_INET</emphasis>
+<emphasis>AF_INET</emphasis>
 or
-<emphasis remap='B'>AF_INET6</emphasis>.
+<emphasis>AF_INET6</emphasis>.
 (The
-<emphasis remap='B'>&lt;libreswan.h&gt;</emphasis>
+<emphasis>&lt;libreswan.h&gt;</emphasis>
 header file arranges to include the necessary headers for these
 names to be known.)</para>
 
-<para><emphasis remap='I'>Masktocount</emphasis>
+<para><emphasis>Masktocount</emphasis>
 converts a subnet mask, expressed as an address, to a bit count
 suitable for use with
 <function>initsubnet</function>.
@@ -141,15 +141,15 @@ It returns
 <option>-1</option>
 for error; see DIAGNOSTICS.</para>
 
-<para><emphasis remap='I'>Networkof</emphasis>
+<para><emphasis>Networkof</emphasis>
 fills in
-<emphasis remap='I'>*dst</emphasis>
+<emphasis>*dst</emphasis>
 with the base address of subnet
 <varname role='parameter'>src</varname>.</para>
 
-<para><emphasis remap='I'>Maskof</emphasis>
+<para><emphasis>Maskof</emphasis>
 fills in
-<emphasis remap='I'>*dst</emphasis>
+<emphasis>*dst</emphasis>
 with the subnet mask of subnet
 <varname role='parameter'>src</varname>,
 expressed as an address.</para>
@@ -171,7 +171,7 @@ impossible mask bit count;
 non-zero host-number bits and
 <varname role='parameter'>clash</varname>
 is
-<emphasis remap='B'>'x'</emphasis>.
+<emphasis>'x'</emphasis>.
 Fatal errors in
 <function>addrtosubnet</function>
 are:
@@ -186,7 +186,7 @@ mask bits not contiguous.</para>
   <refsect1 id='author'>
     <title>AUTHOR</title>
     <para>
-      <emphasis role='strong' remap='B'>Paul Wouters</emphasis>
+      <emphasis role='strong'>Paul Wouters</emphasis>
     </para>
   </refsect1>
 <refsect1 id='history'><title>HISTORY</title>

@@ -87,12 +87,12 @@
 
 <refsect1 id='description'><title>DESCRIPTION</title>
 <para>These functions do various comparisons and tests on the
-<emphasis remap='I'>ip_address</emphasis>
+<emphasis>ip_address</emphasis>
 type and
-<emphasis remap='I'>ip_subnet</emphasis>
+<emphasis>ip_subnet</emphasis>
 types.</para>
 
-<para><emphasis remap='I'>Sameaddr</emphasis>
+<para><emphasis>Sameaddr</emphasis>
 returns
 non-zero
 if addresses
@@ -105,7 +105,7 @@ and
 otherwise.
 Addresses of different families are never identical.</para>
 
-<para><emphasis remap='I'>Addrcmp</emphasis>
+<para><emphasis>Addrcmp</emphasis>
 returns
 <option>-1</option>,
 <literal>0</literal>,
@@ -121,7 +121,7 @@ they are never equal;
 the ordering reported in this case is arbitrary
 (and probably not useful) but consistent.</para>
 
-<para><emphasis remap='I'>Samesubnet</emphasis>
+<para><emphasis>Samesubnet</emphasis>
 returns
 non-zero
 if subnets
@@ -134,7 +134,7 @@ and
 otherwise.
 Subnets of different address families are never identical.</para>
 
-<para><emphasis remap='I'>Addrinsubnet</emphasis>
+<para><emphasis>Addrinsubnet</emphasis>
 returns
 non-zero
 if address
@@ -147,7 +147,7 @@ otherwise.
 An address is never within a
 subnet of a different address family.</para>
 
-<para><emphasis remap='I'>Subnetinsubnet</emphasis>
+<para><emphasis>Subnetinsubnet</emphasis>
 returns
 non-zero
 if subnet
@@ -161,7 +161,7 @@ A subnet is deemed to be a subset of itself.
 A subnet is never a subset of another
 subnet if their address families differ.</para>
 
-<para><emphasis remap='I'>Subnetishost</emphasis>
+<para><emphasis>Subnetishost</emphasis>
 returns
 non-zero
 if subnet
@@ -171,7 +171,7 @@ and
 <literal>0</literal>
 otherwise.</para>
 
-<para><emphasis remap='I'>Samesaid</emphasis>
+<para><emphasis>Samesaid</emphasis>
 returns
 non-zero
 if SA IDs
@@ -183,7 +183,7 @@ and
 <literal>0</literal>
 otherwise.</para>
 
-<para><emphasis remap='I'>Sameaddrtype</emphasis>
+<para><emphasis>Sameaddrtype</emphasis>
 returns
 non-zero
 if addresses
@@ -195,7 +195,7 @@ and
 <literal>0</literal>
 otherwise.</para>
 
-<para><emphasis remap='I'>Samesubnettype</emphasis>
+<para><emphasis>Samesubnettype</emphasis>
 returns
 non-zero
 if subnets
@@ -218,7 +218,7 @@ otherwise.</para>
   <refsect1 id='author'>
     <title>AUTHOR</title>
     <para>
-      <emphasis role='strong' remap='B'>Paul Wouters</emphasis>
+      <emphasis role='strong'>Paul Wouters</emphasis>
     </para>
   </refsect1>
 </refentry>

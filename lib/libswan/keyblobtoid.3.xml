@@ -45,7 +45,7 @@
 
 
 <refsect1 id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Keyblobtoid</emphasis>
+<para><emphasis>Keyblobtoid</emphasis>
 and
 <function>splitkeytoid</function>
 generate
@@ -55,7 +55,7 @@ for use in messages and reporting,
 writing the result to
 <varname role='parameter'>dst</varname>.
 A
-<emphasis remap='I'>key ID</emphasis>
+<emphasis>key ID</emphasis>
 is a short ASCII string identifying a key;
 currently it is just the first nine characters of the base64
 encoding of the RFC 2537/3110 &ldquo;byte blob&rdquo; representation of the key.
@@ -63,13 +63,13 @@ encoding of the RFC 2537/3110 &ldquo;byte blob&rdquo; representation of the key.
 there is always some small chance of two random keys having the
 same ID.)</para>
 
-<para><emphasis remap='I'>Keyblobtoid</emphasis>
+<para><emphasis>Keyblobtoid</emphasis>
 generates a key ID from a key which is already in the form of an
 RFC 2537/3110 binary key
 <varname role='parameter'>blob</varname>
 (encoded exponent length, exponent, modulus).</para>
 
-<para><emphasis remap='I'>Splitkeytoid</emphasis>
+<para><emphasis>Splitkeytoid</emphasis>
 generates a key ID from a key given in the form of a separate
 (binary) exponent
 <varname role='parameter'>e</varname>
@@ -87,16 +87,16 @@ under no circumstances are more than
 bytes written to
 <varname role='parameter'>dst</varname>.
 A result that will not fit is truncated.
-<emphasis remap='I'>Dstlen</emphasis>
+<emphasis>Dstlen</emphasis>
 can be zero, in which case
 <varname role='parameter'>dst</varname>
 need not be valid and no result is written,
 but the return value is unaffected;
 in all other cases, the (possibly truncated) result is NUL-terminated.
 The
-<emphasis remap='I'>libreswan.h</emphasis>
+<emphasis>libreswan.h</emphasis>
 header file defines a constant
-<emphasis remap='B'>KEYID_BUF</emphasis>
+<emphasis>KEYID_BUF</emphasis>
 which is the size of a buffer large enough for worst-case results.</para>
 
 <para>Both functions return
@@ -123,7 +123,7 @@ probability of collision.</para>
 
 <refsect1 id='see_also'><title>SEE ALSO</title>
 <para>RFC 3110,
-<emphasis remap='I'>RSA/SHA-1 SIGs and RSA KEYs in the Domain Name System (DNS)</emphasis>,
+<emphasis>RSA/SHA-1 SIGs and RSA KEYs in the Domain Name System (DNS)</emphasis>,
 Eastlake, 2001
 (superseding the older but better-known RFC 2537).</para>
 </refsect1>
@@ -138,7 +138,7 @@ exponent too long for its length to be representable.</para>
   <refsect1 id='author'>
     <title>AUTHOR</title>
     <para>
-      <emphasis role='strong' remap='B'>Paul Wouters</emphasis>
+      <emphasis role='strong'>Paul Wouters</emphasis>
     </para>
   </refsect1>
 <refsect1 id='history'><title>HISTORY</title>

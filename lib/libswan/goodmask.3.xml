@@ -47,7 +47,7 @@ see
 <citerefentry><refentrytitle>ipsec-masktocount</refentrytitle><manvolnum>3</manvolnum></citerefentry>
 for a partial replacement.</para>
 
-<para><emphasis remap='I'>Goodmask</emphasis>
+<para><emphasis>Goodmask</emphasis>
 reports whether the subnet
 <varname role='parameter'>mask</varname>
 is a valid one,
@@ -55,11 +55,11 @@ i.e. consists of a (possibly empty) sequence of
 <literal>1</literal>s
 followed by a (possibly empty) sequence of
 <literal>0</literal>s.
-<emphasis remap='I'>Masktobits</emphasis>
+<emphasis>Masktobits</emphasis>
 takes a (valid) subnet mask and returns the number of
 <literal>1</literal>
 bits in it.
-<emphasis remap='I'>Bitstomask</emphasis>
+<emphasis>Bitstomask</emphasis>
 reverses this,
 returning the subnet mask corresponding to bit count
 <varname role='parameter'>n</varname>.</para>
@@ -72,11 +72,11 @@ returning the subnet mask corresponding to bit count
 </refsect1>
 
 <refsect1 id='diagnostics'><title>DIAGNOSTICS</title>
-<para><emphasis remap='I'>Masktobits</emphasis>
+<para><emphasis>Masktobits</emphasis>
 returns
 <option>-1</option>
 for an invalid mask.
-<emphasis remap='I'>Bitstomask</emphasis>
+<emphasis>Bitstomask</emphasis>
 returns an all-zeros mask for a negative or out-of-range
 <varname role='parameter'>n</varname>.</para>
 </refsect1>
@@ -94,7 +94,7 @@ zero is sometimes a legitimate mask.</para>
   <refsect1 id='author'>
     <title>AUTHOR</title>
     <para>
-      <emphasis role='strong' remap='B'>Paul Wouters</emphasis>
+      <emphasis role='strong'>Paul Wouters</emphasis>
     </para>
   </refsect1>
 </refentry>

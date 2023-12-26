@@ -63,12 +63,12 @@
 for their replacements.
 <function>atoaddr</function> and <function>atosubnet</function> have already been deleted.</para>
 
-<para><emphasis remap='I'>Atoaddr</emphasis>
+<para><emphasis>Atoaddr</emphasis>
 converts an ASCII name or dotted-decimal address into a binary address
 (in network byte order).
-<emphasis remap='I'>Addrtoa</emphasis>
+<emphasis>Addrtoa</emphasis>
 does the reverse conversion, back to an ASCII dotted-decimal address.
-<emphasis remap='I'>Atosubnet</emphasis>
+<emphasis>Atosubnet</emphasis>
 and
 <function>subnettoa</function>
 do likewise for the &ldquo;address/mask&rdquo; ASCII form used to write a
@@ -78,13 +78,13 @@ specification of a subnet.</para>
 dotted-decimal address (e.g.
 <literal>1.2.3.4</literal>),
 an eight-digit network-order hexadecimal number with the usual C prefix (e.g.
-<emphasis remap='B'>0x01020304</emphasis>,
+<emphasis>0x01020304</emphasis>,
 which is synonymous with
 <literal>1.2.3.4</literal>),
 an eight-digit host-order hexadecimal number with a
-<emphasis remap='B'>0h</emphasis>
+<emphasis>0h</emphasis>
 prefix (e.g.
-<emphasis remap='B'>0h01020304</emphasis>,
+<emphasis>0h01020304</emphasis>,
 which is synonymous with
 <literal>1.2.3.4</literal>
 on a big-endian host and
@@ -118,7 +118,7 @@ is always complete and does not contain leading zeros.</para>
 <para>The letters in
 a hexadecimal address may be uppercase or lowercase or any mixture thereof.
 Use of hexadecimal addresses is
-<emphasis remap='B'>strongly discouraged</emphasis>;
+<emphasis>strongly discouraged</emphasis>;
 they are included only to save hassles when dealing with
 the handful of perverted programs that already print
 network addresses in hexadecimal.</para>
@@ -128,7 +128,7 @@ or incomplete, and are looked up as specified by local system configuration
 (see
 <citerefentry><refentrytitle>resolver</refentrytitle><manvolnum>5</manvolnum></citerefentry>).
 The
-<emphasis remap='I'>h_addr</emphasis>
+<emphasis>h_addr</emphasis>
 value returned by
 <citerefentry><refentrytitle>gethostbyname</refentrytitle><manvolnum>3</manvolnum></citerefentry>
 is used,
@@ -141,9 +141,9 @@ only if
 <citerefentry><refentrytitle>gethostbyname</refentrytitle><manvolnum>3</manvolnum></citerefentry>
 fails.</para>
 
-<para>A subnet specification is of the form <emphasis remap='I'>network</emphasis><emphasis remap='B'>/</emphasis><varname role='parameter'>mask</varname>.
+<para>A subnet specification is of the form <emphasis>network</emphasis><emphasis>/</emphasis><varname role='parameter'>mask</varname>.
 The
-<emphasis remap='I'>network</emphasis>
+<emphasis>network</emphasis>
 and
 <varname role='parameter'>mask</varname>
 can be any form acceptable to
@@ -160,18 +160,18 @@ means
 In any case, the mask must be contiguous
 (a sequence of high bits on and all remaining low bits off).
 As a special case, the subnet specification
-<emphasis remap='B'>%default</emphasis>
+<emphasis>%default</emphasis>
 is a synonym for
-<emphasis remap='B'>0.0.0.0/0</emphasis>.</para>
+<emphasis>0.0.0.0/0</emphasis>.</para>
 
-<para><emphasis remap='I'>Atosubnet</emphasis>
+<para><emphasis>Atosubnet</emphasis>
 ANDs the mask with the address before returning,
 so that any non-network bits in the address are turned off
 (e.g.,
-<emphasis remap='B'>10.1.2.3/24</emphasis>
+<emphasis>10.1.2.3/24</emphasis>
 is synonymous with
-<emphasis remap='B'>10.1.2.0/24</emphasis>).
-<emphasis remap='I'>Subnettoa</emphasis>
+<emphasis>10.1.2.0/24</emphasis>).
+<emphasis>Subnettoa</emphasis>
 generates the decimal-integer-bit-count
 form of the mask,
 with no leading zeros,
@@ -194,7 +194,7 @@ a
 value of
 <literal>0</literal>
 is taken to mean
-<emphasis remap='B'>strlen(src)</emphasis>.</para>
+<emphasis>strlen(src)</emphasis>.</para>
 
 <para>The
 <varname role='parameter'>dstlen</varname>
@@ -210,18 +210,18 @@ under no circumstances are more than
 bytes written to
 <varname role='parameter'>dst</varname>.
 A result that will not fit is truncated.
-<emphasis remap='I'>Dstlen</emphasis>
+<emphasis>Dstlen</emphasis>
 can be zero, in which case
 <varname role='parameter'>dst</varname>
 need not be valid and no result is written,
 but the return value is unaffected;
 in all other cases, the (possibly truncated) result is NUL-terminated.
 The
-<emphasis remap='I'>libreswan.h</emphasis>
+<emphasis>libreswan.h</emphasis>
 header file defines constants,
-<emphasis remap='B'>ADDRTOA_BUF</emphasis>
+<emphasis>ADDRTOA_BUF</emphasis>
 and
-<emphasis remap='B'>SUBNETTOA_BUF</emphasis>,
+<emphasis>SUBNETTOA_BUF</emphasis>,
 that are the sizes of buffers just large enough for worst-case results.</para>
 
 <para>The
@@ -234,7 +234,7 @@ specifies what format is to be used for the conversion.
 The value
 <literal>0</literal>
 (not the ASCII character
-<emphasis remap='B'>'0'</emphasis>,
+<emphasis>'0'</emphasis>,
 but a zero value)
 specifies a reasonable default,
 and is in fact the only format currently available.
@@ -271,12 +271,12 @@ dotted-decimal component too large to fit in 8 bits.</para>
 <function>atosubnet</function>
 are:
 no
-<emphasis remap='B'>/</emphasis>
+<emphasis>/</emphasis>
 in
 <varname role='parameter'>src</varname>;
 <function>atoaddr</function>
 error in conversion of
-<emphasis remap='I'>network</emphasis>
+<emphasis>network</emphasis>
 or
 <varname role='parameter'>mask</varname>;
 bit-count mask too big;
@@ -297,9 +297,9 @@ unknown format.</para>
 <refsect1 id='bugs'><title>BUGS</title>
 <para>The interpretation of incomplete dotted-decimal addresses
 (e.g.
-<emphasis remap='B'>10/24</emphasis>
+<emphasis>10/24</emphasis>
 means
-<emphasis remap='B'>10.0.0.0/24</emphasis>)
+<emphasis>10.0.0.0/24</emphasis>)
 differs from that of some older conversion
 functions, e.g. those of
 <citerefentry><refentrytitle>inet</refentrytitle><manvolnum>3</manvolnum></citerefentry>.
@@ -326,18 +326,18 @@ to slightly obscure code,
 because many readers will not think of NULL as signifying success.
 A good way to make it clearer is to write something like:</para>
 
-<literallayout remap='.nf'>
-<emphasis remap='B'>const char *error;</emphasis>
+<literallayout>
+<emphasis>const char *error;</emphasis>
 
-<emphasis remap='B'>error = atoaddr( /* ... */ );</emphasis>
-<emphasis remap='B'>if (error != NULL) {</emphasis>
-<emphasis remap='B'>        /* something went wrong */</emphasis>
+<emphasis>error = atoaddr( /* ... */ );</emphasis>
+<emphasis>if (error != NULL) {</emphasis>
+<emphasis>        /* something went wrong */</emphasis>
 </literallayout> <!-- .fi -->
 </refsect1>
   <refsect1 id='author'>
     <title>AUTHOR</title>
     <para>
-      <emphasis role='strong' remap='B'>Paul Wouters</emphasis>
+      <emphasis role='strong'>Paul Wouters</emphasis>
     </para>
   </refsect1>
 </refentry>

@@ -28,7 +28,7 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>Connectionstatus</emphasis> list status of all
+      <emphasis>Connectionstatus</emphasis> list status of all
       connections or optionally specitfied <option>connectionname</option>.
     </para>
   </refsect1>

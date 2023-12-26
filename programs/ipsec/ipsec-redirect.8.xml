@@ -30,7 +30,7 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>Redirect</emphasis> a connection (if connectionname is specified)
+      <emphasis>Redirect</emphasis> a connection (if connectionname is specified)
       or all connections to <option>--redirect-to</option> specified ip-address or
       comma-separated list of ip-addresses (evenly distributed).
     </para>

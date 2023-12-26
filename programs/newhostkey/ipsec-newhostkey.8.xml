@@ -64,7 +64,7 @@
 
 	<varlistentry>
 	  <term>
-	    <option>--nssdir</option>&nbsp;<replaceable>@@IPSEC_NSSDIR@@</replaceable>
+	    <option>--nssdir</option> <replaceable>@@IPSEC_NSSDIR@@</replaceable>
 	  </term>
 	  <listitem>
 	    <para>
@@ -76,7 +76,7 @@
 	</varlistentry>
 
 	<varlistentry>
-	  <term><option>--password</option>&nbsp;<replaceable>password</replaceable></term>
+	  <term><option>--password</option> <replaceable>password</replaceable></term>
 	  <listitem>
 	    <para>
 	      The <option>--password</option> option specifies a
@@ -88,7 +88,7 @@
 
 	<varlistentry>
 	  <term>
-	    <option>--bits</option>&nbsp;<replaceable>bits</replaceable>
+	    <option>--bits</option> <replaceable>bits</replaceable>
 	  </term>
 	  <listitem>
 	    <para>
@@ -102,7 +102,7 @@
 
 	<varlistentry>
 	  <term>
-	    <option>--curve</option>&nbsp;<replaceable>curve</replaceable>
+	    <option>--curve</option> <replaceable>curve</replaceable>
 	  </term>
 	  <listitem>
 	    <para>
@@ -116,21 +116,21 @@
 
 	<varlistentry>
 	  <term>
-	    <option>--keytype</option>&nbsp;<replaceable>rsa|ecdsa</replaceable>
+	    <option>--keytype</option> <replaceable>rsa|ecdsa</replaceable>
 	  </term>
 	  <listitem>
 	    <para>
 	      The <option>--keytype</option> option specifies the type of key,
-	      which can either be <emphasis remap='I'>rsa</emphasis> (RSA)
-	      or <emphasis remap='I'>ecdsa</emphasis> (ECDSA);
-	      if omitted the current default is <emphasis remap='I'>rsa</emphasis>.
+	      which can either be <emphasis>rsa</emphasis> (RSA)
+	      or <emphasis>ecdsa</emphasis> (ECDSA);
+	      if omitted the current default is <emphasis>rsa</emphasis>.
 	    </para>
 	  </listitem>
 	</varlistentry>
 
 	<varlistentry>
 	  <term>
-	    <option>--seeddev</option>&nbsp;<replaceable>device</replaceable>
+	    <option>--seeddev</option> <replaceable>device</replaceable>
 	  </term>
 	  <listitem>
 	    <para>

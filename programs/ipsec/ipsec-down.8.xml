@@ -29,7 +29,7 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>Down</emphasis> operation commands pluto to
+      <emphasis>Down</emphasis> operation commands pluto to
       tear down all connections matching specified
       <option>connectionname</option> in internal configuration database.
       This connection definitions in place so remotes can immediately

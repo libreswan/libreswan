@@ -28,7 +28,7 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>Trafficstatus</emphasis> operation list current
+      <emphasis>Trafficstatus</emphasis> operation list current
       Child SA states with traffic counters.
     </para>
   </refsect1>

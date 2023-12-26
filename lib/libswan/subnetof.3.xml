@@ -48,14 +48,14 @@
 <citerefentry><refentrytitle>ipsec-networkof</refentrytitle><manvolnum>3</manvolnum></citerefentry>
 for their replacements.</para>
 
-<para><emphasis remap='I'>Subnetof</emphasis>
+<para><emphasis>Subnetof</emphasis>
 takes an Internet
-<emphasis remap='I'>address</emphasis>
+<emphasis>address</emphasis>
 and a subnet
 <varname role='parameter'>mask</varname>
 and returns the network part of the address
 (all in network byte order).
-<emphasis remap='I'>Hostof</emphasis>
+<emphasis>Hostof</emphasis>
 similarly returns the host part, and
 <function>broadcastof</function>
 returns the broadcast address (all-1s convention) for the network.</para>
@@ -78,7 +78,7 @@ an API, in hopes of easing the eventual transition to IPv6.</para>
   <refsect1 id='author'>
     <title>AUTHOR</title>
     <para>
-      <emphasis role='strong' remap='B'>Paul Wouters</emphasis>
+      <emphasis role='strong'>Paul Wouters</emphasis>
     </para>
   </refsect1>
 </refentry>

@@ -30,11 +30,11 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>Start</emphasis> operation without any options
+      <emphasis>Start</emphasis> operation without any options
       requests initsystem to start ipsec service.
     </para>
     <para>
-      <emphasis remap='I'>Start</emphasis> operation with
+      <emphasis>Start</emphasis> operation with
       <option>connectionname</option> option is equivalent to
       running first <option>ipsec add connectionname</option> and then
       <option>ipsec up connectionname</option>, causing same effect

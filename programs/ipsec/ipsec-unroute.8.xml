@@ -30,7 +30,7 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>Unroute</emphasis> operation removes
+      <emphasis>Unroute</emphasis> operation removes
       route and policies left behind from previously routed connection.
       For example <option>down</option> operation leaves states behind
       to leave connection to <option>ondemand</option> state. If you need

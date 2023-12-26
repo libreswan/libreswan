@@ -34,8 +34,8 @@
       <command>ipsec _stackmanager</command> is called
       from within the init sub-system (systemd, upstart, sysv initscripts)
       to bring up the Libreswan kernel component as configured via the
-      <emphasis remap='I'>protostack=</emphasis> option in the <emphasis
-      remap='I'>ipsec.conf</emphasis> configuration file.
+      <emphasis>protostack=</emphasis> option in the <emphasis>ipsec.conf</emphasis>
+      configuration file.
     </para>
 
     <para>

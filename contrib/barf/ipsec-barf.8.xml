@@ -62,10 +62,10 @@
     <para>
       <command>barf</command> has to figure out which files in
       <filename>/var/log</filename> contain the IPsec log messages. It looks for
-      general log messages first in <emphasis remap='I'>messages</emphasis>
-      and <emphasis remap='I'>syslog</emphasis>, and for Pluto messages first in
-      <emphasis remap='I'>secure</emphasis>, <emphasis remap='I'>auth.log</emphasis>,
-      and <emphasis remap='I'>debug</emphasis>. In both cases, if it does not find
+      general log messages first in <emphasis>messages</emphasis>
+      and <emphasis>syslog</emphasis>, and for Pluto messages first in
+      <emphasis>secure</emphasis>, <emphasis>auth.log</emphasis>,
+      and <emphasis>debug</emphasis>. In both cases, if it does not find
       what it is looking for in one of those &ldquo;likely&rdquo; places,
       it will resort to a brute-force search of most (non-compressed) files in
       <filename>/var/log</filename>.
@@ -101,7 +101,7 @@
     </para>
 
     <para>
-      Finding <emphasis remap='I'>updown</emphasis>
+      Finding <emphasis>updown</emphasis>
       scripts (so they can be included in output) is, in general, difficult.
       <command>barf</command>
       uses a very simple heuristic that is easily fooled.

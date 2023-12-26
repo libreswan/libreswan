@@ -28,7 +28,7 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>Rereadall</emphasis> operation is same as
+      <emphasis>Rereadall</emphasis> operation is same as
       running both <option>rereadsecrets</option> and <option>rereadcerts</option>.
     </para>
   </refsect1>

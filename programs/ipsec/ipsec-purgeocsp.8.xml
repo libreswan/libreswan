@@ -28,7 +28,7 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>Purgeocsp</emphasis> operation purges the
+      <emphasis>Purgeocsp</emphasis> operation purges the
       NSS OCSP cache.
     </para>
   </refsect1>

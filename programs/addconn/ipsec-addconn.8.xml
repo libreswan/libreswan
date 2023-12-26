@@ -113,7 +113,7 @@
     </para>
 
     <para>
-      When addcon is run, connections that have the <emphasis remap='I'>auto=</emphasis>
+      When addcon is run, connections that have the <emphasis>auto=</emphasis>
       option set to <command>add</command>, <command>start</command>
       or <command>route</command> will be loaded, routed or initiated.
       If a connection was loaded or initiated already, it will be replaced.
@@ -121,9 +121,9 @@
 
     <para>
       When <option>--configsetup</option> is specified, the
-      configuration file is parsed for the <emphasis remap='I'>config setup</emphasis>
+      configuration file is parsed for the <emphasis>config setup</emphasis>
       section and printed to the terminal usable as a shell script.
-      These are prefaced with <emphasis remap='I'>export </emphasis>
+      These are prefaced with <emphasis>export </emphasis>
       unless  <option>--noexport</option> is specified.
     </para>
 

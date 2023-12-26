@@ -28,7 +28,7 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>Listpubkeys</emphasis> operation lists all public keys
+      <emphasis>Listpubkeys</emphasis> operation lists all public keys
       from <option>pluto</option> internal database.
     </para>
   </refsect1>

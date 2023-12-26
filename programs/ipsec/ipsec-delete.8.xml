@@ -29,7 +29,7 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>Delete</emphasis> operation deletes a connection
+      <emphasis>Delete</emphasis> operation deletes a connection
       specification from <option>pluto</option> internal database (also tearing
       down any connections based on it).
     </para>

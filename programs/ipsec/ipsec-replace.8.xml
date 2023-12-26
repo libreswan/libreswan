@@ -30,7 +30,7 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>Replace</emphasis> a connection definition from
+      <emphasis>Replace</emphasis> a connection definition from
       <option>pluto</option> internal database with one from @@IPSEC_CONF@@.
       Replace is very similar to <option>ipsec add</option> but it first
       deletes old connection secification and old tunnels using same

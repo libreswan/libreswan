@@ -49,29 +49,29 @@
 
 <refsect1 id='description'><title>DESCRIPTION</title>
 <para>The
-<emphasis remap='B'>&lt;libreswan.h&gt;</emphasis>
+<emphasis>&lt;libreswan.h&gt;</emphasis>
 internal type
-<emphasis remap='I'>ip_address</emphasis>
+<emphasis>ip_address</emphasis>
 contains one of the
 <function>sockaddr</function>
 types internally.
-<emphasis remap='I'>Reliance on this feature is discouraged</emphasis>,
+<emphasis>Reliance on this feature is discouraged</emphasis>,
 but it may occasionally be necessary.
 These functions provide low-level tools for this purpose.</para>
 
-<para><emphasis remap='I'>Portof</emphasis>
+<para><emphasis>Portof</emphasis>
 and
 <function>setportof</function>
 respectively read and write the port-number field of the internal
 <function>sockaddr</function>.
 The values are in network byte order.</para>
 
-<para><emphasis remap='I'>Sockaddrof</emphasis>
+<para><emphasis>Sockaddrof</emphasis>
 returns a pointer to the internal
 <function>sockaddr</function>,
 for passing to other functions.</para>
 
-<para><emphasis remap='I'>Sockaddrlenof</emphasis>
+<para><emphasis>Sockaddrlenof</emphasis>
 reports the size of the internal
 <function>sockaddr</function>,
 for use in storage allocation.</para>
@@ -82,18 +82,18 @@ for use in storage allocation.</para>
 </refsect1>
 
 <refsect1 id='diagnostics'><title>DIAGNOSTICS</title>
-<para><emphasis remap='I'>Portof</emphasis>
+<para><emphasis>Portof</emphasis>
 returns
 <option>-1</option>,
-<emphasis remap='I'>sockaddrof</emphasis>
+<emphasis>sockaddrof</emphasis>
 returns
-<emphasis remap='B'>NULL</emphasis>,
+<emphasis>NULL</emphasis>,
 and
 <function>sockaddrlenof</function>
 returns
 <literal>0</literal>
 if an unknown address family is found within the
-<emphasis remap='I'>ip_address</emphasis>.</para>
+<emphasis>ip_address</emphasis>.</para>
 </refsect1>
 
 <refsect1 id='history'><title>HISTORY</title>
@@ -102,14 +102,14 @@ if an unknown address family is found within the
 
 <refsect1 id='bugs'><title>BUGS</title>
 <para>These functions all depend on low-level details of the
-<emphasis remap='I'>ip_address</emphasis>
+<emphasis>ip_address</emphasis>
 type, which are in principle subject to change.
 Avoid using them unless really necessary.</para>
 </refsect1>
   <refsect1 id='author'>
     <title>AUTHOR</title>
     <para>
-      <emphasis role='strong' remap='B'>Paul Wouters</emphasis>
+      <emphasis role='strong'>Paul Wouters</emphasis>
     </para>
   </refsect1>
 </refentry>

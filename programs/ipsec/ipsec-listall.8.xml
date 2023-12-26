@@ -29,7 +29,7 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>Listall</emphasis> lists information about all
+      <emphasis>Listall</emphasis> lists information about all
       locally loaded public keys, X.509 certificates, X.509 certificate
       authority certificates and certificate revocation lists.
     </para>

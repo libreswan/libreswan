@@ -28,7 +28,7 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>Fipsstatus</emphasis> shows IPsec daemon (pluto) FIPS status.
+      <emphasis>Fipsstatus</emphasis> shows IPsec daemon (pluto) FIPS status.
     </para>
   </refsect1>
 

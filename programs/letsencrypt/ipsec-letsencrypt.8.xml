@@ -48,7 +48,7 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>Letsencrypt</emphasis>
+      <emphasis>Letsencrypt</emphasis>
       The command creates a secure Opportunistic Connection between the hosts
       commonly referred to as client and server. The client connects to the server
       and remains anonymous, whereas the server is authenticated before connecting
