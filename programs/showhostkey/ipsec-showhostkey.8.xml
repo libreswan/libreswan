@@ -59,7 +59,7 @@
     <title>DESCRIPTION</title>
 
     <para>
-      <emphasis remap='I'>Showhostkey</emphasis> outputs (on standard
+      <emphasis>Showhostkey</emphasis> outputs (on standard
       output) a public key suitable for this host, in the format
       specified, using the host key information stored in the NSS
       database.
@@ -115,7 +115,7 @@
 	    <para>
 	      Specify the password to use when accessing the NSS
 	      database (default contained in
-	      <filename>@IPSEC_CONFDDIR@/nsspassword</filename>).
+	      <filename>@@IPSEC_CONFDDIR@@/nsspassword</filename>).
 	    </para>
 	  </listitem>
 	</varlistentry>
@@ -198,8 +198,8 @@
 	    <para>
 	      Print the selected public key in
 	      <citerefentry><refentrytitle>ipsec.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>
-	      format, as a <emphasis remap='B'>leftrsasigkey</emphasis>
-	      or <emphasis remap='B'>rightrsasigkey</emphasis> parameter
+	      format, as a <emphasis>leftrsasigkey</emphasis>
+	      or <emphasis>rightrsasigkey</emphasis> parameter
 	      respectively.  For example, <option>--left</option> might
 	      give (with the key data trimmed down for clarity):
 	    </para>
@@ -223,7 +223,7 @@
 	      <option>--gateway</option>, which currently supports IPv4
 	      and IPv6 addresses. For the host name, the value returned
 	      by <emphasis>gethostname</emphasis> is used, with a
-	      <emphasis remap='B'>.</emphasis> appended.
+	      <emphasis>.</emphasis> appended.
 	    </para>
 	    <para>
 	      For example, <option>--ipseckey --gateway
@@ -274,8 +274,8 @@
     <para>
       A complaint about &ldquo;no pubkey line found&rdquo; indicates
       that the host has a key but it was generated with an old version
-      of FreeS/WAN and does not contain the information that <emphasis
-      remap='I'>showhostkey</emphasis> needs.
+      of FreeS/WAN and does not contain the information that
+      <emphasis>showhostkey</emphasis> needs.
     </para>
   </refsect1>
 
@@ -283,7 +283,7 @@
     <title>FILES</title>
     <para>
       <filename>@@IPSEC_NSSDIR@@</filename>,
-      <filename>@IPSEC_CONFDDIR@/nsspassword</filename>
+      <filename>@@IPSEC_CONFDDIR@@/nsspassword</filename>
     </para>
   </refsect1>
 
@@ -311,9 +311,8 @@
     <para>
       Arguably, rather than just reporting the no-IN-KEY-line-found
       problem, <command>showhostkey</command> should be
-      smart enough to run the existing key through <emphasis
-      remap='I'>rsasigkey</emphasis> with the
-      <option>--oldkey</option> option, to generate a suitable output
+      smart enough to run the existing key through <emphasis>rsasigkey</emphasis>
+      with the <option>--oldkey</option> option, to generate a suitable output
       line.
     </para>
   </refsect1>
