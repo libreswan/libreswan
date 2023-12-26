@@ -564,10 +564,8 @@ ipsec_stopnflog() {
 
     firewall_cmd
 
-    if [ "${FIREWALL}" = IPTABLES ]; then
-	nflog_iptables_delete "${NFGROUP}"
-    elif [ "${FIREWALL}" = NFTABLES ]; then
-	nflog_nftables_delete
+    if [ -n "${FIREWALL}" ]; then
+	nflog_${FIREWALL}_delete "${NFGROUP}"
     fi
 
     exit 0
@@ -625,9 +623,9 @@ firewall_cmd() {
     USE_NFTABLES=@@USE_NFTABLES@@
 
     if [ "${USE_NFTABLES}" = true ]; then
-	FIREWALL=NFTABLES
+	FIREWALL=nftables
     elif [ "${USE_IPTABLES}" = true ]; then
-	FIREWALL=IPTABLES
+	FIREWALL=iptables
     else
 	FIREWALL=
     fi
@@ -660,10 +658,8 @@ ipsec_checknflog() {
 
     firewall_cmd
 
-    if [ "${FIREWALL}" = IPTABLES ]; then
-	checknflog_iptables
-    elif [ "${FIREWALL}" = NFTABLES ]; then
-	checknflog_nftables
+    if [ -n "${FIREWALL}" ]; then
+	checknflog_${FIREWALL}
     fi
 
     exit 0

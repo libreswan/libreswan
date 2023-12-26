@@ -841,10 +841,11 @@ doroute() {
 firewall_cmd() {
     USE_IPTABLES=@@USE_IPTABLES@@
     USE_NFTABLES=@@USE_NFTABLES@@
+
     if [ "${USE_NFTABLES}" = true ]; then
-	FIREWALL=NFTABLES;
+	FIREWALL=nftables
     elif [ "${USE_IPTABLES}" = true ]; then
-	FIREWALL=IPTABLES
+	FIREWALL=iptables
     else
 	FIREWALL=
     fi
@@ -912,34 +913,34 @@ nftables_delete_chain() {
 
 addnflog() {
     firewall_cmd
-    if [ "${FIREWALL}" = IPTABLES -a -n "${NFLOG}" ]; then
+    if [ "${FIREWALL}" = "nftables" -a -n "${NFLOG}" ]; then
+        add_nflog_nftables_conn
+    elif [ "${FIREWALL}" = iptables -a -n "${NFLOG}" ]; then
         iptables -I OUTPUT -m policy --dir out --pol ipsec \
             -s ${PLUTO_MY_CLIENT} -d ${PLUTO_PEER_CLIENT} \
             -j NFLOG --nflog-group ${NFLOG} --nflog-prefix ${PLUTO_CONNECTION}
         iptables -I INPUT  -m policy --dir in --pol ipsec \
             -s ${PLUTO_PEER_CLIENT} -d ${PLUTO_MY_CLIENT} \
             -j NFLOG --nflog-group ${NFLOG} --nflog-prefix ${PLUTO_CONNECTION}
-    elif [ "${FIREWALL}" = NFTABLES -a -n "${NFLOG}" ]; then
-        add_nflog_nftables_conn
     fi
 }
 
 delnflog() {
     firewall_cmd
-    if [ "${FIREWALL}" = "IPTABLES" -a -n "${NFLOG}" ]; then
-	iptables -D OUTPUT -m policy --dir out --pol ipsec \
-	    -s ${PLUTO_MY_CLIENT} -d ${PLUTO_PEER_CLIENT} \
-	    -j NFLOG --nflog-group ${NFLOG} --nflog-prefix ${PLUTO_CONNECTION}
-	iptables -D INPUT  -m policy --dir in --pol ipsec \
-	    -s ${PLUTO_PEER_CLIENT} -d ${PLUTO_MY_CLIENT} \
-	    -j NFLOG --nflog-group ${NFLOG} --nflog-prefix ${PLUTO_CONNECTION}
-    elif [ "${FIREWALL}" = "NFTABLES" -a -n "${NFLOG}" ]; then
+    if [ "${FIREWALL}" = "nftables" -a -n "${NFLOG}" ]; then
 	# note the 3rd argument. regexp should be identical to what is used in nft add rule
 	nftables_delete_rule ipsec-log input "ipsec in reqid ${PLUTO_SA_REQID} ip saddr ${PLUTO_PEER_CLIENT} ip daddr ${PLUTO_MY_CLIENT_NET}"
 	nftables_delete_rule ipsec-log output "ipsec out reqid ${PLUTO_SA_REQID} ip saddr ${PLUTO_MY_CLIENT} ip daddr ${PLUTO_PEER_CLIENT}"
 	nftables_delete_chain ipsec-log input
 	nftables_delete_chain ipsec-log output
 	nftables_delete_table ipsec-log
+    elif [ "${FIREWALL}" = "iptables" -a -n "${NFLOG}" ]; then
+	iptables -D OUTPUT -m policy --dir out --pol ipsec \
+	    -s ${PLUTO_MY_CLIENT} -d ${PLUTO_PEER_CLIENT} \
+	    -j NFLOG --nflog-group ${NFLOG} --nflog-prefix ${PLUTO_CONNECTION}
+	iptables -D INPUT  -m policy --dir in --pol ipsec \
+	    -s ${PLUTO_PEER_CLIENT} -d ${PLUTO_MY_CLIENT} \
+	    -j NFLOG --nflog-group ${NFLOG} --nflog-prefix ${PLUTO_CONNECTION}
     fi
 }
 
@@ -1055,31 +1056,31 @@ EOF
 
 addcat() {
     firewall_cmd
-    if [ "${FIREWALL}" = IPTABLES -a -n "${CAT}" -a "${PLUTO_MY_CLIENT_NET}" != "0.0.0.0" ] ; then
+    if [ "${FIREWALL}" = "nftables" -a -n "${CAT}" ]; then
+        add_nftables_cat
+    elif [ "${FIREWALL}" = "iptables" -a -n "${CAT}" -a "${PLUTO_MY_CLIENT_NET}" != "0.0.0.0" ] ; then
 	iptables -t nat -I POSTROUTING -m policy --dir out --pol ipsec \
 	    -d ${PLUTO_PEER_CLIENT} -j SNAT --to-source ${PLUTO_MY_CLIENT_NET}
 	iptables -t nat -I PREROUTING -m policy --dir in --pol ipsec \
 	    -d ${PLUTO_MY_CLIENT_NET} -s ${PLUTO_PEER_CLIENT} \
 	    -j DNAT --to-destination ${PLUTO_ME}
-    elif [ "${FIREWALL}" = NFTABLES -a -n "${CAT}" ]; then
-        add_nftables_cat
     fi
 }
 
 delcat() {
     firewall_cmd
-    if [ "${FIREWALL}" = IPTABLES -a -n "${CAT}" ]; then
-        iptables -t nat -D PREROUTING -m policy --dir in --pol ipsec  \
-	        -d ${PLUTO_MY_CLIENT_NET} -s ${PLUTO_PEER_CLIENT} \
-	        -j DNAT --to-destination ${PLUTO_ME}
-	    iptables -t nat -D POSTROUTING -m policy --dir out --pol ipsec \
-	        -d ${PLUTO_PEER_CLIENT} -j SNAT --to-source ${PLUTO_MY_CLIENT_NET}
-    elif [ "${FIREWALL}" = NFTABLES -a -n "${CAT}" ]; then
+    if [ "${FIREWALL}" = "nftables" -a -n "${CAT}" ]; then
 	nftables_delete_rule ipsec-cat postrouting "ipsec out reqid ${PLUTO_SA_REQID} ip saddr ${PLUTO_ME} ip daddr ${PLUTO_PEER_CLIENT}"
 	nftables_delete_rule ipsec-cat prerouting "ipsec in reqid ${PLUTO_SA_REQID} ip saddr ${PLUTO_PEER_CLIENT} ip daddr ${PLUTO_MY_CLIENT_NET}"
 	nftables_delete_chain ipsec-cat prerouting
 	nftables_delete_chain ipsec-cat postrouting
 	nftables_delete_table ipsec-cat
+    elif [ "${FIREWALL}" = "iptables" -a -n "${CAT}" ]; then
+        iptables -t nat -D PREROUTING -m policy --dir in --pol ipsec  \
+	        -d ${PLUTO_MY_CLIENT_NET} -s ${PLUTO_PEER_CLIENT} \
+	        -j DNAT --to-destination ${PLUTO_ME}
+	    iptables -t nat -D POSTROUTING -m policy --dir out --pol ipsec \
+	        -d ${PLUTO_PEER_CLIENT} -j SNAT --to-source ${PLUTO_MY_CLIENT_NET}
     fi
 }
 
