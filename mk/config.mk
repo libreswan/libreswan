@@ -649,9 +649,6 @@ TRANSFORM_VARIABLES = $(SED) \
 			-e "s:@@SD_WATCHDOGSEC@@:$(SD_WATCHDOGSEC):g" \
 			-e "s:@@SHELL_BINARY@@:$(SHELL_BINARY):g" \
 			-e "s:@@USE_DEFAULT_CONNS@@:$(USE_DEFAULT_CONNS):g" \
-			-e "s:@@USE_IPTABLES@@:$(USE_IPTABLES):g" \
-			-e "s:@@USE_NFTABLES@@:$(USE_NFTABLES):g" \
-			-e "s:@@USE_NFLOG@@:$(USE_NFLOG):g" \
 			$(patsubst %, -e %, $(TRANSFORMS))
 
 # For KVM testing setup
@@ -771,31 +768,78 @@ ifeq ($(USE_NM),true)
 USERLAND_CFLAGS+=-DHAVE_NM
 endif
 
+#
+# Enable Client Address Translation; what ever that is.
+#
+
 USE_CAT ?= false
+
 ifeq ($(USE_CAT),true)
 USERLAND_CFLAGS += -DUSE_CAT
 endif
 
-# USE_CAT requires either USE_NFTABLES or USE_IPTABLES
-ifeq ($(USE_NFTABLES),false)
-ifeq ($(USE_IPTABLES),false)
-ifeq ($(USE_CAT),true)
-$(error ERROR: USE_CAT is set but neither USE_NFTABLES nor USE_IPTABLES is set)
-endif
-endif
-endif
+TRANSFORMS += 's:@@USE_CAT@@:$(USE_CAT):g'
+
+#
+# Enable NFLOG; what ever that is.
+#
 
 USE_NFLOG ?= false
+
 ifeq ($(USE_NFLOG),true)
 USERLAND_CFLAGS += -DUSE_NFLOG
 endif
 
-# USE_NFLOG requires either USE_NFTABLES or USE_IPTABLES
+TRANSFORMS += 's:@@USE_NFLOG@@:$(USE_NFLOG):g'
+
+#
+# IPTABLES vs NFTABLES
+#
+
+USE_IPTABLES ?= false
+
+ifeq ($(USE_IPTABLES),true)
+USERLAND_CFLAGS += -DUSE_IPTABLES
+endif
+
+TRANSFORMS += 's:@@USE_IPTABLES@@:$(USE_IPTABLES):g'
+
+USE_NFTABLES ?= false
+
+ifeq ($(USE_NFTABLES),true)
+USERLAND_CFLAGS += -DUSE_NFTABLES
+endif
+
+TRANSFORMS += 's:@@USE_NFTABLES@@:$(USE_NFTABLES):g'
+
+#
+# Check for conflicts between NFTABLES, IPTABLES, CAT and 
+# NFLOG.
+#
+# CAT and NFLOG require one of USE_NFTABLES or USE_IPTABLES.  Can't
+# have both USE_NFTABLES and USE_IPTABLES.
+#
+# Do this after all the MAKE variables have been initialized.
+
+ifeq ($(USE_CAT),true)
 ifeq ($(USE_NFTABLES),false)
 ifeq ($(USE_IPTABLES),false)
-ifeq ($(USE_NFLOG),true)
-$(error ERROR: USE_NFLOG is set but neither USE_NFTABLES nor USE_IPTABLES is set)
+$(error ERROR: USE_CAT=true requires either USE_NFTABLES=true or USE_IPTABLES=true)
 endif
+endif
+endif
+
+ifeq ($(USE_NFLOG),true)
+ifeq ($(USE_NFTABLES),false)
+ifeq ($(USE_IPTABLES),false)
+$(error ERROR: USE_NFLOG=true requires either USE_NFTABLES=true or USE_IPTABLES=true)
+endif
+endif
+endif
+
+ifeq ($(USE_NFTABLES),true)
+ifeq ($(USE_IPTABLES),true)
+$(error ERROR: Both USE_NFTABLES=true and USE_IPTABLES=true are set, you can not set both)
 endif
 endif
 
@@ -926,25 +970,6 @@ USERLAND_CFLAGS += -DFORCE_PR_ASSERT
 # stick with RETRANSMIT_INTERVAL_DEFAULT as makefile variable name
 ifdef RETRANSMIT_INTERVAL_DEFAULT
 USERLAND_CFLAGS += -DRETRANSMIT_INTERVAL_DEFAULT_MS="$(RETRANSMIT_INTERVAL_DEFAULT)"
-endif
-
-# iptables for CAT, or NFLOG, look, barf, verify
-USE_IPTABLES ?= false
-ifeq ($(USE_IPTABLES),true)
-USERLAND_CFLAGS += -DUSE_IPTABLES
-endif
-
-# nft for cat nflog cat linux specific
-USE_NFTABLES ?= false
-ifeq ($(USE_NFTABLES),true)
-USERLAND_CFLAGS += -DUSE_NFTABLES
-endif
-
-# check for USE_NFTABLES and USE_IPTABLES - both can't be set
-ifeq ($(USE_NFTABLES),true)
-ifeq ($(USE_IPTABLES),true)
-$(error ERROR: Both USE_NFTABLES and USE_IPTABLES variables set, you can not set both)
-endif
 endif
 
 ifeq ($(HAVE_BROKEN_POPEN),true)
