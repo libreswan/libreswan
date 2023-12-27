@@ -45,7 +45,30 @@ def c(child, s):
 # boot in single user mode (/ is RO)
 
 def install_base(child, param):
-    rs(child, 'seconds', '2')
+
+    # Need to disable DDB's pager so things don't get stuck part way
+    # through a panic.
+
+    # Choices are:
+    # 1. Boot normally
+    # 2. Boot single user
+    # 3. *Drop to boot prompt*
+    rs(child, 'seconds', '3')
+
+    # boot with both +enter-debugger and +single-user-mode
+    rs(child, '> ', 'boot -d -s\n')
+
+    # annoyingly the first thing DDB does is show registers but being
+    # more than 24 lines; ends up waiting in the pager.
+    rs(child, '--db_more--', ' ')
+
+    # finally at the DDB prompt, set the pager's lines to zero and
+    # then continue
+    rs(child, 'db...> ', 'w db_max_line 0\n')
+    rs(child, 'db...> ', 'continue\n')
+
+    # Now resume the install
+
     rs(child, 'Enter pathname of shell or RETURN for /bin/sh:', '\n')
     # the above has only 4 seconds
 
@@ -54,8 +77,6 @@ def install_base(child, param):
     c(child, 'mount -rt cd9660 /dev/cd1 /mnt')
     c(child, '/bin/sh -x /mnt/base.sh')
 
-    c(child, 'umount /targetroot')
-    c(child, 'umount /mnt')
     c(child, 'halt -p')
 
     sys.exit(child.wait())

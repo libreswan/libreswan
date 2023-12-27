@@ -2,34 +2,45 @@
 
 set -x
 
+:
+: Controlled panic
+:
+
+sysctl -w ddb.onpanic=0
+sysctl -w ddb.lines=0
+
+:
+: Make /tmp writable.
+:
+
 mount -t tmpfs tmpfs /tmp
 touch /tmp/foo
 
-#
-# Initialize the disk creating a single DOS NetBSD partition.
-#
+:
+: Initialize the disk creating a single DOS NetBSD partition.
+:
 
 dd count=2 if=/dev/zero of=/dev/ld0
 fdisk -f -i ld0
 fdisk -f -0 -a -s 169 -u ld0
 fdisk ld0
 
-#
-# Now create the NetBSD partitions within that.
-#
+:
+: Now create the NetBSD partitions within that.
+:
 
 # By default NetBSD generates a label with everything in e:, switch it
 # to a:.  And use that as the root file system.  Don't bother with
 # swap.
 
-disklabel ld0 > /tmp/ld0.label
+disklabel ld0 > /tmp/ld0.label || echo disklabel barfed 2
 sed -i -e "s/ e:/ a:/" /tmp/ld0.label
 disklabel -R -r ld0 /tmp/ld0.label
 newfs /dev/ld0a
 
-#
-# Enable booting of the first (0) partition.
-#
+:
+: Enable booting of the first or zero partition.
+:
 
 # The MBR is installed into front of the disk; the NetBSD partition is
 # made active; and finally install secondary boot and boot-blocks are
@@ -45,9 +56,9 @@ umount /targetroot
 dumpfs /dev/ld0a | grep format # expect FFSv1
 installboot -v -o console=com0,timeout=5,speed=9600 /dev/rld0a /usr/mdec/bootxx_ffsv1
 
-#
-# Unpack the files into the root file system.
-#
+:
+: Unpack the files into the root file system.
+:
 
 mount -o async /dev/ld0a /targetroot
 touch /targetroot/.
@@ -79,9 +90,9 @@ done
 
 cd /
 
-#
-# Set up the mount points
-#
+:
+: Set up the mount points
+:
 
 mkdir /targetroot/kern /targetroot/proc /targetroot/pool /targetroot/bench
 
@@ -101,9 +112,9 @@ EOF
 # sed -i -e "s/root:[^:]*:/root:$(cat /tmp/pwd):/"  /etc/master.passwd
 # sed -i -e "s/toor:[^:]*:/toor::/"  /etc/master.passwd
 
-#
-# network
-#
+:
+: Setup the network to use DHCP on eth0
+:
 
 cat <<EOF | tee -a /targetroot/etc/rc.conf
 . /etc/defaults/rc.conf
@@ -119,6 +130,10 @@ EOF
 cat <<EOF | tee /targetroot/etc/myname
 netbsd
 EOF
+
+:
+: Fix SHELL prompt
+:
 
 #
 # Change the shell prompt to [USER@HOST PWD STATUS]# so it works with
@@ -138,3 +153,16 @@ case "\$-" in
         ;;
 esac
 EOF
+
+:
+: tweak sysctl
+:
+
+echo ddb.lines=0 >> /targetroot/etc/sysctl.conf
+
+:
+: Cleanup and shutdown
+:
+
+umount /targetroot
+umount /mnt
