@@ -579,13 +579,12 @@ static bool ikev2_set_internal_address(struct pbs_in *cp_a_pbs,
 	set_child_has_client(cc, local, true);
 	local->lease[afi->ip_index] = ip;
 
-#if defined(USE_CAT)
 	if (local->config->has_client_address_translation) {
 		address_buf ipb;
 		ldbg_sa(child,
 			"CAT: configured, not setting host source IP address to %s local CAT = %s->true",
 			str_address(&ip, &ipb), bool_str(local->has_cat));
-		local->has_cat = true; /* create iptable entry */
+		local->has_cat = true; /* create NAT entry */
 		ip_address this_client_prefix = selector_prefix(cc->spd->local->client);
 		if (address_eq_address(this_client_prefix, ip)) {
 			/*
@@ -594,16 +593,14 @@ static bool ikev2_set_internal_address(struct pbs_in *cp_a_pbs,
 			 */
 			address_buf ipb;
 			pdbg(child->sa.logger,
-			     "CAT: received INTERNAL_IP%d_ADDRESS that is same as this->client.addr %s. Will not add CAT iptable rules",
+			     "CAT: received INTERNAL_IP%d_ADDRESS that is same as this->client.addr %s. Will not add CAT rules",
 			     afi->ip_version, str_address(&ip, &ipb));
 		} else {
 			update_end_selector(cc, cc->local->config->index,
 					    selector_from_address(ip),
 					    "CAT: scribbling on end while ignoring TS");
 		}
-	} else
-#endif
-	if (connection_requires_tss(cc) == NULL) {
+	} else if (connection_requires_tss(cc) == NULL) {
 		update_end_selector(cc, cc->local->config->index,
 				    selector_from_address(ip),
 				    "CP scribbling on end while ignoring TS");

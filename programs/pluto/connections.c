@@ -1269,7 +1269,13 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 
 	switch (wm->ike_version) {
 	case IKEv2:
+#ifdef USE_CAT
 		child_config->has_client_address_translation = src->cat;
+#else
+			llog(RC_LOG, logger,
+			     "warning: IKEv2, ignoring %scat=%s (client address translation) - support not compiled in",
+			     leftright, bool_str(src->cat));
+#endif
 		break;
 	case IKEv1:
 		if (src->cat) {
