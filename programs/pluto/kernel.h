@@ -61,10 +61,6 @@ enum kernel_policy_op {
 
 extern const struct enum_names kernel_policy_op_names;
 
-#ifdef IPSEC_CONNECTION_LIMIT
-extern int num_ipsec_eroute;
-#endif
-
 enum direction {
 	DIRECTION_INBOUND = 2, /*>true*/
 	DIRECTION_OUTBOUND = 4, /* so lset_t works */

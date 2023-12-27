@@ -572,13 +572,6 @@ USE_LDAP ?= false
 # Include libcurl support (currently used for fetching CRLs)
 USE_LIBCURL ?= true
 
-# Do we want to limit the number of ipsec connections artificially
-USE_IPSEC_CONNECTION_LIMIT ?= false
-IPSEC_CONNECTION_LIMIT ?= 250
-ifeq ($(USE_IPSEC_CONNECTION_LIMIT),true)
-USERLAND_CFLAGS += -DIPSEC_CONNECTION_LIMIT=$(IPSEC_CONNECTION_LIMIT)
-endif
-
 # For Angstrom linux with broken popen() set to true. See bug #1067
 HAVE_BROKEN_POPEN ?= false
 

@@ -278,10 +278,6 @@ struct bare_shunt {
 
 static struct bare_shunt *bare_shunts = NULL;
 
-#ifdef IPSEC_CONNECTION_LIMIT
-int num_ipsec_eroute = 0;
-#endif
-
 static void jam_bare_shunt(struct jambuf *buf, const struct bare_shunt *bs)
 {
 	jam(buf, "bare shunt %p ", bs);
@@ -1933,28 +1929,6 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 	     enum_name(&routing_names, c->child.routing),
 	     bool_str(up));
 
-#ifdef IPSEC_CONNECTION_LIMIT
-	unsigned new_spds = 0;
-	FOR_EACH_ITEM(spd, &c->child.spds) {
-
-		if (is_cisco_split(spd)) {
-			/* XXX: why is CISCO skipped? */
-			continue;
-		}
-
-		PEXPECT(logger, spd->wip.ok);
-		if (spd->wip.conflicting.shunt == NULL) {
-			new_spds++;
-		}
-	}
-	if (num_ipsec_eroute + new_spds >= IPSEC_CONNECTION_LIMIT) {
-		llog(RC_LOG_SERIOUS, logger,
-		     "Maximum number of IPsec connections reached (%d)",
-		     IPSEC_CONNECTION_LIMIT);
-		return false;
-	}
-#endif
-
 	bool ok = true;	/* sticky: once false, stays false */
 
 	/*
@@ -2074,14 +2048,6 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 		/* clear host shunts that clash with freshly installed route */
 		clear_narrow_holds(&spd->local->client, &spd->remote->client, logger);
 	}
-
-
-#ifdef IPSEC_CONNECTION_LIMIT
-	num_ipsec_eroute += new_spds;
-	llog(RC_COMMENT, logger,
-	     "%d IPsec connections are currently being managed",
-	     num_ipsec_eroute);
-#endif
 
 	return true;
 }

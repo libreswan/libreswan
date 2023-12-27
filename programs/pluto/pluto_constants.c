@@ -32,7 +32,6 @@
 
 /*
  * To obsolete or convert to runtime options:
- * IPSEC_CONNECTION_LIMIT
  * NOTYET
  * NOT_YET
  * PFKEY

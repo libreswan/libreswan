@@ -564,9 +564,6 @@ void delete_spd_kernel_policies(struct spd_route *spd,
 	delete_spd_kernel_policy(spd, owner, DIRECTION_INBOUND,
 				 inbound_policy_expectation,
 				 logger, where, story);
-#ifdef IPSEC_CONNECTION_LIMIT
-	num_ipsec_eroute--;
-#endif
 }
 
 /* CAT and it's kittens */
