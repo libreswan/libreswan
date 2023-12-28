@@ -54,7 +54,7 @@ KVM_TESTINGDIR ?= $(KVM_RUTDIR)/testing
 KVM_POOLDIR ?= $(abspath $(abs_top_srcdir)/../pool)
 KVM_LOCALDIR ?= $(KVM_POOLDIR)
 KVM_SNAPSHOTDIR ?=
-KVM_WGET ?= wget
+KVM_WGET ?= wget --progress=dot:giga --continue
 
 # While KVM_PREFIX might be empty, KVM_PREFIXES is never empty.
 KVM_PREFIX ?=
@@ -902,7 +902,7 @@ KVM_ALPINE_ISO_URL ?= https://dl-cdn.alpinelinux.org/alpine/v3.18/releases/x86_6
 KVM_ALPINE_ISO = $(KVM_POOLDIR)/$(notdir $(KVM_ALPINE_ISO_URL))
 kvm-iso: $(KVM_ALPINE_ISO)
 $(KVM_ALPINE_ISO): | $(KVM_POOLDIR)
-	$(KVM_WGET) --output-document $@.tmp --continue -- $(KVM_ALPINE_ISO_URL)
+	$(KVM_WGET) --output-document $@.tmp -- $(KVM_ALPINE_ISO_URL)
 	touch $@.tmp # wget preserves dates
 	mv $@.tmp $@
 
@@ -916,13 +916,14 @@ $(KVM_ALPINE_DOMAIN)-base: $(KVM_ALPINE_ISO)
 # Debian
 #
 
-KVM_DEBIAN_RELEASE = 12.2.0
+KVM_DEBIAN_RELEASE ?= 12.2.0
+# https://cdimage.debian.org/debian-cd/current/amd64/iso-dvd
 KVM_DEBIAN_URL ?= https://cdimage.debian.org/mirror/cdimage/archive/$(KVM_DEBIAN_RELEASE)/amd64/iso-dvd
 KVM_DEBIAN_ISO_URL ?= $(KVM_DEBIAN_URL)/debian-$(KVM_DEBIAN_RELEASE)-amd64-DVD-1.iso
 KVM_DEBIAN_ISO = $(KVM_POOLDIR)/$(notdir $(KVM_DEBIAN_ISO_URL))
 kvm-iso: $(KVM_DEBIAN_ISO)
 $(KVM_DEBIAN_ISO): | $(KVM_POOLDIR)
-	$(KVM_WGET) --output-document $@.tmp --continue -- $(KVM_DEBIAN_ISO_URL)
+	$(KVM_WGET) --output-document $@.tmp -- $(KVM_DEBIAN_ISO_URL)
 	touch $@.tmp # wget preserves dates
 	mv $@.tmp $@
 
@@ -960,7 +961,7 @@ KVM_FEDORA_KICKSTART_FILE ?= fedora/base.ks
 KVM_FEDORA_ISO = $(KVM_POOLDIR)/$(notdir $(KVM_FEDORA_ISO_URL))
 kvm-iso: $(KVM_FEDORA_ISO)
 $(KVM_FEDORA_ISO): | $(KVM_POOLDIR)
-	$(KVM_WGET) --output-document $@.tmp --continue -- $(KVM_FEDORA_ISO_URL)
+	$(KVM_WGET) --output-document $@.tmp -- $(KVM_FEDORA_ISO_URL)
 	touch $@.tmp # wget preserves dates
 	mv $@.tmp $@
 
@@ -998,7 +999,7 @@ kvm-iso: $(KVM_FREEBSD_ISO)
 # For FreeBSD, download the compressed ISO
 .PRECIOUS: $(KVM_FREEBSD_ISO).xz  $(KVM_FREEBSD_ISO)
 $(KVM_FREEBSD_ISO).xz: | $(KVM_POOLDIR)
-	$(KVM_WGET) --output-document $@.tmp --continue -- $(KVM_FREEBSD_ISO_URL).xz
+	$(KVM_WGET) --output-document $@.tmp -- $(KVM_FREEBSD_ISO_URL).xz
 	touch $@.tmp # wget preserves dates
 	mv $@.tmp $@
 $(KVM_FREEBSD_ISO): | $(KVM_FREEBSD_ISO).xz
@@ -1043,11 +1044,11 @@ KVM_NETBSD_BOOT_ISO ?= $(basename $(KVM_NETBSD_INSTALL_ISO))-boot.iso
 kvm-iso: $(KVM_NETBSD_BOOT_ISO)
 kvm-iso: $(KVM_NETBSD_INSTALL_ISO)
 $(KVM_NETBSD_INSTALL_ISO): | $(KVM_POOLDIR)
-	$(KVM_WGET) --output-document $@.tmp --continue -- $(KVM_NETBSD_INSTALL_ISO_URL)
+	$(KVM_WGET) --output-document $@.tmp -- $(KVM_NETBSD_INSTALL_ISO_URL)
 	touch $@.tmp # wget preserves dates
 	mv $@.tmp $@
 $(KVM_NETBSD_BOOT_ISO): | $(KVM_POOLDIR)
-	$(KVM_WGET) --output-document $@.tmp --continue -- $(KVM_NETBSD_BOOT_ISO_URL)
+	$(KVM_WGET) --output-document $@.tmp -- $(KVM_NETBSD_BOOT_ISO_URL)
 	touch $@.tmp # wget preserves dates
 	mv $@.tmp $@
 
@@ -1090,7 +1091,7 @@ KVM_OPENBSD_ISO = $(KVM_POOLDIR)/OpenBSD-$(KVM_OPENBSD_ISO_RELEASE)-install.iso
 
 kvm-iso: $(KVM_OPENBSD_ISO)
 $(KVM_OPENBSD_ISO): | $(KVM_POOLDIR)
-	$(KVM_WGET) --output-document $@.tmp --continue -- $(KVM_OPENBSD_ISO_URL)
+	$(KVM_WGET) --output-document $@.tmp -- $(KVM_OPENBSD_ISO_URL)
 	touch $@.tmp # wget preserves dates
 	echo 'SHA256 ($@.tmp) = $(KVM_OPENBSD_ISO_SHA256)' | cksum -c
 	mv $@.tmp $@
