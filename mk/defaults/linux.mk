@@ -43,11 +43,6 @@ ifneq ($(filter debian ubuntu,$(LINUX_VARIANT)),)
   ifeq ($(LINUX_VERSION_CODENAME),focal)  # Ubuntu 20.04 LTS (Focal Fossa); until April 2025
     USE_NSS_KDF ?= false
   endif
-  ifeq ($(LINUX_VERSION_CODENAME),bionic) # Ubuntu 18.04 LTS (Bionic Beaver); until April 2023
-    USE_NSS_KDF ?= false
-    USE_XFRM_INTERFACE_IFLA_HEADER ?= true
-    USE_NSS_IPSEC_PROFILE ?= false
-  endif
 endif
 
 #
