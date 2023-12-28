@@ -184,11 +184,14 @@ while true ; do
 	 WEB_SUMMARYDIR=${summarydir}
 
     #
-    # Clenup ready for the new run
+    # Cleanup ready for the new run
     #
 
     ${status} "running distclean"
-    run distclean
+    if ! run distclean ; then
+	${status} "distclean barfed, restarting with HEAD"
+	exec $0 ${repodir} ${summarydir}
+    fi
 
     #
     # Build / update / test the repo
