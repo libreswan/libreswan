@@ -147,8 +147,7 @@ void natd_lookup_common(struct state *st,
 		break;
 
 	case YNA_YES:
-		dbg("NAT_TRAVERSAL local policy enforces encapsulation");
-		dbg("NAT_TRAVERSAL forceencaps enabled");
+		ldbg(st->st_logger, "NAT_TRAVERSAL local policy enforces encapsulation");
 		st->hidden_variables.st_nat_traversal |=
 			LELEM(NATED_PEER) | LELEM(NATED_HOST);
 		st->hidden_variables.st_natd = endpoint_address(sender);

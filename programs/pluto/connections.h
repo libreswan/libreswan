@@ -305,8 +305,7 @@ struct config {
 					 * type */
 
 	enum yna_options encapsulation;	/* encapsulation mode of
-					 * auto/yes/no - formerly
-					 * forceencaps=yes/no */
+					 * auto/yes/no */
 
 	msgid_t ike_window;		/* IKE v2 window size
 					 * 7296#section-2.3 */
