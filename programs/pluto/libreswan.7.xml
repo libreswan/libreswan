@@ -1224,17 +1224,15 @@
 
         <varlistentry>
           <term>
-	    <option>--ctlbase</option> <replaceable>path</replaceable>
+	    <option>--rundir</option> <replaceable>@@RUNDIR@@</replaceable>
 	  </term>
           <listitem>
             <para>
-	      Basename for control files. <emphasis>path</emphasis>.ctl
-	      is the socket through
-	      which <command>whack</command> communicates
-	      with <command>pluto</command>. <emphasis>path</emphasis>.pid
+	      Directory to store control socket, <emphasis>pluto.ctl</emphasis>,
+	      the socket through which <command>whack</command> communicates
+	      with <command>pluto</command>. <emphasis>pluto.pid</emphasis>
 	      is the lockfile to prevent multiple <command>pluto</command>
-	      instances. The default is
-	      <filename>@@RUNDIR@@/pluto.pid</filename>).
+	      instances. The default is <filename>@@RUNDIR@@</filename>).
 	    </para>
           </listitem>
         </varlistentry>

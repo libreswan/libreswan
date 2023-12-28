@@ -460,8 +460,6 @@
 
       <arg choice="plain">--delete</arg>
 
-      <arg choice="opt">--ctlbase <replaceable>path</replaceable></arg>
-
       <arg choice="opt">--label <replaceable>string</replaceable></arg>
     </cmdsynopsis>
 
@@ -2922,24 +2920,6 @@
             <para>
 	      Changes the UDP port that <emphasis>pluto</emphasis> will use
 	      (default, specified by IANA: 500).
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--ctlbase</option> <replaceable>path</replaceable>
-	  </term>
-          <listitem>
-            <para>
-	      Basename for control files. <emphasis>path</emphasis>.ctl
-	      is the socket through
-	      which <command>whack</command> communicates
-	      with <command>pluto</command>. <emphasis>path</emphasis>.pid
-	      is the lockfile to prevent
-	      multiple <command>pluto</command>
-	      instances. The default is
-	      <filename>@@RUNDIR@@/pluto</filename>).
 	    </para>
           </listitem>
         </varlistentry>
