@@ -7,27 +7,27 @@ road #
 road #
  ipsec whack --impair suppress-retransmits
 road #
- ipsec auto --add road-eastnet-forceencaps
-"road-eastnet-forceencaps": added IKEv2 connection
+ ipsec auto --add road-eastnet-encapsulation=yes
+"road-eastnet-encapsulation=yes": added IKEv2 connection
 road #
  ipsec status |grep encaps:
-"road-eastnet-forceencaps":   nat-traversal: encaps:yes; keepalive:20s
+"road-eastnet-encapsulation=yes":   nat-traversal: encaps:yes; keepalive:20s
 road #
  echo "initdone"
 initdone
 road #
- ipsec whack --name road-eastnet-forceencaps --initiate
-"road-eastnet-forceencaps" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-"road-eastnet-forceencaps" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-"road-eastnet-forceencaps" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-"road-eastnet-forceencaps" #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
-"road-eastnet-forceencaps" #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.209/32===192.0.2.0/24] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATD=192.1.2.23:4500 DPD=passive}
+ ipsec whack --name road-eastnet-encapsulation=yes --initiate
+"road-eastnet-encapsulation=yes" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"road-eastnet-encapsulation=yes" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"road-eastnet-encapsulation=yes" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"road-eastnet-encapsulation=yes" #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
+"road-eastnet-encapsulation=yes" #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.209/32===192.0.2.0/24] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATD=192.1.2.23:4500 DPD=passive}
 road #
  ../../guestbin/ping-once.sh --up 192.0.2.254
 up
 road #
  ipsec whack --trafficstatus
-#2: "road-eastnet-forceencaps", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+#2: "road-eastnet-encapsulation=yes", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 road #
  echo done
 done

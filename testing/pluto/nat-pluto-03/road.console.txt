@@ -5,32 +5,32 @@ Redirecting to: [initsystem]
 road #
  ../../guestbin/wait-until-pluto-started
 road #
- ipsec auto --add road-eastnet-forceencaps
-"road-eastnet-forceencaps": added IKEv1 connection
+ ipsec auto --add road-eastnet-encapsulation=yes
+"road-eastnet-encapsulation=yes": added IKEv1 connection
 road #
  ipsec status |grep encaps:
-"road-eastnet-forceencaps":   nat-traversal: encaps:yes; keepalive:20s; ikev1-method:rfc+drafts
+"road-eastnet-encapsulation=yes":   nat-traversal: encaps:yes; keepalive:20s; ikev1-method:rfc+drafts
 road #
  echo "initdone"
 initdone
 road #
- ipsec whack --name road-eastnet-forceencaps --initiate
-"road-eastnet-forceencaps" #1: initiating IKEv1 Main Mode connection
-"road-eastnet-forceencaps" #1: sent Main Mode request
-"road-eastnet-forceencaps" #1: sent Main Mode I2
-"road-eastnet-forceencaps" #1: sent Main Mode I3
-"road-eastnet-forceencaps" #1: Peer ID is ID_FQDN: '@east'
-"road-eastnet-forceencaps" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
-"road-eastnet-forceencaps" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-"road-eastnet-forceencaps" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-"road-eastnet-forceencaps" #2: sent Quick Mode request
-"road-eastnet-forceencaps" #2: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATD=192.1.2.23:4500 DPD=passive}
+ ipsec whack --name road-eastnet-encapsulation=yes --initiate
+"road-eastnet-encapsulation=yes" #1: initiating IKEv1 Main Mode connection
+"road-eastnet-encapsulation=yes" #1: sent Main Mode request
+"road-eastnet-encapsulation=yes" #1: sent Main Mode I2
+"road-eastnet-encapsulation=yes" #1: sent Main Mode I3
+"road-eastnet-encapsulation=yes" #1: Peer ID is ID_FQDN: '@east'
+"road-eastnet-encapsulation=yes" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"road-eastnet-encapsulation=yes" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"road-eastnet-encapsulation=yes" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"road-eastnet-encapsulation=yes" #2: sent Quick Mode request
+"road-eastnet-encapsulation=yes" #2: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATD=192.1.2.23:4500 DPD=passive}
 road #
  ../../guestbin/ping-once.sh --up 192.0.2.254
 up
 road #
  ipsec whack --trafficstatus
-#2: "road-eastnet-forceencaps", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+#2: "road-eastnet-encapsulation=yes", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 road #
  echo done
 done
