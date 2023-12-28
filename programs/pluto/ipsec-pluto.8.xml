@@ -57,7 +57,7 @@
       <arg choice="opt">--statsbin <replaceable>filename</replaceable></arg>
       <arg choice="opt">--secctx-attr-type <replaceable>number</replaceable></arg>
       <sbr/>
-      <arg choice="opt">--use-netkey</arg>
+      <arg choice="opt">--use-xfrm</arg>
       <arg choice="opt">--use-bsdkame</arg>
     </cmdsynopsis>
 
@@ -645,7 +645,7 @@
       <variablelist>
 	<varlistentry>
 	  <term>
-	    <option>--use-netkey</option>
+	    <option>--use-xfrm</option>
 	  </term>
 	  <listitem>
 	    <para>
