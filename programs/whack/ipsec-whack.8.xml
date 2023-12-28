@@ -183,12 +183,10 @@
 
       <arg choice="opt">--rsasig</arg>
 
-      <arg choice="opt">--encapsulate
+      <arg choice="opt">--encapsulation
       <group choice="plain">
         <arg choice="opt">yes</arg>
-
         <arg choice="opt">no</arg>
-
         <arg choice="opt">auto</arg>
       </group>
       </arg>
@@ -1490,7 +1488,7 @@
 
       <varlistentry>
         <term>
-	  <option>--forceencaps</option>
+	  <option>--encapsulation</option> <emphasis>yes|no|auto</emphasis>
 	</term>
         <listitem>
           <para>
