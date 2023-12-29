@@ -1340,11 +1340,11 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 		sa_ipsec_soft_bytes = fuzz_soft_limit("ipsec-max-bytes",st->st_sa_role,
 						      c->config->sa_ipsec_max_bytes,
 						      IPSEC_SA_MAX_SOFT_LIMIT_PERCENTAGE,
-						      st->st_logger);
+						      st->logger);
 		sa_ipsec_soft_packets = fuzz_soft_limit("ipsec-max-packets", st->st_sa_role,
 							c->config->sa_ipsec_max_packets,
 							IPSEC_SA_MAX_SOFT_LIMIT_PERCENTAGE,
-							st->st_logger);
+							st->logger);
 	}
 
 
@@ -1405,7 +1405,7 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 			said_next->mark_set = c->sa_marks.out;
 		}
 
-		if (!kernel_ops_add_sa(said_next, replace, st->st_logger)) {
+		if (!kernel_ops_add_sa(said_next, replace, st->logger)) {
 			log_state(RC_LOG, st, "add_sa ipcomp failed");
 			goto fail;
 		}
@@ -1506,13 +1506,13 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 		dbg("kernel: st->st_esp.keymat_len=%zu is encrypt_keymat_size=%zu + integ_keymat_size=%zu",
 		    esp_keymat.len, encrypt_keymat_size, integ_keymat_size);
 
-		PASSERT(st->st_logger, esp_keymat.len == encrypt_keymat_size + integ_keymat_size);
+		PASSERT(st->logger, esp_keymat.len == encrypt_keymat_size + integ_keymat_size);
 
 		*said_next = said_boilerplate;
 		said_next->spi = esp_spi;
 		said_next->proto = &ip_protocol_esp;
 		said_next->replay_window = c->config->child_sa.replay_window;
-		ldbg(st->st_logger, "kernel: setting IPsec SA replay-window to %ju",
+		ldbg(st->logger, "kernel: setting IPsec SA replay-window to %ju",
 		     c->config->child_sa.replay_window);
 
 		if (c->xfrmi != NULL) {
@@ -1523,21 +1523,21 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 		if (direction == DIRECTION_OUTBOUND &&
 		    c->config->child_sa.tfcpad != 0 &&
 		    !st->st_seen_no_tfc) {
-			ldbg(st->st_logger, "kernel: Enabling TFC at %ju bytes (up to PMTU)",
+			ldbg(st->logger, "kernel: Enabling TFC at %ju bytes (up to PMTU)",
 			     c->config->child_sa.tfcpad);
 			said_next->tfcpad = c->config->child_sa.tfcpad;
 		}
 
 		if (c->config->decap_dscp) {
-			ldbg(st->st_logger, "kernel: Enabling Decap ToS/DSCP bits");
+			ldbg(st->logger, "kernel: Enabling Decap ToS/DSCP bits");
 			said_next->decap_dscp = true;
 		}
 		if (!c->config->encap_dscp) {
-			ldbg(st->st_logger, "kernel: Disabling Encap ToS/DSCP bits");
+			ldbg(st->logger, "kernel: Disabling Encap ToS/DSCP bits");
 			said_next->encap_dscp = false;
 		}
 		if (c->config->nopmtudisc) {
-			ldbg(st->st_logger, "kernel: Disabling Path MTU Discovery");
+			ldbg(st->logger, "kernel: Disabling Path MTU Discovery");
 			said_next->nopmtudisc = true;
 		}
 
@@ -1599,20 +1599,20 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 
 		setup_esp_nic_offload(&said_next->nic_offload, c, &nic_offload_fallback);
 
-		bool ret = kernel_ops_add_sa(said_next, replace, st->st_logger);
+		bool ret = kernel_ops_add_sa(said_next, replace, st->logger);
 
 		if (!ret && nic_offload_fallback &&
 			said_next->nic_offload.dev != NULL) {
 			/* Fallback to crypto offload from packet offload */
 			if (said_next->nic_offload.type == OFFLOAD_PACKET) {
 				said_next->nic_offload.type = OFFLOAD_CRYPTO;
-				ret = kernel_ops_add_sa(said_next, replace, st->st_logger);
+				ret = kernel_ops_add_sa(said_next, replace, st->logger);
 			}
 
 			if (!ret) {
 				/* Fallback to non-nic-offload crypto */
 				said_next->nic_offload.dev = NULL;
-				ret = kernel_ops_add_sa(said_next, replace, st->st_logger);
+				ret = kernel_ops_add_sa(said_next, replace, st->logger);
 			}
 		}
 
@@ -1641,7 +1641,7 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 			goto fail;
 		}
 
-		PASSERT(st->st_logger, ah_keymat.len == integ->integ_keymat_size);
+		PASSERT(st->logger, ah_keymat.len == integ->integ_keymat_size);
 
 		*said_next = said_boilerplate;
 		said_next->spi = ah_spi;
@@ -1655,7 +1655,7 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 					    ah_spi, &text_ah);
 
 		said_next->replay_window = c->config->child_sa.replay_window;
-		ldbg(st->st_logger, "kernel: setting IPsec SA replay-window to %ju",
+		ldbg(st->logger, "kernel: setting IPsec SA replay-window to %ju",
 		     c->config->child_sa.replay_window);
 
 		if (st->st_ah.attrs.transattrs.esn_enabled) {
@@ -1667,7 +1667,7 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 			DBG_dump_hunk("AH authkey:", said_next->integ_key);
 		}
 
-		bool ret = kernel_ops_add_sa(said_next, replace, st->st_logger);
+		bool ret = kernel_ops_add_sa(said_next, replace, st->logger);
 		/* scrub key from memory */
 		memset(ah_keymat.ptr, 0, ah_keymat.len);
 
@@ -1698,7 +1698,7 @@ fail:
 						 said_next->proto,
 						 &said_next->src.address,
 						 &said_next->dst.address,
-						 st->st_logger);
+						 st->logger);
 		}
 	}
 	return false;
@@ -1707,7 +1707,7 @@ fail:
 static bool install_inbound_ipsec_kernel_policies(struct child_sa *child)
 {
 	const struct connection *c = child->sa.st_connection;
-	struct logger *logger = child->sa.st_logger;
+	struct logger *logger = child->sa.logger;
 	/*
 	 * Add an inbound eroute to enforce an arrival check.
 	 *
@@ -1858,7 +1858,7 @@ static bool uninstall_kernel_state(struct child_sa *child, enum direction direct
 		result &= kernel_ops_del_ipsec_spi(tbd->spi,
 						   tbd->protocol,
 						   &tbd->src, &tbd->dst,
-						   child->sa.st_logger);
+						   child->sa.logger);
 	}
 
 	return result;
@@ -1907,7 +1907,7 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 						   enum routing new_routing,
 						   bool up)
 {
-	struct logger *logger = child->sa.st_logger;
+	struct logger *logger = child->sa.logger;
 	struct connection *c = child->sa.st_connection;
 
 	if (is_labeled_child(c)) {
@@ -2028,7 +2028,7 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 			/* go back to old routing */
 			struct spd_owner owner = spd_owner(spd, c->child.routing,
 							   logger, HERE);
-			delete_cat_kernel_policies(spd, &owner, child->sa.st_logger, HERE);
+			delete_cat_kernel_policies(spd, &owner, child->sa.logger, HERE);
 			revert_kernel_policy(spd, child, logger);
 		}
 		return false;
@@ -2074,7 +2074,7 @@ static bool connection_has_policy_conflicts(const struct connection *c,
 
 bool install_inbound_ipsec_sa(struct child_sa *child, enum routing new_routing, where_t where)
 {
-	struct logger *logger = child->sa.st_logger;
+	struct logger *logger = child->sa.logger;
 	struct connection *c = child->sa.st_connection;
 
 	ldbg(logger, "kernel: %s() for "PRI_SO": inbound "PRI_WHERE,
@@ -2118,7 +2118,7 @@ bool install_inbound_ipsec_sa(struct child_sa *child, enum routing new_routing, 
 
 bool install_outbound_ipsec_sa(struct child_sa *child, enum routing new_routing, bool up, where_t where)
 {
-	struct logger *logger = child->sa.st_logger;
+	struct logger *logger = child->sa.logger;
 	struct connection *c = child->sa.st_connection;
 
 	ldbg(logger, "kernel: %s() for "PRI_SO": outbound "PRI_WHERE,
@@ -2178,10 +2178,10 @@ bool install_outbound_ipsec_sa(struct child_sa *child, enum routing new_routing,
 	 * fighting over the same Child SA, for instance in
 	 * ikev2-systemrole-04-mesh.
 	 */
-	PEXPECT(child->sa.st_logger, new_ipsec_sa >= old_ipsec_sa);
+	PEXPECT(child->sa.logger, new_ipsec_sa >= old_ipsec_sa);
 #endif
 #if 0
-	PEXPECT(child->sa.st_logger, routing_sa == new_ipsec_sa);
+	PEXPECT(child->sa.logger, routing_sa == new_ipsec_sa);
 #endif
 
 	/*
@@ -2402,7 +2402,7 @@ bool get_ipsec_traffic(struct child_sa *child,
 	uint64_t add_time = 0;
 	uint64_t lastused = 0;
 	if (!kernel_ops->get_kernel_state(&sa, &bytes, &add_time, &lastused,
-					  child->sa.st_logger))
+					  child->sa.logger))
 		return false;
 	ldbg_sa(child, "kernel: %s() bytes=%"PRIu64" add_time=%"PRIu64" lastused=%"PRIu64,
 		__func__, bytes, add_time, lastused);

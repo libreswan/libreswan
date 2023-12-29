@@ -106,7 +106,7 @@ static void whack_impair_action(enum impair_action impairment_action,
 			return;
 		}
 		/* will log */
-		struct logger *loggers = merge_loggers(st->st_logger, background, logger);
+		struct logger *loggers = merge_loggers(st->logger, background, logger);
 		enum event_type event = impairment_param;
 		call_state_event_handler(loggers, st, event);
 		free_logger(&loggers, HERE);
@@ -144,7 +144,7 @@ static void whack_impair_action(enum impair_action impairment_action,
 			/* already logged */
 			return;
 		}
-		struct logger *loggers = merge_loggers(ike->sa.st_logger, background, logger);
+		struct logger *loggers = merge_loggers(ike->sa.logger, background, logger);
 		llog(RC_COMMENT, loggers, "initiating liveness");
 		submit_v2_liveness_exchange(ike, st->st_serialno);
 		free_logger(&loggers, HERE);
@@ -158,7 +158,7 @@ static void whack_impair_action(enum impair_action impairment_action,
 			return;
 		}
 		/* will log */
-		struct logger *loggers = merge_loggers(st->st_logger,
+		struct logger *loggers = merge_loggers(st->logger,
 						       true/*background*/, logger);
 		llog(RC_COMMENT, loggers, "sending keepalive");
 		send_keepalive_using_state(st, "inject keep-alive");

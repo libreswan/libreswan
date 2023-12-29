@@ -51,7 +51,7 @@ bool ikev1_decode_peer_id_initiator(struct state *st, struct msg_digest *md)
 
 	diag_t d = update_peer_id(pexpect_ike_sa(st), peer, NULL/*tarzan*/);
 	if (d != NULL) {
-		llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
+		llog_diag(RC_LOG_SERIOUS, st->logger, &d, "%s", "");
 		return false;
 	}
 
@@ -69,7 +69,7 @@ bool ikev1_decode_peer_id_aggr_mode_responder(struct state *st,
 
 	diag_t d = update_peer_id(pexpect_ike_sa(st),  &peer, NULL/*tarzan*/);
 	if (d != NULL) {
-		llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
+		llog_diag(RC_LOG_SERIOUS, st->logger, &d, "%s", "");
 		return false;
 	}
 
@@ -151,7 +151,7 @@ bool ikev1_decode_peer_id_main_mode_responder(struct state *st, struct msg_diges
 
 	diag_t d = update_peer_id(pexpect_ike_sa(st), &peer_id, NULL/*tarzan*/);
 	if (d != NULL) {
-		llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
+		llog_diag(RC_LOG_SERIOUS, st->logger, &d, "%s", "");
 		return false;
 	}
 
@@ -201,7 +201,7 @@ static bool decode_peer_id(struct state *st, struct msg_digest *md, struct id *p
 
 	diag_t d = unpack_peer_id(id->isaid_idtype, peer, &id_pld->pbs);
 	if (d != NULL) {
-		llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
+		llog_diag(RC_LOG, st->logger, &d, "%s", "");
 		return false;
 	}
 
@@ -285,7 +285,7 @@ stf_status oakley_auth(struct msg_digest *md, bool initiator)
 							&pubkey_signer_raw_rsa,
 							NULL/*legacy-signature-name*/);
 		if (d != NULL) {
-			llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
+			llog_diag(RC_LOG_SERIOUS, st->logger, &d, "%s", "");
 			dbg("received message SIG_%s data did not match computed value",
 			    initiator ? "R" : "I" /*reverse*/);
 			r = STF_FAIL_v1N + v1N_INVALID_KEY_INFORMATION;

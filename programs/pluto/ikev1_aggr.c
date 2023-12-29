@@ -265,12 +265,12 @@ stf_status aggr_inI1_outR1(struct state *null_st UNUSED,
 
 	/* KE in */
 	if (!unpack_KE(&ike->sa.st_gi, "Gi", ike->sa.st_oakley.ta_dh,
-		       md->chain[ISAKMP_NEXT_KE], ike->sa.st_logger)) {
+		       md->chain[ISAKMP_NEXT_KE], ike->sa.logger)) {
 		return STF_FAIL_v1N + v1N_INVALID_KEY_INFORMATION;
 	}
 
 	/* Ni in */
-	RETURN_STF_FAIL_v1NURE(accept_v1_nonce(ike->sa.st_logger, md, &ike->sa.st_ni, "Ni"));
+	RETURN_STF_FAIL_v1NURE(accept_v1_nonce(ike->sa.logger, md, &ike->sa.st_ni, "Ni"));
 
 	/* calculate KE and Nonce */
 	submit_ke_and_nonce(&ike->sa, ike->sa.st_oakley.ta_dh,
@@ -341,7 +341,7 @@ static stf_status aggr_inI1_outR1_continue2(struct state *st,
 
 	/* done parsing; initialize crypto */
 
-	reply_stream = open_pbs_out("reply packet", reply_buffer, sizeof(reply_buffer), st->st_logger);
+	reply_stream = open_pbs_out("reply packet", reply_buffer, sizeof(reply_buffer), st->logger);
 
 	/* HDR out */
 	pb_stream rbody;
@@ -396,7 +396,7 @@ static stf_status aggr_inI1_outR1_continue2(struct state *st,
 	/************** build rest of output: KE, Nr, IDir, HASH_R/SIG_R ********/
 
 	/* KE */
-	if (!ikev1_justship_KE(st->st_logger, &st->st_gr, &rbody)) {
+	if (!ikev1_justship_KE(st->logger, &st->st_gr, &rbody)) {
 		free_auth_chain(auth_chain, chain_len);
 		return STF_INTERNAL_ERROR;
 	}
@@ -470,7 +470,7 @@ static stf_status aggr_inI1_outR1_continue2(struct state *st,
 		} else {
 			/* SIG_R out */
 			struct hash_signature sig = v1_sign_hash_RSA(c, &hash,
-								     st->st_logger);
+								     st->logger);
 			if (sig.len == 0) {
 				/* already logged */
 				return STF_FAIL_v1N + v1N_AUTHENTICATION_FAILED;
@@ -568,12 +568,12 @@ stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 
 	/* KE in */
 	if (!unpack_KE(&st->st_gr, "Gr", st->st_oakley.ta_dh,
-		       md->chain[ISAKMP_NEXT_KE], st->st_logger)) {
+		       md->chain[ISAKMP_NEXT_KE], st->logger)) {
 		return STF_FAIL_v1N + v1N_INVALID_KEY_INFORMATION;
 	}
 
 	/* Ni in */
-	RETURN_STF_FAIL_v1NURE(accept_v1_nonce(st->st_logger, md, &st->st_nr, "Nr"));
+	RETURN_STF_FAIL_v1NURE(accept_v1_nonce(st->logger, md, &st->st_nr, "Nr"));
 
 	/*
 	 * Moved the following up as we need Rcookie for hash,
@@ -659,7 +659,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 	/**************** build output packet: HDR, HASH_I/SIG_I **************/
 
 	/* make sure HDR is at start of a clean buffer */
-	reply_stream = open_pbs_out("reply packet", reply_buffer, sizeof(reply_buffer), st->st_logger);
+	reply_stream = open_pbs_out("reply packet", reply_buffer, sizeof(reply_buffer), st->logger);
 	pb_stream rbody;
 
 	/* HDR out */
@@ -728,7 +728,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 		struct isakmp_ipsec_id id_hd = build_v1_id_payload(&c->local->host, &id_b);
 
 		uint8_t idbuf[1024]; /* fits all possible identity payloads? */
-		struct pbs_out id_pbs = open_pbs_out("identity payload", idbuf, sizeof(idbuf), st->st_logger);
+		struct pbs_out id_pbs = open_pbs_out("identity payload", idbuf, sizeof(idbuf), st->logger);
 		pb_stream r_id_pbs;
 		if (!out_struct(&id_hd, &isakmp_ipsec_identification_desc,
 				&id_pbs, &r_id_pbs) ||
@@ -748,7 +748,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 		} else {
 			/* SIG_I out */
 			struct hash_signature sig = v1_sign_hash_RSA(st->st_connection, &hash,
-								     st->st_logger);
+								     st->logger);
 			if (sig.len == 0) {
 				/* already logged */
 				return STF_FAIL_v1N + v1N_AUTHENTICATION_FAILED;
@@ -805,7 +805,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 
 #ifdef USE_XFRM_INTERFACE
 	if (c->xfrmi != NULL && c->xfrmi->if_id != 0)
-		if (!add_xfrm_interface(c, st->st_logger))
+		if (!add_xfrm_interface(c, st->logger))
 			return STF_FATAL;
 #endif
 	ISAKMP_SA_established(pexpect_ike_sa(st));
@@ -834,7 +834,7 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 		struct isakmp_ipsec_id id_hd = build_v1_id_payload(&c->remote->host, &id_b);
 
 		uint8_t idbuf[1024];	/* ??? enough room for reconstructed peer ID payload? */
-		struct pbs_out pbs = open_pbs_out("identity payload", idbuf, sizeof(idbuf), st->st_logger);
+		struct pbs_out pbs = open_pbs_out("identity payload", idbuf, sizeof(idbuf), st->logger);
 
 		/* interop ID for SoftRemote & maybe others ? */
 		id_hd.isaiid_protoid = st->st_peeridentity_protocol;
@@ -853,7 +853,7 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 		diag_t d = pbs_in_struct(&id_pbs, &isakmp_identification_desc,
 					 &id_pd.payload, sizeof(id_pd.payload), &id_pd.pbs);
 		if (d != NULL) {
-			llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
+			llog_diag(RC_LOG, st->logger, &d, "%s", "");
 			return STF_FAIL_v1N + v1N_PAYLOAD_MALFORMED;
 		}
 	}
@@ -896,7 +896,7 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 	if (new_certs_to_verify) {
 		diag_t d = update_peer_id_certs(pexpect_ike_sa(st));
 		if (d != NULL) {
-			llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
+			llog_diag(RC_LOG_SERIOUS, st->logger, &d, "%s", "");
 			return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
 		}
 	}
@@ -957,7 +957,7 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 
 #ifdef USE_XFRM_INTERFACE
 	if (c->xfrmi != NULL && c->xfrmi->if_id != 0)
-		if (!add_xfrm_interface(c, st->st_logger))
+		if (!add_xfrm_interface(c, st->logger))
 			return STF_FATAL;
 #endif
 	ISAKMP_SA_established(pexpect_ike_sa(st));
@@ -1072,7 +1072,7 @@ static stf_status aggr_outI1_continue_tail(struct state *st,
 	dbg("aggr_outI1_tail for #%lu", st->st_serialno);
 
 	/* make sure HDR is at start of a clean buffer */
-	reply_stream = open_pbs_out("reply packet", reply_buffer, sizeof(reply_buffer), st->st_logger);
+	reply_stream = open_pbs_out("reply packet", reply_buffer, sizeof(reply_buffer), st->logger);
 
 	/* HDR out */
 	pb_stream rbody;

@@ -67,7 +67,7 @@ void pam_auth_abort(struct state *st, const char *story)
 	struct pam_auth *pamauth = st->st_pam_auth;
 
 	if (pamauth == NULL) {
-		llog_pexpect(st->st_logger, HERE,
+		llog_pexpect(st->logger, HERE,
 			     "PAM: %s while authenticating yet no PAM process to abort",
 			     story);
 		return;
@@ -198,7 +198,7 @@ bool pam_auth_fork_request(struct state *st,
 	    pamauth->serialno, pamauth->ptarg.name);
 	pamauth->child = server_fork("pamauth", pamauth->serialno,
 				     pam_child, pam_callback, pamauth,
-				     st->st_logger);
+				     st->logger);
 	if (pamauth->child < 0) {
 		log_state(RC_LOG, st,
 			  "PAM: creation of PAM authentication process for user '%s' failed",

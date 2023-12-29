@@ -129,10 +129,10 @@ bool v2_nat_detected(struct ike_sa *ike, struct msg_digest *md)
 	/* First: one with my IP & port. */
 	struct crypt_mac hash_local = natd_hash(hasher, &md->hdr.isa_ike_spis,
 						md->iface->local_endpoint,
-						ike->sa.st_logger);
+						ike->sa.logger);
 	/* Second: one with sender IP & port */
 	struct crypt_mac hash_remote = natd_hash(hasher, &md->hdr.isa_ike_spis,
-						 md->sender, ike->sa.st_logger);
+						 md->sender, ike->sa.logger);
 
 	bool found_local = false;
 	bool found_remote = false;
@@ -226,7 +226,7 @@ bool v2_natify_initiator_endpoints(struct ike_sa *ike, where_t where)
 		ip_endpoint new_endpoint = set_endpoint_port(ike->sa.st_remote_endpoint,
 							     ip_hport(NAT_IKE_UDP_PORT));
 		endpoint_buf oep, nep;
-		ldbg(ike->sa.st_logger,
+		ldbg(ike->sa.logger,
 		     "NAT: "PRI_SO" floating remote port from %s to %s using NAT_IKE_UDP_PORT "PRI_WHERE,
 		     pri_so(ike->sa.st_serialno),
 		     str_endpoint(&ike->sa.st_remote_endpoint, &oep),

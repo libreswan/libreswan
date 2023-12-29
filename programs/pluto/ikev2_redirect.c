@@ -486,7 +486,7 @@ bool redirect_ike_auth(struct ike_sa *ike, struct msg_digest *md, stf_status *re
 					   ike->sa.st_connection->config->redirect.accept_to,
 					   NULL,
 					   &redirect_ip,
-					   ike->sa.st_logger);
+					   ike->sa.logger);
 	if (err != NULL) {
 		dbg("redirect: warning: parsing of v2N_REDIRECT payload failed: %s", err);
 		return false;
@@ -591,7 +591,7 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_REDIRECT(struct ike_sa *ike,
 					   c->config->redirect.accept_to,
 					   &ike->sa.st_ni,
 					   &redirect_ip,
-					   ike->sa.st_logger);
+					   ike->sa.logger);
 	if (err != NULL) {
 		llog_sa(RC_LOG_SERIOUS, ike,
 			  "warning: parsing of v2N_REDIRECT payload failed: %s", err);
@@ -608,7 +608,7 @@ void process_v2_INFORMATIONAL_request_v2N_REDIRECT(struct ike_sa *ike, struct ms
 	dbg("received v2N_REDIRECT in informational");
 	ip_address redirect_to;
 	err_t e = parse_redirect_payload(&pbs, ike->sa.st_connection->config->redirect.accept_to,
-					 NULL, &redirect_to, ike->sa.st_logger);
+					 NULL, &redirect_to, ike->sa.logger);
 	if (e != NULL) {
 		/* XXX: parse_redirect_payload() also often logs! */
 		llog_sa(RC_LOG_SERIOUS, ike,

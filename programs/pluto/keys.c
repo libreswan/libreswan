@@ -303,7 +303,7 @@ diag_t authsig_and_log_using_pubkey(struct ike_sa *ike,
 	struct tac_state s = {
 		/* in */
 		.signer = signer,
-		.logger = ike->sa.st_logger,
+		.logger = ike->sa.logger,
 		.hash = hash,
 		.now = realnow(),
 		.signature = signature,
@@ -373,7 +373,7 @@ diag_t authsig_and_log_using_pubkey(struct ike_sa *ike,
 
 	pexpect(s.key != NULL);
 	pexpect(s.tried_cnt > 0);
-	LLOG_JAMBUF(RC_LOG_SERIOUS, ike->sa.st_logger, buf) {
+	LLOG_JAMBUF(RC_LOG_SERIOUS, ike->sa.logger, buf) {
 		if (ike->sa.st_ike_version == IKEv2) {
 			/*
 			 * IKEv2 only; IKEv1 logs established as a

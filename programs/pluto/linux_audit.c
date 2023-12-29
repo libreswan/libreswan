@@ -299,7 +299,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 			AUDIT_CRYPTO_IPSEC_SA : AUDIT_CRYPTO_IKE_SA,
 			audit_str, laddr,
 		    (op == LAK_PARENT_FAIL || op == LAK_CHILD_FAIL) ? AUDIT_RESULT_FAIL : AUDIT_RESULT_OK,
-		    st->st_logger);
+		    st->logger);
 }
 #if __GNUC__ >= 7
 #pragma GCC diagnostic pop

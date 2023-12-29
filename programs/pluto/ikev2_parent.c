@@ -145,7 +145,7 @@ bool negotiate_hash_algo_from_notification(const struct pbs_in *payload_pbs,
 		diag_t d = pbs_in_thing(&pbs, nh_value,
 					"hash algorithm identifier (network ordered)");
 		if (d != NULL) {
-			llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
+			llog_diag(RC_LOG_SERIOUS, ike->sa.logger, &d, "%s", "");
 			return false;
 		}
 		enum ikev2_hash_algorithm h_value = ntohs(nh_value);
@@ -170,7 +170,7 @@ bool negotiate_hash_algo_from_notification(const struct pbs_in *payload_pbs,
 
 void llog_v2_ike_sa_established(struct ike_sa *ike, struct child_sa *larval)
 {
-	LLOG_JAMBUF(RC_SUCCESS, larval->sa.st_logger, buf) {
+	LLOG_JAMBUF(RC_SUCCESS, larval->sa.logger, buf) {
 		switch (larval->sa.st_sa_role) {
 		case SA_INITIATOR: jam_string(buf, "initiator"); break;
 		case SA_RESPONDER: jam_string(buf, "responder"); break;
@@ -209,7 +209,7 @@ bool v2_accept_ke_for_proposal(struct ike_sa *ike,
 
 	if (accepted_dh->common.id[IKEv2_ALG_ID] != ke_group) {
 		enum_buf ke_esb;
-		llog(RC_LOG, st->st_logger,
+		llog(RC_LOG, st->logger,
 		     "initiator guessed wrong keying material group (%s); responding with INVALID_KE_PAYLOAD requesting %s",
 		     str_enum_short(&oakley_group_names, ke_group, &ke_esb),
 		     accepted_dh->common.fqn);
@@ -218,7 +218,7 @@ bool v2_accept_ke_for_proposal(struct ike_sa *ike,
 		/* convert group to a raw buffer */
 		uint16_t gr = htons(accepted_dh->group);
 		chunk_t nd = THING_AS_CHUNK(gr);
-		record_v2N_response(st->st_logger, ike, md,
+		record_v2N_response(st->logger, ike, md,
 				    v2N_INVALID_KE_PAYLOAD, &nd,
 				    security);
 		return false;
@@ -226,9 +226,9 @@ bool v2_accept_ke_for_proposal(struct ike_sa *ike,
 
 	/* ike sa init */
 	if (!unpack_KE(&st->st_gi, "Gi", accepted_dh,
-		       md->chain[ISAKMP_NEXT_v2KE], st->st_logger)) {
+		       md->chain[ISAKMP_NEXT_v2KE], st->logger)) {
 		/* already logged? */
-		record_v2N_response(st->st_logger, ike, md,
+		record_v2N_response(st->logger, ike, md,
 				    v2N_INVALID_SYNTAX,
 				    NULL, security);
 		return false;
@@ -342,7 +342,7 @@ struct crypt_mac v2_hash_id_payload(const char *id_name, struct ike_sa *ike,
 	 * MACedIDForR = prf(SK_pr, RestOfInitIDPayload)
 	 */
 	struct crypt_prf *id_ctx = crypt_prf_init_symkey(id_name, ike->sa.st_oakley.ta_prf,
-							 key_name, key, ike->sa.st_logger);
+							 key_name, key, ike->sa.logger);
 	/* skip PayloadHeader; hash: IDType | RESERVED */
 	crypt_prf_update_bytes(id_ctx, "IDType", &ike->sa.st_v2_id_payload.header.isai_type,
 				sizeof(ike->sa.st_v2_id_payload.header.isai_type));
@@ -365,7 +365,7 @@ struct crypt_mac v2_id_hash(struct ike_sa *ike, const char *why,
 	id_start += NSIZEOF_isakmp_generic;
 	id_size -= NSIZEOF_isakmp_generic;
 	struct crypt_prf *id_ctx = crypt_prf_init_symkey(why, ike->sa.st_oakley.ta_prf,
-							 key_name, key, ike->sa.st_logger);
+							 key_name, key, ike->sa.logger);
 	crypt_prf_update_bytes(id_ctx, id_name, id_start, id_size);
 	return crypt_prf_final_mac(&id_ctx, NULL/*no-truncation*/);
 }
@@ -430,7 +430,7 @@ static bool expire_ike_because_child_not_used(struct state *st)
 	}
 
 	if (nr_child_leases(c->remote) > 0) {
-		llog_pexpect(st->st_logger, HERE,
+		llog_pexpect(st->logger, HERE,
 			     "#%lu has lease; should not be trying to replace",
 			     st->st_serialno);
 		return true;
@@ -443,7 +443,7 @@ static bool expire_ike_because_child_not_used(struct state *st)
 		ike = pexpect_ike_sa(st);
 		child = child_sa_by_serialno(c->newest_ipsec_sa);
 		if (child == NULL) {
-			llog_pexpect(st->st_logger, HERE,
+			llog_pexpect(st->logger, HERE,
 				     "can't check usage as IKE SA #%lu has no newest child",
 				     ike->sa.st_serialno);
 			return true;
@@ -562,7 +562,7 @@ bool v2_state_is_expired(struct state *st, const char *verb)
 		 * the IKE SA has gone they shouldn't be getting
 		 * rekeys!
 		 */
-		llog_pexpect(st->st_logger, HERE,
+		llog_pexpect(st->logger, HERE,
 			     "not %s Child SA #%lu; as IKE SA #%lu has diasppeared",
 			     verb, st->st_serialno, st->st_clonedfrom);
 		event_force(EVENT_v2_EXPIRE, st);
@@ -596,7 +596,7 @@ bool v2_state_is_expired(struct state *st, const char *verb)
 		 */
 		const char *satype = IS_IKE_SA(st) ? "IKE" : "Child";
 #if 0
-		llog_pexpect(st->st_logger, HERE,
+		llog_pexpect(st->logger, HERE,
 			     "not %s stale %s SA #%lu; as already got a newer #%lu",
 			     verb, satype, st->st_serialno, newer_sa);
 #else

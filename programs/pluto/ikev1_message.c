@@ -107,5 +107,5 @@ bool ikev1_ship_KE(struct state *st, struct dh_local_secret *local_secret,
 		   chunk_t *g, struct pbs_out *outs)
 {
 	unpack_KE_from_helper(st, local_secret, g);
-	return ikev1_justship_KE(st->st_logger, g, outs);
+	return ikev1_justship_KE(st->logger, g, outs);
 }

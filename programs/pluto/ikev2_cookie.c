@@ -225,7 +225,7 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_COOKIE(struct ike_sa *ike,
 	shunk_t cookie = pbs_in_left(cookie_pbs);
 	if (cookie.len > IKEv2_MAX_COOKIE_SIZE) {
 		/* XXX: cumbersom */
-		if (suppress_log(ike->sa.st_logger)) {
+		if (suppress_log(ike->sa.logger)) {
 			dbg("IKEv2 COOKIE notify payload too big - packet dropped");
 		} else {
 			llog_sa(RC_LOG, ike, "IKEv2_COOKIE notify payload too big - packet dropped");
@@ -234,7 +234,7 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_COOKIE(struct ike_sa *ike,
 	}
 	if (cookie.len < 1) {
 		/* XXX: cumbersom */
-		if (suppress_log(ike->sa.st_logger)) {
+		if (suppress_log(ike->sa.logger)) {
 			dbg("IKEv2 COOKIE notify payload too small - packet dropped");
 		} else {
 			llog_sa(RC_LOG, ike, "IKEv2 COOKIE notify payload too small - packet dropped");
@@ -255,7 +255,7 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_COOKIE(struct ike_sa *ike,
 		DBG_dump_hunk("IKEv2 cookie received", ike->sa.st_dcookie);
 	}
 
-	if (!suppress_log(ike->sa.st_logger)) {
+	if (!suppress_log(ike->sa.logger)) {
 		llog_sa(RC_LOG, ike,
 			  "received anti-DDOS COOKIE response, resending IKE_SA_INIT request with COOKIE payload");
 	}

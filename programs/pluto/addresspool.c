@@ -650,7 +650,7 @@ err_t lease_that_address(struct connection *c, const struct state *st,
 	ip_address ia;
 	err_t err = pool_lease_to_address(pool, new_lease, &ia);
 	if (err != NULL) {
-		llog_pexpect(st->st_logger, HERE, "%s", err);
+		llog_pexpect(st->logger, HERE, "%s", err);
 	}
 	c->remote->child.lease[afi->ip_index] = ia;
 	set_child_has_client(c, remote, true);

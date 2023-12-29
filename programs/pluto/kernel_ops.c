@@ -399,7 +399,7 @@ bool kernel_ops_add_sa(const struct kernel_state *sa, bool replace, struct logge
 
 bool kernel_ops_migrate_ipsec_sa(struct child_sa *child)
 {
-	struct logger *logger = child->sa.st_logger;
+	struct logger *logger = child->sa.logger;
 	if (kernel_ops->migrate_ipsec_sa == NULL) {
 		ldbg(logger, "%s() unsupported kernel stack in migrate_ipsec_sa", __func__);
 		return false;

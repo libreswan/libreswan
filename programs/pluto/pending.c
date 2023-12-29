@@ -159,12 +159,12 @@ void release_pending_whacks(struct state *st, err_t story)
 	if (IS_CHILD_SA(st)) {
 		struct ike_sa *ike = ike_sa(st, HERE);
 		if (ike == NULL || !same_whack(st->logger, ike->sa.logger)) {
-			release_whack(st->st_logger, HERE);
+			release_whack(st->logger, HERE);
 			return;
 		}
 
 		ike_with_same_whack = ike;
-		release_whack(ike->sa.st_logger, HERE);
+		release_whack(ike->sa.logger, HERE);
 	} else {
 		ike_with_same_whack = pexpect_ike_sa(st);
 	}
@@ -194,7 +194,7 @@ void release_pending_whacks(struct state *st, err_t story)
 		     __func__,
 		     p->ike->sa.st_connection->config->ike_info->parent_name,
 		     pri_so(p->ike->sa.st_serialno),
-		     pri_logger(p->ike->sa.st_logger),
+		     pri_logger(p->ike->sa.logger),
 		     p->ike->sa.st_connection->config->ike_info->parent_name,
 		     pri_logger(p->logger));
 
@@ -345,7 +345,7 @@ void move_pending(struct ike_sa *old, struct ike_sa *new)
 		return;
 	}
 
-	ldbg(old->sa.st_logger, "pending: update ike %p pending %p -> ike %p pending %p",
+	ldbg(old->sa.logger, "pending: update ike %p pending %p -> ike %p pending %p",
 	     old, old->sa.st_pending,
 	     new, new->sa.st_pending);
 
@@ -365,7 +365,7 @@ void move_pending(struct ike_sa *old, struct ike_sa *new)
  */
 void flush_pending_by_state(struct ike_sa *ike)
 {
-	ldbg(ike->sa.st_logger, "pending: %s() ike %p pending %p",
+	ldbg(ike->sa.logger, "pending: %s() ike %p pending %p",
 	     __func__, ike, ike->sa.st_pending);
 
 	struct pending **pp = &ike->sa.st_pending;

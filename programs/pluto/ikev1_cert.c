@@ -126,7 +126,7 @@ bool v1_decode_certs(struct msg_digest *md)
 	};
 
 	struct root_certs *root_certs = root_certs_addref(&global_logger); /* must-release */
-	struct verified_certs certs = find_and_verify_certs(st->st_logger, st->st_ike_version,
+	struct verified_certs certs = find_and_verify_certs(st->logger, st->st_ike_version,
 							    cert_payloads, &rev_opts,
 							    root_certs, &c->remote->host.id);
 	root_certs_delref(&root_certs, GLOBAL_LOGGER);
@@ -147,7 +147,7 @@ bool v1_decode_certs(struct msg_digest *md)
 			chunk_t fdn = empty_chunk;
 			if (find_crl_fetch_dn(&fdn, c)) {
 				/* FDN contains issuer_dn */
-				submit_crl_fetch_request(ASN1(fdn), st->st_logger);
+				submit_crl_fetch_request(ASN1(fdn), st->logger);
 			}
 		}
 #endif
@@ -206,7 +206,7 @@ static void decode_certificate_request(struct state *st, enum ike_cert_type cert
 		if (ca_name.len > 0) {
 			err_t e = asn1_ok(ca_name);
 			if (e != NULL) {
-				llog(RC_LOG_SERIOUS, st->st_logger,
+				llog(RC_LOG_SERIOUS, st->logger,
 				     "ignoring CERTREQ payload that is not ASN1: %s", e);
 				return;
 			}
@@ -228,7 +228,7 @@ static void decode_certificate_request(struct state *st, enum ike_cert_type cert
 	default:
 	{
 		enum_buf b;
-		llog(RC_LOG_SERIOUS, st->st_logger,
+		llog(RC_LOG_SERIOUS, st->logger,
 		     "ignoring CERTREQ payload of unsupported type %s",
 		     str_enum(&ikev2_cert_type_names, cert_type, &b));
 	}

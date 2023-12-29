@@ -1322,13 +1322,13 @@ static bool xfrm_migrate_ipsec_sa(struct child_sa *child)
 
 	return
 		init_xfrm_kernel_migrate(child, XFRM_POLICY_OUT, &migrate) &&
-		migrate_xfrm_sa(&migrate, child->sa.st_logger) &&
+		migrate_xfrm_sa(&migrate, child->sa.logger) &&
 
 		init_xfrm_kernel_migrate(child, XFRM_POLICY_IN, &migrate) &&
-		migrate_xfrm_sa(&migrate, child->sa.st_logger) &&
+		migrate_xfrm_sa(&migrate, child->sa.logger) &&
 
 		init_xfrm_kernel_migrate(child, XFRM_POLICY_FWD, &migrate) &&
-		migrate_xfrm_sa(&migrate, child->sa.st_logger);
+		migrate_xfrm_sa(&migrate, child->sa.logger);
 }
 
 /* see /usr/include/linux/ethtool.h */

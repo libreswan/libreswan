@@ -148,7 +148,7 @@ static void compute_intermediate_mac(struct ike_sa *ike,
 	struct crypt_prf *prf = crypt_prf_init_symkey("prf(IntAuth_*_A [| IntAuth_*_P])",
 						      ike->sa.st_oakley.ta_prf,
 						      "SK_p", intermediate_key,
-						      ike->sa.st_logger);
+						      ike->sa.logger);
 
 	/* prf(..., IntAuth_[ir](N-1) | ...) */
 	if (int_auth_ir->len > 0) {
@@ -203,7 +203,7 @@ stf_status initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike, struct msg_d
 
 	struct v2_message request;
 	if (!open_v2_message("intermediate exchange request",
-			     ike, ike->sa.st_logger,
+			     ike, ike->sa.logger,
 			     NULL/*request*/, ISAKMP_v2_IKE_INTERMEDIATE,
 			     reply_buffer, sizeof(reply_buffer), &request,
 			     ENCRYPTED_PAYLOAD)) {
@@ -284,7 +284,7 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 
 	struct v2_message response;
 	if (!open_v2_message("intermediate exchange response",
-			     ike, ike->sa.st_logger,
+			     ike, ike->sa.logger,
 			     md/*response*/, ISAKMP_v2_IKE_INTERMEDIATE,
 			     reply_buffer, sizeof(reply_buffer), &response,
 			     ENCRYPTED_PAYLOAD)) {

@@ -128,7 +128,7 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 
 	struct v2_message response;
 	if (!open_v2_message("information exchange reply packet",
-			     ike, ike->sa.st_logger,
+			     ike, ike->sa.logger,
 			     md/*response*/, ISAKMP_v2_INFORMATIONAL,
 			     reply_buffer, sizeof(reply_buffer), &response,
 			     ENCRYPTED_PAYLOAD)) {
@@ -139,7 +139,7 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 
 	if (md->chain[ISAKMP_NEXT_v2N] != NULL) {
 		if (!process_v2N_requests(ike, md, response.pbs)) {
-			record_v2N_response(ike->sa.st_logger, ike, md,
+			record_v2N_response(ike->sa.logger, ike, md,
 					    v2N_INVALID_SYNTAX, NULL, ENCRYPTED_PAYLOAD);
 			/*
 			 * STF_FATAL will send the recorded message
@@ -154,7 +154,7 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 	bool del_ike = false;
 	if (md->chain[ISAKMP_NEXT_v2D] != NULL) {
 		if (!process_v2D_requests(&del_ike, ike, md, response.pbs)) {
-			record_v2N_response(ike->sa.st_logger, ike, md,
+			record_v2N_response(ike->sa.logger, ike, md,
 					    v2N_INVALID_SYNTAX, NULL, ENCRYPTED_PAYLOAD);
 			/*
 			 * STF_FATAL will send the recorded message
@@ -291,8 +291,8 @@ stf_status IKE_SA_DEL_process_v2_INFORMATIONAL_response(struct ike_sa *ike,
 							struct child_sa *null_child,
 							struct msg_digest *md)
 {
-	PEXPECT(ike->sa.st_logger, null_child == NULL);
-	PEXPECT(ike->sa.st_logger, md != NULL);
+	PEXPECT(ike->sa.logger, null_child == NULL);
+	PEXPECT(ike->sa.logger, md != NULL);
 	/*
 	 * This must be a response to our IKE SA delete request Even
 	 * if there are are other Delete Payloads, they cannot matter:

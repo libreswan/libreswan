@@ -1269,12 +1269,12 @@ static bool v2_child_connection_probably_shared(struct child_sa *child,
 bool process_v2TS_request_payloads(struct child_sa *child,
 				   const struct msg_digest *md)
 {
-	indent_t indent = {child->sa.st_logger, 0};
+	indent_t indent = {child->sa.logger, 0};
 	passert(v2_msg_role(md) == MESSAGE_REQUEST);
 	passert(child->sa.st_sa_role == SA_RESPONDER);
 
 	struct traffic_selector_payloads tsps = empty_traffic_selector_payloads;
-	if (!v2_parse_tsps(md, &tsps, child->sa.st_logger)) {
+	if (!v2_parse_tsps(md, &tsps, child->sa.logger)) {
 		return false;
 	}
 
@@ -1794,7 +1794,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 	if (best.connection != child->sa.st_connection) {
 		connswitch_state_and_log(&child->sa, best.connection);
 		if (best.instantiated) {
-			connection_delref(&best.connection, child->sa.st_logger);
+			connection_delref(&best.connection, child->sa.logger);
 		}
 	}
 
@@ -1805,7 +1805,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 bool process_v2TS_response_payloads(struct child_sa *child,
 				    struct msg_digest *md)
 {
-	indent_t indent = {child->sa.st_logger, 0};
+	indent_t indent = {child->sa.logger, 0};
 
 	passert(child->sa.st_sa_role == SA_INITIATOR);
 	passert(v2_msg_role(md) == MESSAGE_RESPONSE);
@@ -1813,7 +1813,7 @@ bool process_v2TS_response_payloads(struct child_sa *child,
 	struct connection *c = child->sa.st_connection;
 
 	struct traffic_selector_payloads tsps = empty_traffic_selector_payloads;
-	if (!v2_parse_tsps(md, &tsps, child->sa.st_logger)) {
+	if (!v2_parse_tsps(md, &tsps, child->sa.logger)) {
 		return false;
 	}
 
@@ -1887,7 +1887,7 @@ bool process_v2TS_response_payloads(struct child_sa *child,
  */
 bool verify_rekey_child_request_ts(struct child_sa *child, struct msg_digest *md)
 {
-	indent_t indent = {child->sa.st_logger, 0};
+	indent_t indent = {child->sa.logger, 0};
 
 	if (!pexpect(child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0))
 		return false;
@@ -1895,7 +1895,7 @@ bool verify_rekey_child_request_ts(struct child_sa *child, struct msg_digest *md
 	const struct connection *c = child->sa.st_connection;
 	struct traffic_selector_payloads their_tsps = empty_traffic_selector_payloads;
 
-	if (!v2_parse_tsps(md, &their_tsps, child->sa.st_logger)) {
+	if (!v2_parse_tsps(md, &their_tsps, child->sa.logger)) {
 		llog_sa(RC_LOG_SERIOUS, child,
 			  "received malformed TSi/TSr payload(s)");
 		return false;

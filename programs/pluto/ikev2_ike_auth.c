@@ -137,7 +137,7 @@ stf_status initiate_v2_IKE_AUTH_request(struct ike_sa *ike, struct msg_digest *m
 					&ike->sa.st_skey_d_nss,
 					&ike->sa.st_skey_pi_nss,
 					&ike->sa.st_skey_pr_nss,
-					ike->sa.st_logger);
+					ike->sa.logger);
 			llog_sa(RC_LOG, ike,
 				  "PPK AUTH calculated as initiator");
 		} else {
@@ -167,7 +167,7 @@ stf_status initiate_v2_IKE_AUTH_request(struct ike_sa *ike, struct msg_digest *m
 		shunk_t data;
 		ike->sa.st_v2_id_payload.header =
 			build_v2_id_payload(&pc->local->host, &data,
-					    "my IDi", ike->sa.st_logger);
+					    "my IDi", ike->sa.logger);
 		ike->sa.st_v2_id_payload.data = clone_hunk(data, "my IDi");
 	}
 
@@ -295,7 +295,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 
 	struct v2_message request;
 	if (!open_v2_message("IKE_AUTH request",
-			     ike, ike->sa.st_logger, NULL/*request*/,
+			     ike, ike->sa.logger, NULL/*request*/,
 			     ISAKMP_v2_IKE_AUTH,
 			     reply_buffer, sizeof(reply_buffer),
 			     &request, ENCRYPTED_PAYLOAD)) {
@@ -370,7 +370,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 			shunk_t id_b;
 			struct ikev2_id r_id =
 				build_v2_id_payload(&pc->remote->host, &id_b,
-						    "their IDr", ike->sa.st_logger);
+						    "their IDr", ike->sa.logger);
 			pb_stream r_id_pbs;
 			if (!out_struct(&r_id, &ikev2_id_r_desc, request.pbs,
 				&r_id_pbs) ||
@@ -566,7 +566,7 @@ static stf_status ikev2_pam_continue(struct state *ike_st,
 	     __func__, ike->sa.st_serialno, ike->sa.st_state->name);
 
 	if (!success) {
-		record_v2N_response(ike->sa.st_logger, ike, md,
+		record_v2N_response(ike->sa.logger, ike, md,
 				    v2N_AUTHENTICATION_FAILED, NULL/*no-data*/,
 				    ENCRYPTED_PAYLOAD);
 		pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
@@ -596,7 +596,7 @@ stf_status process_v2_IKE_AUTH_request(struct ike_sa *ike,
 	 *
 	 * XXX: move this into ikev2.c?
 	 */
-	LLOG_JAMBUF(RC_LOG, ike->sa.st_logger, buf) {
+	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
 		jam(buf, "processing decrypted ");
 		jam_msg_digest(buf, md);
 	}
@@ -644,9 +644,9 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 
 	diag_t d = ikev2_responder_decode_initiator_id(ike, md);
 	if (d != NULL) {
-		llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
+		llog_diag(RC_LOG_SERIOUS, ike->sa.logger, &d, "%s", "");
 		pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
-		record_v2N_response(ike->sa.st_logger, ike, md,
+		record_v2N_response(ike->sa.logger, ike, md,
 				    v2N_AUTHENTICATION_FAILED, NULL/*no-data*/,
 				    ENCRYPTED_PAYLOAD);
 		return STF_FATAL;
@@ -680,7 +680,7 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 					&ike->sa.st_skey_d_nss,
 					&ike->sa.st_skey_pi_nss,
 					&ike->sa.st_skey_pr_nss,
-					ike->sa.st_logger);
+					ike->sa.logger);
 			ike->sa.st_ppk_used = true;
 			llog_sa(RC_LOG, ike,
 				  "PPK AUTH calculated as responder");
@@ -719,7 +719,7 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 
 	if (!found_ppk && c->config->ppk.insist) {
 		llog_sa(RC_LOG_SERIOUS, ike, "Requested PPK_ID not found and connection requires a valid PPK");
-		record_v2N_response(ike->sa.st_logger, ike, md,
+		record_v2N_response(ike->sa.logger, ike, md,
 				    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
 				    ENCRYPTED_PAYLOAD);
 		return STF_FATAL;
@@ -760,7 +760,7 @@ stf_status process_v2_IKE_AUTH_request_ipseckey_continue(struct ike_sa *ike,
 {
 	if (err) {
 		/* already logged?! */
-		record_v2N_response(ike->sa.st_logger, ike, md,
+		record_v2N_response(ike->sa.logger, ike, md,
 				    v2N_AUTHENTICATION_FAILED, NULL/*no-data*/,
 				    ENCRYPTED_PAYLOAD);
 		return STF_FATAL;
@@ -799,9 +799,9 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 		diag_t d = verify_v2AUTH_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
 						 ike, &idhash_in, &pbs_no_ppk_auth, remote_auth);
 		if (d != NULL) {
-			llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
+			llog_diag(RC_LOG_SERIOUS, ike->sa.logger, &d, "%s", "");
 			dbg("no PPK auth failed");
-			record_v2N_response(ike->sa.st_logger, ike, md,
+			record_v2N_response(ike->sa.logger, ike, md,
 					    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
 					    ENCRYPTED_PAYLOAD);
 			pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
@@ -821,9 +821,9 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 		diag_t d = verify_v2AUTH_and_log(IKEv2_AUTH_NULL, ike, &idhash_in,
 						 &pbs_null_auth, AUTH_NULL);
 		if (d != NULL) {
-			llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
+			llog_diag(RC_LOG_SERIOUS, ike->sa.logger, &d, "%s", "");
 			dbg("NULL_auth from Notify Payload failed");
-			record_v2N_response(ike->sa.st_logger, ike, md,
+			record_v2N_response(ike->sa.logger, ike, md,
 					    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
 					    ENCRYPTED_PAYLOAD);
 			pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
@@ -836,9 +836,9 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 						 ike, &idhash_in, &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
 						 remote_auth);
 		if (d != NULL) {
-			llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
+			llog_diag(RC_LOG_SERIOUS, ike->sa.logger, &d, "%s", "");
 			dbg("I2 Auth Payload failed");
-			record_v2N_response(ike->sa.st_logger, ike, md,
+			record_v2N_response(ike->sa.logger, ike, md,
 					    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
 					    ENCRYPTED_PAYLOAD);
 			pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
@@ -882,7 +882,7 @@ static stf_status submit_v2_IKE_AUTH_response_signature(struct ike_sa *ike, stru
 							     LOCAL_PERSPECTIVE);
 	if (!submit_v2_auth_signature(ike, &hash_to_sign, hash_algo, signer, cb, HERE)) {
 		dbg("submit_v2_auth_signature() died, fatal");
-		record_v2N_response(ike->sa.st_logger, ike, md,
+		record_v2N_response(ike->sa.logger, ike, md,
 				    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
 				    ENCRYPTED_PAYLOAD);
 		return STF_FATAL;
@@ -911,7 +911,7 @@ stf_status generate_v2_responder_auth(struct ike_sa *ike, struct msg_digest *md,
 		shunk_t data;
 		ike->sa.st_v2_id_payload.header =
 			build_v2_id_payload(&c->local->host, &data,
-					    "my IDr", ike->sa.st_logger);
+					    "my IDr", ike->sa.logger);
 		ike->sa.st_v2_id_payload.data = clone_hunk(data, "my IDr");
 	}
 
@@ -973,7 +973,7 @@ stf_status generate_v2_responder_auth(struct ike_sa *ike, struct msg_digest *md,
 			hash_story = "saved earlier";
 		}
 		if (ike->sa.st_v2_digsig.hash == NULL) {
-			record_v2N_response(ike->sa.st_logger, ike, md,
+			record_v2N_response(ike->sa.logger, ike, md,
 					    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
 					    ENCRYPTED_PAYLOAD);
 			return STF_FATAL;
@@ -1035,7 +1035,7 @@ static stf_status process_v2_IKE_AUTH_request_tail(struct state *ike_st,
 		 * TBD: send this notification encrypted because the
 		 * AUTH payload succeed
 		 */
-		record_v2N_response(ike->sa.st_logger, ike, md,
+		record_v2N_response(ike->sa.logger, ike, md,
 				    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
 				    ENCRYPTED_PAYLOAD);
 		return STF_FATAL;
@@ -1100,7 +1100,7 @@ bool v2_ike_sa_auth_responder_establish(struct ike_sa *ike, bool *send_redirecti
 		/* ensure we run keepalives if needed */
 		if (c->config->nat_keepalive) {
 			/* XXX: just trigger this event? */
-			nat_traversal_ka_event(ike->sa.st_logger);
+			nat_traversal_ka_event(ike->sa.logger);
 		}
 	}
 
@@ -1145,7 +1145,7 @@ static stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike
 
 	struct v2_message response;
 	if (!open_v2_message("IKE_AUTH response",
-			     ike, ike->sa.st_logger, md/*response*/,
+			     ike, ike->sa.logger, md/*response*/,
 			     ISAKMP_v2_IKE_AUTH,
 			     reply_buffer, sizeof(reply_buffer),
 			     &response, ENCRYPTED_PAYLOAD)) {
@@ -1282,7 +1282,7 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 
 	diag_t d = ikev2_initiator_decode_responder_id(ike, md);
 	if (d != NULL) {
-		llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
+		llog_diag(RC_LOG_SERIOUS, ike->sa.logger, &d, "%s", "");
 		pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
 		/*
 		 * We cannot send a response as we are processing
@@ -1346,7 +1346,7 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 	d = verify_v2AUTH_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
 				  ike, &idhash_in, &md->chain[ISAKMP_NEXT_v2AUTH]->pbs, that_authby);
 	if (d != NULL) {
-		llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
+		llog_diag(RC_LOG_SERIOUS, ike->sa.logger, &d, "%s", "");
 		pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
 		/*
 		 * We cannot send a response as we are processing
@@ -1396,7 +1396,7 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 			 * XXX: call nat_traversal_new_ka_event()
 			 * instead?  There's no hurry right?
 			 */
-			nat_traversal_ka_event(ike->sa.st_logger);
+			nat_traversal_ka_event(ike->sa.logger);
 		}
 	}
 

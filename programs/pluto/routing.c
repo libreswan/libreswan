@@ -582,7 +582,7 @@ static void routed_tunnel_to_routed_failure(enum routing_event event,
 {
 	/* currently up and routed */
 
-	struct logger *logger = child->sa.st_logger;
+	struct logger *logger = child->sa.logger;
 	struct connection *c = child->sa.st_connection;
 
 	FOR_EACH_ITEM(spd, &c->child.spds) {
@@ -836,7 +836,7 @@ static void unrouted_tunnel_to_routed_ondemand(enum routing_event event,
 {
 	/* currently down and unrouted */
 
-	struct logger *logger = child->sa.st_logger;
+	struct logger *logger = child->sa.logger;
 	struct connection *c = child->sa.st_connection;
 
 	FOR_EACH_ITEM(spd, &c->child.spds) {
@@ -867,7 +867,7 @@ static void unrouted_tunnel_to_routed_failure(enum routing_event event,
 {
 	/* currently down and unrouted */
 
-	struct logger *logger = child->sa.st_logger;
+	struct logger *logger = child->sa.logger;
 	struct connection *c = child->sa.st_connection;
 
 	FOR_EACH_ITEM(spd, &c->child.spds) {
@@ -1201,10 +1201,10 @@ void state_disowns_connection(struct state *st)
 		if (c->owner[i] == st->st_serialno) {
 #if 0
 			/* should already be clear? */
-			llog_pexpect(st->st_logger, HERE,
+			llog_pexpect(st->logger, HERE,
 				     connection_owner_names[i]);
 #else
-			pdbg(st->st_logger,
+			pdbg(st->logger,
 			     "disown .%s",
 			     enum_name(&connection_owner_names, i));
 #endif

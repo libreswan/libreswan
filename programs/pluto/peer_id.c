@@ -349,7 +349,7 @@ static struct connection *refine_host_connection_on_responder(int indent,
 				    str_id(&d->local->host.id, &usb),
 				    enum_show(&ike_id_type_names, d->local->host.id.kind, &usesb));
 				/* ??? pexpect(d->spd->spd_next == NULL); */
-				if (!idr_wildmatch(&d->local->host, tarzan_id, st->st_logger)) {
+				if (!idr_wildmatch(&d->local->host, tarzan_id, st->logger)) {
 					dbg_rhc("skipping because peer IDr payload does not match our expected ID");
 					continue;
 				}
@@ -385,7 +385,7 @@ static struct connection *refine_host_connection_on_responder(int indent,
 						continue;	/* no key */
 					}
 					if (get_local_private_key(d, &pubkey_type_rsa,
-								  st->st_logger) == NULL) {
+								  st->logger) == NULL) {
 						/*
 						 * We must at least be able to find
 						 * our private key.
@@ -433,14 +433,14 @@ static struct connection *refine_host_connection_on_responder(int indent,
 					break;
 				case AUTH_RSASIG:
 					if (get_local_private_key(d, &pubkey_type_rsa,
-								  st->st_logger) == NULL) {
+								  st->logger) == NULL) {
 						dbg_rhc("skipping because RSASIG and no private key");
 						continue;	/* no key */
 					}
 					break;
 				case AUTH_ECDSA:
 					if (get_local_private_key(d, &pubkey_type_ecdsa,
-								  st->st_logger) == NULL) {
+								  st->logger) == NULL) {
 						dbg_rhc("skipping because ECDSA and no private key");
 						continue;	/* no key */
 					}
@@ -627,13 +627,13 @@ bool refine_host_connection_of_state_on_responder(struct state *st,
 							    NULL/*not-yet-known*/,
 							    peer_id, HERE);
 		} else {
-			r = connection_addref(r, st->st_logger);
+			r = connection_addref(r, st->logger);
 		}
 		/*
 		 * R is an improvement on .st_connection -- replace.
 		 */
 		connswitch_state_and_log(st, r);
-		connection_delref(&r, st->st_logger);
+		connection_delref(&r, st->logger);
 	}
 
 	connection_buf bcb;
@@ -666,7 +666,7 @@ diag_t update_peer_id_certs(struct ike_sa *ike)
 	       id_buf idb;
 	       ldbg_sa(ike, "X509: CERT '%s' and ID '%s' don't match but require-id-on-certificate=no",
 		       end_cert->subjectName, str_id(&c->remote->host.id, &idb));
-	       llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
+	       llog_diag(RC_LOG_SERIOUS, ike->sa.logger, &d, "%s", "");
 	       llog_sa(RC_LOG, ike, "X509: connection allows unmatched IKE ID and certificate SAN");
 	       return NULL;
        }

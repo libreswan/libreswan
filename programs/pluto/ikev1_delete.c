@@ -51,10 +51,10 @@
 
 void send_v1_delete(struct ike_sa *isakmp, struct state *st, where_t where)
 {
-	ldbg(st->st_logger, "hacking around IKEv1 send'n'log delete for "PRI_SO" "PRI_WHERE,
+	ldbg(st->logger, "hacking around IKEv1 send'n'log delete for "PRI_SO" "PRI_WHERE,
 	     pri_so(st->st_serialno), pri_where(where));
 
-	if (!PEXPECT(st->st_logger, IS_V1_ISAKMP_SA_ESTABLISHED(&isakmp->sa))) {
+	if (!PEXPECT(st->logger, IS_V1_ISAKMP_SA_ESTABLISHED(&isakmp->sa))) {
 		return;
 	}
 
@@ -84,11 +84,11 @@ void send_v1_delete(struct ike_sa *isakmp, struct state *st, where_t where)
 			ns++;
 		}
 
-		PASSERT(st->st_logger, ns != said); /* there must be some SAs to delete */
+		PASSERT(st->logger, ns != said); /* there must be some SAs to delete */
 	}
 
 	if (impair.send_no_delete) {
-		llog(RC_LOG, st->st_logger, "IMPAIR: impair-send-no-delete set - not sending Delete/Notify");
+		llog(RC_LOG, st->logger, "IMPAIR: impair-send-no-delete set - not sending Delete/Notify");
 		return;
 	}
 
@@ -96,7 +96,7 @@ void send_v1_delete(struct ike_sa *isakmp, struct state *st, where_t where)
 	msgid = generate_msgid(p1st);
 
 	uint8_t buffer[8192];	/* ??? large enough for any deletion notification? */
-	struct pbs_out reply_pbs = open_pbs_out("delete msg", buffer, sizeof(buffer), st->st_logger);
+	struct pbs_out reply_pbs = open_pbs_out("delete msg", buffer, sizeof(buffer), st->logger);
 
 	/* HDR* */
 	{
@@ -141,15 +141,15 @@ void send_v1_delete(struct ike_sa *isakmp, struct state *st, where_t where)
 			close_output_pbs(&del_pbs);
 			break;
 		case IMPAIR_EMIT_OMIT:
-			llog(RC_LOG, st->st_logger, "IMPAIR: omitting ISKMP delete payload");
+			llog(RC_LOG, st->logger, "IMPAIR: omitting ISKMP delete payload");
 			break;
 		case IMPAIR_EMIT_EMPTY:
 			passert(out_struct(&isad, &isakmp_delete_desc, &r_hdr_pbs, &del_pbs));
-			llog(RC_LOG, st->st_logger, "IMPAIR: emitting empty (i.e., no SPI) ISKMP delete payload");
+			llog(RC_LOG, st->logger, "IMPAIR: emitting empty (i.e., no SPI) ISKMP delete payload");
 			close_output_pbs(&del_pbs);
 			break;
 		case IMPAIR_EMIT_DUPLICATE:
-			llog(RC_LOG, st->st_logger, "IMPAIR: emitting duplicate ISKMP delete payloads");
+			llog(RC_LOG, st->logger, "IMPAIR: emitting duplicate ISKMP delete payloads");
 			for (unsigned nr = 0; nr < 2; nr++) {
 				passert(out_struct(&isad, &isakmp_delete_desc, &r_hdr_pbs, &del_pbs));
 				passert(out_raw(st->st_ike_spis.initiator.bytes, COOKIE_SIZE,
@@ -185,16 +185,16 @@ void send_v1_delete(struct ike_sa *isakmp, struct state *st, where_t where)
 				close_output_pbs(&del_pbs);
 				break;
 			case IMPAIR_EMIT_OMIT:
-				llog(RC_LOG, st->st_logger, "IMPAIR: omitting IPsec delete payload");
+				llog(RC_LOG, st->logger, "IMPAIR: omitting IPsec delete payload");
 				break;
 			case IMPAIR_EMIT_EMPTY:
 				passert(out_struct(&isad, &isakmp_delete_desc,
 						   &r_hdr_pbs, &del_pbs));
-				llog(RC_LOG, st->st_logger, "IMPAIR: emitting empty (i.e., no SPI) IPsec delete payload");
+				llog(RC_LOG, st->logger, "IMPAIR: emitting empty (i.e., no SPI) IPsec delete payload");
 				close_output_pbs(&del_pbs);
 				break;
 			case IMPAIR_EMIT_DUPLICATE:
-				llog(RC_LOG, st->st_logger, "IMPAIR: emitting duplicte IPsec delete payloads");
+				llog(RC_LOG, st->logger, "IMPAIR: emitting duplicte IPsec delete payloads");
 				for (unsigned nr = 0; nr < 2; nr++) {
 					passert(out_struct(&isad, &isakmp_delete_desc,
 							   &r_hdr_pbs, &del_pbs));
@@ -341,7 +341,7 @@ bool accept_delete(struct state **stp,
 	}
 
 	if (!IS_IKE_SA(*stp)) {
-		llog(RC_LOG_SERIOUS, (*stp)->st_logger,
+		llog(RC_LOG_SERIOUS, (*stp)->logger,
 		     "ignoring Delete SA payload: not an ISAKMP SA");
 		return false;
 	}
@@ -420,13 +420,13 @@ bool accept_delete(struct state **stp,
 			passert(sizeof(cookies.initiator) == COOKIE_SIZE);
 			d = pbs_in_thing(&p->pbs, cookies.initiator, "iCookie");
 			if (d != NULL) {
-				llog_diag(RC_LOG, p1->sa.st_logger, &d, "%s", "");
+				llog_diag(RC_LOG, p1->sa.logger, &d, "%s", "");
 				return false;
 			}
 
 			d = pbs_in_thing(&p->pbs, cookies.responder, "rCookie");
 			if (d != NULL) {
-				llog_diag(RC_LOG, p1->sa.st_logger, &d, "%s", "");
+				llog_diag(RC_LOG, p1->sa.logger, &d, "%s", "");
 				return false;
 			}
 
@@ -439,7 +439,7 @@ bool accept_delete(struct state **stp,
 			}
 
 			if (!IS_PARENT_SA(st)) {
-				llog_pexpect(p1->sa.st_logger, HERE,
+				llog_pexpect(p1->sa.logger, HERE,
 					     "ignoring Delete SA payload: "PRI_SO" is not an ISAKMP SA",
 					     pri_so(st->st_serialno));
 				continue;
@@ -483,7 +483,7 @@ bool accept_delete(struct state **stp,
 			ipsec_spi_t spi;	/* network order */
 			diag_t dt = pbs_in_thing(&p->pbs, spi, "SPI");
 			if (dt != NULL) {
-				llog_diag(RC_LOG, p1->sa.st_logger, &dt, "%s", "");
+				llog_diag(RC_LOG, p1->sa.logger, &dt, "%s", "");
 				return false;
 			}
 

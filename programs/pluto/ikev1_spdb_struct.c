@@ -861,11 +861,11 @@ bool ikev1_out_sa(pb_stream *outs,
 		revised_sadb = v1_ike_alg_make_sadb(c->config->ike_proposals,
 						    auth_method,
 						    aggressive_mode,
-						    st->st_logger);
+						    st->logger);
 	} else {
 		revised_sadb = v1_kernel_alg_makedb(child_sa_policy(c),
 						    c->config->child_sa.proposals,
-						    true, st->st_logger);
+						    true, st->logger);
 
 		/* add IPcomp proposal if policy asks for it */
 
@@ -1057,7 +1057,7 @@ bool ikev1_out_sa(pb_stream *outs,
 					 */
 					if (!ipcomp_cpi_generated) {
 						st->st_ipcomp.inbound.spi =
-							get_ipsec_cpi(c, st->st_logger);
+							get_ipsec_cpi(c, st->logger);
 						if (st->st_ipcomp.inbound.spi == 0)
 							goto fail; /* problem generating CPI */
 
@@ -1082,7 +1082,7 @@ bool ikev1_out_sa(pb_stream *outs,
 				if (spi_ptr != NULL) {
 					if (!*spi_generated) {
 						*spi_ptr = get_ipsec_spi(c, proto, 0,
-									 st->st_logger);
+									 st->logger);
 						*spi_generated = true;
 					}
 					if (!out_raw((uint8_t *)spi_ptr,
@@ -1544,7 +1544,7 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 
 	d = pbs_in_struct(sa_pbs, &ipsec_sit_desc, &ipsecdoisit, sizeof(ipsecdoisit), NULL);
 	if (d != NULL) {
-		llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
+		llog_diag(RC_LOG, st->logger, &d, "%s", "");
 		return v1N_SITUATION_NOT_SUPPORTED;	/* reject whole SA */
 	}
 
@@ -1568,7 +1568,7 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 			  &proposal, sizeof(proposal),
 			  &proposal_pbs);
 	if (d != NULL) {
-		llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
+		llog_diag(RC_LOG, st->logger, &d, "%s", "");
 		return v1N_PAYLOAD_MALFORMED;	/* reject whole SA */
 	}
 
@@ -1617,7 +1617,7 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 		diag_t d = pbs_in_shunk(&proposal_pbs, proposal.isap_spisize, &junk_spi,
 					"Oakley SPI (ignored)");
 		if (d != NULL) {
-			llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
+			llog_diag(RC_LOG_SERIOUS, st->logger, &d, "%s", "");
 			return v1N_PAYLOAD_MALFORMED;	/* reject whole SA */
 		}
 	} else {
@@ -1659,7 +1659,7 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 		diag_t d = pbs_in_struct(&proposal_pbs, &isakmp_isakmp_transform_desc,
 					 &trans, sizeof(trans), &trans_pbs);
 		if (d != NULL) {
-			llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
+			llog_diag(RC_LOG, st->logger, &d, "%s", "");
 			return v1N_BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 		}
 
@@ -1707,7 +1707,7 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 			diag_t d = pbs_in_struct(&trans_pbs, &isakmp_oakley_attribute_desc,
 						 &a, sizeof(a), &attr_pbs);
 			if (d != NULL) {
-				llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "invalid transform: ");
+				llog_diag(RC_LOG_SERIOUS, st->logger, &d, "invalid transform: ");
 				return v1N_BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 			}
 
@@ -2024,7 +2024,7 @@ rsasig_common:
 			/*
 			 * ML: at last check for allowed transforms in ike_proposals
 			 */
-			if (!ikev1_verify_ike(&ta, c->config->ike_proposals, st->st_logger)) {
+			if (!ikev1_verify_ike(&ta, c->config->ike_proposals, st->logger)) {
 				/*
 				 * already logged; UGH acts as a skip
 				 * rest of checks flag
@@ -2159,7 +2159,7 @@ bool init_aggr_st_oakley(struct ike_sa *ike)
 		 */
 		revised_sadb = v1_ike_alg_make_sadb(c->config->ike_proposals,
 						    auth_method, true,
-						    ike->sa.st_logger);
+						    ike->sa.logger);
 	}
 
 	if (revised_sadb == NULL)
@@ -2262,7 +2262,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 
 	diag_t d = pbs_in_struct(prop_pbs, trans_desc, trans, sizeof(*trans), trans_pbs);
 	if (d != NULL) {
-		llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
+		llog_diag(RC_LOG, st->logger, &d, "%s", "");
 		return false;
 	}
 
@@ -2328,7 +2328,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		diag_t d = pbs_in_struct(trans_pbs, &isakmp_ipsec_attribute_desc,
 					 &a, sizeof(a), &attr_pbs);
 		if (d != NULL) {
-			llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
+			llog_diag(RC_LOG, st->logger, &d, "%s", "");
 			return false;
 		}
 
@@ -2718,7 +2718,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 	/* Situation */
 	d = pbs_in_struct(sa_pbs, &ipsec_sit_desc, &ipsecdoisit, sizeof(ipsecdoisit), NULL);
 	if (d != NULL) {
-		llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
+		llog_diag(RC_LOG, st->logger, &d, "%s", "");
 		return v1N_SITUATION_NOT_SUPPORTED;	/* reject whole SA */
 	}
 
@@ -2747,7 +2747,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 			  &next_proposal, sizeof(next_proposal),
 			  &next_proposal_pbs);
 	if (d != NULL) {
-		llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
+		llog_diag(RC_LOG, st->logger, &d, "%s", "");
 		return v1N_BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 	}
 
@@ -2795,7 +2795,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 								IPSEC_DOI_SPI_SIZE - IPCOMP_CPI_SIZE,
 								&filler, "CPI filler");
 					if (d != NULL) {
-						llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
+						llog_diag(RC_LOG, st->logger, &d, "%s", "");
 						return v1N_INVALID_SPI;	/* reject whole SA */
 					}
 					if (!all_zero(filler.ptr, filler.len)) {
@@ -2818,7 +2818,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 							IPCOMP_CPI_SIZE,
 							"CPI");
 				if (d != NULL) {
-					llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
+					llog_diag(RC_LOG, st->logger, &d, "%s", "");
 					return v1N_INVALID_SPI;	/* reject whole SA */
 				}
 
@@ -2865,7 +2865,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 
 				diag_t d = pbs_in_thing(&next_proposal_pbs, next_spi, "SPI");
 				if (d != NULL) {
-					llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
+					llog_diag(RC_LOG, st->logger, &d, "%s", "");
 					return v1N_INVALID_SPI;	/* reject whole SA */
 				}
 
@@ -2951,7 +2951,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 						 &next_proposal, sizeof(next_proposal),
 						 &next_proposal_pbs);
 			if (d != NULL) {
-				llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
+				llog_diag(RC_LOG, st->logger, &d, "%s", "");
 				return v1N_BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 			}
 		} while (next_proposal.isap_proposal == propno);
@@ -3043,7 +3043,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 				continue; /* we didn't find a nice one */
 
 			/* Check AH proposal with configuration */
-			if (!ikev1_verify_ah(c, &ah_attrs.transattrs, st->st_logger)) {
+			if (!ikev1_verify_ah(c, &ah_attrs.transattrs, st->logger)) {
 				continue;
 			}
 			ah_attrs_spi = ah_spi;
@@ -3072,7 +3072,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 				/*
 				 * check for allowed transforms in alg_info_esp
 				 */
-				if (!ikev1_verify_esp(c, &esp_attrs.transattrs, st->st_logger)) {
+				if (!ikev1_verify_esp(c, &esp_attrs.transattrs, st->logger)) {
 					continue;       /* try another */
 				}
 
@@ -3220,7 +3220,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 					      &isakmp_ah_transform_desc,
 					      &ah_trans_pbs,
 					      c->spd,
-					      st->st_logger);
+					      st->logger);
 			}
 
 			/* ESP proposal */
@@ -3233,7 +3233,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 					      &isakmp_esp_transform_desc,
 					      &esp_trans_pbs,
 					      c->spd,
-					      st->st_logger);
+					      st->logger);
 			}
 
 			/* IPCOMP proposal */
@@ -3246,7 +3246,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 					      &isakmp_ipcomp_transform_desc,
 					      &ipcomp_trans_pbs,
 					      c->spd,
-					      st->st_logger);
+					      st->logger);
 			}
 
 			close_output_pbs(r_sa_pbs);

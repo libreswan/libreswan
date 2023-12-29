@@ -320,7 +320,7 @@ void submit_task(const struct logger *logger,
 		 where_t where)
 {
 	if (st->st_offloaded_task != NULL) {
-		llog_pexpect(st->st_logger, where,
+		llog_pexpect(st->logger, where,
 			     "state already has outstanding crypto ["PRI_WHERE"]",
 			     pri_where(st->st_offloaded_task->where));
 		return;

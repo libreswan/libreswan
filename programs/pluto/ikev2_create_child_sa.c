@@ -221,7 +221,7 @@ static void emancipate_larval_ike_sa(struct ike_sa *old_ike, struct child_sa *ne
 	 */
 	/* XXX: call transition->llog()? */
 	llog_v2_ike_sa_established(old_ike, new_ike);
-	release_whack(new_ike->sa.st_logger, HERE);
+	release_whack(new_ike->sa.logger, HERE);
 }
 
 /*
@@ -251,7 +251,7 @@ static bool find_v2N_REKEY_SA_child(struct ike_sa *ike,
 
 	const struct payload_digest *rekey_sa_payload = md->pd[PD_v2N_REKEY_SA];
 	if (rekey_sa_payload == NULL) {
-		llog_pexpect(ike->sa.st_logger, HERE,
+		llog_pexpect(ike->sa.logger, HERE,
 			     "rekey child can't find its rekey_sa payload");
 		return false;
 	}
@@ -298,7 +298,7 @@ static bool find_v2N_REKEY_SA_child(struct ike_sa *ike,
 	diag_t d = pbs_in_thing(&rekey_pbs, spi, "SPI");
 	if (d != NULL) {
 		/* for instance, truncated SPI */
-		llog_diag(RC_LOG, ike->sa.st_logger, &d, "%s", "");
+		llog_diag(RC_LOG, ike->sa.logger, &d, "%s", "");
 		return false;
 	}
 
@@ -330,7 +330,7 @@ static bool find_v2N_REKEY_SA_child(struct ike_sa *ike,
 			"CREATE_CHILD_SA no such IPsec SA to rekey SA("PRI_IPSEC_SPI") Protocol %s",
 			pri_ipsec_spi(spi),
 			enum_show(&ikev2_notify_protocol_id_names, rekey_notify->isan_protoid, &b));
-		record_v2N_spi_response(ike->sa.st_logger, ike, md,
+		record_v2N_spi_response(ike->sa.logger, ike, md,
 					rekey_notify->isan_protoid, &spi,
 					v2N_CHILD_SA_NOT_FOUND,
 					NULL/*empty data*/, ENCRYPTED_PAYLOAD);
@@ -358,7 +358,7 @@ static bool record_v2_rekey_ike_message(struct ike_sa *ike,
 
 	struct v2_message message;
 	if (!open_v2_message("CREATE_CHILD_SA rekey ike",
-			     ike, larval_ike->sa.st_logger,
+			     ike, larval_ike->sa.logger,
 			     request_md, ISAKMP_v2_CREATE_CHILD_SA,
 			     reply_buffer, sizeof(reply_buffer),
 			     &message, ENCRYPTED_PAYLOAD)) {
@@ -406,7 +406,7 @@ static bool record_v2_rekey_ike_message(struct ike_sa *ike,
 	/* send NONCE */
 	{
 		struct ikev2_generic in = {
-			.isag_critical = build_ikev2_critical(false, larval_ike->sa.st_logger),
+			.isag_critical = build_ikev2_critical(false, larval_ike->sa.logger),
 		};
 		struct pbs_out nr_pbs;
 
@@ -449,7 +449,7 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_child(struct ike_sa *ike,
 						       struct child_sa *child_being_replaced)
 {
 	struct connection *c = child_being_replaced->sa.st_connection;
-	struct logger *logger = child_being_replaced->sa.st_logger;
+	struct logger *logger = child_being_replaced->sa.logger;
 	passert(c != NULL);
 
 	dbg("initiating child sa with "PRI_LOGGER, pri_logger(logger));
@@ -632,7 +632,7 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 
 	struct v2_message request;
 	if (!open_v2_message("rekey Child SA request",
-			     ike, larval_child->sa.st_logger,
+			     ike, larval_child->sa.logger,
 			     /*initiator*/NULL, ISAKMP_v2_CREATE_CHILD_SA,
 			     reply_buffer, sizeof(reply_buffer), &request,
 			     ENCRYPTED_PAYLOAD)) {
@@ -655,7 +655,7 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 			rekey_spi = prev->sa.st_ah.inbound.spi;
 			rekey_protoid = PROTO_IPSEC_AH;
 		} else {
-			llog_pexpect(larval_child->sa.st_logger, HERE,
+			llog_pexpect(larval_child->sa.logger, HERE,
 				     "previous Child SA #%lu being rekeyed is not ESP/AH",
 				     larval_child->sa.st_v2_rekey_pred);
 			return STF_INTERNAL_ERROR;
@@ -706,7 +706,7 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 
 	struct child_sa *predecessor = NULL;
 	if (!find_v2N_REKEY_SA_child(ike, md, &predecessor)) {
-		record_v2N_response(ike->sa.st_logger, ike, md, v2N_INVALID_SYNTAX,
+		record_v2N_response(ike->sa.logger, ike, md, v2N_INVALID_SYNTAX,
 				    NULL/*empty data*/, ENCRYPTED_PAYLOAD);
 		return STF_FATAL;
 	}
@@ -728,7 +728,7 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 							     larval_child->sa.logger);
 
 	if (!verify_rekey_child_request_ts(larval_child, md)) {
-		record_v2N_response(ike->sa.st_logger, ike, md,
+		record_v2N_response(ike->sa.logger, ike, md,
 				    v2N_TS_UNACCEPTABLE, NULL/*no data*/,
 				    ENCRYPTED_PAYLOAD);
 		delete_child_sa(&larval_child);
@@ -877,7 +877,7 @@ stf_status initiate_v2_CREATE_CHILD_SA_new_child_request(struct ike_sa *ike,
 
 	struct v2_message request;
 	if (!open_v2_message("new Child SA request",
-			     ike, larval_child->sa.st_logger,
+			     ike, larval_child->sa.logger,
 			     /*initiator*/NULL, ISAKMP_v2_CREATE_CHILD_SA,
 			     reply_buffer, sizeof(reply_buffer),
 			     &request, ENCRYPTED_PAYLOAD)) {
@@ -937,7 +937,7 @@ stf_status process_v2_CREATE_CHILD_SA_new_child_request(struct ike_sa *ike,
 
 	if (!process_v2TS_request_payloads(larval_child, md)) {
 		/* already logged */
-		record_v2N_response(larval_child->sa.st_logger, ike, md,
+		record_v2N_response(larval_child->sa.logger, ike, md,
 				    v2N_TS_UNACCEPTABLE,
 				    NULL/*no-data*/, ENCRYPTED_PAYLOAD);
 		delete_child_sa(&larval_child);
@@ -964,12 +964,12 @@ stf_status process_v2_CREATE_CHILD_SA_request(struct ike_sa *ike,
 	free_chunk_content(&larval_child->sa.st_nr); /* this is from the parent. */
 
 	/* Ni in */
-	if (!accept_v2_nonce(larval_child->sa.st_logger, md, &larval_child->sa.st_ni, "Ni")) {
+	if (!accept_v2_nonce(larval_child->sa.logger, md, &larval_child->sa.st_ni, "Ni")) {
 		/*
 		 * Presumably not our fault.  Syntax error response
 		 * impicitly kills the family.
 		 */
-		record_v2N_response(ike->sa.st_logger, ike, md,
+		record_v2N_response(ike->sa.logger, ike, md,
 				    v2N_INVALID_SYNTAX, NULL/*no-data*/,
 				    ENCRYPTED_PAYLOAD);
 		delete_child_sa(&larval_child);
@@ -982,7 +982,7 @@ stf_status process_v2_CREATE_CHILD_SA_request(struct ike_sa *ike,
 					 larval_child->sa.st_v2_create_child_sa_proposals,
 					 /*expect-accepted-proposal?*/false);
 	if (n != v2N_NOTHING_WRONG) {
-		record_v2N_response(ike->sa.st_logger, ike, md,
+		record_v2N_response(ike->sa.logger, ike, md,
 				    n, NULL/*no-data*/, ENCRYPTED_PAYLOAD);
 		delete_child_sa(&larval_child);
 		ike->sa.st_v2_msgid_windows.responder.wip_sa = NULL;
@@ -1094,7 +1094,7 @@ static stf_status process_v2_CREATE_CHILD_SA_request_continue_2(struct state *ik
 
 	if (larval_child->sa.st_dh_shared_secret == NULL) {
 		log_state(RC_LOG, &larval_child->sa, "DH failed");
-		record_v2N_response(larval_child->sa.st_logger, ike, request_md,
+		record_v2N_response(larval_child->sa.logger, ike, request_md,
 				    v2N_INVALID_SYNTAX, NULL,
 				    ENCRYPTED_PAYLOAD);
 		delete_child_sa(&larval_child);
@@ -1126,7 +1126,7 @@ stf_status process_v2_CREATE_CHILD_SA_request_continue_3(struct ike_sa *ike,
 
 	struct v2_message response;
 	if (!open_v2_message("CREATE_CHILD_SA message",
-			     ike, larval_child->sa.st_logger,
+			     ike, larval_child->sa.logger,
 			     request_md, ISAKMP_v2_CREATE_CHILD_SA,
 			     reply_buffer, sizeof(reply_buffer),
 			     &response, ENCRYPTED_PAYLOAD)) {
@@ -1137,7 +1137,7 @@ stf_status process_v2_CREATE_CHILD_SA_request_continue_3(struct ike_sa *ike,
 								response.pbs);
 	if (n != v2N_NOTHING_WRONG) {
 		/* already logged */
-		record_v2N_response(larval_child->sa.st_logger, ike, request_md,
+		record_v2N_response(larval_child->sa.logger, ike, request_md,
 				    n, NULL/*no-data*/, ENCRYPTED_PAYLOAD);
 		delete_child_sa(&larval_child);
 		ike->sa.st_v2_msgid_windows.responder.wip_sa = NULL;
@@ -1186,7 +1186,7 @@ stf_status process_v2_CREATE_CHILD_SA_child_response(struct ike_sa *ike,
 	larval_child->sa.st_v2_transition = transition;
 
 	/* Ni in */
-	if (!accept_v2_nonce(larval_child->sa.st_logger, response_md,
+	if (!accept_v2_nonce(larval_child->sa.logger, response_md,
 			     &larval_child->sa.st_nr, "Nr")) {
 		/*
 		 * Presumably not our fault.  Syntax errors in a
@@ -1247,7 +1247,7 @@ stf_status process_v2_CREATE_CHILD_SA_child_response(struct ike_sa *ike,
 		 */
 		v2_child_sa_established(ike, larval_child);
 		/* hack; cover all bases; handled by close any whacks? */
-		release_whack(larval_child->sa.st_logger, HERE);
+		release_whack(larval_child->sa.logger, HERE);
 		return STF_OK; /* IKE */
 	}
 
@@ -1260,7 +1260,7 @@ stf_status process_v2_CREATE_CHILD_SA_child_response(struct ike_sa *ike,
 	 */
 	pexpect(larval_child->sa.st_oakley.ta_dh == larval_child->sa.st_pfs_group);
 	if (!unpack_KE(&larval_child->sa.st_gr, "Gr", larval_child->sa.st_oakley.ta_dh,
-		       response_md->chain[ISAKMP_NEXT_v2KE], larval_child->sa.st_logger)) {
+		       response_md->chain[ISAKMP_NEXT_v2KE], larval_child->sa.logger)) {
 		/*
 		 * XXX: Initiator; need to initiate a delete exchange.
 		 */
@@ -1342,7 +1342,7 @@ static stf_status process_v2_CREATE_CHILD_SA_child_response_continue_1(struct st
 	 */
 	v2_child_sa_established(ike, larval_child);
 	/* hack; cover all bases; handled by close any whacks? */
-	release_whack(larval_child->sa.st_logger, HERE);
+	release_whack(larval_child->sa.logger, HERE);
 
 	return STF_OK; /* IKE */
 }
@@ -1363,7 +1363,7 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_ike(struct ike_sa *ike)
 	struct child_sa *larval_ike = new_v2_child_sa(c, ike, IKE_SA,
 						      SA_INITIATOR,
 						      STATE_V2_REKEY_IKE_I0);
-	state_attach(&larval_ike->sa, ike->sa.st_logger);
+	state_attach(&larval_ike->sa, ike->sa.logger);
 	larval_ike->sa.st_oakley = ike->sa.st_oakley;
 	larval_ike->sa.st_ike_rekey_spis.initiator = ike_initiator_spi();
 	larval_ike->sa.st_v2_rekey_pred = ike->sa.st_serialno;
@@ -1496,14 +1496,14 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
 	free_chunk_content(&larval_ike->sa.st_nr); /* this is from the parent. */
 
 	/* Ni in */
-	if (!accept_v2_nonce(larval_ike->sa.st_logger, request_md, &larval_ike->sa.st_ni, "Ni")) {
+	if (!accept_v2_nonce(larval_ike->sa.logger, request_md, &larval_ike->sa.st_ni, "Ni")) {
 		/*
 		 * Presumably not our fault.  A syntax error response
 		 * implicitly kills the entire family.
 		 *
 		 * Already logged?
 		 */
-		record_v2N_response(ike->sa.st_logger, ike, request_md,
+		record_v2N_response(ike->sa.logger, ike, request_md,
 				    v2N_INVALID_SYNTAX, NULL/*no-data*/,
 				    ENCRYPTED_PAYLOAD);
 		delete_child_sa(&larval_ike);
@@ -1522,10 +1522,10 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
 				     /*expect_accepted*/ false,
 				     is_opportunistic(c),
 				     &larval_ike->sa.st_v2_accepted_proposal,
-				     ike_proposals, larval_ike->sa.st_logger);
+				     ike_proposals, larval_ike->sa.logger);
 	if (n != v2N_NOTHING_WRONG) {
 		pexpect(larval_ike->sa.st_sa_role == SA_RESPONDER);
-		record_v2N_response(larval_ike->sa.st_logger, ike, request_md,
+		record_v2N_response(larval_ike->sa.logger, ike, request_md,
 				    n, NULL, ENCRYPTED_PAYLOAD);
 		delete_child_sa(&larval_ike);
 		ike->sa.st_v2_msgid_windows.responder.wip_sa = NULL;
@@ -1538,7 +1538,7 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
 	}
 
 	if (!ikev2_proposal_to_trans_attrs(larval_ike->sa.st_v2_accepted_proposal,
-					   &larval_ike->sa.st_oakley, larval_ike->sa.st_logger)) {
+					   &larval_ike->sa.st_oakley, larval_ike->sa.logger)) {
 		llog_sa(RC_LOG_SERIOUS, larval_ike,
 			"IKE responder accepted an unsupported algorithm");
 		delete_child_sa(&larval_ike);
@@ -1600,7 +1600,7 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_1(struct
 	ikev2_copy_cookie_from_sa(larval_ike->sa.st_v2_accepted_proposal,
 				  &larval_ike->sa.st_ike_rekey_spis.initiator);
 	larval_ike->sa.st_ike_rekey_spis.responder = ike_responder_spi(&request_md->sender,
-								       larval_ike->sa.st_logger);
+								       larval_ike->sa.logger);
 	submit_dh_shared_secret(&ike->sa, &larval_ike->sa,
 				larval_ike->sa.st_gi/*responder needs initiator KE*/,
 				process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_2,
@@ -1635,7 +1635,7 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_2(struct
 	     __func__, larval_ike->sa.st_serialno, larval_ike->sa.st_state->name);
 
 	if (larval_ike->sa.st_dh_shared_secret == NULL) {
-		record_v2N_response(ike->sa.st_logger, ike, request_md,
+		record_v2N_response(ike->sa.logger, ike, request_md,
 				    v2N_INVALID_SYNTAX, NULL,
 				    ENCRYPTED_PAYLOAD);
 		delete_child_sa(&larval_ike);
@@ -1688,7 +1688,7 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response(struct ike_sa *ike,
 	larval_ike->sa.st_v2_transition = transition;
 
 	/* Ni in */
-	if (!accept_v2_nonce(larval_ike->sa.st_logger, response_md, &larval_ike->sa.st_nr, "Nr")) {
+	if (!accept_v2_nonce(larval_ike->sa.logger, response_md, &larval_ike->sa.st_nr, "Nr")) {
 		/*
 		 * Presumably not our fault.  Syntax errors in a
 		 * response kill the family and trigger no further
@@ -1710,7 +1710,7 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response(struct ike_sa *ike,
 				     is_opportunistic(c),
 				     &larval_ike->sa.st_v2_accepted_proposal,
 				     larval_ike->sa.st_v2_create_child_sa_proposals,
-				     larval_ike->sa.st_logger);
+				     larval_ike->sa.logger);
 	if (v2_notification_fatal(n)) {
 		return STF_FATAL;
 	}
@@ -1726,7 +1726,7 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response(struct ike_sa *ike,
 				       larval_ike->sa.st_v2_accepted_proposal);
 	}
 	if (!ikev2_proposal_to_trans_attrs(larval_ike->sa.st_v2_accepted_proposal,
-					   &larval_ike->sa.st_oakley, larval_ike->sa.st_logger)) {
+					   &larval_ike->sa.st_oakley, larval_ike->sa.logger)) {
 		llog_sa(RC_LOG_SERIOUS, larval_ike,
 			"IKE responder accepted an unsupported algorithm");
 		/* free early return items */
@@ -1737,7 +1737,7 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response(struct ike_sa *ike,
 
 	 /* KE in */
 	if (!unpack_KE(&larval_ike->sa.st_gr, "Gr", larval_ike->sa.st_oakley.ta_dh,
-		       response_md->chain[ISAKMP_NEXT_v2KE], larval_ike->sa.st_logger)) {
+		       response_md->chain[ISAKMP_NEXT_v2KE], larval_ike->sa.logger)) {
 		/*
 		 * XXX: Initiator so returning this notification will
 		 * go no where.  Need to check RFC for what to do
@@ -1862,7 +1862,7 @@ stf_status process_v2_CREATE_CHILD_SA_failure_response(struct ike_sa *ike,
 							 &sg, sizeof(sg), NULL);
 				if (d != NULL) {
 					enum_buf nb;
-					llog_diag(RC_LOG, (*larval_child)->sa.st_logger, &d,
+					llog_diag(RC_LOG, (*larval_child)->sa.logger, &d,
 						  "CREATE_CHILD_SA failed with error notification %s response: ",
 						  str_enum_short(&v2_notification_names, n, &nb));
 					status = STF_FATAL;
@@ -1911,9 +1911,9 @@ stf_status process_v2_CREATE_CHILD_SA_failure_response(struct ike_sa *ike,
 	 */
 	struct state *replacing = state_by_serialno((*larval_child)->sa.st_v2_rekey_pred);
 	if (replacing != NULL && IS_CHILD_SA(replacing)) {
-		PEXPECT((*larval_child)->sa.st_logger,
+		PEXPECT((*larval_child)->sa.logger,
 			(*larval_child)->sa.st_sa_type_when_established == IPSEC_SA);
-		state_detach(replacing, (*larval_child)->sa.st_logger);
+		state_detach(replacing, (*larval_child)->sa.logger);
 	}
 
 	connection_delete_child(larval_child, HERE);

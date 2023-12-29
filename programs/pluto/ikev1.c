@@ -983,7 +983,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 
 		default:
 		{
-			struct logger *logger = st != NULL ? st->st_logger :
+			struct logger *logger = st != NULL ? st->logger :
 							     md->logger;
 			enum_buf eb;
 			llog(RC_LOG_SERIOUS, logger,
@@ -995,7 +995,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 	} else {
 		/* warn if we didn't find any Delete or Notify payload in packet */
 		if (md->chain[ISAKMP_NEXT_D] == NULL) {
-			const struct logger *logger = (st != NULL ? st->st_logger :
+			const struct logger *logger = (st != NULL ? st->logger :
 						 md->logger);
 			llog(RC_LOG_SERIOUS, logger,
 				    "received and ignored empty informational notification payload");
@@ -1122,7 +1122,7 @@ void process_v1_packet(struct msg_digest *md)
 			send_v1_notification_from_md(md, t);		\
 	}
 
-#define LOGGER (st != NULL ? st->st_logger : md->logger)
+#define LOGGER (st != NULL ? st->logger : md->logger)
 
 #define LOG_PACKET(RC, ...) llog(RC, LOGGER, __VA_ARGS__)
 #define LOG_PACKET_JAMBUF(RC_FLAGS, BUF) LLOG_JAMBUF(RC_FLAGS, LOGGER, BUF)
@@ -1868,7 +1868,7 @@ void process_packet_tail(struct msg_digest *md)
 					 pbs_left(&md->message_pbs),
 					 st->st_enc_key_nss,
 					 st->st_v1_new_iv.ptr, false,
-					 st->st_logger);
+					 st->logger);
 		if (DBGP(DBG_CRYPT)) {
 			DBG_dump_hunk("IV after:", st->st_v1_new_iv);
 			DBG_log("decrypted payload (starts at offset %td):",
@@ -2262,11 +2262,11 @@ void process_packet_tail(struct msg_digest *md)
 			    nname);
 		} else {
 			if (impair.copy_v1_notify_response_SPIs_to_retransmission) {
-				ldbg(st->st_logger, "IMPAIR: copying notify response SPIs to recorded message and then resending it");
+				ldbg(st->logger, "IMPAIR: copying notify response SPIs to recorded message and then resending it");
 				/* skip non-ESP marker if needed */
 				size_t skip = (st->st_iface_endpoint->esp_encapsulation_enabled ? NON_ESP_MARKER_SIZE : 0);
 				size_t spis = sizeof(md->hdr.isa_ike_spis);
-				PASSERT(st->st_logger, st->st_v1_tpacket.len >= skip + spis);
+				PASSERT(st->logger, st->st_v1_tpacket.len >= skip + spis);
 				memcpy(st->st_v1_tpacket.ptr + skip, &md->hdr.isa_ike_spis, spis);
 #if 0
 				uint8_t *flags = (uint8_t*)st->st_v1_tpacket.ptr + skip + spis + 3;
@@ -2304,7 +2304,7 @@ void process_packet_tail(struct msg_digest *md)
 	for (struct payload_digest *p = md->chain[ISAKMP_NEXT_VID];
 	     p != NULL; p = p->next) {
 		handle_v1_vendorid(md, pbs_in_left(&p->pbs),
-				   (st != NULL ? st->st_logger : md->logger));
+				   (st != NULL ? st->logger : md->logger));
 	}
 
 	pexpect(st == md->v1_st); /* could be NULL */
@@ -2729,7 +2729,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 			passert(st->st_state->kind < STATE_IKEv1_ROOF);
 
 			/* tell whack and logs our progress */
-			LLOG_JAMBUF(w, st->st_logger, buf) {
+			LLOG_JAMBUF(w, st->logger, buf) {
 				jam(buf, "%s", st->st_state->story);
 				/* document SA details for admin's pleasure */
 				if (jam_details != NULL) {
@@ -2845,7 +2845,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 
 		if (IS_V1_ISAKMP_SA_ESTABLISHED(st) ||
 		    IS_IPSEC_SA_ESTABLISHED(st))
-			release_whack(st->st_logger, HERE);
+			release_whack(st->logger, HERE);
 
 		if (IS_V1_QUICK(st->st_state->kind))
 			break;
@@ -2877,7 +2877,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 				       st->st_connection,
 				       st->st_connection->spd,
 				       pexpect_child_sa(st),
-				       st->st_logger))
+				       st->logger))
 				dbg("sending disconnect to NM failed, you may need to do it manually");
 		}
 #endif
@@ -2935,12 +2935,12 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 				       st->st_connection,
 				       st->st_connection->spd,
 				       pexpect_child_sa(st),
-				       st->st_logger))
+				       st->logger))
 				dbg("sending disconnect to NM failed, you may need to do it manually");
 		}
 #endif
 		if (IS_V1_QUICK(st->st_state->kind)) {
-			ldbg(st->st_logger, "quick delete");
+			ldbg(st->logger, "quick delete");
 			connection_delete_v1_state(&st, HERE);
 			/* wipe out dangling pointer to st */
 			md->v1_st = NULL;
@@ -3041,24 +3041,24 @@ void ISAKMP_SA_established(struct ike_sa *ike)
 struct ike_sa *established_isakmp_sa_for_state(struct state *st,
 					       bool viable_parent)
 {
-	PASSERT(st->st_logger, !st->st_on_delete.skip_send_delete);
-	PASSERT(st->st_logger, st->st_ike_version == IKEv1);
+	PASSERT(st->logger, !st->st_on_delete.skip_send_delete);
+	PASSERT(st->logger, st->st_ike_version == IKEv1);
 
 	if (IS_V1_ISAKMP_SA_ESTABLISHED(st)) {
-		pdbg(st->st_logger,
+		pdbg(st->logger,
 		     "send? yes, IKEv1 ISAKMP SA in state %s is established",
 		     st->st_state->short_name);
 		return pexpect_ike_sa(st);
 	}
 
 	if (IS_V1_ISAKMP_SA(st)) {
-		pdbg(st->st_logger,
+		pdbg(st->logger,
 		     "send? no, IKEv1 ISAKMP SA in state %s is NOT established",
 		     st->st_state->short_name);
 		return NULL;
 	}
 
-	PEXPECT(st->st_logger, IS_CHILD_SA(st));
+	PEXPECT(st->logger, IS_CHILD_SA(st));
 
 	if (!IS_IPSEC_SA_ESTABLISHED(st)) {
 		/*
@@ -3066,7 +3066,7 @@ struct ike_sa *established_isakmp_sa_for_state(struct state *st,
 		 * need to start a new IKE SA to send the delete
 		 * notification ???
 		 */
-		pdbg(st->st_logger,
+		pdbg(st->logger,
 		     "send? no, IKEv1 IPsec SA in state %s is not established",
 		     st->st_state->name);
 		return NULL;
@@ -3076,13 +3076,13 @@ struct ike_sa *established_isakmp_sa_for_state(struct state *st,
 							  V1_ISAKMP_SA_ESTABLISHED_STATES,
 							  viable_parent);
 	if (isakmp == NULL) {
-		pdbg(st->st_logger,
+		pdbg(st->logger,
 		     "send? no, IKEv1 IPsec SA in state %s is established but has no established ISAKMP SA",
 		     st->st_state->short_name);
 		return NULL;
 	}
 
-	pdbg(st->st_logger,
+	pdbg(st->logger,
 	     "send? yes, IKEv1 IPsec SA in state %s is established and has the established ISAKMP SA "PRI_SO,
 	     st->st_state->short_name,
 	     pri_so(isakmp->sa.st_serialno));

@@ -61,7 +61,7 @@ static void schedule_liveness(struct child_sa *child, deltatime_t time_since_las
 	 */
 	delay = deltatime_sub(delay, time_since_last_contact);
 	delay = deltatime_max(delay, deltatime(MIN_LIVENESS));
-	LDBGP_JAMBUF(DBG_BASE, child->sa.st_logger, buf) {
+	LDBGP_JAMBUF(DBG_BASE, child->sa.logger, buf) {
 		deltatime_buf db;
 		endpoint_buf remote_buf;
 		jam(buf, "liveness: #%lu scheduling next check for %s in %s seconds",
@@ -89,7 +89,7 @@ static bool recent_last_contact(struct child_sa *child,
 	 */
 	deltatime_t fuzz_since_last_contact = deltatime_add(time_since_last_contact,
 							    deltatime(MIN_LIVENESS));
-	LDBGP_JAMBUF(DBG_BASE, child->sa.st_logger, buf) {
+	LDBGP_JAMBUF(DBG_BASE, child->sa.logger, buf) {
 		jam_string(buf, "time_since_last_contact=");
 		jam_deltatime(buf, time_since_last_contact);
 		jam_string(buf, " -> ");

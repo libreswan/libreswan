@@ -69,14 +69,14 @@ bool submit_v2_auth_signature(struct ike_sa *ike,
 		.hash_to_sign = *hash_to_sign,
 		.signer = signer,
 		.pks = get_local_private_key(c, signer->type,
-					     ike->sa.st_logger),
+					     ike->sa.logger),
 	};
 
 	if (task.pks == NULL)
 		/* failure: no key to use */
 		return false;
 
-	submit_task(ike->sa.st_logger, &ike->sa /*state to resume*/,
+	submit_task(ike->sa.logger, &ike->sa /*state to resume*/,
 		    clone_thing(task, "signature task"),
 		    &v2_auth_signature_handler, where);
 	return true;

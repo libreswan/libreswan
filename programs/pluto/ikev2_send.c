@@ -507,7 +507,7 @@ stf_status record_v2_informational_request(const char *name,
 	uint8_t buffer[MIN_OUTPUT_UDP_SIZE];	/* ??? large enough for any informational? */
 
 	struct v2_message request;
-	if (!open_v2_message(name, ike, sender->st_logger,
+	if (!open_v2_message(name, ike, sender->logger,
 			     NULL/*request*/, ISAKMP_v2_INFORMATIONAL,
 			     buffer, sizeof(buffer), &request,
 			     ENCRYPTED_PAYLOAD)) {

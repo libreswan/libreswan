@@ -137,7 +137,7 @@ struct ike_sa *main_outI1(struct connection *c,
 	}
 
 	/* set up reply */
-	reply_stream = open_pbs_out("reply packet", reply_buffer, sizeof(reply_buffer), st->st_logger);
+	reply_stream = open_pbs_out("reply packet", reply_buffer, sizeof(reply_buffer), st->logger);
 
 	/* HDR out */
 	pb_stream rbody;
@@ -283,7 +283,7 @@ struct crypt_mac main_mode_hash(struct state *st,
 	struct crypt_prf *ctx = crypt_prf_init_symkey("main mode",
 						      st->st_oakley.ta_prf,
 						      "skeyid", st->st_skeyid_nss,
-						      st->st_logger);
+						      st->logger);
 	main_mode_hash_body(st, role, idpl, ctx);
 	return crypt_prf_final_mac(&ctx, NULL);
 }
@@ -364,7 +364,7 @@ bool ikev1_encrypt_message(pb_stream *pbs, struct state *st)
 	e->encrypt_ops->do_crypt(e, enc_start, enc_len,
 				 st->st_enc_key_nss,
 				 st->st_v1_new_iv.ptr, true,
-				 st->st_logger);
+				 st->logger);
 
 	update_iv(st);
 	if (DBGP(DBG_CRYPT)) {
@@ -399,16 +399,16 @@ bool ikev1_close_message(struct pbs_out *pbs, const struct state *st)
 		return false;
 	}
 
-	PASSERT(st->st_logger, st->st_ike_version == IKEv1);
+	PASSERT(st->logger, st->st_ike_version == IKEv1);
 
 	size_t padding = pad_up(pbs_offset(pbs), 4);
 	if (padding == 0) {
-		ldbg(st->st_logger, "no IKEv1 message padding required");
+		ldbg(st->logger, "no IKEv1 message padding required");
 	} else if (!st->st_connection->config->ikepad) {
-		ldbg(st->st_logger, "IKEv1 message padding of %zu bytes skipped by policy",
+		ldbg(st->logger, "IKEv1 message padding of %zu bytes skipped by policy",
 		     padding);
 	} else {
-		ldbg(st->st_logger, "padding IKEv1 message with %zu bytes", padding);
+		ldbg(st->logger, "padding IKEv1 message with %zu bytes", padding);
 		if (!pbs_out_zero(pbs, padding, "message padding")) {
 			/* already logged */
 			return false; /*fatal*/
@@ -505,7 +505,7 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 	 * We can't leave this to comm_handle() because we must
 	 * fill in the cookie.
 	 */
-	reply_stream = open_pbs_out("reply packet", reply_buffer, sizeof(reply_buffer), st->st_logger);
+	reply_stream = open_pbs_out("reply packet", reply_buffer, sizeof(reply_buffer), st->logger);
 	struct pbs_out rbody;
 	{
 		struct isakmp_hdr hdr = md->hdr;
@@ -627,7 +627,7 @@ static stf_status main_inR1_outI2_continue(struct state *st,
 	struct pbs_out rbody;
 	ikev1_init_pbs_out_from_md_hdr(md, false,
 				       &reply_stream, reply_buffer, sizeof(reply_buffer),
-				       &rbody, st->st_logger);
+				       &rbody, st->logger);
 
 	/* KE out */
 	if (!ikev1_ship_KE(st, local_secret, &st->st_gi, &rbody))
@@ -698,12 +698,12 @@ stf_status main_inI2_outR2(struct state *st, struct msg_digest *md)
 {
 	/* KE in */
 	if (!unpack_KE(&st->st_gi, "Gi", st->st_oakley.ta_dh,
-		       md->chain[ISAKMP_NEXT_KE], st->st_logger)) {
+		       md->chain[ISAKMP_NEXT_KE], st->logger)) {
 		return STF_FAIL_v1N + v1N_INVALID_KEY_INFORMATION;
 	}
 
 	/* Ni in */
-	RETURN_STF_FAIL_v1NURE(accept_v1_nonce(st->st_logger, md, &st->st_ni, "Ni"));
+	RETURN_STF_FAIL_v1NURE(accept_v1_nonce(st->logger, md, &st->st_ni, "Ni"));
 
 	/* decode certificate requests */
 	decode_v1_certificate_requests(st, md);
@@ -783,7 +783,7 @@ static stf_status main_inI2_outR2_continue1(struct state *st,
 	struct pbs_out rbody;
 	ikev1_init_pbs_out_from_md_hdr(md, false,
 				       &reply_stream, reply_buffer, sizeof(reply_buffer),
-				       &rbody, st->st_logger);
+				       &rbody, st->logger);
 
 	/* KE out */
 	passert(ikev1_ship_KE(st, local_secret, &st->st_gr, &rbody));
@@ -911,12 +911,12 @@ stf_status main_inR2_outI3(struct state *st, struct msg_digest *md)
 
 	/* KE in */
 	if (!unpack_KE(&st->st_gr, "Gr", st->st_oakley.ta_dh,
-		       md->chain[ISAKMP_NEXT_KE], st->st_logger)) {
+		       md->chain[ISAKMP_NEXT_KE], st->logger)) {
 		return STF_FAIL_v1N + v1N_INVALID_KEY_INFORMATION;
 	}
 
 	/* Nr in */
-	RETURN_STF_FAIL_v1NURE(accept_v1_nonce(st->st_logger, md, &st->st_nr, "Nr"));
+	RETURN_STF_FAIL_v1NURE(accept_v1_nonce(st->logger, md, &st->st_nr, "Nr"));
 	submit_dh_shared_secret(st, st, st->st_gr, main_inR2_outI3_continue, HERE);
 	return STF_SUSPEND;
 }
@@ -938,7 +938,7 @@ static stf_status main_inR2_outI3_continue(struct state *st,
 	struct pbs_out rbody[1]; /* hack */
 	ikev1_init_pbs_out_from_md_hdr(md, true,
 				       &reply_stream, reply_buffer, sizeof(reply_buffer),
-				       rbody, st->st_logger);
+				       rbody, st->logger);
 
 	const struct connection *c = st->st_connection;
 	const struct cert *mycert = c->local->host.config->cert.nss_cert != NULL ? &c->local->host.config->cert : NULL;
@@ -1106,7 +1106,7 @@ static stf_status main_inR2_outI3_continue(struct state *st,
 		} else {
 			/* SIG_I out */
 			struct hash_signature sig;
-			sig = v1_sign_hash_RSA(c, &hash, st->st_logger);
+			sig = v1_sign_hash_RSA(c, &hash, st->logger);
 			if (sig.len == 0) {
 				/* already logged */
 				return STF_FAIL_v1N + v1N_AUTHENTICATION_FAILED;
@@ -1246,7 +1246,7 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 	struct pbs_out rbody;
 	ikev1_init_pbs_out_from_md_hdr(md, true,
 				       &reply_stream, reply_buffer, sizeof(reply_buffer),
-				       &rbody, st->st_logger);
+				       &rbody, st->logger);
 
 	enum next_payload_types_ikev1 auth_payload = st->st_oakley.auth == OAKLEY_PRESHARED_KEY ?
 		ISAKMP_NEXT_HASH : ISAKMP_NEXT_SIG;
@@ -1321,7 +1321,7 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 		} else {
 			/* SIG_R out */
 			struct hash_signature sig;
-			sig = v1_sign_hash_RSA(c, &hash, st->st_logger);
+			sig = v1_sign_hash_RSA(c, &hash, st->logger);
 			if (sig.len == 0) {
 				/* already logged */
 				return STF_FAIL_v1N + v1N_AUTHENTICATION_FAILED;
@@ -1368,7 +1368,7 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 
 #ifdef USE_XFRM_INTERFACE
 	if (c->xfrmi != NULL && c->xfrmi->if_id != 0)
-		if (!add_xfrm_interface(c, st->st_logger))
+		if (!add_xfrm_interface(c, st->logger))
 			return STF_FATAL;
 #endif
 	ISAKMP_SA_established(pexpect_ike_sa(st));
@@ -1433,7 +1433,7 @@ stf_status main_inR3(struct state *st, struct msg_digest *md)
 
 #ifdef USE_XFRM_INTERFACE
 	if (c->xfrmi != NULL && c->xfrmi->if_id != 0)
-		if (!add_xfrm_interface(c, st->st_logger))
+		if (!add_xfrm_interface(c, st->logger))
 			return STF_FATAL;
 #endif
 	ISAKMP_SA_established(pexpect_ike_sa(st));
@@ -1462,7 +1462,7 @@ stf_status send_isakmp_notification(struct state *st,
 
 	msgid = generate_msgid(st);
 
-	reply_stream = open_pbs_out("reply packet", reply_buffer, sizeof(reply_buffer), st->st_logger);
+	reply_stream = open_pbs_out("reply packet", reply_buffer, sizeof(reply_buffer), st->logger);
 
 	/* HDR* */
 	{
@@ -1730,17 +1730,17 @@ void send_v1_notification_from_state(struct state *st, enum state_kind from_stat
 								  V1_ISAKMP_SA_ESTABLISHED_STATES,
 								  /*viable-parent*/false);
 		if (isakmp == NULL) {
-			llog(RC_LOG_SERIOUS, st->st_logger,
+			llog(RC_LOG_SERIOUS, st->logger,
 			     "no ISAKMP SA for Quick mode notification");
 			return;
 		}
 		if (!IS_V1_ISAKMP_ENCRYPTED(isakmp->sa.st_state->kind)) {
 			/*passert?*/
-			llog(RC_LOG_SERIOUS, st->st_logger,
+			llog(RC_LOG_SERIOUS, st->logger,
 			     "ISAKMP SA for Quick mode notification is not encrypted");
 			return;
 		}
-		send_v1_notification(st->st_logger, st, type,
+		send_v1_notification(st->logger, st, type,
 				     isakmp, generate_msgid(&isakmp->sa),
 				     st->st_ike_spis.initiator.bytes,
 				     st->st_ike_spis.responder.bytes,
@@ -1749,7 +1749,7 @@ void send_v1_notification_from_state(struct state *st, enum state_kind from_stat
 	}
 
 	if (IS_V1_ISAKMP_ENCRYPTED(from_state)) {
-		send_v1_notification(st->st_logger, st, type,
+		send_v1_notification(st->logger, st, type,
 				     pexpect_parent_sa(st),
 				     generate_msgid(st),
 				     st->st_ike_spis.initiator.bytes,
@@ -1759,7 +1759,7 @@ void send_v1_notification_from_state(struct state *st, enum state_kind from_stat
 	}
 
 	/* no ISAKMP SA established - don't encrypt notification */
-	send_v1_notification(st->st_logger, st, type,
+	send_v1_notification(st->logger, st, type,
 			     /*no-ISAKMP*/NULL, v1_MAINMODE_MSGID,
 			     st->st_ike_spis.initiator.bytes,
 			     st->st_ike_spis.responder.bytes,

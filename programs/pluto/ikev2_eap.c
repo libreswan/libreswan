@@ -210,7 +210,7 @@ void free_eap_state(struct eap_state **_eap)
 
 static bool start_eap(struct ike_sa *ike, struct pbs_out *pbs)
 {
-	struct logger *logger = ike->sa.st_logger;
+	struct logger *logger = ike->sa.logger;
 	struct eap_state *eap;
 	pb_stream pb_eap;
 
@@ -218,7 +218,7 @@ static bool start_eap(struct ike_sa *ike, struct pbs_out *pbs)
 	ike->sa.st_eap = eap;
 
 	struct ikev2_generic ie = {
-		.isag_critical = build_ikev2_critical(false, ike->sa.st_logger),
+		.isag_critical = build_ikev2_critical(false, ike->sa.logger),
 	};
 	struct eap_tls eap_payload = {
 		.eap_code = EAP_CODE_REQUEST,
@@ -234,7 +234,7 @@ static bool start_eap(struct ike_sa *ike, struct pbs_out *pbs)
 		return false;
 
 	const struct secret_stuff *pks = get_local_private_key(c, &pubkey_type_rsa,
-								    ike->sa.st_logger);
+								    ike->sa.logger);
 	if (!pks) {
 		llog_sa(RC_LOG, ike, "private key for connection not found");
 		return false;
@@ -281,7 +281,7 @@ static stf_status send_eap_termination_response(struct ike_sa *ike, struct msg_d
 
 	struct v2_message response;
 	if (!open_v2_message("EAP termination response",
-			     ike, ike->sa.st_logger, md/*response*/,
+			     ike, ike->sa.logger, md/*response*/,
 			     ISAKMP_v2_IKE_AUTH,
 			     reply_buffer, sizeof(reply_buffer),
 			     &response, ENCRYPTED_PAYLOAD)) {
@@ -289,7 +289,7 @@ static stf_status send_eap_termination_response(struct ike_sa *ike, struct msg_d
 	}
 
 	struct ikev2_generic ie = {
-		.isag_critical = build_ikev2_critical(false, ike->sa.st_logger),
+		.isag_critical = build_ikev2_critical(false, ike->sa.logger),
 	};
 	struct eap_termination eap_msg = {
 		.eap_code = eap_code,
@@ -325,14 +325,14 @@ static stf_status send_eap_fragment_response(struct ike_sa *ike, struct msg_dige
 
 	struct v2_message response;
 	if (!open_v2_message("EAP fragment response",
-			     ike, ike->sa.st_logger, md/*response*/,
+			     ike, ike->sa.logger, md/*response*/,
 			     ISAKMP_v2_IKE_AUTH, reply_buffer, sizeof(reply_buffer),
 			     &response, ENCRYPTED_PAYLOAD)) {
 		return STF_INTERNAL_ERROR;
 	}
 
 	struct ikev2_generic ie = {
-		.isag_critical = build_ikev2_critical(false, ike->sa.st_logger),
+		.isag_critical = build_ikev2_critical(false, ike->sa.logger),
 	};
 	struct eap_tls eaptls = {
 		.eap_code = eap_code,
@@ -420,7 +420,7 @@ stf_status process_v2_IKE_AUTH_request_EAP_start(struct ike_sa *ike,
 	 *
 	 * XXX: move this into ikev2.c?
 	 */
-	LLOG_JAMBUF(RC_LOG, ike->sa.st_logger, buf) {
+	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
 		jam(buf, "processing decrypted ");
 		jam_msg_digest(buf, md);
 	}
@@ -453,7 +453,7 @@ stf_status process_v2_IKE_AUTH_request_EAP_start(struct ike_sa *ike,
 
 auth_fail:
 	pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
-	record_v2N_response(ike->sa.st_logger, ike, md,
+	record_v2N_response(ike->sa.logger, ike, md,
 			    v2N_AUTHENTICATION_FAILED, NULL/*no-data*/,
 			    ENCRYPTED_PAYLOAD);
 	return STF_FATAL;
@@ -469,7 +469,7 @@ static stf_status process_v2_IKE_AUTH_request_EAP_start_signature_continue(struc
 
 	struct v2_message response;
 	if (!open_v2_message("start EAP response",
-			     ike, ike->sa.st_logger, md/*response*/,
+			     ike, ike->sa.logger, md/*response*/,
 			     ISAKMP_v2_IKE_AUTH,
 			     reply_buffer, sizeof(reply_buffer),
 			     &response, ENCRYPTED_PAYLOAD)) {
@@ -542,7 +542,7 @@ static stf_status process_v2_IKE_AUTH_request_EAP_start_signature_continue(struc
 
 auth_fail:
 	pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
-	record_v2N_response(ike->sa.st_logger, ike, md,
+	record_v2N_response(ike->sa.logger, ike, md,
 			    v2N_AUTHENTICATION_FAILED, NULL/*no-data*/,
 			    ENCRYPTED_PAYLOAD);
 	return STF_FATAL;
@@ -553,7 +553,7 @@ stf_status process_v2_IKE_AUTH_request_EAP_continue(struct ike_sa *ike,
 						    struct msg_digest *md)
 {
 	struct eap_state *eap = ike->sa.st_eap;
-	struct logger *logger = ike->sa.st_logger;
+	struct logger *logger = ike->sa.logger;
 	diag_t d;
 
 	pexpect(eap != NULL);
@@ -595,7 +595,7 @@ stf_status process_v2_IKE_AUTH_request_EAP_continue(struct ike_sa *ike,
 
 	eap->eaptls_inbuf = pbs_in_left(&data);
 	eap->eaptls_outbuf = open_pbs_out("reply EAP message",
-		reply_buffer, sizeof(reply_buffer), ike->sa.st_logger);
+		reply_buffer, sizeof(reply_buffer), ike->sa.logger);
 
 	llog_sa(RC_LOG, ike, "EAP with %zd bytes, flags %x",
 		eap->eaptls_inbuf.len, eaptls.eaptls_flags);
@@ -620,7 +620,7 @@ stf_status process_v2_IKE_AUTH_request_EAP_continue(struct ike_sa *ike,
 	return send_eap_fragment_response(ike, md, EAP_CODE_REQUEST, 1024);
 
 err_diag:
-	llog_diag(RC_LOG, ike->sa.st_logger, &d, "%s", "");
+	llog_diag(RC_LOG, ike->sa.logger, &d, "%s", "");
 	return STF_FATAL;
 }
 
@@ -631,7 +631,7 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 	static const char key_pad_str[] = "client EAP encryption"; /* EAP-TLS RFC 5216 */
 	struct eap_state *eap = ike->sa.st_eap;
 	struct msg_digest *sa_md = ike->sa.st_eap_sa_md;
-	struct logger *logger = ike->sa.st_logger;
+	struct logger *logger = ike->sa.logger;
 
 	pexpect(eap != NULL);
 	pexpect(sa_md != NULL);
@@ -677,9 +677,9 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 						   &msk);
 	free_eap_state(&ike->sa.st_eap);
 	if (d != NULL) {
-		llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
+		llog_diag(RC_LOG_SERIOUS, ike->sa.logger, &d, "%s", "");
 		dbg("EAP AUTH failed");
-		record_v2N_response(ike->sa.st_logger, ike, md,
+		record_v2N_response(ike->sa.logger, ike, md,
 				    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
 				    ENCRYPTED_PAYLOAD);
 		pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
@@ -698,7 +698,7 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 
 	struct v2_message response;
 	if (!open_v2_message("EAP final response",
-			     ike, ike->sa.st_logger, md/*response*/,
+			     ike, ike->sa.logger, md/*response*/,
 			     ISAKMP_v2_IKE_AUTH,
 			     reply_buffer, sizeof(reply_buffer),
 			     &response, ENCRYPTED_PAYLOAD)) {

@@ -242,8 +242,8 @@ static bool impair_message(const struct message *message,
 			struct state_filter sf = { .where = HERE, };
 			while (next_state_new2old(&sf)) {
 				struct state *st = sf.st;
-				if (whack_attached(st->st_logger)) {
-					llog(RC_LOG, st->st_logger,
+				if (whack_attached(st->logger)) {
+					llog(RC_LOG, st->logger,
 					     "IMPAIR: drop %s message %u",
 					     direction->name,
 					     m->message_nr);

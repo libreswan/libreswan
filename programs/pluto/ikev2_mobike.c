@@ -72,7 +72,7 @@ static bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest 
 		 * reasonable.  However, per above comments, handling
 		 * multiple Child SAs is still a TODO item.
 		 */
-		llog_pexpect(ike->sa.st_logger, HERE,
+		llog_pexpect(ike->sa.logger, HERE,
 			     "IKE SA lost first Child SA "PRI_SO, pri_so(c->newest_ipsec_sa));
 		return false;
 	}
@@ -176,8 +176,8 @@ static bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest 
 	 * host-pair DB
 	 */
 	disorient(c);
-	if (!orient(&c, ike->sa.st_logger)) {
-		llog_pexpect(ike->sa.st_logger, HERE,
+	if (!orient(&c, ike->sa.logger)) {
+		llog_pexpect(ike->sa.logger, HERE,
 			     "%s after mobike failed", "orient");
 		return false;
 	}
@@ -440,7 +440,7 @@ void record_deladdr(ip_address *ip, char *a_type)
 		ike->sa.st_deleted_local_addr = local_address;
 		struct child_sa *child = child_sa_by_serialno(ike->sa.st_connection->newest_ipsec_sa);
 		if (child == NULL) {
-			llog_pexpect(ike->sa.st_logger, HERE,
+			llog_pexpect(ike->sa.logger, HERE,
 				     "newest Child SA "PRI_SO" lost",
 				     pri_so(ike->sa.st_connection->newest_ipsec_sa));
 			continue;
@@ -565,7 +565,7 @@ static struct iface_endpoint *find_new_iface(struct ike_sa *ike, ip_address new_
 		endpoint_buf b;
 		dbg(PRI_SO" no interface for %s try to initialize",
 		    ike->sa.st_serialno, str_endpoint(&local_endpoint, &b));
-		find_ifaces(false, ike->sa.st_logger);
+		find_ifaces(false, ike->sa.logger);
 		iface = find_iface_endpoint_by_local_endpoint(local_endpoint);
 		if (iface ==  NULL) {
 			return NULL;
@@ -594,7 +594,7 @@ void ikev2_addr_change(struct state *ike_sa)
 
 	ip_address dest = endpoint_address(ike->sa.st_remote_endpoint);
 	struct ip_route route;
-	switch (get_route(dest, &route, ike->sa.st_logger)) {
+	switch (get_route(dest, &route, ike->sa.logger)) {
 	case ROUTE_SUCCESS:
 	{
 		struct iface_endpoint *iface = find_new_iface(ike, route.source); /* must delref */

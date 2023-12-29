@@ -129,8 +129,8 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *mdp, struct ik
 
 void ldbg_v2_success(struct ike_sa *ike)
 {
-	LDBGP_JAMBUF(DBG_BASE, ike->sa.st_logger, buf) {
-		jam_logger_prefix(buf, ike->sa.st_logger);
+	LDBGP_JAMBUF(DBG_BASE, ike->sa.logger, buf) {
+		jam_logger_prefix(buf, ike->sa.logger);
 		jam_string(buf, ike->sa.st_v2_transition->story);
 		jam_string(buf, ": ");
 		jam_string(buf, (ike->sa.st_sa_role == SA_INITIATOR ? "initiator " :
@@ -143,7 +143,7 @@ void ldbg_v2_success(struct ike_sa *ike)
 void llog_v2_success_story(struct ike_sa *ike)
 {
 	enum rc_type w = RC_NEW_V2_STATE + ike->sa.st_state->kind;
- 	LLOG_JAMBUF(w, ike->sa.st_logger, buf) {
+ 	LLOG_JAMBUF(w, ike->sa.logger, buf) {
 		jam_string(buf, ike->sa.st_state->story);
 	}
 }
@@ -151,7 +151,7 @@ void llog_v2_success_story(struct ike_sa *ike)
 void llog_v2_success_exchange(struct ike_sa *ike)
 {
 	enum rc_type w = RC_NEW_V2_STATE + ike->sa.st_state->kind;
-	LLOG_JAMBUF(w, ike->sa.st_logger, buf) {
+	LLOG_JAMBUF(w, ike->sa.logger, buf) {
 		switch (ike->sa.st_v2_transition->recv_role) {
 		case MESSAGE_REQUEST: jam_string(buf, "responder processed"); break;
 		case MESSAGE_RESPONSE: jam_string(buf, "initiator processed"); break;
@@ -168,7 +168,7 @@ void llog_v2_success_exchange(struct ike_sa *ike)
 void llog_v2_success_sent_message_to(struct ike_sa *ike)
 {
 	enum rc_type w = RC_NEW_V2_STATE + ike->sa.st_state->kind;
-	LLOG_JAMBUF(w, ike->sa.st_logger, buf) {
+	LLOG_JAMBUF(w, ike->sa.logger, buf) {
 		jam_string(buf, "sent ");
 		jam_enum_short(buf, &ikev2_exchange_names, ike->sa.st_v2_transition->exchange);
 		jam_string(buf, " ");
@@ -185,7 +185,7 @@ void llog_v2_success_sent_message_to(struct ike_sa *ike)
 void llog_v2_success_story_details(struct ike_sa *ike)
 {
 	enum rc_type w = RC_NEW_V2_STATE + ike->sa.st_state->kind;
-	LLOG_JAMBUF(w, ike->sa.st_logger, buf) {
+	LLOG_JAMBUF(w, ike->sa.logger, buf) {
 		jam_string(buf, ike->sa.st_state->story);
 		jam_string(buf, " ");
 		jam_parent_sa_details(buf, &ike->sa);
@@ -1501,7 +1501,7 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 			diag_t d = pbs_in_struct(&in_pbs, &ikev2_skf_desc,
 						 &skf, sizeof(skf), &ignored);
 			if (d != NULL) {
-				llog_diag(RC_LOG, ike->sa.st_logger, &d, "%s", "");
+				llog_diag(RC_LOG, ike->sa.logger, &d, "%s", "");
 				return true;
 			}
 			if (skf.isaskf_total != ike->sa.st_v2_msgid_windows.responder.recv_frags) {
@@ -2012,7 +2012,7 @@ static void complete_protected_but_fatal_exchange(struct ike_sa *ike, struct msg
 	 */
 	switch (v2_msg_role(md)) {
 	case MESSAGE_REQUEST:
-		record_v2N_response(ike->sa.st_logger, ike, md,
+		record_v2N_response(ike->sa.logger, ike, md,
 				    n, data, ENCRYPTED_PAYLOAD);
 		break;
 	case MESSAGE_RESPONSE:
@@ -2093,7 +2093,7 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 	dbg("unpacking clear payload");
 	passert(!md->message_payloads.parsed);
 	md->message_payloads =
-		ikev2_decode_payloads(ike->sa.st_logger, md,
+		ikev2_decode_payloads(ike->sa.logger, md,
 				      &md->message_pbs,
 				      md->hdr.isa_np);
 	if (md->message_payloads.n != v2N_NOTHING_WRONG) {
@@ -2137,7 +2137,7 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 	 * about at most 7 transitions and, in this case, a relatively
 	 * cheap compare (the old code scanned all transitions).
 	 */
-	if (!sniff_v2_state_transition(ike->sa.st_logger, ike->sa.st_state, md)) {
+	if (!sniff_v2_state_transition(ike->sa.logger, ike->sa.st_state, md)) {
 		/* already logged */
 		/* drop packet on the floor */
 		return;
@@ -2205,7 +2205,7 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 		break;
 	default:
 		/* packet decode should have rejected this */
-		llog_pexpect(ike->sa.st_logger, HERE,
+		llog_pexpect(ike->sa.logger, HERE,
 			     "message contains both SK and SKF payloads");
 		return;
 	}
@@ -2246,7 +2246,7 @@ void process_protected_v2_message(struct ike_sa *ike, struct msg_digest *md)
 	 * the least of our problems.
 	 */
 	struct payload_digest *sk = md->chain[ISAKMP_NEXT_v2SK];
-	md->encrypted_payloads = ikev2_decode_payloads(ike->sa.st_logger, md, &sk->pbs,
+	md->encrypted_payloads = ikev2_decode_payloads(ike->sa.logger, md, &sk->pbs,
 						       sk->payload.generic.isag_np);
 	if (md->encrypted_payloads.n != v2N_NOTHING_WRONG) {
 		chunk_t data = chunk2(md->encrypted_payloads.data,
@@ -2263,7 +2263,7 @@ void process_protected_v2_message(struct ike_sa *ike, struct msg_digest *md)
 
 	bool secured_payload_failed = false;
 	const struct v2_state_transition *svm =
-		find_v2_state_transition(ike->sa.st_logger, ike->sa.st_state, md,
+		find_v2_state_transition(ike->sa.logger, ike->sa.st_state, md,
 					 &secured_payload_failed);
 
 	/* no useful state microcode entry? */
@@ -2519,7 +2519,7 @@ static void success_v2_state_transition(struct ike_sa *ike,
 		 * Is there really no case where we want to
 		 * set no timer?  more likely an accident?
 		 */
-		llog_pexpect(ike->sa.st_logger, HERE,
+		llog_pexpect(ike->sa.logger, HERE,
 			     "v2 microcode entry (%s) has unspecified timeout_event",
 			     transition->story);
 		break;
@@ -2571,9 +2571,9 @@ static void success_v2_state_transition(struct ike_sa *ike,
 	}
 
 	if (just_established) {
-		release_whack(ike->sa.st_logger, HERE);
+		release_whack(ike->sa.logger, HERE);
 	} else if (transition->flags & SMF2_RELEASE_WHACK) {
-		release_whack(ike->sa.st_logger, HERE);
+		release_whack(ike->sa.logger, HERE);
 	}
 }
 
@@ -2667,7 +2667,7 @@ void complete_v2_state_transition(struct ike_sa *ike,
 	pexpect(transition->state == ike->sa.st_state->kind);
 #endif
 
-	LDBGP_JAMBUF(DBG_BASE, ike->sa.st_logger, buf) {
+	LDBGP_JAMBUF(DBG_BASE, ike->sa.logger, buf) {
 		jam(buf, "#%lu complete_v2_state_transition()", ike->sa.st_serialno);
 		if (ike->sa.st_state->kind != transition->state) {
 			jam(buf, " in state %s", ike->sa.st_state->short_name);
@@ -2821,7 +2821,7 @@ void complete_v2_state_transition(struct ike_sa *ike,
 	/* default */
 	passert(result >= STF_FAIL_v1N);
 	v2_notification_t notification = result - STF_FAIL_v1N;
-	llog_pexpect(ike->sa.st_logger, HERE,
+	llog_pexpect(ike->sa.logger, HERE,
 		     "state transition '%s' failed with %s",
 		     transition->story,
 		     enum_name(&v2_notification_names, notification));
@@ -2864,7 +2864,7 @@ static void reinitiate_v2_ike_sa_init(const char *story, struct state *st, void 
 		/* create new-from-old first; must delref; blocking call */
 		struct iface_endpoint *p = connect_to_tcp_endpoint(ike->sa.st_iface_endpoint->ip_dev,
 								   ike->sa.st_remote_endpoint,
-								   ike->sa.st_logger);
+								   ike->sa.logger);
 		if (p == NULL) {
 			/* already logged */
 			complete_v2_state_transition(ike, NULL, STF_FATAL);

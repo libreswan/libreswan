@@ -276,7 +276,7 @@ static void update_state_stats(struct state *st,
 
 		if (category_states != count_states) {
 			/* not really ST's fault? */
-			llog_pexpect(st->st_logger, HERE,
+			llog_pexpect(st->logger, HERE,
 				     "category states: "PRI_CAT" != count states: "PRI_CAT,
 				     category_states, count_states);
 		}
@@ -284,7 +284,7 @@ static void update_state_stats(struct state *st,
 		if (cat_count[CAT_ESTABLISHED_IKE_SA] !=
 		    (cat_count_ike_sa[CAT_AUTHENTICATED] + cat_count_ike_sa[CAT_ANONYMOUS])) {
 			/* not really ST's fault? */
-			llog_pexpect(st->st_logger, HERE,
+			llog_pexpect(st->logger, HERE,
 				     "established IKE SA: "PRI_CAT" != authenticated: "PRI_CAT" + anoynmous: "PRI_CAT,
 				     cat_count[CAT_ESTABLISHED_IKE_SA],
 				     cat_count_ike_sa[CAT_AUTHENTICATED],
@@ -294,7 +294,7 @@ static void update_state_stats(struct state *st,
 		if (cat_count[CAT_ESTABLISHED_CHILD_SA] !=
 		    (cat_count_child_sa[CAT_AUTHENTICATED] + cat_count_child_sa[CAT_ANONYMOUS])) {
 			/* not really ST's fault? */
-			llog_pexpect(st->st_logger, HERE,
+			llog_pexpect(st->logger, HERE,
 				     "established CHILD SA: "PRI_CAT" != authenticated: "PRI_CAT" + anoynmous: "PRI_CAT,
 				     cat_count[CAT_ESTABLISHED_CHILD_SA],
 				     cat_count_child_sa[CAT_AUTHENTICATED],
@@ -350,7 +350,7 @@ struct ike_sa *ike_sa(struct state *st, where_t where)
 	if (st != NULL && IS_CHILD_SA(st)) {
 		struct state *pst = state_by_serialno(st->st_clonedfrom);
 		if (pst == NULL) {
-			llog_pexpect(st->st_logger, where,
+			llog_pexpect(st->logger, where,
 				     "child state missing parent state "PRI_SO,
 				     pri_so(st->st_clonedfrom));
 			/* about to crash with an NPE? */
@@ -369,7 +369,7 @@ struct ike_sa *parent_sa_where(struct child_sa *child, where_t where)
 
 	/* the definition of a child */
 	if (!IS_CHILD_SA(&child->sa)) {
-		llog_passert(child->sa.st_logger, where,
+		llog_passert(child->sa.logger, where,
 			     "Child SA is not a child");
 	}
 
@@ -379,7 +379,7 @@ struct ike_sa *parent_sa_where(struct child_sa *child, where_t where)
 	}
 
 	if (child->sa.st_ike_version == IKEv1) {
-		ldbg(child->sa.st_logger,
+		ldbg(child->sa.logger,
 		     "IKEv1 IPsec SA "PRI_SO" missing ISAKMP SA "PRI_SO" "PRI_WHERE,
 		     pri_so(child->sa.st_serialno),
 		     pri_so(child->sa.st_clonedfrom),
@@ -387,7 +387,7 @@ struct ike_sa *parent_sa_where(struct child_sa *child, where_t where)
 		return NULL;
 	}
 
-	llog_pexpect(child->sa.st_logger, where,
+	llog_pexpect(child->sa.logger, where,
 		     "child state missing parent state "PRI_SO,
 		     pri_so(child->sa.st_clonedfrom));
 	/* about to crash? */
@@ -400,7 +400,7 @@ struct ike_sa *isakmp_sa_where(struct child_sa *child, where_t where)
 		return NULL;
 	}
 
-	if (!PEXPECT(child->sa.st_logger, child->sa.st_ike_version == IKEv1)) {
+	if (!PEXPECT(child->sa.logger, child->sa.st_ike_version == IKEv1)) {
 		return NULL;
 	}
 
@@ -413,7 +413,7 @@ struct ike_sa *ike_sa_where(struct child_sa *child, where_t where)
 		return NULL;
 	}
 
-	if (!PEXPECT(child->sa.st_logger, child->sa.st_ike_version >= IKEv2)) {
+	if (!PEXPECT(child->sa.logger, child->sa.st_ike_version >= IKEv2)) {
 		return NULL;
 	}
 
@@ -426,7 +426,7 @@ struct ike_sa *pexpect_ike_sa_where(struct state *st, where_t where)
 		return NULL;
 	}
 	if (!IS_IKE_SA(st)) {
-		llog_pexpect(st->st_logger, where,
+		llog_pexpect(st->logger, where,
 			     "state #%lu is not an IKE SA", st->st_serialno);
 		return NULL; /* kaboom */
 	}
@@ -440,7 +440,7 @@ struct child_sa *pexpect_child_sa_where(struct state *st, where_t where)
 	}
 	if (!IS_CHILD_SA(st)) {
 		/* In IKEv2 a re-keying IKE SA starts life as a child */
-		llog_pexpect(st->st_logger, where,
+		llog_pexpect(st->logger, where,
 			     "state #%lu is not a CHILD", st->st_serialno);
 		return NULL; /* kaboom */
 	}
@@ -487,7 +487,7 @@ static struct state *new_state(struct connection *c,
 	st->st_serialno = state_serialno;
 
 	/* needed by jam_state_connection_serialno() */
-	st->st_connection = connection_addref(c, st->st_logger);
+	st->st_connection = connection_addref(c, st->logger);
 	state_db_init_state(st); /* hash called below */
 
 	st->st_clonedfrom = clonedfrom;
@@ -505,7 +505,7 @@ static struct state *new_state(struct connection *c,
 	st->st_remote_endpoint = remote_endpoint;
 	st->st_iface_endpoint = local_iface_endpoint;
 
-	ldbg(st->st_logger,
+	ldbg(st->logger,
 	     "creating state object "PRI_SO" at %p",
 	     pri_so(st->st_serialno), (void *) st);
 
@@ -735,16 +735,16 @@ static void flush_incomplete_children(struct ike_sa *ike)
 		switch (child->sa.st_ike_version) {
 		case IKEv1:
 			if (!IS_IPSEC_SA_ESTABLISHED(&child->sa)) {
-				state_attach(&child->sa, ike->sa.st_logger);
+				state_attach(&child->sa, ike->sa.logger);
 				connection_delete_child(&child, HERE);
 			}
 			continue;
 		case IKEv2:
-			state_attach(&child->sa, ike->sa.st_logger);
+			state_attach(&child->sa, ike->sa.logger);
 			connection_delete_child(&child, HERE);
 			continue;
 		}
-		bad_enum(ike->sa.st_logger, &ike_version_names, child->sa.st_ike_version);
+		bad_enum(ike->sa.logger, &ike_version_names, child->sa.st_ike_version);
 	}
 }
 
@@ -786,7 +786,7 @@ static void update_and_log_traffic(struct child_sa *child, const char *name,
 		llog_sa(RC_LOG, child, "failed to pull traffic counters from inbound IPsec SA");
 	}
 
-	LLOG_JAMBUF(RC_INFORMATIONAL, child->sa.st_logger, buf) {
+	LLOG_JAMBUF(RC_INFORMATIONAL, child->sa.logger, buf) {
 		jam(buf, "%s traffic information:", name);
 		/* in */
 		jam_string(buf, " in=");
@@ -810,7 +810,7 @@ static void llog_delete_n_send(lset_t rc_flags,
 			       struct ike_sa *ike,
 			       struct state *st)
 {
-	LLOG_JAMBUF(rc_flags, st->st_logger, buf) {
+	LLOG_JAMBUF(rc_flags, st->logger, buf) {
 		/* deleting {IKE,Child,IPsec,ISAKMP} SA */
 		jam_string(buf, "deleting ");
 		jam_string(buf, state_sa_name(st));
@@ -835,7 +835,7 @@ static void llog_delete_n_send(lset_t rc_flags,
 			jam_string(buf, " and sending notification using ");
 			jam_string(buf, st->st_connection->config->ike_info->parent_sa_name);
 			jam_string(buf, " ");
-			jam_prefix(buf, ike->sa.st_logger);
+			jam_prefix(buf, ike->sa.logger);
 		} else if (st->st_clonedfrom != SOS_NOBODY) {
 			jam_string(buf, " and sending notification using ");
 			jam_string(buf, st->st_connection->config->ike_info->parent_sa_name);
@@ -849,7 +849,7 @@ static void llog_delete_n_send(lset_t rc_flags,
 
 void llog_sa_delete_n_send(struct ike_sa *ike, struct state *st)
 {
-	PEXPECT(st->st_logger, !st->st_on_delete.skip_log_message);
+	PEXPECT(st->logger, !st->st_on_delete.skip_log_message);
 	llog_delete_n_send(RC_LOG, ike, st);
 	on_delete(st, skip_log_message);
 }
@@ -857,12 +857,12 @@ void llog_sa_delete_n_send(struct ike_sa *ike, struct state *st)
 /* delete a state object */
 void delete_state(struct state *st)
 {
-	pdbg(st->st_logger, "%s() skipping log_message:%s",
+	pdbg(st->logger, "%s() skipping log_message:%s",
 	     __func__,
 	     bool_str(st->st_on_delete.skip_log_message));
 
 	/* must be as set by delete_{ike,child}_sa() */
-	PEXPECT(st->st_logger, st->st_on_delete.skip_send_delete);
+	PEXPECT(st->logger, st->st_on_delete.skip_send_delete);
 
 	/*
 	 * An IKEv2 IKE SA can only be deleted after all children.
@@ -877,7 +877,7 @@ void delete_state(struct state *st)
 		while (next_state_old2new(&sf)) {
 			state_buf sb;
 			barf((DBGP(DBG_BASE) ? PASSERT_FLAGS : PEXPECT_FLAGS),
-			     st->st_logger, /*ignore-exit-code*/0, HERE,
+			     st->logger, /*ignore-exit-code*/0, HERE,
 			     "unexpected Child SA "PRI_STATE,
 			     pri_state(sf.st, &sb));
 		}
@@ -1072,13 +1072,13 @@ void delete_state(struct state *st)
 	 *   hash table this succeeding means that there must be a
 	 *   second state using the connection
 	 */
-	connection_delref(&st->st_connection, st->st_logger);
+	connection_delref(&st->st_connection, st->logger);
 
 	v2_msgid_free(st);
 
 	change_state(st, STATE_UNDEFINED);
 
-	release_whack(st->st_logger, HERE);
+	release_whack(st->logger, HERE);
 
 	/* from here on we are just freeing RAM */
 
@@ -1174,7 +1174,7 @@ void delete_state(struct state *st)
 	free_chunk_content(&st->st_no_ppk_auth);
 	free_chunk_content(&st->st_active_redirect_gw);
 
-	free_logger(&st->st_logger, HERE);
+	free_logger(&st->logger, HERE);
 	messup(st);
 	pfree(st);
 }
@@ -1600,11 +1600,11 @@ struct ike_sa *find_viable_parent_for_connection(const struct connection *c)
 			}
 		} else {
 			if (st->st_sa_role != SA_INITIATOR) {
-				PEXPECT(st->st_logger,
+				PEXPECT(st->logger,
 					!LHAS(ok_states, st->st_state->kind));
 				continue;
 			}
-			PEXPECT(st->st_logger,
+			PEXPECT(st->logger,
 				LHAS(ok_states, st->st_state->kind));
 		}
 		/* better? */
@@ -2032,7 +2032,7 @@ void list_state_events(struct show *s, const monotime_t now)
 void set_v1_transition(struct state *st, const struct state_v1_microcode *transition,
 		       where_t where)
 {
-	LDBGP_JAMBUF(DBG_BASE, st->st_logger, buf) {
+	LDBGP_JAMBUF(DBG_BASE, st->logger, buf) {
 		jam(buf, "#%lu.st_v1_transition ", st->st_serialno);
 		jam_v1_transition(buf, st->st_v1_transition);
 		jam(buf, " to ");
@@ -2047,7 +2047,7 @@ void set_v1_transition(struct state *st, const struct state_v1_microcode *transi
 void set_v2_transition(struct state *st, const struct v2_state_transition *transition,
 		       where_t where)
 {
-	LDBGP_JAMBUF(DBG_BASE, st->st_logger, buf) {
+	LDBGP_JAMBUF(DBG_BASE, st->logger, buf) {
 		jam(buf, "#%lu.st_v2_transition ", st->st_serialno);
 		jam_v2_transition(buf, st->st_v2_transition);
 		jam(buf, " -> ");
@@ -2071,7 +2071,7 @@ static void jam_st(struct jambuf *buf, struct state *st)
 
 void switch_md_st(struct msg_digest *md, struct state *st, where_t where)
 {
-	LDBGP_JAMBUF(DBG_BASE, st->st_logger, buf) {
+	LDBGP_JAMBUF(DBG_BASE, st->logger, buf) {
 		jam(buf, "switching IKEv%d MD.ST from ", st->st_ike_version);
 		jam_st(buf, md->v1_st);
 		jam(buf, " to ");
@@ -2100,9 +2100,9 @@ void connswitch_state_and_log(struct state *st, struct connection *new)
 	connection_buf nb;
 	log_state(RC_LOG, st, "switched to "PRI_CONNECTION,
 		  pri_connection(new, &nb));
-	st->st_connection = connection_addref(new, st->st_logger);
+	st->st_connection = connection_addref(new, st->logger);
 	state_db_rehash_connection_serialno(st);
-	connection_delref(&old, st->st_logger);
+	connection_delref(&old, st->logger);
 }
 
 /*
@@ -2192,10 +2192,10 @@ void wipe_old_connections(const struct ike_sa *ike)
 		 * conversely when one is permanent then so too is the
 		 * other.
 		 */
-		PEXPECT(ike->sa.st_logger, c->local->kind == d->local->kind);
-		PEXPECT(ike->sa.st_logger, is_instance(c) || is_permanent(c));
-		PEXPECT(ike->sa.st_logger, is_instance(c) == is_instance(d));
-		PEXPECT(ike->sa.st_logger, is_permanent(c) == is_permanent(d));
+		PEXPECT(ike->sa.logger, c->local->kind == d->local->kind);
+		PEXPECT(ike->sa.logger, is_instance(c) || is_permanent(c));
+		PEXPECT(ike->sa.logger, is_instance(c) == is_instance(d));
+		PEXPECT(ike->sa.logger, is_permanent(c) == is_permanent(d));
 
 		/*
 		 * XXX: Assume this call doesn't want to log to whack?
@@ -2224,7 +2224,7 @@ void wipe_old_connections(const struct ike_sa *ike)
 			 * alone.
 			 */
 
-			llog_pexpect(ike->sa.st_logger, HERE,
+			llog_pexpect(ike->sa.logger, HERE,
 				     "why am I deleting the shiny new permanent IKE?");
 			terminate_all_connection_states(c, HERE);
 		}
@@ -2274,14 +2274,14 @@ void DBG_tcpdump_ike_sa_keys(const struct state *st)
 
 	/* v2 IKE authentication key for initiator (256 bit bound) */
 	chunk_t ai = chunk_from_symkey("ai", st->st_skey_ai_nss,
-				       st->st_logger);
+				       st->logger);
 	char tai[3 + 2 * BYTES_FOR_BITS(256)] = "";
 	datatot(ai.ptr, ai.len, 'x', tai, sizeof(tai));
 	free_chunk_content(&ai);
 
 	/* v2 IKE encryption key for initiator (256 bit bound) */
 	chunk_t ei = chunk_from_symkey("ei", st->st_skey_ei_nss,
-				       st->st_logger);
+				       st->logger);
 	char tei[3 + 2 * BYTES_FOR_BITS(256)] = "";
 	datatot(ei.ptr, ei.len, 'x', tei, sizeof(tei));
 	free_chunk_content(&ei);
@@ -2294,14 +2294,14 @@ void DBG_tcpdump_ike_sa_keys(const struct state *st)
 
 	/* v2 IKE authentication key for responder (256 bit bound) */
 	chunk_t ar = chunk_from_symkey("ar", st->st_skey_ar_nss,
-				       st->st_logger);
+				       st->logger);
 	char tar[3 + 2 * BYTES_FOR_BITS(256)] = "";
 	datatot(ar.ptr, ar.len, 'x', tar, sizeof(tar));
 	free_chunk_content(&ar);
 
 	/* v2 IKE encryption key for responder (256 bit bound) */
 	chunk_t er = chunk_from_symkey("er", st->st_skey_er_nss,
-				       st->st_logger);
+				       st->logger);
 	char ter[3 + 2 * BYTES_FOR_BITS(256)] = "";
 	datatot(er.ptr, er.len, 'x', ter, sizeof(ter));
 	free_chunk_content(&er);

@@ -78,7 +78,7 @@ void ikev2_replace(struct state *st)
 		lset_t policy = capture_child_rekey_policy(st);
 
 		ipsecdoi_initiate(st->st_connection, policy, st->st_serialno, &inception,
-				  null_shunk, /*background?*/false, st->st_logger,
+				  null_shunk, /*background?*/false, st->logger,
 				  INITIATED_BY_REPLACE, HERE);
 	}
 }
@@ -90,7 +90,7 @@ void event_v2_replace(struct state *st, monotime_t now UNUSED)
 	}
 
 	const char *satype = IS_IKE_SA(st) ? "IKE" : "Child";
-	ldbg(st->st_logger, "replacing stale %s SA", satype);
+	ldbg(st->logger, "replacing stale %s SA", satype);
 
 	ikev2_replace(st);
 	event_force(EVENT_v2_EXPIRE, st);

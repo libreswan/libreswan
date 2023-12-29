@@ -198,7 +198,7 @@ bool emit_v2CP_response(const struct child_sa *child, struct pbs_out *outpbs)
 		.isacp_type = IKEv2_CP_CFG_REPLY,
 	};
 
-	ldbg_cp(child->sa.st_logger, c,
+	ldbg_cp(child->sa.logger, c,
 		"send %s Configuration Payload",
 		enum_name(&ikev2_cp_type_names, cp.isacp_type));
 
@@ -246,7 +246,7 @@ bool emit_v2CP_request(const struct child_sa *child, struct pbs_out *outpbs)
 		.isacp_type = IKEv2_CP_CFG_REQUEST,
 	};
 
-	ldbg_cp(child->sa.st_logger, child->sa.st_connection,
+	ldbg_cp(child->sa.logger, child->sa.st_connection,
 		"emit %s Configuration Payload",
 		enum_name(&ikev2_cp_type_names, cp.isacp_type));
 
@@ -271,7 +271,7 @@ bool emit_v2CP_request(const struct child_sa *child, struct pbs_out *outpbs)
 	}
 
 	if (!ask_for_something) {
-		llog_pexpect(child->sa.st_logger, HERE,
+		llog_pexpect(child->sa.logger, HERE,
 			     "can't figure out which internal address is needed");
 		return false;
 	}
@@ -340,7 +340,7 @@ bool process_v2_IKE_AUTH_request_v2CP_request_payload(struct ike_sa *ike,
 		diag_t d = pbs_in_struct(cp_pbs, &ikev2_cp_attribute_desc,
 					 &cp_attr, sizeof(cp_attr), &cp_attr_pbs);
 		if (d != NULL) {
-			llog_diag(RC_LOG_SERIOUS, child->sa.st_logger, &d,
+			llog_diag(RC_LOG_SERIOUS, child->sa.logger, &d,
 				 "ERROR: malformed CP attribute");
 			return false;
 		}
@@ -468,14 +468,14 @@ static void ikev2_set_domain(struct pbs_in *cp_a_pbs, struct child_sa *child)
 
 	shunk_t str = pbs_in_left(cp_a_pbs);
 	if (child->sa.st_connection->config->ignore_peer_dns) {
-		LLOG_JAMBUF(RC_INFORMATIONAL, child->sa.st_logger, buf) {
+		LLOG_JAMBUF(RC_INFORMATIONAL, child->sa.logger, buf) {
 			jam_string(buf, "received and ignored INTERNAL_DNS_DOMAIN: ");
 			jam_sanitized_hunk(buf, str);
 		}
 		return;
 	}
 
-	char *safestr = broken_dns_stringify(str, child->sa.st_logger);
+	char *safestr = broken_dns_stringify(str, child->sa.logger);
 	if (safestr != NULL) {
 		append_st_cfg_domain(&child->sa, safestr);
 	}
@@ -497,7 +497,7 @@ static bool ikev2_set_dns(struct pbs_in *cp_a_pbs, struct child_sa *child,
 	ip_address ip;
 	diag_t d = pbs_in_address(cp_a_pbs, &ip, af, "INTERNAL_IP_DNS CP payload");
 	if (d != NULL) {
-		llog_diag(RC_LOG, child->sa.st_logger, &d, "%s", "");
+		llog_diag(RC_LOG, child->sa.logger, &d, "%s", "");
 		return false;
 	}
 
@@ -540,7 +540,7 @@ static bool ikev2_set_internal_address(struct pbs_in *cp_a_pbs,
 	ip_address ip;
 	diag_t d = pbs_in_address(cp_a_pbs, &ip, afi, "INTERNAL_IP_ADDRESS");
 	if (d != NULL) {
-		llog_diag(RC_LOG, child->sa.st_logger, &d, "%s", "");
+		llog_diag(RC_LOG, child->sa.logger, &d, "%s", "");
 		return false;
 	}
 
@@ -661,7 +661,7 @@ bool process_v2CP_response_payload(struct ike_sa *ike UNUSED, struct child_sa *c
 		diag_t d = pbs_in_struct(attrs, &ikev2_cp_attribute_desc,
 					 &cp_a, sizeof(cp_a), &cp_a_pbs);
 		if (d != NULL) {
-			llog_diag(RC_LOG_SERIOUS, child->sa.st_logger, &d,
+			llog_diag(RC_LOG_SERIOUS, child->sa.logger, &d,
 				 "ERROR malformed CP attribute");
 			return false;
 		}

@@ -161,12 +161,12 @@ static void ikev1_natd_lookup(struct msg_digest *md, struct state *st)
 
 	struct crypt_mac hash_local = natd_hash(hasher, &st->st_ike_spis,
 						md->iface->local_endpoint,
-						st->st_logger);
+						st->logger);
 
 	/* Second: one with sender IP & port */
 
 	struct crypt_mac hash_remote = natd_hash(hasher, &st->st_ike_spis,
-						 md->sender, st->st_logger);
+						 md->sender, st->logger);
 
 	if (DBGP(DBG_BASE)) {
 		DBG_dump_hunk("expected NAT-D(local):", hash_local);
@@ -231,7 +231,7 @@ bool ikev1_nat_traversal_add_natd(pb_stream *outs,
 
 	hash = natd_hash(st->st_oakley.ta_prf->hasher,
 			 &ike_spis, remote_endpoint,
-			 st->st_logger);
+			 st->logger);
 	if (!ikev1_out_generic_raw(pd, outs, hash.ptr, hash.len,
 				   "NAT-D"))
 		return false;
@@ -241,7 +241,7 @@ bool ikev1_nat_traversal_add_natd(pb_stream *outs,
 	const ip_endpoint local_endpoint = set_endpoint_port(md->iface->local_endpoint, ip_hport(local_port));
 	hash = natd_hash(st->st_oakley.ta_prf->hasher,
 			 &ike_spis, local_endpoint,
-			 st->st_logger);
+			 st->logger);
 	return ikev1_out_generic_raw(pd, outs, hash.ptr, hash.len,
 				     "NAT-D");
 }
@@ -497,7 +497,7 @@ void v1_natify_initiator_endpoints(struct state *st, where_t where)
 	ip_endpoint new_endpoint = set_endpoint_port(st->st_remote_endpoint,
 						     ip_hport(NAT_IKE_UDP_PORT));
 	endpoint_buf oep, nep;
-	ldbg(st->st_logger,
+	ldbg(st->logger,
 	     "NAT-T: "PRI_SO" floating remote port from %s to %s using NAT_IKE_UDP_PORT "PRI_WHERE,
 	     pri_so(st->st_serialno),
 	     str_endpoint(&st->st_remote_endpoint, &oep),

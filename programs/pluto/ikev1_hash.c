@@ -161,7 +161,7 @@ bool check_v1_HASH(enum v1_hash_type type, const char *what,
 		.body = received_hash.ptr + received_hash.len,
 		.what = what,
 		.hash_type = type,
-		.logger = st->st_logger,
+		.logger = st->logger,
 	};
 	fixup_v1_HASH(st, &expected, md->hdr.isa_msgid, md->message_pbs.roof);
 	/* does it match? */

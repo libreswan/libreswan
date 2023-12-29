@@ -108,7 +108,7 @@ void submit_ke_and_nonce(struct state *st, const struct dh_desc *dh,
 	struct task *task = alloc_thing(struct task, "dh");
 	task->dh = dh;
 	task->cb = cb;
-	submit_task(st->st_logger, st, task, &ke_and_nonce_handler, where);
+	submit_task(st->logger, st, task, &ke_and_nonce_handler, where);
 }
 
 /*

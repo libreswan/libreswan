@@ -240,7 +240,7 @@ bool send_shunks_using_state(struct state *st, const char *where,
 	return send_shunks(where, false, st->st_serialno,
 			   st->st_iface_endpoint, st->st_remote_endpoint,
 			   shunk_a, shunk_b,
-			   st->st_logger);
+			   st->logger);
 }
 
 bool send_shunk_using_state(struct state *st, const char *where,
@@ -266,5 +266,5 @@ bool send_keepalive_using_state(struct state *st, const char *where)
 	return send_shunks(where, true, st->st_serialno, st->st_iface_endpoint,
 			   st->st_remote_endpoint,
 			   THING_AS_SHUNK(ka_payload), null_shunk,
-			   st->st_logger);
+			   st->logger);
 }

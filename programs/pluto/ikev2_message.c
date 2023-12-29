@@ -260,7 +260,7 @@ static bool open_body_v2SK_payload(struct pbs_out *container,
 
 	struct ikev2_generic e = {
 		.isag_length = 0, /* filled in later */
-		.isag_critical = build_ikev2_critical(false, ike->sa.st_logger),
+		.isag_critical = build_ikev2_critical(false, ike->sa.logger),
 	};
 	if (!pbs_out_struct(container, &ikev2_sk_desc, &e, sizeof(e), &sk->pbs)) {
 		llog(RC_LOG, logger,
@@ -464,7 +464,7 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 		construct_enc_iv("encryption IV/starting-variable", enc_iv,
 				 wire_iv_start, salt,
 				 ike->sa.st_oakley.ta_encrypt,
-				 ike->sa.st_logger);
+				 ike->sa.logger);
 
 		/* now, encrypt */
 		if (DBGP(DBG_CRYPT)) {
@@ -522,7 +522,7 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 {
 	if (!ike->sa.hidden_variables.st_skeyid_calculated) {
 		endpoint_buf b;
-		llog_pexpect(ike->sa.st_logger, HERE,
+		llog_pexpect(ike->sa.logger, HERE,
 			     "received encrypted packet from %s but no exponents for state #%lu to decrypt it",
 			     str_endpoint_sensitive(&ike->sa.st_remote_endpoint, &b),
 			     ike->sa.st_serialno);
@@ -627,7 +627,7 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 			      wire_iv_start, wire_iv_size,
 			      aad_start, aad_size,
 			      enc_start, enc_size, integ_size,
-			      cipherkey, false, ike->sa.st_logger)) {
+			      cipherkey, false, ike->sa.logger)) {
 			return false;
 		}
 
@@ -642,7 +642,7 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 		 * the truncated digest.
 		 */
 		struct crypt_prf *ctx = crypt_prf_init_symkey("auth", ike->sa.st_oakley.ta_integ->prf,
-							      "authkey", authkey, ike->sa.st_logger);
+							      "authkey", authkey, ike->sa.logger);
 		crypt_prf_update_bytes(ctx, "message", auth_start, integ_start - auth_start);
 		struct crypt_mac td = crypt_prf_final_mac(&ctx, ike->sa.st_oakley.ta_integ);
 
@@ -658,7 +658,7 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 		construct_enc_iv("decryption IV/starting-variable", enc_iv,
 				 wire_iv_start, salt,
 				 ike->sa.st_oakley.ta_encrypt,
-				 ike->sa.st_logger);
+				 ike->sa.logger);
 
 		/* decrypt */
 		if (DBGP(DBG_CRYPT)) {
@@ -670,7 +670,7 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 				   enc_start, enc_size,
 				   cipherkey,
 				   enc_iv, false,
-				   ike->sa.st_logger);
+				   ike->sa.logger);
 
 		if (DBGP(DBG_CRYPT)) {
 			DBG_dump("payload after decryption:", enc_start, enc_size);
@@ -1183,7 +1183,7 @@ static bool record_outbound_fragment(struct logger *logger,
 
 	const struct ikev2_skf e = {
 		.isaskf_np = skf_np, /* needed */
-		.isaskf_critical = build_ikev2_critical(false, ike->sa.st_logger),
+		.isaskf_critical = build_ikev2_critical(false, ike->sa.logger),
 		.isaskf_number = number,
 		.isaskf_total = total,
 	};

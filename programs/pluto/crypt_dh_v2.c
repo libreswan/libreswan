@@ -213,7 +213,7 @@ void calc_v2_keymat(struct state *st,
 			 &st->st_skey_responder_salt,
 			 &st->st_skey_chunk_SK_pi,
 			 &st->st_skey_chunk_SK_pr,
-			 st->st_logger);
+			 st->logger);
 
 	st->hidden_variables.st_skeyid_calculated = true;
 }

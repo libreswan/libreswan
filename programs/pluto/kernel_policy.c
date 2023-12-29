@@ -679,7 +679,7 @@ void install_inbound_ipsec_kernel_policy(struct child_sa *child,
 	if (add_inbound_cat != NULL) {
 		add_cat_kernel_policy(child->sa.st_connection,
 				      &kernel_policy, DIRECTION_INBOUND,
-				      child->sa.st_logger, where, add_inbound_cat);
+				      child->sa.logger, where, add_inbound_cat);
 	}
 
 	if (!kernel_ops_policy_add(KERNEL_POLICY_OP_ADD,
@@ -688,7 +688,7 @@ void install_inbound_ipsec_kernel_policy(struct child_sa *child,
 				   &kernel_policy.dst.route,	/* dst_client */
 				   &kernel_policy,			/* " */
 				   deltatime(0),		/* lifetime */
-				   child->sa.st_logger, where, "add inbound Child SA")) {
+				   child->sa.logger, where, "add inbound Child SA")) {
 		selector_buf sb, db;
 		llog_sa(RC_LOG, child,
 			"kernel: %s() failed to add SPD for %s=>%s",
@@ -702,13 +702,13 @@ bool install_outbound_ipsec_kernel_policy(struct child_sa *child,
 					  struct spd_route *spd,
 					  enum kernel_policy_op op, where_t where)
 {
-	struct logger *logger = child->sa.st_logger;
+	struct logger *logger = child->sa.logger;
 	PASSERT(logger, (op == KERNEL_POLICY_OP_REPLACE ||
 			 op == KERNEL_POLICY_OP_ADD));
 	const struct kernel_policy kernel_policy =
 		kernel_policy_from_state(child, spd, DIRECTION_OUTBOUND, where);
 	/* check for no transform at all */
-	PASSERT(child->sa.st_logger, kernel_policy.nr_rules > 0);
+	PASSERT(child->sa.logger, kernel_policy.nr_rules > 0);
 	if (spd->local->child->has_cat) {
 		/*
 		 * CAT means:
@@ -721,7 +721,7 @@ bool install_outbound_ipsec_kernel_policy(struct child_sa *child,
 		 */
 		add_cat_kernel_policy(child->sa.st_connection,
 				      &kernel_policy, DIRECTION_OUTBOUND,
-				      child->sa.st_logger, where,
+				      child->sa.logger, where,
 				      "CAT: add outbound IPsec policy");
 		/*
 		 * Now add the client.

@@ -142,7 +142,7 @@ static v1_notification_t accept_PFS_KE(struct state *st, struct msg_digest *md,
 			return v1N_INVALID_KEY_INFORMATION; /* ??? */
 		}
 		if (!unpack_KE(dest, val_name, st->st_pfs_group,
-			       ke_pd, st->st_logger)) {
+			       ke_pd, st->logger)) {
 			return v1N_INVALID_KEY_INFORMATION;
 		}
 		return v1N_NOTHING_WRONG;
@@ -340,8 +340,8 @@ static void compute_proto_keymat(struct state *st,
 						    THING_AS_SHUNK(pi->inbound.spi),
 						    st->st_ni, st->st_nr,
 						    needed_len,
-						    st->st_logger);
-	PASSERT(st->st_logger, pi->inbound.keymat.len == needed_len);
+						    st->logger);
+	PASSERT(st->logger, pi->inbound.keymat.len == needed_len);
 
 	free_chunk_content(&pi->outbound.keymat);
 	pi->outbound.keymat = ikev1_section_5_keymat(st->st_oakley.ta_prf,
@@ -351,8 +351,8 @@ static void compute_proto_keymat(struct state *st,
 						     THING_AS_SHUNK(pi->outbound.spi),
 						     st->st_ni, st->st_nr,
 						     needed_len,
-						     st->st_logger);
-	PASSERT(st->st_logger, pi->outbound.keymat.len == needed_len);
+						     st->logger);
+	PASSERT(st->logger, pi->outbound.keymat.len == needed_len);
 
 	if (DBGP(DBG_CRYPT)) {
 		DBG_log("%s KEYMAT", satypename);
@@ -602,7 +602,7 @@ void init_phase2_iv(struct state *st, const msgid_t *msgid)
 	}
 
 	struct crypt_hash *ctx = crypt_hash_init("Phase 2 IV", h,
-						 st->st_logger);
+						 st->logger);
 	crypt_hash_digest_hunk(ctx, "PH1_IV", st->st_v1_ph1_iv);
 	passert(*msgid != 0);
 	passert(sizeof(msgid_t) == sizeof(uint32_t));
@@ -651,7 +651,7 @@ struct child_sa *quick_outI1(struct ike_sa *isakmp,
 			child->sa.st_pfs_group = isakmp->sa.st_oakley.ta_dh;
 	}
 
-	LLOG_JAMBUF(RC_LOG, child->sa.st_logger, buf) {
+	LLOG_JAMBUF(RC_LOG, child->sa.logger, buf) {
 		jam(buf, "initiating Quick Mode ");
 		jam_connection_policies(buf, child->sa.st_connection);
 		if (replacing != SOS_NOBODY) {
@@ -766,7 +766,7 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 	}
 
 	/* set up reply */
-	reply_stream = open_pbs_out("reply packet",reply_buffer, sizeof(reply_buffer), st->st_logger);
+	reply_stream = open_pbs_out("reply packet",reply_buffer, sizeof(reply_buffer), st->logger);
 
 	/* HDR* out */
 	{
@@ -806,7 +806,7 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 			.compress = (st->st_policy & POLICY_COMPRESS),
 		};
 
-		ldbg(st->st_logger,
+		ldbg(st->logger,
 		     "emitting quick defaults using policy:%s%s%s",
 		     (pm.encrypt ? " encrypt" : ""),
 		     (pm.authenticate ? " authenticate" : ""),
@@ -945,7 +945,7 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 		/* IDci (initiator is remote peer) */
 
 		if (!decode_net_id(&IDci->payload.ipsec_id, &IDci->pbs,
-				   &remote_client, "peer client", p1st->st_logger))
+				   &remote_client, "peer client", p1st->logger))
 			return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
 
 		/* for code overwriting above */
@@ -975,7 +975,7 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 		/* IDcr (we are local responder) */
 
 		if (!decode_net_id(&IDcr->payload.ipsec_id, &IDcr->pbs,
-				   &local_client, "our client", p1st->st_logger))
+				   &local_client, "our client", p1st->logger))
 			return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
 
 		/*
@@ -995,13 +995,13 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 			shunk_t idfqdn = pbs_in_left(&IDcr->pbs);
 
 			hv = p1st->hidden_variables;
-			nat_traversal_natoa_lookup(md, &hv, p1st->st_logger);
+			nat_traversal_natoa_lookup(md, &hv, p1st->logger);
 
 			if (address_is_specified(hv.st_nat_oa)) {
 				remote_client = selector_from_address_protocol_port(hv.st_nat_oa,
 										    remote_protocol,
 										    remote_port);
-				LLOG_JAMBUF(RC_LOG_SERIOUS, p1st->st_logger, buf) {
+				LLOG_JAMBUF(RC_LOG_SERIOUS, p1st->logger, buf) {
 					jam(buf, "IDci was FQDN: ");
 					jam_sanitized_hunk(buf, idfqdn);
 					jam(buf, ", using NAT_OA=");
@@ -1069,7 +1069,7 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 	}
 
 	if (p == NULL) {
-		LLOG_JAMBUF(RC_LOG, p1st->st_logger, buf) {
+		LLOG_JAMBUF(RC_LOG, p1st->logger, buf) {
 			jam(buf, "cannot respond to IPsec SA request because no connection is known for ");
 
 			/*
@@ -1171,7 +1171,7 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 	hv = p1st->hidden_variables;
 	if ((hv.st_nat_traversal & NAT_T_DETECTED) &&
 	    (hv.st_nat_traversal & NAT_T_WITH_NATOA))
-		nat_traversal_natoa_lookup(md, &hv, p1st->st_logger);
+		nat_traversal_natoa_lookup(md, &hv, p1st->logger);
 
 	/* create our new state */
 
@@ -1247,7 +1247,7 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 	}
 
 	/* Ni in */
-	RETURN_STF_FAIL_v1NURE(accept_v1_nonce(child->sa.st_logger, md, &child->sa.st_ni, "Ni"));
+	RETURN_STF_FAIL_v1NURE(accept_v1_nonce(child->sa.logger, md, &child->sa.st_ni, "Ni"));
 
 	/* [ KE ] in (for PFS) */
 	RETURN_STF_FAIL_v1NURE(accept_PFS_KE(&child->sa, md, &child->sa.st_gi,
@@ -1439,7 +1439,7 @@ static stf_status quick_inI1_outR1_continue12_tail(struct state *st, struct msg_
 	struct pbs_out rbody;
 	ikev1_init_pbs_out_from_md_hdr(md, true,
 				       &reply_stream, reply_buffer, sizeof(reply_buffer),
-				       &rbody, st->st_logger);
+				       &rbody, st->logger);
 
 	struct v1_hash_fixup hash_fixup;
 	if (!emit_v1_HASH(V1_HASH_2, "quick inR1 outI2",
@@ -1477,7 +1477,7 @@ static stf_status quick_inI1_outR1_continue12_tail(struct state *st, struct msg_
 	log_state(RC_LOG, st,
 		  "responding to Quick Mode proposal {msgid:%08" PRIx32 "}",
 		  st->st_v1_msgid.id);
-	LLOG_JAMBUF(RC_LOG, st->st_logger, buf) {
+	LLOG_JAMBUF(RC_LOG, st->logger, buf) {
 		jam(buf, "    us: ");
 		const struct connection *c = st->st_connection;
 		const struct spd_route *sr = c->spd;
@@ -1532,7 +1532,7 @@ static stf_status quick_inI1_outR1_continue12_tail(struct state *st, struct msg_
 
 	/* [ KE ] out (for PFS) */
 	if (st->st_pfs_group != NULL && st->st_gr.ptr != NULL) {
-		if (!ikev1_justship_KE(st->st_logger, &st->st_gr, &rbody))
+		if (!ikev1_justship_KE(st->logger, &st->st_gr, &rbody))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -1558,7 +1558,7 @@ static stf_status quick_inI1_outR1_continue12_tail(struct state *st, struct msg_
 #ifdef USE_XFRM_INTERFACE
 	struct connection *c = st->st_connection;
 	if (c->xfrmi != NULL && c->xfrmi->if_id != 0)
-		if (!add_xfrm_interface(c, st->st_logger))
+		if (!add_xfrm_interface(c, st->logger))
 			return STF_FATAL;
 #endif
 
@@ -1601,7 +1601,7 @@ stf_status quick_inR1_outI2(struct state *st, struct msg_digest *md)
 	}
 
 	/* Nr in */
-	RETURN_STF_FAIL_v1NURE(accept_v1_nonce(st->st_logger, md, &st->st_nr, "Nr"));
+	RETURN_STF_FAIL_v1NURE(accept_v1_nonce(st->logger, md, &st->st_nr, "Nr"));
 
 	/* [ KE ] in (for PFS) */
 	RETURN_STF_FAIL_v1NURE(accept_PFS_KE(st, md, &st->st_gr, "Gr",
@@ -1637,11 +1637,11 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 	struct pbs_out rbody;
 	ikev1_init_pbs_out_from_md_hdr(md, true,
 				       &reply_stream, reply_buffer, sizeof(reply_buffer),
-				       &rbody, st->st_logger);
+				       &rbody, st->logger);
 
 	if ((st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) &&
 	    (st->hidden_variables.st_nat_traversal & NAT_T_WITH_NATOA))
-		nat_traversal_natoa_lookup(md, &st->hidden_variables, st->st_logger);
+		nat_traversal_natoa_lookup(md, &st->hidden_variables, st->logger);
 
 	/* [ IDci, IDcr ] in; these must match what we sent */
 
@@ -1657,7 +1657,7 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 					  c->spd->local->client.ipproto,
 					  c->spd->local->client.hport,
 					  selector_subnet(st->st_connection->spd->local->client),
-					  "our client", st->st_logger))
+					  "our client", st->logger))
 				return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
 
 			/* we checked elsewhere that we got two of them */
@@ -1670,7 +1670,7 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 					  c->spd->remote->client.ipproto,
 					  c->spd->remote->client.hport,
 					  selector_subnet(st->st_connection->spd->remote->client),
-					  "peer client", st->st_logger))
+					  "peer client", st->logger))
 				return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
 
 			/*
@@ -1686,7 +1686,7 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 				shunk_t idfqdn = pbs_in_left(&IDcr->pbs);
 				update_first_selector(st->st_connection, remote,
 						      selector_from_address(st->hidden_variables.st_nat_oa));
-				LLOG_JAMBUF(RC_LOG_SERIOUS, st->st_logger, buf) {
+				LLOG_JAMBUF(RC_LOG_SERIOUS, st->logger, buf) {
 					jam(buf, "IDcr was FQDN: ");
 					jam_sanitized_hunk(buf, idfqdn);
 					jam(buf, ", using NAT_OA=");
@@ -1775,7 +1775,7 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 	 */
 #ifdef USE_XFRM_INTERFACE
 	if (c->xfrmi != NULL && c->xfrmi->if_id != 0)
-		if (!add_xfrm_interface(c, st->st_logger))
+		if (!add_xfrm_interface(c, st->logger))
 			return STF_FATAL;
 #endif
 
@@ -1819,7 +1819,7 @@ stf_status quick_inI2(struct state *st, struct msg_digest *md UNUSED)
 #ifdef USE_XFRM_INTERFACE
 	struct connection *c = st->st_connection;
 	if (c->xfrmi != NULL && c->xfrmi->if_id != 0)
-		if (!add_xfrm_interface(c, st->st_logger))
+		if (!add_xfrm_interface(c, st->logger))
 			return STF_FATAL;
 #endif
 	/*

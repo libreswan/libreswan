@@ -39,7 +39,7 @@ bool record_v2_delete(struct ike_sa *ike, struct state *st)
 
 	struct v2_message request;
 	if (!open_v2_message("informational exchange delete request",
-			     ike, st->st_logger,
+			     ike, st->logger,
 			     NULL/*request*/, ISAKMP_v2_INFORMATIONAL,
 			     buf, sizeof(buf), &request,
 			     ENCRYPTED_PAYLOAD)) {
@@ -66,7 +66,7 @@ bool record_v2_delete(struct ike_sa *ike, struct state *st)
 		if (impair.v2_delete_protoid > 0) {
 			enum_buf ebo, ebn;
 			enum ikev2_sec_proto_id protoid = impair.v2_delete_protoid - 1; /* unbias */
-			llog(RC_LOG, st->st_logger, "IMPAIR: changing Delete payload Protocol ID from %s to %s (%u)",
+			llog(RC_LOG, st->logger, "IMPAIR: changing Delete payload Protocol ID from %s to %s (%u)",
 			     str_enum_short(&ikev2_delete_protocol_id_names, v2del_tmp.isad_protoid, &ebo),
 			     str_enum_short(&ikev2_delete_protocol_id_names, protoid, &ebn),
 			     protoid);
@@ -266,7 +266,7 @@ bool process_v2D_requests(bool *del_ike, struct ike_sa *ike, struct msg_digest *
 
 		switch (v2del->isad_protoid) {
 		case PROTO_ISAKMP:
-			llog_passert(ike->sa.st_logger, HERE, "unexpected IKE delete");
+			llog_passert(ike->sa.logger, HERE, "unexpected IKE delete");
 
 		case PROTO_IPSEC_AH: /* Child SAs */
 		case PROTO_IPSEC_ESP: /* Child SAs */
@@ -300,7 +300,7 @@ bool process_v2D_requests(bool *del_ike, struct ike_sa *ike, struct msg_digest *
 				ipsec_spi_t outbound_spi;
 				diag_t d = pbs_in_thing( &p->pbs, outbound_spi, "SPI");
 				if (d != NULL) {
-					llog_diag(RC_LOG, ike->sa.st_logger, &d, "%s", "");
+					llog_diag(RC_LOG, ike->sa.logger, &d, "%s", "");
 					return false;
 				}
 
@@ -395,7 +395,7 @@ bool process_v2D_responses(struct ike_sa *ike, struct msg_digest *md)
 
 		switch (v2del->isad_protoid) {
 		case PROTO_ISAKMP:
-			llog_passert(ike->sa.st_logger, HERE, "unexpected IKE delete");
+			llog_passert(ike->sa.logger, HERE, "unexpected IKE delete");
 
 		case PROTO_IPSEC_AH: /* Child SAs */
 		case PROTO_IPSEC_ESP: /* Child SAs */
@@ -422,7 +422,7 @@ bool process_v2D_responses(struct ike_sa *ike, struct msg_digest *md)
 
 				diag_t d = pbs_in_thing(&p->pbs, spi, "SPI");
 				if (d != NULL) {
-					llog_diag(RC_LOG, ike->sa.st_logger, &d, "%s", "");
+					llog_diag(RC_LOG, ike->sa.logger, &d, "%s", "");
 					return false;
 				}
 
@@ -505,7 +505,7 @@ void record_n_send_n_log_v2_delete(struct ike_sa *ike, where_t where)
 	llog_sa_delete_n_send(ike, &ike->sa);
 
 	if (ike->sa.st_on_delete.skip_send_delete) {
-		llog_pexpect(ike->sa.st_logger, where,
+		llog_pexpect(ike->sa.logger, where,
 			     "%s() called when skipping send delete", __func__);
 	} else {
 		on_delete(&ike->sa, skip_send_delete);

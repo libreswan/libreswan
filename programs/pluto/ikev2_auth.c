@@ -95,7 +95,7 @@ struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
 	}
 
 	struct crypt_hash *ctx = crypt_hash_init("sighash", hasher,
-						 ike->sa.st_logger);
+						 ike->sa.logger);
 	crypt_hash_digest_hunk(ctx, "first packet", firstpacket);
 	crypt_hash_digest_hunk(ctx, "nonce", *nonce);
 	/* we took the PRF(SK_d,ID[ir]'), so length is prf hash length */
@@ -276,7 +276,7 @@ bool emit_local_v2AUTH(struct ike_sa *ike,
 {
 	enum keyword_auth authby = ike->sa.st_eap_sa_md ? AUTH_PSK : local_v2_auth(ike);
 	struct ikev2_auth a = {
-		.isaa_critical = build_ikev2_critical(false, ike->sa.st_logger),
+		.isaa_critical = build_ikev2_critical(false, ike->sa.logger),
 		.isaa_auth_method = local_v2AUTH_method(ike, authby),
 	};
 

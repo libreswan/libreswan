@@ -145,6 +145,6 @@ void calc_v1_skeyid_and_iv(struct state *st)
 			&st->st_skeyid_e_nss,	/* output */
 			&st->st_v1_new_iv,	/* output */
 			&st->st_enc_key_nss,	/* output */
-			st->st_logger);
+			st->logger);
 	st->hidden_variables.st_skeyid_calculated = true;
 }

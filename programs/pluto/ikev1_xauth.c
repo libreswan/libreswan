@@ -482,7 +482,7 @@ static stf_status modecfg_send_set(struct state *st)
 {
 	/* set up reply */
 	uint8_t buf[256];
-	struct pbs_out reply = open_pbs_out("ModecfgR1", buf, sizeof(buf), st->st_logger);
+	struct pbs_out reply = open_pbs_out("ModecfgR1", buf, sizeof(buf), st->logger);
 
 	change_v1_state(st, STATE_MODE_CFG_R1);
 	/* HDR out */
@@ -570,7 +570,7 @@ stf_status xauth_send_request(struct state *st)
 
 	/* set up reply */
 	uint8_t buf[256];
-	struct pbs_out reply = open_pbs_out("xauth_buf", buf, sizeof(buf), st->st_logger);
+	struct pbs_out reply = open_pbs_out("xauth_buf", buf, sizeof(buf), st->logger);
 
 	log_state(RC_LOG, st,
 		  "XAUTH: Sending Username/Password request (%s->XAUTH_R0)",
@@ -684,7 +684,7 @@ stf_status modecfg_send_request(struct state *st)
 {
 	/* set up reply */
 	uint8_t buf[256];
-	struct pbs_out reply = open_pbs_out("xauth_buf", buf, sizeof(buf), st->st_logger);
+	struct pbs_out reply = open_pbs_out("xauth_buf", buf, sizeof(buf), st->logger);
 
 	log_state(RC_LOG, st, "modecfg: Sending IP request (MODECFG_I1)");
 
@@ -786,7 +786,7 @@ static stf_status xauth_send_status(struct state *st, int status)
 {
 	/* set up reply */
 	uint8_t buf[256];
-	struct pbs_out reply = open_pbs_out("xauth_buf", buf, sizeof(buf), st->st_logger);
+	struct pbs_out reply = open_pbs_out("xauth_buf", buf, sizeof(buf), st->logger);
 
 	/* pick a new message id */
 	st->st_v1_msgid.phase15 = generate_msgid(st);
@@ -1043,7 +1043,7 @@ static bool do_file_authentication(struct state *st, const char *name,
 			cp = crypt(password, passwdhash);
 			win = cp != NULL && streq(cp, passwdhash);
 
-			ldbgf(DBG_CRYPT, st->st_logger, "XAUTH: %s user(%s:%s) pass %s vs %s",
+			ldbgf(DBG_CRYPT, st->logger, "XAUTH: %s user(%s:%s) pass %s vs %s",
 			      win ? "success" : "failure",
 			      userid, connectionname, cp, passwdhash);
 
@@ -1057,7 +1057,7 @@ static bool do_file_authentication(struct state *st, const char *name,
 					/* ??? should we then keep trying other entries? */
 					if (!add_xauth_addresspool(c, userid,
 								   addresspool,
-								   st->st_logger)) {
+								   st->logger)) {
 						win = false;
 						continue;	/* try other entries */
 					}
@@ -1290,7 +1290,7 @@ stf_status xauth_inR0(struct state *st, struct msg_digest *md)
 		diag_t d = pbs_in_struct(attrs, &isakmp_xauth_attribute_desc,
 					 &attr, sizeof(attr), &strattr);
 		if (d != NULL) {
-			llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
+			llog_diag(RC_LOG, st->logger, &d, "%s", "");
 			/* fail if malformed */
 			return STF_FAIL_v1N;
 		}
@@ -1437,7 +1437,7 @@ stf_status modecfg_inR0(struct state *st, struct msg_digest *md)
 	struct pbs_out rbody;
 	ikev1_init_pbs_out_from_md_hdr(md, true,
 				       &reply_stream, reply_buffer, sizeof(reply_buffer),
-				       &rbody, st->st_logger);
+				       &rbody, st->logger);
 
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute;
 	pb_stream *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
@@ -1468,7 +1468,7 @@ stf_status modecfg_inR0(struct state *st, struct msg_digest *md)
 			diag_t d = pbs_in_struct(attrs, &isakmp_xauth_attribute_desc,
 						 &attr, sizeof(attr), &strattr);
 			if (d != NULL) {
-				llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
+				llog_diag(RC_LOG, st->logger, &d, "%s", "");
 				/* reject malformed */
 				return STF_FAIL_v1N;
 			}
@@ -1548,7 +1548,7 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 		diag_t d = pbs_in_struct(attrs, &isakmp_xauth_attribute_desc,
 					 &attr, sizeof(attr), &strattr);
 		if (d != NULL) {
-			llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
+			llog_diag(RC_LOG, st->logger, &d, "%s", "");
 			/* reject malformed */
 			return STF_FAIL_v1N;
 		}
@@ -1561,7 +1561,7 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 			ip_address a;
 			diag_t d = pbs_in_address(&strattr, &a, &ipv4_info, "addr");
 			if (d != NULL) {
-				llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
+				llog_diag(RC_LOG, st->logger, &d, "%s", "");
 				return STF_FATAL;
 			}
 			update_first_selector(c, local, selector_from_address(a));
@@ -1743,7 +1743,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 	struct pbs_out rbody;
 	ikev1_init_pbs_out_from_md_hdr(md, true,
 				       &reply_stream, reply_buffer, sizeof(reply_buffer),
-				       &rbody, st->st_logger);
+				       &rbody, st->logger);
 
 	struct connection *c = st->st_connection;
 
@@ -1774,7 +1774,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 			diag_t d = pbs_in_struct(attrs, &isakmp_xauth_attribute_desc,
 						 &attr, sizeof(attr), &ignored);
 			if (d != NULL) {
-				llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
+				llog_diag(RC_LOG, st->logger, &d, "%s", "");
 				/* reject malformed */
 				return STF_FAIL_v1N;
 			}
@@ -1811,7 +1811,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 			diag_t d = pbs_in_struct(attrs, &isakmp_xauth_attribute_desc,
 						 &attr, sizeof(attr), &strattr);
 			if (d != NULL) {
-				llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
+				llog_diag(RC_LOG, st->logger, &d, "%s", "");
 				/* reject malformed */
 				return STF_FAIL_v1N;
 			}
@@ -1824,7 +1824,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 				ip_address a;
 				diag_t d = pbs_in_address(&strattr, &a, &ipv4_info, "addr");
 				if (d != NULL) {
-					llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
+					llog_diag(RC_LOG, st->logger, &d, "%s", "");
 					return STF_FATAL;
 				}
 				set_child_has_client(c, local, true);
@@ -1849,7 +1849,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 				ip_address a;
 				diag_t d = pbs_in_address(&strattr, &a, &ipv4_info, "addr");
 				if (d != NULL) {
-					llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
+					llog_diag(RC_LOG, st->logger, &d, "%s", "");
 					return STF_FATAL;
 				}
 
@@ -1864,7 +1864,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 				ip_address a;
 				diag_t d = pbs_in_address(&strattr, &a, &ipv4_info, "addr");
 				if (d != NULL) {
-					llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
+					llog_diag(RC_LOG, st->logger, &d, "%s", "");
 					return STF_FATAL;
 				}
 
@@ -1885,7 +1885,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 			{
 				append_st_cfg_domain(st, cisco_stringify(&strattr, "Domain",
 									 false/*don't-ignore*/,
-									 st->st_logger));
+									 st->logger));
 				break;
 			}
 
@@ -1893,7 +1893,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 			{
 				st->st_seen_cfg_banner = cisco_stringify(&strattr, "Banner",
 									 false/*don't-ignore*/,
-									 st->st_logger);
+									 st->logger);
 				break;
 			}
 
@@ -1915,7 +1915,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 					diag_t d = pbs_in_struct(&strattr, &CISCO_split_desc,
 								 &i, sizeof(i), NULL);
 					if (d != NULL) {
-						llog_diag(RC_INFORMATIONAL, st->st_logger, &d,
+						llog_diag(RC_INFORMATIONAL, st->logger, &d,
 							  "ignoring malformed CISCO_SPLIT_INC payload: ");
 						break;
 					}
@@ -2213,7 +2213,7 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 	struct pbs_out rbody;
 	ikev1_init_pbs_out_from_md_hdr(md, true,
 				       &reply_stream, reply_buffer, sizeof(reply_buffer),
-				       &rbody, st->st_logger);
+				       &rbody, st->logger);
 
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute;
 	pb_stream *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
@@ -2262,7 +2262,7 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 		diag_t d = pbs_in_struct(attrs, &isakmp_xauth_attribute_desc,
 					 &attr, sizeof(attr), &strattr);
 		if (d != NULL) {
-			llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
+			llog_diag(RC_LOG, st->logger, &d, "%s", "");
 			/* reject malformed */
 			return STF_FAIL_v1N;
 		}
@@ -2379,7 +2379,7 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 					  "XAUTH: Username or password request was received, but XAUTH client mode not enabled.");
 				return STF_IGNORE;
 			}
-			ldbg(st->st_logger, "XAUTH: Username or password request received");
+			ldbg(st->logger, "XAUTH: Username or password request received");
 		} else {
 			if (st->st_connection->local->host.config->xauth.client) {
 				log_state(RC_LOG, st,
@@ -2462,7 +2462,7 @@ stf_status xauth_inI1(struct state *st, struct msg_digest *md)
 	struct pbs_out rbody;
 	ikev1_init_pbs_out_from_md_hdr(md, true,
 				       &reply_stream, reply_buffer, sizeof(reply_buffer),
-				       &rbody, st->st_logger);
+				       &rbody, st->logger);
 
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute;
 	pb_stream *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
@@ -2496,7 +2496,7 @@ stf_status xauth_inI1(struct state *st, struct msg_digest *md)
 			diag_t d = pbs_in_struct(attrs, &isakmp_xauth_attribute_desc,
 						 &attr, sizeof(attr), &strattr);
 			if (d != NULL) {
-				llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
+				llog_diag(RC_LOG, st->logger, &d, "%s", "");
 				/* reject malformed */
 				return STF_FAIL_v1N;
 			}

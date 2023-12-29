@@ -474,7 +474,7 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 		}
 
 		dbg("unpacking clear payloads");
-		md->message_payloads = ikev2_decode_payloads(ike->sa.st_logger, md,
+		md->message_payloads = ikev2_decode_payloads(ike->sa.logger, md,
 							     &md->message_pbs,
 							     md->hdr.isa_np);
 		if (md->message_payloads.n != v2N_NOTHING_WRONG) {
@@ -484,7 +484,7 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 
 		/* transition? */
 		const struct v2_state_transition *transition =
-			find_v2_state_transition(ike->sa.st_logger, ike->sa.st_state, md,
+			find_v2_state_transition(ike->sa.logger, ike->sa.st_state, md,
 						 /*secured_payload_failed?*/NULL);
 		if (transition == NULL) {
 			/* already logged */
@@ -559,16 +559,16 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 	} else if (HAS_IPSEC_POLICY(policy)) {
 		struct connection *cc;
 		if (is_labeled(c)) {
-			PEXPECT(ike->sa.st_logger, is_labeled_parent(c));
-			PEXPECT(ike->sa.st_logger, c == ike->sa.st_connection);
+			PEXPECT(ike->sa.logger, is_labeled_parent(c));
+			PEXPECT(ike->sa.logger, c == ike->sa.st_connection);
 			cc = sec_label_child_instantiate(ike, sec_label, HERE);
 		} else {
-			cc = connection_addref(c, ike->sa.st_logger);
+			cc = connection_addref(c, ike->sa.logger);
 		}
 		add_pending(ike, cc, policy,
 			    (predecessor == NULL ? SOS_NOBODY : predecessor->st_serialno),
 			    sec_label, true/*part of initiate*/, background);
-		connection_delref(&cc, ike->sa.st_logger);
+		connection_delref(&cc, ike->sa.logger);
 	}
 
 	/*
@@ -627,7 +627,7 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 	 * been logged.  Better to do that in the caller?
 	 */
 	if (background) {
-		release_whack(ike->sa.st_logger, HERE);
+		release_whack(ike->sa.logger, HERE);
 	}
 
 	if (IS_LIBUNBOUND && id_ipseckey_allowed(ike, IKEv2_AUTH_RESERVED)) {
@@ -692,7 +692,7 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 
 	struct v2_message request;
 	if (!open_v2_message("IKE_SA_INIT request",
-			     ike, ike->sa.st_logger, NULL/*request*/,
+			     ike, ike->sa.logger, NULL/*request*/,
 			     ISAKMP_v2_IKE_SA_INIT,
 			     reply_buffer, sizeof(reply_buffer),
 			     &request, UNENCRYPTED_PAYLOAD)) {
@@ -739,7 +739,7 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 	{
 		pb_stream pb;
 		struct ikev2_generic in = {
-			.isag_critical = build_ikev2_critical(false, ike->sa.st_logger),
+			.isag_critical = build_ikev2_critical(false, ike->sa.logger),
 		};
 
 		if (!out_struct(&in, &ikev2_nonce_desc, request.pbs, &pb) ||
@@ -874,7 +874,7 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 
 	/* Vendor ID processing */
 	for (struct payload_digest *v = md->chain[ISAKMP_NEXT_v2V]; v != NULL; v = v->next) {
-		handle_v2_vendorid(pbs_in_left(&v->pbs), ike->sa.st_logger);
+		handle_v2_vendorid(pbs_in_left(&v->pbs), ike->sa.logger);
 	}
 
 	/* Get the proposals ready. */
@@ -890,10 +890,10 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 				     /*expect_accepted*/ false,
 				     is_opportunistic(c),
 				     &ike->sa.st_v2_accepted_proposal,
-				     ike_proposals, ike->sa.st_logger);
+				     ike_proposals, ike->sa.logger);
 	if (n != v2N_NOTHING_WRONG) {
 		pexpect(ike->sa.st_sa_role == SA_RESPONDER);
-		record_v2N_response(ike->sa.st_logger, ike, md,
+		record_v2N_response(ike->sa.logger, ike, md,
 				    n, NULL, UNENCRYPTED_PAYLOAD);
 		/*
 		 * STF_FATAL will send the recorded message and then
@@ -914,7 +914,7 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 	 * ...), drop everything.
 	 */
 	if (!ikev2_proposal_to_trans_attrs(ike->sa.st_v2_accepted_proposal,
-					   &ike->sa.st_oakley, ike->sa.st_logger)) {
+					   &ike->sa.st_oakley, ike->sa.logger)) {
 		llog_sa(RC_LOG_SERIOUS, ike, "IKE responder accepted an unsupported algorithm");
 		/* STF_INTERNAL_ERROR doesn't delete ST */
 		return STF_FATAL;
@@ -968,7 +968,7 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 				"IMPAIR: ignoring SIGNATURE_HASH_ALGORITHMS notify in IKE_SA_INIT request");
 		} else {
 			if (!negotiate_hash_algo_from_notification(&md->pd[PD_v2N_SIGNATURE_HASH_ALGORITHMS]->pbs, ike)) {
-				record_v2N_response(ike->sa.st_logger, ike, md,
+				record_v2N_response(ike->sa.logger, ike, md,
 						    v2N_INVALID_SYNTAX, NULL, UNENCRYPTED_PAYLOAD);
 				/*
 				 * STF_FATAL will send the recorded
@@ -1031,7 +1031,7 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 
 	struct v2_message response;
 	if (!open_v2_message("IKE_SA_INIT response",
-			     ike, ike->sa.st_logger, md/*response*/,
+			     ike, ike->sa.logger, md/*response*/,
 			     ISAKMP_v2_IKE_SA_INIT,
 			     reply_buffer, sizeof(reply_buffer),
 			     &response, UNENCRYPTED_PAYLOAD)) {
@@ -1054,12 +1054,12 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	}
 
 	/* Ni in */
-	if (!accept_v2_nonce(ike->sa.st_logger, md, &ike->sa.st_ni, "Ni")) {
+	if (!accept_v2_nonce(ike->sa.logger, md, &ike->sa.st_ni, "Ni")) {
 		/*
 		 * Presumably not our fault.  Syntax errors kill the
 		 * family, hence FATAL.
 		 */
-		record_v2N_response(ike->sa.st_logger, ike, md,
+		record_v2N_response(ike->sa.logger, ike, md,
 				    v2N_INVALID_SYNTAX, NULL/*no-data*/,
 				    UNENCRYPTED_PAYLOAD);
 		return STF_FATAL;
@@ -1090,7 +1090,7 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	{
 		pb_stream pb;
 		struct ikev2_generic in = {
-			.isag_critical = build_ikev2_critical(false, ike->sa.st_logger),
+			.isag_critical = build_ikev2_critical(false, ike->sa.logger),
 		};
 
 		if (!out_struct(&in, &ikev2_nonce_desc, response.pbs, &pb) ||
@@ -1252,7 +1252,7 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_PAYLOAD(struct ike_sa 
 	diag_t d = pbs_in_struct(&invalid_ke_pbs, &suggested_group_desc,
 				 &sg, sizeof(sg), NULL);
 	if (d != NULL) {
-		llog_diag(RC_LOG, ike->sa.st_logger, &d, "%s", "");
+		llog_diag(RC_LOG, ike->sa.logger, &d, "%s", "");
 		return STF_IGNORE;
 	}
 
@@ -1376,7 +1376,7 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 
 	/* KE in */
 	if (!unpack_KE(&ike->sa.st_gr, "Gr", ike->sa.st_oakley.ta_dh,
-		       md->chain[ISAKMP_NEXT_v2KE], ike->sa.st_logger)) {
+		       md->chain[ISAKMP_NEXT_v2KE], ike->sa.logger)) {
 		/*
 		 * XXX: Initiator - so this code will not trigger a
 		 * notify.  Since packet isn't trusted, should it be
@@ -1388,7 +1388,7 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 	}
 
 	/* Ni in */
-	if (!accept_v2_nonce(ike->sa.st_logger, md, &ike->sa.st_nr, "Nr")) {
+	if (!accept_v2_nonce(ike->sa.logger, md, &ike->sa.st_nr, "Nr")) {
 		/*
 		 * Presumably not our fault.  Syntax errors in a
 		 * response kill the family (and trigger no further
@@ -1415,7 +1415,7 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 					     /*expect_accepted*/ true,
 					     is_opportunistic(c),
 					     &ike->sa.st_v2_accepted_proposal,
-					     ike_proposals, ike->sa.st_logger);
+					     ike_proposals, ike->sa.logger);
 		if (n != v2N_NOTHING_WRONG) {
 			dbg("ikev2_parse_parent_sa_body() failed in ikev2_parent_inR1outI2()");
 			/*
@@ -1425,7 +1425,7 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 		}
 
 		if (!ikev2_proposal_to_trans_attrs(ike->sa.st_v2_accepted_proposal,
-						   &ike->sa.st_oakley, ike->sa.st_logger)) {
+						   &ike->sa.st_oakley, ike->sa.logger)) {
 			llog_sa(RC_LOG_SERIOUS, ike,
 				"IKE initiator proposed an unsupported algorithm");
 			free_ikev2_proposal(&ike->sa.st_v2_accepted_proposal);
@@ -1611,13 +1611,13 @@ void process_v2_request_no_skeyseed(struct ike_sa *ike, struct msg_digest *md)
 			break;
 		}
 	} else {
-		llog_pexpect(ike->sa.st_logger, HERE,
+		llog_pexpect(ike->sa.logger, HERE,
 			     "message has neither SK nor SKF payload");
 		return;
 	}
 
 	if ((*frags) == NULL) {
-		llog_pexpect(ike->sa.st_logger, HERE, "no fragments");
+		llog_pexpect(ike->sa.logger, HERE, "no fragments");
 		return;
 	}
 

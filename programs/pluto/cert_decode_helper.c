@@ -90,7 +90,7 @@ void submit_v2_cert_decode(struct ike_sa *ike,
 			.crl_strict = crl_strict,
 		},
 	};
-	submit_task(ike->sa.st_logger,
+	submit_task(ike->sa.logger,
 		    /*resume IKE*/&ike->sa,
 		    clone_thing(task, "decode certificate payload task"),
 		    &cert_decode_handler, where);
@@ -131,7 +131,7 @@ static stf_status cert_decode_completed(struct state *st,
 		 */
 		chunk_t fdn = empty_chunk;
 		if (find_crl_fetch_dn(&fdn, ike->sa.st_connection)) {
-			submit_crl_fetch_request(ASN1(fdn), ike->sa.st_logger);
+			submit_crl_fetch_request(ASN1(fdn), ike->sa.logger);
 		}
 		pexpect(task->verified.cert_chain == NULL);
 		pexpect(task->verified.pubkey_db == NULL);

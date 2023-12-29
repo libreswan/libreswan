@@ -203,7 +203,7 @@ void submit_dh_shared_secret(struct state *task_st,
 	dbg("submitting DH shared secret for "PRI_SO"/"PRI_SO" "PRI_WHERE,
 	    task_st->st_serialno, dh_st->st_serialno, pri_where(where));
 	if (dh_st->st_dh_shared_secret != NULL) {
-		llog_pexpect(dh_st->st_logger, where,
+		llog_pexpect(dh_st->logger, where,
 			     "in %s expecting st->st_dh_shared_secret == NULL",
 			     __func__);
 	}
@@ -212,5 +212,5 @@ void submit_dh_shared_secret(struct state *task_st,
 	task->local_secret = dh_local_secret_addref(dh_st->st_dh_local_secret, HERE);
 	task->dh_serialno = dh_st->st_serialno;
 	task->cb = cb;
-	submit_task(dh_st->st_logger, task_st, task, &dh_shared_secret_handler, where);
+	submit_task(dh_st->logger, task_st, task, &dh_shared_secret_handler, where);
 }

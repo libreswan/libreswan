@@ -365,23 +365,23 @@ static bool zap_connection_child(struct ike_sa **ike,
 	(*child) = child_sa_by_serialno((*ike)->sa.st_connection->newest_routing_sa);
 	if ((*child) == NULL) {
 		dispatched_to_child = false;
-		ldbg_routing((*ike)->sa.st_logger, "  IKE SA's connection has no Child SA "PRI_SO,
+		ldbg_routing((*ike)->sa.logger, "  IKE SA's connection has no Child SA "PRI_SO,
 			     pri_so((*ike)->sa.st_connection->newest_routing_sa));
 	} else if ((*child)->sa.st_clonedfrom != (*ike)->sa.st_serialno) {
 		dispatched_to_child = false;
-		ldbg_routing((*ike)->sa.st_logger, "  IKE SA is not the parent of the connection's Child SA "PRI_SO,
+		ldbg_routing((*ike)->sa.logger, "  IKE SA is not the parent of the connection's Child SA "PRI_SO,
 			     pri_so((*child)->sa.st_serialno));
 	} else {
-		ldbg_routing((*ike)->sa.st_logger, "  dispatching delete to Child SA "PRI_SO,
+		ldbg_routing((*ike)->sa.logger, "  dispatching delete to Child SA "PRI_SO,
 			     pri_so((*child)->sa.st_serialno));
-		state_attach(&(*child)->sa, (*ike)->sa.st_logger);
+		state_attach(&(*child)->sa, (*ike)->sa.logger);
 		/* will delete child and its logger */
 		dispatched_to_child = true;
 		zap_child(child, where); /* always dispatches here*/
-		PEXPECT((*ike)->sa.st_logger, dispatched_to_child);
-		PEXPECT((*ike)->sa.st_logger, (*child) == NULL); /*gone!*/
-		PEXPECT((*ike)->sa.st_logger, (*ike)->sa.st_connection->newest_routing_sa == SOS_NOBODY);
-		PEXPECT((*ike)->sa.st_logger, (*ike)->sa.st_connection->newest_ipsec_sa == SOS_NOBODY);
+		PEXPECT((*ike)->sa.logger, dispatched_to_child);
+		PEXPECT((*ike)->sa.logger, (*child) == NULL); /*gone!*/
+		PEXPECT((*ike)->sa.logger, (*ike)->sa.st_connection->newest_routing_sa == SOS_NOBODY);
+		PEXPECT((*ike)->sa.logger, (*ike)->sa.st_connection->newest_ipsec_sa == SOS_NOBODY);
 	}
 	return dispatched_to_child;
 }
@@ -394,16 +394,16 @@ static void zap_v1_child(struct ike_sa **ike, struct child_sa *child)
 	 * wild.
 	 */
 	if (IS_IPSEC_SA_ESTABLISHED(&child->sa)) {
-		ldbg_routing((*ike)->sa.st_logger, "    letting established IPsec SA "PRI_SO" go wild",
+		ldbg_routing((*ike)->sa.logger, "    letting established IPsec SA "PRI_SO" go wild",
 			     pri_so(child->sa.st_serialno));
 	} else {
 		/*
 		 * Attach the IKE SA's whack to the child so that the
 		 * child can also log its demise.
 		 */
-		ldbg_routing((*ike)->sa.st_logger, "    deleting larval IPsec SA "PRI_SO,
+		ldbg_routing((*ike)->sa.logger, "    deleting larval IPsec SA "PRI_SO,
 			     pri_so(child->sa.st_serialno));
-		state_attach(&child->sa, (*ike)->sa.st_logger);
+		state_attach(&child->sa, (*ike)->sa.logger);
 		delete_child_sa(&child);
 	}
 }
@@ -420,7 +420,7 @@ static void zap_v2_child(struct ike_sa **ike, struct child_sa *child,
 	 * If the child owns the connection's routing then it needs to
 	 * be dispatched; else it can simply be deleted.
 	 */
-	state_attach(&child->sa, (*ike)->sa.st_logger);
+	state_attach(&child->sa, (*ike)->sa.logger);
 
 	/* redundant */
 	on_delete(&child->sa, skip_send_delete);
@@ -428,9 +428,9 @@ static void zap_v2_child(struct ike_sa **ike, struct child_sa *child,
 	struct connection *cc = child->sa.st_connection;
 
 	if (cc->newest_ipsec_sa == child->sa.st_serialno) {
-		PEXPECT((*ike)->sa.st_logger, IS_IPSEC_SA_ESTABLISHED(&child->sa));
+		PEXPECT((*ike)->sa.logger, IS_IPSEC_SA_ESTABLISHED(&child->sa));
 		/* will delete child and its logger */
-		ldbg_routing((*ike)->sa.st_logger, "    zapping established Child SA "PRI_SO,
+		ldbg_routing((*ike)->sa.logger, "    zapping established Child SA "PRI_SO,
 			     pri_so(child->sa.st_serialno));
 		zap_child(&child, where);
 		return;
@@ -449,7 +449,7 @@ static void zap_v2_child(struct ike_sa **ike, struct child_sa *child,
 
 	if (cc->newest_routing_sa == child->sa.st_serialno) {
 		/* will delete child and its logger */
-		ldbg_routing((*ike)->sa.st_logger, "    zapping larval Child SA "PRI_SO,
+		ldbg_routing((*ike)->sa.logger, "    zapping larval Child SA "PRI_SO,
 			     pri_so(child->sa.st_serialno));
 		zap_child(&child, where);
 		return;
@@ -466,7 +466,7 @@ static void zap_v2_child(struct ike_sa **ike, struct child_sa *child,
 		return;
 	}
 
-	ldbg_routing((*ike)->sa.st_logger, "    zapping Child SA "PRI_SO,
+	ldbg_routing((*ike)->sa.logger, "    zapping Child SA "PRI_SO,
 		     pri_so(child->sa.st_serialno));
 	delete_child_sa(&child);
 }
@@ -476,7 +476,7 @@ static void connection_zap_ike_family(struct ike_sa **ike,
 				      void (*zap_child)(struct child_sa **child, where_t where),
 				      where_t where)
 {
-	ldbg_routing((*ike)->sa.st_logger, "%s()", __func__);
+	ldbg_routing((*ike)->sa.logger, "%s()", __func__);
 
 	ldbg((*ike)->sa.logger, "  IKE SA is no longer viable");
 	(*ike)->sa.st_viable_parent = false;
@@ -523,7 +523,7 @@ void connection_delete_ike_family(struct ike_sa **ike, where_t where)
 
 void connection_delete_v1_state(struct state **st, where_t where)
 {
-	PEXPECT((*st)->st_logger, (*st)->st_ike_version == IKEv1);
+	PEXPECT((*st)->logger, (*st)->st_ike_version == IKEv1);
 	if (IS_PARENT_SA(*st)) {
 		struct ike_sa *ike = pexpect_parent_sa(*st);
 		connection_delete_ike(&ike, where);

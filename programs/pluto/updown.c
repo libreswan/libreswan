@@ -188,7 +188,7 @@ static bool fmt_common_shell_out(char *buf,
 	JDuint("XAUTH_FAILED", (child != NULL && child->sa.st_xauth_soft ? 1 : 0));
 
 	if (child != NULL && child->sa.st_xauth_username[0] != '\0') {
-		JDemitter("PLUTO_USERNAME", jam_clean_xauth_username(&jb, child->sa.st_xauth_username, child->sa.st_logger));
+		JDemitter("PLUTO_USERNAME", jam_clean_xauth_username(&jb, child->sa.st_xauth_username, child->sa.logger));
 	}
 
 	ip_address sourceip = spd_end_sourceip(sr->local);
@@ -490,7 +490,7 @@ bool do_updown(enum updown updown_verb,
 	 * The sec_label code violates this expectation somehow.
 	 */
 	PEXPECT(logger, ((c != NULL && c->logger == logger) ||
-			 (st != NULL && st->st_logger == logger)));
+			 (st != NULL && st->logger == logger)));
 #endif
 
 	const char *verb;
@@ -555,7 +555,7 @@ void do_updown_unroute_spd(const struct spd_route *spd, const struct spd_owner *
 
 void do_updown_unroute(const struct connection *c, struct child_sa *child)
 {
-	struct logger *logger = (child != NULL ? child->sa.st_logger : c->logger);
+	struct logger *logger = (child != NULL ? child->sa.logger : c->logger);
 	PEXPECT(logger, !routed(c));
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 		/* only unroute if no other connection shares it */

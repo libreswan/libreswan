@@ -76,7 +76,7 @@ bool extract_v2N_ppk_identity(const struct pbs_in *notify_pbs,
 	uint8_t id_byte;
 	d = pbs_in_thing(&pbs, id_byte, "PPK_ID type");
 	if (d != NULL) {
-		llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d,
+		llog_diag(RC_LOG_SERIOUS, ike->sa.logger, &d,
 			  "reading PPK ID: ");
 		return false;
 
@@ -132,7 +132,7 @@ static bool ikev2_calculate_hash(struct ike_sa *ike,
 	const struct connection *c = ike->sa.st_connection;
 
 	const struct secret_stuff *pks = get_local_private_key(c, type,
-								    ike->sa.st_logger);
+								    ike->sa.logger);
 	if (pks == NULL) {
 		llog_sa(RC_LOG, ike, "No %s private key found", type->name);
 		return false; /* failure: no key to use */
@@ -150,7 +150,7 @@ static bool ikev2_calculate_hash(struct ike_sa *ike,
 	statetime_t sign_time = statetime_start(&ike->sa);
 	struct hash_signature sig;
 	sig = signer->sign_hash(pks, idhash->ptr, idhash->len,
-				hash_algo, ike->sa.st_logger);
+				hash_algo, ike->sa.logger);
 	statetime_stop(&sign_time, "%s() calling sign_hash_RSA()", __func__);
 	if (sig.len == 0)
 		return false;
@@ -200,7 +200,7 @@ bool ikev2_calc_no_ppk_auth(struct ike_sa *ike,
 
 		shunk_t h = hash_algo->digital_signature_blob[DIGITAL_SIGNATURE_RSASSA_PSS_BLOB];
 		if (h.len == 0) {
-			llog_pexpect(ike->sa.st_logger, HERE,
+			llog_pexpect(ike->sa.logger, HERE,
 				     "negotiated hash algorithm %s has no RSA ASN1 blob",
 				     hash_algo->common.fqn);
 			return false;

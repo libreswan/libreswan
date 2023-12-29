@@ -78,7 +78,7 @@ void ikev1_replace(struct state *st)
 		lset_t policy = capture_child_rekey_policy(st);
 		passert(HAS_IPSEC_POLICY(policy));
 		ipsecdoi_initiate(st->st_connection, policy, st->st_serialno, &inception,
-				  null_shunk, /*background?*/false, st->st_logger,
+				  null_shunk, /*background?*/false, st->logger,
 				  INITIATED_BY_REPLACE, HERE);
 	}
 }
@@ -91,7 +91,7 @@ void event_v1_replace(struct state *st, monotime_t now)
 	so_serial_t newer_sa = get_newer_sa_from_connection(st);
 	if (newer_sa != SOS_NOBODY) {
 		/* not very interesting: no need to replace */
-		ldbg(st->st_logger,
+		ldbg(st->logger,
 		     "not replacing stale %s SA %lu; #%lu will do",
 		     satype, st->st_serialno, newer_sa);
 	} else if (!c->config->rekey &&
@@ -112,11 +112,11 @@ void event_v1_replace(struct state *st, monotime_t now)
 		 * This is just an optimization: correctness is not
 		 * at stake.
 		 */
-		ldbg(st->st_logger,
+		ldbg(st->logger,
 		     "not replacing stale %s SA: inactive for %jds",
 		     satype, deltasecs(monotimediff(now, st->st_outbound_time)));
 	} else {
-		ldbg(st->st_logger, "replacing stale %s SA", satype);
+		ldbg(st->logger, "replacing stale %s SA", satype);
 		/*
 		 * XXX: this call gets double billed -
 		 * both to the state being deleted and

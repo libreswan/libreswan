@@ -113,7 +113,7 @@ static void jam_v2_msgid(struct jambuf *buf,
 
 void dbg_v2_msgid(struct ike_sa *ike, const char *fmt, ...)
 {
-	LDBGP_JAMBUF(DBG_BASE, ike->sa.st_logger, buf) {
+	LDBGP_JAMBUF(DBG_BASE, ike->sa.logger, buf) {
 		va_list ap;
 		va_start(ap, fmt);
 		jam_v2_msgid(buf, ike, fmt, ap);
@@ -123,7 +123,7 @@ void dbg_v2_msgid(struct ike_sa *ike, const char *fmt, ...)
 
 void fail_v2_msgid_where(where_t where, struct ike_sa *ike, const char *fmt, ...)
 {
-	LLOG_PEXPECT_JAMBUF(ike->sa.st_logger, where, buf) {
+	LLOG_PEXPECT_JAMBUF(ike->sa.logger, where, buf) {
 		va_list ap;
 		va_start(ap, fmt);
 		jam_v2_msgid(buf, ike, fmt, ap);
@@ -143,7 +143,7 @@ static void dbg_msgids_update(const char *what,
 			      enum message_role message, intmax_t msgid,
 			      struct ike_sa *ike, const struct v2_msgid_windows *old_windows)
 {
-	LDBGP_JAMBUF(DBG_BASE, ike->sa.st_logger, buf) {
+	LDBGP_JAMBUF(DBG_BASE, ike->sa.logger, buf) {
 		jam_msgid_prefix(buf, ike);
 		jam(buf, " %s", what);
 		switch (message) {

@@ -174,18 +174,18 @@ bool whack_prompt_for(struct state *st,
 		      bool echo, char *ansbuf, size_t ansbuf_len)
 {
 	/* find an fd */
-	struct fd *whack_fd = logger_fd(st->st_logger);
+	struct fd *whack_fd = logger_fd(st->logger);
 	if (whack_fd == NULL) {
 		log_state(RC_LOG_SERIOUS, st,
 			  "XAUTH password requested, but no file descriptor available for prompt");
 		return false;
 	}
 
-	ldbg(st->st_logger, "prompting whack for %s using "PRI_FD,
+	ldbg(st->logger, "prompting whack for %s using "PRI_FD,
 	     prompt, pri_fd(whack_fd));
 
 	JAMBUF(buf) {
-		jam_logger_prefix(buf, st->st_logger);
+		jam_logger_prefix(buf, st->logger);
 		/* the real message */
 		jam(buf, "prompt for %s:", prompt);
 		jambuf_to_whack(buf, whack_fd,
@@ -194,7 +194,7 @@ bool whack_prompt_for(struct state *st,
 
 	ssize_t n = fd_read(whack_fd, ansbuf, ansbuf_len);
 	if (n < 0) {
-		llog_errno(RC_LOG_SERIOUS, st->st_logger, (-(int)n),
+		llog_errno(RC_LOG_SERIOUS, st->logger, (-(int)n),
 			   "read(whackfd) failed: ");
 		return false;
 	}
@@ -575,7 +575,7 @@ void log_state(lset_t rc_flags, const struct state *st,
 	va_start(ap, msg);
 	if (pexpect((st) != NULL) &&
 	    pexpect(in_main_thread())) {
-		llog_va_list(rc_flags, st->st_logger, msg, ap);
+		llog_va_list(rc_flags, st->logger, msg, ap);
 	} else {
 		/* still get the message out */
 		llog_va_list(rc_flags, &global_logger, msg, ap);
@@ -667,7 +667,7 @@ void connection_attach_where(struct connection *c, const struct logger *src, whe
 
 void state_attach_where(struct state *st, const struct logger *src, where_t where)
 {
-	whack_attach_where(st->st_logger, src, where);
+	whack_attach_where(st->logger, src, where);
 }
 
 void whack_detach_where(struct logger *dst, const struct logger *src, where_t where)
@@ -711,5 +711,5 @@ void state_detach_where(struct state *st, const struct logger *src, where_t wher
 	if (st == NULL) {
 		return;
 	}
-	whack_detach_where(st->st_logger, src, where);
+	whack_detach_where(st->logger, src, where);
 }

@@ -128,8 +128,8 @@ void free_logger(struct logger **logp, where_t where);
 
 void log_state(lset_t rc_flags, const struct state *st,
 	       const char *msg, ...) PRINTF_LIKE(3);
-#define llog_sa(RC_FLAGS, SA, MSG, ...) llog(RC_FLAGS, (SA)->sa.st_logger, MSG, ##__VA_ARGS__)
-#define ldbg_sa(SA, MSG, ...) ldbg((SA)->sa.st_logger, MSG, ##__VA_ARGS__)
+#define llog_sa(RC_FLAGS, SA, MSG, ...) llog(RC_FLAGS, (SA)->sa.logger, MSG, ##__VA_ARGS__)
+#define ldbg_sa(SA, MSG, ...) ldbg((SA)->sa.logger, MSG, ##__VA_ARGS__)
 
 #define state_buf connection_buf /* hack */
 #define PRI_STATE PRI_CONNECTION" "PRI_SO

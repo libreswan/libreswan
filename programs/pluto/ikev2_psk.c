@@ -206,7 +206,7 @@ static diag_t ikev2_calculate_psk_sighash(bool verify,
 	passert(idhash->len == ike->sa.st_oakley.ta_prf->prf_output_size);
 	*sighash = ikev2_psk_auth(ike->sa.st_oakley.ta_prf, pss,
 				  firstpacket, *nonce, idhash,
-				  intermediate_auth, ike->sa.st_logger);
+				  intermediate_auth, ike->sa.logger);
 	free_chunk_content(&intermediate_auth);
 	return NULL;
 }
@@ -223,7 +223,7 @@ bool ikev2_emit_psk_auth(enum keyword_auth authby,
 					       ike->sa.st_firstpacket_me,
 					       &signed_octets);
 	if (d != NULL) {
-		llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
+		llog_diag(RC_LOG_SERIOUS, ike->sa.logger, &d, "%s", "");
 		return false;
 	}
 
@@ -246,7 +246,7 @@ bool ikev2_create_psk_auth(enum keyword_auth authby,
 					       ike->sa.st_firstpacket_me,
 					       &signed_octets);
 	if (d != NULL) {
-		llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
+		llog_diag(RC_LOG_SERIOUS, ike->sa.logger, &d, "%s", "");
 		return false;
 	}
 
@@ -308,7 +308,7 @@ diag_t verify_v2AUTH_and_log_using_psk(enum keyword_auth authby,
 			    str_id(&ike->sa.st_connection->remote->host.id, &idb));
 	}
 
-	LLOG_JAMBUF(RC_LOG_SERIOUS, ike->sa.st_logger, buf) {
+	LLOG_JAMBUF(RC_LOG_SERIOUS, ike->sa.logger, buf) {
 		jam(buf, "%s established IKE SA; ",
 		    (ike->sa.st_sa_role == SA_INITIATOR ? "initiator" :
 		     ike->sa.st_sa_role == SA_RESPONDER ? "responder" :

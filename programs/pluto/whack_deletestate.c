@@ -68,7 +68,7 @@ void whack_deletestate(const struct whack_message *m, struct show *s)
 		return;
 	}
 
-	struct logger *logger = merge_loggers(st->st_logger,
+	struct logger *logger = merge_loggers(st->logger,
 					      m->whack_async/*background*/,
 					      show_logger(s));
 	llog(LOG_STREAM/*not-whack*/, logger,

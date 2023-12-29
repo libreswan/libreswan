@@ -109,7 +109,7 @@ void ikev2_derive_child_keys(struct ike_sa *ike, struct child_sa *child)
 	 */
 	PK11SymKey *shared = NULL;
 	if (child->sa.st_pfs_group != NULL) {
-		ldbgf(DBG_CRYPT, child->sa.st_logger,
+		ldbgf(DBG_CRYPT, child->sa.logger,
 		      "#%lu %s add g^ir to child key %p",
 		      child->sa.st_serialno, child->sa.st_state->name, child->sa.st_dh_shared_secret);
 		shared = child->sa.st_dh_shared_secret;
@@ -121,19 +121,19 @@ void ikev2_derive_child_keys(struct ike_sa *ike, struct child_sa *child)
 						   child->sa.st_ni,
 						   child->sa.st_nr,
 						   keymat_len * 2,
-						   child->sa.st_logger);
+						   child->sa.logger);
 	PK11SymKey *ikey = key_from_symkey_bytes("initiator to responder key",
 						 keymat, 0, keymat_len,
-						 HERE, child->sa.st_logger);
+						 HERE, child->sa.logger);
 	ikeymat = chunk_from_symkey("initiator to responder keys", ikey,
-				    child->sa.st_logger);
+				    child->sa.logger);
 	release_symkey(__func__, "ikey", &ikey);
 
 	PK11SymKey *rkey = key_from_symkey_bytes("responder to initiator key",
 						 keymat, keymat_len, keymat_len,
-						 HERE, child->sa.st_logger);
+						 HERE, child->sa.logger);
 	rkeymat = chunk_from_symkey("responder to initiator keys:", rkey,
-				    child->sa.st_logger);
+				    child->sa.logger);
 	release_symkey(__func__, "rkey", &rkey);
 
 	release_symkey(__func__, "keymat", &keymat);

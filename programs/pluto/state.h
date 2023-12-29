@@ -313,7 +313,6 @@ struct state {
 
 	struct connection *st_connection;       /* connection for this SA */
  	struct logger *logger;
-#define st_logger logger
 
 	struct trans_attrs st_oakley;
 
@@ -792,7 +791,7 @@ struct state {
 #define on_delete_where(ST, S, WHERE)				\
 	{							\
 		struct state *s_ = (ST);			\
-		pdbg(s_->st_logger,				\
+		pdbg(s_->logger,				\
 		     ".st_on_delete."#S" %s->true "PRI_WHERE,	\
 		     bool_str(s_->st_on_delete.S),		\
 		     pri_where(WHERE));				\
