@@ -657,7 +657,7 @@ void whack_attach_where(struct logger *dst, const struct logger *src, where_t wh
 
 void md_attach_where(struct msg_digest *md, const struct logger *src, where_t where)
 {
-	whack_attach_where(md->md_logger, src, where);
+	whack_attach_where(md->logger, src, where);
 }
 
 void connection_attach_where(struct connection *c, const struct logger *src, where_t where)
@@ -695,7 +695,7 @@ void md_detach_where(struct msg_digest *md, const struct logger *src, where_t wh
 	if (md == NULL) {
 		return;
 	}
-	whack_detach_where(md->md_logger, src, where);
+	whack_detach_where(md->logger, src, where);
 }
 
 void connection_detach_where(struct connection *c, const struct logger *src, where_t where)

@@ -433,7 +433,7 @@ void send_v2N_response_from_md(struct msg_digest *md,
 		    exchange_type);
 	}
 
-	llog(RC_LOG, md->md_logger,
+	llog(RC_LOG, md->logger,
 	     "responding to %s (%d) message (Message ID %u) with unencrypted notification %s",
 	     exchange_name, exchange_type,
 	     md->hdr.isa_msgid,
@@ -457,11 +457,11 @@ void send_v2N_response_from_md(struct msg_digest *md,
 	uint8_t buf[MIN_OUTPUT_UDP_SIZE];
 	struct v2_message response;
 	if (!open_v2_message("unencrypted notification response",
-			     NULL/*no-IKE*/, md->md_logger, md/*response*/,
+			     NULL/*no-IKE*/, md->logger, md/*response*/,
 			     exchange_type,
 			     buf, sizeof(buf),
 			     &response, UNENCRYPTED_PAYLOAD)) {
-		llog_pexpect(md->md_logger, HERE,
+		llog_pexpect(md->logger, HERE,
 			     "error building header for unencrypted %s %s notification with message ID %u",
 			     exchange_name, notify_name, md->hdr.isa_msgid);
 		return;
@@ -470,7 +470,7 @@ void send_v2N_response_from_md(struct msg_digest *md,
 	/* build and add v2N payload to the packet */
 	shunk_t nhunk = ndata == NULL ? empty_shunk : *ndata;
 	if (!emit_v2N_hunk(ntype, nhunk, response.pbs)) {
-		llog_pexpect(md->md_logger, HERE,
+		llog_pexpect(md->logger, HERE,
 			     "error building unencrypted %s %s notification with message ID %u",
 			     exchange_name, notify_name, md->hdr.isa_msgid);
 		return;

@@ -468,7 +468,7 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 	struct state *st = md->v1_st = &ike->sa;
 
 	/* delref stack connection pointer */
-	connection_delref(&c, md->md_logger);
+	connection_delref(&c, md->logger);
 	c = ike->sa.st_connection;
 
 	passert(!st->st_oakley.doing_xauth);
@@ -1789,7 +1789,7 @@ void send_v1_notification_from_md(struct msg_digest *md, v1_notification_t type)
 
 	endpoint_buf b;
 	enum_buf nb;
-	llog(RC_NOTIFICATION + type, md->md_logger,
+	llog(RC_NOTIFICATION + type, md->logger,
 	     "sending notification %s to %s",
 	     str_enum_short(&v1_notification_names, type, &nb),
 	     str_endpoint(&md->sender, &b));
@@ -1797,7 +1797,7 @@ void send_v1_notification_from_md(struct msg_digest *md, v1_notification_t type)
 	uint8_t buffer[1024];	/* ??? large enough for any notification? */
 	struct pbs_out pbs = open_pbs_out("notification msg",
 					  buffer, sizeof(buffer),
-					  md->md_logger);
+					  md->logger);
 
 	/* HDR* */
 
@@ -1828,7 +1828,7 @@ void send_v1_notification_from_md(struct msg_digest *md, v1_notification_t type)
 
 		if (!out_struct(&isan, &isakmp_notification_desc,
 					&r_hdr_pbs, &not_pbs)) {
-			llog(RC_LOG, md->md_logger,
+			llog(RC_LOG, md->logger,
 			     "failed to build notification in send_notification");
 			return;
 		}

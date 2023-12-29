@@ -231,7 +231,7 @@ bool send_pbs_out_using_md(struct msg_digest *md, const char *where, struct pbs_
 	return send_shunks(where, false, SOS_NOBODY,
 			   md->iface, md->sender,
 			   pbs_out_all(packet), null_shunk,
-			   md->md_logger);
+			   md->logger);
 }
 
 bool send_shunks_using_state(struct state *st, const char *where,

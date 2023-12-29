@@ -1800,7 +1800,7 @@ void ikev2_process_packet(struct msg_digest *md)
 	 */
 
 	const enum isakmp_xchg_type ix = md->hdr.isa_xchg;
-	LDBGP_JAMBUF(DBG_BASE, md->md_logger, buf) {
+	LDBGP_JAMBUF(DBG_BASE, md->logger, buf) {
 		switch (expected_local_ike_role) {
 		case SA_RESPONDER:
 			jam(buf, "I am the IKE SA Original Responder");

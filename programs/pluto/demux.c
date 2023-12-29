@@ -97,9 +97,9 @@ void process_md(struct msg_digest *md)
 		 * of any content - not even to look for major version
 		 * number!  So we'll just drop it.
 		 */
-		lset_t rc_flags = log_limiter_rc_flags(md->md_logger, &md_log_limiter);
+		lset_t rc_flags = log_limiter_rc_flags(md->logger, &md_log_limiter);
 		if (rc_flags != 0) {
-			llog_diag(rc_flags, md->md_logger, &d,
+			llog_diag(rc_flags, md->logger, &d,
 				  "dropping packet with mangled IKE header: ");
 		}
 		return;

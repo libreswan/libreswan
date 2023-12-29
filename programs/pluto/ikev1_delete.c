@@ -335,7 +335,7 @@ bool accept_delete(struct state **stp,
 	/* Need state for things to be encrypted */
 	if (*stp == NULL) {
 		/* should not be here */
-		llog(RC_LOG_SERIOUS, md->md_logger,
+		llog(RC_LOG_SERIOUS, md->logger,
 		     "ignoring Delete SA payload: no state");
 		return false;
 	}

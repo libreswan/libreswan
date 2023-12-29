@@ -149,7 +149,6 @@ struct msg_digest {
 	bool new_iv_set;			/* (v1) */
 	struct state *v1_st;			/* (v1) current state object */
 	struct logger *logger;			/* logger for this MD */
-#define md_logger logger
 
 	threadtime_t md_inception;		/* when was this started */
 

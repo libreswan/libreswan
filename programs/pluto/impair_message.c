@@ -366,7 +366,7 @@ bool impair_inbound(struct msg_digest *md)
 	}
 
 	const struct message *saved_message = save_inbound(md);
-	return impair_message(saved_message, &inbound_impairments, md->md_logger);
+	return impair_message(saved_message, &inbound_impairments, md->logger);
 }
 
 bool impair_outbound(const struct iface_endpoint *interface, shunk_t message,

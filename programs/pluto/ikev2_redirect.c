@@ -214,7 +214,7 @@ static shunk_t build_redirect_notification_data_str(const shunk_t dest,
 
 bool redirect_global(struct msg_digest *md)
 {
-	struct logger *logger = md->md_logger;
+	struct logger *logger = md->logger;
 
 	/* if we don't support global redirection, no need to continue */
 	if (global_redirect == GLOBAL_REDIRECT_NO ||

@@ -28,7 +28,7 @@ struct msg_digest *alloc_md(struct iface_endpoint *ifp,
 	struct msg_digest *md = refcnt_overalloc(struct msg_digest, packet_len, where);
 	md->iface = iface_endpoint_addref_where(ifp, where);
 	md->sender = *sender;
-	md->md_logger = alloc_logger(md, &logger_message_vec,
+	md->logger = alloc_logger(md, &logger_message_vec,
 				     /*debugging*/LEMPTY, where);
 	void *buffer = md + 1;
 	init_pbs(&md->packet_pbs, buffer, packet_len, "packet");
@@ -57,11 +57,11 @@ struct msg_digest *md_addref_where(struct msg_digest *md, where_t where)
 void md_delref_where(struct msg_digest **mdp, where_t where)
 {
 	/* need non-NULL so .md_logger is available */
-	const struct logger *logger = (*mdp != NULL ? (*mdp)->md_logger : &global_logger);
+	const struct logger *logger = (*mdp != NULL ? (*mdp)->logger : &global_logger);
 	struct msg_digest *md = delref_where(mdp, logger, where);
 	if (md != NULL) {
 		free_chunk_content(&md->raw_packet);
-		free_logger(&md->md_logger, where);
+		free_logger(&md->logger, where);
 		iface_endpoint_delref_where(&md->iface, where);
 		pfree(md);
 	}

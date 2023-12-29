@@ -944,7 +944,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 		 */
 		case v1N_R_U_THERE:
 			if (st == NULL) {
-				llog(RC_LOG, md->md_logger,
+				llog(RC_LOG, md->logger,
 				     "received bogus R_U_THERE informational message");
 				return STF_IGNORE;
 			}
@@ -952,7 +952,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 
 		case v1N_R_U_THERE_ACK:
 			if (st == NULL) {
-				llog(RC_LOG, md->md_logger,
+				llog(RC_LOG, md->logger,
 				     "received bogus R_U_THERE_ACK informational message");
 				return STF_IGNORE;
 			}
@@ -984,7 +984,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 		default:
 		{
 			struct logger *logger = st != NULL ? st->st_logger :
-							     md->md_logger;
+							     md->logger;
 			enum_buf eb;
 			llog(RC_LOG_SERIOUS, logger,
 			     "received and ignored notification payload: %s",
@@ -996,7 +996,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 		/* warn if we didn't find any Delete or Notify payload in packet */
 		if (md->chain[ISAKMP_NEXT_D] == NULL) {
 			const struct logger *logger = (st != NULL ? st->st_logger :
-						 md->md_logger);
+						 md->logger);
 			llog(RC_LOG_SERIOUS, logger,
 				    "received and ignored empty informational notification payload");
 		}
@@ -1122,7 +1122,7 @@ void process_v1_packet(struct msg_digest *md)
 			send_v1_notification_from_md(md, t);		\
 	}
 
-#define LOGGER (st != NULL ? st->st_logger : md->md_logger)
+#define LOGGER (st != NULL ? st->st_logger : md->logger)
 
 #define LOG_PACKET(RC, ...) llog(RC, LOGGER, __VA_ARGS__)
 #define LOG_PACKET_JAMBUF(RC_FLAGS, BUF) LLOG_JAMBUF(RC_FLAGS, LOGGER, BUF)
@@ -1205,7 +1205,7 @@ void process_v1_packet(struct msg_digest *md)
 							   md->hdr.isa_msgid);
 
 				if (st == NULL) {
-					llog(RC_LOG, md->md_logger,
+					llog(RC_LOG, md->logger,
 					     "phase 1 message is part of an unknown exchange");
 					/* XXX Could send notification back */
 					return;
@@ -1221,7 +1221,7 @@ void process_v1_packet(struct msg_digest *md)
 					 * Well that or played 1/2^32
 					 * odds.
 					 */
-					llog_pexpect(md->md_logger, HERE,
+					llog_pexpect(md->logger, HERE,
 						     "phase 1 message matching AGGR_R0 state");
 					return;
 				}
@@ -2290,11 +2290,11 @@ void process_packet_tail(struct msg_digest *md)
 	for (struct payload_digest *p = md->chain[ISAKMP_NEXT_D];
 	     p != NULL; p = p->next) {
 		if (!accept_delete(&st, md, p)) {
-			ldbg(md->md_logger, "bailing with bad delete message");
+			ldbg(md->logger, "bailing with bad delete message");
 			return;
 		}
 		if (st == NULL) {
-			ldbg(md->md_logger, "bailing due to self-inflicted delete");
+			ldbg(md->logger, "bailing due to self-inflicted delete");
 			return;
 		}
 	}
@@ -2304,7 +2304,7 @@ void process_packet_tail(struct msg_digest *md)
 	for (struct payload_digest *p = md->chain[ISAKMP_NEXT_VID];
 	     p != NULL; p = p->next) {
 		handle_v1_vendorid(md, pbs_in_left(&p->pbs),
-				   (st != NULL ? st->st_logger : md->md_logger));
+				   (st != NULL ? st->st_logger : md->logger));
 	}
 
 	pexpect(st == md->v1_st); /* could be NULL */

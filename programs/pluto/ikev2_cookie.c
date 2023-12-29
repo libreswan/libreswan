@@ -71,7 +71,7 @@ static bool compute_v2_cookie_from_md(v2_cookie_t *cookie,
 {
 	struct crypt_hash *ctx = crypt_hash_init("IKEv2 COOKIE",
 						 &ike_alg_hash_sha2_256,
-						 md->md_logger);
+						 md->logger);
 
 	crypt_hash_digest_hunk(ctx, "Ni", Ni);
 

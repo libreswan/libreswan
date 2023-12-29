@@ -281,7 +281,7 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 		 * but could be v2N_UNSUPPORTED_CRITICAL_PAYLOAD.
 		 */
 		pexpect(!md->message_payloads.parsed);
-		md->message_payloads = ikev2_decode_payloads(md->md_logger, md,
+		md->message_payloads = ikev2_decode_payloads(md->logger, md,
 							     &md->message_pbs,
 							     md->hdr.isa_np);
 		if (md->message_payloads.n != v2N_NOTHING_WRONG) {
@@ -340,7 +340,7 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 		 */
 		const struct finite_state *start_state = finite_states[STATE_V2_PARENT_R0];
 		const struct v2_state_transition *transition =
-			find_v2_state_transition(md->md_logger, start_state, md,
+			find_v2_state_transition(md->logger, start_state, md,
 						 /*secured_payload_failed?*/NULL);
 		if (transition == NULL) {
 			/* already logged */
@@ -355,7 +355,7 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 		struct connection *c = find_v2_host_pair_connection(md, &send_reject_response);
 		if (c == NULL) {
 			endpoint_buf b;
-			llog(RC_LOG_SERIOUS, md->md_logger,
+			llog(RC_LOG_SERIOUS, md->logger,
 			     "%s message received on %s but no suitable connection found with IKEv2 policy",
 			     enum_name(&ikev2_exchange_names, md->hdr.isa_xchg),
 			     str_endpoint(&md->iface->local_endpoint, &b));
@@ -392,7 +392,7 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 		}
 		v2_dispatch(ike, md, transition);
 		statetime_stop(&start, "%s()", __func__);
-		connection_delref(&c, md->md_logger);
+		connection_delref(&c, md->logger);
 		return;
 	}
 

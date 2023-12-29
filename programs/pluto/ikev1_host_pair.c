@@ -244,7 +244,7 @@ struct connection *find_v1_aggr_mode_connection(struct msg_digest *md,
 				    true/*POLICY_AGGRESSIVE*/,
 				    peer_id);
 	if (c != NULL) {
-		return connection_addref(c, md->md_logger);
+		return connection_addref(c, md->logger);
 	}
 
 	c = find_v1_host_connection(md->iface->ip_dev->local_address,
@@ -261,7 +261,7 @@ struct connection *find_v1_aggr_mode_connection(struct msg_digest *md,
 
 	endpoint_buf b;
 	authby_buf pb;
-	llog(RC_LOG_SERIOUS, md->md_logger,
+	llog(RC_LOG_SERIOUS, md->logger,
 	     "initial Aggressive Mode message from %s but no (wildcard) connection has been configured with authby %s",
 	     str_endpoint(&md->sender, &b),
 	     str_authby(authby, &pb));
@@ -281,7 +281,7 @@ struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 	bool policy_xauth = false;
 	diag_t d = preparse_isakmp_sa_body(sa_pd->pbs, &authby, &policy_xauth);
 	if (d != NULL) {
-		llog_diag(RC_LOG_SERIOUS, md->md_logger, &d,
+		llog_diag(RC_LOG_SERIOUS, md->logger, &d,
 			  "initial Main Mode message has corrupt SA payload: ");
 		return NULL;
 	}
@@ -305,11 +305,11 @@ struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 		 * instantiation anyway (eg vnet=)
 		 */
 		if (is_template(c)) {
-			ldbg(md->md_logger, "local endpoint needs instantiation");
+			ldbg(md->logger, "local endpoint needs instantiation");
 			return rw_responder_instantiate(c, sender_address, HERE);
 		}
 
-		return connection_addref(c, md->md_logger);
+		return connection_addref(c, md->logger);
 	}
 
 	/*
@@ -370,7 +370,7 @@ struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 
 	if (c == NULL) {
 		authby_buf ab;
-		llog(RC_LOG_SERIOUS, md->md_logger,
+		llog(RC_LOG_SERIOUS, md->logger,
 		     "initial Main Mode message received but no connection has been authorized with authby=%s and xauth=%s",
 		     str_authby(authby, &ab), bool_str(policy_xauth));
 		/* XXX notification is in order! */
@@ -379,7 +379,7 @@ struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 
 	if (!is_template(c)) {
 		connection_buf cib;
-		llog(RC_LOG_SERIOUS, md->md_logger,
+		llog(RC_LOG_SERIOUS, md->logger,
 		     "initial Main Mode message received but "PRI_CONNECTION" forbids connection",
 		     pri_connection(c, &cib));
 		/* XXX notification is in order! */
@@ -392,7 +392,7 @@ struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 	 * Their ID isn't declared yet.
 	 */
 	connection_buf cib;
-	ldbg(md->md_logger, "instantiating "PRI_CONNECTION" for initial Main Mode message",
+	ldbg(md->logger, "instantiating "PRI_CONNECTION" for initial Main Mode message",
 	     pri_connection(c, &cib));
 	return rw_responder_instantiate(c, sender_address, HERE);
 }

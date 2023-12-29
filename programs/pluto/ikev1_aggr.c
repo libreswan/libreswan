@@ -141,7 +141,7 @@ stf_status aggr_inI1_outR1(struct state *null_st UNUSED,
 	struct authby authby = {0};
 	d = preparse_isakmp_sa_body(sa_pd->pbs, &authby, &xauth);
 	if (d != NULL) {
-		llog_diag(RC_LOG_SERIOUS, md->md_logger, &d,
+		llog_diag(RC_LOG_SERIOUS, md->logger, &d,
 			  "initial Aggressive Mode message has corrupt SA payload: ");
 		return STF_IGNORE;
 	}
@@ -169,7 +169,7 @@ stf_status aggr_inI1_outR1(struct state *null_st UNUSED,
 	struct ike_sa *ike = new_v1_rstate(c, md);
 
 	/* delref stack connection pointer */
-	connection_delref(&c, md->md_logger);
+	connection_delref(&c, md->logger);
 	c = ike->sa.st_connection;
 
 	md->v1_st = &ike->sa;  /* (caller will reset cur_state) */

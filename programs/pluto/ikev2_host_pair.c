@@ -123,7 +123,7 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 	address_buf lb;
 	address_buf rb;
 	authby_buf pb;
-	ldbg(md->md_logger, "%s() %s->%s remote_authby=%s", __func__,
+	ldbg(md->logger, "%s() %s->%s remote_authby=%s", __func__,
 	     str_address(&remote_address, &rb),
 	     str_address(&local_address, &lb),
 	     str_authby(remote_authby, &pb));
@@ -142,7 +142,7 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 		struct connection *d = hpf_remote.c;
 
 		if (!match_connection(d, remote_authby, send_reject_response,
-				      md->md_logger)) {
+				      md->logger)) {
 			continue;
 		}
 
@@ -154,14 +154,14 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 		if (d->established_ike_sa != SOS_NOBODY) {
 			/* instant winner */
 			connection_buf cb;
-			ldbg(md->md_logger, "  instant winner with "PRI_CONNECTION" IKE SA "PRI_SO,
+			ldbg(md->logger, "  instant winner with "PRI_CONNECTION" IKE SA "PRI_SO,
 			     pri_connection(d, &cb),
 			     pri_so(d->established_ike_sa));
 			c = d;
 			break;
 		}
 		if (c == NULL) {
-			ldbg(md->md_logger, "  saving for later");
+			ldbg(md->logger, "  saving for later");
 			c = d;
 		}
 	}
@@ -171,22 +171,22 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 		 * We found a possibly non-wildcard connection.
 		 */
 		if (is_labeled_template(c)) {
-			ldbg(md->md_logger,
+			ldbg(md->logger,
 			     "local endpoint is a labeled template - needs instantiation");
 			return sec_label_parent_instantiate(c, remote_address, HERE);
 		}
 
 		if (is_template(c) &&
 		    c->config->ikev2_allow_narrowing) {
-			ldbg(md->md_logger,
+			ldbg(md->logger,
 			     "local endpoint has narrowing=yes - needs instantiation");
 			return rw_responder_instantiate(c, remote_address, HERE);
 		}
 
 		connection_buf cb;
-		ldbg(md->md_logger, "winner is "PRI_CONNECTION,
+		ldbg(md->logger, "winner is "PRI_CONNECTION,
 		     pri_connection(c, &cb));
-		return connection_addref(c, md->md_logger);
+		return connection_addref(c, md->logger);
 	}
 
 	/*
@@ -217,7 +217,7 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 		struct connection *d = hpf_unset.c;
 
 		if (!match_connection(d, remote_authby, send_reject_response,
-				      md->md_logger)) {
+				      md->logger)) {
 			continue;
 		}
 
@@ -226,7 +226,7 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 		 */
 		if (is_template(d) && !is_opportunistic(d)) {
 			connection_buf cb;
-			ldbg(md->md_logger,
+			ldbg(md->logger,
 			     "  instant winner with non-opportunistic template "PRI_CONNECTION,
 			     pri_connection(d, &cb));
 			c = d;
@@ -286,7 +286,7 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 	if (c == NULL) {
 		endpoint_buf b;
 		authby_buf pb;
-		ldbg(md->md_logger,
+		ldbg(md->logger,
 		     "  %s message received on %s but no connection has been authorized with policy %s, %s",
 		     enum_name(&ikev2_exchange_names, md->hdr.isa_xchg),
 		     str_endpoint(local_endpoint, &b),
@@ -302,19 +302,19 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 
 	if (is_opportunistic(c)) {
 		connection_buf cb;
-		ldbg(md->md_logger, "  instantiate opportunistic winner "PRI_CONNECTION,
+		ldbg(md->logger, "  instantiate opportunistic winner "PRI_CONNECTION,
 		     pri_connection(c, &cb));
 		c = oppo_responder_instantiate(c, remote_address, HERE);
 	} else if (is_labeled_template(c)) {
 		/* regular roadwarrior */
 		connection_buf cb;
-		ldbg(md->md_logger, "  instantiate sec_label winner "PRI_CONNECTION,
+		ldbg(md->logger, "  instantiate sec_label winner "PRI_CONNECTION,
 		     pri_connection(c, &cb));
 		c = sec_label_parent_instantiate(c, remote_address, HERE);
 	} else {
 		/* regular roadwarrior */
 		connection_buf cb;
-		ldbg(md->md_logger, "  instantiate roadwarrior winner "PRI_CONNECTION,
+		ldbg(md->logger, "  instantiate roadwarrior winner "PRI_CONNECTION,
 		     pri_connection(c, &cb));
 		c = rw_responder_instantiate(c, remote_address, HERE);
 	}
@@ -366,7 +366,7 @@ struct connection *find_v2_host_pair_connection(const struct msg_digest *md,
 	}
 
 	if (c == NULL) {
-		ldbg(md->md_logger,
+		ldbg(md->logger,
 		     "  no connection found, %s",
 		     ((*send_reject_response) ? "sending reject response" : "suppressing reject response"));
 		return NULL;
@@ -374,7 +374,7 @@ struct connection *find_v2_host_pair_connection(const struct msg_digest *md,
 
 	connection_buf ci;
 	authby_buf pb;
-	ldbg(md->md_logger,
+	ldbg(md->logger,
 	     "found connection: "PRI_CONNECTION" with remote authby %s",
 	     pri_connection(c, &ci),
 	     str_authby(c->remote->host.config->authby, &pb));

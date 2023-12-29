@@ -648,7 +648,7 @@ struct ike_sa *new_v1_rstate(struct connection *c, struct msg_digest *md)
 		pexpect_parent_sa(new_state(c, SOS_NOBODY,
 					    local_iface_endpoint, remote_endpoint,
 					    md->hdr.isa_ike_spis.initiator,
-					    ike_responder_spi(&md->sender, md->md_logger),
+					    ike_responder_spi(&md->sender, md->logger),
 					    IKE_SA, SA_RESPONDER, HERE));
 
 	return parent;
@@ -704,7 +704,7 @@ struct ike_sa *new_v2_ike_sa_responder(struct connection *c,
 	return new_v2_ike_sa(c, transition, SA_RESPONDER,
 			     local_iface_endpoint, remote_endpoint,
 			     md->hdr.isa_ike_spis.initiator,
-			     ike_responder_spi(&md->sender, md->md_logger));
+			     ike_responder_spi(&md->sender, md->logger));
 }
 
 /*
