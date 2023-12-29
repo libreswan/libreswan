@@ -547,7 +547,8 @@ web-pages-disabled:
 # XXX: $(file < "x") tries to open '"x"' !!!
 .PHONY: kvm-kill
 kvm-kill:
-	test -s "$(KVM_PIDFILE)" && kill $(file < $(KVM_PIDFILE))
+	test -s "$(top_srcdir)/$(KVM_PIDFILE)"
+	kill $(file < $(top_srcdir)/$(KVM_PIDFILE))
 .PHONY: kvm-status
 kvm-status:
 	test -s "$(KVM_PIDFILE)" && ps $(file < $(KVM_PIDFILE))
