@@ -43,6 +43,8 @@ b end-strongswan
   s/ SPIs: [0-9a-f]*_i [0-9a-f]*_o/ SPIs: SPISPI_i SPISPI_o/
   s/ CPIs: [0-9a-f]*_i [0-9a-f]*_o/ CPIs: CPI_i CPI_o/
   s/ SPIs: [0-9a-f]*_i\(\**\) [0-9a-f]*_r\(\**\)/ SPIs: SPISPI_i\1 SPISPI_r\2/
+  s/ with SPIs [0-9a-f]*_i\(.*\) [0-9a-f]*_o\(.*\)/ with SPIs: SPISPI_i\1 SPISPI_o\2/
+  s/ SPI [0-9a-f]*$/ SPI SPISPI/
 
   s/ [0-9]* bytes_\([io]\),/ XX bytes_\1,/g
   s/ [0-9]* bytes_\([io]\) ([0-9X]*s ago),/ XXX bytes_\1 (XXs ago),/g
