@@ -39,7 +39,7 @@ IKE_SA westnet-eastnet-ikev2[1] established between 192.1.2.45[west]...192.1.2.2
 scheduling reauthentication in XXXs
 maximum IKE_SA lifetime XXXs
 selected proposal: ESP:AES_GCM_16_256/NO_EXT_SEQ
-CHILD_SA westnet-eastnet-ikev2{1} established with SPIs: SPISPI_i SPISPI_o and TS 192.0.1.0/24 === 192.0.2.0/24
+CHILD_SA westnet-eastnet-ikev2{1} established with SPIs SPISPI_i SPISPI_o and TS 192.0.1.0/24 === 192.0.2.0/24
 connection 'westnet-eastnet-ikev2' established successfully
 west #
  strongswan up westnet-eastnet2-ikev2
@@ -49,14 +49,14 @@ sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
 received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
 parsed CREATE_CHILD_SA response 2 [ SA No KE TSi TSr ]
 selected proposal: ESP:AES_CBC_128/HMAC_SHA2_256_128/MODP_2048/NO_EXT_SEQ
-CHILD_SA westnet-eastnet2-ikev2{2} established with SPIs: SPISPI_i SPISPI_o and TS 8.8.8.8/32 === 9.9.9.9/32
+CHILD_SA westnet-eastnet2-ikev2{2} established with SPIs SPISPI_i SPISPI_o and TS 8.8.8.8/32 === 9.9.9.9/32
 connection 'westnet-eastnet2-ikev2' established successfully
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
  strongswan down "westnet-eastnet-ikev2{1}"
-closing CHILD_SA westnet-eastnet-ikev2{1} with SPIs: SPISPI_i (XXX bytes) SPISPI_o (XXX bytes) and TS 192.0.1.0/24 === 192.0.2.0/24
+closing CHILD_SA westnet-eastnet-ikev2{1} with SPIs SPISPI_i (XXX bytes) SPISPI_o (XXX bytes) and TS 192.0.1.0/24 === 192.0.2.0/24
 sending DELETE for ESP CHILD_SA with SPI SPISPI
 generating INFORMATIONAL request 3 [ D ]
 sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
@@ -69,7 +69,7 @@ west #
  sleep 1
 west #
  strongswan down "westnet-eastnet2-ikev2{2}"
-closing CHILD_SA westnet-eastnet2-ikev2{2} with SPIs: SPISPI_i (XXX bytes) SPISPI_o (XXX bytes) and TS 8.8.8.8/32 === 9.9.9.9/32
+closing CHILD_SA westnet-eastnet2-ikev2{2} with SPIs SPISPI_i (XXX bytes) SPISPI_o (XXX bytes) and TS 8.8.8.8/32 === 9.9.9.9/32
 sending DELETE for ESP CHILD_SA with SPI SPISPI
 generating INFORMATIONAL request 4 [ D ]
 sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
