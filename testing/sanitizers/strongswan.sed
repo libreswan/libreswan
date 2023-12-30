@@ -40,11 +40,15 @@ b end-strongswan
   s/ uptime: [0-9]* minute[s]*, since .*$/ uptime: XXX minute, since YYY/
   s/ malloc: sbrk [0-9]*, mmap [0-9]*, used [0-9]*, free [0-9]*$/ malloc sbrk XXXXXX,mmap X, used XXXXXX, free XXXXX/g
   s/ ESTABLISHED [0-9]* second[s]* ago/ ESTABLISHED XXX second ago/
+
   s/ SPIs: [0-9a-f]*_i [0-9a-f]*_o/ SPIs: SPISPI_i SPISPI_o/
-  s/ CPIs: [0-9a-f]*_i [0-9a-f]*_o/ CPIs: CPI_i CPI_o/
+  # allow "1234_i*"
   s/ SPIs: [0-9a-f]*_i\(\**\) [0-9a-f]*_r\(\**\)/ SPIs: SPISPI_i\1 SPISPI_r\2/
-  s/ with SPIs [0-9a-f]*_i\(.*\) [0-9a-f]*_o\(.*\)/ with SPIs SPISPI_i\1 SPISPI_o\2/
+  s/ SPIs [0-9a-f]*_i [0-9a-f]*_o/ SPIs SPISPI_i SPISPI_o/
+  # allow "1234_i (nnn bytes) 1234_o"
+  s/ SPIs [0-9a-f]*_i \(([^)]*)\) [0-9a-f]*_o/ SPIs SPISPI_i \1 SPISPI_o/
   s/ SPI [0-9a-f]*$/ SPI SPISPI/
+  s/ CPIs: [0-9a-f]*_i [0-9a-f]*_o/ CPIs: CPI_i CPI_o/
 
   s/ [0-9]* bytes_\([io]\),/ XX bytes_\1,/g
   s/ [0-9]* bytes_\([io]\) ([0-9X]*s ago),/ XXX bytes_\1 (XXs ago),/g
@@ -56,7 +60,6 @@ b end-strongswan
   s/QUICK_MODE request [0-9]* /QUICK_MODE request 0123456789 /
   s/QUICK_MODE response [0-9]* /QUICK_MODE response 0123456789 /
 
-  s/established with SPIs .* and /established with SPIs SPISPI_i SPISPI_o and /
   s/maximum IKE_SA lifetime [0-9]*s/maximum IKE_SA lifetime XXXs/
   s/reauthentication already scheduled in [0-9]*s/reauthentication already scheduled in XXXs/
   s/received AUTH_LIFETIME of [0-9]*s/received AUTH_LIFETIME of XXXXs/
