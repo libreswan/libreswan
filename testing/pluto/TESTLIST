@@ -962,7 +962,6 @@ kvmplutotest    algo-pluto-14-aes_ctr	good
 # tests for using multiple subnets using conn aliases
 #
 kvmplutotest	multinet-01		good
-kvmplutotest	multinet-03		wip
 kvmplutotest	multinet-04		good
 kvmplutotest	ikev1-rw-multiple-subnets			good
 kvmplutotest	ikev1-rw-multiple-subnets-split			good

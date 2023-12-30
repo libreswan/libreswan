@@ -1,4 +1,0 @@
-This is a test case for the "subnets=" declaration, including rekeys
-
-Note: half of these IPsec SA's should be in EVENT_SA_REPLACE, and the
-other half in EVENT_SA_EXPIRE
