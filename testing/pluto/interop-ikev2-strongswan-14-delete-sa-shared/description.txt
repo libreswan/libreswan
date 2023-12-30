@@ -1,7 +1,4 @@
 This tests processing a DELETE request from strongswan interop
-
-This test is WIP, because it seems strongswan is broken. If you
-send a delete for a connection with shared IKE SA, it will
-actually delete the IKE SA and not the IPsec SA. So we cannot
-confirm that we properly receive the IPsec SA delete and reply
-with a DELETE payload and not an empty INFORMATIONAL payload.
+Strongswan will show receiving the DELETE confirmations from
+libreswan. Note that to delete a Child SA, strongswan's down
+command needs to specify the number of the child, eg {1} or {2}

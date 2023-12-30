@@ -1,0 +1,100 @@
+/testing/guestbin/swan-prep --userland strongswan
+west #
+ # confirm that the network is alive
+west #
+ ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
+destination -I 192.0.1.254 192.0.2.254 is alive
+west #
+ # ensure that clear text does not get through
+west #
+ iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j DROP
+west #
+ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
+west #
+ # confirm clear text does not get through
+west #
+ ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
+down
+west #
+ ../../guestbin/strongswan-start.sh
+west #
+ echo "initdone"
+initdone
+west #
+ strongswan up westnet-eastnet-ikev2
+initiating IKE_SA westnet-eastnet-ikev2[1] to 192.1.2.23
+generating IKE_SA_INIT request 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) N(FRAG_SUP) N(HASH_ALG) N(REDIR_SUP) ]
+sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
+received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
+parsed IKE_SA_INIT response 0 [ SA KE No N(FRAG_SUP) N(NATD_S_IP) N(NATD_D_IP) N(CHDLESS_SUP) ]
+selected proposal: IKE:AES_GCM_16_256/PRF_HMAC_SHA2_512/MODP_2048
+authentication of 'west' (myself) with pre-shared key
+establishing CHILD_SA westnet-eastnet-ikev2{1}
+generating IKE_AUTH request 1 [ IDi N(INIT_CONTACT) IDr AUTH SA TSi TSr N(MOBIKE_SUP) N(ADD_4_ADDR) N(EAP_ONLY) N(MSG_ID_SYN_SUP) ]
+sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
+received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
+parsed IKE_AUTH response 1 [ IDr AUTH SA TSi TSr ]
+authentication of 'east' with pre-shared key successful
+IKE_SA westnet-eastnet-ikev2[1] established between 192.1.2.45[west]...192.1.2.23[east]
+scheduling reauthentication in XXXs
+maximum IKE_SA lifetime XXXs
+selected proposal: ESP:AES_GCM_16_256/NO_EXT_SEQ
+CHILD_SA westnet-eastnet-ikev2{1} established with SPIs: SPISPI_i SPISPI_o and TS 192.0.1.0/24 === 192.0.2.0/24
+connection 'westnet-eastnet-ikev2' established successfully
+west #
+ strongswan up westnet-eastnet2-ikev2
+establishing CHILD_SA westnet-eastnet2-ikev2{2}
+generating CREATE_CHILD_SA request 2 [ SA No KE TSi TSr ]
+sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
+received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
+parsed CREATE_CHILD_SA response 2 [ SA No KE TSi TSr ]
+selected proposal: ESP:AES_CBC_128/HMAC_SHA2_256_128/MODP_2048/NO_EXT_SEQ
+CHILD_SA westnet-eastnet2-ikev2{2} established with SPIs: SPISPI_i SPISPI_o and TS 8.8.8.8/32 === 9.9.9.9/32
+connection 'westnet-eastnet2-ikev2' established successfully
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
+west #
+ strongswan down "westnet-eastnet-ikev2{1}"
+closing CHILD_SA westnet-eastnet-ikev2{1} with SPIs: SPISPI_i (XXX bytes) SPISPI_o (XXX bytes) and TS 192.0.1.0/24 === 192.0.2.0/24
+sending DELETE for ESP CHILD_SA with SPI SPISPI
+generating INFORMATIONAL request 3 [ D ]
+sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
+received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
+parsed INFORMATIONAL response 3 [ D ]
+received DELETE for ESP CHILD_SA with SPI SPISPI
+CHILD_SA closed
+CHILD_SA {1} closed successfully
+west #
+ sleep 1
+west #
+ strongswan down "westnet-eastnet2-ikev2{2}"
+closing CHILD_SA westnet-eastnet2-ikev2{2} with SPIs: SPISPI_i (XXX bytes) SPISPI_o (XXX bytes) and TS 8.8.8.8/32 === 9.9.9.9/32
+sending DELETE for ESP CHILD_SA with SPI SPISPI
+generating INFORMATIONAL request 4 [ D ]
+sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
+received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
+parsed INFORMATIONAL response 4 [ D ]
+received DELETE for ESP CHILD_SA with SPI SPISPI
+CHILD_SA closed
+CHILD_SA {2} closed successfully
+west #
+ sleep 3
+west #
+ echo done
+done
+west #
+ if [ -f /var/run/pluto/pluto.pid ]; then ../../guestbin/ipsec-kernel-state.sh ; fi
+west #
+ if [ -f /var/run/pluto/pluto.pid ]; then ../../guestbin/ipsec-kernel-policy.sh ; fi
+west #
+ if [ -f /var/run/pluto/pluto.pid ]; then grep "Message ID:" /tmp/pluto.log | sed "s/last_.*$//" ; fi
+west #
+ if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then strongswan status ; fi
+Shunted Connections:
+Bypass LAN 192.0.1.0/24:  192.0.1.0/24 === 192.0.1.0/24 PASS
+Bypass LAN 192.1.2.0/24:  192.1.2.0/24 === 192.1.2.0/24 PASS
+Security Associations (1 up, 0 connecting):
+westnet-eastnet-ikev2[1]: ESTABLISHED XXX second ago, 192.1.2.45[west]...192.1.2.23[east]
+west #
+ 
