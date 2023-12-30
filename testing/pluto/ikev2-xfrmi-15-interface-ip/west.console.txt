@@ -1,0 +1,100 @@
+ip route get to 192.0.2.254 | grep 192.1.2.23 > /dev/null 2> /dev/null && ip route del 192.0.2.0/24 via 192.1.2.23 dev eth1 || true
+west #
+ /testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec add westnet-eastnet
+"westnet-eastnet": added IKEv2 connection
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec auto --up westnet-eastnet
+"westnet-eastnet" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"westnet-eastnet" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"westnet-eastnet" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"westnet-eastnet" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"westnet-eastnet" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.251 192.0.2.254
+up
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.251 192.0.2.254
+up
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.251 192.0.2.254
+up
+west #
+ ip addr show dev ipsec1
+X: ipsec1@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+    inet 192.0.1.251/24 scope global ipsec1
+       valid_lft forever preferred_lft forever
+west #
+ echo done
+done
+west #
+ ipsec whack --trafficstatus
+#2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=252, outBytes=252, maxBytes=2^63B, id='@east'
+west #
+ ip -s link show ipsec1
+X: ipsec1@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+    RX:  bytes packets errors dropped  missed   mcast           
+           252       3      0       0       0       0 
+    TX:  bytes packets errors dropped carrier collsns           
+           252       3      0       0       0       0 
+west #
+ ip rule show
+0:	from all lookup local
+32766:	from all lookup main
+32767:	from all lookup default
+west #
+ ip route show table 50
+Error: ipv4: FIB table does not exist.
+Dump terminated
+west #
+ ../../guestbin/ipsec-kernel-state.sh
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	output-mark 0x1/0xffffffff
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+	if_id 0x1
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	output-mark 0x1/0xffffffff
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+	if_id 0x1
+west #
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.0.1.0/24 dst 192.0.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+	if_id 0x1
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+	if_id 0x1
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+	if_id 0x1
+west #
+ 
