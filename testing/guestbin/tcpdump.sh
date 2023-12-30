@@ -95,8 +95,8 @@ function set_file_names()
 
 function start_tcpdump()
 {
-	# call stop if there are any previous runawy tcpdump
-	stop_tcpdump
+	# call stop if there are any previous runawy tcpdump - don't show output
+	stop_tcpdump >/dev/null 2>&1
 	rm -f ${out_path}
 	rm -f ${log_path}
 	rm -f ${pid_path}
