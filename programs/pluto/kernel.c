@@ -1511,11 +1511,9 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 		*said_next = said_boilerplate;
 		said_next->spi = esp_spi;
 		said_next->proto = &ip_protocol_esp;
-		if (direction == DIRECTION_INBOUND) {
-			said_next->replay_window = c->config->child_sa.replay_window;
-			ldbg(st->logger, "kernel: setting IPsec SA replay-window to %ju",
-			     c->config->child_sa.replay_window);
-		}
+		said_next->replay_window = c->config->child_sa.replay_window;
+		ldbg(st->logger, "kernel: setting IPsec SA replay-window to %ju",
+		     c->config->child_sa.replay_window);
 
 		if (c->xfrmi != NULL) {
 			said_next->xfrm_if_id = c->xfrmi->if_id;
@@ -1656,11 +1654,9 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 					    &ip_protocol_ah,
 					    ah_spi, &text_ah);
 
-		if (direction == DIRECTION_INBOUND) {
-			said_next->replay_window = c->config->child_sa.replay_window;
-			ldbg(st->logger, "kernel: setting IPsec SA replay-window to %ju",
-			     c->config->child_sa.replay_window);
-		}
+		said_next->replay_window = c->config->child_sa.replay_window;
+		ldbg(st->logger, "kernel: setting IPsec SA replay-window to %ju",
+		     c->config->child_sa.replay_window);
 
 		if (st->st_ah.attrs.transattrs.esn_enabled) {
 			dbg("kernel: Enabling ESN");
