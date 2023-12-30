@@ -544,8 +544,8 @@ kvmplutotest	ikev1-xfrmi-02-aggr			wip
 kvmplutotest	ikev1-xfrmi-04				good
 kvmplutotest	ikev1-xfrmi-04-aggr			good
 kvmplutotest	ikev1-xfrmi-05-remote-access-client	good
-kvmplutotest	ikev2-xfrmi-15-interface-ip		wip
-kvmplutotest	ikev2-xfrmi-16-rekey			wip
+kvmplutotest	ikev2-xfrmi-15-interface-ip		good
+kvmplutotest	ikev2-xfrmi-16-rekey			good
 kvmplutotest	ikev2-xfrmi-17-ipcomp			good
 
 kvmplutotest	ikev2-decap-dscp-01			good
@@ -1139,7 +1139,7 @@ kvmplutotest	interop-ikev2-strongswan-11-nat-initiator	good
 kvmplutotest	interop-ikev2-strongswan-12-nat-responder	good
 kvmplutotest	interop-ikev2-strongswan-13-ah-initiator	good
 kvmplutotest	interop-ikev2-strongswan-14-delete-sa		good
-kvmplutotest	interop-ikev2-strongswan-14-delete-sa-shared	wip
+kvmplutotest	interop-ikev2-strongswan-14-delete-sa-shared	good
 kvmplutotest	interop-ikev2-strongswan-15-child-sa		good
 kvmplutotest	interop-ikev2-strongswan-15-child-sa-responder  good
 kvmplutotest	interop-ikev2-strongswan-17-delete-sa-responder good
