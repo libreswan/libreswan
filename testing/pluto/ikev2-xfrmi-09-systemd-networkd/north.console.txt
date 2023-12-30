@@ -36,7 +36,6 @@ north #
  sleep  2 # why?
 north #
  ../../guestbin/tcpdump.sh --start -i ipsec2
-tcpdump /tmp/north.ikev2-xfrmi-09-systemd-networkd.ipsec2.tcpdump.pid is not running
 tcpdump started
 north #
  ../../guestbin/ping-once.sh --up  192.0.2.254
