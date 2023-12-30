@@ -4,5 +4,5 @@ ipsec start
 ../../guestbin/wait-until-pluto-started
 ../../guestbin/tcpdump.sh --start -i eth0
 ipsec whack --impair revival
-ipsec add road
+ipsec auto --add road
 echo "initdone"
