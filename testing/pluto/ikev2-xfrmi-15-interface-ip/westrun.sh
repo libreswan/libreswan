@@ -1,4 +1,4 @@
-ipsec auto --up west
+ipsec auto --up westnet-eastnet
 ../../guestbin/ping-once.sh --up -I 192.0.1.251 192.0.2.254
 ../../guestbin/ping-once.sh --up -I 192.0.1.251 192.0.2.254
 ../../guestbin/ping-once.sh --up -I 192.0.1.251 192.0.2.254
