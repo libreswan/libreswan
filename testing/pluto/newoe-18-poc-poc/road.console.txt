@@ -131,6 +131,7 @@ road #
  sleep 10
 road #
  ipsec auto --delete private-or-clear
+"private-or-clear": deleting group instances
 road #
  sleep 5
 road #

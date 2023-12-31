@@ -37,6 +37,7 @@ road #
  ipsec whack --impair send-no-delete
 road #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
+"westnet-eastnet-ipv4-psk-ikev2": deleting template instances
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23: terminating SAs using this connection
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: IMPAIR: impair-send-no-delete set - not sending Delete/Notify
@@ -58,6 +59,7 @@ road #
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #4: initiator established Child SA using #3; IPsec tunnel [192.0.2.1/32===192.1.2.23/32] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATD=192.1.2.23:4500 DPD=passive}
 road #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
+"westnet-eastnet-ipv4-psk-ikev2": deleting template instances
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23: terminating SAs using this connection
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #3: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #3: IMPAIR: impair-send-no-delete set - not sending Delete/Notify
@@ -79,6 +81,7 @@ road #
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #6: initiator established Child SA using #5; IPsec tunnel [192.0.2.1/32===192.1.2.23/32] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATD=192.1.2.23:4500 DPD=passive}
 road #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
+"westnet-eastnet-ipv4-psk-ikev2": deleting template instances
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23: terminating SAs using this connection
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #5: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #5: IMPAIR: impair-send-no-delete set - not sending Delete/Notify
