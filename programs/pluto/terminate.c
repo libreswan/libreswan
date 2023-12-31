@@ -295,8 +295,9 @@ void terminate_and_down_connections(struct connection *c,
 			if (!next_connection_old2new(&cq)) {
 				break;
 			}
+			/* log first actual delete */
 			if (last == NULL) {
-				llog(RC_LOG, c->logger, "terminating connection instances");
+				llog(RC_LOG, c->logger, "deleting template instances");
 			}
 			/* always going forward */
 			PASSERT(logger, last != cq.c);
