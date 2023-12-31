@@ -10,8 +10,8 @@ road #
 road #
  # should show encaps no, natt payloads none
 road #
- ipsec status | grep "encaps:"
-"road-eastnet-nonat":   nat-traversal: encaps:no; keepalive:20s; ikev1-method:none
+ ipsec status | grep encapsulation:
+"road-eastnet-nonat":   nat-traversal: encapsulation:no; keepalive:20s; ikev1-method:none
 road #
  echo "initdone"
 initdone

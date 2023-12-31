@@ -29,7 +29,7 @@ east #
 "nss-cert":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "nss-cert":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=*, E=*
 "nss-cert":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
-"nss-cert":   nat-traversal: encaps:auto; keepalive:20s
+"nss-cert":   nat-traversal: encapsulation:auto; keepalive:20s
 "nss-cert":   routing: unrouted;
 "nss-cert":   conn serial: $1;
 east #

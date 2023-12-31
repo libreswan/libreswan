@@ -120,7 +120,7 @@ Connection list:
 "northnet-westnet-ipv4-psk":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "northnet-westnet-ipv4-psk":   our idtype: ID_FQDN; our id=@north; their idtype: ID_FQDN; their id=@east
 "northnet-westnet-ipv4-psk":   dpd: passive; delay:0s; timeout:0s
-"northnet-westnet-ipv4-psk":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
+"northnet-westnet-ipv4-psk":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "northnet-westnet-ipv4-psk":   routing: routed-tunnel; established IPsec SA: #2;
 "northnet-westnet-ipv4-psk":   conn serial: $1;
 "northnet-westnet-ipv4-psk":   IKEv1 algorithm newest: AES_CBC_256-HMAC_SHA2_256-MODP2048

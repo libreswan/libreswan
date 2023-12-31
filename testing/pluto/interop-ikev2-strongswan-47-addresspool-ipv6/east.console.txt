@@ -116,7 +116,7 @@ Connection list:
 "rw-eastnet-ipv6":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "rw-eastnet-ipv6":   our idtype: ID_FQDN; our id=@east; their idtype: %none; their id=(none)
 "rw-eastnet-ipv6":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
-"rw-eastnet-ipv6":   nat-traversal: encaps:auto; keepalive:20s
+"rw-eastnet-ipv6":   nat-traversal: encapsulation:auto; keepalive:20s
 "rw-eastnet-ipv6":   routing: unrouted;
 "rw-eastnet-ipv6":   conn serial: $1;
  

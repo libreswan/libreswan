@@ -8,8 +8,8 @@ road #
  ipsec auto --add road-eastnet-encapsulation=yes
 "road-eastnet-encapsulation=yes": added IKEv1 connection
 road #
- ipsec status |grep encaps:
-"road-eastnet-encapsulation=yes":   nat-traversal: encaps:yes; keepalive:20s; ikev1-method:rfc+drafts
+ ipsec status | grep encapsulation:
+"road-eastnet-encapsulation=yes":   nat-traversal: encapsulation:yes; keepalive:20s; ikev1-method:rfc+drafts
 road #
  echo "initdone"
 initdone

@@ -125,7 +125,7 @@ Connection list:
 "westnet-eastnet-aes128":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "westnet-eastnet-aes128":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 "westnet-eastnet-aes128":   dpd: passive; delay:0s; timeout:0s
-"westnet-eastnet-aes128":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
+"westnet-eastnet-aes128":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "westnet-eastnet-aes128":   routing: unrouted;
 "westnet-eastnet-aes128":   conn serial: $1;
 "westnet-eastnet-aes128":   IKE algorithms: AES_CBC_256-HMAC_SHA2_256-MODP2048, AES_CBC_256-HMAC_SHA2_512-MODP2048, AES_CBC_256-HMAC_SHA1-MODP2048, AES_CBC_256-HMAC_SHA2_256-MODP1536, AES_CBC_256-HMAC_SHA2_512-MODP1536, AES_CBC_256-HMAC_SHA1-MODP1536

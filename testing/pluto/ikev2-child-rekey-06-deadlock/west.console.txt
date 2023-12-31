@@ -50,7 +50,7 @@ west #
 "west":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "west":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 "west":   liveness: passive; dpddelay:0s; retransmit-timeout:15s
-"west":   nat-traversal: encaps:auto; keepalive:20s
+"west":   nat-traversal: encapsulation:auto; keepalive:20s
 "west":   routing: unrouted;
 "west":   conn serial: $1;
 west #

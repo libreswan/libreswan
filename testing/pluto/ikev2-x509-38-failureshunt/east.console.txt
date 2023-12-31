@@ -114,7 +114,7 @@ Connection list:
 "failureshunt":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "failureshunt":   our idtype: ID_IPV4_ADDR; our id=192.1.2.23; their idtype: ID_IPV4_ADDR; their id=192.1.2.45
 "failureshunt":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
-"failureshunt":   nat-traversal: encaps:auto; keepalive:20s
+"failureshunt":   nat-traversal: encapsulation:auto; keepalive:20s
 "failureshunt":   routing: unrouted;
 "failureshunt":   conn serial: $1;
 "westnet-eastnet": 192.1.2.23...192.1.2.45; unrouted; my_ip=unset; their_ip=unset;
@@ -133,7 +133,7 @@ Connection list:
 "westnet-eastnet":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "westnet-eastnet":   our idtype: ID_IPV4_ADDR; our id=192.1.2.23; their idtype: ID_IPV4_ADDR; their id=192.1.2.45
 "westnet-eastnet":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
-"westnet-eastnet":   nat-traversal: encaps:auto; keepalive:20s
+"westnet-eastnet":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet":   routing: unrouted;
 "westnet-eastnet":   conn serial: $2;
  

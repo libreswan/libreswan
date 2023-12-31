@@ -141,7 +141,7 @@ west #
 "TUNNEL-A":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "TUNNEL-A":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
 "TUNNEL-A":   dpd: passive; delay:0s; timeout:0s
-"TUNNEL-A":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
+"TUNNEL-A":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "TUNNEL-A":   routing: routed-tunnel; established IPsec SA: #2;
 "TUNNEL-A":   conn serial: $2;
 "TUNNEL-A":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
@@ -161,7 +161,7 @@ west #
 "TUNNEL-B":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "TUNNEL-B":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
 "TUNNEL-B":   dpd: passive; delay:0s; timeout:0s
-"TUNNEL-B":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
+"TUNNEL-B":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "TUNNEL-B":   routing: unrouted;
 "TUNNEL-B":   conn serial: $3;
 "TUNNEL-C": 192.0.1.254/32===192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===192.0.2.234/32; erouted; eroute owner: #4
@@ -180,7 +180,7 @@ west #
 "TUNNEL-C":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "TUNNEL-C":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
 "TUNNEL-C":   dpd: passive; delay:0s; timeout:0s
-"TUNNEL-C":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
+"TUNNEL-C":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "TUNNEL-C":   routing: routed-tunnel; established IPsec SA: #4;
 "TUNNEL-C":   conn serial: $1;
 "TUNNEL-C":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
@@ -211,7 +211,7 @@ west #
 "TUNNEL-A":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "TUNNEL-A":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
 "TUNNEL-A":   dpd: passive; delay:0s; timeout:0s
-"TUNNEL-A":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
+"TUNNEL-A":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "TUNNEL-A":   routing: routed-tunnel; established IPsec SA: #2;
 "TUNNEL-A":   conn serial: $2;
 "TUNNEL-A":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
@@ -231,7 +231,7 @@ west #
 "TUNNEL-C":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "TUNNEL-C":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
 "TUNNEL-C":   dpd: passive; delay:0s; timeout:0s
-"TUNNEL-C":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
+"TUNNEL-C":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "TUNNEL-C":   routing: routed-tunnel; established IPsec SA: #4;
 "TUNNEL-C":   conn serial: $1;
 "TUNNEL-C":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>

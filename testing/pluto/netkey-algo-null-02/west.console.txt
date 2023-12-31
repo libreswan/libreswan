@@ -125,7 +125,7 @@ Connection list:
 "westnet-eastnet-esp-null-alg":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "westnet-eastnet-esp-null-alg":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 "westnet-eastnet-esp-null-alg":   dpd: passive; delay:0s; timeout:0s
-"westnet-eastnet-esp-null-alg":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
+"westnet-eastnet-esp-null-alg":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "westnet-eastnet-esp-null-alg":   routing: unrouted;
 "westnet-eastnet-esp-null-alg":   conn serial: $1;
 "westnet-eastnet-esp-null-alg":   ESP algorithms: NULL-HMAC_SHA1_96

@@ -125,7 +125,7 @@ Connection list:
 "westnet-eastnet-gcm":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "westnet-eastnet-gcm":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 "westnet-eastnet-gcm":   dpd: passive; delay:0s; timeout:0s
-"westnet-eastnet-gcm":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
+"westnet-eastnet-gcm":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "westnet-eastnet-gcm":   routing: unrouted;
 "westnet-eastnet-gcm":   conn serial: $1;
 "westnet-eastnet-gcm":   IKE algorithms: AES_CBC_256-HMAC_SHA2_256-MODP2048, AES_CBC_256-HMAC_SHA2_512-MODP2048, AES_CBC_256-HMAC_SHA1-MODP2048, AES_CBC_256-HMAC_SHA2_256-MODP1536, AES_CBC_256-HMAC_SHA2_512-MODP1536, AES_CBC_256-HMAC_SHA1-MODP1536

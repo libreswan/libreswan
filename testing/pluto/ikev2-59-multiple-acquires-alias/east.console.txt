@@ -40,7 +40,7 @@ east #
 "north-eastnets/0x1":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "north-eastnets/0x1":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@north
 "north-eastnets/0x1":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
-"north-eastnets/0x1":   nat-traversal: encaps:auto; keepalive:20s
+"north-eastnets/0x1":   nat-traversal: encapsulation:auto; keepalive:20s
 "north-eastnets/0x1":   routing: unrouted;
 "north-eastnets/0x1":   conn serial: $1;
 "north-eastnets/0x1":   aliases: north-eastnets
@@ -62,7 +62,7 @@ east #
 "north-eastnets/0x2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "north-eastnets/0x2":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@north
 "north-eastnets/0x2":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
-"north-eastnets/0x2":   nat-traversal: encaps:auto; keepalive:20s
+"north-eastnets/0x2":   nat-traversal: encapsulation:auto; keepalive:20s
 "north-eastnets/0x2":   routing: unrouted;
 "north-eastnets/0x2":   conn serial: $2;
 "north-eastnets/0x2":   aliases: north-eastnets

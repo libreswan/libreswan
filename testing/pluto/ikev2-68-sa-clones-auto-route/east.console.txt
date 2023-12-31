@@ -27,7 +27,7 @@ east #
 "westnet-eastnet-0":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "westnet-eastnet-0":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
 "westnet-eastnet-0":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
-"westnet-eastnet-0":   nat-traversal: encaps:auto; keepalive:20s
+"westnet-eastnet-0":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet-0":   routing: unrouted;
 "westnet-eastnet-0":   conn serial: $1;
 "westnet-eastnet-0":   aliases: westnet-eastnet
@@ -47,7 +47,7 @@ east #
 "westnet-eastnet-1":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "westnet-eastnet-1":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
 "westnet-eastnet-1":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
-"westnet-eastnet-1":   nat-traversal: encaps:auto; keepalive:20s
+"westnet-eastnet-1":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet-1":   routing: unrouted;
 "westnet-eastnet-1":   conn serial: $1;
 "westnet-eastnet-1":   aliases: westnet-eastnet
@@ -67,7 +67,7 @@ east #
 "westnet-eastnet-2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "westnet-eastnet-2":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
 "westnet-eastnet-2":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
-"westnet-eastnet-2":   nat-traversal: encaps:auto; keepalive:20s
+"westnet-eastnet-2":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet-2":   routing: unrouted;
 "westnet-eastnet-2":   conn serial: $1;
 "westnet-eastnet-2":   aliases: westnet-eastnet
@@ -162,7 +162,7 @@ east #
 "westnet-eastnet-0":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "westnet-eastnet-0":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
 "westnet-eastnet-0":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
-"westnet-eastnet-0":   nat-traversal: encaps:auto; keepalive:20s
+"westnet-eastnet-0":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet-0":   routing: routed-tunnel; established ISAKMP SA: #1; established IPsec SA: #2;
 "westnet-eastnet-0":   aliases: westnet-eastnet
 "westnet-eastnet-0":   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-MODP2048
@@ -183,7 +183,7 @@ east #
 "westnet-eastnet-1":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "westnet-eastnet-1":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
 "westnet-eastnet-1":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
-"westnet-eastnet-1":   nat-traversal: encaps:auto; keepalive:20s
+"westnet-eastnet-1":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet-1":   routing: routed-tunnel; established IPsec SA: #3;
 "westnet-eastnet-1":   aliases: westnet-eastnet
 "westnet-eastnet-1":   ESP algorithm newest: AES_GCM_16_256-NONE; pfsgroup=<Phase1>
@@ -203,7 +203,7 @@ east #
 "westnet-eastnet-2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "westnet-eastnet-2":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
 "westnet-eastnet-2":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
-"westnet-eastnet-2":   nat-traversal: encaps:auto; keepalive:20s
+"westnet-eastnet-2":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet-2":   routing: routed-tunnel; established IPsec SA: #4;
 "westnet-eastnet-2":   aliases: westnet-eastnet
 "westnet-eastnet-2":   ESP algorithm newest: AES_GCM_16_256-NONE; pfsgroup=<Phase1>

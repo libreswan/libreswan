@@ -30,7 +30,7 @@ east #
 "west-east":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "west-east":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
 "west-east":   dpd: passive; delay:0s; timeout:0s
-"west-east":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
+"west-east":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "west-east":   routing: unrouted;
 "west-east":   conn serial: $1;
 "west-east-b": 198.51.100.2/32===192.1.2.23[@east]...192.1.2.45[@west]===198.51.100.1/32; unrouted; my_ip=unset; their_ip=unset;
@@ -48,7 +48,7 @@ east #
 "west-east-b":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "west-east-b":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
 "west-east-b":   dpd: passive; delay:0s; timeout:0s
-"west-east-b":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
+"west-east-b":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "west-east-b":   routing: unrouted;
 "west-east-b":   conn serial: $2;
 "west-east-c": 198.51.100.4/32===192.1.2.23[@east]...192.1.2.45[@west]===198.51.100.3/32; unrouted; my_ip=unset; their_ip=unset;
@@ -66,7 +66,7 @@ east #
 "west-east-c":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "west-east-c":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
 "west-east-c":   dpd: passive; delay:0s; timeout:0s
-"west-east-c":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
+"west-east-c":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "west-east-c":   routing: unrouted;
 "west-east-c":   conn serial: $3;
 east #
@@ -91,7 +91,7 @@ east #
 "west-east":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "west-east":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
 "west-east":   dpd: passive; delay:0s; timeout:0s
-"west-east":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
+"west-east":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "west-east":   routing: unrouted;
 "west-east":   conn serial: $1;
 "west-east-b": 198.51.100.2/32===192.1.2.23[@east]...192.1.2.45[@west]===198.51.100.1/32; routed-tunnel; my_ip=unset; their_ip=unset;
@@ -109,7 +109,7 @@ east #
 "west-east-b":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "west-east-b":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
 "west-east-b":   dpd: passive; delay:0s; timeout:0s
-"west-east-b":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
+"west-east-b":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "west-east-b":   routing: routed-tunnel; established IPsec SA: #3;
 "west-east-b":   conn serial: $2;
 "west-east-b":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
@@ -128,7 +128,7 @@ east #
 "west-east-c":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "west-east-c":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
 "west-east-c":   dpd: passive; delay:0s; timeout:0s
-"west-east-c":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
+"west-east-c":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "west-east-c":   routing: routed-tunnel; established IPsec SA: #4;
 "west-east-c":   conn serial: $3;
 "west-east-c":   IKEv1 algorithm newest: AES_CBC_256-HMAC_SHA2_256-MODP2048

@@ -78,7 +78,7 @@ west #
 "westnet-eastnet-ikev2a":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "westnet-eastnet-ikev2a":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 "westnet-eastnet-ikev2a":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
-"westnet-eastnet-ikev2a":   nat-traversal: encaps:auto; keepalive:20s
+"westnet-eastnet-ikev2a":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet-ikev2a":   routing: routed-tunnel; established Child SA: #2;
 "westnet-eastnet-ikev2a":   conn serial: $1;
 "westnet-eastnet-ikev2a":   IKE algorithms: 3DES_CBC-HMAC_MD5-MODP2048
@@ -101,7 +101,7 @@ west #
 "westnet-eastnet-ikev2b":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "westnet-eastnet-ikev2b":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 "westnet-eastnet-ikev2b":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
-"westnet-eastnet-ikev2b":   nat-traversal: encaps:auto; keepalive:20s
+"westnet-eastnet-ikev2b":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet-ikev2b":   routing: routed-tunnel; established Child SA: #3;
 "westnet-eastnet-ikev2b":   conn serial: $2;
 "westnet-eastnet-ikev2b":   IKE algorithms: 3DES_CBC-HMAC_MD5-MODP2048
@@ -123,7 +123,7 @@ west #
 "westnet-eastnet-ikev2c":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "westnet-eastnet-ikev2c":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 "westnet-eastnet-ikev2c":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
-"westnet-eastnet-ikev2c":   nat-traversal: encaps:auto; keepalive:20s
+"westnet-eastnet-ikev2c":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet-ikev2c":   routing: routed-tunnel; established Child SA: #4;
 "westnet-eastnet-ikev2c":   conn serial: $3;
 "westnet-eastnet-ikev2c":   IKE algorithms: 3DES_CBC-HMAC_MD5-MODP2048

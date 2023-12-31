@@ -34,7 +34,7 @@ west #
 "road-chain-B":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "road-chain-B":   our idtype: ID_FQDN; our id=@west_chain_endcert.testing.libreswan.org; their idtype: ID_FQDN; their id=@east.testing.libreswan.org
 "road-chain-B":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
-"road-chain-B":   nat-traversal: encaps:auto; keepalive:20s
+"road-chain-B":   nat-traversal: encapsulation:auto; keepalive:20s
 "road-chain-B":   routing: unrouted;
 "road-chain-B":   conn serial: $1;
 west #

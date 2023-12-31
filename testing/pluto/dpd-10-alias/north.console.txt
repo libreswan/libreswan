@@ -73,7 +73,7 @@ north #
 "north-dpd/0x1":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "north-dpd/0x1":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
 "north-dpd/0x1":   dpd: action:restart; delay:3; timeout:10
-"north-dpd/0x1":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
+"north-dpd/0x1":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "north-dpd/0x1":   routing: unrouted;
 "north-dpd/0x1":   conn serial: $1;
 "north-dpd/0x1":   aliases: north-dpd
@@ -93,7 +93,7 @@ north #
 "north-dpd/0x2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "north-dpd/0x2":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
 "north-dpd/0x2":   dpd: action:restart; delay:3; timeout:10
-"north-dpd/0x2":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
+"north-dpd/0x2":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "north-dpd/0x2":   conn serial: $2;
 "north-dpd/0x2":   aliases: north-dpd
 "north-dpd/0x2":   IKEv1 algorithm newest: AES_CBC_256-HMAC_SHA2_256-MODP2048

@@ -92,7 +92,7 @@ west #
 "westnet-eastnet-ikev2b":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "westnet-eastnet-ikev2b":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 "westnet-eastnet-ikev2b":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
-"westnet-eastnet-ikev2b":   nat-traversal: encaps:auto; keepalive:20s
+"westnet-eastnet-ikev2b":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet-ikev2b":   routing: unrouted;
 "westnet-eastnet-ikev2b":   conn serial: $2;
 "westnet-eastnet-ikev2c": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.201.0/24; unrouted; my_ip=unset; their_ip=unset;
@@ -111,7 +111,7 @@ west #
 "westnet-eastnet-ikev2c":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "westnet-eastnet-ikev2c":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 "westnet-eastnet-ikev2c":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
-"westnet-eastnet-ikev2c":   nat-traversal: encaps:auto; keepalive:20s
+"westnet-eastnet-ikev2c":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet-ikev2c":   routing: unrouted;
 "westnet-eastnet-ikev2c":   conn serial: $3;
 west #

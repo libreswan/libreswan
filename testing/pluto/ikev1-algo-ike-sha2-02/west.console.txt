@@ -42,7 +42,7 @@ west #
 "westnet-eastnet-sha2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "westnet-eastnet-sha2":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 "westnet-eastnet-sha2":   dpd: passive; delay:0s; timeout:0s
-"westnet-eastnet-sha2":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
+"westnet-eastnet-sha2":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "westnet-eastnet-sha2":   routing: unrouted;
 "westnet-eastnet-sha2":   conn serial: $1;
 "westnet-eastnet-sha2":   IKE algorithms: AES_CBC_128-HMAC_SHA2_256-MODP2048, AES_CBC_128-HMAC_SHA2_256-MODP1536

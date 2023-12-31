@@ -22,7 +22,7 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "westnet-eastnet-ipv4-psk-ikev2":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 "westnet-eastnet-ipv4-psk-ikev2":   liveness: passive; dpddelay:0s; retransmit-timeout:20s
-"westnet-eastnet-ipv4-psk-ikev2":   nat-traversal: encaps:auto; keepalive:20s
+"westnet-eastnet-ipv4-psk-ikev2":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet-ipv4-psk-ikev2":   routing: unrouted-bare-negotiation;
 "westnet-eastnet-ipv4-psk-ikev2":   conn serial: $1;
 #1: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_V2_PARENT_I1 (sent IKE_SA_INIT request); RETRANSMIT in XXs; idle;
@@ -48,7 +48,7 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "westnet-eastnet-ipv4-psk-ikev2":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 "westnet-eastnet-ipv4-psk-ikev2":   liveness: passive; dpddelay:0s; retransmit-timeout:20s
-"westnet-eastnet-ipv4-psk-ikev2":   nat-traversal: encaps:auto; keepalive:20s
+"westnet-eastnet-ipv4-psk-ikev2":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet-ipv4-psk-ikev2":   routing: unrouted-bare-negotiation;
 "westnet-eastnet-ipv4-psk-ikev2":   conn serial: $1;
 #1: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_V2_PARENT_I1 (sent IKE_SA_INIT request); RETRANSMIT in XXs; idle;
@@ -76,7 +76,7 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "westnet-eastnet-ipv4-psk-ikev2":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 "westnet-eastnet-ipv4-psk-ikev2":   liveness: passive; dpddelay:0s; retransmit-timeout:20s
-"westnet-eastnet-ipv4-psk-ikev2":   nat-traversal: encaps:auto; keepalive:20s
+"westnet-eastnet-ipv4-psk-ikev2":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet-ipv4-psk-ikev2":   routing: unrouted-bare-negotiation;
 "westnet-eastnet-ipv4-psk-ikev2":   conn serial: $1;
 #2: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_V2_PARENT_I1 (sent IKE_SA_INIT request); RETRANSMIT in XXs; idle;

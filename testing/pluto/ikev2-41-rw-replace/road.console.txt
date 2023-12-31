@@ -129,7 +129,7 @@ Connection list:
 "road-east-x509-ipv4":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "road-east-x509-ipv4":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
 "road-east-x509-ipv4":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
-"road-east-x509-ipv4":   nat-traversal: encaps:auto; keepalive:20s
+"road-east-x509-ipv4":   nat-traversal: encapsulation:auto; keepalive:20s
 "road-east-x509-ipv4":   routing: unrouted;
 "road-east-x509-ipv4":   conn serial: $1;
 "road-east-x509-ipv4"[1]: 192.0.2.100/32===192.1.3.209[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org,+MC+S=C]---192.1.3.254...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===0.0.0.0/0; routed-tunnel; my_ip=192.0.2.100; their_ip=unset;
@@ -149,7 +149,7 @@ Connection list:
 "road-east-x509-ipv4"[1]:   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "road-east-x509-ipv4"[1]:   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
 "road-east-x509-ipv4"[1]:   liveness: passive; dpddelay:0s; retransmit-timeout:60s
-"road-east-x509-ipv4"[1]:   nat-traversal: encaps:auto; keepalive:20s
+"road-east-x509-ipv4"[1]:   nat-traversal: encapsulation:auto; keepalive:20s
 "road-east-x509-ipv4"[1]:   routing: routed-tunnel; established Child SA: #2;
 "road-east-x509-ipv4"[1]:   conn serial: $2, instantiated from: $1;
 "road-east-x509-ipv4"[1]:   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-MODP2048
@@ -291,7 +291,7 @@ Connection list:
 "road-east-x509-ipv4":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "road-east-x509-ipv4":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
 "road-east-x509-ipv4":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
-"road-east-x509-ipv4":   nat-traversal: encaps:auto; keepalive:20s
+"road-east-x509-ipv4":   nat-traversal: encapsulation:auto; keepalive:20s
 "road-east-x509-ipv4":   routing: unrouted;
 "road-east-x509-ipv4":   conn serial: $1;
 "road-east-x509-ipv4"[1]: 192.0.2.100/32===192.1.3.209[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org,+MC+S=C]---192.1.3.254...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===0.0.0.0/0; routed-tunnel; my_ip=192.0.2.100; their_ip=unset;
@@ -311,7 +311,7 @@ Connection list:
 "road-east-x509-ipv4"[1]:   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "road-east-x509-ipv4"[1]:   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
 "road-east-x509-ipv4"[1]:   liveness: passive; dpddelay:0s; retransmit-timeout:60s
-"road-east-x509-ipv4"[1]:   nat-traversal: encaps:auto; keepalive:20s
+"road-east-x509-ipv4"[1]:   nat-traversal: encapsulation:auto; keepalive:20s
 "road-east-x509-ipv4"[1]:   routing: routed-tunnel; established Child SA: #2;
 "road-east-x509-ipv4"[1]:   conn serial: $2, instantiated from: $1;
 "road-east-x509-ipv4"[1]:   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-MODP2048

@@ -44,7 +44,7 @@ road #
 "v6-transport":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "v6-transport":   our idtype: ID_FQDN; our id=@road; their idtype: ID_FQDN; their id=@east
 "v6-transport":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
-"v6-transport":   nat-traversal: encaps:auto; keepalive:20s
+"v6-transport":   nat-traversal: encapsulation:auto; keepalive:20s
 "v6-transport":   routing: unrouted;
 "v6-transport":   conn serial: $1;
 road #

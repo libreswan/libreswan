@@ -113,7 +113,7 @@ Connection list:
 "northnet-westnet-ipv4-psk":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "northnet-westnet-ipv4-psk":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@north
 "northnet-westnet-ipv4-psk":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
-"northnet-westnet-ipv4-psk":   nat-traversal: encaps:auto; keepalive:20s
+"northnet-westnet-ipv4-psk":   nat-traversal: encapsulation:auto; keepalive:20s
 "northnet-westnet-ipv4-psk":   routing: unrouted;
 "northnet-westnet-ipv4-psk":   conn serial: $2;
 "westnet-northnet-ipv4-psk": 192.0.3.0/24===192.1.2.23[@east]...192.1.2.45[@west]===192.0.1.0/24; unrouted; my_ip=unset; their_ip=unset;
@@ -132,7 +132,7 @@ Connection list:
 "westnet-northnet-ipv4-psk":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "westnet-northnet-ipv4-psk":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
 "westnet-northnet-ipv4-psk":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
-"westnet-northnet-ipv4-psk":   nat-traversal: encaps:auto; keepalive:20s
+"westnet-northnet-ipv4-psk":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-northnet-ipv4-psk":   routing: unrouted;
 "westnet-northnet-ipv4-psk":   conn serial: $1;
  

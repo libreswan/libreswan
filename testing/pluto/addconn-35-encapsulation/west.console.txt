@@ -66,24 +66,24 @@ west #
 "whack--passthrough--encapsulation=auto": warning: encapsulation=auto ignored for never-negotiate connection
 "whack--passthrough--encapsulation=auto": added passthrough connection
 west #
- ipsec connectionstatus | sed -n -e 's/\(^[^:]*:\).* \(encaps:[^;]*\);.*/\1 \2/p' | sort
-"addconn": encaps:auto
-"addconn--encapsulation=auto": encaps:auto
-"addconn--encapsulation=no": encaps:no
-"addconn--encapsulation=yes": encaps:yes
-"addconn--type=passthrough": encaps:no
-"addconn--type=passthrough--encapsulation=auto": encaps:no
-"addconn--type=passthrough--encapsulation=no": encaps:no
-"addconn--type=passthrough--encapsulation=yes": encaps:no
-"whack": encaps:auto
-"whack--encapsulation=auto": encaps:auto
-"whack--encapsulation": encaps:yes
-"whack--encapsulation=no": encaps:no
-"whack--encapsulation=yes": encaps:yes
-"whack--passthrough": encaps:no
-"whack--passthrough--encapsulation=auto": encaps:no
-"whack--passthrough--encapsulation": encaps:no
-"whack--passthrough--encapsulation=no": encaps:no
-"whack--passthrough--encapsulation=yes": encaps:no
+ ipsec connectionstatus | sed -n -e 's/\(^[^:]*:\).* \(encapsulation:[^;]*\);.*/\1 \2/p' | sort
+"addconn": encapsulation:auto
+"addconn--encapsulation=auto": encapsulation:auto
+"addconn--encapsulation=no": encapsulation:no
+"addconn--encapsulation=yes": encapsulation:yes
+"addconn--type=passthrough--encapsulation=auto": encapsulation:no
+"addconn--type=passthrough": encapsulation:no
+"addconn--type=passthrough--encapsulation=no": encapsulation:no
+"addconn--type=passthrough--encapsulation=yes": encapsulation:no
+"whack": encapsulation:auto
+"whack--encapsulation=auto": encapsulation:auto
+"whack--encapsulation": encapsulation:yes
+"whack--encapsulation=no": encapsulation:no
+"whack--encapsulation=yes": encapsulation:yes
+"whack--passthrough--encapsulation=auto": encapsulation:no
+"whack--passthrough--encapsulation": encapsulation:no
+"whack--passthrough": encapsulation:no
+"whack--passthrough--encapsulation=no": encapsulation:no
+"whack--passthrough--encapsulation=yes": encapsulation:no
 west #
  

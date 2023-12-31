@@ -25,7 +25,7 @@ east #
 "road-east-ikev2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "road-east-ikev2":   our idtype: ID_IPV4_ADDR; our id=192.1.2.23; their idtype: ID_FQDN; their id=@west.testing.libreswan.org
 "road-east-ikev2":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
-"road-east-ikev2":   nat-traversal: encaps:auto; keepalive:20s
+"road-east-ikev2":   nat-traversal: encapsulation:auto; keepalive:20s
 "road-east-ikev2":   routing: unrouted;
 "road-east-ikev2":   conn serial: $1;
 east #

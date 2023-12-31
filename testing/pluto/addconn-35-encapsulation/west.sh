@@ -24,4 +24,4 @@ ipsec whack --name whack--passthrough--encapsulation=no   --encapsulation=no   -
 ipsec whack --name whack--passthrough--encapsulation=yes  --encapsulation=yes  --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
 ipsec whack --name whack--passthrough--encapsulation=auto --encapsulation=auto --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
 
-ipsec connectionstatus | sed -n -e 's/\(^[^:]*:\).* \(encaps:[^;]*\);.*/\1 \2/p' | sort
+ipsec connectionstatus | sed -n -e 's/\(^[^:]*:\).* \(encapsulation:[^;]*\);.*/\1 \2/p' | sort

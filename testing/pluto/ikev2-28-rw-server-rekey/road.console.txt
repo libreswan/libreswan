@@ -31,7 +31,7 @@ road #
 "road-eastnet-nonat":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "road-eastnet-nonat":   our idtype: ID_FQDN; our id=@road; their idtype: ID_FQDN; their id=@east
 "road-eastnet-nonat":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
-"road-eastnet-nonat":   nat-traversal: encaps:auto; keepalive:20s
+"road-eastnet-nonat":   nat-traversal: encapsulation:auto; keepalive:20s
 "road-eastnet-nonat":   routing: unrouted;
 "road-eastnet-nonat":   conn serial: $1;
 road #

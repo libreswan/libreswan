@@ -32,7 +32,7 @@ west #
 "west-east":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "west-east":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 "west-east":   dpd: passive; delay:0s; timeout:0s
-"west-east":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
+"west-east":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "west-east":   routing: unrouted;
 "west-east":   conn serial: $2;
 "westnet-eastnet": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
@@ -50,7 +50,7 @@ west #
 "westnet-eastnet":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "westnet-eastnet":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 "westnet-eastnet":   dpd: passive; delay:0s; timeout:0s
-"westnet-eastnet":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
+"westnet-eastnet":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "westnet-eastnet":   routing: unrouted;
 "westnet-eastnet":   conn serial: $1;
 west #

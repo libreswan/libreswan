@@ -39,7 +39,7 @@ west #
 "westnet-eastnet-4in6":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "westnet-eastnet-4in6":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 "westnet-eastnet-4in6":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
-"westnet-eastnet-4in6":   nat-traversal: encaps:auto; keepalive:20s
+"westnet-eastnet-4in6":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet-4in6":   routing: unrouted;
 "westnet-eastnet-4in6":   conn serial: $1;
 west #

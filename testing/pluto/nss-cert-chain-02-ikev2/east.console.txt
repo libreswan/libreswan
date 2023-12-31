@@ -27,7 +27,7 @@ east #
 "nss-cert-chain":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "nss-cert-chain":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east_chain_endcert.testing.libreswan.org, E=east_chain_endcert@testing.libreswan.org; their idtype: %fromcert; their id=%fromcert
 "nss-cert-chain":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
-"nss-cert-chain":   nat-traversal: encaps:auto; keepalive:20s
+"nss-cert-chain":   nat-traversal: encapsulation:auto; keepalive:20s
 "nss-cert-chain":   routing: unrouted;
 "nss-cert-chain":   conn serial: $1;
 east #

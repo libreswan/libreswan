@@ -162,7 +162,7 @@ Connection list:
 "clear":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "clear":   our idtype: ID_IPV4_ADDR; our id=192.1.2.45; their idtype: %none; their id=(none)
 "clear":   liveness: passive; dpddelay:0s; retransmit-timeout:0s
-"clear":   nat-traversal: encaps:no; keepalive:no
+"clear":   nat-traversal: encapsulation:no; keepalive:no
 "clear":   routing: unrouted;
 "clear":   conn serial: $3;
 "clear#192.1.2.254/32": 192.1.2.45---192.1.2.254...%any===192.1.2.254/32; routed-never-negotiate; my_ip=unset; their_ip=unset;
@@ -181,7 +181,7 @@ Connection list:
 "clear#192.1.2.254/32":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "clear#192.1.2.254/32":   our idtype: ID_IPV4_ADDR; our id=192.1.2.45; their idtype: %none; their id=(none)
 "clear#192.1.2.254/32":   liveness: passive; dpddelay:0s; retransmit-timeout:0s
-"clear#192.1.2.254/32":   nat-traversal: encaps:no; keepalive:no
+"clear#192.1.2.254/32":   nat-traversal: encapsulation:no; keepalive:no
 "clear#192.1.2.254/32":   routing: routed-never-negotiate;
 "clear#192.1.2.254/32":   conn serial: $6, instantiated from: $3;
 "private": 192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]---192.1.2.254...%opportunisticgroup[%fromcert]; unrouted; my_ip=unset; their_ip=unset;
@@ -201,7 +201,7 @@ Connection list:
 "private":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "private":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org; their idtype: %fromcert; their id=%fromcert
 "private":   liveness: passive; dpddelay:0s; retransmit-timeout:2s
-"private":   nat-traversal: encaps:auto; keepalive:20s
+"private":   nat-traversal: encapsulation:auto; keepalive:20s
 "private":   routing: unrouted;
 "private":   conn serial: $1;
 "private#10.1.0.0/24": 192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]---192.1.2.254...%opportunistic[%fromcert]===10.1.0.0/24; routed-ondemand; my_ip=unset; their_ip=unset;
@@ -221,7 +221,7 @@ Connection list:
 "private#10.1.0.0/24":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "private#10.1.0.0/24":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org; their idtype: %fromcert; their id=%fromcert
 "private#10.1.0.0/24":   liveness: passive; dpddelay:0s; retransmit-timeout:2s
-"private#10.1.0.0/24":   nat-traversal: encaps:auto; keepalive:20s
+"private#10.1.0.0/24":   nat-traversal: encapsulation:auto; keepalive:20s
 "private#10.1.0.0/24":   routing: routed-ondemand;
 "private#10.1.0.0/24":   conn serial: $4, instantiated from: $1;
 "private-or-clear": 192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]---192.1.2.254...%opportunisticgroup[%fromcert]; unrouted; my_ip=unset; their_ip=unset;
@@ -241,7 +241,7 @@ Connection list:
 "private-or-clear":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "private-or-clear":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org; their idtype: %fromcert; their id=%fromcert
 "private-or-clear":   liveness: passive; dpddelay:0s; retransmit-timeout:2s
-"private-or-clear":   nat-traversal: encaps:auto; keepalive:20s
+"private-or-clear":   nat-traversal: encapsulation:auto; keepalive:20s
 "private-or-clear":   routing: unrouted;
 "private-or-clear":   conn serial: $2;
 "private-or-clear#192.1.2.0/24": 192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]---192.1.2.254...%opportunistic[%fromcert]===192.1.2.0/24; routed-ondemand; my_ip=unset; their_ip=unset;
@@ -261,7 +261,7 @@ Connection list:
 "private-or-clear#192.1.2.0/24":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "private-or-clear#192.1.2.0/24":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org; their idtype: %fromcert; their id=%fromcert
 "private-or-clear#192.1.2.0/24":   liveness: passive; dpddelay:0s; retransmit-timeout:2s
-"private-or-clear#192.1.2.0/24":   nat-traversal: encaps:auto; keepalive:20s
+"private-or-clear#192.1.2.0/24":   nat-traversal: encapsulation:auto; keepalive:20s
 "private-or-clear#192.1.2.0/24":   routing: routed-ondemand;
 "private-or-clear#192.1.2.0/24":   conn serial: $5, instantiated from: $2;
  

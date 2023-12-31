@@ -110,7 +110,7 @@ Connection list:
 "westnet-eastnet-no-sha1":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "westnet-eastnet-no-sha1":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
 "westnet-eastnet-no-sha1":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
-"westnet-eastnet-no-sha1":   nat-traversal: encaps:auto; keepalive:20s
+"westnet-eastnet-no-sha1":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet-no-sha1":   routing: unrouted;
 "westnet-eastnet-no-sha1":   conn serial: $1;
  

@@ -26,7 +26,7 @@ road #
 "road-eastnet-psk":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "road-eastnet-psk":   our idtype: ID_FQDN; our id=@roadrandom; their idtype: ID_FQDN; their id=@east
 "road-eastnet-psk":   dpd: passive; delay:0s; timeout:0s
-"road-eastnet-psk":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
+"road-eastnet-psk":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "road-eastnet-psk":   routing: unrouted;
 "road-eastnet-psk":   conn serial: $1;
 "road-eastnet-psk":   IKE algorithms: 3DES_CBC-HMAC_SHA1-MODP2048, 3DES_CBC-HMAC_SHA1-MODP1536

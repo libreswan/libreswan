@@ -114,7 +114,7 @@ Connection list:
 "west-rsasigkey-east-rsasigkey":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "west-rsasigkey-east-rsasigkey":   our idtype: ID_IPV4_ADDR; our id=192.1.2.23; their idtype: ID_IPV4_ADDR; their id=192.1.2.45
 "west-rsasigkey-east-rsasigkey":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
-"west-rsasigkey-east-rsasigkey":   nat-traversal: encaps:auto; keepalive:20s
+"west-rsasigkey-east-rsasigkey":   nat-traversal: encapsulation:auto; keepalive:20s
 "west-rsasigkey-east-rsasigkey":   routing: unrouted;
 "west-rsasigkey-east-rsasigkey":   conn serial: $1;
  

@@ -43,7 +43,7 @@ west #
 "westnet-eastnet-ikev2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "westnet-eastnet-ikev2":   our idtype: ID_FQDN; our id=@west; their idtype: ID_NULL; their id=ID_NULL
 "westnet-eastnet-ikev2":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
-"westnet-eastnet-ikev2":   nat-traversal: encaps:auto; keepalive:20s
+"westnet-eastnet-ikev2":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet-ikev2":   routing: unrouted;
 "westnet-eastnet-ikev2":   conn serial: $1;
 west #

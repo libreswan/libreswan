@@ -41,7 +41,7 @@ west #
 "tfc":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 "tfc":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 "tfc":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
-"tfc":   nat-traversal: encaps:auto; keepalive:20s
+"tfc":   nat-traversal: encapsulation:auto; keepalive:20s
 "tfc":   routing: unrouted;
 "tfc":   conn serial: $1;
 west #
