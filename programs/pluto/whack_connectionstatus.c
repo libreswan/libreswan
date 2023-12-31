@@ -823,14 +823,18 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		jam_string(buf, ":  ");
 		/* nat */
 		jam(buf, " nat-traversal:");
-		jam_string(buf, " encaps:");
+		/* encapsulation= */
+		jam_string(buf, " encapsulation:");
 		jam_sparse(buf, yna_option_names, c->config->encapsulation);
-		jam_string(buf, "; keepalive:");
+		jam_string(buf, ";");
+		/* nat-keepalive= + keep-alive= */
+		jam_string(buf, " keepalive:");
 		if (c->config->nat_keepalive) {
 			jam(buf, "%jds", deltasecs(nat_keepalive_period));
 		} else {
 			jam_string(buf, bool_str(false));
 		}
+		/* nat-ikev1-method= */
 		if (c->config->ike_version == IKEv1) {
 			jam_string(buf, "; ikev1-method:");
 			switch (c->config->ikev1_natt) {
