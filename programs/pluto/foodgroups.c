@@ -111,7 +111,7 @@ static void delete_group_instantiation(co_serial_t serialno, struct logger *logg
 	connection_attach(template, logger);
 	ldbg(template->logger, "removing group template");
 
-	terminate_and_down_connections(template, logger, HERE);
+	terminate_and_down_connections(template, HERE);
 	/* template lives to fight another day; oops */
 	delete_connection(&template);
 }

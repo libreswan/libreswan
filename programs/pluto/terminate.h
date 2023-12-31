@@ -33,10 +33,12 @@ void terminate_all_connection_states(struct connection *c, where_t where);
  *
  * If C is a TEMPLATE or LABELED_TEMPLATE this will delete any
  * INSTANCE, LABELED_PARENT or LABELED_CHILD.
+ *
+ * Whack is attached to C; whack will be propogated to instances.
  */
-void terminate_and_down_connections(struct connection *c, struct logger *logger, where_t where);
-/* ditto, but don't recurse */
-void terminate_and_down_connection(struct connection *c, struct logger *logger, where_t where);
+void terminate_and_down_connections(struct connection *c, where_t where);
+/* ditto, but don't recurse; again, whack is attached to C */
+void terminate_and_down_connection(struct connection *c, where_t where);
 
 void terminate_and_delete_connections(struct connection **cp, struct logger *logger, where_t where);
 

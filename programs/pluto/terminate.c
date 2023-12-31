@@ -209,11 +209,8 @@ void terminate_all_connection_states(struct connection *c, where_t where)
  */
 
 void terminate_and_down_connection(struct connection *c,
-				   struct logger *logger,
 				   where_t where)
 {
-	connection_attach(c, logger);
-
 	if (never_negotiate(c)) {
 		/*
 		 * Suppress message as there are no SAs; only unroute
@@ -226,9 +223,9 @@ void terminate_and_down_connection(struct connection *c,
 	}
 
 	/* see callers */
-	PEXPECT(logger, (c->local->kind == CK_INSTANCE ||
-			 c->local->kind == CK_PERMANENT ||
-			 c->local->kind == CK_LABELED_PARENT));
+	PEXPECT(c->logger, (c->local->kind == CK_INSTANCE ||
+			    c->local->kind == CK_PERMANENT ||
+			    c->local->kind == CK_LABELED_PARENT));
 
 	/*
 	 * Strip the +UP bit so that the connection (when its state is
@@ -266,19 +263,16 @@ void terminate_and_down_connection(struct connection *c,
 	 */
 	remove_connection_from_pending(c);
 	pmemory(c); /* should not disappear; caller holds ref */
-
-	connection_detach(c, logger);
 }
 
-void terminate_and_down_connections(struct connection *c,
-				    struct logger *logger, where_t where)
+void terminate_and_down_connections(struct connection *c, where_t where)
 {
 	switch (c->local->kind) {
 	case CK_INSTANCE:
 	case CK_PERMANENT:
 	case CK_LABELED_PARENT:
-		/* caller holds ref */
-		terminate_and_down_connection(c, logger, where);
+		/* caller holds ref; whack already attached */
+		terminate_and_down_connection(c, where);
 		pmemory(c); /* should not disappear; caller holds ref */
 		return;
 
@@ -293,9 +287,10 @@ void terminate_and_down_connections(struct connection *c,
 		 * cause Child SA cuckoo connection to be deleted.
 		 * Hence, the loop picks away at the first instance.
 		 */
-		connection_attach(c, logger);
 		del_policy(c, policy.up);
-		/* pick away at instances */
+		/*
+		 * Pick away at instances.
+		 */
 		const struct connection *last = NULL;
 		while (true) {
 			struct connection_filter cq = {
@@ -310,24 +305,24 @@ void terminate_and_down_connections(struct connection *c,
 				llog(RC_LOG, c->logger, "deleting template instances");
 			}
 			/* always going forward */
-			PASSERT(logger, last != cq.c);
+			PASSERT(c->logger, last != cq.c);
 			last = cq.c;
-			/* should disappear */
-			connection_addref(cq.c, logger);
-			terminate_and_down_connection(cq.c, logger, where);
+			/* stop it disappearing */
+			connection_addref(cq.c, c->logger);
+			connection_attach(cq.c, c->logger);
+			terminate_and_down_connection(cq.c, where);
+			/* leave whack attached during death */
 			delete_connection(&cq.c);
 		}
 		pmemory(c); /* should not disappear */
 		/* to be sure */
 		connection_unroute(c, where);
-		connection_detach(c, logger);
 		return;
 	}
 
 	case CK_GROUP:
 	{
 		/* should not disappear */
-		connection_attach(c, logger);
 		del_policy(c, policy.up);
 		struct connection_filter cq = {
 			.clonedfrom = c,
@@ -336,12 +331,13 @@ void terminate_and_down_connections(struct connection *c,
 		if (next_connection_old2new(&cq)) {
 			llog(RC_LOG, c->logger, "terminating group instances");
 			do {
-				terminate_and_down_connections(cq.c, logger, where);
+				connection_attach(cq.c, c->logger); /* propogate whack */
+				terminate_and_down_connections(cq.c, where);
 				pmemory(cq.c); /* should not disappear */
+				connection_detach(cq.c, c->logger); /* propogate whack */
 			} while (next_connection_old2new(&cq));
 		}
 		pmemory(c); /* should not disappear */
-		connection_detach(c, logger);
 		return;
 	}
 
@@ -368,7 +364,9 @@ void terminate_and_delete_connections(struct connection **cp,
 		 * cause Child SA cuckoo connection to be deleted.
 		 * Hence, the keep getting first loop.
 		 */
-		terminate_and_down_connections((*cp), logger, where);
+		connection_attach((*cp), logger);
+		terminate_and_down_connections((*cp), where);
+		/* leave whack attached during death */
 		delete_connection(cp);
 		return;
 
@@ -387,7 +385,7 @@ void terminate_and_delete_connections(struct connection **cp,
 			} while (next_connection_old2new(&cq));
 		}
 		pmemory((*cp)); /* should not disappear */
-		connection_detach((*cp), logger);
+		/* leave whack attached during death */
 		delete_connection(cp);
 		return;
 	}
