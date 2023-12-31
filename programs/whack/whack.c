@@ -126,7 +126,7 @@ static void help(void)
 		"	[--xauthby file|pam|alwaysok] [--xauthfail hard|soft] \\\n"
 		"	[--dontrekey] [--aggressive] \\\n"
 		"	[--initialcontact] [--cisco-unity] [--fake-strongswan] \\\n"
-		"	[--encaps <auto|yes|no>] [--no-nat-keepalive] \\\n"
+		"	[--encapsulation[={auto,yes,no}] [--no-nat-keepalive] \\\n"
 		"	[--ikev1-natt <both|rfc|drafts>] [--no-nat_keepalive] \\\n"
 		"	[--dpddelay <seconds> --dpdtimeout <seconds>] \\\n"
 		"	[--xauthserver | --xauthclient] \\\n"
