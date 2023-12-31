@@ -18,6 +18,7 @@ kvm_test_name=$(${quietmake} print-kvm-test-name)
 kvm_test_flags=$(${quietmake} print-kvm-test-flags)
 kvm_prefixes=($(${quietmake} print-kvm-prefixes))
 kvm_sourcedir=$(${quietmake} print-kvm-sourcedir)
+kvm_pidfile=$(${quietmake} print-kvm-pidfile)
 
 # repo under test
 rutdir=${kvm_testingdir:+$(realpath $(dirname "${kvm_testingdir}"))}
@@ -487,10 +488,16 @@ for op in "${ops[@]}" ; do
 
 	add ) git add "$@" ;;
 
-	kill ) ${gnumake} kvm-${op} ;;
+	kill )
+	       test -s ${kvm_pidfile} && kill $(cat ${kvm_pidfile})
+	       ;;
+	status )
+	       test -s ${kvm_pidfile} && ps www $(cat ${kvm_pidfile})
+	       ;;
+
 	base* | upgrade* | transmogrify* | build* | install* | \
         shutdown* | uninstall* | downgrade* | demolish* | \
-        status | check-clean | clean | purge* )
+        check-clean | clean | purge* )
 	    echo ${gnumake} kvm-${op}
 	    ${gnumake} kvm-${op} || exit $?
 	    ;;

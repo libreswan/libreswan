@@ -354,6 +354,8 @@ print-kvm-platform: ; @:$(info $(KVM_PLATFORM))
 print-kvm-rutdir: ; @:$(info $(KVM_RUTDIR))
 .PHONY: print-kvm-testdir
 print-kvm-testdir: ; @:$(info $(KVM_TESTDIR))
+.PHONY: print-kvm-pidfile
+print-kvm-pidfile: ; @:$(info $(KVM_PIDFILE))
 
 KVM_POOLDIR_PREFIX = $(KVM_POOLDIR)/$(KVM_FIRST_PREFIX)
 KVM_LOCALDIR_PREFIXES = \
@@ -543,15 +545,6 @@ web-pages-disabled:
 #
 # - need build domains shutdown as, otherwise, test domains can refuse
 #   to boot because the domain they were cloned from is still running.
-
-# XXX: $(file < "x") tries to open '"x"' !!!
-.PHONY: kvm-kill
-kvm-kill:
-	test -s "$(top_srcdir)/$(KVM_PIDFILE)"
-	kill $(file < $(top_srcdir)/$(KVM_PIDFILE))
-.PHONY: kvm-status
-kvm-status:
-	test -s "$(KVM_PIDFILE)" && ps $(file < $(KVM_PIDFILE))
 
 # Allow any of 'KVM_TEST_STATUS=good|wip', 'KVM_TEST_STATUS=good wip',
 # or KVM_TEST_STATUS+=wip.

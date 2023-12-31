@@ -541,14 +541,6 @@ web-pages-disabled:
 # - need build domains shutdown as, otherwise, test domains can refuse
 #   to boot because the domain they were cloned from is still running.
 
-# XXX: $(file < "x") tries to open '"x"' !!!
-.PHONY: kvm-kill
-kvm-kill:
-	test -s "$(KVM_PIDFILE)" && kill $(file < $(KVM_PIDFILE))
-.PHONY: kvm-status
-kvm-status:
-	test -s "$(KVM_PIDFILE)" && ps $(file < $(KVM_PIDFILE))
-
 # Allow any of 'KVM_TEST_STATUS=good|wip', 'KVM_TEST_STATUS=good wip',
 # or KVM_TEST_STATUS+=wip.
 
