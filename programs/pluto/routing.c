@@ -1659,6 +1659,7 @@ static bool dispatch_1(enum routing_event event,
 
 	case X(TEARDOWN_IKE, ROUTED_NEGOTIATION, INSTANCE):
 	case X(TEARDOWN_IKE, ROUTED_NEGOTIATION, PERMANENT):
+	case X(RESCHEDULE, ROUTED_NEGOTIATION, INSTANCE):
 	case X(RESCHEDULE, ROUTED_NEGOTIATION, PERMANENT):
 		/*
 		 * For instance, this end initiated a Child SA for the
