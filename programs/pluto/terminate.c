@@ -213,7 +213,17 @@ void terminate_and_down_connection(struct connection *c,
 				   where_t where)
 {
 	connection_attach(c, logger);
-	llog(RC_LOG, c->logger, "terminating SAs using this connection");
+
+	if (never_negotiate(c)) {
+		/*
+		 * Suppress message as there are no SAs; only unroute
+		 * is really needed.
+		 */
+		PEXPECT(c->logger, c->local->kind == CK_PERMANENT);
+		pdbg(c->logger, "terminating and downing never-negotiate connection");
+	} else {
+		llog(RC_LOG, c->logger, "terminating SAs using this connection");
+	}
 
 	/* see callers */
 	PEXPECT(logger, (c->local->kind == CK_INSTANCE ||
