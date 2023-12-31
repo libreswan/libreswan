@@ -675,15 +675,15 @@ void whack_detach_where(struct logger *dst, const struct logger *src, where_t wh
 	/* find a whack to detach */
 	struct fd *src_fd = logger_fd(src);
 	if (src_fd == NULL) {
-		pdbg(dst, "no whack to detach");
+		pdbg(dst, "no whack to detach "PRI_WHERE, pri_where(where));
 		return;
 	}
 
 	/* find where it is attached */
 	for (unsigned i = 0; i < elemsof(dst->whackfd); i++) {
 		if (dst->whackfd[i] == src_fd) {
-			pdbg(dst, "detach whack "PRI_FD" from logger %p slot %u",
-			     pri_fd(src_fd), dst, i);
+			pdbg(dst, "detach whack "PRI_FD" from logger %p slot %u "PRI_WHERE,
+			     pri_fd(src_fd), dst, i, pri_where(where));
 			fd_delref_where(&dst->whackfd[i], where);
 			return;
 		}
