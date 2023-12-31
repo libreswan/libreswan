@@ -2122,24 +2122,12 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_SEND_REDIRECT:	/* --send-redirect */
-		{
-			const struct sparse_name *sn = sparse_lookup(yna_option_names, optarg);
-			if (sn == NULL) {
-				diagw("--send-redirect options are 'yes', 'no' or 'auto'");
-			}
-			msg.send_redirect = sn->value;
+			msg.send_redirect = optarg_sparse(0, yna_option_names);
 			continue;
-		}
 
 		case CD_ACCEPT_REDIRECT:	/* --accept-redirect */
-		{
-			const struct sparse_name *sn = sparse_lookup(yn_option_names, optarg);
-			if (sn == NULL) {
-				diagw("--accept-redirect options are 'yes' and 'no'");
-			}
-			msg.accept_redirect = sn->value;
+			msg.accept_redirect = optarg_sparse(0, yn_option_names);
 			continue;
-		}
 
 		case CD_ACCEPT_REDIRECT_TO:	/* --accept-redirect-to */
 			msg.accept_redirect_to = strdup(optarg);
