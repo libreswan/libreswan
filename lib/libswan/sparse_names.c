@@ -82,3 +82,22 @@ const char *sparse_sparse_name(sparse_sparse_names ssd, unsigned long v1, unsign
 	}
 	return NULL;
 }
+
+size_t jam_sparse_names(struct jambuf *buf, const struct sparse_name *names, const char *separator)
+{
+	const char *sep = "";
+	size_t s = 0;
+	for (const struct sparse_name *i = names; i->name != NULL; i++) {
+		const struct sparse_name *j = names;
+		while (j < i && j->value != i->value) {
+			j++;
+		}
+		/* not a duplicate */
+		if (i == j) {
+			s += jam_string(buf, sep);
+			s += jam_string(buf, i->name);
+			sep = separator;
+		}
+	}
+	return s;
+}

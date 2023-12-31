@@ -55,6 +55,7 @@ typedef struct {
 const char *sparse_name(sparse_names sd, unsigned long val);
 size_t jam_sparse(struct jambuf *buf, sparse_names sd, unsigned long val);
 const char *str_sparse(sparse_names sd, unsigned long val, sparse_buf *buf);
+size_t jam_sparse_names(struct jambuf *buf, const struct sparse_name *names, const char *separator);
 
 /*
  * sparse_sparse_names is much like enum_enum_names, except, again the
