@@ -1521,3 +1521,12 @@ kvmplutotest	 android-be-happy			skiptest # ANDROID simulator
 kvmplutotest	flush-on-startup-pfkeyv2		freebsd	github/1285
 kvmplutotest	flush-on-startup-xfrm			good	github/1284
 kvmplutotest	flush-on-shutdown-xfrm			good	github/1384
+
+kvmplutotest	impair-install-inbound-ipsec-sa-initiator-ikev1		wip
+kvmplutotest	impair-install-inbound-ipsec-sa-initiator-ikev2		wip
+kvmplutotest	impair-install-inbound-ipsec-sa-responder-ikev1		wip
+kvmplutotest	impair-install-inbound-ipsec-sa-responder-ikev2		wip
+kvmplutotest	impair-install-outbound-ipsec-sa-initiator-ikev1	wip
+kvmplutotest	impair-install-outbound-ipsec-sa-initiator-ikev2	wip
+kvmplutotest	impair-install-outbound-ipsec-sa-responder-ikev1	wip
+kvmplutotest	impair-install-outbound-ipsec-sa-responder-ikev2	wip
