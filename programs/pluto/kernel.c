@@ -2088,6 +2088,11 @@ bool install_inbound_ipsec_sa(struct child_sa *child, enum routing new_routing, 
 		return false;
 	}
 
+	if (impair.install_inbound_ipsec_sa) {
+		llog(RC_LOG, logger, "IMPAIR: kernel: %s() failing", __func__);
+		return false;
+	}
+
 	return true;
 }
 
@@ -2126,6 +2131,11 @@ bool install_outbound_ipsec_sa(struct child_sa *child, enum routing new_routing,
 	clear_connection_spd_conflicts(c);
 
 	if (!install_outbound_ipsec_kernel_policies(child, new_routing, up)) {
+		return false;
+	}
+
+	if (impair.install_outbound_ipsec_sa) {
+		llog(RC_LOG, logger, "IMPAIR: kernel: %s() failing", __func__);
 		return false;
 	}
 

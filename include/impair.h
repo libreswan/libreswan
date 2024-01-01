@@ -177,6 +177,9 @@ struct impair {
 
 	unsigned helper_thread_delay;
 
+	bool install_inbound_ipsec_sa;
+	bool install_outbound_ipsec_sa;
+
 	/*
 	 * add more here
 	 */
