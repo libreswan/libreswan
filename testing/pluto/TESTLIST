@@ -453,7 +453,6 @@ kvmplutotest	ikev2-x509-27-criticalflag-clientAuth	good
 kvmplutotest	ikev2-x509-28-del-nssdb-cert		good
 kvmplutotest	ikev2-x509-29-selfsigned		wip	github:542
 kvmplutotest	ikev2-x509-30-mismatch-ignore		good
-kvmplutotest	ikev2-x509-31-wifi-assist		wip	github/1312
 kvmplutotest	ikev2-x509-31-wifi-assist-nonat		good
 kvmplutotest	ikev2-x509-38-failureshunt		good
 kvmplutotest	ikev2-x509-39-OU-comma			good
