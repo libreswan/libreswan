@@ -51,3 +51,5 @@ s/\t seq-hi 0x0, seq [^,]*, oseq-hi 0x0, oseq .*$/\t seq-hi 0x0, seq 0xXX, oseq-
 
 # debug details aren't interesting
 s/^debug:.*/debug .../
+
+/^WARNING: ipsec auto has been deprecated$/d
