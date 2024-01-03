@@ -1714,7 +1714,13 @@ static bool install_inbound_ipsec_kernel_policies(struct child_sa *child)
 		     /* inbound */
 		     str_selector(&spd->remote->client, &sb),
 		     str_selector(&spd->local->client, &db));
-		install_inbound_ipsec_kernel_policy(child, spd, HERE);
+		if (!install_inbound_ipsec_kernel_policy(child, spd, HERE)) {
+		    log_state(RC_LOG_SERIOUS, &child->sa, "Installing IPsec SA failed - check logs or dmesg");
+		    struct spd_owner owner = spd_owner(spd, RT_UNROUTED_FAILURE, logger, HERE);
+		    delete_spd_kernel_policies(spd, &owner, IGNORE_KERNEL_POLICY_MISSING,
+						logger, HERE, "cleanup after failed add_sa");
+			return false;
+		}
 	}
 
 	return true;
