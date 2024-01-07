@@ -58,7 +58,7 @@ status=${json_status}
 
 run() (
     href="<a href=\"$(basename ${resultsdir})/$1.log\">$1</a>"
-    ${status} "running 'make ${href}'"
+    ${update_status} "running 'make ${href}'"
 
     # So new features can be tested (?) use kvmrunner.py from this
     # directory (${utilsdir}), but point it at files in the test
@@ -77,7 +77,7 @@ run() (
 	touch ${resultsdir}/$1.ok ;
     fi | tee -a ${resultsdir}/$1.log
     if test ! -r ${resultsdir}/$1.ok ; then
-	${status} "'make ${href}' failed"
+	${update_status} "'make ${href}' failed"
 	exit 1
     fi
     gzip -v -9 ${resultsdir}/$1.log
@@ -85,9 +85,10 @@ run() (
 
 while true ; do
 
-    # start with basic status
+    # start with basic status output; updated below to add more
+    # details as they become available.
 
-    status=${json_status}
+    update_status=${json_status}
 
     # Update the repo.
     #
@@ -97,7 +98,7 @@ while true ; do
     # Force ${branch} to be identical to ${remote} by using --ff-only
     # - if it fails the script dies.
 
-    ${status} "updating repository"
+    ${update_status} "updating repository"
     ( cd ${repodir} && git fetch || true )
     ( cd ${repodir} && git merge --ff-only )
 
@@ -106,7 +107,7 @@ while true ; do
     # This will add any new commits found in ${repodir} (added by
     # above fetch) and merge the results from the last test run.
 
-    ${status} "updating summary"
+    ${update_status} "updating summary"
     make -C ${makedir} web-summarydir \
 	 WEB_REPODIR=${repodir} \
 	 WEB_RESULTSDIR= \
@@ -117,7 +118,7 @@ while true ; do
     # Search [earliest_commit..HEAD] for something interesting and
     # untested.
 
-    ${status} "looking for work"
+    ${update_status} "looking for work"
     if ! commit=$(${webdir}/gime-work.sh ${summarydir} ${repodir} ${earliest_commit}) ; then
 	# Seemlingly nothing to do ...
 
@@ -128,7 +129,7 @@ while true ; do
 	future=$(expr ${now} + ${delay})
 
 	# do something productive
-	${status} "idle; deleting debug.log.gz files older than 30 days"
+	${update_status} "idle; deleting debug.log.gz files older than 30 days"
 	find ${summarydir} -type f -name 'debug.log.gz' -mtime +30 -print0 | \
 	    xargs -0 --no-run-if-empty rm -v
 	find ${summarydir} -type f -name '*.log.gz' -mtime +180 -print0 | \
@@ -137,12 +138,12 @@ while true ; do
 	# is there still time?
 	now=$(date +%s)
 	if test ${future} -lt ${now} ; then
-	    ${status} "the future (${future}) is now (${now})"
+	    ${update_status} "the future (${future}) is now (${now})"
 	    continue
 	fi
 
 	seconds=$(expr ${future} - ${now})
-	${status} "idle; will retry at $(date -u -d @${future} +%H:%M) ($(date -u -d @${now} +%H:%M) + ${seconds}s)"
+	${update_status} "idle; will retry at $(date -u -d @${future} +%H:%M) ($(date -u -d @${now} +%H:%M) + ${seconds}s)"
 	sleep ${seconds}
 	continue
     fi
@@ -154,15 +155,17 @@ while true ; do
     # When first starting and/or recovering this does nothing as the
     # repo is already at head.
 
-    ${status} "checking out ${commit}"
+    ${update_status} "checking out ${commit}"
     ( cd ${repodir} && git reset --hard ${commit} )
 
+    # Determine the repodir and add that to status.
+    #
     # Mimic how web-targets.mki computes RESULTSDIR; switch to
     # directory specific status.
 
     resultsdir=${summarydir}/$(${webdir}/gime-git-description.sh ${repodir})
     gitstamp=$(basename ${resultsdir})
-    status="${json_status} --directory ${gitstamp}"
+    update_status="${update_status} --directory ${gitstamp}"
 
     # create the resultsdir and point the summary at it.
 
@@ -170,7 +173,7 @@ while true ; do
     ln -s $(basename ${resultsdir}) ${summarydir}/current
 
     start_time=$(${webdir}/now.sh)
-    ${status} "creating results directory"
+    ${update_status} "creating results directory"
     make -C ${makedir} web-resultsdir \
 	 WEB_TIME=${start_time} \
 	 WEB_REPODIR=${repodir} \
@@ -180,16 +183,6 @@ while true ; do
 
     # fudge up enough of summary.json to fool the top level
     ${webdir}/json-summary.sh "${start_time}" > ${resultsdir}/summary.json
-
-    #
-    # Cleanup ready for the new run
-    #
-
-    ${status} "running distclean"
-    if ! run distclean ; then
-	${status} "distclean barfed, restarting with HEAD"
-	exec $0 ${repodir} ${summarydir}
-    fi
 
     #
     # Build / update / test the repo
@@ -305,11 +298,11 @@ while true ; do
 	# convert raw list to an array
 	jq -s . < ${resultsdir}/build.json.in > ${resultsdir}/build.json
 
-	if test "${status}" = failed ; then
+	if test "${result}" = failed ; then
 	    # force the next run to test HEAD++ using rebuilt and
 	    # updated domains; hopefully that will contain the fix (or
 	    # at least contain the damage).
-	    ${status} "${target} barfed, restarting with HEAD"
+	    ${update_status} "${target} barfed, restarting with HEAD"
 	    exec $0 ${repodir} ${summarydir}
 	fi
 
@@ -326,7 +319,7 @@ while true ; do
     # It is assumed that git, when switching checkouts, creates new
     # files, and not modifies in-place.
 
-    ${status} "hardlink $(basename ${repodir}) $(${resultsdir})"
+    ${update_status} "hardlink $(basename ${repodir}) $(${resultsdir})"
     hardlink -v ${repodir} ${resultsdir}
 
 
@@ -335,9 +328,9 @@ while true ; do
     # A result with output-missing is good sign that the VMs have
     # become corrupt and need a rebuild.
 
-    ${status} "checking KVMs"
+    ${update_status} "checking KVMs"
     if grep '"output-missing"' "${resultsdir}/results.json" ; then
-	${status} "corrupt domains detected, restarting with HEAD"
+	${update_status} "corrupt domains detected, restarting with HEAD"
 	exec $0 ${repodir} ${summarydir}
     fi
 
