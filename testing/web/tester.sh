@@ -113,6 +113,16 @@ while true ; do
 	 WEB_RESULTSDIR= \
 	 WEB_SUMMARYDIR=${summarydir}
 
+    # Clean out old logs
+    #
+    # The script can run for a long time before idleing so do this
+    # every time.  Never delete log files for -0- commits (i.e.,
+    # releases).
+    ${update_status} "deleting *.log.gz files older than 14 days"
+    find ${summarydir} -type f -name '*.log.gz' -mtime +14 -print0 | \
+	grep -v -e -0- | \
+	xargs -0 --no-run-if-empty rm -v
+
     # Select the next commit to test
     #
     # Search [earliest_commit..HEAD] for something interesting and
@@ -127,13 +137,6 @@ while true ; do
 	delay=$(expr 10 \* 60)
 	now=$(date +%s)
 	future=$(expr ${now} + ${delay})
-
-	# do something productive
-	${update_status} "idle; deleting debug.log.gz files older than 30 days"
-	find ${summarydir} -type f -name 'debug.log.gz' -mtime +30 -print0 | \
-	    xargs -0 --no-run-if-empty rm -v
-	find ${summarydir} -type f -name '*.log.gz' -mtime +180 -print0 | \
-	    xargs -0 --no-run-if-empty rm -v
 
 	# is there still time?
 	now=$(date +%s)
