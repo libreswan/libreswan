@@ -7,9 +7,9 @@ if test $# -lt 2 -o $# -gt 3; then
 
 Usage:
 
-    $0 <repodir> <summarydir> [ <earliest_commit> ]
+    $0 <rutdir> <summarydir> [ <earliest_commit> ]
 
-Track <repodir>'s current branch and test each "interesting" commit.
+Track <rutdir>'s current branch and test each "interesting" commit.
 Publish results under <summarydir>.
 
 XXX: Should this also look at and use things like WEB_PREFIXES and
@@ -21,12 +21,12 @@ fi
 
 set -euvx
 
-repodir=$(cd $1 && pwd ) ; shift
+rutdir=$(cd $1 && pwd ) ; shift
 summarydir=$(cd $1 && pwd) ; shift
 
 webdir=$(dirname $0)
-makedir=$(cd ${webdir}/../.. && pwd)
-utilsdir=${makedir}/testing/utils
+benchdir=$(cd ${webdir}/../.. && pwd)
+utilsdir=${benchdir}/testing/utils
 
 # start with new shiny new just upgraded domains
 
@@ -49,7 +49,7 @@ if test $# -gt 0 ; then
     # updated.
     earliest_commit=$1; shift
 else
-    earliest_commit=$(${webdir}/gime-git-hash.sh ${repodir} HEAD)
+    earliest_commit=$(${webdir}/gime-git-hash.sh ${rutdir} HEAD)
 fi
 
 json_status="${webdir}/json-status.sh --json ${summarydir}/status.json"
@@ -62,12 +62,12 @@ run() (
 
     # So new features can be tested (?) use kvmrunner.py from this
     # directory (${utilsdir}), but point it at files in the test
-    # directory (${repodir}).
+    # directory (${rutdir}).
 
-    runner="${utilsdir}/kvmrunner.py --publish-hash ${commit} --publish-results ${resultsdir} --testing-directory ${repodir}/testing --publish-status ${summarydir}/status.json"
+    runner="${utilsdir}/kvmrunner.py --publish-hash ${commit} --publish-results ${resultsdir} --testing-directory ${rutdir}/testing --publish-status ${summarydir}/status.json"
 
-    if make -C ${repodir} $1 \
-	    WEB_REPODIR= \
+    if make -C ${rutdir} $1 \
+	    WEB_RUTDIR= \
 	    WEB_RESULTSDIR= \
 	    WEB_SUMMARYDIR= \
 	    ${runner:+KVMRUNNER="${runner}"} \
@@ -99,17 +99,17 @@ while true ; do
     # - if it fails the script dies.
 
     ${update_status} "updating repository"
-    ( cd ${repodir} && git fetch || true )
-    ( cd ${repodir} && git merge --ff-only )
+    ( cd ${rutdir} && git fetch || true )
+    ( cd ${rutdir} && git merge --ff-only )
 
     # Update the summary web page
     #
-    # This will add any new commits found in ${repodir} (added by
+    # This will add any new commits found in ${rutdir} (added by
     # above fetch) and merge the results from the last test run.
 
     ${update_status} "updating summary"
-    make -C ${makedir} web-summarydir \
-	 WEB_REPODIR=${repodir} \
+    make -C ${benchdir} web-summarydir \
+	 WEB_RUTDIR=${rutdir} \
 	 WEB_RESULTSDIR= \
 	 WEB_SUMMARYDIR=${summarydir}
 
@@ -129,7 +129,7 @@ while true ; do
     # untested.
 
     ${update_status} "looking for work"
-    if ! commit=$(${webdir}/gime-work.sh ${summarydir} ${repodir} ${earliest_commit}) ; then
+    if ! commit=$(${webdir}/gime-work.sh ${summarydir} ${rutdir} ${earliest_commit}) ; then
 	# Seemlingly nothing to do ...
 
 	# github gets updated up every 15 minutes so sleep for less
@@ -159,14 +159,14 @@ while true ; do
     # repo is already at head.
 
     ${update_status} "checking out ${commit}"
-    ( cd ${repodir} && git reset --hard ${commit} )
+    ( cd ${rutdir} && git reset --hard ${commit} )
 
-    # Determine the repodir and add that to status.
+    # Determine the rutdir and add that to status.
     #
     # Mimic how web-targets.mki computes RESULTSDIR; switch to
     # directory specific status.
 
-    resultsdir=${summarydir}/$(${webdir}/gime-git-description.sh ${repodir})
+    resultsdir=${summarydir}/$(${webdir}/gime-git-description.sh ${rutdir})
     gitstamp=$(basename ${resultsdir})
     update_status="${update_status} --directory ${gitstamp}"
 
@@ -177,9 +177,9 @@ while true ; do
 
     start_time=$(${webdir}/now.sh)
     ${update_status} "creating results directory"
-    make -C ${makedir} web-resultsdir \
+    make -C ${benchdir} web-resultsdir \
 	 WEB_TIME=${start_time} \
-	 WEB_REPODIR=${repodir} \
+	 WEB_RUTDIR=${rutdir} \
 	 WEB_HASH=${commit} \
 	 WEB_RESULTSDIR=${resultsdir} \
 	 WEB_SUMMARYDIR=${summarydir}
@@ -268,11 +268,11 @@ while true ; do
 		html )
 		    mkdir -p ${resultsdir}/documentation
 		    rm -f ${resultsdir}/documentation/*.html
-		    cp -v ${repodir}/OBJ.*/html/*.html ${resultsdir}/documentation/
+		    cp -v ${rutdir}/OBJ.*/html/*.html ${resultsdir}/documentation/
 		    # Use libreswan.7 as the index page since that
 		    # should be the starting point for someone reading
 		    # about libreswan.
-		    cp -v ${repodir}/OBJ.*/html/libreswan.7.html ${resultsdir}/documentation/index.html
+		    cp -v ${rutdir}/OBJ.*/html/libreswan.7.html ${resultsdir}/documentation/index.html
 		    ;;
 		kvm-check )
 		    # should only update when latest
@@ -306,7 +306,7 @@ while true ; do
 	    # updated domains; hopefully that will contain the fix (or
 	    # at least contain the damage).
 	    ${update_status} "${target} barfed, restarting with HEAD"
-	    exec $0 ${repodir} ${summarydir}
+	    exec $0 ${rutdir} ${summarydir}
 	fi
 
     done
@@ -322,8 +322,8 @@ while true ; do
     # It is assumed that git, when switching checkouts, creates new
     # files, and not modifies in-place.
 
-    ${update_status} "hardlink $(basename ${repodir}) $(${resultsdir})"
-    hardlink -v ${repodir} ${resultsdir}
+    ${update_status} "hardlink $(basename ${rutdir}) $(${resultsdir})"
+    hardlink -v ${rutdir} ${resultsdir}
 
 
     # Check that the test VMs are ok
@@ -334,7 +334,7 @@ while true ; do
     ${update_status} "checking KVMs"
     if grep '"output-missing"' "${resultsdir}/results.json" ; then
 	${update_status} "corrupt domains detected, restarting with HEAD"
-	exec $0 ${repodir} ${summarydir}
+	exec $0 ${rutdir} ${summarydir}
     fi
 
     # loop back to code updating summary dir
