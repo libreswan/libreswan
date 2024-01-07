@@ -1018,24 +1018,28 @@ $(KVM_FREEBSD_DOMAIN)-base.iso: | testing/libvirt/freebsd/base.conf
 #
 # - needs a second serial console boot iso
 #
-
 KVM_NETBSD_MACHINE = amd64
 KVM_NETBSD_URL_PREFIX ?= https://nycdn.netbsd.org/pub/NetBSD-daily/netbsd-10/latest/
 
-KVM_NETBSD_INSTALL_ISO_URL ?= $(KVM_NETBSD_URL_PREFIX)/images/NetBSD-10.0_RC1-$(KVM_NETBSD_MACHINE).iso
-KVM_NETBSD_INSTALL_ISO ?= $(KVM_POOLDIR)/$(notdir $(KVM_NETBSD_INSTALL_ISO_URL))
+KVM_NETBSD_INSTALL_ISO ?= $(KVM_POOLDIR)/NetBSD-10.0_RC2-$(KVM_NETBSD_MACHINE).iso
+KVM_NETBSD_INSTALL_ISO_URL ?= $(KVM_NETBSD_URL_PREFIX)/images/$(notdir $(KVM_NETBSD_INSTALL_ISO))
+KVM_NETBSD_INSTALL_ISO_SHA512 ?= 71ddc1e7dc83deefff6a540669ed43f5d9d4a694d2ab2ac836d5f05fcf6887a211ddae089b07bfc3ae0bb3c47dfc0385f40201083791b6cdc2cd730bc9059897
 
-KVM_NETBSD_BOOT_ISO_URL ?= $(KVM_NETBSD_URL_PREFIX)/$(KVM_NETBSD_MACHINE)/installation/cdrom/boot-com.iso
+# i.e., replace .is with -boot.iso; boot-com.iso isn't unique
 KVM_NETBSD_BOOT_ISO ?= $(basename $(KVM_NETBSD_INSTALL_ISO))-boot.iso
+KVM_NETBSD_BOOT_ISO_URL ?= $(KVM_NETBSD_URL_PREFIX)/$(KVM_NETBSD_MACHINE)/installation/cdrom/boot-com.iso
+KVM_NETBSD_BOOT_ISO_SHA512 ?= 7451b61cddb69e3d88fe132d4148f5498f8a1847c180f160b0f60057b5e99993f756cd2adf63e5ccd5f5a17884a451f0073db26fde79d110f43d8606d0c4a35b
 
 kvm-iso: $(KVM_NETBSD_BOOT_ISO)
 kvm-iso: $(KVM_NETBSD_INSTALL_ISO)
 $(KVM_NETBSD_INSTALL_ISO): | $(KVM_POOLDIR)
 	$(KVM_WGET) --output-document $@.tmp -- $(KVM_NETBSD_INSTALL_ISO_URL)
+	echo 'SHA512 ($@.tmp) = $(KVM_NETBSD_INSTALL_ISO_SHA512)' | cksum -c
 	touch $@.tmp # wget preserves dates
 	mv $@.tmp $@
 $(KVM_NETBSD_BOOT_ISO): | $(KVM_POOLDIR)
 	$(KVM_WGET) --output-document $@.tmp -- $(KVM_NETBSD_BOOT_ISO_URL)
+	echo 'SHA512 ($@.tmp) = $(KVM_NETBSD_BOOT_ISO_SHA512)' | cksum -c
 	touch $@.tmp # wget preserves dates
 	mv $@.tmp $@
 
