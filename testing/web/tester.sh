@@ -60,11 +60,6 @@ run() (
     href="<a href=\"$(basename ${resultsdir})/$1.log\">$1</a>"
     ${status} "running 'make ${href}'"
 
-    # fudge up enough of summary.json to fool the top level
-    if test ! -r ${resultsdir}/kvm-test.ok ; then
-	${webdir}/json-summary.sh "${start_time}" > ${resultsdir}/summary.json
-    fi
-
     # So new features can be tested (?) use kvmrunner.py from this
     # directory (${utilsdir}), but point it at files in the test
     # directory (${repodir}).
@@ -182,6 +177,9 @@ while true ; do
 	 WEB_HASH=${commit} \
 	 WEB_RESULTSDIR=${resultsdir} \
 	 WEB_SUMMARYDIR=${summarydir}
+
+    # fudge up enough of summary.json to fool the top level
+    ${webdir}/json-summary.sh "${start_time}" > ${resultsdir}/summary.json
 
     #
     # Cleanup ready for the new run
