@@ -3,22 +3,23 @@
   <listitem>
 <para>Set the method of Network Interface Controller (NIC)
 hardware offload for ESP/AH packet processing.  Acceptable values
-are <emphasis>auto</emphasis> (the default),
+are <emphasis>no</emphasis> (the default),
 <emphasis>crypto</emphasis>, <emphasis>packet</emphasis>
-or <emphasis>no</emphasis>. The value <emphasis>yes</emphasis>
+or <emphasis>auto</emphasis>. The value <emphasis>yes</emphasis>
 is a backwards compatible value for <emphasis>crypto</emphasis>.
 This option is separate from any CPU hardware offload available.
 The crypto value offloads the crypto operations to the NIC card and is
 available on Linux 4.13+ using the XFRM IPsec stack, when the kernel is
-compiled with the options CONFIG_XFRM_OFFLOAD, CONFIG_INET_ESP_OFFLOAD
-and CONFIG_INET6_ESP_OFFLOAD. The packet value offloads the entire cleartext
-packet to the NIC card to be encrypted and is available on Linux 6.3+ using
-the XFRM IPsec stack. The auto option will attempt to auto-detect
-the presence of kernel and hardware support, and if found, attempt to install
-a packet offload IPsec SA. Failing this, it will fallback to attempt a crypto
-offload IPsec SA, and failing that it will fall back to not using any nic-offload.
-This fallback would then use the regular CPUs (and their hardware offload, such as
-AES-NI). One vendor supporting this offload method is Nvidia/Mellanox.</para>
+compiled with the options CONFIG_XFRM_OFFLOAD, CONFIG_INET_ESP_OFFLOAD and
+CONFIG_INET6_ESP_OFFLOAD. The packet value offloads the entire cleartext
+packet to the NIC card to be encrypted and is available on Linux 6.3+
+using the XFRM IPsec stack. The auto option will attempt to auto-detect
+the presence of kernel and hardware support, and if found, attempt to
+install a packet offload IPsec SA. Failing this, it will fallback to
+attempt a crypto offload IPsec SA, and failing that it will fall back to
+not using any nic-offload.  This fallback would then use the regular CPUs
+(and their hardware offload, such as AES-NI). One vendor supporting this
+offload method is Nvidia/Mellanox.</para>
   </listitem>
   </varlistentry>
 

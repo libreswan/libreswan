@@ -138,7 +138,7 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 	DOPT(KNCF_XAUTHBY, XAUTHBY_FILE);
 	DOPT(KNCF_XAUTHFAIL, XAUTHFAIL_HARD);
 
-	DOPT(KNCF_NIC_OFFLOAD, offload_auto);
+	DOPT(KNCF_NIC_OFFLOAD, offload_no);
 
 	DOPT(KNCF_REPLAY_WINDOW, IPSEC_SA_DEFAULT_REPLAY_WINDOW);
 

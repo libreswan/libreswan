@@ -115,7 +115,7 @@ static const struct sparse_name kw_offload_list[] = {
 	{ "auto",       offload_auto },
 	{ "crypto",     offload_crypto },
 	{ "packet",     offload_packet },
-	{ "yes",        offload_packet }, /* backwards compat */
+	{ "yes",        offload_crypto }, /* backwards compat. packet has complications */
        SPARSE_NULL
 };
 
