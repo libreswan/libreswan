@@ -209,7 +209,7 @@ Connection list:
 "clear-or-private":   policy: IKEv2+AUTH_NULL+ENCRYPT+TUNNEL+PFS+OPPORTUNISTIC+GROUP+IKEV2_ALLOW_NARROWING+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+NEGO_PASS+failurePASS;
 "clear-or-private":   v2-auth-hash-policy: none;
 "clear-or-private":   conn_prio: 32,0; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-"clear-or-private":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+"clear-or-private":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "clear-or-private":   our idtype: ID_NULL; our id=ID_NULL; their idtype: ID_NULL; their id=ID_NULL
 "clear-or-private":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 "clear-or-private":   nat-traversal: encapsulation:auto; keepalive:20s
@@ -228,7 +228,7 @@ Connection list:
 "private":   policy: IKEv2+AUTH_NULL+ENCRYPT+TUNNEL+PFS+OPPORTUNISTIC+ROUTE+GROUP+IKEV2_ALLOW_NARROWING+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+failureDROP;
 "private":   v2-auth-hash-policy: none;
 "private":   conn_prio: 32,0; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-"private":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+"private":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "private":   our idtype: ID_NULL; our id=ID_NULL; their idtype: ID_NULL; their id=ID_NULL
 "private":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 "private":   nat-traversal: encapsulation:auto; keepalive:20s
@@ -247,7 +247,7 @@ Connection list:
 "private-or-clear":   policy: IKEv2+AUTH_NULL+ENCRYPT+TUNNEL+PFS+OPPORTUNISTIC+ROUTE+GROUP+IKEV2_ALLOW_NARROWING+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+NEGO_PASS+failurePASS;
 "private-or-clear":   v2-auth-hash-policy: none;
 "private-or-clear":   conn_prio: 32,0; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-"private-or-clear":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+"private-or-clear":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "private-or-clear":   our idtype: ID_NULL; our id=ID_NULL; their idtype: ID_NULL; their id=ID_NULL
 "private-or-clear":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 "private-or-clear":   nat-traversal: encapsulation:auto; keepalive:20s
@@ -266,7 +266,7 @@ Connection list:
 "private-or-clear#192.1.2.0/24":   policy: IKEv2+AUTH_NULL+ENCRYPT+TUNNEL+PFS+OPPORTUNISTIC+GROUPINSTANCE+IKEV2_ALLOW_NARROWING+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+NEGO_PASS+failurePASS;
 "private-or-clear#192.1.2.0/24":   v2-auth-hash-policy: none;
 "private-or-clear#192.1.2.0/24":   conn_prio: 32,0; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-"private-or-clear#192.1.2.0/24":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+"private-or-clear#192.1.2.0/24":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "private-or-clear#192.1.2.0/24":   our idtype: ID_NULL; our id=ID_NULL; their idtype: ID_NULL; their id=ID_NULL
 "private-or-clear#192.1.2.0/24":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 "private-or-clear#192.1.2.0/24":   nat-traversal: encapsulation:auto; keepalive:20s

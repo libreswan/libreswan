@@ -27,7 +27,7 @@ east #
 "west-east":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "west-east":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "west-east":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-"west-east":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+"west-east":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "west-east":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
 "west-east":   dpd: passive; delay:0s; timeout:0s
 "west-east":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
@@ -45,7 +45,7 @@ east #
 "west-east-b":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "west-east-b":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "west-east-b":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-"west-east-b":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+"west-east-b":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "west-east-b":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
 "west-east-b":   dpd: passive; delay:0s; timeout:0s
 "west-east-b":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
@@ -63,7 +63,7 @@ east #
 "west-east-c":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "west-east-c":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "west-east-c":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-"west-east-c":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+"west-east-c":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "west-east-c":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
 "west-east-c":   dpd: passive; delay:0s; timeout:0s
 "west-east-c":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
@@ -88,7 +88,7 @@ east #
 "west-east":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "west-east":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "west-east":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-"west-east":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+"west-east":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "west-east":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
 "west-east":   dpd: passive; delay:0s; timeout:0s
 "west-east":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
@@ -106,7 +106,7 @@ east #
 "west-east-b":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "west-east-b":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "west-east-b":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-"west-east-b":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+"west-east-b":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "west-east-b":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
 "west-east-b":   dpd: passive; delay:0s; timeout:0s
 "west-east-b":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
@@ -125,7 +125,7 @@ east #
 "west-east-c":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "west-east-c":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "west-east-c":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-"west-east-c":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+"west-east-c":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "west-east-c":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
 "west-east-c":   dpd: passive; delay:0s; timeout:0s
 "west-east-c":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
