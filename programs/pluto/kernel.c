@@ -1904,6 +1904,9 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 	     enum_name(&routing_names, c->child.routing),
 	     bool_str(up));
 
+	/* clear the deck */
+	clear_connection_spd_conflicts(c);
+
 	bool ok = true;	/* sticky: once false, stays false */
 
 	/*
@@ -2128,8 +2131,6 @@ bool install_outbound_ipsec_sa(struct child_sa *child, enum routing new_routing,
 		return false;
 	}
 
-	clear_connection_spd_conflicts(c);
-
 	if (!install_outbound_ipsec_kernel_policies(child, new_routing, up)) {
 		return false;
 	}
@@ -2138,8 +2139,6 @@ bool install_outbound_ipsec_sa(struct child_sa *child, enum routing new_routing,
 		llog(RC_LOG, logger, "IMPAIR: kernel: %s() failing", __func__);
 		return false;
 	}
-
-	clear_connection_spd_conflicts(c);
 
 	/*
 	 * Transfer ownership of the connection's IPsec SA (kernel
