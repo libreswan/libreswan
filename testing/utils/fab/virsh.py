@@ -37,7 +37,7 @@ class STATE:
 
 _VIRSH = ["sudo", "virsh", "--connect", "qemu:///system"]
 
-START_TIMEOUT = 60
+START_TIMEOUT = 90
 # Can be anything as it either matches immediately or dies with EOF.
 CONSOLE_TIMEOUT = 20
 SHUTDOWN_TIMEOUT = 30
@@ -102,7 +102,7 @@ class Domain:
     def _shutdown(self):
         self._run_status_output(_VIRSH + ["shutdown", self.domain_name])
 
-    def shutdown(self, timeout=SHUTDOWN_TIMEOUT):
+    def shutdown(self):
         """Use the console to detect the shutdown - if/when the domain stops
         it will exit giving an EOF.
 
@@ -117,11 +117,11 @@ class Domain:
                 self.logger.error("domain already shutdown")
                 return True
 
-        self.logger.info("waiting %d seconds for domain to shutdown", timeout)
+        self.logger.info("waiting %d seconds for domain to shutdown", SHUTDOWN_TIMEOUT)
         lapsed_time = timing.Lapsed()
         self._shutdown()
         if self._console.expect([pexpect.EOF, pexpect.TIMEOUT],
-                                timeout=timeout) == 0:
+                                timeout=SHUTDOWN_TIMEOUT) == 0:
             self.logger.info("got EOF; domain shutdown after %s", lapsed_time)
             self._console = False
             self.logger.info("domain state is: %s", self.state())
@@ -132,7 +132,7 @@ class Domain:
     def _destroy(self):
         return self._run_status_output(_VIRSH + ["destroy", self.domain_name])
 
-    def destroy(self, timeout=DESTROY_TIMEOUT):
+    def destroy(self):
         """Use the console to detect a destroyed domain - if/when the domain
         stops it will exit giving an EOF.
 
@@ -143,11 +143,11 @@ class Domain:
             self.logger.error("domain already destroyed")
             return True
 
-        self.logger.info("waiting %d seconds for domain to be destroyed", timeout)
+        self.logger.info("waiting %d seconds for domain to be destroyed", DESTROY_TIMEOUT)
         lapsed_time = timing.Lapsed()
         self._destroy()
         if console.expect([pexpect.EOF, pexpect.TIMEOUT],
-                          timeout=timeout) == 0:
+                          timeout=DESTROY_TIMEOUT) == 0:
             self.logger.info("domain destroyed after %s", lapsed_time)
             self._console = None
             return True
@@ -161,11 +161,11 @@ class Domain:
 
     def start(self):
         # A shutdown domain can linger for a bit
-        timeout = START_TIMEOUT
-        while self.state() == STATE.IN_SHUTDOWN and timeout > 0:
+        shutdown_timeout = START_TIMEOUT
+        while self.state() == STATE.IN_SHUTDOWN and shutdown_timeout > 0:
             self.logger.info("waiting for domain to finish shutting down")
             time.sleep(1)
-            timeout = timeout - 1;
+            shutdown_timeout = shutdown_timeout - 1;
 
         command = _VIRSH + ["start", self.domain_name, "--console"]
         self.logger.info("spawning: %s", " ".join(command))
