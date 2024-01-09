@@ -1,0 +1,4 @@
+test nic-offload
+
+It isn't expected to orient, which is good as at that point it would
+notice that all interfaces don't support hardware offload.

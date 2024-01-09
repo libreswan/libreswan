@@ -1,0 +1,93 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec add addconn
+"addconn": added IKEv2 connection
+west #
+ ipsec add addconn--nic-offload=no
+"addconn--nic-offload=no": added IKEv2 connection
+west #
+ ipsec add addconn--nic-offload=yes
+"addconn--nic-offload=yes": added IKEv2 connection
+west #
+ ipsec add addconn--nic-offload=auto
+"addconn--nic-offload=auto": added IKEv2 connection
+west #
+ ipsec add addconn--nic-offload=packet
+"addconn--nic-offload=packet": added IKEv2 connection
+west #
+ ipsec add addconn--nic-offload=crypto
+"addconn--nic-offload=crypto": added IKEv2 connection
+west #
+ ipsec whack --name whack                                           --host 1.2.3.4 --to --host 5.6.7.8
+"whack": added IKEv2 connection
+west #
+ ipsec whack --name whack--nic-offload        --nic-offload         --host 1.2.3.4 --to --host 5.6.7.8
+whack error: "whack--nic-offload" unrecognized "--host"
+west #
+ ipsec whack --name whack--nic-offload=no     --nic-offload=no      --host 1.2.3.4 --to --host 5.6.7.8
+"whack--nic-offload=no": added IKEv2 connection
+west #
+ ipsec whack --name whack--nic-offload=yes    --nic-offload=yes     --host 1.2.3.4 --to --host 5.6.7.8
+"whack--nic-offload=yes": added IKEv2 connection
+west #
+ ipsec whack --name whack--nic-offload=auto   --nic-offload=auto    --host 1.2.3.4 --to --host 5.6.7.8
+"whack--nic-offload=auto": added IKEv2 connection
+west #
+ ipsec whack --name whack--nic-offload=packet --nic-offload=packet  --host 1.2.3.4 --to --host 5.6.7.8
+"whack--nic-offload=packet": added IKEv2 connection
+west #
+ ipsec whack --name whack--nic-offload=crypto --nic-offload=crypto  --host 1.2.3.4 --to --host 5.6.7.8
+"whack--nic-offload=crypto": added IKEv2 connection
+west #
+ ipsec whack --name whack--passthrough                                            --pass --host 1.2.3.4 --to --host 5.6.7.8
+"whack--passthrough": added passthrough connection
+west #
+ ipsec whack --name whack--passthrough--nic-offload         --nic-offload         --pass --host 1.2.3.4 --to --host 5.6.7.8
+whack error: "whack--passthrough--nic-offload" unrecognized "--pass"
+west #
+ ipsec whack --name whack--passthrough--nic-offload=no      --nic-offload=no      --pass --host 1.2.3.4 --to --host 5.6.7.8
+"whack--passthrough--nic-offload=no": nic-offload=no ignored for never-negotiate connection
+"whack--passthrough--nic-offload=no": added passthrough connection
+west #
+ ipsec whack --name whack--passthrough--nic-offload=yes     --nic-offload=yes     --pass --host 1.2.3.4 --to --host 5.6.7.8
+"whack--passthrough--nic-offload=yes": nic-offload=crypto ignored for never-negotiate connection
+"whack--passthrough--nic-offload=yes": added passthrough connection
+west #
+ ipsec whack --name whack--passthrough--nic-offload=auto    --nic-offload=auto    --pass --host 1.2.3.4 --to --host 5.6.7.8
+"whack--passthrough--nic-offload=auto": nic-offload=auto ignored for never-negotiate connection
+"whack--passthrough--nic-offload=auto": added passthrough connection
+west #
+ ipsec whack --name whack--passthrough--nic-offload=packet  --nic-offload=packet  --pass --host 1.2.3.4 --to --host 5.6.7.8
+"whack--passthrough--nic-offload=packet": nic-offload=packet ignored for never-negotiate connection
+"whack--passthrough--nic-offload=packet": added passthrough connection
+west #
+ ipsec whack --name whack--passthrough--nic-offload=crypto  --nic-offload=crypto  --pass --host 1.2.3.4 --to --host 5.6.7.8
+"whack--passthrough--nic-offload=crypto": nic-offload=crypto ignored for never-negotiate connection
+"whack--passthrough--nic-offload=crypto": added passthrough connection
+west #
+ ipsec connectionstatus | sed -n -e 's/\(^[^:]*:\).* \(nic-offload:[^;]*\);.*/\1 \2/p' | sort
+"addconn--nic-offload=auto": nic-offload:auto
+"addconn--nic-offload=crypto": nic-offload:crypto
+"addconn": nic-offload:no
+"addconn--nic-offload=no": nic-offload:no
+"addconn--nic-offload=packet": nic-offload:packet
+"addconn--nic-offload=yes": nic-offload:crypto
+"whack--nic-offload=auto": nic-offload:auto
+"whack--nic-offload=crypto": nic-offload:crypto
+"whack": nic-offload:no
+"whack--nic-offload=no": nic-offload:no
+"whack--nic-offload=packet": nic-offload:packet
+"whack--nic-offload=yes": nic-offload:crypto
+"whack--passthrough--nic-offload=auto": nic-offload:no
+"whack--passthrough--nic-offload=crypto": nic-offload:no
+"whack--passthrough": nic-offload:no
+"whack--passthrough--nic-offload=no": nic-offload:no
+"whack--passthrough--nic-offload=packet": nic-offload:no
+"whack--passthrough--nic-offload=yes": nic-offload:no
+west #
+ 
