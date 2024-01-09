@@ -130,3 +130,15 @@ const struct sparse_name tcp_option_names[] = {
 	{ "fallback", IKE_TCP_FALLBACK },
 	SPARSE_NULL
 };
+
+
+const struct sparse_name nic_offload_option_names[] = {
+	{ "no",         NIC_OFFLOAD_NO },
+	{ "auto",       NIC_OFFLOAD_AUTO },
+	{ "crypto",     NIC_OFFLOAD_CRYPTO },
+	{ "packet",     NIC_OFFLOAD_PACKET },
+	{ "yes",        NIC_OFFLOAD_CRYPTO }, /* backwards
+					       * compat. PACKET has
+					       * complications */
+	SPARSE_NULL
+};

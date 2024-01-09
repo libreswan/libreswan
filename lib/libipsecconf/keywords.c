@@ -110,15 +110,6 @@ static const struct sparse_name kw_ikev2_list[] = {
 	SPARSE_NULL
 };
 
-static const struct sparse_name kw_offload_list[] = {
-	{ "no",         offload_no },
-	{ "auto",       offload_auto },
-	{ "crypto",     offload_crypto },
-	{ "packet",     offload_packet },
-	{ "yes",        offload_crypto }, /* backwards compat. packet has complications */
-       SPARSE_NULL
-};
-
 static const struct sparse_name kw_ddos_list[] = {
 	{ "auto",      DDOS_AUTO },
 	{ "busy",      DDOS_FORCE_BUSY },
@@ -511,7 +502,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "vti-shared",  kv_conn,  kt_enum,  KNCF_VTI_SHARED, yn_option_names, NULL, },
   { "ipsec-interface", kv_conn, kt_string, KSCF_IPSEC_INTERFACE, NULL, NULL, },
 
-  { "nic-offload",  kv_conn,  kt_enum,  KNCF_NIC_OFFLOAD,  kw_offload_list, NULL, },
+  { "nic-offload",  kv_conn,  kt_enum,  KNCF_NIC_OFFLOAD,  nic_offload_option_names, NULL, },
 
   { "encapsulation",  kv_conn,  kt_enum,  KNCF_ENCAPSULATION,  yna_option_names, NULL, },
 

@@ -860,15 +860,15 @@ enum eap_options {
 	IKE_EAP_TLS = 1,
 };
 
-/*
- * Use lower case to avoid confusion with kernel options
- */
-enum offload_options {
-	offload_auto = 1, /* default */
-	offload_no = 2,
-	offload_crypto = 3,
-	offload_packet = 4,
+enum nic_offload_options {
+	NIC_OFFLOAD_UNSET = 0,
+	NIC_OFFLOAD_AUTO, /* default */
+	NIC_OFFLOAD_NO,
+	NIC_OFFLOAD_CRYPTO,
+	NIC_OFFLOAD_PACKET,
 };
+
+extern const struct sparse_name nic_offload_option_names[];
 
 /*
  * Policies for establishing an SA

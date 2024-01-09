@@ -229,7 +229,7 @@ struct config {
 	struct ike_proposals ike_proposals;
 	struct ikev2_proposals *v2_ike_proposals;
 
-	enum offload_options nic_offload;
+	enum nic_offload_options nic_offload;
 	char *dnshostname;
 
 	struct {

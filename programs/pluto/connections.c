@@ -2834,6 +2834,30 @@ static diag_t extract_connection(const struct whack_message *wm,
 					    wm, c->logger);
 
 	if (never_negotiate_wm(wm)) {
+		if (wm->nic_offload != NIC_OFFLOAD_UNSET) {
+			llog(RC_LOG, c->logger, "nic-offload=%s ignored for never-negotiate connection",
+			     sparse_name(nic_offload_option_names, wm->nic_offload));
+		}
+		/* keep <<ipsec connectionstatus>> simple */
+		config->nic_offload = NIC_OFFLOAD_NO;
+	} else {
+		switch (wm->nic_offload) {
+		case NIC_OFFLOAD_UNSET:
+		case NIC_OFFLOAD_NO:
+			config->nic_offload = NIC_OFFLOAD_NO; /* default */
+			break;
+		case NIC_OFFLOAD_AUTO:
+		case NIC_OFFLOAD_PACKET:
+		case NIC_OFFLOAD_CRYPTO:
+			if (kernel_ops->detect_offload == NULL) {
+				return diag("no kernel support for nic-offload[=%s]",
+					    sparse_name(nic_offload_option_names, wm->nic_offload));
+			}
+			config->nic_offload = wm->nic_offload;
+		}
+	}
+
+	if (never_negotiate_wm(wm)) {
 		dbg("skipping over misc settings as NEVER_NEGOTIATE");
 	} else {
 
@@ -2855,8 +2879,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 		if (d != NULL) {
 			return d;
 		}
-
-		config->nic_offload = wm->nic_offload;
 
 		config->sa_rekey_margin = wm->sa_rekey_margin;
 		config->sa_rekey_fuzz = wm->sa_rekeyfuzz_percent;

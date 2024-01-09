@@ -1264,14 +1264,14 @@ bool unrouted_to_routed_ondemand_sec_label(struct connection *c, struct logger *
 void setup_esp_nic_offload(struct nic_offload *nic_offload, const struct connection *c,
 		bool *nic_offload_fallback)
 {
-	if (c->config->nic_offload == offload_no ||
+	if (c->config->nic_offload == NIC_OFFLOAD_NO ||
 	    c->iface == NULL ||
 	    c->iface->real_device_name == NULL) {
 		dbg("kernel: NIC esp-hw-offload disabled for connection '%s'", c->name);
 		return;
 	}
 
-	if (c->config->nic_offload == offload_auto) {
+	if (c->config->nic_offload == NIC_OFFLOAD_AUTO) {
 		if (!c->iface->nic_offload) {
 			dbg("kernel: NIC esp-hw-offload not for connection '%s' not available on interface %s",
 				c->name, c->iface->real_device_name);
@@ -1283,7 +1283,7 @@ void setup_esp_nic_offload(struct nic_offload *nic_offload, const struct connect
 		    c->name, c->iface->real_device_name);
 	}
 	nic_offload->dev = c->iface->real_device_name;
-	nic_offload->type = (c->config->nic_offload == offload_packet) ?
+	nic_offload->type = (c->config->nic_offload == NIC_OFFLOAD_PACKET) ?
 				OFFLOAD_PACKET : OFFLOAD_CRYPTO;
 }
 
