@@ -8,17 +8,20 @@ set -e
 
 # gmake isn't on debian?
 gnumake="make -C $(realpath $(dirname $0))/testing/libvirt"
-quietmake="${gnumake} --no-print-directory"
 
-kvm_platform=$(${quietmake} print-kvm-platform)
-kvm_testingdir=$(${quietmake} print-kvm-testingdir)
-kvm_baseline=$(${quietmake} print-kvm-baseline)
-kvm_test_status=$(${quietmake} print-kvm-test-status)
-kvm_test_name=$(${quietmake} print-kvm-test-name)
-kvm_test_flags=$(${quietmake} print-kvm-test-flags)
-kvm_prefixes=($(${quietmake} print-kvm-prefixes))
-kvm_sourcedir=$(${quietmake} print-kvm-sourcedir)
-kvm_pidfile=$(${quietmake} print-kvm-pidfile)
+print-kvm-variable() {
+    ${gnumake} --no-print-directory print-kvm-variable VARIABLE=$1
+}
+
+kvm_platform=$(print-kvm-variable KVM_PLATFORM)
+kvm_testingdir=$(print-kvm-variable KVM_TESTINGDIR)
+kvm_baseline=$(print-kvm-variable KVM_BASELINE)
+kvm_test_status=$(print-kvm-variable KVM_TEST_STATUS)
+kvm_test_name=$(print-kvm-variable KVM_TEST_NAME)
+kvm_test_flags=$(print-kvm-variable KVM_TEST_FLAGS)
+kvm_prefixes=($(print-kvm-variable KVM_PREFIXES))
+kvm_sourcedir=$(print-kvm-variable KVM_SOURCEDIR)
+kvm_pidfile=$(print-kvm-variable KVM_PIDFILE)
 
 # repo under test
 rutdir=${kvm_testingdir:+$(realpath $(dirname "${kvm_testingdir}"))}

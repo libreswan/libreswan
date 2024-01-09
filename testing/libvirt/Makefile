@@ -334,28 +334,10 @@ KVM_DOMAINS += $(KVM_TEST_DOMAINS)
 
 # targets for dumping the above; $(info) value to stdout when
 # evaluating the command @: gives make real work.
-.PHONY: print-kvm-prefixes
-print-kvm-prefixes: ; @:$(info $(KVM_PREFIXES))
-.PHONY: print-kvm-test-status
-print-kvm-test-status: ; @:$(info $(STRIPPED_KVM_TEST_STATUS))
-.PHONY: print-kvm-test-name
-print-kvm-test-name: ; @:$(info $(STRIPPED_KVM_TEST_NAME))
-.PHONY: print-kvm-test-flags
-print-kvm-test-flags: ; @:$(info $(KVM_TEST_FLAGS))
-.PHONY: print-kvm-testingdir
-print-kvm-testingdir: ; @:$(info $(KVM_TESTINGDIR))
-.PHONY: print-kvm-sourcedir
-print-kvm-sourcedir: ; @:$(info $(KVM_SOURCEDIR))
-.PHONY: print-kvm-baseline
-print-kvm-baseline: ; @:$(info $(KVM_BASELINE))
-.PHONY: print-kvm-platform
-print-kvm-platform: ; @:$(info $(KVM_PLATFORM))
-.PHONY: print-kvm-rutdir
-print-kvm-rutdir: ; @:$(info $(KVM_RUTDIR))
-.PHONY: print-kvm-testdir
-print-kvm-testdir: ; @:$(info $(KVM_TESTDIR))
-.PHONY: print-kvm-pidfile
-print-kvm-pidfile: ; @:$(info $(KVM_PIDFILE))
+
+.PHONY: print-kvm-variable
+print-kvm-variable:
+	@echo "$($(VARIABLE))"
 
 KVM_POOLDIR_PREFIX = $(KVM_POOLDIR)/$(KVM_FIRST_PREFIX)
 KVM_LOCALDIR_PREFIXES = \
