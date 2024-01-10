@@ -1034,14 +1034,30 @@ static uintmax_t optarg_uintmax(void)
 	return val;
 }
 
+/*
+ * Lookup OPTARG in NAMES.
+ *
+ * When optional_argument OPTARG is missing, return OPTIONAL (pass
+ * optional=0 when required_argument).
+ */
+
 static uintmax_t optarg_sparse(unsigned optional, const struct sparse_name names[])
 {
 	if (optarg == NULL) {
+		passert(long_opts[long_index].has_arg == optional_argument);
+		passert(optional != 0);
 		return optional;
 	}
+
 	const struct sparse_name *name = sparse_lookup(names, optarg);
 	if (name == NULL) {
-		diagq("unrecognized", optarg);
+		JAMBUF(buf) {
+			const char *msg = jambuf_cursor(buf); /* hack */
+			jam(buf, "unrecognized --%s '%s', valid arguments are: ",
+			    long_opts[long_index].name, optarg);
+			jam_sparse_names(buf, names, ", ");
+			diagw(msg);
+		}
 	}
 	return name->value;
 }
