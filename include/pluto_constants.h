@@ -862,8 +862,8 @@ enum eap_options {
 
 enum nic_offload_options {
 	NIC_OFFLOAD_UNSET = 0,
-	NIC_OFFLOAD_AUTO, /* default */
-	NIC_OFFLOAD_NO,
+	NIC_OFFLOAD_AUTO,
+	NIC_OFFLOAD_NO, /* default */
 	NIC_OFFLOAD_CRYPTO,
 	NIC_OFFLOAD_PACKET,
 };

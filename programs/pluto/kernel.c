@@ -1270,11 +1270,12 @@ void setup_esp_nic_offload(struct nic_offload *nic_offload, const struct connect
 	}
 
 	switch (c->config->nic_offload) {
-	case offload_no:
+	case NIC_OFFLOAD_UNSET:
+	case NIC_OFFLOAD_NO:
 		dbg("kernel: NIC esp-hw-offload disabled for connection '%s'", c->name);
 		return;
 
-	case offload_auto:
+	case NIC_OFFLOAD_AUTO:
 		if (!c->iface->nic_offload) {
 			dbg("kernel: NIC esp-hw-offload for connection '%s' not available on interface %s",
 				c->name, c->iface->real_device_name);
@@ -1287,13 +1288,13 @@ void setup_esp_nic_offload(struct nic_offload *nic_offload, const struct connect
 		nic_offload->dev = c->iface->real_device_name;
 		nic_offload->type = OFFLOAD_PACKET;
 		return;
-	case offload_packet:
+	case NIC_OFFLOAD_PACKET:
 		nic_offload->dev = c->iface->real_device_name;
 		nic_offload->type = OFFLOAD_PACKET;
 		dbg("kernel: NIC esp-hw-offload packet offload for connection '%s' enabled on interface %s",
 		    c->name, c->iface->real_device_name);
 		return;
-	case offload_crypto:
+	case NIC_OFFLOAD_CRYPTO:
 		nic_offload->dev = c->iface->real_device_name;
 		nic_offload->type = OFFLOAD_CRYPTO;
 		dbg("kernel: NIC esp-hw-offload crypto offload for connection '%s' enabled on interface %s",
@@ -1589,7 +1590,7 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 
 		setup_esp_nic_offload(&said_next->nic_offload, c, &nic_offload_fallback);
 
-		bool cno = c->config->nic_offload == offload_auto;
+		bool cno = c->config->nic_offload == NIC_OFFLOAD_AUTO;
 		bool ret = kernel_ops_add_sa(said_next, replace, st->logger);
 
 		if (!ret && nic_offload_fallback)
