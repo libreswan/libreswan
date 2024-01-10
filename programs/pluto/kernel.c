@@ -1613,6 +1613,11 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 			log_state(RC_LOG_SERIOUS, st, "Warning: NIC packet esp-hw-offload not available for interface %s",
 				c->iface->real_device_name);
 
+		/*
+		 * XXX: This short-circuit is broken; it skips the
+		 * memzero() below.
+		 */
+
 		if (!ret && !cno)
 			goto fail;
 
@@ -1634,6 +1639,9 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 					log_state(RC_LOG_SERIOUS, st, "Warning: IPsec SA is not using any NIC esp-hw-offload");
 			}
 		}
+
+		/* scrub keys from memory */
+		memset(esp_keymat.ptr, 0, esp_keymat.len);
 
 		if (!ret)
 			goto fail;
@@ -1684,6 +1692,8 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 		}
 
 		bool ret = kernel_ops_add_sa(said_next, replace, st->logger);
+		/* scrub key from memory */
+		memset(ah_keymat.ptr, 0, ah_keymat.len);
 
 		if (!ret) {
 			goto fail;
@@ -1697,12 +1707,6 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 		DBG_log("Impair SA creation is set, pretending to fail");
 		goto fail;
 	}
-
-	/* scrub keys from memory */
-	if (st->st_esp.present)
-		memset(esp_keymat.ptr, 0, esp_keymat.len);
-	if (st->st_ah.present)
-		memset(ah_keymat.ptr, 0, ah_keymat.len);
 	return true;
 
 fail:
@@ -1721,12 +1725,6 @@ fail:
 						 st->logger);
 		}
 	}
-	/* scrub keys from memory */
-	if (st->st_esp.present)
-		memset(esp_keymat.ptr, 0, esp_keymat.len);
-	if (st->st_ah.present)
-		memset(ah_keymat.ptr, 0, ah_keymat.len);
-
 	return false;
 }
 
