@@ -1,0 +1,5 @@
+Confirm nic-offload=crypto without hardware support falls back to software.
+
+This seems part of the kernel, that is add_sa() does not fail if crypto
+support is not available. So we don't have the choice to be strict and fail.
+

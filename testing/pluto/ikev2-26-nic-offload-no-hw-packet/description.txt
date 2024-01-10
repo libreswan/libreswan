@@ -1,0 +1,4 @@
+Confirm nic-offload=packet without hardware fails properly.
+This means no established SA, and no partial kernel states
+and a connection that is retrying
+

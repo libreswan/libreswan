@@ -1529,3 +1529,9 @@ kvmplutotest	impair-install-outbound-ipsec-sa-initiator-ikev1	wip
 kvmplutotest	impair-install-outbound-ipsec-sa-initiator-ikev2	wip
 kvmplutotest	impair-install-outbound-ipsec-sa-responder-ikev1	wip
 kvmplutotest	impair-install-outbound-ipsec-sa-responder-ikev2	wip
+
+# NIC hardware esp-hw-offload support - tests have no hardware
+kvmplutotest	ikev2-26-nic-offload-no-hw-auto		good
+kvmplutotest	ikev2-26-nic-offload-no-hw-crypto	good
+kvmplutotest	ikev2-26-nic-offload-no-hw-packet	good
+
