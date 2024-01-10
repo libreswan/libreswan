@@ -246,8 +246,7 @@ static struct kernel_policy kernel_policy_from_state(const struct child_sa *chil
 		tunnel |= (child->sa.st_ah.attrs.mode == ENCAPSULATION_MODE_TUNNEL);
 	}
 
-	setup_esp_nic_offload(&nic_offload, child->sa.st_connection,
-			      NULL, child->sa.logger);
+	setup_esp_nic_offload(&nic_offload, child->sa.st_connection, child->sa.logger);
 	enum encap_mode mode = (tunnel ? ENCAP_MODE_TUNNEL : ENCAP_MODE_TRANSPORT);
 	struct kernel_policy kernel_policy = kernel_policy_from_spd(policy,
 								    spd, mode, direction,
@@ -275,7 +274,7 @@ bool add_sec_label_kernel_policy(const struct spd_route *spd,
 	enum encap_mode encap_mode = c->config->child_sa.encap_mode;
 
 	struct nic_offload nic_offload = {};
-	setup_esp_nic_offload(&nic_offload, c, NULL, logger);
+	setup_esp_nic_offload(&nic_offload, c, logger);
 
 	struct kernel_policy_encap policy = {
 		.ipcomp = c->config->child_sa.ipcomp,
@@ -337,7 +336,7 @@ bool add_spd_kernel_policy(const struct spd_route *spd,
 	 * _from_spd shouldn't be doing).
 	 */
 
-	setup_esp_nic_offload(&nic_offload, c, NULL, logger);
+	setup_esp_nic_offload(&nic_offload, c, logger);
 	struct kernel_policy kernel_policy =
 		kernel_policy_from_void(spd->local->client, spd->remote->client,
 					direction, spd_priority(spd),
@@ -418,7 +417,7 @@ bool replace_spd_kernel_policy(const struct spd_route *spd,
 	struct connection *c = spd->connection;
 	struct nic_offload nic_offload = {};
 
-	setup_esp_nic_offload(&nic_offload, c, NULL, logger);
+	setup_esp_nic_offload(&nic_offload, c, logger);
 	selector_pair_buf spb;
 	ldbg(logger, " replacing %s",
 	     str_selector_pair(&spd->local->client, &spd->remote->client, &spb));
@@ -463,7 +462,7 @@ static bool restore_spd_kernel_policy(const struct spd_route *spd,
 	ldbg(logger, "%s() %s", __func__,
 	     str_selector_pair(&spd->local->client, &spd->remote->client, &spb));
 
-	setup_esp_nic_offload(&nic_offload, c, NULL, logger);
+	setup_esp_nic_offload(&nic_offload, c, logger);
 	struct kernel_policy kernel_policy =
 		kernel_policy_from_void(spd->local->client,
 					spd->remote->client,

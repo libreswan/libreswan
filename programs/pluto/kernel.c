@@ -897,7 +897,7 @@ static void revert_kernel_policy(struct spd_route *spd,
 	ldbg(logger, "kernel: %s() restoring bare shunt", __func__);
 	struct bare_shunt *bs = *spd->wip.conflicting.shunt;
 	struct nic_offload nic_offload = {};
-	setup_esp_nic_offload(&nic_offload, c, NULL, logger);
+	setup_esp_nic_offload(&nic_offload, c, logger);
 	if (!install_bare_kernel_policy(bs->our_client, bs->peer_client,
 					bs->shunt_kind, bs->shunt_policy,
 					&nic_offload, logger, HERE)) {
@@ -1263,7 +1263,6 @@ bool unrouted_to_routed_ondemand_sec_label(struct connection *c, struct logger *
 
 void setup_esp_nic_offload(struct nic_offload *nic_offload,
 			   const struct connection *c,
-			   bool *nic_offload_fallback,
 			   struct logger *logger)
 {
 	if (PBAD(logger, c->iface == NULL) /* aka oriented() */ ||
@@ -1283,8 +1282,6 @@ void setup_esp_nic_offload(struct nic_offload *nic_offload,
 			     c->name, c->iface->real_device_name);
 			return;
 		}
-		if (nic_offload_fallback)
-			*nic_offload_fallback = true;
 		ldbg(logger, "kernel: NIC esp-hw-offload auto offload for connection '%s' enabled on interface %s",
 		     c->name, c->iface->real_device_name);
 		nic_offload->dev = c->iface->real_device_name;
@@ -1321,7 +1318,6 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 
 	struct connection *c = st->st_connection;
 	bool replace = (direction == DIRECTION_INBOUND && (kernel_ops->get_ipsec_spi != NULL));
-	bool nic_offload_fallback = false;
 
 	/* SPIs, saved for spigrouping or undoing, if necessary */
 	struct kernel_state said[EM_MAXRELSPIS];
@@ -1596,17 +1592,31 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 			DBG_dump_hunk("ESP integrity key:", said_next->integ_key);
 		}
 
-		setup_esp_nic_offload(&said_next->nic_offload, c, &nic_offload_fallback,
-				      st->logger);
+		bool cno = (c->config->nic_offload == NIC_OFFLOAD_AUTO);
+		bool nic_offload_fallback = (c->iface->nic_offload &&
+					     c->config->nic_offload == NIC_OFFLOAD_AUTO);
 
-		bool cno = c->config->nic_offload == NIC_OFFLOAD_AUTO;
+		setup_esp_nic_offload(&said_next->nic_offload, c, st->logger);
+
 		bool ret = kernel_ops_add_sa(said_next, replace, st->logger);
+
+		/*
+		 * XXX: these log messages struggle to make sense.
+		 * The first should be merged into the re-try code.
+		 * The second shouldn't be AUTO specific and happen
+		 * before the first add attempt?
+		 */
 
 		if (!ret && nic_offload_fallback)
 			log_state(RC_LOG_SERIOUS, st, "Warning: NIC packet esp-hw-offload not available for this IPsec SA with its negotiated parameters");
 		if (cno && said_next->nic_offload.dev == NULL)
 			log_state(RC_LOG_SERIOUS, st, "Warning: NIC packet esp-hw-offload not available for interface %s",
 				c->iface->real_device_name);
+
+		/*
+		 * XXX: This short-circuit is broken; it skips the
+		 * memzero() below.
+		 */
 
 		if (!ret && !cno)
 			goto fail;
@@ -2494,7 +2504,7 @@ void orphan_holdpass(struct connection *c,
 	 */
 
 	struct nic_offload nic_offload = {};
-	setup_esp_nic_offload(&nic_offload, c, NULL, logger);
+	setup_esp_nic_offload(&nic_offload, c, logger);
 	if (install_bare_kernel_policy(src, dst,
 				       SHUNT_KIND_FAILURE, c->config->shunt[SHUNT_KIND_FAILURE],
 				       &nic_offload,
