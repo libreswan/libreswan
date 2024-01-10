@@ -1266,8 +1266,8 @@ void setup_esp_nic_offload(struct nic_offload *nic_offload,
 			   bool *nic_offload_fallback,
 			   struct logger *logger)
 {
-	if (c->iface == NULL || c->iface->real_device_name == NULL) {
-		ldbg(logger, "kernel: NIC esp-hw-offload not supported for connection '%s' with unknown interface", c->name);
+	if (PBAD(logger, c->iface == NULL) /* aka oriented() */ ||
+	    PBAD(logger, c->iface->real_device_name == NULL)) {
 		return;
 	}
 
