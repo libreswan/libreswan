@@ -929,7 +929,8 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 
 	}
 
-	if (policy != NULL && policy->nic_offload.dev != NULL &&
+	if (policy != NULL &&
+	    policy->nic_offload.dev != NULL &&
 	    policy->nic_offload.type == OFFLOAD_PACKET &&
 	    (xfrm_dir == XFRM_POLICY_IN || xfrm_dir == XFRM_POLICY_OUT)) {
 
@@ -1513,7 +1514,8 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 	req.p.reqid = sa->reqid;
 	ldbg(logger, "%s() adding IPsec SA with reqid %d", __func__, sa->reqid);
 
-	if (!sa->nic_offload.dev || sa->nic_offload.type != OFFLOAD_PACKET) {
+	if (sa->nic_offload.dev == NULL /* i.e., no offload */ ||
+	    sa->nic_offload.type != OFFLOAD_PACKET) {
 		req.p.lft.soft_byte_limit = sa->sa_max_soft_bytes;
 		req.p.lft.hard_byte_limit = sa->sa_ipsec_max_bytes;
 		req.p.lft.hard_packet_limit = sa->sa_ipsec_max_packets;
@@ -1792,7 +1794,7 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 	}
 #endif
 
-	if (sa->nic_offload.dev) {
+	if (sa->nic_offload.dev != NULL) {
 		struct xfrm_user_offload xuo = {
 			.flags = ((sa->direction == DIRECTION_INBOUND ? XFRM_OFFLOAD_INBOUND : 0) |
 				   (address_info(sa->src.address) == &ipv6_info ? XFRM_OFFLOAD_IPV6 : 0) |
