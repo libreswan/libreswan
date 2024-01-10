@@ -2130,6 +2130,11 @@ bool install_inbound_ipsec_sa(struct child_sa *child, enum routing new_routing, 
 		return false;
 	}
 
+	if (impair.install_ipsec_sa_inbound_early) {
+		llog(RC_LOG, logger, "IMPAIR: kernel: install_ipsec_sa_inbound_early in %s()", __func__);
+		return false;
+	}
+
 	if (!setup_half_kernel_state(&child->sa, DIRECTION_INBOUND)) {
 		ldbg(logger, "kernel: %s() failed to install inbound kernel state", __func__);
 		return false;
@@ -2140,8 +2145,8 @@ bool install_inbound_ipsec_sa(struct child_sa *child, enum routing new_routing, 
 		return false;
 	}
 
-	if (impair.install_inbound_ipsec_sa) {
-		llog(RC_LOG, logger, "IMPAIR: kernel: %s() failing", __func__);
+	if (impair.install_ipsec_sa_inbound_late) {
+		llog(RC_LOG, logger, "IMPAIR: kernel: install_ipsec_sa_inbound_late in %s()", __func__);
 		return false;
 	}
 
@@ -2175,6 +2180,11 @@ bool install_outbound_ipsec_sa(struct child_sa *child, enum routing new_routing,
 
 	/* (attempt to) actually set up the SA group */
 
+	if (impair.install_ipsec_sa_outbound_early) {
+		llog(RC_LOG, logger, "IMPAIR: kernel: install_ipsec_sa_outbound_early in %s()", __func__);
+		return false;
+	}
+
 	if (!setup_half_kernel_state(&child->sa, DIRECTION_OUTBOUND)) {
 		ldbg(logger, "kernel: %s() failed to install outbound kernel state", __func__);
 		return false;
@@ -2184,8 +2194,8 @@ bool install_outbound_ipsec_sa(struct child_sa *child, enum routing new_routing,
 		return false;
 	}
 
-	if (impair.install_outbound_ipsec_sa) {
-		llog(RC_LOG, logger, "IMPAIR: kernel: %s() failing", __func__);
+	if (impair.install_ipsec_sa_outbound_late) {
+		llog(RC_LOG, logger, "IMPAIR: kernel: install_ipsec_sa_outbound_late in %s()", __func__);
 		return false;
 	}
 

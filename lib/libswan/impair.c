@@ -302,8 +302,10 @@ struct impairment impairments[] = {
 
 	U(helper_thread_delay, "pause <unsigned> seconds before starting each helper thread job"),
 
-	B(install_inbound_ipsec_sa, "return an error from the install inbound IPsec SA code"),
-	B(install_outbound_ipsec_sa, "return an error from the install outbound IPsec SA code"),
+	B(install_ipsec_sa_inbound_early, "abort installing the inbound IPsec SA code at the start"),
+	B(install_ipsec_sa_inbound_late, "abort installing the inbound IPsec SA code at the end"),
+	B(install_ipsec_sa_outbound_early, "abort installing the outbound IPsec SA code at the start"),
+	B(install_ipsec_sa_outbound_late, "abort installing the outbound IPsec SA code at the end"),
 
 #undef U
 #undef B
