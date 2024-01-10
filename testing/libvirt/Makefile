@@ -15,6 +15,10 @@
 include ../../mk/dirs.mk
 include ../../mk/config.mk
 
+WEB_REPODIR=$(KVM_RUTDIR)
+
+include ../../mk/web-targets.mk
+
 # Note: GNU Make doesn't let you combine pattern targets (e.x.,
 # kvm-install-%: kvm-reboot-%) with .PHONY.  Consequently, so that
 # patterns can be used, any targets with dependencies are not marked
@@ -511,15 +515,6 @@ KVM_TESTS ?= $(KVM_TESTINGDIR)/pluto
 # then KVM_TESTS ends up containing new lines, strip them out.
 STRIPPED_KVM_TESTS = $(strip $(KVM_TESTS))
 
-.PHONY:
-web-pages-disabled:
-	@echo
-	@echo Web-pages disabled.
-	@echo
-	@echo To enable web pages create the directory: $(LSW_WEBDIR)
-	@echo To convert this result into a web page run: make web-page
-	@echo
-
 # Run the testsuite.
 #
 # - depends on kvm-keys-ok and not kvm-keys or $(KVM_KEYS) so that the
@@ -547,7 +542,7 @@ kvm-%: $(KVM_HOST_OK) kvm-keys-ok
 	: $@
 	: shutdown all the build domains, kvmrunner shuts down the test domains
 	$(foreach domain, $(KVM_BUILD_DOMAINS), $(call shutdown-os-domain, $(domain)))
-	@$(MAKE) $(if $(WEB_ENABLED), web-test-prep, -s web-pages-disabled)
+	@$(MAKE) -C $(top_srcdir) --no-print-directory WEB_REPODIR=$(WEB_REPODIR) web-test-prep
 	: KVM_TESTS="$(STRIPPED_KVM_TESTS)"
 	$(KVMRUNNER) \
 		$(if $(KVM_PIDFILE), --pid-file "$(KVM_PIDFILE)") \
@@ -565,7 +560,7 @@ kvm-%: $(KVM_HOST_OK) kvm-keys-ok
 		$(KVMRUNNER_FLAGS) \
 		$(KVM_TEST_FLAGS) \
 		$(STRIPPED_KVM_TESTS)
-	@$(MAKE) $(if $(WEB_ENABLED), web-test-post, -s web-pages-disabled)
+	@$(MAKE) -C $(top_srcdir) --no-print-directory WEB_REPODIR=$(WEB_REPODIR) web-test-post
 
 # clean up; accept pretty much everything
 KVM_TEST_CLEAN_TARGETS = kvm-clean-check kvm-check-clean kvm-clean-test kvm-test-clean

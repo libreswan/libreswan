@@ -23,8 +23,8 @@ Lets assume everything is being set up under ~/libreswan-web/:
 
 With the following layout:
 
-      ~/libreswan-web/repo-under-test/   # repository/directory under test
-      ~/libreswan-web/testbench-repo/    # repostory/directory driving the tests
+      ~/libreswan-web/rutdir/   # repository/directory under test
+      ~/libreswan-web/benchdir/    # repostory/directory driving the tests
       ~/libreswan-web/pool/              # directory containing VM disks et.al.
       ~/libreswan-web/results/           # directory containing published results
 
@@ -52,39 +52,39 @@ and optionally:
       $ cd ~/libreswan-web/
       $ mkdir -p pool/
 
-- checkout a dedicated repository for running tests (aka repo-under-test/)
+- checkout a dedicated repository for running tests (aka rutdir/)
 
   In addition to regular updates using "git fetch + git rebase", this
   repository is switched to the commit being tested using "git reset
   --hard".
 
       $ cd ~/libreswan-web/
-      $ git clone https://github.com/libreswan/libreswan.git repo-under-test/
+      $ git clone https://github.com/libreswan/libreswan.git rutdir/
 
-- configure the repo-under-test
+- configure the rutdir
 
   increase the number of reboots allowed in parallel (since a reboot
   seems to tie up two cores a rule of thumb is number-cores/2):
 
-      $ echo 'KVM_WORKERS=2' >> repo-under-test/Makefile.inc.local
+      $ echo 'KVM_WORKERS=2' >> rutdir/Makefile.inc.local
 
   increase the number of test domains (and give them unique prefixes
   so that they don't run with the default domain names):
 
-      $ echo 'KVM_PREFIXES=w1. w2.' >> repo-under-test/Makefile.inc.local
+      $ echo 'KVM_PREFIXES=w1. w2.' >> rutdir/Makefile.inc.local
 
   enable the wip tests:
 
-      $ echo "KVM_TEST_FLAGS=--test-status 'good|wip'" >> repo-under-test/Makefile.inc.local
+      $ echo "KVM_TEST_FLAGS=--test-status 'good|wip'" >> rutdir/Makefile.inc.local
 
   move the test domains to /tmp (tmpfs):
 
-      $ echo 'KVM_LOCALDIR=/tmp/pool' >> repo-under-test/Makefile.inc.local
+      $ echo 'KVM_LOCALDIR=/tmp/pool' >> rutdir/Makefile.inc.local
 
-- checkout a repository for the web sources and scripts (aka testbench-repo/)
+- checkout a repository for the web sources and scripts (aka benchdir/)
 
       $ cd ~/libreswan-web/
-      $ git clone https://github.com/libreswan/libreswan.git testbench-repo/
+      $ git clone https://github.com/libreswan/libreswan.git benchdir/
 
 
 ## Running
@@ -96,13 +96,13 @@ Either:
 
     $ cd libreswan-web/
     $ rm -f nohup.out
-    $ nohup testbench-repo/testing/web/tester.sh repo-under-test/ results/ &
+    $ nohup benchdir/testing/web/tester.sh &
     $ tail -f nohup.out
 
 or:
 
-    $ rm -f nohup.out
-    $ nohup ./libreswan-web/testbench-repo/testing/web/tester.sh libreswan-web/repo-under-test libreswan-web/results/ &
+    $ cp /dev/null nohup.out
+    $ nohup ./libreswan-web/benchdir/testing/web/tester.sh &
     $ tail -f nohup.out
 
 
@@ -148,27 +148,27 @@ with "restart"):
   crash it by running the following a few times:
 
       $ cd libreswan-web/
-      $ ( cd repo-under-test/ && make kvm-uninstall )
+      $ ( cd rutdir/ && make kvm-uninstall )
 
 - (optional, but recommended) upgrade and reboot the test machine:
 
       $ sudo dnf upgrade -y
       $ sudo reboot
 
-- (optional) cleanup and update the repo-under-test/ (tester.sh will do this
+- (optional) cleanup and update the rutdir/ (tester.sh will do this
   anyway)
 
       $ cd libreswan-web/
-      $ ( cd repo-under-test/ && git clean -f )
-      $ ( cd repo-under-test/ && git pull --ff-only )
+      $ ( cd rutdir/ && git clean -f )
+      $ ( cd rutdir/ && git pull --ff-only )
 
-- (optional) update the testbench-repo/ repository:
+- (optional) update the benchdir/ repository:
 
   Remember to first check for local changes:
 
       $ cd libreswan-web/
-      $ ( cd testbench-repo/ && git status )
-      $ ( cd testbench-repo/ && git pull --ff-only )
+      $ ( cd benchdir/ && git status )
+      $ ( cd benchdir/ && git pull --ff-only )
 
 - (optional) examine, and perhaps delete, any test runs where tests
   have 'missing-output':
@@ -188,7 +188,7 @@ with "restart"):
     a list of test runs along with their commit and "interest" level
     (see below):
 
-        $ ./testbench-repo/testing/web/gime-work.sh results repo-under-test/ 2>&1 | tee commits.tmp
+        $ ./benchdir/testing/web/gime-work.sh results rutdir/ 2>&1 | tee commits.tmp
 
   - strip the raw list of everything but test runs; also exclude the
     most recent test run (so the latest result isn't deleted):
@@ -373,7 +373,7 @@ After the release, save the results to elsewhere.
   Note the addition of ${n} to specify the commit to start from.
 
       cp /dev/null nohup.out ; nohup ;
-      ./libreswan-web/testbench-repo/testing/web/tester.sh libreswan-web/test-repo results ${n} &
+      ./libreswan-web/benchdir/testing/web/tester.sh ${n} &
 
 
 # Improvements

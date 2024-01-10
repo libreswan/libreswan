@@ -24,11 +24,11 @@ ifneq ($(wildcard $(WEB_SUMMARYDIR)),)
 WEB_ENABLED ?= true
 endif
 
-WEB_UTILSDIR ?= testing/utils
-WEB_SOURCEDIR ?= testing/web
+WEB_UTILSDIR ?= $(top_srcdir)/testing/utils
+WEB_SOURCEDIR ?= $(top_srcdir)/testing/web
 WEB_REPODIR ?= .
 # these are verbose so multiple invocations can be spotted
-WEB_SUBDIR ?= $(shell $(WEB_SOURCEDIR)/gime-git-description.sh $(WEB_REPODIR))
+WEB_SUBDIR ?= $(shell set -x ; $(WEB_SOURCEDIR)/gime-git-description.sh $(WEB_REPODIR))
 
 # shortcuts to use when web is enabled, set up to evaluate once as
 # they can be a little expensive.  These make variable can only be
@@ -91,6 +91,14 @@ web-test-post:
 ifdef WEB_ENABLED
 web-test-prep: web-resultsdir web-summarydir web-testsdir
 web-test-post: web-tests-json
+else
+web-test-prep web-test-post:
+	@echo
+	@echo Web-pages disabled.
+	@echo
+	@echo To enable web pages create the directory: $(LSW_WEBDIR)
+	@echo To convert this result into a web page run: make web-page
+	@echo
 endif
 
 #

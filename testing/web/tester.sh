@@ -2,18 +2,15 @@
 
 set -u
 
-if test $# -lt 2 -o $# -gt 3; then
+if test $# -gt 1; then
     cat >> /dev/stderr <<EOF
 
 Usage:
 
-    $0 <rutdir> <summarydir> [ <earliest_commit> ]
+    $0 [ <earliest_commit> ]
 
-Track <rutdir>'s current branch and test each "interesting" commit.
-Publish results under <summarydir>.
-
-XXX: Should this also look at and use things like WEB_PREFIXES and
-WEB_WORKERS in Makefile.inc.local?
+Track KVM_RUTDIR's current branch and test each "interesting" commit.
+Publish results under WEB_SUMMARYDIR.
 
 EOF
     exit 1
@@ -21,12 +18,27 @@ fi
 
 set -euvx
 
-rutdir=$(cd $1 && pwd ) ; shift
-summarydir=$(cd $1 && pwd) ; shift
-
-webdir=$(dirname $0)
+tester=$(realpath $0)
+webdir=$(dirname ${tester})
 benchdir=$(cd ${webdir}/../.. && pwd)
 utilsdir=${benchdir}/testing/utils
+
+make_variable() {
+    local v=$(make -C ${benchdir}/testing/libvirt --no-print-directory print-kvm-variable VARIABLE=$2)
+    if test "${v}" == "" ; then
+	echo $2 not defined 1>&2
+	exit 1
+    fi
+    eval $1="'$v'"
+}
+
+make_variable rutdir KVM_RUTDIR
+make_variable summarydir WEB_SUMMARYDIR
+make_variable prefixes KVM_PREFIXES
+make_variable workers KVM_WORKERS
+
+rutdir=$(realpath ${rutdir})
+summarydir=$(realpath ${summarydir})
 
 # start with new shiny new just upgraded domains
 
@@ -55,10 +67,7 @@ fi
 json_status="${webdir}/json-status.sh --json ${summarydir}/status.json"
 status=${json_status}
 
-
-run() (
-    href="<a href=\"$(basename ${resultsdir})/$1.log\">$1</a>"
-    ${update_status} "running 'make ${href}'"
+MAKE() {
 
     # So new features can be tested (?) use kvmrunner.py from this
     # directory (${utilsdir}), but point it at files in the test
@@ -66,22 +75,17 @@ run() (
 
     runner="${utilsdir}/kvmrunner.py --publish-hash ${commit} --publish-results ${resultsdir} --testing-directory ${rutdir}/testing --publish-status ${summarydir}/status.json"
 
-    if make -C ${rutdir} $1 \
-	    WEB_RUTDIR= \
-	    WEB_RESULTSDIR= \
-	    WEB_SUMMARYDIR= \
-	    ${runner:+KVMRUNNER="${runner}"} \
-	    ${prefixes:+KVM_PREFIXES="${prefixes}"} \
-	    ${workers:+KVM_WORKERS="${workers}"} \
-	    2>&1 ; then
-	touch ${resultsdir}/$1.ok ;
-    fi | tee -a ${resultsdir}/$1.log
-    if test ! -r ${resultsdir}/$1.ok ; then
-	${update_status} "'make ${href}' failed"
-	exit 1
-    fi
-    gzip -v -9 ${resultsdir}/$1.log
-)
+    make -C ${rutdir} $1 \
+	    WEB_RESULTSDIR=
+	    WEB_SUMMARYDIR=
+	    KVM_PREFIXES="${prefixes}" \
+	    KVM_WORKERS="${workers}" \
+	    KVMRUNNER="${runner}"
+}
+
+KVM() {
+    ${benchdir}/kvm ${target}
+}
 
 while true ; do
 
@@ -99,8 +103,8 @@ while true ; do
     # - if it fails the script dies.
 
     ${update_status} "updating repository"
-    ( cd ${rutdir} && git fetch || true )
-    ( cd ${rutdir} && git merge --ff-only )
+    git -C ${rutdir} fetch || true
+    git -C ${rutdir} merge --ff-only
 
     # Update the summary web page
     #
@@ -109,7 +113,6 @@ while true ; do
 
     ${update_status} "updating summary"
     make -C ${benchdir} web-summarydir \
-	 WEB_RUTDIR=${rutdir} \
 	 WEB_RESULTSDIR= \
 	 WEB_SUMMARYDIR=${summarydir}
 
@@ -159,7 +162,7 @@ while true ; do
     # repo is already at head.
 
     ${update_status} "checking out ${commit}"
-    ( cd ${rutdir} && git reset --hard ${commit} )
+    git -C ${rutdir} reset --hard ${commit}
 
     # Determine the rutdir and add that to status.
     #
@@ -179,7 +182,6 @@ while true ; do
     ${update_status} "creating results directory"
     make -C ${benchdir} web-resultsdir \
 	 WEB_TIME=${start_time} \
-	 WEB_RUTDIR=${rutdir} \
 	 WEB_HASH=${commit} \
 	 WEB_RESULTSDIR=${resultsdir} \
 	 WEB_SUMMARYDIR=${summarydir}
@@ -203,35 +205,36 @@ while true ; do
     #
     # - always transmogrify so current config is picked up
     #
-    # - the "~" prefix to OS names means ignore failure; and "+ means
-    #   it must pass
+    # - the "~" suffix means ignore failure
+    #
+    # - the prefix MAKE: and KVM: denote what is run
 
-    targets="distclean html" # NATIVE!
+    targets="MAKE:distclean MAKE:html" # NATIVE!
     finished=""
-    oss="+fedora ~freebsd ~netbsd ~openbsd ~alpine ~debian"
+
+    # form KVM:TARGET[~+]OS
+    oss="+fedora ~freebsd ~openbsd ~alpine ~debian"
 
     if ${build_kvms} ; then
-	targets="${targets} kvm-purge"
 	for os in $oss ; do
-	    # i.e., kvm-upgrade+OS and kvm-upgrade~OS
-	    targets="${targets} kvm-upgrade${os}"
-	    targets="${targets} kvm-transmogrify${os}"
+	    # i.e., kvm-upgrade[~+]OS
+	    targets="${targets} KVM:upgrade${os}"
 	done
     else
-	for os in $oss ; do
-	    # i.e., kvm-shutdown+OS and kvm-shutdown~OS
-	    targets="${targets} kvm-shutdown${os}"
-	    targets="${targets} kvm-transmogrify${os}"
-	done
+	targets="${targets} KVM:shutdown"
     fi
 
-    targets="${targets} kvm-keys"
-
     for os in ${oss} ; do
-    	targets="${targets} kvm-install-all${os}"
+    	targets="${targets} KVM:transmogrify${os}"
     done
 
-    targets="${targets} kvm-check"
+    targets="${targets} KVM:keys"
+
+    for os in ${oss} ; do
+    	targets="${targets} KVM:install${os}"
+    done
+
+    targets="${targets} KVM:check"
 
     build_kvms=false # for next time round
 
@@ -240,11 +243,13 @@ while true ; do
 
     for t in ${targets} ; do
 
-	# "~" means ignore; "+" means pass
-	target=$(echo "${t}" | tr '~+' '--')
-	os=$(expr "${t}" : '^.*[~+]\(.*\)$' || echo -n)
-	ot=$(expr "${t}" : '^\([^~+]*\)')
+	# RUN:OT[~+]OS or RUN:TARGET
+	run=$(echo "${t}" | sed -e 's/:.*//')
+	target=$(echo "${t}" | sed -e 's/.*://' -e 's/[~+]/-/')
+	ot=$(echo "${t}" | sed -n -e 's/.*:\([^~+]*\)[~+]\(.*\)/\1/p')
+	os=$(echo "${t}" | sed -n -e 's/.*:\([^~+]*\)[~+]\(.*\)/\2/p')
 	ignore=$(expr "${t}" : '.*~' > /dev/null && echo true || echo false)
+
 	finished="${finished} ${target}"
 	logfile=${resultsdir}/${target}.log
 	cp /dev/null ${logfile}
@@ -254,15 +259,25 @@ while true ; do
 	    cat ${resultsdir}/build.json.in
 	    # same command further down
 	    jq --null-input \
+	       --arg run    "${run}" \
 	       --arg target "${target}" \
 	       --arg ot     "${ot}" \
 	       --arg os     "${os}" \
 	       --arg status "running" \
-	       '{ target: $target, ot: $ot, os: $os, status: $status }'
+	       '{ run: $run, target: $target, ot: $ot, os: $os, status: $status }'
 	} | jq -s . > ${resultsdir}/build.json
 
-	# run the target on hand
-	if run ${target} ; then
+	# run the target; note how the start of the pipeline
+	# creates ${target}.ok as a way to detect success
+
+	href="<a href=\"$(basename ${resultsdir})/${target}.log\">${target}</a>"
+	${status} "running '${run} ${href}'"
+
+	if ${run} ${target} 2>&1 ; then
+	    touch ${resultsdir}/${target}.ok ;
+	fi | tee -a ${resultsdir}/${target}.log
+
+	if test -r ${resultsdir}/${target}.ok ; then
 	    result=ok
 	    case ${target} in
 		html )
@@ -286,17 +301,21 @@ while true ; do
 	else
 	    result=failed
 	fi
+	gzip -v -9 ${resultsdir}/${target}.log
+
+	${status} "'${run} ${href}' ok"
 
 	# generate json of the final result
 
 	# same command further up
 	{
 	    jq --null-input \
+	       --arg run    "${run}" \
 	       --arg target "${target}" \
 	       --arg ot     "${ot}" \
 	       --arg os     "${os}" \
 	       --arg status "${result}" \
-	       '{ target: $target, ot: $ot, os: $os, status: $status }'
+	       '{ run: $run, target: $target, ot: $ot, os: $os, status: $status }'
 	} >> ${resultsdir}/build.json.in
 	# convert raw list to an array
 	jq -s . < ${resultsdir}/build.json.in > ${resultsdir}/build.json
@@ -306,7 +325,7 @@ while true ; do
 	    # updated domains; hopefully that will contain the fix (or
 	    # at least contain the damage).
 	    ${update_status} "${target} barfed, restarting with HEAD"
-	    exec $0 ${rutdir} ${summarydir}
+	    exec ${tester}
 	fi
 
     done
@@ -325,7 +344,6 @@ while true ; do
     ${update_status} "hardlink $(basename ${rutdir}) $(${resultsdir})"
     hardlink -v ${rutdir} ${resultsdir}
 
-
     # Check that the test VMs are ok
     #
     # A result with output-missing is good sign that the VMs have
@@ -334,7 +352,7 @@ while true ; do
     ${update_status} "checking KVMs"
     if grep '"output-missing"' "${resultsdir}/results.json" ; then
 	${update_status} "corrupt domains detected, restarting with HEAD"
-	exec $0 ${rutdir} ${summarydir}
+	exec ${tester}
     fi
 
     # loop back to code updating summary dir
