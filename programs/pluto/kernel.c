@@ -1264,27 +1264,42 @@ bool unrouted_to_routed_ondemand_sec_label(struct connection *c, struct logger *
 void setup_esp_nic_offload(struct nic_offload *nic_offload, const struct connection *c,
 		bool *nic_offload_fallback)
 {
-	if (c->config->nic_offload == NIC_OFFLOAD_NO ||
-	    c->iface == NULL ||
-	    c->iface->real_device_name == NULL) {
-		dbg("kernel: NIC esp-hw-offload disabled for connection '%s'", c->name);
+	if (c->iface == NULL || c->iface->real_device_name == NULL) {
+		dbg("kernel: NIC esp-hw-offload not supported for connection '%s' with unknown interface", c->name);
 		return;
 	}
 
-	if (c->config->nic_offload == NIC_OFFLOAD_AUTO) {
+	switch (c->config->nic_offload) {
+	case offload_no:
+		dbg("kernel: NIC esp-hw-offload disabled for connection '%s'", c->name);
+		return;
+
+	case offload_auto:
 		if (!c->iface->nic_offload) {
-			dbg("kernel: NIC esp-hw-offload not for connection '%s' not available on interface %s",
+			dbg("kernel: NIC esp-hw-offload for connection '%s' not available on interface %s",
 				c->name, c->iface->real_device_name);
 			return;
 		}
 		if (nic_offload_fallback)
 			*nic_offload_fallback = true;
-		dbg("kernel: NIC esp-hw-offload offload for connection '%s' enabled on interface %s",
+		dbg("kernel: NIC esp-hw-offload auto offload for connection '%s' enabled on interface %s",
 		    c->name, c->iface->real_device_name);
+		nic_offload->dev = c->iface->real_device_name;
+		nic_offload->type = OFFLOAD_PACKET;
+		return;
+	case offload_packet:
+		nic_offload->dev = c->iface->real_device_name;
+		nic_offload->type = OFFLOAD_PACKET;
+		dbg("kernel: NIC esp-hw-offload packet offload for connection '%s' enabled on interface %s",
+		    c->name, c->iface->real_device_name);
+		return;
+	case offload_crypto:
+		nic_offload->dev = c->iface->real_device_name;
+		nic_offload->type = OFFLOAD_CRYPTO;
+		dbg("kernel: NIC esp-hw-offload crypto offload for connection '%s' enabled on interface %s",
+		    c->name, c->iface->real_device_name);
+		return;
 	}
-	nic_offload->dev = c->iface->real_device_name;
-	nic_offload->type = (c->config->nic_offload == NIC_OFFLOAD_PACKET) ?
-				OFFLOAD_PACKET : OFFLOAD_CRYPTO;
 }
 
 /*
@@ -1574,20 +1589,34 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 
 		setup_esp_nic_offload(&said_next->nic_offload, c, &nic_offload_fallback);
 
+		bool cno = c->config->nic_offload == offload_auto;
 		bool ret = kernel_ops_add_sa(said_next, replace, st->logger);
 
-		if (!ret && nic_offload_fallback &&
-			said_next->nic_offload.dev != NULL) {
+		if (!ret && nic_offload_fallback)
+			log_state(RC_LOG_SERIOUS, st, "Warning: NIC packet esp-hw-offload not available for this IPsec SA with its negotiated parameters");
+		if (cno && said_next->nic_offload.dev == NULL)
+			log_state(RC_LOG_SERIOUS, st, "Warning: NIC packet esp-hw-offload not available for interface %s",
+				c->iface->real_device_name);
+
+		if (!ret && !cno)
+			goto fail;
+
+		if (!ret && nic_offload_fallback && said_next->nic_offload.dev != NULL) {
 			/* Fallback to crypto offload from packet offload */
 			if (said_next->nic_offload.type == OFFLOAD_PACKET) {
 				said_next->nic_offload.type = OFFLOAD_CRYPTO;
 				ret = kernel_ops_add_sa(said_next, replace, st->logger);
+			} else {
+				log_state(RC_LOG_SERIOUS, st, "Warning: NIC packet esp-hw-offload PAUL HUH");
 			}
 
 			if (!ret) {
+				log_state(RC_LOG_SERIOUS, st, "Warning: NIC crypto esp-hw-offload failed for this IPsec SA with its negotiated parameters");
 				/* Fallback to non-nic-offload crypto */
 				said_next->nic_offload.dev = NULL;
 				ret = kernel_ops_add_sa(said_next, replace, st->logger);
+				if (ret)
+					log_state(RC_LOG_SERIOUS, st, "Warning: IPsec SA is not using any NIC esp-hw-offload");
 			}
 		}
 
