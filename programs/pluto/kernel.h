@@ -68,15 +68,15 @@ enum direction {
 
 extern const struct enum_names direction_names;
 
-enum offload_type {
-	OFFLOAD_NONE,
-	OFFLOAD_CRYPTO,
-	OFFLOAD_PACKET,
+enum kernel_offload_type {
+	KERNEL_OFFLOAD_NONE,
+	KERNEL_OFFLOAD_CRYPTO,
+	KERNEL_OFFLOAD_PACKET,
 };
 
 struct nic_offload {
 	const char *dev;
-	enum offload_type type;
+	enum kernel_offload_type type;
 };
 
 

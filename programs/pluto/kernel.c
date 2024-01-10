@@ -1288,17 +1288,17 @@ void setup_esp_nic_offload(struct nic_offload *nic_offload,
 		ldbg(logger, "kernel: NIC esp-hw-offload auto offload for connection '%s' enabled on interface %s",
 		     c->name, c->iface->real_device_name);
 		nic_offload->dev = c->iface->real_device_name;
-		nic_offload->type = OFFLOAD_PACKET;
+		nic_offload->type = KERNEL_OFFLOAD_PACKET;
 		return;
 	case NIC_OFFLOAD_PACKET:
 		nic_offload->dev = c->iface->real_device_name;
-		nic_offload->type = OFFLOAD_PACKET;
+		nic_offload->type = KERNEL_OFFLOAD_PACKET;
 		ldbg(logger, "kernel: NIC esp-hw-offload packet offload for connection '%s' enabled on interface %s",
 		     c->name, c->iface->real_device_name);
 		return;
 	case NIC_OFFLOAD_CRYPTO:
 		nic_offload->dev = c->iface->real_device_name;
-		nic_offload->type = OFFLOAD_CRYPTO;
+		nic_offload->type = KERNEL_OFFLOAD_CRYPTO;
 		ldbg(logger, "kernel: NIC esp-hw-offload crypto offload for connection '%s' enabled on interface %s",
 		     c->name, c->iface->real_device_name);
 		return;
@@ -1607,8 +1607,8 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 
 		if (!ret && nic_offload_fallback && said_next->nic_offload.dev != NULL) {
 			/* Fallback to crypto offload from packet offload */
-			if (said_next->nic_offload.type == OFFLOAD_PACKET) {
-				said_next->nic_offload.type = OFFLOAD_CRYPTO;
+			if (said_next->nic_offload.type == KERNEL_OFFLOAD_PACKET) {
+				said_next->nic_offload.type = KERNEL_OFFLOAD_CRYPTO;
 				ret = kernel_ops_add_sa(said_next, replace, st->logger);
 			} else {
 				log_state(RC_LOG_SERIOUS, st, "Warning: NIC packet esp-hw-offload PAUL HUH");

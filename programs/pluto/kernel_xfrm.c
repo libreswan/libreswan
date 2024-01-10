@@ -931,7 +931,7 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 
 	if (policy != NULL &&
 	    policy->nic_offload.dev != NULL &&
-	    policy->nic_offload.type == OFFLOAD_PACKET &&
+	    policy->nic_offload.type == KERNEL_OFFLOAD_PACKET &&
 	    (xfrm_dir == XFRM_POLICY_IN || xfrm_dir == XFRM_POLICY_OUT)) {
 
 		const struct nic_offload *nic_offload = &policy->nic_offload;
@@ -1515,7 +1515,7 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 	ldbg(logger, "%s() adding IPsec SA with reqid %d", __func__, sa->reqid);
 
 	if (sa->nic_offload.dev == NULL /* i.e., no offload */ ||
-	    sa->nic_offload.type != OFFLOAD_PACKET) {
+	    sa->nic_offload.type != KERNEL_OFFLOAD_PACKET) {
 		req.p.lft.soft_byte_limit = sa->sa_max_soft_bytes;
 		req.p.lft.hard_byte_limit = sa->sa_ipsec_max_bytes;
 		req.p.lft.hard_packet_limit = sa->sa_ipsec_max_packets;
@@ -1805,9 +1805,9 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 		}
 
 		switch (sa->nic_offload.type) {
-		case OFFLOAD_PACKET: xuo.flags |= XFRM_OFFLOAD_PACKET; break;
-		case OFFLOAD_CRYPTO: xuo.flags |= 0; break;
-		case OFFLOAD_NONE: bad_case(OFFLOAD_NONE);
+		case KERNEL_OFFLOAD_PACKET: xuo.flags |= XFRM_OFFLOAD_PACKET; break;
+		case KERNEL_OFFLOAD_CRYPTO: xuo.flags |= 0; break;
+		case KERNEL_OFFLOAD_NONE: bad_case(KERNEL_OFFLOAD_NONE);
 		}
 
 		switch (address_info(sa->src.address)->ip_version) {
@@ -1824,7 +1824,7 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
 		ldbg(logger, "%s() esp-hw-offload set via interface %s for IPsec SA, type: %s",
 		     __func__, sa->nic_offload.dev,
-		     sa->nic_offload.type == OFFLOAD_PACKET ? "Packet" : "Crypto");
+		     sa->nic_offload.type == KERNEL_OFFLOAD_PACKET ? "Packet" : "Crypto");
 	} else {
 		ldbg(logger, "%s() esp-hw-offload not set for IPsec SA", __func__);
 	}
@@ -2897,7 +2897,7 @@ static err_t xfrm_migrate_ipsec_sa_is_enabled(struct logger *logger)
 
 static bool netlink_poke_ipsec_offload_policy_hole(struct nic_offload *nic_offload, struct logger *logger)
 {
-	if (nic_offload->type != OFFLOAD_PACKET)
+	if (nic_offload->type != KERNEL_OFFLOAD_PACKET)
 		return false;
 
 	struct {

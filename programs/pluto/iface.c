@@ -559,7 +559,7 @@ static void add_new_ifaces(struct logger *logger)
 		if (ifd->nic_offload && kernel_ops->poke_ipsec_offload_policy_hole != NULL) {
 			struct nic_offload nic_offload = {
 				.dev = ifd->real_device_name,
-				.type = OFFLOAD_PACKET,
+				.type = KERNEL_OFFLOAD_PACKET,
 			};
 
 			if (!kernel_ops->poke_ipsec_offload_policy_hole(&nic_offload, logger))
