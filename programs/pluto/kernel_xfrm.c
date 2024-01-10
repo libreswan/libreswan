@@ -1796,11 +1796,24 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 
 	if (sa->nic_offload.dev != NULL) {
 		struct xfrm_user_offload xuo = {
-			.flags = ((sa->direction == DIRECTION_INBOUND ? XFRM_OFFLOAD_INBOUND : 0) |
-				   (address_info(sa->src.address) == &ipv6_info ? XFRM_OFFLOAD_IPV6 : 0) |
-				   (sa->nic_offload.type == OFFLOAD_PACKET ? XFRM_OFFLOAD_PACKET : 0)),
 			.ifindex = if_nametoindex(sa->nic_offload.dev),
 		};
+
+		switch (sa->direction) {
+		case DIRECTION_INBOUND: xuo.flags |= XFRM_OFFLOAD_INBOUND; break;
+		case DIRECTION_OUTBOUND: xuo.flags |= 0; break;
+		}
+
+		switch (sa->nic_offload.type) {
+		case OFFLOAD_PACKET: xuo.flags |= XFRM_OFFLOAD_PACKET; break;
+		case OFFLOAD_CRYPTO: xuo.flags |= 0; break;
+		case OFFLOAD_NONE: bad_case(OFFLOAD_NONE);
+		}
+
+		switch (address_info(sa->src.address)->ip_version) {
+		case IPv4: xuo.flags |= 0; break;
+		case IPv6: xuo.flags |= XFRM_OFFLOAD_IPV6; break;
+		}
 
 		attr->rta_type = XFRMA_OFFLOAD_DEV;
 		attr->rta_len = RTA_LENGTH(sizeof(xuo));
