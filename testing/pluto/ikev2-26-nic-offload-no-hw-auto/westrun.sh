@@ -1,4 +1,4 @@
-ipsec auto --up westnet-eastnet-ipv4-psk-ikev2
+ipsec auto --up west-east-transport
 # should be no crypto hardware options in state
 ip xfrm state
 ip xfrm policy
