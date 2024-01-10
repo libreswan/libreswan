@@ -1,0 +1,20 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
+"westnet-eastnet-ipv4-psk-ikev2": added IKEv1 connection
+east #
+ ipsec whack --impair install_ipsec_sa_inbound_early
+east #
+ echo "initdone"
+initdone
+east #
+ ../../guestbin/ipsec-kernel-state.sh
+east #
+ ../../guestbin/ipsec-kernel-policy.sh
+east #
+ 
