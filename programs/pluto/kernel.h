@@ -412,8 +412,10 @@ struct kernel_acquire {
 };
 
 void jam_kernel_acquire(struct jambuf *buf, const struct kernel_acquire *b);
-void setup_esp_nic_offload(struct nic_offload *nic_offload, const struct connection *c,
-				bool *nic_offload_fallback);
+void setup_esp_nic_offload(struct nic_offload *nic_offload,
+			   const struct connection *c,
+			   bool *nic_offload_fallback,
+			   struct logger *logger);
 
 struct spd_owner spd_owner(const struct spd_route *spd, enum routing new_routing,
 			   struct logger *logger, where_t where);

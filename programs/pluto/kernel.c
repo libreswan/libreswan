@@ -897,7 +897,7 @@ static void revert_kernel_policy(struct spd_route *spd,
 	ldbg(logger, "kernel: %s() restoring bare shunt", __func__);
 	struct bare_shunt *bs = *spd->wip.conflicting.shunt;
 	struct nic_offload nic_offload = {};
-	setup_esp_nic_offload(&nic_offload, c, NULL);
+	setup_esp_nic_offload(&nic_offload, c, NULL, logger);
 	if (!install_bare_kernel_policy(bs->our_client, bs->peer_client,
 					bs->shunt_kind, bs->shunt_policy,
 					&nic_offload, logger, HERE)) {
@@ -1261,44 +1261,46 @@ bool unrouted_to_routed_ondemand_sec_label(struct connection *c, struct logger *
 	return true;
 }
 
-void setup_esp_nic_offload(struct nic_offload *nic_offload, const struct connection *c,
-		bool *nic_offload_fallback)
+void setup_esp_nic_offload(struct nic_offload *nic_offload,
+			   const struct connection *c,
+			   bool *nic_offload_fallback,
+			   struct logger *logger)
 {
 	if (c->iface == NULL || c->iface->real_device_name == NULL) {
-		dbg("kernel: NIC esp-hw-offload not supported for connection '%s' with unknown interface", c->name);
+		ldbg(logger, "kernel: NIC esp-hw-offload not supported for connection '%s' with unknown interface", c->name);
 		return;
 	}
 
 	switch (c->config->nic_offload) {
 	case NIC_OFFLOAD_UNSET:
 	case NIC_OFFLOAD_NO:
-		dbg("kernel: NIC esp-hw-offload disabled for connection '%s'", c->name);
+		ldbg(logger, "kernel: NIC esp-hw-offload disabled for connection '%s'", c->name);
 		return;
 
 	case NIC_OFFLOAD_AUTO:
 		if (!c->iface->nic_offload) {
-			dbg("kernel: NIC esp-hw-offload for connection '%s' not available on interface %s",
-				c->name, c->iface->real_device_name);
+			ldbg(logger, "kernel: NIC esp-hw-offload for connection '%s' not available on interface %s",
+			     c->name, c->iface->real_device_name);
 			return;
 		}
 		if (nic_offload_fallback)
 			*nic_offload_fallback = true;
-		dbg("kernel: NIC esp-hw-offload auto offload for connection '%s' enabled on interface %s",
-		    c->name, c->iface->real_device_name);
+		ldbg(logger, "kernel: NIC esp-hw-offload auto offload for connection '%s' enabled on interface %s",
+		     c->name, c->iface->real_device_name);
 		nic_offload->dev = c->iface->real_device_name;
 		nic_offload->type = OFFLOAD_PACKET;
 		return;
 	case NIC_OFFLOAD_PACKET:
 		nic_offload->dev = c->iface->real_device_name;
 		nic_offload->type = OFFLOAD_PACKET;
-		dbg("kernel: NIC esp-hw-offload packet offload for connection '%s' enabled on interface %s",
-		    c->name, c->iface->real_device_name);
+		ldbg(logger, "kernel: NIC esp-hw-offload packet offload for connection '%s' enabled on interface %s",
+		     c->name, c->iface->real_device_name);
 		return;
 	case NIC_OFFLOAD_CRYPTO:
 		nic_offload->dev = c->iface->real_device_name;
 		nic_offload->type = OFFLOAD_CRYPTO;
-		dbg("kernel: NIC esp-hw-offload crypto offload for connection '%s' enabled on interface %s",
-		    c->name, c->iface->real_device_name);
+		ldbg(logger, "kernel: NIC esp-hw-offload crypto offload for connection '%s' enabled on interface %s",
+		     c->name, c->iface->real_device_name);
 		return;
 	}
 }
@@ -1588,7 +1590,8 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 			DBG_dump_hunk("ESP integrity key:", said_next->integ_key);
 		}
 
-		setup_esp_nic_offload(&said_next->nic_offload, c, &nic_offload_fallback);
+		setup_esp_nic_offload(&said_next->nic_offload, c, &nic_offload_fallback,
+				      st->logger);
 
 		bool cno = c->config->nic_offload == NIC_OFFLOAD_AUTO;
 		bool ret = kernel_ops_add_sa(said_next, replace, st->logger);
@@ -2485,7 +2488,7 @@ void orphan_holdpass(struct connection *c,
 	 */
 
 	struct nic_offload nic_offload = {};
-	setup_esp_nic_offload(&nic_offload, c, NULL);
+	setup_esp_nic_offload(&nic_offload, c, NULL, logger);
 	if (install_bare_kernel_policy(src, dst,
 				       SHUNT_KIND_FAILURE, c->config->shunt[SHUNT_KIND_FAILURE],
 				       &nic_offload,
