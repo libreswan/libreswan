@@ -1291,12 +1291,18 @@ void setup_esp_nic_offload(struct nic_offload *nic_offload,
 		nic_offload->type = KERNEL_OFFLOAD_PACKET;
 		return;
 	case NIC_OFFLOAD_PACKET:
+		if (PBAD(logger, !c->iface->nic_offload)) {
+			return;
+		}
 		nic_offload->dev = c->iface->real_device_name;
 		nic_offload->type = KERNEL_OFFLOAD_PACKET;
 		ldbg(logger, "kernel: NIC esp-hw-offload packet offload for connection '%s' enabled on interface %s",
 		     c->name, c->iface->real_device_name);
 		return;
 	case NIC_OFFLOAD_CRYPTO:
+		if (PBAD(logger, !c->iface->nic_offload)) {
+			return;
+		}
 		nic_offload->dev = c->iface->real_device_name;
 		nic_offload->type = KERNEL_OFFLOAD_CRYPTO;
 		ldbg(logger, "kernel: NIC esp-hw-offload crypto offload for connection '%s' enabled on interface %s",
