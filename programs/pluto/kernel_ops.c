@@ -363,6 +363,7 @@ bool kernel_ops_add_sa(const struct kernel_state *sa, bool replace, struct logge
 
 	switch (sa->mode) {
 	case KERNEL_MODE_TRANSPORT:
+	{
 		/*
 		 * XXX: since this is for transport mode what is
 		 * allowed to change?
@@ -386,6 +387,7 @@ bool kernel_ops_add_sa(const struct kernel_state *sa, bool replace, struct logge
 			pexpect(address_eq_address(sa->dst.address, selector_prefix(sa->dst.route)));
 		}
 		break;
+	}
 	case KERNEL_MODE_TUNNEL:
 		break;
 	}
