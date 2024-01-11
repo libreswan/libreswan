@@ -1522,22 +1522,22 @@ kvmplutotest	flush-on-startup-pfkeyv2		freebsd	github/1285
 kvmplutotest	flush-on-startup-xfrm			good	github/1284
 kvmplutotest	flush-on-shutdown-xfrm			good	github/1384
 
-kvmplutotest	impair-install-ipsec-sa-inbound-early-initiator-ikev1	wip
-kvmplutotest	impair-install-ipsec-sa-inbound-early-initiator-ikev2	wip
-kvmplutotest	impair-install-ipsec-sa-inbound-early-responder-ikev1	wip
-kvmplutotest	impair-install-ipsec-sa-inbound-early-responder-ikev2	wip
-kvmplutotest	impair-install-ipsec-sa-inbound-late-initiator-ikev1	wip
-kvmplutotest	impair-install-ipsec-sa-inbound-late-initiator-ikev2	wip
-kvmplutotest	impair-install-ipsec-sa-inbound-late-responder-ikev1	wip
-kvmplutotest	impair-install-ipsec-sa-inbound-late-responder-ikev2	wip
-kvmplutotest	impair-install-ipsec-sa-outbound-early-initiator-ikev1	wip
-kvmplutotest	impair-install-ipsec-sa-outbound-early-initiator-ikev2	wip
-kvmplutotest	impair-install-ipsec-sa-outbound-early-responder-ikev1	wip
-kvmplutotest	impair-install-ipsec-sa-outbound-early-responder-ikev2	wip
-kvmplutotest	impair-install-ipsec-sa-outbound-late-initiator-ikev1	wip
-kvmplutotest	impair-install-ipsec-sa-outbound-late-initiator-ikev2	wip
-kvmplutotest	impair-install-ipsec-sa-outbound-late-responder-ikev1	wip
-kvmplutotest	impair-install-ipsec-sa-outbound-late-responder-ikev2	wip
+kvmplutotest	impair-install-ipsec-sa-inbound-state-initiator-ikev1	wip
+kvmplutotest	impair-install-ipsec-sa-inbound-state-initiator-ikev2	wip
+kvmplutotest	impair-install-ipsec-sa-inbound-state-responder-ikev1	wip
+kvmplutotest	impair-install-ipsec-sa-inbound-state-responder-ikev2	wip
+kvmplutotest	impair-install-ipsec-sa-inbound-policy-initiator-ikev1	wip
+kvmplutotest	impair-install-ipsec-sa-inbound-policy-initiator-ikev2	wip
+kvmplutotest	impair-install-ipsec-sa-inbound-policy-responder-ikev1	wip
+kvmplutotest	impair-install-ipsec-sa-inbound-policy-responder-ikev2	wip
+kvmplutotest	impair-install-ipsec-sa-outbound-state-initiator-ikev1	wip
+kvmplutotest	impair-install-ipsec-sa-outbound-state-initiator-ikev2	wip
+kvmplutotest	impair-install-ipsec-sa-outbound-state-responder-ikev1	wip
+kvmplutotest	impair-install-ipsec-sa-outbound-state-responder-ikev2	wip
+kvmplutotest	impair-install-ipsec-sa-outbound-policy-initiator-ikev1	wip
+kvmplutotest	impair-install-ipsec-sa-outbound-policy-initiator-ikev2	wip
+kvmplutotest	impair-install-ipsec-sa-outbound-policy-responder-ikev1	wip
+kvmplutotest	impair-install-ipsec-sa-outbound-policy-responder-ikev2	wip
 
 # NIC hardware esp-hw-offload support - tests have no hardware
 kvmplutotest	ikev2-26-nic-offload-no-hw-auto		good
