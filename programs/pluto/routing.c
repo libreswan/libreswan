@@ -326,6 +326,7 @@ bool connection_establish_inbound(struct child_sa *child, where_t where)
 	struct routing_annex annex = {
 		.child = &child,
 		.where = where,
+		.initiated_by = INITIATED_BY_PEER,
 	};
 	return dispatch(CONNECTION_ESTABLISH_INBOUND, cc, logger, &annex);
 }
@@ -338,6 +339,7 @@ bool connection_establish_outbound(struct ike_sa *ike, struct child_sa *child, w
 		.child = &child,
 		.ike = &ike,
 		.where = where,
+		.initiated_by = INITIATED_BY_PEER,
 	};
 	return dispatch(CONNECTION_ESTABLISH_OUTBOUND, cc, logger, &annex);
 }
@@ -350,6 +352,7 @@ bool connection_establish_child(struct ike_sa *ike, struct child_sa *child, wher
 		.child = &child,
 		.ike = &ike,
 		.where = where,
+		.initiated_by = INITIATED_BY_PEER,
 	};
 	return dispatch(CONNECTION_ESTABLISH_CHILD_SA, cc, logger, &annex);
 }
@@ -1423,6 +1426,7 @@ void connection_establish_ike(struct ike_sa *ike, where_t where)
 	struct routing_annex annex = {
 		.ike = &ike,
 		.where = where,
+		.initiated_by = INITIATED_BY_PEER,
 	};
 	dispatch(CONNECTION_ESTABLISH_IKE_SA, c, logger, &annex);
 }

@@ -18,11 +18,15 @@
 #define INITIATED_BY_H
 
 enum initiated_by {
-	INITIATED_BY_WHACK, /*guess*/
+	INITIATED_BY_UNKNOWN = 0,
+	INITIATED_BY_WHACK,
 	INITIATED_BY_REVIVE,
 	INITIATED_BY_ACQUIRE,
 	INITIATED_BY_REPLACE,
+	INITIATED_BY_PEER,
 };
+
+#define INITIATED_BY_ROOF (INITIATED_BY_PEER+1)
 
 extern const struct enum_names initiated_by_names;
 

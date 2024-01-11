@@ -19,15 +19,17 @@
 
 static const char *initiated_by_name[] = {
 #define S(E) [E] = #E
-	S(INITIATED_BY_WHACK),
-	S(INITIATED_BY_REVIVE),
 	S(INITIATED_BY_ACQUIRE),
+	S(INITIATED_BY_PEER),
 	S(INITIATED_BY_REPLACE),
+	S(INITIATED_BY_REVIVE),
+	S(INITIATED_BY_UNKNOWN),
+	S(INITIATED_BY_WHACK),
 #undef S
 };
 
 const struct enum_names initiated_by_names = {
-	0, INITIATED_BY_REPLACE,
+	0, INITIATED_BY_ROOF-1,
 	ARRAY_REF(initiated_by_name),
 	"INITIATED_BY_", NULL,
 };
