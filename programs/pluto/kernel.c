@@ -1312,11 +1312,11 @@ void setup_esp_nic_offload(struct nic_offload *nic_offload,
  * Set up one direction of the SA bundle
  */
 
-static bool setup_half_kernel_state(struct state *st, enum direction direction)
+static bool setup_half_kernel_state(struct child_sa *child, enum direction direction)
 {
 	/* Build an inbound or outbound SA */
 
-	struct connection *c = st->st_connection;
+	struct connection *c = child->sa.st_connection;
 	bool replace = (direction == DIRECTION_INBOUND && (kernel_ops->get_ipsec_spi != NULL));
 
 	/* SPIs, saved for spigrouping or undoing, if necessary */
@@ -1332,25 +1332,27 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 	uint64_t sa_ipsec_soft_packets = c->config->sa_ipsec_max_packets;
 
 	if (c->config->rekey) {
-		sa_ipsec_soft_bytes = fuzz_soft_limit("ipsec-max-bytes",st->st_sa_role,
+		sa_ipsec_soft_bytes = fuzz_soft_limit("ipsec-max-bytes",
+						      child->sa.st_sa_role,
 						      c->config->sa_ipsec_max_bytes,
 						      IPSEC_SA_MAX_SOFT_LIMIT_PERCENTAGE,
-						      st->logger);
-		sa_ipsec_soft_packets = fuzz_soft_limit("ipsec-max-packets", st->st_sa_role,
+						      child->sa.logger);
+		sa_ipsec_soft_packets = fuzz_soft_limit("ipsec-max-packets",
+							child->sa.st_sa_role,
 							c->config->sa_ipsec_max_packets,
 							IPSEC_SA_MAX_SOFT_LIMIT_PERCENTAGE,
-							st->logger);
+							child->sa.logger);
 	}
 
 
-	struct kernel_route route = kernel_route_from_state(st, direction);
+	struct kernel_route route = kernel_route_from_state(&child->sa, direction);
 
 	enum kernel_mode mode;
 	switch (route.mode) {
 	case ENCAP_MODE_TUNNEL: mode = KERNEL_MODE_TUNNEL; break;
 	case ENCAP_MODE_TRANSPORT: mode = KERNEL_MODE_TRANSPORT; break;
 	default:
-		bad_enum(st->logger, &encap_mode_names, route.mode);
+		bad_enum(child->sa.logger, &encap_mode_names, route.mode);
 	}
 
 	const struct kernel_state said_boilerplate = {
@@ -1365,8 +1367,8 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 		.sa_max_soft_packets = sa_ipsec_soft_packets,
 		.sa_ipsec_max_bytes = c->config->sa_ipsec_max_bytes,
 		.sa_ipsec_max_packets = c->config->sa_ipsec_max_packets,
-		.sec_label = (st->st_v1_seen_sec_label.len > 0 ? st->st_v1_seen_sec_label :
-			      st->st_v1_acquired_sec_label.len > 0 ? st->st_v1_acquired_sec_label :
+		.sec_label = (child->sa.st_v1_seen_sec_label.len > 0 ? child->sa.st_v1_seen_sec_label :
+			      child->sa.st_v1_acquired_sec_label.len > 0 ? child->sa.st_v1_acquired_sec_label :
 			      c->child.sec_label /* assume connection outlive their kernel_sa's */),
 	};
 
@@ -1382,21 +1384,21 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 	    str_selector(&said_boilerplate.dst.route, &dcb),
 	    /* see above */
 	    pri_shunk(said_boilerplate.sec_label),
-	    (st->st_v1_seen_sec_label.len > 0 ? " (IKEv1 seen)" :
-	     st->st_v1_acquired_sec_label.len > 0 ? " (IKEv1 acquired)" :
+	    (child->sa.st_v1_seen_sec_label.len > 0 ? " (IKEv1 seen)" :
+	     child->sa.st_v1_acquired_sec_label.len > 0 ? " (IKEv1 acquired)" :
 	     c->child.sec_label.len > 0 ? " (IKEv2 this)" :
 	     ""))
 
 	/* set up IPCOMP SA, if any */
 
-	if (st->st_ipcomp.present) {
-		ipsec_spi_t ipcomp_spi = (direction == DIRECTION_INBOUND ? st->st_ipcomp.inbound.spi :
-					  st->st_ipcomp.outbound.spi);
+	if (child->sa.st_ipcomp.present) {
+		ipsec_spi_t ipcomp_spi = (direction == DIRECTION_INBOUND ? child->sa.st_ipcomp.inbound.spi :
+					  child->sa.st_ipcomp.outbound.spi);
 		*said_next = said_boilerplate;
 		said_next->spi = ipcomp_spi;
 		said_next->proto = &ip_protocol_ipcomp;
 
-		said_next->ipcomp = st->st_ipcomp.attrs.transattrs.ta_ipcomp;
+		said_next->ipcomp = child->sa.st_ipcomp.attrs.transattrs.ta_ipcomp;
 		said_next->level = said_next - said;
 		said_next->reqid = reqid_ipcomp(c->child.reqid);
 		said_next->story = said_str(route.dst.address,
@@ -1408,8 +1410,8 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 			said_next->mark_set = c->sa_marks.out;
 		}
 
-		if (!kernel_ops_add_sa(said_next, replace, st->logger)) {
-			log_state(RC_LOG, st, "add_sa ipcomp failed");
+		if (!kernel_ops_add_sa(said_next, replace, child->sa.logger)) {
+			llog_sa(RC_LOG, child, "add_sa ipcomp failed");
 			goto fail;
 		}
 		said_next++;
@@ -1417,33 +1419,33 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 
 	/* set up ESP SA, if any */
 
-	if (st->st_esp.present) {
-		ipsec_spi_t esp_spi = (direction == DIRECTION_INBOUND ? st->st_esp.inbound.spi :
-				       st->st_esp.outbound.spi);
-		chunk_t esp_keymat = (direction == DIRECTION_INBOUND ? st->st_esp.inbound.keymat :
-				      st->st_esp.outbound.keymat);
-		const struct trans_attrs *ta = &st->st_esp.attrs.transattrs;
+	if (child->sa.st_esp.present) {
+		ipsec_spi_t esp_spi = (direction == DIRECTION_INBOUND ? child->sa.st_esp.inbound.spi :
+				       child->sa.st_esp.outbound.spi);
+		chunk_t esp_keymat = (direction == DIRECTION_INBOUND ? child->sa.st_esp.inbound.keymat :
+				      child->sa.st_esp.outbound.keymat);
+		const struct trans_attrs *ta = &child->sa.st_esp.attrs.transattrs;
 
 		const struct ip_encap *encap_type = NULL;
 		uint16_t encap_sport = 0, encap_dport = 0;
 		ip_address natt_oa;
 
-		if (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED ||
-		    st->st_iface_endpoint->io->protocol == &ip_protocol_tcp) {
-			encap_type = st->st_iface_endpoint->io->protocol->encap_esp;
+		if (child->sa.hidden_variables.st_nat_traversal & NAT_T_DETECTED ||
+		    child->sa.st_iface_endpoint->io->protocol == &ip_protocol_tcp) {
+			encap_type = child->sa.st_iface_endpoint->io->protocol->encap_esp;
 			switch (direction) {
 			case DIRECTION_INBOUND:
-				encap_sport = endpoint_hport(st->st_remote_endpoint);
-				encap_dport = endpoint_hport(st->st_iface_endpoint->local_endpoint);
+				encap_sport = endpoint_hport(child->sa.st_remote_endpoint);
+				encap_dport = endpoint_hport(child->sa.st_iface_endpoint->local_endpoint);
 				break;
 			case DIRECTION_OUTBOUND:
-				encap_sport = endpoint_hport(st->st_iface_endpoint->local_endpoint);
-				encap_dport = endpoint_hport(st->st_remote_endpoint);
+				encap_sport = endpoint_hport(child->sa.st_iface_endpoint->local_endpoint);
+				encap_dport = endpoint_hport(child->sa.st_remote_endpoint);
 				break;
 			default:
 				bad_case(direction);
 			}
-			natt_oa = st->hidden_variables.st_nat_oa;
+			natt_oa = child->sa.hidden_variables.st_nat_oa;
 			dbg("kernel: natt/tcp sa encap_type="PRI_IP_ENCAP" sport=%d dport=%d",
 			    pri_ip_encap(encap_type), encap_sport, encap_dport);
 		}
@@ -1461,15 +1463,15 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 		 * since the connection was loaded).
 		 */
 		if (!kernel_alg_integ_ok(ta->ta_integ)) {
-			log_state(RC_LOG_SERIOUS, st,
-				  "ESP integrity algorithm %s is not implemented or allowed",
-				  ta->ta_integ->common.fqn);
+			llog_sa(RC_LOG_SERIOUS, child,
+				"ESP integrity algorithm %s is not implemented or allowed",
+				ta->ta_integ->common.fqn);
 			goto fail;
 		}
 		if (!kernel_alg_encrypt_ok(ta->ta_encrypt)) {
-			log_state(RC_LOG_SERIOUS, st,
-				  "ESP encryption algorithm %s is not implemented or allowed",
-				  ta->ta_encrypt->common.fqn);
+			llog_sa(RC_LOG_SERIOUS, child,
+				"ESP encryption algorithm %s is not implemented or allowed",
+				ta->ta_encrypt->common.fqn);
 			goto fail;
 		}
 
@@ -1479,9 +1481,9 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 		size_t encrypt_keymat_size;
 		if (!kernel_alg_encrypt_key_size(ta->ta_encrypt, ta->enckeylen,
 						 &encrypt_keymat_size)) {
-			log_state(RC_LOG_SERIOUS, st,
-				  "ESP encryption algorithm %s with key length %d not implemented or allowed",
-				  ta->ta_encrypt->common.fqn, ta->enckeylen);
+			llog_sa(RC_LOG_SERIOUS, child,
+				"ESP encryption algorithm %s with key length %d not implemented or allowed",
+				ta->ta_encrypt->common.fqn, ta->enckeylen);
 			goto fail;
 		}
 
@@ -1506,16 +1508,16 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 
 		size_t integ_keymat_size = ta->ta_integ->integ_keymat_size; /* BYTES */
 
-		dbg("kernel: st->st_esp.keymat_len=%zu is encrypt_keymat_size=%zu + integ_keymat_size=%zu",
+		dbg("kernel: child->sa.st_esp.keymat_len=%zu is encrypt_keymat_size=%zu + integ_keymat_size=%zu",
 		    esp_keymat.len, encrypt_keymat_size, integ_keymat_size);
 
-		PASSERT(st->logger, esp_keymat.len == encrypt_keymat_size + integ_keymat_size);
+		PASSERT(child->sa.logger, esp_keymat.len == encrypt_keymat_size + integ_keymat_size);
 
 		*said_next = said_boilerplate;
 		said_next->spi = esp_spi;
 		said_next->proto = &ip_protocol_esp;
 		said_next->replay_window = c->config->child_sa.replay_window;
-		ldbg(st->logger, "kernel: setting IPsec SA replay-window to %ju",
+		ldbg(child->sa.logger, "kernel: setting IPsec SA replay-window to %ju",
 		     c->config->child_sa.replay_window);
 
 		if (c->xfrmi != NULL) {
@@ -1525,22 +1527,22 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 
 		if (direction == DIRECTION_OUTBOUND &&
 		    c->config->child_sa.tfcpad != 0 &&
-		    !st->st_seen_no_tfc) {
-			ldbg(st->logger, "kernel: Enabling TFC at %ju bytes (up to PMTU)",
+		    !child->sa.st_seen_no_tfc) {
+			ldbg(child->sa.logger, "kernel: Enabling TFC at %ju bytes (up to PMTU)",
 			     c->config->child_sa.tfcpad);
 			said_next->tfcpad = c->config->child_sa.tfcpad;
 		}
 
 		if (c->config->decap_dscp) {
-			ldbg(st->logger, "kernel: Enabling Decap ToS/DSCP bits");
+			ldbg(child->sa.logger, "kernel: Enabling Decap ToS/DSCP bits");
 			said_next->decap_dscp = true;
 		}
 		if (!c->config->encap_dscp) {
-			ldbg(st->logger, "kernel: Disabling Encap ToS/DSCP bits");
+			ldbg(child->sa.logger, "kernel: Disabling Encap ToS/DSCP bits");
 			said_next->encap_dscp = false;
 		}
 		if (c->config->nopmtudisc) {
-			ldbg(st->logger, "kernel: Disabling Path MTU Discovery");
+			ldbg(child->sa.logger, "kernel: Disabling Path MTU Discovery");
 			said_next->nopmtudisc = true;
 		}
 
@@ -1550,8 +1552,8 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 		    c->config->sha2_truncbug) {
 			if (kernel_ops->sha2_truncbug_support) {
 				if (libreswan_fipsmode() == 1) {
-					log_state(RC_LOG_SERIOUS, st,
-						  "Error: sha2-truncbug=yes is not allowed in FIPS mode");
+					llog_sa(RC_LOG_SERIOUS, child,
+						"Error: sha2-truncbug=yes is not allowed in FIPS mode");
 					goto fail;
 				}
 				dbg("kernel:  authalg converted for sha2 truncation at 96bits instead of IETF's mandated 128bits");
@@ -1561,14 +1563,14 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 				 */
 				said_next->integ = &ike_alg_integ_hmac_sha2_256_truncbug;
 			} else {
-				log_state(RC_LOG_SERIOUS, st,
-					  "Error: %s stack does not support sha2_truncbug=yes",
-					  kernel_ops->interface_name);
+				llog_sa(RC_LOG_SERIOUS, child,
+					"Error: %s stack does not support sha2_truncbug=yes",
+					kernel_ops->interface_name);
 				goto fail;
 			}
 		}
 #endif
-		if (st->st_esp.attrs.transattrs.esn_enabled) {
+		if (child->sa.st_esp.attrs.transattrs.esn_enabled) {
 			dbg("kernel: Enabling ESN");
 			said_next->esn = true;
 		}
@@ -1604,9 +1606,9 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 		bool nic_offload_fallback = (c->iface->nic_offload &&
 					     c->config->nic_offload == NIC_OFFLOAD_AUTO);
 
-		setup_esp_nic_offload(&said_next->nic_offload, c, st->logger);
+		setup_esp_nic_offload(&said_next->nic_offload, c, child->sa.logger);
 
-		bool ret = kernel_ops_add_sa(said_next, replace, st->logger);
+		bool ret = kernel_ops_add_sa(said_next, replace, child->sa.logger);
 
 		/*
 		 * XXX: these log messages struggle to make sense.
@@ -1615,11 +1617,15 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 		 * before the first add attempt?
 		 */
 
-		if (!ret && nic_offload_fallback)
-			log_state(RC_LOG_SERIOUS, st, "Warning: NIC packet esp-hw-offload not available for this IPsec SA with its negotiated parameters");
-		if (cno && said_next->nic_offload.dev == NULL)
-			log_state(RC_LOG_SERIOUS, st, "Warning: NIC packet esp-hw-offload not available for interface %s",
+		if (!ret && nic_offload_fallback) {
+			llog_sa(RC_LOG_SERIOUS, child,
+				"Warning: NIC packet esp-hw-offload not available for this IPsec SA with its negotiated parameters");
+		}
+		if (cno && said_next->nic_offload.dev == NULL) {
+			llog_sa(RC_LOG_SERIOUS, child,
+				"Warning: NIC packet esp-hw-offload not available for interface %s",
 				c->iface->real_device_name);
+		}
 
 		/*
 		 * XXX: This short-circuit is broken; it skips the
@@ -1633,18 +1639,22 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 			/* Fallback to crypto offload from packet offload */
 			if (said_next->nic_offload.type == KERNEL_OFFLOAD_PACKET) {
 				said_next->nic_offload.type = KERNEL_OFFLOAD_CRYPTO;
-				ret = kernel_ops_add_sa(said_next, replace, st->logger);
+				ret = kernel_ops_add_sa(said_next, replace, child->sa.logger);
 			} else {
-				log_state(RC_LOG_SERIOUS, st, "Warning: NIC packet esp-hw-offload PAUL HUH");
+				llog_sa(RC_LOG_SERIOUS, child,
+					"Warning: NIC packet esp-hw-offload PAUL HUH");
 			}
 
 			if (!ret) {
-				log_state(RC_LOG_SERIOUS, st, "Warning: NIC crypto esp-hw-offload failed for this IPsec SA with its negotiated parameters");
+				llog_sa(RC_LOG_SERIOUS, child,
+					"Warning: NIC crypto esp-hw-offload failed for this IPsec SA with its negotiated parameters");
 				/* Fallback to non-nic-offload crypto */
 				said_next->nic_offload.dev = NULL;
-				ret = kernel_ops_add_sa(said_next, replace, st->logger);
-				if (ret)
-					log_state(RC_LOG_SERIOUS, st, "Warning: IPsec SA is not using any NIC esp-hw-offload");
+				ret = kernel_ops_add_sa(said_next, replace, child->sa.logger);
+				if (ret) {
+					llog_sa(RC_LOG_SERIOUS, child,
+						"Warning: IPsec SA is not using any NIC esp-hw-offload");
+				}
 			}
 		}
 
@@ -1659,21 +1669,20 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 
 	/* set up AH SA, if any */
 
-	if (st->st_ah.present) {
-		ipsec_spi_t ah_spi = (direction == DIRECTION_INBOUND ? st->st_ah.inbound.spi :
-				      st->st_ah.outbound.spi);
-		chunk_t ah_keymat = (direction == DIRECTION_INBOUND ? st->st_ah.inbound.keymat :
-				     st->st_ah.outbound.keymat);
+	if (child->sa.st_ah.present) {
+		ipsec_spi_t ah_spi = (direction == DIRECTION_INBOUND ? child->sa.st_ah.inbound.spi :
+				      child->sa.st_ah.outbound.spi);
+		chunk_t ah_keymat = (direction == DIRECTION_INBOUND ? child->sa.st_ah.inbound.keymat :
+				     child->sa.st_ah.outbound.keymat);
 
-		const struct integ_desc *integ = st->st_ah.attrs.transattrs.ta_integ;
+		const struct integ_desc *integ = child->sa.st_ah.attrs.transattrs.ta_integ;
 		if (integ->integ_ikev1_ah_transform <= 0) {
-			log_state(RC_LOG_SERIOUS, st,
-				  "%s not implemented",
-				  integ->common.fqn);
+			llog_sa(RC_LOG_SERIOUS, child,
+				"%s not implemented", integ->common.fqn);
 			goto fail;
 		}
 
-		PASSERT(st->logger, ah_keymat.len == integ->integ_keymat_size);
+		PASSERT(child->sa.logger, ah_keymat.len == integ->integ_keymat_size);
 
 		*said_next = said_boilerplate;
 		said_next->spi = ah_spi;
@@ -1687,10 +1696,10 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 					    ah_spi, &text_ah);
 
 		said_next->replay_window = c->config->child_sa.replay_window;
-		ldbg(st->logger, "kernel: setting IPsec SA replay-window to %ju",
+		ldbg(child->sa.logger, "kernel: setting IPsec SA replay-window to %ju",
 		     c->config->child_sa.replay_window);
 
-		if (st->st_ah.attrs.transattrs.esn_enabled) {
+		if (child->sa.st_ah.attrs.transattrs.esn_enabled) {
 			dbg("kernel: Enabling ESN");
 			said_next->esn = true;
 		}
@@ -1699,7 +1708,7 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 			DBG_dump_hunk("AH authkey:", said_next->integ_key);
 		}
 
-		bool ret = kernel_ops_add_sa(said_next, replace, st->logger);
+		bool ret = kernel_ops_add_sa(said_next, replace, child->sa.logger);
 		/* scrub key from memory */
 		memset(ah_keymat.ptr, 0, ah_keymat.len);
 
@@ -1718,7 +1727,7 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 	return true;
 
 fail:
-	log_state(RC_LOG, st, "setup_half_ipsec_sa() hit fail:");
+	llog_sa(RC_LOG, child, "setup_half_ipsec_sa() hit fail:");
 	/*
 	 * Undo the done SPIs.
 	 *
@@ -1730,7 +1739,7 @@ fail:
 						 said_next->proto,
 						 &said_next->src.address,
 						 &said_next->dst.address,
-						 st->logger);
+						 child->sa.logger);
 		}
 	}
 	return false;
@@ -2143,7 +2152,7 @@ bool install_inbound_ipsec_sa(struct child_sa *child, enum routing new_routing, 
 		return false;
 	}
 
-	if (!setup_half_kernel_state(&child->sa, DIRECTION_INBOUND)) {
+	if (!setup_half_kernel_state(child, DIRECTION_INBOUND)) {
 		ldbg(logger, "kernel: %s() failed to install inbound kernel state", __func__);
 		return false;
 	}
@@ -2193,7 +2202,7 @@ bool install_outbound_ipsec_sa(struct child_sa *child, enum routing new_routing,
 		return false;
 	}
 
-	if (!setup_half_kernel_state(&child->sa, DIRECTION_OUTBOUND)) {
+	if (!setup_half_kernel_state(child, DIRECTION_OUTBOUND)) {
 		ldbg(logger, "kernel: %s() failed to install outbound kernel state", __func__);
 		return false;
 	}
