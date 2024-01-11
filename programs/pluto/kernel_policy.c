@@ -81,7 +81,7 @@ static struct kernel_policy kernel_policy_from_void(ip_selector local, ip_select
 		.sa_marks = sa_marks,
 		.xfrmi = xfrmi,
 		.sec_label = sec_label,
-		.mode = ENCAP_MODE_TRANSPORT,
+		.mode = KERNEL_MODE_TRANSPORT,
 		.nic_offload = *nic_offload,
 	};
 
@@ -116,7 +116,7 @@ struct kernel_policy_encap {
 
 static struct kernel_policy kernel_policy_from_spd(struct kernel_policy_encap policy,
 						   const struct spd_route *spd,
-						   enum encap_mode mode,
+						   enum encap_mode encap_mode,
 						   enum direction direction,
 						   struct nic_offload *nic_offload,
 						   where_t where)
@@ -133,17 +133,20 @@ static struct kernel_policy kernel_policy_from_spd(struct kernel_policy_encap po
 	 * internal IP, communication doesn't work.
 	 */
 	ip_selector remote_route;
-	switch (mode) {
+	enum kernel_mode kernel_mode;
+	switch (encap_mode) {
 	case ENCAP_MODE_TUNNEL:
+		kernel_mode = KERNEL_MODE_TUNNEL;
 		remote_route = spd->remote->client;
 		break;
 	case ENCAP_MODE_TRANSPORT:
+		kernel_mode = KERNEL_MODE_TRANSPORT;
 		remote_route = selector_from_address_protocol_port(spd->remote->host->addr,
 								   selector_protocol(spd->remote->client),
 								   selector_port(spd->remote->client));
 		break;
 	default:
-		bad_case(mode);
+		bad_case(encap_mode);
 	}
 
 	struct kernel_policy kernel_policy = {
@@ -156,7 +159,7 @@ static struct kernel_policy kernel_policy_from_spd(struct kernel_policy_encap po
 		.remote.host = spd->remote->host->addr,
 		/* details */
 		.priority = spd_priority(spd),
-		.mode = mode,
+		.mode = kernel_mode,
 		.kind = SHUNT_KIND_IPSEC,
 		.shunt = SHUNT_IPSEC,
 		.where = where,

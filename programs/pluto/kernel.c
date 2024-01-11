@@ -1345,13 +1345,21 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 
 	struct kernel_route route = kernel_route_from_state(st, direction);
 
+	enum kernel_mode mode;
+	switch (route.mode) {
+	case ENCAP_MODE_TUNNEL: mode = KERNEL_MODE_TUNNEL; break;
+	case ENCAP_MODE_TRANSPORT: mode = KERNEL_MODE_TRANSPORT; break;
+	default:
+		bad_enum(st->logger, &encap_mode_names, route.mode);
+	}
+
 	const struct kernel_state said_boilerplate = {
 		.src.address = route.src.address,
 		.dst.address = route.dst.address,
 		.src.route = route.src.route,
 		.dst.route = route.dst.route,
 		.direction = direction,
-		.tunnel = (route.mode == ENCAP_MODE_TUNNEL),
+		.mode = mode,
 		.sa_lifetime = c->config->sa_ipsec_max_lifetime,
 		.sa_max_soft_bytes = sa_ipsec_soft_bytes,
 		.sa_max_soft_packets = sa_ipsec_soft_packets,

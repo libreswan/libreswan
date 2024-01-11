@@ -798,7 +798,7 @@ static bool pfkeyv2_add_sa(const struct kernel_state *k,
 	 *
 	 * OpenBSD instead uses this bit.
 	 */
-	if (k->tunnel) {
+	if (k->mode == KERNEL_MODE_TUNNEL) {
 		saflags |= SADB_X_SAFLAGS_TUNNEL;
 	}
 #endif
@@ -894,7 +894,11 @@ static bool pfkeyv2_add_sa(const struct kernel_state *k,
 #ifdef SADB_X_EXT_SA2 /* FreeBSD NetBSD */
 	put_sadb_x_sa2(&req, IPSEC_MODE_ANY, k->reqid);
 #endif
-	/* (k->level == 0 && k->tunnel ?  ipsec_mode_tunnel : ipsec_mode_transport), */
+#if 0
+	k->level == 0 && k->mode == KERNEL_MODE_TUNNEL ? ipsec_mode_tunnel :
+		k->mode == KERNEL_MODE_TRANSPORT ? ipsec_mode_transport :
+		barf)
+#endif
 
 	/*
 	 * address(SD)
@@ -1167,8 +1171,8 @@ static struct sadb_x_policy *put_sadb_x_policy(struct outbuf *req,
 			 * Should the caller take care of this?
 			 */
 			enum ipsec_mode mode =
-				(kernel_policy->mode == ENCAP_MODE_TUNNEL ? IPSEC_MODE_TUNNEL :
-				 kernel_policy->mode == ENCAP_MODE_TRANSPORT ? IPSEC_MODE_TRANSPORT :
+				(kernel_policy->mode == KERNEL_MODE_TUNNEL ? IPSEC_MODE_TUNNEL :
+				 kernel_policy->mode == KERNEL_MODE_TRANSPORT ? IPSEC_MODE_TRANSPORT :
 				 pexpect(0));
 			for (unsigned i = 0; i < kernel_policy->nr_rules; i++) {
 				const struct kernel_policy_rule *rule = &kernel_policy->rule[i];
@@ -1264,8 +1268,8 @@ static bool kernel_pfkeyv2_policy_add(enum kernel_policy_op op,
 		break;
 	case SHUNT_IPSEC:
 		policy_type = SADB_X_FLOW_TYPE_REQUIRE;
-		policy_name = (policy->mode == ENCAP_MODE_TUNNEL ? ip_protocol_ipip.name :
-			       policy->mode == ENCAP_MODE_TRANSPORT ? protocol_from_ipproto(policy->rule[policy->nr_rules-1].proto)->name :
+		policy_name = (policy->mode == KERNEL_MODE_TUNNEL ? ip_protocol_ipip.name :
+			       policy->mode == KERNEL_MODE_TRANSPORT ? protocol_from_ipproto(policy->rule[policy->nr_rules-1].proto)->name :
 			       "UNKNOWN");
 		break;
 	case SHUNT_PASS:
@@ -1374,8 +1378,8 @@ static bool kernel_pfkeyv2_policy_add(enum kernel_policy_op op,
 		break;
 	case SHUNT_IPSEC:
 		policy_type = IPSEC_POLICY_IPSEC;
-		policy_name = (policy->mode == ENCAP_MODE_TUNNEL ? ip_protocol_ipip.name :
-			       policy->mode == ENCAP_MODE_TRANSPORT ? protocol_from_ipproto(policy->rule[policy->nr_rules-1].proto)->name :
+		policy_name = (policy->mode == KERNEL_MODE_TUNNEL ? ip_protocol_ipip.name :
+			       policy->mode == KERNEL_MODE_TRANSPORT ? protocol_from_ipproto(policy->rule[policy->nr_rules-1].proto)->name :
 			       "UNKNOWN");
 		break;
 	case SHUNT_PASS:

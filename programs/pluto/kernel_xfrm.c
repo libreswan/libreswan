@@ -791,8 +791,8 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 		break;
 	case SHUNT_IPSEC:
 		xfrm_action = XFRM_POLICY_ALLOW;
-		policy_name = (policy->mode == ENCAP_MODE_TUNNEL ? ip_protocol_ipip.name :
-			       policy->mode == ENCAP_MODE_TRANSPORT ? protocol_from_ipproto(policy->rule[policy->nr_rules-1].proto)->name :
+		policy_name = (policy->mode == KERNEL_MODE_TUNNEL ? ip_protocol_ipip.name :
+			       policy->mode == KERNEL_MODE_TRANSPORT ? protocol_from_ipproto(policy->rule[policy->nr_rules-1].proto)->name :
 			       "UNKNOWN");
 		break;
 	case SHUNT_PASS:
@@ -886,7 +886,7 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 
 		passert(policy->nr_rules <= (int)elemsof(tmpls));
 		/* only the first rule gets the worm; er tunnel flag */
-		unsigned mode = (policy->mode == ENCAP_MODE_TUNNEL ? XFRM_MODE_TUNNEL :
+		unsigned mode = (policy->mode == KERNEL_MODE_TUNNEL ? XFRM_MODE_TUNNEL :
 				 XFRM_MODE_TRANSPORT);
 		for (unsigned i = 0; i < policy->nr_rules; i++) {
 			const struct kernel_policy_rule *rule = &policy->rule[i];
@@ -981,7 +981,7 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 				break;
 			}
 			if (policy->shunt == SHUNT_IPSEC &&
-			    policy->mode == ENCAP_MODE_TRANSPORT) {
+			    policy->mode == KERNEL_MODE_TRANSPORT) {
 				break;
 			}
 			ldbg(logger, "%s() adding policy forward (suspect a tunnel)", __func__);
@@ -1486,16 +1486,25 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 	/*
 	 * This requires ipv6 modules. It is required to support 6in4
 	 * and 4in6 tunnels in linux 2.6.25+
-	 *
-	 * Only the innermost SA gets the "tunnel" flag.
 	 */
-	if (sa->level == 0 && sa->tunnel) {
-		ldbg(logger, "%s() enabling tunnel mode", __func__);
-		req.p.mode = XFRM_MODE_TUNNEL;
-		req.p.flags |= XFRM_STATE_AF_UNSPEC;
-	} else {
-		ldbg(logger, "%s() enabling transport mode", __func__);
+	switch (sa->mode) {
+	case KERNEL_MODE_TUNNEL:
+		/* Only the innermost SA gets the "tunnel" flag. */
+		if (sa->level == 0) {
+			ldbg(logger, "%s() enabling tunnel mode at outer most level", __func__);
+			req.p.mode = XFRM_MODE_TUNNEL;
+			req.p.flags |= XFRM_STATE_AF_UNSPEC;
+		} else {
+			ldbg(logger, "%s() enabling transport mode at non-outer level", __func__);
+			req.p.mode = XFRM_MODE_TRANSPORT;
+		}
+		break;
+	case KERNEL_MODE_TRANSPORT:
+		ldbg(logger, "%s() enabling transport mode at non-outer level", __func__);
 		req.p.mode = XFRM_MODE_TRANSPORT;
+		break;
+	default:
+		bad_enum(logger, &kernel_mode_names, sa->mode);
 	}
 
 	/*
@@ -1507,7 +1516,7 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 	 * traffic selectors. Caller function will inform us if we
 	 * need or don't need selectors.
 	 */
-	if (!sa->tunnel) {
+	if (sa->mode == KERNEL_MODE_TRANSPORT) {
 		set_xfrm_selectors(&req.p.sel, &sa->src.route, &sa->dst.route, logger);
 	}
 
@@ -1742,8 +1751,14 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 			req.n.nlmsg_len += attr->rta_len;
 			attr = (struct rtattr *)((char *)attr + attr->rta_len);
 
-			/* Traffic Flow Confidentiality is only for ESP tunnel mode */
-			if (sa->tfcpad != 0 && sa->tunnel && sa->level == 0) {
+			/*
+			 * Traffic Flow Confidentiality is only for
+			 * ESP tunnel mode (which is only on outer
+			 * level).
+			 */
+			if (sa->tfcpad != 0 &&
+			    sa->mode == KERNEL_MODE_TUNNEL &&
+			    sa->level == 0) {
 				ldbg(logger, "%s() setting TFC to %" PRIu32 " (up to PMTU)",
 				     __func__, sa->tfcpad);
 

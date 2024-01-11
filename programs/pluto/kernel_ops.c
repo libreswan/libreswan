@@ -318,7 +318,7 @@ bool kernel_ops_add_sa(const struct kernel_state *sa, bool replace, struct logge
 			jam(buf, " level=%d", sa->level);
 			jam_string(buf, " ");
 			jam_enum_short(buf, &direction_names, sa->direction);
-			jam(buf, " %s", (sa->tunnel ? "tunnel" : "transport"));
+			jam_enum_short(buf, &kernel_mode_names, sa->mode);
 		}
 
 		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, logger, buf) {
@@ -361,7 +361,8 @@ bool kernel_ops_add_sa(const struct kernel_state *sa, bool replace, struct logge
 		}
 	}
 
-	if (!sa->tunnel/*i.e., transport-mode*/) {
+	switch (sa->mode) {
+	case KERNEL_MODE_TRANSPORT:
 		/*
 		 * XXX: since this is for transport mode what is
 		 * allowed to change?
@@ -384,6 +385,8 @@ bool kernel_ops_add_sa(const struct kernel_state *sa, bool replace, struct logge
 			pexpect(address_eq_address(sa->src.address, selector_prefix(sa->src.route)));
 			pexpect(address_eq_address(sa->dst.address, selector_prefix(sa->dst.route)));
 		}
+		break;
+	case KERNEL_MODE_TUNNEL:
 	}
 
 	bool ok = kernel_ops->add_sa(sa, replace, logger);

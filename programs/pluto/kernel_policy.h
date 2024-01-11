@@ -24,7 +24,7 @@
 #include "ip_selector.h"
 #include "encap_mode.h"
 
-#include "kernel.h"		/* for kernel_priority_t */
+#include "kernel.h"		/* for kernel_priority_t and kernel_mode */
 
 enum direction;
 enum expect_kernel_policy;
@@ -135,7 +135,7 @@ struct kernel_policy {
 	 * or transport); any other rules are always in transport
 	 * mode.
 	 */
-	enum encap_mode mode;
+	enum kernel_mode mode;
 	unsigned nr_rules;
 	struct kernel_policy_rule rule[3/*IPCOMP+{ESP,AH}+PADDING*/];
 	struct nic_offload nic_offload;
