@@ -2140,18 +2140,9 @@ static diag_t extract_connection(const struct whack_message *wm,
 	config->child_sa.encap_mode = mode;
 
 	if (mode == ENCAP_MODE_TRANSPORT) {
-		if (wm->vti_interface != NULL)
+		if (wm->vti_interface != NULL) {
 			return diag("VTI requires tunnel mode but connection specifies type=transport");
-	} else {
-		if (wm->nic_offload == NIC_OFFLOAD_PACKET || wm->nic_offload == NIC_OFFLOAD_AUTO)
-			return diag("nic-offload=packet|auto currently works for transport mode only. There are no known nic-offload cards that support packet offload with Tunnel Mode or IPTFS. If you know of such a card, contact swan-dev@lists.libreswan.org");
-	}
-
-	if (wm->nic_offload == NIC_OFFLOAD_PACKET || wm->nic_offload == NIC_OFFLOAD_AUTO) {
-		if (encap_proto != ENCAP_PROTO_ESP)
-			return diag("nic-offload=packet|auto requires phase2=esp");
-		if (compress)
-			return diag("nic-offload=packet|auto does not support IPCOMP compression.");
+		}
 	}
 
 	if (wm->authby.never) {
@@ -2583,20 +2574,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 		config->child_sa.replay_window = wm->replay_window;
 	}
 
-	if (wm->nic_offload == NIC_OFFLOAD_PACKET || wm->nic_offload == NIC_OFFLOAD_AUTO) {
-		switch (wm->replay_window) {
-			case 32:
-			case 64:
-			case 128:
-			case 256:
-				dbg("packet offload replay-window compatible with all known hardware and Linux kernels");
-				break;
-			default:
-				return diag("current packet offload hardware only supports replay-window of 32, 64, 128 or 256");
-		}
-		/* check if we need checks for tfcpad= , encap-dscp, nopmtudisc, ikepad, encapsulation, etc? */
-	}
-
 	if (never_negotiate_wm(wm)) {
 		if (wm->esn != YNE_UNSET) {
 			llog(RC_INFORMATIONAL, c->logger,
@@ -2878,6 +2855,32 @@ static diag_t extract_connection(const struct whack_message *wm,
 			}
 			config->nic_offload = wm->nic_offload;
 		}
+
+		if (wm->nic_offload == NIC_OFFLOAD_PACKET ||
+		    wm->nic_offload == NIC_OFFLOAD_AUTO) {
+			if (mode != ENCAP_MODE_TRANSPORT) {
+				return diag("nic-offload=packet|auto restricted to type=transport");
+			}
+			if (encap_proto != ENCAP_PROTO_ESP) {
+				return diag("nic-offload=packet|auto restricted to phase2=esp");
+			}
+			if (compress) {
+				return diag("nic-offload=packet|auto restricted to compression=no");
+			}
+
+			switch (wm->replay_window) {
+			case 32:
+			case 64:
+			case 128:
+			case 256:
+				ldbg(c->logger, "packet offload replay-window compatible with all known hardware and Linux kernels");
+				break;
+			default:
+				return diag("current packet offload hardware only supports replay-window of 32, 64, 128 or 256");
+			}
+			/* check if we need checks for tfcpad= , encap-dscp, nopmtudisc, ikepad, encapsulation, etc? */
+		}
+
 	}
 
 	if (never_negotiate_wm(wm)) {
