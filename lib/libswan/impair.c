@@ -301,10 +301,10 @@ struct impairment impairments[] = {
 
 	U(helper_thread_delay, "pause <unsigned> seconds before starting each helper thread job"),
 
-	B(install_ipsec_sa_inbound_early, "abort installing the inbound IPsec SA code at the start"),
-	B(install_ipsec_sa_inbound_late, "abort installing the inbound IPsec SA code at the end"),
-	B(install_ipsec_sa_outbound_early, "abort installing the outbound IPsec SA code at the start"),
-	B(install_ipsec_sa_outbound_late, "abort installing the outbound IPsec SA code at the end"),
+	B(install_ipsec_sa_inbound_state, "error after installing the inbound IPsec SA state (but before policy)"),
+	B(install_ipsec_sa_inbound_policy, "error after installing the inbound IPsec SA policy (and state)"),
+	B(install_ipsec_sa_outbound_state, "error after installing the outbound IPsec SA state (but before policy)"),
+	B(install_ipsec_sa_outbound_policy, "error after installing the outbound IPsec SA policy (and state)"),
 
 #undef U
 #undef B

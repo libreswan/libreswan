@@ -1720,15 +1720,24 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 		said_next++;
 	}
 
+	if (impair.install_ipsec_sa_outbound_state && direction == DIRECTION_OUTBOUND) {
+		llog(RC_LOG, child->sa.logger, "IMPAIR: kernel: install_ipsec_sa_outbound_state in %s()", __func__);
+		goto fail;
+	}
+	if (impair.install_ipsec_sa_inbound_state && direction == DIRECTION_INBOUND) {
+		llog(RC_LOG, child->sa.logger, "IMPAIR: kernel: install_ipsec_sa_inbound_state in %s()", __func__);
+		goto fail;
+	}
+
 	return true;
 
 fail:
-	llog_sa(RC_LOG, child, "setup_half_ipsec_sa() hit fail:");
 	/*
-	 * Undo the done SPIs.
+	 * Undo the done SPIs; should have been logged above.
 	 *
 	 * Deleting the SPI also deletes any SAs attached to them.
 	 */
+	ldbg_sa(child, "%s() cleaning up after a fail", __func__);
 	while (said_next-- != said) {
 		if (said_next->proto != NULL) {
 			kernel_ops_del_ipsec_spi(said_next->spi,
@@ -1777,6 +1786,11 @@ static bool install_inbound_ipsec_kernel_policies(struct child_sa *child)
 		     str_selector(&spd->remote->client, &sb),
 		     str_selector(&spd->local->client, &db));
 		install_inbound_ipsec_kernel_policy(child, spd, HERE);
+	}
+
+	if (impair.install_ipsec_sa_inbound_policy) {
+		llog(RC_LOG, logger, "IMPAIR: kernel: install_ipsec_sa_inbound_policy in %s()", __func__);
+		return false;
 	}
 
 	return true;
@@ -2059,6 +2073,11 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 		}
 	}
 
+	if (impair.install_ipsec_sa_outbound_policy) {
+		llog(RC_LOG, logger, "IMPAIR: kernel: install_ipsec_sa_outbound_policy in %s()", __func__);
+		return false;
+	}
+
 	/*
 	 * Finally clean up.
 	 */
@@ -2143,11 +2162,6 @@ bool install_inbound_ipsec_sa(struct child_sa *child, enum routing new_routing, 
 		return false;
 	}
 
-	if (impair.install_ipsec_sa_inbound_early) {
-		llog(RC_LOG, logger, "IMPAIR: kernel: install_ipsec_sa_inbound_early in %s()", __func__);
-		return false;
-	}
-
 	if (!setup_half_kernel_state(child, DIRECTION_INBOUND)) {
 		ldbg(logger, "kernel: %s() failed to install inbound kernel state", __func__);
 		return false;
@@ -2155,11 +2169,6 @@ bool install_inbound_ipsec_sa(struct child_sa *child, enum routing new_routing, 
 
 	if (!install_inbound_ipsec_kernel_policies(child)) {
 		ldbg(logger, "kernel: %s() failed to install inbound kernel policy", __func__);
-		return false;
-	}
-
-	if (impair.install_ipsec_sa_inbound_late) {
-		llog(RC_LOG, logger, "IMPAIR: kernel: install_ipsec_sa_inbound_late in %s()", __func__);
 		return false;
 	}
 
@@ -2193,22 +2202,12 @@ bool install_outbound_ipsec_sa(struct child_sa *child, enum routing new_routing,
 
 	/* (attempt to) actually set up the SA group */
 
-	if (impair.install_ipsec_sa_outbound_early) {
-		llog(RC_LOG, logger, "IMPAIR: kernel: install_ipsec_sa_outbound_early in %s()", __func__);
-		return false;
-	}
-
 	if (!setup_half_kernel_state(child, DIRECTION_OUTBOUND)) {
 		ldbg(logger, "kernel: %s() failed to install outbound kernel state", __func__);
 		return false;
 	}
 
 	if (!install_outbound_ipsec_kernel_policies(child, new_routing, up)) {
-		return false;
-	}
-
-	if (impair.install_ipsec_sa_outbound_late) {
-		llog(RC_LOG, logger, "IMPAIR: kernel: install_ipsec_sa_outbound_late in %s()", __func__);
 		return false;
 	}
 

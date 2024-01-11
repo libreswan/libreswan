@@ -176,10 +176,10 @@ struct impair {
 
 	unsigned helper_thread_delay;
 
-	bool install_ipsec_sa_inbound_early;
-	bool install_ipsec_sa_inbound_late;
-	bool install_ipsec_sa_outbound_early;
-	bool install_ipsec_sa_outbound_late;
+	bool install_ipsec_sa_inbound_state;
+	bool install_ipsec_sa_inbound_policy;
+	bool install_ipsec_sa_outbound_state;
+	bool install_ipsec_sa_outbound_policy;
 
 	/*
 	 * add more here
