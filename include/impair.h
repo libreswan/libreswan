@@ -99,7 +99,6 @@ struct impair {
 	bool bust_mi2;
 	bool bust_mr2;
 	bool drop_i2;
-	bool sa_creation;
 	bool jacob_two_two;
 	bool allow_null_none;
 	bool major_version_bump;

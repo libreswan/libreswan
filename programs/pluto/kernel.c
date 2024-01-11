@@ -1720,11 +1720,6 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 		said_next++;
 	}
 
-	/* if the impaired is set, pretend this fails */
-	if (impair.sa_creation) {
-		DBG_log("Impair SA creation is set, pretending to fail");
-		goto fail;
-	}
 	return true;
 
 fail:

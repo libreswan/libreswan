@@ -153,7 +153,6 @@ struct impairment impairments[] = {
 	V("rekey-respond-subnet", rekey_respond_subnet, "impair IPsec SA rekey responder TSi and TSR to X/32 X/128"),
 	V("replay-encrypted", replay_encrypted, "replay encrypted packets"),
 	V("revival", revival, "disable code that revives a connection that is supposed to stay up"),
-	V("sa-creation", sa_creation, "fail all SA creation"),
 	V("send-bogus-dcookie", send_bogus_dcookie, "causes pluto to send a a bogus IKEv2 DCOOKIE"),
 	V("send-bogus-isakmp-flag", send_bogus_isakmp_flag, "causes pluto to set a RESERVED ISAKMP flag to test ignoring/zeroing it"),
 	V("send-bogus-payload-flag", send_bogus_payload_flag, "causes pluto to set a RESERVED PAYLOAD flag to test ignoring/zeroing it"),
