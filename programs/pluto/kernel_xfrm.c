@@ -1491,16 +1491,16 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 	case KERNEL_MODE_TUNNEL:
 		/* Only the innermost SA gets the "tunnel" flag. */
 		if (sa->level == 0) {
-			ldbg(logger, "%s() enabling tunnel mode at outer most level", __func__);
+			ldbg(logger, "%s() tunnel enabling inner-most tunnel mode", __func__);
 			req.p.mode = XFRM_MODE_TUNNEL;
 			req.p.flags |= XFRM_STATE_AF_UNSPEC;
 		} else {
-			ldbg(logger, "%s() enabling transport mode at non-outer level", __func__);
+			ldbg(logger, "%s() tunnel enabling non-inner transport mode", __func__);
 			req.p.mode = XFRM_MODE_TRANSPORT;
 		}
 		break;
 	case KERNEL_MODE_TRANSPORT:
-		ldbg(logger, "%s() enabling transport mode at non-outer level", __func__);
+		ldbg(logger, "%s() transport enabling transport mode", __func__);
 		req.p.mode = XFRM_MODE_TRANSPORT;
 		break;
 	default:

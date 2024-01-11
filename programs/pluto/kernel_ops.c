@@ -318,6 +318,7 @@ bool kernel_ops_add_sa(const struct kernel_state *sa, bool replace, struct logge
 			jam(buf, " level=%d", sa->level);
 			jam_string(buf, " ");
 			jam_enum_short(buf, &direction_names, sa->direction);
+			jam_string(buf, " ");
 			jam_enum_short(buf, &kernel_mode_names, sa->mode);
 		}
 
