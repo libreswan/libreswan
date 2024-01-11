@@ -376,15 +376,15 @@ bool kernel_ops_add_sa(const struct kernel_state *sa, bool replace, struct logge
 		 * ROUTE.
 		 */
 		const struct ip_info *afi = address_info(sa->src.address);
-		pexpect(selector_info(sa->src.route) == afi);
-		pexpect(selector_info(sa->dst.route) == afi);
-		if (DBGP(DBG_ROUTING)) {
+		PEXPECT(logger, selector_info(sa->src.route) == afi);
+		PEXPECT(logger, selector_info(sa->dst.route) == afi);
+		if (DBGP(DBG_BASE)) {
 			/* XXX: no test triggers these!?! */
-			pexpect(selector_prefix_bits(sa->src.route) == afi->mask_cnt);
-			pexpect(selector_prefix_bits(sa->dst.route) == afi->mask_cnt);
+			PEXPECT(logger, selector_prefix_bits(sa->src.route) == afi->mask_cnt);
+			PEXPECT(logger, selector_prefix_bits(sa->dst.route) == afi->mask_cnt);
 			/* don't know which of .D/.S is .L/.R */
-			pexpect(address_eq_address(sa->src.address, selector_prefix(sa->src.route)));
-			pexpect(address_eq_address(sa->dst.address, selector_prefix(sa->dst.route)));
+			PEXPECT(logger, address_eq_address(sa->src.address, selector_prefix(sa->src.route)));
+			PEXPECT(logger, address_eq_address(sa->dst.address, selector_prefix(sa->dst.route)));
 		}
 		break;
 	}
