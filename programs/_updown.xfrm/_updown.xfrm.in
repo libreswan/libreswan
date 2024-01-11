@@ -641,7 +641,7 @@ do_ip()
     fi
 
     case "${oops}" in
-	'RTNETLINK answers: No such process'*)
+	'RTNETLINK answers: File exists'*|'RTNETLINK answers: No such process'*)
 	    # should not happen, but ... ignore if the
 	    # route was already removed
 	    oops=""
