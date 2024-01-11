@@ -429,12 +429,13 @@ struct kernel_route {
 	} src, dst;
 };
 
-static struct kernel_route kernel_route_from_state(const struct state *st, enum direction direction)
+static struct kernel_route kernel_route_from_state(const struct child_sa *child,
+						   enum direction direction)
 {
-	const struct connection *c = st->st_connection;
+	const struct connection *c = child->sa.st_connection;
 
 	enum encap_mode mode = ENCAP_MODE_TRANSPORT;
-	FOR_EACH_THING(proto, &st->st_esp, &st->st_ah) {
+	FOR_EACH_THING(proto, &child->sa.st_esp, &child->sa.st_ah) {
 		if (proto->present && proto->attrs.mode == ENCAPSULATION_MODE_TUNNEL) {
 			mode = ENCAP_MODE_TUNNEL;
 			break;
@@ -1345,7 +1346,7 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 	}
 
 
-	struct kernel_route route = kernel_route_from_state(&child->sa, direction);
+	struct kernel_route route = kernel_route_from_state(child, direction);
 
 	enum kernel_mode mode;
 	switch (route.mode) {
