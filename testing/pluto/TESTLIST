@@ -1543,3 +1543,5 @@ kvmplutotest	impair-install-ipsec-sa-outbound-policy-responder-ikev2	wip
 kvmplutotest	ikev2-26-nic-offload-no-hw-auto		good
 kvmplutotest	ikev2-26-nic-offload-no-hw-crypto	wip	github/1527
 kvmplutotest	ikev2-26-nic-offload-no-hw-packet	wip	github/1527
+
+kvmplutotest	testing/pluto/ikev1-29-quick-death	wip	github/1531
