@@ -2429,11 +2429,14 @@ static void success_v2_state_transition(struct ike_sa *ike,
 	 *
 	 * XXX: so ....
 	 *
-	 * - replay protection?
-	 *
-	 * - IKE_AUTH exchange? Already handled? Exclude?
+	 * do nothing
 	 */
 	if (nat_traversal_enabled &&
+	    /*
+	     * Only when MOBIKE is not in the picture.
+	     */
+	    !ike->sa.st_ike_sent_v2n_mobike_supported &&
+	    !ike->sa.st_ike_seen_v2n_mobike_supported &&
 	    /*
 	     * Only when responding ...
 	     */
@@ -2464,27 +2467,35 @@ static void success_v2_state_transition(struct ike_sa *ike,
 	    !LHAS(ike->sa.hidden_variables.st_nat_traversal, NATED_HOST) &&
 	    LHAS(ike->sa.hidden_variables.st_nat_traversal, NATED_PEER)) {
 		/*
-		 * Things are looking plausible.
+		 * XXX: are these guards sufficient?
 		 */
-		if (ike->sa.st_ike_sent_v2n_mobike_supported &&
-		    ike->sa.st_ike_seen_v2n_mobike_supported &&
-		    md->hdr.isa_xchg == ISAKMP_v2_INFORMATIONAL) {
-			/*
-			 * Only when MOBIKE has not been negotiated ...
-			 */
-			endpoint_buf sb, mb;
-			dbg("NAT: MOBIKE: skipping remote sender from %s -> %s as MOBIKE delt with it in informational code(?)",
-			    str_endpoint(&ike->sa.st_remote_endpoint, &sb),
-			    str_endpoint(&md->sender, &mb));
-		} else {
-			endpoint_buf sb, mb;
-			dbg("NAT: MOBKIE: updating remote sender from %s -> %s as non-MOBIKE or non-INFORMATIONAL",
-			    str_endpoint(&ike->sa.st_remote_endpoint, &sb),
-			    str_endpoint(&md->sender, &mb));
-			ike->sa.st_remote_endpoint = md->sender;
-		}
+		endpoint_buf sb, mb;
+		llog_sa(RC_LOG_SERIOUS, ike, "NAT: MOBKIE disabled, ignoring peer endpoint change from %s to %s",
+			str_endpoint(&ike->sa.st_remote_endpoint, &sb),
+			str_endpoint(&md->sender, &mb));
+#if 0
+		/*
+		 * Implementing this properly requires:
+		 *
+		 * + an audit of the above guards; are they
+		 *   sufficient?
+		 *
+		 * + an update to the IKE SA's remote endpoint per
+		 *   below
+		 *
+		 * + an update to any installed IPsec kernel state and
+		 *   policy
+		 *
+		 * While this code was added in some form in '05, the
+		 * code to update IPsec - was never implemented.  The
+		 * result was an IKE SA yet the IPsec SAs had no
+		 * traffic flow.
+		 *
+		 * See github/1529 and github/1492.
+		 */
+		ike->sa.st_remote_endpoint = md->sender;
+#endif
 	}
-
 	/*
 	 * Schedule for whatever timeout is specified (and shut down
 	 * any short term timers).
