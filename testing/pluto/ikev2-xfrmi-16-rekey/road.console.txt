@@ -35,7 +35,6 @@ road #
  ipsec whack --rekey-ipsec --name road
 "road" #3: initiating rekey to replace Child SA #2
 "road" #3: sent CREATE_CHILD_SA request to rekey IPsec SA
-"road" #3: route-host output: PATH/libexec/ipsec/_updown.xfrm: doroute "ip -4 rule add prio 100 to 192.1.2.23/32 fwmark 1/0xffffffff lookup 50" failed (RTNETLINK answers: File exists)
 "road" #3: initiator rekeyed Child SA #2 using #1; IPsec tunnel [192.1.3.209/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
 "road" #2: deleting established Child SA using IKE SA #1
 "road" #2: ESP traffic information: in=0B out=0B
@@ -45,7 +44,6 @@ road #
  ipsec whack --rekey-ipsec --name road
 "road" #4: initiating rekey to replace Child SA #3
 "road" #4: sent CREATE_CHILD_SA request to rekey IPsec SA
-"road" #4: route-host output: PATH/libexec/ipsec/_updown.xfrm: doroute "ip -4 rule add prio 100 to 192.1.2.23/32 fwmark 1/0xffffffff lookup 50" failed (RTNETLINK answers: File exists)
 "road" #4: initiator rekeyed Child SA #3 using #1; IPsec tunnel [192.1.3.209/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
 "road" #3: deleting established Child SA using IKE SA #1
 "road" #3: ESP traffic information: in=0B out=0B
