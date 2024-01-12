@@ -180,40 +180,40 @@ static void impair_message_drip(struct direction_impairment *direction,
 
 void add_message_impairment(enum impair_action impair_action,
 			    enum impair_message_direction impair_direction,
-			    unsigned biased_value, struct logger *logger)
+			    bool whack_enable, unsigned whack_value,
+			    struct logger *logger)
 {
 	impair_messages = true; /* sticky */
 	PASSERT(logger, impair_direction < elemsof(message_impairments));
 	struct direction_impairment *direction = message_impairments[impair_direction];
-	unsigned message_nr = biased_value - 1; /*unbias 0*/
 	switch (impair_action) {
 	case CALL_IMPAIR_MESSAGE_DROP:
 		break;
 	case CALL_IMPAIR_MESSAGE_BLOCK:
-		direction->block = biased_value; /*0-or-1*/
+		direction->block = whack_enable;
 		llog(RC_LOG, logger, "IMPAIR: block all %s messages: %s",
 		     direction->name, bool_str(direction->block));
 		return;
 	case CALL_IMPAIR_MESSAGE_DRIP:
-		impair_message_drip(direction, message_nr, logger);
+		impair_message_drip(direction, /*message_nr*/whack_value, logger);
 		return;
 	case CALL_IMPAIR_MESSAGE_REPLAY_DUPLICATES:
-		direction->replay_duplicates = biased_value;
+		direction->replay_duplicates = whack_enable;
 		return;
 	case CALL_IMPAIR_MESSAGE_REPLAY_FORWARD:
-		direction->replay_forward = biased_value;
+		direction->replay_forward = whack_enable;
 		return;
 	case CALL_IMPAIR_MESSAGE_REPLAY_BACKWARD:
-		direction->replay_backward = biased_value;
+		direction->replay_backward = whack_enable;
 		return;
 	default:
 		bad_case(impair_action);
 	}
 	PASSERT(logger, direction != NULL);
 	llog(RC_LOG, logger, "IMPAIR: will drop %s message %u",
-	     direction->name, message_nr);
+	     direction->name, /*message_nr*/whack_value);
 	struct message_impairment *m = alloc_thing(struct message_impairment, "impair message");
-	m->message_nr = message_nr;
+	m->message_nr = whack_value;
 	m->next = direction->impairments;
 	direction->impairments = m;
 }

@@ -63,9 +63,9 @@ bool record_v2_delete(struct ike_sa *ike, struct state *st)
 			};
 		}
 
-		if (impair.v2_delete_protoid > 0) {
+		if (impair.v2_delete_protoid.enabled) {
 			enum_buf ebo, ebn;
-			enum ikev2_sec_proto_id protoid = impair.v2_delete_protoid - 1; /* unbias */
+			enum ikev2_sec_proto_id protoid = impair.v2_delete_protoid.value;
 			llog(RC_LOG, st->logger, "IMPAIR: changing Delete payload Protocol ID from %s to %s (%u)",
 			     str_enum_short(&ikev2_delete_protocol_id_names, v2del_tmp.isad_protoid, &ebo),
 			     str_enum_short(&ikev2_delete_protocol_id_names, protoid, &ebn),

@@ -72,7 +72,9 @@ struct crypt_mac natd_hash(const struct hash_desc *hasher,
 	/* only responder's IKE SPI can be zero */
 	if (ike_spi_is_zero(&spis->initiator)) {
 		dbg("nat: IKE.SPIi is unexpectedly zero");
-		pexpect(impair.ike_initiator_spi-1/*1-bias*/ == 0);
+		/* presumably because it was impaired?!? */
+		pexpect(impair.ike_initiator_spi.enabled &&
+			impair.ike_initiator_spi.value == 0);
 	}
 	if (ike_spi_is_zero(&spis->responder)) {
 		/* IKE_SA_INIT exchange */

@@ -2538,9 +2538,10 @@ int main(int argc, char **argv)
 		case DBGOPT_NO_IMPAIR:	/* --no-impair */
 		{
 			bool enable = (c == DBGOPT_IMPAIR);
-			realloc_things(msg.impairments, msg.nr_impairments,
-				       msg.nr_impairments+1, "impairments");
-			switch (parse_impair(optarg, &msg.impairments[msg.nr_impairments],
+			unsigned old_len = msg.impairments.len++;
+			realloc_things(msg.impairments.list,
+				       old_len, msg.impairments.len, "impairments");
+			switch (parse_impair(optarg, &msg.impairments.list[old_len],
 					     enable, logger)) {
 			case IMPAIR_OK:
 				break;
@@ -2551,7 +2552,6 @@ int main(int argc, char **argv)
 				/* parse_impair() printed the error */
 				exit(1);
 			}
-			msg.nr_impairments++;
 			continue;
 		}
 		}
@@ -2745,7 +2745,7 @@ int main(int argc, char **argv)
 	      msg.whack_briefstatus ||
 	      msg.whack_clear_stats ||
 	      !lmod_empty(msg.debugging) ||
-	      msg.nr_impairments > 0 ||
+	      msg.impairments.len > 0 ||
 	      msg.whack_shutdown ||
 	      msg.whack_purgeocsp ||
 	      msg.whack_seccomp_crashtest ||

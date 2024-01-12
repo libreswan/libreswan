@@ -305,10 +305,10 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		dbg_whack(s, "debugging: stop: %s", str_lmod(&debug_names, m->debugging, &lb));
 	}
 
-	if (m->nr_impairments > 0) {
-		dbg_whack(s, "impair: start: %d impairments", m->nr_impairments);
+	if (m->impairments.len > 0) {
+		dbg_whack(s, "impair: start: %d impairments", m->impairments.len);
 		whack_impair(m, s);
-		dbg_whack(s, "impair: stop: %d impairments", m->nr_impairments);
+		dbg_whack(s, "impair: stop: %d impairments", m->impairments.len);
 	}
 
 	if (m->whack_rekey_ike) {

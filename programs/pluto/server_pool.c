@@ -172,10 +172,10 @@ static void do_job(struct job *job, helper_id_t helper_id)
 {
 	logtime_t start = logtime_start(job->logger);
 
-	if (impair.helper_thread_delay > 0) {
+	if (impair.helper_thread_delay.enabled) {
 		DBG_log(PRI_JOB": helper is pausing for %u seconds",
-			pri_job(job), impair.helper_thread_delay);
-		sleep(impair.helper_thread_delay);
+			pri_job(job), impair.helper_thread_delay.value);
+		sleep(impair.helper_thread_delay.value);
 	}
 
 	if (job->cancelled) {

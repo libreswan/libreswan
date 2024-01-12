@@ -24,6 +24,7 @@
 struct fd;
 struct logger;
 struct jambuf;
+struct whack_impair;
 
 /*
  * Meddle with the contents of a payload.
@@ -60,6 +61,11 @@ enum impair_v2_transform {
 	IMPAIR_v2_TRANSFORM_OMIT,
 };
 
+struct impair_unsigned {
+	bool enabled;
+	unsigned value;
+};
+
 /*
  * What can be impaired.
  *
@@ -93,8 +99,8 @@ struct impair {
 	enum impair_v1_exchange v1_hash_exchange;
 	bool v1_hash_check;
 
-	unsigned ike_initiator_spi;
-	unsigned ike_responder_spi;
+	struct impair_unsigned ike_initiator_spi;
+	struct impair_unsigned ike_responder_spi;
 
 	bool bust_mi2;
 	bool bust_mr2;
@@ -121,8 +127,10 @@ struct impair {
 
 	enum impair_v2_transform v2_proposal_integ;
 	enum impair_v2_transform v2_proposal_dh;
-	unsigned ikev2_add_ike_transform;
-	unsigned ikev2_add_child_transform;
+
+	struct impair_unsigned ikev2_add_ike_transform;
+	struct impair_unsigned ikev2_add_child_transform;
+
 	bool replay_encrypted;
 	bool corrupt_encrypted;
 	bool proposal_parser;
@@ -159,22 +167,23 @@ struct impair {
 
 	bool cannot_ondemand;
 
-	unsigned number_of_TSi_selectors;
-	unsigned number_of_TSr_selectors;
+	struct impair_unsigned number_of_TSi_selectors;
+	struct impair_unsigned number_of_TSr_selectors;
 
 	bool lifetime;
 
 	bool copy_v1_notify_response_SPIs_to_retransmission;
 
-	unsigned v1_remote_quick_id;
+	struct impair_unsigned v1_remote_quick_id;
+
 	enum impair_emit v1_isakmp_delete_payload;
 	enum impair_emit v1_ipsec_delete_payload;
 
-	unsigned v2_delete_protoid;
-	unsigned v2n_rekey_sa_protoid;
-	unsigned v2_proposal_protoid;
+	struct impair_unsigned v2_delete_protoid;
+	struct impair_unsigned v2n_rekey_sa_protoid;
+	struct impair_unsigned v2_proposal_protoid;
 
-	unsigned helper_thread_delay;
+	struct impair_unsigned helper_thread_delay;
 
 	bool install_ipsec_sa_inbound_state;
 	bool install_ipsec_sa_inbound_policy;
@@ -189,22 +198,14 @@ struct impair {
 
 extern struct impair impair;
 
-/*
- * What whack sends across the wire for a impair.
- */
-
-struct whack_impair {
-	unsigned what;
-	unsigned biased_value;
-};
-
 enum impair_status {
 	IMPAIR_OK = 1,
 	IMPAIR_HELP,
 	IMPAIR_ERROR,
 };
 
-enum impair_status parse_impair(const char *optarg, struct whack_impair *whack_impair,
+enum impair_status parse_impair(const char *optarg,
+				struct whack_impair *whack_impair,
 				bool enable, struct logger *logger);
 
 enum impair_message_direction {
@@ -236,8 +237,11 @@ enum impair_action {
 };
 
 bool process_impair(const struct whack_impair *whack_impair,
-		    void (*action)(enum impair_action, unsigned what,
-				   unsigned how, bool background,
+		    void (*action)(enum impair_action impairment_action,
+				   unsigned impairment_param,
+				   bool whack_enable,
+				   unsigned whack_value,
+				   bool background,
 				   struct logger *logger),
 		    bool background, struct logger *logger);
 

@@ -167,7 +167,7 @@ static bool emit_subnet_id(enum perspective perspective,
 
 	enum ike_id_type idtype =
 		(perspective == REMOTE_PERSPECTIVE &&
-		 impair.v1_remote_quick_id > 0 ? (int)impair.v1_remote_quick_id - 1/*unbias*/ :
+		 impair.v1_remote_quick_id.enabled ? (int)impair.v1_remote_quick_id.value :
 		 usehost ? ai->id_ip_addr :
 		 ai->id_ip_addr_subnet);
 

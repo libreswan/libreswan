@@ -35,14 +35,8 @@
 #include "impair_message.h"
 #include "connection_event.h"
 
-static struct state *find_impaired_state(unsigned biased_what,
-					 struct logger *logger)
+static struct state *find_impaired_state(so_serial_t so, struct logger *logger)
 {
-	if (biased_what == 0) {
-		llog(RC_COMMENT, logger, "state 'no' is not valid");
-		return NULL;
-	}
-	so_serial_t so = biased_what - 1; /* unbias */
 	struct state *st = state_by_serialno(so);
 	if (st == NULL) {
 		llog(RC_COMMENT, logger, "state #%lu not found", so);
@@ -51,16 +45,11 @@ static struct state *find_impaired_state(unsigned biased_what,
 	return st;
 }
 
-static struct connection *find_impaired_connection(unsigned biased_what,
+static struct connection *find_impaired_connection(co_serial_t co,
 						   struct logger *logger)
 {
-	if (biased_what == 0) {
-		llog(RC_COMMENT, logger, "connection 'no' is not valid");
-		return NULL;
-	}
-	co_serial_t co = biased_what - 1; /* unbias */
 	struct connection *c = connection_by_serialno(co);
-	if (c== NULL) {
+	if (c == NULL) {
 		llog(RC_COMMENT, logger, "connection "PRI_CO" not found", co);
 		return NULL;
 	}
@@ -85,22 +74,21 @@ static struct logger *merge_loggers(struct logger *o_logger,
 
 static void whack_impair_action(enum impair_action impairment_action,
 				unsigned impairment_param,
-				unsigned biased_value,
-				bool background, struct logger *logger)
+				bool whack_enable,
+				unsigned whack_value,
+				bool background,
+				struct logger *logger)
 {
 	switch (impairment_action) {
 	case CALL_IMPAIR_UPDATE:
 		/* err... */
 		break;
 	case CALL_GLOBAL_EVENT_HANDLER:
-	{
-		passert(biased_value > 0);
-		call_global_event_inline(biased_value, logger);
+		call_global_event_inline(whack_value, logger);
 		break;
-	}
 	case CALL_STATE_EVENT_HANDLER:
 	{
-		struct state *st = find_impaired_state(biased_value, logger);
+		struct state *st = find_impaired_state(whack_value, logger);
 		if (st == NULL) {
 			/* already logged */
 			return;
@@ -114,7 +102,7 @@ static void whack_impair_action(enum impair_action impairment_action,
 	}
 	case CALL_CONNECTION_EVENT_HANDLER:
 	{
-		struct connection *c = find_impaired_connection(biased_value, logger);
+		struct connection *c = find_impaired_connection(whack_value, logger);
 		if (c == NULL) {
 			/* already logged */
 			return;
@@ -133,7 +121,7 @@ static void whack_impair_action(enum impair_action impairment_action,
 	}
 	case CALL_INITIATE_v2_LIVENESS:
 	{
-		struct state *st = find_impaired_state(biased_value, logger);
+		struct state *st = find_impaired_state(whack_value, logger);
 		if (st == NULL) {
 			/* already logged */
 			return;
@@ -152,7 +140,7 @@ static void whack_impair_action(enum impair_action impairment_action,
 	}
 	case CALL_SEND_KEEPALIVE:
 	{
-		struct state *st = find_impaired_state(biased_value, logger);
+		struct state *st = find_impaired_state(whack_value, logger);
 		if (st == NULL) {
 			/* already logged */
 			return;
@@ -173,7 +161,7 @@ static void whack_impair_action(enum impair_action impairment_action,
 	case CALL_IMPAIR_MESSAGE_REPLAY_BACKWARD:
 		add_message_impairment(impairment_action,
 				       (enum impair_message_direction)impairment_param,
-				       biased_value, logger);
+				       whack_enable, whack_value, logger);
 		break;
 	}
 }
@@ -182,9 +170,9 @@ void whack_impair(const struct whack_message *m, struct show *s)
 {
 	struct logger *logger = show_logger(s);
 	if (m->name == NULL) {
-		for (unsigned i = 0; i < m->nr_impairments; i++) {
+		FOR_EACH_ITEM(impairment, &m->impairments) {
 			/* ??? what should we do with return value? */
-			process_impair(&m->impairments[i],
+			process_impair(impairment,
 				       whack_impair_action,
 				       m->whack_async/*background*/,
 				       logger);

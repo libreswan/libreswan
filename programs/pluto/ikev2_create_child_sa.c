@@ -661,9 +661,9 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 			return STF_INTERNAL_ERROR;
 		}
 
-		if (impair.v2n_rekey_sa_protoid > 0) {
+		if (impair.v2n_rekey_sa_protoid.enabled) {
 			enum_buf ebo, ebn;
-			enum ikev2_sec_proto_id protoid = impair.v2n_rekey_sa_protoid - 1; /* unbias */
+			enum ikev2_sec_proto_id protoid = impair.v2n_rekey_sa_protoid.value;
 			llog_sa(RC_LOG, prev, "IMPAIR: changing REKEY SA notify Protocol ID from %s to %s (%u)",
 				str_enum_short(&ikev2_notify_protocol_id_names, rekey_protoid, &ebo),
 				str_enum_short(&ikev2_notify_protocol_id_names, protoid, &ebn),

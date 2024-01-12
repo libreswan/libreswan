@@ -1464,14 +1464,14 @@ static int walk_transforms(pb_stream *proposal_pbs, int nr_trans,
 		}
 	}
 
-	unsigned add_impaired_transform = (proposal->protoid == IKEv2_SEC_PROTO_IKE ?
-					   impair.ikev2_add_ike_transform :
-					   impair.ikev2_add_child_transform);
-	if (propnum == 1 && add_impaired_transform > 0) {
+	const struct impair_unsigned *add_impaired_transform =
+		(proposal->protoid == IKEv2_SEC_PROTO_IKE ? &impair.ikev2_add_ike_transform :
+		 &impair.ikev2_add_child_transform);
+	if (propnum == 1 && add_impaired_transform->enabled) {
 		trans_nr++;
 		if (proposal_pbs != NULL) {
 			bool is_last_transform = trans_nr == nr_trans;
-			unsigned type_id = add_impaired_transform - 1; /* unbias */
+			unsigned type_id = add_impaired_transform->value;
 			enum ikev2_trans_type transform_type = (type_id >> 16) & 0xff;
 			unsigned transform_id = (type_id & 0xffff);
 			enum_buf typeb, idb;
@@ -1505,9 +1505,9 @@ static bool emit_proposal(struct pbs_out *sa_pbs,
 	}
 
 	enum ikev2_sec_proto_id proposal_protoid = proposal->protoid;
-	if (impair.v2_proposal_protoid > 0) {
+	if (impair.v2_proposal_protoid.enabled) {
 		enum_buf ebo, ebn;
-		enum ikev2_sec_proto_id protoid = impair.v2_proposal_protoid - 1; /* unbias */
+		enum ikev2_sec_proto_id protoid = impair.v2_proposal_protoid.value;
 		llog(RC_LOG, sa_pbs->outs_logger, "IMPAIR: changing proposal substructure Protocol ID from %s to %s (%u)",
 		     str_enum_short(&ikev2_proposal_protocol_id_names, proposal_protoid, &ebo),
 		     str_enum_short(&ikev2_proposal_protocol_id_names, protoid, &ebn),

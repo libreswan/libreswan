@@ -23,6 +23,7 @@
 #include "keywords.h"
 #include "impair.h"
 #include "lswlog.h"
+#include "whack.h"
 
 static const struct keyword impair_emit_value[] = {
 #define S(E, H) [IMPAIR_EMIT_##E] = {					\
@@ -77,24 +78,49 @@ struct impairment {
 	const char *what;
 	const char *help;
 	/*
-	 * When .how_keywords is non-NULL, HOW is either a keyword or
-	 * an (unsigned) number encoded as .keywords .nr_keywords +
-	 * NUMBER.
+	 * When .how_keywords is non-NULL, HOW is the unbiased value
+	 * of the keyword.  It's assumed that any keyword with the
+	 * value 0 disables the impairment.
+	 *
+	 * And when .unsigned_help is also non-NULL, HOW can be an
+	 * unsigned number encoded as .keywords .nr_keywords +
+	 * UNSIGNED.
 	 */
 	const struct keywords *how_keywords;
 	/*
-	 * (else) When .how_enum_names is non-NULL, HOW is the enum
-	 * name value.
+	 * (else)
+	 *
+	 * When .how_enum_names is non-NULL, HOW is the unbiased enum
+	 * name's value.  It's assumed that any enum-name with the
+	 * value 0 disables the impairment.
+	 *
+	 * And when .unsigned_help is also non-NULL, HOW can be an
+	 * unsigned value which is passed unchanged (again 0 implies
+	 * disabled).
+	 *
+	 * If 0 is ever needed then the field can be changed to
+	 * impair_unsigned.
 	 */
 	const struct enum_names *how_enum_names;
 	/*
-	 * (else) when .unsigned_help is non-NULL, HOW is the value
-	 * biased by 1.
+	 * (else)
+	 *
+	 * When .unsigned_help is non-NULL, HOW is the unsigned value.
+	 *
+	 * Note: either the value is a struct impair_unsigned which as
+	 * an enabled bit, or the value is being used for an event.
 	 */
 	const char *unsigned_help;
+	/*
+	 * Location of the value to update, and, optionally, the bit
+	 * to set/clear.
+	 */
 	void *value;
-	/* size_t offsetof_value; */
 	size_t sizeof_value;
+	bool *enabled;		/* possibly NULL enabled bit */
+	/*
+	 * Operations.
+	 */
 	enum impair_action action;
 	unsigned param;
 };
@@ -128,14 +154,15 @@ struct impairment impairments[] = {
 		.value = &impair.VALUE,			\
 		.sizeof_value = sizeof(impair.VALUE),	\
 	}
-#define U(VALUE, HELP)					\
-	{						\
-		.what = #VALUE,				\
-		.action = CALL_IMPAIR_UPDATE,		\
-		.help = HELP,				\
-		.value = &impair.VALUE,			\
-		.sizeof_value = sizeof(impair.VALUE),	\
-		.unsigned_help = "<unsigned>",		\
+#define U(VALUE, HELP)						\
+	{							\
+		.what = #VALUE,					\
+		.action = CALL_IMPAIR_UPDATE,			\
+		.help = HELP,					\
+		.value = &impair.VALUE.value,			\
+		.sizeof_value = sizeof(impair.VALUE.value),	\
+		.enabled = &impair.VALUE.enabled,		\
+		.unsigned_help = "<unsigned>",			\
 	}
 
 	B(allow_dns_insecure, "allow IPSECKEY lookups without DNSSEC protection"),
@@ -144,18 +171,20 @@ struct impairment impairments[] = {
 	B(bust_mi2, "make MI2 really large"),
 	B(bust_mr2, "make MR2 really large"),
 	V(child_key_length_attribute, "corrupt the outgoing CHILD proposal's key length attribute",
-	  .how_keywords = &impair_emit_keywords, .unsigned_help = "emit <unsigned> as the key length"),
+	  .how_keywords = &impair_emit_keywords,
+	  .unsigned_help = "emit <unsigned> as the key length"),
 	B(corrupt_encrypted, "corrupts the encrypted packet so that the decryption fails"),
 	B(drop_i2, "drop second initiator packet"),
 	B(drop_xauth_r0, "causes pluto to drop an XAUTH user/passwd request on IKE initiator"),
 	B(emitting, "disable correctness-checks when emitting a payload (let anything out)"),
 	B(force_fips, "causes pluto to believe we are in fips mode, NSS needs its own hack"),
-	V(ike_initiator_spi, "corrupt the IKE initiator SPI",
-	  .unsigned_help = "set SPI to <unsigned>"),
 	V(ike_key_length_attribute, "corrupt the outgoing IKE proposal's key length attribute",
-	  .how_keywords = &impair_emit_keywords, .unsigned_help = "emit <unsigned> as the key length"),
-	V(ike_responder_spi, "corrupt the IKE responder SPI",
-	  .unsigned_help = "set SPI to <unsigned>"),
+	  .how_keywords = &impair_emit_keywords,
+	  .unsigned_help = "emit <unsigned> as the key length"),
+
+	U(ike_initiator_spi, "corrupt the IKE initiator SPI setting it to the <unsigned> value"),
+	U(ike_responder_spi, "corrupt the IKE responder SPI setting it to the <unsigned> value"),
+
 	B(ikev1_del_with_notify, "causes pluto to send IKE Delete with additional bogus Notify payload"),
 
 	V(v2_proposal_integ, "integrity in proposals",
@@ -163,10 +192,8 @@ struct impairment impairments[] = {
 	V(v2_proposal_dh, "dh in proposals",
 	  .how_keywords = &impair_v2_transform_keywords),
 
-	V(ikev2_add_ike_transform, "add an extra (possibly bogus) transform to the first IKE proposal",
-	  .unsigned_help = "transform type+id encoded as TYPE<<16|ID"),
-	V(ikev2_add_child_transform, "add an extra (possibly bogus) transform to the first CHILD proposal",
-	  .unsigned_help = "transform type+id encoded as TYPE<<16|ID"),
+	U(ikev2_add_ike_transform, "add an extra (possibly bogus) TYPE transform with ID to the first IKE proposal (<unsigned> is encoded as TYPE<<16|ID)"),
+	U(ikev2_add_child_transform, "add an extra (possibly bogus) TYPE transform with ID to the first CHILD proposal (<unsigned> is encoded as TYPE<<16|ID)"),
 
 	B(jacob_two_two, "cause pluto to send all messages twice."),
 	V(ke_payload, "corrupt the outgoing KE payload",
@@ -297,17 +324,14 @@ struct impairment impairments[] = {
 
 	B(cannot_ondemand, "force acquire to call cannot_ondemand() and fail"),
 
-	V(number_of_TSi_selectors, "send bogus number of selectors in TSi payload",
-	  .unsigned_help = "number of selectors"),
-	V(number_of_TSr_selectors, "send bogus number of selectors in TSr payload",
-	  .unsigned_help = "force number of selectors"),
+	U(number_of_TSi_selectors, "set the number of selectors in the TSi payload to the bogus <unsigned>"),
+	U(number_of_TSr_selectors, "set the number of selectors in the TSr payload to the bogus <unsigned>"),
 
 	B(lifetime, "skip any IKE/IPsec lifetime checks when adding connection"),
 
 	B(copy_v1_notify_response_SPIs_to_retransmission, "copy SPIs in IKEv1 notify response to last sent packet and then retransmit"),
 
-	V(v1_remote_quick_id, "set the remote quick ID",
-	  .unsigned_help = "value to set quick id too"),
+	U(v1_remote_quick_id, "set the remote quick ID to <unsigned>"),
 
 	V(v1_isakmp_delete_payload, "corrupt outgoing ISAKMP delete payload",
 	  .how_keywords = &impair_emit_keywords),
@@ -377,29 +401,67 @@ static void help_impair(const char *prefix, FILE *file)
 }
 
 /*
- * Return the long value in STRING, but with +ve values adjusted by
- * BIAS.  If the operation fails, zero is returned - bias must be
- * non-zero.
+ * Try to bias VALUE.  When the BIAS would overflow log and fail.
  */
-static unsigned parse_biased_unsigned(shunk_t string, const struct impairment *cr)
+
+static bool bias_uintmax(const struct impairment *impairment,
+			 unsigned bias, uintmax_t *value,
+			 struct logger *logger)
 {
-	unsigned bias = cr->how_keywords != NULL ? cr->how_keywords->nr_values : 1;
-	uintmax_t u;
-	err_t err = shunk_to_uintmax(string, NULL, 0/*base*/, &u);
 	/*
-	 * Since, after bias, value must be non-zero, this acts as an
-	 * error flag.
+	 * Does the result fit?
+	 *
+	 * Start with 0xff..ff, and then right shift it so it is the
+	 * MAX of the value.
 	 */
-	if (err != NULL) {
-		return 0;
+	unsigned drop = sizeof(uintmax_t) - impairment->sizeof_value;
+	uintmax_t max = ((uintmax_t)UINTMAX_MAX) >> drop;
+	if (*value > max - bias) {
+		llog(ERROR_STREAM, logger,
+		     "impair option '%s' value '%ju' overflows",
+		     impairment->what, *value);
+		return false;
 	}
-	if (u > UINTMAX_MAX - bias) {
-		return 0; /* i.e., u+bias overflows */
-	}
-	return u + bias;
+
+	*value += bias;
+	return true;
 }
 
-#define IMPAIR_DISABLE (elemsof(impairments) + 0)
+/*
+ * Optionally parse value as a uintmax.
+ *
+ * Used by keyword and enum cases when unsigned is an allowed
+ * fallback.  Hence only consider the bias operation an error.
+ */
+static bool parse_uintmax(shunk_t string,
+			  const struct impairment *impairment,
+			  unsigned bias,
+			  struct whack_impair *whack_impair,
+			  struct logger *logger)
+{
+	if (impairment->unsigned_help == NULL) {
+		return 0;
+	}
+
+	uintmax_t value;
+	if (shunk_to_uintmax(string, NULL, 0/*base*/, &value) != NULL) {
+		return 0;
+	}
+
+	if (!bias_uintmax(impairment, bias, &value, logger)) {
+		/* already logged */
+		return IMPAIR_ERROR;
+	}
+
+	*whack_impair = (struct whack_impair) {
+		.what = impairment - impairments, /*i.e., index*/
+		.value = value,
+		.enable = (value > 0),
+	};
+	return IMPAIR_OK;
+}
+
+#define IMPAIR_NONE (elemsof(impairments) + 0)
 #define IMPAIR_LIST (elemsof(impairments) + 1)
 
 enum impair_status parse_impair(const char *optarg,
@@ -414,8 +476,7 @@ enum impair_status parse_impair(const char *optarg,
 
 	if (enable && streq(optarg, "none")) {
 		*whack_impair = (struct whack_impair) {
-			.what = IMPAIR_DISABLE,
-			.biased_value = 0,
+			.what = IMPAIR_NONE,
 		};
 		return IMPAIR_OK;
 	}
@@ -423,7 +484,6 @@ enum impair_status parse_impair(const char *optarg,
 	if (enable && streq(optarg, "list")) {
 		*whack_impair = (struct whack_impair) {
 			.what = IMPAIR_LIST,
-			.biased_value = 0,
 		};
 		return IMPAIR_OK;
 	}
@@ -480,7 +540,8 @@ enum impair_status parse_impair(const char *optarg,
 	if (!enable || what_no || hunk_strcaseeq(how, "no")) {
 		*whack_impair = (struct whack_impair) {
 			.what = ci,
-			.biased_value = 0,
+			.value = 0,
+			.enable = false,
 		};
 		return IMPAIR_OK;
 	}
@@ -494,19 +555,59 @@ enum impair_status parse_impair(const char *optarg,
 		if (kw != NULL) {
 			*whack_impair = (struct whack_impair) {
 				.what = ci,
-				.biased_value = kw->value,
+				.value = kw->value, /* unbiased */
 			};
 			return IMPAIR_OK;
 		}
+		/* try unsigned */
+		enum impair_status status = parse_uintmax(how, impairment,
+							  impairment->how_keywords->nr_values,
+							  whack_impair, logger);
+		if (status != 0) {
+			/* either saved, or error */
+			return status;
+		}
+		/* error */
 	} else if (impairment->how_enum_names != NULL) {
 		long e = enum_match(impairment->how_enum_names, how);
 		if (e >= 0) {
 			*whack_impair = (struct whack_impair) {
 				.what = ci,
-				.biased_value = e,
+				.value = e, /* unbiased */
 			};
 			return IMPAIR_OK;
 		}
+		/* try unsigned */
+		enum impair_status status = parse_uintmax(how, impairment,
+							  /*no-bias*/0,
+							  whack_impair,
+							  logger);
+		if (status != 0) {
+			/* either saved, or error */
+			return status;
+		}
+		/* error */
+	} else if (impairment->unsigned_help != NULL) {
+		uintmax_t value;
+		err_t err = shunk_to_uintmax(how, NULL, 0/*base*/, &value);
+		if (err != NULL) {
+			llog(ERROR_STREAM, logger,
+			     "impair option '"PRI_SHUNK"' has invalid parameter '"PRI_SHUNK"': %s",
+			     pri_shunk(what), pri_shunk(how), err);
+			return IMPAIR_ERROR;
+		}
+		/* never bias; checks for size */
+		unsigned bias = 0;
+		if (!bias_uintmax(impairment, bias, &value, logger)) {
+			/* already logged */
+			return IMPAIR_ERROR;
+		}
+		*whack_impair = (struct whack_impair) {
+			.what = ci,
+			.value = value,
+			.enable = true,
+		};
+		return IMPAIR_OK;
 	} else {
 		/*
 		 * Assume boolean - use "yes" and "no" as that is what
@@ -519,7 +620,8 @@ enum impair_status parse_impair(const char *optarg,
 			/* --impair WHAT:no */
 			*whack_impair = (struct whack_impair) {
 				.what = ci,
-				.biased_value = false,
+				.value = false,
+				.enable = false,
 			};
 			return IMPAIR_OK;
 		}
@@ -528,26 +630,17 @@ enum impair_status parse_impair(const char *optarg,
 			/* --impair WHAT:yes or --impair WHAT */
 			*whack_impair = (struct whack_impair) {
 				.what = ci,
-				.biased_value = true,
+				.value = true,
+				.enable = true,
 			};
 			return IMPAIR_OK;
 		}
-	}
-
-	if (impairment->unsigned_help != NULL) {
-		unsigned biased_value = parse_biased_unsigned(how, impairment);
-		if (biased_value > 0) {
-			*whack_impair = (struct whack_impair) {
-				.what = ci,
-				.biased_value = biased_value,
-			};
-			return IMPAIR_OK;
-		}
+		/* error */
 	}
 
 	llog(ERROR_STREAM, logger,
-		    "ignoring impair option '"PRI_SHUNK"' with unrecognized parameter '"PRI_SHUNK"' (%s)",
-		    pri_shunk(what), pri_shunk(how), optarg);
+		    "impair option '"PRI_SHUNK"' has unrecognized parameter '"PRI_SHUNK"'",
+		    pri_shunk(what), pri_shunk(how));
 	return IMPAIR_ERROR;
 }
 
@@ -569,41 +662,68 @@ static uintmax_t value_of(const struct impairment *impairment)
 	}
 }
 
-static void jam_impairment(struct jambuf *buf,
-			   const struct impairment *impairment)
+static bool impairment_enabled(const struct impairment *impairment)
 {
-	jam(buf, "%s:", impairment->what);
-	unsigned value = value_of(impairment);
+	if (impairment->action != CALL_IMPAIR_UPDATE) {
+		return false;
+	}
+	/* flip logic */
+	if (impairment->enabled != NULL && *impairment->enabled) {
+		return true;
+	}
+	if (value_of(impairment) != 0) {
+		return true;
+	}
+	return false;
+}
+
+
+static void jam_impairment_value(struct jambuf *buf,
+				 const struct impairment *impairment)
+{
+	uintmax_t value = value_of(impairment);
 	if (impairment->how_keywords != NULL) {
 		const struct keyword *kw = keyword_by_value(impairment->how_keywords, value);
 		if (kw != NULL) {
 			jam_string(buf, kw->sname);
 		} else if (value >= impairment->how_keywords->nr_values) {
-			jam(buf, "%zu", value - impairment->how_keywords->nr_values);
+			/*unbias*/
+			jam(buf, "%ju", value - impairment->how_keywords->nr_values);
 		} else {
-			jam(buf, "?%u?", value);
+			jam(buf, "?%ju?", value);
 		}
 	} else if (impairment->how_enum_names != NULL) {
 		const char *sname = enum_name_short(impairment->how_enum_names, value);
 		if (sname != NULL) {
 			jam_string(buf, sname);
 		} else {
-			jam(buf, "?%u?", value);
+			jam(buf, "%ju", value);
+		}
+	} else if (impairment->unsigned_help != NULL &&
+		   impairment->enabled != NULL) {
+		if (*impairment->enabled) {
+			jam(buf, "%ju", value);
+		} else {
+			jam_string(buf, "no");
 		}
 	} else if (impairment->unsigned_help != NULL) {
-		/* always one biased */
-		if (value == 0) {
-			jam(buf, "no");
-		} else {
-			jam(buf, "%u", value-1);
-		}
+		/* should have .enabled */
+		jam(buf, "?%ju?", value);
 	} else {
 		switch (value) {
 		case 0: jam(buf, "no"); break;
 		case 1: jam(buf, "yes"); break;
-		default: jam(buf, "?%u?", value);
+		default: jam(buf, "?%ju?", value);
 		}
 	}
+}
+
+static void jam_impairment(struct jambuf *buf,
+			   const struct impairment *impairment)
+{
+	jam_string(buf, impairment->what);
+	jam_string(buf, ":");
+	jam_impairment_value(buf, impairment);
 }
 
 bool have_impairments(void)
@@ -611,8 +731,7 @@ bool have_impairments(void)
 	/* is there anything enabled? */
 	for (unsigned ci = 1; ci < elemsof(impairments); ci++) {
 		const struct impairment *impairment = &impairments[ci];
-		if (impairment->action == CALL_IMPAIR_UPDATE &&
-		    value_of(impairment) != 0) {
+		if (impairment_enabled(impairment)) {
 			return true;
 		}
 	}
@@ -624,61 +743,33 @@ void jam_impairments(struct jambuf *buf, const char *sep)
 	const char *s = "";
 	for (unsigned ci = 1; ci < elemsof(impairments); ci++) {
 		const struct impairment *impairment = &impairments[ci];
-		if (impairment->action == CALL_IMPAIR_UPDATE &&
-		    value_of(impairment) != 0) {
-			jam_string(buf, s); s = sep;
+		if (impairment_enabled(impairment)) {
+			jam_string(buf, s);
+			s = sep;
 			jam_impairment(buf, impairment);
 		}
 	}
 }
 
-bool process_impair(const struct whack_impair *wc,
-		    void (*action)(enum impair_action impairment_action,
-				   unsigned impairment_param,
-				   unsigned biased_value,
-				   bool background, struct logger *logger),
-		    bool background, struct logger *logger)
+static void process_impair_update(const struct impairment *impairment,
+				  const struct whack_impair *wc,
+				  struct logger *logger)
 {
-	if (wc->what == 0) {
-		/* ignore; silently */
-		return true;
-	} else if (wc->what == IMPAIR_DISABLE) {
-		for (unsigned ci = 1; ci < elemsof(impairments); ci++) {
-			const struct impairment *impairment = &impairments[ci];
-			if (impairment->action == CALL_IMPAIR_UPDATE &&
-			    value_of(impairment) != 0) {
-				dbg("%s: disabled", impairment->what);
-				memset(impairment->value, 0, impairment->sizeof_value);
-			}
-		}
-		return true;
-	} else if (wc->what == IMPAIR_LIST) {
-		for (unsigned ci = 1; ci < elemsof(impairments); ci++) {
-			const struct impairment *impairment = &impairments[ci];
-			if (impairment->action == CALL_IMPAIR_UPDATE &&
-			    value_of(impairment) != 0) {
-				LLOG_JAMBUF(RC_COMMENT, logger, buf) {
-					jam_impairment(buf, impairment);
-				}
-			}
-		}
-		return true;
-	} else if (wc->what >= elemsof(impairments)) {
-		llog(RC_LOG|ERROR_STREAM, logger,
-			    "impairment %u out-of-range", wc->what);
-		return false;
-	}
-	const struct impairment *impairment = &impairments[wc->what];
-	switch (impairment->action) {
-	case CALL_IMPAIR_UPDATE:
-	{
-		/* do not un-bias */
-		uintmax_t old;
+	LLOG_JAMBUF(LOG_STREAM, logger, buf) {
+		/*
+		 * XXX: lower case "impair:" for updates; upper case
+		 * "IMPAIR:" for actions.
+		 */
+		jam_string(buf, "impair: ");
+		jam_string(buf, impairment->what);
+		jam_string(buf, ": ");
+		/* old value */
+		jam_impairment_value(buf, impairment);
+		/* update */
 		switch (impairment->sizeof_value) {
 #define L(T) case sizeof(uint##T##_t):					\
 			{						\
-				old = *(uint##T##_t*)impairment->value;	\
-				*(uint##T##_t*)impairment->value = wc->biased_value; \
+				*(uint##T##_t*)impairment->value = wc->value; \
 				break;					\
 			}
 			L(8);
@@ -689,14 +780,67 @@ bool process_impair(const struct whack_impair *wc,
 		default:
 			bad_case(impairment->sizeof_value);
 		}
-		/* log the update; but not to whack */
-		LLOG_JAMBUF(LOG_STREAM, logger, buf) {
-			jam_string(buf, "impair ");
-			jam_impairment(buf, impairment);
-			jam(buf, " (was %ju)", old);
+		if (impairment->enabled != NULL) {
+			*impairment->enabled = wc->enable;
 		}
-		return true;
+		/* new value */
+		jam_string(buf, " -> ");
+		jam_impairment_value(buf, impairment);
 	}
+}
+
+static void process_impair_none(struct logger *logger)
+{
+	for (unsigned ci = 1; ci < elemsof(impairments); ci++) {
+		const struct impairment *impairment = &impairments[ci];
+		if (impairment_enabled(impairment)) {
+			struct whack_impair wc = {0}; /* i.e., none */
+			process_impair_update(impairment, &wc, logger);
+		}
+	}
+}
+
+static void process_impair_list(struct logger *logger)
+{
+	for (unsigned ci = 1; ci < elemsof(impairments); ci++) {
+		const struct impairment *impairment = &impairments[ci];
+		if (impairment_enabled(impairment)) {
+			LLOG_JAMBUF(RC_COMMENT, logger, buf) {
+				jam_impairment(buf, impairment);
+			}
+		}
+	}
+}
+
+bool process_impair(const struct whack_impair *wc,
+		    void (*action)(enum impair_action impairment_action,
+				   unsigned impairment_param,
+				   bool whack_enable,
+				   unsigned whack_value,
+				   bool background,
+				   struct logger *logger),
+		    bool background, struct logger *logger)
+{
+	if (wc->what == 0) {
+		/* ignore; silently */
+		return true;
+	} else if (wc->what == IMPAIR_NONE) {
+		process_impair_none(logger);
+		return true;
+	} else if (wc->what == IMPAIR_LIST) {
+		process_impair_list(logger);
+		return true;
+	} else if (wc->what >= elemsof(impairments)) {
+		llog(RC_LOG|ERROR_STREAM, logger,
+			    "impairment %u out-of-range", wc->what);
+		return false;
+	}
+	const struct impairment *impairment = &impairments[wc->what];
+	switch (impairment->action) {
+	case CALL_IMPAIR_UPDATE:
+		/* log the update; but not to whack */
+		process_impair_update(impairment, wc, logger);
+		return true;
 	case CALL_INITIATE_v2_LIVENESS:
 	case CALL_SEND_KEEPALIVE:
 	case CALL_GLOBAL_EVENT_HANDLER:
@@ -708,13 +852,13 @@ bool process_impair(const struct whack_impair *wc,
 	case CALL_IMPAIR_MESSAGE_REPLAY_DUPLICATES:
 	case CALL_IMPAIR_MESSAGE_REPLAY_FORWARD:
 	case CALL_IMPAIR_MESSAGE_REPLAY_BACKWARD:
-		/* how is always biased */
 		if (action == NULL) {
 			llog(RC_LOG|DEBUG_STREAM, logger,
 				    "no action for impairment %s", impairment->what);
 			return false;
 		}
-		action(impairment->action, impairment->param, wc->biased_value,
+		action(impairment->action, impairment->param,
+		       wc->enable, wc->value,
 		       background, logger);
 		return true;
 	}

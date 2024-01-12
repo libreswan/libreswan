@@ -369,7 +369,7 @@ static bool pickle_whack_message(struct whackpacker *wp,
 		PICKLE_STRING(&wp->msg->redirect_to) &&
 		PICKLE_STRING(&wp->msg->accept_redirect_to) &&
 		PICKLE_CHUNK(&wp->msg->keyval) &&
-		PICKLE_THINGS(&wp->msg->impairments, wp->msg->nr_impairments) &&
+		PICKLE_THINGS(&wp->msg->impairments.list, wp->msg->impairments.len) &&
 		PICKLE_STRING(&wp->msg->sec_label) &&
 		PICKLE_IP_INFO(&wp->msg->host_afi) &&
 		PICKLE_IP_INFO(&wp->msg->child_afi) &&

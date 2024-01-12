@@ -56,9 +56,8 @@ void refresh_ike_spi_secret(void)
  */
 ike_spi_t ike_initiator_spi(void)
 {
-	if (impair.ike_initiator_spi > 0) {
-		/* 1-biased so that 0 is "disable" */
-		uintmax_t v = impair.ike_initiator_spi - 1;
+	if (impair.ike_initiator_spi.enabled) {
+		uintmax_t v = impair.ike_initiator_spi.value;
 		dbg("forcing IKE initiator SPI to 0x%jx", v);
 		ike_spi_t spi;
 		hton_chunk(v, THING_AS_CHUNK(spi));
@@ -83,9 +82,8 @@ ike_spi_t ike_initiator_spi(void)
  */
 ike_spi_t ike_responder_spi(const ip_endpoint *initiator_endpoint, struct logger *logger)
 {
-	if (impair.ike_responder_spi > 0) {
-		/* 1-biased so that 0 is "disable" */
-		uintmax_t v = impair.ike_responder_spi - 1;
+	if (impair.ike_responder_spi.enabled) {
+		uintmax_t v = impair.ike_responder_spi.value;
 		dbg("forcing IKE responder SPI to 0x%jx", v);
 		ike_spi_t spi;
 		hton_chunk(v, THING_AS_CHUNK(spi));

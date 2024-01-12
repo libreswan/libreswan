@@ -21,8 +21,10 @@
  *
  */
 
-#ifndef _WHACK_H
-#define _WHACK_H
+#ifndef WHACK_H
+#define WHACK_H
+
+#include <stdint.h>		/* for uintmax_t et.al. */
 
 #include "ietf_constants.h"
 #include "lset.h"
@@ -31,7 +33,6 @@
 #include "chunk.h"
 #include "reqid.h"
 #include "err.h"
-#include "impair.h"
 #include "ip_range.h"
 #include "ip_subnet.h"
 #include "ip_protoport.h"
@@ -123,6 +124,16 @@ struct whack_end {
 	char *groundhog;	/* Is this end a groundhog? */
 };
 
+/*
+ * Impairments.
+ */
+
+struct whack_impair {
+	unsigned what;
+	uintmax_t value;
+	bool enable;
+};
+
 struct whack_message {
 	unsigned int magic;
 
@@ -158,9 +169,11 @@ struct whack_message {
 	lmod_t debugging;
 	lset_t conn_debug;
 
-	/* what to impair and how */
-	struct whack_impair *impairments;
-	unsigned nr_impairments;
+	/* what to impair and how; a list like structure */
+	struct {
+		unsigned len;
+		struct whack_impair *list;
+	} impairments;
 
 	/* for WHACK_CONNECTION */
 
@@ -467,4 +480,4 @@ extern int whack_get_value(char *buf, size_t bufsize);
 
 extern bool lsw_alias_cmp(const char *name, const char *aliases);
 
-#endif /* _WHACK_H */
+#endif /* WHACK_H */
