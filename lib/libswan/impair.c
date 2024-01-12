@@ -102,132 +102,161 @@ struct impairment {
 struct impairment impairments[] = {
 	{ .what = NULL, },
 
-#define A(WHAT, ACTION, PARAM, HELP, UNSIGNED_HELP, ...) \
-	{ .what = WHAT, .action = CALL_##ACTION, .param = PARAM, .help = HELP, .unsigned_help = UNSIGNED_HELP, ##__VA_ARGS__, }
-#define V(WHAT, VALUE, HELP, ...) \
-	{ .what = WHAT, .action = CALL_IMPAIR_UPDATE, .value = &impair.VALUE, .help = HELP, .sizeof_value = sizeof(impair.VALUE), ##__VA_ARGS__, }
-#define B(VALUE, HELP, ...) \
-	{ .what = #VALUE, .action = CALL_IMPAIR_UPDATE, .value = &impair.VALUE, .help = HELP, .sizeof_value = sizeof(impair.VALUE), ##__VA_ARGS__, }
+#define A(WHAT, ACTION, PARAM, HELP, UNSIGNED_HELP, ...)	\
+	{							\
+		.what = WHAT,					\
+		.action = CALL_##ACTION,			\
+		.param = PARAM,					\
+		.help = HELP,					\
+		.unsigned_help = UNSIGNED_HELP,			\
+		##__VA_ARGS__,					\
+	}
+#define V(VALUE, HELP, ...)				\
+	{						\
+		.what = #VALUE,				\
+		.action = CALL_IMPAIR_UPDATE,		\
+		.value = &impair.VALUE,			\
+		.help = HELP,				\
+		.sizeof_value = sizeof(impair.VALUE),	\
+		##__VA_ARGS__,				\
+	}
+#define B(VALUE, HELP)					\
+	{						\
+		.what = #VALUE,				\
+		.action = CALL_IMPAIR_UPDATE,		\
+		.help = HELP,				\
+		.value = &impair.VALUE,			\
+		.sizeof_value = sizeof(impair.VALUE),	\
+	}
+#define U(VALUE, HELP)					\
+	{						\
+		.what = #VALUE,				\
+		.action = CALL_IMPAIR_UPDATE,		\
+		.help = HELP,				\
+		.value = &impair.VALUE,			\
+		.sizeof_value = sizeof(impair.VALUE),	\
+		.unsigned_help = "<unsigned>",		\
+	}
 
-	V("allow-dns-insecure", allow_dns_insecure, "allow IPSECKEY lookups without DNSSEC protection"),
-	V("allow-null-none", allow_null_none, "cause pluto to allow esp=null-none and ah=none for testing"),
-	V("bad-ikev2-auth-xchg", bad_ike_auth_xchg, "causes pluto to send IKE_AUTH replies with wrong exchange type"),
-	V("bust-mi2", bust_mi2, "make MI2 really large"),
-	V("bust-mr2", bust_mr2, "make MR2 really large"),
-	V("child-key-length-attribute", child_key_length_attribute, "corrupt the outgoing CHILD proposal's key length attribute",
+	B(allow_dns_insecure, "allow IPSECKEY lookups without DNSSEC protection"),
+	B(allow_null_none, "cause pluto to allow esp=null-none and ah=none for testing"),
+	B(bad_ike_auth_xchg, "causes pluto to send IKE_AUTH replies with wrong exchange type"),
+	B(bust_mi2, "make MI2 really large"),
+	B(bust_mr2, "make MR2 really large"),
+	V(child_key_length_attribute, "corrupt the outgoing CHILD proposal's key length attribute",
 	  .how_keywords = &impair_emit_keywords, .unsigned_help = "emit <unsigned> as the key length"),
-	V("corrupt-encrypted", corrupt_encrypted, "corrupts the encrypted packet so that the decryption fails"),
-	V("drop-i2", drop_i2, "drop second initiator packet"),
-	V("drop-xauth-r0", drop_xauth_r0, "causes pluto to drop an XAUTH user/passwd request on IKE initiator"),
-	V("emitting", emitting, "disable correctness-checks when emitting a payload (let anything out)"),
-	V("force-fips", force_fips, "causes pluto to believe we are in fips mode, NSS needs its own hack"),
-	V("ike-initiator-spi", ike_initiator_spi, "corrupt the IKE initiator SPI", .unsigned_help = "set SPI to <unsigned>"),
-	V("ike-key-length-attribute", ike_key_length_attribute, "corrupt the outgoing IKE proposal's key length attribute",
+	B(corrupt_encrypted, "corrupts the encrypted packet so that the decryption fails"),
+	B(drop_i2, "drop second initiator packet"),
+	B(drop_xauth_r0, "causes pluto to drop an XAUTH user/passwd request on IKE initiator"),
+	B(emitting, "disable correctness-checks when emitting a payload (let anything out)"),
+	B(force_fips, "causes pluto to believe we are in fips mode, NSS needs its own hack"),
+	V(ike_initiator_spi, "corrupt the IKE initiator SPI",
+	  .unsigned_help = "set SPI to <unsigned>"),
+	V(ike_key_length_attribute, "corrupt the outgoing IKE proposal's key length attribute",
 	  .how_keywords = &impair_emit_keywords, .unsigned_help = "emit <unsigned> as the key length"),
-	V("ike-responder-spi", ike_responder_spi, "corrupt the IKE responder SPI", .unsigned_help = "set SPI to <unsigned>"),
-	V("ikev1-del-with-notify", ikev1_del_with_notify, "causes pluto to send IKE Delete with additional bogus Notify payload"),
+	V(ike_responder_spi, "corrupt the IKE responder SPI",
+	  .unsigned_help = "set SPI to <unsigned>"),
+	B(ikev1_del_with_notify, "causes pluto to send IKE Delete with additional bogus Notify payload"),
 
-	V("v2-proposal-integ", v2_proposal_integ, "integrity in proposals", .how_keywords = &impair_v2_transform_keywords),
-	V("v2-proposal-dh", v2_proposal_dh, "dh in proposals", .how_keywords = &impair_v2_transform_keywords),
+	V(v2_proposal_integ, "integrity in proposals",
+	  .how_keywords = &impair_v2_transform_keywords),
+	V(v2_proposal_dh, "dh in proposals",
+	  .how_keywords = &impair_v2_transform_keywords),
 
-	V("ikev2-add-ike-transform", ikev2_add_ike_transform, "add an extra (possibly bogus) transform to the first IKE proposal", .unsigned_help = "transform type+id encoded as TYPE<<16|ID"),
-	V("ikev2-add-child-transform", ikev2_add_child_transform, "add an extra (possibly bogus) transform to the first CHILD proposal", .unsigned_help = "transform type+id encoded as TYPE<<16|ID"),
+	V(ikev2_add_ike_transform, "add an extra (possibly bogus) transform to the first IKE proposal",
+	  .unsigned_help = "transform type+id encoded as TYPE<<16|ID"),
+	V(ikev2_add_child_transform, "add an extra (possibly bogus) transform to the first CHILD proposal",
+	  .unsigned_help = "transform type+id encoded as TYPE<<16|ID"),
 
-	V("jacob-two-two", jacob_two_two, "cause pluto to send all messages twice."),
-	V("ke-payload", ke_payload, "corrupt the outgoing KE payload",
-	  .how_keywords = &impair_emit_keywords, .unsigned_help = "emit the KE payload filled with <unsigned> bytes"),
-	V("log-rate-limit", log_rate_limit, "set the per-hour(?) cap on rate-limited log messages"),
-	V("major-version-bump", major_version_bump, "cause pluto to send an IKE major version that's higher then we support."),
-	V("minor-version-bump", minor_version_bump, "cause pluto to send an IKE minor version that's higher then we support."),
-	V("childless-ikev2-supported", childless_ikev2_supported, "causes pluto to omit/ignore the CHILDLESS_IKEV2_SUPPORTED notify in the IKE_SA_INIT exchange"),
+	B(jacob_two_two, "cause pluto to send all messages twice."),
+	V(ke_payload, "corrupt the outgoing KE payload",
+	  .how_keywords = &impair_emit_keywords,
+	  .unsigned_help = "emit the KE payload filled with <unsigned> bytes"),
+	B(log_rate_limit, "set the per-hour(?) cap on rate-limited log messages"),
+	B(major_version_bump, "cause pluto to send an IKE major version that's higher then we support."),
+	B(minor_version_bump, "cause pluto to send an IKE minor version that's higher then we support."),
+	B(childless_ikev2_supported, "causes pluto to omit/ignore the CHILDLESS_IKEV2_SUPPORTED notify in the IKE_SA_INIT exchange"),
 
-	V("ignore-v2n-signature-hash-algorithms", ignore_v2N_SIGNATURE_HASH_ALGORITHMS,
-	  "causes pluto to ignore the notification SIGNATURE_HASH_ALGORITHMS in the IKE_SA_INIT exchange"),
-	V("omit-v2n-signature-hash-algorithms", omit_v2N_SIGNATURE_HASH_ALGORITHMS,
-	  "causes pluto to omit the notification SIGNATURE_HASH_ALGORITHMS in the IKE_SA_INIT exchange"),
+	B(ignore_v2N_SIGNATURE_HASH_ALGORITHMS, "causes pluto to ignore the notification SIGNATURE_HASH_ALGORITHMS in the IKE_SA_INIT exchange"),
+	B(omit_v2N_SIGNATURE_HASH_ALGORITHMS, "causes pluto to omit the notification SIGNATURE_HASH_ALGORITHMS in the IKE_SA_INIT exchange"),
 
-	V("proposal-parser", proposal_parser, "impair algorithm parser - what you see is what you get"),
-	V("rekey-initiate-supernet", rekey_initiate_supernet, "impair IPsec SA rekey initiator TSi and TSR to 0/0 ::0, emulate Windows client"),
-	V("rekey-initiate-subnet", rekey_initiate_subnet, "impair IPsec SA rekey initiator TSi and TSR to X/32 or X/128"),
-	V("rekey-respond-supernet", rekey_respond_supernet, "impair IPsec SA rekey responder TSi and TSR to 0/0 ::0"),
-	V("rekey-respond-subnet", rekey_respond_subnet, "impair IPsec SA rekey responder TSi and TSR to X/32 X/128"),
-	V("replay-encrypted", replay_encrypted, "replay encrypted packets"),
-	V("revival", revival, "disable code that revives a connection that is supposed to stay up"),
-	V("send-bogus-dcookie", send_bogus_dcookie, "causes pluto to send a a bogus IKEv2 DCOOKIE"),
-	V("send-bogus-isakmp-flag", send_bogus_isakmp_flag, "causes pluto to set a RESERVED ISAKMP flag to test ignoring/zeroing it"),
-	V("send-bogus-payload-flag", send_bogus_payload_flag, "causes pluto to set a RESERVED PAYLOAD flag to test ignoring/zeroing it"),
-	V("send-key-size-check", send_key_size_check, "causes pluto to omit checking configured ESP key sizes for testing"),
-	V("send-no-delete", send_no_delete, "causes pluto to omit sending Notify/Delete messages"),
-	V("send-no-ikev2-auth", send_no_ikev2_auth, "causes pluto to omit sending an IKEv2 IKE_AUTH packet"),
-	V("send-no-main-r2", send_no_main_r2, "causes pluto to omit sending an last Main Mode response packet"),
-	V("send-no-xauth-r0", send_no_xauth_r0, "causes pluto to omit sending an XAUTH user/passwd request"),
-	V("send-no-idr", send_no_idr, "causes pluto as initiator to omit sending an IDr payload"),
-	V("send-pkcs7-thingie", send_pkcs7_thingie, "send certificates as a PKCS7 thingie"),
-	V("send-nonzero-reserved", send_nonzero_reserved, "send non-zero reserved fields in IKEv2 proposal fields"),
-	V("send-nonzero-reserved-id", send_nonzero_reserved_id, "send non-zero reserved fields in IKEv2 ID payload that is part of the AUTH hash calculation"),
-	V("suppress-retransmits", suppress_retransmits, "causes pluto to never send retransmits (wait the full timeout)"),
-	V("timeout-on-retransmit", timeout_on_retransmit, "causes pluto to 'retry' (switch protocol) on the first retransmit"),
+	B(proposal_parser, "impair algorithm parser - what you see is what you get"),
+	B(rekey_initiate_supernet, "impair IPsec SA rekey initiator TSi and TSR to 0/0 ::0, emulate Windows client"),
+	B(rekey_initiate_subnet, "impair IPsec SA rekey initiator TSi and TSR to X/32 or X/128"),
+	B(rekey_respond_supernet, "impair IPsec SA rekey responder TSi and TSR to 0/0 ::0"),
+	B(rekey_respond_subnet, "impair IPsec SA rekey responder TSi and TSR to X/32 X/128"),
+	B(replay_encrypted, "replay encrypted packets"),
+	B(revival, "disable code that revives a connection that is supposed to stay up"),
+	B(send_bogus_dcookie, "causes pluto to send a a bogus IKEv2 DCOOKIE"),
+	B(send_bogus_isakmp_flag, "causes pluto to set a RESERVED ISAKMP flag to test ignoring/zeroing it"),
+	B(send_bogus_payload_flag, "causes pluto to set a RESERVED PAYLOAD flag to test ignoring/zeroing it"),
+	B(send_key_size_check, "causes pluto to omit checking configured ESP key sizes for testing"),
+	B(send_no_delete, "causes pluto to omit sending Notify/Delete messages"),
+	B(send_no_ikev2_auth, "causes pluto to omit sending an IKEv2 IKE_AUTH packet"),
+	B(send_no_main_r2, "causes pluto to omit sending an last Main Mode response packet"),
+	B(send_no_xauth_r0, "causes pluto to omit sending an XAUTH user/passwd request"),
+	B(send_no_idr, "causes pluto as initiator to omit sending an IDr payload"),
+	B(send_pkcs7_thingie, "send certificates as a PKCS7 thingie"),
+	B(send_nonzero_reserved, "send non-zero reserved fields in IKEv2 proposal fields"),
+	B(send_nonzero_reserved_id, "send non-zero reserved fields in IKEv2 ID payload that is part of the AUTH hash calculation"),
+	B(suppress_retransmits, "causes pluto to never send retransmits (wait the full timeout)"),
+	B(timeout_on_retransmit, "causes pluto to 'retry' (switch protocol) on the first retransmit"),
 
-	V("event-check-crls", event_check_crls, "do not schedule the CRL check event"),
+	B(event_check_crls, "do not schedule the CRL check event"),
 
-	V("v1-hash-check", v1_hash_check, "disable check of incoming IKEv1 hash payload"),
-	V("v1-hash-exchange", v1_hash_exchange, "corrupt the HASH payload in the outgoing exchange",
+	B(v1_hash_check, "disable check of incoming IKEv1 hash payload"),
+	V(v1_hash_exchange, "corrupt the HASH payload in the outgoing exchange",
 	  .how_keywords = &impair_v1_exchange_keywords),
-	V("v1-hash-payload", v1_hash_payload, "corrupt the emitted HASH payload",
-	  .how_keywords = &impair_emit_keywords, .unsigned_help = "emit the hash payload filled with <unsigned> bytes"),
+	V(v1_hash_payload, "corrupt the emitted HASH payload",
+	  .how_keywords = &impair_emit_keywords,
+	  .unsigned_help = "emit the hash payload filled with <unsigned> bytes"),
 
-	V("tcp-use-blocking-write", tcp_use_blocking_write, "use a blocking write when sending TCP encapsulated IKE messages"),
-	V("tcp-skip-setsockopt-espintcp", tcp_skip_setsockopt_espintcp, "skip the required setsockopt(\"espintcp\") call"),
+	B(tcp_use_blocking_write, "use a blocking write when sending TCP encapsulated IKE messages"),
+	B(tcp_skip_setsockopt_espintcp, "skip the required setsockopt(\"espintcp\") call"),
 
 	/*
 	 * Impair message flow.
 	 */
 
-	A("drop-inbound", IMPAIR_MESSAGE_DROP, IMPAIR_INBOUND_MESSAGE,
+	A("drop_inbound", IMPAIR_MESSAGE_DROP, IMPAIR_INBOUND_MESSAGE,
 	  "drop the N'th inbound message", "message number"),
-	A("drop-outbound", IMPAIR_MESSAGE_DROP, IMPAIR_OUTBOUND_MESSAGE,
+	A("drop_outbound", IMPAIR_MESSAGE_DROP, IMPAIR_OUTBOUND_MESSAGE,
 	  "drop the N'th outbound message", "message number"),
 
-	A("block-inbound", IMPAIR_MESSAGE_BLOCK, IMPAIR_INBOUND_MESSAGE,
+	A("block_inbound", IMPAIR_MESSAGE_BLOCK, IMPAIR_INBOUND_MESSAGE,
 	  "block all incoming message", NULL),
-	A("block-outbound", IMPAIR_MESSAGE_BLOCK, IMPAIR_OUTBOUND_MESSAGE,
+	A("block_outbound", IMPAIR_MESSAGE_BLOCK, IMPAIR_OUTBOUND_MESSAGE,
 	  "block all outgoing message", NULL),
 
-	A("drip-inbound", IMPAIR_MESSAGE_DRIP, IMPAIR_INBOUND_MESSAGE,
+	A("drip_inbound", IMPAIR_MESSAGE_DRIP, IMPAIR_INBOUND_MESSAGE,
 	  "drip N'th inbound message", "message number"),
-	A("drip-outbound", IMPAIR_MESSAGE_DRIP, IMPAIR_OUTBOUND_MESSAGE,
+	A("drip_outbound", IMPAIR_MESSAGE_DRIP, IMPAIR_OUTBOUND_MESSAGE,
 	  "drip N'th outbound message", "message number"),
 
-	A("replay-backward", IMPAIR_MESSAGE_REPLAY_BACKWARD, IMPAIR_INBOUND_MESSAGE,
+	A("replay_backward", IMPAIR_MESSAGE_REPLAY_BACKWARD, IMPAIR_INBOUND_MESSAGE,
 	  "replay all earlier inbound packets new-to-old", NULL),
-	A("replay-duplicates", IMPAIR_MESSAGE_REPLAY_DUPLICATES, IMPAIR_INBOUND_MESSAGE,
+	A("replay_duplicates", IMPAIR_MESSAGE_REPLAY_DUPLICATES, IMPAIR_INBOUND_MESSAGE,
 	  "duplicate each inbound packet", NULL),
-	A("replay-forward", IMPAIR_MESSAGE_REPLAY_FORWARD, IMPAIR_INBOUND_MESSAGE,
+	A("replay_forward", IMPAIR_MESSAGE_REPLAY_FORWARD, IMPAIR_INBOUND_MESSAGE,
 	  "replay all inbound packets old-to-new", NULL),
 
 	/*
 	 * Mangle payloads.
 	 */
 
-	V("add-unknown-v2-payload-to", add_unknown_v2_payload_to,
-	  "impair the (unencrypted) part of the exchange",
+	V(add_unknown_v2_payload_to, "impair the (unencrypted) part of the exchange",
 	  .how_enum_names = &ikev2_exchange_names),
-	V("add-unknown-v2-payload-to-sk", add_unknown_v2_payload_to_sk,
-	  "impair the encrypted part of the exchange",
+	V(add_unknown_v2_payload_to_sk, "impair the encrypted part of the exchange",
 	  .how_enum_names = &ikev2_exchange_names),
-	V("unknown-v2-payload-critical", unknown_v2_payload_critical,
-	  "include the unknown payload in the encrypted SK payload"),
-	V("ignore-soft-expire", ignore_soft_expire, "ignore kernel soft expire events"),
-	V("ignore-hard-expire", ignore_hard_expire, "ignore kernel hard expire events"),
+	B(unknown_v2_payload_critical, "include the unknown payload in the encrypted SK payload"),
+	B(ignore_soft_expire, "ignore kernel soft expire events"),
+	B(ignore_hard_expire, "ignore kernel hard expire events"),
 
-	V("force-v2-auth-method", force_v2_auth_method,
-	  "force the use of the specified IKEv2 AUTH method",
+	V(force_v2_auth_method, "force the use of the specified IKEv2 AUTH method",
 	  .how_enum_names = &ikev2_auth_method_names),
 
-	V("omit-v2-ike-auth-child", omit_v2_ike_auth_child,
-	  "omit, and don't expect, CHILD SA payloads in IKE_AUTH message"),
-	V("ignore-v2-ike-auth-child", ignore_v2_ike_auth_child,
-	  "ignore, but do expect, CHILD SA payloads in the IKE_AUTH message"),
+	B(omit_v2_ike_auth_child, "omit, and don't expect, CHILD SA payloads in IKE_AUTH message"),
+	B(ignore_v2_ike_auth_child, "ignore, but do expect, CHILD SA payloads in the IKE_AUTH message"),
 
 	/*
 	 * Trigger global event.
@@ -240,20 +269,20 @@ struct impairment impairments[] = {
 	 * Trigger state event.
 	 */
 
-	A("trigger-v2-rekey", STATE_EVENT_HANDLER, EVENT_v2_REKEY,
+	A("trigger_v2_rekey", STATE_EVENT_HANDLER, EVENT_v2_REKEY,
 	  "trigger the rekey event", "#SA"),
-	A("trigger-v2-liveness", STATE_EVENT_HANDLER, EVENT_v2_LIVENESS,
+	A("trigger_v2_liveness", STATE_EVENT_HANDLER, EVENT_v2_LIVENESS,
 	  "trigger the liveness event", "#SA"),
-	A("trigger-v1-replace", STATE_EVENT_HANDLER, EVENT_v1_REPLACE,
+	A("trigger_v1_replace", STATE_EVENT_HANDLER, EVENT_v1_REPLACE,
 	  "trigger the IKEv1 replace event", "#SA"),
-	A("trigger-v2-replace", STATE_EVENT_HANDLER, EVENT_v2_REPLACE,
+	A("trigger_v2_replace", STATE_EVENT_HANDLER, EVENT_v2_REPLACE,
 	  "trigger the IKEv2 replace event", "#SA"),
 
 	/*
 	 * Trigger connection event.
 	 */
 
-	A("trigger-revival", CONNECTION_EVENT_HANDLER, CONNECTION_REVIVAL,
+	A("trigger_revival", CONNECTION_EVENT_HANDLER, CONNECTION_REVIVAL,
 	  "trigger the revival event", "$CONNECTION"),
 
 	/*
@@ -261,39 +290,30 @@ struct impairment impairments[] = {
 	 * logic).
 	 */
 
-	A("initiate-v2-liveness", INITIATE_v2_LIVENESS, 0,
+	A("initiate_v2_liveness", INITIATE_v2_LIVENESS, 0,
 	  "initiate an IKEv2 liveness exchange", "IKE SA"),
-	A("send-keepalive", SEND_KEEPALIVE, 0,
+	A("send_keepalive", SEND_KEEPALIVE, 0,
 	  "send a NAT keepalive packet", "SA"),
 
-	V("cannot-ondemand", cannot_ondemand,
-	  "force acquire to call cannot_ondemand() and fail"),
+	B(cannot_ondemand, "force acquire to call cannot_ondemand() and fail"),
 
-	V("number-of-TSi-selectors", number_of_TSi_selectors,
-	  "send bogus number of selectors in TSi payload",
+	V(number_of_TSi_selectors, "send bogus number of selectors in TSi payload",
 	  .unsigned_help = "number of selectors"),
-	V("number-of-TSr-selectors", number_of_TSr_selectors,
-	  "send bogus number of selectors in TSr payload",
+	V(number_of_TSr_selectors, "send bogus number of selectors in TSr payload",
 	  .unsigned_help = "force number of selectors"),
 
 	B(lifetime, "skip any IKE/IPsec lifetime checks when adding connection"),
 
-	B(copy_v1_notify_response_SPIs_to_retransmission,
-	  "copy SPIs in IKEv1 notify response to last sent packet and then retransmit"),
+	B(copy_v1_notify_response_SPIs_to_retransmission, "copy SPIs in IKEv1 notify response to last sent packet and then retransmit"),
 
-	V("v1_remote_quick_id", v1_remote_quick_id, "set the remote quick ID",
+	V(v1_remote_quick_id, "set the remote quick ID",
 	  .unsigned_help = "value to set quick id too"),
 
-	V("v1_isakmp_delete_payload", v1_isakmp_delete_payload,
-	  "corrupt outgoing ISAKMP delete payload",
+	V(v1_isakmp_delete_payload, "corrupt outgoing ISAKMP delete payload",
 	  .how_keywords = &impair_emit_keywords),
 
-	V("v1_ipsec_delete_payload", v1_ipsec_delete_payload,
-	  "corrupt outgoing IPsec delete payload",
+	V(v1_ipsec_delete_payload, "corrupt outgoing IPsec delete payload",
 	  .how_keywords = &impair_emit_keywords),
-
-#define U(VALUE, HELP, ...) \
-	{ .what = #VALUE, .action = CALL_IMPAIR_UPDATE, .value = &impair.VALUE, .help = HELP, .sizeof_value = sizeof(impair.VALUE), .unsigned_help = "<unsigned>", ##__VA_ARGS__, }
 
 	U(v2_delete_protoid, "corrupt the IKEv2 Delete protocol ID"),
 	U(v2n_rekey_sa_protoid, "corrupt the IKEv2 REKEY CHILD notify protocol ID"),
