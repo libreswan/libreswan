@@ -65,7 +65,7 @@ initdone
 west #
  # temp file fixing
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
  ipsec auto --up westnet-eastnet-ikev2
 "westnet-eastnet-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP

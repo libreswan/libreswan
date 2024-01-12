@@ -2,7 +2,7 @@
 # confirm that the network is alive
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec whack --impair suppress-retransmits
+ipsec whack --impair suppress_retransmits
 ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
 ipsec auto --status
 echo "initdone"

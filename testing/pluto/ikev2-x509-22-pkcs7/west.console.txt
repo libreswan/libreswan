@@ -22,7 +22,7 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec whack --impair send-pkcs7-thingie
+ ipsec whack --impair send_pkcs7_thingie
 west #
  ipsec auto --add ikev2-westnet-eastnet-x509-cr
 "ikev2-westnet-eastnet-x509-cr": added IKEv2 connection

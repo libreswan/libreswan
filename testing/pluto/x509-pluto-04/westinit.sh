@@ -4,6 +4,6 @@ ipsec certutil -D -n east
 ipsec certutil -D -n east-ec
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec whack --impair timeout-on-retransmit
+ipsec whack --impair timeout_on_retransmit
 ipsec auto --add westnet-eastnet-x509-cr
 echo "initdone"

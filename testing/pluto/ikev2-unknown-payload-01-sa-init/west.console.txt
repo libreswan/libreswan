@@ -12,9 +12,9 @@ west #
 west #
  ipsec whack --impair revival
 west #
- ipsec whack --impair suppress-retransmits # one packet
+ ipsec whack --impair suppress_retransmits # one packet
 west #
- ipsec whack --impair add-unknown-v2-payload-to:IKE_SA_INIT
+ ipsec whack --impair add_unknown_v2_payload_to:IKE_SA_INIT
 west #
  : good
 west #
@@ -40,11 +40,11 @@ west #
 west #
  ipsec whack --impair revival
 west #
- ipsec whack --impair timeout-on-retransmit # one packet
+ ipsec whack --impair timeout_on_retransmit # one packet
 west #
- ipsec whack --impair add-unknown-v2-payload-to:IKE_SA_INIT
+ ipsec whack --impair add_unknown_v2_payload_to:IKE_SA_INIT
 west #
- ipsec whack --impair unknown-v2-payload-critical
+ ipsec whack --impair unknown_v2_payload_critical
 west #
  ../../guestbin/libreswan-up-down.sh westnet-eastnet-ipv4-psk-ikev2 -I 192.0.1.254 192.0.2.254
 "westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection

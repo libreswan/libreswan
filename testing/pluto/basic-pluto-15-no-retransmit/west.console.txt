@@ -7,7 +7,7 @@ west #
 west #
  # suffer a quick death
 west #
- ipsec whack --impair timeout-on-retransmit
+ ipsec whack --impair timeout_on_retransmit
 west #
  ipsec auto --add westnet-eastnet
 "westnet-eastnet": added IKEv1 connection

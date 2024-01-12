@@ -12,7 +12,7 @@ west #
 west #
  # send AES_128; should work
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
  ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
 "aes128": added IKEv2 connection
@@ -32,9 +32,9 @@ west #
 west #
  # send AES_0
 west #
- ipsec whack --impair timeout-on-retransmit
+ ipsec whack --impair timeout_on_retransmit
 west #
- ipsec whack --impair ike-key-length-attribute:0
+ ipsec whack --impair ike_key_length_attribute:0
 west #
  ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
 "aes128": added IKEv2 connection
@@ -48,9 +48,9 @@ west #
 west #
  ipsec whack --impair none
 west #
- ipsec whack --impair timeout-on-retransmit
+ ipsec whack --impair timeout_on_retransmit
 west #
- ipsec whack --impair child-key-length-attribute:0
+ ipsec whack --impair child_key_length_attribute:0
 west #
  ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
 "aes128": added IKEv2 connection
@@ -65,9 +65,9 @@ west #
 west #
  # send AES_128_128; will work but probably should not
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
- ipsec whack --impair ike-key-length-attribute:duplicate
+ ipsec whack --impair ike_key_length_attribute:duplicate
 west #
  ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
 "aes128": added IKEv2 connection
@@ -86,9 +86,9 @@ up
 west #
  ipsec whack --impair none
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
- ipsec whack --impair child-key-length-attribute:duplicate
+ ipsec whack --impair child_key_length_attribute:duplicate
 west #
  ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
 "aes128": added IKEv2 connection
@@ -109,9 +109,9 @@ west #
 west #
  # send AES; should fail
 west #
- ipsec whack --impair timeout-on-retransmit
+ ipsec whack --impair timeout_on_retransmit
 west #
- ipsec whack --impair ike-key-length-attribute:omit
+ ipsec whack --impair ike_key_length_attribute:omit
 west #
  ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
 "aes128": added IKEv2 connection
@@ -125,9 +125,9 @@ west #
 west #
  ipsec whack --impair none
 west #
- ipsec whack --impair timeout-on-retransmit
+ ipsec whack --impair timeout_on_retransmit
 west #
- ipsec whack --impair child-key-length-attribute:omit
+ ipsec whack --impair child_key_length_attribute:omit
 west #
  ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
 "aes128": added IKEv2 connection
@@ -142,11 +142,11 @@ west #
 west #
  # send AES_<>; should fail
 west #
- ipsec whack --impair timeout-on-retransmit
+ ipsec whack --impair timeout_on_retransmit
 west #
  ipsec whack --impair emitting
 west #
- ipsec whack --impair ike-key-length-attribute:empty
+ ipsec whack --impair ike_key_length_attribute:empty
 west #
  ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
 "aes128": added IKEv2 connection
@@ -161,11 +161,11 @@ west #
 west #
  ipsec whack --impair none
 west #
- ipsec whack --impair timeout-on-retransmit
+ ipsec whack --impair timeout_on_retransmit
 west #
  ipsec whack --impair emitting
 west #
- ipsec whack --impair ike-key-length-attribute:empty
+ ipsec whack --impair ike_key_length_attribute:empty
 west #
  ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
 "aes128": added IKEv2 connection
@@ -182,7 +182,7 @@ west #
 west #
  # send 3DES; should work, key-length should be omitted
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
  ../../guestbin/libreswan-up-down.sh 3des -I 192.0.1.254 192.0.2.254
 "3des": added IKEv2 connection
@@ -202,9 +202,9 @@ west #
 west #
  # send 3DES_0; should fail (but doesn't)
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
- ipsec whack --impair ike-key-length-attribute:0
+ ipsec whack --impair ike_key_length_attribute:0
 west #
  ../../guestbin/libreswan-up-down.sh 3des -I 192.0.1.254 192.0.2.254
 "3des": added IKEv2 connection
@@ -225,9 +225,9 @@ west #
 west #
  # send 3DES_192; should work (but doesn't)
 west #
- ipsec whack --impair timeout-on-retransmit
+ ipsec whack --impair timeout_on_retransmit
 west #
- ipsec whack --impair ike-key-length-attribute:192
+ ipsec whack --impair ike_key_length_attribute:192
 west #
  ../../guestbin/libreswan-up-down.sh 3des -I 192.0.1.254 192.0.2.254
 "3des": added IKEv2 connection

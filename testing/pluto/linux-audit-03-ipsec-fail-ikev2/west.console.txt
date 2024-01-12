@@ -10,7 +10,7 @@ west #
  ipsec auto --add ikev2-ipsec-fail
 "ikev2-ipsec-fail": added IKEv2 connection
 west #
- #ipsec whack --impair timeout-on-retransmit
+ #ipsec whack --impair timeout_on_retransmit
 west #
  echo "initdone"
 initdone

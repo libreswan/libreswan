@@ -11,7 +11,7 @@ road #
  ipsec auto --add x509
 "x509": added IKEv2 connection
 road #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 road #
  echo done
 done

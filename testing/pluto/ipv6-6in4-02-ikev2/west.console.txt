@@ -50,7 +50,7 @@ west #
 "westnet-eastnet-6in4":   routing: unrouted;
 "westnet-eastnet-6in4":   conn serial: $1;
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
  echo "initdone"
 initdone

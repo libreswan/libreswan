@@ -8,7 +8,7 @@ west #
  ipsec auto --add westnet-eastnet-aggr
 "westnet-eastnet-aggr": added IKEv1 connection
 west #
- ipsec whack --impair timeout-on-retransmit
+ ipsec whack --impair timeout_on_retransmit
 west #
  echo "initdone"
 initdone

@@ -6,7 +6,7 @@ Redirecting to: [initsystem]
 north #
  ../../guestbin/wait-until-pluto-started
 north #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 north #
  ipsec auto --add rw
 "rw": added IKEv2 connection

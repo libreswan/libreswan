@@ -39,7 +39,7 @@ road #
 road #
  # prevent delete notify
 road #
- ipsec whack --impair send-no-delete
+ ipsec whack --impair send_no_delete
 road #
  ipsec restart
 Redirecting to: [initsystem]

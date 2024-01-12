@@ -15,7 +15,7 @@ east #
 "eastnet-westnet-ikev2": warning: PF_KEY v2 kernel interface does not support ESN so disabling
 "eastnet-westnet-ikev2": added IKEv2 connection
 east #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 east #
  echo "initdone"
 initdone

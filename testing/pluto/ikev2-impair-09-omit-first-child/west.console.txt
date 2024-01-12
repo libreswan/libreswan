@@ -8,12 +8,12 @@ west #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
 "westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
  echo "initdone"
 initdone
 west #
- ipsec whack --impair omit-v2-ike-auth-child
+ ipsec whack --impair omit_v2_ike_auth_child
 west #
  ipsec auto --up westnet-eastnet-ipv4-psk-ikev2
 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: omitting CHILD SA payloads from the IKE_AUTH request

@@ -5,9 +5,9 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec whack --impair ke-payload:empty
+ ipsec whack --impair ke_payload:empty
 east #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 east #
  ipsec auto --add westnet-eastnet-ipv4-psk-slow
 "westnet-eastnet-ipv4-psk-slow": added IKEv1 connection

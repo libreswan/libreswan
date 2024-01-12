@@ -28,7 +28,7 @@ west #
 west #
  #ip route del 192.0.2.0/24
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
  echo "initdone"
 initdone

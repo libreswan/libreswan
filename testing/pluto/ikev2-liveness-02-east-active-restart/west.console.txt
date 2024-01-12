@@ -24,7 +24,7 @@ west #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
 "westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
  echo "initdone"
 initdone
@@ -45,7 +45,7 @@ west #
 west #
  # kill initiator
 west #
- ipsec whack --impair send-no-delete
+ ipsec whack --impair send_no_delete
 west #
  ipsec auto --delete westnet-eastnet-ipv4-psk-ikev2
 "westnet-eastnet-ipv4-psk-ikev2": terminating SAs using this connection

@@ -5,9 +5,9 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec whack --impair replay-encrypted
+ ipsec whack --impair replay_encrypted
 east #
- ipsec whack --impair corrupt-encrypted
+ ipsec whack --impair corrupt_encrypted
 east #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
 "westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection

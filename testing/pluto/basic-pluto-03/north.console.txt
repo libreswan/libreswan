@@ -14,7 +14,7 @@ Redirecting to: [initsystem]
 north #
  ../../guestbin/wait-until-pluto-started
 north #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 north #
  ipsec auto --add northnet-eastnet-nonat
 "northnet-eastnet-nonat": added IKEv1 connection

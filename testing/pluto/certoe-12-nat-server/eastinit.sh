@@ -7,7 +7,7 @@ echo "192.1.3.0/24"  >> /etc/ipsec.d/policies/clear-or-private
 ip addr show scope global
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec whack --impair suppress-retransmits
+ipsec whack --impair suppress_retransmits
 # give OE policies time to load
 ../../guestbin/wait-for.sh --match 'loaded 11' -- ipsec auto --status
 echo "initdone"

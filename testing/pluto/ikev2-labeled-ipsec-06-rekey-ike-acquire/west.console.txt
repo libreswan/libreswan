@@ -50,10 +50,10 @@ west #
 west #
  # retransmit, scheduled for 10s, will unstick it.
 west #
- ipsec whack --impair drop-outbound:1
+ ipsec whack --impair drop_outbound:1
 IMPAIR: will drop outbound message 1
 west #
- ipsec whack --asynchronous --impair trigger-v2-rekey:1
+ ipsec whack --asynchronous --impair trigger_v2_rekey:1
 "labeled"[1] 192.1.2.23 #1: deleting existing REKEY event
 "labeled"[1] 192.1.2.23 #1: calling REKEY event handler
 west #

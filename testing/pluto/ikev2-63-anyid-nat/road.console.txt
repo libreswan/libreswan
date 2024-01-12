@@ -29,7 +29,7 @@ road #
 "westnet-eastnet-ipv4-psk-ikev2":   routing: unrouted;
 "westnet-eastnet-ipv4-psk-ikev2":   conn serial: $1;
 road #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 road #
  echo "initdone"
 initdone

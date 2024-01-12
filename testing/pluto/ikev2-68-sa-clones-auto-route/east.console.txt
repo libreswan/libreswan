@@ -72,7 +72,7 @@ east #
 "westnet-eastnet-2":   conn serial: $1;
 "westnet-eastnet-2":   aliases: westnet-eastnet
 east #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 east #
  echo "initdone"
 initdone

@@ -8,11 +8,11 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec whack --impair suppress-retransmits # one packet
+ ipsec whack --impair suppress_retransmits # one packet
 west #
- ipsec whack --impair replay-encrypted
+ ipsec whack --impair replay_encrypted
 west #
- ipsec whack --impair corrupt-encrypted
+ ipsec whack --impair corrupt_encrypted
 west #
  ../../guestbin/libreswan-up-down.sh westnet-eastnet-ipv4-psk-ikev2 -I 192.0.1.254 192.0.2.254
 "westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection

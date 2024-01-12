@@ -46,7 +46,7 @@ west #
 "westnet-eastnet-3des":   IKE algorithms: AES_CBC_256-HMAC_SHA2_256-MODP2048, AES_CBC_256-HMAC_SHA2_512-MODP2048, AES_CBC_256-HMAC_SHA1-MODP2048, AES_CBC_256-HMAC_SHA2_256-MODP1536, AES_CBC_256-HMAC_SHA2_512-MODP1536, AES_CBC_256-HMAC_SHA1-MODP1536
 "westnet-eastnet-3des":   ESP algorithms: 3DES_CBC-HMAC_MD5_96
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
  echo "initdone"
 initdone

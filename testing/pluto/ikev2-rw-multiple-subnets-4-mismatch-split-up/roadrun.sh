@@ -1,6 +1,6 @@
 # matched by peer
 ipsec whack --impair revival
-ipsec whack --impair suppress-retransmits
+ipsec whack --impair suppress_retransmits
 ipsec auto --up road/0x1
 ipsec whack --impair none
 
@@ -11,7 +11,7 @@ ipsec whack --impair none
 
 # matched by peer
 ipsec whack --impair revival
-ipsec whack --impair suppress-retransmits
+ipsec whack --impair suppress_retransmits
 ipsec auto --up road/0x3
 ipsec whack --impair none
 

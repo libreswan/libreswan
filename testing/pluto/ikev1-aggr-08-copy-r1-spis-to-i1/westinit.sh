@@ -4,5 +4,5 @@ ipsec start
 ipsec auto --add westnet-eastnet-aggr
 ipsec whack --impair copy_v1_notify_response_SPIs_to_retransmission
 ipsec whack --impair revival
-ipsec whack --impair timeout-on-retransmit
+ipsec whack --impair timeout_on_retransmit
 echo "initdone"

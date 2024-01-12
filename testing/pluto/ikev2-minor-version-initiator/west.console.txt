@@ -21,12 +21,12 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec whack --impair minor-version-bump
+ ipsec whack --impair minor_version_bump
 west #
  ipsec auto --add westnet-eastnet-ikev2
 "westnet-eastnet-ikev2": added IKEv2 connection
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
  echo "initdone"
 initdone

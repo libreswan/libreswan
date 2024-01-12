@@ -10,7 +10,7 @@ road #
 "road-east-x509-ipv4": warning: IKEv2 ignores dpdtimeout= and dpdaction=; use dpddelay= and retransmit-timeout=
 "road-east-x509-ipv4": added IKEv2 connection
 road #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 road #
  echo "initdone"
 initdone

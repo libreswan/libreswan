@@ -14,7 +14,7 @@ east #
  ../../guestbin/wait-for.sh --match 'loaded 10,' -- ipsec auto --status
 Total IPsec connections: loaded 10, active 0
 east #
- ipsec whack --impair send-no-ikev2-auth
+ ipsec whack --impair send_no_ikev2_auth
 east #
  echo "initdone"
 initdone

@@ -1,6 +1,6 @@
 ipsec auto --up road
 ../../guestbin/ping-once.sh --up 192.0.2.254
-ipsec whack --impair send-no-delete
+ipsec whack --impair send_no_delete
 ipsec stop
 ipsec start
 ../../guestbin/wait-until-pluto-started

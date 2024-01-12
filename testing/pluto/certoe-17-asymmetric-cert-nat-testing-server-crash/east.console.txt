@@ -12,7 +12,7 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 east #
  # give OE policies time to load
 east #
@@ -29,7 +29,7 @@ east #
 east #
  # killing service ipsec
 east #
- ipsec whack --impair send-no-delete
+ ipsec whack --impair send_no_delete
 east #
  ipsec stop
 Redirecting to: [initsystem]

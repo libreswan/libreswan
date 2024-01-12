@@ -25,7 +25,7 @@ initdone
 west #
  ipsec whack --impair revival
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
  ipsec auto --up nss-cert
 "nss-cert" #1: initiating IKEv2 connection to 192.1.2.23 using UDP

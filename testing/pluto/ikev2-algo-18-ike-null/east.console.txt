@@ -5,7 +5,7 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec whack --impair allow-null-none
+ ipsec whack --impair allow_null_none
 east #
  ipsec add algo
 "algo": added IKEv2 connection

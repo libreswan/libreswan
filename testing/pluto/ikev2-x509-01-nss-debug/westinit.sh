@@ -21,5 +21,5 @@ export NSPR_LOG_MODULES="nss_mod_log:4"
 ipsec pluto --config /etc/ipsec.conf
 ../../guestbin/wait-until-pluto-started
 ipsec auto --add ikev2-westnet-eastnet-x509-cr
-ipsec whack --impair suppress-retransmits
+ipsec whack --impair suppress_retransmits
 echo "initdone"

@@ -31,6 +31,6 @@ ipsec auto --delete westnet-eastnet-ikev2-dh31
 # ipsec auto --delete westnet-eastnet-ikev2-dh20-fallback
 #
 # MODP1536 is no longer in the default list and should fail
-ipsec whack --impair timeout-on-retransmit
+ipsec whack --impair timeout_on_retransmit
 ipsec auto --up westnet-eastnet-ikev2-modp1536
 echo done

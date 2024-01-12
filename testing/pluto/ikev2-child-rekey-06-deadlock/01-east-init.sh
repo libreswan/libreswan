@@ -4,5 +4,5 @@ ipsec start
 ipsec auto --add east
 ipsec auto --status | grep east
 ipsec whack --impair revival
-ipsec whack --impair suppress-retransmits
+ipsec whack --impair suppress_retransmits
 echo "initdone"

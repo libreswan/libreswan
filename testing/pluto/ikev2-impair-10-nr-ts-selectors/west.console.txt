@@ -8,7 +8,7 @@ west #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
 "westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
  echo "initdone"
 initdone
@@ -30,7 +30,7 @@ west #
 west #
  # TSi
 west #
- ipsec whack --impair number-of-TSi-selectors:0
+ ipsec whack --impair number_of_TSi_selectors:0
 west #
  ipsec auto --up westnet-eastnet-ipv4-psk-ikev2
 "westnet-eastnet-ipv4-psk-ikev2" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -45,11 +45,11 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2" #3: intiating delete
 "westnet-eastnet-ipv4-psk-ikev2" #3: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #
- ipsec whack --impair number-of-TSi-selectors:no
+ ipsec whack --impair number_of_TSi_selectors:no
 west #
  # TSr
 west #
- ipsec whack --impair number-of-TSr-selectors:2
+ ipsec whack --impair number_of_TSr_selectors:2
 west #
  ipsec auto --up westnet-eastnet-ipv4-psk-ikev2
 "westnet-eastnet-ipv4-psk-ikev2" #5: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -64,7 +64,7 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2" #5: intiating delete
 "westnet-eastnet-ipv4-psk-ikev2" #5: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #
- ipsec whack --impair number-of-TSr-selectors:no
+ ipsec whack --impair number_of_TSr_selectors:no
 west #
  echo done
 done

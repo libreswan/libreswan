@@ -8,7 +8,7 @@ road #
  ipsec auto --add road-east
 "road-east": added IKEv2 connection
 road #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 road #
  echo "initdone"
 initdone

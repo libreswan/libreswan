@@ -46,7 +46,7 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2":   conn serial: $1;
 "westnet-eastnet-ipv4-psk-ikev2":   ESP algorithms: AES_CBC-AES_CMAC_96
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
  echo "initdone"
 initdone

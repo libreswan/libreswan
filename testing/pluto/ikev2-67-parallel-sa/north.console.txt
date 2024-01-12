@@ -9,7 +9,7 @@ north #
 "northnet-eastnet/0x1": added IKEv2 connection
 "northnet-eastnet/0x2": added IKEv2 connection
 north #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 north #
  echo "initdone"
 initdone

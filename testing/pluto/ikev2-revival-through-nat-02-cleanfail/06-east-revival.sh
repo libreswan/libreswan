@@ -10,7 +10,7 @@
 
 # Now trigger the revival.  Since ROAD is down it will fail.  And
 # being KEEP further revivals are abandoned.
-ipsec whack --impair trigger-revival:2
+ipsec whack --impair trigger_revival:2
 
 # but road is really down, so that fails; and everything is deleted
 ../../guestbin/ipsec-kernel-policy.sh

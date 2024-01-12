@@ -35,7 +35,7 @@ road #
 "road-eastnet-nonat":   routing: unrouted;
 "road-eastnet-nonat":   conn serial: $1;
 road #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 road #
  echo "initdone"
 initdone

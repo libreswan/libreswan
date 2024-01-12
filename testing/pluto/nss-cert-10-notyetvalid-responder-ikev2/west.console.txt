@@ -14,7 +14,7 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
  ipsec whack --impair revival
 west #

@@ -1,5 +1,5 @@
 # the impair causes memory corruption and a crash ?
-ipsec whack --impair suppress-retransmits
+ipsec whack --impair suppress_retransmits
 # should succeed
 ipsec auto --up nss-cert-correct
 ipsec auto --down nss-cert-correct

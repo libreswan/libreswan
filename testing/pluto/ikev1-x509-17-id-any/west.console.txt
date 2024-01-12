@@ -27,7 +27,7 @@ west #
  ipsec auto --add ikev2-westnet-eastnet-x509-cr
 "ikev2-westnet-eastnet-x509-cr": added IKEv1 connection
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
  echo "initdone"
 initdone

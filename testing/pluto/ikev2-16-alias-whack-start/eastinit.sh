@@ -4,5 +4,5 @@ ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec auto --add northnet-eastnets
 ipsec auto --status | grep northnet-eastnets
-ipsec whack --impair suppress-retransmits
+ipsec whack --impair suppress_retransmits
 echo "initdone"

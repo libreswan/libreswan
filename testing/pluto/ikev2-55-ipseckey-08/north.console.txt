@@ -8,7 +8,7 @@ north #
  ipsec auto --add north-east
 "north-east": added IKEv2 connection
 north #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 north #
  # road should have only one public key of its own
 north #

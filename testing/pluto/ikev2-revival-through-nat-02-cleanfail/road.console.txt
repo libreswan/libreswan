@@ -9,7 +9,7 @@ road #
 "road-eastnet-ikev2": adding UDP interface eth0 192.1.3.209:6666
 "road-eastnet-ikev2": added IKEv2 connection
 road #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 road #
  echo "initdone"
 initdone

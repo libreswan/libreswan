@@ -16,14 +16,14 @@ west #
  ipsec auto --add nss-cert-correct
 "nss-cert-correct": added IKEv2 connection
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
  echo "initdone"
 initdone
 west #
  # the impair causes memory corruption and a crash ?
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
  # should succeed
 west #

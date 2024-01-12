@@ -1,4 +1,4 @@
-ipsec whack --impair suppress-retransmits
+ipsec whack --impair suppress_retransmits
 ipsec auto --up westnet-eastnet-subnets
 ipsec whack --trafficstatus
 # test return code for --down when using aliases

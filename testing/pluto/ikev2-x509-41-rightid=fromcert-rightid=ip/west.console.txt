@@ -12,7 +12,7 @@ west #
  ipsec status | grep idtype
 "ikev2-westnet-eastnet-x509-cr":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west-nosan.testing.libreswan.org, E=user-west-nosan@testing.libreswan.org; their idtype: %fromcert; their id=%fromcert
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
  echo "initdone"
 initdone

@@ -8,7 +8,7 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec whack --impair ke-payload:omit
+ ipsec whack --impair ke_payload:omit
 west #
  ipsec whack --impair revival  # give up after N retry attempts
 west #

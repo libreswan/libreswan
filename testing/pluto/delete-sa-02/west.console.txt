@@ -25,7 +25,7 @@ west #
 west #
  # enable sending a bogus Notify with the Delete
 west #
- ipsec whack --debug-all --impair ikev1-del-with-notify
+ ipsec whack --debug-all --impair ikev1_del_with_notify
 west #
  ipsec auto --down west-east
 "west-east": terminating SAs using this connection

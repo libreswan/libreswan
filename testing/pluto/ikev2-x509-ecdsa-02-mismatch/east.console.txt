@@ -9,7 +9,7 @@ east #
  ipsec auto --add westnet-eastnet-ikev2
 "westnet-eastnet-ikev2": added IKEv2 connection
 east #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 east #
  echo "initdone"
 initdone

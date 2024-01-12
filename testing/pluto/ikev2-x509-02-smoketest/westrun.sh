@@ -1,5 +1,5 @@
 # fail quick for -bad certs that are supposed to fail
-ipsec whack --impair suppress-retransmits
+ipsec whack --impair suppress_retransmits
 # stock certificate test
 ipsec auto --up west
 ipsec auto --delete west

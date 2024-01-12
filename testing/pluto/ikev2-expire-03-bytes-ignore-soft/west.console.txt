@@ -16,7 +16,7 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec whack --impair ignore-soft-expire
+ ipsec whack --impair ignore_soft_expire
 west #
  ipsec auto --up west
 "west" #1: initiating IKEv2 connection to 192.1.2.23 using UDP

@@ -14,7 +14,7 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec whack --impair timeout-on-retransmit
+ ipsec whack --impair timeout_on_retransmit
 west #
  ipsec whack --impair revival
 west #

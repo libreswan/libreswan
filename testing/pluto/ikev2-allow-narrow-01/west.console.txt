@@ -48,7 +48,7 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
  # expected to fail
 west #

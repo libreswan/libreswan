@@ -4,7 +4,7 @@ ipsec start
 ../../guestbin/wait-for.sh --match 'loaded 2,' -- ipsec auto --status
 
 # fail to send send IKE_SA_INIT
-ipsec whack --impair suppress-retransmits
+ipsec whack --impair suppress_retransmits
 ../../guestbin/ping-once.sh --down -I 192.1.3.209 192.1.2.23
 
 # OE send message is suppressed; this is next best

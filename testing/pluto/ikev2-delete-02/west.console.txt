@@ -24,7 +24,7 @@ west #
  ipsec auto --add west-east-delete1
 "west-east-delete1": added IKEv2 connection
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
  ipsec whack --impair revival
 west #

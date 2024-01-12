@@ -4,7 +4,7 @@ cp ikev2-oe.conf /etc/ipsec.d/ikev2-oe.conf
 echo "192.1.2.0/24"  >> /etc/ipsec.d/policies/private-or-clear
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec whack --impair suppress-retransmits
+ipsec whack --impair suppress_retransmits
 ipsec auto --add road-east
 ipsec auto --add road-west
 # give OE a chance to load conns

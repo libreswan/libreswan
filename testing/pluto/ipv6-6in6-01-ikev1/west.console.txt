@@ -24,7 +24,7 @@ west #
  ipsec auto --add westnet-eastnet-6in6
 "westnet-eastnet-6in6": added IKEv1 connection
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
  echo "initdone"
 initdone

@@ -11,7 +11,7 @@ west #
  ipsec auto --add westnet-eastnet-port667
 "westnet-eastnet-port667": added IKEv1 connection
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
  echo "initdone"
 initdone

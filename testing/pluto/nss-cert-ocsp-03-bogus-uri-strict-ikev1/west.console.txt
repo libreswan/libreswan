@@ -37,7 +37,7 @@ initdone
 west #
  # hang-around
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
  ipsec auto --up nss-cert-ocsp
 "nss-cert-ocsp" #1: initiating IKEv1 Main Mode connection

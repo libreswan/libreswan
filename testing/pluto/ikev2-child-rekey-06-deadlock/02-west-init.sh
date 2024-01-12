@@ -2,7 +2,7 @@
 ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec whack --impair revival
-ipsec whack --impair suppress-retransmits
+ipsec whack --impair suppress_retransmits
 ipsec auto --add west
 # iptables -A INPUT -s 192.1.2.23 -j LOG --log-prefix "east all"
 # iptables -A INPUT -m u32 --u32 '0x6&0xFF=0x11' -j LOG --log-prefix  "udp log"

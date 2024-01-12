@@ -5,7 +5,7 @@ Redirecting to: [initsystem]
 road #
  ../../guestbin/wait-until-pluto-started
 road #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 road #
  ipsec auto --add road-east-psk
 "road-east-psk": added IKEv1 connection
@@ -13,7 +13,7 @@ road #
  echo "initdone"
 initdone
 road #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 road #
  ipsec auto --up road-east-psk
 "road-east-psk" #1: initiating IKEv1 Main Mode connection

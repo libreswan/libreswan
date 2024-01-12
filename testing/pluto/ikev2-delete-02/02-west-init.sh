@@ -9,6 +9,6 @@ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec auto --add west-east-delete1
-ipsec whack --impair suppress-retransmits
+ipsec whack --impair suppress_retransmits
 ipsec whack --impair revival
 echo "initdone"

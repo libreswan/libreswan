@@ -4,5 +4,5 @@ iptables -A INPUT -i eth1 -s 192.0.2.254/32 -j DROP
 ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec auto --add northnet-eastnet-nat
-ipsec whack --impair suppress-retransmits
+ipsec whack --impair suppress_retransmits
 echo "initdone"

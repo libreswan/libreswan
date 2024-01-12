@@ -2,7 +2,7 @@ ipsec whack --xauthname 'use3' --xauthpass 'use1pass' --name westnet-eastnet-ipv
 ../../guestbin/ping-once.sh --up -I 192.0.2.1 192.1.2.23
 ipsec whack --trafficstatus
 # change ip, emulating sudden switching network
-ipsec whack --impair send-no-delete
+ipsec whack --impair send_no_delete
 ipsec stop
 ifconfig eth0 192.1.3.210 netmask 255.255.255.0
 route add default gw 192.1.3.254

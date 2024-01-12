@@ -7,7 +7,7 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec whack --impair v2-proposal-dh:drop-none
+ ipsec whack --impair v2_proposal_dh:drop-none
 west #
  ipsec up dh
 "dh" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -26,7 +26,7 @@ west #
 west #
  # ALLOW
 west #
- ipsec whack --impair v2-proposal-dh:allow-none
+ ipsec whack --impair v2_proposal_dh:allow-none
 west #
  ipsec whack --rekey-ike   --name dh
 "dh" #3: initiating rekey to replace IKE SA #1
@@ -51,7 +51,7 @@ west #
 west #
  # DROP
 west #
- ipsec whack --impair v2-proposal-dh:drop-none
+ ipsec whack --impair v2_proposal_dh:drop-none
 west #
  ipsec whack --rekey-ike   --name dh
 "dh" #5: initiating rekey to replace IKE SA #3
@@ -84,7 +84,7 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec whack --impair v2-proposal-dh:allow-none
+ ipsec whack --impair v2_proposal_dh:allow-none
 west #
  ipsec up dh
 "dh" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -103,7 +103,7 @@ west #
 west #
  # DROP
 west #
- ipsec whack --impair v2-proposal-dh:drop-none
+ ipsec whack --impair v2_proposal_dh:drop-none
 west #
  ipsec whack --rekey-ike   --name dh
 "dh" #3: initiating rekey to replace IKE SA #1
@@ -128,7 +128,7 @@ west #
 west #
  # ALLOW
 west #
- ipsec whack --impair v2-proposal-dh:allow-none
+ ipsec whack --impair v2_proposal_dh:allow-none
 west #
  ipsec whack --rekey-ike   --name dh
 "dh" #5: initiating rekey to replace IKE SA #3

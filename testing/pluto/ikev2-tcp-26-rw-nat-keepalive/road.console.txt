@@ -8,7 +8,7 @@ road #
  ipsec add road
 "road": added IKEv2 connection
 road #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 road #
  echo "initdone"
 initdone
@@ -23,7 +23,7 @@ road #
  ../../guestbin/ping-once.sh --up 192.0.2.254
 up
 road #
- ipsec whack --impair send-keepalive:1
+ ipsec whack --impair send_keepalive:1
 "road" #1: sending keepalive
 road #
  ../../guestbin/ping-once.sh --up 192.0.2.254

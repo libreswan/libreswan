@@ -13,7 +13,7 @@ west #
  ipsec auto --add ikev1-aggr-ipsec-fail
 "ikev1-aggr-ipsec-fail": added IKEv1 connection
 west #
- #ipsec whack --impair timeout-on-retransmit
+ #ipsec whack --impair timeout_on_retransmit
 west #
  echo "initdone"
 initdone

@@ -2,6 +2,6 @@
 ipsec certutil -D -n east
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec whack --impair suppress-retransmits
+ipsec whack --impair suppress_retransmits
 ipsec auto --add main
 echo "initdone"

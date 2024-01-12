@@ -24,7 +24,7 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
  ipsec whack --impair revival
 west #
@@ -34,7 +34,7 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
  # this should fail
 west #

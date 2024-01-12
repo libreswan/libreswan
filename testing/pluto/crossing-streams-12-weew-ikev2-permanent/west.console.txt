@@ -7,9 +7,9 @@ west #
 west #
  ipsec whack --impair revival
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
- ipsec whack --impair block-inbound:yes
+ ipsec whack --impair block_inbound:yes
 IMPAIR: block all inbound messages: yes
 west #
  ipsec auto --add east-west
@@ -41,7 +41,7 @@ west #
 west #
  # hold east's IKE_AUTH request as inbound message 3
 west #
- ipsec whack --impair drip-inbound:1
+ ipsec whack --impair drip_inbound:1
 IMPAIR: start processing inbound drip packet 1
 IMPAIR: stop processing inbound drip packet 1
 west #
@@ -55,7 +55,7 @@ west #
 west #
  # establish east's IKE SA #2 and Child SA #4
 west #
- ipsec whack --impair drip-inbound:3
+ ipsec whack --impair drip_inbound:3
 IMPAIR: start processing inbound drip packet 3
 IMPAIR: stop processing inbound drip packet 3
 west #
@@ -68,7 +68,7 @@ west #
 west #
  # hold east's IKE_AUTH response as inbound message 4
 west #
- ipsec whack --impair drip-inbound:2
+ ipsec whack --impair drip_inbound:2
 IMPAIR: start processing inbound drip packet 2
 IMPAIR: stop processing inbound drip packet 2
 west #
@@ -82,7 +82,7 @@ west #
 west #
  # establish west's Child SA #3
 west #
- ipsec whack --impair drip-inbound:4
+ ipsec whack --impair drip_inbound:4
 IMPAIR: inbound message 4 not found
 west #
  ../../guestbin/wait-for.sh --match 'established Child SA using #1' -- cat /tmp/pluto.log

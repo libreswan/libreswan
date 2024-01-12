@@ -11,5 +11,5 @@ ipsec start
 ipsec auto --add westnet-eastnet-vti
 # remove the regular route for 192.0.2.0/24
 #ip route del 192.0.2.0/24
-ipsec whack --impair suppress-retransmits
+ipsec whack --impair suppress_retransmits
 echo "initdone"

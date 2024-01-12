@@ -9,7 +9,7 @@ north #
  ipsec auto --add north-east
 "north-east": added IKEv1 connection
 north #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 north #
  echo "initdone"
 initdone
@@ -36,7 +36,7 @@ north #
 north #
  ip route add 0.0.0.0/0 via 192.1.3.254 dev eth1
 north #
- ipsec whack --impair send-no-delete
+ ipsec whack --impair send_no_delete
 north #
  ipsec restart
 Redirecting to: [initsystem]
@@ -45,7 +45,7 @@ north #
 north #
  # temp while the test still fails
 north #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 north #
  ipsec auto --add north-east
 "north-east": added IKEv1 connection

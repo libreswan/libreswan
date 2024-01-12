@@ -36,7 +36,7 @@ initdone
 west #
  # fail quick for -bad certs that are supposed to fail
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
  # stock certificate test
 west #

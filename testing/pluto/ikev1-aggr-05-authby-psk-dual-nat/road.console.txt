@@ -32,7 +32,7 @@ road #
 road #
  # emulate bringing up second server behind same NAT "runner"
 road #
- ipsec whack --impair send-no-delete
+ ipsec whack --impair send_no_delete
 road #
  ipsec auto --delete road-east
 "road-east": terminating SAs using this connection

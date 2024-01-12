@@ -5,7 +5,7 @@ ipsec whack --shuntstatus
 ../../guestbin/ipsec-kernel-state.sh
 ../../guestbin/ipsec-kernel-policy.sh
 # kill pluto without sending ike delete
-ipsec whack --impair send-no-delete
+ipsec whack --impair send_no_delete
 ipsec stop
 sleep 40 # waiting for what?
 ipsec start

@@ -13,7 +13,7 @@ north #
 north #
  ipsec whack --impair none
 north #
- ipsec whack --impair revival --impair timeout-on-retransmit
+ ipsec whack --impair revival --impair timeout_on_retransmit
 north #
  ipsec auto --add north-east
 "north-east": added IKEv2 connection
@@ -26,7 +26,7 @@ north #
 "north-east" #1: IMPAIR: redirect: skip scheduling redirect event
 "north-east" #1: deleting IKE SA (PARENT_I1) and NOT sending notification
 north #
- ipsec whack --impair trigger-revival:1
+ ipsec whack --impair trigger_revival:1
 "north-east": dispatch REVIVAL event
 "north-east" #2: initiating IKEv2 connection to 192.1.2.44 using UDP
 "north-east" #2: sent IKE_SA_INIT request to 192.1.2.44:500
@@ -42,7 +42,7 @@ north #
 north #
  ipsec whack --impair none
 north #
- ipsec whack --impair revival --impair timeout-on-retransmit
+ ipsec whack --impair revival --impair timeout_on_retransmit
 north #
  ipsec auto --add north-east
 "north-east": added IKEv2 connection
@@ -55,7 +55,7 @@ north #
 "north-east" #3: IMPAIR: redirect: skip scheduling redirect event
 "north-east" #3: deleting IKE SA (PARENT_I1) and NOT sending notification
 north #
- ipsec whack --impair trigger-revival:2
+ ipsec whack --impair trigger_revival:2
 "north-east": dispatch REVIVAL event
 "north-east" #4: initiating IKEv2 connection to 192.1.2.46 using UDP
 "north-east" #4: sent IKE_SA_INIT request to 192.1.2.46:500
@@ -71,7 +71,7 @@ north #
 north #
  ipsec whack --impair none
 north #
- ipsec whack --impair revival --impair suppress-retransmits
+ ipsec whack --impair revival --impair suppress_retransmits
 north #
  ipsec auto --add north-east
 "north-east": added IKEv2 connection
@@ -84,7 +84,7 @@ north #
 "north-east" #5: IMPAIR: redirect: skip scheduling redirect event
 "north-east" #5: deleting IKE SA (PARENT_I1) and NOT sending notification
 north #
- ipsec whack --impair trigger-revival:3
+ ipsec whack --impair trigger_revival:3
 "north-east": dispatch REVIVAL event
 "north-east" #6: initiating IKEv2 connection to 192.1.2.45 using UDP
 "north-east" #6: sent IKE_SA_INIT request to 192.1.2.45:500

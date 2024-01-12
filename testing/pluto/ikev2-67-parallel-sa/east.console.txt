@@ -51,7 +51,7 @@ east #
 "northnet-eastnet/0x2":   conn serial: $2;
 "northnet-eastnet/0x2":   aliases: northnet-eastnet
 east #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 east #
  echo "initdone"
 initdone

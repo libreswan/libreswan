@@ -5,7 +5,7 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec whack --impair send-bogus-isakmp-flag
+ ipsec whack --impair send_bogus_isakmp_flag
 east #
  ipsec auto --add westnet-eastnet-ikev2
 "westnet-eastnet-ikev2": added IKEv2 connection

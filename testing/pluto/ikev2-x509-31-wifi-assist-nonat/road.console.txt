@@ -8,7 +8,7 @@ Redirecting to: [initsystem]
 road #
  ../../guestbin/wait-until-pluto-started
 road #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 road #
  ipsec auto --add rw-lte
 "rw-lte": added IKEv2 connection

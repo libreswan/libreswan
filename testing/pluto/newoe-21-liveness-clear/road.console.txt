@@ -120,7 +120,7 @@ Certificate Nickname                                         Trust Attributes
 road #
  # kill pluto without sending ike delete
 road #
- ipsec whack --impair send-no-delete
+ ipsec whack --impair send_no_delete
 road #
  ipsec stop
 Redirecting to: [initsystem]

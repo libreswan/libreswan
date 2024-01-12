@@ -33,14 +33,14 @@ west #
 "westnet-eastnet-ipv4-psk-ppk":   routing: unrouted;
 "westnet-eastnet-ipv4-psk-ppk":   conn serial: $1;
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
  echo "initdone"
 initdone
 west #
  ipsec whack --impair revival
 west #
- ipsec whack --impair timeout-on-retransmit
+ ipsec whack --impair timeout_on_retransmit
 west #
  # expected to fail
 west #

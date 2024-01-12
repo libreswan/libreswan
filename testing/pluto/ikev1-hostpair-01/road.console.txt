@@ -6,7 +6,7 @@ Redirecting to: [initsystem]
 road #
  ../../guestbin/wait-until-pluto-started
 road #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 road #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev1
 "westnet-eastnet-ipv4-psk-ikev1": added IKEv1 connection
@@ -45,7 +45,7 @@ road #
 road #
  # change ip, emulating sudden switching network
 road #
- ipsec whack --impair send-no-delete
+ ipsec whack --impair send_no_delete
 road #
  ipsec stop
 Redirecting to: [initsystem]

@@ -2,7 +2,7 @@ east# /testing/guestbin/swan-prep --46
 east# ipsec start
 Redirecting to: [initsystem]
 east# ../../guestbin/wait-until-pluto-started
-east# ipsec whack --impair suppress-retransmits
+east# ipsec whack --impair suppress_retransmits
 east# echo "initdone"
 initdone
 netbsdw# ../../guestbin/netbsd-prep.sh # note: swan-prep does not yet support BSD

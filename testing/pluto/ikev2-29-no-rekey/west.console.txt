@@ -45,7 +45,7 @@ west #
 "westnet-eastnet-ikev2":   routing: unrouted;
 "westnet-eastnet-ikev2":   conn serial: $1;
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
  ipsec whack --impair revival
 west #

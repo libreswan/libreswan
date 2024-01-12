@@ -45,7 +45,7 @@ west #
 "westnet-eastnet-aes256":   conn serial: $1;
 "westnet-eastnet-aes256":   IKE algorithms: AES_CBC_256-HMAC_SHA2_256-MODP2048
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
  echo "initdone"
 initdone

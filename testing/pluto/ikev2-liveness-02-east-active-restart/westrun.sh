@@ -3,7 +3,7 @@ ipsec auto --up westnet-eastnet-ipv4-psk-ikev2
 # sleep run a few liveness cycles (they are every 5 seconds)
 sleep 20
 # kill initiator
-ipsec whack --impair send-no-delete
+ipsec whack --impair send_no_delete
 ipsec auto --delete westnet-eastnet-ipv4-psk-ikev2
 ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
 ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254

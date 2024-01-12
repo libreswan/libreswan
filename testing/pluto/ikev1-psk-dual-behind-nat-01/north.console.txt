@@ -10,7 +10,7 @@ north #
  ipsec auto --add north-east
 "north-east": added IKEv1 connection
 north #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 north #
  ipsec whack --xauthname 'use1' --xauthpass 'use1pass' --name north-east --initiate
 "north-east" #1: initiating IKEv1 Main Mode connection

@@ -10,9 +10,9 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec whack --impair send-key-size-check
+ ipsec whack --impair send_key_size_check
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
  ipsec auto --add westnet-eastnet-aes256
 "westnet-eastnet-aes256": added IKEv1 connection

@@ -11,7 +11,7 @@ road #
  echo done
 done
 road #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 road #
  ipsec whack --xauthname 'baduser' --xauthpass 'use1pass' --name xauth-road-eastnet --initiate
 "xauth-road-eastnet" #1: initiating IKEv1 Main Mode connection

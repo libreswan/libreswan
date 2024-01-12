@@ -9,7 +9,7 @@ west #
  ipsec auto --add v6-tunnel
 "v6-tunnel": added IKEv2 connection
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
  echo "initdone"
 initdone

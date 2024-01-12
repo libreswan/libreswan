@@ -24,7 +24,7 @@ ipsec connectionstatus westnet-eastnet-ikev2
 ../../guestbin/ipsec-kernel-policy.sh
 
 # now let the revival kick in; the trap should be replaced by a %hold(block)
-ipsec whack --async --impair trigger-revival:1
+ipsec whack --async --impair trigger_revival:1
 ipsec connectionstatus westnet-eastnet-ikev2
 ../../guestbin/ipsec-kernel-policy.sh
 

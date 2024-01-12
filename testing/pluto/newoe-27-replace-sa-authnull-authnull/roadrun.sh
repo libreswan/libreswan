@@ -6,7 +6,7 @@ ipsec whack --shuntstatus
 ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
 ipsec whack --trafficstatus
 # prevent delete notify
-ipsec whack --impair send-no-delete
+ipsec whack --impair send_no_delete
 ipsec restart
 ../../guestbin/wait-until-pluto-started
 # give OE policies time to load

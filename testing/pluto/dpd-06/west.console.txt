@@ -8,7 +8,7 @@ west #
  ipsec auto --add west-east
 "west-east": added IKEv1 connection
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
  echo "initdone"
 initdone

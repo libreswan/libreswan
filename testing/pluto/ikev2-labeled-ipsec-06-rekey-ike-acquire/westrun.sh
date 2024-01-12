@@ -7,8 +7,8 @@ ipsec auto --up labeled
 # Initiate a rekey of the IKE SA but drop the initial CREATE_CHILD_SA
 # request.  This will cause the exchange to become stuck; the
 # retransmit, scheduled for 10s, will unstick it.
-ipsec whack --impair drop-outbound:1
-ipsec whack --asynchronous --impair trigger-v2-rekey:1
+ipsec whack --impair drop_outbound:1
+ipsec whack --asynchronous --impair trigger_v2_rekey:1
 ../../guestbin/wait-for.sh --match REKEY_IKE_I1 -- ipsec whack --showstates
 
 # Trigger traffic using the predefined ping_t context.  Because the

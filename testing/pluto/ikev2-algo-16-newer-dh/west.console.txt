@@ -10,7 +10,7 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
  echo "initdone"
 initdone
@@ -155,7 +155,7 @@ west #
 west #
  # MODP1536 is no longer in the default list and should fail
 west #
- ipsec whack --impair timeout-on-retransmit
+ ipsec whack --impair timeout_on_retransmit
 west #
  ipsec auto --up westnet-eastnet-ikev2-modp1536
 "westnet-eastnet-ikev2-modp1536" #17: initiating IKEv2 connection to 192.1.2.23 using UDP

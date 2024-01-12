@@ -17,7 +17,7 @@ east #
  ipsec auto --add nss-cert-ocsp
 "nss-cert-ocsp": added IKEv1 connection
 east #
- ipsec whack --impair timeout-on-retransmit
+ ipsec whack --impair timeout_on_retransmit
 east #
  echo "initdone"
 initdone

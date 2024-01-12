@@ -17,7 +17,7 @@ ip6tables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 ../../guestbin/ping-once.sh --down 2001:db8:0:2::254
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec whack --impair suppress-retransmits
+ipsec whack --impair suppress_retransmits
 # this test need --verbose to see source address selection
 ipsec auto --add --verbose road
 echo "initdone"

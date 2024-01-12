@@ -16,11 +16,11 @@ east #
  ipsec auto --add westnet-eastnet-ikev2
 "westnet-eastnet-ikev2": added IKEv2 connection
 east #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 east #
- ipsec whack --impair force-v2-auth-method:ecdsa_sha2_384_p384
+ ipsec whack --impair force_v2_auth_method:ecdsa_sha2_384_p384
 east #
- ipsec whack --impair omit-v2n-signature-hash-algorithms
+ ipsec whack --impair omit_v2n_signature_hash_algorithms
 east #
  echo "initdone"
 initdone

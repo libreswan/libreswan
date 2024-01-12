@@ -5,5 +5,5 @@ ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec auto --add nss-cert-incorrect
 ipsec auto --add nss-cert-correct
-ipsec whack --impair suppress-retransmits
+ipsec whack --impair suppress_retransmits
 echo "initdone"

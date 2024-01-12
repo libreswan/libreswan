@@ -27,7 +27,7 @@ west #
  ipsec auto --status | grep DECAP_DSCP
 "netkey":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+DECAP_DSCP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
  echo "initdone"
 initdone

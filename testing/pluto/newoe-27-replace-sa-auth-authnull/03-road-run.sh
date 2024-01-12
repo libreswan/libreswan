@@ -9,7 +9,7 @@ ipsec whack --shuntstatus
 ../../guestbin/ipsec-kernel-policy.sh
 
 # now delete the authenticated sa
-ipsec whack --impair send-no-delete
+ipsec whack --impair send_no_delete
 ipsec auto --delete authenticated
 
 # the ping triggers an OE authnull attempt. It should fail because

@@ -10,7 +10,7 @@ initdone
 west #
  # send AES_128; should work
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
  ../../guestbin/libreswan-up-down.sh conf --up -I 192.0.1.254 192.0.2.254
 "conf": added IKEv2 connection
@@ -30,9 +30,9 @@ west #
 west #
  # add IKE transform type 6 id 0 unknown
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
- ipsec whack --impair ikev2-add-ike-transform:0x60000
+ ipsec whack --impair ikev2_add_ike_transform:0x60000
 west #
  ../../guestbin/libreswan-up-down.sh conf --up -I 192.0.1.254 192.0.2.254
 "conf": added IKEv2 connection
@@ -53,9 +53,9 @@ west #
 west #
  # add IKE transform type 3 (PRF) id 0xff unknown
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
- ipsec whack --impair ikev2-add-ike-transform:0x3ffff
+ ipsec whack --impair ikev2_add_ike_transform:0x3ffff
 west #
  ../../guestbin/libreswan-up-down.sh conf --up -I 192.0.1.254 192.0.2.254
 "conf": added IKEv2 connection
@@ -76,9 +76,9 @@ west #
 west #
  # add CHILD transform type 6 id 0 unknown
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
- ipsec whack --impair ikev2-add-child-transform:0x60000
+ ipsec whack --impair ikev2_add_child_transform:0x60000
 west #
  ../../guestbin/libreswan-up-down.sh conf --up -I 192.0.1.254 192.0.2.254
 "conf": added IKEv2 connection
@@ -99,9 +99,9 @@ west #
 west #
  # add CHILD transform type 3 (PRF) id 0xffff unknown
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
- ipsec whack --impair ikev2-add-child-transform:0x3ffff
+ ipsec whack --impair ikev2_add_child_transform:0x3ffff
 west #
  ../../guestbin/libreswan-up-down.sh conf --up -I 192.0.1.254 192.0.2.254
 "conf": added IKEv2 connection

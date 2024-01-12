@@ -32,7 +32,7 @@ east #
 "nss-cert-chain":   routing: unrouted;
 "nss-cert-chain":   conn serial: $1;
 east #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 east #
  echo "initdone"
 initdone

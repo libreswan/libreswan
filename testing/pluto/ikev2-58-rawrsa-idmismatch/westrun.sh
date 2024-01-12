@@ -1,4 +1,4 @@
-ipsec whack --impair suppress-retransmits
+ipsec whack --impair suppress_retransmits
 # this connection will fail
 ipsec auto --up west-westnet-eastnet
 ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254

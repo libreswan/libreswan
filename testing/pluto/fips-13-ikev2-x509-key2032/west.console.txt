@@ -14,7 +14,7 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
  # should fail - our FIPS code requires 3072 minimum key
 west #

@@ -46,7 +46,7 @@ west_chain_endcert                                           u,u,u
 west_chain_int_2                                             CT,, 
 west_chain_int_1                                             CT,, 
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
  echo "initdone"
 initdone

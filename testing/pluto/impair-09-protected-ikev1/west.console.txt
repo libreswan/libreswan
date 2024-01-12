@@ -31,7 +31,7 @@ west #
 west #
  ipsec whack --impair none
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
  ../../guestbin/libreswan-up-down.sh westnet-eastnet --alive -I 192.0.1.254 192.0.2.254
 "westnet-eastnet": terminating SAs using this connection
@@ -59,13 +59,13 @@ west #
 west #
  ipsec whack --impair revival
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
- ipsec whack --impair v1-hash-exchange:quick
+ ipsec whack --impair v1_hash_exchange:quick
 west #
  # HASH payload omitted - should fail
 west #
- ipsec whack --impair v1-hash-payload:omit
+ ipsec whack --impair v1_hash_payload:omit
 west #
  ../../guestbin/libreswan-up-down.sh westnet-eastnet --down -I 192.0.1.254 192.0.2.254
 "westnet-eastnet": added IKEv1 connection
@@ -84,7 +84,7 @@ west #
 west #
  # HASH payload empty - should fail
 west #
- ipsec whack --impair v1-hash-payload:empty
+ ipsec whack --impair v1_hash_payload:empty
 west #
  ../../guestbin/libreswan-up-down.sh westnet-eastnet --down -I 192.0.1.254 192.0.2.254
 "westnet-eastnet": added IKEv1 connection
@@ -103,7 +103,7 @@ west #
 west #
  # HASH payload badly calculated - should fail
 west #
- ipsec whack --impair v1-hash-payload:0
+ ipsec whack --impair v1_hash_payload:0
 west #
  ../../guestbin/libreswan-up-down.sh westnet-eastnet --down -I 192.0.1.254 192.0.2.254
 "westnet-eastnet": added IKEv1 connection
@@ -129,13 +129,13 @@ west #
 west #
  ipsec whack --impair revival
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
- ipsec whack --impair v1-hash-exchange:delete
+ ipsec whack --impair v1_hash_exchange:delete
 west #
  # HASH payload omitted - delete should fail
 west #
- ipsec whack --impair v1-hash-payload:omit
+ ipsec whack --impair v1_hash_payload:omit
 west #
  ../../guestbin/libreswan-up-down.sh westnet-eastnet --alive -I 192.0.1.254 192.0.2.254
 "westnet-eastnet": added IKEv1 connection
@@ -160,7 +160,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  # HASH payload empty - delete should fail
 west #
- ipsec whack --impair v1-hash-payload:empty
+ ipsec whack --impair v1_hash_payload:empty
 west #
  ../../guestbin/libreswan-up-down.sh westnet-eastnet --alive -I 192.0.1.254 192.0.2.254
 "westnet-eastnet": added IKEv1 connection
@@ -185,7 +185,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  # HASH payload badly calculated - delete should fail
 west #
- ipsec whack --impair v1-hash-payload:0
+ ipsec whack --impair v1_hash_payload:0
 west #
  ../../guestbin/libreswan-up-down.sh westnet-eastnet --alive -I 192.0.1.254 192.0.2.254
 "westnet-eastnet": added IKEv1 connection
@@ -217,13 +217,13 @@ west #
 west #
  ipsec whack --impair revival
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
- ipsec whack --impair v1-hash-exchange:xauth
+ ipsec whack --impair v1_hash_exchange:xauth
 west #
  # HASH payload omitted - XAUTH should fail
 west #
- ipsec whack --impair v1-hash-payload:omit
+ ipsec whack --impair v1_hash_payload:omit
 west #
  ../../guestbin/libreswan-up-down.sh westnet-eastnet --alive -I 192.0.1.254 192.0.2.254
 "westnet-eastnet": added IKEv1 connection
@@ -246,7 +246,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  # HASH payload empty - XAUTH should fail
 west #
- ipsec whack --impair v1-hash-payload:empty
+ ipsec whack --impair v1_hash_payload:empty
 west #
  ../../guestbin/libreswan-up-down.sh westnet-eastnet --alive -I 192.0.1.254 192.0.2.254
 "westnet-eastnet": added IKEv1 connection
@@ -269,7 +269,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  # HASH payload badly calculated - XAUTH should fail
 west #
- ipsec whack --impair v1-hash-payload:0
+ ipsec whack --impair v1_hash_payload:0
 west #
  ../../guestbin/libreswan-up-down.sh westnet-eastnet --alive -I 192.0.1.254 192.0.2.254
 "westnet-eastnet": added IKEv1 connection
@@ -299,13 +299,13 @@ west #
 west #
  ipsec whack --impair revival
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
- ipsec whack --impair v1-hash-exchange:notification
+ ipsec whack --impair v1_hash_exchange:notification
 west #
  # HASH payload omitted - INFO should fail
 west #
- ipsec whack --impair v1-hash-payload:omit
+ ipsec whack --impair v1_hash_payload:omit
 west #
  ../../guestbin/libreswan-up-down.sh westnet-eastnet --alive -I 192.0.1.254 192.0.2.254
 "westnet-eastnet": added IKEv1 connection
@@ -328,7 +328,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  # HASH payload empty - INFO should fail
 west #
- ipsec whack --impair v1-hash-payload:empty
+ ipsec whack --impair v1_hash_payload:empty
 west #
  ../../guestbin/libreswan-up-down.sh westnet-eastnet --alive -I 192.0.1.254 192.0.2.254
 "westnet-eastnet": added IKEv1 connection
@@ -351,7 +351,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  # HASH payload badly calculated - INFO should fail
 west #
- ipsec whack --impair v1-hash-payload:0
+ ipsec whack --impair v1_hash_payload:0
 west #
  ../../guestbin/libreswan-up-down.sh westnet-eastnet --alive -I 192.0.1.254 192.0.2.254
 "westnet-eastnet": added IKEv1 connection

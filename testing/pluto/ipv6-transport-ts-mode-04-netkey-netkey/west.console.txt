@@ -16,7 +16,7 @@ west #
  ipsec auto --add v6-transport
 "v6-transport": added IKEv1 connection
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
  echo "initdone"
 initdone

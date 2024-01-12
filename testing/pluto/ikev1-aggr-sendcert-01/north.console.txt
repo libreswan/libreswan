@@ -14,7 +14,7 @@ initdone
 north #
  # temp while the test still fails
 north #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 north #
  ipsec auto --up north-east
 "north-east" #1: initiating IKEv1 Aggressive Mode connection

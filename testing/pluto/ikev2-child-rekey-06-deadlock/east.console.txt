@@ -31,7 +31,7 @@ east #
 east #
  ipsec whack --impair revival
 east #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 east #
  echo "initdone"
 initdone

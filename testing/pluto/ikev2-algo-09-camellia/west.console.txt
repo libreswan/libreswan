@@ -24,7 +24,7 @@ west #
  ipsec auto --add westnet-eastnet-camellia
 "westnet-eastnet-camellia": added IKEv2 connection
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
  echo "initdone"
 initdone

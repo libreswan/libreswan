@@ -12,7 +12,7 @@ road #
  ipsec auto --add road-east-ikev2
 "road-east-ikev2": added IKEv2 connection
 road #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 road #
  # road should have only one public key of its own
 road #

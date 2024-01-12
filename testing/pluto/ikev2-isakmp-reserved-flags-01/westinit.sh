@@ -8,7 +8,7 @@ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec whack --impair send-bogus-isakmp-flag
+ipsec whack --impair send_bogus_isakmp_flag
 ipsec auto --add westnet-eastnet-ikev2
-ipsec whack --impair suppress-retransmits
+ipsec whack --impair suppress_retransmits
 echo "initdone"

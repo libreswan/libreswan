@@ -14,7 +14,7 @@ west #
  ipsec status | grep idtype
 "ikev2-westnet-eastnet-x509-cr":   our idtype: ID_IPV4_ADDR; our id=192.1.2.45; their idtype: ID_IPV4_ADDR; their id=192.1.2.23
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
  echo "initdone"
 initdone

@@ -5,5 +5,5 @@ ipsec start
 ../../guestbin/wait-until-pluto-started
 # give OE policies time to load
 ../../guestbin/wait-for.sh --match 'loaded 10,' -- ipsec auto --status
-ipsec whack --impair send-no-ikev2-auth
+ipsec whack --impair send_no_ikev2_auth
 echo "initdone"

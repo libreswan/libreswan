@@ -11,5 +11,5 @@ ipsec start
 ipsec auto --add west-east
 ipsec auto --add west-east-passthrough
 ipsec auto --route west-east-passthrough
-ipsec whack --impair suppress-retransmits
+ipsec whack --impair suppress_retransmits
 echo "initdone"

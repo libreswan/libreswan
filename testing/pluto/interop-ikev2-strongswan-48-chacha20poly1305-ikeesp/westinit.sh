@@ -9,5 +9,5 @@ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec auto --add chacha
-ipsec whack --impair timeout-on-retransmit
+ipsec whack --impair timeout_on_retransmit
 echo "initdone"

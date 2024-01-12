@@ -24,7 +24,7 @@ Total IPsec connections: loaded 2, active 0
 road #
  # fail to send send IKE_SA_INIT
 road #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 road #
  ../../guestbin/ping-once.sh --down -I 192.1.3.209 192.1.2.23
 down

@@ -11,7 +11,7 @@ road #
 road #
  ipsec whack --impair revival
 road #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 road #
  echo "initdone"
 initdone
@@ -33,7 +33,7 @@ road #
  ipsec whack --trafficstatus
 #2: "road-east-x509-ipv4"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=192.0.2.100/32
 road #
- ipsec whack --impair rekey-initiate-supernet
+ ipsec whack --impair rekey_initiate_supernet
 road #
  ipsec whack --rekey-ipsec --name road-east-x509-ipv4 --async
 road #

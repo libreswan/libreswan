@@ -12,7 +12,7 @@ echo "192.1.3.209/32"  >> /etc/ipsec.d/policies/private
 restorecon -R /etc/ipsec.d
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec whack --impair suppress-retransmits
+ipsec whack --impair suppress_retransmits
 # give OE policies time to load
 ../../guestbin/wait-for.sh --match 'loaded 11,' -- ipsec auto --status
 echo "initdone"

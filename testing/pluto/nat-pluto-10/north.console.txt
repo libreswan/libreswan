@@ -13,7 +13,7 @@ north #
  ipsec auto --add northnet-eastnet-nat
 "northnet-eastnet-nat": added IKEv1 connection
 north #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 north #
  echo "initdone"
 initdone

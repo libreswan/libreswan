@@ -49,7 +49,7 @@ road #
 "v6-tunnel-east-road":   routing: unrouted;
 "v6-tunnel-east-road":   conn serial: $1;
 road #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 road #
  echo "initdone"
 initdone

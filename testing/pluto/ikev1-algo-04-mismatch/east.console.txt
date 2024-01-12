@@ -5,7 +5,7 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec whack --impair timeout-on-retransmit
+ ipsec whack --impair timeout_on_retransmit
 east #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev1
 "westnet-eastnet-ipv4-psk-ikev1": added IKEv1 connection

@@ -21,12 +21,12 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
  echo "initdone"
 initdone
 west #
- ipsec whack --impair suppress-retransmits --debug crypt
+ ipsec whack --impair suppress_retransmits --debug crypt
 west #
  ../../guestbin/libreswan-up-down.sh ike=chacha20poly1305-sha2-dh19 -I 192.0.1.254 192.0.2.254
 "ike=chacha20poly1305-sha2-dh19": added IKEv2 connection

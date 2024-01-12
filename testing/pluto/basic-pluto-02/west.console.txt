@@ -65,7 +65,7 @@ west #
 "orient9": 192.1.2.45---192.1.2.254...8.8.8.8; unrouted; my_ip=unset; their_ip=unset;
 "westnet-all": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===0.0.0.0/0; unrouted; my_ip=unset; their_ip=unset;
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
  echo "initdone"
 initdone

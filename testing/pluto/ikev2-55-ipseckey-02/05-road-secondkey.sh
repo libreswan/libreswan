@@ -1,4 +1,4 @@
-ipsec whack --impair suppress-retransmits
+ipsec whack --impair suppress_retransmits
 ipsec whack --impair revival
 ipsec auto --add road-east-2
 ipsec auto --up road-east-2

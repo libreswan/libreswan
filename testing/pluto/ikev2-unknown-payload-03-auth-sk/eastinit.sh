@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec whack --impair add-unknown-v2-payload-to-sk:IKE_AUTH
+ipsec whack --impair add_unknown_v2_payload_to_sk:IKE_AUTH
 ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
 echo "initdone"

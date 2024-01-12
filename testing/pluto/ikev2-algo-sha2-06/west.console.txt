@@ -141,7 +141,7 @@ IPsec SAs: total(0), authenticated(0), anonymous(0)
 Bare Shunt list:
  
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
  echo "initdone"
 initdone

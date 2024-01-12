@@ -28,7 +28,7 @@ road #
 "road1" #2: sent Quick Mode request
 "road1" #2: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATD=192.1.2.23:4500 DPD=passive}
 road #
- ipsec whack --impair send-no-delete
+ ipsec whack --impair send_no_delete
 road #
  ipsec restart
 Redirecting to: [initsystem]

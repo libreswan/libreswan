@@ -13,7 +13,7 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec whack --impair timeout-on-retransmit
+ ipsec whack --impair timeout_on_retransmit
 west #
  ipsec auto --add westnet-eastnet-x509-cr
 "westnet-eastnet-x509-cr": added IKEv1 connection

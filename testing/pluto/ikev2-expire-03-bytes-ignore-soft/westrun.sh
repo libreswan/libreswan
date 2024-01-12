@@ -1,4 +1,4 @@
-ipsec whack --impair ignore-soft-expire
+ipsec whack --impair ignore_soft_expire
 ipsec auto --up west
 # pings will not trigger a soft expire
 ping -n -q -c 18 -I 192.0.1.254 192.0.2.254

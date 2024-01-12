@@ -16,7 +16,7 @@ road #
  echo done
 done
 road #
- ipsec whack --impair timeout-on-retransmit
+ ipsec whack --impair timeout_on_retransmit
 road #
  ipsec auto --up x509
 "x509" #1: initiating IKEv1 Main Mode connection

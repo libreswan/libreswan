@@ -1,4 +1,4 @@
-ipsec whack --impair suppress-retransmits
+ipsec whack --impair suppress_retransmits
 # IKE will be triggered by acquire; expect two labels
 ipsec auto --route labeled
 ../../guestbin/ipsec-kernel-state.sh

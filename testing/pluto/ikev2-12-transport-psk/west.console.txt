@@ -46,7 +46,7 @@ west #
 "ipv4-psk-ikev2-transport":   conn serial: $1;
 "ipv4-psk-ikev2-transport":   ESP algorithms: 3DES_CBC-HMAC_SHA2_256_128
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
  echo "initdone"
 initdone

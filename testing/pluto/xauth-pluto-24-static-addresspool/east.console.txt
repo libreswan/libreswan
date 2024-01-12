@@ -9,7 +9,7 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec whack --impair timeout-on-retransmit
+ ipsec whack --impair timeout_on_retransmit
 east #
  ipsec auto --add east-any
 "east-any": added IKEv1 connection

@@ -15,9 +15,9 @@ west #
 west #
  ipsec whack --impair revival
 west #
- ipsec whack --impair ke-payload:empty
+ ipsec whack --impair ke_payload:empty
 west #
- ipsec whack --impair timeout-on-retransmit
+ ipsec whack --impair timeout_on_retransmit
 west #
  ipsec auto --up westnet-eastnet-ipv4-psk-ikev2
 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -35,7 +35,7 @@ west #
 west #
  ipsec whack --impair revival
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
  ipsec auto --up westnet-eastnet-ipv4-psk-ikev2
 "westnet-eastnet-ipv4-psk-ikev2" #2: initiating IKEv2 connection to 192.1.2.23 using UDP

@@ -7,7 +7,7 @@ for IMPAIR_DIE_ONINFO, since that code tried to read the deleted state.
 This test is added in case there is regression and use on a deleted
 state pointer would happen again - even if unlikely
 
-This is replicated with the --impair impair-ikev1-del-with-notify
+This is replicated with the --impair impair_ikev1_del_with_notify
 
 east should not crash on processing the Delete + Notify with:
 

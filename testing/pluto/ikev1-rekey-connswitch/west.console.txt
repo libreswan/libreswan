@@ -39,7 +39,7 @@ west #
 "TUNNEL-B": IMPAIR: skipping ipsec-lifetime=28800 checks
 "TUNNEL-B": added IKEv1 connection
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
  ipsec whack --impair revival
 west #

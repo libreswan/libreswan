@@ -47,7 +47,7 @@ west #
 "westnet-eastnet-dh19":   IKE algorithms: AES_CBC-HMAC_SHA1-DH19
 "westnet-eastnet-dh19":   ESP algorithms: AES_CBC-HMAC_SHA1_96-DH19
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
  echo "initdone"
 initdone

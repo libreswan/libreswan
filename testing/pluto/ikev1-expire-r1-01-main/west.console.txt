@@ -15,9 +15,9 @@ initdone
 west #
  # create a partial state on east, don't hold the hack for retransmit
 west #
- ipsec whack --impair drop-i2
+ ipsec whack --impair drop_i2
 west #
- ipsec whack --impair timeout-on-retransmit
+ ipsec whack --impair timeout_on_retransmit
 west #
  ipsec auto --up westnet-eastnet
 "westnet-eastnet" #1: initiating IKEv1 Main Mode connection

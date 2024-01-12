@@ -36,7 +36,7 @@ west #
 "west-x509" #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate 'CN=east-selfsigned.testing.libreswan.org' issued by CA 'CN=east-selfsigned.testing.libreswan.org'
 "west-x509" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
- ipsec whack --impair timeout-on-retransmit
+ ipsec whack --impair timeout_on_retransmit
 west #
  # this one should fail, as east is only expecting selfsigned cert of west, not road
 west #

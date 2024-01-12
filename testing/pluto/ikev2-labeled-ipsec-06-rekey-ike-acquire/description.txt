@@ -1,6 +1,6 @@
 IKEv2 labeled IPsec with an acquire happening part way through an IKE rekey
 
-- the IKE rekey is initiated but <<--impair drop-outbound:1>>
+- the IKE rekey is initiated but <<--impair drop_outbound:1>>
   causes the request to be lost; the rekey becomes stuck
   until a retransmit (10s) gets things going again
 

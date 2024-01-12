@@ -45,7 +45,7 @@ west #
 "westnet-eastnet-aggr":   conn serial: $1;
 "westnet-eastnet-aggr":   IKE algorithms: 3DES_CBC-HMAC_SHA1-MODP1536
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
  echo "initdone"
 initdone

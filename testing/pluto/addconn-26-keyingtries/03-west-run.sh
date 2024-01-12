@@ -1,4 +1,4 @@
-ipsec whack --impair ke-payload:omit
+ipsec whack --impair ke_payload:omit
 ipsec whack --impair revival  # give up after N retry attempts
 
 ipsec auto --add  westnet-eastnet

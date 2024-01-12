@@ -6,7 +6,7 @@ ipsec certutil -M -n "strongSwan CA - strongSwan" -t CT,,
 ipsec pluto --config /etc/ipsec.conf --leak-detective
 ../../guestbin/wait-until-pluto-started
 ipsec auto --add westnet-eastnet-ikev2
-ipsec whack --impair suppress-retransmits
-ipsec whack --impair force-v2-auth-method:ecdsa_sha2_384_p384
-ipsec whack --impair omit-v2n-signature-hash-algorithms
+ipsec whack --impair suppress_retransmits
+ipsec whack --impair force_v2_auth_method:ecdsa_sha2_384_p384
+ipsec whack --impair omit_v2n_signature_hash_algorithms
 echo "initdone"

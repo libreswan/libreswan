@@ -46,7 +46,7 @@ west #
 "westnet-eastnet-dh15":   IKE algorithms: 3DES_CBC-HMAC_SHA1-MODP3072
 "westnet-eastnet-dh15":   ESP algorithms: 3DES_CBC-HMAC_SHA1_96-MODP3072
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
  echo "initdone"
 initdone

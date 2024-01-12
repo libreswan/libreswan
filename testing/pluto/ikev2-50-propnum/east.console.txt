@@ -8,7 +8,7 @@ east #
  ipsec auto --add westnet-eastnet-propnum
 "westnet-eastnet-propnum": added IKEv2 connection
 east #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 east #
  echo "initdone"
 initdone

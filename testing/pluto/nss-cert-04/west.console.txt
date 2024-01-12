@@ -8,7 +8,7 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec whack --impair timeout-on-retransmit
+ ipsec whack --impair timeout_on_retransmit
 west #
  ipsec auto --add nss-cert
 "nss-cert": added IKEv1 connection
@@ -34,7 +34,7 @@ west #
 "nss-cert":   routing: unrouted;
 "nss-cert":   conn serial: $1;
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
  echo "initdone"
 initdone

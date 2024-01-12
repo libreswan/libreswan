@@ -16,7 +16,7 @@ road #
 road #
  ipsec whack --impair none
 road #
- ipsec whack --impair revival --impair suppress-retransmits
+ ipsec whack --impair revival --impair suppress_retransmits
 road #
  ipsec auto --up road-east
 "road-east" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -26,7 +26,7 @@ road #
 "road-east" #1: IMPAIR: redirect: skip scheduling redirect event
 "road-east" #1: deleting IKE SA (PARENT_I1) and NOT sending notification
 road #
- ipsec whack --impair trigger-revival:1
+ ipsec whack --impair trigger_revival:1
 "road-east": dispatch REVIVAL event
 "road-east" #2: initiating IKEv2 connection to 192.1.2.45 using UDP
 "road-east" #2: sent IKE_SA_INIT request to 192.1.2.45:500
@@ -54,7 +54,7 @@ road #
 road #
  ipsec whack --impair none
 road #
- ipsec whack --impair revival --impair timeout-on-retransmit
+ ipsec whack --impair revival --impair timeout_on_retransmit
 road #
  ipsec auto --add road-east
 "road-east": added IKEv2 connection
@@ -67,7 +67,7 @@ road #
 "road-east" #4: IMPAIR: redirect: skip scheduling redirect event
 "road-east" #4: deleting IKE SA (PARENT_I1) and NOT sending notification
 road #
- ipsec whack --impair trigger-revival:2
+ ipsec whack --impair trigger_revival:2
 "road-east": dispatch REVIVAL event
 "road-east" #5: initiating IKEv2 connection to 192.1.2.44 using UDP
 "road-east" #5: sent IKE_SA_INIT request to 192.1.2.44:500

@@ -5,7 +5,7 @@ echo "192.1.3.0/24"  >> /etc/ipsec.d/policies/clear-or-private
 ip addr add 192.1.2.66/24 dev eth1
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec whack --impair suppress-retransmits
+ipsec whack --impair suppress_retransmits
 # "loaded private key"
 ipsec whack --listpubkeys
 # "has private key"

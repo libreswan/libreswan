@@ -13,5 +13,5 @@ ipsec certutil -M -n "strongSwan CA - strongSwan" -t CT,,
 ipsec pluto --config /etc/ipsec.conf --leak-detective
 ../../guestbin/wait-until-pluto-started
 ipsec auto --add westnet-eastnet-ikev2
-ipsec whack --impair suppress-retransmits
+ipsec whack --impair suppress_retransmits
 echo "initdone"

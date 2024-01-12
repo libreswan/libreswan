@@ -36,7 +36,7 @@ north #
  ipsec whack --trafficstatus
 #2: "north-east", username=use1, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, lease=192.0.2.101/32
 north #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 north #
  echo initdone
 initdone

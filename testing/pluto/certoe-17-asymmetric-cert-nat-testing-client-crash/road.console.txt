@@ -14,7 +14,7 @@ Redirecting to: [initsystem]
 road #
  ../../guestbin/wait-until-pluto-started
 road #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 road #
  # give OE policies time to load
 road #
@@ -50,7 +50,7 @@ road #
 road #
  # Emulate crashing the client
 road #
- ipsec whack --impair send-no-delete
+ ipsec whack --impair send_no_delete
 road #
  ipsec stop
 Redirecting to: [initsystem]

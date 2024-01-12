@@ -8,7 +8,7 @@ west #
 west #
  ipsec whack --impair revival
 west #
- ipsec whack --impair timeout-on-retransmit
+ ipsec whack --impair timeout_on_retransmit
 west #
  ipsec add west
 "west": added IKEv2 connection

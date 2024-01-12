@@ -8,12 +8,12 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec whack --impair send-pkcs7-thingie
+ ipsec whack --impair send_pkcs7_thingie
 west #
  ipsec auto --add westnet-eastnet-x509
 "westnet-eastnet-x509": added IKEv1 connection
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
  echo "initdone"
 initdone

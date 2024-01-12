@@ -14,7 +14,7 @@ west #
 west #
  ipsec whack --impair revival
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
  ../../guestbin/libreswan-up-down.sh aes128 --alive -I 192.0.1.254 192.0.2.254
 "aes128": added IKEv1 connection
@@ -40,9 +40,9 @@ west #
 west #
  ipsec whack --impair revival
 west #
- ipsec whack --impair timeout-on-retransmit
+ ipsec whack --impair timeout_on_retransmit
 west #
- ipsec whack --impair ike-key-length-attribute:duplicate
+ ipsec whack --impair ike_key_length_attribute:duplicate
 west #
  ../../guestbin/libreswan-up-down.sh aes128 --down -I 192.0.1.254 192.0.2.254
 "aes128": added IKEv1 connection
@@ -61,9 +61,9 @@ west #
 west #
  ipsec whack --impair revival
 west #
- ipsec whack --impair timeout-on-retransmit
+ ipsec whack --impair timeout_on_retransmit
 west #
- ipsec whack --impair child-key-length-attribute:duplicate
+ ipsec whack --impair child_key_length_attribute:duplicate
 west #
  ../../guestbin/libreswan-up-down.sh aes128 --down -I 192.0.1.254 192.0.2.254
 "aes128": added IKEv1 connection
@@ -86,9 +86,9 @@ west #
 west #
  ipsec whack --impair revival
 west #
- ipsec whack --impair timeout-on-retransmit
+ ipsec whack --impair timeout_on_retransmit
 west #
- ipsec whack --impair ike-key-length-attribute:0
+ ipsec whack --impair ike_key_length_attribute:0
 west #
  ../../guestbin/libreswan-up-down.sh aes128 --down -I 192.0.1.254 192.0.2.254
 "aes128": added IKEv1 connection
@@ -107,9 +107,9 @@ west #
 west #
  ipsec whack --impair revival
 west #
- ipsec whack --impair timeout-on-retransmit
+ ipsec whack --impair timeout_on_retransmit
 west #
- ipsec whack --impair child-key-length-attribute:0
+ ipsec whack --impair child_key_length_attribute:0
 west #
  ../../guestbin/libreswan-up-down.sh aes128 --down -I 192.0.1.254 192.0.2.254
 "aes128": added IKEv1 connection
@@ -132,9 +132,9 @@ west #
 west #
  ipsec whack --impair revival
 west #
- ipsec whack --impair timeout-on-retransmit
+ ipsec whack --impair timeout_on_retransmit
 west #
- ipsec whack --impair ike-key-length-attribute:omit
+ ipsec whack --impair ike_key_length_attribute:omit
 west #
  ../../guestbin/libreswan-up-down.sh aes128 --alive -I 192.0.1.254 192.0.2.254
 "aes128": added IKEv1 connection
@@ -160,9 +160,9 @@ west #
 west #
  ipsec whack --impair revival
 west #
- ipsec whack --impair timeout-on-retransmit
+ ipsec whack --impair timeout_on_retransmit
 west #
- ipsec whack --impair child-key-length-attribute:omit
+ ipsec whack --impair child_key_length_attribute:omit
 west #
  ../../guestbin/libreswan-up-down.sh aes128 --down -I 192.0.1.254 192.0.2.254
 "aes128": added IKEv1 connection
@@ -185,11 +185,11 @@ west #
 west #
  ipsec whack --impair revival
 west #
- ipsec whack --impair timeout-on-retransmit
+ ipsec whack --impair timeout_on_retransmit
 west #
  ipsec whack --impair emitting
 west #
- ipsec whack --impair ike-key-length-attribute:empty
+ ipsec whack --impair ike_key_length_attribute:empty
 west #
  ../../guestbin/libreswan-up-down.sh aes128 --alive -I 192.0.1.254 192.0.2.254
 "aes128": added IKEv1 connection
@@ -215,11 +215,11 @@ west #
 west #
  ipsec whack --impair revival
 west #
- ipsec whack --impair timeout-on-retransmit
+ ipsec whack --impair timeout_on_retransmit
 west #
  ipsec whack --impair emitting
 west #
- ipsec whack --impair child-key-length-attribute:empty
+ ipsec whack --impair child_key_length_attribute:empty
 west #
  ../../guestbin/libreswan-up-down.sh aes128 --down -I 192.0.1.254 192.0.2.254
 "aes128": added IKEv1 connection
@@ -248,7 +248,7 @@ west #
 west #
  ipsec whack --impair revival
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
  ../../guestbin/libreswan-up-down.sh 3des --alive -I 192.0.1.254 192.0.2.254
 "3des": added IKEv1 connection
@@ -274,9 +274,9 @@ west #
 west #
  ipsec whack --impair revival
 west #
- ipsec whack --impair timeout-on-retransmit
+ ipsec whack --impair timeout_on_retransmit
 west #
- ipsec whack --impair ike-key-length-attribute:0
+ ipsec whack --impair ike_key_length_attribute:0
 west #
  ../../guestbin/libreswan-up-down.sh 3des --down -I 192.0.1.254 192.0.2.254
 "3des": added IKEv1 connection
@@ -296,9 +296,9 @@ west #
 west #
  ipsec whack --impair revival
 west #
- ipsec whack --impair timeout-on-retransmit
+ ipsec whack --impair timeout_on_retransmit
 west #
- ipsec whack --impair ike-key-length-attribute:192
+ ipsec whack --impair ike_key_length_attribute:192
 west #
  ../../guestbin/libreswan-up-down.sh 3des --alive -I 192.0.1.254 192.0.2.254
 "3des": added IKEv1 connection

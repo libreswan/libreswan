@@ -5,7 +5,7 @@ Redirecting to: [initsystem]
 north #
  ../../guestbin/wait-until-pluto-started
 north #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 north #
  ipsec auto --add northnet-westnet-ipv4-psk
 "northnet-westnet-ipv4-psk": added IKEv2 connection

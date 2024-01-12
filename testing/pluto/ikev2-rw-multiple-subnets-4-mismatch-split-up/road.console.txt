@@ -19,7 +19,7 @@ road #
 road #
  ipsec whack --impair revival
 road #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 road #
  ipsec auto --up road/0x1
 "road/0x1" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -47,7 +47,7 @@ road #
 road #
  ipsec whack --impair revival
 road #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 road #
  ipsec auto --up road/0x3
 "road/0x3" #4: initiating Child SA using IKE SA #1

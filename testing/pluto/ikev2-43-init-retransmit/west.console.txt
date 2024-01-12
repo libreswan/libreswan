@@ -29,9 +29,9 @@ initdone
 west #
  # say everything twice; but not using a retransmit
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair suppress_retransmits
 west #
- ipsec whack --impair jacob-two-two
+ ipsec whack --impair jacob_two_two
 west #
  ipsec auto --up westnet-eastnet-ipv4-psk-ikev2
 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP

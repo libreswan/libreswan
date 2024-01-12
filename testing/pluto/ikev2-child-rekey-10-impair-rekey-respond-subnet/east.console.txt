@@ -11,7 +11,7 @@ east #
 east #
  ipsec whack --impair revival
 east #
- ipsec whack --impair rekey-respond-subnet
+ ipsec whack --impair rekey_respond_subnet
 east #
  echo "initdone"
 initdone

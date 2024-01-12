@@ -9,6 +9,6 @@ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 ip addr add 192.0.11.254/24 dev eth1
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec whack --impair suppress-retransmits
+ipsec whack --impair suppress_retransmits
 ipsec auto --add westnets-eastnet
 echo "initdone"

@@ -33,7 +33,7 @@ west #
 west #
  iptables -I INPUT -p udp --dport 500 -j DROP
 west #
- ipsec whack --impair timeout-on-retransmit
+ ipsec whack --impair timeout_on_retransmit
 west #
  ipsec auto --up westnet-eastnet-ikev2b #retransmits
 "westnet-eastnet-ikev2b" #3: initiating Child SA using IKE SA #1

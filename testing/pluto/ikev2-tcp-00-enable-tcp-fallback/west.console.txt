@@ -37,7 +37,7 @@ west #
 "west" #1: IMPAIR: revival: skip scheduling revival event
 "west" #1: deleting IKE SA (PARENT_I1) and NOT sending notification
 west #
- ipsec whack --impair trigger-revival:1
+ ipsec whack --impair trigger_revival:1
 "west": dispatch REVIVAL event
 "west": reviving connection which timeout IKE SA but must remain up per local policy (serial $1)
 "west" #2: initiating IKEv2 connection to 192.1.2.23 using TCP
