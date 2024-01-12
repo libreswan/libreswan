@@ -827,7 +827,7 @@ kvmplutotest	nat-pluto-01		good
 kvmplutotest	nat-pluto-02		good
 kvmplutotest	nat-pluto-03		good
 kvmplutotest	nat-pluto-04		good
-kvmplutotest	nat-pluto-07		good
+kvmplutotest	nat-pluto-07		wip	github/1492
 kvmplutotest	nat-pluto-08		good
 kvmplutotest	nat-pluto-09		good
 kvmplutotest	nat-pluto-10		good

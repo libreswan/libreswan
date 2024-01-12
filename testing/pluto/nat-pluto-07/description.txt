@@ -5,5 +5,5 @@ to be used on origination, it blocks ESP, and it times out the connection
 quickly. In addition, a second IP address is configured on NIC, and connections
 on port 4500 at NAT'ed to that second IP.
 
-
-
+2024: To have this work IKE needs to also update any IPsec state and
+policy installed in the kernel.  And that has never happened.
