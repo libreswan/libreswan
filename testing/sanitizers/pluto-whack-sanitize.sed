@@ -24,6 +24,7 @@ s/'\([0-9]\)[0-9][0-9]-bit RSA/'\1nn-bit RSA/
 s,\(instance with peer .*\) {isakmp=#.*/ipsec=#.*},\1,
 s,\(initiating Quick Mode .*\) {using isakmp#.*},\1,
 s,\(initiating Quick Mode .* to replace #.*\) {using isakmp#.*},\1,
+s/\(sent Quick Mode reply, .*\) {.*/\1/
 s,{msgid.*},,
 
 s,; \([a-z0-9A-Z_]\+\) in [0-9]\+s,; \1 in XXs,g
