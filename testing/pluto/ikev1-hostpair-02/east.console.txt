@@ -16,10 +16,10 @@ east #
  echo "initdone"
 initdone
 east #
- ../../guestbin/wait-for.sh --match '^".*#2: IPsec SA established' -- cat /tmp/pluto.log
+ ../../guestbin/wait-for-pluto.sh '^".*#2: IPsec SA established'
 "roadnet-eastnet-ipv4-psk-ikev1"[1] 192.1.2.254 #2: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATD=192.1.2.254:4500 DPD=passive username=use3}
 east #
- ../../guestbin/wait-for.sh --match '^".*#8: IPsec SA established' -- cat /tmp/pluto.log
+ ../../guestbin/wait-for-pluto.sh '^".*#8: IPsec SA established'
 "roadnet-eastnet-ipv4-psk-ikev1"[1] 192.1.2.254 #8: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATD=192.1.2.254:4500 DPD=passive username=use3}
 east #
  ipsec status | grep STATE_

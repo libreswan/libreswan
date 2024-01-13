@@ -36,10 +36,10 @@ west #
 west #
  ipsec whack --rekey-ipsec --name west --async
 west #
- ../../guestbin/wait-for.sh --match '^".*#3: initiator rekeyed Child SA #2' -- cat /tmp/pluto.log
+ ../../guestbin/wait-for-pluto.sh '^".*#3: initiator rekeyed Child SA #2'
 "west" #3: initiator rekeyed Child SA #2 using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
 west #
- ../../guestbin/wait-for.sh --match '^".*#2: ESP traffic information:' -- cat /tmp/pluto.log
+ ../../guestbin/wait-for-pluto.sh '^".*#2: ESP traffic information:'
 "west" #2: ESP traffic information: in=84B out=84B
 west #
  ipsec auto --down west
@@ -67,7 +67,7 @@ west #
 west #
  ipsec whack --rekey-ipsec --name west --async
 west #
- ../../guestbin/wait-for.sh --match '^".*#6: CREATE_CHILD_SA failed' -- cat /tmp/pluto.log
+ ../../guestbin/wait-for-pluto.sh '^".*#6: CREATE_CHILD_SA failed'
 "west" #6: CREATE_CHILD_SA failed with error notification INVALID_SYNTAX
 west #
  ipsec auto --down west
@@ -92,7 +92,7 @@ west #
 west #
  ipsec whack --rekey-ipsec --name west --async
 west #
- ../../guestbin/wait-for.sh --match '^".*#9: CREATE_CHILD_SA failed' -- cat /tmp/pluto.log
+ ../../guestbin/wait-for-pluto.sh '^".*#9: CREATE_CHILD_SA failed'
 "west" #9: CREATE_CHILD_SA failed with error notification INVALID_SYNTAX
 west #
  ipsec auto --down west
@@ -117,7 +117,7 @@ west #
 west #
  ipsec whack --rekey-ipsec --name west --async
 west #
- ../../guestbin/wait-for.sh --match '^".*#12: CREATE_CHILD_SA failed' -- cat /tmp/pluto.log
+ ../../guestbin/wait-for-pluto.sh '^".*#12: CREATE_CHILD_SA failed'
 "west" #12: CREATE_CHILD_SA failed with error notification INVALID_SYNTAX
 west #
  ipsec auto --down west

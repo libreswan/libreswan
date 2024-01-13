@@ -29,7 +29,7 @@ west #
  ipsec up --asynchronous east-west
 "east-west" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 west #
- ../../guestbin/wait-for.sh --match '^".*#1: sent IKE_SA_INIT request' -- cat /tmp/pluto.log
+ ../../guestbin/wait-for-pluto.sh '^".*#1: sent IKE_SA_INIT request'
 "east-west" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 west #
  ../../guestbin/wait-for-inbound.sh 2
@@ -45,7 +45,7 @@ west #
 IMPAIR: start processing inbound drip packet 1
 IMPAIR: stop processing inbound drip packet 1
 west #
- ../../guestbin/wait-for.sh --match '^".*#2: sent IKE_SA_INIT' -- cat /tmp/pluto.log
+ ../../guestbin/wait-for-pluto.sh '^".*#2: sent IKE_SA_INIT'
 "east-west" #2: sent IKE_SA_INIT (or IKE_INTERMEDIATE) response {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 west #
  ../../guestbin/wait-for-inbound.sh 3
@@ -85,7 +85,7 @@ west #
  ipsec whack --impair drip_inbound:4
 IMPAIR: inbound message 4 not found
 west #
- ../../guestbin/wait-for.sh --match 'established Child SA using #1' -- cat /tmp/pluto.log
+ ../../guestbin/wait-for-pluto.sh 'established Child SA using #1'
 ???
 west #
  ipsec showstates

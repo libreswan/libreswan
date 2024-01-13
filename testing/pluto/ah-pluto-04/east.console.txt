@@ -11,7 +11,7 @@ east #
  echo "initdone"
 initdone
 east #
- ../../guestbin/wait-for.sh --match '^".*#2: IPsec SA established' -- cat /tmp/pluto.log
+ ../../guestbin/wait-for-pluto.sh '^".*#2: IPsec SA established'
 "westnet-eastnet-ah" #2: IPsec SA established tunnel mode {AH=>0xAHAH <0xAHAH xfrm=HMAC_SHA2_384_192 DPD=passive}
 east #
  ../../guestbin/ipsec-kernel-state.sh

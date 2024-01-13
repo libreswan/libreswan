@@ -31,7 +31,7 @@ down
 road #
  # OE send message is suppressed; this is next best
 road #
- ../../guestbin/wait-for.sh --match 'initiator sent IKE_SA_INIT request' -- cat /tmp/pluto.log
+ ../../guestbin/wait-for-pluto.sh 'initiator sent IKE_SA_INIT request'
 | "private#192.1.2.0/24"[1] ...192.1.2.23 #1: initiating IKE_SA_INIT: initiator sent IKE_SA_INIT request
 road #
  # dump state/policy for larval OE connection

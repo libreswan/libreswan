@@ -52,22 +52,22 @@ east #
 east #
  # too quick for the exchange.
 east #
- ../../guestbin/wait-for.sh --match 'imported CRL.*CN=nic.testing.libreswan.org' -- cat /tmp/pluto.log
+ ../../guestbin/wait-for-pluto.sh 'imported CRL.*CN=nic.testing.libreswan.org'
 imported CRL for 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=nic.testing.libreswan.org, E=user-nic@testing.libreswan.org' from: http://nic.testing.libreswan.org/revoked.crl
 east #
- ../../guestbin/wait-for.sh --match 'imported CRL.*CN=hashsha1.testing.libreswan.org' -- cat /tmp/pluto.log
+ ../../guestbin/wait-for-pluto.sh 'imported CRL.*CN=hashsha1.testing.libreswan.org'
 imported CRL for 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=hashsha1.testing.libreswan.org, E=user-hashsha1@testing.libreswan.org' from: http://nic.testing.libreswan.org/revoked.crl
 east #
- ../../guestbin/wait-for.sh --match 'imported CRL.*CN=north.testing.libreswan.org' -- cat /tmp/pluto.log
+ ../../guestbin/wait-for-pluto.sh 'imported CRL.*CN=north.testing.libreswan.org'
 imported CRL for 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org' from: http://nic.testing.libreswan.org/revoked.crl
 east #
- ../../guestbin/wait-for.sh --match 'imported CRL.*CN=road.testing.libreswan.org' -- cat /tmp/pluto.log
+ ../../guestbin/wait-for-pluto.sh 'imported CRL.*CN=road.testing.libreswan.org'
 imported CRL for 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org' from: http://nic.testing.libreswan.org/revoked.crl
 east #
- ../../guestbin/wait-for.sh --match 'imported CRL.*CN=east.testing.libreswan.org' -- cat /tmp/pluto.log
+ ../../guestbin/wait-for-pluto.sh 'imported CRL.*CN=east.testing.libreswan.org'
 imported CRL for 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' from: http://nic.testing.libreswan.org/revoked.crl
 east #
- ../../guestbin/wait-for.sh --match 'imported CRL.*CN=Libreswan test CA for mainca' -- cat /tmp/pluto.log
+ ../../guestbin/wait-for-pluto.sh 'imported CRL.*CN=Libreswan test CA for mainca'
 imported CRL for 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org' from: http://nic.testing.libreswan.org/revoked.crl
 east #
  # check the queue is drained

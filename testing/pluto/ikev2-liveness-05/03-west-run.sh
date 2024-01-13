@@ -11,7 +11,7 @@ iptables -I INPUT -s 192.1.2.23/32 -d 0/0 -j DROP
 iptables -I OUTPUT -d 192.1.2.23/32 -s 0/0 -j DROP
 
 # DPD should have triggered now
-../../guestbin/wait-for.sh --match '^".*#1: liveness action' -- cat /tmp/pluto.log
+../../guestbin/wait-for-pluto.sh '^".*#1: liveness action'
 
 # Tunnel should be down with %trap or %hold preventing packet leaks
 # But shuntstatus only shows bare shunts, not connection shunts :(
@@ -27,5 +27,5 @@ iptables -D INPUT -s 192.1.2.23/32 -d 0/0 -j DROP
 iptables -D OUTPUT -d 192.1.2.23/32 -s 0/0 -j DROP
 
 # Tunnel should be back up now even without triggering traffic
-../../guestbin/wait-for.sh --match '^".*#[3-9] established Child SA' -- cat /tmp/pluto.log
+../../guestbin/wait-for-pluto.sh '^".*#[3-9] established Child SA'
 ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254

@@ -11,7 +11,7 @@ initdone
 road #
  # wait for first tunnel (#2) to establish
 road #
- ../../guestbin/wait-for.sh --match '^".*#2: initiator established Child SA' -- cat /tmp/pluto.log
+ ../../guestbin/wait-for-pluto.sh '^".*#2: initiator established Child SA'
 "road/0x1" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATD=192.1.2.23:4500 DPD=passive}
 road #
  ../../guestbin/ping-once.sh --up 192.0.2.254
@@ -21,7 +21,7 @@ road #
 road #
  # it seems the ping goes all alien
 road #
- ../../guestbin/wait-for.sh --match '^".*#3: initiator established Child SA' -- cat /tmp/pluto.log
+ ../../guestbin/wait-for-pluto.sh '^".*#3: initiator established Child SA'
 "road/0x2" #3: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.20.0/24] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATD=192.1.2.23:4500 DPD=passive}
 road #
  ../../guestbin/ping-once.sh --up 192.0.20.254

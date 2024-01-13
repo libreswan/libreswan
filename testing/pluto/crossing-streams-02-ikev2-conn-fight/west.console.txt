@@ -38,7 +38,7 @@ west #
  ipsec auto --asynchronous --up westnet-eastnet-ipv4-psk-ikev2
 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 west #
- ../../guestbin/wait-for.sh --match 'IMPAIR: blocking outbound message 1' -- cat /tmp/pluto.log
+ ../../guestbin/wait-for-pluto.sh 'IMPAIR: blocking outbound message 1'
 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: blocking outbound message 1
 west #
  ipsec whack --impair drip_outbound:1
@@ -52,7 +52,7 @@ west #
 IMPAIR: start processing inbound drip packet 1
 IMPAIR: stop processing inbound drip packet 1
 west #
- ../../guestbin/wait-for.sh --match 'IMPAIR: blocking outbound message 2' -- cat /tmp/pluto.log
+ ../../guestbin/wait-for-pluto.sh 'IMPAIR: blocking outbound message 2'
 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: blocking outbound message 2
 west #
  ipsec whack --impair drip_outbound:2

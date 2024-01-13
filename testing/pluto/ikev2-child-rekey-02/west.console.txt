@@ -78,13 +78,13 @@ west #
 west #
  # rekey to Child #5 #6 #7
 west #
- ../../guestbin/wait-for.sh --match '^".*#5: initiator rekeyed Child SA' -- cat /tmp/pluto.log
+ ../../guestbin/wait-for-pluto.sh '^".*#5: initiator rekeyed Child SA'
 "westnet-eastnet-ikev2a" #5: initiator rekeyed Child SA #2 using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
- ../../guestbin/wait-for.sh --match '^".*#6: initiator rekeyed Child SA' -- cat /tmp/pluto.log
+ ../../guestbin/wait-for-pluto.sh '^".*#6: initiator rekeyed Child SA'
 "westnet-eastnet-ikev2b" #6: initiator rekeyed Child SA #3 using #1; IPsec tunnel [192.0.100.0/24===192.0.200.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
- ../../guestbin/wait-for.sh --match '^".*#7: initiator rekeyed Child SA' -- cat /tmp/pluto.log
+ ../../guestbin/wait-for-pluto.sh '^".*#7: initiator rekeyed Child SA'
 "westnet-eastnet-ikev2c" #7: initiator rekeyed Child SA #4 using #1; IPsec tunnel [192.0.101.0/24===192.0.201.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
@@ -98,13 +98,13 @@ up
 west #
  # wait for old, so that they are not in traffic status
 west #
- ../../guestbin/wait-for.sh --match '^".*#2: ESP traffic information:' -- cat /tmp/pluto.log
+ ../../guestbin/wait-for-pluto.sh '^".*#2: ESP traffic information:'
 "westnet-eastnet-ikev2a" #2: ESP traffic information: in=84B out=84B
 west #
- ../../guestbin/wait-for.sh --match '^".*#3: ESP traffic information:' -- cat /tmp/pluto.log
+ ../../guestbin/wait-for-pluto.sh '^".*#3: ESP traffic information:'
 "westnet-eastnet-ikev2b" #3: ESP traffic information: in=84B out=84B
 west #
- ../../guestbin/wait-for.sh --match '^".*#4: ESP traffic information:' -- cat /tmp/pluto.log
+ ../../guestbin/wait-for-pluto.sh '^".*#4: ESP traffic information:'
 "westnet-eastnet-ikev2c" #4: ESP traffic information: in=84B out=84B
 west #
  # expect Child #5 #6 #7
@@ -116,13 +116,13 @@ west #
 west #
  # rekey to Child #8 #9 #10
 west #
- ../../guestbin/wait-for.sh --match '^".*#8: initiator rekeyed Child SA' -- cat /tmp/pluto.log
+ ../../guestbin/wait-for-pluto.sh '^".*#8: initiator rekeyed Child SA'
 "westnet-eastnet-ikev2a" #8: initiator rekeyed Child SA #5 using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
- ../../guestbin/wait-for.sh --match '^".*#9: initiator rekeyed Child SA' -- cat /tmp/pluto.log
+ ../../guestbin/wait-for-pluto.sh '^".*#9: initiator rekeyed Child SA'
 "westnet-eastnet-ikev2b" #9: initiator rekeyed Child SA #6 using #1; IPsec tunnel [192.0.100.0/24===192.0.200.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
- ../../guestbin/wait-for.sh --match '^".*#10: initiator rekeyed Child SA' -- cat /tmp/pluto.log
+ ../../guestbin/wait-for-pluto.sh '^".*#10: initiator rekeyed Child SA'
 "westnet-eastnet-ikev2c" #10: initiator rekeyed Child SA #7 using #1; IPsec tunnel [192.0.101.0/24===192.0.201.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
@@ -136,13 +136,13 @@ up
 west #
  # wait for old, so that they are not in traffic status
 west #
- ../../guestbin/wait-for.sh --match '^".*#5: ESP traffic information:' -- cat /tmp/pluto.log
+ ../../guestbin/wait-for-pluto.sh '^".*#5: ESP traffic information:'
 "westnet-eastnet-ikev2a" #5: ESP traffic information: in=84B out=84B
 west #
- ../../guestbin/wait-for.sh --match '^".*#6: ESP traffic information:' -- cat /tmp/pluto.log
+ ../../guestbin/wait-for-pluto.sh '^".*#6: ESP traffic information:'
 "westnet-eastnet-ikev2b" #6: ESP traffic information: in=84B out=84B
 west #
- ../../guestbin/wait-for.sh --match '^".*#7: ESP traffic information:' -- cat /tmp/pluto.log
+ ../../guestbin/wait-for-pluto.sh '^".*#7: ESP traffic information:'
 "westnet-eastnet-ikev2c" #7: ESP traffic information: in=84B out=84B
 west #
  # expect Child #8 #9 #10

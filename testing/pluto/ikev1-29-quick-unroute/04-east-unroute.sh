@@ -1,3 +1,3 @@
 # to be sure; initiator's already received it
-../../guestbin/wait-for.sh --match '#2: sent Quick' -- cat /tmp/pluto.log
+../../guestbin/wait-for-pluto.sh '#2: sent Quick'
 ipsec unroute west-to-east

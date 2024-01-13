@@ -47,7 +47,7 @@ west #
 west #
  sleep 45
 west #
- ../../guestbin/wait-for.sh --match '#3: initiating .* to replace #1' -- cat /tmp/pluto.log
+ ../../guestbin/wait-for-pluto.sh '#3: initiating .* to replace #1'
 "westnet-eastnet-ipv4-psk-ikev2" #3: initiating IKEv1 Main Mode connection to replace #1
 west #
  ../../guestbin/wait-for.sh --match '#3: .* SA established' -- ipsec whack --showstates

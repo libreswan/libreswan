@@ -12,7 +12,7 @@ iptables -I INPUT -s 192.1.2.23/32 -d 0/0 -j DROP
 iptables -I OUTPUT -d 192.1.2.23/32 -s 0/0 -j DROP
 
 # Wait for liveness to trigger
-../../guestbin/wait-for.sh --match '^".*#1: liveness action' -- cat /tmp/pluto.log
+../../guestbin/wait-for-pluto.sh '^".*#1: liveness action'
 
 # Tunnel should be cleared, no trap/hold
 # shuntstatus does not show connection shunt unfortunately

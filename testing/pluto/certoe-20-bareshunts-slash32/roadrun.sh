@@ -11,7 +11,7 @@
 # correct.  At this point, since the connection owns the kernel
 # policy, there are no bare shunts.
 
-../../guestbin/wait-for.sh --match '^".*#1: .*retransmission; will wait 0.5 seconds' -- cat /tmp/pluto.log
+../../guestbin/wait-for-pluto.sh '^".*#1: .*retransmission; will wait 0.5 seconds'
 ../../guestbin/ipsec-kernel-policy.sh 192.1.2.23
 ipsec whack --shuntstatus
 ipsec showstates
@@ -26,7 +26,7 @@ ipsec showstates
 # the state and the template connection, and the kernel policy will be
 # owned by a bare shunt.
 
-../../guestbin/wait-for.sh --match '^".*#1:.* 5 second timeout exceeded' -- cat /tmp/pluto.log
+../../guestbin/wait-for-pluto.sh '^".*#1:.* 5 second timeout exceeded'
 ../../guestbin/ipsec-kernel-policy.sh 192.1.2.23
 ipsec whack --shuntstatus
 ipsec showstates
@@ -47,4 +47,4 @@ ipsec showstates
 # Since the bare shunt as gone, a ping should start a new IKE SA.
 
 ../../guestbin/ping-once.sh --down -I 192.1.3.209 192.1.2.23
-../../guestbin/wait-for.sh --match '^".*#2: .*retransmission; will wait 0.5 seconds' -- cat /tmp/pluto.log
+../../guestbin/wait-for-pluto.sh '^".*#2: .*retransmission; will wait 0.5 seconds'

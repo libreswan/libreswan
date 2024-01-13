@@ -40,7 +40,7 @@ west #
 west #
  # wait for at least one R_U_THERE packet
 west #
- ../../guestbin/wait-for.sh --match 'processing informational R_U_THERE' -- cat /tmp/pluto.log
+ ../../guestbin/wait-for-pluto.sh 'processing informational R_U_THERE'
 | processing informational R_U_THERE (36136)
 west #
  # set up block via iptables

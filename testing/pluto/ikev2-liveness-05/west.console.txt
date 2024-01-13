@@ -53,7 +53,7 @@ west #
 west #
  # DPD should have triggered now
 west #
- ../../guestbin/wait-for.sh --match '^".*#1: liveness action' -- cat /tmp/pluto.log
+ ../../guestbin/wait-for-pluto.sh '^".*#1: liveness action'
 "westnet-eastnet-ikev2"[1] 192.1.2.23 #1: liveness action - putting connection into hold
 west #
  # Tunnel should be down with %trap or %hold preventing packet leaks
@@ -86,7 +86,7 @@ west #
 west #
  # Tunnel should be back up now even without triggering traffic
 west #
- ../../guestbin/wait-for.sh --match '^".*#[3-9]: initiator established Child SA' -- cat /tmp/pluto.log
+ ../../guestbin/wait-for-pluto.sh '^".*#[3-9]: initiator established Child SA'
 "westnet-eastnet-ikev2"[1] 192.1.2.23 #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=active}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254

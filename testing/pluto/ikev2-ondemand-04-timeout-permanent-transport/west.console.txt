@@ -26,7 +26,7 @@ west #
  ../../guestbin/ping-once.sh --forget -I 192.1.2.45 192.1.2.23
 fired and forgotten
 west #
- ../../guestbin/wait-for.sh --match '^".*#1: sent IKE_SA_INIT request' -- cat /tmp/pluto.log
+ ../../guestbin/wait-for-pluto.sh '^".*#1: sent IKE_SA_INIT request'
 "west" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 west #
  ../../guestbin/ipsec-kernel-policy.sh
@@ -37,7 +37,7 @@ src 192.1.2.45/32 dst 192.1.2.23/32
 west #
  # wait for it to fail
 west #
- ../../guestbin/wait-for.sh --match ' second timeout exceeded after ' -- cat /tmp/pluto.log
+ ../../guestbin/wait-for-pluto.sh ' second timeout exceeded after '
 "west" #1: STATE_V2_PARENT_I1: 10 second timeout exceeded after 5 retransmits.  No response (or no acceptable response) to our first IKEv2 message
 west #
  ../../guestbin/ipsec-kernel-policy.sh
