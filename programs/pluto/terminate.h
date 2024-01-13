@@ -36,9 +36,13 @@ void terminate_all_connection_states(struct connection *c, where_t where);
  *
  * Whack is attached to C; whack will be propogated to instances.
  */
-void terminate_and_down_connections(struct connection *c, where_t where);
+void terminate_and_down_connections(struct connection *c,
+				    bool strip_route,
+				    where_t where);
 /* ditto, but don't recurse; again, whack is attached to C */
-void terminate_and_down_connection(struct connection *c, where_t where);
+void terminate_and_down_connection(struct connection *c,
+				   bool strip_route_bit,
+				   where_t where);
 
 void terminate_and_delete_connections(struct connection **cp, struct logger *logger, where_t where);
 

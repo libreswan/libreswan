@@ -244,7 +244,7 @@ bool orient(struct connection *c, struct logger *logger)
 				jam_string(buf, " and right ");
 				jam_iface(buf, iface);
 			}
-			terminate_and_down_connection(c, HERE);
+			terminate_and_down_connection(c, /*strip-route-bit*/false, HERE);
 			connection_detach(c, logger);
 			return false;
 		}
@@ -282,7 +282,7 @@ bool orient(struct connection *c, struct logger *logger)
 				jam_string(buf, " ");
 				jam_iface(buf, iface);
 			}
-			terminate_and_down_connection(c, HERE);
+			terminate_and_down_connection(c, /*strip-route-bit*/false, HERE);
 			connection_detach(c, logger);
 			return false;
 		}
