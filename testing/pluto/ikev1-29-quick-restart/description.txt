@@ -1,9 +1,8 @@
-IKEv1 quick exchange where initiator dies part way through
+IKEv1 quick exchange where initiator restarts part way through
 
 The responder's last transition is:
 
   routing: stop ESTABLISH_INBOUND, UNROUTED_BARE_NEGOTIATION->UNROUTED_INBOUND, PERMANENT; ok=yes; negotiating_ike_sa #1 established_ike_sa #1 newest_routing_sa #0->#2
 
-this is then followed by an unroute which shouldn't crash.
-
-
+The initiator then restarts initiating the partially established
+connection from scratch.
