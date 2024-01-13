@@ -3,18 +3,12 @@ ipsec up --asynchronous west-to-east
 # step through the main mode exchange
 
 ../../guestbin/wait-for.sh --match '#1: sent Main Mode request' -- cat /tmp/pluto.log
-../../guestbin/wait-for.sh --match 'IMPAIR: blocking inbound message 1'  -- cat /tmp/pluto.log
-ipsec whack --impair drip_inbound:1
 
-../../guestbin/wait-for.sh --match '#1: sent Main Mode I2' -- cat /tmp/pluto.log
-../../guestbin/wait-for.sh --match 'IMPAIR: blocking inbound message 2'  -- cat /tmp/pluto.log
-ipsec whack --impair drip_inbound:2
+../../guestbin/drip-inbound.sh 1 '#1: sent Main Mode I2'
 
-../../guestbin/wait-for.sh --match '#1: sent Main Mode I3' -- cat /tmp/pluto.log
-../../guestbin/wait-for.sh --match 'IMPAIR: blocking inbound message 3'  -- cat /tmp/pluto.log
-ipsec whack --impair drip_inbound:3
+../../guestbin/drip-inbound.sh 2 '#1: sent Main Mode I3'
 
-../../guestbin/wait-for.sh --match '#1: ISAKMP SA established' -- cat /tmp/pluto.log
+../../guestbin/drip-inbound.sh 3 '#1: ISAKMP SA established'
 
 # wait for quick mode response
 ../../guestbin/wait-for.sh --match '#2: sent Quick Mode request' -- cat /tmp/pluto.log
