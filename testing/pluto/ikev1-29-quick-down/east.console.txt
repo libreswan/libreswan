@@ -1,0 +1,29 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec add west-to-east
+"west-to-east": added IKEv1 connection
+east #
+ echo "initdone"
+initdone
+east #
+ # to be sure; initiator's already received it
+east #
+ ../../guestbin/wait-for-pluto.sh '#2: sent Quick'
+"west-to-east" #2: sent Quick Mode reply, inbound IPsec SA installed, expecting confirmation transport mode
+east #
+ ipsec delete west-to-east
+"west-to-east": terminating SAs using this connection
+"west-to-east" #2: deleting IPsec SA (QUICK_R1) and sending notification using ISAKMP SA #1
+ERROR: "west-to-east" #2: kernel: xfrm XFRM_MSG_DELPOLICY delete response for flow (out): No such file or directory (errno 2)
+ERROR: "west-to-east" #2: netlink response for Get SA esp.ESPSPIi@192.1.2.45: No such process (errno 3)
+"west-to-east" #2: failed to pull traffic counters from outbound IPsec SA
+"west-to-east" #2: ESP traffic information: in=0B out=0B
+ERROR: "west-to-east" #2: netlink response for Del SA esp.ESPSPIi@192.1.2.45: No such process (errno 3)
+"west-to-east" #1: deleting ISAKMP SA (MAIN_R3) and sending notification
+east #
+ 

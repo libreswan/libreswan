@@ -1544,6 +1544,7 @@ kvmplutotest	ikev2-26-nic-offload-no-hw-auto		good
 kvmplutotest	ikev2-26-nic-offload-no-hw-crypto	wip	github/1527
 kvmplutotest	ikev2-26-nic-offload-no-hw-packet	wip	github/1527
 
-kvmplutotest	ikev1-29-quick-unroute			wip	github/1531
 kvmplutotest	ikev1-29-quick-delete			wip	github/1531
+kvmplutotest	ikev1-29-quick-down			wip	github/1531
 kvmplutotest	ikev1-29-quick-restart			wip	github/1531
+kvmplutotest	ikev1-29-quick-unroute			wip	github/1531
