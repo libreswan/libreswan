@@ -48,7 +48,7 @@ west #
  ../../guestbin/wait-for.sh --match '#2: sent Quick Mode request' -- cat /tmp/pluto.log
 "west-to-east" #2: sent Quick Mode request
 west #
- ../../guestbin/wait-for.sh --match 'IMPAIR: blocking inbound message 4'  -- cat /tmp/pluto.log
+ ../../guestbin/wait-for-inbound.sh 4
 packet from 192.1.2.23:500: IMPAIR: blocking inbound message 4
 west #
  

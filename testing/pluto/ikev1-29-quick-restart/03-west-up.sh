@@ -12,4 +12,4 @@ ipsec up --asynchronous west-to-east
 
 # wait for quick mode response
 ../../guestbin/wait-for.sh --match '#2: sent Quick Mode request' -- cat /tmp/pluto.log
-../../guestbin/wait-for.sh --match 'IMPAIR: blocking inbound message 4'  -- cat /tmp/pluto.log
+../../guestbin/wait-for-inbound.sh 4

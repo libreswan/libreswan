@@ -43,7 +43,7 @@ east# ipsec up --asynchronous east-west
 
 "east-west" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 
-west# ../../guestbin/wait-for.sh --match 'IMPAIR: blocking inbound message 1' -- cat /tmp/pluto.log
+west# ../../guestbin/wait-for-inbound.sh 1
 
 packet from 192.1.2.23:500: IMPAIR: blocking inbound message 1
 
@@ -60,7 +60,7 @@ west# ../../guestbin/wait-for.sh --match '^".*#1: sent IKE_SA_INIT request' -- c
 
 "east-west" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 
-west# ../../guestbin/wait-for.sh --match 'IMPAIR: blocking inbound message 2' -- cat /tmp/pluto.log
+west# ../../guestbin/wait-for-inbound.sh 2
 
 packet from 192.1.2.23:500: IMPAIR: blocking inbound message 2
 
@@ -78,7 +78,7 @@ west# ../../guestbin/wait-for.sh --match '^".*#2: sent IKE_SA_INIT' -- cat /tmp/
 
 "east-west" #2: sent IKE_SA_INIT (or IKE_INTERMEDIATE) response {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 
-west# ../../guestbin/wait-for.sh --match 'IMPAIR: blocking inbound message 3' -- cat /tmp/pluto.log
+west# ../../guestbin/wait-for-inbound.sh 3
 
 packet from 192.1.2.23:500: IMPAIR: blocking inbound message 3
 
@@ -96,7 +96,7 @@ west# ../../guestbin/wait-for.sh --match '^".*#1: sent IKE_AUTH request'  -- cat
 
 "east-west" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 
-west# ../../guestbin/wait-for.sh --match 'IMPAIR: blocking inbound message 4'  -- cat /tmp/pluto.log
+west# ../../guestbin/wait-for-inbound.sh 4
 
 packet from 192.1.2.23:500: IMPAIR: blocking inbound message 4
 
