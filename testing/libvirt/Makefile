@@ -556,7 +556,8 @@ kvm-%: $(KVM_HOST_OK) kvm-keys-ok
 		$(if $(STRIPPED_KVM_TEST_NAME), --test-name '$(STRIPPED_KVM_TEST_NAME)') \
 		$(if $(KVM_SNAPSHOTDIR), --snapshot-directory $(KVM_SNAPSHOTDIR)) \
 		$(if $(filter kvm-re%, $@), --skip passed) \
-		$(if $(KVM_RUN_POST_MORTEM), --run-post-mortem) \
+		$(if $(filter true, $(KVM_RUN_POST_MORTEM)), --run-post-mortem, \
+		$(if $(filter false, $(KVM_RUN_POST_MORTEM)), --no-run-post-mortem)) \
 		$(KVMRUNNER_FLAGS) \
 		$(KVM_TEST_FLAGS) \
 		$(STRIPPED_KVM_TESTS)
