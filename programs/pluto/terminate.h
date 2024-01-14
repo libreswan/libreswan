@@ -20,6 +20,7 @@
 
 struct connection;
 struct logger;
+struct ike_sa;
 
 void terminate_all_connection_states(struct connection *c, where_t where);
 
