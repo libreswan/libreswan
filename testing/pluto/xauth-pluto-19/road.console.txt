@@ -16,7 +16,6 @@ road #
 initdone
 road #
  ipsec auto --replace modecfg-road-eastnet-psk
-"modecfg-road-eastnet-psk": terminating SAs using this connection
 "modecfg-road-eastnet-psk": added IKEv1 connection
 road #
  ipsec whack --status | grep modecfg-road-eastnet-psk

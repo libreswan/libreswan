@@ -36,7 +36,6 @@ up
 "esp=null-md5" #1: intiating delete
 "esp=null-md5" #2: ESP traffic information: in=84B out=84B
 "esp=null-md5" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
-"esp=null-md5": terminating SAs using this connection
 west #
  ../../guestbin/libreswan-up-down.sh esp=null-sha1 -I 192.0.1.254 192.0.2.254
 "esp=null-sha1": added IKEv2 connection
@@ -50,7 +49,6 @@ up
 "esp=null-sha1" #3: intiating delete
 "esp=null-sha1" #4: ESP traffic information: in=84B out=84B
 "esp=null-sha1" #3: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
-"esp=null-sha1": terminating SAs using this connection
 west #
  ../../guestbin/libreswan-up-down.sh esp=null_auth_aes_gmac-null -I 192.0.1.254 192.0.2.254
 "esp=null_auth_aes_gmac-null": added IKEv2 connection
@@ -64,7 +62,6 @@ up
 "esp=null_auth_aes_gmac-null" #5: intiating delete
 "esp=null_auth_aes_gmac-null" #6: ESP traffic information: in=84B out=84B
 "esp=null_auth_aes_gmac-null" #5: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
-"esp=null_auth_aes_gmac-null": terminating SAs using this connection
 west #
  modinfo chacha20poly1305 > /dev/null && ../../guestbin/libreswan-up-down.sh esp=chacha20_poly1305-null -I 192.0.1.254 192.0.2.254 || true
 "esp=chacha20_poly1305-null": added IKEv2 connection
@@ -78,7 +75,6 @@ up
 "esp=chacha20_poly1305-null" #7: intiating delete
 "esp=chacha20_poly1305-null" #8: ESP traffic information: in=84B out=84B
 "esp=chacha20_poly1305-null" #7: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
-"esp=chacha20_poly1305-null": terminating SAs using this connection
 west #
  echo done
 done

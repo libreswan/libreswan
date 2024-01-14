@@ -42,7 +42,6 @@ up
 "ikev2-defaults" #1: intiating delete
 "ikev2-defaults" #2: ESP traffic information: in=84B out=84B
 "ikev2-defaults" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
-"ikev2-defaults": terminating SAs using this connection
 west #
  : other combinations
 west #
@@ -58,7 +57,6 @@ up
 "ikev2-ike=aes128-sha2" #3: intiating delete
 "ikev2-ike=aes128-sha2" #4: ESP traffic information: in=84B out=84B
 "ikev2-ike=aes128-sha2" #3: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
-"ikev2-ike=aes128-sha2": terminating SAs using this connection
 west #
  echo done
 done

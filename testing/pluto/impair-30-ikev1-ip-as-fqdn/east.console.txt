@@ -6,7 +6,6 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add east
-"east": terminating SAs using this connection
 "east": ikev2=no has been replaced by keyexchange=ikev1
 "east": added IKEv1 connection
 east #

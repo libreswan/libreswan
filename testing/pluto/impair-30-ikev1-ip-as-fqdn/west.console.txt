@@ -6,7 +6,6 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add west
-"west": terminating SAs using this connection
 "west": ikev2=no has been replaced by keyexchange=ikev1
 "west": added IKEv1 connection
 west #

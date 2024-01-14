@@ -32,7 +32,6 @@ west #
  ipsec up tcp && ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254 && ipsec down tcp || true
 ERROR: "tcp": TCP: socket XX: connecting to 192.1.2.23:4500: Connection refused (errno 111)
 down
-"tcp": terminating SAs using this connection
 west #
  ipsec up udp && ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254 && ipsec down udp || true
 "udp" #1: initiating IKEv2 connection to 192.1.2.23 using UDP

@@ -146,7 +146,6 @@ west #
 west #
  ipsec auto --down westnet-eastnet-subnets || echo "return code failed - should be 0"
 terminating all connections with alias "westnet-eastnet-subnets"
-"westnet-eastnet-subnets/2x2": terminating SAs using this connection
 "westnet-eastnet-subnets/2x2": ISAKMP SA is shared - only terminating IPsec SA
 "westnet-eastnet-subnets/2x2" #5: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
 "westnet-eastnet-subnets/2x2" #5: ESP traffic information: in=0B out=0B

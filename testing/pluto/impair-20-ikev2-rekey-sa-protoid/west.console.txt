@@ -71,7 +71,6 @@ west #
 "west" #6: CREATE_CHILD_SA failed with error notification INVALID_SYNTAX
 west #
  ipsec auto --down west
-"west": terminating SAs using this connection
 west #
  # protoid=IKE
 west #
@@ -96,7 +95,6 @@ west #
 "west" #9: CREATE_CHILD_SA failed with error notification INVALID_SYNTAX
 west #
  ipsec auto --down west
-"west": terminating SAs using this connection
 west #
  # protoid=unknown
 west #
@@ -121,7 +119,6 @@ west #
 "west" #12: CREATE_CHILD_SA failed with error notification INVALID_SYNTAX
 west #
  ipsec auto --down west
-"west": terminating SAs using this connection
 west #
  ipsec whack --trafficstatus
 west #

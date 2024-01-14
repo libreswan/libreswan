@@ -70,7 +70,6 @@ west #
 "westnet-eastnet-ipv4-psk-ppk" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #
  ipsec auto --delete westnet-eastnet-ipv4-psk-ppk
-"westnet-eastnet-ipv4-psk-ppk": terminating SAs using this connection
 west #
  echo done
 done

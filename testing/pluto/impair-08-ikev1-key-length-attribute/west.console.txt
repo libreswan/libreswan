@@ -32,7 +32,6 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 "aes128" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
 "aes128" #2: ESP traffic information: in=84B out=84B
 "aes128" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
-"aes128": terminating SAs using this connection
 west #
  ipsec whack --impair none
 west #
@@ -154,7 +153,6 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 "aes128" #10: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #9
 "aes128" #10: ESP traffic information: in=84B out=84B
 "aes128" #9: deleting ISAKMP SA (MAIN_I4) and sending notification
-"aes128": terminating SAs using this connection
 west #
  ipsec whack --impair none
 west #
@@ -209,7 +207,6 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 "aes128" #14: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #13
 "aes128" #14: ESP traffic information: in=84B out=84B
 "aes128" #13: deleting ISAKMP SA (MAIN_I4) and sending notification
-"aes128": terminating SAs using this connection
 west #
  ipsec whack --impair none
 west #
@@ -266,7 +263,6 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 "3des" #18: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #17
 "3des" #18: ESP traffic information: in=84B out=84B
 "3des" #17: deleting ISAKMP SA (MAIN_I4) and sending notification
-"3des": terminating SAs using this connection
 west #
  ipsec whack --impair none
 west #
@@ -317,7 +313,6 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 "3des" #21: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #20
 "3des" #21: ESP traffic information: in=84B out=84B
 "3des" #20: deleting ISAKMP SA (MAIN_I4) and sending notification
-"3des": terminating SAs using this connection
 west #
  ipsec whack --impair none
 west #

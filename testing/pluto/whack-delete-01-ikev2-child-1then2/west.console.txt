@@ -52,7 +52,6 @@ west #
 "west-cuckoo" #3: ESP traffic information: in=84B out=84B
 west #
  ipsec delete west-cuckoo
-"west-cuckoo": terminating SAs using this connection
 west #
  # non-zero counts confirm encrypted traffic flowing
 west #

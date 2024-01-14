@@ -41,7 +41,6 @@ listening for IKE messages
 adding UDP interface eth1 192.1.2.66:500
 adding UDP interface eth1 192.1.2.66:4500
 "west-float": connection matches both left eth1 192.1.2.45 and right eth1 192.1.2.66
-"west-float": terminating SAs using this connection
 forgetting secrets
 loading secrets from "/etc/ipsec.secrets"
 no secrets filename matched "/etc/ipsec.d/*.secrets"
@@ -66,6 +65,7 @@ west #
 listening for IKE messages
 shutting down interface eth1 192.1.2.66:4500
 shutting down interface eth1 192.1.2.66:500
+"float-east": terminating SAs using this connection
 "float-east" #4: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #3
 ERROR: "float-east" #3: send on eth1 from 192.1.2.66:500 to 192.1.2.23:500 using UDP failed in delete notify [...]
 "float-east" #4: unroute-host output: RTNETLINK answers: Network is unreachable

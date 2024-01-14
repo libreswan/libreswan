@@ -34,7 +34,6 @@ initiating 2 connections
 west #
  ipsec down west
 terminating all connections with alias "west"
-"west-cuckoo": terminating SAs using this connection
 "west-cuckoo": ISAKMP SA is shared - only terminating IPsec SA
 "west-cuckoo" #3: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
 "west-cuckoo" #3: ESP traffic information: in=0B out=0B
@@ -59,7 +58,6 @@ initiating 1 connection
 west #
  ipsec down west
 terminating all connections with alias "west"
-"west-cuckoo": terminating SAs using this connection
 "west-cuckoo": ISAKMP SA is shared - only terminating IPsec SA
 "west-cuckoo" #5: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
 "west-cuckoo" #5: ESP traffic information: in=0B out=0B
@@ -69,7 +67,6 @@ terminating all connections with alias "west"
 terminated 2 connections
 west #
  ipsec delete cuckold
-"west-cuckold": terminating SAs using this connection
 west #
  ipsec delete cuckoo
 "west-cuckoo": terminating SAs using this connection

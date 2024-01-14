@@ -6,7 +6,6 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add road-east
-"road-east": terminating SAs using this connection
 "road-east": added IKEv2 connection
 east #
  ipsec auto --status | grep road-east

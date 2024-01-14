@@ -40,7 +40,6 @@ up
 "ike=chacha20poly1305-sha2-dh19" #1: intiating delete
 "ike=chacha20poly1305-sha2-dh19" #2: ESP traffic information: in=84B out=84B
 "ike=chacha20poly1305-sha2-dh19" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
-"ike=chacha20poly1305-sha2-dh19": terminating SAs using this connection
 west #
  ../../guestbin/libreswan-up-down.sh ike=aes128-sha2-dh19 -I 192.0.1.254 192.0.2.254
 "ike=aes128-sha2-dh19": added IKEv2 connection
@@ -54,7 +53,6 @@ up
 "ike=aes128-sha2-dh19" #3: intiating delete
 "ike=aes128-sha2-dh19" #4: ESP traffic information: in=84B out=84B
 "ike=aes128-sha2-dh19" #3: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
-"ike=aes128-sha2-dh19": terminating SAs using this connection
 west #
  ../../guestbin/libreswan-up-down.sh ike=aes128-sha2-dh20 -I 192.0.1.254 192.0.2.254
 "ike=aes128-sha2-dh20": added IKEv2 connection
@@ -68,7 +66,6 @@ up
 "ike=aes128-sha2-dh20" #5: intiating delete
 "ike=aes128-sha2-dh20" #6: ESP traffic information: in=84B out=84B
 "ike=aes128-sha2-dh20" #5: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
-"ike=aes128-sha2-dh20": terminating SAs using this connection
 west #
  ../../guestbin/libreswan-up-down.sh ike=aes128-sha2-dh21 -I 192.0.1.254 192.0.2.254
 "ike=aes128-sha2-dh21": added IKEv2 connection
@@ -82,7 +79,6 @@ up
 "ike=aes128-sha2-dh21" #7: intiating delete
 "ike=aes128-sha2-dh21" #8: ESP traffic information: in=84B out=84B
 "ike=aes128-sha2-dh21" #7: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
-"ike=aes128-sha2-dh21": terminating SAs using this connection
 west #
  ../../guestbin/libreswan-up-down.sh ike=aes128-sha1-dh19 -I 192.0.1.254 192.0.2.254
 "ike=aes128-sha1-dh19": added IKEv2 connection
@@ -96,7 +92,6 @@ up
 "ike=aes128-sha1-dh19" #9: intiating delete
 "ike=aes128-sha1-dh19" #10: ESP traffic information: in=84B out=84B
 "ike=aes128-sha1-dh19" #9: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
-"ike=aes128-sha1-dh19": terminating SAs using this connection
 west #
  ../../guestbin/libreswan-up-down.sh ike=aes128-sha1-dh20 -I 192.0.1.254 192.0.2.254
 "ike=aes128-sha1-dh20": added IKEv2 connection
@@ -110,7 +105,6 @@ up
 "ike=aes128-sha1-dh20" #11: intiating delete
 "ike=aes128-sha1-dh20" #12: ESP traffic information: in=84B out=84B
 "ike=aes128-sha1-dh20" #11: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
-"ike=aes128-sha1-dh20": terminating SAs using this connection
 west #
  ../../guestbin/libreswan-up-down.sh ike=aes128-sha1-dh21 -I 192.0.1.254 192.0.2.254
 "ike=aes128-sha1-dh21": added IKEv2 connection
@@ -124,7 +118,6 @@ up
 "ike=aes128-sha1-dh21" #13: intiating delete
 "ike=aes128-sha1-dh21" #14: ESP traffic information: in=84B out=84B
 "ike=aes128-sha1-dh21" #13: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
-"ike=aes128-sha1-dh21": terminating SAs using this connection
 west #
  ../../guestbin/libreswan-up-down.sh ike=aes_ctr128-sha1-dh21 -I 192.0.1.254 192.0.2.254
 "ike=aes_ctr128-sha1-dh21": added IKEv2 connection
@@ -138,7 +131,6 @@ up
 "ike=aes_ctr128-sha1-dh21" #15: intiating delete
 "ike=aes_ctr128-sha1-dh21" #16: ESP traffic information: in=84B out=84B
 "ike=aes_ctr128-sha1-dh21" #15: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
-"ike=aes_ctr128-sha1-dh21": terminating SAs using this connection
 west #
  ../../guestbin/libreswan-up-down.sh ike=3des-sha2-modp2048 -I 192.0.1.254 192.0.2.254
 "ike=3des-sha2-modp2048": added IKEv2 connection
@@ -152,7 +144,6 @@ up
 "ike=3des-sha2-modp2048" #17: intiating delete
 "ike=3des-sha2-modp2048" #18: ESP traffic information: in=84B out=84B
 "ike=3des-sha2-modp2048" #17: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
-"ike=3des-sha2-modp2048": terminating SAs using this connection
 west #
  ../../guestbin/libreswan-up-down.sh ike=aes128-aes_xcbc-modp2048 -I 192.0.1.254 192.0.2.254
 "ike=aes128-aes_xcbc-modp2048": added IKEv2 connection
@@ -166,7 +157,6 @@ up
 "ike=aes128-aes_xcbc-modp2048" #19: intiating delete
 "ike=aes128-aes_xcbc-modp2048" #20: ESP traffic information: in=84B out=84B
 "ike=aes128-aes_xcbc-modp2048" #19: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
-"ike=aes128-aes_xcbc-modp2048": terminating SAs using this connection
 west #
  echo done
 done

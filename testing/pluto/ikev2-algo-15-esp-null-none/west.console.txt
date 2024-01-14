@@ -53,7 +53,6 @@ up
 "esp=null-none" #1: intiating delete
 "esp=null-none" #2: ESP traffic information: in=84B out=84B
 "esp=null-none" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
-"esp=null-none": terminating SAs using this connection
 west #
  # exclude INTEG=NONE in the proposal
 west #
@@ -73,7 +72,6 @@ up
 "esp=null-none" #3: intiating delete
 "esp=null-none" #4: ESP traffic information: in=84B out=84B
 "esp=null-none" #3: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
-"esp=null-none": terminating SAs using this connection
 west #
  echo done
 done

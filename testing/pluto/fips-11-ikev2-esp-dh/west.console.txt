@@ -48,7 +48,6 @@ west #
 up
 "ikev2-esp=aes-sha1-modp4096": terminating SAs using this connection
 "ikev2-esp=aes-sha1-modp4096" #3: ESP traffic information: in=84B out=84B
-"ikev2-esp=aes-sha1-modp4096": terminating SAs using this connection
 west #
  ipsec auto --delete ikev2-base
 "ikev2-base": terminating SAs using this connection

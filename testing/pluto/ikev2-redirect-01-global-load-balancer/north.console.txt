@@ -36,7 +36,6 @@ north #
 "north-east" #2: deleting IKE SA (PARENT_I1) and NOT sending notification
 north #
  ipsec auto --delete north-east
-"north-east": terminating SAs using this connection
 north #
  # north is redirected to 3 - 192.1.2.46 - which is down
 north #
@@ -65,7 +64,6 @@ north #
 "north-east" #4: deleting IKE SA (PARENT_I1) and NOT sending notification
 north #
  ipsec auto --delete north-east
-"north-east": terminating SAs using this connection
 north #
  # north is redirected to 2 - 192.1.2.45 - which is up
 north #

@@ -21,7 +21,6 @@ north #
  # test for refcounting when connection has never been up'ed yet
 north #
  ipsec auto --add north
-"north": terminating SAs using this connection
 "north": added IKEv2 connection
 north #
  echo "initdone"

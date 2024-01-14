@@ -34,7 +34,6 @@ west #
  ipsec whack --impair suppress_retransmits
 west #
  ../../guestbin/libreswan-up-down.sh westnet-eastnet --alive -I 192.0.1.254 192.0.2.254
-"westnet-eastnet": terminating SAs using this connection
 "westnet-eastnet": added IKEv1 connection
 "westnet-eastnet" #1: initiating IKEv1 Main Mode connection
 "westnet-eastnet" #1: sent Main Mode request
@@ -51,7 +50,6 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 "westnet-eastnet" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
 "westnet-eastnet" #2: ESP traffic information: in=84B out=84B
 "westnet-eastnet" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
-"westnet-eastnet": terminating SAs using this connection
 west #
  # Quick:
 west #
@@ -156,7 +154,6 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 "westnet-eastnet" #10: ESP traffic information: in=84B out=84B
 "westnet-eastnet" #9: deleting ISAKMP SA (MAIN_I4) and sending notification
 "westnet-eastnet" #9: IMPAIR: omitting HASH payload for send delete
-"westnet-eastnet": terminating SAs using this connection
 west #
  # HASH payload empty - delete should fail
 west #
@@ -181,7 +178,6 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 "westnet-eastnet" #12: ESP traffic information: in=84B out=84B
 "westnet-eastnet" #11: deleting ISAKMP SA (MAIN_I4) and sending notification
 "westnet-eastnet" #11: IMPAIR: sending HASH payload with no data for send delete
-"westnet-eastnet": terminating SAs using this connection
 west #
  # HASH payload badly calculated - delete should fail
 west #
@@ -206,7 +202,6 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 "westnet-eastnet" #14: ESP traffic information: in=84B out=84B
 "westnet-eastnet" #13: deleting ISAKMP SA (MAIN_I4) and sending notification
 "westnet-eastnet" #13: IMPAIR: setting HASH payload bytes to 00
-"westnet-eastnet": terminating SAs using this connection
 west #
  echo done
 done
@@ -242,7 +237,6 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 "westnet-eastnet" #16: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #15
 "westnet-eastnet" #16: ESP traffic information: in=84B out=84B
 "westnet-eastnet" #15: deleting ISAKMP SA (MAIN_I4) and sending notification
-"westnet-eastnet": terminating SAs using this connection
 west #
  # HASH payload empty - XAUTH should fail
 west #
@@ -265,7 +259,6 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 "westnet-eastnet" #18: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #17
 "westnet-eastnet" #18: ESP traffic information: in=84B out=84B
 "westnet-eastnet" #17: deleting ISAKMP SA (MAIN_I4) and sending notification
-"westnet-eastnet": terminating SAs using this connection
 west #
  # HASH payload badly calculated - XAUTH should fail
 west #
@@ -288,7 +281,6 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 "westnet-eastnet" #20: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #19
 "westnet-eastnet" #20: ESP traffic information: in=84B out=84B
 "westnet-eastnet" #19: deleting ISAKMP SA (MAIN_I4) and sending notification
-"westnet-eastnet": terminating SAs using this connection
 west #
  echo done
 done
@@ -324,7 +316,6 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 "westnet-eastnet" #22: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #21
 "westnet-eastnet" #22: ESP traffic information: in=84B out=84B
 "westnet-eastnet" #21: deleting ISAKMP SA (MAIN_I4) and sending notification
-"westnet-eastnet": terminating SAs using this connection
 west #
  # HASH payload empty - INFO should fail
 west #
@@ -347,7 +338,6 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 "westnet-eastnet" #24: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #23
 "westnet-eastnet" #24: ESP traffic information: in=84B out=84B
 "westnet-eastnet" #23: deleting ISAKMP SA (MAIN_I4) and sending notification
-"westnet-eastnet": terminating SAs using this connection
 west #
  # HASH payload badly calculated - INFO should fail
 west #
@@ -370,7 +360,6 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 "westnet-eastnet" #26: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #25
 "westnet-eastnet" #26: ESP traffic information: in=84B out=84B
 "westnet-eastnet" #25: deleting ISAKMP SA (MAIN_I4) and sending notification
-"westnet-eastnet": terminating SAs using this connection
 west #
  echo done
 done

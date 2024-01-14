@@ -105,6 +105,5 @@ west #
  ipsec auto --showstates
 west #
  ipsec delete west-east-delete1
-"west-east-delete1": terminating SAs using this connection
 west #
  

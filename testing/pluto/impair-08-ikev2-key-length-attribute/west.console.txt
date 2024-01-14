@@ -26,7 +26,6 @@ up
 "aes128" #1: intiating delete
 "aes128" #2: ESP traffic information: in=84B out=84B
 "aes128" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
-"aes128": terminating SAs using this connection
 west #
  ipsec whack --impair none
 west #
@@ -82,7 +81,6 @@ up
 "aes128" #7: intiating delete
 "aes128" #8: ESP traffic information: in=84B out=84B
 "aes128" #7: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
-"aes128": terminating SAs using this connection
 west #
  ipsec whack --impair none
 west #
@@ -103,7 +101,6 @@ up
 "aes128" #9: intiating delete
 "aes128" #10: ESP traffic information: in=84B out=84B
 "aes128" #9: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
-"aes128": terminating SAs using this connection
 west #
  ipsec whack --impair none
 west #
@@ -196,7 +193,6 @@ up
 "3des" #19: intiating delete
 "3des" #20: ESP traffic information: in=84B out=84B
 "3des" #19: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
-"3des": terminating SAs using this connection
 west #
  ipsec whack --impair none
 west #
@@ -219,7 +215,6 @@ up
 "3des" #21: intiating delete
 "3des" #22: ESP traffic information: in=84B out=84B
 "3des" #21: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
-"3des": terminating SAs using this connection
 west #
  ipsec whack --impair none
 west #

@@ -74,7 +74,6 @@ west #
  sleep 1
 west #
  ipsec auto --down  west-east
-"west-east": terminating SAs using this connection
 "west-east": ISAKMP SA is shared - only terminating IPsec SA
 "west-east" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
 "west-east" #2: ESP traffic information: in=0B out=0B

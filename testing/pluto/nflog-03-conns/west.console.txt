@@ -100,7 +100,6 @@ west #
 up
 west #
  ipsec auto --down westnet-eastnet-nflog
-"westnet-eastnet-nflog": terminating SAs using this connection
 "westnet-eastnet-nflog": ISAKMP SA is shared - only terminating IPsec SA
 "westnet-eastnet-nflog" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
 "westnet-eastnet-nflog" #2: ESP traffic information: in=168B out=168B
