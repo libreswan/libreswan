@@ -17,6 +17,13 @@ east #
 "west-to-east" #2: sent Quick Mode reply, inbound IPsec SA installed, expecting confirmation transport mode
 east #
  ipsec unroute west-to-east
-FATAL: ASSERTION FAILED: "west-to-east": routing: unhandled UNROUTE, UNROUTED_INBOUND, PERMANENT; by=UNKNOWN; $1@0x7fede2bf8a88; negotiating_ike_sa #1 established_ike_sa #1 newest_routing_sa #2 (unroute_connection() +30 programs/pluto/whack_unroute.c)
+"west-to-east": terminating SAs using this connection
+"west-to-east" #2: deleting IPsec SA (QUICK_R1) and sending notification using ISAKMP SA #1
+ERROR: "west-to-east" #2: kernel: xfrm XFRM_MSG_DELPOLICY delete response for flow (out): No such file or directory (errno 2)
+ERROR: "west-to-east" #2: netlink response for Get SA esp.ESPSPIi@192.1.2.45: No such process (errno 3)
+"west-to-east" #2: failed to pull traffic counters from outbound IPsec SA
+"west-to-east" #2: ESP traffic information: in=0B out=0B
+ERROR: "west-to-east" #2: netlink response for Del SA esp.ESPSPIi@192.1.2.45: No such process (errno 3)
+"west-to-east" #1: deleting ISAKMP SA (MAIN_R3) and sending notification
 east #
  

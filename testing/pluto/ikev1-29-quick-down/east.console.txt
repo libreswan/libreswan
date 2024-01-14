@@ -16,7 +16,7 @@ east #
  ../../guestbin/wait-for-pluto.sh '#2: sent Quick'
 "west-to-east" #2: sent Quick Mode reply, inbound IPsec SA installed, expecting confirmation transport mode
 east #
- ipsec delete west-to-east
+ ipsec down west-to-east
 "west-to-east": terminating SAs using this connection
 "west-to-east" #2: deleting IPsec SA (QUICK_R1) and sending notification using ISAKMP SA #1
 ERROR: "west-to-east" #2: kernel: xfrm XFRM_MSG_DELPOLICY delete response for flow (out): No such file or directory (errno 2)
