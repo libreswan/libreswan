@@ -25,6 +25,7 @@ struct ike_sa;
 struct connection;
 struct whack_message;
 struct show;
+struct whack_state_context;
 
 struct each {
 	const char *future_tense;
@@ -127,7 +128,9 @@ void whack_connection_states(struct connection *c,
 			     void (whack)(struct connection *c,
 					  struct ike_sa **ike,
 					  struct child_sa **child,
-					  enum whack_state),
+					  enum whack_state,
+					  struct whack_state_context *context),
+			     struct whack_state_context *context,
 			     where_t where);
 
 #endif

@@ -183,11 +183,20 @@ static void delete_v2_states(struct connection *c,
 	bad_case(whacamole);
 }
 
+struct whack_state_context {
+	unsigned count;
+};
+
 static void delete_states(struct connection *c,
 			  struct ike_sa **ike,
 			  struct child_sa **child,
-			  enum whack_state whacamole)
+			  enum whack_state whacamole,
+			  struct whack_state_context *context)
 {
+	if (context->count == 0) {
+		llog(RC_LOG, c->logger, "terminating SAs using this connection");
+	}
+	context->count++;
 	switch (c->config->ike_version) {
 	case IKEv1:
 		delete_v1_states(c, ike, child, whacamole);
@@ -201,7 +210,8 @@ static void delete_states(struct connection *c,
 
 void terminate_all_connection_states(struct connection *c, where_t where)
 {
-	whack_connection_states(c, delete_states, where);
+	struct whack_state_context context = {0};
+	whack_connection_states(c, delete_states, &context, where);
 }
 
 /*
@@ -219,7 +229,7 @@ void terminate_and_down_connection(struct connection *c,
 		PEXPECT(c->logger, c->local->kind == CK_PERMANENT);
 		pdbg(c->logger, "terminating and downing never-negotiate connection");
 	} else {
-		llog(RC_LOG, c->logger, "terminating SAs using this connection");
+		pdbg(c->logger, "terminating SAs using this connection");
 	}
 
 	/* see callers */

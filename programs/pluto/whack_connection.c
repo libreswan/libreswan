@@ -365,7 +365,9 @@ void whack_connection_states(struct connection *c,
 			     void (whack_state)(struct connection *c,
 						struct ike_sa **ike,
 						struct child_sa **child,
-						enum whack_state),
+						enum whack_state,
+						struct whack_state_context *context),
+			     struct whack_state_context *context,
 			     where_t where)
 {
 	pdbg(c->logger,
@@ -380,7 +382,7 @@ void whack_connection_states(struct connection *c,
 	if (ike != NULL) {
 		pdbg(c->logger, "%s()  dispatching START to "PRI_SO,
 		     __func__, pri_so(ike->sa.st_serialno));
-		whack_state(c, &ike, NULL, WHACK_START_IKE);
+		whack_state(c, &ike, NULL, WHACK_START_IKE, context);
 	} else {
 		pdbg(c->logger, "%s()  skipping START, no IKE", __func__);
 	}
@@ -405,19 +407,19 @@ void whack_connection_states(struct connection *c,
 		     __func__,
 		     pri_so(connection_child->sa.st_serialno));
 		whack_ike = true;
-		whack_state(c, NULL, &connection_child, WHACK_CUCKOO);
+		whack_state(c, NULL, &connection_child, WHACK_CUCKOO, context);
 	} else if (ike == NULL) {
 		pdbg(c->logger, "%s()  dispatch orphaned Child SA "PRI_SO,
 		     __func__,
 		     pri_so(connection_child->sa.st_serialno));
 		whack_ike = false;
-		whack_state(c, NULL, &connection_child, WHACK_ORPHAN);
+		whack_state(c, NULL, &connection_child, WHACK_ORPHAN, context);
 	} else {
 		pdbg(c->logger, "%s()  dispatch Child SA "PRI_SO,
 		     __func__,
 		     pri_so(connection_child->sa.st_serialno));
 		whack_ike = false;
-		whack_state(c, &ike, &connection_child, WHACK_CHILD);
+		whack_state(c, &ike, &connection_child, WHACK_CHILD, context);
 	}
 
 	/*
@@ -464,7 +466,7 @@ void whack_connection_states(struct connection *c,
 			pdbg(c->logger, "%s()    dispatch lurking IKE SA to "PRI_SO,
 			     __func__, pri_so(weed.st->st_serialno));
 			struct ike_sa *lingering_ike = pexpect_ike_sa(weed.st);
-			whack_state(c, &lingering_ike, NULL, WHACK_LURKING_IKE);
+			whack_state(c, &lingering_ike, NULL, WHACK_LURKING_IKE, context);
 			nr_parents++;
 		} else {
 			pdbg(c->logger, "%s()    dispatch lurking Child SA to "PRI_SO,
@@ -472,7 +474,7 @@ void whack_connection_states(struct connection *c,
 			struct child_sa *lingering_child = pexpect_child_sa(weed.st);
 			/* may not have IKE as parent? */
 			nr_children++;
-			whack_state(c, NULL, &lingering_child, WHACK_LURKING_CHILD);
+			whack_state(c, NULL, &lingering_child, WHACK_LURKING_CHILD, context);
 		}
 	}
 	pdbg(c->logger, "%s()    weeded %u parents and %u children",
@@ -497,7 +499,7 @@ void whack_connection_states(struct connection *c,
 			state_buf sb;
 			pdbg(c->logger, "%s()    dispatching to sibling Child SA "PRI_STATE,
 			     __func__, pri_state(&child->sa, &sb));
-			whack_state(c, &ike, &child, WHACK_SIBLING);
+			whack_state(c, &ike, &child, WHACK_SIBLING, context);
 			nr++;
 		}
 		pdbg(c->logger, "%s()    poked %u siblings", __func__, nr);
@@ -511,12 +513,13 @@ void whack_connection_states(struct connection *c,
 	if (ike != NULL && whack_ike) {
 		pdbg(c->logger, "%s()  dispatch to IKE SA "PRI_SO" as child skipped",
 		     __func__, pri_so(ike->sa.st_serialno));
-		whack_state(c, &ike, NULL, WHACK_IKE);
+		whack_state(c, &ike, NULL,
+			    WHACK_IKE, context);
 	}
 
 	if (ike != NULL) {
 		pdbg(c->logger, "%s()  dispatch STOP as reached end", __func__);
-		whack_state(c, &ike, NULL, WHACK_STOP_IKE);
+		whack_state(c, &ike, NULL, WHACK_STOP_IKE, context);
 	} else {
 		pdbg(c->logger, "%s()  skipping STOP, no IKE", __func__);
 	}
