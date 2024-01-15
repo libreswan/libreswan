@@ -47,7 +47,6 @@ enum routing_event {
 	CONNECTION_RESCHEDULE,
 	/* establish a connection (speculative) */
 	CONNECTION_ESTABLISH_IKE,
-	CONNECTION_ESTABLISH_CHILD,
 	CONNECTION_ESTABLISH_INBOUND,
 	CONNECTION_ESTABLISH_OUTBOUND,
 	/* tear down a connection */
@@ -65,7 +64,6 @@ static const char *routing_event_name[] = {
 	S(CONNECTION_UNROUTE),
 	S(CONNECTION_INITIATE),
 	S(CONNECTION_ESTABLISH_IKE),
-	S(CONNECTION_ESTABLISH_CHILD),
 	S(CONNECTION_ESTABLISH_INBOUND),
 	S(CONNECTION_ESTABLISH_OUTBOUND),
 	S(CONNECTION_PENDING),
@@ -319,6 +317,18 @@ void ldbg_routing(struct logger *logger, const char *fmt, ...)
 	}
 }
 
+/*
+ * The IKEv1 responder spreads establishing a Child SA over two
+ * transactions (messages): INBOUND is established while processing
+ * the first Quick Mode request; and OUTBOUND while processing the
+ * second Quick Mode request.
+ *
+ * IKEv2 and IKEv1 initiators all establish the Child SA in one
+ * transaction (message).  However, to make error recovery slightly
+ * simpler, this single transaction is brown down just like for an
+ * IKEv1 responder.
+ */
+
 bool connection_establish_inbound(struct child_sa *child, where_t where)
 {
 	struct connection *cc = child->sa.st_connection;
@@ -354,7 +364,18 @@ bool connection_establish_child(struct ike_sa *ike, struct child_sa *child, wher
 		.where = where,
 		.initiated_by = INITIATED_BY_PEER,
 	};
-	return dispatch(CONNECTION_ESTABLISH_CHILD, cc, logger, &annex);
+	/*
+	 * The IKEv1 initiator, and IKEv2 initiators and responders
+	 * alway establish both inbound and outbound during the same
+	 * exchange.
+	 *
+	 * However, since this can fail part way through, it is broken
+	 * down into two transactions.  That way, hopefully, the
+	 * outbound code doesn't need to revert changes made by the
+	 * inbound code.
+	 */
+	return (dispatch(CONNECTION_ESTABLISH_INBOUND, cc, logger, &annex) &&
+		dispatch(CONNECTION_ESTABLISH_OUTBOUND, cc, logger, &annex));
 }
 
 enum shunt_kind routing_shunt_kind(enum routing routing)
@@ -1792,107 +1813,6 @@ static bool dispatch_1(enum routing_event event,
 		teardown_unrouted_inbound_negotiation(event, c, (*e->child), logger, e->where, e->story);
 		return true;
 
-	case X(ESTABLISH_CHILD, UNROUTED_BARE_NEGOTIATION, INSTANCE):
-	case X(ESTABLISH_CHILD, UNROUTED_BARE_NEGOTIATION, PERMANENT):
-		if (!install_inbound_ipsec_sa((*e->child), RT_UNROUTED_INBOUND, e->where)) {
-			return false;
-		}
- 		set_routing(event, c, RT_UNROUTED_INBOUND, e);
-		if (!install_outbound_ipsec_sa((*e->child), RT_ROUTED_TUNNEL, /*up*/true, e->where)) {
-			return false;
-		}
-		set_established_child(event, c, RT_ROUTED_TUNNEL, e);
-		return true;
-
-	case X(ESTABLISH_CHILD, ROUTED_NEGOTIATION, INSTANCE):
-	case X(ESTABLISH_CHILD, ROUTED_NEGOTIATION, PERMANENT):
-		/* addconn-05-bogus-left-interface
-		 * algo-ikev2-aes128-sha1-ecp256 et.al. */
-		if (!install_inbound_ipsec_sa((*e->child), RT_ROUTED_INBOUND_NEGOTIATION, e->where)) {
-			return false;
-		}
-		set_routing(event, c, RT_ROUTED_INBOUND_NEGOTIATION, e);
-		if (!install_outbound_ipsec_sa((*e->child), RT_ROUTED_TUNNEL, /*up*/true, e->where)) {
-			return false;
-		}
-		set_established_child(event, c, RT_ROUTED_TUNNEL, e);
-		return true;
-
-	case X(ESTABLISH_CHILD, ROUTED_ONDEMAND, INSTANCE):
-	case X(ESTABLISH_CHILD, ROUTED_ONDEMAND, PERMANENT):
-		/*
-		 * This transition (ignoring IKEv1 responder) is
-		 * immediately followed by an event to replace the
-		 * outbound on-demand policy.  Hence, don't bother
-		 * updating it to routed-negotiation.
-		 */
-		flush_routed_ondemand_revival(c);
-		if (!install_inbound_ipsec_sa((*e->child), RT_ROUTED_INBOUND_NEGOTIATION, e->where)) {
-			return false;
-		}
-		set_routing(event, c, RT_ROUTED_INBOUND_NEGOTIATION, e);
-		if (!install_outbound_ipsec_sa((*e->child), RT_ROUTED_TUNNEL, /*up*/true, e->where)) {
-			return false;
-		}
-		set_established_child(event, c, RT_ROUTED_TUNNEL, e);
-		return true;
-
-	case X(ESTABLISH_CHILD, ROUTED_TUNNEL, INSTANCE):
-	case X(ESTABLISH_CHILD, ROUTED_TUNNEL, PERMANENT):
-		/*
-		 * This happens when there's a re-key where the state
-		 * is re-established but not the policy (that is left
-		 * untouched).
-		 *
-		 * For instance ikev2-12-transport-psk and
-		 * ikev2-28-rw-server-rekey
-		 * ikev1-labeled-ipsec-01-permissive.
-		 *
-		 * XXX: suspect this is too early - for rekey should
-		 * only update after new child establishes?
-		 */
-		if (!install_inbound_ipsec_sa((*e->child), RT_ROUTED_TUNNEL, e->where)) {
-			return false;
-		}
-		set_routing(event, c, RT_ROUTED_TUNNEL, e);
-		/*
-		 * This happens when there's a re-key where the state
-		 * is re-established but not the policy (that is left
-		 * untouched).
-		 *
-		 * For instance ikev2-12-transport-psk and
-		 * ikev2-28-rw-server-rekey
-		 * ikev1-labeled-ipsec-01-permissive.
-		 */
-		if (!install_outbound_ipsec_sa((*e->child), RT_ROUTED_TUNNEL, /*up*/false, e->where)) {
-			return false;
-		}
-		set_established_child(event, c, RT_ROUTED_TUNNEL, e);
-		return true;
-
-	case X(ESTABLISH_CHILD, UNROUTED, INSTANCE):
-	case X(ESTABLISH_CHILD, UNROUTED, PERMANENT):
-		if (!install_inbound_ipsec_sa((*e->child), RT_UNROUTED_INBOUND, e->where)) {
-			return false;
-		}
-		set_routing(event, c, RT_UNROUTED_INBOUND, e);
-		if (!install_outbound_ipsec_sa((*e->child), RT_ROUTED_TUNNEL, /*up*/true, e->where)) {
-			return false;
-		}
-		set_established_child(event, c, RT_ROUTED_TUNNEL, e);
-		return true;
-
-	case X(ESTABLISH_CHILD, UNROUTED_NEGOTIATION, INSTANCE):
-		if (!install_inbound_ipsec_sa((*e->child), RT_UNROUTED_INBOUND_NEGOTIATION, e->where)) {
-			return false;
-		}
-		set_routing(event, c, RT_UNROUTED_INBOUND_NEGOTIATION, e);
-		if (!install_outbound_ipsec_sa((*e->child), RT_ROUTED_TUNNEL, /*up*/true, e->where)) {
-			return false;
-		}
-		set_established_child(event, c, RT_ROUTED_TUNNEL, e);
-		return true;
-
 	case X(ESTABLISH_INBOUND, UNROUTED_BARE_NEGOTIATION, INSTANCE):
 	case X(ESTABLISH_INBOUND, UNROUTED_BARE_NEGOTIATION, PERMANENT):
 		if (!install_inbound_ipsec_sa((*e->child), RT_UNROUTED_INBOUND, e->where)) {
@@ -2231,29 +2151,35 @@ static bool dispatch_1(enum routing_event event,
  * Labeled IPsec child.
  */
 
-	case X(ESTABLISH_CHILD, UNROUTED_TUNNEL, LABELED_CHILD):
-		/* rekey */
+	case X(ESTABLISH_INBOUND, UNROUTED_TUNNEL, LABELED_CHILD):
+		/* rekey; already up */
 		if (!install_inbound_ipsec_sa((*e->child), RT_UNROUTED_TUNNEL, e->where)) {
 			return false;
 		}
 		set_routing(event, c, RT_UNROUTED_TUNNEL, e);
+		return true;
+	case X(ESTABLISH_OUTBOUND, UNROUTED_TUNNEL, LABELED_CHILD):
 		/* rekey; already up */
 		if (!install_outbound_ipsec_sa((*e->child), RT_UNROUTED_TUNNEL, /*up*/false, e->where)) {
 			return false;
 		}
 		set_established_child(event, c, RT_UNROUTED_TUNNEL, e);
 		return true;
-	case X(ESTABLISH_CHILD, UNROUTED, LABELED_CHILD):
+
+	case X(ESTABLISH_INBOUND, UNROUTED, LABELED_CHILD):
 		if (!install_inbound_ipsec_sa((*e->child), RT_UNROUTED_INBOUND, e->where)) {
 			return false;
 		}
 		set_routing(event, c, RT_UNROUTED_INBOUND, e);
+		return true;
+	case X(ESTABLISH_OUTBOUND, UNROUTED_INBOUND, LABELED_CHILD):
 		/* new; not up */
 		if (!install_outbound_ipsec_sa((*e->child), RT_UNROUTED_TUNNEL, /*up*/true, e->where)) {
 			return false;
 		}
 		set_established_child(event, c, RT_UNROUTED_TUNNEL, e);
 		return true;
+
 	case X(UNROUTE, UNROUTED_INBOUND, LABELED_CHILD):
 	case X(UNROUTE, UNROUTED_TUNNEL, LABELED_CHILD):
 		set_routing(event, c, RT_UNROUTED, NULL);
