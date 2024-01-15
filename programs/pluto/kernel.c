@@ -2185,13 +2185,6 @@ bool install_outbound_ipsec_sa(struct child_sa *child, enum routing new_routing,
 	     pri_where(where));
 
 	/*
-	 * Pass +0: Lookup the status of each SPD.
-	 *
-	 * Still call find_spd_conflicts() when a sec_label so that
-	 * the structure is zeroed (sec_labels ignore conflicts).
-	 */
-
-	/*
 	 * if this is a transport SA, and overlapping SAs are supported, then
 	 * this route is not necessary at all.
 	 */
