@@ -68,8 +68,10 @@ west #
 "west-to-east" #1: sent Main Mode request
 "west-to-east" #1: sent Main Mode I2
 "west-to-east" #1: sent Main Mode I3
-"west-to-east" #1: STATE_MAIN_I3: 60 second timeout exceeded after 7 retransmits.  Possible authentication failure: no acceptable response to our first encrypted message
-"west-to-east" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"west-to-east" #1: deleting ISAKMP SA (MAIN_I3) and NOT sending notification
+"west-to-east" #1: Peer ID is ID_FQDN: '@east'
+"west-to-east" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA1 group=MODP2048}
+"west-to-east" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TRANSPORT+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"west-to-east" #2: sent Quick Mode request
+"west-to-east" #2: IPsec SA established transport mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
  
