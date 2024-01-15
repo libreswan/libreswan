@@ -19,9 +19,4 @@ east #
  echo "initdone"
 initdone
 east #
- # non-zero counts confirm encrypted traffic flowing
-east #
- ipsec trafficstatus
-#2: "east"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=208, outBytes=208, maxBytes=2^63B, id='@road'
-east #
  

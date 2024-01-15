@@ -17,7 +17,7 @@ road #
  echo "initdone"
 initdone
 road #
- ipsec auto --up road
+ ipsec up road
 "road" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "road" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 "road" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
@@ -95,9 +95,39 @@ road #
  ../../guestbin/ping-once.sh --up 2001:db8:0:20::254
 up
 road #
- # non-zero counts confirm encrypted traffic flowing
-road #
  ipsec trafficstatus
 #2: "road", type=ESP, add_time=1234567890, inBytes=208, outBytes=208, maxBytes=2^63B, id='@east'
+road #
+ ipsec whack --rekey-ike --name road
+"road" #3: initiating rekey to replace IKE SA #1
+"road" #3: sent CREATE_CHILD_SA request to rekey IKE SA
+"road" #3: initiator rekeyed IKE SA #1 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"road" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+road #
+ ../../guestbin/ping-once.sh --up 2001:db8:0:2::254
+up
+road #
+ ../../guestbin/ping-once.sh --up 2001:db8:0:20::254
+up
+road #
+ ipsec trafficstatus
+#2: "road", type=ESP, add_time=1234567890, inBytes=416, outBytes=416, maxBytes=2^63B, id='@east'
+road #
+ ipsec whack --rekey-child --name road
+"road" #4: initiating rekey to replace Child SA #2
+"road" #4: sent CREATE_CHILD_SA request to rekey IPsec SA
+"road" #4: accepted selectors [2001:db8:0:3::/64]->[2001:db8:0:2::/64 2001:db8:0:20::/64]
+"road" #4: initiator rekeyed Child SA #2 using #3; IPsec tunnel [2001:db8:0:3::/64===2001:db8:0:2::/64] [2001:db8:0:3::/64===2001:db8:0:20::/64] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATD=192.1.2.23:4500 DPD=passive}
+"road" #2: deleting established Child SA using IKE SA #3
+"road" #2: ESP traffic information: in=416B out=416B
+road #
+ ../../guestbin/ping-once.sh --up 2001:db8:0:2::254
+up
+road #
+ ../../guestbin/ping-once.sh --up 2001:db8:0:20::254
+up
+road #
+ ipsec trafficstatus
+#4: "road", type=ESP, add_time=1234567890, inBytes=208, outBytes=208, maxBytes=2^63B, id='@east'
 road #
  

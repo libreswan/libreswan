@@ -17,7 +17,7 @@ road #
  echo "initdone"
 initdone
 road #
- ipsec auto --up road
+ ipsec up road
 "road" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "road" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 "road" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}

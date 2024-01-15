@@ -1,1 +1,1 @@
-ipsec auto --up road
+ipsec up road
