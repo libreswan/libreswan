@@ -20,16 +20,14 @@
   <refsynopsisdiv id="synopsis">
 
     <cmdsynopsis>
-      <command>ipsec</command>
-      <arg choice="plain"><replaceable>whack</replaceable></arg>
+      <command>ipsec whack</command>
       <arg choice="opt">--help</arg>
       <arg choice="opt">--version</arg>
     </cmdsynopsis>
 
     <cmdsynopsis>
-      <command>ipsec</command>
+      <command>ipsec whack</command>
 
-      <arg choice="plain"><replaceable>whack</replaceable></arg>
       <arg choice="plain">--name <replaceable>connection-name</replaceable></arg>
 
       <group choice="opt">
@@ -281,9 +279,7 @@
     </cmdsynopsis>
 
     <cmdsynopsis>
-      <command>ipsec</command>
-
-      <arg choice="plain"><replaceable>whack</replaceable></arg>
+      <command>ipsec whack</command>
 
       <arg choice="plain">--keyid <replaceable>id</replaceable></arg>
 
@@ -298,9 +294,7 @@
     </cmdsynopsis>
 
     <cmdsynopsis>
-      <command>ipsec</command>
-
-      <arg choice="plain"><replaceable>whack</replaceable></arg>
+      <command>ipsec whack</command>
 
       <group choice="plain">
         <arg choice="plain">--listen</arg>
@@ -314,9 +308,7 @@
     </cmdsynopsis>
 
     <cmdsynopsis>
-      <command>ipsec</command>
-
-      <arg choice="plain"><replaceable>whack</replaceable></arg>
+      <command>ipsec whack</command>
 
       <group choice="plain">
         <arg choice="plain">--ddos-auto</arg>
@@ -329,9 +321,7 @@
     </cmdsynopsis>
 
     <cmdsynopsis>
-      <command>ipsec</command>
-
-      <arg choice="plain"><replaceable>whack</replaceable></arg>
+      <command>ipsec whack</command>
 
       <group choice="plain">
         <arg choice="plain">--route</arg>
@@ -349,9 +339,7 @@
     </cmdsynopsis>
 
     <cmdsynopsis>
-      <command>ipsec</command>
-
-      <arg choice="plain"><replaceable>whack</replaceable></arg>
+      <command>ipsec whack</command>
 
       <group choice="plain">
         <arg choice="plain">--initiate</arg>
@@ -378,27 +366,21 @@
     </cmdsynopsis>
 
     <cmdsynopsis>
-      <command>ipsec</command>
-
-      <arg choice="plain"><replaceable>whack</replaceable></arg>
+      <command>ipsec whack</command>
 
       <arg choice="plain">--global-redirect
       <replaceable>yes|no|auto</replaceable></arg>
     </cmdsynopsis>
 
     <cmdsynopsis>
-      <command>ipsec</command>
-
-      <arg choice="plain"><replaceable>whack</replaceable></arg>
+      <command>ipsec whack</command>
 
       <arg choice="plain">--global-redirect-to
       <replaceable>ip-address(es)</replaceable></arg>
     </cmdsynopsis>
 
     <cmdsynopsis>
-      <command>ipsec</command>
-
-      <arg choice="plain"><replaceable>whack</replaceable></arg>
+      <command>ipsec whack</command>
 
       <arg choice="opt">
 	--name
@@ -411,9 +393,7 @@
     </cmdsynopsis>
 
     <cmdsynopsis>
-      <command>ipsec</command>
-
-      <arg choice="plain"><replaceable>whack</replaceable></arg>
+      <command>ipsec whack</command>
 
       <group choice="opt">
         <arg choice="opt">--tunnelipv4</arg>
@@ -439,9 +419,7 @@
     </cmdsynopsis>
 
     <cmdsynopsis>
-      <command>ipsec</command>
-
-      <arg choice="plain"><replaceable>whack</replaceable></arg>
+      <command>ipsec whack</command>
 
       <arg choice="plain">--crash</arg>
 
@@ -449,9 +427,7 @@
     </cmdsynopsis>
 
     <cmdsynopsis>
-      <command>ipsec</command>
-
-      <arg choice="plain"><replaceable>whack</replaceable></arg>
+      <command>ipsec whack</command>
 
       <arg choice="plain">--name
       <replaceable>connection-name</replaceable></arg>
@@ -462,9 +438,7 @@
     </cmdsynopsis>
 
     <cmdsynopsis>
-      <command>ipsec</command>
-
-      <arg choice="plain"><replaceable>whack</replaceable></arg>
+      <command>ipsec whack</command>
 
       <arg choice="plain">--deletestate
       <replaceable>state-number</replaceable></arg>
@@ -476,9 +450,7 @@
     </cmdsynopsis>
 
     <cmdsynopsis>
-      <command>ipsec</command>
-
-      <arg choice="plain"><replaceable>whack</replaceable></arg>
+      <command>ipsec whack</command>
 
       <arg choice="plain">--deleteuser</arg>
       <arg choice="plain">--name
@@ -491,9 +463,7 @@
     </cmdsynopsis>
 
     <cmdsynopsis>
-      <command>ipsec</command>
-
-      <arg choice="plain"><replaceable>whack</replaceable></arg>
+      <command>ipsec whack</command>
 
       <arg choice="opt">
 	--name
@@ -531,9 +501,7 @@
     </cmdsynopsis>
 
     <cmdsynopsis>
-      <command>ipsec</command>
-
-      <arg choice="plain"><replaceable>whack</replaceable></arg>
+      <command>ipsec whack</command>
 
       <arg choice="opt">--utc</arg>
 
@@ -550,9 +518,7 @@
     </cmdsynopsis>
 
     <cmdsynopsis>
-      <command>ipsec</command>
-
-      <arg choice="plain"><replaceable>whack</replaceable></arg>
+      <command>ipsec whack</command>
 
       <arg choice="opt">--utc</arg>
 
@@ -562,33 +528,25 @@
     </cmdsynopsis>
 
     <cmdsynopsis>
-      <command>ipsec</command>
-
-      <arg choice="plain"><replaceable>whack</replaceable></arg>
+      <command>ipsec whack</command>
 
       <arg choice="plain">--ddns</arg>
     </cmdsynopsis>
 
     <cmdsynopsis>
-      <command>ipsec</command>
-
-      <arg choice="plain"><replaceable>whack</replaceable></arg>
+      <command>ipsec whack</command>
 
       <arg choice="plain">--listevents</arg>
     </cmdsynopsis>
 
     <cmdsynopsis>
-      <command>ipsec</command>
-
-      <arg choice="plain"><replaceable>whack</replaceable></arg>
+      <command>ipsec whack</command>
 
       <arg choice="plain">--purgeocsp</arg>
     </cmdsynopsis>
 
     <cmdsynopsis>
-      <command>ipsec</command>
-
-      <arg choice="plain"><replaceable>whack</replaceable></arg>
+      <command>ipsec whack</command>
 
       <arg choice="plain">--status</arg>
       <arg choice="plain">--addresspoolstatus</arg>
@@ -606,9 +564,7 @@
     </cmdsynopsis>
 
     <cmdsynopsis>
-      <command>ipsec</command>
-
-      <arg choice="plain"><replaceable>whack</replaceable></arg>
+      <command>ipsec whack</command>
 
       <arg choice="plain">--globalstatus</arg>
       <arg choice="plain">--clearstats</arg>
@@ -620,9 +576,7 @@
     </cmdsynopsis>
 
     <cmdsynopsis>
-      <command>ipsec</command>
-
-      <arg choice="plain"><replaceable>whack</replaceable></arg>
+      <command>ipsec whack</command>
 
       <arg choice="opt">--ike-socket-bufsize <replaceable>bufsize</replaceable></arg>
       <arg choice="opt">--ike-socket-errqueue-toggle</arg>
@@ -634,9 +588,7 @@
     </cmdsynopsis>
 
     <cmdsynopsis>
-      <command>ipsec</command>
-
-      <arg choice="plain"><replaceable>whack</replaceable></arg>
+      <command>ipsec whack</command>
 
       <arg choice="plain">--shutdown</arg>
 

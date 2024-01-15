@@ -17,8 +17,7 @@
   <!-- body begins here -->
   <refsynopsisdiv id="synopsis">
     <cmdsynopsis>
-      <command>ipsec</command>
-      <arg choice="plain"><replaceable>addconn</replaceable></arg>
+      <command>ipsec addconn</command>
       <arg choice="opt">--configsetup</arg>
       <arg choice="opt">--config <replaceable>@@IPSEC_CONF@@</replaceable></arg>
       <arg choice="opt">--ctlsocket <replaceable>@@RUNDIR@@/pluto.ctl</replaceable></arg>
@@ -28,8 +27,7 @@
     </cmdsynopsis>
 
     <cmdsynopsis>
-      <command>ipsec</command>
-      <arg choice="plain"><replaceable>addconn</replaceable></arg>
+      <command>ipsec addconn</command>
       <arg choice="plain">--liststack</arg>
       <arg choice="opt">--config <replaceable>@@IPSEC_CONF@@</replaceable></arg>
       <arg choice="opt">--ctlsocket <replaceable>@@RUNDIR@@/pluto.ctl</replaceable></arg>
@@ -39,8 +37,7 @@
     </cmdsynopsis>
 
     <cmdsynopsis>
-      <command>ipsec</command>
-      <arg choice="plain"><replaceable>addconn</replaceable></arg>
+      <command>ipsec addconn</command>
       <arg choice="plain">--checkconfig</arg>
       <arg choice="opt">--config <replaceable>@@IPSEC_CONF@@</replaceable></arg>
       <arg choice="opt">--ctlsocket <replaceable>@@RUNDIR@@/pluto.ctl</replaceable></arg>
@@ -48,21 +45,17 @@
       <arg choice="opt">--warningsfatal</arg>
     </cmdsynopsis>
 
-
     <cmdsynopsis>
-      <command>ipsec</command>
-      <arg choice="plain"><replaceable>addconn</replaceable></arg>
+      <command>ipsec addconn</command>
       <arg choice="plain">--autoall</arg>
       <arg choice="opt">--config <replaceable>@@IPSEC_CONF@@</replaceable></arg>
       <arg choice="opt">--ctlsocket <replaceable>@@RUNDIR@@/pluto.ctl</replaceable></arg>
       <arg choice="opt">--verbose</arg>
       <arg choice="opt">--warningsfatal</arg>
-
     </cmdsynopsis>
 
     <cmdsynopsis>
-      <command>ipsec</command>
-      <arg choice="plain"><replaceable>addconn</replaceable></arg>
+      <command>ipsec addconn</command>
       <arg choice="opt">--config <replaceable>@@IPSEC_CONF@@</replaceable></arg>
       <arg choice="opt">--ctlsocket <replaceable>@@RUNDIR@@/pluto.ctl</replaceable></arg>
       <arg choice="opt">--verbose</arg>
@@ -72,8 +65,7 @@
     </cmdsynopsis>
 
     <cmdsynopsis>
-      <command>ipsec</command>
-      <arg choice="plain"><replaceable>addconn</replaceable></arg>
+      <command>ipsec addconn</command>
       <arg choice="opt">--config <replaceable>@@IPSEC_CONF@@</replaceable></arg>
       <arg choice="opt">--ctlsocket <replaceable>@@RUNDIR@@/pluto.ctl</replaceable></arg>
       <arg choice="opt">--listadd</arg>
@@ -86,13 +78,10 @@
     </cmdsynopsis>
 
     <cmdsynopsis>
-      <command>ipsec</command>
-      <arg choice="plain"><replaceable>addconn --help</replaceable></arg>
+      <command>ipsec addconn</command>
+      <arg choice="plain">--help</arg>
     </cmdsynopsis>
   </refsynopsisdiv>
-
-
-
 
   <refsect1 id='description'>
     <title>DESCRIPTION</title>

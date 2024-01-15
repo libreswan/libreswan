@@ -17,8 +17,7 @@
   <!-- body begins here -->
   <refsynopsisdiv id='synopsis'>
     <cmdsynopsis>
-      <command>ipsec</command>
-      <arg choice='plain'><replaceable>letsencrypt</replaceable></arg>
+      <command>ipsec letsencrypt</command>
       <arg choice='opt'>--client </arg>
       <arg choice='opt'>--server </arg>
       <arg choice='opt'>--test </arg>
@@ -34,13 +33,11 @@
   <refsect1 id='examples'>
     <title>EXAMPLES</title>
     <cmdsynopsis>
-      <command>ipsec</command>
-      <arg choice='plain'><replaceable>letsencrypt</replaceable></arg>
+      <command>ipsec letsencrypt</command>
       <arg choice='plain'>{ --client | --server | --test | --disable | --help }</arg>
     </cmdsynopsis>
     <cmdsynopsis>
-      <command>ipsec</command>
-      <arg choice='plain'><replaceable>letsencrypt</replaceable></arg>
+      <command>ipsec letsencrypt</command>
       <arg choice='plain'>{ --generate-certificate | --renew }</arg>
       <arg choice='plain'><replaceable>hostname</replaceable></arg>
     </cmdsynopsis>

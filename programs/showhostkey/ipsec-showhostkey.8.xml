@@ -18,9 +18,8 @@
   <!-- body begins here -->
   <refsynopsisdiv id='synopsis'>
     <cmdsynopsis>
-      <command>ipsec</command>
+      <command>ipsec showhostkey</command>
 
-      <arg choice='plain'><replaceable>showhostkey</replaceable></arg>
       <arg>--verbose</arg>
 
       <arg choice='req'>

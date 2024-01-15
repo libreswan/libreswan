@@ -17,8 +17,7 @@
   <!-- body begins here -->
   <refsynopsisdiv id='synopsis'>
     <cmdsynopsis>
-      <command>ipsec</command>
-      <arg choice='plain'><replaceable>rsasigkey</replaceable></arg>
+      <command>ipsec rsasigkey</command>
       <arg choice='opt'>--verbose </arg>
       <arg choice='opt'>--seeddev <replaceable>device</replaceable></arg>
       <arg choice='opt'>--seed <replaceable>numbits</replaceable></arg>
