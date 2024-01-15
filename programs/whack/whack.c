@@ -735,7 +735,7 @@ static const struct option long_opts[] = {
 
 	{ "rekey-ike", no_argument, NULL, OPT_REKEY_IKE },
 	{ "rekey-child", no_argument, NULL, OPT_REKEY_CHILD },
-	{ "rekey-ipsec", no_argument, NULL, OPT_REKEY_CHILD },
+	{ "rekey-ipsec", no_argument, NULL, OPT_REKEY_CHILD }, /* old name */
 	/* list options */
 
 	{ "utc", no_argument, NULL, LST_UTC },
