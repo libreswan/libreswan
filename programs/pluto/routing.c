@@ -1568,6 +1568,8 @@ static bool dispatch_1(enum routing_event event,
 	case X(ESTABLISH_IKE_SA, ROUTED_TUNNEL, PERMANENT):
 	case X(ESTABLISH_IKE_SA, UNROUTED_NEGOTIATION, INSTANCE):
 	case X(ESTABLISH_IKE_SA, UNROUTED_NEGOTIATION, PERMANENT):
+	case X(ESTABLISH_IKE_SA, UNROUTED_INBOUND, INSTANCE):
+	case X(ESTABLISH_IKE_SA, UNROUTED_INBOUND, PERMANENT):
 		/* unchanged; except to attach IKE */
 		set_established_ike(event, c, c->child.routing, e);
 		return true;
