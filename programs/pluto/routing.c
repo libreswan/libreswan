@@ -46,8 +46,8 @@ enum routing_event {
 	CONNECTION_PENDING,
 	CONNECTION_RESCHEDULE,
 	/* establish a connection (speculative) */
-	CONNECTION_ESTABLISH_IKE_SA,
-	CONNECTION_ESTABLISH_CHILD_SA,
+	CONNECTION_ESTABLISH_IKE,
+	CONNECTION_ESTABLISH_CHILD,
 	CONNECTION_ESTABLISH_INBOUND,
 	CONNECTION_ESTABLISH_OUTBOUND,
 	/* tear down a connection */
@@ -64,8 +64,8 @@ static const char *routing_event_name[] = {
 	S(CONNECTION_ROUTE),
 	S(CONNECTION_UNROUTE),
 	S(CONNECTION_INITIATE),
-	S(CONNECTION_ESTABLISH_IKE_SA),
-	S(CONNECTION_ESTABLISH_CHILD_SA),
+	S(CONNECTION_ESTABLISH_IKE),
+	S(CONNECTION_ESTABLISH_CHILD),
 	S(CONNECTION_ESTABLISH_INBOUND),
 	S(CONNECTION_ESTABLISH_OUTBOUND),
 	S(CONNECTION_PENDING),
@@ -354,7 +354,7 @@ bool connection_establish_child(struct ike_sa *ike, struct child_sa *child, wher
 		.where = where,
 		.initiated_by = INITIATED_BY_PEER,
 	};
-	return dispatch(CONNECTION_ESTABLISH_CHILD_SA, cc, logger, &annex);
+	return dispatch(CONNECTION_ESTABLISH_CHILD, cc, logger, &annex);
 }
 
 enum shunt_kind routing_shunt_kind(enum routing routing)
@@ -1428,7 +1428,7 @@ void connection_establish_ike(struct ike_sa *ike, where_t where)
 		.where = where,
 		.initiated_by = INITIATED_BY_PEER,
 	};
-	dispatch(CONNECTION_ESTABLISH_IKE_SA, c, logger, &annex);
+	dispatch(CONNECTION_ESTABLISH_IKE, c, logger, &annex);
 }
 
 void connection_route(struct connection *c, where_t where)
@@ -1553,23 +1553,23 @@ static bool dispatch_1(enum routing_event event,
 		}
 		return true;
 
-	case X(ESTABLISH_IKE_SA, UNROUTED, INSTANCE):
-	case X(ESTABLISH_IKE_SA, UNROUTED, PERMANENT):
-	case X(ESTABLISH_IKE_SA, UNROUTED_BARE_NEGOTIATION, INSTANCE):
-	case X(ESTABLISH_IKE_SA, UNROUTED_BARE_NEGOTIATION, PERMANENT):
+	case X(ESTABLISH_IKE, UNROUTED, INSTANCE):
+	case X(ESTABLISH_IKE, UNROUTED, PERMANENT):
+	case X(ESTABLISH_IKE, UNROUTED_BARE_NEGOTIATION, INSTANCE):
+	case X(ESTABLISH_IKE, UNROUTED_BARE_NEGOTIATION, PERMANENT):
 		set_established_ike(event, c, RT_UNROUTED_BARE_NEGOTIATION, e);
 		return true;
 
-	case X(ESTABLISH_IKE_SA, ROUTED_NEGOTIATION, INSTANCE):
-	case X(ESTABLISH_IKE_SA, ROUTED_NEGOTIATION, PERMANENT):
-	case X(ESTABLISH_IKE_SA, ROUTED_ONDEMAND, INSTANCE):
-	case X(ESTABLISH_IKE_SA, ROUTED_ONDEMAND, PERMANENT):
-	case X(ESTABLISH_IKE_SA, ROUTED_TUNNEL, INSTANCE):
-	case X(ESTABLISH_IKE_SA, ROUTED_TUNNEL, PERMANENT):
-	case X(ESTABLISH_IKE_SA, UNROUTED_NEGOTIATION, INSTANCE):
-	case X(ESTABLISH_IKE_SA, UNROUTED_NEGOTIATION, PERMANENT):
-	case X(ESTABLISH_IKE_SA, UNROUTED_INBOUND, INSTANCE):
-	case X(ESTABLISH_IKE_SA, UNROUTED_INBOUND, PERMANENT):
+	case X(ESTABLISH_IKE, ROUTED_NEGOTIATION, INSTANCE):
+	case X(ESTABLISH_IKE, ROUTED_NEGOTIATION, PERMANENT):
+	case X(ESTABLISH_IKE, ROUTED_ONDEMAND, INSTANCE):
+	case X(ESTABLISH_IKE, ROUTED_ONDEMAND, PERMANENT):
+	case X(ESTABLISH_IKE, ROUTED_TUNNEL, INSTANCE):
+	case X(ESTABLISH_IKE, ROUTED_TUNNEL, PERMANENT):
+	case X(ESTABLISH_IKE, UNROUTED_NEGOTIATION, INSTANCE):
+	case X(ESTABLISH_IKE, UNROUTED_NEGOTIATION, PERMANENT):
+	case X(ESTABLISH_IKE, UNROUTED_INBOUND, INSTANCE):
+	case X(ESTABLISH_IKE, UNROUTED_INBOUND, PERMANENT):
 		/* unchanged; except to attach IKE */
 		set_established_ike(event, c, c->child.routing, e);
 		return true;
@@ -1792,8 +1792,8 @@ static bool dispatch_1(enum routing_event event,
 		teardown_unrouted_inbound_negotiation(event, c, (*e->child), logger, e->where, e->story);
 		return true;
 
-	case X(ESTABLISH_CHILD_SA, UNROUTED_BARE_NEGOTIATION, INSTANCE):
-	case X(ESTABLISH_CHILD_SA, UNROUTED_BARE_NEGOTIATION, PERMANENT):
+	case X(ESTABLISH_CHILD, UNROUTED_BARE_NEGOTIATION, INSTANCE):
+	case X(ESTABLISH_CHILD, UNROUTED_BARE_NEGOTIATION, PERMANENT):
 		if (!install_inbound_ipsec_sa((*e->child), RT_UNROUTED_INBOUND, e->where)) {
 			return false;
 		}
@@ -1804,8 +1804,8 @@ static bool dispatch_1(enum routing_event event,
 		set_established_child(event, c, RT_ROUTED_TUNNEL, e);
 		return true;
 
-	case X(ESTABLISH_CHILD_SA, ROUTED_NEGOTIATION, INSTANCE):
-	case X(ESTABLISH_CHILD_SA, ROUTED_NEGOTIATION, PERMANENT):
+	case X(ESTABLISH_CHILD, ROUTED_NEGOTIATION, INSTANCE):
+	case X(ESTABLISH_CHILD, ROUTED_NEGOTIATION, PERMANENT):
 		/* addconn-05-bogus-left-interface
 		 * algo-ikev2-aes128-sha1-ecp256 et.al. */
 		if (!install_inbound_ipsec_sa((*e->child), RT_ROUTED_INBOUND_NEGOTIATION, e->where)) {
@@ -1818,8 +1818,8 @@ static bool dispatch_1(enum routing_event event,
 		set_established_child(event, c, RT_ROUTED_TUNNEL, e);
 		return true;
 
-	case X(ESTABLISH_CHILD_SA, ROUTED_ONDEMAND, INSTANCE):
-	case X(ESTABLISH_CHILD_SA, ROUTED_ONDEMAND, PERMANENT):
+	case X(ESTABLISH_CHILD, ROUTED_ONDEMAND, INSTANCE):
+	case X(ESTABLISH_CHILD, ROUTED_ONDEMAND, PERMANENT):
 		/*
 		 * This transition (ignoring IKEv1 responder) is
 		 * immediately followed by an event to replace the
@@ -1837,8 +1837,8 @@ static bool dispatch_1(enum routing_event event,
 		set_established_child(event, c, RT_ROUTED_TUNNEL, e);
 		return true;
 
-	case X(ESTABLISH_CHILD_SA, ROUTED_TUNNEL, INSTANCE):
-	case X(ESTABLISH_CHILD_SA, ROUTED_TUNNEL, PERMANENT):
+	case X(ESTABLISH_CHILD, ROUTED_TUNNEL, INSTANCE):
+	case X(ESTABLISH_CHILD, ROUTED_TUNNEL, PERMANENT):
 		/*
 		 * This happens when there's a re-key where the state
 		 * is re-established but not the policy (that is left
@@ -1870,8 +1870,8 @@ static bool dispatch_1(enum routing_event event,
 		set_established_child(event, c, RT_ROUTED_TUNNEL, e);
 		return true;
 
-	case X(ESTABLISH_CHILD_SA, UNROUTED, INSTANCE):
-	case X(ESTABLISH_CHILD_SA, UNROUTED, PERMANENT):
+	case X(ESTABLISH_CHILD, UNROUTED, INSTANCE):
+	case X(ESTABLISH_CHILD, UNROUTED, PERMANENT):
 		if (!install_inbound_ipsec_sa((*e->child), RT_UNROUTED_INBOUND, e->where)) {
 			return false;
 		}
@@ -1882,7 +1882,7 @@ static bool dispatch_1(enum routing_event event,
 		set_established_child(event, c, RT_ROUTED_TUNNEL, e);
 		return true;
 
-	case X(ESTABLISH_CHILD_SA, UNROUTED_NEGOTIATION, INSTANCE):
+	case X(ESTABLISH_CHILD, UNROUTED_NEGOTIATION, INSTANCE):
 		if (!install_inbound_ipsec_sa((*e->child), RT_UNROUTED_INBOUND_NEGOTIATION, e->where)) {
 			return false;
 		}
@@ -2133,7 +2133,7 @@ static bool dispatch_1(enum routing_event event,
  * Labeled IPsec.
  */
 
-	case X(ESTABLISH_IKE_SA, UNROUTED, LABELED_PARENT):
+	case X(ESTABLISH_IKE, UNROUTED, LABELED_PARENT):
 		/*
 		 * For SEC_LABELs install a trap for any outgoing
 		 * connection so that it will trigger an acquire which
@@ -2153,7 +2153,7 @@ static bool dispatch_1(enum routing_event event,
 		}
 		set_established_ike(event, c, RT_ROUTED_ONDEMAND, e);
 		return true;
-	case X(ESTABLISH_IKE_SA, ROUTED_ONDEMAND, LABELED_PARENT):
+	case X(ESTABLISH_IKE, ROUTED_ONDEMAND, LABELED_PARENT):
 		/*
 		 * Presumably a rekey?
 		 */
@@ -2231,7 +2231,7 @@ static bool dispatch_1(enum routing_event event,
  * Labeled IPsec child.
  */
 
-	case X(ESTABLISH_CHILD_SA, UNROUTED_TUNNEL, LABELED_CHILD):
+	case X(ESTABLISH_CHILD, UNROUTED_TUNNEL, LABELED_CHILD):
 		/* rekey */
 		if (!install_inbound_ipsec_sa((*e->child), RT_UNROUTED_TUNNEL, e->where)) {
 			return false;
@@ -2243,7 +2243,7 @@ static bool dispatch_1(enum routing_event event,
 		}
 		set_established_child(event, c, RT_UNROUTED_TUNNEL, e);
 		return true;
-	case X(ESTABLISH_CHILD_SA, UNROUTED, LABELED_CHILD):
+	case X(ESTABLISH_CHILD, UNROUTED, LABELED_CHILD):
 		if (!install_inbound_ipsec_sa((*e->child), RT_UNROUTED_INBOUND, e->where)) {
 			return false;
 		}
