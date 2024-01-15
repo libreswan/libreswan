@@ -1907,7 +1907,11 @@ static bool dispatch_1(enum routing_event event,
 
 	case X(ESTABLISH_OUTBOUND, ROUTED_INBOUND_NEGOTIATION, INSTANCE):
 	case X(ESTABLISH_OUTBOUND, ROUTED_INBOUND_NEGOTIATION, PERMANENT):
-		if (!install_outbound_ipsec_sa((*e->child), RT_ROUTED_TUNNEL, /*up*/true, e->where)) {
+		if (!install_outbound_ipsec_sa((*e->child), RT_ROUTED_TUNNEL,
+					       (struct do_updown) {
+						       .up = true,
+						       .route = false,
+					       }, e->where)) {
 			return false;
 		}
 		set_established_child(event, c, RT_ROUTED_TUNNEL, e);
@@ -1924,7 +1928,11 @@ static bool dispatch_1(enum routing_event event,
 		 * ikev2-28-rw-server-rekey
 		 * ikev1-labeled-ipsec-01-permissive.
 		 */
-		if (!install_outbound_ipsec_sa((*e->child), RT_ROUTED_TUNNEL, /*up*/false, e->where)) {
+		if (!install_outbound_ipsec_sa((*e->child), RT_ROUTED_TUNNEL,
+					       (struct do_updown) {
+						       .up = false,
+						       .route = false,
+					       }, e->where)) {
 			return false;
 		}
 		set_established_child(event, c, RT_ROUTED_TUNNEL, e);
@@ -1934,7 +1942,11 @@ static bool dispatch_1(enum routing_event event,
 	case X(ESTABLISH_OUTBOUND, UNROUTED_INBOUND, PERMANENT):
 	case X(ESTABLISH_OUTBOUND, UNROUTED_INBOUND_NEGOTIATION, INSTANCE):
 	case X(ESTABLISH_OUTBOUND, UNROUTED_INBOUND_NEGOTIATION, PERMANENT):
-		if (!install_outbound_ipsec_sa((*e->child), RT_ROUTED_TUNNEL, /*up*/true, e->where)) {
+		if (!install_outbound_ipsec_sa((*e->child), RT_ROUTED_TUNNEL,
+					       (struct do_updown) {
+						       .up = true,
+						       .route = true,
+					       }, e->where)) {
 			return false;
 		}
 		set_established_child(event, c, RT_ROUTED_TUNNEL, e);
@@ -2160,7 +2172,11 @@ static bool dispatch_1(enum routing_event event,
 		return true;
 	case X(ESTABLISH_OUTBOUND, UNROUTED_TUNNEL, LABELED_CHILD):
 		/* rekey; already up */
-		if (!install_outbound_ipsec_sa((*e->child), RT_UNROUTED_TUNNEL, /*up*/false, e->where)) {
+		if (!install_outbound_ipsec_sa((*e->child), RT_UNROUTED_TUNNEL,
+					       (struct do_updown) {
+						       .up = false,
+						       .route = false,
+					       }, e->where)) {
 			return false;
 		}
 		set_established_child(event, c, RT_UNROUTED_TUNNEL, e);
@@ -2174,7 +2190,11 @@ static bool dispatch_1(enum routing_event event,
 		return true;
 	case X(ESTABLISH_OUTBOUND, UNROUTED_INBOUND, LABELED_CHILD):
 		/* new; not up */
-		if (!install_outbound_ipsec_sa((*e->child), RT_UNROUTED_TUNNEL, /*up*/true, e->where)) {
+		if (!install_outbound_ipsec_sa((*e->child), RT_UNROUTED_TUNNEL,
+					       (struct do_updown) {
+						       .up = true,
+						       .route = false,
+					       }, e->where)) {
 			return false;
 		}
 		set_established_child(event, c, RT_UNROUTED_TUNNEL, e);

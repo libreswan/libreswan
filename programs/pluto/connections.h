@@ -600,9 +600,13 @@ struct spd_owner {
 	/*
 	 * .bare_route
 	 *
-	 * Return the owner of the SPD's route, but excluding the SPD.
-	 * When this is NULL it is assumed that SPD's route should be
-	 * unrouted.
+	 * Return the owner of the SPD's route (but ignoring the
+	 * current SPD).  When this is NULL it is assumed that SPD's
+	 * route should be unrouted.
+	 *
+	 * When rekeying, since the current SPD is excluded, this is
+	 * NULL.  Hence this can not be used to determine if the
+	 * current SPD is already installed.
 	 *
 	 * The check excludes SPDs of the connection's parent: this
 	 * seems very weak as the parent may still be routed.
@@ -619,10 +623,10 @@ struct spd_owner {
 	/*
 	 * .bare_policy
 	 *
-	 * Assuming C_SPD doesn't exist (i.e., being deleted), look
-	 * for the highest priority policy that matches the selectors.
+	 * Assuming SPD doesn't exist (i.e., being deleted), look for
+	 * the highest priority policy that matches the selectors.
 	 *
-	 * Since C_SPD doesn't exist checks for matching .overlapip
+	 * Since SPD doesn't exist checks for matching .overlapip
 	 * and/or priority aren't needed.
 	 */
 	const struct spd_route *bare_policy;

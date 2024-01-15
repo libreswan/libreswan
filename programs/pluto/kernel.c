@@ -1956,7 +1956,7 @@ void show_kernel_interface(struct show *s)
 
 static bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 						   enum routing new_routing,
-						   bool up)
+						   struct do_updown updown)
 {
 	struct logger *logger = child->sa.logger;
 	struct connection *c = child->sa.st_connection;
@@ -1973,12 +1973,13 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 	}
 
 	ldbg(logger,
-	     "kernel: %s() installing IPsec policies for "PRI_SO": connection is currently "PRI_SO" %s up=%s",
+	     "kernel: %s() installing IPsec policies for "PRI_SO": connection is currently "PRI_SO" %s route=%s up=%s",
 	     __func__,
 	     pri_so(child->sa.st_serialno),
 	     pri_so(c->newest_routing_sa),
 	     enum_name(&routing_names, c->child.routing),
-	     bool_str(up));
+	     bool_str(updown.route),
+	     bool_str(updown.up));
 
 	/* clear the deck */
 	clear_connection_spd_conflicts(c);
@@ -2031,20 +2032,22 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 		 * Probably.  This code path needs a re-think.
 		 */
 
-		ldbg(logger, "kernel: %s() running updown-prepare", __func__);
 		PEXPECT(logger, spd->wip.ok);
-		if (owner.bare_route == NULL) {
+		if ((updown.route || updown.up) && owner.bare_route == NULL) {
 			/* a new route: no deletion required, but preparation is */
 			if (!do_updown(UPDOWN_PREPARE, c, spd, child, logger))
 				ldbg(logger, "kernel: prepare command returned an error");
+		} else {
+			ldbg(logger, "kernel: %s() skipping updown-prepare", __func__);
 		}
 
-		ldbg(logger, "kernel: %s() running updown-route", __func__);
 		PEXPECT(logger, spd->wip.ok);
-		if (owner.bare_route == NULL) {
+		if (updown.route && owner.bare_route == NULL) {
 			/* a new route: no deletion required, but preparation is */
 			ok = spd->wip.installed.route =
 				do_updown(UPDOWN_ROUTE, c, spd, child, logger);
+		} else {
+			ldbg(logger, "kernel: %s() skipping updown-route as non-bare", __func__);
 		}
 		if (!ok) {
 			break;
@@ -2063,11 +2066,12 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 		 * simple.
 		 */
 
-		if (up) {
+		if (updown.up) {
 			PEXPECT(logger, spd->wip.ok);
 			ok = spd->wip.installed.up =
 				do_updown(UPDOWN_UP, c, spd, child, logger);
 		}
+
 		if (!ok) {
 			break;
 		}
@@ -2175,7 +2179,8 @@ bool install_inbound_ipsec_sa(struct child_sa *child, enum routing new_routing, 
 	return true;
 }
 
-bool install_outbound_ipsec_sa(struct child_sa *child, enum routing new_routing, bool up, where_t where)
+bool install_outbound_ipsec_sa(struct child_sa *child, enum routing new_routing,
+			       struct do_updown updown, where_t where)
 {
 	struct logger *logger = child->sa.logger;
 	struct connection *c = child->sa.st_connection;
@@ -2200,7 +2205,7 @@ bool install_outbound_ipsec_sa(struct child_sa *child, enum routing new_routing,
 		return false;
 	}
 
-	if (!install_outbound_ipsec_kernel_policies(child, new_routing, up)) {
+	if (!install_outbound_ipsec_kernel_policies(child, new_routing, updown)) {
 		return false;
 	}
 
