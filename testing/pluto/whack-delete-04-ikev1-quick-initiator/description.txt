@@ -1,0 +1,7 @@
+IKEv1 quick exchange where the half quick initiator connection is deleted
+
+The initiator sends the first quick-mode request but is then deleted
+before it can process the response.
+
+For instance, the responder dies immediately after establishing the
+ISAKMP SA.

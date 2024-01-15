@@ -1,0 +1,13 @@
+IKEv1 quick exchange where the half quick connection is deleted
+
+The responder receives the quick-mode message, transitions, and then
+responds.  The connection is then unrouted.  The last transition
+being:
+
+  routing: stop ESTABLISH_INBOUND, UNROUTED_BARE_NEGOTIATION->UNROUTED_INBOUND, PERMANENT; ok=yes; negotiating_ike_sa #1 established_ike_sa #1 newest_routing_sa #0->#2
+
+This happens when the initiator disappears part way through the quick
+exchange.
+
+
+

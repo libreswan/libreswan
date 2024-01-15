@@ -1355,6 +1355,8 @@ kvmplutotest	whack-down-01-ikev1-child-1then2	good
 kvmplutotest	whack-down-01-ikev2-child-1then2	good
 kvmplutotest	whack-down-02-ikev1-child-2then1	good
 kvmplutotest	whack-down-02-ikev2-child-2then1	good
+kvmplutotest	whack-down-03-ikev1-quick-responder	good	github/1531
+kvmplutotest	whack-down-03-ikev1-quick-initiator	good	github/1531
 
 kvmplutotest	whack-delete-01-ikev1-child-1then2	good
 kvmplutotest	whack-delete-01-ikev2-child-1then2	good
@@ -1362,10 +1364,16 @@ kvmplutotest	whack-delete-02-ikev1-child-2then1	good
 kvmplutotest	whack-delete-02-ikev2-child-2then1	good
 kvmplutotest	whack-delete-03-up-revival-ikev1	good
 kvmplutotest	whack-delete-03-up-revival-ikev2	good
+kvmplutotest	whack-delete-04-ikev1-quick-responder	good	github/1531
+kvmplutotest	whack-delete-04-ikev1-quick-initiator	good	github/1531
 
 kvmplutotest	whack-deleteuser-01			good	github/1269
 kvmplutotest	whack-deleteid-01-psk-ikev1		good	github/1268
 kvmplutotest	whack-deleteid-01-psk-ikev2		good	github/1268
+
+kvmplutotest	whack-unroute-01-ikev1-quick-responder	good	github/1531
+kvmplutotest	whack-unroute-01-ikev1-quick-initiator	good	github/1531
+
 
 # PPK
 kvmplutotest	ikev2-ppk-static-01-insist-yes			good
@@ -1544,7 +1552,4 @@ kvmplutotest	ikev2-26-nic-offload-no-hw-auto		good
 kvmplutotest	ikev2-26-nic-offload-no-hw-crypto	wip	github/1527
 kvmplutotest	ikev2-26-nic-offload-no-hw-packet	wip	github/1527
 
-kvmplutotest	ikev1-29-quick-delete			wip	github/1531
-kvmplutotest	ikev1-29-quick-down			wip	github/1531
 kvmplutotest	ikev1-29-quick-restart			wip	github/1531
-kvmplutotest	ikev1-29-quick-unroute			wip	github/1531
