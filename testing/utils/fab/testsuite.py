@@ -107,12 +107,13 @@ class Test:
 
 class Testsuite:
 
-    def __init__(self, logger, testlist, error_level,
+    def __init__(self, logger, testlist,
                  testing_directory,
                  testsuite_output_directory=None):
         self.directory = os.path.dirname(testlist)
         self.testlist = collections.OrderedDict()
         line_nr = 0
+        ok = True
         with open(testlist, 'r') as testlist_file:
             for line in testlist_file:
                 line_nr += 1
@@ -131,15 +132,15 @@ class Testsuite:
                 fields = line.split()
                 if len(fields) < 3:
                     # This is serious
-                    logger.log(error_level,
-                               "****** %s:%d: line has too few fields: %s",
-                               testlist, line_nr, orig)
+                    logger.error("****** %s:%d: line has too few fields: %s",
+                                 testlist, line_nr, orig)
+                    ok = False
                     continue
                 if len(fields) > 4:
                     # This is serious
-                    logger.log(error_level,
-                               "****** %s:%d: line has too many fields: %s",
-                               testlist, line_nr, orig)
+                    logger.error("****** %s:%d: line has too many fields: %s",
+                                 testlist, line_nr, orig)
+                    ok = False
                     continue
                 kind = fields[0]
                 name = fields[1]
@@ -152,10 +153,10 @@ class Testsuite:
                 logger.debug("test directory: %s", test.directory)
                 if not os.path.exists(test.directory):
                     # This is serious.  However, stumble on.
-                    logger.log(error_level,
-                               "****** %s:%d: invalid test %s: test directory not found: %s",
-                               testlist, line_nr,
-                               test.name, test.directory)
+                    logger.error("****** %s:%d: invalid test %s: test directory not found: %s",
+                                 testlist, line_nr,
+                                 test.name, test.directory)
+                    ok = False
                     continue
                 if test.name in self.testlist:
                     # This is serious.
@@ -165,13 +166,16 @@ class Testsuite:
                     # selecting the first entry would invalidate
                     # earlier test results.
                     first = self.testlist[test.name]
-                    logger.log(error_level,
-                               "****** %s:%d: test %s %s %s is a duplicate of %s %s %s",
-                               testlist, line_nr,
-                               test.kind, test.name, test.status,
-                               first.kind, first.name, first.status)
+                    logger.error("****** %s:%d: test %s %s %s is a duplicate of %s %s %s",
+                                 testlist, line_nr,
+                                 test.kind, test.name, test.status,
+                                 first.kind, first.name, first.status)
+                    ok = False
                 # an OrderedDict which saves insertion order
                 self.testlist[test.name] = test
+
+        if not ok:
+            raise Exception("TESTLIST file %s invalid" % (testlist))
 
     def __iter__(self):
         return self.testlist.values().__iter__()
@@ -223,8 +227,7 @@ def is_test_output_directory(directory):
 
 def load(logger, log_level, args,
          testsuite_directory=None,
-         testsuite_output_directory=None,
-         error_level=logutil.ERROR):
+         testsuite_output_directory=None):
     """Load the single testsuite (TESTLIST) found in DIRECTORY
 
     A testsutite is defined by the presence of TESTLIST in DIRECTORY,
@@ -253,7 +256,7 @@ def load(logger, log_level, args,
             head, tail = os.path.split(head)
             path = os.path.join(tail, path)
 
-    return Testsuite(logger, testlist, error_level,
+    return Testsuite(logger, testlist,
                      testing_directory=args.testing_directory,
                      testsuite_output_directory=testsuite_output_directory or args.testsuite_output)
 
