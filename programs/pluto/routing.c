@@ -1786,6 +1786,12 @@ static bool dispatch_1(enum routing_event event,
 		teardown_routed_tunnel(event, c, e->child, e->where);
 		return true;
 
+	case X(TEARDOWN_CHILD, ROUTED_INBOUND_NEGOTIATION, INSTANCE):
+	case X(TEARDOWN_CHILD, ROUTED_INBOUND_NEGOTIATION, PERMANENT):
+		/* total overkill */
+		teardown_routed_tunnel(event, c, e->child, e->where);
+		return true;
+
 	case X(TEARDOWN_CHILD, UNROUTED_TUNNEL, INSTANCE):
 	case X(TEARDOWN_CHILD, UNROUTED_TUNNEL, PERMANENT):
 		teardown_unrouted_tunnel(event, c, (*e->child), logger, e->where, e->story);
