@@ -579,7 +579,7 @@ static bool pexpect_cat(const struct connection *c, struct logger *logger)
 		PEXPECT(logger, c->local->child.has_cat));
 }
 
-void add_cat_kernel_policy(const struct connection *c,
+bool add_cat_kernel_policy(const struct connection *c,
 			   const struct kernel_policy *kernel_policy,
 			   enum direction direction,
 			   struct logger *logger, where_t where,
@@ -587,7 +587,7 @@ void add_cat_kernel_policy(const struct connection *c,
 {
 	ldbg(logger, "%s", reason);
 	if (!pexpect_cat(c, logger)) {
-		return;
+		return false;
 	}
 
 	ip_selector local_client = selector_from_address(kernel_policy->local.host);
@@ -596,7 +596,9 @@ void add_cat_kernel_policy(const struct connection *c,
 			       kernel_policy, deltatime(0),
 			       logger, where, reason)) {
 		llog(RC_LOG, logger, "%s failed", reason);
+		return false;
 	}
+	return true;
 }
 
 static void delete_cat_kernel_policy(const struct spd_route *spd,
@@ -659,7 +661,7 @@ void delete_cat_kernel_policies(const struct spd_route *spd,
 	}
 }
 
-void install_inbound_ipsec_kernel_policy(struct child_sa *child,
+bool install_inbound_ipsec_kernel_policy(struct child_sa *child,
 					 struct spd_route *spd,
 					 where_t where)
 {
@@ -680,9 +682,11 @@ void install_inbound_ipsec_kernel_policy(struct child_sa *child,
 	const char *add_inbound_cat = NULL;
 #endif
 	if (add_inbound_cat != NULL) {
-		add_cat_kernel_policy(child->sa.st_connection,
+		if(!add_cat_kernel_policy(child->sa.st_connection,
 				      &kernel_policy, DIRECTION_INBOUND,
-				      child->sa.logger, where, add_inbound_cat);
+				      child->sa.logger, where, add_inbound_cat)) {
+			return false;
+		}
 	}
 
 	if (!kernel_ops_policy_add(KERNEL_POLICY_OP_ADD,
@@ -698,7 +702,9 @@ void install_inbound_ipsec_kernel_policy(struct child_sa *child,
 			__func__,
 			str_selector(&kernel_policy.src.client, &sb),
 			str_selector(&kernel_policy.dst.client, &db));
+		return false;
 	}
+	return true;
 }
 
 bool install_outbound_ipsec_kernel_policy(struct child_sa *child,
@@ -722,10 +728,12 @@ bool install_outbound_ipsec_kernel_policy(struct child_sa *child,
 		 * = add outbound client -> client policy for the
 		 *   assigned address.
 		 */
-		add_cat_kernel_policy(child->sa.st_connection,
+		if (!add_cat_kernel_policy(child->sa.st_connection,
 				      &kernel_policy, DIRECTION_OUTBOUND,
 				      child->sa.logger, where,
-				      "CAT: add outbound IPsec policy");
+				      "CAT: add outbound IPsec policy")) {
+			return false;
+		}
 		/*
 		 * Now add the client.
 		 */

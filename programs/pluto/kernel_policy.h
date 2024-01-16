@@ -222,7 +222,7 @@ void delete_spd_kernel_policies(struct spd_route *spd,
  * maps the local.host -> remote.client.
  */
 
-void add_cat_kernel_policy(const struct connection *c,
+bool add_cat_kernel_policy(const struct connection *c,
 			   const struct kernel_policy *kernel_policy,
 			   enum direction direction,
 			   struct logger *logger, where_t where,
@@ -239,7 +239,7 @@ void delete_cat_kernel_policies(const struct spd_route *spd,
 				struct logger *logger,
 				where_t where);
 
-void install_inbound_ipsec_kernel_policy(struct child_sa *child, struct spd_route *spd,
+bool install_inbound_ipsec_kernel_policy(struct child_sa *child, struct spd_route *spd,
 					 where_t where);
 bool install_outbound_ipsec_kernel_policy(struct child_sa *child, struct spd_route *spd,
 					  enum kernel_policy_op op, where_t where);
