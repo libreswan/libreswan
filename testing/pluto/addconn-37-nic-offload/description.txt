@@ -2,3 +2,7 @@ test nic-offload
 
 It isn't expected to orient, which is good as at that point it would
 notice that all interfaces don't support hardware offload.
+
+Paul: Note I don't think that is true. We do not know if the interface
+supports hardware offload, even after setup_esp_nic_offload(). Only at
+add_sa() time.
