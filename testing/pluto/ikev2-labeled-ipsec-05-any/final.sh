@@ -4,4 +4,4 @@
 ../../guestbin/ipsec-kernel-state.sh
 ../../guestbin/ipsec-kernel-policy.sh
 # The IKE SA should be associated with the template connection
-ipsec showstates
+ipsec showstates | sed -e 's/=[1-9][0-9]*B/=<NNN>B/g'
