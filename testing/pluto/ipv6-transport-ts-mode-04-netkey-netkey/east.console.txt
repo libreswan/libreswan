@@ -8,8 +8,8 @@ east #
  ipsec auto --add v6-transport
 "v6-transport": added IKEv1 connection
 east #
- ../../guestbin/echod.sh -6 1701
-listening on IPv6 port 1701
+ ../../guestbin/echo-server.sh -tcp -6 1701 -daemon
+listening on IPv6 TCP port 1701
 east #
  echo "initdone"
 initdone

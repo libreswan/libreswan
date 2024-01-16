@@ -6,8 +6,8 @@ east #
 east #
  #iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 east #
- ../../guestbin/echod.sh
-listening on IPv4 port 7
+ ../../guestbin/echo-server.sh -tcp -4 7 -daemon
+listening on IPv4 TCP port 7
 east #
  ipsec start
 Redirecting to: [initsystem]

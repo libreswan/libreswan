@@ -20,8 +20,8 @@ east #
 east #
  ../../guestbin/l2tpd.sh
 east #
- ../../guestbin/echod.sh
-listening on IPv4 port 7
+ ../../guestbin/echo-server.sh -tcp -4 7 -daemon
+listening on IPv4 TCP port 7
 east #
  echo done
 done

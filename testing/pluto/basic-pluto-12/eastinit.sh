@@ -2,7 +2,7 @@
 # block plaintext port 7
 #iptables -A INPUT -i eth1 -s 0.0.0.0/0 -p tcp --dport 7 -j DROP
 #iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
-../../guestbin/echod.sh
+../../guestbin/echo-server.sh -tcp -4 7 -daemon
 ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec auto --add westnet-eastnet
