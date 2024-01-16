@@ -1,25 +1,31 @@
   <varlistentry>
   <term><emphasis>nic-offload</emphasis></term>
   <listitem>
-<para>Set the method of Network Interface Controller (NIC)
-hardware offload for ESP/AH packet processing.  Acceptable values
-are <emphasis>no</emphasis> (the default),
-<emphasis>crypto</emphasis>, <emphasis>packet</emphasis>
-or <emphasis>auto</emphasis>. The value <emphasis>yes</emphasis>
+<para>Set the method of Network Interface Controller (NIC) hardware
+offload for ESP/AH packet processing.  Acceptable values are
+<emphasis>no</emphasis> (the default), <emphasis>crypto</emphasis>
+or <emphasis>packet</emphasis>.  The value <emphasis>yes</emphasis>
 is a backwards compatible value for <emphasis>crypto</emphasis>.
-This option is separate from any CPU hardware offload available.
-The crypto value offloads the crypto operations to the NIC card and is
-available on Linux 4.13+ using the XFRM IPsec stack, when the kernel is
-compiled with the options CONFIG_XFRM_OFFLOAD, CONFIG_INET_ESP_OFFLOAD and
-CONFIG_INET6_ESP_OFFLOAD. The packet value offloads the entire cleartext
-packet to the NIC card to be encrypted and is available on Linux 6.3+
-using the XFRM IPsec stack. The auto option will attempt to auto-detect
-the presence of kernel and hardware support, and if found, attempt to
-install a packet offload IPsec SA. Failing this, it will fallback to
-attempt a crypto offload IPsec SA, and failing that it will fall back to
-not using any nic-offload.  This fallback would then use the regular CPUs
-(and their hardware offload, such as AES-NI). One vendor supporting this
-offload method is Nvidia/Mellanox.</para>
+The nic-offload option is separate from any CPU hardware offload available.
+When set to <emphasis>crypto</emphasis>, only cryptographic operations
+are offloaded to the NIC card. This is available starting Linux 4.13 using
+the XFRM IPsec stack. It requires that the Linux kernel is compiled with
+the options CONFIG_XFRM_OFFLOAD, CONFIG_INET_ESP_OFFLOAD and
+CONFIG_INET6_ESP_OFFLOAD. When set to <emphasis>packet</emphasis>, the
+entire packet processing and encryption/decryption is offloaded to the NIC
+card. This is available starting Linux 6.3 using the XFRM IPsec stack when
+compiled with the same config options listed above. The Linux
+kernel attempts to fall back from crypto hardware offload to software, but
+only for some algorithms (AEADs only?). There is no fallback from packet
+to crypto as this would require re-installing previous kernel policies.
+crypto fallback would then use the regular CPUs (and their hardware offload,
+such as AES-NI). At the time of libreswan 5.0, only Nvidia/Mellanox supports
+packet offload. In general, it makes no sense to try to offload older
+cryptographic algorithms such as AES-SHA2 or 3DES-sha1, as these are so
+much slower than AEAD algorithms such as AES-GCM or AES-CCM, even if the
+latter are not accelerated (although these are accelerated on most modern
+CPUs and SOCs).
+</para>
   </listitem>
   </varlistentry>
 

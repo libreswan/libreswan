@@ -1276,18 +1276,6 @@ void setup_esp_nic_offload(struct nic_offload *nic_offload,
 	case NIC_OFFLOAD_NO:
 		ldbg(logger, "kernel: NIC esp-hw-offload disabled for connection '%s'", c->name);
 		return;
-
-	case NIC_OFFLOAD_AUTO:
-		if (!c->iface->nic_offload) {
-			ldbg(logger, "kernel: NIC esp-hw-offload for connection '%s' not available on interface %s",
-			     c->name, c->iface->real_device_name);
-			return;
-		}
-		ldbg(logger, "kernel: NIC esp-hw-offload auto offload for connection '%s' enabled on interface %s",
-		     c->name, c->iface->real_device_name);
-		nic_offload->dev = c->iface->real_device_name;
-		nic_offload->type = KERNEL_OFFLOAD_PACKET;
-		return;
 	case NIC_OFFLOAD_PACKET:
 		if (PBAD(logger, !c->iface->nic_offload)) {
 			return;
@@ -1603,67 +1591,22 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 			DBG_dump_hunk("ESP integrity key:", said_next->integ_key);
 		}
 
-		bool cno = (c->config->nic_offload == NIC_OFFLOAD_AUTO);
-		bool nic_offload_fallback = (c->iface->nic_offload &&
-					     c->config->nic_offload == NIC_OFFLOAD_AUTO);
-
 		setup_esp_nic_offload(&said_next->nic_offload, c, child->sa.logger);
 
 		bool ret = kernel_ops_add_sa(said_next, replace, child->sa.logger);
 
-		/*
-		 * XXX: these log messages struggle to make sense.
-		 * The first should be merged into the re-try code.
-		 * The second shouldn't be AUTO specific and happen
-		 * before the first add attempt?
-		 */
-
-		if (!ret && nic_offload_fallback) {
-			llog_sa(RC_LOG_SERIOUS, child,
-				"Warning: NIC packet esp-hw-offload not available for this IPsec SA with its negotiated parameters");
-		}
-		if (cno && said_next->nic_offload.dev == NULL) {
-			llog_sa(RC_LOG_SERIOUS, child,
-				"Warning: NIC packet esp-hw-offload not available for interface %s",
-				c->iface->real_device_name);
-		}
-
-		/*
-		 * XXX: This short-circuit is broken; it skips the
-		 * memzero() below.
-		 */
-
-		if (!ret && !cno)
-			goto fail;
-
-		if (!ret && nic_offload_fallback && said_next->nic_offload.dev != NULL) {
-			/* Fallback to crypto offload from packet offload */
-			if (said_next->nic_offload.type == KERNEL_OFFLOAD_PACKET) {
-				said_next->nic_offload.type = KERNEL_OFFLOAD_CRYPTO;
-				ret = kernel_ops_add_sa(said_next, replace, child->sa.logger);
-			} else {
-				llog_sa(RC_LOG_SERIOUS, child,
-					"Warning: NIC packet esp-hw-offload PAUL HUH");
-			}
-
-			if (!ret) {
-				llog_sa(RC_LOG_SERIOUS, child,
-					"Warning: NIC crypto esp-hw-offload failed for this IPsec SA with its negotiated parameters");
-				/* Fallback to non-nic-offload crypto */
-				said_next->nic_offload.dev = NULL;
-				ret = kernel_ops_add_sa(said_next, replace, child->sa.logger);
-				if (ret) {
-					llog_sa(RC_LOG_SERIOUS, child,
-						"Warning: IPsec SA is not using any NIC esp-hw-offload");
-				}
-			}
-		}
-
 		/* scrub keys from memory */
 		memset(esp_keymat.ptr, 0, esp_keymat.len);
 
-		if (!ret)
+		if (!ret) {
+			llog_sa(RC_LOG_SERIOUS, child, "Warning: Adding IPsec SA to failed - %s",
+				said_next->nic_offload.type == KERNEL_OFFLOAD_PACKET ?
+					"NIC packet esp-hw-offload possibly not available for the negotiated parameters" :
+					said_next->nic_offload.type == KERNEL_OFFLOAD_CRYPTO ?
+						"NIC packet esp-hw-offload possibly not available for the negotiated parameters" :
+							"unknown error");
 			goto fail;
+		}
 
 		said_next++;
 	}

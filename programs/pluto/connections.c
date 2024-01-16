@@ -2846,7 +2846,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 		case NIC_OFFLOAD_NO:
 			config->nic_offload = NIC_OFFLOAD_NO; /* default */
 			break;
-		case NIC_OFFLOAD_AUTO:
 		case NIC_OFFLOAD_PACKET:
 		case NIC_OFFLOAD_CRYPTO:
 			if (kernel_ops->detect_offload == NULL) {
@@ -2856,8 +2855,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 			config->nic_offload = wm->nic_offload;
 		}
 
-		if (wm->nic_offload == NIC_OFFLOAD_PACKET ||
-		    wm->nic_offload == NIC_OFFLOAD_AUTO) {
+		if (wm->nic_offload == NIC_OFFLOAD_PACKET) {
 			if (mode != ENCAP_MODE_TRANSPORT) {
 				return diag("nic-offload=packet|auto restricted to type=transport");
 			}
