@@ -14,9 +14,6 @@ west #
  ipsec add addconn--nic-offload=yes
 "addconn--nic-offload=yes": added IKEv2 connection
 west #
- ipsec add addconn--nic-offload=auto
-"addconn--nic-offload=auto": added IKEv2 connection
-west #
  ipsec add addconn--nic-offload=packet
 "addconn--nic-offload=packet": added IKEv2 connection
 west #
@@ -35,9 +32,6 @@ west #
  ipsec whack --name whack--nic-offload=yes    --nic-offload=yes     --transport --host 1.2.3.4 --to --host 5.6.7.8
 "whack--nic-offload=yes": added IKEv2 connection
 west #
- ipsec whack --name whack--nic-offload=auto   --nic-offload=auto    --transport --host 1.2.3.4 --to --host 5.6.7.8
-"whack--nic-offload=auto": added IKEv2 connection
-west #
  ipsec whack --name whack--nic-offload=packet --nic-offload=packet  --transport --host 1.2.3.4 --to --host 5.6.7.8
 "whack--nic-offload=packet": added IKEv2 connection
 west #
@@ -55,10 +49,6 @@ west #
 "whack--passthrough--nic-offload=yes": nic-offload=crypto ignored for never-negotiate connection
 "whack--passthrough--nic-offload=yes": added passthrough connection
 west #
- ipsec whack --name whack--passthrough--nic-offload=auto    --nic-offload=auto    --pass --host 1.2.3.4 --to --host 5.6.7.8
-"whack--passthrough--nic-offload=auto": nic-offload=auto ignored for never-negotiate connection
-"whack--passthrough--nic-offload=auto": added passthrough connection
-west #
  ipsec whack --name whack--passthrough--nic-offload=packet  --nic-offload=packet  --pass --host 1.2.3.4 --to --host 5.6.7.8
 "whack--passthrough--nic-offload=packet": nic-offload=packet ignored for never-negotiate connection
 "whack--passthrough--nic-offload=packet": added passthrough connection
@@ -68,19 +58,16 @@ west #
 "whack--passthrough--nic-offload=crypto": added passthrough connection
 west #
  ipsec connectionstatus | sed -n -e 's/\(^[^:]*:\).* \(nic-offload:[^;]*\);.*/\1 \2/p' | sort
-"addconn--nic-offload=auto": nic-offload:auto
 "addconn--nic-offload=crypto": nic-offload:crypto
 "addconn": nic-offload:no
 "addconn--nic-offload=no": nic-offload:no
 "addconn--nic-offload=packet": nic-offload:packet
 "addconn--nic-offload=yes": nic-offload:crypto
-"whack--nic-offload=auto": nic-offload:auto
 "whack--nic-offload=crypto": nic-offload:crypto
 "whack": nic-offload:no
 "whack--nic-offload=no": nic-offload:no
 "whack--nic-offload=packet": nic-offload:packet
 "whack--nic-offload=yes": nic-offload:crypto
-"whack--passthrough--nic-offload=auto": nic-offload:no
 "whack--passthrough--nic-offload=crypto": nic-offload:no
 "whack--passthrough": nic-offload:no
 "whack--passthrough--nic-offload=no": nic-offload:no
