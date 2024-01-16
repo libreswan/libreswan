@@ -21,28 +21,28 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
-"westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
+ ipsec add west-east
+"west-east": added IKEv2 connection
 west #
  ipsec whack --impair suppress_retransmits
 west #
+ ipsec whack --impair revival
+west #
  ipsec whack --impair install_ipsec_sa_outbound_state
 west #
- echo "initdone"
-initdone
-west #
- ipsec auto --up westnet-eastnet-ipv4-psk-ikev2
-"westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-"westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-"westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-"westnet-eastnet-ipv4-psk-ikev2" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-"westnet-eastnet-ipv4-psk-ikev2" #2: IMPAIR: kernel: install_ipsec_sa_outbound_state in setup_half_kernel_state()
-"westnet-eastnet-ipv4-psk-ikev2" #2: CHILD SA encountered fatal error: INVALID_SYNTAX
-"westnet-eastnet-ipv4-psk-ikev2" #1: encountered fatal error in state STATE_V2_ESTABLISHED_IKE_SA
-"westnet-eastnet-ipv4-psk-ikev2" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-ERROR: "westnet-eastnet-ipv4-psk-ikev2" #2: kernel: xfrm XFRM_MSG_DELPOLICY delete response for flow (out): No such file or directory (errno 2)
-ERROR: "westnet-eastnet-ipv4-psk-ikev2" #2: netlink response for Del SA esp.ESPSPIi@192.1.2.23: No such process (errno 3)
-"westnet-eastnet-ipv4-psk-ikev2" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and NOT sending notification
+ ipsec up west-east
+"west-east" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west-east" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"west-east" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"west-east" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"west-east" #2: IMPAIR: kernel: install_ipsec_sa_outbound_state in setup_half_kernel_state()
+"west-east" #2: CHILD SA encountered fatal error: INVALID_SYNTAX
+"west-east" #1: encountered fatal error in state STATE_V2_ESTABLISHED_IKE_SA
+"west-east" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"west-east" #2: IMPAIR: revival: skip scheduling revival event
+ERROR: "west-east" #2: kernel: xfrm XFRM_MSG_DELPOLICY delete response for flow (out): No such file or directory (errno 2)
+ERROR: "west-east" #2: netlink response for Del SA esp.ESPSPIi@192.1.2.23: No such process (errno 3)
+"west-east" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and NOT sending notification
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 down UNEXPECTED
@@ -55,10 +55,6 @@ west #
 done
 west #
  ../../guestbin/ipsec-kernel-state.sh
-src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPI reqid REQID mode transport
-	replay-window 0 
-	sel src 192.1.2.23/32 dst 192.1.2.45/32 
 west #
  ../../guestbin/ipsec-kernel-policy.sh
 west #

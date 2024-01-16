@@ -21,20 +21,21 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
-"westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
+ ipsec add west-east
+"west-east": added IKEv2 connection
 west #
  ipsec whack --impair suppress_retransmits
 west #
- echo "initdone"
-initdone
+ ipsec whack --impair revival
 west #
- ipsec auto --up westnet-eastnet-ipv4-psk-ikev2
-"westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-"westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-"westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-"westnet-eastnet-ipv4-psk-ikev2" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-"westnet-eastnet-ipv4-psk-ikev2" #2: IKE_AUTH response rejected Child SA with TS_UNACCEPTABLE
+ ipsec route west-east
+west #
+ ipsec up west-east
+"west-east" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west-east" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"west-east" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"west-east" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"west-east" #2: IKE_AUTH response rejected Child SA with TS_UNACCEPTABLE
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 down UNEXPECTED
@@ -49,5 +50,11 @@ west #
  ../../guestbin/ipsec-kernel-state.sh
 west #
  ../../guestbin/ipsec-kernel-policy.sh
+src 192.0.1.0/24 dst 192.0.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+west #
+ ipsec unroute west-east
 west #
  

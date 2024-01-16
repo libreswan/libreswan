@@ -5,13 +5,12 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
-"westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
+ ipsec add west-east
+"west-east": added IKEv2 connection
+east #
+ ipsec whack --impair revival
 east #
  ipsec whack --impair install_ipsec_sa_outbound_policy
-east #
- echo "initdone"
-initdone
 east #
  ../../guestbin/ipsec-kernel-state.sh
 src 192.1.2.23 dst 192.1.2.45
@@ -32,5 +31,9 @@ src 192.1.2.45 dst 192.1.2.23
 	 00000000 00000000 00000000 XXXXXXXX 
 east #
  ../../guestbin/ipsec-kernel-policy.sh
+east #
+ ipsec unroute west-east
+"west-east": terminating SAs using this connection
+"west-east" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 east #
  

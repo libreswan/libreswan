@@ -5,11 +5,10 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
-"westnet-eastnet-ipv4-psk-ikev2": added IKEv1 connection
+ ipsec add west-east
+"west-east": added IKEv1 connection
 east #
- echo "initdone"
-initdone
+ ipsec whack --impair revival
 east #
  ../../guestbin/ipsec-kernel-state.sh
 src 192.1.2.45 dst 192.1.2.23
@@ -31,5 +30,15 @@ src 192.0.1.0/24 dst 192.0.2.0/24
 	dir in priority PRIORITY ptype main
 	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
+east #
+ ipsec unroute west-east
+"west-east": terminating SAs using this connection
+"west-east" #2: deleting IPsec SA (QUICK_R1) and sending notification using ISAKMP SA #1
+ERROR: "west-east" #2: kernel: xfrm XFRM_MSG_DELPOLICY delete response for flow (out): No such file or directory (errno 2)
+ERROR: "west-east" #2: netlink response for Get SA esp.ESPSPIi@192.1.2.45: No such process (errno 3)
+"west-east" #2: failed to pull traffic counters from outbound IPsec SA
+"west-east" #2: ESP traffic information: in=0B out=0B
+ERROR: "west-east" #2: netlink response for Del SA esp.ESPSPIi@192.1.2.45: No such process (errno 3)
+"west-east" #1: deleting ISAKMP SA (MAIN_R3) and sending notification
 east #
  

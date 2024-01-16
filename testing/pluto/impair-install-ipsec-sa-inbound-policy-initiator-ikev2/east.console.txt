@@ -5,11 +5,10 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
-"westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
+ ipsec add west-east
+"west-east": added IKEv2 connection
 east #
- echo "initdone"
-initdone
+ ipsec whack --impair revival
 east #
  ../../guestbin/ipsec-kernel-state.sh
 src 192.1.2.23 dst 192.1.2.45
@@ -58,5 +57,12 @@ src 192.0.2.0/24 dst 192.0.1.0/24
 	dir out priority PRIORITY ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto esp reqid REQID mode tunnel
+east #
+ ipsec unroute west-east
+"west-east": terminating SAs using this connection
+"west-east" #3: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"west-east" #4: ESP traffic information: in=0B out=0B
+"west-east" #2: ESP traffic information: in=0B out=0B
+"west-east" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and NOT sending notification
 east #
  

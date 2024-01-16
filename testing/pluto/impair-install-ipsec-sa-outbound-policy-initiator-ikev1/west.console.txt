@@ -21,27 +21,26 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
-"westnet-eastnet-ipv4-psk-ikev2": added IKEv1 connection
+ ipsec add west-east
+"west-east": added IKEv1 connection
 west #
  ipsec whack --impair suppress_retransmits
 west #
+ ipsec whack --impair revival
+west #
  ipsec whack --impair install_ipsec_sa_outbound_policy
 west #
- echo "initdone"
-initdone
-west #
- ipsec auto --up westnet-eastnet-ipv4-psk-ikev2
-"westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv1 Main Mode connection
-"westnet-eastnet-ipv4-psk-ikev2" #1: sent Main Mode request
-"westnet-eastnet-ipv4-psk-ikev2" #1: sent Main Mode I2
-"westnet-eastnet-ipv4-psk-ikev2" #1: sent Main Mode I3
-"westnet-eastnet-ipv4-psk-ikev2" #1: Peer ID is ID_FQDN: '@east'
-"westnet-eastnet-ipv4-psk-ikev2" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-"westnet-eastnet-ipv4-psk-ikev2" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-"westnet-eastnet-ipv4-psk-ikev2" #2: sent Quick Mode request
-"westnet-eastnet-ipv4-psk-ikev2" #2: IMPAIR: kernel: install_ipsec_sa_outbound_policy in install_outbound_ipsec_kernel_policies()
-"westnet-eastnet-ipv4-psk-ikev2" #2: state transition function for STATE_QUICK_I1 had internal error
+ ipsec up west-east
+"west-east" #1: initiating IKEv1 Main Mode connection
+"west-east" #1: sent Main Mode request
+"west-east" #1: sent Main Mode I2
+"west-east" #1: sent Main Mode I3
+"west-east" #1: Peer ID is ID_FQDN: '@east'
+"west-east" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"west-east" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"west-east" #2: sent Quick Mode request
+"west-east" #2: IMPAIR: kernel: install_ipsec_sa_outbound_policy in install_outbound_ipsec_kernel_policies()
+"west-east" #2: state transition function for STATE_QUICK_I1 had internal error
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 down UNEXPECTED
