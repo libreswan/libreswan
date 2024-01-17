@@ -484,6 +484,27 @@ diffs_command()
     fi
 }
 
+kill_command()
+{
+    if test -n ${kvm_pidfile} ; then
+	echo "no ${kvm_pidfile} file" 1>&2
+	exit 1
+    fi
+    local pid=$(cat ${kvm_pidfile})
+    echo "killing ${pid}" 1>&2
+    kill ${pid}
+}
+
+status_command()
+{
+    if test -n ${kvm_pidfile} ; then
+	echo "no ${kvm_pidfile} file" 1>&2
+	exit 1
+    fi
+    local pid=$(cat ${kvm_pidfile})
+    ps www ${pid}
+}
+
 # second pass
 status=0
 for op in "${ops[@]}" ; do
@@ -491,12 +512,8 @@ for op in "${ops[@]}" ; do
 
 	add ) git add "$@" ;;
 
-	kill )
-	       test -s ${kvm_pidfile} && kill $(cat ${kvm_pidfile})
-	       ;;
-	status )
-	       test -s ${kvm_pidfile} && ps www $(cat ${kvm_pidfile})
-	       ;;
+	kill ) kill_command ;;
+	status ) status_command ;;
 
 	base* | upgrade* | transmogrify* | build* | install* | \
         shutdown* | uninstall* | downgrade* | demolish* | \
