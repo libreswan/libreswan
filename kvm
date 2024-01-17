@@ -486,7 +486,7 @@ diffs_command()
 
 kill_command()
 {
-    if test -n ${kvm_pidfile} ; then
+    if test ! -r ${kvm_pidfile} ; then
 	echo "no ${kvm_pidfile} file" 1>&2
 	exit 1
     fi
@@ -497,12 +497,14 @@ kill_command()
 
 status_command()
 {
-    if test -n ${kvm_pidfile} ; then
+    if test ! -r ${kvm_pidfile} ; then
 	echo "no ${kvm_pidfile} file" 1>&2
 	exit 1
     fi
     local pid=$(cat ${kvm_pidfile})
-    ps www ${pid}
+    ps="ps www --no-headers ${pid}"
+    echo "${ps}"
+    ${ps}
 }
 
 # second pass
