@@ -28,7 +28,7 @@ WEB_UTILSDIR ?= $(top_srcdir)/testing/utils
 WEB_SOURCEDIR ?= $(top_srcdir)/testing/web
 WEB_REPODIR ?= .
 # these are verbose so multiple invocations can be spotted
-WEB_SUBDIR ?= $(shell set -x ; $(WEB_SOURCEDIR)/gime-git-description.sh $(WEB_REPODIR))
+WEB_SUBDIR ?= $(shell $(WEB_SOURCEDIR)/gime-git-description.sh $(WEB_REPODIR))
 
 # shortcuts to use when web is enabled, set up to evaluate once as
 # they can be a little expensive.  These make variable can only be
