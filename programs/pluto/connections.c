@@ -2121,13 +2121,13 @@ static diag_t extract_connection(const struct whack_message *wm,
 	}
 	config->child_sa.encap_proto = encap_proto;
 
-	enum encap_mode mode;
+	enum encap_mode encap_mode;
 	if (wm->type == KS_UNSET) {
-		mode = ENCAP_MODE_TUNNEL;
+		encap_mode = ENCAP_MODE_TUNNEL;
 	} else if (wm->type == KS_TUNNEL) {
-		mode = ENCAP_MODE_TUNNEL;
+		encap_mode = ENCAP_MODE_TUNNEL;
 	} else if (wm->type == KS_TRANSPORT) {
-		mode = ENCAP_MODE_TRANSPORT;
+		encap_mode = ENCAP_MODE_TRANSPORT;
 	} else {
 		if (!never_negotiate_wm(wm)) {
 			sparse_buf sb;
@@ -2135,11 +2135,11 @@ static diag_t extract_connection(const struct whack_message *wm,
 				     "type=%s should be never-negotiate",
 				     str_sparse(type_option_names, wm->type, &sb));
 		}
-		mode = ENCAP_MODE_UNSET;
+		encap_mode = ENCAP_MODE_UNSET;
 	}
-	config->child_sa.encap_mode = mode;
+	config->child_sa.encap_mode = encap_mode;
 
-	if (mode == ENCAP_MODE_TRANSPORT) {
+	if (encap_mode == ENCAP_MODE_TRANSPORT) {
 		if (wm->vti_interface != NULL) {
 			return diag("VTI requires tunnel mode but connection specifies type=transport");
 		}
@@ -2289,7 +2289,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 		if (wm->ike_version < IKEv2) {
 			return diag("MOBIKE requires IKEv2");
 		}
-		if (mode != ENCAP_MODE_TUNNEL) {
+		if (encap_mode != ENCAP_MODE_TUNNEL) {
 			return diag("MOBIKE requires tunnel mode");
 		}
 		if (kernel_ops->migrate_ipsec_sa_is_enabled == NULL) {
@@ -2856,7 +2856,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 		}
 
 		if (wm->nic_offload == NIC_OFFLOAD_PACKET) {
-			if (mode != ENCAP_MODE_TRANSPORT) {
+			if (encap_mode != ENCAP_MODE_TRANSPORT) {
 				return diag("nic-offload=packet|auto restricted to type=transport");
 			}
 			if (encap_proto != ENCAP_PROTO_ESP) {
@@ -3125,7 +3125,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	config->child_sa.priority = wm->priority;
 
 	if (wm->tfc != 0) {
-		if (mode == ENCAP_MODE_TRANSPORT) {
+		if (encap_mode == ENCAP_MODE_TRANSPORT) {
 			return diag("connection with type=transport cannot specify tfc=");
 		}
 		if (encap_proto == ENCAP_PROTO_AH) {
