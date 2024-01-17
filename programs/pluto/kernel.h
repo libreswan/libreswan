@@ -31,6 +31,7 @@
 #include "connections.h"	/* for struct sa_marks et.al. */
 #include "ip_said.h"		/* for SA_AH et.al. */
 #include "ip_packet.h"
+#include "kernel_mode.h"
 
 struct sa_marks;
 struct spd_route;
@@ -60,26 +61,6 @@ enum kernel_policy_op {
 };
 
 extern const struct enum_names kernel_policy_op_names;
-
-/*
- * Kernel's outer most encapsulation mode.
- *
- * Contrary to the RFCs and ENCAPSULATION_MODE_*, the kernel only has
- * to handle three outermost encapsulation.  Hence an ENUM that only
- * defines those values.
- *
- * Except contrary to that, PF KEY v2 accepts the mode "any".
- */
-
-enum kernel_mode {
-#define KERNEL_MODE_FLOOR 1
-	KERNEL_MODE_TRANSPORT = 1,
-	KERNEL_MODE_TUNNEL = 2,
-#define KERNEL_MODE_ROOF (KERNEL_MODE_TUNNEL+1)
-};
-
-
-extern const struct enum_names kernel_mode_names;
 
 enum direction {
 	DIRECTION_INBOUND = 2, /*>true*/

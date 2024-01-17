@@ -73,21 +73,6 @@ enum_names direction_names = {
 
 /* */
 
-static const char *kernel_mode_name[] = {
-#define S(E) [E-KERNEL_MODE_TRANSPORT] = #E
-	S(KERNEL_MODE_TRANSPORT),
-	S(KERNEL_MODE_TUNNEL),
-#undef S
-};
-
-enum_names kernel_mode_names = {
-	KERNEL_MODE_FLOOR, KERNEL_MODE_ROOF-1,
-	ARRAY_REF(kernel_mode_name),
-	.en_prefix = "KERNEL_MODE_",
-};
-
-/* */
-
 /* print a policy: like bitnamesof, but it also does the non-bitfields.
  * Suppress the shunt and fail fields if 0.
  */
@@ -124,7 +109,6 @@ static const enum_names *pluto_enum_names_checklist[] = {
 	&shunt_policy_names,
 	&keyword_auth_names,
 	&keyword_host_names,
-	&kernel_mode_names,
 	NULL,
 };
 

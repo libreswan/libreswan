@@ -94,6 +94,8 @@ OBJS += certs.o
 OBJS += reqid.o
 OBJS += keyid.o
 
+OBJS += kernel_mode.o
+
 ifneq ($(LINUX_VARIANT),)
 OBJS += kernel_netlink_reply.o
 OBJS += kernel_netlink_query.o
