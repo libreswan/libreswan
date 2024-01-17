@@ -39,12 +39,12 @@ static size_t jam_ipv4_address(struct jambuf *buf, const struct ip_info *afi, co
 	return s;
 }
 
-static size_t jam_ipv4_endpoint(struct jambuf *buf, const struct ip_info *afi,
-				const struct ip_bytes *bytes, unsigned hport)
+static size_t jam_ipv4_address_wrapped_port(struct jambuf *buf, const struct ip_info *afi,
+					    const struct ip_bytes *bytes, unsigned hport)
 {
 	size_t s = 0;
 	/* N.N.N.N:PORT */
-	s += afi->address.jam(buf, afi, bytes);
+	s += jam_ipv4_address(buf, afi, bytes);
 	s += jam(buf, ":%u", hport);
 	return s;
 }
@@ -118,8 +118,8 @@ static size_t jam_ipv6_address_wrapped(struct jambuf *buf, const struct ip_info 
 	return s;
 }
 
-static size_t jam_ipv6_endpoint(struct jambuf *buf, const struct ip_info *afi,
-				const struct ip_bytes *bytes, unsigned hport)
+static size_t jam_ipv6_address_wrapped_port(struct jambuf *buf, const struct ip_info *afi,
+					    const struct ip_bytes *bytes, unsigned hport)
 {
 	size_t s = 0;
 	/* [N:..:N]:PORT */
@@ -168,14 +168,14 @@ const struct ip_info ip_families[IP_INDEX_ROOF] = {
 		.ip_name = "IPv4",
 		.mask_cnt = 32,
 
+		/* formatting */
+		.jam.address = jam_ipv4_address,
+		.jam.address_wrapped = jam_ipv4_address,
+		.jam.address_wrapped_port = jam_ipv4_address_wrapped_port,
+
 		/* ip_address - .address.any matches grep */
 		.address.unspec = { .is_set = true, .version = IPv4, }, /* 0.0.0.0 */
 		.address.loopback = { .is_set = true, .version = IPv4, .bytes = { { 127, 0, 0, 1, }, }, },
-		.address.jam = jam_ipv4_address,
-		.address.jam_wrapped = jam_ipv4_address,
-
-		/* ip_endpoint - */
-		.endpoint.jam = jam_ipv4_endpoint,
 
 		/* ip_subnet - .subnet.any matches grep */
 		.subnet.zero = { .is_set = true, .version = IPv4, .maskbits = 32, }, /* 0.0.0.0/32 */
@@ -227,14 +227,14 @@ const struct ip_info ip_families[IP_INDEX_ROOF] = {
 		.ip_name = "IPv6",
 		.mask_cnt = 128,
 
+		/* formatting */
+		.jam.address = jam_ipv6_address,
+		.jam.address_wrapped = jam_ipv6_address_wrapped,
+		.jam.address_wrapped_port = jam_ipv6_address_wrapped_port,
+
 		/* ip_address - .address.any matches grep */
 		.address.unspec = { .is_set = true, .version = IPv6, }, /* :: */
 		.address.loopback = { .is_set = true, .version = IPv6, .bytes = { { [15] = 1, }, }, }, /* ::1 */
-		.address.jam = jam_ipv6_address,
-		.address.jam_wrapped = jam_ipv6_address_wrapped,
-
-		/* ip_endpoint - */
-		.endpoint.jam = jam_ipv6_endpoint,
 
 		/* ip_subnet - .subnet.any matches grep */
 		.subnet.zero = { .is_set = true, .version = IPv6, .maskbits = 128, }, /* ::/128 */

@@ -135,13 +135,13 @@ size_t jam_packet(struct jambuf *buf, const ip_packet *packet)
 		 * For IPv6, jam_wrapped() includes includes [] so
 		 * output is consistent with endpoint.jam().
 		 */
-		s += afi->address.jam_wrapped(buf, afi, &packet->src.bytes);
+		s += afi->jam.address_wrapped(buf, afi, &packet->src.bytes);
 	} else {
-		s += afi->endpoint.jam(buf, afi, &packet->src.bytes, packet->src.hport);
+		s += afi->jam.address_wrapped_port(buf, afi, &packet->src.bytes, packet->src.hport);
 	}
 	/* DST port is always valid */
 	s += jam(buf, "-%s->", packet->protocol->name);
-	s += afi->endpoint.jam(buf, afi, &packet->dst.bytes, packet->dst.hport);
+	s += afi->jam.address_wrapped_port(buf, afi, &packet->dst.bytes, packet->dst.hport);
 	return s;
 }
 

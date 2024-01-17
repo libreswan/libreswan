@@ -88,7 +88,7 @@ size_t jam_said(struct jambuf *buf, const ip_said *said)
 			    '?'));
 	s += jam(buf, "%x", ntohl(said->spi));;
 	s += jam_char(buf, '@');
-	s += afi->address.jam(buf, afi, &said->dst);
+	s += afi->jam.address(buf, afi, &said->dst);
 	return s;
 }
 

@@ -23,22 +23,33 @@ struct ip_info {
 	unsigned mask_cnt; /* 32 or 128 */
 
 	/*
+	 * Formatting primatives.
+	 */
+	struct {
+		/* N.N.N.N or N:N:N:N */
+		size_t (*address)(struct jambuf *buf, const struct ip_info *info, const struct ip_bytes *bytes);
+		/* N.N.N.N or [MM:MM:MM...] */
+		size_t (*address_wrapped)(struct jambuf *buf, const struct ip_info *info, const struct ip_bytes *bytes);
+		/* N.N.N.N:PORT or [N:..:N]:PORT */
+		size_t (*address_wrapped_port)(struct jambuf *buf, const struct ip_info *info,
+					       const struct ip_bytes *bytes, unsigned hport);
+	} jam;
+
+	/*
 	 * ip_address
 	 */
 	struct {
 		const ip_address unspec;	/* 0.0.0.0 or :: */
 		const ip_address loopback;	/* 127.0.0.1 or ::1 */
-		size_t (*jam)(struct jambuf *buf, const struct ip_info *info, const struct ip_bytes *bytes);
-		/* N.N.N.N or [MM:MM:MM...] */
-		size_t (*jam_wrapped)(struct jambuf *buf, const struct ip_info *info, const struct ip_bytes *bytes);
 	} address;
 
 	/*
 	 * ip_endpoint
 	 */
+#if 0
 	struct {
-		size_t (*jam)(struct jambuf *buf, const struct ip_info *info, const struct ip_bytes *bytes, unsigned hport);
 	} endpoint;
+#endif
 
 	/*
 	 * ip_subnet.
