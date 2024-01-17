@@ -114,7 +114,7 @@ bool kernel_ops_policy_add(enum kernel_policy_op op,
 			 * or UDP?
 			 */
 			jam_string(buf, ",");
-			jam_enum_short(buf, &encap_mode_names, policy->mode);
+			jam_enum_short(buf, &kernel_mode_names, policy->mode);
 			jam_string(buf, "[");
 			for (unsigned i = policy->nr_rules; i > 0; i--) {
 				const struct kernel_policy_rule *rule = &policy->rule[i-1];

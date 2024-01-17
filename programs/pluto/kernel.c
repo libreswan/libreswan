@@ -422,7 +422,7 @@ ipsec_spi_t get_ipsec_cpi(const struct connection *c, struct logger *logger)
  */
 
 struct kernel_route {
-	enum encap_mode mode;
+	enum kernel_mode mode;
 	struct {
 		ip_address address; /* ip_endpoint? */
 		ip_selector route; /* ip_address? */
@@ -434,10 +434,10 @@ static struct kernel_route kernel_route_from_state(const struct child_sa *child,
 {
 	const struct connection *c = child->sa.st_connection;
 
-	enum encap_mode mode = ENCAP_MODE_TRANSPORT;
+	enum kernel_mode kernel_mode = KERNEL_MODE_TRANSPORT;
 	FOR_EACH_THING(proto, &child->sa.st_esp, &child->sa.st_ah) {
 		if (proto->present && proto->attrs.mode == ENCAPSULATION_MODE_TUNNEL) {
-			mode = ENCAP_MODE_TUNNEL;
+			kernel_mode = KERNEL_MODE_TUNNEL;
 			break;
 		}
 	}
@@ -457,12 +457,12 @@ static struct kernel_route kernel_route_from_state(const struct child_sa *child,
 	ip_selector remote_route;
 	const ip_selectors *local = &c->local->child.selectors.accepted;
 	const ip_selectors *remote = &c->remote->child.selectors.accepted;
-	switch (mode) {
-	case ENCAP_MODE_TUNNEL:
+	switch (kernel_mode) {
+	case KERNEL_MODE_TUNNEL:
 		local_route = unset_selector;	/* XXX: kernel_policy has spd->client */
 		remote_route = unset_selector;	/* XXX: kernel_policy has spd->client */
 		break;
-	case ENCAP_MODE_TRANSPORT:
+	case KERNEL_MODE_TRANSPORT:
 		/*
 		 * XXX: need to work around:
 		 *
@@ -480,13 +480,13 @@ static struct kernel_route kernel_route_from_state(const struct child_sa *child,
 								   selector_port(remote_client));
 		break;
 	default:
-		bad_case(mode);
+		bad_enum(child->sa.logger, &kernel_mode_names, kernel_mode);
 	}
 
 	switch (direction) {
 	case DIRECTION_INBOUND:
 		return (struct kernel_route) {
-			.mode = mode,
+			.mode = kernel_mode,
 			.src.address = c->remote->host.addr,
 			.dst.address = c->local->host.addr,
 			.src.route = remote_route,
@@ -494,7 +494,7 @@ static struct kernel_route kernel_route_from_state(const struct child_sa *child,
 		};
 	case DIRECTION_OUTBOUND:
 		return (struct kernel_route) {
-			.mode = mode,
+			.mode = kernel_mode,
 			.src.address = c->local->host.addr,
 			.dst.address = c->remote->host.addr,
 			.src.route = local_route,
@@ -1336,21 +1336,13 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 
 	struct kernel_route route = kernel_route_from_state(child, direction);
 
-	enum kernel_mode mode;
-	switch (route.mode) {
-	case ENCAP_MODE_TUNNEL: mode = KERNEL_MODE_TUNNEL; break;
-	case ENCAP_MODE_TRANSPORT: mode = KERNEL_MODE_TRANSPORT; break;
-	default:
-		bad_enum(child->sa.logger, &encap_mode_names, route.mode);
-	}
-
 	const struct kernel_state said_boilerplate = {
 		.src.address = route.src.address,
 		.dst.address = route.dst.address,
 		.src.route = route.src.route,
 		.dst.route = route.dst.route,
 		.direction = direction,
-		.mode = mode,
+		.mode = route.mode,
 		.sa_lifetime = c->config->sa_ipsec_max_lifetime,
 		.sa_max_soft_bytes = sa_ipsec_soft_bytes,
 		.sa_max_soft_packets = sa_ipsec_soft_packets,
@@ -1368,7 +1360,7 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 	    enum_name_short(&direction_names, said_boilerplate.direction),
 	    str_selector(&said_boilerplate.src.route, &scb),
 	    str_address(&said_boilerplate.src.address, &sab),
-	    enum_name_short(&encap_mode_names, route.mode),
+	    enum_name_short(&kernel_mode_names, route.mode),
 	    str_address(&said_boilerplate.dst.address, &dab),
 	    str_selector(&said_boilerplate.dst.route, &dcb),
 	    /* see above */

@@ -116,9 +116,10 @@ struct kernel_policy_encap {
 
 static struct kernel_policy kernel_policy_from_spd(struct kernel_policy_encap policy,
 						   const struct spd_route *spd,
-						   enum encap_mode encap_mode,
+						   enum kernel_mode kernel_mode,
 						   enum direction direction,
 						   struct nic_offload *nic_offload,
+						   struct logger *logger,
 						   where_t where)
 {
 	/*
@@ -133,20 +134,17 @@ static struct kernel_policy kernel_policy_from_spd(struct kernel_policy_encap po
 	 * internal IP, communication doesn't work.
 	 */
 	ip_selector remote_route;
-	enum kernel_mode kernel_mode;
-	switch (encap_mode) {
-	case ENCAP_MODE_TUNNEL:
-		kernel_mode = KERNEL_MODE_TUNNEL;
+	switch (kernel_mode) {
+	case KERNEL_MODE_TUNNEL:
 		remote_route = spd->remote->client;
 		break;
-	case ENCAP_MODE_TRANSPORT:
-		kernel_mode = KERNEL_MODE_TRANSPORT;
+	case KERNEL_MODE_TRANSPORT:
 		remote_route = selector_from_address_protocol_port(spd->remote->host->addr,
 								   selector_protocol(spd->remote->client),
 								   selector_port(spd->remote->client));
 		break;
 	default:
-		bad_case(encap_mode);
+		bad_enum(logger, &kernel_mode_names, kernel_mode);
 	}
 
 	struct kernel_policy kernel_policy = {
@@ -250,10 +248,12 @@ static struct kernel_policy kernel_policy_from_state(const struct child_sa *chil
 	}
 
 	setup_esp_nic_offload(&nic_offload, child->sa.st_connection, child->sa.logger);
-	enum encap_mode mode = (tunnel ? ENCAP_MODE_TUNNEL : ENCAP_MODE_TRANSPORT);
+	enum kernel_mode kernel_mode = (tunnel ? KERNEL_MODE_TUNNEL : KERNEL_MODE_TRANSPORT);
 	struct kernel_policy kernel_policy = kernel_policy_from_spd(policy,
-								    spd, mode, direction,
+								    spd, kernel_mode,
+								    direction,
 								    &nic_offload,
+								    child->sa.logger,
 								    where);
 	return kernel_policy;
 }
@@ -274,7 +274,9 @@ bool add_sec_label_kernel_policy(const struct spd_route *spd,
 {
 	const struct connection *c = spd->connection;
 	PASSERT(logger, c->config->sec_label.len > 0);
-	enum encap_mode encap_mode = c->config->child_sa.encap_mode;
+	enum kernel_mode kernel_mode =
+		(c->config->child_sa.encap_mode == ENCAP_MODE_TUNNEL ? KERNEL_MODE_TUNNEL :
+		 KERNEL_MODE_TRANSPORT);
 
 	struct nic_offload nic_offload = {};
 	setup_esp_nic_offload(&nic_offload, c, logger);
@@ -285,9 +287,9 @@ bool add_sec_label_kernel_policy(const struct spd_route *spd,
 		.ah = (c->config->child_sa.encap_proto == ENCAP_PROTO_AH),
 	};
 	struct kernel_policy kernel_policy =
-		kernel_policy_from_spd(policy, spd, encap_mode, direction,
+		kernel_policy_from_spd(policy, spd, kernel_mode, direction,
 				       &nic_offload,
-				       where);
+				       logger, where);
 	if (!kernel_ops_policy_add(KERNEL_POLICY_OP_ADD, direction,
 				   &kernel_policy.src.client,
 				   &kernel_policy.dst.client,

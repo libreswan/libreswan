@@ -30,7 +30,7 @@ enum direction;
 enum expect_kernel_policy;
 enum kernel_policy_op;
 enum shunt_policy;
-enum encap_mode;
+enum kernel_mode;
 struct logger;
 struct spd_route;
 
