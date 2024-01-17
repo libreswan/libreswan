@@ -1772,8 +1772,6 @@ bool ikev2_proposal_to_proto_info(const struct ikev2_proposal *proposal,
 	proto_info->outbound.last_used =
 		realnow();
 
-	proto_info->attrs.mode = ENCAPSULATION_MODE_TUNNEL;
-
 	return true;
 }
 

@@ -303,18 +303,19 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 			dbg("local policy is transport mode and received USE_TRANSPORT_MODE");
 			larval_child->sa.st_seen_and_use_transport_mode = true;
 			encapsulation_mode = ENCAPSULATION_MODE_TRANSPORT;
-			if (larval_child->sa.st_esp.present) {
-				larval_child->sa.st_esp.attrs.mode = encapsulation_mode;
-			}
-			if (larval_child->sa.st_ah.present) {
-				larval_child->sa.st_ah.attrs.mode = encapsulation_mode;
-			}
 		}
 	} else if (expecting_transport_mode) {
 		/* we should have received transport mode request */
 		llog_sa(RC_LOG_SERIOUS, larval_child,
 			"policy dictates Transport Mode, but peer requested Tunnel Mode");
 		return v2N_NO_PROPOSAL_CHOSEN;
+	}
+
+	if (larval_child->sa.st_esp.present) {
+		larval_child->sa.st_esp.attrs.mode = encapsulation_mode;
+	}
+	if (larval_child->sa.st_ah.present) {
+		larval_child->sa.st_ah.attrs.mode = encapsulation_mode;
 	}
 
 	if (!compute_v2_child_spi(larval_child)) {
@@ -355,7 +356,6 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 			//child->sa.st_ipcomp.outbound.spi = uniquify_peer_cpi((ipsec_spi_t)htonl(n_ipcomp.ikev2_cpi), cst, 0);
 			larval_child->sa.st_ipcomp.outbound.spi = htonl((ipsec_spi_t)n_ipcomp.ikev2_cpi);
 			larval_child->sa.st_ipcomp.attrs.transattrs.ta_ipcomp = ikev2_get_ipcomp_desc(n_ipcomp.ikev2_notify_ipcomp_trans);
-			larval_child->sa.st_ipcomp.attrs.mode = encapsulation_mode;
 			larval_child->sa.st_ipcomp.inbound.last_used =
 			larval_child->sa.st_ipcomp.outbound.last_used =
 				realnow();
@@ -729,14 +729,15 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 		} else {
 			dbg("Initiator policy is transport, responder sends v2N_USE_TRANSPORT_MODE, setting CHILD SA to transport mode");
 			encapsulation_mode = ENCAPSULATION_MODE_TRANSPORT;
-			if (child->sa.st_esp.present) {
-				child->sa.st_esp.attrs.mode = encapsulation_mode;
-			}
-			if (child->sa.st_ah.present) {
-				child->sa.st_ah.attrs.mode = encapsulation_mode;
-			}
 		}
 	}
+	if (child->sa.st_esp.present) {
+		child->sa.st_esp.attrs.mode = encapsulation_mode;
+	}
+	if (child->sa.st_ah.present) {
+		child->sa.st_ah.attrs.mode = encapsulation_mode;
+	}
+
 	child->sa.st_seen_no_tfc = md->pd[PD_v2N_ESP_TFC_PADDING_NOT_SUPPORTED] != NULL;
 	if (md->pd[PD_v2N_IPCOMP_SUPPORTED] != NULL) {
 		struct pbs_in pbs = md->pd[PD_v2N_IPCOMP_SUPPORTED]->pbs;
@@ -775,7 +776,6 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 		child->sa.st_ipcomp.outbound.spi = htonl((ipsec_spi_t)n_ipcomp.ikev2_cpi);
 		child->sa.st_ipcomp.attrs.transattrs.ta_ipcomp =
 			ikev2_get_ipcomp_desc(n_ipcomp.ikev2_notify_ipcomp_trans);
-		child->sa.st_ipcomp.attrs.mode = encapsulation_mode;
 		child->sa.st_ipcomp.inbound.last_used =
 		child->sa.st_ipcomp.outbound.last_used =
 			realnow();
