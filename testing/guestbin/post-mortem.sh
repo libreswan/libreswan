@@ -163,7 +163,7 @@ else
 	log=OUTPUT/post-mortem.$(hostname).${what}.log
 	$(dirname $0)/${what}.sh | tee -a ${log}
 	if test -s ${log} ; then
-	    IGNORE # FAIL - ongoing research
+	    FAIL
 	else
 	    PASS
 	fi
