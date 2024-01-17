@@ -66,7 +66,7 @@ KVM_PREFIXES ?= $(if $(KVM_PREFIX), $(KVM_PREFIX), '')
 KVM_WORKERS ?= 1
 #KVM_WORKERS ?= $(shell awk 'BEGIN { c=1 } /cpu cores/ { c=$$4 } END { if (c>1) print c/2; }' /proc/cpuinfo)
 #KVM_PYTHON ?= PYTHONPATH=/home/python/pexpect:/home/python/ptyprocess /home/python/v3.8/bin/python3
-KVM_PIDFILE ?= kvmrunner.pid
+KVM_PIDFILE ?= $(KVM_BENCHDIR)/kvmrunner.pid
 # Current user's UID; and GID used by QEMU
 KVM_UID ?= $(shell id -u)
 KVM_GID ?= $(shell stat --format=%g $(KVM_HOST_QEMUDIR))
