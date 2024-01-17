@@ -2298,7 +2298,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 	}
 
 	*attrs = (struct ipsec_trans_attrs) {
-		.life_seconds = IPSEC_SA_LIFETIME_DEFAULT,	/* life_seconds */
+		.v1_lifetime = IPSEC_SA_LIFETIME_DEFAULT,	/* life_seconds */
 		.mode = ENCAPSULATION_MODE_UNSPECIFIED,        /* encapsulation */
 	};
 
@@ -2407,7 +2407,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				deltatime_t lifemax =
 					(libreswan_fipsmode() ? FIPS_IPSEC_SA_LIFETIME_MAXIMUM :
 					 IPSEC_SA_LIFETIME_MAXIMUM);
-				attrs->life_seconds =
+				attrs->v1_lifetime =
 					(deltatime_cmp(val, >, lifemax) ? lifemax :
 					 deltatime_cmp(val, >, st->st_connection->config->sa_ipsec_max_lifetime) ? st->st_connection->config->sa_ipsec_max_lifetime :
 					 val);

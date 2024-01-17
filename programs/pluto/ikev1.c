@@ -2641,9 +2641,9 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 #define clamp_delay(trans)						\
 				{					\
 					if (st->trans.present &&	\
-					    deltatime_cmp(event_delay, >=, st->trans.attrs.life_seconds)) { \
+					    deltatime_cmp(event_delay, >=, st->trans.attrs.v1_lifetime)) { \
 						agreed_time = true;	\
-						event_delay = st->trans.attrs.life_seconds; \
+						event_delay = st->trans.attrs.v1_lifetime; \
 					}				\
 				}
 				clamp_delay(st_ah);

@@ -135,7 +135,7 @@ struct trans_attrs {
  */
 struct ipsec_trans_attrs {
 	struct trans_attrs transattrs;
-	deltatime_t life_seconds;	/* max life of this SA in seconds */
+	deltatime_t v1_lifetime;	/* max life of this SA */
 	enum encapsulation_mode mode;	/* transport or tunnel or ... */
 };
 
