@@ -228,27 +228,23 @@ static struct kernel_policy kernel_policy_from_state(const struct child_sa *chil
 						     enum direction direction,
 						     where_t where)
 {
-	bool tunnel = false;
 	struct nic_offload nic_offload = {};
 	struct kernel_policy_encap policy = {0};
 
 	if (child->sa.st_ipcomp.present) {
 		policy.ipcomp = true;
-		tunnel |= (child->sa.st_ipcomp.attrs.mode == ENCAPSULATION_MODE_TUNNEL);
 	}
 
 	if (child->sa.st_esp.present) {
 		policy.esp = true;
-		tunnel |= (child->sa.st_esp.attrs.mode == ENCAPSULATION_MODE_TUNNEL);
 	}
 
 	if (child->sa.st_ah.present) {
 		policy.ah = true;
-		tunnel |= (child->sa.st_ah.attrs.mode == ENCAPSULATION_MODE_TUNNEL);
 	}
 
 	setup_esp_nic_offload(&nic_offload, child->sa.st_connection, child->sa.logger);
-	enum kernel_mode kernel_mode = (tunnel ? KERNEL_MODE_TUNNEL : KERNEL_MODE_TRANSPORT);
+	enum kernel_mode kernel_mode = child->sa.st_kernel_mode;
 	struct kernel_policy kernel_policy = kernel_policy_from_spd(policy,
 								    spd, kernel_mode,
 								    direction,

@@ -289,34 +289,35 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 	 * proposal as needed.
 	 */
 
-	bool expecting_transport_mode = (cc->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT);
-	enum encapsulation_mode encapsulation_mode = ENCAPSULATION_MODE_TUNNEL;
-	if (request_md->pd[PD_v2N_USE_TRANSPORT_MODE] != NULL) {
-		if (!expecting_transport_mode) {
-			/*
-			 * RFC allows us to ignore their (wrong)
-			 * request for transport mode
-			 */
-			llog_sa(RC_LOG, larval_child,
-				"policy dictates Tunnel Mode, ignoring peer's request for Transport Mode");
-		} else {
-			dbg("local policy is transport mode and received USE_TRANSPORT_MODE");
-			larval_child->sa.st_seen_and_use_transport_mode = true;
-			encapsulation_mode = ENCAPSULATION_MODE_TRANSPORT;
-		}
-	} else if (expecting_transport_mode) {
-		/* we should have received transport mode request */
+	enum kernel_mode required_mode =
+		(cc->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT ? KERNEL_MODE_TRANSPORT :
+		 cc->config->child_sa.encap_mode == ENCAP_MODE_TUNNEL ? KERNEL_MODE_TUNNEL :
+		 pexpect(0));
+	enum kernel_mode requested_mode =
+		(request_md->pd[PD_v2N_USE_TRANSPORT_MODE] != NULL ? KERNEL_MODE_TRANSPORT :
+		 KERNEL_MODE_TUNNEL);
+	if (required_mode == requested_mode) {
+		ldbg_sa(larval_child, "local policy is %s and received matching notify",
+			enum_name(&kernel_mode_stories, required_mode));
+	} else if (required_mode == KERNEL_MODE_TUNNEL) {
+		/*
+		 * RFC allows us to ignore their (wrong) request for
+		 * transport mode.
+		 */
+		llog_sa(RC_LOG, larval_child,
+			"policy dictates %s, ignoring peer's request for %s",
+			enum_name(&kernel_mode_stories, required_mode),
+			enum_name(&kernel_mode_stories, requested_mode));
+	} else {
+		/* we should have received a matching mode request */
 		llog_sa(RC_LOG_SERIOUS, larval_child,
-			"policy dictates Transport Mode, but peer requested Tunnel Mode");
+			"policy dictates %s, but peer requested %s",
+			enum_name(&kernel_mode_stories, required_mode),
+			enum_name(&kernel_mode_stories, requested_mode));
 		return v2N_NO_PROPOSAL_CHOSEN;
 	}
 
-	if (larval_child->sa.st_esp.present) {
-		larval_child->sa.st_esp.attrs.mode = encapsulation_mode;
-	}
-	if (larval_child->sa.st_ah.present) {
-		larval_child->sa.st_ah.attrs.mode = encapsulation_mode;
-	}
+	larval_child->sa.st_kernel_mode = required_mode;
 
 	if (!compute_v2_child_spi(larval_child)) {
 		return v2N_INVALID_SYNTAX;/* something fatal */
@@ -491,7 +492,7 @@ bool emit_v2_child_response_payloads(struct ike_sa *ike,
 		return false;
 	}
 
-	if (larval_child->sa.st_seen_and_use_transport_mode &&
+	if (larval_child->sa.st_kernel_mode == KERNEL_MODE_TRANSPORT &&
 	    !emit_v2N(v2N_USE_TRANSPORT_MODE, outpbs)) {
 		return false;
 	}
@@ -717,26 +718,35 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 	}
 
 	/* check for Child SA related NOTIFY payloads */
-	enum encapsulation_mode encapsulation_mode = ENCAPSULATION_MODE_TUNNEL;
-	if (md->pd[PD_v2N_USE_TRANSPORT_MODE] != NULL) {
-		if (c->config->child_sa.encap_mode == ENCAP_MODE_TUNNEL) {
-			/*
-			 * This means we did not send
-			 * v2N_USE_TRANSPORT, however responder is
-			 * sending it in now, seems incorrect
-			 */
-			dbg("Initiator policy is tunnel, responder sends v2N_USE_TRANSPORT_MODE notification in inR2, ignoring it");
-		} else {
-			dbg("Initiator policy is transport, responder sends v2N_USE_TRANSPORT_MODE, setting CHILD SA to transport mode");
-			encapsulation_mode = ENCAPSULATION_MODE_TRANSPORT;
-		}
-	}
-	if (child->sa.st_esp.present) {
-		child->sa.st_esp.attrs.mode = encapsulation_mode;
-	}
-	if (child->sa.st_ah.present) {
-		child->sa.st_ah.attrs.mode = encapsulation_mode;
-	}
+
+	enum kernel_mode required_mode =
+		(c->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT ? KERNEL_MODE_TRANSPORT :
+		 c->config->child_sa.encap_mode == ENCAP_MODE_TUNNEL ? KERNEL_MODE_TUNNEL :
+		 pexpect(0));
+	enum kernel_mode accepted_mode =
+		(md->pd[PD_v2N_USE_TRANSPORT_MODE] != NULL ? KERNEL_MODE_TRANSPORT :
+		 KERNEL_MODE_TUNNEL);
+	if (required_mode == accepted_mode) {
+		ldbg_sa(child, "local policy is %s and received matching notify",
+			enum_name(&kernel_mode_stories, required_mode));
+	} else if (required_mode == KERNEL_MODE_TUNNEL) {
+		/*
+		 * RFC allows us to ignore their (wrong) request for
+		 * transport mode.
+		 */
+		llog_sa(RC_LOG, child,
+			"policy dictates %s, ignoring peer's unsolicited request for %s",
+			enum_name(&kernel_mode_stories, required_mode),
+			enum_name(&kernel_mode_stories, accepted_mode));
+	} else {
+		/* we should have received a matching response */
+		llog_sa(RC_LOG_SERIOUS, child,
+			"policy dictates %s, but peer requested %s",
+			enum_name(&kernel_mode_stories, required_mode),
+			enum_name(&kernel_mode_stories, accepted_mode));
+ 		return v2N_NO_PROPOSAL_CHOSEN;
+ 	}
+	child->sa.st_kernel_mode = required_mode;
 
 	child->sa.st_seen_no_tfc = md->pd[PD_v2N_ESP_TFC_PADDING_NOT_SUPPORTED] != NULL;
 	if (md->pd[PD_v2N_IPCOMP_SUPPORTED] != NULL) {

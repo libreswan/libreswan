@@ -433,14 +433,7 @@ static struct kernel_route kernel_route_from_state(const struct child_sa *child,
 						   enum direction direction)
 {
 	const struct connection *c = child->sa.st_connection;
-
-	enum kernel_mode kernel_mode = KERNEL_MODE_TRANSPORT;
-	FOR_EACH_THING(proto, &child->sa.st_esp, &child->sa.st_ah) {
-		if (proto->present && proto->attrs.mode == ENCAPSULATION_MODE_TUNNEL) {
-			kernel_mode = KERNEL_MODE_TUNNEL;
-			break;
-		}
-	}
+	enum kernel_mode kernel_mode = child->sa.st_kernel_mode;
 
 	/*
 	 * With pfkey and transport mode with nat-traversal we need to

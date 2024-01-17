@@ -314,9 +314,7 @@ static void show_established_child_details(struct show *s, struct child_sa *chil
 				 child->sa.st_ipcomp.inbound.spi);
 		}
 #if defined(KERNEL_XFRM)
-		if (child->sa.st_ah.attrs.mode == ENCAPSULATION_MODE_TUNNEL ||
-		    child->sa.st_esp.attrs.mode == ENCAPSULATION_MODE_TUNNEL ||
-		    child->sa.st_ipcomp.attrs.mode == ENCAPSULATION_MODE_TUNNEL) {
+		if (child->sa.st_kernel_mode == KERNEL_MODE_TUNNEL) {
 			add_said(c->remote->host.addr,
 				 &ip_protocol_ipip,
 				 (ipsec_spi_t)0);

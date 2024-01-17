@@ -2247,7 +2247,7 @@ bool init_aggr_st_oakley(struct ike_sa *ike)
 struct ipsec_transform {
 	struct trans_attrs transattrs;
 	deltatime_t lifetime;
-	enum encapsulation_mode mode;
+	enum kernel_mode kernel_mode;
 	ipsec_spi_t spi;
 };
 
@@ -2306,7 +2306,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 
 	*attrs = (struct ipsec_transform) {
 		.lifetime = IPSEC_SA_LIFETIME_DEFAULT,	/* life_seconds */
-		.mode = ENCAPSULATION_MODE_UNSPECIFIED,        /* encapsulation */
+		.kernel_mode = 0,		        /* encapsulation */
 	};
 
 	switch (proto) {
@@ -2487,15 +2487,15 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			case ENCAPSULATION_MODE_TRANSPORT:
 			case ENCAPSULATION_MODE_UDP_TRANSPORT_DRAFTS:
 			case ENCAPSULATION_MODE_UDP_TRANSPORT_RFC:
-				val = ENCAPSULATION_MODE_TRANSPORT;
+				attrs->kernel_mode = KERNEL_MODE_TRANSPORT;
 				break;
 			case ENCAPSULATION_MODE_TUNNEL:
 			case ENCAPSULATION_MODE_UDP_TUNNEL_DRAFTS:
 			case ENCAPSULATION_MODE_UDP_TUNNEL_RFC:
-				val = ENCAPSULATION_MODE_TUNNEL;
+				attrs->kernel_mode = KERNEL_MODE_TUNNEL;
 				break;
 			}
-			attrs->mode = val;
+
 			break;
 
 		case AUTH_ALGORITHM | ISAKMP_ATTR_AF_TV:
@@ -2579,7 +2579,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			 * the default value of Transport Mode is assumed."
 			 * This contradicts/overrides the DOI (quoted below).
 			 */
-			attrs->mode = ENCAPSULATION_MODE_TRANSPORT;
+			attrs->kernel_mode = KERNEL_MODE_TRANSPORT;
 		} else {
 			/* ??? Technically, RFC 2407 (IPSEC DOI) 4.5 specifies that
 			 * the default is "unspecified (host-dependent)".
@@ -2975,9 +2975,11 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 		 * not require an AUTH.
 		 */
 
-		struct ipsec_transform ah_attrs;
-		struct ipsec_transform esp_attrs;
-		struct ipsec_transform ipcomp_attrs;
+		enum kernel_mode kernel_mode = 0;
+
+		struct ipsec_transform ah_attrs = {0};
+		struct ipsec_transform esp_attrs = {0};
+		struct ipsec_transform ipcomp_attrs = {0};
 
 		struct pbs_in ah_trans_pbs;
 		struct pbs_in esp_trans_pbs;
@@ -3049,6 +3051,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 			if (!ikev1_verify_ah(c, &ah_attrs.transattrs, st->logger)) {
 				continue;
 			}
+			kernel_mode = ah_attrs.kernel_mode;
 			ah_attrs.spi = ah_spi;
 		}
 
@@ -3096,8 +3099,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 					continue; /* try another */
 				}
 
-				if (ah_seen &&
-				    ah_attrs.mode != esp_attrs.mode) {
+				if (ah_seen && ah_attrs.kernel_mode != esp_attrs.kernel_mode) {
 					log_state(RC_LOG_SERIOUS, st,
 						  "Skipped bogus proposal where AH and ESP transforms disagree about mode");
 					continue; /* try another */
@@ -3108,6 +3110,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 			if (tn == esp_proposal.isap_notrans)
 				continue; /* we didn't find a nice one */
 
+			kernel_mode = esp_attrs.kernel_mode;
 			esp_attrs.spi = esp_spi;
 		} else if (st->st_policy & POLICY_ENCRYPT) {
 			connection_buf cib;
@@ -3187,11 +3190,12 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 				}
 
 				if (ah_seen &&
-				    ah_attrs.mode != ipcomp_attrs.mode) {
+				    ah_attrs.kernel_mode != ipcomp_attrs.kernel_mode) {
 					/* ??? This should be an error, but is it? */
 					dbg("AH and IPCOMP transforms disagree about mode; TUNNEL presumed");
-				} else if (esp_seen &&
-					   esp_attrs.mode != ipcomp_attrs.mode) {
+				}
+				if (esp_seen &&
+				    esp_attrs.kernel_mode != ipcomp_attrs.kernel_mode) {
 					/* ??? This should be an error, but is it? */
 					dbg("ESP and IPCOMP transforms disagree about mode; TUNNEL presumed");
 				}
@@ -3259,12 +3263,13 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 
 		const realtime_t now = realnow();
 
+		st->st_kernel_mode = kernel_mode;
+
 #define COPY(WHAT)							\
 		st->st_##WHAT.present = WHAT##_seen;			\
 		if (WHAT##_seen) {					\
 			st->st_##WHAT.attrs.transattrs = WHAT##_attrs.transattrs;	\
 			st->st_##WHAT.attrs.v1_lifetime = WHAT##_attrs.lifetime; \
-			st->st_##WHAT.attrs.mode = WHAT##_attrs.mode;	\
 			st->st_##WHAT.outbound.spi = WHAT##_attrs.spi;	\
 			st->st_##WHAT.inbound.last_used = now;		\
 			st->st_##WHAT.outbound.last_used = now;		\
