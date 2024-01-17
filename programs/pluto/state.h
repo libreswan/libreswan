@@ -157,7 +157,6 @@ struct ipsec_proto_info {
 	struct ipsec_trans_attrs attrs; /* info on remote */
 	struct ipsec_flow inbound;
 	struct ipsec_flow outbound;
-	ipsec_spi_t our_spi;
 	uint64_t add_time;
 };
 
