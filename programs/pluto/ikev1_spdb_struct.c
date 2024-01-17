@@ -2244,10 +2244,17 @@ bool init_aggr_st_oakley(struct ike_sa *ike)
  * This routine is used by quick_inI1_outR1() and quick_inR1_outI2().
  */
 
+struct ipsec_transform {
+	struct trans_attrs transattrs;
+	deltatime_t lifetime;
+	enum encapsulation_mode mode;
+	ipsec_spi_t spi;
+};
+
 static bool parse_ipsec_transform(struct isakmp_transform *trans,
-				  struct ipsec_trans_attrs *attrs,
-				  pb_stream *prop_pbs,
-				  pb_stream *trans_pbs,
+				  struct ipsec_transform *attrs,
+				  struct pbs_in *prop_pbs,
+				  struct pbs_in *trans_pbs,
 				  struct_desc *trans_desc,
 				  int previous_transnum, /* or -1 if none */
 				  bool selection,
@@ -2297,8 +2304,8 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 	}
 	}
 
-	*attrs = (struct ipsec_trans_attrs) {
-		.v1_lifetime = IPSEC_SA_LIFETIME_DEFAULT,	/* life_seconds */
+	*attrs = (struct ipsec_transform) {
+		.lifetime = IPSEC_SA_LIFETIME_DEFAULT,	/* life_seconds */
 		.mode = ENCAPSULATION_MODE_UNSPECIFIED,        /* encapsulation */
 	};
 
@@ -2407,7 +2414,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				deltatime_t lifemax =
 					(libreswan_fipsmode() ? FIPS_IPSEC_SA_LIFETIME_MAXIMUM :
 					 IPSEC_SA_LIFETIME_MAXIMUM);
-				attrs->v1_lifetime =
+				attrs->lifetime =
 					(deltatime_cmp(val, >, lifemax) ? lifemax :
 					 deltatime_cmp(val, >, st->st_connection->config->sa_ipsec_max_lifetime) ? st->st_connection->config->sa_ipsec_max_lifetime :
 					 val);
@@ -2968,9 +2975,9 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 		 * not require an AUTH.
 		 */
 
-		struct ipsec_trans_attrs ah_attrs;
-		struct ipsec_trans_attrs esp_attrs;
-		struct ipsec_trans_attrs ipcomp_attrs;
+		struct ipsec_transform ah_attrs;
+		struct ipsec_transform esp_attrs;
+		struct ipsec_transform ipcomp_attrs;
 
 		struct pbs_in ah_trans_pbs;
 		struct pbs_in esp_trans_pbs;
@@ -2979,10 +2986,6 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 		struct isakmp_transform ah_trans;
 		struct isakmp_transform esp_trans;
 		struct isakmp_transform ipcomp_trans;
-
-		ipsec_spi_t ah_attrs_spi = 0;
-		ipsec_spi_t esp_attrs_spi = 0;
-		ipsec_spi_t ipcomp_attrs_cpi = 0;
 
 		if (ah_seen) {
 			int previous_transnum = -1;
@@ -3046,7 +3049,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 			if (!ikev1_verify_ah(c, &ah_attrs.transattrs, st->logger)) {
 				continue;
 			}
-			ah_attrs_spi = ah_spi;
+			ah_attrs.spi = ah_spi;
 		}
 
 		if (esp_seen) {
@@ -3105,7 +3108,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 			if (tn == esp_proposal.isap_notrans)
 				continue; /* we didn't find a nice one */
 
-			esp_attrs_spi = esp_spi;
+			esp_attrs.spi = esp_spi;
 		} else if (st->st_policy & POLICY_ENCRYPT) {
 			connection_buf cib;
 			address_buf b;
@@ -3198,7 +3201,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 			if (tn == ipcomp_proposal.isap_notrans)
 				continue; /* we didn't find a nice one */
 
-			ipcomp_attrs_cpi = ipcomp_cpi;
+			ipcomp_attrs.spi = ipcomp_cpi;
 		}
 
 		/* Eureka: we liked what we saw -- accept it. */
@@ -3256,29 +3259,21 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 
 		const realtime_t now = realnow();
 
-		st->st_ah.present = ah_seen;
-		if (ah_seen) {
-			st->st_ah.attrs = ah_attrs;
-			st->st_ah.outbound.spi = ah_attrs_spi;
-			st->st_ah.inbound.last_used = now;
-			st->st_ah.outbound.last_used = now;
+#define COPY(WHAT)							\
+		st->st_##WHAT.present = WHAT##_seen;			\
+		if (WHAT##_seen) {					\
+			st->st_##WHAT.attrs.transattrs = WHAT##_attrs.transattrs;	\
+			st->st_##WHAT.attrs.v1_lifetime = WHAT##_attrs.lifetime; \
+			st->st_##WHAT.attrs.mode = WHAT##_attrs.mode;	\
+			st->st_##WHAT.outbound.spi = WHAT##_attrs.spi;	\
+			st->st_##WHAT.inbound.last_used = now;		\
+			st->st_##WHAT.outbound.last_used = now;		\
 		}
 
-		st->st_esp.present = esp_seen;
-		if (esp_seen) {
-			st->st_esp.attrs = esp_attrs;
-			st->st_esp.outbound.spi = esp_attrs_spi;
-			st->st_esp.inbound.last_used = now;
-			st->st_esp.outbound.last_used = now;
-		}
-
-		st->st_ipcomp.present = ipcomp_seen;
-		if (ipcomp_seen) {
-			st->st_ipcomp.attrs = ipcomp_attrs;
-			st->st_ipcomp.outbound.spi = ipcomp_attrs_cpi;
-			st->st_ipcomp.inbound.last_used = now;
-			st->st_ipcomp.outbound.last_used = now;
-		}
+		COPY(ah);
+		COPY(esp);
+		COPY(ipcomp);
+#undef COPY
 
 		return v1N_NOTHING_WRONG;	/* accept this transform! */
 	}
