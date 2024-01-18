@@ -1116,22 +1116,6 @@ v2_notification_t process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *
 	child->sa.st_ikev2_anon = ike->sa.st_ikev2_anon; /* was set after duplicate_state() (?!?) */
 	child->sa.st_seen_no_tfc = response_md->pd[PD_v2N_ESP_TFC_PADDING_NOT_SUPPORTED] != NULL;
 
-	/* AUTH is ok, we can trust the notify payloads */
-	if (response_md->pd[PD_v2N_USE_TRANSPORT_MODE] != NULL) {
-		/* FIXME: use new RFC logic turning this into a request, not requirement */
-		if (child->sa.st_connection->config->child_sa.encap_mode == ENCAP_MODE_TUNNEL) {
-			llog_sa(RC_LOG_SERIOUS, child,
-				  "local policy requires Tunnel Mode but peer requires required Transport Mode");
-			return v2N_TS_UNACCEPTABLE;
-		}
-	} else {
-		if (child->sa.st_connection->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT) {
-			llog_sa(RC_LOG_SERIOUS, child,
-				  "local policy requires Transport Mode but peer requires required Tunnel Mode");
-			return v2N_TS_UNACCEPTABLE;
-		}
-	}
-
 	/* examine and accept SA ESP/AH proposals */
 
 	n = process_v2_childs_sa_payload("IKE_AUTH initiator accepting remote ESP/AH proposal",
