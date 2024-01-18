@@ -215,6 +215,10 @@ bool orient(struct connection *c, struct logger *logger)
 	 * interfaces have been checked.  More than one could match,
 	 * oops!
 	 */
+
+	bool need_offload = ((c->config->nic_offload == NIC_OFFLOAD_PACKET) ||
+				(c->config->nic_offload == NIC_OFFLOAD_CRYPTO));
+
 	enum left_right matching_end = END_ROOF;/*invalid*/
 	struct iface *matching_iface = NULL;
 
@@ -247,6 +251,20 @@ bool orient(struct connection *c, struct logger *logger)
 			terminate_and_down_connection(c, /*strip-route-bit*/false, HERE);
 			connection_detach(c, logger);
 			return false;
+		}
+
+		if (need_offload && !iface->nic_offload) {
+			if (DBGP(DBG_BASE)) {
+				LLOG_JAMBUF(DEBUG_STREAM, c->logger, buf) {
+					jam_string(buf, "    interface ");
+					jam_iface(buf, iface);
+					jam_string(buf, " does not have required nic-offload support");
+				llog(RC_LOG_SERIOUS, c->logger,
+					"interface search skipped interface %s as it does not have nic-offload support",
+						iface->real_device_name);
+				}
+			}
+			continue;
 		}
 
 		passert(left != right); /* only one */
