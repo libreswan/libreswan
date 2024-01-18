@@ -24,6 +24,7 @@ west #
 "west" #2: sent Quick Mode request
 "west" #2: STATE_QUICK_I1: 60 second timeout exceeded after 7 retransmits.  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal
 "west" #2: deleting IPsec SA (QUICK_I1) and NOT sending notification
+ERROR: "west" #2: netlink response for Del SA esp.ESPSPIi@192.1.2.45: No such process (errno 3)
 west #
  echo done
 done

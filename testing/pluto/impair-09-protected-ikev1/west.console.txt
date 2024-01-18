@@ -79,6 +79,7 @@ west #
 "westnet-eastnet" #4: sent Quick Mode request
 "westnet-eastnet" #4: STATE_QUICK_I1: 60 second timeout exceeded after 0 retransmits.  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal
 "westnet-eastnet" #4: deleting IPsec SA (QUICK_I1) and NOT sending notification
+ERROR: "westnet-eastnet" #4: netlink response for Del SA esp.ESPSPIi@192.1.2.45: No such process (errno 3)
 west #
  # HASH payload empty - should fail
 west #
@@ -98,6 +99,7 @@ west #
 "westnet-eastnet" #6: sent Quick Mode request
 "westnet-eastnet" #6: STATE_QUICK_I1: 60 second timeout exceeded after 0 retransmits.  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal
 "westnet-eastnet" #6: deleting IPsec SA (QUICK_I1) and NOT sending notification
+ERROR: "westnet-eastnet" #6: netlink response for Del SA esp.ESPSPIi@192.1.2.45: No such process (errno 3)
 west #
  # HASH payload badly calculated - should fail
 west #
@@ -117,6 +119,7 @@ west #
 "westnet-eastnet" #8: sent Quick Mode request
 "westnet-eastnet" #8: STATE_QUICK_I1: 60 second timeout exceeded after 0 retransmits.  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal
 "westnet-eastnet" #8: deleting IPsec SA (QUICK_I1) and NOT sending notification
+ERROR: "westnet-eastnet" #8: netlink response for Del SA esp.ESPSPIi@192.1.2.45: No such process (errno 3)
 west #
  echo done
 done
