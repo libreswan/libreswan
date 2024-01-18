@@ -1372,7 +1372,7 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 		said_next->spi = ipcomp_spi;
 		said_next->proto = &ip_protocol_ipcomp;
 
-		said_next->ipcomp = child->sa.st_ipcomp.attrs.transattrs.ta_ipcomp;
+		said_next->ipcomp = child->sa.st_ipcomp.trans_attrs.ta_ipcomp;
 		said_next->level = said_next - said;
 		said_next->reqid = reqid_ipcomp(c->child.reqid);
 		said_next->story = said_str(route.dst.address,
@@ -1398,7 +1398,7 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 				       child->sa.st_esp.outbound.spi);
 		chunk_t esp_keymat = (direction == DIRECTION_INBOUND ? child->sa.st_esp.inbound.keymat :
 				      child->sa.st_esp.outbound.keymat);
-		const struct trans_attrs *ta = &child->sa.st_esp.attrs.transattrs;
+		const struct trans_attrs *ta = &child->sa.st_esp.trans_attrs;
 
 		const struct ip_encap *encap_type = NULL;
 		uint16_t encap_sport = 0, encap_dport = 0;
@@ -1544,7 +1544,7 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 			}
 		}
 #endif
-		if (child->sa.st_esp.attrs.transattrs.esn_enabled) {
+		if (child->sa.st_esp.trans_attrs.esn_enabled) {
 			dbg("kernel: Enabling ESN");
 			said_next->esn = true;
 		}
@@ -1604,7 +1604,7 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 		chunk_t ah_keymat = (direction == DIRECTION_INBOUND ? child->sa.st_ah.inbound.keymat :
 				     child->sa.st_ah.outbound.keymat);
 
-		const struct integ_desc *integ = child->sa.st_ah.attrs.transattrs.ta_integ;
+		const struct integ_desc *integ = child->sa.st_ah.trans_attrs.ta_integ;
 		if (integ->integ_ikev1_ah_transform <= 0) {
 			llog_sa(RC_LOG_SERIOUS, child,
 				"%s not implemented", integ->common.fqn);
@@ -1628,7 +1628,7 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 		ldbg(child->sa.logger, "kernel: setting IPsec SA replay-window to %ju",
 		     c->config->child_sa.replay_window);
 
-		if (child->sa.st_ah.attrs.transattrs.esn_enabled) {
+		if (child->sa.st_ah.trans_attrs.esn_enabled) {
 			dbg("kernel: Enabling ESN");
 			said_next->esn = true;
 		}

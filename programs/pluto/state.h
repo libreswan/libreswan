@@ -134,14 +134,6 @@ struct trans_attrs {
  * Yes, this is screwy -- we keep different direction information in
  * different places. Fix it up sometime.
  */
-struct ipsec_trans_attrs {
-	struct trans_attrs transattrs;
-	deltatime_t v1_lifetime;	/* max life of this SA */
-};
-
-/*
- * IPsec per protocol state information.
- */
 
 struct ipsec_flow {
 	bool expired[SA_EXPIRE_KIND_ROOF];
@@ -154,7 +146,8 @@ struct ipsec_flow {
 struct ipsec_proto_info {
 	const struct ip_protocol *protocol;	/* ESP, AH, COMP, ... */
 	bool present;				/* was this transform negotiated? */
-	struct ipsec_trans_attrs attrs; /* info on remote */
+	deltatime_t v1_lifetime;	/* max life of this SA */
+	struct trans_attrs trans_attrs;
 	struct ipsec_flow inbound;
 	struct ipsec_flow outbound;
 	uint64_t add_time;

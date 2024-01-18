@@ -253,13 +253,13 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 
 		if (st->st_esp.present) {
 			pi = &st->st_esp;
-			encrypt = st->st_esp.attrs.transattrs.ta_encrypt;
-			integ = st->st_esp.attrs.transattrs.ta_integ;
-			enckeylen = st->st_esp.attrs.transattrs.enckeylen;
+			encrypt = st->st_esp.trans_attrs.ta_encrypt;
+			integ = st->st_esp.trans_attrs.ta_integ;
+			enckeylen = st->st_esp.trans_attrs.enckeylen;
 		} else if (st->st_ah.present) {
 			pi = &st->st_ah;
 			encrypt = NULL;
-			integ = st->st_ah.attrs.transattrs.ta_integ;
+			integ = st->st_ah.trans_attrs.ta_integ;
 			enckeylen = 0;
 		} else {
 			pi = &st->st_esp;	/* hack: will yield zero SPIs, I think */

@@ -356,7 +356,7 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 			dbg("received v2N_IPCOMP_SUPPORTED with compression CPI=%d", htonl(n_ipcomp.ikev2_cpi));
 			//child->sa.st_ipcomp.outbound.spi = uniquify_peer_cpi((ipsec_spi_t)htonl(n_ipcomp.ikev2_cpi), cst, 0);
 			larval_child->sa.st_ipcomp.outbound.spi = htonl((ipsec_spi_t)n_ipcomp.ikev2_cpi);
-			larval_child->sa.st_ipcomp.attrs.transattrs.ta_ipcomp = ikev2_get_ipcomp_desc(n_ipcomp.ikev2_notify_ipcomp_trans);
+			larval_child->sa.st_ipcomp.trans_attrs.ta_ipcomp = ikev2_get_ipcomp_desc(n_ipcomp.ikev2_notify_ipcomp_trans);
 			larval_child->sa.st_ipcomp.inbound.last_used =
 			larval_child->sa.st_ipcomp.outbound.last_used =
 				realnow();
@@ -560,8 +560,8 @@ v2_notification_t process_v2_childs_sa_payload(const char *what,
 	 * returned by the proposal parser needs to be patched up.
 	 */
 	const struct dh_desc *accepted_dh =
-		proto_info->attrs.transattrs.ta_dh == &ike_alg_dh_none ? NULL
-		: proto_info->attrs.transattrs.ta_dh;
+		proto_info->trans_attrs.ta_dh == &ike_alg_dh_none ? NULL
+		: proto_info->trans_attrs.ta_dh;
 	switch (child->sa.st_sa_role) {
 	case SA_INITIATOR:
 		pexpect(expect_accepted_proposal);
@@ -598,7 +598,7 @@ v2_notification_t process_v2_childs_sa_payload(const char *what,
 	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA && child->sa.st_pfs_group != NULL) {
 		dbg("updating #%lu's .st_oakley with preserved PRF, but why update?",
 			child->sa.st_serialno);
-		struct trans_attrs accepted_oakley = proto_info->attrs.transattrs;
+		struct trans_attrs accepted_oakley = proto_info->trans_attrs;
 		pexpect(accepted_oakley.ta_prf == NULL);
 		accepted_oakley.ta_prf = child->sa.st_oakley.ta_prf;
 		child->sa.st_oakley = accepted_oakley;
@@ -784,7 +784,7 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 
 		//child->sa.st_ipcomp.outbound.spi = uniquify_peer_cpi((ipsec_spi_t)htonl(n_ipcomp.ikev2_cpi), st, 0);
 		child->sa.st_ipcomp.outbound.spi = htonl((ipsec_spi_t)n_ipcomp.ikev2_cpi);
-		child->sa.st_ipcomp.attrs.transattrs.ta_ipcomp =
+		child->sa.st_ipcomp.trans_attrs.ta_ipcomp =
 			ikev2_get_ipcomp_desc(n_ipcomp.ikev2_notify_ipcomp_trans);
 		child->sa.st_ipcomp.inbound.last_used =
 		child->sa.st_ipcomp.outbound.last_used =

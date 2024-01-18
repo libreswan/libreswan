@@ -219,7 +219,7 @@ static void compute_proto_keymat(struct state *st,
 	 */
 	switch (protoid) {
 	case PROTO_IPSEC_ESP:
-		switch (pi->attrs.transattrs.ta_ikev1_encrypt) {
+		switch (pi->trans_attrs.ta_ikev1_encrypt) {
 		case ESP_NULL:
 			needed_len = 0;
 			break;
@@ -232,17 +232,17 @@ static void compute_proto_keymat(struct state *st,
 		case ESP_AES:
 			needed_len = AES_CBC_BLOCK_SIZE;
 			/* if an attribute is set, then use that! */
-			if (st->st_esp.attrs.transattrs.enckeylen != 0) {
+			if (st->st_esp.trans_attrs.enckeylen != 0) {
 				needed_len =
-					st->st_esp.attrs.transattrs.enckeylen /
+					st->st_esp.trans_attrs.enckeylen /
 					BITS_IN_BYTE;
 				/* XXX: obtained from peer - was it verified for validity yet? */
 			}
 			break;
 		case ESP_AES_CTR:
-			if (st->st_esp.attrs.transattrs.enckeylen != 0) {
+			if (st->st_esp.trans_attrs.enckeylen != 0) {
 				needed_len =
-					st->st_esp.attrs.transattrs.enckeylen /
+					st->st_esp.trans_attrs.enckeylen /
 					BITS_IN_BYTE;
 				/* XXX: obtained from peer - was it verified for validity yet? */
 			} else {
@@ -256,11 +256,11 @@ static void compute_proto_keymat(struct state *st,
 		case ESP_AES_GCM_12:
 		case ESP_AES_GCM_16:
 			/* valid keysize enforced before we get here */
-			if (st->st_esp.attrs.transattrs.enckeylen != 0) {
-				passert(st->st_esp.attrs.transattrs.enckeylen == 128 ||
-					st->st_esp.attrs.transattrs.enckeylen == 192 ||
-					st->st_esp.attrs.transattrs.enckeylen == 256);
-				needed_len = st->st_esp.attrs.transattrs.enckeylen / BITS_IN_BYTE;
+			if (st->st_esp.trans_attrs.enckeylen != 0) {
+				passert(st->st_esp.trans_attrs.enckeylen == 128 ||
+					st->st_esp.trans_attrs.enckeylen == 192 ||
+					st->st_esp.trans_attrs.enckeylen == 256);
+				needed_len = st->st_esp.trans_attrs.enckeylen / BITS_IN_BYTE;
 			} else {
 				/* if no keylength set, pick strongest allowed */
 				needed_len = AEAD_AES_KEY_MAX_LEN / BITS_IN_BYTE;
@@ -272,11 +272,11 @@ static void compute_proto_keymat(struct state *st,
 		case ESP_AES_CCM_12:
 		case ESP_AES_CCM_16:
 			/* valid keysize enforced before we get here */
-			if (st->st_esp.attrs.transattrs.enckeylen != 0) {
-				passert(st->st_esp.attrs.transattrs.enckeylen == 128 ||
-					st->st_esp.attrs.transattrs.enckeylen == 192 ||
-					st->st_esp.attrs.transattrs.enckeylen == 256);
-				needed_len = st->st_esp.attrs.transattrs.enckeylen / BITS_IN_BYTE;
+			if (st->st_esp.trans_attrs.enckeylen != 0) {
+				passert(st->st_esp.trans_attrs.enckeylen == 128 ||
+					st->st_esp.trans_attrs.enckeylen == 192 ||
+					st->st_esp.trans_attrs.enckeylen == 256);
+				needed_len = st->st_esp.trans_attrs.enckeylen / BITS_IN_BYTE;
 			} else {
 				/* if no keylength set, pick strongest allowed */
 				needed_len = AEAD_AES_KEY_MAX_LEN / BITS_IN_BYTE;
@@ -287,11 +287,11 @@ static void compute_proto_keymat(struct state *st,
 
 		case ESP_CAMELLIA:
 			/* if an attribute is set, then use that! */
-			if (st->st_esp.attrs.transattrs.enckeylen == 0) {
+			if (st->st_esp.trans_attrs.enckeylen == 0) {
 				needed_len = CAMELLIA_BLOCK_SIZE;
 			} else {
 				needed_len =
-					st->st_esp.attrs.transattrs.enckeylen /
+					st->st_esp.trans_attrs.enckeylen /
 					BITS_IN_BYTE;
 				/* XXX: obtained from peer - was it verified for validity yet? */
 			}
@@ -301,31 +301,31 @@ static void compute_proto_keymat(struct state *st,
 		case ESP_TWOFISH:
 		case ESP_SERPENT:
 		/* ESP_SEED is for IKEv1 only and not supported. Its number in IKEv2 has been re-used */
-			bad_case(pi->attrs.transattrs.ta_ikev1_encrypt);
+			bad_case(pi->trans_attrs.ta_ikev1_encrypt);
 
 		default:
 			/* bytes */
-			needed_len = encrypt_max_key_bit_length(pi->attrs.transattrs.ta_encrypt) / BITS_IN_BYTE;
+			needed_len = encrypt_max_key_bit_length(pi->trans_attrs.ta_encrypt) / BITS_IN_BYTE;
 			if (needed_len > 0) {
 				/* XXX: check key_len coupling with kernel.c's */
-				if (pi->attrs.transattrs.enckeylen) {
+				if (pi->trans_attrs.enckeylen) {
 					needed_len =
-						pi->attrs.transattrs.enckeylen
+						pi->trans_attrs.enckeylen
 						/ BITS_IN_BYTE;
 					dbg("compute_proto_keymat: key_len=%d from peer",
 					    (int)needed_len);
 				}
 				break;
 			}
-			bad_case(pi->attrs.transattrs.ta_ikev1_encrypt);
+			bad_case(pi->trans_attrs.ta_ikev1_encrypt);
 		}
 		dbg("compute_proto_keymat: needed_len (after ESP enc)=%d", (int)needed_len);
-		needed_len += pi->attrs.transattrs.ta_integ->integ_keymat_size;
+		needed_len += pi->trans_attrs.ta_integ->integ_keymat_size;
 		dbg("compute_proto_keymat: needed_len (after ESP auth)=%d", (int)needed_len);
 		break;
 
 	case PROTO_IPSEC_AH:
-		needed_len += pi->attrs.transattrs.ta_integ->integ_keymat_size;
+		needed_len += pi->trans_attrs.ta_integ->integ_keymat_size;
 		break;
 
 	default:

@@ -164,9 +164,9 @@ void show_kernel_alg_connection(struct show *s,
 			jam_string(buf, ":  ");
 			jam(buf, " %s algorithm newest: %s_%03d-%s;",
 			    satype,
-			    st->st_esp.attrs.transattrs.ta_encrypt->common.fqn,
-			    st->st_esp.attrs.transattrs.enckeylen,
-			    st->st_esp.attrs.transattrs.ta_integ->common.fqn);
+			    st->st_esp.trans_attrs.ta_encrypt->common.fqn,
+			    st->st_esp.trans_attrs.enckeylen,
+			    st->st_esp.trans_attrs.ta_integ->common.fqn);
 			jam(buf, " pfsgroup=%s", pfsbuf);
 		}
 	}
@@ -177,7 +177,7 @@ void show_kernel_alg_connection(struct show *s,
 			jam_string(buf, ":  ");
 			jam(buf, " %s algorithm newest: %s;",
 			    satype,
-			    st->st_ah.attrs.transattrs.ta_integ->common.fqn);
+			    st->st_ah.trans_attrs.ta_integ->common.fqn);
 			jam(buf, " pfsgroup=%s", pfsbuf);
 		}
 	}

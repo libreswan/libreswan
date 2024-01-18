@@ -1237,7 +1237,8 @@ static struct child_sa *duplicate_state(struct connection *c,
 
 	/* these were set while we didn't have client state yet */
 	/* we should really split the NOTIFY loop in two cleaner ones */
-	child->sa.st_ipcomp.attrs = ike->sa.st_ipcomp.attrs;
+	child->sa.st_ipcomp.trans_attrs = ike->sa.st_ipcomp.trans_attrs;
+	child->sa.st_ipcomp.v1_lifetime = ike->sa.st_ipcomp.v1_lifetime;
 	child->sa.st_ipcomp.present = ike->sa.st_ipcomp.present;
 	child->sa.st_ipcomp.inbound.spi = ike->sa.st_ipcomp.inbound.spi;
 

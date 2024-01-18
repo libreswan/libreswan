@@ -65,18 +65,18 @@ void ikev2_derive_child_keys(struct ike_sa *ike, struct child_sa *child)
 	 * Integrity seed (key).  AEAD, for instance has NULL (no)
 	 * separate integrity.
 	 */
-	const struct integ_desc *integ = ipi->attrs.transattrs.ta_integ;
+	const struct integ_desc *integ = ipi->trans_attrs.ta_integ;
 	size_t integ_key_size = (integ != NULL ? integ->integ_keymat_size : 0);
 	/*
 	 * If there is encryption, then ENCKEYLEN contains the
 	 * required number of bits.
 	 */
-	size_t encrypt_key_size = BYTES_FOR_BITS(ipi->attrs.transattrs.enckeylen);
+	size_t encrypt_key_size = BYTES_FOR_BITS(ipi->trans_attrs.enckeylen);
 	/*
 	 * Finally, some encryption algorithms such as AEAD and CTR
 	 * require "salt" as part of the "starting variable".
 	 */
-	const struct encrypt_desc *encrypt = ipi->attrs.transattrs.ta_encrypt;
+	const struct encrypt_desc *encrypt = ipi->trans_attrs.ta_encrypt;
 	size_t encrypt_salt_size = (encrypt != NULL ? encrypt->salt_size : 0);
 
 	size_t keymat_len = integ_key_size + encrypt_key_size + encrypt_salt_size;

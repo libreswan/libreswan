@@ -3268,8 +3268,8 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 #define COPY(WHAT)							\
 		st->st_##WHAT.present = WHAT##_seen;			\
 		if (WHAT##_seen) {					\
-			st->st_##WHAT.attrs.transattrs = WHAT##_attrs.transattrs;	\
-			st->st_##WHAT.attrs.v1_lifetime = WHAT##_attrs.lifetime; \
+			st->st_##WHAT.trans_attrs = WHAT##_attrs.transattrs; \
+			st->st_##WHAT.v1_lifetime = WHAT##_attrs.lifetime; \
 			st->st_##WHAT.outbound.spi = WHAT##_attrs.spi;	\
 			st->st_##WHAT.inbound.last_used = now;		\
 			st->st_##WHAT.outbound.last_used = now;		\

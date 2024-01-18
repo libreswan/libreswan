@@ -103,7 +103,7 @@ lset_t capture_child_rekey_policy(struct state *st)
 		policy |= POLICY_AUTHENTICATE;
 	}
 	if (st->st_esp.present &&
-	    st->st_esp.attrs.transattrs.ta_encrypt != &ike_alg_encrypt_null) {
+	    st->st_esp.trans_attrs.ta_encrypt != &ike_alg_encrypt_null) {
 		policy |= POLICY_ENCRYPT;
 	}
 	if (st->st_ipcomp.present) {
@@ -123,7 +123,7 @@ void jam_child_sa_details(struct jambuf *buf, struct state *st)
 		ini = " ";
 		bool nat = (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) != 0;
 		bool tfc = c->config->child_sa.tfcpad != 0 && !st->st_seen_no_tfc;
-		bool esn = st->st_esp.attrs.transattrs.esn_enabled;
+		bool esn = st->st_esp.trans_attrs.esn_enabled;
 		bool tcp = st->st_iface_endpoint->io->protocol == &ip_protocol_tcp;
 
 		if (nat)
@@ -136,14 +136,14 @@ void jam_child_sa_details(struct jambuf *buf, struct state *st)
 		    tfc ? "/TFC" : "",
 		    ntohl(st->st_esp.outbound.spi),
 		    ntohl(st->st_esp.inbound.spi));
-		jam(buf, " xfrm=%s", st->st_esp.attrs.transattrs.ta_encrypt->common.fqn);
+		jam(buf, " xfrm=%s", st->st_esp.trans_attrs.ta_encrypt->common.fqn);
 		/* log keylen when it is required and/or "interesting" */
-		if (!st->st_esp.attrs.transattrs.ta_encrypt->keylen_omitted ||
-		    (st->st_esp.attrs.transattrs.enckeylen != 0 &&
-		     st->st_esp.attrs.transattrs.enckeylen != st->st_esp.attrs.transattrs.ta_encrypt->keydeflen)) {
-			jam(buf, "_%u", st->st_esp.attrs.transattrs.enckeylen);
+		if (!st->st_esp.trans_attrs.ta_encrypt->keylen_omitted ||
+		    (st->st_esp.trans_attrs.enckeylen != 0 &&
+		     st->st_esp.trans_attrs.enckeylen != st->st_esp.trans_attrs.ta_encrypt->keydeflen)) {
+			jam(buf, "_%u", st->st_esp.trans_attrs.enckeylen);
 		}
-		jam(buf, "-%s", st->st_esp.attrs.transattrs.ta_integ->common.fqn);
+		jam(buf, "-%s", st->st_esp.trans_attrs.ta_integ->common.fqn);
 
 		if ((st->st_ike_version == IKEv2) && st->st_pfs_group != NULL) {
 			jam_string(buf, "-");
@@ -165,10 +165,10 @@ void jam_child_sa_details(struct jambuf *buf, struct state *st)
 		jam_string(buf, ini);
 		ini = " ";
 		jam(buf, "AH%s=>0x%08" PRIx32 " <0x%08" PRIx32 " xfrm=%s",
-		    st->st_ah.attrs.transattrs.esn_enabled ? "/ESN" : "",
+		    st->st_ah.trans_attrs.esn_enabled ? "/ESN" : "",
 		    ntohl(st->st_ah.outbound.spi),
 		    ntohl(st->st_ah.inbound.spi),
-		    st->st_ah.attrs.transattrs.ta_integ->common.fqn);
+		    st->st_ah.trans_attrs.ta_integ->common.fqn);
 	}
 
 	if (st->st_ipcomp.present) {
