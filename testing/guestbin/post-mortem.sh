@@ -11,6 +11,8 @@
 set -e
 ok=true
 
+log_prefix=OUTPUT/$(hostname).post-mortem
+
 #
 # A feeble attempt at making the messages consistent (and, hence,
 # easier to grep).
@@ -33,7 +35,7 @@ FAIL() {
 }
 
 IGNORE() {
-    echo IGNORE: "${test}"
+    echo IGNORE: "${test}" "$@"
 }
 
 SKIP() {
@@ -147,27 +149,37 @@ elif test ! -r /proc/net/xfrm_stat ; then
 elif $(dirname $0)/xfrmcheck.sh ; then
     PASS
 else
-    IGNORE # FAIL - ongoing research
+    IGNORE ongoing research
 fi
 
 
-CHECK state/policy entries
-
-# For the moment dump the tables so it is possible to access the
-# damage.
+CHECK state entries
 
 if ! ${pluto} ; then
     SKIP as pluto was not running
 else
-    for what in ipsec-kernel-state ipsec-kernel-policy ; do
-	log=OUTPUT/post-mortem.$(hostname).${what}.log
-	$(dirname $0)/${what}.sh | tee -a ${log}
-	if test -s ${log} ; then
-	    IGNORE # FAIL - ongoing research
-	else
-	    PASS
-	fi
-    done
+    log=${log_prefix}.kernel-state.log
+    $(dirname $0)/ipsec-kernel-state.sh | tee -a ${log}
+    if test -s ${log} ; then
+	IGNORE still tracking down lingering states
+    else
+	PASS
+    fi
+fi
+
+
+CHECK policy entries
+
+if ! ${pluto} ; then
+    SKIP as pluto was not running
+else
+    log=${log_prefix}.kernel-policy.log
+    $(dirname $0)/ipsec-kernel-policy.sh | tee -a ${log}
+    if test -s ${log} ; then
+	IGNORE still tracking down lingering kernel-policy
+    else
+	PASS
+    fi
 fi
 
 
@@ -176,7 +188,7 @@ CHECK selinux audit records
 # Should the setup code snapshot austatus before the test is run?
 
 if test -f /sbin/ausearch ; then
-    log=OUTPUT/post-mortem.$(hostname).ausearch.log
+    log=${log_prefix}.ausearch.log
     # ignore status, save to file as might contain key=(null), ulgh!
     ausearch -r -m avc -ts boot > ${log} 2>&1 || true
     # some warnings are OK, some are not :-(
@@ -193,7 +205,7 @@ if test -f /sbin/ausearch ; then
 	FAIL
 
 	# Output SELinux reference policy for missing rules.
-	rules=OUTPUT/post-mortem.$(hostname).audit2allow.rules
+	rules=${log_prefix}.audit2allow.rules
 	echo saving rules in ${rules}
 	ausearch -r -m avc -ts boot 2>&1 | audit2allow -R | tee ${rules}
     else
