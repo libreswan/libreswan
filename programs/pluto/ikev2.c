@@ -178,9 +178,7 @@ void llog_v2_success_sent_message_to(struct ike_sa *ike)
 		case NO_MESSAGE: jam_string(buf, "INTERNAL ERROR"); break;
 		}
 		jam_string(buf, " to ");
-		jam_endpoint_sensitive(buf, &ike->sa.st_remote_endpoint);
-		jam_string(buf, " using ");
-		jam_string(buf, endpoint_protocol(ike->sa.st_remote_endpoint)->name);
+		jam_endpoint_address_protocol_port_sensitive(buf, &ike->sa.st_remote_endpoint);
 	}
 }
 
