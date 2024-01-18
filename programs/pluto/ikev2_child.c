@@ -625,7 +625,7 @@ void llog_v2_child_sa_established(struct ike_sa *ike UNUSED, struct child_sa *ch
 		jam_so(buf, child->sa.st_clonedfrom);
 		jam_string(buf, "; IPsec ");
 		/* log Child SA Traffic Selector details for admin's pleasure */
-		jam_string(buf, (child_sa_policy(c) & POLICY_TUNNEL ? "tunnel" : "transport"));
+		jam_enum_human(buf, &kernel_mode_names, child->sa.st_kernel_mode);
 		FOR_EACH_ITEM(spd, &c->child.spds) {
 			jam_string(buf, " ");
 			jam_string(buf, "[");
