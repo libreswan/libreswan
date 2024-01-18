@@ -44,7 +44,7 @@ west #
 west #
  ipsec auto --up old-west
 "old-west" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-"old-west" #1: sent IKE_SA_INIT request to 192.1.2.23:500 using UDP
+"old-west" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "old-west" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 "old-west" #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate 'CN=east' issued by CA 'CN=west-ca'
 "old-west" #2: received INTERNAL_IP4_ADDRESS 192.0.1.0
@@ -58,7 +58,7 @@ west #
 west #
  ipsec auto --up new-west
 "new-west" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
-"new-west" #3: sent IKE_SA_INIT request to 192.1.2.23:500 using UDP
+"new-west" #3: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "new-west" #3: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 "new-west" #3: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate 'CN=east' issued by CA 'CN=west-ca'
 "new-west" #4: received INTERNAL_IP4_ADDRESS 192.0.1.0
@@ -72,7 +72,7 @@ west #
 west #
  ipsec auto --up old-west
 "old-west" #5: initiating IKEv2 connection to 192.1.2.23 using UDP
-"old-west" #5: sent IKE_SA_INIT request to 192.1.2.23:500 using UDP
+"old-west" #5: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "old-west" #5: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 "old-west" #5: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate 'CN=east' issued by CA 'CN=west-ca'
 "old-west" #6: received INTERNAL_IP4_ADDRESS 192.0.1.0
@@ -86,7 +86,7 @@ west #
 west #
  ipsec auto --up new-west
 "new-west" #7: initiating IKEv2 connection to 192.1.2.23 using UDP
-"new-west" #7: sent IKE_SA_INIT request to 192.1.2.23:500 using UDP
+"new-west" #7: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "new-west" #7: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 "new-west" #7: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate 'CN=east' issued by CA 'CN=west-ca'
 "new-west" #8: received INTERNAL_IP4_ADDRESS 192.0.1.0

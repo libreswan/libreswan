@@ -20,7 +20,7 @@ road #
 road #
  ipsec auto --up road-east
 "road-east" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-"road-east" #1: sent IKE_SA_INIT request to 192.1.2.23:500 using UDP
+"road-east" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "road-east" #1: IKE_SA_INIT response redirecting to new gateway 192.1.2.45
 "road-east" #1: scheduling redirect 1 to 192.1.2.45
 "road-east" #1: IMPAIR: redirect: skip scheduling redirect event
@@ -29,7 +29,7 @@ road #
  ipsec whack --impair trigger_revival:1
 "road-east": dispatch REVIVAL event
 "road-east" #2: initiating IKEv2 connection to 192.1.2.45 using UDP
-"road-east" #2: sent IKE_SA_INIT request to 192.1.2.45:500 using UDP
+"road-east" #2: sent IKE_SA_INIT request to 192.1.2.45:UDP/500
 "road-east" #2: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 "road-east" #2: initiator established IKE SA; authenticated peer '3nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 "road-east" #3: received INTERNAL_IP4_ADDRESS 192.0.2.101
@@ -61,7 +61,7 @@ road #
 road #
  ipsec auto --up road-east
 "road-east" #4: initiating IKEv2 connection to 192.1.2.23 using UDP
-"road-east" #4: sent IKE_SA_INIT request to 192.1.2.23:500 using UDP
+"road-east" #4: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "road-east" #4: IKE_SA_INIT response redirecting to new gateway 192.1.2.44
 "road-east" #4: scheduling redirect 1 to 192.1.2.44
 "road-east" #4: IMPAIR: redirect: skip scheduling redirect event
@@ -70,7 +70,7 @@ road #
  ipsec whack --impair trigger_revival:2
 "road-east": dispatch REVIVAL event
 "road-east" #5: initiating IKEv2 connection to 192.1.2.44 using UDP
-"road-east" #5: sent IKE_SA_INIT request to 192.1.2.44:500 using UDP
+"road-east" #5: sent IKE_SA_INIT request to 192.1.2.44:UDP/500
 "road-east" #5: IMPAIR: retransmit so timing out SA (may retry)
 "road-east" #5: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "road-east" #5: IMPAIR: revival: skip scheduling revival event

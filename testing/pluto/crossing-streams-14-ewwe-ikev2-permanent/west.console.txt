@@ -46,7 +46,7 @@ west #
 "east-west" #2: initiating IKEv2 connection to 192.1.2.23 using UDP
 west #
  ../../guestbin/wait-for-pluto.sh '^".*#2: sent IKE_SA_INIT request'
-"east-west" #2: sent IKE_SA_INIT request to 192.1.2.23:500 using UDP
+"east-west" #2: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 west #
  ../../guestbin/wait-for-inbound.sh 3
 packet from 192.1.2.23:500: IMPAIR: blocking inbound message 3

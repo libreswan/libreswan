@@ -32,7 +32,7 @@ initiating all connections with alias "road"
 "road/0x2": queue Child SA; waiting on IKE SA "road/0x8" #1 negotiating with 192.1.2.23
 "road/0x1": queue Child SA; waiting on IKE SA "road/0x8" #1 negotiating with 192.1.2.23
 initiating 8 connections
-"road/0x8" #1: sent IKE_SA_INIT request to 192.1.2.23:500 using UDP
+"road/0x8" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "road/0x1" #2: Child SA initiating pending connection using IKE SA #1's IKE_AUTH exchange
 "road/0x8" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 "road/0x8" #1: initiator established IKE SA; authenticated peer '3nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'

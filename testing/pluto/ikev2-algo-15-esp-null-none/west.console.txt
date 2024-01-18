@@ -42,7 +42,7 @@ west #
  ../../guestbin/libreswan-up-down.sh esp=null-none -I 192.0.1.254 192.0.2.254
 "esp=null-none": added IKEv2 connection
 "esp=null-none" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-"esp=null-none" #1: sent IKE_SA_INIT request to 192.1.2.23:500 using UDP
+"esp=null-none" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "esp=null-none" #1: IMPAIR: proposal 1 transform INTEG=NONE included when counting transforms
 "esp=null-none" #1: IMPAIR: proposal 1 transform INTEG=NONE included when emitting proposal
 "esp=null-none" #1: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
@@ -61,7 +61,7 @@ west #
  ../../guestbin/libreswan-up-down.sh esp=null-none -I 192.0.1.254 192.0.2.254
 "esp=null-none": added IKEv2 connection
 "esp=null-none" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
-"esp=null-none" #3: sent IKE_SA_INIT request to 192.1.2.23:500 using UDP
+"esp=null-none" #3: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "esp=null-none" #3: IMPAIR: proposal 1 transform INTEG=NONE excluded when counting transforms
 "esp=null-none" #3: IMPAIR: proposal 1 transform INTEG=NONE excluded when emitting proposal
 "esp=null-none" #3: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}

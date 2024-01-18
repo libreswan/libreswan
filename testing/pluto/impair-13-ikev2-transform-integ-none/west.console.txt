@@ -13,7 +13,7 @@ west #
 "integ" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "integ" #1: IMPAIR: proposal 1 transform INTEG=NONE excluded when counting transforms
 "integ" #1: IMPAIR: proposal 1 transform INTEG=NONE excluded when emitting proposal
-"integ" #1: sent IKE_SA_INIT request to 192.1.2.23:500 using UDP
+"integ" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "integ" #1: IMPAIR: proposal 1 transform INTEG=NONE excluded when counting transforms
 "integ" #1: IMPAIR: proposal 1 transform INTEG=NONE excluded when emitting proposal
 "integ" #1: sent IKE_AUTH request {cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 group=MODP2048}
@@ -96,7 +96,7 @@ west #
 "integ" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "integ" #1: IMPAIR: proposal 1 transform INTEG=NONE included when counting transforms
 "integ" #1: IMPAIR: proposal 1 transform INTEG=NONE included when emitting proposal
-"integ" #1: sent IKE_SA_INIT request to 192.1.2.23:500 using UDP
+"integ" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "integ" #1: IMPAIR: proposal 1 transform INTEG=NONE included when counting transforms
 "integ" #1: IMPAIR: proposal 1 transform INTEG=NONE included when emitting proposal
 "integ" #1: sent IKE_AUTH request {cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 group=MODP2048}
