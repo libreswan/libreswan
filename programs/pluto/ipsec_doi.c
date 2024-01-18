@@ -155,7 +155,7 @@ void jam_child_sa_details(struct jambuf *buf, struct state *st)
 		 */
 		if (c->iface->nic_offload && (c->config->nic_offload == NIC_OFFLOAD_PACKET ||
 			c->config->nic_offload == NIC_OFFLOAD_CRYPTO)) {
-			jam(buf, " esp-hw-offload=%s", c->config->nic_offload == NIC_OFFLOAD_PACKET ?
+			jam(buf, " nic-offload=%s", c->config->nic_offload == NIC_OFFLOAD_PACKET ?
 				"packet" : "crypto");
 		}
 
