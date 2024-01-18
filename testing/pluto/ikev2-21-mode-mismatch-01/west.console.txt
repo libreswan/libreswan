@@ -44,9 +44,11 @@ west #
 "ipv4-psk-ikev2-transport" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 "ipv4-psk-ikev2-transport" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 "ipv4-psk-ikev2-transport" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-"ipv4-psk-ikev2-transport" #2: local policy requires Transport Mode but peer requires required Tunnel Mode
+"ipv4-psk-ikev2-transport" #2: policy dictates Transport Mode, but peer requested Tunnel Mode
+"ipv4-psk-ikev2-transport" #2: CHILD SA failed: NO_PROPOSAL_CHOSEN
 "ipv4-psk-ikev2-transport" #1: IKE SA established but initiator rejected Child SA response
 "ipv4-psk-ikev2-transport" #2: deleting larval Child SA using IKE SA #1
+ERROR: "ipv4-psk-ikev2-transport" #2: netlink response for Del SA esp.ESPSPIi@192.1.2.23: No such process (errno 3)
 west #
  echo done
 done
