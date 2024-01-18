@@ -493,7 +493,7 @@ bool kernel_ops_del_ipsec_spi(ipsec_spi_t spi, const struct ip_protocol *proto,
 	return ok;
 }
 
-bool kernel_ops_detect_offload(const struct kernel_iface *ifp, struct logger *logger)
+bool kernel_ops_nic_detect_offload(const struct kernel_iface *ifp, struct logger *logger)
 {
 	static bool no_offload;
 	if (no_offload) {
@@ -501,7 +501,7 @@ bool kernel_ops_detect_offload(const struct kernel_iface *ifp, struct logger *lo
 		return false;
 	}
 
-	if (kernel_ops->detect_offload == NULL) {
+	if (kernel_ops->nic_detect_offload == NULL) {
 		ldbg(logger, "%s() %s kernel interface does not support offload",
 		     __func__, kernel_ops->interface_name);
 		no_offload = true;
@@ -509,7 +509,7 @@ bool kernel_ops_detect_offload(const struct kernel_iface *ifp, struct logger *lo
 	}
 
 	ldbg(logger, "%s() %s ...", __func__, ifp->name);
-	bool ok = kernel_ops->detect_offload(ifp, logger);
+	bool ok = kernel_ops->nic_detect_offload(ifp, logger);
 	ldbg(logger, "%s() ... %s", __func__, bool_str(ok));
 
 	return ok;
