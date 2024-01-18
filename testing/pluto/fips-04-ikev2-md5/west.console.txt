@@ -31,7 +31,7 @@ initdone
 west #
  ipsec auto --up westnet-eastnet-md5
 "westnet-eastnet-md5" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-"westnet-eastnet-md5" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"westnet-eastnet-md5" #1: sent IKE_SA_INIT request to 192.1.2.23:500 using UDP
 "westnet-eastnet-md5" #1: dropping unexpected IKE_SA_INIT message containing NO_PROPOSAL_CHOSEN notification; message payloads: N; missing payloads: SA,KE,Ni
 "westnet-eastnet-md5" #1: IMPAIR: retransmit so timing out SA (may retry)
 "westnet-eastnet-md5" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds

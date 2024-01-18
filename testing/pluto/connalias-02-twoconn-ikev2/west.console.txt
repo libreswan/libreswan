@@ -20,7 +20,7 @@ initiating all connections with alias "west"
 "west-cuckoo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "west-cuckold": queue Child SA; waiting on IKE SA "west-cuckoo" #1 negotiating with 192.1.2.23
 initiating 2 connections
-"west-cuckoo" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"west-cuckoo" #1: sent IKE_SA_INIT request to 192.1.2.23:500 using UDP
 "west-cuckold" #2: Child SA initiating pending connection using IKE SA #1's IKE_AUTH exchange
 "west-cuckoo" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 "west-cuckoo" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'

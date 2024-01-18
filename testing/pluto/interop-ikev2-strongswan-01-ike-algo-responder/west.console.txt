@@ -31,7 +31,7 @@ west #
  ../../guestbin/libreswan-up-down.sh ike=chacha20poly1305-sha2-dh19 -I 192.0.1.254 192.0.2.254
 "ike=chacha20poly1305-sha2-dh19": added IKEv2 connection
 "ike=chacha20poly1305-sha2-dh19" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-"ike=chacha20poly1305-sha2-dh19" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"ike=chacha20poly1305-sha2-dh19" #1: sent IKE_SA_INIT request to 192.1.2.23:500 using UDP
 "ike=chacha20poly1305-sha2-dh19" #1: sent IKE_AUTH request {cipher=CHACHA20_POLY1305_256 integ=n/a prf=HMAC_SHA2_256 group=DH19}
 "ike=chacha20poly1305-sha2-dh19" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "ike=chacha20poly1305-sha2-dh19" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
@@ -44,7 +44,7 @@ west #
  ../../guestbin/libreswan-up-down.sh ike=aes128-sha2-dh19 -I 192.0.1.254 192.0.2.254
 "ike=aes128-sha2-dh19": added IKEv2 connection
 "ike=aes128-sha2-dh19" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
-"ike=aes128-sha2-dh19" #3: sent IKE_SA_INIT request to 192.1.2.23:500
+"ike=aes128-sha2-dh19" #3: sent IKE_SA_INIT request to 192.1.2.23:500 using UDP
 "ike=aes128-sha2-dh19" #3: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=DH19}
 "ike=aes128-sha2-dh19" #3: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "ike=aes128-sha2-dh19" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
@@ -57,7 +57,7 @@ west #
  ../../guestbin/libreswan-up-down.sh ike=aes128-sha2-dh20 -I 192.0.1.254 192.0.2.254
 "ike=aes128-sha2-dh20": added IKEv2 connection
 "ike=aes128-sha2-dh20" #5: initiating IKEv2 connection to 192.1.2.23 using UDP
-"ike=aes128-sha2-dh20" #5: sent IKE_SA_INIT request to 192.1.2.23:500
+"ike=aes128-sha2-dh20" #5: sent IKE_SA_INIT request to 192.1.2.23:500 using UDP
 "ike=aes128-sha2-dh20" #5: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=DH20}
 "ike=aes128-sha2-dh20" #5: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "ike=aes128-sha2-dh20" #6: initiator established Child SA using #5; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
@@ -70,7 +70,7 @@ west #
  ../../guestbin/libreswan-up-down.sh ike=aes128-sha2-dh21 -I 192.0.1.254 192.0.2.254
 "ike=aes128-sha2-dh21": added IKEv2 connection
 "ike=aes128-sha2-dh21" #7: initiating IKEv2 connection to 192.1.2.23 using UDP
-"ike=aes128-sha2-dh21" #7: sent IKE_SA_INIT request to 192.1.2.23:500
+"ike=aes128-sha2-dh21" #7: sent IKE_SA_INIT request to 192.1.2.23:500 using UDP
 "ike=aes128-sha2-dh21" #7: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=DH21}
 "ike=aes128-sha2-dh21" #7: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "ike=aes128-sha2-dh21" #8: initiator established Child SA using #7; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
@@ -83,7 +83,7 @@ west #
  ../../guestbin/libreswan-up-down.sh ike=aes128-sha1-dh19 -I 192.0.1.254 192.0.2.254
 "ike=aes128-sha1-dh19": added IKEv2 connection
 "ike=aes128-sha1-dh19" #9: initiating IKEv2 connection to 192.1.2.23 using UDP
-"ike=aes128-sha1-dh19" #9: sent IKE_SA_INIT request to 192.1.2.23:500
+"ike=aes128-sha1-dh19" #9: sent IKE_SA_INIT request to 192.1.2.23:500 using UDP
 "ike=aes128-sha1-dh19" #9: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=DH19}
 "ike=aes128-sha1-dh19" #9: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "ike=aes128-sha1-dh19" #10: initiator established Child SA using #9; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
@@ -96,7 +96,7 @@ west #
  ../../guestbin/libreswan-up-down.sh ike=aes128-sha1-dh20 -I 192.0.1.254 192.0.2.254
 "ike=aes128-sha1-dh20": added IKEv2 connection
 "ike=aes128-sha1-dh20" #11: initiating IKEv2 connection to 192.1.2.23 using UDP
-"ike=aes128-sha1-dh20" #11: sent IKE_SA_INIT request to 192.1.2.23:500
+"ike=aes128-sha1-dh20" #11: sent IKE_SA_INIT request to 192.1.2.23:500 using UDP
 "ike=aes128-sha1-dh20" #11: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=DH20}
 "ike=aes128-sha1-dh20" #11: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "ike=aes128-sha1-dh20" #12: initiator established Child SA using #11; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
@@ -109,7 +109,7 @@ west #
  ../../guestbin/libreswan-up-down.sh ike=aes128-sha1-dh21 -I 192.0.1.254 192.0.2.254
 "ike=aes128-sha1-dh21": added IKEv2 connection
 "ike=aes128-sha1-dh21" #13: initiating IKEv2 connection to 192.1.2.23 using UDP
-"ike=aes128-sha1-dh21" #13: sent IKE_SA_INIT request to 192.1.2.23:500
+"ike=aes128-sha1-dh21" #13: sent IKE_SA_INIT request to 192.1.2.23:500 using UDP
 "ike=aes128-sha1-dh21" #13: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=DH21}
 "ike=aes128-sha1-dh21" #13: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "ike=aes128-sha1-dh21" #14: initiator established Child SA using #13; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
@@ -122,7 +122,7 @@ west #
  ../../guestbin/libreswan-up-down.sh ike=aes_ctr128-sha1-dh21 -I 192.0.1.254 192.0.2.254
 "ike=aes_ctr128-sha1-dh21": added IKEv2 connection
 "ike=aes_ctr128-sha1-dh21" #15: initiating IKEv2 connection to 192.1.2.23 using UDP
-"ike=aes_ctr128-sha1-dh21" #15: sent IKE_SA_INIT request to 192.1.2.23:500
+"ike=aes_ctr128-sha1-dh21" #15: sent IKE_SA_INIT request to 192.1.2.23:500 using UDP
 "ike=aes_ctr128-sha1-dh21" #15: sent IKE_AUTH request {cipher=AES_CTR_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=DH21}
 "ike=aes_ctr128-sha1-dh21" #15: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "ike=aes_ctr128-sha1-dh21" #16: initiator established Child SA using #15; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
@@ -135,7 +135,7 @@ west #
  ../../guestbin/libreswan-up-down.sh ike=3des-sha2-modp2048 -I 192.0.1.254 192.0.2.254
 "ike=3des-sha2-modp2048": added IKEv2 connection
 "ike=3des-sha2-modp2048" #17: initiating IKEv2 connection to 192.1.2.23 using UDP
-"ike=3des-sha2-modp2048" #17: sent IKE_SA_INIT request to 192.1.2.23:500
+"ike=3des-sha2-modp2048" #17: sent IKE_SA_INIT request to 192.1.2.23:500 using UDP
 "ike=3des-sha2-modp2048" #17: sent IKE_AUTH request {cipher=3DES_CBC_192 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=MODP2048}
 "ike=3des-sha2-modp2048" #17: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "ike=3des-sha2-modp2048" #18: initiator established Child SA using #17; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
@@ -148,7 +148,7 @@ west #
  ../../guestbin/libreswan-up-down.sh ike=aes128-aes_xcbc-modp2048 -I 192.0.1.254 192.0.2.254
 "ike=aes128-aes_xcbc-modp2048": added IKEv2 connection
 "ike=aes128-aes_xcbc-modp2048" #19: initiating IKEv2 connection to 192.1.2.23 using UDP
-"ike=aes128-aes_xcbc-modp2048" #19: sent IKE_SA_INIT request to 192.1.2.23:500
+"ike=aes128-aes_xcbc-modp2048" #19: sent IKE_SA_INIT request to 192.1.2.23:500 using UDP
 "ike=aes128-aes_xcbc-modp2048" #19: sent IKE_AUTH request {cipher=AES_CBC_128 integ=AES_XCBC_96 prf=AES_XCBC group=MODP2048}
 "ike=aes128-aes_xcbc-modp2048" #19: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "ike=aes128-aes_xcbc-modp2048" #20: initiator established Child SA using #19; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}

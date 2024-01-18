@@ -15,7 +15,7 @@ west #
 west #
  ipsec auto --up westnet-eastnet-mismatch
 "westnet-eastnet-mismatch" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-"westnet-eastnet-mismatch" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"westnet-eastnet-mismatch" #1: sent IKE_SA_INIT request to 192.1.2.23:500 using UDP
 "westnet-eastnet-mismatch" #1: WARNING: '@west' PSK length of 6 bytes is too short for PRF HMAC_SHA2_512 in FIPS mode (32 bytes required)
 "westnet-eastnet-mismatch" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 "westnet-eastnet-mismatch" #1: WARNING: '@west' PSK length of 6 bytes is too short for PRF HMAC_SHA2_512 in FIPS mode (32 bytes required)

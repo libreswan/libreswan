@@ -27,7 +27,7 @@ north #
 fired and forgotten
 north #
  ../../guestbin/wait-for-pluto.sh '^".*#1: sent IKE_SA_INIT request'
-"north" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"north" #1: sent IKE_SA_INIT request to 192.1.2.23:500 using UDP
 north #
  ../../guestbin/ipsec-kernel-policy.sh
 src 192.0.3.254/32 dst 192.0.2.0/24

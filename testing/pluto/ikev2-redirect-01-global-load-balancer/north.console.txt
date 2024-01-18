@@ -20,7 +20,7 @@ north #
 north #
  ipsec auto --up north-east
 "north-east" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-"north-east" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"north-east" #1: sent IKE_SA_INIT request to 192.1.2.23:500 using UDP
 "north-east" #1: IKE_SA_INIT response redirecting to new gateway 192.1.2.44
 "north-east" #1: scheduling redirect 1 to 192.1.2.44
 "north-east" #1: IMPAIR: redirect: skip scheduling redirect event
@@ -29,7 +29,7 @@ north #
  ipsec whack --impair trigger_revival:1
 "north-east": dispatch REVIVAL event
 "north-east" #2: initiating IKEv2 connection to 192.1.2.44 using UDP
-"north-east" #2: sent IKE_SA_INIT request to 192.1.2.44:500
+"north-east" #2: sent IKE_SA_INIT request to 192.1.2.44:500 using UDP
 "north-east" #2: IMPAIR: retransmit so timing out SA (may retry)
 "north-east" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "north-east" #2: IMPAIR: revival: skip scheduling revival event
@@ -48,7 +48,7 @@ north #
 north #
  ipsec auto --up north-east
 "north-east" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
-"north-east" #3: sent IKE_SA_INIT request to 192.1.2.23:500
+"north-east" #3: sent IKE_SA_INIT request to 192.1.2.23:500 using UDP
 "north-east" #3: IKE_SA_INIT response redirecting to new gateway 192.1.2.46
 "north-east" #3: scheduling redirect 1 to 192.1.2.46
 "north-east" #3: IMPAIR: redirect: skip scheduling redirect event
@@ -57,7 +57,7 @@ north #
  ipsec whack --impair trigger_revival:2
 "north-east": dispatch REVIVAL event
 "north-east" #4: initiating IKEv2 connection to 192.1.2.46 using UDP
-"north-east" #4: sent IKE_SA_INIT request to 192.1.2.46:500
+"north-east" #4: sent IKE_SA_INIT request to 192.1.2.46:500 using UDP
 "north-east" #4: IMPAIR: retransmit so timing out SA (may retry)
 "north-east" #4: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "north-east" #4: IMPAIR: revival: skip scheduling revival event
@@ -76,7 +76,7 @@ north #
 north #
  ipsec auto --up north-east
 "north-east" #5: initiating IKEv2 connection to 192.1.2.23 using UDP
-"north-east" #5: sent IKE_SA_INIT request to 192.1.2.23:500
+"north-east" #5: sent IKE_SA_INIT request to 192.1.2.23:500 using UDP
 "north-east" #5: IKE_SA_INIT response redirecting to new gateway 192.1.2.45
 "north-east" #5: scheduling redirect 1 to 192.1.2.45
 "north-east" #5: IMPAIR: redirect: skip scheduling redirect event
@@ -85,7 +85,7 @@ north #
  ipsec whack --impair trigger_revival:3
 "north-east": dispatch REVIVAL event
 "north-east" #6: initiating IKEv2 connection to 192.1.2.45 using UDP
-"north-east" #6: sent IKE_SA_INIT request to 192.1.2.45:500
+"north-east" #6: sent IKE_SA_INIT request to 192.1.2.45:500 using UDP
 "north-east" #6: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 "north-east" #6: initiator established IKE SA; authenticated peer '3nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 "north-east" #7: received INTERNAL_IP4_ADDRESS 192.0.2.101

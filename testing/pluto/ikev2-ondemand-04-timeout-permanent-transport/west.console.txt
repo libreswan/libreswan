@@ -27,7 +27,7 @@ west #
 fired and forgotten
 west #
  ../../guestbin/wait-for-pluto.sh '^".*#1: sent IKE_SA_INIT request'
-"west" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"west" #1: sent IKE_SA_INIT request to 192.1.2.23:500 using UDP
 west #
  ../../guestbin/ipsec-kernel-policy.sh
 src 192.1.2.45/32 dst 192.1.2.23/32

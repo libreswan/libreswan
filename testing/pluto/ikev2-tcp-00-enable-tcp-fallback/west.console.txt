@@ -31,7 +31,7 @@ west #
 west #
  ipsec up west
 "west" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-"west" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"west" #1: sent IKE_SA_INIT request to 192.1.2.23:500 using UDP
 "west" #1: STATE_V2_PARENT_I1: 10 second timeout exceeded after 5 retransmits.  No response (or no acceptable response) to our first IKEv2 message
 "west" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "west" #1: IMPAIR: revival: skip scheduling revival event
@@ -41,7 +41,7 @@ west #
 "west": dispatch REVIVAL event
 "west": reviving connection which timeout IKE SA but must remain up per local policy (serial $1)
 "west" #2: initiating IKEv2 connection to 192.1.2.23 using TCP
-"west" #2: sent IKE_SA_INIT request to 192.1.2.23:4500
+"west" #2: sent IKE_SA_INIT request to 192.1.2.23:4500 using TCP
 "west" #2: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 "west" #2: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "west" #3: initiator established Child SA using #2; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESPinTCP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
