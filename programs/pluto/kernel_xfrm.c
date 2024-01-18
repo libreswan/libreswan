@@ -939,8 +939,8 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 			((char *)&req + req.n.nlmsg_len);
 		struct xfrm_user_offload *xuo;
 
-		llog(RC_LOG, logger,"%s() adding offload via interface %s for IPsec policy, type: Packet",
-			__func__, nic_offload->dev);
+		dbg("packet offload enabled via interface %s for IPsec policy",
+			nic_offload->dev);
 		attr->rta_type = XFRMA_OFFLOAD_DEV;
 		attr->rta_len = RTA_LENGTH(sizeof(*xuo));
 		xuo = RTA_DATA(attr);

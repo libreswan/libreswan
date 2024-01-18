@@ -151,6 +151,16 @@ void jam_child_sa_details(struct jambuf *buf, struct state *st)
 			jam_string(buf, "-");
 			jam_string(buf, st->st_pfs_group->common.fqn);
 		}
+
+		/*
+		 * We should really mark this somewhere on the child state
+		 */
+		if (c->iface->nic_offload && (c->config->nic_offload == NIC_OFFLOAD_PACKET ||
+			c->config->nic_offload == NIC_OFFLOAD_CRYPTO)) {
+			jam(buf, " esp-hw-offload=%s", c->config->nic_offload == NIC_OFFLOAD_PACKET ?
+				"packet" : "crypto");
+		}
+
 	}
 
 	if (st->st_ah.present) {

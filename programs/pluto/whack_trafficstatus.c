@@ -41,6 +41,7 @@
 #include "show.h"
 #include "whack_connection.h"		/* for whack_each_connection() */
 #include "whack_trafficstatus.h"
+#include "iface.h"
 
 /* note: this mutates *st by calling get_sa_bundle_info */
 static void jam_child_sa_traffic(struct jambuf *buf, struct child_sa *child)
@@ -60,8 +61,12 @@ static void jam_child_sa_traffic(struct jambuf *buf, struct child_sa *child)
 	}
 
 	/* traffic */
-	jam(buf, ", type=%s, add_time=%"PRIu64,
+	jam(buf, ", type=%s%s, add_time=%"PRIu64,
 	    (child->sa.st_esp.present ? "ESP" : child->sa.st_ah.present ? "AH" : child->sa.st_ipcomp.present ? "IPCOMP" : "UNKNOWN"),
+	    (!c->iface->nic_offload) ? "" :
+		(c->config->nic_offload == NIC_OFFLOAD_PACKET) ? "(esp-hw-offload=packet)" :
+		(c->config->nic_offload == NIC_OFFLOAD_CRYPTO) ? "(esp-hw-offload=crypto)" :
+		   "(esp-hw-offload=unknown)",
 	    child->sa.st_esp.add_time);
 
 	struct ipsec_proto_info *first_ipsec_proto =
