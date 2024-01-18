@@ -92,7 +92,7 @@ ip_endpoint endpoint_from_address_protocol_port(const ip_address address,
  */
 
 typedef struct {
-	char buf[sizeof("[") + sizeof(address_buf) + sizeof("]:65535") + sizeof("/65535")];
+	char buf[sizeof("[") + sizeof(address_buf) + sizeof("]:PROTOCOL/65535")];
 } endpoint_buf;
 
 size_t jam_endpoint(struct jambuf *, const ip_endpoint*);
@@ -100,6 +100,13 @@ size_t jam_endpoint_sensitive(struct jambuf *, const ip_endpoint*);
 
 const char *str_endpoint(const ip_endpoint *, endpoint_buf *);
 const char *str_endpoint_sensitive(const ip_endpoint *, endpoint_buf *);
+
+
+size_t jam_endpoint_address_protocol_port(struct jambuf *, const ip_endpoint*);
+size_t jam_endpoint_address_protocol_port_sensitive(struct jambuf *, const ip_endpoint*);
+
+const char *str_endpoint_address_protocol_port(const ip_endpoint *, endpoint_buf *);
+const char *str_endpoint_address_protocol_port_sensitive(const ip_endpoint *, endpoint_buf *);
 
 typedef struct {
 	char buf[sizeof(endpoint_buf) + sizeof("--UNKNOWN--UNKNOWN-->") + sizeof(endpoint_buf)];

@@ -156,7 +156,7 @@ bool endpoint_is_specified(const ip_endpoint endpoint)
 }
 
 /*
- * Format an endpoint.
+ * Format an endpoint as ADDRESS:PORT.
  *
  * Either ADDRESS:PORT (IPv4) or [ADDRESS]:PORT, but when PORT is
  * invalid, just the ADDRESS is formatted.
@@ -200,6 +200,60 @@ const char *str_endpoint_sensitive(const ip_endpoint *endpoint, endpoint_buf *ds
 {
 	struct jambuf buf = ARRAY_AS_JAMBUF(dst->buf);
 	jam_endpoint_sensitive(&buf, endpoint);
+	return dst->buf;
+}
+
+/*
+ * Format an endpoint as ADDRESS:PROTOCOL/PORT.
+ *
+ * Either ADDRESS:PORT (IPv4) or [ADDRESS]:PORT, but when PORT is
+ * invalid, just the ADDRESS is formatted.
+ *
+ * From wikipedia: For TCP, port number 0 is reserved and
+ * cannot be used, while for UDP, the source port is optional
+ * and a value of zero means no port.
+ */
+
+size_t jam_endpoint_address_protocol_port(struct jambuf *buf, const ip_endpoint *endpoint)
+{
+	if (endpoint_is_unset(endpoint)) {
+		return jam_string(buf, "<unset-endpoint>");
+	}
+
+	const struct ip_info *afi = endpoint_type(endpoint);
+	if (afi == NULL) {
+		return jam_string(buf, "<unknown-endpoint>");
+	}
+
+	size_t s = 0;
+	s += afi->jam.address_wrapped(buf, afi, &endpoint->bytes);
+	s += jam_string(buf, ":");
+	s += jam_protocol(buf, endpoint_protocol(*endpoint));
+	s += jam_string(buf, "/");
+	s += jam_hport(buf, endpoint_port(*endpoint));
+	return s;
+}
+
+const char *str_endpoint_address_protocol_port(const ip_endpoint *endpoint, endpoint_buf *dst)
+{
+	struct jambuf buf = ARRAY_AS_JAMBUF(dst->buf);
+	jam_endpoint_address_protocol_port(&buf, endpoint);
+	return dst->buf;
+}
+
+size_t jam_endpoint_address_protocol_port_sensitive(struct jambuf *buf, const ip_endpoint *endpoint)
+{
+	if (!log_ip) {
+		return jam_string(buf, "<endpoint>");
+	}
+
+	return jam_endpoint_address_protocol_port(buf, endpoint);
+}
+
+const char *str_endpoint_address_protocol_port_sensitive(const ip_endpoint *endpoint, endpoint_buf *dst)
+{
+	struct jambuf buf = ARRAY_AS_JAMBUF(dst->buf);
+	jam_endpoint_address_protocol_port_sensitive(&buf, endpoint);
 	return dst->buf;
 }
 
