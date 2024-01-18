@@ -2212,6 +2212,9 @@ void teardown_ipsec_kernel_states(struct child_sa *child)
 			PEXPECT(logger, c->child.routing == RT_ROUTED_TUNNEL);
 #endif
 			uninstall_kernel_states(child);
+		} else if (child->sa.st_state->kind == STATE_QUICK_I1 &&
+			   child->sa.st_sa_type_when_established == IPSEC_SA) {
+			uninstall_kernel_states(child);
 		}
 		break;
 	case IKEv2:
