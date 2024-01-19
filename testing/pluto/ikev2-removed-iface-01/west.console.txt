@@ -15,6 +15,7 @@ west #
 "test1": added IKEv2 connection
 west #
  ipsec auto --add test2
+"test2": connection failed to orient - check connection and network settings
 "test2": added IKEv2 connection
 west #
  ipsec auto --add test3
