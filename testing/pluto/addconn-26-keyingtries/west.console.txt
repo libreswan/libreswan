@@ -29,6 +29,7 @@ west #
 west #
  ipsec auto --add  nevernegotiate
 "nevernegotiate": warning: keyingtries=0 ignored, connection will never negotiate
+"nevernegotiate": connection failed to orient - check connection and network settings
 "nevernegotiate": added passthrough connection
 west #
  ipsec auto --up westnet-eastnet-k2
