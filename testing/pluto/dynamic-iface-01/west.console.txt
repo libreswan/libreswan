@@ -9,6 +9,7 @@ west #
 "west-east": added IKEv1 connection
 west #
  ipsec auto --add float-east
+"float-east": connection failed to orient - check connection and network settings
 "float-east": added IKEv1 connection
 west #
  ipsec auto --add west-float
