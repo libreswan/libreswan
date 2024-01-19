@@ -9,9 +9,11 @@ west #
 initdone
 west #
  ipsec auto --add first
+"first": connection failed to orient - check connection and network settings
 "first": added IKEv2 connection
 west #
  ipsec auto --add second
+"second": connection failed to orient - check connection and network settings
 "second": added IKEv2 connection
 west #
  # conn second should inherit the conn %default values with 3des-md5
