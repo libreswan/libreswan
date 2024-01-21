@@ -16,7 +16,7 @@ print-kvm-variable() {
 kvm_platform=$(print-kvm-variable KVM_PLATFORM)
 kvm_testingdir=$(print-kvm-variable KVM_TESTINGDIR)
 kvm_baseline=$(print-kvm-variable KVM_BASELINE)
-kvm_test_status=$(print-kvm-variable KVM_TEST_STATUS)
+kvm_test_status=$(echo $(print-kvm-variable KVM_TEST_STATUS) | tr ' ' '|')
 kvm_test_name=$(print-kvm-variable KVM_TEST_NAME)
 kvm_test_flags=$(print-kvm-variable KVM_TEST_FLAGS)
 kvm_prefixes=($(print-kvm-variable KVM_PREFIXES))
@@ -451,8 +451,8 @@ kvmresults()
 {
     ./testing/utils/kvmresults.py \
 	${kvm_testingdir:+--testing-directory ${kvm_testingdir}} \
-	${kvm_test_status:+--test-status ${kvm_test_status}} \
-	${kvm_test_name:+--test-name ${kvm_test_name}} \
+	${kvm_test_status:+--test-status "${kvm_test_status}"} \
+	${kvm_test_name:+--test-name "${kvm_test_name}"} \
 	${kvm_test_flags} \
 	"$@"
 }
