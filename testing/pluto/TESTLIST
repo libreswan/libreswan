@@ -135,7 +135,11 @@ kvmplutotest	addconn-33-encap-mode				good
 kvmplutotest	addconn-34-encap-proto				good
 kvmplutotest	addconn-35-encapsulation			good
 kvmplutotest	addconn-36-vti					good
+# try to offload when there's no hardware
 kvmplutotest	addconn-37-nic-offload				good
+kvmplutotest	addconn-37-nic-offload-no-hw-crypto		good	github/1527
+kvmplutotest	addconn-37-nic-offload-no-hw-packet		good	github/1527
+
 
 #################################################################
 # IKEv2 tests
@@ -1549,9 +1553,5 @@ kvmplutotest	impair-install-ipsec-sa-outbound-policy-initiator-ikev1	wip
 kvmplutotest	impair-install-ipsec-sa-outbound-policy-initiator-ikev2	wip
 kvmplutotest	impair-install-ipsec-sa-outbound-policy-responder-ikev1	wip
 kvmplutotest	impair-install-ipsec-sa-outbound-policy-responder-ikev2	wip
-
-# NIC hardware esp-hw-offload support - tests have no hardware
-kvmplutotest	ikev2-26-nic-offload-no-hw-crypto	wip	github/1527
-kvmplutotest	ikev2-26-nic-offload-no-hw-packet	wip	github/1527
 
 kvmplutotest	ikev1-29-quick-restart			wip	github/1531
