@@ -28,6 +28,11 @@ static unsigned whack_route_connection(const struct whack_message *m UNUSED,
 				       struct connection *c)
 {
 	connection_attach(c, show_logger(s));
+	if (routed(c)) {
+		whack_log(RC_FATAL, s, "connection is already routed (ondemand)");
+		connection_detach(c, show_logger(s));
+		return 0;
+	}
 	connection_route(c, HERE);
 	connection_detach(c, show_logger(s));
 	return 1; /* the connection counts */
