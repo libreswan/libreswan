@@ -1,0 +1,21 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec auto --add westnet-eastnet-ikev2
+"westnet-eastnet-ikev2": added IKEv2 connection
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec auto --route westnet-eastnet-ikev2
+west #
+ # should say already routed
+west #
+ ipsec auto --route westnet-eastnet-ikev2
+connection is already routed (ondemand)
+west #
+ 

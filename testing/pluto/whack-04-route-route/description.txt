@@ -1,0 +1,3 @@
+Test that routing a routed connection doesn't cause assertion fail.
+
+This tests https://github.com/libreswan/libreswan/issues/1562
