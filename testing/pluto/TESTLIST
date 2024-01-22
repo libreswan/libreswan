@@ -142,6 +142,7 @@ kvmplutotest	addconn-37-nic-offload				good
 #################################################################
 kvmplutotest	whack-02-globalstatus			good
 kvmplutotest	whack-03-rereadcerts			good
+kvmplutotest	whack-04-route-route			good
 
 
 #################################################################
