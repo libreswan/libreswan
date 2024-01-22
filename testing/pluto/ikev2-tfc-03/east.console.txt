@@ -12,9 +12,12 @@ east #
 initdone
 east #
  ipsec whack --trafficstatus
-#2: "tfc", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@west'
+#2: "tfc", type=ESP, add_time=1234567890, inBytes=1446, outBytes=84, maxBytes=2^63B, id='@west'
 east #
- # ESP should show TFC for west and east
+ # These should show TFC for west and east
+east #
+ grep "setting TFC to" /tmp/pluto.log
+| netlink_add_sa() setting TFC to 1500 (up to PMTU)
 east #
  grep "^[^|].* established Child SA" /tmp/pluto.log
 "tfc" #2: responder established Child SA using #1; IPsec tunnel [192.0.2.0/24===192.0.1.0/24] {ESP/ESN/TFC=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
