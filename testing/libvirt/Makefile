@@ -681,22 +681,6 @@ kvm-keys-ok:
 		exit 1 ;						\
 	fi
 
-#
-# Build a pool of networks from scratch
-#
-
-# This defines the primitives, the public rules are defined near the
-# end.
-
-define create-kvm-network
-	:
-        : create-kvm-network file=$(strip $(1))
-	:
-	$(VIRSH) net-define $(1)
-	$(VIRSH) net-autostart $(basename $(notdir $(1)))
-	$(VIRSH) net-start $(basename $(notdir $(1)))
-endef
-
 
 #
 # The Gateway and Test networks
@@ -735,7 +719,9 @@ KVM_GATEWAY = $(KVM_POOLDIR)/$(KVM_GATEWAY_NAME)
 $(KVM_GATEWAY): | net/$(KVM_GATEWAY_NAME)
 $(KVM_GATEWAY): | $(KVM_POOLDIR)
 	./kvm-uninstall-network.sh $@
-	$(call create-kvm-network, net/$(KVM_GATEWAY_NAME))
+	$(VIRSH) net-define net/$(KVM_GATEWAY_NAME)
+	$(VIRSH) net-autostart $(KVM_GATEWAY_NAME)
+	$(VIRSH) net-start $(KVM_GATEWAY_NAME)
 	touch $@
 
 #
@@ -753,7 +739,7 @@ KVM_BRIDGE_NAME = $(strip $(if $(patsubst 192_%,,$*), \
 					swan$(subst _,,$(patsubst %192_,,$*))))
 
 $(KVM_TEST_NETWORKS): \
-$(KVM_LOCALDIR)/%: | $(KVM_LOCALDIR)
+$(KVM_LOCALDIR)/%: $(KVM_FRESH_BOOT_FILE) | $(KVM_LOCALDIR)
 	: $@
 	./kvm-uninstall-network.sh $@
 	rm -f '$@.tmp'
@@ -767,7 +753,10 @@ $(KVM_LOCALDIR)/%: | $(KVM_LOCALDIR)
 	$(if $(patsubst 192_%,, $*), \
 	echo "    -->" 							>> '$@.tmp')
 	echo "</network>"						>> '$@.tmp'
-	$(call create-kvm-network, $@.tmp)
+	: create a transient network
+	: - immediately started
+	: - deleted on reboot
+	$(VIRSH) net-create $@.tmp
 	mv $@.tmp $@
 
 .PHONY: kvm-install-test-networks kvm-install-gateway
