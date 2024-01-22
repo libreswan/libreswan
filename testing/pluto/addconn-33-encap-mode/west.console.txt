@@ -6,27 +6,21 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add addconn
-"addconn": connection failed to orient - check connection and network settings
 "addconn": added IKEv2 connection
 west #
  ipsec add addconn--type=transport
-"addconn--type=transport": connection failed to orient - check connection and network settings
 "addconn--type=transport": added IKEv2 connection
 west #
  ipsec add addconn--type=tunnel
-"addconn--type=tunnel": connection failed to orient - check connection and network settings
 "addconn--type=tunnel": added IKEv2 connection
 west #
  ipsec whack --name whack                           --encrypt --host 1.2.3.4 --to --host 5.6.7.8
-"whack": connection failed to orient - check connection and network settings
 "whack": added IKEv2 connection
 west #
  ipsec whack --name whack--tunnel     --tunnel      --encrypt --host 1.2.3.4 --to --host 5.6.7.8
-"whack--tunnel": connection failed to orient - check connection and network settings
 "whack--tunnel": added IKEv2 connection
 west #
  ipsec whack --name whack--transport  --transport   --encrypt --host 1.2.3.4 --to --host 5.6.7.8
-"whack--transport": connection failed to orient - check connection and network settings
 "whack--transport": added IKEv2 connection
 west #
  ipsec connectionstatus | sed -n -e 's/\(.* policy:\) .*TUNNEL.*/\1 TUNNEL/p'

@@ -6,43 +6,33 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add addconn--default
-"addconn--default": connection failed to orient - check connection and network settings
 "addconn--default": added IKEv1 connection
 west #
  ipsec add addconn--both
-"addconn--both": connection failed to orient - check connection and network settings
 "addconn--both": added IKEv1 connection
 west #
  ipsec add addconn--rfc
-"addconn--rfc": connection failed to orient - check connection and network settings
 "addconn--rfc": added IKEv1 connection
 west #
  ipsec add addconn--drafts
-"addconn--drafts": connection failed to orient - check connection and network settings
 "addconn--drafts": added IKEv1 connection
 west #
  ipsec add addconn--none
-"addconn--none": connection failed to orient - check connection and network settings
 "addconn--none": added IKEv1 connection
 west #
  ipsec whack --name whack--default                      --encrypt --ikev1 --ipv4 --host 1.2.3.4 --to --host 5.6.7.8
-"whack--default": connection failed to orient - check connection and network settings
 "whack--default": added IKEv1 connection
 west #
  ipsec whack --name whack--both    --ikev1-natt both    --encrypt --ikev1 --ipv4 --host 1.2.3.4 --to --host 5.6.7.8
-"whack--both": connection failed to orient - check connection and network settings
 "whack--both": added IKEv1 connection
 west #
  ipsec whack --name whack--rfc     --ikev1-natt rfc     --encrypt --ikev1 --ipv4 --host 1.2.3.4 --to --host 5.6.7.8
-"whack--rfc": connection failed to orient - check connection and network settings
 "whack--rfc": added IKEv1 connection
 west #
  ipsec whack --name whack--drafts  --ikev1-natt drafts  --encrypt --ikev1 --ipv4 --host 1.2.3.4 --to --host 5.6.7.8
-"whack--drafts": connection failed to orient - check connection and network settings
 "whack--drafts": added IKEv1 connection
 west #
  ipsec whack --name whack--none    --ikev1-natt none    --encrypt --ikev1 --ipv4 --host 1.2.3.4 --to --host 5.6.7.8
-"whack--none": connection failed to orient - check connection and network settings
 "whack--none": added IKEv1 connection
 west #
  ipsec connectionstatus | sed -n -e 's/^\([^:]*:\) .* \(ikev1-method:\)[ ]*\([^ ;]*\).*/\1 \2 \3/p' | sort

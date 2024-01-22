@@ -3527,9 +3527,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 *
 	 * This function holds the just allocated reference.
 	 */
-	if (!orient(c, c->logger)) {
-		llog(RC_LOG_SERIOUS, c->logger, "connection failed to orient - check connection and network settings");
-	}
+	orient(c, c->logger);
+
 	return NULL;
 }
 

@@ -11,55 +11,42 @@ west #
  # these should load properly
 west #
  ipsec auto --add default-implicit-authby
-"default-implicit-authby": connection failed to orient - check connection and network settings
 "default-implicit-authby": added IKEv2 connection
 west #
  ipsec auto --add default-specified-authby
-"default-specified-authby": connection failed to orient - check connection and network settings
 "default-specified-authby": added IKEv2 connection
 west #
  ipsec auto --add ecdsa-rsa
-"ecdsa-rsa": connection failed to orient - check connection and network settings
 "ecdsa-rsa": added IKEv2 connection
 west #
  ipsec auto --add ecdsa
-"ecdsa": connection failed to orient - check connection and network settings
 "ecdsa": added IKEv2 connection
 west #
  ipsec auto --add ecdsa-sha2
-"ecdsa-sha2": connection failed to orient - check connection and network settings
 "ecdsa-sha2": added IKEv2 connection
 west #
  ipsec auto --add ecdsa-sha2_256
-"ecdsa-sha2_256": connection failed to orient - check connection and network settings
 "ecdsa-sha2_256": added IKEv2 connection
 west #
  ipsec auto --add ecdsa-sha2_384
-"ecdsa-sha2_384": connection failed to orient - check connection and network settings
 "ecdsa-sha2_384": added IKEv2 connection
 west #
  ipsec auto --add ecdsa-sha2_512
-"ecdsa-sha2_512": connection failed to orient - check connection and network settings
 "ecdsa-sha2_512": added IKEv2 connection
 west #
  ipsec auto --add rsa-sha1
-"rsa-sha1": connection failed to orient - check connection and network settings
 "rsa-sha1": added IKEv2 connection
 west #
  ipsec auto --add rsa-sha2
-"rsa-sha2": connection failed to orient - check connection and network settings
 "rsa-sha2": added IKEv2 connection
 west #
  ipsec auto --add rsa-sha2_256
-"rsa-sha2_256": connection failed to orient - check connection and network settings
 "rsa-sha2_256": added IKEv2 connection
 west #
  ipsec auto --add rsa-sha2_384
-"rsa-sha2_384": connection failed to orient - check connection and network settings
 "rsa-sha2_384": added IKEv2 connection
 west #
  ipsec auto --add rsa-sha2_512
-"rsa-sha2_512": connection failed to orient - check connection and network settings
 "rsa-sha2_512": added IKEv2 connection
 west #
  ipsec status |grep policy: | grep -v modecfg
