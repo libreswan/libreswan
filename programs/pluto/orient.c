@@ -253,25 +253,18 @@ bool orient(struct connection *c, struct logger *logger)
 			return false;
 		}
 
-		if (need_offload && !iface->nic_offload) {
-			if (DBGP(DBG_BASE)) {
-				LLOG_JAMBUF(DEBUG_STREAM, c->logger, buf) {
-					jam_string(buf, "    interface ");
-					jam_iface(buf, iface);
-					jam_string(buf, " does not have required nic-offload support");
-				llog(RC_LOG_SERIOUS, c->logger,
-					"interface search skipped interface %s as it does not have nic-offload support",
-						iface->real_device_name);
-				}
-			}
-			continue;
-		}
-
 		passert(left != right); /* only one */
 		enum left_right end = (left ? LEFT_END :
 				       right ? RIGHT_END :
 				       END_ROOF);
 		passert(end != END_ROOF);
+
+		if (need_offload && !iface->nic_offload) {
+			llog(RC_LOG, c->logger,
+			     "interface search skipped interface %s as it does not have nic-offload support",
+			     iface->real_device_name);
+			continue;
+		}
 
 		if (matching_iface != NULL) {
 			/*
