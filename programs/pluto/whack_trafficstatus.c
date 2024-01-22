@@ -62,7 +62,7 @@ static void jam_child_sa_traffic(struct jambuf *buf, struct child_sa *child)
 
 	/* traffic */
 	jam(buf, ", type=%s%s, add_time=%"PRIu64,
-	    (child->sa.st_esp.present ? "ESP" : child->sa.st_ah.present ? "AH" : child->sa.st_ipcomp.present ? "IPCOMP" : "UNKNOWN"),
+	    (child->sa.st_esp.protocol == &ip_protocol_esp ? "ESP" : child->sa.st_ah.protocol == &ip_protocol_ah ? "AH" : child->sa.st_ipcomp.protocol == &ip_protocol_ipcomp ? "IPCOMP" : "UNKNOWN"),
 	    (!c->iface->nic_offload) ? "" :
 		(c->config->nic_offload == NIC_OFFLOAD_PACKET) ? "(nic-offload=packet)" :
 		(c->config->nic_offload == NIC_OFFLOAD_CRYPTO) ? "(nic-offload=crypto)" :
@@ -70,9 +70,9 @@ static void jam_child_sa_traffic(struct jambuf *buf, struct child_sa *child)
 	    child->sa.st_esp.add_time);
 
 	struct ipsec_proto_info *first_ipsec_proto =
-		(child->sa.st_esp.present ? &child->sa.st_esp:
-		 child->sa.st_ah.present ? &child->sa.st_ah :
-		 child->sa.st_ipcomp.present ? &child->sa.st_ipcomp :
+		(child->sa.st_esp.protocol == &ip_protocol_esp ? &child->sa.st_esp:
+		 child->sa.st_ah.protocol == &ip_protocol_ah ? &child->sa.st_ah :
+		 child->sa.st_ipcomp.protocol == &ip_protocol_ipcomp ? &child->sa.st_ipcomp :
 		 NULL);
 	passert(first_ipsec_proto != NULL);
 

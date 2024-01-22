@@ -1365,7 +1365,7 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 
 	/* set up IPCOMP SA, if any */
 
-	if (child->sa.st_ipcomp.present) {
+	if (child->sa.st_ipcomp.protocol == &ip_protocol_ipcomp) {
 		ipsec_spi_t ipcomp_spi = (direction == DIRECTION_INBOUND ? child->sa.st_ipcomp.inbound.spi :
 					  child->sa.st_ipcomp.outbound.spi);
 		*said_next = said_boilerplate;
@@ -1393,7 +1393,7 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 
 	/* set up ESP SA, if any */
 
-	if (child->sa.st_esp.present) {
+	if (child->sa.st_esp.protocol == &ip_protocol_esp) {
 		ipsec_spi_t esp_spi = (direction == DIRECTION_INBOUND ? child->sa.st_esp.inbound.spi :
 				       child->sa.st_esp.outbound.spi);
 		chunk_t esp_keymat = (direction == DIRECTION_INBOUND ? child->sa.st_esp.inbound.keymat :
@@ -1598,7 +1598,7 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 
 	/* set up AH SA, if any */
 
-	if (child->sa.st_ah.present) {
+	if (child->sa.st_ah.protocol == &ip_protocol_ah) {
 		ipsec_spi_t ah_spi = (direction == DIRECTION_INBOUND ? child->sa.st_ah.inbound.spi :
 				      child->sa.st_ah.outbound.spi);
 		chunk_t ah_keymat = (direction == DIRECTION_INBOUND ? child->sa.st_ah.inbound.keymat :
@@ -1746,21 +1746,22 @@ struct dead_sa {	/* XXX: this is ip_said+src */
 
 static unsigned append_teardown(struct dead_sa *dead, enum direction direction,
 				const struct ipsec_proto_info *proto,
+				const struct ip_protocol *protocol,
 				ip_address host_addr, ip_address effective_remote_address)
 {
-	bool present = proto->present;
+	bool present = (proto->protocol == protocol);
 	if (!present &&
 	    direction == DIRECTION_INBOUND &&
 	    proto->inbound.spi != 0 &&
 	    proto->outbound.spi == 0) {
 		dbg("kernel: forcing inbound delete of %s as .inbound.spi: "PRI_IPSEC_SPI"; attrs.spi: "PRI_IPSEC_SPI,
-		    proto->protocol->name,
+		    protocol->name,
 		    pri_ipsec_spi(proto->inbound.spi),
 		    pri_ipsec_spi(proto->outbound.spi));
 		present = true;
 	}
 	if (present) {
-		dead->protocol = proto->protocol;
+		dead->protocol = protocol;
 		switch (direction) {
 		case DIRECTION_INBOUND:
 			if (proto->inbound.expired[SA_HARD_EXPIRED]) {
@@ -1819,14 +1820,17 @@ static bool uninstall_kernel_state(struct child_sa *child, enum direction direct
 
 	/* collect each proto SA that needs deleting */
 
-	struct dead_sa dead[3];	/* at most 3 entries */
+	struct dead_sa dead[3];	/* at most 2 entries */
 	unsigned nr = 0;
 	nr += append_teardown(dead + nr, direction, &child->sa.st_ah,
-			      c->local->host.addr, effective_remote_address);
+			      &ip_protocol_ah, c->local->host.addr,
+			      effective_remote_address);
 	nr += append_teardown(dead + nr, direction, &child->sa.st_esp,
-			      c->local->host.addr, effective_remote_address);
+			      &ip_protocol_esp, c->local->host.addr,
+			      effective_remote_address);
 	nr += append_teardown(dead + nr, direction, &child->sa.st_ipcomp,
-			      c->local->host.addr, effective_remote_address);
+			      &ip_protocol_ipcomp, c->local->host.addr,
+			      effective_remote_address);
 	passert(nr < elemsof(dead));
 
 	/*
@@ -2187,7 +2191,7 @@ bool install_outbound_ipsec_sa(struct child_sa *child, enum routing new_routing,
 
 void uninstall_kernel_states(struct child_sa *child)
 {
-	if (child->sa.st_esp.present || child->sa.st_ah.present) {
+	if (child->sa.st_esp.protocol == &ip_protocol_esp || child->sa.st_ah.protocol == &ip_protocol_ah) {
 		/* ESP or AH means this was an established IPsec SA */
 		linux_audit_conn(&child->sa, LAK_CHILD_DESTROY);
 	}
@@ -2274,9 +2278,9 @@ bool was_eroute_idle(struct child_sa *child, deltatime_t since_when)
 {
 	passert(child != NULL);
 	struct ipsec_proto_info *first_proto_info =
-		(child->sa.st_ah.present ? &child->sa.st_ah :
-		 child->sa.st_esp.present ? &child->sa.st_esp :
-		 child->sa.st_ipcomp.present ? &child->sa.st_ipcomp :
+		(child->sa.st_ah.protocol == &ip_protocol_ah ? &child->sa.st_ah :
+		 child->sa.st_esp.protocol == &ip_protocol_esp ? &child->sa.st_esp :
+		 child->sa.st_ipcomp.protocol == &ip_protocol_ipcomp ? &child->sa.st_ipcomp :
 		 NULL);
 
 	if (!get_ipsec_traffic(child, first_proto_info, DIRECTION_INBOUND)) {
@@ -2596,9 +2600,9 @@ void handle_sa_expire(ipsec_spi_t spi, uint8_t protoid, ip_address dst,
 	bool rekey = c->config->rekey;
 	bool newest = c->newest_ipsec_sa == child->sa.st_serialno;
 	struct state *st =  &child->sa;
-	struct ipsec_proto_info *pr = (st->st_esp.present ? &st->st_esp :
-				       st->st_ah.present ? &st->st_ah :
-				       st->st_ipcomp.present ? &st->st_ipcomp :
+	struct ipsec_proto_info *pr = (st->st_esp.protocol == &ip_protocol_esp ? &st->st_esp :
+				       st->st_ah.protocol == &ip_protocol_ah ? &st->st_ah :
+				       st->st_ipcomp.protocol == &ip_protocol_ipcomp ? &st->st_ipcomp :
 				       NULL);
 
 	bool already_softexpired = ((pr->inbound.expired[SA_SOFT_EXPIRED]) ||

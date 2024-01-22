@@ -363,9 +363,9 @@ static void compute_proto_keymat(struct state *st,
 
 static void compute_keymats(struct state *st)
 {
-	if (st->st_ah.present)
+	if (st->st_ah.protocol == &ip_protocol_ah)
 		compute_proto_keymat(st, PROTO_IPSEC_AH, &st->st_ah, "AH");
-	if (st->st_esp.present)
+	if (st->st_esp.protocol == &ip_protocol_esp)
 		compute_proto_keymat(st, PROTO_IPSEC_ESP, &st->st_esp, "ESP");
 }
 

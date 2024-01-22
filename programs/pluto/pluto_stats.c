@@ -277,7 +277,7 @@ static void pstat_child_sa_established(struct state *st)
 	}
 #endif
 
-	if (st->st_esp.present) {
+	if (st->st_esp.protocol == &ip_protocol_esp) {
 		bool nat = (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) != 0;
 		bool tfc = c->config->child_sa.tfcpad != 0 && !st->st_seen_no_tfc;
 		bool esn = st->st_esp.trans_attrs.esn_enabled;
@@ -291,7 +291,7 @@ static void pstat_child_sa_established(struct state *st)
 			st->st_esp.trans_attrs.ta_integ->common.id[IKEv2_ALG_ID]);
 		pstats_sa(nat, tfc, esn);
 	}
-	if (st->st_ah.present) {
+	if (st->st_ah.protocol == &ip_protocol_ah) {
 		/* XXX: .st_esp? */
 		bool esn = st->st_esp.trans_attrs.esn_enabled;
 		pstats_ipsec_ah++;
@@ -300,7 +300,7 @@ static void pstat_child_sa_established(struct state *st)
 			st->st_ah.trans_attrs.ta_integ->common.id[IKEv2_ALG_ID]);
 		pstats_sa(false, false, esn);
 	}
-	if (st->st_ipcomp.present) {
+	if (st->st_ipcomp.protocol == &ip_protocol_ipcomp) {
 		pstats_ipsec_ipcomp++;
 	}
 }

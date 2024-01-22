@@ -497,9 +497,6 @@ static struct state *new_state(struct connection *c,
 	st->st_sa_type_when_established = sa_type;
 	st->st_ike_spis.initiator = ike_initiator_spi;
 	st->st_ike_spis.responder = ike_responder_spi;
-	st->st_ah.protocol = &ip_protocol_ah;
-	st->st_esp.protocol = &ip_protocol_esp;
-	st->st_ipcomp.protocol = &ip_protocol_ipcomp;
 	st->hidden_variables.st_nat_oa = ipv4_info.address.unspec;
 	st->hidden_variables.st_natd = ipv4_info.address.unspec;
 	st->st_remote_endpoint = remote_endpoint;
@@ -940,21 +937,21 @@ void delete_state(struct state *st)
 		 * ESP/AH/IPCOMP
 		 */
 		struct child_sa *child = pexpect_child_sa(st);
-		if (st->st_esp.present) {
+		if (st->st_esp.protocol == &ip_protocol_esp) {
 			update_and_log_traffic(child, "ESP", &st->st_esp,
 					       &pstats_esp_bytes);
 			pstats_ipsec_bytes.in += st->st_esp.inbound.bytes;
 			pstats_ipsec_bytes.out += st->st_esp.outbound.bytes;
 		}
 
-		if (st->st_ah.present) {
+		if (st->st_ah.protocol == &ip_protocol_ah) {
 			update_and_log_traffic(child, "AH", &st->st_ah,
 					       &pstats_ah_bytes);
 			pstats_ipsec_bytes.in += st->st_ah.inbound.bytes;
 			pstats_ipsec_bytes.out += st->st_ah.outbound.bytes;
 		}
 
-		if (st->st_ipcomp.present) {
+		if (st->st_ipcomp.protocol == &ip_protocol_ipcomp) {
 			update_and_log_traffic(child, "IPCOMP", &st->st_ipcomp,
 					       &pstats_ipcomp_bytes);
 			/* XXX: not ipcomp */
@@ -1239,7 +1236,7 @@ static struct child_sa *duplicate_state(struct connection *c,
 	/* we should really split the NOTIFY loop in two cleaner ones */
 	child->sa.st_ipcomp.trans_attrs = ike->sa.st_ipcomp.trans_attrs;
 	child->sa.st_ipcomp.v1_lifetime = ike->sa.st_ipcomp.v1_lifetime;
-	child->sa.st_ipcomp.present = ike->sa.st_ipcomp.present;
+	child->sa.st_ipcomp.protocol = ike->sa.st_ipcomp.protocol;
 	child->sa.st_ipcomp.inbound.spi = ike->sa.st_ipcomp.inbound.spi;
 
 	if (sa_type == IPSEC_SA) {
@@ -1405,7 +1402,7 @@ static bool v2_spi_predicate(struct state *st, void *context)
 		bad_case(filter->protoid);
 	}
 
-	if (pr->present) {
+	if (pr->protocol != NULL) {
 		if (pr->outbound.spi == filter->outbound_spi) {
 			dbg("v2 CHILD SA #%lu found using their inbound (our outbound) SPI, in %s",
 			    st->st_serialno, st->st_state->name);
@@ -1675,7 +1672,7 @@ ipsec_spi_t uniquify_peer_cpi(ipsec_spi_t cpi, const struct state *st, int tries
 	struct state_filter sf = { .where = HERE, };
 	while (next_state_new2old(&sf)) {
 		struct state *s = sf.st;
-		if (s->st_ipcomp.present &&
+		if (s->st_ipcomp.protocol == &ip_protocol_ipcomp &&
 		    sameaddr(&s->st_connection->remote->host.addr,
 			     &st->st_connection->remote->host.addr) &&
 		    cpi == s->st_ipcomp.outbound.spi)

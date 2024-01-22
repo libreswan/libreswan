@@ -289,7 +289,7 @@ static void show_established_child_details(struct show *s, struct child_sa *chil
 
 		/* SAIDs */
 
-		if (child->sa.st_ah.present) {
+		if (child->sa.st_ah.protocol == &ip_protocol_ah) {
 			add_said(c->remote->host.addr,
 				 &ip_protocol_ah,
 				 child->sa.st_ah.outbound.spi);
@@ -297,7 +297,7 @@ static void show_established_child_details(struct show *s, struct child_sa *chil
 				 &ip_protocol_ah,
 				 child->sa.st_ah.inbound.spi);
 		}
-		if (child->sa.st_esp.present) {
+		if (child->sa.st_esp.protocol == &ip_protocol_esp) {
 			add_said(c->remote->host.addr,
 				 &ip_protocol_esp,
 				 child->sa.st_esp.outbound.spi);
@@ -305,7 +305,7 @@ static void show_established_child_details(struct show *s, struct child_sa *chil
 				 &ip_protocol_esp,
 				 child->sa.st_esp.inbound.spi);
 		}
-		if (child->sa.st_ipcomp.present) {
+		if (child->sa.st_ipcomp.protocol == &ip_protocol_ipcomp) {
 			add_said(c->remote->host.addr,
 				 &ip_protocol_ipcomp,
 				 child->sa.st_ipcomp.outbound.spi);
@@ -337,15 +337,15 @@ static void show_established_child_details(struct show *s, struct child_sa *chil
 		 */
 
 		struct ipsec_proto_info *first_proto_info =
-			(child->sa.st_ah.present ? &child->sa.st_ah :
-			 child->sa.st_esp.present ? &child->sa.st_esp :
-			 child->sa.st_ipcomp.present ? &child->sa.st_ipcomp :
+			(child->sa.st_ah.protocol == &ip_protocol_ah ? &child->sa.st_ah :
+			 child->sa.st_esp.protocol == &ip_protocol_esp ? &child->sa.st_esp :
+			 child->sa.st_ipcomp.protocol == &ip_protocol_ipcomp ? &child->sa.st_ipcomp :
 			 NULL);
 
 		bool in_info = get_ipsec_traffic(child, first_proto_info, DIRECTION_INBOUND);
 		bool out_info = get_ipsec_traffic(child, first_proto_info, DIRECTION_OUTBOUND);
 
-		if (child->sa.st_ah.present) {
+		if (child->sa.st_ah.protocol == &ip_protocol_ah) {
 			if (in_info) {
 				jam(buf, " AHin=");
 				jam_readable_humber(buf, first_proto_info->inbound.bytes, false);
@@ -356,7 +356,7 @@ static void show_established_child_details(struct show *s, struct child_sa *chil
 			}
 			jam_humber_uintmax(buf, " AHmax=", c->config->sa_ipsec_max_bytes, "B");
 		}
-		if (child->sa.st_esp.present) {
+		if (child->sa.st_esp.protocol == &ip_protocol_esp) {
 			if (in_info) {
 				jam(buf, " ESPin=");
 				jam_readable_humber(buf, first_proto_info->inbound.bytes, false);
@@ -367,7 +367,7 @@ static void show_established_child_details(struct show *s, struct child_sa *chil
 			}
 			jam_humber_uintmax(buf, " ESPmax=", c->config->sa_ipsec_max_bytes, "B");
 		}
-		if (child->sa.st_ipcomp.present) {
+		if (child->sa.st_ipcomp.protocol == &ip_protocol_ipcomp) {
 			if (in_info) {
 				jam(buf, " IPCOMPin=");
 				jam_readable_humber(buf, first_proto_info->inbound.bytes, false);

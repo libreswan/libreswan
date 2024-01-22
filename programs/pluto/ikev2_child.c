@@ -101,10 +101,20 @@ static bool compute_v2_child_spi(struct child_sa *larval_child)
 {
 	struct connection *cc = larval_child->sa.st_connection;
 	struct ipsec_proto_info *proto_info = ikev2_child_sa_proto_info(larval_child);
+	/* hack until esp/ah merged */
+	const struct ip_protocol *protocol = NULL;
+	if (proto_info == &larval_child->sa.st_esp) {
+		protocol = &ip_protocol_esp;
+	}
+	if (proto_info == &larval_child->sa.st_ah) {
+		protocol = &ip_protocol_ah;
+	}
+	if (PBAD(larval_child->sa.logger, protocol == NULL)) {
+		return false;
+	}
 	/* XXX: should "avoid" be set to the peer's SPI when known? */
 	pexpect(proto_info->inbound.spi == 0);
-	proto_info->inbound.spi = get_ipsec_spi(cc,
-						proto_info->protocol,
+	proto_info->inbound.spi = get_ipsec_spi(cc, protocol,
 						0 /* avoid this # */,
 						larval_child->sa.logger);
 	return (proto_info->inbound.spi != 0);
@@ -327,7 +337,7 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 	if (request_md->pd[PD_v2N_IPCOMP_SUPPORTED] != NULL) {
 		if (!expecting_compression) {
 			dbg("Ignored IPCOMP request as connection has compress=no");
-			larval_child->sa.st_ipcomp.present = false;
+			pexpect(larval_child->sa.st_ipcomp.protocol == NULL);
 		} else {
 			dbg("received v2N_IPCOMP_SUPPORTED");
 
@@ -361,7 +371,7 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 			larval_child->sa.st_ipcomp.outbound.last_used =
 				realnow();
 
-			larval_child->sa.st_ipcomp.present = true;
+			larval_child->sa.st_ipcomp.protocol = &ip_protocol_ipcomp;
 			/* logic above decided to enable IPCOMP */
 			if (!compute_v2_child_ipcomp_cpi(larval_child)) {
 				return v2N_INVALID_SYNTAX; /* something fatal */
@@ -502,7 +512,7 @@ bool emit_v2_child_response_payloads(struct ike_sa *ike,
 			return false;
 	}
 
-	if (larval_child->sa.st_ipcomp.present &&
+	if (larval_child->sa.st_ipcomp.protocol == &ip_protocol_ipcomp &&
 	    !emit_v2N_ipcomp_supported(larval_child, outpbs)) {
 		return false;
 	}
@@ -520,7 +530,6 @@ v2_notification_t process_v2_childs_sa_payload(const char *what,
 	struct connection *c = child->sa.st_connection;
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
 	enum isakmp_xchg_type isa_xchg = md->hdr.isa_xchg;
-	struct ipsec_proto_info *proto_info = ikev2_child_sa_proto_info(child);
 	v2_notification_t n;
 
 	n = ikev2_process_sa_payload(what,
@@ -541,6 +550,19 @@ v2_notification_t process_v2_childs_sa_payload(const char *what,
 	if (DBGP(DBG_BASE)) {
 		DBG_log_ikev2_proposal(what, child->sa.st_v2_accepted_proposal);
 	}
+	struct ipsec_proto_info *proto_info = ikev2_child_sa_proto_info(child);
+	/* hack until esp/ah merged */
+	const struct ip_protocol *protocol = NULL;
+	if (proto_info == &child->sa.st_esp) {
+		protocol = &ip_protocol_esp;
+	}
+	if (proto_info == &child->sa.st_ah) {
+		protocol = &ip_protocol_ah;
+	}
+	if (PBAD(child->sa.logger, protocol == NULL)) {
+		return v2N_NO_PROPOSAL_CHOSEN; /* lie */
+	}
+	proto_info->protocol = protocol;
 	if (!ikev2_proposal_to_proto_info(child->sa.st_v2_accepted_proposal, proto_info,
 					  child->sa.logger)) {
 		llog_sa(RC_LOG_SERIOUS, child,
@@ -789,7 +811,7 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 		child->sa.st_ipcomp.inbound.last_used =
 		child->sa.st_ipcomp.outbound.last_used =
 			realnow();
-		child->sa.st_ipcomp.present = true;
+		child->sa.st_ipcomp.protocol = &ip_protocol_ipcomp;
 	}
 
 	ikev2_derive_child_keys(ike, child);

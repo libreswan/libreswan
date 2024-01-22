@@ -235,7 +235,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 		    op == LAK_CHILD_DESTROY ? "destroy" : "start", /* fail uses op=start */
 		    conn_encode,
 		    st->st_serialno,
-		    st->st_esp.present ? "ipsec-esp" : st->st_ah.present ? "ipsec-ah" : "ipsec-policy");
+		    st->st_esp.protocol == &ip_protocol_esp ? "ipsec-esp" : st->st_ah.protocol == &ip_protocol_ah ? "ipsec-ah" : "ipsec-policy");
 		jam_string(&buf, " samode=");
 		jam_enum_short(&buf, &encap_mode_story, c->config->child_sa.encap_mode);
 
@@ -251,12 +251,12 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 		const struct integ_desc *integ;
 		unsigned enckeylen;
 
-		if (st->st_esp.present) {
+		if (st->st_esp.protocol == &ip_protocol_esp) {
 			pi = &st->st_esp;
 			encrypt = st->st_esp.trans_attrs.ta_encrypt;
 			integ = st->st_esp.trans_attrs.ta_integ;
 			enckeylen = st->st_esp.trans_attrs.enckeylen;
-		} else if (st->st_ah.present) {
+		} else if (st->st_ah.protocol == &ip_protocol_ah) {
 			pi = &st->st_ah;
 			encrypt = NULL;
 			integ = st->st_ah.trans_attrs.ta_integ;

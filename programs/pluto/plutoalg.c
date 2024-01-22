@@ -158,7 +158,7 @@ void show_kernel_alg_connection(struct show *s,
 
 	const struct state *st = state_by_serialno(c->newest_ipsec_sa);
 
-	if (st != NULL && st->st_esp.present) {
+	if (st != NULL && st->st_esp.protocol == &ip_protocol_esp) {
 		SHOW_JAMBUF(s, buf) {
 			jam_connection_short(buf, c);
 			jam_string(buf, ":  ");
@@ -171,7 +171,7 @@ void show_kernel_alg_connection(struct show *s,
 		}
 	}
 
-	if (st != NULL && st->st_ah.present) {
+	if (st != NULL && st->st_ah.protocol == &ip_protocol_ah) {
 		SHOW_JAMBUF(s, buf) {
 			jam_connection_short(buf, c);
 			jam_string(buf, ":  ");

@@ -1130,10 +1130,10 @@ static bool init_xfrm_kernel_migrate(struct child_sa *child,
 	const struct ip_protocol *proto;
 	const struct ipsec_proto_info *proto_info;
 
-	if (child->sa.st_esp.present) {
+	if (child->sa.st_esp.protocol == &ip_protocol_esp) {
 		proto = &ip_protocol_esp;
 		proto_info = &child->sa.st_esp;
-	} else if (child->sa.st_ah.present) {
+	} else if (child->sa.st_ah.protocol == &ip_protocol_ah) {
 		proto = &ip_protocol_ah;
 		proto_info = &child->sa.st_ah;
 	} else {
@@ -1314,7 +1314,7 @@ static bool migrate_xfrm_sa(const struct kernel_migrate *sa, struct logger *logg
 
 static bool xfrm_migrate_ipsec_sa(struct child_sa *child)
 {
-	if (!child->sa.st_esp.present) {
+	if (child->sa.st_esp.protocol != &ip_protocol_esp) {
 		llog_sa(RC_LOG, child, "mobike SA migration only support ESP SA");
 		return false;
 	}

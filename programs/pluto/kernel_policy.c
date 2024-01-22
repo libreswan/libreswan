@@ -231,15 +231,15 @@ static struct kernel_policy kernel_policy_from_state(const struct child_sa *chil
 	struct nic_offload nic_offload = {};
 	struct kernel_policy_encap policy = {0};
 
-	if (child->sa.st_ipcomp.present) {
+	if (child->sa.st_ipcomp.protocol == &ip_protocol_ipcomp) {
 		policy.ipcomp = true;
 	}
 
-	if (child->sa.st_esp.present) {
+	if (child->sa.st_esp.protocol == &ip_protocol_esp) {
 		policy.esp = true;
 	}
 
-	if (child->sa.st_ah.present) {
+	if (child->sa.st_ah.protocol == &ip_protocol_ah) {
 		policy.ah = true;
 	}
 

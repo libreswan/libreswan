@@ -99,14 +99,14 @@ lset_t capture_child_rekey_policy(struct state *st)
 
 	if (st->st_pfs_group != NULL)
 		policy |= POLICY_PFS;
-	if (st->st_ah.present) {
+	if (st->st_ah.protocol == &ip_protocol_ah) {
 		policy |= POLICY_AUTHENTICATE;
 	}
-	if (st->st_esp.present &&
+	if (st->st_esp.protocol == &ip_protocol_esp &&
 	    st->st_esp.trans_attrs.ta_encrypt != &ike_alg_encrypt_null) {
 		policy |= POLICY_ENCRYPT;
 	}
-	if (st->st_ipcomp.present) {
+	if (st->st_ipcomp.protocol == &ip_protocol_ipcomp) {
 		policy |= POLICY_COMPRESS;
 	}
 
@@ -118,7 +118,7 @@ void jam_child_sa_details(struct jambuf *buf, struct state *st)
 	struct connection *const c = st->st_connection;
 	const char *ini = "{";
 
-	if (st->st_esp.present) {
+	if (st->st_esp.protocol == &ip_protocol_esp) {
 		jam_string(buf, ini);
 		ini = " ";
 		bool nat = (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) != 0;
@@ -161,7 +161,7 @@ void jam_child_sa_details(struct jambuf *buf, struct state *st)
 
 	}
 
-	if (st->st_ah.present) {
+	if (st->st_ah.protocol == &ip_protocol_ah) {
 		jam_string(buf, ini);
 		ini = " ";
 		jam(buf, "AH%s=>0x%08" PRIx32 " <0x%08" PRIx32 " xfrm=%s",
@@ -171,7 +171,7 @@ void jam_child_sa_details(struct jambuf *buf, struct state *st)
 		    st->st_ah.trans_attrs.ta_integ->common.fqn);
 	}
 
-	if (st->st_ipcomp.present) {
+	if (st->st_ipcomp.protocol == &ip_protocol_ipcomp) {
 		jam_string(buf, ini);
 		ini = " ";
 		jam(buf, "IPCOMP=>0x%08" PRIx32 " <0x%08" PRIx32,

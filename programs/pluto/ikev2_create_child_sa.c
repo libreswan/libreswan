@@ -648,10 +648,10 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 	{
 		enum ikev2_sec_proto_id rekey_protoid;
 		ipsec_spi_t rekey_spi;
-		if (prev->sa.st_esp.present) {
+		if (prev->sa.st_esp.protocol == &ip_protocol_esp) {
 			rekey_spi = prev->sa.st_esp.inbound.spi;
 			rekey_protoid = PROTO_IPSEC_ESP;
-		} else if (prev->sa.st_ah.present) {
+		} else if (prev->sa.st_ah.protocol == &ip_protocol_ah) {
 			rekey_spi = prev->sa.st_ah.inbound.spi;
 			rekey_protoid = PROTO_IPSEC_AH;
 		} else {

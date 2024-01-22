@@ -145,7 +145,6 @@ struct ipsec_flow {
 
 struct ipsec_proto_info {
 	const struct ip_protocol *protocol;	/* ESP, AH, COMP, ... */
-	bool present;				/* was this transform negotiated? */
 	deltatime_t v1_lifetime;	/* max life of this SA */
 	struct trans_attrs trans_attrs;
 	struct ipsec_flow inbound;

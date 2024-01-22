@@ -1767,7 +1767,6 @@ bool ikev2_proposal_to_proto_info(const struct ikev2_proposal *proposal,
 	}
 
 	proto_info->trans_attrs = ta;
-	proto_info->present = true;
 	proto_info->inbound.last_used =
 	proto_info->outbound.last_used =
 		realnow();

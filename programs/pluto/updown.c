@@ -123,15 +123,15 @@ static bool fmt_common_shell_out(char *buf,
 	JDuint("PLUTO_MY_PORT", sr->local->client.hport);
 	JDuint("PLUTO_MY_PROTOCOL", sr->local->client.ipproto);
 	JDuint("PLUTO_SA_REQID", (child == NULL ? c->child.reqid :
-				  child->sa.st_esp.present ? reqid_esp(c->child.reqid) :
-				  child->sa.st_ah.present ? reqid_ah(c->child.reqid) :
-				  child->sa.st_ipcomp.present ? reqid_ipcomp(c->child.reqid) :
+				  child->sa.st_esp.protocol == &ip_protocol_esp ? reqid_esp(c->child.reqid) :
+				  child->sa.st_ah.protocol == &ip_protocol_ah ? reqid_ah(c->child.reqid) :
+				  child->sa.st_ipcomp.protocol == &ip_protocol_ipcomp ? reqid_ipcomp(c->child.reqid) :
 				  c->child.reqid));
 
 	JDstr("PLUTO_SA_TYPE", (child == NULL ? "none" :
-				child->sa.st_esp.present ? "ESP" :
-				child->sa.st_ah.present ? "AH" :
-				child->sa.st_ipcomp.present ? "IPCOMP" :
+				child->sa.st_esp.protocol == &ip_protocol_esp ? "ESP" :
+				child->sa.st_ah.protocol == &ip_protocol_ah ? "AH" :
+				child->sa.st_ipcomp.protocol == &ip_protocol_ipcomp ? "IPCOMP" :
 				"unknown?"));
 
 	JDipaddr("PLUTO_PEER", sr->remote->host->addr);
@@ -212,9 +212,9 @@ static bool fmt_common_shell_out(char *buf,
 
 	struct ipsec_proto_info *const first_ipsec_proto =
 		(child == NULL ? NULL :
-		 child->sa.st_esp.present ? &child->sa.st_esp :
-		 child->sa.st_ah.present ? &child->sa.st_ah :
-		 child->sa.st_ipcomp.present ? &child->sa.st_ipcomp :
+		 child->sa.st_esp.protocol == &ip_protocol_esp ? &child->sa.st_esp :
+		 child->sa.st_ah.protocol == &ip_protocol_ah ? &child->sa.st_ah :
+		 child->sa.st_ipcomp.protocol == &ip_protocol_ipcomp ? &child->sa.st_ipcomp :
 		 NULL);
 
 	if (first_ipsec_proto != NULL) {

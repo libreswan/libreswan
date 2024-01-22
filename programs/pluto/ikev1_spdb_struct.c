@@ -3266,8 +3266,8 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 		st->st_kernel_mode = kernel_mode;
 
 #define COPY(WHAT)							\
-		st->st_##WHAT.present = WHAT##_seen;			\
 		if (WHAT##_seen) {					\
+			st->st_##WHAT.protocol = &ip_protocol_##WHAT;	\
 			st->st_##WHAT.trans_attrs = WHAT##_attrs.transattrs; \
 			st->st_##WHAT.v1_lifetime = WHAT##_attrs.lifetime; \
 			st->st_##WHAT.outbound.spi = WHAT##_attrs.spi;	\

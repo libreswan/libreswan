@@ -71,13 +71,13 @@ void send_v1_delete(struct ike_sa *isakmp, struct state *st, where_t where)
 	 * without this.
 	 */
 	if (IS_IPSEC_SA_ESTABLISHED(st)) {
-		if (st->st_ah.present) {
+		if (st->st_ah.protocol == &ip_protocol_ah) {
 			*ns = said_from_address_protocol_spi(st->st_connection->local->host.addr,
 							     &ip_protocol_ah,
 							     st->st_ah.inbound.spi);
 			ns++;
 		}
-		if (st->st_esp.present) {
+		if (st->st_esp.protocol == &ip_protocol_esp) {
 			*ns = said_from_address_protocol_spi(st->st_connection->local->host.addr,
 							     &ip_protocol_esp,
 							     st->st_esp.inbound.spi);
@@ -297,7 +297,7 @@ static struct child_sa *find_phase2_state_to_delete(const struct ike_sa *p1,
 		const struct ipsec_proto_info *pr =
 			(protoid == PROTO_IPSEC_AH ? &p2->sa.st_ah :
 			 &p2->sa.st_esp);
-		if (!pr->present) {
+		if (pr->protocol == NULL) {
 			continue;
 		}
 		if (pr->outbound.spi == spi) {

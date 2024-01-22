@@ -2640,7 +2640,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 
 #define clamp_delay(trans)						\
 				{					\
-					if (st->trans.present &&	\
+					if (st->trans.protocol != NULL &&	\
 					    deltatime_cmp(event_delay, >=, st->trans.v1_lifetime)) { \
 						agreed_time = true;	\
 						event_delay = st->trans.v1_lifetime; \
