@@ -138,13 +138,6 @@ kvmplutotest	addconn-36-vti					good
 kvmplutotest	addconn-37-nic-offload				good
 
 #################################################################
-# Whack UI tests
-#################################################################
-kvmplutotest	whack-02-globalstatus			good
-kvmplutotest	whack-03-rereadcerts			good
-
-
-#################################################################
 # IKEv2 tests
 #################################################################
 kvmplutotest	ikev2-03-basic-rawrsa			good
@@ -1336,7 +1329,14 @@ kvmplutotest	seccomp-01-enabled		good	github/795
 kvmplutotest	seccomp-02-tolerant		good	github/795
 kvmplutotest	seccomp-03-updown		wip
 
-# Utility tests like "ipsec showhostkey"
+#################################################################
+# Whack/IPSEC UI tests
+#################################################################
+
+kvmplutotest	whack-globalstatus-01			good
+kvmplutotest	whack-rereadcerts-01			good
+
+# "ipsec showhostkey"
 kvmplutotest	whack-hostkey-01-ckaid-rsa		good
 kvmplutotest	whack-hostkey-01-ckaid-ecdsa		good
 kvmplutotest	whack-hostkey-02-ckaid-fips		good
@@ -1346,6 +1346,7 @@ kvmplutotest	whack-hostkey-05-ikev2-rawkey-rsa	good
 kvmplutotest	whack-hostkey-05-ikev2-rawkey-ecdsa	good
 kvmplutotest	whack-hostkey-06-ikev2-pubkey-rsa	good
 kvmplutotest	whack-hostkey-06-ikev2-pubkey-ecdsa	good
+
 # up edge cases
 kvmplutotest	whack-up-01-async-ikev1			good
 kvmplutotest	whack-up-01-async-ikev2			good
