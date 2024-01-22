@@ -62,7 +62,6 @@ installboot -v -o console=com0,timeout=5,speed=9600 /dev/rld0a /usr/mdec/bootxx_
 
 mount -o async /dev/ld0a /targetroot
 touch /targetroot/.
-cd /targetroot
 
 sets=/mnt/$(uname -m)/binary/sets
 
@@ -75,7 +74,7 @@ ls ${sets}
 for f in ${sets}/[a-jl-z]*.${tgz} ${sets}/[a-jl-z]*.${tgz} ; do
     if test -r "${f}" ; then
 	echo $f
-	tar xpf ${f}
+	( cd /targetroot && tar xpf ${f} )
     fi
 done
 
@@ -83,12 +82,11 @@ done
 for f in kern-GENERIC.${tgz} kern_generic.${tgz} ; do
     k=${sets}/${f}
     if test -r ${k} ; then
-	tar xpvf ${k}
+	( cd /targetroot && tar xpvf ${k} )
 	break
     fi
 done
 
-cd /
 
 :
 : Set up the mount points
@@ -106,6 +104,20 @@ tmpfs           /tmp            tmpfs   rw
 @@GATEWAY@@:@@POOLDIR@@ /pool   nfs     rw
 @@GATEWAY@@:@@BENCHDIR@@ /bench nfs     rw
 EOF
+
+
+:
+: run post install
+:
+
+# opensslcertsrehash needs /dev populated
+( cd /targetroot/dev && ./MAKEDEV all )
+# postinstall needs these
+cp ${sets}/etc.${tgz} /targetroot/var/tmp
+cp ${sets}/xetc.${tgz} /targetroot/var/tmp
+# opensslcertsreahsh only works with /
+chroot /targetroot postinstall -s /var/tmp/etc.${tgz} -s /var/tmp/xetc.${tgz} fix
+
 
 # also blank out TOOR's password as backup?
 # c("echo swan | pwhash |sed -e 's/[\$\/\\]/\\\$/g' | tee /tmp/pwd")

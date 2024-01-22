@@ -37,8 +37,5 @@ pkgin -y install racoon2
 pkgin -y install pkg_developer
 pkgin -y install mozilla-rootcerts
 
-# git, for instance, requires the mozilla root certs.
-mozilla-rootcerts install
-
 pkg_admin fetch-pkg-vulnerabilities
 pkg_admin audit || true
