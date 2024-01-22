@@ -12,6 +12,7 @@ west #
 west #
  ipsec auto --add test
 "test": ikev2=yes has been replaced by keyexchange=ikev2
+"test": connection failed to orient - check connection and network settings
 "test": added IKEv2 connection
 west #
  ipsec status | grep algorithms: # DEFAULT
@@ -26,6 +27,7 @@ west #
 west #
  ipsec auto --add test
 "test": ikev2=yes has been replaced by keyexchange=ikev2
+"test": connection failed to orient - check connection and network settings
 "test": added IKEv2 connection
 west #
  ipsec status | grep algorithms: # FIPS
@@ -40,6 +42,7 @@ west #
 west #
  ipsec auto --add test
 "test": ikev2=yes has been replaced by keyexchange=ikev2
+"test": connection failed to orient - check connection and network settings
 "test": added IKEv2 connection
 west #
  ipsec status | grep algorithms: # FUTURE
@@ -54,6 +57,7 @@ west #
 west #
  ipsec auto --add test
 "test": ikev2=yes has been replaced by keyexchange=ikev2
+"test": connection failed to orient - check connection and network settings
 "test": added IKEv2 connection
 west #
  ipsec status | grep algorithms: # LEGACY

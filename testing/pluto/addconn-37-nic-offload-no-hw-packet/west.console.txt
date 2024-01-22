@@ -7,6 +7,7 @@ west #
 west #
  ipsec auto --add west-east-transport
 "west-east-transport": interface search skipped interface eth1 as it does not have nic-offload support
+"west-east-transport": connection failed to orient - check connection and network settings
 "west-east-transport": added IKEv2 connection
 west #
  ipsec whack --impair suppress_retransmits
