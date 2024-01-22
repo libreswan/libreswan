@@ -195,6 +195,18 @@ void llog_v2_success_state_story_details(struct ike_sa *ike)
 	}
 }
 
+void llog_v2_success_state_story_to_details(struct ike_sa *ike)
+{
+	enum rc_type w = RC_NEW_V2_STATE + ike->sa.st_state->kind;
+	LLOG_JAMBUF(w, ike->sa.logger, buf) {
+		jam_string(buf, ike->sa.st_state->story);
+		jam_string(buf, " to ");
+		jam_endpoint_address_protocol_port_sensitive(buf, &ike->sa.st_remote_endpoint);
+		jam_string(buf, " ");
+		jam_parent_sa_details(buf, &ike->sa);
+	}
+}
+
 /*
  * From RFC 5996 syntax: [optional] and {encrypted}
  *
@@ -350,7 +362,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .req_clear_payloads = P(SA) | P(KE) | P(Nr),
 	  .opt_clear_payloads = P(CERTREQ),
 	  .processor  = process_v2_IKE_SA_INIT_response,
-	  .llog_success = llog_v2_success_state_story_details,
+	  .llog_success = llog_v2_success_state_story_to_details,
 	  .timeout_event = EVENT_RETRANSMIT, },
 
 	{ .story      = "Initiator: process IKE_INTERMEDIATE reply, initiate IKE_AUTH or IKE_INTERMEDIATE",
