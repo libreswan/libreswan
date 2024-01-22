@@ -181,8 +181,6 @@ spd_priority_t spd_priority(const struct spd_route *spd)
 	return (spd_priority_t) { prio, };
 }
 
-static global_timer_cb kernel_scan_shunts;
-
 /*
  * Add an outbound bare kernel policy, aka shunt.
  *
@@ -1850,51 +1848,6 @@ static bool uninstall_kernel_state(struct child_sa *child, enum direction direct
 	return result;
 }
 
-const struct kernel_ops *const kernel_stacks[] = {
-#ifdef KERNEL_XFRM
-	&xfrm_kernel_ops,
-#endif
-#ifdef KERNEL_PFKEYV2
-	&pfkeyv2_kernel_ops,
-#endif
-	NULL,
-};
-
-const struct kernel_ops *kernel_ops = NULL/*kernel_stacks[0]*/;
-
-deltatime_t bare_shunt_interval = DELTATIME_INIT(SHUNT_SCAN_INTERVAL);
-
-void init_kernel(struct logger *logger)
-{
-	struct utsname un;
-
-	/* get kernel version */
-	uname(&un);
-	llog(RC_LOG, logger,
-	     "using %s %s kernel support code on %s",
-	     un.sysname, kernel_ops->interface_name, un.version);
-
-	PASSERT(logger, kernel_ops->init != NULL);
-	PASSERT(logger, kernel_ops->flush != NULL);
-	PASSERT(logger, kernel_ops->poke_holes != NULL);
-
-	kernel_ops->init(logger);
-	kernel_ops->flush(logger);
-	/* after flush, else they get flushed! */
-	kernel_ops->poke_holes(logger);
-
-	enable_periodic_timer(EVENT_SHUNT_SCAN, kernel_scan_shunts,
-			      bare_shunt_interval);
-}
-
-void show_kernel_interface(struct show *s)
-{
-	if (kernel_ops != NULL) {
-		show_comment(s, "using kernel interface: %s",
-			     kernel_ops->interface_name);
-	}
-}
-
 static bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 						   enum routing new_routing,
 						   struct do_updown updown)
@@ -2562,17 +2515,6 @@ static void delete_bare_shunt_kernel_policies(struct logger *logger)
 	}
 }
 
-static void kernel_scan_shunts(struct logger *logger)
-{
-	expire_bare_shunts(logger);
-}
-
-void shutdown_kernel(struct logger *logger)
-{
-	delete_bare_shunt_kernel_policies(logger);
-	kernel_ops->shutdown(logger);
-}
-
 void handle_sa_expire(ipsec_spi_t spi, uint8_t protoid, ip_address dst,
 		      bool hard, uint64_t bytes, uint64_t packets, uint64_t add_time,
 		      struct logger *logger)
@@ -2690,4 +2632,62 @@ void jam_kernel_acquire(struct jambuf *buf, const struct kernel_acquire *b)
 		jam(buf, " policy=%u", (unsigned)b->policy_id);
 	}
 #endif
+}
+
+const struct kernel_ops *const kernel_stacks[] = {
+#ifdef KERNEL_XFRM
+	&xfrm_kernel_ops,
+#endif
+#ifdef KERNEL_PFKEYV2
+	&pfkeyv2_kernel_ops,
+#endif
+	NULL,
+};
+
+const struct kernel_ops *kernel_ops = NULL/*kernel_stacks[0]*/;
+
+deltatime_t bare_shunt_interval = DELTATIME_INIT(SHUNT_SCAN_INTERVAL);
+
+static global_timer_cb kernel_scan_shunts;
+
+static void kernel_scan_shunts(struct logger *logger)
+{
+	expire_bare_shunts(logger);
+}
+
+void init_kernel(struct logger *logger)
+{
+	struct utsname un;
+
+	/* get kernel version */
+	uname(&un);
+	llog(RC_LOG, logger,
+	     "using %s %s kernel support code on %s",
+	     un.sysname, kernel_ops->interface_name, un.version);
+
+	PASSERT(logger, kernel_ops->init != NULL);
+	PASSERT(logger, kernel_ops->flush != NULL);
+	PASSERT(logger, kernel_ops->poke_holes != NULL);
+
+	kernel_ops->init(logger);
+	kernel_ops->flush(logger);
+	/* after flush, else they get flushed! */
+	kernel_ops->poke_holes(logger);
+
+	enable_periodic_timer(EVENT_SHUNT_SCAN, kernel_scan_shunts,
+			      bare_shunt_interval);
+}
+
+void show_kernel_interface(struct show *s)
+{
+	if (kernel_ops != NULL) {
+		show_comment(s, "using kernel interface: %s",
+			     kernel_ops->interface_name);
+	}
+}
+
+void shutdown_kernel(struct logger *logger)
+{
+	delete_bare_shunt_kernel_policies(logger);
+	kernel_ops->shutdown(logger);
 }
