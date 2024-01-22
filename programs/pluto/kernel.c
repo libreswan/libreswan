@@ -1875,7 +1875,13 @@ void init_kernel(struct logger *logger)
 	     un.sysname, kernel_ops->interface_name, un.version);
 
 	PASSERT(logger, kernel_ops->init != NULL);
-	kernel_ops->init(/*flush*/true, logger);
+	PASSERT(logger, kernel_ops->flush != NULL);
+	PASSERT(logger, kernel_ops->poke_holes != NULL);
+
+	kernel_ops->init(logger);
+	kernel_ops->flush(logger);
+	/* after flush, else they get flushed! */
+	kernel_ops->poke_holes(logger);
 
 	enable_periodic_timer(EVENT_SHUNT_SCAN, kernel_scan_shunts,
 			      bare_shunt_interval);

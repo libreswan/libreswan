@@ -229,8 +229,11 @@ struct kernel_ops {
 	bool esn_supported;
 	uintmax_t max_replay_window;
 
-	void (*init)(bool flush, struct logger *logger);
+	void (*init)(struct logger *logger);
+	void (*flush)(struct logger *logger);
+	void (*poke_holes)(struct logger *logger);
 	void (*shutdown)(struct logger *logger);
+
 	bool (*policy_add)(enum kernel_policy_op op,
 			   enum direction dir,
 			   const ip_selector *src_client,

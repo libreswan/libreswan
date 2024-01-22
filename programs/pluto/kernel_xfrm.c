@@ -118,7 +118,6 @@
 
 static void netlink_process_xfrm_messages(int fd, void *arg, struct logger *logger);
 static void netlink_process_rtm_messages(int fd, void *arg, struct logger *logger);
-static void poke_icmpv6_holes(struct logger *logger);
 static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 			      unsigned expected_resp_type, struct nlm_resp *rbuf,
 			      const char *description, const char *story,
@@ -282,7 +281,7 @@ static void init_netlink_xfrm_fd(struct logger *logger)
  * init_netlink - Initialize the netlink interface.  Opens the sockets and
  * then binds to the broadcast socket.
  */
-static void kernel_xfrm_init(bool flush, struct logger *logger)
+static void kernel_xfrm_init(struct logger *logger)
 {
 #define XFRM_ACQ_EXPIRES "/proc/sys/net/core/xfrm_acq_expires"
 #define XFRM_STAT "/proc/net/xfrm_stat"
@@ -332,33 +331,6 @@ static void kernel_xfrm_init(bool flush, struct logger *logger)
 	init_netlink_rtm_fd(logger);
 	init_netlink_xfrm_fd(logger);
 
-	if (flush) {
-		struct nlm_resp rsp;
-		int recv_errno;
-
-		struct nlmsghdr policy = {
-			.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK,
-			.nlmsg_type = XFRM_MSG_FLUSHPOLICY,
-			.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(0)),
-		};
-		sendrecv_xfrm_msg(&policy, NLMSG_ERROR, &rsp,
-				  "flush", "policy",
-				  &recv_errno, logger);
-
-		struct {
-			struct nlmsghdr n;
-			struct xfrm_usersa_flush f; /*protocol*/
-		} state = {
-			.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK,
-			.n.nlmsg_type = XFRM_MSG_FLUSHSA,
-			.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(state.f))),
-			.f.proto = 0,
-		};
-		sendrecv_xfrm_msg(&state.n, NLMSG_ERROR, &rsp,
-				  "flush", "state",
-				  &recv_errno, logger);
-	}
-
 	/*
 	 * Just assume any algorithm with a NETLINK_XFRM name works.
 	 *
@@ -381,11 +353,34 @@ static void kernel_xfrm_init(bool flush, struct logger *logger)
 			kernel_integ_add(alg);
 		}
 	}
+}
 
-	/* Add the port bypass polcies */
+static void kernel_xfrm_flush(struct logger *logger)
+{
+	struct nlm_resp rsp;
+	int recv_errno;
 
-	/* may not return */
-	poke_icmpv6_holes(logger);
+	struct nlmsghdr policy = {
+		.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK,
+		.nlmsg_type = XFRM_MSG_FLUSHPOLICY,
+		.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(0)),
+	};
+	sendrecv_xfrm_msg(&policy, NLMSG_ERROR, &rsp,
+			  "flush", "policy",
+			  &recv_errno, logger);
+
+	struct {
+		struct nlmsghdr n;
+		struct xfrm_usersa_flush f; /*protocol*/
+	} state = {
+		.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK,
+		.n.nlmsg_type = XFRM_MSG_FLUSHSA,
+		.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(state.f))),
+		.f.proto = 0,
+	};
+	sendrecv_xfrm_msg(&state.n, NLMSG_ERROR, &rsp,
+			  "flush", "state",
+			  &recv_errno, logger);
 }
 
 /*
@@ -2754,7 +2749,7 @@ static bool delete_icmpv6_bypass_policies(struct logger *logger)
 	return ok;
 }
 
-static void poke_icmpv6_holes(struct logger *logger)
+static void kernel_xfrm_poke_icmpv6_holes(struct logger *logger)
 {
 	/* this could be per interface specific too */
 	const char proc_f[] = "/proc/sys/net/ipv6/conf/all/disable_ipv6";
@@ -3042,6 +3037,8 @@ const struct kernel_ops xfrm_kernel_ops = {
 	.esn_supported = true,
 
 	.init = kernel_xfrm_init,
+	.flush = kernel_xfrm_flush,
+	.poke_holes = kernel_xfrm_poke_icmpv6_holes,
 	.shutdown = kernel_xfrm_shutdown,
 
 	.policy_del = kernel_xfrm_policy_del,

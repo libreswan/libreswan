@@ -582,7 +582,7 @@ static void register_satype(const struct ip_protocol *protocol, struct logger *l
 	}
 }
 
-static void kernel_pfkeyv2_init(bool flush, struct logger *logger)
+static void kernel_pfkeyv2_init(struct logger *logger)
 {
 	ldbg(logger, "initializing PFKEY V2");
 
@@ -604,17 +604,22 @@ static void kernel_pfkeyv2_init(bool flush, struct logger *logger)
 	register_satype(&ip_protocol_ah, logger);
 	register_satype(&ip_protocol_esp, logger);
 	register_satype(&ip_protocol_ipcomp, logger);
+}
 
-	/* flush if needed */
-	if (flush) {
-		struct inbuf resp;
-		sadb_base_sendrecv(&resp, SADB_FLUSH, SADB_SATYPE_UNSPEC, logger);
+static void kernel_pfkeyv2_flush(struct logger *logger)
+{
+	struct inbuf resp;
+	sadb_base_sendrecv(&resp, SADB_FLUSH, SADB_SATYPE_UNSPEC, logger);
 #ifdef SADB_X_SPDFLUSH /* FreeBSD NetBSD */
-		sadb_base_sendrecv(&resp, SADB_X_SPDFLUSH, SADB_SATYPE_UNSPEC, logger);
+	sadb_base_sendrecv(&resp, SADB_X_SPDFLUSH, SADB_SATYPE_UNSPEC, logger);
 #else /* OpenBSD */
-		ldbg(logger, "OpenBSD SADB_FLUSH does everything; SADB_X_SPDFLUSH not needed");
+	ldbg(logger, "OpenBSD SADB_FLUSH does everything; SADB_X_SPDFLUSH not needed");
 #endif
-	}
+}
+
+static void kernel_pfkeyv2_poke_holes(struct logger *logger)
+{
+	ldbg(logger, "does PFKEY need to poke holes in its kernel policies?");
 }
 
 static ipsec_spi_t pfkeyv2_get_ipsec_spi(ipsec_spi_t avoid UNUSED,
@@ -1690,6 +1695,8 @@ const struct kernel_ops pfkeyv2_kernel_ops = {
 #endif
 
 	.init = kernel_pfkeyv2_init,
+	.flush = kernel_pfkeyv2_flush,
+	.poke_holes = kernel_pfkeyv2_poke_holes,
 	.shutdown = kernel_pfkeyv2_shutdown,
 
 	.get_ipsec_spi = pfkeyv2_get_ipsec_spi,
