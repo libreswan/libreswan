@@ -67,13 +67,18 @@ bool process_any_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *ike,
 						       struct msg_digest *md,
 						       struct pbs_out *sk_pbs);
 
-#define ikev2_child_sa_proto_info(SA)					\
+/*
+ * Macro as that handles const CHILD.
+ */
+#define ikev2_child_sa_proto_info(CHILD)				\
 	({								\
-		typeof(SA) sa_ = (SA); /* evaluate once */		\
-		lset_t p_ = (child_sa_policy(sa_->sa.st_connection) &	\
-			     (POLICY_ENCRYPT | POLICY_AUTHENTICATE));	\
-		(p_ == POLICY_ENCRYPT ? &sa_->sa.st_esp :		\
-		 p_ == POLICY_AUTHENTICATE ? &sa_->sa.st_ah :		\
+		/* evaluate once */					\
+		typeof(CHILD) child_ = (CHILD);				\
+		enum encap_proto encap_proto =				\
+			child_->sa.st_connection->config->child_sa.encap_proto; \
+		/* handle const CHILD */				\
+		(encap_proto == ENCAP_PROTO_ESP ? &child_->sa.st_esp : \
+		 encap_proto == ENCAP_PROTO_AH ? &child_->sa.st_ah :	\
 		 NULL);							\
 	})
 
