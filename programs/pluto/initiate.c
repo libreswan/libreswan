@@ -326,7 +326,7 @@ static bool initiate_connection_4_fab(struct connection *c,
 	    c->config->child_sa.encap_proto != ENCAP_PROTO_UNSET) {
 		struct db_sa *phase2_sa = v1_kernel_alg_makedb(child_sa_policy(c),
 							       c->config->child_sa.proposals,
-							       true, c->logger);
+							       c->logger);
 		if (c->config->child_sa.proposals.p != NULL && phase2_sa == NULL) {
 			llog(WHACK_STREAM|RC_LOG_SERIOUS, c->logger,
 			     "cannot initiate: no acceptable kernel algorithms loaded");

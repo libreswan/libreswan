@@ -176,6 +176,6 @@ struct alg_info_esp;
 
 struct db_sa *v1_kernel_alg_makedb(lset_t policy,
 				   const struct child_proposals proposals,
-				   bool logit, struct logger *logger);
+				   struct logger *logger);
 
 #endif /*  _SPDB_H_ */

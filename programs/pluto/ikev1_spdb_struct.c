@@ -274,8 +274,7 @@ static bool ikev1_verify_ah(const struct connection *c,
 
 static bool kernel_alg_db_add(struct db_context *db_ctx,
 			      const struct proposal *proposal,
-			      lset_t policy, bool logit,
-			      struct logger *logger)
+			      lset_t policy, struct logger *logger)
 {
 	enum ipsec_cipher_algo ealg_i = ESP_reserved;
 
@@ -284,13 +283,9 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 		ealg_i = algs.encrypt->common.id[IKEv1_ESP_ID];
 		/* already checked by the parser? */
 		if (!kernel_alg_encrypt_ok(algs.encrypt)) {
-			if (logit) {
-				llog(RC_LOG_SERIOUS, logger,
-					    "requested kernel enc ealg_id=%d not present",
-					    ealg_i);
-			} else {
-				dbg("requested kernel enc ealg_id=%d not present", ealg_i);
-			}
+			llog(RC_LOG_SERIOUS, logger,
+			     "requested kernel enc ealg_id=%d not present",
+			     ealg_i);
 			return false;
 		}
 	}
@@ -362,8 +357,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
  *	malloced pointer (this quirk allows easier spdb.c change)
  */
 static struct db_context *kernel_alg_db_new(struct child_proposals proposals,
-					    lset_t policy, bool logit,
-					    struct logger *logger)
+					    lset_t policy, struct logger *logger)
 {
 	unsigned int trans_cnt = 0;
 	int protoid = PROTO_RESERVED;
@@ -396,7 +390,7 @@ static struct db_context *kernel_alg_db_new(struct child_proposals proposals,
 				jam_string(buf, "adding proposal: ");
 				jam_proposal(buf, proposal);
 			}
-			if (!kernel_alg_db_add(ctx_new, proposal, policy, logit, logger))
+			if (!kernel_alg_db_add(ctx_new, proposal, policy, logger))
 				success = false;	/* ??? should we break? */
 		}
 	} else {
@@ -432,7 +426,7 @@ static struct db_context *kernel_alg_db_new(struct child_proposals proposals,
 
 struct db_sa *v1_kernel_alg_makedb(lset_t policy,
 				   struct child_proposals proposals,
-				   bool logit, struct logger *logger)
+				   struct logger *logger)
 {
 	if (proposals.p == NULL) {
 		struct ipsec_db_policy pm = {
@@ -451,7 +445,7 @@ struct db_sa *v1_kernel_alg_makedb(lset_t policy,
 		return sadb;
 	}
 
-	struct db_context *dbnew = kernel_alg_db_new(proposals, policy, logit, logger);
+	struct db_context *dbnew = kernel_alg_db_new(proposals, policy, logger);
 
 	if (dbnew == NULL) {
 		llog(RC_LOG, logger, "failed to translate esp_info to proposal, returning empty");
@@ -865,7 +859,7 @@ bool ikev1_out_sa(pb_stream *outs,
 	} else {
 		revised_sadb = v1_kernel_alg_makedb(child_sa_policy(c),
 						    c->config->child_sa.proposals,
-						    true, st->logger);
+						    st->logger);
 
 		/* add IPcomp proposal if policy asks for it */
 
