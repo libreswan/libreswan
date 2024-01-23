@@ -2646,6 +2646,8 @@ const struct kernel_ops *const kernel_stacks[] = {
 
 const struct kernel_ops *kernel_ops = NULL/*kernel_stacks[0]*/;
 
+static bool kernel_initialized = false;
+
 deltatime_t bare_shunt_interval = DELTATIME_INIT(SHUNT_SCAN_INTERVAL);
 
 static global_timer_cb kernel_scan_shunts;
@@ -2657,6 +2659,13 @@ static void kernel_scan_shunts(struct logger *logger)
 
 void init_kernel(struct logger *logger)
 {
+	/*
+	 * Hack to stop early startup failure cascading into kernel
+	 * code.  For instance, when NSS barfs, the uninitialized
+	 * kernel gets shutdown.
+	 */
+	kernel_initialized = true;
+
 	struct utsname un;
 
 	/* get kernel version */
@@ -2688,6 +2697,9 @@ void show_kernel_interface(struct show *s)
 
 void shutdown_kernel(struct logger *logger)
 {
-	delete_bare_shunt_kernel_policies(logger);
-	kernel_ops->shutdown(logger);
+	if (kernel_initialized) {
+		delete_bare_shunt_kernel_policies(logger);
+		kernel_ops->flush(logger);
+		kernel_ops->shutdown(logger);
+	}
 }

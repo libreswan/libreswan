@@ -14,7 +14,7 @@
  * Copyright (C) 2012 Philippe Vouters <Philippe.Vouters@laposte.net>
  * Copyright (C) 2012 Wes Hardaker <opensource@hardakers.net>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
- * Copyright (C) 2016-2020 Andrew Cagney
+ * Copyright (C) 2016-2024 Andrew Cagney
  * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
