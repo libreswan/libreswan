@@ -32,13 +32,13 @@ struct connection;
 bool initiate_connection(struct connection *c, const char *remote_host,
 			 bool background, struct logger *logger);
 
-void ipsecdoi_initiate(struct connection *c,
-		       lset_t policy,
-		       so_serial_t replacing,
-		       const threadtime_t *inception,
-		       shunk_t sec_label,
-		       bool background, struct logger *logger,
-		       enum initiated_by initiated_by,
-		       where_t where);
+void initiate(struct connection *c,
+	      lset_t policy,
+	      so_serial_t replacing,
+	      const threadtime_t *inception,
+	      shunk_t sec_label,
+	      bool background, struct logger *logger,
+	      enum initiated_by initiated_by,
+	      where_t where);
 
 #endif

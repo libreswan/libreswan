@@ -514,7 +514,7 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
  * Initiate an Oakley Main Mode exchange.
  *       HDR, SAi1, KEi, Ni   -->
  *
- * Note: this is not called from demux.c, but from ipsecdoi_initiate().
+ * Note: this is not called from demux.c, but from initiate().
  *
  */
 

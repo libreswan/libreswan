@@ -349,21 +349,21 @@ static bool initiate_connection_4_fab(struct connection *c,
 	so_serial_t replacing = SOS_NOBODY;
 	lset_t policy = child_sa_policy(c);
 
-	ipsecdoi_initiate(c, policy, replacing, &inception,
-			  sec_label, background, logger,
-			  INITIATED_BY_WHACK/*maybe?*/, HERE);
+	initiate(c, policy, replacing, &inception,
+		 sec_label, background, logger,
+		 INITIATED_BY_WHACK/*maybe?*/, HERE);
 
 	return true;
 }
 
-void ipsecdoi_initiate(struct connection *c,
-		       lset_t policy,
-		       so_serial_t replacing,
-		       const threadtime_t *inception,
-		       shunk_t sec_label,
-		       bool background, struct logger *logger,
-		       enum initiated_by initiated_by,
-		       where_t where)
+void initiate(struct connection *c,
+	      lset_t policy,
+	      so_serial_t replacing,
+	      const threadtime_t *inception,
+	      shunk_t sec_label,
+	      bool background, struct logger *logger,
+	      enum initiated_by initiated_by,
+	      where_t where)
 {
 	enum_buf ifnb;
 	ldbg_connection(c, where, "%s() from %s sec_label "PRI_SHUNK,

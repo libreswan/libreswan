@@ -151,11 +151,11 @@ void initiate_ondemand(const struct kernel_acquire *b)
 		jam_kernel_acquire(buf, b);
 	}
 
-	ipsecdoi_initiate(cp, child_sa_policy(cp), SOS_NOBODY,
-			  &inception, b->sec_label,
-			  b->background, cp->logger,
-			  INITIATED_BY_ACQUIRE,
-			  HERE);
+	initiate(cp, child_sa_policy(cp), SOS_NOBODY,
+		 &inception, b->sec_label,
+		 b->background, cp->logger,
+		 INITIATED_BY_ACQUIRE,
+		 HERE);
 
 	connection_detach(cp, b->logger);
 	connection_delref(&cp, b->logger);

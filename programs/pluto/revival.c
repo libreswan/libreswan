@@ -322,7 +322,7 @@ void revive_connection(struct connection *c, const char *subplot,
 	lset_t policy = child_sa_policy(c);
 	bool background = false;
 
-	ipsecdoi_initiate(c, policy, replacing, inception,
-			  sec_label, background, logger,
-			  INITIATED_BY_REVIVE, HERE);
+	initiate(c, policy, replacing, inception,
+		 sec_label, background, logger,
+		 INITIATED_BY_REVIVE, HERE);
 }
