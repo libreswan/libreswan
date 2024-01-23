@@ -161,7 +161,7 @@ else
     log=${log_prefix}.kernel-state.log
     $(dirname $0)/ipsec-kernel-state.sh | tee -a ${log}
     if test -s ${log} ; then
-	IGNORE still tracking down lingering states
+	FAIL
     else
 	PASS
     fi
@@ -176,7 +176,7 @@ else
     log=${log_prefix}.kernel-policy.log
     $(dirname $0)/ipsec-kernel-policy.sh | tee -a ${log}
     if test -s ${log} ; then
-	IGNORE still tracking down lingering kernel-policy
+	FAIL
     else
 	PASS
     fi
