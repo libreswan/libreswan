@@ -366,9 +366,13 @@ void initiate(struct connection *c,
 	      where_t where)
 {
 	enum_buf ifnb;
-	ldbg_connection(c, where, "%s() from %s sec_label "PRI_SHUNK,
+	policy_buf pb;
+	enum_buf epb;
+	ldbg_connection(c, where, "%s() by %s policy=%s proto=%s sec_label="PRI_SHUNK,
 			__func__,
 			str_enum_short(&initiated_by_names, initiated_by, &ifnb),
+			str_policy(policy, &pb),
+			str_enum_short(&encap_proto_names, c->config->child_sa.encap_proto, &epb),
 			pri_shunk(sec_label));
 
 	/*
