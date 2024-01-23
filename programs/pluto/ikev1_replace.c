@@ -54,12 +54,21 @@ void ikev1_replace(struct state *st)
 	threadtime_t inception = threadtime_start();
 
 	if (IS_IKE_SA(st)) {
-		/* start from policy in connection */
-
-		struct connection *c = st->st_connection;
-
-		/* should this call capture_child_rekey_policy(st); */
+		/*
+		 * Should this call capture_child_rekey_policy(st) or
+		 * child_sa_policy(c) to capture the Child SA's
+		 * policy?
+		 *
+		 * Probably not.
+		 *
+		 * When the IKE (ISAKMP) SA initiator code sees
+		 * policy=LEMPTY it skips scheduling the connection as
+		 * a Child SA to be initiated once the IKE SA
+		 * establishes.  Instead the revival code will
+		 * schedule the connection as a child.
+		 */
 		lset_t policy = LEMPTY;
+		struct connection *c = st->st_connection;
 		struct ike_sa *predecessor = pexpect_ike_sa(st);
 		if (c->config->aggressive) {
 			aggr_outI1(c, predecessor, policy, &inception, /*background?*/false);
