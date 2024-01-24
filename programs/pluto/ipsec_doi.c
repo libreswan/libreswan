@@ -91,21 +91,39 @@
  */
 lset_t capture_child_rekey_policy(struct state *st)
 {
-	lset_t policy = st->st_policy;
+	lset_t policy = LEMPTY;
+
+	/*
+	 * ESP/AH are non-negotiatable, hence the connection value can
+	 * be used.
+	 *
+	 * Note that the initiate code tests for non-LEMPTY policy
+	 * when deciding if an IKE (ISAKMP) SA should also initiate
+	 * the connection as a Child SA (look for add_pending()).
+	 */
+	switch (st->st_connection->config->child_sa.encap_proto) {
+	case ENCAP_PROTO_ESP:
+		policy |= POLICY_ENCRYPT;
+		break;
+	case ENCAP_PROTO_AH:
+		policy |= POLICY_AUTHENTICATE;
+		break;
+	default:
+		/*
+		 * Without ESP/AH the connection must be
+		 * never-negotiate, hence return LEMPTY.
+		 */
+		return LEMPTY;
+	}
 
 	if (st->st_kernel_mode == KERNEL_MODE_TUNNEL) {
 		policy |= POLICY_TUNNEL;
 	}
 
-	if (st->st_pfs_group != NULL)
+	if (st->st_pfs_group != NULL) {
 		policy |= POLICY_PFS;
-	if (st->st_ah.protocol == &ip_protocol_ah) {
-		policy |= POLICY_AUTHENTICATE;
 	}
-	if (st->st_esp.protocol == &ip_protocol_esp &&
-	    st->st_esp.trans_attrs.ta_encrypt != &ike_alg_encrypt_null) {
-		policy |= POLICY_ENCRYPT;
-	}
+
 	if (st->st_ipcomp.protocol == &ip_protocol_ipcomp) {
 		policy |= POLICY_COMPRESS;
 	}
