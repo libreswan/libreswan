@@ -128,10 +128,10 @@ struct ike_sa *main_outI1(struct connection *c,
 		 * so that a Child SA isn't also initiated and this
 		 * code is skipped.
 		 */
-		add_pending(ike, c, policy,
-			    (predecessor == NULL ? SOS_NOBODY :
-			     predecessor->sa.st_serialno),
-			    null_shunk, true /* part of initiate */, background);
+		append_pending(ike, c, policy,
+			       (predecessor == NULL ? SOS_NOBODY :
+				predecessor->sa.st_serialno),
+			       null_shunk, true /* part of initiate */, background);
 	}
 
 	if (predecessor == NULL) {

@@ -570,9 +570,9 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 		} else {
 			cc = connection_addref(c, ike->sa.logger);
 		}
-		add_pending(ike, cc, policy,
-			    (predecessor == NULL ? SOS_NOBODY : predecessor->st_serialno),
-			    sec_label, true/*part of initiate*/, background);
+		append_pending(ike, cc, policy,
+			       (predecessor == NULL ? SOS_NOBODY : predecessor->st_serialno),
+			       sec_label, true/*part of initiate*/, background);
 		connection_delref(&cc, ike->sa.logger);
 	}
 

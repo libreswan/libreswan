@@ -506,9 +506,9 @@ void initiate(struct connection *c,
 	case IKEv1:
 	{
 		/* leave our Phase 2 negotiation pending */
-		add_pending(ike, c, policy,
-			    replacing, sec_label,
-			    false /*part of initiate*/, background);
+		append_pending(ike, c, policy,
+			       replacing, sec_label,
+			       false /*part of initiate*/, background);
 		if (initiated_by != INITIATED_BY_REPLACE) {
 			connection_pending(c, initiated_by, where);
 		}
@@ -525,9 +525,9 @@ void initiate(struct connection *c,
 		} else {
 			cc = connection_addref(c, c->logger);
 		}
-		add_pending(ike, cc, policy,
-			    replacing, sec_label,
-			    false /*part of initiate*/, background);
+		append_pending(ike, cc, policy,
+			       replacing, sec_label,
+			       false /*part of initiate*/, background);
 		if (initiated_by != INITIATED_BY_REPLACE) {
 			connection_pending(cc, initiated_by, where);
 		}

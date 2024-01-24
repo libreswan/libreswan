@@ -59,13 +59,13 @@
  * suitable phase 1 (IKE SA)
  */
 
-void add_pending(struct ike_sa *ike,
-		 struct connection *c,
-		 lset_t policy,
-		 so_serial_t replacing,
-		 const shunk_t sec_label,
-		 bool part_of_initiate,
-		 bool background)
+void append_pending(struct ike_sa *ike,
+		    struct connection *c,
+		    lset_t policy,
+		    so_serial_t replacing,
+		    const shunk_t sec_label,
+		    bool part_of_initiating_ike_sa,
+		    bool background)
 {
 	if (c->pending != NULL) {
 		address_buf b;
@@ -99,14 +99,13 @@ void add_pending(struct ike_sa *ike,
 	p->policy = policy;
 	p->replacing = replacing;
 	p->pend_time = mononow();
-	p->part_of_initiate = part_of_initiate; /* useful */
 	p->sec_label = sec_label;
 
 	/*
 	 * If this is part of an initiate then there's already enough
 	 * going on; no need to log this action.
 	 */
-	enum stream only = (!part_of_initiate ? ALL_STREAMS :
+	enum stream only = (!part_of_initiating_ike_sa ? ALL_STREAMS :
 			    DBGP(DBG_BASE) ? DEBUG_STREAM :
 			    NO_STREAM);
 
@@ -123,12 +122,23 @@ void add_pending(struct ike_sa *ike,
 		     ipstr(&c->remote->host.addr, &b));
 	}
 
-	p->next = ike->sa.st_pending;
-	ike->sa.st_pending = p;
+	/*
+	 * Hopefully the list is short.
+	 *
+	 * Append SAs as they arrive so that things are processed
+	 * first-in first-out.
+	 *
+	 * Since, for the IKE SA, the first child is immediately
+	 * added, the IKE SA's connection's Child SA is always first.
+	 */
+	struct pending **end = &ike->sa.st_pending;
+	while ((*end) != NULL) {
+		end = &(*end)->next;
+	}
+	*end = p;
+
 	ldbg_sa(ike, "pending: %s() ike %p pending %p connection %p ike %p",
-		__func__, ike, ike->sa.st_pending,
-		ike->sa.st_pending->connection,
-		ike->sa.st_pending->ike);
+		__func__, ike, p, p->connection, p->ike);
 }
 
 /*
