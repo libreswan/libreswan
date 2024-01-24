@@ -1236,7 +1236,7 @@ static bool v2_child_connection_probably_shared(struct child_sa *child,
 
 	struct ike_sa *ike = ike_sa(&child->sa, HERE);
 	struct state_filter sf = { .where = HERE, };
-	while (next_state_new2old(&sf)) {
+	while (next_state(NEW2OLD, &sf)) {
 		struct state *st = sf.st;
 		if (st->st_connection != c) {
 			continue;

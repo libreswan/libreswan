@@ -2944,7 +2944,7 @@ bool already_has_larval_v2_child(struct ike_sa *ike, const struct connection *c)
 		.clonedfrom = ike->sa.st_serialno,
 	};
 
-	while (next_state_old2new(&sf)) {
+	while (next_state(OLD2NEW, &sf)) {
 		struct state *st = sf.st;
 
 		/* larval child state? */

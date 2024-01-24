@@ -396,7 +396,7 @@ static bool matches_filter(struct state *st, struct state_filter *filter)
 	return true;
 }
 
-static bool next_state(enum chrono adv, struct state_filter *filter)
+bool next_state(enum chrono adv, struct state_filter *filter)
 {
 	if (filter->internal == NULL) {
 		/*
@@ -426,14 +426,4 @@ static bool next_state(enum chrono adv, struct state_filter *filter)
 	}
 	dbg("  matches: %d", filter->count);
 	return false;
-}
-
-bool next_state_old2new(struct state_filter *filter)
-{
-	return next_state(OLD2NEW, filter);
-}
-
-bool next_state_new2old(struct state_filter *filter)
-{
-	return next_state(NEW2OLD, filter);
 }

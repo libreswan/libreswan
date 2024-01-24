@@ -48,7 +48,7 @@ void whack_deleteid(const struct whack_message *m, struct show *s)
 		.where = HERE,
 	};
 	unsigned nr = 0;
-	while (next_state_new2old(&sf)) {
+	while (next_state(NEW2OLD, &sf)) {
 		struct connection *c = sf.st->st_connection;
 
 		if (!IS_PARENT_SA(sf.st)) {

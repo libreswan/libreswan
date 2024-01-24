@@ -141,7 +141,7 @@ static unsigned whack_trafficstatus_connection(const struct whack_message *m UNU
 		.where = HERE,
 	};
 	unsigned nr = 0;
-	while (next_state_old2new(&state_by_connection)) {
+	while (next_state(OLD2NEW, &state_by_connection)) {
 
 		struct state *st = state_by_connection.st;
 

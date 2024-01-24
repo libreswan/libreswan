@@ -984,8 +984,7 @@ struct state_filter {
 	where_t where;
 };
 
-bool next_state_new2old(struct state_filter *query);
-bool next_state_old2new(struct state_filter *query);
+bool next_state(enum chrono advance, struct state_filter *query);
 
 extern void set_sa_expire_next_event(enum sa_expire_kind expire, struct child_sa *child);
 

@@ -567,7 +567,7 @@ static void connection_zap_ike_family(struct ike_sa **ike,
 		.clonedfrom = (*ike)->sa.st_serialno,
 		.where = HERE,
 	};
-	while(next_state_new2old(&cf)) {
+	while(next_state(NEW2OLD, &cf)) {
 		struct child_sa *child = pexpect_child_sa(cf.st);
 
 		switch (child->sa.st_ike_version) {

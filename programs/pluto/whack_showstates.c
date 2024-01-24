@@ -102,7 +102,7 @@ static struct state **sort_states(where_t where)
 	int count = 0;
 	{
 		struct state_filter sf = { .where = where, };
-		while (next_state_new2old(&sf)) {
+		while (next_state(NEW2OLD, &sf)) {
 			count++;
 		}
 	}
@@ -119,7 +119,7 @@ static struct state **sort_states(where_t where)
 		int p = 0;
 
 		struct state_filter sf = { .where = where, };
-		while (next_state_new2old(&sf)) {
+		while (next_state(NEW2OLD, &sf)) {
 			struct state *st = sf.st;
 			passert(st != NULL);
 			array[p++] = st;

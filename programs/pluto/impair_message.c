@@ -240,7 +240,7 @@ static bool impair_message(const struct message *message,
 			 */
 			bool whacked = false;
 			struct state_filter sf = { .where = HERE, };
-			while (next_state_new2old(&sf)) {
+			while (next_state(NEW2OLD, &sf)) {
 				struct state *st = sf.st;
 				if (whack_attached(st->logger)) {
 					llog(RC_LOG, st->logger,

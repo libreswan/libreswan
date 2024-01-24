@@ -54,7 +54,7 @@ static uint64_t get_child_bytes(const struct connection *c, enum direction direc
 	    .connection_serialno = c->serialno,
 	    .where = HERE,
 	};
-	while (next_state_old2new(&state_by_connection)) {
+	while (next_state(OLD2NEW, &state_by_connection)) {
 
 		struct state *st = state_by_connection.st;
 

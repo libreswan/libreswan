@@ -50,7 +50,7 @@ static void delete_states_by_peer(struct show *s, const ip_address *peer)
 	/* first restart the phase1s */
 	for (int ph1 = 0; ph1 < 2; ph1++) {
 		struct state_filter sf = { .where = HERE, };
-		while (next_state_new2old(&sf)) {
+		while (next_state(NEW2OLD, &sf)) {
 			struct state *st = sf.st;
 			const struct connection *c = st->st_connection;
 			endpoint_buf b;

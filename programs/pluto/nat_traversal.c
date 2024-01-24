@@ -302,7 +302,7 @@ void nat_traversal_ka_event(struct logger *unused_logger UNUSED)
 	nat_kap_event = false;  /* ready to be reschedule */
 
 	struct state_filter sf = { .where = HERE, };
-	while (next_state_new2old(&sf)) {
+	while (next_state(NEW2OLD, &sf)) {
 		nat_traversal_ka_event_state(sf.st, &nat_kap_st);
 	}
 

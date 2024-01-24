@@ -112,7 +112,7 @@ void event_v1_dpd_timeout(struct state *tbd_st)
 			.clonedfrom = ike->sa.st_serialno,
 			.where = HERE,
 		};
-		while (next_state_new2old(&sf)) {
+		while (next_state(NEW2OLD, &sf)) {
 			struct child_sa *child = pexpect_child_sa(sf.st);
 			pdbg(logger, "delete IPsec SA "PRI_SO" which is a sibling",
 			     pri_so(child->sa.st_serialno));
@@ -130,7 +130,7 @@ void event_v1_dpd_timeout(struct state *tbd_st)
 			.connection_serialno = c->serialno,
 			.where = HERE,
 		};
-		while (next_state_new2old(&sf)) {
+		while (next_state(NEW2OLD, &sf)) {
 			/* on first pass, ignore established ISAKMP SA's */
 			if (IS_PARENT_SA(sf.st)) {
 				continue;
@@ -155,7 +155,7 @@ void event_v1_dpd_timeout(struct state *tbd_st)
 			.connection_serialno = c->serialno,
 			.where = HERE,
 		};
-		while (next_state_new2old(&sf)) {
+		while (next_state(NEW2OLD, &sf)) {
 			if (!PEXPECT(logger, IS_PARENT_SA(sf.st))) {
 				continue;
 			}

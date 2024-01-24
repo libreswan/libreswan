@@ -382,7 +382,7 @@ void record_newaddr(ip_address *ip, char *a_type)
 		.ike_version = IKEv2,
 		.where = HERE,
 	};
-	while (next_state_new2old(&sf)) {
+	while (next_state(NEW2OLD, &sf)) {
 
 		if (!IS_IKE_SA(sf.st)) {
 			continue;
@@ -420,7 +420,7 @@ void record_deladdr(ip_address *ip, char *a_type)
 		.ike_version = IKEv2,
 		.where = HERE,
 	};
-	while (next_state_new2old(&sf)) {
+	while (next_state(NEW2OLD, &sf)) {
 
 		if (!IS_IKE_SA(sf.st)) {
 			continue;

@@ -49,7 +49,7 @@ void whack_deleteuser(const struct whack_message *m, struct show *s)
 		.where = HERE,
 	};
 	unsigned nr = 0;
-	while (next_state_new2old(&sf)) {
+	while (next_state(NEW2OLD, &sf)) {
 
 		if (!IS_ISAKMP_SA(sf.st)) {
 			continue;

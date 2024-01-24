@@ -446,7 +446,7 @@ void whack_connection_states(struct connection *c,
 	};
 	unsigned nr_parents = 0;
 	unsigned nr_children = 0;
-	while (next_state_new2old(&weed)) {
+	while (next_state(NEW2OLD, &weed)) {
 		if (weed.st->st_serialno == c->established_ike_sa) {
 			pdbg(c->logger, "%s()    skipping "PRI_SO" as newest IKE SA",
 			      __func__, pri_so(weed.st->st_serialno));
@@ -494,7 +494,7 @@ void whack_connection_states(struct connection *c,
 			.where = where,
 		};
 		unsigned nr = 0;
-		while (next_state_new2old(&child_filter)) {
+		while (next_state(NEW2OLD, &child_filter)) {
 			struct child_sa *child = pexpect_child_sa(child_filter.st);
 			state_buf sb;
 			pdbg(c->logger, "%s()    dispatching to sibling Child SA "PRI_STATE,

@@ -48,7 +48,7 @@ static bool shared_phase1_connection(struct ike_sa *ike)
 		.clonedfrom = ike->sa.st_serialno,
 		.where = HERE,
 	};
-	while (next_state_new2old(&sf)) {
+	while (next_state(NEW2OLD, &sf)) {
 		struct state *st = sf.st;
 		if (st->st_connection != ike->sa.st_connection)
 			return true;

@@ -363,7 +363,7 @@ static bool connection_ok_to_delete(struct connection *c, where_t where)
 		.connection_serialno = c->serialno,
 		.where = HERE,
 	};
-	while (next_state_new2old(&state)) {
+	while (next_state(NEW2OLD, &state)) {
 		state_buf sb;
 		llog_pexpect(logger, where,
 			     "connection "PRI_CO" [%p] is still being used by %s "PRI_STATE,
