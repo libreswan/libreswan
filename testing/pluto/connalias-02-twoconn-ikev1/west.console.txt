@@ -17,60 +17,66 @@ initdone
 west #
  ipsec up west
 initiating all connections with alias "west"
-"west-cuckoo" #1: initiating IKEv1 Main Mode connection
-"west-cuckoo" #1: sent Main Mode request
-"west-cuckold": queue IPsec SA; waiting on ISAKMP SA "west-cuckoo" #1 negotiating with 192.1.2.23
+"west-cuckold" #1: initiating IKEv1 Main Mode connection
+"west-cuckold" #1: sent Main Mode request
+"west-cuckoo": queue IPsec SA; waiting on ISAKMP SA "west-cuckold" #1 negotiating with 192.1.2.23
 initiating 2 connections
-"west-cuckoo" #1: sent Main Mode I2
-"west-cuckoo" #1: sent Main Mode I3
-"west-cuckoo" #1: Peer ID is ID_FQDN: '@east'
-"west-cuckoo" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-"west-cuckoo" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-"west-cuckold" #3: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-"west-cuckoo" #2: sent Quick Mode request
-"west-cuckold" #3: sent Quick Mode request
-"west-cuckoo" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
-"west-cuckold" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+"west-cuckold" #1: sent Main Mode I2
+"west-cuckold" #1: sent Main Mode I3
+"west-cuckold" #1: Peer ID is ID_FQDN: '@east'
+"west-cuckold" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"west-cuckold" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"west-cuckoo" #3: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"west-cuckold" #2: sent Quick Mode request
+"west-cuckoo" #3: sent Quick Mode request
+"west-cuckold" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+"west-cuckoo" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
  ipsec down west
 terminating all connections with alias "west"
-"west-cuckoo": ISAKMP SA is shared - only terminating IPsec SA
-"west-cuckoo" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
-"west-cuckoo" #2: ESP traffic information: in=0B out=0B
+"west-cuckoo": terminating SAs using this connection
+"west-cuckoo" #3: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA "west-cuckold" #1
+"west-cuckoo" #3: ESP traffic information: in=0B out=0B
 "west-cuckold": terminating SAs using this connection
-"west-cuckold" #3: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA "west-cuckoo" #1
-"west-cuckold" #3: ESP traffic information: in=0B out=0B
+"west-cuckold" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
+"west-cuckold" #2: ESP traffic information: in=0B out=0B
+"west-cuckold" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
 terminated 2 connections
 west #
  ipsec up cuckold
 initiating all connections with alias "cuckold"
-"west-cuckold" #4: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"west-cuckold" #4: initiating IKEv1 Main Mode connection
+"west-cuckold" #4: sent Main Mode request
 initiating 1 connection
-"west-cuckold" #4: sent Quick Mode request
-"west-cuckold" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+"west-cuckold" #4: sent Main Mode I2
+"west-cuckold" #4: sent Main Mode I3
+"west-cuckold" #4: Peer ID is ID_FQDN: '@east'
+"west-cuckold" #4: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"west-cuckold" #5: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"west-cuckold" #5: sent Quick Mode request
+"west-cuckold" #5: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
  ipsec up cuckoo
 initiating all connections with alias "cuckoo"
-"west-cuckoo" #5: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"west-cuckoo" #6: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 initiating 1 connection
-"west-cuckoo" #5: sent Quick Mode request
-"west-cuckoo" #5: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+"west-cuckoo" #6: sent Quick Mode request
+"west-cuckoo" #6: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
  ipsec down west
 terminating all connections with alias "west"
-"west-cuckoo": ISAKMP SA is shared - only terminating IPsec SA
-"west-cuckoo" #5: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
-"west-cuckoo" #5: ESP traffic information: in=0B out=0B
+"west-cuckoo": terminating SAs using this connection
+"west-cuckoo" #6: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA "west-cuckold" #4
+"west-cuckoo" #6: ESP traffic information: in=0B out=0B
 "west-cuckold": terminating SAs using this connection
-"west-cuckold" #4: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA "west-cuckoo" #1
-"west-cuckold" #4: ESP traffic information: in=0B out=0B
+"west-cuckold" #5: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #4
+"west-cuckold" #5: ESP traffic information: in=0B out=0B
+"west-cuckold" #4: deleting ISAKMP SA (MAIN_I4) and sending notification
 terminated 2 connections
 west #
  ipsec delete cuckold
 west #
  ipsec delete cuckoo
-"west-cuckoo": terminating SAs using this connection
-"west-cuckoo" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
 west #
  # non-zero counts confirm encrypted traffic flowing
 west #
