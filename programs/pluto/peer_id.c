@@ -236,7 +236,7 @@ static struct connection *refine_host_connection_on_responder(int indent,
 			.remote = &remote,
 			.where = HERE,
 		};
-		while (next_connection_new2old(&hpf)) {
+		while (next_connection(NEW2OLD, &hpf)) {
 			struct connection *d = hpf.c;
 
 			connection_buf b1, b2;

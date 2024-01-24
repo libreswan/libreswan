@@ -138,7 +138,7 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 		.remote = &remote_address,
 		.where = HERE,
 	};
-	while (next_connection_new2old(&hpf_remote)) {
+	while (next_connection(NEW2OLD, &hpf_remote)) {
 		struct connection *d = hpf_remote.c;
 
 		if (!match_connection(d, remote_authby, send_reject_response,
@@ -213,7 +213,7 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 		.remote = &unset_address,
 		.where = HERE,
 	};
-	while (next_connection_new2old(&hpf_unset)) {
+	while (next_connection(NEW2OLD, &hpf_unset)) {
 		struct connection *d = hpf_unset.c;
 
 		if (!match_connection(d, remote_authby, send_reject_response,

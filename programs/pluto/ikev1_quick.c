@@ -1855,7 +1855,7 @@ static bool is_virtual_net_used(struct connection *c,
 				const struct id *peer_id)
 {
 	struct connection_filter cq = { .where = HERE, };
-	while (next_connection_new2old(&cq)) {
+	while (next_connection(NEW2OLD, &cq)) {
 		struct connection *d = cq.c;
 		switch (d->local->kind) {
 		case CK_PERMANENT:
@@ -2035,7 +2035,7 @@ static struct connection *fc_try(const struct connection *c,
 		.remote = &remote_address,
 		.where = HERE,
 	};
-	while (next_connection_new2old(&hpf)) {
+	while (next_connection(NEW2OLD, &hpf)) {
 		struct connection *d = hpf.c;
 
 		if (d->config->ike_version != IKEv1) {
@@ -2314,7 +2314,7 @@ struct connection *find_v1_client_connection(struct connection *const c,
 				.remote = &unset_address,
 				.where = HERE,
 			};
-			while (next_connection_new2old(&hpf)) {
+			while (next_connection(NEW2OLD, &hpf)) {
 				/* found something */
 				local_address = spd->local->host->addr;
 				selector_buf s2;

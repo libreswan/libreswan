@@ -930,8 +930,7 @@ struct connection_filter {
 	where_t where;
 };
 
-bool next_connection_old2new(struct connection_filter *query);
-bool next_connection_new2old(struct connection_filter *query);
+bool next_connection(enum chrono order, struct connection_filter *query);
 
 /*
  * For iterating over the spd_route DB.

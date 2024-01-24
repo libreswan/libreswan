@@ -371,7 +371,7 @@ void check_orientations(struct logger *logger)
 	struct connection_filter cf = {
 		.where = HERE,
 	};
-	while (next_connection_new2old(&cf)) {
+	while (next_connection(NEW2OLD, &cf)) {
 		struct connection *c = cf.c;
 		if (oriented(c)) {
 			disorient(c);

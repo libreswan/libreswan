@@ -228,7 +228,7 @@ static bool matches_connection_filter(struct connection *c, struct connection_fi
 	return true; /* sure */
 }
 
-static bool next_connection(enum chrono adv, struct connection_filter *filter)
+bool next_connection(enum chrono adv, struct connection_filter *filter)
 {
 	if (filter->internal == NULL) {
 		/*
@@ -258,14 +258,4 @@ static bool next_connection(enum chrono adv, struct connection_filter *filter)
 	}
 	dbg("  matches: %d", filter->count);
 	return false;
-}
-
-bool next_connection_old2new(struct connection_filter *filter)
-{
-	return next_connection(OLD2NEW, filter);
-}
-
-bool next_connection_new2old(struct connection_filter *filter)
-{
-	return next_connection(NEW2OLD, filter);
 }

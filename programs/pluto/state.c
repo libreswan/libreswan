@@ -2156,7 +2156,7 @@ void wipe_old_connections(const struct ike_sa *ike)
 		.that_id_eq = &c->remote->host.id,
 		.where = HERE,
 	};
-	while (next_connection_new2old(&cf)) {
+	while (next_connection(NEW2OLD, &cf)) {
 		struct connection *d = cf.c;
 
 		/*

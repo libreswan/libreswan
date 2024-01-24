@@ -293,7 +293,7 @@ generalName_t *collect_rw_ca_candidates(struct msg_digest *md)
 		.remote = &unset_address,
 		.where = HERE,
 	};
-	while (next_connection_new2old(&hpf)) {
+	while (next_connection(NEW2OLD, &hpf)) {
 		struct connection *d = hpf.c;
 
 #if 0

@@ -1323,7 +1323,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 			.remote = &remote,
 			.where = HERE,
 		};
-		while (next_connection_new2old(&hpf)) {
+		while (next_connection(NEW2OLD, &hpf)) {
 			struct connection *d = hpf.c;
 			indent.level = 2;
 
@@ -1591,7 +1591,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 			.kind = CK_TEMPLATE /* require a template */,
 			.where = HERE,
 		};
-		while (next_connection_new2old(&cf)) {
+		while (next_connection(NEW2OLD, &cf)) {
 			struct connection *t = cf.c;
 			indent.level = 2;
 
