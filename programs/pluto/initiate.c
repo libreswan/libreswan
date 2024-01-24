@@ -283,59 +283,6 @@ static bool initiate_connection_4_fab(struct connection *c,
 	    __func__, pri_connection(c, &cb), background ? "background" : "foreground",
 	    pri_logger(c->logger));
 
-	/* We will only request an IPsec SA if policy isn't empty
-	 * (ignoring Main Mode items).
-	 * This is a fudge, but not yet important.
-	 *
-	 * XXX:  Is this still useful?
-	 *
-	 * In theory, by delaying the the kernel algorithm probe until
-	 * here when the connection is being initiated, it is possible
-	 * to detect kernel algorithms that have been loaded after
-	 * pluto has started or are only loaded on-demand.
-	 *
-	 * In reality, the kernel algorithm DB is "static": PFKEY is
-	 * only probed during startup(?); and XFRM, even if it does
-	 * support probing, is using static entries.  See
-	 * kernel_alg.c.
-	 *
-	 * Consequently:
-	 *
-	 * - when the connection's proposal suite is specified, the
-	 * algorithm parser will check the algorithms against the
-	 * kernel algorithm DB, so calling kernel_alg_makedb() to to
-	 * perform an identical check is redundant
-	 *
-	 * - when default proposals are used (CHILD_PROPOSALS.P==NULL)
-	 * (the parser can't see these) kernel_alg_makedb(NULL)
-	 * returns a static table and skips all checks
-	 *
-	 * - finally, kernel_alg_makedb() is IKEv1 only
-	 *
-	 * A better fix would be to feed the proposal parser the
-	 * default proposal suite.
-	 *
-	 * For moment leave call but make it IKEv1 only - for IKEv2
-	 * all it does is give spdb.c some busy work (and log bogus
-	 * stats).
-	 *
-	 * XXX: mumble something about c->config->ike_version
-	 */
-#ifdef USE_IKEv1
-	if (c->config->ike_version == IKEv1 &&
-	    c->config->child_sa.encap_proto != ENCAP_PROTO_UNSET) {
-		struct db_sa *phase2_sa = v1_kernel_alg_makedb(c->config->child_sa.encap_proto,
-							       c->config->child_sa.proposals,
-							       c->logger);
-		if (c->config->child_sa.proposals.p != NULL && phase2_sa == NULL) {
-			llog(WHACK_STREAM|RC_LOG_SERIOUS, c->logger,
-			     "cannot initiate: no acceptable kernel algorithms loaded");
-			return false;
-		}
-		free_sa(&phase2_sa);
-	}
-#endif
-
 	add_policy(c, policy.up);
 
 	/*
