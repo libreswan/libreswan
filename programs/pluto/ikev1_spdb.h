@@ -174,7 +174,7 @@ extern void sa_log(struct db_sa *f);
 struct alg_info_ike;
 struct alg_info_esp;
 
-struct db_sa *v1_kernel_alg_makedb(lset_t policy,
+struct db_sa *v1_kernel_alg_makedb(enum encap_proto encap_proto,
 				   const struct child_proposals proposals,
 				   struct logger *logger);
 

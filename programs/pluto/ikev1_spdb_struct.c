@@ -273,13 +273,14 @@ static bool ikev1_verify_ah(const struct connection *c,
  */
 
 static bool kernel_alg_db_add(struct db_context *db_ctx,
+			      enum encap_proto encap_proto,
 			      const struct proposal *proposal,
-			      lset_t policy, struct logger *logger)
+			      struct logger *logger)
 {
 	enum ipsec_cipher_algo ealg_i = ESP_reserved;
 
 	struct v1_proposal algs = v1_proposal(proposal);
-	if (policy & POLICY_ENCRYPT) {
+	if (encap_proto == ENCAP_PROTO_ESP) {
 		ealg_i = algs.encrypt->common.id[IKEv1_ESP_ID];
 		/* already checked by the parser? */
 		if (!kernel_alg_encrypt_ok(algs.encrypt)) {
@@ -298,7 +299,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 		return false;
 	}
 
-	if (policy & POLICY_ENCRYPT) {
+	if (encap_proto == ENCAP_PROTO_ESP) {
 		/*open new transformation */
 		db_trans_add(db_ctx, ealg_i);
 
@@ -336,7 +337,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 				}
 			}
 		}
-	} else if (policy & POLICY_AUTHENTICATE) {
+	} else if (encap_proto == ENCAP_PROTO_AH) {
 		/* open new transformation */
 		db_trans_add(db_ctx, aalg_i);
 
@@ -356,16 +357,17 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
  *	for now this function does free() previous returned
  *	malloced pointer (this quirk allows easier spdb.c change)
  */
-static struct db_context *kernel_alg_db_new(struct child_proposals proposals,
-					    lset_t policy, struct logger *logger)
+static struct db_context *kernel_alg_db_new(enum encap_proto encap_proto,
+					    struct child_proposals proposals,
+					    struct logger *logger)
 {
 	unsigned int trans_cnt = 0;
 	int protoid = PROTO_RESERVED;
 
-	if (policy & POLICY_ENCRYPT) {
+	if (encap_proto == ENCAP_PROTO_ESP) {
 		trans_cnt = kernel_alg_encrypt_count() * kernel_alg_integ_count();
 		protoid = PROTO_IPSEC_ESP;
-	} else if (policy & POLICY_AUTHENTICATE) {
+	} else if (encap_proto == ENCAP_PROTO_AH) {
 		trans_cnt = kernel_alg_integ_count();
 		protoid = PROTO_IPSEC_AH;
 	}
@@ -390,7 +392,7 @@ static struct db_context *kernel_alg_db_new(struct child_proposals proposals,
 				jam_string(buf, "adding proposal: ");
 				jam_proposal(buf, proposal);
 			}
-			if (!kernel_alg_db_add(ctx_new, proposal, policy, logger))
+			if (!kernel_alg_db_add(ctx_new, encap_proto, proposal, logger))
 				success = false;	/* ??? should we break? */
 		}
 	} else {
@@ -424,14 +426,14 @@ static struct db_context *kernel_alg_db_new(struct child_proposals proposals,
 	return ctx_new;
 }
 
-struct db_sa *v1_kernel_alg_makedb(lset_t policy,
+struct db_sa *v1_kernel_alg_makedb(enum encap_proto encap_proto,
 				   struct child_proposals proposals,
 				   struct logger *logger)
 {
 	if (proposals.p == NULL) {
 		struct ipsec_db_policy pm = {
-			.encrypt = (policy & POLICY_ENCRYPT),
-			.authenticate = (policy & POLICY_AUTHENTICATE),
+			.encrypt = (encap_proto == ENCAP_PROTO_ESP),
+			.authenticate = (encap_proto == ENCAP_PROTO_AH),
 		};
 		ldbg(logger,
 		     "empty esp_info, returning defaults for:%s%s",
@@ -445,7 +447,7 @@ struct db_sa *v1_kernel_alg_makedb(lset_t policy,
 		return sadb;
 	}
 
-	struct db_context *dbnew = kernel_alg_db_new(proposals, policy, logger);
+	struct db_context *dbnew = kernel_alg_db_new(encap_proto, proposals, logger);
 
 	if (dbnew == NULL) {
 		llog(RC_LOG, logger, "failed to translate esp_info to proposal, returning empty");
@@ -857,7 +859,7 @@ bool ikev1_out_sa(pb_stream *outs,
 						    aggressive_mode,
 						    st->logger);
 	} else {
-		revised_sadb = v1_kernel_alg_makedb(child_sa_policy(c),
+		revised_sadb = v1_kernel_alg_makedb(c->config->child_sa.encap_proto,
 						    c->config->child_sa.proposals,
 						    st->logger);
 
