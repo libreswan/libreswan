@@ -83,6 +83,7 @@ void whack_initiate(const struct whack_message *m, struct show *s)
 	}
 
 	whack_connection(m, s, whack_initiate_connection,
+			 /*alias_order*/NEW2OLD,
 			 (struct each) {
 				 .future_tense = "initiating",
 				 .past_tense = "initiating",

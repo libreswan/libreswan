@@ -177,6 +177,7 @@ void whack_down(const struct whack_message *m, struct show *s)
 	}
 
 	whack_connection(m, s, whack_down_connection,
+			 /*alias_order*/NEW2OLD,
 			 (struct each) {
 				 .future_tense = "terminating",
 				 .past_tense = "terminated",
