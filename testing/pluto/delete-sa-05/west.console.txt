@@ -13,15 +13,15 @@ west #
  sleep 30
 west #
  ipsec whack --trafficstatus
-#3: "west-east-auto", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
-#2: "west-east-auto2", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+#2: "west-east-auto", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+#3: "west-east-auto2", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
 west #
  # delete instead of down so it won't re-establish due to east auto=start
 west #
  ipsec auto --delete west-east-auto
 "west-east-auto": terminating SAs using this connection
-"west-east-auto" #3: deleting IPsec SA (QUICK_R2) and sending notification using ISAKMP SA #1
-"west-east-auto" #3: ESP traffic information: in=0B out=0B
+"west-east-auto" #2: deleting IPsec SA (QUICK_R2) and sending notification using ISAKMP SA #1
+"west-east-auto" #2: ESP traffic information: in=0B out=0B
 "west-east-auto" #1: deleting ISAKMP SA (MAIN_R3) and sending notification
 west #
  # wait for revival of IPsec then IKE
@@ -31,8 +31,8 @@ west #
  # We should still have the ISAKMP SA for west-east-auto2
 west #
  ipsec showstates | grep west-east
-#2: "west-east-auto2":500 STATE_QUICK_R2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
-#2: "west-east-auto2" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
+#3: "west-east-auto2":500 STATE_QUICK_R2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
+#3: "west-east-auto2" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
 #4: "west-east-auto2":500 STATE_MAIN_R3 (ISAKMP SA established); REPLACE in XXs; newest; lastdpd=-1s(seq in:0 out:0); idle;
 west #
  # one IPsec SA should be up and one ISAKMP SA should be there
@@ -42,11 +42,11 @@ west #
  # should be an attempt for the deleted IPsec SA to be restarted
 west #
  ipsec whack --trafficstatus
-#2: "west-east-auto2", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+#3: "west-east-auto2", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
 west #
  ipsec showstates | grep west-east
-#2: "west-east-auto2":500 STATE_QUICK_R2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
-#2: "west-east-auto2" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
+#3: "west-east-auto2":500 STATE_QUICK_R2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
+#3: "west-east-auto2" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
 #4: "west-east-auto2":500 STATE_MAIN_R3 (ISAKMP SA established); REPLACE in XXs; newest; lastdpd=-1s(seq in:0 out:0); idle;
 west #
  

@@ -83,16 +83,16 @@ initiating 2 connections
 "westnet-eastnet-second" #1: Peer ID is ID_FQDN: '@east'
 "westnet-eastnet-second" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
 "westnet-eastnet-second" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-"westnet-eastnet-alias" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-"westnet-eastnet-second" #3: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-"westnet-eastnet-alias" #2: sent Quick Mode request
-"westnet-eastnet-second" #3: sent Quick Mode request
-"westnet-eastnet-alias" #2: cannot install kernel policy 192.0.1.0/24===192.0.2.0/24; it is in use by the unrouted-bare-negotiation connection "westnet-eastnet-second"
-"westnet-eastnet-alias" #2: state transition function for STATE_QUICK_I1 had internal error
-"westnet-eastnet-second" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+"westnet-eastnet-second" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"westnet-eastnet-alias" #3: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"westnet-eastnet-second" #2: sent Quick Mode request
+"westnet-eastnet-alias" #3: sent Quick Mode request
+"westnet-eastnet-second" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+"westnet-eastnet-alias" #3: cannot install kernel policy 192.0.1.0/24===192.0.2.0/24; it is in use by the routed-tunnel connection "westnet-eastnet-second"
+"westnet-eastnet-alias" #3: state transition function for STATE_QUICK_I1 had internal error
 west #
  ipsec whack --trafficstatus
-#3: "westnet-eastnet-second", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+#2: "westnet-eastnet-second", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
 west #
  echo done
 done

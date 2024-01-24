@@ -17,12 +17,12 @@ east #
  # should be an attempt for the deleted IPsec SA to be restarted
 east #
  ipsec whack --trafficstatus
-#2: "west-east-auto2", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@west'
+#3: "west-east-auto2", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@west'
 east #
  ipsec showstates | grep west-east
 #5: "west-east-auto":500 STATE_MAIN_I4 (ISAKMP SA established); REPLACE in XXs; newest; lastdpd=-1s(seq in:0 out:0); idle;
 #6: "west-east-auto":500 STATE_QUICK_I1 (sent Quick Mode request); RETRANSMIT in XXs; lastdpd=-1s(seq in:0 out:0); idle;
-#2: "west-east-auto2":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
-#2: "west-east-auto2" esp.ESPSPIi@192.1.2.45 esp.ESPSPIi@192.1.2.23 tun.0@192.1.2.45 tun.0@192.1.2.23 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
+#3: "west-east-auto2":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
+#3: "west-east-auto2" esp.ESPSPIi@192.1.2.45 esp.ESPSPIi@192.1.2.23 tun.0@192.1.2.45 tun.0@192.1.2.23 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
 east #
  

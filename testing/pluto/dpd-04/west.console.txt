@@ -80,7 +80,7 @@ west #
  # wait for west-east
 west #
  ../../guestbin/wait-for.sh --match '"west-east"' -- ipsec whack --trafficstatus
-#6: "west-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+#8: "west-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
 west #
  ../../guestbin/ping-once.sh --up -I 192.1.2.45 192.1.2.23
 up
@@ -93,7 +93,7 @@ up UNEXPECTED
 PING 192.1.2.23 (192.1.2.23) from 192.0.1.254 : 56(84) bytes of data. 64 bytes from 192.1.2.23: icmp_seq=1 ttl=64 time=0.XXX ms --- 192.1.2.23 ping statistics --- 1 packets transmitted, 1 received, 0% packet loss, time XXXX rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
  ../../guestbin/wait-for.sh --match '"westnet-east"' -- ipsec whack --trafficstatus
-#8: "westnet-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+#6: "westnet-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.1.2.23
 up
@@ -123,9 +123,9 @@ west #
  # Tunnels should be back up now
 west #
  ipsec whack --trafficstatus
-#6: "west-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+#8: "west-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 #7: "west-eastnet", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='@east'
-#8: "westnet-east", type=ESP, add_time=1234567890, inBytes=252, outBytes=252, maxBytes=2^63B, id='@east'
+#6: "westnet-east", type=ESP, add_time=1234567890, inBytes=252, outBytes=252, maxBytes=2^63B, id='@east'
 west #
  echo done
 done

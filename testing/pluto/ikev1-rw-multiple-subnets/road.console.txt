@@ -21,11 +21,11 @@ road #
  ipsec auto --down road
 terminating all connections with alias "road"
 "road/0x2": ISAKMP SA is shared - only terminating IPsec SA
-"road/0x2" #3: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
-"road/0x2" #3: ESP traffic information: in=84B out=84B
+"road/0x2" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
+"road/0x2" #2: ESP traffic information: in=84B out=84B
 "road/0x1": terminating SAs using this connection
-"road/0x1" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA "road/0x2" #1
-"road/0x1" #2: ESP traffic information: in=84B out=84B
+"road/0x1" #3: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA "road/0x2" #1
+"road/0x1" #3: ESP traffic information: in=84B out=84B
 terminated 2 connections
 road #
  ipsec trafficstatus
