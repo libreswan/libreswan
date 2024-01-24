@@ -957,17 +957,6 @@ enum sa_policy_bits {
 #define POL_SIGHASH_IDENTITY	LELEM(IKEv2_HASH_ALGORITHM_IDENTITY)	/* rfc4307-bis does responder support IDENTITY? */
 #define POL_SIGHASH_DEFAULTS	(POL_SIGHASH_SHA2_256 | POL_SIGHASH_SHA2_384 | POL_SIGHASH_SHA2_512);
 
-/* These policy bits must match exactly: POLICY_XAUTH, POLICY_AGGRESSIVE, POLICY_IKEV1_ALLOW */
-
-/*
- * Any IPsec policy?  If not, a connection description is only for
- * ISAKMP SA, not IPSEC SA.  (A pun, I admit.)
- *
- * Note: a connection can only be routed if it is NEVER_NEGOTIATE or
- * HAS_IPSEC_POLICY.
- */
-#define HAS_IPSEC_POLICY(p) (((p) & POLICY_ENCRYPT) || ((p) & POLICY_AUTHENTICATE))
-
 /*
  * values for right=/left=
  *

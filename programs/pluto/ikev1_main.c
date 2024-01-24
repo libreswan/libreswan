@@ -122,7 +122,12 @@ struct ike_sa *main_outI1(struct connection *c,
 	struct state *st = &ike->sa;
 	statetime_t start = statetime_backdate(st, inception);
 
-	if (HAS_IPSEC_POLICY(policy)) {
+	if (policy != LEMPTY) {
+		/*
+		 * When replacing the IKE (ISAKMP) SA, policy=LEMPTY
+		 * so that a Child SA isn't also initiated and this
+		 * code is skipped.
+		 */
 		add_pending(ike, c, policy,
 			    (predecessor == NULL ? SOS_NOBODY :
 			     predecessor->sa.st_serialno),

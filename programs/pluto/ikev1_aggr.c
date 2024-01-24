@@ -1012,10 +1012,16 @@ struct ike_sa *aggr_outI1(struct connection *c,
 		return NULL;
 	}
 
-	if (HAS_IPSEC_POLICY(policy))
+	if (policy != LEMPTY) {
+		/*
+		 * When replacing the IKE (ISAKMP) SA, policy=LEMPTY
+		 * so that a Child SA isn't also initiated and this
+		 * code is skipped.
+		 */
 		add_pending(ike, c, policy,
 			    (predecessor == NULL ? SOS_NOBODY : predecessor->sa.st_serialno),
 			    null_shunk, true /*part of initiate*/, background);
+	}
 
 	if (predecessor == NULL) {
 		llog_sa(RC_LOG, ike, "initiating IKEv1 Aggressive Mode connection");

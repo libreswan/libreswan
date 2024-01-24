@@ -76,7 +76,7 @@ void ikev1_replace(struct state *st)
 		 * everything.
 		 */
 		lset_t policy = capture_child_rekey_policy(st);
-		passert(HAS_IPSEC_POLICY(policy));
+		passert(policy != LEMPTY);
 		initiate(st->st_connection, policy, st->st_serialno, &inception,
 			 null_shunk, /*background?*/false, st->logger,
 			 INITIATED_BY_REPLACE, HERE);

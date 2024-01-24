@@ -556,7 +556,12 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 		     pri_shunk(c->config->sec_label));
 	} else if (impair.omit_v2_ike_auth_child) {
 		llog_sa(RC_LOG, ike, "IMPAIR: omitting CHILD SA payloads from the IKE_AUTH request");
-	} else if (HAS_IPSEC_POLICY(policy)) {
+	} else if (policy != LEMPTY) {
+		/*
+		 * When replacing the IKE (ISAKMP) SA, policy=LEMPTY
+		 * so that a Child SA isn't also initiated and this
+		 * code is skipped.
+		 */
 		struct connection *cc;
 		if (is_labeled(c)) {
 			PEXPECT(ike->sa.logger, is_labeled_parent(c));
