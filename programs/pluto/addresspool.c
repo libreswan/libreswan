@@ -266,7 +266,7 @@ static void DBG_pool(bool verbose, const struct addresspool *pool,
 		va_end(args);
 		if (verbose) {
 			jam(buf, "; pool-refcount %u size %u leases %u in-use %u free %u reusable %u",
-			    refcnt_peek(&pool->refcnt), pool->size, pool->nr_leases,
+			    refcnt_peek(pool, &global_logger), pool->size, pool->nr_leases,
 			    pool->nr_in_use, pool->free_list.nr, pool->nr_reusable);
 		}
 	}

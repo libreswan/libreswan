@@ -144,7 +144,7 @@ void free_root_certs(struct logger *logger)
 	 * the call to refcnt_peek and the root_certs_delref's deletion.
 	 * The consequence is benign: only a delay of FREE_ROOT_CERTS_TIMEOUT.
 	 */
-	if (refcnt_peek(&root_cert_db->refcnt) > 1) {
+	if (refcnt_peek(root_cert_db, logger) > 1) {
 		llog(RC_LOG, logger, "root certs still in use; suspect stuck thread");
 		/* extend or set cert cache lifetime */
 		schedule_oneshot_timer(EVENT_FREE_ROOT_CERTS, FREE_ROOT_CERTS_TIMEOUT);

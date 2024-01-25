@@ -122,7 +122,7 @@ static unsigned down_connection(struct connection *c, struct logger *logger)
 	 * the magical deleting instance message appears on the
 	 * console.
 	 */
-	if (is_instance(c) && refcnt_peek(&c->refcnt) == 1) {
+	if (is_instance(c) && refcnt_peek(c, c->logger) == 1) {
 		ldbg(c->logger, "hack attack: skipping detach so that caller can log deleting instance");
 		return 1;
 	}
@@ -175,6 +175,25 @@ void whack_down(const struct whack_message *m, struct show *s)
 			  "received command to terminate connection, but did not receive the connection name - ignored");
 		return;
 	}
+
+	/*
+	 * Down aliases NEW2OLD.
+	 *
+	 * For subnets= the generated connections are brought up in
+	 * the order they are generated (OLD2NEW).  This means that
+	 * the first generated connection is made the IKE SA and
+	 * further generated connections create Child SAs hanging off
+	 * that IKE SA.  To ensure that the IKE SA is stripped of
+	 * these Child SAs when it is taken down, the aliases are
+	 * taken down in reverse order so that when the first
+	 * generated connection is reached there is only that
+	 * connection's IKE and Child SAs left.
+	 *
+	 * It seems to work ...
+	 *
+	 * What should happen is for the last Child SA to see that the
+	 * IKE SA has -UP and initiate an IKE SA delete.
+	 */
 
 	whack_connection(m, s, whack_down_connection,
 			 /*alias_order*/NEW2OLD,

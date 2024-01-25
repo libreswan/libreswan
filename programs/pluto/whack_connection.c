@@ -110,8 +110,8 @@ static bool whack_connections_by_alias(const struct whack_message *m,
 				       const struct each *each)
 {
 	struct logger *logger = show_logger(s);
-	struct connection_filter by_alias = {
-		.alias = m->name,
+	struct connection_filter by_alias_root = {
+		.alias_root = m->name,
 		.where = HERE,
 	};
 
@@ -126,7 +126,7 @@ static bool whack_connections_by_alias(const struct whack_message *m,
 	 * This way deleting an alias connection tree can't corrupt
 	 * the search list.
 	 */
-	if (next_connection(alias_order, &by_alias)) {
+	if (all_connections(alias_order, &by_alias_root, logger)) {
 		/* header */
 		if (each->future_tense != NULL) {
 			/*
@@ -141,21 +141,8 @@ static bool whack_connections_by_alias(const struct whack_message *m,
 		}
 		unsigned nr = 0;
 		do {
-			/*
-			 * Only pass the matching connection root to
-			 * visit_connections().  i.e., ignore aliased
-			 * instances.  Instead visit_connections()
-			 * will then recurse through all the instances
-			 * if needed.
-			 *
-			 * Only the alias roots have .root_config
-			 * non-NULL.
-			 */
-			if (by_alias.c->root_config == NULL) {
-				continue;
-			}
-			nr += visit_connections(by_alias.c, m, s, visit_connection);
-		} while (next_connection(alias_order, &by_alias));
+			nr += visit_connections(by_alias_root.c, m, s, visit_connection);
+		} while (all_connections(alias_order, &by_alias_root, logger));
 		/* footer */
 		if (each->past_tense != NULL) {
 			if (nr == 1) {
