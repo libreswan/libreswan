@@ -135,6 +135,17 @@ op == "free" {
     next
 }
 
+op == "peek" {
+    debug("peek")
+    if (!(key in counts)) {
+	error(key, "unknown")
+    } else {
+	history[key] = history[key] "\n" NR ": " $0
+	# gets by delete with 0 so checking is meaningless
+    }
+    next
+}
+
 op != "" {
     error(key, "operation unknown")
 }
