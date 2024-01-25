@@ -282,7 +282,7 @@ static struct child_sa *find_phase2_state_to_delete(const struct ike_sa *p1,
 	struct state_filter sf = {
 		.where = HERE,
 	};
-	while (next_state_new2old(&sf)) {
+	while (next_state(NEW2OLD, &sf)) {
 		if (!IS_CHILD_SA(sf.st)) {
 			continue;
 		}

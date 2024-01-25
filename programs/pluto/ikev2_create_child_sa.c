@@ -181,7 +181,7 @@ static void migrate_v2_children(struct ike_sa *from, struct child_sa *to)
 		.clonedfrom = from->sa.st_serialno,
 		.where = HERE,
 	};
-	while (next_state_old2new(&child)) {
+	while (next_state(OLD2NEW, &child)) {
 		migrate_v2_child(from, to, pexpect_child_sa(child.st));
 	}
 }

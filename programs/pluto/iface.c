@@ -159,7 +159,7 @@ static void release_dead_interfaces(struct logger *logger)
 	 * are deleted before templates are released.
 	 */
 	struct connection_filter cf = { .where = HERE, };
-	while (next_connection_new2old(&cf)) {
+	while (next_connection(NEW2OLD, &cf)) {
 		struct connection *c = cf.c;
 
 		if (!oriented(c)) {

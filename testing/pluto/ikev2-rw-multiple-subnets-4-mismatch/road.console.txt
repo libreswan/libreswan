@@ -23,67 +23,67 @@ initdone
 road #
  ipsec auto --up road
 initiating all connections with alias "road"
-"road/0x8" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-"road/0x7": queue Child SA; waiting on IKE SA "road/0x8" #1 negotiating with 192.1.2.23
-"road/0x6": queue Child SA; waiting on IKE SA "road/0x8" #1 negotiating with 192.1.2.23
-"road/0x5": queue Child SA; waiting on IKE SA "road/0x8" #1 negotiating with 192.1.2.23
-"road/0x4": queue Child SA; waiting on IKE SA "road/0x8" #1 negotiating with 192.1.2.23
-"road/0x3": queue Child SA; waiting on IKE SA "road/0x8" #1 negotiating with 192.1.2.23
-"road/0x2": queue Child SA; waiting on IKE SA "road/0x8" #1 negotiating with 192.1.2.23
-"road/0x1": queue Child SA; waiting on IKE SA "road/0x8" #1 negotiating with 192.1.2.23
+"road/0x1" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"road/0x2": queue Child SA; waiting on IKE SA "road/0x1" #1 negotiating with 192.1.2.23
+"road/0x3": queue Child SA; waiting on IKE SA "road/0x1" #1 negotiating with 192.1.2.23
+"road/0x4": queue Child SA; waiting on IKE SA "road/0x1" #1 negotiating with 192.1.2.23
+"road/0x5": queue Child SA; waiting on IKE SA "road/0x1" #1 negotiating with 192.1.2.23
+"road/0x6": queue Child SA; waiting on IKE SA "road/0x1" #1 negotiating with 192.1.2.23
+"road/0x7": queue Child SA; waiting on IKE SA "road/0x1" #1 negotiating with 192.1.2.23
+"road/0x8": queue Child SA; waiting on IKE SA "road/0x1" #1 negotiating with 192.1.2.23
 initiating 8 connections
-"road/0x8" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"road/0x8" #1: sent IKE_AUTH request to 192.1.2.23:UDP/4500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-"road/0x8" #1: initiator established IKE SA; authenticated peer '3nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-"road/0x8" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===10.0.4.0/24] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATD=192.1.2.23:4500 DPD=passive}
-"road/0x7" #3: initiating Child SA using IKE SA #1
-"road/0x6" #4: initiating Child SA using IKE SA #1
-"road/0x5" #5: initiating Child SA using IKE SA #1
-"road/0x4" #6: initiating Child SA using IKE SA #1
-"road/0x3" #7: initiating Child SA using IKE SA #1
-"road/0x2" #8: initiating Child SA using IKE SA #1
-"road/0x1" #9: initiating Child SA using IKE SA #1
-"road/0x7" #3: sent CREATE_CHILD_SA request for new IPsec SA
-"road/0x7" #3: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===10.0.3.0/24] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATD=192.1.2.23:4500 DPD=passive}
-"road/0x4" #6: sent CREATE_CHILD_SA request for new IPsec SA
-"road/0x4" #6: CREATE_CHILD_SA failed with error notification TS_UNACCEPTABLE
-"road/0x2" #8: sent CREATE_CHILD_SA request for new IPsec SA
-"road/0x2" #8: CREATE_CHILD_SA failed with error notification TS_UNACCEPTABLE
-"road/0x6" #4: sent CREATE_CHILD_SA request for new IPsec SA
-"road/0x6" #4: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===10.0.2.0/24] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATD=192.1.2.23:4500 DPD=passive}
-"road/0x1" #9: sent CREATE_CHILD_SA request for new IPsec SA
-"road/0x1" #9: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATD=192.1.2.23:4500 DPD=passive}
-"road/0x3" #7: sent CREATE_CHILD_SA request for new IPsec SA
-"road/0x3" #7: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.20.0/24] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATD=192.1.2.23:4500 DPD=passive}
-"road/0x5" #5: sent CREATE_CHILD_SA request for new IPsec SA
-"road/0x5" #5: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===10.0.1.0/24] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATD=192.1.2.23:4500 DPD=passive}
+"road/0x1" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"road/0x1" #1: sent IKE_AUTH request to 192.1.2.23:UDP/4500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"road/0x1" #1: initiator established IKE SA; authenticated peer '3nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"road/0x1" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATD=192.1.2.23:4500 DPD=passive}
+"road/0x2" #3: initiating Child SA using IKE SA #1
+"road/0x3" #4: initiating Child SA using IKE SA #1
+"road/0x4" #5: initiating Child SA using IKE SA #1
+"road/0x5" #6: initiating Child SA using IKE SA #1
+"road/0x6" #7: initiating Child SA using IKE SA #1
+"road/0x7" #8: initiating Child SA using IKE SA #1
+"road/0x8" #9: initiating Child SA using IKE SA #1
+"road/0x2" #3: sent CREATE_CHILD_SA request for new IPsec SA
+"road/0x2" #3: CREATE_CHILD_SA failed with error notification TS_UNACCEPTABLE
+"road/0x5" #6: sent CREATE_CHILD_SA request for new IPsec SA
+"road/0x5" #6: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===10.0.1.0/24] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATD=192.1.2.23:4500 DPD=passive}
+"road/0x7" #8: sent CREATE_CHILD_SA request for new IPsec SA
+"road/0x7" #8: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===10.0.3.0/24] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATD=192.1.2.23:4500 DPD=passive}
+"road/0x3" #4: sent CREATE_CHILD_SA request for new IPsec SA
+"road/0x3" #4: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.20.0/24] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATD=192.1.2.23:4500 DPD=passive}
+"road/0x8" #9: sent CREATE_CHILD_SA request for new IPsec SA
+"road/0x8" #9: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===10.0.4.0/24] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATD=192.1.2.23:4500 DPD=passive}
+"road/0x6" #7: sent CREATE_CHILD_SA request for new IPsec SA
+"road/0x6" #7: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===10.0.2.0/24] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATD=192.1.2.23:4500 DPD=passive}
+"road/0x4" #5: sent CREATE_CHILD_SA request for new IPsec SA
+"road/0x4" #5: CREATE_CHILD_SA failed with error notification TS_UNACCEPTABLE
 road #
  sleep 3
 road #
  # There should be 6 tunnels up, and 2 broken tunnels
 road #
  ipsec trafficstatus
-#9: "road/0x1", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
-#7: "road/0x3", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
-#5: "road/0x5", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
-#4: "road/0x6", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
-#3: "road/0x7", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
-#2: "road/0x8", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+#2: "road/0x1", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+#4: "road/0x3", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+#6: "road/0x5", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+#7: "road/0x6", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+#8: "road/0x7", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+#9: "road/0x8", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 road #
  ipsec showstates
-#9: "road/0x1":4500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
-#9: "road/0x1" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.3.209 tun.0@192.1.2.23 tun.0@192.1.3.209 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
-#7: "road/0x3":4500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
-#7: "road/0x3" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.3.209 tun.0@192.1.2.23 tun.0@192.1.3.209 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
-#5: "road/0x5":4500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
-#5: "road/0x5" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.3.209 tun.0@192.1.2.23 tun.0@192.1.3.209 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
-#4: "road/0x6":4500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
-#4: "road/0x6" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.3.209 tun.0@192.1.2.23 tun.0@192.1.3.209 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
-#3: "road/0x7":4500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
-#3: "road/0x7" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.3.209 tun.0@192.1.2.23 tun.0@192.1.3.209 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
-#1: "road/0x8":4500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
-#2: "road/0x8":4500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
-#2: "road/0x8" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.3.209 tun.0@192.1.2.23 tun.0@192.1.3.209 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
+#1: "road/0x1":4500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
+#2: "road/0x1":4500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
+#2: "road/0x1" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.3.209 tun.0@192.1.2.23 tun.0@192.1.3.209 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
+#4: "road/0x3":4500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
+#4: "road/0x3" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.3.209 tun.0@192.1.2.23 tun.0@192.1.3.209 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
+#6: "road/0x5":4500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
+#6: "road/0x5" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.3.209 tun.0@192.1.2.23 tun.0@192.1.3.209 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
+#7: "road/0x6":4500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
+#7: "road/0x6" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.3.209 tun.0@192.1.2.23 tun.0@192.1.3.209 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
+#8: "road/0x7":4500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
+#8: "road/0x7" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.3.209 tun.0@192.1.2.23 tun.0@192.1.3.209 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
+#9: "road/0x8":4500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
+#9: "road/0x8" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.3.209 tun.0@192.1.2.23 tun.0@192.1.3.209 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
 road #
  echo done
 done

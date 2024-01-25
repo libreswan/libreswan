@@ -727,7 +727,7 @@ static void flush_incomplete_children(struct ike_sa *ike)
 		.clonedfrom = ike->sa.st_serialno,
 		.where = HERE,
 	};
-	while (next_state_old2new(&sf)) {
+	while (next_state(OLD2NEW, &sf)) {
 		struct child_sa *child = pexpect_child_sa(sf.st);
 		switch (child->sa.st_ike_version) {
 		case IKEv1:
@@ -871,7 +871,7 @@ void delete_state(struct state *st)
 			.clonedfrom = st->st_serialno,
 			.where = HERE,
 		};
-		while (next_state_old2new(&sf)) {
+		while (next_state(OLD2NEW, &sf)) {
 			state_buf sb;
 			barf((DBGP(DBG_BASE) ? PASSERT_FLAGS : PEXPECT_FLAGS),
 			     st->logger, /*ignore-exit-code*/0, HERE,
@@ -1449,7 +1449,7 @@ struct child_sa *find_v2_child_sa_by_spi(ipsec_spi_t spi, int8_t protoid,
 		.dst = &dst,
 	};
 	struct state_filter sf = { .where = HERE, };
-	while (next_state_new2old(&sf)) {
+	while (next_state(NEW2OLD, &sf)) {
 		struct state *st = sf.st;
 		if (v2_spi_predicate(st, &filter))
 			break;
@@ -1516,7 +1516,7 @@ struct ike_sa *find_ike_sa_by_connection(const struct connection *c,
 	struct ike_sa *best = NULL;
 
 	struct state_filter sf = { .where = HERE, };
-	while (next_state_new2old(&sf)) {
+	while (next_state(NEW2OLD, &sf)) {
 		struct state *st = sf.st;
 		if (!IS_PARENT_SA(st)) {
 			continue;
@@ -1570,7 +1570,7 @@ struct ike_sa *find_viable_parent_for_connection(const struct connection *c)
 	struct ike_sa *best = NULL;
 
 	struct state_filter sf = { .where = HERE, };
-	while (next_state_new2old(&sf)) {
+	while (next_state(NEW2OLD, &sf)) {
 		struct state *st = sf.st;
 		if (!IS_PARENT_SA(st)) {
 			continue;
@@ -1670,7 +1670,7 @@ ipsec_spi_t uniquify_peer_cpi(ipsec_spi_t cpi, const struct state *st, int tries
 	 * Hard work.  If there is no unique value, we'll loop forever!
 	 */
 	struct state_filter sf = { .where = HERE, };
-	while (next_state_new2old(&sf)) {
+	while (next_state(NEW2OLD, &sf)) {
 		struct state *s = sf.st;
 		if (s->st_ipcomp.protocol == &ip_protocol_ipcomp &&
 		    sameaddr(&s->st_connection->remote->host.addr,
@@ -1776,7 +1776,7 @@ void send_n_log_delete_ike_family_now(struct ike_sa **ike,
 		.clonedfrom = (*ike)->sa.st_serialno,
 		.where = where,
 	};
-	while(next_state_new2old(&cf)) {
+	while(next_state(NEW2OLD, &cf)) {
 		struct child_sa *child = pexpect_child_sa(cf.st);
 		state_attach(&child->sa, logger); /* no detach, going down */
 		switch (child->sa.st_ike_version) {
@@ -2013,7 +2013,7 @@ void list_state_events(struct show *s, const monotime_t now)
 	struct state_filter sf = {
 		.where = HERE,
 	};
-	while (next_state_old2new(&sf)) {
+	while (next_state(OLD2NEW, &sf)) {
 		struct state *st = sf.st;
 		list_state_event(s, st, st->st_event, now);
 		list_state_event(s, st, st->st_v1_send_xauth_event, now);
@@ -2156,7 +2156,7 @@ void wipe_old_connections(const struct ike_sa *ike)
 		.that_id_eq = &c->remote->host.id,
 		.where = HERE,
 	};
-	while (next_connection_new2old(&cf)) {
+	while (next_connection(NEW2OLD, &cf)) {
 		struct connection *d = cf.c;
 
 		/*

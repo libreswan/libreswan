@@ -209,7 +209,7 @@ bool connection_with_name_exists(const char *name)
 		.name = name,
 		.where = HERE,
 	};
-	while (next_connection_new2old(&cq)) {
+	while (next_connection(NEW2OLD, &cq)) {
 		return true;
 	}
 	return false;
@@ -344,7 +344,7 @@ static bool connection_ok_to_delete(struct connection *c, where_t where)
 		.clonedfrom = c,
 		.where = HERE,
 	};
-	while (next_connection_old2new(&instance)) {
+	while (next_connection(OLD2NEW, &instance)) {
 		connection_buf cb;
 		llog_pexpect(logger, where,
 			     "connection "PRI_CO" [%p] still instantiated as "PRI_CONNECTION" [%p]",
@@ -363,7 +363,7 @@ static bool connection_ok_to_delete(struct connection *c, where_t where)
 		.connection_serialno = c->serialno,
 		.where = HERE,
 	};
-	while (next_state_new2old(&state)) {
+	while (next_state(NEW2OLD, &state)) {
 		state_buf sb;
 		llog_pexpect(logger, where,
 			     "connection "PRI_CO" [%p] is still being used by %s "PRI_STATE,
@@ -3910,7 +3910,7 @@ struct connection *find_connection_for_packet(const ip_packet packet,
 	connection_priority_t best_priority = BOTTOM_PRIORITY;
 
 	struct connection_filter cq = { .where = HERE, };
-	while (next_connection_new2old(&cq)) {
+	while (next_connection(NEW2OLD, &cq)) {
 		struct connection *c = cq.c;
 
 		if (is_group(c)) {
@@ -4190,7 +4190,7 @@ struct connection **sort_connections(void)
 	unsigned nr_connections = 0;
 	{
 		struct connection_filter cq = { .where = HERE, };
-		while (next_connection_new2old(&cq)) {
+		while (next_connection(NEW2OLD, &cq)) {
 			nr_connections++;
 		}
 	}
@@ -4206,7 +4206,7 @@ struct connection **sort_connections(void)
 	{
 		unsigned i = 0;
 		struct connection_filter cq = { .where = HERE, };
-		while (next_connection_new2old(&cq)) {
+		while (next_connection(NEW2OLD, &cq)) {
 			connections[i++] = cq.c;
 		}
 		passert(i == nr_connections);

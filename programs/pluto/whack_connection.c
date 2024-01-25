@@ -78,7 +78,7 @@ static bool whack_connections_by_name(const struct whack_message *m,
 		.name = m->name,
 		.where = HERE,
 	};
-	if (next_connection_old2new(&by_name)) {
+	if (next_connection(OLD2NEW, &by_name)) {
 		visit_connections(by_name.c, m, s,
 				  visit_connection);
 		return true; /* found something, stop */
@@ -106,6 +106,7 @@ static bool whack_connections_by_alias(const struct whack_message *m,
 				       struct show *s,
 				       whack_connections_visitor_cb *visit_connections,
 				       whack_connection_visitor_cb *visit_connection,
+				       enum chrono alias_order,
 				       const struct each *each)
 {
 	struct logger *logger = show_logger(s);
@@ -113,16 +114,19 @@ static bool whack_connections_by_alias(const struct whack_message *m,
 		.alias = m->name,
 		.where = HERE,
 	};
+
 	/*
-	 * Search new-to-old so that when the alias root is a template
-	 * there are no instances of that alias ahead in the search
-	 * list list (instances of an (alias) connection are newer
-	 * than the template).
+	 * Danger:
+	 *
+	 * When deleting connections, ALIAS_ORDER should be NEW2OLD so
+	 * that when the alias root is a template all instances are
+	 * deleted before the template (instances are always newer
+	 * than their templates).
 	 *
 	 * This way deleting an alias connection tree can't corrupt
 	 * the search list.
 	 */
-	if (next_connection_new2old(&by_alias)) {
+	if (next_connection(alias_order, &by_alias)) {
 		/* header */
 		if (each->future_tense != NULL) {
 			/*
@@ -151,7 +155,7 @@ static bool whack_connections_by_alias(const struct whack_message *m,
 				continue;
 			}
 			nr += visit_connections(by_alias.c, m, s, visit_connection);
-		} while (next_connection_new2old(&by_alias));
+		} while (next_connection(alias_order, &by_alias));
 		/* footer */
 		if (each->past_tense != NULL) {
 			if (nr == 1) {
@@ -245,7 +249,7 @@ unsigned whack_connection_instance_new2old(const struct whack_message *m,
 		.clonedfrom = c,
 		.where = HERE,
 	};
-	while (next_connection_new2old(&instances)) {
+	while (next_connection(NEW2OLD, &instances)) {
 
 		connection_buf cqb;
 		ldbg(c->logger, "visting instance "PRI_CONNECTION,
@@ -276,7 +280,7 @@ static unsigned visit_connections_bottom_up(struct connection *c,
 		.clonedfrom = c,
 		.where = HERE,
 	};
-	while (next_connection_new2old(&instances)) {
+	while (next_connection(NEW2OLD, &instances)) {
 		/* abuse bool */
 		nr += visit_connections_bottom_up(instances.c, m, s, visit_connection);
 	}
@@ -292,6 +296,7 @@ static void whack_connections(const struct whack_message *m,
 			      struct show *s,
 			      whack_connections_visitor_cb *visit_connections,
 			      whack_connection_visitor_cb *visit_connection,
+			      enum chrono alias_order,
 			      const struct each *each)
 {
 	struct logger *logger = show_logger(s);
@@ -307,10 +312,21 @@ static void whack_connections(const struct whack_message *m,
 		return;
 	}
  
+	/*
+	 * Danger:
+	 *
+	 * When deleting connections, ALIAS_ORDER should be NEW2OLD so
+	 * that when the alias root is a template all instances are
+	 * deleted before the template (instances are always newer
+	 * than their templates).
+	 *
+	 * This way deleting an alias connection tree can't corrupt
+	 * the search list.
+	 */
 	if (whack_connections_by_alias(m, s,
 				       visit_connections,
 				       visit_connection,
-				       each)) {
+				       alias_order, each)) {
 		return;
 	}
 
@@ -346,10 +362,22 @@ static void whack_connections(const struct whack_message *m,
 void whack_connection(const struct whack_message *m,
 		      struct show *s,
 		      whack_connection_visitor_cb *visit_connection,
+		      enum chrono alias_order,
 		      struct each each)
 {
+	/*
+	 * Danger:
+	 *
+	 * When deleting connections, ALIAS_ORDER should be NEW2OLD so
+	 * that when the alias root is a template all instances are
+	 * deleted before the template (instances are always newer
+	 * than their templates).
+	 *
+	 * This way deleting an alias connection tree can't corrupt
+	 * the search list.
+	 */
 	whack_connections(m, s, visit_connections_root,
-			  visit_connection, &each);
+			  visit_connection, alias_order, &each);
 }
 
 void whack_connections_bottom_up(const struct whack_message *m,
@@ -357,8 +385,21 @@ void whack_connections_bottom_up(const struct whack_message *m,
 				 whack_connection_visitor_cb *visit_connection,
 				 struct each each)
 {
+	/*
+	 * Danger:
+	 *
+	 * When deleting connections, ALIAS_ORDER should be NEW2OLD so
+	 * that when the alias root is a template all instances are
+	 * deleted before the template (instances are always newer
+	 * than their templates).
+	 *
+	 * This way deleting an alias connection tree can't corrupt
+	 * the search list.
+	 */
 	whack_connections(m, s, visit_connections_bottom_up,
-			  visit_connection, &each);
+			  visit_connection,
+			  /*alias_order*/NEW2OLD,
+			  &each);
 }
 
 void whack_connection_states(struct connection *c,
@@ -446,7 +487,7 @@ void whack_connection_states(struct connection *c,
 	};
 	unsigned nr_parents = 0;
 	unsigned nr_children = 0;
-	while (next_state_new2old(&weed)) {
+	while (next_state(NEW2OLD, &weed)) {
 		if (weed.st->st_serialno == c->established_ike_sa) {
 			pdbg(c->logger, "%s()    skipping "PRI_SO" as newest IKE SA",
 			      __func__, pri_so(weed.st->st_serialno));
@@ -494,7 +535,7 @@ void whack_connection_states(struct connection *c,
 			.where = where,
 		};
 		unsigned nr = 0;
-		while (next_state_new2old(&child_filter)) {
+		while (next_state(NEW2OLD, &child_filter)) {
 			struct child_sa *child = pexpect_child_sa(child_filter.st);
 			state_buf sb;
 			pdbg(c->logger, "%s()    dispatching to sibling Child SA "PRI_STATE,

@@ -48,6 +48,7 @@ void whack_unroute(const struct whack_message *m, struct show *s)
 	}
 
 	whack_connection(m, s, whack_unroute_connections,
+			 /*alias_order*/NEW2OLD,
 			 (struct each) {
 				 .log_unknown_name = true,
 			 });

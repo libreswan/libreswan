@@ -341,7 +341,7 @@ void load_groups(struct logger *logger)
 		.kind = CK_GROUP,
 		.where = HERE,
 	};
-	while (next_connection_new2old(&cf)) {
+	while (next_connection(NEW2OLD, &cf)) {
 		struct connection *g = cf.c;
 		if (oriented(g)) {
 			struct file_lex_position flp = {

@@ -190,7 +190,7 @@ void binlog_state(struct state *st, enum state_kind new_state)
 		const struct finite_state *save_state = st->st_state;
 		st->st_state = finite_states[new_state];
 		struct state_filter sf = { .where = HERE, };
-		while (next_state_new2old(&sf)) {
+		while (next_state(NEW2OLD, &sf)) {
 			connection_state(sf.st, &lc);
 		}
 		st->st_state = save_state;

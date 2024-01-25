@@ -212,7 +212,7 @@ void connection_check_ddns(struct logger *logger)
 	struct connection_filter cf = {
 		.where = HERE,
 	};
-	while (next_connection_new2old(&cf)) {
+	while (next_connection(NEW2OLD, &cf)) {
 		/* addref, delref is probably over kill */
 		struct connection *c = connection_addref(cf.c, logger);
 		connection_check_ddns1(c, logger);

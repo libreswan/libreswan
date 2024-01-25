@@ -534,7 +534,7 @@ void find_and_active_redirect_states(const char *conn_name,
 	int cnt = 0;
 
 	struct state_filter sf = { .where = HERE, };
-	while (next_state_new2old(&sf)) {
+	while (next_state(NEW2OLD, &sf)) {
 		struct state *st = sf.st;
 		if (IS_IKE_SA_ESTABLISHED(st) &&
 		    (conn_name == NULL || streq(conn_name, st->st_connection->name))) {

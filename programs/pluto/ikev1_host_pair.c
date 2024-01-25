@@ -202,7 +202,7 @@ static struct connection *find_v1_host_connection(const ip_address local_address
 		.remote = &remote_address,
 		.where = HERE,
 	};
-	while (next_connection_new2old(&hpf)) {
+	while (next_connection(NEW2OLD, &hpf)) {
 		struct connection *d = hpf.c;
 
 		if (!match_v1_connection(d, authby, policy_xauth,
@@ -335,7 +335,7 @@ struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 		.remote = &unset_address,
 		.where = HERE,
 	};
-	while (next_connection_new2old(&hpf)) {
+	while (next_connection(NEW2OLD, &hpf)) {
 		struct connection *d = hpf.c;
 
 		if (!match_v1_connection(d, authby, policy_xauth,

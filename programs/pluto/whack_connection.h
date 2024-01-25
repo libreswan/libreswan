@@ -26,6 +26,7 @@ struct connection;
 struct whack_message;
 struct show;
 struct whack_state_context;
+enum chrono;
 
 struct each {
 	const char *future_tense;
@@ -53,11 +54,22 @@ void whack_all_connections_sorted(const struct whack_message *m, struct show *s,
 
 /*
  * Visit the connection "root" identified by M (for aliases there may
- * be multiple "root" connections)
+ * be multiple "root" connections and they are processed in chrono
+ * order)
+ *
+ * Danger:
+ *
+ * When deleting connections, ALIAS_ORDER should be NEW2OLD so that
+ * when the alias root is a template all instances are deleted before
+ * the template (instances are always newer than their templates).
+ *
+ * This way deleting an alias connection tree can't corrupt the search
+ * list.
  */
 
 void whack_connection(const struct whack_message *m, struct show *s,
 		      whack_connection_visitor_cb *visit_connection,
+		      enum chrono alias_order,
 		      struct each each);
 
 unsigned whack_connection_instance_new2old(const struct whack_message *m, struct show *s,

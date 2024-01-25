@@ -34,21 +34,21 @@ initdone
 west #
  ipsec auto --up westnets-eastnet
 initiating all connections with alias "westnets-eastnet"
-"westnets-eastnet/2x0" #1: initiating IKEv1 Main Mode connection
-"westnets-eastnet/2x0" #1: sent Main Mode request
-"westnets-eastnet/1x0": queue IPsec SA; waiting on ISAKMP SA "westnets-eastnet/2x0" #1 negotiating with 192.1.2.23
+"westnets-eastnet/1x0" #1: initiating IKEv1 Main Mode connection
+"westnets-eastnet/1x0" #1: sent Main Mode request
+"westnets-eastnet/2x0": queue IPsec SA; waiting on ISAKMP SA "westnets-eastnet/1x0" #1 negotiating with 192.1.2.23
 initiating 2 connections
-"westnets-eastnet/2x0" #1: sent Main Mode I2
-"westnets-eastnet/2x0" #1: sent Main Mode I3
-"westnets-eastnet/2x0" #1: Peer ID is ID_FQDN: '@east'
-"westnets-eastnet/2x0" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
-"westnets-eastnet/2x0" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-"westnets-eastnet/2x0" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-"westnets-eastnet/1x0" #3: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-"westnets-eastnet/2x0" #2: sent Quick Mode request
-"westnets-eastnet/1x0" #3: sent Quick Mode request
-"westnets-eastnet/2x0" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
-"westnets-eastnet/1x0" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+"westnets-eastnet/1x0" #1: sent Main Mode I2
+"westnets-eastnet/1x0" #1: sent Main Mode I3
+"westnets-eastnet/1x0" #1: Peer ID is ID_FQDN: '@east'
+"westnets-eastnet/1x0" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnets-eastnet/1x0" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"westnets-eastnet/1x0" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"westnets-eastnet/2x0" #3: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"westnets-eastnet/1x0" #2: sent Quick Mode request
+"westnets-eastnet/2x0" #3: sent Quick Mode request
+"westnets-eastnet/1x0" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+"westnets-eastnet/2x0" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
@@ -57,8 +57,8 @@ west #
 up
 west #
  ipsec whack --trafficstatus
-#3: "westnets-eastnet/1x0", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
-#2: "westnets-eastnet/2x0", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+#2: "westnets-eastnet/1x0", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+#3: "westnets-eastnet/2x0", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  echo done
 done

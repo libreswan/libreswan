@@ -314,7 +314,7 @@ void terminate_and_down_connections(struct connection *c,
 				.clonedfrom = c,
 				.where = where,
 			};
-			if (!next_connection_old2new(&cq)) {
+			if (!next_connection(OLD2NEW, &cq)) {
 				break;
 			}
 			/* log first actual delete */
@@ -345,14 +345,14 @@ void terminate_and_down_connections(struct connection *c,
 			.clonedfrom = c,
 			.where = where,
 		};
-		if (next_connection_old2new(&cq)) {
+		if (next_connection(OLD2NEW, &cq)) {
 			llog(RC_LOG, c->logger, "terminating group instances");
 			do {
 				connection_attach(cq.c, c->logger); /* propogate whack */
 				terminate_and_down_connections(cq.c, strip_route_bit, where);
 				pmemory(cq.c); /* should not disappear */
 				connection_detach(cq.c, c->logger); /* propogate whack */
-			} while (next_connection_old2new(&cq));
+			} while (next_connection(OLD2NEW, &cq));
 		}
 		pmemory(c); /* should not disappear */
 		return;
@@ -395,11 +395,11 @@ void terminate_and_delete_connections(struct connection **cp,
 			.clonedfrom = (*cp),
 			.where = where,
 		};
-		if (next_connection_old2new(&cq)) {
+		if (next_connection(OLD2NEW, &cq)) {
 			llog(RC_LOG, (*cp)->logger, "deleting group instances");
 			do {
 				terminate_and_delete_connections(&cq.c, logger, where);
-			} while (next_connection_old2new(&cq));
+			} while (next_connection(OLD2NEW, &cq));
 		}
 		pmemory((*cp)); /* should not disappear */
 		/* leave whack attached during death */
@@ -567,7 +567,7 @@ static void connection_zap_ike_family(struct ike_sa **ike,
 		.clonedfrom = (*ike)->sa.st_serialno,
 		.where = HERE,
 	};
-	while(next_state_new2old(&cf)) {
+	while(next_state(NEW2OLD, &cf)) {
 		struct child_sa *child = pexpect_child_sa(cf.st);
 
 		switch (child->sa.st_ike_version) {
