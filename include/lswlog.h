@@ -51,7 +51,8 @@ extern bool log_to_stderr;          /* should log go to stderr? */
 
 enum rc_type {
 	RC_COMMENT = 0,		/* non-commital utterance with 000 prefix(does not affect exit status) */
-	RC_RAW = 1,			/* ditto, but also suppresses the 000 prefix */
+	RC_RESERVED_1 = 1,	/* was RC_RAW, 000 prefix never
+				 * appears */
 	RC_LOG = 2,			/* message aimed at log (does not affect exit status) */
 	RC_LOG_SERIOUS = 3,		/* serious message aimed at log (does not affect exit status) */
 	RC_SUCCESS = 4,		/* success (exit status 0) */

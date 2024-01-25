@@ -77,7 +77,7 @@ static void blank_line(struct show *s)
 	char blank_buf[sizeof(" "/*\0*/) + 1/*canary*/ + 1/*why-not*/];
 	struct jambuf buf = ARRAY_AS_JAMBUF(blank_buf);
 	jam_string(&buf, " ");
-	jambuf_to_logger(&buf, s->logger, RC_RAW|WHACK_STREAM);
+	jambuf_to_logger(&buf, s->logger, RC_COMMENT|WHACK_STREAM);
 }
 
 void free_show(struct show **sp)
@@ -121,8 +121,7 @@ void show_blank(struct show *s)
 
 struct jambuf *show_jambuf(struct show *s, enum rc_type rc)
 {
-	pexpect(rc == RC_RAW ||
-		rc == RC_COMMENT ||
+	pexpect(rc == RC_COMMENT ||
 		rc == RC_UNKNOWN_NAME/*show_traffic_status()*/);
 	return jambuf_from_logjam(&s->logjam, s->logger,
 				  /*pluto_exit_code*/0,
@@ -159,11 +158,11 @@ static void show_rc_va_list(struct show *s, enum rc_type rc,
 	show_to_logger(s);
 }
 
-void show_comment(struct show *s, const char *message, ...)
+void show(struct show *s, const char *message, ...)
 {
 	va_list ap;
 	va_start(ap, message);
-	show_rc_va_list(s, RC_RAW, message, ap);
+	show_rc_va_list(s, RC_COMMENT, message, ap);
 	va_end(ap);
 }
 
@@ -172,13 +171,5 @@ void whack_log(enum rc_type rc, struct show *s, const char *message, ...)
 	va_list ap;
 	va_start(ap, message);
 	show_rc_va_list(s, rc, message, ap);
-	va_end(ap);
-}
-
-void show_raw(struct show *s, const char *message, ...)
-{
-	va_list ap;
-	va_start(ap, message);
-	show_rc_va_list(s, RC_RAW, message, ap);
 	va_end(ap);
 }

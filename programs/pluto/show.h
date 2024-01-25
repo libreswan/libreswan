@@ -41,7 +41,7 @@ struct logger *show_logger(struct show *s);
 struct jambuf *show_jambuf(struct show *s, enum rc_type rc);
 void show_to_logger(struct show *s);
 #define SHOW_JAMBUF(S, BUF)					\
-	for (struct jambuf *BUF = show_jambuf(S, RC_RAW);	\
+	for (struct jambuf *BUF = show_jambuf(S, RC_COMMENT);	\
 	     BUF != NULL;					\
 	     show_to_logger(S), BUF = NULL)
 
@@ -52,10 +52,10 @@ void show_to_logger(struct show *s);
  * Example 1:
  *
  *    show_separator(s);
- *    show_comment(s, "heading 1");
+ *    show(s, "heading 1");
  *    show_separator(s);
  *    show_separator(s);
- *    show_comment(s, "heading 2");
+ *    show(s, "heading 2");
  *    show_separator(s);
  *
  *    heading 1
@@ -68,7 +68,7 @@ void show_to_logger(struct show *s);
  *    show_blank(s);
  *    show_separator(s);
  *    show_blank(s);
- *    show_comment(s, "heading 1");
+ *    show(s, "heading 1");
  *
  * will output:
  *
@@ -86,12 +86,10 @@ void show_blank(struct show *s);
  * "comment" comes from RC_COMMENT, better name?
  */
 
-void show_comment(struct show *s, const char *message, ...) PRINTF_LIKE(2);
-
-/*
- * A raw line (no prefix).
- */
-void show_raw(struct show *s, const char *message, ...) PRINTF_LIKE(2);
+void show(struct show *s, const char *message, ...) PRINTF_LIKE(2);
+/* delay churn */
+#define show_raw show
+#define show_comment show
 
 /*
  * Whack only logging.

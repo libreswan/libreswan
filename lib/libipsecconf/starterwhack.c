@@ -138,7 +138,6 @@ static int starter_whack_read_reply(int sock,
 
 				switch (s) {
 				case RC_COMMENT:
-				case RC_RAW:
 				case RC_LOG:
 				case RC_INFORMATIONAL:
 					/* ignore */
