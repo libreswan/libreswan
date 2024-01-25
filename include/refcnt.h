@@ -59,7 +59,17 @@ void refcnt_init(const void *pointer, struct refcnt *refcnt,
 	refcnt_overalloc(THING, /*extra*/0, WHERE)
 
 /* look at refcnt atomically */
-unsigned refcnt_peek(const refcnt_t *refcnt);
+
+unsigned refcnt_peek_where(const void *pointer,
+			   const refcnt_t *refcnt,
+			   struct logger *owner,
+			   where_t where);
+#define refcnt_peek(OBJ, OWNER)						\
+	({								\
+		typeof(OBJ) o_ = OBJ; /* evaluate once */		\
+		(o_ == NULL ? 0 : /* a NULL pointer has no references */ \
+		 refcnt_peek_where(o_, &o_->refcnt, OWNER, HERE));	\
+	})
 
 /*
  * Add a reference.

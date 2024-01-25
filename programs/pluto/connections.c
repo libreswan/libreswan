@@ -308,7 +308,7 @@ static bool connection_ok_to_delete(struct connection *c, where_t where)
 	bool ok_to_delete = true;
 	struct logger *logger = c->logger;
 
-	unsigned refcnt = refcnt_peek(&c->refcnt);
+	unsigned refcnt = refcnt_peek(c, logger);
 	if (refcnt != 0) {
 		llog_pexpect(logger, where,
 			     "connection "PRI_CO" [%p] still has %u references",

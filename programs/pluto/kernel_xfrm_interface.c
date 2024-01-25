@@ -451,10 +451,20 @@ static void free_xfrmi_ipaddr_list(struct pluto_xfrmi_ipaddr *xfrmi_ipaddr, stru
 	struct pluto_xfrmi_ipaddr *xi_next = NULL;
 
 	while (xi != NULL) {
+		/* step off IX */
 		xi_next = xi->next;
-		/* When the list is allocated with interface IPs not created by pluto,
-		 * then they were never unreference'd, so we'll have to do it here */
-		if (refcnt_peek(&(xi->refcnt)) > 0) {
+		/*
+		 * When the list is allocated with interface IPs not
+		 * created by pluto, then they were never
+		 * unreference'd, so we'll have to do it here
+		 *
+		 * XXX: since XI is non-NULL this must always be
+		 * true?
+		 *
+		 * XXX: forcing the deletion of all references
+		 * suggests that something elsewhere is leaking these?
+		 */
+		if (refcnt_peek(xi, logger) > 0) {
 			struct pluto_xfrmi_ipaddr *xi_unref_result = NULL;
 			do {
 				/* delref_where() sets the pointer passed in to NULL
@@ -473,7 +483,7 @@ static void reference_xfrmi_ip(struct pluto_xfrmi *xfrmi, struct pluto_xfrmi_ipa
 	addref_where(xfrmi_ipaddr, HERE);
 	dbg("reference xfrmi_ipaddr=%p name=%s if_id=%u refcount=%u (after)",
 			xfrmi_ipaddr, xfrmi->name, xfrmi->if_id,
-			refcnt_peek(&(xfrmi_ipaddr->refcnt)));
+	    refcnt_peek(xfrmi_ipaddr, &global_logger));
 }
 
 static void unreference_xfrmi_ip(struct connection *c, struct logger *logger)
@@ -499,7 +509,7 @@ static void unreference_xfrmi_ip(struct connection *c, struct logger *logger)
 
 	ldbg(logger, "unreference_xfrmi_ip() xfrmi_ipaddr=%p name=%s if_id=%u IP [%s] refcount=%u (before).",
 		 refd_xfrmi_ipaddr, c->xfrmi->name, c->xfrmi->if_id, refd_xfrmi_ipaddr->if_ip_str,
-		 refcnt_peek(&(refd_xfrmi_ipaddr->refcnt)));
+	     refcnt_peek(refd_xfrmi_ipaddr, logger));
 
 	/* Decrement the reference:
 	 * - The pointer passed in will be set to NULL
@@ -1321,7 +1331,7 @@ void reference_xfrmi(struct connection *c)
 	addref_where(c->xfrmi, HERE);
 	ldbg(logger, "reference xfrmi=%p name=%s if_id=%u refcount=%u (after)", c->xfrmi,
 	     c->xfrmi->name, c->xfrmi->if_id,
-	     refcnt_peek(&(c->xfrmi->refcnt)));
+	     refcnt_peek(c->xfrmi, c->logger));
 }
 
 void unreference_xfrmi(struct connection *c)
@@ -1331,7 +1341,7 @@ void unreference_xfrmi(struct connection *c)
 
 	ldbg(logger, "unreference xfrmi=%p name=%s if_id=%u refcount=%u (before).",
 	     c->xfrmi, c->xfrmi->name, c->xfrmi->if_id,
-	     refcnt_peek(&(c->xfrmi->refcnt)));
+	     refcnt_peek(c->xfrmi, c->logger));
 
 	unreference_xfrmi_ip(c, logger);
 

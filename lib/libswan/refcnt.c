@@ -125,7 +125,10 @@ void refcnt_addref_where(const char *what,
  * look at refcnt atomically
  * This is a bit slow but it is used rarely.
  */
-unsigned refcnt_peek(const refcnt_t *refcnt)
+unsigned refcnt_peek_where(const void *pointer,
+			   const refcnt_t *refcnt,
+			   struct logger *logger,
+			   where_t where)
 {
 	unsigned val;
 	pthread_mutex_lock(&refcnt_mutex);
@@ -133,6 +136,7 @@ unsigned refcnt_peek(const refcnt_t *refcnt)
 		val = refcnt->count;
 	}
 	pthread_mutex_unlock(&refcnt_mutex);
+	ldbg_ref(logger, /*owner*/NULL, "peek", /*what*/NULL, pointer, where, val, val);
 	return val;
 }
 

@@ -122,7 +122,7 @@ static unsigned down_connection(struct connection *c, struct logger *logger)
 	 * the magical deleting instance message appears on the
 	 * console.
 	 */
-	if (is_instance(c) && refcnt_peek(&c->refcnt) == 1) {
+	if (is_instance(c) && refcnt_peek(c, c->logger) == 1) {
 		ldbg(c->logger, "hack attack: skipping detach so that caller can log deleting instance");
 		return 1;
 	}
