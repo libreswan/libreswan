@@ -52,7 +52,7 @@ void whack_delete(const struct whack_message *m, struct show *s,
 	 * before templates.
 	 */
 	whack_connection(m, s, whack_delete_connections,
-			 /*alias_order*/NEW2OLD,
+			 /*alias_order*/OLD2NEW,
 			 (struct each) {
 				 .log_unknown_name = log_unknown_name,
 			 });

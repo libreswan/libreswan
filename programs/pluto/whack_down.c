@@ -176,6 +176,25 @@ void whack_down(const struct whack_message *m, struct show *s)
 		return;
 	}
 
+	/*
+	 * Down aliases NEW2OLD.
+	 *
+	 * For subnets= the generated connections are brought up in
+	 * the order they are generated (OLD2NEW).  This means that
+	 * the first generated connection is made the IKE SA and
+	 * further generated connections create Child SAs hanging off
+	 * that IKE SA.  To ensure that the IKE SA is stripped of
+	 * these Child SAs when it is taken down, the aliases are
+	 * taken down in reverse order so that when the first
+	 * generated connection is reached there is only that
+	 * connection's IKE and Child SAs left.
+	 *
+	 * It seems to work ...
+	 *
+	 * What should happen is for the last Child SA to see that the
+	 * IKE SA has -UP and initiate an IKE SA delete.
+	 */
+
 	whack_connection(m, s, whack_down_connection,
 			 /*alias_order*/NEW2OLD,
 			 (struct each) {
