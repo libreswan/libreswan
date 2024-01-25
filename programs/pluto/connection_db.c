@@ -189,8 +189,13 @@ static bool matches_connection_filter(struct connection *c, struct connection_fi
 	if (filter->name != NULL && !streq(filter->name, c->name)) {
 		return false;
 	}
-	if (filter->alias != NULL && !lsw_alias_cmp(filter->alias, c->config->connalias)) {
-		return false;
+	if (filter->alias_root != NULL) {
+		if (c->root_config == NULL) {
+			return false;
+		}
+		if (!lsw_alias_cmp(filter->alias_root, c->config->connalias)) {
+			return false;
+		}
 	}
 	if (filter->this_id_eq != NULL && !id_eq(filter->this_id_eq, &c->local->host.id)) {
 		return false;
@@ -230,6 +235,8 @@ static bool matches_connection_filter(struct connection *c, struct connection_fi
 
 bool next_connection(enum chrono adv, struct connection_filter *filter)
 {
+	/* try to stop all_connections() calls */
+	passert(filter->connections == NULL);
 	if (filter->internal == NULL) {
 		/*
 		 * Advance to first entry of the circular list (if the
@@ -257,5 +264,75 @@ bool next_connection(enum chrono adv, struct connection_filter *filter)
 		}
 	}
 	dbg("  matches: %d", filter->count);
+	return false;
+}
+
+bool all_connections(enum chrono adv, struct connection_filter *filter,
+		     struct logger *logger)
+{
+	/* try to stop next_connection() calls */
+	PASSERT_WHERE(logger, filter->where, filter->internal == NULL);
+
+	if (filter->connections == NULL) {
+
+		unsigned count = 0;
+		{
+			struct connection_filter iterator = *filter;
+			while (next_connection(adv, &iterator)) {
+				count++;
+			}
+		}
+
+		if (count == 0) {
+			return false; /* nothing to see */
+		}
+
+		/*
+		 * Over allocate array so that it is NULL terminated.  Since
+		 * next_connection() passerts .connections==NULL, hold off on
+		 * saving connections.
+		 */
+		struct connection **connections =
+			alloc_things(struct connection*, count+1, __func__);
+
+		{
+			struct connection_filter iterator = iterator = *filter;
+			unsigned i = 0;
+			while (next_connection(adv, &iterator)) {
+				PASSERT(logger, refcnt_peek(iterator.c, logger) >= 1);
+				connections[i++] = connection_addref(iterator.c, logger);
+				PASSERT(logger, refcnt_peek(iterator.c, logger) > 1);
+			}
+			PASSERT(logger, i == count);
+			PASSERT(logger, connections[i] == NULL);
+		}
+		filter->connections = connections;
+	}
+
+	/*
+	 * Delete and skip any connections that have somehow been
+	 * reduced to one reference.
+	 *
+	 * XXX: refcnt_peek() returns 0 for NULL.
+	 */
+
+	while (refcnt_peek(filter->connections[filter->count], logger) == 1) {
+		connection_delref(&filter->connections[filter->count], logger);
+		filter->count++;
+	}
+
+	/*
+	 * Save/return the connection.
+	 */
+	filter->c = filter->connections[filter->count];
+	if (filter->c != NULL) {
+		PASSERT(logger, refcnt_peek(filter->c, logger) > 1);
+		connection_delref(&filter->connections[filter->count], logger);
+		filter->count++;
+		return true;
+	}
+
+	/* all done */
+	pfreeany(filter->connections);
 	return false;
 }

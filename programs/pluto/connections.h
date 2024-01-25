@@ -909,7 +909,7 @@ struct connection_filter {
 	/* filters */
 	enum connection_kind kind;
 	const char *name;
-	const char *alias;
+	const char *alias_root;
 	const struct id *this_id_eq; /* strict; not same_id() */
 	const struct id *that_id_eq; /* strict; not same_id() */
 	struct connection *clonedfrom;
@@ -922,15 +922,39 @@ struct connection_filter {
 	 */
 	struct connection *c;
 
-	/* internal: handle on next entry */
-	struct list_entry *internal;
+	/*
+	 * internal
+	 */
+	struct list_entry *internal; /* handle on next entry; used by next_connection() */
+	struct connection **connections; /* refcounted connections; used by all_connections() */
 	/* internal: total matches so far */
 	unsigned count;
 	/* .where MUST BE LAST (See GCC bug 102288) */
 	where_t where;
 };
 
+/*
+ * Can bail early; beware of delete.  Should this be NEW2OLD only?
+ */
 bool next_connection(enum chrono order, struct connection_filter *query);
+
+/*
+ * Must iterate over all matches (can't break from loop).
+ *
+ * All matching connections get an addref() (i.e., making refcnt()>1)
+ * and then before each connection is returned, the reference is
+ * dropped (i.e., refcnt()>=1).  This means that the current
+ * connection has no extra references, and if the reference is the
+ * last can be deleted using delete_connection() (pexpect
+ * refcnt()==1).
+ *
+ * However, this also means that, due to the addref(), code can't use
+ * delete_connection() to delete anything still in the queue.  Instead
+ * the connection should be delref()ed.  If that leaves
+ * all_connections() with the last reference the the connection is not
+ * returned (it is delref()ed deleting it).
+ */
+bool all_connections(enum chrono adv, struct connection_filter *filter, struct logger *logger);
 
 /*
  * For iterating over the spd_route DB.
