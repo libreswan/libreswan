@@ -4689,46 +4689,45 @@ bool is_labeled_child(const struct connection *c)
 	bad_case(c->local->kind);
 }
 
-bool can_have_parent_sa(const struct connection *c)
+bool can_have_sa(const struct connection *c, 
+		 enum sa_type sa_type)
 {
 	if (c == NULL) {
 		return false;
 	}
-	switch (c->local->kind) {
-	case CK_INVALID:
-		break;
-	case CK_LABELED_CHILD:
-	case CK_GROUP:
-	case CK_LABELED_TEMPLATE:
-	case CK_TEMPLATE:
-		return false;
-	case CK_LABELED_PARENT:
-	case CK_PERMANENT:
-	case CK_INSTANCE:
-		return true;
+	switch (sa_type) {
+	case IKE_SA:
+		switch (c->local->kind) {
+		case CK_INVALID:
+			break;
+		case CK_LABELED_CHILD:
+		case CK_GROUP:
+		case CK_LABELED_TEMPLATE:
+		case CK_TEMPLATE:
+			return false;
+		case CK_LABELED_PARENT:
+		case CK_PERMANENT:
+		case CK_INSTANCE:
+			return true;
+		}
+		bad_enum(c->logger, &connection_kind_names, c->local->kind);
+	case CHILD_SA:
+		switch (c->local->kind) {
+		case CK_INVALID:
+			break;
+		case CK_LABELED_TEMPLATE:
+		case CK_LABELED_PARENT:
+		case CK_TEMPLATE:
+		case CK_GROUP:
+			return false;
+		case CK_PERMANENT:
+		case CK_INSTANCE:
+		case CK_LABELED_CHILD:
+			return true;
+		}
+		bad_enum(c->logger, &connection_kind_names, c->local->kind);
 	}
-	bad_case(c->local->kind);
-}
-
-bool can_have_child_sa(const struct connection *c)
-{
-	if (c == NULL) {
-		return false;
-	}
-	switch (c->local->kind) {
-	case CK_INVALID:
-		break;
-	case CK_LABELED_TEMPLATE:
-	case CK_LABELED_PARENT:
-	case CK_TEMPLATE:
-	case CK_GROUP:
-		return false;
-	case CK_PERMANENT:
-	case CK_INSTANCE:
-	case CK_LABELED_CHILD:
-		return true;
-	}
-	bad_case(c->local->kind);
+	bad_case(sa_type);
 }
 
 /*

@@ -123,7 +123,7 @@ static unsigned whack_trafficstatus_connection(const struct whack_message *m UNU
 					       struct show *s,
 					       struct connection *c)
 {
-	if (!can_have_child_sa(c)) {
+	if (!can_have_sa(c, CHILD_SA)) {
 		return 0; /* the connection doesn't count */
 	}
 
