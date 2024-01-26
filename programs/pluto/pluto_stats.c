@@ -137,11 +137,11 @@ static unsigned long pstats_sa_established[IKE_VERSION_ROOF][SA_TYPE_ROOF];
 static const char *pstats_sa_names[IKE_VERSION_ROOF][SA_TYPE_ROOF] = {
 	[IKEv1] = {
 		[IKE_SA] = "ikev1.isakmp",
-		[IPSEC_SA] = "ikev1.ipsec",
+		[CHILD_SA] = "ikev1.ipsec",
 	},
 	[IKEv2] = {
 		[IKE_SA] = "ikev2.ike",
-		[IPSEC_SA] = "ikev2.child",
+		[CHILD_SA] = "ikev2.child",
 	},
 };
 
@@ -321,7 +321,7 @@ void pstat_sa_established(struct state *st)
 
 	switch (st->st_pstats.sa_type) {
 	case IKE_SA: pstat_ike_sa_established(st); break;
-	case IPSEC_SA: pstat_child_sa_established(st); break;
+	case CHILD_SA: pstat_child_sa_established(st); break;
 	}
 }
 

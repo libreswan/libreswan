@@ -489,7 +489,7 @@ void schedule_v2_replace_event(struct state *st)
 	deltatime_t lifetime;
 	switch (st->st_sa_type_when_established) {
 	case IKE_SA: lifetime = c->config->sa_ike_max_lifetime; break;
-	case IPSEC_SA: lifetime = c->config->sa_ipsec_max_lifetime; break;
+	case CHILD_SA: lifetime = c->config->sa_ipsec_max_lifetime; break;
 	default: bad_case(st->st_sa_type_when_established);
 	}
 

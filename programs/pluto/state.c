@@ -1190,7 +1190,7 @@ static struct child_sa *duplicate_state(struct connection *c,
 					enum sa_type sa_type,
 					enum sa_role sa_role)
 {
-	if (sa_type == IPSEC_SA) {
+	if (sa_type == CHILD_SA) {
 		/* record use of the Phase 1 / Parent state */
 		ike->sa.st_outbound_count++;
 		ike->sa.st_outbound_time = mononow();
@@ -1210,9 +1210,9 @@ static struct child_sa *duplicate_state(struct connection *c,
 	connection_buf cib;
 	dbg("duplicating state object #%lu "PRI_CONNECTION" as #%lu for %s",
 	    ike->sa.st_serialno, pri_connection(ike->sa.st_connection, &cib),
-	    child->sa.st_serialno, sa_type == IPSEC_SA ? "IPSEC SA" : "IKE SA");
+	    child->sa.st_serialno, sa_type == CHILD_SA ? "IPSEC SA" : "IKE SA");
 
-	if (sa_type == IPSEC_SA) {
+	if (sa_type == CHILD_SA) {
 		child->sa.st_oakley = ike->sa.st_oakley;
 	}
 
@@ -1239,7 +1239,7 @@ static struct child_sa *duplicate_state(struct connection *c,
 	child->sa.st_ipcomp.protocol = ike->sa.st_ipcomp.protocol;
 	child->sa.st_ipcomp.inbound.spi = ike->sa.st_ipcomp.inbound.spi;
 
-	if (sa_type == IPSEC_SA) {
+	if (sa_type == CHILD_SA) {
 #   define clone_nss_symkey_field(field) child->sa.field = reference_symkey(__func__, #field, ike->sa.field)
 		clone_nss_symkey_field(st_skeyid_nss);
 		clone_nss_symkey_field(st_skey_d_nss); /* aka st_skeyid_d_nss */
@@ -1282,7 +1282,7 @@ struct child_sa *new_v1_child_sa(struct connection *c,
 				 struct ike_sa *isakmp,
 				 enum sa_role sa_role)
 {
-	return duplicate_state(c, isakmp, IPSEC_SA, sa_role);
+	return duplicate_state(c, isakmp, CHILD_SA, sa_role);
 }
 
 struct child_sa *new_v2_child_sa(struct connection *c,

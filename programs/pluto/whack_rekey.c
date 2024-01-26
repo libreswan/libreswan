@@ -98,7 +98,7 @@ static unsigned whack_rekey_child(const struct whack_message *m,
 		return 0; /* the connection doesn't count */
 	}
 
-	return rekey_state(m, s, c, IPSEC_SA, c->newest_ipsec_sa);
+	return rekey_state(m, s, c, CHILD_SA, c->newest_ipsec_sa);
 }
 
 void whack_rekey(const struct whack_message *m, struct show *s, enum sa_type sa_type)
@@ -118,7 +118,7 @@ void whack_rekey(const struct whack_message *m, struct show *s, enum sa_type sa_
 						    .log_unknown_name = true,
 					    });
 		return;
-	case IPSEC_SA:
+	case CHILD_SA:
 		whack_connections_bottom_up(m, s, whack_rekey_child,
 					    (struct each) {
 						    .log_unknown_name = true,

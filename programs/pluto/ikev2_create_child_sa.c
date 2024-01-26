@@ -456,7 +456,7 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_child(struct ike_sa *ike,
 	dbg("initiating child sa with "PRI_LOGGER, pri_logger(logger));
 
 	pexpect(IS_CHILD_SA_ESTABLISHED(&child_being_replaced->sa));
-	struct child_sa *larval_child = new_v2_child_sa(c, ike, IPSEC_SA,
+	struct child_sa *larval_child = new_v2_child_sa(c, ike, CHILD_SA,
 							SA_INITIATOR,
 							STATE_V2_REKEY_CHILD_I0);
 	state_attach(&larval_child->sa, logger);
@@ -721,7 +721,7 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 	struct child_sa *larval_child =
 		ike->sa.st_v2_msgid_windows.responder.wip_sa =
 		new_v2_child_sa(predecessor->sa.st_connection,
-				       ike, IPSEC_SA, SA_RESPONDER,
+				       ike, CHILD_SA, SA_RESPONDER,
 				       STATE_V2_REKEY_CHILD_R0);
 
 	larval_child->sa.st_v2_rekey_pred = predecessor->sa.st_serialno;
@@ -753,7 +753,7 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_new_child(struct ike_sa *ike,
 	/* share the log! */
 	state_attach(&ike->sa, cc->logger);
 
-	struct child_sa *larval_child = new_v2_child_sa(cc, ike, IPSEC_SA,
+	struct child_sa *larval_child = new_v2_child_sa(cc, ike, CHILD_SA,
 							SA_INITIATOR,
 							STATE_V2_NEW_CHILD_I0);
 
@@ -917,7 +917,7 @@ stf_status process_v2_CREATE_CHILD_SA_new_child_request(struct ike_sa *ike,
 	struct child_sa *larval_child =
 		ike->sa.st_v2_msgid_windows.responder.wip_sa =
 		new_v2_child_sa(ike->sa.st_connection,
-				ike, IPSEC_SA, SA_RESPONDER,
+				ike, CHILD_SA, SA_RESPONDER,
 				STATE_V2_NEW_CHILD_R0);
 
 	larval_child->sa.st_v2_create_child_sa_proposals =
@@ -1177,7 +1177,7 @@ stf_status process_v2_CREATE_CHILD_SA_child_response(struct ike_sa *ike,
 		return STF_INTERNAL_ERROR;
 	}
 
-	pexpect(larval_child->sa.st_sa_type_when_established == IPSEC_SA);
+	pexpect(larval_child->sa.st_sa_type_when_established == CHILD_SA);
 
 	/*
 	 * Drive the larval Child SA's state machine.
@@ -1298,7 +1298,7 @@ static stf_status process_v2_CREATE_CHILD_SA_child_response_continue_1(struct st
 
 	pexpect(v2_msg_role(response_md) == MESSAGE_RESPONSE); /* i.e., MD!=NULL */
 	pexpect(larval_child->sa.st_sa_role == SA_INITIATOR);
-	pexpect(larval_child->sa.st_sa_type_when_established == IPSEC_SA);
+	pexpect(larval_child->sa.st_sa_type_when_established == CHILD_SA);
 	dbg("%s() for #%lu %s",
 	     __func__, larval_child->sa.st_serialno, larval_child->sa.st_state->name);
 
@@ -1920,7 +1920,7 @@ stf_status process_v2_CREATE_CHILD_SA_failure_response(struct ike_sa *ike,
 	struct state *replacing = state_by_serialno((*larval_child)->sa.st_v2_rekey_pred);
 	if (replacing != NULL && IS_CHILD_SA(replacing)) {
 		PEXPECT((*larval_child)->sa.logger,
-			(*larval_child)->sa.st_sa_type_when_established == IPSEC_SA);
+			(*larval_child)->sa.st_sa_type_when_established == CHILD_SA);
 		state_detach(replacing, (*larval_child)->sa.logger);
 	}
 

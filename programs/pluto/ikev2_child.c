@@ -175,7 +175,7 @@ bool emit_v2_child_request_payloads(const struct ike_sa *ike,
 		return false;
 	}
 
-	if (!pexpect(larval_child->sa.st_sa_type_when_established == IPSEC_SA)) {
+	if (!pexpect(larval_child->sa.st_sa_type_when_established == CHILD_SA)) {
 		return false;
 	}
 
@@ -437,7 +437,7 @@ bool emit_v2_child_response_payloads(struct ike_sa *ike,
 				     const struct msg_digest *request_md,
 				     struct pbs_out *outpbs)
 {
-	pexpect(larval_child->sa.st_sa_type_when_established == IPSEC_SA); /* never grow up */
+	pexpect(larval_child->sa.st_sa_type_when_established == CHILD_SA); /* never grow up */
 	enum isakmp_xchg_type isa_xchg = request_md->hdr.isa_xchg;
 	struct connection *cc = larval_child->sa.st_connection;
 
@@ -885,7 +885,7 @@ static v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ik
 	struct child_sa *child =
 		ike->sa.st_v2_msgid_windows.responder.wip_sa =
 		new_v2_child_sa(ike->sa.st_connection, ike,
-				IPSEC_SA, SA_RESPONDER,
+				CHILD_SA, SA_RESPONDER,
 				STATE_V2_IKE_AUTH_CHILD_R0);
 
 	/*

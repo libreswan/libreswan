@@ -319,7 +319,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 
 	if (m->whack_rekey_ipsec) {
 		dbg_whack(s, "rekey_ipsec: start: '%s'", m->name == NULL ? "<null>" : m->name);
-		whack_rekey(m, s, IPSEC_SA);
+		whack_rekey(m, s, CHILD_SA);
 		dbg_whack(s, "rekey_ipsec: stop: '%s'", (m->name == NULL ? "<null>" : m->name));
 	}
 

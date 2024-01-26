@@ -4766,7 +4766,7 @@ const char *connection_sa_name(const struct connection *c, enum sa_type sa_type)
 	switch (sa_type) {
 	case IKE_SA:
 		return c->config->ike_info->parent_sa_name;
-	case IPSEC_SA:
+	case CHILD_SA:
 		return c->config->ike_info->child_sa_name;
 	}
 	bad_case(sa_type);
@@ -4778,7 +4778,7 @@ const char *connection_sa_short_name(const struct connection *c, enum sa_type sa
 	switch (sa_type) {
 	case IKE_SA:
 		return c->config->ike_info->parent_name;
-	case IPSEC_SA:
+	case CHILD_SA:
 		return c->config->ike_info->child_name;
 	}
 	bad_case(sa_type);

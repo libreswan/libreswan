@@ -76,8 +76,8 @@ typedef unsigned long so_serial_t;
 enum sa_type {
 #define SA_TYPE_FLOOR 0
 	IKE_SA = SA_TYPE_FLOOR,
-	IPSEC_SA,
-#define SA_TYPE_ROOF (IPSEC_SA+1)
+	CHILD_SA,
+#define SA_TYPE_ROOF (CHILD_SA+1)
 };
 
 typedef uint32_t msgid_t;      /* Host byte ordered */

@@ -438,7 +438,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 		 * SA is finished.  Consequently, code is forced to switch
 		 * back to the IKE SA.
 		 */
-		struct child_sa *child = new_v2_child_sa(cc, ike, IPSEC_SA,
+		struct child_sa *child = new_v2_child_sa(cc, ike, CHILD_SA,
 							 SA_INITIATOR,
 							 STATE_V2_IKE_AUTH_CHILD_I0);
 		/*
