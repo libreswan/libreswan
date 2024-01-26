@@ -11,6 +11,9 @@ east #
  echo "initdone"
 initdone
 east #
+ ../../guestbin/wait-for-pluto.sh '#2: IPsec SA established'
+"westnet-eastnet-ikev1" #2: IPsec SA established tunnel mode {AH=>0xAHAH <0xAHAH xfrm=HMAC_SHA2_512_256 DPD=passive}
+east #
  if [ -f /var/run/pluto/pluto.pid ]; then ../../guestbin/ipsec-kernel-state.sh ; fi
 src 192.1.2.23 dst 192.1.2.45
 	proto ah spi 0xSPISPI reqid REQID mode tunnel

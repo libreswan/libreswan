@@ -21,43 +21,63 @@ west #
  echo "initdone"
 initdone
 west #
- strongswan up westnet-eastnet-ikev1
-initiating Main Mode IKE_SA westnet-eastnet-ikev1[1] to 192.1.2.23
-generating ID_PROT request 0 [ SA V V V V V ]
-sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
-received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
-parsed ID_PROT response 0 [ SA V V V ]
-received FRAGMENTATION vendor ID
-received DPD vendor ID
-received NAT-T (RFC 3947) vendor ID
-selected proposal: IKE:AES_CBC_256/HMAC_SHA1_96/PRF_HMAC_SHA1/MODP_2048
-generating ID_PROT request 0 [ KE No NAT-D NAT-D ]
-sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
-received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
-parsed ID_PROT response 0 [ KE No NAT-D NAT-D ]
-generating ID_PROT request 0 [ ID HASH N(INITIAL_CONTACT) ]
-sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
-received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
-parsed ID_PROT response 0 [ ID HASH ]
-IKE_SA westnet-eastnet-ikev1[1] established between 192.1.2.45[west]...192.1.2.23[east]
-scheduling reauthentication in XXXs
-maximum IKE_SA lifetime XXXs
-generating QUICK_MODE request 0123456789 [ HASH SA No ID ID ]
-sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
-received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
-parsed QUICK_MODE response 0123456789 [ HASH SA No ID ID ]
-selected proposal: AH:HMAC_SHA2_512_256/NO_EXT_SEQ
-CHILD_SA westnet-eastnet-ikev1{1} established with SPIs SPISPI_i SPISPI_o and TS 192.0.1.0/24 === 192.0.2.0/24
-sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
-connection 'westnet-eastnet-ikev1' established successfully
+ swanctl --initiate --child westnet-eastnet-ikev1 --loglevel 1
+[IKE] initiating Main Mode IKE_SA westnet-eastnet-ikev1[1] to 192.1.2.23
+[ENC] generating ID_PROT request 0 [ SA V V V V V ]
+[NET] sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
+[NET] received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
+[ENC] parsed ID_PROT response 0 [ SA V V V ]
+[IKE] received FRAGMENTATION vendor ID
+[IKE] received DPD vendor ID
+[IKE] received NAT-T (RFC 3947) vendor ID
+[CFG] selected proposal: IKE:AES_CBC_256/HMAC_SHA1_96/PRF_HMAC_SHA1/MODP_2048
+[ENC] generating ID_PROT request 0 [ KE No NAT-D NAT-D ]
+[NET] sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
+[NET] received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
+[ENC] parsed ID_PROT response 0 [ KE No NAT-D NAT-D ]
+[ENC] generating ID_PROT request 0 [ ID HASH N(INITIAL_CONTACT) ]
+[NET] sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
+[NET] received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
+[ENC] parsed ID_PROT response 0 [ ID HASH ]
+[IKE] IKE_SA westnet-eastnet-ikev1[1] established between 192.1.2.45[west]...192.1.2.23[east]
+[IKE] scheduling reauthentication in XXXs
+[IKE] maximum IKE_SA lifetime XXXs
+[ENC] generating QUICK_MODE request 0123456789 [ HASH SA No ID ID ]
+[NET] sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
+[NET] received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
+[ENC] parsed QUICK_MODE response 0123456789 [ HASH SA No ID ID ]
+[CFG] selected proposal: AH:HMAC_SHA2_512_256/NO_EXT_SEQ
+[IKE] CHILD_SA westnet-eastnet-ikev1{1} established with SPIs SPISPI_i SPISPI_o and TS 192.0.1.0/24 === 192.0.2.0/24
+initiate completed successfully
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
- # cannot use ../../guestbin/ipsec-kernel-state.sh
-west #
- ../../guestbin/ipsec-kernel-policy.sh for strongswan
-grep: strongswan: No such file or directory
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.0.1.0/24 dst 192.0.1.0/24
+	dir fwd priority PRIORITY ptype main
+src 192.0.1.0/24 dst 192.0.1.0/24
+	dir in priority PRIORITY ptype main
+src 192.0.1.0/24 dst 192.0.1.0/24
+	dir out priority PRIORITY ptype main
+src 192.1.2.0/24 dst 192.1.2.0/24
+	dir fwd priority PRIORITY ptype main
+src 192.1.2.0/24 dst 192.1.2.0/24
+	dir in priority PRIORITY ptype main
+src 192.1.2.0/24 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+src 192.0.1.0/24 dst 192.0.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto ah spi 0xSPISPI reqid REQID mode tunnel
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto ah reqid REQID mode tunnel
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto ah reqid REQID mode tunnel
 west #
  ../../guestbin/ipsec-kernel-state.sh
 src 192.1.2.45 dst 192.1.2.23
@@ -70,51 +90,6 @@ src 192.1.2.23 dst 192.1.2.45
 	replay-window 32 flag af-unspec align4
 	auth-trunc hmac(sha512) 0xHASHKEY 256
 	lastused YYYY-MM-DD HH:MM:SS
-west #
- ip xfrm policy
-src 192.0.1.0/24 dst 192.0.2.0/24 
-	dir out priority PRIORITY ptype main 
-	tmpl src 192.1.2.45 dst 192.1.2.23
-		proto ah spi 0xSPISPI reqid REQID mode tunnel
-src 192.0.2.0/24 dst 192.0.1.0/24 
-	dir fwd priority PRIORITY ptype main 
-	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto ah reqid REQID mode tunnel
-src 192.0.2.0/24 dst 192.0.1.0/24 
-	dir in priority PRIORITY ptype main 
-	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto ah reqid REQID mode tunnel
-src 192.1.2.0/24 dst 192.1.2.0/24 
-	dir fwd priority PRIORITY ptype main 
-src 192.1.2.0/24 dst 192.1.2.0/24 
-	dir in priority PRIORITY ptype main 
-src 192.1.2.0/24 dst 192.1.2.0/24 
-	dir out priority PRIORITY ptype main 
-src 192.0.1.0/24 dst 192.0.1.0/24 
-	dir fwd priority PRIORITY ptype main 
-src 192.0.1.0/24 dst 192.0.1.0/24 
-	dir in priority PRIORITY ptype main 
-src 192.0.1.0/24 dst 192.0.1.0/24 
-	dir out priority PRIORITY ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src ::/0 dst ::/0 
-	socket in priority 0 ptype main 
-src ::/0 dst ::/0 
-	socket out priority 0 ptype main 
-src ::/0 dst ::/0 
-	socket in priority 0 ptype main 
-src ::/0 dst ::/0 
-	socket out priority 0 ptype main 
-west #
- echo done
-done
 west #
  if [ -f /var/run/pluto/pluto.pid ]; then ../../guestbin/ipsec-kernel-state.sh ; fi
 west #
