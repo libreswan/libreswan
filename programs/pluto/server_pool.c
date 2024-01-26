@@ -257,7 +257,7 @@ static void *helper_thread(void *arg)
 	}
 
 	dbg("helper %u: telling main thread that it is exiting", w->helper_id);
-	schedule_callback("helper stopped", SOS_NOBODY,
+	schedule_callback("helper stopped", deltatime(0), SOS_NOBODY,
 			  helper_thread_stopped_callback, NULL);
 	return NULL;
 }
@@ -375,7 +375,8 @@ void submit_task(const struct logger *logger,
 		 * STF_SUSPEND, and then the event-loop will invoke
 		 * the callback.
 		 */
-		schedule_callback("inline crypto", SOS_NOBODY, inline_worker, job);
+		schedule_callback("inline crypto", deltatime(0),
+				  SOS_NOBODY, inline_worker, job);
 		return;
 	}
 
@@ -580,7 +581,7 @@ void stop_server_helpers(void (*server_helpers_stopped_cb)(void))
 		 */
 		dbg("no helper threads to shutdown");
 		pexpect(helper_threads == NULL);
-		schedule_callback("no helpers to stop", SOS_NOBODY,
+		schedule_callback("no helpers to stop", deltatime(0), SOS_NOBODY,
 				  call_server_helpers_stopped_callback, NULL);
 	}
 }

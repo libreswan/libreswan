@@ -591,7 +591,8 @@ void v2_msgid_schedule_next_initiator(struct ike_sa *ike)
 			dbg_v2_msgid(ike,
 				     "wakeing IKE SA for next initiator "PRI_SO", (unack %jd)",
 				     pri_so(pending->who_for), unack);
-			schedule_callback("next initiator", ike->sa.st_serialno, initiate_next, NULL);
+			schedule_callback("next initiator", deltatime(0),
+					  ike->sa.st_serialno, initiate_next, NULL);
 		} else {
 			dbg_v2_msgid(ike,
 				     "next initiator "PRI_SO" blocked by outstanding response (unack %jd)",

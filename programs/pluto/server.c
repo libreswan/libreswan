@@ -763,7 +763,8 @@ static void callback_handler(void *arg, const struct timer_event *event)
 	threadtime_stop(&start, SOS_NOBODY, "callback %s", e.story);
 }
 
-void schedule_callback(const char *story, so_serial_t serialno,
+void schedule_callback(const char *story, deltatime_t delay,
+		       so_serial_t serialno,
 		       callback_cb *callback, void *context)
 {
 	struct callback_event tmp = {
@@ -779,7 +780,7 @@ void schedule_callback(const char *story, so_serial_t serialno,
 	 * Event may have even run on another thread before the below
 	 * call returns.
 	 */
-	schedule_timeout(story, &e->timer, deltatime(0), callback_handler, e);
+	schedule_timeout(story, &e->timer, delay, callback_handler, e);
 }
 
 static void fd_read_listener_event_handler(evutil_socket_t fd,

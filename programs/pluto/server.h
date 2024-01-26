@@ -153,10 +153,14 @@ void schedule_resume(const char *name, so_serial_t serialno,
  *
  * Unlike schedule_resume(), SERIALNO can be SOS_NOBODY and this
  * doesn't try to unsuspend MD.
+ *
+ * DELAY should be deltatime(0).  However, impaired code says
+ * otherwize.
  */
 
 typedef void callback_cb(const char *story, struct state *st, void *context);
-void schedule_callback(const char *story, so_serial_t serialno,
+void schedule_callback(const char *story, deltatime_t delay,
+		       so_serial_t serialno,
 		       callback_cb *callback, void *context);
 
 void call_global_event_inline(enum global_timer type,
