@@ -17,12 +17,9 @@
   <!-- body begins here -->
   <refsynopsisdiv id='synopsis'>
     <cmdsynopsis>
-      <command>ipsec</command>
-      <arg choice='plain'>vfychain</arg>
-      <sbr/>
+      <command>ipsec vfychain</command>
     </cmdsynopsis>
   </refsynopsisdiv>
-
 
   <refsect1 id='description'>
     <title>DESCRIPTION</title>

@@ -17,13 +17,11 @@
   <!-- body begins here -->
   <refsynopsisdiv id='synopsis'>
     <cmdsynopsis>
-      <command>ipsec</command>
+      <command>ipsec trafficstatus</command>
       <arg choice='plain'>trafficstatus</arg>
       <arg choice='opt'>--ctlsocket <replaceable>@@RUNDIR@@/pluto.ctl</replaceable></arg>
-      <sbr/>
     </cmdsynopsis>
   </refsynopsisdiv>
-
 
   <refsect1 id='description'>
     <title>DESCRIPTION</title>

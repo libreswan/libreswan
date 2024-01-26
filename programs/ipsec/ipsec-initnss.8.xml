@@ -17,10 +17,8 @@
   <!-- body begins here -->
   <refsynopsisdiv id='synopsis'>
     <cmdsynopsis>
-      <command>ipsec</command>
-      <arg choice='plain'>initnss</arg>
+      <command>ipsec initnss</command>
       <arg choice='opt'>--nssdir <replaceable>@@IPSEC_NSSDIR@@</replaceable></arg>
-      <sbr/>
     </cmdsynopsis>
   </refsynopsisdiv>
 

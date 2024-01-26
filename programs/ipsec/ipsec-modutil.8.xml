@@ -17,12 +17,9 @@
   <!-- body begins here -->
   <refsynopsisdiv id='synopsis'>
     <cmdsynopsis>
-      <command>ipsec</command>
-      <arg choice='plain'>modutil</arg>
-      <sbr/>
+      <command>ipsec modutil</command>
     </cmdsynopsis>
   </refsynopsisdiv>
-
 
   <refsect1 id='description'>
     <title>DESCRIPTION</title>

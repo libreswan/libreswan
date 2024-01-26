@@ -17,12 +17,9 @@
   <!-- body begins here -->
   <refsynopsisdiv id='synopsis'>
     <cmdsynopsis>
-      <command>ipsec</command>
-      <arg choice='plain'>pk12util</arg>
-      <sbr/>
+      <command>ipsec pk12util</command>
     </cmdsynopsis>
   </refsynopsisdiv>
-
 
   <refsect1 id='description'>
     <title>DESCRIPTION</title>

@@ -17,11 +17,9 @@
   <!-- body begins here -->
   <refsynopsisdiv id='synopsis'>
     <cmdsynopsis>
-      <command>ipsec</command>
-      <arg choice='plain'>checkconfig</arg>
+      <command>ipsec checkconfig</command>
       <arg choice='opt'>--verbose</arg>
       <arg choice='opt'>--config <replaceable>@@IPSEC_CONF@@</replaceable></arg>
-      <sbr/>
     </cmdsynopsis>
   </refsynopsisdiv>
 
