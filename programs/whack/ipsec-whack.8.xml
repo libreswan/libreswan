@@ -347,7 +347,7 @@
 
     <cmdsynopsis>
       <command>ipsec whack</command>
-      <arg choice="plain">--terminate</arg>
+      <arg choice="plain">--down</arg>
       <arg choice="plain">--name <replaceable>connection</replaceable></arg>
       <arg choice="opt">--asynchronous</arg>
     </cmdsynopsis>
@@ -1756,39 +1756,6 @@
         </listitem>
       </varlistentry>
 
-      <varlistentry>
-        <term>
-	  <option>--delete</option>
-	</term>
-        <listitem>
-          <para>
-	    When used in the connection form, it causes any previous
-	    connection with this name to be deleted before this one is
-	    added.  Unlike a normal delete, no diagnostic is produced
-	    if there was no previous connection to delete. Any routing
-	    in place for the connection is undone.
-	  </para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-
-    <variablelist>
-      <varlistentry>
-        <term>
-	  <option>--delete</option>
-	</term>
-        <term>
-	  <option>--name <replaceable>connection-name</replaceable></option>
-	</term>
-        <listitem>
-          <para>
-	    The delete form deletes a named connection description and
-	    any SAs established or negotiations initiated using this
-	    connection. Any routing in place for the connection is
-	    undone.
-	  </para>
-        </listitem>
-      </varlistentry>
     </variablelist>
 
     <variablelist>
@@ -1982,18 +1949,40 @@
 
       <varlistentry>
         <term>
-	  <option>--terminate</option>
-	</term>
-        <term>
-	  <option>--name <replaceable>connection-name</replaceable></option>
+	  <option>--delete</option>
+	  <option>--name <replaceable>connection</replaceable></option>
 	</term>
         <listitem>
           <para>
-	    The terminate form tells <emphasis>pluto</emphasis>
-	    to delete any SAs that use the specified connection
-	    and to stop any negotiations in process. it does not
-	    prevent new negotiations from starting
-	    (the delete form has this effect).
+	    Delete the specified
+	    <replaceable>connection</replaceable>.  Any negotiating or
+	    established SAs are terminated.  Any routing is removed.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--down</option>
+	  <option>--name <replaceable>connection</replaceable></option>
+	  <option>--asynchronous</option>
+	</term>
+        <listitem>
+          <para>
+	    Delete any Child SAs associated with the connection, and
+	    remove UP from the connection's policy (so the connection
+	    is no longer required to stay up).  If the connection has
+	    an IKE SA that is not not shared with other connections
+	    then that is also is deleted.
+	  </para>
+	  <para>
+	    Since the connection is still in place
+	    <option>--down</option> does not prevent new negotiations.
+	    For instance, the peer may initiate, or a routed
+	    (on-demand) connection will initiate when there is
+	    traffic.  <option>--unroute</option> will also prevent
+	    traffic initiating the connection, and
+	    <option>--delete</option> will prevent all negotiation.
 	  </para>
         </listitem>
       </varlistentry>
