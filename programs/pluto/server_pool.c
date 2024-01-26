@@ -173,17 +173,17 @@ static void do_job(struct job *job, helper_id_t helper_id)
 	logtime_t start = logtime_start(job->logger);
 
 	if (impair.helper_thread_delay.enabled) {
-		DBG_log(PRI_JOB": helper is pausing for %u seconds",
-			pri_job(job), impair.helper_thread_delay.value);
+		llog(RC_LOG, job->logger, "IMPAIR: "PRI_JOB": helper is pausing for %u seconds",
+		     pri_job(job), impair.helper_thread_delay.value);
 		sleep(impair.helper_thread_delay.value);
 	}
 
 	if (job->cancelled) {
-		dbg(PRI_JOB": skipping as cancelled", pri_job(job));
+		ldbg(job->logger, PRI_JOB": skipping as cancelled", pri_job(job));
 	} else {
-		dbg(PRI_JOB": started", pri_job(job));
+		ldbg(job->logger, PRI_JOB": started", pri_job(job));
 		job->handler->computer_fn(job->logger, job->task, helper_id);
-		dbg(PRI_JOB": finished", pri_job(job));
+		ldbg(job->logger, PRI_JOB": finished", pri_job(job));
 	}
 
 	job->time_used = logtime_stop(&start, PRI_JOB, pri_job(job));
@@ -355,7 +355,7 @@ void submit_task(const struct logger *logger,
 	st->st_offloaded_task = job;
 	st->st_offloaded_task_in_background = false;
 	job->logger = clone_logger(logger, HERE);
-	dbg(PRI_JOB": added to pending queue", pri_job(job));
+	ldbg(job->logger, PRI_JOB": added to pending queue", pri_job(job));
 
 	/*
 	 * Schedule a timeout event to cap the suspend time.
@@ -431,7 +431,7 @@ static stf_status handle_helper_answer(struct state *st,
 	stf_status status;
 	if (job->cancelled) {
 		/* suppressed */
-		dbg(PRI_JOB": job cancelled!", pri_job(job));
+		ldbg(job->logger, PRI_JOB": job cancelled!", pri_job(job));
 		pexpect(st == NULL || st->st_offloaded_task == NULL);
 		status = STF_SKIP_COMPLETE_STATE_TRANSITION;
 	} else if (st == NULL) {
@@ -439,7 +439,7 @@ static stf_status handle_helper_answer(struct state *st,
 		llog_pexpect(job->logger, HERE, PRI_JOB": state disappeared!", pri_job(job));
 		status = STF_SKIP_COMPLETE_STATE_TRANSITION;
 	} else {
-		dbg(PRI_JOB": calling state's callback function", pri_job(job));
+		ldbg(job->logger, PRI_JOB": calling state's callback function", pri_job(job));
 		pexpect(st->st_offloaded_task == job);
 		st->st_offloaded_task = NULL;
 		st->st_offloaded_task_in_background = false;
@@ -451,8 +451,8 @@ static stf_status handle_helper_answer(struct state *st,
 		status = job->handler->completed_cb(st, md, job->task);
 	}
 	esb_buf buf;
-	dbg(PRI_JOB": final status %s; cleaning up",
-	    pri_job(job), enum_show(&stf_status_names, status, &buf));
+	ldbg(job->logger, PRI_JOB": final status %s; cleaning up",
+	     pri_job(job), enum_show(&stf_status_names, status, &buf));
 	free_job(&job);
 	return status;
 }
