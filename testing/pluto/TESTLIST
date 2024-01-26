@@ -1376,6 +1376,9 @@ kvmplutotest	whack-deleteuser-01			good	github/1269
 kvmplutotest	whack-deleteid-01-psk-ikev1		good	github/1268
 kvmplutotest	whack-deleteid-01-psk-ikev2		good	github/1268
 
+kvmplutotest	whack-rekey-child-01-async-ikev2	good
+kvmplutotest	whack-rekey-ike-01-async-ikev2		good
+
 kvmplutotest	whack-route-01-route-routed		wip	github/1562
 
 kvmplutotest	whack-unroute-01-ikev1-quick-responder	good	github/1531
