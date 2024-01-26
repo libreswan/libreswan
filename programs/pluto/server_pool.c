@@ -172,12 +172,6 @@ static void do_job(struct job *job, helper_id_t helper_id)
 {
 	logtime_t start = logtime_start(job->logger);
 
-	if (impair.helper_thread_delay.enabled) {
-		llog(RC_LOG, job->logger, "IMPAIR: "PRI_JOB": helper is pausing for %u seconds",
-		     pri_job(job), impair.helper_thread_delay.value);
-		sleep(impair.helper_thread_delay.value);
-	}
-
 	if (job->cancelled) {
 		ldbg(job->logger, PRI_JOB": skipping as cancelled", pri_job(job));
 	} else {
@@ -253,6 +247,12 @@ static void *helper_thread(void *arg)
 			break;
 		}
 		/* might be cancelled */
+		if (impair.helper_thread_delay.enabled) {
+			llog(RC_LOG, job->logger,
+			     "IMPAIR: "PRI_JOB": helper is pausing for %u seconds",
+			     pri_job(job), impair.helper_thread_delay.value);
+			sleep(impair.helper_thread_delay.value);
+		}
 		do_job(job, w->helper_id);
 	}
 
@@ -375,7 +375,14 @@ void submit_task(const struct logger *logger,
 		 * STF_SUSPEND, and then the event-loop will invoke
 		 * the callback.
 		 */
-		schedule_callback("inline crypto", deltatime(0),
+		deltatime_t delay = deltatime(0);
+		if (impair.helper_thread_delay.enabled) {
+			delay = deltatime(impair.helper_thread_delay.value);
+			llog(RC_LOG, job->logger, "IMPAIR: "PRI_JOB": helper is pausing for %ju seconds",
+			     pri_job(job), deltasecs(delay));
+		}
+
+		schedule_callback("inline crypto", delay,
 				  SOS_NOBODY, inline_worker, job);
 		return;
 	}
