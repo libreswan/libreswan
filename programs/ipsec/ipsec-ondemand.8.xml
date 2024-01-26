@@ -18,7 +18,7 @@
   <refsynopsisdiv id='synopsis'>
     <cmdsynopsis>
       <command>ipsec ondemand</command>
-      <arg choice='plain'>connectionname</arg>
+      <arg choice='plain'><replaceable>connection</replaceable></arg>
       <arg choice='opt'>--config <replaceable>@@IPSEC_CONF@@</replaceable></arg>
       <arg choice='opt'>--ctlsocket <replaceable>@@RUNDIR@@/pluto.ctl</replaceable></arg>
     </cmdsynopsis>
@@ -27,19 +27,21 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis>Ondemand</emphasis> operation is equivalent
-      to running first <option>ipsec add connectionname</option> and
-      then <option>ipsec route connectionname</option>, causing the same
-      effect as connection configuration option
+      <command>ipsec ondemand</command> is equivalent to running first
+      <command>ipsec add
+      <replaceable>connection</replaceable></command> and then
+      <command>ipsec route
+      <replaceable>connection</replaceable></command>, causing the
+      same effect as connection configuration option
       <option>auto=ondemand</option>. This sets up connection to be
-      <option>on demand</option>, causing connection
-      to establish only when triggered by outbound traffic.
+      <option>on demand</option>, causing connection to establish only
+      when triggered by outbound traffic.
     </para>
     <para>
-      Note: you might also need to run <option>ipsec rereadsecrets</option>
-      when your new connection uses pre-shared key (PSK) authentication,
-      <option>authby=secret</option> because secrets keys are only being
-      read at startup.
+      Note: you might also need to run <command>ipsec
+      rereadsecrets</command> when your new connection uses pre-shared
+      key (PSK) authentication, <option>authby=secret</option> because
+      secrets keys are only being read at startup.
     </para>
   </refsect1>
 

@@ -17,8 +17,8 @@
   <!-- body begins here -->
   <refsynopsisdiv id='synopsis'>
     <cmdsynopsis>
-      <command>ipsec redirect</command>
-      <arg choice='opt'>connectionname</arg>
+      <command>ipsec connectionstatus</command>
+      <arg choice='plain'><replaceable>connection</replaceable></arg>
       <arg choice='plain'>--redirect-to <replaceable>ip-address,...</replaceable></arg>
       <arg choice='opt'>--ctlsocket <replaceable>@@RUNDIR@@/pluto.ctl</replaceable></arg>
     </cmdsynopsis>

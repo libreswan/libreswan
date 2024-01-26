@@ -18,7 +18,7 @@
   <refsynopsisdiv id='synopsis'>
     <cmdsynopsis>
       <command>ipsec up</command>
-      <arg choice='opt'>connectionname</arg>
+      <arg choice='plain'><replaceable>connection</replaceable></arg>
       <arg choice='opt'>--ctlsocket <replaceable>@@RUNDIR@@/pluto.ctl</replaceable></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
@@ -36,8 +36,9 @@
     </para>
     <para>
       To <option>add</option> and <option>up</option> a connection
-      with single command use <option>ipsec start connectionname</option>.
-      These both have same effect as configuration option
+      with single command use <command>ipsec start
+      <replaceable>connection</replaceable></command>.  These both
+      have same effect as configuration option
       <option>auto=start</option> on startup.
     </para>
     <para>

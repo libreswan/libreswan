@@ -26,11 +26,12 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis>Briefconnectionstatus</emphasis> list brief connection
-      status from the pluto daemon for all connections or optionally specified
-      <option>connectionname</option>. Displays one line per connection showing
-      client and host IPs, bytes, connection name, and reqid. Get complete
-      connection status with <option>ipsec connectionstatus</option>.
+      <command>ipsec briefconnectionstatus</command> list brief
+      connection status from the pluto daemon for all connections or
+      optionally specified <replaceable>connection</replaceable>.
+      Displays one line per connection showing client and host IPs,
+      bytes, connection name, and reqid. Get complete connection
+      status with <command>ipsec connectionstatus</command>.
     </para>
   </refsect1>
 

@@ -18,7 +18,7 @@
   <refsynopsisdiv id='synopsis'>
     <cmdsynopsis>
       <command>ipsec route</command>
-      <arg choice='plain'>connectionname</arg>
+      <arg choice='plain'><replaceable>connection</replaceable></arg>
       <arg choice='opt'>--config <replaceable>@@IPSEC_CONF@@</replaceable></arg>
       <arg choice='opt'>--ctlsocket <replaceable>@@RUNDIR@@/pluto.ctl</replaceable></arg>
     </cmdsynopsis>
@@ -36,8 +36,8 @@
     </para>
     <para>
       If you want to <option>add</option> and <option>route</option>
-      a connection you can just run <option>ipsec ondemand
-      connectionname</option>.
+      a connection you can just run <command>ipsec ondemand
+      <replaceable>connection</replaceable></command>.
     </para>
   </refsect1>
 

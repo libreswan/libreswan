@@ -18,7 +18,7 @@
   <refsynopsisdiv id='synopsis'>
     <cmdsynopsis>
       <command>ipsec checknflog</command>
-      <arg choice='plain'>connectionname</arg>
+      <arg choice='plain'><replaceable>connection</replaceable></arg>
       <arg choice='opt'>--config <replaceable>@@IPSEC_CONF@@</replaceable></arg>
       <arg choice='opt'>--ctlsocket <replaceable>@@RUNDIR@@/pluto.ctl</replaceable></arg>
     </cmdsynopsis>

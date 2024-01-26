@@ -18,7 +18,7 @@
   <refsynopsisdiv id='synopsis'>
     <cmdsynopsis>
       <command>ipsec down</command>
-      <arg choice='plain'>connectionname</arg>
+      <arg choice='plain'><replaceable>connection</replaceable></arg>
       <arg choice='opt'>--ctlsocket <replaceable>@@RUNDIR@@/pluto.ctl</replaceable></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
@@ -26,22 +26,23 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis>Down</emphasis> operation commands pluto to
-      tear down all connections matching specified
-      <option>connectionname</option> in internal configuration database.
-      This connection definitions in place so remotes can immediately
-      connect back. If you want tunnel to go permanently down, use
-      <option>ipsec delete</option> instead.
+      <command>ipsec down</command> commands pluto to tear down all
+      connections matching specified
+      <replaceable>connection</replaceable> in internal configuration
+      database.  This connection definitions in place so remotes can
+      immediately connect back. If you want tunnel to go permanently
+      down, use <command>ipsec delete</command> instead.
     </para>
     <para>
-      Normally, pluto's route to a destination remains in place when a
-      <option>down</option> operation is used to take the connection down
-      (or if connection setup, or later automatic rekeying, fails). This
-      permits establishing a new connection (perhaps using a different
-      specification; the route is altered as necessary) without having
-      a “window” in which packets might go elsewhere based on a more general
-      route. Such a route can be removed using the <option>unroute</option>
-      operation (and is implicitly removed by <option>delete</option>).
+      Normally, pluto's route to a destination remains in place when
+      an <command>ipsec down</command> is used to take the connection
+      down (or if connection setup, or later automatic rekeying,
+      fails). This permits establishing a new connection (perhaps
+      using a different specification; the route is altered as
+      necessary) without having a “window” in which packets might go
+      elsewhere based on a more general route. Such a route can be
+      removed using the <command>ipsec unroute</command> operation
+      (and is implicitly removed by <command>ipsec delete</command>).
     </para>
   </refsect1>
 

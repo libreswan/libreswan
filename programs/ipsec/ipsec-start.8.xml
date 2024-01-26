@@ -18,7 +18,7 @@
   <refsynopsisdiv id='synopsis'>
     <cmdsynopsis>
       <command>ipsec start</command>
-      <arg choice='opt'>connectionname</arg>
+      <arg choice='plain'><replaceable>connection</replaceable></arg>
       <arg choice='opt'>--config <replaceable>@@IPSEC_CONF@@</replaceable></arg>
       <arg choice='opt'>--ctlsocket <replaceable>@@RUNDIR@@/pluto.ctl</replaceable></arg>
     </cmdsynopsis>
@@ -31,22 +31,24 @@
       requests initsystem to start ipsec service.
     </para>
     <para>
-      <emphasis>Start</emphasis> operation with
-      <option>connectionname</option> option is equivalent to
-      running first <option>ipsec add connectionname</option> and then
-      <option>ipsec up connectionname</option>, causing same effect
-      as connection configuration option <option>auto=start</option>
-      on startup.
+      <command>ipsec start</command> with
+      <replaceable>connection</replaceable> option is equivalent to
+      running first <command>ipsec add
+      <replaceable>connection</replaceable></command> and then
+      <command>ipsec up
+      <replaceable>connection</replaceable></command>, causing same
+      effect as connection configuration option
+      <option>auto=start</option> on startup.
     </para>
     <para>
       This sets up connection to be added to the pluto internal database
       and establishing the connection immediately.
     </para>
     <para>
-      Note: you might also need to run <option>ipsec rereadsecrets</option>
-      when your new connection uses pre-shared key (PSK) authentication,
-      <option>authby=secret</option> because secrets keys are only being
-      read at startup.
+      Note: you might also need to run <command>ipsec
+      rereadsecrets</command> when your new connection uses pre-shared
+      key (PSK) authentication, <option>authby=secret</option> because
+      secrets keys are only being read at startup.
     </para>
   </refsect1>
 

@@ -40,11 +40,12 @@
       analysis.
     </para>
     <para>
-      This only adds the connection specification making it possible for
-      remote to connect. To establish the connection you need to use
-      <option>ipsec up connectionname</option> or to do both
-      <option>add</option> and <option>up</option> with one
-      run you can use <option>ipsec start connectionname</option>.
+      This only adds the connection specification making it possible
+      for remote to connect. To establish the connection you need to
+      use <command>ipsec up <replaceable>connection</replaceable></command> or to do both
+      <option>add</option> and <option>up</option> with one run you
+      can use <command>ipsec start
+      <replaceable>connection</replaceable></command>.
     </para>
     <para>
       Note: you might also need to run <option>ipsec rereadsecrets</option>

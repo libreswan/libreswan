@@ -18,7 +18,7 @@
   <refsynopsisdiv id='synopsis'>
     <cmdsynopsis>
       <command>ipsec connectionstatus</command>
-      <arg choice='opt'>connectionname</arg>
+      <arg choice='plain'><replaceable>connection</replaceable></arg>
       <arg choice='opt'>--ctlsocket <replaceable>@@RUNDIR@@/pluto.ctl</replaceable></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
@@ -26,8 +26,9 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis>Connectionstatus</emphasis> list status of all
-      connections or optionally specitfied <option>connectionname</option>.
+      <command>ipsec connectionstatus</command> list status of all
+      connections or optionally specified
+      <replaceable>connection</replaceable>.
     </para>
   </refsect1>
 
