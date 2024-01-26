@@ -371,8 +371,11 @@ enum option_enums {
 	OPT_UNLISTEN,
 	OPT_IKEBUF,
 	OPT_IKE_MSGERR,
+
 	OPT_REKEY_IKE,
 	OPT_REKEY_CHILD,
+	OPT_DELETE_IKE,
+	OPT_DELETE_CHILD,
 
 	OPT_REDIRECT_TO,	/* either active or for connection */
 	OPT_GLOBAL_REDIRECT,
@@ -736,6 +739,8 @@ static const struct option long_opts[] = {
 	{ "rekey-ike", no_argument, NULL, OPT_REKEY_IKE },
 	{ "rekey-child", no_argument, NULL, OPT_REKEY_CHILD },
 	{ "rekey-ipsec", no_argument, NULL, OPT_REKEY_CHILD }, /* old name */
+	{ "delete-ike", no_argument, NULL, OPT_DELETE_IKE },
+	{ "delete-child", no_argument, NULL, OPT_DELETE_CHILD },
 	/* list options */
 
 	{ "utc", no_argument, NULL, LST_UTC },
@@ -1386,8 +1391,16 @@ int main(int argc, char **argv)
 			msg.whack_rekey_ike = true;
 			continue;
 
-		case OPT_REKEY_CHILD: /* --rekey-ipsec */
-			msg.whack_rekey_ipsec = true;
+		case OPT_REKEY_CHILD: /* --rekey-child */
+			msg.whack_rekey_child = true;
+			continue;
+
+		case OPT_DELETE_IKE: /* --delete-ike */
+			msg.whack_delete_ike = true;
+			continue;
+
+		case OPT_DELETE_CHILD: /* --delete-child */
+			msg.whack_delete_child = true;
 			continue;
 
 		case OPT_DELETE:	/* --delete */
@@ -2686,6 +2699,8 @@ int main(int argc, char **argv)
 	    seen[OPT_DELETEUSER] ||
 	    seen[OPT_REKEY_IKE] ||
 	    seen[OPT_REKEY_CHILD] ||
+	    seen[OPT_DELETE_IKE] ||
+	    seen[OPT_DELETE_CHILD] ||
 	    (opts_seen & CONN_OPT_SEEN)) {
 		if (!seen[OPT_NAME]) {
 			diagw("missing --name <connection_name>");
@@ -2751,10 +2766,13 @@ int main(int argc, char **argv)
 	      msg.whack_seccomp_crashtest ||
 	      msg.whack_showstates ||
 	      msg.whack_rekey_ike ||
-	      msg.whack_rekey_ipsec ||
+	      msg.whack_rekey_child ||
+	      msg.whack_delete_ike ||
+	      msg.whack_delete_child ||
 	      msg.whack_listpubkeys ||
-	      msg.whack_checkpubkeys))
+	      msg.whack_checkpubkeys)) {
 		diagw("no action specified; try --help for hints");
+	}
 
 	/* pack strings for inclusion in message */
 	wp.msg = &msg;

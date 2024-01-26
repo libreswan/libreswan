@@ -25,8 +25,10 @@
 
 struct whack_message;
 struct show;
-enum sa_type;
 
-void whack_rekey(const struct whack_message *m, struct show *s, enum sa_type sa_type);
+void whack_rekey_ike(const struct whack_message *m, struct show *s);
+void whack_rekey_child(const struct whack_message *m, struct show *s);
+void whack_delete_ike(const struct whack_message *m, struct show *s);
+void whack_delete_child(const struct whack_message *m, struct show *s);
 
 #endif

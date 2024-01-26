@@ -72,7 +72,7 @@
 #include "whack_down.h"
 #include "whack_impair.h"
 #include "whack_initiate.h"
-#include "whack_rekey.h"
+#include "whack_sa.h"
 #include "whack_route.h"
 #include "whack_shutdown.h"
 #include "whack_status.h"
@@ -312,15 +312,27 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 	}
 
 	if (m->whack_rekey_ike) {
-		dbg_whack(s, "rekey-ike: start: '%s'", (m->name == NULL ? "<null>" : m->name));
-		whack_rekey(m, s, IKE_SA);
-		dbg_whack(s, "rekey-ike: stop: '%s'", (m->name == NULL ? "<null>" : m->name));
+		dbg_whack(s, "rekey_ike: start: '%s'", (m->name == NULL ? "<null>" : m->name));
+		whack_rekey_ike(m, s);
+		dbg_whack(s, "rekey_ike: stop: '%s'", (m->name == NULL ? "<null>" : m->name));
 	}
 
-	if (m->whack_rekey_ipsec) {
-		dbg_whack(s, "rekey_ipsec: start: '%s'", m->name == NULL ? "<null>" : m->name);
-		whack_rekey(m, s, CHILD_SA);
-		dbg_whack(s, "rekey_ipsec: stop: '%s'", (m->name == NULL ? "<null>" : m->name));
+	if (m->whack_rekey_child) {
+		dbg_whack(s, "rekey_child: start: '%s'", m->name == NULL ? "<null>" : m->name);
+		whack_rekey_child(m, s);
+		dbg_whack(s, "rekey_child: stop: '%s'", (m->name == NULL ? "<null>" : m->name));
+	}
+
+	if (m->whack_delete_ike) {
+		dbg_whack(s, "delete_ike: start: '%s'", (m->name == NULL ? "<null>" : m->name));
+		whack_delete_ike(m, s);
+		dbg_whack(s, "delete_ike: stop: '%s'", (m->name == NULL ? "<null>" : m->name));
+	}
+
+	if (m->whack_delete_child) {
+		dbg_whack(s, "delete_child: start: '%s'", m->name == NULL ? "<null>" : m->name);
+		whack_delete_child(m, s);
+		dbg_whack(s, "delete_child: stop: '%s'", (m->name == NULL ? "<null>" : m->name));
 	}
 
 	/*

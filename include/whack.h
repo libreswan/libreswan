@@ -366,9 +366,11 @@ struct whack_message {
 	bool whack_deletestate;
 	long unsigned int whack_deletestateno;
 
-	/* rekey now */
-	bool whack_rekey_ike; /* rekey the latest ike now */
-	bool whack_rekey_ipsec;  /* rekey latest ipsec now */
+	/* rekey/delete SA now */
+	bool whack_rekey_ike;		/* initiate rekey of latest IKE SA */
+	bool whack_rekey_child;		/* initiate rekey of latest Child SA */
+	bool whack_delete_ike;		/* initiate delete of the latest IKE SA */
+	bool whack_delete_child;	/* initiate delete of latest Child SA */
 
 	/* for WHACK_NFLOG_GROUP: */
 	long unsigned int whack_nfloggroup;

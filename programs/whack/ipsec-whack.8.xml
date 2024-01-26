@@ -357,6 +357,8 @@
       <group choice='req'>
         <arg choice="plain">--rekey-ike</arg>
         <arg choice="plain">--rekey-child</arg>
+        <arg choice="plain">--delete-ike</arg>
+        <arg choice="plain">--delete-child</arg>
       </group>
       <arg choice="plain">--name <replaceable>connection</replaceable></arg>
       <arg choice="opt">--asynchronous</arg>
@@ -1915,12 +1917,12 @@
         <term>
 	  <option>--rekey-ike</option>
 	  <option>--name <replaceable>connection</replaceable></option>
+	  <option>--asynchronous</option>
 	</term>
         <listitem>
           <para>
-	    Force a rekey the IKE SA (ISAKMP SA) of the
-	    <replaceable>connection</replaceable>.  It does not affect
-	    the Child SAs (IPsec SAs).
+	    Initiate a rekey of the connection's established IKE SA.
+	    It does not affect the Child SA.
 	  </para>
         </listitem>
       </varlistentry>
@@ -1929,12 +1931,40 @@
         <term>
 	  <option>--rekey-child</option>
 	  <option>--name <replaceable>connection</replaceable></option>
+	  <option>--asynchronous</option>
 	</term>
         <listitem>
           <para>
-	    Force a rekey the Child SA (IPsec SA) of the
-	    <replaceable>connection</replaceable>.  It does not affect
-	    the IKE SA (ISAKMP SA).
+	    Initiate a rekey of the connection's established Child SA.
+	    It does not affect the connection's IKE SA.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--delete-ike</option>
+	  <option>--name <replaceable>connection</replaceable></option>
+	  <option>--asynchronous</option>
+	</term>
+        <listitem>
+          <para>
+	    Initiate a delete of the connection's established IKE SA.
+	    It does not affect the Child SA.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--delete-child</option>
+	  <option>--name <replaceable>connection</replaceable></option>
+	  <option>--asynchronous</option>
+	</term>
+        <listitem>
+          <para>
+	    Initiate a delete of the connection's established Child SA.
+	    It does not affect the connection's IKE SA.
 	  </para>
         </listitem>
       </varlistentry>
