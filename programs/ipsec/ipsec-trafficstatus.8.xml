@@ -26,10 +26,11 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis>Trafficstatus</emphasis> operation list current
-      IPsec SA states with traffic counters. Note that when packet hardware offload is used
-      the actual counters might be delayed for a number of seconds due to caching so the
-      reported number would be slightly out of date. This also affects the logged traffic
+      <command>ipsec trafficstatus</command> lists current IPsec SA
+      states with traffic counters.  Note that when packet hardware
+      offload is used the actual counters might be delayed for a
+      number of seconds due to caching so the reported number would be
+      slightly out of date.  This also affects the logged traffic
       counters when an IPsec SA is terminated.
     </para>
   </refsect1>

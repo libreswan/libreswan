@@ -1063,8 +1063,8 @@
 	    normally passed along by <citerefentry>
 	    <refentrytitle>ipsec-up</refentrytitle>
 	    <manvolnum>8</manvolnum> </citerefentry> when an xauth
-	    connection is started using <emphasis>ipsec up
-	    conn</emphasis>.
+	    connection is started using <command>ipsec up
+	    <replaceable>connection</replaceable></command>.
 	  </para>
         </listitem>
       </varlistentry>
@@ -1079,8 +1079,8 @@
 	    is normally passed along by <citerefentry>
 	    <refentrytitle>ipsec-up</refentrytitle>
 	    <manvolnum>8</manvolnum> </citerefentry> when an xauth
-	    connection is started using <emphasis>ipsec up
-	    conn</emphasis>.
+	    connection is started using <command>ipsec up
+	    <replaceable>connection</replaceable></command>.
 	  </para>
         </listitem>
       </varlistentry>
@@ -2234,10 +2234,10 @@
     </para>
 
     <para>
-      Statistics can be seen using <emphasis>ipsec whack
-      --globalstats</emphasis> and reset using
-      <emphasis>ipsec whack --clearstats</emphasis>. This can be used
-      with the munin software to monitor VPN services.
+      Statistics can be seen using <command>ipsec whack
+      --globalstats</command> and reset using <command>ipsec whack
+      --clearstats</command>. This can be used with the munin software
+      to monitor VPN services.
     </para>
 
       <variablelist>

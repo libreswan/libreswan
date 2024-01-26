@@ -8,7 +8,7 @@
       values are <emphasis>busy</emphasis>, <emphasis>unlimited</emphasis>
       or <emphasis>auto</emphasis> (the default). This option can also be
       given to the IKE daemon while running, for example by issuing
-      <emphasis>ipsec whack --ddos--busy</emphasis>.  When
+      <command>ipsec whack --ddos--busy</command>.  When
       in busy mode, pluto activates anti-DDoS counter
       measures. Currently, counter measures consist of requiring IKEv2
       anti-DDoS cookies on new incoming IKE requests, and a more

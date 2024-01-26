@@ -25,8 +25,8 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis>Showstates</emphasis> operation list current IKE SA
-      and Child SA states.
+      <command>ipsec showstates</command> list current IKE SA and
+      Child SA states.
     </para>
   </refsect1>
 

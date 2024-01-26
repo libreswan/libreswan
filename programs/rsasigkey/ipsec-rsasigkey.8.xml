@@ -100,7 +100,9 @@
   <refsect1 id='examples'><title>EXAMPLES</title>
   <variablelist>
     <varlistentry>
-      <term><emphasis>ipsec rsasigkey --verbose 4096 </emphasis></term>
+      <term>
+	<command>ipsec rsasigkey --verbose 4096 </command>
+      </term>
       <listitem>
 	<para>
 	  generates a 4096-bit signature key  and stores this key in the NSS database.

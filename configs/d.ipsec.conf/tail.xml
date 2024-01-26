@@ -66,13 +66,14 @@
   </para>
 
   <para>
-    When <emphasis>type</emphasis> or <emphasis>failureshunt</emphasis> is set
-    to <emphasis>drop</emphasis> or <emphasis>reject,</emphasis> Libreswan
-    blocks outbound packets using eroutes, but assumes inbound blocking is
-    handled by the firewall. Libreswan offers firewall hooks via an
-    &ldquo;updown&rdquo; script.  However, the default
-    <emphasis>ipsec _updown</emphasis> provides no help in controlling
-    a modern firewall.
+    When <emphasis>type</emphasis> or
+    <emphasis>failureshunt</emphasis> is set to
+    <emphasis>drop</emphasis> or <emphasis>reject,</emphasis>
+    Libreswan blocks outbound packets using eroutes, but assumes
+    inbound blocking is handled by the firewall. Libreswan offers
+    firewall hooks via an &ldquo;updown&rdquo; script.  However, the
+    default <command>ipsec _updown</command> provides no help in
+    controlling a modern firewall.
   </para>
 
   <para>

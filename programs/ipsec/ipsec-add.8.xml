@@ -27,17 +27,17 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis>Add</emphasis> operation add a connection
-      specification from @@IPSEC_CONF@@ to internal database within pluto,
-      The Libreswan IKE daemon. If there already was connection
-      specification with same connectionname, old tunnels are torn
-      down and new specification replaces old one.
+      <command>ipsec add</command> adds a connection specification
+      from <filename>@@IPSEC_CONF@@</filename> to internal database
+      within pluto, The Libreswan IKE daemon.  If there already was
+      connection specification with same connectionname, old tunnels
+      are torn down and new specification replaces old one.
     </para>
     <para>
-      With <option>ipsec add --checkconfig</option> you can validate
+      With <command>ipsec add --checkconfig</command> you can validate
       your configuration file. This will return 0 if config was valid.
-      Optionally you can add <option>--verbose</option> for  more detailed
-      analysis.
+      Optionally you can add <option>--verbose</option> for more
+      detailed analysis.
     </para>
     <para>
       This only adds the connection specification making it possible
@@ -48,10 +48,10 @@
       <replaceable>connection</replaceable></command>.
     </para>
     <para>
-      Note: you might also need to run <option>ipsec rereadsecrets</option>
-      when your new connection uses pre-shared key (PSK) authentication,
-      <option>authby=secret</option> because secrets keys are only being
-      read at startup.
+      Note: you might also need to run <command>ipsec
+      rereadsecrets</command> when your new connection uses pre-shared
+      key (PSK) authentication, <option>authby=secret</option> because
+      secrets keys are only being read at startup.
     </para>
   </refsect1>
 

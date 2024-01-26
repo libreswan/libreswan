@@ -26,9 +26,9 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis>Delete</emphasis> operation deletes a connection
-      specification from <option>pluto</option> internal database (also tearing
-      down any connections based on it).
+      <command>ipsec delete</command> deletes a connection
+      specification from <option>pluto</option> internal database
+      (also tearing down any connections based on it).
     </para>
   </refsect1>
 

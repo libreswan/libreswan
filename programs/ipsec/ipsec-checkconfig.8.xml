@@ -26,10 +26,10 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis>Checkconfig</emphasis> operation validates
-      your configuration file, @@IPSEC_CONF@@. Command will return 0 if
-      configuration is valid. Optionally you can add
-      <option>--verbose</option> for  more detailed analysis.
+      <command>ipsec checkconfig</command> validates your
+      configuration file, <filename>@@IPSEC_CONF@@</filename>. The
+      command will return 0 if configuration is valid.  Optionally you
+      can add <option>--verbose</option> for more detailed analysis.
     </para>
   </refsect1>
 

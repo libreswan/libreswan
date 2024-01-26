@@ -25,10 +25,10 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis>Listen</emphasis> operation requests pluto to
-      re-listen all interfaces. After operation pluto will be able to
-      answer new connection requests. This is not required on normal
-      system startup sequence.
+      <command>ipsec listen</command> requests pluto to re-listen all
+      interfaces.  After operation pluto will be able to answer new
+      connection requests.  This is not required on normal system
+      startup sequence.
     </para>
   </refsect1>
 

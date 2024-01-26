@@ -25,7 +25,7 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis>Status</emphasis> operation asks <command>pluto</command>
+      <command>ipsec status</command> asks <command>pluto</command>
       for current connections status information.
     </para>
   </refsect1>

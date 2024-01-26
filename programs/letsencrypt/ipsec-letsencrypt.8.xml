@@ -54,34 +54,39 @@
     </para>
 
     <para>
-      The <option>--client</option> operation is used for initial client setup.
+      The option <option>--client</option> is used for initial client
+      setup.
     </para>
 
     <para>
-      The <option>--server</option> operation is used for initial server setup.
+      The option <option>--server</option> is used for initial server
+      setup.
     </para>
 
     <para>
-      The <option>--test</option> operation is used for testing
-      the configuration/connection.
+      The option <option>--test</option> is used for testing the
+      configuration/connection.
     </para>
 
     <para>
-      The <option>--generate-certificate hostname</option>
-      operation is used for generating the certificate for the hostname.
+      The option <option>--generate-certificate <replaceable>hostname</replaceable></option>
+      is used for generating the certificate for the hostname.
     </para>
 
     <para>
-      The <option>--renew hostname</option> operation is used for updating
-      the generated certificate, it keeps the private key same.
+      The option <option>--renew
+      <replaceable>hostname</replaceable></option> is used for
+      updating the generated certificate, it keeps the private key
+      same.
     </para>
 
     <para>
-      The <option>--disable</option> operation is used for disabling IPsec service.
+      The option <option>--disable</option> is used for disabling
+      IPsec service.
     </para>
 
     <para>
-      The <option>--help</option> operation is used for displaying all
+      The option <option>--help</option> is used for displaying all
       the available options.
     </para>
   </refsect1>

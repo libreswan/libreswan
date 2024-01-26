@@ -26,9 +26,15 @@ accept-redirect is set to no.
   <varlistentry>
   <term><emphasis>send-redirect</emphasis></term>
   <listitem>
-<para>Whether to send requests for the remote peer to redirect IKE/IPsec SA's during IKE_AUTH. Valid options are
-	<emphasis>no</emphasis> (the default) and <emphasis>yes</emphasis>. If set, the option <emphasis>redirect-to=</emphasis> must also be set to indicate where to redirect peers to. For redirection during IKE_SA_INIT exchange, see the <emphasis>global-redirect=</emphasis> and
-	<emphasis>global-redirect-to=</emphasis> options. Runtime redirects can be triggered via the <emphasis>ipsec whack --redirect</emphasis> command.
+<para>Whether to send requests for the remote peer to redirect
+IKE/IPsec SA's during IKE_AUTH. Valid options are
+<emphasis>no</emphasis> (the default) and <emphasis>yes</emphasis>. If
+set, the option <emphasis>redirect-to=</emphasis> must also be set to
+indicate where to redirect peers to. For redirection during
+IKE_SA_INIT exchange, see the <emphasis>global-redirect=</emphasis>
+and <emphasis>global-redirect-to=</emphasis> options. Runtime
+redirects can be triggered via the <command>ipsec redirect</command>
+command.
 </para>
   </listitem>
   </varlistentry>

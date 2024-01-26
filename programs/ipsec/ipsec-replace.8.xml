@@ -27,16 +27,17 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis>Replace</emphasis> a connection definition from
-      <option>pluto</option> internal database with one from @@IPSEC_CONF@@.
-      Replace is very similar to <option>ipsec add</option> but it first
-      deletes old connection secification and old tunnels using same
-      connection name.
+      <command>ipsec replace</command> replaces a connection
+      definition from <option>pluto</option> internal database with
+      one from <filename>@@IPSEC_CONF@@</filename>.  Replace is very
+      similar to <command>ipsec add</command> but it first deletes old
+      connection secification and old tunnels using same connection
+      name.
     </para>
     <para>
-      This only replaces the connection description making it possible for
-      remote to connect. To initialize the connection you need to use
-      <option>ipsec up</option>.
+      This only replaces the connection description making it possible
+      for remote to connect. To initialize the connection you need to
+      use <command>ipsec up</command>.
     </para>
   </refsect1>
 

@@ -44,14 +44,14 @@
       centralized services.
     </para>
     <para>
-      <userinput>ipsec help</userinput> lists the available commands.
+      <command>ipsec help</command> lists the available commands.
       Most have their own manual pages.
     </para>
     <para>
-      <userinput>ipsec version</userinput> outputs the software version.
+      <command>ipsec version</command> outputs the software version.
     </para>
     <para>
-      <userinput>ipsec directory</userinput> reports where the
+      <command>ipsec directory</command> reports where the
       <command>ipsec</command> sub-commands are stored.
     </para>
   </refsect1>
@@ -371,10 +371,10 @@
 
   <refsect1 id='returncode'><title>RETURN CODE</title>
   <para>
-    The ipsec command passes the return code of the sub-command
-    back to the caller. The only exception is when
-    <userinput>ipsec pluto</userinput> is used without --nofork,
-    as it will fork into the background and the ipsec command returns
+    The ipsec command passes the return code of the sub-command back
+    to the caller. The only exception is when <command>ipsec
+    pluto</command> is used without <option>--nofork</option>, as it
+    will fork into the background and the ipsec command returns
     success while the pluto daemon may in fact exit with an error code
     after the fork.
   </para>

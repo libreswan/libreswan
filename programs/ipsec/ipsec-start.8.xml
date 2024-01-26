@@ -27,8 +27,8 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis>Start</emphasis> operation without any options
-      requests initsystem to start ipsec service.
+      <command>ipsec start</command> without any options requests
+      initsystem to start ipsec service.
     </para>
     <para>
       <command>ipsec start</command> with

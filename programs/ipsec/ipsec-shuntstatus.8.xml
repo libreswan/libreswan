@@ -25,8 +25,8 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis>Shuntstatus</emphasis> operation list current
-      IPsec negotation shunts. Shunts are temporary states to prevent
+      <command>ipsec shuntstatus</command> lists current IPsec
+      negotation shunts.  Shunts are temporary states to prevent
       packet leak during connection negotiation.
     </para>
   </refsect1>

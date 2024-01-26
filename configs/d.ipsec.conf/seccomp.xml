@@ -22,15 +22,17 @@ or DNS helpers.</para>
 are inherited by the updown scripts, so these scripts are also not
 allowed to use syscalls that are forbidden for pluto.</para>
 
-<para>This feature can be tested using <emphasis>ipsec whack
---seccomp-crashtest</emphasis>. <emphasis>Warning: </emphasis>
-With seccomp=enabled, pluto will be terminated by the kernel. With
-seccomp=tolerant or seccomp=disabled, pluto will report the results of
-the seccomp test. SECCOMP will log the forbidden syscall numbers to the
-audit log, but only with seccomp=enabled. The tool scmp_sys_resolver
-from the libseccomp development package can be used to translate the
-syscall number into a name. See programs/pluto/pluto_seccomp.c for the
-list of allowed syscalls.  </para>
+<para>
+  This feature can be tested using <command>ipsec whack
+  --seccomp-crashtest</command>. <emphasis>Warning: </emphasis> With
+  seccomp=enabled, pluto will be terminated by the kernel. With
+  seccomp=tolerant or seccomp=disabled, pluto will report the results
+  of the seccomp test. SECCOMP will log the forbidden syscall numbers
+  to the audit log, but only with seccomp=enabled. The tool
+  scmp_sys_resolver from the libseccomp development package can be
+  used to translate the syscall number into a name. See
+  programs/pluto/pluto_seccomp.c for the list of allowed syscalls.
+  </para>
 
 
   </listitem>

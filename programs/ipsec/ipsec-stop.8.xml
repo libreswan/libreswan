@@ -24,8 +24,8 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis>Stop</emphasis> operation stops ipsec service
-      via initsystem tools.
+      <command>ipsec stop</command> stops ipsec service via initsystem
+      tools.
     </para>
   </refsect1>
 

@@ -95,7 +95,7 @@
   <variablelist>
     <varlistentry>
       <term>
-	<emphasis>ipsec ecdsasigkey --verbose 4096 </emphasis>
+	<command>ipsec ecdsasigkey --verbose 4096</command>
       </term>
       <listitem>
 	<para>generates a 4096-bit signature key  and stores this key in the NSS database.

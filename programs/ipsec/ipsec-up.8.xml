@@ -26,13 +26,14 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis>Up</emphasis> operation without any options
+      <command>ipsec up</command> operation without any options
       requests initsystem to up ipsec service.
     </para>
     <para>
-      <emphasis>Up</emphasis> operation asks
-      <command>pluto</command> to establish a connection
-      specified in internal database.
+      <command>ipsec up
+      <replaceable>connection</replaceable></command> operation asks
+      <command>pluto</command> to establish a connection specified in
+      internal database.
     </para>
     <para>
       To <option>add</option> and <option>up</option> a connection
@@ -42,10 +43,10 @@
       <option>auto=start</option> on startup.
     </para>
     <para>
-      Note: you might also need to run <option>ipsec rereadsecrets</option>
-      when your new connection uses pre-shared key (PSK) authentication,
-      <option>authby=secret</option> because secrets keys are only being
-      read at startup.
+      Note: you might also need to run <command>ipsec
+      rereadsecrets</command> when your new connection uses pre-shared
+      key (PSK) authentication, <option>authby=secret</option> because
+      secrets keys are only being read at startup.
     </para>
   </refsect1>
 

@@ -27,12 +27,13 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis>Unroute</emphasis> operation removes
-      route and policies left behind from previously routed connection.
-      For example <option>down</option> operation leaves states behind
-      to leave connection to <option>ondemand</option> state. If you need
-      to completely disable the connection you should use the
-      <option>delete</option> option.
+      <command>ipsec unroute</command> removes route and policies left
+      behind from previously routed connection.  For example
+      <command>ipsec down</command> leaves states behind to leave the
+      connection in the <option>ondemand</option> state.  If you need
+      to completely disable the connection you should use
+      <command>ipsec delete
+      <replaceable>connection</replaceable></command>.
     </para>
   </refsect1>
 

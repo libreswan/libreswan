@@ -25,8 +25,9 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis>Rereadall</emphasis> operation is same as
-      running both <option>rereadsecrets</option> and <option>rereadcerts</option>.
+      <command>ipsec rereadall</command> is same as running both
+      <command>ipsec rereadsecrets</command> and <command>ipsec
+      rereadcerts</command>.
     </para>
   </refsect1>
 

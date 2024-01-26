@@ -15,7 +15,7 @@
       redirection after IKE SA authentication, see the
       <emphasis>send-redirect=</emphasis> and <emphasis>redirect-to=</emphasis>
       options. This configuration can be changed at runtime via the
-      <emphasis>ipsec whack --global-redirect</emphasis> command.
+      <command>ipsec whack --global-redirect</command> command.
     </para>
   </listitem>
 </varlistentry>
@@ -32,7 +32,7 @@
       to it, while multiple specified entries means peers will be
       evenly distributed across the specified servers. This
       configuration can be changed at runtime via the
-      <emphasis>ipsec whack --global-redirect-to</emphasis> command.
+      <command>ipsec whack --global-redirect-to</command> command.
     </para>
   </listitem>
 </varlistentry>

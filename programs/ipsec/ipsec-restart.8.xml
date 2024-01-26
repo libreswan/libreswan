@@ -24,8 +24,8 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis>Restart</emphasis> operation restarts ipsec service
-      via initsystem tools.
+      <command>ipsec restart</command> restarts ipsec service via
+      initsystem tools.
     </para>
   </refsect1>
 

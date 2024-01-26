@@ -54,9 +54,9 @@
     </para>
     <para>
       If not specified, a secure set of defaults will be used.  The
-      program <command>ipsec algparse</command>
-      can be used to query these defaults for instance:
-      <userinput>ipsec algparse esp=</userinput> (see 
+      program <command>ipsec algparse</command> can be used to query
+      these defaults for instance: <command>ipsec algparse
+      esp=</command> (see
       <citerefentry>
 	<refentrytitle>ipsec_algparse</refentrytitle>
 	<manvolnum>8</manvolnum> </citerefentry>).

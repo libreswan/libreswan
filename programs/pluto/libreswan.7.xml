@@ -927,7 +927,7 @@
       superuser. Generally, no arguments are needed. To run in manually, the
       superuser can simply type</para>
 
-      <para>ipsec pluto</para>
+      <para><command>ipsec pluto</command></para>
 
       <para>The command will immediately return, but a <emphasis>pluto</emphasis>
       process will be left running, waiting for
@@ -1417,7 +1417,7 @@
       </para>
 
       <para>
-	<userinput>ipsec pluto --debug base --debug cpu-usage</userinput>
+	<command>ipsec pluto --debug base --debug cpu-usage</command>
       </para>
 
       <para>
@@ -1426,7 +1426,7 @@
       </para>
 
       <para>
-	<userinput>ipsec whack --no-debug base</userinput>
+	<command>ipsec whack --no-debug base</command>
       </para>
 
       <para>
@@ -1434,7 +1434,7 @@
       </para>
 
       <para>
-	<userinput>ipsec whack --debug none --debug cpu-usage</userinput>
+	<command>ipsec whack --debug none --debug cpu-usage</command>
       </para>
 
     </refsect2>

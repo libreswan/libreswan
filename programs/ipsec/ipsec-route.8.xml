@@ -27,12 +27,11 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis>Route</emphasis> operation changes previously
-      <option>add</option>ed connection to routed state. This
-      cause pluto to add necessary IPsec policies and routes on
-      system to cause connection to be <option>on demand</option>,
-      causing connection to establish only when triggered by
-      outbound traffic.
+      <command>ipsec route</command> changes previously
+      <option>add</option>ed connection to routed state.  This cause
+      pluto to add necessary IPsec policies and routes on system to
+      cause connection to be <option>on demand</option>, causing
+      connection to establish only when triggered by outbound traffic.
     </para>
     <para>
       If you want to <option>add</option> and <option>route</option>
