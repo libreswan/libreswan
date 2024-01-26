@@ -523,7 +523,7 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 					       lset_t policy,
 					       const threadtime_t *inception,
 					       shunk_t sec_label,
-					       bool background)
+					       bool detach_whack)
 {
 	if (drop_new_exchanges()) {
 		/* Only drop outgoing opportunistic connections */
@@ -572,7 +572,7 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 		}
 		append_pending(ike, cc, policy,
 			       (predecessor == NULL ? SOS_NOBODY : predecessor->st_serialno),
-			       sec_label, true/*part of initiate*/, background);
+			       sec_label, true/*part of initiate*/, detach_whack);
 		connection_delref(&cc, ike->sa.logger);
 	}
 
@@ -631,7 +631,7 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 	 * XXX: hack: detach from whack _after_ the above message has
 	 * been logged.  Better to do that in the caller?
 	 */
-	if (background) {
+	if (detach_whack) {
 		release_whack(ike->sa.logger, HERE);
 	}
 
@@ -667,7 +667,8 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 	 * Calculate KE and Nonce.
 	 */
 	submit_ke_and_nonce(&ike->sa, ike->sa.st_oakley.ta_dh,
-			    initiate_v2_IKE_SA_INIT_request_continue, HERE);
+			    initiate_v2_IKE_SA_INIT_request_continue,
+			    detach_whack, HERE);
 	statetime_stop(&start, "%s()", __func__);
 	return ike;
 }
@@ -990,7 +991,8 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 
 	/* calculate the nonce and the KE */
 	submit_ke_and_nonce(&ike->sa, ike->sa.st_oakley.ta_dh,
-			    process_v2_IKE_SA_INIT_request_continue, HERE);
+			    process_v2_IKE_SA_INIT_request_continue,
+			    /*detach_whack*/false, HERE);
 	return STF_SUSPEND;
 }
 
@@ -1222,7 +1224,8 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 static stf_status resubmit_ke_and_nonce(struct ike_sa *ike)
 {
 	submit_ke_and_nonce(&ike->sa, ike->sa.st_oakley.ta_dh,
-			    initiate_v2_IKE_SA_INIT_request_continue, HERE);
+			    initiate_v2_IKE_SA_INIT_request_continue,
+			    /*detach_whack*/false, HERE);
 	return STF_SUSPEND;
 }
 

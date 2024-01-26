@@ -72,6 +72,10 @@
 #include "ikev2_replace.h"
 #include "terminate.h"
 
+static void dispatch_event(struct state *st, enum event_type event_type,
+			   deltatime_t event_delay, struct logger *logger,
+			   bool detach_whack);
+
 static int state_event_cmp(const void *lp, const void *rp)
 {
 	const struct state_event *const *le = lp;
@@ -172,9 +176,6 @@ void delete_state_event(struct state_event **evp, where_t where)
  * to event specific data (for example, to a state structure).
  */
 
-static void dispatch_event(struct state *st, enum event_type event_type,
-			   deltatime_t event_delay, struct logger *logger);
-
 static void timer_event_cb(void *arg, const struct timer_event *event)
 {
 	/*
@@ -222,12 +223,14 @@ static void timer_event_cb(void *arg, const struct timer_event *event)
 	}
 
 	statetime_t start = statetime_backdate(st, &event->inception);
-	dispatch_event(st, event_type, event_delay, event->logger);
+	dispatch_event(st, event_type, event_delay, event->logger,
+		       /*detach_whack*/false);
 	statetime_stop(&start, "%s() %s", __func__, event_name);
 }
 
 static void dispatch_event(struct state *st, enum event_type event_type,
-			   deltatime_t event_delay, struct logger *logger)
+			   deltatime_t event_delay, struct logger *logger,
+			   bool detach_whack)
 {
 	const monotime_t now = mononow();
 	/*
@@ -276,7 +279,7 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 
 	case EVENT_v2_REKEY:
 		pexpect(st->st_ike_version == IKEv2);
-		v2_event_sa_rekey(st);
+		v2_event_sa_rekey(st, detach_whack);
 		break;
 
 #ifdef USE_IKEv1
@@ -609,7 +612,7 @@ void event_force(enum event_type type, struct state *st)
 }
 
 void call_state_event_handler(struct logger *logger, struct state *st,
-			      enum event_type event_type)
+			      enum event_type event_type, bool detach_whack)
 {
 	const char *event_name = enum_name_short(&event_type_names, event_type);
 	if (event_name == NULL) {
@@ -647,5 +650,5 @@ void call_state_event_handler(struct logger *logger, struct state *st,
 	}
 
 	llog(RC_COMMENT, logger, "calling %s event handler", event_name);
-	dispatch_event(st, event_type, event_delay, logger);
+	dispatch_event(st, event_type, event_delay, logger, detach_whack);
 }

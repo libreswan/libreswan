@@ -611,7 +611,7 @@ bool v2_state_is_expired(struct state *st, const char *verb)
 	return false;
 }
 
-void v2_event_sa_rekey(struct state *st)
+void v2_event_sa_rekey(struct state *st, bool detach_whack)
 {
 	if (v2_state_is_expired(st, "rekey")) {
 		return;
@@ -621,9 +621,10 @@ void v2_event_sa_rekey(struct state *st)
 
 	struct child_sa *larval_sa;
 	if (IS_IKE_SA(st)) {
-		larval_sa = submit_v2_CREATE_CHILD_SA_rekey_ike(ike);
+		larval_sa = submit_v2_CREATE_CHILD_SA_rekey_ike(ike, /*detach_whack*/false);
 	} else {
-		larval_sa = submit_v2_CREATE_CHILD_SA_rekey_child(ike, pexpect_child_sa(st));
+		larval_sa = submit_v2_CREATE_CHILD_SA_rekey_child(ike, pexpect_child_sa(st),
+								  detach_whack);
 	}
 
 	const char *satype = IS_IKE_SA(st) ? "IKE" : "Child";

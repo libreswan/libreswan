@@ -76,7 +76,7 @@ static void whack_impair_action(enum impair_action impairment_action,
 				unsigned impairment_param,
 				bool whack_enable,
 				unsigned whack_value,
-				bool background,
+				bool detach_whack,
 				struct logger *logger)
 {
 	switch (impairment_action) {
@@ -94,9 +94,9 @@ static void whack_impair_action(enum impair_action impairment_action,
 			return;
 		}
 		/* will log */
-		struct logger *loggers = merge_loggers(st->logger, background, logger);
+		struct logger *loggers = merge_loggers(st->logger, detach_whack, logger);
 		enum event_type event = impairment_param;
-		call_state_event_handler(loggers, st, event);
+		call_state_event_handler(loggers, st, event, detach_whack);
 		free_logger(&loggers, HERE);
 		break;
 	}
@@ -109,7 +109,7 @@ static void whack_impair_action(enum impair_action impairment_action,
 		}
 		c = connection_addref(c, logger); /*must-delref*/
 		/* will log */
-		struct logger *loggers = merge_loggers(c->logger, background, logger);
+		struct logger *loggers = merge_loggers(c->logger, detach_whack, logger);
 		enum connection_event event = impairment_param;
 		call_connection_event_handler(loggers, c, event);
 		free_logger(&loggers, HERE);
@@ -132,7 +132,7 @@ static void whack_impair_action(enum impair_action impairment_action,
 			/* already logged */
 			return;
 		}
-		struct logger *loggers = merge_loggers(ike->sa.logger, background, logger);
+		struct logger *loggers = merge_loggers(ike->sa.logger, detach_whack, logger);
 		llog(RC_COMMENT, loggers, "initiating liveness");
 		submit_v2_liveness_exchange(ike, st->st_serialno);
 		free_logger(&loggers, HERE);
@@ -147,7 +147,7 @@ static void whack_impair_action(enum impair_action impairment_action,
 		}
 		/* will log */
 		struct logger *loggers = merge_loggers(st->logger,
-						       true/*background*/, logger);
+						       true/*detach_whack*/, logger);
 		llog(RC_COMMENT, loggers, "sending keepalive");
 		send_keepalive_using_state(st, "inject keep-alive");
 		free_logger(&loggers, HERE);
@@ -174,7 +174,7 @@ void whack_impair(const struct whack_message *m, struct show *s)
 			/* ??? what should we do with return value? */
 			process_impair(impairment,
 				       whack_impair_action,
-				       m->whack_async/*background*/,
+				       m->whack_async/*detach_whack*/,
 				       logger);
 		}
 	} else if (!m->whack_add/*connection*/) {

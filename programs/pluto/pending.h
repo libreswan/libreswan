@@ -52,7 +52,7 @@ void append_pending(struct ike_sa *ike,
 		    so_serial_t replacing,
 		    shunk_t sec_label,
 		    bool part_of_initiating_ike_sa,
-		    bool background);
+		    bool detach_whack);
 
 void unpend(struct ike_sa *ike, struct connection *cc);
 void release_pending_whacks(struct state *st, err_t story);

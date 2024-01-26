@@ -90,7 +90,7 @@ void submit_v2_cert_decode(struct ike_sa *ike,
 			.crl_strict = crl_strict,
 		},
 	};
-	submit_task(ike->sa.logger,
+	submit_task(ike->sa.logger, /*detach_whack*/false,
 		    /*resume IKE*/&ike->sa,
 		    clone_thing(task, "decode certificate payload task"),
 		    &cert_decode_handler, where);

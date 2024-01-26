@@ -314,6 +314,7 @@ static void inline_worker(const char *story UNUSED, struct state *unused_st UNUS
  */
 
 void submit_task(const struct logger *logger,
+		 bool detach_whack,
 		 struct state *st,
 		 struct task *task,
 		 const struct task_handler *handler,
@@ -382,9 +383,17 @@ void submit_task(const struct logger *logger,
 			     pri_job(job), deltasecs(delay));
 		}
 
+		if (detach_whack) {
+			whack_detach(job->logger, logger);
+		}
+
 		schedule_callback("inline crypto", delay,
 				  SOS_NOBODY, inline_worker, job);
 		return;
+	}
+
+	if (detach_whack) {
+		whack_detach(job->logger, logger);
 	}
 
 	/* add to backlog */

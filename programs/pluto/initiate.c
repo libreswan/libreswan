@@ -308,7 +308,8 @@ void initiate(struct connection *c,
 	      so_serial_t replacing,
 	      const threadtime_t *inception,
 	      shunk_t sec_label,
-	      bool background, struct logger *logger,
+	      bool detach_whack,
+	      struct logger *logger,
 	      enum initiated_by initiated_by,
 	      where_t where)
 {
@@ -347,17 +348,17 @@ void initiate(struct connection *c,
 		case IKEv1:
 			if (c->config->aggressive) {
 				ike = aggr_outI1(c, NULL, policy,
-						 inception, background);
+						 inception, detach_whack);
 			} else {
 				ike = main_outI1(c, NULL, policy,
-						 inception, background);
+						 inception, detach_whack);
 			}
 			break;
 #endif
 		case IKEv2:
 			ike = initiate_v2_IKE_SA_INIT_request(c, NULL, policy,
 							      inception, sec_label,
-							      background);
+							      detach_whack);
 			break;
 		}
 		if (ike == NULL) {
@@ -366,7 +367,7 @@ void initiate(struct connection *c,
 		if (initiated_by != INITIATED_BY_REPLACE) {
 			connection_initiated_ike(ike, initiated_by, HERE);
 		}
-		if (background) {
+		if (detach_whack) {
 			state_detach(&ike->sa, c->logger);
 		}
 		return;
@@ -410,7 +411,8 @@ void initiate(struct connection *c,
 			} else {
 				cc = connection_addref(c, c->logger);
 			}
-			child = submit_v2_CREATE_CHILD_SA_new_child(ike, cc, policy);
+			child = submit_v2_CREATE_CHILD_SA_new_child(ike, cc, policy,
+								    detach_whack);
 			if (c != cc) {
 				connection_detach(cc, c->logger);
 			}
@@ -426,7 +428,7 @@ void initiate(struct connection *c,
 		if (initiated_by != INITIATED_BY_REPLACE) {
 			connection_initiated_child(ike, child, initiated_by, where);
 		}
-		if (background) {
+		if (detach_whack) {
 			/*
 			 * Silence Children!
 			 *
@@ -455,7 +457,8 @@ void initiate(struct connection *c,
 		/* leave our Phase 2 negotiation pending */
 		append_pending(ike, c, policy,
 			       replacing, sec_label,
-			       false /*part of initiate*/, background);
+			       false /*part of initiate*/,
+			       detach_whack);
 		if (initiated_by != INITIATED_BY_REPLACE) {
 			connection_pending(c, initiated_by, where);
 		}
@@ -474,7 +477,8 @@ void initiate(struct connection *c,
 		}
 		append_pending(ike, cc, policy,
 			       replacing, sec_label,
-			       false /*part of initiate*/, background);
+			       false /*part of initiate*/,
+			       detach_whack);
 		if (initiated_by != INITIATED_BY_REPLACE) {
 			connection_pending(cc, initiated_by, where);
 		}

@@ -54,7 +54,7 @@ extern void event_force(enum event_type type, struct state *st);
 extern void delete_event(struct state *st);
 
 void call_state_event_handler(struct logger *logger, struct state *st,
-			      enum event_type type);
+			      enum event_type type, bool detach_whack);
 
 extern void list_timers(struct show *s, const monotime_t now);
 extern char *revive_conn;

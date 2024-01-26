@@ -76,7 +76,8 @@ bool submit_v2_auth_signature(struct ike_sa *ike,
 		/* failure: no key to use */
 		return false;
 
-	submit_task(ike->sa.logger, &ike->sa /*state to resume*/,
+	submit_task(ike->sa.logger, /*detach_whack*/false,
+		    &ike->sa /*state to resume*/,
 		    clone_thing(task, "signature task"),
 		    &v2_auth_signature_handler, where);
 	return true;

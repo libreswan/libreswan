@@ -446,7 +446,8 @@ static bool record_v2_rekey_ike_message(struct ike_sa *ike,
  */
 
 struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_child(struct ike_sa *ike,
-						       struct child_sa *child_being_replaced)
+						       struct child_sa *child_being_replaced,
+						       bool detach_whack)
 {
 	struct connection *c = child_being_replaced->sa.st_connection;
 	struct logger *logger = child_being_replaced->sa.logger;
@@ -496,7 +497,8 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_child(struct ike_sa *ike,
 	    pri_shunk(c->child.sec_label));
 
 	submit_ke_and_nonce(&larval_child->sa, larval_child->sa.st_pfs_group /*possibly-null*/,
-			    queue_v2_CREATE_CHILD_SA_rekey_child_request, HERE);
+			    queue_v2_CREATE_CHILD_SA_rekey_child_request,
+			    detach_whack, HERE);
 
 	return larval_child;
 }
@@ -745,7 +747,8 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 
 struct child_sa *submit_v2_CREATE_CHILD_SA_new_child(struct ike_sa *ike,
 						     struct connection *cc, /* for child + whack */
-						     lset_t policy)
+						     lset_t policy,
+						     bool detach_whack)
 {
 	/* share the log! */
 	state_attach(&ike->sa, cc->logger);
@@ -782,7 +785,8 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_new_child(struct ike_sa *ike,
 	    larval_child->sa.st_pfs_group == NULL ? "no-pfs" : larval_child->sa.st_pfs_group->common.fqn);
 
 	submit_ke_and_nonce(&larval_child->sa, larval_child->sa.st_pfs_group /*possibly-null*/,
-			    queue_v2_CREATE_CHILD_SA_new_child_request, HERE);
+			    queue_v2_CREATE_CHILD_SA_new_child_request,
+			    detach_whack, HERE);
 	return larval_child;
 }
 
@@ -1017,7 +1021,8 @@ stf_status process_v2_CREATE_CHILD_SA_request(struct ike_sa *ike,
 	 */
 	submit_ke_and_nonce(&ike->sa,
 			    larval_child->sa.st_pfs_group != NULL ? larval_child->sa.st_oakley.ta_dh : NULL,
-			    process_v2_CREATE_CHILD_SA_request_continue_1, HERE);
+			    process_v2_CREATE_CHILD_SA_request_continue_1,
+			    /*detach_whack*/false, HERE);
 	return STF_SUSPEND;
 }
 
@@ -1355,7 +1360,8 @@ static stf_status process_v2_CREATE_CHILD_SA_child_response_continue_1(struct st
  * to the message queue.
  */
 
-struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_ike(struct ike_sa *ike)
+struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_ike(struct ike_sa *ike,
+						     bool detach_whack)
 {
 	struct connection *c = ike->sa.st_connection;
 
@@ -1389,7 +1395,8 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_ike(struct ike_sa *ike)
 	    larval_ike->sa.st_oakley.ta_dh->common.fqn);
 
 	submit_ke_and_nonce(&larval_ike->sa, larval_ike->sa.st_oakley.ta_dh,
-			    queue_v2_CREATE_CHILD_SA_rekey_ike_request, HERE);
+			    queue_v2_CREATE_CHILD_SA_rekey_ike_request,
+			    detach_whack, HERE);
 	/* "return STF_SUSPEND" */
 	return larval_ike;
 }
@@ -1564,7 +1571,8 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
 	}
 
 	submit_ke_and_nonce(&ike->sa, larval_ike->sa.st_oakley.ta_dh,
-			    process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_1, HERE);
+			    process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_1,
+			    /*detach_whack*/false, HERE);
 	return STF_SUSPEND;
 }
 

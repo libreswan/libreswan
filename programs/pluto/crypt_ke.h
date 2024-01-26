@@ -36,7 +36,8 @@ typedef stf_status (ke_and_nonce_cb)(struct state *st, struct msg_digest *md,
  */
 
 void submit_ke_and_nonce(struct state *st, const struct dh_desc *dh,
-			 ke_and_nonce_cb *cb, where_t where);
+			 ke_and_nonce_cb *cb,
+			 bool detach_whack, where_t where);
 
 /*
  * KE and NONCE

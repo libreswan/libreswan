@@ -678,10 +678,12 @@ struct child_sa *quick_outI1(struct ike_sa *isakmp,
 
 	if (policy & POLICY_PFS) {
 		submit_ke_and_nonce(&child->sa, child->sa.st_pfs_group,
-				    quick_outI1_continue, HERE);
+				    quick_outI1_continue,
+				    /*detach_whack*/false, HERE);
 	} else {
 		submit_ke_and_nonce(&child->sa, NULL /* no-nonce*/,
-				    quick_outI1_continue, HERE);
+				    quick_outI1_continue,
+				    /*detach_whack*/false, HERE);
 	}
 	return child;
 }
@@ -1258,7 +1260,8 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 	passert(child->sa.st_connection != NULL);
 
 	submit_ke_and_nonce(&child->sa, child->sa.st_pfs_group/*possibly-null*/,
-			    quick_inI1_outR1_continue1, HERE);
+			    quick_inI1_outR1_continue1,
+			    /*detach_whack*/false, HERE);
 
 	passert(child->sa.st_connection != NULL);
 	return STF_SUSPEND;

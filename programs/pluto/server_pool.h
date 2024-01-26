@@ -61,6 +61,7 @@ struct task_handler {
 };
 
 extern void submit_task(const struct logger *logger,
+			bool detach_whack,
 			struct state *st,
 			struct task *task,
 			const struct task_handler *handler,

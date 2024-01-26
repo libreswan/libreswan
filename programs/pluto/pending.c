@@ -65,7 +65,7 @@ void append_pending(struct ike_sa *ike,
 		    so_serial_t replacing,
 		    const shunk_t sec_label,
 		    bool part_of_initiating_ike_sa,
-		    bool background)
+		    bool detach_whack)
 {
 	if (c->pending != NULL) {
 		address_buf b;
@@ -90,7 +90,7 @@ void append_pending(struct ike_sa *ike,
 	 * after this code returns.
 	 */
 	p->logger = clone_logger(c->logger, HERE);
-	if (background) {
+	if (detach_whack) {
 		release_whack(p->logger, HERE);
 	}
 
@@ -309,7 +309,8 @@ void unpend(struct ike_sa *ike, struct connection *cc)
 			} else if (!already_has_larval_v2_child(ike, p->connection)) {
 				connection_attach(p->connection, p->logger);
 				submit_v2_CREATE_CHILD_SA_new_child(ike, p->connection,
-								    p->policy);
+								    p->policy,
+								    /*detach_whack*/false);
 				connection_detach(p->connection, p->logger);
 			}
 			break;

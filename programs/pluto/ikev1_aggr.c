@@ -274,7 +274,8 @@ stf_status aggr_inI1_outR1(struct state *null_st UNUSED,
 
 	/* calculate KE and Nonce */
 	submit_ke_and_nonce(&ike->sa, ike->sa.st_oakley.ta_dh,
-			    aggr_inI1_outR1_continue1, HERE);
+			    aggr_inI1_outR1_continue1,
+			    /*detach_whack*/false, HERE);
 	return STF_SUSPEND;
 }
 
@@ -984,7 +985,7 @@ struct ike_sa *aggr_outI1(struct connection *c,
 			  struct ike_sa *predecessor,
 			  lset_t policy,
 			  const threadtime_t *inception,
-			  bool background)
+			  bool detach_whack)
 {
 	/* set up new state */
 	struct ike_sa *ike = new_v1_istate(c, STATE_AGGR_I1);
@@ -1020,7 +1021,8 @@ struct ike_sa *aggr_outI1(struct connection *c,
 		 */
 		append_pending(ike, c, policy,
 			       (predecessor == NULL ? SOS_NOBODY : predecessor->sa.st_serialno),
-			       null_shunk, true /*part of initiate*/, background);
+			       null_shunk, true /*part of initiate*/,
+			       detach_whack);
 	}
 
 	if (predecessor == NULL) {
@@ -1037,7 +1039,8 @@ struct ike_sa *aggr_outI1(struct connection *c,
 	 * Calculate KE and Nonce.
 	 */
 	submit_ke_and_nonce(&ike->sa, ike->sa.st_oakley.ta_dh,
-			    aggr_outI1_continue, HERE);
+			    aggr_outI1_continue,
+			    /*detach_whack*/false, HERE);
 	statetime_stop(&start, "%s()", __func__);
 	return ike;
 }

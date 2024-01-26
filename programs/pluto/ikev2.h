@@ -125,7 +125,7 @@ extern bool emit_v2KE(chunk_t g, const struct dh_desc *group, pb_stream *outs);
 
 extern void init_ikev2(void);
 
-void v2_event_sa_rekey(struct state *st);
+void v2_event_sa_rekey(struct state *st, bool detach_whack);
 void v2_event_sa_replace(struct state *st);
 
 struct payload_summary ikev2_decode_payloads(struct logger *log,
