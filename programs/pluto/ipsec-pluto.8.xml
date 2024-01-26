@@ -419,7 +419,7 @@
 	      the directory containing the NSS trust store
 	    </para>
 	    <para>
-	      Default is @@IPSEC_NSSDIR@@.
+	      Default is <filename>@@IPSEC_NSSDIR@@</filename>.
 	    </para>
 	  </listitem>
 	</varlistentry>

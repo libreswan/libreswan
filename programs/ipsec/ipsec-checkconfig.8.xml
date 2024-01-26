@@ -12,7 +12,7 @@
   </refmeta>
   <refnamediv id='name'>
     <refname>ipsec-checkconfig</refname>
-    <refpurpose>Validate ipsec configuration file, @@IPSEC_CONF@@</refpurpose>
+    <refpurpose>Validate ipsec configuration file, <filename>@@IPSEC_CONF@@</filename></refpurpose>
   </refnamediv>
   <!-- body begins here -->
   <refsynopsisdiv id='synopsis'>

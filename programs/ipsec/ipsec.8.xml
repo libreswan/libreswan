@@ -231,7 +231,7 @@
 	<listitem>
 	  <para>
 	    Used to validate and dump the ipsec file (default
-	    @@IPSEC_CONF@@).
+	    <filename>@@IPSEC_CONF@@</filename>).
 	  </para>
 	  <para>
 	    See
@@ -383,7 +383,7 @@
 <refsect1 id='files'>
   <title>FILES</title>
   <para>
-    @@LIBEXECDIR@@	usual utilities directory
+    <filename>@@LIBEXECDIR@@</filename>	usual utilities directory
   </para>
 </refsect1>
 

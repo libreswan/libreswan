@@ -12,7 +12,10 @@
   </refmeta>
   <refnamediv id='name'>
     <refname>ipsec-add</refname>
-    <refpurpose>Add a connection specification to pluto internal database from @@IPSEC_CONF@@</refpurpose>
+    <refpurpose>
+      Add a connection specification to pluto internal database from
+      <filename>@@IPSEC_CONF@@</filename>
+    </refpurpose>
   </refnamediv>
   <!-- body begins here -->
   <refsynopsisdiv id='synopsis'>

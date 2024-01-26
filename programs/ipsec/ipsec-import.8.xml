@@ -28,8 +28,9 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis>Import</emphasis> PKCS#12 files into the IPsec NSS database
-      located at the ipsec NSS data directory (default: @@IPSEC_NSSDIR@@)
+      <emphasis>Import</emphasis> PKCS#12 files into the IPsec NSS
+      database located at the ipsec NSS data directory (default:
+      <filename>@@IPSEC_NSSDIR@@</filename>)
     </para>
   </refsect1>
 

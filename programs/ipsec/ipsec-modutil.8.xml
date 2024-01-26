@@ -24,9 +24,17 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <command>modutil</command> is a helper to run NSS modutil
-      on IPsec NSS database with <option>-dbdir @@IPSEC_NSSDIR@@</option> option.
-      See <option>modutil</option>(1) for other options.
+      <command>ipsec modutil</command> is a helper that runs
+      <application>NSS's</application> <command>modutil</command>
+      command against <application>Libreswan's</application> NSS
+      database by adding the option <option>-d
+      <filename>@@IPSEC_NSSDIR@@</filename></option> to the parameter
+      list.
+    </para>
+    <para>
+      See <citerefentry> <refentrytitle>modutil</refentrytitle>
+      <manvolnum>1</manvolnum> </citerefentry> for additional
+      information.
     </para>
   </refsect1>
 

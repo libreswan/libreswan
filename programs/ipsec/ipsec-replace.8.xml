@@ -12,7 +12,10 @@
   </refmeta>
   <refnamediv id='name'>
     <refname>ipsec-replace</refname>
-    <refpurpose>Replace a connection definition with one from @@IPSEC_CONF@@</refpurpose>
+    <refpurpose>
+      Replace a connection definition with one from
+      <filename>@@IPSEC_CONF@@</filename>
+    </refpurpose>
   </refnamediv>
   <!-- body begins here -->
   <refsynopsisdiv id='synopsis'>

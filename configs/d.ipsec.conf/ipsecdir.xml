@@ -29,8 +29,9 @@
         <listitem>
 	  <para>
             (optional) passwords needed to unlock the NSS database in
-            @@IPSEC_NSSDIR@@ (this file should not be world-readable).
-            See README.nss for more information.
+            <filename>@@IPSEC_NSSDIR@@</filename> (this file should
+            not be world-readable).  See README.nss for more
+            information.
           </para>
 	</listitem>
       </varlistentry>

@@ -24,9 +24,20 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
+      <command>ipsec crlutil</command> is a helper that runs
+      <application>NSS's</application> <command>crlutil</command>
+      command against <application>Libreswan's</application> NSS
+      database by adding the option <option>-d
+      <filename>@@IPSEC_NSSDIR@@</filename></option> to the parameter
+      list.
+
       <command>crlutil</command> is a helper to run NSS crlutil
       on IPsec NSS database with <option>-d @@IPSEC_NSSDIR@@</option> option.
-      See <option>crlutil</option>(1) for other options.
+    </para>
+    <para>
+      See <citerefentry> <refentrytitle>crlutil</refentrytitle>
+      <manvolnum>1</manvolnum> </citerefentry> for additional
+      information.
     </para>
   </refsect1>
 

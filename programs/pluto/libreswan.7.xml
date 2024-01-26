@@ -815,10 +815,11 @@
       </para>
 
       <para>
-	Pluto supports X.509 Certificates. All certificate handling is done
-	using the NSS library and all certificate material is stored in an
-	NSS database in @@IPSEC_NSSDIR@@ or another directory as specified
-	by <option>--nssdir</option>.
+	Pluto supports X.509 Certificates.  All certificate handling
+	is done using the NSS library and all certificate material is
+	stored in an NSS database in
+	<filename>@@IPSEC_NSSDIR@@</filename> or another directory as
+	specified by <option>--nssdir</option>.
       </para>
 
       <para>

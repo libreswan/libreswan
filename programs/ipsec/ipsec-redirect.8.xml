@@ -12,7 +12,10 @@
   </refmeta>
   <refnamediv id='name'>
     <refname>ipsec-redirect</refname>
-    <refpurpose>Redirect a connection definition with one from @@IPSEC_CONF@@</refpurpose>
+    <refpurpose>
+      Redirect a connection definition with one from
+      <filename>@@IPSEC_CONF@@</filename>.
+    </refpurpose>
   </refnamediv>
   <!-- body begins here -->
   <refsynopsisdiv id='synopsis'>

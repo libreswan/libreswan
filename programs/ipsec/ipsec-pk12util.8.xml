@@ -24,11 +24,17 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <command>ipsec pk12util</command> is a helper to run
+      <command>ipsec pk12util</command> is a helper that runs
       <application>NSS's</application> <command>pk12util</command>
-      command on <application>Libreswan's</application> NSS database
-      with <option>-d <filename>@@IPSEC_NSSDIR@@</filename></option>
-      option.  See <option>pk12util</option>(1) for other options.
+      command against <application>Libreswan's</application> NSS
+      database by adding the option <option>-d
+      <filename>@@IPSEC_NSSDIR@@</filename></option> to the parameter
+      list.
+    </para>
+    <para>
+      See <citerefentry> <refentrytitle>pk12util</refentrytitle>
+      <manvolnum>1</manvolnum> </citerefentry> for additional
+      information.
     </para>
   </refsect1>
 
