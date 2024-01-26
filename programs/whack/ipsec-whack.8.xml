@@ -649,7 +649,7 @@
     <variablelist>
       <varlistentry>
         <term>
-	  <option>--ctlsocket</option> <replaceable>@@RUNDIR@@/pluto.ctl</replaceable>
+	  <option>--ctlsocket <filename><replaceable>@@RUNDIR@@/pluto.ctl</replaceable></filename></option>
 	</term>
         <listitem>
           <para>
@@ -662,7 +662,7 @@
 
       <varlistentry>
         <term>
-	  <option>--rundir</option> <replaceable>path</replaceable>
+	  <option>--rundir <filename><replaceable>path</replaceable></filename></option>
 	</term>
         <listitem>
           <para>
@@ -678,7 +678,7 @@
 
       <varlistentry>
         <term>
-	  <option>--label</option> <replaceable>string</replaceable>
+	  <option>--label <replaceable>string</replaceable></option>
 	</term>
         <listitem>
           <para>
@@ -741,7 +741,7 @@
 
       <varlistentry>
         <term>
-	  <option>--name</option> <replaceable>connection-name</replaceable>
+	  <option>--name <replaceable>connection-name</replaceable></option>
 	</term>
         <listitem>
           <para>
@@ -772,7 +772,7 @@
 
       <varlistentry>
         <term>
-	  <option>--id</option> <replaceable>id</replaceable>
+	  <option>--id <replaceable>id</replaceable></option>
 	</term>
         <listitem>
           <para>
@@ -795,13 +795,13 @@
 
       <varlistentry>
         <term>
-	  <option>--host</option> <replaceable>ip-address</replaceable>
+	  <option>--host <replaceable>ip-address</replaceable></option>
 	</term>
         <term>
-	  <option>--host</option> <replaceable>%any</replaceable>
+	  <option>--host <replaceable>%any</replaceable></option>
 	</term>
         <term>
-	  <option>--host</option> <replaceable>%opportunistic</replaceable>
+	  <option>--host <replaceable>%opportunistic</replaceable></option>
 	</term>
         <listitem>
           <para>
@@ -820,7 +820,7 @@
 
       <varlistentry>
         <term>
-	  <option>--cert</option> <replaceable>friendly_name</replaceable>
+	  <option>--cert <replaceable>friendly_name</replaceable></option>
 	</term>
         <listitem>
           <para>
@@ -836,7 +836,7 @@
 
       <varlistentry>
         <term>
-	  <option>--ckaid</option> <replaceable>CKAID</replaceable>
+	  <option>--ckaid <replaceable>CKAID</replaceable></option>
 	</term>
         <listitem>
 	  <para>
@@ -854,7 +854,7 @@
 
       <varlistentry>
         <term>
-	  <option>--ca</option> <replaceable>distinguished name</replaceable>
+	  <option>--ca <replaceable>distinguished name</replaceable></option>
 	</term>
         <listitem>
           <para>
@@ -868,7 +868,7 @@
 
       <varlistentry>
         <term>
-	  <option>--groups</option> <replaceable>access control groups</replaceable>
+	  <option>--groups <replaceable>access control groups</replaceable></option>
 	</term>
         <listitem>
           <para>
@@ -918,7 +918,7 @@
 
       <varlistentry>
         <term>
-	  <option>--certtype</option> <replaceable>number</replaceable>
+	  <option>--certtype <replaceable>number</replaceable></option>
 	</term>
         <listitem>
           <para>
@@ -929,7 +929,7 @@
 
       <varlistentry>
         <term>
-	  <option>--ikeport</option> <replaceable>port-number</replaceable>
+	  <option>--ikeport <replaceable>port-number</replaceable></option>
 	</term>
         <listitem>
           <para>
@@ -944,7 +944,7 @@
 
       <varlistentry>
         <term>
-	  <option>--nexthop</option>&nbsp;<replaceable>ip-address</replaceable>
+	  <option>--nexthop <replaceable>ip-address</replaceable></option>
 	</term>
         <listitem>
           <para>
@@ -965,10 +965,10 @@
 
       <varlistentry>
         <term>
-	  <option>--subnet</option> <replaceable>subnet</replaceable>
+	  <option>--subnet <replaceable>subnet</replaceable></option>
 	</term>
         <term>
-	  <option>--client</option> <replaceable>subnet</replaceable>
+	  <option>--client <replaceable>subnet</replaceable></option>
 	</term>
         <listitem>
           <para>
@@ -987,7 +987,7 @@
 
       <varlistentry>
         <term>
-	  <option>--clientprotoport</option> <replaceable>protocol</replaceable>/<replaceable>port</replaceable>
+	  <option>--clientprotoport <replaceable>protocol</replaceable>/<replaceable>port</replaceable></option>
 	</term>
         <listitem>
           <para>
@@ -1006,10 +1006,10 @@
 
       <varlistentry>
         <term>
-	  <option>--sourceip</option> <replaceable>ip-address</replaceable>
+	  <option>--sourceip <replaceable>ip-address</replaceable></option>
 	</term>
         <term>
-	  <option>--srcip</option> <replaceable>ip-address</replaceable>
+	  <option>--srcip <replaceable>ip-address</replaceable></option>
 	</term>
         <listitem>
           <para>
@@ -1146,7 +1146,7 @@
 
       <varlistentry>
         <term>
-	  <option>--updown</option> <replaceable>updown</replaceable>
+	  <option>--updown <filename><replaceable>updown</replaceable></filename></option>
 	</term>
         <listitem>
           <para>
@@ -1343,7 +1343,7 @@
 
       <varlistentry>
         <term>
-	  <option>--pfsgroup</option> <replaceable>modp-group</replaceable>
+	  <option>--pfsgroup <replaceable>modp-group</replaceable></option>
 	</term>
         <listitem>
           <para>
@@ -1364,7 +1364,7 @@
 
       <varlistentry>
         <term>
-	  <option>--esp</option> <replaceable>esp-algos</replaceable>
+	  <option>--esp <replaceable>esp-algos</replaceable></option>
 	</term>
         <listitem>
           <para>
@@ -1409,7 +1409,7 @@
 
       <varlistentry>
         <term>
-	  <option>--dpddelay</option> <replaceable>seconds</replaceable>
+	  <option>--dpddelay <replaceable>seconds</replaceable></option>
 	</term>
         <listitem>
           <para>
@@ -1422,7 +1422,7 @@
 
       <varlistentry>
         <term>
-	  <option>--timeout</option> <replaceable>seconds</replaceable>
+	  <option>--timeout <replaceable>seconds</replaceable></option>
 	</term>
         <listitem>
           <para>
@@ -1673,7 +1673,7 @@
 
       <varlistentry>
         <term>
-	  <option>--ikelifetime</option> <replaceable>seconds</replaceable>
+	  <option>--ikelifetime <replaceable>seconds</replaceable></option>
 	</term>
         <listitem>
           <para>
@@ -1688,7 +1688,7 @@
 
       <varlistentry>
         <term>
-	  <option>--ipseclifetime</option> <replaceable>seconds</replaceable>
+	  <option>--ipseclifetime <replaceable>seconds</replaceable></option>
 	</term>
         <listitem>
           <para>
@@ -1703,7 +1703,7 @@
 
       <varlistentry>
         <term>
-	  <option>--rekeymargin</option> <replaceable>seconds</replaceable>
+	  <option>--rekeymargin <replaceable>seconds</replaceable></option>
 	</term>
         <listitem>
           <para>
@@ -1717,7 +1717,7 @@
 
       <varlistentry>
         <term>
-	  <option>--rekeyfuzz</option> <replaceable>percentage</replaceable>
+	  <option>--rekeyfuzz <replaceable>percentage</replaceable></option>
 	</term>
         <listitem>
           <para>
@@ -1778,7 +1778,7 @@
 	  <option>--delete</option>
 	</term>
         <term>
-	  <option>--name</option> <replaceable>connection-name</replaceable>
+	  <option>--name <replaceable>connection-name</replaceable></option>
 	</term>
         <listitem>
           <para>
@@ -1794,7 +1794,7 @@
     <variablelist>
       <varlistentry>
         <term>
-	  <option>--deletestate</option> <replaceable>state-number</replaceable>
+	  <option>--deletestate <replaceable>state-number</replaceable></option>
 	</term>
         <listitem>
           <para>
@@ -1825,7 +1825,7 @@
 	  <option>--route</option>
 	</term>
         <term>
-	  <option>--name</option> <replaceable>connection-name</replaceable>
+	  <option>--name <replaceable>connection-name</replaceable></option>
 	</term>
         <listitem>
           <para>
@@ -1845,7 +1845,7 @@
 	  <option>--unroute</option>
 	</term>
         <term>
-	  <option>--name</option> <replaceable>connection-name</replaceable>
+	  <option>--name <replaceable>connection-name</replaceable></option>
 	</term>
         <listitem>
           <para>
@@ -1875,7 +1875,7 @@
 	  <option>--initiate</option>
 	</term>
         <term>
-	  <option>--name</option> <replaceable>connection-name</replaceable>
+	  <option>--name <replaceable>connection-name</replaceable></option>
 	</term>
         <term>
 	  <option>--asynchronous</option>
@@ -1912,19 +1912,19 @@
 	  <option>--tunnelipv6</option>
 	</term>
         <term>
-	  <option>--oppohere</option> <replaceable>ip-address</replaceable>
+	  <option>--oppohere <replaceable>ip-address</replaceable></option>
 	</term>
         <term>
-	  <option>--oppothere</option> <replaceable>ip-address</replaceable>
+	  <option>--oppothere <replaceable>ip-address</replaceable></option>
 	</term>
         <term>
-	  <option>--opposport</option> <replaceable>port</replaceable>
+	  <option>--opposport <replaceable>port</replaceable></option>
 	</term>
         <term>
-	  <option>--oppodport</option> <replaceable>port</replaceable>
+	  <option>--oppodport <replaceable>port</replaceable></option>
 	</term>
         <term>
-	  <option>--oppoproto</option> <replaceable>protocol</replaceable>
+	  <option>--oppoproto <replaceable>protocol</replaceable></option>
 	</term>
         <listitem>
           <para>
@@ -1947,7 +1947,7 @@
       <varlistentry>
         <term>
 	  <option>--rekey-ike</option>
-	  <option>--name</option> <replaceable>connection</replaceable>
+	  <option>--name <replaceable>connection</replaceable></option>
 	</term>
         <listitem>
           <para>
@@ -1961,7 +1961,7 @@
       <varlistentry>
         <term>
 	  <option>--rekey-child</option>
-	  <option>--name</option> <replaceable>connection</replaceable>
+	  <option>--name <replaceable>connection</replaceable></option>
 	</term>
         <listitem>
           <para>
@@ -1985,7 +1985,7 @@
 	  <option>--terminate</option>
 	</term>
         <term>
-	  <option>--name</option> <replaceable>connection-name</replaceable>
+	  <option>--name <replaceable>connection-name</replaceable></option>
 	</term>
         <listitem>
           <para>
@@ -2000,7 +2000,7 @@
 
       <varlistentry>
         <term>
-	  <option>--crash</option> <replaceable>ip-address</replaceable>
+	  <option>--crash <replaceable>ip-address</replaceable></option>
 	</term>
         <listitem>
           <para>
@@ -2059,7 +2059,7 @@
 
       <varlistentry>
         <term>
-	  <option>--global-redirect-to</option> <replaceable>ip-address(es)</replaceable>
+	  <option>--global-redirect-to <replaceable>ip-address(es)</replaceable></option>
 	</term>
         <listitem>
           <para>
@@ -2071,10 +2071,10 @@
 
       <varlistentry>
         <term>
-	  <option>--name</option> <replaceable>connection_name</replaceable>
+	  <option>--name <replaceable>connection_name</replaceable></option>
 	</term>
         <term>
-	  <option>--redirect-to</option> <replaceable>ip-address(es)</replaceable>
+	  <option>--redirect-to <replaceable>ip-address(es)</replaceable></option>
 	</term>
         <listitem>
           <para>
@@ -2101,7 +2101,7 @@
 
       <varlistentry>
         <term>
-	  <option>--keyid</option> <replaceable>id</replaceable>
+	  <option>--keyid <replaceable>id</replaceable></option>
 	</term>
         <listitem>
           <para>
@@ -2130,7 +2130,7 @@
 
       <varlistentry>
         <term>
-	  <option>--pubkeyrsa</option> <replaceable>key</replaceable>
+	  <option>--pubkeyrsa <replaceable>key</replaceable></option>
 	</term>
         <listitem>
           <para>
@@ -2391,12 +2391,10 @@
       user.</para>
 
       <para>
-	For testing purposes, the options
-	<option>--xauthuser</option>
-	<replaceable>user</replaceable>
-	<option>--xauthpass</option>
-	<replaceable>pass</replaceable> may be be given prior to the
-	<option>--initiate</option> to provide responses to the
+	For testing purposes, the options <option>--xauthuser
+	<replaceable>user</replaceable></option> <option>--xauthpass
+	<replaceable>pass</replaceable></option> may be be given prior
+	to the <option>--initiate</option> to provide responses to the
 	username and password prompts.
       </para>
     </refsect2>
@@ -2842,7 +2840,7 @@
 
         <varlistentry>
           <term>
-	    <option>--interface</option> <replaceable>interfacename</replaceable>
+	    <option>--interface <replaceable>interfacename</replaceable></option>
 	  </term>
           <listitem>
             <para>
@@ -2859,7 +2857,7 @@
 
         <varlistentry>
           <term>
-	    <option>--ikeport</option> <replaceable>port-number</replaceable>
+	    <option>--ikeport <replaceable>port-number</replaceable></option>
 	  </term>
           <listitem>
             <para>
@@ -2871,7 +2869,7 @@
 
         <varlistentry>
           <term>
-	    <option>--secretsfile</option> <replaceable>file</replaceable>
+	    <option>--secretsfile <filename><replaceable>file</replaceable></filename></option>
 	  </term>
           <listitem>
             <para>

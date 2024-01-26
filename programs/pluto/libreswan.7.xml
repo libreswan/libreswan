@@ -1195,7 +1195,7 @@
 
         <varlistentry>
           <term>
-	    <option>--interface</option> <replaceable>interfacename</replaceable>
+	    <option>--interface <replaceable>interfacename</replaceable></option>
 	  </term>
           <listitem>
             <para>
@@ -1212,7 +1212,7 @@
 
         <varlistentry>
           <term>
-	    <option>--ikeport</option> <replaceable>port-number</replaceable>
+	    <option>--ikeport <replaceable>port-number</replaceable></option>
 	  </term>
           <listitem>
             <para>
@@ -1224,7 +1224,7 @@
 
         <varlistentry>
           <term>
-	    <option>--rundir</option> <replaceable>@@RUNDIR@@</replaceable>
+	    <option>--rundir <replaceable>@@RUNDIR@@</replaceable></option>
 	  </term>
           <listitem>
             <para>
@@ -1239,7 +1239,7 @@
 
         <varlistentry>
           <term>
-	    <option>--secretsfile</option> <replaceable>file</replaceable>
+	    <option>--secretsfile <replaceable>file</replaceable></option>
 	  </term>
           <listitem>
             <para>

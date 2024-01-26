@@ -170,7 +170,7 @@
 	</varlistentry>
 	<varlistentry>
           <term>
-	    <option>--rundir</option> <replaceable>path</replaceable>
+	    <option>--rundir <filename><replaceable>path</replaceable></filename></option>
 	  </term>
           <listitem>
 	    <para>

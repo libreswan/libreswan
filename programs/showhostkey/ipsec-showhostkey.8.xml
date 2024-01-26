@@ -155,7 +155,7 @@
       <variablelist>
 	<varlistentry>
 	  <term>
-	    <option>--ckaid</option> <replaceable>ckaid</replaceable>
+	    <option>--ckaid <replaceable>ckaid</replaceable></option>
 	  </term>
 	  <listitem>
 	    <para>
@@ -166,7 +166,7 @@
 
 	<varlistentry>
 	  <term>
-	    <option>--rsaid</option> <replaceable>rsaid</replaceable>
+	    <option>--rsaid <replaceable>rsaid</replaceable></option>
 	  </term>
 	  <listitem>
 	    <para>

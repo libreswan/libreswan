@@ -64,7 +64,7 @@
 
 	<varlistentry>
 	  <term>
-	    <option>--nssdir</option> <replaceable>@@IPSEC_NSSDIR@@</replaceable>
+	    <option>--nssdir <filename><replaceable>@@IPSEC_NSSDIR@@</replaceable></filename></option>
 	  </term>
 	  <listitem>
 	    <para>
@@ -76,7 +76,9 @@
 	</varlistentry>
 
 	<varlistentry>
-	  <term><option>--password</option> <replaceable>password</replaceable></term>
+	  <term>
+	    <option>--password <replaceable>password</replaceable></option>
+	  </term>
 	  <listitem>
 	    <para>
 	      The <option>--password</option> option specifies a
@@ -88,7 +90,7 @@
 
 	<varlistentry>
 	  <term>
-	    <option>--bits</option> <replaceable>bits</replaceable>
+	    <option>--bits <replaceable>bits</replaceable></option>
 	  </term>
 	  <listitem>
 	    <para>
@@ -102,7 +104,7 @@
 
 	<varlistentry>
 	  <term>
-	    <option>--curve</option> <replaceable>curve</replaceable>
+	    <option>--curve <replaceable>curve</replaceable></option>
 	  </term>
 	  <listitem>
 	    <para>
@@ -116,7 +118,7 @@
 
 	<varlistentry>
 	  <term>
-	    <option>--keytype</option> <replaceable>rsa|ecdsa</replaceable>
+	    <option>--keytype <replaceable>rsa|ecdsa</replaceable></option>
 	  </term>
 	  <listitem>
 	    <para>
@@ -130,7 +132,7 @@
 
 	<varlistentry>
 	  <term>
-	    <option>--seeddev</option> <replaceable>device</replaceable>
+	    <option>--seeddev <replaceable>device</replaceable></option>
 	  </term>
 	  <listitem>
 	    <para>
