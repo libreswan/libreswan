@@ -53,9 +53,7 @@ west #
  ipsec whack --impair drop_outbound:1
 IMPAIR: will drop outbound message 1
 west #
- ipsec whack --asynchronous --impair trigger_v2_rekey:1
-"labeled"[1] 192.1.2.23 #1: deleting existing REKEY event
-"labeled"[1] 192.1.2.23 #1: calling REKEY event handler
+ ipsec whack --rekey-ike --asynchronous --name labeled
 west #
  ../../guestbin/wait-for.sh --match REKEY_IKE_I1 -- ipsec whack --showstates
 #2: "labeled"[1] 192.1.2.23:500 STATE_V2_REKEY_IKE_I1 (sent CREATE_CHILD_SA request to rekey IKE SA); idle;
