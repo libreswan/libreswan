@@ -1,0 +1,88 @@
+/testing/guestbin/swan-prep --46 --nokey
+Creating empty NSS database
+west #
+ ip addr show eth0 | grep global | sort
+    inet 192.0.1.254/24 scope global eth0
+    inet6 2001:db8:0:1::254/64 scope global
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec whack --impair suppress_retransmits
+west #
+ ipsec add west-cuckold
+"west-cuckold": added IKEv2 connection
+west #
+ ipsec add west-cuckoo
+"west-cuckoo": added IKEv2 connection
+west #
+ echo "initdone"
+initdone
+west #
+ # bring up the IKE SA
+west #
+ ipsec up west-cuckold
+"west-cuckold" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west-cuckold" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"west-cuckold" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"west-cuckold" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"west-cuckold" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+west #
+ # stall the Child SA's crypto
+west #
+ ipsec whack --impair helper_thread_delay:5
+west #
+ ipsec up west-cuckoo --asynchronous
+"west-cuckoo" #3: initiating Child SA using IKE SA #1
+"west-cuckoo" #3: IMPAIR: job 3 helper 0 #3 submit_v2_CREATE_CHILD_SA_new_child (dh): helper is pausing for 5 seconds
+west #
+ ipsec whack --impair helper_thread_delay:no
+west #
+ # start the delete but impair the message leaving the delete hanging
+west #
+ ipsec whack --impair block_outbound
+IMPAIR: recording all outbound messages
+IMPAIR: block all outbound messages: no -> yes
+west #
+ ipsec whack --down-ike --name west-cuckold --asynchronous
+west #
+ ../../guestbin/wait-for-pluto.sh '#1: IMPAIR: blocking outbound message 1'
+"west-cuckold" #1: IMPAIR: blocking outbound message 1
+west #
+ ipsec whack --no-impair block_outbound
+IMPAIR: block all outbound messages: yes -> no
+west #
+ # wait for the child SA's stalled crypto to complete and then get
+west #
+ # added to the IKE SA's message queue
+west #
+ ../../guestbin/wait-for-pluto.sh '#3: adding CREATE_CHILD_SA request'
+"west-cuckoo" #3: adding CREATE_CHILD_SA request to IKE SA #1's message queue
+west #
+ # Now release the delete! The IKE SA and its child will die but ...
+west #
+ ipsec whack --impair drip_outbound:1
+IMPAIR: start processing outbound drip packet 1
+IMPAIR: stop processing outbound drip packet 1
+west #
+ # The second child will revive itself using its own IKE SA
+west #
+ ../../guestbin/wait-for-pluto.sh '#4: initiator established IKE SA'
+"west-cuckoo" #4: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+west #
+ ../../guestbin/wait-for-pluto.sh '#5: initiator established Child SA using #4'
+"west-cuckoo" #5: initiator established Child SA using #4; IPsec tunnel [192.0.3.0/24===192.0.20.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+west #
+ # expect second child
+west #
+ ipsec trafficstatus
+#5: "west-cuckoo", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+west #
+ # non-zero counts confirm encrypted traffic flowing
+west #
+ ipsec trafficstatus
+#5: "west-cuckoo", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+west #
+ 

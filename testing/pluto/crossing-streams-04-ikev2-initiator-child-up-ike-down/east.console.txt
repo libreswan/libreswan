@@ -1,0 +1,27 @@
+/testing/guestbin/swan-prep --46 --nokey
+Creating empty NSS database
+east #
+ ../../guestbin/ifconfig.sh eth0 add 192.0.20.254/24
+    inet 192.0.20.254/24 scope global eth0
+east #
+ ../../guestbin/ifconfig.sh eth0 add 2001:db8:0:20::254/64
+    inet6 2001:db8:0:20::254/64 scope global 
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec auto --add east
+"east/0x1": added IKEv2 connection
+"east/0x2": added IKEv2 connection
+east #
+ echo "initdone"
+initdone
+east #
+ # non-zero counts confirm encrypted traffic flowing
+east #
+ ipsec trafficstatus
+#4: "east/0x2", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@west'
+east #
+ 

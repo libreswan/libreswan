@@ -1,0 +1,71 @@
+/testing/guestbin/swan-prep --46 --nokey
+Creating empty NSS database
+east #
+ ../../guestbin/ifconfig.sh eth0 add 192.0.20.254/24
+    inet 192.0.20.254/24 scope global eth0
+east #
+ ../../guestbin/ifconfig.sh eth0 add 2001:db8:0:20::254/64
+    inet6 2001:db8:0:20::254/64 scope global 
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec whack --impair suppress_retransmits
+east #
+ ipsec auto --add east
+"east/0x1": added IKEv2 connection
+"east/0x2": added IKEv2 connection
+east #
+ echo "initdone"
+initdone
+east #
+ # On EAST, block inbound messages, specifically the IKE SA rekey
+east #
+ # request that is about to be sent.
+east #
+ ipsec whack --impair block_inbound
+IMPAIR: recording all inbound messages
+IMPAIR: block all inbound messages: no -> yes
+east #
+ # back to WEST
+east #
+ # Wait for WEST's rekey request to arrive (and be blocked).
+east #
+ ../../guestbin/wait-for-pluto.sh 'IMPAIR: blocking inbound message 1'
+packet from 192.1.2.45:500: IMPAIR: blocking inbound message 1
+east #
+ ipsec whack --no-impair block_inbound
+IMPAIR: block all inbound messages: yes -> no
+east #
+ # now get the request onto the crypto queue
+east #
+ ipsec whack --impair helper_thread_delay:5
+east #
+ date
+Tue Jan 30 07:50:27 AM EST 2024
+east #
+ ipsec whack --impair drip_inbound:1
+IMPAIR: start processing inbound drip packet 1
+IMPAIR: stop processing inbound drip packet 1
+east #
+ date
+Tue Jan 30 07:50:27 AM EST 2024
+east #
+ ../../guestbin/wait-for-pluto.sh '#1: IMPAIR: job 3 helper 0 #1 process_v2_CREATE_CHILD_SA_rekey_ike_request '
+"east/0x2" #1: IMPAIR: job 3 helper 0 #1 process_v2_CREATE_CHILD_SA_rekey_ike_request (dh): helper is pausing for 5 seconds
+east #
+ ipsec whack --impair helper_thread_delay:no
+east #
+ # with the request in limbo, initiate a new child sa exchange
+east #
+ ipsec up east/0x2
+"east/0x2" #4: initiating Child SA using IKE SA #1
+"east/0x2" #4: connection is already unrouted HOLD
+"east/0x2" #4: sent CREATE_CHILD_SA request for new IPsec SA
+"east/0x2" #4: sent CREATE_CHILD_SA request for new IPsec SA
+"east/0x2" #1: ISAKMP_v2_CREATE_CHILD_SA message response with Message ID 0 has no matching SA
+"east/0x2" #1: STATE_V2_ESTABLISHED_IKE_SA: 60 second timeout exceeded after 0 retransmits.  No response (or no acceptable response) to our IKEv2 message
+"east/0x2" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and NOT sending notification
+>>>>>>>>>> TIMEOUT while running command east# ipsec up east/0x2 <<<<<<<<<<

@@ -1,0 +1,12 @@
+The second IKEv2 child is getting ready to initiate, the IKE SA initiates a delete.
+
+Something like the following:
+
+- cuckoo finds cuckold's IKE SA is viable parent
+- cuckoo starts crypto (made to sleep 5)
+- cuckold's IKE SA told to go down
+- cuckold's IKE SA no longer viable parent
+- cuckold sends delete IKE SA which is stalled
+- cuckoo finishes crypto
+- cuckoo finds cuckold's IKE SA no longer viable and reschedules
+- cuckoo brings up its own IKE SA + Child SA
