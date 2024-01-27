@@ -19,6 +19,7 @@
 #ifndef _PLUTO_STATS_H
 #define _PLUTO_STATS_H
 
+enum sa_type;
 enum delete_reason;
 
 struct pluto_stat {

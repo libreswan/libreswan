@@ -73,13 +73,6 @@ typedef unsigned long so_serial_t;
 #define pri_so(SO) (SO)
 #define jam_so(BUF, SO) jam(BUF, PRI_SO, SO)
 
-enum sa_type {
-#define SA_TYPE_FLOOR 0
-	IKE_SA = SA_TYPE_FLOOR,
-	CHILD_SA,
-#define SA_TYPE_ROOF (CHILD_SA+1)
-};
-
 typedef uint32_t msgid_t;      /* Host byte ordered */
 #define PRI_MSGID "%"PRIu32
 #define v1_MAINMODE_MSGID  ((msgid_t) 0)		/* network and host order */

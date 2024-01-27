@@ -47,6 +47,7 @@ OBJS += encap_mode_names.o
 OBJS += encap_proto_names.o
 OBJS += initiated_by_names.o
 OBJS += connection_owner.o
+OBJS += sa_type.o
 
 OBJS += constants.o \
 	id.o \

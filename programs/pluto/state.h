@@ -48,7 +48,7 @@
 #include "ip_endpoint.h"
 #include "ip_selector.h"
 #include "kernel_mode.h"
-
+#include "sa_type.h"
 #include "quirks.h"
 #include "list_entry.h"
 #include "retransmit.h"
