@@ -34,7 +34,7 @@ west #
  ipsec whack --trafficstatus
 #2: "west", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
- ipsec whack --rekey-ipsec --name west --async
+ ipsec whack --rekey-child --name west --async
 west #
  ../../guestbin/wait-for-pluto.sh '^".*#3: initiator rekeyed Child SA #2'
 "west" #3: initiator rekeyed Child SA #2 using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
@@ -65,7 +65,7 @@ west #
 west #
  ipsec whack --impair v2n_rekey_sa_protoid:0 --impair emitting
 west #
- ipsec whack --rekey-ipsec --name west --async
+ ipsec whack --rekey-child --name west --async
 west #
  ../../guestbin/wait-for-pluto.sh '^".*#6: CREATE_CHILD_SA failed'
 "west" #6: CREATE_CHILD_SA failed with error notification INVALID_SYNTAX
@@ -89,7 +89,7 @@ west #
 west #
  ipsec whack --impair v2n_rekey_sa_protoid:1 --impair emitting
 west #
- ipsec whack --rekey-ipsec --name west --async
+ ipsec whack --rekey-child --name west --async
 west #
  ../../guestbin/wait-for-pluto.sh '^".*#9: CREATE_CHILD_SA failed'
 "west" #9: CREATE_CHILD_SA failed with error notification INVALID_SYNTAX
@@ -113,7 +113,7 @@ west #
 west #
  ipsec whack --impair v2n_rekey_sa_protoid:4 --impair emitting
 west #
- ipsec whack --rekey-ipsec --name west --async
+ ipsec whack --rekey-child --name west --async
 west #
  ../../guestbin/wait-for-pluto.sh '^".*#12: CREATE_CHILD_SA failed'
 "west" #12: CREATE_CHILD_SA failed with error notification INVALID_SYNTAX

@@ -66,7 +66,7 @@ west #
 west #
  # test rekey
 west #
- ipsec whack --rekey-ipsec --name ipv4-psk-ikev2-transport
+ ipsec whack --rekey-child --name ipv4-psk-ikev2-transport
 "ipv4-psk-ikev2-transport" #3: initiating rekey to replace Child SA #2
 "ipv4-psk-ikev2-transport" #3: sent CREATE_CHILD_SA request to rekey IPsec SA
 "ipv4-psk-ikev2-transport" #3: initiator rekeyed Child SA #2 using #1; IPsec transport [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA2_256_128-MODP2048 DPD=passive}

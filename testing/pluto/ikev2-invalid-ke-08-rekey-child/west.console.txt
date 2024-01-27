@@ -43,7 +43,7 @@ west #
 west #
  # rekey CHILD SA
 west #
- ipsec whack --rekey-ipsec --name west
+ ipsec whack --rekey-child --name west
 "west" #3: initiating rekey to replace Child SA #2
 "west" #3: sent CREATE_CHILD_SA request to rekey IPsec SA
 ... should fail due to invalid ke ...

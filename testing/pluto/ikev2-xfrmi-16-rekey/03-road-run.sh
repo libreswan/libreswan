@@ -4,10 +4,10 @@ ipsec auto --up road
 ../../guestbin/tcpdump.sh --start -i ipsec1
 
 # rekey; detaches after old Child SA is gone
-ipsec whack --rekey-ipsec --name road
+ipsec whack --rekey-child --name road
 
 # rekey; detaches after old Child SA is gone
-ipsec whack --rekey-ipsec --name road
+ipsec whack --rekey-child --name road
 
 # give TCPDUMP some time before shutting it down; output should be
 # empty as only IKE packets were sent

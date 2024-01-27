@@ -32,7 +32,7 @@ tcpdump started
 road #
  # rekey; detaches after old Child SA is gone
 road #
- ipsec whack --rekey-ipsec --name road
+ ipsec whack --rekey-child --name road
 "road" #3: initiating rekey to replace Child SA #2
 "road" #3: sent CREATE_CHILD_SA request to rekey IPsec SA
 "road" #3: initiator rekeyed Child SA #2 using #1; IPsec tunnel [192.1.3.209/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
@@ -41,7 +41,7 @@ road #
 road #
  # rekey; detaches after old Child SA is gone
 road #
- ipsec whack --rekey-ipsec --name road
+ ipsec whack --rekey-child --name road
 "road" #4: initiating rekey to replace Child SA #3
 "road" #4: sent CREATE_CHILD_SA request to rekey IPsec SA
 "road" #4: initiator rekeyed Child SA #3 using #1; IPsec tunnel [192.1.3.209/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}

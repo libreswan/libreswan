@@ -35,7 +35,7 @@ road #
  ipsec whack --trafficstatus
 #2: "road-east-x509-ipv4"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=192.0.2.100/32
 road #
- ipsec whack --rekey-ipsec --name road-east-x509-ipv4 --async
+ ipsec whack --rekey-child --name road-east-x509-ipv4 --async
 road #
  echo "sleep 40 seconds"
 sleep 40 seconds

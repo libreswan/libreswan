@@ -8,7 +8,7 @@ ipsec whack --rekey-ike --name rekey
 # is the error what we really want? Or would we want it to find the shared IKE SA? 
 ipsec whack --rekey-ike --name rekey2
 # rekey should not trigger IKE_SA_INIT exchanges but CREATE_CHIKD_SA exchanges
-ipsec whack --rekey-ipsec --name rekey1
-ipsec whack --rekey-ipsec --name rekey 
-ipsec whack --rekey-ipsec --name rekey2
+ipsec whack --rekey-child --name rekey1
+ipsec whack --rekey-child --name rekey 
+ipsec whack --rekey-child --name rekey2
 echo done

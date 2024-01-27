@@ -7,7 +7,7 @@ ipsec whack --trafficstatus
 echo "sleep 9"
 sleep 9
 # rekey CHILD SA
-ipsec whack --rekey-ipsec --name west
+ipsec whack --rekey-child --name west
 sleep 2
 # expect IKE #1 CHILD #3
 ipsec showstates

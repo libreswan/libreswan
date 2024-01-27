@@ -46,13 +46,13 @@ west #
 #1: "west-east/4x0":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
 #5: "west-east/4x0":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
 west #
- ipsec whack --rekey-ipsec --name west-east/1x0
+ ipsec whack --rekey-child --name west-east/1x0
 west #
- ipsec whack --rekey-ipsec --name west-east/2x0
+ ipsec whack --rekey-child --name west-east/2x0
 west #
- ipsec whack --rekey-ipsec --name west-east/3x0
+ ipsec whack --rekey-child --name west-east/3x0
 west #
- ipsec whack --rekey-ipsec --name west-east/4x0
+ ipsec whack --rekey-child --name west-east/4x0
 west #
  sleep 45
 west #

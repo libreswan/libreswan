@@ -4,8 +4,8 @@ ipsec auto --up west
 ipsec trafficstatus
 
 # This rekey, #2->#3, should succeed
-ipsec whack --rekey-ipsec --name west
+ipsec whack --rekey-child --name west
 
 # This rekey, #3->#4, should fail.  The message is blocked by firewall
 # rules added in 02-west-init.sh
-ipsec whack --rekey-ipsec --name west
+ipsec whack --rekey-child --name west

@@ -50,7 +50,7 @@ west #
 west #
  # double check IKE messages still work by sending rekey request
 west #
- ipsec whack --rekey-ipsec --name west-east-ikev2
+ ipsec whack --rekey-child --name west-east-ikev2
 "west-east-ikev2" #3: initiating rekey to replace Child SA #2
 "west-east-ikev2" #3: sent CREATE_CHILD_SA request to rekey IPsec SA
 "west-east-ikev2" #3: initiator rekeyed Child SA #2 using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}

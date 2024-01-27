@@ -228,13 +228,13 @@ west #
  ipsec whack --rekey-ike --name 1
 no connection or alias named "1"'
 west #
- ipsec whack --rekey-ipsec --name 2
+ ipsec whack --rekey-child --name 2
 no connection or alias named "2"'
 west #
- ipsec whack --rekey-ipsec --name 3
+ ipsec whack --rekey-child --name 3
 no connection or alias named "3"'
 west #
- ipsec whack --rekey-ipsec --name 4
+ ipsec whack --rekey-child --name 4
 no connection or alias named "4"'
 west #
  echo done

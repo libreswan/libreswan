@@ -35,7 +35,7 @@ road #
 road #
  ipsec whack --impair rekey_initiate_supernet
 road #
- ipsec whack --rekey-ipsec --name road-east-x509-ipv4 --async
+ ipsec whack --rekey-child --name road-east-x509-ipv4 --async
 road #
  echo "sleep 40 seconds"
 sleep 40 seconds

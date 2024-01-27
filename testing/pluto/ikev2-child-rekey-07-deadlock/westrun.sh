@@ -2,16 +2,16 @@
 ipsec auto --up west-east
 
 # CHILD #2->#6
-ipsec whack --rekey-ipsec --name west-east/1x0 --async
+ipsec whack --rekey-child --name west-east/1x0 --async
 
 # CHILD #3->#7
-ipsec whack --rekey-ipsec --name west-east/2x0 --async
+ipsec whack --rekey-child --name west-east/2x0 --async
 
 # CHILD #4->#8
-ipsec whack --rekey-ipsec --name west-east/3x0 --async
+ipsec whack --rekey-child --name west-east/3x0 --async
 
 # CHILD #5->#9
-ipsec whack --rekey-ipsec --name west-east/4x0 --async
+ipsec whack --rekey-child --name west-east/4x0 --async
 
 # state #1 in STATE_V2_ESTABLISHED_IKE_SA, and #6, #7, #8 and #9 in
 # STATE_V2_ESTABLISHED_CHILD_SA anything other state is a sign of

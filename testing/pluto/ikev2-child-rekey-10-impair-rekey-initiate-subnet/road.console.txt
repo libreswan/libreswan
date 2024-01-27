@@ -37,7 +37,7 @@ road #
 road #
  ipsec whack --impair rekey_initiate_subnet
 road #
- ipsec whack --rekey-ipsec --name road-east-x509-ipv4 --async
+ ipsec whack --rekey-child --name road-east-x509-ipv4 --async
 road #
  echo "sleep 40 seconds to let rekey happen and fail"
 sleep 40 seconds to let rekey happen and fail

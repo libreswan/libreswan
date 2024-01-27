@@ -43,7 +43,7 @@ west #
 west #
  # rekey CHILD SA
 west #
- ipsec whack --rekey-ipsec --name west
+ ipsec whack --rekey-child --name west
 "west" #3: initiating rekey to replace Child SA #2
 "west" #3: sent CREATE_CHILD_SA request to rekey IPsec SA
 "west" #3: initiator rekeyed Child SA #2 using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
@@ -77,7 +77,7 @@ up
 west #
  # rekey CHILD SA
 west #
- ipsec whack --rekey-ipsec --name west
+ ipsec whack --rekey-child --name west
 "west" #4: initiating rekey to replace Child SA #3
 "west" #4: sent CREATE_CHILD_SA request to rekey IPsec SA
 "west" #4: initiator rekeyed Child SA #3 using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}

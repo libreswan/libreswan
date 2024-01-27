@@ -25,8 +25,8 @@ ipsec showstates
 
 # now the fun begins
 ipsec whack --rekey-ike --name 1
-ipsec whack --rekey-ipsec --name 2
-ipsec whack --rekey-ipsec --name 3
-ipsec whack --rekey-ipsec --name 4
+ipsec whack --rekey-child --name 2
+ipsec whack --rekey-child --name 3
+ipsec whack --rekey-child --name 4
 
 echo done

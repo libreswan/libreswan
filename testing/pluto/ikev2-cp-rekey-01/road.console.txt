@@ -35,7 +35,7 @@ road #
  ipsec whack --trafficstatus
 #2: "eastnet-any"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east', lease=100.64.13.2/32
 road #
- ipsec whack --rekey-ipsec --name eastnet-any
+ ipsec whack --rekey-child --name eastnet-any
 "eastnet-any"[1] 192.1.2.23 #3: initiating rekey to replace Child SA #2
 "eastnet-any"[1] 192.1.2.23 #3: sent CREATE_CHILD_SA request to rekey IPsec SA
 "eastnet-any"[1] 192.1.2.23 #3: initiator rekeyed Child SA #2 using #1; IPsec tunnel [100.64.13.2/32===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
