@@ -49,7 +49,7 @@ west #
  # is the error what we really want? Or would we want it to find the shared IKE SA?
 west #
  ipsec whack --rekey-ike --name rekey2
-"rekey2": connection does not have IKE SA
+"rekey2": connection does not have an established IKE SA
 west #
  # rekey should not trigger IKE_SA_INIT exchanges but CREATE_CHIKD_SA exchanges
 west #

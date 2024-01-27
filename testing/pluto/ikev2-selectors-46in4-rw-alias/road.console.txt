@@ -121,7 +121,7 @@ road #
 #3: "road/2x2", type=ESP, add_time=1234567890, inBytes=104, outBytes=104, maxBytes=2^63B, id='@east'
 road #
  ipsec whack --rekey-ike --name road
-"road/2x2": connection does not have IKE SA
+"road/2x2": connection does not have an established IKE SA
 "road/1x1" #4: initiating rekey to replace IKE SA #1
 "road/1x1" #4: sent CREATE_CHILD_SA request to rekey IKE SA
 "road/1x1" #4: initiator rekeyed IKE SA #1 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
