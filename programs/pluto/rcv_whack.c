@@ -271,6 +271,46 @@ static void dbg_whack(struct show *s, const char *fmt, ...)
 }
 
 /*
+ *
+ */
+
+static void dispatch(const struct whack_message *const m, struct show *s,
+		     void (*op)(const struct whack_message *const m, struct show *s),
+		     const char *name,
+		     const char *fmt, ...)
+{
+	struct logger *logger = show_logger(s);
+	if (DBGP(DBG_BASE)) {
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+			jam_string(buf, "whack: ");
+			jam_string(buf, "start: ");
+			jam_string(buf, name);
+			jam_string(buf, ": ");
+			va_list ap;
+			va_start(ap, fmt);
+			jam_va_list(buf, fmt, ap);
+			va_end(ap);
+			jam(buf, " ("PRI_LOGGER")", pri_logger(logger));
+		}
+	}
+	op(m, s);
+	if (DBGP(DBG_BASE)) {
+		struct logger *logger = show_logger(s);
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+			jam_string(buf, "whack: ");
+			jam_string(buf, "stop: ");
+			jam_string(buf, name);
+			jam_string(buf, ": ");
+			va_list ap;
+			va_start(ap, fmt);
+			jam_va_list(buf, fmt, ap);
+			va_end(ap);
+			jam(buf, " ("PRI_LOGGER")", pri_logger(logger));
+		}
+	}
+}
+
+/*
  * handle a whack message.
  */
 
@@ -311,28 +351,11 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		dbg_whack(s, "impair: stop: %d impairments", m->impairments.len);
 	}
 
-	if (m->whack_rekey_ike) {
-		dbg_whack(s, "rekey_ike: start: '%s'", (m->name == NULL ? "<null>" : m->name));
-		whack_rekey_ike(m, s);
-		dbg_whack(s, "rekey_ike: stop: '%s'", (m->name == NULL ? "<null>" : m->name));
-	}
-
-	if (m->whack_rekey_child) {
-		dbg_whack(s, "rekey_child: start: '%s'", m->name == NULL ? "<null>" : m->name);
-		whack_rekey_child(m, s);
-		dbg_whack(s, "rekey_child: stop: '%s'", (m->name == NULL ? "<null>" : m->name));
-	}
-
-	if (m->whack_delete_ike) {
-		dbg_whack(s, "delete_ike: start: '%s'", (m->name == NULL ? "<null>" : m->name));
-		whack_delete_ike(m, s);
-		dbg_whack(s, "delete_ike: stop: '%s'", (m->name == NULL ? "<null>" : m->name));
-	}
-
-	if (m->whack_delete_child) {
-		dbg_whack(s, "delete_child: start: '%s'", m->name == NULL ? "<null>" : m->name);
-		whack_delete_child(m, s);
-		dbg_whack(s, "delete_child: stop: '%s'", (m->name == NULL ? "<null>" : m->name));
+	if (m->whack_sa) {
+		dispatch(m, s, whack_sa, "whack_sa", "%s %s %s",
+			 whack_sa_name(m->whack_sa),
+			 enum_name(&sa_type_names, m->whack_sa_type),
+			 (m->name == NULL ? "<null>" : m->name));
 	}
 
 	/*

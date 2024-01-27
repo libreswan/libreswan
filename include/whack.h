@@ -39,6 +39,7 @@
 #include "ip_cidr.h"
 #include "authby.h"
 #include "encap_proto.h"
+#include "sa_type.h"
 
 #ifndef DEFAULT_CTL_SOCKET
 # define DEFAULT_CTL_SOCKET IPSEC_RUNDIR "/pluto.ctl"
@@ -366,11 +367,17 @@ struct whack_message {
 	bool whack_deletestate;
 	long unsigned int whack_deletestateno;
 
-	/* rekey/delete SA now */
-	bool whack_rekey_ike;		/* initiate rekey of latest IKE SA */
-	bool whack_rekey_child;		/* initiate rekey of latest Child SA */
-	bool whack_delete_ike;		/* initiate delete of the latest IKE SA */
-	bool whack_delete_child;	/* initiate delete of latest Child SA */
+	/* initiate rekey/delete/down SA now */
+	enum whack_sa {
+		WHACK_REKEY_SA = 1,
+		WHACK_DELETE_SA,
+		WHACK_DOWN_SA,
+	} whack_sa;
+#define whack_sa_name(OP) ((OP) == WHACK_REKEY_SA ? "rekey" :	\
+			   (OP) == WHACK_DELETE_SA ? "delete" :	\
+			   (OP) == WHACK_DOWN_SA ? "down" :	\
+			   "???")
+	enum sa_type whack_sa_type;
 
 	/* for WHACK_NFLOG_GROUP: */
 	long unsigned int whack_nfloggroup;

@@ -359,6 +359,8 @@
         <arg choice="plain">--rekey-child</arg>
         <arg choice="plain">--delete-ike</arg>
         <arg choice="plain">--delete-child</arg>
+        <arg choice="plain">--down-ike</arg>
+        <arg choice="plain">--down-child</arg>
       </group>
       <arg choice="plain">--name <replaceable>connection</replaceable></arg>
       <arg choice="opt">--asynchronous</arg>
@@ -1919,15 +1921,6 @@
 	  <option>--name <replaceable>connection</replaceable></option>
 	  <option>--asynchronous</option>
 	</term>
-        <listitem>
-          <para>
-	    Initiate a rekey of the connection's established IKE SA.
-	    It does not affect the Child SA.
-	  </para>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry>
         <term>
 	  <option>--rekey-child</option>
 	  <option>--name <replaceable>connection</replaceable></option>
@@ -1935,8 +1928,8 @@
 	</term>
         <listitem>
           <para>
-	    Initiate a rekey of the connection's established Child SA.
-	    It does not affect the connection's IKE SA.
+	    Initiate a rekey of the connection's established IKE or
+	    Child SA.
 	  </para>
         </listitem>
       </varlistentry>
@@ -1947,24 +1940,43 @@
 	  <option>--name <replaceable>connection</replaceable></option>
 	  <option>--asynchronous</option>
 	</term>
-        <listitem>
-          <para>
-	    Initiate a delete of the connection's established IKE SA.
-	    It does not affect the Child SA.
-	  </para>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry>
         <term>
 	  <option>--delete-child</option>
 	  <option>--name <replaceable>connection</replaceable></option>
 	  <option>--asynchronous</option>
 	</term>
+        <term>
+	  <option>--down-ike</option>
+	  <option>--name <replaceable>connection</replaceable></option>
+	  <option>--asynchronous</option>
+	</term>
+        <term>
+	  <option>--down-child</option>
+	  <option>--name <replaceable>connection</replaceable></option>
+	  <option>--asynchronous</option>
+	</term>
         <listitem>
           <para>
-	    Initiate a delete of the connection's established Child SA.
-	    It does not affect the connection's IKE SA.
+	    Initiate a delete of the connection's established IKE or
+	    Child SA.  For <option>--down-ike</option> and
+	    <option>--down-child</option> first clear connection's UP
+	    policy.
+	    <itemizedlist>
+	      <listitem>
+		<para>
+		  deleting an IKE SA implicitly deletes all the IKE
+		  SA's children (IKEv2)
+		</para>
+	      </listitem>
+	      <listitem>
+		<para>
+		  any affected connection with policy UP will try to
+		  revive (for <option>--down-ike</option> and
+		  <option>--down-child</option>, since the
+		  connection's UP policy was cleared, will not revive)
+		</para>
+	      </listitem>
+	    </itemizedlist>
 	  </para>
         </listitem>
       </varlistentry>

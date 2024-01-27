@@ -376,6 +376,8 @@ enum option_enums {
 	OPT_REKEY_CHILD,
 	OPT_DELETE_IKE,
 	OPT_DELETE_CHILD,
+	OPT_DOWN_IKE,
+	OPT_DOWN_CHILD,
 
 	OPT_REDIRECT_TO,	/* either active or for connection */
 	OPT_GLOBAL_REDIRECT,
@@ -740,6 +742,9 @@ static const struct option long_opts[] = {
 	{ "rekey-child", no_argument, NULL, OPT_REKEY_CHILD },
 	{ "delete-ike", no_argument, NULL, OPT_DELETE_IKE },
 	{ "delete-child", no_argument, NULL, OPT_DELETE_CHILD },
+	{ "down-ike", no_argument, NULL, OPT_DOWN_IKE },
+	{ "down-child", no_argument, NULL, OPT_DOWN_CHILD },
+
 	/* list options */
 
 	{ "utc", no_argument, NULL, LST_UTC },
@@ -1387,19 +1392,30 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_REKEY_IKE: /* --rekey-ike */
-			msg.whack_rekey_ike = true;
+			msg.whack_sa = WHACK_REKEY_SA;
+			msg.whack_sa_type = IKE_SA;
 			continue;
-
 		case OPT_REKEY_CHILD: /* --rekey-child */
-			msg.whack_rekey_child = true;
+			msg.whack_sa = WHACK_REKEY_SA;
+			msg.whack_sa_type = CHILD_SA;
 			continue;
 
 		case OPT_DELETE_IKE: /* --delete-ike */
-			msg.whack_delete_ike = true;
+			msg.whack_sa = WHACK_DELETE_SA;
+			msg.whack_sa_type = IKE_SA;
+			continue;
+		case OPT_DELETE_CHILD: /* --delete-child */
+			msg.whack_sa = WHACK_DELETE_SA;
+			msg.whack_sa_type = CHILD_SA;
 			continue;
 
-		case OPT_DELETE_CHILD: /* --delete-child */
-			msg.whack_delete_child = true;
+		case OPT_DOWN_IKE: /* --down-ike */
+			msg.whack_sa = WHACK_DOWN_SA;
+			msg.whack_sa_type = IKE_SA;
+			continue;
+		case OPT_DOWN_CHILD: /* --down-child */
+			msg.whack_sa = WHACK_DOWN_SA;
+			msg.whack_sa_type = CHILD_SA;
 			continue;
 
 		case OPT_DELETE:	/* --delete */
@@ -2764,10 +2780,7 @@ int main(int argc, char **argv)
 	      msg.whack_purgeocsp ||
 	      msg.whack_seccomp_crashtest ||
 	      msg.whack_showstates ||
-	      msg.whack_rekey_ike ||
-	      msg.whack_rekey_child ||
-	      msg.whack_delete_ike ||
-	      msg.whack_delete_child ||
+	      msg.whack_sa ||
 	      msg.whack_listpubkeys ||
 	      msg.whack_checkpubkeys)) {
 		diagw("no action specified; try --help for hints");

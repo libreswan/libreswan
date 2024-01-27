@@ -27,7 +27,7 @@ static const char *sa_type_name[] = {
 
 const struct enum_names sa_type_names = {
 	SA_TYPE_FLOOR,
-	SA_TYPE_ROOF,
+	SA_TYPE_ROOF-1,
 	ARRAY_REF(sa_type_name),
 	.en_prefix = NULL,
 };

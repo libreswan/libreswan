@@ -30,36 +30,69 @@
 #include "whack_connection.h"
 #include "ikev2_delete.h"
 
-static struct state *connection_state(const struct whack_message *m,
-				      struct show *s,
-				      struct connection *c,
-				      enum sa_type sa_type,
-				      so_serial_t so)
+static bool whack_rekey_sa(struct state *st)
+{
+	event_force(EVENT_v2_REKEY, st);
+	return true; /* the connection counts */
+}
+
+static bool whack_delete_sa(struct state *st)
+{
+	switch (st->st_sa_type_when_established) {
+	case IKE_SA:
+		submit_v2_delete_exchange(pexpect_ike_sa(st), NULL);
+		return true; /* the connection counts */
+	case CHILD_SA:
+		submit_v2_delete_exchange(ike_sa(st, HERE), pexpect_child_sa(st));
+		return true; /* the connection counts */
+	}
+	bad_case(st->st_sa_type_when_established);
+}
+
+static unsigned whack_connection_sa(const struct whack_message *m,
+				    struct show *s,
+				    struct connection *c)
 {
 	struct logger *logger = show_logger(s);
 
-	if (!can_have_sa(c, sa_type)) {
+	if (!can_have_sa(c, m->whack_sa_type)) {
 		/* silently skip */
-		connection_buf cb;
-		ldbg(logger, "skipping non-%s connection "PRI_CONNECTION,
-		     connection_sa_name(c, sa_type),
-		     pri_connection(c, &cb));
-		return NULL; /* the connection doesn't count */
+		connection_attach(c, logger);
+		ldbg(logger, "skipping non-%s connection",
+		     connection_sa_name(c, m->whack_sa_type));
+		connection_detach(c, logger);
+		return 0;
+	}
+
+	so_serial_t so = SOS_NOBODY;
+	switch (m->whack_sa_type) {
+	case IKE_SA: so = c->established_ike_sa; break;
+	case CHILD_SA: so = c->newest_ipsec_sa; break;
+	}
+
+	if (so == SOS_NOBODY) {
+		connection_attach(c, logger);
+		llog(RC_LOG, c->logger, "connection does not have an established %s",
+		     connection_sa_name(c, m->whack_sa_type));
+		connection_detach(c, logger);
+		return 0; /* the connection doesn't count */
 	}
 
 	struct state *st = state_by_serialno(so);
 	if (st == NULL) {
 		connection_attach(c, logger);
-		llog(RC_LOG, c->logger, "connection does not have %s",
-		     connection_sa_name(c, sa_type));
+		llog(RC_LOG, c->logger, "connection established %s "PRI_SO" missing",
+		     connection_sa_name(c, m->whack_sa_type),
+		     pri_so(so));
 		connection_detach(c, logger);
-		return NULL; /* the connection doesn't count */
+		return 0; /* the connection doesn't count */
 	}
 
 	if (!m->whack_async) {
 		state_attach(st, logger);
 	}
 
+	/* find and attach to the IKE SA */
 	if (IS_CHILD_SA(st)) {
 		struct child_sa *child = pexpect_child_sa(st);
 		struct ike_sa *parent = parent_sa(child);
@@ -68,120 +101,41 @@ static struct state *connection_state(const struct whack_message *m,
 				"%s has no %s",
 				st->st_connection->config->ike_info->child_sa_name,
 				st->st_connection->config->ike_info->parent_sa_name);
-			return NULL; /* the connection doesn't count */
+			return 0; /* the connection doesn't count */
 		}
 		if (!m->whack_async) {
 			state_attach(&parent->sa, logger);
 		}
 	}
 
-	return st;
+	switch (m->whack_sa) {
+	case WHACK_REKEY_SA:
+		return whack_rekey_sa(st);
+	case WHACK_DELETE_SA:
+		return whack_delete_sa(st);
+	case WHACK_DOWN_SA:
+		del_policy(c, policy.up);
+		return whack_delete_sa(st);
+	}
+
+	bad_case(m->whack_sa);
 }
 
-static void whack_connection_sa(const struct whack_message *m,
-				struct show *s,
-				const char *op,
-				whack_connection_visitor_cb *whack_connection_sa_visitor)
+
+void whack_sa(const struct whack_message *m, struct show *s)
 {
 	struct logger *logger = show_logger(s);
 	if (m->name == NULL) {
 		/* leave bread crumb */
 		llog(RC_FATAL, logger,
-		     "received command to %s connection, but did not receive the connection name", op);
+		     "received command to %s connection %s, but did not receive the connection name",
+		     whack_sa_name(m->whack_sa),
+		     enum_name(&sa_type_names, m->whack_sa_type));
 		return;
 	}
 
-	whack_connections_bottom_up(m, s, whack_connection_sa_visitor,
+	whack_connections_bottom_up(m, s, whack_connection_sa,
 				    (struct each) {
 					    .log_unknown_name = true,
 				    });
-}
-
-static bool whack_rekey_connection_sa(const struct whack_message *m,
-				      struct show *s,
-				      struct connection *c,
-				      enum sa_type sa_type,
-				      so_serial_t so)
-{
-	struct state *st = connection_state(m, s, c, sa_type, so);
-	if (st == NULL) {
-		/* already logged */
-		return false;
-	}
-
-	pdbg(st->logger, "rekeying");
-	event_force(EVENT_v2_REKEY, st);
-	return true; /* the connection counts */
-}
-
-static unsigned whack_rekey_connection_ike_sa(const struct whack_message *m,
-					      struct show *s,
-					      struct connection *c)
-{
-	return whack_rekey_connection_sa(m, s, c, IKE_SA, c->established_ike_sa);
-}
-
-static unsigned whack_rekey_connection_child_sa(const struct whack_message *m,
-						struct show *s,
-						struct connection *c)
-{
-	return whack_rekey_connection_sa(m, s, c, CHILD_SA, c->newest_ipsec_sa);
-}
-
-void whack_rekey_ike(const struct whack_message *m, struct show *s)
-{
-	whack_connection_sa(m, s, "rekey IKE SA", whack_rekey_connection_ike_sa);
-}
-
-void whack_rekey_child(const struct whack_message *m, struct show *s)
-{
-	whack_connection_sa(m, s, "rekey Child SA", whack_rekey_connection_child_sa);
-}
-
-static bool whack_delete_connection_sa(const struct whack_message *m,
-				       struct show *s,
-				       struct connection *c,
-				       enum sa_type sa_type,
-				       so_serial_t so)
-{
-	struct state *st = connection_state(m, s, c, sa_type, so);
-	if (st == NULL) {
-		/* already logged */
-		return false;
-	}
-
-	pdbg(st->logger, "deleting");
-	switch (sa_type) {
-	case IKE_SA:
-		submit_v2_delete_exchange(pexpect_ike_sa(st), NULL);
-		return true; /* the connection counts */
-	case CHILD_SA:
-		submit_v2_delete_exchange(ike_sa(st, HERE), pexpect_child_sa(st));
-		return true; /* the connection counts */
-	}
-	bad_case(sa_type);
-}
-
-static unsigned whack_delete_connection_ike_sa(const struct whack_message *m,
-					      struct show *s,
-					      struct connection *c)
-{
-	return whack_delete_connection_sa(m, s, c, IKE_SA, c->established_ike_sa);
-}
-
-static unsigned whack_delete_connection_child_sa(const struct whack_message *m,
-						struct show *s,
-						struct connection *c)
-{
-	return whack_delete_connection_sa(m, s, c, CHILD_SA, c->newest_ipsec_sa);
-}
-
-void whack_delete_ike(const struct whack_message *m, struct show *s)
-{
-	whack_connection_sa(m, s, "delete IKE SA", whack_delete_connection_ike_sa);
-}
-
-void whack_delete_child(const struct whack_message *m, struct show *s)
-{
-	whack_connection_sa(m, s, "delete Child SA", whack_delete_connection_child_sa);
 }

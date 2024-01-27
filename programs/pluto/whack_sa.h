@@ -26,9 +26,6 @@
 struct whack_message;
 struct show;
 
-void whack_rekey_ike(const struct whack_message *m, struct show *s);
-void whack_rekey_child(const struct whack_message *m, struct show *s);
-void whack_delete_ike(const struct whack_message *m, struct show *s);
-void whack_delete_child(const struct whack_message *m, struct show *s);
+void whack_sa(const struct whack_message *m, struct show *s);
 
 #endif
