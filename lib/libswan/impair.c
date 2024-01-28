@@ -251,21 +251,24 @@ struct impairment impairments[] = {
 	  "drop the N'th outbound message", "message number"),
 
 	A("block_inbound", IMPAIR_MESSAGE_BLOCK, IMPAIR_INBOUND_MESSAGE,
-	  "block all incoming message", NULL),
+	  "block all inbound messages", NULL),
 	A("block_outbound", IMPAIR_MESSAGE_BLOCK, IMPAIR_OUTBOUND_MESSAGE,
-	  "block all outgoing message", NULL),
+	  "block all outbound messages", NULL),
 
 	A("drip_inbound", IMPAIR_MESSAGE_DRIP, IMPAIR_INBOUND_MESSAGE,
 	  "drip N'th inbound message", "message number"),
 	A("drip_outbound", IMPAIR_MESSAGE_DRIP, IMPAIR_OUTBOUND_MESSAGE,
 	  "drip N'th outbound message", "message number"),
 
-	A("replay_backward", IMPAIR_MESSAGE_REPLAY_BACKWARD, IMPAIR_INBOUND_MESSAGE,
-	  "replay all earlier inbound packets new-to-old", NULL),
-	A("replay_duplicates", IMPAIR_MESSAGE_REPLAY_DUPLICATES, IMPAIR_INBOUND_MESSAGE,
+	A("duplicate_inbound", IMPAIR_MESSAGE_DUPLICATE, IMPAIR_INBOUND_MESSAGE,
 	  "duplicate each inbound packet", NULL),
-	A("replay_forward", IMPAIR_MESSAGE_REPLAY_FORWARD, IMPAIR_INBOUND_MESSAGE,
+	A("duplicate_outbound", IMPAIR_MESSAGE_DUPLICATE, IMPAIR_OUTBOUND_MESSAGE,
+	  "duplicate each outbound packet", NULL),
+
+	A("replay_inbound", IMPAIR_MESSAGE_REPLAY, IMPAIR_INBOUND_MESSAGE,
 	  "replay all inbound packets old-to-new", NULL),
+	A("replay_outbound", IMPAIR_MESSAGE_REPLAY, IMPAIR_OUTBOUND_MESSAGE,
+	  "replay all outbound packets old-to-new", NULL),
 
 	/*
 	 * Mangle payloads.
@@ -849,9 +852,8 @@ bool process_impair(const struct whack_impair *wc,
 	case CALL_IMPAIR_MESSAGE_DROP:
 	case CALL_IMPAIR_MESSAGE_BLOCK:
 	case CALL_IMPAIR_MESSAGE_DRIP:
-	case CALL_IMPAIR_MESSAGE_REPLAY_DUPLICATES:
-	case CALL_IMPAIR_MESSAGE_REPLAY_FORWARD:
-	case CALL_IMPAIR_MESSAGE_REPLAY_BACKWARD:
+	case CALL_IMPAIR_MESSAGE_DUPLICATE:
+	case CALL_IMPAIR_MESSAGE_REPLAY:
 		if (action == NULL) {
 			llog(RC_LOG|DEBUG_STREAM, logger,
 				    "no action for impairment %s", impairment->what);

@@ -9,7 +9,9 @@ east #
  ipsec auto --add westnet-eastnet-ikev2
 "westnet-eastnet-ikev2": added IKEv2 connection
 east #
- ipsec whack --impair replay_forward
+ ipsec whack --impair replay_inbound
+IMPAIR: recording all inbound messages
+IMPAIR: replay all inbound messages old-to-new: no -> yes
 east #
  echo "initdone"
 initdone

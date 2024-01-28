@@ -44,8 +44,6 @@ static void drip_outbound(const struct message *m, struct logger *logger);
  * Track messages to impair.
  */
 
-static bool impair_messages;
-
 struct message {
 	unsigned nr;
 	chunk_t body;
@@ -77,31 +75,31 @@ struct message_impairment {
 
 struct direction_impairment {
 	const char *name;
+	bool impaired;
+	bool block;
 	struct message_impairment *impairments;
 	struct list_head messages;
 	unsigned nr_messages;
-	bool replay_duplicates;
-	bool replay_forward;
-	bool replay_backward;
-	bool block;
+	bool duplicate;
+	bool replay;
 	void (*drip)(const struct message *m, struct logger *logger);
 };
 
-static struct direction_impairment inbound_impairments = {
+static struct direction_impairment inbound = {
 	.name = "inbound",
-	.messages = INIT_LIST_HEAD(&inbound_impairments.messages, &message_info),
+	.messages = INIT_LIST_HEAD(&inbound.messages, &message_info),
 	.drip = drip_inbound,
 };
 
-static struct direction_impairment outbound_impairments = {
+static struct direction_impairment outbound = {
 	.name = "outbound",
-	.messages = INIT_LIST_HEAD(&outbound_impairments.messages, &message_info),
+	.messages = INIT_LIST_HEAD(&outbound.messages, &message_info),
 	.drip = drip_outbound,
 };
 
 struct direction_impairment *const message_impairments[] = {
-	[IMPAIR_INBOUND_MESSAGE] = &inbound_impairments,
-	[IMPAIR_OUTBOUND_MESSAGE] = &outbound_impairments,
+	[IMPAIR_INBOUND_MESSAGE] = &inbound,
+	[IMPAIR_OUTBOUND_MESSAGE] = &outbound,
 };
 
 /*
@@ -141,7 +139,7 @@ static const struct message *save_message(struct direction_impairment *direction
 
 static const struct message *save_inbound(struct msg_digest *md)
 {
-	return save_message(&inbound_impairments,
+	return save_message(&inbound,
 			    pbs_in_all(&md->packet_pbs),
 			    /*inbound.md*/md,
 			    /*outbound.interface*/NULL,
@@ -152,7 +150,7 @@ static const struct message *save_outbound(shunk_t message,
 					   const struct iface_endpoint *interface,
 					   const ip_endpoint endpoint)
 {
-	return save_message(&outbound_impairments, message,
+	return save_message(&outbound, message,
 			    /*inbound.md*/NULL,
 			    interface, endpoint);
 }
@@ -183,39 +181,54 @@ void add_message_impairment(enum impair_action impair_action,
 			    bool whack_enable, unsigned whack_value,
 			    struct logger *logger)
 {
-	impair_messages = true; /* sticky */
 	PASSERT(logger, impair_direction < elemsof(message_impairments));
 	struct direction_impairment *direction = message_impairments[impair_direction];
+	PASSERT(logger, direction != NULL);
+
+	if (!direction->impaired) {
+		llog(RC_LOG, logger, "IMPAIR: recording all %s messages",
+		     direction->name);
+		direction->impaired = true; /* sticky */
+	}
+
 	switch (impair_action) {
-	case CALL_IMPAIR_MESSAGE_DROP:
-		break;
 	case CALL_IMPAIR_MESSAGE_BLOCK:
+		llog(RC_LOG, logger, "IMPAIR: block all %s messages: %s -> %s",
+		     direction->name,
+		     bool_str(direction->block),
+		     bool_str(whack_enable));
 		direction->block = whack_enable;
-		llog(RC_LOG, logger, "IMPAIR: block all %s messages: %s",
-		     direction->name, bool_str(direction->block));
 		return;
 	case CALL_IMPAIR_MESSAGE_DRIP:
 		impair_message_drip(direction, /*message_nr*/whack_value, logger);
 		return;
-	case CALL_IMPAIR_MESSAGE_REPLAY_DUPLICATES:
-		direction->replay_duplicates = whack_enable;
+	case CALL_IMPAIR_MESSAGE_DROP:
+	{
+		struct message_impairment *m = alloc_thing(struct message_impairment, "impair message");
+		m->message_nr = whack_value;
+		m->next = direction->impairments;
+		direction->impairments = m;
+		llog(RC_LOG, logger, "IMPAIR: will drop %s message %u",
+		     direction->name, /*message_nr*/whack_value);
+		break;
+	}
+	case CALL_IMPAIR_MESSAGE_DUPLICATE:
+		llog(RC_LOG, logger, "IMPAIR: replay duplicate of all %s messages: %s -> %s",
+		     direction->name,
+		     bool_str(direction->duplicate),
+		     bool_str(whack_enable));
+		direction->duplicate = whack_enable;
 		return;
-	case CALL_IMPAIR_MESSAGE_REPLAY_FORWARD:
-		direction->replay_forward = whack_enable;
-		return;
-	case CALL_IMPAIR_MESSAGE_REPLAY_BACKWARD:
-		direction->replay_backward = whack_enable;
+	case CALL_IMPAIR_MESSAGE_REPLAY:
+		llog(RC_LOG, logger, "IMPAIR: replay all %s messages old-to-new: %s -> %s",
+		     direction->name,
+		     bool_str(direction->replay),
+		     bool_str(whack_enable));
+		direction->replay = whack_enable;
 		return;
 	default:
 		bad_case(impair_action);
 	}
-	PASSERT(logger, direction != NULL);
-	llog(RC_LOG, logger, "IMPAIR: will drop %s message %u",
-	     direction->name, /*message_nr*/whack_value);
-	struct message_impairment *m = alloc_thing(struct message_impairment, "impair message");
-	m->message_nr = whack_value;
-	m->next = direction->impairments;
-	direction->impairments = m;
 }
 
 static bool impair_message(const struct message *message,
@@ -266,25 +279,17 @@ static bool impair_message(const struct message *message,
 		}
 	}
 
-	if (direction->replay_duplicates) {
+	if (direction->duplicate) {
 		/* MD is the most recent entry */
 		drip_message(direction, message, "original", logger);
 		drip_message(direction, message, "duplicate", logger);
 		impaired = true;
 	}
 
-	if (direction->replay_forward) {
+	if (direction->replay) {
 		struct message *m = NULL;
 		FOR_EACH_LIST_ENTRY_OLD2NEW(m, &direction->messages) {
 			drip_message(direction, m, "replay forward", logger);
-		}
-		impaired = true;
-	}
-
-	if (direction->replay_backward) {
-		struct message *m = NULL;
-		FOR_EACH_LIST_ENTRY_NEW2OLD(m, &direction->messages) {
-			drip_message(direction, m, "replay backward", logger);
 		}
 		impaired = true;
 	}
@@ -361,27 +366,28 @@ static void drip_outbound(const struct message *m, struct logger *logger)
 
 bool impair_inbound(struct msg_digest *md)
 {
-	if (!impair_messages) {
+	if (!inbound.impaired) {
 		return false;
 	}
 
 	const struct message *saved_message = save_inbound(md);
-	return impair_message(saved_message, &inbound_impairments, md->logger);
+	return impair_message(saved_message, &inbound, md->logger);
 }
 
 bool impair_outbound(const struct iface_endpoint *interface, shunk_t message,
 		     const ip_endpoint *endpoint, struct logger *logger)
 {
-	if (!impair_messages) {
+	if (!outbound.impaired) {
 		return false;
 	}
 
 	const struct message *saved_message = save_outbound(message, interface, *endpoint);
-	return impair_message(saved_message, &outbound_impairments, logger);
+	return impair_message(saved_message, &outbound, logger);
 }
 
 void shutdown_impair_message(struct logger *logger)
 {
-	free_direction(&inbound_impairments, logger);
-	free_direction(&outbound_impairments, logger);
+	FOR_EACH_ELEMENT(direction, message_impairments) {
+		free_direction((*direction), logger);
+	}
 }

@@ -156,9 +156,8 @@ static void whack_impair_action(enum impair_action impairment_action,
 	case CALL_IMPAIR_MESSAGE_DRIP:
 	case CALL_IMPAIR_MESSAGE_DROP:
 	case CALL_IMPAIR_MESSAGE_BLOCK:
-	case CALL_IMPAIR_MESSAGE_REPLAY_DUPLICATES:
-	case CALL_IMPAIR_MESSAGE_REPLAY_FORWARD:
-	case CALL_IMPAIR_MESSAGE_REPLAY_BACKWARD:
+	case CALL_IMPAIR_MESSAGE_DUPLICATE:
+	case CALL_IMPAIR_MESSAGE_REPLAY:
 		add_message_impairment(impairment_action,
 				       (enum impair_message_direction)impairment_param,
 				       whack_enable, whack_value, logger);
