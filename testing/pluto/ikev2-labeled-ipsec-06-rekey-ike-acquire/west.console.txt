@@ -51,6 +51,7 @@ west #
  # retransmit, scheduled for 10s, will unstick it.
 west #
  ipsec whack --impair drop_outbound:1
+IMPAIR: recording all outbound messages
 IMPAIR: will drop outbound message 1
 west #
  ipsec whack --rekey-ike --asynchronous --name labeled

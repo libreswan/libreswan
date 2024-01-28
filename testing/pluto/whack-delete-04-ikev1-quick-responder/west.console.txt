@@ -11,7 +11,8 @@ west #
  ipsec whack --impair suppress_retransmits
 west #
  ipsec whack --impair block_inbound:yes
-IMPAIR: block all inbound messages: yes
+IMPAIR: recording all inbound messages
+IMPAIR: block all inbound messages: no -> yes
 west #
  echo "initdone"
 initdone

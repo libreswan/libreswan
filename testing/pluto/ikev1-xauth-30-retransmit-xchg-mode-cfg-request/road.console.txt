@@ -12,6 +12,7 @@ road #
 done
 road #
  ipsec whack --impair drop_inbound:4
+IMPAIR: recording all inbound messages
 IMPAIR: will drop inbound message 4
 road #
  ipsec whack --xauthname 'use1' --xauthpass 'use1pass' --name xauth-road-eastnet --initiate

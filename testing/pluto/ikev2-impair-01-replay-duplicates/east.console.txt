@@ -5,7 +5,9 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec whack --impair replay_duplicates
+ ipsec whack --impair duplicate_inbound
+IMPAIR: recording all inbound messages
+IMPAIR: replay duplicate of all inbound messages: no -> yes
 east #
  ipsec auto --add westnet-eastnet
 "westnet-eastnet": added IKEv2 connection
