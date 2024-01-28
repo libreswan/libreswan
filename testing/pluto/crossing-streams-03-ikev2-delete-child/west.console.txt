@@ -1,0 +1,96 @@
+/testing/guestbin/swan-prep --4 --nokey
+Creating empty NSS database
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec whack --impair suppress_retransmits
+west #
+ ipsec add east-west
+"east-west": added IKEv2 connection
+west #
+ ipsec up east-west
+"east-west" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"east-west" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"east-west" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"east-west" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"east-west" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+west #
+ ../../guestbin/ping-once.sh --up 192.0.2.254
+up
+west #
+ ipsec trafficstatus
+#2: "east-west", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+west #
+ # stop all traffic, will be drip feeding
+west #
+ ipsec whack --impair block_inbound
+IMPAIR: recording all inbound messages
+IMPAIR: block all inbound messages: no -> yes
+west #
+ ipsec whack --impair block_outbound
+IMPAIR: recording all outbound messages
+IMPAIR: block all outbound messages: no -> yes
+west #
+ # initiate delete; but block it
+west #
+ ipsec whack --delete-child --name east-west --asynchronous
+west #
+ ../../guestbin/wait-for-pluto.sh 'IMPAIR: blocking outbound message 1'
+"east-west" #1: IMPAIR: blocking outbound message 1
+west #
+ # now do same on east
+west #
+ # wait for EAST's delete message to be blocked
+west #
+ ../../guestbin/wait-for-pluto.sh 'IMPAIR: blocking inbound message 1'
+packet from 192.1.2.23:500: IMPAIR: blocking inbound message 1
+west #
+ # stop further blocking so revival can occure
+west #
+ ipsec whack --no-impair block_inbound
+IMPAIR: block all inbound messages: yes -> no
+west #
+ ipsec whack --no-impair block_outbound
+IMPAIR: block all outbound messages: yes -> no
+west #
+ # Process EAST's delete request before letting WEST's request go out.
+west #
+ #
+west #
+ # For a Child SA delete, because WEST has a delete in flight, it will
+west #
+ # respond with an empty notify where as normally it would respond with
+west #
+ # inbound SPIs.
+west #
+ ../../guestbin/drip-inbound.sh 1 '#2: ESP traffic information'
+packet from 192.1.2.23:500: IMPAIR: blocking inbound message 1
+IMPAIR: start processing inbound drip packet 1
+IMPAIR: stop processing inbound drip packet 1
+"east-west" #2: ESP traffic information: in=84B out=84B
+west #
+ # Let WEST's delete message to EAST go out. Since EAST has completed
+west #
+ # it's delete exchange it should respond with an empty notify instead
+west #
+ # of outbound SPIs as they have been deleted.
+west #
+ ipsec whack --impair drip_outbound:1
+IMPAIR: start processing outbound drip packet 1
+IMPAIR: stop processing outbound drip packet 1
+west #
+ # revived
+west #
+ ../../guestbin/wait-for-pluto.sh '#3: initiator established Child SA using #1'
+"east-west" #3: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
+west #
+ ../../guestbin/ping-once.sh --up 192.0.2.254
+up
+west #
+ ipsec trafficstatus
+#3: "east-west", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+west #
+ 

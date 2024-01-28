@@ -1473,12 +1473,19 @@ kvmplutotest	ikev2-revival-through-nat-01-down	good
 kvmplutotest	ikev2-revival-through-nat-02-cleanfail	good	github/992,github/1427
 
 # crossing the stream race conditions
+
 kvmplutotest    crossing-streams-01-ikev2-github-1211	wip	github/1211
 kvmplutotest	crossing-streams-02-ikev2-conn-fight	wip	github/1231
+
+kvmplutotest	crossing-streams-03-ikev2-delete-ike		good	github/1587
+kvmplutotest	crossing-streams-03-ikev2-delete-child		good	github/1586
+kvmplutotest	crossing-streams-03-ikev2-delete-ike-vs-child	good
+
 kvmplutotest	crossing-streams-11-wewe-ikev2-permanent	wip
 kvmplutotest	crossing-streams-12-weew-ikev2-permanent	wip
 kvmplutotest	crossing-streams-13-ewew-ikev2-permanent	wip
 kvmplutotest	crossing-streams-14-ewwe-ikev2-permanent	wip
+
 kvmplutotest	ikev2-crossing-streams-01		wip	github:557
 kvmplutotest	ikev2-crossing-streams-02		good
 kvmplutotest	ikev2-crossing-streams-03-iface		wip	github:557

@@ -1,0 +1,12 @@
+peers delete the Child SA simultaneously
+
+- west initiates delete but its outbound message is blocked
+- east initiates delete
+- west blocks east's inbound delete
+
+At this point both ends think they are the one deleting.
+
+- west sends it's blocked delete request
+- west receives east's blocked delete request
+
+Since things are still +UP, revival should occure.

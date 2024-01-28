@@ -1,0 +1,20 @@
+/testing/guestbin/swan-prep --4 --nokey
+Creating empty NSS database
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec whack --impair suppress_retransmits
+east #
+ ipsec auto --add east-west
+"east-west": added IKEv2 connection
+east #
+ # initiate delete; WEST will block the message leaving EAST hanging
+east #
+ ipsec whack --delete-child --name east-west --asynchronous
+east #
+ # now back to WEST
+east #
+ 
