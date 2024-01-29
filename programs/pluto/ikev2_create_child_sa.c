@@ -557,45 +557,37 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 							   struct child_sa *larval_child,
 							   struct msg_digest *null_md UNUSED)
 {
-	struct connection *cc = larval_child->sa.st_connection;
 	pexpect(ike->sa.st_v2_msgid_windows.initiator.wip_sa == larval_child);
 
 	if (!ike->sa.st_viable_parent) {
 		/*
-		 * This return will delete the larval child.
+		 * The concern is that a Child SA assigned to a viable
+		 * IKE SA was allocated, sent off to do crypto, and
+		 * then queued waiting for an open window, has found
+		 * that the IKE SA is no longer viable.  For instance
+		 * due to the IKE SA initiating a delete or rekey.
 		 *
-		 * XXX: Several things might happen next:
+		 * However, the .st_viable_parent bit is not cleared
+		 * by these delete and rekey exchanges.  Instead it is
+		 * only cleared by the TERMINATE NOW code (<<ipsec
+		 * {delete,unroute} connection>>) to stop terminated
+		 * children trying to latch onto the dying IKE SA.
 		 *
-		 * - during the delete the revival code will schedule
-                 *   a replace for the connection
+		 * For an initiated rekey or delete, because the
+		 * message window size is 1, the outstanding exchange
+		 * blocks the initiation of this new exchange.  Then
+		 * when the response is received, the message queue is
+		 * either deleted or moved to the new IKE SA (if the
+		 * window were to be made bigger then this behaviour
+		 * would need to be made explicit).
 		 *
-		 *   I suspect not as the revival code is, mostly, all
-                 *   about IKE SAs.
-		 *
-		 * - the old Child SA rekey timer expires trigging a
-		 *   replace
-		 *
-		 *   Certainly plausible; assuming nothing else
-		 *   happens earlier.
-		 *
-		 * - the IKE SA is deleted causing the old child to
-		 *   also be replaced
-		 *
-		 *   Most likely?
-		 *
-		 * What most likely didn't help was scheduling a
-		 * replace event for the larval child; only to then
-		 * delete that child.  Presumably one of the above
-		 * saved the day.  That code was removed.
-		 *
-		 * XXX: "trying replace" is a policy thing so probably
-		 * not always valid.
+		 * XXX: It isn't clear what happens when a rekey
+		 * responder also wants to initiate a child exchange.
 		 */
 		llog_sa(RC_LOG_SERIOUS, larval_child,
 			"IKE SA #%lu no longer viable for rekey of Child SA #%lu",
 			ike->sa.st_serialno, larval_child->sa.st_v2_rekey_pred);
-		larval_child->sa.st_policy = child_sa_policy(cc); /* for pick_initiator */
-		delete_child_sa(&larval_child);
+		connection_delete_child(&larval_child, HERE);
 		ike->sa.st_v2_msgid_windows.initiator.wip_sa = larval_child = NULL;
 		return STF_OK; /* IKE */
 	}
@@ -751,7 +743,9 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_new_child(struct ike_sa *ike,
 						     bool detach_whack)
 {
 	/* share the log! */
-	state_attach(&ike->sa, cc->logger);
+	if (!detach_whack) {
+		state_attach(&ike->sa, cc->logger);
+	}
 
 	struct child_sa *larval_child = new_v2_child_sa(cc, ike, CHILD_SA,
 							SA_INITIATOR,
@@ -848,29 +842,33 @@ stf_status initiate_v2_CREATE_CHILD_SA_new_child_request(struct ike_sa *ike,
 
 	if (!ike->sa.st_viable_parent) {
 		/*
-		 * This return will delete the larval child.
+		 * The concern is that a Child SA assigned to a viable
+		 * IKE SA was allocated, sent off to do crypto, and
+		 * then queued waiting for an open window, has found
+		 * that the IKE SA is no longer viable.  For instance
+		 * due to the IKE SA initiating a delete or rekey.
 		 *
-		 * XXX: Several things might happen next:
+		 * However, the .st_viable_parent bit is not cleared
+		 * by these delete and rekey exchanges.  Instead it is
+		 * only cleared by the TERMINATE NOW code (<<ipsec
+		 * {delete,unroute} connection>>) to stop terminated
+		 * children trying to latch onto the dying IKE SA.
 		 *
-		 * - during the delete the revival code will schedule
-                 *   a replace for the connection
+		 * For an initiated rekey or delete, because the
+		 * message window size is 1, the outstanding exchange
+		 * blocks the initiation of this new exchange.  Then
+		 * when the response is received, the message queue is
+		 * either deleted or moved to the new IKE SA (if the
+		 * window were to be made bigger then this behaviour
+		 * would need to be made explicit).
 		 *
-		 *   I suspect not as the revival code is, mostly, all
-                 *   about IKE SAs.
-		 *
-		 * What most likely didn't help was scheduling a
-		 * replace event for the larval child; only to then
-		 * delete that child.  Presumably one of the above
-		 * saved the day.  That code was removed.
-		 *
-		 * XXX: "trying replace" is a policy thing so probably
-		 * not always valid.
+		 * XXX: It isn't clear what happens when a rekey
+		 * responder also wants to initiate a child exchange.
 		 */
 		llog_sa(RC_LOG_SERIOUS, larval_child,
 			"IKE SA #%lu no longer viable for initiating a Child SA",
 			ike->sa.st_serialno);
-		larval_child->sa.st_policy = child_sa_policy(larval_child->sa.st_connection); /* for pick_initiator */
-		delete_child_sa(&larval_child);
+		connection_delete_child(&larval_child, HERE);
 		ike->sa.st_v2_msgid_windows.initiator.wip_sa = larval_child = NULL;
 		return STF_OK; /* IKE */
 	}
