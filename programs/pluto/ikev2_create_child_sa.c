@@ -509,11 +509,11 @@ static void llog_v2_success_rekey_child_request(struct ike_sa *ike)
 	struct child_sa *larval = ike->sa.st_v2_msgid_windows.initiator.wip_sa;
 	if (larval != NULL) {
 #if 0
-		llog_sa(RC_NEW_V2_STATE + larval->sa.st_state->kind, larval,
+		llog_sa(RC_LOG, larval,
 			"sent CREATE_CHILD_SA request to rekey IPsec SA "PRI_SO" using IKE SA "PRI_SO,
 			pri_so(larval->sa.st_v2_rekey_pred), pri_so(ike->sa.st_serialno));
 #else
-		llog_sa(RC_NEW_V2_STATE + larval->sa.st_state->kind, larval,
+		llog_sa(RC_LOG, larval,
 			"sent CREATE_CHILD_SA request to rekey IPsec SA");
 #endif
 	} else {
@@ -796,11 +796,11 @@ static void llog_v2_success_new_child_request(struct ike_sa *ike)
 	struct child_sa *larval = ike->sa.st_v2_msgid_windows.initiator.wip_sa;
 	if (larval != NULL) {
 #if 0
-		llog_sa(RC_NEW_V2_STATE + larval->sa.st_state->kind, larval,
+		llog_sa(RC_LOG, larval,
 			"sent CREATE_CHILD_SA request for new IPsec SA using IKE SA "PRI_SO,
 			pri_so(ike->sa.st_serialno));
 #else
-		llog_sa(RC_NEW_V2_STATE + larval->sa.st_state->kind, larval,
+		llog_sa(RC_LOG, larval,
 			"sent CREATE_CHILD_SA request for new IPsec SA");
 #endif
 	} else {
@@ -1408,11 +1408,11 @@ static void llog_v2_success_rekey_ike_request(struct ike_sa *ike)
 	if (larval != NULL) {
 		pexpect(larval->sa.st_v2_rekey_pred == ike->sa.st_serialno);
 #if 0
-		llog_sa(RC_NEW_V2_STATE + larval->sa.st_state->kind, larval,
+		llog_sa(RC_LARVAL, larval,
 			"sent CREATE_CHILD_SA request to rekey IKE SA "PRI_SO,
 			pri_so(larval->sa.st_v2_rekey_pred));
 #else
-		llog_sa(RC_NEW_V2_STATE + larval->sa.st_state->kind, larval,
+		llog_sa(RC_LOG, larval,
 			"sent CREATE_CHILD_SA request to rekey IKE SA");
 #endif
 	} else {

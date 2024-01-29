@@ -212,13 +212,11 @@ struct ike_sa *main_outI1(struct connection *c,
 
 	if (predecessor != NULL) {
 		move_pending(predecessor, pexpect_ike_sa(st));
-		llog_sa(RC_NEW_V1_STATE + st->st_state->kind, ike,
-			"%s, replacing "PRI_SO,
+		llog_sa(RC_LOG, ike, "%s, replacing "PRI_SO,
 			st->st_state->story,
 			pri_so(predecessor->sa.st_serialno));
 	} else {
-		llog_sa(RC_NEW_V1_STATE + st->st_state->kind, ike,
-			  "%s", st->st_state->story);
+		llog_sa(RC_LOG, ike, "%s", st->st_state->story);
 	}
 
 	statetime_stop(&start, "%s()", __func__);

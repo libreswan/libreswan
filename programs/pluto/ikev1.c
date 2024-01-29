@@ -2715,7 +2715,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 				w = RC_SUCCESS; /* log our success */
 			} else {
 				jam_details = NULL;
-				w = RC_NEW_V1_STATE + st->st_state->kind;
+				w = RC_LOG;
 			}
 
 			passert(st->st_state->kind < STATE_IKEv1_ROOF);

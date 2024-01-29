@@ -145,8 +145,7 @@ void ldbg_v2_success(struct ike_sa *ike)
 
 void llog_v2_success_exchange_processed(struct ike_sa *ike)
 {
-	enum rc_type w = RC_NEW_V2_STATE + ike->sa.st_state->kind;
-	LLOG_JAMBUF(w, ike->sa.logger, buf) {
+	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
 		switch (ike->sa.st_v2_transition->recv_role) {
 		case MESSAGE_REQUEST: jam_string(buf, "responder processed"); break;
 		case MESSAGE_RESPONSE: jam_string(buf, "initiator processed"); break;
@@ -162,8 +161,7 @@ void llog_v2_success_exchange_processed(struct ike_sa *ike)
 /* sent EXCHANGE {request,response} to <address> */
 void llog_v2_success_exchange_sent(struct ike_sa *ike)
 {
-	enum rc_type w = RC_NEW_V2_STATE + ike->sa.st_state->kind;
-	LLOG_JAMBUF(w, ike->sa.logger, buf) {
+	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
 		jam_string(buf, "sent ");
 		jam_enum_short(buf, &ikev2_exchange_names, ike->sa.st_v2_transition->exchange);
 		jam_string(buf, " ");
@@ -179,16 +177,14 @@ void llog_v2_success_exchange_sent(struct ike_sa *ike)
 
 void llog_v2_success_state_story(struct ike_sa *ike)
 {
-	enum rc_type w = RC_NEW_V2_STATE + ike->sa.st_state->kind;
- 	LLOG_JAMBUF(w, ike->sa.logger, buf) {
+ 	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
 		jam_string(buf, ike->sa.st_state->story);
 	}
 }
 
 void llog_v2_success_state_story_details(struct ike_sa *ike)
 {
-	enum rc_type w = RC_NEW_V2_STATE + ike->sa.st_state->kind;
-	LLOG_JAMBUF(w, ike->sa.logger, buf) {
+	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
 		jam_string(buf, ike->sa.st_state->story);
 		jam_string(buf, " ");
 		jam_parent_sa_details(buf, &ike->sa);
@@ -197,8 +193,7 @@ void llog_v2_success_state_story_details(struct ike_sa *ike)
 
 void llog_v2_success_state_story_to_details(struct ike_sa *ike)
 {
-	enum rc_type w = RC_NEW_V2_STATE + ike->sa.st_state->kind;
-	LLOG_JAMBUF(w, ike->sa.logger, buf) {
+	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
 		jam_string(buf, ike->sa.st_state->story);
 		jam_string(buf, " to ");
 		jam_endpoint_address_protocol_port_sensitive(buf, &ike->sa.st_remote_endpoint);

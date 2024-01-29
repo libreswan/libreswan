@@ -613,15 +613,15 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 		} else {
 			what = "establishing Child SA";
 		}
-		llog_sa(log_stream | (RC_NEW_V2_STATE + STATE_V2_PARENT_I1), ike,
-			  "initiating IKEv2 connection to replace %s #%lu",
-			  what, predecessor->st_serialno);
+		llog_sa(log_stream | RC_LOG, ike,
+			"initiating IKEv2 connection to replace %s #%lu",
+			what, predecessor->st_serialno);
 		move_pending(ike_sa(predecessor, HERE), ike);
 	} else {
 		address_buf ab;
 		const struct ip_protocol *protocol = endpoint_protocol(ike->sa.st_remote_endpoint);
 		ip_address remote_addr = endpoint_address(ike->sa.st_remote_endpoint);
-		llog_sa(log_stream | (RC_NEW_V2_STATE + STATE_V2_PARENT_I1), ike,
+		llog_sa(log_stream | RC_LOG, ike,
 			"initiating IKEv2 connection to %s using %s",
 			str_address(&remote_addr, &ab),
 			protocol->name);

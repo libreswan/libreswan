@@ -1168,7 +1168,6 @@ static stf_status aggr_outI1_continue_tail(struct state *st,
 	clear_retransmits(st);
 	start_retransmits(st);
 
-	log_state(RC_NEW_V1_STATE + st->st_state->kind, st,
-		  "%s", st->st_state->story);
+	log_state(RC_LOG, st, "%s", st->st_state->story);
 	return STF_IGNORE;
 }

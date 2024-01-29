@@ -98,13 +98,6 @@ enum rc_type {
 	RC_EXIT_ROOF = 100,
 
 	/*
-	 * progress: start of range for successful state transition.
-	 * Actual value is RC_NEW_V[12]_STATE plus the new state code.
-	 */
-	RC_NEW_V1_STATE = RC_EXIT_ROOF,
-	RC_NEW_V2_STATE = 150,
-
-	/*
 	 * Start of range for notification.
 	 *
 	 * Actual value is RC_NOTIFICATION plus code for notification
