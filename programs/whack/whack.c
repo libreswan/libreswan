@@ -2716,6 +2716,8 @@ int main(int argc, char **argv)
 	    seen[OPT_REKEY_CHILD] ||
 	    seen[OPT_DELETE_IKE] ||
 	    seen[OPT_DELETE_CHILD] ||
+	    seen[OPT_DOWN_IKE] ||
+	    seen[OPT_DOWN_CHILD] ||
 	    (opts_seen & CONN_OPT_SEEN)) {
 		if (!seen[OPT_NAME]) {
 			diagw("missing --name <connection_name>");
