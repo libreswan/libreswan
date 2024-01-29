@@ -97,11 +97,26 @@ static void queue_v2_CREATE_CHILD_SA_initiator(struct state *larval_sa,
 		return;
 	}
 
-	pexpect(larval->sa.st_sa_role == SA_INITIATOR);
-	pexpect(larval->sa.st_state->kind == STATE_V2_NEW_CHILD_I0 ||
-		larval->sa.st_state->kind == STATE_V2_REKEY_CHILD_I0 ||
-		larval->sa.st_state->kind == STATE_V2_REKEY_IKE_I0);
-	pexpect(ike->sa.st_state->kind == STATE_V2_ESTABLISHED_IKE_SA);
+	struct logger *logger = larval->sa.logger;
+
+	PEXPECT(logger, larval->sa.st_sa_role == SA_INITIATOR);
+	PEXPECT(logger, (larval->sa.st_state->kind == STATE_V2_NEW_CHILD_I0 ||
+			 larval->sa.st_state->kind == STATE_V2_REKEY_CHILD_I0 ||
+			 larval->sa.st_state->kind == STATE_V2_REKEY_IKE_I0));
+	/*
+	 * After initiating a delete the IKE SA transitions to
+	 * STATE_V2_IKE_SA_DELETE so accomodate it here (the request
+	 * will be queued but never initiated - instead the delete
+	 * code will reschedule).
+	 *
+	 * XXX: 2024-01-29: Note that the STATE_V2_IKE_SA_DELETE is
+	 * broken.  When in that state, the IKEv2 state machine will
+	 * only accept the delete response which means that the peer
+	 * also requesting an IKE SA delete is ignored (see: crossing
+	 * IKE SA delete ignored #1587).
+	 */
+	PEXPECT(logger, (ike->sa.st_state->kind == STATE_V2_ESTABLISHED_IKE_SA ||
+			 ike->sa.st_state->kind == STATE_V2_IKE_SA_DELETE));
 
 	/*
 	 * Unpack the crypto material computed out-of-band.
@@ -115,9 +130,9 @@ static void queue_v2_CREATE_CHILD_SA_initiator(struct state *larval_sa,
 		unpack_KE_from_helper(&larval->sa, local_secret, &larval->sa.st_gi);
 	}
 
-	dbg("adding larval SA #%lu to IKE SA #%lu message initiator queue; sec_label="PRI_SHUNK,
-	    larval->sa.st_serialno, ike->sa.st_serialno,
-	    pri_shunk(larval->sa.st_connection->child.sec_label));
+	pdbg(logger, "adding larval SA to IKE SA "PRI_SO" message initiator queue; sec_label="PRI_SHUNK,
+	     pri_so(ike->sa.st_serialno),
+	     pri_shunk(larval->sa.st_connection->child.sec_label));
 
 	/*
 	 * Note: larval SA -> IKE SA hop
