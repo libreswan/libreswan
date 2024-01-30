@@ -122,8 +122,10 @@ while true ; do
     # every time.  Never delete log files for -0- commits (i.e.,
     # releases).
     ${update_status} "deleting *.log.gz files older than 14 days"
-    find ${summarydir} -type f -name '*.log.gz' -mtime +14 -print0 | \
-	grep -v -e -0- | \
+    find ${summarydir} \
+		-type d -name '*-0-*' -prune \
+		-o \
+	    	-type f -name '*.log.gz' -mtime +14 -print0 | \
 	xargs -0 --no-run-if-empty rm -v
 
     # Select the next commit to test
