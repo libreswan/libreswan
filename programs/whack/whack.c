@@ -2932,12 +2932,12 @@ int main(int argc, char **argv)
 			}
 
 			switch (s) {
-			/* these logs are informational only */
-			case RC_COMMENT:
-			case RC_INFORMATIONAL:
+
 			case RC_LOG:
-			/* RC_LOG_SERIOUS is supposed to be here according to lswlog.h, but seems oudated? */
-				/* ignore */
+				/*
+				 * Ignore; these logs are
+				 * informational only.
+				 */
 				break;
 
 			case RC_ENTERSECRET:
