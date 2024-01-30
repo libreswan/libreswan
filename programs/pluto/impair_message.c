@@ -341,6 +341,7 @@ static void drip_inbound(const struct message *m, struct logger *logger)
 	struct msg_digest *md = clone_raw_md(m->inbound.md, HERE);
 	md_attach(md, logger);
 	process_md(md);
+	md_detach(md, logger);
 	md_delref(&md);
 	pexpect(md == NULL);
 }
