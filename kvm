@@ -142,14 +142,15 @@ pass2help()
   Step wize create/delete the domains (just use ./kvm install):
 
     base[-PLATFORM]
-	(re)create a domain containing the base OS
+	create a domain containing the base OS
 	creates: ${basehosts}
     upgrade[-PLATFORM]
-	(re)create the upgrade domain from the base domain
-	installs missing + upgrades existing packages on base domain
+	create the upgrade domain from the base domain
+	installs missing packages
+        updates existing packages
 	creates: ${upgradehosts}
     transmogrify[-PLATFORM]
-	(re)create the build domain from the upgrade domain
+	create the build domain from the upgrade domain
 	transmogrifies the domain ready for building and testing
 	creates: ${kvm_platform}
     build[-PLATFORM]
@@ -165,10 +166,10 @@ pass2help()
 	shutdown all domains
     uninstall[-PLATFORM]
 	delete test-domains, PLATFORM
-	(but leave the build trees and base domains alone)
+	leaves PLATFORM-base and PLATFORM-upgrade
     downgrade[-PLATFORM]
-	delete test-domains, PLATFORM, PLATFORM.upgrade
-	remove any updates to the base domains
+	delete test-domains, PLATFORM, PLATFORM-upgrade
+	leaves PLATFORM-base
     demolish[-PLATFORM]
 	delete test-domains, PLATFORM, PLATFORM.upgrade, PLATFORM.base
 	delete all domains and all builds
@@ -187,7 +188,12 @@ pass2help()
 	  base domain: ${basehosts}
 	  upgrade domain: ${upgradehosts}
 
-  Namespaces:
+  Configuration:
+
+    config
+	show the configuration
+
+  Namespaces - broken:
 
     nsinstall
 	install namespaces
@@ -517,7 +523,7 @@ for op in "${ops[@]}" ; do
 	kill ) kill_command ;;
 	status ) status_command ;;
 
-	base* | upgrade* | transmogrify* | build* | install* | \
+	config | base* | upgrade* | transmogrify* | build* | install* | \
         shutdown* | uninstall* | downgrade* | demolish* | \
         check-clean | clean | purge* )
 	    echo ${gnumake} kvm-${op}
