@@ -16,6 +16,6 @@ west #
  # should say already routed
 west #
  ipsec auto --route westnet-eastnet-ikev2
-connection is already routed (ondemand)
+"westnet-eastnet-ikev2": connection is already routed
 west #
  
