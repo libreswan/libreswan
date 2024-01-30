@@ -398,7 +398,6 @@ enum shunt_kind routing_shunt_kind(enum routing routing)
 	case RT_UNROUTED_TUNNEL:
 	case RT_ROUTED_TUNNEL:
 		return SHUNT_KIND_IPSEC;
-	case RT_UNROUTED_FAILURE:
 	case RT_ROUTED_FAILURE:
 		return SHUNT_KIND_FAILURE;
 	}
@@ -428,7 +427,6 @@ bool kernel_route_installed(const struct connection *c)
 	case RT_UNROUTED:
 	case RT_UNROUTED_BARE_NEGOTIATION:
 	case RT_UNROUTED_NEGOTIATION:
-	case RT_UNROUTED_FAILURE:
 	case RT_UNROUTED_INBOUND:
 	case RT_UNROUTED_INBOUND_NEGOTIATION:
 	case RT_UNROUTED_TUNNEL:
@@ -451,7 +449,6 @@ bool kernel_policy_installed(const struct connection *c)
 	case RT_ROUTED_NEVER_NEGOTIATE:
 	case RT_ROUTED_INBOUND_NEGOTIATION:
 	case RT_ROUTED_TUNNEL:
-	case RT_UNROUTED_FAILURE:
 	case RT_ROUTED_FAILURE:
 	case RT_UNROUTED_TUNNEL:
 		return true;

@@ -56,7 +56,6 @@ enum routing {
 	RT_UNROUTED_NEGOTIATION,		/* unrouted, inbound: none,        outbound: negotiation */
 	RT_ROUTED_NEGOTIATION,			/* routed,   inbound: none,        outbound: negotiation */
 	/* failed */
-	RT_UNROUTED_FAILURE,      		/* unrouted, inbound: ?,           outbound: failure */
 	RT_ROUTED_FAILURE,      		/* routed,   inbound: ?,           outbound: failure */
 	/* half established */
 	RT_UNROUTED_INBOUND,			/* unrouted, inbound: established, outbound: none */

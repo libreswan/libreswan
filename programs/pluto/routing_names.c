@@ -27,7 +27,6 @@ static const char *routing_name[] = {
 	S(RT_UNROUTED_NEGOTIATION),
 	S(RT_ROUTED_NEGOTIATION),
 	/* failed */
-	S(RT_UNROUTED_FAILURE),
 	S(RT_ROUTED_FAILURE),
 	/* half established */
 	S(RT_UNROUTED_INBOUND),

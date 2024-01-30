@@ -29,7 +29,6 @@ static const char *const routing_tail[] = {
 	[RT_UNROUTED_NEGOTIATION] = "unrouted HOLD",      /* unrouted, but HOLD shunt installed */
 	[RT_ROUTED_NEGOTIATION] = "erouted HOLD",         /* routed, and HOLD shunt installed */
 	/* fail */
-	[RT_UNROUTED_FAILURE] = "unrouted failure",       /* unrouted, and failure shunt installed */
 	[RT_ROUTED_FAILURE] = "fail erouted",         	  /* routed, and failure-context shunt eroute installed */
 	/* half established */
 	[RT_UNROUTED_INBOUND] = "unrouted HOLD",	/* unrouted, outbound negotiation, inbound established */
