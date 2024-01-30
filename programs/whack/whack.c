@@ -2946,9 +2946,8 @@ int main(int argc, char **argv)
 
 			case RC_ENTERSECRET:
 				if (!gotxauthpass) {
-					xauthpasslen = whack_get_secret(
-						xauthpass,
-						sizeof(xauthpass));
+					xauthpasslen = whack_get_secret(xauthpass,
+									sizeof(xauthpass));
 				}
 				send_reply(sock,
 					   xauthpass,
@@ -2957,9 +2956,8 @@ int main(int argc, char **argv)
 
 			case RC_USERPROMPT:
 				if (!gotusername) {
-					usernamelen = whack_get_value(
-						xauthusername,
-						sizeof(xauthusername));
+					usernamelen = whack_get_value(xauthusername,
+								      sizeof(xauthusername));
 				}
 				send_reply(sock,
 					   xauthusername,

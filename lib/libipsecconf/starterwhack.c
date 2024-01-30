@@ -68,7 +68,7 @@ static int starter_whack_read_reply(int sock,
 {
 	char buf[4097]; /* arbitrary limit on log line length */
 	char *be = buf;
-	int ret = 0;
+	int exit_status = 0;
 
 	for (;; ) {
 		char *ls = buf;
@@ -134,81 +134,76 @@ static int starter_whack_read_reply(int sock,
 			 * figure out prefix number and how it should affect
 			 * our exit status
 			 */
-			{
 
-				switch (s) {
-				case RC_COMMENT:
-				case RC_LOG:
-				case RC_INFORMATIONAL:
-					/* ignore */
-					break;
+			switch (s) {
+			case RC_COMMENT:
+			case RC_LOG:
+			case RC_INFORMATIONAL:
+				/* ignore */
+				break;
 
-				case RC_SUCCESS:
-					/* be happy */
-					ret = 0;
-					break;
+			case RC_SUCCESS:
+				/* be happy */
+				exit_status = 0;
+				break;
 
-				case RC_ENTERSECRET:
-					if (xauthpasslen == 0) {
-						xauthpasslen =
-							whack_get_secret(
-								xauthpass,
-								XAUTH_MAX_PASS_LENGTH);
-					}
-					if (xauthpasslen >
-						XAUTH_MAX_PASS_LENGTH) {
-						/*
-						 * for input >= 128,
-						 * xauthpasslen would be 129
-						 */
-						xauthpasslen =
-							XAUTH_MAX_PASS_LENGTH;
-						starter_log(LOG_LEVEL_ERR,
-							"xauth password cannot be >= %d chars",
-							XAUTH_MAX_PASS_LENGTH);
-					}
-					ret = send_reply(sock, xauthpass,
-							xauthpasslen);
-					if (ret != 0)
-						return ret;
-
-					break;
-
-				case RC_USERPROMPT:
-					if (usernamelen == 0) {
-						usernamelen = whack_get_value(
-							xauthusername,
-							MAX_XAUTH_USERNAME_LEN);
-					}
-					if (usernamelen >
-						MAX_XAUTH_USERNAME_LEN) {
-						/*
-						 * for input >= 128,
-						 * useramelen would be 129
-						 */
-						usernamelen =
-							MAX_XAUTH_USERNAME_LEN;
-						starter_log(LOG_LEVEL_ERR,
-							"username cannot be >= %d chars",
-							MAX_XAUTH_USERNAME_LEN);
-					}
-					ret = send_reply(sock, xauthusername,
-							usernamelen);
-					if (ret != 0)
-						return ret;
-
-					break;
-
-				default:
-					/* pass through */
-					ret = s;
-					break;
+			case RC_ENTERSECRET:
+				if (xauthpasslen == 0) {
+					xauthpasslen =
+						whack_get_secret(xauthpass,
+								 XAUTH_MAX_PASS_LENGTH);
 				}
+				if (xauthpasslen >
+				    XAUTH_MAX_PASS_LENGTH) {
+					/*
+					 * for input >= 128,
+					 * xauthpasslen would be 129
+					 */
+					xauthpasslen =
+						XAUTH_MAX_PASS_LENGTH;
+					starter_log(LOG_LEVEL_ERR,
+						    "xauth password cannot be >= %d chars",
+						    XAUTH_MAX_PASS_LENGTH);
+				}
+				exit_status = send_reply(sock, xauthpass, xauthpasslen);
+				if (exit_status != 0) {
+					return exit_status;
+				}
+
+				break;
+
+			case RC_USERPROMPT:
+				if (usernamelen == 0) {
+					usernamelen = whack_get_value(xauthusername,
+								      MAX_XAUTH_USERNAME_LEN);
+				}
+				if (usernamelen > MAX_XAUTH_USERNAME_LEN) {
+					/*
+					 * for input >= 128,
+					 * useramelen would be 129
+					 */
+					usernamelen = MAX_XAUTH_USERNAME_LEN;
+					starter_log(LOG_LEVEL_ERR,
+						    "username cannot be >= %d chars",
+						    MAX_XAUTH_USERNAME_LEN);
+				}
+				exit_status = send_reply(sock, xauthusername, usernamelen);
+				if (exit_status != 0) {
+					return exit_status;
+				}
+
+				break;
+
+			default:
+				/* pass through */
+				exit_status = s;
+				break;
 			}
+
 			ls = le;
 		}
 	}
-	return ret;
+	return exit_status;
 }
 
 static int send_whack_msg(struct whack_message *msg, char *ctlsocket, struct logger *logger)
@@ -269,8 +264,7 @@ static int send_whack_msg(struct whack_message *msg, char *ctlsocket, struct log
 		char xauthusername[MAX_XAUTH_USERNAME_LEN];
 		char xauthpass[XAUTH_MAX_PASS_LENGTH];
 
-		ret = starter_whack_read_reply(sock, xauthusername, xauthpass, 0,
-					0);
+		ret = starter_whack_read_reply(sock, xauthusername, xauthpass, 0, 0);
 		close(sock);
 	}
 
