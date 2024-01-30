@@ -2912,9 +2912,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 			/* this will log */
 			SEND_NOTIFICATION(md->v1_note);
 		} else {
-			/* XXX: why whack only? */
-			log_state(WHACK_STREAM | (RC_NOTIFICATION + md->v1_note), st,
-				  "state transition failed: %s", notify_name);
+			log_state(RC_LOG, st, "state transition failed: %s", notify_name);
 		}
 
 		dbg("state transition function for %s failed: %s",

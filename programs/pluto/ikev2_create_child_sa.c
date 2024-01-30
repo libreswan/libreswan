@@ -1909,7 +1909,7 @@ stf_status process_v2_CREATE_CHILD_SA_failure_response(struct ike_sa *ike,
 		/* there was no reason, huh? */
 		status = STF_OK;/*keep IKE?*/
 		/* log something */
-		llog_sa(RC_NOTIFICATION, (*larval_child), "state transition '%s' failed",
+		llog_sa(RC_LOG, (*larval_child), "state transition '%s' failed",
 			(*larval_child)->sa.st_v2_transition->story);
 	}
 

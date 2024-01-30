@@ -1624,14 +1624,9 @@ static void send_v1_notification(struct logger *logger,
 	}
 
 	{
-		/*
-		 * This will pick up cur_state, if any (which means it
-		 * is still relying on cur_state :-().  Can't use
-		 * SNDST as that may be fake.
-		 */
 		endpoint_buf b;
 		enum_buf nb;
-		llog(RC_NOTIFICATION + type, logger,
+		llog(RC_LOG, logger,
 		     "sending %snotification %s to %s",
 		     (isakmp_encrypt != NULL ? "encrypted " : ""),
 		     str_enum_short(&v1_notification_names, type, &nb),
@@ -1794,7 +1789,7 @@ void send_v1_notification_from_md(struct msg_digest *md, v1_notification_t type)
 
 	endpoint_buf b;
 	enum_buf nb;
-	llog(RC_NOTIFICATION + type, md->logger,
+	llog(RC_LOG, md->logger,
 	     "sending notification %s to %s",
 	     str_enum_short(&v1_notification_names, type, &nb),
 	     str_endpoint(&md->sender, &b));

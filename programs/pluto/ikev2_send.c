@@ -313,7 +313,7 @@ static bool emit_v2N_spi_response(struct v2_message *response,
 	 * is it ever different to the IKE SA?
 	 */
 	endpoint_buf b;
-	llog(RC_NOTIFICATION+ntype, response->logger,
+	llog(RC_LOG, response->logger,
 	     "responding to %s message (ID %u) from %s with %s notification %s",
 	     exchange_name, md->hdr.isa_msgid,
 	     str_endpoint_sensitive(&ike->sa.st_remote_endpoint, &b),
