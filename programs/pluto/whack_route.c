@@ -28,7 +28,7 @@ static unsigned whack_route_connection(const struct whack_message *m UNUSED,
 				       struct connection *c)
 {
 	connection_attach(c, show_logger(s));
-	if (routed(c)) {
+	if (kernel_route_installed(c)) {
 		whack_log(RC_FATAL, s, "connection is already routed (ondemand)");
 		connection_detach(c, show_logger(s));
 		return 0;

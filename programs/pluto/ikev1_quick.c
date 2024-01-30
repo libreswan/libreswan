@@ -2185,7 +2185,7 @@ static struct connection *fc_try(const struct connection *c,
 			 * - given that, not switching is preferred
 			 */
 			connection_priority_t prio =
-				PRIO_WEIGHT * routed(d) +
+				PRIO_WEIGHT * kernel_route_installed(d) +
 				WILD_WEIGHT * (MAX_WILDCARDS - wildcards) +
 				PATH_WEIGHT * (MAX_CA_PATH_LEN - pathlen) +
 				(c == d ? 1 : 0) +
@@ -2276,7 +2276,7 @@ struct connection *find_v1_client_connection(struct connection *const c,
 			    (spd->remote->client.ipproto == remote_protocol) &&
 			    (!spd->remote->client.hport ||
 			     spd->remote->client.hport == remote_port)) {
-				if (routed(c))
+				if (kernel_route_installed(c))
 					return c;
 
 				unrouted = c;

@@ -665,7 +665,7 @@ struct spd_owner spd_owner(const struct spd_route *c_spd,
 		 */
 		{
 			const char *checking = "bare_route";
-			if (!routed(d)) {
+			if (!kernel_route_installed(d)) {
 				ldbg_spd(logger, indent, d_spd, "skipped %s; not routed", checking);
 			} else if (c->clonedfrom == d) {
 				/* D, the parent, is already routed */

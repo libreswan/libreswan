@@ -410,7 +410,11 @@ enum shunt_kind spd_shunt_kind(const struct spd_route *spd)
 	return routing_shunt_kind(spd->connection->child.routing);
 }
 
-bool routed(const struct connection *c)
+/*
+ * True when updown(route) has been run; not <<ipsec route>>.
+ */
+
+bool kernel_route_installed(const struct connection *c)
 {
 	enum routing r = c->child.routing;
 	switch (r) {

@@ -3978,8 +3978,8 @@ struct connection *find_connection_for_packet(const ip_packet packet,
 			(is_opportunistic(c) &&
 			 is_instance(c) &&
 			 pexpect(c->clonedfrom != NULL) /* because instance */ &&
-			 routed(c->clonedfrom));
-		if (!routed(c) && !instance_initiation_ok &&
+			 kernel_route_installed(c->clonedfrom));
+		if (!kernel_route_installed(c) && !instance_initiation_ok &&
 		    c->config->sec_label.len == 0) {
 			connection_buf cb;
 			selector_pair_buf sb;
