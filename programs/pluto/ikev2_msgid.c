@@ -464,6 +464,7 @@ void v2_msgid_queue_initiator(struct ike_sa *ike, struct child_sa *child,
 {
 	/* for logging */
 	so_serial_t who_for = (child != NULL ? child->sa.st_serialno : ike->sa.st_serialno);
+	struct logger *logger = (child != NULL ? child->sa.logger : ike->sa.logger);
 	/*
 	 * Find the insertion point; small list?
 	 *
@@ -472,16 +473,35 @@ void v2_msgid_queue_initiator(struct ike_sa *ike, struct child_sa *child,
 	 * notification) are put at the front before anything else
 	 * (namely CREATE_CHILD_SA).
 	 */
+	unsigned ranking = 0;
 	struct v2_msgid_pending **pp = &ike->sa.st_v2_msgid_windows.pending_requests;
 	while (*pp != NULL) {
 		if (transition->exchange == ISAKMP_v2_INFORMATIONAL
 		    && (*pp)->transition->exchange != ISAKMP_v2_INFORMATIONAL) {
-			dbg("inserting informational exchange for #%lu before #%lu's %s exchange",
-			    who_for, (*pp)->who_for,
-			    enum_name(&isakmp_xchg_type_names, (*pp)->transition->exchange));
 			break;
 		}
+		ranking++;
 		pp = &(*pp)->next;
+	}
+	/*
+	 * Full log when the exchange is blocked.  That is waiting on
+	 * another exchange (ranking>0) or an exchange in progress.
+	 */
+	enum stream stream = (ranking > 0 ? LOG_STREAM :
+			      v2_msgid_request_outstanding(ike) ? LOG_STREAM :
+			      DEBUG_STREAM);
+	LLOG_JAMBUF(stream, logger, buf) {
+		jam(buf, "adding %s request to IKE SA "PRI_SO"'s message queue",
+		    enum_name_short(&isakmp_xchg_type_names, transition->exchange),
+		    pri_so(ike->sa.st_serialno));
+		if (ranking > 0) {
+			jam(buf, " at position %u", ranking);
+		}
+		if ((*pp) != NULL) {
+			jam(buf, "; before "PRI_SO"'s %s exchange",
+			    pri_so((*pp)->who_for),
+			    enum_name_short(&isakmp_xchg_type_names, (*pp)->transition->exchange));
+		}
 	}
 	/* append */
 	struct v2_msgid_pending new = {
