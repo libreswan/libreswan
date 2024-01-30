@@ -23,19 +23,58 @@
 #include "log.h"
 #include "whack_connection.h"
 
+static unsigned maybe_route_connection(struct connection *c)
+{
+	if (is_instance(c)) {
+		pdbg(c->logger, "instances are not routed");
+		return 0; /* not counted */
+	}
+
+	if (c->policy.route) {
+		llog(RC_LOG, c->logger, "connection is already routed");
+		return 0; /* not counted */
+	}
+
+	if (c->child.routing == RT_UNROUTED) {
+		/* both install policy and route connection */
+		connection_route(c, HERE);
+		return 1; /* counted */
+	}
+
+	if (kernel_route_installed(c)) {
+		/*
+		 * Need to stop the connection unrouting.
+		 *
+		 * For instance, a connection in state ROUTED_TUNNEL
+		 * and with -ROUTE will still have the kernel route
+		 * and policy installed.  Add +ROUTE so that when the
+		 * connection fails or is taken down, ondemand routing
+		 * remains in place.
+		 *
+		 * Note that is includes states such as
+		 * ROUTED_ONDEMAND which happens when a connection as
+		 * +UP -ROUTE.
+		 */
+		add_policy(c, policy.route);
+		llog(RC_LOG, c->logger, "connection will remain routed");
+		return 1;
+	}
+
+	/*
+	 * These are assumed to be in-flight connections.
+	 */
+	llog(RC_LOG, c->logger, "connection marked for routing");
+	return 1;
+}
+
 static unsigned whack_route_connection(const struct whack_message *m UNUSED,
 				       struct show *s,
 				       struct connection *c)
 {
 	connection_attach(c, show_logger(s));
-	if (kernel_route_installed(c)) {
-		whack_log(RC_FATAL, s, "connection is already routed (ondemand)");
-		connection_detach(c, show_logger(s));
-		return 0;
-	}
-	connection_route(c, HERE);
+	unsigned rc = maybe_route_connection(c);
 	connection_detach(c, show_logger(s));
-	return 1; /* the connection counts */
+	return rc;
 }
 
 void whack_route(const struct whack_message *m, struct show *s)
