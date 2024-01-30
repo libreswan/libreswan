@@ -142,11 +142,6 @@ static int starter_whack_read_reply(int sock,
 				/* ignore */
 				break;
 
-			case RC_SUCCESS:
-				/* be happy */
-				exit_status = 0;
-				break;
-
 			case RC_ENTERSECRET:
 				if (xauthpasslen == 0) {
 					xauthpasslen =
@@ -195,8 +190,18 @@ static int starter_whack_read_reply(int sock,
 				break;
 
 			default:
-				/* pass through */
-				exit_status = s;
+				/*
+				 * Only RC_ codes between
+				 * RC_EXIT_FLOOR (RC_DUPNAME) and
+				 * RC_EXIT_ROOF are errors.
+				 *
+				 * The exit status is sticky so that
+				 * incidental logs don't clear or
+				 * change it.
+				 */
+				if (exit_status == 0 && s >= RC_EXIT_FLOOR && s < RC_EXIT_ROOF) {
+					exit_status = s;
+				}
 				break;
 			}
 

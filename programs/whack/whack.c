@@ -2939,10 +2939,6 @@ int main(int argc, char **argv)
 			/* RC_LOG_SERIOUS is supposed to be here according to lswlog.h, but seems oudated? */
 				/* ignore */
 				break;
-			case RC_SUCCESS:
-				/* be happy */
-				exit_status = 0;
-				break;
 
 			case RC_ENTERSECRET:
 				if (!gotxauthpass) {
@@ -2968,12 +2964,15 @@ int main(int argc, char **argv)
 				/*
 				 * Only RC_ codes between
 				 * RC_EXIT_FLOOR (RC_DUPNAME) and
-				 * RC_EXIT_ROOF are errors
+				 * RC_EXIT_ROOF are errors.
+				 *
+				 * The exit status is sticky so that
+				 * incidental logs don't clear or
+				 * change it.
 				 */
-				if (s > 0 && (s < RC_EXIT_FLOOR || s >= RC_EXIT_ROOF))
-					s = 0;
-				exit_status = msg.whack_async ?
-					0 : s;
+				if (exit_status == 0 && s >= RC_EXIT_FLOOR && s < RC_EXIT_ROOF) {
+					exit_status = (msg.whack_async ? 0 : s);
+				}
 				break;
 			}
 
