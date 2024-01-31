@@ -330,7 +330,7 @@
 	  </para>
 	  <para>
 	    See:
-	    <citerefentry><refentrytitle>ipsec-algparse</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
+	    <citerefentry><refentrytitle>ipsec-showroute</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
 	  </para>
 	</listitem>
       </varlistentry>
