@@ -19,6 +19,7 @@ LIB = libwhack.a
 
 OBJS += whacklib.o
 OBJS += aliascomp.o
+OBJS += pickle.o
 
 ifdef top_srcdir
 include ${top_srcdir}/mk/library.mk
