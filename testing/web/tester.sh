@@ -23,6 +23,10 @@ webdir=$(dirname ${tester})
 benchdir=$(cd ${webdir}/../.. && pwd)
 utilsdir=${benchdir}/testing/utils
 
+# run from BENCHDIR so relative make varibles work
+# and ./kvm doesn't get confused
+cd ${benchdir}
+
 make_variable() {
     local v=$(make -C ${benchdir}/testing/libvirt --no-print-directory print-kvm-variable VARIABLE=$2)
     if test "${v}" == "" ; then
