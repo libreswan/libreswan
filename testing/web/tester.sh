@@ -249,11 +249,13 @@ while true ; do
 
     for t in ${targets} ; do
 
-	# RUN:OT[~+]OS or RUN:TARGET
-	run=$(echo "${t}" | sed -e 's/:.*//')
-	target=$(echo "${t}" | sed -e 's/.*://' -e 's/[~+]/-/')
-	ot=$(echo "${t}" | sed -n -e 's/.*:\([^~+]*\)[~+]\(.*\)/\1/p')
-	os=$(echo "${t}" | sed -n -e 's/.*:\([^~+]*\)[~+]\(.*\)/\2/p')
+	# T=RUN:TARGET RUN:OT{,[~+]OS}
+	run=$(    echo "${t}" | sed -e 's/\(.*\):\(\([^~+]*\)[~+]*\(.*\)\)/\1/' )
+	target=$( echo "${t}" | sed -e 's/\(.*\):\(\([^~+]*\)[~+]*\(.*\)\)/\2/' -e 's/[~+]/-/' )
+	ot=$(     echo "${t}" | sed -e 's/\(.*\):\(\([^~+]*\)[~+]*\(.*\)\)/\3/' )
+	os=$(     echo "${t}" | sed -e 's/\(.*\):\(\([^~+]*\)[~+]*\(.*\)\)/\4/' )
+
+	# ...~...
 	ignore=$(expr "${t}" : '.*~' > /dev/null && echo true || echo false)
 
 	finished="${finished} ${target}"
