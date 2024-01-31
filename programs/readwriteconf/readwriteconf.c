@@ -125,7 +125,7 @@ int main(int argc, char *argv[])
 	if (verbose)
 		printf("opening file: %s\n", configfile);
 
-	starter_use_log(verbose != 0, true, verbose == 0);
+	starter_use_log(verbose != 0, verbose == 0);
 
 	starter_errors_t errl = { NULL };
 	cfg = confread_load(configfile, &errl, NULL, false);

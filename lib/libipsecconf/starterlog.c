@@ -34,13 +34,11 @@
  */
 
 static bool log_debugging = false;
-static bool log_to_console = false;
 static bool log_to_syslog = false;
 
 static void log_one_line(int level, const char *buff)
 {
-	if (log_to_console)
-		fprintf(stderr, "%s\n", buff);
+	fprintf(stderr, "%s\n", buff);
 
 	if (log_to_syslog) {
 		if (level == LOG_LEVEL_ERR)
@@ -80,10 +78,9 @@ void starter_log(int level, const char *fmt, ...)
 	va_end(args);
 }
 
-void starter_use_log(bool debug, bool console, bool mysyslog)
+void starter_use_log(bool debug, bool mysyslog)
 {
 	log_debugging = debug;
-	log_to_console = console;
 	if (mysyslog != log_to_syslog) {
 		if (mysyslog)
 			openlog("libipsecconf", LOG_PID, LOG_USER);
