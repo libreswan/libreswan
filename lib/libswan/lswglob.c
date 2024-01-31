@@ -40,7 +40,7 @@ int lswglob(const char *pattern, glob_t *pglob, const char *what, struct logger 
 	{
 		lswglob_logger = logger;
 		lswglob_what = what;
-		r = glob(pattern, GLOB_ERR, lswglob_errfunc, pglob);
+		r = glob(pattern, GLOB_ERR|GLOB_BRACE, lswglob_errfunc, pglob);
 		lswglob_logger = NULL;
 		lswglob_what = NULL;
 	}
