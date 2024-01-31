@@ -27,9 +27,5 @@ extern void starter_log(int level, const char *fmt, ...) PRINTF_LIKE(2);
 
 extern void starter_use_log(bool debug);
 
-extern void *xmalloc(size_t s);
-extern char *xstrdup(const char *s);
-extern void *xrealloc(void *o, size_t s);
-
 #endif /* _STARTER_LOG_H_ */
 
