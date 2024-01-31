@@ -34,18 +34,10 @@
  */
 
 static bool log_debugging = false;
-static bool log_to_syslog = false;
 
-static void log_one_line(int level, const char *buff)
+static void log_one_line(const char *buff)
 {
 	fprintf(stderr, "%s\n", buff);
-
-	if (log_to_syslog) {
-		if (level == LOG_LEVEL_ERR)
-			syslog(LOG_ERR, "%s\n", buff);
-		else
-			syslog(LOG_INFO, "%s\n", buff);
-	}
 }
 
 void starter_log(int level, const char *fmt, ...)
@@ -68,26 +60,19 @@ void starter_log(int level, const char *fmt, ...)
 		if (p == NULL)
 			break;
 		*p = '\0';
-		log_one_line(level, b);
+		log_one_line(b);
 		b = p + 1;
 	}
 
 	/* log the '\0'- terminated segment */
-	log_one_line(level, b);
+	log_one_line(b);
 
 	va_end(args);
 }
 
-void starter_use_log(bool debug, bool mysyslog)
+void starter_use_log(bool debug)
 {
 	log_debugging = debug;
-	if (mysyslog != log_to_syslog) {
-		if (mysyslog)
-			openlog("libipsecconf", LOG_PID, LOG_USER);
-		else
-			closelog();
-		log_to_syslog = mysyslog;
-	}
 	if (log_debugging)
 		starter_log(LOG_LEVEL_ERR, "debugging mode enabled");
 }
