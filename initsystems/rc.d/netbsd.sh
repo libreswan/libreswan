@@ -21,8 +21,8 @@ name="pluto"
 rcvar=$name
 pidfile="@@RUNDIR@@/${name}.pid"
 command="@@LIBEXECDIR@@/pluto"
-command_args="--logfile @@LOGDIR@@/pluto.log --config @@SYSCONFDIR@@/ipsec.conf --leak-detective"
-required_files="@@SYSCONFDIR@@/ipsec.conf"
+command_args="--logfile @@LOGDIR@@/pluto.log --config @@IPSEC_CONF@@ --leak-detective"
+required_files="@@IPSEC_CONF@@"
 start_precmd="@@SBINDIR@@/ipsec checknss"
 
 load_rc_config $name

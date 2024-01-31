@@ -80,10 +80,10 @@ case "$1" in
 	    namespaces )
 		echo "Redirecting to: namespaces direct start via ipsec pluto"
 		ipsec --checknflog > /dev/null
-		exec ipsec pluto --config @@SYSCONFDIR@@/ipsec.conf --leak-detective
+		exec ipsec pluto --config @@IPSEC_CONF@@ --leak-detective
 		;;
 	    "" )
-		what="ipsec pluto --logfile @@LOGDIR@@/pluto.log --config @@SYSCONFDIR@@/ipsec.conf --leak-detective"
+		what="ipsec pluto --logfile @@LOGDIR@@/pluto.log --config @@IPSEC_CONF@@ --leak-detective"
 		echo "Redirecting to: ${what} [start manually]"
 		exec ${what}
 		;;
@@ -229,7 +229,7 @@ case "$1" in
 	    namespaces )
 		echo "Redirecting to: namespaces"
 		ipsec whack --shutdown
-		exec ipsec pluto --config @@SYSCONFDIR@@/ipsec.conf --leak-detective
+		exec ipsec pluto --config @@IPSEC_CONF@@ --leak-detective
 		;;
 	    "" )
 		echo "Redirecting to: [stop start manually]"
