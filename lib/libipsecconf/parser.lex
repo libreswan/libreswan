@@ -191,22 +191,6 @@ int parser_y_include (const char *filename)
 	globbuf.gl_offs = 0;
 
 	/*
-	 * If the filename starts with /, we try to find it prefixed with
-	 * rootdir or rootdir2.
-	 *
-	 * glob() returns a match if that file exists, even without
-	 * having to do any globbing.
-	 *
-	 * Use GNU GLOB_BRACE extension to glob(3) if available.
-	 */
-
-#ifdef GLOB_BRACE
-# define GB GLOB_BRACE
-#else
-# define GB 0
-#endif
-
-	/*
 	 * If there is no rootdir, but there is a rootdir2, swap them.
 	 * This reduces the number of cases to be handled.
 	 */
@@ -218,7 +202,7 @@ int parser_y_include (const char *filename)
 	if (filename[0] != '/' || rootdir[0] == '\0') {
 		/* try plain name, with no rootdirs */
 		try = filename;
-		globresult = glob(try, GB, globugh_include, &globbuf);
+		globresult = glob(try, 0, globugh_include, &globbuf);
 		if (globresult == GLOB_NOMATCH) {
 			if (strchr(filename,'*') == NULL) {
 				/* not a wildcard, throw error */
@@ -237,7 +221,7 @@ int parser_y_include (const char *filename)
 		snprintf(newname, sizeof(newname), "%s%s", rootdir, filename);
 		try = newname;
 
-		globresult = glob(try, GB, globugh_include, &globbuf);
+		globresult = glob(try, 0, globugh_include, &globbuf);
 		if (globresult == GLOB_NOMATCH) {
 			if (rootdir2[0] == '\0') {
 				if (strchr(filename,'*') == NULL) {
@@ -257,7 +241,7 @@ int parser_y_include (const char *filename)
 				snprintf(newname2, sizeof(newname2),
 					 "%s%s", rootdir2, filename);
 				try = newname2;
-				globresult = glob(try, GB, globugh_include, &globbuf);
+				globresult = glob(try, 0, globugh_include, &globbuf);
 				if (globresult == GLOB_NOMATCH) {
 					starter_log(LOG_LEVEL_ERR,
 						"warning: could not open include filename: '%s' (tried '%s' and '%s')",
