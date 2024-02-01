@@ -38,6 +38,7 @@ v5.0 (Unreleased)
 * ipsec barf: script moved to contrib/ [Andrew]
 * ipsec _secretsensor: script moved to contrib/ [Andrew]
 * IKEv2: when non-MOBIKE never update NATed endpoint [#1492/Wofferl/Andrew]
+* ipsec.conf: <<include {a,b,c}.conf>> no longer supported [Andrew]
 
 v4.12 (Aug 8, 2023)
 * SECURITY IKEv2: Fixes https://libreswan.org/security/CVE-2023-38710
