@@ -40,6 +40,9 @@ int lswglob(const char *pattern, glob_t *pglob, const char *what, struct logger 
 	{
 		lswglob_logger = logger;
 		lswglob_what = what;
+#ifndef GLOB_BRACE
+# define GLOB_BRACE 0	/* musl libc */
+#endif
 		r = glob(pattern, GLOB_ERR|GLOB_BRACE, lswglob_errfunc, pglob);
 		lswglob_logger = NULL;
 		lswglob_what = NULL;
