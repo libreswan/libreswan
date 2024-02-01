@@ -134,7 +134,7 @@ resolving family=IPv4 src=<defaultroute> gateway=192.1.3.254 peer 192.1.2.23
   success: src=192.1.3.209 gateway=192.1.3.254
 resolving family=IPv4 src=192.1.2.23 gateway=<not-set> peer 192.1.3.209
   seeking NOTHING
-connect(pluto_ctl) failed: No such file or directory
+ERROR: ipsec addconn: connect(pluto_ctl) failed: No such file or directory (errno 2)
 road #
  echo done
 done
