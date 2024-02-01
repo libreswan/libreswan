@@ -38,7 +38,6 @@
 
 #include "ipsecconf/starterwhack.h"
 #include "ipsecconf/confread.h"
-#include "ipsecconf/starterlog.h"
 
 #include "lswalloc.h"
 #include "lswlog.h"
@@ -46,25 +45,25 @@
 #include "id.h"
 #include "ip_address.h"
 #include "ip_info.h"
+#include "lswlog.h"
 
-static int send_reply(int sock, char *buf, ssize_t len)
+static int send_reply(int sock, char *buf, ssize_t len, struct logger *logger)
 {
 	/* send the secret to pluto */
 	if (write(sock, buf, len) != len) {
 		int e = errno;
-
-		starter_log(LOG_LEVEL_ERR, "whack: write() failed (%d %s)",
-			e, strerror(e));
+		llog_error(logger, e, "write() failed");
 		return RC_WHACK_PROBLEM;
 	}
 	return 0;
 }
 
 static int starter_whack_read_reply(int sock,
-				char xauthusername[MAX_XAUTH_USERNAME_LEN],
-				char xauthpass[XAUTH_MAX_PASS_LENGTH],
-				int usernamelen,
-				int xauthpasslen)
+				    char xauthusername[MAX_XAUTH_USERNAME_LEN],
+				    char xauthpass[XAUTH_MAX_PASS_LENGTH],
+				    int usernamelen,
+				    int xauthpasslen,
+				    struct logger *logger)
 {
 	char buf[4097]; /* arbitrary limit on log line length */
 	char *be = buf;
@@ -126,10 +125,9 @@ static int starter_whack_read_reply(int sock,
 
 			if (write(STDOUT_FILENO, ls, le - ls) == -1) {
 				int e = errno;
-				starter_log(LOG_LEVEL_ERR,
-					    "whack: write() starterwhack.c:124 failed (%d %s), and ignored.",
-					    e, strerror(e));
+				llog_errno(RC_LOG, logger, e, "write() failed, and ignored");
 			}
+
 			/*
 			 * figure out prefix number and how it should affect
 			 * our exit status
@@ -150,19 +148,18 @@ static int starter_whack_read_reply(int sock,
 						whack_get_secret(xauthpass,
 								 XAUTH_MAX_PASS_LENGTH);
 				}
-				if (xauthpasslen >
-				    XAUTH_MAX_PASS_LENGTH) {
+				if (xauthpasslen > XAUTH_MAX_PASS_LENGTH) {
 					/*
 					 * for input >= 128,
 					 * xauthpasslen would be 129
 					 */
 					xauthpasslen =
 						XAUTH_MAX_PASS_LENGTH;
-					starter_log(LOG_LEVEL_ERR,
-						    "xauth password cannot be >= %d chars",
-						    XAUTH_MAX_PASS_LENGTH);
+					llog_error(logger, 0,
+						   "xauth password cannot be >= %d chars",
+						   XAUTH_MAX_PASS_LENGTH);
 				}
-				exit_status = send_reply(sock, xauthpass, xauthpasslen);
+				exit_status = send_reply(sock, xauthpass, xauthpasslen, logger);
 				if (exit_status != 0) {
 					return exit_status;
 				}
@@ -180,11 +177,11 @@ static int starter_whack_read_reply(int sock,
 					 * useramelen would be 129
 					 */
 					usernamelen = MAX_XAUTH_USERNAME_LEN;
-					starter_log(LOG_LEVEL_ERR,
-						    "username cannot be >= %d chars",
-						    MAX_XAUTH_USERNAME_LEN);
+					llog_error(logger, 0,
+						   "username cannot be >= %d chars",
+						   MAX_XAUTH_USERNAME_LEN);
 				}
-				exit_status = send_reply(sock, xauthusername, usernamelen);
+				exit_status = send_reply(sock, xauthusername, usernamelen, logger);
 				if (exit_status != 0) {
 					return exit_status;
 				}
@@ -233,8 +230,7 @@ static int send_whack_msg(struct whack_message *msg, char *ctlsocket, struct log
 	ugh = pack_whack_msg(&wp, logger);
 
 	if (ugh != NULL) {
-		starter_log(LOG_LEVEL_ERR,
-			"send_wack_msg(): can't pack strings: %s", ugh);
+		llog_error(logger, 0, "send_wack_msg(): can't pack strings: %s", ugh);
 		return -1;
 	}
 
@@ -243,25 +239,21 @@ static int send_whack_msg(struct whack_message *msg, char *ctlsocket, struct log
 	/* Connect to pluto ctl */
 	sock = cloexec_socket(AF_UNIX, SOCK_STREAM, 0);
 	if (sock < 0) {
-		starter_log(LOG_LEVEL_ERR, "socket() failed: %s",
-			strerror(errno));
+		llog_error(logger, errno, "socket() failed");
 		return -1;
 	}
 	if (connect(sock, (struct sockaddr *)&ctl_addr,
 			offsetof(struct sockaddr_un, sun_path) +
 				strlen(ctl_addr.sun_path)) <
-		0)
-	{
-		starter_log(LOG_LEVEL_ERR, "connect(pluto_ctl) failed: %s",
-			strerror(errno));
+		0) {
+		llog_error(logger, errno, "connect(pluto_ctl) failed");
 		close(sock);
 		return -1;
 	}
 
 	/* Send message */
 	if (write(sock, msg, len) != len) {
-		starter_log(LOG_LEVEL_ERR, "write(pluto_ctl) failed: %s",
-			strerror(errno));
+		llog_error(logger, errno, "write(pluto_ctl) failed");
 		close(sock);
 		return -1;
 	}
@@ -271,7 +263,7 @@ static int send_whack_msg(struct whack_message *msg, char *ctlsocket, struct log
 		char xauthusername[MAX_XAUTH_USERNAME_LEN];
 		char xauthpass[XAUTH_MAX_PASS_LENGTH];
 
-		ret = starter_whack_read_reply(sock, xauthusername, xauthpass, 0, 0);
+		ret = starter_whack_read_reply(sock, xauthusername, xauthpass, 0, 0, logger);
 		close(sock);
 	}
 
@@ -446,15 +438,13 @@ static int starter_whack_add_pubkey(struct starter_config *cfg,
 
 		switch (end->pubkey_type) {
 		case PUBKEY_DNSONDEMAND:
-			starter_log(LOG_LEVEL_DEBUG,
-				"conn %s/%s has key from DNS",
-				connection_name(conn), lr);
+			ldbg(logger, "conn %s/%s has key from DNS",
+			     connection_name(conn), lr);
 			break;
 
 		case PUBKEY_CERTIFICATE:
-			starter_log(LOG_LEVEL_DEBUG,
-				"conn %s/%s has key from certificate",
-				connection_name(conn), lr);
+			ldbg(logger, "conn %s/%s has key from certificate",
+			     connection_name(conn), lr);
 			break;
 
 		case PUBKEY_NOTSET:
@@ -478,20 +468,18 @@ static int starter_whack_add_pubkey(struct starter_config *cfg,
 			err_t err = ttochunk(shunk1(end->pubkey), base, &keyspace);
 			if (err != NULL) {
 				enum_buf pkb;
-				starter_log(LOG_LEVEL_ERR,
-					    "conn %s: %s%s malformed [%s]",
-					    connection_name(conn), lr,
-					    str_enum(&ipseckey_algorithm_config_names, end->pubkey_alg, &pkb),
-					    err);
+				llog_error(logger, 0, "conn %s: %s%s malformed [%s]",
+					   connection_name(conn), lr,
+					   str_enum(&ipseckey_algorithm_config_names, end->pubkey_alg, &pkb),
+					   err);
 				return 1;
 			}
 
 			enum_buf pkb;
-			starter_log(LOG_LEVEL_DEBUG,
-				    "\tsending %s %s%s=%s",
-				    connection_name(conn), lr,
-				    str_enum(&ipseckey_algorithm_config_names, end->pubkey_alg, &pkb),
-				    end->pubkey);
+			ldbg(logger, "\tsending %s %s%s=%s",
+			     connection_name(conn), lr,
+			     str_enum(&ipseckey_algorithm_config_names, end->pubkey_alg, &pkb),
+			     end->pubkey);
 			msg.keyval = keyspace;
 			ret = send_whack_msg(&msg, cfg->ctlsocket, logger);
 			free_chunk_content(&keyspace);
@@ -505,12 +493,12 @@ static int starter_whack_add_pubkey(struct starter_config *cfg,
 	return 0;
 }
 
-static void conn_log_val(const struct starter_conn *conn,
+static void conn_log_val(struct logger *logger,
+			 const struct starter_conn *conn,
 			 const char *name, const char *value)
 {
 	if (value != NULL) {
-		starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" %s=%s",
-			    conn->name, name, value);
+		ldbg(logger, "conn: \"%s\" %s=%s", conn->name, name, value);
 	}
 }
 
@@ -584,9 +572,9 @@ int starter_whack_add_conn(struct starter_config *cfg,
 	if (conn->options_set[KNCF_REQID]) {
 		if (conn->options[KNCF_REQID] <= 0 ||
 		    conn->options[KNCF_REQID] > IPSEC_MANUAL_REQID_MAX) {
-			starter_log(LOG_LEVEL_ERR,
-				"Ignoring reqid value - range must be 1-%u",
-				IPSEC_MANUAL_REQID_MAX);
+			llog_error(logger, 0,
+				   "ignoring reqid value - range must be 1-%u",
+				   IPSEC_MANUAL_REQID_MAX);
 		} else {
 			msg.sa_reqid = conn->options[KNCF_REQID];
 		}
@@ -647,38 +635,37 @@ int starter_whack_add_conn(struct starter_config *cfg,
 
 	if (conn->strings_set[KSCF_SEC_LABEL]) {
 		msg.sec_label = conn->sec_label;
-		starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" sec_label=%s",
-			    conn->name, msg.sec_label);
+		ldbg(logger, "conn: \"%s\" sec_label=%s", conn->name, msg.sec_label);
 	}
 
 	msg.conn_debug = conn->options[KNCF_DEBUG];
 
 	msg.modecfg_dns = conn->modecfg_dns;
-	conn_log_val(conn, "modecfgdns", msg.modecfg_dns);
+	conn_log_val(logger, conn, "modecfgdns", msg.modecfg_dns);
 	msg.modecfg_domains = conn->modecfg_domains;
-	conn_log_val(conn, "modecfgdomains", msg.modecfg_domains);
+	conn_log_val(logger, conn, "modecfgdomains", msg.modecfg_domains);
 	msg.modecfg_banner = conn->modecfg_banner;
-	conn_log_val(conn, "modecfgbanner", msg.modecfg_banner);
+	conn_log_val(logger, conn, "modecfgbanner", msg.modecfg_banner);
 
 	msg.conn_mark_both = conn->conn_mark_both;
-	conn_log_val(conn, "mark", msg.conn_mark_both);
+	conn_log_val(logger, conn, "mark", msg.conn_mark_both);
 	msg.conn_mark_in = conn->conn_mark_in;
-	conn_log_val(conn, "mark-in", msg.conn_mark_in);
+	conn_log_val(logger, conn, "mark-in", msg.conn_mark_in);
 	msg.conn_mark_out = conn->conn_mark_out;
-	conn_log_val(conn, "mark-out", msg.conn_mark_out);
+	conn_log_val(logger, conn, "mark-out", msg.conn_mark_out);
 
 	msg.vti_interface = conn->strings[KSCF_VTI_INTERFACE];
-	conn_log_val(conn, "vti-interface", msg.vti_interface);
+	conn_log_val(logger, conn, "vti-interface", msg.vti_interface);
 	msg.vti_routing = conn->options[KNCF_VTI_ROUTING];
 	msg.vti_shared = conn->options[KNCF_VTI_SHARED];
 
 	msg.ppk_ids = conn->ppk_ids;
-	conn_log_val(conn, "ppk-ids", msg.ppk_ids);
+	conn_log_val(logger, conn, "ppk-ids", msg.ppk_ids);
 
 	msg.redirect_to = conn->strings[KSCF_REDIRECT_TO];
-	conn_log_val(conn, "redirect-to", msg.redirect_to);
+	conn_log_val(logger, conn, "redirect-to", msg.redirect_to);
 	msg.accept_redirect_to = conn->strings[KSCF_ACCEPT_REDIRECT_TO];
-	conn_log_val(conn, "accept-redirect-to", msg.accept_redirect_to);
+	conn_log_val(logger, conn, "accept-redirect-to", msg.accept_redirect_to);
 	msg.send_redirect = conn->options[KNCF_SEND_REDIRECT];
 
 	msg.mobike = conn->options[KNCF_MOBIKE]; /*yn_options*/
@@ -713,9 +700,9 @@ int starter_whack_add_conn(struct starter_config *cfg,
 		return -1;
 
 	msg.esp = conn->esp;
-	conn_log_val(conn, "esp", msg.esp);
+	conn_log_val(logger, conn, "esp", msg.esp);
 	msg.ike = conn->ike_crypto;
-	conn_log_val(conn, "ike", msg.ike);
+	conn_log_val(logger, conn, "ike", msg.ike);
 
 	int r = send_whack_msg(&msg, cfg->ctlsocket, logger);
 	if (r != 0)
