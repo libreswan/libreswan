@@ -859,7 +859,10 @@ $(KVM_POOLDIR_PREFIX)%-base: \
 # Alpine
 #
 
-KVM_ALPINE_ISO_URL ?= https://dl-cdn.alpinelinux.org/alpine/v3.18/releases/x86_64/alpine-standard-3.18.0-x86_64.iso
+KVM_ALPINE_VERSION ?= v3.19
+KVM_ALPINE_RELEASE ?= 3.19.1
+KVM_ALPINE_URL ?= https://dl-cdn.alpinelinux.org/alpine/
+KVM_ALPINE_ISO_URL ?= $(KVM_ALPINE_URL)/$(KVM_ALPINE_VERSION)/releases/x86_64/alpine-standard-$(KVM_ALPINE_RELEASE)-x86_64.iso
 KVM_ALPINE_ISO = $(KVM_POOLDIR)/$(notdir $(KVM_ALPINE_ISO_URL))
 kvm-iso: $(KVM_ALPINE_ISO)
 $(KVM_ALPINE_ISO): | $(KVM_POOLDIR)

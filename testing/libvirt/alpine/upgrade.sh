@@ -43,6 +43,3 @@ add pkgconfig
 add sed sed-doc
 add unbound-doc unbound-dev
 add xmlto xmlto-doc
-
-# there is no gmake?!?
-ln -s make /usr/bin/gmake
