@@ -47,17 +47,6 @@
 #include "ip_info.h"
 #include "lswlog.h"
 
-static int send_reply(int sock, char *buf, ssize_t len, struct logger *logger)
-{
-	/* send the secret to pluto */
-	if (write(sock, buf, len) != len) {
-		int e = errno;
-		llog_error(logger, e, "write() failed");
-		return RC_WHACK_PROBLEM;
-	}
-	return 0;
-}
-
 static int starter_whack_read_reply(int sock,
 				    char xauthusername[MAX_XAUTH_USERNAME_LEN],
 				    char xauthpass[XAUTH_MAX_PASS_LENGTH],
@@ -159,11 +148,7 @@ static int starter_whack_read_reply(int sock,
 						   "xauth password cannot be >= %d chars",
 						   XAUTH_MAX_PASS_LENGTH);
 				}
-				exit_status = send_reply(sock, xauthpass, xauthpasslen, logger);
-				if (exit_status != 0) {
-					return exit_status;
-				}
-
+				whack_send_reply(sock, xauthpass, xauthpasslen, logger);
 				break;
 
 			case RC_USERPROMPT:
@@ -181,10 +166,7 @@ static int starter_whack_read_reply(int sock,
 						   "username cannot be >= %d chars",
 						   MAX_XAUTH_USERNAME_LEN);
 				}
-				exit_status = send_reply(sock, xauthusername, usernamelen, logger);
-				if (exit_status != 0) {
-					return exit_status;
-				}
+				whack_send_reply(sock, xauthusername, usernamelen, logger);
 
 				break;
 

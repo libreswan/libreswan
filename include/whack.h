@@ -487,6 +487,8 @@ extern void clear_end(const char *leftright, struct whack_end *e);
 extern size_t whack_get_secret(char *buf, size_t bufsize);
 extern int whack_get_value(char *buf, size_t bufsize);
 
+void whack_send_reply(int sock, const char *buf, ssize_t len, struct logger *logger);
+
 extern bool lsw_alias_cmp(const char *name, const char *aliases);
 
 #endif /* WHACK_H */

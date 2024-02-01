@@ -1071,18 +1071,6 @@ static uintmax_t optarg_sparse(unsigned optional, const struct sparse_name names
 	return name->value;
 }
 
-static void send_reply(int sock, char *buf, ssize_t len)
-{
-	/* send the secret to pluto */
-	if (write(sock, buf, len) != len) {
-		int e = errno;
-
-		fprintf(stderr, "whack: write() failed (%d %s)\n", e,
-			strerror(e));
-		exit(RC_WHACK_PROBLEM);
-	}
-}
-
 /* This is a hack for initiating ISAKMP exchanges. */
 
 int main(int argc, char **argv)
@@ -2945,9 +2933,7 @@ int main(int argc, char **argv)
 					xauthpasslen = whack_get_secret(xauthpass,
 									sizeof(xauthpass));
 				}
-				send_reply(sock,
-					   xauthpass,
-					   xauthpasslen);
+				whack_send_reply(sock, xauthpass, xauthpasslen, logger);
 				break;
 
 			case RC_USERPROMPT:
@@ -2955,9 +2941,7 @@ int main(int argc, char **argv)
 					usernamelen = whack_get_value(xauthusername,
 								      sizeof(xauthusername));
 				}
-				send_reply(sock,
-					   xauthusername,
-					   usernamelen);
+				whack_send_reply(sock, xauthusername, usernamelen, logger);
 				break;
 
 			default:
