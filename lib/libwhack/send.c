@@ -32,7 +32,7 @@
 
 #include "lswlog.h"
 
-void whack_send_reply(int sock, const char *buf, ssize_t len, struct logger *logger)
+static void whack_send_reply(int sock, const char *buf, ssize_t len, struct logger *logger)
 {
 	/* send the secret to pluto */
 	if (write(sock, buf, len) != len) {
@@ -43,14 +43,12 @@ void whack_send_reply(int sock, const char *buf, ssize_t len, struct logger *log
 	}
 }
 
-#if 0
-
-static int starter_whack_read_reply(int sock,
-				    char xauthusername[MAX_XAUTH_USERNAME_LEN],
-				    char xauthpass[XAUTH_MAX_PASS_LENGTH],
-				    int usernamelen,
-				    int xauthpasslen,
-				    struct logger *logger)
+int whack_read_reply(int sock,
+		     char xauthusername[MAX_XAUTH_USERNAME_LEN],
+		     char xauthpass[XAUTH_MAX_PASS_LENGTH],
+		     int usernamelen,
+		     int xauthpasslen,
+		     struct logger *logger)
 {
 	char buf[4097]; /* arbitrary limit on log line length */
 	char *be = buf;
@@ -62,17 +60,14 @@ static int starter_whack_read_reply(int sock,
 
 		if (rl < 0) {
 			int e = errno;
-
-			fprintf(stderr, "whack: read() failed (%d %s)\n", e,
-				strerror(e));
-			return RC_WHACK_PROBLEM;
+			llog_error(logger, e, "read() failed");
+			exit(RC_WHACK_PROBLEM);
 		}
+
 		if (rl == 0) {
-			if (be != buf)
-				fprintf(stderr,
-					"whack: last line from pluto too long or unterminated\n");
-
-
+			if (be != buf) {
+				llog_error(logger, 0, "last line from pluto too long or unterminated");
+			}
 			break;
 		}
 
@@ -98,14 +93,9 @@ static int starter_whack_read_reply(int sock,
 			unsigned long s = strtoul(ls, &lpe, 10);
 			if (lpe == ls || *lpe != ' ') {
 				/* includes embedded NL, see above */
-				fprintf(stderr, "whack: log line missing NNN prefix: %*s",
-					(int)(le - ls), ls);
-#if 0
-				ls = le;
-				continue;
-#else
+				llog_error(logger, 0, "log line missing NNN prefix: %*s",
+					   (int)(le - ls), ls);
 				exit(RC_WHACK_PROBLEM);
-#endif
 			}
 
 			ls = lpe + 1; /* skip NNN_ */
@@ -190,6 +180,7 @@ static int starter_whack_read_reply(int sock,
 	return exit_status;
 }
 
+#if 0
 static int send_whack_msg(struct whack_message *msg, char *ctlsocket, struct logger *logger)
 {
 	struct sockaddr_un ctl_addr = { .sun_family = AF_UNIX };

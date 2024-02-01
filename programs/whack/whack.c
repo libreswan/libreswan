@@ -1085,9 +1085,8 @@ int main(int argc, char **argv)
 
 	char xauthusername[MAX_XAUTH_USERNAME_LEN];
 	char xauthpass[XAUTH_MAX_PASS_LENGTH];
-	int usernamelen = 0;
-	int xauthpasslen = 0;
-	bool gotusername = false, gotxauthpass = false;
+	int usernamelen = 0;	/* includes '\0' */
+	int xauthpasslen = 0;	/* includes '\0' */
 	const char *ugh;
 	bool ignore_errors = false;
 
@@ -2327,19 +2326,15 @@ int main(int argc, char **argv)
 			 * both actions
 			 */
 			end->xauth_username = optarg;
-			gotusername = true;
 			/* ??? why does this length include NUL? */
-			usernamelen = jam_str(xauthusername, sizeof(xauthusername),
-					optarg) -
-				xauthusername + 1;
+			/* XXX: no clue; but >0 does imply being present */
+			usernamelen = jam_str(xauthusername, sizeof(xauthusername), optarg) - xauthusername + 1;
 			continue;
 
 		case OPT_XAUTHPASS:	/* --xauthpass */
-			gotxauthpass = true;
 			/* ??? why does this length include NUL? */
-			xauthpasslen = jam_str(xauthpass, sizeof(xauthpass),
-					optarg) -
-				xauthpass + 1;
+			/* XXX: no clue; but >0 does imply being present */
+			xauthpasslen = jam_str(xauthpass, sizeof(xauthpass), optarg) - xauthpass + 1;
 			continue;
 
 		case END_MODECFGCLIENT:	/* --modeconfigclient */
@@ -2850,119 +2845,8 @@ int main(int argc, char **argv)
 		exit(RC_WHACK_PROBLEM);
 	}
 
-	/* for now, just copy reply back to stdout */
-
-	char buf[4097];	/* arbitrary limit on log line length */
-	char *be = buf;
-
-	for (;;) {
-		char *ls = buf;
-		ssize_t rl = read(sock, be, (buf + sizeof(buf) - 1) - be);
-
-		if (rl < 0) {
-			int e = errno;
-
-			fprintf(stderr,
-				"whack: read() failed (%d %s)\n",
-				e, strerror(e));
-			exit(RC_WHACK_PROBLEM);
-		}
-		if (rl == 0) {
-			if (be != buf)
-				fprintf(stderr,
-					"whack: last line from pluto too long or unterminated\n");
-			break;
-		}
-
-		be += rl;
-		*be = '\0';
-
-		for (;;) {
-			char *le = strchr(ls, '\n');
-
-			if (le == NULL) {
-				/*
-				 * move last, partial line
-				 * to start of buffer
-				 */
-				memmove(buf, ls, be - ls);
-				be -= ls - buf;
-				break;
-			}
-			le++;	/* include NL in line */
-
-			/*
-			 * figure out prefix number and how it should
-			 * affect our exit status and printing
-			 */
-			char *lpe = NULL; /* line-prefix-end */
-			unsigned long s = strtoul(ls, &lpe, 10);
-			if (lpe == ls || *lpe != ' ') {
-				/* includes embedded NL, see above */
-				fprintf(stderr, "whack: log line missing NNN prefix: %*s",
-					(int)(le - ls), ls);
-#if 0
-				ls = le;
-				continue;
-#else
-				exit(RC_WHACK_PROBLEM);
-#endif
-			}
-
-			ls = lpe + 1; /* skip NNN_ */
-
-			if (write(STDOUT_FILENO, ls, le - ls) != (le - ls)) {
-				int e = errno;
-
-				fprintf(stderr,
-					"whack: write() failed to stdout(%d %s)\n",
-					e, strerror(e));
-			}
-
-			switch (s) {
-
-			case RC_LOG:
-				/*
-				 * Ignore; these logs are
-				 * informational only.
-				 */
-				break;
-
-			case RC_ENTERSECRET:
-				if (!gotxauthpass) {
-					xauthpasslen = whack_get_secret(xauthpass,
-									sizeof(xauthpass));
-				}
-				whack_send_reply(sock, xauthpass, xauthpasslen, logger);
-				break;
-
-			case RC_USERPROMPT:
-				if (!gotusername) {
-					usernamelen = whack_get_value(xauthusername,
-								      sizeof(xauthusername));
-				}
-				whack_send_reply(sock, xauthusername, usernamelen, logger);
-				break;
-
-			default:
-				/*
-				 * Only RC_ codes between
-				 * RC_EXIT_FLOOR (RC_DUPNAME) and
-				 * RC_EXIT_ROOF are errors.
-				 *
-				 * The exit status is sticky so that
-				 * incidental logs don't clear or
-				 * change it.
-				 */
-				if (exit_status == 0 && s >= RC_EXIT_FLOOR && s < RC_EXIT_ROOF) {
-					exit_status = (msg.whack_async ? 0 : s);
-				}
-				break;
-			}
-
-			ls = le;
-		}
-	}
+	exit_status = whack_read_reply(sock, xauthusername, xauthpass,
+				       usernamelen, xauthpasslen, logger);
 
 	if (ignore_errors)
 		return 0;
