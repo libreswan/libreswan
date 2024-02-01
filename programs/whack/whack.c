@@ -1013,13 +1013,7 @@ static ip_address get_address_any(struct family *family)
 	return get_address_family(family)->address.unspec;
 }
 
-struct sockaddr_un ctl_addr = {
-	.sun_family = AF_UNIX,
-	.sun_path  = DEFAULT_CTL_SOCKET,
-#ifdef USE_SOCKADDR_LEN
-	.sun_len = sizeof(struct sockaddr_un),
-#endif
-};
+static char *ctlsocket = NULL;
 
 static deltatime_t optarg_deltatime(const struct timescale *timescale)
 {
@@ -1078,7 +1072,6 @@ int main(int argc, char **argv)
 	struct logger *logger = tool_logger(argc, argv);
 
 	struct whack_message msg;
-	struct whackpacker wp;
 	char esp_buf[256];	/* uses snprintf */
 	bool seen[OPTION_ENUMS_ROOF] = {0};
 	lset_t opts_seen = LEMPTY;
@@ -1275,19 +1268,13 @@ int main(int argc, char **argv)
 		/* the rest of the options combine in complex ways */
 
 		case OPT_RUNDIR:	/* --rundir <dir> */
-			if (snprintf(ctl_addr.sun_path,
-				     sizeof(ctl_addr.sun_path),
-				     "%s/pluto.ctl", optarg) == -1)
-				diagw("Invalid rundir for sun_addr");
-
+			pfreeany(ctlsocket);
+			ctlsocket = alloc_printf("%s/pluto.ctl", optarg);
 			continue;
 
 		case OPT_CTLSOCKET:	/* --ctlsocket <file> */
-			if (snprintf(ctl_addr.sun_path,
-				     sizeof(ctl_addr.sun_path),
-				     "%s", optarg) == -1)
-				diagw("Invalid ctlsocket for sun_addr");
-
+			pfreeany(ctlsocket);
+			ctlsocket = clone_str(optarg, "ctlsocket");
 			continue;
 
 		case OPT_NAME:	/* --name <connection-name> */
@@ -2771,9 +2758,6 @@ int main(int argc, char **argv)
 		diagw("no action specified; try --help for hints");
 	}
 
-	/* pack strings for inclusion in message */
-	wp.msg = &msg;
-
 	/* build esp message as esp="<esp>;<pfsgroup>" */
 	if (msg.pfsgroup != NULL) {
 		snprintf(esp_buf, sizeof(esp_buf), "%s;%s",
@@ -2781,72 +2765,15 @@ int main(int argc, char **argv)
 			 msg.pfsgroup != NULL ? msg.pfsgroup : "");
 		msg.esp = esp_buf;
 	}
-	ugh = pack_whack_msg(&wp, logger);
-	if (ugh != NULL)
-		diagw(ugh);
 
 	msg.magic = ((opts_seen & ~BASIC_OPT_SEEN) != LEMPTY ? WHACK_MAGIC :
 		     WHACK_BASIC_MAGIC);
 
-	/* send message to Pluto */
-	if (access(ctl_addr.sun_path, R_OK | W_OK) < 0) {
-		int e = errno;
-
-		switch (e) {
-		case EACCES:
-			fprintf(stderr,
-				"whack: no right to communicate with pluto (access(\"%s\"))\n",
-				ctl_addr.sun_path);
-			break;
-		case ENOENT:
-			fprintf(stderr,
-				"whack: Pluto is not running (no \"%s\")\n",
-				ctl_addr.sun_path);
-			break;
-		default:
-			fprintf(stderr,
-				"whack: access(\"%s\") failed with %d %s\n",
-				ctl_addr.sun_path, errno, strerror(e));
-			break;
-		}
-		exit(RC_WHACK_PROBLEM);
-	}
-
-	int sock = cloexec_socket(AF_UNIX, SOCK_STREAM, 0);
-	int exit_status = 0;
-	ssize_t len = wp.str_next - (unsigned char *)&msg;
-
-	if (sock == -1) {
-		int e = errno;
-
-		fprintf(stderr, "whack: socket() failed (%d %s)\n", e, strerror(
-				e));
-		exit(RC_WHACK_PROBLEM);
-	}
-
-	if (connect(sock, (struct sockaddr *)&ctl_addr,
-		    offsetof(struct sockaddr_un,
-			     sun_path) + strlen(ctl_addr.sun_path)) < 0)
-	{
-		int e = errno;
-
-		fprintf(stderr,
-			"whack:%s connect() for \"%s\" failed (%d %s)\n",
-			e == ECONNREFUSED ? " is Pluto running? " : "",
-			ctl_addr.sun_path, e, strerror(e));
-		exit(RC_WHACK_PROBLEM);
-	}
-
-	if (write(sock, &msg, len) != len) {
-		int e = errno;
-
-		fprintf(stderr, "whack: write() failed (%d %s)\n",
-			e, strerror(e));
-		exit(RC_WHACK_PROBLEM);
-	}
-
-	exit_status = whack_read_reply(sock, xauthusername, xauthpass,
-				       usernamelen, xauthpasslen, logger);
+	int exit_status = whack_send_msg(&msg,
+					 (ctlsocket == NULL ? DEFAULT_CTL_SOCKET : ctlsocket),
+					 xauthusername, xauthpass,
+					 usernamelen, xauthpasslen,
+					 logger);
 
 	if (ignore_errors)
 		return 0;

@@ -27,9 +27,10 @@
 #include <unistd.h>		/* for write() */
 #include <errno.h>
 #include <stdlib.h>		/* for exit() */
+#include <sys/un.h>		/* struct sockaddr_un;! */
 
 #include "whack.h"
-
+#include "lsw_socket.h"
 #include "lswlog.h"
 
 static void whack_send_reply(int sock, const char *buf, ssize_t len, struct logger *logger)
@@ -43,12 +44,12 @@ static void whack_send_reply(int sock, const char *buf, ssize_t len, struct logg
 	}
 }
 
-int whack_read_reply(int sock,
-		     char xauthusername[MAX_XAUTH_USERNAME_LEN],
-		     char xauthpass[XAUTH_MAX_PASS_LENGTH],
-		     int usernamelen,
-		     int xauthpasslen,
-		     struct logger *logger)
+static int whack_read_reply(int sock,
+			    char xauthusername[MAX_XAUTH_USERNAME_LEN],
+			    char xauthpass[XAUTH_MAX_PASS_LENGTH],
+			    int usernamelen,
+			    int xauthpasslen,
+			    struct logger *logger)
 {
 	char buf[4097]; /* arbitrary limit on log line length */
 	char *be = buf;
@@ -120,6 +121,10 @@ int whack_read_reply(int sock,
 				break;
 
 			case RC_ENTERSECRET:
+				if (xauthpass == NULL) {
+					llog_error(logger, 0, "unexpected request for xauth password");
+					exit(RC_WHACK_PROBLEM);
+				}
 				if (xauthpasslen == 0) {
 					xauthpasslen =
 						whack_get_secret(xauthpass,
@@ -140,6 +145,10 @@ int whack_read_reply(int sock,
 				break;
 
 			case RC_USERPROMPT:
+				if (xauthusername == NULL) {
+					llog_error(logger, 0, "unexpected request for xauth username");
+					exit(RC_WHACK_PROBLEM);
+				}
 				if (usernamelen == 0) {
 					usernamelen = whack_get_value(xauthusername,
 								      MAX_XAUTH_USERNAME_LEN);
@@ -180,64 +189,87 @@ int whack_read_reply(int sock,
 	return exit_status;
 }
 
-#if 0
-static int send_whack_msg(struct whack_message *msg, char *ctlsocket, struct logger *logger)
+int whack_send_msg(struct whack_message *msg, char *ctlsocket,
+		   char xauthusername[MAX_XAUTH_USERNAME_LEN],
+		   char xauthpass[XAUTH_MAX_PASS_LENGTH],
+		   int usernamelen, int xauthpasslen,
+		   struct logger *logger)
 {
-	struct sockaddr_un ctl_addr = { .sun_family = AF_UNIX };
-	int sock;
-	ssize_t len;
-	struct whackpacker wp;
-	err_t ugh;
-	int ret;
+	struct sockaddr_un ctl_addr = {
+		.sun_family = AF_UNIX,
+		.sun_path  = DEFAULT_CTL_SOCKET,
+#ifdef USE_SOCKADDR_LEN
+		.sun_len = sizeof(struct sockaddr_un),
+#endif
+	};
 
 	/* copy socket location */
+
 	fill_and_terminate(ctl_addr.sun_path, ctlsocket, sizeof(ctl_addr.sun_path));
 
 	/*  Pack strings */
-	wp.msg = msg;
-	wp.str_next = (unsigned char *)msg->string;
-	wp.str_roof = (unsigned char *)&msg->string[sizeof(msg->string)];
 
-	ugh = pack_whack_msg(&wp, logger);
+	struct whackpacker wp = {
+		.msg = msg,
+		.str_next = (unsigned char *)msg->string,
+		.str_roof = (unsigned char *)&msg->string[sizeof(msg->string)],
+	};
+
+	err_t ugh = pack_whack_msg(&wp, logger);
 
 	if (ugh != NULL) {
 		llog_error(logger, 0, "send_wack_msg(): can't pack strings: %s", ugh);
 		return -1;
 	}
 
-	len = wp.str_next - (unsigned char *)msg;
+	ssize_t len = wp.str_next - (unsigned char *)msg;
 
 	/* Connect to pluto ctl */
-	sock = cloexec_socket(AF_UNIX, SOCK_STREAM, 0);
+
+	if (access(ctl_addr.sun_path, R_OK | W_OK) < 0) {
+		int e = errno;
+
+		switch (e) {
+		case EACCES:
+			llog_error(logger, e, "no right to communicate with pluto (access(\"%s\"))",
+				   ctl_addr.sun_path);
+			break;
+		case ENOENT:
+			llog_error(logger, e, "Pluto is not running (no \"%s\")",
+				   ctl_addr.sun_path);
+			break;
+		default:
+			llog_error(logger, e, "access(\"%s\") failed",
+				   ctl_addr.sun_path);
+			break;
+		}
+		exit(RC_WHACK_PROBLEM);
+	}
+
+	int sock = cloexec_socket(AF_UNIX, SOCK_STREAM, 0);
 	if (sock < 0) {
 		llog_error(logger, errno, "socket() failed");
-		return -1;
+		exit(RC_WHACK_PROBLEM);
 	}
+
 	if (connect(sock, (struct sockaddr *)&ctl_addr,
-			offsetof(struct sockaddr_un, sun_path) +
-				strlen(ctl_addr.sun_path)) <
-		0) {
+		    offsetof(struct sockaddr_un, sun_path) + strlen(ctl_addr.sun_path)) < 0) {
 		llog_error(logger, errno, "connect(pluto_ctl) failed");
 		close(sock);
-		return -1;
+		exit(RC_WHACK_PROBLEM);
 	}
 
 	/* Send message */
+
 	if (write(sock, msg, len) != len) {
 		llog_error(logger, errno, "write(pluto_ctl) failed");
 		close(sock);
-		return -1;
+		exit(RC_WHACK_PROBLEM);
 	}
 
-	/* read reply */
-	{
-		char xauthusername[MAX_XAUTH_USERNAME_LEN];
-		char xauthpass[XAUTH_MAX_PASS_LENGTH];
-
-		ret = starter_whack_read_reply(sock, xauthusername, xauthpass, 0, 0, logger);
-		close(sock);
-	}
+	/* read reply (possibly send further messages) */
+	int ret = whack_read_reply(sock, xauthusername, xauthpass, usernamelen, xauthpasslen, logger);
+	close(sock);
 
 	return ret;
 }
-#endif

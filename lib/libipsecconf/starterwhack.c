@@ -47,66 +47,6 @@
 #include "ip_info.h"
 #include "lswlog.h"
 
-static int send_whack_msg(struct whack_message *msg, char *ctlsocket, struct logger *logger)
-{
-	struct sockaddr_un ctl_addr = { .sun_family = AF_UNIX };
-	int sock;
-	ssize_t len;
-	struct whackpacker wp;
-	err_t ugh;
-	int ret;
-
-	/* copy socket location */
-	fill_and_terminate(ctl_addr.sun_path, ctlsocket, sizeof(ctl_addr.sun_path));
-
-	/*  Pack strings */
-	wp.msg = msg;
-	wp.str_next = (unsigned char *)msg->string;
-	wp.str_roof = (unsigned char *)&msg->string[sizeof(msg->string)];
-
-	ugh = pack_whack_msg(&wp, logger);
-
-	if (ugh != NULL) {
-		llog_error(logger, 0, "send_wack_msg(): can't pack strings: %s", ugh);
-		return -1;
-	}
-
-	len = wp.str_next - (unsigned char *)msg;
-
-	/* Connect to pluto ctl */
-	sock = cloexec_socket(AF_UNIX, SOCK_STREAM, 0);
-	if (sock < 0) {
-		llog_error(logger, errno, "socket() failed");
-		return -1;
-	}
-	if (connect(sock, (struct sockaddr *)&ctl_addr,
-			offsetof(struct sockaddr_un, sun_path) +
-				strlen(ctl_addr.sun_path)) <
-		0) {
-		llog_error(logger, errno, "connect(pluto_ctl) failed");
-		close(sock);
-		return -1;
-	}
-
-	/* Send message */
-	if (write(sock, msg, len) != len) {
-		llog_error(logger, errno, "write(pluto_ctl) failed");
-		close(sock);
-		return -1;
-	}
-
-	/* read reply */
-	{
-		char xauthusername[MAX_XAUTH_USERNAME_LEN];
-		char xauthpass[XAUTH_MAX_PASS_LENGTH];
-
-		ret = whack_read_reply(sock, xauthusername, xauthpass, 0, 0, logger);
-		close(sock);
-	}
-
-	return ret;
-}
-
 static const struct whack_message empty_whack_message = {
 	.magic = WHACK_MAGIC,
 };
@@ -318,7 +258,7 @@ static int starter_whack_add_pubkey(struct starter_config *cfg,
 			     str_enum(&ipseckey_algorithm_config_names, end->pubkey_alg, &pkb),
 			     end->pubkey);
 			msg.keyval = keyspace;
-			ret = send_whack_msg(&msg, cfg->ctlsocket, logger);
+			ret = whack_send_msg(&msg, cfg->ctlsocket, NULL, NULL, 0, 0, logger);
 			free_chunk_content(&keyspace);
 		}
 		}
@@ -541,7 +481,7 @@ int starter_whack_add_conn(struct starter_config *cfg,
 	msg.ike = conn->ike_crypto;
 	conn_log_val(logger, conn, "ike", msg.ike);
 
-	int r = send_whack_msg(&msg, cfg->ctlsocket, logger);
+	int r = whack_send_msg(&msg, cfg->ctlsocket, NULL, NULL, 0, 0, logger);
 	if (r != 0)
 		return r;
 
@@ -566,7 +506,7 @@ int starter_whack_route_conn(struct starter_config *cfg,
 	struct whack_message msg = empty_whack_message;
 	msg.whack_route = true;
 	msg.name = connection_name(conn);
-	return send_whack_msg(&msg, cfg->ctlsocket, logger);
+	return whack_send_msg(&msg, cfg->ctlsocket, NULL, NULL, 0, 0, logger);
 }
 
 int starter_whack_initiate_conn(struct starter_config *cfg,
@@ -577,12 +517,12 @@ int starter_whack_initiate_conn(struct starter_config *cfg,
 	msg.whack_initiate = true;
 	msg.whack_async = true;
 	msg.name = connection_name(conn);
-	return send_whack_msg(&msg, cfg->ctlsocket, logger);
+	return whack_send_msg(&msg, cfg->ctlsocket, NULL, NULL, 0, 0, logger);
 }
 
 int starter_whack_listen(struct starter_config *cfg, struct logger *logger)
 {
 	struct whack_message msg = empty_whack_message;
 	msg.whack_listen = true;
-	return send_whack_msg(&msg, cfg->ctlsocket, logger);
+	return whack_send_msg(&msg, cfg->ctlsocket, NULL, NULL, 0, 0, logger);
 }
