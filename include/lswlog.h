@@ -66,32 +66,38 @@ enum rc_type {
 
 	RC_SUCCESS = 4,			/* success (exit status 0) */
 
+	/*
+	 * XXX: Clearly this is reuse of numbers is broken.
+	 */
+
 	/* improper request */
 	RC_EXIT_FLOOR = 20,
-	RC_DUPNAME = RC_EXIT_FLOOR,	/* attempt to reuse a connection name */
-	RC_UNKNOWN_NAME,	/* connection name unknown or state number */
-	RC_ORIENT,		/* cannot orient connection: neither end is us */
-	RC_CLASH,		/* clash between two Road Warrior connections OVERLOADED */
-	RC_DEAF,		/* need --listen before --initiate */
-	RC_ROUTE,		/* cannot route */
-	RC_RTBUSY,		/* cannot unroute: route busy */
-	RC_BADID,		/* malformed --id */
-	RC_NOKEY,		/* no key found through DNS */
-	RC_NOPEERIP,		/* cannot initiate when peer IP is unknown */
-	RC_INITSHUNT,		/* cannot initiate a shunt-oly connection */
-	RC_WILDCARD,		/* cannot initiate when ID has wildcards */
-	RC_CRLERROR,		/* CRL fetching disabled or obsolete reread cmd */
-	RC_WHACK_PROBLEM,	/* whack-detected problem */
+	RC_DUPNAME = 20,	/* attempt to reuse a connection name */
+	RC_UNKNOWN_NAME = 21,	/* connection name unknown or state number */
+	RC_ORIENT = 22,		/* cannot orient connection: neither end is us */
+	RC_CLASH = 23,		/* clash between two Road Warrior connections OVERLOADED */
+	RC_DEAF = 24,		/* need --listen before --initiate */
+	RC_ROUTE = 25,		/* cannot route */
+	RC_RTBUSY = 26,		/* cannot unroute: route busy */
+	RC_BADID = 27,		/* malformed --id */
+	RC_NOKEY = 28,		/* no key found through DNS */
+	RC_NOPEERIP = 29,	/* cannot initiate when peer IP is unknown */
+	RC_INITSHUNT = 30,	/* cannot initiate a shunt-oly connection */
+	RC_WILDCARD = 31,	/* cannot initiate when ID has wildcards */
+	RC_CRLERROR = 32,	/* CRL fetching disabled or obsolete reread cmd */
+	RC_WHACK_PROBLEM = 33,	/* whack-detected problem */
 
 	/* permanent failure */
 	RC_BADWHACKMESSAGE = 30,
-	RC_NORETRANSMISSION,
-	RC_INTERNALERR,
-	RC_OPPOFAILURE,		/* Opportunism failed */
-	RC_CRYPTOFAILED,	/* system too busy to perform required
-				* cryptographic operations */
-	RC_AGGRALGO,		/* multiple algorithms requested in phase 1 aggressive */
-	RC_FATAL,		/* fatal error encountered, and negotiation aborted */
+	RC_NORETRANSMISSION = 31,
+	RC_INTERNALERR = 32,
+	RC_OPPOFAILURE = 33,	/* Opportunism failed */
+	RC_CRYPTOFAILED = 34,	/* system too busy to perform required
+				 * cryptographic operations */
+	RC_AGGRALGO = 35,	/* multiple algorithms requested in
+				 * phase 1 aggressive */
+	RC_FATAL = 36,		/* fatal error encountered, and
+				 * negotiation aborted */
 
 	/* entry of secrets */
 	RC_ENTERSECRET = 40,
