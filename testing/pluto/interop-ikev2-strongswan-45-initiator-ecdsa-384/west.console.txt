@@ -57,7 +57,7 @@ west #
 up
 west #
  ipsec whack --trafficstatus
-whack: Pluto is not running (no "/run/pluto/pluto.ctl")
+ERROR: ipsec whack: Pluto is not running (no "/run/pluto/pluto.ctl"): No such file or directory (errno 2)
 west #
  echo done
 done

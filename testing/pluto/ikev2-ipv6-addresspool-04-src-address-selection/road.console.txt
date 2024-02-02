@@ -200,7 +200,7 @@ resolving family=IPv6 src=<defaultroute> gateway=fe80::1000:ff:fe32:64ba peer 20
   success: src=2001:db8:0:3:1:: gateway=fe80::1000:ff:fe32:64ba
 resolving family=IPv6 src=2001:db8:1:2::23 gateway=<not-set> peer 2001:db8:0:3:1::
   seeking NOTHING
-ERROR: ipsec addconn: connect(pluto_ctl) failed: No such file or directory (errno 2)
+ERROR: ipsec addconn: Pluto is not running (no "/run/pluto/foo"): No such file or directory (errno 2)
 road #
  echo done
 done
