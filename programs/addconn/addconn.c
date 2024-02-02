@@ -352,8 +352,8 @@ int main(int argc, char *argv[])
 	cur_debugging = (verbose > 1 ? DBG_ALL :
 			 verbose > 0 ? DBG_BASE :
 			 LEMPTY);
-
-	starter_use_log(verbose != 0);
+	/* logged when true! */
+	ldbg(logger, "debugging mode enabled");
 
 	struct starter_config *cfg = NULL;
 

@@ -24,7 +24,5 @@
 
 extern void starter_log(int level, const char *fmt, ...) PRINTF_LIKE(2);
 
-extern void starter_use_log(bool debug);
-
 #endif /* _STARTER_LOG_H_ */
 

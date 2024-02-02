@@ -33,8 +33,6 @@
  * o use syslog option in config file
  */
 
-static bool log_debugging = false;
-
 static void log_one_line(const char *buff)
 {
 	fprintf(stderr, "%s\n", buff);
@@ -65,11 +63,4 @@ void starter_log(int level UNUSED, const char *fmt, ...)
 	log_one_line(b);
 
 	va_end(args);
-}
-
-void starter_use_log(bool debug)
-{
-	log_debugging = debug;
-	if (log_debugging)
-		starter_log(LOG_LEVEL_ERR, "debugging mode enabled");
 }

@@ -121,6 +121,8 @@ int main(int argc, char *argv[])
 	cur_debugging = (verbose > 1 ? DBG_ALL :
 			 verbose > 0 ? DBG_BASE :
 			 LEMPTY);
+	/* logged when true */
+	ldbg(logger, "debugging mode enabled");
 
 	if (verbose > 3) {
 		yydebug = 1;
@@ -128,8 +130,6 @@ int main(int argc, char *argv[])
 
 	if (verbose)
 		printf("opening file: %s\n", configfile);
-
-	starter_use_log(verbose != 0);
 
 	starter_errors_t errl = { NULL };
 	cfg = confread_load(configfile, NULL, false,
