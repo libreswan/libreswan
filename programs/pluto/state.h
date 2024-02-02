@@ -140,6 +140,7 @@ struct ipsec_flow {
 	uint64_t bytes;
 	realtime_t last_used;
 	chunk_t keymat;
+	bool installed;
 	ipsec_spi_t spi;
 };
 

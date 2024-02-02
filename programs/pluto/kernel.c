@@ -1742,49 +1742,54 @@ struct dead_sa {	/* XXX: this is ip_said+src */
 	ip_address dst;
 };
 
+static unsigned append_spi(struct dead_sa *dead,
+			   const char *name,
+			   const struct ipsec_flow *flow,
+			   ip_address src, ip_address dst,
+			   struct logger *logger)
+{
+	if (flow->expired[SA_HARD_EXPIRED]) {
+		ldbg(logger, "kernel expired %s SPI "PRI_IPSEC_SPI" skip deleting",
+		     name, pri_ipsec_spi(flow->spi));
+		return 0;
+	}
+	dead->spi = flow->spi;
+	dead->src = src;
+	dead->dst = dst;
+	return 1;
+}
+
 static unsigned append_teardown(struct dead_sa *dead, enum direction direction,
 				const struct ipsec_proto_info *proto,
 				const struct ip_protocol *protocol,
-				ip_address host_addr, ip_address effective_remote_address)
+				ip_address host_addr, ip_address effective_remote_address,
+				struct logger *logger)
 {
 	bool present = (proto->protocol == protocol);
 	if (!present &&
 	    direction == DIRECTION_INBOUND &&
 	    proto->inbound.spi != 0 &&
 	    proto->outbound.spi == 0) {
-		dbg("kernel: forcing inbound delete of %s as .inbound.spi: "PRI_IPSEC_SPI"; attrs.spi: "PRI_IPSEC_SPI,
-		    protocol->name,
-		    pri_ipsec_spi(proto->inbound.spi),
-		    pri_ipsec_spi(proto->outbound.spi));
+		ldbg(logger, "kernel: forcing inbound delete of %s as .inbound.spi: "PRI_IPSEC_SPI"; attrs.spi: "PRI_IPSEC_SPI,
+		     protocol->name,
+		     pri_ipsec_spi(proto->inbound.spi),
+		     pri_ipsec_spi(proto->outbound.spi));
 		present = true;
 	}
 	if (present) {
 		dead->protocol = protocol;
 		switch (direction) {
 		case DIRECTION_INBOUND:
-			if (proto->inbound.expired[SA_HARD_EXPIRED]) {
-				dbg("kernel expired SPI 0x%x skip deleting",
-				    ntohl(proto->inbound.spi));
-				return 0;
-			}
-			dead->spi = proto->inbound.spi; /* incoming */
-			dead->src = effective_remote_address;
-			dead->dst = host_addr;
+			return append_spi(dead, "inbound", &proto->inbound,
+					  effective_remote_address, host_addr,
+					  logger);
 			break;
 		case DIRECTION_OUTBOUND:
-			if (proto->outbound.expired[SA_HARD_EXPIRED]) {
-				dbg("kernel hard expired SPI 0x%x skip deleting",
-				    ntohl(proto->outbound.spi));
-				return 0;
-			}
-			dead->spi = proto->outbound.spi; /* outgoing */
-			dead->src = host_addr;
-			dead->dst = effective_remote_address;
-			break;
-		default:
-			bad_case(direction);
+			return append_spi(dead, "outbound", &proto->outbound,
+					  host_addr, effective_remote_address,
+					  logger);
 		}
-		return 1;
+		bad_enum(logger, &direction_names, direction);
 	}
 	return 0;
 }
@@ -1822,13 +1827,13 @@ static bool uninstall_kernel_state(struct child_sa *child, enum direction direct
 	unsigned nr = 0;
 	nr += append_teardown(dead + nr, direction, &child->sa.st_ah,
 			      &ip_protocol_ah, c->local->host.addr,
-			      effective_remote_address);
+			      effective_remote_address, child->sa.logger);
 	nr += append_teardown(dead + nr, direction, &child->sa.st_esp,
 			      &ip_protocol_esp, c->local->host.addr,
-			      effective_remote_address);
+			      effective_remote_address, child->sa.logger);
 	nr += append_teardown(dead + nr, direction, &child->sa.st_ipcomp,
 			      &ip_protocol_ipcomp, c->local->host.addr,
-			      effective_remote_address);
+			      effective_remote_address, child->sa.logger);
 	passert(nr < elemsof(dead));
 
 	/*
