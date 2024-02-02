@@ -484,9 +484,6 @@ extern err_t pack_whack_msg(struct whackpacker *wp, struct logger *logger);
 extern bool unpack_whack_msg(struct whackpacker *wp, struct logger *logger);
 extern void clear_end(const char *leftright, struct whack_end *e);
 
-extern size_t whack_get_secret(char *buf, size_t bufsize);
-extern int whack_get_value(char *buf, size_t bufsize);
-
 int whack_send_msg(struct whack_message *msg, char *ctlsocket,
 		   char xauthusername[MAX_XAUTH_USERNAME_LEN],
 		   char xauthpass[XAUTH_MAX_PASS_LENGTH],

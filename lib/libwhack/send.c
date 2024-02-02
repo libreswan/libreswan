@@ -33,6 +33,63 @@
 #include "lsw_socket.h"
 #include "lswlog.h"
 
+static int whack_get_value(char *buf, size_t bufsize)
+{
+	int len;
+	int try;
+
+	fflush(stdout);
+
+	try = 3;
+	len = 0;
+	while (try > 0 && len == 0) {
+		fprintf(stderr, "Enter username:   ");
+
+		memset(buf, 0, bufsize);
+
+		if (fgets(buf, bufsize, stdin) != buf) {
+			if (errno == 0) {
+				fprintf(stderr,
+					"Cannot read username from standard in\n");
+				exit(RC_WHACK_PROBLEM);
+			} else {
+				perror("fgets value");
+				exit(RC_WHACK_PROBLEM);
+			}
+		}
+
+		/* send the value to pluto, including \0, but fgets adds \n */
+		len = strlen(buf);
+		if (len == 0)
+			fprintf(stderr, "answer was empty, retry\n");
+
+		try--;
+	}
+
+	if (len ==  0)
+		exit(RC_WHACK_PROBLEM);
+
+	return len;
+}
+
+/* Get password from user.  Truncate it to fit in buf. */
+/* ??? the function getpass(3) is obsolete! */
+static size_t whack_get_secret(char *buf, size_t bufsize)
+{
+	fflush(stdout);
+	passert(bufsize > 0);	/* room for terminal NUL */
+
+	char *secret = getpass("Enter passphrase: ");
+	/* jam_str would be good but it requires too much library */
+	size_t len = strlen(secret) + 1;
+	size_t trunc_len = len <= bufsize ? len : bufsize;
+
+	memcpy(buf, secret, trunc_len);
+	buf[trunc_len-1] = '\0';	/* force NUL termination */
+	memset(secret, 0, len);	/* scrub secret from RAM */
+	return trunc_len;
+}
+
 static void whack_send_reply(int sock, const char *buf, ssize_t len, struct logger *logger)
 {
 	/* send the secret to pluto */
