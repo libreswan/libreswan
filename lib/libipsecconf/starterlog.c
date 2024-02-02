@@ -40,14 +40,11 @@ static void log_one_line(const char *buff)
 	fprintf(stderr, "%s\n", buff);
 }
 
-void starter_log(int level, const char *fmt, ...)
+void starter_log(int level UNUSED, const char *fmt, ...)
 {
 	va_list args;
 	char buff[BUFF_SIZE];
 	char *b;
-
-	if (!log_debugging && level == LOG_LEVEL_DEBUG)
-		return;
 
 	va_start(args, fmt);
 	vsnprintf(buff, BUFF_SIZE - 1, fmt, args);

@@ -118,6 +118,10 @@ int main(int argc, char *argv[])
 	if (configfile == NULL)
 		configfile = clone_str(IPSEC_CONF, "default ipsec.conf file");
 
+	cur_debugging = (verbose > 1 ? DBG_ALL :
+			 verbose > 0 ? DBG_BASE :
+			 LEMPTY);
+
 	if (verbose > 3) {
 		yydebug = 1;
 	}

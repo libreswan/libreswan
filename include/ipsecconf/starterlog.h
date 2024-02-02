@@ -21,7 +21,6 @@
 
 #define LOG_LEVEL_INFO   1
 #define LOG_LEVEL_ERR    2
-#define LOG_LEVEL_DEBUG  3
 
 extern void starter_log(int level, const char *fmt, ...) PRINTF_LIKE(2);
 

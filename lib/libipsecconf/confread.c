@@ -369,7 +369,8 @@ static bool load_setup(struct starter_config *cfg,
 
 static bool validate_end(struct starter_conn *conn_st,
 			 struct starter_end *end,
-			 starter_errors_t *perrl)
+			 starter_errors_t *perrl,
+			 struct logger *logger)
 {
 	const char *leftright = end->leftright;
 	bool err = false;
@@ -392,7 +393,7 @@ static bool validate_end(struct starter_conn *conn_st,
 
 	case KH_IFACE:
 		/* generally, this doesn't show up at this stage */
-		starter_log(LOG_LEVEL_DEBUG, "starter: %s is KH_IFACE", leftright);
+		ldbg(logger, "starter: %s is KH_IFACE", leftright);
 		break;
 
 	case KH_IPADDR:
@@ -435,13 +436,11 @@ static bool validate_end(struct starter_conn *conn_st,
 
 	case KH_IPHOSTNAME:
 		/* generally, this doesn't show up at this stage */
-		starter_log(LOG_LEVEL_DEBUG,
-			    "starter: %s is KH_IPHOSTNAME", leftright);
+		ldbg(logger, "starter: %s is KH_IPHOSTNAME", leftright);
 		break;
 
 	case KH_DEFAULTROUTE:
-		starter_log(LOG_LEVEL_DEBUG,
-			    "starter: %s is KH_DEFAULTROUTE", leftright);
+		ldbg(logger, "starter: %s is KH_DEFAULTROUTE", leftright);
 		break;
 
 	case KH_NOTSET:
@@ -616,9 +615,8 @@ static bool validate_end(struct starter_conn *conn_st,
 		if (end->strings_set[KSCF_SUBNET])
 			ERR_FOUND("cannot specify both %ssubnet= and %saddresspool=",
 				leftright, leftright);
-		starter_log(LOG_LEVEL_DEBUG,
-			    "connection's %saddresspool set to: %s",
-			    leftright, end->strings[KSCF_ADDRESSPOOL] );
+		ldbg(logger, "connection's %saddresspool set to: %s",
+		     leftright, end->strings[KSCF_ADDRESSPOOL] );
 
 		end->addresspool = addresspool;
 	}
@@ -929,7 +927,8 @@ static bool load_conn(struct starter_conn *conn,
 		      struct section_list *sl,
 		      bool alsoprocessing,
 		      bool defaultconn,
-		      starter_errors_t *perrl)
+		      starter_errors_t *perrl,
+		      struct logger *logger)
 {
 	bool err;
 
@@ -1026,9 +1025,8 @@ static bool load_conn(struct starter_conn *conn,
 			if (addin->beenhere)
 				continue;	/* already handled */
 
-			starter_log(LOG_LEVEL_DEBUG,
-				    "\twhile loading conn '%s' also including '%s'",
-				    conn->name, seeking);
+			ldbg(logger, "\twhile loading conn '%s' also including '%s'",
+			     conn->name, seeking);
 
 			conn->strings_set[KSCF_ALSO] = false;
 			pfreeany(conn->strings[KSCF_ALSO]);
@@ -1301,8 +1299,8 @@ static bool load_conn(struct starter_conn *conn,
 	}
 	conn->left.host_family = conn->right.host_family = afi;
 
-	err |= validate_end(conn, &conn->left, perrl);
-	err |= validate_end(conn, &conn->right, perrl);
+	err |= validate_end(conn, &conn->left, perrl, logger);
+	err |= validate_end(conn, &conn->right, perrl, logger);
 
 	if (conn->options_set[KNCF_AUTO]) {
 		conn->autostart = conn->options[KNCF_AUTO];
@@ -1396,13 +1394,14 @@ static bool init_load_conn(struct starter_config *cfg,
 			   const struct config_parsed *cfgp,
 			   struct section_list *sconn,
 			   bool defaultconn,
-			   starter_errors_t *perrl)
+			   starter_errors_t *perrl,
+			   struct logger *logger)
 {
-	starter_log(LOG_LEVEL_DEBUG, "Loading conn %s", sconn->name);
+	ldbg(logger, "loading conn %s", sconn->name);
 
 	struct starter_conn *conn = alloc_add_conn(cfg, sconn->name);
 
-	bool connerr = load_conn(conn, cfgp, sconn, true, defaultconn, perrl);
+	bool connerr = load_conn(conn, cfgp, sconn, true, defaultconn, perrl, logger);
 
 	if (connerr) {
 		starter_log(LOG_LEVEL_INFO, "while loading '%s': %s",
@@ -1462,12 +1461,11 @@ struct starter_config *confread_load(const char *file,
 		for (struct section_list *sconn = cfgp->sections.tqh_first; (!err) && sconn != NULL;
 		     sconn = sconn->link.tqe_next) {
 			if (streq(sconn->name, "%default")) {
-				starter_log(LOG_LEVEL_DEBUG,
-					    "Loading default conn");
+				ldbg(logger, "loading default conn");
 				err |= load_conn(&cfg->conn_default,
 						 cfgp, sconn, false,
 						 true/*default conn*/,
-						 perrl);
+						 perrl, logger);
 			}
 		}
 
@@ -1479,7 +1477,7 @@ struct starter_config *confread_load(const char *file,
 			if (!streq(sconn->name, "%default"))
 				err |= init_load_conn(cfg, cfgp, sconn,
 						      false/*default conn*/,
-						      perrl);
+						      perrl, logger);
 		}
 	}
 

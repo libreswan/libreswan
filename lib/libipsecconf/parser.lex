@@ -46,6 +46,7 @@ YY_DECL;
 #include "ipsecconf/parser.h"	/* includes parser.tab.h */
 #include "ipsecconf/parserlast.h"
 #include "ipsecconf/starterlog.h"
+#include "lswlog.h"
 
 #define MAX_INCLUDE_DEPTH	10
 
@@ -215,9 +216,8 @@ int parser_y_include (const char *filename, struct logger *logger)
 					filename);
 			} else {
 				/* don't throw an error, just log a warning */
-				starter_log(LOG_LEVEL_DEBUG,
-					"could not open include wildcard filename(s): '%s'",
-					filename);
+				ldbg(logger, "could not open include wildcard filename(s): '%s'",
+				     filename);
 			}
 		}
 	} else {
@@ -235,9 +235,8 @@ int parser_y_include (const char *filename, struct logger *logger)
 						filename, newname);
 				} else {
 					/* don't throw an error, just log a warning */
-					starter_log(LOG_LEVEL_DEBUG,
-						"could not open include wildcard filename(s) '%s' (tried '%s')",
-						filename, newname);
+					ldbg(logger, "could not open include wildcard filename(s) '%s' (tried '%s')",
+					     filename, newname);
 				}
 			} else {
 				/* try again, prefixing with rootdir2 */
@@ -265,11 +264,10 @@ int parser_y_include (const char *filename, struct logger *logger)
 		}
 
 		if (lex_verbosity > 0) {
-			starter_log(LOG_LEVEL_DEBUG,
-				    "including file '%s' ('%s') from %s:%u"
-				    , filename, try
-				    , stacktop->filename
-				    , stacktop->line);
+			ldbg(logger, "including file '%s' ('%s') from %s:%u",
+			     filename, try,
+			     stacktop->filename,
+			     stacktop->line);
 		}
 		++ic_private.stack_ptr;
 		stacktop = &ic_private.stack[ic_private.stack_ptr];
@@ -313,14 +311,12 @@ static int parser_y_eof(struct logger *logger)
 		if (lex_verbosity > 0) {
 			int stackp = ic_private.stack_ptr;
 
-			starter_log(LOG_LEVEL_DEBUG,
-				    "end of file %s", stacktop->filename);
+			ldbg(logger, "end of file %s", stacktop->filename);
 
 			if (stackp > 0) {
-				starter_log(LOG_LEVEL_DEBUG,
-					"resuming %s:%u"
-					, ic_private.stack[stackp-1].filename
-					, ic_private.stack[stackp-1].line);
+				ldbg(logger, "resuming %s:%u",
+				     ic_private.stack[stackp-1].filename,
+				     ic_private.stack[stackp-1].line);
 			}
 		}
 
