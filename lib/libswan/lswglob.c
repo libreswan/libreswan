@@ -1,4 +1,4 @@
-/* log wrapper, for libreswan
+/* Thread / logger friendly glob(), for libreswan
  *
  * Copyright (C) 2005 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2017 D. Hugh Redelmeier <hugh@mimosa.com>
@@ -18,6 +18,11 @@
  */
 
 #include <pthread.h>
+#include <glob.h>
+
+#ifndef GLOB_ABORTED
+#define GLOB_ABORTED GLOB_ABEND        /* fix for old versions */
+#endif
 
 #include "lswglob.h"
 #include "lswlog.h"
@@ -33,17 +38,54 @@ static int lswglob_errfunc(const char *epath, int eerrno)
 	return 1;	/* stop glob */
 }
 
-int lswglob(const char *pattern, glob_t *pglob, const char *what, struct logger *logger)
+bool lswglob(const char *pattern, const char *what,
+	     void (*matches)(unsigned count, char **files,
+			     struct lswglob_context *context,
+			     struct logger *logger),
+	     struct lswglob_context *context,
+	     struct logger *logger)
 {
 	int r;
+	glob_t globbuf;
+	/*
+	 * Call glob() locked.
+	 *
+	 * GLOB_ERR means bail when a directory can't be read which is
+	 * possibly redundant as having lswlog_errfunc() return 1
+	 * means the same thing!?!
+	 */
 	pthread_mutex_lock(&lswglob_mutex);
 	{
 		lswglob_logger = logger;
 		lswglob_what = what;
-		r = glob(pattern, GLOB_ERR, lswglob_errfunc, pglob);
+		r = glob(pattern, GLOB_ERR, lswglob_errfunc, &globbuf);
 		lswglob_logger = NULL;
 		lswglob_what = NULL;
 	}
 	pthread_mutex_unlock(&lswglob_mutex);
-	return r;
+
+	switch (r) {
+	case 0:	/* success */
+		matches(globbuf.gl_pathc, globbuf.gl_pathv, context, logger);
+		break;
+
+	case GLOB_NOSPACE:
+		llog_passert(logger, HERE, "out of memory processing %s", what);
+		break;
+
+	case GLOB_ABORTED:
+		/* already logged by lswglob_errfunc() */
+		break;
+
+	case GLOB_NOMATCH:
+		break;
+
+	default:
+		llog_pexpect(logger, HERE,
+			     "%s pattern %s: unknown glob error %d",
+			     what, pattern, r);
+	}
+	globfree(&globbuf);
+	/* only NOMATCH is a fail */
+	return (r != GLOB_NOMATCH);
 }

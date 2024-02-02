@@ -876,6 +876,28 @@ static void process_secret_records(struct file_lex_position *flp,
 	}
 }
 
+struct lswglob_context {
+	struct file_lex_position *oflp;
+	struct secret **psecrets;
+};
+
+static void process_secret_files(unsigned count, char **files,
+				 struct lswglob_context *context,
+				 struct logger *logger UNUSED)
+{
+	for (unsigned i = 0; i < count; i++) {
+		const char *file = files[i];
+		struct file_lex_position *flp = NULL;
+		if (lexopen(&flp, file, false, context->oflp)) {
+			llog(RC_LOG, flp->logger,
+			     "loading secrets from \"%s\"", file);
+			flushline(flp, "file starts with indentation (continuation notation)");
+			process_secret_records(flp, context->psecrets);
+			lexclose(&flp);
+		}
+	}
+}
+
 static void process_secrets_file(struct file_lex_position *oflp,
 				 struct secret **psecrets, const char *file_pat)
 {
@@ -886,48 +908,14 @@ static void process_secrets_file(struct file_lex_position *oflp,
 		return;
 	}
 
-	/* do globbing */
-	glob_t globbuf;
-	int r = lswglob(file_pat, &globbuf, "secrets", oflp->logger);
-
-	switch (r) {
-	case 0:
-		/* success */
-		/* for each file... */
-		for (char **fnp = globbuf.gl_pathv; fnp != NULL && *fnp != NULL; fnp++) {
-			struct file_lex_position *flp = NULL;
-			if (lexopen(&flp, *fnp, false, oflp)) {
-				llog(RC_LOG, flp->logger,
-					    "loading secrets from \"%s\"", *fnp);
-				flushline(flp, "file starts with indentation (continuation notation)");
-				process_secret_records(flp, psecrets);
-				lexclose(&flp);
-			}
-		}
-		break;
-
-	case GLOB_NOSPACE:
-		llog(RC_LOG_SERIOUS, oflp->logger,
-			    "out of space processing secrets filename \"%s\"",
-			    file_pat);
-		break;
-
-	case GLOB_ABORTED:
-		/* already logged by globugh_secrets() */
-		break;
-
-	case GLOB_NOMATCH:
-		llog(RC_LOG, oflp->logger,
-			    "no secrets filename matched \"%s\"", file_pat);
-		break;
-
-	default:
-		llog(RC_LOG_SERIOUS, oflp->logger,
-			    "unknown glob error %d", r);
-		break;
+	struct lswglob_context context = {
+		.oflp = oflp,
+		psecrets = psecrets,
+	};
+	if (!lswglob(file_pat, "secrets", process_secret_files,
+		     &context, oflp->logger)) {
+		llog(RC_LOG, oflp->logger, "no secrets filename matched \"%s\"", file_pat);
 	}
-
-	globfree(&globbuf);
 }
 
 void lsw_free_preshared_secrets(struct secret **psecrets, struct logger *logger)

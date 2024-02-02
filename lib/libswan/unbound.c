@@ -50,6 +50,22 @@ void unbound_ctx_free(void)
 	}
 }
 
+static void add_trust_anchors(unsigned count, char **files,
+			      struct lswglob_context *context UNUSED,
+			      struct logger *logger)
+{
+	for (unsigned i = 0; i < count; i++) {
+		const char *file = files[i];
+		int ugh = ub_ctx_add_ta_file(dns_ctx, file);
+		if (ugh != 0) {
+			llog(RC_LOG_SERIOUS, logger, "ignored trusted key file %s: %s",
+			     file,  ub_strerror(ugh));
+		} else {
+			ldbg(logger, "added contents of trusted key file %s to unbound resolver context", file);
+		}
+	}
+}
+
 static void unbound_ctx_config(bool do_dnssec, const char *rootfile, const char *trusted,
 			       struct logger *logger)
 {
@@ -152,47 +168,8 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile, const char 
 
 	if (trusted == NULL) {
 		dbg("no additional dnssec trust anchors defined via dnssec-trusted= option");
-	} else {
-		glob_t globbuf;
-		int r = lswglob(trusted, &globbuf, "trusted anchor", logger);
-
-		switch (r) {
-		case 0:	/* success */
-			for (char **fnp = globbuf.gl_pathv; fnp != NULL && *fnp != NULL; fnp++) {
-				ugh = ub_ctx_add_ta_file(dns_ctx, *fnp);
-				if (ugh != 0) {
-					llog(RC_LOG_SERIOUS, logger,
-						    "Ignored trusted key file %s: %s",
-						    *fnp,  ub_strerror(ugh));
-				} else {
-					dbg("added contents of trusted key file %s to unbound resolver context",
-					    *fnp);
-				}
-			}
-			break;
-
-		case GLOB_NOSPACE:
-			llog(RC_LOG_SERIOUS, logger,
-				    "out of space processing dnssec-trusted= argument: %s",
-				    trusted);
-			break;
-
-		case GLOB_ABORTED:
-			/* already logged by globugh_ta */
-			break;
-
-		case GLOB_NOMATCH:
-			llog(RC_LOG_SERIOUS, logger,
-				    "no trust anchor files matched '%s'", trusted);
-			break;
-
-		default:
-			llog(RC_LOG_SERIOUS, logger,
-				    "trusted key file '%s': unknown glob error %d",
-				    trusted, r);
-			break;
-		}
-		globfree(&globbuf);
+	} else if (!lswglob(trusted, "trusted anchor", add_trust_anchors, /*lswglob_context*/NULL, logger)) {
+		llog(RC_LOG, logger, "no trust anchor files matched '%s'", trusted);
 	}
 }
 

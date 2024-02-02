@@ -19,14 +19,15 @@
 #ifndef LSWGLOB_H
 #define LSWGLOB_H
 
-#include <glob.h>
-
-#ifndef GLOB_ABORTED
-#define GLOB_ABORTED GLOB_ABEND        /* fix for old versions */
-#endif
+#include <stdbool.h>
 
 struct logger;
+struct lswglob_context;
 
-int lswglob(const char *pattern, glob_t *pglob, const char *what, struct logger *logger);
+/* only returns false when no match */
+bool lswglob(const char *pattern, const char *what,
+	     void (*file)(unsigned count, char **files, struct lswglob_context *, struct logger *logger),
+	     struct lswglob_context *context,
+	     struct logger *logger);
 
 #endif
