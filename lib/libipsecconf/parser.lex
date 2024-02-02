@@ -35,7 +35,6 @@
 #include <assert.h>
 #include <unistd.h>
 #include <limits.h>
-#include <glob.h>
 
 struct logger;
 #define YY_DECL int yylex(struct logger *logger)
@@ -47,6 +46,7 @@ YY_DECL;
 #include "ipsecconf/parserlast.h"
 #include "ipsecconf/starterlog.h"
 #include "lswlog.h"
+#include "lswglob.h"
 
 #define MAX_INCLUDE_DEPTH	10
 
@@ -67,7 +67,7 @@ struct ic_inputsource {
 	bool once;
 	char *filename;
 	int fileglobcnt;
-	glob_t fileglob;
+	char **fileglob;
 };
 
 static struct {
@@ -77,7 +77,7 @@ static struct {
 
 static struct ic_inputsource *stacktop;
 
-char *parser_cur_filename(void)
+const char *parser_cur_filename(void)
 {
 	return stacktop->filename;
 }
@@ -119,21 +119,24 @@ static void parser_y_close(struct ic_inputsource *iis)
 		fclose(iis->file);
 		iis->file = NULL;
 	}
-	if (iis->fileglob.gl_pathv != NULL) {
-		globfree(&iis->fileglob);
-		iis->fileglob.gl_pathv = NULL;
+	if (iis->fileglob != NULL) {
+		for (char **p = iis->fileglob; *p; p++) {
+			free(*p);
+		}
+		free(iis->fileglob);
+		iis->fileglob = NULL;
 	}
 }
 
 static int parser_y_nextglobfile(struct ic_inputsource *iis, struct logger *logger)
 {
-	if (iis->fileglob.gl_pathv == NULL) {
+	if (iis->fileglob == NULL) {
 		ldbg(logger, "EOF: no .fileglob");
 		/* EOF */
 		return -1;
 	}
 
-	if (iis->fileglob.gl_pathv[iis->fileglobcnt] == NULL) {
+	if (iis->fileglob[iis->fileglobcnt] == NULL) {
 		/* EOF */
 		ldbg(logger, "EOF: .fileglob[%u] == NULL", iis->fileglobcnt);
 		return -1;
@@ -153,7 +156,7 @@ static int parser_y_nextglobfile(struct ic_inputsource *iis, struct logger *logg
 
 	iis->line = 1;
 	iis->once = true;
-	iis->filename = strdup(iis->fileglob.gl_pathv[fcnt]);
+	iis->filename = strdup(iis->fileglob[fcnt]);
 
 	/* open the file */
 	FILE *f = fopen(iis->filename, "r");
@@ -164,7 +167,7 @@ static int parser_y_nextglobfile(struct ic_inputsource *iis, struct logger *logg
 			(strstr(iis->filename, "crypto-policies/back-ends/libreswan.config") == NULL) ?
 				"cannot open include filename: '%s': %s" :
 				"ignored loading default system-wide crypto-policies file '%s': %s",
-			iis->fileglob.gl_pathv[fcnt],
+			iis->fileglob[fcnt],
 			strerror(errno));
 		yyerror(logger, ebuf);
 		return -1;
@@ -176,23 +179,47 @@ static int parser_y_nextglobfile(struct ic_inputsource *iis, struct logger *logg
 	return 0;
 }
 
-static int globugh_include(const char *epath, int eerrno)
+struct lswglob_context {
+	const char *filename;
+	const char *try;
+};
+
+static void glob_include(unsigned count, char **files,
+			  struct lswglob_context *context,
+			  struct logger *logger)
 {
-	starter_log(LOG_LEVEL_ERR, "problem with include filename '%s': %s",
-		    epath, strerror(eerrno));
-	return 1;	/* stop glob */
+	/* success */
+
+	if (ic_private.stack_ptr >= MAX_INCLUDE_DEPTH - 1) {
+		yyerror(logger, "max inclusion depth reached");
+		return;
+	}
+
+	if (lex_verbosity > 0) {
+		ldbg(logger, "including file '%s' ('%s') from %s:%u",
+		     context->filename, context->try,
+		     stacktop->filename,
+		     stacktop->line);
+	}
+
+	++ic_private.stack_ptr;
+	stacktop = &ic_private.stack[ic_private.stack_ptr];
+	stacktop->state = YY_CURRENT_BUFFER;
+	stacktop->file = NULL;
+	stacktop->filename = NULL;
+	stacktop->fileglobcnt = 0;
+
+	stacktop->fileglob = calloc(sizeof(char *), count + 1);
+	for (unsigned i = 0; i < count; i++) {
+		stacktop->fileglob[i] = strdup(files[i]);
+	}
+	stacktop->fileglob[count] = NULL;
+
+	parser_y_eof(logger);
 }
 
 void parser_y_include (const char *filename, struct logger *logger)
 {
-	const char *try;
-	char newname[PATH_MAX];
-	char newname2[PATH_MAX];
-	glob_t globbuf;
-	int globresult;
-
-	globbuf.gl_offs = 0;
-
 	/*
 	 * If there is no rootdir, but there is a rootdir2, swap them.
 	 * This reduces the number of cases to be handled.
@@ -202,96 +229,63 @@ void parser_y_include (const char *filename, struct logger *logger)
 		rootdir2[0] = '\0';
 	}
 
+	struct lswglob_context context = {
+		.filename = filename,
+	};
+
 	if (filename[0] != '/' || rootdir[0] == '\0') {
 		/* try plain name, with no rootdirs */
-		try = filename;
-		globresult = glob(try, 0, globugh_include, &globbuf);
-		if (globresult == GLOB_NOMATCH) {
-			if (strchr(filename,'*') == NULL) {
-				/* not a wildcard, throw error */
-				llog(RC_LOG, logger, "warning: could not open include filename: '%s'",
-				     filename);
-			} else {
-				/* don't throw an error, just log a warning */
-				ldbg(logger, "could not open include wildcard filename(s): '%s'",
-				     filename);
-			}
-		}
-	} else {
-		/* try prefixing with rootdir */
-		snprintf(newname, sizeof(newname), "%s%s", rootdir, filename);
-		try = newname;
-
-		globresult = glob(try, 0, globugh_include, &globbuf);
-		if (globresult == GLOB_NOMATCH) {
-			if (rootdir2[0] == '\0') {
-				if (strchr(filename,'*') == NULL) {
-					/* not a wildcard, throw error */
-					llog(RC_LOG, logger, "warning: could not open include filename '%s' (tried '%s')",
-					     filename, newname);
-				} else {
-					/* don't throw an error, just log a warning */
-					ldbg(logger, "could not open include wildcard filename(s) '%s' (tried '%s')",
-					     filename, newname);
-				}
-			} else {
-				/* try again, prefixing with rootdir2 */
-				globfree(&globbuf);
-				snprintf(newname2, sizeof(newname2),
-					 "%s%s", rootdir2, filename);
-				try = newname2;
-				globresult = glob(try, 0, globugh_include, &globbuf);
-				if (globresult == GLOB_NOMATCH) {
-					llog(RC_LOG, logger,
-					     "warning: could not open include filename: '%s' (tried '%s' and '%s')",
-					     filename, newname, newname2);
-				}
-			}
-		}
-	}
-
-	switch (globresult) {
-	case 0:
-		/* success */
-
-		if (ic_private.stack_ptr >= MAX_INCLUDE_DEPTH - 1) {
-			yyerror(logger, "max inclusion depth reached");
+		context.try = filename;
+		if (lswglob(context.try, "ipsec.conf", glob_include, &context, logger)) {
 			return;
 		}
-
-		if (lex_verbosity > 0) {
-			ldbg(logger, "including file '%s' ('%s') from %s:%u",
-			     filename, try,
-			     stacktop->filename,
-			     stacktop->line);
+		if (strchr(filename, '*') == NULL) {
+			/* not a wildcard, throw error */
+			llog(RC_LOG, logger, "warning: could not open include filename: '%s'",
+			     filename);
+		} else {
+			/* don't throw an error, just log a warning */
+			ldbg(logger, "could not open include wildcard filename(s): '%s'",
+			     filename);
 		}
-		++ic_private.stack_ptr;
-		stacktop = &ic_private.stack[ic_private.stack_ptr];
-		stacktop->state = YY_CURRENT_BUFFER;
-		stacktop->fileglob = globbuf;
-		stacktop->fileglobcnt = 0;
-		stacktop->file = NULL;
-		stacktop->filename = NULL;
-
-		parser_y_eof(logger);
 		return;
-
-	case GLOB_NOSPACE:
-		llog(RC_LOG, logger, "out of space processing include filename \"%s\"",
-		     try);
-		break;
-
-	case GLOB_ABORTED:	/* already logged by globugh_include() */
-	case GLOB_NOMATCH:	/* already logged above */
-		break;
-
-	default:
-		llog(RC_LOG, logger, "unknown glob error %d", globresult);
-		break;
 	}
 
-	/* error happened, but we ignore it */
-	globfree(&globbuf);
+	/* try prefixing with rootdir */
+	char newname[PATH_MAX];
+	snprintf(newname, sizeof(newname), "%s%s", rootdir, filename);
+	context.try = newname;
+
+	if (lswglob(context.try, "ipsec.conf", glob_include, &context, logger)) {
+		return;
+	}
+
+	if (rootdir2[0] == '\0') {
+		if (strchr(filename,'*') == NULL) {
+			/* not a wildcard, throw error */
+			llog(RC_LOG, logger, "warning: could not open include filename '%s' (tried '%s')",
+			     filename, newname);
+		} else {
+			/* don't throw an error, just log a warning */
+			ldbg(logger, "could not open include wildcard filename(s) '%s' (tried '%s')",
+			     filename, newname);
+		}
+		return;
+	}
+
+	/* try again, prefixing with rootdir2 */
+	char newname2[PATH_MAX];
+	snprintf(newname2, sizeof(newname2),
+		 "%s%s", rootdir2, filename);
+	context.try = newname2;
+	if (lswglob(context.try, "ipsec.conf", glob_include, &context, logger)) {
+		return;
+	}
+
+	llog(RC_LOG, logger,
+	     "warning: could not open include filename: '%s' (tried '%s' and '%s')",
+	     filename, newname, newname2);
+
 	return;
 }
 
