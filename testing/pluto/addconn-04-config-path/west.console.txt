@@ -38,7 +38,7 @@ west #
 west #
  ipsec addconn --verbose --config /etc/ipsec.conf --checkconfig
 opening file: /etc/ipsec.conf
-debugging mode enabled
+| debugging mode enabled
 | including file '/etc/ipsec.d/include-bomb.conf' ('/etc/ipsec.d/include-bomb.conf') from /etc/ipsec.conf:9
 | including file '/etc/ipsec.d/include-bomb.conf' ('/etc/ipsec.d/include-bomb.conf') from /etc/ipsec.d/include-bomb.conf:3
 | including file '/etc/ipsec.d/include-bomb.conf' ('/etc/ipsec.d/include-bomb.conf') from /etc/ipsec.d/include-bomb.conf:3

@@ -7,7 +7,7 @@ west #
 west #
  ipsec addconn --verbose west
 opening file: /etc/ipsec.conf
-debugging mode enabled
+| debugging mode enabled
 | end of file /etc/ipsec.conf
 | loading default conn
 | loading conn west
@@ -29,7 +29,7 @@ resolving family=IPv4 src=192.1.2.23 gateway=<not-set> peer %eth1
 west #
  ipsec addconn --verbose west-bogus
 opening file: /etc/ipsec.conf
-debugging mode enabled
+| debugging mode enabled
 | end of file /etc/ipsec.conf
 | loading default conn
 | loading conn west
