@@ -181,7 +181,7 @@ static int parser_y_nextglobfile(struct ic_inputsource *iis, struct logger *logg
 static int globugh_include(const char *epath, int eerrno)
 {
 	starter_log(LOG_LEVEL_ERR, "problem with include filename '%s': %s",
-		epath, strerror(eerrno));
+		    epath, strerror(eerrno));
 	return 1;	/* stop glob */
 }
 
@@ -211,9 +211,8 @@ int parser_y_include (const char *filename, struct logger *logger)
 		if (globresult == GLOB_NOMATCH) {
 			if (strchr(filename,'*') == NULL) {
 				/* not a wildcard, throw error */
-				starter_log(LOG_LEVEL_ERR,
-					"warning: could not open include filename: '%s'",
-					filename);
+				llog(RC_LOG, logger, "warning: could not open include filename: '%s'",
+				     filename);
 			} else {
 				/* don't throw an error, just log a warning */
 				ldbg(logger, "could not open include wildcard filename(s): '%s'",
@@ -230,9 +229,8 @@ int parser_y_include (const char *filename, struct logger *logger)
 			if (rootdir2[0] == '\0') {
 				if (strchr(filename,'*') == NULL) {
 					/* not a wildcard, throw error */
-					starter_log(LOG_LEVEL_ERR,
-						"warning: could not open include filename '%s' (tried '%s')",
-						filename, newname);
+					llog(RC_LOG, logger, "warning: could not open include filename '%s' (tried '%s')",
+					     filename, newname);
 				} else {
 					/* don't throw an error, just log a warning */
 					ldbg(logger, "could not open include wildcard filename(s) '%s' (tried '%s')",
@@ -246,9 +244,9 @@ int parser_y_include (const char *filename, struct logger *logger)
 				try = newname2;
 				globresult = glob(try, 0, globugh_include, &globbuf);
 				if (globresult == GLOB_NOMATCH) {
-					starter_log(LOG_LEVEL_ERR,
-						"warning: could not open include filename: '%s' (tried '%s' and '%s')",
-						filename, newname, newname2);
+					llog(RC_LOG, logger,
+					     "warning: could not open include filename: '%s' (tried '%s' and '%s')",
+					     filename, newname, newname2);
 				}
 			}
 		}
@@ -280,9 +278,8 @@ int parser_y_include (const char *filename, struct logger *logger)
 		return parser_y_eof(logger);
 
 	case GLOB_NOSPACE:
-		starter_log(LOG_LEVEL_ERR,
-			"out of space processing include filename \"%s\"",
-			try);
+		llog(RC_LOG, logger, "out of space processing include filename \"%s\"",
+		     try);
 		break;
 
 	case GLOB_ABORTED:	/* already logged by globugh_include() */
@@ -290,7 +287,7 @@ int parser_y_include (const char *filename, struct logger *logger)
 		break;
 
 	default:
-		starter_log(LOG_LEVEL_ERR, "unknown glob error %d", globresult);
+		llog(RC_LOG, logger, "unknown glob error %d", globresult);
 		break;
 	}
 

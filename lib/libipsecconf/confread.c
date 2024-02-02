@@ -340,9 +340,8 @@ static bool load_setup(struct starter_config *cfg,
 			     kw->keyword.keydef->keyname);
 			break;
 		case kt_obsolete_quiet:
-			starter_log(LOG_LEVEL_ERR,
-				    "Warning: ignored obsolete keyword '%s'",
-				    kw->keyword.keydef->keyname);
+			llog(RC_LOG, logger, "warning: ignored obsolete keyword '%s'",
+			     kw->keyword.keydef->keyname);
 			break;
 		default:
 			/* NEVER HAPPENS */
@@ -830,9 +829,8 @@ static bool translate_field(struct starter_conn *conn,
 		break;
 
 	case kt_obsolete_quiet:
-		starter_log(LOG_LEVEL_ERR,
-			    "Warning: obsolete keyword '%s' ignored",
-			    kw->keyword.keydef->keyname);
+		llog(RC_LOG, logger, "warning: obsolete keyword '%s' ignored",
+		     kw->keyword.keydef->keyname);
 		break;
 	}
 	return serious_err;
@@ -1016,9 +1014,8 @@ static bool load_conn(struct starter_conn *conn,
 				;
 
 			if (addin == NULL) {
-				starter_log(LOG_LEVEL_ERR,
-					    "cannot find conn '%s' needed by conn '%s'",
-					    seeking, conn->name);
+				llog(RC_LOG, logger, "cannot find conn '%s' needed by conn '%s'",
+				     seeking, conn->name);
 				starter_error_append(perrl, "cannot find conn '%s' needed by conn '%s'",
 					seeking, conn->name);
 				err = true;
