@@ -175,13 +175,15 @@ typedef struct {
 extern void starter_error_append(starter_errors_t *perrl, const char *fmt, ...) PRINTF_LIKE(2);
 
 
-extern struct config_parsed *parser_load_conf(const char *file, starter_errors_t *perr);
+extern struct config_parsed *parser_load_conf(const char *file, starter_errors_t *perr,
+					      struct logger *logger);
 extern void parser_free_conf(struct config_parsed *cfg);
 
 extern struct starter_config *confread_load(const char *file,
 					    starter_errors_t *perrl,
 					    const char *ctlsocket,
-					    bool setuponly);
+					    bool setuponly,
+					    struct logger *logger);
 
 extern void confread_free(struct starter_config *cfg);
 

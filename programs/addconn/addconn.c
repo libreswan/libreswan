@@ -356,7 +356,8 @@ int main(int argc, char *argv[])
 	{
 		starter_errors_t errl = { NULL };
 
-		cfg = confread_load(configfile, &errl, ctlsocket, configsetup);
+		cfg = confread_load(configfile, &errl, ctlsocket,
+				    configsetup, logger);
 
 		if (cfg == NULL) {
 			fprintf(stderr, "cannot load config '%s': %s\n",

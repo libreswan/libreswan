@@ -1417,14 +1417,15 @@ static bool init_load_conn(struct starter_config *cfg,
 struct starter_config *confread_load(const char *file,
 				     starter_errors_t *perrl,
 				     const char *ctlsocket,
-				     bool setuponly)
+				     bool setuponly,
+				     struct logger *logger)
 {
 	bool err = false;
 
 	/**
 	 * Load file
 	 */
-	struct config_parsed *cfgp = parser_load_conf(file, perrl);
+	struct config_parsed *cfgp = parser_load_conf(file, perrl, logger);
 
 	if (cfgp == NULL)
 		return NULL;

@@ -37,6 +37,10 @@
 #include <limits.h>
 #include <glob.h>
 
+struct logger;
+#define YY_DECL int yylex(struct logger *logger)
+YY_DECL;
+
 #include "ipsecconf/keywords.h"
 #define YYDEBUG 1	/* HACK! for ipsecconf/parser.h AND parser.tab.h */
 #include "ipsecconf/parser.h"	/* includes parser.tab.h */
@@ -50,7 +54,7 @@ int lex_verbosity = 0;	/* how much tracing output to show */
 char rootdir[PATH_MAX];		/* when evaluating paths, prefix this to them */
 char rootdir2[PATH_MAX];	/* or... try this one too */
 
-static int parser_y_eof(void);
+static int parser_y_eof(struct logger *logger);
 
 /* we want no actual output! */
 #define ECHO
@@ -120,7 +124,7 @@ static void parser_y_close(struct ic_inputsource *iis)
 	}
 }
 
-static int parser_y_nextglobfile(struct ic_inputsource *iis)
+static int parser_y_nextglobfile(struct ic_inputsource *iis, struct logger *logger)
 {
 	FILE *f;
 	int fcnt;
@@ -163,7 +167,7 @@ static int parser_y_nextglobfile(struct ic_inputsource *iis)
 				"ignored loading default system-wide crypto-policies file '%s': %s",
 			iis->fileglob.gl_pathv[fcnt],
 			strerror(errno));
-		yyerror(ebuf);
+		yyerror(logger, ebuf);
 		return -1;
 	}
 	iis->file = f;
@@ -180,7 +184,7 @@ static int globugh_include(const char *epath, int eerrno)
 	return 1;	/* stop glob */
 }
 
-int parser_y_include (const char *filename)
+int parser_y_include (const char *filename, struct logger *logger)
 {
 	const char *try;
 	char newname[PATH_MAX];
@@ -251,14 +255,12 @@ int parser_y_include (const char *filename)
 		}
 	}
 
-#undef GB
-
 	switch (globresult) {
 	case 0:
 		/* success */
 
 		if (ic_private.stack_ptr >= MAX_INCLUDE_DEPTH - 1) {
-			yyerror("max inclusion depth reached");
+			yyerror(logger, "max inclusion depth reached");
 			return 1;
 		}
 
@@ -277,7 +279,7 @@ int parser_y_include (const char *filename)
 		stacktop->file = NULL;
 		stacktop->filename = NULL;
 
-		return parser_y_eof();
+		return parser_y_eof(logger);
 
 	case GLOB_NOSPACE:
 		starter_log(LOG_LEVEL_ERR,
@@ -299,13 +301,13 @@ int parser_y_include (const char *filename)
 	return 0;
 }
 
-static int parser_y_eof(void)
+static int parser_y_eof(struct logger *logger)
 {
 	if (stacktop->state != YY_CURRENT_BUFFER) {
 		yy_delete_buffer(YY_CURRENT_BUFFER);
 	}
 
-	if (parser_y_nextglobfile(stacktop) == -1) {
+	if (parser_y_nextglobfile(stacktop, logger) == -1) {
 		/* no more glob'ed files to process */
 
 		if (lex_verbosity > 0) {
@@ -378,7 +380,7 @@ static int parser_y_eof(void)
 	 * we've finished this file:
 	 * continue with the file it was included from (if any)
 	 */
-	if (parser_y_eof()) {
+	if (parser_y_eof(logger)) {
 		yyterminate();
 	}
 }
@@ -537,7 +539,7 @@ include			return INCLUDE;
 
 #.*			{ /* eat comment to end of line */ }
 
-.			yyerror(yytext);
+.			yyerror(logger, yytext);
 %%
 
 int yywrap(void) {

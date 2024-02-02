@@ -52,9 +52,9 @@ static char parser_errstring[ERRSTRING_LEN+1];
 static bool save_errors;
 static struct config_parsed *parser_cfg;
 static struct kw_list **parser_kw, *parser_kw_last;
-static void new_parser_kw(struct keyword *keyword, char *string, uintmax_t number);	/* forward */
-static uintmax_t parser_unsigned(const char *yytext);
-static uintmax_t parser_time(struct keyword *kw, const char *yytext);
+static void new_parser_kw(struct keyword *keyword, char *string, uintmax_t number, struct logger *logger);
+static uintmax_t parser_unsigned(const char *yytext, struct logger *logger);
+static uintmax_t parser_time(struct keyword *kw, const char *yytext, struct logger *logger);
 static struct starter_comments_list *parser_comments;
 
 /**
@@ -62,6 +62,8 @@ static struct starter_comments_list *parser_comments;
  */
 
 %}
+
+%parse-param {struct logger *logger}
 
 %union {
 	char *s;
@@ -114,7 +116,7 @@ section_or_include:
 		if (section == NULL) {
 			parser_kw = NULL;
 			parser_kw_last = NULL;
-			yyerror("can't allocate memory in section_or_include/conn");
+			yyerror(logger, "can't allocate memory in section_or_include/conn");
 		} else {
 			section->name = $2;
 			section->kw = NULL;
@@ -134,7 +136,7 @@ section_or_include:
 		}
 	} kw_sections
 	| INCLUDE STRING EOL {
-		parser_y_include($2);
+		parser_y_include($2, logger);
 	}
 	;
 
@@ -188,7 +190,7 @@ statement_kw:
 		case kt_percent:
 		case kt_binary:
 		case kt_byte:
-			yyerror("keyword value is a keyword, but type not a string");
+			yyerror(logger, "keyword value is a keyword, but type not a string");
 			assert(kw.keydef->type != kt_bool);
 			break;
 
@@ -200,14 +202,14 @@ statement_kw:
 			break;
 		}
 
-		new_parser_kw(&kw, string, number);
+		new_parser_kw(&kw, string, number, logger);
 	}
 	| COMMENT EQUAL STRING {
 		struct starter_comments *new =
 			malloc(sizeof(struct starter_comments));
 
 		if (new == NULL) {
-			yyerror("can't allocate memory in statement_kw");
+			yyerror(logger, "can't allocate memory in statement_kw");
 		} else {
 			new->x_comment = strdup($1.string);
 			new->commentvalue = strdup($3);
@@ -248,18 +250,18 @@ statement_kw:
 			break;
 
 		case kt_number:
-			number = parser_unsigned($3);
+			number = parser_unsigned($3, logger);
 			break;
 
 		case kt_time:
-			number = parser_time(&$1, $3);
+			number = parser_time(&$1, $3, logger);
 			break;
 
 		case kt_bool:
 		case kt_percent:
 		case kt_binary:
 		case kt_byte:
-			yyerror("valid keyword, but value is not a number");
+			yyerror(logger, "valid keyword, but value is not a number");
 			assert(kw.keydef->type != kt_bool);
 			break;
 		case kt_comment:
@@ -269,11 +271,11 @@ statement_kw:
 			break;
 		}
 
-		new_parser_kw(&kw, string, number);
+		new_parser_kw(&kw, string, number, logger);
 	}
 
 	| BOOLWORD EQUAL BOOLEAN {
-		new_parser_kw(&$1, NULL, $3);
+		new_parser_kw(&$1, NULL, $3, logger);
 	}
 
 	| PERCENTWORD EQUAL STRING {
@@ -287,22 +289,22 @@ statement_kw:
 			snprintf(buf, sizeof(buf),
 				"malformed percentage %s=%s",
 				kw.keydef->keyname, str);
-			yyerror(buf);
+			yyerror(logger, buf);
 		} else if (!streq(endptr, "%")) {
 			snprintf(buf, sizeof(buf),
 				"bad percentage multiplier \"%s\" on %s",
 				endptr, str);
-			yyerror(buf);
+			yyerror(logger, buf);
 		} else if (errno != 0 || val > UINT_MAX) {
 			snprintf(buf, sizeof(buf),
 				"percentage way too large \"%s\"", str);
-			yyerror(buf);
+			yyerror(logger, buf);
 		} else {
-			new_parser_kw(&kw, NULL, (unsigned int)val);
+			new_parser_kw(&kw, NULL, (unsigned int)val, logger);
 		}
 	}
 	| KEYWORD EQUAL BOOLEAN {
-		new_parser_kw(&$1, NULL, $3);
+		new_parser_kw(&$1, NULL, $3, logger);
 	}
 	| KEYWORD EQUAL { /* this is meaningless, we ignore it */ }
 	| BINARYWORD EQUAL STRING {
@@ -312,10 +314,10 @@ statement_kw:
 
 		diag_t diag = ttobinary(str, &b, 0 /* no B prefix */);
 		if (diag != NULL) {
-			yyerror(str_diag(diag));
+			yyerror(logger, str_diag(diag));
 			pfree_diag(&diag);
 		} else {
-			new_parser_kw(kw, NULL, b);
+			new_parser_kw(kw, NULL, b, logger);
 		}
 	}
 	| BYTEWORD EQUAL STRING {
@@ -325,22 +327,24 @@ statement_kw:
 
 		diag_t diag = ttobinary(str, &b, 1 /* with B prefix */);
 		if (diag != NULL) {
-			yyerror(str_diag(diag));
+			yyerror(logger, str_diag(diag));
 			pfree_diag(&diag);
 		} else {
-			new_parser_kw(kw, NULL, b);
+			new_parser_kw(kw, NULL, b, logger);
 		}
 	}
 	;
 %%
 
-void yyerror(const char *s)
+void yyerror(struct logger *logger UNUSED, const char *s)
 {
 	if (save_errors)
 		parser_y_error(parser_errstring, ERRSTRING_LEN, s);
 }
 
-struct config_parsed *parser_load_conf(const char *file, starter_errors_t *perrl)
+struct config_parsed *parser_load_conf(const char *file,
+				       starter_errors_t *perrl,
+				       struct logger *logger)
 {
 	parser_errstring[0] = '\0';
 
@@ -370,13 +374,13 @@ struct config_parsed *parser_load_conf(const char *file, starter_errors_t *perrl
 	TAILQ_INIT(&cfg->comments);
 	parser_cfg = cfg;
 
-	if (yyparse() != 0) {
+	if (yyparse(logger) != 0) {
 		if (parser_errstring[0] == '\0') {
 			snprintf(parser_errstring, ERRSTRING_LEN,
 				"Unknown error...");
 		}
 		save_errors = false;
-		do {} while (yyparse() != 0);
+		do {} while (yyparse(logger) != 0);
 		goto err;
 	}
 
@@ -439,12 +443,13 @@ void parser_free_conf(struct config_parsed *cfg)
 	}
 }
 
-static void new_parser_kw(struct keyword *keyword, char *string, uintmax_t number)
+static void new_parser_kw(struct keyword *keyword, char *string, uintmax_t number,
+			  struct logger *logger)
 {
 	struct kw_list *new = malloc(sizeof(struct kw_list));
 
 	if (new == NULL) {
-		yyerror("cannot allocate memory for a kw_list");
+		yyerror(logger, "cannot allocate memory for a kw_list");
 	} else {
 		/*
 		 * fill the values into new
@@ -469,7 +474,7 @@ static void new_parser_kw(struct keyword *keyword, char *string, uintmax_t numbe
 	}
 }
 
-uintmax_t parser_unsigned(const char *yytext)
+uintmax_t parser_unsigned(const char *yytext, struct logger *logger)
 {
 	uintmax_t number;
 	err_t err = shunk_to_uintmax(shunk1(yytext), NULL, /*base*/10, &number);
@@ -477,12 +482,12 @@ uintmax_t parser_unsigned(const char *yytext)
 		char ebuf[128];
 		snprintf(ebuf, sizeof(ebuf),
 			 "%s: %s", err, yytext);
-		yyerror(ebuf);
+		yyerror(logger, ebuf);
 	}
 	return number;
 }
 
-uintmax_t parser_time(struct keyword *kw, const char *str)
+uintmax_t parser_time(struct keyword *kw, const char *str, struct logger *logger)
 {
 	const struct timescale *scale;
 	if (kw->keydef->validity & kv_milliseconds) {
@@ -493,7 +498,7 @@ uintmax_t parser_time(struct keyword *kw, const char *str)
 	deltatime_t d;
 	diag_t diag = ttodeltatime(str, &d, scale);
 	if (diag != NULL) {
-		yyerror(str_diag(diag));
+		yyerror(logger, str_diag(diag));
 		pfree_diag(&diag);
 	}
 	return deltamillisecs(d);
