@@ -46,6 +46,7 @@ static void drip_outbound(const struct message *m, struct logger *logger);
 
 struct message {
 	unsigned nr;
+	unsigned count;
 	chunk_t body;
 	struct {
 		struct msg_digest *md;
@@ -121,6 +122,7 @@ static const struct message *save_message(struct direction_impairment *direction
 				DBG_log("matching %u", nr);
 				DBG_dump_hunk(NULL, old->body);
 			}
+			old->count++;
 			return old;
 		}
 	}
@@ -240,8 +242,13 @@ static bool impair_message(const struct message *message,
 	bool impaired = false;
 
 	if (direction->block) {
-		llog(RC_LOG, logger, "IMPAIR: blocking %s message %u",
-		     direction->name, message->nr);
+		if (message->count > 0) {
+			llog(RC_LOG, logger, "IMPAIR: blocking retransmit %u of %s message %u",
+			     message->count, direction->name, message->nr);
+		} else {
+			llog(RC_LOG, logger, "IMPAIR: blocking %s message %u",
+			     direction->name, message->nr);
+		}
 		return true;
 	}
 
