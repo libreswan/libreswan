@@ -346,8 +346,8 @@ static struct starter_config *read_cfg_file(char *configfile, long longindex, st
 	struct starter_config *cfg = NULL;
 	starter_errors_t errl = { NULL };
 
-	cfg = confread_load(configfile, &errl, NULL /* ctl_addr.sun_path? */,
-			    true, logger);
+	cfg = confread_load(configfile, NULL /* ctl_addr.sun_path? */,
+			    true, &errl, logger);
 	if (cfg == NULL) {
 		/*
 		 * note: fatal_opt() never returns so we will have a

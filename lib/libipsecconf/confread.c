@@ -281,7 +281,8 @@ static char **tokens_from_string(const char *value, int *n)
  * @return bool TRUE if unsuccessful
  */
 static bool load_setup(struct starter_config *cfg,
-		       const struct config_parsed *cfgp)
+		       const struct config_parsed *cfgp,
+		       struct logger *logger)
 {
 	bool err = false;
 	const struct kw_list *kw;
@@ -335,9 +336,8 @@ static bool load_setup(struct starter_config *cfg,
 			break;
 
 		case kt_obsolete:
-			starter_log(LOG_LEVEL_INFO,
-				    "Warning: ignored obsolete keyword '%s'",
-				    kw->keyword.keydef->keyname);
+			llog(RC_LOG, logger, "warning: ignored obsolete keyword '%s'",
+			     kw->keyword.keydef->keyname);
 			break;
 		case kt_obsolete_quiet:
 			starter_log(LOG_LEVEL_ERR,
@@ -661,7 +661,6 @@ static bool validate_end(struct starter_conn *conn_st,
 static bool translate_field(struct starter_conn *conn,
 			    const struct section_list *sl,
 			    enum keyword_set assigned_value,
-			    starter_errors_t *perrl,
 			    const struct kw_list *kw,
 			    const char *leftright,
 			    ksf *the_strings,
@@ -671,7 +670,9 @@ static bool translate_field(struct starter_conn *conn,
 			    knf *the_options,
 			    int_set *set_options,
 			    unsigned opt_floor,
-			    unsigned opt_roof)
+			    unsigned opt_roof,
+			    starter_errors_t *perrl,
+			    struct logger *logger)
 {
 	bool serious_err = false;
 	unsigned int field = kw->keyword.keydef->field;
@@ -699,7 +700,7 @@ static bool translate_field(struct starter_conn *conn,
 				 conn->name,
 				 sl->name);
 
-			starter_log(LOG_LEVEL_INFO, "%s", tmp_err);
+			llog(RC_LOG, logger, "%s", tmp_err);
 			starter_error_append(perrl, "%s", tmp_err);
 
 			/* only fatal if we try to change values */
@@ -759,7 +760,7 @@ static bool translate_field(struct starter_conn *conn,
 				 conn->name,
 				 sl->name);
 
-			starter_log(LOG_LEVEL_INFO, "%s", tmp_err);
+			llog(RC_LOG, logger, "%s", tmp_err);
 			starter_error_append(perrl, "%s", tmp_err);
 
 			/* only fatal if we try to change values */
@@ -807,7 +808,7 @@ static bool translate_field(struct starter_conn *conn,
 				 leftright, kw->keyword.keydef->keyname,
 				 conn->name,
 				 sl->name);
-			starter_log(LOG_LEVEL_INFO, "%s", tmp_err);
+			llog(RC_LOG, logger, "%s", tmp_err);
 			starter_error_append(perrl, "%s", tmp_err);
 			/* only fatal if we try to change values */
 			if ((*the_options)[field] != (int)kw->number) {
@@ -824,9 +825,8 @@ static bool translate_field(struct starter_conn *conn,
 		break;
 
 	case kt_obsolete:
-		starter_log(LOG_LEVEL_INFO,
-			    "Warning: obsolete keyword '%s' ignored",
-			    kw->keyword.keydef->keyname);
+		llog(RC_LOG, logger, "warning: obsolete keyword '%s' ignored",
+		     kw->keyword.keydef->keyname);
 		break;
 
 	case kt_obsolete_quiet:
@@ -841,11 +841,12 @@ static bool translate_field(struct starter_conn *conn,
 static bool translate_leftright(struct starter_conn *conn,
 				const struct section_list *sl,
 				enum keyword_set assigned_value,
-				starter_errors_t *perrl,
 				const struct kw_list *kw,
-				struct starter_end *this)
+				struct starter_end *this,
+				starter_errors_t *perrl,
+				struct logger *logger)
 {
-	return translate_field(conn, sl, assigned_value, perrl, kw,
+	return translate_field(conn, sl, assigned_value, kw,
 			       /*leftright*/this->leftright,
 			       /*the_strings*/&this->strings,
 			       /*set_strings*/&this->strings_set,
@@ -854,13 +855,15 @@ static bool translate_leftright(struct starter_conn *conn,
 			       /*the_options*/&this->options,
 			       /*set_options*/&this->options_set,
 			       /*opt_floor*/KSCF_last_loose + 1,
-			       /*opt_roof*/KNCF_last_leftright + 1);
+			       /*opt_roof*/KNCF_last_leftright + 1,
+			       perrl, logger);
 }
 
 static bool translate_conn(struct starter_conn *conn,
 			   const struct section_list *sl,
 			   enum keyword_set assigned_value,
-			   starter_errors_t *perrl)
+			   starter_errors_t *perrl,
+			   struct logger *logger)
 {
 	/* note: not all errors are considered serious */
 	bool serious_err = false;
@@ -873,7 +876,7 @@ static bool translate_conn(struct starter_conn *conn,
 			snprintf(tmp_err, sizeof(tmp_err),
 				 "keyword '%s' is not valid in a conn (%s)\n",
 				 kw->keyword.keydef->keyname, sl->name);
-			starter_log(LOG_LEVEL_INFO, "%s", tmp_err);
+			llog(RC_LOG, logger, "%s", tmp_err);
 			starter_error_append(perrl, "%s", tmp_err);
 			continue;
 		}
@@ -882,18 +885,18 @@ static bool translate_conn(struct starter_conn *conn,
 			if (kw->keyword.keyleft) {
 				serious_err |=
 					translate_leftright(conn, sl, assigned_value,
-							    perrl, kw,
-							    &conn->left);
+							    kw, &conn->left,
+							    perrl, logger);
 			}
 			if (kw->keyword.keyright) {
 				serious_err |=
 					translate_leftright(conn, sl, assigned_value,
-							    perrl, kw,
-							    &conn->right);
+							    kw, &conn->right,
+							    perrl, logger);
 			}
 		} else {
 			serious_err |=
-				translate_field(conn, sl, assigned_value, perrl, kw,
+				translate_field(conn, sl, assigned_value, kw,
 						/*leftright*/"",
 						/*the_strings*/&conn->strings,
 						/*set_strings*/&conn->strings_set,
@@ -902,7 +905,8 @@ static bool translate_conn(struct starter_conn *conn,
 						/*the_options*/&conn->options,
 						/*set_options*/&conn->options_set,
 						/*opt_floor*/KNCF_last_leftright + 1,
-						/*opt_roof*/KNCF_ROOF);
+						/*opt_roof*/KNCF_ROOF,
+						perrl, logger);
 		}
 	}
 	return serious_err;
@@ -934,8 +938,8 @@ static bool load_conn(struct starter_conn *conn,
 
 	/* turn all of the keyword/value pairs into options/strings in left/right */
 	err = translate_conn(conn, sl,
-			defaultconn ? k_default : k_set,
-			perrl);
+			     defaultconn ? k_default : k_set,
+			     perrl, logger);
 
 	move_comment_list(&conn->comments, &sl->comments);
 
@@ -944,9 +948,8 @@ static bool load_conn(struct starter_conn *conn,
 
 	if (conn->strings[KSCF_ALSO] != NULL &&
 	    !alsoprocessing) {
-		starter_log(LOG_LEVEL_INFO,
-			    "also= is not valid in section '%s'",
-			    sl->name);
+		llog(RC_LOG, logger, "also= is not valid in section '%s'",
+		     sl->name);
 		starter_error_append(perrl, "also= is not valid in section '%s'",
 			sl->name);
 		return true;	/* error */
@@ -983,11 +986,11 @@ static bool load_conn(struct starter_conn *conn,
 			 * Inside the loop because of indirect alsos.
 			 */
 			if (alsosize >= ALSO_LIMIT) {
-				starter_log(LOG_LEVEL_INFO,
-					    "while loading conn '%s', too many also= used at section %s. Limit is %d",
-					    conn->name,
-					    alsos[alsosize],
-					    ALSO_LIMIT);
+				llog(RC_LOG, logger,
+				     "while loading conn '%s', too many also= used at section %s. Limit is %d",
+				     conn->name,
+				     alsos[alsosize],
+				     ALSO_LIMIT);
 				starter_error_append(perrl, "while loading conn '%s', too many also= used at section %s. Limit is %d",
 					conn->name,
 					alsos[alsosize],
@@ -1034,7 +1037,7 @@ static bool load_conn(struct starter_conn *conn,
 			addin->beenhere = true;
 
 			/* translate things, but do not replace earlier settings! */
-			err |= translate_conn(conn, addin, k_set, perrl);
+			err |= translate_conn(conn, addin, k_set, perrl, logger);
 
 			if (conn->strings[KSCF_ALSO] != NULL) {
 				/* add this guy's alsos too */
@@ -1404,8 +1407,8 @@ static bool init_load_conn(struct starter_config *cfg,
 	bool connerr = load_conn(conn, cfgp, sconn, true, defaultconn, perrl, logger);
 
 	if (connerr) {
-		starter_log(LOG_LEVEL_INFO, "while loading '%s': %s",
-			    sconn->name, perrl->errors);
+		llog(RC_LOG, logger, "while loading '%s': %s",
+		     sconn->name, perrl->errors);
 		/* ??? should caller not log perrl? */
 	} else {
 		conn->state = STATE_LOADED;
@@ -1414,9 +1417,9 @@ static bool init_load_conn(struct starter_config *cfg,
 }
 
 struct starter_config *confread_load(const char *file,
-				     starter_errors_t *perrl,
 				     const char *ctlsocket,
 				     bool setuponly,
+				     starter_errors_t *perrl,
 				     struct logger *logger)
 {
 	bool err = false;
@@ -1444,7 +1447,7 @@ struct starter_config *confread_load(const char *file,
 	/**
 	 * Load setup
 	 */
-	err |= load_setup(cfg, cfgp);
+	err |= load_setup(cfg, cfgp, logger);
 
 	if (err) {
 		parser_free_conf(cfgp);

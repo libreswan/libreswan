@@ -132,7 +132,8 @@ int main(int argc, char *argv[])
 	starter_use_log(verbose != 0);
 
 	starter_errors_t errl = { NULL };
-	cfg = confread_load(configfile, &errl, NULL, false, logger);
+	cfg = confread_load(configfile, NULL, false,
+			    &errl, logger);
 
 	if (cfg == NULL) {
 		fprintf(stderr, "%s: config file \"%s\" cannot be loaded: %s\n",
