@@ -33,7 +33,7 @@ look()
 	 -o -type f -name '*.awk' -print \
 	 -o -type f -name '*.in' -print \
 	 -o -type f -name '*.[chly]' -print \
-	 -o -type f -name '*.lex' -print
+	 -o -type f -name '*.lex' -print \
 	 -o -type f -name '*.xml' -print
 }
 
