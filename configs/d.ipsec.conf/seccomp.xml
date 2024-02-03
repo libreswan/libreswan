@@ -12,15 +12,21 @@ allowed to call any syscall offered by the kernel, although it might be
 restricted via other security mechanisms, such as capabilities, SElinux,
 AppArmor or other OS security features.</para>
 
-<para>The current default is disabled, but it is expected that in
-the future this feature will be enabled on all supported operating
-systems. Similarly, it is expected that further privilege separation
-will reduce the allowed syscalls - for example for the crypto helpers
-or DNS helpers.</para>
+<para>By default, seccomp is disabled, as there is a significant performance
+penalty, custom updown scripts could trigger false positives, and
+system library updates could also trigger false positives. A false positive
+(or real malicious remote code execution of a bad syscall) will cause the
+pluto daemon to crash or hang.</para>
 
 <para><emphasis>Warning:</emphasis> The restrictions of pluto
 are inherited by the updown scripts, so these scripts are also not
 allowed to use syscalls that are forbidden for pluto.</para>
+
+<para>
+To see if a seccomp rule got triggered, you must run with seccomp=enabled,
+and keep an eye on <emphasis>type=SECCOMP</emphasis> messages in the
+audit log (usually <emphasis>/var/log/audit/audit.log</emphasis>. Note
+that logging can be delayed by many seconds.</para>
 
 <para>
   This feature can be tested using <command>ipsec whack
