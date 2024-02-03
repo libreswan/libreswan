@@ -26,7 +26,7 @@ extern char *parser_cur_filename(void);
 extern int parser_cur_lineno(void);
 extern void parser_y_error(char *b, int size, const char *s);
 extern void parser_y_init(const char *name, FILE *f );
-extern int parser_y_include(const char *filename, struct logger *logger);
+void parser_y_include(const char *filename, struct logger *logger);
 
 #define THIS_IPSEC_CONF_VERSION 2
 

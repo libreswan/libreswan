@@ -55,7 +55,7 @@ int lex_verbosity = 0;	/* how much tracing output to show */
 char rootdir[PATH_MAX];		/* when evaluating paths, prefix this to them */
 char rootdir2[PATH_MAX];	/* or... try this one too */
 
-static int parser_y_eof(struct logger *logger);
+static bool parser_y_eof(struct logger *logger);
 
 /* we want no actual output! */
 #define ECHO
@@ -183,7 +183,7 @@ static int globugh_include(const char *epath, int eerrno)
 	return 1;	/* stop glob */
 }
 
-int parser_y_include (const char *filename, struct logger *logger)
+void parser_y_include (const char *filename, struct logger *logger)
 {
 	const char *try;
 	char newname[PATH_MAX];
@@ -256,7 +256,7 @@ int parser_y_include (const char *filename, struct logger *logger)
 
 		if (ic_private.stack_ptr >= MAX_INCLUDE_DEPTH - 1) {
 			yyerror(logger, "max inclusion depth reached");
-			return 1;
+			return;
 		}
 
 		if (lex_verbosity > 0) {
@@ -273,7 +273,8 @@ int parser_y_include (const char *filename, struct logger *logger)
 		stacktop->file = NULL;
 		stacktop->filename = NULL;
 
-		return parser_y_eof(logger);
+		parser_y_eof(logger);
+		return;
 
 	case GLOB_NOSPACE:
 		llog(RC_LOG, logger, "out of space processing include filename \"%s\"",
@@ -291,10 +292,10 @@ int parser_y_include (const char *filename, struct logger *logger)
 
 	/* error happened, but we ignore it */
 	globfree(&globbuf);
-	return 0;
+	return;
 }
 
-static int parser_y_eof(struct logger *logger)
+static bool parser_y_eof(struct logger *logger)
 {
 	if (stacktop->state != YY_CURRENT_BUFFER) {
 		yy_delete_buffer(YY_CURRENT_BUFFER);
@@ -322,11 +323,11 @@ static int parser_y_eof(struct logger *logger)
 		parser_y_close(stacktop);
 
 		if (--ic_private.stack_ptr < 0) {
-			return 1;
+			return true;
 		}
 		stacktop = &ic_private.stack[ic_private.stack_ptr];
 	}
-	return 0;
+	return false;
 }
 
 %}
