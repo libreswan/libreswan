@@ -63,7 +63,7 @@ static struct starter_comments_list *parser_comments;
 
 %}
 
-%parse-param {struct logger *logger}
+%param {struct logger *logger}
 
 %union {
 	char *s;
