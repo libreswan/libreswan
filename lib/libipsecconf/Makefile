@@ -66,14 +66,13 @@ LEX = flex
 
 $(builddir)/lex.yy.c: parser.lex
 	: no space between -o and scratch output file
-	$(LEX) -o$@.tmp $<
-	sed -e 's/for ( i = 0; i < _yybytes_len; ++i )$$/for ( i = 0; (yy_size_t)i < (yy_size_t)_yybytes_len; ++i )/' \
-	    -e '/^extern int isatty.*$$/d' \
-	    -e 's/if ((int) ((yy_n_chars) + number_to_move) > YY_CURRENT_BUFFER_LVALUE->yy_buf_size) {$$/if (((yy_n_chars) + number_to_move) > YY_CURRENT_BUFFER_LVALUE->yy_buf_size) {/' \
-	    < $@.tmp > $@.sedtmp
-	rm $@.tmp
+	$(LEX) -o$@ --stdout $< | sed \
+		-e 's/for ( i = 0; i < _yybytes_len; ++i )$$/for ( i = 0; (yy_size_t)i < (yy_size_t)_yybytes_len; ++i )/' \
+		-e '/^extern int isatty.*$$/d' \
+		-e 's/if ((int) ((yy_n_chars) + number_to_move) > YY_CURRENT_BUFFER_LVALUE->yy_buf_size) {$$/if (((yy_n_chars) + number_to_move) > YY_CURRENT_BUFFER_LVALUE->yy_buf_size) {/' \
+		> $@.tmp
 	: install result
-	mv $@.sedtmp $@
+	mv $@.tmp $@
 
 # Use wild card rule so that GNU Make knows that both are output from
 # a single recipe.
