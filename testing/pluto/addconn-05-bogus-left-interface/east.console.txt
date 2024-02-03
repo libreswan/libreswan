@@ -8,6 +8,9 @@ east #
  ipsec addconn --verbose east
 opening file: /etc/ipsec.conf
 | debugging mode enabled
+| EOF: stacktop->filename = /etc/ipsec.conf
+| EOF: stacktop->filename = /etc/ipsec.conf
+| EOF: no .fileglob
 | end of file /etc/ipsec.conf
 | loading default conn
 | loading conn west

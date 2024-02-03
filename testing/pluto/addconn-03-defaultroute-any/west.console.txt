@@ -11,6 +11,9 @@ west #
  ipsec addconn --verbose test
 opening file: /etc/ipsec.conf
 | debugging mode enabled
+| EOF: stacktop->filename = /etc/ipsec.conf
+| EOF: stacktop->filename = /etc/ipsec.conf
+| EOF: no .fileglob
 | end of file /etc/ipsec.conf
 | loading conn test
 | starter: left is KH_DEFAULTROUTE

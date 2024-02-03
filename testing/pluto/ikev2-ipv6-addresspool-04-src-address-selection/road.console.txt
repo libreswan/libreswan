@@ -37,6 +37,9 @@ road #
  ipsec auto --add --verbose road
 opening file: /etc/ipsec.conf
 | debugging mode enabled
+| EOF: stacktop->filename = /etc/ipsec.conf
+| EOF: stacktop->filename = /etc/ipsec.conf
+| EOF: no .fileglob
 | end of file /etc/ipsec.conf
 | loading conn road
 | starter: left is KH_DEFAULTROUTE
@@ -143,6 +146,9 @@ road #
  ipsec addconn --verbose --ctlsocket /run/pluto/foo road
 opening file: /etc/ipsec.conf
 | debugging mode enabled
+| EOF: stacktop->filename = /etc/ipsec.conf
+| EOF: stacktop->filename = /etc/ipsec.conf
+| EOF: no .fileglob
 | end of file /etc/ipsec.conf
 | loading conn road
 | starter: left is KH_DEFAULTROUTE
