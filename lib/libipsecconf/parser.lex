@@ -127,22 +127,20 @@ static void parser_y_close(struct ic_inputsource *iis)
 
 static int parser_y_nextglobfile(struct ic_inputsource *iis, struct logger *logger)
 {
-	FILE *f;
-	int fcnt;
+	if (iis->fileglob.gl_pathv == NULL) {
+		ldbg(logger, "EOF: no .fileglob");
+		/* EOF */
+		return -1;
+	}
 
-#if 0
-	printf("fileglobcnt: %d pathc: %d cmp: %u\n",
-		iis->fileglobcnt, stacktop->fileglob.gl_pathc,
-		(iis->fileglobcnt >= (int)stacktop->fileglob.gl_pathc));
-#endif
-
-	if ((int)iis->fileglobcnt >= (int)stacktop->fileglob.gl_pathc) {
-		/* EOFiles */
+	if (iis->fileglob.gl_pathv[iis->fileglobcnt] == NULL) {
+		/* EOF */
+		ldbg(logger, "EOF: .fileglob[%u] == NULL", iis->fileglobcnt);
 		return -1;
 	}
 
 	/* increment for next time */
-	fcnt = iis->fileglobcnt++;
+	int fcnt = iis->fileglobcnt++;
 
 	if (iis->file != NULL) {
 		fclose(iis->file);
@@ -158,7 +156,7 @@ static int parser_y_nextglobfile(struct ic_inputsource *iis, struct logger *logg
 	iis->filename = strdup(iis->fileglob.gl_pathv[fcnt]);
 
 	/* open the file */
-	f = fopen(iis->filename, "r");
+	FILE *f = fopen(iis->filename, "r");
 	if (f == NULL) {
 		char ebuf[128];
 
@@ -355,10 +353,9 @@ static int parser_y_eof(struct logger *logger)
 %%
 
 <<EOF>>	{
-#if 0
-	printf("EOF: stacktop->filename = %s\n",
-		stacktop->filename == NULL ? "NULL" : stacktop->filename);
-#endif
+	ldbg(logger, "EOF: stacktop->filename = %s",
+	     stacktop->filename == NULL ? "<null>" : stacktop->filename);
+
 	/*
 	 * Add a newline at the end of the file in case one was missing.
 	 * This code assumes that EOF is sticky:
