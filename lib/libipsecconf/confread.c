@@ -43,7 +43,6 @@
 #include "ttodata.h"
 
 #include "ipsecconf/confread.h"
-#include "ipsecconf/starterlog.h"
 #include "ipsecconf/interfaces.h"
 
 #include "ipsecconf/keywords.h"

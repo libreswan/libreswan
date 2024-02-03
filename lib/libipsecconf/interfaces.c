@@ -30,7 +30,6 @@
 #include "passert.h"
 #include "ipsecconf/interfaces.h"
 #include "ipsecconf/exec.h"
-#include "ipsecconf/starterlog.h"
 #include "lswlog.h"	/* for pexpect() */
 #include "ip_info.h"
 #include "ip_protocol.h"

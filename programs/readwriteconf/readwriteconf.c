@@ -30,7 +30,6 @@
 #include "ipsecconf/confread.h"
 #include "ipsecconf/confwrite.h"
 #include "ipsecconf/parser-controls.h"
-#include "ipsecconf/starterlog.h"
 
 static int verbose = 0;
 

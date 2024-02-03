@@ -30,7 +30,6 @@
 #include "lswtool.h"
 #include "whack.h"
 #include "ipsecconf/parser-controls.h"
-#include "ipsecconf/starterlog.h"
 #include "ipsecconf/confread.h"
 #include "ipsecconf/confwrite.h"
 #include "ipsecconf/starterwhack.h"

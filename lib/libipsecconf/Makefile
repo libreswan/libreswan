@@ -17,7 +17,7 @@
 LIBRARY=ipsecconf
 LIB=lib${LIBRARY}.a
 
-SRCS=confread.c confwrite.c starterwhack.c starterlog.c
+SRCS=confread.c confwrite.c starterwhack.c
 SRCS+=parser.tab.c lex.yy.c keywords.c
 SRCS+=interfaces.c
 
