@@ -135,6 +135,7 @@ static void init_seccomp_addconn(uint32_t def_action, struct logger *logger)
 	LSW_SECCOMP_ADD(socketpair);
 	LSW_SECCOMP_ADD(stat);
 	LSW_SECCOMP_ADD(statfs);
+	LSW_SECCOMP_ADD(sysinfo);
 	LSW_SECCOMP_ADD(uname);
 	LSW_SECCOMP_ADD(waitpid);
 	LSW_SECCOMP_ADD(write);

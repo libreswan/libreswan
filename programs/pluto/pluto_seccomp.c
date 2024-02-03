@@ -68,6 +68,7 @@ static void init_seccomp(uint32_t def_action, bool main, struct logger *logger)
 		LSW_SECCOMP_ADD(clone3);
 #endif
 		LSW_SECCOMP_ADD(connect);
+		LSW_SECCOMP_ADD(copy_file_range);
 		LSW_SECCOMP_ADD(dup);
 		LSW_SECCOMP_ADD(dup2);
 		LSW_SECCOMP_ADD(dup3);
@@ -89,6 +90,7 @@ static void init_seccomp(uint32_t def_action, bool main, struct logger *logger)
 		LSW_SECCOMP_ADD(geteuid);
 		LSW_SECCOMP_ADD(getgid);
 		LSW_SECCOMP_ADD(getgroups);
+		LSW_SECCOMP_ADD(get_mempolicy);
 		LSW_SECCOMP_ADD(getpgid);
 		LSW_SECCOMP_ADD(getpgrp);
 		LSW_SECCOMP_ADD(getppid);
@@ -99,9 +101,9 @@ static void init_seccomp(uint32_t def_action, bool main, struct logger *logger)
 		LSW_SECCOMP_ADD(getuid);
 		LSW_SECCOMP_ADD(ioctl);
 		LSW_SECCOMP_ADD(lstat);
+		LSW_SECCOMP_ADD(listen);
 		LSW_SECCOMP_ADD(mkdir);
 		LSW_SECCOMP_ADD(munmap);
-		LSW_SECCOMP_ADD(newfstatat);
 		LSW_SECCOMP_ADD(open);
 		LSW_SECCOMP_ADD(pipe);
 		LSW_SECCOMP_ADD(pipe2);
@@ -117,8 +119,11 @@ static void init_seccomp(uint32_t def_action, bool main, struct logger *logger)
 #if SCMP_SYS(rseq)
 		LSW_SECCOMP_ADD(rseq);
 #endif
+		LSW_SECCOMP_ADD(sched_getaffinity);
 		LSW_SECCOMP_ADD(select);
+		LSW_SECCOMP_ADD(sendmmsg);
 		LSW_SECCOMP_ADD(sendmsg);
+		LSW_SECCOMP_ADD(set_mempolicy);
 		LSW_SECCOMP_ADD(set_robust_list);
 		LSW_SECCOMP_ADD(setsockopt);
 		LSW_SECCOMP_ADD(socket);
@@ -148,6 +153,7 @@ static void init_seccomp(uint32_t def_action, bool main, struct logger *logger)
 	LSW_SECCOMP_ADD(mmap);
 	LSW_SECCOMP_ADD(mprotect);
 	LSW_SECCOMP_ADD(nanosleep);
+	LSW_SECCOMP_ADD(newfstatat);
 	LSW_SECCOMP_ADD(openat);
 	LSW_SECCOMP_ADD(pread64);
 	LSW_SECCOMP_ADD(rt_sigaction);
