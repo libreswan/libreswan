@@ -60,7 +60,6 @@ int main(int argc, char *argv[])
 	struct logger *logger = tool_logger(argc, argv);
 
 	int opt;
-	struct starter_config *cfg = NULL;
 	char *configfile = NULL;
 	struct starter_conn *conn = NULL;
 	char *name = NULL;
@@ -114,11 +113,8 @@ int main(int argc, char *argv[])
 		exit(4);
 	}
 
-	if (configfile == NULL)
-		configfile = clone_str(IPSEC_CONF, "default ipsec.conf file");
-
-	cur_debugging = (verbose > 1 ? DBG_ALL :
-			 verbose > 0 ? DBG_BASE :
+	cur_debugging = (verbose > 2 ? DBG_ALL :
+			 verbose > 1 ? DBG_BASE :
 			 LEMPTY);
 	/* logged when true */
 	ldbg(logger, "debugging mode enabled");
@@ -127,12 +123,16 @@ int main(int argc, char *argv[])
 		yydebug = 1;
 	}
 
-	if (verbose)
+	if (configfile == NULL) {
+		configfile = clone_str(IPSEC_CONF, "default ipsec.conf file");
+	}
+	if (verbose > 0) {
 		printf("opening file: %s\n", configfile);
+	}
 
 	starter_errors_t errl = { NULL };
-	cfg = confread_load(configfile, NULL, false,
-			    &errl, logger);
+	struct starter_config *cfg = confread_load(configfile, NULL, false,
+						   &errl, logger);
 
 	if (cfg == NULL) {
 		fprintf(stderr, "%s: config file \"%s\" cannot be loaded: %s\n",

@@ -339,45 +339,43 @@ int main(int argc, char *argv[])
 	    !checkconfig)
 		usage();
 
-	if (verbose > 3) {
-		yydebug = 1;
-	}
-
-	if (configfile == NULL)
-		configfile = clone_str(IPSEC_CONF, "default ipsec.conf file");
-
-	if (verbose > 0)
-		printf("opening file: %s\n", configfile);
-
-	cur_debugging = (verbose > 1 ? DBG_ALL :
-			 verbose > 0 ? DBG_BASE :
+	cur_debugging = (verbose > 2 ? DBG_ALL :
+			 verbose > 1 ? DBG_BASE :
 			 LEMPTY);
 	/* logged when true! */
 	ldbg(logger, "debugging mode enabled");
 
-	struct starter_config *cfg = NULL;
+	if (verbose > 3) {
+		yydebug = 1;
+	}
 
-	{
-		starter_errors_t errl = { NULL };
+	if (configfile == NULL) {
+		configfile = clone_str(IPSEC_CONF, "default ipsec.conf file");
+	}
+	if (verbose > 0) {
+		printf("opening file: %s\n", configfile);
+	}
 
-		cfg = confread_load(configfile, ctlsocket, configsetup,
-				    &errl, logger);
+	starter_errors_t errl = { NULL };
+	struct starter_config *cfg = confread_load(configfile, ctlsocket,
+						   configsetup,
+						   &errl, logger);
 
-		if (cfg == NULL) {
-			fprintf(stderr, "cannot load config '%s': %s\n",
-				configfile, errl.errors);
-			pfreeany(errl.errors);
-			exit(3);
-		}
-		if (errl.errors != NULL) {
-			fprintf(stderr, "addconn, in config '%s', %s\n",
-				configfile, errl.errors);
-			pfree(errl.errors);
-		}
-		if (checkconfig) {
-			confread_free(cfg);
-			exit(0);
-		}
+	if (cfg == NULL) {
+		fprintf(stderr, "cannot load config '%s': %s\n",
+			configfile, errl.errors);
+		pfreeany(errl.errors);
+		exit(3);
+	}
+	if (errl.errors != NULL) {
+		fprintf(stderr, "addconn, in config '%s', %s\n",
+			configfile, errl.errors);
+		pfree(errl.errors);
+	}
+
+	if (checkconfig) {
+		confread_free(cfg);
+		exit(0);
 	}
 
 #ifdef USE_SECCOMP
