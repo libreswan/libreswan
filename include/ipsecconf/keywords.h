@@ -263,7 +263,7 @@ enum keyword_numeric_conn_field {
 	KNCF_REMOTE_PEER_TYPE,	/* Cisco interop: remote peer type */
 	KNCF_NM_CONFIGURED,	/* Network Manager support */
 	KNCF_SAREFTRACK,	/* saref tracking parameter for _updown */
-	KNCF_WARNIGNORE,	/* to ignore obsoleted keywords */
+	KNCF_OBSOLETE,		/* to ignore but warn obsoleted keywords */
 	KNCF_XAUTHBY,		/* method of xauth user auth - file, pam or alwaysok */
 	KNCF_XAUTHFAIL,		/* method of failing, soft or hard */
 	KNCF_FRAGMENTATION,	/* Enable support for IKE fragmentation */

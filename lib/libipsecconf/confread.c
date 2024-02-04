@@ -248,8 +248,7 @@ static char **tokens_from_string(const char *value, int *n)
  * @return bool TRUE if unsuccessful
  */
 static bool load_setup(struct starter_config *cfg,
-		       const struct config_parsed *cfgp,
-		       struct logger *logger)
+		       const struct config_parsed *cfgp)
 {
 	bool err = false;
 	const struct kw_list *kw;
@@ -299,16 +298,12 @@ static bool load_setup(struct starter_config *cfg,
 			err = true;
 			break;
 
+		case kt_appendstring:
+		case kt_appendlist:
 		case kt_comment:
+		case kt_obsolete:
 			break;
 
-		case kt_obsolete:
-			llog(RC_LOG, logger, "warning: ignored obsolete keyword '%s'",
-			     kw->keyword.keydef->keyname);
-			break;
-		default:
-			/* NEVER HAPPENS */
-			break;
 		}
 	}
 
@@ -769,13 +764,10 @@ static bool translate_field(struct starter_conn *conn,
 		break;
 
 	case kt_comment:
-		break;
-
 	case kt_obsolete:
-		llog(RC_LOG, logger, "warning: obsolete keyword '%s' ignored",
-		     kw->keyword.keydef->keyname);
 		break;
 	}
+
 	return serious_err;
 }
 
@@ -1344,8 +1336,6 @@ struct starter_config *confread_load(const char *file,
 				     bool setuponly,
 				     struct logger *logger)
 {
-	bool err = false;
-
 	/**
 	 * Load file
 	 */
@@ -1363,9 +1353,10 @@ struct starter_config *confread_load(const char *file,
 
 	/**
 	 * Load setup
+	 *
+	 * Danger: reverse fail.
 	 */
-	err |= load_setup(cfg, cfgp, logger);
-
+	bool err = load_setup(cfg, cfgp);
 	if (err) {
 		parser_free_conf(cfgp);
 		confread_free(cfg);

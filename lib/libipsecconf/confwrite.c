@@ -154,8 +154,6 @@ static void confwrite_int(FILE *out,
 			break;
 
 		case kt_comment:
-			break;
-
 		case kt_obsolete:
 			break;
 
@@ -238,8 +236,6 @@ static void confwrite_str(FILE *out,
 			break;
 
 		case kt_comment:
-			break;
-
 		case kt_obsolete:
 			break;
 		}

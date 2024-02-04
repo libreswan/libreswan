@@ -198,8 +198,6 @@ statement_kw:
 			break;
 
 		case kt_comment:
-			break;
-
 		case kt_obsolete:
 			break;
 		}
@@ -263,8 +261,8 @@ statement_kw:
 			yyerror(logger, "valid keyword, but value is not a number");
 			assert(kw.keydef->type != kt_bool);
 			break;
+
 		case kt_comment:
-			break;
 		case kt_obsolete:
 			break;
 		}
@@ -427,6 +425,12 @@ static void new_parser_kw(struct keyword *keyword, char *string, uintmax_t numbe
 		return;
 	}
 
+	if (keyword->keydef->type == kt_obsolete) {
+		yyerror(logger, "warning: ignored obsolete keyword: %s",
+			keyword->keydef->keyname);
+		/* drop it on the floor */
+		return;
+	}
 
 	struct kw_list *new = malloc(sizeof(struct kw_list));
 	PASSERT(logger, new != NULL);
