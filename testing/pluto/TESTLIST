@@ -141,7 +141,7 @@ kvmplutotest	addconn-36-vti					good
 kvmplutotest	addconn-37-nic-offload				good
 kvmplutotest	addconn-37-nic-offload-no-hw-crypto		good	github/1527
 kvmplutotest	addconn-37-nic-offload-no-hw-packet		good	github/1527
-
+kvmplutotest	addconn-38-obsolete				good
 
 #################################################################
 # IKEv2 tests

@@ -1,0 +1,4 @@
+test ipsec.conf obsolete keywords
+
+should get warning
+
