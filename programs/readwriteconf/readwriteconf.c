@@ -131,7 +131,7 @@ int main(int argc, char *argv[])
 	}
 
 	starter_errors_t errl = { NULL };
-	struct starter_config *cfg = confread_load(configfile, NULL, false,
+	struct starter_config *cfg = confread_load(configfile, false,
 						   &errl, logger);
 
 	if (cfg == NULL) {

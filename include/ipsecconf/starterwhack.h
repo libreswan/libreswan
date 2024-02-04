@@ -20,16 +20,16 @@ struct starter_conn;
 struct starter_config;
 struct logger;
 
-int starter_whack_add_conn(struct starter_config *cfg,
+int starter_whack_add_conn(const char *ctlsocket,
 			   const struct starter_conn *conn,
 			   struct logger *logger);
-int starter_whack_route_conn(struct starter_config *cfg,
+int starter_whack_route_conn(const char *ctlsocket,
 			     struct starter_conn *conn,
 			     struct logger *logger);
-int starter_whack_initiate_conn(struct starter_config *cfg,
+int starter_whack_initiate_conn(const char *ctlsocket,
 				struct starter_conn *conn,
 				struct logger *logger);
-extern int starter_whack_listen(struct starter_config *cfg,
+extern int starter_whack_listen(const char *ctlsocket,
 				struct logger *logger);
 
 #endif /* _STARTER_WHACK_H_ */

@@ -219,7 +219,7 @@ int main(int argc, char *argv[])
 	const char *varprefix = "";
 	int exit_status = 0;
 	struct starter_conn *conn = NULL;
-	char *ctlsocket = NULL;
+	char *ctlsocket = clone_str(DEFAULT_CTL_SOCKET, "default control socket");
 
 #if 0
 	/* efence settings */
@@ -262,6 +262,7 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'c':
+			pfree(ctlsocket);
 			ctlsocket = clone_str(optarg, "control socket");
 			break;
 
@@ -309,9 +310,6 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if (ctlsocket == NULL)
-		ctlsocket = clone_str(DEFAULT_CTL_SOCKET, "default ctlsocket");
-
 	if (autoall) {
 		/* pluto forks us, we might have to wait on it to create the socket */
 		struct stat sb;
@@ -357,8 +355,7 @@ int main(int argc, char *argv[])
 	}
 
 	starter_errors_t errl = { NULL };
-	struct starter_config *cfg = confread_load(configfile, ctlsocket,
-						   configsetup,
+	struct starter_config *cfg = confread_load(configfile, configsetup,
 						   &errl, logger);
 
 	if (cfg == NULL) {
@@ -425,7 +422,8 @@ int main(int argc, char *argv[])
 				if (verbose > 0)
 					printf(" %s\n", conn->name);
 				resolve_default_routes(conn, logger);
-				starter_whack_add_conn(cfg, conn, logger);
+				starter_whack_add_conn(ctlsocket,
+						       conn, logger);
 				break;
 			}
 		}
@@ -434,7 +432,7 @@ int main(int argc, char *argv[])
 		 * We loaded all connections. Now tell pluto to listen,
 		 * then route the conns and resolve default route.
 		 */
-		starter_whack_listen(cfg, logger);
+		starter_whack_listen(ctlsocket, logger);
 
 		if (verbose > 0)
 			printf("  Pass #2: Routing auto=route connections\n");
@@ -443,7 +441,7 @@ int main(int argc, char *argv[])
 			if (conn->autostart == AUTOSTART_ONDEMAND) {
 				if (verbose > 0)
 					printf(" %s", conn->name);
-				starter_whack_route_conn(cfg, conn, logger);
+				starter_whack_route_conn(ctlsocket, conn, logger);
 			}
 		}
 
@@ -454,7 +452,7 @@ int main(int argc, char *argv[])
 			if (conn->autostart == AUTOSTART_START) {
 				if (verbose > 0)
 					printf(" %s", conn->name);
-				starter_whack_initiate_conn(cfg, conn, logger);
+				starter_whack_initiate_conn(ctlsocket, conn, logger);
 			}
 		}
 
@@ -520,7 +518,8 @@ int main(int argc, char *argv[])
 						conn->name);
 				} else {
 					resolve_default_routes(conn, logger);
-					exit_status = starter_whack_add_conn(cfg, conn, logger);
+					exit_status = starter_whack_add_conn(ctlsocket,
+									     conn, logger);
 					conn->state = STATE_ADDED;
 				}
 			}

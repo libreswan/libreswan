@@ -156,8 +156,6 @@ struct starter_config {
 	/* conn %default */
 	struct starter_conn conn_default;
 
-	char *ctlsocket;  /* location of pluto control socket */
-
 	/* connections list (without %default) */
 	TAILQ_HEAD(, starter_conn) conns;
 };
@@ -180,7 +178,6 @@ extern struct config_parsed *parser_load_conf(const char *file, starter_errors_t
 extern void parser_free_conf(struct config_parsed *cfg);
 
 extern struct starter_config *confread_load(const char *file,
-					    const char *ctlsocket,
 					    bool setuponly,
 					    starter_errors_t *perrl,
 					    struct logger *logger);

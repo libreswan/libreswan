@@ -198,7 +198,7 @@ static bool set_whack_end(struct whack_end *w,
 	return true;
 }
 
-static int starter_whack_add_pubkey(struct starter_config *cfg,
+static int starter_whack_add_pubkey(const char *ctlsocket,
 				    const struct starter_conn *conn,
 				    const struct starter_end *end,
 				    struct logger *logger)
@@ -258,7 +258,7 @@ static int starter_whack_add_pubkey(struct starter_config *cfg,
 			     str_enum(&ipseckey_algorithm_config_names, end->pubkey_alg, &pkb),
 			     end->pubkey);
 			msg.keyval = keyspace;
-			ret = whack_send_msg(&msg, cfg->ctlsocket, NULL, NULL, 0, 0, logger);
+			ret = whack_send_msg(&msg, ctlsocket, NULL, NULL, 0, 0, logger);
 			free_chunk_content(&keyspace);
 		}
 		}
@@ -279,7 +279,7 @@ static void conn_log_val(struct logger *logger,
 	}
 }
 
-int starter_whack_add_conn(struct starter_config *cfg,
+int starter_whack_add_conn(const char *ctlsocket,
 			   const struct starter_conn *conn,
 			   struct logger *logger)
 {
@@ -481,17 +481,17 @@ int starter_whack_add_conn(struct starter_config *cfg,
 	msg.ike = conn->ike_crypto;
 	conn_log_val(logger, conn, "ike", msg.ike);
 
-	int r = whack_send_msg(&msg, cfg->ctlsocket, NULL, NULL, 0, 0, logger);
+	int r = whack_send_msg(&msg, ctlsocket, NULL, NULL, 0, 0, logger);
 	if (r != 0)
 		return r;
 
 	if (conn->left.pubkey != NULL) {
-		r = starter_whack_add_pubkey(cfg, conn, &conn->left, logger);
+		r = starter_whack_add_pubkey(ctlsocket, conn, &conn->left, logger);
 		if (r != 0)
 			return r;
 	}
 	if (conn->right.pubkey != NULL) {
-		r = starter_whack_add_pubkey(cfg, conn, &conn->right, logger);
+		r = starter_whack_add_pubkey(ctlsocket, conn, &conn->right, logger);
 		if (r != 0)
 			return r;
 	}
@@ -499,17 +499,17 @@ int starter_whack_add_conn(struct starter_config *cfg,
 	return 0;
 }
 
-int starter_whack_route_conn(struct starter_config *cfg,
+int starter_whack_route_conn(const char *ctlsocket,
 			     struct starter_conn *conn,
 			     struct logger *logger)
 {
 	struct whack_message msg = empty_whack_message;
 	msg.whack_route = true;
 	msg.name = connection_name(conn);
-	return whack_send_msg(&msg, cfg->ctlsocket, NULL, NULL, 0, 0, logger);
+	return whack_send_msg(&msg, ctlsocket, NULL, NULL, 0, 0, logger);
 }
 
-int starter_whack_initiate_conn(struct starter_config *cfg,
+int starter_whack_initiate_conn(const char *ctlsocket,
 				struct starter_conn *conn,
 				struct logger *logger)
 {
@@ -517,12 +517,12 @@ int starter_whack_initiate_conn(struct starter_config *cfg,
 	msg.whack_initiate = true;
 	msg.whack_async = true;
 	msg.name = connection_name(conn);
-	return whack_send_msg(&msg, cfg->ctlsocket, NULL, NULL, 0, 0, logger);
+	return whack_send_msg(&msg, ctlsocket, NULL, NULL, 0, 0, logger);
 }
 
-int starter_whack_listen(struct starter_config *cfg, struct logger *logger)
+int starter_whack_listen(const char *ctlsocket, struct logger *logger)
 {
 	struct whack_message msg = empty_whack_message;
 	msg.whack_listen = true;
-	return whack_send_msg(&msg, cfg->ctlsocket, NULL, NULL, 0, 0, logger);
+	return whack_send_msg(&msg, ctlsocket, NULL, NULL, 0, 0, logger);
 }

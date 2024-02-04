@@ -114,8 +114,6 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 
 	/* ==== end of config setup ==== */
 
-	cfg->ctlsocket = clone_str(DEFAULT_CTL_SOCKET, "default control socket");
-
 	/* ==== conn %default ==== */
 
 	struct starter_conn *d = &cfg->conn_default;
@@ -1413,7 +1411,6 @@ static bool init_load_conn(struct starter_config *cfg,
 }
 
 struct starter_config *confread_load(const char *file,
-				     const char *ctlsocket,
 				     bool setuponly,
 				     starter_errors_t *perrl,
 				     struct logger *logger)
@@ -1434,11 +1431,6 @@ struct starter_config *confread_load(const char *file,
 	 * Set default values
 	 */
 	ipsecconf_default_values(cfg);
-
-	if (ctlsocket != NULL) {
-		pfree(cfg->ctlsocket);
-		cfg->ctlsocket = clone_str(ctlsocket, "default ctlsocket");
-	}
 
 	/**
 	 * Load setup
@@ -1539,8 +1531,6 @@ static void confread_free_conn(struct starter_conn *conn)
 
 void confread_free(struct starter_config *cfg)
 {
-	pfree(cfg->ctlsocket);
-
 	for (unsigned i = 0; i < elemsof(cfg->setup.strings); i++)
 		pfreeany(cfg->setup.strings[i]);
 
