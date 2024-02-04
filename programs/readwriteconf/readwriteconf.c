@@ -113,9 +113,11 @@ int main(int argc, char *argv[])
 		exit(4);
 	}
 
-	cur_debugging = (verbose > 2 ? DBG_ALL :
+	cur_debugging = (verbose > 3 ? DBG_ALL|DBG_TMI :
+			 verbose > 2 ? DBG_ALL :
 			 verbose > 1 ? DBG_BASE :
 			 LEMPTY);
+
 	/* logged when true */
 	ldbg(logger, "debugging mode enabled");
 

@@ -112,8 +112,8 @@ section_or_include:
 		parser.kw_validity = kv_config;
 		parser.section = "config setup";
 		parser.comments = &parser.cfg->comments;
-		if (yydebug)
-			fprintf(stderr, "\nconfig setup read\n");
+		ldbg(logger, "%s", "");
+		ldbg(logger, "reading config setup");
 	} kw_sections
 	| CONN STRING EOL {
 		struct section_list *section = malloc(sizeof(struct section_list));
@@ -134,8 +134,8 @@ section_or_include:
 		TAILQ_INIT(&section->comments);
 		parser.comments = &section->comments;
 
-		if (yydebug)
-			fprintf(stderr, "\nread conn %s\n", section->name);
+		ldbg(logger, "%s", "");
+		ldbg(logger, "reading conn %s", section->name);
 
 	} kw_sections
 	| INCLUDE STRING EOL {

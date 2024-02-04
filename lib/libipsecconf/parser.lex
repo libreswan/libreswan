@@ -436,8 +436,7 @@ static bool parser_y_eof(struct logger *logger)
 
 				/* remove trailing " */
 				s[len-1] = '\0';
-				if (yydebug)
-					fprintf(stderr, "STRING: \"%s\"\n", s);
+				ldbgf(DBG_TMI, logger, "STRING: \"%s\"", s);
 				yylval.s = strdup(s);
 				BEGIN INITIAL;
 				return STRING;
@@ -452,8 +451,7 @@ static bool parser_y_eof(struct logger *logger)
 
 				/* remove trailing } */
 				s[len-1] = '\0';
-				if (yydebug)
-					fprintf(stderr, "STRING{}: {%s}\n", s);
+				ldbgf(DBG_TMI, logger, "STRING{}: {%s}", s);
 				yylval.s = strdup(s);
 				BEGIN INITIAL;
 				return STRING;
@@ -493,9 +491,7 @@ include			return INCLUDE;
 [^\"= \t\n]+		{
 				int tok;
 
-				if (yydebug)
-					fprintf(stderr, "STR/KEY: %s\n",
-						yytext);
+				ldbgf(DBG_TMI, logger, "STR/KEY: %s", yytext);
 				tok = parser_find_keyword(yytext, &yylval);
 				switch (tok) {
 				case BOOLWORD:
