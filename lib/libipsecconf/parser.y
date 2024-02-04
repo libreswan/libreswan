@@ -117,31 +117,26 @@ section_or_include:
 	} kw_sections
 	| CONN STRING EOL {
 		struct section_list *section = malloc(sizeof(struct section_list));
+		PASSERT(logger, section != NULL);
 
-		if (section == NULL) {
-			parser.kw = NULL;
-			parser.kw_last = NULL;
-			parser.kw_validity = LEMPTY;
-			yyerror(logger, "can't allocate memory in section_or_include/conn");
-		} else {
-			section->name = $2;
-			section->kw = NULL;
+		section->name = $2;
+		section->kw = NULL;
 
-			TAILQ_INSERT_TAIL(&parser.cfg->sections, section, link);
+		TAILQ_INSERT_TAIL(&parser.cfg->sections, section, link);
 
-			/* setup keyword section to record values */
-			parser.kw = &section->kw;
-			parser.kw_last = NULL;
-			parser.kw_validity = LEMPTY;
-			parser.section = $2;
+		/* setup keyword section to record values */
+		parser.kw = &section->kw;
+		parser.kw_last = NULL;
+		parser.kw_validity = LEMPTY;
+		parser.section = $2;
 
-			/* and comments */
-			TAILQ_INIT(&section->comments);
-			parser.comments = &section->comments;
+		/* and comments */
+		TAILQ_INIT(&section->comments);
+		parser.comments = &section->comments;
 
-			if (yydebug)
-				fprintf(stderr, "\nread conn %s\n", section->name);
-		}
+		if (yydebug)
+			fprintf(stderr, "\nread conn %s\n", section->name);
+
 	} kw_sections
 	| INCLUDE STRING EOL {
 		parser_y_include($2, logger);
@@ -215,14 +210,11 @@ statement_kw:
 	| COMMENT EQUAL STRING {
 		struct starter_comments *new =
 			malloc(sizeof(struct starter_comments));
+		PASSERT(logger, new != NULL);
 
-		if (new == NULL) {
-			yyerror(logger, "can't allocate memory in statement_kw");
-		} else {
-			new->x_comment = strdup($1.string);
-			new->commentvalue = strdup($3);
-			TAILQ_INSERT_TAIL(parser.comments, new, link);
-		}
+		new->x_comment = strdup($1.string);
+		new->commentvalue = strdup($3);
+		TAILQ_INSERT_TAIL(parser.comments, new, link);
 	}
 	| KEYWORD EQUAL STRING {
 		struct keyword kw = $1;
@@ -356,11 +348,7 @@ struct config_parsed *parser_load_conf(const char *file,
 				       struct logger *logger)
 {
 	parser.cfg = malloc(sizeof(struct config_parsed));
-
-	if (parser.cfg == NULL) {
-		llog(RC_LOG, logger, "can't allocate memory");
-		goto err;
-	}
+	PASSERT(logger, parser.cfg != NULL);
 
 	FILE *f = streq(file, "-") ?
 		fdopen(STDIN_FILENO, "r") : fopen(file, "r");
@@ -443,31 +431,28 @@ static void new_parser_kw(struct keyword *keyword, char *string, uintmax_t numbe
 
 
 	struct kw_list *new = malloc(sizeof(struct kw_list));
+	PASSERT(logger, new != NULL);
 
-	if (new == NULL) {
-		yyerror(logger, "cannot allocate memory for a kw_list");
-	} else {
-		/*
-		 * fill the values into new
-		 * (either string or number might have a placeholder value
-		 */
-		new->keyword = *keyword;
-		new->string = string;
-		new->number = number;
-		new->next = NULL;
+	/*
+	 * fill the values into new
+	 * (either string or number might have a placeholder value
+	 */
+	new->keyword = *keyword;
+	new->string = string;
+	new->number = number;
+	new->next = NULL;
 
-		/* link the new kw_list into the list */
+	/* link the new kw_list into the list */
 
-		if (*parser.kw == NULL)
-			*parser.kw = new;	/* first in (some) list */
+	if (*parser.kw == NULL)
+		*parser.kw = new;	/* first in (some) list */
 
-		/* connect to previous last on list */
-		if (parser.kw_last != NULL)
-			parser.kw_last->next = new;
+	/* connect to previous last on list */
+	if (parser.kw_last != NULL)
+		parser.kw_last->next = new;
 
-		/* new is new last on list */
-		parser.kw_last = new;
-	}
+	/* new is new last on list */
+	parser.kw_last = new;
 }
 
 uintmax_t parser_unsigned(const char *yytext, struct logger *logger)
