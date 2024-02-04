@@ -29,7 +29,6 @@
 #include "ip_address.h"
 #include "passert.h"
 #include "ipsecconf/interfaces.h"
-#include "ipsecconf/exec.h"
 #include "lswlog.h"	/* for pexpect() */
 #include "ip_info.h"
 #include "ip_protocol.h"
