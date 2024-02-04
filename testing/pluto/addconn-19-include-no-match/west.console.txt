@@ -1,0 +1,21 @@
+/testing/guestbin/swan-prep
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ # what is being included
+west #
+ grep include /etc/ipsec.conf
+include /tmp/file-not-found.*
+west #
+ # expect no complaints
+west #
+ ipsec auto --add west
+"west": added IKEv1 connection
+west #
+ 

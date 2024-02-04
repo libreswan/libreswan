@@ -1,0 +1,22 @@
+/testing/guestbin/swan-prep
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ # what is being included
+west #
+ grep include /etc/ipsec.conf
+include /etc/file-not-found.conf
+west #
+ # expect include file not found
+west #
+ ipsec auto --add west
+ipsec addconn: /etc/ipsec.conf:21: warning: could not open include filename: '/etc/file-not-found.conf'
+"west": added IKEv1 connection
+west #
+ 

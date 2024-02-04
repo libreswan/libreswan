@@ -1,0 +1,4 @@
+test ipsec.conf include <file-not-found>
+
+should get an error (unlike including a glob)
+

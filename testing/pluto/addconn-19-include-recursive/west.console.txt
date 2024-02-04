@@ -6,19 +6,17 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- sleep 3
+ ../../guestbin/wait-until-pluto-started
 west #
- # add a connection to test adddconn as well
+ # what is being included
+west #
+ grep include /etc/ipsec.conf
+include /etc/ipsec.conf
+west #
+ # expect the add to fail as recursive
 west #
  ipsec auto --add west
 ipsec addconn: /etc/ipsec.conf:21: max inclusion depth reached
 "west": added IKEv1 connection
-west #
- # there should be something to shutdown, proving we started properly
-west #
- ipsec whack --shutdown
-west #
- echo done
-done
 west #
  

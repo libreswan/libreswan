@@ -117,7 +117,9 @@ kvmplutotest	addconn-15-sourceip				good
 kvmplutotest	addconn-16-empty-config-option			good
 kvmplutotest	addconn-17-config-time-suffix			good
 kvmplutotest	addconn-18-config-percentage-suffix		good
-kvmplutotest	addconn-19-recursive-include			good
+kvmplutotest	addconn-19-include-recursive			good
+kvmplutotest	addconn-19-include-missing			good
+kvmplutotest	addconn-19-include-no-match			good
 kvmplutotest	addconn-20-conn-default				good
 kvmplutotest	addconn-21-config-setup-listen			good
 kvmplutotest	addconn-22-authby-hash-algo			good

@@ -1,0 +1,4 @@
+ipsec.conf include *.conf ; but no such file
+
+should be silent
+
