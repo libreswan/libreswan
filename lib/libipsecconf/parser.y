@@ -46,12 +46,19 @@
  * Static Globals
  */
 static bool save_errors;
-static struct config_parsed *parser_cfg;
-static struct kw_list **parser_kw, *parser_kw_last;
+
+static struct parser {
+	struct config_parsed *cfg;
+	const char *section;
+	struct kw_list **kw;
+	struct kw_list *kw_last;
+	lset_t kw_validity;
+	struct starter_comments_list *comments;
+} parser;
+
 static void new_parser_kw(struct keyword *keyword, char *string, uintmax_t number, struct logger *logger);
 static uintmax_t parser_unsigned(const char *yytext, struct logger *logger);
 static uintmax_t parser_time(struct keyword *kw, const char *yytext, struct logger *logger);
-static struct starter_comments_list *parser_comments;
 
 /**
  * Functions
@@ -100,9 +107,11 @@ sections: /* NULL */
 
 section_or_include:
 	CONFIG SETUP EOL {
-		parser_kw = &parser_cfg->config_setup;
-		parser_kw_last = NULL;
-		parser_comments = &parser_cfg->comments;
+		parser.kw = &parser.cfg->config_setup;
+		parser.kw_last = NULL;
+		parser.kw_validity = kv_config;
+		parser.section = "config setup";
+		parser.comments = &parser.cfg->comments;
 		if (yydebug)
 			fprintf(stderr, "\nconfig setup read\n");
 	} kw_sections
@@ -110,22 +119,25 @@ section_or_include:
 		struct section_list *section = malloc(sizeof(struct section_list));
 
 		if (section == NULL) {
-			parser_kw = NULL;
-			parser_kw_last = NULL;
+			parser.kw = NULL;
+			parser.kw_last = NULL;
+			parser.kw_validity = LEMPTY;
 			yyerror(logger, "can't allocate memory in section_or_include/conn");
 		} else {
 			section->name = $2;
 			section->kw = NULL;
 
-			TAILQ_INSERT_TAIL(&parser_cfg->sections, section, link);
+			TAILQ_INSERT_TAIL(&parser.cfg->sections, section, link);
 
 			/* setup keyword section to record values */
-			parser_kw = &section->kw;
-			parser_kw_last = NULL;
+			parser.kw = &section->kw;
+			parser.kw_last = NULL;
+			parser.kw_validity = LEMPTY;
+			parser.section = $2;
 
 			/* and comments */
 			TAILQ_INIT(&section->comments);
-			parser_comments = &section->comments;
+			parser.comments = &section->comments;
 
 			if (yydebug)
 				fprintf(stderr, "\nread conn %s\n", section->name);
@@ -209,7 +221,7 @@ statement_kw:
 		} else {
 			new->x_comment = strdup($1.string);
 			new->commentvalue = strdup($3);
-			TAILQ_INSERT_TAIL(parser_comments, new, link);
+			TAILQ_INSERT_TAIL(parser.comments, new, link);
 		}
 	}
 	| KEYWORD EQUAL STRING {
@@ -343,15 +355,12 @@ void yyerror(struct logger *logger UNUSED, const char *s, ...)
 struct config_parsed *parser_load_conf(const char *file,
 				       struct logger *logger)
 {
-	struct config_parsed *cfg = malloc(sizeof(struct config_parsed));
+	parser.cfg = malloc(sizeof(struct config_parsed));
 
-	if (cfg == NULL) {
+	if (parser.cfg == NULL) {
 		llog(RC_LOG, logger, "can't allocate memory");
 		goto err;
 	}
-
-	static const struct config_parsed empty_config_parsed;	/* zero or null everywhere */
-	*cfg = empty_config_parsed;
 
 	FILE *f = streq(file, "-") ?
 		fdopen(STDIN_FILENO, "r") : fopen(file, "r");
@@ -364,9 +373,8 @@ struct config_parsed *parser_load_conf(const char *file,
 	yyin = f;
 	parser_y_init(file, f);
 	save_errors = true;
-	TAILQ_INIT(&cfg->sections);
-	TAILQ_INIT(&cfg->comments);
-	parser_cfg = cfg;
+	TAILQ_INIT(&parser.cfg->sections);
+	TAILQ_INIT(&parser.cfg->comments);
 
 	if (yyparse(logger) != 0) {
 		save_errors = false;
@@ -374,25 +382,16 @@ struct config_parsed *parser_load_conf(const char *file,
 		goto err;
 	}
 
-	/* check all are kv_config */
-	for (const struct kw_list *kw = parser_cfg->config_setup;
-	     kw != NULL; kw = kw->next) {
-		if (!(kw->keyword.keydef->validity & kv_config)) {
-			llog(RC_LOG, logger,
-			     "unexpected keyword '%s' in section 'config setup'",
-			     kw->keyword.keydef->keyname);
-			goto err;
-		}
-	}
-
 	/**
 	 * Config valid
 	 */
+	struct config_parsed *cfg = parser.cfg;
+	parser.cfg = NULL;
 	return cfg;
 
 err:
-	if (cfg != NULL)
-		parser_free_conf(cfg);
+	if (parser.cfg != NULL)
+		parser_free_conf(parser.cfg);
 
 	return NULL;
 }
@@ -434,6 +433,15 @@ void parser_free_conf(struct config_parsed *cfg)
 static void new_parser_kw(struct keyword *keyword, char *string, uintmax_t number,
 			  struct logger *logger)
 {
+	if ((keyword->keydef->validity & parser.kw_validity) != parser.kw_validity) {
+		yyerror(logger, "unexpected keyword '%s' in section '%s'",
+			keyword->keydef->keyname,
+			parser.section);
+		/* drop it on the floor */
+		return;
+	}
+
+
 	struct kw_list *new = malloc(sizeof(struct kw_list));
 
 	if (new == NULL) {
@@ -450,15 +458,15 @@ static void new_parser_kw(struct keyword *keyword, char *string, uintmax_t numbe
 
 		/* link the new kw_list into the list */
 
-		if (*parser_kw == NULL)
-			*parser_kw = new;	/* first in (some) list */
+		if (*parser.kw == NULL)
+			*parser.kw = new;	/* first in (some) list */
 
 		/* connect to previous last on list */
-		if (parser_kw_last != NULL)
-			parser_kw_last->next = new;
+		if (parser.kw_last != NULL)
+			parser.kw_last->next = new;
 
 		/* new is new last on list */
-		parser_kw_last = new;
+		parser.kw_last = new;
 	}
 }
 
