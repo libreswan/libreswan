@@ -1,7 +1,6 @@
 /testing/guestbin/swan-prep
 west #
  ipsec addconn --config /etc/ipsec.conf --checkconfig
-ipsec addconn: duplicate key 'left' in conn westnet-eastnet-ikev2 while processing def westnet-eastnet-ikev2
 ipsec addconn: while loading 'westnet-eastnet-ikev2': duplicate key 'left' in conn westnet-eastnet-ikev2 while processing def westnet-eastnet-ikev2
 addconn, in config '/etc/ipsec.conf', duplicate key 'left' in conn westnet-eastnet-ikev2 while processing def westnet-eastnet-ikev2
 west #
