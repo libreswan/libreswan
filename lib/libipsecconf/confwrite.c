@@ -157,7 +157,6 @@ static void confwrite_int(FILE *out,
 			break;
 
 		case kt_obsolete:
-		case kt_obsolete_quiet:
 			break;
 
 		case kt_time: /* special number, but do work later XXX */
@@ -242,7 +241,6 @@ static void confwrite_str(FILE *out,
 			break;
 
 		case kt_obsolete:
-		case kt_obsolete_quiet:
 			break;
 		}
 	}

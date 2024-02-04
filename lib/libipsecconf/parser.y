@@ -201,7 +201,6 @@ statement_kw:
 			break;
 
 		case kt_obsolete:
-		case kt_obsolete_quiet:
 			break;
 		}
 
@@ -267,7 +266,6 @@ statement_kw:
 		case kt_comment:
 			break;
 		case kt_obsolete:
-		case kt_obsolete_quiet:
 			break;
 		}
 

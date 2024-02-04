@@ -306,10 +306,6 @@ static bool load_setup(struct starter_config *cfg,
 			llog(RC_LOG, logger, "warning: ignored obsolete keyword '%s'",
 			     kw->keyword.keydef->keyname);
 			break;
-		case kt_obsolete_quiet:
-			llog(RC_LOG, logger, "warning: ignored obsolete keyword '%s'",
-			     kw->keyword.keydef->keyname);
-			break;
 		default:
 			/* NEVER HAPPENS */
 			break;
@@ -776,11 +772,6 @@ static bool translate_field(struct starter_conn *conn,
 		break;
 
 	case kt_obsolete:
-		llog(RC_LOG, logger, "warning: obsolete keyword '%s' ignored",
-		     kw->keyword.keydef->keyname);
-		break;
-
-	case kt_obsolete_quiet:
 		llog(RC_LOG, logger, "warning: obsolete keyword '%s' ignored",
 		     kw->keyword.keydef->keyname);
 		break;

@@ -348,7 +348,6 @@ enum keyword_type {
 	kt_bitstring,           /* an encryption/authentication key */
 	kt_comment,             /* a value that is a cooked comment */
 	kt_obsolete,            /* option that is obsoleted, allow keyword but warn and ignore */
-	kt_obsolete_quiet,      /* option that is obsoleted, allow keyword but don't bother warning */
 };
 
 struct keyword_def {
