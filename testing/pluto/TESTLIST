@@ -99,7 +99,6 @@ kvmplutotest	readwriteconf-01				wip
 kvmplutotest	algparse-01					good
 kvmplutotest	algparse-02-fips				good
 
-kvmplutotest	addconn-01-config-setup-retransmit-interval	good
 kvmplutotest	addconn-02-many-routes				good
 kvmplutotest	addconn-03-defaultroute-any			good
 kvmplutotest	addconn-04-config-path				good
@@ -141,7 +140,8 @@ kvmplutotest	addconn-36-vti					good
 kvmplutotest	addconn-37-nic-offload				good
 kvmplutotest	addconn-37-nic-offload-no-hw-crypto		good	github/1527
 kvmplutotest	addconn-37-nic-offload-no-hw-packet		good	github/1527
-kvmplutotest	addconn-38-obsolete				good
+kvmplutotest	addconn-38-keyword-obsolete			good
+kvmplutotest	addconn-38-keyword-in-wrong-section		good
 
 #################################################################
 # IKEv2 tests

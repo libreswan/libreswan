@@ -1,0 +1,3 @@
+test ipsec.conf keywords in wrong section
+
+should get warning
