@@ -6,7 +6,8 @@ west #
  # config contains a conn option in config setup, addconn must deal
 west #
  ipsec addconn --config /etc/ipsec.conf --checkconfig
-cannot load config '/etc/ipsec.conf': unexpected keyword 'retransmit-interval' in section 'config setup'
+ipsec addconn: unexpected keyword 'retransmit-interval' in section 'config setup'
+ipsec addconn: cannot load config file '/etc/ipsec.conf'
 west #
  echo done
 done

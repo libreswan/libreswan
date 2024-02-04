@@ -97,39 +97,21 @@ west #
  echo "include /etc/ipsec.d/west-errors.conf" >> /etc/ipsec.conf
 west #
  ipsec auto --add ecdsa-sha1-should-fail
-ipsec addconn: while loading 'ecdsa-sha1-should-fail': authby=ecdsa cannot use sha1, only sha2
-ipsec addconn: while loading 'ikev1-rsa2-should-fail': authby=ecdsa cannot use sha1, only sha2
-ikev1 connection must use authby= of rsasig, secret or never
-ipsec addconn: while loading 'ikev1-ecdsa-should-fail': authby=ecdsa cannot use sha1, only sha2
-ikev1 connection must use authby= of rsasig, secret or never
-ikev1 connection must use authby= of rsasig, secret or never
-addconn, in config '/etc/ipsec.conf', authby=ecdsa cannot use sha1, only sha2
-ikev1 connection must use authby= of rsasig, secret or never
-ikev1 connection must use authby= of rsasig, secret or never
+ipsec addconn: authby=ecdsa cannot use sha1, only sha2
+ipsec addconn: ikev1 connection must use authby= of rsasig, secret or never
+ipsec addconn: ikev1 connection must use authby= of rsasig, secret or never
 conn ecdsa-sha1-should-fail did not load properly
 west #
  ipsec auto --add ikev1-rsa2-should-fail
-ipsec addconn: while loading 'ecdsa-sha1-should-fail': authby=ecdsa cannot use sha1, only sha2
-ipsec addconn: while loading 'ikev1-rsa2-should-fail': authby=ecdsa cannot use sha1, only sha2
-ikev1 connection must use authby= of rsasig, secret or never
-ipsec addconn: while loading 'ikev1-ecdsa-should-fail': authby=ecdsa cannot use sha1, only sha2
-ikev1 connection must use authby= of rsasig, secret or never
-ikev1 connection must use authby= of rsasig, secret or never
-addconn, in config '/etc/ipsec.conf', authby=ecdsa cannot use sha1, only sha2
-ikev1 connection must use authby= of rsasig, secret or never
-ikev1 connection must use authby= of rsasig, secret or never
+ipsec addconn: authby=ecdsa cannot use sha1, only sha2
+ipsec addconn: ikev1 connection must use authby= of rsasig, secret or never
+ipsec addconn: ikev1 connection must use authby= of rsasig, secret or never
 conn ikev1-rsa2-should-fail did not load properly
 west #
  ipsec auto --add ikev1-ecdsa-should-fail
-ipsec addconn: while loading 'ecdsa-sha1-should-fail': authby=ecdsa cannot use sha1, only sha2
-ipsec addconn: while loading 'ikev1-rsa2-should-fail': authby=ecdsa cannot use sha1, only sha2
-ikev1 connection must use authby= of rsasig, secret or never
-ipsec addconn: while loading 'ikev1-ecdsa-should-fail': authby=ecdsa cannot use sha1, only sha2
-ikev1 connection must use authby= of rsasig, secret or never
-ikev1 connection must use authby= of rsasig, secret or never
-addconn, in config '/etc/ipsec.conf', authby=ecdsa cannot use sha1, only sha2
-ikev1 connection must use authby= of rsasig, secret or never
-ikev1 connection must use authby= of rsasig, secret or never
+ipsec addconn: authby=ecdsa cannot use sha1, only sha2
+ipsec addconn: ikev1 connection must use authby= of rsasig, secret or never
+ipsec addconn: ikev1 connection must use authby= of rsasig, secret or never
 conn ikev1-ecdsa-should-fail did not load properly
 west #
  rm /etc/ipsec.d/west-errors.conf
