@@ -23,20 +23,6 @@ road #
 road #
  ipsec auto --add --verbose road
 opening file: /etc/ipsec.conf
-| debugging mode enabled
-| EOF: stacktop->filename = /etc/ipsec.conf
-| EOF: stacktop->filename = /etc/ipsec.conf
-| EOF: no .fileglob
-| end of file /etc/ipsec.conf
-| loading conn road
-| starter: left is KH_DEFAULTROUTE
-| unbound context created - setting debug level to 5
-| /etc/hosts lookups activated
-| /etc/resolv.conf usage activated
-| outgoing-port-avoid set 0-65535
-| outgoing-port-permit set 32768-60999
-| loading dnssec root key from:/var/lib/unbound/root.key
-| no additional dnssec trust anchors defined via dnssec-trusted= option
 loading named conns: road
 resolving family=IPv4 src=<defaultroute> gateway=<defaultroute> peer 192.1.2.23
   seeking GATEWAY
@@ -106,20 +92,6 @@ road #
 road #
  ipsec addconn --verbose --ctlsocket /run/pluto/foo road
 opening file: /etc/ipsec.conf
-| debugging mode enabled
-| EOF: stacktop->filename = /etc/ipsec.conf
-| EOF: stacktop->filename = /etc/ipsec.conf
-| EOF: no .fileglob
-| end of file /etc/ipsec.conf
-| loading conn road
-| starter: left is KH_DEFAULTROUTE
-| unbound context created - setting debug level to 5
-| /etc/hosts lookups activated
-| /etc/resolv.conf usage activated
-| outgoing-port-avoid set 0-65535
-| outgoing-port-permit set 32768-60999
-| loading dnssec root key from:/var/lib/unbound/root.key
-| no additional dnssec trust anchors defined via dnssec-trusted= option
 loading named conns: road
 resolving family=IPv4 src=<defaultroute> gateway=<defaultroute> peer 192.1.2.23
   seeking GATEWAY
