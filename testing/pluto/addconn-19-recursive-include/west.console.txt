@@ -11,6 +11,7 @@ west #
  # add a connection to test adddconn as well
 west #
  ipsec auto --add west
+ipsec addconn: /etc/ipsec.conf:21: max inclusion depth reached
 "west": added IKEv1 connection
 west #
  # there should be something to shutdown, proving we started properly

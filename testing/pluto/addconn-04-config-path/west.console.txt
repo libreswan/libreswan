@@ -48,6 +48,7 @@ opening file: /etc/ipsec.conf
 | including file '/etc/ipsec.d/include-bomb.conf' ('/etc/ipsec.d/include-bomb.conf') from /etc/ipsec.d/include-bomb.conf:3
 | including file '/etc/ipsec.d/include-bomb.conf' ('/etc/ipsec.d/include-bomb.conf') from /etc/ipsec.d/include-bomb.conf:3
 | including file '/etc/ipsec.d/include-bomb.conf' ('/etc/ipsec.d/include-bomb.conf') from /etc/ipsec.d/include-bomb.conf:3
+ipsec addconn: /etc/ipsec.d/include-bomb.conf:3: max inclusion depth reached
 | EOF: stacktop->filename = /etc/ipsec.d/include-bomb.conf
 | EOF: stacktop->filename = /etc/ipsec.d/include-bomb.conf
 | EOF: .fileglob[1] == NULL

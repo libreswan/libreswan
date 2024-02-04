@@ -9,6 +9,8 @@ west #
 initdone
 west #
  ipsec auto --add time-good
+ipsec addconn: /etc/ipsec.conf:19: unrecognized duration multiplier "seconds"
+ipsec addconn: /etc/ipsec.conf:25: unrecognized duration multiplier "xA"
 "time-good": added IKEv2 connection
 west #
  # rekey_margin: should be less than rekey interval
@@ -19,12 +21,16 @@ west #
  # output is unpredictable, include ephemeral values
 west #
  ipsec addconn time-wip
+ipsec addconn: /etc/ipsec.conf:19: unrecognized duration multiplier "seconds"
+ipsec addconn: /etc/ipsec.conf:25: unrecognized duration multiplier "xA"
 "time-wip": added IKEv2 connection
 west #
  ipsec status | grep time-wip | grep margin
 "time-wip":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 0s; rekey_fuzz: 100%;
 west #
  ipsec addconn time-wip-hex
+ipsec addconn: /etc/ipsec.conf:19: unrecognized duration multiplier "seconds"
+ipsec addconn: /etc/ipsec.conf:25: unrecognized duration multiplier "xA"
 "time-wip-hex": added IKEv2 connection
 west #
  ipsec status | grep time-wip-hex | grep margin

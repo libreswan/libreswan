@@ -9,6 +9,7 @@ west #
 initdone
 west #
  ipsec auto --add percentage-good
+ipsec addconn: /etc/ipsec.conf:18: bad percentage multiplier "foo" on 10foo
 "percentage-good": added IKEv2 connection
 west #
  # rekey_margin: should be less than rekey interval
@@ -21,6 +22,7 @@ west #
  ipsec addconn --verbose percentage-wip
 opening file: /etc/ipsec.conf
 | debugging mode enabled
+ipsec addconn: /etc/ipsec.conf:18: bad percentage multiplier "foo" on 10foo
 | EOF: stacktop->filename = /etc/ipsec.conf
 | EOF: stacktop->filename = /etc/ipsec.conf
 | EOF: no .fileglob
@@ -48,6 +50,7 @@ west #
  ipsec addconn --verbose percentage-wip
 opening file: /etc/ipsec.conf
 | debugging mode enabled
+ipsec addconn: /etc/ipsec.conf:18: bad percentage multiplier "foo" on 10foo
 | EOF: stacktop->filename = /etc/ipsec.conf
 | EOF: stacktop->filename = /etc/ipsec.conf
 | EOF: no .fileglob
