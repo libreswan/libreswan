@@ -800,14 +800,6 @@ static bool translate_conn(struct starter_conn *conn,
 	bool serious_err = false;
 
 	for (const struct kw_list *kw = sl->kw; kw != NULL; kw = kw->next) {
-		if ((kw->keyword.keydef->validity & kv_conn) == 0) {
-			/* this isn't valid in a conn! */
-			llog(RC_LOG, logger,
-			     "keyword '%s' is not valid in a conn (%s)\n",
-			     kw->keyword.keydef->keyname, sl->name);
-			continue;
-		}
-
 		if (kw->keyword.keydef->validity & kv_leftright) {
 			if (kw->keyword.keyleft) {
 				serious_err |=
@@ -1322,7 +1314,7 @@ static bool init_load_conn(struct starter_config *cfg,
 
 	struct starter_conn *conn = alloc_add_conn(cfg, sconn->name);
 
-	bool connerr = load_conn(conn, cfgp, sconn, true, defaultconn, logger);
+	bool connerr = load_conn(conn, cfgp, sconn, /*also*/true, defaultconn, logger);
 
 	if (connerr) {
 		/* ??? should caller not log perrl? */
@@ -1374,7 +1366,8 @@ struct starter_config *confread_load(const char *file,
 			if (streq(sconn->name, "%default")) {
 				ldbg(logger, "loading default conn");
 				err |= load_conn(&cfg->conn_default,
-						 cfgp, sconn, false,
+						 cfgp, sconn,
+						 /*also=*/false,
 						 true/*default conn*/,
 						 logger);
 			}

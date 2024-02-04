@@ -49,10 +49,9 @@ static bool save_errors;
 
 static struct parser {
 	struct config_parsed *cfg;
-	const char *section;
 	struct kw_list **kw;
 	struct kw_list *kw_last;
-	lset_t kw_validity;
+	enum section { SECTION_CONFIG_SETUP, SECTION_CONN_DEFAULT, SECTION_CONN, } section;
 	struct starter_comments_list *comments;
 } parser;
 
@@ -109,8 +108,7 @@ section_or_include:
 	CONFIG SETUP EOL {
 		parser.kw = &parser.cfg->config_setup;
 		parser.kw_last = NULL;
-		parser.kw_validity = kv_config;
-		parser.section = "config setup";
+		parser.section = SECTION_CONFIG_SETUP;
 		parser.comments = &parser.cfg->comments;
 		ldbg(logger, "%s", "");
 		ldbg(logger, "reading config setup");
@@ -127,8 +125,8 @@ section_or_include:
 		/* setup keyword section to record values */
 		parser.kw = &section->kw;
 		parser.kw_last = NULL;
-		parser.kw_validity = LEMPTY;
-		parser.section = $2;
+		parser.section = (streq(section->name, "%default") ? SECTION_CONN_DEFAULT :
+				  SECTION_CONN);
 
 		/* and comments */
 		TAILQ_INIT(&section->comments);
@@ -417,12 +415,32 @@ void parser_free_conf(struct config_parsed *cfg)
 static void new_parser_kw(struct keyword *keyword, char *string, uintmax_t number,
 			  struct logger *logger)
 {
-	if ((keyword->keydef->validity & parser.kw_validity) != parser.kw_validity) {
-		yyerror(logger, "unexpected keyword '%s' in section '%s'",
-			keyword->keydef->keyname,
-			parser.section);
-		/* drop it on the floor */
-		return;
+	switch (parser.section) {
+	case SECTION_CONFIG_SETUP:
+		if ((keyword->keydef->validity & kv_config) == LEMPTY) {
+			yyerror(logger, "warning: ignored invalid 'config setup' keyword: %s",
+				keyword->keydef->keyname);
+			/* drop it on the floor */
+			return;
+		}
+		break;
+	case SECTION_CONN:
+		if ((keyword->keydef->validity & kv_conn) == LEMPTY) {
+			yyerror(logger, "warning: ignored invalid conn keyword: %s",
+				keyword->keydef->keyname);
+			/* drop it on the floor */
+			return;
+		}
+		break;
+	case SECTION_CONN_DEFAULT:
+		if ((keyword->keydef->validity & kv_conn) == LEMPTY ||
+		    keyword->keydef->field == KSCF_ALSO) {
+			yyerror(logger, "warning: ignored invalid 'conn %%default' keyword: %s",
+				keyword->keydef->keyname);
+			/* drop it on the floor */
+			return;
+		}
+		break;
 	}
 
 	if (keyword->keydef->type == kt_obsolete) {
