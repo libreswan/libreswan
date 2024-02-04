@@ -81,20 +81,9 @@ const char *parser_cur_filename(void)
 	return stacktop->filename;
 }
 
-int parser_cur_lineno(void)
+unsigned parser_cur_line(void)
 {
 	return stacktop->line;
-}
-
-void parser_y_error(char *b, int size, const char *s)
-{
-#if defined(SOMETHING_FOR_SOME_ARCH)
-	extern char *yytext;
-#endif
-	snprintf(b, size, "%s:%u: %s [%s]",
-		stacktop->filename == NULL ? "<none>" : stacktop->filename,
-		stacktop->line,
-		s, yytext);
 }
 
 void parser_y_init (const char *name, FILE *f)
@@ -160,15 +149,16 @@ static int parser_y_nextglobfile(struct ic_inputsource *iis, struct logger *logg
 	/* open the file */
 	FILE *f = fopen(iis->filename, "r");
 	if (f == NULL) {
-		char ebuf[128];
-
-		snprintf(ebuf, sizeof(ebuf),
-			(strstr(iis->filename, "crypto-policies/back-ends/libreswan.config") == NULL) ?
-				"cannot open include filename: '%s': %s" :
-				"ignored loading default system-wide crypto-policies file '%s': %s",
-			iis->fileglob[fcnt],
-			strerror(errno));
-		yyerror(logger, ebuf);
+		/* XXX: nasty hack for RHEL */
+		if (strstr(iis->filename, "crypto-policies/back-ends/libreswan.config") == NULL) {
+			yyerror(logger, "cannot open include filename: '%s': %s",
+				iis->fileglob[fcnt],
+				strerror(errno));
+		} else {
+			yyerror(logger, "ignored loading default system-wide crypto-policies file '%s': %s",
+				iis->fileglob[fcnt],
+				strerror(errno));
+		}
 		return -1;
 	}
 	iis->file = f;
@@ -523,7 +513,7 @@ include			return INCLUDE;
 
 #.*			{ /* eat comment to end of line */ }
 
-.			yyerror(logger, yytext);
+.			yyerror(logger, "%s", yytext);
 %%
 
 int yywrap(void) {

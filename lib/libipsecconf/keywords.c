@@ -676,7 +676,7 @@ uintmax_t parser_enum(const struct keyword_def *kd, const char *s)
 	fprintf(stderr,
 		"ERROR: %s: %d: keyword %s, invalid value: %s\n",
 		parser_cur_filename(),
-		parser_cur_lineno(),
+		parser_cur_line(),
 		kd->keyname,
 		s);
 	exit(1);
@@ -720,7 +720,7 @@ uintmax_t parser_enum_list(const struct keyword_def *kd, const char *s)
 			fprintf(stderr,
 				"ERROR: %s: %d: keyword %s, invalid value: "PRI_SHUNK"\n",
 				parser_cur_filename(),
-				parser_cur_lineno(),
+				parser_cur_line(),
 				kd->keyname,
 				pri_shunk(piece));
 			exit(1);
@@ -750,7 +750,7 @@ lset_t parser_lset(const struct keyword_def *kd, const char *value)
 		 * should lmod_arg() instead return the error?
 		 */
 		fprintf(stderr, "ERROR: %s: %d: keyword %s, invalid value: %s\n",
-			parser_cur_filename(), parser_cur_lineno(),
+			parser_cur_filename(), parser_cur_line(),
 			kd->keyname, value);
 		exit(1);
 	}

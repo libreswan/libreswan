@@ -23,8 +23,7 @@ struct logger;
 #include "parser-controls.h"
 
 extern const char *parser_cur_filename(void);
-extern int parser_cur_lineno(void);
-extern void parser_y_error(char *b, int size, const char *s);
+extern unsigned parser_cur_line(void);
 extern void parser_y_init(const char *name, FILE *f );
 void parser_y_include(const char *filename, struct logger *logger);
 

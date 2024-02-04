@@ -37,14 +37,10 @@
 #include "ipsecconf/parser.h"	/* includes parser.tab.h" */
 #include "ipsecconf/parser-flex.h"
 #include "ipsecconf/confread.h"
+#include "lswlog.h"
 
 #define YYERROR_VERBOSE
 #define ERRSTRING_LEN	256
-
-/**
- * Bison
- */
-static char parser_errstring[ERRSTRING_LEN+1];
 
 /**
  * Static Globals
@@ -282,23 +278,16 @@ statement_kw:
 		struct keyword kw = $1;
 		const char *const str = $3;
 		/*const*/ char *endptr;
-		char buf[80];
 		unsigned long val = (errno = 0, strtoul(str, &endptr, 10));
 
 		if (endptr == str) {
-			snprintf(buf, sizeof(buf),
-				"malformed percentage %s=%s",
+			yyerror(logger, "malformed percentage %s=%s",
 				kw.keydef->keyname, str);
-			yyerror(logger, buf);
 		} else if (!streq(endptr, "%")) {
-			snprintf(buf, sizeof(buf),
-				"bad percentage multiplier \"%s\" on %s",
+			yyerror(logger, "bad percentage multiplier \"%s\" on %s",
 				endptr, str);
-			yyerror(logger, buf);
 		} else if (errno != 0 || val > UINT_MAX) {
-			snprintf(buf, sizeof(buf),
-				"percentage way too large \"%s\"", str);
-			yyerror(logger, buf);
+			yyerror(logger, "percentage way too large \"%s\"", str);
 		} else {
 			new_parser_kw(&kw, NULL, (unsigned int)val, logger);
 		}
@@ -314,7 +303,7 @@ statement_kw:
 
 		diag_t diag = ttobinary(str, &b, 0 /* no B prefix */);
 		if (diag != NULL) {
-			yyerror(logger, str_diag(diag));
+			yyerror(logger, "%s", str_diag(diag));
 			pfree_diag(&diag);
 		} else {
 			new_parser_kw(kw, NULL, b, logger);
@@ -327,7 +316,7 @@ statement_kw:
 
 		diag_t diag = ttobinary(str, &b, 1 /* with B prefix */);
 		if (diag != NULL) {
-			yyerror(logger, str_diag(diag));
+			yyerror(logger, "%s", str_diag(diag));
 			pfree_diag(&diag);
 		} else {
 			new_parser_kw(kw, NULL, b, logger);
@@ -336,22 +325,29 @@ statement_kw:
 	;
 %%
 
-void yyerror(struct logger *logger UNUSED, const char *s)
+void yyerror(struct logger *logger UNUSED, const char *s, ...)
 {
-	if (save_errors)
-		parser_y_error(parser_errstring, ERRSTRING_LEN, s);
+	if (save_errors) {
+		LLOG_JAMBUF(RC_LOG, logger, buf) {
+			jam(buf, "%s:%u: ",
+			    parser_cur_filename(),
+			    parser_cur_line());
+			va_list ap;
+			va_start(ap, s);
+			jam_va_list(buf, s, ap);
+			va_end(ap);
+		}
+	}
 }
 
 struct config_parsed *parser_load_conf(const char *file,
 				       starter_errors_t *perrl,
 				       struct logger *logger)
 {
-	parser_errstring[0] = '\0';
-
 	struct config_parsed *cfg = malloc(sizeof(struct config_parsed));
 
 	if (cfg == NULL) {
-		snprintf(parser_errstring, ERRSTRING_LEN, "can't allocate memory");
+		starter_error_append(perrl, "%s", "can't allocate memory");
 		goto err;
 	}
 
@@ -362,8 +358,7 @@ struct config_parsed *parser_load_conf(const char *file,
 		fdopen(STDIN_FILENO, "r") : fopen(file, "r");
 
 	if (f == NULL) {
-		snprintf(parser_errstring, ERRSTRING_LEN, "can't load file '%s'",
-			 file);
+		starter_error_append(perrl, "can't load file '%s'", file);
 		goto err;
 	}
 
@@ -375,9 +370,8 @@ struct config_parsed *parser_load_conf(const char *file,
 	parser_cfg = cfg;
 
 	if (yyparse(logger) != 0) {
-		if (parser_errstring[0] == '\0') {
-			snprintf(parser_errstring, ERRSTRING_LEN,
-				"Unknown error...");
+		if (perrl->errors == NULL) {
+			starter_error_append(perrl, "Unknown error...");
 		}
 		save_errors = false;
 		do {} while (yyparse(logger) != 0);
@@ -388,8 +382,7 @@ struct config_parsed *parser_load_conf(const char *file,
 	for (const struct kw_list *kw = parser_cfg->config_setup;
 	     kw != NULL; kw = kw->next) {
 		if (!(kw->keyword.keydef->validity & kv_config)) {
-			snprintf(parser_errstring, sizeof(parser_errstring),
-				 "unexpected keyword '%s' in section 'config setup'",
+			starter_error_append(perrl, "unexpected keyword '%s' in section 'config setup'",
 				 kw->keyword.keydef->keyname);
 			goto err;
 		}
@@ -401,8 +394,6 @@ struct config_parsed *parser_load_conf(const char *file,
 	return cfg;
 
 err:
-	starter_error_append(perrl, "%s", parser_errstring);
-
 	if (cfg != NULL)
 		parser_free_conf(cfg);
 
@@ -479,10 +470,7 @@ uintmax_t parser_unsigned(const char *yytext, struct logger *logger)
 	uintmax_t number;
 	err_t err = shunk_to_uintmax(shunk1(yytext), NULL, /*base*/10, &number);
 	if (err != NULL) {
-		char ebuf[128];
-		snprintf(ebuf, sizeof(ebuf),
-			 "%s: %s", err, yytext);
-		yyerror(logger, ebuf);
+		yyerror(logger, "%s: %s", err, yytext);
 	}
 	return number;
 }
@@ -498,7 +486,7 @@ uintmax_t parser_time(struct keyword *kw, const char *str, struct logger *logger
 	deltatime_t d;
 	diag_t diag = ttodeltatime(str, &d, scale);
 	if (diag != NULL) {
-		yyerror(logger, str_diag(diag));
+		yyerror(logger, "%s", str_diag(diag));
 		pfree_diag(&diag);
 	}
 	return deltamillisecs(d);
