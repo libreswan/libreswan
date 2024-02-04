@@ -688,16 +688,11 @@ static bool translate_field(struct starter_conn *conn,
 		assert(field < str_roof);
 
 		if ((*set_strings)[field] == k_set) {
-			char tmp_err[512];
-
-			snprintf(tmp_err, sizeof(tmp_err),
-				 "duplicate key '%s%s' in conn %s while processing def %s",
-				 leftright, kw->keyword.keydef->keyname,
-				 conn->name,
-				 sl->name);
-
-			llog(RC_LOG, logger, "%s", tmp_err);
-			starter_error_append(perrl, "%s", tmp_err);
+			starter_error_append(perrl,
+					     "duplicate key '%s%s' in conn %s while processing def %s",
+					     leftright, kw->keyword.keydef->keyname,
+					     conn->name,
+					     sl->name);
 
 			/* only fatal if we try to change values */
 			if (kw->keyword.string == NULL ||
@@ -748,16 +743,11 @@ static bool translate_field(struct starter_conn *conn,
 		assert(field <= KSCF_last_loose);
 
 		if ((*set_options)[field] == k_set) {
-			char tmp_err[512];
-
-			snprintf(tmp_err, sizeof(tmp_err),
-				 "duplicate key '%s%s' in conn %s while processing def %s",
-				 leftright, kw->keyword.keydef->keyname,
-				 conn->name,
-				 sl->name);
-
-			llog(RC_LOG, logger, "%s", tmp_err);
-			starter_error_append(perrl, "%s", tmp_err);
+			starter_error_append(perrl,
+					     "duplicate key '%s%s' in conn %s while processing def %s",
+					     leftright, kw->keyword.keydef->keyname,
+					     conn->name,
+					     sl->name);
 
 			/* only fatal if we try to change values */
 			if ((*the_options)[field] != (int)kw->number ||
@@ -797,15 +787,12 @@ static bool translate_field(struct starter_conn *conn,
 		assert(opt_floor <= field && field < opt_roof);
 
 		if ((*set_options)[field] == k_set) {
-			char tmp_err[512];
+			starter_error_append(perrl,
+					     "duplicate key '%s%s' in conn %s while processing def %s",
+					     leftright, kw->keyword.keydef->keyname,
+					     conn->name,
+					     sl->name);
 
-			snprintf(tmp_err, sizeof(tmp_err),
-				 "duplicate key '%s%s' in conn %s while processing def %s",
-				 leftright, kw->keyword.keydef->keyname,
-				 conn->name,
-				 sl->name);
-			llog(RC_LOG, logger, "%s", tmp_err);
-			starter_error_append(perrl, "%s", tmp_err);
 			/* only fatal if we try to change values */
 			if ((*the_options)[field] != (int)kw->number) {
 				serious_err = true;
@@ -866,13 +853,9 @@ static bool translate_conn(struct starter_conn *conn,
 	for (const struct kw_list *kw = sl->kw; kw != NULL; kw = kw->next) {
 		if ((kw->keyword.keydef->validity & kv_conn) == 0) {
 			/* this isn't valid in a conn! */
-			char tmp_err[512];
-
-			snprintf(tmp_err, sizeof(tmp_err),
-				 "keyword '%s' is not valid in a conn (%s)\n",
-				 kw->keyword.keydef->keyname, sl->name);
-			llog(RC_LOG, logger, "%s", tmp_err);
-			starter_error_append(perrl, "%s", tmp_err);
+			starter_error_append(perrl,
+					     "keyword '%s' is not valid in a conn (%s)\n",
+					     kw->keyword.keydef->keyname, sl->name);
 			continue;
 		}
 
@@ -943,10 +926,8 @@ static bool load_conn(struct starter_conn *conn,
 
 	if (conn->strings[KSCF_ALSO] != NULL &&
 	    !alsoprocessing) {
-		llog(RC_LOG, logger, "also= is not valid in section '%s'",
-		     sl->name);
 		starter_error_append(perrl, "also= is not valid in section '%s'",
-			sl->name);
+				     sl->name);
 		return true;	/* error */
 	}
 
@@ -981,15 +962,10 @@ static bool load_conn(struct starter_conn *conn,
 			 * Inside the loop because of indirect alsos.
 			 */
 			if (alsosize >= ALSO_LIMIT) {
-				llog(RC_LOG, logger,
-				     "while loading conn '%s', too many also= used at section %s. Limit is %d",
-				     conn->name,
-				     alsos[alsosize],
-				     ALSO_LIMIT);
 				starter_error_append(perrl, "while loading conn '%s', too many also= used at section %s. Limit is %d",
-					conn->name,
-					alsos[alsosize],
-					ALSO_LIMIT);
+						     conn->name,
+						     alsos[alsosize],
+						     ALSO_LIMIT);
 				return true;	/* error */
 			}
 
@@ -1011,10 +987,8 @@ static bool load_conn(struct starter_conn *conn,
 				;
 
 			if (addin == NULL) {
-				llog(RC_LOG, logger, "cannot find conn '%s' needed by conn '%s'",
-				     seeking, conn->name);
 				starter_error_append(perrl, "cannot find conn '%s' needed by conn '%s'",
-					seeking, conn->name);
+						     seeking, conn->name);
 				err = true;
 				continue;	/* allowing further error detection */
 			}
