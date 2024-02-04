@@ -130,20 +130,10 @@ int main(int argc, char *argv[])
 		printf("opening file: %s\n", configfile);
 	}
 
-	starter_errors_t errl = { NULL };
-	struct starter_config *cfg = confread_load(configfile, false,
-						   &errl, logger);
-
+	struct starter_config *cfg = confread_load(configfile, false, logger);
 	if (cfg == NULL) {
-		fprintf(stderr, "%s: config file \"%s\" cannot be loaded: %s\n",
-			progname, configfile, errl.errors);
-		pfreeany(errl.errors);
+		llog(RC_LOG, logger, "cannot load config file '%s'", configfile);
 		exit(3);
-	}
-	if (errl.errors != NULL) {
-		fprintf(stderr, "%s: config file \"%s\", ignoring: %s\n",
-			progname, configfile, errl.errors);
-		pfree(errl.errors);
 	}
 
 	/* load all conns marked as auto=add or better */

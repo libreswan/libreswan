@@ -344,21 +344,11 @@ int verbose = 0;
 static struct starter_config *read_cfg_file(char *configfile, long longindex, struct logger *logger)
 {
 	struct starter_config *cfg = NULL;
-	starter_errors_t errl = { NULL };
 
-	cfg = confread_load(configfile, true, &errl, logger);
+	cfg = confread_load(configfile, true, logger);
 	if (cfg == NULL) {
-		/*
-		 * note: fatal_opt() never returns so we will have a
-		 * technical leak of errl.errors
-		 */
-		fatal_opt(longindex, logger, "%s", errl.errors);
-	}
-
-	if (errl.errors != NULL) {
-		llog(RC_LOG, logger, "pluto --config '%s', ignoring: %s",
-			    configfile, errl.errors);
-		pfree(errl.errors);
+		/* details already logged */
+		fatal_opt(longindex, logger, "cannot load config file '%s'\n", configfile);
 	}
 
 	return cfg;

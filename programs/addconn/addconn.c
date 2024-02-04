@@ -354,20 +354,10 @@ int main(int argc, char *argv[])
 		printf("opening file: %s\n", configfile);
 	}
 
-	starter_errors_t errl = { NULL };
-	struct starter_config *cfg = confread_load(configfile, configsetup,
-						   &errl, logger);
-
+	struct starter_config *cfg = confread_load(configfile, configsetup, logger);
 	if (cfg == NULL) {
-		fprintf(stderr, "cannot load config '%s': %s\n",
-			configfile, errl.errors);
-		pfreeany(errl.errors);
+		llog(RC_LOG, logger, "cannot load config file '%s'", configfile);
 		exit(3);
-	}
-	if (errl.errors != NULL) {
-		fprintf(stderr, "addconn, in config '%s', %s\n",
-			configfile, errl.errors);
-		pfree(errl.errors);
 	}
 
 	if (checkconfig) {

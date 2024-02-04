@@ -185,36 +185,6 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 	/* ==== end of conn %default ==== */
 }
 
-/*
- * format error, and append to string of errors
- * The messages are separated by newline: not perfect.
- */
-void starter_error_append(starter_errors_t *perrl, const char *fmt, ...)
-{
-	va_list args;
-	char tmp_err[512];
-
-	va_start(args, fmt);
-	vsnprintf(tmp_err, sizeof(tmp_err) - 1, fmt, args);
-	va_end(args);
-
-	if (perrl->errors == NULL) {
-		/* first error */
-		perrl->errors = clone_str(tmp_err, "starter error");
-	} else {
-		/* subsequent error: append to previous messages */
-		size_t ol = strlen(perrl->errors);
-		size_t al = strlen(tmp_err);
-		char *nerr = alloc_bytes(ol + al + 2, "starter errors");
-
-		memcpy(nerr, perrl->errors, ol);
-		nerr[ol] = '\n';
-		memcpy(&nerr[ol + 1], tmp_err, al + 1);
-		pfree(perrl->errors);
-		perrl->errors = nerr;
-	}
-}
-
 /**
  * Create a NULL-terminated array of tokens from a string of whitespace-separated tokens.
  *
@@ -365,7 +335,6 @@ static bool load_setup(struct starter_config *cfg,
 
 static bool validate_end(struct starter_conn *conn_st,
 			 struct starter_end *end,
-			 starter_errors_t *perrl,
 			 struct logger *logger)
 {
 	const char *leftright = end->leftright;
@@ -375,7 +344,7 @@ static bool validate_end(struct starter_conn *conn_st,
 	pexpect(end->host_family == &ipv4_info ||
 		end->host_family == &ipv6_info); /* i.e., not NULL */
 
-#  define ERR_FOUND(...) { starter_error_append(perrl, __VA_ARGS__); err = true; }
+#  define ERR_FOUND(...) { llog(RC_LOG, logger, __VA_ARGS__); err = true; }
 
 	if (!end->options_set[KNCF_IP])
 		conn_st->state = STATE_INCOMPLETE;
@@ -667,7 +636,6 @@ static bool translate_field(struct starter_conn *conn,
 			    int_set *set_options,
 			    unsigned opt_floor,
 			    unsigned opt_roof,
-			    starter_errors_t *perrl,
 			    struct logger *logger)
 {
 	bool serious_err = false;
@@ -688,11 +656,11 @@ static bool translate_field(struct starter_conn *conn,
 		assert(field < str_roof);
 
 		if ((*set_strings)[field] == k_set) {
-			starter_error_append(perrl,
-					     "duplicate key '%s%s' in conn %s while processing def %s",
-					     leftright, kw->keyword.keydef->keyname,
-					     conn->name,
-					     sl->name);
+			llog(RC_LOG, logger,
+			     "duplicate key '%s%s' in conn %s while processing def %s",
+			     leftright, kw->keyword.keydef->keyname,
+			     conn->name,
+			     sl->name);
 
 			/* only fatal if we try to change values */
 			if (kw->keyword.string == NULL ||
@@ -707,8 +675,8 @@ static bool translate_field(struct starter_conn *conn,
 		pfreeany((*the_strings)[field]);
 
 		if (kw->string == NULL) {
-			starter_error_append(perrl, "Invalid %s value",
-					     kw->keyword.keydef->keyname);
+			llog(RC_LOG, logger, "invalid %s value",
+			     kw->keyword.keydef->keyname);
 			serious_err = true;
 			break;
 		}
@@ -743,11 +711,11 @@ static bool translate_field(struct starter_conn *conn,
 		assert(field <= KSCF_last_loose);
 
 		if ((*set_options)[field] == k_set) {
-			starter_error_append(perrl,
-					     "duplicate key '%s%s' in conn %s while processing def %s",
-					     leftright, kw->keyword.keydef->keyname,
-					     conn->name,
-					     sl->name);
+			llog(RC_LOG, logger,
+			     "duplicate key '%s%s' in conn %s while processing def %s",
+			     leftright, kw->keyword.keydef->keyname,
+			     conn->name,
+			     sl->name);
 
 			/* only fatal if we try to change values */
 			if ((*the_options)[field] != (int)kw->number ||
@@ -787,11 +755,11 @@ static bool translate_field(struct starter_conn *conn,
 		assert(opt_floor <= field && field < opt_roof);
 
 		if ((*set_options)[field] == k_set) {
-			starter_error_append(perrl,
-					     "duplicate key '%s%s' in conn %s while processing def %s",
-					     leftright, kw->keyword.keydef->keyname,
-					     conn->name,
-					     sl->name);
+			llog(RC_LOG, logger,
+			     "duplicate key '%s%s' in conn %s while processing def %s",
+			     leftright, kw->keyword.keydef->keyname,
+			     conn->name,
+			     sl->name);
 
 			/* only fatal if we try to change values */
 			if ((*the_options)[field] != (int)kw->number) {
@@ -825,7 +793,6 @@ static bool translate_leftright(struct starter_conn *conn,
 				enum keyword_set assigned_value,
 				const struct kw_list *kw,
 				struct starter_end *this,
-				starter_errors_t *perrl,
 				struct logger *logger)
 {
 	return translate_field(conn, sl, assigned_value, kw,
@@ -838,13 +805,12 @@ static bool translate_leftright(struct starter_conn *conn,
 			       /*set_options*/&this->options_set,
 			       /*opt_floor*/KSCF_last_loose + 1,
 			       /*opt_roof*/KNCF_last_leftright + 1,
-			       perrl, logger);
+			       logger);
 }
 
 static bool translate_conn(struct starter_conn *conn,
 			   const struct section_list *sl,
 			   enum keyword_set assigned_value,
-			   starter_errors_t *perrl,
 			   struct logger *logger)
 {
 	/* note: not all errors are considered serious */
@@ -853,9 +819,9 @@ static bool translate_conn(struct starter_conn *conn,
 	for (const struct kw_list *kw = sl->kw; kw != NULL; kw = kw->next) {
 		if ((kw->keyword.keydef->validity & kv_conn) == 0) {
 			/* this isn't valid in a conn! */
-			starter_error_append(perrl,
-					     "keyword '%s' is not valid in a conn (%s)\n",
-					     kw->keyword.keydef->keyname, sl->name);
+			llog(RC_LOG, logger,
+			     "keyword '%s' is not valid in a conn (%s)\n",
+			     kw->keyword.keydef->keyname, sl->name);
 			continue;
 		}
 
@@ -864,13 +830,13 @@ static bool translate_conn(struct starter_conn *conn,
 				serious_err |=
 					translate_leftright(conn, sl, assigned_value,
 							    kw, &conn->left,
-							    perrl, logger);
+							    logger);
 			}
 			if (kw->keyword.keyright) {
 				serious_err |=
 					translate_leftright(conn, sl, assigned_value,
 							    kw, &conn->right,
-							    perrl, logger);
+							    logger);
 			}
 		} else {
 			serious_err |=
@@ -884,7 +850,7 @@ static bool translate_conn(struct starter_conn *conn,
 						/*set_options*/&conn->options_set,
 						/*opt_floor*/KNCF_last_leftright + 1,
 						/*opt_roof*/KNCF_ROOF,
-						perrl, logger);
+						logger);
 		}
 	}
 	return serious_err;
@@ -909,7 +875,6 @@ static bool load_conn(struct starter_conn *conn,
 		      struct section_list *sl,
 		      bool alsoprocessing,
 		      bool defaultconn,
-		      starter_errors_t *perrl,
 		      struct logger *logger)
 {
 	bool err;
@@ -917,7 +882,7 @@ static bool load_conn(struct starter_conn *conn,
 	/* turn all of the keyword/value pairs into options/strings in left/right */
 	err = translate_conn(conn, sl,
 			     defaultconn ? k_default : k_set,
-			     perrl, logger);
+			     logger);
 
 	move_comment_list(&conn->comments, &sl->comments);
 
@@ -926,8 +891,8 @@ static bool load_conn(struct starter_conn *conn,
 
 	if (conn->strings[KSCF_ALSO] != NULL &&
 	    !alsoprocessing) {
-		starter_error_append(perrl, "also= is not valid in section '%s'",
-				     sl->name);
+		llog(RC_LOG, logger, "also= is not valid in section '%s'",
+		     sl->name);
 		return true;	/* error */
 	}
 
@@ -962,10 +927,11 @@ static bool load_conn(struct starter_conn *conn,
 			 * Inside the loop because of indirect alsos.
 			 */
 			if (alsosize >= ALSO_LIMIT) {
-				starter_error_append(perrl, "while loading conn '%s', too many also= used at section %s. Limit is %d",
-						     conn->name,
-						     alsos[alsosize],
-						     ALSO_LIMIT);
+				llog(RC_LOG, logger,
+				     "while loading conn '%s', too many also= used at section %s. Limit is %d",
+				     conn->name,
+				     alsos[alsosize],
+				     ALSO_LIMIT);
 				return true;	/* error */
 			}
 
@@ -987,8 +953,9 @@ static bool load_conn(struct starter_conn *conn,
 				;
 
 			if (addin == NULL) {
-				starter_error_append(perrl, "cannot find conn '%s' needed by conn '%s'",
-						     seeking, conn->name);
+				llog(RC_LOG, logger,
+				     "cannot find conn '%s' needed by conn '%s'",
+				     seeking, conn->name);
 				err = true;
 				continue;	/* allowing further error detection */
 			}
@@ -1005,7 +972,7 @@ static bool load_conn(struct starter_conn *conn,
 			addin->beenhere = true;
 
 			/* translate things, but do not replace earlier settings! */
-			err |= translate_conn(conn, addin, k_set, perrl, logger);
+			err |= translate_conn(conn, addin, k_set, logger);
 
 			if (conn->strings[KSCF_ALSO] != NULL) {
 				/* add this guy's alsos too */
@@ -1188,7 +1155,8 @@ static bool load_conn(struct starter_conn *conn,
 				conn->authby.never = true;
 			/* everything else is only supported for IKEv2 */
 			} else if (conn->ike_version == IKEv1) {
-				starter_error_append(perrl, "ikev1 connection must use authby= of rsasig, secret or never");
+				llog(RC_LOG, logger,
+				     "ikev1 connection must use authby= of rsasig, secret or never");
 				return true;
 			} else if (hunk_streq(val, "null")) {
 				conn->authby.null = true;
@@ -1224,10 +1192,10 @@ static bool load_conn(struct starter_conn *conn,
 				conn->authby.ecdsa = true;
 				conn->sighash_policy |= POL_SIGHASH_SHA2_512;
 			} else if (hunk_streq(val, "ecdsa-sha1")) {
-				starter_error_append(perrl, "authby=ecdsa cannot use sha1, only sha2");
+				llog(RC_LOG, logger, "authby=ecdsa cannot use sha1, only sha2");
 				return true;
 			} else {
-				starter_error_append(perrl, "connection authby= value is unknown");
+				llog(RC_LOG, logger, "connection authby= value is unknown");
 				return true;
 			}
 		}
@@ -1270,8 +1238,8 @@ static bool load_conn(struct starter_conn *conn,
 	}
 	conn->left.host_family = conn->right.host_family = afi;
 
-	err |= validate_end(conn, &conn->left, perrl, logger);
-	err |= validate_end(conn, &conn->right, perrl, logger);
+	err |= validate_end(conn, &conn->left, logger);
+	err |= validate_end(conn, &conn->right, logger);
 
 	if (conn->options_set[KNCF_AUTO]) {
 		conn->autostart = conn->options[KNCF_AUTO];
@@ -1365,18 +1333,15 @@ static bool init_load_conn(struct starter_config *cfg,
 			   const struct config_parsed *cfgp,
 			   struct section_list *sconn,
 			   bool defaultconn,
-			   starter_errors_t *perrl,
 			   struct logger *logger)
 {
 	ldbg(logger, "loading conn %s", sconn->name);
 
 	struct starter_conn *conn = alloc_add_conn(cfg, sconn->name);
 
-	bool connerr = load_conn(conn, cfgp, sconn, true, defaultconn, perrl, logger);
+	bool connerr = load_conn(conn, cfgp, sconn, true, defaultconn, logger);
 
 	if (connerr) {
-		llog(RC_LOG, logger, "while loading '%s': %s",
-		     sconn->name, perrl->errors);
 		/* ??? should caller not log perrl? */
 	} else {
 		conn->state = STATE_LOADED;
@@ -1386,7 +1351,6 @@ static bool init_load_conn(struct starter_config *cfg,
 
 struct starter_config *confread_load(const char *file,
 				     bool setuponly,
-				     starter_errors_t *perrl,
 				     struct logger *logger)
 {
 	bool err = false;
@@ -1394,7 +1358,7 @@ struct starter_config *confread_load(const char *file,
 	/**
 	 * Load file
 	 */
-	struct config_parsed *cfgp = parser_load_conf(file, perrl, logger);
+	struct config_parsed *cfgp = parser_load_conf(file, logger);
 
 	if (cfgp == NULL)
 		return NULL;
@@ -1430,7 +1394,7 @@ struct starter_config *confread_load(const char *file,
 				err |= load_conn(&cfg->conn_default,
 						 cfgp, sconn, false,
 						 true/*default conn*/,
-						 perrl, logger);
+						 logger);
 			}
 		}
 
@@ -1442,7 +1406,7 @@ struct starter_config *confread_load(const char *file,
 			if (!streq(sconn->name, "%default"))
 				err |= init_load_conn(cfg, cfgp, sconn,
 						      false/*default conn*/,
-						      perrl, logger);
+						      logger);
 		}
 	}
 

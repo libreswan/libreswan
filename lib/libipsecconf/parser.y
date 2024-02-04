@@ -341,13 +341,12 @@ void yyerror(struct logger *logger UNUSED, const char *s, ...)
 }
 
 struct config_parsed *parser_load_conf(const char *file,
-				       starter_errors_t *perrl,
 				       struct logger *logger)
 {
 	struct config_parsed *cfg = malloc(sizeof(struct config_parsed));
 
 	if (cfg == NULL) {
-		starter_error_append(perrl, "%s", "can't allocate memory");
+		llog(RC_LOG, logger, "can't allocate memory");
 		goto err;
 	}
 
@@ -358,7 +357,7 @@ struct config_parsed *parser_load_conf(const char *file,
 		fdopen(STDIN_FILENO, "r") : fopen(file, "r");
 
 	if (f == NULL) {
-		starter_error_append(perrl, "can't load file '%s'", file);
+		llog(RC_LOG, logger, "can't load file '%s'", file);
 		goto err;
 	}
 
@@ -370,9 +369,6 @@ struct config_parsed *parser_load_conf(const char *file,
 	parser_cfg = cfg;
 
 	if (yyparse(logger) != 0) {
-		if (perrl->errors == NULL) {
-			starter_error_append(perrl, "Unknown error...");
-		}
 		save_errors = false;
 		do {} while (yyparse(logger) != 0);
 		goto err;
@@ -382,8 +378,9 @@ struct config_parsed *parser_load_conf(const char *file,
 	for (const struct kw_list *kw = parser_cfg->config_setup;
 	     kw != NULL; kw = kw->next) {
 		if (!(kw->keyword.keydef->validity & kv_config)) {
-			starter_error_append(perrl, "unexpected keyword '%s' in section 'config setup'",
-				 kw->keyword.keydef->keyname);
+			llog(RC_LOG, logger,
+			     "unexpected keyword '%s' in section 'config setup'",
+			     kw->keyword.keydef->keyname);
 			goto err;
 		}
 	}

@@ -160,26 +160,12 @@ struct starter_config {
 	TAILQ_HEAD(, starter_conn) conns;
 };
 
-/*
- * accumulate errors in this struct.
- * This is a string with newlines separating messages.
- * The string is heap-allocated so the caller is responsible
- * for freeing it.
- */
-typedef struct {
-	char *errors;
-} starter_errors_t;
-
-extern void starter_error_append(starter_errors_t *perrl, const char *fmt, ...) PRINTF_LIKE(2);
-
-
-extern struct config_parsed *parser_load_conf(const char *file, starter_errors_t *perr,
+extern struct config_parsed *parser_load_conf(const char *file,
 					      struct logger *logger);
 extern void parser_free_conf(struct config_parsed *cfg);
 
 extern struct starter_config *confread_load(const char *file,
 					    bool setuponly,
-					    starter_errors_t *perrl,
 					    struct logger *logger);
 
 extern void confread_free(struct starter_config *cfg);
