@@ -230,8 +230,8 @@ void parser_y_include (const char *filename, struct logger *logger)
 		}
 		if (strchr(filename, '*') == NULL) {
 			/* not a wildcard, throw error */
-			llog(RC_LOG, logger, "warning: could not open include filename: '%s'",
-			     filename);
+			yyerror(logger, "warning: could not open include filename: '%s'",
+				filename);
 		} else {
 			/* don't throw an error, just log a warning */
 			ldbg(logger, "could not open include wildcard filename(s): '%s'",
@@ -252,8 +252,8 @@ void parser_y_include (const char *filename, struct logger *logger)
 	if (rootdir2[0] == '\0') {
 		if (strchr(filename,'*') == NULL) {
 			/* not a wildcard, throw error */
-			llog(RC_LOG, logger, "warning: could not open include filename '%s' (tried '%s')",
-			     filename, newname);
+			yyerror(logger, "warning: could not open include filename '%s' (tried '%s')",
+				filename, newname);
 		} else {
 			/* don't throw an error, just log a warning */
 			ldbg(logger, "could not open include wildcard filename(s) '%s' (tried '%s')",
@@ -271,9 +271,9 @@ void parser_y_include (const char *filename, struct logger *logger)
 		return;
 	}
 
-	llog(RC_LOG, logger,
-	     "warning: could not open include filename: '%s' (tried '%s' and '%s')",
-	     filename, newname, newname2);
+	yyerror(logger,
+		"warning: could not open include filename: '%s' (tried '%s' and '%s')",
+		filename, newname, newname2);
 
 	return;
 }
