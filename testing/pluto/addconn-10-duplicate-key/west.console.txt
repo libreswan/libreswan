@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep
 west #
  ipsec addconn --config /etc/ipsec.conf --checkconfig
-ipsec addconn: duplicate key 'left' in conn westnet-eastnet-ikev2 while processing def westnet-eastnet-ikev2
+ipsec addconn: /etc/ipsec.conf:18: warning: overriding earlier conn keyword: left
 west #
  

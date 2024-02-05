@@ -11,10 +11,10 @@ west #
  # expect obsolete keywords
 west #
  ipsec auto --add west
-ipsec addconn: /etc/ipsec.conf:12: warning: ignored invalid 'config setup' keyword: retransmit-interval
-ipsec addconn: /etc/ipsec.conf:13: warning: ignored invalid 'config setup' keyword: also
-ipsec addconn: /etc/ipsec.conf:16: warning: ignored invalid 'conn %default' keyword: also
-ipsec addconn: /etc/ipsec.conf:24: warning: ignored invalid conn keyword: dumpdir
+ipsec addconn: /etc/ipsec.conf:12: warning: invalid 'config setup' keyword ignored: retransmit-interval
+ipsec addconn: /etc/ipsec.conf:13: warning: invalid 'config setup' keyword ignored: also=west
+ipsec addconn: /etc/ipsec.conf:16: warning: invalid 'conn %%default' keyword ignored: also=west
+ipsec addconn: /etc/ipsec.conf:24: warning: invalid conn keyword ignored: dumpdir=/tmp
 "west": added IKEv1 connection
 west #
  
