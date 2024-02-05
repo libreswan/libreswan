@@ -319,20 +319,17 @@ static bool parser_y_eof(struct logger *logger)
  *
  * INITIAL: pre-defined and default lex state
  *
- * BOOLEAN_KEY, COMMENT_KEY, KEY: just matched the BOOLWORD,
- * "x-comment", other keyword; expecting '='
+ * COMMENT_KEY, KEY: just matched the "x-comment", other keyword;
+ * expecting '='
  *
  * VALUE: just matched '=' in KEY state; matches a quoted/braced/raw
  * string; returns to INITIAL state
- *
- * BOOLEAN_VALUE: just matched '=' in BOOLEAN_KEY state; matches a
- * boolean token; returns to INITIAL state
  *
  * COMMENT_VALUE: just matched '=' in COMMENT_KEY state; matches
  * everything up to \n as a string; returns to INITIAL state
  */
 
-%x KEY VALUE BOOLEAN_KEY BOOLEAN_VALUE COMMENT_KEY COMMENT_VALUE
+%x KEY VALUE COMMENT_KEY COMMENT_VALUE
 
 %%
 
@@ -371,54 +368,31 @@ static bool parser_y_eof(struct logger *logger)
 
 ^[\t ]+			return FIRST_SPACES;
 
-<INITIAL,BOOLEAN_VALUE>[\t ]+	/* ignore spaces in line */ ;
+<INITIAL>[\t ]+		/* ignore spaces in line */ ;
 
-<VALUE>%forever	{
+<VALUE>%forever		{
 				/* a number, really 0 */
 				yylval.s = strdup("0");
 				BEGIN INITIAL;
 				return STRING;
 			}
 
-<KEY,BOOLEAN_KEY,COMMENT_KEY>[\t ] /* eat blanks */
-<KEY,BOOLEAN_KEY,COMMENT_KEY>\n {
+<KEY,COMMENT_KEY>[\t ]	/* eat blanks */
+<KEY,COMMENT_KEY>\n	{
 				/* missing equals? */
 				stacktop->line++;
 				BEGIN INITIAL;
 				return EOL;
 			}
 <KEY>=			{ BEGIN VALUE; return EQUAL; }
-<BOOLEAN_KEY>=		{ BEGIN BOOLEAN_VALUE; return EQUAL; }
 <COMMENT_KEY>=		{ BEGIN COMMENT_VALUE; return EQUAL; }
 
-<VALUE,BOOLEAN_VALUE>[\t ] /* eat blanks (not COMMENT_VALUE) */
-<VALUE,BOOLEAN_VALUE>\n	{
+<VALUE>[\t ]		/* eat blanks (not COMMENT_VALUE) */
+<VALUE>\n		{
 				/* missing value? (not COMMENT_VALUE) */
 				stacktop->line++;
 				BEGIN INITIAL;
 				return EOL;
-			}
-
-<BOOLEAN_VALUE>1    |
-<BOOLEAN_VALUE>y    |
-<BOOLEAN_VALUE>yes  |
-<BOOLEAN_VALUE>true |
-<BOOLEAN_VALUE>on	{
-				/* process a boolean */
-				yylval.boolean = true;
-				BEGIN INITIAL;
-				return BOOLEAN;
-			}
-
-<BOOLEAN_VALUE>0     |
-<BOOLEAN_VALUE>n     |
-<BOOLEAN_VALUE>no    |
-<BOOLEAN_VALUE>false |
-<BOOLEAN_VALUE>off	{
-				/* process a boolean */
-				yylval.boolean = false;
-				BEGIN INITIAL;
-				return BOOLEAN;
 			}
 
 <COMMENT_VALUE>[^\n]*	{
@@ -494,9 +468,6 @@ include			return INCLUDE;
 				ldbgf(DBG_TMI, logger, "STR/KEY: %s", yytext);
 				tok = parser_find_keyword(yytext, &yylval);
 				switch (tok) {
-				case BOOLWORD:
-					BEGIN BOOLEAN_KEY;
-					break;
 				case COMMENT:
 					BEGIN COMMENT_KEY;
 					break;

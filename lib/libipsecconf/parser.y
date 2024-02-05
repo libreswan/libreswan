@@ -56,6 +56,7 @@ static struct parser {
 
 static void new_parser_kw(struct keyword *keyword, const char *string, uintmax_t number, struct logger *logger);
 static uintmax_t parser_unsigned(const char *yytext, struct logger *logger);
+static uintmax_t parser_bool(struct keyword *kw, const char *yytext, struct logger *logger);
 static uintmax_t parser_time(struct keyword *kw, const char *yytext, struct logger *logger);
 
 /**
@@ -73,9 +74,7 @@ static uintmax_t parser_time(struct keyword *kw, const char *yytext, struct logg
 }
 %token EQUAL FIRST_SPACES EOL CONFIG SETUP CONN INCLUDE VERSION
 %token <s>      STRING
-%token <boolean>   BOOLEAN
 %token <k>      KEYWORD
-%token <k>      BOOLWORD
 %token <k>      PERCENTWORD
 %token <k>      BINARYWORD
 %token <k>      BYTEWORD
@@ -211,22 +210,22 @@ statement_kw:
 	| KEYWORD EQUAL STRING {
 		struct keyword kw = $1;
 
-		const char *string = NULL;	/* neutral placeholding value */
-		uintmax_t number = 0;	/* neutral placeholding value */
+		const char *string = $3;	/* neutral placeholding value */
+		uintmax_t number = 0;		/* neutral placeholding value */
 
 		switch (kw.keydef->type) {
 		case kt_list:
-			number = parser_enum_list(kw.keydef, $3);
+			number = parser_enum_list(kw.keydef, string);
 			break;
 		case kt_lset:
-			number = parser_lset(kw.keydef, $3); /* XXX: truncates! */
+			number = parser_lset(kw.keydef, string); /* XXX: truncates! */
 			break;
 		case kt_enum:
-			number = parser_enum(kw.keydef, $3);
+			number = parser_enum(kw.keydef, string);
 			break;
 		case kt_pubkey:
 		case kt_loose_enum:
-			number = parser_loose_enum(&kw, $3);
+			number = parser_loose_enum(&kw, string);
 			break;
 		case kt_string:
 		case kt_appendstring:
@@ -238,23 +237,24 @@ statement_kw:
 		case kt_idtype:
 		case kt_range:
 		case kt_subnet:
-			string = $3;
 			break;
 
 		case kt_number:
-			number = parser_unsigned($3, logger);
+			number = parser_unsigned(string, logger);
 			break;
 
 		case kt_time:
-			number = parser_time(&$1, $3, logger);
+			number = parser_time(&kw, string, logger);
 			break;
 
 		case kt_bool:
+			number = parser_bool(&kw, string, logger);
+			break;
+
 		case kt_percent:
 		case kt_binary:
 		case kt_byte:
 			yyerror(logger, "valid keyword, but value is not a number");
-			assert(kw.keydef->type != kt_bool);
 			break;
 
 		case kt_comment:
@@ -263,10 +263,6 @@ statement_kw:
 		}
 
 		new_parser_kw(&kw, string, number, logger);
-	}
-
-	| BOOLWORD EQUAL BOOLEAN {
-		new_parser_kw(&$1, NULL, $3, logger);
 	}
 
 	| PERCENTWORD EQUAL STRING {
@@ -286,9 +282,6 @@ statement_kw:
 		} else {
 			new_parser_kw(&kw, NULL, (unsigned int)val, logger);
 		}
-	}
-	| KEYWORD EQUAL BOOLEAN {
-		new_parser_kw(&$1, NULL, $3, logger);
 	}
 	| KEYWORD EQUAL { /* this is meaningless, we ignore it */ }
 	| BINARYWORD EQUAL STRING {
@@ -507,6 +500,22 @@ uintmax_t parser_unsigned(const char *yytext, struct logger *logger)
 		yyerror(logger, "%s: %s", err, yytext);
 	}
 	return number;
+}
+
+uintmax_t parser_bool(struct keyword *kw, const char *yytext, struct logger *logger)
+{
+	const struct sparse_name *name = sparse_lookup(yn_option_names, yytext);
+	if (name == NULL) {
+		yyerror(logger, "boolean keyword invalid: %s=%s", kw->keydef->keyname, yytext);
+		return 0;
+	}
+	enum yn_options yn = name->value;
+	switch (yn) {
+	case YN_YES: return true;
+	case YN_NO: return false;
+	case YN_UNSET: break;
+	}
+	bad_case(yn);
 }
 
 uintmax_t parser_time(struct keyword *kw, const char *str, struct logger *logger)
