@@ -50,12 +50,11 @@ static bool save_errors;
 static struct parser {
 	struct config_parsed *cfg;
 	struct kw_list **kw;
-	struct kw_list *kw_last;
 	enum section { SECTION_CONFIG_SETUP, SECTION_CONN_DEFAULT, SECTION_CONN, } section;
 	struct starter_comments_list *comments;
 } parser;
 
-static void new_parser_kw(struct keyword *keyword, char *string, uintmax_t number, struct logger *logger);
+static void new_parser_kw(struct keyword *keyword, const char *string, uintmax_t number, struct logger *logger);
 static uintmax_t parser_unsigned(const char *yytext, struct logger *logger);
 static uintmax_t parser_time(struct keyword *kw, const char *yytext, struct logger *logger);
 
@@ -107,7 +106,6 @@ sections: /* NULL */
 section_or_include:
 	CONFIG SETUP EOL {
 		parser.kw = &parser.cfg->config_setup;
-		parser.kw_last = NULL;
 		parser.section = SECTION_CONFIG_SETUP;
 		parser.comments = &parser.cfg->comments;
 		ldbg(logger, "%s", "");
@@ -124,7 +122,6 @@ section_or_include:
 
 		/* setup keyword section to record values */
 		parser.kw = &section->kw;
-		parser.kw_last = NULL;
 		parser.section = (streq(section->name, "%default") ? SECTION_CONN_DEFAULT :
 				  SECTION_CONN);
 
@@ -155,7 +152,7 @@ statement_kw:
 		/* because the third argument was also a keyword, we dig up the string representation. */
 		const char *value = $3.keydef->keyname;
 
-		char *string = NULL;	/* neutral placeholding value */
+		const char *string = NULL;	/* neutral placeholding value */
 		uintmax_t number = 0;	/* neutral placeholding value */
 
 		switch (kw.keydef->type) {
@@ -182,7 +179,7 @@ statement_kw:
 		case kt_idtype:
 		case kt_range:
 		case kt_subnet:
-			string = strdup(value);
+			string = value;
 			break;
 
 		case kt_bool:
@@ -214,7 +211,7 @@ statement_kw:
 	| KEYWORD EQUAL STRING {
 		struct keyword kw = $1;
 
-		char *string = NULL;	/* neutral placeholding value */
+		const char *string = NULL;	/* neutral placeholding value */
 		uintmax_t number = 0;	/* neutral placeholding value */
 
 		switch (kw.keydef->type) {
@@ -412,31 +409,45 @@ void parser_free_conf(struct config_parsed *cfg)
 	}
 }
 
-static void new_parser_kw(struct keyword *keyword, char *string, uintmax_t number,
+static void new_parser_kw(struct keyword *keyword,
+			  const char *string,
+			  uintmax_t number,
 			  struct logger *logger)
 {
+	/* both means no prefix */
+	const char *leftright =
+		(keyword->keyleft && keyword->keyright ? "" :
+		 keyword->keyleft ? "left" :
+		 keyword->keyright ? "right" :
+		 "");
+	const char *section = "???";
+	const char *eqs = (string == NULL ? "" : "=");
+	const char *value = (string == NULL ? "" : string);
 	switch (parser.section) {
 	case SECTION_CONFIG_SETUP:
+		section = "'config setup'";
 		if ((keyword->keydef->validity & kv_config) == LEMPTY) {
-			yyerror(logger, "warning: ignored invalid 'config setup' keyword: %s",
-				keyword->keydef->keyname);
+			yyerror(logger, "warning: invalid %s keyword ignored: %s%s%s%s",
+				section, leftright, keyword->keydef->keyname, eqs, value);
 			/* drop it on the floor */
 			return;
 		}
 		break;
 	case SECTION_CONN:
+		section = "conn";
 		if ((keyword->keydef->validity & kv_conn) == LEMPTY) {
-			yyerror(logger, "warning: ignored invalid conn keyword: %s",
-				keyword->keydef->keyname);
+			yyerror(logger, "warning: invalid %s keyword ignored: %s%s%s%s",
+				section, leftright, keyword->keydef->keyname, eqs, value);
 			/* drop it on the floor */
 			return;
 		}
 		break;
 	case SECTION_CONN_DEFAULT:
+		section = "'conn %%default'";
 		if ((keyword->keydef->validity & kv_conn) == LEMPTY ||
 		    keyword->keydef->field == KSCF_ALSO) {
-			yyerror(logger, "warning: ignored invalid 'conn %%default' keyword: %s",
-				keyword->keydef->keyname);
+			yyerror(logger, "warning: invalid %s keyword ignored: %s%s%s%s",
+				section, leftright, keyword->keydef->keyname, eqs, value);
 			/* drop it on the floor */
 			return;
 		}
@@ -444,35 +455,48 @@ static void new_parser_kw(struct keyword *keyword, char *string, uintmax_t numbe
 	}
 
 	if (keyword->keydef->type == kt_obsolete) {
-		yyerror(logger, "warning: ignored obsolete keyword: %s",
-			keyword->keydef->keyname);
+		yyerror(logger, "warning: obsolete %s keyword ignored: %s%s%s%s",
+			section, leftright, keyword->keydef->keyname, eqs, value);
 		/* drop it on the floor */
 		return;
 	}
 
-	struct kw_list *new = malloc(sizeof(struct kw_list));
-	PASSERT(logger, new != NULL);
+	/* Find end, while looking for duplicates. */
+	struct kw_list **end;
+	for (end = parser.kw; (*end) != NULL; end = &(*end)->next) {
+		if ((*end)->keyword.keydef != keyword->keydef) {
+			continue;
+		}
+		if (((*end)->keyword.keyleft != keyword->keyleft) &&
+		    ((*end)->keyword.keyright != keyword->keyright)) {
+			continue;
+		}
+		if (keyword->keydef->validity & kv_duplicateok) {
+			continue;
+		}
+		yyerror(logger, "warning: overriding earlier %s keyword: %s%s%s%s",
+			section, leftright, keyword->keydef->keyname, eqs, value);
+		/* ulgh; not pfree()/clone_str() */
+		free((*end)->string);
+		(*end)->string = (string != NULL ? strdup(string) : NULL);
+		(*end)->number = number;
+		return;
+	}
 
 	/*
 	 * fill the values into new
 	 * (either string or number might have a placeholder value
 	 */
-	new->keyword = *keyword;
-	new->string = string;
-	new->number = number;
-	new->next = NULL;
+	struct kw_list *new = malloc(sizeof(struct kw_list));
+	PASSERT(logger, new != NULL);
+	(*new) = (struct kw_list) {
+		.keyword = *keyword,
+		.string = (string != NULL ? strdup(string) : NULL),
+		.number = number,
+	};
 
-	/* link the new kw_list into the list */
-
-	if (*parser.kw == NULL)
-		*parser.kw = new;	/* first in (some) list */
-
-	/* connect to previous last on list */
-	if (parser.kw_last != NULL)
-		parser.kw_last->next = new;
-
-	/* new is new last on list */
-	parser.kw_last = new;
+	/* append the new kw_list to the list */
+	(*end) = new;
 }
 
 uintmax_t parser_unsigned(const char *yytext, struct logger *logger)

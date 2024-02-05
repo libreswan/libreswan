@@ -305,7 +305,14 @@ enum keyword_valid {
 	kv_alias  = LELEM(5),           /* is an alias for another keyword */
 	kv_policy = LELEM(6),           /* is a policy affecting verb, processed specially */
 	kv_processed = LELEM(7),        /* is processed, do not output literal string */
-	kv_duplicateok = LELEM(8),      /* it is okay if also= items are duplicated */
+	kv_duplicateok = LELEM(8),	/* within a connection, the
+					 * item can be duplicated
+					 * (notably also=) */
+#if 0
+	kv_overrideok = LELEM(?),	/* between merged connections
+					 * (also=), the item can be
+					 * overwritten */
+#endif
 	kv_milliseconds = LELEM(9),	/* value already in milliseconds */
 };
 #define KV_CONTEXT_MASK (kv_config | kv_conn | kv_leftright)

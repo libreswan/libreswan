@@ -407,8 +407,8 @@ const struct keyword_def ipsec_conf_keywords[] = {
 
   /* these are conn statements which are not left/right */
 
-  { "auto",  kv_conn | kv_duplicateok,  kt_enum,  KNCF_AUTO,  kw_autostart_list, NULL, },
-  { "also",  kv_conn,  kt_appendstring,  KSCF_ALSO, NULL, NULL, },
+  { "auto",  kv_conn,  kt_enum,  KNCF_AUTO,  kw_autostart_list, NULL, },
+  { "also",  kv_conn | kv_duplicateok,  kt_appendstring,  KSCF_ALSO, NULL, NULL, },
   { "ike",  kv_conn,  kt_string,  KSCF_IKE, NULL, NULL, },
   { "hostaddrfamily",  kv_conn,  kt_enum,  KNCF_HOSTADDRFAMILY,  kw_addrfamily_list, NULL, },
   { "clientaddrfamily",  kv_conn,  kt_enum,  KNCF_CLIENTADDRFAMILY,  kw_addrfamily_list, NULL, },
