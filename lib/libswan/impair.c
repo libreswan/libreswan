@@ -91,15 +91,10 @@ struct impairment {
 	 * (else)
 	 *
 	 * When .how_enum_names is non-NULL, HOW is the unbiased enum
-	 * name's value.  It's assumed that any enum-name with the
-	 * value 0 disables the impairment.
+	 * name's value.
 	 *
 	 * And when .unsigned_help is also non-NULL, HOW can be an
-	 * unsigned value which is passed unchanged (again 0 implies
-	 * disabled).
-	 *
-	 * If 0 is ever needed then the field can be changed to
-	 * impair_unsigned.
+	 * unsigned value which is passed unchanged.  Zero is allowed.
 	 */
 	const struct enum_names *how_enum_names;
 	/*
@@ -108,7 +103,8 @@ struct impairment {
 	 * When .unsigned_help is non-NULL, HOW is the unsigned value.
 	 *
 	 * Note: either the value is a struct impair_unsigned which as
-	 * an enabled bit, or the value is being used for an event.
+	 * an enabled bit and allows zero, or the value is being used
+	 * by an event.
 	 */
 	const char *unsigned_help;
 	/*
@@ -163,6 +159,17 @@ struct impairment impairments[] = {
 		.sizeof_value = sizeof(impair.VALUE.value),	\
 		.enabled = &impair.VALUE.enabled,		\
 		.unsigned_help = "<unsigned>",			\
+	}
+#define E(VALUE, ENUM_NAMES, HELP, ...)				\
+	{							\
+		.what = #VALUE,					\
+		.action = CALL_IMPAIR_UPDATE,			\
+		.help = HELP,					\
+		.enabled = &impair.VALUE.enabled,		\
+		.value = &impair.VALUE.value,			\
+		.sizeof_value = sizeof(impair.VALUE.value),	\
+		.how_enum_names = &ENUM_NAMES,			\
+		##__VA_ARGS__,					\
 	}
 
 	B(allow_dns_insecure, "allow IPSECKEY lookups without DNSSEC protection"),
@@ -274,16 +281,16 @@ struct impairment impairments[] = {
 	 * Mangle payloads.
 	 */
 
-	V(add_unknown_v2_payload_to, "impair the (unencrypted) part of the exchange",
-	  .how_enum_names = &ikev2_exchange_names),
-	V(add_unknown_v2_payload_to_sk, "impair the encrypted part of the exchange",
-	  .how_enum_names = &ikev2_exchange_names),
+	E(add_unknown_v2_payload_to, ikev2_exchange_names,
+	  "impair the (unencrypted) part of the exchange"),
+	E(add_unknown_v2_payload_to_sk, ikev2_exchange_names,
+	  "impair the encrypted part of the exchange"),
 	B(unknown_v2_payload_critical, "include the unknown payload in the encrypted SK payload"),
 	B(ignore_soft_expire, "ignore kernel soft expire events"),
 	B(ignore_hard_expire, "ignore kernel hard expire events"),
 
-	V(force_v2_auth_method, "force the use of the specified IKEv2 AUTH method",
-	  .how_enum_names = &ikev2_auth_method_names),
+	E(force_v2_auth_method, ikev2_auth_method_names,
+	  "force the use of the specified IKEv2 AUTH method"),
 
 	B(omit_v2_ike_auth_child, "omit, and don't expect, CHILD SA payloads in IKE_AUTH message"),
 	B(ignore_v2_ike_auth_child, "ignore, but do expect, CHILD SA payloads in the IKE_AUTH message"),
@@ -357,6 +364,7 @@ struct impairment impairments[] = {
 #undef B
 #undef V
 #undef A
+#undef E
 
 };
 
@@ -456,10 +464,13 @@ static bool parse_uintmax(shunk_t string,
 		return IMPAIR_ERROR;
 	}
 
+	/*
+	 * When .enabled, 0 is valid so pass it along.
+	 */
 	*whack_impair = (struct whack_impair) {
 		.what = impairment - impairments, /*i.e., index*/
 		.value = value,
-		.enable = (value > 0),
+		.enable = (impairment->enabled != NULL ? true : value > 0),
 	};
 	return IMPAIR_OK;
 }
@@ -564,7 +575,7 @@ enum impair_status parse_impair(const char *optarg,
 		}
 		/* try unsigned */
 		enum impair_status status = parse_uintmax(how, impairment,
-							  impairment->how_keywords->nr_values,
+							  /*bias*/impairment->how_keywords->nr_values,
 							  whack_impair, logger);
 		if (status != 0) {
 			/* either saved, or error */
@@ -577,6 +588,7 @@ enum impair_status parse_impair(const char *optarg,
 			*whack_impair = (struct whack_impair) {
 				.what = ci,
 				.value = e, /* unbiased */
+				.enable = true,
 			};
 			return IMPAIR_OK;
 		}

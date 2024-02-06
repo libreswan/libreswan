@@ -479,14 +479,6 @@ static stf_status process_v2_IKE_AUTH_request_EAP_start_signature_continue(struc
 	/* decide to send CERT payload before we generate IDr */
 	bool send_cert = ikev2_send_cert_decision(ike);
 
-	if (impair.add_unknown_v2_payload_to_sk == ISAKMP_v2_IKE_AUTH) {
-		if (!emit_v2UNKNOWN("SK reply",
-				    impair.add_unknown_v2_payload_to_sk,
-				    response.pbs)) {
-			return STF_INTERNAL_ERROR;
-		}
-	}
-
 	/* send any NOTIFY payloads */
 	if (ike->sa.st_ike_sent_v2n_mobike_supported) {
 		if (!emit_v2N(v2N_MOBIKE_SUPPORTED, response.pbs))
@@ -703,14 +695,6 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 			     reply_buffer, sizeof(reply_buffer),
 			     &response, ENCRYPTED_PAYLOAD)) {
 		return STF_INTERNAL_ERROR;
-	}
-
-	if (impair.add_unknown_v2_payload_to_sk == ISAKMP_v2_IKE_AUTH) {
-		if (!emit_v2UNKNOWN("SK reply",
-				    impair.add_unknown_v2_payload_to_sk,
-				    response.pbs)) {
-			return STF_INTERNAL_ERROR;
-		}
 	}
 
 	/*

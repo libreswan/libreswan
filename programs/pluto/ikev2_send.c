@@ -101,15 +101,22 @@ void record_v2_message(struct ike_sa *ike,
  * Send a payload.
  */
 
-bool emit_v2UNKNOWN(const char *victim, enum isakmp_xchg_type exchange_type,
+bool emit_v2UNKNOWN(const char *victim,
+		    enum isakmp_xchg_type exchange_type,
+		    const struct impair_unsigned *impairment,
 		    struct pbs_out *outs)
 {
+	if (impairment->value != exchange_type) {
+		/* successfully did nothing */
+		return true;
+	}
+
 	llog(RC_LOG, outs->outs_logger,
-	     "IMPAIR: adding an unknown%s payload of type %d to %s %s",
+	     "IMPAIR: adding an unknown%s payload of type %d to %s %s message",
 	     impair.unknown_v2_payload_critical ? " critical" : "",
 	     ikev2_unknown_payload_desc.pt,
-	     enum_name_short(&ikev2_exchange_names, exchange_type),
-	     victim);
+	     victim,
+	     enum_name_short(&ikev2_exchange_names, exchange_type));
 	struct ikev2_generic gen = {
 		.isag_critical = build_ikev2_critical(impair.unknown_v2_payload_critical, outs->outs_logger),
 	};

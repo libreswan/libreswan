@@ -214,8 +214,10 @@ static bool open_v2_message_body(struct pbs_out *message,
 		/* already logged */
 		return false;
 	}
-	if (impair.add_unknown_v2_payload_to == exchange_type &&
-	    !emit_v2UNKNOWN("request", exchange_type, body)) {
+
+	if (!emit_v2UNKNOWN("unencrypted", exchange_type,
+			    &impair.add_unknown_v2_payload_to,
+			    body)) {
 		return false;
 	}
 
@@ -1400,7 +1402,8 @@ struct ikev2_id build_v2_id_payload(const struct host_end *end, shunk_t *body,
 
 bool open_v2_message(const char *story,
 		     struct ike_sa *ike, struct logger *logger,
-		     struct msg_digest *request_md, enum isakmp_xchg_type exchange_type,
+		     struct msg_digest *request_md,
+		     enum isakmp_xchg_type exchange_type,
 		     uint8_t *buf, size_t sizeof_buf,
 		     struct v2_message *message,
 		     enum payload_security security)
@@ -1438,6 +1441,11 @@ bool open_v2_message(const char *story,
 			return false;
 		}
 		message->pbs = &message->sk.pbs;
+		if (!emit_v2UNKNOWN("encrypted", exchange_type,
+				    &impair.add_unknown_v2_payload_to_sk,
+				    message->pbs)) {
+			return false;
+		}
 		break;
 	case UNENCRYPTED_PAYLOAD:
 		/* unsecured payload when secured allowed? */

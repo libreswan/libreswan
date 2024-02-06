@@ -135,11 +135,12 @@ enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
 {
 	struct connection *c = ike->sa.st_connection;
 
-	if (impair.force_v2_auth_method != 0) {
+	if (impair.force_v2_auth_method.enabled) {
 		enum_buf eb;
 		llog_sa(RC_LOG, ike, "IMPAIR: forcing auth method %s",
-			str_enum(&ikev2_auth_method_names, impair.force_v2_auth_method, &eb));
-		return impair.force_v2_auth_method;
+			str_enum(&ikev2_auth_method_names,
+				 impair.force_v2_auth_method.value, &eb));
+		return impair.force_v2_auth_method.value;
 	}
 
 	switch (authby) {

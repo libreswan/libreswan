@@ -27,6 +27,7 @@ struct dh_desc;
 struct ike_sa;
 struct child_sa;
 enum payload_security;
+struct impair_unsigned;
 
 struct v2_incoming_fragment {
 	chunk_t text;		/* cipher or plain - decrypt in place */
@@ -137,7 +138,9 @@ void free_v2_outgoing_fragments(struct v2_outgoing_fragment **frags);
  * for the sub-payload).
  */
 
-bool emit_v2UNKNOWN(const char *victim, enum isakmp_xchg_type exchange_type,
+bool emit_v2UNKNOWN(const char *victim,
+		    enum isakmp_xchg_type exchange_type,
+		    const struct impair_unsigned *impair,
 		    struct pbs_out *outs);
 
 /*

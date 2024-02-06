@@ -331,14 +331,6 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 		close_output_pbs(&i_id_pbs);
 	}
 
-	if (impair.add_unknown_v2_payload_to_sk == ISAKMP_v2_IKE_AUTH) {
-		if (!emit_v2UNKNOWN("SK request",
-				    impair.add_unknown_v2_payload_to_sk,
-				    request.pbs)) {
-			return STF_INTERNAL_ERROR;
-		}
-	}
-
 	/* send [CERT,] payload RFC 4306 3.6, 1.2) */
 
 	if (send_cert) {
@@ -1154,14 +1146,6 @@ static stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike
 
 	/* decide to send CERT payload before we generate IDr */
 	bool send_cert = ikev2_send_cert_decision(ike);
-
-	if (impair.add_unknown_v2_payload_to_sk == ISAKMP_v2_IKE_AUTH) {
-		if (!emit_v2UNKNOWN("SK reply",
-				    impair.add_unknown_v2_payload_to_sk,
-				    response.pbs)) {
-			return STF_INTERNAL_ERROR;
-		}
-	}
 
 	/* send any NOTIFY payloads */
 	if (ike->sa.st_ike_sent_v2n_mobike_supported) {

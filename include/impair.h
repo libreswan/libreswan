@@ -149,11 +149,11 @@ struct impair {
 	bool tcp_use_blocking_write;
 	bool tcp_skip_setsockopt_espintcp;
 
-	unsigned add_unknown_v2_payload_to;
-	unsigned add_unknown_v2_payload_to_sk;
+	struct impair_unsigned add_unknown_v2_payload_to;
+	struct impair_unsigned add_unknown_v2_payload_to_sk;
 	bool unknown_v2_payload_critical;
 
-	unsigned force_v2_auth_method;
+	struct impair_unsigned force_v2_auth_method;
 
 	bool ignore_v2N_SIGNATURE_HASH_ALGORITHMS;
 	bool omit_v2N_SIGNATURE_HASH_ALGORITHMS;
