@@ -60,6 +60,7 @@ static void parser_kw_warning(struct logger *logger, struct keyword *kw, const c
 
 void parser_kw(struct keyword *kw, const char *string, struct logger *logger);
 
+static void yyerror(struct logger *logger, const char *msg);
 static void new_parser_kw(struct keyword *keyword, const char *string, uintmax_t number, struct logger *logger);
 
 /**
@@ -175,6 +176,21 @@ statement_kw:
 	;
 %%
 
+void parser_warning(struct logger *logger, const char *s, ...)
+{
+	if (save_errors) {
+		LLOG_JAMBUF(RC_LOG, logger, buf) {
+			jam(buf, "%s:%u: warning: ",
+			    parser_cur_filename(),
+			    parser_cur_line());
+			va_list ap;
+			va_start(ap, s);
+			jam_va_list(buf, s, ap);
+			va_end(ap);
+		}
+	}
+}
+
 void parser_kw_warning(struct logger *logger, struct keyword *kw, const char *yytext,
 		       const char *s, ...)
 {
@@ -201,17 +217,14 @@ void parser_kw_warning(struct logger *logger, struct keyword *kw, const char *yy
 	}
 }
 
-void yyerror(struct logger *logger UNUSED, const char *s, ...)
+void yyerror(struct logger *logger, const char *s)
 {
 	if (save_errors) {
 		LLOG_JAMBUF(RC_LOG, logger, buf) {
 			jam(buf, "%s:%u: ",
 			    parser_cur_filename(),
 			    parser_cur_line());
-			va_list ap;
-			va_start(ap, s);
-			jam_va_list(buf, s, ap);
-			va_end(ap);
+			jam_string(buf, s);
 		}
 	}
 }

@@ -26,9 +26,7 @@ extern int lex_verbosity;	/* how much tracing output to show */
 extern char rootdir[PATH_MAX];	/* when evaluating paths, prefix this to them */
 extern char rootdir2[PATH_MAX];	/* when evaluating paths, alternatively prefix this to them */
 
-/* things from parser.y */
-
-void yyerror(struct logger *logger, const char *, ...) PRINTF_LIKE(2);	/* defined in parser.y */
+void parser_warning(struct logger *logger, const char *s, ...) PRINTF_LIKE(2);	/* defined in parser.y */
 
 /* Dirty trick to dodge bison version differences.
  * Old bison (2.5) produces parser.tab.h without yydebug decl and no

@@ -116,18 +116,18 @@ static void parser_y_close(struct ic_inputsource *iis)
 	}
 }
 
-static int parser_y_nextglobfile(struct ic_inputsource *iis, struct logger *logger)
+static bool parser_y_nextglobfile(struct ic_inputsource *iis, struct logger *logger)
 {
 	if (iis->fileglob == NULL) {
-		ldbg(logger, "EOF: no .fileglob");
 		/* EOF */
-		return -1;
+		ldbg(logger, "EOF: no .fileglob");
+		return false;
 	}
 
 	if (iis->fileglob[iis->fileglobcnt] == NULL) {
 		/* EOF */
 		ldbg(logger, "EOF: .fileglob[%u] == NULL", iis->fileglobcnt);
-		return -1;
+		return false;
 	}
 
 	/* increment for next time */
@@ -150,22 +150,22 @@ static int parser_y_nextglobfile(struct ic_inputsource *iis, struct logger *logg
 	FILE *f = fopen(iis->filename, "r");
 	if (f == NULL) {
 		/* XXX: nasty hack for RHEL */
-		if (strstr(iis->filename, "crypto-policies/back-ends/libreswan.config") == NULL) {
-			yyerror(logger, "cannot open include filename: '%s': %s",
-				iis->fileglob[fcnt],
-				strerror(errno));
+		if (strstr(iis->filename, "crypto-policies/back-ends/libreswan.config") != NULL) {
+			parser_warning(logger, "ignored loading default system-wide crypto-policies file '%s': %s",
+				       iis->fileglob[fcnt],
+				       strerror(errno));
 		} else {
-			yyerror(logger, "ignored loading default system-wide crypto-policies file '%s': %s",
-				iis->fileglob[fcnt],
-				strerror(errno));
+			parser_warning(logger, "cannot open include filename: '%s': %s",
+				       iis->fileglob[fcnt],
+				       strerror(errno));
 		}
-		return -1;
+		return false;
 	}
 	iis->file = f;
 
 	yy_switch_to_buffer(yy_create_buffer(f, YY_BUF_SIZE));
 
-	return 0;
+	return true;
 }
 
 struct lswglob_context {
@@ -180,7 +180,8 @@ static void glob_include(unsigned count, char **files,
 	/* success */
 
 	if (ic_private.stack_ptr >= MAX_INCLUDE_DEPTH - 1) {
-		yyerror(logger, "max inclusion depth reached");
+		parser_warning(logger, "including '%s' exceeds max inclusion depth of %u",
+			       context->filename, MAX_INCLUDE_DEPTH);
 		return;
 	}
 
@@ -191,6 +192,7 @@ static void glob_include(unsigned count, char **files,
 		     stacktop->line);
 	}
 
+	PASSERT(logger, ic_private.stack_ptr < sizeof(ic_private.stack) - 1);
 	++ic_private.stack_ptr;
 	stacktop = &ic_private.stack[ic_private.stack_ptr];
 	stacktop->state = YY_CURRENT_BUFFER;
@@ -230,8 +232,8 @@ void parser_y_include (const char *filename, struct logger *logger)
 		}
 		if (strchr(filename, '*') == NULL) {
 			/* not a wildcard, throw error */
-			yyerror(logger, "warning: could not open include filename: '%s'",
-				filename);
+			parser_warning(logger, "could not open include filename: '%s'",
+				       filename);
 		} else {
 			/* don't throw an error, just log a warning */
 			ldbg(logger, "could not open include wildcard filename(s): '%s'",
@@ -252,8 +254,8 @@ void parser_y_include (const char *filename, struct logger *logger)
 	if (rootdir2[0] == '\0') {
 		if (strchr(filename,'*') == NULL) {
 			/* not a wildcard, throw error */
-			yyerror(logger, "warning: could not open include filename '%s' (tried '%s')",
-				filename, newname);
+			parser_warning(logger, "could not open include filename '%s' (tried '%s')",
+				       filename, newname);
 		} else {
 			/* don't throw an error, just log a warning */
 			ldbg(logger, "could not open include wildcard filename(s) '%s' (tried '%s')",
@@ -271,9 +273,8 @@ void parser_y_include (const char *filename, struct logger *logger)
 		return;
 	}
 
-	yyerror(logger,
-		"warning: could not open include filename: '%s' (tried '%s' and '%s')",
-		filename, newname, newname2);
+	parser_warning(logger, "could not open include filename: '%s' (tried '%s' and '%s')",
+		       filename, newname, newname2);
 
 	return;
 }
@@ -284,7 +285,7 @@ static bool parser_y_eof(struct logger *logger)
 		yy_delete_buffer(YY_CURRENT_BUFFER);
 	}
 
-	if (parser_y_nextglobfile(stacktop, logger) == -1) {
+	if (!parser_y_nextglobfile(stacktop, logger)) {
 		/* no more glob'ed files to process */
 
 		if (lex_verbosity > 0) {
@@ -480,7 +481,7 @@ include			return INCLUDE;
 
 #.*			{ /* eat comment to end of line */ }
 
-.			yyerror(logger, "%s", yytext);
+.			parser_warning(logger, "unrecognized: %s", yytext);
 %%
 
 int yywrap(void) {
