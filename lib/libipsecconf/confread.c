@@ -274,7 +274,6 @@ static bool load_setup(struct starter_config *cfg,
 			cfg->setup.strings_set[f] = true;
 			break;
 
-		case kt_list:
 		case kt_lset:
 		case kt_bool:
 		case kt_enum:
@@ -733,7 +732,6 @@ static bool translate_field(struct starter_conn *conn,
 		(*set_options)[field] = assigned_value;
 		break;
 
-	case kt_list:
 	case kt_lset:
 	case kt_bool:
 	case kt_enum:

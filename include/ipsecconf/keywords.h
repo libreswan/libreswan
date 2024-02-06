@@ -338,7 +338,6 @@ enum keyword_type {
 	kt_dirname,             /* value is a dir name string */
 	kt_bool,                /* value is an on/off type */
 	kt_enum,                /* value is from a set of key words */
-	kt_list,                /* a set of values from a set of key words */
 	kt_lset,                /* a set of values from an enum name */
 	kt_loose_enum,          /* either a string, or a %-prefixed enum */
 	kt_pubkey,              /* a public key, or set of values */
@@ -412,7 +411,6 @@ extern const struct keyword_def ipsec_conf_keywords[];
 
 lset_t parser_lset(const struct keyword_def *kd, const char *s);
 uintmax_t parser_enum(const struct keyword_def *kd, const char *s);
-uintmax_t parser_enum_list(const struct keyword_def *kd, const char *s);
 uintmax_t parser_loose_enum(struct keyword *k, const char *s);
 
 #endif /* _KEYWORDS_H_ */

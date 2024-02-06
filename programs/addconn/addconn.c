@@ -636,15 +636,6 @@ int main(int argc, char *argv[])
 					bool_str(cfg->setup.options[kd->field]));
 				break;
 
-			case kt_list:
-				printf("%s %s%s='",
-					export, varprefix, safe_kwname);
-				confwrite_list(stdout, "",
-					cfg->setup.options[kd->field],
-					kd);
-				printf("'\n");
-				break;
-
 			case kt_obsolete:
 				break;
 

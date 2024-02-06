@@ -487,9 +487,6 @@ void parser_kw(struct keyword *kw, const char *string, struct logger *logger)
 	bool ok = true;
 
 	switch (kw->keydef->type) {
-	case kt_list:
-		number = parser_enum_list(kw->keydef, string);
-		break;
 	case kt_lset:
 		number = parser_lset(kw->keydef, string); /* XXX: truncates! */
 		break;

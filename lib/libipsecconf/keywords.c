@@ -673,54 +673,6 @@ uintmax_t parser_enum(const struct keyword_def *kd, const char *s)
 	exit(1);
 }
 
-uintmax_t parser_enum_list(const struct keyword_def *kd, const char *s)
-{
-	assert(kd->type == kt_list);
-
-	unsigned int valresult = 0;
-
-	/*
-	 * Split up the string into comma separated pieces, and look
-	 * each piece up in the value list provided in the definition.
-	 */
-
-	int numfound = 0;
-	shunk_t cursor = shunk1(s);
-	while (true) {
-		shunk_t piece = shunk_token(&cursor, NULL/*delim*/, ":, \t");
-		if (piece.ptr == NULL) {
-			break;
-		}
-		if (piece.len == 0) {
-			/* discard empty strings */
-			continue;
-		}
-
-		assert(kd->validenum != NULL);
-		for (const struct sparse_name *kev = kd->validenum;
-		     kev->name != NULL; kev++) {
-			if (hunk_strcaseeq(piece, kev->name)) {
-				/* found it: count it */
-				numfound++;
-				valresult |= kev->value;
-				break;
-			}
-		}
-		if (numfound == 0) {
-			/* we didn't find anything, complain */
-			fprintf(stderr,
-				"ERROR: %s: %d: keyword %s, invalid value: "PRI_SHUNK"\n",
-				parser_cur_filename(),
-				parser_cur_line(),
-				kd->keyname,
-				pri_shunk(piece));
-			exit(1);
-		}
-	}
-
-	return valresult;
-}
-
 lset_t parser_lset(const struct keyword_def *kd, const char *value)
 {
 	assert(kd->type == kt_lset);

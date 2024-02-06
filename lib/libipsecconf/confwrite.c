@@ -124,20 +124,6 @@ static void confwrite_int(FILE *out,
 			}
 			break;
 
-		case kt_list:
-			/* special enumeration */
-			if (options_set[k->field]) {
-				int val = options[k->field];
-
-				if (val != 0) {
-					fprintf(out, "\t%s%s=\"", side, k->keyname);
-					confwrite_list(out, "", val, k);
-
-					fprintf(out, "\"\n");
-				}
-			}
-			break;
-
 		case kt_lset:
 			if (options_set[k->field]) {
 				unsigned long val = options[k->field];
@@ -219,7 +205,6 @@ static void confwrite_str(FILE *out,
 
 		case kt_bool:
 		case kt_enum:
-		case kt_list:
 		case kt_lset:
 		case kt_loose_enum:
 			/* special enumeration */
