@@ -84,7 +84,6 @@ static bool parser_kw_time(struct keyword *kw, const char *yytext,
 %token EQUAL FIRST_SPACES EOL CONFIG SETUP CONN INCLUDE VERSION
 %token <s>      STRING
 %token <k>      KEYWORD
-%token <k>      BYTEWORD
 %token <k>      COMMENT
 %%
 
@@ -179,19 +178,6 @@ statement_kw:
 		parser_kw(&kw, string, logger);
 	}
 	| KEYWORD EQUAL { /* this is meaningless, we ignore it */ }
-	| BYTEWORD EQUAL STRING {
-		struct keyword *kw = &$1;
-		const char *const str = $3;
-		uint64_t b;
-
-		diag_t diag = ttobinary(str, &b, 1 /* with B prefix */);
-		if (diag != NULL) {
-			yyerror(logger, "%s", str_diag(diag));
-			pfree_diag(&diag);
-		} else {
-			new_parser_kw(kw, NULL, b, logger);
-		}
-	}
 	;
 %%
 
@@ -488,6 +474,19 @@ static bool parser_kw_binary(struct keyword *kw, const char *yytext,
 	return true;
 }
 
+static bool parser_kw_byte(struct keyword *kw, const char *yytext,
+			   uintmax_t *number, struct logger *logger)
+{
+	diag_t diag = ttobinary(yytext, number, 1 /* with B prefix */);
+	if (diag != NULL) {
+		parser_kw_warning(logger, kw, yytext,
+				  "%s, keyword ignored", str_diag(diag));
+		pfree_diag(&diag);
+		return false;
+	}
+
+	return true;
+}
 
 void parser_kw(struct keyword *kw, const char *string, struct logger *logger)
 {
@@ -541,7 +540,7 @@ void parser_kw(struct keyword *kw, const char *string, struct logger *logger)
 		break;
 
 	case kt_byte:
-		yyerror(logger, "valid keyword, but value is not a number");
+		ok = parser_kw_byte(kw, string, &number, logger);
 		break;
 
 	case kt_comment:
