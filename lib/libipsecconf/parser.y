@@ -342,13 +342,6 @@ static void new_parser_kw(struct keyword *kw,
 		break;
 	}
 
-	if (kw->keydef->type == kt_obsolete) {
-		parser_kw_warning(logger, kw, yytext,
-				  "obsolete %s keyword ignored", section);
-		/* drop it on the floor */
-		return;
-	}
-
 	/* Find end, while looking for duplicates. */
 	struct kw_list **end;
 	for (end = parser.kw; (*end) != NULL; end = &(*end)->next) {
@@ -612,9 +605,15 @@ void parser_kw(struct keyword *kw, const char *string, struct logger *logger)
 		ok = parser_kw_byte(kw, string, &number, logger);
 		break;
 
-	case kt_comment:
 	case kt_obsolete:
+		/* drop it on the floor */
+		parser_kw_warning(logger, kw, string, "obsolete keyword ignored");
+		ok = false;
 		break;
+
+	case kt_comment:
+		break;
+
 	}
 
 	if (ok) {
