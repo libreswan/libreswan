@@ -61,13 +61,6 @@ void parser_kw(struct keyword *kw, const char *string, struct logger *logger);
 
 static void new_parser_kw(struct keyword *keyword, const char *string, uintmax_t number, struct logger *logger);
 
-static bool parser_kw_unsigned(struct keyword *kw, const char *yytext,
-			       uintmax_t *number, struct logger *logger);
-static bool parser_kw_bool(struct keyword *kw, const char *yytext,
-			   uintmax_t *number, struct logger *logger);
-static bool parser_kw_time(struct keyword *kw, const char *yytext,
-			   uintmax_t *number, struct logger *logger);
-
 /**
  * Functions
  */
@@ -380,8 +373,8 @@ static void new_parser_kw(struct keyword *kw,
 	(*end) = new;
 }
 
-bool parser_kw_unsigned(struct keyword *kw, const char *yytext,
-			uintmax_t *number, struct logger *logger)
+static bool parser_kw_unsigned(struct keyword *kw, const char *yytext,
+			       uintmax_t *number, struct logger *logger)
 {
 	err_t err = shunk_to_uintmax(shunk1(yytext), NULL, /*base*/10, number);
 	if (err != NULL) {
@@ -391,8 +384,8 @@ bool parser_kw_unsigned(struct keyword *kw, const char *yytext,
 	return true;
 }
 
-bool parser_kw_bool(struct keyword *kw, const char *yytext,
-		    uintmax_t *number, struct logger *logger)
+static bool parser_kw_bool(struct keyword *kw, const char *yytext,
+			   uintmax_t *number, struct logger *logger)
 {
 	const struct sparse_name *name = sparse_lookup(yn_option_names, yytext);
 	if (name == NULL) {
@@ -413,8 +406,8 @@ bool parser_kw_bool(struct keyword *kw, const char *yytext,
 	bad_case(yn);
 }
 
-bool parser_kw_time(struct keyword *kw, const char *yytext,
-		    uintmax_t *number, struct logger *logger)
+static bool parser_kw_time(struct keyword *kw, const char *yytext,
+			   uintmax_t *number, struct logger *logger)
 {
 	const struct timescale *scale;
 	if (kw->keydef->validity & kv_milliseconds) {
@@ -519,7 +512,7 @@ void parser_kw(struct keyword *kw, const char *string, struct logger *logger)
 	case kt_subnet:
 		break;
 
-	case kt_number:
+	case kt_unsigned:
 		ok = parser_kw_unsigned(kw, string, &number, logger);
 		break;
 

@@ -331,9 +331,9 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "ocsp-strict",  kv_config,  kt_bool,  KBF_OCSP_STRICT, NULL, NULL, },
   { "ocsp-enable",  kv_config,  kt_bool,  KBF_OCSP_ENABLE, NULL, NULL, },
   { "ocsp-uri",  kv_config,  kt_string,  KSF_OCSP_URI, NULL, NULL, },
-  { "ocsp-timeout",  kv_config,  kt_number,  KBF_OCSP_TIMEOUT, NULL, NULL, },
+  { "ocsp-timeout",  kv_config,  kt_unsigned,  KBF_OCSP_TIMEOUT, NULL, NULL, },
   { "ocsp-trustname",  kv_config,  kt_string,  KSF_OCSP_TRUSTNAME, NULL, NULL, },
-  { "ocsp-cache-size",  kv_config,  kt_number,  KBF_OCSP_CACHE_SIZE, NULL, NULL, },
+  { "ocsp-cache-size",  kv_config,  kt_unsigned,  KBF_OCSP_CACHE_SIZE, NULL, NULL, },
   { "ocsp-cache-min-age",  kv_config,  kt_time,  KBF_OCSP_CACHE_MIN_AGE_MS, NULL, NULL, },
   { "ocsp-cache-max-age",  kv_config,  kt_time,  KBF_OCSP_CACHE_MAX_AGE_MS, NULL, NULL, },
   { "ocsp-method",  kv_config | kv_processed,  kt_enum,  KBF_OCSP_METHOD,  kw_ocsp_method_list, NULL, },
@@ -342,27 +342,27 @@ const struct keyword_def ipsec_conf_keywords[] = {
 #ifdef USE_SECCOMP
   { "seccomp",  kv_config | kv_processed ,  kt_enum,  KBF_SECCOMP,  kw_seccomp_list, NULL, },
 #endif
-  { "ddos-ike-threshold",  kv_config,  kt_number,  KBF_DDOS_IKE_THRESHOLD, NULL, NULL, },
-  { "max-halfopen-ike",  kv_config,  kt_number,  KBF_MAX_HALFOPEN_IKE, NULL, NULL, },
-  { "ike-socket-bufsize",  kv_config,  kt_number,  KBF_IKEBUF, NULL, NULL, },
+  { "ddos-ike-threshold",  kv_config,  kt_unsigned,  KBF_DDOS_IKE_THRESHOLD, NULL, NULL, },
+  { "max-halfopen-ike",  kv_config,  kt_unsigned,  KBF_MAX_HALFOPEN_IKE, NULL, NULL, },
+  { "ike-socket-bufsize",  kv_config,  kt_unsigned,  KBF_IKEBUF, NULL, NULL, },
   { "ike-socket-errqueue",  kv_config,  kt_bool,  KBF_IKE_ERRQUEUE, NULL, NULL, },
 #if defined(USE_NFLOG)
-  { "nflog-all",  kv_config,  kt_number,  KBF_NFLOG_ALL, NULL, NULL, },
+  { "nflog-all",  kv_config,  kt_unsigned,  KBF_NFLOG_ALL, NULL, NULL, },
 #endif
 #ifdef XFRM_LIFETIME_DEFAULT
-  { "xfrmlifetime",  kv_config,  kt_number,  KBF_XFRMLIFETIME, NULL, NULL, },
+  { "xfrmlifetime",  kv_config,  kt_unsigned,  KBF_XFRMLIFETIME, NULL, NULL, },
 #endif
   { "virtual-private",  kv_config,  kt_string,  KSF_VIRTUALPRIVATE, NULL, NULL, },
   { "virtual_private",  kv_config,  kt_string,  KSF_VIRTUALPRIVATE, NULL, NULL, }, /* obsolete variant, very common */
-  { "seedbits",  kv_config,  kt_number,  KBF_SEEDBITS, NULL, NULL, },
-  { "keep-alive",  kv_config,  kt_number,  KBF_KEEPALIVE, NULL, NULL, },
+  { "seedbits",  kv_config,  kt_unsigned,  KBF_SEEDBITS, NULL, NULL, },
+  { "keep-alive",  kv_config,  kt_unsigned,  KBF_KEEPALIVE, NULL, NULL, },
 
   { "listen-tcp", kv_config, kt_bool, KBF_LISTEN_TCP, NULL, NULL },
   { "listen-udp", kv_config, kt_bool, KBF_LISTEN_UDP, NULL, NULL },
 
   { "listen",  kv_config,  kt_string,  KSF_LISTEN, NULL, NULL, },
   { "protostack",  kv_config,  kt_string,  KSF_PROTOSTACK,  NULL, NULL, },
-  { "nhelpers",  kv_config,  kt_number,  KBF_NHELPERS, NULL, NULL, },
+  { "nhelpers",  kv_config,  kt_unsigned,  KBF_NHELPERS, NULL, NULL, },
   { "drop-oppo-null",  kv_config,  kt_bool,  KBF_DROP_OPPO_NULL, NULL, NULL, },
   { "interfaces",  kv_config, kt_obsolete, KNCF_OBSOLETE, NULL, NULL, }, /* obsoleted but often present keyword */
 
@@ -376,7 +376,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "subnet",  kv_conn | kv_leftright | kv_processed,  kt_subnet,  KSCF_SUBNET, NULL, NULL, },
   { "subnets",  kv_conn | kv_leftright,  kt_appendlist,  KSCF_SUBNETS, NULL, NULL, },
   { "sourceip",  kv_conn | kv_leftright,  kt_ipaddr,  KSCF_SOURCEIP, NULL, NULL, },
-  { "ikeport",  kv_conn | kv_leftright,  kt_number,  KNCF_IKEPORT, NULL, NULL, },
+  { "ikeport",  kv_conn | kv_leftright,  kt_unsigned,  KNCF_IKEPORT, NULL, NULL, },
   { "interface-ip", kv_conn | kv_leftright,  kt_subnet, KSCF_INTERFACE_IP, NULL, NULL, },
   { "vti",  kv_conn | kv_leftright | kv_processed,  kt_subnet,  KSCF_VTI_IP, NULL, NULL, },
   { "nexthop",  kv_conn | kv_leftright,  kt_ipaddr,  KSCF_NEXTHOP, NULL, NULL, },
@@ -497,14 +497,14 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "rekey",  kv_conn,  kt_enum,  KNCF_REKEY, yn_option_names, NULL, },
   { "rekeymargin",  kv_conn,  kt_time,  KNCF_REKEYMARGIN_MS, NULL, NULL, },
   { "rekeyfuzz",  kv_conn,  kt_percent,  KNCF_REKEYFUZZ, NULL, NULL, },
-  { "keyingtries",  kv_conn,  kt_number,  KNCF_KEYINGTRIES, NULL, NULL, },
-  { "replay-window",  kv_conn,  kt_number,  KNCF_REPLAY_WINDOW, NULL, NULL, },
+  { "keyingtries",  kv_conn,  kt_unsigned,  KNCF_KEYINGTRIES, NULL, NULL, },
+  { "replay-window",  kv_conn,  kt_unsigned,  KNCF_REPLAY_WINDOW, NULL, NULL, },
   { "ikelifetime",  kv_conn,  kt_time,  KNCF_IKELIFETIME_MS, NULL, NULL, },
   { "failureshunt",  kv_conn,  kt_enum,  KNCF_FAILURESHUNT,  kw_failureshunt_list, NULL, },
   { "negotiationshunt",  kv_conn,  kt_enum,  KNCF_NEGOTIATIONSHUNT,  kw_negotiationshunt_list, NULL, },
 
   { "enable-tcp",  kv_conn, kt_enum, KNCF_ENABLE_TCP, tcp_option_names, NULL },
-  { "tcp-remoteport",  kv_conn, kt_number, KNCF_TCP_REMOTEPORT, NULL, NULL },
+  { "tcp-remoteport",  kv_conn, kt_unsigned, KNCF_TCP_REMOTEPORT, NULL, NULL },
 
   { "connalias",  kv_conn | kv_processed,  kt_appendstring,  KSCF_CONNALIAS, NULL, NULL, },
 
@@ -518,7 +518,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "compress",  kv_conn,  kt_enum,  KNCF_COMPRESS, yn_option_names, NULL, },
 
   /* route metric */
-  { "metric",  kv_conn,  kt_number,  KNCF_METRIC, NULL, NULL, },
+  { "metric",  kv_conn,  kt_unsigned,  KNCF_METRIC, NULL, NULL, },
 
   /* DPD */
   { "dpddelay",  kv_conn,  kt_string,  KSCF_DPDDELAY_MS, NULL, NULL, },
@@ -528,12 +528,12 @@ const struct keyword_def ipsec_conf_keywords[] = {
 
   { "sendca",      kv_conn,  kt_enum,  KNCF_SEND_CA,  kw_sendca_list, NULL, },
 
-  { "mtu",  kv_conn,  kt_number,  KNCF_MTU, NULL, NULL, },
-  { "priority",  kv_conn,  kt_number,  KNCF_PRIORITY, NULL, NULL, },
-  { "tfc",  kv_conn,  kt_number,  KNCF_TFC, NULL, NULL, },
-  { "reqid",  kv_conn,  kt_number,  KNCF_REQID, NULL, NULL, },
+  { "mtu",  kv_conn,  kt_unsigned,  KNCF_MTU, NULL, NULL, },
+  { "priority",  kv_conn,  kt_unsigned,  KNCF_PRIORITY, NULL, NULL, },
+  { "tfc",  kv_conn,  kt_unsigned,  KNCF_TFC, NULL, NULL, },
+  { "reqid",  kv_conn,  kt_unsigned,  KNCF_REQID, NULL, NULL, },
 #if defined(USE_NFLOG)
-  { "nflog",  kv_conn,  kt_number,  KNCF_NFLOG_CONN, NULL, NULL, },
+  { "nflog",  kv_conn,  kt_unsigned,  KNCF_NFLOG_CONN, NULL, NULL, },
 #endif
 
   { "aggressive",  kv_conn,  kt_enum,  KNCF_AGGRESSIVE, yn_option_names, NULL, },

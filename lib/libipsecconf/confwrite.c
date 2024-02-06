@@ -160,7 +160,7 @@ static void confwrite_int(FILE *out,
 		case kt_time: /* special number, but do work later XXX */
 		case kt_binary:
 		case kt_byte:
-		case kt_number:
+		case kt_unsigned:
 			if (options_set[k->field])
 				fprintf(out, "\t%s%s=%jd\n", side, k->keyname,
 					options[k->field]);
@@ -232,7 +232,7 @@ static void confwrite_str(FILE *out,
 			break;
 
 		case kt_percent:
-		case kt_number:
+		case kt_unsigned:
 			break;
 
 		case kt_comment:

@@ -342,7 +342,7 @@ enum keyword_type {
 	kt_lset,                /* a set of values from an enum name */
 	kt_loose_enum,          /* either a string, or a %-prefixed enum */
 	kt_pubkey,              /* a public key, or set of values */
-	kt_number,              /* an integer */
+	kt_unsigned,            /* an unsigned integer */
 	kt_time,                /* a number representing time */
 	kt_percent,             /* a number representing percentage */
 	kt_byte,                /* a number representing Binary bytes with prefixs. KiB.. IEC 60027-2/ISO 8000 */
