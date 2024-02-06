@@ -622,7 +622,7 @@ int main(int argc, char *argv[])
 			case kt_string:
 			case kt_filename:
 			case kt_dirname:
-			case kt_loose_enum:
+			case kt_host:
 				if (cfg->setup.strings[kd->field]) {
 					printf("%s %s%s='%s'\n",
 						export, varprefix, safe_kwname,

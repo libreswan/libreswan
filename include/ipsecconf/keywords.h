@@ -337,10 +337,10 @@ enum keyword_type {
 	kt_filename,            /* value is a filename string */
 	kt_dirname,             /* value is a dir name string */
 	kt_bool,                /* value is an on/off type */
-	kt_sparse_name,         /* value is from a sparse_name table */
-	kt_lset,                /* a set of values from an enum name */
-	kt_loose_enum,          /* either a string, or a %-prefixed enum */
-	kt_pubkey,              /* a public key, or set of values */
+	kt_sparse_name,         /* value is from .sparse_name table */
+	kt_lset,                /* a set of values from .sparse_name */
+	kt_host,	        /* %-prefixed .sparse_name, or a hostname string */
+	kt_pubkey,	        /* %-prefixed .sparse_name, or a pubkey string */
 	kt_unsigned,            /* an unsigned integer */
 	kt_time,                /* a number representing time */
 	kt_percent,             /* a number representing percentage */
@@ -360,7 +360,7 @@ struct keyword_def {
 	unsigned int validity;          /* has bits from enum keyword_valid (kv_*) */
 	enum keyword_type type;
 	unsigned int field;             /* one of keyword_*_field */
-	const struct sparse_name *valid_sparse_name;
+	const struct sparse_name *sparse_name;
 	const struct lmod_info *info;
 };
 
@@ -408,7 +408,5 @@ struct config_parsed {
 };
 
 extern const struct keyword_def ipsec_conf_keywords[];
-
-uintmax_t parser_loose_enum(struct keyword *k, const char *s);
 
 #endif /* _KEYWORDS_H_ */

@@ -525,9 +525,9 @@ static bool parser_kw_lset(struct keyword *kw, const char *yytext,
 static bool parser_kw_sparse_name(struct keyword *kw, const char *yytext,
 				  uintmax_t *number, struct logger *logger)
 {
-	PASSERT(logger, kw->keydef->valid_sparse_name != NULL);
+	PASSERT(logger, kw->keydef->sparse_name != NULL);
 
-	const struct sparse_name *sn = sparse_lookup(kw->keydef->valid_sparse_name, yytext);
+	const struct sparse_name *sn = sparse_lookup(kw->keydef->sparse_name, yytext);
 	if (sn != NULL) {
 		(*number) = sn->value;
 		return true;
@@ -540,6 +540,24 @@ static bool parser_kw_sparse_name(struct keyword *kw, const char *yytext,
 	 */
 	parser_kw_warning(logger, kw, yytext, "invalid, keyword ignored");
 	return false;
+}
+
+static bool parser_kw_loose_sparse_name(struct keyword *kw, const char *yytext,
+					uintmax_t *number, struct logger *logger)
+{
+	PASSERT(logger, (kw->keydef->type == kt_host ||
+			 kw->keydef->type == kt_pubkey));
+	PASSERT(logger, kw->keydef->sparse_name != NULL);
+
+	const struct sparse_name *sn = sparse_lookup(kw->keydef->sparse_name, yytext);
+	if (sn != NULL) {
+		PASSERT(logger, sn->value != LOOSE_ENUM_OTHER);
+		(*number) = sn->value;
+		return true;
+	}
+
+	(*number) = LOOSE_ENUM_OTHER; /* i.e., use string value */
+	return true;
 }
 
 void parser_kw(struct keyword *kw, const char *string, struct logger *logger)
@@ -555,8 +573,8 @@ void parser_kw(struct keyword *kw, const char *string, struct logger *logger)
 		ok = parser_kw_sparse_name(kw, string, &number, logger);
 		break;
 	case kt_pubkey:
-	case kt_loose_enum:
-		number = parser_loose_enum(kw, string);
+	case kt_host:
+		ok = parser_kw_loose_sparse_name(kw, string, &number, logger);
 		break;
 	case kt_string:
 	case kt_appendstring:

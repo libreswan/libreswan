@@ -371,7 +371,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   /*
    * This is "left=" and "right="
    */
-  { "",  kv_conn | kv_leftright| kv_processed,  kt_loose_enum,  KSCF_IP,  kw_host_list, NULL, },
+  { "",  kv_conn | kv_leftright| kv_processed,  kt_host,  KSCF_IP,  kw_host_list, NULL, },
 
   { "subnet",  kv_conn | kv_leftright | kv_processed,  kt_subnet,  KSCF_SUBNET, NULL, NULL, },
   { "subnets",  kv_conn | kv_leftright,  kt_appendlist,  KSCF_SUBNETS, NULL, NULL, },
@@ -645,29 +645,4 @@ int parser_find_keyword(const char *s, YYSTYPE *lval)
 	lval->k.keyleft = left;
 	lval->k.keyright = right;
 	return keywordtype;
-}
-
-uintmax_t parser_loose_enum(struct keyword *k, const char *s)
-{
-	const struct keyword_def *kd = k->keydef;
-
-	assert(kd->type == kt_loose_enum || kd->type == kt_pubkey);
-	assert(kd->valid_sparse_name != NULL && kd->valid_sparse_name != NULL);
-
-	for (const struct sparse_name *kev = kd->valid_sparse_name; kev->name != NULL; kev++) {
-		if (strcaseeq(s, kev->name)) {
-			k->string = NULL;
-			return kev->value;
-		}
-	}
-
-	/* perhaps an unsigned integer? */
-	uintmax_t number;
-	if (shunk_to_uintmax(shunk1(s), NULL, /*base*/10, &number) == NULL) {
-		k->string = NULL;
-		return number;
-	}
-
-	k->string = strdup(s);	/* ??? why not xstrdup? */
-	return 255; /* what the heck is 255? */
 }

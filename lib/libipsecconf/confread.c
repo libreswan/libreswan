@@ -265,7 +265,7 @@ static bool load_setup(struct starter_config *cfg,
 		case kt_string:
 		case kt_filename:
 		case kt_dirname:
-		case kt_loose_enum:
+		case kt_host:
 			/* all treated as strings for now */
 			assert(f < elemsof(cfg->setup.strings));
 			pfreeany(cfg->setup.strings[f]);
@@ -697,7 +697,7 @@ static bool translate_field(struct starter_conn *conn,
 		break;
 
 	case kt_pubkey:
-	case kt_loose_enum:
+	case kt_host:
 		assert(field <= KSCF_last_loose);
 
 		if ((*set_options)[field] == k_set) {
@@ -724,10 +724,10 @@ static bool translate_field(struct starter_conn *conn,
 
 		(*the_options)[field] = kw->number;
 		if (kw->number == LOOSE_ENUM_OTHER) {
-			assert(kw->keyword.string != NULL);
+			assert(kw->string != NULL);
 			pfreeany((*the_strings)[field]);
 			(*the_strings)[field] = clone_str(
-				kw->keyword.string, "kt_loose_enum kw->keyword.string");
+				kw->string, "kt_loose_enum kw->keyword.string");
 		}
 		(*set_options)[field] = assigned_value;
 		break;

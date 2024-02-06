@@ -41,7 +41,7 @@ void confwrite_list(FILE *out, char *prefix, int val, const struct keyword_def *
 {
 	char *sep = "";
 
-	for (const struct sparse_name *kev  = k->valid_sparse_name; kev->name != NULL; kev++) {
+	for (const struct sparse_name *kev  = k->sparse_name; kev->name != NULL; kev++) {
 		unsigned int mask = kev->value;
 
 		if (mask != 0 && (val & mask) == mask) {
@@ -100,26 +100,25 @@ static void confwrite_int(FILE *out,
 			}
 			break;
 
+		case kt_host:
+			/* special enumeration */
+			if (options_set[k->field]) {
+				fprintf(out, "\t%s%s=%s\n", side,
+					k->keyname, strings[k->field]);
+			}
+			break;
+
 		case kt_sparse_name:
-		case kt_loose_enum:
 			/* special enumeration */
 			if (options_set[k->field]) {
 				int val = options[k->field];
 				fprintf(out, "\t%s%s=", side, k->keyname);
-
-				if (k->type == kt_loose_enum &&
-				    val == LOOSE_ENUM_OTHER) {
-					fprintf(out, "%s\n",
-						strings[k->field]);
-				} else {
-					for (const struct sparse_name *kev = k->valid_sparse_name;
-					     kev->name != NULL; kev++) {
-						/* XXX: INT vs UNSIGNED magic? */
-						if ((int)kev->value == val) {
-							break;
-						}
+				for (const struct sparse_name *kev = k->sparse_name;
+				     kev->name != NULL; kev++) {
+					/* XXX: INT vs UNSIGNED magic? */
+					if ((int)kev->value == val) {
+						break;
 					}
-					fprintf(out, "\n");
 				}
 			}
 			break;
@@ -206,7 +205,7 @@ static void confwrite_str(FILE *out,
 		case kt_bool:
 		case kt_sparse_name:
 		case kt_lset:
-		case kt_loose_enum:
+		case kt_host:
 			/* special enumeration */
 			break;
 
