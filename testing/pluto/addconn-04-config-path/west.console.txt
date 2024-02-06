@@ -38,7 +38,7 @@ west #
 west #
  ipsec addconn --verbose --config /etc/ipsec.conf --checkconfig
 opening file: /etc/ipsec.conf
-ipsec addconn: /etc/ipsec.d/include-bomb.conf:3: max inclusion depth reached
+ipsec addconn: /etc/ipsec.d/include-bomb.conf:3: warning: including '/etc/ipsec.d/include-bomb.conf' exceeds max inclusion depth of 10
 west #
  echo done
 done

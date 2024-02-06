@@ -79,7 +79,7 @@ ipsec addconn: /etc/ipsec.conf:7: warning: overriding earlier 'config setup' key
 ipsec addconn: /etc/ipsec.conf:8: warning: overriding earlier 'config setup' keyword: plutodebug=all
 ipsec addconn: /etc/ipsec.conf:9: warning: overriding earlier 'config setup' keyword: dumpdir=/tmp
 ipsec addconn: /etc/ipsec.conf:10: warning: overriding earlier 'config setup' keyword: protostack=xfrm
-ipsec addconn: /etc/ipsec.conf:21: max inclusion depth reached
+ipsec addconn: /etc/ipsec.conf:21: warning: including '/etc/ipsec.conf' exceeds max inclusion depth of 10
 "west": added IKEv1 connection
 west #
  
