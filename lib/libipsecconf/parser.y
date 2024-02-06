@@ -533,12 +533,6 @@ static bool parser_kw_sparse_name(struct keyword *kw, const char *yytext,
 		return true;
 	}
 
-	/* perhaps an unsigned integer? */
-	if (shunk_to_uintmax(shunk1(yytext), NULL, /*base*/10, number) == NULL) {
-		/* stored in NUMBER */
-		return true;
-	}
-
 	/*
 	 * We didn't find anything, complain.
 	 *
