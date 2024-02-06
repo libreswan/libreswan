@@ -673,34 +673,6 @@ uintmax_t parser_enum(const struct keyword_def *kd, const char *s)
 	exit(1);
 }
 
-lset_t parser_lset(const struct keyword_def *kd, const char *value)
-{
-	assert(kd->type == kt_lset);
-
-	lmod_t result;
-	zero(&result);
-
-	/*
-	 * Use lmod_args() since it both knows how to parse a comma
-	 * separated list and can handle no-XXX (ex: all,no-xauth).
-	 * The final set of enabled bits is returned in .set.
-	 */
-	if (!lmod_arg(&result, kd->info, value, true/*enable*/)) {
-		/*
-		 * If the lookup failed, complain (and exit!).
-		 *
-		 * XXX: the error diagnostic is a little vague -
-		 * should lmod_arg() instead return the error?
-		 */
-		fprintf(stderr, "ERROR: %s: %d: keyword %s, invalid value: %s\n",
-			parser_cur_filename(), parser_cur_line(),
-			kd->keyname, value);
-		exit(1);
-	}
-
-	return result.set;
-}
-
 uintmax_t parser_loose_enum(struct keyword *k, const char *s)
 {
 	const struct keyword_def *kd = k->keydef;

@@ -38,6 +38,7 @@
 #include "ipsecconf/parser-flex.h"
 #include "ipsecconf/confread.h"
 #include "lswlog.h"
+#include "lmod.h"
 
 #define YYERROR_VERBOSE
 #define ERRSTRING_LEN	256
@@ -481,6 +482,33 @@ static bool parser_kw_byte(struct keyword *kw, const char *yytext,
 	return true;
 }
 
+static bool parser_kw_lset(struct keyword *kw, const char *yytext,
+			   uintmax_t *number, struct logger *logger)
+{
+	lmod_t result = {0};
+
+	/*
+	 * Use lmod_args() since it both knows how to parse a comma
+	 * separated list and can handle no-XXX (ex: all,no-xauth).
+	 * The final set of enabled bits is returned in .set.
+	 */
+	if (!lmod_arg(&result, kw->keydef->info, yytext, true/*enable*/)) {
+		/*
+		 * If the lookup failed, complain.
+		 *
+		 * XXX: the error diagnostic is a little vague -
+		 * should lmod_arg() instead return the error?
+		 */
+		parser_kw_warning(logger, kw, yytext, "invalid, keyword ignored");
+		return false;
+	}
+
+	/* no truncation */
+	PEXPECT(logger, sizeof(*number) == sizeof(result.set));
+	(*number) = result.set;
+	return true;
+}
+
 void parser_kw(struct keyword *kw, const char *string, struct logger *logger)
 {
 	uintmax_t number = 0;		/* neutral placeholding value */
@@ -488,7 +516,7 @@ void parser_kw(struct keyword *kw, const char *string, struct logger *logger)
 
 	switch (kw->keydef->type) {
 	case kt_lset:
-		number = parser_lset(kw->keydef, string); /* XXX: truncates! */
+		ok = parser_kw_lset(kw, string, &number, logger);
 		break;
 	case kt_enum:
 		number = parser_enum(kw->keydef, string);
