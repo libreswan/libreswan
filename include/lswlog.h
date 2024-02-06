@@ -66,12 +66,13 @@ enum rc_type {
 
 	RC_SUCCESS = 4,			/* success (exit status 0) */
 
-	/*
-	 * XXX: Clearly this is reuse of numbers is broken.
-	 */
+	/* entry of secrets */
+	RC_ENTERSECRET = 10,
+	RC_USERPROMPT = 11,
+
+	RC_EXIT_FLOOR = 20,
 
 	/* improper request */
-	RC_EXIT_FLOOR = 20,
 	RC_DUPNAME = 20,	/* attempt to reuse a connection name */
 	RC_UNKNOWN_NAME = 21,	/* connection name unknown or state number */
 	RC_ORIENT = 22,		/* cannot orient connection: neither end is us */
@@ -88,20 +89,16 @@ enum rc_type {
 	RC_WHACK_PROBLEM = 33,	/* whack-detected problem */
 
 	/* permanent failure */
-	RC_BADWHACKMESSAGE = 30,
-	RC_NORETRANSMISSION = 31,
-	RC_INTERNALERR = 32,
-	RC_OPPOFAILURE = 33,	/* Opportunism failed */
-	RC_CRYPTOFAILED = 34,	/* system too busy to perform required
+	RC_BADWHACKMESSAGE = 50,
+	RC_NORETRANSMISSION = 51,
+	RC_INTERNALERR = 52,
+	RC_OPPOFAILURE = 53,	/* Opportunism failed */
+	RC_CRYPTOFAILED = 54,	/* system too busy to perform required
 				 * cryptographic operations */
-	RC_AGGRALGO = 35,	/* multiple algorithms requested in
+	RC_AGGRALGO = 55,	/* multiple algorithms requested in
 				 * phase 1 aggressive */
-	RC_FATAL = 36,		/* fatal error encountered, and
+	RC_FATAL = 56,		/* fatal error encountered, and
 				 * negotiation aborted */
-
-	/* entry of secrets */
-	RC_ENTERSECRET = 40,
-	RC_USERPROMPT = 41,
 
 	RC_EXIT_ROOF = 100,
 };
