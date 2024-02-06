@@ -11,8 +11,8 @@ west #
  # expect obsolete keywords
 west #
  ipsec auto --add west
-ipsec addconn: /etc/ipsec.conf:11: warning: obsolete 'config setup' keyword ignored: interfaces
-ipsec addconn: /etc/ipsec.conf:12: warning: obsolete 'config setup' keyword ignored: ikev1-secctx-attr-type
+ipsec addconn: /etc/ipsec.conf:11: warning: obsolete 'config setup' keyword ignored: interfaces=blah
+ipsec addconn: /etc/ipsec.conf:12: warning: obsolete 'config setup' keyword ignored: ikev1-secctx-attr-type=blah
 "west": added IKEv1 connection
 west #
  
