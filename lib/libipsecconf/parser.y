@@ -438,54 +438,48 @@ void parser_free_conf(struct config_parsed *cfg)
 	}
 }
 
-static void new_parser_kw(struct keyword *keyword,
-			  const char *string,
+static void new_parser_kw(struct keyword *kw,
+			  const char *yytext,
 			  uintmax_t number,
 			  struct logger *logger)
 {
 	/* both means no prefix */
-	const char *leftright =
-		(keyword->keyleft && keyword->keyright ? "" :
-		 keyword->keyleft ? "left" :
-		 keyword->keyright ? "right" :
-		 "");
 	const char *section = "???";
-	const char *eqs = (string == NULL ? "" : "=");
-	const char *value = (string == NULL ? "" : string);
 	switch (parser.section) {
 	case SECTION_CONFIG_SETUP:
 		section = "'config setup'";
-		if ((keyword->keydef->validity & kv_config) == LEMPTY) {
-			yyerror(logger, "warning: invalid %s keyword ignored: %s%s%s%s",
-				section, leftright, keyword->keydef->keyname, eqs, value);
+		if ((kw->keydef->validity & kv_config) == LEMPTY) {
+			parser_kw_warning(logger, kw, yytext,
+					  "invalid %s keyword ignored",
+					  section);
 			/* drop it on the floor */
 			return;
 		}
 		break;
 	case SECTION_CONN:
 		section = "conn";
-		if ((keyword->keydef->validity & kv_conn) == LEMPTY) {
-			yyerror(logger, "warning: invalid %s keyword ignored: %s%s%s%s",
-				section, leftright, keyword->keydef->keyname, eqs, value);
+		if ((kw->keydef->validity & kv_conn) == LEMPTY) {
+			parser_kw_warning(logger, kw, yytext,
+					  "invalid %s keyword ignored", section);
 			/* drop it on the floor */
 			return;
 		}
 		break;
 	case SECTION_CONN_DEFAULT:
 		section = "'conn %%default'";
-		if ((keyword->keydef->validity & kv_conn) == LEMPTY ||
-		    keyword->keydef->field == KSCF_ALSO) {
-			yyerror(logger, "warning: invalid %s keyword ignored: %s%s%s%s",
-				section, leftright, keyword->keydef->keyname, eqs, value);
+		if ((kw->keydef->validity & kv_conn) == LEMPTY ||
+		    kw->keydef->field == KSCF_ALSO) {
+			parser_kw_warning(logger, kw, yytext,
+					  "invalid %s keyword ignored", section);
 			/* drop it on the floor */
 			return;
 		}
 		break;
 	}
 
-	if (keyword->keydef->type == kt_obsolete) {
-		yyerror(logger, "warning: obsolete %s keyword ignored: %s%s%s%s",
-			section, leftright, keyword->keydef->keyname, eqs, value);
+	if (kw->keydef->type == kt_obsolete) {
+		parser_kw_warning(logger, kw, yytext,
+				  "obsolete %s keyword ignored", section);
 		/* drop it on the floor */
 		return;
 	}
@@ -493,21 +487,21 @@ static void new_parser_kw(struct keyword *keyword,
 	/* Find end, while looking for duplicates. */
 	struct kw_list **end;
 	for (end = parser.kw; (*end) != NULL; end = &(*end)->next) {
-		if ((*end)->keyword.keydef != keyword->keydef) {
+		if ((*end)->keyword.keydef != kw->keydef) {
 			continue;
 		}
-		if (((*end)->keyword.keyleft != keyword->keyleft) &&
-		    ((*end)->keyword.keyright != keyword->keyright)) {
+		if (((*end)->keyword.keyleft != kw->keyleft) &&
+		    ((*end)->keyword.keyright != kw->keyright)) {
 			continue;
 		}
-		if (keyword->keydef->validity & kv_duplicateok) {
+		if (kw->keydef->validity & kv_duplicateok) {
 			continue;
 		}
-		yyerror(logger, "warning: overriding earlier %s keyword: %s%s%s%s",
-			section, leftright, keyword->keydef->keyname, eqs, value);
+		parser_kw_warning(logger, kw, yytext,
+				  "overriding earlier %s keyword", section);
 		/* ulgh; not pfree()/clone_str() */
 		free((*end)->string);
-		(*end)->string = (string != NULL ? strdup(string) : NULL);
+		(*end)->string = (yytext != NULL ? strdup(yytext) : NULL);
 		(*end)->number = number;
 		return;
 	}
@@ -519,8 +513,8 @@ static void new_parser_kw(struct keyword *keyword,
 	struct kw_list *new = malloc(sizeof(struct kw_list));
 	PASSERT(logger, new != NULL);
 	(*new) = (struct kw_list) {
-		.keyword = *keyword,
-		.string = (string != NULL ? strdup(string) : NULL),
+		.keyword = *kw,
+		.string = (yytext != NULL ? strdup(yytext) : NULL),
 		.number = number,
 	};
 
