@@ -409,7 +409,6 @@ struct config_parsed {
 
 extern const struct keyword_def ipsec_conf_keywords[];
 
-uintmax_t parser_enum(const struct keyword_def *kd, const char *s);
 uintmax_t parser_loose_enum(struct keyword *k, const char *s);
 
 #endif /* _KEYWORDS_H_ */

@@ -647,32 +647,6 @@ int parser_find_keyword(const char *s, YYSTYPE *lval)
 	return keywordtype;
 }
 
-uintmax_t parser_enum(const struct keyword_def *kd, const char *s)
-{
-	assert(kd->type == kt_enum);
-	assert(kd->validenum != NULL && kd->validenum != NULL);
-
-	const struct sparse_name *sn = sparse_lookup(kd->validenum, s);
-	if (sn != NULL) {
-		return sn->value;
-	}
-
-	/* perhaps an unsigned integer? */
-	uintmax_t number;
-	if (shunk_to_uintmax(shunk1(s), NULL, /*base*/10, &number) == NULL) {
-		return number;
-	}
-
-	/* we didn't find anything, complain */
-	fprintf(stderr,
-		"ERROR: %s: %d: keyword %s, invalid value: %s\n",
-		parser_cur_filename(),
-		parser_cur_line(),
-		kd->keyname,
-		s);
-	exit(1);
-}
-
 uintmax_t parser_loose_enum(struct keyword *k, const char *s)
 {
 	const struct keyword_def *kd = k->keydef;

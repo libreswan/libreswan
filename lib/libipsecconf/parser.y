@@ -509,6 +509,32 @@ static bool parser_kw_lset(struct keyword *kw, const char *yytext,
 	return true;
 }
 
+static bool parser_kw_enum(struct keyword *kw, const char *yytext,
+			   uintmax_t *number, struct logger *logger)
+{
+	PASSERT(logger, kw->keydef->validenum != NULL);
+
+	const struct sparse_name *sn = sparse_lookup(kw->keydef->validenum, yytext);
+	if (sn != NULL) {
+		(*number) = sn->value;
+		return true;
+	}
+
+	/* perhaps an unsigned integer? */
+	if (shunk_to_uintmax(shunk1(yytext), NULL, /*base*/10, number) == NULL) {
+		/* stored in NUMBER */
+		return true;
+	}
+
+	/*
+	 * We didn't find anything, complain.
+	 *
+	 * XXX: call jam_sparse_names() to list what is valid?
+	 */
+	parser_kw_warning(logger, kw, yytext, "invalid, keyword ignored");
+	return false;
+}
+
 void parser_kw(struct keyword *kw, const char *string, struct logger *logger)
 {
 	uintmax_t number = 0;		/* neutral placeholding value */
@@ -519,7 +545,7 @@ void parser_kw(struct keyword *kw, const char *string, struct logger *logger)
 		ok = parser_kw_lset(kw, string, &number, logger);
 		break;
 	case kt_enum:
-		number = parser_enum(kw->keydef, string);
+		ok = parser_kw_enum(kw, string, &number, logger);
 		break;
 	case kt_pubkey:
 	case kt_loose_enum:
