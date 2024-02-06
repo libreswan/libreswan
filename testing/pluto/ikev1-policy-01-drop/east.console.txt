@@ -11,13 +11,13 @@ east #
  # should fail
 east #
  ipsec auto --add ikev1
-ipsec addconn: /etc/ipsec.conf:13: warning: overriding earlier 'config setup' keyword: ikev1-policy
+ipsec addconn: /etc/ipsec.conf:13: warning: overriding earlier 'config setup' keyword: ikev1-policy=drop
 "ikev1": failed to add connection: global ikev1-policy does not allow IKEv1 connections
 east #
  # should work but unused
 east #
  ipsec auto --add ikev2
-ipsec addconn: /etc/ipsec.conf:13: warning: overriding earlier 'config setup' keyword: ikev1-policy
+ipsec addconn: /etc/ipsec.conf:13: warning: overriding earlier 'config setup' keyword: ikev1-policy=drop
 "ikev2": added IKEv2 connection
 east #
  echo "initdone"
