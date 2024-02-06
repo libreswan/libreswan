@@ -337,7 +337,7 @@ enum keyword_type {
 	kt_filename,            /* value is a filename string */
 	kt_dirname,             /* value is a dir name string */
 	kt_bool,                /* value is an on/off type */
-	kt_enum,                /* value is from a set of key words */
+	kt_sparse_name,         /* value is from a sparse_name table */
 	kt_lset,                /* a set of values from an enum name */
 	kt_loose_enum,          /* either a string, or a %-prefixed enum */
 	kt_pubkey,              /* a public key, or set of values */
@@ -360,7 +360,7 @@ struct keyword_def {
 	unsigned int validity;          /* has bits from enum keyword_valid (kv_*) */
 	enum keyword_type type;
 	unsigned int field;             /* one of keyword_*_field */
-	const struct sparse_name *validenum;
+	const struct sparse_name *valid_sparse_name;
 	const struct lmod_info *info;
 };
 

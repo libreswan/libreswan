@@ -41,7 +41,7 @@ void confwrite_list(FILE *out, char *prefix, int val, const struct keyword_def *
 {
 	char *sep = "";
 
-	for (const struct sparse_name *kev  = k->validenum; kev->name != NULL; kev++) {
+	for (const struct sparse_name *kev  = k->valid_sparse_name; kev->name != NULL; kev++) {
 		unsigned int mask = kev->value;
 
 		if (mask != 0 && (val & mask) == mask) {
@@ -100,7 +100,7 @@ static void confwrite_int(FILE *out,
 			}
 			break;
 
-		case kt_enum:
+		case kt_sparse_name:
 		case kt_loose_enum:
 			/* special enumeration */
 			if (options_set[k->field]) {
@@ -112,7 +112,7 @@ static void confwrite_int(FILE *out,
 					fprintf(out, "%s\n",
 						strings[k->field]);
 				} else {
-					for (const struct sparse_name *kev = k->validenum;
+					for (const struct sparse_name *kev = k->valid_sparse_name;
 					     kev->name != NULL; kev++) {
 						/* XXX: INT vs UNSIGNED magic? */
 						if ((int)kev->value == val) {
@@ -204,7 +204,7 @@ static void confwrite_str(FILE *out,
 			break;
 
 		case kt_bool:
-		case kt_enum:
+		case kt_sparse_name:
 		case kt_lset:
 		case kt_loose_enum:
 			/* special enumeration */
