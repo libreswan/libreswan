@@ -1459,6 +1459,11 @@ bool open_v2_message(const char *story,
 
 bool close_v2_message(struct v2_message *message)
 {
+	if (impair.add_v2_notification.enabled) {
+		if (!emit_v2N(impair.add_v2_notification.value, message->pbs)) {
+			return false;
+		}
+	}
 
 	switch (message->security) {
 	case ENCRYPTED_PAYLOAD:

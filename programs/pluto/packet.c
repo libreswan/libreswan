@@ -861,6 +861,7 @@ struct_desc ikev2_generic_desc = {
 	.size = sizeof(struct ikev2_generic),
 	.pt = ISAKMP_NEXT_v2NONE,	/* could be any unknown */
 };
+
 /* for IMPAIR_ADD_UNKNOWN_PAYLOAD_TO_* */
 struct_desc ikev2_unknown_payload_desc = {
 	.name = "IKEv2 Unknown Payload",

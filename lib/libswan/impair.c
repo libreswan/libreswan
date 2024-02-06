@@ -286,6 +286,10 @@ struct impairment impairments[] = {
 	E(add_unknown_v2_payload_to_sk, ikev2_exchange_names,
 	  "impair the encrypted part of the exchange"),
 	B(unknown_v2_payload_critical, "include the unknown payload in the encrypted SK payload"),
+
+	E(add_v2_notification, v2_notification_names, "add a notification to the message",
+	  .unsigned_help = "notification"),
+
 	B(ignore_soft_expire, "ignore kernel soft expire events"),
 	B(ignore_hard_expire, "ignore kernel hard expire events"),
 
