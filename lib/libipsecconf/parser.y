@@ -84,7 +84,6 @@ static bool parser_kw_time(struct keyword *kw, const char *yytext,
 %token EQUAL FIRST_SPACES EOL CONFIG SETUP CONN INCLUDE VERSION
 %token <s>      STRING
 %token <k>      KEYWORD
-%token <k>      PERCENTWORD
 %token <k>      BINARYWORD
 %token <k>      BYTEWORD
 %token <k>      COMMENT
@@ -179,25 +178,6 @@ statement_kw:
 		struct keyword kw = $1;
 		const char *string = $3;
 		parser_kw(&kw, string, logger);
-	}
-
-	| PERCENTWORD EQUAL STRING {
-		struct keyword kw = $1;
-		const char *const str = $3;
-		/*const*/ char *endptr;
-		unsigned long val = (errno = 0, strtoul(str, &endptr, 10));
-
-		if (endptr == str) {
-			yyerror(logger, "malformed percentage %s=%s",
-				kw.keydef->keyname, str);
-		} else if (!streq(endptr, "%")) {
-			yyerror(logger, "bad percentage multiplier \"%s\" on %s",
-				endptr, str);
-		} else if (errno != 0 || val > UINT_MAX) {
-			yyerror(logger, "percentage way too large \"%s\"", str);
-		} else {
-			new_parser_kw(&kw, NULL, (unsigned int)val, logger);
-		}
 	}
 	| KEYWORD EQUAL { /* this is meaningless, we ignore it */ }
 	| BINARYWORD EQUAL STRING {
@@ -481,6 +461,32 @@ bool parser_kw_time(struct keyword *kw, const char *yytext,
 	return true;
 }
 
+static bool parser_kw_percent(struct keyword *kw, const char *yytext,
+			      uintmax_t *number, struct logger *logger)
+{
+	shunk_t end;
+	err_t err = shunk_to_uintmax(shunk1(yytext), &end, /*base*/10, number);
+	if (err != NULL) {
+		parser_kw_warning(logger, kw, yytext, "%s, percent keyword ignored", err);
+		return false;
+	}
+
+	if (!hunk_streq(end, "%")) {
+		parser_kw_warning(logger, kw, yytext,
+				  "bad percentage multiplier \""PRI_SHUNK"\", keyword ignored",
+				  pri_shunk(end));
+		return false;
+	}
+
+	if ((*number) > UINT_MAX) {
+		parser_kw_warning(logger, kw, yytext,
+				  "percentage way too large, keyword ignored");
+		return false;
+	}
+
+	return true;
+}
+
 void parser_kw(struct keyword *kw, const char *string, struct logger *logger)
 {
 	uintmax_t number = 0;		/* neutral placeholding value */
@@ -525,6 +531,9 @@ void parser_kw(struct keyword *kw, const char *string, struct logger *logger)
 		break;
 
 	case kt_percent:
+		ok = parser_kw_percent(kw, string, &number, logger);
+		break;
+
 	case kt_binary:
 	case kt_byte:
 		yyerror(logger, "valid keyword, but value is not a number");
