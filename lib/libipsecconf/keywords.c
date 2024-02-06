@@ -628,15 +628,13 @@ int parser_find_keyword(const char *s, YYSTYPE *lval)
 	}
 
 	switch (k->type) {
-	case kt_binary:
-		keywordtype = BINARYWORD;
-		break;
 	case kt_byte:
 		keywordtype = BYTEWORD;
 		break;
 	case kt_comment:
 		keywordtype = COMMENT;
 		break;
+	case kt_binary:
 	case kt_percent:
 	case kt_bool:
 	default:
