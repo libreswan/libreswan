@@ -54,10 +54,16 @@ static struct parser {
 	struct starter_comments_list *comments;
 } parser;
 
+static void parser_kw_warning(struct logger *logger, struct keyword *kw, const char *yytext,
+			      const char *s, ...) PRINTF_LIKE(4);
 static void new_parser_kw(struct keyword *keyword, const char *string, uintmax_t number, struct logger *logger);
-static uintmax_t parser_unsigned(const char *yytext, struct logger *logger);
-static uintmax_t parser_bool(struct keyword *kw, const char *yytext, struct logger *logger);
-static uintmax_t parser_time(struct keyword *kw, const char *yytext, struct logger *logger);
+
+static bool parser_kw_unsigned(struct keyword *kw, const char *yytext,
+			       uintmax_t *number, struct logger *logger);
+static bool parser_kw_bool(struct keyword *kw, const char *yytext,
+			   uintmax_t *number, struct logger *logger);
+static bool parser_kw_time(struct keyword *kw, const char *yytext,
+			   uintmax_t *number, struct logger *logger);
 
 /**
  * Functions
@@ -212,6 +218,7 @@ statement_kw:
 
 		const char *string = $3;	/* neutral placeholding value */
 		uintmax_t number = 0;		/* neutral placeholding value */
+		bool ok = true;
 
 		switch (kw.keydef->type) {
 		case kt_list:
@@ -240,15 +247,15 @@ statement_kw:
 			break;
 
 		case kt_number:
-			number = parser_unsigned(string, logger);
+			ok = parser_kw_unsigned(&kw, string, &number, logger);
 			break;
 
 		case kt_time:
-			number = parser_time(&kw, string, logger);
+			ok = parser_kw_time(&kw, string, &number, logger);
 			break;
 
 		case kt_bool:
-			number = parser_bool(&kw, string, logger);
+			ok = parser_kw_bool(&kw, string, &number, logger);
 			break;
 
 		case kt_percent:
@@ -262,7 +269,10 @@ statement_kw:
 			break;
 		}
 
-		new_parser_kw(&kw, string, number, logger);
+		if (ok) {
+			new_parser_kw(&kw, string, number, logger);
+		}
+
 	}
 
 	| PERCENTWORD EQUAL STRING {
@@ -312,6 +322,32 @@ statement_kw:
 	}
 	;
 %%
+
+void parser_kw_warning(struct logger *logger, struct keyword *kw, const char *yytext,
+		       const char *s, ...)
+{
+	if (save_errors) {
+		LLOG_JAMBUF(RC_LOG, logger, buf) {
+			jam(buf, "%s:%u: warning: ",
+			    parser_cur_filename(),
+			    parser_cur_line());
+			va_list ap;
+			va_start(ap, s);
+			jam_va_list(buf, s, ap);
+			va_end(ap);
+			jam_string(buf, ": ");
+			if (kw->keyleft && !kw->keyright) {
+				jam_string(buf, "left");
+			}
+			if (!kw->keyleft && kw->keyright) {
+				jam_string(buf, "right");
+			}
+			jam_string(buf, kw->keydef->keyname);
+			jam_string(buf, "=");
+			jam_string(buf, yytext);
+		}
+	}
+}
 
 void yyerror(struct logger *logger UNUSED, const char *s, ...)
 {
@@ -492,33 +528,41 @@ static void new_parser_kw(struct keyword *keyword,
 	(*end) = new;
 }
 
-uintmax_t parser_unsigned(const char *yytext, struct logger *logger)
+bool parser_kw_unsigned(struct keyword *kw, const char *yytext,
+			uintmax_t *number, struct logger *logger)
 {
-	uintmax_t number;
-	err_t err = shunk_to_uintmax(shunk1(yytext), NULL, /*base*/10, &number);
+	err_t err = shunk_to_uintmax(shunk1(yytext), NULL, /*base*/10, number);
 	if (err != NULL) {
-		yyerror(logger, "%s: %s", err, yytext);
+		parser_kw_warning(logger, kw, yytext, "%s, keyword ignored", err);
+		return false;
 	}
-	return number;
+	return true;
 }
 
-uintmax_t parser_bool(struct keyword *kw, const char *yytext, struct logger *logger)
+bool parser_kw_bool(struct keyword *kw, const char *yytext,
+		    uintmax_t *number, struct logger *logger)
 {
 	const struct sparse_name *name = sparse_lookup(yn_option_names, yytext);
 	if (name == NULL) {
-		yyerror(logger, "boolean keyword invalid: %s=%s", kw->keydef->keyname, yytext);
-		return 0;
+		parser_kw_warning(logger, kw, yytext, "invalid boolean, keyword ignored");
+		return false;
 	}
 	enum yn_options yn = name->value;
 	switch (yn) {
-	case YN_YES: return true;
-	case YN_NO: return false;
-	case YN_UNSET: break;
+	case YN_YES:
+		(*number) = true;
+		return true;
+	case YN_NO:
+		(*number) = false;
+		return true;
+	case YN_UNSET:
+		break;
 	}
 	bad_case(yn);
 }
 
-uintmax_t parser_time(struct keyword *kw, const char *str, struct logger *logger)
+bool parser_kw_time(struct keyword *kw, const char *yytext,
+		    uintmax_t *number, struct logger *logger)
 {
 	const struct timescale *scale;
 	if (kw->keydef->validity & kv_milliseconds) {
@@ -527,10 +571,12 @@ uintmax_t parser_time(struct keyword *kw, const char *str, struct logger *logger
 		scale = &timescale_seconds;
 	}
 	deltatime_t d;
-	diag_t diag = ttodeltatime(str, &d, scale);
+	diag_t diag = ttodeltatime(yytext, &d, scale);
 	if (diag != NULL) {
-		yyerror(logger, "%s", str_diag(diag));
+		parser_kw_warning(logger, kw, yytext, "%s, keyword ignored", str_diag(diag));
 		pfree_diag(&diag);
+		return false;
 	}
-	return deltamillisecs(d);
+	(*number) = deltamillisecs(d);
+	return true;
 }
