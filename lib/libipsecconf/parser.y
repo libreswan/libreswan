@@ -56,6 +56,9 @@ static struct parser {
 
 static void parser_kw_warning(struct logger *logger, struct keyword *kw, const char *yytext,
 			      const char *s, ...) PRINTF_LIKE(4);
+
+void parser_kw(struct keyword *kw, const char *string, struct logger *logger);
+
 static void new_parser_kw(struct keyword *keyword, const char *string, uintmax_t number, struct logger *logger);
 
 static bool parser_kw_unsigned(struct keyword *kw, const char *yytext,
@@ -152,57 +155,16 @@ kw_section: FIRST_SPACES statement_kw EOL
 
 statement_kw:
 	KEYWORD EQUAL KEYWORD {
+		/*
+		 * Because the third argument was also a keyword, we
+		 * dig up the string representation.
+		 *
+		 * There should be a way to stop the lexer converting
+		 * the third field into a keyword.
+		 */
 		struct keyword kw = $1;
-
-		/* because the third argument was also a keyword, we dig up the string representation. */
 		const char *value = $3.keydef->keyname;
-
-		const char *string = NULL;	/* neutral placeholding value */
-		uintmax_t number = 0;	/* neutral placeholding value */
-
-		switch (kw.keydef->type) {
-		case kt_list:
-			number = parser_enum_list(kw.keydef, value);
-			break;
-		case kt_lset:
-			number = parser_lset(kw.keydef, value);	/* XXX: truncates! */
-			break;
-		case kt_enum:
-			number = parser_enum(kw.keydef, value);
-			break;
-		case kt_pubkey:
-		case kt_loose_enum:
-			number = parser_loose_enum(&kw, value);
-			break;
-		case kt_string:
-		case kt_appendstring:
-		case kt_appendlist:
-		case kt_filename:
-		case kt_dirname:
-		case kt_ipaddr:
-		case kt_bitstring:
-		case kt_idtype:
-		case kt_range:
-		case kt_subnet:
-			string = value;
-			break;
-
-		case kt_bool:
-		case kt_number:
-		case kt_time:
-		case kt_percent:
-		case kt_binary:
-		case kt_byte:
-			yyerror(logger, "keyword value is a keyword, but type not a string");
-			assert(kw.keydef->type != kt_bool);
-			break;
-
-		case kt_comment:
-		case kt_obsolete:
-			break;
-		}
-
-		new_parser_kw(&kw, string, number, logger);
+		parser_kw(&kw, value, logger);
 	}
 	| COMMENT EQUAL STRING {
 		struct starter_comments *new =
@@ -215,64 +177,8 @@ statement_kw:
 	}
 	| KEYWORD EQUAL STRING {
 		struct keyword kw = $1;
-
-		const char *string = $3;	/* neutral placeholding value */
-		uintmax_t number = 0;		/* neutral placeholding value */
-		bool ok = true;
-
-		switch (kw.keydef->type) {
-		case kt_list:
-			number = parser_enum_list(kw.keydef, string);
-			break;
-		case kt_lset:
-			number = parser_lset(kw.keydef, string); /* XXX: truncates! */
-			break;
-		case kt_enum:
-			number = parser_enum(kw.keydef, string);
-			break;
-		case kt_pubkey:
-		case kt_loose_enum:
-			number = parser_loose_enum(&kw, string);
-			break;
-		case kt_string:
-		case kt_appendstring:
-		case kt_appendlist:
-		case kt_filename:
-		case kt_dirname:
-		case kt_ipaddr:
-		case kt_bitstring:
-		case kt_idtype:
-		case kt_range:
-		case kt_subnet:
-			break;
-
-		case kt_number:
-			ok = parser_kw_unsigned(&kw, string, &number, logger);
-			break;
-
-		case kt_time:
-			ok = parser_kw_time(&kw, string, &number, logger);
-			break;
-
-		case kt_bool:
-			ok = parser_kw_bool(&kw, string, &number, logger);
-			break;
-
-		case kt_percent:
-		case kt_binary:
-		case kt_byte:
-			yyerror(logger, "valid keyword, but value is not a number");
-			break;
-
-		case kt_comment:
-		case kt_obsolete:
-			break;
-		}
-
-		if (ok) {
-			new_parser_kw(&kw, string, number, logger);
-		}
-
+		const char *string = $3;
+		parser_kw(&kw, string, logger);
 	}
 
 	| PERCENTWORD EQUAL STRING {
@@ -573,4 +479,63 @@ bool parser_kw_time(struct keyword *kw, const char *yytext,
 	}
 	(*number) = deltamillisecs(d);
 	return true;
+}
+
+void parser_kw(struct keyword *kw, const char *string, struct logger *logger)
+{
+	uintmax_t number = 0;		/* neutral placeholding value */
+	bool ok = true;
+
+	switch (kw->keydef->type) {
+	case kt_list:
+		number = parser_enum_list(kw->keydef, string);
+		break;
+	case kt_lset:
+		number = parser_lset(kw->keydef, string); /* XXX: truncates! */
+		break;
+	case kt_enum:
+		number = parser_enum(kw->keydef, string);
+		break;
+	case kt_pubkey:
+	case kt_loose_enum:
+		number = parser_loose_enum(kw, string);
+		break;
+	case kt_string:
+	case kt_appendstring:
+	case kt_appendlist:
+	case kt_filename:
+	case kt_dirname:
+	case kt_ipaddr:
+	case kt_bitstring:
+	case kt_idtype:
+	case kt_range:
+	case kt_subnet:
+		break;
+
+	case kt_number:
+		ok = parser_kw_unsigned(kw, string, &number, logger);
+		break;
+
+	case kt_time:
+		ok = parser_kw_time(kw, string, &number, logger);
+		break;
+
+	case kt_bool:
+		ok = parser_kw_bool(kw, string, &number, logger);
+		break;
+
+	case kt_percent:
+	case kt_binary:
+	case kt_byte:
+		yyerror(logger, "valid keyword, but value is not a number");
+		break;
+
+	case kt_comment:
+	case kt_obsolete:
+		break;
+	}
+
+	if (ok) {
+		new_parser_kw(kw, string, number, logger);
+	}
 }
