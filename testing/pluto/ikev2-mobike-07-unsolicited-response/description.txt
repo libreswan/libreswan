@@ -1,0 +1,4 @@
+initiator has intermediate disabled; but responder still sends intermediate supported
+
+apparently cisco does this; and in <=4.5 it would crash pluto
+see github/1574

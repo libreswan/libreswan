@@ -1422,6 +1422,7 @@ kvmplutotest	ikev2-mobike-03				good	github/527
 kvmplutotest	ikev2-mobike-04				good
 kvmplutotest	ikev2-mobike-05-gcm			good
 kvmplutotest	ikev2-mobike-06				good
+kvmplutotest	ikev2-mobike-07-unsolicited-response	good
 kvmplutotest	interop-ikev2-strongswan-38-mobike-pool		good
 kvmplutotest 	interop-ikev2-strongswan-38-mobike-initiator	good
 kvmplutotest 	interop-ikev2-strongswan-39-mobike-responder	good
