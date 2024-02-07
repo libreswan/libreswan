@@ -1071,6 +1071,7 @@ kvmplutotest    compress-pluto-02			good
 kvmplutotest    ikev2-14-compress			good
 kvmplutotest    ikev2-14-compress-mismatch		good
 kvmplutotest    ikev2-14-compress-cleanup		wip	github:435
+kvmplutotest	ikev2-14-compress-unsolicited		good
 kvmplutotest	sourceip-01				good
 
 #################################################################
