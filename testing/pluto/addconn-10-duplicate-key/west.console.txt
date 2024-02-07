@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep
 west #
  ipsec addconn --config /etc/ipsec.conf --checkconfig
-ipsec addconn: /etc/ipsec.conf:18: warning: overriding earlier conn keyword: left=192.1.2.46
+ipsec addconn: /etc/ipsec.conf:18: warning: ignoring duplicate conn keyword: left=192.1.2.46
 west #
  
