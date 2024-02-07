@@ -294,7 +294,6 @@ algparse -fips -v2 -pfs 'esp=3des-sha1-modp8192,3des-sha2-modp2048'
 algparse -fips -v2 -pfs 'ah'
 	HMAC_SHA2_512_256
 	HMAC_SHA2_256_128
-	HMAC_SHA1_96
 algparse -fips -v2 -pfs 'ah='
 	ERROR: AH proposal is empty
 algparse -fips -v2 -pfs 'ah=md5'
