@@ -443,7 +443,7 @@ struct state {
 	struct {
 		chunk_t initiator;	/* calculated from my last Intermediate Exchange packet */
 		chunk_t responder;	/* calculated from peers last Intermediate Exchange packet */
-		bool used;		/* both ends agree/use Intermediate Exchange */
+		bool enabled;		/* both ends agree/use Intermediate Exchange */
 		uint32_t id;		/* ID of last IKE_INTERMEDIATE exchange */
 	} st_v2_ike_intermediate;
 

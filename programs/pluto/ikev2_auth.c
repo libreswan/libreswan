@@ -88,7 +88,7 @@ struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
 		DBG_dump_hunk("inputs to hash1 (first packet)", firstpacket);
 		DBG_dump_hunk(nonce_name, *nonce);
 		DBG_dump_hunk("idhash", *idhash);
-		if (ike->sa.st_v2_ike_intermediate.used) {
+		if (ike->sa.st_v2_ike_intermediate.enabled) {
 			DBG_dump_hunk("IntAuth_*_I_A", ia1);
 			DBG_dump_hunk("IntAuth_*_R_A", ia2);
 		}
@@ -101,7 +101,7 @@ struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
 	/* we took the PRF(SK_d,ID[ir]'), so length is prf hash length */
 	passert(idhash->len == ike->sa.st_oakley.ta_prf->prf_output_size);
 	crypt_hash_digest_hunk(ctx, "IDHASH", *idhash);
-	if (ike->sa.st_v2_ike_intermediate.used) {
+	if (ike->sa.st_v2_ike_intermediate.enabled) {
 		crypt_hash_digest_hunk(ctx, "IntAuth_*_I_A", ia1);
 		crypt_hash_digest_hunk(ctx, "IntAuth_*_R_A", ia2);
 		/* IKE AUTH's first Message ID */

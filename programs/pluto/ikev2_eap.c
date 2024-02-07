@@ -720,7 +720,11 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 	if (!emit_local_v2AUTH(ike, &msk, &ike->sa.st_v2_id_payload.mac, response.pbs)) {
 		return STF_INTERNAL_ERROR;
 	}
-	ike->sa.st_v2_ike_intermediate.used = false;
+
+	if (ike->sa.st_v2_ike_intermediate.enabled) {
+		ldbg_sa(ike, "disabling IKE_INTERMEDIATE, but why?");
+		ike->sa.st_v2_ike_intermediate.enabled = false;
+	}
 
 	/*
 	 * Try to build a child.

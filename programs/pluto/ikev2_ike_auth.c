@@ -516,7 +516,10 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 				  "Failed to calculate additional NULL_AUTH");
 			return STF_FATAL;
 		}
-		ike->sa.st_v2_ike_intermediate.used = false;
+		if (ike->sa.st_v2_ike_intermediate.enabled) {
+			ldbg_sa(ike, "disabling IKE_INTERMEDIATE, but why?");
+			ike->sa.st_v2_ike_intermediate.enabled = false;
+		}
 		if (!emit_v2N_hunk(v2N_NULL_AUTH, null_auth, request.pbs)) {
 			free_chunk_content(&null_auth);
 			return STF_INTERNAL_ERROR;
@@ -1204,7 +1207,11 @@ static stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike
 	if (!emit_local_v2AUTH(ike, auth_sig, &ike->sa.st_v2_id_payload.mac, response.pbs)) {
 		return STF_INTERNAL_ERROR;
 	}
-	ike->sa.st_v2_ike_intermediate.used = false;
+
+	if (ike->sa.st_v2_ike_intermediate.enabled) {
+		ldbg_sa(ike, "disabling IKE_INTERMEDIATE, but why?");
+		ike->sa.st_v2_ike_intermediate.enabled = false;
+	}
 
 	/*
 	 * Try to build a child.

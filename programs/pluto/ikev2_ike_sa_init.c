@@ -1124,7 +1124,7 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	    md->pd[PD_v2N_INTERMEDIATE_EXCHANGE_SUPPORTED] != NULL) {
 		if (!emit_v2N(v2N_INTERMEDIATE_EXCHANGE_SUPPORTED, response.pbs))
 			return STF_INTERNAL_ERROR;
-		ike->sa.st_v2_ike_intermediate.used = true;
+		ike->sa.st_v2_ike_intermediate.enabled = true;
 	}
 
 	/*
@@ -1500,7 +1500,7 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 	 */
 	if (md->pd[PD_v2N_INTERMEDIATE_EXCHANGE_SUPPORTED] != NULL) {
 		if (c->config->intermediate) {
-			ike->sa.st_v2_ike_intermediate.used = true;
+			ike->sa.st_v2_ike_intermediate.enabled = true;
 			ldbg_sa(ike, "using intermediate");
 		} else {
 			/* aka CISCO? */
@@ -1565,7 +1565,7 @@ stf_status process_v2_IKE_SA_INIT_response_continue(struct state *ike_sa,
 	 * The IKE_SA_INIT response has been processed, now dispatch
 	 * the next request.
 	 */
-	return (ike->sa.st_v2_ike_intermediate.used /* SHH: GNU style ?: */
+	return (ike->sa.st_v2_ike_intermediate.enabled /* SHH: GNU style ?: */
 		? initiate_v2_IKE_INTERMEDIATE_request
 		: initiate_v2_IKE_AUTH_request)(ike, md);
 }
