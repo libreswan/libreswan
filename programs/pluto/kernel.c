@@ -1339,9 +1339,7 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 		.sa_max_soft_packets = sa_ipsec_soft_packets,
 		.sa_ipsec_max_bytes = c->config->sa_ipsec_max_bytes,
 		.sa_ipsec_max_packets = c->config->sa_ipsec_max_packets,
-		.sec_label = (child->sa.st_v1_seen_sec_label.len > 0 ? child->sa.st_v1_seen_sec_label :
-			      child->sa.st_v1_acquired_sec_label.len > 0 ? child->sa.st_v1_acquired_sec_label :
-			      c->child.sec_label /* assume connection outlive their kernel_sa's */),
+		.sec_label = c->child.sec_label /* assume connection outlive their kernel_sa's */,
 	};
 
 	address_buf sab, dab;
@@ -1356,10 +1354,7 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 	    str_selector(&said_boilerplate.dst.route, &dcb),
 	    /* see above */
 	    pri_shunk(said_boilerplate.sec_label),
-	    (child->sa.st_v1_seen_sec_label.len > 0 ? " (IKEv1 seen)" :
-	     child->sa.st_v1_acquired_sec_label.len > 0 ? " (IKEv1 acquired)" :
-	     c->child.sec_label.len > 0 ? " (IKEv2 this)" :
-	     ""))
+	    (c->child.sec_label.len > 0 ? " (IKEv2 this)" : ""))
 
 	/* set up IPCOMP SA, if any */
 

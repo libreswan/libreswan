@@ -726,10 +726,6 @@ struct state {
 	uint8_t st_reply_xchg;
 	bool st_peer_wants_null;		/* We received IDr payload of type ID_NULL (and we allow auth=NULL / authby=NULL */
 
-	/* IKEv2 stores sec labels in the connection instance */
-	chunk_t st_v1_seen_sec_label;
-	chunk_t st_v1_acquired_sec_label;
-
 	/* IKEv2 IKE SA only */
 	bool st_ike_sent_v2n_mobike_supported;	/* sent MOBIKE_SUPPORTED notify */
 	bool st_ike_seen_v2n_mobike_supported;	/* did we receive MOBIKE_SUPPORTED */

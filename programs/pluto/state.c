@@ -1165,9 +1165,6 @@ void delete_state(struct state *st)
 	pfreeany(st->st_seen_cfg_domains);
 	pfreeany(st->st_seen_cfg_banner);
 
-	free_chunk_content(&st->st_v1_seen_sec_label);
-	free_chunk_content(&st->st_v1_acquired_sec_label);
-
 	free_chunk_content(&st->st_no_ppk_auth);
 	free_chunk_content(&st->st_active_redirect_gw);
 
@@ -1270,10 +1267,6 @@ static struct child_sa *duplicate_state(struct connection *c,
 	child->sa.st_seen_cfg_dns = clone_str(ike->sa.st_seen_cfg_dns, "child st_seen_cfg_dns");
 	child->sa.st_seen_cfg_domains = clone_str(ike->sa.st_seen_cfg_domains, "child st_seen_cfg_domains");
 	child->sa.st_seen_cfg_banner = clone_str(ike->sa.st_seen_cfg_banner, "child st_seen_cfg_banner");
-
-	/* XXX: scary */
-	child->sa.st_v1_acquired_sec_label = ike->sa.st_v1_acquired_sec_label;
-	child->sa.st_v1_seen_sec_label = ike->sa.st_v1_seen_sec_label;
 
 	return child;
 }
