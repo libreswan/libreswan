@@ -299,12 +299,17 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 	 * proposal as needed.
 	 */
 
+	bool transport_mode_accepted =
+		accept_v2_notification(larval_child->sa.logger, request_md,
+				       cc->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT,
+				       v2N_USE_TRANSPORT_MODE);
+
 	enum kernel_mode required_mode =
 		(cc->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT ? KERNEL_MODE_TRANSPORT :
 		 cc->config->child_sa.encap_mode == ENCAP_MODE_TUNNEL ? KERNEL_MODE_TUNNEL :
 		 pexpect(0));
 	enum kernel_mode requested_mode =
-		(request_md->pd[PD_v2N_USE_TRANSPORT_MODE] != NULL ? KERNEL_MODE_TRANSPORT :
+		(transport_mode_accepted ? KERNEL_MODE_TRANSPORT :
 		 KERNEL_MODE_TUNNEL);
 	if (required_mode == requested_mode) {
 		ldbg_sa(larval_child, "local policy is %s and received matching notify",
@@ -741,33 +746,28 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 
 	/* check for Child SA related NOTIFY payloads */
 
+	bool transport_mode_accepted =
+		accept_v2_notification(child->sa.logger, md,
+				       c->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT,
+				       v2N_USE_TRANSPORT_MODE);
+
 	enum kernel_mode required_mode =
 		(c->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT ? KERNEL_MODE_TRANSPORT :
 		 c->config->child_sa.encap_mode == ENCAP_MODE_TUNNEL ? KERNEL_MODE_TUNNEL :
 		 pexpect(0));
 	enum kernel_mode accepted_mode =
-		(md->pd[PD_v2N_USE_TRANSPORT_MODE] != NULL ? KERNEL_MODE_TRANSPORT :
+		(transport_mode_accepted ? KERNEL_MODE_TRANSPORT :
 		 KERNEL_MODE_TUNNEL);
-	if (required_mode == accepted_mode) {
-		ldbg_sa(child, "local policy is %s and received matching notify",
-			enum_name(&kernel_mode_stories, required_mode));
-	} else if (required_mode == KERNEL_MODE_TUNNEL) {
-		/*
-		 * RFC allows us to ignore their (wrong) request for
-		 * transport mode.
-		 */
-		llog_sa(RC_LOG, child,
-			"policy dictates %s, ignoring peer's unsolicited request for %s",
-			enum_name(&kernel_mode_stories, required_mode),
-			enum_name(&kernel_mode_stories, accepted_mode));
-	} else {
-		/* we should have received a matching response */
+	if (required_mode != accepted_mode) {
+		/* we should have accepted a matching response */
 		llog_sa(RC_LOG_SERIOUS, child,
 			"policy dictates %s, but peer requested %s",
 			enum_name(&kernel_mode_stories, required_mode),
 			enum_name(&kernel_mode_stories, accepted_mode));
  		return v2N_NO_PROPOSAL_CHOSEN;
  	}
+	ldbg_sa(child, "local policy is %s and received matching notify",
+		enum_name(&kernel_mode_stories, required_mode));
 	child->sa.st_kernel_mode = required_mode;
 
 	child->sa.st_seen_no_tfc = md->pd[PD_v2N_ESP_TFC_PADDING_NOT_SUPPORTED] != NULL;
