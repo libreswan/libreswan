@@ -76,12 +76,6 @@ static const char default_v2_ah_proposals[] =
 	"SHA2_512_256"
 	","
 	"SHA2_256_128"
-	","
-	/*
-	 * something strongswan might accept; bottom of the preference
-	 * list
-	 */
-	"SHA1_96"
 	;
 
 static const struct ike_alg *default_v2_ah_integ[] = {
