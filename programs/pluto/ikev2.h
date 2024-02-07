@@ -174,4 +174,8 @@ void ldbg_v2_success(struct ike_sa *ike);
 
 bool v2_state_is_expired(struct state *st, const char *verb);
 
+bool accept_v2_notification(struct logger *logger, struct msg_digest *md,
+			    bool enabled, v2_notification_t n);
+
+
 #endif

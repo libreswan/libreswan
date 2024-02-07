@@ -2957,3 +2957,33 @@ bool already_has_larval_v2_child(struct ike_sa *ike, const struct connection *c)
 
 	return false;
 }
+
+bool accept_v2_notification(struct logger *logger, struct msg_digest *md,
+			    bool enabled, v2_notification_t n)
+{
+	enum v2_pd pd = v2_pd_from_notification(n);
+	if (md->pd[pd] != NULL) {
+		if (enabled) {
+			enum_buf eb, rb;
+			ldbg(logger, "accepted %s notification %s",
+			     str_enum_short(&v2_notification_names, n, &eb),
+			     str_enum_short(&message_role_names, v2_msg_role(md), &rb));
+			return true;
+		}
+		if (v2_msg_role(md) == MESSAGE_RESPONSE) {
+			enum_buf eb;
+			llog(RC_LOG, logger,
+			     "unsolicited %s notification response ignored",
+			     str_enum_short(&v2_notification_names, n, &eb));
+		} else {
+			enum_buf eb;
+			ldbg(logger, "%s notification request ignored",
+			     str_enum_short(&v2_notification_names, n, &eb));
+		}
+		return false;
+	}
+	enum_buf eb;
+	ldbg(logger, "%s neither requested nor accepted",
+	     str_enum_short(&v2_notification_names, n, &eb));
+	return false;
+}
