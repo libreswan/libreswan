@@ -1492,16 +1492,25 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 	};
 
 	/*
-	 * If we seen the intermediate AND we are configured to use
+	 * If we see the intermediate AND we are configured to use
 	 * intermediate.
 	 *
 	 * For now, do only one Intermediate Exchange round and
 	 * proceed with IKE_AUTH.
 	 */
-	ike->sa.st_v2_ike_intermediate.used = (c->config->intermediate &&
-					       md->pd[PD_v2N_INTERMEDIATE_EXCHANGE_SUPPORTED] != NULL);
+	if (md->pd[PD_v2N_INTERMEDIATE_EXCHANGE_SUPPORTED] != NULL) {
+		if (c->config->intermediate) {
+			ike->sa.st_v2_ike_intermediate.used = true;
+			ldbg_sa(ike, "using intermediate");
+		} else {
+			/* aka CISCO? */
+			llog_sa(RC_LOG, ike,
+				"unsolicited INTERMEDIATE_EXCHANGE_SUPPORTED notification ignored");
+		}
+	}
 
-	submit_dh_shared_secret(&ike->sa, &ike->sa, ike->sa.st_gr/*initiator needs responder KE*/,
+	submit_dh_shared_secret(&ike->sa, &ike->sa,
+				ike->sa.st_gr/*initiator needs responder KE*/,
 				process_v2_IKE_SA_INIT_response_continue, HERE);
 	return STF_SUSPEND;
 }
