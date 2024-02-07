@@ -196,7 +196,7 @@ static bool fmt_common_shell_out(char *buf,
 		JDipaddr("PLUTO_MY_SOURCEIP", sourceip);
 		if (child != NULL) {
 			JDstr("PLUTO_MOBIKE_EVENT",
-			      (child->sa.st_mobike_del_src_ip ? "yes" : ""));
+			      (child->sa.st_v2_mobike.del_src_ip ? "yes" : ""));
 		}
 	}
 

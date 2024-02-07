@@ -398,7 +398,6 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 	}
 
 	if (ike->sa.st_connection->config->mobike) {
-		ike->sa.st_ike_sent_v2n_mobike_supported = true;
 		if (!emit_v2N(v2N_MOBIKE_SUPPORTED, request.pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
@@ -678,10 +677,10 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 					ike->sa.logger);
 			ike->sa.st_ppk_used = true;
 			llog_sa(RC_LOG, ike,
-				  "PPK AUTH calculated as responder");
+				"PPK AUTH calculated as responder");
 		} else {
 			llog_sa(RC_LOG, ike,
-				  "ignored received PPK_IDENTITY - connection does not require PPK or PPKID not found");
+				"ignored received PPK_IDENTITY - connection does not require PPK or PPKID not found");
 		}
 	}
 	if (md->pd[PD_v2N_NO_PPK_AUTH] != NULL) {
@@ -696,12 +695,22 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 				      no_ppk_auth, "NO_PPK_AUTH extract");
 		}
 	}
-	ike->sa.st_ike_seen_v2n_mobike_supported = md->pd[PD_v2N_MOBIKE_SUPPORTED] != NULL;
-	if (ike->sa.st_ike_seen_v2n_mobike_supported) {
-		dbg("received v2N_MOBIKE_SUPPORTED %s",
-		    ike->sa.st_ike_sent_v2n_mobike_supported ?
-		    "and sent" : "while it did not sent");
+
+	if (md->pd[PD_v2N_MOBIKE_SUPPORTED] != NULL) {
+		if (c->config->mobike) {
+			if (c->remote->host.config->type == KH_ANY) {
+				ldbg_sa(ike, "enabling mobike");
+				/* only allow %any connection to mobike */
+				ike->sa.st_v2_mobike.enabled = true;
+			} else {
+				llog_sa(RC_LOG, ike,
+					"not responding with v2N_MOBIKE_SUPPORTED, that end is not %%any");
+			}
+		} else {
+			ldbg_sa(ike, "received and ignored v2N_MOBIKE_SUPPORTED");
+		}
 	}
+
 	ike->sa.st_ike_seen_v2n_initial_contact = md->pd[PD_v2N_INITIAL_CONTACT] != NULL;
 
 	/*
@@ -1100,15 +1109,6 @@ bool v2_ike_sa_auth_responder_establish(struct ike_sa *ike, bool *send_redirecti
 	}
 
 	/* send response */
-	if (c->config->mobike && ike->sa.st_ike_seen_v2n_mobike_supported) {
-		if (c->remote->host.config->type == KH_ANY) {
-			/* only allow %any connection to mobike */
-			ike->sa.st_ike_sent_v2n_mobike_supported = true;
-		} else {
-			llog_sa(RC_LOG, ike,
-				  "not responding with v2N_MOBIKE_SUPPORTED, that end is not %%any");
-		}
-	}
 
 	if (ike->sa.st_seen_redirect_sup &&
 	    (c->config->redirect.send_always ||
@@ -1151,7 +1151,7 @@ static stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike
 	bool send_cert = ikev2_send_cert_decision(ike);
 
 	/* send any NOTIFY payloads */
-	if (ike->sa.st_ike_sent_v2n_mobike_supported) {
+	if (ike->sa.st_v2_mobike.enabled) {
 		if (!emit_v2N(v2N_MOBIKE_SUPPORTED, response.pbs))
 			return STF_INTERNAL_ERROR;
 	}
@@ -1368,11 +1368,14 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 		return redirect_status;
 	}
 
-	ike->sa.st_ike_seen_v2n_mobike_supported = (md->pd[PD_v2N_MOBIKE_SUPPORTED] != NULL);
-	if (ike->sa.st_ike_seen_v2n_mobike_supported) {
-		dbg("received v2N_MOBIKE_SUPPORTED %s",
-		    (ike->sa.st_ike_sent_v2n_mobike_supported ? "and sent" :
-		     "while it did not sent"));
+	if (md->pd[PD_v2N_MOBIKE_SUPPORTED] != NULL) {
+		if (c->config->mobike) {
+			ldbg_sa(ike, "mobike enabled");
+			ike->sa.st_v2_mobike.enabled = true;
+		} else {
+			llog_sa(RC_LOG, ike,
+				"unsolicited MOBIKE_SUPPORTED notification ignored");
+		}
 	}
 
 	/*

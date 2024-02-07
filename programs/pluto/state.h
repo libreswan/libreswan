@@ -368,13 +368,6 @@ struct state {
 	 */
 	struct iface_endpoint *st_iface_endpoint;  /* where to send from */
 
-	bool st_mobike_del_src_ip;		/* for mobike migrate unroute */
-	/* IKEv2 MOBIKE probe copies */
-	ip_address st_deleted_local_addr;	/* kernel deleted address */
-	ip_endpoint st_mobike_remote_endpoint;
-	ip_endpoint st_mobike_local_endpoint;	/* new address to initiate MOBIKE */
-	ip_address st_mobike_host_nexthop;	/* for updown script */
-
 	/** IKEv1-only things **/
 	/* XXX: union { struct { .. } v1; struct {...} v2;} st? */
 
@@ -727,8 +720,16 @@ struct state {
 	bool st_peer_wants_null;		/* We received IDr payload of type ID_NULL (and we allow auth=NULL / authby=NULL */
 
 	/* IKEv2 IKE SA only */
-	bool st_ike_sent_v2n_mobike_supported;	/* sent MOBIKE_SUPPORTED notify */
-	bool st_ike_seen_v2n_mobike_supported;	/* did we receive MOBIKE_SUPPORTED */
+	struct {
+		bool enabled;			/* did we agree to MOBIKE? */
+		bool del_src_ip;		/* for mobike migrate unroute */
+		/* IKEv2 MOBIKE probe copies */
+		ip_address deleted_local_addr;	/* kernel deleted address */
+		ip_endpoint remote_endpoint;
+		ip_endpoint local_endpoint;	/* new address to initiate MOBIKE */
+		ip_address host_nexthop;	/* for updown script */
+	} st_v2_mobike;
+
 	bool st_ike_seen_v2n_initial_contact;	/* did we receive INITIAL_CONTACT */
 	bool st_v2_childless_ikev2_supported;	/* childless exchange? */
 	/* this a fuzzy bool */

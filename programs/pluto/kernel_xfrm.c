@@ -1192,20 +1192,21 @@ static bool init_xfrm_kernel_migrate(struct child_sa *child,
 		/* WWW what about sec_label? */
 	};
 
-	passert(endpoint_is_specified(child->sa.st_mobike_local_endpoint) != endpoint_is_specified(child->sa.st_mobike_remote_endpoint));
+	passert(endpoint_is_specified(child->sa.st_v2_mobike.local_endpoint) !=
+		endpoint_is_specified(child->sa.st_v2_mobike.remote_endpoint));
 
 	struct jambuf story_jb = ARRAY_AS_JAMBUF(migrate->story);
 	const struct spd_end_info *old_ei;
 	ip_endpoint new_ep;
 
-	if (endpoint_is_specified(child->sa.st_mobike_local_endpoint)) {
+	if (endpoint_is_specified(child->sa.st_v2_mobike.local_endpoint)) {
 		jam_string(&story_jb, "initiator migrate kernel SA ");
 		old_ei = &local;
-		new_ep = child->sa.st_mobike_local_endpoint;
+		new_ep = child->sa.st_v2_mobike.local_endpoint;
 	} else {
 		jam_string(&story_jb, "responder migrate kernel SA ");
 		old_ei = &remote;
-		new_ep = child->sa.st_mobike_remote_endpoint;
+		new_ep = child->sa.st_v2_mobike.remote_endpoint;
 	}
 
 	struct kernel_migrate_end *changing_ke = (old_ei == src) ? &migrate->src : &migrate->dst;

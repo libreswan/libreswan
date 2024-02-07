@@ -2445,8 +2445,7 @@ static void success_v2_state_transition(struct ike_sa *ike,
 	    /*
 	     * Only when MOBIKE is not in the picture.
 	     */
-	    !ike->sa.st_ike_sent_v2n_mobike_supported &&
-	    !ike->sa.st_ike_seen_v2n_mobike_supported &&
+	    !ike->sa.st_v2_mobike.enabled &&
 	    /*
 	     * Only when responding ...
 	     */

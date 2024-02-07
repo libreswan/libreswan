@@ -1972,9 +1972,9 @@ static bool dispatch_1(enum routing_event event,
 		 * XXX: no-op as SPD is still owned?
 		 */
 		set_routing(event, c, RT_UNROUTED_TUNNEL, e);
-		(*e->child)->sa.st_mobike_del_src_ip = true;
+		(*e->child)->sa.st_v2_mobike.del_src_ip = true;
 		do_updown_unroute(c, (*e->child));
-		(*e->child)->sa.st_mobike_del_src_ip = false;
+		(*e->child)->sa.st_v2_mobike.del_src_ip = false;
 		return true;
 
 	case X(RESUME, UNROUTED_TUNNEL, PERMANENT):

@@ -95,17 +95,17 @@ static bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest 
 		/* MOBIKE inititor processing response */
 		old_endpoint = ike->sa.st_iface_endpoint->local_endpoint;
 
-		child->sa.st_mobike_local_endpoint = ike->sa.st_mobike_local_endpoint;
-		child->sa.st_mobike_host_nexthop = ike->sa.st_mobike_host_nexthop;
+		child->sa.st_v2_mobike.local_endpoint = ike->sa.st_v2_mobike.local_endpoint;
+		child->sa.st_v2_mobike.host_nexthop = ike->sa.st_v2_mobike.host_nexthop;
 
-		new_endpoint = ike->sa.st_mobike_local_endpoint;
+		new_endpoint = ike->sa.st_v2_mobike.local_endpoint;
 		break;
 	case MESSAGE_REQUEST:
 		/* MOBIKE responder processing request */
 		old_endpoint = ike->sa.st_remote_endpoint;
 
-		child->sa.st_mobike_remote_endpoint = md->sender;
-		ike->sa.st_mobike_remote_endpoint = md->sender;
+		child->sa.st_v2_mobike.remote_endpoint = md->sender;
+		ike->sa.st_v2_mobike.remote_endpoint = md->sender;
 
 		new_endpoint =md->sender;
 		break;
@@ -146,11 +146,11 @@ static bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest 
 	switch (md_role) {
 	case MESSAGE_RESPONSE:
 		/* MOBIKE initiator processing response */
-		c->local->host.addr = endpoint_address(child->sa.st_mobike_local_endpoint);
+		c->local->host.addr = endpoint_address(child->sa.st_v2_mobike.local_endpoint);
 		dbg("%s() %s.host_port: %u->%u", __func__, c->local->config->leftright,
-		    c->local->host.port, endpoint_hport(child->sa.st_mobike_local_endpoint));
-		c->local->host.port = endpoint_hport(child->sa.st_mobike_local_endpoint);
-		c->local->host.nexthop = child->sa.st_mobike_host_nexthop;
+		    c->local->host.port, endpoint_hport(child->sa.st_v2_mobike.local_endpoint));
+		c->local->host.port = endpoint_hport(child->sa.st_v2_mobike.local_endpoint);
+		c->local->host.nexthop = child->sa.st_v2_mobike.host_nexthop;
 		break;
 	case MESSAGE_REQUEST:
 		/* MOBIKE responder processing request */
@@ -187,8 +187,8 @@ static bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest 
 	if (md_role == MESSAGE_RESPONSE) {
 		/* MOBIKE initiator processing response */
 		connection_resume(child, HERE);
-		ike->sa.st_deleted_local_addr = unset_address;
-		child->sa.st_deleted_local_addr = unset_address;
+		ike->sa.st_v2_mobike.deleted_local_addr = unset_address;
+		child->sa.st_v2_mobike.deleted_local_addr = unset_address;
 		if (dpd_active_locally(child->sa.st_connection) &&
 		    child->sa.st_v2_liveness_event == NULL) {
 			dbg("dpd re-enabled after mobike, scheduling ikev2 liveness checks");
@@ -205,8 +205,7 @@ static bool mobike_check_established(struct ike_sa *ike)
 {
 	struct connection *c = ike->sa.st_connection;
 	bool ret = (c->config->mobike &&
-		    ike->sa.st_ike_seen_v2n_mobike_supported &&
-		    ike->sa.st_ike_sent_v2n_mobike_supported &&
+		    ike->sa.st_v2_mobike.enabled &&
 		    IS_IKE_SA_ESTABLISHED(&ike->sa));
 
 	return ret;
@@ -279,7 +278,7 @@ bool process_v2N_mobike_requests(struct ike_sa *ike, struct msg_digest *md,
 		 * for only this reply packet, without updating IKE
 		 * endpoint and without UPDATE_SA.
 		 */
-		ike->sa.st_mobike_remote_endpoint = md->sender;
+		ike->sa.st_v2_mobike.remote_endpoint = md->sender;
 	}
 
 	if (ntfy_update_sa) {
@@ -367,7 +366,7 @@ bool add_mobike_response_payloads(shunk_t cookie2, struct msg_digest *md,
 static payload_emitter_fn add_mobike_payloads; /* type check */
 static bool add_mobike_payloads(struct state *st, pb_stream *pbs)
 {
-	ip_endpoint local_endpoint = st->st_mobike_local_endpoint;
+	ip_endpoint local_endpoint = st->st_v2_mobike.local_endpoint;
 	ip_endpoint remote_endpoint = st->st_remote_endpoint;
 	return emit_v2N(v2N_UPDATE_SA_ADDRESSES, pbs) &&
 		ikev2_out_natd(&local_endpoint, &remote_endpoint,
@@ -393,7 +392,7 @@ void record_newaddr(ip_address *ip, char *a_type)
 			continue;
 		}
 
-		if (address_is_specified(ike->sa.st_deleted_local_addr)) {
+		if (address_is_specified(ike->sa.st_v2_mobike.deleted_local_addr)) {
 			/*
 			 * A work around for delay between new address
 			 * and new route A better fix would be listen
@@ -438,8 +437,8 @@ void record_deladdr(ip_address *ip, char *a_type)
 			continue;
 		}
 
-		ip_address ip_p = ike->sa.st_deleted_local_addr;
-		ike->sa.st_deleted_local_addr = local_address;
+		ip_address ip_p = ike->sa.st_v2_mobike.deleted_local_addr;
+		ike->sa.st_v2_mobike.deleted_local_addr = local_address;
 		struct child_sa *child = child_sa_by_serialno(ike->sa.st_connection->newest_ipsec_sa);
 		if (child == NULL) {
 			llog_pexpect(ike->sa.logger, HERE,
@@ -539,8 +538,8 @@ static void initiate_mobike_probe(struct ike_sa *ike,
 	 * The interface changed (new address in .address) but
 	 * continue to use the existing port.
 	 */
-	ike->sa.st_mobike_local_endpoint = new_iface->local_endpoint;
-	ike->sa.st_mobike_host_nexthop = new_nexthop; /* for updown, after xfrm migration */
+	ike->sa.st_v2_mobike.local_endpoint = new_iface->local_endpoint;
+	ike->sa.st_v2_mobike.host_nexthop = new_nexthop; /* for updown, after xfrm migration */
 
 	/* notice how it gets set back below */
 	struct iface_endpoint *old_iface = ike->sa.st_iface_endpoint;
