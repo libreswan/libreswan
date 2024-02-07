@@ -355,12 +355,17 @@ static void new_parser_kw(struct keyword *kw,
 		if (kw->keydef->validity & kv_duplicateok) {
 			continue;
 		}
-		parser_kw_warning(logger, kw, yytext,
-				  "overriding earlier %s keyword", section);
-		/* ulgh; not pfree()/clone_str() */
-		free((*end)->string);
-		(*end)->string = (yytext != NULL ? strdup(yytext) : NULL);
-		(*end)->number = number;
+		/* note the weird behaviour! */
+		if (parser.section == SECTION_CONFIG_SETUP) {
+			parser_kw_warning(logger, kw, yytext,
+					  "overriding earlier %s keyword with new value", section);
+			/* ulgh; not pfree()/clone_str() */
+			free((*end)->string);
+			(*end)->string = (yytext != NULL ? strdup(yytext) : NULL);
+			(*end)->number = number;
+			return;
+		}
+		parser_kw_warning(logger, kw, yytext, "ignoring duplicate %s keyword", section);
 		return;
 	}
 
