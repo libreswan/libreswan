@@ -13,25 +13,20 @@
  * for more details.
  */
 
-#include "keywords.h"
-#include "constants.h"
+#include "lswcdefs.h"		/* for ARRAY_REF() */
+#include "enum_names.h"
+#include "sa_role.h"
 
-struct keyword sa_role_keywords[] = {
-#define S(E, H) [SA_##E] = { .name = "SA_" #E, .sname = #E, .value = SA_##E, .details = H, }
-	S(INITIATOR, "SA initiator"),
-	S(RESPONDER, "SA responder"),
+const char *sa_role_name[] = {
+#define S(E) [E - SA_ROLE_FLOOR] = #E
+	S(SA_INITIATOR),
+	S(SA_RESPONDER),
 #undef S
 };
 
-struct keywords sa_role_names =
-	SPARSE_KEYWORDS("SA role", sa_role_keywords);
-
-struct keyword message_role_keywords[] = {
-#define S(E, H) [MESSAGE_##E] = { .name = "MESSAGE_" #E, .sname = #E, .value = MESSAGE_##E, .details = H, }
-	S(REQUEST, "message request"),
-	S(RESPONSE, "message response"),
-#undef S
+const struct enum_names sa_role_names = {
+	SA_ROLE_FLOOR, SA_ROLE_ROOF-1,
+	ARRAY_REF(sa_role_name),
+	"SA_ROLE_",
+	NULL,
 };
-
-struct keywords message_role_names =
-	SPARSE_KEYWORDS("message role", message_role_keywords);

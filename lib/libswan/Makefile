@@ -115,7 +115,8 @@ endif
 
 OBJS += log_ip.o
 OBJS += fd.o
-OBJS += role.o
+OBJS += message_role.o
+OBJS += sa_role.o
 
 OBJS += datatot.o
 

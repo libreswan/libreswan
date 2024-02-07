@@ -23,6 +23,7 @@
 #include "lswlog.h"		/* for bad_case() */
 
 #include "rekeyfuzz.h"
+#include "sa_role.h"
 
 /*
  * Important policy lies buried here.

@@ -22,6 +22,7 @@
 struct state;
 struct connection;
 struct list_entry;
+enum sa_role;
 
 void state_db_init(struct logger *logger);
 void state_db_check(struct logger *logger);

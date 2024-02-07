@@ -56,6 +56,8 @@
 #include "ike_spi.h"
 #include "pluto_timing.h"	/* for statetime_t */
 #include "ikev2_msgid.h"
+#include "message_role.h"
+#include "sa_role.h"
 
 struct whack_message;
 struct v2_state_transition;

@@ -622,50 +622,6 @@ enum perspective {
 
 extern const struct enum_names perspective_names;
 
-/*
- * The IKEv2 message role.  Is this message a request or a response
- * (to a request) as determined by the IKEv2 "R (Response)" flag.
- *
- * Since either end can initiate a request either end can set the
- * R(Response) flag.
- *
- * During a CHILD_SA exchange it is the request initiator (receives
- * the MESSAGE_RESPONSE) and request responder (receives the
- * MESSAGE_REQUEST), and not the original (IKE SA) initiator /
- * responder that determine how crypto material is carved up.
- */
-
-enum message_role {
-	NO_MESSAGE = 0,
-#define MESSAGE_ROLE_FLOOR 1
-	MESSAGE_REQUEST = 1, /* MSG_R missing */
-	MESSAGE_RESPONSE = 2, /* MSR_R present */
-#define MESSAGE_ROLE_ROOF 3
-};
-
-extern struct keywords message_role_names;
-
-/*
- * The SA role determined by who initiated the SA.
- *
- * For all IKEv2 exchanges establishing or rekeying an SA it is
- * determined by who initiated that SA exchange.  During the exchange,
- * the SA_INITIATOR will always have the R(esponse) bit clear and the
- * SA_RESPONDER will always have the R(esponse) bit set.
- *
- * The IKE SA's role is used to identify which SPI (cookie) to use in
- * the header by setting or clearing the I(Initiator) flag.
- *
- * The IKE or CHILD SA role is used when assigning keying material.
- */
-
-enum sa_role {
-	SA_INITIATOR = 1,
-	SA_RESPONDER = 2,
-};
-
-extern struct keywords sa_role_names;
-
 #ifdef USE_IKEv1
 #define V1_PHASE1_INITIATOR_STATES  (LELEM(STATE_MAIN_I1) | \
 				     LELEM(STATE_MAIN_I2) | \

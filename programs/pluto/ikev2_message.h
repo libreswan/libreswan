@@ -19,6 +19,7 @@
 #include "chunk.h"
 
 #include "packet.h"		/* for pb_stream */
+#include "message_role.h"
 
 struct msg_digest;
 struct dh_desc;
