@@ -75,10 +75,19 @@ enum v2_pd v2_pd_from_notification(v2_notification_t n)
 #undef C
 }
 
-void decode_v2N_payload(struct logger *unused_logger UNUSED, struct msg_digest *md,
+void decode_v2N_payload(struct logger *logger, struct msg_digest *md,
 			const struct payload_digest *notify)
 {
 	v2_notification_t n = notify->payload.v2n.isan_type;
+
+	if (impair.ignore_v2_notification.enabled &&
+	    impair.ignore_v2_notification.value == n) {
+		enum_buf eb;
+		llog(RC_LOG, logger, "IMPAIR: ignoring %s notification",
+		     str_enum_short(&v2_notification_names, n, &eb));
+		return;
+	}
+
 	const char *type;
 	if (n < 16384) {
 		type = "error";

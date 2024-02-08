@@ -211,7 +211,6 @@ struct impairment impairments[] = {
 	B(minor_version_bump, "cause pluto to send an IKE minor version that's higher then we support."),
 	B(childless_ikev2_supported, "causes pluto to omit/ignore the CHILDLESS_IKEV2_SUPPORTED notify in the IKE_SA_INIT exchange"),
 
-	B(ignore_v2N_SIGNATURE_HASH_ALGORITHMS, "causes pluto to ignore the notification SIGNATURE_HASH_ALGORITHMS in the IKE_SA_INIT exchange"),
 	B(omit_v2N_SIGNATURE_HASH_ALGORITHMS, "causes pluto to omit the notification SIGNATURE_HASH_ALGORITHMS in the IKE_SA_INIT exchange"),
 
 	B(proposal_parser, "impair algorithm parser - what you see is what you get"),
@@ -288,6 +287,8 @@ struct impairment impairments[] = {
 	B(unknown_v2_payload_critical, "include the unknown payload in the encrypted SK payload"),
 
 	E(add_v2_notification, v2_notification_names, "add a notification to the message",
+	  .unsigned_help = "notification"),
+	E(ignore_v2_notification, v2_notification_names, "ignore a notification in the message",
 	  .unsigned_help = "notification"),
 
 	B(ignore_soft_expire, "ignore kernel soft expire events"),
