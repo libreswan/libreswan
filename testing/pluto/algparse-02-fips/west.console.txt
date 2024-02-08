@@ -31,7 +31,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  grep ^FIPS /tmp/pluto.log
-FIPS Mode: YES
+FIPS Mode: ON
 FIPS mode enabled for pluto daemon
 FIPS HMAC integrity support [not required]
 FIPS Encryption algorithms:

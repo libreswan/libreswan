@@ -29,7 +29,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  grep ^FIPS /tmp/pluto.log
-FIPS Mode: NO
+FIPS Mode: OFF
 FIPS mode disabled for pluto daemon
 FIPS HMAC integrity support [not required]
 west #

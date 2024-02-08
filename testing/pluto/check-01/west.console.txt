@@ -45,7 +45,7 @@ ipsec _asn1check: leak detective found no leaks
 west #
  ipsec _vendoridcheck > /dev/null || echo failed
 ipsec _vendoridcheck: Initializing NSS
-ipsec _vendoridcheck: FIPS Mode: NO
+ipsec _vendoridcheck: FIPS Mode: OFF
 west #
  ipsec _ttodatacheck -r
 west #
