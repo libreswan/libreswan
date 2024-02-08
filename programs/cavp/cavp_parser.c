@@ -19,7 +19,7 @@
 #include <stdlib.h>
 #include <regex.h>
 
-#include "lswfips.h"
+#include "fips_mode.h"
 #include "lswnss.h"
 
 #include "cavp.h"

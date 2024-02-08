@@ -40,10 +40,4 @@ else
     service ipsec disable
 fi
 
-# generate up-to-date FIPS .hmac files
-
-if which fipshmac > /dev/null 2>&1; then
-    make install-fipshmac
-fi
-
 echo "$0 finished on $(hostname) at $(date)"

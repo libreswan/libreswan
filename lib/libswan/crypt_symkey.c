@@ -19,7 +19,7 @@
 #include "lswlog.h"
 #include "ike_alg.h"
 #include "crypt_symkey.h"
-#include "lswfips.h"
+#include "fips_mode.h"
 #include "lswnss.h"
 #include "ike_alg_encrypt.h"		/* for ike_alg_encrypt_null */
 
@@ -107,7 +107,7 @@ void DBG_symkey(struct logger *logger, const char *prefix, const char *name, PK1
 	}
 #if 0
 	if (DBGP(DBG_CRYPT)) {
-		if (libreswan_fipsmode()) {
+		if (is_fips_mode()) {
 			DBG_log("%s secured by FIPS", prefix);
 		} else {
 			chunk_t bytes = chunk_from_symkey(prefix, key, logger);

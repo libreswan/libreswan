@@ -28,7 +28,7 @@
 #include "connections.h"
 #include "rcv_whack.h"
 #include "log.h"
-#include "lswfips.h"
+#include "fips_mode.h"
 #include "show.h"
 #include "kernel.h"
 #ifdef USE_SECCOMP

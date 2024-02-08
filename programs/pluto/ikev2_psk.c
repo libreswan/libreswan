@@ -49,7 +49,7 @@
 #include "keys.h"
 #include "crypt_prf.h"
 #include "crypt_symkey.h"
-#include "lswfips.h"
+#include "fips_mode.h"
 #include "ikev2_prf.h"
 #include "ikev2_psk.h"
 
@@ -167,7 +167,7 @@ static diag_t ikev2_calculate_psk_sighash(bool verify,
 		/* XXX: this should happen during connection load */
 		const size_t key_size_min = crypt_prf_fips_key_size_min(ike->sa.st_oakley.ta_prf);
 		if (psk->len < key_size_min) {
-			if (libreswan_fipsmode()) {
+			if (is_fips_mode()) {
 				id_buf idb;
 				return diag("FIPS: authentication failed: '%s' PSK length of %zu bytes is too short for PRF %s in FIPS mode (%zu bytes required)",
 					    str_id(&c->local->host.id, &idb),

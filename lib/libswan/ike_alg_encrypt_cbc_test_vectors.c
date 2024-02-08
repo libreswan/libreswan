@@ -23,7 +23,7 @@
 #include "ike_alg_test_cbc.h"
 #include "ike_alg_encrypt_ops.h"	/* XXX: oops */
 
-#include "lswfips.h"
+#include "fips_mode.h"
 #include "pk11pub.h"
 #include "crypt_symkey.h"
 

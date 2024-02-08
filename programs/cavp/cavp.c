@@ -17,7 +17,7 @@
 #include <stdio.h>
 
 #include "lswtool.h"
-#include "lswfips.h"
+#include "fips_mode.h"
 #include "lswnss.h"
 #include "lswlog.h"			/* for log_to_stderr */
 #include "ike_alg.h"
@@ -151,7 +151,7 @@ int main(int argc, char *argv[])
 
 	/* -fips must come first! */
 	if (strcmp(*argp, "-fips") == 0 || strcmp(*argp, "--fips") == 0) {
-		lsw_set_fips_mode(LSW_FIPS_ON);
+		set_fips_mode(FIPS_MODE_ON);
 		argp++;
 	}
 

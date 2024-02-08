@@ -100,7 +100,6 @@ ifeq ($(DISTRO), fedora)
 	ifeq ($(DISTRO_REL), rawhide)
 		# TWEAKS += rawhide-remove-dnf-update
 		TWEAKS += dnf-nogpgcheck
-		LOCAL_MAKE_FLAGS += USE_FIPSCHECK=false
 	endif
 
 	MAKE_BASE = base

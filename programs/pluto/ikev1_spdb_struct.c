@@ -49,7 +49,7 @@
 #include "ike_alg_integ.h"
 #include "ike_alg_ipcomp.h"	/* for ike_alg_ipcomp_deflate */
 #include "ikev1_db_ops.h"
-#include "lswfips.h" /* for libreswan_fipsmode */
+#include "fips_mode.h" /* for is_fips_mode */
 #include "crypt_prf.h"
 #include "ikev1_message.h"
 #include "ip_endpoint.h"
@@ -1998,7 +1998,7 @@ rsasig_common:
 				const size_t key_size_min = crypt_prf_fips_key_size_min(ta.ta_prf);
 
 				if (pss->len < key_size_min) {
-					if (libreswan_fipsmode()) {
+					if (is_fips_mode()) {
 						log_state(RC_LOG_SERIOUS, st,
 							  "FIPS Error: connection %s PSK length of %zu bytes is too short for %s PRF in FIPS mode (%zu bytes required)",
 							  c->name,
@@ -2408,7 +2408,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				 * Silently limit duration to our maximum.
 				 */
 				deltatime_t lifemax =
-					(libreswan_fipsmode() ? FIPS_IPSEC_SA_LIFETIME_MAXIMUM :
+					(is_fips_mode() ? FIPS_IPSEC_SA_LIFETIME_MAXIMUM :
 					 IPSEC_SA_LIFETIME_MAXIMUM);
 				attrs->lifetime =
 					(deltatime_cmp(val, >, lifemax) ? lifemax :

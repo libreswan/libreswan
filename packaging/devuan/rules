@@ -37,7 +37,6 @@ override_dh_auto_build:
 		LIBEXECDIR=/usr/libexec/ipsec \
 		NSSDIR=/var/lib/ipsec/nss \
 		USE_LDAP=true \
-		USE_FIPSCHECK=false \
 		$(ENABLE_LIBCAP_NG) \
 		$(ENABLE_SELINUX) \
 		DEFAULT_DNSSEC_ROOTKEY_FILE=/usr/share/dns/root.key \
@@ -52,7 +51,6 @@ override_dh_auto_install-arch:
 		LIBEXECDIR=/usr/libexec/ipsec \
 		NSSDIR=/var/lib/ipsec/nss \
 		USE_LDAP=true \
-		USE_FIPSCHECK=false \
 		$(ENABLE_LIBCAP_NG) \
 		$(ENABLE_SELINUX) \
 		DESTDIR=$(CURDIR)/debian/libreswan \

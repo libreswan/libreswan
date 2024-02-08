@@ -76,7 +76,7 @@
 #include "nat_traversal.h"
 #include "ip_address.h"
 #include "ip_info.h"
-#include "lswfips.h" /* for libreswan_fipsmode() */
+#include "fips_mode.h" /* for is_fips_mode() */
 #include "kernel_xfrm_interface.h"
 #include "iface.h"
 #include "ip_selector.h"
@@ -1518,7 +1518,7 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 		if (said_next->integ == &ike_alg_integ_sha2_256 &&
 		    c->config->sha2_truncbug) {
 			if (kernel_ops->sha2_truncbug_support) {
-				if (libreswan_fipsmode() == 1) {
+				if (is_fips_mode() == 1) {
 					llog_sa(RC_LOG_SERIOUS, child,
 						"Error: sha2-truncbug=yes is not allowed in FIPS mode");
 					goto fail;

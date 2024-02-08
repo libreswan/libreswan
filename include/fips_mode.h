@@ -18,22 +18,27 @@
  * for more details.
  */
 
-#ifndef LSWFIPS_H
-#define LSWFIPS_H
+#ifndef FIPS_MODE_H
+#define FIPS_MODE_H
 
 #include <stdbool.h>	/* for bool */
 
 struct logger;
 
-enum lsw_fips_mode {
-	LSW_FIPS_UNKNOWN,
-	LSW_FIPS_OFF,
-	LSW_FIPS_ON
+enum fips_mode {
+#define FIPS_MODE_UNSET 0	/* 0 is reserved; and not an enum */
+#define FIPS_MODE_FLOOR FIPS_MODE_OFF
+	FIPS_MODE_OFF = 1,
+	FIPS_MODE_ON,
+#define FIPS_MODE_ROOF (FIPS_MODE_ON+1)
 };
 
-extern void lsw_set_fips_mode(enum lsw_fips_mode fips);
-extern enum lsw_fips_mode lsw_get_fips_mode(struct logger *logger);
-extern bool libreswan_fipsmode(void);
+extern const struct enum_names fips_mode_names;
+
+void set_fips_mode(enum fips_mode fips);
+enum fips_mode get_fips_mode(struct logger *logger);
+
+bool is_fips_mode(void);
 
 #endif
 

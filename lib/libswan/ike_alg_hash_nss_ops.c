@@ -20,7 +20,7 @@
 #include "ike_alg_hash.h"
 #include "ike_alg_hash_ops.h"
 #include "crypt_symkey.h"
-#include "lswfips.h"
+#include "fips_mode.h"
 #include "lswnss.h"
 
 /*

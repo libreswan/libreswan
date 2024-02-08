@@ -553,10 +553,6 @@ SD_WATCHDOGSEC ?= 0
 SD_TYPE=simple
 endif
 
-# Build support for integrity check for libreswan on startup
-USE_FIPSCHECK ?= false
-FIPSPRODUCTCHECK ?= /etc/system-fips
-
 # Enable Labeled IPsec Functionality (requires SElinux)
 USE_LABELED_IPSEC ?= false
 
@@ -719,12 +715,6 @@ ifndef DEFAULT_DNSSEC_ROOTKEY_FILE
 $(error DEFAULT_DNSSEC_ROOTKEY_FILE unknown)
 endif
 USERLAND_CFLAGS += -DDEFAULT_DNSSEC_ROOTKEY_FILE=\"$(DEFAULT_DNSSEC_ROOTKEY_FILE)\"
-endif
-
-ifeq ($(USE_FIPSCHECK),true)
-USERLAND_CFLAGS += -DFIPS_CHECK
-USERLAND_CFLAGS += -DFIPSPRODUCTCHECK=\"${FIPSPRODUCTCHECK}\"
-FIPSCHECK_LDFLAGS ?= -lfipscheck
 endif
 
 ifeq ($(USE_LABELED_IPSEC),true)

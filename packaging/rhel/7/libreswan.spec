@@ -16,7 +16,6 @@
     SHELL_BINARY=/bin/sh \\\
     USE_AUTHPAM=true \\\
     USE_DNSSEC=%{USE_DNSSEC} \\\
-    USE_FIPSCHECK=false \\\
     USE_LABELED_IPSEC=true \\\
     USE_LDAP=true \\\
     USE_LIBCAP_NG=true \\\

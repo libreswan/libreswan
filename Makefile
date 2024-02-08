@@ -196,22 +196,6 @@ release:
 
 local-install:
 
-# Test only target (run by swan-install) that generates FIPS .*.hmac
-# file for pluto that will be verified by fipscheck.
-#
-# (should really use fipshmac -d /usr/lib64/fipscheck but then
-#  we need to hassle with multilib)
-# Without this fipscheck (run in FIPS mode) will fail.
-
-.PHONY: install-fipshmac
-install-fipshmac:
-ifeq ($(USE_FIPSCHECK),true)
-	fipshmac $(DESTDIR)$(LIBEXECDIR)/pluto
-else
-	@echo "install-fipshmac target requires compiling with USE_FIPSCHECK"
-	@exit 1
-endif
-
 include ${LIBRESWANSRCDIR}/mk/docker-targets.mk
 include ${LIBRESWANSRCDIR}/mk/kvm-targets.mk
 include ${LIBRESWANSRCDIR}/mk/web-targets.mk

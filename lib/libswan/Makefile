@@ -48,13 +48,14 @@ OBJS += encap_proto_names.o
 OBJS += initiated_by_names.o
 OBJS += connection_owner.o
 OBJS += sa_type.o
+OBJS += fips_mode.o
+OBJS += fips_mode_names.o
 
 OBJS += constants.o \
 	id.o \
 	initaddr.o \
 	lex.o \
 	lswconf.o \
-	lswfips.o \
 	sameaddr.o \
 	subnettypeof.o ttodata.o \
 	ttosaid.o \

@@ -24,7 +24,7 @@
 #include "lswlog.h"
 #include "proposals.h"
 #include "alg_byname.h"
-#include "lswfips.h"
+#include "fips_mode.h"
 
 #include "ike_alg.h"
 #include "ike_alg_integ.h"

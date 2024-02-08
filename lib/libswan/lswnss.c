@@ -24,7 +24,7 @@
 #include "lswnss.h"
 #include "lswalloc.h"
 #include "lswlog.h"
-#include "lswfips.h"
+#include "fips_mode.h"
 
 static char *lsw_nss_get_password(PK11SlotInfo *slot, PRBool retry, void *arg);
 
@@ -72,7 +72,7 @@ diag_t lsw_nss_setup(const char *configdir, unsigned setup_flags,
 	/*
 	 * Initialize NSS, possibly flipping it to the correct mode.
 	 */
-	enum lsw_fips_mode fips_mode;
+	enum fips_mode fips_mode;
 	if (nssdir != NULL) {
 		SECStatus rv = NSS_Initialize(nssdir, "", "", SECMOD_DB,
 					      (flags & LSW_NSS_READONLY) ? NSS_INIT_READONLY : 0);
@@ -84,11 +84,17 @@ diag_t lsw_nss_setup(const char *configdir, unsigned setup_flags,
 			pfree(nssdir);
 			return d;
 		}
-		fips_mode = lsw_get_fips_mode(logger);
+		fips_mode = get_fips_mode(logger);
 	} else {
 		NSS_NoDB_Init(".");
-		fips_mode = lsw_get_fips_mode(logger);
-		if (fips_mode == LSW_FIPS_ON && !PK11_IsFIPS()) {
+		fips_mode = get_fips_mode(logger);
+		if (fips_mode == FIPS_MODE_ON && !PK11_IsFIPS()) {
+			/*
+			 * Happens when set_fips_mode(FIPS_MODE_ON) is
+			 * called before calling this function.  For
+			 * instance, in algparse.  Need to flip NSS's
+			 * mode so that it matches.
+			 */
 			SECMODModule *internal = SECMOD_GetInternalModule();
 			if (internal == NULL) {
 				return diag_nss_error("SECMOD_GetInternalModule() failed");
@@ -103,7 +109,7 @@ diag_t lsw_nss_setup(const char *configdir, unsigned setup_flags,
 		}
 	}
 
-	if (fips_mode == LSW_FIPS_UNKNOWN) {
+	if (fips_mode == FIPS_MODE_UNSET) {
 		pfreeany(nssdir);
 		return diag("NSS: FIPS mode could not be determined");
 	}

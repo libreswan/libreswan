@@ -5,7 +5,7 @@
 #include "lswtool.h"
 #include "lswalloc.h"
 #include "lswnss.h"
-#include "lswfips.h"
+#include "fips_mode.h"
 #include "lswconf.h"
 #include "crypt_symkey.h"		/* for init_crypt_symkey() */
 #include "ike_alg.h"
@@ -622,11 +622,9 @@ int main(int argc, char *argv[])
 		} else if (streq(arg, "pfs=no") || streq(arg, "pfs=off")) {
 			pfs = false;
 		} else if (streq(arg, "fips") || streq(arg, "fips=yes") || streq(arg, "fips=on")) {
-			lsw_set_fips_mode(LSW_FIPS_ON);
+			set_fips_mode(FIPS_MODE_ON);
 		} else if (streq(arg, "fips=no") || streq(arg, "fips=off")) {
-			lsw_set_fips_mode(LSW_FIPS_OFF);
-		} else if (streq(arg, "fips=unknown")) {
-			lsw_set_fips_mode(LSW_FIPS_UNKNOWN);
+			set_fips_mode(FIPS_MODE_OFF);
 		} else if (streq(arg, "v") || streq(arg, "verbose")) {
 			verbose = true;
 		} else if (streq(arg, "debug")) {
@@ -660,7 +658,7 @@ int main(int argc, char *argv[])
 	}
 
 	init_crypt_symkey(logger);
-	fips = libreswan_fipsmode();
+	fips = is_fips_mode();
 
 	/*
 	 * Only be verbose after NSS has started.  Otherwise fake and

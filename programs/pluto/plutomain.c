@@ -44,7 +44,7 @@
 #include "timescale.h"
 #include "lswversion.h"
 #include "lswconf.h"
-#include "lswfips.h"
+#include "fips_mode.h"
 #include "lswnss.h"
 #include "defs.h"
 #include "nss_ocsp.h"
@@ -112,11 +112,6 @@ bool in_main_thread(void)
 static char *rundir = NULL;
 static bool fork_desired = USE_FORK || USE_DAEMON;
 static bool selftest_only = false;
-
-#ifdef FIPS_CHECK
-# include <fipscheck.h> /* from fipscheck devel */
-static const char *fips_package_files[] = { IPSEC_EXECDIR "/pluto", NULL };
-#endif
 
 /* pulled from main for show_setup_plutomain() */
 static const struct lsw_conf_options *oco;
@@ -213,9 +208,6 @@ static const char compile_time_interop_options[] = ""
 #endif
 #ifdef USE_SYSTEMD_WATCHDOG
 	" SYSTEMD_WATCHDOG"
-#endif
-#ifdef FIPS_CHECK
-	" FIPS_BINCHECK"
 #endif
 #ifdef HAVE_LABELED_IPSEC
 	" LABELED_IPSEC"
@@ -1598,7 +1590,7 @@ int main(int argc, char **argv)
 	spd_route_db_init(logger);
 
 	pluto_init_nss(oco->nssdir, logger);
-	if (libreswan_fipsmode()) {
+	if (is_fips_mode()) {
 		/*
 		 * clear out --debug-crypt if set
 		 *
@@ -1631,11 +1623,11 @@ int main(int argc, char **argv)
 
 	if (impair.force_fips) {
 		llog(RC_LOG, logger, "IMPAIR: forcing FIPS checks to true to emulate FIPS mode");
-		lsw_set_fips_mode(LSW_FIPS_ON);
+		set_fips_mode(FIPS_MODE_ON);
 	}
 
 	bool nss_fips_mode = PK11_IsFIPS();
-	if (libreswan_fipsmode()) {
+	if (is_fips_mode()) {
 		llog(RC_LOG, logger, "FIPS mode enabled for pluto daemon");
 		if (nss_fips_mode) {
 			llog(RC_LOG, logger, "NSS library is running in FIPS mode");
@@ -1661,22 +1653,10 @@ int main(int argc, char **argv)
 		llog(RC_LOG, logger, "NSS OCSP started");
 	}
 
-#ifdef FIPS_CHECK
-	llog(RC_LOG, logger, "FIPS HMAC integrity support [enabled]");
-	bool fips_files = FIPSCHECK_verify_files(fips_package_files);
-	if (fips_files) {
-		llog(RC_LOG, logger, "FIPS HMAC integrity verification self-test [passed]");
-	} else if (libreswan_fipsmode()) {
-		fatal(PLUTO_EXIT_FIPS_FAIL, logger, "FIPS HMAC integrity verification self-test [FAILED], pluto ABORTED");
-	} else {
-		llog(RC_LOG_SERIOUS, logger, "FIPS HMAC integrity verification self-test [FAILED]");
-	}
-#else
-# ifdef USE_NSS_KDF
+#ifdef USE_NSS_KDF
 	llog(RC_LOG, logger, "FIPS HMAC integrity support [not required]");
-# else
+#else
 	llog(RC_LOG, logger, "FIPS HMAC integrity support [not compiled in]");
-# endif
 #endif
 
 #ifdef HAVE_LIBCAP_NG

@@ -30,7 +30,7 @@
 
 #include "sysdep.h"
 #include "constants.h"
-#include "lswfips.h"
+#include "fips_mode.h"
 #include "lswlog.h"
 #include "lswalloc.h"
 #include "proposals.h"
@@ -1283,7 +1283,7 @@ static void log_ike_algs(struct logger *logger)
 	FOR_EACH_IKE_ALG_TYPEP(typep) {
 		const struct ike_alg_type *type = *typep;
 		llog(RC_LOG, logger, "%s%s algorithms:",
-			    libreswan_fipsmode() ? "FIPS " : "",
+			    is_fips_mode() ? "FIPS " : "",
 			    type->Name);
 		FOR_EACH_IKE_ALGP(type, algp) {
 			LLOG_JAMBUF(RC_LOG, logger, buf) {
@@ -1320,7 +1320,7 @@ static void strip_nonfips(const struct ike_alg_type *type, struct logger *logger
 
 void init_ike_alg(struct logger *logger)
 {
-	bool fips = libreswan_fipsmode();
+	bool fips = is_fips_mode();
 
 	/*
 	 * If needed, completely strip out non-FIPS algorithms.

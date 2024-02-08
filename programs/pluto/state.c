@@ -66,7 +66,7 @@
 #include "orient.h"
 #include "ikev2_proposals.h"		/* for free_ikev2_proposal() */
 #include "ikev2_eap.h"			/* for free_eap_state() */
-#include "lswfips.h"			/* for libreswan_fipsmode() */
+#include "fips_mode.h"			/* for is_fips_mode() */
 #include "show.h"
 #include "ikev1_replace.h"
 #include "ikev2_replace.h"
@@ -2236,7 +2236,7 @@ void wipe_old_connections(const struct ike_sa *ike)
 void DBG_tcpdump_ike_sa_keys(const struct state *st)
 {
 	passert(DBGP(DBG_PRIVATE));
-	passert(!libreswan_fipsmode());
+	passert(!is_fips_mode());
 
 	if (st->st_oakley.ta_integ == NULL ||
 	    st->st_oakley.ta_encrypt == NULL)

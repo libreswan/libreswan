@@ -16,7 +16,7 @@
 #include <stdlib.h>
 #include "constants.h"
 #include "lswalloc.h"
-#include "lswfips.h"
+#include "fips_mode.h"
 
 #include "ike_alg.h"
 #include "test_buffer.h"

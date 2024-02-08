@@ -82,7 +82,7 @@
 
 #include "nat_traversal.h"
 
-#include "lswfips.h"
+#include "fips_mode.h"
 
 #ifdef USE_SECCOMP
 # include "pluto_seccomp.h"
@@ -915,7 +915,7 @@ void show_debug_status(struct show *s)
 
 void show_fips_status(struct show *s)
 {
-	bool fips = libreswan_fipsmode();
+	bool fips = is_fips_mode();
 	show_comment(s, "FIPS mode %s", !fips ?
 		"disabled" :
 		impair.force_fips ? "enabled [forced]" : "enabled");

@@ -82,7 +82,7 @@
 #include "nss_cert_load.h"
 #include "ikev2.h"
 #include "virtual_ip.h"	/* needs connections.h */
-#include "lswfips.h"
+#include "fips_mode.h"
 #include "crypto.h"
 #include "kernel_xfrm.h"
 #include "ip_address.h"
@@ -1086,7 +1086,7 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 		if (e != NULL) {
 			return diag("%sgroundhog=%s, %s", leftright, src->groundhog, e);
 		}
-		if (host_config->groundhog && libreswan_fipsmode()) {
+		if (host_config->groundhog && is_fips_mode()) {
 			return diag("%sgroundhog=%s is invalid in FIPS mode",
 				    leftright, src->groundhog);
 		}
@@ -1453,7 +1453,7 @@ diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
 	 * by NSS.
 	 * See also RSA_secret_sane() and ECDSA_secret_sane()
 	 */
-	if (libreswan_fipsmode()) {
+	if (is_fips_mode()) {
 		SECKEYPublicKey *pk = CERT_ExtractPublicKey(cert);
 		passert(pk != NULL);
 		if (pk->keyType == rsaKey &&
@@ -1776,7 +1776,7 @@ static diag_t extract_lifetime(deltatime_t *lifetime,
 	 */
 	const char *fips;
 	deltatime_t max_lifetime;
-	if (libreswan_fipsmode()) {
+	if (is_fips_mode()) {
 		fips = "FIPS: ";
 		max_lifetime = lifetime_fips;
 	} else {
@@ -2526,7 +2526,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 		return d;
 	}
 
-	if (libreswan_fipsmode() && config->negotiation_shunt == SHUNT_PASS) {
+	if (is_fips_mode() && config->negotiation_shunt == SHUNT_PASS) {
 		enum_buf sb;
 		llog(RC_LOG_SERIOUS, c->logger,
 		     "FIPS: ignored negotiationshunt=%s - packets MUST be blocked in FIPS mode",
@@ -2545,7 +2545,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	config->shunt[SHUNT_KIND_ONDEMAND] = SHUNT_TRAP;
 	config->shunt[SHUNT_KIND_IPSEC] = SHUNT_IPSEC;
 
-	if (libreswan_fipsmode() && config->failure_shunt != SHUNT_NONE) {
+	if (is_fips_mode() && config->failure_shunt != SHUNT_NONE) {
 		enum_buf eb;
 		llog(RC_LOG_SERIOUS, c->logger,
 		     "FIPS: ignored failureshunt=%s - packets MUST be blocked in FIPS mode",

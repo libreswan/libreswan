@@ -26,7 +26,7 @@
 #include "sysdep.h"
 #include "constants.h"
 #include "lswconf.h"
-#include "lswfips.h"
+#include "fips_mode.h"
 
 
 #include "defs.h"
@@ -53,7 +53,7 @@
 static void show_system_security(struct show *s)
 {
 	int selinux = libreswan_selinux(show_logger(s));
-	bool fips = libreswan_fipsmode();
+	bool fips = is_fips_mode();
 
 	show_separator(s);
 	show_comment(s, "fips mode=%s;", fips ? "enabled" : "disabled");

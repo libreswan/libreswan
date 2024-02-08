@@ -29,7 +29,7 @@
 
 #include "crypt_prf.h"
 #include "crypt_symkey.h"
-#include "lswfips.h"
+#include "fips_mode.h"
 
 /*
  * IKEv2 - RFC4306 2.14 SKEYSEED - calculation.

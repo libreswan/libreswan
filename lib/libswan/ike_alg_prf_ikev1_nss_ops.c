@@ -270,8 +270,6 @@ static chunk_t section_5_keymat(const struct prf_desc *prf,
 
 	/*
 	 * If this fails to compile, a newer nss version is needed.
-	 * Alternatively compile with USE_NSS_KDF=false.
-	 * But then for FIPS, compiling with USE_FIPSCHECK is needed again.
 	 */
 	CK_NSS_IKE1_APP_B_PRF_DERIVE_PARAMS dparams = {
 		.prfMechanism = prf->nss.mechanism,

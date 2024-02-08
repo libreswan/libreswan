@@ -23,7 +23,7 @@
 #include "test_buffer.h"
 #include "ike_alg_test_prf.h"
 
-#include "lswfips.h"
+#include "fips_mode.h"
 #include "pk11pub.h"
 #include "crypt_prf.h"
 #include "crypt_symkey.h"

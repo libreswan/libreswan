@@ -28,7 +28,7 @@
 #include "connections.h"
 #include "log.h"
 #include "show.h"
-#include "lswfips.h"
+#include "fips_mode.h"
 #include "whack_connection.h"
 
 static unsigned whack_debug_connection(const struct whack_message *m,
@@ -51,7 +51,7 @@ static unsigned whack_debug_connection(const struct whack_message *m,
 void whack_debug(const struct whack_message *m, struct show *s)
 {
 	struct logger *logger = show_logger(s);
-	if (libreswan_fipsmode()) {
+	if (is_fips_mode()) {
 		if (lmod_is_set(m->debugging, DBG_PRIVATE)) {
 			llog(RC_FATAL, logger,
 			     "FIPS: --debug private is not allowed in FIPS mode, aborted");

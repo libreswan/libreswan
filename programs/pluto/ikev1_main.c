@@ -84,7 +84,7 @@
 #include "ikev1_dpd.h"
 #include "pluto_x509.h"
 #include "crypt_ke.h"
-#include "lswfips.h"
+#include "fips_mode.h"
 #include "ip_address.h"
 #include "send.h"
 #include "ikev1_send.h"
@@ -586,7 +586,7 @@ stf_status main_inR1_outI2(struct state *st, struct msg_digest *md)
 							NULL, true, st));
 	}
 
-	if (libreswan_fipsmode() && st->st_oakley.ta_prf == NULL) {
+	if (is_fips_mode() && st->st_oakley.ta_prf == NULL) {
 		log_state(RC_LOG_SERIOUS, st,
 			  "Missing prf - algo not allowed in fips mode (inR1_outI2)?");
 		return STF_FAIL_v1N + v1N_SITUATION_NOT_SUPPORTED;
@@ -769,7 +769,7 @@ static stf_status main_inI2_outR2_continue1(struct state *st,
 
 	passert(md != NULL);
 
-	if (libreswan_fipsmode() && st->st_oakley.ta_prf == NULL) {
+	if (is_fips_mode() && st->st_oakley.ta_prf == NULL) {
 		log_state(RC_LOG_SERIOUS, st,
 			  "Missing prf - algo not allowed in fips mode (inI2_outR2)?");
 		return STF_FAIL_v1N + v1N_SITUATION_NOT_SUPPORTED;

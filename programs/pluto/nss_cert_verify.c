@@ -31,7 +31,7 @@
 #include "constants.h"
 #include "x509.h"
 #include "nss_cert_verify.h"
-#include "lswfips.h" /* for libreswan_fipsmode() */
+#include "fips_mode.h" /* for is_fips_mode() */
 #include "certs.h"
 #include <secder.h>
 #include <secerr.h>
@@ -400,7 +400,7 @@ static void add_decoded_cert(CERTCertDBHandle *handle,
 	 *
 	 * See also RSA_secret_sane() and ECDSA_secret_sane()
 	 */
-	if (libreswan_fipsmode()) {
+	if (is_fips_mode()) {
 		SECKEYPublicKey *pk = CERT_ExtractPublicKey(cert);
 		passert(pk != NULL);
 		unsigned key_bit_size = pk->u.rsa.modulus.len * BITS_IN_BYTE;

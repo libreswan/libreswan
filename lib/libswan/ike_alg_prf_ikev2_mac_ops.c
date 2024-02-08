@@ -27,7 +27,7 @@
 
 #include "crypt_prf.h"
 #include "crypt_symkey.h"
-#include "lswfips.h"
+#include "fips_mode.h"
 
 /*
  * IKEv2 - RFC4306 2.14 SKEYSEED - calculation.
@@ -231,7 +231,7 @@ static struct crypt_mac psk_auth(const struct prf_desc *prf_desc,
 			crypt_prf_init_hunk("<prf-psk> = prf(<psk>,\"Key Pad for IKEv2\")",
 					    prf_desc, "shared secret", pss, logger);
 		if (prf == NULL) {
-			if (libreswan_fipsmode()) {
+			if (is_fips_mode()) {
 				llog_passert(logger, HERE,
 					     "FIPS: failure creating %s PRF context for digesting PSK",
 					     prf_desc->common.fqn);
