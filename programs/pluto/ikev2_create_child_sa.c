@@ -681,9 +681,16 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 		}
 
 		pexpect(rekey_spi != 0);
-		if (!emit_v2Nsa_pl(v2N_REKEY_SA, rekey_protoid, &rekey_spi, request.pbs, NULL)) {
+
+		struct pbs_out rekey_pbs;
+		if (!open_v2N_SA_output_pbs(request.pbs,
+					    v2N_REKEY_SA, rekey_protoid, &rekey_spi,
+					    &rekey_pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
+		/* no payload */
+		close_output_pbs(&rekey_pbs);
+
 	}
 
 	if (!emit_v2_child_request_payloads(ike, larval_child,

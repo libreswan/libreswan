@@ -479,9 +479,11 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 			DBG_dump_hunk("ppk_id from payload:", ppk_id_p.ppk_id);
 		}
 
-		pb_stream ppks;
-		if (!emit_v2Npl(v2N_PPK_IDENTITY, request.pbs, &ppks) ||
-		    !emit_unified_ppk_id(&ppk_id_p, &ppks)) {
+		struct pbs_out ppks;
+		if (!open_v2N_output_pbs(request.pbs, v2N_PPK_IDENTITY, &ppks)) {
+			return STF_INTERNAL_ERROR;
+		}
+		if (!emit_unified_ppk_id(&ppk_id_p, &ppks)) {
 			return STF_INTERNAL_ERROR;
 		}
 		close_output_pbs(&ppks);

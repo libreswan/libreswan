@@ -153,13 +153,17 @@ bool emit_v2UNKNOWN(const char *victim,
  *    payload, these payloads NEVER have the Critical Flag set.
  */
 
-
-bool emit_v2N_header(struct pbs_out *outs,
-		     v2_notification_t ntype,
-		     enum ikev2_sec_proto_id protocol_id,
-		     unsigned spi_size,
-		     struct pbs_out *spi_and_data)
+bool open_v2N_SA_output_pbs(struct pbs_out *outs,
+			    v2_notification_t ntype,
+			    enum ikev2_sec_proto_id protocol_id,
+			    const ipsec_spi_t *spi, /* optional */
+			    struct pbs_out *sub_payload)
 {
+	struct pbs_out tmp;
+	if (PBAD(outs->outs_logger, sub_payload == NULL)) {
+		sub_payload = &tmp;
+	}
+
 	/* See RFC 5996 section 3.10 "Notify Payload" */
 	if (!PEXPECT(outs->outs_logger, (impair.emitting ||
 					 protocol_id == PROTO_v2_RESERVED ||
@@ -168,22 +172,24 @@ bool emit_v2N_header(struct pbs_out *outs,
 		return false;
 	}
 
+	size_t spi_size = (spi == NULL ? 0 : sizeof(*spi));
+
 	switch (ntype) {
 	case v2N_INVALID_SELECTORS:
 	case v2N_REKEY_SA:
 	case v2N_CHILD_SA_NOT_FOUND:
 		if (protocol_id == PROTO_v2_RESERVED || spi_size == 0) {
-			dbg("XXX: type requires SA; missing");
+			ldbg(outs->outs_logger, "XXX: type requires SA; missing");
 		}
 		break;
 	default:
 		if (protocol_id != PROTO_v2_RESERVED || spi_size > 0) {
-			dbg("XXX: type forbids SA but SA present");
+			ldbg(outs->outs_logger, "XXX: type forbids SA but SA present");
 		}
 		break;
 	}
 
-	dbg("adding a v2N Payload");
+	ldbg(outs->outs_logger, "adding a v2N Payload");
 
 	struct ikev2_notify n = {
 		.isan_critical = build_ikev2_critical(false, outs->outs_logger),
@@ -192,53 +198,36 @@ bool emit_v2N_header(struct pbs_out *outs,
 		.isan_type = ntype,
 	};
 
-	return pbs_out_struct(outs, &ikev2_notify_desc,
-			      &n, sizeof(n), spi_and_data);
-}
-
-/* emit a v2 Notification payload, with optional SA and optional sub-payload */
-bool emit_v2Nsa_pl(v2_notification_t ntype,
-		   enum ikev2_sec_proto_id protoid,
-		   const ipsec_spi_t *spi, /* optional */
-		   struct pbs_out *outs,
-		   struct pbs_out *payload_pbs /* optional */)
-{
-	size_t spi_size = (spi == NULL ? 0 : sizeof(*spi));
-
-	struct pbs_out pls;
-	if (!emit_v2N_header(outs, ntype, protoid, spi_size, &pls)) {
+	if (!pbs_out_struct(outs, &ikev2_notify_desc,
+			    &n, sizeof(n), sub_payload)) {
 		return false;
 	}
 
 	if (spi != NULL) {
-		if (!pbs_out_thing(&pls, *spi, "SPI")) {
+		if (!pbs_out_thing(sub_payload, *spi, "SPI")) {
 			/* already logged */
 			return false;
 		}
 	}
 
-	if (payload_pbs == NULL)
-		close_output_pbs(&pls);
-	else
-		*payload_pbs = pls;
 	return true;
 }
 
 /* emit a v2 Notification payload, with optional sub-payload */
-bool emit_v2Npl(v2_notification_t ntype,
-		pb_stream *outs,
-		pb_stream *payload_pbs /* optional */)
+bool open_v2N_output_pbs(struct pbs_out *outs,
+			 v2_notification_t ntype,
+			 struct pbs_out *sub_payload)
 {
-	return emit_v2Nsa_pl(ntype, PROTO_v2_RESERVED, NULL, outs, payload_pbs);
+	return open_v2N_SA_output_pbs(outs, ntype, PROTO_v2_RESERVED, NULL, sub_payload);
 }
 
 /* emit a v2 Notification payload, with bytes as sub-payload */
 bool emit_v2N_bytes(v2_notification_t ntype,
 		    const void *bytes, size_t size, /* optional */
-		    pb_stream *outs)
+		    struct pbs_out *outs)
 {
-	pb_stream pl;
-	if (!emit_v2Npl(ntype, outs, &pl)) {
+	struct pbs_out pl;
+	if (!open_v2N_output_pbs(outs, ntype, &pl)) {
 		return false;
 	}
 
@@ -255,15 +244,15 @@ bool emit_v2N_bytes(v2_notification_t ntype,
 bool emit_v2N(v2_notification_t ntype,
 	       pb_stream *outs)
 {
-	return emit_v2Npl(ntype, outs, NULL);
+	return emit_v2N_bytes(ntype, NULL, 0, outs);
 }
 
 bool emit_v2N_SIGNATURE_HASH_ALGORITHMS(lset_t sighash_policy,
 					pb_stream *outs)
 {
-	pb_stream n_pbs;
+	struct pbs_out n_pbs;
 
-	if (!emit_v2Npl(v2N_SIGNATURE_HASH_ALGORITHMS, outs, &n_pbs)) {
+	if (!open_v2N_output_pbs(outs, v2N_SIGNATURE_HASH_ALGORITHMS, &n_pbs)) {
 		llog(RC_LOG, outs->outs_logger, "error initializing notify payload for notify message");
 		return false;
 	}
@@ -360,8 +349,11 @@ static bool emit_v2N_spi_response(struct v2_message *response,
 	}
 
 	pb_stream n_pbs;
-	if (!emit_v2Nsa_pl(ntype, protoid, spi, response->pbs, &n_pbs) ||
-	    (ndata != NULL && !out_hunk(*ndata, &n_pbs, "Notify data"))) {
+	if (!open_v2N_SA_output_pbs(response->pbs, ntype, protoid, spi, &n_pbs)) {
+		return false;
+	}
+
+	if (ndata != NULL && !out_hunk(*ndata, &n_pbs, "Notify data")) {
 		return false;
 	}
 

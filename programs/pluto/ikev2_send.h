@@ -133,9 +133,9 @@ void free_v2_outgoing_fragments(struct v2_outgoing_fragment **frags);
 /*
  * Emit an IKEv2 payload.
  *
- * Like the out_*() primitives, these have the pb_stream for emission as
- * the last parameter (or second last if the last one is the pb_stream
- * for the sub-payload).
+ * Like the out_*() primitives, these have struct pbs_out for emission
+ * as the last parameter (or second last if the last one is the struct
+ * pbs_out for the sub-payload).
  */
 
 bool emit_v2UNKNOWN(const char *victim,
@@ -144,39 +144,39 @@ bool emit_v2UNKNOWN(const char *victim,
 		    struct pbs_out *outs);
 
 /*
- * Emit an IKEv2 Notify payload.
+ * Construct IKEv2 notification payloads.
  */
 
-bool emit_v2N_header(struct pbs_out *outs,
-		     v2_notification_t ntype,
-		     enum ikev2_sec_proto_id protocol_id,
-		     unsigned spi_size,
-		     struct pbs_out *spi_and_data);
+/*
+ * Emit an SA Notification header (could be 0/none), and then open the
+ * sub_payload.
+ */
+bool open_v2N_SA_output_pbs(struct pbs_out *outs,
+			    v2_notification_t ntype,
+			    enum ikev2_sec_proto_id protoid,
+			    const ipsec_spi_t *spi, /* optional */
+			    struct pbs_out *sub_payload);
 
-/* emit a v2 Notification payload, with optional SA and optional sub-payload */
-bool emit_v2Nsa_pl(v2_notification_t ntype,
-		enum ikev2_sec_proto_id protoid,
-		const ipsec_spi_t *spi, /* optional */
-		pb_stream *outs,
-		pb_stream *payload_pbs /* optional */);
+/*
+ * Emit a non-SA v2 Notification payload header and then open the
+ * sub-payload.
+ */
+bool open_v2N_output_pbs(struct pbs_out *outs,
+			 v2_notification_t ntype,
+			 struct pbs_out *sub_payload);
 
-/* emit a v2 Notification payload, with optional sub-payload */
-/* i.e., emit header then open a containing payload? */
-bool emit_v2Npl(v2_notification_t ntype,
-		pb_stream *outs,
-		pb_stream *payload_pbs /* optional */);
-
-/* emit a v2 Notification payload, with optional hunk as sub-payload */
+/*
+ * Emit a v2 Notification payload, with optional hunk as sub-payload.
+ */
 bool emit_v2N_bytes(v2_notification_t ntype,
 		   const void *bytes, size_t size,
-		   pb_stream *outs);
+		   struct pbs_out *outs);
 #define emit_v2N_hunk(NTYPE, HUNK, OUTS)	emit_v2N_bytes(NTYPE, (HUNK).ptr, (HUNK).len, OUTS)
 
-/* output a v2 simple Notification payload */
-bool emit_v2N(v2_notification_t ntype,
-	       pb_stream *outs);
+/* output an empty v2 notification payload */
+bool emit_v2N(v2_notification_t ntype, struct pbs_out *outs);
 
 bool emit_v2N_SIGNATURE_HASH_ALGORITHMS(lset_t sighash_policy,
-					pb_stream *outs);
+					struct pbs_out *outs);
 
 #endif

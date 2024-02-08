@@ -129,15 +129,15 @@ static bool emit_v2N_ipcomp_supported(const struct child_sa *child, struct pbs_o
 		return false;
 	}
 
+	struct pbs_out d_pbs;
+	if (!open_v2N_output_pbs(s, v2N_IPCOMP_SUPPORTED, &d_pbs)) {
+		return false;
+	}
+
 	struct ikev2_notify_ipcomp_data id = {
 		.ikev2_cpi = h_cpi, /* packet code expects host byte order */
 		.ikev2_notify_ipcomp_trans = IPCOMP_DEFLATE,
 	};
-
-	struct pbs_out d_pbs;
-	if (!emit_v2Npl(v2N_IPCOMP_SUPPORTED, s, &d_pbs)) {
-		return false;
-	}
 
 	if (!pbs_out_struct(&d_pbs, &ikev2notify_ipcomp_data_desc, &id, sizeof(id), NULL)) {
 		/* already logged */
