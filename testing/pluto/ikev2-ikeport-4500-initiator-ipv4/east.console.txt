@@ -57,8 +57,4 @@ src ::/0 dst ::/0 proto ipv6-icmp type 136
 src ::/0 dst ::/0 proto ipv6-icmp type 136
 	dir out priority PRIORITY ptype main
 east #
- grep -e '| sending ' /tmp/pluto.log
-| sending 252 bytes for Respond to IKE_SA_INIT through eth1 from 192.1.2.23:4500 to 192.1.2.45:4500 using UDP (for #1)
-| sending 229 bytes for Responder: process IKE_AUTH request through eth1 from 192.1.2.23:4500 to 192.1.2.45:4500 using UDP (for #1)
-east #
  

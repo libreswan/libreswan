@@ -57,8 +57,4 @@ src 2001:db8:0:2::/64 dst 2001:db8:0:1::/64
 	tmpl src 2001:db8:1:2::23 dst 2001:db8:1:2::45
 		proto esp reqid REQID mode tunnel
 east #
- grep -e '| sending ' /tmp/pluto.log
-| sending 252 bytes for Respond to IKE_SA_INIT through eth1 from [2001:db8:1:2::23]:4500 to [2001:db8:1:2::45]:4500 using UDP (for #1)
-| sending 277 bytes for Responder: process IKE_AUTH request through eth1 from [2001:db8:1:2::23]:4500 to [2001:db8:1:2::45]:4500 using UDP (for #1)
-east #
  
