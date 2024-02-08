@@ -34,7 +34,6 @@ east #
  # east should show required PPK is missing
 east #
  hostname | grep east > /dev/null && grep "PPK_ID not found" /tmp/pluto.log
-"westnet-eastnet-ipv4-psk-ppk" #1: Requested PPK_ID not found and connection requires a valid PPK
 east #
  ipsec whack --shutdown
 east #
