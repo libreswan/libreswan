@@ -165,16 +165,16 @@ static const struct ike_alg *default_v2_ike_prfs[] = {
 };
 
 static const struct ike_alg *default_v2_groups[] = {
-	&ike_alg_dh_modp2048.common,
-	&ike_alg_dh_modp3072.common,
-	&ike_alg_dh_modp4096.common,
-	&ike_alg_dh_modp8192.common,
 	&ike_alg_dh_secp256r1.common,
 	&ike_alg_dh_secp384r1.common,
 	&ike_alg_dh_secp521r1.common,
 #ifdef USE_DH31
 	&ike_alg_dh_curve25519.common,
 #endif
+	&ike_alg_dh_modp4096.common,
+	&ike_alg_dh_modp3072.common,
+	&ike_alg_dh_modp2048.common,
+	&ike_alg_dh_modp8192.common,
 	NULL,
 };
 
