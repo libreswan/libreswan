@@ -1123,11 +1123,13 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	 }
 
 	/* Send INTERMEDIATE_EXCHANGE_SUPPORTED Notify payload */
-	if (c->config->intermediate &&
-	    md->pd[PD_v2N_INTERMEDIATE_EXCHANGE_SUPPORTED] != NULL) {
-		if (!emit_v2N(v2N_INTERMEDIATE_EXCHANGE_SUPPORTED, response.pbs))
+	ike->sa.st_v2_ike_intermediate.enabled =
+		accept_v2_notification(ike->sa.logger, md, c->config->intermediate,
+				       v2N_INTERMEDIATE_EXCHANGE_SUPPORTED);
+	if (ike->sa.st_v2_ike_intermediate.enabled) {
+		if (!emit_v2N(v2N_INTERMEDIATE_EXCHANGE_SUPPORTED, response.pbs)) {
 			return STF_INTERNAL_ERROR;
-		ike->sa.st_v2_ike_intermediate.enabled = true;
+		}
 	}
 
 	/*
@@ -1505,16 +1507,9 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 	 * For now, do only one Intermediate Exchange round and
 	 * proceed with IKE_AUTH.
 	 */
-	if (md->pd[PD_v2N_INTERMEDIATE_EXCHANGE_SUPPORTED] != NULL) {
-		if (c->config->intermediate) {
-			ike->sa.st_v2_ike_intermediate.enabled = true;
-			ldbg_sa(ike, "using intermediate");
-		} else {
-			/* aka CISCO? */
-			llog_sa(RC_LOG, ike,
-				"unsolicited INTERMEDIATE_EXCHANGE_SUPPORTED notification ignored");
-		}
-	}
+	ike->sa.st_v2_ike_intermediate.enabled =
+		accept_v2_notification(ike->sa.logger, md, c->config->intermediate,
+				       v2N_INTERMEDIATE_EXCHANGE_SUPPORTED);
 
 	submit_dh_shared_secret(&ike->sa, &ike->sa,
 				ike->sa.st_gr/*initiator needs responder KE*/,
