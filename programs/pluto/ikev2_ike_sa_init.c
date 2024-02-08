@@ -942,7 +942,10 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 	}
 
 	/* extract results */
-	ike->sa.st_seen_fragmentation_supported = md->pd[PD_v2N_IKEV2_FRAGMENTATION_SUPPORTED] != NULL;
+	ike->sa.st_v2_ike_fragmentation_enabled =
+		accept_v2_notification(ike->sa.logger, md, c->config->ike_frag.allow,
+				       v2N_IKEV2_FRAGMENTATION_SUPPORTED);
+
 	ike->sa.st_seen_ppk = md->pd[PD_v2N_USE_PPK] != NULL;
 	ike->sa.st_seen_redirect_sup = (md->pd[PD_v2N_REDIRECTED_FROM] != NULL ||
 					md->pd[PD_v2N_REDIRECT_SUPPORTED] != NULL);
@@ -1107,8 +1110,8 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 		close_output_pbs(&pb);
 	}
 
-	/* Send fragmentation support notification */
-	if (c->config->ike_frag.allow) {
+	/* Send fragmentation support notification response? */
+	if (ike->sa.st_v2_ike_fragmentation_enabled) {
 		if (!emit_v2N(v2N_IKEV2_FRAGMENTATION_SUPPORTED, response.pbs))
 			return STF_INTERNAL_ERROR;
 	}
@@ -1352,15 +1355,19 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 	 * XXX: this iteration over the notifies modifies state
 	 * _before_ the code's committed to creating an SA.  Hack this
 	 * by resetting any flags that might be set.
+	 *
+	 * XXX: comment is probably out-of-date as all fields always
+	 * set.
 	 */
-	ike->sa.st_seen_fragmentation_supported = false;
-	ike->sa.st_seen_ppk = false;
 
 	ike->sa.st_v2_childless_ikev2_supported =
 		(impair.childless_ikev2_supported ? false :
 		 md->pd[PD_v2N_CHILDLESS_IKEV2_SUPPORTED] != NULL);
 
-	ike->sa.st_seen_fragmentation_supported = md->pd[PD_v2N_IKEV2_FRAGMENTATION_SUPPORTED] != NULL;
+	ike->sa.st_v2_ike_fragmentation_enabled =
+		accept_v2_notification(ike->sa.logger, md, c->config->ike_frag.allow,
+				       v2N_IKEV2_FRAGMENTATION_SUPPORTED);
+
 	ike->sa.st_seen_ppk = md->pd[PD_v2N_USE_PPK] != NULL;
 
 	if (md->pd[PD_v2N_SIGNATURE_HASH_ALGORITHMS] != NULL) {

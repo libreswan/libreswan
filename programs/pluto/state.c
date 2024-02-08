@@ -1222,7 +1222,8 @@ static struct child_sa *duplicate_state(struct connection *c,
 	    ike->sa.st_serialno,pri_where(HERE));
 	passert(child->sa.st_ike_version == ike->sa.st_ike_version);
 	child->sa.st_ikev2_anon = ike->sa.st_ikev2_anon;
-	child->sa.st_seen_fragmentation_supported = ike->sa.st_seen_fragmentation_supported;
+	child->sa.st_v1_seen_fragmentation_supported = ike->sa.st_v1_seen_fragmentation_supported;
+	child->sa.st_v2_ike_fragmentation_enabled = ike->sa.st_v2_ike_fragmentation_enabled;
 	child->sa.st_v1_seen_fragments = ike->sa.st_v1_seen_fragments;
 	child->sa.st_seen_ppk = ike->sa.st_seen_ppk;
 	child->sa.st_seen_redirect_sup = ike->sa.st_seen_redirect_sup;

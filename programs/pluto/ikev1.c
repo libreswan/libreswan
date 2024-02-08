@@ -2481,7 +2481,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 
 		if (md->fragvid) {
 			dbg("peer supports fragmentation");
-			st->st_seen_fragmentation_supported = true;
+			st->st_v1_seen_fragmentation_supported = true;
 		}
 
 		if (md->dpd) {
