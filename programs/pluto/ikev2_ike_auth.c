@@ -696,18 +696,17 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 		}
 	}
 
-	if (md->pd[PD_v2N_MOBIKE_SUPPORTED] != NULL) {
-		if (c->config->mobike) {
-			if (c->remote->host.config->type == KH_ANY) {
-				ldbg_sa(ike, "enabling mobike");
-				/* only allow %any connection to mobike */
-				ike->sa.st_v2_mobike.enabled = true;
-			} else {
-				llog_sa(RC_LOG, ike,
-					"not responding with v2N_MOBIKE_SUPPORTED, that end is not %%any");
-			}
+	bool mobike_accepted =
+		accept_v2_notification(ike->sa.logger, md, c->config->mobike,
+				       v2N_MOBIKE_SUPPORTED);
+	if (mobike_accepted) {
+		if (c->remote->host.config->type == KH_ANY) {
+			ldbg_sa(ike, "enabling mobike");
+			/* only allow %any connection to mobike */
+			ike->sa.st_v2_mobike.enabled = true;
 		} else {
-			ldbg_sa(ike, "received and ignored v2N_MOBIKE_SUPPORTED");
+			llog_sa(RC_LOG, ike,
+				"not responding with v2N_MOBIKE_SUPPORTED, that end is not %%any");
 		}
 	}
 
@@ -1368,15 +1367,9 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 		return redirect_status;
 	}
 
-	if (md->pd[PD_v2N_MOBIKE_SUPPORTED] != NULL) {
-		if (c->config->mobike) {
-			ldbg_sa(ike, "mobike enabled");
-			ike->sa.st_v2_mobike.enabled = true;
-		} else {
-			llog_sa(RC_LOG, ike,
-				"unsolicited MOBIKE_SUPPORTED notification ignored");
-		}
-	}
+	ike->sa.st_v2_mobike.enabled =
+		accept_v2_notification(ike->sa.logger, md, c->config->mobike,
+				       v2N_MOBIKE_SUPPORTED);
 
 	/*
 	 * Keep the portal open ...
