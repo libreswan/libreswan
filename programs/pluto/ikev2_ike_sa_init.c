@@ -943,8 +943,8 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 
 	/* extract results */
 	ike->sa.st_v2_ike_fragmentation_enabled =
-		accept_v2_notification(ike->sa.logger, md, c->config->ike_frag.allow,
-				       v2N_IKEV2_FRAGMENTATION_SUPPORTED);
+		accept_v2_notification(v2N_IKEV2_FRAGMENTATION_SUPPORTED,
+				       ike->sa.logger, md, c->config->ike_frag.allow);
 
 	ike->sa.st_seen_ppk = md->pd[PD_v2N_USE_PPK] != NULL;
 	ike->sa.st_seen_redirect_sup = (md->pd[PD_v2N_REDIRECTED_FROM] != NULL ||
@@ -1119,8 +1119,8 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 
 	/* Send INTERMEDIATE_EXCHANGE_SUPPORTED Notify payload */
 	ike->sa.st_v2_ike_intermediate.enabled =
-		accept_v2_notification(ike->sa.logger, md, c->config->intermediate,
-				       v2N_INTERMEDIATE_EXCHANGE_SUPPORTED);
+		accept_v2_notification(v2N_INTERMEDIATE_EXCHANGE_SUPPORTED,
+				       ike->sa.logger, md, c->config->intermediate);
 	if (ike->sa.st_v2_ike_intermediate.enabled) {
 		if (!emit_v2N(v2N_INTERMEDIATE_EXCHANGE_SUPPORTED, response.pbs)) {
 			return STF_INTERNAL_ERROR;
@@ -1362,8 +1362,8 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 		 md->pd[PD_v2N_CHILDLESS_IKEV2_SUPPORTED] != NULL);
 
 	ike->sa.st_v2_ike_fragmentation_enabled =
-		accept_v2_notification(ike->sa.logger, md, c->config->ike_frag.allow,
-				       v2N_IKEV2_FRAGMENTATION_SUPPORTED);
+		accept_v2_notification(v2N_IKEV2_FRAGMENTATION_SUPPORTED,
+				       ike->sa.logger, md, c->config->ike_frag.allow);
 
 	ike->sa.st_seen_ppk = md->pd[PD_v2N_USE_PPK] != NULL;
 
@@ -1498,8 +1498,8 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 	 * proceed with IKE_AUTH.
 	 */
 	ike->sa.st_v2_ike_intermediate.enabled =
-		accept_v2_notification(ike->sa.logger, md, c->config->intermediate,
-				       v2N_INTERMEDIATE_EXCHANGE_SUPPORTED);
+		accept_v2_notification(v2N_INTERMEDIATE_EXCHANGE_SUPPORTED,
+				       ike->sa.logger, md, c->config->intermediate);
 
 	submit_dh_shared_secret(&ike->sa, &ike->sa,
 				ike->sa.st_gr/*initiator needs responder KE*/,

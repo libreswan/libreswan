@@ -300,9 +300,9 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 	 */
 
 	bool transport_mode_accepted =
-		accept_v2_notification(larval_child->sa.logger, request_md,
-				       cc->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT,
-				       v2N_USE_TRANSPORT_MODE);
+		accept_v2_notification(v2N_USE_TRANSPORT_MODE,
+				       larval_child->sa.logger, request_md,
+				       cc->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT);
 
 	enum kernel_mode required_mode =
 		(cc->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT ? KERNEL_MODE_TRANSPORT :
@@ -747,9 +747,8 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 	/* check for Child SA related NOTIFY payloads */
 
 	bool transport_mode_accepted =
-		accept_v2_notification(child->sa.logger, md,
-				       c->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT,
-				       v2N_USE_TRANSPORT_MODE);
+		accept_v2_notification(v2N_USE_TRANSPORT_MODE, child->sa.logger, md,
+				       c->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT);
 
 	enum kernel_mode required_mode =
 		(c->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT ? KERNEL_MODE_TRANSPORT :

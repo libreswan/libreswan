@@ -2958,8 +2958,10 @@ bool already_has_larval_v2_child(struct ike_sa *ike, const struct connection *c)
 	return false;
 }
 
-bool accept_v2_notification(struct logger *logger, struct msg_digest *md,
-			    bool enabled, v2_notification_t n)
+bool accept_v2_notification(v2_notification_t n,
+			    struct logger *logger,
+			    struct msg_digest *md,
+			    bool enabled)
 {
 	enum v2_pd pd = v2_pd_from_notification(n);
 	if (md->pd[pd] != NULL) {

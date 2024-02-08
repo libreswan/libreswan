@@ -697,8 +697,8 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 	}
 
 	bool mobike_accepted =
-		accept_v2_notification(ike->sa.logger, md, c->config->mobike,
-				       v2N_MOBIKE_SUPPORTED);
+		accept_v2_notification(v2N_MOBIKE_SUPPORTED, ike->sa.logger, md, c->config->mobike);
+
 	if (mobike_accepted) {
 		if (c->remote->host.config->type == KH_ANY) {
 			ldbg_sa(ike, "enabling mobike");
@@ -1368,8 +1368,7 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 	}
 
 	ike->sa.st_v2_mobike.enabled =
-		accept_v2_notification(ike->sa.logger, md, c->config->mobike,
-				       v2N_MOBIKE_SUPPORTED);
+		accept_v2_notification(v2N_MOBIKE_SUPPORTED, ike->sa.logger, md, c->config->mobike);
 
 	/*
 	 * Keep the portal open ...
