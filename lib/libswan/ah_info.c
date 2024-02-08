@@ -65,7 +65,8 @@ static const char default_v1_ah_proposals[] =
 	;
 
 const struct proposal_defaults v1_ah_defaults = {
-	.proposals = default_v1_ah_proposals,
+	.proposals[FIPS_MODE_ON] = default_v1_ah_proposals,
+	.proposals[FIPS_MODE_OFF] = default_v1_ah_proposals,
 };
 
 /*
@@ -87,7 +88,8 @@ static const struct ike_alg *default_v2_ah_integ[] = {
 };
 
 const struct proposal_defaults v2_ah_defaults = {
-	.proposals = default_v2_ah_proposals,
+	.proposals[FIPS_MODE_ON] = default_v2_ah_proposals,
+	.proposals[FIPS_MODE_OFF] = default_v2_ah_proposals,
 	.integ = default_v2_ah_integ,
 };
 

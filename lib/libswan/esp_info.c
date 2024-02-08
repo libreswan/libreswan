@@ -70,7 +70,8 @@ static const struct ike_alg *default_v1_esp_integ[] = {
 };
 
 static const struct proposal_defaults v1_esp_defaults = {
-	.proposals = default_v1_esp_proposals,
+	.proposals[FIPS_MODE_OFF] = default_v1_esp_proposals,
+	.proposals[FIPS_MODE_ON] = default_v1_esp_proposals,
 	.integ = default_v1_esp_integ,
 };
 
@@ -97,7 +98,8 @@ static const struct ike_alg *default_v2_esp_integ[] = {
 };
 
 static const struct proposal_defaults v2_esp_defaults = {
-	.proposals = default_v2_esp_proposals,
+	.proposals[FIPS_MODE_ON] = default_v2_esp_proposals,
+	.proposals[FIPS_MODE_OFF] = default_v2_esp_proposals,
 	.integ = default_v2_esp_integ,
 };
 

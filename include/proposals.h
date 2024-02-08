@@ -30,6 +30,7 @@
 #include "ike_alg.h"
 #include "shunk.h"
 #include "diag.h"
+#include "fips_mode.h"
 
 struct jambuf;
 struct alg_info;
@@ -94,8 +95,10 @@ struct proposal_defaults {
 	/*
 	 * Proposals to parse when the parser is called with a NULL
 	 * proposals string.
+	 *
+	 * Code needs FIPS and non-FIPS variants.
 	 */
-	const char *proposals;
+	const char *proposals[FIPS_MODE_ROOF];
 	/*
 	 * Algorithms to add to the proposal when they were not
 	 * specified by the proposal string.
