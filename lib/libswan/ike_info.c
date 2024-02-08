@@ -147,10 +147,22 @@ const struct proposal_defaults v1_ike_defaults = {
  * proposal) so, for moment, don't merge things.
  */
 
-static const char default_v2_ike_proposals[] =
+static const char default_fips_on_v2_ike_proposals[] =
 	"AES_GCM_16_256"
 	","
 	"AES_GCM_16_128"
+	","
+	"AES_CBC_256"
+	","
+	"AES_CBC_128"
+	;
+
+static const char default_fips_off_v2_ike_proposals[] =
+	"AES_GCM_16_256"
+	","
+	"AES_GCM_16_128"
+	","
+	"CHACHA20_POLY1305" /*not-FIPS*/
 	","
 	"AES_CBC_256"
 	","
@@ -180,8 +192,8 @@ static const struct ike_alg *default_v2_groups[] = {
 };
 
 const struct proposal_defaults v2_ike_defaults = {
-	.proposals[FIPS_MODE_ON] = default_v2_ike_proposals,
-	.proposals[FIPS_MODE_OFF] = default_v2_ike_proposals,
+	.proposals[FIPS_MODE_ON] = default_fips_on_v2_ike_proposals,
+	.proposals[FIPS_MODE_OFF] = default_fips_off_v2_ike_proposals,
 	.prf = default_v2_ike_prfs,
 	/* INTEG is derived from PRF when applicable */
 	.dh = default_v2_groups,

@@ -79,10 +79,22 @@ static const struct proposal_defaults v1_esp_defaults = {
  * IKEv2:
  */
 
-static const char default_v2_esp_proposals[] =
+static const char default_fips_on_v2_esp_proposals[] =
 	"AES_GCM_16_256"
 	","
 	"AES_GCM_16_128"
+	","
+	"AES_CBC_256"
+	","
+	"AES_CBC_128"
+	;
+
+static const char default_fips_off_v2_esp_proposals[] =
+	"AES_GCM_16_256"
+	","
+	"AES_GCM_16_128"
+	","
+	"CHACHA20_POLY1305" /*non-FIPS*/
 	","
 	"AES_CBC_256"
 	","
@@ -98,8 +110,8 @@ static const struct ike_alg *default_v2_esp_integ[] = {
 };
 
 static const struct proposal_defaults v2_esp_defaults = {
-	.proposals[FIPS_MODE_ON] = default_v2_esp_proposals,
-	.proposals[FIPS_MODE_OFF] = default_v2_esp_proposals,
+	.proposals[FIPS_MODE_ON] = default_fips_on_v2_esp_proposals,
+	.proposals[FIPS_MODE_OFF] = default_fips_off_v2_esp_proposals,
 	.integ = default_v2_esp_integ,
 };
 
