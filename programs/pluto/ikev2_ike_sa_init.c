@@ -946,7 +946,10 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 		accept_v2_notification(v2N_IKEV2_FRAGMENTATION_SUPPORTED,
 				       ike->sa.logger, md, c->config->ike_frag.allow);
 
-	ike->sa.st_seen_ppk = md->pd[PD_v2N_USE_PPK] != NULL;
+	ike->sa.st_v2_ike_ppk_enabled =
+		accept_v2_notification(v2N_USE_PPK,
+				       ike->sa.logger, md, c->config->ppk.allow);
+
 	ike->sa.st_seen_redirect_sup = (md->pd[PD_v2N_REDIRECTED_FROM] != NULL ||
 					md->pd[PD_v2N_REDIRECT_SUPPORTED] != NULL);
 
@@ -1112,7 +1115,7 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	}
 
 	/* Send USE_PPK Notify payload */
-	if (ike->sa.st_seen_ppk) {
+	if (ike->sa.st_v2_ike_ppk_enabled) {
 		if (!emit_v2N(v2N_USE_PPK, response.pbs))
 			return STF_INTERNAL_ERROR;
 	 }
@@ -1365,7 +1368,9 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 		accept_v2_notification(v2N_IKEV2_FRAGMENTATION_SUPPORTED,
 				       ike->sa.logger, md, c->config->ike_frag.allow);
 
-	ike->sa.st_seen_ppk = md->pd[PD_v2N_USE_PPK] != NULL;
+	ike->sa.st_v2_ike_ppk_enabled =
+		accept_v2_notification(v2N_USE_PPK,
+				       ike->sa.logger, md, c->config->ppk.allow);
 
 	if (md->pd[PD_v2N_SIGNATURE_HASH_ALGORITHMS] != NULL) {
 		if (!negotiate_hash_algo_from_notification(&md->pd[PD_v2N_SIGNATURE_HASH_ALGORITHMS]->pbs, ike)) {

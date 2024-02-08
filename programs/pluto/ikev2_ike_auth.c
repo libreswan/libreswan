@@ -117,7 +117,7 @@ stf_status initiate_v2_IKE_AUTH_request(struct ike_sa *ike, struct msg_digest *m
 	 * Stash the no-ppk keys in st_skey_*_no_ppk, and then
 	 * scramble the st_skey_* keys with PPK.
 	 */
-	if (pc->config->ppk.allow && ike->sa.st_seen_ppk) {
+	if (ike->sa.st_v2_ike_ppk_enabled) {
 		chunk_t *ppk_id;
 		const shunk_t ppk = get_connection_ppk_initiator(ike->sa.st_connection, &ppk_id);
 
@@ -148,8 +148,12 @@ stf_status initiate_v2_IKE_AUTH_request(struct ike_sa *ike, struct msg_digest *m
 			} else {
 				llog_sa(RC_LOG, ike,
 					  "failed to find PPK and PPK_ID, continuing without PPK");
-				/* we should omit sending any PPK Identity, so we pretend we didn't see USE_PPK */
-				ike->sa.st_seen_ppk = false;
+				/*
+				 * we should omit sending any PPK
+				 * Identity, so we pretend we didn't
+				 * see USE_PPK.
+				 */
+				ike->sa.st_v2_ike_ppk_enabled = false;
 			}
 		}
 	}
@@ -174,7 +178,7 @@ stf_status initiate_v2_IKE_AUTH_request(struct ike_sa *ike, struct msg_digest *m
 	ike->sa.st_v2_id_payload.mac = v2_hash_id_payload("IDi", ike,
 							  "st_skey_pi_nss",
 							  ike->sa.st_skey_pi_nss);
-	if (ike->sa.st_seen_ppk && !pc->config->ppk.insist) {
+	if (ike->sa.st_v2_ike_ppk_enabled && !pc->config->ppk.insist) {
 		/* ID payload that we've build is the same */
 		ike->sa.st_v2_id_payload.mac_no_ppk_auth =
 			v2_hash_id_payload("IDi (no-PPK)", ike,
@@ -465,7 +469,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 	 * If we and responder are willing to use a PPK, we need to
 	 * generate NO_PPK_AUTH as well as PPK-based AUTH payload
 	 */
-	if (ike->sa.st_seen_ppk) {
+	if (ike->sa.st_v2_ike_ppk_enabled) {
 		chunk_t *ppk_id;
 		get_connection_ppk_initiator(ike->sa.st_connection, &ppk_id);
 		struct ppk_id_payload ppk_id_p = { .type = 0, };
@@ -1305,11 +1309,12 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 
 	/*
 	 * If we sent USE_PPK and we did not receive a PPK_IDENTITY,
-	 * it means the responder failed to find our PPK ID, but allowed
-	 * the connection to continue without PPK by using our NO_PPK_AUTH
-	 * payload. We should revert our key material to NO_PPK versions.
+	 * it means the responder failed to find our PPK ID, but
+	 * allowed the connection to continue without PPK by using our
+	 * NO_PPK_AUTH payload. We should revert our key material to
+	 * NO_PPK versions.
 	 */
-	if (ike->sa.st_seen_ppk &&
+	if (ike->sa.st_v2_ike_ppk_enabled &&
 	    md->pd[PD_v2N_PPK_IDENTITY] == NULL &&
 	    c->config->ppk.allow) {
 		/* discard the PPK based calculations */

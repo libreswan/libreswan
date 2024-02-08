@@ -658,7 +658,7 @@ struct state {
 	 * Post-quantum Preshared Key variables (v2)
 	 */
 	bool st_ppk_used;			/* both ends agreed on PPK ID and PPK */
-	bool st_seen_ppk;			/* does remote peer support PPK? */
+	bool st_v2_ike_ppk_enabled;		/* does remote peer support PPK? */
 
 	chunk_t st_no_ppk_auth;
 	PK11SymKey *st_sk_d_no_ppk;
