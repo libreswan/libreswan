@@ -17,7 +17,7 @@ road #
  ipsec auto --up rw
 "rw"[1] 192.1.2.23 #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "rw"[1] 192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"rw"[1] 192.1.2.23 #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"rw"[1] 192.1.2.23 #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
 "rw"[1] 192.1.2.23 #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate '@east.testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 "rw"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 100.64.0.1
 "rw"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS 1.2.3.4

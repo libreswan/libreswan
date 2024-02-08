@@ -36,18 +36,18 @@ west #
  ipsec auto --add westnet-eastnet-ikev2
 "westnet-eastnet-ikev2": added IKEv2 connection
 west #
- ipsec auto --add westnet-eastnet-ikev2-00
-"westnet-eastnet-ikev2-00": added IKEv2 connection
+ ipsec auto --add 'westnet-eastnet-ikev2-pfs=no-esp=aes'
+"westnet-eastnet-ikev2-pfs=no-esp=aes": added IKEv2 connection
 west #
- ipsec auto --add westnet-eastnet-ikev2-01
-"westnet-eastnet-ikev2-01": ignoring redundant ESP DH algorithm NONE as PFS policy is disabled
-"westnet-eastnet-ikev2-01": added IKEv2 connection
+ ipsec auto --add 'westnet-eastnet-ikev2-pfs=no-esp=aes;none'
+"westnet-eastnet-ikev2-pfs=no-esp=aes;none": ignoring redundant ESP DH algorithm NONE as PFS policy is disabled
+"westnet-eastnet-ikev2-pfs=no-esp=aes;none": added IKEv2 connection
 west #
- ipsec auto --add westnet-eastnet-ikev2-10
-"westnet-eastnet-ikev2-10": added IKEv2 connection
+ ipsec auto --add 'westnet-eastnet-ikev2-pfs=yes-esp=aes'
+"westnet-eastnet-ikev2-pfs=yes-esp=aes": added IKEv2 connection
 west #
- ipsec auto --add westnet-eastnet-ikev2-11
-"westnet-eastnet-ikev2-11": added IKEv2 connection
+ ipsec auto --add 'westnet-eastnet-ikev2-pfs=yes-esp=aes;none'
+"westnet-eastnet-ikev2-pfs=yes-esp=aes;none": added IKEv2 connection
 west #
  echo "initdone"
 initdone
@@ -55,7 +55,7 @@ west #
  ipsec auto --up westnet-eastnet-ikev2
 "westnet-eastnet-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet-eastnet-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"westnet-eastnet-ikev2" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"westnet-eastnet-ikev2" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
 "westnet-eastnet-ikev2" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "westnet-eastnet-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_512_256 DPD=passive}
 west #
@@ -66,50 +66,50 @@ west #
 west #
  # pfs=no dh= - connect
 west #
- ipsec auto --up westnet-eastnet-ikev2-00
-"westnet-eastnet-ikev2-00" #3: initiating Child SA using IKE SA #1
-"westnet-eastnet-ikev2-00" #3: sent CREATE_CHILD_SA request for new IPsec SA
-"westnet-eastnet-ikev2-00" #3: initiator established Child SA using #1; IPsec tunnel [192.0.100.0/24===192.0.200.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_512_256 DPD=passive}
+ ipsec auto --up 'westnet-eastnet-ikev2-pfs=no-esp=aes'
+"westnet-eastnet-ikev2-pfs=no-esp=aes" #3: initiating Child SA using IKE SA #1
+"westnet-eastnet-ikev2-pfs=no-esp=aes" #3: sent CREATE_CHILD_SA request for new IPsec SA
+"westnet-eastnet-ikev2-pfs=no-esp=aes" #3: initiator established Child SA using #1; IPsec tunnel [192.0.100.0/24===192.0.200.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_512_256 DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.100.254 192.0.200.254
 up
 west #
  # pfs=no dh=none - connect
 west #
- ipsec auto --up westnet-eastnet-ikev2-01
-"westnet-eastnet-ikev2-01" #4: initiating Child SA using IKE SA #1
-"westnet-eastnet-ikev2-01" #4: sent CREATE_CHILD_SA request for new IPsec SA
-"westnet-eastnet-ikev2-01" #4: initiator established Child SA using #1; IPsec tunnel [192.0.101.0/24===192.0.201.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_512_256 DPD=passive}
+ ipsec auto --up 'westnet-eastnet-ikev2-pfs=no-esp=aes;none'
+"westnet-eastnet-ikev2-pfs=no-esp=aes;none" #4: initiating Child SA using IKE SA #1
+"westnet-eastnet-ikev2-pfs=no-esp=aes;none" #4: sent CREATE_CHILD_SA request for new IPsec SA
+"westnet-eastnet-ikev2-pfs=no-esp=aes;none" #4: initiator established Child SA using #1; IPsec tunnel [192.0.101.0/24===192.0.201.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_512_256 DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.101.254 192.0.201.254
 up
 west #
  # pfs=yes dh= - connect
 west #
- ipsec auto --up westnet-eastnet-ikev2-10
-"westnet-eastnet-ikev2-10" #5: initiating Child SA using IKE SA #1
-"westnet-eastnet-ikev2-10" #5: sent CREATE_CHILD_SA request for new IPsec SA
-"westnet-eastnet-ikev2-10" #5: initiator established Child SA using #1; IPsec tunnel [192.0.110.0/24===192.0.210.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_512_256-MODP2048 DPD=passive}
+ ipsec auto --up 'westnet-eastnet-ikev2-pfs=yes-esp=aes'
+"westnet-eastnet-ikev2-pfs=yes-esp=aes" #5: initiating Child SA using IKE SA #1
+"westnet-eastnet-ikev2-pfs=yes-esp=aes" #5: sent CREATE_CHILD_SA request for new IPsec SA
+"westnet-eastnet-ikev2-pfs=yes-esp=aes" #5: initiator established Child SA using #1; IPsec tunnel [192.0.110.0/24===192.0.210.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_512_256-DH19 DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.110.254 192.0.210.254
 up
 west #
  # pfs=yes dh=none - connect
 west #
- ipsec auto --up westnet-eastnet-ikev2-11
-"westnet-eastnet-ikev2-11" #6: initiating Child SA using IKE SA #1
-"westnet-eastnet-ikev2-11" #6: sent CREATE_CHILD_SA request for new IPsec SA
-"westnet-eastnet-ikev2-11" #6: initiator established Child SA using #1; IPsec tunnel [192.0.111.0/24===192.0.211.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_512_256 DPD=passive}
+ ipsec auto --up 'westnet-eastnet-ikev2-pfs=yes-esp=aes;none'
+"westnet-eastnet-ikev2-pfs=yes-esp=aes;none" #6: initiating Child SA using IKE SA #1
+"westnet-eastnet-ikev2-pfs=yes-esp=aes;none" #6: sent CREATE_CHILD_SA request for new IPsec SA
+"westnet-eastnet-ikev2-pfs=yes-esp=aes;none" #6: initiator established Child SA using #1; IPsec tunnel [192.0.111.0/24===192.0.211.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_512_256 DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.111.254 192.0.211.254
 up
 west #
  ipsec whack --trafficstatus
 #2: "westnet-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
-#3: "westnet-eastnet-ikev2-00", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
-#4: "westnet-eastnet-ikev2-01", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
-#5: "westnet-eastnet-ikev2-10", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
-#6: "westnet-eastnet-ikev2-11", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+#3: "westnet-eastnet-ikev2-pfs=no-esp=aes", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+#4: "westnet-eastnet-ikev2-pfs=no-esp=aes;none", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+#5: "westnet-eastnet-ikev2-pfs=yes-esp=aes", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+#6: "westnet-eastnet-ikev2-pfs=yes-esp=aes;none", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  echo done
 done

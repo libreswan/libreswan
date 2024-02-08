@@ -20,7 +20,7 @@ road #
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: sending INITIAL_CONTACT
-"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: sent IKE_AUTH request to 192.1.2.23:UDP/4500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: sent IKE_AUTH request to 192.1.2.23:UDP/4500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: initiator established IKE SA; authenticated peer '3nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 192.0.2.1
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS 1.2.3.4
@@ -59,7 +59,7 @@ road #
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: sending INITIAL_CONTACT
-"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: sent IKE_AUTH request to 192.1.2.23:UDP/4500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: sent IKE_AUTH request to 192.1.2.23:UDP/4500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: initiator established IKE SA; authenticated peer '3nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 192.0.2.1
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS 1.2.3.4
@@ -119,7 +119,7 @@ road #
 "westnet-eastnet-ipv4-psk-ikev2"[1]:   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet-ipv4-psk-ikev2"[1]:   routing: routed-tunnel; established Child SA: #2;
 "westnet-eastnet-ipv4-psk-ikev2"[1]:   conn serial: $2, instantiated from: $1;
-"westnet-eastnet-ipv4-psk-ikev2"[1]:   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-MODP2048
+"westnet-eastnet-ipv4-psk-ikev2"[1]:   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-DH19
 "westnet-eastnet-ipv4-psk-ikev2"[1]:   ESP algorithm newest: AES_GCM_16_256-NONE; pfsgroup=<Phase1>
 #1: "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23:4500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
 #2: "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23:4500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;

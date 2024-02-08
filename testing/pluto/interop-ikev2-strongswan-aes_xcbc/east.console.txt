@@ -25,9 +25,9 @@ Shunted Connections:
 Bypass LAN 192.0.2.0/24:  192.0.2.0/24 === 192.0.2.0/24 PASS
 Bypass LAN 192.1.2.0/24:  192.1.2.0/24 === 192.1.2.0/24 PASS
 Security Associations (1 up, 0 connecting):
-westnet-eastnet-ikev2[1]: ESTABLISHED XXX second ago, 192.1.2.23[east]...192.1.2.45[west]
-westnet-eastnet-ikev2[1]: IKEv2 SPIs: SPISPI_i SPISPI_r*, pre-shared key reauthentication in 2 hours
-westnet-eastnet-ikev2[1]: IKE proposal: AES_CBC_128/AES_XCBC_96/PRF_AES128_XCBC/MODP_2048
+westnet-eastnet-ikev2[2]: ESTABLISHED XXX second ago, 192.1.2.23[east]...192.1.2.45[west]
+westnet-eastnet-ikev2[2]: IKEv2 SPIs: SPISPI_i SPISPI_r*, pre-shared key reauthentication in 2 hours
+westnet-eastnet-ikev2[2]: IKE proposal: AES_CBC_128/AES_XCBC_96/PRF_AES128_XCBC/MODP_2048
 westnet-eastnet-ikev2{1}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o
 westnet-eastnet-ikev2{1}:  AES_CBC_128/AES_XCBC_96, XXX bytes_i (XX pkts, XXs ago), XXX bytes_o (XX pkts, XXs ago), rekeying in XX minutes
 westnet-eastnet-ikev2{1}:   192.0.2.0/24 === 192.0.1.0/24

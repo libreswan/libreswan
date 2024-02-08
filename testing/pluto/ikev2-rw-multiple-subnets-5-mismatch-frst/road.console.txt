@@ -23,16 +23,16 @@ initiating all connections with alias "road"
 "road/0x4": queue Child SA; waiting on IKE SA "road/0x1" #1 negotiating with 192.1.2.23
 initiating 4 connections
 "road/0x1" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"road/0x1" #1: sent IKE_AUTH request to 192.1.2.23:UDP/4500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"road/0x1" #1: sent IKE_AUTH request to 192.1.2.23:UDP/4500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
 "road/0x1" #1: initiator established IKE SA; authenticated peer '3nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 "road/0x1" #2: IKE_AUTH response rejected Child SA with TS_UNACCEPTABLE
 "road/0x2" #3: initiating Child SA using IKE SA #1
 "road/0x3" #4: initiating Child SA using IKE SA #1
 "road/0x4" #5: initiating Child SA using IKE SA #1
 "road/0x2" #3: sent CREATE_CHILD_SA request for new IPsec SA
-"road/0x2" #3: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATD=192.1.2.23:4500 DPD=passive}
+"road/0x2" #3: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 NATD=192.1.2.23:4500 DPD=passive}
 "road/0x3" #4: sent CREATE_CHILD_SA request for new IPsec SA
-"road/0x3" #4: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.20.0/24] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATD=192.1.2.23:4500 DPD=passive}
+"road/0x3" #4: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.20.0/24] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 NATD=192.1.2.23:4500 DPD=passive}
 "road/0x4" #5: sent CREATE_CHILD_SA request for new IPsec SA
 "road/0x4" #5: CREATE_CHILD_SA failed with error notification TS_UNACCEPTABLE
 road #

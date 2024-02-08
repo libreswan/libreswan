@@ -5,7 +5,7 @@ versions up to 4.3 result in an error:
  ipsec auto --up west-east-ikev2
 1v2 "west-east-ikev2" #1: initiating IKEv2 connection
 1v2 "west-east-ikev2" #1: sent IKE_SA_INIT request
-1v2 "west-east-ikev2" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+1v2 "west-east-ikev2" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
 002 "west-east-ikev2" #1: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "west-east-ikev2" #1: authenticated using RSA with SHA2_512
 003 "west-east-ikev2" #2: cannot install route: peer is within its client

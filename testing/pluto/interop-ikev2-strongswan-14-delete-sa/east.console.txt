@@ -18,8 +18,6 @@ east #
  if [ -f /var/run/pluto/pluto.pid ]; then grep -E "Message ID: [0-9] " /tmp/pluto.log  ; fi
 |    Message ID: 0 (00 00 00 00)
 |    Message ID: 0 (00 00 00 00)
-|    Message ID: 0 (00 00 00 00)
-|    Message ID: 0 (00 00 00 00)
 |    Message ID: 1 (00 00 00 01)
 |    Message ID: 1 (00 00 00 01)
 |    Message ID: 2 (00 00 00 02)

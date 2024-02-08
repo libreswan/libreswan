@@ -20,7 +20,7 @@ west #
  ipsec auto --up ikev2
 "ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"ikev2" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"ikev2" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
 "ikev2" #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east-v2'
 "ikev2" #2: initiator established Child SA using #1; IPsec tunnel [10.0.1.0/24===10.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
@@ -36,9 +36,9 @@ west #
 Redirecting to: [initsystem]
 west #
  grep -E -i "IKE|ipsec-" /var/log/audit/audit.log
-type=CRYPTO_IKE_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=start direction=initiator conn-name="ikev2" connstate=1 ike-version=2.0 auth=RSA_SIG cipher=aes_gcm_16 ksize=256 integ=none prf=sha512 pfs=MODP2048 raddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=success'^]UID="root" AUID="unset"
+type=CRYPTO_IKE_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=start direction=initiator conn-name="ikev2" connstate=1 ike-version=2.0 auth=RSA_SIG cipher=aes_gcm_16 ksize=256 integ=none prf=sha512 pfs=DH19 raddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=success'^]UID="root" AUID="unset"
 type=CRYPTO_IPSEC_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=start conn-name="ikev2" connstate=2, satype=ipsec-esp samode=tunnel cipher=AES_GCM_C ksize=256 integ=NONE in-spi=DEC(HEX) out-spi=DEC(HEX) in-spi=DEC(HEX) out-spi=DEC(HEX) raddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=success'^]UID="root" AUID="unset"
 type=CRYPTO_IPSEC_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=destroy conn-name="ikev2" connstate=2, satype=ipsec-esp samode=tunnel cipher=AES_GCM_C ksize=256 integ=NONE in-spi=DEC(HEX) out-spi=DEC(HEX) in-spi=DEC(HEX) out-spi=DEC(HEX) raddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=success'^]UID="root" AUID="unset"
-type=CRYPTO_IKE_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=destroy direction=initiator conn-name="ikev2" connstate=1 ike-version=2.0 auth=RSA_SIG cipher=aes_gcm_16 ksize=256 integ=none prf=sha512 pfs=MODP2048 raddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=success'^]UID="root" AUID="unset"
+type=CRYPTO_IKE_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=destroy direction=initiator conn-name="ikev2" connstate=1 ike-version=2.0 auth=RSA_SIG cipher=aes_gcm_16 ksize=256 integ=none prf=sha512 pfs=DH19 raddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=success'^]UID="root" AUID="unset"
 west #
  

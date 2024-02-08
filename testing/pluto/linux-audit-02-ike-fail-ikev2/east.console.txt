@@ -19,6 +19,6 @@ east #
 Redirecting to: [initsystem]
 east #
  grep -E -i "IKE|ipsec-" /var/log/audit/audit.log
-type=CRYPTO_IKE_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=start direction=responder conn-name="ikev2" connstate=1 ike-version=2.0 auth=RSA_SIG cipher=aes_gcm_16 ksize=256 integ=none prf=sha512 pfs=MODP2048 raddr=192.1.2.45 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.23 terminal=? res=failed'^]UID="root" AUID="unset"
+type=CRYPTO_IKE_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=start direction=responder conn-name="ikev2" connstate=1 ike-version=2.0 auth=RSA_SIG cipher=aes_gcm_16 ksize=256 integ=none prf=sha512 pfs=DH19 raddr=192.1.2.45 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.23 terminal=? res=failed'^]UID="root" AUID="unset"
 east #
  

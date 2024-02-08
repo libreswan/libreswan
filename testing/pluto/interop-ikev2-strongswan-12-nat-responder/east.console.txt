@@ -25,9 +25,9 @@ Shunted Connections:
 Bypass LAN 192.0.2.0/24:  192.0.2.0/24 === 192.0.2.0/24 PASS
 Bypass LAN 192.1.2.0/24:  192.1.2.0/24 === 192.1.2.0/24 PASS
 Security Associations (1 up, 0 connecting):
-road-eastnet-ikev2[2]: ESTABLISHED XXX second ago, 192.1.2.23[east]...192.1.2.254[road]
-road-eastnet-ikev2[2]: IKEv2 SPIs: SPISPI_i SPISPI_r*, pre-shared key reauthentication in 2 hours
-road-eastnet-ikev2[2]: IKE proposal: AES_CBC_256/HMAC_SHA2_256_128/PRF_HMAC_SHA2_256/ECP_256
+road-eastnet-ikev2[1]: ESTABLISHED XXX second ago, 192.1.2.23[east]...192.1.2.254[road]
+road-eastnet-ikev2[1]: IKEv2 SPIs: SPISPI_i SPISPI_r*, pre-shared key reauthentication in 2 hours
+road-eastnet-ikev2[1]: IKE proposal: AES_CBC_256/HMAC_SHA2_256_128/PRF_HMAC_SHA2_256/ECP_256
 road-eastnet-ikev2{1}:  INSTALLED, TUNNEL, reqid 1, ESP in UDP SPIs: SPISPI_i SPISPI_o
 road-eastnet-ikev2{1}:  AES_CBC_256/HMAC_SHA2_256_128, XXX bytes_i (XX pkts, XXs ago), XXX bytes_o (XX pkts, XXs ago), rekeying in XX minutes
 road-eastnet-ikev2{1}:   192.0.2.0/24 === 192.1.3.209/32

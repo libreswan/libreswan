@@ -21,9 +21,9 @@ ipsec whack --impair timeout_on_retransmit
 
 ipsec auto --add westnet-eastnet-ikev2
 
-ipsec auto --add westnet-eastnet-ikev2-00
-ipsec auto --add westnet-eastnet-ikev2-01
-ipsec auto --add westnet-eastnet-ikev2-10
-ipsec auto --add westnet-eastnet-ikev2-11
+ipsec auto --add 'westnet-eastnet-ikev2-pfs=no-esp=aes'
+ipsec auto --add 'westnet-eastnet-ikev2-pfs=no-esp=aes;none'
+ipsec auto --add 'westnet-eastnet-ikev2-pfs=yes-esp=aes'
+ipsec auto --add 'westnet-eastnet-ikev2-pfs=yes-esp=aes;none'
 
 echo "initdone"

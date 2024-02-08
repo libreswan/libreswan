@@ -26,14 +26,8 @@ initiating IKE_SA westnet-eastnet-ikev2[1] to 192.1.2.23
 generating IKE_SA_INIT request 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) N(FRAG_SUP) N(HASH_ALG) N(REDIR_SUP) ]
 sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
 received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
-parsed IKE_SA_INIT response 0 [ N(INVAL_KE) ]
-peer didn't accept DH group ECP_256, it requested MODP_2048
-initiating IKE_SA westnet-eastnet-ikev2[1] to 192.1.2.23
-generating IKE_SA_INIT request 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) N(FRAG_SUP) N(HASH_ALG) N(REDIR_SUP) ]
-sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
-received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
 parsed IKE_SA_INIT response 0 [ SA KE No N(FRAG_SUP) N(HASH_ALG) N(NATD_S_IP) N(NATD_D_IP) N(CHDLESS_SUP) CERTREQ ]
-selected proposal: IKE:AES_GCM_16_256/PRF_HMAC_SHA2_512/MODP_2048
+selected proposal: IKE:AES_GCM_16_256/PRF_HMAC_SHA2_512/ECP_256
 received cert request for "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org"
 authentication of 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org' (myself) with RSA_EMSA_PSS_SHA2_384_SALT_48 successful
 establishing CHILD_SA westnet-eastnet-ikev2{1}

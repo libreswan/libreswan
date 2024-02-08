@@ -13,9 +13,9 @@ initdone
 east #
  if [ -f /var/run/pluto/pluto.pid ]; then ipsec auto --down westnet-eastnet-ikev2 ; fi
 "westnet-eastnet-ikev2": terminating SAs using this connection
-"westnet-eastnet-ikev2" #2: intiating delete
-"westnet-eastnet-ikev2" #3: ESP traffic information: in=84B out=84B
-"westnet-eastnet-ikev2" #2: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
+"westnet-eastnet-ikev2" #1: intiating delete
+"westnet-eastnet-ikev2" #2: ESP traffic information: in=84B out=84B
+"westnet-eastnet-ikev2" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 east #
  if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then sleep 5 ; fi
 east #
@@ -26,8 +26,6 @@ east #
  if [ -f /var/run/pluto/pluto.pid ]; then ../../guestbin/ipsec-kernel-policy.sh ; fi
 east #
  if [ -f /var/run/pluto/pluto.pid ]; then grep -E "Message ID: [0-9] " /tmp/pluto.log  ; fi
-|    Message ID: 0 (00 00 00 00)
-|    Message ID: 0 (00 00 00 00)
 |    Message ID: 0 (00 00 00 00)
 |    Message ID: 0 (00 00 00 00)
 |    Message ID: 1 (00 00 00 01)

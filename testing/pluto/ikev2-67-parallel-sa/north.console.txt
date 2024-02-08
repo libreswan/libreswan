@@ -22,12 +22,12 @@ initiating all connections with alias "northnet-eastnet"
 "northnet-eastnet/0x1": queue Child SA; waiting on IKE SA "northnet-eastnet/0x2" #1 negotiating with 192.1.2.23
 "northnet-eastnet/0x2" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "northnet-eastnet/0x1" #2: Child SA initiating pending connection using IKE SA #1's IKE_AUTH exchange
-"northnet-eastnet/0x2" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"northnet-eastnet/0x2" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
 "northnet-eastnet/0x2" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "northnet-eastnet/0x1" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 "northnet-eastnet/0x2" #3: initiating Child SA using IKE SA #1
 "northnet-eastnet/0x2" #3: sent CREATE_CHILD_SA request for new IPsec SA
-"northnet-eastnet/0x2" #3: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
+"northnet-eastnet/0x2" #3: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 DPD=passive}
 north #
  taskset 0x1 ping -n -q -c 2 -I 192.0.3.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.3.254 : 56(84) bytes of data.

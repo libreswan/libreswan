@@ -20,7 +20,7 @@ road #
  ipsec up road
 "road" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "road" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"road" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"road" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
 "road" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "road" #2: accepted selectors [192.0.3.0/24]->[192.0.2.0/24 192.0.20.0/24]
 "road" #2: running updown up 192.0.3.0/24===192.0.2.0/24

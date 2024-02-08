@@ -123,7 +123,7 @@ road #
 ipsec auto --up road-eastnet-nonat
 "road-eastnet-nonat" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "road-eastnet-nonat" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"road-eastnet-nonat" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=aes_gcm_16_256 integ=n/a prf=sha2_512 group=MODP2048}
+"road-eastnet-nonat" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=aes_gcm_16_256 integ=n/a prf=sha2_512 group=DH19}
 "road-eastnet-nonat" #2: negotiated connection [192.0.2.219/32->192.0.2.0/24]
 "road-eastnet-nonat" #2: STATE_V2_ESTABLISHED_IKE_SA: initiator established IKE SA tunnel mode {ESP=>0xESPESP<0xESPESP xfrm=AES_128-HMAC_SHA1 DPD=passive}
 road #

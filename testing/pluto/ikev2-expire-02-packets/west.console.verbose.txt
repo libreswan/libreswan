@@ -17,7 +17,7 @@ initdone
 ]0;root@swantest:/home/build/libreswan/testing/pluto/ikev2-expire-02-packets[root@west ikev2-expire-02-packets]# ipsec auto --up west
 181 "west" #1: initiating IKEv2 connection
 181 "west" #1: sent IKE_SA_INIT request
-182 "west" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+182 "west" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
 003 "west" #1: initiator established IKE SA; authenticated using authby=secret and peer ID_FQDN '@east'
 002 "west" #2: route-client output: Error: Peer netns reference is invalid.
 004 "west" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] === [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0x75cd8d5e <0xbba19740 xfrm=AES_GCM_16_256-NONE DPD=passive}

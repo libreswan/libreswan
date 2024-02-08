@@ -28,7 +28,7 @@ east #
 "westnet-eastnet-ipv4-psk-ikev2":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet-ipv4-psk-ikev2":   routing: unrouted;
 "westnet-eastnet-ipv4-psk-ikev2":   conn serial: $1;
-"westnet-eastnet-ipv4-psk-ikev2":   IKE algorithms: 3DES_CBC-HMAC_SHA2_256-MODP2048+MODP3072+MODP4096+MODP8192+DH19+DH20+DH21+DH31
+"westnet-eastnet-ipv4-psk-ikev2":   IKE algorithms: 3DES_CBC-HMAC_SHA2_256-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
 east #
  echo "initdone"
 initdone

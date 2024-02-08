@@ -47,7 +47,7 @@ west #
 "westnet-eastnet-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-ikev2" #1: IMPAIR: forcing auth method IKEv2_AUTH_ECDSA_SHA2_384_P384
 "westnet-eastnet-ikev2" #1: IMPAIR: forcing auth method IKEv2_AUTH_ECDSA_SHA2_384_P384
-"westnet-eastnet-ikev2" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"westnet-eastnet-ikev2" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
 "westnet-eastnet-ikev2" #1: initiator established IKE SA; authenticated peer 'P-384 ECDSA with SHA2_384' signature using peer certificate 'C=CH, O=strongSwan, CN=strongEast' issued by CA 'C=CH, O=strongSwan, CN=strongSwan CA'
 "westnet-eastnet-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #

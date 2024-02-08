@@ -55,7 +55,7 @@ west #
  ipsec auto --up westnet-eastnet-ikev2
 "westnet-eastnet-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet-eastnet-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"westnet-eastnet-ikev2" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"westnet-eastnet-ikev2" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
 "westnet-eastnet-ikev2" #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
 "westnet-eastnet-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
@@ -169,7 +169,7 @@ Connection list:
 "westnet-eastnet-ikev2":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet-ikev2":   routing: routed-tunnel; established Child SA: #2;
 "westnet-eastnet-ikev2":   conn serial: $1;
-"westnet-eastnet-ikev2":   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-MODP2048
+"westnet-eastnet-ikev2":   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-DH19
 "westnet-eastnet-ikev2":   ESP algorithm newest: AES_GCM_16_256-NONE; pfsgroup=<Phase1>
  
 Total IPsec connections: loaded 1, active 1

@@ -35,7 +35,7 @@ east #
  hostname | grep east > /dev/null && ipsec whack --rekey-child --name road-eastnet-nonat
 "road-eastnet-nonat"[1] 192.1.3.209 #3: initiating rekey to replace Child SA #2
 "road-eastnet-nonat"[1] 192.1.3.209 #3: sent CREATE_CHILD_SA request to rekey IPsec SA
-"road-eastnet-nonat"[1] 192.1.3.209 #3: initiator rekeyed Child SA #2 using #1; IPsec tunnel [192.0.2.0/24===192.0.2.219/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
+"road-eastnet-nonat"[1] 192.1.3.209 #3: initiator rekeyed Child SA #2 using #1; IPsec tunnel [192.0.2.0/24===192.0.2.219/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 DPD=passive}
 "road-eastnet-nonat"[1] 192.1.3.209 #2: deleting established Child SA using IKE SA #1
 "road-eastnet-nonat"[1] 192.1.3.209 #2: ESP traffic information: in=84B out=84B
 east #

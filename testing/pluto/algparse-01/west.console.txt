@@ -1,6 +1,14 @@
 ../../guestbin/swan-prep
 west #
- # run the parser tests
+ # Run the parser tests.
+west #
+ #
+west #
+ # The output is a patch showing differences so to update run something
+west #
+ # like:
+west #
+ #    algparse.sh ... | patch
 west #
  ../../guestbin/algparse.sh 'ipsec algparse' algparse*.txt > /dev/null
 ipsec algparse -v1 -pfs -t # algparse.v1.pfs.txt
@@ -9,11 +17,11 @@ ipsec algparse -v2 -pfs -t # algparse.v2.pfs.txt
 ipsec algparse -v2 -t # algparse.v2.txt
 ipsec algparse -v # algparse.v.txt
 west #
- # run the algorithm tests
+ # Run the algorithm tests; there should be no fails.
 west #
  ipsec algparse -ta > /dev/null
 west #
- # check pluto is starting in the correct mode
+ # Check pluto is starting in the correct mode.
 west #
  ipsec start
 Redirecting to: [initsystem]
@@ -25,7 +33,7 @@ FIPS Mode: NO
 FIPS mode disabled for pluto daemon
 FIPS HMAC integrity support [not required]
 west #
- # check pluto algorithm list
+ # Check pluto algorithm list.
 west #
  sed -n -e '/^|/d' -e ':algs / algorithms:/ { :alg ; p ; n ; /^  / b alg ; b algs }' /tmp/pluto.log
 Encryption algorithms:

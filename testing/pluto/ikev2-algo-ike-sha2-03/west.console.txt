@@ -44,7 +44,7 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet-ipv4-psk-ikev2":   routing: unrouted;
 "westnet-eastnet-ipv4-psk-ikev2":   conn serial: $1;
-"westnet-eastnet-ipv4-psk-ikev2":   IKE algorithms: AES_CBC-HMAC_SHA2_256-MODP2048+MODP3072+MODP4096+MODP8192+DH19+DH20+DH21+DH31
+"westnet-eastnet-ipv4-psk-ikev2":   IKE algorithms: AES_CBC-HMAC_SHA2_256-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
 west #
  ipsec whack --impair suppress_retransmits
 west #
@@ -54,7 +54,7 @@ west #
  ipsec auto --up westnet-eastnet-ipv4-psk-ikev2
 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_CBC_256 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=MODP2048}
+"westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_CBC_256 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=DH19}
 "westnet-eastnet-ipv4-psk-ikev2" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "westnet-eastnet-ipv4-psk-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #

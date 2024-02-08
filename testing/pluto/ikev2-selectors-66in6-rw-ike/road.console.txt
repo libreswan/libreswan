@@ -20,7 +20,7 @@ road #
  ipsec up road
 "road" #1: initiating IKEv2 connection to 2001:db8:1:2::23 using UDP
 "road" #1: sent IKE_SA_INIT request to [2001:db8:1:2::23]:UDP/500
-"road" #1: sent IKE_AUTH request to [2001:db8:1:2::23]:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"road" #1: sent IKE_AUTH request to [2001:db8:1:2::23]:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
 "road" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "road" #2: accepted selectors [2001:db8:0:3::/64]->[2001:db8:0:2::/64 2001:db8:0:20::/64]
 "road" #2: running updown prepare 2001:db8:0:3::/64===2001:db8:0:2::/64
@@ -99,7 +99,7 @@ road #
  ipsec whack --rekey-ike --name road
 "road" #3: initiating rekey to replace IKE SA #1
 "road" #3: sent CREATE_CHILD_SA request to rekey IKE SA
-"road" #3: initiator rekeyed IKE SA #1 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"road" #3: initiator rekeyed IKE SA #1 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
 "road" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 road #
  ../../guestbin/ping-once.sh --up 2001:db8:0:2::254
@@ -115,7 +115,7 @@ road #
 "road" #4: initiating rekey to replace Child SA #2
 "road" #4: sent CREATE_CHILD_SA request to rekey IPsec SA
 "road" #4: accepted selectors [2001:db8:0:3::/64]->[2001:db8:0:2::/64 2001:db8:0:20::/64]
-"road" #4: initiator rekeyed Child SA #2 using #3; IPsec tunnel [2001:db8:0:3::/64===2001:db8:0:2::/64] [2001:db8:0:3::/64===2001:db8:0:20::/64] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
+"road" #4: initiator rekeyed Child SA #2 using #3; IPsec tunnel [2001:db8:0:3::/64===2001:db8:0:2::/64] [2001:db8:0:3::/64===2001:db8:0:20::/64] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 DPD=passive}
 "road" #2: deleting established Child SA using IKE SA #3
 "road" #2: ESP traffic information: in=416B out=416B
 road #

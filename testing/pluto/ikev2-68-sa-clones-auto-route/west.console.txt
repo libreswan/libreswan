@@ -81,14 +81,14 @@ west #
 "westnet-eastnet-0" #1: initiating v2 parent SA
 "westnet-eastnet-0" #1: initiate
 "westnet-eastnet-0" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"westnet-eastnet-0" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"westnet-eastnet-0" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
 "westnet-eastnet-0" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "westnet-eastnet-0" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24] --(0)-=== [192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 "westnet-eastnet-1" #4: sent IPsec Child req wait response
 "westnet-eastnet-2" #3: message id deadlock? wait sending, add to send next list using parent #1 unacknowledged 1 next message id=3 ike exchange window 1
 "westnet-eastnet-2" #3: sent IPsec Child req wait response
-"westnet-eastnet-1" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0/24] --(1)-=== [192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
-"westnet-eastnet-2" #3: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24] --(2)-=== [192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
+"westnet-eastnet-1" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0/24] --(1)-=== [192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 DPD=passive}
+"westnet-eastnet-2" #3: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24] --(2)-=== [192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 DPD=passive}
 west #
  taskset 0x1 ping -n -c 2 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
@@ -193,7 +193,7 @@ west #
 "westnet-eastnet-0":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet-0":   routing: routed-tunnel; established ISAKMP SA: #1; established IPsec SA: #2;
 "westnet-eastnet-0":   aliases: westnet-eastnet
-"westnet-eastnet-0":   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-MODP2048
+"westnet-eastnet-0":   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-DH19
 "westnet-eastnet-0":   ESP algorithm newest: AES_GCM_16_256-NONE; pfsgroup=<Phase1>
 "westnet-eastnet-1": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; erouted; eroute owner: #4
 "westnet-eastnet-1":     oriented; my_ip=unset; their_ip=unset;

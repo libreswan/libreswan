@@ -48,7 +48,7 @@ west #
  ipsec auto --up ikev2-westnet-eastnet-x509-cr
 "ikev2-westnet-eastnet-x509-cr" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "ikev2-westnet-eastnet-x509-cr" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"ikev2-westnet-eastnet-x509-cr" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"ikev2-westnet-eastnet-x509-cr" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
 "ikev2-westnet-eastnet-x509-cr" #1: NSS: ERROR: IPsec certificate E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA invalid: SEC_ERROR_UNKNOWN_ISSUER: Peer's Certificate issuer is not recognized.
 "ikev2-westnet-eastnet-x509-cr" #1: X509: certificate payload rejected for this connection
 "ikev2-westnet-eastnet-x509-cr" #1: encountered fatal error in state STATE_V2_PARENT_I2

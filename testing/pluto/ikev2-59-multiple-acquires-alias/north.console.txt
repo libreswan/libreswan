@@ -30,7 +30,7 @@ initiating all connections with alias "north-eastnets"
 "north-eastnets/0x1": queue Child SA; waiting on IKE SA "north-eastnets/0x2" #1 negotiating with 192.1.2.23
 "north-eastnets/0x2" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "north-eastnets/0x1" #2: Child SA initiating pending connection using IKE SA #1's IKE_AUTH exchange
-"north-eastnets/0x2" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_CBC_256 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=MODP2048}
+"north-eastnets/0x2" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_CBC_256 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=DH19}
 "north-eastnets/0x2" #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
 "north-eastnets/0x1" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_512_256 DPD=passive}
 "north-eastnets/0x2" #3: initiating Child SA using IKE SA #1
@@ -82,7 +82,7 @@ north #
 "north-eastnets/0x2":   conn serial: $2;
 "north-eastnets/0x2":   aliases: north-eastnets
 "north-eastnets/0x2":   IKE algorithms: AES_CBC_256-HMAC_SHA2_256-MODP2048
-"north-eastnets/0x2":   IKEv2 algorithm newest: AES_CBC_256-HMAC_SHA2_256-MODP2048
+"north-eastnets/0x2":   IKEv2 algorithm newest: AES_CBC_256-HMAC_SHA2_256-DH19
 "north-eastnets/0x2":   ESP algorithms: AES_CBC_128-HMAC_SHA2_512_256-MODP3072
 "north-eastnets/0x2":   ESP algorithm newest: AES_CBC_128-HMAC_SHA2_512_256; pfsgroup=<Phase1>
 #2: "north-eastnets/0x1":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;

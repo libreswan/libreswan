@@ -29,7 +29,7 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: sending bogus KE (g^x) == 0 value to break DH calculations
 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"westnet-eastnet-ipv4-psk-ikev2" #1: NSS: shared key calculation using MODP failed: SEC_ERROR_NO_MEMORY: security library: memory allocation failure.
+"westnet-eastnet-ipv4-psk-ikev2" #1: NSS: shared key calculation using ECP failed: SEC_ERROR_INVALID_KEY: The key does not support the requested operation.
 "westnet-eastnet-ipv4-psk-ikev2" #1: encountered fatal error in state STATE_V2_PARENT_I1
 "westnet-eastnet-ipv4-psk-ikev2" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: revival: skip scheduling revival event
@@ -50,7 +50,7 @@ west #
  ipsec auto --up westnet-eastnet-ipv4-psk-ikev2
 "westnet-eastnet-ipv4-psk-ikev2" #2: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet-eastnet-ipv4-psk-ikev2" #2: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"westnet-eastnet-ipv4-psk-ikev2" #2: NSS: shared key calculation using MODP failed: SEC_ERROR_NO_MEMORY: security library: memory allocation failure.
+"westnet-eastnet-ipv4-psk-ikev2" #2: NSS: shared key calculation using ECP failed: SEC_ERROR_INVALID_KEY: The key does not support the requested operation.
 "westnet-eastnet-ipv4-psk-ikev2" #2: encountered fatal error in state STATE_V2_PARENT_I1
 "westnet-eastnet-ipv4-psk-ikev2" #2: connection is supposed to remain up; revival attempt 2 scheduled in 5 seconds
 "westnet-eastnet-ipv4-psk-ikev2" #2: IMPAIR: revival: skip scheduling revival event
@@ -60,7 +60,7 @@ west #
 done
 west #
  grep -e v2N_INVALID_KE_PAYLOAD -e v2N_INVALID_SYNTAX -e SEC_ERROR /tmp/pluto.log | grep -v -e '^|'
-"westnet-eastnet-ipv4-psk-ikev2" #1: NSS: shared key calculation using MODP failed: SEC_ERROR_NO_MEMORY: security library: memory allocation failure.
-"westnet-eastnet-ipv4-psk-ikev2" #2: NSS: shared key calculation using MODP failed: SEC_ERROR_NO_MEMORY: security library: memory allocation failure.
+"westnet-eastnet-ipv4-psk-ikev2" #1: NSS: shared key calculation using ECP failed: SEC_ERROR_INVALID_KEY: The key does not support the requested operation.
+"westnet-eastnet-ipv4-psk-ikev2" #2: NSS: shared key calculation using ECP failed: SEC_ERROR_INVALID_KEY: The key does not support the requested operation.
 west #
  

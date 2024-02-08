@@ -1,15 +1,23 @@
 ../../guestbin/swan-prep --fips
 
-# run the parser tests
+# Run the parser tests.
+#
+# The output is a patch showing differences so to update run something
+# like:
+#    algparse.sh ... | patch
+
 ../../guestbin/algparse.sh 'ipsec algparse' algparse*.txt > /dev/null
 
-# run the algorithm tests
+# Run the algorithm tests; there should be no fails.
+
 ipsec algparse -ta > /dev/null
 
-# check pluto is starting in the correct mode
+# Check that pluto is starting in the correct mode.
+
 ipsec start
 ../../guestbin/wait-until-pluto-started
 grep ^FIPS /tmp/pluto.log
 
-# check pluto algorithm list
+# Check pluto algorithm list.
+
 sed -n -e '/^|/d' -e ':algs / algorithms:/ { :alg ; p ; n ; /^  / b alg ; b algs }' /tmp/pluto.log

@@ -13,7 +13,7 @@ north #
  ipsec auto --up northnet-westnet-ipv4-psk
 "northnet-westnet-ipv4-psk" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "northnet-westnet-ipv4-psk" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"northnet-westnet-ipv4-psk" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"northnet-westnet-ipv4-psk" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
 "northnet-westnet-ipv4-psk" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "northnet-westnet-ipv4-psk" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.1.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 north #
@@ -122,7 +122,7 @@ Connection list:
 "northnet-westnet-ipv4-psk":   nat-traversal: encapsulation:auto; keepalive:20s
 "northnet-westnet-ipv4-psk":   routing: routed-tunnel; established Child SA: #2;
 "northnet-westnet-ipv4-psk":   conn serial: $1;
-"northnet-westnet-ipv4-psk":   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-MODP2048
+"northnet-westnet-ipv4-psk":   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-DH19
 "northnet-westnet-ipv4-psk":   ESP algorithm newest: AES_GCM_16_256-NONE; pfsgroup=<Phase1>
  
 Total IPsec connections: loaded 1, active 1

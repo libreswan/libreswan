@@ -27,7 +27,7 @@ Mar  1 03:44:37.470882: "conn7" #2364: STATE_PARENT_I1: retransmission; will wai
 Mar  1 03:44:37.471843: "conn7" #2364: ERROR: asynchronous network error report on ens192 (172.16.1.2:500), complainant 172.16.2.2: Connection refused [errno 111, origin ICMP type 3 code 3 (not authenticated)]
 Mar  1 03:44:45.480036: "conn7" #2364: STATE_PARENT_I1: retransmission; will wait 16 seconds for response
 Mar  1 03:44:45.481185: "conn7" #2364: ERROR: asynchronous network error report on ens192 (172.16.1.2:500), complainant 172.16.2.2: Connection refused [errno 111, origin ICMP type 3 code 3 (not authenticated)]
-Mar  1 03:44:55.365359: "conn7" #2365: proposal 1:IKE=AES_CBC_128-HMAC_MD5-HMAC_MD5_96-MODP2048 chosen from remote proposals 1:IKE:ENCR=AES_CBC_128;PRF=HMAC_MD5;INTEG=HMAC_MD5_96;DH=MODP2048[first-match]
+Mar  1 03:44:55.365359: "conn7" #2365: proposal 1:IKE=AES_CBC_128-HMAC_MD5-HMAC_MD5_96-ECP_256 chosen from remote proposals 1:IKE:ENCR=AES_CBC_128;PRF=HMAC_MD5;INTEG=HMAC_MD5_96;DH=MODP2048[first-match]
 Mar  1 03:44:55.367416: "conn7" #2365: sent IKE_SA_INIT (or IKE_INTERMEDIATE) response {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_MD5_96 prf=HMAC_MD5 group=MODP2048}
 Mar  1 03:44:55.376118: "conn7" #2365: processing decrypted IKE_AUTH request: SK{IDi,AUTH,SA,TSi,TSr}
 Mar  1 03:44:55.376166: "conn7" #2365: IKEv2 mode peer ID is ID_IPV4_ADDR: '172.16.2.2'

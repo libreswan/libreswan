@@ -21,7 +21,7 @@ initdone
 freebsdw# ipsec auto --up eastnet-westnet-ikev2
 "eastnet-westnet-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "eastnet-westnet-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"eastnet-westnet-ikev2" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_CBC_256 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
+"eastnet-westnet-ikev2" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_CBC_256 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=DH19}
 "eastnet-westnet-ikev2" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "eastnet-westnet-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {AH/ESN=>0xAHAH <0xAHAH xfrm=HMAC_SHA1_96 DPD=passive}
 freebsdw# ../../guestbin/ipsec-kernel-policy.sh

@@ -28,7 +28,7 @@ west #
  ipsec auto --up ikev2-failtest # sanitize-retransmits
 "ikev2-failtest" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "ikev2-failtest" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"ikev2-failtest" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"ikev2-failtest" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
 "ikev2-failtest" #1: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
 "ikev2-failtest" #1: encountered fatal error in state STATE_V2_PARENT_I2
 "ikev2-failtest" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
@@ -45,6 +45,6 @@ Redirecting to: [initsystem]
 west #
  grep -E -i "IKE|ipsec-" /var/log/audit/audit.log
 type=CRYPTO_IPSEC_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=start conn-name="ikev2-failtest" connstate=2, satype=ipsec-policy samode=tunnel cipher=none ksize=0 integ=none in-spi=DEC(HEX) out-spi=DEC(HEX) in-spi=DEC(HEX) out-spi=DEC(HEX) raddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=failed'^]UID="root" AUID="unset"
-type=CRYPTO_IKE_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=start direction=initiator conn-name="ikev2-failtest" connstate=1 ike-version=2.0 auth=PRESHARED_KEY cipher=aes_gcm_16 ksize=256 integ=none prf=sha512 pfs=MODP2048 raddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=failed'^]UID="root" AUID="unset"
+type=CRYPTO_IKE_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=start direction=initiator conn-name="ikev2-failtest" connstate=1 ike-version=2.0 auth=PRESHARED_KEY cipher=aes_gcm_16 ksize=256 integ=none prf=sha512 pfs=DH19 raddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=failed'^]UID="root" AUID="unset"
 west #
  

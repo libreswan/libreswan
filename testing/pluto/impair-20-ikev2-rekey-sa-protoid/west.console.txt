@@ -24,7 +24,7 @@ west #
  ipsec auto --up west
 "west" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "west" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"west" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"west" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
 "west" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "west" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
@@ -37,7 +37,7 @@ west #
  ipsec whack --rekey-child --name west --async
 west #
  ../../guestbin/wait-for-pluto.sh '^".*#3: initiator rekeyed Child SA #2'
-"west" #3: initiator rekeyed Child SA #2 using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
+"west" #3: initiator rekeyed Child SA #2 using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 DPD=passive}
 west #
  ../../guestbin/wait-for-pluto.sh '^".*#2: ESP traffic information:'
 "west" #2: ESP traffic information: in=84B out=84B
@@ -53,7 +53,7 @@ west #
  ipsec auto --up west
 "west" #4: initiating IKEv2 connection to 192.1.2.23 using UDP
 "west" #4: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"west" #4: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"west" #4: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
 "west" #4: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "west" #5: initiator established Child SA using #4; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
@@ -77,7 +77,7 @@ west #
  ipsec auto --up west
 "west" #7: initiating IKEv2 connection to 192.1.2.23 using UDP
 "west" #7: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"west" #7: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"west" #7: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
 "west" #7: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "west" #8: initiator established Child SA using #7; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
@@ -101,7 +101,7 @@ west #
  ipsec auto --up west
 "west" #10: initiating IKEv2 connection to 192.1.2.23 using UDP
 "west" #10: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"west" #10: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"west" #10: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
 "west" #10: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "west" #11: initiator established Child SA using #10; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
