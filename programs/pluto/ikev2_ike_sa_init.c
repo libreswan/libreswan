@@ -949,6 +949,14 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 	ike->sa.st_v2_ike_ppk_enabled =
 		accept_v2_notification(v2N_USE_PPK,
 				       ike->sa.logger, md, c->config->ppk.allow);
+	if (c->config->ppk.insist && !ike->sa.st_v2_ike_ppk_enabled) {
+		record_v2N_response(ike->sa.logger, ike, md,
+				    v2N_NO_PROPOSAL_CHOSEN,
+				    NULL, UNENCRYPTED_PAYLOAD);
+		llog_sa(RC_LOG_SERIOUS, ike,
+			"connection has ppk=insist but peer does not support PPK");
+		return STF_FATAL;
+	}
 
 	ike->sa.st_seen_redirect_sup = (md->pd[PD_v2N_REDIRECTED_FROM] != NULL ||
 					md->pd[PD_v2N_REDIRECT_SUPPORTED] != NULL);
@@ -1371,6 +1379,11 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 	ike->sa.st_v2_ike_ppk_enabled =
 		accept_v2_notification(v2N_USE_PPK,
 				       ike->sa.logger, md, c->config->ppk.allow);
+	if (c->config->ppk.insist && !ike->sa.st_v2_ike_ppk_enabled) {
+		llog_sa(RC_LOG_SERIOUS, ike,
+			"connection has ppk=insist but peer does not support PPK");
+		return STF_FATAL;
+	}
 
 	if (md->pd[PD_v2N_SIGNATURE_HASH_ALGORITHMS] != NULL) {
 		if (!negotiate_hash_algo_from_notification(&md->pd[PD_v2N_SIGNATURE_HASH_ALGORITHMS]->pbs, ike)) {
