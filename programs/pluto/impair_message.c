@@ -76,7 +76,7 @@ struct message_impairment {
 
 struct direction_impairment {
 	const char *name;
-	bool impaired;
+	bool *recording;
 	bool block;
 	struct message_impairment *impairments;
 	struct list_head messages;
@@ -90,12 +90,14 @@ static struct direction_impairment inbound = {
 	.name = "inbound",
 	.messages = INIT_LIST_HEAD(&inbound.messages, &message_info),
 	.drip = drip_inbound,
+	.recording = &impair.record_inbound,
 };
 
 static struct direction_impairment outbound = {
 	.name = "outbound",
 	.messages = INIT_LIST_HEAD(&outbound.messages, &message_info),
 	.drip = drip_outbound,
+	.recording = &impair.record_outbound,
 };
 
 struct direction_impairment *const message_impairments[] = {
@@ -187,10 +189,11 @@ void add_message_impairment(enum impair_action impair_action,
 	struct direction_impairment *direction = message_impairments[impair_direction];
 	PASSERT(logger, direction != NULL);
 
-	if (!direction->impaired) {
+	if (!(*direction->recording)) {
+		/* auto-enable; can disable with --impair record_*:no */
 		llog(RC_LOG, logger, "IMPAIR: recording all %s messages",
 		     direction->name);
-		direction->impaired = true; /* sticky */
+		(*direction->recording) = true;
 	}
 
 	switch (impair_action) {
@@ -374,7 +377,7 @@ static void drip_outbound(const struct message *m, struct logger *logger)
 
 bool impair_inbound(struct msg_digest *md)
 {
-	if (!inbound.impaired) {
+	if (!impair.record_inbound) {
 		return false;
 	}
 
@@ -385,7 +388,7 @@ bool impair_inbound(struct msg_digest *md)
 bool impair_outbound(const struct iface_endpoint *interface, shunk_t message,
 		     const ip_endpoint *endpoint, struct logger *logger)
 {
-	if (!outbound.impaired) {
+	if (!impair.record_outbound) {
 		return false;
 	}
 

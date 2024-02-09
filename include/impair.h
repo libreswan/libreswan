@@ -191,6 +191,9 @@ struct impair {
 	bool install_ipsec_sa_outbound_state;
 	bool install_ipsec_sa_outbound_policy;
 
+	bool record_inbound;
+	bool record_outbound;
+
 	/*
 	 * add more here
 	 */

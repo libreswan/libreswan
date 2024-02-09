@@ -249,6 +249,9 @@ struct impairment impairments[] = {
 	 * Impair message flow.
 	 */
 
+	B(record_inbound, "enable recording of inbound messages"),
+	B(record_outbound, "enable recording of outbound messages"),
+
 	A("drop_inbound", IMPAIR_MESSAGE_DROP, IMPAIR_INBOUND_MESSAGE,
 	  "drop the N'th inbound message", "message number"),
 	A("drop_outbound", IMPAIR_MESSAGE_DROP, IMPAIR_OUTBOUND_MESSAGE,
