@@ -12,12 +12,15 @@
     </para>
     <para>
       <simplelist columns='1'>
-	<member><computeroutput>updown="ipsec _updown --route yes"</computeroutput></member>
+        <member><computeroutput>updown="ipsec _updown --route yes"</computeroutput></member>
       </simplelist>
     </para>
     <para>
       To disable calling an updown script, set it to the empty string,
       eg leftupdown="" or leftupdown="%disabled".
+    </para>
+    <para>
+      Connections with type= set to passthrough, reject or drop never run updown.
     </para>
     <para>
       See

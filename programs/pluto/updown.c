@@ -509,6 +509,11 @@ bool do_updown(enum updown updown_verb,
 		bad_case(updown_verb);
 	}
 
+	if (never_negotiate(c)) {
+		ldbg(logger, "kernel: skipped updown %s command - not needed for never_negotiate connections", verb);
+		return true;
+	}
+
 	/*
 	 * Support for skipping updown, eg leftupdown=""
 	 * Useful on busy servers that do not need to use updown for anything
