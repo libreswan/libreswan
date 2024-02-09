@@ -32,6 +32,14 @@ west #
 "addconn--rightupdown=right": connection failed to orient - check connection and network settings
 "addconn--rightupdown=right": added IKEv2 connection
 west #
+ ipsec add addconn--type=passthrough
+"addconn--type=passthrough": connection failed to orient - check connection and network settings
+"addconn--type=passthrough": added passthrough connection
+west #
+ ipsec add addconn--type=passthrough--leftupdown=left
+"addconn--type=passthrough--leftupdown=left": connection failed to orient - check connection and network settings
+"addconn--type=passthrough--leftupdown=left": added passthrough connection
+west #
  ipsec whack --name whack                                      --host 1.2.3.4 --to --host 5.6.7.8
 "whack": connection failed to orient - check connection and network settings
 "whack": added IKEv2 connection
@@ -40,6 +48,14 @@ west #
 "whack--updown=from": connection failed to orient - check connection and network settings
 "whack--updown=from": added IKEv2 connection
 west #
+ ipsec whack --name whack--pass               --pass                --host 1.2.3.4 --to --host 5.6.7.8
+"whack--pass": connection failed to orient - check connection and network settings
+"whack--pass": added passthrough connection
+west #
+ ipsec whack --name whack--pass--updown=from  --pass --updown=from  --host 1.2.3.4 --to --host 5.6.7.8
+"whack--pass--updown=from": connection failed to orient - check connection and network settings
+"whack--pass--updown=from": added passthrough connection
+west #
  ipsec connectionstatus | sed -n -e 's/\(^[^:]*:\).* \([a-z_]*updown=[^;]*\);.*/\1 \2/p' | sort
 "addconn--leftupdown=%disabled": my_updown=<disabled>
 "addconn--leftupdown=left": my_updown=left
@@ -47,7 +63,11 @@ west #
 "addconn--leftupdown=quotes": my_updown=<disabled>
 "addconn": my_updown=ipsec _updown
 "addconn--rightupdown=right": my_updown=ipsec _updown
+"addconn--type=passthrough--leftupdown=left": my_updown=left
+"addconn--type=passthrough": my_updown=ipsec _updown
 "whack": my_updown=ipsec _updown
+"whack--pass": my_updown=ipsec _updown
+"whack--pass--updown=from": my_updown=from
 "whack--updown=from": my_updown=from
 west #
  
