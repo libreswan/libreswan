@@ -3573,9 +3573,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 *
 	 * This function holds the just allocated reference.
 	 */
-	if (!orient(c, c->logger)) {
-		llog(RC_LOG, c->logger, "connection failed to orient - check connection and network settings");
-	}
+	orient(c, c->logger);
+
 	return NULL;
 }
 
@@ -3606,6 +3605,13 @@ bool add_connection(const struct whack_message *wm, struct logger *logger)
 
 	/* log all about this connection */
 
+	/* connection is good-to-go: log against it */
+
+	err_t tss = connection_requires_tss(c);
+	if (tss != NULL) {
+		llog(RC_LOG, c->logger, "connection is using multiple %s", tss);
+	}
+
 	/* slightly different names compared to pluto_constants.c */
 	static const char *const policy_shunt_names[SHUNT_POLICY_ROOF] = {
 		[SHUNT_UNSET] = "[should not happen]",
@@ -3615,15 +3621,36 @@ bool add_connection(const struct whack_message *wm, struct logger *logger)
 		[SHUNT_DROP] = "drop",
 		[SHUNT_REJECT] = "reject",
 	};
+	const char *what =
+		(never_negotiate(c) ? policy_shunt_names[c->config->never_negotiate_shunt] :
+		 c->config->ike_info->version_name);
 
-	/* connection is good-to-go: log against it */
-	err_t tss = connection_requires_tss(c);
-	if (tss != NULL) {
-		llog(RC_LOG, c->logger, "connection is using multiple %s", tss);
+	LLOG_JAMBUF(RC_LOG, c->logger, buf) {
+		jam_string(buf, "added ");
+		if (!oriented(c)) {
+			jam_string(buf, "unoriented ");
+		}
+		jam_string(buf, what);
+		jam_string(buf, " connection");
+		if (!oriented(c)) {
+			jam_string(buf, " (neither ");
+			FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
+				const struct connection_end *end = &c->end[lr];
+				jam_string(buf, end->host.config->leftright);
+				jam_string(buf, "=");
+				if (end->host.config->addr_name != NULL) {
+					jam_string(buf, end->host.config->addr_name);
+				} else {
+					jam_address(buf, &end->host.addr);
+				}
+				if (lr == LEFT_END) {
+					jam_string(buf, " nor ");
+				}
+			}
+			jam_string(buf, " match an interface)");
+		}
 	}
-	const char *what = (never_negotiate(c) ? policy_shunt_names[c->config->never_negotiate_shunt] :
-			    c->config->ike_info->version_name);
-	llog(RC_LOG, c->logger, "added %s connection", what);
+
 	policy_buf pb;
 	ldbg(c->logger,
 	     "ike_life: %jd; ipsec_life: %jds; rekey_margin: %jds; rekey_fuzz: %lu%%; replay_window: %ju; policy: %s ipsec_max_bytes: %ju ipsec_max_packets %ju",
