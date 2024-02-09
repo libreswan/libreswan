@@ -61,7 +61,7 @@ west #
  ipsec connectionstatus | sed -n -e 's/\(^[^:]*:\).* \([a-z_]*updown=[^;]*\);.*/\1 \2/p' | sort
 "addconn--leftupdown=%disabled": my_updown=<disabled>
 "addconn--leftupdown=left": my_updown=left
-"addconn--leftupdown=": my_updown=ipsec _updown
+"addconn--leftupdown=": my_updown=<disabled>
 "addconn--leftupdown=quotes": my_updown=<disabled>
 "addconn": my_updown=ipsec _updown
 "addconn--rightupdown=right": my_updown=ipsec _updown

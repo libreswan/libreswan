@@ -20,3 +20,15 @@ However, that is "fixed" in that this rule:
 which is part of the grammar is able to always accept an empty option.
 
 Question now is, is that valid?
+
+NO.
+
+A configuration like:
+
+    rightupdown=
+
+should be interpreted the same as:
+
+    rightupdown=''
+
+Which it now is.
