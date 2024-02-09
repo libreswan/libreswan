@@ -1,1 +1,4 @@
-Interop with strongswan using two connections that share the same Parent SA.
+Interop second IKEv2 child strongswan using (almost) default parameters.
+
+"almost" as strongswan doesn't include DH with second child so
+libreswan needs pfs=no to allow this.
