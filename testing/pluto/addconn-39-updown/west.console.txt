@@ -37,6 +37,7 @@ west #
 "addconn--type=passthrough": added passthrough connection
 west #
  ipsec add addconn--type=passthrough--leftupdown=left
+"addconn--type=passthrough--leftupdown=left": warning: leftupdown=left ignored when never negotiate
 "addconn--type=passthrough--leftupdown=left": connection failed to orient - check connection and network settings
 "addconn--type=passthrough--leftupdown=left": added passthrough connection
 west #
@@ -53,6 +54,7 @@ west #
 "whack--pass": added passthrough connection
 west #
  ipsec whack --name whack--pass--updown=from  --pass --updown=from  --host 1.2.3.4 --to --host 5.6.7.8
+"whack--pass--updown=from": warning: leftupdown=from ignored when never negotiate
 "whack--pass--updown=from": connection failed to orient - check connection and network settings
 "whack--pass--updown=from": added passthrough connection
 west #
@@ -63,11 +65,11 @@ west #
 "addconn--leftupdown=quotes": my_updown=<disabled>
 "addconn": my_updown=ipsec _updown
 "addconn--rightupdown=right": my_updown=ipsec _updown
-"addconn--type=passthrough--leftupdown=left": my_updown=left
-"addconn--type=passthrough": my_updown=ipsec _updown
+"addconn--type=passthrough--leftupdown=left": my_updown=<disabled>
+"addconn--type=passthrough": my_updown=<disabled>
 "whack": my_updown=ipsec _updown
-"whack--pass": my_updown=ipsec _updown
-"whack--pass--updown=from": my_updown=from
+"whack--pass": my_updown=<disabled>
+"whack--pass--updown=from": my_updown=<disabled>
 "whack--updown=from": my_updown=from
 west #
  
