@@ -8,5 +8,5 @@ ipsec pluto --config /etc/ipsec.conf --leak-detective
 ipsec auto --add westnet-eastnet-ikev2
 ipsec whack --impair suppress_retransmits
 ipsec whack --impair force_v2_auth_method:ecdsa_sha2_384_p384
-ipsec whack --impair omit_v2n_signature_hash_algorithms
+ipsec whack --impair omit_v2_notification:SIGNATURE_HASH_ALGORITHMS
 echo "initdone"

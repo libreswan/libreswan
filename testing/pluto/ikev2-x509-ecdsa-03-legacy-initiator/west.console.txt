@@ -36,14 +36,14 @@ west #
 west #
  ipsec whack --impair force_v2_auth_method:ecdsa_sha2_384_p384
 west #
- ipsec whack --impair omit_v2n_signature_hash_algorithms
+ ipsec whack --impair omit_v2_notification:SIGNATURE_HASH_ALGORITHMS
 west #
  echo "initdone"
 initdone
 west #
  ipsec auto --up westnet-eastnet-ikev2
 "westnet-eastnet-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-"westnet-eastnet-ikev2" #1: IMPAIR: omitting the SIGNATURE_HASH_ALGORITHM notification in IKE_SA_INIT request
+"westnet-eastnet-ikev2" #1: IMPAIR: omitting SIGNATURE_HASH_ALGORITHMS notification
 "westnet-eastnet-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-ikev2" #1: IMPAIR: forcing auth method IKEv2_AUTH_ECDSA_SHA2_384_P384
 "westnet-eastnet-ikev2" #1: IMPAIR: forcing auth method IKEv2_AUTH_ECDSA_SHA2_384_P384
