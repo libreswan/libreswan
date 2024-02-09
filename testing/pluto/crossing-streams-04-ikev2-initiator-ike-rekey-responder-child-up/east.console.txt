@@ -62,7 +62,7 @@ east #
 east #
  ipsec up east/0x2
 "east/0x2" #4: initiating Child SA using IKE SA #1
-"east/0x2" #4: connection is already unrouted HOLD
+"east/0x2" #4: connection for Child SA is already in state unrouted-bare-negotiation
 "east/0x2" #4: sent CREATE_CHILD_SA request for new IPsec SA
 "east/0x2" #4: sent CREATE_CHILD_SA request for new IPsec SA
 "east/0x2" #1: ISAKMP_v2_CREATE_CHILD_SA message response with Message ID 0 has no matching SA

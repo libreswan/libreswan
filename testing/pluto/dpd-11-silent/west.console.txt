@@ -94,7 +94,7 @@ west #
 west #
  ipsec auto --up west-east
 "west-east" #3: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-"west-east" #3: connection is already erouted
+"west-east" #3: connection for Child SA is already in state routed-tunnel
 "west-east" #3: sent Quick Mode request
 "west-east" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=active}
 west #

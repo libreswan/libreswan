@@ -88,7 +88,7 @@ west #
 west #
  ipsec auto --up west-east
 "west-east" #3: initiating Child SA using IKE SA #1
-"west-east" #3: connection is already erouted
+"west-east" #3: connection for Child SA is already in state routed-tunnel
 "west-east" #3: sent CREATE_CHILD_SA request for new IPsec SA
 "west-east" #3: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 DPD=active}
 west #
