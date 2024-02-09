@@ -176,7 +176,7 @@ statement_kw:
 	;
 %%
 
-void parser_warning(struct logger *logger, const char *s, ...)
+void parser_warning(struct logger *logger, int error, const char *s, ...)
 {
 	if (save_errors) {
 		LLOG_JAMBUF(RC_LOG, logger, buf) {
@@ -187,6 +187,9 @@ void parser_warning(struct logger *logger, const char *s, ...)
 			va_start(ap, s);
 			jam_va_list(buf, s, ap);
 			va_end(ap);
+			if (error > 0) {
+				jam_errno(buf, error);
+			}
 		}
 	}
 }

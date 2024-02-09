@@ -149,16 +149,10 @@ static bool parser_y_nextglobfile(struct ic_inputsource *iis, struct logger *log
 	/* open the file */
 	FILE *f = fopen(iis->filename, "r");
 	if (f == NULL) {
-		/* XXX: nasty hack for RHEL */
-		if (strstr(iis->filename, "crypto-policies/back-ends/libreswan.config") != NULL) {
-			parser_warning(logger, "ignored loading default system-wide crypto-policies file '%s': %s",
-				       iis->fileglob[fcnt],
-				       strerror(errno));
-		} else {
-			parser_warning(logger, "cannot open include filename: '%s': %s",
-				       iis->fileglob[fcnt],
-				       strerror(errno));
-		}
+		int e = errno;
+		parser_warning(logger, e,
+			       "cannot open include filename: '%s'",
+			       iis->fileglob[fcnt]);
 		return false;
 	}
 	iis->file = f;
@@ -180,7 +174,8 @@ static void glob_include(unsigned count, char **files,
 	/* success */
 
 	if (ic_private.stack_ptr >= MAX_INCLUDE_DEPTH - 1) {
-		parser_warning(logger, "including '%s' exceeds max inclusion depth of %u",
+		parser_warning(logger, /*errno*/0,
+			       "including '%s' exceeds max inclusion depth of %u",
 			       context->filename, MAX_INCLUDE_DEPTH);
 		return;
 	}
@@ -232,7 +227,8 @@ void parser_y_include (const char *filename, struct logger *logger)
 		}
 		if (strchr(filename, '*') == NULL) {
 			/* not a wildcard, throw error */
-			parser_warning(logger, "could not open include filename: '%s'",
+			parser_warning(logger, /*errno*/0,
+				       "could not open include filename: '%s'",
 				       filename);
 		} else {
 			/* don't throw an error, just log a warning */
@@ -254,7 +250,8 @@ void parser_y_include (const char *filename, struct logger *logger)
 	if (rootdir2[0] == '\0') {
 		if (strchr(filename,'*') == NULL) {
 			/* not a wildcard, throw error */
-			parser_warning(logger, "could not open include filename '%s' (tried '%s')",
+			parser_warning(logger, /*errno*/0,
+				       "could not open include filename '%s' (tried '%s')",
 				       filename, newname);
 		} else {
 			/* don't throw an error, just log a warning */
@@ -273,7 +270,8 @@ void parser_y_include (const char *filename, struct logger *logger)
 		return;
 	}
 
-	parser_warning(logger, "could not open include filename: '%s' (tried '%s' and '%s')",
+	parser_warning(logger, /*errno*/0,
+		       "could not open include filename: '%s' (tried '%s' and '%s')",
 		       filename, newname, newname2);
 
 	return;
@@ -481,7 +479,10 @@ include			return INCLUDE;
 
 #.*			{ /* eat comment to end of line */ }
 
-.			parser_warning(logger, "unrecognized: %s", yytext);
+.			{
+				parser_warning(logger, /*errno*/0,
+					       "unrecognized: %s", yytext);
+			}
 %%
 
 int yywrap(void) {
