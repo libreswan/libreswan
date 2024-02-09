@@ -143,6 +143,8 @@ kvmplutotest	addconn-37-nic-offload-no-hw-packet		good	github/1527
 kvmplutotest	addconn-38-keyword-obsolete			good
 kvmplutotest	addconn-38-keyword-in-wrong-section		good
 
+kvmplutotest	addconn-39-updown				good	github/1607
+
 #################################################################
 # IKEv2 tests
 #################################################################

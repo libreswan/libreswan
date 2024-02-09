@@ -1,0 +1,53 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec add addconn
+"addconn": connection failed to orient - check connection and network settings
+"addconn": added IKEv2 connection
+west #
+ ipsec add addconn--leftupdown=
+"addconn--leftupdown=": connection failed to orient - check connection and network settings
+"addconn--leftupdown=": added IKEv2 connection
+west #
+ ipsec add addconn--leftupdown=quotes
+"addconn--leftupdown=quotes": connection failed to orient - check connection and network settings
+"addconn--leftupdown=quotes": added IKEv2 connection
+west #
+ ipsec add addconn--leftupdown=%disabled
+"addconn--leftupdown=%disabled": connection failed to orient - check connection and network settings
+"addconn--leftupdown=%disabled": added IKEv2 connection
+west #
+ ipsec add addconn--leftupdown=my-updown
+conn 'addconn--leftupdown=my-updown': not found (tried aliases)
+west #
+ ipsec add addconn--leftupdown=left
+"addconn--leftupdown=left": connection failed to orient - check connection and network settings
+"addconn--leftupdown=left": added IKEv2 connection
+west #
+ ipsec add addconn--rightupdown=right
+"addconn--rightupdown=right": connection failed to orient - check connection and network settings
+"addconn--rightupdown=right": added IKEv2 connection
+west #
+ ipsec whack --name whack                                      --host 1.2.3.4 --to --host 5.6.7.8
+"whack": connection failed to orient - check connection and network settings
+"whack": added IKEv2 connection
+west #
+ ipsec whack --name whack--updown=from  --updown=from          --host 1.2.3.4 --to --host 5.6.7.8
+"whack--updown=from": connection failed to orient - check connection and network settings
+"whack--updown=from": added IKEv2 connection
+west #
+ ipsec connectionstatus | sed -n -e 's/\(^[^:]*:\).* \([a-z_]*updown=[^;]*\);.*/\1 \2/p' | sort
+"addconn--leftupdown=%disabled": my_updown=<disabled>
+"addconn--leftupdown=left": my_updown=left
+"addconn--leftupdown=": my_updown=ipsec _updown
+"addconn--leftupdown=quotes": my_updown=<disabled>
+"addconn": my_updown=ipsec _updown
+"addconn--rightupdown=right": my_updown=ipsec _updown
+"whack": my_updown=ipsec _updown
+"whack--updown=from": my_updown=from
+west #
+ 
