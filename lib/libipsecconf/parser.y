@@ -172,7 +172,10 @@ statement_kw:
 		const char *string = $3;
 		parser_kw(&kw, string, logger);
 	}
-	| KEYWORD EQUAL { /* this is meaningless, we ignore it */ }
+	| KEYWORD EQUAL {
+		struct keyword kw = $1;
+		parser_kw(&kw, "", logger);
+	}
 	;
 %%
 
