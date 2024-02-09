@@ -37,6 +37,9 @@
  */
 #define STATE_TABLE_SIZE 499
 
+#define DEFAULT_UPDOWN "ipsec _updown"
+#define UPDOWN_DISABLED "%disabled"
+
 # ifndef DEFAULT_DNSSEC_ROOTKEY_FILE
 #  define DEFAULT_DNSSEC_ROOTKEY_FILE "<unused>"
 # endif

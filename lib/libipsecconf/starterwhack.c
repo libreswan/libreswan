@@ -174,7 +174,18 @@ static bool set_whack_end(struct whack_end *w,
 	else
 		w->eap = IKE_EAP_NONE;
 
-	w->updown = l->updown;
+	/*
+	 * XXX: work-around the pickler turning the string '' into the
+	 * NULL at the other end.  %disabled is also a work-around for
+	 * that.
+	 */
+	if (l->strings[KSCF_UPDOWN] != NULL &&
+	    streq(l->strings[KSCF_UPDOWN], "")) {
+		w->updown = UPDOWN_DISABLED;
+	} else {
+		w->updown = l->strings[KSCF_UPDOWN];
+	}
+
 	w->virt = NULL;
 	w->virt = l->virt;
 	w->key_from_DNS_on_demand = l->key_from_DNS_on_demand;

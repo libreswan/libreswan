@@ -26,8 +26,6 @@
 
 #include "ipsecconf/keywords.h"
 
-# define DEFAULT_UPDOWN "ipsec _updown"
-
 #include "lset.h"
 #include "err.h"
 #include "ip_range.h"
@@ -82,7 +80,6 @@ struct starter_end {
 	char *certx;
 	char *ckaid;
 	char *ca;
-	char *updown;
 	char *addresspool;
 	ksf strings;
 	knf options;

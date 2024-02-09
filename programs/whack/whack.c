@@ -57,7 +57,6 @@
 #include "ip_info.h"
 #include "timescale.h"
 
-#include "ipsecconf/confread.h" /* for DEFAULT_UPDOWN */
 /*
  * Print the 'ipsec --whack help' message
  */
@@ -1123,9 +1122,6 @@ int main(int argc, char **argv)
 
 	msg.host_afi = NULL;
 	msg.child_afi = NULL;
-
-	msg.right.updown = DEFAULT_UPDOWN;
-	msg.left.updown = DEFAULT_UPDOWN;
 
 	msg.enable_tcp = 0; /* aka unset */;
 	msg.tcp_remoteport = 0; /* aka unset */

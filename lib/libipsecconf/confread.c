@@ -179,9 +179,6 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 	d->right.key_from_DNS_on_demand = false;
 
 	d->state = STATE_LOADED;
-
-	d->left.updown = clone_str(DEFAULT_UPDOWN, "conn default left updown");
-	d->right.updown = clone_str(DEFAULT_UPDOWN, "conn default right updown");
 	/* ==== end of conn %default ==== */
 }
 
@@ -550,11 +547,6 @@ static bool validate_end(struct starter_conn *conn_st,
 
 	if (end->strings_set[KSCF_CA])
 		end->ca = clone_str(end->strings[KSCF_CA], "KSCF_CA");
-
-	if (end->strings_set[KSCF_UPDOWN]) {
-		pfreeany(end->updown);
-		end->updown = clone_str(end->strings[KSCF_UPDOWN], "KSCF_UPDOWN");
-	}
 
 	if (end->strings_set[KSCF_PROTOPORT]) {
 		char *value = end->strings[KSCF_PROTOPORT];
@@ -1276,7 +1268,6 @@ static void copy_conn_default(struct starter_conn *conn,
 	STR_FIELD_END(certx);
 	STR_FIELD_END(ckaid);
 	STR_FIELD_END(ca);
-	STR_FIELD_END(updown);
 
 	for (unsigned i = 0; i < elemsof(conn->left.strings); i++)
 		STR_FIELD_END(strings[i]);
@@ -1430,7 +1421,6 @@ static void confread_free_conn(struct starter_conn *conn)
 	STR_FIELD_END(certx);
 	STR_FIELD_END(ckaid);
 	STR_FIELD_END(ca);
-	STR_FIELD_END(updown);
 
 	for (unsigned i = 0; i < elemsof(conn->left.strings); i++)
 		STR_FIELD_END(strings[i]);

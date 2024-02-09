@@ -1298,10 +1298,20 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 	 *
 	 * XXX: Perhaps src->updown will some day be NULL.
 	 */
-	child_config->updown = (src->updown == NULL ? NULL :
-				streq(src->updown, "%disabled") ? NULL :
-				streq(src->updown, "") ? NULL :
-				clone_str(src->updown, "child_config.updown"));
+	if (never_negotiate_wm(wm)) {
+		if (src->updown != NULL) {
+			llog(RC_LOG, logger,
+			     "warning: %supdown=%s ignored when never negotiate",
+			     leftright, src->updown);
+		}
+	} else {
+		child_config->updown =
+			(src->updown == NULL ? clone_str(DEFAULT_UPDOWN, "default_updown") :
+			 streq(src->updown, UPDOWN_DISABLED) ? NULL :
+			 streq(src->updown, "") ? NULL :
+			 clone_str(src->updown, "child_config.updown"));
+	}
+
 	ip_selectors *child_selectors = &child_config->selectors;
 
 	/*
