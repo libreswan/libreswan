@@ -46,7 +46,7 @@
     descriptions to be changed, copied to the other security gateways
     involved, etc., without having to constantly extract them from the
     configuration file and then insert them back into it.  Note also
-    the <emphasis>also</emphasis> and <emphasis>alsoflip</emphasis>
+    the <emphasis>also</emphasis>
     parameters (described below) which permit splitting a single
     logical section (e.g. a connection description) into several
     distinct sections.
@@ -142,18 +142,6 @@
 	</para>
       </listitem>
     </varlistentry>
-    <varlistentry>
-      <term>
-	<emphasis>alsoflip</emphasis>
-      </term>
-      <listitem>
-	<para>
-	  can be used in a <emphasis>conn</emphasis>
-	  section.  It acts like an <emphasis>also</emphasis> that flips
-	  the referenced section's entries left-for-right.
-	</para>
-      </listitem>
-    </varlistentry>
   </variablelist>
 
   <para>
@@ -177,8 +165,7 @@
     multiple <emphasis>%default</emphasis> sections of a
     given type, but only one default may be supplied for any specific
     parameter name.  <emphasis>%default</emphasis> sections
-    may not contain <emphasis>also</emphasis> or <emphasis>alsoflip</emphasis>
-    parameters.
+    may not contain any <emphasis>also</emphasis> parameters.
   </para>
 
   <para>
