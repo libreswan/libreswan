@@ -42,18 +42,31 @@
  * Pack and unpack bytes
  */
 
+static bool pack_bytes(struct whackpacker *wp,
+		       const void *bytes, size_t nr_bytes,
+		       const char *what,
+		       struct logger *logger)
+{
+	size_t space = wp->str_roof - wp->str_next;
+	if (space < nr_bytes) {
+		llog(RC_LOG, logger, "buffer overflow for '%s', space for %zu bytes but need %zu",
+		     what, space, nr_bytes);
+		return false; /* would overflow buffer */
+	}
+	memcpy(wp->str_next, bytes, nr_bytes);
+	wp->str_next += nr_bytes;
+	return true;
+}
+
 static bool pack_raw(struct whackpacker *wp,
 		     void **bytes, size_t nr_bytes,
 		     const char *what,
 		     struct logger *logger)
 {
-	if (wp->str_next + nr_bytes > wp->str_roof) {
-		ldbgf(DBG_TMI, logger, "%s: buffer overflow for '%s'",
-		      __func__, what);
-		return false; /* would overflow buffer */
+	if (!pack_bytes(wp, (*bytes), nr_bytes, what, logger)) {
+		return false;
 	}
-	memcpy(wp->str_next, *bytes, nr_bytes);
-	wp->str_next += nr_bytes;
+	(*bytes) = NULL;
 	return true;
 }
 
@@ -62,15 +75,15 @@ static bool unpack_raw(struct whackpacker *wp,
 		       const char *what,
 		       struct logger *logger)
 {
-	uint8_t *end = wp->str_next + nr_bytes;
-	if (end > wp->str_roof) {
+	size_t space = wp->str_roof - wp->str_next;
+	if (space < nr_bytes) {
 		/* overflow */
-		ldbgf(DBG_TMI, logger, "%s: buffer overflow for '%s'; needing %zu bytes",
-		      __func__, what, nr_bytes);
+		llog(RC_LOG, logger, "buffer overflow for '%s'; have %zu bytes but expecting %zu",
+		     what, space, nr_bytes);
 		return false;
 	}
-	*bytes = wp->str_next;
-	wp->str_next = end;
+	(*bytes) = wp->str_next;
+	wp->str_next += nr_bytes;
 	return true;
 }
 
@@ -138,54 +151,58 @@ static bool unpack_shunk(struct whackpacker *wp, shunk_t *shunk, const char *wha
 }
 
 /*
- * Pack and unpack a nul-terminated string to a whack messages
+ * Pack and unpack possibly NULL, NUL-terminated strings.
  *
  * Notes:
  *
+ * - On the wire, the pointer contains the number of bytes including
+ *   the trailing NUL.  So zero is a NULL pointer, and one is an empty
+ *   string.
+ *
  * - to prevent the string pointer going across the wire, it is set to
- *   NULL after packing
+ *   the number of bytes
  *
  * - the unpacked pointer stored in *P points into the whack message
  *   do don't free it
- *
- * - NULL pointers are converted to ""
  */
 
 static bool pack_string(struct whackpacker *wp, char **p, const char *what, struct logger *logger)
 {
-	const char *s = (*p == NULL ? "" : *p); /* note: NULL becomes ""! */
-	size_t len = strlen(s) + 1;
-
-	if (wp->str_roof - wp->str_next < (ptrdiff_t)len) {
-		ldbgf(DBG_TMI, logger, "%s: buffer overflow for '%s'",
-		      __func__, what);
-		return false; /* would overflow buffer */
+	if ((*p) == NULL) {
+		/* NULL pointer encoded as zero bytes */
+		(*p) = NULL;
+		return true;
 	}
 
-	strcpy((char *)wp->str_next, s);
-	wp->str_next += len;
-	*p = NULL; /* kill pointer being sent on wire! */
+	size_t nr_bytes = strlen((*p)) + 1;
+	if (!pack_bytes(wp, (*p), nr_bytes, what, logger)) {
+		return false;
+	}
+
+	(*p) = (void*)nr_bytes;
 	return true;
 }
 
 static bool unpack_string(struct whackpacker *wp, char **p, const char *what, struct logger *logger)
 {
-	/* expect wire-pointer to be NULL */
-	pexpect(*p == NULL);
-
-	uint8_t *end = memchr(wp->str_next, '\0', (wp->str_roof - wp->str_next) );
-	if (end == NULL) {
-		ldbgf(DBG_TMI, logger, "%s: buffer overflow for '%s'; missing NUL",
-		      __func__, what);
-		return false; /* fishy: no end found */
+	if ((*p) == NULL) {
+		/* unpack NULL as NULL */
+		return true;
 	}
 
-	unsigned char *s = (wp->str_next == end ? NULL : wp->str_next);
+	/* p carries the string length */
+	size_t nr_bytes = (ptrdiff_t)(*p);
+	void *s = NULL;
+	if (!unpack_raw(wp, &s, nr_bytes, what, logger)) {
+		return false;
+	}
 
-	ldbgf(DBG_TMI, logger, "%s: '%s' is %ld bytes", __func__, what, (long int)(end - wp->str_next));
+	*p = s;
+	if ((*p)[nr_bytes-1] != '\0') {
+		llog(RC_LOG, logger, "%s lost its terminating NUL", what);
+		return false;
+	}
 
-	*p = (char *)s;
-	wp->str_next = end + 1;
 	return true;
 }
 
