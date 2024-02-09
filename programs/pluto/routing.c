@@ -1288,13 +1288,11 @@ static bool initiated_ike_dispatch_ok(struct connection *c,
 		 * acquires triggering simultaneously) or due to an
 		 * initiate being used to force a rekey.
 		 */
-		{
-			enum_buf rb;
-
-			llog(RC_LOG, logger, "connection is already %s",
-			     str_enum(&routing_tails, c->child.routing, &rb));
-			return false;
+		LLOG_JAMBUF(RC_LOG, logger, buf) {
+			jam_string(buf, "connection for IKE SA is already in state ");
+			jam_enum_human(buf, &routing_names, c->child.routing);
 		}
+		return false;
 	}
 }
 
@@ -1360,17 +1358,16 @@ static bool initiated_child_dispatch_ok(struct connection *c,
 		}
 		return true;
 	default:
-	{
 		/*
 		 * Ignore stray initiates (presumably due to two
 		 * acquires triggering simultaneously) or due to an
 		 * initiate being used to force a rekey.
 		 */
-		enum_buf rb;
-		llog(RC_LOG, logger, "connection is already %s",
-		     str_enum(&routing_tails, c->child.routing, &rb));
+		LLOG_JAMBUF(RC_LOG, logger, buf) {
+			jam_string(buf, "connection for Child SA is already in state ");
+			jam_enum_human(buf, &routing_names, c->child.routing);
+		}
 		return false;
-	}
 	}
 }
 
