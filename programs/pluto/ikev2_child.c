@@ -120,9 +120,19 @@ static bool compute_v2_child_spi(struct child_sa *larval_child)
 	return (proto_info->inbound.spi != 0);
 }
 
-static bool emit_v2N_ipcomp_supported(const struct child_sa *child, struct pbs_out *s)
+static bool emit_v2N_IPCOMP_SUPPORTED(const struct child_sa *child, struct pbs_out *outs)
 {
-	dbg("Initiator child policy is compress=yes, sending v2N_IPCOMP_SUPPORTED for DEFLATE");
+	ldbg(outs->outs_logger, "initiator child policy is compress=yes, sending v2N_IPCOMP_SUPPORTED for DEFLATE");
+
+	v2_notification_t ntype = v2N_IPCOMP_SUPPORTED;
+	if (impair.omit_v2_notification.enabled &&
+	    impair.omit_v2_notification.value == ntype) {
+		enum_buf eb;
+		llog(RC_LOG, outs->outs_logger,
+		     "IMPAIR: omitting %s notification",
+		     str_enum_short(&v2_notification_names, ntype, &eb));
+		return true;
+	}
 
 	ipsec_spi_t h_cpi = (uint16_t)ntohl(child->sa.st_ipcomp.inbound.spi);
 	if (!pexpect(h_cpi != 0)) {
@@ -130,7 +140,7 @@ static bool emit_v2N_ipcomp_supported(const struct child_sa *child, struct pbs_o
 	}
 
 	struct pbs_out d_pbs;
-	if (!open_v2N_output_pbs(s, v2N_IPCOMP_SUPPORTED, &d_pbs)) {
+	if (!open_v2N_output_pbs(outs, ntype, &d_pbs)) {
 		return false;
 	}
 
@@ -237,7 +247,7 @@ bool emit_v2_child_request_payloads(const struct ike_sa *ike,
 	/* IPCOMP based on policy */
 
 	if (cc->config->child_sa.ipcomp &&
-	    !emit_v2N_ipcomp_supported(larval_child, pbs)) {
+	    !emit_v2N_IPCOMP_SUPPORTED(larval_child, pbs)) {
 		return false;
 	}
 
@@ -518,7 +528,7 @@ bool emit_v2_child_response_payloads(struct ike_sa *ike,
 	}
 
 	if (larval_child->sa.st_ipcomp.protocol == &ip_protocol_ipcomp &&
-	    !emit_v2N_ipcomp_supported(larval_child, outpbs)) {
+	    !emit_v2N_IPCOMP_SUPPORTED(larval_child, outpbs)) {
 		return false;
 	}
 

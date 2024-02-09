@@ -157,8 +157,7 @@ struct impair {
 
 	struct impair_unsigned add_v2_notification;
 	struct impair_unsigned ignore_v2_notification;
-
-	bool omit_v2N_SIGNATURE_HASH_ALGORITHMS;
+	struct impair_unsigned omit_v2_notification;
 
 	bool omit_v2_ike_auth_child;
 	bool ignore_v2_ike_auth_child;

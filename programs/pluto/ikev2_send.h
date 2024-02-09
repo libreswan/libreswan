@@ -176,7 +176,4 @@ bool emit_v2N_bytes(v2_notification_t ntype,
 /* output an empty v2 notification payload */
 bool emit_v2N(v2_notification_t ntype, struct pbs_out *outs);
 
-bool emit_v2N_SIGNATURE_HASH_ALGORITHMS(lset_t sighash_policy,
-					struct pbs_out *outs);
-
 #endif

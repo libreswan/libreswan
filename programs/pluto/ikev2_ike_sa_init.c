@@ -692,6 +692,46 @@ stf_status initiate_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	return record_v2_IKE_SA_INIT_request(ike) ? STF_OK : STF_INTERNAL_ERROR;
 }
 
+static bool emit_v2N_SIGNATURE_HASH_ALGORITHMS(lset_t sighash_policy,
+					       struct pbs_out *outs)
+{
+	v2_notification_t ntype = v2N_SIGNATURE_HASH_ALGORITHMS;
+
+	if (impair.omit_v2_notification.enabled &&
+	    impair.omit_v2_notification.value == ntype) {
+		enum_buf eb;
+		llog(RC_LOG, outs->outs_logger,
+		     "IMPAIR: omitting %s notification",
+		     str_enum_short(&v2_notification_names, ntype, &eb));
+		return true;
+	}
+
+	struct pbs_out n_pbs;
+
+	if (!open_v2N_output_pbs(outs, ntype, &n_pbs)) {
+		llog(RC_LOG, outs->outs_logger, "error initializing notify payload for notify message");
+		return false;
+	}
+
+#define H(POLICY, ID)							\
+	if (sighash_policy & POLICY) {					\
+		uint16_t hash_id = htons(ID);				\
+		passert(sizeof(hash_id) == RFC_7427_HASH_ALGORITHM_IDENTIFIER_SIZE); \
+		if (!pbs_out_thing(&n_pbs, hash_id,			\
+				 "hash algorithm identifier "#ID)) {	\
+			/* already logged */				\
+			return false;					\
+		}							\
+	}
+	H(POL_SIGHASH_SHA2_256, IKEv2_HASH_ALGORITHM_SHA2_256);
+	H(POL_SIGHASH_SHA2_384, IKEv2_HASH_ALGORITHM_SHA2_384);
+	H(POL_SIGHASH_SHA2_512, IKEv2_HASH_ALGORITHM_SHA2_512);
+#undef H
+
+	close_output_pbs(&n_pbs);
+	return true;
+}
+
 bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 {
 	struct connection *c = ike->sa.st_connection;
@@ -798,13 +838,11 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 	 * Since the iniator can't switch connections the decision is
 	 * final.
 	 */
-	if (impair.omit_v2N_SIGNATURE_HASH_ALGORITHMS) {
-		llog_sa(RC_LOG, ike,
-			  "IMPAIR: omitting the SIGNATURE_HASH_ALGORITHM notification in IKE_SA_INIT request");
-	} else if (authby_has_digsig(c->remote->host.config->authby) &&
-		   (c->config->sighash_policy != LEMPTY)) {
-		if (!emit_v2N_SIGNATURE_HASH_ALGORITHMS(c->config->sighash_policy, request.pbs))
+	if (authby_has_digsig(c->remote->host.config->authby) &&
+	    (c->config->sighash_policy != LEMPTY)) {
+		if (!emit_v2N_SIGNATURE_HASH_ALGORITHMS(c->config->sighash_policy, request.pbs)) {
 			return false;
+		}
 	}
 
 	/* Send NAT-T Notify payloads */
@@ -1149,9 +1187,7 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	 * + not sending SIGNATURE_HASH_ALGORITHM leaks configuration
 	 *   information
 	 */
-	if (impair.omit_v2N_SIGNATURE_HASH_ALGORITHMS) {
-		llog_sa(RC_LOG, ike, "IMPAIR: omitting SIGNATURE_HASH_ALGORITHMS notification in IKE_SA_INIT response");
-	} else if (c->config->sighash_policy != LEMPTY) {
+	if (c->config->sighash_policy != LEMPTY) {
 		if (!emit_v2N_SIGNATURE_HASH_ALGORITHMS(c->config->sighash_policy, response.pbs)) {
 			return STF_INTERNAL_ERROR;
 		}

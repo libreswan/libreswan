@@ -226,6 +226,15 @@ bool emit_v2N_bytes(v2_notification_t ntype,
 		    const void *bytes, size_t size, /* optional */
 		    struct pbs_out *outs)
 {
+	if (impair.omit_v2_notification.enabled &&
+	    impair.omit_v2_notification.value == ntype) {
+		enum_buf eb;
+		llog(RC_LOG, outs->outs_logger,
+		     "IMPAIR: omitting %s notification",
+		     str_enum_short(&v2_notification_names, ntype, &eb));
+		return true;
+	}
+
 	struct pbs_out pl;
 	if (!open_v2N_output_pbs(outs, ntype, &pl)) {
 		return false;
@@ -245,35 +254,6 @@ bool emit_v2N(v2_notification_t ntype,
 	       pb_stream *outs)
 {
 	return emit_v2N_bytes(ntype, NULL, 0, outs);
-}
-
-bool emit_v2N_SIGNATURE_HASH_ALGORITHMS(lset_t sighash_policy,
-					pb_stream *outs)
-{
-	struct pbs_out n_pbs;
-
-	if (!open_v2N_output_pbs(outs, v2N_SIGNATURE_HASH_ALGORITHMS, &n_pbs)) {
-		llog(RC_LOG, outs->outs_logger, "error initializing notify payload for notify message");
-		return false;
-	}
-
-#define H(POLICY, ID)							\
-	if (sighash_policy & POLICY) {					\
-		uint16_t hash_id = htons(ID);				\
-		passert(sizeof(hash_id) == RFC_7427_HASH_ALGORITHM_IDENTIFIER_SIZE); \
-		if (!pbs_out_thing(&n_pbs, hash_id,			\
-				 "hash algorithm identifier "#ID)) {	\
-			/* already logged */				\
-			return false;					\
-		}							\
-	}
-	H(POL_SIGHASH_SHA2_256, IKEv2_HASH_ALGORITHM_SHA2_256);
-	H(POL_SIGHASH_SHA2_384, IKEv2_HASH_ALGORITHM_SHA2_384);
-	H(POL_SIGHASH_SHA2_512, IKEv2_HASH_ALGORITHM_SHA2_512);
-#undef H
-
-	close_output_pbs(&n_pbs);
-	return true;
 }
 
 /*
