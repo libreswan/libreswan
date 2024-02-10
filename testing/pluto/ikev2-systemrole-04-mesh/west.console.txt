@@ -148,7 +148,7 @@ Connection list:
  
 "clear": 192.1.2.45---192.1.2.254...%group; unrouted; my_ip=unset; their_ip=unset;
 "clear":   host: oriented; local: 192.1.2.45; remote: %group;
-"clear":   my_updown=ipsec _updown;
+"clear":   my_updown=<disabled>;
 "clear":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 "clear":   our auth:never, their auth:never, our autheap:none, their autheap:none;
 "clear":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
@@ -167,7 +167,7 @@ Connection list:
 "clear":   conn serial: $3;
 "clear#192.1.2.254/32": 192.1.2.45---192.1.2.254...%any===192.1.2.254/32; routed-never-negotiate; my_ip=unset; their_ip=unset;
 "clear#192.1.2.254/32":   host: oriented; local: 192.1.2.45; remote: %any;
-"clear#192.1.2.254/32":   my_updown=ipsec _updown;
+"clear#192.1.2.254/32":   my_updown=<disabled>;
 "clear#192.1.2.254/32":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 "clear#192.1.2.254/32":   our auth:never, their auth:never, our autheap:none, their autheap:none;
 "clear#192.1.2.254/32":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
