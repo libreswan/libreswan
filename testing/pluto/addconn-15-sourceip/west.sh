@@ -24,3 +24,5 @@ add sourceips-inside-selectors
 add sourceip-outside-subnets
 add sourceip-inside-subnets
 add sourceips-inside-subnets
+
+add sourceip-vs-interface-ip

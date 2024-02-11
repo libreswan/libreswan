@@ -2,5 +2,6 @@ check sourceip= vs the subnet=...
 
 - sourceip is only allowed when there's also subnet=
 - sourceip must fall within at least one subnet= entry
+- sourceip conflicts with interface-ip
 
-github #897
+see also, github #897

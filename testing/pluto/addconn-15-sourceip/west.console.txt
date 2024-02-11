@@ -59,4 +59,7 @@ west #
 "sourceips-inside-subnets/2x2": 1.0.0.0/24===192.1.2.45[@west]...192.1.2.23[@east]===2.0.0.0/24; unrouted; my_ip=1.0.0.1; their_ip=unset;
 "sourceips-inside-subnets/1x1": 1::/64===192.1.2.45[@west]...192.1.2.23[@east]===2::/64; unrouted; my_ip=1::1; their_ip=unset;
 west #
+ add sourceip-vs-interface-ip
+"sourceip-vs-interface-ip": failed to add connection: leftsourceip=1.0.0.1 invalid, requires leftsubnet
+west #
  
