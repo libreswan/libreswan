@@ -1,0 +1,13 @@
+<refsect1 id='files'>
+  <title>
+    FILES
+  </title>
+  <para>
+    <filename>/etc/ipsec.conf</filename>
+    <filename>/etc/ipsec.d/policies/clear</filename>
+    <filename>/etc/ipsec.d/policies/clear-or-private</filename>
+    <filename>/etc/ipsec.d/policies/private-or-clear</filename>
+    <filename>/etc/ipsec.d/policies/private</filename>
+    <filename>/etc/ipsec.d/policies/block</filename>
+  </para>
+</refsect1>

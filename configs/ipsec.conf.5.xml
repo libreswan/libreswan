@@ -152,7 +152,14 @@
 <!ENTITY shuntlifetime SYSTEM "d.ipsec.conf/shuntlifetime.xml">
 <!ENTITY statsbin SYSTEM "d.ipsec.conf/statsbin.xml">
 <!ENTITY syslog SYSTEM "d.ipsec.conf/syslog.xml">
-<!ENTITY tail SYSTEM "d.ipsec.conf/tail.xml">
+
+<!ENTITY choosing_a_connection SYSTEM "d.ipsec.conf/choosing_a_connection.xml">
+<!ENTITY files SYSTEM "d.ipsec.conf/files.xml">
+<!ENTITY see_also SYSTEM "d.ipsec.conf/see_also.xml">
+<!ENTITY history SYSTEM "d.ipsec.conf/history.xml">
+<!ENTITY bugs SYSTEM "d.ipsec.conf/bugs.xml">
+<!ENTITY author SYSTEM "d.ipsec.conf/author.xml">
+
 <!ENTITY tcp-remoteport SYSTEM "d.ipsec.conf/tcp-remoteport.xml">
 <!ENTITY tfc SYSTEM "d.ipsec.conf/tfc.xml">
 <!ENTITY type SYSTEM "d.ipsec.conf/type.xml">
@@ -337,12 +344,11 @@
   </refsect1>
 
   &oe_conns;
-  &tail;
+  &choosing_a_connection;
+  &files;
+  &see_also;
+  &history;
+  &bugs;
+  &author;
 
-  <refsect1 id='author'>
-    <title>AUTHOR</title>
-    <para>
-      <author><personname><firstname>Paul</firstname><surname>Wouters</surname></personname></author>
-    </para>
-  </refsect1>
 </refentry>

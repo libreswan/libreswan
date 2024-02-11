@@ -1,0 +1,9 @@
+<refsect1 id='see_also'>
+  <title>
+    SEE ALSO
+  </title>
+  <para>
+    <citerefentry><refentrytitle>ipsec</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+    <citerefentry><refentrytitle>ipsec_rsasigkey</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+  </para>
+</refsect1>

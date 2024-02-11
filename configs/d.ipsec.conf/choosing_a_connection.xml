@@ -1,0 +1,22 @@
+<refsect1 id='choosing_a_connection'>
+  <title>
+    CHOOSING A CONNECTION [THIS SECTION IS EXTREMELY OUT OF DATE
+  </title>
+  <para>
+    When choosing a connection to apply to an outbound packet caught
+    with a <emphasis>%trap,</emphasis> the system prefers
+    the one with the most specific eroute that includes the packet's
+    source and destination IP addresses.  Source subnets are examined
+    before destination subnets.  For initiating, only routed
+    connections are considered. For responding, unrouted but added
+    connections are considered.
+  </para>
+  <para>
+    When choosing a connection to use to respond to a negotiation
+    that doesn't match an ordinary conn, an opportunistic connection may
+    be instantiated. Eventually, its instance will be /32 -&gt; /32, but
+    for earlier stages of the negotiation, there will not be enough
+    information about the client subnets to complete the
+    instantiation.
+  </para>
+</refsect1>
