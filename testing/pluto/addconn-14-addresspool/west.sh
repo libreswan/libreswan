@@ -39,3 +39,6 @@ ipsec auto --add bad-client
 
 ipsec auto --add good-server
 ipsec auto --add bad-server
+
+ipsec auto --add subnet-vs-addresspool
+ipsec auto --add subnets-vs-addresspool

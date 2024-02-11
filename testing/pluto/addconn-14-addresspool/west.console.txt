@@ -101,4 +101,10 @@ west #
  ipsec auto --add bad-server
 "bad-server": failed to add connection: leftmodecfgserver=yes expects rightaddresspool= and not leftaddresspool=
 west #
+ ipsec auto --add subnet-vs-addresspool
+"subnet-vs-addresspool": failed to add connection: cannot specify both leftaddresspool= and leftsubnet=
+west #
+ ipsec auto --add subnets-vs-addresspool
+"subnets-vs-addresspool/1x0": failed to add connection: cannot specify both leftaddresspool= and leftsubnets=
+west #
  
