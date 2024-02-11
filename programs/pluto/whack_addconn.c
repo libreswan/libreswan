@@ -188,11 +188,19 @@ static void permutate_connection_subnets(const struct whack_message *wm,
 			wam.connalias = wm->name;
 
 			/*
-			 * Preserve old ADDCONN behaviour of only
-			 * providing subnet= for now.
+			 * Leave .subnets values alone.
+			 *
+			 * This way, add_connection() can see the
+			 * original value that the subnet was taken
+			 * from and log accordingly.
+			 *
+			 * For instance addresspool vs subnets should
+			 * complain about subnets and not subnet.
 			 */
+#if 0
 			wam.left.subnets = NULL;
 			wam.right.subnets = NULL;
+#endif
 
 			/*
 			 * Build a new connection name by appending
