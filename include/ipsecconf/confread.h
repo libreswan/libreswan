@@ -77,7 +77,6 @@ struct starter_end {
 	char *certx;
 	char *ckaid;
 	char *ca;
-	char *addresspool;
 	ksf strings;
 	knf options;
 

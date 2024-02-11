@@ -1162,8 +1162,18 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 	 * OE configurations have leftmodecfgclient=yes
 	 * rightaddresspool= which creates a the connection that is
 	 * both a client and a server.
-
 	 */
+
+	if (src->addresspool != NULL) {
+		if (src->subnets != NULL) {
+			return diag("cannot specify both %saddresspool= and %ssubnets=",
+				    leftright, leftright);
+		}
+		if (src->subnet != NULL) {
+			return diag("cannot specify both %saddresspool= and %ssubnet=",
+				    leftright, leftright);
+		}
+	}
 
 	if (src->addresspool != NULL) {
 		/*

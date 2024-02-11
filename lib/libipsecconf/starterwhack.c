@@ -205,7 +205,8 @@ static bool set_whack_end(struct whack_end *w,
 		w->modecfg_client = l->options[KNCF_MODECONFIGCLIENT];
 	if (l->options_set[KNCF_CAT])
 		w->cat = l->options[KNCF_CAT];
-	w->addresspool = l->addresspool;
+
+	w->addresspool = l->strings[KSCF_ADDRESSPOOL];
 	return true;
 }
 

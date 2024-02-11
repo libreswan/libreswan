@@ -371,12 +371,6 @@ static bool validate_end(struct starter_conn *conn_st,
 	/* validate the KSCF_SUBNET */
 	if (end->strings_set[KSCF_SUBNET]) {
 		char *value = end->strings[KSCF_SUBNET];
-
-		if (end->strings_set[KSCF_ADDRESSPOOL]) {
-			ERR_FOUND("cannot specify both %ssubnet= and %saddresspool=", leftright,
-				leftright);
-		}
-
 		if (startswith(value, "vhost:") || startswith(value, "vnet:")) {
 			if (conn_st->ike_version != IKEv1) {
 				ERR_FOUND("The vnet: and vhost: keywords are only valid for IKEv1 connections");
@@ -507,18 +501,6 @@ static bool validate_end(struct starter_conn *conn_st,
 		if (ugh != NULL)
 			ERR_FOUND("bad %sprotoport=%s [%s]", leftright, value,
 				  ugh);
-	}
-
-	if (end->strings_set[KSCF_ADDRESSPOOL]) {
-		char *addresspool = end->strings[KSCF_ADDRESSPOOL];
-
-		if (end->strings_set[KSCF_SUBNET])
-			ERR_FOUND("cannot specify both %ssubnet= and %saddresspool=",
-				leftright, leftright);
-		ldbg(logger, "connection's %saddresspool set to: %s",
-		     leftright, end->strings[KSCF_ADDRESSPOOL] );
-
-		end->addresspool = addresspool;
 	}
 
 	if (end->strings_set[KSCF_INTERFACE_IP]) {
