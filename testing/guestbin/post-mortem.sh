@@ -201,6 +201,7 @@ if test -f /sbin/ausearch ; then
 		 -e '^type=PATH .*dbus' \
 		 -e '^type=PROCTITLE.*systemd-networkd' \
 		 -e '^type=PATH .* name="/run"' \
+		 -e '^type=AVC .* comm="agetty"' \
 	    ${log} ; then
 	FAIL
 
