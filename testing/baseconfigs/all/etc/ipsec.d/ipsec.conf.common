@@ -67,14 +67,6 @@ conn west-east
 conn westnet-eastnet
 	also=westnet-eastnet-ipv4
 
-conn westnet-eastnet-ipv4-psk
-	also=west-east-base-ipv4
-	leftsubnet=192.0.1.0/24
-	rightsubnet=192.0.2.0/24
-	leftid=@west
-	rightid=@east
-	authby=secret
-
 conn westnet-eastnet-ipv4
 	also=west-east-base-id-nss
 	also=west-east-base-ipv4
@@ -165,11 +157,6 @@ conn road-east-base-id-nss
 	# Right security gateway, subnet behind it, next hop toward left.
 	rightid=@east
 	also=east-rightrsasigkey
-
-conn rw-east-pool-x509-ipv4
-	also=rw-east-base-x509
-	leftaddresspool=192.0.2.100-192.0.2.199
-	rightsubnet=0.0.0.0/0
 
 conn road-east-base-x509
         left=%defaultroute
