@@ -122,7 +122,7 @@ static bool set_whack_end(struct whack_end *w,
 		break;
 	}
 
-	w->sourceip = l->sourceip; /* could be NULL */
+	w->sourceip = l->strings[KSCF_SOURCEIP]; /* could be NULL */
 
 	if (cidr_is_specified(l->vti_ip))
 		w->host_vtiip = l->vti_ip;

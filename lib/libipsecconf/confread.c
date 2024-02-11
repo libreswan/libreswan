@@ -462,18 +462,6 @@ static bool validate_end(struct starter_conn *conn_st,
 		}
 	}
 
-	/* parse KSCF_SOURCEIP */
-	if (end->strings_set[KSCF_SOURCEIP]) {
-		if (end->strings_set[KSCF_INTERFACE_IP]) {
-			ERR_FOUND("cannot specify %sinterface-ip=%s and %sssourceip=%s",
-				  leftright,
-				  end->strings[KSCF_INTERFACE_IP],
-				  leftright,
-				  end->strings[KSCF_SOURCEIP]);
-		}
-		end->sourceip = clone_str(end->strings[KSCF_SOURCEIP], "end->sourceip");
-	}
-
 	/* copy certificate path name */
 	if (end->strings_set[KSCF_CERT] && end->strings_set[KSCF_CKAID]) {
 		ERR_FOUND("only one of %scert and %sckaid can be specified",
@@ -505,13 +493,6 @@ static bool validate_end(struct starter_conn *conn_st,
 		if (oops != NULL) {
 			ERR_FOUND("bad addr %s%s=%s [%s]",
 				  leftright, "interface-ip", value, oops);
-		}
-		if (end->strings_set[KSCF_SOURCEIP]) {
-			ERR_FOUND("cannot specify  %sinterface-ip=%s and  %sssourceip=%s",
-					leftright,
-					end->strings[KSCF_INTERFACE_IP],
-					leftright,
-					end->strings[KSCF_SOURCEIP]);
 		}
 	}
 

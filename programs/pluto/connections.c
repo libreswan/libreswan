@@ -1412,9 +1412,17 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 	 * least one selector determined above.
 	 */
 
-	if (src->sourceip != NULL && src->subnet == NULL) {
-		return diag("%ssourceip=%s invalid, requires %ssubnet",
-			    leftright, src->sourceip, leftright);
+	if (src->sourceip != NULL) {
+		if (src->subnet == NULL) {
+			return diag("%ssourceip=%s invalid, requires %ssubnet",
+				    leftright, src->sourceip, leftright);
+		}
+		if (src->ifaceip.is_set) {
+			cidr_buf cb;
+			return diag("cannot specify %sinterface-ip=%s and %sssourceip=%s",
+				    leftright, str_cidr(&src->ifaceip, &cb),
+				    leftright, src->sourceip);
+		}
 	}
 
 	if (src->sourceip != NULL) {

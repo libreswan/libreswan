@@ -59,7 +59,6 @@ struct starter_end {
 	enum keyword_host nexttype;
 	ip_address addr;
 	ip_address nexthop;
-	char *sourceip;
 	char *subnet;
 	ip_cidr vti_ip;
 	ip_cidr ifaceip;
