@@ -351,6 +351,7 @@ enum keyword_type {
 	kt_subnet,              /* an IP address subnet */
 	kt_idtype,              /* an ID type */
 	kt_bitstring,           /* an encryption/authentication key */
+	kt_also,		/* i.e., #include */
 	kt_comment,             /* a value that is a cooked comment */
 	kt_obsolete,            /* option that is obsoleted, allow keyword but warn and ignore */
 };

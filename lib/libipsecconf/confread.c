@@ -294,6 +294,7 @@ static bool load_setup(struct starter_config *cfg,
 			err = true;
 			break;
 
+		case kt_also:
 		case kt_appendstring:
 		case kt_appendlist:
 		case kt_comment:
@@ -667,6 +668,7 @@ static bool translate_field(struct starter_conn *conn,
 		(*set_strings)[field] = assigned_value;
 		break;
 
+	case kt_also:
 	case kt_appendstring:
 	case kt_appendlist:
 		/* implicitly, this field can have multiple values */

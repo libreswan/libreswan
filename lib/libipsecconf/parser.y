@@ -581,6 +581,7 @@ void parser_kw(struct keyword *kw, const char *string, struct logger *logger)
 		ok = parser_kw_loose_sparse_name(kw, string, &number, logger);
 		break;
 	case kt_string:
+	case kt_also:
 	case kt_appendstring:
 	case kt_appendlist:
 	case kt_filename:

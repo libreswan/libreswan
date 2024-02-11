@@ -77,6 +77,7 @@ static void confwrite_int(FILE *out,
 
 		switch (k->type) {
 		case kt_string:
+		case kt_also:
 		case kt_appendstring:
 		case kt_appendlist:
 		case kt_filename:
@@ -170,6 +171,7 @@ static void confwrite_str(FILE *out,
 			continue;
 
 		switch (k->type) {
+		case kt_also:
 		case kt_appendlist:
 			if (strings_set[k->field])
 				fprintf(out, "\t%s%s={%s}\n", side, k->keyname,
