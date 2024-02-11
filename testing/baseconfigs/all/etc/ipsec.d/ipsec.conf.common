@@ -117,12 +117,6 @@ conn west-east-base-ipv4
 	right=192.1.2.23
 	rightnexthop=192.1.2.45
 
-conn west-east-base-ipv6
-	left=2001:db8:1:2::45
-	leftnexthop=2001:db8:1:2::23
-	right=2001:db8:1:2::23
-	rightnexthop=2001:db8:1:2::45
-
 conn north-east-base-id-nss
 	# Left security gateway, subnet behind it, next hop toward right.
 	leftid=@north
