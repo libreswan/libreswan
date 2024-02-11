@@ -37,9 +37,6 @@
 
 struct logger;
 
-/* define an upper limit to number of times also= can be used */
-#define ALSO_LIMIT 32
-
 enum keyword_set {
 	k_unset   = false,
 	k_set     = true,
@@ -108,8 +105,6 @@ struct starter_conn {
 	struct authby authby;
 	lset_t sighash_policy;
 	enum shunt_policy shunt[SHUNT_KIND_ROOF];
-
-	char **alsos;	/* pointer to NULL-terminated array of strings */
 
 	struct starter_end left, right;
 

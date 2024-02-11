@@ -127,18 +127,17 @@
       <term><emphasis>also</emphasis></term>
       <listitem>
 	<para>
-	  the value is a section name; the parameters of that section
-	  are appended to this section, as if they had been written as
-	  part of it.  The specified section must exist, must follow
-	  the current one, and must have the same section type.
-	  (Nesting is permitted, and there may be more than one
-	  <emphasis>also</emphasis> in a single section,
-	  although it is forbidden to append the same section more
-	  than once.)  This allows, for example, keeping the
-	  encryption keys for a connection in a separate file from the
-	  rest of the description, by using both an <emphasis>also</emphasis>
-	  parameter and an <emphasis>include</emphasis> line.
-	  (Caution, see BUGS below for some restrictions.)
+	  The value is a section name.  The parameters of that section
+	  are inserted, in place, into this section (i.e., as if they
+	  had been written as part of and at that point in the
+	  section's definition).  The specified section must exist,
+	  and must have the same section type.  Multiple and nested
+	  <emphasis>also</emphasis> are permitted (duplicate
+	  insertions of the same section are ignored).  This allows,
+	  for example, keeping the encryption keys for a connection in
+	  a separate file from the rest of the description, by using
+	  both an <emphasis>also</emphasis> parameter and an
+	  <emphasis>include</emphasis> line.
 	</para>
       </listitem>
     </varlistentry>

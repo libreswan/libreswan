@@ -51,6 +51,12 @@
 #include "whack.h" /* for DEFAULT_CTL_SOCKET */
 #include "lswlog.h"
 
+static bool translate_conn(struct starter_conn *conn,
+			   const struct config_parsed *cfgp,
+			   struct section_list *sl,
+			   enum keyword_set assigned_value,
+			   struct logger *logger);
+
 /**
  * Set up hardcoded defaults, from data in programs/pluto/constants.h
  *
@@ -180,60 +186,6 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 
 	d->state = STATE_LOADED;
 	/* ==== end of conn %default ==== */
-}
-
-/**
- * Create a NULL-terminated array of tokens from a string of whitespace-separated tokens.
- *
- * @param value string to be broken up at blanks, creating strings for list
- * @param n where to place element count (excluding terminating NULL)
- * @return tokens_from_string (NULL or pointer to NULL-terminated array of pointers to strings)
- */
-static char **tokens_from_string(const char *value, int *n)
-{
-	*n = 0;	/* in case of early exit */
-
-	if (value == NULL)
-		return NULL;
-
-	/* avoid damaging original string */
-	char *const val = clone_str(value, "tokens_from_string value");
-	if (val == NULL)
-		return NULL;	/* cannot happen -- silence a coverity warning */
-
-	char *const end = val + strlen(val);
-
-	/* count number of items in string and terminate each with NUL */
-	int count = 0;
-	for (char *b = val; b < end; ) {
-		char *e;
-		for (e = b; *e != '\0' && !char_isspace(*e); e++)
-			;
-		*e = '\0';
-		if (e != b)
-			count++;
-		b = e + 1;
-	}
-
-	*n = count;
-
-	if (count == 0) {
-		pfree(val);
-		return NULL;
-	}
-
-	char **const nlist = (char **)alloc_bytes((count + 1) * sizeof(char *), "tokens_from_string nlist");
-
-	count = 0;
-	for (char *b = val; b < end; ) {
-		char *e = b + strlen(b);
-		if (e != b)
-			nlist[count++] = clone_str(b, "tokens_from_string item");
-		b = e + 1;
-	}
-	nlist[count] = NULL;
-	pfree(val);
-	return nlist;
 }
 
 /**
@@ -607,6 +559,7 @@ static bool validate_end(struct starter_conn *conn_st,
  */
 
 static bool translate_field(struct starter_conn *conn,
+			    const struct config_parsed *cfgp,
 			    const struct section_list *sl,
 			    enum keyword_set assigned_value,
 			    const struct kw_list *kw,
@@ -627,6 +580,25 @@ static bool translate_field(struct starter_conn *conn,
 	assert(kw->keyword.keydef != NULL);
 
 	switch (kw->keyword.keydef->type) {
+	case kt_also:
+	{
+		struct section_list *addin;
+		const char *seeking = kw->string;
+		for (addin = cfgp->sections.tqh_first;
+		     addin != NULL && !streq(seeking, addin->name);
+		     addin = addin->link.tqe_next)
+			;
+		if (addin == NULL) {
+			llog(RC_LOG, logger,
+			     "cannot find conn '%s' needed by conn '%s'",
+			     seeking, conn->name);
+			serious_err = true;
+			break;
+		}
+		/* translate things, but do not replace earlier settings! */
+		serious_err |= translate_conn(conn, cfgp, addin, k_set, logger);
+		break;
+	}
 	case kt_string:
 	case kt_filename:
 	case kt_dirname:
@@ -668,7 +640,6 @@ static bool translate_field(struct starter_conn *conn,
 		(*set_strings)[field] = assigned_value;
 		break;
 
-	case kt_also:
 	case kt_appendstring:
 	case kt_appendlist:
 		/* implicitly, this field can have multiple values */
@@ -764,13 +735,14 @@ static bool translate_field(struct starter_conn *conn,
 }
 
 static bool translate_leftright(struct starter_conn *conn,
+			    const struct config_parsed *cfgp,
 				const struct section_list *sl,
 				enum keyword_set assigned_value,
 				const struct kw_list *kw,
 				struct starter_end *this,
 				struct logger *logger)
 {
-	return translate_field(conn, sl, assigned_value, kw,
+	return translate_field(conn, cfgp, sl, assigned_value, kw,
 			       /*leftright*/this->leftright,
 			       /*the_strings*/&this->strings,
 			       /*set_strings*/&this->strings_set,
@@ -784,10 +756,17 @@ static bool translate_leftright(struct starter_conn *conn,
 }
 
 static bool translate_conn(struct starter_conn *conn,
-			   const struct section_list *sl,
+			   const struct config_parsed *cfgp,
+			   struct section_list *sl,
 			   enum keyword_set assigned_value,
 			   struct logger *logger)
 {
+	if (sl->beenhere) {
+		ldbg(logger, "ignore duplicate include");
+		return false;
+	}
+	sl->beenhere = true;
+
 	/* note: not all errors are considered serious */
 	bool serious_err = false;
 
@@ -795,19 +774,19 @@ static bool translate_conn(struct starter_conn *conn,
 		if (kw->keyword.keydef->validity & kv_leftright) {
 			if (kw->keyword.keyleft) {
 				serious_err |=
-					translate_leftright(conn, sl, assigned_value,
+					translate_leftright(conn, cfgp, sl, assigned_value,
 							    kw, &conn->left,
 							    logger);
 			}
 			if (kw->keyword.keyright) {
 				serious_err |=
-					translate_leftright(conn, sl, assigned_value,
+					translate_leftright(conn, cfgp, sl, assigned_value,
 							    kw, &conn->right,
 							    logger);
 			}
 		} else {
 			serious_err |=
-				translate_field(conn, sl, assigned_value, kw,
+				translate_field(conn, cfgp, sl, assigned_value, kw,
 						/*leftright*/"",
 						/*the_strings*/&conn->strings,
 						/*set_strings*/&conn->strings_set,
@@ -844,12 +823,16 @@ static bool load_conn(struct starter_conn *conn,
 		      bool defaultconn,
 		      struct logger *logger)
 {
-	bool err;
+	/* reset all of the "beenhere" flags */
+	for (struct section_list *s = cfgp->sections.tqh_first; s != NULL;
+	     s = s->link.tqe_next) {
+		s->beenhere = false;
+	}
 
 	/* turn all of the keyword/value pairs into options/strings in left/right */
-	err = translate_conn(conn, sl,
-			     defaultconn ? k_default : k_set,
-			     logger);
+	bool err = translate_conn(conn, cfgp, sl,
+				  defaultconn ? k_default : k_set,
+				  logger);
 
 	move_comment_list(&conn->comments, &sl->comments);
 
@@ -862,122 +845,6 @@ static bool load_conn(struct starter_conn *conn,
 		     sl->name);
 		return true;	/* error */
 	}
-
-	/*
-	 * Process the also list
-	 *
-	 * Note: conn->alsos will be NULL until we finish
-	 * and the appropriate list will be in local variable alsos.
-	 */
-
-	/* free any residual alsos list */
-	if (conn->alsos != NULL) {
-		for (char **s = conn->alsos; *s != NULL; s++)
-			pfreeany(*s);
-		pfree(conn->alsos);
-		conn->alsos = NULL;
-	}
-
-	int alsosize;
-	char **alsos = tokens_from_string(conn->strings[KSCF_ALSO], &alsosize);
-
-	if (alsoprocessing && alsos != NULL) {
-		/* reset all of the "beenhere" flags */
-		for (struct section_list *s = cfgp->sections.tqh_first; s != NULL;
-		     s = s->link.tqe_next)
-			s->beenhere = false;
-		sl->beenhere = true;
-
-		for (int alsoplace = 0; alsoplace < alsosize; alsoplace++) {
-			/*
-			 * Check for too many alsos.
-			 * Inside the loop because of indirect alsos.
-			 */
-			if (alsosize >= ALSO_LIMIT) {
-				llog(RC_LOG, logger,
-				     "while loading conn '%s', too many also= used at section %s. Limit is %d",
-				     conn->name,
-				     alsos[alsosize],
-				     ALSO_LIMIT);
-				return true;	/* error */
-			}
-
-			/*
-			 * for each also= listed, go find this section's keyword list, and
-			 * load it as well. This may extend the also= list (and the end),
-			 * which we handle by zeroing the also list, and adding to it after
-			 * checking for duplicates.
-			 */
-			const char *seeking = alsos[alsoplace];
-			passert(seeking != NULL);
-
-			struct section_list *addin;
-
-			for (addin = cfgp->sections.tqh_first;
-			     addin != NULL &&
-			     !streq(seeking, addin->name);
-			     addin = addin->link.tqe_next)
-				;
-
-			if (addin == NULL) {
-				llog(RC_LOG, logger,
-				     "cannot find conn '%s' needed by conn '%s'",
-				     seeking, conn->name);
-				err = true;
-				continue;	/* allowing further error detection */
-			}
-
-			if (addin->beenhere)
-				continue;	/* already handled */
-
-			ldbg(logger, "\twhile loading conn '%s' also including '%s'",
-			     conn->name, seeking);
-
-			conn->strings_set[KSCF_ALSO] = false;
-			pfreeany(conn->strings[KSCF_ALSO]);
-			conn->strings[KSCF_ALSO] = NULL;
-			addin->beenhere = true;
-
-			/* translate things, but do not replace earlier settings! */
-			err |= translate_conn(conn, addin, k_set, logger);
-
-			if (conn->strings[KSCF_ALSO] != NULL) {
-				/* add this guy's alsos too */
-				int newalsosize;
-				char **newalsos = tokens_from_string(
-					conn->strings[KSCF_ALSO], &newalsosize);
-
-				if (newalsos != NULL) {
-					/*
-					 * Append newalsos onto alsos.
-					 * Requires a re-allocation.
-					 * Copying is shallow: the lists
-					 * are copied and freed but
-					 * the underlying strings are unchanged.
-					 */
-					char **ra = alloc_bytes((alsosize +
-						newalsosize + 1) *
-						sizeof(char *),
-						"conn->alsos");
-					memcpy(ra, alsos, alsosize * sizeof(char *));
-					pfree(alsos);
-					alsos = ra;
-
-					memcpy(ra + alsosize, newalsos,
-						(newalsosize + 1) * sizeof(char *));
-					pfree(newalsos);
-
-					alsosize += newalsosize;
-				}
-			}
-		}
-	}
-
-	/*
-	 * Migrate alsos back to conn->alsos.
-	 * Note that this is the transitive closure.
-	 */
-	conn->alsos = alsos;
 
 	if (conn->options_set[KNCF_TYPE]) {
 		switch ((enum type_options)conn->options[KNCF_TYPE]) {

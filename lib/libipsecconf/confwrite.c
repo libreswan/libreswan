@@ -369,19 +369,6 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 		fprintf(out, "# begin conn %s\n", conn->name);
 
 	fprintf(out, "conn %s\n", conn->name);
-
-	if (conn->alsos != NULL) {
-		/* handle also= as a comment */
-
-		int alsoplace = 0;
-
-		fprintf(out, "\t#also =");
-		while (conn->alsos[alsoplace] != NULL) {
-			fprintf(out, " %s", conn->alsos[alsoplace]);
-			alsoplace++;
-		}
-		fprintf(out, "\n");
-	}
 	confwrite_side(out, &conn->left);
 	confwrite_side(out, &conn->right);
 	/* fprintf(out, "# confwrite_int:\n"); */
