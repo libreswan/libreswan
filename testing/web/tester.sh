@@ -130,7 +130,7 @@ if ! commit=$(${webdir}/gime-work.sh ${summarydir} ${rutdir} ${earliest_commit})
     delay=$(expr 10 \* 60)
     now=$(date +%s)
     future=$(expr ${now} + ${delay})
-    ${update_status} "idle; will retry at $(date -u -d @${future} +%H:%M) ($(date -u -d @${now} +%H:%M) + ${seconds}s)"
+    ${update_status} "idle; will retry at $(date -u -d @${future} +%H:%M) ($(date -u -d @${now} +%H:%M) + ${delay}s)"
     sleep ${delay}
     echo ${tester}
 fi
