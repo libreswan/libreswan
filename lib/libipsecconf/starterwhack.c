@@ -142,9 +142,8 @@ static bool set_whack_end(struct whack_end *w,
 	if (l->certx != NULL) {
 		w->cert = l->certx;
 	}
-	if (l->ckaid != NULL) {
-		w->ckaid = l->ckaid;
-	}
+	w->ckaid = l->strings[KSCF_CKAID];
+
 	if (l->pubkey_type == PUBKEY_PREEXCHANGED) {
 		/*
 		 * Only send over raw (prexchanged) rsapubkeys (i.e.,

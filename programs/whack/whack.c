@@ -1720,9 +1720,6 @@ int main(int argc, char **argv)
 		case END_CKAID:	/* --ckaid <ckaid> */
 			if (end->cert != NULL)
 				diagw("only one --cert <nickname> or --ckaid <ckaid> allowed");
-			/* try parsing it; the error isn't the most specific */
-			const char *ugh = ttodata(optarg, 0, 16, NULL, 0, NULL);
-			diagq(ugh, optarg);
 			end->ckaid = optarg;	/* decoded by Pluto */
 			continue;
 

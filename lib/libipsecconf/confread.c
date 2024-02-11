@@ -482,15 +482,6 @@ static bool validate_end(struct starter_conn *conn_st,
 	if (end->strings_set[KSCF_CERT]) {
 		end->certx = clone_str(end->strings[KSCF_CERT], "KSCF_CERT");
 	}
-	if (end->strings_set[KSCF_CKAID]) {
-		const char *ckaid = end->strings[KSCF_CKAID];
-		/* try parsing it */
-		const char *ugh = ttodata(ckaid, 0, 16, NULL, 0, NULL);
-		if (ugh != NULL) {
-			ERR_FOUND("invalid %sckaid: %s", leftright, ugh);
-		}
-		end->ckaid = clone_str(ckaid, "KSCF_CKAID");
-	}
 
 	if (end->strings_set[KSCF_CA])
 		end->ca = clone_str(end->strings[KSCF_CA], "KSCF_CA");
@@ -1117,7 +1108,6 @@ static void copy_conn_default(struct starter_conn *conn,
 	STR_FIELD_END(pubkey);
 	STR_FIELD_END(virt);
 	STR_FIELD_END(certx);
-	STR_FIELD_END(ckaid);
 	STR_FIELD_END(ca);
 
 	for (unsigned i = 0; i < elemsof(conn->left.strings); i++)
@@ -1270,7 +1260,6 @@ static void confread_free_conn(struct starter_conn *conn)
 	STR_FIELD_END(pubkey);
 	STR_FIELD_END(virt);
 	STR_FIELD_END(certx);
-	STR_FIELD_END(ckaid);
 	STR_FIELD_END(ca);
 
 	for (unsigned i = 0; i < elemsof(conn->left.strings); i++)

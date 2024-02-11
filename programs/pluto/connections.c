@@ -902,8 +902,6 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 		ckaid_t ckaid;
 		err_t err = string_to_ckaid(src->ckaid, &ckaid);
 		if (err != NULL) {
-			/* should have been rejected by whack? */
-			/* XXX: don't trust whack */
 			return diag("%s CKAID '%s' invalid: %s",
 				    leftright, src->ckaid, err);
 		}

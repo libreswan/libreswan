@@ -75,7 +75,6 @@ struct starter_end {
 	bool key_from_DNS_on_demand;
 	char *virt;
 	char *certx;
-	char *ckaid;
 	char *ca;
 	ksf strings;
 	knf options;
