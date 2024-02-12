@@ -441,7 +441,7 @@ static bool expire_ike_because_child_not_used(struct state *st)
 	struct ike_sa *ike;
 	if (IS_IKE_SA(st)) {
 		ike = pexpect_ike_sa(st);
-		child = child_sa_by_serialno(c->newest_ipsec_sa);
+		child = child_sa_by_serialno(c->established_child_sa);
 		if (child == NULL) {
 			llog_pexpect(st->logger, HERE,
 				     "can't check usage as IKE SA #%lu has no newest child",

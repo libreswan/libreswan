@@ -278,7 +278,7 @@ static void nat_traversal_ka_event_state(struct state *st, unsigned *data)
 			return;
 		}
 
-		if (c->newest_ipsec_sa != st->st_serialno) {
+		if (c->established_child_sa != st->st_serialno) {
 			dbg("skipping NAT-T KEEP-ALIVE: #%lu is not current IPsec SA", st->st_serialno);
 			return;
 		}

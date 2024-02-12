@@ -242,7 +242,7 @@ enum retransmit_action retransmit(struct state *st)
 				jam_string(buf, ".  No response (or no acceptable response) to our first IKEv1 message");
 				break;
 			case STATE_QUICK_I1:
-				if (st->st_connection->newest_ipsec_sa == SOS_NOBODY) {
+				if (st->st_connection->established_child_sa == SOS_NOBODY) {
 					jam_string(buf, ".  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal");
 				}
 				break;

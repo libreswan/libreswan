@@ -156,7 +156,7 @@ void show_kernel_alg_connection(struct show *s,
 		}
 	}
 
-	const struct state *st = state_by_serialno(c->newest_ipsec_sa);
+	const struct state *st = state_by_serialno(c->established_child_sa);
 
 	if (st != NULL && st->st_esp.protocol == &ip_protocol_esp) {
 		SHOW_JAMBUF(s, buf) {

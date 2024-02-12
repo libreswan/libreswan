@@ -73,7 +73,7 @@ static unsigned down_connection(struct connection *c, struct logger *logger)
 	 * NULL?
 	 */
 	struct ike_sa *ike = ike_sa_by_serialno(c->established_ike_sa);
-	struct child_sa *child = child_sa_by_serialno(c->newest_ipsec_sa);
+	struct child_sa *child = child_sa_by_serialno(c->established_child_sa);
 
 	if (shared_phase1_connection(ike)) {
 		del_policy(c, policy.up);

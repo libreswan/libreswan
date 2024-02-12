@@ -98,7 +98,7 @@ static unsigned whack_rekey_child(const struct whack_message *m,
 		return 0; /* the connection doesn't count */
 	}
 
-	return rekey_state(m, s, c, CHILD_SA, c->newest_ipsec_sa);
+	return rekey_state(m, s, c, CHILD_SA, c->established_child_sa);
 }
 
 void whack_rekey(const struct whack_message *m, struct show *s, enum sa_type sa_type)

@@ -4288,8 +4288,8 @@ so_serial_t get_newer_sa_from_connection(struct state *st)
 		dbg("picked established_ike_sa #%lu for #%lu",
 		    newest, st->st_serialno);
 	} else {
-		newest = c->newest_ipsec_sa;
-		dbg("picked newest_ipsec_sa #%lu for #%lu",
+		newest = c->established_child_sa;
+		dbg("picked established_child_sa #%lu for #%lu",
 		    newest, st->st_serialno);
 	}
 

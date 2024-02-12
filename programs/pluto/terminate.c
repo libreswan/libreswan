@@ -455,7 +455,7 @@ static bool zap_connection_child(struct ike_sa **ike,
 		PEXPECT((*ike)->sa.logger, dispatched_to_child);
 		PEXPECT((*ike)->sa.logger, (*child) == NULL); /*gone!*/
 		PEXPECT((*ike)->sa.logger, (*ike)->sa.st_connection->newest_routing_sa == SOS_NOBODY);
-		PEXPECT((*ike)->sa.logger, (*ike)->sa.st_connection->newest_ipsec_sa == SOS_NOBODY);
+		PEXPECT((*ike)->sa.logger, (*ike)->sa.st_connection->established_child_sa == SOS_NOBODY);
 	}
 	return dispatched_to_child;
 }
@@ -501,7 +501,7 @@ static void zap_v2_child(struct ike_sa **ike, struct child_sa *child,
 	on_delete(&child->sa, skip_log_message);
 	struct connection *cc = child->sa.st_connection;
 
-	if (cc->newest_ipsec_sa == child->sa.st_serialno) {
+	if (cc->established_child_sa == child->sa.st_serialno) {
 		PEXPECT((*ike)->sa.logger, IS_IPSEC_SA_ESTABLISHED(&child->sa));
 		/* will delete child and its logger */
 		ldbg_routing((*ike)->sa.logger, "    zapping established Child SA "PRI_SO,

@@ -214,12 +214,12 @@ bool scheduled_revival(struct connection *c, struct state *st/*can be NULL*/,
 				return false;
 			}
 
-			if (c->newest_ipsec_sa != SOS_NOBODY &&
-			    c->newest_ipsec_sa != st->st_serialno) {
+			if (c->established_child_sa != SOS_NOBODY &&
+			    c->established_child_sa != st->st_serialno) {
 				/* should be covered by above */
 				llog_pexpect(st->logger, HERE,
-					     "revival: skipping, .newest_ipsec_sa "PRI_SO" is not us",
-					     pri_so(c->newest_ipsec_sa));
+					     "revival: skipping, .established_child_sa "PRI_SO" is not us",
+					     pri_so(c->established_child_sa));
 				return false;
 			}
 		}

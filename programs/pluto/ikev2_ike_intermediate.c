@@ -365,10 +365,10 @@ stf_status process_v2_IKE_INTERMEDIATE_response(struct ike_sa *ike,
 	 * streams could mean the lower serial established later and is
 	 * the "newest". Should > be replaced with !=   ?
 	 */
-	if (c->newest_ipsec_sa > ike->sa.st_serialno) {
+	if (c->established_child_sa > ike->sa.st_serialno) {
 		llog_sa(RC_LOG, ike,
 			  "state superseded by #%lu, drop this negotiation",
-			  c->newest_ipsec_sa);
+			  c->established_child_sa);
 		return STF_FATAL;
 	}
 

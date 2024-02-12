@@ -45,7 +45,7 @@ static uint64_t get_child_bytes(const struct connection *c, enum direction direc
 	 * Look for all states with C as the connection.  And then
 	 * from there dump the traffic status of any children.
 	 *
-	 * Using .newest_ipsec_sa or .newest_routing_sa isn't
+	 * Using .established_child_sa or .newest_routing_sa isn't
 	 * sufficient as this won't include established Child SAs that
 	 * are in the process of being replaced.
 	 */

@@ -64,7 +64,7 @@ static bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest 
 	 * would it work if the Child SA connection is different from IKE SA?
 	 * for now just do this one connection, later on loop over all Child SAs
 	 */
-	struct child_sa *child = child_sa_by_serialno(c->newest_ipsec_sa);
+	struct child_sa *child = child_sa_by_serialno(c->established_child_sa);
 	if (child == NULL) {
 		/*
 		 * XXX: Technically, loosing the first child (it gets
@@ -73,7 +73,7 @@ static bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest 
 		 * multiple Child SAs is still a TODO item.
 		 */
 		llog_pexpect(ike->sa.logger, HERE,
-			     "IKE SA lost first Child SA "PRI_SO, pri_so(c->newest_ipsec_sa));
+			     "IKE SA lost first Child SA "PRI_SO, pri_so(c->established_child_sa));
 		return false;
 	}
 
@@ -439,11 +439,11 @@ void record_deladdr(ip_address *ip, char *a_type)
 
 		ip_address ip_p = ike->sa.st_v2_mobike.deleted_local_addr;
 		ike->sa.st_v2_mobike.deleted_local_addr = local_address;
-		struct child_sa *child = child_sa_by_serialno(ike->sa.st_connection->newest_ipsec_sa);
+		struct child_sa *child = child_sa_by_serialno(ike->sa.st_connection->established_child_sa);
 		if (child == NULL) {
 			llog_pexpect(ike->sa.logger, HERE,
 				     "newest Child SA "PRI_SO" lost",
-				     pri_so(ike->sa.st_connection->newest_ipsec_sa));
+				     pri_so(ike->sa.st_connection->established_child_sa));
 			continue;
 		}
 

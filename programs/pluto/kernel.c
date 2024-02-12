@@ -2546,7 +2546,7 @@ void handle_sa_expire(ipsec_spi_t spi, uint8_t protoid, ip_address dst,
 	}
 
 	bool rekey = c->config->rekey;
-	bool newest = c->newest_ipsec_sa == child->sa.st_serialno;
+	bool newest = c->established_child_sa == child->sa.st_serialno;
 	struct state *st =  &child->sa;
 	struct ipsec_proto_info *pr = (st->st_esp.protocol == &ip_protocol_esp ? &st->st_esp :
 				       st->st_ah.protocol == &ip_protocol_ah ? &st->st_ah :

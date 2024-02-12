@@ -160,9 +160,9 @@ void liveness_check(struct state *st)
 	 * If the child is lingering (replaced but not yet deleted),
 	 * don't do liveness.
 	 */
-	if (c->newest_ipsec_sa != child->sa.st_serialno) {
+	if (c->established_child_sa != child->sa.st_serialno) {
 		dbg("liveness: #%lu was replaced by #%lu so not needed",
-		    child->sa.st_serialno, c->newest_ipsec_sa);
+		    child->sa.st_serialno, c->established_child_sa);
 		return;
 	}
 

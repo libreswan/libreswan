@@ -1070,7 +1070,7 @@ bool v2_ike_sa_auth_responder_establish(struct ike_sa *ike, bool *send_redirecti
 	 */
 	wipe_old_connections(ike);
 
-	if (ike->sa.st_ike_seen_v2n_initial_contact && c->newest_ipsec_sa != SOS_NOBODY) {
+	if (ike->sa.st_ike_seen_v2n_initial_contact && c->established_child_sa != SOS_NOBODY) {
 		/*
 		 * XXX: This is for the first child only.
 		 *
@@ -1093,12 +1093,12 @@ bool v2_ike_sa_auth_responder_establish(struct ike_sa *ike, bool *send_redirecti
 		} else if (!uniqueIDs) {
 			dbg("ignoring initial contact: uniqueIDs disabled");
 		} else {
-			struct state *old_p2 = state_by_serialno(c->newest_ipsec_sa);
+			struct state *old_p2 = state_by_serialno(c->established_child_sa);
 			struct connection *d = old_p2 == NULL ? NULL : old_p2->st_connection;
 
 			if (c == d && same_id(&c->remote->host.id, &d->remote->host.id)) {
 				dbg("Initial Contact received, deleting old state #%lu from connection '%s' due to new IKE SA #%lu",
-				    c->newest_ipsec_sa, c->name, ike->sa.st_serialno);
+				    c->established_child_sa, c->name, ike->sa.st_serialno);
 				on_delete(old_p2, skip_send_delete);
 				event_force(EVENT_v2_DISCARD, old_p2);
 			}

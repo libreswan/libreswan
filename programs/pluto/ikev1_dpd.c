@@ -442,7 +442,7 @@ static void p2_dpd_outI1(struct child_sa *p2)
 		return;
 	}
 
-	if (p1->sa.st_connection->newest_ipsec_sa != p2->sa.st_serialno) {
+	if (p1->sa.st_connection->established_child_sa != p2->sa.st_serialno) {
 		pdbg(p1->sa.logger,
 		     "DPD: no need to send or schedule DPD for replaced IPsec SA");
 		return;

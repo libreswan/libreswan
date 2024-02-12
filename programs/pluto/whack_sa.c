@@ -67,7 +67,7 @@ static unsigned whack_connection_sa(const struct whack_message *m,
 	so_serial_t so = SOS_NOBODY;
 	switch (m->whack_sa_type) {
 	case IKE_SA: so = c->established_ike_sa; break;
-	case CHILD_SA: so = c->newest_ipsec_sa; break;
+	case CHILD_SA: so = c->established_child_sa; break;
 	}
 
 	if (so == SOS_NOBODY) {

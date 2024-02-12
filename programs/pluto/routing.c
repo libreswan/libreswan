@@ -465,7 +465,7 @@ static void set_routing(enum routing_event event UNUSED,
 		c->newest_routing_sa = (*e->child)->sa.st_serialno;
 	} else {
 		c->newest_routing_sa =
-			c->newest_ipsec_sa =
+			c->established_child_sa =
 			SOS_NOBODY;
 	}
 	c->child.routing = new_routing;
@@ -552,7 +552,7 @@ static void set_established_child(enum routing_event event UNUSED,
 		}
 	}
 	c->child.routing = routing;
-	c->newest_ipsec_sa = c->newest_routing_sa = (*e->child)->sa.st_serialno;
+	c->established_child_sa = c->newest_routing_sa = (*e->child)->sa.st_serialno;
 }
 
 static bool unrouted_to_routed_ondemand(enum routing_event event, struct connection *c, where_t where)
