@@ -123,7 +123,7 @@ kvmplutotest	addconn-20-conn-default				good
 kvmplutotest	addconn-21-config-setup-listen			good
 kvmplutotest	addconn-22-authby-hash-algo			good
 kvmplutotest	addconn-23-system-crypto-policies		good
-kvmplutotest	addconn-24-conn-default-rsasigkey		wip	github:833
+kvmplutotest	addconn-24-conn-default-rsasigkey		good	github:833
 kvmplutotest	addconn-25-missing-cert				good
 kvmplutotest	addconn-26-keyingtries				good	github/1061
 kvmplutotest	addconn-27-keyexchange				good	github/1168

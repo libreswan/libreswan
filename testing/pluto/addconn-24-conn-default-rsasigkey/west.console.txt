@@ -13,7 +13,9 @@ west #
  # should not show: addconn, in config '/etc/ipsec.conf', duplicate public key
 west #
  ipsec auto --add test1
+"test1": added IKEv2 connection
 west #
  ipsec auto --add test2
+"test2": added IKEv2 connection
 west #
  
