@@ -68,27 +68,27 @@ conn westnet-eastnet
 	also=westnet-eastnet-ipv4
 
 conn westnet-eastnet-ipv4
-	also=west-east-base-id-nss
-	also=west-east-base-ipv4
 	leftsubnet=192.0.1.0/24
 	rightsubnet=192.0.2.0/24
+	also=west-east-base-id-nss
+	also=west-east-base-ipv4
 
 conn northnet-eastnet
 	also=northnet-eastnet-ipv4
 
 conn northnet-eastnet-ipv4
-	also=north-east-base
 	leftsubnet=192.0.3.0/24
 	rightsubnet=192.0.2.0/24
+	also=north-east-base
 
 conn road-east
 	also=road-east-base
 	also=road-east-base-id-nss
 
 conn road-eastnet
+	rightsubnet=192.0.2.0/24
 	also=road-east-base
 	also=road-east-base-id-nss
-	rightsubnet=192.0.2.0/24
 
 conn westnet-eastnet-x509
 	leftsubnet=192.0.1.0/24
@@ -120,30 +120,30 @@ conn west-east-base-ipv4
 conn north-east-base-id-nss
 	# Left security gateway, subnet behind it, next hop toward right.
 	leftid=@north
-	also=north-leftrsasigkey
 	# Right security gateway, subnet behind it, next hop toward left.
 	rightid=@east
+	also=north-leftrsasigkey
 	also=east-rightrsasigkey
 
 conn west-east-base-id-nss
 	# Left security gateway, subnet behind it, next hop toward right.
 	leftid=@west
-	also=west-leftrsasigkey
 	# Right security gateway, subnet behind it, next hop toward left.
 	rightid=@east
+	also=west-leftrsasigkey
 	also=east-rightrsasigkey
 
 conn road-east-base
-	also=road-east-base-id-nss
 	right=192.1.2.23
 	#left not specified as test case picks "random" ip
+	also=road-east-base-id-nss
 
 conn road-east-base-id-nss
 	# Left security gateway, subnet behind it, next hop toward right.
 	leftid=@road
-	also=road-leftrsasigkey
 	# Right security gateway, subnet behind it, next hop toward left.
 	rightid=@east
+	also=road-leftrsasigkey
 	also=east-rightrsasigkey
 
 conn road-east-base-x509
@@ -187,11 +187,11 @@ conn north-east
 	#left=%any
 	#leftnexthop=192.2.3.254
 	leftid=@north
-	also=north-leftrsasigkey
 	# Right security gateway, subnet behind it, next hop toward left.
 	right=192.1.2.23
 	rightid=@east
-	also=east-rightrsasigkey
 	rightnexthop=192.1.2.254
+	also=north-leftrsasigkey
+	also=east-rightrsasigkey
 
 include /testing/baseconfigs/all/etc/ipsec.d/rsasigkey.conf
