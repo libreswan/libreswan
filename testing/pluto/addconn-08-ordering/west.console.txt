@@ -6,6 +6,8 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec whack --name order-test --tunnel --encrypt --ipv4 --tunnelipv6  --host 1.2.3.4 --id foo --client fe80::1/128 --to --host 2.3.4.5 --id bar --client fe80::2/128
+"order-test": warning: ignoring leftid=foo: not a numeric IPv4 address and name lookup failed (no validation performed)
+"order-test": warning: ignoring rightid=bar: not a numeric IPv4 address and name lookup failed (no validation performed)
 "order-test": connection failed to orient - check connection and network settings
 "order-test": added IKEv2 connection
 west #
