@@ -130,12 +130,17 @@ static bool set_whack_end(struct whack_end *w,
 	if (cidr_is_specified(l->ifaceip))
 		w->ifaceip = l->ifaceip;
 
-	w->subnet = l->subnet;
-
-	if (l->strings[KSCF_SUBNETS] != NULL) {
-		w->subnets = clone_str(l->strings[KSCF_SUBNETS], "subnets");
+	/* validate the KSCF_SUBNET */
+	if (l->strings[KSCF_SUBNET] != NULL) {
+		char *value = l->strings[KSCF_SUBNET];
+		if (startswith(value, "vhost:") || startswith(value, "vnet:")) {
+			w->virt = value;
+		} else {
+			w->subnet = value;
+		}
 	}
 
+	w->subnets = l->strings[KSCF_SUBNETS];
 	w->host_ikeport = l->options[KNCF_IKEPORT];
 	w->protoport = l->protoport;
 
@@ -185,8 +190,6 @@ static bool set_whack_end(struct whack_end *w,
 		w->updown = l->strings[KSCF_UPDOWN];
 	}
 
-	w->virt = NULL;
-	w->virt = l->virt;
 	w->key_from_DNS_on_demand = l->key_from_DNS_on_demand;
 
 	if (l->options_set[KNCF_XAUTHSERVER])

@@ -299,11 +299,6 @@ static void confwrite_side(FILE *out, struct starter_end *end)
 		break;
 	}
 
-	if (end->subnet != NULL) {
-		fprintf(out, "\t%ssubnet=%s\n", side,
-			end->subnet);
-	}
-
 	if (cidr_is_specified(end->vti_ip)) {
 		cidr_buf as;
 		fprintf(out, "\t%svti=%s\n", side,

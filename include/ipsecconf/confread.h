@@ -59,7 +59,6 @@ struct starter_end {
 	enum keyword_host nexttype;
 	ip_address addr;
 	ip_address nexthop;
-	char *subnet;
 	ip_cidr vti_ip;
 	ip_cidr ifaceip;
 	char *iface;
@@ -72,7 +71,6 @@ struct starter_end {
 	char *pubkey;
 
 	bool key_from_DNS_on_demand;
-	char *virt;
 	char *certx;
 	ksf strings;
 	knf options;

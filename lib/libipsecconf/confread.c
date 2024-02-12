@@ -368,19 +368,6 @@ static bool validate_end(struct starter_conn *conn_st,
 		/* XXX: check type? */
 	}
 
-	/* validate the KSCF_SUBNET */
-	if (end->strings_set[KSCF_SUBNET]) {
-		char *value = end->strings[KSCF_SUBNET];
-		if (startswith(value, "vhost:") || startswith(value, "vnet:")) {
-			if (conn_st->ike_version != IKEv1) {
-				ERR_FOUND("The vnet: and vhost: keywords are only valid for IKEv1 connections");
-			}
-			end->virt = clone_str(value, "validate_end item");
-		} else {
-			end->subnet = clone_str(value, "validate_end subnet");
-		}
-	}
-
 	/*
 	 * validate the KSCF_NEXTHOP; set nexthop address to
 	 * something consistent, by default
@@ -1084,7 +1071,6 @@ static void copy_conn_default(struct starter_conn *conn,
 	STR_FIELD_END(iface);
 	STR_FIELD_END(id);
 	STR_FIELD_END(pubkey);
-	STR_FIELD_END(virt);
 	STR_FIELD_END(certx);
 
 	for (unsigned i = 0; i < elemsof(conn->left.strings); i++)
@@ -1235,7 +1221,6 @@ static void confread_free_conn(struct starter_conn *conn)
 	STR_FIELD_END(iface);
 	STR_FIELD_END(id);
 	STR_FIELD_END(pubkey);
-	STR_FIELD_END(virt);
 	STR_FIELD_END(certx);
 
 	for (unsigned i = 0; i < elemsof(conn->left.strings); i++)
