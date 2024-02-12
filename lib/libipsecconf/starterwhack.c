@@ -159,7 +159,7 @@ static bool set_whack_end(struct whack_end *w,
 		w->pubkey_alg = l->pubkey_alg;
 		w->pubkey = l->pubkey;
 	}
-	w->ca = l->ca;
+	w->ca = l->strings[KSCF_CA];
 	if (l->options_set[KNCF_SENDCERT])
 		w->sendcert = l->options[KNCF_SENDCERT];
 	else

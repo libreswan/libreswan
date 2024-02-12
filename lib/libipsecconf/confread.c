@@ -471,9 +471,6 @@ static bool validate_end(struct starter_conn *conn_st,
 		end->certx = clone_str(end->strings[KSCF_CERT], "KSCF_CERT");
 	}
 
-	if (end->strings_set[KSCF_CA])
-		end->ca = clone_str(end->strings[KSCF_CA], "KSCF_CA");
-
 	if (end->strings_set[KSCF_PROTOPORT]) {
 		char *value = end->strings[KSCF_PROTOPORT];
 		err_t ugh = ttoprotoport(value, &end->protoport);
@@ -1089,7 +1086,6 @@ static void copy_conn_default(struct starter_conn *conn,
 	STR_FIELD_END(pubkey);
 	STR_FIELD_END(virt);
 	STR_FIELD_END(certx);
-	STR_FIELD_END(ca);
 
 	for (unsigned i = 0; i < elemsof(conn->left.strings); i++)
 		STR_FIELD_END(strings[i]);
@@ -1241,7 +1237,6 @@ static void confread_free_conn(struct starter_conn *conn)
 	STR_FIELD_END(pubkey);
 	STR_FIELD_END(virt);
 	STR_FIELD_END(certx);
-	STR_FIELD_END(ca);
 
 	for (unsigned i = 0; i < elemsof(conn->left.strings); i++)
 		STR_FIELD_END(strings[i]);
