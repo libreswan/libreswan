@@ -148,16 +148,6 @@ conn westnet-eastnet-x509
 
 # aliases for old test cases - ideally testcases stop using these two names
 
-conn north-east-base
-	left=192.1.3.33
-	right=192.1.2.23
-	# Left security gateway, subnet behind it, next hop toward right.
-	leftid=@north
-	# Right security gateway, subnet behind it, next hop toward left.
-	rightid=@east
-	also=north-leftrsasigkey
-	also=east-rightrsasigkey
-
 conn west-east-base
 	left=192.1.2.45
 	leftnexthop=192.1.2.23
