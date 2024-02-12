@@ -113,17 +113,24 @@ int main(int argc, char *argv[])
 		exit(4);
 	}
 
-	cur_debugging = (verbose > 3 ? DBG_ALL|DBG_TMI :
-			 verbose > 2 ? DBG_ALL :
-			 verbose > 1 ? DBG_BASE :
-			 LEMPTY);
+	switch (verbose) {
+	case 0:
+	case 1:
+		break;
+	case 2:
+		cur_debugging = DBG_ALL;
+		break;
+	case 3:
+		cur_debugging = DBG_ALL|DBG_TMI;
+		break;
+	default: /*>=4*/
+		cur_debugging = DBG_ALL|DBG_TMI;
+		yydebug = true;
+		break;
+	}
 
 	/* logged when true */
 	ldbg(logger, "debugging mode enabled");
-
-	if (verbose > 3) {
-		yydebug = 1;
-	}
 
 	if (configfile == NULL) {
 		configfile = clone_str(IPSEC_CONF, "default ipsec.conf file");

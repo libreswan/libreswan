@@ -108,7 +108,6 @@ section_or_include:
 		parser.kw = &parser.cfg->config_setup;
 		parser.section = SECTION_CONFIG_SETUP;
 		parser.comments = &parser.cfg->comments;
-		ldbg(logger, "%s", "");
 		ldbg(logger, "reading config setup");
 	} kw_sections
 	| CONN STRING EOL {
@@ -129,7 +128,6 @@ section_or_include:
 		TAILQ_INIT(&section->comments);
 		parser.comments = &section->comments;
 
-		ldbg(logger, "%s", "");
 		ldbg(logger, "reading conn %s", section->name);
 
 	} kw_sections
@@ -197,6 +195,17 @@ void parser_warning(struct logger *logger, int error, const char *s, ...)
 	}
 }
 
+static const char *leftright(struct keyword *kw)
+{
+	if (kw->keyleft && !kw->keyright) {
+		return "left";
+	}
+	if (!kw->keyleft && kw->keyright) {
+		return "right";
+	}
+	return "";
+}
+
 void parser_kw_warning(struct logger *logger, struct keyword *kw, const char *yytext,
 		       const char *s, ...)
 {
@@ -210,12 +219,7 @@ void parser_kw_warning(struct logger *logger, struct keyword *kw, const char *yy
 			jam_va_list(buf, s, ap);
 			va_end(ap);
 			jam_string(buf, ": ");
-			if (kw->keyleft && !kw->keyright) {
-				jam_string(buf, "left");
-			}
-			if (!kw->keyleft && kw->keyright) {
-				jam_string(buf, "right");
-			}
+			jam_string(buf, leftright(kw));
 			jam_string(buf, kw->keydef->keyname);
 			jam_string(buf, "=");
 			jam_string(buf, yytext);
@@ -386,6 +390,10 @@ static void new_parser_kw(struct keyword *kw,
 		.string = (yytext != NULL ? strdup(yytext) : NULL),
 		.number = number,
 	};
+
+	ldbgf(DBG_TMI, logger, "  %s%s=%s number=%ju field=%u", kw->keydef->keyname,
+	      leftright(kw), new->string, new->number,
+	      kw->keydef->field);
 
 	/* append the new kw_list to the list */
 	(*end) = new;

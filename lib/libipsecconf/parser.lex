@@ -409,7 +409,6 @@ static bool parser_y_eof(struct logger *logger)
 
 				/* remove trailing " */
 				s[len-1] = '\0';
-				ldbgf(DBG_TMI, logger, "STRING: \"%s\"", s);
 				yylval.s = strdup(s);
 				BEGIN INITIAL;
 				return STRING;
@@ -424,7 +423,6 @@ static bool parser_y_eof(struct logger *logger)
 
 				/* remove trailing } */
 				s[len-1] = '\0';
-				ldbgf(DBG_TMI, logger, "STRING{}: {%s}", s);
 				yylval.s = strdup(s);
 				BEGIN INITIAL;
 				return STRING;
@@ -462,10 +460,7 @@ conn			{ BEGIN VALUE; return CONN; }
 include			return INCLUDE;
 
 [^\"= \t\n]+		{
-				int tok;
-
-				ldbgf(DBG_TMI, logger, "STR/KEY: %s", yytext);
-				tok = parser_find_keyword(yytext, &yylval);
+				int tok = parser_find_keyword(yytext, &yylval);
 				switch (tok) {
 				case COMMENT:
 					BEGIN COMMENT_KEY;
