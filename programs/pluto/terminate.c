@@ -436,11 +436,11 @@ static bool zap_connection_child(struct ike_sa **ike,
 {
 
 	bool dispatched_to_child;
-	(*child) = child_sa_by_serialno((*ike)->sa.st_connection->newest_routing_sa);
+	(*child) = child_sa_by_serialno((*ike)->sa.st_connection->negotiating_child_sa);
 	if ((*child) == NULL) {
 		dispatched_to_child = false;
 		ldbg_routing((*ike)->sa.logger, "  IKE SA's connection has no Child SA "PRI_SO,
-			     pri_so((*ike)->sa.st_connection->newest_routing_sa));
+			     pri_so((*ike)->sa.st_connection->negotiating_child_sa));
 	} else if ((*child)->sa.st_clonedfrom != (*ike)->sa.st_serialno) {
 		dispatched_to_child = false;
 		ldbg_routing((*ike)->sa.logger, "  IKE SA is not the parent of the connection's Child SA "PRI_SO,
@@ -454,7 +454,7 @@ static bool zap_connection_child(struct ike_sa **ike,
 		zap_child(child, where); /* always dispatches here*/
 		PEXPECT((*ike)->sa.logger, dispatched_to_child);
 		PEXPECT((*ike)->sa.logger, (*child) == NULL); /*gone!*/
-		PEXPECT((*ike)->sa.logger, (*ike)->sa.st_connection->newest_routing_sa == SOS_NOBODY);
+		PEXPECT((*ike)->sa.logger, (*ike)->sa.st_connection->negotiating_child_sa == SOS_NOBODY);
 		PEXPECT((*ike)->sa.logger, (*ike)->sa.st_connection->established_child_sa == SOS_NOBODY);
 	}
 	return dispatched_to_child;
@@ -521,7 +521,7 @@ static void zap_v2_child(struct ike_sa **ike, struct child_sa *child,
 		return;
 	}
 
-	if (cc->newest_routing_sa == child->sa.st_serialno) {
+	if (cc->negotiating_child_sa == child->sa.st_serialno) {
 		/* will delete child and its logger */
 		ldbg_routing((*ike)->sa.logger, "    zapping larval Child SA "PRI_SO,
 			     pri_so(child->sa.st_serialno));

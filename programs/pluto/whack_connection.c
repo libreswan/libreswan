@@ -399,11 +399,11 @@ void whack_connection_states(struct connection *c,
 			     where_t where)
 {
 	pdbg(c->logger,
-	     "%s() .negotiating_ike_sa "PRI_SO" .established_ike_sa "PRI_SO" .newest_routing_sa "PRI_SO" .established_child_sa "PRI_SO,
+	     "%s() .negotiating_ike_sa "PRI_SO" .established_ike_sa "PRI_SO" .negotiating_child_sa "PRI_SO" .established_child_sa "PRI_SO,
 	     __func__,
 	     pri_so(c->negotiating_ike_sa),
 	     pri_so(c->established_ike_sa),
-	     pri_so(c->newest_routing_sa),
+	     pri_so(c->negotiating_child_sa),
 	     pri_so(c->established_child_sa));
 
 	struct ike_sa *ike = ike_sa_by_serialno(c->established_ike_sa); /* could be NULL */
@@ -424,10 +424,10 @@ void whack_connection_states(struct connection *c,
 
 	bool whack_ike;
 	struct child_sa *connection_child =
-		child_sa_by_serialno(c->newest_routing_sa);
+		child_sa_by_serialno(c->negotiating_child_sa);
 	if (connection_child == NULL) {
 		pdbg(c->logger, "%s()  skipping Child SA, as no "PRI_SO,
-		     __func__, pri_so(c->newest_routing_sa));
+		     __func__, pri_so(c->negotiating_child_sa));
 		whack_ike = true;
 	} else if (connection_child->sa.st_clonedfrom != c->established_ike_sa) {
 		/* st_clonedfrom can't be be SOS_NOBODY */
@@ -485,7 +485,7 @@ void whack_connection_states(struct connection *c,
 			      __func__, pri_so(weed.st->st_serialno));
 			continue;
 		}
-		if (weed.st->st_serialno == c->newest_routing_sa) {
+		if (weed.st->st_serialno == c->negotiating_child_sa) {
 			pdbg(c->logger, "%s()    skipping "PRI_SO" as newest routing SA",
 			      __func__, pri_so(weed.st->st_serialno));
 			continue;

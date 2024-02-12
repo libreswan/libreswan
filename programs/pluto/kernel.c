@@ -1684,7 +1684,7 @@ static bool install_inbound_ipsec_kernel_policies(struct child_sa *child)
 	 * Not much to be done on failure.
 	 */
 	ldbg(logger, "kernel: %s() owner="PRI_SO,
-	     __func__, pri_so(c->newest_routing_sa));
+	     __func__, pri_so(c->negotiating_child_sa));
 
 	if (is_labeled_child(c)) {
 		ldbg(logger, "kernel: %s() skipping as IKEv2 config.sec_label="PRI_SHUNK,
@@ -1692,10 +1692,10 @@ static bool install_inbound_ipsec_kernel_policies(struct child_sa *child)
 		return true;
 	}
 
-	if (c->newest_routing_sa != SOS_NOBODY &&
-	    c->newest_routing_sa != child->sa.st_serialno) {
+	if (c->negotiating_child_sa != SOS_NOBODY &&
+	    c->negotiating_child_sa != child->sa.st_serialno) {
 		ldbg(logger, "kernel: %s() skipping as already has owner "PRI_SO,
-		     __func__, pri_so(c->newest_routing_sa));
+		     __func__, pri_so(c->negotiating_child_sa));
 		return true;
 	}
 
@@ -1860,8 +1860,8 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 		return true;
 	}
 
-	if (c->newest_routing_sa != SOS_NOBODY &&
-	    c->newest_routing_sa != child->sa.st_serialno) {
+	if (c->negotiating_child_sa != SOS_NOBODY &&
+	    c->negotiating_child_sa != child->sa.st_serialno) {
 		ldbg(logger, "kernel: %s() skipping kernel policies as already owner", __func__);
 		return true;
 	}
@@ -1870,7 +1870,7 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 	     "kernel: %s() installing IPsec policies for "PRI_SO": connection is currently "PRI_SO" %s route=%s up=%s",
 	     __func__,
 	     pri_so(child->sa.st_serialno),
-	     pri_so(c->newest_routing_sa),
+	     pri_so(c->negotiating_child_sa),
 	     enum_name(&routing_names, c->child.routing),
 	     bool_str(updown.route),
 	     bool_str(updown.up));

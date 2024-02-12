@@ -475,7 +475,7 @@ struct connection *spd_instantiate(struct connection *t,
 	add_connection_spds(d, address_info(d->local->host.addr));
 
 	/* leave breadcrumb */
-	pexpect(d->newest_routing_sa == SOS_NOBODY);
+	pexpect(d->negotiating_child_sa == SOS_NOBODY);
 	pexpect(d->child.routing == RT_UNROUTED);
 
 	connection_buf tb;
@@ -502,7 +502,7 @@ struct connection *sec_label_parent_instantiate(struct connection *t,
 	update_selectors(p);
 	add_connection_spds(p, address_info(p->local->host.addr));
 
-	pexpect(p->newest_routing_sa == SOS_NOBODY);
+	pexpect(p->negotiating_child_sa == SOS_NOBODY);
 	pexpect(p->child.routing == RT_UNROUTED);
 
 	connection_buf tb;
@@ -538,7 +538,7 @@ struct connection *sec_label_child_instantiate(struct ike_sa *ike,
 	update_selectors(c);
 	add_connection_spds(c, address_info(c->local->host.addr));
 
-	pexpect(c->newest_routing_sa == SOS_NOBODY);
+	pexpect(c->negotiating_child_sa == SOS_NOBODY);
 	pexpect(c->child.routing == RT_UNROUTED);
 
 	connection_buf tb;

@@ -462,9 +462,9 @@ static void set_routing(enum routing_event event UNUSED,
 			const struct routing_annex *e)
 {
 	if (e != NULL && e->child != NULL && (*e->child) != NULL) {
-		c->newest_routing_sa = (*e->child)->sa.st_serialno;
+		c->negotiating_child_sa = (*e->child)->sa.st_serialno;
 	} else {
-		c->newest_routing_sa =
+		c->negotiating_child_sa =
 			c->established_child_sa =
 			SOS_NOBODY;
 	}
@@ -485,8 +485,8 @@ static void set_initiated(enum routing_event event UNUSED,
 	 * should it set .negotiating_ike_sa.
 	 */
 	if ((e->child) != NULL && (*e->child) != NULL) {
-		PEXPECT((*e->child)->sa.logger, c->newest_routing_sa == SOS_NOBODY);
-		c->newest_routing_sa = (*e->child)->sa.st_serialno;
+		PEXPECT((*e->child)->sa.logger, c->negotiating_child_sa == SOS_NOBODY);
+		c->negotiating_child_sa = (*e->child)->sa.st_serialno;
 		c->child.routing = new_routing;
 		return;
 	}
@@ -552,7 +552,7 @@ static void set_established_child(enum routing_event event UNUSED,
 		}
 	}
 	c->child.routing = routing;
-	c->established_child_sa = c->newest_routing_sa = (*e->child)->sa.st_serialno;
+	c->established_child_sa = c->negotiating_child_sa = (*e->child)->sa.st_serialno;
 }
 
 static bool unrouted_to_routed_ondemand(enum routing_event event, struct connection *c, where_t where)
@@ -1107,11 +1107,11 @@ static void teardown_routed_negotiation(enum routing_event event,
 
 static bool child_dispatch_ok(struct connection *c, struct logger *logger, const struct routing_annex *e)
 {
-	if ((*e->child)->sa.st_serialno == c->newest_routing_sa) {
+	if ((*e->child)->sa.st_serialno == c->negotiating_child_sa) {
 		return true;
 	}
-	ldbg_routing(logger, "Child SA does not match .newest_routing_sa "PRI_SO,
-		     pri_so(c->newest_routing_sa));
+	ldbg_routing(logger, "Child SA does not match .negotiating_child_sa "PRI_SO,
+		     pri_so(c->negotiating_child_sa));
 	return false;
 }
 
@@ -1169,8 +1169,8 @@ static bool ike_dispatch_ok(struct connection *c, struct logger *logger, const s
 		return true;
 	}
 
-	ldbg_routing(logger, "IKE SA does not match .newest_routing_sa "PRI_SO,
-		     pri_so(c->newest_routing_sa));
+	ldbg_routing(logger, "IKE SA does not match .negotiating_child_sa "PRI_SO,
+		     pri_so(c->negotiating_child_sa));
 	return false;
 }
 

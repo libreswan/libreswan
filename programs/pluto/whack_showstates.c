@@ -217,7 +217,7 @@ static void show_state(struct show *s, struct state *st, const monotime_t now)
 		}
 
 		/* XXX spd-enum */ /* XXX: huh? */
-		if (c->newest_routing_sa == st->st_serialno) {
+		if (c->negotiating_child_sa == st->st_serialno) {
 			jam(buf, " eroute owner;");
 		}
 
@@ -272,7 +272,7 @@ static void show_established_child_details(struct show *s, struct child_sa *chil
 		 * XXX - mcr last used is really an attribute of
 		 * the connection
 		 */
-		if (c->newest_routing_sa == child->sa.st_serialno &&
+		if (c->negotiating_child_sa == child->sa.st_serialno &&
 		    child->sa.st_outbound_count != 0) {
 			jam(buf, " used %jds ago;",
 			    deltasecs(monotimediff(now , child->sa.st_outbound_time)));

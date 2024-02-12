@@ -131,7 +131,7 @@ static unsigned whack_trafficstatus_connection(const struct whack_message *m UNU
 	 * Look for all states with C as the connection.  And then
 	 * from there dump the traffic status of any children.
 	 *
-	 * Using .established_child_sa or .newest_routing_sa isn't
+	 * Using .established_child_sa or .negotiating_child_sa isn't
 	 * sufficient as this won't include established Child SAs that
 	 * are in the process of being replaced.
 	 */

@@ -777,7 +777,7 @@ struct connection {
 	so_serial_t owner[CONNECTION_OWNER_ROOF];
 #define negotiating_ike_sa owner[NEGOTIATING_IKE_SA]
 #define established_ike_sa owner[ESTABLISHED_IKE_SA]
-#define newest_routing_sa owner[NEGOTIATING_CHILD_SA]
+#define negotiating_child_sa owner[NEGOTIATING_CHILD_SA]
 #define established_child_sa owner[ESTABLISHED_CHILD_SA]
 
 	struct addresspool *pool[IP_INDEX_ROOF];

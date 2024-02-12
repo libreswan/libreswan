@@ -201,16 +201,16 @@ bool scheduled_revival(struct connection *c, struct state *st/*can be NULL*/,
 		 * call when it isn't.
 		 */
 		if (IS_CHILD_SA(st)) {
-			if (c->newest_routing_sa != SOS_NOBODY &&
-			    c->newest_routing_sa != st->st_serialno) {
+			if (c->negotiating_child_sa != SOS_NOBODY &&
+			    c->negotiating_child_sa != st->st_serialno) {
 				/*
 				 * There's a newer SA playing with the routing.
 				 * Presumably this is an old Child SA that is in the
 				 * process of being rekeyed or replaced.
 				 */
 				llog_pexpect(st->logger, HERE,
-					     "revival: skipping, .newest_routing_sa "PRI_SO" is not us",
-					     pri_so(c->newest_routing_sa));
+					     "revival: skipping, .negotiating_child_sa "PRI_SO" is not us",
+					     pri_so(c->negotiating_child_sa));
 				return false;
 			}
 
