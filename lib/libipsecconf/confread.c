@@ -180,10 +180,6 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 
 	d->xfrm_if_id = UINT32_MAX;
 
-	/* default is NOT to look in DNS */
-	d->left.key_from_DNS_on_demand = false;
-	d->right.key_from_DNS_on_demand = false;
-
 	d->state = STATE_LOADED;
 	/* ==== end of conn %default ==== */
 }
@@ -408,43 +404,6 @@ static bool validate_end(struct starter_conn *conn_st,
 			char *cc;
 			while ((cc = strstr(end->id, ",,")) != NULL) {
 				cc[0] = '\\';
-			}
-		}
-	}
-
-	static const struct {
-		enum ipseckey_algorithm_type alg;
-		enum keyword_string_conn_field kscf;
-		const char *name;
-	} keys[] = {
-		{ .alg = IPSECKEY_ALGORITHM_RSA, KSCF_RSASIGKEY, "rsasigkey", },
-		{ .alg = IPSECKEY_ALGORITHM_ECDSA, KSCF_ECDSAKEY, "ecdsakey", },
-		{ .alg = IPSECKEY_ALGORITHM_X_PUBKEY, KSCF_PUBKEY, "pubkey", },
-	};
-
-	FOR_EACH_ELEMENT(key, keys) {
-		if (!end->options_set[key->kscf]) {
-			continue;
-		}
-		if (end->pubkey != NULL) {
-			ERR_FOUND("duplicate public key");
-		}
-
-		end->pubkey_type = end->options[key->kscf];
-		end->pubkey_alg = key->alg;
-
-		switch (end->options[key->kscf]) {
-		case PUBKEY_DNSONDEMAND:
-			end->key_from_DNS_on_demand = true;
-			break;
-
-		default:
-			end->key_from_DNS_on_demand = false;
-			/* validate the KSCF_RSASIGKEY1/RSASIGKEY2 */
-			if (end->strings[key->kscf] != NULL) {
-				char *value = end->strings[key->kscf];
-				pfreeany(end->pubkey);
-				end->pubkey = clone_str(value, "end->pubkey");
 			}
 		}
 	}
@@ -1070,7 +1029,6 @@ static void copy_conn_default(struct starter_conn *conn,
 
 	STR_FIELD_END(iface);
 	STR_FIELD_END(id);
-	STR_FIELD_END(pubkey);
 	STR_FIELD_END(certx);
 
 	for (unsigned i = 0; i < elemsof(conn->left.strings); i++)
@@ -1220,7 +1178,6 @@ static void confread_free_conn(struct starter_conn *conn)
 
 	STR_FIELD_END(iface);
 	STR_FIELD_END(id);
-	STR_FIELD_END(pubkey);
 	STR_FIELD_END(certx);
 
 	for (unsigned i = 0; i < elemsof(conn->left.strings); i++)

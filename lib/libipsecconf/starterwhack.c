@@ -149,21 +149,50 @@ static bool set_whack_end(struct whack_end *w,
 	}
 	w->ckaid = l->strings[KSCF_CKAID];
 
-	if (l->pubkey_type == PUBKEY_PREEXCHANGED) {
-		/*
-		 * Only send over raw (prexchanged) rsapubkeys (i.e.,
-		 * not %cert et.a.)
-		 *
-		 * XXX: but what is with the two rsasigkeys?  Whack seems
-		 * to be willing to send pluto two raw pubkeys under
-		 * the same ID.  Just assume that the first key should
-		 * be used for the CKAID.
-		 */
-		passert(l->pubkey != NULL);
-		passert(l->pubkey_alg != 0);
-		w->pubkey_alg = l->pubkey_alg;
-		w->pubkey = l->pubkey;
+	static const struct {
+		enum ipseckey_algorithm_type alg;
+		enum keyword_string_conn_field kscf;
+		const char *name;
+	} keys[] = {
+		{ .alg = IPSECKEY_ALGORITHM_RSA, KSCF_RSASIGKEY, "rsasigkey", },
+		{ .alg = IPSECKEY_ALGORITHM_ECDSA, KSCF_ECDSAKEY, "ecdsakey", },
+		{ .alg = IPSECKEY_ALGORITHM_X_PUBKEY, KSCF_PUBKEY, "pubkey", },
+	};
+	FOR_EACH_ELEMENT(key, keys) {
+		if (!l->options_set[key->kscf]) {
+			continue;
+		}
+
+		switch (l->options[key->kscf]) {
+
+		case PUBKEY_DNSONDEMAND:
+			w->key_from_DNS_on_demand = true;
+			break;
+
+		case PUBKEY_PREEXCHANGED:
+			/*
+			 * Only send over raw (prexchanged) rsapubkeys
+			 * (i.e., not %cert et.a.)
+			 *
+			 * XXX: but what is with the two rsasigkeys?
+			 * Whack seems to be willing to send pluto two
+			 * raw pubkeys under the same ID.  Just assume
+			 * that the first key should be used for the
+			 * CKAID.
+			 */
+			w->key_from_DNS_on_demand = false;
+			w->pubkey = l->strings[key->kscf];
+			w->pubkey_alg = key->alg;
+			break;
+
+		default:
+			w->key_from_DNS_on_demand = false;
+			break;
+		}
+
+		break;
 	}
+
 	w->ca = l->strings[KSCF_CA];
 	if (l->options_set[KNCF_SENDCERT])
 		w->sendcert = l->options[KNCF_SENDCERT];
@@ -190,8 +219,6 @@ static bool set_whack_end(struct whack_end *w,
 		w->updown = l->strings[KSCF_UPDOWN];
 	}
 
-	w->key_from_DNS_on_demand = l->key_from_DNS_on_demand;
-
 	if (l->options_set[KNCF_XAUTHSERVER])
 		w->xauth_server = l->options[KNCF_XAUTHSERVER];
 	if (l->options_set[KNCF_XAUTHCLIENT])
@@ -215,71 +242,53 @@ static bool set_whack_end(struct whack_end *w,
 static int starter_whack_add_pubkey(const char *ctlsocket,
 				    const struct starter_conn *conn,
 				    const struct starter_end *end,
+				    const char *pubkey,
+				    enum ipseckey_algorithm_type pubkey_alg,
 				    struct logger *logger)
 {
-	int ret = 0;
 	const char *lr = end->leftright;
 
 	struct whack_message msg = empty_whack_message;
 	msg.whack_key = true;
-	msg.pubkey_alg = end->pubkey_alg;
+	msg.pubkey_alg = pubkey_alg;
+	msg.keyid = end->id;
 
-	if (end->id && end->pubkey != NULL) {
-		msg.keyid = end->id;
-
-		switch (end->pubkey_type) {
-		case PUBKEY_DNSONDEMAND:
-			ldbg(logger, "conn %s/%s has key from DNS",
-			     connection_name(conn), lr);
-			break;
-
-		case PUBKEY_CERTIFICATE:
-			ldbg(logger, "conn %s/%s has key from certificate",
-			     connection_name(conn), lr);
-			break;
-
-		case PUBKEY_NOTSET:
-			break;
-
-		case PUBKEY_PREEXCHANGED:
-		{
-			int base;
-			switch (end->pubkey_alg) {
-			case IPSECKEY_ALGORITHM_RSA:
-			case IPSECKEY_ALGORITHM_ECDSA:
-				base = 0; /* figure it out */
-				break;
-			case IPSECKEY_ALGORITHM_X_PUBKEY:
-				base = 64; /* dam it */
-				break;
-			default:
-				bad_case(end->pubkey_alg);
-			}
-			chunk_t keyspace = NULL_HUNK; /* must free */
-			err_t err = ttochunk(shunk1(end->pubkey), base, &keyspace);
-			if (err != NULL) {
-				enum_buf pkb;
-				llog_error(logger, 0, "conn %s: %s%s malformed [%s]",
-					   connection_name(conn), lr,
-					   str_enum(&ipseckey_algorithm_config_names, end->pubkey_alg, &pkb),
-					   err);
-				return 1;
-			}
-
-			enum_buf pkb;
-			ldbg(logger, "\tsending %s %s%s=%s",
-			     connection_name(conn), lr,
-			     str_enum(&ipseckey_algorithm_config_names, end->pubkey_alg, &pkb),
-			     end->pubkey);
-			msg.keyval = keyspace;
-			ret = whack_send_msg(&msg, ctlsocket, NULL, NULL, 0, 0, logger);
-			free_chunk_content(&keyspace);
-		}
-		}
+	int base;
+	switch (pubkey_alg) {
+	case IPSECKEY_ALGORITHM_RSA:
+	case IPSECKEY_ALGORITHM_ECDSA:
+		base = 0; /* figure it out */
+		break;
+	case IPSECKEY_ALGORITHM_X_PUBKEY:
+		base = 64; /* dam it */
+		break;
+	default:
+		bad_case(pubkey_alg);
 	}
 
-	if (ret < 0)
+	chunk_t keyspace = NULL_HUNK; /* must free */
+	err_t err = ttochunk(shunk1(pubkey), base, &keyspace);
+	if (err != NULL) {
+		enum_buf pkb;
+		llog_error(logger, 0, "conn %s: %s%s malformed [%s]",
+			   connection_name(conn), lr,
+			   str_enum(&ipseckey_algorithm_config_names, pubkey_alg, &pkb),
+			   err);
+		return 1;
+	}
+
+	enum_buf pkb;
+	ldbg(logger, "\tsending %s %s%s=%s",
+	     connection_name(conn), lr,
+	     str_enum(&ipseckey_algorithm_config_names, pubkey_alg, &pkb),
+	     pubkey);
+	msg.keyval = keyspace;
+	int ret = whack_send_msg(&msg, ctlsocket, NULL, NULL, 0, 0, logger);
+	free_chunk_content(&keyspace);
+
+	if (ret < 0) {
 		return ret;
+	}
 
 	return 0;
 }
@@ -495,19 +504,36 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.ike = conn->ike_crypto;
 	conn_log_val(logger, conn, "ike", msg.ike);
 
+	/* Need to save pubkeys before the pointers are pickled.  */
+	const char *left_pubkey = msg.left.pubkey;
+	const char *right_pubkey = msg.right.pubkey;
+
 	int r = whack_send_msg(&msg, ctlsocket, NULL, NULL, 0, 0, logger);
 	if (r != 0)
 		return r;
 
-	if (conn->left.pubkey != NULL) {
-		r = starter_whack_add_pubkey(ctlsocket, conn, &conn->left, logger);
-		if (r != 0)
+	/*
+	 * XXX: the above sent over the pubkeys, why repeat?
+	 */
+	if (left_pubkey != NULL && conn->left.id != NULL) {
+		int r = starter_whack_add_pubkey(ctlsocket, conn,
+						 &conn->left,
+						 left_pubkey,
+						 msg.left.pubkey_alg,
+						 logger);
+		if (r != 0) {
 			return r;
+		}
 	}
-	if (conn->right.pubkey != NULL) {
-		r = starter_whack_add_pubkey(ctlsocket, conn, &conn->right, logger);
-		if (r != 0)
+	if (right_pubkey != NULL && conn->right.id != NULL) {
+		int r = starter_whack_add_pubkey(ctlsocket, conn,
+						 &conn->right,
+						 right_pubkey,
+						 msg.right.pubkey_alg,
+						 logger);
+		if (r != 0) {
 			return r;
+		}
 	}
 
 	return 0;

@@ -66,11 +66,6 @@ struct starter_end {
 
 	ip_protoport protoport;
 
-	enum keyword_pubkey pubkey_type;
-	enum ipseckey_algorithm_type pubkey_alg;
-	char *pubkey;
-
-	bool key_from_DNS_on_demand;
 	char *certx;
 	ksf strings;
 	knf options;

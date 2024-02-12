@@ -311,13 +311,6 @@ static void confwrite_side(FILE *out, struct starter_end *end)
 			str_cidr(&end->ifaceip, &as));
 	}
 
-	if (end->pubkey != NULL && end->pubkey[0] != '\0') {
-		enum_buf pkb;
-		fprintf(out, "\t%s%s=%s\n", side,
-			str_enum(&ipseckey_algorithm_config_names, end->pubkey_alg, &pkb),
-			end->pubkey);
-	}
-
 	if (end->protoport.is_set) {
 		protoport_buf buf;
 		fprintf(out, "\t%sprotoport=%s\n", side,
