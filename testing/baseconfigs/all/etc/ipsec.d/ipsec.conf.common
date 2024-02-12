@@ -107,16 +107,6 @@ conn northnet-eastnet
 	also=road-leftrsasigkey
 	also=east-rightrsasigkey
 
-conn northnet-eastnet-ipv4
-	leftsubnet=192.0.3.0/24
-	rightsubnet=192.0.2.0/24
-	# Left security gateway, subnet behind it, next hop toward right.
-	leftid=@road
-	# Right security gateway, subnet behind it, next hop toward left.
-	rightid=@east
-	also=road-leftrsasigkey
-	also=east-rightrsasigkey
-
 conn road-east
 	right=192.1.2.23
 	#left not specified as test case picks "random" ip
@@ -173,32 +163,6 @@ conn west-east-base
 	leftnexthop=192.1.2.23
 	right=192.1.2.23
 	rightnexthop=192.1.2.45
-	# Left security gateway, subnet behind it, next hop toward right.
-	leftid=@west
-	# Right security gateway, subnet behind it, next hop toward left.
-	rightid=@east
-	also=west-leftrsasigkey
-	also=east-rightrsasigkey
-
-conn north-east-base-ipv4
-	left=192.1.3.33
-	right=192.1.2.23
-
-conn west-east-base-ipv4
-	left=192.1.2.45
-	leftnexthop=192.1.2.23
-	right=192.1.2.23
-	rightnexthop=192.1.2.45
-
-conn north-east-base-id-nss
-	# Left security gateway, subnet behind it, next hop toward right.
-	leftid=@north
-	# Right security gateway, subnet behind it, next hop toward left.
-	rightid=@east
-	also=north-leftrsasigkey
-	also=east-rightrsasigkey
-
-conn west-east-base-id-nss
 	# Left security gateway, subnet behind it, next hop toward right.
 	leftid=@west
 	# Right security gateway, subnet behind it, next hop toward left.
