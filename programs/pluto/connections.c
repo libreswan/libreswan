@@ -729,20 +729,45 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 	const char *leftright = host_config->leftright;
 
 	/*
-	 * decode id, if any
+	 * Decode id, if any.
 	 *
 	 * For %fromcert, the load_end_cert*() call will update it.
 	 */
 	if (src->id == NULL) {
+		/*
+		 * The id will be set to the host by
+		 * update_hosts_from_end_host_addr() which is after it
+		 * has been resolved.
+		 */
 		host->id.kind = ID_NONE;
 	} else {
 		/*
-		 * Cannot report errors due to low level nesting of functions,
-		 * since it will try literal IP string conversions first. But
-		 * atoid() will log real failures like illegal DNS chars already,
-		 * and for @string ID's all chars are valid without processing.
+		 * XXX: old comment
+		 *
+		 * Cannot report errors due to low level nesting of
+		 * functions, since it will try literal IP string
+		 * conversions first. But atoid() will log real
+		 * failures like illegal DNS chars already, and for
+		 * @string ID's all chars are valid without
+		 * processing.
+		 *
+		 * XXX: new comment
+		 *
+		 * atoid() now returns the error as a diagnostic;
+		 * however given id=foo which doesn't resolve this
+		 * generates an error causing the ID to be ignored (it
+		 * ends up being set to the IP address).
 		 */
-		atoid(src->id, &host->id);
+		err_t e = atoid(src->id, &host->id);
+		if (e != NULL) {
+			llog(RC_LOG, logger, "warning: ignoring %sid=%s: %s",
+			     leftright, src->id, e);
+			/*
+			 * Will leave it empty aka ID_NONE which means
+			 * that further down it is set to the IP
+			 * address of the host.
+			 */
+		}
 	}
 
 	/* decode CA distinguished name, if any */
