@@ -32,4 +32,15 @@ diag_t verify_v2AUTH_and_log_using_psk(enum keyword_auth authby,
 				       struct pbs_in *sig_pbs,
 				       const struct hash_signature *auth_sig);
 
+bool ikev2_emit_psk_auth(enum keyword_auth authby,
+			 const struct ike_sa *ike,
+			 const struct crypt_mac *idhash,
+			 pb_stream *a_pbs,
+			 const struct hash_signature *auth_sig);
+
+bool ikev2_create_psk_auth(enum keyword_auth authby,
+			   const struct ike_sa *ike,
+			   const struct crypt_mac *idhash,
+			   chunk_t *additional_auth /* output */);
+
 #endif

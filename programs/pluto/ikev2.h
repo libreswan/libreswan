@@ -44,17 +44,6 @@ void schedule_reinitiate_v2_ike_sa_init(struct ike_sa *ike,
 
 struct crypt_mac ikev2_rsa_sha1_hash(const struct crypt_mac *hash);
 
-extern bool ikev2_emit_psk_auth(enum keyword_auth authby,
-				const struct ike_sa *ike,
-				const struct crypt_mac *idhash,
-				pb_stream *a_pbs,
-				const struct hash_signature *auth_sig);
-
-extern bool ikev2_create_psk_auth(enum keyword_auth authby,
-				  const struct ike_sa *ike,
-				  const struct crypt_mac *idhash,
-				  chunk_t *additional_auth /* output */);
-
 extern void ikev2_derive_child_keys(struct ike_sa *ike, struct child_sa *child);
 
 void schedule_v2_replace_event(struct state *st);

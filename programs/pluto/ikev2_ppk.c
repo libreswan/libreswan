@@ -35,6 +35,7 @@
 #include "crypt_mac.h"
 #include "ikev2_auth.h"
 #include "log.h"
+#include "ikev2_psk.h"
 
 /*
  * used by initiator, to properly construct struct

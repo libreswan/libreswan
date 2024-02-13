@@ -59,6 +59,7 @@
 #include "ikev2_cert.h"
 #include "keys.h"
 #include "ike_alg_hash.h"
+#include "ikev2_psk.h"
 #include "ikev2_cp.h"
 #include "kernel.h"			/* for install_sec_label_connection_policies() */
 #include "ikev2_delete.h"		/* for submit_v2_delete_exchange() */
