@@ -24,6 +24,7 @@ static const char *initiated_by_name[] = {
 	S(INITIATED_BY_REPLACE),
 	S(INITIATED_BY_REVIVE),
 	S(INITIATED_BY_UNKNOWN),
+	S(INITIATED_BY_IKE),
 	S(INITIATED_BY_WHACK),
 #undef S
 };
