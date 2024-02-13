@@ -775,6 +775,7 @@ struct connection {
 	 * routing.c.
 	 */
 	so_serial_t owner[CONNECTION_OWNER_ROOF];
+#define routing_sa owner[ROUTING_SA] /* IKE or Child SA! */
 #define negotiating_ike_sa owner[NEGOTIATING_IKE_SA]
 #define established_ike_sa owner[ESTABLISHED_IKE_SA]
 #define negotiating_child_sa owner[NEGOTIATING_CHILD_SA]

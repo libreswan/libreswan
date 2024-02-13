@@ -23,6 +23,16 @@
 enum connection_owner {
 #define CONNECTION_OWNER_FLOOR IKE_SA_OWNER_FLOOR
 
+	/*
+	 * The current SA, IKE or Child, that owns the kernel policy.
+	 *
+	 * For instance, during an on-demand IKE_SA_INIT exchange the
+	 * ROUTING_SA starts with the IKE_SA.  But then, at the start
+	 * of IKE_AUTH, ownership transfers to the IKE_SA's first
+	 * Child SA.
+	 */
+	ROUTING_SA,
+
 #define IKE_SA_OWNER_FLOOR NEGOTIATING_IKE_SA
 	NEGOTIATING_IKE_SA,
 	ESTABLISHED_IKE_SA,

@@ -362,6 +362,9 @@ static void jam_connection_owners(struct jambuf *buf,
 		case ESTABLISHED_CHILD_SA:
 			jam_string(buf, "established");
 			break;
+		case ROUTING_SA:
+			jam_string(buf, "routing");
+			break;
 		}
 		jam_string(buf, " ");
 		switch (owner) {
@@ -372,6 +375,9 @@ static void jam_connection_owners(struct jambuf *buf,
 		case NEGOTIATING_CHILD_SA:
 		case ESTABLISHED_CHILD_SA:
 			jam_string(buf, c->config->ike_info->child_sa_name);
+			break;
+		case ROUTING_SA:
+			jam_string(buf, "SA");
 			break;
 		}
 		jam_string(buf, ": ");

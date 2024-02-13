@@ -19,6 +19,7 @@
 #include "lswcdefs.h"		/* for ARRAY_REF */
 
 const char *connection_owner_name[] = {
+	[ROUTING_SA] = "routing_sa",
 	[NEGOTIATING_IKE_SA] = "negotiating_ike_sa",
 	[ESTABLISHED_IKE_SA] = "established_ike_sa",
 	[NEGOTIATING_CHILD_SA] = "negotiating_child_sa",
