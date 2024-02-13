@@ -91,7 +91,7 @@ enum rc_type {
 	/* permanent failure */
 	RC_BADWHACKMESSAGE = 50,
 	RC_NORETRANSMISSION = 51,
-	RC_INTERNALERR = 52,
+	RC_INTERNAL_ERROR = 52,
 	RC_OPPOFAILURE = 53,	/* Opportunism failed */
 	RC_CRYPTOFAILED = 54,	/* system too busy to perform required
 				 * cryptographic operations */

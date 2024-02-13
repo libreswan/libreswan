@@ -2732,9 +2732,9 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		return;
 
 	case STF_INTERNAL_ERROR:
-		llog_sa(RC_INTERNALERR, ike,
-			"state transition function for %s had internal error",
-			ike->sa.st_state->name);
+		llog_pexpect(ike->sa.logger, HERE,
+			     "state transition function for %s had internal error",
+			     ike->sa.st_state->name);
 		release_pending_whacks(&ike->sa, "internal error");
 		return;
 

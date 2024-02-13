@@ -2848,9 +2848,9 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 	case STF_INTERNAL_ERROR:
 		/* update the previous packet history */
 		remember_received_packet(st, md);
-		log_state(RC_INTERNALERR + md->v1_note, st,
-			  "state transition function for %s had internal error",
-			  st->st_state->name);
+		llog_pexpect(st->logger, HERE,
+			     "state transition function for %s had internal error",
+			     st->st_state->name);
 		release_pending_whacks(st, "internal error");
 		/* expire will eventually delete state? */
 		break;
