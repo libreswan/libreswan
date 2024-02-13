@@ -169,9 +169,7 @@ static bool set_whack_end(struct whack_end *w,
 	w->host_ikeport = l->options[KNCF_IKEPORT];
 	w->protoport = l->protoport;
 
-	if (l->certx != NULL) {
-		w->cert = l->certx;
-	}
+	w->cert = l->strings[KSCF_CERT];
 	w->ckaid = l->strings[KSCF_CKAID];
 
 	static const struct {

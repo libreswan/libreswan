@@ -386,13 +386,6 @@ static bool validate_end(struct starter_conn *conn_st,
 	}
 
 	/* copy certificate path name */
-	if (end->strings_set[KSCF_CERT] && end->strings_set[KSCF_CKAID]) {
-		ERR_FOUND("only one of %scert and %sckaid can be specified",
-			  leftright, leftright);
-	}
-	if (end->strings_set[KSCF_CERT]) {
-		end->certx = clone_str(end->strings[KSCF_CERT], "KSCF_CERT");
-	}
 
 	if (end->strings_set[KSCF_PROTOPORT]) {
 		char *value = end->strings[KSCF_PROTOPORT];
@@ -1004,8 +997,6 @@ static void copy_conn_default(struct starter_conn *conn,
 
 # define STR_FIELD_END(f) { STR_FIELD(left.f); STR_FIELD(right.f); }
 
-	STR_FIELD_END(certx);
-
 	for (unsigned i = 0; i < elemsof(conn->left.strings); i++)
 		STR_FIELD_END(strings[i]);
 
@@ -1150,8 +1141,6 @@ static void confread_free_conn(struct starter_conn *conn)
 	/* handle starter_end strings */
 
 # define STR_FIELD_END(f) { STR_FIELD(left.f); STR_FIELD(right.f); }
-
-	STR_FIELD_END(certx);
 
 	for (unsigned i = 0; i < elemsof(conn->left.strings); i++)
 		STR_FIELD_END(strings[i]);

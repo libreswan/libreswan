@@ -314,9 +314,6 @@ static void confwrite_side(FILE *out, struct starter_end *end)
 			str_protoport(&end->protoport, &buf));
 	}
 
-	if (end->certx != NULL)
-		fprintf(out, "\t%scert=%s\n", side, end->certx);
-
 	confwrite_int(out, side,
 		      kv_conn | kv_leftright,
 		      end->options, end->options_set, end->strings);

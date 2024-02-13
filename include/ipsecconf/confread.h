@@ -63,7 +63,6 @@ struct starter_end {
 	ip_cidr ifaceip;
 	ip_protoport protoport;
 
-	char *certx;
 	ksf strings;
 	knf options;
 
