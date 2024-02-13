@@ -15,9 +15,11 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add x509
+ipsec addconn: changing legacy ',,' to '\,' in rightid=CN=server, OU=Global,, Support,, Services, O=Test Example, L=Brno, ST=Moravia, C=CZ
 "x509": added IKEv2 connection
 west #
  ipsec auto --add x509-comma-comma
+ipsec addconn: changing legacy ',,' to '\,' in rightid=CN=server, OU=Global,, Support,, Services, O=Test Example, L=Brno, ST=Moravia, C=CZ
 "x509-comma-comma": added IKEv2 connection
 west #
  # show both conns are interpreted with \,
