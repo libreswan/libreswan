@@ -62,7 +62,6 @@ struct starter_end {
 	ip_cidr vti_ip;
 	ip_cidr ifaceip;
 	char *iface;
-	char *id;
 
 	ip_protoport protoport;
 

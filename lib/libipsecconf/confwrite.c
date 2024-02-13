@@ -274,9 +274,6 @@ static void confwrite_side(FILE *out, struct starter_end *end)
 		break;
 	}
 
-	if (end->strings_set[KSCF_ID] && end->id)
-		fprintf(out, "\t%sid=\"%s\"\n",     side, end->id);
-
 	switch (end->nexttype) {
 	case KH_NOTSET:
 		/* nothing! */

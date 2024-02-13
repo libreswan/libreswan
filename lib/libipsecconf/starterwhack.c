@@ -66,11 +66,36 @@ static char *connection_name(const struct starter_conn *conn)
 }
 
 static bool set_whack_end(struct whack_end *w,
-			  const struct starter_end *l)
+			  const struct starter_end *l,
+			  struct logger *logger)
 {
 	const char *lr = l->leftright;
 	w->leftright = lr;
-	w->id = l->id;
+
+	/* validate the KSCF_ID */
+	if (l->strings[KSCF_ID] != NULL) {
+		char *value = l->strings[KSCF_ID];
+		/*
+		 * Fixup old ",," in a ID_DER_ASN1_DN to proper
+		 * backslash comma.
+		 */
+		if (value[0] != '@' &&
+		    strstr(value, ",,") != NULL &&
+		    strstr(value, "=") != NULL) {
+			llog(RC_LOG, logger,
+			     "changing legacy ',,' to '\\,' in %sid=%s",
+			     lr, value);
+			char *cc;
+			while ((cc = strstr(value, ",,")) != NULL) {
+				cc[0] = '\\';
+			}
+		}
+		w->id = value;
+	} else if (l->addrtype == KH_IPADDR) {
+		address_buf b;
+		w->id = clone_str(str_address(&l->addr, &b), "if id");
+	}
+
 	w->host_type = l->addrtype;
 
 	switch (l->addrtype) {
@@ -239,19 +264,18 @@ static bool set_whack_end(struct whack_end *w,
 	return true;
 }
 
-static int starter_whack_add_pubkey(const char *ctlsocket,
+static int starter_whack_add_pubkey(const char *leftright,
+				    const char *ctlsocket,
 				    const struct starter_conn *conn,
-				    const struct starter_end *end,
+				    char *keyid,
 				    const char *pubkey,
 				    enum ipseckey_algorithm_type pubkey_alg,
 				    struct logger *logger)
 {
-	const char *lr = end->leftright;
-
 	struct whack_message msg = empty_whack_message;
 	msg.whack_key = true;
 	msg.pubkey_alg = pubkey_alg;
-	msg.keyid = end->id;
+	msg.keyid = keyid;
 
 	int base;
 	switch (pubkey_alg) {
@@ -271,7 +295,7 @@ static int starter_whack_add_pubkey(const char *ctlsocket,
 	if (err != NULL) {
 		enum_buf pkb;
 		llog_error(logger, 0, "conn %s: %s%s malformed [%s]",
-			   connection_name(conn), lr,
+			   connection_name(conn), leftright,
 			   str_enum(&ipseckey_algorithm_config_names, pubkey_alg, &pkb),
 			   err);
 		return 1;
@@ -279,7 +303,7 @@ static int starter_whack_add_pubkey(const char *ctlsocket,
 
 	enum_buf pkb;
 	ldbg(logger, "\tsending %s %s%s=%s",
-	     connection_name(conn), lr,
+	     connection_name(conn), leftright,
 	     str_enum(&ipseckey_algorithm_config_names, pubkey_alg, &pkb),
 	     pubkey);
 	msg.keyval = keyspace;
@@ -494,9 +518,9 @@ int starter_whack_add_conn(const char *ctlsocket,
 	if (conn->options_set[KNCF_XAUTHFAIL])
 		msg.xauthfail = conn->options[KNCF_XAUTHFAIL];
 
-	if (!set_whack_end(&msg.left, &conn->left))
+	if (!set_whack_end(&msg.left, &conn->left, logger))
 		return -1;
-	if (!set_whack_end(&msg.right, &conn->right))
+	if (!set_whack_end(&msg.right, &conn->right, logger))
 		return -1;
 
 	msg.esp = conn->esp;
@@ -504,9 +528,14 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.ike = conn->ike_crypto;
 	conn_log_val(logger, conn, "ike", msg.ike);
 
-	/* Need to save pubkeys before the pointers are pickled.  */
+	/*
+	 * Save the "computed" pubkeys and IDs before the pointers in
+	 * MSG are pickled.
+	 */
 	const char *left_pubkey = msg.left.pubkey;
 	const char *right_pubkey = msg.right.pubkey;
+	char *left_id = msg.left.id;
+	char *right_id = msg.right.id;
 
 	int r = whack_send_msg(&msg, ctlsocket, NULL, NULL, 0, 0, logger);
 	if (r != 0)
@@ -514,21 +543,22 @@ int starter_whack_add_conn(const char *ctlsocket,
 
 	/*
 	 * XXX: the above sent over the pubkeys, why repeat?
+	 *
+	 * Because the above sending over pubkeys is a hack (but still
+	 * the right thing to do).
 	 */
-	if (left_pubkey != NULL && conn->left.id != NULL) {
-		int r = starter_whack_add_pubkey(ctlsocket, conn,
-						 &conn->left,
-						 left_pubkey,
+	if (left_id != NULL && left_pubkey != NULL) {
+		int r = starter_whack_add_pubkey("left", ctlsocket, conn,
+						 left_id, left_pubkey,
 						 msg.left.pubkey_alg,
 						 logger);
 		if (r != 0) {
 			return r;
 		}
 	}
-	if (right_pubkey != NULL && conn->right.id != NULL) {
-		int r = starter_whack_add_pubkey(ctlsocket, conn,
-						 &conn->right,
-						 right_pubkey,
+	if (right_id != NULL && right_pubkey != NULL) {
+		int r = starter_whack_add_pubkey("right", ctlsocket, conn,
+						 right_id, right_pubkey,
 						 msg.right.pubkey_alg,
 						 logger);
 		if (r != 0) {

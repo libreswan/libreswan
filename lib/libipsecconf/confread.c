@@ -322,11 +322,6 @@ static bool validate_end(struct starter_conn *conn_st,
 			pexpect(end->host_family == address_type(&end->addr));
 		}
 
-		if (end->id == NULL) {
-			ipstr_buf b;
-
-			end->id = clone_str(ipstr(&end->addr, &b), "end if");
-		}
 		break;
 
 	case KH_OPPO:
@@ -388,25 +383,6 @@ static bool validate_end(struct starter_conn *conn_st,
 
 		if (end->addrtype == KH_DEFAULTROUTE) {
 			end->nexttype = KH_DEFAULTROUTE;
-		}
-	}
-
-	/* validate the KSCF_ID */
-	if (end->strings_set[KSCF_ID]) {
-		char *value = end->strings[KSCF_ID];
-
-		pfreeany(end->id);
-		end->id = clone_str(value, "end->id");
-		/* fixup old ",," in a ID_DER_ASN1_DN to proper backslash comma */
-		if ((end->id[0] != '@') && (strstr(end->id, ",,") != NULL)
-		    && strstr(end->id, "=") != NULL) {
-			llog(RC_LOG, logger,
-			     "changing legacy ',,' to '\\,' in %sid=%s",
-			     leftright, value);
-			char *cc;
-			while ((cc = strstr(end->id, ",,")) != NULL) {
-				cc[0] = '\\';
-			}
 		}
 	}
 
@@ -1030,7 +1006,6 @@ static void copy_conn_default(struct starter_conn *conn,
 # define STR_FIELD_END(f) { STR_FIELD(left.f); STR_FIELD(right.f); }
 
 	STR_FIELD_END(iface);
-	STR_FIELD_END(id);
 	STR_FIELD_END(certx);
 
 	for (unsigned i = 0; i < elemsof(conn->left.strings); i++)
@@ -1179,7 +1154,6 @@ static void confread_free_conn(struct starter_conn *conn)
 # define STR_FIELD_END(f) { STR_FIELD(left.f); STR_FIELD(right.f); }
 
 	STR_FIELD_END(iface);
-	STR_FIELD_END(id);
 	STR_FIELD_END(certx);
 
 	for (unsigned i = 0; i < elemsof(conn->left.strings); i++)
