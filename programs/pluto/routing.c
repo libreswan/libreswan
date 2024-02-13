@@ -451,6 +451,7 @@ bool kernel_policy_installed(const struct connection *c)
 static void set_routing(struct connection *c,
 			enum routing new_routing)
 {
+	c->routing_sa = SOS_NOBODY;
 	c->negotiating_child_sa = SOS_NOBODY;
 	c->established_child_sa = SOS_NOBODY;
 	c->child.routing = new_routing;
@@ -473,6 +474,7 @@ static void set_negotiating(struct connection *c,
 			      c->negotiating_child_sa == SOS_NOBODY);
 		PEXPECT_WHERE((*e->child)->sa.logger, e->where,
 			      c->established_child_sa == SOS_NOBODY);
+		c->routing_sa = (*e->child)->sa.st_serialno;
 		c->negotiating_child_sa = (*e->child)->sa.st_serialno;
 		c->child.routing = new_routing;
 		return;
@@ -483,6 +485,7 @@ static void set_negotiating(struct connection *c,
 			      c->negotiating_ike_sa == SOS_NOBODY);
 		PEXPECT_WHERE((*e->ike)->sa.logger, e->where,
 			      c->established_ike_sa == SOS_NOBODY);
+		c->routing_sa = (*e->ike)->sa.st_serialno;
 		c->negotiating_ike_sa = (*e->ike)->sa.st_serialno;
 		c->child.routing = new_routing;
 		return;
@@ -510,7 +513,9 @@ static void set_established_inbound(struct connection *c,
 				    enum routing new_routing,
 				    const struct routing_annex *e)
 {
-	c->negotiating_child_sa = (*e->child)->sa.st_serialno;
+	struct child_sa *child = (*e->child);
+	c->routing_sa = child->sa.st_serialno;
+	c->negotiating_child_sa = child->sa.st_serialno;
 	c->child.routing = new_routing;
 }
 
@@ -558,8 +563,9 @@ static void set_established_outbound(struct connection *c,
 		}
 	}
 	c->child.routing = routing;
-	c->established_child_sa = child->sa.st_serialno;
+	c->routing_sa = child->sa.st_serialno;
 	c->negotiating_child_sa = child->sa.st_serialno;
+	c->established_child_sa = child->sa.st_serialno;
 }
 
 static bool unrouted_to_routed_ondemand(struct connection *c, where_t where)
@@ -2255,12 +2261,14 @@ static bool dispatch_1(enum routing_event event,
 			return true;
 		}
 		set_established_ike(event, c, RT_ROUTED_ONDEMAND, e);
+		c->routing_sa = (*e->ike)->sa.st_serialno;
 		return true;
 	case X(ESTABLISH_IKE, ROUTED_ONDEMAND, LABELED_PARENT):
 		/*
 		 * Presumably a rekey?
 		 */
 		set_established_ike(event, c, RT_ROUTED_ONDEMAND, e);
+		c->routing_sa = (*e->ike)->sa.st_serialno;
 		return true;
 
 	case X(ROUTE, UNROUTED, LABELED_TEMPLATE):
