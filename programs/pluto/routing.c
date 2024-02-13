@@ -1288,7 +1288,7 @@ static bool initiated_ike_dispatch_ok(struct connection *c,
 		 * acquires triggering simultaneously) or due to an
 		 * initiate being used to force a rekey.
 		 */
-		LLOG_JAMBUF(RC_LOG, logger, buf) {
+		LLOG_JAMBUF(LOG_STREAM, logger, buf) {
 			jam_string(buf, "connection for IKE SA is already in state ");
 			jam_enum_human(buf, &routing_names, c->child.routing);
 		}
@@ -1363,7 +1363,7 @@ static bool initiated_child_dispatch_ok(struct connection *c,
 		 * acquires triggering simultaneously) or due to an
 		 * initiate being used to force a rekey.
 		 */
-		LLOG_JAMBUF(RC_LOG, logger, buf) {
+		LLOG_JAMBUF(LOG_STREAM, logger, buf) {
 			jam_string(buf, "connection for Child SA is already in state ");
 			jam_enum_human(buf, &routing_names, c->child.routing);
 		}
