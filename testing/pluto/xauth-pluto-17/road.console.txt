@@ -43,7 +43,6 @@ road #
 road #
  ipsec auto --up xauth-road-eastnet-psk
 "xauth-road-eastnet-psk" #3: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+XAUTH+AGGRESSIVE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-"xauth-road-eastnet-psk" #3: connection for Child SA is already in state routed-tunnel
 "xauth-road-eastnet-psk" #3: sent Quick Mode request
 "xauth-road-eastnet-psk" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=active username=use2}
 road #
