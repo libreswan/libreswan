@@ -301,9 +301,8 @@ static bool validate_end(struct starter_conn *conn_st,
 		assert(end->strings[KSCF_IP] != NULL);
 
 		if (end->strings[KSCF_IP][0] == '%') {
-			pfree(end->iface);
-			end->iface = clone_str(end->strings[KSCF_IP] + 1, "KH_IPADDR end->iface");
-			if (!starter_iface_find(end->iface,
+			const char *iface = end->strings[KSCF_IP] + 1;
+			if (!starter_iface_find(iface,
 						end->host_family,
 						&end->addr,
 						&end->nexthop))
@@ -1005,7 +1004,6 @@ static void copy_conn_default(struct starter_conn *conn,
 
 # define STR_FIELD_END(f) { STR_FIELD(left.f); STR_FIELD(right.f); }
 
-	STR_FIELD_END(iface);
 	STR_FIELD_END(certx);
 
 	for (unsigned i = 0; i < elemsof(conn->left.strings); i++)
@@ -1153,7 +1151,6 @@ static void confread_free_conn(struct starter_conn *conn)
 
 # define STR_FIELD_END(f) { STR_FIELD(left.f); STR_FIELD(right.f); }
 
-	STR_FIELD_END(iface);
 	STR_FIELD_END(certx);
 
 	for (unsigned i = 0; i < elemsof(conn->left.strings); i++)

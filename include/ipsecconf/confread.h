@@ -61,8 +61,6 @@ struct starter_end {
 	ip_address nexthop;
 	ip_cidr vti_ip;
 	ip_cidr ifaceip;
-	char *iface;
-
 	ip_protoport protoport;
 
 	char *certx;
