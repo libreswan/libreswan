@@ -117,17 +117,6 @@ conn road-east
 	also=road-leftrsasigkey
 	also=east-rightrsasigkey
 
-conn road-eastnet
-	rightsubnet=192.0.2.0/24
-	right=192.1.2.23
-	#left not specified as test case picks "random" ip
-	# Left security gateway, subnet behind it, next hop toward right.
-	leftid=@road
-	# Right security gateway, subnet behind it, next hop toward left.
-	rightid=@east
-	also=road-leftrsasigkey
-	also=east-rightrsasigkey
-
 conn westnet-eastnet-x509
 	leftsubnet=192.0.1.0/24
 	leftsourceip=192.0.1.254
