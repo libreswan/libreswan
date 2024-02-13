@@ -320,12 +320,27 @@ bool emit_local_v2AUTH(struct ike_sa *ike,
 
 	case IKEv2_AUTH_PSK:
 	case IKEv2_AUTH_NULL:
-		/* emit */
-		if (!ikev2_emit_psk_auth(authby, ike, id_payload_mac, &auth_pbs, auth_sig)) {
-			llog(RC_LOG_SERIOUS, outs->outs_logger, "Failed to find our PreShared Key");
+	{
+		struct crypt_mac signed_octets = empty_mac;
+		diag_t d = ikev2_calculate_psk_sighash(false, auth_sig,
+						       ike, authby, id_payload_mac,
+						       ike->sa.st_firstpacket_me,
+						       &signed_octets);
+		if (d != NULL) {
+			llog_diag(RC_LOG_SERIOUS, ike->sa.logger, &d, "%s", "");
 			return false;
 		}
+
+		if (DBGP(DBG_CRYPT)) {
+			DBG_dump_hunk("PSK auth octets", signed_octets);
+		}
+
+		if (!pbs_out_hunk(&auth_pbs, signed_octets, "PSK auth")) {
+			return false;
+		}
+
 		break;
+	}
 
 	default:
 		bad_case(a.isaa_auth_method);

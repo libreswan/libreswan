@@ -53,13 +53,13 @@
 #include "ikev2_prf.h"
 #include "ikev2_psk.h"
 
-static diag_t ikev2_calculate_psk_sighash(bool verify,
-					  const struct hash_signature *auth_sig,
-					  const struct ike_sa *ike,
-					  enum keyword_auth authby,
-					  const struct crypt_mac *idhash,
-					  const chunk_t firstpacket,
-					  struct crypt_mac *sighash)
+diag_t ikev2_calculate_psk_sighash(bool verify,
+				   const struct hash_signature *auth_sig,
+				   const struct ike_sa *ike,
+				   enum keyword_auth authby,
+				   const struct crypt_mac *idhash,
+				   const chunk_t firstpacket,
+				   struct crypt_mac *sighash)
 {
 	const struct connection *c = ike->sa.st_connection;
 	*sighash = empty_mac;
@@ -209,30 +209,6 @@ static diag_t ikev2_calculate_psk_sighash(bool verify,
 				  intermediate_auth, ike->sa.logger);
 	free_chunk_content(&intermediate_auth);
 	return NULL;
-}
-
-bool ikev2_emit_psk_auth(enum keyword_auth authby,
-			 const struct ike_sa *ike,
-			 const struct crypt_mac *idhash,
-			 pb_stream *a_pbs,
-			 const struct hash_signature *auth_sig)
-{
-	struct crypt_mac signed_octets = empty_mac;
-	diag_t d = ikev2_calculate_psk_sighash(false, auth_sig,
-					       ike, authby, idhash,
-					       ike->sa.st_firstpacket_me,
-					       &signed_octets);
-	if (d != NULL) {
-		llog_diag(RC_LOG_SERIOUS, ike->sa.logger, &d, "%s", "");
-		return false;
-	}
-
-	if (DBGP(DBG_CRYPT)) {
-		DBG_dump_hunk("PSK auth octets", signed_octets);
-	}
-
-	bool ok = out_hunk(signed_octets, a_pbs, "PSK auth");
-	return ok;
 }
 
 bool ikev2_create_psk_auth(enum keyword_auth authby,

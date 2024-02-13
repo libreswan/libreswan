@@ -26,17 +26,19 @@ struct crypt_mac;
 struct pbs_in;
 struct hash_signature;
 
+diag_t ikev2_calculate_psk_sighash(bool verify,
+				   const struct hash_signature *auth_sig,
+				   const struct ike_sa *ike,
+				   enum keyword_auth authby,
+				   const struct crypt_mac *idhash,
+				   const chunk_t firstpacket,
+				   struct crypt_mac *sighash);
+
 diag_t verify_v2AUTH_and_log_using_psk(enum keyword_auth authby,
 				       const struct ike_sa *ike,
 				       const struct crypt_mac *idhash,
 				       struct pbs_in *sig_pbs,
 				       const struct hash_signature *auth_sig);
-
-bool ikev2_emit_psk_auth(enum keyword_auth authby,
-			 const struct ike_sa *ike,
-			 const struct crypt_mac *idhash,
-			 pb_stream *a_pbs,
-			 const struct hash_signature *auth_sig);
 
 bool ikev2_create_psk_auth(enum keyword_auth authby,
 			   const struct ike_sa *ike,
