@@ -159,17 +159,6 @@ conn road-east-base
 	also=road-leftrsasigkey
 	also=east-rightrsasigkey
 
-conn road-east-base-x509
-        left=%defaultroute
-        leftrsasigkey=%cert
-        leftid=%fromcert
-        leftcert=road
-        # Right security gateway, subnet behind it,toward left.
-        right=192.1.2.23
-        rightid=%fromcert
-        rightrsasigkey=%cert
-        rightcert=east
-
 conn west-east-x509
         # Left security gateway, subnet behind it, next hop toward right.
         left=192.1.2.45
