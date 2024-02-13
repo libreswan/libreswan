@@ -399,8 +399,10 @@ static bool validate_end(struct starter_conn *conn_st,
 		end->id = clone_str(value, "end->id");
 		/* fixup old ",," in a ID_DER_ASN1_DN to proper backslash comma */
 		if ((end->id[0] != '@') && (strstr(end->id, ",,") != NULL)
-			&& strstr(end->id, "=") != NULL)
-		{
+		    && strstr(end->id, "=") != NULL) {
+			llog(RC_LOG, logger,
+			     "changing legacy ',,' to '\\,' in %sid=%s",
+			     leftright, value);
 			char *cc;
 			while ((cc = strstr(end->id, ",,")) != NULL) {
 				cc[0] = '\\';
