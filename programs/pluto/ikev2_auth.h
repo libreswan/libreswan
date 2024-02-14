@@ -50,8 +50,7 @@ enum keyword_auth local_v2_auth(struct ike_sa *ike);
 enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike, enum keyword_auth auth);
 bool emit_local_v2AUTH(struct ike_sa *ike,
 		       const struct hash_signature *auth_sig,
-		       const struct crypt_mac *idhash,
-		       pb_stream *outpbs);
+		       struct pbs_out *outpbs);
 
 typedef stf_status (v2_auth_signature_cb)(struct ike_sa *ike,
 					  struct msg_digest *md,

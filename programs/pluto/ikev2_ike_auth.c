@@ -398,7 +398,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 
 	/* send out the AUTH payload */
 
-	if (!emit_local_v2AUTH(ike, auth_sig, &ike->sa.st_v2_id_payload.mac, request.pbs)) {
+	if (!emit_local_v2AUTH(ike, auth_sig, request.pbs)) {
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -1210,7 +1210,7 @@ static stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike
 
 	/* now send AUTH payload */
 
-	if (!emit_local_v2AUTH(ike, auth_sig, &ike->sa.st_v2_id_payload.mac, response.pbs)) {
+	if (!emit_local_v2AUTH(ike, auth_sig, response.pbs)) {
 		return STF_INTERNAL_ERROR;
 	}
 

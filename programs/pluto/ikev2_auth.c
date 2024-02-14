@@ -272,11 +272,8 @@ const struct hash_desc *v2_auth_negotiated_signature_hash(struct ike_sa *ike)
 
 bool emit_local_v2AUTH(struct ike_sa *ike,
 		       const struct hash_signature *auth_sig,
-		       const struct crypt_mac *id_payload_mac,
 		       struct pbs_out *outs)
 {
-	PASSERT(ike->sa.logger, &ike->sa.st_v2_id_payload.mac == id_payload_mac);
-
 	enum keyword_auth authby = ike->sa.st_eap_sa_md ? AUTH_PSK : local_v2_auth(ike);
 	struct ikev2_auth a = {
 		.isaa_critical = build_ikev2_critical(false, ike->sa.logger),
@@ -325,7 +322,8 @@ bool emit_local_v2AUTH(struct ike_sa *ike,
 	{
 		struct crypt_mac signed_octets = empty_mac;
 		diag_t d = ikev2_calculate_psk_sighash(LOCAL_PERSPECTIVE, auth_sig,
-						       ike, authby, id_payload_mac,
+						       ike, authby,
+						       &ike->sa.st_v2_id_payload.mac,
 						       ike->sa.st_firstpacket_me,
 						       &signed_octets);
 		if (d != NULL) {

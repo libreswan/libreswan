@@ -517,7 +517,7 @@ static stf_status process_v2_IKE_AUTH_request_EAP_start_signature_continue(struc
 	/* now send AUTH payload */
 	if (c->local->host.config->auth == AUTH_EAPONLY) {
 		dbg("EAP: skipping AUTH payload as our proof-of-identity is eap-only");
-	} else if (!emit_local_v2AUTH(ike, auth_sig, &ike->sa.st_v2_id_payload.mac, response.pbs)) {
+	} else if (!emit_local_v2AUTH(ike, auth_sig, response.pbs)) {
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -719,7 +719,7 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 
 	/* now send AUTH payload */
 
-	if (!emit_local_v2AUTH(ike, &msk, &ike->sa.st_v2_id_payload.mac, response.pbs)) {
+	if (!emit_local_v2AUTH(ike, &msk, response.pbs)) {
 		return STF_INTERNAL_ERROR;
 	}
 
