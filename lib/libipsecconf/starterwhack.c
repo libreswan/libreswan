@@ -481,8 +481,7 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.vti_routing = conn->options[KNCF_VTI_ROUTING];
 	msg.vti_shared = conn->options[KNCF_VTI_SHARED];
 
-	msg.ppk_ids = conn->ppk_ids;
-	conn_log_val(logger, conn, "ppk-ids", msg.ppk_ids);
+	msg.ppk_ids = conn->strings[KSCF_PPK_IDS];
 
 	msg.redirect_to = conn->strings[KSCF_REDIRECT_TO];
 	conn_log_val(logger, conn, "redirect-to", msg.redirect_to);

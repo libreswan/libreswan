@@ -116,7 +116,6 @@ struct starter_conn {
 	char *conn_mark_both;
 	char *conn_mark_in;
 	char *conn_mark_out;
-	char *ppk_ids;
 	uint32_t xfrm_if_id;
 	char *dpd_delay;
 	char *dpd_timeout;

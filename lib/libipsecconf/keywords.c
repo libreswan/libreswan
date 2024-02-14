@@ -417,7 +417,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "keyexchange",  kv_conn,  kt_sparse_name,  KNCF_KEYEXCHANGE,  kw_keyexchange_list, NULL, },
   { "ikev2",  kv_conn | kv_processed,  kt_sparse_name,  KNCF_IKEv2,  kw_ikev2_list, NULL, },
   { "ppk", kv_conn | kv_processed, kt_sparse_name, KNCF_PPK, nppi_option_names, NULL, },
-  { "ppk-ids", kv_conn | kv_processed, kt_string, KSCF_PPKIDS, NULL, NULL, },
+  { "ppk-ids", kv_conn | kv_processed, kt_string, KSCF_PPK_IDS, NULL, NULL, },
   { "intermediate",  kv_conn | kv_processed, kt_sparse_name, KNCF_INTERMEDIATE, yn_option_names, NULL, },
   { "esn",  kv_conn | kv_processed,  kt_sparse_name,  KNCF_ESN,  yne_option_names, NULL, },
   { "decap-dscp",  kv_conn | kv_processed,  kt_sparse_name,  KNCF_DECAP_DSCP,  yn_option_names, NULL, },
