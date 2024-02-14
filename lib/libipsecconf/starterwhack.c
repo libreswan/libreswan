@@ -455,11 +455,7 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.nm_configured = conn->options[KNCF_NM_CONFIGURED];
 #endif
 
-	if (conn->strings_set[KSCF_SEC_LABEL]) {
-		msg.sec_label = conn->sec_label;
-		ldbg(logger, "conn: \"%s\" sec_label=%s", conn->name, msg.sec_label);
-	}
-
+	msg.sec_label = conn->strings[KSCF_SEC_LABEL];
 	msg.conn_debug = conn->options[KNCF_DEBUG];
 
 	msg.modecfg_dns = conn->modecfg_dns;

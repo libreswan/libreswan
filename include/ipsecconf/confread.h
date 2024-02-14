@@ -112,7 +112,6 @@ struct starter_conn {
 	char *modecfg_dns;
 	char *modecfg_domains;
 	char *modecfg_banner;
-	char *sec_label;
 	char *conn_mark_both;
 	char *conn_mark_in;
 	char *conn_mark_out;
