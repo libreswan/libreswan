@@ -275,6 +275,8 @@ bool emit_local_v2AUTH(struct ike_sa *ike,
 		       const struct crypt_mac *id_payload_mac,
 		       struct pbs_out *outs)
 {
+	PASSERT(ike->sa.logger, &ike->sa.st_v2_id_payload.mac == id_payload_mac);
+
 	enum keyword_auth authby = ike->sa.st_eap_sa_md ? AUTH_PSK : local_v2_auth(ike);
 	struct ikev2_auth a = {
 		.isaa_critical = build_ikev2_critical(false, ike->sa.logger),
