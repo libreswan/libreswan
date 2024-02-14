@@ -25,8 +25,9 @@ struct ike_sa;
 struct crypt_mac;
 struct pbs_in;
 struct hash_signature;
+enum perspective;
 
-diag_t ikev2_calculate_psk_sighash(bool verify,
+diag_t ikev2_calculate_psk_sighash(enum perspective perspective,
 				   const struct hash_signature *auth_sig,
 				   const struct ike_sa *ike,
 				   enum keyword_auth authby,

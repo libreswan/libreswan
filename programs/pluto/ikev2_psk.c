@@ -53,7 +53,7 @@
 #include "ikev2_prf.h"
 #include "ikev2_psk.h"
 
-diag_t ikev2_calculate_psk_sighash(bool verify,
+diag_t ikev2_calculate_psk_sighash(enum perspective perspective,
 				   const struct hash_signature *auth_sig,
 				   const struct ike_sa *ike,
 				   enum keyword_auth authby,
@@ -65,10 +65,11 @@ diag_t ikev2_calculate_psk_sighash(bool verify,
 	*sighash = empty_mac;
 	passert(authby == AUTH_EAPONLY || authby == AUTH_PSK || authby == AUTH_NULL);
 
-	dbg("ikev2_calculate_psk_sighash() called from %s to %s PSK with authby=%s",
-	    ike->sa.st_state->name,
-	    verify ? "verify" : "create",
-	    enum_name(&keyword_auth_names, authby));
+	enum_buf pb;
+	ldbg_sa(ike, "%s() called for %s to %s PSK with authby=%s",
+		__func__, ike->sa.st_state->name,
+		str_enum_short(&perspective_names, perspective, &pb),
+		enum_name(&keyword_auth_names, authby));
 
 	/* this is the IKE_AUTH exchange, so a given */
 	passert(ike->sa.hidden_variables.st_skeyid_calculated);
@@ -108,30 +109,42 @@ diag_t ikev2_calculate_psk_sighash(bool verify,
 
 	switch (ike->sa.st_sa_role) {
 	case SA_INITIATOR:
-		if (verify) {
+		switch (perspective) {
+		case REMOTE_PERSPECTIVE:
 			/* we are initiator verifying PSK */
-			nonce_name = "Ni: initiator verifying hash from responder";
+			nonce_name = "Ni: initiator re-generating hash from responder";
 			nonce = &ike->sa.st_ni;
 			nullauth_pss = ike->sa.st_skey_chunk_SK_pr;
-		} else {
+			break;
+		case LOCAL_PERSPECTIVE:
 			/* we are initiator sending PSK */
 			nonce_name = "Nr: initiator generating hash for responder";
 			nonce = &ike->sa.st_nr;
 			nullauth_pss = ike->sa.st_skey_chunk_SK_pi;
+			break;
+		case NO_PERSPECTIVE:
+		default:
+			bad_case(perspective);
 		}
 		break;
 
 	case SA_RESPONDER:
-		if (verify) {
+		switch (perspective) {
+		case REMOTE_PERSPECTIVE:
 			/* we are responder verifying PSK */
-			nonce_name = "Nr: responder verifying hash from initiator";
+			nonce_name = "Nr: responder re-generating hash from initiator";
 			nonce = &ike->sa.st_nr;
 			nullauth_pss = ike->sa.st_skey_chunk_SK_pi;
-		} else {
+			break;
+		case LOCAL_PERSPECTIVE:
 			/* we are responder sending PSK */
-			nonce_name = "create: responder generating hash for initiator";
+			nonce_name = "Ni: create: responder generating hash for initiator";
 			nonce = &ike->sa.st_ni;
 			nullauth_pss = ike->sa.st_skey_chunk_SK_pr;
+			break;
+		case NO_PERSPECTIVE:
+		default:
+			bad_case(perspective);
 		}
 		break;
 
@@ -218,7 +231,8 @@ bool ikev2_create_psk_auth(enum keyword_auth authby,
 {
 	*additional_auth = empty_chunk;
 	struct crypt_mac signed_octets = empty_mac;
-	diag_t d = ikev2_calculate_psk_sighash(false, NULL, ike, authby, idhash,
+	diag_t d = ikev2_calculate_psk_sighash(LOCAL_PERSPECTIVE, NULL,
+					       ike, authby, idhash,
 					       ike->sa.st_firstpacket_me,
 					       &signed_octets);
 	if (d != NULL) {
@@ -263,7 +277,7 @@ diag_t verify_v2AUTH_and_log_using_psk(enum keyword_auth authby,
 	}
 
 	struct crypt_mac calc_hash = empty_mac;
-	diag_t d = ikev2_calculate_psk_sighash(true, auth_sig,
+	diag_t d = ikev2_calculate_psk_sighash(REMOTE_PERSPECTIVE, auth_sig,
 					       ike, authby, idhash,
 					       ike->sa.st_firstpacket_peer,
 					       &calc_hash);

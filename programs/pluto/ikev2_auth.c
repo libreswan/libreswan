@@ -322,7 +322,7 @@ bool emit_local_v2AUTH(struct ike_sa *ike,
 	case IKEv2_AUTH_NULL:
 	{
 		struct crypt_mac signed_octets = empty_mac;
-		diag_t d = ikev2_calculate_psk_sighash(false, auth_sig,
+		diag_t d = ikev2_calculate_psk_sighash(LOCAL_PERSPECTIVE, auth_sig,
 						       ike, authby, id_payload_mac,
 						       ike->sa.st_firstpacket_me,
 						       &signed_octets);
