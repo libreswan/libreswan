@@ -53,6 +53,7 @@
 #include "ikev2_create_child_sa.h"		/* for initiate_v2_CREATE_CHILD_SA_create_child() */
 #include "initiate.h"
 #include "show.h"
+#include "initiated_by.h"
 
 /*
  * queue an IPsec SA negotiation pending completion of a
@@ -308,21 +309,31 @@ void unpend(struct ike_sa *ike, struct connection *cc)
 				what = "delete from";
 			} else if (!already_has_larval_v2_child(ike, p->connection)) {
 				connection_attach(p->connection, p->logger);
-				submit_v2_CREATE_CHILD_SA_new_child(ike, p->connection,
-								    p->policy,
-								    /*detach_whack*/false);
+				struct child_sa *child =
+					submit_v2_CREATE_CHILD_SA_new_child(ike, p->connection,
+									    p->policy,
+									    /*detach_whack*/false);
+				connection_initiated_child(ike, child,
+							   INITIATED_BY_PENDING,
+							   HERE);
 				connection_detach(p->connection, p->logger);
 			}
 			break;
 		case IKEv1:
 #ifdef USE_IKEv1
+		{
 			connection_attach(p->connection, p->logger);
-			quick_outI1(ike, p->connection,
-				    p->policy,
-				    p->replacing);
+			struct child_sa *child =
+				quick_outI1(ike, p->connection,
+					    p->policy,
+					    p->replacing);
+			connection_initiated_child(ike, child,
+						   INITIATED_BY_PENDING,
+						   HERE);
 			connection_detach(p->connection, p->logger);
-#endif
 			break;
+		}
+#endif
 		default:
 			bad_case(ike->sa.st_ike_version);
 		}

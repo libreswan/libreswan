@@ -39,6 +39,8 @@
 #include "ikev2.h"
 #include "connections.h"
 #include "secrets.h"
+#include "initiated_by.h"
+
 #include "ikev2_message.h"
 #ifdef USE_PAM_AUTH
 #include "pam_auth.h"
@@ -328,6 +330,8 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 		struct child_sa *child = new_v2_child_sa(cc, ike, CHILD_SA,
 							 SA_INITIATOR,
 							 STATE_V2_IKE_AUTH_CHILD_I0);
+		connection_initiated_child(ike, child, INITIATED_BY_IKE, HERE);
+
 		/*
 		 * whack has been attached to the Child SA, release
 		 * from the connection.
