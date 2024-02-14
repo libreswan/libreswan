@@ -3010,56 +3010,48 @@ static diag_t extract_connection(const struct whack_message *wm,
 		switch (wm->ike_version) {
 		case IKEv1:
 			/* IKEv1's RFC 3706 DPD */
-			if (wm->dpd_delay != NULL &&
-			    wm->dpd_timeout != NULL) {
-				if (wm->dpd_action != DPD_ACTION_UNSET) {
-					llog(RC_LOG, c->logger,
-					     "warning: IKEv1 ignores dpdaction=");
-				}
+			if (wm->dpddelay != NULL &&
+			    wm->dpdtimeout != NULL) {
 				diag_t d;
-				d = ttodeltatime(wm->dpd_delay,
+				d = ttodeltatime(wm->dpddelay,
 						 &config->dpd.delay,
 						 dpd_timescale);
 				if (d != NULL) {
 					return diag_diag(&d, "dpddelay=%s invalid, ",
-							 wm->dpd_delay);
+							 wm->dpddelay);
 				}
-				d = ttodeltatime(wm->dpd_timeout,
+				d = ttodeltatime(wm->dpdtimeout,
 						 &config->dpd.timeout,
 						 dpd_timescale);
 				if (d != NULL) {
 					return diag_diag(&d, "dpdtimeout=%s invalid, ",
-							 wm->dpd_timeout);
+							 wm->dpdtimeout);
 				}
 				deltatime_buf db, tb;
 				ldbg(c->logger, "IKEv1 dpd.timeout=%s dpd.delay=%s",
 				     str_deltatime(config->dpd.timeout, &db),
 				     str_deltatime(config->dpd.delay, &tb));
-			} else if (wm->dpd_action != DPD_ACTION_UNSET) {
-				llog(RC_LOG, c->logger,
-				     "warning: IKEv1 ignores dpdaction=, use dpdtimeout= and dpddelay=");
-			} else if (wm->dpd_delay != NULL  ||
-				   wm->dpd_timeout != NULL) {
+			} else if (wm->dpddelay != NULL  ||
+				   wm->dpdtimeout != NULL) {
 				llog(RC_LOG, c->logger,
 				     "warning: IKEv1 dpd settings are ignored unless both dpdtimeout= and dpddelay= are set");
 			}
 			break;
 		case IKEv2:
-			if (wm->dpd_delay != NULL) {
+			if (wm->dpddelay != NULL) {
 				diag_t d;
-				d = ttodeltatime(wm->dpd_delay,
+				d = ttodeltatime(wm->dpddelay,
 						 &config->dpd.delay,
 						 dpd_timescale);
 				if (d != NULL) {
 					return diag_diag(&d, "dpddelay=%s invalid, ",
-							 wm->dpd_delay);
+							 wm->dpddelay);
 				}
 			}
-			if (wm->dpd_timeout != NULL ||
-			    wm->dpd_action != DPD_ACTION_UNSET) {
+			if (wm->dpdtimeout != NULL) {
 				/* actual values don't matter */
 				llog(RC_LOG, c->logger,
-				     "warning: IKEv2 ignores dpdtimeout= and dpdaction=; use dpddelay= and retransmit-timeout=");
+				     "warning: IKEv2 ignores dpdtimeout==; use dpddelay= and retransmit-timeout=");
 			}
 			break;
 		}

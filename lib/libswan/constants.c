@@ -281,21 +281,6 @@ enum_names sa_policy_bit_names = {
 	NULL
 };
 
-/* DPD actions */
-static const char *const dpd_action_name[] = {
-	"action:unset",
-	"action:clear",
-	"action:hold",
-	"action:restart",
-};
-
-enum_names dpd_action_names = {
-	DPD_ACTION_UNSET, DPD_ACTION_RESTART,
-	ARRAY_REF(dpd_action_name),
-	"action:", /* prefix */
-	NULL
-};
-
 /* systemd watchdog action names */
 static const char *const sd_action_name[] = {
 	"action: exit", /* daemon exiting */

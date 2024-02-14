@@ -524,7 +524,7 @@ enum option_enums {
 	CD_REPLAY_WINDOW,
 	CD_DPDDELAY,
 	CD_DPDTIMEOUT,
-	CD_DPDACTION,
+	CD_OBSOLETE,
 	CD_SEND_REDIRECT,
 	CD_ACCEPT_REDIRECT,
 	CD_ACCEPT_REDIRECT_TO,
@@ -833,7 +833,7 @@ static const struct option long_opts[] = {
 
 	{ "dpddelay", required_argument, NULL, CD_DPDDELAY },
 	{ "dpdtimeout", required_argument, NULL, CD_DPDTIMEOUT },
-	{ "dpdaction", required_argument, NULL, CD_DPDACTION },
+	{ "dpdaction", required_argument, NULL, CD_OBSOLETE },
 	{ "send-redirect", required_argument, NULL, CD_SEND_REDIRECT },
 	{ "accept-redirect", required_argument, NULL, CD_ACCEPT_REDIRECT },
 	{ "accept-redirect-to", required_argument, NULL, CD_ACCEPT_REDIRECT_TO },
@@ -1130,8 +1130,6 @@ int main(int argc, char **argv)
 	msg.oppo.ipproto = IPPROTO_ICMP;
 	msg.oppo.local.port = ip_hport(8);
 	msg.oppo.remote.port = ip_hport(0);
-
-	msg.dpd_action = DPD_ACTION_UNSET;
 
 	for (;;) {
 
@@ -2091,29 +2089,16 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_DPDDELAY:	/* --dpddelay <seconds> */
-			msg.dpd_delay = strdup(optarg);
+			msg.dpddelay = strdup(optarg);
 			continue;
 
 		case CD_DPDTIMEOUT:	/* --dpdtimeout <seconds> */
-			msg.dpd_timeout = strdup(optarg);
+			msg.dpdtimeout = strdup(optarg);
 			continue;
 
-		case CD_DPDACTION:	/* --dpdaction */
-			if (streq(optarg, "clear")) {
-				msg.dpd_action = DPD_ACTION_CLEAR;
-			} else if (streq(optarg, "hold")) {
-				msg.dpd_action = DPD_ACTION_HOLD;
-			} else if (streq(optarg, "restart")) {
-				msg.dpd_action = DPD_ACTION_RESTART;
-			} else if (streq(optarg, "restart_by_peer")) {
-				/*
-				 * obsolete (not advertised) option for
-				 * compatibility
-				 */
-				msg.dpd_action = DPD_ACTION_RESTART;
-			} else {
-				diagw("dpdaction can only be \"clear\", \"hold\" or \"restart\"");
-			}
+		case CD_OBSOLETE:
+			llog(RC_LOG, logger,
+			     "obsolete --%s option ignored", long_opts[long_index].name);
 			continue;
 
 		case CD_SEND_REDIRECT:	/* --send-redirect */

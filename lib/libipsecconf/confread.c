@@ -783,9 +783,6 @@ static bool load_conn(struct starter_conn *conn,
 	str_to_conn(conn_mark_in, KSCF_CONN_MARK_IN);
 	str_to_conn(conn_mark_out, KSCF_CONN_MARK_OUT);
 
-	str_to_conn(dpd_delay, KSCF_DPDDELAY_MS);
-	str_to_conn(dpd_timeout, KSCF_DPDTIMEOUT_MS);
-
 #	undef str_to_conn
 
 	if (conn->options_set[KNCF_KEYEXCHANGE]) {
@@ -981,8 +978,6 @@ static void copy_conn_default(struct starter_conn *conn,
 	STR_FIELD(conn_mark_both);
 	STR_FIELD(conn_mark_in);
 	STR_FIELD(conn_mark_out);
-	STR_FIELD(dpd_delay);
-	STR_FIELD(dpd_timeout);
 
 	for (unsigned i = 0; i < elemsof(conn->strings); i++)
 		STR_FIELD(strings[i]);

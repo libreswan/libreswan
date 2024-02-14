@@ -165,8 +165,8 @@ enum keyword_string_conn_field {
 	KSCF_CONN_MARK_IN,
 	KSCF_CONN_MARK_OUT,
 	KSCF_VTI_INTERFACE,
-	KSCF_DPDDELAY_MS,
-	KSCF_DPDTIMEOUT_MS,
+	KSCF_DPDDELAY,
+	KSCF_DPDTIMEOUT,
 
 	KSCF_ROOF
 };
@@ -210,7 +210,6 @@ enum keyword_numeric_conn_field {
 	KNCF_DEBUG,
 
 	/* ??? these were once in keyword_numeric_config_field (KBF prefix) */
-	KNCF_DPDACTION,
 	KNCF_FAILURESHUNT,
 	KNCF_NEGOTIATIONSHUNT,
 	KNCF_TYPE,

@@ -411,10 +411,8 @@ int starter_whack_add_conn(const char *ctlsocket,
 	}
 
 	/* default to HOLD */
-	msg.dpd_action = (conn->options_set[KNCF_DPDACTION] ? conn->options[KNCF_DPDACTION] :
-			  DPD_ACTION_UNSET);
-	msg.dpd_delay = conn->dpd_delay;
-	msg.dpd_timeout = conn->dpd_timeout;
+	msg.dpddelay = conn->strings[KSCF_DPDDELAY];
+	msg.dpdtimeout = conn->strings[KSCF_DPDTIMEOUT];
 
 	if (conn->options_set[KNCF_SEND_CA])
 		msg.send_ca = conn->options[KNCF_SEND_CA];

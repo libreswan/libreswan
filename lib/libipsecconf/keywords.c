@@ -138,18 +138,6 @@ static const struct sparse_name kw_auth_list[] = {
  };
 
 /*
- * Values for dpdaction={hold,clear,restart}
- */
-static const struct sparse_name kw_dpdaction_list[] = {
-	{ "hold",    DPD_ACTION_HOLD },
-	{ "clear",   DPD_ACTION_CLEAR },
-	{ "restart",   DPD_ACTION_RESTART },
-	/* obsoleted keyword - functionality moved into "restart" */
-	{ "restart_by_peer",   DPD_ACTION_RESTART },
-	SPARSE_NULL
-};
-
-/*
  * Values for sendca={none,issuer,all}
  */
 
@@ -521,10 +509,10 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "metric",  kv_conn,  kt_unsigned,  KNCF_METRIC, NULL, NULL, },
 
   /* DPD */
-  { "dpddelay",  kv_conn,  kt_string,  KSCF_DPDDELAY_MS, NULL, NULL, },
-  { "ikev1-dpdtimeout",  kv_conn,  kt_string,  KSCF_DPDTIMEOUT_MS, NULL, NULL, },
-  { "dpdtimeout",  kv_conn | kv_alias,  kt_string,  KSCF_DPDTIMEOUT_MS, NULL, NULL, }, /* old name */
-  { "dpdaction",  kv_conn,  kt_sparse_name,  KNCF_DPDACTION,  kw_dpdaction_list, NULL, },
+  { "dpddelay",  kv_conn,  kt_string,  KSCF_DPDDELAY, NULL, NULL, },
+  { "ikev1-dpdtimeout",  kv_conn,  kt_string,  KSCF_DPDTIMEOUT, NULL, NULL, },
+  { "dpdtimeout",  kv_conn | kv_alias,  kt_string,  KSCF_DPDTIMEOUT, NULL, NULL, }, /* old name */
+  { "dpdaction",  kv_conn,  kt_obsolete,  KNCF_OBSOLETE,  NULL, NULL, },
 
   { "sendca",      kv_conn,  kt_sparse_name,  KNCF_SEND_CA,  kw_sendca_list, NULL, },
 

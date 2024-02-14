@@ -85,14 +85,6 @@ enum ike_version {
 
 #define DEFAULT_XFRM_IF_NAME "ipsec1"
 
-/* RFC 3706 Dead Peer Detection */
-enum dpd_action {
-	DPD_ACTION_UNSET,
-	DPD_ACTION_CLEAR,
-	DPD_ACTION_HOLD,
-	DPD_ACTION_RESTART
-};
-
 enum send_ca_policy {
 	CA_SEND_NONE = 0,
 	CA_SEND_ISSUER = 1,

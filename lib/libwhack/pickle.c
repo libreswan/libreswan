@@ -390,8 +390,8 @@ static bool pickle_whack_message(struct whackpacker *wp,
 		PICKLE_STRING(&wp->msg->sec_label) &&
 		PICKLE_IP_INFO(&wp->msg->host_afi) &&
 		PICKLE_IP_INFO(&wp->msg->child_afi) &&
-		PICKLE_STRING(&wp->msg->dpd_timeout) &&
-		PICKLE_STRING(&wp->msg->dpd_delay) &&
+		PICKLE_STRING(&wp->msg->dpdtimeout) &&
+		PICKLE_STRING(&wp->msg->dpddelay) &&
 		true);
 }
 

@@ -95,7 +95,6 @@ const char *str_policy(lset_t policy, policy_buf *dst)
 }
 
 static const enum_names *pluto_enum_names_checklist[] = {
-	&dpd_action_names,
 	&sd_action_names,
 	&natt_method_names,
 	&routing_tails,
