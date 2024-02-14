@@ -6,7 +6,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add west-east
-"west-east": warning: IKEv1 ignores dpdaction=
+ipsec addconn: /etc/ipsec.conf:17: warning: obsolete keyword ignored: dpdaction=hold
 "west-east": added IKEv1 connection
 west #
  echo "initdone"

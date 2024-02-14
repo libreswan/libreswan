@@ -6,14 +6,14 @@ road #
  ../../guestbin/wait-until-pluto-started
 road #
  ipsec auto --add xauth-road-eastnet-psk
-"xauth-road-eastnet-psk": warning: IKEv1 ignores dpdaction=
+ipsec addconn: /etc/ipsec.conf:22: warning: obsolete keyword ignored: dpdaction=restart
 "xauth-road-eastnet-psk": added IKEv1 connection
 road #
  echo "initdone"
 initdone
 road #
  ipsec auto --add xauth-road-eastnet-psk
-"xauth-road-eastnet-psk": warning: IKEv1 ignores dpdaction=
+ipsec addconn: /etc/ipsec.conf:22: warning: obsolete keyword ignored: dpdaction=restart
 "xauth-road-eastnet-psk": added IKEv1 connection
 road #
  ipsec whack --xauthname 'use2' --xauthpass 'use1pass' --name xauth-road-eastnet-psk --initiate
