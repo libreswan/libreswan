@@ -692,9 +692,7 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 	}
 
 	/* calculate hash of IDi for AUTH below */
-	struct crypt_mac idhash_in = v2_id_hash(ike, "IDi verify hash", "IDi",
-						pbs_in_all(&sa_md->chain[ISAKMP_NEXT_v2IDi]->pbs),
-						"skey_pi", ike->sa.st_skey_pi_nss);
+	struct crypt_mac idhash_in = v2_remote_id_hash(ike, "IDi verify hash", md);
 
 	if (DBGP(DBG_BASE)) {
 		DBG_dump_hunk("EAP: msk", msk);

@@ -333,21 +333,6 @@ bool emit_v2KE(chunk_t g, const struct dh_desc *group,
 	return true;
 }
 
-struct crypt_mac v2_id_hash(struct ike_sa *ike, const char *why,
-			    const char *id_name, shunk_t id_payload,
-			    const char *key_name, PK11SymKey *key)
-{
-	const uint8_t *id_start = id_payload.ptr;
-	size_t id_size = id_payload.len;
-	/* HASH of ID is not done over common header */
-	id_start += NSIZEOF_isakmp_generic;
-	id_size -= NSIZEOF_isakmp_generic;
-	struct crypt_prf *id_ctx = crypt_prf_init_symkey(why, ike->sa.st_oakley.ta_prf,
-							 key_name, key, ike->sa.logger);
-	crypt_prf_update_bytes(id_ctx, id_name, id_start, id_size);
-	return crypt_prf_final_mac(&id_ctx, NULL/*no-truncation*/);
-}
-
 void ikev2_rekey_expire_predecessor(const struct child_sa *larval, so_serial_t pred)
 {
 	struct state *rst = state_by_serialno(pred);

@@ -936,3 +936,46 @@ void v2_IKE_AUTH_initiator_id_payload(struct ike_sa *ike)
 					   ike->sa.st_sk_pi_no_ppk);
 	}
 }
+
+struct crypt_mac v2_remote_id_hash(const struct ike_sa *ike,
+				   const char *why,
+				   const struct msg_digest *md)
+{
+	/*
+	 * Computing hash according to peer, hence initiator uses
+	 * responder's IDr payload and responder's secret, and
+	 * vis-vis.
+	 */
+
+	PK11SymKey *key;
+	const struct pbs_in *id_pbs;
+	const char *key_name;
+	const char *id_name;
+	switch (ike->sa.st_sa_role) {
+	case SA_INITIATOR:
+		key_name = "st_skey_pr_nss";
+		key = ike->sa.st_skey_pr_nss;
+		id_name = "IDr";
+		id_pbs = &md->chain[ISAKMP_NEXT_v2IDr]->pbs;
+		break;
+	case SA_RESPONDER:
+		key_name = "st_skey_pi_nss";
+		key = ike->sa.st_skey_pi_nss;
+		id_name = "IDi";
+		id_pbs = &md->chain[ISAKMP_NEXT_v2IDi]->pbs;
+		break;
+	default:
+		bad_case(ike->sa.st_sa_role);
+	}
+
+	shunk_t id_payload = pbs_in_all(id_pbs);
+	const uint8_t *id_start = id_payload.ptr;
+	size_t id_size = id_payload.len;
+	/* HASH of ID is not done over common header */
+	id_start += NSIZEOF_isakmp_generic;
+	id_size -= NSIZEOF_isakmp_generic;
+	struct crypt_prf *id_ctx = crypt_prf_init_symkey(why, ike->sa.st_oakley.ta_prf,
+							 key_name, key, ike->sa.logger);
+	crypt_prf_update_bytes(id_ctx, id_name, id_start, id_size);
+	return crypt_prf_final_mac(&id_ctx, NULL/*no-truncation*/);
+}

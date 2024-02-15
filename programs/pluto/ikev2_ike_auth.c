@@ -672,9 +672,7 @@ stf_status process_v2_IKE_AUTH_request_ipseckey_continue(struct ike_sa *ike,
 stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_digest *md)
 {
 	/* calculate hash of IDi for AUTH below */
-	struct crypt_mac idhash_in = v2_id_hash(ike, "IDi verify hash", "IDi",
-						pbs_in_all(&md->chain[ISAKMP_NEXT_v2IDi]->pbs),
-						"skey_pi", ike->sa.st_skey_pi_nss);
+	struct crypt_mac idhash_in = v2_remote_id_hash(ike, "IDi verify hash", md);
 
 	/* process AUTH payload */
 
@@ -1083,9 +1081,7 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 		ike->sa.st_skey_pr_nss = reference_symkey(__func__, "used sk_pr from no ppk", ike->sa.st_sk_pr_no_ppk);
 	}
 
-	struct crypt_mac idhash_in = v2_id_hash(ike, "idhash auth R2", "IDr",
-						pbs_in_all(&md->chain[ISAKMP_NEXT_v2IDr]->pbs),
-						"skey_pr", ike->sa.st_skey_pr_nss);
+	struct crypt_mac idhash_in = v2_remote_id_hash(ike, "idhash auth R2", md);
 
 	/* process AUTH payload */
 

@@ -78,4 +78,7 @@ stf_status submit_v2AUTH_generate_initiator_signature(struct ike_sa *ike, struct
 void v2_IKE_AUTH_responder_id_payload(struct ike_sa *ike);
 void v2_IKE_AUTH_initiator_id_payload(struct ike_sa *ike);
 
+struct crypt_mac v2_remote_id_hash(const struct ike_sa *ike, const char *why,
+				   const struct msg_digest *md);
+
 #endif

@@ -135,9 +135,6 @@ bool v2_accept_ke_for_proposal(struct ike_sa *ike,
 			       enum payload_security security);
 void ikev2_rekey_expire_predecessor(const struct child_sa *larval_sa, so_serial_t pred);
 
-struct crypt_mac v2_id_hash(struct ike_sa *ike, const char *why,
-			    const char *id_name, shunk_t id_payload,
-			    const char *key_name, PK11SymKey *key);
 bool id_ipseckey_allowed(struct ike_sa *ike, enum ikev2_auth_method atype);
 
 bool negotiate_hash_algo_from_notification(const struct pbs_in *payload_pbs,
