@@ -423,9 +423,9 @@ struct whack_message {
 	char *connalias;
 
 	/* for IKEv1 MODECFG and IKEv2 CP */
-	char *modecfg_dns;
-	char *modecfg_domains;
-	char *modecfg_banner;
+	char *modecfgdns;
+	char *modecfgdomains;
+	char *modecfgbanner;
 
 	char *conn_mark_both;
 	char *conn_mark_in;

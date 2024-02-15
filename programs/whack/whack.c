@@ -1106,9 +1106,6 @@ int main(int argc, char **argv)
 
 	msg.xauthby = XAUTHBY_FILE;
 	msg.xauthfail = XAUTHFAIL_HARD;
-	msg.modecfg_domains = NULL;
-	msg.modecfg_dns = NULL;
-	msg.modecfg_banner = NULL;
 
 	msg.sa_ipsec_max_bytes = IPSEC_SA_MAX_OPERATIONS; /* max uint_64_t */
 	msg.sa_ipsec_max_packets = IPSEC_SA_MAX_OPERATIONS; /* max uint_64_t */
@@ -2315,13 +2312,13 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_MODECFGDNS:	/* --modecfgdns */
-			msg.modecfg_dns = strdup(optarg);
+			msg.modecfgdns = strdup(optarg);
 			continue;
 		case CD_MODECFGDOMAINS:	/* --modecfgdomains */
-			msg.modecfg_domains = strdup(optarg);
+			msg.modecfgdomains = strdup(optarg);
 			continue;
 		case CD_MODECFGBANNER:	/* --modecfgbanner */
-			msg.modecfg_banner = strdup(optarg);
+			msg.modecfgbanner = strdup(optarg);
 			continue;
 
 		case CD_CONN_MARK_BOTH:      /* --conn-mark */

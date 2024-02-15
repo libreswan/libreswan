@@ -372,9 +372,9 @@ static bool pickle_whack_message(struct whackpacker *wp,
 		PICKLE_STRING(&wp->msg->esp) &&
 		PICKLE_STRING(&wp->msg->connalias) &&
 		PICKLE_STRING(&wp->msg->dnshostname) &&
-		PICKLE_STRING(&wp->msg->modecfg_dns) &&
-		PICKLE_STRING(&wp->msg->modecfg_domains) &&
-		PICKLE_STRING(&wp->msg->modecfg_banner) &&
+		PICKLE_STRING(&wp->msg->modecfgdns) &&
+		PICKLE_STRING(&wp->msg->modecfgdomains) &&
+		PICKLE_STRING(&wp->msg->modecfgbanner) &&
 		PICKLE_STRING(&wp->msg->conn_mark_both) &&
 		PICKLE_STRING(&wp->msg->conn_mark_in) &&
 		PICKLE_STRING(&wp->msg->conn_mark_out) &&

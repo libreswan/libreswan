@@ -3075,26 +3075,26 @@ static diag_t extract_connection(const struct whack_message *wm,
 		config->xauthby = wm->xauthby;
 		config->xauthfail = wm->xauthfail;
 
-		diag_t d = ttoaddresses_num(shunk1(wm->modecfg_dns), ", ",
+		diag_t d = ttoaddresses_num(shunk1(wm->modecfgdns), ", ",
 					    /* IKEv1 doesn't do IPv6 */
 					    (wm->ike_version == IKEv1 ? &ipv4_info : NULL),
 					    &config->modecfg.dns);
 		if (d != NULL) {
-			return diag_diag(&d, "modecfgdns=%s invalid: ", wm->modecfg_dns);
+			return diag_diag(&d, "modecfgdns=%s invalid: ", wm->modecfgdns);
 		}
 
-		config->modecfg.domains = clone_shunk_tokens(shunk1(wm->modecfg_domains),
+		config->modecfg.domains = clone_shunk_tokens(shunk1(wm->modecfgdomains),
 							     ", ", HERE);
 		if (wm->ike_version == IKEv1 &&
 		    config->modecfg.domains != NULL &&
 		    config->modecfg.domains[1].ptr != NULL) {
 			llog(RC_LOG_SERIOUS, c->logger,
 			     "IKEv1 only uses the first domain in modecfgdomain=%s",
-			     wm->modecfg_domains);
+			     wm->modecfgdomains);
 			config->modecfg.domains[1] = null_shunk;
 		}
 
-		config->modecfg.banner = clone_str(wm->modecfg_banner, "connection modecfg_banner");
+		config->modecfg.banner = clone_str(wm->modecfgbanner, "connection modecfg_banner");
 
 		/* RFC 8784 and draft-smyslov-ipsecme-ikev2-qr-alt-07 */
 		config->ppk_ids = clone_str(wm->ppk_ids, "connection ppk_ids");

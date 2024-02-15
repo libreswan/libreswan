@@ -456,12 +456,9 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.sec_label = conn->strings[KSCF_SEC_LABEL];
 	msg.conn_debug = conn->options[KNCF_DEBUG];
 
-	msg.modecfg_dns = conn->modecfg_dns;
-	conn_log_val(logger, conn, "modecfgdns", msg.modecfg_dns);
-	msg.modecfg_domains = conn->modecfg_domains;
-	conn_log_val(logger, conn, "modecfgdomains", msg.modecfg_domains);
-	msg.modecfg_banner = conn->modecfg_banner;
-	conn_log_val(logger, conn, "modecfgbanner", msg.modecfg_banner);
+	msg.modecfgdns = conn->strings[KSCF_MODECFGDNS];
+	msg.modecfgdomains = conn->strings[KSCF_MODECFGDOMAINS];
+	msg.modecfgbanner = conn->strings[KSCF_MODECFGBANNER];
 
 	msg.conn_mark_both = conn->conn_mark_both;
 	conn_log_val(logger, conn, "mark", msg.conn_mark_both);

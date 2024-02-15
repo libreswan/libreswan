@@ -775,10 +775,6 @@ static bool load_conn(struct starter_conn *conn,
 	str_to_conn(ike_crypto, KSCF_IKE);
 	str_to_conn(esp, KSCF_ESP);
 
-	str_to_conn(modecfg_dns, KSCF_MODECFGDNS);
-	str_to_conn(modecfg_domains, KSCF_MODECFGDOMAINS);
-	str_to_conn(modecfg_banner, KSCF_MODECFGBANNER);
-
 	str_to_conn(conn_mark_both, KSCF_CONN_MARK_BOTH);
 	str_to_conn(conn_mark_in, KSCF_CONN_MARK_IN);
 	str_to_conn(conn_mark_out, KSCF_CONN_MARK_OUT);
@@ -969,9 +965,6 @@ static void copy_conn_default(struct starter_conn *conn,
 	STR_FIELD(ike_crypto);
 	STR_FIELD(esp);
 
-	STR_FIELD(modecfg_dns);
-	STR_FIELD(modecfg_domains);
-	STR_FIELD(modecfg_banner);
 	STR_FIELD(conn_mark_both);
 	STR_FIELD(conn_mark_in);
 	STR_FIELD(conn_mark_out);
@@ -1112,9 +1105,6 @@ static void confread_free_conn(struct starter_conn *conn)
 	STR_FIELD(ike_crypto);
 	STR_FIELD(esp);
 
-	STR_FIELD(modecfg_dns);
-	STR_FIELD(modecfg_domains);
-	STR_FIELD(modecfg_banner);
 	STR_FIELD(conn_mark_both);
 	STR_FIELD(conn_mark_in);
 	STR_FIELD(conn_mark_out);
