@@ -333,28 +333,6 @@ bool emit_v2KE(chunk_t g, const struct dh_desc *group,
 	return true;
 }
 
-struct crypt_mac v2_hash_id_payload(const char *id_name, const struct ike_sa *ike,
-				    const char *key_name, PK11SymKey *key)
-{
-	/*
-	 * InitiatorIDPayload = PayloadHeader | RestOfInitIDPayload
-	 * RestOfInitIDPayload = IDType | RESERVED | InitIDData
-	 * MACedIDForR = prf(SK_pr, RestOfInitIDPayload)
-	 */
-	struct crypt_prf *id_ctx = crypt_prf_init_symkey(id_name, ike->sa.st_oakley.ta_prf,
-							 key_name, key, ike->sa.logger);
-	/* skip PayloadHeader; hash: IDType | RESERVED */
-	crypt_prf_update_bytes(id_ctx, "IDType", &ike->sa.st_v2_id_payload.header.isai_type,
-				sizeof(ike->sa.st_v2_id_payload.header.isai_type));
-	/* note that res1+res2 is 3 zero bytes */
-	crypt_prf_update_byte(id_ctx, "RESERVED 1", ike->sa.st_v2_id_payload.header.isai_res1);
-	crypt_prf_update_byte(id_ctx, "RESERVED 2", ike->sa.st_v2_id_payload.header.isai_res2);
-	crypt_prf_update_byte(id_ctx, "RESERVED 3", ike->sa.st_v2_id_payload.header.isai_res3);
-	/* hash: InitIDData */
-	crypt_prf_update_hunk(id_ctx, "InitIDData", ike->sa.st_v2_id_payload.data);
-	return crypt_prf_final_mac(&id_ctx, NULL/*no-truncation*/);
-}
-
 struct crypt_mac v2_id_hash(struct ike_sa *ike, const char *why,
 			    const char *id_name, shunk_t id_payload,
 			    const char *key_name, PK11SymKey *key)

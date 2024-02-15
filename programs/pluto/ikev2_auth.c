@@ -609,33 +609,6 @@ static stf_status submit_v2_IKE_AUTH_response_signature(struct ike_sa *ike, stru
 stf_status submit_v2AUTH_generate_responder_signature(struct ike_sa *ike, struct msg_digest *md,
 						      v2_auth_signature_cb auth_cb)
 {
-	struct connection *const c = ike->sa.st_connection;
-
-	/*
-	 * Construct the IDr payload and store it in state so that it
-	 * can be emitted later.  Then use that to construct the
-	 * "MACedIDFor[R]".
-	 *
-	 * Code assumes that struct ikev2_id's "IDType|RESERVED" is
-	 * laid out the same as the packet.
-	 */
-
-	if (ike->sa.st_peer_wants_null) {
-		/* make it the Null ID */
-		ike->sa.st_v2_id_payload.header.isai_type = ID_NULL;
-		ike->sa.st_v2_id_payload.data = empty_chunk;
-	} else {
-		shunk_t data;
-		ike->sa.st_v2_id_payload.header =
-			build_v2_id_payload(&c->local->host, &data,
-					    "my IDr", ike->sa.logger);
-		ike->sa.st_v2_id_payload.data = clone_hunk(data, "my IDr");
-	}
-
-	/* will be signed in auth payload */
-	ike->sa.st_v2_id_payload.mac = v2_hash_id_payload("IDr", ike, "st_skey_pr_nss",
-							  ike->sa.st_skey_pr_nss);
-
 	enum keyword_auth authby = local_v2_auth(ike);
 	enum ikev2_auth_method auth_method = local_v2AUTH_method(ike, authby);
 	switch (auth_method) {
@@ -898,6 +871,49 @@ stf_status submit_v2AUTH_generate_initiator_signature(struct ike_sa *ike, struct
  * Code assumes that struct ikev2_id's "IDType|RESERVED" is laid out
  * the same as the packet.
  */
+
+static struct crypt_mac v2_hash_id_payload(const char *id_name, const struct ike_sa *ike,
+					   const char *key_name, PK11SymKey *key)
+{
+	/*
+	 * InitiatorIDPayload = PayloadHeader | RestOfInitIDPayload
+	 * RestOfInitIDPayload = IDType | RESERVED | InitIDData
+	 * MACedIDForR = prf(SK_pr, RestOfInitIDPayload)
+	 */
+	struct crypt_prf *id_ctx = crypt_prf_init_symkey(id_name, ike->sa.st_oakley.ta_prf,
+							 key_name, key, ike->sa.logger);
+	/* skip PayloadHeader; hash: IDType | RESERVED */
+	crypt_prf_update_bytes(id_ctx, "IDType", &ike->sa.st_v2_id_payload.header.isai_type,
+				sizeof(ike->sa.st_v2_id_payload.header.isai_type));
+	/* note that res1+res2 is 3 zero bytes */
+	crypt_prf_update_byte(id_ctx, "RESERVED 1", ike->sa.st_v2_id_payload.header.isai_res1);
+	crypt_prf_update_byte(id_ctx, "RESERVED 2", ike->sa.st_v2_id_payload.header.isai_res2);
+	crypt_prf_update_byte(id_ctx, "RESERVED 3", ike->sa.st_v2_id_payload.header.isai_res3);
+	/* hash: InitIDData */
+	crypt_prf_update_hunk(id_ctx, "InitIDData", ike->sa.st_v2_id_payload.data);
+	return crypt_prf_final_mac(&id_ctx, NULL/*no-truncation*/);
+}
+
+void v2_IKE_AUTH_responder_id_payload(struct ike_sa *ike)
+{
+	struct connection *const c = ike->sa.st_connection;
+
+	if (ike->sa.st_peer_wants_null) {
+		/* make it the Null ID */
+		ike->sa.st_v2_id_payload.header.isai_type = ID_NULL;
+		ike->sa.st_v2_id_payload.data = empty_chunk;
+	} else {
+		shunk_t data;
+		ike->sa.st_v2_id_payload.header =
+			build_v2_id_payload(&c->local->host, &data,
+					    "my IDr", ike->sa.logger);
+		ike->sa.st_v2_id_payload.data = clone_hunk(data, "my IDr");
+	}
+
+	/* will be signed in auth payload */
+	ike->sa.st_v2_id_payload.mac = v2_hash_id_payload("IDr", ike, "st_skey_pr_nss",
+					    ike->sa.st_skey_pr_nss);
+}
 
 void v2_IKE_AUTH_initiator_id_payload(struct ike_sa *ike)
 {

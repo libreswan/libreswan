@@ -790,6 +790,16 @@ static stf_status process_v2_IKE_AUTH_request_tail(struct state *ike_st,
 		return STF_FATAL;
 	}
 
+	/*
+	 * Construct the IDr payload and store it in state so that it
+	 * can be emitted later.  Then use that to construct the
+	 * "MACedIDFor[R]".
+	 *
+	 * Code assumes that struct ikev2_id's "IDType|RESERVED" is
+	 * laid out the same as the packet.
+	 */
+	v2_IKE_AUTH_responder_id_payload(ike);
+
 	return submit_v2AUTH_generate_responder_signature(ike, md, process_v2_IKE_AUTH_request_auth_signature_continue);
 }
 
