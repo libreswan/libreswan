@@ -107,8 +107,6 @@ struct starter_conn {
 		STATE_FAILED,
 	} state;
 
-	char *ike_crypto;
-	char *esp;
 	uint32_t xfrm_if_id;
 };
 

@@ -508,10 +508,8 @@ int starter_whack_add_conn(const char *ctlsocket,
 	if (!set_whack_end(&msg.right, &conn->right, logger))
 		return -1;
 
-	msg.esp = conn->esp;
-	conn_log_val(logger, conn, "esp", msg.esp);
-	msg.ike = conn->ike_crypto;
-	conn_log_val(logger, conn, "ike", msg.ike);
+	msg.esp = conn->strings[KSCF_ESP];
+	msg.ike = conn->strings[KSCF_IKE];
 
 	/*
 	 * Save the "computed" pubkeys and IDs before the pointers in

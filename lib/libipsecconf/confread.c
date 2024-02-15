@@ -772,9 +772,6 @@ static bool load_conn(struct starter_conn *conn,
 
 	str_to_conn(connalias, KSCF_CONNALIAS);
 
-	str_to_conn(ike_crypto, KSCF_IKE);
-	str_to_conn(esp, KSCF_ESP);
-
 #	undef str_to_conn
 
 	if (conn->options_set[KNCF_KEYEXCHANGE]) {
@@ -958,9 +955,6 @@ static void copy_conn_default(struct starter_conn *conn,
 	STR_FIELD(name);
 	STR_FIELD(connalias);
 
-	STR_FIELD(ike_crypto);
-	STR_FIELD(esp);
-
 	for (unsigned i = 0; i < elemsof(conn->strings); i++)
 		STR_FIELD(strings[i]);
 
@@ -1090,9 +1084,6 @@ static void confread_free_conn(struct starter_conn *conn)
 
 	STR_FIELD(name);
 	STR_FIELD(connalias);
-
-	STR_FIELD(ike_crypto);
-	STR_FIELD(esp);
 
 	for (unsigned i = 0; i < elemsof(conn->strings); i++)
 		STR_FIELD(strings[i]);
