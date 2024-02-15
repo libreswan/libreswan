@@ -869,6 +869,15 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		jam_string(buf, " routing: ");
 		jam_enum_human(buf, &routing_names, c->child.routing);
 		jam_string(buf, ";");
+		struct state *sa = state_by_serialno(c->routing_sa);
+		if (sa != NULL) {
+			jam_string(buf, " owner: ");
+			jam_string(buf, state_sa_name(sa));
+			jam_string(buf, " ");
+			jam_so(buf, sa->st_serialno);
+			jam_string(buf, ";");
+		}
+		jam_connection_owners(buf, c, IKE_SA_OWNER_FLOOR, IKE_SA_OWNER_ROOF);
 		jam_connection_owners(buf, c, CHILD_SA_OWNER_FLOOR, CHILD_SA_OWNER_ROOF);
 	}
 
