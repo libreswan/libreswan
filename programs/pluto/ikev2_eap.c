@@ -449,7 +449,7 @@ stf_status process_v2_IKE_AUTH_request_EAP_start(struct ike_sa *ike,
 	if (status != STF_OK)
 		return status;
 
-	return generate_v2_responder_auth(ike, md, process_v2_IKE_AUTH_request_EAP_start_signature_continue);
+	return submit_v2AUTH_generate_responder_signature(ike, md, process_v2_IKE_AUTH_request_EAP_start_signature_continue);
 
 auth_fail:
 	pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
