@@ -56,14 +56,4 @@ conn block
 	left=%group
 	#auto=route
 
-conn road-east
-	right=192.1.2.23
-	#left not specified as test case picks "random" ip
-	# Left security gateway, subnet behind it, next hop toward right.
-	leftid=@road
-	# Right security gateway, subnet behind it, next hop toward left.
-	rightid=@east
-	also=road-leftrsasigkey
-	also=east-rightrsasigkey
-
 include /testing/baseconfigs/all/etc/ipsec.d/rsasigkey.conf
