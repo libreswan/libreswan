@@ -93,8 +93,6 @@ struct starter_conn {
 
 	struct starter_end left, right;
 
-	unsigned long id;
-
 	const struct ip_info *clientaddrfamily;
 
 	enum autostart autostart; /*"auto" is a C reserved word*/

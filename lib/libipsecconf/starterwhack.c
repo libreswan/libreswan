@@ -51,20 +51,6 @@ static const struct whack_message empty_whack_message = {
 	.magic = WHACK_MAGIC,
 };
 
-/* NOT RE-ENTRANT: uses a static buffer */
-static char *connection_name(const struct starter_conn *conn)
-{
-	/* If connection name is '%auto', create a new name like conn_xxxxx */
-	static char buf[32];
-
-	if (streq(conn->name, "%auto")) {
-		snprintf(buf, sizeof(buf), "conn_%ld", conn->id);
-		return buf;
-	} else {
-		return conn->name;
-	}
-}
-
 static bool set_whack_end(struct whack_end *w,
 			  const struct starter_end *l,
 			  struct logger *logger)
@@ -293,7 +279,7 @@ static int starter_whack_add_pubkey(const char *leftright,
 	if (err != NULL) {
 		enum_buf pkb;
 		llog_error(logger, 0, "conn %s: %s%s malformed [%s]",
-			   connection_name(conn), leftright,
+			   conn->name, leftright,
 			   str_enum(&ipseckey_algorithm_config_names, pubkey_alg, &pkb),
 			   err);
 		return 1;
@@ -301,7 +287,7 @@ static int starter_whack_add_pubkey(const char *leftright,
 
 	enum_buf pkb;
 	ldbg(logger, "\tsending %s %s%s=%s",
-	     connection_name(conn), leftright,
+	     conn->name, leftright,
 	     str_enum(&ipseckey_algorithm_config_names, pubkey_alg, &pkb),
 	     pubkey);
 	msg.keyval = keyspace;
@@ -330,7 +316,7 @@ int starter_whack_add_conn(const char *ctlsocket,
 {
 	struct whack_message msg = empty_whack_message;
 	msg.whack_addconn = true;
-	msg.name = connection_name(conn);
+	msg.name = conn->name;
 
 	msg.host_afi = conn->left.host_family;
 	msg.child_afi = conn->clientaddrfamily;
@@ -558,7 +544,7 @@ int starter_whack_route_conn(const char *ctlsocket,
 {
 	struct whack_message msg = empty_whack_message;
 	msg.whack_route = true;
-	msg.name = connection_name(conn);
+	msg.name = conn->name;
 	return whack_send_msg(&msg, ctlsocket, NULL, NULL, 0, 0, logger);
 }
 
@@ -569,7 +555,7 @@ int starter_whack_initiate_conn(const char *ctlsocket,
 	struct whack_message msg = empty_whack_message;
 	msg.whack_initiate = true;
 	msg.whack_async = true;
-	msg.name = connection_name(conn);
+	msg.name = conn->name;
 	return whack_send_msg(&msg, ctlsocket, NULL, NULL, 0, 0, logger);
 }
 
