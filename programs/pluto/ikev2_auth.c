@@ -275,9 +275,10 @@ bool emit_local_v2AUTH(struct ike_sa *ike,
 		       struct pbs_out *outs)
 {
 	enum keyword_auth authby = ike->sa.st_eap_sa_md ? AUTH_PSK : local_v2_auth(ike);
+	enum ikev2_auth_method local_auth_method = local_v2AUTH_method(ike, authby);
 	struct ikev2_auth a = {
 		.isaa_critical = build_ikev2_critical(false, ike->sa.logger),
-		.isaa_auth_method = local_v2AUTH_method(ike, authby),
+		.isaa_auth_method = local_auth_method,
 	};
 
 	struct pbs_out auth_pbs;
@@ -285,11 +286,13 @@ bool emit_local_v2AUTH(struct ike_sa *ike,
 		return false;
 	}
 
-	switch (a.isaa_auth_method) {
+	switch (local_auth_method) {
 	case IKEv2_AUTH_RSA:
 	case IKEv2_AUTH_ECDSA_SHA2_256_P256:
 	case IKEv2_AUTH_ECDSA_SHA2_384_P384:
 	case IKEv2_AUTH_ECDSA_SHA2_512_P521:
+	case IKEv2_AUTH_PSK:
+	case IKEv2_AUTH_NULL:
 		if (!out_hunk(*auth_sig, &auth_pbs, "signature")) {
 			return false;
 		}
@@ -314,31 +317,6 @@ bool emit_local_v2AUTH(struct ike_sa *ike,
 			/* already logged */
 			return false;
 		}
-		break;
-	}
-
-	case IKEv2_AUTH_PSK:
-	case IKEv2_AUTH_NULL:
-	{
-		struct crypt_mac signed_octets = empty_mac;
-		diag_t d = ikev2_calculate_psk_sighash(LOCAL_PERSPECTIVE, auth_sig,
-						       ike, authby,
-						       &ike->sa.st_v2_id_payload.mac,
-						       ike->sa.st_firstpacket_me,
-						       &signed_octets);
-		if (d != NULL) {
-			llog_diag(RC_LOG_SERIOUS, ike->sa.logger, &d, "%s", "");
-			return false;
-		}
-
-		if (DBGP(DBG_CRYPT)) {
-			DBG_dump_hunk("PSK auth octets", signed_octets);
-		}
-
-		if (!pbs_out_hunk(&auth_pbs, signed_octets, "PSK auth")) {
-			return false;
-		}
-
 		break;
 	}
 

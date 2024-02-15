@@ -253,7 +253,31 @@ stf_status initiate_v2_IKE_AUTH_request(struct ike_sa *ike, struct msg_digest *m
 
 	case IKEv2_AUTH_PSK:
 	case IKEv2_AUTH_NULL:
-		return initiate_v2_IKE_AUTH_request_signature_continue(ike, md, NULL/*auth_sig*/);
+	{
+		struct crypt_mac signed_octets = empty_mac;
+		diag_t d = ikev2_calculate_psk_sighash(LOCAL_PERSPECTIVE,
+						       /*accumulated EAP hash*/NULL,
+						       ike, authby,
+						       &ike->sa.st_v2_id_payload.mac,
+						       ike->sa.st_firstpacket_me,
+						       &signed_octets);
+		if (d != NULL) {
+			llog_diag(RC_LOG_SERIOUS, ike->sa.logger, &d, "%s", "");
+			return false;
+		}
+
+		if (DBGP(DBG_CRYPT)) {
+			DBG_dump_hunk("PSK auth octets", signed_octets);
+		}
+
+		struct hash_signature signed_signature = {
+			.len = signed_octets.len,
+		};
+		PASSERT(ike->sa.logger, sizeof(signed_signature.ptr) >= sizeof(signed_octets.ptr));
+		memcpy_hunk(signed_signature.ptr, signed_octets, signed_octets.len);
+
+		return initiate_v2_IKE_AUTH_request_signature_continue(ike, md, &signed_signature);
+	}
 
 	default:
 	{
@@ -1021,7 +1045,34 @@ stf_status generate_v2_responder_auth(struct ike_sa *ike, struct msg_digest *md,
 
 	case IKEv2_AUTH_PSK:
 	case IKEv2_AUTH_NULL:
-		return auth_cb(ike, md, NULL/*auth_sig*/);
+	{
+		struct crypt_mac signed_octets = empty_mac;
+		diag_t d = ikev2_calculate_psk_sighash(LOCAL_PERSPECTIVE,
+						       /*accumulated EAP hash*/NULL,
+						       ike, authby,
+						       &ike->sa.st_v2_id_payload.mac,
+						       ike->sa.st_firstpacket_me,
+						       &signed_octets);
+		if (d != NULL) {
+			llog_diag(RC_LOG_SERIOUS, ike->sa.logger, &d, "%s", "");
+			record_v2N_response(ike->sa.logger, ike, md,
+					    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
+					    ENCRYPTED_PAYLOAD);
+			return STF_FATAL;
+		}
+
+		if (DBGP(DBG_CRYPT)) {
+			DBG_dump_hunk("PSK auth octets", signed_octets);
+		}
+
+		struct hash_signature signed_signature = {
+			.len = signed_octets.len,
+		};
+		PASSERT(ike->sa.logger, sizeof(signed_signature.ptr) >= sizeof(signed_octets.ptr));
+		memcpy_hunk(signed_signature.ptr, signed_octets, signed_octets.len);
+
+		return auth_cb(ike, md, &signed_signature);
+	}
 
 	default:
 	{
