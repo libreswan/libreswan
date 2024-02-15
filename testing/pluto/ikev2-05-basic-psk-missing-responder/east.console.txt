@@ -1,0 +1,24 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
+"westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
+east #
+ ipsec whack --impair record_outbound
+east #
+ echo "initdone"
+initdone
+east #
+ ipsec whack --impair drip_outbound:1
+IMPAIR: start processing outbound drip packet 1
+IMPAIR: stop processing outbound drip packet 1
+east #
+ ../../guestbin/ipsec-kernel-state.sh
+east #
+ ../../guestbin/ipsec-kernel-policy.sh
+east #
+ 
