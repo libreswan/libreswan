@@ -72,4 +72,7 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 stf_status submit_v2AUTH_generate_responder_signature(struct ike_sa *ike, struct msg_digest *md,
 						      v2_auth_signature_cb auth_cb);
 
+stf_status submit_v2AUTH_generate_initiator_signature(struct ike_sa *ike, struct msg_digest *md,
+						      v2_auth_signature_cb *cb);
+
 #endif
