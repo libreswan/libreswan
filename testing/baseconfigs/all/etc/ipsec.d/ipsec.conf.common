@@ -55,5 +55,3 @@ conn block
 	right=%defaultroute
 	left=%group
 	#auto=route
-
-include /testing/baseconfigs/all/etc/ipsec.d/rsasigkey.conf
