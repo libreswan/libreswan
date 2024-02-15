@@ -49,6 +49,10 @@ west #
 done
 west #
  ../../guestbin/ipsec-kernel-state.sh
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 0 
+	sel src 192.1.2.23/32 dst 192.1.2.45/32 
 west #
  ../../guestbin/ipsec-kernel-policy.sh
 west #

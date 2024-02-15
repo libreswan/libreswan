@@ -33,7 +33,7 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-ipv4-psk-ikev2" #1: authentication failed: no PSK found for '@west'
-"westnet-eastnet-ipv4-psk-ikev2" #1: STATE_V2_PARENT_I1: 60 second timeout exceeded after 0 retransmits.  No response (or no acceptable response) to our first IKEv2 message
+"westnet-eastnet-ipv4-psk-ikev2" #1: encountered fatal error in state STATE_V2_PARENT_I1
 "westnet-eastnet-ipv4-psk-ikev2" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "westnet-eastnet-ipv4-psk-ikev2" #1: deleting IKE SA (PARENT_I1) and NOT sending notification
 west #
