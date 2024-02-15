@@ -498,7 +498,7 @@ enum option_enums {
 	CD_PFS,
 	CD_REQID,
 	CD_NFLOG_GROUP,
-	CD_CONN_MARK_BOTH,
+	CD_CONN_MARK,
 	CD_CONN_MARK_IN,
 	CD_CONN_MARK_OUT,
 	CD_VTI_INTERFACE,
@@ -863,7 +863,7 @@ static const struct option long_opts[] = {
 #ifdef USE_NFLOG
 	{ "nflog-group", required_argument, NULL, CD_NFLOG_GROUP },
 #endif
-	{ "conn-mark", required_argument, NULL, CD_CONN_MARK_BOTH },
+	{ "conn-mark", required_argument, NULL, CD_CONN_MARK },
 	{ "conn-mark-in", required_argument, NULL, CD_CONN_MARK_IN },
 	{ "conn-mark-out", required_argument, NULL, CD_CONN_MARK_OUT },
 	{ "vti-iface", required_argument, NULL, CD_VTI_INTERFACE }, /* backward compat */
@@ -2321,14 +2321,14 @@ int main(int argc, char **argv)
 			msg.modecfgbanner = strdup(optarg);
 			continue;
 
-		case CD_CONN_MARK_BOTH:      /* --conn-mark */
-			msg.conn_mark_both = strdup(optarg);
+		case CD_CONN_MARK:      /* --conn-mark */
+			msg.mark = strdup(optarg);
 			continue;
 		case CD_CONN_MARK_IN:      /* --conn-mark-in */
-			msg.conn_mark_in = strdup(optarg);
+			msg.mark_in = strdup(optarg);
 			continue;
 		case CD_CONN_MARK_OUT:      /* --conn-mark-out */
-			msg.conn_mark_out = strdup(optarg);
+			msg.mark_out = strdup(optarg);
 			continue;
 
 		case CD_VTI_INTERFACE:      /* --vti-interface=IFACE */

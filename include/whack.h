@@ -427,9 +427,9 @@ struct whack_message {
 	char *modecfgdomains;
 	char *modecfgbanner;
 
-	char *conn_mark_both;
-	char *conn_mark_in;
-	char *conn_mark_out;
+	char *mark;
+	char *mark_in;
+	char *mark_out;
 
 	char *vti_interface;
 	enum yn_options vti_routing;	/* perform routing into vti

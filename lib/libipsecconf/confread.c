@@ -775,10 +775,6 @@ static bool load_conn(struct starter_conn *conn,
 	str_to_conn(ike_crypto, KSCF_IKE);
 	str_to_conn(esp, KSCF_ESP);
 
-	str_to_conn(conn_mark_both, KSCF_CONN_MARK_BOTH);
-	str_to_conn(conn_mark_in, KSCF_CONN_MARK_IN);
-	str_to_conn(conn_mark_out, KSCF_CONN_MARK_OUT);
-
 #	undef str_to_conn
 
 	if (conn->options_set[KNCF_KEYEXCHANGE]) {
@@ -965,13 +961,6 @@ static void copy_conn_default(struct starter_conn *conn,
 	STR_FIELD(ike_crypto);
 	STR_FIELD(esp);
 
-	STR_FIELD(conn_mark_both);
-	STR_FIELD(conn_mark_in);
-	STR_FIELD(conn_mark_out);
-	STR_FIELD(conn_mark_both);
-	STR_FIELD(conn_mark_in);
-	STR_FIELD(conn_mark_out);
-
 	for (unsigned i = 0; i < elemsof(conn->strings); i++)
 		STR_FIELD(strings[i]);
 
@@ -1104,13 +1093,6 @@ static void confread_free_conn(struct starter_conn *conn)
 
 	STR_FIELD(ike_crypto);
 	STR_FIELD(esp);
-
-	STR_FIELD(conn_mark_both);
-	STR_FIELD(conn_mark_in);
-	STR_FIELD(conn_mark_out);
-	STR_FIELD(conn_mark_both);
-	STR_FIELD(conn_mark_in);
-	STR_FIELD(conn_mark_out);
 
 	for (unsigned i = 0; i < elemsof(conn->strings); i++)
 		STR_FIELD(strings[i]);

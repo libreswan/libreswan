@@ -109,9 +109,6 @@ struct starter_conn {
 
 	char *ike_crypto;
 	char *esp;
-	char *conn_mark_both;
-	char *conn_mark_in;
-	char *conn_mark_out;
 	uint32_t xfrm_if_id;
 };
 

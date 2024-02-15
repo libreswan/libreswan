@@ -460,12 +460,9 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.modecfgdomains = conn->strings[KSCF_MODECFGDOMAINS];
 	msg.modecfgbanner = conn->strings[KSCF_MODECFGBANNER];
 
-	msg.conn_mark_both = conn->conn_mark_both;
-	conn_log_val(logger, conn, "mark", msg.conn_mark_both);
-	msg.conn_mark_in = conn->conn_mark_in;
-	conn_log_val(logger, conn, "mark-in", msg.conn_mark_in);
-	msg.conn_mark_out = conn->conn_mark_out;
-	conn_log_val(logger, conn, "mark-out", msg.conn_mark_out);
+	msg.mark = conn->strings[KSCF_MARK];
+	msg.mark_in = conn->strings[KSCF_MARK_IN];
+	msg.mark_out = conn->strings[KSCF_MARK_OUT];
 
 	msg.vti_interface = conn->strings[KSCF_VTI_INTERFACE];
 	conn_log_val(logger, conn, "vti-interface", msg.vti_interface);

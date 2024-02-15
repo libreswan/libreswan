@@ -3120,18 +3120,18 @@ static diag_t extract_connection(const struct whack_message *wm,
 		 */
 
 		/* mark-in= and mark-out= overwrite mark= */
-		if (wm->conn_mark_both != NULL) {
-			mark_parse(wm->conn_mark_both, &c->sa_marks.in, c->logger);
-			mark_parse(wm->conn_mark_both, &c->sa_marks.out, c->logger);
-			if (wm->conn_mark_in != NULL || wm->conn_mark_out != NULL) {
+		if (wm->mark != NULL) {
+			mark_parse(wm->mark, &c->sa_marks.in, c->logger);
+			mark_parse(wm->mark, &c->sa_marks.out, c->logger);
+			if (wm->mark_in != NULL || wm->mark_out != NULL) {
 				llog(RC_LOG_SERIOUS, c->logger,
 				     "conflicting mark specifications");
 			}
 		}
-		if (wm->conn_mark_in != NULL)
-			mark_parse(wm->conn_mark_in, &c->sa_marks.in, c->logger);
-		if (wm->conn_mark_out != NULL)
-			mark_parse(wm->conn_mark_out, &c->sa_marks.out, c->logger);
+		if (wm->mark_in != NULL)
+			mark_parse(wm->mark_in, &c->sa_marks.in, c->logger);
+		if (wm->mark_out != NULL)
+			mark_parse(wm->mark_out, &c->sa_marks.out, c->logger);
 	}
 
 	/* ipsec-interface */
