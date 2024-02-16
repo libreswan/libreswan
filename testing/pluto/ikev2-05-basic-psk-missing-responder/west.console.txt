@@ -24,6 +24,8 @@ west #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
 "westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
 west #
+ ipsec whack --impair revival
+west #
  ipsec whack --impair suppress_retransmits
 west #
  echo "initdone"
@@ -36,6 +38,7 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2" #1: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
 "westnet-eastnet-ipv4-psk-ikev2" #1: encountered fatal error in state STATE_V2_PARENT_I2
 "westnet-eastnet-ipv4-psk-ikev2" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: revival: skip scheduling revival event
 "westnet-eastnet-ipv4-psk-ikev2" #1: deleting IKE SA (PARENT_I2) and NOT sending notification
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
@@ -49,10 +52,6 @@ west #
 done
 west #
  ../../guestbin/ipsec-kernel-state.sh
-src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPI reqid REQID mode transport
-	replay-window 0 
-	sel src 192.1.2.23/32 dst 192.1.2.45/32 
 west #
  ../../guestbin/ipsec-kernel-policy.sh
 west #
