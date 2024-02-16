@@ -25,6 +25,7 @@
 #include "ike_alg.h"
 #include "ike_alg_hash.h"
 #include "crypt_hash.h"
+#include "crypt_prf.h"
 
 #include "defs.h"
 #include "ikev2_auth.h"
@@ -888,4 +889,34 @@ stf_status submit_v2AUTH_generate_initiator_signature(struct ike_sa *ike, struct
 	}
 	}
 
+}
+
+/*
+ * Construct the ID[ir] payload and store it in state so that it can
+ * be emitted later.  Then use that to construct the "MACedIDFor[IR]".
+ *
+ * Code assumes that struct ikev2_id's "IDType|RESERVED" is laid out
+ * the same as the packet.
+ */
+
+void v2_IKE_AUTH_initiator_id_payload(struct ike_sa *ike)
+{
+	struct connection *c = ike->sa.st_connection;
+
+	shunk_t data;
+	ike->sa.st_v2_id_payload.header =
+		build_v2_id_payload(&c->local->host, &data,
+				    "my IDi", ike->sa.logger);
+	ike->sa.st_v2_id_payload.data = clone_hunk(data, "my IDi");
+
+	ike->sa.st_v2_id_payload.mac = v2_hash_id_payload("IDi", ike,
+					    "st_skey_pi_nss",
+					    ike->sa.st_skey_pi_nss);
+	if (ike->sa.st_v2_ike_ppk_enabled && !c->config->ppk.insist) {
+		/* ID payload that we've build is the same */
+		ike->sa.st_v2_id_payload.mac_no_ppk_auth =
+			v2_hash_id_payload("IDi (no-PPK)", ike,
+					   "sk_pi_no_pkk",
+					   ike->sa.st_sk_pi_no_ppk);
+	}
 }

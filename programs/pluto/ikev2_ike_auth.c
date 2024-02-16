@@ -152,25 +152,7 @@ stf_status initiate_v2_IKE_AUTH_request(struct ike_sa *ike, struct msg_digest *m
 	 * Code assumes that struct ikev2_id's "IDType|RESERVED" is
 	 * laid out the same as the packet.
 	 */
-
-	{
-		shunk_t data;
-		ike->sa.st_v2_id_payload.header =
-			build_v2_id_payload(&pc->local->host, &data,
-					    "my IDi", ike->sa.logger);
-		ike->sa.st_v2_id_payload.data = clone_hunk(data, "my IDi");
-	}
-
-	ike->sa.st_v2_id_payload.mac = v2_hash_id_payload("IDi", ike,
-							  "st_skey_pi_nss",
-							  ike->sa.st_skey_pi_nss);
-	if (ike->sa.st_v2_ike_ppk_enabled && !pc->config->ppk.insist) {
-		/* ID payload that we've build is the same */
-		ike->sa.st_v2_id_payload.mac_no_ppk_auth =
-			v2_hash_id_payload("IDi (no-PPK)", ike,
-					   "sk_pi_no_pkk",
-					   ike->sa.st_sk_pi_no_ppk);
-	}
+	v2_IKE_AUTH_initiator_id_payload(ike);
 
 	return submit_v2AUTH_generate_initiator_signature(ike, md, initiate_v2_IKE_AUTH_request_signature_continue);
 }

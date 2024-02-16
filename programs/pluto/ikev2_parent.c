@@ -333,8 +333,8 @@ bool emit_v2KE(chunk_t g, const struct dh_desc *group,
 	return true;
 }
 
-struct crypt_mac v2_hash_id_payload(const char *id_name, struct ike_sa *ike,
-					   const char *key_name, PK11SymKey *key)
+struct crypt_mac v2_hash_id_payload(const char *id_name, const struct ike_sa *ike,
+				    const char *key_name, PK11SymKey *key)
 {
 	/*
 	 * InitiatorIDPayload = PayloadHeader | RestOfInitIDPayload

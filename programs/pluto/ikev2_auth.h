@@ -75,4 +75,6 @@ stf_status submit_v2AUTH_generate_responder_signature(struct ike_sa *ike, struct
 stf_status submit_v2AUTH_generate_initiator_signature(struct ike_sa *ike, struct msg_digest *md,
 						      v2_auth_signature_cb *cb);
 
+void v2_IKE_AUTH_initiator_id_payload(struct ike_sa *ike);
+
 #endif
