@@ -358,9 +358,6 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 	/* fprintf(out, "# confwrite_comments:\n"); */
 	confwrite_comments(out, conn);
 
-	if (conn->connalias != NULL)
-		cwf("connalias", conn->connalias);
-
 	{
 		const char *dsn = "UNKNOWN";
 

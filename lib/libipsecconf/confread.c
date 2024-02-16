@@ -761,18 +761,11 @@ static bool load_conn(struct starter_conn *conn,
 		}							\
 	}
 
-	/* ??? sometimes (when? why?) the member is already set */
-
-#	define str_to_conn(member, kscf) { \
-		if (conn->strings_set[kscf]) { \
-			pfreeany(conn->member); \
-			conn->member = clone_str(conn->strings[kscf], #kscf); \
-		} \
-	}
-
-	str_to_conn(connalias, KSCF_CONNALIAS);
-
-#	undef str_to_conn
+	/*
+	 * ??? sometimes (when? why?) the member is already set.
+	 *
+	 * When a conn sets it and then expands also=.
+	 */
 
 	if (conn->options_set[KNCF_KEYEXCHANGE]) {
 		if (conn->options[KNCF_KEYEXCHANGE] == IKE_VERSION_ROOF) {
@@ -948,12 +941,9 @@ static void copy_conn_default(struct starter_conn *conn,
 	 * should correspond to STR_FIELD calls in copy_conn_default() and confread_free_conn.
 	 */
 
-	assert(conn->connalias == NULL);
-
 # define STR_FIELD(f)  { conn->f = clone_str(conn->f, #f); }
 
 	STR_FIELD(name);
-	STR_FIELD(connalias);
 
 	for (unsigned i = 0; i < elemsof(conn->strings); i++)
 		STR_FIELD(strings[i]);
@@ -1083,7 +1073,6 @@ static void confread_free_conn(struct starter_conn *conn)
 # define STR_FIELD(f)  { pfreeany(conn->f); }
 
 	STR_FIELD(name);
-	STR_FIELD(connalias);
 
 	for (unsigned i = 0; i < elemsof(conn->strings); i++)
 		STR_FIELD(strings[i]);

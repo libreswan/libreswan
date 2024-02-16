@@ -358,7 +358,7 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.failure_shunt = conn->failure_shunt;
 	msg.autostart = conn->autostart;
 
-	msg.connalias = conn->connalias;
+	msg.connalias = conn->strings[KSCF_CONNALIAS];
 
 	msg.metric = conn->options[KNCF_METRIC];
 
