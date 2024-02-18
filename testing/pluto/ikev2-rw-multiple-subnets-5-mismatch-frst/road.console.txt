@@ -31,12 +31,16 @@ initiating 4 connections
 "road/0x2" #3: initiating Child SA using IKE SA #1
 "road/0x3" #4: initiating Child SA using IKE SA #1
 "road/0x4" #5: initiating Child SA using IKE SA #1
+"road/0x1" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"road/0x1" #2: IMPAIR: revival: skip scheduling revival event
 "road/0x2" #3: sent CREATE_CHILD_SA request for new IPsec SA
 "road/0x2" #3: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 NATD=192.1.2.23:4500 DPD=passive}
 "road/0x3" #4: sent CREATE_CHILD_SA request for new IPsec SA
 "road/0x3" #4: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.20.0/24] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 NATD=192.1.2.23:4500 DPD=passive}
 "road/0x4" #5: sent CREATE_CHILD_SA request for new IPsec SA
 "road/0x4" #5: CREATE_CHILD_SA failed with error notification TS_UNACCEPTABLE
+"road/0x4" #5: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"road/0x4" #5: IMPAIR: revival: skip scheduling revival event
 road #
  # sleep 3
 road #

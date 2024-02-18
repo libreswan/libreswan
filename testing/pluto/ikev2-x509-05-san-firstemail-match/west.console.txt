@@ -26,8 +26,8 @@ west #
 "san" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
 "san" #1: X509: authentication failed; peer certificate subjectAltName extension does not match ID_USER_FQDN 'user-east@testing.libreswan.org'
 "san" #1: deleting IKE SA (PARENT_I2) and sending notification
-"san" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"san" #1: IMPAIR: revival: skip scheduling revival event
+"san" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"san" #2: IMPAIR: revival: skip scheduling revival event
 west #
  echo "done"
 done

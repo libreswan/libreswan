@@ -28,8 +28,8 @@ west #
 "westnet-eastnet-ikev2" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
 "westnet-eastnet-ikev2" #1: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
 "westnet-eastnet-ikev2" #1: encountered fatal error in state STATE_V2_PARENT_I2
-"westnet-eastnet-ikev2" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"westnet-eastnet-ikev2" #1: IMPAIR: revival: skip scheduling revival event
+"westnet-eastnet-ikev2" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"westnet-eastnet-ikev2" #2: IMPAIR: revival: skip scheduling revival event
 "westnet-eastnet-ikev2" #1: deleting IKE SA (PARENT_I2) and NOT sending notification
 west #
  echo done

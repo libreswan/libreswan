@@ -31,9 +31,8 @@ west #
 "west-cuckoo" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
 "west-cuckoo" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "west-cuckoo" #1: IKE_AUTH response redirecting to new gateway 192.1.3.33
-"west-cuckoo" #2: deleting larval Child SA
-"west-cuckoo" #1: scheduling redirect 1 to 192.1.3.33
-"west-cuckoo" #1: IMPAIR: redirect: skip scheduling redirect event
+"west-cuckoo" #2: scheduling redirect 1 to 192.1.3.33
+"west-cuckoo" #2: IMPAIR: redirect: skip scheduling redirect event
 "west-cuckoo" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and NOT sending notification
 west #
  ipsec whack --impair trigger_revival:1
@@ -54,9 +53,8 @@ west #
 "west-cuckold" #5: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
 "west-cuckold" #5: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "west-cuckold" #5: IKE_AUTH response redirecting to new gateway 192.1.3.33
-"west-cuckold" #6: deleting larval Child SA
-"west-cuckold" #5: scheduling redirect 1 to 192.1.3.33
-"west-cuckold" #5: IMPAIR: redirect: skip scheduling redirect event
+"west-cuckold" #6: scheduling redirect 1 to 192.1.3.33
+"west-cuckold" #6: IMPAIR: redirect: skip scheduling redirect event
 "west-cuckold" #5: deleting IKE SA (ESTABLISHED_IKE_SA) and NOT sending notification
 west #
  # re-initiate the second connection; it will now match the first IKE

@@ -80,6 +80,8 @@ west #
 "westnet-eastnet" #4: IMPAIR: omitting HASH payload for outI1
 "westnet-eastnet" #4: sent Quick Mode request
 "westnet-eastnet" #4: STATE_QUICK_I1: 60 second timeout exceeded after 0 retransmits.  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal
+"westnet-eastnet" #4: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"westnet-eastnet" #4: IMPAIR: revival: skip scheduling revival event
 "westnet-eastnet" #4: deleting IPsec SA (QUICK_I1) and NOT sending notification
 ERROR: "westnet-eastnet" #4: netlink response for Del SA esp.ESPSPIi@192.1.2.45: No such process (errno 3)
 west #
@@ -100,6 +102,8 @@ west #
 "westnet-eastnet" #6: IMPAIR: sending HASH payload with no data for outI1
 "westnet-eastnet" #6: sent Quick Mode request
 "westnet-eastnet" #6: STATE_QUICK_I1: 60 second timeout exceeded after 0 retransmits.  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal
+"westnet-eastnet" #6: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"westnet-eastnet" #6: IMPAIR: revival: skip scheduling revival event
 "westnet-eastnet" #6: deleting IPsec SA (QUICK_I1) and NOT sending notification
 ERROR: "westnet-eastnet" #6: netlink response for Del SA esp.ESPSPIi@192.1.2.45: No such process (errno 3)
 west #
@@ -120,6 +124,8 @@ west #
 "westnet-eastnet" #8: IMPAIR: setting HASH payload bytes to 00
 "westnet-eastnet" #8: sent Quick Mode request
 "westnet-eastnet" #8: STATE_QUICK_I1: 60 second timeout exceeded after 0 retransmits.  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal
+"westnet-eastnet" #8: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"westnet-eastnet" #8: IMPAIR: revival: skip scheduling revival event
 "westnet-eastnet" #8: deleting IPsec SA (QUICK_I1) and NOT sending notification
 ERROR: "westnet-eastnet" #8: netlink response for Del SA esp.ESPSPIi@192.1.2.45: No such process (errno 3)
 west #
@@ -394,6 +400,7 @@ west #
 |    length: 278 (01 16)
 "westnet-eastnet" #3: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
 "westnet-eastnet" #4: IMPAIR: omitting HASH payload for outI1
+"westnet-eastnet" #4: IMPAIR: revival: skip scheduling revival event
 -- start message (ID)
 |    next payload type: ISAKMP_NEXT_ID (0x5)
 | ***parse ISAKMP Signature Payload:
@@ -401,6 +408,7 @@ west #
 |    length: 278 (01 16)
 "westnet-eastnet" #5: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
 "westnet-eastnet" #6: IMPAIR: sending HASH payload with no data for outI1
+"westnet-eastnet" #6: IMPAIR: revival: skip scheduling revival event
 -- start message (ID)
 |    next payload type: ISAKMP_NEXT_ID (0x5)
 | ***parse ISAKMP Signature Payload:
@@ -408,6 +416,7 @@ west #
 |    length: 278 (01 16)
 "westnet-eastnet" #7: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
 "westnet-eastnet" #8: IMPAIR: setting HASH payload bytes to 00
+"westnet-eastnet" #8: IMPAIR: revival: skip scheduling revival event
 -- start message (ID)
 |    next payload type: ISAKMP_NEXT_ID (0x5)
 | ***parse ISAKMP Signature Payload:

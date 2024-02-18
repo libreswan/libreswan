@@ -33,8 +33,8 @@ west #
 "nss-cert" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
 "nss-cert" #1: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
 "nss-cert" #1: encountered fatal error in state STATE_V2_PARENT_I2
-"nss-cert" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"nss-cert" #1: IMPAIR: revival: skip scheduling revival event
+"nss-cert" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"nss-cert" #2: IMPAIR: revival: skip scheduling revival event
 "nss-cert" #1: deleting IKE SA (PARENT_I2) and NOT sending notification
 west #
  echo done

@@ -27,7 +27,7 @@ west #
 "ikev2-westnet-eastnet-x509-cr" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
 "ikev2-westnet-eastnet-x509-cr" #1: X509: authentication failed; peer certificate contains no subjectAltName extension to match ID_FQDN '@right'
 "ikev2-westnet-eastnet-x509-cr" #1: deleting IKE SA (PARENT_I2) and sending notification
-"ikev2-westnet-eastnet-x509-cr" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"ikev2-westnet-eastnet-x509-cr" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 west #
  echo "done"
 done

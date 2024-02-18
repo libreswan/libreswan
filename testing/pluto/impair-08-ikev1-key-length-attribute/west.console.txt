@@ -79,6 +79,8 @@ west #
 "aes128" #5: IMPAIR: duplicating key-length
 "aes128" #5: sent Quick Mode request
 "aes128" #5: IMPAIR: retransmit so timing out SA (may retry)
+"aes128" #5: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"aes128" #5: IMPAIR: revival: skip scheduling revival event
 "aes128" #5: deleting IPsec SA (QUICK_I1) and NOT sending notification
 west #
  ipsec whack --impair none
@@ -125,6 +127,8 @@ west #
 "aes128" #8: IMPAIR: sending key-length attribute value 0
 "aes128" #8: sent Quick Mode request
 "aes128" #8: IMPAIR: retransmit so timing out SA (may retry)
+"aes128" #8: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"aes128" #8: IMPAIR: revival: skip scheduling revival event
 "aes128" #8: deleting IPsec SA (QUICK_I1) and NOT sending notification
 west #
  ipsec whack --impair none
@@ -177,6 +181,8 @@ west #
 "aes128" #12: IMPAIR: not sending key-length attribute
 "aes128" #12: sent Quick Mode request
 "aes128" #12: IMPAIR: retransmit so timing out SA (may retry)
+"aes128" #12: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"aes128" #12: IMPAIR: revival: skip scheduling revival event
 "aes128" #12: deleting IPsec SA (QUICK_I1) and NOT sending notification
 west #
  ipsec whack --impair none
@@ -233,6 +239,8 @@ west #
 "aes128" #16: IMPAIR: key-length-attribute:empty not implemented
 "aes128" #16: sent Quick Mode request
 "aes128" #16: IMPAIR: retransmit so timing out SA (may retry)
+"aes128" #16: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"aes128" #16: IMPAIR: revival: skip scheduling revival event
 "aes128" #16: deleting IPsec SA (QUICK_I1) and NOT sending notification
 west #
  ipsec whack --impair none

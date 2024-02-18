@@ -55,6 +55,8 @@ west #
 "westnet-eastnet-aes256" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 "westnet-eastnet-aes256" #2: sent Quick Mode request
 "westnet-eastnet-aes256" #2: STATE_QUICK_I1: 60 second timeout exceeded after 0 retransmits.  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal
+"westnet-eastnet-aes256" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"westnet-eastnet-aes256" #2: IMPAIR: revival: skip scheduling revival event
 "westnet-eastnet-aes256" #2: deleting IPsec SA (QUICK_I1) and NOT sending notification
 ERROR: "westnet-eastnet-aes256" #2: netlink response for Del SA esp.ESPSPIi@192.1.2.45: No such process (errno 3)
 west #

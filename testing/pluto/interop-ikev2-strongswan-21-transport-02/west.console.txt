@@ -29,6 +29,8 @@ west #
 "westnet-eastnet-ikev2" #2: CHILD SA failed: NO_PROPOSAL_CHOSEN
 "westnet-eastnet-ikev2" #1: IKE SA established but initiator rejected Child SA response
 "westnet-eastnet-ikev2" #2: deleting larval Child SA using IKE SA #1
+"westnet-eastnet-ikev2" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"westnet-eastnet-ikev2" #2: IMPAIR: revival: skip scheduling revival event
 ERROR: "westnet-eastnet-ikev2" #2: netlink response for Del SA esp.ESPSPIi@192.1.2.23: No such process (errno 3)
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254

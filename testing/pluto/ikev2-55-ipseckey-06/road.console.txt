@@ -43,7 +43,7 @@ road #
 "road-east-ikev2" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
 "road-east-ikev2" #1: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
 "road-east-ikev2" #1: encountered fatal error in state STATE_V2_PARENT_I2
-"road-east-ikev2" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"road-east-ikev2" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "road-east-ikev2" #1: deleting IKE SA (PARENT_I2) and NOT sending notification
 road #
  # there should be two public keys. including road

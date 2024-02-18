@@ -50,6 +50,8 @@ west #
 "ipv4-psk-ikev2-transport" #2: CHILD SA failed: NO_PROPOSAL_CHOSEN
 "ipv4-psk-ikev2-transport" #1: IKE SA established but initiator rejected Child SA response
 "ipv4-psk-ikev2-transport" #2: deleting larval Child SA using IKE SA #1
+"ipv4-psk-ikev2-transport" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"ipv4-psk-ikev2-transport" #2: IMPAIR: revival: skip scheduling revival event
 ERROR: "ipv4-psk-ikev2-transport" #2: netlink response for Del SA esp.ESPSPIi@192.1.2.23: No such process (errno 3)
 west #
  echo done

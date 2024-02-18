@@ -49,7 +49,7 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2" #3: IMPAIR: setting (should be off) critical payload bit
 "westnet-eastnet-ipv4-psk-ikev2" #3: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
 "westnet-eastnet-ipv4-psk-ikev2" #3: IMPAIR: retransmit so timing out SA (may retry)
-"westnet-eastnet-ipv4-psk-ikev2" #3: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"westnet-eastnet-ipv4-psk-ikev2" #4: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "westnet-eastnet-ipv4-psk-ikev2" #3: deleting IKE SA (PARENT_I2) and NOT sending notification
 west #
  echo done

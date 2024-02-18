@@ -48,7 +48,7 @@ west #
 "nss-cert-incorrect" #3: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
 "nss-cert-incorrect" #3: X509: authentication failed; peer ID_DER_ASN1_DN 'E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA' does not match expected 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org'
 "nss-cert-incorrect" #3: deleting IKE SA (PARENT_I2) and sending notification
-"nss-cert-incorrect" #3: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"nss-cert-incorrect" #4: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 west #
  echo done
 done
