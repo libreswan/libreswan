@@ -10,5 +10,5 @@ ipsec whack --impair suppress_retransmits
 # ensure for tests acquires expire before our failureshunt=2m
 echo 30 > /proc/sys/net/core/xfrm_acq_expires
 # give OE policies time to load
-../../guestbin/wait-for.sh --match 'loaded 11,' -- ipsec auto --status
+../../guestbin/wait-for.sh --match 'loaded 10,' -- ipsec auto --status
 echo "initdone"

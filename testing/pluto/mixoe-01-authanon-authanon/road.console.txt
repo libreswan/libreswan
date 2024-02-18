@@ -18,15 +18,14 @@ road #
 road #
  # give OE policies time to load
 road #
- ../../guestbin/wait-for.sh --match 'loaded 11,' -- ipsec auto --status
-Total IPsec connections: loaded 11, active 0
+ ../../guestbin/wait-for.sh --match 'loaded 10,' -- ipsec auto --status
+Total IPsec connections: loaded 10, active 0
 road #
  ipsec status | grep "our auth" | grep private
 "clear-or-private":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+AUTH_NULL+RSASIG_v1_5, our autheap:none, their autheap:none;
 "private":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+AUTH_NULL+RSASIG_v1_5, our autheap:none, their autheap:none;
 "private-or-clear":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+AUTH_NULL+RSASIG_v1_5, our autheap:none, their autheap:none;
 "private-or-clear#192.1.2.23/32":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+AUTH_NULL+RSASIG_v1_5, our autheap:none, their autheap:none;
-"private-or-clear-all":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+AUTH_NULL+RSASIG_v1_5, our autheap:none, their autheap:none;
 road #
  echo "initdone"
 initdone

@@ -13,10 +13,6 @@
 # Tempting to use "postcard" instead of "clear"
 # these are for a subnet behind us.
 
-# a different named conn, so we can have a different policy
-conn private-or-clear-all
-	also=private-or-clear
-
 # these are for self
 conn clear
 	type=passthrough

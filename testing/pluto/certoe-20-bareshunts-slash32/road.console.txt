@@ -17,8 +17,8 @@ road #
 road #
  # give OE policies time to load
 road #
- ../../guestbin/wait-for.sh --match 'loaded 11,' -- ipsec auto --status
-Total IPsec connections: loaded 11, active 0
+ ../../guestbin/wait-for.sh --match 'loaded 10,' -- ipsec auto --status
+Total IPsec connections: loaded 10, active 0
 road #
  echo "initdone"
 initdone
@@ -88,7 +88,7 @@ road #
  ipsec whack --shuntstatus
 Bare Shunt list:
  
-192.1.3.209/32 -0-> 192.1.2.23/32 => %pass    oe-failing $12
+192.1.3.209/32 -0-> 192.1.2.23/32 => %pass    oe-failing $10
 road #
  ipsec showstates
 road #

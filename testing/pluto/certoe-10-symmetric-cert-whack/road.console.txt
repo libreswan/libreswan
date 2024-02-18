@@ -22,8 +22,8 @@ road #
 road #
  # give OE policies time to load
 road #
- ../../guestbin/wait-for.sh --match 'loaded 8' -- ipsec auto --status
-Total IPsec connections: loaded 8, active 0
+ ../../guestbin/wait-for.sh --match 'loaded 7' -- ipsec auto --status
+Total IPsec connections: loaded 7, active 0
 road #
  ip -s xfrm monitor > /tmp/xfrm-monitor.out & sleep 1
 [x] PID
