@@ -13,7 +13,7 @@ ipsec whack --impair suppress_retransmits
 echo 30 > /proc/sys/net/core/xfrm_acq_expires
 
 # give OE policies time to load
-../../guestbin/wait-for.sh --match 'loaded 10' -- ipsec auto --status
+../../guestbin/wait-for.sh --match 'loaded 9,' -- ipsec auto --status
 
 # one packet, which gets eaten by XFRM, so east does not initiate
 ../../guestbin/ping-once.sh --forget -I 192.1.3.33 192.1.2.23

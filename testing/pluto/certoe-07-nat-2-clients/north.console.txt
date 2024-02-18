@@ -28,8 +28,8 @@ north #
 north #
  # give OE policies time to load
 north #
- ../../guestbin/wait-for.sh --match 'loaded 10' -- ipsec auto --status
-Total IPsec connections: loaded 10, active 0
+ ../../guestbin/wait-for.sh --match 'loaded 9,' -- ipsec auto --status
+Total IPsec connections: loaded 9, active 0
 north #
  # one packet, which gets eaten by XFRM, so east does not initiate
 north #
