@@ -1272,8 +1272,65 @@ struct best {
 	struct narrowed_selector_payloads nsps;
 };
 
+static bool fit_connection_for_v2TS_request(struct connection *d,
+					    const struct traffic_selector_payloads *tsps,
+					    struct narrowed_selector_payloads *nsps,
+					    indent_t indent)
+{
+	/* responder -- note D! */
+	enum fit responder_selector_fit;
+	if (d->config->ikev2_allow_narrowing) {
+		if (is_template(d)) {
+			/*
+			 * A template starts wider
+			 * than the TS and then, when
+			 * it is instantiated, gets
+			 * narrowed.
+			 */
+			responder_selector_fit = END_WIDER_THAN_TS;
+		} else {
+			/*
+			 * An existing instance needs
+			 * to just accomodate the
+			 * existing traffic
+			 * selectors?!?
+			 *
+			 * XXX: should this instead
+			 * only allow a strict equals?
+			 */
+			responder_selector_fit = END_NARROWER_THAN_TS;
+		}
+	} else {
+		responder_selector_fit = END_EQUALS_TS;
+	}
+
+	/*
+	 * Responder expects the TS sec_label to be
+	 * narrower than the IKE sec_label.
+	 */
+	enum fit responder_sec_label_fit = END_WIDER_THAN_TS;
+
+	/* responder so cross the streams */
+
+	const struct child_selector_ends ends = {
+		.i.selectors = &d->remote->child.selectors.proposed,
+		.i.sec_label = d->config->sec_label,
+		.r.selectors = &d->local->child.selectors.proposed,
+		.r.sec_label = d->config->sec_label,
+	};
+
+	if (!fit_tsps_to_ends(nsps, tsps, &ends,
+			      responder_selector_fit,
+			      responder_sec_label_fit,
+			      indent)) {
+		return false;
+	}
+
+	return true;
+}
+
 static struct best find_best_connection_for_v2TS_request(struct child_sa *child,
-							 const struct traffic_selector_payloads tsps,
+							 const struct traffic_selector_payloads *tsps,
 							 const struct msg_digest *md)
 {
 	indent_t indent = {child->sa.logger, 0};
@@ -1421,53 +1478,8 @@ static struct best find_best_connection_for_v2TS_request(struct child_sa *child,
 				}
 			}
 
-			/* responder -- note D! */
-			enum fit responder_selector_fit;
-			if (d->config->ikev2_allow_narrowing) {
-				if (is_template(d)) {
-					/*
-					 * A template starts wider
-					 * than the TS and then, when
-					 * it is instantiated, gets
-					 * narrowed.
-					 */
-					responder_selector_fit = END_WIDER_THAN_TS;
-				} else {
-					/*
-					 * An existing instance needs
-					 * to just accomodate the
-					 * existing traffic
-					 * selectors?!?
-					 *
-					 * XXX: should this instead
-					 * only allow a strict equals?
-					 */
-					responder_selector_fit = END_NARROWER_THAN_TS;
-				}
-			} else {
-				responder_selector_fit = END_EQUALS_TS;
-			}
-
-			/*
-			 * Responder expects the TS sec_label to be
-			 * narrower than the IKE sec_label.
-			 */
-			enum fit responder_sec_label_fit = END_WIDER_THAN_TS;
-
-			/* responder so cross the streams */
-
-			const struct child_selector_ends ends = {
-				.i.selectors = &d->remote->child.selectors.proposed,
-				.i.sec_label = d->config->sec_label,
-				.r.selectors = &d->local->child.selectors.proposed,
-				.r.sec_label = d->config->sec_label,
-			};
-
 			struct narrowed_selector_payloads nsps = {0};
-			if (!fit_tsps_to_ends(&nsps, &tsps, &ends,
-					      responder_selector_fit,
-					      responder_sec_label_fit,
-					      indent)) {
+			if (!fit_connection_for_v2TS_request(d, tsps, &nsps, indent)) {
 				connection_buf cb;
 				dbg_ts("skipping "PRI_CONNECTION" does not score at all",
 				       pri_connection(d, &cb));
@@ -1510,7 +1522,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 	 * when it is an ID_NULL OE instance (normally these are
 	 * excluded).
 	 */
-	struct best best = find_best_connection_for_v2TS_request(child, tsps, md);
+	struct best best = find_best_connection_for_v2TS_request(child, &tsps, md);
 
 	indent.level = 1;
 
