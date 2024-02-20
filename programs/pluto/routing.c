@@ -572,7 +572,8 @@ static bool unrouted_to_routed_ondemand(enum routing_event event, struct connect
  * unrouted_to_routed_ondemand() installs multiple SPDs and only
  * outbound.
  */
-static bool unrouted_to_routed_ondemand_sec_label(struct connection *c,
+static bool unrouted_to_routed_ondemand_sec_label(const enum routing_event event,
+						  struct connection *c,
 						  struct logger *logger,
 						  where_t where)
 {
@@ -644,6 +645,14 @@ static bool unrouted_to_routed_ondemand_sec_label(struct connection *c,
 					 logger, where, "failed security label");
 		return false;
 	}
+
+	/*
+	 * XXX: this call clears the connection's
+	 * .established_child_sa and .negotiating_child_sa.  That is
+	 * ok since, for sec_label, they should never be set on the
+	 * LABELED_TEMPATE or LABELED_PARENT (see pexpect() above).
+	 */
+	set_routing(event, c, RT_ROUTED_ONDEMAND, NULL);
 
 	return true;
 }
@@ -2185,7 +2194,7 @@ static bool dispatch_1(enum routing_event event,
 		 * is_labeled_parent() have overlapping SPDs that
 		 * seems to do no harm.
 		 */
-		if (!unrouted_to_routed_ondemand_sec_label(c, logger, e->where)) {
+		if (!unrouted_to_routed_ondemand_sec_label(event, c, logger, e->where)) {
 			llog(RC_ROUTE, logger, "could not route");
 			return true;
 		}
@@ -2209,11 +2218,10 @@ static bool dispatch_1(enum routing_event event,
 			PEXPECT(logger, c->child.routing == RT_ROUTED_NEVER_NEGOTIATE);
 			return true;
 		}
-		if (!unrouted_to_routed_ondemand_sec_label(c, logger, e->where)) {
+		if (!unrouted_to_routed_ondemand_sec_label(event, c, logger, e->where)) {
 			llog(RC_ROUTE, logger, "could not route");
 			return true;
 		}
-		set_routing(event, c, RT_ROUTED_ONDEMAND, NULL);
 		return true;
 	case X(ROUTE, ROUTED_ONDEMAND, LABELED_PARENT):
 		/*
@@ -2237,11 +2245,10 @@ static bool dispatch_1(enum routing_event event,
 		 * But what if the two have the same SPDs?  Then the
 		 * routing happens twice which seems to be harmless.
 		 */
-		if (!unrouted_to_routed_ondemand_sec_label(c, logger, e->where)) {
+		if (!unrouted_to_routed_ondemand_sec_label(event, c, logger, e->where)) {
 			llog(RC_ROUTE, logger, "could not route");
 			return true;
 		}
-		set_routing(event, c, RT_ROUTED_ONDEMAND, NULL);
 		return true;
 	case X(UNROUTE, UNROUTED, LABELED_TEMPLATE):
 	case X(UNROUTE, UNROUTED, LABELED_PARENT):
