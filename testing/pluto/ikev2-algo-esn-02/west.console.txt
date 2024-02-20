@@ -18,6 +18,8 @@ west #
  echo "initdone"
 initdone
 west #
+ ipsec whack --impair revival
+west #
  # should fail to establish
 west #
  ipsec whack --impair suppress_retransmits

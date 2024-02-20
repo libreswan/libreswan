@@ -23,6 +23,8 @@ initdone
 west #
  ipsec whack --impair revival
 west #
+ ipsec whack --impair revival
+west #
  # establish the IKE SA, and first connection
 west #
  ipsec auto --up west-cuckoo

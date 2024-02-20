@@ -8,3 +8,4 @@ ipsec whack --impair suppress_retransmits
 ipsec auto --add westnet-eastnet-aes256
 ipsec auto --status | grep westnet-eastnet-aes256
 echo "initdone"
+ipsec whack --impair revival

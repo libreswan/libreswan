@@ -13,6 +13,8 @@ west #
  echo "initdone"
 initdone
 west #
+ ipsec whack --impair revival
+west #
  ipsec up westnet-eastnet-ipcomp
 "westnet-eastnet-ipcomp" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet-eastnet-ipcomp" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500

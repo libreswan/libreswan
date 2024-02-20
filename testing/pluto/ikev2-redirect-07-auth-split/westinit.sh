@@ -11,3 +11,4 @@ ipsec add west-cuckoo
 ipsec add west-cuckold
 
 echo "initdone"
+ipsec whack --impair revival

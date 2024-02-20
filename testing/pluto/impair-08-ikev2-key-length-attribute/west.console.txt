@@ -8,6 +8,8 @@ west #
  echo "initdone"
 initdone
 west #
+ ipsec whack --impair revival
+west #
  # AES: key-length required
 west #
  # send AES_128; should work

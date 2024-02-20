@@ -48,6 +48,8 @@ west #
  echo "initdone"
 initdone
 west #
+ ipsec whack --impair revival
+west #
  ipsec whack --impair suppress_retransmits
 west #
  # expected to fail

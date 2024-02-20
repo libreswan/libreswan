@@ -37,6 +37,8 @@ west #
  echo "initdone"
 initdone
 west #
+ ipsec whack --impair revival
+west #
  ipsec whack --impair suppress_retransmits
 west #
  ipsec auto --up ipv4-psk-ikev2-transport

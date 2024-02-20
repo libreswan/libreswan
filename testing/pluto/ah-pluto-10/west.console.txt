@@ -13,6 +13,8 @@ west #
  echo "initdone"
 initdone
 west #
+ ipsec whack --impair revival
+west #
  ipsec auto --up westnet-eastnet-ah
 "westnet-eastnet-ah" #1: initiating IKEv1 Main Mode connection
 "westnet-eastnet-ah" #1: sent Main Mode request

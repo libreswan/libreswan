@@ -127,6 +127,8 @@ west #
  echo "initdone"
 initdone
 west #
+ ipsec whack --impair revival
+west #
  # this should fail, as SHA1 is not part of the default proposal set anymore
 west #
  ipsec whack --impair timeout_on_retransmit

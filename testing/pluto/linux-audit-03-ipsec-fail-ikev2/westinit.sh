@@ -5,3 +5,4 @@ ipsec start
 ipsec auto --add ikev2-ipsec-fail
 #ipsec whack --impair timeout_on_retransmit
 echo "initdone"
+ipsec whack --impair revival

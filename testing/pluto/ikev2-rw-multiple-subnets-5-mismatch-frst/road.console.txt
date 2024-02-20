@@ -15,6 +15,8 @@ road #
  echo "initdone"
 initdone
 road #
+ ipsec whack --impair revival
+road #
  ipsec auto --up road
 initiating all connections with alias "road"
 "road/0x1" #1: initiating IKEv2 connection to 192.1.2.23 using UDP

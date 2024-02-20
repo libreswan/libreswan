@@ -18,6 +18,8 @@ west #
  echo "initdone"
 initdone
 west #
+ ipsec whack --impair revival
+west #
  # ipsec fail tests
 west #
  # See description of limitations of this test

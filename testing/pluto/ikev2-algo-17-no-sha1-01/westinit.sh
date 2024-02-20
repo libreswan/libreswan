@@ -4,3 +4,4 @@ ipsec start
 ipsec auto --add westnet-eastnet-no-sha1
 ipsec auto --status
 echo "initdone"
+ipsec whack --impair revival

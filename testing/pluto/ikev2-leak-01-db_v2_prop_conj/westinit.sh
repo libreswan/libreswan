@@ -4,3 +4,4 @@ ipsec pluto --config /etc/ipsec.conf --leak-detective
 ipsec whack --impair suppress_retransmits
 ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
 echo "initdone"
+ipsec whack --impair revival

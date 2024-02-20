@@ -11,3 +11,4 @@ ipsec whack --impair timeout_on_retransmit
 ipsec auto --add westnet-eastnet-compress
 ipsec auto --status | grep westnet-eastnet-compress
 echo "initdone"
+ipsec whack --impair revival

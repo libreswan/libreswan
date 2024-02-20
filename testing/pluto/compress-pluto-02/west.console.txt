@@ -47,6 +47,8 @@ west #
  echo "initdone"
 initdone
 west #
+ ipsec whack --impair revival
+west #
  ipsec auto --up westnet-eastnet-compress
 "westnet-eastnet-compress" #1: initiating IKEv1 Main Mode connection
 "westnet-eastnet-compress" #1: sent Main Mode request

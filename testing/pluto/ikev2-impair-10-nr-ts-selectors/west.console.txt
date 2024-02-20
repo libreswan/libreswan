@@ -13,6 +13,8 @@ west #
  echo "initdone"
 initdone
 west #
+ ipsec whack --impair revival
+west #
  # all is normal
 west #
  ipsec auto --up westnet-eastnet-ipv4-psk-ikev2

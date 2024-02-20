@@ -12,6 +12,8 @@ west #
  echo "initdone"
 initdone
 west #
+ ipsec whack --impair revival
+west #
  ipsec whack --impair v1_remote_quick_id:2
 west #
  ipsec auto --up west

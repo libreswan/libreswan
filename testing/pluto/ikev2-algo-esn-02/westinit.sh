@@ -6,3 +6,4 @@ ipsec start
 ipsec auto --add replay
 ipsec whack --impair suppress_retransmits
 echo "initdone"
+ipsec whack --impair revival

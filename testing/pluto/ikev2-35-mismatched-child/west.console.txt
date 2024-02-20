@@ -13,6 +13,8 @@ initdone
 west #
  ipsec whack --impair revival
 west #
+ ipsec whack --impair revival
+west #
  ipsec auto --up westnet-eastnet-mismatch
 "westnet-eastnet-mismatch" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet-eastnet-mismatch" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500

@@ -27,6 +27,8 @@ west #
  echo "initdone"
 initdone
 west #
+ ipsec whack --impair revival
+west #
  # Proper test connection, should work
 west #
  ipsec whack --impair none
