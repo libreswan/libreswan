@@ -1024,10 +1024,15 @@ struct connection *alloc_connection(const char *name,
  * Three types of labels.
  */
 
-bool is_labeled(const struct connection *c);
-bool is_labeled_template(const struct connection *c);
-bool is_labeled_parent(const struct connection *c);
-bool is_labeled_child(const struct connection *c);
+bool is_labeled_where(const struct connection *c, where_t where);
+bool is_labeled_template_where(const struct connection *c, where_t where);
+bool is_labeled_parent_where(const struct connection *c, where_t where);
+bool is_labeled_child_where(const struct connection *c, where_t where);
+
+#define is_labeled(C) is_labeled_where(C, HERE)
+#define is_labeled_template(C) is_labeled_template_where(C, HERE)
+#define is_labeled_parent(C) is_labeled_parent_where(C, HERE)
+#define is_labeled_child(C) is_labeled_child_where(C, HERE)
 
 bool is_permanent(const struct connection *c);
 

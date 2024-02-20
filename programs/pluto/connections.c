@@ -4640,7 +4640,7 @@ bool is_group_instance(const struct connection *c)
 	bad_enum(c->logger, &connection_kind_names, c->local->kind);
 }
 
-bool is_labeled(const struct connection *c)
+bool is_labeled_where(const struct connection *c, where_t where)
 {
 	if (c == NULL) {
 		return false;
@@ -4651,19 +4651,19 @@ bool is_labeled(const struct connection *c)
 	case CK_LABELED_PARENT:
 	case CK_LABELED_CHILD:
 	case CK_LABELED_TEMPLATE:
-		PASSERT(c->logger, c->config->sec_label.len > 0);
+		PASSERT_WHERE(c->logger, where, c->config->sec_label.len > 0);
 		return true;
 	case CK_TEMPLATE:
 	case CK_PERMANENT:
 	case CK_GROUP:
 	case CK_INSTANCE:
-		PASSERT(c->logger, c->config->sec_label.len == 0);
+		PASSERT_WHERE(c->logger, where, c->config->sec_label.len == 0);
 		return false;
 	}
 	bad_case(c->local->kind);
 }
 
-bool is_labeled_template(const struct connection *c)
+bool is_labeled_template_where(const struct connection *c, where_t where)
 {
 	if (c == NULL) {
 		return false;
@@ -4672,8 +4672,8 @@ bool is_labeled_template(const struct connection *c)
 	case CK_INVALID:
 		break;
 	case CK_LABELED_TEMPLATE:
-		PASSERT(c->logger, (c->config->sec_label.len > 0 &&
-				    c->child.sec_label.len == 0));
+		PASSERT_WHERE(c->logger, where, (c->config->sec_label.len > 0 &&
+						 c->child.sec_label.len == 0));
 		return true;
 	case CK_LABELED_PARENT:
 	case CK_LABELED_CHILD:
@@ -4686,7 +4686,7 @@ bool is_labeled_template(const struct connection *c)
 	bad_case(c->local->kind);
 }
 
-bool is_labeled_parent(const struct connection *c)
+bool is_labeled_parent_where(const struct connection *c, where_t where)
 {
 	if (c == NULL) {
 		return false;
@@ -4695,8 +4695,8 @@ bool is_labeled_parent(const struct connection *c)
 	case CK_INVALID:
 		break;
 	case CK_LABELED_PARENT:
-		PASSERT(c->logger, (c->config->sec_label.len > 0 &&
-				    c->child.sec_label.len == 0));
+		PASSERT_WHERE(c->logger, where, (c->config->sec_label.len > 0 &&
+						 c->child.sec_label.len == 0));
 		return true;
 	case CK_LABELED_TEMPLATE:
 	case CK_LABELED_CHILD:
@@ -4709,7 +4709,7 @@ bool is_labeled_parent(const struct connection *c)
 	bad_case(c->local->kind);
 }
 
-bool is_labeled_child(const struct connection *c)
+bool is_labeled_child_where(const struct connection *c, where_t where)
 {
 	if (c == NULL) {
 		return false;
@@ -4718,8 +4718,8 @@ bool is_labeled_child(const struct connection *c)
 	case CK_INVALID:
 		break;
 	case CK_LABELED_CHILD:
-		PASSERT(c->logger, (c->config->sec_label.len > 0 &&
-				    c->child.sec_label.len > 0));
+		PASSERT_WHERE(c->logger, where, (c->config->sec_label.len > 0 &&
+						 c->child.sec_label.len > 0));
 		return true;
 	case CK_LABELED_TEMPLATE:
 	case CK_LABELED_PARENT:
