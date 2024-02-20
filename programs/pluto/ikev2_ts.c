@@ -1759,7 +1759,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 		pexpect(best.nsps.r.sec_label.len > 0);
 		pexpect(best.connection->child.sec_label.len == 0);
 		pexpect(address_is_specified(best.connection->remote->host.addr));
-		struct connection *s = sec_label_child_instantiate(ike_sa(&child->sa, HERE), best.nsps.i.sec_label, HERE);
+		struct connection *s = labeled_parent_instantiate(ike_sa(&child->sa, HERE), best.nsps.i.sec_label, HERE);
 		scribble_ts_request_on_responder(child, s, &best.nsps, indent);
 		/* switch to instantiated instance; same score */
 		best.connection = s;

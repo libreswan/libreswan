@@ -155,7 +155,7 @@ static bool initiate_connection_2_address(struct connection *c,
 
 		struct connection *d;
 		if (is_labeled(c)) {
-			d = sec_label_parent_instantiate(c, remote_ip, HERE);
+			d = labeled_template_instantiate(c, remote_ip, HERE);
 		} else {
 			d = spd_instantiate(c, remote_ip, HERE);
 		}
@@ -238,7 +238,7 @@ static bool initiate_connection_3_template(struct connection *c,
 
 	if (is_labeled_template(c)) {
 		struct connection *d =
-			sec_label_parent_instantiate(c, c->remote->host.addr, HERE);
+			labeled_template_instantiate(c, c->remote->host.addr, HERE);
 		connection_attach(d, c->logger);
 		/*
 		 * LOGGING: why not log this (other than it messes
@@ -405,7 +405,7 @@ void initiate(struct connection *c,
 			dbg("initiating child sa with "PRI_LOGGER, pri_logger(logger));
 			struct connection *cc;
 			if (c->config->sec_label.len > 0) {
-				cc = sec_label_child_instantiate(ike, sec_label, HERE);
+				cc = labeled_parent_instantiate(ike, sec_label, HERE);
 				/* propogate whack attached to C */
 				connection_attach(cc, c->logger);
 			} else {
@@ -471,7 +471,7 @@ void initiate(struct connection *c,
 		struct connection *cc;
 		if (c->config->sec_label.len > 0) {
 			/* sec-labels require a separate child connection */
-			cc = sec_label_child_instantiate(ike, sec_label, HERE);
+			cc = labeled_parent_instantiate(ike, sec_label, HERE);
 		} else {
 			cc = connection_addref(c, c->logger);
 		}

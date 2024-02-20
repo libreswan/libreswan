@@ -566,7 +566,7 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 		if (is_labeled(c)) {
 			PEXPECT(ike->sa.logger, is_labeled_parent(c));
 			PEXPECT(ike->sa.logger, c == ike->sa.st_connection);
-			cc = sec_label_child_instantiate(ike, sec_label, HERE);
+			cc = labeled_parent_instantiate(ike, sec_label, HERE);
 		} else {
 			cc = connection_addref(c, ike->sa.logger);
 		}

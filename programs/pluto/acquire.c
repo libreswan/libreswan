@@ -130,7 +130,7 @@ void initiate_ondemand(const struct kernel_acquire *b)
 	 */
 
 	struct connection *cp =
-		(is_labeled_template(c) ? sec_label_parent_instantiate(c, (c)->remote->host.addr, HERE) :
+		(is_labeled_template(c) ? labeled_template_instantiate(c, (c)->remote->host.addr, HERE) :
 		 is_opportunistic_template(c) ? oppo_initiator_instantiate(c, b->packet, HERE) :
 		 is_permanent(c) ? connection_addref(c, b->logger) :
 		 is_instance(c) ? connection_addref(c, b->logger) /*valid?!?*/:

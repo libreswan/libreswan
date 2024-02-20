@@ -173,7 +173,7 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 		if (is_labeled_template(c)) {
 			ldbg(md->logger,
 			     "local endpoint is a labeled template - needs instantiation");
-			return sec_label_parent_instantiate(c, remote_address, HERE);
+			return labeled_template_instantiate(c, remote_address, HERE);
 		}
 
 		if (is_template(c) &&
@@ -310,7 +310,7 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 		connection_buf cb;
 		ldbg(md->logger, "  instantiate sec_label winner "PRI_CONNECTION,
 		     pri_connection(c, &cb));
-		c = sec_label_parent_instantiate(c, remote_address, HERE);
+		c = labeled_template_instantiate(c, remote_address, HERE);
 	} else {
 		/* regular roadwarrior */
 		connection_buf cb;
