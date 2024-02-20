@@ -392,10 +392,6 @@ bool kernel_ops_migrate_ipsec_sa(struct child_sa *child);
 extern void show_kernel_interface(struct show *s);
 void shutdown_kernel(struct logger *logger);
 
-bool unrouted_to_routed_ondemand_sec_label(struct connection *c,
-					   struct logger *logger,
-					   where_t where);
-
 extern deltatime_t bare_shunt_interval;
 
 extern bool kernel_ops_nic_detect_offload(const struct kernel_iface *ifp, struct logger *logger);
