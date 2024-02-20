@@ -1266,17 +1266,19 @@ static bool v2_child_connection_probably_shared(struct child_sa *child,
  * possibly giving up.
  */
 
-bool process_v2TS_request_payloads(struct child_sa *child,
-				   const struct msg_digest *md)
+struct best {
+	struct connection *connection;
+	bool instantiated;
+	struct narrowed_selector_payloads nsps;
+};
+
+static struct best find_best_connection_for_v2TS_request(struct child_sa *child,
+							 const struct traffic_selector_payloads tsps,
+							 const struct msg_digest *md)
 {
 	indent_t indent = {child->sa.logger, 0};
 	passert(v2_msg_role(md) == MESSAGE_REQUEST);
 	passert(child->sa.st_sa_role == SA_RESPONDER);
-
-	struct traffic_selector_payloads tsps = empty_traffic_selector_payloads;
-	if (!v2_parse_tsps(md, &tsps, child->sa.logger)) {
-		return false;
-	}
 
 	/*
 	 * Start with nothing.  The loop then evaluates each
@@ -1286,11 +1288,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 	 * when it is an ID_NULL OE instance (normally these are
 	 * excluded).
 	 */
-	struct best {
-		struct connection *connection;
-		bool instantiated;
-		struct narrowed_selector_payloads nsps;
-	} best = {0};
+	struct best best = {0};
 
 	/*
 	 * XXX: This double loop is performing two searches:
@@ -1488,6 +1486,31 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 			}
 		}
 	}
+	return best;
+}
+
+bool process_v2TS_request_payloads(struct child_sa *child,
+				   const struct msg_digest *md)
+{
+	indent_t indent = {child->sa.logger, 0};
+	passert(v2_msg_role(md) == MESSAGE_REQUEST);
+	passert(child->sa.st_sa_role == SA_RESPONDER);
+	struct connection *cc = child->sa.st_connection;
+
+	struct traffic_selector_payloads tsps = empty_traffic_selector_payloads;
+	if (!v2_parse_tsps(md, &tsps, child->sa.logger)) {
+		return false;
+	}
+
+	/*
+	 * Start with nothing.  The loop then evaluates each
+	 * connection, including the child's existing connection.
+	 *
+	 * Note in particular the code that allows C to be evaluated
+	 * when it is an ID_NULL OE instance (normally these are
+	 * excluded).
+	 */
+	struct best best = find_best_connection_for_v2TS_request(child, tsps, md);
 
 	indent.level = 1;
 
