@@ -37,12 +37,7 @@ enum routing_event {
 	CONNECTION_ROUTE,
 	CONNECTION_UNROUTE,
 	/* start/stop a connection */
-	CONNECTION_INITIATE, /* also revive */
-	/* initiator/responder? */
-	CONNECTION_INITIATE_IKE,
-	CONNECTION_INITIATE_CHILD,
-	CONNECTION_RESPOND_IKE,
-	CONNECTION_RESPOND_CHILD,
+	CONNECTION_INITIATED, /* also revive */
 	CONNECTION_PENDING,
 	CONNECTION_RESCHEDULE,
 	/* establish a connection (speculative) */
@@ -62,16 +57,12 @@ static const char *routing_event_name[] = {
 #define S(E) [E] = #E
 	S(CONNECTION_ROUTE),
 	S(CONNECTION_UNROUTE),
-	S(CONNECTION_INITIATE),
+	S(CONNECTION_INITIATED),
 	S(CONNECTION_ESTABLISH_IKE),
 	S(CONNECTION_ESTABLISH_INBOUND),
 	S(CONNECTION_ESTABLISH_OUTBOUND),
 	S(CONNECTION_PENDING),
 	S(CONNECTION_RESCHEDULE),
-	S(CONNECTION_INITIATE_IKE),
-	S(CONNECTION_INITIATE_CHILD),
-	S(CONNECTION_RESPOND_IKE),
-	S(CONNECTION_RESPOND_CHILD),
 	S(CONNECTION_TEARDOWN_IKE),
 	S(CONNECTION_TEARDOWN_CHILD),
 	S(CONNECTION_SUSPEND),
@@ -871,7 +862,7 @@ static void routed_ondemand_to_routed_negotiation(enum routing_event event,
 						  const struct routing_annex *e)
 {
         PEXPECT(logger, !is_opportunistic(c));
-	PASSERT(logger, event == CONNECTION_INITIATE);
+	PASSERT(logger, event == CONNECTION_INITIATED);
 	enum routing rt_negotiation = RT_ROUTED_NEGOTIATION;
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 		struct spd_owner owner = spd_owner(spd, rt_negotiation,
@@ -1412,7 +1403,7 @@ void connection_initiated_ike(struct ike_sa *ike,
 		.where = where,
 		.dispatch_ok = initiated_ike_dispatch_ok,
 	};
-	dispatch(CONNECTION_INITIATE, c, logger, &annex);
+	dispatch(CONNECTION_INITIATED, c, logger, &annex);
 }
 
 static bool initiated_child_dispatch_ok(struct connection *c,
@@ -1490,7 +1481,7 @@ void connection_initiated_child(struct ike_sa *ike, struct child_sa *child,
 		.dispatch_ok = initiated_child_dispatch_ok,
 		.where = where,
 	};
-	dispatch(CONNECTION_INITIATE, cc, logger, &annex);
+	dispatch(CONNECTION_INITIATED, cc, logger, &annex);
 }
 
 void connection_pending(struct connection *c, enum initiated_by initiated_by, where_t where)
@@ -1500,7 +1491,7 @@ void connection_pending(struct connection *c, enum initiated_by initiated_by, wh
 		.where = where,
 		.dispatch_ok = initiated_child_dispatch_ok,
 	};
-	dispatch(CONNECTION_INITIATE, c, c->logger, &annex);
+	dispatch(CONNECTION_INITIATED, c, c->logger, &annex);
 }
 
 static bool reschedule_dispatch_ok(struct connection *c,
@@ -1704,14 +1695,14 @@ static bool dispatch_1(enum routing_event event,
 		set_established_ike(event, c, c->child.routing, e);
 		return true;
 
-	case X(INITIATE, ROUTED_ONDEMAND, INSTANCE): /* from revival */
-	case X(INITIATE, ROUTED_ONDEMAND, PERMANENT):
+	case X(INITIATED, ROUTED_ONDEMAND, INSTANCE): /* from revival */
+	case X(INITIATED, ROUTED_ONDEMAND, PERMANENT):
 		flush_routed_ondemand_revival(c);
 		routed_ondemand_to_routed_negotiation(event, c, logger, e);
 		PEXPECT(logger, c->child.routing == RT_ROUTED_NEGOTIATION);
 		return true;
 
-	case X(INITIATE, UNROUTED, INSTANCE):
+	case X(INITIATED, UNROUTED, INSTANCE):
 		/*
 		 * Triggered by whack against the template which is
 		 * then instantiated creating this connection.  The
@@ -1738,7 +1729,7 @@ static bool dispatch_1(enum routing_event event,
 		}
 		break;
 
-	case X(INITIATE, UNROUTED, PERMANENT):
+	case X(INITIATED, UNROUTED, PERMANENT):
 		flush_unrouted_revival(c);
 		set_initiated(event, c, RT_UNROUTED_BARE_NEGOTIATION, e);
 		return true;
@@ -2260,9 +2251,9 @@ static bool dispatch_1(enum routing_event event,
 		routed_kernel_policy_to_unrouted(event, c, DIRECTION_INBOUND|DIRECTION_OUTBOUND,
 						 logger, e->where, "unroute");
 		return true;
-	case X(INITIATE, ROUTED_ONDEMAND, LABELED_PARENT):
-	case X(INITIATE, UNROUTED, LABELED_CHILD):
-	case X(INITIATE, UNROUTED, LABELED_PARENT):
+	case X(INITIATED, ROUTED_ONDEMAND, LABELED_PARENT):
+	case X(INITIATED, UNROUTED, LABELED_CHILD):
+	case X(INITIATED, UNROUTED, LABELED_PARENT):
 		return true;
 	case X(TEARDOWN_IKE, ROUTED_ONDEMAND, LABELED_PARENT):
 		/* labeled ipsec installs both inbound and outbound */
