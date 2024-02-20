@@ -91,7 +91,8 @@ struct routing_annex {
 	struct child_sa **child;
 	enum initiated_by initiated_by;
 	const char *story;
-	bool (*dispatch_ok)(struct connection *c, struct logger *logger, const struct routing_annex *e);
+	bool (*dispatch_ok)(struct connection *c, struct logger *logger,
+			    const struct routing_annex *e);
 	void (*post_op)(const struct routing_annex *e);
 	where_t where;
 };
@@ -1105,9 +1106,12 @@ static void teardown_routed_negotiation(enum routing_event event,
  * Received a message telling us to delete the connection's Child.SA.
  */
 
-static bool child_dispatch_ok(struct connection *c, struct logger *logger, const struct routing_annex *e)
+static bool teardown_child_dispatch_ok(struct connection *c,
+				       struct logger *logger,
+				       const struct routing_annex *e)
 {
 	if ((*e->child)->sa.st_serialno == c->negotiating_child_sa) {
+		ldbg_routing(logger, "Child SA matches .negotiating_child_sa");
 		return true;
 	}
 	ldbg_routing(logger, "Child SA does not match .negotiating_child_sa "PRI_SO,
@@ -1115,12 +1119,12 @@ static bool child_dispatch_ok(struct connection *c, struct logger *logger, const
 	return false;
 }
 
-static void child_delete_post_op(const struct routing_annex *e)
+static void teardown_child_post_op(const struct routing_annex *e)
 {
 	delete_child_sa(e->child);
 }
 
-static void zap_child(struct child_sa **child, const char *story, where_t where)
+static void teardown_child(struct child_sa **child, const char *story, where_t where)
 {
 	struct connection *cc = (*child)->sa.st_connection;
 	struct logger *logger = clone_logger((*child)->sa.logger, HERE); /* must free */
@@ -1131,8 +1135,8 @@ static void zap_child(struct child_sa **child, const char *story, where_t where)
 		/*
 		 * Does the child sa own the routing?
 		 */
-		.dispatch_ok = child_dispatch_ok,
-		.post_op = child_delete_post_op,
+		.dispatch_ok = teardown_child_dispatch_ok,
+		.post_op = teardown_child_post_op,
 		.story = story,
 	};
 
@@ -1147,12 +1151,12 @@ static void zap_child(struct child_sa **child, const char *story, where_t where)
 
 void connection_delete_child(struct child_sa **child, where_t where)
 {
-	zap_child(child, "delete Child SA", where);
+	teardown_child(child, "delete Child SA", where);
 }
 
 void connection_timeout_child(struct child_sa **child, where_t where)
 {
-	zap_child(child, "timeout Child SA", where);
+	teardown_child(child, "timeout Child SA", where);
 }
 
 /*
@@ -1162,24 +1166,30 @@ void connection_timeout_child(struct child_sa **child, where_t where)
  * This isn't strong enough.  There could be multiple larval IKE SAs
  * and this check doesn't filter them out.
  */
-static bool ike_dispatch_ok(struct connection *c, struct logger *logger, const struct routing_annex *e)
+static bool teardown_ike_dispatch_ok(struct connection *c,
+				     struct logger *logger,
+				     const struct routing_annex *e)
 {
-	if (c->established_ike_sa == SOS_NOBODY ||
-	    c->established_ike_sa == (*e->ike)->sa.st_serialno) {
+	if (c->established_ike_sa == SOS_NOBODY) {
+		ldbg_routing(logger, "IKE SA matches unset .established_ike_sa");
+		return true;
+	}
+	if (c->established_ike_sa == (*e->ike)->sa.st_serialno) {
+		ldbg_routing(logger, "IKE SA matches .established_ike_sa");
 		return true;
 	}
 
-	ldbg_routing(logger, "IKE SA does not match .negotiating_child_sa "PRI_SO,
-		     pri_so(c->negotiating_child_sa));
+	ldbg_routing(logger, "IKE SA does not match .established_ike_sa "PRI_SO,
+		     pri_so(c->established_ike_sa));
 	return false;
 }
 
-static void ike_delete_post_op(const struct routing_annex *e)
+static void teardown_ike_post_op(const struct routing_annex *e)
 {
 	delete_ike_sa(e->ike);
 }
 
-static void zap_ike(struct ike_sa **ike, const char *story, where_t where)
+static void teardown_ike(struct ike_sa **ike, const char *story, where_t where)
 {
 	struct connection *c = (*ike)->sa.st_connection;
 	struct logger *logger = clone_logger((*ike)->sa.logger, HERE);
@@ -1187,8 +1197,8 @@ static void zap_ike(struct ike_sa **ike, const char *story, where_t where)
 		.story = story,
 		.ike = ike,
 		.where = where,
-		.dispatch_ok = ike_dispatch_ok,
-		.post_op = ike_delete_post_op,
+		.dispatch_ok = teardown_ike_dispatch_ok,
+		.post_op = teardown_ike_post_op,
 	};
 
 	dispatch(CONNECTION_TEARDOWN_IKE, c, logger, &annex);
@@ -1199,12 +1209,12 @@ static void zap_ike(struct ike_sa **ike, const char *story, where_t where)
 
 void connection_delete_ike(struct ike_sa **ike, where_t where)
 {
-	zap_ike(ike, "delete IKE SA", where);
+	teardown_ike(ike, "delete IKE SA", where);
 }
 
 void connection_timeout_ike(struct ike_sa **ike, where_t where)
 {
-	zap_ike(ike, "timeout IKE SA", where);
+	teardown_ike(ike, "timeout IKE SA", where);
 }
 
 /*
@@ -1279,8 +1289,10 @@ static bool initiated_ike_dispatch_ok(struct connection *c,
 	switch (c->child.routing) {
 	case RT_UNROUTED:
 		pexpect_connection_is_disowned(c, logger, e->where);
+		ldbg_routing(logger, "IKE SA matches unrouted");
 		return true;
 	case RT_ROUTED_ONDEMAND:
+		ldbg_routing(logger, "IKE SA matches ROUTED_ONDEMAND");
 		return true;
 	default:
 		/*
@@ -1317,6 +1329,7 @@ static bool initiated_child_dispatch_ok(struct connection *c,
 {
 	switch (c->child.routing) {
 	case RT_ROUTED_ONDEMAND:
+		ldbg_routing(logger, "Child SA matches ROUTED_ONDEMAND");
 		return true;
 	case RT_UNROUTED:
 		/*
@@ -1339,6 +1352,7 @@ static bool initiated_child_dispatch_ok(struct connection *c,
 		 *
 		 * Have to wonder what happens when there's a replace?
 		 */
+		ldbg_routing(logger, "Child SA matches UNROUTED");
 		for (enum connection_owner owner = CONNECTION_OWNER_FLOOR;
 		     owner < CONNECTION_OWNER_ROOF; owner++) {
 			if (c->owner[owner] == SOS_NOBODY) {
@@ -1397,16 +1411,21 @@ void connection_pending(struct connection *c, enum initiated_by initiated_by, wh
 	dispatch(CONNECTION_INITIATE, c, c->logger, &annex);
 }
 
-static bool unpend_dispatch_ok(struct connection *c,
-			       struct logger *logger UNUSED,
-			       const struct routing_annex *e UNUSED)
+static bool reschedule_dispatch_ok(struct connection *c,
+				   struct logger *logger UNUSED,
+				   const struct routing_annex *e UNUSED)
 {
 	/* skip when any hint of an owner */
 	for (unsigned i = 0; i < elemsof(c->owner); i++) {
 		if (c->owner[i] != SOS_NOBODY) {
+			enum_buf ob;
+			ldbg_routing(logger, "connection owned by %s "PRI_SO,
+				     str_enum(&connection_owner_names, i, &ob),
+				     pri_so(c->owner[i]));
 			return false;
 		}
 	}
+	ldbg_routing(logger, "connection has no owner");
 	return true;
 }
 
@@ -1415,7 +1434,7 @@ void connection_reschedule(struct connection *c, struct logger *logger, where_t 
 	struct routing_annex annex = {
 		.story = "re-schedule",
 		.where = where,
-		.dispatch_ok = unpend_dispatch_ok,
+		.dispatch_ok = reschedule_dispatch_ok,
 	};
 
 	dispatch(CONNECTION_RESCHEDULE, c, logger, &annex);
