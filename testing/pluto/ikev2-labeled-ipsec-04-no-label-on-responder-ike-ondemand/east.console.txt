@@ -15,9 +15,9 @@ east #
  echo "initdone"
 initdone
 east #
- # confirm east rejects the Traffic Selectors with security labels in it
+ grep '^".* do not match ' /tmp/pluto.log
 east #
- hostname |grep east > /dev/null && grep "No IKEv2 connection found" /tmp/pluto.log
-"labeled" #2: No IKEv2 connection found with compatible Traffic Selectors
+ grep "no IKEv2 connection found" /tmp/pluto.log
+"labeled" #2: no IKEv2 connection found with compatible Traffic Selectors
 east #
  
