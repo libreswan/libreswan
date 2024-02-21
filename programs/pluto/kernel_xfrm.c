@@ -1479,6 +1479,16 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 	req.p.id.spi = sa->spi;
 	req.p.id.proto = sa->proto->ipproto;
 	req.p.family = address_info(sa->src.address)->af;
+
+	/*
+	 * No known hardware supports packet offload with ESPinUDP/ESPinTCP
+	 */
+	if (sa->encap_type != NULL && sa->nic_offload.dev != NULL &&
+	    sa->nic_offload.type == KERNEL_OFFLOAD_PACKET) {
+		llog(RC_LOG_SERIOUS, logger, "connection cannot be NAT'ed and use nic-offload=packet");
+		return false;
+	}
+
 	/*
 	 * This requires ipv6 modules. It is required to support 6in4
 	 * and 4in6 tunnels in linux 2.6.25+

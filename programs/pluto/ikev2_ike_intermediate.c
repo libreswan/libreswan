@@ -397,6 +397,11 @@ stf_status process_v2_IKE_INTERMEDIATE_response(struct ike_sa *ike,
 			/* already logged */
 			return STF_FATAL;
 		}
+		if (ike->sa.st_connection->config->nic_offload == NIC_OFFLOAD_PACKET) {
+			llog_sa(RC_LOG_SERIOUS, ike,
+			"connection is NATed but nic-offload=packet does not support NAT");
+			return STF_FATAL;
+		}
 	}
 
 	/*
