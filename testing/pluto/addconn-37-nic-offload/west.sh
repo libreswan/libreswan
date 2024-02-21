@@ -9,6 +9,9 @@ ipsec add addconn--nic-offload=yes
 ipsec add addconn--nic-offload=packet
 ipsec add addconn--nic-offload=crypto
 
+# should fail to load
+ipsec add addconn-encapsulation=yes
+
 ipsec whack --name whack                                           --transport --host 1.2.3.4 --to --host 5.6.7.8
 ipsec whack --name whack--nic-offload-x      --nic-offload x       --transport --host 1.2.3.4 --to --host 5.6.7.8
 ipsec whack --name whack--nic-offload=no     --nic-offload=no      --transport --host 1.2.3.4 --to --host 5.6.7.8
