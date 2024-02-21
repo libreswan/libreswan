@@ -5,7 +5,7 @@
   <refmeta>
     <refentrytitle>LIBRESWAN</refentrytitle>
     <manvolnum>7</manvolnum>
-    <refmiscinfo class="date">4 December 2023</refmiscinfo>
+    <refmiscinfo class="date">21 February 2024</refmiscinfo>
     <refmiscinfo class="source">Libreswan</refmiscinfo>
     <refmiscinfo class="version">@@IPSECVERSION@@</refmiscinfo>
     <refmiscinfo class="manual">Miscellaneous</refmiscinfo>
@@ -14,7 +14,7 @@
   <refnamediv id="name">
     <refname>libreswan</refname>
     <refpurpose>
-      Internet Key Exchange Manager for IPsec
+      Internet Key Exchange (IKE) Manager for IPsec
     </refpurpose>
   </refnamediv>
 
@@ -40,30 +40,39 @@
       <citerefentry> <refentrytitle>ipsec.conf</refentrytitle>
       <manvolnum>5</manvolnum> </citerefentry>).
 
-      For authentication, <application>Libreswan</application> can use
+      For authentication, <application>Libreswan</application> uses
       an <application>NSS</application> trust store containing
-      <application>X.509</application> or raw private keys, or a
-      preshared secret (see <citerefentry>
+      <application>X.509</application> certificates and raw private keys, or a
+      separate file containg preshared secrets (see <citerefentry>
       <refentrytitle>ipsec.secrets</refentrytitle>
       <manvolnum>5</manvolnum> </citerefentry>).
     </para>
 
     <para>
-      <application>Libreswan</application> is used to automatically
-      build shared "Security Associations" on a system that has IPsec,
-      the secure IP protocol. In other words,
-      <application>Libreswan</application> can eliminate much of the
-      work of manual keying.  The actual secure transmission of
-      packets is the responsibility of the kernel.
-      <application>Libreswan</application> can talk to various kernel
+      <application>Libreswan</application> is used to negotiate and create
+      shared Security Associations (SA) on a system that has IPsec,
+      the secure IP protocol using the IKE protocol. The actual transmission
+      of IPsec packets is the responsibility of the kernel.
+      <application>Libreswan</application> can talk to various IPsec kernel
       implementations, such as the <application>Linux
       XFRM</application> and <application>BSD KAME</application> IPsec
       stacks.
     </para>
 
     <para>
-      <application>Libreswan</application> implements version 1 and 2
-      of the Internet Key Exchange Protocol.
+      <application>Libreswan</application> implements IKE version 1 (RFC 2409)
+      and IKE version 2 (RFC 7296). IKEv1 is considered Deprecated (RFC 9395) and
+      it is strongly recommended to migrate all existing IKEv1 configurations to
+      IKEv2.  Currently, to enable IKEv1 at all, the <emphasis>ipsec.conf</emphasis>
+      section <emphasis>config setup</emphasis> must contain the line
+      <emphasis>ikev1-policy=yes</emphasis>. The default is to not accept IKEv1 packets.
+      Each connection configuration needs to specify to use IKEv1 as well using the
+      keyword <emphasis>keyexchange=ikev1</emphasis>. Finally, libreswan must have
+      been compiled with <emphasis>USE_IKEv1=true</emphasis>. While this is the
+      currently the default, it is expected to change in the near future. Unless the
+      peer does not support IKEv2, IKEv1 SHOULD NOT be used. Peers that do not support
+      IKEv2 at this point are likely running on "end of life" software or hardware.
+      The IKEv1 code is in maintenance mode and no new features will be considered.
     </para>
 
     <refsect2 id="ike_overview">
@@ -74,11 +83,9 @@
 	(<emphasis>SA</emphasis>) is an agreement between two network
 	nodes on how to process certain traffic between them. This
 	processing may involve encapsulation, authentication,
-	encryption, and compression.  Given that manually establishing
-	these associations does not scale, the <application>Internet
-	Key Exchange Protocol</application>
-	(<application>IKE</application>) provides a way to establish
-	these associations dynamically.
+	encryption, and compression.  The <application>Internet
+	Key Exchange Protocol</application> (<application>IKE</application>)
+	provides a standardized way to establish these associations dynamically.
       </para>
 
       <para>
@@ -97,7 +104,7 @@
 	An <application>IKE</application> instance (i.e. an IKE
 	implementation on a particular network node) communicates with
 	other <application>IKE</application> instance using either UDP
-	or TCP IP packets, so there must be a route between the nodes
+	or TCP packets, so there must be a route between the nodes
 	in each direction.
       </para>
 
@@ -113,17 +120,19 @@
 	<application>IKE</application> deals with two kinds of
 	Security Associations.  The first part of a negotiation
 	between IKE instances is to build an IKE SA.  An IKE SA is
-	used to protect communication between the two IKEs.  Child SAs
-	(for IPsec) can then be built by the IKEs - these are used to
-	carry protected IP traffic between the systems.
+	used to establish an authenticated and private communication
+	channel between the two IKE nodes. This communiation channel
+	is used to negotiate the actually Child SAs, which are the
+	actual IPsec SAs. The IPsec SAs carry protected IP traffic
+	between the systems.
       </para>
 
       <para>
 	Negotiating an IKE SA (refered to as the The Initial
 	Exchanges) consists of at least the IKE_SA_INIT exchange to
-	establish a secured channel, and the IKE_AUTH exchange to
-	prove identity.  Extensions, such as EAP and INTERMEDIATE, may
-	add further exchanges.
+	establish a private channel, and the IKE_AUTH exchange to
+	authenticate the channel. Extensions, such as EAP and
+	INTERMEDIATE, may add further exchanges.
       </para>
 
       <para>
@@ -133,14 +142,8 @@
       </para>
 
       <para>
-	IKE instances must be able to authenticate each other as part
-	of their negotiation of an ISAKMP SA. This can be done by
-	several mechanisms described in the draft standards.
-      </para>
-
-      <para>
 	IKE negotiation can be initiated by any instance with any
-	other.  If both can find an agreeable set of characteristics
+	other instance.  If both can find an agreeable set of characteristics
 	for a Security Association, and both recognize each others
 	authenticity, they can set up a Security Association.  The
 	standards do not specify what causes an IKE instance to
