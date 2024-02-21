@@ -1774,6 +1774,31 @@ static bool dispatch_1(enum routing_event event,
 		set_negotiating(c, RT_UNROUTED_BARE_NEGOTIATION, e);
 		return true;
 
+	case X(INITIATED, UNROUTED_BARE_NEGOTIATION, INSTANCE):
+	case X(INITIATED, UNROUTED_BARE_NEGOTIATION, PERMANENT):
+		set_negotiating(c, RT_UNROUTED_BARE_NEGOTIATION, e);
+		return true;
+
+	case X(INITIATED, ROUTED_NEGOTIATION, INSTANCE):
+	case X(INITIATED, ROUTED_NEGOTIATION, PERMANENT):
+		/*
+		 * For instance, Child SA, during an on-demand
+		 * triggered IKE AUTH, stealing the connection from
+		 * the IKE SA.
+		 */
+		set_negotiating(c, RT_ROUTED_NEGOTIATION, e);
+		return true;
+
+	case X(INITIATED, UNROUTED_NEGOTIATION, INSTANCE):
+	case X(INITIATED, UNROUTED_NEGOTIATION, PERMANENT):
+		/*
+		 * For instance, Child SA, during an on-demand
+		 * triggered IKE AUTH, stealing the connection from
+		 * the IKE SA.
+		 */
+		set_negotiating(c, RT_UNROUTED_NEGOTIATION, e);
+		return true;
+
 	case X(TEARDOWN_IKE, UNROUTED, INSTANCE):
 	case X(TEARDOWN_IKE, UNROUTED, PERMANENT):
 		/*
