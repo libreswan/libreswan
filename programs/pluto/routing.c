@@ -891,7 +891,7 @@ static void routed_ondemand_to_routed_negotiation(enum routing_event event,
 		}
 	}
 	/* the state isn't yet known */
-	set_routing(event, c, rt_negotiation, e);
+	set_negotiating(c, rt_negotiation, e);
 }
 
 /*
