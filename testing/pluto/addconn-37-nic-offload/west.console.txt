@@ -25,6 +25,13 @@ west #
 "addconn--nic-offload=crypto": connection failed to orient - check connection and network settings
 "addconn--nic-offload=crypto": added IKEv2 connection
 west #
+ # should fail to load
+west #
+ ipsec add addconn-encapsulation=yes
+"addconn-encapsulation=yes": failed to add connection: nic-offload=packet cannot specify encapsulation=yes
+west #
+ 
+west #
  ipsec whack --name whack                                           --transport --host 1.2.3.4 --to --host 5.6.7.8
 "whack": connection failed to orient - check connection and network settings
 "whack": added IKEv2 connection
