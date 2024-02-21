@@ -463,28 +463,33 @@ static void set_routing(enum routing_event event UNUSED,
 	c->child.routing = new_routing;
 }
 
-static void set_initiated(enum routing_event event UNUSED,
-			  struct connection *c,
-			  enum routing new_routing,
-			  const struct routing_annex *e)
+static void set_negotiating(struct connection *c,
+			    enum routing new_routing,
+			    const struct routing_annex *e)
 {
 	/*
 	 * The IKE and Child share the same initiate event but are
 	 * dispatched separately.
 	 *
-	 * A negotiating child connection using an existing IKE SA
-	 * doesn't have .established_ike_sa set.  Should it, and
-	 * should it set .negotiating_ike_sa.
+	 * A negotiating Child SA using an existing IKE SA won't have
+	 * .established_ike_sa set (ditto for .negotiating_ike_sa).
+	 * Should it?
 	 */
 	if ((e->child) != NULL && (*e->child) != NULL) {
-		PEXPECT((*e->child)->sa.logger, c->negotiating_child_sa == SOS_NOBODY);
+		PEXPECT_WHERE((*e->child)->sa.logger, e->where,
+			      c->negotiating_child_sa == SOS_NOBODY);
+		PEXPECT_WHERE((*e->child)->sa.logger, e->where,
+			      c->established_child_sa == SOS_NOBODY);
 		c->negotiating_child_sa = (*e->child)->sa.st_serialno;
 		c->child.routing = new_routing;
 		return;
 	}
 
 	if ((e->ike) != NULL && (*e->ike) != NULL) {
-		PEXPECT((*e->ike)->sa.logger, c->negotiating_ike_sa == SOS_NOBODY);
+		PEXPECT_WHERE((*e->ike)->sa.logger, e->where,
+			      c->negotiating_ike_sa == SOS_NOBODY);
+		PEXPECT_WHERE((*e->ike)->sa.logger, e->where,
+			      c->established_ike_sa == SOS_NOBODY);
 		c->negotiating_ike_sa = (*e->ike)->sa.st_serialno;
 		c->child.routing = new_routing;
 		return;
@@ -495,8 +500,17 @@ static void set_initiated(enum routing_event event UNUSED,
 	 * pending queue.  Should such a connection get its owner
 	 * updated?  It definitely needs its routing updated so that
 	 * pending knows what to change when things progress.
+	 *
+	 * XXX: but isn't that a PENDING event?  No, currently
+	 * connection_pending() is dispatched as an INITIATE event.
 	 */
-	ldbg_routing(c->logger, "no initiating IKE or Child SA; assumed to be pending; leaving routing alone");
+#if 1
+	ldbg_routing(c->logger, "no initiating IKE or Child SA; assumed to be pending");
+	c->child.routing = new_routing;
+#else
+	llog_pexpect(c->logger, e->where,
+		     "no initiating IKE or Child SA; assumed to be pending; leaving routing alone");
+#endif
 }
 
 static void set_established_child(enum routing_event event UNUSED,
@@ -1696,7 +1710,6 @@ static bool dispatch_1(enum routing_event event,
 	case X(INITIATED, ROUTED_ONDEMAND, PERMANENT):
 		flush_routed_ondemand_revival(c);
 		routed_ondemand_to_routed_negotiation(event, c, logger, e);
-		PEXPECT(logger, c->child.routing == RT_ROUTED_NEGOTIATION);
 		return true;
 
 	case X(INITIATED, UNROUTED, INSTANCE):
@@ -1728,7 +1741,7 @@ static bool dispatch_1(enum routing_event event,
 
 	case X(INITIATED, UNROUTED, PERMANENT):
 		flush_unrouted_revival(c);
-		set_initiated(event, c, RT_UNROUTED_BARE_NEGOTIATION, e);
+		set_negotiating(c, RT_UNROUTED_BARE_NEGOTIATION, e);
 		return true;
 
 	case X(TEARDOWN_IKE, UNROUTED, INSTANCE):
