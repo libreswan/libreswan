@@ -5,5 +5,6 @@ semodule -i OUTPUT/ipsecspd-full-perm.pp
 # start pluto
 ipsec start
 ../../guestbin/wait-until-pluto-started
+ipsec whack --impair revival
 ipsec auto --add labeled
 echo "initdone"

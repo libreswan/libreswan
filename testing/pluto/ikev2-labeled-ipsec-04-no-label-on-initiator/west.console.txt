@@ -13,6 +13,8 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
+ ipsec whack --impair revival
+west #
  ipsec auto --add labeled
 "labeled": added IKEv2 connection
 west #
