@@ -1770,7 +1770,7 @@ static bool dispatch_1(enum routing_event event,
 			 * routing, skip these in the instance.
 			 */
 			ldbg_routing(logger, "skipping hold as template is unrouted");
-			set_routing(event, c, RT_UNROUTED_BARE_NEGOTIATION, e);
+			set_negotiating(c, RT_UNROUTED_BARE_NEGOTIATION, e);
 			return true;
 		}
 		if (c->clonedfrom->child.routing == RT_ROUTED_ONDEMAND) {
@@ -1780,7 +1780,7 @@ static bool dispatch_1(enum routing_event event,
 			 * the template's routing is sufficient for now.
 			 */
 			unrouted_instance_to_unrouted_negotiation(event, c, e->where);
-			set_routing(event, c, RT_UNROUTED_NEGOTIATION, e);
+			set_negotiating(c, RT_UNROUTED_NEGOTIATION, e);
 			return true;
 		}
 		break;
