@@ -2908,13 +2908,16 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 		if (wm->nic_offload == NIC_OFFLOAD_PACKET) {
 			if (encap_mode != ENCAP_MODE_TRANSPORT) {
-				return diag("nic-offload=packet|auto restricted to type=transport");
+				return diag("nic-offload=packet restricted to type=transport");
 			}
 			if (encap_proto != ENCAP_PROTO_ESP) {
-				return diag("nic-offload=packet|auto restricted to phase2=esp");
+				return diag("nic-offload=packet restricted to phase2=esp");
 			}
 			if (compress) {
-				return diag("nic-offload=packet|auto restricted to compression=no");
+				return diag("nic-offload=packet restricted to compression=no");
+			}
+			if (config->encapsulation == YNA_YES) {
+				return diag("nic-offload=packet cannot specify encapsulation=yes");
 			}
 
 			switch (wm->replay_window) {
