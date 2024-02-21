@@ -1498,13 +1498,59 @@ void connection_initiated_child(struct ike_sa *ike, struct child_sa *child,
 	dispatch(CONNECTION_INITIATED, cc, logger, &annex);
 }
 
+static bool pending_dispatch_ok(struct connection *c,
+				struct logger *logger,
+				const struct routing_annex *e UNUSED)
+{
+	switch (c->child.routing) {
+	case RT_ROUTED_ONDEMAND:
+		ldbg_routing(logger, "connection matches ROUTED_ONDEMAND");
+		return true;
+	case RT_UNROUTED:
+		/*
+		 * An UNROUTED connection (i.e., no Child SA) can
+		 * still have an IKE SA, just as long as that IKE SA
+		 * matches what is negotiating the connection?
+		 *
+		 * For instance:
+		 *
+		 *    up cuckold     -- #1, #2
+		 *    up cuckoo      -- #3 (uses #1)
+		 *    down cuckold   -- only deletes #2, #1 is in use
+		 *
+		 * followed by:
+		 *
+		 *    up cuckold
+		 *
+		 * will initiate the connection cuckold with IKE SA
+		 * still set to #1.
+		 *
+		 * Have to wonder what happens when there's a replace?
+		 */
+		ldbg_routing(logger, "connection matches UNROUTED");
+		return true;
+	default:
+		/*
+		 * Ignore stray initiates (presumably due to two
+		 * acquires triggering simultaneously) or due to an
+		 * initiate being used to force a rekey.
+		 */
+		LLOG_JAMBUF(LOG_STREAM, logger, buf) {
+			jam_string(buf, "connection is already in state ");
+			jam_enum_human(buf, &routing_names, c->child.routing);
+		}
+		return false;
+	}
+}
+
 void connection_pending(struct connection *c, enum initiated_by initiated_by, where_t where)
 {
 	struct routing_annex annex = {
 		.initiated_by = initiated_by,
 		.where = where,
-		.dispatch_ok = initiated_child_dispatch_ok,
+		.dispatch_ok = pending_dispatch_ok,
 	};
+	/*XXX: not pending */
 	dispatch(CONNECTION_INITIATED, c, c->logger, &annex);
 }
 
