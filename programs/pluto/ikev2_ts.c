@@ -1438,9 +1438,9 @@ static struct best find_best_connection_for_v2TS_request(struct child_sa *child,
 			 * that matches an existing connection
 			 * instance.
 			 */
-			if (is_labeled_child(d)) {
+			if (is_labeled(d)) {
 				connection_buf cb;
-				dbg_ts("skipping "PRI_CONNECTION", labeled IKEv2 child",
+				dbg_ts("skipping "PRI_CONNECTION", labeled",
 				       pri_connection(d, &cb));
 				continue;
 			}
@@ -1522,7 +1522,22 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 	 * when it is an ID_NULL OE instance (normally these are
 	 * excluded).
 	 */
-	struct best best = find_best_connection_for_v2TS_request(child, &tsps, md);
+	struct best best;
+	if (is_labeled(cc)) {
+		PEXPECT(child->sa.logger, is_labeled_parent(cc));
+		struct narrowed_selector_payloads nsps = {0};
+		if (!fit_connection_for_v2TS_request(cc, &tsps, &nsps, indent)) {
+			llog_sa(RC_LOG_SERIOUS, child, "proposed Traffic Selectors do not match labeled IKEv2 connection");
+			return false;
+		}
+		best = (struct best) {
+			.connection = cc,
+			.instantiated = false,
+			.nsps = nsps,
+		};
+	} else {
+		best = find_best_connection_for_v2TS_request(child, &tsps, md);
+	}
 
 	indent.level = 1;
 
@@ -1581,7 +1596,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 		 */
 		dbg_ts("no best spd route; but the current %s connection \"%s\" is not a CK_INSTANCE; giving up",
 		       enum_name(&connection_kind_names, cc->local->kind), cc->name);
-		llog_sa(RC_LOG_SERIOUS, child, "No IKEv2 connection found with compatible Traffic Selectors");
+		llog_sa(RC_LOG_SERIOUS, child, "no IKEv2 connection found with compatible Traffic Selectors");
 		return false;
 	}
 
