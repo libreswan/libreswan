@@ -513,10 +513,17 @@ static void set_negotiating(struct connection *c,
 #endif
 }
 
-static void set_established_child(enum routing_event event UNUSED,
-				  struct connection *c,
-				  enum routing routing,
-				  const struct routing_annex *e)
+static void set_established_inbound(struct connection *c,
+				    enum routing new_routing,
+				    const struct routing_annex *e)
+{
+	c->negotiating_child_sa = (*e->child)->sa.st_serialno;
+	c->child.routing = new_routing;
+}
+
+static void set_established_outbound(struct connection *c,
+				     enum routing routing,
+				     const struct routing_annex *e)
 {
 	struct child_sa *child = (*e->child);
 	struct ike_sa *ike = (e->ike != NULL ? (*e->ike) : NULL);
@@ -1980,7 +1987,7 @@ static bool dispatch_1(enum routing_event event,
 		if (!install_inbound_ipsec_sa((*e->child), RT_UNROUTED_INBOUND, e->where)) {
 			return false;
 		}
-		set_routing(event, c, RT_UNROUTED_INBOUND, e);
+		set_established_inbound(c, RT_UNROUTED_INBOUND, e);
 		return true;
 
 	case X(ESTABLISH_INBOUND, ROUTED_INBOUND_NEGOTIATION, PERMANENT):
@@ -1988,7 +1995,7 @@ static bool dispatch_1(enum routing_event event,
 		if (!install_inbound_ipsec_sa((*e->child), RT_ROUTED_INBOUND_NEGOTIATION, e->where)) {
 			return false;
 		}
-		set_routing(event, c, RT_ROUTED_INBOUND_NEGOTIATION, e);
+		set_established_inbound(c, RT_ROUTED_INBOUND_NEGOTIATION, e);
 		return true;
 
 	case X(ESTABLISH_INBOUND, ROUTED_NEGOTIATION, INSTANCE):
@@ -1998,7 +2005,7 @@ static bool dispatch_1(enum routing_event event,
 		if (!install_inbound_ipsec_sa((*e->child), RT_ROUTED_INBOUND_NEGOTIATION, e->where)) {
 			return false;
 		}
-		set_routing(event, c, RT_ROUTED_INBOUND_NEGOTIATION, e);
+		set_established_inbound(c, RT_ROUTED_INBOUND_NEGOTIATION, e);
 		return true;
 
 	case X(ESTABLISH_INBOUND, ROUTED_ONDEMAND, INSTANCE):
@@ -2013,7 +2020,7 @@ static bool dispatch_1(enum routing_event event,
 		if (!install_inbound_ipsec_sa((*e->child), RT_ROUTED_INBOUND_NEGOTIATION, e->where)) {
 			return false;
 		}
-		set_routing(event, c, RT_ROUTED_INBOUND_NEGOTIATION, e);
+		set_established_inbound(c, RT_ROUTED_INBOUND_NEGOTIATION, e);
 		return true;
 
 	case X(ESTABLISH_INBOUND, ROUTED_TUNNEL, INSTANCE):
@@ -2033,7 +2040,7 @@ static bool dispatch_1(enum routing_event event,
 		if (!install_inbound_ipsec_sa((*e->child), RT_ROUTED_TUNNEL, e->where)) {
 			return false;
 		}
-		set_routing(event, c, RT_ROUTED_TUNNEL, e);
+		set_established_inbound(c, RT_ROUTED_TUNNEL, e);
 		return true;
 
 	case X(ESTABLISH_INBOUND, UNROUTED, INSTANCE):
@@ -2041,7 +2048,7 @@ static bool dispatch_1(enum routing_event event,
 		if (!install_inbound_ipsec_sa((*e->child), RT_UNROUTED_INBOUND, e->where)) {
 			return false;
 		}
-		set_routing(event, c, RT_UNROUTED_INBOUND, e);
+		set_established_inbound(c, RT_UNROUTED_INBOUND, e);
 		return true;
 
 	case X(ESTABLISH_INBOUND, UNROUTED_INBOUND, PERMANENT):
@@ -2049,7 +2056,7 @@ static bool dispatch_1(enum routing_event event,
 		if (!install_inbound_ipsec_sa((*e->child), RT_UNROUTED_INBOUND, e->where)) {
 			return false;
 		}
-		set_routing(event, c, RT_UNROUTED_INBOUND, e);
+		set_established_inbound(c, RT_UNROUTED_INBOUND, e);
 		return true;
 
 	case X(ESTABLISH_INBOUND, UNROUTED_INBOUND_NEGOTIATION, PERMANENT):
@@ -2057,14 +2064,14 @@ static bool dispatch_1(enum routing_event event,
 		if (!install_inbound_ipsec_sa((*e->child), RT_UNROUTED_INBOUND_NEGOTIATION, e->where)) {
 			return false;
 		}
-		set_routing(event, c, RT_UNROUTED_INBOUND_NEGOTIATION, e);
+		set_established_inbound(c, RT_UNROUTED_INBOUND_NEGOTIATION, e);
 		return true;
 
 	case X(ESTABLISH_INBOUND, UNROUTED_NEGOTIATION, INSTANCE):
 		if (!install_inbound_ipsec_sa((*e->child), RT_UNROUTED_INBOUND_NEGOTIATION, e->where)) {
 			return false;
 		}
-		set_routing(event, c, RT_UNROUTED_INBOUND_NEGOTIATION, e);
+		set_established_inbound(c, RT_UNROUTED_INBOUND_NEGOTIATION, e);
 		return true;
 
 	case X(ESTABLISH_OUTBOUND, ROUTED_INBOUND_NEGOTIATION, INSTANCE):
@@ -2076,7 +2083,7 @@ static bool dispatch_1(enum routing_event event,
 					       }, e->where)) {
 			return false;
 		}
-		set_established_child(event, c, RT_ROUTED_TUNNEL, e);
+		set_established_outbound(c, RT_ROUTED_TUNNEL, e);
 		return true;
 
 	case X(ESTABLISH_OUTBOUND, ROUTED_TUNNEL, INSTANCE):
@@ -2097,7 +2104,7 @@ static bool dispatch_1(enum routing_event event,
 					       }, e->where)) {
 			return false;
 		}
-		set_established_child(event, c, RT_ROUTED_TUNNEL, e);
+		set_established_outbound(c, RT_ROUTED_TUNNEL, e);
 		return true;
 
 	case X(ESTABLISH_OUTBOUND, UNROUTED_INBOUND, INSTANCE):
@@ -2111,7 +2118,7 @@ static bool dispatch_1(enum routing_event event,
 					       }, e->where)) {
 			return false;
 		}
-		set_established_child(event, c, RT_ROUTED_TUNNEL, e);
+		set_established_outbound(c, RT_ROUTED_TUNNEL, e);
 		return true;
 
 	case X(SUSPEND, ROUTED_TUNNEL, PERMANENT):
@@ -2328,7 +2335,7 @@ static bool dispatch_1(enum routing_event event,
 		if (!install_inbound_ipsec_sa((*e->child), RT_UNROUTED_TUNNEL, e->where)) {
 			return false;
 		}
-		set_routing(event, c, RT_UNROUTED_TUNNEL, e);
+		set_established_inbound(c, RT_UNROUTED_TUNNEL, e);
 		return true;
 	case X(ESTABLISH_OUTBOUND, UNROUTED_TUNNEL, LABELED_CHILD):
 		/* rekey; already up */
@@ -2339,14 +2346,14 @@ static bool dispatch_1(enum routing_event event,
 					       }, e->where)) {
 			return false;
 		}
-		set_established_child(event, c, RT_UNROUTED_TUNNEL, e);
+		set_established_outbound(c, RT_UNROUTED_TUNNEL, e);
 		return true;
 
 	case X(ESTABLISH_INBOUND, UNROUTED, LABELED_CHILD):
 		if (!install_inbound_ipsec_sa((*e->child), RT_UNROUTED_INBOUND, e->where)) {
 			return false;
 		}
-		set_routing(event, c, RT_UNROUTED_INBOUND, e);
+		set_established_inbound(c, RT_UNROUTED_INBOUND, e);
 		return true;
 	case X(ESTABLISH_OUTBOUND, UNROUTED_INBOUND, LABELED_CHILD):
 		/* new; not up */
@@ -2357,7 +2364,7 @@ static bool dispatch_1(enum routing_event event,
 					       }, e->where)) {
 			return false;
 		}
-		set_established_child(event, c, RT_UNROUTED_TUNNEL, e);
+		set_established_outbound(c, RT_UNROUTED_TUNNEL, e);
 		return true;
 
 	case X(UNROUTE, UNROUTED_INBOUND, LABELED_CHILD):
