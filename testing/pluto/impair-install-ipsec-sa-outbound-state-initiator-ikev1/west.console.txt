@@ -42,7 +42,7 @@ west #
 "west-east" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+ROUTE+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 "west-east" #2: sent Quick Mode request
 "west-east" #2: IMPAIR: kernel: install_ipsec_sa_outbound_state in setup_half_kernel_state()
-"west-east" #2: state transition function for STATE_QUICK_I1 had internal error
+EXPECTATION FAILED: "west-east" #2: state transition function for STATE_QUICK_I1 had internal error (complete_v1_state_transition() +2851 programs/pluto/ikev1.c)
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 down UNEXPECTED
@@ -55,15 +55,6 @@ west #
 done
 west #
  ../../guestbin/ipsec-kernel-state.sh
-src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 0 flag af-unspec
-	auth-trunc hmac(sha1) 0xHASHKEY 96
-	enc cbc(aes) 0xENCKEY
-	anti-replay esn context:
-	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
-	 replay_window 128, bitmap-length 4
-	 00000000 00000000 00000000 XXXXXXXX 
 west #
  ../../guestbin/ipsec-kernel-policy.sh
 src 192.0.1.0/24 dst 192.0.2.0/24
