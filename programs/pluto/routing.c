@@ -448,18 +448,11 @@ bool kernel_policy_installed(const struct connection *c)
 	bad_case(c->child.routing);
 }
 
-static void set_routing(enum routing_event event UNUSED,
-			struct connection *c,
-			enum routing new_routing,
-			const struct routing_annex *e)
+static void set_routing(struct connection *c,
+			enum routing new_routing)
 {
-	if (e != NULL && e->child != NULL && (*e->child) != NULL) {
-		c->negotiating_child_sa = (*e->child)->sa.st_serialno;
-	} else {
-		c->negotiating_child_sa =
-			c->established_child_sa =
-			SOS_NOBODY;
-	}
+	c->negotiating_child_sa = SOS_NOBODY;
+	c->established_child_sa = SOS_NOBODY;
 	c->child.routing = new_routing;
 }
 
@@ -528,13 +521,13 @@ static void set_established_outbound(struct connection *c,
 	struct child_sa *child = (*e->child);
 	struct ike_sa *ike = (e->ike != NULL ? (*e->ike) : NULL);
 	PEXPECT(child->sa.logger, child->sa.st_connection == c);
+	/*
+	 * Do we have star-crossed-streams?  When this happens
+	 * try to mitigate the damage.
+	 */
 	if (ike != NULL) {
 		/* by definition */
 		PEXPECT(child->sa.logger, ike->sa.st_serialno == child->sa.st_clonedfrom);
-		/*
-		 * Do we have star-crossed-streams?  When this happens
-		 * try to mitigate the damage.
-		 */
 		for (enum connection_owner owner = IKE_SA_OWNER_FLOOR;
 		     owner < IKE_SA_OWNER_ROOF; owner++) {
 			if (ike->sa.st_connection == c) {
@@ -565,15 +558,16 @@ static void set_established_outbound(struct connection *c,
 		}
 	}
 	c->child.routing = routing;
-	c->established_child_sa = c->negotiating_child_sa = (*e->child)->sa.st_serialno;
+	c->established_child_sa = child->sa.st_serialno;
+	c->negotiating_child_sa = child->sa.st_serialno;
 }
 
-static bool unrouted_to_routed_ondemand(enum routing_event event, struct connection *c, where_t where)
+static bool unrouted_to_routed_ondemand(struct connection *c, where_t where)
 {
 	if (!unrouted_to_routed(c, RT_ROUTED_ONDEMAND, where)) {
 		return false;
 	}
-	set_routing(event, c, RT_ROUTED_ONDEMAND, NULL);
+	set_routing(c, RT_ROUTED_ONDEMAND);
 	return true;
 }
 
@@ -584,8 +578,7 @@ static bool unrouted_to_routed_ondemand(enum routing_event event, struct connect
  * unrouted_to_routed_ondemand() installs multiple SPDs and only
  * outbound.
  */
-static bool unrouted_to_routed_ondemand_sec_label(const enum routing_event event,
-						  struct connection *c,
+static bool unrouted_to_routed_ondemand_sec_label(struct connection *c,
 						  struct logger *logger,
 						  where_t where)
 {
@@ -664,22 +657,21 @@ static bool unrouted_to_routed_ondemand_sec_label(const enum routing_event event
 	 * ok since, for sec_label, they should never be set on the
 	 * LABELED_TEMPATE or LABELED_PARENT (see pexpect() above).
 	 */
-	set_routing(event, c, RT_ROUTED_ONDEMAND, NULL);
+	set_routing(c, RT_ROUTED_ONDEMAND);
 
 	return true;
 }
 
-static bool unrouted_to_routed_never_negotiate(enum routing_event event, struct connection *c, where_t where)
+static bool unrouted_to_routed_never_negotiate(struct connection *c, where_t where)
 {
 	if (!unrouted_to_routed(c, RT_ROUTED_NEVER_NEGOTIATE, where)) {
 		return false;
 	}
-	set_routing(event, c, RT_ROUTED_NEVER_NEGOTIATE, NULL);
+	set_routing(c, RT_ROUTED_NEVER_NEGOTIATE);
 	return true;
 }
 
-static void routed_tunnel_to_routed_ondemand(enum routing_event event,
-					     struct child_sa *child,
+static void routed_tunnel_to_routed_ondemand(struct child_sa *child,
 					     where_t where)
 {
 	/* currently up and routed */
@@ -703,11 +695,10 @@ static void routed_tunnel_to_routed_ondemand(enum routing_event event,
 						      logger, where);
 	}
 
-	set_routing(event, child->sa.st_connection, RT_ROUTED_ONDEMAND, NULL);
+	set_routing(child->sa.st_connection, RT_ROUTED_ONDEMAND);
 }
 
-static void routed_tunnel_to_routed_failure(enum routing_event event,
-					    struct child_sa *child,
+static void routed_tunnel_to_routed_failure(struct child_sa *child,
 					    where_t where)
 {
 	/* currently up and routed */
@@ -733,11 +724,10 @@ static void routed_tunnel_to_routed_failure(enum routing_event event,
 						      logger, where);
 	}
 
-	set_routing(event, child->sa.st_connection, RT_ROUTED_FAILURE, NULL);
+	set_routing(child->sa.st_connection, RT_ROUTED_FAILURE);
 }
 
-static void routed_kernel_policy_to_unrouted(enum routing_event event,
-					     struct connection *c,
+static void routed_kernel_policy_to_unrouted(struct connection *c,
 					     lset_t direction,
 					     struct logger *logger,
 					     where_t where,
@@ -771,11 +761,10 @@ static void routed_kernel_policy_to_unrouted(enum routing_event event,
 		do_updown_unroute_spd(spd, &owner, NULL, logger);
 	}
 
-	set_routing(event, c, RT_UNROUTED, NULL);
+	set_routing(c, RT_UNROUTED);
 }
 
-static void unrouted_kernel_policy_to_unrouted(enum routing_event event,
-					       struct connection *c,
+static void unrouted_kernel_policy_to_unrouted(struct connection *c,
 					       lset_t direction,
 					       struct logger *logger, where_t where,
 					       const char *story)
@@ -807,11 +796,10 @@ static void unrouted_kernel_policy_to_unrouted(enum routing_event event,
 					   logger, where, story);
 	}
 
-	set_routing(event, c, RT_UNROUTED, NULL);
+	set_routing(c, RT_UNROUTED);
 }
 
-static void routed_tunnel_to_unrouted(enum routing_event event,
-				      struct child_sa *child,
+static void routed_tunnel_to_unrouted(struct child_sa *child,
 				      where_t where)
 {
 	/* currently up and routed */
@@ -835,7 +823,7 @@ static void routed_tunnel_to_unrouted(enum routing_event event,
 		do_updown_unroute_spd(spd, &owner, child, logger);
 	}
 
-	set_routing(event, c, RT_UNROUTED, NULL);
+	set_routing(c, RT_UNROUTED);
 }
 
 /*
@@ -907,8 +895,7 @@ static void routed_ondemand_to_routed_negotiation(enum routing_event event,
  * instantiated instances do not take this code path).
  */
 
-static void routed_negotiation_to_routed_ondemand(enum routing_event event,
-						  struct connection *c,
+static void routed_negotiation_to_routed_ondemand(struct connection *c,
 						  struct logger *logger,
 						  where_t where,
 						  const char *reason)
@@ -923,20 +910,19 @@ static void routed_negotiation_to_routed_ondemand(enum routing_event event,
 			llog(RC_LOG, logger, "%s failed", reason);
 		}
 	}
-	set_routing(event, c, RT_ROUTED_ONDEMAND, NULL);
+	set_routing(c, RT_ROUTED_ONDEMAND);
 }
 
 /*
  * Delete the ROUTED_TUNNEL, and possibly delete the connection.
  */
 
-static void teardown_routed_tunnel(enum routing_event event,
-				   struct connection *c,
+static void teardown_routed_tunnel(struct connection *c,
 				   struct child_sa **child,
 				   where_t where)
 {
 	if (scheduled_child_revival(*child, "received Delete/Notify")) {
-		routed_tunnel_to_routed_ondemand(event, (*child), where);
+		routed_tunnel_to_routed_ondemand((*child), where);
 		return;
 	}
 
@@ -945,7 +931,7 @@ static void teardown_routed_tunnel(enum routing_event event,
 	 */
 	if (is_permanent(c) && c->policy.route) {
 		/* it's being stripped of the state, hence SOS_NOBODY */
-		routed_tunnel_to_routed_ondemand(event, (*child), where);
+		routed_tunnel_to_routed_ondemand((*child), where);
 		return;
 	}
 
@@ -953,15 +939,14 @@ static void teardown_routed_tunnel(enum routing_event event,
 	 * Is there a failure shunt?
 	 */
 	if (is_permanent(c) && c->config->failure_shunt != SHUNT_NONE) {
-		routed_tunnel_to_routed_failure(event, (*child), where);
+		routed_tunnel_to_routed_failure((*child), where);
 		return;
 	}
 
-	routed_tunnel_to_unrouted(event, (*child), where);
+	routed_tunnel_to_unrouted((*child), where);
 }
 
-static void unrouted_tunnel_to_routed_ondemand(enum routing_event event,
-					       struct child_sa *child,
+static void unrouted_tunnel_to_routed_ondemand(struct child_sa *child,
 					       where_t where)
 {
 	/* currently down and unrouted */
@@ -988,11 +973,10 @@ static void unrouted_tunnel_to_routed_ondemand(enum routing_event event,
 	}
 
 	do_updown_child(UPDOWN_ROUTE, child);
-	set_routing(event, child->sa.st_connection, RT_ROUTED_ONDEMAND, NULL);
+	set_routing(child->sa.st_connection, RT_ROUTED_ONDEMAND);
 }
 
-static void unrouted_tunnel_to_routed_failure(enum routing_event event,
-					      struct child_sa *child,
+static void unrouted_tunnel_to_routed_failure(struct child_sa *child,
 					      where_t where)
 {
 	/* currently down and unrouted */
@@ -1019,11 +1003,10 @@ static void unrouted_tunnel_to_routed_failure(enum routing_event event,
 	}
 
 	do_updown_child(UPDOWN_ROUTE, child);
-	set_routing(event, child->sa.st_connection, RT_ROUTED_FAILURE, NULL);
+	set_routing(child->sa.st_connection, RT_ROUTED_FAILURE);
 }
 
-static void unrouted_tunnel_to_unrouted(enum routing_event event,
-					struct connection *c,
+static void unrouted_tunnel_to_unrouted(struct connection *c,
 					struct logger *logger,
 					where_t where,
 					const char *story)
@@ -1047,18 +1030,17 @@ static void unrouted_tunnel_to_unrouted(enum routing_event event,
 	 * update routing; route_owner() will see this and not
 	 * think this route is the owner?
 	 */
-	set_routing(event, c, RT_UNROUTED, NULL);
+	set_routing(c, RT_UNROUTED);
 }
 
-static void teardown_unrouted_tunnel(enum routing_event event,
-				     struct connection *c,
+static void teardown_unrouted_tunnel(struct connection *c,
 				     struct child_sa *child,
 				     struct logger *logger,
 				     where_t where,
 				     const char *story)
 {
 	if (scheduled_child_revival(child, "received Delete/Notify")) {
-		unrouted_tunnel_to_routed_ondemand(event, child, where);
+		unrouted_tunnel_to_routed_ondemand(child, where);
 		return;
 	}
 
@@ -1067,7 +1049,7 @@ static void teardown_unrouted_tunnel(enum routing_event event,
 	 */
 	if (is_permanent(c) && c->policy.route) {
 		/* it's being stripped of the state, hence SOS_NOBODY */
-		unrouted_tunnel_to_routed_ondemand(event, child, where);
+		unrouted_tunnel_to_routed_ondemand(child, where);
 		return;
 	}
 
@@ -1075,15 +1057,14 @@ static void teardown_unrouted_tunnel(enum routing_event event,
 	 * Is there a failure shunt?
 	 */
 	if (is_permanent(c) && c->config->failure_shunt != SHUNT_NONE) {
-		unrouted_tunnel_to_routed_failure(event, child, where);
+		unrouted_tunnel_to_routed_failure(child, where);
 		return;
 	}
 
-	unrouted_tunnel_to_unrouted(event, c, logger, where, story);
+	unrouted_tunnel_to_unrouted(c, logger, where, story);
 }
 
-static void routed_inbound_negotiation_to_unrouted(enum routing_event event,
-						   struct connection *c,
+static void routed_inbound_negotiation_to_unrouted(struct connection *c,
 						   struct child_sa *child,
 						   struct logger *logger,
 						   where_t where,
@@ -1104,11 +1085,10 @@ static void routed_inbound_negotiation_to_unrouted(enum routing_event event,
 		do_updown_unroute_spd(spd, &owner, child, logger);
 	}
 
-	set_routing(event, c, RT_UNROUTED, NULL);
+	set_routing(c, RT_UNROUTED);
 }
 
-static void unrouted_inbound_to_unrouted(enum routing_event event,
-					 struct connection *c,
+static void unrouted_inbound_to_unrouted(struct connection *c,
 					 struct logger *logger,
 					 where_t where,
 					 const char *story)
@@ -1129,50 +1109,47 @@ static void unrouted_inbound_to_unrouted(enum routing_event event,
 					   logger, where, story);
 	}
 
-	set_routing(event, c, RT_UNROUTED, NULL);
+	set_routing(c, RT_UNROUTED);
 }
 
-static void teardown_unrouted_inbound(enum routing_event event,
-				      struct connection *c,
+static void teardown_unrouted_inbound(struct connection *c,
 				      struct child_sa *child,
 				      struct logger *logger,
 				      where_t where,
 				      const char *story)
 {
 	if (scheduled_child_revival(child, story)) {
-		unrouted_inbound_to_unrouted(event, c, logger, where, story);
+		unrouted_inbound_to_unrouted(c, logger, where, story);
 		return;
 	}
 
-	unrouted_inbound_to_unrouted(event, c, logger, where, story);
+	unrouted_inbound_to_unrouted(c, logger, where, story);
 }
 
-static void teardown_unrouted_inbound_negotiation(enum routing_event event,
-						  struct connection *c,
+static void teardown_unrouted_inbound_negotiation(struct connection *c,
 						  struct child_sa *child,
 						  struct logger *logger,
 						  where_t where,
 						  const char *story)
 {
 	if (scheduled_child_revival(child, story)) {
-		unrouted_kernel_policy_to_unrouted(event, c, DIRECTION_INBOUND,
+		unrouted_kernel_policy_to_unrouted(c, DIRECTION_INBOUND,
 						   logger, where, story);
 		return;
 	}
 
-	unrouted_kernel_policy_to_unrouted(event, c, DIRECTION_INBOUND,
+	unrouted_kernel_policy_to_unrouted(c, DIRECTION_INBOUND,
 					   logger, where, story);
 }
 
-static void teardown_routed_negotiation(enum routing_event event,
-					struct connection *c,
+static void teardown_routed_negotiation(struct connection *c,
 					struct child_sa *child,
 					struct logger *logger,
 					where_t where,
 					const char *reason)
 {
 	if (scheduled_child_revival(child, reason)) {
-		routed_negotiation_to_routed_ondemand(event, c, logger, where,
+		routed_negotiation_to_routed_ondemand(c, logger, where,
 						      reason);
 		PEXPECT(logger, c->child.routing == RT_ROUTED_ONDEMAND);
 		return;
@@ -1187,12 +1164,12 @@ static void teardown_routed_negotiation(enum routing_event event,
 		 * Change routing so we don't get cleared out
 		 * when state/connection dies.
 		 */
-		set_routing(event, c, RT_UNROUTED, NULL);
+		set_routing(c, RT_UNROUTED);
 		return;
 	}
 
 	if (c->policy.route) {
-		routed_negotiation_to_routed_ondemand(event, c, logger, where,
+		routed_negotiation_to_routed_ondemand(c, logger, where,
 						      "restoring ondemand, connection is routed");
 		PEXPECT(logger, c->child.routing == RT_ROUTED_ONDEMAND);
 		return;
@@ -1201,7 +1178,7 @@ static void teardown_routed_negotiation(enum routing_event event,
 	/*
 	 * Should this instead install a failure shunt?
 	 */
-	routed_kernel_policy_to_unrouted(event, c, DIRECTION_INBOUND,
+	routed_kernel_policy_to_unrouted(c, DIRECTION_INBOUND,
 					 logger, where, "deleting");
 	PEXPECT(logger, c->child.routing == RT_UNROUTED);
 }
@@ -1725,14 +1702,14 @@ static bool dispatch_1(enum routing_event event,
 	case X(ROUTE, UNROUTED, PERMANENT):
 		add_policy(c, policy.route); /* always */
 		if (never_negotiate(c)) {
-			if (!unrouted_to_routed_never_negotiate(event, c, e->where)) {
+			if (!unrouted_to_routed_never_negotiate(c, e->where)) {
 				/* XXX: why whack only? */
 				llog(RC_ROUTE, logger, "could not route");
 				return true;
 			}
 			PEXPECT(logger, c->child.routing == RT_ROUTED_NEVER_NEGOTIATE);
 		} else {
-			if (!unrouted_to_routed_ondemand(event, c, e->where)) {
+			if (!unrouted_to_routed_ondemand(c, e->where)) {
 				/* XXX: why whack only? */
 				llog(RC_ROUTE, logger, "could not route");
 				return true;
@@ -1833,17 +1810,17 @@ static bool dispatch_1(enum routing_event event,
 	case X(TEARDOWN_IKE, UNROUTED_BARE_NEGOTIATION, INSTANCE):
 	case X(TEARDOWN_IKE, UNROUTED_BARE_NEGOTIATION, PERMANENT):
 		if (connection_cannot_die(event, c, logger, e)) {
-			set_routing(event, c, RT_UNROUTED, NULL);
+			set_routing(c, RT_UNROUTED);
 			return true;
 		}
-		set_routing(event, c, RT_UNROUTED, NULL);
+		set_routing(c, RT_UNROUTED);
 		return true;
 
 	case X(TEARDOWN_CHILD, ROUTED_NEGOTIATION, PERMANENT):
 		/*
 		 * For instance, things fail during IKE_AUTH.
 		 */
-		teardown_routed_negotiation(event, c, (*e->child), logger,
+		teardown_routed_negotiation(c, (*e->child), logger,
 					    e->where, "delete Child SA");
 		return true;
 
@@ -1864,7 +1841,7 @@ static bool dispatch_1(enum routing_event event,
 		 */
 		/* ex, permanent+up */
 		if (connection_cannot_die(event, c, logger, e)) {
-			routed_negotiation_to_routed_ondemand(event, c, logger, e->where,
+			routed_negotiation_to_routed_ondemand(c, logger, e->where,
 							      "restoring ondemand, reviving");
 			PEXPECT(logger, c->child.routing == RT_ROUTED_ONDEMAND);
 			return true;
@@ -1878,17 +1855,17 @@ static bool dispatch_1(enum routing_event event,
 			 * Change routing so we don't get cleared out
 			 * when state/connection dies.
 			 */
-			set_routing(event, c, RT_UNROUTED, NULL);
+			set_routing(c, RT_UNROUTED);
 			return true;
 		}
 		if (c->policy.route) {
-			routed_negotiation_to_routed_ondemand(event, c, logger, e->where,
+			routed_negotiation_to_routed_ondemand(c, logger, e->where,
 							      "restoring ondemand, connection is routed");
 			PEXPECT(logger, c->child.routing == RT_ROUTED_ONDEMAND);
 			return true;
 		}
 		/* is this reachable? */
-		routed_kernel_policy_to_unrouted(event, c, DIRECTION_OUTBOUND,
+		routed_kernel_policy_to_unrouted(c, DIRECTION_OUTBOUND,
 						 logger, e->where, "deleting");
 		PEXPECT(logger, c->child.routing == RT_UNROUTED);
 		/* connection lives to fight another day */
@@ -1896,7 +1873,7 @@ static bool dispatch_1(enum routing_event event,
 
 	case X(TEARDOWN_CHILD, UNROUTED_NEGOTIATION, INSTANCE):
 		if (connection_cannot_die(event, c, logger, e)) {
-			unrouted_kernel_policy_to_unrouted(event, c, DIRECTION_OUTBOUND,
+			unrouted_kernel_policy_to_unrouted(c, DIRECTION_OUTBOUND,
 							   logger, e->where, "fail");
 			return true;
 		}
@@ -1909,16 +1886,16 @@ static bool dispatch_1(enum routing_event event,
 			 * Change routing so we don't get cleared out
 			 * when state/connection dies.
 			 */
-			set_routing(event, c, RT_UNROUTED, NULL);
+			set_routing(c, RT_UNROUTED);
 			return true;
 		}
-		unrouted_kernel_policy_to_unrouted(event, c, DIRECTION_OUTBOUND,
+		unrouted_kernel_policy_to_unrouted(c, DIRECTION_OUTBOUND,
 						   logger, e->where, "fail");
 		return true;
 
 	case X(TEARDOWN_IKE, UNROUTED_NEGOTIATION, INSTANCE):
 		if (connection_cannot_die(event, c, logger, e)) {
-			unrouted_kernel_policy_to_unrouted(event, c, DIRECTION_OUTBOUND,
+			unrouted_kernel_policy_to_unrouted(c, DIRECTION_OUTBOUND,
 							   logger, e->where, e->story);
 			return true;
 		}
@@ -1931,10 +1908,10 @@ static bool dispatch_1(enum routing_event event,
 			 * Change routing so we don't get cleared out
 			 * when state/connection dies.
 			 */
-			set_routing(event, c, RT_UNROUTED, NULL);
+			set_routing(c, RT_UNROUTED);
 			return true;
 		}
-		unrouted_kernel_policy_to_unrouted(event, c, DIRECTION_OUTBOUND,
+		unrouted_kernel_policy_to_unrouted(c, DIRECTION_OUTBOUND,
 						   logger, e->where, e->story);
 		return true;
 
@@ -1946,18 +1923,18 @@ static bool dispatch_1(enum routing_event event,
 	case X(TEARDOWN_CHILD, ROUTED_TUNNEL, INSTANCE):
 	case X(TEARDOWN_CHILD, ROUTED_TUNNEL, PERMANENT):
 		/* permenant connections are never deleted */
-		teardown_routed_tunnel(event, c, e->child, e->where);
+		teardown_routed_tunnel(c, e->child, e->where);
 		return true;
 
 	case X(TEARDOWN_CHILD, ROUTED_INBOUND_NEGOTIATION, INSTANCE):
 	case X(TEARDOWN_CHILD, ROUTED_INBOUND_NEGOTIATION, PERMANENT):
 		/* total overkill */
-		teardown_routed_tunnel(event, c, e->child, e->where);
+		teardown_routed_tunnel(c, e->child, e->where);
 		return true;
 
 	case X(TEARDOWN_CHILD, UNROUTED_TUNNEL, INSTANCE):
 	case X(TEARDOWN_CHILD, UNROUTED_TUNNEL, PERMANENT):
-		teardown_unrouted_tunnel(event, c, (*e->child), logger, e->where, e->story);
+		teardown_unrouted_tunnel(c, (*e->child), logger, e->where, e->story);
 		return true;
 
 	case X(TEARDOWN_CHILD, UNROUTED_INBOUND, INSTANCE):
@@ -1968,7 +1945,7 @@ static bool dispatch_1(enum routing_event event,
 		 * gets a timeout.  Full down_routed_tunnel is
 		 * overkill - just inbound needs to be pulled.
 		 */
-		teardown_unrouted_inbound(event, c, (*e->child), logger, e->where, e->story);
+		teardown_unrouted_inbound(c, (*e->child), logger, e->where, e->story);
 		return true;
 
 	case X(TEARDOWN_CHILD, UNROUTED_INBOUND_NEGOTIATION, INSTANCE):
@@ -1979,7 +1956,7 @@ static bool dispatch_1(enum routing_event event,
 		 * overkill - just inbound needs to be pulled.
 		 */
 		ldbg_routing(logger, "OOPS: UNROUTED_INBOUND_NEGOTIATION isn't routed!");
-		teardown_unrouted_inbound_negotiation(event, c, (*e->child), logger, e->where, e->story);
+		teardown_unrouted_inbound_negotiation(c, (*e->child), logger, e->where, e->story);
 		return true;
 
 	case X(ESTABLISH_INBOUND, UNROUTED_BARE_NEGOTIATION, INSTANCE):
@@ -2133,7 +2110,7 @@ static bool dispatch_1(enum routing_event event,
 		 *
 		 * XXX: no-op as SPD is still owned?
 		 */
-		set_routing(event, c, RT_UNROUTED_TUNNEL, e);
+		c->child.routing = RT_UNROUTED_TUNNEL;
 		(*e->child)->sa.st_v2_mobike.del_src_ip = true;
 		do_updown_unroute(c, (*e->child));
 		(*e->child)->sa.st_v2_mobike.del_src_ip = false;
@@ -2141,7 +2118,7 @@ static bool dispatch_1(enum routing_event event,
 
 	case X(RESUME, UNROUTED_TUNNEL, PERMANENT):
 	case X(RESUME, UNROUTED_TUNNEL, INSTANCE):
-		set_routing(event, c, RT_ROUTED_TUNNEL, e);
+		c->child.routing = RT_ROUTED_TUNNEL;
 		do_updown_child(UPDOWN_ROUTE, (*e->child));
 		do_updown_child(UPDOWN_UP, (*e->child));
 		return true;
@@ -2170,30 +2147,30 @@ static bool dispatch_1(enum routing_event event,
 
 	case X(UNROUTE, UNROUTED_BARE_NEGOTIATION, INSTANCE):
 	case X(UNROUTE, UNROUTED_BARE_NEGOTIATION, PERMANENT):
-		set_routing(event, c, RT_UNROUTED, NULL);
+		set_routing(c, RT_UNROUTED);
 		return true;
 
 	case X(UNROUTE, ROUTED_FAILURE, INSTANCE):
 	case X(UNROUTE, ROUTED_FAILURE, PERMANENT):
-		routed_kernel_policy_to_unrouted(event, c, DIRECTION_OUTBOUND,
+		routed_kernel_policy_to_unrouted(c, DIRECTION_OUTBOUND,
 						 logger, e->where, "unroute");
 		return true;
 
 	case X(UNROUTE, ROUTED_INBOUND_NEGOTIATION, INSTANCE): /* xauth-pluto-25-lsw299 */
 	case X(UNROUTE, ROUTED_INBOUND_NEGOTIATION, PERMANENT): /* ikev1-xfrmi-02-aggr */
 	case X(UNROUTE, ROUTED_INBOUND_NEGOTIATION, TEMPLATE): /* xauth-pluto-25-lsw299 xauth-pluto-25-mixed-addresspool */
-		routed_inbound_negotiation_to_unrouted(event, c, (*e->child), logger, e->where, e->story);
+		routed_inbound_negotiation_to_unrouted(c, (*e->child), logger, e->where, e->story);
 		return true;
 
 	case X(UNROUTE, ROUTED_NEGOTIATION, INSTANCE):
 	case X(UNROUTE, ROUTED_NEGOTIATION, PERMANENT):
-		routed_kernel_policy_to_unrouted(event, c, DIRECTION_OUTBOUND,
+		routed_kernel_policy_to_unrouted(c, DIRECTION_OUTBOUND,
 						 logger, e->where, "unroute");
 		return true;
 
 	case X(UNROUTE, ROUTED_NEVER_NEGOTIATE, TEMPLATE):
 	case X(UNROUTE, ROUTED_NEVER_NEGOTIATE, PERMANENT):
-		routed_kernel_policy_to_unrouted(event, c, DIRECTION_INBOUND|DIRECTION_OUTBOUND,
+		routed_kernel_policy_to_unrouted(c, DIRECTION_INBOUND|DIRECTION_OUTBOUND,
 						 logger, e->where, "unroute");
 		return true;
 
@@ -2204,7 +2181,7 @@ static bool dispatch_1(enum routing_event event,
 		    c->local->kind == CK_PERMANENT) {
 			flush_routed_ondemand_revival(c);
 		}
-		routed_kernel_policy_to_unrouted(event, c, DIRECTION_OUTBOUND,
+		routed_kernel_policy_to_unrouted(c, DIRECTION_OUTBOUND,
 						 logger, e->where, "unroute");
 		return true;
 
@@ -2221,13 +2198,13 @@ static bool dispatch_1(enum routing_event event,
 		return true;
 
 	case X(UNROUTE, UNROUTED_NEGOTIATION, INSTANCE):
-		unrouted_kernel_policy_to_unrouted(event, c, DIRECTION_OUTBOUND,
+		unrouted_kernel_policy_to_unrouted(c, DIRECTION_OUTBOUND,
 						   logger, e->where, "unroute");
 		return true;
 
 	case X(UNROUTE, UNROUTED_TUNNEL, INSTANCE):
 	case X(UNROUTE, UNROUTED_TUNNEL, PERMANENT):
-		unrouted_tunnel_to_unrouted(event, c, logger, e->where, "unroute");
+		unrouted_tunnel_to_unrouted(c, logger, e->where, "unroute");
 		return true;
 
 /*
@@ -2248,7 +2225,7 @@ static bool dispatch_1(enum routing_event event,
 		 * is_labeled_parent() have overlapping SPDs that
 		 * seems to do no harm.
 		 */
-		if (!unrouted_to_routed_ondemand_sec_label(event, c, logger, e->where)) {
+		if (!unrouted_to_routed_ondemand_sec_label(c, logger, e->where)) {
 			llog(RC_ROUTE, logger, "could not route");
 			return true;
 		}
@@ -2264,7 +2241,7 @@ static bool dispatch_1(enum routing_event event,
 	case X(ROUTE, UNROUTED, LABELED_TEMPLATE):
 		add_policy(c, policy.route); /* always */
 		if (never_negotiate(c)) {
-			if (!unrouted_to_routed_never_negotiate(event, c, e->where)) {
+			if (!unrouted_to_routed_never_negotiate(c, e->where)) {
 				/* XXX: why whack only? */
 				llog(WHACK_STREAM|RC_ROUTE, logger, "could not route");
 				return true;
@@ -2272,7 +2249,7 @@ static bool dispatch_1(enum routing_event event,
 			PEXPECT(logger, c->child.routing == RT_ROUTED_NEVER_NEGOTIATE);
 			return true;
 		}
-		if (!unrouted_to_routed_ondemand_sec_label(event, c, logger, e->where)) {
+		if (!unrouted_to_routed_ondemand_sec_label(c, logger, e->where)) {
 			llog(RC_ROUTE, logger, "could not route");
 			return true;
 		}
@@ -2283,7 +2260,7 @@ static bool dispatch_1(enum routing_event event,
 		 * rekey re-routes the existing routed connection from
 		 * IKE AUTH.
 		 */
-		set_routing(event, c, RT_ROUTED_ONDEMAND, NULL);
+		set_routing(c, RT_ROUTED_ONDEMAND);
 		return true;
 	case X(ROUTE, UNROUTED_BARE_NEGOTIATION, LABELED_PARENT): /* see above */
 	case X(ROUTE, UNROUTED, LABELED_PARENT):
@@ -2299,7 +2276,7 @@ static bool dispatch_1(enum routing_event event,
 		 * But what if the two have the same SPDs?  Then the
 		 * routing happens twice which seems to be harmless.
 		 */
-		if (!unrouted_to_routed_ondemand_sec_label(event, c, logger, e->where)) {
+		if (!unrouted_to_routed_ondemand_sec_label(c, logger, e->where)) {
 			llog(RC_ROUTE, logger, "could not route");
 			return true;
 		}
@@ -2311,7 +2288,7 @@ static bool dispatch_1(enum routing_event event,
 	case X(UNROUTE, ROUTED_ONDEMAND, LABELED_TEMPLATE):
 	case X(UNROUTE, ROUTED_ONDEMAND, LABELED_PARENT):
 		/* labeled ipsec installs both inbound and outbound */
-		routed_kernel_policy_to_unrouted(event, c, DIRECTION_INBOUND|DIRECTION_OUTBOUND,
+		routed_kernel_policy_to_unrouted(c, DIRECTION_INBOUND|DIRECTION_OUTBOUND,
 						 logger, e->where, "unroute");
 		return true;
 	case X(INITIATED, ROUTED_ONDEMAND, LABELED_PARENT):
@@ -2320,7 +2297,7 @@ static bool dispatch_1(enum routing_event event,
 		return true;
 	case X(TEARDOWN_IKE, ROUTED_ONDEMAND, LABELED_PARENT):
 		/* labeled ipsec installs both inbound and outbound */
-		routed_kernel_policy_to_unrouted(event, c, DIRECTION_INBOUND|DIRECTION_OUTBOUND,
+		routed_kernel_policy_to_unrouted(c, DIRECTION_INBOUND|DIRECTION_OUTBOUND,
 						 logger, e->where, "unroute");
 		return true;
 	case X(TEARDOWN_IKE, UNROUTED, LABELED_PARENT):
@@ -2369,14 +2346,14 @@ static bool dispatch_1(enum routing_event event,
 
 	case X(UNROUTE, UNROUTED_INBOUND, LABELED_CHILD):
 	case X(UNROUTE, UNROUTED_TUNNEL, LABELED_CHILD):
-		set_routing(event, c, RT_UNROUTED, NULL);
+		set_routing(c, RT_UNROUTED);
 		return true;
 	case X(UNROUTE, UNROUTED, LABELED_CHILD):
 		ldbg_routing(logger, "already unrouted");
 		return true;
 	case X(TEARDOWN_CHILD, UNROUTED_INBOUND, LABELED_CHILD):
 	case X(TEARDOWN_CHILD, UNROUTED_TUNNEL, LABELED_CHILD):
-		set_routing(event, c, RT_UNROUTED, NULL);
+		set_routing(c, RT_UNROUTED);
 		return true;
 	case X(RESCHEDULE, UNROUTED, LABELED_CHILD):
 		/* drop it on the floor; ike died */
