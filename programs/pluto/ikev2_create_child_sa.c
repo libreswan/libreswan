@@ -1164,7 +1164,7 @@ stf_status process_v2_CREATE_CHILD_SA_request_continue_3(struct ike_sa *ike,
 		/* already logged */
 		record_v2N_response(larval_child->sa.logger, ike, request_md,
 				    n, NULL/*no-data*/, ENCRYPTED_PAYLOAD);
-		delete_child_sa(&larval_child);
+		connection_delete_child(&larval_child, HERE);
 		ike->sa.st_v2_msgid_windows.responder.wip_sa = NULL;
 		return v2_notification_fatal(n) ? STF_FATAL : STF_OK; /*IKE*/
 	}
