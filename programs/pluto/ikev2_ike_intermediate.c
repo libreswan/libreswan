@@ -375,36 +375,6 @@ stf_status process_v2_IKE_INTERMEDIATE_response(struct ike_sa *ike,
 	dbg("No KE payload in INTERMEDIATE RESPONSE, not calculating keys, going to AUTH by completing state transition");
 
 	/*
-	 * Initiator: check v2N_NAT_DETECTION_DESTINATION_IP or/and
-	 * v2N_NAT_DETECTION_SOURCE_IP.
-	 *
-	 *   2.23.  NAT Traversal
-	 *
-	 *   The IKE initiator MUST check the NAT_DETECTION_SOURCE_IP
-	 *   or NAT_DETECTION_DESTINATION_IP payloads if present, and
-	 *   if they do not match the addresses in the outer packet,
-	 *   MUST tunnel all future IKE and ESP packets associated
-	 *   with this IKE SA over UDP port 4500.
-	 *
-	 * When detected, float to the NAT port as needed (*ikeport
-	 * can't float but already supports NAT).  When the ports
-	 * can't support NAT, give up.
-	 */
-
-	if (v2_nat_detected(ike, md)) {
-		pexpect(ike->sa.hidden_variables.st_nat_traversal & NAT_T_DETECTED);
-		if (!v2_natify_initiator_endpoints(ike, HERE)) {
-			/* already logged */
-			return STF_FATAL;
-		}
-		if (ike->sa.st_connection->config->nic_offload == NIC_OFFLOAD_PACKET) {
-			llog_sa(RC_LOG_SERIOUS, ike,
-			"connection is NATed but nic-offload=packet does not support NAT");
-			return STF_FATAL;
-		}
-	}
-
-	/*
 	 * Initiate the calculation of g^xy.
 	 *
 	 * Form and pass in the full SPI[ir] that will eventually be
