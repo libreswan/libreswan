@@ -6,57 +6,45 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add addconn
-"addconn": connection failed to orient - check connection and network settings
-"addconn": added IKEv2 connection
+"addconn": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--leftupdown=
-"addconn--leftupdown=": connection failed to orient - check connection and network settings
-"addconn--leftupdown=": added IKEv2 connection
+"addconn--leftupdown=": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--leftupdown=quotes
-"addconn--leftupdown=quotes": connection failed to orient - check connection and network settings
-"addconn--leftupdown=quotes": added IKEv2 connection
+"addconn--leftupdown=quotes": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--leftupdown=%disabled
-"addconn--leftupdown=%disabled": connection failed to orient - check connection and network settings
-"addconn--leftupdown=%disabled": added IKEv2 connection
+"addconn--leftupdown=%disabled": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--leftupdown=my-updown
 conn 'addconn--leftupdown=my-updown': not found (tried aliases)
 west #
  ipsec add addconn--leftupdown=left
-"addconn--leftupdown=left": connection failed to orient - check connection and network settings
-"addconn--leftupdown=left": added IKEv2 connection
+"addconn--leftupdown=left": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--rightupdown=right
-"addconn--rightupdown=right": connection failed to orient - check connection and network settings
-"addconn--rightupdown=right": added IKEv2 connection
+"addconn--rightupdown=right": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--type=passthrough
-"addconn--type=passthrough": connection failed to orient - check connection and network settings
-"addconn--type=passthrough": added passthrough connection
+"addconn--type=passthrough": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--type=passthrough--leftupdown=left
 "addconn--type=passthrough--leftupdown=left": warning: leftupdown=left ignored when never negotiate
-"addconn--type=passthrough--leftupdown=left": connection failed to orient - check connection and network settings
-"addconn--type=passthrough--leftupdown=left": added passthrough connection
+"addconn--type=passthrough--leftupdown=left": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack                                      --host 1.2.3.4 --to --host 5.6.7.8
-"whack": connection failed to orient - check connection and network settings
-"whack": added IKEv2 connection
+"whack": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--updown=from  --updown=from          --host 1.2.3.4 --to --host 5.6.7.8
-"whack--updown=from": connection failed to orient - check connection and network settings
-"whack--updown=from": added IKEv2 connection
+"whack--updown=from": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--pass               --pass                --host 1.2.3.4 --to --host 5.6.7.8
-"whack--pass": connection failed to orient - check connection and network settings
-"whack--pass": added passthrough connection
+"whack--pass": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--pass--updown=from  --pass --updown=from  --host 1.2.3.4 --to --host 5.6.7.8
 "whack--pass--updown=from": warning: leftupdown=from ignored when never negotiate
-"whack--pass--updown=from": connection failed to orient - check connection and network settings
-"whack--pass--updown=from": added passthrough connection
+"whack--pass--updown=from": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec connectionstatus | sed -n -e 's/\(^[^:]*:\).* \([a-z_]*updown=[^;]*\);.*/\1 \2/p' | sort
 "addconn--leftupdown=%disabled": my_updown=<disabled>

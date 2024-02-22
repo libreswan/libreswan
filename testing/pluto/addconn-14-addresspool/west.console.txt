@@ -33,15 +33,13 @@ west #
 "6toXin4": failed to add connection: address family of leftaddresspool=2001:db8:0:3:1::/97 conflicts with right=192.1.2.23
 west #
  ipsec auto --add 6toXin6
-"6toXin6": connection failed to orient - check connection and network settings
-"6toXin6": added IKEv2 connection
+"6toXin6": added unoriented IKEv2 connection (neither left=2001:db8:1:2::45 nor right=2001:db8:1:2::23 match an interface)
 west #
  ipsec auto --add 4to4in4
 "4to4in4": added IKEv2 connection
 west #
  ipsec auto --add 4to4in6
-"4to4in6": connection failed to orient - check connection and network settings
-"4to4in6": added IKEv2 connection
+"4to4in6": added unoriented IKEv2 connection (neither left=2001:db8:1:2::45 nor right=2001:db8:1:2::23 match an interface)
 west #
  ipsec auto --add 4to6in4
 "4to6in4": failed to add connection: address family of leftaddresspool=192.168.1.0/24 conflicts with rightsubnet=2001:db8:2::/64
@@ -59,8 +57,7 @@ west #
 "6to6in4": added IKEv2 connection
 west #
  ipsec auto --add 6to6in6
-"6to6in6": connection failed to orient - check connection and network settings
-"6to6in6": added IKEv2 connection
+"6to6in6": added unoriented IKEv2 connection (neither left=2001:db8:1:2::45 nor right=2001:db8:1:2::23 match an interface)
 west #
  ipsec auto --add 46to4in4
 "46to4in4": failed to add connection: address family of leftaddresspool=192.168.1.0/24,2001:db8:1::/64 conflicts with rightsubnet=192.168.2.0/24
@@ -79,9 +76,8 @@ west #
 "46to64in4": added IKEv2 connection
 west #
  ipsec auto --add 64to46in6
-"64to46in6": connection failed to orient - check connection and network settings
 "64to46in6": connection is using multiple addresspools
-"64to46in6": added IKEv2 connection
+"64to46in6": added unoriented IKEv2 connection (neither left=2001:db8:1:2::45 nor right=2001:db8:1:2::23 match an interface)
 west #
  ipsec auto --add good-cat
 "good-cat": added IKEv2 connection

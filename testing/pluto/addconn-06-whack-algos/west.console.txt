@@ -8,20 +8,16 @@ west #
  # parser---* connections from west.conf loaded
 west #
  ipsec whack --name whack----rsasig      --host 1.2.3.4 --ikefrag-allow --no-esn --pfs --tunnel --rsasig --encrypt --ikev2-allow --ipv4 --to --host 5.6.7.8
-"whack----rsasig": connection failed to orient - check connection and network settings
-"whack----rsasig": added IKEv2 connection
+"whack----rsasig": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack-----ecdsa      --host 1.2.3.4 --ikefrag-allow --no-esn --pfs --tunnel --ecdsa  --encrypt --ikev2-allow --ipv4 --to --host 5.6.7.8
-"whack-----ecdsa": connection failed to orient - check connection and network settings
-"whack-----ecdsa": added IKEv2 connection
+"whack-----ecdsa": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--defaults      --host 1.2.3.4 --ikefrag-allow --no-esn --pfs --tunnel          --encrypt --ikev2-allow --ipv4 --to --host 5.6.7.8
-"whack--defaults": connection failed to orient - check connection and network settings
-"whack--defaults": added IKEv2 connection
+"whack--defaults": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--ikev2-default --host 1.2.3.4 --ikefrag-allow --no-esn --pfs --tunnel          --encrypt               --ipv4 --to --host 5.6.7.8
-"whack--ikev2-default": connection failed to orient - check connection and network settings
-"whack--ikev2-default": added IKEv2 connection
+"whack--ikev2-default": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec connectionstatus | grep "policy:" | grep rsasig | grep TUNNEL
 "parser---rsasig":   policy: IKEv2+RSASIG+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;

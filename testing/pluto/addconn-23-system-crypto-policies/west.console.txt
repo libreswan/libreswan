@@ -12,8 +12,7 @@ west #
 west #
  ipsec auto --add test
 "test": ikev2=yes has been replaced by keyexchange=ikev2
-"test": connection failed to orient - check connection and network settings
-"test": added IKEv2 connection
+"test": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec status | grep algorithms: # DEFAULT
 "test":   IKE algorithms: AES_GCM_16_256-HMAC_SHA2_512+HMAC_SHA2_256-DH19+MODP2048+DH31+DH21+DH20+MODP3072+MODP4096+MODP8192, CHACHA20_POLY1305-HMAC_SHA2_512+HMAC_SHA2_256-DH19+MODP2048+DH31+DH21+DH20+MODP3072+MODP4096+MODP8192, AES_CBC_256-HMAC_SHA2_512+HMAC_SHA2_256-DH19+MODP2048+DH31+DH21+DH20+MODP3072+MODP4096+MODP8192, AES_GCM_16_128-HMAC_SHA2_512+HMAC_SHA2_256-DH19+MODP2048+DH31+DH21+DH20+MODP3072+MODP4096+MODP8192, AES_CBC_128-HMAC_SHA2_256-DH19+MODP2048+DH31+DH21+DH20+MODP3072+MODP4096+MODP8192
@@ -27,8 +26,7 @@ west #
 west #
  ipsec auto --add test
 "test": ikev2=yes has been replaced by keyexchange=ikev2
-"test": connection failed to orient - check connection and network settings
-"test": added IKEv2 connection
+"test": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec status | grep algorithms: # FIPS
 "test":   IKE algorithms: AES_GCM_16_256-HMAC_SHA2_512+HMAC_SHA2_256-DH19+MODP2048+DH21+DH20+MODP3072+MODP4096+MODP8192, AES_CBC_256-HMAC_SHA2_512+HMAC_SHA2_256-DH19+MODP2048+DH21+DH20+MODP3072+MODP4096+MODP8192, AES_GCM_16_128-HMAC_SHA2_512+HMAC_SHA2_256-DH19+MODP2048+DH21+DH20+MODP3072+MODP4096+MODP8192, AES_CBC_128-HMAC_SHA2_256-DH19+MODP2048+DH21+DH20+MODP3072+MODP4096+MODP8192
@@ -42,8 +40,7 @@ west #
 west #
  ipsec auto --add test
 "test": ikev2=yes has been replaced by keyexchange=ikev2
-"test": connection failed to orient - check connection and network settings
-"test": added IKEv2 connection
+"test": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec status | grep algorithms: # FUTURE
 "test":   IKE algorithms: AES_GCM_16_256-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH31+DH21+DH20+MODP3072+MODP4096+MODP8192, CHACHA20_POLY1305-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH31+DH21+DH20+MODP3072+MODP4096+MODP8192, AES_CBC_256-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH31+DH21+DH20+MODP3072+MODP4096+MODP8192
@@ -57,8 +54,7 @@ west #
 west #
  ipsec auto --add test
 "test": ikev2=yes has been replaced by keyexchange=ikev2
-"test": connection failed to orient - check connection and network settings
-"test": added IKEv2 connection
+"test": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec status | grep algorithms: # LEGACY
 "test":   IKE algorithms: AES_GCM_16_256-HMAC_SHA2_512+HMAC_SHA2_256-DH19+MODP2048+DH31+DH21+DH20+MODP3072+MODP4096+MODP8192+MODP1536, CHACHA20_POLY1305-HMAC_SHA2_512+HMAC_SHA2_256-DH19+MODP2048+DH31+DH21+DH20+MODP3072+MODP4096+MODP8192+MODP1536, AES_CBC_256-HMAC_SHA2_512+HMAC_SHA2_256-DH19+MODP2048+DH31+DH21+DH20+MODP3072+MODP4096+MODP8192+MODP1536, AES_GCM_16_128-HMAC_SHA2_512+HMAC_SHA2_256-DH19+MODP2048+DH31+DH21+DH20+MODP3072+MODP4096+MODP8192+MODP1536, AES_CBC_128-HMAC_SHA2_256-DH19+MODP2048+DH31+DH21+DH20+MODP3072+MODP4096+MODP8192+MODP1536

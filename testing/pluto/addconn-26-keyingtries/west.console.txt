@@ -29,8 +29,7 @@ west #
 west #
  ipsec auto --add  nevernegotiate
 "nevernegotiate": warning: keyingtries=0 ignored, connection will never negotiate
-"nevernegotiate": connection failed to orient - check connection and network settings
-"nevernegotiate": added passthrough connection
+"nevernegotiate": added unoriented passthrough connection (neither left=10.0.1.1 nor right=0.0.0.0 match an interface)
 west #
  ipsec auto --up westnet-eastnet-k2
 "westnet-eastnet-k2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP

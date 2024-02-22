@@ -6,107 +6,84 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add addconn
-"addconn": connection failed to orient - check connection and network settings
-"addconn": added IKEv2 connection
+"addconn": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--vti-shared=no
-"addconn--vti-shared=no": connection failed to orient - check connection and network settings
-"addconn--vti-shared=no": added IKEv2 connection
+"addconn--vti-shared=no": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--vti-shared=yes
-"addconn--vti-shared=yes": connection failed to orient - check connection and network settings
-"addconn--vti-shared=yes": added IKEv2 connection
+"addconn--vti-shared=yes": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--vti-routing=no
-"addconn--vti-routing=no": connection failed to orient - check connection and network settings
-"addconn--vti-routing=no": added IKEv2 connection
+"addconn--vti-routing=no": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--vti-routing=yes
-"addconn--vti-routing=yes": connection failed to orient - check connection and network settings
-"addconn--vti-routing=yes": added IKEv2 connection
+"addconn--vti-routing=yes": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--vti-interface=short
-"addconn--vti-interface=short": connection failed to orient - check connection and network settings
-"addconn--vti-interface=short": added IKEv2 connection
+"addconn--vti-interface=short": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--vti-interface=long
 "addconn--vti-interface=long": warning: length of vti-interface 'very-very-very-very-long-name' exceeds IFNAMSIZ (16)
-"addconn--vti-interface=long": connection failed to orient - check connection and network settings
-"addconn--vti-interface=long": added IKEv2 connection
+"addconn--vti-interface=long": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack                                      --host 1.2.3.4 --to --host 5.6.7.8
-"whack": connection failed to orient - check connection and network settings
-"whack": added IKEv2 connection
+"whack": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--vti-shared       --vti-shared       --host 1.2.3.4 --to --host 5.6.7.8
-"whack--vti-shared": connection failed to orient - check connection and network settings
-"whack--vti-shared": added IKEv2 connection
+"whack--vti-shared": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--vti-shared=no    --vti-shared=no    --host 1.2.3.4 --to --host 5.6.7.8
-"whack--vti-shared=no": connection failed to orient - check connection and network settings
-"whack--vti-shared=no": added IKEv2 connection
+"whack--vti-shared=no": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--vti-shared=yes   --vti-shared=yes   --host 1.2.3.4 --to --host 5.6.7.8
-"whack--vti-shared=yes": connection failed to orient - check connection and network settings
-"whack--vti-shared=yes": added IKEv2 connection
+"whack--vti-shared=yes": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--vti-routing      --vti-routing      --host 1.2.3.4 --to --host 5.6.7.8
-"whack--vti-routing": connection failed to orient - check connection and network settings
-"whack--vti-routing": added IKEv2 connection
+"whack--vti-routing": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--vti-routing=no   --vti-routing=no   --host 1.2.3.4 --to --host 5.6.7.8
-"whack--vti-routing=no": connection failed to orient - check connection and network settings
-"whack--vti-routing=no": added IKEv2 connection
+"whack--vti-routing=no": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--vti-routing=yes  --vti-routing=yes  --host 1.2.3.4 --to --host 5.6.7.8
-"whack--vti-routing=yes": connection failed to orient - check connection and network settings
-"whack--vti-routing=yes": added IKEv2 connection
+"whack--vti-routing=yes": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--vti-interface        --vti-interface          --host 1.2.3.4 --to --host 5.6.7.8
 whack error: "whack--vti-interface" connection missing --host before --to
 west #
  ipsec whack --name whack--vti-interface=short  --vti-interface=short    --host 1.2.3.4 --to --host 5.6.7.8
-"whack--vti-interface=short": connection failed to orient - check connection and network settings
-"whack--vti-interface=short": added IKEv2 connection
+"whack--vti-interface=short": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--vti-interface=long   --vti-interface=very-very-very-very-long-name  --host 1.2.3.4 --to --host 5.6.7.8
 "whack--vti-interface=long": warning: length of vti-interface 'very-very-very-very-long-name' exceeds IFNAMSIZ (16)
-"whack--vti-interface=long": connection failed to orient - check connection and network settings
-"whack--vti-interface=long": added IKEv2 connection
+"whack--vti-interface=long": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--passthrough                                      --pass --host 1.2.3.4 --to --host 5.6.7.8
-"whack--passthrough": connection failed to orient - check connection and network settings
-"whack--passthrough": added passthrough connection
+"whack--passthrough": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--passthrough--vti-shared       --vti-shared       --pass --host 1.2.3.4 --to --host 5.6.7.8
 "whack--passthrough--vti-shared": warning: vti-shared=yes ignored for never-negotiate connection
-"whack--passthrough--vti-shared": connection failed to orient - check connection and network settings
-"whack--passthrough--vti-shared": added passthrough connection
+"whack--passthrough--vti-shared": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--passthrough--vti-shared=no    --vti-shared=no    --pass --host 1.2.3.4 --to --host 5.6.7.8
 "whack--passthrough--vti-shared=no": warning: vti-shared=no ignored for never-negotiate connection
-"whack--passthrough--vti-shared=no": connection failed to orient - check connection and network settings
-"whack--passthrough--vti-shared=no": added passthrough connection
+"whack--passthrough--vti-shared=no": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--passthrough--vti-shared=yes   --vti-shared=yes   --pass --host 1.2.3.4 --to --host 5.6.7.8
 "whack--passthrough--vti-shared=yes": warning: vti-shared=yes ignored for never-negotiate connection
-"whack--passthrough--vti-shared=yes": connection failed to orient - check connection and network settings
-"whack--passthrough--vti-shared=yes": added passthrough connection
+"whack--passthrough--vti-shared=yes": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--passthrough--vti-routing      --vti-routing      --pass --host 1.2.3.4 --to --host 5.6.7.8
 "whack--passthrough--vti-routing": warning: vti-routing=yes ignored for never-negotiate connection
-"whack--passthrough--vti-routing": connection failed to orient - check connection and network settings
-"whack--passthrough--vti-routing": added passthrough connection
+"whack--passthrough--vti-routing": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--passthrough--vti-routing=no   --vti-routing=no   --pass --host 1.2.3.4 --to --host 5.6.7.8
 "whack--passthrough--vti-routing=no": warning: vti-routing=no ignored for never-negotiate connection
-"whack--passthrough--vti-routing=no": connection failed to orient - check connection and network settings
-"whack--passthrough--vti-routing=no": added passthrough connection
+"whack--passthrough--vti-routing=no": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--passthrough--vti-routing=yes  --vti-routing=yes  --pass --host 1.2.3.4 --to --host 5.6.7.8
 "whack--passthrough--vti-routing=yes": warning: vti-routing=yes ignored for never-negotiate connection
-"whack--passthrough--vti-routing=yes": connection failed to orient - check connection and network settings
-"whack--passthrough--vti-routing=yes": added passthrough connection
+"whack--passthrough--vti-routing=yes": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec connectionstatus | sed -n -e 's/\(^[^:]*:\).* \(vti-routing:[^;]*\);.*/\1 \2/p' | sort
 "addconn--vti-interface=long": vti-routing:no

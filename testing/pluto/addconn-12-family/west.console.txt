@@ -6,41 +6,34 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add 4in4-base
-"4in4-base": connection failed to orient - check connection and network settings
-"4in4-base": added IKEv2 connection
+"4in4-base": added unoriented IKEv2 connection (neither left=10.11.12.13 nor right=20.21.22.23 match an interface)
 west #
  ipsec auto --add 4in4-good
-"4in4-good": connection failed to orient - check connection and network settings
-"4in4-good": added IKEv2 connection
+"4in4-good": added unoriented IKEv2 connection (neither left=10.11.12.13 nor right=20.21.22.23 match an interface)
 west #
  ipsec auto --add 4in4-bad
 "4in4-bad": failed to add connection: address family of leftsubnet=1.2.3.0/24 conflicts with rightsubnet=::/0
 west #
  ipsec auto --add 4in4-protoport
-"4in4-protoport": connection failed to orient - check connection and network settings
-"4in4-protoport": added IKEv2 connection
+"4in4-protoport": added unoriented IKEv2 connection (neither left=10.11.12.13 nor right=20.21.22.23 match an interface)
 west #
  ipsec auto --add 6in6-base
-"6in6-base": connection failed to orient - check connection and network settings
-"6in6-base": added IKEv2 connection
+"6in6-base": added unoriented IKEv2 connection (neither left=10:11:12:13:: nor right=20:21:22:23:: match an interface)
 west #
  ipsec auto --add 6in6-good
-"6in6-good": connection failed to orient - check connection and network settings
-"6in6-good": added IKEv2 connection
+"6in6-good": added unoriented IKEv2 connection (neither left=10:11:12:13:: nor right=20:21:22:23:: match an interface)
 west #
  ipsec auto --add 6in6-bad
 "6in6-bad": failed to add connection: address family of leftsubnet=1:2:3::/64 conflicts with rightsubnet=0.0.0.0/0
 west #
  ipsec auto --add 6in6-protoport
-"6in6-protoport": connection failed to orient - check connection and network settings
-"6in6-protoport": added IKEv2 connection
+"6in6-protoport": added unoriented IKEv2 connection (neither left=10:11:12:13:: nor right=20:21:22:23:: match an interface)
 west #
  ipsec auto --add 4in6-base # also bad
 "4in6-base": failed to add connection: address family of leftsubnet=1.2.3.0/24 conflicts with right=20:21:22:23::
 west #
  ipsec auto --add 4in6-good
-"4in6-good": connection failed to orient - check connection and network settings
-"4in6-good": added IKEv2 connection
+"4in6-good": added unoriented IKEv2 connection (neither left=10:11:12:13:: nor right=20:21:22:23:: match an interface)
 west #
  ipsec auto --add 4in6-bad
 "4in6-bad": failed to add connection: address family of leftsubnet=1.2.3.0/24 conflicts with rightsubnet=::/0
@@ -52,8 +45,7 @@ west #
 "6in4-base": failed to add connection: address family of leftsubnet=1:2:3::/64 conflicts with right=20.21.22.23
 west #
  ipsec auto --add 6in4-good
-"6in4-good": connection failed to orient - check connection and network settings
-"6in4-good": added IKEv2 connection
+"6in4-good": added unoriented IKEv2 connection (neither left=10.11.12.13 nor right=20.21.22.23 match an interface)
 west #
  ipsec auto --add 6in4-bad
 "6in4-bad": failed to add connection: address family of leftsubnet=1:2:3::/64 conflicts with rightsubnet=0.0.0/0
@@ -62,8 +54,7 @@ west #
 "6in4-protoport": failed to add connection: address family of leftsubnet=1:2:3::/64 conflicts with right=20.21.22.23
 west #
  ipsec auto --add 44family4
-"44family4": connection failed to orient - check connection and network settings
-"44family4": added IKEv2 connection
+"44family4": added unoriented IKEv2 connection (neither left=10.11.12.13 nor right=20.21.22.23 match an interface)
 west #
  ipsec auto --add 44family6
 "44family6": failed to add connection: "childaddrfamily=IPv6" conflicts with "leftsubnet=0/0"
@@ -84,8 +75,7 @@ west #
 "66family4": failed to add connection: "childaddrfamily=IPv4" conflicts with "leftsubnet=::/0"
 west #
  ipsec auto --add 66family6
-"66family6": connection failed to orient - check connection and network settings
-"66family6": added IKEv2 connection
+"66family6": added unoriented IKEv2 connection (neither left=10.11.12.13 nor right=20.21.22.23 match an interface)
 west #
  ipsec status | grep '==='
 "44family4": 0.0.0.0/0===10.11.12.13...20.21.22.23===0.0.0.0/0; unoriented; my_ip=unset; their_ip=unset;

@@ -6,83 +6,65 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add addconn
-"addconn": connection failed to orient - check connection and network settings
-"addconn": added IKEv2 connection
+"addconn": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--encapsulation=no
-"addconn--encapsulation=no": connection failed to orient - check connection and network settings
-"addconn--encapsulation=no": added IKEv2 connection
+"addconn--encapsulation=no": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--encapsulation=yes
-"addconn--encapsulation=yes": connection failed to orient - check connection and network settings
-"addconn--encapsulation=yes": added IKEv2 connection
+"addconn--encapsulation=yes": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--encapsulation=auto
-"addconn--encapsulation=auto": connection failed to orient - check connection and network settings
-"addconn--encapsulation=auto": added IKEv2 connection
+"addconn--encapsulation=auto": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--type=passthrough
-"addconn--type=passthrough": connection failed to orient - check connection and network settings
-"addconn--type=passthrough": added passthrough connection
+"addconn--type=passthrough": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--type=passthrough--encapsulation=no
 "addconn--type=passthrough--encapsulation=no": warning: encapsulation=no ignored for never-negotiate connection
-"addconn--type=passthrough--encapsulation=no": connection failed to orient - check connection and network settings
-"addconn--type=passthrough--encapsulation=no": added passthrough connection
+"addconn--type=passthrough--encapsulation=no": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--type=passthrough--encapsulation=yes
 "addconn--type=passthrough--encapsulation=yes": warning: encapsulation=yes ignored for never-negotiate connection
-"addconn--type=passthrough--encapsulation=yes": connection failed to orient - check connection and network settings
-"addconn--type=passthrough--encapsulation=yes": added passthrough connection
+"addconn--type=passthrough--encapsulation=yes": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--type=passthrough--encapsulation=auto
 "addconn--type=passthrough--encapsulation=auto": warning: encapsulation=auto ignored for never-negotiate connection
-"addconn--type=passthrough--encapsulation=auto": connection failed to orient - check connection and network settings
-"addconn--type=passthrough--encapsulation=auto": added passthrough connection
+"addconn--type=passthrough--encapsulation=auto": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack                                            --encrypt --host 1.2.3.4 --to --host 5.6.7.8
-"whack": connection failed to orient - check connection and network settings
-"whack": added IKEv2 connection
+"whack": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--encapsulation       --encapsulation       --encrypt --host 1.2.3.4 --to --host 5.6.7.8
-"whack--encapsulation": connection failed to orient - check connection and network settings
-"whack--encapsulation": added IKEv2 connection
+"whack--encapsulation": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--encapsulation=no    --encapsulation=no    --encrypt --host 1.2.3.4 --to --host 5.6.7.8
-"whack--encapsulation=no": connection failed to orient - check connection and network settings
-"whack--encapsulation=no": added IKEv2 connection
+"whack--encapsulation=no": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--encapsulation=yes   --encapsulation=yes   --encrypt --host 1.2.3.4 --to --host 5.6.7.8
-"whack--encapsulation=yes": connection failed to orient - check connection and network settings
-"whack--encapsulation=yes": added IKEv2 connection
+"whack--encapsulation=yes": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--encapsulation=auto  --encapsulation=auto  --encrypt --host 1.2.3.4 --to --host 5.6.7.8
-"whack--encapsulation=auto": connection failed to orient - check connection and network settings
-"whack--encapsulation=auto": added IKEv2 connection
+"whack--encapsulation=auto": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--passthrough                                          --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
-"whack--passthrough": connection failed to orient - check connection and network settings
-"whack--passthrough": added passthrough connection
+"whack--passthrough": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--passthrough--encapsulation      --encapsulation      --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
 "whack--passthrough--encapsulation": warning: encapsulation=yes ignored for never-negotiate connection
-"whack--passthrough--encapsulation": connection failed to orient - check connection and network settings
-"whack--passthrough--encapsulation": added passthrough connection
+"whack--passthrough--encapsulation": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--passthrough--encapsulation=no   --encapsulation=no   --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
 "whack--passthrough--encapsulation=no": warning: encapsulation=no ignored for never-negotiate connection
-"whack--passthrough--encapsulation=no": connection failed to orient - check connection and network settings
-"whack--passthrough--encapsulation=no": added passthrough connection
+"whack--passthrough--encapsulation=no": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--passthrough--encapsulation=yes  --encapsulation=yes  --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
 "whack--passthrough--encapsulation=yes": warning: encapsulation=yes ignored for never-negotiate connection
-"whack--passthrough--encapsulation=yes": connection failed to orient - check connection and network settings
-"whack--passthrough--encapsulation=yes": added passthrough connection
+"whack--passthrough--encapsulation=yes": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--passthrough--encapsulation=auto --encapsulation=auto --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
 "whack--passthrough--encapsulation=auto": warning: encapsulation=auto ignored for never-negotiate connection
-"whack--passthrough--encapsulation=auto": connection failed to orient - check connection and network settings
-"whack--passthrough--encapsulation=auto": added passthrough connection
+"whack--passthrough--encapsulation=auto": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec connectionstatus | sed -n -e 's/\(^[^:]*:\).* \(encapsulation:[^;]*\);.*/\1 \2/p' | sort
 "addconn": encapsulation:auto

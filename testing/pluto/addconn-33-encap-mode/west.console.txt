@@ -6,28 +6,22 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add addconn
-"addconn": connection failed to orient - check connection and network settings
-"addconn": added IKEv2 connection
+"addconn": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--type=transport
-"addconn--type=transport": connection failed to orient - check connection and network settings
-"addconn--type=transport": added IKEv2 connection
+"addconn--type=transport": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--type=tunnel
-"addconn--type=tunnel": connection failed to orient - check connection and network settings
-"addconn--type=tunnel": added IKEv2 connection
+"addconn--type=tunnel": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack                           --encrypt --host 1.2.3.4 --to --host 5.6.7.8
-"whack": connection failed to orient - check connection and network settings
-"whack": added IKEv2 connection
+"whack": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--tunnel     --tunnel      --encrypt --host 1.2.3.4 --to --host 5.6.7.8
-"whack--tunnel": connection failed to orient - check connection and network settings
-"whack--tunnel": added IKEv2 connection
+"whack--tunnel": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--transport  --transport   --encrypt --host 1.2.3.4 --to --host 5.6.7.8
-"whack--transport": connection failed to orient - check connection and network settings
-"whack--transport": added IKEv2 connection
+"whack--transport": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec connectionstatus | sed -n -e 's/\(.* policy:\) .*TUNNEL.*/\1 TUNNEL/p'
 "addconn":   policy: TUNNEL

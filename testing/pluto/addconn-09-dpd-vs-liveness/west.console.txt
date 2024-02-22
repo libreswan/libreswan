@@ -12,52 +12,45 @@ ipsec addconn: /etc/ipsec.conf:18: warning: obsolete keyword ignored: dpdaction=
 ipsec addconn: /etc/ipsec.conf:24: warning: obsolete keyword ignored: dpdaction=clear
 ipsec addconn: /etc/ipsec.conf:42: warning: obsolete keyword ignored: dpdaction=clear
 "ikev1-dpdtimeout=10s": warning: IKEv1 dpd settings are ignored unless both dpdtimeout= and dpddelay= are set
-"ikev1-dpdtimeout=10s": connection failed to orient - check connection and network settings
-"ikev1-dpdtimeout=10s": added IKEv1 connection
+"ikev1-dpdtimeout=10s": added unoriented IKEv1 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec auto --add ikev1-dpddelay=10s              # requires dpdtimeout
 ipsec addconn: /etc/ipsec.conf:18: warning: obsolete keyword ignored: dpdaction=clear
 ipsec addconn: /etc/ipsec.conf:24: warning: obsolete keyword ignored: dpdaction=clear
 ipsec addconn: /etc/ipsec.conf:42: warning: obsolete keyword ignored: dpdaction=clear
 "ikev1-dpddelay=10s": warning: IKEv1 dpd settings are ignored unless both dpdtimeout= and dpddelay= are set
-"ikev1-dpddelay=10s": connection failed to orient - check connection and network settings
-"ikev1-dpddelay=10s": added IKEv1 connection
+"ikev1-dpddelay=10s": added unoriented IKEv1 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec auto --add ikev1-dpdaction=clear           # requires dpddelay+dpdtimeout
 ipsec addconn: /etc/ipsec.conf:18: warning: obsolete keyword ignored: dpdaction=clear
 ipsec addconn: /etc/ipsec.conf:24: warning: obsolete keyword ignored: dpdaction=clear
 ipsec addconn: /etc/ipsec.conf:42: warning: obsolete keyword ignored: dpdaction=clear
-"ikev1-dpdaction=clear": connection failed to orient - check connection and network settings
-"ikev1-dpdaction=clear": added IKEv1 connection
+"ikev1-dpdaction=clear": added unoriented IKEv1 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec auto --add ikev1-dpdaction=clear-dpdtimeout=10s # requires dpddelay
 ipsec addconn: /etc/ipsec.conf:18: warning: obsolete keyword ignored: dpdaction=clear
 ipsec addconn: /etc/ipsec.conf:24: warning: obsolete keyword ignored: dpdaction=clear
 ipsec addconn: /etc/ipsec.conf:42: warning: obsolete keyword ignored: dpdaction=clear
 "ikev1-dpdaction=clear-dpdtimeout=10s": warning: IKEv1 dpd settings are ignored unless both dpdtimeout= and dpddelay= are set
-"ikev1-dpdaction=clear-dpdtimeout=10s": connection failed to orient - check connection and network settings
-"ikev1-dpdaction=clear-dpdtimeout=10s": added IKEv1 connection
+"ikev1-dpdaction=clear-dpdtimeout=10s": added unoriented IKEv1 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec auto --add ikev1-dpddelay=10s-dpdtimeout=0s # requires dpdtimeout!=0
 ipsec addconn: /etc/ipsec.conf:18: warning: obsolete keyword ignored: dpdaction=clear
 ipsec addconn: /etc/ipsec.conf:24: warning: obsolete keyword ignored: dpdaction=clear
 ipsec addconn: /etc/ipsec.conf:42: warning: obsolete keyword ignored: dpdaction=clear
-"ikev1-dpddelay=10s-dpdtimeout=0s": connection failed to orient - check connection and network settings
-"ikev1-dpddelay=10s-dpdtimeout=0s": added IKEv1 connection
+"ikev1-dpddelay=10s-dpdtimeout=0s": added unoriented IKEv1 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec auto --add ikev2-dpdtimeout=10s            # ignore dpdtimeout
 ipsec addconn: /etc/ipsec.conf:18: warning: obsolete keyword ignored: dpdaction=clear
 ipsec addconn: /etc/ipsec.conf:24: warning: obsolete keyword ignored: dpdaction=clear
 ipsec addconn: /etc/ipsec.conf:42: warning: obsolete keyword ignored: dpdaction=clear
 "ikev2-dpdtimeout=10s": warning: IKEv2 ignores dpdtimeout==; use dpddelay= and retransmit-timeout=
-"ikev2-dpdtimeout=10s": connection failed to orient - check connection and network settings
-"ikev2-dpdtimeout=10s": added IKEv2 connection
+"ikev2-dpdtimeout=10s": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec auto --add ikev2-dpdaction=clear           # requires dpddelay
 ipsec addconn: /etc/ipsec.conf:18: warning: obsolete keyword ignored: dpdaction=clear
 ipsec addconn: /etc/ipsec.conf:24: warning: obsolete keyword ignored: dpdaction=clear
 ipsec addconn: /etc/ipsec.conf:42: warning: obsolete keyword ignored: dpdaction=clear
-"ikev2-dpdaction=clear": connection failed to orient - check connection and network settings
-"ikev2-dpdaction=clear": added IKEv2 connection
+"ikev2-dpdaction=clear": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  

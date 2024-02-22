@@ -8,8 +8,7 @@ west #
  ipsec whack --name order-test --tunnel --encrypt --ipv4 --tunnelipv6  --host 1.2.3.4 --id foo --client fe80::1/128 --to --host 2.3.4.5 --id bar --client fe80::2/128
 "order-test": warning: ignoring leftid=foo: not a numeric IPv4 address and name lookup failed (no validation performed)
 "order-test": warning: ignoring rightid=bar: not a numeric IPv4 address and name lookup failed (no validation performed)
-"order-test": connection failed to orient - check connection and network settings
-"order-test": added IKEv2 connection
+"order-test": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=2.3.4.5 match an interface)
 west #
  ipsec whack --connectionstatus --name order-test
 "order-test": fe80::1/128===1.2.3.4[+S?C]...2.3.4.5[+S?C]===fe80::2/128; unoriented; my_ip=unset; their_ip=unset;

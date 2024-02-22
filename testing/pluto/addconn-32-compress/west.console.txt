@@ -6,65 +6,51 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add addconn
-"addconn": connection failed to orient - check connection and network settings
-"addconn": added IKEv2 connection
+"addconn": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--compress=no
-"addconn--compress=no": connection failed to orient - check connection and network settings
-"addconn--compress=no": added IKEv2 connection
+"addconn--compress=no": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--compress=yes
-"addconn--compress=yes": connection failed to orient - check connection and network settings
-"addconn--compress=yes": added IKEv2 connection
+"addconn--compress=yes": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--type=passthrough
-"addconn--type=passthrough": connection failed to orient - check connection and network settings
-"addconn--type=passthrough": added passthrough connection
+"addconn--type=passthrough": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--type=passthrough--compress=no
 "addconn--type=passthrough--compress=no": warning: compress=no ignored for never-negotiate connection
-"addconn--type=passthrough--compress=no": connection failed to orient - check connection and network settings
-"addconn--type=passthrough--compress=no": added passthrough connection
+"addconn--type=passthrough--compress=no": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--type=passthrough--compress=yes
 "addconn--type=passthrough--compress=yes": warning: compress=yes ignored for never-negotiate connection
-"addconn--type=passthrough--compress=yes": connection failed to orient - check connection and network settings
-"addconn--type=passthrough--compress=yes": added passthrough connection
+"addconn--type=passthrough--compress=yes": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack                               --encrypt --host 1.2.3.4 --to --host 5.6.7.8
-"whack": connection failed to orient - check connection and network settings
-"whack": added IKEv2 connection
+"whack": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--compress      --compress     --encrypt --host 1.2.3.4 --to --host 5.6.7.8
-"whack--compress": connection failed to orient - check connection and network settings
-"whack--compress": added IKEv2 connection
+"whack--compress": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--compress=no   --compress=no  --encrypt --host 1.2.3.4 --to --host 5.6.7.8
-"whack--compress=no": connection failed to orient - check connection and network settings
-"whack--compress=no": added IKEv2 connection
+"whack--compress=no": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--compress=yes  --compress=yes --encrypt --host 1.2.3.4 --to --host 5.6.7.8
-"whack--compress=yes": connection failed to orient - check connection and network settings
-"whack--compress=yes": added IKEv2 connection
+"whack--compress=yes": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--passthrough                               --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
-"whack--passthrough": connection failed to orient - check connection and network settings
-"whack--passthrough": added passthrough connection
+"whack--passthrough": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--passthrough--compress      --compress     --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
 "whack--passthrough--compress": warning: compress=yes ignored for never-negotiate connection
-"whack--passthrough--compress": connection failed to orient - check connection and network settings
-"whack--passthrough--compress": added passthrough connection
+"whack--passthrough--compress": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--passthrough--compress=no   --compress=no  --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
 "whack--passthrough--compress=no": warning: compress=no ignored for never-negotiate connection
-"whack--passthrough--compress=no": connection failed to orient - check connection and network settings
-"whack--passthrough--compress=no": added passthrough connection
+"whack--passthrough--compress=no": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--passthrough--compress=yes  --compress=yes --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
 "whack--passthrough--compress=yes": warning: compress=yes ignored for never-negotiate connection
-"whack--passthrough--compress=yes": connection failed to orient - check connection and network settings
-"whack--passthrough--compress=yes": added passthrough connection
+"whack--passthrough--compress=yes": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec connectionstatus | sed -n -e 's/\(.* policy:\) .*COMPRESS.*/\1 COMPRESS/p' | sort
 "addconn--compress=yes":   policy: COMPRESS

@@ -22,8 +22,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-ikev2
-"westnet-eastnet-ikev2": connection failed to orient - check connection and network settings
-"westnet-eastnet-ikev2": added IKEv2 connection
+"westnet-eastnet-ikev2": added unoriented IKEv2 connection (neither left=192.1.2.46 nor right=192.1.2.24 match an interface)
 west #
  # should be unoriented
 west #

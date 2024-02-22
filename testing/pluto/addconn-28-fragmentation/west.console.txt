@@ -6,63 +6,49 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add addconn--ikev1
-"addconn--ikev1": connection failed to orient - check connection and network settings
-"addconn--ikev1": added IKEv1 connection
+"addconn--ikev1": added unoriented IKEv1 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--ikev1--fragmentation-force
-"addconn--ikev1--fragmentation-force": connection failed to orient - check connection and network settings
-"addconn--ikev1--fragmentation-force": added IKEv1 connection
+"addconn--ikev1--fragmentation-force": added unoriented IKEv1 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--ikev2
-"addconn--ikev2": connection failed to orient - check connection and network settings
-"addconn--ikev2": added IKEv2 connection
+"addconn--ikev2": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--ikev2--fragmentation-no
-"addconn--ikev2--fragmentation-no": connection failed to orient - check connection and network settings
-"addconn--ikev2--fragmentation-no": added IKEv2 connection
+"addconn--ikev2--fragmentation-no": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--ikev2--fragmentation-yes
-"addconn--ikev2--fragmentation-yes": connection failed to orient - check connection and network settings
-"addconn--ikev2--fragmentation-yes": added IKEv2 connection
+"addconn--ikev2--fragmentation-yes": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--ikev2--fragmentation-force
 "addconn--ikev2--fragmentation-force": warning: IKEv1 only fragmentation=force ignored; using fragmentation=yes
-"addconn--ikev2--fragmentation-force": connection failed to orient - check connection and network settings
-"addconn--ikev2--fragmentation-force": added IKEv2 connection
+"addconn--ikev2--fragmentation-force": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--ikev1                      --host 1.2.3.4                       --no-esn --pfs --tunnel --encrypt --ikev1 --ipv4 --to --host 5.6.7.8
-"whack--ikev1": connection failed to orient - check connection and network settings
-"whack--ikev1": added IKEv1 connection
+"whack--ikev1": added unoriented IKEv1 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--ikev1--fragmentation-force --host 1.2.3.4 --fragmentation force --no-esn --pfs --tunnel --encrypt --ikev1 --ipv4 --to --host 5.6.7.8
-"whack--ikev1--fragmentation-force": connection failed to orient - check connection and network settings
-"whack--ikev1--fragmentation-force": added IKEv1 connection
+"whack--ikev1--fragmentation-force": added unoriented IKEv1 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--ikev2                      --host 1.2.3.4                       --no-esn --pfs --tunnel --encrypt --ikev2 --ipv4 --to --host 5.6.7.8
-"whack--ikev2": connection failed to orient - check connection and network settings
-"whack--ikev2": added IKEv2 connection
+"whack--ikev2": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--ikev2--ikefrag-allow       --host 1.2.3.4 --ikefrag-allow       --no-esn --pfs --tunnel --encrypt --ikev2 --ipv4 --to --host 5.6.7.8
-"whack--ikev2--ikefrag-allow": connection failed to orient - check connection and network settings
-"whack--ikev2--ikefrag-allow": added IKEv2 connection
+"whack--ikev2--ikefrag-allow": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--ikev2--ikefrag-force       --host 1.2.3.4 --ikefrag-force       --no-esn --pfs --tunnel --encrypt --ikev2 --ipv4 --to --host 5.6.7.8
 "whack--ikev2--ikefrag-force": warning: IKEv1 only fragmentation=force ignored; using fragmentation=yes
-"whack--ikev2--ikefrag-force": connection failed to orient - check connection and network settings
-"whack--ikev2--ikefrag-force": added IKEv2 connection
+"whack--ikev2--ikefrag-force": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--ikev2--fragmentation-no    --host 1.2.3.4 --fragmentation no    --no-esn --pfs --tunnel --encrypt --ikev2 --ipv4 --to --host 5.6.7.8
-"whack--ikev2--fragmentation-no": connection failed to orient - check connection and network settings
-"whack--ikev2--fragmentation-no": added IKEv2 connection
+"whack--ikev2--fragmentation-no": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--ikev2--fragmentation-yes   --host 1.2.3.4 --fragmentation yes   --no-esn --pfs --tunnel --encrypt --ikev2 --ipv4 --to --host 5.6.7.8
-"whack--ikev2--fragmentation-yes": connection failed to orient - check connection and network settings
-"whack--ikev2--fragmentation-yes": added IKEv2 connection
+"whack--ikev2--fragmentation-yes": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--ikev2--fragmentation-force --host 1.2.3.4 --fragmentation force --no-esn --pfs --tunnel --encrypt --ikev2 --ipv4 --to --host 5.6.7.8
 "whack--ikev2--fragmentation-force": warning: IKEv1 only fragmentation=force ignored; using fragmentation=yes
-"whack--ikev2--fragmentation-force": connection failed to orient - check connection and network settings
-"whack--ikev2--fragmentation-force": added IKEv2 connection
+"whack--ikev2--fragmentation-force": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec connectionstatus | sed -n -e 's/\(.* policy:\) .*\(IKEv[12]\).*/\1 \2/p'
 "addconn--ikev1":   policy: IKEv1

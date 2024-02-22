@@ -6,65 +6,51 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add addconn
-"addconn": connection failed to orient - check connection and network settings
-"addconn": added IKEv2 connection
+"addconn": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--pfs=no
-"addconn--pfs=no": connection failed to orient - check connection and network settings
-"addconn--pfs=no": added IKEv2 connection
+"addconn--pfs=no": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--pfs=yes
-"addconn--pfs=yes": connection failed to orient - check connection and network settings
-"addconn--pfs=yes": added IKEv2 connection
+"addconn--pfs=yes": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--type=passthrough
-"addconn--type=passthrough": connection failed to orient - check connection and network settings
-"addconn--type=passthrough": added passthrough connection
+"addconn--type=passthrough": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--type=passthrough--pfs=no
 "addconn--type=passthrough--pfs=no": warning: pfs=no ignored for never-negotiate connection
-"addconn--type=passthrough--pfs=no": connection failed to orient - check connection and network settings
-"addconn--type=passthrough--pfs=no": added passthrough connection
+"addconn--type=passthrough--pfs=no": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--type=passthrough--pfs=yes
 "addconn--type=passthrough--pfs=yes": warning: pfs=yes ignored for never-negotiate connection
-"addconn--type=passthrough--pfs=yes": connection failed to orient - check connection and network settings
-"addconn--type=passthrough--pfs=yes": added passthrough connection
+"addconn--type=passthrough--pfs=yes": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack                     --encrypt --host 1.2.3.4 --to --host 5.6.7.8
-"whack": connection failed to orient - check connection and network settings
-"whack": added IKEv2 connection
+"whack": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--pfs      --pfs     --encrypt --host 1.2.3.4 --to --host 5.6.7.8
-"whack--pfs": connection failed to orient - check connection and network settings
-"whack--pfs": added IKEv2 connection
+"whack--pfs": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--pfs=no   --pfs=no  --encrypt --host 1.2.3.4 --to --host 5.6.7.8
-"whack--pfs=no": connection failed to orient - check connection and network settings
-"whack--pfs=no": added IKEv2 connection
+"whack--pfs=no": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--pfs=yes  --pfs=yes --encrypt --host 1.2.3.4 --to --host 5.6.7.8
-"whack--pfs=yes": connection failed to orient - check connection and network settings
-"whack--pfs=yes": added IKEv2 connection
+"whack--pfs=yes": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--passthrough                     --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
-"whack--passthrough": connection failed to orient - check connection and network settings
-"whack--passthrough": added passthrough connection
+"whack--passthrough": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--passthrough--pfs      --pfs     --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
 "whack--passthrough--pfs": warning: pfs=yes ignored for never-negotiate connection
-"whack--passthrough--pfs": connection failed to orient - check connection and network settings
-"whack--passthrough--pfs": added passthrough connection
+"whack--passthrough--pfs": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--passthrough--pfs=no   --pfs=no  --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
 "whack--passthrough--pfs=no": warning: pfs=no ignored for never-negotiate connection
-"whack--passthrough--pfs=no": connection failed to orient - check connection and network settings
-"whack--passthrough--pfs=no": added passthrough connection
+"whack--passthrough--pfs=no": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--passthrough--pfs=yes  --pfs=yes --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
 "whack--passthrough--pfs=yes": warning: pfs=yes ignored for never-negotiate connection
-"whack--passthrough--pfs=yes": connection failed to orient - check connection and network settings
-"whack--passthrough--pfs=yes": added passthrough connection
+"whack--passthrough--pfs=yes": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec connectionstatus | sed -n -e 's/\(.* policy:\) .*PFS.*/\1 PFS/p' | sort
 "addconn--pfs=yes":   policy: PFS

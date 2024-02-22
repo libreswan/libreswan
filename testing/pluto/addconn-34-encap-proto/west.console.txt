@@ -6,56 +6,44 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add addconn
-"addconn": connection failed to orient - check connection and network settings
-"addconn": added IKEv2 connection
+"addconn": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--phase2=esp
-"addconn--phase2=esp": connection failed to orient - check connection and network settings
-"addconn--phase2=esp": added IKEv2 connection
+"addconn--phase2=esp": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--phase2=ah
-"addconn--phase2=ah": connection failed to orient - check connection and network settings
-"addconn--phase2=ah": added IKEv2 connection
+"addconn--phase2=ah": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--type=passthrough
-"addconn--type=passthrough": connection failed to orient - check connection and network settings
-"addconn--type=passthrough": added passthrough connection
+"addconn--type=passthrough": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--type=passthrough--phase2=esp
 "addconn--type=passthrough--phase2=esp": warning: phase2=esp ignored for never-negotiate connection
-"addconn--type=passthrough--phase2=esp": connection failed to orient - check connection and network settings
-"addconn--type=passthrough--phase2=esp": added passthrough connection
+"addconn--type=passthrough--phase2=esp": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--type=passthrough--phase2=ah
 "addconn--type=passthrough--phase2=ah": warning: phase2=ah ignored for never-negotiate connection
-"addconn--type=passthrough--phase2=ah": connection failed to orient - check connection and network settings
-"addconn--type=passthrough--phase2=ah": added passthrough connection
+"addconn--type=passthrough--phase2=ah": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack                              --host 1.2.3.4 --to --host 5.6.7.8
-"whack": connection failed to orient - check connection and network settings
-"whack": added IKEv2 connection
+"whack": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--encrypt      --encrypt      --host 1.2.3.4 --to --host 5.6.7.8
-"whack--encrypt": connection failed to orient - check connection and network settings
-"whack--encrypt": added IKEv2 connection
+"whack--encrypt": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--authenticate --authenticate --host 1.2.3.4 --to --host 5.6.7.8
-"whack--authenticate": connection failed to orient - check connection and network settings
-"whack--authenticate": added IKEv2 connection
+"whack--authenticate": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--pass                              --pass --host 1.2.3.4 --to --host 5.6.7.8
-"whack--pass": connection failed to orient - check connection and network settings
-"whack--pass": added passthrough connection
+"whack--pass": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--pass--encrypt      --encrypt      --pass --host 1.2.3.4 --to --host 5.6.7.8
 "whack--pass--encrypt": warning: phase2=esp ignored for never-negotiate connection
-"whack--pass--encrypt": connection failed to orient - check connection and network settings
-"whack--pass--encrypt": added passthrough connection
+"whack--pass--encrypt": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--pass--authenticate --authenticate --pass --host 1.2.3.4 --to --host 5.6.7.8
 "whack--pass--authenticate": warning: phase2=ah ignored for never-negotiate connection
-"whack--pass--authenticate": connection failed to orient - check connection and network settings
-"whack--pass--authenticate": added passthrough connection
+"whack--pass--authenticate": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec connectionstatus | sed -n -e 's/\(.* policy:\) .*ENCRYPT.*/\1 ENCRYPT/p'
 "addconn":   policy: ENCRYPT

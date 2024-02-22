@@ -12,8 +12,7 @@ east #
 "float-east": added IKEv1 connection
 east #
  ipsec auto --add west-float
-"west-float": connection failed to orient - check connection and network settings
-"west-float": added IKEv1 connection
+"west-float": added unoriented IKEv1 connection (neither left=192.1.2.45 nor right=192.1.2.66 match an interface)
 east #
  echo "initdone"
 initdone
