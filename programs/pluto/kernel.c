@@ -1560,13 +1560,21 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 		said_next++;
 	}
 
-	if (impair.install_ipsec_sa_outbound_state && direction == DIRECTION_OUTBOUND) {
-		llog(RC_LOG, child->sa.logger, "IMPAIR: kernel: install_ipsec_sa_outbound_state in %s()", __func__);
-		goto fail;
-	}
-	if (impair.install_ipsec_sa_inbound_state && direction == DIRECTION_INBOUND) {
-		llog(RC_LOG, child->sa.logger, "IMPAIR: kernel: install_ipsec_sa_inbound_state in %s()", __func__);
-		goto fail;
+	switch (direction) {
+	case DIRECTION_OUTBOUND:
+		if (impair.install_ipsec_sa_outbound_state) {
+			llog(RC_LOG, child->sa.logger,
+			     "IMPAIR: kernel: install_ipsec_sa_outbound_state in %s()", __func__);
+			goto fail;
+		}
+		break;
+	case DIRECTION_INBOUND:
+		if (impair.install_ipsec_sa_inbound_state && direction == DIRECTION_INBOUND) {
+			llog(RC_LOG, child->sa.logger,
+			     "IMPAIR: kernel: install_ipsec_sa_inbound_state in %s()", __func__);
+			goto fail;
+		}
+		break;
 	}
 
 	return true;
