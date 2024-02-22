@@ -852,52 +852,11 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
  */
 
 static v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *ike,
+								       struct child_sa *child,
 								       struct msg_digest *md,
 								       struct pbs_out *sk_pbs)
 {
-	v2_notification_t n;
-
-	if (impair.omit_v2_ike_auth_child) {
-		/* only omit when missing */
-		if (has_v2_IKE_AUTH_child_sa_payloads(md)) {
-			llog_pexpect(ike->sa.logger, HERE,
-				     "IMPAIR: IKE_AUTH request should have omitted CHILD SA payloads");
-			return v2N_INVALID_SYNTAX; /* fatal */
-		}
-		llog_sa(RC_LOG, ike, "IMPAIR: as expected, IKE_AUTH request omitted CHILD SA payloads");
-		return v2N_NOTHING_WRONG;
-	}
-
-	if (impair.ignore_v2_ike_auth_child) {
-		/* try to ignore the child */
-		if (!has_v2_IKE_AUTH_child_sa_payloads(md)) {
-			llog_pexpect(ike->sa.logger, HERE,
-				     "IMPAIR: IKE_AUTH request should have included CHILD_SA payloads");
-			return v2N_INVALID_SYNTAX; /* fatal */
-		}
-		llog_sa(RC_LOG, ike, "IMPAIR: as expected, IKE_AUTH request included CHILD SA payloads; ignoring them");
-		return v2N_NOTHING_WRONG;
-	}
-
-	/* try to process them */
-	if (!has_v2_IKE_AUTH_child_sa_payloads(md)) {
-		llog_sa(RC_LOG, ike, "IKE_AUTH request does not propose a Child SA; creating childless SA");
-		/* caller will send notification, if needed */
-		return v2N_NOTHING_WRONG;
-	}
-
-	/*
-	 * There's enough to build a Child SA.  Save it in .WIP_SA, if
-	 * this function fails call will clean it up.
-	 */
-
-	struct child_sa *child =
-		ike->sa.st_v2_msgid_windows.responder.wip_sa =
-		new_v2_child_sa(ike->sa.st_connection, ike,
-				CHILD_SA, SA_RESPONDER,
-				STATE_V2_IKE_AUTH_CHILD_R0);
-
-	/*
+	v2_notification_t n;	/*
 	 * Parse the CP payloads if needed (need child so that rants
 	 * can be logged against child).
 	 *
@@ -1017,13 +976,49 @@ bool process_any_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *ike,
 						       struct msg_digest *md,
 						       struct pbs_out *sk_pbs)
 {
-	pexpect(ike->sa.st_v2_msgid_windows.responder.wip_sa == NULL);
-	v2_notification_t cn = process_v2_IKE_AUTH_request_child_sa_payloads(ike, md, sk_pbs);
-	if (cn != v2N_NOTHING_WRONG) {
-		/* XXX: add delete_any_child_sa()? */
-		if (ike->sa.st_v2_msgid_windows.responder.wip_sa != NULL) {
-			connection_delete_child(&ike->sa.st_v2_msgid_windows.responder.wip_sa, HERE);
+	if (impair.omit_v2_ike_auth_child) {
+		/* only omit when missing */
+		if (has_v2_IKE_AUTH_child_sa_payloads(md)) {
+			llog_pexpect(ike->sa.logger, HERE,
+				     "IMPAIR: IKE_AUTH request should have omitted CHILD SA payloads");
+			return false; /* fatal */
 		}
+		llog_sa(RC_LOG, ike, "IMPAIR: as expected, IKE_AUTH request omitted CHILD SA payloads");
+		return true;
+	}
+
+	if (impair.ignore_v2_ike_auth_child) {
+		/* try to ignore the child */
+		if (!has_v2_IKE_AUTH_child_sa_payloads(md)) {
+			llog_pexpect(ike->sa.logger, HERE,
+				     "IMPAIR: IKE_AUTH request should have included CHILD_SA payloads");
+			return false; /* fatal */
+		}
+		llog_sa(RC_LOG, ike, "IMPAIR: as expected, IKE_AUTH request included CHILD SA payloads; ignoring them");
+		return true;
+	}
+
+	/* try to process them */
+	if (!has_v2_IKE_AUTH_child_sa_payloads(md)) {
+		llog_sa(RC_LOG, ike, "IKE_AUTH request does not propose a Child SA; creating childless SA");
+		return true;
+	}
+
+	/*
+	 * There's enough to build a Child SA.  Save it in .WIP_SA, if
+	 * this function fails call will clean it up.
+	 */
+
+	pexpect(ike->sa.st_v2_msgid_windows.responder.wip_sa == NULL);
+	struct child_sa *child =
+		ike->sa.st_v2_msgid_windows.responder.wip_sa =
+		new_v2_child_sa(ike->sa.st_connection, ike,
+				CHILD_SA, SA_RESPONDER,
+				STATE_V2_IKE_AUTH_CHILD_R0);
+
+	v2_notification_t cn = process_v2_IKE_AUTH_request_child_sa_payloads(ike, child, md, sk_pbs);
+	if (cn != v2N_NOTHING_WRONG) {
+		connection_delete_child(&ike->sa.st_v2_msgid_windows.responder.wip_sa, HERE);
 		if (v2_notification_fatal(cn)) {
 			record_v2N_response(ike->sa.logger, ike, md,
 					    cn, NULL/*no-data*/,
