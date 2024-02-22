@@ -40,10 +40,9 @@ west #
 "west-east" #2: IMPAIR: kernel: install_ipsec_sa_inbound_policy in install_inbound_ipsec_kernel_policies()
 "west-east" #2: CHILD SA encountered fatal error: INVALID_SYNTAX
 "west-east" #1: encountered fatal error in state STATE_V2_ESTABLISHED_IKE_SA
-"west-east" #2: deleting larval Child SA
+"west-east" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"west-east" #2: IMPAIR: revival: skip scheduling revival event
 ERROR: "west-east" #2: netlink response for Del SA esp.ESPSPIi@192.1.2.23: No such process (errno 3)
-"west-east" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"west-east" #1: IMPAIR: revival: skip scheduling revival event
 "west-east" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and NOT sending notification
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
