@@ -128,7 +128,7 @@ west #
 "westnet-eastnet-ikev2":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 "westnet-eastnet-ikev2":   liveness: active; dpddelay:3s; retransmit-timeout:10s
 "westnet-eastnet-ikev2":   nat-traversal: encapsulation:auto; keepalive:20s
-"westnet-eastnet-ikev2":   routing: routed-negotiation;
+"westnet-eastnet-ikev2":   routing: routed-negotiation; owner: IKE SA #3; negotiating IKE SA: #3;
 "westnet-eastnet-ikev2":   conn serial: $1;
 west #
  ../../guestbin/ipsec-kernel-policy.sh

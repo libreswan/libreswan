@@ -82,7 +82,7 @@ west #
 "westnet-eastnet":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 "westnet-eastnet":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 "westnet-eastnet":   nat-traversal: encapsulation:auto; keepalive:20s
-"westnet-eastnet":   routing: routed-tunnel; established Child SA: #3;
+"westnet-eastnet":   routing: routed-tunnel; owner: Child SA #3; established IKE SA: #1; established Child SA: #3;
 "westnet-eastnet":   conn serial: $1;
 "westnet-eastnet":   IKE algorithms: AES_CBC_256-HMAC_SHA2_512-MODP2048
 "westnet-eastnet":   IKEv2 algorithm newest: AES_CBC_256-HMAC_SHA2_512-MODP2048

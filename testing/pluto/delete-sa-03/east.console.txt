@@ -110,7 +110,7 @@ east #
 "west-east-b":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
 "west-east-b":   dpd: passive; delay:0s; timeout:0s
 "west-east-b":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
-"west-east-b":   routing: routed-tunnel; established IPsec SA: #3;
+"west-east-b":   routing: routed-tunnel; owner: IPsec SA #3; established IPsec SA: #3;
 "west-east-b":   conn serial: $2;
 "west-east-b":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
 "west-east-c": 198.51.100.4/32===192.1.2.23[@east]...192.1.2.45[@west]===198.51.100.3/32; routed-tunnel; my_ip=unset; their_ip=unset;
@@ -129,7 +129,7 @@ east #
 "west-east-c":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
 "west-east-c":   dpd: passive; delay:0s; timeout:0s
 "west-east-c":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
-"west-east-c":   routing: routed-tunnel; established IPsec SA: #4;
+"west-east-c":   routing: routed-tunnel; owner: IPsec SA #4; established ISAKMP SA: #1; established IPsec SA: #4;
 "west-east-c":   conn serial: $3;
 "west-east-c":   IKEv1 algorithm newest: AES_CBC_256-HMAC_SHA2_256-MODP2048
 "west-east-c":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>

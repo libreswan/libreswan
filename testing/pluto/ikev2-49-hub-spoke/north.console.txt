@@ -120,7 +120,7 @@ Connection list:
 "northnet-westnet-ipv4-psk":   our idtype: ID_FQDN; our id=@north; their idtype: ID_FQDN; their id=@east
 "northnet-westnet-ipv4-psk":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 "northnet-westnet-ipv4-psk":   nat-traversal: encapsulation:auto; keepalive:20s
-"northnet-westnet-ipv4-psk":   routing: routed-tunnel; established Child SA: #2;
+"northnet-westnet-ipv4-psk":   routing: routed-tunnel; owner: Child SA #2; established IKE SA: #1; established Child SA: #2;
 "northnet-westnet-ipv4-psk":   conn serial: $1;
 "northnet-westnet-ipv4-psk":   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-DH19
 "northnet-westnet-ipv4-psk":   ESP algorithm newest: AES_GCM_16_256-NONE; pfsgroup=<Phase1>

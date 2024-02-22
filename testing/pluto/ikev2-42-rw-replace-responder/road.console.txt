@@ -172,7 +172,7 @@ Connection list:
 "road-east-x509-ipv4"[1]:   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
 "road-east-x509-ipv4"[1]:   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 "road-east-x509-ipv4"[1]:   nat-traversal: encapsulation:auto; keepalive:20s
-"road-east-x509-ipv4"[1]:   routing: routed-tunnel; established Child SA: #2;
+"road-east-x509-ipv4"[1]:   routing: routed-tunnel; owner: Child SA #2; established IKE SA: #3; established Child SA: #2;
 "road-east-x509-ipv4"[1]:   conn serial: $2, instantiated from: $1;
 "road-east-x509-ipv4"[1]:   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-DH19
 "road-east-x509-ipv4"[1]:   ESP algorithm newest: AES_GCM_16_256-NONE; pfsgroup=<Phase1>

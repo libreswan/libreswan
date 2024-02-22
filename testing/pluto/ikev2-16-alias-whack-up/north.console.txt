@@ -47,7 +47,7 @@ north #
 "northnet-eastnets/0x1":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
 "northnet-eastnets/0x1":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 "northnet-eastnets/0x1":   nat-traversal: encapsulation:auto; keepalive:20s
-"northnet-eastnets/0x1":   routing: routed-tunnel; established Child SA: #2;
+"northnet-eastnets/0x1":   routing: routed-tunnel; owner: Child SA #2; established IKE SA: #1; established Child SA: #2;
 "northnet-eastnets/0x1":   conn serial: $1;
 "northnet-eastnets/0x1":   aliases: northnet-eastnets
 "northnet-eastnets/0x1":   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-DH19
@@ -70,7 +70,7 @@ north #
 "northnet-eastnets/0x2":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
 "northnet-eastnets/0x2":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 "northnet-eastnets/0x2":   nat-traversal: encapsulation:auto; keepalive:20s
-"northnet-eastnets/0x2":   routing: routed-tunnel; established Child SA: #3;
+"northnet-eastnets/0x2":   routing: routed-tunnel; owner: Child SA #3; established Child SA: #3;
 "northnet-eastnets/0x2":   conn serial: $2;
 "northnet-eastnets/0x2":   aliases: northnet-eastnets
 "northnet-eastnets/0x2":   ESP algorithm newest: AES_GCM_16_256-NONE; pfsgroup=<Phase1>

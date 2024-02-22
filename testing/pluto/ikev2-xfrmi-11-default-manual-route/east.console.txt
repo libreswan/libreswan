@@ -119,7 +119,7 @@ Connection list:
 "westnet-eastnet":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
 "westnet-eastnet":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 "westnet-eastnet":   nat-traversal: encapsulation:auto; keepalive:20s
-"westnet-eastnet":   routing: routed-tunnel; established Child SA: #2;
+"westnet-eastnet":   routing: routed-tunnel; owner: Child SA #2; established IKE SA: #1; established Child SA: #2;
 "westnet-eastnet":   conn serial: $1;
 "westnet-eastnet":   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-DH19
 "westnet-eastnet":   ESP algorithm newest: AES_GCM_16_256-NONE; pfsgroup=<Phase1>
