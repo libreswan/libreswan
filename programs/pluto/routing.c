@@ -1197,12 +1197,12 @@ static bool teardown_child_dispatch_ok(struct connection *c,
 				       struct logger *logger,
 				       const struct routing_annex *e)
 {
-	if ((*e->child)->sa.st_serialno == c->negotiating_child_sa) {
-		ldbg_routing(logger, "Child SA matches .negotiating_child_sa");
+	if (c->routing_sa == (*e->child)->sa.st_serialno) {
+		ldbg_routing(logger, "Child SA matches .routing_sa");
 		return true;
 	}
-	ldbg_routing(logger, "Child SA does not match .negotiating_child_sa "PRI_SO,
-		     pri_so(c->negotiating_child_sa));
+	ldbg_routing(logger, "Child SA does not match .routing_sa "PRI_SO,
+		     pri_so(c->routing_sa));
 	return false;
 }
 
@@ -1257,17 +1257,13 @@ static bool teardown_ike_dispatch_ok(struct connection *c,
 				     struct logger *logger,
 				     const struct routing_annex *e)
 {
-	if (c->established_ike_sa == SOS_NOBODY) {
-		ldbg_routing(logger, "IKE SA matches unset .established_ike_sa");
-		return true;
-	}
-	if (c->established_ike_sa == (*e->ike)->sa.st_serialno) {
-		ldbg_routing(logger, "IKE SA matches .established_ike_sa");
+	if (c->routing_sa == (*e->ike)->sa.st_serialno) {
+		ldbg_routing(logger, "IKE SA matches .routing_sa");
 		return true;
 	}
 
-	ldbg_routing(logger, "IKE SA does not match .established_ike_sa "PRI_SO,
-		     pri_so(c->established_ike_sa));
+	ldbg_routing(logger, "IKE SA does not match .routing_sa "PRI_SO,
+		     pri_so(c->routing_sa));
 	return false;
 }
 
@@ -1373,26 +1369,14 @@ static bool initiated_ike_dispatch_ok(struct connection *c,
 				      struct logger *logger,
 				      const struct routing_annex *e)
 {
-	switch (c->child.routing) {
-	case RT_UNROUTED:
-		pexpect_connection_is_disowned(c, logger, e->where);
-		ldbg_routing(logger, "IKE SA matches unrouted");
+	if (c->routing_sa == SOS_NOBODY) {
+		ldbg_routing(logger, "IKE SA matches unset .routing_sa");
 		return true;
-	case RT_ROUTED_ONDEMAND:
-		ldbg_routing(logger, "IKE SA matches ROUTED_ONDEMAND");
-		return true;
-	default:
-		/*
-		 * Ignore stray initiates (presumably due to two
-		 * acquires triggering simultaneously) or due to an
-		 * initiate being used to force a rekey.
-		 */
-		LLOG_JAMBUF(LOG_STREAM, logger, buf) {
-			jam_string(buf, "connection for IKE SA is already in state ");
-			jam_enum_human(buf, &routing_names, c->child.routing);
-		}
-		return false;
 	}
+	if (c->routing_sa == (*e->ike)->sa.st_serialno) {
+		ldbg_routing(logger, "IKE SA matches .routing_sa");
+	}
+	return false;
 }
 
 void connection_initiated_ike(struct ike_sa *ike,
@@ -1414,62 +1398,19 @@ static bool initiated_child_dispatch_ok(struct connection *c,
 					struct logger *logger,
 					const struct routing_annex *e)
 {
-	switch (c->child.routing) {
-	case RT_ROUTED_ONDEMAND:
-		ldbg_routing(logger, "Child SA matches ROUTED_ONDEMAND");
+	if (c->routing_sa == SOS_NOBODY) {
+		ldbg_routing(logger, "Child SA matches unset .routing_sa");
 		return true;
-	case RT_UNROUTED:
-		/*
-		 * An UNROUTED connection (i.e., no Child SA) can
-		 * still have an IKE SA, just as long as that IKE SA
-		 * matches what is negotiating the connection?
-		 *
-		 * For instance:
-		 *
-		 *    up cuckold     -- #1, #2
-		 *    up cuckoo      -- #3 (uses #1)
-		 *    down cuckold   -- only deletes #2, #1 is in use
-		 *
-		 * followed by:
-		 *
-		 *    up cuckold
-		 *
-		 * will initiate the connection cuckold with IKE SA
-		 * still set to #1.
-		 *
-		 * Have to wonder what happens when there's a replace?
-		 */
-		ldbg_routing(logger, "Child SA matches UNROUTED");
-		for (enum connection_owner owner = CONNECTION_OWNER_FLOOR;
-		     owner < CONNECTION_OWNER_ROOF; owner++) {
-			if (c->owner[owner] == SOS_NOBODY) {
-				continue;
-			}
-			if (owner >= IKE_SA_OWNER_FLOOR &&
-			    owner < IKE_SA_OWNER_ROOF &&
-			    c->owner[owner] == (*e->ike)->sa.st_serialno) {
-				pdbg(logger, "connection already has IKE SA");
-				continue;
-			}
-			llog_pexpect(logger, e->where,
-				     "connection "PRI_CO" [%p] is already owned by .%s "PRI_SO,
-				     pri_connection_co(c), c,
-				     enum_name(&connection_owner_names, owner),
-				     pri_so(c->owner[owner]));
-		}
-		return true;
-	default:
-		/*
-		 * Ignore stray initiates (presumably due to two
-		 * acquires triggering simultaneously) or due to an
-		 * initiate being used to force a rekey.
-		 */
-		LLOG_JAMBUF(LOG_STREAM, logger, buf) {
-			jam_string(buf, "connection for Child SA is already in state ");
-			jam_enum_human(buf, &routing_names, c->child.routing);
-		}
-		return false;
 	}
+	if (c->routing_sa == (*e->child)->sa.st_serialno) {
+		ldbg_routing(logger, "Child SA matches .routing_sa");
+		return true;
+	}
+	if (c->routing_sa == (*e->child)->sa.st_clonedfrom) {
+		ldbg_routing(logger, "Child SA's IKE SA matches .routing_sa");
+		return true;
+	}
+	return false;
 }
 
 void connection_initiated_child(struct ike_sa *ike, struct child_sa *child,
@@ -2406,9 +2347,9 @@ static bool dispatch_1(enum routing_event event,
 }
 
 static bool dispatch(enum routing_event event,
-	      struct connection *c,
-	      struct logger *logger, /* must out-live call */
-	      const struct routing_annex *e)
+		     struct connection *c,
+		     struct logger *logger, /* must out-live call */
+		     const struct routing_annex *e)
 {
 	PASSERT(logger, e->where != NULL);
 	bool ok = true;

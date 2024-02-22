@@ -773,6 +773,39 @@ struct connection {
 	/*
 	 * Private variables for tracking routing.  Only updated by
 	 * routing.c.
+	 *
+	 * As a simple example:
+	 *
+	 * <<ipsec route>>
+	 *
+	 * - the unowned connection installs kernal trap policy and
+	 * transitions to on-demand
+	 *
+	 * acquire
+	 *
+	 * - an IKE SA is created, the trap policy is changed to block
+	 * and .routing_sa is set to the IKE SA; IKE_SA_INIT is
+	 * initiated
+	 *
+	 * IKE_SA_INIT response
+	 *
+	 * - since the IKE SA owns the connection, a failed response
+	 * deleting the IKE SA will trigger revival
+	 *
+	 * - the Child SA is created and .routing_sa is set to that;
+	 * IKE_AUTH is initiated
+	 *
+	 * IKE_AUTH response
+	 *
+	 * - since the Child SA owns the connection, a failed response
+	 * (either IKE or Child) triggers revival
+	 *
+	 * - the Child SA installs the IPsec state/policy
+	 *
+	 * Child SA deleted (or IKE deleting all children)
+	 *
+	 * - since the Child SA owns the connection, it being deleted
+	 * triggers revival
 	 */
 	so_serial_t owner[CONNECTION_OWNER_ROOF];
 #define routing_sa owner[ROUTING_SA] /* IKE or Child SA! */
