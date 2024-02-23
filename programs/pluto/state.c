@@ -72,6 +72,7 @@
 #include "ikev2_replace.h"
 #include "routing.h"
 #include "terminate.h"
+#include "whack_shutdown.h"		/* for exiting_pluto; */
 
 static void delete_state(struct state *st);
 
@@ -1912,7 +1913,15 @@ bool require_ddos_cookies(void)
 
 bool drop_new_exchanges(void)
 {
-	return cat_count[CAT_HALF_OPEN_IKE_SA] >= pluto_max_halfopen;
+	if (exiting_pluto) {
+		dbg("%s() exiting_pluto!", __func__);
+		return true;
+	}
+	if (cat_count[CAT_HALF_OPEN_IKE_SA] >= pluto_max_halfopen) {
+		dbg("%s() half open count >= %u", __func__, pluto_max_halfopen);
+		return true;
+	}
+	return false;
 }
 
 void show_globalstate_status(struct show *s)
