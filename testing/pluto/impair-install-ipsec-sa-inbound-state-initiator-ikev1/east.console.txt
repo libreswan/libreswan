@@ -20,6 +20,15 @@ src 192.1.2.45 dst 192.1.2.23
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
 east #
  ../../guestbin/ipsec-kernel-policy.sh
 src 192.0.1.0/24 dst 192.0.2.0/24
@@ -33,8 +42,13 @@ src 192.0.1.0/24 dst 192.0.2.0/24
 east #
  ipsec unroute west-east
 "west-east": terminating SAs using this connection
-"west-east" #2: deleting IPsec SA (QUICK_R1) and sending notification using ISAKMP SA #1
-ERROR: "west-east" #2: kernel: xfrm XFRM_MSG_DELPOLICY delete response for flow (out): No such file or directory (errno 2)
+"west-east" #3: deleting IPsec SA (QUICK_R1) and sending notification using ISAKMP SA #1
+ERROR: "west-east" #3: kernel: xfrm XFRM_MSG_DELPOLICY delete response for flow (out): No such file or directory (errno 2)
+ERROR: "west-east" #3: netlink response for Get SA esp.ESPSPIi@192.1.2.45: No such process (errno 3)
+"west-east" #3: failed to pull traffic counters from outbound IPsec SA
+"west-east" #3: ESP traffic information: in=0B out=0B
+ERROR: "west-east" #3: netlink response for Del SA esp.ESPSPIi@192.1.2.45: No such process (errno 3)
+"west-east" #2: deleting IPsec SA (QUICK_R1) and NOT sending notification
 ERROR: "west-east" #2: netlink response for Get SA esp.ESPSPIi@192.1.2.45: No such process (errno 3)
 "west-east" #2: failed to pull traffic counters from outbound IPsec SA
 "west-east" #2: ESP traffic information: in=0B out=0B

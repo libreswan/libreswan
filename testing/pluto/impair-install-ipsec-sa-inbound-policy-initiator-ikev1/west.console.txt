@@ -42,7 +42,11 @@ west #
 "west-east" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+ROUTE+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 "west-east" #2: sent Quick Mode request
 "west-east" #2: IMPAIR: kernel: install_ipsec_sa_inbound_policy in install_inbound_ipsec_kernel_policies()
-EXPECTATION FAILED: "west-east" #2: state transition function for STATE_QUICK_I1 had internal error (complete_v1_state_transition() +2851 programs/pluto/ikev1.c)
+"west-east" #2: state transition failed: failed
+"west-east" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"west-east" #2: IMPAIR: revival: skip scheduling revival event
+"west-east" #2: deleting IPsec SA (QUICK_I1) and NOT sending notification
+ERROR: "west-east" #2: netlink response for Del SA esp.ESPSPIi@192.1.2.23: No such process (errno 3)
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 down UNEXPECTED
@@ -55,22 +59,17 @@ west #
 done
 west #
  ../../guestbin/ipsec-kernel-state.sh
+src 192.0.1.254 dst 192.0.2.254
+	proto esp spi 0x00000000 reqid 0 mode transport
+	replay-window 0 
+	sel src 192.0.1.254/32 dst 192.0.2.254/32 proto icmp type 8 code 0 dev eth1 
 west #
  ../../guestbin/ipsec-kernel-policy.sh
 src 192.0.1.0/24 dst 192.0.2.0/24
 	dir out priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
-src 192.0.2.0/24 dst 192.0.1.0/24
-	dir fwd priority PRIORITY ptype main
-	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto esp reqid REQID mode tunnel
-src 192.0.2.0/24 dst 192.0.1.0/24
-	dir in priority PRIORITY ptype main
-	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto esp reqid REQID mode tunnel
 west #
  ipsec unroute west-east
-"west-east": kernel_ops_policy_del()   XFRM_MSG_DELPOLICY for flow delete (in) encountered unexpected policy
 west #
  

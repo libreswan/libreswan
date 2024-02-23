@@ -18,7 +18,6 @@ east #
 east #
  ipsec unroute west-east
 "west-east": terminating SAs using this connection
-"west-east" #3: deleting IPsec SA (QUICK_R0) and NOT sending notification
 "west-east" #1: deleting ISAKMP SA (MAIN_R3) and sending notification
 east #
  

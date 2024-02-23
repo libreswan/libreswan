@@ -67,16 +67,7 @@ src 192.0.1.0/24 dst 192.0.2.0/24
 	dir out priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
-src 192.0.2.0/24 dst 192.0.1.0/24
-	dir fwd priority PRIORITY ptype main
-	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto esp reqid REQID mode tunnel
-src 192.0.2.0/24 dst 192.0.1.0/24
-	dir in priority PRIORITY ptype main
-	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto esp reqid REQID mode tunnel
 west #
  ipsec unroute west-east
-"west-east": kernel_ops_policy_del()   XFRM_MSG_DELPOLICY for flow delete (in) encountered unexpected policy
 west #
  

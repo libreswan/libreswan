@@ -43,6 +43,8 @@ west #
 "west-east" #1: encountered fatal error in state STATE_V2_ESTABLISHED_IKE_SA
 "west-east" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "west-east" #2: IMPAIR: revival: skip scheduling revival event
+ERROR: "west-east" #2: kernel: xfrm XFRM_MSG_DELPOLICY delete response for flow (in): No such file or directory (errno 2)
+"west-east" #2: kernel: replace_ipsec_with_bare_kernel_policy() inbound delete failed
 ERROR: "west-east" #2: netlink response for Del SA esp.ESPSPIi@192.1.2.23: No such process (errno 3)
 ERROR: "west-east" #2: netlink response for Del SA esp.ESPSPIi@192.1.2.45: No such process (errno 3)
 "west-east" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and NOT sending notification
