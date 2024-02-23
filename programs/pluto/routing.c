@@ -1934,6 +1934,13 @@ static bool dispatch_1(enum routing_event event,
 	case X(ESTABLISH_INBOUND, UNROUTED_BARE_NEGOTIATION, INSTANCE):
 	case X(ESTABLISH_INBOUND, UNROUTED_BARE_NEGOTIATION, PERMANENT):
 		if (!install_inbound_ipsec_sa((*e->child), RT_UNROUTED_INBOUND, e->where)) {
+			/*
+			 * Assume Child SA at least partially
+			 * scribbled on the state/policy and hence,
+			 * has become owner.  Should this also
+			 * transition the connection's routing?
+			 */
+			set_established_inbound(c, RT_UNROUTED_INBOUND, e);
 			return false;
 		}
 		set_established_inbound(c, RT_UNROUTED_INBOUND, e);
@@ -1942,6 +1949,13 @@ static bool dispatch_1(enum routing_event event,
 	case X(ESTABLISH_INBOUND, ROUTED_INBOUND_NEGOTIATION, PERMANENT):
 		/* alias-01 */
 		if (!install_inbound_ipsec_sa((*e->child), RT_ROUTED_INBOUND_NEGOTIATION, e->where)) {
+			/*
+			 * Assume Child SA at least partially
+			 * scribbled on the state/policy and hence,
+			 * has become owner.  Should this also
+			 * transition the connection's routing?
+			 */
+			set_established_inbound(c, RT_ROUTED_INBOUND_NEGOTIATION, e);
 			return false;
 		}
 		set_established_inbound(c, RT_ROUTED_INBOUND_NEGOTIATION, e);
@@ -1952,6 +1966,13 @@ static bool dispatch_1(enum routing_event event,
 		/* addconn-05-bogus-left-interface
 		 * algo-ikev2-aes128-sha1-ecp256 et.al. */
 		if (!install_inbound_ipsec_sa((*e->child), RT_ROUTED_INBOUND_NEGOTIATION, e->where)) {
+			/*
+			 * Assume Child SA at least partially
+			 * scribbled on the state/policy and hence,
+			 * has become owner.  Should this also
+			 * transition the connection's routing?
+			 */
+			set_established_inbound(c, RT_ROUTED_INBOUND_NEGOTIATION, e);
 			return false;
 		}
 		set_established_inbound(c, RT_ROUTED_INBOUND_NEGOTIATION, e);
@@ -1967,6 +1988,13 @@ static bool dispatch_1(enum routing_event event,
 		 */
 		flush_routed_ondemand_revival(c);
 		if (!install_inbound_ipsec_sa((*e->child), RT_ROUTED_INBOUND_NEGOTIATION, e->where)) {
+			/*
+			 * Assume Child SA at least partially
+			 * scribbled on the state/policy and hence,
+			 * has become owner.  Should this also
+			 * transition the connection's routing?
+			 */
+			set_established_inbound(c, RT_ROUTED_INBOUND_NEGOTIATION, e);
 			return false;
 		}
 		set_established_inbound(c, RT_ROUTED_INBOUND_NEGOTIATION, e);
@@ -1987,6 +2015,13 @@ static bool dispatch_1(enum routing_event event,
 		 * only update after new child establishes?
 		 */
 		if (!install_inbound_ipsec_sa((*e->child), RT_ROUTED_TUNNEL, e->where)) {
+			/*
+			 * Assume Child SA at least partially
+			 * scribbled on the state/policy and hence,
+			 * has become owner.  Should this also
+			 * transition the connection's routing?
+			 */
+			set_established_inbound(c, RT_ROUTED_TUNNEL, e);
 			return false;
 		}
 		set_established_inbound(c, RT_ROUTED_TUNNEL, e);
@@ -1995,6 +2030,13 @@ static bool dispatch_1(enum routing_event event,
 	case X(ESTABLISH_INBOUND, UNROUTED, INSTANCE):
 	case X(ESTABLISH_INBOUND, UNROUTED, PERMANENT):
 		if (!install_inbound_ipsec_sa((*e->child), RT_UNROUTED_INBOUND, e->where)) {
+			/*
+			 * Assume Child SA at least partially
+			 * scribbled on the state/policy and hence,
+			 * has become owner.  Should this also
+			 * transition the connection's routing?
+			 */
+			set_established_inbound(c, RT_UNROUTED_INBOUND, e);
 			return false;
 		}
 		set_established_inbound(c, RT_UNROUTED_INBOUND, e);
@@ -2003,6 +2045,13 @@ static bool dispatch_1(enum routing_event event,
 	case X(ESTABLISH_INBOUND, UNROUTED_INBOUND, PERMANENT):
 		/* alias-01 */
 		if (!install_inbound_ipsec_sa((*e->child), RT_UNROUTED_INBOUND, e->where)) {
+			/*
+			 * Assume Child SA at least partially
+			 * scribbled on the state/policy and hence,
+			 * has become owner.  Should this also
+			 * transition the connection's routing?
+			 */
+			set_established_inbound(c, RT_UNROUTED_INBOUND, e);
 			return false;
 		}
 		set_established_inbound(c, RT_UNROUTED_INBOUND, e);
@@ -2011,6 +2060,13 @@ static bool dispatch_1(enum routing_event event,
 	case X(ESTABLISH_INBOUND, UNROUTED_INBOUND_NEGOTIATION, PERMANENT):
 		/* alias-01 */
 		if (!install_inbound_ipsec_sa((*e->child), RT_UNROUTED_INBOUND_NEGOTIATION, e->where)) {
+			/*
+			 * Assume Child SA at least partially
+			 * scribbled on the state/policy and hence,
+			 * has become owner.  Should this also
+			 * transition the connection's routing?
+			 */
+			set_established_inbound(c, RT_UNROUTED_INBOUND_NEGOTIATION, e);
 			return false;
 		}
 		set_established_inbound(c, RT_UNROUTED_INBOUND_NEGOTIATION, e);
@@ -2018,6 +2074,13 @@ static bool dispatch_1(enum routing_event event,
 
 	case X(ESTABLISH_INBOUND, UNROUTED_NEGOTIATION, INSTANCE):
 		if (!install_inbound_ipsec_sa((*e->child), RT_UNROUTED_INBOUND_NEGOTIATION, e->where)) {
+			/*
+			 * Assume Child SA at least partially
+			 * scribbled on the state/policy and hence,
+			 * has become owner.  Should this also
+			 * transition the connection's routing?
+			 */
+			set_established_inbound(c, RT_UNROUTED_INBOUND_NEGOTIATION, e);
 			return false;
 		}
 		set_established_inbound(c, RT_UNROUTED_INBOUND_NEGOTIATION, e);
@@ -2030,6 +2093,13 @@ static bool dispatch_1(enum routing_event event,
 						       .up = true,
 						       .route = false,
 					       }, e->where)) {
+			/*
+			 * Assume Child SA at least partially
+			 * scribbled on the state/policy and hence,
+			 * has become owner.  Should this also
+			 * transition the connection's routing?
+			 */
+			set_established_outbound(c, RT_ROUTED_TUNNEL, e);
 			return false;
 		}
 		set_established_outbound(c, RT_ROUTED_TUNNEL, e);
@@ -2051,6 +2121,13 @@ static bool dispatch_1(enum routing_event event,
 						       .up = false,
 						       .route = false,
 					       }, e->where)) {
+			/*
+			 * Assume Child SA at least partially
+			 * scribbled on the state/policy and hence,
+			 * has become owner.  Should this also
+			 * transition the connection's routing?
+			 */
+			set_established_outbound(c, RT_ROUTED_TUNNEL, e);
 			return false;
 		}
 		set_established_outbound(c, RT_ROUTED_TUNNEL, e);
@@ -2065,6 +2142,13 @@ static bool dispatch_1(enum routing_event event,
 						       .up = true,
 						       .route = true,
 					       }, e->where)) {
+			/*
+			 * Assume Child SA at least partially
+			 * scribbled on the state/policy and hence,
+			 * has become owner.  Should this also
+			 * transition the connection's routing?
+			 */
+			set_established_outbound(c, RT_ROUTED_TUNNEL, e);
 			return false;
 		}
 		set_established_outbound(c, RT_ROUTED_TUNNEL, e);
@@ -2295,6 +2379,13 @@ static bool dispatch_1(enum routing_event event,
 						       .up = false,
 						       .route = false,
 					       }, e->where)) {
+			/*
+			 * Assume Child SA at least partially
+			 * scribbled on the state/policy and hence,
+			 * has become owner.  Should this also
+			 * transition the connection's routing?
+			 */
+			set_established_outbound(c, RT_ROUTED_TUNNEL, e);
 			return false;
 		}
 		set_established_outbound(c, RT_UNROUTED_TUNNEL, e);
@@ -2313,6 +2404,13 @@ static bool dispatch_1(enum routing_event event,
 						       .up = true,
 						       .route = false,
 					       }, e->where)) {
+			/*
+			 * Assume Child SA at least partially
+			 * scribbled on the state/policy and hence,
+			 * has become owner.  Should this also
+			 * transition the connection's routing?
+			 */
+			set_established_outbound(c, RT_ROUTED_TUNNEL, e);
 			return false;
 		}
 		set_established_outbound(c, RT_UNROUTED_TUNNEL, e);
