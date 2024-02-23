@@ -46,8 +46,6 @@ struct crypt_mac ikev2_rsa_sha1_hash(const struct crypt_mac *hash);
 
 extern void ikev2_derive_child_keys(struct ike_sa *ike, struct child_sa *child);
 
-void schedule_v2_replace_event(struct state *st);
-
 bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct child_sa *child);
 
 struct ikev2_expected_payloads {
@@ -107,15 +105,9 @@ struct v2_state_transition {
 	void (*llog_success)(struct ike_sa *ike);
 };
 
-void v2_ike_sa_established(struct ike_sa *ike);
-void llog_v2_ike_sa_established(struct ike_sa *ike, struct child_sa *larval);
-
-extern bool emit_v2KE(chunk_t g, const struct dh_desc *group, pb_stream *outs);
-
 extern void init_ikev2(void);
 
-void v2_event_sa_rekey(struct state *st, bool detach_whack);
-void v2_event_sa_replace(struct state *st);
+void event_v2_rekey(struct state *st, bool detach_whack);
 
 struct payload_summary ikev2_decode_payloads(struct logger *log,
 					     struct msg_digest *md,
@@ -125,22 +117,11 @@ struct payload_summary ikev2_decode_payloads(struct logger *log,
 void v2_dispatch(struct ike_sa *ike, struct msg_digest *md,
 		 const struct v2_state_transition *transition);
 
-bool accept_v2_nonce(struct logger *logger, struct msg_digest *md,
-		     chunk_t *dest, const char *name);
-
 bool v2_accept_ke_for_proposal(struct ike_sa *ike,
 			       struct state *st,
 			       struct msg_digest *md,
 			       const struct dh_desc *accepted_dh,
 			       enum payload_security security);
-void ikev2_rekey_expire_predecessor(const struct child_sa *larval_sa, so_serial_t pred);
-
-bool id_ipseckey_allowed(struct ike_sa *ike, enum ikev2_auth_method atype);
-
-bool negotiate_hash_algo_from_notification(const struct pbs_in *payload_pbs,
-					   struct ike_sa *ike);
-
-
 /*
  * See 2.21. Error Handling.  In particular the IKE_AUTH discussion.
  */
@@ -153,8 +134,6 @@ void llog_v2_success_exchange_sent(struct ike_sa *ike);
 void llog_v2_success_exchange_processed(struct ike_sa *ike);
 void llog_v2_success_state_story(struct ike_sa *ike);
 void ldbg_v2_success(struct ike_sa *ike);
-
-bool v2_state_is_expired(struct state *st, const char *verb);
 
 bool accept_v2_notification(v2_notification_t n,
 			    struct logger *logger,

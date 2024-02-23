@@ -66,6 +66,7 @@
 #include "pending.h"
 #include "kernel.h"			/* for get_my_cpi() hack */
 #include "ikev2_proposals.h"
+#include "ikev2_parent.h"
 
 static bool emit_v2_child_response_payloads(struct ike_sa *ike,
 					    const struct child_sa *child,

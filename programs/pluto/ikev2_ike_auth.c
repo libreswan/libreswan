@@ -69,6 +69,7 @@
 #include "routing.h"
 #include "ikev2_replace.h"
 #include "revival.h"
+#include "ikev2_parent.h"
 
 static stf_status process_v2_IKE_AUTH_request_tail(struct state *st,
 						   struct msg_digest *md,

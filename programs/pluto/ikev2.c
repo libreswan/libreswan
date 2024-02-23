@@ -86,6 +86,7 @@
 #include "ikev2_child.h"		/* for jam_v2_child_sa_details() */
 #include "ikev2_eap.h"
 #include "terminate.h"
+#include "ikev2_parent.h"
 
 static callback_cb reinitiate_v2_ike_sa_init;	/* type assertion */
 
@@ -2977,4 +2978,26 @@ bool accept_v2_notification(v2_notification_t n,
 	ldbg(logger, "%s neither requested nor accepted",
 	     str_enum_short(&v2_notification_names, n, &eb));
 	return false;
+}
+
+void event_v2_rekey(struct state *st, bool detach_whack)
+{
+	if (v2_state_is_expired(st, "rekey")) {
+		return;
+	}
+
+	struct ike_sa *ike = ike_sa(st, HERE);
+
+	struct child_sa *larval_sa;
+	if (IS_IKE_SA(st)) {
+		larval_sa = submit_v2_CREATE_CHILD_SA_rekey_ike(ike, /*detach_whack*/false);
+	} else {
+		larval_sa = submit_v2_CREATE_CHILD_SA_rekey_child(ike, pexpect_child_sa(st),
+								  detach_whack);
+	}
+
+	const char *satype = IS_IKE_SA(st) ? "IKE" : "Child";
+	llog_sa(RC_LOG, larval_sa,
+		"initiating rekey to replace %s SA #%lu",
+		satype, st->st_serialno);
 }

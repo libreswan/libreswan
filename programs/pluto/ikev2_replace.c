@@ -34,6 +34,7 @@
 #include "connections.h"
 #include "ikev2_ike_sa_init.h"
 #include "initiate.h"
+#include "ikev2_parent.h"
 
 /* Replace SA with a fresh one that is similar
  *

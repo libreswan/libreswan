@@ -279,7 +279,7 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 
 	case EVENT_v2_REKEY:
 		pexpect(st->st_ike_version == IKEv2);
-		v2_event_sa_rekey(st, detach_whack);
+		event_v2_rekey(st, detach_whack);
 		break;
 
 #ifdef USE_IKEv1

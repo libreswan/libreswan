@@ -35,6 +35,8 @@
 #include "sysdep.h"
 #include "constants.h"
 #include "defs.h"
+#include "demux.h"
+#include "ikev2_parent.h"
 #include "state.h"
 #include "keys.h" /* needs state.h */
 #include "id.h"
@@ -49,7 +51,6 @@
 #include "kernel_alg.h"
 #include "plutoalg.h"
 #include "packet.h"
-#include "demux.h"
 #include "ikev2.h"
 #include "log.h"
 #include "ipsec_doi.h"
@@ -574,24 +575,138 @@ bool v2_state_is_expired(struct state *st, const char *verb)
 	return false;
 }
 
-void v2_event_sa_rekey(struct state *st, bool detach_whack)
+static stf_status process_v2_request_no_skeyseed_continue(struct state *ike_st,
+							  struct msg_digest *unused_md)
 {
-	if (v2_state_is_expired(st, "rekey")) {
+	struct ike_sa *ike = pexpect_ike_sa(ike_st);
+	pexpect(ike->sa.st_sa_role == SA_RESPONDER);
+	pexpect(v2_msg_role(unused_md) == NO_MESSAGE);
+	pexpect(ike->sa.st_state->kind == STATE_V2_PARENT_R1);
+	dbg("%s() for #%lu %s: calculating g^{xy}, sending R2",
+	    __func__, ike->sa.st_serialno, ike->sa.st_state->name);
+
+	struct v2_incoming_fragments **frags = &ike->sa.st_v2_incoming[MESSAGE_REQUEST];
+	if (!pexpect((*frags) != NULL)) {
+		return STF_INTERNAL_ERROR;
+	}
+
+	if (ike->sa.st_dh_shared_secret == NULL) {
+		/*
+		 * Since dh failed, the channel isn't end-to-end
+		 * encrypted.  Try to send back a clear text notify
+		 * and then abandon the connection.
+		 */
+		dbg("aborting IKE SA: DH failed (EXPECTATION FAILED valid as no transition?)");
+		send_v2N_response_from_md((*frags)->md, v2N_INVALID_SYNTAX, NULL);
+		return STF_FATAL;
+	}
+
+	calc_v2_keymat(&ike->sa,
+		       NULL /* no old keymat; not a rekey */,
+		       NULL /* no old prf; not a rekey */,
+		       &ike->sa.st_ike_spis);
+
+	/*
+	 * Try to decrypt the fragments; the result could be no
+	 * fragments, and hence, no exchange.
+	 */
+
+	struct msg_digest *md;
+	if ((*frags)->total == 0) {
+		if (!ikev2_decrypt_msg(ike, (*frags)->md)) {
+			free_v2_incoming_fragments(frags);
+			return STF_SKIP_COMPLETE_STATE_TRANSITION;
+		}
+		md = md_addref((*frags)->md);
+		free_v2_incoming_fragments(frags);
+	} else {
+		if (!decrypt_v2_incoming_fragments(ike, frags)) {
+			/* could free FRAGS */
+			return STF_SKIP_COMPLETE_STATE_TRANSITION;
+		}
+		md = reassemble_v2_incoming_fragments(frags);
+	}
+
+	process_protected_v2_message(ike, md);
+	md_delref(&md);
+	return STF_SKIP_COMPLETE_STATE_TRANSITION;
+}
+
+void process_v2_request_no_skeyseed(struct ike_sa *ike, struct msg_digest *md)
+{
+	if (!pexpect(v2_msg_role(md) == MESSAGE_REQUEST)) {
+		/*
+		 * Responder only: on the initiator, SKEYSEED is
+		 * computed by the IKE_SA_INIT response processor.
+		 */
 		return;
 	}
 
-	struct ike_sa *ike = ike_sa(st, HERE);
-
-	struct child_sa *larval_sa;
-	if (IS_IKE_SA(st)) {
-		larval_sa = submit_v2_CREATE_CHILD_SA_rekey_ike(ike, /*detach_whack*/false);
-	} else {
-		larval_sa = submit_v2_CREATE_CHILD_SA_rekey_child(ike, pexpect_child_sa(st),
-								  detach_whack);
+	const enum isakmp_xchg_type ix = md->hdr.isa_xchg;
+	if (!pexpect(ix == ISAKMP_v2_IKE_INTERMEDIATE || ix == ISAKMP_v2_IKE_AUTH)) {
+		/*
+		 * IKE_INTERMEDIATE and IKE_AUTH requests only.
+		 */
+		return;
 	}
 
-	const char *satype = IS_IKE_SA(st) ? "IKE" : "Child";
-	llog_sa(RC_LOG, larval_sa,
-		"initiating rekey to replace %s SA #%lu",
-		satype, st->st_serialno);
+	/*
+	 * Accumulate (or ignore) the message.
+	 *
+	 * If the message seems reasonable and is consistent with
+	 * previous messages, save it.
+	 *
+	 * However, if there's something suspect such as flip-flopping
+	 * between SK and SKF, repeated fragment; wrong or bad total;
+	 * ... then let it drop.  End result could be that no messages
+	 * accumulate and .st_v2_incomming remains NULL.
+	 *
+	 * XXX: as a hack, store the SK message in the exchange buffer
+	 * (storing it in .st_suspended_md confuses pluto).
+	 */
+
+	struct v2_incoming_fragments **frags = &ike->sa.st_v2_incoming[v2_msg_role(md)];
+	if (md->chain[ISAKMP_NEXT_v2SK] != NULL) {
+		dbg("received IKE encrypted message");
+		if ((*frags) != NULL) {
+			if ((*frags)->total != 0) {
+				dbg("  ignoring message; collecting fragments");
+				return;
+			}
+			pexpect((*frags)->md != NULL);
+			dbg("  ignoring message; already collected");
+			return;
+		}
+		/* save message */
+		*frags = alloc_thing(struct v2_incoming_fragments, "incoming v2_ike_rfrags");
+		(*frags)->md = md_addref(md);
+	} else if (md->chain[ISAKMP_NEXT_v2SKF] != NULL) {
+		switch (collect_v2_incoming_fragment(ike, md)) {
+		case FRAGMENT_IGNORED:
+			dbg("no fragments accumulated; skipping SKEYSEED");
+			return;
+		case FRAGMENTS_MISSING:
+		case FRAGMENTS_COMPLETE:
+			break;
+		}
+	} else {
+		llog_pexpect(ike->sa.logger, HERE,
+			     "message has neither SK nor SKF payload");
+		return;
+	}
+
+	if ((*frags) == NULL) {
+		llog_pexpect(ike->sa.logger, HERE, "no fragments");
+		return;
+	}
+
+	/*
+	 * If fragments are accumulating, and not already started,
+	 * kick off SKEYSEED.
+	 */
+	if (!ike->sa.st_offloaded_task_in_background) {
+		submit_dh_shared_secret(&ike->sa, &ike->sa, ike->sa.st_gi/*responder needs initiator KE*/,
+					process_v2_request_no_skeyseed_continue, HERE);
+		ike->sa.st_offloaded_task_in_background = true;
+	}
 }
