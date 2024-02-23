@@ -232,6 +232,7 @@ struct kernel_ops {
 	void (*init)(struct logger *logger);
 	void (*flush)(struct logger *logger);
 	void (*poke_holes)(struct logger *logger);
+	void (*plug_holes)(struct logger *logger);
 	void (*shutdown)(struct logger *logger);
 
 	bool (*policy_add)(enum kernel_policy_op op,

@@ -622,6 +622,11 @@ static void kernel_pfkeyv2_poke_holes(struct logger *logger)
 	ldbg(logger, "does PFKEY need to poke holes in its kernel policies?");
 }
 
+static void kernel_pfkeyv2_plug_holes(struct logger *logger)
+{
+	ldbg(logger, "does PFKEY need to poke holes in its kernel policies?");
+}
+
 static ipsec_spi_t pfkeyv2_get_ipsec_spi(ipsec_spi_t avoid UNUSED,
 					 const ip_address *src,
 					 const ip_address *dst,
@@ -1697,6 +1702,7 @@ const struct kernel_ops pfkeyv2_kernel_ops = {
 	.init = kernel_pfkeyv2_init,
 	.flush = kernel_pfkeyv2_flush,
 	.poke_holes = kernel_pfkeyv2_poke_holes,
+	.plug_holes = kernel_pfkeyv2_plug_holes,
 	.shutdown = kernel_pfkeyv2_shutdown,
 
 	.get_ipsec_spi = pfkeyv2_get_ipsec_spi,

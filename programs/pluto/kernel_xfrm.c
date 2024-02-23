@@ -2760,7 +2760,7 @@ static bool delete_icmpv6_bypass_policies(struct logger *logger)
 	return ok;
 }
 
-static void kernel_xfrm_poke_icmpv6_holes(struct logger *logger)
+static void kernel_xfrm_poke_holes(struct logger *logger)
 {
 	/* this could be per interface specific too */
 	const char proc_f[] = "/proc/sys/net/ipv6/conf/all/disable_ipv6";
@@ -2808,6 +2808,13 @@ static void kernel_xfrm_poke_icmpv6_holes(struct logger *logger)
 	}
 
 	hyperspace_bypass.icmpv6 = true;
+}
+
+static void kernel_xfrm_plug_holes(struct logger *logger)
+{
+	if (hyperspace_bypass.icmpv6) {
+		delete_icmpv6_bypass_policies(logger);
+	}
 }
 
 static bool qry_xfrm_mirgrate_support(struct logger *logger)
@@ -3027,9 +3034,6 @@ static bool netlink_poke_ipsec_policy_hole(int fd, const struct ip_info *afi, st
 
 static void kernel_xfrm_shutdown(struct logger *logger)
 {
-	if (hyperspace_bypass.icmpv6) {
-		delete_icmpv6_bypass_policies(logger);
-	}
 #ifdef USE_XFRM_INTERFACE
 	free_xfrmi_ipsec1(logger);
 #else
@@ -3049,7 +3053,8 @@ const struct kernel_ops xfrm_kernel_ops = {
 
 	.init = kernel_xfrm_init,
 	.flush = kernel_xfrm_flush,
-	.poke_holes = kernel_xfrm_poke_icmpv6_holes,
+	.poke_holes = kernel_xfrm_poke_holes,
+	.plug_holes = kernel_xfrm_plug_holes,
 	.shutdown = kernel_xfrm_shutdown,
 
 	.policy_del = kernel_xfrm_policy_del,

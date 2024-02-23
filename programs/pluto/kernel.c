@@ -2626,6 +2626,7 @@ void shutdown_kernel(struct logger *logger)
 {
 	if (kernel_initialized) {
 		delete_bare_shunt_kernel_policies(logger);
+		kernel_ops->plug_holes(logger);
 		kernel_ops->flush(logger);
 		kernel_ops->shutdown(logger);
 	}
