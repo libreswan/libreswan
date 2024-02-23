@@ -29,4 +29,6 @@ extern ikev2_state_transition_fn process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_
 
 bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike);
 
+void llog_v2_IKE_SA_INIT_success(struct ike_sa *ike);
+
 #endif

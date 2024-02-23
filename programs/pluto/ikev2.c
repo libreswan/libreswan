@@ -182,23 +182,12 @@ void llog_v2_success_state_story(struct ike_sa *ike)
 	}
 }
 
-void llog_v2_success_state_story_details(struct ike_sa *ike)
-{
-	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
-		jam_string(buf, ike->sa.st_state->story);
-		jam_string(buf, " ");
-		jam_parent_sa_details(buf, &ike->sa);
-	}
-}
-
-void llog_v2_success_state_story_to_details(struct ike_sa *ike)
+static void llog_v2_success_state_story_to(struct ike_sa *ike)
 {
 	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
 		jam_string(buf, ike->sa.st_state->story);
 		jam_string(buf, " to ");
 		jam_endpoint_address_protocol_port_sensitive(buf, &ike->sa.st_remote_endpoint);
-		jam_string(buf, " ");
-		jam_parent_sa_details(buf, &ike->sa);
 	}
 }
 
@@ -357,7 +346,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .req_clear_payloads = P(SA) | P(KE) | P(Nr),
 	  .opt_clear_payloads = P(CERTREQ),
 	  .processor  = process_v2_IKE_SA_INIT_response,
-	  .llog_success = llog_v2_success_state_story_to_details,
+	  .llog_success = llog_v2_success_state_story_to,
 	  .timeout_event = EVENT_RETRANSMIT, },
 
 	{ .story      = "Initiator: process IKE_INTERMEDIATE reply, initiate IKE_AUTH or IKE_INTERMEDIATE",
@@ -421,7 +410,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .send_role  = MESSAGE_RESPONSE,
 	  .req_clear_payloads = P(SA) | P(KE) | P(Ni),
 	  .processor  = process_v2_IKE_SA_INIT_request,
-	  .llog_success = llog_v2_success_state_story_details,
+	  .llog_success = llog_v2_IKE_SA_INIT_success,
 	  .timeout_event = EVENT_v2_DISCARD, },
 
 	/* STATE_V2_PARENT_R1: I2 --> R2

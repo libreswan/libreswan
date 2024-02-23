@@ -62,11 +62,65 @@
 #include "routing.h"
 #include "ikev2_replace.h"
 #include "revival.h"
+#include "ike_alg_integ.h"	/* for ike_alg_integ_none */
 
 static ke_and_nonce_cb initiate_v2_IKE_SA_INIT_request_continue;	/* type assertion */
 static dh_shared_secret_cb process_v2_request_no_skeyseed_continue;	/* type assertion */
 static dh_shared_secret_cb process_v2_IKE_SA_INIT_response_continue;	/* type assertion */
 static ke_and_nonce_cb process_v2_IKE_SA_INIT_request_continue;		/* forward decl and type assertion */
+
+void llog_v2_IKE_SA_INIT_success(struct ike_sa *ike)
+{
+
+	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
+
+		jam_string(buf, "processed IKE_SA_INIT ");
+		jam_string(buf, ike->sa.st_sa_role == SA_INITIATOR ? "response" : "request");
+		jam_string(buf, " from ");
+		jam_endpoint_address_protocol_port_sensitive(buf, &ike->sa.st_remote_endpoint);
+		jam_string(buf, " ");
+
+		PASSERT(ike->sa.logger, ike->sa.st_oakley.ta_encrypt != NULL);
+		PASSERT(ike->sa.logger, ike->sa.st_oakley.ta_prf != NULL);
+		PASSERT(ike->sa.logger, ike->sa.st_oakley.ta_dh != NULL);
+
+		jam_string(buf, "{");
+
+		jam_string(buf, "cipher=");
+		jam_string(buf, ike->sa.st_oakley.ta_encrypt->common.fqn);
+		if (ike->sa.st_oakley.enckeylen > 0) {
+			/* XXX: also check omit key? */
+			jam(buf, "_%d", ike->sa.st_oakley.enckeylen);
+		}
+
+		jam_string(buf, " ");
+
+		jam_string(buf, "integ=");
+		jam_string(buf, (ike->sa.st_oakley.ta_integ == &ike_alg_integ_none ? "n/a" :
+				 ike->sa.st_oakley.ta_integ->common.fqn));
+
+		jam_string(buf, " ");
+
+		jam_string(buf, "prf=");
+		jam_string(buf, ike->sa.st_oakley.ta_prf->common.fqn);
+
+		jam_string(buf, " ");
+
+		jam_string(buf, "group=");
+		jam_string(buf, ike->sa.st_oakley.ta_dh->common.fqn);
+
+		jam_string(buf, "}");
+
+		if (ike->sa.st_sa_role == SA_INITIATOR) {
+			jam_string(buf, ", initiating ");
+			enum isakmp_xchg_type ix =
+				(ike->sa.st_v2_ike_intermediate.enabled ? ISAKMP_v2_IKE_INTERMEDIATE :
+				 ISAKMP_v2_IKE_AUTH);
+			jam_enum_short(buf, &ikev2_exchange_names, ix);
+		}
+	}
+
+}
 
 void process_v2_IKE_SA_INIT(struct msg_digest *md)
 {
@@ -1613,12 +1667,20 @@ stf_status process_v2_IKE_SA_INIT_response_continue(struct state *ike_sa,
 	process_v2CERTREQ_payload(ike, md);
 
 	/*
-	 * The IKE_SA_INIT response has been processed, now dispatch
-	 * the next request.
+	 * The IKE_SA_INIT response has been processed, log completion
+	 * and dispatch the next request.
 	 */
-	return (ike->sa.st_v2_ike_intermediate.enabled /* SHH: GNU style ?: */
-		? initiate_v2_IKE_INTERMEDIATE_request
-		: initiate_v2_IKE_AUTH_request)(ike, md);
+
+	stf_status (*next_exchange)(struct ike_sa *ike, struct msg_digest *md);
+	if (ike->sa.st_v2_ike_intermediate.enabled) {
+		next_exchange = initiate_v2_IKE_INTERMEDIATE_request;
+	} else {
+		next_exchange = initiate_v2_IKE_AUTH_request;
+	}
+
+	llog_v2_IKE_SA_INIT_success(ike);
+
+	return next_exchange(ike, md);
 }
 
 void process_v2_request_no_skeyseed(struct ike_sa *ike, struct msg_digest *md)
