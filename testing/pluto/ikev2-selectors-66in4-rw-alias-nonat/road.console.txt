@@ -23,7 +23,8 @@ initiating all connections with alias "road"
 "road/0x1": queue Child SA; waiting on IKE SA "road/0x2" #1 negotiating with 192.1.2.23
 "road/0x2" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "road/0x1" #2: Child SA initiating pending connection using IKE SA #1's IKE_AUTH exchange
-"road/0x2" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
+"road/0x2" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"road/0x2" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
 "road/0x2" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "road/0x1" #2: initiator established Child SA using #1; IPsec tunnel [2001:db8:0:3::/64===2001:db8:0:2::/64] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 "road/0x2" #3: initiating Child SA using IKE SA #1

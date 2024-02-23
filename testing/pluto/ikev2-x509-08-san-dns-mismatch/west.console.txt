@@ -21,7 +21,8 @@ west #
  ipsec auto --up san
 "san" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "san" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"san" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
+"san" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"san" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
 "san" #1: X509: authentication failed; peer certificate subjectAltName extension does not match ID_FQDN 'NOTeast.testing.libreswan.org'
 "san" #1: deleting IKE SA (PARENT_I2) and sending notification
 "san" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds

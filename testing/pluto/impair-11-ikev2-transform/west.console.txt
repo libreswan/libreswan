@@ -16,7 +16,8 @@ west #
 "conf": added IKEv2 connection
 "conf" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "conf" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"conf" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
+"conf" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
+"conf" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
 "conf" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "conf" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 up
@@ -38,7 +39,8 @@ west #
 "conf" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
 "conf" #3: IMPAIR: adding transform type 6?? (0x6) id 0?? (0x0)
 "conf" #3: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"conf" #3: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=3DES_CBC_192 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
+"conf" #3: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=3DES_CBC_192 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
+"conf" #3: sent IKE_AUTH request to 192.1.2.23:UDP/500
 "conf" #3: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "conf" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 up
@@ -60,7 +62,8 @@ west #
 "conf" #5: initiating IKEv2 connection to 192.1.2.23 using UDP
 "conf" #5: IMPAIR: adding transform type INTEG (0x3) id 65535?? (0xffff)
 "conf" #5: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"conf" #5: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
+"conf" #5: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
+"conf" #5: sent IKE_AUTH request to 192.1.2.23:UDP/500
 "conf" #5: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "conf" #6: initiator established Child SA using #5; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 up
@@ -81,8 +84,9 @@ west #
 "conf": added IKEv2 connection
 "conf" #7: initiating IKEv2 connection to 192.1.2.23 using UDP
 "conf" #7: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"conf" #7: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
 "conf" #7: IMPAIR: adding transform type 6?? (0x6) id 0?? (0x0)
-"conf" #7: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
+"conf" #7: sent IKE_AUTH request to 192.1.2.23:UDP/500
 "conf" #7: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "conf" #8: initiator established Child SA using #7; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 DPD=passive}
 up
@@ -103,8 +107,9 @@ west #
 "conf": added IKEv2 connection
 "conf" #9: initiating IKEv2 connection to 192.1.2.23 using UDP
 "conf" #9: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"conf" #9: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
 "conf" #9: IMPAIR: adding transform type INTEG (0x3) id 65535?? (0xffff)
-"conf" #9: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
+"conf" #9: sent IKE_AUTH request to 192.1.2.23:UDP/500
 "conf" #9: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "conf" #10: initiator established Child SA using #9; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 up

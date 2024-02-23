@@ -62,7 +62,8 @@ IMPAIR: start processing inbound drip packet 3
 IMPAIR: stop processing inbound drip packet 3
 west #
  ../../guestbin/wait-for.sh --match '^".*#2: sent IKE_AUTH request'  -- cat /tmp/pluto.log
-"east-west" #2: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
+"east-west" #2: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"east-west" #2: sent IKE_AUTH request to 192.1.2.23:UDP/500
 west #
  ../../guestbin/wait-for-inbound.sh 4
 packet from 192.1.2.23:500: IMPAIR: blocking inbound message 4

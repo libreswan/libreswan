@@ -21,7 +21,8 @@ north #
  ipsec auto --up north-west
 "north-west" #1: initiating IKEv2 connection to 192.1.2.45 using UDP
 "north-west" #1: sent IKE_SA_INIT request to 192.1.2.45:UDP/500
-"north-west" #1: sent IKE_AUTH request to 192.1.2.45:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
+"north-west" #1: processed IKE_SA_INIT response from 192.1.2.45:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"north-west" #1: sent IKE_AUTH request to 192.1.2.45:UDP/500
 "north-west" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@west'
 "north-west" #2: route-client output: leftsubnet == rightsubnet = 0.0.0.0/0 cannot add route
 "north-west" #2: initiator established Child SA using #1; IPsec tunnel [0.0.0.0/0===0.0.0.0/0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
@@ -56,7 +57,8 @@ north #
  ipsec auto --up north-east
 "north-east" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
 "north-east" #3: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"north-east" #3: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
+"north-east" #3: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"north-east" #3: sent IKE_AUTH request to 192.1.2.23:UDP/500
 "north-east" #3: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "north-east" #4: initiator established Child SA using #3; IPsec tunnel [0.0.0.0/0===0.0.0.0/0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 north #

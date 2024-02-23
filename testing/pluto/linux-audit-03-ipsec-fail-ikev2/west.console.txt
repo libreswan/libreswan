@@ -24,7 +24,8 @@ west #
  ipsec auto --up ikev2-ipsec-fail
 "ikev2-ipsec-fail" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "ikev2-ipsec-fail" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"ikev2-ipsec-fail" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
+"ikev2-ipsec-fail" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"ikev2-ipsec-fail" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
 "ikev2-ipsec-fail" #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east-v2'
 "ikev2-ipsec-fail" #2: IKE_AUTH response rejected Child SA with TS_UNACCEPTABLE
 "ikev2-ipsec-fail" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds

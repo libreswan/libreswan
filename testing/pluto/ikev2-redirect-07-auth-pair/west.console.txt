@@ -28,7 +28,8 @@ west #
  ipsec auto --up west-cuckoo
 "west-cuckoo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "west-cuckoo" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"west-cuckoo" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
+"west-cuckoo" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"west-cuckoo" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
 "west-cuckoo" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "west-cuckoo" #1: IKE_AUTH response redirecting to new gateway 192.1.3.33
 "west-cuckoo" #2: scheduling redirect 1 to 192.1.3.33
@@ -39,7 +40,8 @@ west #
 "west-cuckoo": dispatch REVIVAL event
 "west-cuckoo" #3: initiating IKEv2 connection to 192.1.3.33 using UDP
 "west-cuckoo" #3: sent IKE_SA_INIT request to 192.1.3.33:UDP/500
-"west-cuckoo" #3: sent IKE_AUTH request to 192.1.3.33:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
+"west-cuckoo" #3: processed IKE_SA_INIT response from 192.1.3.33:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"west-cuckoo" #3: sent IKE_AUTH request to 192.1.3.33:UDP/500
 "west-cuckoo" #3: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "west-cuckoo" #4: initiator established Child SA using #3; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
@@ -50,7 +52,8 @@ west #
  ipsec auto --up west-cuckold
 "west-cuckold" #5: initiating IKEv2 connection to 192.1.2.23 using UDP
 "west-cuckold" #5: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"west-cuckold" #5: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
+"west-cuckold" #5: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"west-cuckold" #5: sent IKE_AUTH request to 192.1.2.23:UDP/500
 "west-cuckold" #5: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "west-cuckold" #5: IKE_AUTH response redirecting to new gateway 192.1.3.33
 "west-cuckold" #6: scheduling redirect 1 to 192.1.3.33

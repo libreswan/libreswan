@@ -24,7 +24,8 @@ road #
  ipsec auto --up road-eastnet
 "road-eastnet"[1] 192.1.2.23 #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "road-eastnet"[1] 192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"road-eastnet"[1] 192.1.2.23 #1: sent IKE_AUTH request to 192.1.2.23:UDP/4500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
+"road-eastnet"[1] 192.1.2.23 #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/4500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"road-eastnet"[1] 192.1.2.23 #1: sent IKE_AUTH request to 192.1.2.23:UDP/4500
 "road-eastnet"[1] 192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=secret and ID_IPV4_ADDR '192.1.2.23'
 "road-eastnet"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 192.0.3.10
 "road-eastnet"[1] 192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.10/32===0.0.0.0/0] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATD=192.1.2.23:4500 DPD=passive}

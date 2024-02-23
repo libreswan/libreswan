@@ -27,7 +27,8 @@ road #
  ipsec auto --up road-east-1
 "road-east-1" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "road-east-1" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"road-east-1" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
+"road-east-1" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"road-east-1" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
 "road-east-1" #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
 "road-east-1" #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.209/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 road #
@@ -74,7 +75,8 @@ road #
  ipsec auto --up road-east-2
 "road-east-2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "road-east-2" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"road-east-2" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
+"road-east-2" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"road-east-2" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
 "road-east-2" #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
 "road-east-2" #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.209/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 road #

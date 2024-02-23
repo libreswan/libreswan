@@ -20,7 +20,8 @@ road #
  ipsec auto --up eastnet-any
 "eastnet-any"[1] 192.1.2.23 #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "eastnet-any"[1] 192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"eastnet-any"[1] 192.1.2.23 #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
+"eastnet-any"[1] 192.1.2.23 #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"eastnet-any"[1] 192.1.2.23 #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
 "eastnet-any"[1] 192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "eastnet-any"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 100.64.13.2
 "eastnet-any"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS 1.2.3.4
