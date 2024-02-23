@@ -1568,7 +1568,7 @@ static stf_status quick_inI1_outR1_continue12_tail(struct state *st, struct msg_
 	terminate_conflicts(child);
 
 	if (!connection_establish_inbound(child, HERE)) {
-		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
+		return STF_FAIL_v1N; /* ??? we may be partly committed */
 	}
 
 	/* encrypt message, except for fixed part of header */
@@ -1789,7 +1789,7 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 	PEXPECT(child->sa.logger, ike != NULL);
 
 	if (!connection_establish_child(ike, child, HERE))
-		return STF_INTERNAL_ERROR;
+		return STF_FAIL_v1N;
 
 	/* encrypt message, except for fixed part of header */
 
@@ -1832,7 +1832,7 @@ stf_status quick_inI2(struct state *st, struct msg_digest *md UNUSED)
 	PEXPECT(child->sa.logger, ike != NULL);
 
 	if (!connection_establish_outbound(ike, child, HERE))
-		return STF_INTERNAL_ERROR;
+		return STF_FAIL_v1N;
 
 	update_iv(st);  /* not actually used, but tidy */
 
