@@ -50,7 +50,6 @@ adding UDP interface eth1 192.1.2.23:4500
 "west-east" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
 forgetting secrets
 loading secrets from "/etc/ipsec.secrets"
-no secrets filename matched "/etc/ipsec.d/*.secrets"
 west #
  sleep 30
 west #

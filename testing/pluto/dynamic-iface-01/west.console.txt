@@ -43,7 +43,6 @@ adding UDP interface eth1 192.1.2.66:4500
 "west-float": connection matches both left eth1 192.1.2.45 and right eth1 192.1.2.66
 forgetting secrets
 loading secrets from "/etc/ipsec.secrets"
-no secrets filename matched "/etc/ipsec.d/*.secrets"
 west #
  ipsec auto --up float-east #retransmits
 "float-east" #3: initiating IKEv1 Main Mode connection
@@ -74,7 +73,6 @@ ERROR: "float-east" #3: send on eth1 from 192.1.2.66:500 to 192.1.2.23:500 using
 ERROR: "float-east" #3: send on eth1 from 192.1.2.66:500 to 192.1.2.23:500 using UDP failed in delete notify [...]
 forgetting secrets
 loading secrets from "/etc/ipsec.secrets"
-no secrets filename matched "/etc/ipsec.d/*.secrets"
 west #
  ipsec auto --up west-float #retransmits
 "west-float" #5: initiating IKEv1 Main Mode connection

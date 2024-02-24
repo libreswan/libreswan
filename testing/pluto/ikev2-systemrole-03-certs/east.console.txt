@@ -39,7 +39,6 @@ east #
 east #
  ipsec secrets
 loading secrets from "/etc/ipsec.secrets"
-no secrets filename matched "/etc/ipsec.d/*.secrets"
 east #
  ../../guestbin/if-namespace.sh PATH/sbin/sshd -o PidFile=/var/run/pluto/sshd.pid
 east #

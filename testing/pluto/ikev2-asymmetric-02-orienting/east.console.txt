@@ -21,7 +21,6 @@ adding UDP interface eth1 192.1.2.24:500
 adding UDP interface eth1 192.1.2.24:4500
 forgetting secrets
 loading secrets from "/etc/ipsec.secrets"
-no secrets filename matched "/etc/ipsec.d/*.secrets"
 east #
  # should be oriented
 east #
