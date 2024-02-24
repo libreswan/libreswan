@@ -191,7 +191,11 @@ void init_seccomp_main(struct logger *logger)
 		llog(RC_LOG, logger, "seccomp security enabled in tolerant mode");
 		break;
 	case SECCOMP_DISABLED:
-		llog(RC_LOG, logger, "seccomp security disabled");
+		/*
+		 * XXX: not "is disabled" it makes it sound that
+		 * something active was done when nothing was.
+		 */
+		llog(RC_LOG, logger, "seccomp security is not enabled");
 		break;
 	default:
 		bad_case(pluto_seccomp_mode);
@@ -211,7 +215,10 @@ void init_seccomp_cryptohelper(int helpernum, struct logger *logger)
 		llog(RC_LOG, logger, "seccomp security enabled in tolerant mode for crypto helper %d", helpernum);
 		break;
 	case SECCOMP_DISABLED:
-		llog(RC_LOG, logger, "seccomp security disabled for crypto helper %d", helpernum);
+		/*
+		 * XXX: see above; also skip log as not helpful.
+		 */
+		ldbg(logger, "seccomp security is not enabled for crypto helper %d", helpernum);
 		break;
 	default:
 		bad_case(pluto_seccomp_mode);
