@@ -504,6 +504,12 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "vti-routing",  kv_conn,  kt_sparse_name,  KNCF_VTI_ROUTING, &yn_option_names, NULL, },
   { "vti-shared",  kv_conn,  kt_sparse_name,  KNCF_VTI_SHARED, &yn_option_names, NULL, },
   { "ipsec-interface", kv_conn, kt_string, KSCF_IPSEC_INTERFACE, NULL, NULL, },
+  { "iptfs-out-size", kv_conn, kt_unsigned, KNCF_IPTFS_OUT_SIZE, NULL, NULL, },
+  { "iptfs-out-max-delay", kv_conn, kt_unsigned,  KNCF_IPTFS_OUT_MAX_DELAY, NULL, NULL, },
+  { "iptfs-out-queue", kv_conn, kt_unsigned, KNCF_IPTFS_OUT_QUEUE, NULL, NULL, },
+  { "iptfs-out-fragment", kv_conn, kt_sparse_name, KNCF_IPTFS_OUT_FRAGMENT, &yn_option_names, NULL, },
+  { "iptfs-in-reorder-window", kv_conn, kt_unsigned,  KNCF_IPTFS_IN_REWIN, NULL, NULL, },
+  { "iptfs-in-drop-time", kv_conn, kt_unsigned, KNCF_IPTFS_IN_DROP_TIME, NULL, NULL, },
 
   { "nic-offload",  kv_conn,  kt_sparse_name,  KNCF_NIC_OFFLOAD, &nic_offload_option_names, NULL, },
 

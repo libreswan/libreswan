@@ -396,6 +396,8 @@ typedef enum {
 
 #define PPK_ID_MAXLEN 64 /* fairly arbitrary */
 
+#define IPTFS_UNSET UINT32_MAX
+
 /*
  * debugging settings: a set of selections for reporting These would
  * be more naturally situated in log.h, but they are shared with
@@ -937,6 +939,7 @@ enum type_options {
 	KS_UNSET,
 	KS_TUNNEL,
 	KS_TRANSPORT,
+	KS_IPTFS,
 	KS_PASSTHROUGH,
 	KS_DROP,
 	KS_REJECT,

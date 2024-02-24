@@ -28,7 +28,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-
 #include "sysdep.h"
 #include "constants.h"
 
@@ -280,6 +279,18 @@ bool emit_v2_child_request_payloads(const struct ike_sa *ike,
 		return false;
 	}
 
+
+	bool send_use_iptfs = (!send_use_transport && (cc->config->child_sa.encap_mode == ENCAP_MODE_IPTFS));
+	if (cc->config->child_sa.encap_mode == ENCAP_MODE_IPTFS)
+		dbg("Initiator child policy is iptfs mode, sending v2N_USE_AGGFRAG? %s",
+				bool_str(send_use_iptfs));
+
+	if (!send_use_transport && cc->config->child_sa.encap_mode == ENCAP_MODE_IPTFS &&
+	    !emit_v2N(v2N_USE_AGGFRAG, pbs)) {
+
+		return false;
+	}
+
 	if (cc->config->send_no_esp_tfc &&
 	    !emit_v2N(v2N_ESP_TFC_PADDING_NOT_SUPPORTED, pbs)) {
 		return false;
@@ -332,13 +343,18 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 		accept_v2_notification(v2N_USE_TRANSPORT_MODE,
 				       larval_child->sa.logger, request_md,
 				       cc->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT);
-
+	bool iptfs_mode_accepted =
+		accept_v2_notification(v2N_USE_AGGFRAG,
+				       larval_child->sa.logger, request_md,
+				       cc->config->child_sa.encap_mode == ENCAP_MODE_IPTFS);
 	enum kernel_mode required_mode =
 		(cc->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT ? KERNEL_MODE_TRANSPORT :
+		 cc->config->child_sa.encap_mode == ENCAP_MODE_IPTFS ? KERNEL_MODE_IPTFS :
 		 cc->config->child_sa.encap_mode == ENCAP_MODE_TUNNEL ? KERNEL_MODE_TUNNEL :
 		 pexpect(0));
 	enum kernel_mode requested_mode =
 		(transport_mode_accepted ? KERNEL_MODE_TRANSPORT :
+		 iptfs_mode_accepted ? KERNEL_MODE_IPTFS :
 		 KERNEL_MODE_TUNNEL);
 	if (required_mode == requested_mode) {
 		enum_buf mb;
@@ -544,6 +560,11 @@ bool emit_v2_child_response_payloads(struct ike_sa *ike,
 
 	if (larval_child->sa.st_kernel_mode == KERNEL_MODE_TRANSPORT &&
 	    !emit_v2N(v2N_USE_TRANSPORT_MODE, outpbs)) {
+		return false;
+	}
+
+	if (larval_child->sa.st_kernel_mode == KERNEL_MODE_IPTFS &&
+	    !emit_v2N(v2N_USE_AGGFRAG, outpbs)) {
 		return false;
 	}
 
@@ -786,12 +807,17 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 		accept_v2_notification(v2N_USE_TRANSPORT_MODE, child->sa.logger, md,
 				       c->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT);
 
+	bool iptfs_mode_accepted =
+		accept_v2_notification(v2N_USE_AGGFRAG, child->sa.logger, md,
+				       c->config->child_sa.encap_mode == ENCAP_MODE_IPTFS);
 	enum kernel_mode required_mode =
 		(c->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT ? KERNEL_MODE_TRANSPORT :
+		 c->config->child_sa.encap_mode == ENCAP_MODE_IPTFS ? KERNEL_MODE_IPTFS :
 		 c->config->child_sa.encap_mode == ENCAP_MODE_TUNNEL ? KERNEL_MODE_TUNNEL :
 		 pexpect(0));
 	enum kernel_mode accepted_mode =
 		(transport_mode_accepted ? KERNEL_MODE_TRANSPORT :
+		 iptfs_mode_accepted ? KERNEL_MODE_IPTFS :
 		 KERNEL_MODE_TUNNEL);
 	if (required_mode != accepted_mode) {
 		/* we should have accepted a matching response */
@@ -1175,6 +1201,17 @@ v2_notification_t process_v2_IKE_AUTH_response_child_payloads(struct ike_sa *ike
 	if (!has_v2_IKE_AUTH_child_payloads(response_md)) {
 		llog_sa(RC_LOG, child,
 			"IKE_AUTH response missing v2SA, v2TSi or v2TSr: not attempting to setup CHILD SA");
+		return v2N_TS_UNACCEPTABLE;
+	}
+
+	/* AUTH is ok, we can trust the notify payloads */
+
+	if (response_md->pd[PD_v2N_USE_AGGFRAG] != NULL &&
+	    response_md->pd[PD_v2N_USE_TRANSPORT_MODE] != NULL) {
+		esb_buf eb;
+		llog_sa(RC_LOG, child, "received conflicting options v2N_USE_AGGFRAG and v2N_USE_TRANSPORT_MODE, configured %s",
+			str_enum(&encap_mode_story, child->sa.st_connection->config->child_sa.encap_mode,
+				 &eb));
 		return v2N_TS_UNACCEPTABLE;
 	}
 

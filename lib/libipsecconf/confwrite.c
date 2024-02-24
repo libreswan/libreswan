@@ -379,6 +379,9 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 			case KS_TUNNEL:
 				cwf("type", "tunnel");
 				break;
+			case KS_IPTFS:
+				cwf("type", "iptfs");
+				break;
 			case KS_TRANSPORT:
 				cwf("type", "transport");
 				break;

@@ -21,7 +21,7 @@
  * Encapsulation mode.
  *
  * Contrary to the RFCs and ENCAPSULATION_MODE_*, the kernel only has
- * to handle two modes.  Hence an ENUM that only defines those values.
+ * to handle 3 modes + BEET. Hence an ENUM that only defines the values pluto support.
  *
  * Except contrary to that, PF KEY v2 accepts the mode "any".
  */
@@ -30,6 +30,7 @@ enum encap_mode {
 	ENCAP_MODE_UNSET,
 	ENCAP_MODE_TRANSPORT = 2, /*>true */
 	ENCAP_MODE_TUNNEL,
+	ENCAP_MODE_IPTFS,
 };
 
 extern const struct enum_names encap_mode_names;
