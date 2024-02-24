@@ -30,4 +30,6 @@ bool orient(struct connection *c, struct logger *logger);
 void disorient(struct connection *c);
 void check_orientations(struct logger *logger);
 
+void jam_orientation(struct jambuf *buf, struct connection *c, bool oriented_details);
+
 #endif

@@ -3578,17 +3578,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 	return NULL;
 }
 
-static void jam_host_addr(struct jambuf *buf, struct connection_end *end)
-{
-	jam_string(buf, end->host.config->leftright);
-	jam_string(buf, "=");
-	if (end->host.config->addr_name != NULL) {
-		jam_string(buf, end->host.config->addr_name);
-	} else {
-		jam_address(buf, &end->host.addr);
-	}
-}
-
 bool add_connection(const struct whack_message *wm, struct logger *logger)
 {
 	/* will inherit defaults */
@@ -3625,70 +3614,8 @@ bool add_connection(const struct whack_message *wm, struct logger *logger)
 
 	LLOG_JAMBUF(RC_LOG, c->logger, buf) {
 		jam_string(buf, "added");
-
-		/*
-		 * Did the connection orient?
-		 *
-		 * When listening, a connection should orient so log
-		 * failure, but when pluto isn't even listening
-		 * connections can't orient so say nothing.
-		 *
-		 * Should successfull orientation also be logged?
-		 */
-		if (oriented(c)) {
-#if 0
-			jam_string(buf, " oriented");
-#endif
-		} else if (listening) {			jam_string(buf, " unoriented");
-		}
-
-		/*
-		 * What is the connection?  IKEv1, IKEv2, or never-negotiate?
-		 *
-		 * Use slightly different names compared to
-		 * pluto_constants.c.
-		 */
-		static const char *const policy_shunt_names[SHUNT_POLICY_ROOF] = {
-			[SHUNT_UNSET] = "[should not happen]",
-			[SHUNT_TRAP] = "trap[should not happen]",
-			[SHUNT_NONE] = "none",
-			[SHUNT_PASS] = "passthrough",
-			[SHUNT_DROP] = "drop",
-			[SHUNT_REJECT] = "reject",
-		};
-		const char *what =
-			(never_negotiate(c) ? policy_shunt_names[c->config->never_negotiate_shunt] :
-			 c->config->ike_info->version_name);
 		jam_string(buf, " ");
-		jam_string(buf, what);
-
-		jam_string(buf, " connection");
-
-		/*
-		 * Provide an overview of the conection's orientation;
-		 * or hints at where the problem is when it failed.
-		 */
-		if (oriented(c)) {
-#if 0
-			jam_string(buf, " (local: ");
-			jam_host_addr(buf, c->local);
-			jam_string(buf, " ");
-			jam_string(buf, " remote: ");
-			jam_host_addr(buf, c->remote);
-			jam_string(buf, ")");
-#endif
-		} else if (listening) {
-			/*
-			 * When listening, a connection should orient
-			 * during load yet this one didn't!  Try to
-			 * provide some helpful details.
-			 */
-			jam_string(buf, " (neither ");
-			jam_host_addr(buf, &c->end[LEFT_END]);
-			jam_string(buf, " nor ");
-			jam_host_addr(buf, &c->end[RIGHT_END]);
-			jam_string(buf, " match an interface)");
-		}
+		jam_orientation(buf, c, /*oriented_details*/false);
 	}
 
 	policy_buf pb;
