@@ -64,8 +64,10 @@ bool lswglob(const char *pattern, const char *what,
 	}
 	pthread_mutex_unlock(&lswglob_mutex);
 
+	bool ok;
 	switch (r) {
 	case 0:	/* success */
+		ok = true;
 		matches(globbuf.gl_pathc, globbuf.gl_pathv, context, logger);
 		break;
 
@@ -75,17 +77,23 @@ bool lswglob(const char *pattern, const char *what,
 
 	case GLOB_ABORTED:
 		/* already logged by lswglob_errfunc() */
+		ok = true;
 		break;
 
 	case GLOB_NOMATCH:
+		/*
+		 * Only NOMATCH is a fail, and then only when
+		 * no-wildcards.
+		 */
+		ok = (strchr(pattern, '*') != NULL);
 		break;
 
 	default:
+		ok = true;
 		llog_pexpect(logger, HERE,
 			     "%s pattern %s: unknown glob error %d",
 			     what, pattern, r);
 	}
 	globfree(&globbuf);
-	/* only NOMATCH is a fail */
-	return (r != GLOB_NOMATCH);
+	return ok;
 }

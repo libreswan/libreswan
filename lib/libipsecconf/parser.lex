@@ -225,16 +225,14 @@ void parser_y_include (const char *filename, struct logger *logger)
 		if (lswglob(context.try, "ipsec.conf", glob_include, &context, logger)) {
 			return;
 		}
-		if (strchr(filename, '*') == NULL) {
-			/* not a wildcard, throw error */
-			parser_warning(logger, /*errno*/0,
-				       "could not open include filename: '%s'",
-				       filename);
-		} else {
-			/* don't throw an error, just log a warning */
-			ldbg(logger, "could not open include wildcard filename(s): '%s'",
-			     filename);
-		}
+		/*
+		 * Not a wildcard, throw error.
+		 *
+		 * XXX: throw?
+		 */
+		parser_warning(logger, /*errno*/0,
+			       "could not open include filename: '%s'",
+			       filename);
 		return;
 	}
 
@@ -248,16 +246,10 @@ void parser_y_include (const char *filename, struct logger *logger)
 	}
 
 	if (rootdir2[0] == '\0') {
-		if (strchr(filename,'*') == NULL) {
-			/* not a wildcard, throw error */
-			parser_warning(logger, /*errno*/0,
-				       "could not open include filename '%s' (tried '%s')",
-				       filename, newname);
-		} else {
-			/* don't throw an error, just log a warning */
-			ldbg(logger, "could not open include wildcard filename(s) '%s' (tried '%s')",
-			     filename, newname);
-		}
+		/* not a wildcard, throw error */
+		parser_warning(logger, /*errno*/0,
+			       "could not open include filename '%s' (tried '%s')",
+			       filename, newname);
 		return;
 	}
 

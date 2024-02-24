@@ -66,7 +66,8 @@ static void add_trust_anchors(unsigned count, char **files,
 	}
 }
 
-static void unbound_ctx_config(bool do_dnssec, const char *rootfile, const char *trusted,
+static void unbound_ctx_config(bool do_dnssec, const char *rootfile,
+			       const char *trusted,
 			       struct logger *logger)
 {
 	int ugh;
@@ -168,7 +169,11 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile, const char 
 
 	if (trusted == NULL) {
 		dbg("no additional dnssec trust anchors defined via dnssec-trusted= option");
-	} else if (!lswglob(trusted, "trusted anchor", add_trust_anchors, /*lswglob_context*/NULL, logger)) {
+		return;
+	}
+
+	if (!lswglob(trusted, "trusted anchor", add_trust_anchors,
+		     /*lswglob_context*/NULL, logger)) {
 		llog(RC_LOG, logger, "no trust anchor files matched '%s'", trusted);
 	}
 }
