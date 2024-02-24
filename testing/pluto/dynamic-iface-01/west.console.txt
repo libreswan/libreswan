@@ -41,6 +41,7 @@ listening for IKE messages
 adding UDP interface eth1 192.1.2.66:500
 adding UDP interface eth1 192.1.2.66:4500
 "west-float": connection matches both left eth1 192.1.2.45 and right eth1 192.1.2.66
+"float-east": oriented IKEv1 connection (local: left=192.1.2.66  remote: right=192.1.2.23)
 forgetting secrets
 loading secrets from "/etc/ipsec.secrets"
 west #
@@ -71,6 +72,7 @@ ERROR: "float-east" #3: send on eth1 from 192.1.2.66:500 to 192.1.2.23:500 using
 "float-east" #4: ESP traffic information: in=0B out=0B
 "float-east" #3: deleting ISAKMP SA (MAIN_I4) and sending notification
 ERROR: "float-east" #3: send on eth1 from 192.1.2.66:500 to 192.1.2.23:500 using UDP failed in delete notify [...]
+"west-float": oriented IKEv1 connection (local: left=192.1.2.45  remote: right=192.1.2.66)
 forgetting secrets
 loading secrets from "/etc/ipsec.secrets"
 west #

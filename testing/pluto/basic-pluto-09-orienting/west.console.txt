@@ -38,6 +38,7 @@ west #
 listening for IKE messages
 adding UDP interface test0 172.29.1.3:500
 adding UDP interface test0 172.29.1.3:4500
+"test3": oriented IKEv1 connection (local: left=172.29.1.3  remote: right=172.29.1.2)
 "test2": connection matches both left test0 172.29.1.1 and right test0 172.29.1.3
 forgetting secrets
 loading secrets from "/etc/ipsec.secrets"

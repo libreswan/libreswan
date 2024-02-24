@@ -35,6 +35,7 @@ west #
 listening for IKE messages
 adding UDP interface eth1 192.1.2.46:500
 adding UDP interface eth1 192.1.2.46:4500
+"westnet-eastnet-ikev2": oriented IKEv2 connection (local: left=192.1.2.46  remote: right=192.1.2.24)
 forgetting secrets
 loading secrets from "/etc/ipsec.secrets"
 west #
