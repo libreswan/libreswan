@@ -1863,7 +1863,7 @@ static diag_t extract_lifetime(deltatime_t *lifetime,
 
 	if (deltatime_cmp(max_lifetime, <, min_lifetime)) {
 		return diag("%s%s=%jd must be greater than rekeymargin=%jus + rekeyfuzz=%jd%% yet less than the maximum allowed %ju",
-			    fips, 
+			    fips,
 			    lifetime_name, deltasecs(*lifetime),
 			    deltasecs(wm->sa_rekey_margin), wm->sa_rekeyfuzz_percent,
 			    deltasecs(min_lifetime));
@@ -2179,6 +2179,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 		encap_mode = ENCAP_MODE_TUNNEL;
 	} else if (wm->type == KS_TRANSPORT) {
 		encap_mode = ENCAP_MODE_TRANSPORT;
+	} else if (wm->type == KS_IPTFS) {
+		encap_mode = ENCAP_MODE_IPTFS;
 	} else {
 		if (!never_negotiate_wm(wm)) {
 			sparse_buf sb;
@@ -2294,6 +2296,25 @@ static diag_t extract_connection(const struct whack_message *wm,
 		}
 	}
 #endif
+	/* dod this checks afte  IKE version is set */
+	if (encap_mode == ENCAP_MODE_IPTFS) {
+		if (c->config->ike_version < IKEv2)
+			return diag("type=iptfs connection MUST have IKEv2");
+
+		if (kernel_ops->iptfs_is_enabled == NULL) {
+			return diag("IPTFS is not supported by %s kernel interface",
+					kernel_ops->interface_name);
+		}
+		/* probe the IP-TFS support */
+		err_t err = kernel_iptfs_query();
+		if (err != NULL) {
+			return diag("IP-TFS support is not enabled for %s kernel interface: %s",
+					kernel_ops->interface_name, err);
+		}
+		config->child_sa.iptfs = wm->iptfs;
+	} else {
+		/* TBD return error if any of the IP-TFS config is set */
+	}
 
 	config->intermediate = extract_yn("", "intermediate", wm->intermediate, /*default*/false,wm, c->logger);
 	if (config->intermediate) {
@@ -2340,8 +2361,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 		if (wm->ike_version < IKEv2) {
 			return diag("MOBIKE requires IKEv2");
 		}
-		if (encap_mode != ENCAP_MODE_TUNNEL) {
-			return diag("MOBIKE requires tunnel mode");
+		if (encap_mode != ENCAP_MODE_TUNNEL  && encap_mode != ENCAP_MODE_IPTFS) {
+			return diag("MOBIKE requires tunnel or iptfs mode");
 		}
 		if (kernel_ops->migrate_ipsec_sa_is_enabled == NULL) {
 			return diag("MOBIKE is not supported by %s kernel interface",
@@ -4802,7 +4823,7 @@ bool is_labeled_child_where(const struct connection *c, where_t where)
 	bad_case(c->local->kind);
 }
 
-bool can_have_sa(const struct connection *c, 
+bool can_have_sa(const struct connection *c,
 		 enum sa_type sa_type)
 {
 	if (c == NULL) {
@@ -4849,7 +4870,7 @@ bool can_have_sa(const struct connection *c,
  * addconn was setting XAUTH when either of SERVER or CLIENT was set,
  * but the below only considers SERVER.
  */
- 
+
 bool is_xauth(const struct connection *c)
 {
 	return (c->local->host.config->xauth.server || c->remote->host.config->xauth.server ||

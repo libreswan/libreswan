@@ -146,6 +146,7 @@ const struct sparse_name nic_offload_option_names[] = {
 const struct sparse_name type_option_names[] = {
 	{ "tunnel",    KS_TUNNEL },
 	{ "transport", KS_TRANSPORT },
+	{ "iptfs",     KS_IPTFS },
 	{ "pass",      KS_PASSTHROUGH },
 	{ "passthrough", KS_PASSTHROUGH },
 	{ "reject",    KS_REJECT },

@@ -70,6 +70,7 @@ enum v2_pd v2_pd_from_notification(v2_notification_t n)
 	C(UPDATE_SA_ADDRESSES);
 	C(USE_PPK);
 	C(USE_TRANSPORT_MODE);
+	C(USE_AGGFRAG);
 	default: return PD_v2_INVALID;
 	}
 #undef C

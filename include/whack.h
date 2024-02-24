@@ -40,6 +40,7 @@
 #include "authby.h"
 #include "encap_proto.h"
 #include "sa_type.h"
+#include "iptfs.h"
 
 #ifndef DEFAULT_CTL_SOCKET
 # define DEFAULT_CTL_SOCKET IPSEC_RUNDIR "/pluto.ctl"
@@ -452,6 +453,8 @@ struct whack_message {
 	int metric;
 
 	char *dnshostname;
+
+	struct pluto_iptfs iptfs;
 
 	/* space for strings (hope there is enough room) */
 	size_t str_size;
