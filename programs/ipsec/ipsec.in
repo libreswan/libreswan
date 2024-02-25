@@ -88,7 +88,7 @@ ipsec_add() {
 		export CTLSOCKET
 		shift
 		;;
-	    --dry-run)
+	    --dry-run|-n)
 		dry_run="echo"
 		;;
 	    --verbose)
@@ -154,7 +154,7 @@ ipsec_combined() {
 		export CTLSOCKET
 		shift
 		;;
-	    --dry-run)
+	    --dry-run|-n)
 		dry_run="echo"
 		;;
 	    --verbose)
@@ -207,7 +207,7 @@ ipsec_redirect() {
 		export CTLSOCKET
 		shift
 		;;
-	    --dry-run)
+	    --dry-run|-n)
 		dry_run="echo"
 		;;
 	    -*)
@@ -357,7 +357,7 @@ ipsec_whack() {
 		remote_host="--remote-host ${2}"
 		shift
 		;;
-	    --dry-run)
+	    --dry-run|-n)
 		dry_run="echo"
 		;;
 	    --utc)
@@ -542,6 +542,10 @@ ipsec_stopnflog() {
 	echo "NFLOG support has been disabled" >&2
 	exit 0
     fi
+    if [ -s "${dry_run}" ]; then
+	echo "ipsec stopnflog does not support --dry-run" 1>&2
+	exit 1
+    fi
     local usage
     usage="Usage: ipsec stopnflog"
     while [ ${#} -gt 0 ]; do
@@ -639,6 +643,10 @@ ipsec_checknflog() {
 	echo "NFLOG support has been disabled" >&2
 	exit 0
     fi
+    if [ -s "${dry_run}" ]; then
+	echo "ipsec checknflog does not support --dry-run" 1>&2
+	exit 1
+    fi
     local usage
     usage="Usage: ipsec checknflog"
     while [ ${#} -gt 0 ]; do
@@ -673,6 +681,10 @@ ipsec_sniff() {
 	echo "NFLOG support has been disabled" >&2
 	exit 0
     fi
+    if [ -s "${dry_run}" ]; then
+	echo "ipsec sniff does not support --dry-run" 1>&2
+	exit 1
+    fi
     local usage
     usage="Usage: ipsec sniff"
     while [ ${#} -gt 0 ]; do
@@ -699,6 +711,10 @@ ipsec_sniff() {
 ipsec_import() {
     if [ -z "${1}" ]; then
 	echo "Usage: ipsec import [--nssdir ${IPSEC_NSSDIR}] /path/to/pkcs.12" >&2
+	exit 1
+    fi
+    if [ -s "${dry_run}" ]; then
+	echo "ipsec import does not support --dry-run" 1>&2
 	exit 1
     fi
 
@@ -929,7 +945,6 @@ ipsec_nsscmd() {
     #
     # run nss-tools utilities with correct nss directory
     #
-    local dry_run options
 
     if [ -z "${1}" ]; then
 	echo "Usage: ipsec {certutil|crlutil||pk12util|vfychain} ..." >&2
@@ -960,14 +975,17 @@ ipsec_nsscmd() {
 	    ;;
     esac
 
+    # modutil's nssdir option is different, ulgn
     case "${cmd}" in
 	modutil)
-	    exec ${cmd} -dbdir ${IPSEC_NSSDIR} "${@}"
+	    exec ${dry_run} ${cmd} -dbdir ${IPSEC_NSSDIR} "${@}"
 	    ;;
 	*)
-	    exec ${cmd} -d ${IPSEC_NSSDIR} "${@}"
+	    exec ${dry_run} ${cmd} -d ${IPSEC_NSSDIR} "${@}"
 	    ;;
     esac
+    # exec failed?
+    exit $?
 }
 
 ipsec_setup() {
@@ -994,7 +1012,7 @@ ipsec_setup() {
 		echo "${usage}"
 		exit 0
 		;;
-	    --dry-run)
+	    --dry-run|-n)
 		dry_run="echo"
 		;;
 	    -*)
@@ -1016,6 +1034,7 @@ if [ -z "${1}" ]; then
 fi
 
 # Make sure these variables are empty before parsing command line
+verbose=
 asynchronous=
 dry_run=
 remote_host=
@@ -1046,12 +1065,16 @@ while [ ${#} -gt 0 ]; do
 	    # Whack command is special because --ctlsocket is a whack cmdline option
 	    # We need to make sure we don't give it twice
 	    shift
-	    if echo "${@}" | grep -q -- --ctlsocket; then
-		exec "${IPSEC_EXECDIR}/whack" "${@}"
-	    else
-		exec "${IPSEC_EXECDIR}/whack" --ctlsocket "${CTLSOCKET}" "${@}"
-	    fi
-	    exit 0
+	    case " ${@} " in
+		--ctlsocket)
+		    exec ${dry_run} "${IPSEC_EXECDIR}/whack" "${@}"
+		    ;;
+		*)
+		    exec ${dry_run} "${IPSEC_EXECDIR}/whack" --ctlsocket "${CTLSOCKET}" "${@}"
+		    ;;
+	    esac
+	    # exec failed?
+	    exit $?
 	    ;;
 	add|--add|checkconfig|replace|--replace)
 	    ipsec_add "${@}"
@@ -1105,7 +1128,9 @@ while [ ${#} -gt 0 ]; do
 	    ;;
 	letsencrypt)
 	    shift
-	    exec "${IPSEC_EXECDIR}/letsencrypt" "${@}"
+	    exec ${dry_run} "${IPSEC_EXECDIR}/letsencrypt" "${@}"
+	    # exec failed?
+	    exit $?
 	    ;;
 	help|--help|-h)
 	    ipsec_help
@@ -1143,7 +1168,9 @@ while [ ${#} -gt 0 ]; do
 	    ;;
 	unbound|--unbound)
 	    # activate the unbound ipsec module
-	    exec unbound-control set_option ipsecmod-enabled: yes
+	    exec ${dry_run} unbound-control set_option ipsecmod-enabled: yes
+	    # exec failed?
+	    exit $?
 	    ;;
 	--asynchronous)
 	    asynchronous="${1}"
@@ -1154,7 +1181,7 @@ while [ ${#} -gt 0 ]; do
 	    shift
 	    shift
 	    ;;
-	--dry-run)
+	--dry-run|-n)
 	    dry_run="echo"
 	    shift
 	    ;;
@@ -1170,11 +1197,12 @@ while [ ${#} -gt 0 ]; do
 	    cmd="${1}"
 	    shift
 	    if [ -x "${IPSEC_EXECDIR}/${cmd}" ]; then
-		exec "${IPSEC_EXECDIR}/${cmd}" "${@}"
-	    else
-		printf "%s: unknown IPsec command \"%s\" (\"ipsec help\" for list)\n" "${0}" "${cmd}" >&2
-		exit 2
+		exec ${dry_run} "${IPSEC_EXECDIR}/${cmd}" "${@}"
+		# exec failed?
+		exit $?
 	    fi
+	    printf "%s: unknown IPsec command \"%s\" (\"ipsec help\" for list)\n" "${0}" "${cmd}" >&2
+	    exit 2
 	    ;;
     esac
 done

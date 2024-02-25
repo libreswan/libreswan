@@ -24,6 +24,7 @@
       <arg choice='plain'><replaceable>connection</replaceable></arg>
       <arg choice='plain'>--redirect-to <replaceable>ip-address,...</replaceable></arg>
       <arg choice='opt'>--ctlsocket <replaceable>@@RUNDIR@@/pluto.ctl</replaceable></arg>
+      <arg choice='opt'>--dry-run</arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
@@ -33,6 +34,11 @@
       <emphasis>Redirect</emphasis> a connection (if connectionname is specified)
       or all connections to <option>--redirect-to</option> specified ip-address or
       comma-separated list of ip-addresses (evenly distributed).
+    </para>
+    <para>
+      With <option>--dry-run</option> the underlying
+      <command>whack</command> or <command>addconn</command> command
+      is displayed but not executed.
     </para>
   </refsect1>
 

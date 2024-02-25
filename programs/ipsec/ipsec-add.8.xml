@@ -21,7 +21,11 @@
   <refsynopsisdiv id='synopsis'>
     <cmdsynopsis>
       <command>ipsec add</command>
-      <arg choice='plain'>connectionname|--checkconfig</arg>
+      <group>
+	<arg choice='plain'><replaceable>connection</replaceable></arg>
+	<arg choice='plain'>--checkconfig</arg>
+      </group>
+      <arg choice='opt'>--dry-run</arg>
       <arg choice='opt'>--config <replaceable>@@IPSEC_CONF@@</replaceable></arg>
       <arg choice='opt'>--ctlsocket <replaceable>@@RUNDIR@@/pluto.ctl</replaceable></arg>
     </cmdsynopsis>
@@ -30,22 +34,18 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <command>ipsec add</command> adds a connection specification
-      from <filename>@@IPSEC_CONF@@</filename> to internal database
-      within pluto, The Libreswan IKE daemon.  If there already was
+      <command>ipsec add <replaceable>connection</replaceable>
+      </command> adds a connection specification from
+      <filename>@@IPSEC_CONF@@</filename> to internal database within
+      pluto, The Libreswan IKE daemon.  If there already was
       connection specification with same connectionname, old tunnels
       are torn down and new specification replaces old one.
     </para>
     <para>
-      With <command>ipsec add --checkconfig</command> you can validate
-      your configuration file. This will return 0 if config was valid.
-      Optionally you can add <option>--verbose</option> for more
-      detailed analysis.
-    </para>
-    <para>
       This only adds the connection specification making it possible
       for remote to connect. To establish the connection you need to
-      use <command>ipsec up <replaceable>connection</replaceable></command> or to do both
+      use <command>ipsec up
+      <replaceable>connection</replaceable></command> or to do both
       <option>add</option> and <option>up</option> with one run you
       can use <command>ipsec start
       <replaceable>connection</replaceable></command>.
@@ -55,6 +55,17 @@
       rereadsecrets</command> when your new connection uses pre-shared
       key (PSK) authentication, <option>authby=secret</option> because
       secrets keys are only being read at startup.
+    </para>
+    <para>
+      With <command>ipsec add --checkconfig</command> you can validate
+      your configuration file. This will return 0 if config was valid.
+      Optionally you can add <option>--verbose</option> for more
+      detailed analysis.
+    </para>
+    <para>
+      With <option>--dry-run</option> the underlying
+      <command>whack</command> or <command>addconn</command> command
+      is displayed but not executed.
     </para>
   </refsect1>
 

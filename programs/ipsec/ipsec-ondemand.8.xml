@@ -21,27 +21,32 @@
       <arg choice='plain'><replaceable>connection</replaceable></arg>
       <arg choice='opt'>--config <replaceable>@@IPSEC_CONF@@</replaceable></arg>
       <arg choice='opt'>--ctlsocket <replaceable>@@RUNDIR@@/pluto.ctl</replaceable></arg>
+      <arg choice='opt'>--dry-run</arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <command>ipsec ondemand</command> is equivalent to running first
-      <command>ipsec add
-      <replaceable>connection</replaceable></command> and then
-      <command>ipsec route
-      <replaceable>connection</replaceable></command>, causing the
-      same effect as connection configuration option
-      <option>auto=ondemand</option>. This sets up connection to be
-      <option>on demand</option>, causing connection to establish only
-      when triggered by outbound traffic.
+      <command>ipsec ondemand</command> is equivalent to running
+      <command>ipsec add <replaceable>connection</replaceable>
+      </command> followed by <command>ipsec route
+      <replaceable>connection</replaceable> </command>, having the
+      same effect as the connection configuration option
+      <envar>auto=route</envar> or <envar>auto=ondemand</envar>.  This
+      sets up connection to be <option>on demand</option>, causing
+      connection to establish only when triggered by outbound traffic.
     </para>
     <para>
       Note: you might also need to run <command>ipsec
       rereadsecrets</command> when your new connection uses pre-shared
       key (PSK) authentication, <option>authby=secret</option> because
       secrets keys are only being read at startup.
+    </para>
+    <para>
+      With <option>--dry-run</option> the underlying
+      <command>whack</command> or <command>addconn</command> command
+      is displayed but not executed.
     </para>
   </refsect1>
 

@@ -21,6 +21,7 @@
       <arg choice='plain'><replaceable>connection</replaceable></arg>
       <arg choice='opt'>--config <replaceable>@@IPSEC_CONF@@</replaceable></arg>
       <arg choice='opt'>--ctlsocket <replaceable>@@RUNDIR@@/pluto.ctl</replaceable></arg>
+      <arg choice='opt'>--dry-run</arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
@@ -49,6 +50,11 @@
       rereadsecrets</command> when your new connection uses pre-shared
       key (PSK) authentication, <option>authby=secret</option> because
       secrets keys are only being read at startup.
+    </para>
+    <para>
+      With <option>--dry-run</option> the underlying
+      <command>whack</command> or <command>addconn</command> command
+      is displayed but not executed.
     </para>
   </refsect1>
 
