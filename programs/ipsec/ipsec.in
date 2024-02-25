@@ -58,6 +58,7 @@ ipsec_add() {
     # ipsec add/replace command
     #
     local conn_name usage
+    local verbose
 
     while [ ${#} -gt 0 ]; do
 	case "${1}" in
@@ -91,7 +92,7 @@ ipsec_add() {
 		dry_run="echo"
 		;;
 	    --verbose)
-		verbose="${1}"
+		verbose="${verbose} ${1}"
 		;;
 	    --checkconfig)
 		checkconfig="${1}"
@@ -120,6 +121,7 @@ ipsec_combined() {
     # ipsec start and ipsec ondemand commands
     #
     local cmd conn_name usage
+    local verbose
 
     while [ ${#} -gt 0 ]; do
 	case "${1}" in
@@ -156,7 +158,7 @@ ipsec_combined() {
 		dry_run="echo"
 		;;
 	    --verbose)
-		verbose="${1}"
+		verbose="${verbose} ${1}"
 		;;
 	    --remote-host)
 		remote_host="--remote-host ${2}"
@@ -229,6 +231,7 @@ ipsec_whack() {
     # ipsec whack commands with per-command help
     #
     local cmd conn_name usage
+    local verbose
 
     while [ ${#} -gt 0 ]; do
 	case "${1}" in
@@ -361,7 +364,7 @@ ipsec_whack() {
 		utc="${1}"
 		;;
 	    --verbose)
-		verbose="${1}"
+		verbose="${verbose} ${1}"
 		;;
 	    -*)
 		echo "Unknown option \"${1}\"" >&2
