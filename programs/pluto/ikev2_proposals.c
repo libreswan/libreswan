@@ -332,6 +332,13 @@ static void jam_v2_proposal(struct jambuf *buf, int propnum,
 		if (transforms->transform[0].valid) {
 			/* at least one transform */
 			jam_string(buf, sep);
+			/*
+			 * XXX: hack so that ...-ESN:YES+NO is logged.
+			 * Other fields are self explanatory.
+			 */
+			if (type == IKEv2_TRANS_TYPE_ESN) {
+				jam_string(buf, "ESN:");
+			}
 			jam_transforms(buf, type, transforms);
 			sep = "-";
 		}
@@ -1716,10 +1723,10 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 			}
 			case IKEv2_TRANS_TYPE_ESN:
 				switch (transform->id) {
-				case IKEv2_ESN_ENABLED:
+				case IKEv2_ESN_YES:
 					ta.esn_enabled = true;
 					break;
-				case IKEv2_ESN_DISABLED:
+				case IKEv2_ESN_NO:
 					ta.esn_enabled = false;
 					break;
 				default:
@@ -2177,10 +2184,10 @@ static void add_esn_transforms(struct ikev2_proposal *proposal,
 {
 	passert(!proposal->transforms[IKEv2_TRANS_TYPE_ESN].transform[0].valid);
 	if (c->config->esn.yes) {
-		append_transform(proposal, IKEv2_TRANS_TYPE_ESN, IKEv2_ESN_ENABLED, 0);
+		append_transform(proposal, IKEv2_TRANS_TYPE_ESN, IKEv2_ESN_YES, 0);
 	}
 	if (c->config->esn.no) {
-		append_transform(proposal, IKEv2_TRANS_TYPE_ESN, IKEv2_ESN_DISABLED, 0);
+		append_transform(proposal, IKEv2_TRANS_TYPE_ESN, IKEv2_ESN_NO, 0);
 	}
 }
 

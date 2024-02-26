@@ -938,13 +938,13 @@ enum ikev2_sec_proto_id {
  * Assume indexing is [1..IKEv2_TRANS_TYPE_ROOF)
  */
 enum ikev2_trans_type {
+#define IKEv2_TRANS_TYPE_FLOOR IKEv2_TRANS_TYPE_ENCR
 	IKEv2_TRANS_TYPE_ENCR = 1,
 	IKEv2_TRANS_TYPE_PRF = 2,
 	IKEv2_TRANS_TYPE_INTEG = 3,
 	IKEv2_TRANS_TYPE_DH = 4, /* same as in IKEv1 */
 	IKEv2_TRANS_TYPE_ESN = 5,
-
-	IKEv2_TRANS_TYPE_ROOF
+#define IKEv2_TRANS_TYPE_ROOF (IKEv2_TRANS_TYPE_ESN+1)
 };
 
 /*
@@ -1036,8 +1036,10 @@ enum ikev2_trans_type_integ {
 };
 
 enum ikev2_trans_type_esn {
-	IKEv2_ESN_DISABLED = 0,
-	IKEv2_ESN_ENABLED = 1,
+#define IKEv2_ESN_FLOOR IKEv2_ESN_NO
+	IKEv2_ESN_NO = 0,
+	IKEv2_ESN_YES = 1,
+#define IKEv2_ESN_ROOF (IKEv2_ESN_YES+1)
 };
 
 /*

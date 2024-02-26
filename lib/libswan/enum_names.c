@@ -295,13 +295,17 @@ int enum_match(enum_names *ed, shunk_t string)
 enum_names *enum_enum_table(enum_enum_names *een,
 			    unsigned long table)
 {
-	passert(een->een_last - een->een_first + 1 == een->een_checklen);
+	if (!(een->een_last - een->een_first + 1 == een->een_checklen)) {
+		llog_passert(&global_logger, HERE,
+			     ".een_last=%zu - .een_first=%zu + 1 == .een_checklen=%zu",
+			     een->een_last, een->een_first, een->een_checklen);
+	}
 
 	if (een->een_first <= table && table <= een->een_last) {
 		return een->een_enum_name[table - een->een_first];
-	} else {
-		return NULL;
 	}
+
+	return NULL;
 }
 
 const char *enum_enum_name(enum_enum_names *een, unsigned long table,

@@ -2307,46 +2307,52 @@ enum_names ikev2_trans_type_integ_names = {
 
 /* Transform-type Integrity */
 static const char *const ikev2_trans_type_esn_name[] = {
-	"ESN_DISABLED",
-	"ESN_ENABLED",
+#define S(E) [E-IKEv2_ESN_FLOOR] = #E
+	S(IKEv2_ESN_YES),
+	S(IKEv2_ESN_NO),
+#undef S
 };
 
 enum_names ikev2_trans_type_esn_names = {
-	IKEv2_ESN_DISABLED,
-	IKEv2_ESN_ENABLED,
+	IKEv2_ESN_FLOOR,
+	IKEv2_ESN_ROOF-1,
 	ARRAY_REF(ikev2_trans_type_esn_name),
-	"ESN_", /* prefix */
+	"IKEv2_ESN_", /* prefix */
 	NULL
 };
 
 /* Transform Type */
 static const char *const ikev2_trans_type_name[] = {
-	"TRANS_TYPE_ENCR",
-	"TRANS_TYPE_PRF",
-	"TRANS_TYPE_INTEG",
-	"TRANS_TYPE_DH",
-	"TRANS_TYPE_ESN"
+#define S(E) [E-IKEv2_TRANS_TYPE_FLOOR] = #E
+	S(IKEv2_TRANS_TYPE_ENCR),
+	S(IKEv2_TRANS_TYPE_PRF),
+	S(IKEv2_TRANS_TYPE_INTEG),
+	S(IKEv2_TRANS_TYPE_DH),
+	S(IKEv2_TRANS_TYPE_ESN),
+#undef S
 };
 
 enum_names ikev2_trans_type_names = {
-	IKEv2_TRANS_TYPE_ENCR,
-	IKEv2_TRANS_TYPE_ESN,
+	IKEv2_TRANS_TYPE_FLOOR,
+	IKEv2_TRANS_TYPE_ROOF-1,
 	ARRAY_REF(ikev2_trans_type_name),
-	"TRANS_TYPE_", /* prefix */
+	"IKEv2_TRANS_TYPE_", /* prefix */
 	NULL
 };
 
 /* for each IKEv2 transform attribute, which enum_names describes its values? */
 static enum_names *const ikev2_transid_val_descs[] = {
-	&ikev2_trans_type_encr_names,         /* 1 */
-	&ikev2_trans_type_prf_names,          /* 2 */
-	&ikev2_trans_type_integ_names,        /* 3 */
-	&oakley_group_names,                  /* 4 */
-	&ikev2_trans_type_esn_names,          /* 5 */
+#define S(E,V) [E-IKEv2_TRANS_TYPE_FLOOR] = &V
+	S(IKEv2_TRANS_TYPE_ENCR, ikev2_trans_type_encr_names),        /* 1 */
+	S(IKEv2_TRANS_TYPE_PRF, ikev2_trans_type_prf_names),          /* 2 */
+	S(IKEv2_TRANS_TYPE_INTEG, ikev2_trans_type_integ_names),      /* 3 */
+	S(IKEv2_TRANS_TYPE_DH, oakley_group_names),                   /* 4 */
+	S(IKEv2_TRANS_TYPE_ESN, ikev2_trans_type_esn_names),          /* 5 */
 };
 
 enum_enum_names v2_transform_ID_enums = {
-	IKEv2_TRANS_TYPE_ENCR,	IKEv2_TRANS_TYPE_ESN,
+	IKEv2_TRANS_TYPE_FLOOR,
+	IKEv2_TRANS_TYPE_ROOF-1,
 	ARRAY_REF(ikev2_transid_val_descs)
 };
 
