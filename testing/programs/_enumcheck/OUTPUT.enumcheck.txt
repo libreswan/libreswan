@@ -4264,60 +4264,60 @@ IETF registry enum_names:
          match HMAC_SHA2_512_256 [short]: OK
 
   ikev2_trans_type_esn_names:
-    0 -> ESN_DISABLED
-         jam_enum 0: ESN_DISABLED OK
-         search ESN_DISABLED: OK
-         match ESN_DISABLED: OK
-         short_name 0: DISABLED OK
-         jam_enum_short 0: DISABLED OK
-         jam_enum_human 0: disabled OK
-         match DISABLED [short]: OK
-    1 -> ESN_ENABLED
-         jam_enum 1: ESN_ENABLED OK
-         search ESN_ENABLED: OK
-         match ESN_ENABLED: OK
-         short_name 1: ENABLED OK
-         jam_enum_short 1: ENABLED OK
-         jam_enum_human 1: enabled OK
-         match ENABLED [short]: OK
+    0 -> IKEv2_ESN_NO
+         jam_enum 0: IKEv2_ESN_NO OK
+         search IKEv2_ESN_NO: OK
+         match IKEv2_ESN_NO: OK
+         short_name 0: NO OK
+         jam_enum_short 0: NO OK
+         jam_enum_human 0: no OK
+         match NO [short]: OK
+    1 -> IKEv2_ESN_YES
+         jam_enum 1: IKEv2_ESN_YES OK
+         search IKEv2_ESN_YES: OK
+         match IKEv2_ESN_YES: OK
+         short_name 1: YES OK
+         jam_enum_short 1: YES OK
+         jam_enum_human 1: yes OK
+         match YES [short]: OK
 
   ikev2_trans_type_names:
-    1 -> TRANS_TYPE_ENCR
-         jam_enum 1: TRANS_TYPE_ENCR OK
-         search TRANS_TYPE_ENCR: OK
-         match TRANS_TYPE_ENCR: OK
+    1 -> IKEv2_TRANS_TYPE_ENCR
+         jam_enum 1: IKEv2_TRANS_TYPE_ENCR OK
+         search IKEv2_TRANS_TYPE_ENCR: OK
+         match IKEv2_TRANS_TYPE_ENCR: OK
          short_name 1: ENCR OK
          jam_enum_short 1: ENCR OK
          jam_enum_human 1: encr OK
          match ENCR [short]: OK
-    2 -> TRANS_TYPE_PRF
-         jam_enum 2: TRANS_TYPE_PRF OK
-         search TRANS_TYPE_PRF: OK
-         match TRANS_TYPE_PRF: OK
+    2 -> IKEv2_TRANS_TYPE_PRF
+         jam_enum 2: IKEv2_TRANS_TYPE_PRF OK
+         search IKEv2_TRANS_TYPE_PRF: OK
+         match IKEv2_TRANS_TYPE_PRF: OK
          short_name 2: PRF OK
          jam_enum_short 2: PRF OK
          jam_enum_human 2: prf OK
          match PRF [short]: OK
-    3 -> TRANS_TYPE_INTEG
-         jam_enum 3: TRANS_TYPE_INTEG OK
-         search TRANS_TYPE_INTEG: OK
-         match TRANS_TYPE_INTEG: OK
+    3 -> IKEv2_TRANS_TYPE_INTEG
+         jam_enum 3: IKEv2_TRANS_TYPE_INTEG OK
+         search IKEv2_TRANS_TYPE_INTEG: OK
+         match IKEv2_TRANS_TYPE_INTEG: OK
          short_name 3: INTEG OK
          jam_enum_short 3: INTEG OK
          jam_enum_human 3: integ OK
          match INTEG [short]: OK
-    4 -> TRANS_TYPE_DH
-         jam_enum 4: TRANS_TYPE_DH OK
-         search TRANS_TYPE_DH: OK
-         match TRANS_TYPE_DH: OK
+    4 -> IKEv2_TRANS_TYPE_DH
+         jam_enum 4: IKEv2_TRANS_TYPE_DH OK
+         search IKEv2_TRANS_TYPE_DH: OK
+         match IKEv2_TRANS_TYPE_DH: OK
          short_name 4: DH OK
          jam_enum_short 4: DH OK
          jam_enum_human 4: dh OK
          match DH [short]: OK
-    5 -> TRANS_TYPE_ESN
-         jam_enum 5: TRANS_TYPE_ESN OK
-         search TRANS_TYPE_ESN: OK
-         match TRANS_TYPE_ESN: OK
+    5 -> IKEv2_TRANS_TYPE_ESN
+         jam_enum 5: IKEv2_TRANS_TYPE_ESN OK
+         search IKEv2_TRANS_TYPE_ESN: OK
+         match IKEv2_TRANS_TYPE_ESN: OK
          short_name 5: ESN OK
          jam_enum_short 5: ESN OK
          jam_enum_human 5: esn OK
