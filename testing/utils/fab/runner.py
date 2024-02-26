@@ -538,10 +538,11 @@ def _process_test_queue(domain_prefix, test_queue, nr_tests, args, done, result_
 
     domains = {}
     for guest_name, host_name in GUEST_NAMES:
-        domain = virsh.Domain(logger,
-                              domain_prefix=domain_prefix,
+        domain_name = (domain_prefix + guest_name)
+        domain = virsh.Domain(logger.nest(domain_name),
                               guest_name=guest_name,
                               host_name=host_name,
+                              domain_name=domain_name,
                               snapshot_directory=args.snapshot_directory)
         domains[guest_name] = domain
 
