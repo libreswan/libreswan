@@ -1778,9 +1778,9 @@ static bool dispatch_1(enum routing_event event,
 	case X(RESCHEDULE, UNROUTED_BARE_NEGOTIATION, PERMANENT):
 	case X(RESCHEDULE, UNROUTED, INSTANCE): /* does this ever happen? */
 	case X(RESCHEDULE, UNROUTED, PERMANENT):
+	case X(TEARDOWN_CHILD, UNROUTED_BARE_NEGOTIATION, INSTANCE):
 	case X(TEARDOWN_CHILD, UNROUTED_BARE_NEGOTIATION, PERMANENT):
 	case X(TEARDOWN_CHILD, UNROUTED, PERMANENT): /* permanent+up */
-	case X(TEARDOWN_CHILD, UNROUTED_BARE_NEGOTIATION, INSTANCE):
 	case X(TEARDOWN_IKE, UNROUTED_BARE_NEGOTIATION, INSTANCE):
 	case X(TEARDOWN_IKE, UNROUTED_BARE_NEGOTIATION, PERMANENT):
 		if (connection_cannot_die(event, c, logger, e)) {
@@ -1889,8 +1889,8 @@ static bool dispatch_1(enum routing_event event,
 						   logger, e->where, e->story);
 		return true;
 
-	case X(TEARDOWN_IKE, ROUTED_TUNNEL, PERMANENT):
 	case X(TEARDOWN_IKE, ROUTED_TUNNEL, INSTANCE):
+	case X(TEARDOWN_IKE, ROUTED_TUNNEL, PERMANENT):
 		PEXPECT(c->logger, (*e->ike)->sa.st_ike_version == IKEv1);
 		return true;
 
@@ -2156,8 +2156,8 @@ static bool dispatch_1(enum routing_event event,
 		set_established_outbound(c, RT_ROUTED_TUNNEL, e);
 		return true;
 
-	case X(SUSPEND, ROUTED_TUNNEL, PERMANENT):
 	case X(SUSPEND, ROUTED_TUNNEL, INSTANCE):
+	case X(SUSPEND, ROUTED_TUNNEL, PERMANENT):
 		do_updown_child(UPDOWN_DOWN, (*e->child));
 		/*
 		 * Update connection's routing so that route_owner()
@@ -2174,8 +2174,8 @@ static bool dispatch_1(enum routing_event event,
 		(*e->child)->sa.st_v2_mobike.del_src_ip = false;
 		return true;
 
-	case X(RESUME, UNROUTED_TUNNEL, PERMANENT):
 	case X(RESUME, UNROUTED_TUNNEL, INSTANCE):
+	case X(RESUME, UNROUTED_TUNNEL, PERMANENT):
 		c->child.routing = RT_ROUTED_TUNNEL;
 		do_updown_child(UPDOWN_ROUTE, (*e->child));
 		do_updown_child(UPDOWN_UP, (*e->child));
@@ -2214,9 +2214,9 @@ static bool dispatch_1(enum routing_event event,
 						 logger, e->where, "unroute");
 		return true;
 
+	case X(UNROUTE, ROUTED_INBOUND_NEGOTIATION, TEMPLATE): /* xauth-pluto-25-lsw299 xauth-pluto-25-mixed-addresspool */
 	case X(UNROUTE, ROUTED_INBOUND_NEGOTIATION, INSTANCE): /* xauth-pluto-25-lsw299 */
 	case X(UNROUTE, ROUTED_INBOUND_NEGOTIATION, PERMANENT): /* ikev1-xfrmi-02-aggr */
-	case X(UNROUTE, ROUTED_INBOUND_NEGOTIATION, TEMPLATE): /* xauth-pluto-25-lsw299 xauth-pluto-25-mixed-addresspool */
 		routed_inbound_negotiation_to_unrouted(c, (*e->child), logger, e->where, e->story);
 		return true;
 
@@ -2232,9 +2232,9 @@ static bool dispatch_1(enum routing_event event,
 						 logger, e->where, "unroute");
 		return true;
 
+	case X(UNROUTE, ROUTED_ONDEMAND, TEMPLATE):
 	case X(UNROUTE, ROUTED_ONDEMAND, INSTANCE):
 	case X(UNROUTE, ROUTED_ONDEMAND, PERMANENT):
-	case X(UNROUTE, ROUTED_ONDEMAND, TEMPLATE):
 		if (c->local->kind == CK_INSTANCE ||
 		    c->local->kind == CK_PERMANENT) {
 			flush_routed_ondemand_revival(c);
@@ -2250,8 +2250,8 @@ static bool dispatch_1(enum routing_event event,
 
 	case X(UNROUTE, UNROUTED, GROUP):
 	case X(UNROUTE, UNROUTED, TEMPLATE):
-	case X(UNROUTE, UNROUTED, PERMANENT):
 	case X(UNROUTE, UNROUTED, INSTANCE):
+	case X(UNROUTE, UNROUTED, PERMANENT):
 		ldbg_routing(logger, "already unrouted");
 		return true;
 
