@@ -1846,27 +1846,6 @@ static bool dispatch_1(enum routing_event event,
 		return true;
 
 	case X(TEARDOWN_CHILD, UNROUTED_NEGOTIATION, INSTANCE):
-		if (connection_cannot_die(event, c, logger, e)) {
-			unrouted_kernel_policy_to_unrouted(c, DIRECTION_OUTBOUND,
-							   logger, e->where, "fail");
-			return true;
-		}
-		if (is_instance(c) && is_opportunistic(c)) {
-			/*
-			 * A failed OE initiator, make shunt bare.
-			 */
-			orphan_holdpass(c, c->spd, logger);
-			/*
-			 * Change routing so we don't get cleared out
-			 * when state/connection dies.
-			 */
-			set_routing(c, RT_UNROUTED);
-			return true;
-		}
-		unrouted_kernel_policy_to_unrouted(c, DIRECTION_OUTBOUND,
-						   logger, e->where, "fail");
-		return true;
-
 	case X(TEARDOWN_IKE, UNROUTED_NEGOTIATION, INSTANCE):
 		if (connection_cannot_die(event, c, logger, e)) {
 			unrouted_kernel_policy_to_unrouted(c, DIRECTION_OUTBOUND,
