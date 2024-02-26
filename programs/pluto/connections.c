@@ -1328,8 +1328,6 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 	 *
 	 * Useful on busy servers that do not need to use updown for
 	 * anything.
-	 *
-	 * XXX: Perhaps src->updown will some day be NULL.
 	 */
 	if (never_negotiate_wm(wm)) {
 		if (src->updown != NULL) {

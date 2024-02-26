@@ -430,14 +430,27 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		if (remote_cert != NULL) {
 			jam(buf, " peercert=%s;", remote_cert);
 		}
-		jam_string(buf, " my_updown=");
-		if (c->local->config->child.updown == NULL ||
-		    streq(c->local->config->child.updown, "%disabled")) {
-			jam_string(buf, "<disabled>;");
-		} else {
-			jam_string(buf, c->local->config->child.updown);
-			jam_string(buf, ";");
+
+#define JAM_UPDOWN(BUF, E)						\
+		{							\
+			if ((E)->config->child.updown == NULL) {	\
+				jam_string(BUF, "<disabled>");		\
+			} else {					\
+				jam_string(BUF, (E)->config->child.updown); \
+			}						\
+			jam_string(BUF, ";");				\
 		}
+		if (oriented(c)) {
+			/* left? */
+			jam_string(buf, " my_updown=");
+			JAM_UPDOWN(buf, c->local);
+		} else {
+			jam_string(buf, " leftupdown=");
+			JAM_UPDOWN(buf, &c->end[LEFT_END]);
+			jam_string(buf, " rightupdown=");
+			JAM_UPDOWN(buf, &c->end[RIGHT_END]);
+		}
+#undef JAM_UPDOWN
 	}
 
 	/*
