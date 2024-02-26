@@ -149,12 +149,11 @@ class Console(pexpect.spawn):
         self.logger.debug("exit code '%s'", status)
         return status
 
-    def run(self, command, timeout=TIMEOUT, searchwindowsize=-1):
+    def run(self, command, timeout=TIMEOUT):
         self.logger.debug("run '%s' expecting prompt", command)
         self.sendline(command)
         # This can throw a pexpect.TIMEOUT or pexpect.EOF exception
-        self.expect(self.prompt, timeout=timeout,
-                    searchwindowsize=searchwindowsize)
+        self.expect(self.prompt, timeout=timeout)
         status = self._check_prompt()
         self.logger.debug("run exit status %s", status)
         return status
