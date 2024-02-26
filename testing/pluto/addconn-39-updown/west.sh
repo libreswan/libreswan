@@ -22,4 +22,4 @@ ipsec whack --name whack--updown=from  --updown=from          --host 1.2.3.4 --t
 ipsec whack --name whack--pass               --pass                --host 1.2.3.4 --to --host 5.6.7.8
 ipsec whack --name whack--pass--updown=from  --pass --updown=from  --host 1.2.3.4 --to --host 5.6.7.8
 
-ipsec connectionstatus | sed -n -e 's/\(^[^:]*:\).* \([a-z_]*updown=[^;]*\);.*/\1 \2/p' | sort
+ipsec connectionstatus | sed -n -e '/: .*updown=/ s/  */ /gp' | sort

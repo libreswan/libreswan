@@ -46,18 +46,18 @@ west #
 "whack--pass--updown=from": warning: leftupdown=from ignored when never negotiate
 "whack--pass--updown=from": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
- ipsec connectionstatus | sed -n -e 's/\(^[^:]*:\).* \([a-z_]*updown=[^;]*\);.*/\1 \2/p' | sort
-"addconn--leftupdown=%disabled": my_updown=<disabled>
-"addconn--leftupdown=left": my_updown=left
-"addconn--leftupdown=": my_updown=<disabled>
-"addconn--leftupdown=quotes": my_updown=<disabled>
-"addconn": my_updown=ipsec _updown
-"addconn--rightupdown=right": my_updown=ipsec _updown
-"addconn--type=passthrough--leftupdown=left": my_updown=<disabled>
-"addconn--type=passthrough": my_updown=<disabled>
-"whack": my_updown=ipsec _updown
-"whack--pass": my_updown=<disabled>
-"whack--pass--updown=from": my_updown=<disabled>
-"whack--updown=from": my_updown=from
+ ipsec connectionstatus | sed -n -e '/: .*updown=/ s/  */ /gp' | sort
+"addconn--leftupdown=%disabled": leftupdown=<disabled>; rightupdown=ipsec _updown;
+"addconn": leftupdown=ipsec _updown; rightupdown=ipsec _updown;
+"addconn--leftupdown=left": leftupdown=left; rightupdown=ipsec _updown;
+"addconn--leftupdown=": leftupdown=<disabled>; rightupdown=ipsec _updown;
+"addconn--leftupdown=quotes": leftupdown=<disabled>; rightupdown=ipsec _updown;
+"addconn--rightupdown=right": leftupdown=ipsec _updown; rightupdown=right;
+"addconn--type=passthrough": leftupdown=<disabled>; rightupdown=<disabled>;
+"addconn--type=passthrough--leftupdown=left": leftupdown=<disabled>; rightupdown=<disabled>;
+"whack": leftupdown=ipsec _updown; rightupdown=ipsec _updown;
+"whack--pass": leftupdown=<disabled>; rightupdown=<disabled>;
+"whack--pass--updown=from": leftupdown=<disabled>; rightupdown=<disabled>;
+"whack--updown=from": leftupdown=from; rightupdown=ipsec _updown;
 west #
  

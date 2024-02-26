@@ -13,7 +13,7 @@ west #
  ipsec whack --connectionstatus --name order-test
 "order-test": fe80::1/128===1.2.3.4[+S?C]...2.3.4.5[+S?C]===fe80::2/128; unoriented; my_ip=unset; their_ip=unset;
 "order-test":   host: unoriented; left: 1.2.3.4; right: 2.3.4.5;
-"order-test":   my_updown=ipsec _updown;
+"order-test":   leftupdown=ipsec _updown; rightupdown=ipsec _updown;
 "order-test":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 "order-test":   our auth:rsasig(RSASIG+ECDSA+RSASIG_v1_5), their auth:rsasig(RSASIG+ECDSA+RSASIG_v1_5), our autheap:none, their autheap:none;
 "order-test":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
