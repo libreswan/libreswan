@@ -101,14 +101,10 @@ class TestDomain:
             self.domain.close()
             self.console = None
 
-    def run(self, command):
-        self.logger.info("%s# %s", command.guest_name, command.line)
-        status = self.console.run(command.line, timeout=TEST_TIMEOUT)
-        if status:
-            # XXX: Can't abort as some
-            # ping commands are expected
-            # to fail.
-            self.logger.warning("command '%s' failed with status %d", command.line, status)
+    def run(self, command, timeout=TEST_TIMEOUT):
+        self.logger.info("%s# %s", self.domain.host_name, command)
+        status = self.console.run(command, timeout=timeout)
+        return status, self.console.before
 
 
 def submit_job_for_domain(executor, jobs, logger, domain, work):
@@ -366,7 +362,13 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                     verbose_txt.write(command.guest_name + "# ")
                                     verbose_txt.flush()
                                     # run the command
-                                    test_domain.run(command)
+                                    status, output = test_domain.run(command.line)
+                                    if status:
+                                        # XXX: Can't abort as some
+                                        # ping commands are expected
+                                        # to fail.
+                                        test_domain.logger.warning("command '%s' failed with status %d", command.line, status)
+
                                 except pexpect.TIMEOUT as e:
                                     # A timeout while running a test
                                     # command is a sign that the
@@ -424,7 +426,7 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                         verbose_file.write("%s post-mortem %s" % (post.LHS, post.LHS))
                                         verbose_file.flush()
                                         #
-                                        status = test_domain.console.run(script, timeout=POST_MORTEM_TIMEOUT)
+                                        status, output = test_domain.run(script, timeout=POST_MORTEM_TIMEOUT)
                                         if status:
                                             post_mortem_ok = False
                                             logger.error("%s failed on %s with status %s", script, guest_name, status)
