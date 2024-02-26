@@ -46,12 +46,12 @@ TIMEOUT = 10
 
 class Domain:
 
-    def __init__(self, logger, host_name=None, guest_name=None, domain_name=None, snapshot_directory=None):
+    def __init__(self, logger, domain_prefix=None, host_name=None, guest_name=None, snapshot_directory=None):
         # Use the term "domain" just like virsh
-        self.domain_name = domain_name
+        self.domain_name = (domain_prefix + guest_name)
         self.guest_name = guest_name
         self.host_name = host_name
-        self.logger = logger
+        self.logger = logger.nest(self.domain_name)
         self.debug_handler = None
         self.logger.debug("domain created")
         self._mounts = None
