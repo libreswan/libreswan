@@ -26,9 +26,9 @@
     </para>
     <para>
       When using certificate based ID's, one need to specify the full
-      RDN, optionally using wildcard matching (eg CN='*'). If the RDN
-      contains a comma, this can be masked using a comma (eg OU='Foo,,
-      Bar and associates')
+      RDN, optionally using wildcard matching (eg CN='*').  If the RDN
+      contains a comma, this can be masked using a backslash (eg
+      OU='Foo\, Bar and associates')
     </para>
   </listitem>
 </varlistentry>
