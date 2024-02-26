@@ -344,23 +344,28 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                 f = open(output, "w")
                                 test_domain.console.redirect_output(f)
                                 verbose_files[guest_name] = f
-                                test_domain.console.redirect_output(verbose_txt)
 
                             # If a guest command times out, don't try
                             # to run post-mortem.sh.
                             guest_timed_out = None
 
                             for command in test.commands:
+
+                                if not command.guest_name:
+                                    # Write what is assumed to be a
+                                    # comment to the merged output
+                                    # file.
+                                    if command.line:
+                                        verbose_txt.write("# ")
+                                        verbose_txt.write(command.line)
+                                    else:
+                                        verbose_txt.write("#")
+                                    verbose_txt.write("\n")
+                                    verbose_txt.flush()
+                                    continue
+
                                 test_domain = test_domains[command.guest_name]
                                 try:
-                                    # write an extra prompt to
-                                    # verbose.txt so that the
-                                    # sanitizer knows it has merged
-                                    # output.  It won't split
-                                    # prompt+command and will strip
-                                    # out the duplicate.
-                                    verbose_txt.write(command.guest_name + "# ")
-                                    verbose_txt.flush()
                                     # run the command
                                     status, output = test_domain.run(command.line)
                                     if status:
@@ -368,7 +373,22 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                         # ping commands are expected
                                         # to fail.
                                         test_domain.logger.warning("command '%s' failed with status %d", command.line, status)
-
+                                    # Also write the output to the
+                                    # merged file.  Since the child is
+                                    # in NO-ECHO mode, also need to
+                                    # fudge up prompt and command.
+                                    #
+                                    # Should output file be opened in
+                                    # binary mode?
+                                    verbose_txt.write(command.guest_name)
+                                    verbose_txt.write("# ")
+                                    verbose_txt.write(command.line)
+                                    verbose_txt.write("\n")
+                                    if output:
+                                        verbose_txt.write("\n")
+                                        verbose_txt.write(output.decode()) # convert byte to string
+                                    verbose_txt.write("\n")
+                                    verbose_txt.flush()
                                 except pexpect.TIMEOUT as e:
                                     # A timeout while running a test
                                     # command is a sign that the
@@ -418,8 +438,11 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                     test_domain = test_domains[guest_name]
                                     logger.info("running %s on %s", script, guest_name)
                                     try:
-                                        # again add double prompt
-                                        verbose_txt.write(guest_name + "# ")
+                                        # no-echo so fake prompt
+                                        verbose_txt.write(guest_name)
+                                        verbose_txt.write("# ")
+                                        verbose_txt.write(script)
+                                        verbose_txt.write("\n")
                                         verbose_txt.flush()
                                         # and mark domain's console
                                         verbose_file = verbose_files[guest_name]
@@ -431,6 +454,8 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                             post_mortem_ok = False
                                             logger.error("%s failed on %s with status %s", script, guest_name, status)
                                         else:
+                                            verbose_txt.write(output.decode())
+                                            verbose_txt.flush()
                                             verbose_file.write("%s post-mortem %s" % (post.RHS, post.RHS))
                                             verbose_file.flush()
                                     except pexpect.TIMEOUT as e:
@@ -440,6 +465,7 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                         message = "%s while running script %s" % (post.Issues.TIMEOUT, script)
                                         logger.warning("*** %s ***" % message)
                                         test_domain.console.append_output("%s %s %s", post.LHS, message, post.RHS)
+                                        verbose_txt.write("%s %s %s", post.LHS, message, post.RHS)
                                         continue # always teardown
                                     except pexpect.EOF as e:
                                         # A post-mortem ending with an
@@ -448,6 +474,7 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                         message = "%s while running script %s" % (post.Issues.EOF, script)
                                         logger.exception("*** %s ***" % message)
                                         test_domain.console.append_output("%s %s %s", post.LHS, message, post.RHS)
+                                        verbose_txt.write("%s %s %s", post.LHS, message, post.RHS)
                                         continue # always teardown
                                     except BaseException as e:
                                         # if there is an exception, write
@@ -455,6 +482,7 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                         message = "%s %s while running script %s" % (post.Issues.EXCEPTION, str(e), script)
                                         logger.exception(message)
                                         test_domain.console.append_output("\n%s %s %s\n", post.LHS, message, post.RHS)
+                                        verbose_txt.write("\n%s %s %s\n", post.LHS, message, post.RHS)
                                         raise
 
                                 if post_mortem_ok:

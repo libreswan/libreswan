@@ -90,10 +90,12 @@ class Test:
         # Get an ordered list of {guest_name:,command:} to run.
         self.commands = scripts.commands(self.directory, self.logger)
 
-        # Just assume any host mentioned in scripts needs to run.
+        # Just assume any non-empty host mentioned in scripts needs to
+        # run.
         guest_names = set()
         for command in self.commands:
-            guest_names.add(command.guest_name)
+            if command.guest_name:
+                guest_names.add(command.guest_name)
         self.guest_names = sorted(guest_names)
 
     def testing_directory(self, *path):

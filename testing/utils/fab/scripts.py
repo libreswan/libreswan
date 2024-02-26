@@ -112,14 +112,20 @@ class Command:
         self.guest_name = guest_name
         self.line = line
     def __str__(self):
-        return self.guest_name + "# " + self.line
+        if self.guest_name:
+            return self.guest_name + "# " + self.line
+        else:
+            return self.line
 
 class Commands(list):
     def __str__(self):
         # string is used by --print test-scripts (it has no spaces)
         return "\n".join(str(script) for script in self)
 
-_GUEST_COMMAND_PATTERN = r'^(?P<guest>[a-z]+)# (?P<line>.*)$'
+# for line in open("r").line includes; when <guest> is blank, a
+# comment is assumed.
+
+_GUEST_COMMAND_PATTERN = r'^(?P<guest>[a-z]*)# ?(?P<line>.*)[\n]$'
 _GUEST_COMMAND_REGEX = re.compile(_GUEST_COMMAND_PATTERN)
 
 def commands(directory, logger):
@@ -127,19 +133,22 @@ def commands(directory, logger):
 
     all_console_txt = os.path.join(directory, "all.console.txt")
     if os.path.exists(all_console_txt):
-        with open(all_console_txt, "r") as file:
-            for line in file:
-                match = _GUEST_COMMAND_REGEX.match(line)
-                if match:
-                    commands.append(Command(match.group("guest"), match.group("line")))
+        for line in open(all_console_txt, "r"):
+            # includes '\n'; matches both:
+            #   <host># command
+            # and
+            #   # comment
+            command = _GUEST_COMMAND_REGEX.match(line)
+            if command:
+                commands.append(Command(command.group("guest"), command.group("line")))
     else:
         scripts = _guest_scripts(directory, logger)
         for script in scripts:
-            with open(os.path.join(directory, script.path), "r") as file:
-                for line in file:
-                    line = line.strip()
-                    if line:
-                        command = Command(script.guest_name, line)
-                        commands.append(command)
+            for line in open(os.path.join(directory, script.path), "r"):
+                # toss blank lines and trailing '\n'
+                line = line.strip()
+                if line:
+                    command = Command(script.guest_name, line)
+                    commands.append(command)
 
     return commands
