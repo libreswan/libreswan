@@ -96,4 +96,4 @@ netbsdw# ../../guestbin/ipsec-kernel-state.sh
 	allocated: 2	hard: 0	soft: 0
 	sadb_seq=0 pid=PID refcnt=0
 netbsdw# dmesg | grep ipsec
- 
+
