@@ -742,31 +742,17 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 		host->id.kind = ID_NONE;
 	} else {
 		/*
-		 * XXX: old comment
+		 * Treat any atoid() failure as fatal.  One wart is
+		 * something like id=foo.  ttoaddress_dns() fails
+		 * when, perhaps, the code should instead return FQDN?
 		 *
-		 * Cannot report errors due to low level nesting of
-		 * functions, since it will try literal IP string
-		 * conversions first. But atoid() will log real
-		 * failures like illegal DNS chars already, and for
-		 * @string ID's all chars are valid without
-		 * processing.
-		 *
-		 * XXX: new comment
-		 *
-		 * atoid() now returns the error as a diagnostic;
-		 * however given id=foo which doesn't resolve this
-		 * generates an error causing the ID to be ignored (it
-		 * ends up being set to the IP address).
+		 * In 4.x the error was ignored and ID=<HOST_IP> was
+		 * used.
 		 */
 		err_t e = atoid(src->id, &host->id);
 		if (e != NULL) {
-			llog(RC_LOG, logger, "warning: ignoring %sid=%s: %s",
-			     leftright, src->id, e);
-			/*
-			 * Will leave it empty aka ID_NONE which means
-			 * that further down it is set to the IP
-			 * address of the host.
-			 */
+			return diag("%sid=%s invalid: %s",
+				    leftright, src->id, e);
 		}
 	}
 
