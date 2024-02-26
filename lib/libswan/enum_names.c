@@ -296,8 +296,9 @@ enum_names *enum_enum_table(enum_enum_names *een,
 			    unsigned long table)
 {
 	if (!(een->een_last - een->een_first + 1 == een->een_checklen)) {
+		/* *_{last,first} are longs */
 		llog_passert(&global_logger, HERE,
-			     ".een_last=%zu - .een_first=%zu + 1 == .een_checklen=%zu",
+			     ".een_last=%lu - .een_first=%lu + 1 == .een_checklen=%zu",
 			     een->een_last, een->een_first, een->een_checklen);
 	}
 
