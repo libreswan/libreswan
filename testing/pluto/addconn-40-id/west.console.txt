@@ -1,0 +1,61 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec add addconn
+"addconn": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+west #
+ ipsec add addconn-leftid=%fromcert
+"addconn-leftid=%fromcert": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+west #
+ ipsec add addconn-leftid=%none
+"addconn-leftid=%none": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+west #
+ ipsec add addconn-leftid=%null
+"addconn-leftid=%null": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+west #
+ ipsec add addconn-leftid=%any
+"addconn-leftid=%any": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+west #
+ ipsec add addconn-leftid=ipv4
+"addconn-leftid=ipv4": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+west #
+ ipsec add addconn-leftid=at-hash-hex
+"addconn-leftid=at-hash-hex": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+west #
+ ipsec add addconn-leftid=at-tilda-hex
+"addconn-leftid=at-tilda-hex": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+west #
+ ipsec add addconn-leftid=at-lsquare-foo
+"addconn-leftid=at-lsquare-foo": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+west #
+ ipsec add addconn-leftid=at-lsquare-foo-rsquare
+"addconn-leftid=at-lsquare-foo-rsquare": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+west #
+ ipsec add addconn-leftid=at-foo
+"addconn-leftid=at-foo": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+west #
+ ipsec add addconn-leftid=foo-at-bar
+"addconn-leftid=foo-at-bar": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+west #
+ ipsec add addconn-leftid=foo
+"addconn-leftid=foo": failed to add connection: leftid=foo invalid: not a numeric IPv4 address and name lookup failed (no validation performed)
+west #
+ ipsec connectionstatus | grep ' id'
+"addconn":   our idtype: ID_IPV4_ADDR; our id=1.2.3.4; their idtype: ID_IPV4_ADDR; their id=5.6.7.8
+"addconn-leftid=%any":   our idtype: ID_IPV4_ADDR; our id=1.2.3.4; their idtype: ID_IPV4_ADDR; their id=5.6.7.8
+"addconn-leftid=%fromcert":   our idtype: %fromcert; our id=%fromcert; their idtype: ID_IPV4_ADDR; their id=5.6.7.8
+"addconn-leftid=%none":   our idtype: ID_IPV4_ADDR; our id=1.2.3.4; their idtype: ID_IPV4_ADDR; their id=5.6.7.8
+"addconn-leftid=%null":   our idtype: ID_NULL; our id=ID_NULL; their idtype: ID_IPV4_ADDR; their id=5.6.7.8
+"addconn-leftid=at-foo":   our idtype: ID_FQDN; our id=@foo; their idtype: ID_IPV4_ADDR; their id=5.6.7.8
+"addconn-leftid=at-hash-hex":   our idtype: ID_KEY_ID; our id=@#0x1234abcd; their idtype: ID_IPV4_ADDR; their id=5.6.7.8
+"addconn-leftid=at-lsquare-foo":   our idtype: ID_KEY_ID; our id=@#0x666f6f; their idtype: ID_IPV4_ADDR; their id=5.6.7.8
+"addconn-leftid=at-lsquare-foo-rsquare":   our idtype: ID_KEY_ID; our id=@#0x666f6f; their idtype: ID_IPV4_ADDR; their id=5.6.7.8
+"addconn-leftid=at-tilda-hex":   our idtype: ID_DER_ASN1_DN; our id=0x1234ABCD; their idtype: ID_IPV4_ADDR; their id=5.6.7.8
+"addconn-leftid=foo-at-bar":   our idtype: ID_USER_FQDN; our id=foo@foo; their idtype: ID_IPV4_ADDR; their id=5.6.7.8
+"addconn-leftid=ipv4":   our idtype: ID_IPV4_ADDR; our id=1.2.3.4; their idtype: ID_IPV4_ADDR; their id=5.6.7.8
+west #
+ 
