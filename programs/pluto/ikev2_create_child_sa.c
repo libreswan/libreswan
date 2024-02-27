@@ -58,6 +58,7 @@
 #include "ike_alg_dh.h"			/* for ike_alg_dh_none */
 #include "ikev2_proposals.h"
 #include "ikev2_parent.h"
+#include "ikev2_delete.h"
 
 static ikev2_state_transition_fn process_v2_CREATE_CHILD_SA_request;
 
@@ -1224,8 +1225,42 @@ static stf_status reject_CREATE_CHILD_SA_response(struct ike_sa *ike,
 		return STF_FATAL;
 	}
 
-	delete_child_sa(larval);
+	/*
+	 * This end (the initiator) did not like something
+	 * about the Child SA.
+	 *
+	 * (If the responder sent back an error notification
+	 * to reject the Child SA, then the above call would
+	 * have cleaned up the mess and return
+	 * v2N_NOTHING_WRONG.  After all, problem solved.
+	 */
+#if 0
+	llog_sa(RC_LOG_SERIOUS, ike, "IKE SA established but initiator rejected Child SA response");
+#endif
 	ike->sa.st_v2_msgid_windows.initiator.wip_sa = NULL;
+	passert((*larval) != NULL);
+	/*
+	 * Needed to un-plug the pending queue.  Without this
+	 * the next pending exchange is never started.
+	 *
+	 * While not obvious from the name - unpend() - the
+	 * code is doing two things: removing LARVAL_CHILD's
+	 * pending connection; and submitting a request to
+	 * initiate the next pending connection, if any.
+	 *
+	 * The key thing here is that unpend() delays creating
+	 * the next child until after the previous child is
+	 * done.  Avoiding a race for which child goes next.
+	 *
+	 * For IKEv2, should merge the pending queue into the
+	 * Message ID queue.  Have a queue of exchanges, and a
+	 * queue of things to do when there are no exchanges.
+	 */
+	unpend(ike, (*larval)->sa.st_connection);
+	/*
+	 * Quickly delete this larval SA.
+	 */
+	submit_v2_delete_exchange(ike, (*larval));
 	return STF_OK; /* IKE */
 }
 
