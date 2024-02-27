@@ -25,7 +25,6 @@ north #
  ../../guestbin/wait-until-pluto-started
 north #
  ipsec auto --add l2tp-north-to-east-on-north
-"l2tp-north-to-east-on-north": warning: ignoring rightid=%cert: not a numeric IPv4 address and name lookup failed (no validation performed)
 "l2tp-north-to-east-on-north": added IKEv1 connection
 north #
  ../../guestbin/l2tpd.sh

@@ -7,11 +7,9 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add l2tp-north-to-east-on-east
-"l2tp-north-to-east-on-east": warning: ignoring rightid=%cert: not a numeric IPv4 address and name lookup failed (no validation performed)
 "l2tp-north-to-east-on-east": added IKEv1 connection
 east #
  ipsec auto --add l2tp-distraction-on-east
-"l2tp-distraction-on-east": warning: ignoring rightid=%cert: not a numeric IPv4 address and name lookup failed (no validation performed)
 "l2tp-distraction-on-east": added IKEv1 connection
 east #
  # ensure that clear text does not get through
