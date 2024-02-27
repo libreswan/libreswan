@@ -1731,14 +1731,17 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response(struct ike_sa *ike,
 				 &larval_ike->sa.st_v2_accepted_proposal,
 				 larval_ike->sa.st_v2_create_child_sa_proposals,
 				 larval_ike->sa.logger);
-	if (v2_notification_fatal(n)) {
-		return STF_FATAL;
-	}
 	if (n != v2N_NOTHING_WRONG) {
-		dbg("failed to accept IKE SA, REKEY, response, in process_v2_CREATE_CHILD_SA_rekey_ike_response");
+		/*
+		 * XXX: what should happen here?  It feels like a
+		 * should-not-happen?
+		 */
+		ldbg(larval_ike->sa.logger,
+		     "failed to accept IKE SA, REKEY, response, in process_v2_CREATE_CHILD_SA_rekey_ike_response");
+		PEXPECT(ike->sa.logger, ike->sa.st_v2_msgid_windows.initiator.wip_sa == larval_ike);
 		delete_child_sa(&larval_ike);
 		ike->sa.st_v2_msgid_windows.initiator.wip_sa = larval_ike = NULL;
-		return STF_OK; /* IKE */
+		return (v2_notification_fatal(n) ? STF_FATAL : STF_OK); /* IKE */
 	}
 
 	if (DBGP(DBG_BASE)) {
