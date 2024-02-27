@@ -100,36 +100,36 @@ output: | main_inR2_outI3: delref skeyid_a-key@NULL
 output: | main_inR2_outI3: delref skeyid_e-key@NULL
 output: | main_inR2_outI3: delref enc_key-key@NULL
 output: | submitting DH shared secret for #1/#1 (main_inR2_outI3() +925 programs/pluto/ikev1_main.c)
-output: | struct dh_local_secret: addref @0x7f4fb4759fd8(1->2) (submit_dh_shared_secret() +212 programs/pluto/crypt_dh.c)
-output: | job: newref @0x7f4fb476af98(0->1) (submit_task() +331 programs/pluto/server_pool.c)
-output: | clone logger: newref @0x7f4fb3df8fc8(0->1) (submit_task() +358 programs/pluto/server_pool.c)
-output: | "west-east" #1: attach whack fd@0x7f4fb4858fe8 to logger 0x7f4fb3df8fc8 slot 0 (submit_task() +358 programs/pluto/server_pool.c)
-output: | struct fd: addref @0x7f4fb4858fe8(2->3) (submit_task() +358 programs/pluto/server_pool.c)
+output: | struct dh_local_secret: addref @0x7ff4d0f6ffd8(1->2) (submit_dh_shared_secret() +212 programs/pluto/crypt_dh.c)
+output: | job: newref @0x7ff4d0f80f98(0->1) (submit_task() +331 programs/pluto/server_pool.c)
+output: | clone logger: newref @0x7ff4d060efc8(0->1) (submit_task() +358 programs/pluto/server_pool.c)
+output: | "west-east" #1: attach whack fd@0x7ff4d106efe8 to logger 0x7ff4d060efc8 slot 0 (submit_task() +358 programs/pluto/server_pool.c)
+output: | struct fd: addref @0x7ff4d106efe8(2->3) (submit_task() +358 programs/pluto/server_pool.c)
 output: | job 2 helper 0 #1 main_inR2_outI3 (dh): added to pending queue
-output: | event_schedule_where: newref EVENT_CRYPTO_TIMEOUT-pe@0x7f4fb3dfafa8 timeout in 60 seconds for #1
-output: | tt: newref @0x7f4fb3dfcf68(0->1) (schedule_timeout() +557 programs/pluto/server.c)
+output: | event_schedule_where: newref EVENT_CRYPTO_TIMEOUT-pe@0x7ff4d0610fa8 timeout in 60 seconds for #1
+output: | tt: newref @0x7ff4d0612f68(0->1) (schedule_timeout() +557 programs/pluto/server.c)
 output: | complete v1 state transition with STF_SUSPEND
-output: | suspend: saving MD@0x7f4fb475d668 in state #1 (complete_v1_state_transition() +2417 programs/pluto/ikev1.c)
-output: | struct msg_digest: addref @0x7f4fb475d668(1->2) (complete_v1_state_transition() +2417 programs/pluto/ikev1.c)
-output: | #1 is busy; has suspended MD 0x7f4fb475d668
-output: | #1 requesting EVENT_RETRANSMIT-event@0x7f4fb4762fa8 be deleted (clear_retransmits() +108 programs/pluto/retransmit.c)
+output: | suspend: saving MD@0x7ff4d0f73668 in state #1 (complete_v1_state_transition() +2417 programs/pluto/ikev1.c)
+output: | struct msg_digest: addref @0x7ff4d0f73668(1->2) (complete_v1_state_transition() +2417 programs/pluto/ikev1.c)
+output: | #1 is busy; has suspended MD 0x7ff4d0f73668
+output: | #1 requesting EVENT_RETRANSMIT-event@0x7ff4d0f78fa8 be deleted (clear_retransmits() +108 programs/pluto/retransmit.c)
 output: | #1 deleting EVENT_RETRANSMIT
-output: | tt: delref @0x7f4fb4764f68(1->0) (destroy_timeout() +575 programs/pluto/server.c)
-output: | state-event: delref @0x7f4fb4762fa8(1->0) (clear_retransmits() +108 programs/pluto/retransmit.c)
+output: | tt: delref @0x7ff4d0f7af68(1->0) (destroy_timeout() +575 programs/pluto/server.c)
+output: | state-event: delref @0x7ff4d0f78fa8(1->0) (clear_retransmits() +108 programs/pluto/retransmit.c)
 output: | #1 STATE_MAIN_I2: retransmits: cleared
-output: | #1 spent 0.486 (2.46) milliseconds in process_packet_tail()
+output: | #1 spent 0.482 (2.65) milliseconds in process_packet_tail()
 output: | IKEv1 packet dropped
-output: | packet from 192.1.2.23:500: delref @0x7f4fb475d668(2->1) (process_iface_packet() +296 programs/pluto/demux.c)
-output: | spent 1.12 (8.29) milliseconds in process_iface_packet() reading and processing packet
+output: | packet from 192.1.2.23:500: delref @0x7ff4d0f73668(2->1) (process_iface_packet() +296 programs/pluto/demux.c)
+output: | spent 1.21 (8.98) milliseconds in process_iface_packet() reading and processing packet
 output: | job 2 helper 1 #1 main_inR2_outI3 (dh): started
-output: | newref : g_ir-key@0x7f4fb47caf80 (256-bytes, CONCATENATE_DATA_AND_BASE)
+output: | newref : g_ir-key@0x7ff4d0fe0f80 (256-bytes, CONCATENATE_DATA_AND_BASE)
 output: | job 2 helper 1 #1 main_inR2_outI3 (dh): finished
-output: | "west-east" #1: spent 1.84 (3.28) milliseconds in job 2 helper 1 #1 main_inR2_outI3 (dh)
+output: | "west-east" #1: spent 1.91 (3.49) milliseconds in job 2 helper 1 #1 main_inR2_outI3 (dh)
 output: | scheduling resume sending job back to main thread for #1
-output: | tt: newref @0x7f4fb3dfef68(0->1) (schedule_timeout() +557 programs/pluto/server.c)
+output: | tt: newref @0x7ff4d0614f68(0->1) (schedule_timeout() +557 programs/pluto/server.c)
 output: | helper 1: waiting for work
 output: | processing resume sending job back to main thread for #1
-output: | suspend: restoring MD@0x7f4fb475d668 from state #1 (resume_handler() +641 programs/pluto/server.c)
+output: | suspend: restoring MD@0x7ff4d0f73668 from state #1 (resume_handler() +641 programs/pluto/server.c)
 output: | job 2 helper 1 #1 main_inR2_outI3 (dh): calling state's callback function
 output: | completing DH shared secret for #1/#1
 output: | complete_dh_shared_secret: delref st_dh_shared_secret-key@NULL
@@ -139,23 +139,23 @@ output: | line 1: key type SECRET_PSK(@west) to type SECRET_PSK
 output: | 1: compared key @west to @west / @east -> 8
 output: | 2: compared key @east to @west / @east -> c
 output: |   match=c
-output: |   match c beats previous best_match 0 match=0x7f4fb3dccf68 (line=1)
-output: | concluding with best_match=c best=0x7f4fb3dccf68 (lineno=1)
-output: |     result: newref psk-key@0x7f4fb48c2f80 (52-bytes, EXTRACT_KEY_FROM_KEY)(merge_symkey_bytes() +222 lib/libswan/crypt_symkey.c)
-output: |     result: newref psk-key@0x7f4fb4968f80 (36-bytes, SHA256_HMAC)(pre_shared_key_skeyid() +66 lib/libswan/ike_alg_prf_ikev1_nss_ops.c)
-output: | psk: delref tmp-key@0x7f4fb48c2f80
-output: |     result: newref skeyid-key@0x7f4fb48c2f80 (32-bytes, NSS_IKE1_PRF_DERIVE)(pre_shared_key_skeyid() +89 lib/libswan/ike_alg_prf_ikev1_nss_ops.c)
-output: | SKEYID psk: delref psk-key@0x7f4fb4968f80
+output: |   match c beats previous best_match 0 match=0x7ff4d05e2f68 (line=1)
+output: | concluding with best_match=c best=0x7ff4d05e2f68 (lineno=1)
+output: |     result: newref psk-key@0x7ff4d10d8f80 (52-bytes, EXTRACT_KEY_FROM_KEY)(merge_symkey_bytes() +222 lib/libswan/crypt_symkey.c)
+output: |     result: newref psk-key@0x7ff4d117ef80 (36-bytes, SHA256_HMAC)(pre_shared_key_skeyid() +66 lib/libswan/ike_alg_prf_ikev1_nss_ops.c)
+output: | psk: delref tmp-key@0x7ff4d10d8f80
+output: |     result: newref skeyid-key@0x7ff4d10d8f80 (32-bytes, NSS_IKE1_PRF_DERIVE)(pre_shared_key_skeyid() +89 lib/libswan/ike_alg_prf_ikev1_nss_ops.c)
+output: | SKEYID psk: delref psk-key@0x7ff4d117ef80
 output: | NSS: #1 pointers skeyid_d (nil),  skeyid_a (nil),  skeyid_e (nil),  enc_key (nil)
-output: |     result: newref skeyid_d-key@0x7f4fb4968f80 (32-bytes, EXTRACT_KEY_FROM_KEY)(skeyid_d() +121 lib/libswan/ike_alg_prf_ikev1_nss_ops.c)
-output: |     result: newref skeyid_a-key@0x7f4fb49a8f80 (32-bytes, EXTRACT_KEY_FROM_KEY)(skeyid_a() +152 lib/libswan/ike_alg_prf_ikev1_nss_ops.c)
-output: |     result: newref skeyid_e-key@0x7f4fb47b5f80 (32-bytes, EXTRACT_KEY_FROM_KEY)(skeyid_e() +183 lib/libswan/ike_alg_prf_ikev1_nss_ops.c)
-output: |     result: newref keymat_e-key@0x7f4fb48c0f80 (32-bytes, AES_CBC)(appendix_b_keymat_e() +216 lib/libswan/ike_alg_prf_ikev1_nss_ops.c)
-output: | NSS: #1 pointers skeyid_d 0x7f4fb4968f80,  skeyid_a 0x7f4fb49a8f80,  skeyid_e 0x7f4fb47b5f80,  enc_key 0x7f4fb48c0f80
+output: |     result: newref skeyid_d-key@0x7ff4d117ef80 (32-bytes, EXTRACT_KEY_FROM_KEY)(skeyid_d() +121 lib/libswan/ike_alg_prf_ikev1_nss_ops.c)
+output: |     result: newref skeyid_a-key@0x7ff4d11bef80 (32-bytes, EXTRACT_KEY_FROM_KEY)(skeyid_a() +152 lib/libswan/ike_alg_prf_ikev1_nss_ops.c)
+output: |     result: newref skeyid_e-key@0x7ff4d0fcbf80 (32-bytes, EXTRACT_KEY_FROM_KEY)(skeyid_e() +183 lib/libswan/ike_alg_prf_ikev1_nss_ops.c)
+output: |     result: newref keymat_e-key@0x7ff4d10d6f80 (32-bytes, AES_CBC)(appendix_b_keymat_e() +216 lib/libswan/ike_alg_prf_ikev1_nss_ops.c)
+output: | NSS: #1 pointers skeyid_d 0x7ff4d117ef80,  skeyid_a 0x7ff4d11bef80,  skeyid_e 0x7ff4d0fcbf80,  enc_key 0x7ff4d10d6f80
 output: | opening output PBS reply packet
 output: | **emit ISAKMP Message:
-output: |    initiator SPI: 93 18 3d f4  f7 7f 23 45
-output: |    responder SPI: 73 8a 14 c3  ad f5 fb a2
+output: |    initiator SPI: ec 17 79 fe  a9 81 79 66
+output: |    responder SPI: de 4d e9 3b  ce 1e 43 08
 output: |    next payload type: ISAKMP_NEXT_NONE (0x0)
 output: |    ISAKMP version: ISAKMP Version 1.0 (rfc2407) (0x10)
 output: |    exchange type: ISAKMP_XCHG_IDPROT (0x2)
@@ -170,42 +170,42 @@ output: | I did not send a certificate because digital signatures are not being 
 output: |  I am not sending a certificate request
 output: | I will NOT send an initial contact payload
 output: | init checking NAT-T: global enabled; conn enabled; vid RFC 3947 (NAT-Traversal)
-output: | natd_hash: hasher=0x55d40e526e20(32)
+output: | natd_hash: hasher=0x561a49edae20(32)
 output: | natd_hash: icookie=
-output: |   93 18 3d f4  f7 7f 23 45                             ..=...#E
+output: |   ec 17 79 fe  a9 81 79 66                             ..y...yf
 output: | natd_hash: rcookie=
-output: |   73 8a 14 c3  ad f5 fb a2                             s.......
+output: |   de 4d e9 3b  ce 1e 43 08                             .M.;..C.
 output: | natd_hash: ip=
 output: |   c0 01 02 2d                                          ...-
 output: | natd_hash: port=
 output: |   01 f4                                                ..
 output: | natd_hash: hash=
-output: |   51 db 6c e1  34 cc 8c 40  1a 13 a5 66  67 e9 2a ec   Q.l.4..@...fg.*.
-output: |   fc db a1 ef  f1 6d fa 12  5f 72 6e 6e  dd 00 2a 6f   .....m.._rnn..*o
-output: | natd_hash: hasher=0x55d40e526e20(32)
+output: |   d3 aa 19 a2  6b a4 09 f4  00 c6 bd 97  56 66 c7 b1   ....k.......Vf..
+output: |   ed 1c 15 ed  5e 6e 58 2f  49 a0 63 b5  d0 9c 4e a9   ....^nX/I.c...N.
+output: | natd_hash: hasher=0x561a49edae20(32)
 output: | natd_hash: icookie=
-output: |   93 18 3d f4  f7 7f 23 45                             ..=...#E
+output: |   ec 17 79 fe  a9 81 79 66                             ..y...yf
 output: | natd_hash: rcookie=
-output: |   73 8a 14 c3  ad f5 fb a2                             s.......
+output: |   de 4d e9 3b  ce 1e 43 08                             .M.;..C.
 output: | natd_hash: ip=
 output: |   c0 01 02 17                                          ....
 output: | natd_hash: port=
 output: |   01 f4                                                ..
 output: | natd_hash: hash=
-output: |   33 f1 b6 f0  cd ed bd f6  54 e3 64 6f  d0 b0 68 b4   3.......T.do..h.
-output: |   17 c1 93 a5  a1 7d 40 af  8f d9 bd 4f  80 6f 75 a6   .....}@....O.ou.
+output: |   76 1b 2b ff  4e 77 c3 74  79 c1 f7 0d  9d e6 4a 6b   v.+.Nw.ty.....Jk
+output: |   ed 50 5f d9  d3 09 99 90  f7 50 5a aa  67 7c fd f4   .P_......PZ.g|..
 output: | expected NAT-D(local):
-output: |   51 db 6c e1  34 cc 8c 40  1a 13 a5 66  67 e9 2a ec   Q.l.4..@...fg.*.
-output: |   fc db a1 ef  f1 6d fa 12  5f 72 6e 6e  dd 00 2a 6f   .....m.._rnn..*o
+output: |   d3 aa 19 a2  6b a4 09 f4  00 c6 bd 97  56 66 c7 b1   ....k.......Vf..
+output: |   ed 1c 15 ed  5e 6e 58 2f  49 a0 63 b5  d0 9c 4e a9   ....^nX/I.c...N.
 output: | expected NAT-D(remote):
-output: |   33 f1 b6 f0  cd ed bd f6  54 e3 64 6f  d0 b0 68 b4   3.......T.do..h.
-output: |   17 c1 93 a5  a1 7d 40 af  8f d9 bd 4f  80 6f 75 a6   .....}@....O.ou.
+output: |   76 1b 2b ff  4e 77 c3 74  79 c1 f7 0d  9d e6 4a 6b   v.+.Nw.ty.....Jk
+output: |   ed 50 5f d9  d3 09 99 90  f7 50 5a aa  67 7c fd f4   .P_......PZ.g|..
 output: | received NAT-D:
-output: |   51 db 6c e1  34 cc 8c 40  1a 13 a5 66  67 e9 2a ec   Q.l.4..@...fg.*.
-output: |   fc db a1 ef  f1 6d fa 12  5f 72 6e 6e  dd 00 2a 6f   .....m.._rnn..*o
+output: |   d3 aa 19 a2  6b a4 09 f4  00 c6 bd 97  56 66 c7 b1   ....k.......Vf..
+output: |   ed 1c 15 ed  5e 6e 58 2f  49 a0 63 b5  d0 9c 4e a9   ....^nX/I.c...N.
 output: | received NAT-D:
-output: |   33 f1 b6 f0  cd ed bd f6  54 e3 64 6f  d0 b0 68 b4   3.......T.do..h.
-output: |   17 c1 93 a5  a1 7d 40 af  8f d9 bd 4f  80 6f 75 a6   .....}@....O.ou.
+output: |   76 1b 2b ff  4e 77 c3 74  79 c1 f7 0d  9d e6 4a 6b   v.+.Nw.ty.....Jk
+output: |   ed 50 5f d9  d3 09 99 90  f7 50 5a aa  67 7c fd f4   .P_......PZ.g|..
 output: | NAT_TRAVERSAL encaps using auto-detect
 output: | NAT_TRAVERSAL this end is NOT behind NAT
 output: | NAT_TRAVERSAL that end is NOT behind NAT
@@ -223,65 +223,65 @@ output: | next payload chain: saving location 'ISAKMP Identification Payload (IP
 output: | emitting 4 raw bytes of my identity into ISAKMP Identification Payload (IPsec DOI)
 output: | my identity: 77 65 73 74
 output: | emitting length of ISAKMP Identification Payload (IPsec DOI): 12
-output: |     result: newref clone-key@0x7f4fb3e0ff80 (32-bytes, SHA256_HMAC)(init_symkey() +101 lib/libswan/ike_alg_prf_mac_nss_ops.c)
-output: | main mode: delref clone-key@0x7f4fb3e0ff80
+output: |     result: newref clone-key@0x7ff4d0625f80 (32-bytes, SHA256_HMAC)(init_symkey() +101 lib/libswan/ike_alg_prf_mac_nss_ops.c)
+output: | main mode: delref clone-key@0x7ff4d0625f80
 output: | ***emit ISAKMP Hash Payload:
 output: |    next payload type: ISAKMP_NEXT_NONE (0x0)
 output: | next payload chain: setting previous 'ISAKMP Identification Payload (IPsec DOI)'.'next payload type' to current ISAKMP Hash Payload (8:ISAKMP_NEXT_HASH)
 output: | next payload chain: saving location 'ISAKMP Hash Payload'.'next payload type' in 'reply packet'
 output: | emitting 32 raw bytes of HASH_I into ISAKMP Hash Payload
-output: |   9e 66 69 b7  79 4d 11 08  99 26 8a 40  23 49 c2 03   .fi.yM...&.@#I..
-output: |   44 98 d2 c3  b5 f4 05 ba  4a 61 52 31  72 a7 54 4c   D.......JaR1r.TL
+output: |   a9 ed 40 b3  f3 8e a7 7e  e0 e5 b7 d7  9e 8f f8 9e   ..@....~........
+output: |   31 d7 13 d5  75 2a 02 86  3f 32 b9 d8  e5 14 e9 1b   1...u*..?2......
 output: | emitting length of ISAKMP Hash Payload: 36
 output: | Not sending INITIAL_CONTACT
 output: | no IKEv1 message padding required
 output: | emitting length of ISAKMP Message: 76
 output: | job 2 helper 1 #1 main_inR2_outI3 (dh): final status STF_OK; cleaning up
-output: | delref @0x7f4fb4759fd8(2->1) (cleanup_dh_shared_secret() +170 programs/pluto/crypt_dh.c)
+output: | delref @0x7ff4d0f6ffd8(2->1) (cleanup_dh_shared_secret() +170 programs/pluto/crypt_dh.c)
 output: | DH: delref secret-key@NULL
-output: | "west-east" #1: detach whack fd@0x7f4fb4858fe8 from logger 0x7f4fb3df8fc8 slot 0 (free_job() +430 programs/pluto/server_pool.c)
-output: | delref @0x7f4fb4858fe8(3->2) (free_job() +430 programs/pluto/server_pool.c)
-output: | logger: delref @0x7f4fb3df8fc8(1->0) (free_job() +430 programs/pluto/server_pool.c)
-output: | job: delref @0x7f4fb476af98(1->0) (free_job() +431 programs/pluto/server_pool.c)
+output: | "west-east" #1: detach whack fd@0x7ff4d106efe8 from logger 0x7ff4d060efc8 slot 0 (free_job() +430 programs/pluto/server_pool.c)
+output: | delref @0x7ff4d106efe8(3->2) (free_job() +430 programs/pluto/server_pool.c)
+output: | logger: delref @0x7ff4d060efc8(1->0) (free_job() +430 programs/pluto/server_pool.c)
+output: | job: delref @0x7ff4d0f80f98(1->0) (free_job() +431 programs/pluto/server_pool.c)
 output: | complete v1 state transition with STF_OK
 output: | #1 is idle
 output: | doing_xauth:no, t_xauth_client_done:no
 output: | parent state #1: MAIN_I2(open IKE SA) => MAIN_I3(open IKE SA)
 output: | #1 deleting EVENT_CRYPTO_TIMEOUT
-output: | tt: delref @0x7f4fb3dfcf68(1->0) (destroy_timeout() +575 programs/pluto/server.c)
-output: | state-event: delref @0x7f4fb3dfafa8(1->0) (delete_event() +534 programs/pluto/timer.c)
+output: | tt: delref @0x7ff4d0612f68(1->0) (destroy_timeout() +575 programs/pluto/server.c)
+output: | state-event: delref @0x7ff4d0610fa8(1->0) (delete_event() +534 programs/pluto/timer.c)
 output: | #1 STATE_MAIN_I3: retransmits: cleared
 output: | sending 76 bytes for main_inR2_outI3 through eth1 from 192.1.2.45:500 to 192.1.2.23:500 using UDP (for #1)
-output: |   93 18 3d f4  f7 7f 23 45  73 8a 14 c3  ad f5 fb a2   ..=...#Es.......
-output: |   05 10 02 01  00 00 00 00  00 00 00 4c  01 b7 07 f3   ...........L....
-output: |   2a e5 76 dd  e7 4e ff 98  bc 42 d9 8a  06 c4 6d 6c   *.v..N...B....ml
-output: |   d9 a4 3f 27  c3 90 ad 1a  36 17 d2 a6  60 19 cf 81   ..?'....6...`...
-output: |   61 3f 41 f9  d0 65 9a 90  7e 28 5d 83                a?A..e..~(].
-output: | event_schedule_where: newref EVENT_RETRANSMIT-pe@0x7f4fb3e1cfa8 timeout in 60 seconds for #1
-output: | tt: newref @0x7f4fb4766f68(0->1) (schedule_timeout() +557 programs/pluto/server.c)
-output: | #1 STATE_MAIN_I3: retransmits: first event in 60 seconds; timeout in 60 seconds; limit of 12 retransmits; current time is 12.43843
+output: |   ec 17 79 fe  a9 81 79 66  de 4d e9 3b  ce 1e 43 08   ..y...yf.M.;..C.
+output: |   05 10 02 01  00 00 00 00  00 00 00 4c  d7 f0 17 c3   ...........L....
+output: |   b8 28 fb 13  76 b6 db af  ff 45 95 b5  0b 05 18 61   .(..v....E.....a
+output: |   62 11 36 54  43 54 2b 5c  0e 3b 36 8a  3b 9e 7d a3   b.6TCT+\.;6.;.}.
+output: |   92 c0 e5 5c  ef dd f1 61  34 7a 85 fe                ...\...a4z..
+output: | event_schedule_where: newref EVENT_RETRANSMIT-pe@0x7ff4d0632fa8 timeout in 60 seconds for #1
+output: | tt: newref @0x7ff4d0f7cf68(0->1) (schedule_timeout() +557 programs/pluto/server.c)
+output: | #1 STATE_MAIN_I3: retransmits: first event in 60 seconds; timeout in 60 seconds; limit of 12 retransmits; current time is 12.424312
 output: "west-east" #1: sent Main Mode I3
 output: | modecfg pull: noquirk policy:push not-client
 output: | phase 1 is done, looking for phase 2 to unpend
-output: | packet from 192.1.2.23:500: delref @0x7f4fb475d668(1->0) (resume_handler() +687 programs/pluto/server.c)
+output: | packet from 192.1.2.23:500: delref @0x7ff4d0f73668(1->0) (resume_handler() +687 programs/pluto/server.c)
 output: | packet from 192.1.2.23:500: releasing whack (but there are none) (resume_handler() +687 programs/pluto/server.c)
-output: | logger: delref @0x7f4fb485afc8(1->0) (resume_handler() +687 programs/pluto/server.c)
-output: | delref @0x7f4fb485ef38(3->2) (resume_handler() +687 programs/pluto/server.c)
-output: | #1 spent 4.58 (16.7) milliseconds in resume sending job back to main thread
-output: | tt: delref @0x7f4fb3dfef68(1->0) (destroy_timeout() +575 programs/pluto/server.c)
-output: | spent 0.00167 (0.00165) milliseconds in udp_read_packet() calling check_incoming_msg_errqueue()
-output: | struct msg_digest: newref @0x7f4fb475d7a8(0->1) (udp_read_packet() +249 programs/pluto/iface_udp.c)
-output: | struct iface_endpoint: addref @0x7f4fb485ef38(2->3) (udp_read_packet() +249 programs/pluto/iface_udp.c)
-output: | alloc logger: newref @0x7f4fb485afc8(0->1) (udp_read_packet() +249 programs/pluto/iface_udp.c)
+output: | logger: delref @0x7ff4d1070fc8(1->0) (resume_handler() +687 programs/pluto/server.c)
+output: | delref @0x7ff4d1074f38(3->2) (resume_handler() +687 programs/pluto/server.c)
+output: | #1 spent 4.78 (18) milliseconds in resume sending job back to main thread
+output: | tt: delref @0x7ff4d0614f68(1->0) (destroy_timeout() +575 programs/pluto/server.c)
+output: | spent 0.00168 (0.00167) milliseconds in udp_read_packet() calling check_incoming_msg_errqueue()
+output: | struct msg_digest: newref @0x7ff4d0f737a8(0->1) (udp_read_packet() +249 programs/pluto/iface_udp.c)
+output: | struct iface_endpoint: addref @0x7ff4d1074f38(2->3) (udp_read_packet() +249 programs/pluto/iface_udp.c)
+output: | alloc logger: newref @0x7ff4d1070fc8(0->1) (udp_read_packet() +249 programs/pluto/iface_udp.c)
 output: | *received 76 bytes from 192.1.2.23:500 on eth1 192.1.2.45:500 using UDP
-output: |   93 18 3d f4  f7 7f 23 45  73 8a 14 c3  ad f5 fb a2   ..=...#Es.......
-output: |   05 10 02 01  00 00 00 00  00 00 00 4c  09 87 06 5a   ...........L...Z
-output: |   5f cf ce 3e  84 f9 e5 43  41 3c 0e db  5b 2d 04 75   _..>...CA<..[-.u
-output: |   c2 c4 a6 66  4c 9a 3d db  81 b1 f3 95  4b 67 51 1b   ...fL.=.....KgQ.
-output: |   8d 51 6c aa  2f 3f 09 76  90 1a 1e 88                .Ql./?.v....
+output: |   ec 17 79 fe  a9 81 79 66  de 4d e9 3b  ce 1e 43 08   ..y...yf.M.;..C.
+output: |   05 10 02 01  00 00 00 00  00 00 00 4c  ac ce 10 ce   ...........L....
+output: |   d3 5f 9c 9e  39 0b 03 6a  0e f5 35 17  fc 02 dd e1   ._..9..j..5.....
+output: |   a1 9c 1b 7e  49 eb 6c d3  74 57 41 0f  57 da 56 92   ...~I.l.tWA.W.V.
+output: |   65 3c b2 81  0f dc cd ce  36 21 70 53                e<......6!pS
 output: | **parse ISAKMP Message:
-output: |    initiator SPI: 93 18 3d f4  f7 7f 23 45
-output: |    responder SPI: 73 8a 14 c3  ad f5 fb a2
+output: |    initiator SPI: ec 17 79 fe  a9 81 79 66
+output: |    responder SPI: de 4d e9 3b  ce 1e 43 08
 output: |    next payload type: ISAKMP_NEXT_ID (0x5)
 output: |    ISAKMP version: ISAKMP Version 1.0 (rfc2407) (0x10)
 output: |    exchange type: ISAKMP_XCHG_IDPROT (0x2)
@@ -309,29 +309,29 @@ output: |    length: 36 (00 24)
 output: | message 'main_inR3' HASH payload not checked early
 output: "west-east" #1: Peer ID is ID_FQDN: '@east'
 output: | rhc: peer ID matches and no certificate payload - continuing with peer ID @east
-output: |     result: newref clone-key@0x7f4fb3e0ff80 (32-bytes, SHA256_HMAC)(init_symkey() +101 lib/libswan/ike_alg_prf_mac_nss_ops.c)
-output: | main mode: delref clone-key@0x7f4fb3e0ff80
+output: |     result: newref clone-key@0x7ff4d0625f80 (32-bytes, SHA256_HMAC)(init_symkey() +101 lib/libswan/ike_alg_prf_mac_nss_ops.c)
+output: | main mode: delref clone-key@0x7ff4d0625f80
 output: | received message HASH_R data ok
 output: | authentication succeeded
 output: | wipe_old_connections() contemplating releasing older self
 output: | FOR_EACH_CONNECTION[that_id_eq=@east].... in (wipe_old_connections() +2160 programs/pluto/state.c)
 output: |   found "west-east"
 output: |   matches: 1
-output: | "west-east": addref @0x7f4fb4850a78(3->4) "west-east" #1:  (dispatch() +2436 programs/pluto/routing.c)
-output: | "west-east" #1: routing: start ESTABLISH_IKE, ROUTED_NEGOTIATION, PERMANENT; ISAKMP #1 (MAIN_I3) by=PEER; $1@0x7f4fb4850a78; routing_sa #1 negotiating_ike_sa #1 (ISAKMP_SA_established() +3023 programs/pluto/ikev1.c)
+output: | "west-east": addref @0x7ff4d1066a78(3->4) "west-east" #1:  (dispatch() +2436 programs/pluto/routing.c)
+output: | "west-east" #1: routing: start ESTABLISH_IKE, ROUTED_NEGOTIATION, PERMANENT; ISAKMP #1 (MAIN_I3) by=PEER; $1@0x7ff4d1066a78; routing_sa #1 negotiating_ike_sa #1 (ISAKMP_SA_established() +3023 programs/pluto/ikev1.c)
 output: | "west-east" #1: routing: stop ESTABLISH_IKE, ROUTED_NEGOTIATION, PERMANENT; ok=yes; routing_sa #1 negotiating_ike_sa #1 established_ike_sa #0->#1 (ISAKMP_SA_established() +3023 programs/pluto/ikev1.c)
-output: | "west-east": delref @0x7f4fb4850a78(4->3) "west-east" #1:  (dispatch() +2450 programs/pluto/routing.c)
+output: | "west-east": delref @0x7ff4d1066a78(4->3) "west-east" #1:  (dispatch() +2450 programs/pluto/routing.c)
 output: | complete v1 state transition with STF_OK
 output: | #1 is idle
 output: | doing_xauth:no, t_xauth_client_done:no
 output: | parent state #1: MAIN_I3(open IKE SA) => MAIN_I4(established IKE SA)
-output: | #1 requesting EVENT_RETRANSMIT-event@0x7f4fb3e1cfa8 be deleted (clear_retransmits() +108 programs/pluto/retransmit.c)
+output: | #1 requesting EVENT_RETRANSMIT-event@0x7ff4d0632fa8 be deleted (clear_retransmits() +108 programs/pluto/retransmit.c)
 output: | #1 deleting EVENT_RETRANSMIT
-output: | tt: delref @0x7f4fb4766f68(1->0) (destroy_timeout() +575 programs/pluto/server.c)
-output: | state-event: delref @0x7f4fb3e1cfa8(1->0) (clear_retransmits() +108 programs/pluto/retransmit.c)
+output: | tt: delref @0x7ff4d0f7cf68(1->0) (destroy_timeout() +575 programs/pluto/server.c)
+output: | state-event: delref @0x7ff4d0632fa8(1->0) (clear_retransmits() +108 programs/pluto/retransmit.c)
 output: | #1 STATE_MAIN_I4: retransmits: cleared
-output: | event_schedule_where: newref EVENT_v1_REPLACE-pe@0x7f4fb4757fa8 timeout in 28077 seconds for #1
-output: | tt: newref @0x7f4fb4760f68(0->1) (schedule_timeout() +557 programs/pluto/server.c)
+output: | event_schedule_where: newref EVENT_v1_REPLACE-pe@0x7ff4d0f6dfa8 timeout in 28163 seconds for #1
+output: | tt: newref @0x7ff4d0f76f68(0->1) (schedule_timeout() +557 programs/pluto/server.c)
 output: | pstats #1 ikev1.isakmp established
 output: "west-east" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 output: | "west-east" #1: DPD: dpd_init() called on ISAKMP SA
@@ -339,66 +339,66 @@ output: | "west-east" #1: DPD: Peer supports Dead Peer Detection
 output: | "west-east" #1: DPD: not initializing DPD because DPD is disabled locally
 output: | modecfg pull: noquirk policy:push not-client
 output: | phase 1 is done, looking for phase 2 to unpend
-output: | pending: unpending state 0x7f4fb3de0348 #1 pending 0x7f4fb3de4fa8
-output: | pending: unpend() ike 0x7f4fb3de0348 pending 0x7f4fb3de4fa8 connection 0x7f4fb4850a78 ike 0x7f4fb3de0348
-output: | struct fd: addref @0x7f4fb4858fe8(2->3) (unpend() +325 programs/pluto/pending.c)
-output: | "west-east": attach whack fd@0x7f4fb4858fe8 to empty logger 0x7f4fb3dc0fc8 slot 0
-output: | struct iface_endpoint: addref @0x7f4fb485ef38(3->4) (duplicate_state() +1198 programs/pluto/state.c)
-output: | alloc logger: newref @0x7f4fb4766fc8(0->1) (duplicate_state() +1206 programs/pluto/state.c)
-output: | struct fd: addref @0x7f4fb4858fe8(3->4) (new_state() +482 programs/pluto/state.c)
-output: |  #0: attach whack fd@0x7f4fb4858fe8 to empty logger 0x7f4fb4766fc8 slot 0
-output: | "west-east": addref @0x7f4fb4850a78(3->4)  #2:  (new_state() +491 programs/pluto/state.c)
-output: | creating state object #2 at 0x7f4fb3e1c348
+output: | pending: unpending state 0x7ff4d05f6348 #1 pending 0x7ff4d05fafa8
+output: | pending: unpend() ike 0x7ff4d05f6348 pending 0x7ff4d05fafa8 connection 0x7ff4d1066a78 ike 0x7ff4d05f6348
+output: | struct fd: addref @0x7ff4d106efe8(2->3) (unpend() +325 programs/pluto/pending.c)
+output: | "west-east": attach whack fd@0x7ff4d106efe8 to empty logger 0x7ff4d05d6fc8 slot 0
+output: | struct iface_endpoint: addref @0x7ff4d1074f38(3->4) (duplicate_state() +1198 programs/pluto/state.c)
+output: | alloc logger: newref @0x7ff4d0f7cfc8(0->1) (duplicate_state() +1206 programs/pluto/state.c)
+output: | struct fd: addref @0x7ff4d106efe8(3->4) (new_state() +482 programs/pluto/state.c)
+output: |  #0: attach whack fd@0x7ff4d106efe8 to empty logger 0x7ff4d0f7cfc8 slot 0
+output: | "west-east": addref @0x7ff4d1066a78(3->4)  #2:  (new_state() +491 programs/pluto/state.c)
+output: | creating state object #2 at 0x7ff4d0632348
 output: | pstats #2 ikev1.ipsec started
 output: | duplicating state object #1 "west-east" as #2 for IPSEC SA
 output: | #2 setting local endpoint to 192.1.2.45:500 from #1.st_localport (duplicate_state() +1220 programs/pluto/state.c)
-output: | duplicate_state: addref st_skeyid_nss-key@0x7f4fb48c2f80
-output: | duplicate_state: addref st_skey_d_nss-key@0x7f4fb4968f80
-output: | duplicate_state: addref st_skey_ai_nss-key@0x7f4fb49a8f80
+output: | duplicate_state: addref st_skeyid_nss-key@0x7ff4d10d8f80
+output: | duplicate_state: addref st_skey_d_nss-key@0x7ff4d117ef80
+output: | duplicate_state: addref st_skey_ai_nss-key@0x7ff4d11bef80
 output: | duplicate_state: addref st_skey_ar_nss-key@NULL
-output: | duplicate_state: addref st_skey_ei_nss-key@0x7f4fb47b5f80
+output: | duplicate_state: addref st_skey_ei_nss-key@0x7ff4d0fcbf80
 output: | duplicate_state: addref st_skey_er_nss-key@NULL
 output: | duplicate_state: addref st_skey_pi_nss-key@NULL
 output: | duplicate_state: addref st_skey_pr_nss-key@NULL
-output: | duplicate_state: addref st_enc_key_nss-key@0x7f4fb48c0f80
+output: | duplicate_state: addref st_enc_key_nss-key@0x7ff4d10d6f80
 output: | child state #2: UNDEFINED(ignore) => QUICK_I1(established CHILD SA)
 output: "west-east" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+ROUTE+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-output: | job: newref @0x7f4fb3df8f98(0->1) (submit_task() +331 programs/pluto/server_pool.c)
-output: | clone logger: newref @0x7f4fb3dfcfc8(0->1) (submit_task() +358 programs/pluto/server_pool.c)
-output: | "west-east" #2: attach whack fd@0x7f4fb4858fe8 to logger 0x7f4fb3dfcfc8 slot 0 (submit_task() +358 programs/pluto/server_pool.c)
-output: | struct fd: addref @0x7f4fb4858fe8(4->5) (submit_task() +358 programs/pluto/server_pool.c)
+output: | job: newref @0x7ff4d060ef98(0->1) (submit_task() +331 programs/pluto/server_pool.c)
+output: | clone logger: newref @0x7ff4d0612fc8(0->1) (submit_task() +358 programs/pluto/server_pool.c)
+output: | "west-east" #2: attach whack fd@0x7ff4d106efe8 to logger 0x7ff4d0612fc8 slot 0 (submit_task() +358 programs/pluto/server_pool.c)
+output: | struct fd: addref @0x7ff4d106efe8(4->5) (submit_task() +358 programs/pluto/server_pool.c)
 output: | job 3 helper 0 #2 quick_outI1 (dh): added to pending queue
-output: | event_schedule_where: newref EVENT_CRYPTO_TIMEOUT-pe@0x7f4fb3dfefa8 timeout in 60 seconds for #2
-output: | tt: newref @0x7f4fb3e52f68(0->1) (schedule_timeout() +557 programs/pluto/server.c)
-output: | "west-east": addref @0x7f4fb4850a78(4->5) "west-east" #2:  (dispatch() +2436 programs/pluto/routing.c)
-output: | "west-east" #2: routing: start INITIATED, ROUTED_NEGOTIATION, PERMANENT; ISAKMP #1 (MAIN_I4) IPsec #2 (QUICK_I1) by=PENDING; $1@0x7f4fb4850a78; routing_sa #1 negotiating_ike_sa #1 established_ike_sa #1 (unpend() +332 programs/pluto/pending.c)
+output: | event_schedule_where: newref EVENT_CRYPTO_TIMEOUT-pe@0x7ff4d0614fa8 timeout in 60 seconds for #2
+output: | tt: newref @0x7ff4d0668f68(0->1) (schedule_timeout() +557 programs/pluto/server.c)
+output: | "west-east": addref @0x7ff4d1066a78(4->5) "west-east" #2:  (dispatch() +2436 programs/pluto/routing.c)
+output: | "west-east" #2: routing: start INITIATED, ROUTED_NEGOTIATION, PERMANENT; ISAKMP #1 (MAIN_I4) IPsec #2 (QUICK_I1) by=PENDING; $1@0x7ff4d1066a78; routing_sa #1 negotiating_ike_sa #1 established_ike_sa #1 (unpend() +332 programs/pluto/pending.c)
 output: | "west-east" #2: routing:   Child SA's IKE SA matches .routing_sa
 output: | "west-east" #2: routing: stop INITIATED, ROUTED_NEGOTIATION, PERMANENT; ok=yes; routing_sa #1->#2 negotiating_ike_sa #1 established_ike_sa #1 negotiating_child_sa #0->#2 (unpend() +332 programs/pluto/pending.c)
-output: | "west-east": delref @0x7f4fb4850a78(5->4) "west-east" #2:  (dispatch() +2450 programs/pluto/routing.c)
-output: | "west-east": detach whack fd@0x7f4fb4858fe8 from logger 0x7f4fb3dc0fc8 slot 0 (unpend() +333 programs/pluto/pending.c)
-output: | delref @0x7f4fb4858fe8(5->4) (unpend() +333 programs/pluto/pending.c)
-output: | pending: unqueuing pending [0x7f4fb3de4fa8] Quick Mode connection "west-east" [0x7f4fb4850a78]
-output: | "west-east": delref @0x7f4fb4850a78(4->3)  (delete_pending() +262 programs/pluto/pending.c)
-output: | "west-east": detach whack fd@0x7f4fb4858fe8 from logger 0x7f4fb3de8fc8 slot 0 (delete_pending() +263 programs/pluto/pending.c)
-output: | delref @0x7f4fb4858fe8(4->3) (delete_pending() +263 programs/pluto/pending.c)
-output: | logger: delref @0x7f4fb3de8fc8(1->0) (delete_pending() +263 programs/pluto/pending.c)
-output: | "west-east" #1: detach whack fd@0x7f4fb4858fe8 from logger 0x7f4fb3de2fc8 slot 0 (complete_v1_state_transition() +2840 programs/pluto/ikev1.c)
-output: | delref @0x7f4fb4858fe8(3->2) (complete_v1_state_transition() +2840 programs/pluto/ikev1.c)
-output: | #1 spent 1.86 (15) milliseconds in process_packet_tail()
+output: | "west-east": delref @0x7ff4d1066a78(5->4) "west-east" #2:  (dispatch() +2450 programs/pluto/routing.c)
+output: | "west-east": detach whack fd@0x7ff4d106efe8 from logger 0x7ff4d05d6fc8 slot 0 (unpend() +333 programs/pluto/pending.c)
+output: | delref @0x7ff4d106efe8(5->4) (unpend() +333 programs/pluto/pending.c)
+output: | pending: unqueuing pending [0x7ff4d05fafa8] Quick Mode connection "west-east" [0x7ff4d1066a78]
+output: | "west-east": delref @0x7ff4d1066a78(4->3)  (delete_pending() +262 programs/pluto/pending.c)
+output: | "west-east": detach whack fd@0x7ff4d106efe8 from logger 0x7ff4d05fefc8 slot 0 (delete_pending() +263 programs/pluto/pending.c)
+output: | delref @0x7ff4d106efe8(4->3) (delete_pending() +263 programs/pluto/pending.c)
+output: | logger: delref @0x7ff4d05fefc8(1->0) (delete_pending() +263 programs/pluto/pending.c)
+output: | "west-east" #1: detach whack fd@0x7ff4d106efe8 from logger 0x7ff4d05f8fc8 slot 0 (complete_v1_state_transition() +2840 programs/pluto/ikev1.c)
+output: | delref @0x7ff4d106efe8(3->2) (complete_v1_state_transition() +2840 programs/pluto/ikev1.c)
+output: | #1 spent 1.98 (15.1) milliseconds in process_packet_tail()
 output: | IKEv1 packet dropped
-output: | packet from 192.1.2.23:500: delref @0x7f4fb475d7a8(1->0) (process_iface_packet() +296 programs/pluto/demux.c)
+output: | packet from 192.1.2.23:500: delref @0x7ff4d0f737a8(1->0) (process_iface_packet() +296 programs/pluto/demux.c)
 output: | packet from 192.1.2.23:500: releasing whack (but there are none) (process_iface_packet() +296 programs/pluto/demux.c)
-output: | logger: delref @0x7f4fb485afc8(1->0) (process_iface_packet() +296 programs/pluto/demux.c)
-output: | delref @0x7f4fb485ef38(4->3) (process_iface_packet() +296 programs/pluto/demux.c)
-output: | spent 2.84 (20.1) milliseconds in process_iface_packet() reading and processing packet
+output: | logger: delref @0x7ff4d1070fc8(1->0) (process_iface_packet() +296 programs/pluto/demux.c)
+output: | delref @0x7ff4d1074f38(4->3) (process_iface_packet() +296 programs/pluto/demux.c)
+output: | spent 2.97 (20.1) milliseconds in process_iface_packet() reading and processing packet
 output: | job 3 helper 1 #2 quick_outI1 (dh): started
-output: | struct dh_local_secret: newref @0x7f4fb485afd8(0->1) (calc_dh_local_secret() +85 programs/pluto/crypt_dh.c)
+output: | struct dh_local_secret: newref @0x7ff4d1070fd8(0->1) (calc_dh_local_secret() +85 programs/pluto/crypt_dh.c)
 output: | job 3 helper 1 #2 quick_outI1 (dh): finished
-output: | "west-east" #2: spent 4.48 (7.05) milliseconds in job 3 helper 1 #2 quick_outI1 (dh)
+output: | "west-east" #2: spent 4.44 (6.92) milliseconds in job 3 helper 1 #2 quick_outI1 (dh)
 output: | scheduling resume sending job back to main thread for #2
-output: | tt: newref @0x7f4fb3e7ff68(0->1) (schedule_timeout() +557 programs/pluto/server.c)
-output: | libevent: delref @0x7f4fb494efb8(1->0) (libevent_realloc() +965 programs/pluto/server.c)
-output: | libevent: newref @0x7f4fb3e81f78(0->1) (libevent_realloc() +969 programs/pluto/server.c)
+output: | tt: newref @0x7ff4d0695f68(0->1) (schedule_timeout() +557 programs/pluto/server.c)
+output: | libevent: delref @0x7ff4d1164fb8(1->0) (libevent_realloc() +965 programs/pluto/server.c)
+output: | libevent: newref @0x7ff4d0697f78(0->1) (libevent_realloc() +969 programs/pluto/server.c)
 output: | helper 1: waiting for work
 output: | processing resume sending job back to main thread for #2
 output: | suspend: no MD saved in state #2 (resume_handler() +641 programs/pluto/server.c)
@@ -407,13 +407,13 @@ output: | quick_outI1_continue for #2: calculated ke+nonce, sending I1
 output: | quick_outI1_continue for #2: calculated ke+nonce, sending I1
 output: | opening output PBS reply packet
 output: | **emit ISAKMP Message:
-output: |    initiator SPI: 93 18 3d f4  f7 7f 23 45
-output: |    responder SPI: 73 8a 14 c3  ad f5 fb a2
+output: |    initiator SPI: ec 17 79 fe  a9 81 79 66
+output: |    responder SPI: de 4d e9 3b  ce 1e 43 08
 output: |    next payload type: ISAKMP_NEXT_NONE (0x0)
 output: |    ISAKMP version: ISAKMP Version 1.0 (rfc2407) (0x10)
 output: |    exchange type: ISAKMP_XCHG_QUICK (0x20)
 output: |    flags: ISAKMP_FLAG_v1_ENCRYPTION (0x1)
-output: |    Message ID: 3789554555 (e1 e0 03 7b)
+output: |    Message ID: 1523391037 (5a cd 1a 3d)
 output: | next payload chain: saving message location 'ISAKMP Message'.'next payload type'
 output: | ***emit ISAKMP Hash Payload:
 output: |    next payload type: ISAKMP_NEXT_NONE (0x0)
@@ -423,7 +423,7 @@ output: | emitting 32 zero bytes of HASH DATA into ISAKMP Hash Payload
 output: | emitting length of ISAKMP Hash Payload: 36
 output: | emitting quick defaults using policy: encrypt
 output: | empty esp_info, returning defaults for: encrypt
-output: | sadb: newref @0x7f4fb494efe8(0->1) (v1_kernel_alg_makedb() +445 programs/pluto/ikev1_spdb_struct.c)
+output: | sadb: newref @0x7ff4d1164fe8(0->1) (v1_kernel_alg_makedb() +445 programs/pluto/ikev1_spdb_struct.c)
 output: | ***emit ISAKMP Security Association Payload:
 output: |    next payload type: ISAKMP_NEXT_NONE (0x0)
 output: |    DOI: ISAKMP_DOI_IPSEC (0x1)
@@ -443,9 +443,9 @@ output: | last substructure: saving location 'ISAKMP Security Association Payloa
 output: | "west-east" #2: routing:  kernel_ops_get_ipsec_spi() 192.1.2.23-ESP->192.1.2.45 reqid=4005 [1000,ffffffff] for SPI ...
 output: | sendrecv_xfrm_msg() sending 22 Get SPI SPI
 output: | sendrecv_xfrm_msg() recvfrom() returned 256 bytes
-output: | "west-east" #2: routing:   ... allocated 91cb81d7 for SPI
+output: | "west-east" #2: routing:   ... allocated e2929ca3 for SPI
 output: | emitting 4 raw bytes of SPI SPISPI ISAKMP Proposal Payload
-output: | SPI: 91 cb 81 d7
+output: | SPI: e2 92 9c a3
 output: | *****emit ISAKMP Transform Payload (ESP):
 output: |    next payload type: ISAKMP_NEXT_T (0x3)
 output: |    ESP transform number: 0 (00)
@@ -504,37 +504,37 @@ output: | emitting length of ISAKMP Proposal Payload: 72
 output: | last substructure: checking 'ISAKMP Proposal Payload'.'ISAKMP Transform Payload (ESP)'.'next payload type' is 0
 output: | emitting length of ISAKMP Security Association Payload: 84
 output: | last substructure: checking 'ISAKMP Security Association Payload'.'ISAKMP Proposal Payload'.'next payload type' is 0
-output: | sadb: delref @0x7f4fb494efe8(1->0) (free_sa() +857 programs/pluto/ikev1_spdb.c)
+output: | sadb: delref @0x7ff4d1164fe8(1->0) (free_sa() +857 programs/pluto/ikev1_spdb.c)
 output: | ***emit ISAKMP Nonce Payload:
 output: |    next payload type: ISAKMP_NEXT_NONE (0x0)
 output: | next payload chain: setting previous 'ISAKMP Security Association Payload'.'next payload type' to current ISAKMP Nonce Payload (10:ISAKMP_NEXT_NONCE)
 output: | next payload chain: saving location 'ISAKMP Nonce Payload'.'next payload type' in 'reply packet'
 output: | emitting 32 raw bytes of Ni into ISAKMP Nonce Payload
-output: |   78 39 be 65  fc 02 0a ea  22 22 ff 93  9e fc 8b 8c   x9.e....""......
-output: |   32 af 81 52  8b dc 76 16  57 9f 9a 60  02 28 4c 4b   2..R..v.W..`.(LK
+output: |   21 2e 17 ca  50 c5 20 4f  30 d9 01 5a  a3 f2 46 c0   !...P. O0..Z..F.
+output: |   88 db 9e 6a  9d 22 9c 0e  b7 6c a3 05  73 1c 8d a3   ...j."...l..s...
 output: | emitting length of ISAKMP Nonce Payload: 36
-output: | struct dh_local_secret: addref @0x7f4fb485afd8(1->2) (unpack_KE_from_helper() +155 programs/pluto/crypt_ke.c)
+output: | struct dh_local_secret: addref @0x7ff4d1070fd8(1->2) (unpack_KE_from_helper() +155 programs/pluto/crypt_ke.c)
 output: | ***emit ISAKMP Key Exchange Payload:
 output: |    next payload type: ISAKMP_NEXT_NONE (0x0)
 output: | next payload chain: setting previous 'ISAKMP Nonce Payload'.'next payload type' to current ISAKMP Key Exchange Payload (4:ISAKMP_NEXT_KE)
 output: | next payload chain: saving location 'ISAKMP Key Exchange Payload'.'next payload type' in 'reply packet'
 output: | emitting 256 raw bytes of keyex value into ISAKMP Key Exchange Payload
-output: |   b2 40 bd bf  60 f6 43 d2  51 0e 50 de  bb 1a fd b3   .@..`.C.Q.P.....
-output: |   fc 7d 8c 26  96 db e1 29  06 4d ad 07  b4 ae 95 68   .}.&...).M.....h
-output: |   ef a1 28 e5  8c 72 ad 55  e7 6c f5 a4  48 ed 5e 81   ..(..r.U.l..H.^.
-output: |   3b 5b 0f 93  26 f5 8a d8  b9 18 29 aa  5d 4f dc a3   ;[..&.....).]O..
-output: |   6f fd 79 7c  05 ee eb 5b  b5 b5 8f 38  43 db f2 58   o.y|...[...8C..X
-output: |   c1 7f 5f 37  5c c0 23 e9  12 d8 3f b3  32 80 b4 6d   .._7\.#...?.2..m
-output: |   00 ba c9 ea  61 44 0a 2e  78 0a 53 62  d1 01 fc ac   ....aD..x.Sb....
-output: |   38 33 75 fa  4f a8 dd 55  67 79 1b dc  77 15 84 6c   83u.O..Ugy..w..l
-output: |   1e c6 a9 ae  71 9b 30 62  31 8c 5f ce  fa 3b 06 c5   ....q.0b1._..;..
-output: |   f0 63 17 91  b5 d3 41 9f  23 fc 94 5b  e8 a9 b6 9d   .c....A.#..[....
-output: |   32 67 ab 37  78 e4 38 60  5c 60 03 64  fa 83 d0 3f   2g.7x.8`\`.d...?
-output: |   55 e2 37 68  07 f0 db 63  00 a9 65 34  1d 5e 9f 82   U.7h...c..e4.^..
-output: |   ac 74 b5 60  58 75 2d e0  6b 77 f9 fb  e9 92 fb 03   .t.`Xu-.kw......
-output: |   f5 74 4f 5a  61 e8 87 39  0c 23 90 e5  4e 3c c8 ba   .tOZa..9.#..N<..
-output: |   07 e0 69 fc  ce 31 d5 ba  5f a4 81 44  11 2e b9 a2   ..i..1.._..D....
-output: |   bc e4 92 3b  a7 f6 29 4a  b9 9a ac 01  f8 03 55 56   ...;..)J......UV
+output: |   f2 6d 4b c4  66 2e 68 e4  d7 49 0e dd  f6 d5 c6 e6   .mK.f.h..I......
+output: |   66 55 92 5d  e5 cf e9 89  11 ba 99 10  6b 27 07 9a   fU.]........k'..
+output: |   be 16 06 7d  a4 9e c0 d2  f3 15 ec b5  54 20 47 b0   ...}........T G.
+output: |   35 42 26 66  07 a4 34 5a  6f e8 bc 3c  86 e6 93 54   5B&f..4Zo..<...T
+output: |   f3 31 fa b4  a7 d1 0a d7  8e 81 76 42  32 57 72 d4   .1........vB2Wr.
+output: |   de 65 f9 54  69 d0 af c8  de 47 ea 95  13 4e f9 10   .e.Ti....G...N..
+output: |   ac 96 bc db  8f 88 b6 d9  70 f7 53 26  19 42 91 38   ........p.S&.B.8
+output: |   cf 7f e5 53  db f5 96 0c  9a c1 ee 67  96 19 50 1b   ...S.......g..P.
+output: |   cd f7 be 14  6b 4d b1 5c  7d 14 8d ee  cf 97 6c bb   ....kM.\}.....l.
+output: |   ca 12 95 ff  ac 36 5d e4  54 13 14 e1  07 e0 75 d8   .....6].T.....u.
+output: |   2b b1 96 05  5d 0d ff 88  e7 43 e2 b2  91 07 dd 01   +...]....C......
+output: |   2d 41 ea 47  75 f2 5c 05  1e bb 2f c7  83 df 21 d8   -A.Gu.\.../...!.
+output: |   cd 3c 22 64  11 7a 1e 02  ac 62 76 5a  d1 cb 2a ca   .<"d.z...bvZ..*.
+output: |   14 8b 83 40  2b a0 f9 a6  ca c6 a4 37  89 8b b1 94   ...@+......7....
+output: |   dd 53 73 52  40 c3 8d 24  85 77 83 00  da 67 00 ac   .SsR@..$.w...g..
+output: |   80 a2 2d ef  0d b3 8d f8  99 b7 8e 0b  6a fe 10 c6   ..-.........j...
 output: | emitting length of ISAKMP Key Exchange Payload: 260
 output: | ***emit ISAKMP Identification Payload (IPsec DOI):
 output: |    next payload type: ISAKMP_NEXT_NONE (0x0)
@@ -560,64 +560,64 @@ output: | client network: c0 00 02 00
 output: | emitting 4 raw bytes of client mask into ISAKMP Identification Payload (IPsec DOI)
 output: | client mask: ff ff ff 00
 output: | emitting length of ISAKMP Identification Payload (IPsec DOI): 16
-output: |     result: newref clone-key@0x7f4fb3e0ff80 (32-bytes, SHA256_HMAC)(init_symkey() +101 lib/libswan/ike_alg_prf_mac_nss_ops.c)
-output: | HASH(1): delref clone-key@0x7f4fb3e0ff80
+output: |     result: newref clone-key@0x7ff4d0625f80 (32-bytes, SHA256_HMAC)(init_symkey() +101 lib/libswan/ike_alg_prf_mac_nss_ops.c)
+output: | HASH(1): delref clone-key@0x7ff4d0625f80
 output: | outI1 HASH(1):
-output: |   7e 08 f3 11  60 0d 24 dc  5f 4a 48 90  f0 49 f2 48   ~...`.$._JH..I.H
-output: |   ca bf 97 4c  b7 a0 8d f1  79 5b a7 19  be d3 94 68   ...L....y[.....h
+output: |   8a f0 7c 07  c3 fb c3 db  33 59 47 c1  6a 99 6d 15   ..|.....3YG.j.m.
+output: |   2e dd e1 3d  f5 06 8b 49  3f 6a 00 ff  f5 cb af 08   ...=...I?j......
 output: | no IKEv1 message padding required
 output: | emitting length of ISAKMP Message: 476
 output: | sending 476 bytes for reply packet from quick_outI1 through eth1 from 192.1.2.45:500 to 192.1.2.23:500 using UDP (for #2)
-output: |   93 18 3d f4  f7 7f 23 45  73 8a 14 c3  ad f5 fb a2   ..=...#Es.......
-output: |   08 10 20 01  e1 e0 03 7b  00 00 01 dc  ae 99 e9 f3   .. ....{........
-output: |   77 82 b6 5d  fd f6 78 93  ee f9 7e d7  94 25 f0 ee   w..]..x...~..%..
-output: |   a0 1e c6 c7  5b e5 36 6c  a6 74 3b 4a  24 aa cb 02   ....[.6l.t;J$...
-output: |   66 1a 27 b6  2e 16 de b3  67 65 04 a8  00 d8 ec 72   f.'.....ge.....r
-output: |   77 1b 6b a0  62 ff d4 88  c7 05 ad b0  07 1c 66 3c   w.k.b.........f<
-output: |   e9 3b 11 19  47 d7 de 23  1f 28 eb af  59 e3 27 ad   .;..G..#.(..Y.'.
-output: |   25 89 b4 ae  c3 19 e1 c7  be d4 09 70  d9 05 d1 bb   %..........p....
-output: |   1d e9 eb 92  aa 54 ae 04  5d f2 1a 6c  90 44 f4 a6   .....T..]..l.D..
-output: |   43 16 b8 7f  fb 22 db ee  f6 31 37 3e  8d 97 d9 be   C...."...17>....
-output: |   2b 81 8d 27  17 4a c0 d6  50 b1 c6 70  e6 d1 b5 59   +..'.J..P..p...Y
-output: |   63 03 ce 1c  6a 4a a3 00  de 2a f1 9d  63 c8 cc 11   c...jJ...*..c...
-output: |   30 d1 d2 78  81 64 9a ed  19 19 67 b7  e3 c6 cb d7   0..x.d....g.....
-output: |   2c 63 39 1d  09 ab 09 16  22 34 cd 48  d6 59 ca a0   ,c9....."4.H.Y..
-output: |   76 bf fb c2  e6 a3 f0 da  22 fc e9 ad  7e 5b 53 e5   v......."...~[S.
-output: |   ff 3c e6 db  20 bb 4e 13  06 c8 81 01  4f 36 d1 29   .<.. .N.....O6.)
-output: |   92 ab 96 47  a1 1f ed 6f  ca 7b ea 97  56 b2 f1 fe   ...G...o.{..V...
-output: |   87 fb 00 c5  51 9f b9 8c  b1 54 7c 62  a6 dc 31 04   ....Q....T|b..1.
-output: |   ab 78 cb c2  30 0c c3 f6  50 b6 7e 1a  52 b2 b4 c8   .x..0...P.~.R...
-output: |   2a 5d 61 d0  23 77 87 d8  5e f9 e2 51  24 ab 05 0b   *]a.#w..^..Q$...
-output: |   6e 48 c7 7e  ca 2c 5c bd  0c 40 a6 11  c5 fe 25 05   nH.~.,\..@....%.
-output: |   26 44 64 3a  56 54 1c 25  c9 5a 5c 3a  31 35 03 c0   &Dd:VT.%.Z\:15..
-output: |   50 92 48 53  25 56 5c 95  1b 7f 79 ba  c0 95 b2 b2   P.HS%V\...y.....
-output: |   44 bf fe 87  01 62 e2 0c  5d ee 68 ac  66 43 59 6e   D....b..].h.fCYn
-output: |   e0 42 37 71  73 58 66 82  eb e4 e8 3c  32 90 bb e5   .B7qsXf....<2...
-output: |   1e 36 c0 ef  bb ae 08 3d  a7 75 a0 58  19 1f f2 70   .6.....=.u.X...p
-output: |   38 26 12 e5  ec cd 54 dc  cc 3d 4a 95  6c fd 96 03   8&....T..=J.l...
-output: |   bf 56 d5 e4  16 fc 91 ed  c6 7c c1 45  de b8 d0 15   .V.......|.E....
-output: |   1e 6c 7d b9  5a fa 12 d6  94 8e 37 b9  0b db e2 44   .l}.Z.....7....D
-output: |   36 91 88 57  58 ae 37 a2  c5 89 56 6f                6..WX.7...Vo
+output: |   ec 17 79 fe  a9 81 79 66  de 4d e9 3b  ce 1e 43 08   ..y...yf.M.;..C.
+output: |   08 10 20 01  5a cd 1a 3d  00 00 01 dc  3a f5 a2 4e   .. .Z..=....:..N
+output: |   7e 8e 4f 40  c2 b8 04 89  e7 d9 e0 2f  ac f0 a0 34   ~.O@......./...4
+output: |   93 8c ff 10  70 e5 df d4  8a 95 22 f0  7b 97 3e 00   ....p.....".{.>.
+output: |   d2 9f 2f bc  92 9b 0d 47  0a 24 98 e4  0c 60 cd fc   ../....G.$...`..
+output: |   6c 5b e4 01  57 39 6a 75  9f f9 7a 97  57 07 7b 28   l[..W9ju..z.W.{(
+output: |   0d c9 9b 80  ea 9d 14 a1  03 9b 33 d7  d0 57 79 c6   ..........3..Wy.
+output: |   72 43 72 fb  02 f3 21 40  ce 10 6a bb  85 5a 36 8d   rCr...!@..j..Z6.
+output: |   ba a4 10 3c  0d 42 17 5a  69 03 cd a4  9b 9a 24 0b   ...<.B.Zi.....$.
+output: |   06 d3 41 cc  11 fa ba bf  6b 7e 99 56  76 37 91 e9   ..A.....k~.Vv7..
+output: |   09 66 91 4c  b5 1b 6b c7  48 a0 d3 3b  2d 70 f5 31   .f.L..k.H..;-p.1
+output: |   bd 81 78 de  a7 79 ce 9d  51 1b 14 12  5b 18 32 a7   ..x..y..Q...[.2.
+output: |   26 94 48 00  b8 86 66 d9  f9 25 66 3f  62 dd dd 12   &.H...f..%f?b...
+output: |   87 d5 56 66  cb da be 20  80 1b 62 a4  63 72 2e 2c   ..Vf... ..b.cr.,
+output: |   2e 9d 30 03  cc 3f 5a 8e  1a 42 3e 95  4a 5f f0 c6   ..0..?Z..B>.J_..
+output: |   cb a9 7d e4  0a c7 6c 03  63 e9 46 b0  38 cb 31 7f   ..}...l.c.F.8.1.
+output: |   28 ec 9a fb  0d 62 dc 1f  06 ff d6 3e  05 1e 7f 08   (....b.....>....
+output: |   77 ed 3f 09  08 c1 5c 6a  48 20 5e 47  76 a1 19 09   w.?...\jH ^Gv...
+output: |   55 02 89 39  b3 3e 42 f5  8c 55 26 aa  87 4b 26 7a   U..9.>B..U&..K&z
+output: |   62 0c c6 24  d0 51 2b 59  00 5a 45 de  e1 be 0b c0   b..$.Q+Y.ZE.....
+output: |   e2 8a ef 56  54 e5 10 24  66 f3 1e 9a  3c 79 22 ad   ...VT..$f...<y".
+output: |   da 49 58 35  c6 86 81 9c  4d 90 cc 4f  e2 89 52 b7   .IX5....M..O..R.
+output: |   ba 87 d0 8d  c7 ca 52 d0  3c 01 7c de  92 d4 81 ba   ......R.<.|.....
+output: |   7d d1 e3 45  c7 9e 83 92  d3 b5 48 cd  06 8c d8 9b   }..E......H.....
+output: |   07 a1 7c 7e  e2 2c f6 ce  0d cd 40 65  e0 83 3c 7c   ..|~.,....@e..<|
+output: |   8b 16 3d 8f  94 14 08 1b  e4 1c 5d d0  48 59 e5 6e   ..=.......].HY.n
+output: |   f8 a1 f1 19  ed 34 ae a7  0c b6 ea 83  81 28 9d ca   .....4.......(..
+output: |   73 c5 b8 a6  cd ee 86 18  38 fc b7 0c  d5 09 07 06   s.......8.......
+output: |   e4 f3 ce a5  9e 88 d4 c8  a6 d6 99 24  c5 aa 4b 03   ...........$..K.
+output: |   bd e7 58 27  4b a8 06 09  c1 63 d2 70                ..X'K....c.p
 output: | #2 deleting EVENT_CRYPTO_TIMEOUT
-output: | tt: delref @0x7f4fb3e52f68(1->0) (destroy_timeout() +575 programs/pluto/server.c)
-output: | state-event: delref @0x7f4fb3dfefa8(1->0) (delete_event() +534 programs/pluto/timer.c)
+output: | tt: delref @0x7ff4d0668f68(1->0) (destroy_timeout() +575 programs/pluto/server.c)
+output: | state-event: delref @0x7ff4d0614fa8(1->0) (delete_event() +534 programs/pluto/timer.c)
 output: | #2 STATE_QUICK_I1: retransmits: cleared
-output: | event_schedule_where: newref EVENT_RETRANSMIT-pe@0x7f4fb3e52fa8 timeout in 60 seconds for #2
-output: | tt: newref @0x7f4fb3dfef68(0->1) (schedule_timeout() +557 programs/pluto/server.c)
-output: | #2 STATE_QUICK_I1: retransmits: first event in 60 seconds; timeout in 60 seconds; limit of 12 retransmits; current time is 12.493765
+output: | event_schedule_where: newref EVENT_RETRANSMIT-pe@0x7ff4d0668fa8 timeout in 60 seconds for #2
+output: | tt: newref @0x7ff4d0614f68(0->1) (schedule_timeout() +557 programs/pluto/server.c)
+output: | #2 STATE_QUICK_I1: retransmits: first event in 60 seconds; timeout in 60 seconds; limit of 12 retransmits; current time is 12.485623
 output: "west-east" #2: sent Quick Mode request
 output: | job 3 helper 1 #2 quick_outI1 (dh): final status STF_SKIP_COMPLETE_STATE_TRANSITION; cleaning up
-output: | delref @0x7f4fb485afd8(2->1) (cleanup_ke_and_nonce() +83 programs/pluto/crypt_ke.c)
-output: | "west-east" #2: detach whack fd@0x7f4fb4858fe8 from logger 0x7f4fb3dfcfc8 slot 0 (free_job() +430 programs/pluto/server_pool.c)
-output: | delref @0x7f4fb4858fe8(2->1) (free_job() +430 programs/pluto/server_pool.c)
-output: | logger: delref @0x7f4fb3dfcfc8(1->0) (free_job() +430 programs/pluto/server_pool.c)
-output: | job: delref @0x7f4fb3df8f98(1->0) (free_job() +431 programs/pluto/server_pool.c)
+output: | delref @0x7ff4d1070fd8(2->1) (cleanup_ke_and_nonce() +83 programs/pluto/crypt_ke.c)
+output: | "west-east" #2: detach whack fd@0x7ff4d106efe8 from logger 0x7ff4d0612fc8 slot 0 (free_job() +430 programs/pluto/server_pool.c)
+output: | delref @0x7ff4d106efe8(2->1) (free_job() +430 programs/pluto/server_pool.c)
+output: | logger: delref @0x7ff4d0612fc8(1->0) (free_job() +430 programs/pluto/server_pool.c)
+output: | job: delref @0x7ff4d060ef98(1->0) (free_job() +431 programs/pluto/server_pool.c)
 output: | resume sending job back to main thread for #2 suppresed complete_v1_state_transition()
-output: | #2 spent 2.66 (16.3) milliseconds in resume sending job back to main thread
-output: | tt: delref @0x7f4fb3e7ff68(1->0) (destroy_timeout() +575 programs/pluto/server.c)
+output: | #2 spent 2.31 (22) milliseconds in resume sending job back to main thread
+output: | tt: delref @0x7ff4d0695f68(1->0) (destroy_timeout() +575 programs/pluto/server.c)
 output: | processing global timer EVENT_SHUNT_SCAN
 output: | kernel: checking for aged bare shunts from shunt table to expire
-output: | spent 0.0155 (0.129) milliseconds in global timer EVENT_SHUNT_SCAN
+output: | spent 0.0165 (0.153) milliseconds in global timer EVENT_SHUNT_SCAN
 output: | processing global timer EVENT_NAT_T_KEEPALIVE
 output: | FOR_EACH_STATE_... in (nat_traversal_ka_event() +304 programs/pluto/nat_traversal.c)
 output: |   found "west-east" #2
@@ -625,52 +625,52 @@ output: | not behind NAT: no NAT-T KEEP-ALIVE required for conn west-east
 output: |   found "west-east" #1
 output: | not behind NAT: no NAT-T KEEP-ALIVE required for conn west-east
 output: |   matches: 2
-output: | spent 0.0607 (0.634) milliseconds in global timer EVENT_NAT_T_KEEPALIVE
+output: | spent 0.0327 (0.634) milliseconds in global timer EVENT_NAT_T_KEEPALIVE
 output: | kernel: netlink_process_xfrm_messages() process messages
 output: | netlink_get() recvfrom() returned 248 bytes
 output: | netlink_xfrm_message_processor() got XFRM_MSG_EXPIRE message with length 248
-output: | xfrm_kernel_sa_expire() spi 91cb81d7 src 192.1.2.23 dst 192.1.2.45 hard mode 0 proto 50 bytes 0 packets 0
+output: | xfrm_kernel_sa_expire() spi e2929ca3 src 192.1.2.23 dst 192.1.2.45 hard mode 0 proto 50 bytes 0 packets 0
 output: | FOR_EACH_STATE_... in (find_v2_child_sa_by_spi() +1446 programs/pluto/state.c)
 output: |   found "west-east" #2
 output: |   found "west-east" #1
 output: |   matches: 2
-output: | received kernel hard EXPIRE event for IPsec SPI 91cb81d7, but there is no connection with this SPI SPISPI dst 192.1.2.45 bytes 0 packets 0
+output: | received kernel hard EXPIRE event for IPsec SPI e2929ca3, but there is no connection with this SPI SPISPI dst 192.1.2.45 bytes 0 packets 0
 output: | processing global timer EVENT_SHUNT_SCAN
 output: | kernel: checking for aged bare shunts from shunt table to expire
-output: | spent 0.0135 (0.136) milliseconds in global timer EVENT_SHUNT_SCAN
+output: | spent 0.0163 (0.254) milliseconds in global timer EVENT_SHUNT_SCAN
 output: | processing global timer EVENT_PENDING_DDNS
 output: | FOR_EACH_CONNECTION_.... in (connection_check_ddns() +213 programs/pluto/ddns.c)
 output: |   found "west-east"
-output: | "west-east": addref @0x7f4fb4850a78(3->4)  (connection_check_ddns() +217 programs/pluto/ddns.c)
+output: | "west-east": addref @0x7ff4d1066a78(3->4)  (connection_check_ddns() +217 programs/pluto/ddns.c)
 output: | "west-east": pending ddns: skipping connection, has no .dnshostname
-output: | "west-east": delref @0x7f4fb4850a78(4->3)  (connection_check_ddns() +219 programs/pluto/ddns.c)
+output: | "west-east": delref @0x7ff4d1066a78(4->3)  (connection_check_ddns() +219 programs/pluto/ddns.c)
 output: |   matches: 1
-output: | spent 0.0644 (0.642) milliseconds in in connection_check_ddns for hostname lookup
-output: | spent 0.0795 (0.745) milliseconds in global timer EVENT_PENDING_DDNS
+output: | spent 0.044 (0.462) milliseconds in in connection_check_ddns for hostname lookup
+output: | spent 0.0615 (0.54) milliseconds in global timer EVENT_PENDING_DDNS
 output: | processing global timer EVENT_SHUNT_SCAN
 output: | kernel: checking for aged bare shunts from shunt table to expire
-output: | spent 0.0121 (0.1) milliseconds in global timer EVENT_SHUNT_SCAN
-output: | timer_event_cb: processing EVENT_RETRANSMIT-event@0x7f4fb3e52fa8 for CHILD SA #2 in state QUICK_I1
+output: | spent 0.0081 (0.0982) milliseconds in global timer EVENT_SHUNT_SCAN
+output: | timer_event_cb: processing EVENT_RETRANSMIT-event@0x7ff4d0668fa8 for CHILD SA #2 in state QUICK_I1
 output: | #2 deleting EVENT_RETRANSMIT
-output: | tt: delref @0x7f4fb3dfef68(1->0) (destroy_timeout() +575 programs/pluto/server.c)
-output: | state-event: delref @0x7f4fb3e52fa8(1->0) (timer_event_cb() +221 programs/pluto/timer.c)
+output: | tt: delref @0x7ff4d0614f68(1->0) (destroy_timeout() +575 programs/pluto/server.c)
+output: | state-event: delref @0x7ff4d0668fa8(1->0) (timer_event_cb() +221 programs/pluto/timer.c)
 output: | IKEv1 retransmit event
-output: | #2 STATE_QUICK_I1: retransmits: current time 72.480707
+output: | #2 STATE_QUICK_I1: retransmits: current time 72.46581
 output: | #2 STATE_QUICK_I1: retransmits: retransmit count 0 exceeds limit? NO
 output: | #2 STATE_QUICK_I1: retransmits: deltatime 60 exceeds limit? YES
-output: | #2 STATE_QUICK_I1: retransmits: monotime 59.986942 exceeds limit? NO
+output: | #2 STATE_QUICK_I1: retransmits: monotime 59.980187 exceeds limit? NO
 output: "west-east" #2: STATE_QUICK_I1: 60 second timeout exceeded after 0 retransmits.  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal
 output: | pstats #2 ikev1.ipsec failed too-many-retransmits
-output: | clone logger: newref @0x7f4fb3e7dfc8(0->1) (teardown_child() +1217 programs/pluto/routing.c)
-output: | "west-east" #2: attach whack fd@0x7f4fb4858fe8 to logger 0x7f4fb3e7dfc8 slot 0 (teardown_child() +1217 programs/pluto/routing.c)
-output: | struct fd: addref @0x7f4fb4858fe8(1->2) (teardown_child() +1217 programs/pluto/routing.c)
-output: | "west-east": addref @0x7f4fb4850a78(3->4) "west-east" #2:  (dispatch() +2436 programs/pluto/routing.c)
-output: | "west-east" #2: routing: start TEARDOWN_CHILD, ROUTED_NEGOTIATION, PERMANENT; IPsec #2 (QUICK_I1) by=UNKNOWN; $1@0x7f4fb4850a78; routing_sa #2 negotiating_ike_sa #1 established_ike_sa #1 negotiating_child_sa #2 (event_v1_retransmit() +83 programs/pluto/ikev1_retransmit.c)
+output: | clone logger: newref @0x7ff4d0693fc8(0->1) (teardown_child() +1217 programs/pluto/routing.c)
+output: | "west-east" #2: attach whack fd@0x7ff4d106efe8 to logger 0x7ff4d0693fc8 slot 0 (teardown_child() +1217 programs/pluto/routing.c)
+output: | struct fd: addref @0x7ff4d106efe8(1->2) (teardown_child() +1217 programs/pluto/routing.c)
+output: | "west-east": addref @0x7ff4d1066a78(3->4) "west-east" #2:  (dispatch() +2436 programs/pluto/routing.c)
+output: | "west-east" #2: routing: start TEARDOWN_CHILD, ROUTED_NEGOTIATION, PERMANENT; IPsec #2 (QUICK_I1) by=UNKNOWN; $1@0x7ff4d1066a78; routing_sa #2 negotiating_ike_sa #1 established_ike_sa #1 negotiating_child_sa #2 (event_v1_retransmit() +83 programs/pluto/ikev1_retransmit.c)
 output: | "west-east" #2: routing:   Child SA matches .routing_sa
 output: | revival: skip update_remote_port(), not an instance
 output: "west-east" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-output: | string logger: newref @0x7f4fb3df8fc8(0->1) (schedule_connection_event() +44 programs/pluto/connection_event.c)
-output: | "west-east": addref @0x7f4fb4850a78(4->5) event CONNECTION_REVIVAL for "west-east":  (schedule_connection_event() +49 programs/pluto/connection_event.c)
+output: | string logger: newref @0x7ff4d060efc8(0->1) (schedule_connection_event() +44 programs/pluto/connection_event.c)
+output: | "west-east": addref @0x7ff4d1066a78(4->5) event CONNECTION_REVIVAL for "west-east":  (schedule_connection_event() +49 programs/pluto/connection_event.c)
 output: "west-east" #2: IMPAIR: revival: skip scheduling revival event
 output: | spd_owner() looking for SPD owner of 192.0.1.0/24===192.0.2.0/24 with routing >= ROUTED_ONDEMAND[ONDEMAND]
 output: | FOR_EACH_SPD_ROUTE[remote_client_range=192.0.2.0/24]... in (routed_negotiation_to_routed_ondemand() +911 programs/pluto/routing.c)
@@ -699,44 +699,44 @@ output: | "west-east" #2: delete_state() skipping log_message:no
 output: "west-east" #2: deleting IPsec SA (QUICK_I1) and NOT sending notification
 output: | "west-east" #2: .st_on_delete.skip_log_message no->true (llog_sa_delete_n_send() +852 programs/pluto/state.c)
 output: | pstats #2 ikev1.ipsec deleted too-many-retransmits
-output: | #2 main thread spent 2.66 (16.3) milliseconds helper thread spent 4.48 (7.05) milliseconds in total
+output: | #2 main thread spent 2.31 (22) milliseconds helper thread spent 4.44 (6.92) milliseconds in total
 output: | suspend: no MD saved in state #2 (delete_state() +973 programs/pluto/state.c)
 output: | #2 STATE_QUICK_I1: retransmits: cleared
 output: | kernel: uninstall_kernel_state() deleting OUTBOUND
 output: | kernel: uninstall_kernel_state() deleting INBOUND
-output: | kernel: forcing inbound delete of ESP as .inbound.spi: 91cb81d7; attrs.spi: 00000000
-output: | "west-east" #2: routing:  kernel_ops_del_ipsec_spi() deleting sa 192.1.2.23-ESP[91cb81d7]->192.1.2.45 for esp.ESPSPIi@192.1.2.45 ...
+output: | kernel: forcing inbound delete of ESP as .inbound.spi: e2929ca3; attrs.spi: 00000000
+output: | "west-east" #2: routing:  kernel_ops_del_ipsec_spi() deleting sa 192.1.2.23-ESP[e2929ca3]->192.1.2.45 for esp.ESPSPIi@192.1.2.45 ...
 output: | sendrecv_xfrm_msg() sending 17 Del SA esp.ESPSPIi@192.1.2.45
 output: | sendrecv_xfrm_msg() recvfrom() returned 60 bytes
 output: ERROR: "west-east" #2: netlink response for Del SA esp.ESPSPIi@192.1.2.45: No such process (errno 3)
 output: | "west-east" #2: routing:   ... no
-output: | delref @0x7f4fb485ef38(3->2) (delete_state() +1033 programs/pluto/state.c)
-output: | "west-east": delref @0x7f4fb4850a78(5->4)  #2:  (delete_state() +1073 programs/pluto/state.c)
+output: | delref @0x7ff4d1074f38(3->2) (delete_state() +1033 programs/pluto/state.c)
+output: | "west-east": delref @0x7ff4d1066a78(5->4)  #2:  (delete_state() +1073 programs/pluto/state.c)
 output: | child state #2: QUICK_I1(established CHILD SA) => UNDEFINED(ignore)
-output: |  #2: detach whack fd@0x7f4fb4858fe8 from logger 0x7f4fb4766fc8 slot 0 (delete_state() +1079 programs/pluto/state.c)
-output: | delref @0x7f4fb4858fe8(2->1) (delete_state() +1079 programs/pluto/state.c)
-output: | delref @0x7f4fb485afd8(1->0) (delete_state() +1094 programs/pluto/state.c)
+output: |  #2: detach whack fd@0x7ff4d106efe8 from logger 0x7ff4d0f7cfc8 slot 0 (delete_state() +1079 programs/pluto/state.c)
+output: | delref @0x7ff4d106efe8(2->1) (delete_state() +1079 programs/pluto/state.c)
+output: | delref @0x7ff4d1070fd8(1->0) (delete_state() +1094 programs/pluto/state.c)
 output: | delete_state: delref st->st_dh_shared_secret-key@NULL
-output: | delete_state: delref st->st_skeyid_nss-key@0x7f4fb48c2f80
-output: | delete_state: delref st->st_skey_d_nss-key@0x7f4fb4968f80
-output: | delete_state: delref st->st_skey_ai_nss-key@0x7f4fb49a8f80
+output: | delete_state: delref st->st_skeyid_nss-key@0x7ff4d10d8f80
+output: | delete_state: delref st->st_skey_d_nss-key@0x7ff4d117ef80
+output: | delete_state: delref st->st_skey_ai_nss-key@0x7ff4d11bef80
 output: | delete_state: delref st->st_skey_ar_nss-key@NULL
-output: | delete_state: delref st->st_skey_ei_nss-key@0x7f4fb47b5f80
+output: | delete_state: delref st->st_skey_ei_nss-key@0x7ff4d0fcbf80
 output: | delete_state: delref st->st_skey_er_nss-key@NULL
 output: | delete_state: delref st->st_skey_pi_nss-key@NULL
 output: | delete_state: delref st->st_skey_pr_nss-key@NULL
-output: | delete_state: delref st->st_enc_key_nss-key@0x7f4fb48c0f80
+output: | delete_state: delref st->st_enc_key_nss-key@0x7ff4d10d6f80
 output: | delete_state: delref st->st_sk_d_no_ppk-key@NULL
 output: | delete_state: delref st->st_sk_pi_no_ppk-key@NULL
 output: | delete_state: delref st->st_sk_pr_no_ppk-key@NULL
 output: |  #2: releasing whack (but there are none) (delete_state() +1172 programs/pluto/state.c)
-output: | logger: delref @0x7f4fb4766fc8(1->0) (delete_state() +1172 programs/pluto/state.c)
+output: | logger: delref @0x7ff4d0f7cfc8(1->0) (delete_state() +1172 programs/pluto/state.c)
 output: | "west-east" #2: routing: stop TEARDOWN_CHILD, ROUTED_NEGOTIATION->ROUTED_ONDEMAND, PERMANENT; ok=yes; routing_sa #2->#0 negotiating_ike_sa #1 established_ike_sa #1 negotiating_child_sa #2->#0 revival 0->1 (event_v1_retransmit() +83 programs/pluto/ikev1_retransmit.c)
-output: | "west-east": delref @0x7f4fb4850a78(4->3) "west-east" #2:  (dispatch() +2450 programs/pluto/routing.c)
-output: | "west-east" #2: detach whack fd@0x7f4fb4858fe8 from logger 0x7f4fb3e7dfc8 slot 0 (teardown_child() +1236 programs/pluto/routing.c)
-output: | delref @0x7f4fb4858fe8(1->0) (teardown_child() +1236 programs/pluto/routing.c)
-output: | freeref fd@0x7f4fb4858fe8 (teardown_child() +1236 programs/pluto/routing.c)
-output: | logger: delref @0x7f4fb3e7dfc8(1->0) (teardown_child() +1236 programs/pluto/routing.c)
+output: | "west-east": delref @0x7ff4d1066a78(4->3) "west-east" #2:  (dispatch() +2450 programs/pluto/routing.c)
+output: | "west-east" #2: detach whack fd@0x7ff4d106efe8 from logger 0x7ff4d0693fc8 slot 0 (teardown_child() +1236 programs/pluto/routing.c)
+output: | delref @0x7ff4d106efe8(1->0) (teardown_child() +1236 programs/pluto/routing.c)
+output: | freeref fd@0x7ff4d106efe8 (teardown_child() +1236 programs/pluto/routing.c)
+output: | logger: delref @0x7ff4d0693fc8(1->0) (teardown_child() +1236 programs/pluto/routing.c)
 output: | in statetime_stop() and could not find #2
 output: | kernel: netlink_process_xfrm_messages() process messages
 output: | netlink_get() recvfrom() returned 376 bytes
@@ -753,7 +753,7 @@ output: |   found "west-east"
 output: |     choosing "west-east" priority 25214988; as first best
 output: |   matches: 1
 output: |   concluding with "west-east" priority 25214988 kind=PERMANENT
-output: | "west-east": addref @0x7f4fb4850a78(3->4)  (initiate_ondemand() +135 programs/pluto/acquire.c)
+output: | "west-east": addref @0x7ff4d1066a78(3->4)  (initiate_ondemand() +135 programs/pluto/acquire.c)
 output: | "west-east": no whack to attach
 output: "west-east": initiate on-demand for packet 192.0.1.254:8-ICMP->192.0.2.254:0
 output: | "west-east": initiate() by ACQUIRE policy=ENCRYPT+TUNNEL+PFS proto=ESP sec_label= (initiate_ondemand() +158 programs/pluto/acquire.c)
@@ -766,36 +766,36 @@ output: |     policy: IKEv1+PSK+ENCRYPT+TUNNEL+PFS+ROUTE+UP+IKE_FRAG_ALLOW+ESN_N
 output: | FOR_EACH_STATE_... in (find_viable_parent_for_connection() +1567 programs/pluto/state.c)
 output: |   found "west-east" #1
 output: |   matches: 1
-output: | struct iface_endpoint: addref @0x7f4fb485ef38(2->3) (duplicate_state() +1198 programs/pluto/state.c)
-output: | alloc logger: newref @0x7f4fb3de4fc8(0->1) (duplicate_state() +1206 programs/pluto/state.c)
+output: | struct iface_endpoint: addref @0x7ff4d1074f38(2->3) (duplicate_state() +1198 programs/pluto/state.c)
+output: | alloc logger: newref @0x7ff4d05fafc8(0->1) (duplicate_state() +1206 programs/pluto/state.c)
 output: |  #0: no whack to attach
-output: | "west-east": addref @0x7f4fb4850a78(4->5)  #3:  (new_state() +491 programs/pluto/state.c)
-output: | creating state object #3 at 0x7f4fb494e348
+output: | "west-east": addref @0x7ff4d1066a78(4->5)  #3:  (new_state() +491 programs/pluto/state.c)
+output: | creating state object #3 at 0x7ff4d1164348
 output: | pstats #3 ikev1.ipsec started
 output: | duplicating state object #1 "west-east" as #3 for IPSEC SA
 output: | #3 setting local endpoint to 192.1.2.45:500 from #1.st_localport (duplicate_state() +1220 programs/pluto/state.c)
-output: | duplicate_state: addref st_skeyid_nss-key@0x7f4fb48c2f80
-output: | duplicate_state: addref st_skey_d_nss-key@0x7f4fb4968f80
-output: | duplicate_state: addref st_skey_ai_nss-key@0x7f4fb49a8f80
+output: | duplicate_state: addref st_skeyid_nss-key@0x7ff4d10d8f80
+output: | duplicate_state: addref st_skey_d_nss-key@0x7ff4d117ef80
+output: | duplicate_state: addref st_skey_ai_nss-key@0x7ff4d11bef80
 output: | duplicate_state: addref st_skey_ar_nss-key@NULL
-output: | duplicate_state: addref st_skey_ei_nss-key@0x7f4fb47b5f80
+output: | duplicate_state: addref st_skey_ei_nss-key@0x7ff4d0fcbf80
 output: | duplicate_state: addref st_skey_er_nss-key@NULL
 output: | duplicate_state: addref st_skey_pi_nss-key@NULL
 output: | duplicate_state: addref st_skey_pr_nss-key@NULL
-output: | duplicate_state: addref st_enc_key_nss-key@0x7f4fb48c0f80
+output: | duplicate_state: addref st_enc_key_nss-key@0x7ff4d10d6f80
 output: | child state #3: UNDEFINED(ignore) => QUICK_I1(established CHILD SA)
 output: "west-east" #3: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+ROUTE+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-output: | job: newref @0x7f4fb4858f98(0->1) (submit_task() +331 programs/pluto/server_pool.c)
-output: | clone logger: newref @0x7f4fb4766fc8(0->1) (submit_task() +358 programs/pluto/server_pool.c)
+output: | job: newref @0x7ff4d106ef98(0->1) (submit_task() +331 programs/pluto/server_pool.c)
+output: | clone logger: newref @0x7ff4d0f7cfc8(0->1) (submit_task() +358 programs/pluto/server_pool.c)
 output: | job 4 helper 0 #3 quick_outI1 (dh): added to pending queue
-output: | event_schedule_where: newref EVENT_CRYPTO_TIMEOUT-pe@0x7f4fb4768fa8 timeout in 60 seconds for #3
-output: | tt: newref @0x7f4fb476af68(0->1) (schedule_timeout() +557 programs/pluto/server.c)
-output: | "west-east": addref @0x7f4fb4850a78(5->6) "west-east" #3:  (dispatch() +2436 programs/pluto/routing.c)
-output: | "west-east" #3: routing: start INITIATED, ROUTED_ONDEMAND, PERMANENT; ISAKMP #1 (MAIN_I4) IPsec #3 (QUICK_I1) by=ACQUIRE; $1@0x7f4fb4850a78; negotiating_ike_sa #1 established_ike_sa #1 (initiate_ondemand() +158 programs/pluto/acquire.c)
+output: | event_schedule_where: newref EVENT_CRYPTO_TIMEOUT-pe@0x7ff4d0f7efa8 timeout in 60 seconds for #3
+output: | tt: newref @0x7ff4d0f80f68(0->1) (schedule_timeout() +557 programs/pluto/server.c)
+output: | "west-east": addref @0x7ff4d1066a78(5->6) "west-east" #3:  (dispatch() +2436 programs/pluto/routing.c)
+output: | "west-east" #3: routing: start INITIATED, ROUTED_ONDEMAND, PERMANENT; ISAKMP #1 (MAIN_I4) IPsec #3 (QUICK_I1) by=ACQUIRE; $1@0x7ff4d1066a78; negotiating_ike_sa #1 established_ike_sa #1 (initiate_ondemand() +158 programs/pluto/acquire.c)
 output: | "west-east" #3: routing:   Child SA matches unset .routing_sa
-output: | "west-east": delref @0x7f4fb4850a78(6->5) event CONNECTION_REVIVAL for "west-east":  (discard_connection_event() +71 programs/pluto/connection_event.c)
+output: | "west-east": delref @0x7ff4d1066a78(6->5) event CONNECTION_REVIVAL for "west-east":  (discard_connection_event() +71 programs/pluto/connection_event.c)
 output: | event CONNECTION_REVIVAL for "west-east": releasing whack (but there are none) (discard_connection_event() +72 programs/pluto/connection_event.c)
-output: | logger: delref @0x7f4fb3df8fc8(1->0) (discard_connection_event() +72 programs/pluto/connection_event.c)
+output: | logger: delref @0x7ff4d060efc8(1->0) (discard_connection_event() +72 programs/pluto/connection_event.c)
 output: | spd_owner() looking for SPD owner of 192.0.1.0/24===192.0.2.0/24 with routing >= ROUTED_NEGOTIATION[NEGOTIATION]
 output: | FOR_EACH_SPD_ROUTE[remote_client_range=192.0.2.0/24]... in (routed_ondemand_to_routed_negotiation() +884 programs/pluto/routing.c)
 output: |   found "west-east" 192.0.1.0/24===192.0.2.0/24
@@ -820,15 +820,15 @@ output: | sendrecv_xfrm_msg() recvfrom() returned 36 bytes
 output: | kernel_ops_policy_add()   XFRM_MSG_UPDPOLICY for flow %hold(block) (out) had A policy
 output: | "west-east" #3: routing:   ... yes
 output: | "west-east" #3: routing: stop INITIATED, ROUTED_ONDEMAND->ROUTED_NEGOTIATION, PERMANENT; ok=yes; routing_sa #0->#3 negotiating_ike_sa #1 established_ike_sa #1 negotiating_child_sa #0->#3 (initiate_ondemand() +158 programs/pluto/acquire.c)
-output: | "west-east": delref @0x7f4fb4850a78(5->4) "west-east" #3:  (dispatch() +2450 programs/pluto/routing.c)
+output: | "west-east": delref @0x7ff4d1066a78(5->4) "west-east" #3:  (dispatch() +2450 programs/pluto/routing.c)
 output: | "west-east" #3: no whack to detach (initiate() +442 programs/pluto/initiate.c)
 output: | "west-east": no whack to detach (initiate_ondemand() +160 programs/pluto/acquire.c)
-output: | "west-east": delref @0x7f4fb4850a78(4->3)  (initiate_ondemand() +161 programs/pluto/acquire.c)
-output: | struct dh_local_secret: newref @0x7f4fb3df6fd8(0->1) (calc_dh_local_secret() +85 programs/pluto/crypt_dh.c)
+output: | "west-east": delref @0x7ff4d1066a78(4->3)  (initiate_ondemand() +161 programs/pluto/acquire.c)
+output: | struct dh_local_secret: newref @0x7ff4d060cfd8(0->1) (calc_dh_local_secret() +85 programs/pluto/crypt_dh.c)
 output: | job 4 helper 1 #3 quick_outI1 (dh): finished
-output: | "west-east" #3: spent 4.43 (7.65) milliseconds in job 4 helper 1 #3 quick_outI1 (dh)
+output: | "west-east" #3: spent 2.3 (5.39) milliseconds in job 4 helper 1 #3 quick_outI1 (dh)
 output: | scheduling resume sending job back to main thread for #3
-output: | tt: newref @0x7f4fb3e64f68(0->1) (schedule_timeout() +557 programs/pluto/server.c)
+output: | tt: newref @0x7ff4d067af68(0->1) (schedule_timeout() +557 programs/pluto/server.c)
 output: | processing resume sending job back to main thread for #3
 output: | suspend: no MD saved in state #3 (resume_handler() +641 programs/pluto/server.c)
 output: | job 4 helper 1 #3 quick_outI1 (dh): calling state's callback function
@@ -836,13 +836,13 @@ output: | quick_outI1_continue for #3: calculated ke+nonce, sending I1
 output: | quick_outI1_continue for #3: calculated ke+nonce, sending I1
 output: | opening output PBS reply packet
 output: | **emit ISAKMP Message:
-output: |    initiator SPI: 93 18 3d f4  f7 7f 23 45
-output: |    responder SPI: 73 8a 14 c3  ad f5 fb a2
+output: |    initiator SPI: ec 17 79 fe  a9 81 79 66
+output: |    responder SPI: de 4d e9 3b  ce 1e 43 08
 output: |    next payload type: ISAKMP_NEXT_NONE (0x0)
 output: |    ISAKMP version: ISAKMP Version 1.0 (rfc2407) (0x10)
 output: |    exchange type: ISAKMP_XCHG_QUICK (0x20)
 output: |    flags: ISAKMP_FLAG_v1_ENCRYPTION (0x1)
-output: |    Message ID: 150238945 (08 f4 76 e1)
+output: |    Message ID: 1384188587 (52 81 0a ab)
 output: | next payload chain: saving message location 'ISAKMP Message'.'next payload type'
 output: | ***emit ISAKMP Hash Payload:
 output: |    next payload type: ISAKMP_NEXT_NONE (0x0)
@@ -852,7 +852,7 @@ output: | emitting 32 zero bytes of HASH DATA into ISAKMP Hash Payload
 output: | emitting length of ISAKMP Hash Payload: 36
 output: | emitting quick defaults using policy: encrypt
 output: | empty esp_info, returning defaults for: encrypt
-output: | sadb: newref @0x7f4fb3e66fe8(0->1) (v1_kernel_alg_makedb() +445 programs/pluto/ikev1_spdb_struct.c)
+output: | sadb: newref @0x7ff4d067cfe8(0->1) (v1_kernel_alg_makedb() +445 programs/pluto/ikev1_spdb_struct.c)
 output: | ***emit ISAKMP Security Association Payload:
 output: |    next payload type: ISAKMP_NEXT_NONE (0x0)
 output: |    DOI: ISAKMP_DOI_IPSEC (0x1)
@@ -872,9 +872,9 @@ output: | last substructure: saving location 'ISAKMP Security Association Payloa
 output: | "west-east" #3: routing:  kernel_ops_get_ipsec_spi() 192.1.2.23-ESP->192.1.2.45 reqid=4005 [1000,ffffffff] for SPI ...
 output: | sendrecv_xfrm_msg() sending 22 Get SPI SPI
 output: | sendrecv_xfrm_msg() recvfrom() returned 256 bytes
-output: | "west-east" #3: routing:   ... allocated cc534c2d for SPI
+output: | "west-east" #3: routing:   ... allocated f484df86 for SPI
 output: | emitting 4 raw bytes of SPI SPISPI ISAKMP Proposal Payload
-output: | SPI: cc 53 4c 2d
+output: | SPI: f4 84 df 86
 output: | *****emit ISAKMP Transform Payload (ESP):
 output: |    next payload type: ISAKMP_NEXT_T (0x3)
 output: |    ESP transform number: 0 (00)
@@ -933,37 +933,37 @@ output: | emitting length of ISAKMP Proposal Payload: 72
 output: | last substructure: checking 'ISAKMP Proposal Payload'.'ISAKMP Transform Payload (ESP)'.'next payload type' is 0
 output: | emitting length of ISAKMP Security Association Payload: 84
 output: | last substructure: checking 'ISAKMP Security Association Payload'.'ISAKMP Proposal Payload'.'next payload type' is 0
-output: | sadb: delref @0x7f4fb3e66fe8(1->0) (free_sa() +857 programs/pluto/ikev1_spdb.c)
+output: | sadb: delref @0x7ff4d067cfe8(1->0) (free_sa() +857 programs/pluto/ikev1_spdb.c)
 output: | ***emit ISAKMP Nonce Payload:
 output: |    next payload type: ISAKMP_NEXT_NONE (0x0)
 output: | next payload chain: setting previous 'ISAKMP Security Association Payload'.'next payload type' to current ISAKMP Nonce Payload (10:ISAKMP_NEXT_NONCE)
 output: | next payload chain: saving location 'ISAKMP Nonce Payload'.'next payload type' in 'reply packet'
 output: | emitting 32 raw bytes of Ni into ISAKMP Nonce Payload
-output: |   f1 2e 1a 20  93 8d fe 0a  36 ee 35 a4  d3 dd eb bb   ... ....6.5.....
-output: |   46 36 d6 c8  60 59 4d cb  a9 97 4e 5c  aa 0c 00 7e   F6..`YM...N\...~
+output: |   9f dc 54 c3  46 db 9f d4  57 2d 52 59  1b f5 02 1b   ..T.F...W-RY....
+output: |   2a 4a 7b 7b  90 f9 49 6e  1e ef c4 e6  87 22 67 00   *J{{..In....."g.
 output: | emitting length of ISAKMP Nonce Payload: 36
-output: | struct dh_local_secret: addref @0x7f4fb3df6fd8(1->2) (unpack_KE_from_helper() +155 programs/pluto/crypt_ke.c)
+output: | struct dh_local_secret: addref @0x7ff4d060cfd8(1->2) (unpack_KE_from_helper() +155 programs/pluto/crypt_ke.c)
 output: | ***emit ISAKMP Key Exchange Payload:
 output: |    next payload type: ISAKMP_NEXT_NONE (0x0)
 output: | next payload chain: setting previous 'ISAKMP Nonce Payload'.'next payload type' to current ISAKMP Key Exchange Payload (4:ISAKMP_NEXT_KE)
 output: | next payload chain: saving location 'ISAKMP Key Exchange Payload'.'next payload type' in 'reply packet'
 output: | emitting 256 raw bytes of keyex value into ISAKMP Key Exchange Payload
-output: |   d8 57 33 81  a3 4f 05 a6  4a ee 7a 7a  0c a0 6a 8d   .W3..O..J.zz..j.
-output: |   d1 48 b7 9b  04 ad 05 a8  de b7 f4 54  de 9c 8c ba   .H.........T....
-output: |   14 7e 3c 52  bc c0 32 a2  9d b7 1e cb  6e ae 5d db   .~<R..2.....n.].
-output: |   f8 47 d4 f1  83 8a 43 8b  94 26 84 78  dd c1 3b 07   .G....C..&.x..;.
-output: |   a0 fc a4 98  be b8 ed 09  c4 d2 39 25  9c c8 42 79   ..........9%..By
-output: |   94 a7 01 42  48 9f 3e 10  de f1 ff 13  76 74 8e 6d   ...BH.>.....vt.m
-output: |   10 6d 27 7b  38 dd 4c 95  fa 4d e1 21  09 35 3f 60   .m'{8.L..M.!.5?`
-output: |   66 11 d5 9b  69 fa f7 56  1c bc ad e9  db a6 7a 2f   f...i..V......z/
-output: |   c7 db db 66  8d f3 cc c8  98 ae 19 32  c1 a5 39 a4   ...f.......2..9.
-output: |   4f 3a 3f bf  ef 48 bf c8  e2 f3 93 dc  95 0e a3 82   O:?..H..........
-output: |   02 9c 47 22  3f aa cb 2e  49 a3 2a cb  1a 67 76 33   ..G"?...I.*..gv3
-output: |   a8 10 15 c9  08 68 0d c0  ac 1b c3 88  3b 04 ca a5   .....h......;...
-output: |   9e 6a 16 04  4f 11 09 fe  d9 9e 95 8a  73 ca 2e b1   .j..O.......s...
-output: |   28 93 5b 37  c0 70 86 7f  a2 49 e9 27  31 bd 0a 57   (.[7.p...I.'1..W
-output: |   75 12 f6 86  38 e3 73 10  69 41 0e 96  98 1f e4 31   u...8.s.iA.....1
-output: |   38 22 86 55  92 04 3d 62  81 3c 9e 89  1f ef 82 54   8".U..=b.<.....T
+output: |   94 b1 20 f7  96 ec 1f 33  99 82 55 dd  34 30 f0 22   .. ....3..U.40."
+output: |   37 8f 18 1a  32 c8 09 e4  22 ea 76 d0  bc ef de 09   7...2...".v.....
+output: |   97 a5 d0 48  6d 96 12 35  35 5a 3b 1a  bd 8b 86 53   ...Hm..55Z;....S
+output: |   a4 70 78 16  27 17 5a a4  35 2b 73 7b  34 d9 b6 45   .px.'.Z.5+s{4..E
+output: |   f8 1e 48 dc  d7 7f 5c 3e  3d 7a 06 41  98 bd 9e c0   ..H...\>=z.A....
+output: |   6c 69 a2 eb  42 f0 db 26  3d c4 22 83  a1 5d a2 da   li..B..&=."..]..
+output: |   28 8b 0a 12  02 ff ae 1f  e3 05 6d 57  52 1e 83 6a   (.........mWR..j
+output: |   89 0f b4 2e  eb 0e ae 48  a2 62 7c f7  d0 55 f7 0c   .......H.b|..U..
+output: |   4d 26 86 3b  b9 ec 1f c5  95 19 26 d4  3a 96 0b a2   M&.;......&.:...
+output: |   b6 47 08 ac  4f eb a5 8b  35 37 97 75  73 6e 36 03   .G..O...57.usn6.
+output: |   4a 18 cc e9  f6 58 28 7e  76 64 21 86  78 73 79 ea   J....X(~vd!.xsy.
+output: |   a1 ef 82 e0  6f e7 cf 83  12 d9 6a d1  57 62 d1 e5   ....o.....j.Wb..
+output: |   8d 01 18 56  e0 ce 32 1c  c1 93 4b 68  a9 08 90 eb   ...V..2...Kh....
+output: |   0f a3 73 be  ad 27 2d d7  d2 1a 40 c4  84 00 6a 7f   ..s..'-...@...j.
+output: |   9f a2 5b b7  e0 d4 6f 3b  4d 8e 3e 45  ba ce 2c 5a   ..[...o;M.>E..,Z
+output: |   3c d8 c3 fc  94 bd a7 29  5d c7 bd 52  3d 42 d5 49   <......)]..R=B.I
 output: | emitting length of ISAKMP Key Exchange Payload: 260
 output: | ***emit ISAKMP Identification Payload (IPsec DOI):
 output: |    next payload type: ISAKMP_NEXT_NONE (0x0)
@@ -989,64 +989,64 @@ output: | client network: c0 00 02 00
 output: | emitting 4 raw bytes of client mask into ISAKMP Identification Payload (IPsec DOI)
 output: | client mask: ff ff ff 00
 output: | emitting length of ISAKMP Identification Payload (IPsec DOI): 16
-output: |     result: newref clone-key@0x7f4fb3e0ff80 (32-bytes, SHA256_HMAC)(init_symkey() +101 lib/libswan/ike_alg_prf_mac_nss_ops.c)
-output: | HASH(1): delref clone-key@0x7f4fb3e0ff80
+output: |     result: newref clone-key@0x7ff4d0625f80 (32-bytes, SHA256_HMAC)(init_symkey() +101 lib/libswan/ike_alg_prf_mac_nss_ops.c)
+output: | HASH(1): delref clone-key@0x7ff4d0625f80
 output: | outI1 HASH(1):
-output: |   b1 f2 5e 60  49 4e fe ee  a5 06 0f e0  84 8e 02 c2   ..^`IN..........
-output: |   4a 75 ff 04  d3 69 22 83  84 42 dc 3a  bc ce 92 c1   Ju...i"..B.:....
+output: |   b2 b8 b2 7a  5b 08 88 dc  a9 29 14 c9  e2 dd 6c 5c   ...z[....)....l\
+output: |   44 51 c2 19  c2 e9 d4 9a  79 5a da 93  b0 74 10 13   DQ......yZ...t..
 output: | no IKEv1 message padding required
 output: | emitting length of ISAKMP Message: 476
 output: | sending 476 bytes for reply packet from quick_outI1 through eth1 from 192.1.2.45:500 to 192.1.2.23:500 using UDP (for #3)
-output: |   93 18 3d f4  f7 7f 23 45  73 8a 14 c3  ad f5 fb a2   ..=...#Es.......
-output: |   08 10 20 01  08 f4 76 e1  00 00 01 dc  09 66 e8 43   .. ...v......f.C
-output: |   98 c1 f3 fa  0b 30 07 cb  fd 42 42 63  07 4f 31 0a   .....0...BBc.O1.
-output: |   59 f1 a5 75  f0 c2 14 34  bd 6f b2 91  dc ef 91 df   Y..u...4.o......
-output: |   be 51 12 2d  62 dc 8d c6  39 02 d6 38  d7 a4 47 9d   .Q.-b...9..8..G.
-output: |   1b 74 68 b5  dd 20 78 1e  3c 8c 21 22  30 43 4a 98   .th.. x.<.!"0CJ.
-output: |   78 bc 1c ab  c3 fb 26 df  0e f1 49 a3  b4 53 39 84   x.....&...I..S9.
-output: |   a2 3c 1f f2  18 44 c7 35  b0 1b 4e 2c  4c 3b 92 f7   .<...D.5..N,L;..
-output: |   53 18 90 7b  e3 38 ff 52  2a 24 f8 16  d1 78 06 5f   S..{.8.R*$...x._
-output: |   e7 41 81 f5  7d df 3d ad  e2 76 42 8b  e7 64 c6 c1   .A..}.=..vB..d..
-output: |   47 28 c5 7d  c5 f6 6d d3  de 5b 5f 99  65 cf 3a 4f   G(.}..m..[_.e.:O
-output: |   dd 1b ff ee  3e 93 df 43  ff d3 ee 2e  03 0b 79 87   ....>..C......y.
-output: |   72 35 93 f4  8f f9 25 69  8d ab cd 75  ed 2c ee 83   r5....%i...u.,..
-output: |   5d 2f 9e 1d  d2 20 86 f6  e2 6b ff 74  51 21 08 7c   ]/... ...k.tQ!.|
-output: |   7f a3 95 ff  a6 58 5b 1a  70 a8 70 30  6b 41 18 e1   .....X[.p.p0kA..
-output: |   e1 fb 28 e2  b9 87 2e a3  2a 45 91 b7  95 9c 18 f8   ..(.....*E......
-output: |   fc 91 8c 73  7c de 2a b9  0f eb 13 ca  a0 5c d6 fd   ...s|.*......\..
-output: |   0e ea 35 e9  82 ae cd fd  4b 02 48 ba  51 66 46 b1   ..5.....K.H.QfF.
-output: |   d7 33 10 6d  b5 b2 12 42  e9 9f 30 36  48 8b 86 e2   .3.m...B..06H...
-output: |   cb 7c a8 f2  48 ac b2 d7  38 31 7b 39  42 46 19 6a   .|..H...81{9BF.j
-output: |   7f 94 98 24  0e 44 ab d5  a7 2b bb a9  69 68 b2 e8   ...$.D...+..ih..
-output: |   86 35 d9 f3  70 4d c8 ab  98 33 ae 88  68 7d 52 f6   .5..pM...3..h}R.
-output: |   4c 00 49 23  db ca 4f 37  4c d8 c2 1d  3c 37 00 95   L.I#..O7L...<7..
-output: |   5c bb b2 35  83 aa 02 b2  ed 64 4e cf  64 87 fd da   \..5.....dN.d...
-output: |   e1 33 48 82  86 f4 47 c1  f9 44 a2 d7  25 d7 c8 36   .3H...G..D..%..6
-output: |   bd 5f 89 93  d7 0b 26 9a  f7 d4 5e 22  7a ff 3b 21   ._....&...^"z.;!
-output: |   4a d9 be 85  05 e5 cc 64  dd aa 14 5c  6a 9a e1 28   J......d...\j..(
-output: |   07 c9 2e 47  9e 2e 2d 01  fe c1 d0 25  a7 d9 3d f3   ...G..-....%..=.
-output: |   4e 11 2c 17  55 2e c4 e6  eb 7c f1 2a  31 2e 41 cd   N.,.U....|.*1.A.
-output: |   1e 89 86 85  f9 f7 6b cb  ee a4 bb a9                ......k.....
+output: |   ec 17 79 fe  a9 81 79 66  de 4d e9 3b  ce 1e 43 08   ..y...yf.M.;..C.
+output: |   08 10 20 01  52 81 0a ab  00 00 01 dc  25 da fa ff   .. .R.......%...
+output: |   b6 e2 89 01  8f 96 60 38  10 a3 8b e8  b7 2a e7 70   ......`8.....*.p
+output: |   b8 69 9d 5b  35 40 a3 6a  47 a8 d5 3b  09 f5 08 ff   .i.[5@.jG..;....
+output: |   ef 36 c5 20  ad 0c e4 66  80 f2 ab 8e  d3 02 7f fc   .6. ...f........
+output: |   8d fe 5e 35  55 1a 57 68  fc 28 a4 91  0b 26 70 c0   ..^5U.Wh.(...&p.
+output: |   33 55 40 8b  58 36 6e 18  e5 27 33 d2  d7 29 69 ac   3U@.X6n..'3..)i.
+output: |   73 36 5f f2  38 26 85 a1  98 01 a7 e0  9a 52 6a 4e   s6_.8&.......RjN
+output: |   20 fd e1 16  69 e6 57 2a  3e 0b 9c 29  c0 18 3b d8    ...i.W*>..)..;.
+output: |   b0 cf 6c e2  28 12 c3 4b  03 b3 c8 f7  80 f9 4a 78   ..l.(..K......Jx
+output: |   71 66 a1 20  6d 06 a2 51  79 ea 0f 22  61 39 11 de   qf. m..Qy.."a9..
+output: |   98 3b 42 4e  5b be 1d ac  03 88 9f bc  6b 08 98 cd   .;BN[.......k...
+output: |   7d b0 8e fd  68 e4 61 4f  97 6c fc ca  be 4c 85 ea   }...h.aO.l...L..
+output: |   60 fc 8e a8  a8 05 82 40  03 a2 2e 3c  b0 00 46 0a   `......@...<..F.
+output: |   dd f9 85 13  b6 7d 92 b1  93 67 53 59  5f 52 37 da   .....}...gSY_R7.
+output: |   d7 51 ef 25  40 9d ff 97  2e 75 02 a5  98 cd 4f 16   .Q.%@....u....O.
+output: |   d9 74 d2 3f  6f 55 df d8  9c 39 fa 7b  1a 9b 25 7e   .t.?oU...9.{..%~
+output: |   8a b4 bd 43  cc e0 49 c6  28 2b 84 a0  79 83 81 72   ...C..I.(+..y..r
+output: |   4e 05 c8 b9  65 1c df 52  24 e3 eb 71  b1 b5 e3 f1   N...e..R$..q....
+output: |   fd 32 eb 54  2b f7 66 3d  a2 33 48 b1  43 45 a8 32   .2.T+.f=.3H.CE.2
+output: |   28 56 05 96  f9 57 56 e8  bd 57 8c a9  56 c9 1e 46   (V...WV..W..V..F
+output: |   4e 07 b5 59  7e 4b dd 77  76 46 5b fb  d2 e7 89 37   N..Y~K.wvF[....7
+output: |   3c d9 91 cc  5e 9e 35 a8  45 55 33 e8  b7 7d b3 3f   <...^.5.EU3..}.?
+output: |   50 de c3 5b  ee 76 ac fe  1e 5b 31 b9  ea d3 55 51   P..[.v...[1...UQ
+output: |   1a 3a ae 2a  08 85 74 a1  14 0e 82 94  85 e1 2f 86   .:.*..t......./.
+output: |   dc 0c 01 54  06 56 7f 11  4b d3 55 1e  be ca 0f 75   ...T.V..K.U....u
+output: |   c7 f8 17 c7  ba 83 c9 37  e5 34 23 da  1f 1f a3 52   .......7.4#....R
+output: |   60 36 0d 95  b9 20 0f e3  fd 70 87 49  0c f0 59 7f   `6... ...p.I..Y.
+output: |   10 85 0e f8  13 5f 6d 9c  4c e4 55 94  9a c8 ce 4b   ....._m.L.U....K
+output: |   47 bd eb 80  cc ee f2 86  96 4e 3c 59                G........N<Y
 output: | #3 deleting EVENT_CRYPTO_TIMEOUT
-output: | tt: delref @0x7f4fb476af68(1->0) (destroy_timeout() +575 programs/pluto/server.c)
-output: | state-event: delref @0x7f4fb4768fa8(1->0) (delete_event() +534 programs/pluto/timer.c)
+output: | tt: delref @0x7ff4d0f80f68(1->0) (destroy_timeout() +575 programs/pluto/server.c)
+output: | state-event: delref @0x7ff4d0f7efa8(1->0) (delete_event() +534 programs/pluto/timer.c)
 output: | #3 STATE_QUICK_I1: retransmits: cleared
-output: | event_schedule_where: newref EVENT_RETRANSMIT-pe@0x7f4fb3e68fa8 timeout in 60 seconds for #3
-output: | tt: newref @0x7f4fb4768f68(0->1) (schedule_timeout() +557 programs/pluto/server.c)
-output: | #3 STATE_QUICK_I1: retransmits: first event in 60 seconds; timeout in 60 seconds; limit of 12 retransmits; current time is 72.855552
+output: | event_schedule_where: newref EVENT_RETRANSMIT-pe@0x7ff4d067efa8 timeout in 60 seconds for #3
+output: | tt: newref @0x7ff4d0f7ef68(0->1) (schedule_timeout() +557 programs/pluto/server.c)
+output: | #3 STATE_QUICK_I1: retransmits: first event in 60 seconds; timeout in 60 seconds; limit of 12 retransmits; current time is 72.823732
 output: "west-east" #3: sent Quick Mode request
 output: | job 4 helper 1 #3 quick_outI1 (dh): final status STF_SKIP_COMPLETE_STATE_TRANSITION; cleaning up
-output: | delref @0x7f4fb3df6fd8(2->1) (cleanup_ke_and_nonce() +83 programs/pluto/crypt_ke.c)
+output: | delref @0x7ff4d060cfd8(2->1) (cleanup_ke_and_nonce() +83 programs/pluto/crypt_ke.c)
 output: | "west-east" #3: releasing whack (but there are none) (free_job() +430 programs/pluto/server_pool.c)
-output: | logger: delref @0x7f4fb4766fc8(1->0) (free_job() +430 programs/pluto/server_pool.c)
-output: | job: delref @0x7f4fb4858f98(1->0) (free_job() +431 programs/pluto/server_pool.c)
+output: | logger: delref @0x7ff4d0f7cfc8(1->0) (free_job() +430 programs/pluto/server_pool.c)
+output: | job: delref @0x7ff4d106ef98(1->0) (free_job() +431 programs/pluto/server_pool.c)
 output: | resume sending job back to main thread for #3 suppresed complete_v1_state_transition()
-output: | #3 spent 3.13 (22) milliseconds in resume sending job back to main thread
-output: | tt: delref @0x7f4fb3e64f68(1->0) (destroy_timeout() +575 programs/pluto/server.c)
+output: | #3 spent 2.67 (21.6) milliseconds in resume sending job back to main thread
+output: | tt: delref @0x7ff4d067af68(1->0) (destroy_timeout() +575 programs/pluto/server.c)
 output: | helper 1: waiting for work
 output: | processing global timer EVENT_SHUNT_SCAN
 output: | kernel: checking for aged bare shunts from shunt table to expire
-output: | spent 0.0135 (0.12) milliseconds in global timer EVENT_SHUNT_SCAN
+output: | spent 0.0214 (0.177) milliseconds in global timer EVENT_SHUNT_SCAN
 output: | kernel: netlink_process_xfrm_messages() process messages
 output: | netlink_get() recvfrom() returned 248 bytes
 output: | netlink_xfrm_message_processor() got XFRM_MSG_EXPIRE message with length 248
@@ -1055,12 +1055,12 @@ output: | acquire state with SPI SPISPI expired, ignore it
 output: | kernel: netlink_process_xfrm_messages() process messages
 output: | netlink_get() recvfrom() returned 248 bytes
 output: | netlink_xfrm_message_processor() got XFRM_MSG_EXPIRE message with length 248
-output: | xfrm_kernel_sa_expire() spi cc534c2d src 192.1.2.23 dst 192.1.2.45 hard mode 0 proto 50 bytes 0 packets 0
+output: | xfrm_kernel_sa_expire() spi f484df86 src 192.1.2.23 dst 192.1.2.45 hard mode 0 proto 50 bytes 0 packets 0
 output: | FOR_EACH_STATE_... in (find_v2_child_sa_by_spi() +1446 programs/pluto/state.c)
 output: |   found "west-east" #3
 output: |   found "west-east" #1
 output: |   matches: 2
-output: | received kernel hard EXPIRE event for IPsec SPI cc534c2d, but there is no connection with this SPI SPISPI dst 192.1.2.45 bytes 0 packets 0
+output: | received kernel hard EXPIRE event for IPsec SPI f484df86, but there is no connection with this SPI SPISPI dst 192.1.2.45 bytes 0 packets 0
 west #
  ../../guestbin/ipsec-kernel-state.sh
 west #

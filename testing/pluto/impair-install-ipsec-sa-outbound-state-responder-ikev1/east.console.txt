@@ -12,4 +12,12 @@ east #
 east #
  ipsec whack --impair install_ipsec_sa_outbound_state
 east #
+ ../../guestbin/ipsec-kernel-state.sh
+east #
+ ../../guestbin/ipsec-kernel-policy.sh
+east #
+ ipsec unroute west-east
+"west-east": terminating SAs using this connection
+"west-east" #1: deleting ISAKMP SA (MAIN_R3) and sending notification
+east #
  
