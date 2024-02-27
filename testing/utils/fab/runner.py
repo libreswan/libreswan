@@ -332,18 +332,28 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
 
                         try:
 
+                            # open the consoles
+                            for test_domain in test_domains.values():
+                                test_domain.open()
+
+                            # Open output files.  Since the child is
+                            # in NO-ECHO mode, also need to fudge up
+                            # prompt and command.
+                            #
+                            # Should output file be opened in binary
+                            # mode?
+
                             all_verbose_txt = open(os.path.join(test.output_directory, "all.console.verbose.txt"), "w")
                             verbose_files = {None: all_verbose_txt}
 
-                            # re-direct the test-result log file
                             for test_domain in test_domains.values():
                                 guest_name = test_domain.domain.guest_name
                                 output = os.path.join(test.output_directory,
                                                       guest_name + ".console.verbose.txt")
-                                test_domain.open()
                                 f = open(output, "w")
-                                test_domain.console.redirect_output(f)
                                 verbose_files[guest_name] = f
+                                # re-direct the test-result log file
+                                test_domain.console.redirect_output(f)
 
                             # If a guest command times out, don't try
                             # to run post-mortem.sh.
@@ -366,36 +376,36 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
 
                                 test_domain = test_domains[command.guest_name]
                                 try:
+
+                                    # ALL gets the new prompt
+                                    all_verbose_txt.write(command.guest_name)
+                                    all_verbose_txt.write("# ")
+                                    # both get the command
+                                    all_verbose_txt.write(command.line)
+                                    all_verbose_txt.write("\n")
+                                    all_verbose_txt.flush()
+
                                     # run the command
                                     status, output = test_domain.run(command.line)
+                                    if output:
+                                        all_verbose_txt.write("\n")
+                                        all_verbose_txt.write(output.decode()) # convert byte to string
                                     if status:
                                         # XXX: Can't abort as some
                                         # ping commands are expected
                                         # to fail.
                                         test_domain.logger.warning("command '%s' failed with status %d", command.line, status)
-                                    # Also write the output to the
-                                    # merged file.  Since the child is
-                                    # in NO-ECHO mode, also need to
-                                    # fudge up prompt and command.
-                                    #
-                                    # Should output file be opened in
-                                    # binary mode?
-                                    all_verbose_txt.write(command.guest_name)
-                                    all_verbose_txt.write("# ")
-                                    all_verbose_txt.write(command.line)
-                                    all_verbose_txt.write("\n")
-                                    if output:
-                                        all_verbose_txt.write("\n")
-                                        all_verbose_txt.write(output.decode()) # convert byte to string
                                     all_verbose_txt.write("\n")
                                     all_verbose_txt.flush()
+
                                 except pexpect.TIMEOUT as e:
                                     # A timeout while running a test
                                     # command is a sign that the
                                     # command hung.
                                     message = "%s while running command %s" % (post.Issues.TIMEOUT, command)
                                     logger.warning("*** %s ***" % message)
-                                    test_domain.console.append_output("%s %s %s", post.LHS, message, post.RHS)
+                                    for txt in (all_verbose_txt, guest_verbose_txt):
+                                        txt.write("%s %s %s" % (post.LHS, message, post.RHS))
                                     guest_timed_out = command.guest_name
                                     break
                                 except pexpect.EOF as e:
@@ -435,29 +445,39 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                 all_verbose_txt.flush()
                                 # run post mortem
                                 for guest_name in test.guest_names:
-                                    test_domain = test_domains[guest_name]
-                                    logger.info("running %s on %s", script, guest_name)
+
                                     try:
-                                        # no-echo so fake prompt
+
+                                        test_domain = test_domains[guest_name]
+                                        guest_verbose_txt = verbose_files[guest_name]
+                                        logger.info("running %s on %s", script, guest_name)
+
+                                        # mark domain's console
+                                        guest_verbose_txt.write("%s post-mortem %s" % (post.LHS, post.LHS))
+                                        guest_verbose_txt.flush()
+
+                                        # ALL gets the new prompt
                                         all_verbose_txt.write(guest_name)
                                         all_verbose_txt.write("# ")
+                                        # both get the command
                                         all_verbose_txt.write(script)
                                         all_verbose_txt.write("\n")
                                         all_verbose_txt.flush()
-                                        # and mark domain's console
-                                        verbose_file = verbose_files[guest_name]
-                                        verbose_file.write("%s post-mortem %s" % (post.LHS, post.LHS))
-                                        verbose_file.flush()
-                                        #
+
                                         status, output = test_domain.run(script, timeout=POST_MORTEM_TIMEOUT)
+                                        if output:
+                                            all_verbose_txt.write(output.decode()) # convert byte to string
+                                            all_verbose_txt.write("\n")
+                                            all_verbose_txt.flush()
                                         if status:
                                             post_mortem_ok = False
                                             logger.error("%s failed on %s with status %s", script, guest_name, status)
                                         else:
                                             all_verbose_txt.write(output.decode())
                                             all_verbose_txt.flush()
-                                            verbose_file.write("%s post-mortem %s" % (post.RHS, post.RHS))
-                                            verbose_file.flush()
+                                            guest_verbose_txt.write("%s post-mortem %s" % (post.RHS, post.RHS))
+                                            guest_verbose_txt.flush()
+
                                     except pexpect.TIMEOUT as e:
                                         # A post-mortem ending with a
                                         # TIMEOUT gets treated as a
