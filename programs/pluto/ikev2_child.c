@@ -418,7 +418,7 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 #ifdef USE_XFRM_INTERFACE
 	if (cc->xfrmi != NULL && cc->xfrmi->if_id != 0) {
 		if (!add_xfrm_interface(cc, larval_child->sa.logger)) {
-			return v2N_INVALID_SYNTAX; /* fatal */
+			return v2N_TEMPORARY_FAILURE; /* fatal */
 		}
 	}
 #endif
@@ -429,7 +429,7 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 	/* install inbound and outbound SPI info */
 	if (!connection_establish_child(ike, larval_child, HERE)) {
 		/* already logged */
-		return v2N_TS_UNACCEPTABLE;
+		return v2N_TEMPORARY_FAILURE;
 	}
 
 	/*
@@ -832,16 +832,19 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 
 #ifdef USE_XFRM_INTERFACE
 	/* before calling do_command() */
-	if (child->sa.st_state->kind != STATE_V2_REKEY_CHILD_I1)
+	if (child->sa.st_state->kind != STATE_V2_REKEY_CHILD_I1) {
 		if (c->xfrmi != NULL &&
-				c->xfrmi->if_id != 0)
-			if (!add_xfrm_interface(c, child->sa.logger))
-				return v2N_INVALID_SYNTAX; /* fatal */
+		    c->xfrmi->if_id != 0) {
+			if (!add_xfrm_interface(c, child->sa.logger)) {
+				return v2N_TEMPORARY_FAILURE; /* delete child */
+			}
+		}
+	}
 #endif
+
 	/* now install child SAs */
 	if (!connection_establish_child(ike, child, HERE)) {
-		/* This affects/kills the IKE SA? Oops :-( */
-		return v2N_INVALID_SYNTAX; /* fatal */
+		return v2N_TEMPORARY_FAILURE; /* delete child */
 	}
 
 	if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_I1)
