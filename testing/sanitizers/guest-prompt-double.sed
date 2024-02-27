@@ -7,7 +7,7 @@
 #    [root@east]# : ==== cut ====
 #    [root@east]# COMMAND-1
 #    OUTPUT-1
-#    [root@east]# : ... cut ...
+#    [root@east]# : ==== tuc ====
 #    [root@east]# COMMAND-2
 #    OUTPUT-2
 
@@ -22,9 +22,8 @@
 # there were blank lines when there weren't; correct fix is to dump
 # the line splitting but that is another story
 
-# new prompt is not split: west # west# ...
-/^[a-z][a-z]* # [a-z][a-z]*# / b newprompt
-
+# new prompt in all.verbose.txt, is not split: west# ...
+/^[a-z][a-z]*# / b newprompt
 
 # form THIS-LINE\nNEXT-LINE
 $ ! N
@@ -35,15 +34,4 @@ $ ! N
 # delete up to \n (THIS-LINE)
 D
 
-
-# cleanup new prompt vis:
-#   west # west#
-
 :newprompt
-
-  s/^[a-z][a-z]* # //
-  /^[a-z][a-z]*# $/d
-  # very last line
-  /^[a-z][a-z]* #$/d
-  n
-  b newprompt
