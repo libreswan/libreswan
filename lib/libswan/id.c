@@ -75,6 +75,14 @@ err_t atoid(const char *src, struct id *id)
 		return NULL;
 	}
 
+	if (streq(src, "%any") || streq(src, "0.0.0.0")) {
+		/* any ID will be accepted */
+		*id = (struct id) {
+			.kind = ID_NONE,
+		};
+		return NULL;
+	}
+
 	if (strchr(src, '=') != NULL) {
 		/*
 		 * We interpret this as an ASCII X.501 ID_DER_ASN1_DN.
@@ -96,16 +104,10 @@ err_t atoid(const char *src, struct id *id)
 		return NULL;
 	}
 
-	if (streq(src, "%any") || streq(src, "0.0.0.0")) {
-		/* any ID will be accepted */
-		*id = (struct id) {
-			.kind = ID_NONE,
-		};
-		return NULL;
-	}
-
 	if (strchr(src, '@') == NULL) {
 		/*
+		 * i.e., does not contain an @ at all
+		 *
 		 * !!! this test is not sufficient for distinguishing
 		 * address families.
 		 *
@@ -127,14 +129,10 @@ err_t atoid(const char *src, struct id *id)
 		return NULL;
 	}
 
-	if (strneq(src, "@#", 2)) {
+	if (eat(src, "@#")) {
 		/*
-		 * if there is a second specifier (#) on the line we
-		 * interpret this as ID_KEY_ID.
-		 *
-		 * Discard @#, convert from hex to bin.
+		 * @#<HEX> - convert from hex to bin as ID
 		 */
-		src += 2; /* drop "@#" */
 		chunk_t name = NULL_HUNK;
 		err_t ugh = ttochunk(shunk1(src), 16, &name);
 		if (ugh != NULL) {
@@ -142,20 +140,16 @@ err_t atoid(const char *src, struct id *id)
 		}
 		*id = (struct id) {
 			.kind = ID_KEY_ID,
-			.name = HUNK_AS_SHUNK(name),
+			.name = ASN1(name),
 			.scratch = name.ptr,
 		};
 		return NULL;
 	}
 
-	if (strneq(src, "@~", 2)) {
+	if (eat(src, "@~")) {
 		/*
-		 * if there is a second specifier (~) on the line we
-		 * interpret this as a binary ID_DER_ASN1_DN.
-		 *
-		 * discard @~, convert from hex to bin.
+		 * @~<HEX> - convert from hex to bin as DN
 		 */
-		src += 2; /* drop "@~" */
 		chunk_t name = NULL_HUNK;
 		err_t ugh = ttochunk(shunk1(src), 16, &name);
 		if (ugh != NULL) {
@@ -163,19 +157,16 @@ err_t atoid(const char *src, struct id *id)
 		}
 		*id = (struct id) {
 			.kind = ID_DER_ASN1_DN,
-			.name = HUNK_AS_SHUNK(name),
+			.name = ASN1(name),
 			.scratch = name.ptr,
 		};
 		return NULL;
 	}
 
-	if (strneq(src, "@[", 2)) {
+	if (eat(src, "@[")) {
 		/*
-		 * if there is a second specifier ([) on the line we
-		 * interpret this as a text ID_KEY_ID, and we remove a
-		 * trailing "]", if there is one.
+		 * @[<ID> or @[<ID>] - this is documented
 		 */
-		src += 2; /* drop "@[" */
 		int len = strlen(src);
 		if (src[len-1] == ']') {
 			len -= 1; /* drop trailing "]" */
@@ -189,8 +180,11 @@ err_t atoid(const char *src, struct id *id)
 		return NULL;
 	}
 
-	if (*src == '@') {
-		chunk_t name = clone_bytes_as_chunk(src + 1, strlen(src)-1, "fqdn id");
+	if (eat(src, "@")) {
+		/*
+		 * @<FQDN> - reduced to <FQDN>
+		 */
+		chunk_t name = clone_bytes_as_chunk(src, strlen(src), "fqdn id");
 		*id = (struct id) {
 			.kind = ID_FQDN,
 			/* discard @ */
@@ -201,7 +195,7 @@ err_t atoid(const char *src, struct id *id)
 	}
 
 	/*
-	 * We leave in @, as per DOI 4.6.2.4 (but DNS wants
+	 * <DN>@<DN> unchanged per DOI 4.6.2.4 (but DNS wants
 	 * . instead).
 	 */
 	chunk_t name = clone_bytes_as_chunk(src, strlen(src), "DOI 4.6.2.4");
