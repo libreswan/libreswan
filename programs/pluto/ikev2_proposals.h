@@ -44,23 +44,23 @@ void llog_v2_proposals(lset_t rc_flags, struct logger *logger,
  * juggling is avoided.
  */
 
-v2_notification_t ikev2_process_sa_payload(const char *what,
-					   pb_stream *sa_payload,
-					   bool expect_ike,
-					   bool expect_spi,
-					   bool expect_accepted,
-					   bool opportunistic,
-					   struct ikev2_proposal **chosen_proposal,
-					   const struct ikev2_proposals *local_proposals,
-					   struct logger *logger);
+v2_notification_t process_v2SA_payload(const char *what,
+				       pb_stream *sa_payload,
+				       bool expect_ike,
+				       bool expect_spi,
+				       bool expect_accepted,
+				       bool opportunistic,
+				       struct ikev2_proposal **chosen_proposal,
+				       const struct ikev2_proposals *local_proposals,
+				       struct logger *logger);
 
-bool ikev2_emit_sa_proposals(struct pbs_out *pbs,
-			     const struct ikev2_proposals *proposals,
-			     const shunk_t local_spi);
+bool emit_v2SA_proposals(struct pbs_out *pbs,
+			 const struct ikev2_proposals *proposals,
+			 const shunk_t local_spi);
 
-bool ikev2_emit_sa_proposal(pb_stream *pbs,
-			    const struct ikev2_proposal *proposal,
-			    shunk_t local_spi);
+bool emit_v2SA_proposal(pb_stream *pbs,
+			const struct ikev2_proposal *proposal,
+			shunk_t local_spi);
 
 bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 				   struct trans_attrs *ta_out, struct logger *logger);
@@ -115,7 +115,7 @@ const struct dh_desc *ikev2_proposals_first_dh(const struct ikev2_proposals *pro
 bool ikev2_proposals_include_modp(const struct ikev2_proposals *proposals,
 				  oakley_group_t modp);
 
-void ikev2_copy_cookie_from_sa(const struct ikev2_proposal *accepted_ike_proposal,
-			       ike_spi_t *cookie);
+void ikev2_copy_child_spi_from_proposal(const struct ikev2_proposal *accepted_ike_proposal,
+					ike_spi_t *cookie);
 
 #endif

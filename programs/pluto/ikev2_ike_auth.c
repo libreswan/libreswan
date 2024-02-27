@@ -979,7 +979,7 @@ static stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike
 
 	if (send_redirect) {
 		dbg("skipping child; redirect response");
-	} else if (!process_any_v2_IKE_AUTH_request_child_sa_payloads(ike, md, response.pbs)) {
+	} else if (!process_any_v2_IKE_AUTH_request_child_payloads(ike, md, response.pbs)) {
 		/* already logged; already recorded */
 		return STF_FATAL;
 	}
@@ -1150,7 +1150,7 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 	 * See 2.21.2.  Error Handling in IKE_AUTH
 	 */
 
-	v2_notification_t n = process_v2_IKE_AUTH_response_child_sa_payloads(ike, md);
+	v2_notification_t n = process_v2_IKE_AUTH_response_child_payloads(ike, md);
 
 	if (v2_notification_fatal(n)) {
 		/* already logged */

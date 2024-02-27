@@ -394,9 +394,9 @@ static bool record_v2_rekey_ike_message(struct ike_sa *ike,
 		 */
 		shunk_t local_spi = THING_AS_SHUNK(larval_ike->sa.st_ike_rekey_spis.initiator);
 		/* send v2 IKE SAs*/
-		if (!ikev2_emit_sa_proposals(message.pbs,
-					     larval_ike->sa.st_v2_create_child_sa_proposals,
-					     local_spi)) {
+		if (!emit_v2SA_proposals(message.pbs,
+					 larval_ike->sa.st_v2_create_child_sa_proposals,
+					 local_spi)) {
 			llog_sa(RC_LOG, larval_ike, "outsa fail");
 			return false;
 		}
@@ -409,7 +409,7 @@ static bool record_v2_rekey_ike_message(struct ike_sa *ike,
 		 */
 		shunk_t local_spi = THING_AS_SHUNK(larval_ike->sa.st_ike_rekey_spis.responder);
 		/* send selected v2 IKE SA */
-		if (!ikev2_emit_sa_proposal(message.pbs, larval_ike->sa.st_v2_accepted_proposal, local_spi)) {
+		if (!emit_v2SA_proposal(message.pbs, larval_ike->sa.st_v2_accepted_proposal, local_spi)) {
 			llog_sa(RC_LOG, larval_ike, "outsa fail");
 			return false;
 		}
@@ -1002,10 +1002,10 @@ stf_status process_v2_CREATE_CHILD_SA_request(struct ike_sa *ike,
 		return STF_FATAL; /* invalid syntax means we're dead */
 	}
 
-	n = process_v2_childs_sa_payload("CREATE_CHILD_SA request",
-					 ike, larval_child, md,
-					 larval_child->sa.st_v2_create_child_sa_proposals,
-					 /*expect-accepted-proposal?*/false);
+	n = process_childs_v2SA_payload("CREATE_CHILD_SA request",
+					ike, larval_child, md,
+					larval_child->sa.st_v2_create_child_sa_proposals,
+					/*expect-accepted-proposal?*/false);
 	if (n != v2N_NOTHING_WRONG) {
 		record_v2N_response(ike->sa.logger, ike, md,
 				    n, NULL/*no-data*/, ENCRYPTED_PAYLOAD);
@@ -1225,10 +1225,10 @@ stf_status process_v2_CREATE_CHILD_SA_child_response(struct ike_sa *ike,
 		return STF_FATAL; /* IKE */
 	}
 
-	n = process_v2_childs_sa_payload("CREATE_CHILD_SA responder matching remote ESP/AH proposals",
-					 ike, larval_child, response_md,
-					 larval_child->sa.st_v2_create_child_sa_proposals,
-					 /*expect-accepted-proposal?*/true);
+	n = process_childs_v2SA_payload("CREATE_CHILD_SA responder matching remote ESP/AH proposals",
+					ike, larval_child, response_md,
+					larval_child->sa.st_v2_create_child_sa_proposals,
+					/*expect-accepted-proposal?*/true);
 	if (v2_notification_fatal(n)) {
 		return STF_FATAL; /* IKE */
 	}
@@ -1543,14 +1543,14 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
 	const struct ikev2_proposals *ike_proposals = c->config->v2_ike_proposals;
 
 	struct payload_digest *const sa_pd = request_md->chain[ISAKMP_NEXT_v2SA];
-	n = ikev2_process_sa_payload("IKE Rekey responder child",
-				     &sa_pd->pbs,
-				     /*expect_ike*/ true,
-				     /*expect_spi*/ true,
-				     /*expect_accepted*/ false,
-				     is_opportunistic(c),
-				     &larval_ike->sa.st_v2_accepted_proposal,
-				     ike_proposals, larval_ike->sa.logger);
+	n = process_v2SA_payload("IKE Rekey responder child",
+				 &sa_pd->pbs,
+				 /*expect_ike*/ true,
+				 /*expect_spi*/ true,
+				 /*expect_accepted*/ false,
+				 is_opportunistic(c),
+				 &larval_ike->sa.st_v2_accepted_proposal,
+				 ike_proposals, larval_ike->sa.logger);
 	if (n != v2N_NOTHING_WRONG) {
 		pexpect(larval_ike->sa.st_sa_role == SA_RESPONDER);
 		record_v2N_response(larval_ike->sa.logger, ike, request_md,
@@ -1626,8 +1626,8 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_1(struct
 	/* initiate calculation of g^xy */
 	passert(ike_spi_is_zero(&larval_ike->sa.st_ike_rekey_spis.initiator));
 	passert(ike_spi_is_zero(&larval_ike->sa.st_ike_rekey_spis.responder));
-	ikev2_copy_cookie_from_sa(larval_ike->sa.st_v2_accepted_proposal,
-				  &larval_ike->sa.st_ike_rekey_spis.initiator);
+	ikev2_copy_child_spi_from_proposal(larval_ike->sa.st_v2_accepted_proposal,
+					   &larval_ike->sa.st_ike_rekey_spis.initiator);
 	larval_ike->sa.st_ike_rekey_spis.responder = ike_responder_spi(&request_md->sender,
 								       larval_ike->sa.logger);
 	submit_dh_shared_secret(&ike->sa, &larval_ike->sa,
@@ -1731,15 +1731,15 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response(struct ike_sa *ike,
 	 * that it matches the rekey proposal originally sent.
 	 */
 	struct payload_digest *const sa_pd = response_md->chain[ISAKMP_NEXT_v2SA];
-	n = ikev2_process_sa_payload("IKE initiator (accepting)",
-				     &sa_pd->pbs,
-				     /*expect_ike*/ true,
-				     /*expect_spi*/ true,
-				     /*expect_accepted*/ true,
-				     is_opportunistic(c),
-				     &larval_ike->sa.st_v2_accepted_proposal,
-				     larval_ike->sa.st_v2_create_child_sa_proposals,
-				     larval_ike->sa.logger);
+	n = process_v2SA_payload("IKE initiator (accepting)",
+				 &sa_pd->pbs,
+				 /*expect_ike*/ true,
+				 /*expect_spi*/ true,
+				 /*expect_accepted*/ true,
+				 is_opportunistic(c),
+				 &larval_ike->sa.st_v2_accepted_proposal,
+				 larval_ike->sa.st_v2_create_child_sa_proposals,
+				 larval_ike->sa.logger);
 	if (v2_notification_fatal(n)) {
 		return STF_FATAL;
 	}
@@ -1779,8 +1779,8 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response(struct ike_sa *ike,
 	/* fill in the missing responder SPI */
 	passert(!ike_spi_is_zero(&larval_ike->sa.st_ike_rekey_spis.initiator));
 	passert(ike_spi_is_zero(&larval_ike->sa.st_ike_rekey_spis.responder));
-	ikev2_copy_cookie_from_sa(larval_ike->sa.st_v2_accepted_proposal,
-				  &larval_ike->sa.st_ike_rekey_spis.responder);
+	ikev2_copy_child_spi_from_proposal(larval_ike->sa.st_v2_accepted_proposal,
+					   &larval_ike->sa.st_ike_rekey_spis.responder);
 
 	/* initiate calculation of g^xy for rekey */
 	submit_dh_shared_secret(&ike->sa, &larval_ike->sa,

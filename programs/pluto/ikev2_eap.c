@@ -803,7 +803,7 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 
 	if (send_redirect) {
 		dbg("skipping child; redirect response");
-	} else if (!process_any_v2_IKE_AUTH_request_child_sa_payloads(ike, md, response.pbs)) {
+	} else if (!process_any_v2_IKE_AUTH_request_child_payloads(ike, md, response.pbs)) {
 		/* already logged; already recorded */
 		return STF_FATAL;
 	}

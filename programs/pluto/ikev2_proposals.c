@@ -1135,15 +1135,15 @@ static int ikev2_process_proposals(pb_stream *sa_payload,
  * takes more comparisons.  On the other hand, mallocing and pointer
  * juggling is avoided.
  */
-v2_notification_t ikev2_process_sa_payload(const char *what,
-					   pb_stream *sa_payload,
-					   bool expect_ike,
-					   bool expect_spi,
-					   bool expect_accepted,
-					   bool opportunistic,
-					   struct ikev2_proposal **chosen_proposal,
-					   const struct ikev2_proposals *local_proposals,
-					   struct logger *logger)
+v2_notification_t process_v2SA_payload(const char *what,
+				       pb_stream *sa_payload,
+				       bool expect_ike,
+				       bool expect_spi,
+				       bool expect_accepted,
+				       bool opportunistic,
+				       struct ikev2_proposal **chosen_proposal,
+				       const struct ikev2_proposals *local_proposals,
+				       struct logger *logger)
 {
 	dbg("comparing remote proposals against %s %d local proposals",
 	    what, local_proposals->roof - 1);
@@ -1552,9 +1552,9 @@ static bool emit_proposal(struct pbs_out *sa_pbs,
 	return true;
 }
 
-bool ikev2_emit_sa_proposals(struct pbs_out *pbs,
-			     const struct ikev2_proposals *proposals,
-			     const shunk_t local_spi)
+bool emit_v2SA_proposals(struct pbs_out *pbs,
+			 const struct ikev2_proposals *proposals,
+			 const shunk_t local_spi)
 {
 	dbg("Emitting ikev2_proposals ...");
 
@@ -1586,9 +1586,9 @@ bool ikev2_emit_sa_proposals(struct pbs_out *pbs,
 	return true;
 }
 
-bool ikev2_emit_sa_proposal(pb_stream *pbs,
-			    const struct ikev2_proposal *proposal,
-			    shunk_t local_spi)
+bool emit_v2SA_proposal(pb_stream *pbs,
+			const struct ikev2_proposal *proposal,
+			shunk_t local_spi)
 {
 	dbg("emitting ikev2_proposal ...");
 	passert(pbs != NULL);
@@ -2365,8 +2365,8 @@ bool ikev2_proposals_include_modp(const struct ikev2_proposals *proposals,
 	return false;
 }
 
-void ikev2_copy_cookie_from_sa(const struct ikev2_proposal *accepted_ike_proposal,
-				ike_spi_t *cookie)
+void ikev2_copy_child_spi_from_proposal(const struct ikev2_proposal *accepted_ike_proposal,
+					ike_spi_t *cookie)
 {
 	passert(accepted_ike_proposal->remote_spi.size == COOKIE_SIZE);
 	/* st_icookie is an array of len COOKIE_SIZE. only accept this length */

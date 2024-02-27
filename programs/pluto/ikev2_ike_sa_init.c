@@ -821,8 +821,8 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 	/* SA out */
 
 	const struct ikev2_proposals *ike_proposals = c->config->v2_ike_proposals;
-	if (!ikev2_emit_sa_proposals(request.pbs, ike_proposals,
-				     null_shunk /* IKE - no CHILD SPI */)) {
+	if (!emit_v2SA_proposals(request.pbs, ike_proposals,
+				 null_shunk /* IKE - no CHILD SPI */)) {
 		return false;
 	}
 
@@ -981,14 +981,14 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 	/*
 	 * Select the proposal.
 	 */
-	n = ikev2_process_sa_payload("IKE responder",
-				     &md->chain[ISAKMP_NEXT_v2SA]->pbs,
-				     /*expect_ike*/ true,
-				     /*expect_spi*/ false,
-				     /*expect_accepted*/ false,
-				     is_opportunistic(c),
-				     &ike->sa.st_v2_accepted_proposal,
-				     ike_proposals, ike->sa.logger);
+	n = process_v2SA_payload("IKE responder",
+				 &md->chain[ISAKMP_NEXT_v2SA]->pbs,
+				 /*expect_ike*/ true,
+				 /*expect_spi*/ false,
+				 /*expect_accepted*/ false,
+				 is_opportunistic(c),
+				 &ike->sa.st_v2_accepted_proposal,
+				 ike_proposals, ike->sa.logger);
 	if (n != v2N_NOTHING_WRONG) {
 		pexpect(ike->sa.st_sa_role == SA_RESPONDER);
 		record_v2N_response(ike->sa.logger, ike, md,
@@ -1154,8 +1154,8 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 		 * part of the proposal.  Hence the NULL SPI.
 		 */
 		passert(ike->sa.st_v2_accepted_proposal != NULL);
-		if (!ikev2_emit_sa_proposal(response.pbs, ike->sa.st_v2_accepted_proposal,
-					    null_shunk/*IKE has no SPI*/)) {
+		if (!emit_v2SA_proposal(response.pbs, ike->sa.st_v2_accepted_proposal,
+					null_shunk/*IKE has no SPI*/)) {
 			dbg("problem emitting accepted proposal");
 			return STF_INTERNAL_ERROR;
 		}
@@ -1523,14 +1523,14 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 			md->chain[ISAKMP_NEXT_v2SA];
 		const struct ikev2_proposals *ike_proposals = c->config->v2_ike_proposals;
 
-		n = ikev2_process_sa_payload("IKE initiator (accepting)",
-					     &sa_pd->pbs,
-					     /*expect_ike*/ true,
-					     /*expect_spi*/ false,
-					     /*expect_accepted*/ true,
-					     is_opportunistic(c),
-					     &ike->sa.st_v2_accepted_proposal,
-					     ike_proposals, ike->sa.logger);
+		n = process_v2SA_payload("IKE initiator (accepting)",
+					 &sa_pd->pbs,
+					 /*expect_ike*/ true,
+					 /*expect_spi*/ false,
+					 /*expect_accepted*/ true,
+					 is_opportunistic(c),
+					 &ike->sa.st_v2_accepted_proposal,
+					 ike_proposals, ike->sa.logger);
 		if (n != v2N_NOTHING_WRONG) {
 			dbg("ikev2_parse_parent_sa_body() failed in ikev2_parent_inR1outI2()");
 			/*

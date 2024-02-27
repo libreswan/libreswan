@@ -22,19 +22,17 @@ struct ike_sa;
 struct pbs_out;
 
 /*
- * Result of processing CHILD SA payloads.  Don't use STF_STATUS as it
- * is too ill defined.  Caller needs to see this and decide what
- * action to take.
- *
- * Caller needs to check returned v2_notification_t to see if it is
- * fatal.  See RFC.
+ * Result of processing the Child SA's SA payloads.  Don't use
+ * STF_STATUS as it is too poorly defined.  Caller needs to check
+ * returned v2_notification_t to see if it is fatal and/or return a
+ * notify and/or initiate a delete.  See RFC.
  */
 
-v2_notification_t process_v2_childs_sa_payload(const char *what, struct ike_sa *ike,
-					       struct child_sa *larval_child,
-					       struct msg_digest *md,
-					       const struct ikev2_proposals *child_proposals,
-					       bool expect_accepted_proposal);
+v2_notification_t process_childs_v2SA_payload(const char *what, struct ike_sa *ike,
+					      struct child_sa *larval_child,
+					      struct msg_digest *md,
+					      const struct ikev2_proposals *child_proposals,
+					      bool expect_accepted_proposal);
 
 /*
  * Work the initiator and responder Child SAs through to being
@@ -60,12 +58,12 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike,
 
 void v2_child_sa_established(struct ike_sa *ike, struct child_sa *child);
 
-v2_notification_t process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *ike,
-								 struct msg_digest *md);
+v2_notification_t process_v2_IKE_AUTH_response_child_payloads(struct ike_sa *ike,
+							      struct msg_digest *md);
 
-bool process_any_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *ike,
-						       struct msg_digest *md,
-						       struct pbs_out *sk_pbs);
+bool process_any_v2_IKE_AUTH_request_child_payloads(struct ike_sa *ike,
+						    struct msg_digest *md,
+						    struct pbs_out *sk_pbs);
 
 /*
  * Macro as that handles const CHILD.

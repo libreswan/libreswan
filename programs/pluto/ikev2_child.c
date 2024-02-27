@@ -73,7 +73,11 @@ static bool emit_v2_child_response_payloads(struct ike_sa *ike,
 					    const struct msg_digest *request_md,
 					    struct pbs_out *outpbs);
 
-static bool has_v2_IKE_AUTH_child_sa_payloads(const struct msg_digest *md)
+/*
+ * All payloads required by an IKE_AUTH child?
+ */
+
+static bool has_v2_IKE_AUTH_child_payloads(const struct msg_digest *md)
 {
 	return (md->chain[ISAKMP_NEXT_v2SA] != NULL &&
 		md->chain[ISAKMP_NEXT_v2TSi] != NULL &&
@@ -199,7 +203,7 @@ bool emit_v2_child_request_payloads(const struct ike_sa *ike,
 
 	const struct ipsec_proto_info *proto_info = ikev2_child_sa_proto_info(larval_child);
 	shunk_t local_spi = THING_AS_SHUNK(proto_info->inbound.spi);
-	if (!ikev2_emit_sa_proposals(pbs, child_proposals, local_spi)) {
+	if (!emit_v2SA_proposals(pbs, child_proposals, local_spi)) {
 		return false;
 	}
 
@@ -473,9 +477,9 @@ bool emit_v2_child_response_payloads(struct ike_sa *ike,
 		/* ??? this code won't support AH + ESP */
 		const struct ipsec_proto_info *proto_info = ikev2_child_sa_proto_info(larval_child);
 		shunk_t local_spi = THING_AS_SHUNK(proto_info->inbound.spi);
-		if (!ikev2_emit_sa_proposal(outpbs,
-					    larval_child->sa.st_v2_accepted_proposal,
-					    local_spi)) {
+		if (!emit_v2SA_proposal(outpbs,
+					larval_child->sa.st_v2_accepted_proposal,
+					local_spi)) {
 			dbg("problem emitting accepted proposal");
 			return false;
 		}
@@ -536,26 +540,26 @@ bool emit_v2_child_response_payloads(struct ike_sa *ike,
 	return true;
 }
 
-v2_notification_t process_v2_childs_sa_payload(const char *what,
-					       struct ike_sa *ike UNUSED,
-					       struct child_sa *child,
-					       struct msg_digest *md,
-					       const struct ikev2_proposals *child_proposals,
-					       bool expect_accepted_proposal)
+v2_notification_t process_childs_v2SA_payload(const char *what,
+					      struct ike_sa *ike UNUSED,
+					      struct child_sa *child,
+					      struct msg_digest *md,
+					      const struct ikev2_proposals *child_proposals,
+					      bool expect_accepted_proposal)
 {
 	struct connection *c = child->sa.st_connection;
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
 	enum isakmp_xchg_type isa_xchg = md->hdr.isa_xchg;
 	v2_notification_t n;
 
-	n = ikev2_process_sa_payload(what,
-				     &sa_pd->pbs,
-				     /*expect_ike*/ false,
-				     /*expect_spi*/ true,
-				     expect_accepted_proposal,
-				     is_opportunistic(c),
-				     &child->sa.st_v2_accepted_proposal,
-				     child_proposals, child->sa.logger);
+	n = process_v2SA_payload(what,
+				 &sa_pd->pbs,
+				 /*expect_ike*/ false,
+				 /*expect_spi*/ true,
+				 expect_accepted_proposal,
+				 is_opportunistic(c),
+				 &child->sa.st_v2_accepted_proposal,
+				 child_proposals, child->sa.logger);
 	if (n != v2N_NOTHING_WRONG) {
 		llog_sa(RC_LOG_SERIOUS, child,
 			"%s failed, responder SA processing returned %s",
@@ -944,10 +948,10 @@ static v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ik
 		ldbg_sa(child, "skipping TS processing, mainly to stop tests failing but rumored to cause connection flips?!?");
 	}
 
-	n = process_v2_childs_sa_payload("IKE_AUTH responder matching remote ESP/AH proposals",
-					 ike, child, md,
-					 child->sa.st_connection->config->child_sa.v2_ike_auth_proposals,
-					 /*expect-accepted-proposal?*/false);
+	n = process_childs_v2SA_payload("IKE_AUTH responder matching remote ESP/AH proposals",
+					ike, child, md,
+					child->sa.st_connection->config->child_sa.v2_ike_auth_proposals,
+					/*expect-accepted-proposal?*/false);
 	ldbg(child->sa.logger, "process_v2_childs_sa_payload() returned %s",
 	     enum_name(&v2_notification_names, n));
 	if (n != v2N_NOTHING_WRONG) {
@@ -973,13 +977,13 @@ static v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ik
  * connection; reply, if any, will already be recorded.
  */
 
-bool process_any_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *ike,
-						       struct msg_digest *md,
-						       struct pbs_out *sk_pbs)
+bool process_any_v2_IKE_AUTH_request_child_payloads(struct ike_sa *ike,
+						    struct msg_digest *md,
+						    struct pbs_out *sk_pbs)
 {
 	if (impair.omit_v2_ike_auth_child) {
 		/* only omit when missing */
-		if (has_v2_IKE_AUTH_child_sa_payloads(md)) {
+		if (has_v2_IKE_AUTH_child_payloads(md)) {
 			llog_pexpect(ike->sa.logger, HERE,
 				     "IMPAIR: IKE_AUTH request should have omitted CHILD SA payloads");
 			return false; /* fatal */
@@ -990,7 +994,7 @@ bool process_any_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *ike,
 
 	if (impair.ignore_v2_ike_auth_child) {
 		/* try to ignore the child */
-		if (!has_v2_IKE_AUTH_child_sa_payloads(md)) {
+		if (!has_v2_IKE_AUTH_child_payloads(md)) {
 			llog_pexpect(ike->sa.logger, HERE,
 				     "IMPAIR: IKE_AUTH request should have included CHILD_SA payloads");
 			return false; /* fatal */
@@ -1000,7 +1004,7 @@ bool process_any_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *ike,
 	}
 
 	/* try to process them */
-	if (!has_v2_IKE_AUTH_child_sa_payloads(md)) {
+	if (!has_v2_IKE_AUTH_child_payloads(md)) {
 		llog_sa(RC_LOG, ike, "IKE_AUTH request does not propose a Child SA; creating childless SA");
 		return true;
 	}
@@ -1043,14 +1047,14 @@ bool process_any_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *ike,
  * delete child exchange sending v2N.
  */
 
-v2_notification_t process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *ike,
-								 struct msg_digest *response_md)
+v2_notification_t process_v2_IKE_AUTH_response_child_payloads(struct ike_sa *ike,
+							      struct msg_digest *response_md)
 {
 	v2_notification_t n;
 
 	if (impair.ignore_v2_ike_auth_child) {
 		/* Try to ignore the CHILD SA payloads. */
-		if (!has_v2_IKE_AUTH_child_sa_payloads(response_md)) {
+		if (!has_v2_IKE_AUTH_child_payloads(response_md)) {
 			llog_pexpect(ike->sa.logger, HERE,
 				     "IMPAIR: IKE_AUTH response should have included CHILD SA payloads");
 			return v2N_INVALID_SYNTAX; /* fatal */
@@ -1062,7 +1066,7 @@ v2_notification_t process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *
 
 	if (impair.omit_v2_ike_auth_child) {
 		/* Try to ignore missing CHILD SA payloads. */
-		if (has_v2_IKE_AUTH_child_sa_payloads(response_md)) {
+		if (has_v2_IKE_AUTH_child_payloads(response_md)) {
 			llog_pexpect(ike->sa.logger, HERE,
 				     "IMPAIR: IKE_AUTH response should have omitted CHILD SA payloads");
 			return v2N_INVALID_SYNTAX; /* fatal */
@@ -1077,7 +1081,7 @@ v2_notification_t process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *
 		 * Did the responder send Child SA payloads this end
 		 * didn't ask for?
 		 */
-		if (has_v2_IKE_AUTH_child_sa_payloads(response_md)) {
+		if (has_v2_IKE_AUTH_child_payloads(response_md)) {
 			llog_sa(RC_LOG_SERIOUS, ike,
 				"IKE_AUTH response contains v2SA, v2TSi or v2TSr: but a CHILD SA was not requested!");
 			return v2N_INVALID_SYNTAX; /* fatal */
@@ -1134,7 +1138,7 @@ v2_notification_t process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *
 	 */
 
 	/* Expect CHILD SA payloads. */
-	if (!has_v2_IKE_AUTH_child_sa_payloads(response_md)) {
+	if (!has_v2_IKE_AUTH_child_payloads(response_md)) {
 		llog_sa(RC_LOG_SERIOUS, child,
 			"IKE_AUTH response missing v2SA, v2TSi or v2TSr: not attempting to setup CHILD SA");
 		return v2N_TS_UNACCEPTABLE;
@@ -1145,10 +1149,10 @@ v2_notification_t process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *
 
 	/* examine and accept SA ESP/AH proposals */
 
-	n = process_v2_childs_sa_payload("IKE_AUTH initiator accepting remote ESP/AH proposal",
-					 ike, child, response_md,
-					 child->sa.st_connection->config->child_sa.v2_ike_auth_proposals,
-					 /*expect-accepted-proposal?*/true);
+	n = process_childs_v2SA_payload("IKE_AUTH initiator accepting remote ESP/AH proposal",
+					ike, child, response_md,
+					child->sa.st_connection->config->child_sa.v2_ike_auth_proposals,
+					/*expect-accepted-proposal?*/true);
 	if (n != v2N_NOTHING_WRONG) {
 		return n;
 	}
