@@ -332,8 +332,8 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
 
                         try:
 
-                            verbose_txt = open(os.path.join(test.output_directory, "all.console.verbose.txt"), "w")
-                            verbose_files = {None: verbose_txt}
+                            all_verbose_txt = open(os.path.join(test.output_directory, "all.console.verbose.txt"), "w")
+                            verbose_files = {None: all_verbose_txt}
 
                             # re-direct the test-result log file
                             for test_domain in test_domains.values():
@@ -356,12 +356,12 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                     # comment to the merged output
                                     # file.
                                     if command.line:
-                                        verbose_txt.write("# ")
-                                        verbose_txt.write(command.line)
+                                        all_verbose_txt.write("# ")
+                                        all_verbose_txt.write(command.line)
                                     else:
-                                        verbose_txt.write("#")
-                                    verbose_txt.write("\n")
-                                    verbose_txt.flush()
+                                        all_verbose_txt.write("#")
+                                    all_verbose_txt.write("\n")
+                                    all_verbose_txt.flush()
                                     continue
 
                                 test_domain = test_domains[command.guest_name]
@@ -380,15 +380,15 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                     #
                                     # Should output file be opened in
                                     # binary mode?
-                                    verbose_txt.write(command.guest_name)
-                                    verbose_txt.write("# ")
-                                    verbose_txt.write(command.line)
-                                    verbose_txt.write("\n")
+                                    all_verbose_txt.write(command.guest_name)
+                                    all_verbose_txt.write("# ")
+                                    all_verbose_txt.write(command.line)
+                                    all_verbose_txt.write("\n")
                                     if output:
-                                        verbose_txt.write("\n")
-                                        verbose_txt.write(output.decode()) # convert byte to string
-                                    verbose_txt.write("\n")
-                                    verbose_txt.flush()
+                                        all_verbose_txt.write("\n")
+                                        all_verbose_txt.write(output.decode()) # convert byte to string
+                                    all_verbose_txt.write("\n")
+                                    all_verbose_txt.flush()
                                 except pexpect.TIMEOUT as e:
                                     # A timeout while running a test
                                     # command is a sign that the
@@ -431,19 +431,19 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                 post_mortem_ok = True
                                 script = "../../guestbin/post-mortem.sh"
                                 # Tag merged file ready for post-mortem output
-                                verbose_txt.write("%s post-mortem %s" % (post.LHS, post.LHS))
-                                verbose_txt.flush()
+                                all_verbose_txt.write("%s post-mortem %s" % (post.LHS, post.LHS))
+                                all_verbose_txt.flush()
                                 # run post mortem
                                 for guest_name in test.guest_names:
                                     test_domain = test_domains[guest_name]
                                     logger.info("running %s on %s", script, guest_name)
                                     try:
                                         # no-echo so fake prompt
-                                        verbose_txt.write(guest_name)
-                                        verbose_txt.write("# ")
-                                        verbose_txt.write(script)
-                                        verbose_txt.write("\n")
-                                        verbose_txt.flush()
+                                        all_verbose_txt.write(guest_name)
+                                        all_verbose_txt.write("# ")
+                                        all_verbose_txt.write(script)
+                                        all_verbose_txt.write("\n")
+                                        all_verbose_txt.flush()
                                         # and mark domain's console
                                         verbose_file = verbose_files[guest_name]
                                         verbose_file.write("%s post-mortem %s" % (post.LHS, post.LHS))
@@ -454,8 +454,8 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                             post_mortem_ok = False
                                             logger.error("%s failed on %s with status %s", script, guest_name, status)
                                         else:
-                                            verbose_txt.write(output.decode())
-                                            verbose_txt.flush()
+                                            all_verbose_txt.write(output.decode())
+                                            all_verbose_txt.flush()
                                             verbose_file.write("%s post-mortem %s" % (post.RHS, post.RHS))
                                             verbose_file.flush()
                                     except pexpect.TIMEOUT as e:
@@ -465,7 +465,7 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                         message = "%s while running script %s" % (post.Issues.TIMEOUT, script)
                                         logger.warning("*** %s ***" % message)
                                         test_domain.console.append_output("%s %s %s", post.LHS, message, post.RHS)
-                                        verbose_txt.write("%s %s %s", post.LHS, message, post.RHS)
+                                        all_verbose_txt.write("%s %s %s", post.LHS, message, post.RHS)
                                         continue # always teardown
                                     except pexpect.EOF as e:
                                         # A post-mortem ending with an
@@ -474,7 +474,7 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                         message = "%s while running script %s" % (post.Issues.EOF, script)
                                         logger.exception("*** %s ***" % message)
                                         test_domain.console.append_output("%s %s %s", post.LHS, message, post.RHS)
-                                        verbose_txt.write("%s %s %s", post.LHS, message, post.RHS)
+                                        all_verbose_txt.write("%s %s %s", post.LHS, message, post.RHS)
                                         continue # always teardown
                                     except BaseException as e:
                                         # if there is an exception, write
@@ -482,12 +482,12 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                         message = "%s %s while running script %s" % (post.Issues.EXCEPTION, str(e), script)
                                         logger.exception(message)
                                         test_domain.console.append_output("\n%s %s %s\n", post.LHS, message, post.RHS)
-                                        verbose_txt.write("\n%s %s %s\n", post.LHS, message, post.RHS)
+                                        all_verbose_txt.write("\n%s %s %s\n", post.LHS, message, post.RHS)
                                         raise
 
                                 if post_mortem_ok:
-                                    verbose_txt.write("%s post-mortem %s" % (post.RHS, post.RHS))
-                                    verbose_txt.flush()
+                                    all_verbose_txt.write("%s post-mortem %s" % (post.RHS, post.RHS))
+                                    all_verbose_txt.flush()
 
                             for f in verbose_files.values():
                                 f.write(post.DONE)
