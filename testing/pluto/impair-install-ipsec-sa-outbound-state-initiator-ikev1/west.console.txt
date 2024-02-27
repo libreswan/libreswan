@@ -32,6 +32,10 @@ west #
 west #
  ipsec whack --impair install_ipsec_sa_outbound_state
 west #
+ # Initiate; during IKE_AUTH the child should fail and the connection
+west #
+ # put on to the revival queue
+west #
  ipsec up west-east
 "west-east" #1: initiating IKEv1 Main Mode connection
 "west-east" #1: sent Main Mode request
@@ -42,19 +46,35 @@ west #
 "west-east" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+ROUTE+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 "west-east" #2: sent Quick Mode request
 "west-east" #2: IMPAIR: kernel: install_ipsec_sa_outbound_state in setup_half_kernel_state()
-EXPECTATION FAILED: "west-east" #2: state transition function for STATE_QUICK_I1 had internal error (complete_v1_state_transition() +2851 programs/pluto/ikev1.c)
+"west-east" #2: state transition failed: failed
+"west-east" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"west-east" #2: IMPAIR: revival: skip scheduling revival event
+"west-east" #2: deleting IPsec SA (QUICK_I1) and NOT sending notification
+ERROR: "west-east" #2: netlink response for Del SA esp.ESPSPIi@192.1.2.23: No such process (errno 3)
 west #
- ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
-down UNEXPECTED
-# ping -n -c 1  -i 6 -w 5   -I 192.0.1.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data. --- 192.0.2.254 ping statistics --- 1 packets transmitted, 0 received, 100% packet loss, time XXXX
+ # expect the on-demand kernel policy
 west #
- ipsec whack --trafficstatus
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.0.1.0/24 dst 192.0.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
 west #
- echo done
-done
+ # Trigger an acquire; this fast track the revival using
+west #
+ # CREATE_CHILD_SA and again it will fail
+west #
+ ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
+down
+west #
+ ../../guestbin/wait-for-pluto.sh '#3: IMPAIR: revival'
+"west-east" #3: IMPAIR: revival: skip scheduling revival event
 west #
  ../../guestbin/ipsec-kernel-state.sh
+src 192.0.1.254 dst 192.0.2.254
+	proto esp spi 0x00000000 reqid 0 mode transport
+	replay-window 0 
+	sel src 192.0.1.254/32 dst 192.0.2.254/32 proto icmp type 8 code 0 dev eth1 
 west #
  ../../guestbin/ipsec-kernel-policy.sh
 src 192.0.1.0/24 dst 192.0.2.0/24

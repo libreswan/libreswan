@@ -32,6 +32,10 @@ west #
 west #
  ipsec whack --impair install_ipsec_sa_outbound_state
 west #
+ # Initiate; during IKE_AUTH the child should fail and the connection
+west #
+ # put on to the revival queue
+west #
  ipsec up west-east
 "west-east" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "west-east" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
@@ -46,21 +50,1024 @@ west #
 ERROR: "west-east" #2: netlink response for Del SA esp.ESPSPIi@192.1.2.23: No such process (errno 3)
 "west-east" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and NOT sending notification
 west #
- ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
-down UNEXPECTED
-# ping -n -c 1  -i 6 -w 5   -I 192.0.1.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data. --- 192.0.2.254 ping statistics --- 1 packets transmitted, 0 received, 100% packet loss, time XXXX
+ # expect the on-demand kernel policy
 west #
- ipsec whack --trafficstatus
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.0.1.0/24 dst 192.0.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
 west #
- echo done
-done
+ # Trigger an acquire; this fast track the revival using
+west #
+ # CREATE_CHILD_SA and again it will fail
+west #
+ ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
+down
+west #
+ ../../guestbin/wait-for-pluto.sh '#3: IMPAIR: revival'
+timeout waiting 30 seconds for cat /tmp/pluto.log to match #3: IMPAIR: revival
+output: | NAT_TRAVERSAL encaps using auto-detect
+output: | NAT_TRAVERSAL this end is NOT behind NAT
+output: | NAT_TRAVERSAL that end is NOT behind NAT
+output: | NAT_TRAVERSAL nat-keepalive enabled 192.1.2.23:500
+output: | INTERMEDIATE_EXCHANGE_SUPPORTED neither requested nor accepted
+output: | submitting DH shared secret for #3/#3 (process_v2_IKE_SA_INIT_response() +1619 programs/pluto/ikev2_ike_sa_init.c)
+output: | struct dh_local_secret: addref @0x7fc7c28f0fd8(1->2) (submit_dh_shared_secret() +212 programs/pluto/crypt_dh.c)
+output: | job: newref @0x7fc7c28caf98(0->1) (submit_task() +331 programs/pluto/server_pool.c)
+output: | clone logger: newref @0x7fc7c28cefc8(0->1) (submit_task() +358 programs/pluto/server_pool.c)
+output: | job 4 helper 0 #3 process_v2_IKE_SA_INIT_response (dh): added to pending queue
+output: | event_schedule_where: newref EVENT_CRYPTO_TIMEOUT-pe@0x7fc7c28d0fa8 timeout in 60 seconds for #3
+output: | tt: newref @0x7fc7c28d2f68(0->1) (schedule_timeout() +557 programs/pluto/server.c)
+output: | #3 complete_v2_state_transition() PARENT_I1->PARENT_I2 with status STF_SUSPEND
+output: | suspend: saving MD@0x7fc7c2ab86f8 in state #3 (complete_v2_state_transition() +2702 programs/pluto/ikev2.c)
+output: | struct msg_digest: addref @0x7fc7c2ab86f8(1->2) (complete_v2_state_transition() +2702 programs/pluto/ikev2.c)
+output: | #3 is busy; has suspended MD 0x7fc7c2ab86f8
+output: |   #3 spent 1.1 (11.1) milliseconds in processing: Initiator: process IKE_SA_INIT reply, initiate IKE_AUTH or IKE_INTERMEDIATE in v2_dispatch()
+output: | #3 spent 1.68 (19.3) milliseconds in process_v2_IKE_SA_INIT()
+output: | packet from 192.1.2.23:500: delref @0x7fc7c2ab86f8(2->1) (process_iface_packet() +296 programs/pluto/demux.c)
+output: | spent 1.69 (19.5) milliseconds in process_iface_packet() reading and processing packet
+output: | job 4 helper 1 #3 process_v2_IKE_SA_INIT_response (dh): started
+output: | temp: newref @0x7fc7c2a46f80(0->1) (nss_ecp_calc_shared_secret() +193 lib/libswan/ike_alg_dh_nss_ecp_ops.c)
+output: |     result: newref ecp-shared-secret-key@0x7fc7c34d1f80 (32-bytes, EXTRACT_KEY_FROM_KEY)(nss_ecp_calc_shared_secret() +203 lib/libswan/ike_alg_dh_nss_ecp_ops.c)
+output: | nss_ecp_calc_shared_secret: delref temp-key@0x7fc7c2a46f80
+output: | job 4 helper 1 #3 process_v2_IKE_SA_INIT_response (dh): finished
+output: | "west-east" #3: spent 0.576 (1.78) milliseconds in job 4 helper 1 #3 process_v2_IKE_SA_INIT_response (dh)
+output: | scheduling resume sending job back to main thread for #3
+output: | tt: newref @0x7fc7c28d6f68(0->1) (schedule_timeout() +557 programs/pluto/server.c)
+output: | helper 1: waiting for work
+output: | processing resume sending job back to main thread for #3
+output: | suspend: restoring MD@0x7fc7c2ab86f8 from state #3 (resume_handler() +641 programs/pluto/server.c)
+output: | job 4 helper 1 #3 process_v2_IKE_SA_INIT_response (dh): calling state's callback function
+output: | completing DH shared secret for #3/#3
+output: | complete_dh_shared_secret: delref st_dh_shared_secret-key@NULL
+output: | calculating skeyseed using prf=HMAC_SHA2_512 integ=NONE cipherkey-size=32 salt-size=4
+output: |     result: newref skeyseed-key@0x7fc7c2a46f80 (64-bytes, NSS_IKE_PRF_PLUS_DERIVE)(ike_sa_skeyseed() +106 lib/libswan/ike_alg_prf_ikev2_nss_ops.c)
+output: |     result: newref keymat-key@0x7fc7c33c5f80 (264-bytes, EXTRACT_KEY_FROM_KEY)(prfplus_key_data() +61 lib/libswan/ike_alg_prf_ikev2_nss_ops.c)
+output: | calc_skeyseed_v2: delref skeyseed-key@0x7fc7c2a46f80
+output: |     result: newref SK_d-key@0x7fc7c2a46f80 (64-bytes, EXTRACT_KEY_FROM_KEY)(calc_skeyseed_v2() +115 programs/pluto/crypt_dh_v2.c)
+output: |     result: newref SK_ei-key@0x7fc7c3589f80 (32-bytes, AES_GCM)(calc_skeyseed_v2() +135 programs/pluto/crypt_dh_v2.c)
+output: |     result: newref initiator salt-key@0x7fc7c33daf80 (4-bytes, EXTRACT_KEY_FROM_KEY)(calc_skeyseed_v2() +142 programs/pluto/crypt_dh_v2.c)
+output: | initiator salt: newref slot-key@0x7fc7c34cbf80 (4-bytes, EXTRACT_KEY_FROM_KEY)
+output: | initiator salt: delref slot-key-key@0x7fc7c34cbf80
+output: | calc_skeyseed_v2: delref initiator-salt-key-key@0x7fc7c33daf80
+output: |     result: newref SK_er_k-key@0x7fc7c33daf80 (32-bytes, AES_GCM)(calc_skeyseed_v2() +156 programs/pluto/crypt_dh_v2.c)
+output: |     result: newref responder salt-key@0x7fc7c357af80 (4-bytes, EXTRACT_KEY_FROM_KEY)(calc_skeyseed_v2() +163 programs/pluto/crypt_dh_v2.c)
+output: | responder salt: newref slot-key@0x7fc7c34cbf80 (4-bytes, EXTRACT_KEY_FROM_KEY)
+output: | responder salt: delref slot-key-key@0x7fc7c34cbf80
+output: | calc_skeyseed_v2: delref responder-salt-key-key@0x7fc7c357af80
+output: |     result: newref SK_pi-key@0x7fc7c357af80 (64-bytes, EXTRACT_KEY_FROM_KEY)(calc_skeyseed_v2() +172 programs/pluto/crypt_dh_v2.c)
+output: | chunk_SK_pi: newref slot-key@0x7fc7c34cbf80 (64-bytes, EXTRACT_KEY_FROM_KEY)
+output: | chunk_SK_pi: delref slot-key-key@0x7fc7c34cbf80
+output: |     result: newref SK_pr-key@0x7fc7c34d3f80 (64-bytes, EXTRACT_KEY_FROM_KEY)(calc_skeyseed_v2() +180 programs/pluto/crypt_dh_v2.c)
+output: | chunk_SK_pr: newref slot-key@0x7fc7c34cbf80 (64-bytes, EXTRACT_KEY_FROM_KEY)
+output: | chunk_SK_pr: delref slot-key-key@0x7fc7c34cbf80
+output: | calc_skeyseed_v2: delref finalkey-key@0x7fc7c33c5f80
+output: | State DB: re-hashing IKEv2 state #3 IKE SPIr
+output: | no CERTREQ
+output: "west-east" #3: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+output: | initiate_v2_IKE_AUTH_request() for #3 STATE_V2_PARENT_I1: g^{xy} calculated, sending IKE_AUTH
+output: |     result: newref clone-key@0x7fc7c33c5f80 (64-bytes, SHA512_HMAC)(init_symkey() +101 lib/libswan/ike_alg_prf_mac_nss_ops.c)
+output: | IDi: delref clone-key@0x7fc7c33c5f80
+output: | ikev2_calculate_psk_sighash() called for STATE_V2_PARENT_I1 to LOCAL_PERSPECTIVE PSK with authby=secret
+output: | lsw_get_secret() using IDs for @west->@east of kind SECRET_PSK
+output: | line 1: key type SECRET_PSK(@west) to type SECRET_PSK
+output: | 1: compared key @west to @west / @east -> 8
+output: | 2: compared key @east to @west / @east -> c
+output: |   match=c
+output: |   match c beats previous best_match 0 match=0x7fc7c29dcf68 (line=1)
+output: | concluding with best_match=c best=0x7fc7c29dcf68 (lineno=1)
+output: |     result: newref pss-key@0x7fc7c2a5df80 (52-bytes, EXTRACT_KEY_FROM_KEY)(merge_symkey_bytes() +222 lib/libswan/crypt_symkey.c)
+output: |     result: newref pss-key@0x7fc7c33c5f80 (36-bytes, SHA512_HMAC)(psk_auth() +201 lib/libswan/ike_alg_prf_ikev2_nss_ops.c)
+output: | pss: delref tmp-key@0x7fc7c2a5df80
+output: |     result: newref prf(Shared Secret, "Key Pad for IKEv2")-key@0x7fc7c2a5df80 (64-bytes, SHA512_HMAC)(psk_auth() +228 lib/libswan/ike_alg_prf_ikev2_nss_ops.c)
+output: | psk pss_key: delref pss_key-key@0x7fc7c33c5f80
+output: |     result: newref clone-key@0x7fc7c33c5f80 (64-bytes, SHA512_HMAC)(init_symkey() +101 lib/libswan/ike_alg_prf_mac_nss_ops.c)
+output: | <signed-octets> = prf(<prf-psk>, <msg octets>): delref clone-key@0x7fc7c33c5f80
+output: | psk_auth: delref prf-psk-key@0x7fc7c2a5df80
+output: | opening output PBS IKE_AUTH request
+output: | **emit ISAKMP Message:
+output: |    initiator SPI: 7b 63 82 36  86 46 23 9b
+output: |    responder SPI: 77 9e 45 5a  d1 7a ee 90
+output: |    next payload type: ISAKMP_NEXT_NONE (0x0)
+output: |    ISAKMP version: IKEv2 version 2.0 (rfc4306/rfc5996) (0x20)
+output: |    exchange type: ISAKMP_v2_IKE_AUTH (0x23)
+output: |    flags: ISAKMP_FLAG_v2_IKE_INIT (0x8)
+output: |    Message ID: 1 (00 00 00 01)
+output: | next payload chain: saving message location 'ISAKMP Message'.'next payload type'
+output: | ***emit IKEv2 Encryption Payload:
+output: |    next payload type: ISAKMP_NEXT_v2NONE (0x0)
+output: |    flags: none (0x0)
+output: | next payload chain: setting previous 'ISAKMP Message'.'next payload type' to current IKEv2 Encryption Payload (46:ISAKMP_NEXT_v2SK)
+output: | next payload chain: saving location 'IKEv2 Encryption Payload'.'next payload type' in 'IKE_AUTH request'
+output: | emitting 8 zero bytes of IV into IKEv2 Encryption Payload
+output: | IKEv2 CERT: not sending cert: local leftauthby=PSK does not have RSA or ECDSA
+output: | IDr payload will be sent
+output: | ****emit IKEv2 Identification - Initiator - Payload:
+output: |    next payload type: ISAKMP_NEXT_v2NONE (0x0)
+output: |    flags: none (0x0)
+output: |    ID type: ID_FQDN (0x2)
+output: |    reserved: 00 00 00
+output: | next payload chain: setting previous 'IKEv2 Encryption Payload'.'next payload type' to current IKEv2 Identification - Initiator - Payload (35:ISAKMP_NEXT_v2IDi)
+output: | next payload chain: saving location 'IKEv2 Identification - Initiator - Payload'.'next payload type' in 'IKE_AUTH request'
+output: | emitting 4 raw bytes of my identity into IKEv2 Identification - Initiator - Payload
+output: | my identity: 77 65 73 74
+output: | emitting length of IKEv2 Identification - Initiator - Payload: 12
+output: | IKEv2 CERTREQ: send a cert request?
+output: | IKEv2 CERTREQ: responder has no auth method requiring them to send back their cert
+output: | ****emit IKEv2 Identification - Responder - Payload:
+output: |    next payload type: ISAKMP_NEXT_v2NONE (0x0)
+output: |    flags: none (0x0)
+output: |    ID type: ID_FQDN (0x2)
+output: |    reserved: 00 00 00
+output: | next payload chain: setting previous 'IKEv2 Identification - Initiator - Payload'.'next payload type' to current IKEv2 Identification - Responder - Payload (36:ISAKMP_NEXT_v2IDr)
+output: | next payload chain: saving location 'IKEv2 Identification - Responder - Payload'.'next payload type' in 'IKE_AUTH request'
+output: | emitting 4 raw bytes of their IDr into IKEv2 Identification - Responder - Payload
+output: | their IDr: 65 61 73 74
+output: | emitting length of IKEv2 Identification - Responder - Payload: 12
+output: | not sending INITIAL_CONTACT
+output: | ****emit IKEv2 Authentication Payload:
+output: |    next payload type: ISAKMP_NEXT_v2NONE (0x0)
+output: |    flags: none (0x0)
+output: |    auth method: IKEv2_AUTH_SHARED (0x2)
+output: | next payload chain: setting previous 'IKEv2 Identification - Responder - Payload'.'next payload type' to current IKEv2 Authentication Payload (39:ISAKMP_NEXT_v2AUTH)
+output: | next payload chain: saving location 'IKEv2 Authentication Payload'.'next payload type' in 'IKE_AUTH request'
+output: | emitting 64 raw bytes of signature into IKEv2 Authentication Payload
+output: |   e2 8f 41 f8  57 7c 9d 35  72 63 97 4b  bd f2 4f 9d   ..A.W|.5rc.K..O.
+output: |   de 66 9f d8  c4 1b fe 52  ed fd eb 81  dd bf 7b a9   .f.....R......{.
+output: |   45 3b ca a9  51 d7 d4 29  72 1a c5 24  b6 e9 b3 41   E;..Q..)r..$...A
+output: |   56 88 73 72  35 6c ce 47  47 61 2d ef  ec 30 a4 5f   V.sr5l.GGa-..0._
+output: | emitting length of IKEv2 Authentication Payload: 72
+output: | "west-east": no whack to attach
+output: | pending: first_pending() ike 0x7fc7c2a36348 pending 0x7fc7c2a48fa8 connection 0x7fc7c3462a78 ike 0x7fc7c2a36348
+output: | struct iface_endpoint: addref @0x7fc7c3470f38(3->4) (duplicate_state() +1198 programs/pluto/state.c)
+output: | alloc logger: newref @0x7fc7c293dfc8(0->1) (duplicate_state() +1206 programs/pluto/state.c)
+output: |  #0: no whack to attach
+output: | "west-east": addref @0x7fc7c3462a78(3->4)  #4:  (new_state() +491 programs/pluto/state.c)
+output: | creating state object #4 at 0x7fc7c28e8348
+output: | pstats #4 ikev2.child started
+output: | duplicating state object #3 "west-east" as #4 for IPSEC SA
+output: | #4 setting local endpoint to 192.1.2.45:500 from #3.st_localport (duplicate_state() +1220 programs/pluto/state.c)
+output: | duplicate_state: addref st_skeyid_nss-key@NULL
+output: | duplicate_state: addref st_skey_d_nss-key@0x7fc7c2a46f80
+output: | duplicate_state: addref st_skey_ai_nss-key@NULL
+output: | duplicate_state: addref st_skey_ar_nss-key@NULL
+output: | duplicate_state: addref st_skey_ei_nss-key@0x7fc7c3589f80
+output: | duplicate_state: addref st_skey_er_nss-key@0x7fc7c33daf80
+output: | duplicate_state: addref st_skey_pi_nss-key@0x7fc7c357af80
+output: | duplicate_state: addref st_skey_pr_nss-key@0x7fc7c34d3f80
+output: | duplicate_state: addref st_enc_key_nss-key@NULL
+output: | child state #4: UNDEFINED(ignore) => IKE_AUTH_CHILD_I0(ignore)
+output: | #4.st_v2_transition NULL -> IKE_AUTH_CHILD_I0->ESTABLISHED_CHILD_SA (new_v2_child_sa() +1296 programs/pluto/state.c)
+output: | "west-east": addref @0x7fc7c3462a78(4->5) "west-east" #4:  (dispatch() +2436 programs/pluto/routing.c)
+output: | "west-east" #4: routing: start INITIATED, ROUTED_NEGOTIATION, PERMANENT; IKE #3 (PARENT_I1) Child #4 (IKE_AUTH_CHILD_I0) by=IKE; $1@0x7fc7c3462a78; routing_sa #3 negotiating_ike_sa #3 (initiate_v2_IKE_AUTH_request_signature_continue() +334 programs/pluto/ikev2_ike_auth.c)
+output: | "west-east" #4: routing:   Child SA's IKE SA matches .routing_sa
+output: | "west-east" #4: routing: stop INITIATED, ROUTED_NEGOTIATION, PERMANENT; ok=yes; routing_sa #3->#4 negotiating_ike_sa #3 negotiating_child_sa #0->#4 (initiate_v2_IKE_AUTH_request_signature_continue() +334 programs/pluto/ikev2_ike_auth.c)
+output: | "west-east": delref @0x7fc7c3462a78(5->4) "west-east" #4:  (dispatch() +2450 programs/pluto/routing.c)
+output: | "west-east": releasing whack (but there are none) (initiate_v2_IKE_AUTH_request_signature_continue() +340 programs/pluto/ikev2_ike_auth.c)
+output: | "west-east" #4: routing:  kernel_ops_get_ipsec_spi() 192.1.2.23-ESP->192.1.2.45 reqid=4005 [1000,ffffffff] for SPI ...
+output: | sendrecv_xfrm_msg() sending 22 Get SPI SPI
+output: | sendrecv_xfrm_msg() recvfrom() returned 256 bytes
+output: | "west-east" #4: routing:   ... allocated b8d8481d for SPI
+output: | Emitting ikev2_proposals ...
+output: | ****emit IKEv2 Security Association Payload:
+output: |    next payload type: ISAKMP_NEXT_v2NONE (0x0)
+output: |    flags: none (0x0)
+output: | next payload chain: setting previous 'IKEv2 Authentication Payload'.'next payload type' to current IKEv2 Security Association Payload (33:ISAKMP_NEXT_v2SA)
+output: | next payload chain: saving location 'IKEv2 Security Association Payload'.'next payload type' in 'IKE_AUTH request'
+output: | discard INTEG=NONE when counting transforms (multiple 0; allow single 0)
+output: | discard DH=NONE when counting transforms (multiple 0; allow single 0)
+output: | *****emit IKEv2 Proposal Substructure Payload:
+output: |    last proposal: v2_PROPOSAL_NON_LAST (0x2)
+output: |    prop #: 1 (01)
+output: |    proto ID: IKEv2_SEC_PROTO_ESP (0x3)
+output: |    spi size: 4 (04)
+output: |    # transforms: 3 (03)
+output: | last substructure: saving location 'IKEv2 Security Association Payload'.'IKEv2 Proposal Substructure Payload'.'last proposal'
+output: | emitting 4 raw bytes of our spi into IKEv2 Proposal Substructure Payload
+output: | our spi: b8 d8 48 1d
+output: | ******emit IKEv2 Transform Substructure Payload:
+output: |    last transform: v2_TRANSFORM_NON_LAST (0x3)
+output: |    IKEv2 transform type: IKEv2_TRANS_TYPE_ENCR (0x1)
+output: |    IKEv2 transform ID: AES_GCM_C (0x14)
+output: | last substructure: saving location 'IKEv2 Proposal Substructure Payload'.'IKEv2 Transform Substructure Payload'.'last transform'
+output: | *******emit IKEv2 Attribute Substructure Payload:
+output: |    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+output: |    length/value: 256 (01 00)
+output: | emitting length of IKEv2 Transform Substructure Payload: 12
+output: | discard INTEG=NONE when emitting proposal (multiple 0; allow single 0)
+output: | discard DH=NONE when emitting proposal (multiple 0; allow single 0)
+output: | ******emit IKEv2 Transform Substructure Payload:
+output: |    last transform: v2_TRANSFORM_NON_LAST (0x3)
+output: |    IKEv2 transform type: IKEv2_TRANS_TYPE_ESN (0x5)
+output: |    IKEv2 transform ID: IKEv2_ESN_YES (0x1)
+output: | last substructure: checking 'IKEv2 Proposal Substructure Payload'.'IKEv2 Transform Substructure Payload'.'last transform' containing v2_TRANSFORM_NON_LAST (0x3) is v2_TRANSFORM_NON_LAST (0x3)
+output: | last substructure: saving location 'IKEv2 Proposal Substructure Payload'.'IKEv2 Transform Substructure Payload'.'last transform'
+output: | emitting length of IKEv2 Transform Substructure Payload: 8
+output: | ******emit IKEv2 Transform Substructure Payload:
+output: |    last transform: v2_TRANSFORM_LAST (0x0)
+output: |    IKEv2 transform type: IKEv2_TRANS_TYPE_ESN (0x5)
+output: |    IKEv2 transform ID: IKEv2_ESN_NO (0x0)
+output: | last substructure: checking 'IKEv2 Proposal Substructure Payload'.'IKEv2 Transform Substructure Payload'.'last transform' containing v2_TRANSFORM_NON_LAST (0x3) is v2_TRANSFORM_NON_LAST (0x3)
+output: | last substructure: saving location 'IKEv2 Proposal Substructure Payload'.'IKEv2 Transform Substructure Payload'.'last transform'
+output: | emitting length of IKEv2 Transform Substructure Payload: 8
+output: | emitting length of IKEv2 Proposal Substructure Payload: 40
+output: | last substructure: checking 'IKEv2 Proposal Substructure Payload'.'IKEv2 Transform Substructure Payload'.'last transform' is 0
+output: | discard INTEG=NONE when counting transforms (multiple 0; allow single 0)
+output: | discard DH=NONE when counting transforms (multiple 0; allow single 0)
+output: | *****emit IKEv2 Proposal Substructure Payload:
+output: |    last proposal: v2_PROPOSAL_NON_LAST (0x2)
+output: |    prop #: 2 (02)
+output: |    proto ID: IKEv2_SEC_PROTO_ESP (0x3)
+output: |    spi size: 4 (04)
+output: |    # transforms: 3 (03)
+output: | last substructure: checking 'IKEv2 Security Association Payload'.'IKEv2 Proposal Substructure Payload'.'last proposal' containing v2_PROPOSAL_NON_LAST (0x2) is v2_PROPOSAL_NON_LAST (0x2)
+output: | last substructure: saving location 'IKEv2 Security Association Payload'.'IKEv2 Proposal Substructure Payload'.'last proposal'
+output: | emitting 4 raw bytes of our spi into IKEv2 Proposal Substructure Payload
+output: | our spi: b8 d8 48 1d
+output: | ******emit IKEv2 Transform Substructure Payload:
+output: |    last transform: v2_TRANSFORM_NON_LAST (0x3)
+output: |    IKEv2 transform type: IKEv2_TRANS_TYPE_ENCR (0x1)
+output: |    IKEv2 transform ID: AES_GCM_C (0x14)
+output: | last substructure: saving location 'IKEv2 Proposal Substructure Payload'.'IKEv2 Transform Substructure Payload'.'last transform'
+output: | *******emit IKEv2 Attribute Substructure Payload:
+output: |    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+output: |    length/value: 128 (00 80)
+output: | emitting length of IKEv2 Transform Substructure Payload: 12
+output: | discard INTEG=NONE when emitting proposal (multiple 0; allow single 0)
+output: | discard DH=NONE when emitting proposal (multiple 0; allow single 0)
+output: | ******emit IKEv2 Transform Substructure Payload:
+output: |    last transform: v2_TRANSFORM_NON_LAST (0x3)
+output: |    IKEv2 transform type: IKEv2_TRANS_TYPE_ESN (0x5)
+output: |    IKEv2 transform ID: IKEv2_ESN_YES (0x1)
+output: | last substructure: checking 'IKEv2 Proposal Substructure Payload'.'IKEv2 Transform Substructure Payload'.'last transform' containing v2_TRANSFORM_NON_LAST (0x3) is v2_TRANSFORM_NON_LAST (0x3)
+output: | last substructure: saving location 'IKEv2 Proposal Substructure Payload'.'IKEv2 Transform Substructure Payload'.'last transform'
+output: | emitting length of IKEv2 Transform Substructure Payload: 8
+output: | ******emit IKEv2 Transform Substructure Payload:
+output: |    last transform: v2_TRANSFORM_LAST (0x0)
+output: |    IKEv2 transform type: IKEv2_TRANS_TYPE_ESN (0x5)
+output: |    IKEv2 transform ID: IKEv2_ESN_NO (0x0)
+output: | last substructure: checking 'IKEv2 Proposal Substructure Payload'.'IKEv2 Transform Substructure Payload'.'last transform' containing v2_TRANSFORM_NON_LAST (0x3) is v2_TRANSFORM_NON_LAST (0x3)
+output: | last substructure: saving location 'IKEv2 Proposal Substructure Payload'.'IKEv2 Transform Substructure Payload'.'last transform'
+output: | emitting length of IKEv2 Transform Substructure Payload: 8
+output: | emitting length of IKEv2 Proposal Substructure Payload: 40
+output: | last substructure: checking 'IKEv2 Proposal Substructure Payload'.'IKEv2 Transform Substructure Payload'.'last transform' is 0
+output: | discard INTEG=NONE when counting transforms (multiple 0; allow single 0)
+output: | discard DH=NONE when counting transforms (multiple 0; allow single 0)
+output: | *****emit IKEv2 Proposal Substructure Payload:
+output: |    last proposal: v2_PROPOSAL_NON_LAST (0x2)
+output: |    prop #: 3 (03)
+output: |    proto ID: IKEv2_SEC_PROTO_ESP (0x3)
+output: |    spi size: 4 (04)
+output: |    # transforms: 3 (03)
+output: | last substructure: checking 'IKEv2 Security Association Payload'.'IKEv2 Proposal Substructure Payload'.'last proposal' containing v2_PROPOSAL_NON_LAST (0x2) is v2_PROPOSAL_NON_LAST (0x2)
+output: | last substructure: saving location 'IKEv2 Security Association Payload'.'IKEv2 Proposal Substructure Payload'.'last proposal'
+output: | emitting 4 raw bytes of our spi into IKEv2 Proposal Substructure Payload
+output: | our spi: b8 d8 48 1d
+output: | ******emit IKEv2 Transform Substructure Payload:
+output: |    last transform: v2_TRANSFORM_NON_LAST (0x3)
+output: |    IKEv2 transform type: IKEv2_TRANS_TYPE_ENCR (0x1)
+output: |    IKEv2 transform ID: CHACHA20_POLY1305 (0x1c)
+output: | last substructure: saving location 'IKEv2 Proposal Substructure Payload'.'IKEv2 Transform Substructure Payload'.'last transform'
+output: | emitting length of IKEv2 Transform Substructure Payload: 8
+output: | discard INTEG=NONE when emitting proposal (multiple 0; allow single 0)
+output: | discard DH=NONE when emitting proposal (multiple 0; allow single 0)
+output: | ******emit IKEv2 Transform Substructure Payload:
+output: |    last transform: v2_TRANSFORM_NON_LAST (0x3)
+output: |    IKEv2 transform type: IKEv2_TRANS_TYPE_ESN (0x5)
+output: |    IKEv2 transform ID: IKEv2_ESN_YES (0x1)
+output: | last substructure: checking 'IKEv2 Proposal Substructure Payload'.'IKEv2 Transform Substructure Payload'.'last transform' containing v2_TRANSFORM_NON_LAST (0x3) is v2_TRANSFORM_NON_LAST (0x3)
+output: | last substructure: saving location 'IKEv2 Proposal Substructure Payload'.'IKEv2 Transform Substructure Payload'.'last transform'
+output: | emitting length of IKEv2 Transform Substructure Payload: 8
+output: | ******emit IKEv2 Transform Substructure Payload:
+output: |    last transform: v2_TRANSFORM_LAST (0x0)
+output: |    IKEv2 transform type: IKEv2_TRANS_TYPE_ESN (0x5)
+output: |    IKEv2 transform ID: IKEv2_ESN_NO (0x0)
+output: | last substructure: checking 'IKEv2 Proposal Substructure Payload'.'IKEv2 Transform Substructure Payload'.'last transform' containing v2_TRANSFORM_NON_LAST (0x3) is v2_TRANSFORM_NON_LAST (0x3)
+output: | last substructure: saving location 'IKEv2 Proposal Substructure Payload'.'IKEv2 Transform Substructure Payload'.'last transform'
+output: | emitting length of IKEv2 Transform Substructure Payload: 8
+output: | emitting length of IKEv2 Proposal Substructure Payload: 36
+output: | last substructure: checking 'IKEv2 Proposal Substructure Payload'.'IKEv2 Transform Substructure Payload'.'last transform' is 0
+output: | discard DH=NONE when counting transforms (multiple 0; allow single 0)
+output: | *****emit IKEv2 Proposal Substructure Payload:
+output: |    last proposal: v2_PROPOSAL_NON_LAST (0x2)
+output: |    prop #: 4 (04)
+output: |    proto ID: IKEv2_SEC_PROTO_ESP (0x3)
+output: |    spi size: 4 (04)
+output: |    # transforms: 5 (05)
+output: | last substructure: checking 'IKEv2 Security Association Payload'.'IKEv2 Proposal Substructure Payload'.'last proposal' containing v2_PROPOSAL_NON_LAST (0x2) is v2_PROPOSAL_NON_LAST (0x2)
+output: | last substructure: saving location 'IKEv2 Security Association Payload'.'IKEv2 Proposal Substructure Payload'.'last proposal'
+output: | emitting 4 raw bytes of our spi into IKEv2 Proposal Substructure Payload
+output: | our spi: b8 d8 48 1d
+output: | ******emit IKEv2 Transform Substructure Payload:
+output: |    last transform: v2_TRANSFORM_NON_LAST (0x3)
+output: |    IKEv2 transform type: IKEv2_TRANS_TYPE_ENCR (0x1)
+output: |    IKEv2 transform ID: AES_CBC (0xc)
+output: | last substructure: saving location 'IKEv2 Proposal Substructure Payload'.'IKEv2 Transform Substructure Payload'.'last transform'
+output: | *******emit IKEv2 Attribute Substructure Payload:
+output: |    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+output: |    length/value: 256 (01 00)
+output: | emitting length of IKEv2 Transform Substructure Payload: 12
+output: | ******emit IKEv2 Transform Substructure Payload:
+output: |    last transform: v2_TRANSFORM_NON_LAST (0x3)
+output: |    IKEv2 transform type: IKEv2_TRANS_TYPE_INTEG (0x3)
+output: |    IKEv2 transform ID: AUTH_HMAC_SHA2_512_256 (0xe)
+output: | last substructure: checking 'IKEv2 Proposal Substructure Payload'.'IKEv2 Transform Substructure Payload'.'last transform' containing v2_TRANSFORM_NON_LAST (0x3) is v2_TRANSFORM_NON_LAST (0x3)
+output: | last substructure: saving location 'IKEv2 Proposal Substructure Payload'.'IKEv2 Transform Substructure Payload'.'last transform'
+output: | emitting length of IKEv2 Transform Substructure Payload: 8
+output: | ******emit IKEv2 Transform Substructure Payload:
+output: |    last transform: v2_TRANSFORM_NON_LAST (0x3)
+output: |    IKEv2 transform type: IKEv2_TRANS_TYPE_INTEG (0x3)
+output: |    IKEv2 transform ID: AUTH_HMAC_SHA2_256_128 (0xc)
+output: | last substructure: checking 'IKEv2 Proposal Substructure Payload'.'IKEv2 Transform Substructure Payload'.'last transform' containing v2_TRANSFORM_NON_LAST (0x3) is v2_TRANSFORM_NON_LAST (0x3)
+output: | last substructure: saving location 'IKEv2 Proposal Substructure Payload'.'IKEv2 Transform Substructure Payload'.'last transform'
+output: | emitting length of IKEv2 Transform Substructure Payload: 8
+output: | discard DH=NONE when emitting proposal (multiple 0; allow single 0)
+output: | ******emit IKEv2 Transform Substructure Payload:
+output: |    last transform: v2_TRANSFORM_NON_LAST (0x3)
+output: |    IKEv2 transform type: IKEv2_TRANS_TYPE_ESN (0x5)
+output: |    IKEv2 transform ID: IKEv2_ESN_YES (0x1)
+output: | last substructure: checking 'IKEv2 Proposal Substructure Payload'.'IKEv2 Transform Substructure Payload'.'last transform' containing v2_TRANSFORM_NON_LAST (0x3) is v2_TRANSFORM_NON_LAST (0x3)
+output: | last substructure: saving location 'IKEv2 Proposal Substructure Payload'.'IKEv2 Transform Substructure Payload'.'last transform'
+output: | emitting length of IKEv2 Transform Substructure Payload: 8
+output: | ******emit IKEv2 Transform Substructure Payload:
+output: |    last transform: v2_TRANSFORM_LAST (0x0)
+output: |    IKEv2 transform type: IKEv2_TRANS_TYPE_ESN (0x5)
+output: |    IKEv2 transform ID: IKEv2_ESN_NO (0x0)
+output: | last substructure: checking 'IKEv2 Proposal Substructure Payload'.'IKEv2 Transform Substructure Payload'.'last transform' containing v2_TRANSFORM_NON_LAST (0x3) is v2_TRANSFORM_NON_LAST (0x3)
+output: | last substructure: saving location 'IKEv2 Proposal Substructure Payload'.'IKEv2 Transform Substructure Payload'.'last transform'
+output: | emitting length of IKEv2 Transform Substructure Payload: 8
+output: | emitting length of IKEv2 Proposal Substructure Payload: 56
+output: | last substructure: checking 'IKEv2 Proposal Substructure Payload'.'IKEv2 Transform Substructure Payload'.'last transform' is 0
+output: | discard DH=NONE when counting transforms (multiple 0; allow single 0)
+output: | *****emit IKEv2 Proposal Substructure Payload:
+output: |    last proposal: v2_PROPOSAL_LAST (0x0)
+output: |    prop #: 5 (05)
+output: |    proto ID: IKEv2_SEC_PROTO_ESP (0x3)
+output: |    spi size: 4 (04)
+output: |    # transforms: 5 (05)
+output: | last substructure: checking 'IKEv2 Security Association Payload'.'IKEv2 Proposal Substructure Payload'.'last proposal' containing v2_PROPOSAL_NON_LAST (0x2) is v2_PROPOSAL_NON_LAST (0x2)
+output: | last substructure: saving location 'IKEv2 Security Association Payload'.'IKEv2 Proposal Substructure Payload'.'last proposal'
+output: | emitting 4 raw bytes of our spi into IKEv2 Proposal Substructure Payload
+output: | our spi: b8 d8 48 1d
+output: | ******emit IKEv2 Transform Substructure Payload:
+output: |    last transform: v2_TRANSFORM_NON_LAST (0x3)
+output: |    IKEv2 transform type: IKEv2_TRANS_TYPE_ENCR (0x1)
+output: |    IKEv2 transform ID: AES_CBC (0xc)
+output: | last substructure: saving location 'IKEv2 Proposal Substructure Payload'.'IKEv2 Transform Substructure Payload'.'last transform'
+output: | *******emit IKEv2 Attribute Substructure Payload:
+output: |    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+output: |    length/value: 128 (00 80)
+output: | emitting length of IKEv2 Transform Substructure Payload: 12
+output: | ******emit IKEv2 Transform Substructure Payload:
+output: |    last transform: v2_TRANSFORM_NON_LAST (0x3)
+output: |    IKEv2 transform type: IKEv2_TRANS_TYPE_INTEG (0x3)
+output: |    IKEv2 transform ID: AUTH_HMAC_SHA2_512_256 (0xe)
+output: | last substructure: checking 'IKEv2 Proposal Substructure Payload'.'IKEv2 Transform Substructure Payload'.'last transform' containing v2_TRANSFORM_NON_LAST (0x3) is v2_TRANSFORM_NON_LAST (0x3)
+output: | last substructure: saving location 'IKEv2 Proposal Substructure Payload'.'IKEv2 Transform Substructure Payload'.'last transform'
+output: | emitting length of IKEv2 Transform Substructure Payload: 8
+output: | ******emit IKEv2 Transform Substructure Payload:
+output: |    last transform: v2_TRANSFORM_NON_LAST (0x3)
+output: |    IKEv2 transform type: IKEv2_TRANS_TYPE_INTEG (0x3)
+output: |    IKEv2 transform ID: AUTH_HMAC_SHA2_256_128 (0xc)
+output: | last substructure: checking 'IKEv2 Proposal Substructure Payload'.'IKEv2 Transform Substructure Payload'.'last transform' containing v2_TRANSFORM_NON_LAST (0x3) is v2_TRANSFORM_NON_LAST (0x3)
+output: | last substructure: saving location 'IKEv2 Proposal Substructure Payload'.'IKEv2 Transform Substructure Payload'.'last transform'
+output: | emitting length of IKEv2 Transform Substructure Payload: 8
+output: | discard DH=NONE when emitting proposal (multiple 0; allow single 0)
+output: | ******emit IKEv2 Transform Substructure Payload:
+output: |    last transform: v2_TRANSFORM_NON_LAST (0x3)
+output: |    IKEv2 transform type: IKEv2_TRANS_TYPE_ESN (0x5)
+output: |    IKEv2 transform ID: IKEv2_ESN_YES (0x1)
+output: | last substructure: checking 'IKEv2 Proposal Substructure Payload'.'IKEv2 Transform Substructure Payload'.'last transform' containing v2_TRANSFORM_NON_LAST (0x3) is v2_TRANSFORM_NON_LAST (0x3)
+output: | last substructure: saving location 'IKEv2 Proposal Substructure Payload'.'IKEv2 Transform Substructure Payload'.'last transform'
+output: | emitting length of IKEv2 Transform Substructure Payload: 8
+output: | ******emit IKEv2 Transform Substructure Payload:
+output: |    last transform: v2_TRANSFORM_LAST (0x0)
+output: |    IKEv2 transform type: IKEv2_TRANS_TYPE_ESN (0x5)
+output: |    IKEv2 transform ID: IKEv2_ESN_NO (0x0)
+output: | last substructure: checking 'IKEv2 Proposal Substructure Payload'.'IKEv2 Transform Substructure Payload'.'last transform' containing v2_TRANSFORM_NON_LAST (0x3) is v2_TRANSFORM_NON_LAST (0x3)
+output: | last substructure: saving location 'IKEv2 Proposal Substructure Payload'.'IKEv2 Transform Substructure Payload'.'last transform'
+output: | emitting length of IKEv2 Transform Substructure Payload: 8
+output: | emitting length of IKEv2 Proposal Substructure Payload: 56
+output: | last substructure: checking 'IKEv2 Proposal Substructure Payload'.'IKEv2 Transform Substructure Payload'.'last transform' is 0
+output: | emitting length of IKEv2 Security Association Payload: 232
+output: | last substructure: checking 'IKEv2 Security Association Payload'.'IKEv2 Proposal Substructure Payload'.'last proposal' is 0
+output: | CP: send-v2CP=no; left: local; right: remote;
+output: | ****emit IKEv2 Traffic Selector - Initiator - Payload:
+output: |    next payload type: ISAKMP_NEXT_v2NONE (0x0)
+output: |    flags: none (0x0)
+output: |    number of TS: 1 (01)
+output: | next payload chain: setting previous 'IKEv2 Security Association Payload'.'next payload type' to current IKEv2 Traffic Selector - Initiator - Payload (44:ISAKMP_NEXT_v2TSi)
+output: | next payload chain: saving location 'IKEv2 Traffic Selector - Initiator - Payload'.'next payload type' in 'IKE_AUTH request'
+output: | *****emit IKEv2 Traffic Selector Header:
+output: |    TS type: IKEv2_TS_IPV4_ADDR_RANGE (0x7)
+output: |    IP Protocol ID: ALL (0x0)
+output: | ******emit IKEv2 IP Traffic Selector port range:
+output: |    start port: 0 (00 00)
+output: |    end port: 65535 (ff ff)
+output: | emitting 4 raw bytes of IP start into IKEv2 Traffic Selector Header
+output: | IP start: c0 00 01 00
+output: | emitting 4 raw bytes of IP end into IKEv2 Traffic Selector Header
+output: | IP end: c0 00 01 ff
+output: | emitting length of IKEv2 Traffic Selector Header: 16
+output: | emitting length of IKEv2 Traffic Selector - Initiator - Payload: 24
+output: | ****emit IKEv2 Traffic Selector - Responder - Payload:
+output: |    next payload type: ISAKMP_NEXT_v2NONE (0x0)
+output: |    flags: none (0x0)
+output: |    number of TS: 1 (01)
+output: | next payload chain: setting previous 'IKEv2 Traffic Selector - Initiator - Payload'.'next payload type' to current IKEv2 Traffic Selector - Responder - Payload (45:ISAKMP_NEXT_v2TSr)
+output: | next payload chain: saving location 'IKEv2 Traffic Selector - Responder - Payload'.'next payload type' in 'IKE_AUTH request'
+output: | *****emit IKEv2 Traffic Selector Header:
+output: |    TS type: IKEv2_TS_IPV4_ADDR_RANGE (0x7)
+output: |    IP Protocol ID: ALL (0x0)
+output: | ******emit IKEv2 IP Traffic Selector port range:
+output: |    start port: 0 (00 00)
+output: |    end port: 65535 (ff ff)
+output: | emitting 4 raw bytes of IP start into IKEv2 Traffic Selector Header
+output: | IP start: c0 00 02 00
+output: | emitting 4 raw bytes of IP end into IKEv2 Traffic Selector Header
+output: | IP end: c0 00 02 ff
+output: | emitting length of IKEv2 Traffic Selector Header: 16
+output: | emitting length of IKEv2 Traffic Selector - Responder - Payload: 24
+output: | Initiator child policy is transport mode, sending v2N_USE_TRANSPORT_MODE? no
+output: | adding 1 bytes of padding (including 1 byte padding-length)
+output: | emitting 0 as 1 bytes of padding and length into IKEv2 Encryption Payload
+output: | emitting 16 zero bytes of length of truncated HMAC/KEY into IKEv2 Encryption Payload
+output: | emitting length of IKEv2 Encryption Payload: 405
+output: | emitting length of ISAKMP Message: 433
+output: | recording outgoing fragment failed
+output: | job 4 helper 1 #3 process_v2_IKE_SA_INIT_response (dh): final status STF_OK; cleaning up
+output: | delref @0x7fc7c28f0fd8(2->1) (cleanup_dh_shared_secret() +170 programs/pluto/crypt_dh.c)
+output: | DH: delref secret-key@NULL
+output: | "west-east" #3: releasing whack (but there are none) (free_job() +430 programs/pluto/server_pool.c)
+output: | logger: delref @0x7fc7c28cefc8(1->0) (free_job() +430 programs/pluto/server_pool.c)
+output: | job: delref @0x7fc7c28caf98(1->0) (free_job() +431 programs/pluto/server_pool.c)
+output: | #3 complete_v2_state_transition() PARENT_I1->PARENT_I2 with status STF_OK
+output: | transitioning from state STATE_V2_PARENT_I1 to state STATE_V2_PARENT_I2
+output: | Message ID: updating counters for #3
+output: | Message ID: IKE #3 clearing EVENT_RETRANSMIT as response received (initiator: .sent=0 .recv=-1 .recv_frags=0 .wip=-1 .last_sent=12.538465 .last_recv=12.473737 responder: .sent=-1 .recv=-1 .recv_frags=0 .wip=-1 .last_sent=12.473737 .last_recv=12.473737)
+output: | #3 requesting EVENT_RETRANSMIT-event@0x7fc7c346cfa8 be deleted (clear_retransmits() +108 programs/pluto/retransmit.c)
+output: | #3 deleting EVENT_RETRANSMIT
+output: | tt: delref @0x7fc7c28fbf68(1->0) (destroy_timeout() +575 programs/pluto/server.c)
+output: | state-event: delref @0x7fc7c346cfa8(1->0) (clear_retransmits() +108 programs/pluto/retransmit.c)
+output: | #3 STATE_V2_PARENT_I1: retransmits: cleared
+output: | Message ID: IKE #3 updating initiator received message response 0 (initiator: .recv=-1->0 .wip=0->-1 .last_recv=12.473737->12.686031 responder:)
+output: | Message ID: IKE #3 scheduling EVENT_RETRANSMIT (initiator: .sent=0 .recv=0 .recv_frags=0 .wip=1 .last_sent=12.538465 .last_recv=12.686031 responder: .sent=-1 .recv=-1 .recv_frags=0 .wip=-1 .last_sent=12.473737 .last_recv=12.473737)
+output: | event_schedule_where: newref EVENT_RETRANSMIT-pe@0x7fc7c346cfa8 timeout in 60 seconds for #3
+output: | tt: newref @0x7fc7c28fbf68(0->1) (schedule_timeout() +557 programs/pluto/server.c)
+output: | #3 STATE_V2_PARENT_I1: retransmits: first event in 60 seconds; timeout in 60 seconds; limit of 12 retransmits; current time is 12.686264
+output: | Message ID: IKE #3 updating initiator sent message request 1 (initiator: .sent=0->1 .wip=-1->1 .last_sent=12.538465->12.686528 responder:)
+output: | parent state #3: PARENT_I1(half-open IKE SA) => PARENT_I2(open IKE SA)
+output: | Message ID: IKE #3 no pending message initiators to schedule (initiator: .sent=1 .recv=0 .recv_frags=0 .wip=1 .last_sent=12.686528 .last_recv=12.686031 responder: .sent=-1 .recv=-1 .recv_frags=0 .wip=-1 .last_sent=12.473737 .last_recv=12.473737)
+output: | checking that a retransmit timeout_event was already
+output: | #3 deleting EVENT_CRYPTO_TIMEOUT
+output: | tt: delref @0x7fc7c28d2f68(1->0) (destroy_timeout() +575 programs/pluto/server.c)
+output: | state-event: delref @0x7fc7c28d0fa8(1->0) (delete_event() +534 programs/pluto/timer.c)
+output: | sending 433 bytes for Initiator: process IKE_SA_INIT reply, initiate IKE_AUTH or IKE_INTERMEDIATE through eth1 from 192.1.2.45:500 to 192.1.2.23:500 using UDP (for #3)
+output: |   7b 63 82 36  86 46 23 9b  77 9e 45 5a  d1 7a ee 90   {c.6.F#.w.EZ.z..
+output: |   2e 20 23 08  00 00 00 01  00 00 01 b1  23 00 01 95   . #.........#...
+output: |   34 d4 c6 b8  36 3b 47 94  8b 5e 5e 13  3b 0d 9b c2   4...6;G..^^.;...
+output: |   0c 9a 37 6e  b2 d6 9d 82  0a 67 73 85  17 b0 90 9d   ..7n.....gs.....
+output: |   8b fb 6d 6e  ec 0e 38 28  40 1b 05 2d  d5 78 34 27   ..mn..8(@..-.x4'
+output: |   52 14 ae cf  dc 9e 45 61  1b e8 70 56  bd 8f 43 17   R.....Ea..pV..C.
+output: |   dd ca c5 78  e0 18 dc de  df 8d 5d 42  19 59 36 37   ...x......]B.Y67
+output: |   fe 6e f8 83  67 ab 85 63  63 2b 30 55  52 39 7e 2e   .n..g..cc+0UR9~.
+output: |   a5 0a e2 8b  70 68 b5 48  5d 36 77 5f  24 98 47 66   ....ph.H]6w_$.Gf
+output: |   52 a4 d4 0f  44 7e eb 9e  e8 d2 2d 10  c1 19 28 63   R...D~....-...(c
+output: |   88 54 2f 59  27 c7 d3 70  9c 60 5d e4  ed d3 94 23   .T/Y'..p.`]....#
+output: |   61 0d 70 2c  a1 8d 85 c1  76 62 44 33  d0 5e 7b 41   a.p,....vbD3.^{A
+output: |   1f ba 3b f8  64 46 12 9e  ad ee 2b 43  29 5f 9e 8e   ..;.dF....+C)_..
+output: |   be f1 30 12  67 c9 bd 41  dd d9 93 1f  51 0d cb 26   ..0.g..A....Q..&
+output: |   68 9c f5 4b  8c 2d 6f 7d  56 06 8f fe  87 e3 b3 be   h..K.-o}V.......
+output: |   10 02 1e 37  b3 69 79 02  5c 29 0e 9b  16 b2 57 13   ...7.iy.\)....W.
+output: |   60 a1 e3 c3  4e 7d 29 0c  61 ae a2 69  57 2f 67 ab   `...N}).a..iW/g.
+output: |   dd 11 cc b2  88 8b 83 8b  8e 2a da e4  57 dc 79 65   .........*..W.ye
+output: |   63 e7 3d 69  af df 5b 23  3f 07 e5 2e  cb c8 99 66   c.=i..[#?......f
+output: |   5e 19 17 c6  7a c3 e8 59  59 e5 cd a2  b5 7d 18 93   ^...z..YY....}..
+output: |   eb 92 cf 22  16 67 a7 0d  d8 bb ae 73  77 09 31 f6   ...".g.....sw.1.
+output: |   b7 52 2e 29  db fa 24 20  54 41 68 31  ee 62 b7 be   .R.)..$ TAh1.b..
+output: |   df bd 3f 58  16 e8 47 9e  2e 7d a0 cd  4f a5 85 2f   ..?X..G..}..O../
+output: |   ee ee f5 ac  bc 0c 3e 40  e0 3c 33 4d  b3 2d 85 61   ......>@.<3M.-.a
+output: |   e7 27 6e 5b  37 0d a4 50  3c 14 a1 07  e2 a4 de f7   .'n[7..P<.......
+output: |   29 1c 3f 42  35 8f 7f bb  88 85 b5 b7  3a dd 1d 2f   ).?B5.......:../
+output: |   a1 e4 18 db  9c 07 97 b6  32 b1 8e 7b  f2 4d 04 9d   ........2..{.M..
+output: |   53                                                   S
+output: | sent 1 messages
+output: "west-east" #3: sent IKE_AUTH request to 192.1.2.23:UDP/500
+output: | packet from 192.1.2.23:500: delref @0x7fc7c2ab86f8(1->0) (resume_handler() +687 programs/pluto/server.c)
+output: | packet from 192.1.2.23:500: releasing whack (but there are none) (resume_handler() +687 programs/pluto/server.c)
+output: | logger: delref @0x7fc7c2939fc8(1->0) (resume_handler() +687 programs/pluto/server.c)
+output: | delref @0x7fc7c3470f38(4->3) (resume_handler() +687 programs/pluto/server.c)
+output: | #3 spent 5.95 (44.2) milliseconds in resume sending job back to main thread
+output: | tt: delref @0x7fc7c28d6f68(1->0) (destroy_timeout() +575 programs/pluto/server.c)
+output: | spent 0 (0.00105) milliseconds in udp_read_packet() calling check_incoming_msg_errqueue()
+output: | struct msg_digest: newref @0x7fc7c2ab8708(0->1) (udp_read_packet() +249 programs/pluto/iface_udp.c)
+output: | struct iface_endpoint: addref @0x7fc7c3470f38(3->4) (udp_read_packet() +249 programs/pluto/iface_udp.c)
+output: | alloc logger: newref @0x7fc7c2939fc8(0->1) (udp_read_packet() +249 programs/pluto/iface_udp.c)
+output: | *received 225 bytes from 192.1.2.23:500 on eth1 192.1.2.45:500 using UDP
+output: |   7b 63 82 36  86 46 23 9b  77 9e 45 5a  d1 7a ee 90   {c.6.F#.w.EZ.z..
+output: |   2e 20 23 20  00 00 00 01  00 00 00 e1  24 00 00 c5   . # ........$...
+output: |   5c ba f8 25  c1 57 25 b8  0c 2f 5c 51  e9 14 1a 8e   \..%.W%../\Q....
+output: |   f6 18 55 6a  52 36 22 c2  3b 5b f5 ee  b7 4c 38 73   ..UjR6".;[...L8s
+output: |   04 2a f3 3b  fa 25 c2 31  8a 17 1b e6  95 67 c9 e7   .*.;.%.1.....g..
+output: |   4c bc 00 0f  b5 20 33 1a  6b 97 22 dc  8f f5 59 64   L.... 3.k."...Yd
+output: |   5b 58 e6 0e  e2 1e ee 53  6b 58 47 3d  7c 55 41 ca   [X.....SkXG=|UA.
+output: |   b4 52 88 ea  73 36 bb fe  32 66 1b df  c1 73 a1 b5   .R..s6..2f...s..
+output: |   02 55 e7 2a  df 46 d3 de  08 df 27 fe  c6 bb 14 cd   .U.*.F....'.....
+output: |   c1 b4 b3 bf  b2 a2 a8 cd  47 04 ad e7  05 f8 c9 c0   ........G.......
+output: |   ed 89 6f fb  51 f9 1b fa  65 18 f6 0d  cf d2 14 4b   ..o.Q...e......K
+output: |   cb 9b 9b 77  65 d1 45 11  9e 1f 5f fa  cc e6 68 f2   ...we.E..._...h.
+output: |   cf d3 cf 05  f7 fa d5 cd  52 f7 c2 f1  70 c1 6f 22   ........R...p.o"
+output: |   67 9c 0f eb  60 06 14 f2  d2 ba 25 93  b7 2a c4 54   g...`.....%..*.T
+output: |   e7                                                   .
+output: | **parse ISAKMP Message:
+output: |    initiator SPI: 7b 63 82 36  86 46 23 9b
+output: |    responder SPI: 77 9e 45 5a  d1 7a ee 90
+output: |    next payload type: ISAKMP_NEXT_v2SK (0x2e)
+output: |    ISAKMP version: IKEv2 version 2.0 (rfc4306/rfc5996) (0x20)
+output: |    exchange type: ISAKMP_v2_IKE_AUTH (0x23)
+output: |    flags: ISAKMP_FLAG_v2_MSG_RESPONSE (0x20)
+output: |    Message ID: 1 (00 00 00 01)
+output: |    length: 225 (00 00 00 e1)
+output: |  processing version=2.0 packet with exchange type=ISAKMP_v2_IKE_AUTH (35)
+output: | I am the IKE SA Original Initiator receiving an IKEv2 IKE_AUTH response 
+output: | State DB: found IKEv2 state #3 in PARENT_I2 (find_v2_ike_sa)
+output: | #3 is idle
+output: | #3 idle
+output: | unpacking clear payload
+output: | Now let's proceed with payload (ISAKMP_NEXT_v2SK)
+output: | ***parse IKEv2 Encryption Payload:
+output: |    next payload type: ISAKMP_NEXT_v2IDr (0x24)
+output: |    flags: none (0x0)
+output: |    length: 197 (00 c5)
+output: | processing payload: ISAKMP_NEXT_v2SK (len=193)
+output: | looking for transition from PARENT_I2 matching IKE_AUTH response: SK (ignoring secured payloads)
+output: |   trying: Initiator: process IKE_INTERMEDIATE reply, initiate IKE_AUTH or IKE_INTERMEDIATE
+output: |     exchange type does not match IKE_INTERMEDIATE
+output: |   trying: Initiator: process IKE_AUTH response
+output: |     matching by ignoring secured payloads
+output: | stripping 1 octets as pad
+output: | #3 ikev2 ISAKMP_v2_IKE_AUTH decrypt success
+output: | struct msg_digest: addref @0x7fc7c2ab8708(1->2) (process_packet_with_secured_ike_sa() +2204 programs/pluto/ikev2.c)
+output: | Now let's proceed with payload (ISAKMP_NEXT_v2IDr)
+output: | **parse IKEv2 Identification - Responder - Payload:
+output: |    next payload type: ISAKMP_NEXT_v2AUTH (0x27)
+output: |    flags: none (0x0)
+output: |    length: 12 (00 0c)
+output: |    ID type: ID_FQDN (0x2)
+output: |    reserved: 00 00 00
+output: | processing payload: ISAKMP_NEXT_v2IDr (len=4)
+output: | Now let's proceed with payload (ISAKMP_NEXT_v2AUTH)
+output: | **parse IKEv2 Authentication Payload:
+output: |    next payload type: ISAKMP_NEXT_v2SA (0x21)
+output: |    flags: none (0x0)
+output: |    length: 72 (00 48)
+output: |    auth method: IKEv2_AUTH_SHARED (0x2)
+output: | processing payload: ISAKMP_NEXT_v2AUTH (len=64)
+output: | Now let's proceed with payload (ISAKMP_NEXT_v2SA)
+output: | **parse IKEv2 Security Association Payload:
+output: |    next payload type: ISAKMP_NEXT_v2TSi (0x2c)
+output: |    flags: none (0x0)
+output: |    length: 36 (00 24)
+output: | processing payload: ISAKMP_NEXT_v2SA (len=32)
+output: | Now let's proceed with payload (ISAKMP_NEXT_v2TSi)
+output: | **parse IKEv2 Traffic Selector - Initiator - Payload:
+output: |    next payload type: ISAKMP_NEXT_v2TSr (0x2d)
+output: |    flags: none (0x0)
+output: |    length: 24 (00 18)
+output: |    number of TS: 1 (01)
+output: | processing payload: ISAKMP_NEXT_v2TSi (len=16)
+output: | Now let's proceed with payload (ISAKMP_NEXT_v2TSr)
+output: | **parse IKEv2 Traffic Selector - Responder - Payload:
+output: |    next payload type: ISAKMP_NEXT_v2NONE (0x0)
+output: |    flags: none (0x0)
+output: |    length: 24 (00 18)
+output: |    number of TS: 1 (01)
+output: | processing payload: ISAKMP_NEXT_v2TSr (len=16)
+output: | looking for transition from PARENT_I2 matching IKE_AUTH response: SK{IDr,AUTH,SA,TSi,TSr}
+output: |   trying: Initiator: process IKE_INTERMEDIATE reply, initiate IKE_AUTH or IKE_INTERMEDIATE
+output: |     exchange type does not match IKE_INTERMEDIATE
+output: |   trying: Initiator: process IKE_AUTH response
+output: |     secured message matched
+output: | selected state microcode Initiator: process IKE_AUTH response
+output: | #3.st_v2_transition PARENT_I1->PARENT_I2 -> PARENT_I2->ESTABLISHED_IKE_SA (v2_dispatch() +2308 programs/pluto/ikev2.c)
+output: | Message ID: IKE #3 initiator processing response to existing exchange (initiator: .sent=1 .recv=0 .recv_frags=0 .wip=1 .last_sent=12.686528 .last_recv=12.686031 responder: .sent=-1 .recv=-1 .recv_frags=0 .wip=-1 .last_sent=12.473737 .last_recv=12.473737)
+output: | calling processor Initiator: process IKE_AUTH response
+output: |   #3 spent 1.03 (10.9) milliseconds
+output: | no certs to decode
+output: | responder ID is ID_FQDN: '@east'
+output: | rhc: peer ID matches and no certificate payload - continuing with peer ID @east
+output: |     result: newref clone-key@0x7fc7c2a5df80 (64-bytes, SHA512_HMAC)(init_symkey() +101 lib/libswan/ike_alg_prf_mac_nss_ops.c)
+output: | idhash auth R2: delref clone-key@0x7fc7c2a5df80
+output: | initiator verifying AUTH payload
+output: | verifying auth payload, remote sent v2AUTH=SHARED we want auth=secret
+output: | ikev2_calculate_psk_sighash() called for STATE_V2_PARENT_I2 to REMOTE_PERSPECTIVE PSK with authby=secret
+output: | lsw_get_secret() using IDs for @west->@east of kind SECRET_PSK
+output: | line 1: key type SECRET_PSK(@west) to type SECRET_PSK
+output: | 1: compared key @west to @west / @east -> 8
+output: | 2: compared key @east to @west / @east -> c
+output: |   match=c
+output: |   match c beats previous best_match 0 match=0x7fc7c29dcf68 (line=1)
+output: | concluding with best_match=c best=0x7fc7c29dcf68 (lineno=1)
+output: |     result: newref pss-key@0x7fc7c33c5f80 (52-bytes, EXTRACT_KEY_FROM_KEY)(merge_symkey_bytes() +222 lib/libswan/crypt_symkey.c)
+output: |     result: newref pss-key@0x7fc7c2a5df80 (36-bytes, SHA512_HMAC)(psk_auth() +201 lib/libswan/ike_alg_prf_ikev2_nss_ops.c)
+output: | pss: delref tmp-key@0x7fc7c33c5f80
+output: |     result: newref prf(Shared Secret, "Key Pad for IKEv2")-key@0x7fc7c33c5f80 (64-bytes, SHA512_HMAC)(psk_auth() +228 lib/libswan/ike_alg_prf_ikev2_nss_ops.c)
+output: | psk pss_key: delref pss_key-key@0x7fc7c2a5df80
+output: |     result: newref clone-key@0x7fc7c2a5df80 (64-bytes, SHA512_HMAC)(init_symkey() +101 lib/libswan/ike_alg_prf_mac_nss_ops.c)
+output: | <signed-octets> = prf(<prf-psk>, <msg octets>): delref clone-key@0x7fc7c2a5df80
+output: | psk_auth: delref prf-psk-key@0x7fc7c33c5f80
+output: "west-east" #3: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+output: | parent state #3: PARENT_I2(open IKE SA) => ESTABLISHED_IKE_SA(established IKE SA)
+output: | "west-east": addref @0x7fc7c3462a78(4->5) "west-east" #3:  (dispatch() +2436 programs/pluto/routing.c)
+output: | "west-east" #3: routing: start ESTABLISH_IKE, ROUTED_NEGOTIATION, PERMANENT; IKE #3 (ESTABLISHED_IKE_SA) by=PEER; $1@0x7fc7c3462a78; routing_sa #4 negotiating_ike_sa #3 negotiating_child_sa #4 (v2_ike_sa_established() +193 programs/pluto/ikev2_parent.c)
+output: | "west-east" #3: routing: stop ESTABLISH_IKE, ROUTED_NEGOTIATION, PERMANENT; ok=yes; routing_sa #4 negotiating_ike_sa #3 established_ike_sa #0->#3 negotiating_child_sa #4 (v2_ike_sa_established() +193 programs/pluto/ikev2_parent.c)
+output: | "west-east": delref @0x7fc7c3462a78(5->4) "west-east" #3:  (dispatch() +2450 programs/pluto/routing.c)
+output: | pstats #3 ikev2.ike established
+output: | redirect: no redirect payload in IKE_AUTH reply
+output: | MOBIKE_SUPPORTED neither requested nor accepted
+output: | comparing remote proposals against IKE_AUTH initiator accepting remote ESP/AH proposal 5 local proposals
+output: | local proposal 1 type ENCR has 1 transforms
+output: | local proposal 1 type PRF has 0 transforms
+output: | local proposal 1 type INTEG has 1 transforms
+output: | local proposal 1 type DH has 1 transforms
+output: | local proposal 1 type ESN has 2 transforms
+output: | local proposal 1 transforms: required: ENCR+ESN; optional: INTEG+DH
+output: | local proposal 2 type ENCR has 1 transforms
+output: | local proposal 2 type PRF has 0 transforms
+output: | local proposal 2 type INTEG has 1 transforms
+output: | local proposal 2 type DH has 1 transforms
+output: | local proposal 2 type ESN has 2 transforms
+output: | local proposal 2 transforms: required: ENCR+ESN; optional: INTEG+DH
+output: | local proposal 3 type ENCR has 1 transforms
+output: | local proposal 3 type PRF has 0 transforms
+output: | local proposal 3 type INTEG has 1 transforms
+output: | local proposal 3 type DH has 1 transforms
+output: | local proposal 3 type ESN has 2 transforms
+output: | local proposal 3 transforms: required: ENCR+ESN; optional: INTEG+DH
+output: | local proposal 4 type ENCR has 1 transforms
+output: | local proposal 4 type PRF has 0 transforms
+output: | local proposal 4 type INTEG has 2 transforms
+output: | local proposal 4 type DH has 1 transforms
+output: | local proposal 4 type ESN has 2 transforms
+output: | local proposal 4 transforms: required: ENCR+INTEG+ESN; optional: DH
+output: | local proposal 5 type ENCR has 1 transforms
+output: | local proposal 5 type PRF has 0 transforms
+output: | local proposal 5 type INTEG has 2 transforms
+output: | local proposal 5 type DH has 1 transforms
+output: | local proposal 5 type ESN has 2 transforms
+output: | local proposal 5 transforms: required: ENCR+INTEG+ESN; optional: DH
+output: | ***parse IKEv2 Proposal Substructure Payload:
+output: |    last proposal: v2_PROPOSAL_LAST (0x0)
+output: |    length: 32 (00 20)
+output: |    prop #: 1 (01)
+output: |    proto ID: IKEv2_SEC_PROTO_ESP (0x3)
+output: |    spi size: 4 (04)
+output: |    # transforms: 2 (02)
+output: | parsing 4 raw bytes of IKEv2 Proposal Substructure Payload into remote SPI
+output: |   c3 6c b1 24                                          .l.$
+output: | Comparing remote proposal 1 containing 2 transforms against local proposal [1..1] of 5 local proposals
+output: | ****parse IKEv2 Transform Substructure Payload:
+output: |    last transform: v2_TRANSFORM_NON_LAST (0x3)
+output: |    length: 12 (00 0c)
+output: |    IKEv2 transform type: IKEv2_TRANS_TYPE_ENCR (0x1)
+output: |    IKEv2 transform ID: AES_GCM_C (0x14)
+output: | *****parse IKEv2 Attribute Substructure Payload:
+output: |    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+output: |    length/value: 256 (01 00)
+output: | remote proposal 1 transform 0 (ENCR=AES_GCM_C_256) matches local proposal 1 type 1 (ENCR) transform 0
+output: | ****parse IKEv2 Transform Substructure Payload:
+output: |    last transform: v2_TRANSFORM_LAST (0x0)
+output: |    length: 8 (00 08)
+output: |    IKEv2 transform type: IKEv2_TRANS_TYPE_ESN (0x5)
+output: |    IKEv2 transform ID: IKEv2_ESN_YES (0x1)
+output: | remote proposal 1 transform 1 (ESN=YES) matches local proposal 1 type 5 (ESN) transform 0
+output: | remote proposal 1 proposed transforms: ENCR+ESN; matched: ENCR+ESN; unmatched: none
+output: | comparing remote proposal 1 containing ENCR+ESN transforms to local proposal 1; required: ENCR+ESN; optional: INTEG+DH; matched: ENCR+ESN
+output: | remote proposal 1 matches local proposal 1
+output: | remote accepted the proposal 1:ESP:ENCR=AES_GCM_C_256;ESN=YES[first-match]
+output: | IKE_AUTH initiator accepting remote ESP/AH proposal ikev2_proposal: 1:ESP=AES_GCM_C_256-ESN:YES SPI=c36cb124
+output: | converting proposal to internal trans attrs
+output: | TSi: parsing 1 traffic selectors
+output: | ***parse IKEv2 Traffic Selector Header:
+output: |    TS type: IKEv2_TS_IPV4_ADDR_RANGE (0x7)
+output: |    IP Protocol ID: ALL (0x0)
+output: |    length: 16 (00 10)
+output: | ****parse IKEv2 IP Traffic Selector port range:
+output: |    start port: 0 (00 00)
+output: |    end port: 65535 (ff ff)
+output: | parsing 4 raw bytes of IKEv2 Traffic Selector Header into TS IP start
+output: |   c0 00 01 00                                          ....
+output: | parsing 4 raw bytes of IKEv2 Traffic Selector Header into TS IP end
+output: |   c0 00 01 ff                                          ....
+output: | TSi: parsed 1 traffic selectors
+output: | TSr: parsing 1 traffic selectors
+output: | ***parse IKEv2 Traffic Selector Header:
+output: |    TS type: IKEv2_TS_IPV4_ADDR_RANGE (0x7)
+output: |    IP Protocol ID: ALL (0x0)
+output: |    length: 16 (00 10)
+output: | ****parse IKEv2 IP Traffic Selector port range:
+output: |    start port: 0 (00 00)
+output: |    end port: 65535 (ff ff)
+output: | parsing 4 raw bytes of IKEv2 Traffic Selector Header into TS IP start
+output: |   c0 00 02 00                                          ....
+output: | parsing 4 raw bytes of IKEv2 Traffic Selector Header into TS IP end
+output: |   c0 00 02 ff                                          ....
+output: | TSr: parsed 1 traffic selectors
+output: | ts: evaluating END EQUALS:
+output: | ts:   narrow port: selector.port=0..65535 EQUALS TSi[1]=0..65535 ==> 0..65535(0) (must match)
+output: | ts:   narrow protocol: selector.ipproto=*0 EQUALS TSi[1]=*0 ==> ALL (must match)
+output: | ts:   narrow range: selector.range=192.0.1.0-192.0.1.255 EQUALS TSi[1]=192.0.1.0-192.0.1.255 ==> 192.0.1.0-192.0.1.255 (must match)
+output: | ts:     narrowed TSi[1] address-range 192.0.1.0-192.0.1.255 has fitness 25
+output: | ts:     narrowed TSi[1] port 0 has fitness 65536
+output: | ts:     narrowed TSi[1] protocol ALL has fitness 255
+output: | ts:   narrow port: selector.port=0..65535 EQUALS TSr[1]=0..65535 ==> 0..65535(0) (must match)
+output: | ts:   narrow protocol: selector.ipproto=*0 EQUALS TSr[1]=*0 ==> ALL (must match)
+output: | ts:   narrow range: selector.range=192.0.2.0-192.0.2.255 EQUALS TSr[1]=192.0.2.0-192.0.2.255 ==> 192.0.2.0-192.0.2.255 (must match)
+output: | ts:     narrowed TSr[1] address-range 192.0.2.0-192.0.2.255 has fitness 25
+output: | ts:     narrowed TSr[1] port 0 has fitness 65536
+output: | ts:     narrowed TSr[1] protocol ALL has fitness 255
+output: | skipping scribble as already scribbled
+output: | skipping scribble as already scribbled
+output: | accepted selectors [192.0.1.0/24]->[192.0.2.0/24]
+output: | allocating 1 SPDs
+output: | left.child.has_client: yes -> yes (scribble_ts_response_on_initiator() +285 programs/pluto/ikev2_ts.c)
+output: | right.child.has_client: yes -> yes (scribble_ts_response_on_initiator() +287 programs/pluto/ikev2_ts.c)
+output: | USE_TRANSPORT_MODE neither requested nor accepted
+output: | local policy is Tunnel Mode and received matching notify
+output: | integ=NONE: .key_size=0 encrypt=AES_GCM_16: .key_size=32 .salt_size=4 keymat_len=36
+output: |     result: newref keymat-key@0x7fc7c33c5f80 (72-bytes, EXTRACT_KEY_FROM_KEY)(prfplus_key_data() +61 lib/libswan/ike_alg_prf_ikev2_nss_ops.c)
+output: |     result: newref initiator to responder key-key@0x7fc7c2a5df80 (36-bytes, EXTRACT_KEY_FROM_KEY)(ikev2_derive_child_keys() +126 programs/pluto/ikev2_crypto.c)
+output: | initiator to responder keys: newref slot-key@0x7fc7c34cbf80 (36-bytes, EXTRACT_KEY_FROM_KEY)
+output: | initiator to responder keys: delref slot-key-key@0x7fc7c34cbf80
+output: | ikev2_derive_child_keys: delref ikey-key@0x7fc7c2a5df80
+output: |     result: newref responder to initiator key-key@0x7fc7c2a5df80 (36-bytes, EXTRACT_KEY_FROM_KEY)(ikev2_derive_child_keys() +133 programs/pluto/ikev2_crypto.c)
+output: | responder to initiator keys:: newref slot-key@0x7fc7c34cbf80 (36-bytes, EXTRACT_KEY_FROM_KEY)
+output: | responder to initiator keys:: delref slot-key-key@0x7fc7c34cbf80
+output: | ikev2_derive_child_keys: delref rkey-key@0x7fc7c2a5df80
+output: | ikev2_derive_child_keys: delref keymat-key@0x7fc7c33c5f80
+output: | "west-east": addref @0x7fc7c3462a78(4->5) "west-east" #4:  (dispatch() +2436 programs/pluto/routing.c)
+output: | "west-east" #4: routing: start ESTABLISH_INBOUND, ROUTED_NEGOTIATION, PERMANENT; IKE #3 (ESTABLISHED_IKE_SA) Child #4 (IKE_AUTH_CHILD_I0) by=PEER; $1@0x7fc7c3462a78; routing_sa #4 negotiating_ike_sa #3 established_ike_sa #3 negotiating_child_sa #4 (process_v2_child_response_payloads() +838 programs/pluto/ikev2_child.c)
+output: | kernel: install_inbound_ipsec_sa() for #4: inbound (process_v2_child_response_payloads() +838 programs/pluto/ikev2_child.c)
+output: | checking west-east for conflicts
+output: | spd_owner() looking for SPD owner of 192.0.1.0/24===192.0.2.0/24 with routing >= ROUTED_INBOUND_NEGOTIATION[NEGOTIATION]
+output: | FOR_EACH_SPD_ROUTE[remote_client_range=192.0.2.0/24]... in (install_inbound_ipsec_sa() +1986 programs/pluto/kernel.c)
+output: |   found "west-east" 192.0.1.0/24===192.0.2.0/24
+output: |    "west-east" 192.0.1.0/24===192.0.2.0/24 ROUTED_NEGOTIATION[NEGOTIATION] skipped; ignoring self
+output: |   matches: 1
+output: | spd_owner: owners of 192.0.1.0/24===192.0.2.0/24 routing >= ROUTED_INBOUND_NEGOTIATION[NEGOTIATION]
+output: | initiator ipsec-max-bytes: hard-limit=9223372036854775808 soft-limit=4611686018427387900 softer-limit=2305843009213693950 fuzz=101395308492386470 actual-limit=2407238317706080420
+output: | initiator ipsec-max-packets: hard-limit=9223372036854775808 soft-limit=4611686018427387900 softer-limit=2305843009213693950 fuzz=249219136132022345 actual-limit=2555062145345716295
+output: | kernel: setup_half_kernel_state() INBOUND <unset-selector>->[192.1.2.23=TUNNEL=>192.1.2.45]-><unset-selector> sec_label=
+output: | kernel: looking for alg with encrypt: AES_GCM_16 keylen: 256 integ: NONE
+output: | encrypt AES_GCM_16 keylen=256 transid=20, key_size=32, encryptalg=20
+output: | kernel: AES_GCM_16 requires 4 salt bytes
+output: | kernel: child->sa.st_esp.keymat_len=36 is encrypt_keymat_size=36 + integ_keymat_size=0
+output: | kernel: setting IPsec SA replay-window to 128
+output: | kernel: Enabling ESN
+output: | kernel: NIC esp-hw-offload disabled for connection 'west-east'
+output: | "west-east" #4: routing:  kernel_ops_add_sa() level=0 INBOUND TUNNEL
+output: | "west-east" #4: routing:   (src) <unset-selector> -> 192.1.2.23[b8d8481d] ==> 192.1.2.45 -> <unset-selector> (dst)
+output: | "west-east" #4: routing:   NONE:0 AES_GCM_16:36 replay_window=128 +esn +dont_encap_dscp ...
+output: | netlink_add_sa() tunnel enabling inner-most tunnel mode
+output: | netlink_add_sa() adding IPsec SA with reqid 16389
+output: | netlink_add_sa() enabling ESN
+output: | netlink_add_sa() disabling Encap DSCP
+output: | netlink_add_sa() setting IPsec SA replay-window to 128 using xfrm_replay_state_esn
+output: | netlink_add_sa() esp-hw-offload not set for IPsec SA
+output: | sendrecv_xfrm_msg() sending 26 Add SA esp.ESPSPIi@192.1.2.45
+output: | sendrecv_xfrm_msg() recvfrom() returned 36 bytes
+output: | sendrecv_xfrm_msg() netlink response for Add SA esp.ESPSPIi@192.1.2.45 included non-error error
+output: | "west-east" #4: routing:   ... yes
+output: | kernel: install_inbound_ipsec_kernel_policies() owner=#4
+output: | kernel: install_inbound_ipsec_kernel_policies() is installing SPD for 192.0.2.0/24=>192.0.1.0/24
+output: | kernel: NIC esp-hw-offload disabled for connection 'west-east'
+output: | priority calculation of is 1757393 (0x1ad0d1) base=1 portsw=2 protow=1, srcw=104 dstw=104 instw=1
+output: | kernel: install_inbound_ipsec_kernel_policy() is installing SPD for 192.0.2.0/24=>192.0.1.0/24
+output: | "west-east" #4: routing:  kernel_ops_policy_add() ADD+INBOUND add inbound Child SA (install_inbound_ipsec_kernel_policies() +1636 programs/pluto/kernel.c)
+output: | "west-east" #4: routing:   client=192.0.2.0/24=>192.0.1.0/24 lifetime=0s
+output: | "west-east" #4: routing:   sa_marks=out:0/00000000,in:0/00000000
+output: | "west-east" #4: routing:   policy=192.1.2.23=>192.1.2.45,IPSEC=IPSEC,priority=1757393,TUNNEL[ESP@16389(ALL)]
+output: | kernel_ops_policy_add()   policy=IPv4 action=0 xfrm_dir=0 op=ADD dir=INBOUND
+output: | kernel_xfrm_policy_add() using family IPv4 (2)
+output: | set_xfrm_selectors() using family IPv4 (2)
+output: | kernel_xfrm_policy_add() IPsec SA SPD priority set to 1757393
+output: | kernel_xfrm_policy_add() adding xfrm_user_tmpl reqid=16389 id.proto=50 optional=0 family=2 mode=1 saddr=192.1.2.23 daddr=192.1.2.45
+output: | sendrecv_xfrm_msg() sending 25 policy IPv4
+output: | sendrecv_xfrm_msg() recvfrom() returned 36 bytes
+output: | kernel_ops_policy_add()   XFRM_MSG_UPDPOLICY for flow IPv4 (in) had A policy
+output: | kernel_xfrm_policy_add() adding policy forward (suspect a tunnel)
+output: | sendrecv_xfrm_msg() sending 25 policy IPv4
+output: | sendrecv_xfrm_msg() recvfrom() returned 36 bytes
+output: | kernel_ops_policy_add()   XFRM_MSG_UPDPOLICY for flow IPv4 (fwd) had A policy
+output: | "west-east" #4: routing:   ... yes
+output: | "west-east" #4: routing: stop ESTABLISH_INBOUND, ROUTED_NEGOTIATION->ROUTED_INBOUND_NEGOTIATION, PERMANENT; ok=yes; routing_sa #4 negotiating_ike_sa #3 established_ike_sa #3 negotiating_child_sa #4 (process_v2_child_response_payloads() +838 programs/pluto/ikev2_child.c)
+output: | "west-east": delref @0x7fc7c3462a78(5->4) "west-east" #4:  (dispatch() +2450 programs/pluto/routing.c)
+output: | "west-east": addref @0x7fc7c3462a78(4->5) "west-east" #4:  (dispatch() +2436 programs/pluto/routing.c)
+output: | "west-east" #4: routing: start ESTABLISH_OUTBOUND, ROUTED_INBOUND_NEGOTIATION, PERMANENT; IKE #3 (ESTABLISHED_IKE_SA) Child #4 (IKE_AUTH_CHILD_I0) by=PEER; $1@0x7fc7c3462a78; routing_sa #4 negotiating_ike_sa #3 established_ike_sa #3 negotiating_child_sa #4 (process_v2_child_response_payloads() +838 programs/pluto/ikev2_child.c)
+output: | kernel: install_outbound_ipsec_sa() for #4: outbound (process_v2_child_response_payloads() +838 programs/pluto/ikev2_child.c)
+output: | initiator ipsec-max-bytes: hard-limit=9223372036854775808 soft-limit=4611686018427387900 softer-limit=2305843009213693950 fuzz=329279158805963929 actual-limit=2635122168019657879
+output: | initiator ipsec-max-packets: hard-limit=9223372036854775808 soft-limit=4611686018427387900 softer-limit=2305843009213693950 fuzz=255287362168117167 actual-limit=2561130371381811117
+output: | kernel: setup_half_kernel_state() OUTBOUND <unset-selector>->[192.1.2.45=TUNNEL=>192.1.2.23]-><unset-selector> sec_label=
+output: | kernel: looking for alg with encrypt: AES_GCM_16 keylen: 256 integ: NONE
+output: | encrypt AES_GCM_16 keylen=256 transid=20, key_size=32, encryptalg=20
+output: | kernel: AES_GCM_16 requires 4 salt bytes
+output: | kernel: child->sa.st_esp.keymat_len=36 is encrypt_keymat_size=36 + integ_keymat_size=0
+output: | kernel: setting IPsec SA replay-window to 128
+output: | kernel: Enabling ESN
+output: | kernel: NIC esp-hw-offload disabled for connection 'west-east'
+output: | "west-east" #4: routing:  kernel_ops_add_sa() level=0 OUTBOUND TUNNEL
+output: | "west-east" #4: routing:   (src) <unset-selector> -> 192.1.2.45[c36cb124] ==> 192.1.2.23 -> <unset-selector> (dst)
+output: | "west-east" #4: routing:   NONE:0 AES_GCM_16:36 replay_window=128 +esn +dont_encap_dscp ...
+output: | netlink_add_sa() tunnel enabling inner-most tunnel mode
+output: | netlink_add_sa() adding IPsec SA with reqid 16389
+output: | netlink_add_sa() enabling ESN
+output: | netlink_add_sa() disabling Encap DSCP
+output: | netlink_add_sa() setting IPsec SA replay-window to 128 using xfrm_replay_state_esn
+output: | netlink_add_sa() esp-hw-offload not set for IPsec SA
+output: | sendrecv_xfrm_msg() sending 16 Add SA esp.ESPSPIi@192.1.2.23
+output: | sendrecv_xfrm_msg() recvfrom() returned 36 bytes
+output: | sendrecv_xfrm_msg() netlink response for Add SA esp.ESPSPIi@192.1.2.23 included non-error error
+output: | "west-east" #4: routing:   ... yes
+output: "west-east" #4: IMPAIR: kernel: install_ipsec_sa_outbound_state in setup_half_kernel_state()
+output: | setup_half_kernel_state() cleaning up after a fail
+output: | "west-east" #4: routing:  kernel_ops_del_ipsec_spi() deleting sa 192.1.2.45-ESP[c36cb124]->192.1.2.23 for esp.ESPSPIi@192.1.2.23 ...
+output: | sendrecv_xfrm_msg() sending 17 Del SA esp.ESPSPIi@192.1.2.23
+output: | sendrecv_xfrm_msg() recvfrom() returned 36 bytes
+output: | sendrecv_xfrm_msg() netlink response for Del SA esp.ESPSPIi@192.1.2.23 included non-error error
+output: | "west-east" #4: routing:   ... yes
+output: | kernel: install_outbound_ipsec_sa() failed to install outbound kernel state
+output: | "west-east" #4: routing: stop ESTABLISH_OUTBOUND, ROUTED_INBOUND_NEGOTIATION->ROUTED_TUNNEL, PERMANENT; ok=no; routing_sa #4 negotiating_ike_sa #3 established_ike_sa #3 negotiating_child_sa #4 established_child_sa #0->#4 (process_v2_child_response_payloads() +838 programs/pluto/ikev2_child.c)
+output: | "west-east": delref @0x7fc7c3462a78(5->4) "west-east" #4:  (dispatch() +2450 programs/pluto/routing.c)
+output: "west-east" #4: CHILD SA encountered fatal error: INVALID_SYNTAX
+output: | #3 complete_v2_state_transition() in state ESTABLISHED_IKE_SA PARENT_I2->ESTABLISHED_IKE_SA with status STF_FATAL
+output: "west-east" #3: encountered fatal error in state STATE_V2_ESTABLISHED_IKE_SA
+output: | Message ID: IKE #3 forcing a response received update (STF_FATAL) (initiator: .sent=1 .recv=0 .recv_frags=0 .wip=1 .last_sent=12.686528 .last_recv=12.686031 responder: .sent=-1 .recv=-1 .recv_frags=0 .wip=-1 .last_sent=12.473737 .last_recv=12.473737)
+output: | Message ID: IKE #3 clearing EVENT_RETRANSMIT as response received (initiator: .sent=1 .recv=0 .recv_frags=0 .wip=-1 .last_sent=12.686528 .last_recv=12.686031 responder: .sent=-1 .recv=-1 .recv_frags=0 .wip=-1 .last_sent=12.473737 .last_recv=12.473737)
+output: | #3 requesting EVENT_RETRANSMIT-event@0x7fc7c346cfa8 be deleted (clear_retransmits() +108 programs/pluto/retransmit.c)
+output: | #3 deleting EVENT_RETRANSMIT
+output: | tt: delref @0x7fc7c28fbf68(1->0) (destroy_timeout() +575 programs/pluto/server.c)
+output: | state-event: delref @0x7fc7c346cfa8(1->0) (clear_retransmits() +108 programs/pluto/retransmit.c)
+output: | #3 STATE_V2_ESTABLISHED_IKE_SA: retransmits: cleared
+output: | Message ID: IKE #3 updating initiator received message response 1 (initiator: .recv=0->1 .wip=1->-1 .last_recv=12.686031->12.816703 responder:)
+output: | Message ID: IKE #3 skipping update_send as nothing to send (presumably intiator receiving a response) (initiator: .sent=1 .recv=1 .recv_frags=0 .wip=-1 .last_sent=12.686528 .last_recv=12.816703 responder: .sent=-1 .recv=-1 .recv_frags=0 .wip=-1 .last_sent=12.473737 .last_recv=12.473737)
+output: | "west-east" #3: .st_on_delete.skip_send_delete no->true (complete_v2_state_transition() +2822 programs/pluto/ikev2.c)
+output: | "west-east" #3: routing:   connection_zap_ike_family()
+output: |   IKE SA is no longer viable
+output: | "west-east" #3: routing:     dispatching delete to Child SA #4
+output: | "west-east" #4: no whack to attach
+output: | clone logger: newref @0x7fc7c28fbfc8(0->1) (teardown_child() +1217 programs/pluto/routing.c)
+output: | "west-east": addref @0x7fc7c3462a78(4->5) "west-east" #4:  (dispatch() +2436 programs/pluto/routing.c)
+output: | "west-east" #4: routing: start TEARDOWN_CHILD, ROUTED_TUNNEL, PERMANENT; Child #4 (IKE_AUTH_CHILD_I0) by=UNKNOWN; $1@0x7fc7c3462a78; routing_sa #4 negotiating_ike_sa #3 established_ike_sa #3 negotiating_child_sa #4 established_child_sa #4 (complete_v2_state_transition() +2823 programs/pluto/ikev2.c)
+output: | "west-east" #4: routing:   Child SA matches .routing_sa
+output: | revival: skip update_remote_port(), not an instance
+output: "west-east" #4: connection is supposed to remain up; revival attempt 2 scheduled in 5 seconds
+output: | string logger: newref @0x7fc7c28c8fc8(0->1) (schedule_connection_event() +44 programs/pluto/connection_event.c)
+output: | "west-east": addref @0x7fc7c3462a78(5->6) event CONNECTION_REVIVAL for "west-east":  (schedule_connection_event() +49 programs/pluto/connection_event.c)
+output: "west-east" #4: IMPAIR: revival: skip scheduling revival event
+output: | spd_owner() looking for SPD owner of 192.0.1.0/24===192.0.2.0/24 with routing >= ROUTED_ONDEMAND[ONDEMAND]
+output: | FOR_EACH_SPD_ROUTE[remote_client_range=192.0.2.0/24]... in (complete_v2_state_transition() +2823 programs/pluto/ikev2.c)
+output: |   found "west-east" 192.0.1.0/24===192.0.2.0/24
+output: |    "west-east" 192.0.1.0/24===192.0.2.0/24 ROUTED_TUNNEL[IPSEC] skipped; ignoring self
+output: |   matches: 1
+output: | spd_owner: owners of 192.0.1.0/24===192.0.2.0/24 routing >= ROUTED_ONDEMAND[ONDEMAND]
+output: | kernel: NIC esp-hw-offload disabled for connection 'west-east'
+output: | priority calculation of is 1757393 (0x1ad0d1) base=1 portsw=2 protow=1, srcw=104 dstw=104 instw=1
+output: | "west-east" #4: routing:  kernel_ops_policy_add() REPLACE+OUTBOUND replacing (complete_v2_state_transition() +2823 programs/pluto/ikev2.c)
+output: | "west-east" #4: routing:   client=192.0.1.0/24=>192.0.2.0/24 lifetime=0s
+output: | "west-east" #4: routing:   sa_marks=out:0/00000000,in:0/00000000
+output: | "west-east" #4: routing:   policy=0.0.0.0=>0.0.0.0,ONDEMAND=TRAP,priority=1757393,TRANSPORT[ESP@0(ALL)]
+output: | kernel_ops_policy_add()   policy=%trap(allow) action=0 xfrm_dir=1 op=REPLACE dir=OUTBOUND
+output: | kernel_xfrm_policy_add() using family IPv4 (2)
+output: | set_xfrm_selectors() using family IPv4 (2)
+output: | kernel_xfrm_policy_add() IPsec SA SPD priority set to 1757393
+output: | kernel_xfrm_policy_add() adding xfrm_user_tmpl reqid=0 id.proto=50 optional=0 family=2 mode=0 saddr=<unset-address> daddr=<unset-address>
+output: | sendrecv_xfrm_msg() sending 25 policy %trap(allow)
+output: | sendrecv_xfrm_msg() recvfrom() returned 36 bytes
+output: | kernel_ops_policy_add()   XFRM_MSG_UPDPOLICY for flow %trap(allow) (out) had A policy
+output: | "west-east" #4: routing:   ... yes
+output: | "west-east" #4: routing:  kernel_ops_policy_del() INBOUND REPORT_NO_INBOUND inbound (complete_v2_state_transition() +2823 programs/pluto/ikev2.c)
+output: | "west-east" #4: routing:   client=192.0.2.0/24=>192.0.1.0/24
+output: | "west-east" #4: routing:   sa_marks=out:0/00000000,in:0/00000000
+output: | kernel_xfrm_policy_del() using family IPv4 (2)
+output: | set_xfrm_selectors() using family IPv4 (2)
+output: | sendrecv_xfrm_msg() sending 20 policy delete
+output: | sendrecv_xfrm_msg() recvfrom() returned 36 bytes
+output: | kernel_ops_policy_del()   XFRM_MSG_DELPOLICY for flow delete (in) had A policy
+output: | kernel_xfrm_policy_del() deleting policy forward (even when there may not be one)
+output: | sendrecv_xfrm_msg() sending 20 policy delete
+output: | sendrecv_xfrm_msg() recvfrom() returned 36 bytes
+output: | kernel_ops_policy_del()   XFRM_MSG_DELPOLICY for flow delete (fwd) had A policy
+output: | "west-east" #4: routing:   ... yes
+output: | "west-east" #4: .st_on_delete.skip_send_delete no->true (delete_child_sa() +758 programs/pluto/state.c)
+output: | "west-east" #4: delete_state() skipping log_message:no
+output: | pstats #4 ikev2.child deleted other
+output: | #4 main thread spent 0 (0) milliseconds helper thread spent 0 (0) milliseconds in total
+output: | suspend: no MD saved in state #4 (delete_state() +973 programs/pluto/state.c)
+output: | #4 STATE_V2_IKE_AUTH_CHILD_I0: retransmits: cleared
+output: | kernel: uninstall_kernel_state() deleting OUTBOUND
+output: | "west-east" #4: routing:  kernel_ops_del_ipsec_spi() deleting sa 192.1.2.45-ESP[c36cb124]->192.1.2.23 for esp.ESPSPIi@192.1.2.23 ...
+output: | sendrecv_xfrm_msg() sending 17 Del SA esp.ESPSPIi@192.1.2.23
+output: | sendrecv_xfrm_msg() recvfrom() returned 60 bytes
+output: ERROR: "west-east" #4: netlink response for Del SA esp.ESPSPIi@192.1.2.23: No such process (errno 3)
+output: | "west-east" #4: routing:   ... no
+output: | kernel: uninstall_kernel_state() deleting INBOUND
+output: | "west-east" #4: routing:  kernel_ops_del_ipsec_spi() deleting sa 192.1.2.23-ESP[b8d8481d]->192.1.2.45 for esp.ESPSPIi@192.1.2.45 ...
+output: | sendrecv_xfrm_msg() sending 17 Del SA esp.ESPSPIi@192.1.2.45
+output: | sendrecv_xfrm_msg() recvfrom() returned 36 bytes
+output: | sendrecv_xfrm_msg() netlink response for Del SA esp.ESPSPIi@192.1.2.45 included non-error error
+output: | "west-east" #4: routing:   ... yes
+output: | delref @0x7fc7c3470f38(4->3) (delete_state() +1033 programs/pluto/state.c)
+output: | "west-east": delref @0x7fc7c3462a78(6->5)  #4:  (delete_state() +1073 programs/pluto/state.c)
+output: | child state #4: IKE_AUTH_CHILD_I0(ignore) => UNDEFINED(ignore)
+output: |  #4: releasing whack (but there are none) (delete_state() +1079 programs/pluto/state.c)
+output: | delete_state: delref st->st_dh_shared_secret-key@NULL
+output: | delete_state: delref st->st_skeyid_nss-key@NULL
+output: | delete_state: delref st->st_skey_d_nss-key@0x7fc7c2a46f80
+output: | delete_state: delref st->st_skey_ai_nss-key@NULL
+output: | delete_state: delref st->st_skey_ar_nss-key@NULL
+output: | delete_state: delref st->st_skey_ei_nss-key@0x7fc7c3589f80
+output: | delete_state: delref st->st_skey_er_nss-key@0x7fc7c33daf80
+output: | delete_state: delref st->st_skey_pi_nss-key@0x7fc7c357af80
+output: | delete_state: delref st->st_skey_pr_nss-key@0x7fc7c34d3f80
+output: | delete_state: delref st->st_enc_key_nss-key@NULL
+output: | delete_state: delref st->st_sk_d_no_ppk-key@NULL
+output: | delete_state: delref st->st_sk_pi_no_ppk-key@NULL
+output: | delete_state: delref st->st_sk_pr_no_ppk-key@NULL
+output: |  #4: releasing whack (but there are none) (delete_state() +1172 programs/pluto/state.c)
+output: | logger: delref @0x7fc7c293dfc8(1->0) (delete_state() +1172 programs/pluto/state.c)
+output: | "west-east" #4: routing: stop TEARDOWN_CHILD, ROUTED_TUNNEL->ROUTED_ONDEMAND, PERMANENT; ok=yes; routing_sa #4->#0 negotiating_ike_sa #3 established_ike_sa #3 negotiating_child_sa #4->#0 established_child_sa #4->#0 revival 1->2 (complete_v2_state_transition() +2823 programs/pluto/ikev2.c)
+output: | "west-east": delref @0x7fc7c3462a78(5->4) "west-east" #4:  (dispatch() +2450 programs/pluto/routing.c)
+output: | "west-east" #4: releasing whack (but there are none) (teardown_child() +1236 programs/pluto/routing.c)
+output: | logger: delref @0x7fc7c28fbfc8(1->0) (teardown_child() +1236 programs/pluto/routing.c)
+output: | FOR_EACH_STATE[clonedfrom=#3]... in (connection_zap_ike_family() +568 programs/pluto/terminate.c)
+output: |   matches: 0
+output: | clone logger: newref @0x7fc7c28c6fc8(0->1) (teardown_ike() +1278 programs/pluto/routing.c)
+output: | "west-east": addref @0x7fc7c3462a78(4->5) "west-east" #3:  (dispatch() +2436 programs/pluto/routing.c)
+output: | "west-east" #3: routing: start TEARDOWN_IKE, ROUTED_ONDEMAND, PERMANENT; IKE #3 (ESTABLISHED_IKE_SA) by=UNKNOWN; $1@0x7fc7c3462a78; negotiating_ike_sa #3 established_ike_sa #3 (complete_v2_state_transition() +2823 programs/pluto/ikev2.c)
+output: | "west-east" #3: routing:   IKE SA does not match .routing_sa #0
+output: | "west-east" #3: .st_on_delete.skip_send_delete yes->true (delete_ike_sa() +771 programs/pluto/state.c)
+output: | "west-east" #3: delete_state() skipping log_message:no
+output: | FOR_EACH_STATE[clonedfrom=#3]... in (delete_state() +873 programs/pluto/state.c)
+output: |   matches: 0
+output: "west-east" #3: deleting IKE SA (ESTABLISHED_IKE_SA) and NOT sending notification
+output: | "west-east" #3: .st_on_delete.skip_log_message no->true (llog_sa_delete_n_send() +852 programs/pluto/state.c)
+output: | pstats #3 ikev2.ike deleted completed
+output: | #3 main thread spent 13.5 (128) milliseconds helper thread spent 4.49 (9.03) milliseconds in total
+output: | suspend: no MD saved in state #3 (delete_state() +973 programs/pluto/state.c)
+output: | #3 STATE_V2_ESTABLISHED_IKE_SA: retransmits: cleared
+output: | pending: flush_pending_by_state() ike 0x7fc7c2a36348 pending 0x7fc7c2a48fa8
+output: | pending: flush_pending_by_state() ike 0x7fc7c2a36348 pending 0x7fc7c2a48fa8 connection 0x7fc7c3462a78 ike 0x7fc7c2a36348
+output: | pending: flush pending [0x7fc7c2a48fa8] Child SA connection "west-east" [0x7fc7c3462a78]
+output: | "west-east": delref @0x7fc7c3462a78(5->4)  (delete_pending() +262 programs/pluto/pending.c)
+output: | "west-east": releasing whack (but there are none) (delete_pending() +263 programs/pluto/pending.c)
+output: | logger: delref @0x7fc7c346afc8(1->0) (delete_pending() +263 programs/pluto/pending.c)
+output: | FOR_EACH_STATE[clonedfrom=#3]... in (flush_incomplete_children() +729 programs/pluto/state.c)
+output: |   matches: 0
+output: | "west-east" #3: disown .negotiating_ike_sa
+output: | "west-east" #3: disown .established_ike_sa
+output: | delref @0x7fc7c3470f38(3->2) (delete_state() +1033 programs/pluto/state.c)
+output: | "west-east": delref @0x7fc7c3462a78(4->3)  #3:  (delete_state() +1073 programs/pluto/state.c)
+output: | parent state #3: ESTABLISHED_IKE_SA(established IKE SA) => UNDEFINED(ignore)
+output: |  #3: releasing whack (but there are none) (delete_state() +1079 programs/pluto/state.c)
+output: | delref @0x7fc7c28f0fd8(1->0) (delete_state() +1094 programs/pluto/state.c)
+output: | delete_state: delref st->st_dh_shared_secret-key@0x7fc7c34d1f80
+output: | delete_state: delref st->st_skeyid_nss-key@NULL
+output: | delete_state: delref st->st_skey_d_nss-key@0x7fc7c2a46f80
+output: | delete_state: delref st->st_skey_ai_nss-key@NULL
+output: | delete_state: delref st->st_skey_ar_nss-key@NULL
+output: | delete_state: delref st->st_skey_ei_nss-key@0x7fc7c3589f80
+output: | delete_state: delref st->st_skey_er_nss-key@0x7fc7c33daf80
+output: | delete_state: delref st->st_skey_pi_nss-key@0x7fc7c357af80
+output: | delete_state: delref st->st_skey_pr_nss-key@0x7fc7c34d3f80
+output: | delete_state: delref st->st_enc_key_nss-key@NULL
+output: | delete_state: delref st->st_sk_d_no_ppk-key@NULL
+output: | delete_state: delref st->st_sk_pi_no_ppk-key@NULL
+output: | delete_state: delref st->st_sk_pr_no_ppk-key@NULL
+output: |  #3: releasing whack (but there are none) (delete_state() +1172 programs/pluto/state.c)
+output: | logger: delref @0x7fc7c28f4fc8(1->0) (delete_state() +1172 programs/pluto/state.c)
+output: | "west-east" #3: routing: stop TEARDOWN_IKE, ROUTED_ONDEMAND, PERMANENT; ok=yes; negotiating_ike_sa #3->#0 established_ike_sa #3->#0 (complete_v2_state_transition() +2823 programs/pluto/ikev2.c)
+output: | "west-east": delref @0x7fc7c3462a78(3->2) "west-east" #3:  (dispatch() +2450 programs/pluto/routing.c)
+output: | "west-east" #3: releasing whack (but there are none) (teardown_ike() +1290 programs/pluto/routing.c)
+output: | logger: delref @0x7fc7c28c6fc8(1->0) (teardown_ike() +1290 programs/pluto/routing.c)
+output: | in statetime_stop() and could not find #3
+output: | packet from 192.1.2.23:500: delref @0x7fc7c2ab8708(2->1) (process_packet_with_secured_ike_sa() +2214 programs/pluto/ikev2.c)
+output: | in statetime_stop() and could not find #3
+output: | packet from 192.1.2.23:500: delref @0x7fc7c2ab8708(1->0) (process_iface_packet() +296 programs/pluto/demux.c)
+output: | packet from 192.1.2.23:500: releasing whack (but there are none) (process_iface_packet() +296 programs/pluto/demux.c)
+output: | logger: delref @0x7fc7c2939fc8(1->0) (process_iface_packet() +296 programs/pluto/demux.c)
+output: | delref @0x7fc7c3470f38(2->1) (process_iface_packet() +296 programs/pluto/demux.c)
+output: | spent 8.52 (56.2) milliseconds in process_iface_packet() reading and processing packet
+output: | processing global timer EVENT_SHUNT_SCAN
+output: | kernel: checking for aged bare shunts from shunt table to expire
+output: | spent 0.016 (0.118) milliseconds in global timer EVENT_SHUNT_SCAN
+output: | kernel: netlink_process_xfrm_messages() process messages
+output: | netlink_get() recvfrom() returned 248 bytes
+output: | netlink_xfrm_message_processor() got XFRM_MSG_EXPIRE message with length 248
+output: | xfrm_kernel_sa_expire() spi 00000000 src 192.0.1.254 dst 192.0.2.254 hard mode 0 proto 50 bytes 0 packets 0
+output: | acquire state with SPI SPISPI expired, ignore it
 west #
  ../../guestbin/ipsec-kernel-state.sh
-src 192.0.1.254 dst 192.0.2.254
-	proto esp spi 0x00000000 reqid 0 mode transport
-	replay-window 0 
-	sel src 192.0.1.254/32 dst 192.0.2.254/32 proto icmp type 8 code 0 dev eth1 
 west #
  ../../guestbin/ipsec-kernel-policy.sh
 src 192.0.1.0/24 dst 192.0.2.0/24

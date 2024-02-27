@@ -32,6 +32,10 @@ west #
 west #
  ipsec whack --impair install_ipsec_sa_inbound_state
 west #
+ # Initiate; during IKE_AUTH the child should fail and the connection
+west #
+ # put on to the revival queue
+west #
  ipsec up west-east
 "west-east" #1: initiating IKEv1 Main Mode connection
 "west-east" #1: sent Main Mode request
@@ -51,15 +55,23 @@ ERROR: "west-east" #2: kernel: xfrm XFRM_MSG_DELPOLICY delete response for flow 
 ERROR: "west-east" #2: netlink response for Del SA esp.ESPSPIi@192.1.2.23: No such process (errno 3)
 ERROR: "west-east" #2: netlink response for Del SA esp.ESPSPIi@192.1.2.45: No such process (errno 3)
 west #
- ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
-down UNEXPECTED
-# ping -n -c 1  -i 6 -w 5   -I 192.0.1.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data. --- 192.0.2.254 ping statistics --- 1 packets transmitted, 0 received, 100% packet loss, time XXXX
+ # expect the on-demand kernel policy
 west #
- ipsec whack --trafficstatus
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.0.1.0/24 dst 192.0.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
 west #
- echo done
-done
+ # Trigger an acquire; this fast track the revival using
+west #
+ # CREATE_CHILD_SA and again it will fail
+west #
+ ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
+down
+west #
+ ../../guestbin/wait-for-pluto.sh '#3: IMPAIR: revival'
+"west-east" #3: IMPAIR: revival: skip scheduling revival event
 west #
  ../../guestbin/ipsec-kernel-state.sh
 src 192.0.1.254 dst 192.0.2.254
