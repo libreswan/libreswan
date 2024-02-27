@@ -338,6 +338,7 @@ void ldbg(const struct logger *logger, const char *message, ...) PRINTF_LIKE(2);
 void pdbg(const struct logger *logger, const char *message, ...) PRINTF_LIKE(2);
 
 void ldbgf(lset_t cond, const struct logger *logger, const char *fmt, ...) PRINTF_LIKE(3);
+void pdbgf(lset_t cond, const struct logger *logger, const char *fmt, ...) PRINTF_LIKE(3);
 
 /* LDBG_JAMBUF() is ambigious - LDBG_op() or ldbg() ucase? */
 #define LDBGP_JAMBUF(COND, LOGGER, BUF)					\

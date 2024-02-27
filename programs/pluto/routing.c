@@ -1322,9 +1322,9 @@ void state_disowns_connection(struct state *st)
 			llog_pexpect(st->logger, HERE,
 				     connection_owner_names[i]);
 #else
-			pdbg(st->logger,
-			     "disown .%s",
-			     enum_name(&connection_owner_names, i));
+			pdbgf(DBG_ROUTING, st->logger,
+			      "routing: disown .%s",
+			      enum_name(&connection_owner_names, i));
 #endif
 			c->owner[i] = SOS_NOBODY;
 		}
