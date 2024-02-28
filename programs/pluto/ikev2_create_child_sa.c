@@ -1193,6 +1193,33 @@ stf_status process_v2_CREATE_CHILD_SA_request_continue_3(struct ike_sa *ike,
 }
 
 /*
+ * Reject the response: delete the child and then, when fatal, blow
+ * away the IKE SA.
+ *
+ * XXX: when the response isn't fatal, the code should initiate a
+ * delete exchange for the child (and it's connection).
+ */
+
+static stf_status reject_CREATE_CHILD_SA_response(struct ike_sa *ike,
+						  struct child_sa **larval,
+						  struct msg_digest *md,
+						  v2_notification_t n)
+{
+	PEXPECT(ike->sa.logger, v2_msg_role(md) == MESSAGE_RESPONSE);
+	PEXPECT(ike->sa.logger, (*larval)->sa.st_sa_role == SA_INITIATOR);
+	PEXPECT(ike->sa.logger, ike->sa.st_v2_msgid_windows.initiator.wip_sa == (*larval));
+
+	if (v2_notification_fatal(n)) {
+		/* let STF_FATAL clean up mess */
+		return STF_FATAL;
+	}
+
+	delete_child_sa(larval);
+	ike->sa.st_v2_msgid_windows.initiator.wip_sa = NULL;
+	return STF_OK; /* IKE */
+}
+
+/*
  * initiator received a create Child SA Response (RFC 7296 1.3.1, 1.3.2)
  *
  * Note: "when rekeying, the new Child SA SHOULD NOT have different Traffic
@@ -1244,20 +1271,8 @@ stf_status process_v2_CREATE_CHILD_SA_child_response(struct ike_sa *ike,
 					ike, larval_child, response_md,
 					larval_child->sa.st_v2_create_child_sa_proposals,
 					/*expect-accepted-proposal?*/true);
-	if (v2_notification_fatal(n)) {
-		return STF_FATAL; /* IKE */
-	}
-
 	if (n != v2N_NOTHING_WRONG) {
-		/*
-		 * Kill the child, but not the IKE SA?
-		 *
-		 * XXX: initiator; need to initiate a delete
-		 * exchange.
-		 */
-		delete_child_sa(&larval_child);
-		ike->sa.st_v2_msgid_windows.initiator.wip_sa = larval_child = NULL;
-		return STF_OK; /* IKE */
+		return reject_CREATE_CHILD_SA_response(ike, &larval_child, response_md, n);
 	}
 
 	/*
@@ -1265,19 +1280,8 @@ stf_status process_v2_CREATE_CHILD_SA_child_response(struct ike_sa *ike,
 	 */
 	if (larval_child->sa.st_pfs_group == NULL) {
 		v2_notification_t n = process_v2_child_response_payloads(ike, larval_child, response_md);
-		if (v2_notification_fatal(n)) {
-			return STF_FATAL;
-		}
 		if (n != v2N_NOTHING_WRONG) {
-			/*
-			 * Kill the child, but not the IKE SA?
-			 *
-			 * XXX: initiator; need to initiate a delete
-			 * exchange.
-			 */
-			delete_child_sa(&larval_child);
-			ike->sa.st_v2_msgid_windows.initiator.wip_sa = larval_child = NULL;
-			return STF_OK; /* IKE */
+			return reject_CREATE_CHILD_SA_response(ike, &larval_child, response_md, n);
 		}
 		/*
 		 * XXX: fudge a state transition.
@@ -1357,21 +1361,8 @@ static stf_status process_v2_CREATE_CHILD_SA_child_response_continue_1(struct st
 
 	v2_notification_t n = process_v2_child_response_payloads(ike, larval_child,
 								 response_md);
-	if (v2_notification_fatal(n)) {
-		/*
-		 * XXX: initiator; need to initiate a fatal error
-		 * notification exchange.
-		 */
-		return STF_FATAL; /* IKE */
-	}
-
 	if (n != v2N_NOTHING_WRONG) {
-		/*
-		 * XXX: initiator; need to intiate a delete exchange.
-		 */
-		delete_child_sa(&larval_child);
-		ike->sa.st_v2_msgid_windows.initiator.wip_sa = larval_child = NULL;
-		return STF_OK; /* IKE */
+		return reject_CREATE_CHILD_SA_response(ike, &larval_child, response_md, n);
 	}
 
 	/*
