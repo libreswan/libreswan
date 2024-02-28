@@ -1037,11 +1037,7 @@ stf_status process_v2_CREATE_CHILD_SA_request(struct ike_sa *ike,
 					larval_child->sa.st_v2_create_child_sa_proposals,
 					/*expect-accepted-proposal?*/false);
 	if (n != v2N_NOTHING_WRONG) {
-		record_v2N_response(ike->sa.logger, ike, md,
-				    n, NULL/*no-data*/, ENCRYPTED_PAYLOAD);
-		delete_child_sa(&larval_child);
-		ike->sa.st_v2_msgid_windows.responder.wip_sa = NULL;
-		return v2_notification_fatal(n) ? STF_FATAL : STF_OK; /*IKE*/
+		return reject_CREATE_CHILD_SA_request(ike, &larval_child, md, n, HERE);
 	}
 
 	/*
