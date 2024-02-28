@@ -382,6 +382,7 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                     all_verbose_txt.flush()
                                     continue
 
+                                guest_verbose_txt = verbose_files[command.guest_name]
                                 test_domain = test_domains[command.guest_name]
 
                                 # ALL gets the new prompt
@@ -406,7 +407,7 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                     logger.warning("*** %s ***" % message)
                                     for txt in (all_verbose_txt, guest_verbose_txt):
                                         txt.write("%s %s %s" % (post.LHS, message, post.RHS))
-                                        guest_timed_out = command.guest_name
+                                    guest_timed_out = command.guest_name
                                     break
 
                                 if status is post.Issues.EOF:
@@ -415,7 +416,8 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                     # crashed.
                                     message = "%s while running command %s" % (post.Issues.EOF, command)
                                     logger.exception("*** %s ***" % message)
-                                    test_domain.console.append_output("%s %s %s", post.LHS, message, post.RHS)
+                                    for txt in (all_verbose_txt, guest_verbose_txt):
+                                        txt.write("%s %s %s" % (post.LHS, message, post.RHS))
                                     guest_timed_out = command.guest_name
                                     break
 
@@ -453,44 +455,49 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                     all_verbose_txt.write(guest_name)
                                     all_verbose_txt.write("# ")
                                     # both get the command
-                                    all_verbose_txt.write(script)
-                                    all_verbose_txt.write("\n")
-                                    all_verbose_txt.flush()
+                                    for txt in (all_verbose_txt, guest_verbose_txt):
+                                        txt.write(script)
+                                        txt.write("\n")
+                                        txt.flush()
 
                                     status, output = test_domain.run(script, timeout=POST_MORTEM_TIMEOUT)
                                     if output:
-                                        all_verbose_txt.write(output.decode()) # convert byte to string
                                         all_verbose_txt.write("\n")
-                                        all_verbose_txt.flush()
+                                        for txt in (all_verbose_txt, guest_verbose_txt):
+                                            txt.write(output.decode()) # convert byte to string
+                                            txt.write("\n")
+                                            txt.flush()
 
                                     if status is post.Issues.TIMEOUT:
                                         # A post-mortem ending with a
                                         # TIMEOUT gets treated as a
                                         # FAIL.
+                                        post_mortem_ok = False
                                         message = "%s while running script %s" % (post.Issues.TIMEOUT, script)
                                         logger.warning("*** %s ***" % message)
-                                        test_domain.console.append_output("%s %s %s", post.LHS, message, post.RHS)
-                                        all_verbose_txt.write("%s %s %s", post.LHS, message, post.RHS)
-                                        continue # always teardown
+                                        for txt in (all_verbose_txt, guest_verbose_txt):
+                                            txt.write("%s %s %s" % (post.LHS, message, post.RHS))
+                                        continue # to next teardown
 
                                     if status is post.Issues.EOF:
                                         # A post-mortem ending with an
                                         # EOF gets treated as
                                         # unresloved.
+                                        post_mortem_ok = False
                                         message = "%s while running script %s" % (post.Issues.EOF, script)
                                         logger.exception("*** %s ***" % message)
-                                        test_domain.console.append_output("%s %s %s", post.LHS, message, post.RHS)
-                                        all_verbose_txt.write("%s %s %s", post.LHS, message, post.RHS)
-                                        continue # always teardown
+                                        for txt in (all_verbose_txt, guest_verbose_txt):
+                                            txt.write("%s %s %s" % (post.LHS, message, post.RHS))
+                                        continue # to next teardown
 
                                     if status:
                                         post_mortem_ok = False
                                         logger.error("%s failed on %s with status %s", script, guest_name, status)
-                                    else:
-                                        all_verbose_txt.write(output.decode())
-                                        all_verbose_txt.flush()
-                                        guest_verbose_txt.write("%s post-mortem %s" % (post.RHS, post.RHS))
-                                        guest_verbose_txt.flush()
+                                        continue # to next teardown
+
+                                    # followed by marker
+                                    guest_verbose_txt.write("%s post-mortem %s" % (post.RHS, post.RHS))
+                                    guest_verbose_txt.flush()
 
                                 if post_mortem_ok:
                                     all_verbose_txt.write("%s post-mortem %s" % (post.RHS, post.RHS))
