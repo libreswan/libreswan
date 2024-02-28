@@ -103,9 +103,17 @@ class TestDomain:
 
     def run(self, command, timeout=TEST_TIMEOUT):
         self.logger.info("%s# %s", self.domain.host_name, command)
-        status = self.console.run(command, timeout=timeout)
+        self.console.logger.debug("run '%s' expecting prompt", command)
+        self.console.sendline(command)
+        # This can throw a pexpect.TIMEOUT or pexpect.EOF exception
+        m = self.console.expect([self.console.prompt, pexpect.TIMEOUT, pexpect.EOF], timeout=timeout)
+        if m == 1:
+            return post.Issues.TIMEOUT, self.console.before
+        if m == 2:
+            return post.Issues.EOF, self.console.before
+        status = self.console._check_prompt()
+        self.console.logger.debug("run exit status %s", status)
         return status, self.console.before
-
 
 def submit_job_for_domain(executor, jobs, logger, domain, work):
     job = executor.submit(work, domain)
@@ -375,40 +383,33 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                     continue
 
                                 test_domain = test_domains[command.guest_name]
-                                try:
 
-                                    # ALL gets the new prompt
-                                    all_verbose_txt.write(command.guest_name)
-                                    all_verbose_txt.write("# ")
-                                    # both get the command
-                                    all_verbose_txt.write(command.line)
+                                # ALL gets the new prompt
+                                all_verbose_txt.write(command.guest_name)
+                                all_verbose_txt.write("# ")
+                                # both get the command
+                                all_verbose_txt.write(command.line)
+                                all_verbose_txt.write("\n")
+                                all_verbose_txt.flush()
+
+                                # run the command
+                                status, output = test_domain.run(command.line)
+                                if output:
                                     all_verbose_txt.write("\n")
-                                    all_verbose_txt.flush()
+                                    all_verbose_txt.write(output.decode()) # convert byte to string
 
-                                    # run the command
-                                    status, output = test_domain.run(command.line)
-                                    if output:
-                                        all_verbose_txt.write("\n")
-                                        all_verbose_txt.write(output.decode()) # convert byte to string
-                                    if status:
-                                        # XXX: Can't abort as some
-                                        # ping commands are expected
-                                        # to fail.
-                                        test_domain.logger.warning("command '%s' failed with status %d", command.line, status)
-                                    all_verbose_txt.write("\n")
-                                    all_verbose_txt.flush()
-
-                                except pexpect.TIMEOUT as e:
-                                    # A timeout while running a test
-                                    # command is a sign that the
-                                    # command hung.
+                                if status is post.Issues.TIMEOUT:
+                                    # A timeout while running a
+                                    # test command is a sign that
+                                    # the command hung.
                                     message = "%s while running command %s" % (post.Issues.TIMEOUT, command)
                                     logger.warning("*** %s ***" % message)
                                     for txt in (all_verbose_txt, guest_verbose_txt):
                                         txt.write("%s %s %s" % (post.LHS, message, post.RHS))
-                                    guest_timed_out = command.guest_name
+                                        guest_timed_out = command.guest_name
                                     break
-                                except pexpect.EOF as e:
+
+                                if status is post.Issues.EOF:
                                     # An EOF while a command is
                                     # running is a sign that libvirt
                                     # crashed.
@@ -417,21 +418,15 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                     test_domain.console.append_output("%s %s %s", post.LHS, message, post.RHS)
                                     guest_timed_out = command.guest_name
                                     break
-                                except FileNotFoundError as e:
-                                    # Err .. someone deleted stuff
-                                    # from under us!
-                                    message = "%s while running command %s" % (post.Issues.EOF, command)
-                                    logger.exception("*** %s ***" % message)
-                                    test_domain.console.append_output("%s %s %s", post.LHS, message, post.RHS)
-                                    guest_timed_out = command.guest_name
-                                    break
-                                except BaseException as e:
-                                    # if there is an exception, write
-                                    # it to the console
-                                    message = "%s %s while running command %s" % (post.Issues.EXCEPTION, str(e), command)
-                                    logger.exception("*** %s ***" % message)
-                                    test_domain.console.append_output("\n%s %s %s\n", post.LHS, message, post.RHS)
-                                    raise
+
+                                if status:
+                                    # XXX: Can't abort as some
+                                    # ping commands are expected
+                                    # to fail.
+                                    test_domain.logger.warning("command '%s' failed with status %d", command.line, status)
+
+                                all_verbose_txt.write("\n")
+                                all_verbose_txt.flush()
 
                             if args.run_post_mortem is False:
                                 logger.warning("+++ skipping script post-mortem.sh -- disabled +++")
@@ -446,39 +441,29 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                 # run post mortem
                                 for guest_name in test.guest_names:
 
-                                    try:
+                                    test_domain = test_domains[guest_name]
+                                    guest_verbose_txt = verbose_files[guest_name]
+                                    logger.info("running %s on %s", script, guest_name)
 
-                                        test_domain = test_domains[guest_name]
-                                        guest_verbose_txt = verbose_files[guest_name]
-                                        logger.info("running %s on %s", script, guest_name)
+                                    # mark domain's console
+                                    guest_verbose_txt.write("%s post-mortem %s" % (post.LHS, post.LHS))
+                                    guest_verbose_txt.flush()
 
-                                        # mark domain's console
-                                        guest_verbose_txt.write("%s post-mortem %s" % (post.LHS, post.LHS))
-                                        guest_verbose_txt.flush()
+                                    # ALL gets the new prompt
+                                    all_verbose_txt.write(guest_name)
+                                    all_verbose_txt.write("# ")
+                                    # both get the command
+                                    all_verbose_txt.write(script)
+                                    all_verbose_txt.write("\n")
+                                    all_verbose_txt.flush()
 
-                                        # ALL gets the new prompt
-                                        all_verbose_txt.write(guest_name)
-                                        all_verbose_txt.write("# ")
-                                        # both get the command
-                                        all_verbose_txt.write(script)
+                                    status, output = test_domain.run(script, timeout=POST_MORTEM_TIMEOUT)
+                                    if output:
+                                        all_verbose_txt.write(output.decode()) # convert byte to string
                                         all_verbose_txt.write("\n")
                                         all_verbose_txt.flush()
 
-                                        status, output = test_domain.run(script, timeout=POST_MORTEM_TIMEOUT)
-                                        if output:
-                                            all_verbose_txt.write(output.decode()) # convert byte to string
-                                            all_verbose_txt.write("\n")
-                                            all_verbose_txt.flush()
-                                        if status:
-                                            post_mortem_ok = False
-                                            logger.error("%s failed on %s with status %s", script, guest_name, status)
-                                        else:
-                                            all_verbose_txt.write(output.decode())
-                                            all_verbose_txt.flush()
-                                            guest_verbose_txt.write("%s post-mortem %s" % (post.RHS, post.RHS))
-                                            guest_verbose_txt.flush()
-
-                                    except pexpect.TIMEOUT as e:
+                                    if status is post.Issues.TIMEOUT:
                                         # A post-mortem ending with a
                                         # TIMEOUT gets treated as a
                                         # FAIL.
@@ -487,7 +472,8 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                         test_domain.console.append_output("%s %s %s", post.LHS, message, post.RHS)
                                         all_verbose_txt.write("%s %s %s", post.LHS, message, post.RHS)
                                         continue # always teardown
-                                    except pexpect.EOF as e:
+
+                                    if status is post.Issues.EOF:
                                         # A post-mortem ending with an
                                         # EOF gets treated as
                                         # unresloved.
@@ -496,14 +482,15 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                         test_domain.console.append_output("%s %s %s", post.LHS, message, post.RHS)
                                         all_verbose_txt.write("%s %s %s", post.LHS, message, post.RHS)
                                         continue # always teardown
-                                    except BaseException as e:
-                                        # if there is an exception, write
-                                        # it to the console
-                                        message = "%s %s while running script %s" % (post.Issues.EXCEPTION, str(e), script)
-                                        logger.exception(message)
-                                        test_domain.console.append_output("\n%s %s %s\n", post.LHS, message, post.RHS)
-                                        all_verbose_txt.write("\n%s %s %s\n", post.LHS, message, post.RHS)
-                                        raise
+
+                                    if status:
+                                        post_mortem_ok = False
+                                        logger.error("%s failed on %s with status %s", script, guest_name, status)
+                                    else:
+                                        all_verbose_txt.write(output.decode())
+                                        all_verbose_txt.flush()
+                                        guest_verbose_txt.write("%s post-mortem %s" % (post.RHS, post.RHS))
+                                        guest_verbose_txt.flush()
 
                                 if post_mortem_ok:
                                     all_verbose_txt.write("%s post-mortem %s" % (post.RHS, post.RHS))
