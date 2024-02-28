@@ -71,14 +71,16 @@ KVM_PIDFILE ?= $(KVM_BENCHDIR)/kvmrunner.pid
 KVM_UID ?= $(shell id -u)
 KVM_GID ?= $(shell stat --format=%g $(KVM_HOST_QEMUDIR))
 
+# Don't include @@SOURCEDIR@@ @@TESTINGDIR@@ and @@DOMAIN@@ as they
+# change depending on what is being transformed.  Instead they are
+# added as needed.
+
 KVM_TRANSMOGRIFY = \
 	sed \
 	-e 's;@@GATEWAY@@;$(KVM_GATEWAY_ADDRESS);' \
 	-e 's;@@BENCHDIR@@;$(KVM_BENCHDIR);' \
 	-e 's;@@LOCALDIR@@;$(KVM_LOCALDIR);' \
 	-e 's;@@POOLDIR@@;$(KVM_POOLDIR);' \
-	-e 's;@@SOURCEDIR@@;$(KVM_SOURCEDIR);' \
-	-e 's;@@TESTINGDIR@@;$(KVM_TESTINGDIR);' \
 	-e 's;@@USER@@;$(KVM_UID);' \
 	-e 's;@@GROUP@@;$(KVM_GID);' \
 	-e 's;@@PREFIX@@;$(KVM_FIRST_PREFIX);'
@@ -173,8 +175,9 @@ VIRT_SECURITY ?= --security=type=static,model=dac,label='$(KVM_UID):$(KVM_GID)',
 VIRT_GATEWAY ?= --network=network:$(KVM_GATEWAY_NAME),model=virtio
 VIRT_BENCHDIR ?= --filesystem=target=bench,type=mount,accessmode=squash,source=$(KVM_BENCHDIR)
 VIRT_POOLDIR ?= --filesystem=target=pool,type=mount,accessmode=squash,source=$(KVM_POOLDIR)
-VIRT_SOURCEDIR ?= --filesystem=target=source,type=mount,accessmode=squash,source=$(KVM_SOURCEDIR)
-VIRT_TESTINGDIR ?= --filesystem=target=testing,type=mount,accessmode=squash,source=$(KVM_TESTINGDIR)
+# note: these rely on %==$(OS)
+VIRT_SOURCEDIR ?= --filesystem=target=source,type=mount,accessmode=squash,source=$(KVM_$($*)_SOURCEDIR)
+VIRT_TESTINGDIR ?= --filesystem=target=testing,type=mount,accessmode=squash,source=$(KVM_$($*)_TESTINGDIR)
 
 VIRT_INSTALL_FLAGS = \
 	--connect=$(KVM_CONNECTION) \$(crlf)\
@@ -329,6 +332,13 @@ KVM_DOMAINS += $(KVM_BASE_DOMAINS)
 KVM_DOMAINS += $(KVM_UPGRADE_DOMAINS)
 KVM_DOMAINS += $(KVM_BUILD_DOMAINS)
 KVM_DOMAINS += $(KVM_TEST_DOMAINS)
+
+define kvm-os-dir
+KVM_$($(strip $(1)))_SOURCEDIR ?= $$(KVM_SOURCEDIR)
+KVM_$($(strip $(1)))_TESTINGDIR ?= $$(KVM_TESTINGDIR)
+
+endef
+$(foreach platform, $(KVM_PLATFORM), $(eval $(call kvm-os-dir, $(platform))))
 
 #
 # Domains
@@ -1200,6 +1210,8 @@ $(KVM_POOLDIR_PREFIX)%: \
 	: or KVM_SOURCEDIR where pluto sources live.
 	$(KVM_TRANSMOGRIFY) \
 		-e 's;@@DOMAIN@@;$(notdir $@);' \
+		-e 's;@@SOURCEDIR@@;$(KVM_$($*)_SOURCEDIR);' \
+		-e 's;@@TESTINGDIR@@;$(KVM_$($*)_TESTINGDIR);' \
 		$*/transmogrify.sh \
 		> $@.transmogrify.sh
 	$(KVMSH) $(notdir $@) -- \
@@ -1308,17 +1320,26 @@ kvm-install-base: $(foreach os, $(KVM_OS), kvm-install-base-$(os))
 .PRECIOUS: $(KVM_TEST_DOMAINS)
 
 define define-test-domain
-  $(strip $(1))$(strip $(2))$(strip $(3)): $(KVM_POOLDIR_PREFIX)$(strip $(2)) | \
+  $(addprefix $(1), $(2)): \
+		$(KVM_POOLDIR_PREFIX)$(strip $(3)) \
+		| \
 		$$(addprefix $(1), $$(KVM_TEST_NETWORK_NAMES)) \
-		vm/$(strip $(3)).xml
-	: @=$$@
-	: install-kvm-test-domain prefix=$(strip $(1)) platform=$(strip $(2)) host=$(strip $(3))
+		vm/$(strip $(4)).xml
+	: define-test-domain
+	:  *=$$*
+	:  @=$$@
+	:  prefix=$(1)
+	:  domain=$(2)
+	:  platform=$(3)
+	:  host=$(4)
 	./kvm-uninstall-domain.sh $$@
-	$$(QEMU_IMG) create -f qcow2 -F qcow2 -b $(KVM_POOLDIR_PREFIX)$(strip $(2)).qcow2 $$@.qcow2
+	$$(QEMU_IMG) create -f qcow2 -F qcow2 -b $(KVM_POOLDIR_PREFIX)$(strip $(3)).qcow2 $$@.qcow2
 	$$(KVM_TRANSMOGRIFY) \
 		-e 's;@@DOMAIN@@;$$(notdir $$@);' \
+		-e 's;@@SOURCEDIR@@;$$(KVM_$($(strip $(3)))_SOURCEDIR);' \
+		-e 's;@@TESTINGDIR@@;$$(KVM_$($(strip $(3)))_TESTINGDIR);' \
 		-e "s;network='192_;network='$(addprefix $(notdir $(1)), 192_);" \
-		vm/$(strip $(3)).xml \
+		vm/$(strip $(4)).xml \
 		> '$$@.tmp'
 	$$(VIRSH) define $$@.tmp
 	mv $$@.tmp $$@
@@ -1329,35 +1350,17 @@ $(foreach prefix, $(KVM_LOCALDIR_PREFIXES), \
 	$(foreach platform, $(KVM_PLATFORM), \
 		$(foreach host, $(KVM_OS_HOST_NAMES), \
 			$(eval $(call define-test-domain, \
-				$(prefix), \
+				$(prefix), $(platform)$(host), \
 				$(platform), \
 				$(host))))))
 
-define define-fedora-domain
-  $(addprefix $(1), $(2)): $(3) | \
-		$$(addprefix $(1), $$(KVM_TEST_NETWORK_NAMES)) \
-		vm/$(strip $(2)).xml
-	: @=$$@
-	: install-kvm-test-domain prefix=$(strip $(1)) host=$(strip $(2)) template=$(strip $(3))
-	./kvm-uninstall-domain.sh $$@
-	$$(QEMU_IMG) create -f qcow2 -F qcow2 -b $(strip $(3)).qcow2 $$@.qcow2
-	$$(KVM_TRANSMOGRIFY) \
-		-e 's;@@DOMAIN@@;$$(notdir $$@);' \
-		-e "s;network='192_;network='$(addprefix $(notdir $(1)), 192_);" \
-		vm/$(strip $(2)).xml \
-		> '$$@.tmp'
-	$$(VIRSH) define $$@.tmp
-	mv $$@.tmp $$@
-endef
-
-# generate rules for all combinations, including those not enabled
+# generate rules for "linux" hosts
 $(foreach prefix, $(KVM_LOCALDIR_PREFIXES), \
 	$(foreach host, $(KVM_FEDORA_HOST_NAMES), \
-		$(eval $(call define-fedora-domain, \
-			$(prefix), \
-			$(host), \
-			$(KVM_POOLDIR_PREFIX)fedora))))
-
+		$(eval $(call define-test-domain, \
+			$(prefix), $(host), \
+			fedora, \
+			$(host)))))
 
 #
 # Get rid of (almost) everything
@@ -1520,150 +1523,105 @@ $(1)=$($(1))
 	[$(value $(1))]
 endef
 
-define kvm-value
-$($(1)) [$(value $(1))]
-endef
-
-define kvm-var
-$($(1)) [$$($(1))]
-endef
-
 define kvm-config
 
-Configuration:
+Makefile variables:
 
-  Makefile variables:
-
-    $(call kvm-var-value,KVM_SOURCEDIR)
-    $(call kvm-var-value,KVM_TESTINGDIR)
-
-    $(call kvm-var-value,KVM_POOLDIR)
+$(call kvm-var-value,KVM_POOLDIR)
 	directory for storing the shared base VM;
 	should be relatively permanent storage
-    $(call kvm-var-value,KVM_LOCALDIR)
+$(call kvm-var-value,KVM_LOCALDIR)
 	directory for storing the VMs local to this build tree;
 	can be temporary storage (for instance /tmp)
 
-    $(call kvm-var-value,KVM_WORKERS)
+$(call kvm-var-value,KVM_SOURCEDIR)
 
-    $(call kvm-var-value,KVM_PREFIX)
-    $(call kvm-var-value,KVM_FIRST_PREFIX)
-    $(call kvm-var-value,KVM_PREFIXES)
-    $(call kvm-var-value,KVM_POOLDIR_PREFIX)
-    $(call kvm-var-value,KVM_LOCALDIR_PREFIXES)
+ $(foreach platform,$(KVM_PLATFORM),$(call kvm-var-value,KVM_$($(platform))_SOURCEDIR)$(crlf))
 
-    $(call kvm-var-value,KVM_GROUP)
-    $(call kvm-var-value,KVM_PIDFILE)
-    $(call kvm-var-value,KVM_UID)
-    $(call kvm-var-value,KVM_GID)
-    $(call kvm-var-value,KVM_CONNECTION)
-    $(call kvm-var-value,KVM_VIRSH)
+$(call kvm-var-value,KVM_TESTINGDIR)
+
+ $(foreach platform,$(KVM_PLATFORM),$(call kvm-var-value,KVM_$($(platform))_TESTINGDIR)$(crlf))
+
+$(call kvm-var-value,KVM_WORKERS)
+
+$(call kvm-var-value,KVM_PREFIX)
+$(call kvm-var-value,KVM_FIRST_PREFIX)
+$(call kvm-var-value,KVM_PREFIXES)
+$(call kvm-var-value,KVM_POOLDIR_PREFIX)
+$(call kvm-var-value,KVM_LOCALDIR_PREFIXES)
+
+$(call kvm-var-value,KVM_GROUP)
+$(call kvm-var-value,KVM_PIDFILE)
+$(call kvm-var-value,KVM_UID)
+$(call kvm-var-value,KVM_GID)
+$(call kvm-var-value,KVM_CONNECTION)
+$(call kvm-var-value,KVM_VIRSH)
 	the shared NATting gateway;
 	used by the base domain along with any local domains
 	when internet access is required
 
-    $(call kvm-var-value,KVM_KEYS_DOMAIN)
+$(call kvm-var-value,KVM_KEYS_DOMAIN)
 
-    $(call kvm-var-value,KVM_OS)
-    $(call kvm-var-value,KVM_PLATFORM)
+$(call kvm-var-value,KVM_OS)
+$(call kvm-var-value,KVM_PLATFORM)
 
-    $(call kvm-var-value,KVM_ALPINE_MAKEFLAGS)
-    $(call kvm-var-value,KVM_DEBIAN_MAKEFLAGS)
-    $(call kvm-var-value,KVM_FEDORA_MAKEFLAGS)
-    $(call kvm-var-value,KVM_FREEBSD_MAKEFLAGS)
-    $(call kvm-var-value,KVM_NETBSD_MAKEFLAGS)
-    $(call kvm-var-value,KVM_OPENBSD_MAKEFLAGS)
+$(call kvm-var-value,KVM_MAKEFLAGS)
 
-    $(call kvm-var-value,KVM_ALPINE_OS_VARIANT)
-    $(call kvm-var-value,KVM_DEBIAN_OS_VARIANT)
-    $(call kvm-var-value,KVM_FEDORA_OS_VARIANT)
-    $(call kvm-var-value,KVM_FREEBSD_OS_VARIANT)
-    $(call kvm-var-value,KVM_NETBSD_OS_VARIANT)
-    $(call kvm-var-value,KVM_OPENBSD_OS_VARIANT)
+ $(foreach platform,$(KVM_PLATFORM),$(call kvm-var-value,KVM_$($(platform))_MAKEFLAGS)$(crlf))
 
-    $(call kvm-var-value,KVM_FEDORA_HOST_NAMES)
+ $(foreach platform,$(KVM_PLATFORM),$(call kvm-var-value,KVM_$($(platform))_OS_VARIANT)$(crlf))
 
-    $(call kvm-var-value,KVM_OS_HOST_NAMES)
+$(call kvm-var-value,KVM_FEDORA_HOST_NAMES)
 
-    $(call kvm-var-value,KVM_ALPINE_BASE_HOST_NAME)
-    $(call kvm-var-value,KVM_DEBIAN_BASE_HOST_NAME)
-    $(call kvm-var-value,KVM_FEDORA_BASE_HOST_NAME)
-    $(call kvm-var-value,KVM_FREEBSD_BASE_HOST_NAME)
-    $(call kvm-var-value,KVM_NETBSD_BASE_HOST_NAME)
-    $(call kvm-var-value,KVM_OPENBSD_BASE_HOST_NAME)
+$(call kvm-var-value,KVM_OS_HOST_NAMES)
 
-    $(call kvm-var-value,KVM_BASE_HOST_NAMES)
+$(call kvm-var-value,KVM_BASE_HOST_NAMES)
 
-    $(call kvm-var-value,KVM_ALPINE_UPGRADE_HOST_NAME)
-    $(call kvm-var-value,KVM_DEBIAN_UPGRADE_HOST_NAME)
-    $(call kvm-var-value,KVM_FEDORA_UPGRADE_HOST_NAME)
-    $(call kvm-var-value,KVM_FREEBSD_UPGRADE_HOST_NAME)
-    $(call kvm-var-value,KVM_NETBSD_UPGRADE_HOST_NAME)
-    $(call kvm-var-value,KVM_OPENBSD_UPGRADE_HOST_NAME)
+ $(foreach platform,$(KVM_PLATFORM),$(call kvm-var-value,KVM_$($(platform))_BASE_HOST_NAMES)$(crlf))
 
-    $(call kvm-var-value,KVM_UPGRADE_HOST_NAMES)
+$(call kvm-var-value,KVM_UPGRADE_HOST_NAMES)
 
-    $(call kvm-var-value,KVM_ALPINE_BUILD_HOST_NAME)
-    $(call kvm-var-value,KVM_DEBIAN_BUILD_HOST_NAME)
-    $(call kvm-var-value,KVM_FEDORA_BUILD_HOST_NAME)
-    $(call kvm-var-value,KVM_FREEBSD_BUILD_HOST_NAME)
-    $(call kvm-var-value,KVM_NETBSD_BUILD_HOST_NAME)
-    $(call kvm-var-value,KVM_OPENBSD_BUILD_HOST_NAME)
+ $(foreach platform,$(KVM_PLATFORM),$(call kvm-var-value,KVM_$($(platform))_UPGRADE_HOST_NAMES)$(crlf))
 
-    $(call kvm-var-value,KVM_BASE_HOST_NAMES)
-    $(call kvm-var-value,KVM_UPGRADE_HOST_NAMES)
-    $(call kvm-var-value,KVM_BUILD_HOST_NAMES)
+$(call kvm-var-value,KVM_BUILD_HOST_NAMES)
 
-    $(call kvm-var-value,KVM_ALPINE_TEST_HOST_NAMES)
-    $(call kvm-var-value,KVM_DEBIAN_TEST_HOST_NAMES)
-    $(call kvm-var-value,KVM_FEDORA_TEST_HOST_NAMES)
-    $(call kvm-var-value,KVM_FREEBSD_TEST_HOST_NAMES)
-    $(call kvm-var-value,KVM_NETBSD_TEST_HOST_NAMES)
-    $(call kvm-var-value,KVM_OPENBSD_TEST_HOST_NAMES)
+ $(foreach platform,$(KVM_PLATFORM),$(call kvm-var-value,KVM_$($(platform))_BUILD_HOST_NAMES)$(crlf))
 
-    $(call kvm-var-value,KVM_TEST_HOST_NAMES)
+$(call kvm-var-value,KVM_TEST_HOST_NAMES)
 
-    $(call kvm-var-value,KVM_HOST_NAMES)
+ $(foreach platform,$(KVM_PLATFORM),$(call kvm-var-value,KVM_$($(platform))_TEST_HOST_NAMES)$(crlf))
 
-    $(call kvm-var-value,KVM_ALPINE_TEST_DOMAIN_NAMES)
-    $(call kvm-var-value,KVM_DEBIAN_TEST_DOMAIN_NAMES)
-    $(call kvm-var-value,KVM_FEDORA_TEST_DOMAIN_NAMES)
-    $(call kvm-var-value,KVM_FREEBSD_TEST_DOMAIN_NAMES)
-    $(call kvm-var-value,KVM_NETBSD_TEST_DOMAIN_NAMES)
-    $(call kvm-var-value,KVM_OPENBSD_TEST_DOMAIN_NAMES)
+$(call kvm-var-value,KVM_HOST_NAMES)
 
-    $(call kvm-var-value,KVM_TEST_DOMAIN_NAMES)
+$(call kvm-var-value,KVM_TEST_DOMAIN_NAMES)
 
-    $(call kvm-var-value,KVM_ALPINE_TEST_DOMAINS)
-    $(call kvm-var-value,KVM_DEBIAN_TEST_DOMAINS)
-    $(call kvm-var-value,KVM_FEDORA_TEST_DOMAINS)
-    $(call kvm-var-value,KVM_FREEBSD_TEST_DOMAINS)
-    $(call kvm-var-value,KVM_NETBSD_TEST_DOMAINS)
-    $(call kvm-var-value,KVM_OPENBSD_TEST_DOMAINS)
+ $(foreach platform,$(KVM_PLATFORM),$(call kvm-var-value,KVM_$($(platform))_TEST_DOMAIN_NAMES)$(crlf))
 
-    $(call kvm-var-value,KVM_TEST_DOMAINS)
+$(call kvm-var-value,KVM_TEST_DOMAINS)
 
-    $(call kvm-var-value,KVM_BASE_DOMAIN_NAMES)
-    $(call kvm-var-value,KVM_UPGRADE_DOMAIN_NAMES)
-    $(call kvm-var-value,KVM_BUILD_DOMAIN_NAMES)
+ $(foreach platform,$(KVM_PLATFORM),$(call kvm-var-value,KVM_$($(platform))_TEST_DOMAINS)$(crlf))
 
-    $(call kvm-var-value,KVM_DOMAIN_NAMES)
+$(call kvm-var-value,KVM_BASE_DOMAIN_NAMES)
+$(call kvm-var-value,KVM_UPGRADE_DOMAIN_NAMES)
+$(call kvm-var-value,KVM_BUILD_DOMAIN_NAMES)
 
-    $(call kvm-var-value,KVM_BASE_DOMAINS)
-    $(call kvm-var-value,KVM_UPGRADE_DOMAINS)
-    $(call kvm-var-value,KVM_BUILD_DOMAINS)
-    $(call kvm-var-value,KVM_TEST_DOMAINS)
+$(call kvm-var-value,KVM_DOMAIN_NAMES)
 
-    $(call kvm-var-value,KVM_DOMAINS)
+$(call kvm-var-value,KVM_BASE_DOMAINS)
+$(call kvm-var-value,KVM_UPGRADE_DOMAINS)
+$(call kvm-var-value,KVM_BUILD_DOMAINS)
+$(call kvm-var-value,KVM_TEST_DOMAINS)
 
-    $(call kvm-var-value,KVM_GATEWAY_ADDRESS)
-    $(call kvm-var-value,KVM_GATEWAY_NAME)
-    $(call kvm-var-value,KVM_GATEWAY)
+$(call kvm-var-value,KVM_DOMAINS)
 
-    $(call kvm-var-value,KVM_TEST_NETWORK_NAMES)
-    $(call kvm-var-value,KVM_TEST_NETWORKS)
+$(call kvm-var-value,KVM_GATEWAY_ADDRESS)
+$(call kvm-var-value,KVM_GATEWAY_NAME)
+$(call kvm-var-value,KVM_GATEWAY)
 
- KVM Domains:
+$(call kvm-var-value,KVM_TEST_NETWORK_NAMES)
+$(call kvm-var-value,KVM_TEST_NETWORKS)
+
+KVM Domains:
 
     $(KVM_BASE_DOMAIN)
     | gateway: $(KVM_GATEWAY_NAME)
