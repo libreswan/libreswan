@@ -974,6 +974,36 @@ stf_status process_v2_CREATE_CHILD_SA_new_child_request(struct ike_sa *ike,
 }
 
 /*
+ * Reject the request: record the notification; delete the larval
+ * child and then, when fatal, blow away the IKE SA.
+ */
+
+static stf_status reject_CREATE_CHILD_SA_request(struct ike_sa *ike,
+						 struct child_sa **larval,
+						 struct msg_digest *md,
+						 v2_notification_t n,
+						 where_t where)
+{
+	PEXPECT_WHERE(ike->sa.logger, where, v2_msg_role(md) == MESSAGE_REQUEST);
+	PEXPECT_WHERE(ike->sa.logger, where, (*larval)->sa.st_sa_role == SA_RESPONDER);
+	PEXPECT_WHERE(ike->sa.logger, where, ike->sa.st_v2_msgid_windows.responder.wip_sa == (*larval));
+	PEXPECT_WHERE(ike->sa.logger, where, n != v2N_NOTHING_WRONG);
+	/*
+	 * Queue the response, will be sent by either STF_FATAL or
+	 * STF_OK.
+	 */
+	record_v2N_response(ike->sa.logger, ike, md,
+			    n, NULL/*no-data*/,
+			    ENCRYPTED_PAYLOAD);
+	/*
+	 * Child could have been partially routed; need to move it on.
+	 */
+	connection_delete_child(larval, where);
+	ike->sa.st_v2_msgid_windows.responder.wip_sa = NULL;
+	return v2_notification_fatal(n) ? STF_FATAL : STF_OK; /*IKE*/
+}
+
+/*
  * processing a new Child SA (RFC 7296 1.3.1 or 1.3.3) request
  */
 
@@ -1163,11 +1193,8 @@ stf_status process_v2_CREATE_CHILD_SA_request_continue_3(struct ike_sa *ike,
 								response.pbs);
 	if (n != v2N_NOTHING_WRONG) {
 		/* already logged */
-		record_v2N_response(larval_child->sa.logger, ike, request_md,
-				    n, NULL/*no-data*/, ENCRYPTED_PAYLOAD);
-		connection_delete_child(&larval_child, HERE);
-		ike->sa.st_v2_msgid_windows.responder.wip_sa = NULL;
-		return v2_notification_fatal(n) ? STF_FATAL : STF_OK; /*IKE*/
+		return reject_CREATE_CHILD_SA_request(ike, &larval_child,
+						      request_md, n, HERE);
 	}
 
 	if (!close_and_record_v2_message(&response)) {
