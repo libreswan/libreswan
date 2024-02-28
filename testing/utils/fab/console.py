@@ -175,12 +175,6 @@ class Console(pexpect.spawn):
             self.unicode_output_files = []
             self.logfile = None
 
-    def append_output(self, unicode_format, *unicode_args):
-        output = (unicode_format % unicode_args)
-        for f in self.unicode_output_files:
-            f.write(output)
-            f.flush()
-
     def drain(self):
         self.logger.debug("draining any existing output")
         if self.expect([rb'.+', pexpect.TIMEOUT], timeout=0) == 0:
