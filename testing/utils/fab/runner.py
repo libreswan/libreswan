@@ -360,8 +360,6 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                                       guest_name + ".console.verbose.txt")
                                 f = open(output, "w")
                                 verbose_files[guest_name] = f
-                                # re-direct the test-result log file
-                                test_domain.console.redirect_output(f)
 
                             # If a guest command times out, don't try
                             # to run post-mortem.sh.
@@ -389,15 +387,19 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                 all_verbose_txt.write(command.guest_name)
                                 all_verbose_txt.write("# ")
                                 # both get the command
-                                all_verbose_txt.write(command.line)
-                                all_verbose_txt.write("\n")
-                                all_verbose_txt.flush()
+                                for txt in (all_verbose_txt, guest_verbose_txt):
+                                    txt.write(command.line)
+                                    txt.write("\n")
+                                    txt.flush()
 
                                 # run the command
                                 status, output = test_domain.run(command.line)
                                 if output:
+                                    # All gets a blank line
                                     all_verbose_txt.write("\n")
-                                    all_verbose_txt.write(output.decode()) # convert byte to string
+                                    for txt in (all_verbose_txt, guest_verbose_txt):
+                                        txt.write(output.decode()) # convert byte to string
+                                        txt.flush()
 
                                 if status is post.Issues.TIMEOUT:
                                     # A timeout while running a
@@ -426,6 +428,14 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                     # ping commands are expected
                                     # to fail.
                                     test_domain.logger.warning("command '%s' failed with status %d", command.line, status)
+
+                                # GUEST then gets the next prompt
+                                guest_verbose_txt.write("[root@");
+                                guest_verbose_txt.write(command.guest_name)
+                                guest_verbose_txt.write(" ")
+                                guest_verbose_txt.write(test.name)
+                                guest_verbose_txt.write("]# ")
+                                guest_verbose_txt.flush()
 
                                 all_verbose_txt.write("\n")
                                 all_verbose_txt.flush()
@@ -495,6 +505,13 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                         logger.error("%s failed on %s with status %s", script, guest_name, status)
                                         continue # to next teardown
 
+                                    # GUEST finishes with the old prompt
+                                    guest_verbose_txt.write("[root@");
+                                    guest_verbose_txt.write(command.guest_name)
+                                    guest_verbose_txt.write(" ")
+                                    guest_verbose_txt.write(test.name)
+                                    guest_verbose_txt.write("]# ")
+
                                     # followed by marker
                                     guest_verbose_txt.write("%s post-mortem %s" % (post.RHS, post.RHS))
                                     guest_verbose_txt.flush()
@@ -510,12 +527,6 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
 
                             for f in verbose_files.values():
                                 f.close()
-
-                            # Always disconnect from the test domains.
-                            logger.info("closing all the test domains")
-                            for test_domain in test_domains.values():
-                                test_domain.console.redirect_output(None)
-                                test_domain.close()
 
         finally:
 
