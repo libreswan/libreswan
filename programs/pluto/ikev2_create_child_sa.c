@@ -1215,11 +1215,13 @@ stf_status process_v2_CREATE_CHILD_SA_request_continue_3(struct ike_sa *ike,
 static stf_status reject_CREATE_CHILD_SA_response(struct ike_sa *ike,
 						  struct child_sa **larval,
 						  struct msg_digest *md,
-						  v2_notification_t n)
+						  v2_notification_t n,
+						  where_t where)
 {
-	PEXPECT(ike->sa.logger, v2_msg_role(md) == MESSAGE_RESPONSE);
-	PEXPECT(ike->sa.logger, (*larval)->sa.st_sa_role == SA_INITIATOR);
-	PEXPECT(ike->sa.logger, ike->sa.st_v2_msgid_windows.initiator.wip_sa == (*larval));
+	PEXPECT_WHERE(ike->sa.logger, where, v2_msg_role(md) == MESSAGE_RESPONSE);
+	PEXPECT_WHERE(ike->sa.logger, where, (*larval)->sa.st_sa_role == SA_INITIATOR);
+	PEXPECT_WHERE(ike->sa.logger, where, ike->sa.st_v2_msgid_windows.initiator.wip_sa == (*larval));
+	PEXPECT_WHERE(ike->sa.logger, where, n != v2N_NOTHING_WRONG);
 
 	if (v2_notification_fatal(n)) {
 		/* let STF_FATAL clean up mess */
@@ -1284,7 +1286,8 @@ stf_status process_v2_CREATE_CHILD_SA_child_response(struct ike_sa *ike,
 					larval_child->sa.st_v2_create_child_sa_proposals,
 					/*expect-accepted-proposal?*/true);
 	if (n != v2N_NOTHING_WRONG) {
-		return reject_CREATE_CHILD_SA_response(ike, &larval_child, response_md, n);
+		return reject_CREATE_CHILD_SA_response(ike, &larval_child,
+						       response_md, n, HERE);
 	}
 
 	/*
@@ -1293,7 +1296,8 @@ stf_status process_v2_CREATE_CHILD_SA_child_response(struct ike_sa *ike,
 	if (larval_child->sa.st_pfs_group == NULL) {
 		v2_notification_t n = process_v2_child_response_payloads(ike, larval_child, response_md);
 		if (n != v2N_NOTHING_WRONG) {
-			return reject_CREATE_CHILD_SA_response(ike, &larval_child, response_md, n);
+			return reject_CREATE_CHILD_SA_response(ike, &larval_child,
+							       response_md, n, HERE);
 		}
 		/*
 		 * XXX: fudge a state transition.
@@ -1374,7 +1378,8 @@ static stf_status process_v2_CREATE_CHILD_SA_child_response_continue_1(struct st
 	v2_notification_t n = process_v2_child_response_payloads(ike, larval_child,
 								 response_md);
 	if (n != v2N_NOTHING_WRONG) {
-		return reject_CREATE_CHILD_SA_response(ike, &larval_child, response_md, n);
+		return reject_CREATE_CHILD_SA_response(ike, &larval_child,
+						       response_md, n, HERE);
 	}
 
 	/*
