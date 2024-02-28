@@ -107,19 +107,19 @@ VIRSH = sudo virsh --connect=$(KVM_CONNECTION)
 #
 # for instance:
 #
-#   KVM_FEDORA_ALL_ALGS
+#   KVM_LINUX_ALL_ALGS
 #   KVM_ALL_ALGS
 #
 # In KVM-MAKEFLAG, the macro $(KVM_$($*)_$(strip $(1))) expands to
 # $(KVM_<OS>_<FLAG>) and $(KVM_$(strip $(1))) expands to
 # $(KVM_<FLAG>).
 
-# On Fedora, overide linux defaults
-KVM_FEDORA_NSSDIR ?= $(SYSCONFDIR)/ipsec.d
-KVM_FEDORA_SD_RESTART_TYPE ?= no
-KVM_FEDORA_USE_EFENCE ?= true
-KVM_FEDORA_USE_LABELED_IPSEC ?= true
-KVM_FEDORA_USE_SECCOMP ?= true
+# On Linux, overide linux defaults
+KVM_LINUX_NSSDIR ?= $(SYSCONFDIR)/ipsec.d
+KVM_LINUX_SD_RESTART_TYPE ?= no
+KVM_LINUX_USE_EFENCE ?= true
+KVM_LINUX_USE_LABELED_IPSEC ?= true
+KVM_LINUX_USE_SECCOMP ?= true
 
 # from <FLAG> return KVM_<OS>_<FLAG> or KVM_<FLAG>
 kvm-flag = \
@@ -200,7 +200,8 @@ VIRT_INSTALL_FLAGS = \
 
 KVM_ALPINE ?=
 KVM_DEBIAN ?=
-KVM_FEDORA ?= true
+KVM_FEDORA ?=
+KVM_LINUX ?= true
 KVM_FREEBSD ?=
 KVM_NETBSD ?=
 KVM_OPENBSD ?=
@@ -210,6 +211,7 @@ alpine = ALPINE
 debian = DEBIAN
 fedora = FEDORA
 freebsd = FREEBSD
+linux = LINUX
 netbsd = NETBSD
 openbsd = OPENBSD
 
@@ -218,6 +220,7 @@ KVM_PLATFORM += alpine
 KVM_PLATFORM += debian
 KVM_PLATFORM += fedora
 KVM_PLATFORM += freebsd
+KVM_PLATFORM += linux
 KVM_PLATFORM += netbsd
 KVM_PLATFORM += openbsd
 
@@ -226,15 +229,17 @@ KVM_OS += $(if $(KVM_ALPINE),  alpine)
 KVM_OS += $(if $(KVM_DEBIAN),  debian)
 KVM_OS += $(if $(KVM_FEDORA),  fedora)
 KVM_OS += $(if $(KVM_FREEBSD), freebsd)
+KVM_OS += $(if $(KVM_LINUX),   linux)
 KVM_OS += $(if $(KVM_NETBSD),  netbsd)
 KVM_OS += $(if $(KVM_OPENBSD), openbsd)
 
-# fed into virt-install --os-variant
-KVM_ALPINE_OS_VARIANT ?= $(shell osinfo-query os | awk '/alpinelinux[1-9]/ {print $$1}' | sort -V | tail -1)
-KVM_DEBIAN_OS_VARIANT ?= $(shell osinfo-query os | awk '/debian[1-9]/ {print $$1}' | sort -V | tail -1)
-KVM_FEDORA_OS_VARIANT ?= $(shell osinfo-query os | awk '/fedora[1-9]/ {print $$1}' | sort -V | tail -1)
+# fed into virt-install --os-variant; linux is fedora!
+KVM_ALPINE_OS_VARIANT  ?= $(shell osinfo-query os | awk '/alpinelinux[1-9]/ {print $$1}' | sort -V | tail -1)
+KVM_DEBIAN_OS_VARIANT  ?= $(shell osinfo-query os | awk '/debian[1-9]/ {print $$1}' | sort -V | tail -1)
+KVM_FEDORA_OS_VARIANT  ?= $(shell osinfo-query os | awk '/fedora[1-9]/ {print $$1}' | sort -V | tail -1)
 KVM_FREEBSD_OS_VARIANT ?= $(shell osinfo-query os | awk '/freebsd[1-9]/ {print $$1}' | sort -V | tail -1)
-KVM_NETBSD_OS_VARIANT ?= $(shell osinfo-query os | awk '/netbsd[1-9]/ {print $$1}' | sort -V | tail -1)
+KVM_LINUX_OS_VARIANT   ?= $(shell osinfo-query os | awk '/fedora[1-9]/ {print $$1}' | sort -V | tail -1)
+KVM_NETBSD_OS_VARIANT  ?= $(shell osinfo-query os | awk '/netbsd[1-9]/ {print $$1}' | sort -V | tail -1)
 KVM_OPENBSD_OS_VARIANT ?= $(shell osinfo-query os | awk '/openbsd[1-9]/ {print $$1}' | sort -V | tail -1)
 
 #
@@ -266,10 +271,12 @@ add-kvm-prefixes = \
 		$(addprefix $(call strip-prefix,$(prefix)),$(1)))
 KVM_FIRST_PREFIX = $(call strip-prefix,$(firstword $(KVM_PREFIXES)))
 
-KVM_OS_HOST_NAMES = e w n
-
 # expand anything using $1 (such as make variable names and values)
 # immediately, but delay everything else by using $$.
+
+# override below
+KVM_LINUX_TEST_HOST_NAMES = east west north road nic
+KVM_OS_TEST_HOST_NAMES = e w n
 
 define domains
 
@@ -288,7 +295,7 @@ KVM_$($(strip $1))_UPGRADE_DOMAIN = $$(addprefix $$(KVM_POOLDIR)/, $$(KVM_$($(st
 KVM_$($(strip $1))_BUILD_DOMAIN   = $$(addprefix $$(KVM_POOLDIR)/, $$(KVM_$($(strip $1))_BUILD_DOMAIN_NAME))
 KVM_$($(strip $1))_DOMAIN         = $$(addprefix $$(KVM_POOLDIR)/, $$(KVM_$($(strip $1))_DOMAIN_NAME))
 
-KVM_$($(strip $1))_TEST_HOST_NAMES   = $$(addprefix $1, $$(KVM_OS_HOST_NAMES))
+KVM_$($(strip $1))_TEST_HOST_NAMES   ?= $$(addprefix $1, $$(KVM_OS_TEST_HOST_NAMES))
 KVM_$($(strip $1))_TEST_DOMAIN_NAMES = $$(call add-kvm-prefixes, $$(KVM_$($(strip $1))_TEST_HOST_NAMES))
 KVM_$($(strip $1))_TEST_DOMAINS      = $$(addprefix $$(KVM_LOCALDIR)/, $$(KVM_$($(strip $1))_TEST_DOMAIN_NAMES))
 
@@ -312,11 +319,6 @@ KVM_BUILD_DOMAINS      = $(foreach platform, $(KVM_PLATFORM), $(KVM_$($(platform
 KVM_TEST_HOST_NAMES   = $(foreach platform, $(KVM_PLATFORM), $(KVM_$($(platform))_TEST_HOST_NAMES))
 KVM_TEST_DOMAIN_NAMES = $(foreach platform, $(KVM_PLATFORM), $(KVM_$($(platform))_TEST_DOMAIN_NAMES))
 KVM_TEST_DOMAINS      = $(foreach platform, $(KVM_PLATFORM), $(KVM_$($(platform))_TEST_DOMAINS))
-
-KVM_FEDORA_HOST_NAMES = east west north road nic
-KVM_FEDORA_TEST_HOST_NAMES += $(KVM_FEDORA_HOST_NAMES)
-#KVM_FEDORA_TEST_DOMAIN_NAMES += $(call add-kvm-prefixes, $(KVM_FEDORA_HOST_NAMES))
-#KVM_FEDORA_TEST_DOMAINS += $(addprefix $(KVM_LOCALDIR)/, $(KVM_FEDORA_TEST_DOMAIN_NAMES))
 
 KVM_HOST_NAMES += $(KVM_BASE_HOST_NAMES)
 KVM_HOST_NAMES += $(KVM_UPGRADE_HOST_NAMES)
@@ -613,7 +615,7 @@ kvm-diffs:
 KVM_KEYS = $(KVM_TESTINGDIR)/x509/keys/up-to-date
 KVM_KEYS_EXPIRATION_DAY = 7
 KVM_KEYS_EXPIRED = find $(KVM_TESTINGDIR)/x509/*/ -type f -mtime +$(KVM_KEYS_EXPIRATION_DAY) -ls
-KVM_KEYS_DOMAIN = $(addprefix $(KVM_FIRST_PREFIX), fedora)
+KVM_KEYS_DOMAIN = $(addprefix $(KVM_FIRST_PREFIX), linux)
 
 .PHONY: kvm-keys
 kvm-keys:
@@ -1001,6 +1003,42 @@ $(KVM_FREEBSD_DOMAIN)-base.iso: | freebsd/base.conf
 
 
 #
+# Linux
+#
+# - since kickstart is used this is pretty straight forward
+#
+# For instance: Fedora-Server-dvd-x86_64-36-1.5.iso
+
+KVM_LINUX_RELEASE ?= $(KVM_FEDORA_RELEASE)
+KVM_LINUX_BUILD ?= $(KVM_FEDORA_BUILD)
+KVM_LINUX_ISO_URL ?= $(KVM_FEDORA_ISO_URL)
+KVM_LINUX_KICKSTART_FILE ?= $(KVM_FEDORA_KICKSTART_FILE)
+KVM_LINUX_ISO ?= $(KVM_FEDORA_ISO)
+ifneq ($(KVM_LINUX_ISO),$(KVM_FEDORA_ISO))
+kvm-iso: $(KVM_LINUX_ISO)
+$(KVM_LINUX_ISO): | $(KVM_POOLDIR)
+	$(KVM_WGET) --output-document $@.tmp -- $(KVM_LINUX_ISO_URL)
+	touch $@.tmp # wget preserves dates
+	mv $@.tmp $@
+endif
+
+KVM_LINUX_VIRT_INSTALL_FLAGS = \
+	--location=$(KVM_LINUX_ISO) \
+	--initrd-inject=$(KVM_LINUX_DOMAIN)-base.ks \
+	--extra-args="inst.ks=file:/$(notdir $(KVM_LINUX_DOMAIN)-base.ks) console=ttyS0,115200 net.ifnames=0 biosdevname=0 inst.notmux"
+
+$(KVM_LINUX_DOMAIN)-base: $(KVM_LINUX_ISO)
+$(KVM_LINUX_DOMAIN)-base: | $(KVM_LINUX_KICKSTART_FILE)
+$(KVM_LINUX_DOMAIN)-base: | $(KVM_LINUX_DOMAIN)-base.ks
+
+$(KVM_LINUX_DOMAIN)-base.ks: | $(KVM_LINUX_KICKSTART_FILE)
+	$(KVM_TRANSMOGRIFY) \
+		$(KVM_LINUX_KICKSTART_FILE) \
+		> $@.tmp
+	mv $@.tmp $@
+
+
+#
 # NetBSD
 #
 # - needs a second serial console boot iso
@@ -1160,6 +1198,9 @@ $(KVM_POOLDIR_PREFIX)%-upgrade: \
 	$(KVMSH) --shutdown $(notdir $@)
 	touch $@
 
+KVM_FEDORA_UPGRADE_FLAGS ?= $(KVM_FEDORA_INSTALL_PACKAGES) -- $(KVM_FEDORA_UPGRADE_PACKAGES)
+KVM_LINUX_UPGRADE_FLAGS ?= $(KVM_FEDORA_UPGRADE_FLAGS)
+
 ##
 ## Create the os domain by transmogrifying the updated domain.
 ##
@@ -1190,7 +1231,9 @@ $(KVM_POOLDIR_PREFIX)%: \
 	: @=$@ *=$*
 	./kvm-uninstall-domain.sh $@
 	$(QEMU_IMG) create -f qcow2 -F qcow2 -b $<.qcow2 $@.qcow2
-	: fedora runs chcon TESTINGDIR
+	: Include TESTINGDIR
+	: - fedora runs chcon TESTINGDIR
+	: - BSDs need to setup TESTINGDIR NFS mount point
 	$(VIRT_INSTALL) \
 		$(VIRT_INSTALL_FLAGS) \
 		--vcpus=$(call kvm-flag-value, KVM_BUILD_CPUS) \
@@ -1221,6 +1264,7 @@ $(KVM_POOLDIR_PREFIX)%: \
 	touch $@
 
 KVM_FEDORA_TRANSMOGRIFY_FILES += $(wildcard fedora/network/*.network)
+KVM_LINUX_TRANSMOGRIFY_FILES += $(wildcard linux/network/*.network)
 KVM_FREEBSD_TRANSMOGRIFY_FILES += freebsd/rc.conf
 KVM_NETBSD_TRANSMOGRIFY_FILES += netbsd/rc.local
 KVM_OPENBSD_TRANSMOGRIFY_FILES += openbsd/rc.local
@@ -1348,7 +1392,7 @@ endef
 # generate rules for all combinations, including those not enabled
 $(foreach prefix, $(KVM_LOCALDIR_PREFIXES), \
 	$(foreach platform, $(KVM_PLATFORM), \
-		$(foreach host, $(KVM_OS_HOST_NAMES), \
+		$(foreach host, $(KVM_OS_TEST_HOST_NAMES), \
 			$(eval $(call define-test-domain, \
 				$(prefix), $(platform)$(host), \
 				$(platform), \
@@ -1356,10 +1400,10 @@ $(foreach prefix, $(KVM_LOCALDIR_PREFIXES), \
 
 # generate rules for "linux" hosts
 $(foreach prefix, $(KVM_LOCALDIR_PREFIXES), \
-	$(foreach host, $(KVM_FEDORA_HOST_NAMES), \
+	$(foreach host, $(KVM_LINUX_TEST_HOST_NAMES), \
 		$(eval $(call define-test-domain, \
 			$(prefix), $(host), \
-			fedora, \
+			linux, \
 			$(host)))))
 
 #
@@ -1571,23 +1615,20 @@ $(call kvm-var-value,KVM_MAKEFLAGS)
 
  $(foreach platform,$(KVM_PLATFORM),$(call kvm-var-value,KVM_$($(platform))_OS_VARIANT)$(crlf))
 
-$(call kvm-var-value,KVM_FEDORA_HOST_NAMES)
-
-$(call kvm-var-value,KVM_OS_HOST_NAMES)
-
 $(call kvm-var-value,KVM_BASE_HOST_NAMES)
 
- $(foreach platform,$(KVM_PLATFORM),$(call kvm-var-value,KVM_$($(platform))_BASE_HOST_NAMES)$(crlf))
+ $(foreach platform,$(KVM_PLATFORM),$(call kvm-var-value,KVM_$($(platform))_BASE_HOST_NAME)$(crlf))
 
 $(call kvm-var-value,KVM_UPGRADE_HOST_NAMES)
 
- $(foreach platform,$(KVM_PLATFORM),$(call kvm-var-value,KVM_$($(platform))_UPGRADE_HOST_NAMES)$(crlf))
+ $(foreach platform,$(KVM_PLATFORM),$(call kvm-var-value,KVM_$($(platform))_UPGRADE_HOST_NAME)$(crlf))
 
 $(call kvm-var-value,KVM_BUILD_HOST_NAMES)
 
- $(foreach platform,$(KVM_PLATFORM),$(call kvm-var-value,KVM_$($(platform))_BUILD_HOST_NAMES)$(crlf))
+ $(foreach platform,$(KVM_PLATFORM),$(call kvm-var-value,KVM_$($(platform))_BUILD_HOST_NAME)$(crlf))
 
 $(call kvm-var-value,KVM_TEST_HOST_NAMES)
+$(call kvm-var-value,KVM_OS_TEST_HOST_NAMES)
 
  $(foreach platform,$(KVM_PLATFORM),$(call kvm-var-value,KVM_$($(platform))_TEST_HOST_NAMES)$(crlf))
 

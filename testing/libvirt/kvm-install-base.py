@@ -54,6 +54,7 @@ OS = {
     "debian": debian,
     "fedora": fedora,
     "freebsd": freebsd,
+    "linux": fedora,
     "netbsd": netbsd,
     "openbsd": openbsd
 }
