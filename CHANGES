@@ -1,6 +1,7 @@
 
 See also https://libreswan.org/
 
+* Linux: make libcap-ng failures non-fatal
 * BSD: fix esp=aes_gcm
 * NetBSD: fix compiler warning in lib/libswan/x509.c
 
