@@ -974,27 +974,6 @@ stf_status process_v2_CREATE_CHILD_SA_new_child_request(struct ike_sa *ike,
 }
 
 /*
- * Reject the request: record the notification; delete the larval
- * child and then, when fatal, blow away the IKE SA.
- */
-
-static stf_status reject_CREATE_CHILD_SA_request(struct ike_sa *ike,
-						 struct child_sa **larval,
-						 struct msg_digest *md,
-						 v2_notification_t n)
-{
-	PEXPECT(ike->sa.logger, v2_msg_role(md) == MESSAGE_REQUEST);
-	PEXPECT(ike->sa.logger, (*larval)->sa.st_sa_role == SA_RESPONDER);
-	PEXPECT(ike->sa.logger, ike->sa.st_v2_msgid_windows.responder.wip_sa == (*larval));
-	record_v2N_response(ike->sa.logger, ike, md,
-			    n, NULL/*no-data*/,
-			    ENCRYPTED_PAYLOAD);
-	delete_child_sa(larval);
-	ike->sa.st_v2_msgid_windows.responder.wip_sa = NULL;
-	return v2_notification_fatal(n) ? STF_FATAL : STF_OK; /*IKE*/
-}
-
-/*
  * processing a new Child SA (RFC 7296 1.3.1 or 1.3.3) request
  */
 
@@ -1028,12 +1007,11 @@ stf_status process_v2_CREATE_CHILD_SA_request(struct ike_sa *ike,
 					larval_child->sa.st_v2_create_child_sa_proposals,
 					/*expect-accepted-proposal?*/false);
 	if (n != v2N_NOTHING_WRONG) {
-		/*
-		 * Emits a response and then either returns STF_FATAL
-		 * or STF_OK (child rejected IKE lives to fight
-		 * another day).
-		 */
-		return reject_CREATE_CHILD_SA_request(ike, &larval_child, md, n);
+		record_v2N_response(ike->sa.logger, ike, md,
+				    n, NULL/*no-data*/, ENCRYPTED_PAYLOAD);
+		delete_child_sa(&larval_child);
+		ike->sa.st_v2_msgid_windows.responder.wip_sa = NULL;
+		return v2_notification_fatal(n) ? STF_FATAL : STF_OK; /*IKE*/
 	}
 
 	/*
@@ -1141,10 +1119,13 @@ static stf_status process_v2_CREATE_CHILD_SA_request_continue_2(struct state *ik
 		larval_child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0);
 
 	if (larval_child->sa.st_dh_shared_secret == NULL) {
-		/* something fatal?!? */
-		llog(RC_LOG, larval_child->sa.logger, "DH failed");
-		return reject_CREATE_CHILD_SA_request(ike, &larval_child, request_md,
-						      v2N_INVALID_SYNTAX);
+		log_state(RC_LOG, &larval_child->sa, "DH failed");
+		record_v2N_response(larval_child->sa.logger, ike, request_md,
+				    v2N_INVALID_SYNTAX, NULL,
+				    ENCRYPTED_PAYLOAD);
+		delete_child_sa(&larval_child);
+		ike->sa.st_v2_msgid_windows.responder.wip_sa = NULL;
+		return STF_FATAL; /* kill IKE family */
 	}
 
 	/* may invalidate LARVAL_CHILD */
@@ -1182,7 +1163,11 @@ stf_status process_v2_CREATE_CHILD_SA_request_continue_3(struct ike_sa *ike,
 								response.pbs);
 	if (n != v2N_NOTHING_WRONG) {
 		/* already logged */
-		return reject_CREATE_CHILD_SA_request(ike, &larval_child, request_md, n);
+		record_v2N_response(larval_child->sa.logger, ike, request_md,
+				    n, NULL/*no-data*/, ENCRYPTED_PAYLOAD);
+		connection_delete_child(&larval_child, HERE);
+		ike->sa.st_v2_msgid_windows.responder.wip_sa = NULL;
+		return v2_notification_fatal(n) ? STF_FATAL : STF_OK; /*IKE*/
 	}
 
 	if (!close_and_record_v2_message(&response)) {
