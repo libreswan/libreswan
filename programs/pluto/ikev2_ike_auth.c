@@ -1267,7 +1267,7 @@ static stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike
 	/* now send AUTH payload */
 
 	if (!emit_local_v2AUTH(ike, auth_sig, &ike->sa.st_v2_id_payload.mac, response.pbs)) {
-		return STF_INTERNAL_ERROR;
+		return STF_FATAL;
 	}
 	ike->sa.st_v2_ike_intermediate.used = false;
 
