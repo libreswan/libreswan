@@ -82,6 +82,7 @@ You can load this machine definition into libvirt using:
       <address type='pci' domain='0x0000' bus='0x00' slot='0x07' function='0x0'/>
     </rng>
   </devices>
+  <!-- used by p9fs -->
   <seclabel type='static' model='dac' relabel='yes'>
    <label>@@USER@@:@@GROUP@@</label>
    <imagelabel>@@USER@@:@@GROUP@@</imagelabel>
