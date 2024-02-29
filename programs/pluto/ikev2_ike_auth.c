@@ -397,7 +397,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 	/* send out the AUTH payload */
 
 	if (!emit_local_v2AUTH(ike, auth_sig, &ike->sa.st_v2_id_payload.mac, request.pbs)) {
-		return STF_INTERNAL_ERROR;
+		return STF_FATAL;
 	}
 
 	if (LIN(POLICY_MOBIKE, ike->sa.st_connection->policy)) {
