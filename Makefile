@@ -197,5 +197,4 @@ release:
 local-install:
 
 include ${LIBRESWANSRCDIR}/mk/docker-targets.mk
-include ${LIBRESWANSRCDIR}/mk/kvm-targets.mk
 include ${LIBRESWANSRCDIR}/mk/web-targets.mk
