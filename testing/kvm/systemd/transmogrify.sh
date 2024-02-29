@@ -11,7 +11,7 @@ set -xe ; exec < /dev/null
 systemctl enable systemd-networkd.service
 systemctl enable systemd-networkd-wait-online.service
 
-cp -v /bench/testing/libvirt/systemd/network/* /etc/systemd/network/
+cp -v /bench/testing/kvm/systemd/network/* /etc/systemd/network/
 test -x /usr/sbin/restorecon && restorecon -R /etc/systemd/network
 
 # Provide a default network configuration for build domain
@@ -37,8 +37,8 @@ EOF
 # west, et.al., but for build domains lets the above kick in
 # rm -f /etc/hostname # hostnamectl set-hostname ""
 
-cp -v /bench/testing/libvirt/systemd/hostnamer.service /etc/systemd/system
-cp -v /bench/testing/libvirt/systemd/hostnamer.sh /usr/local/sbin/hostnamer.sh
+cp -v /bench/testing/kvm/systemd/hostnamer.service /etc/systemd/system
+cp -v /bench/testing/kvm/systemd/hostnamer.sh /usr/local/sbin/hostnamer.sh
 chmod a+x /usr/local/sbin/hostnamer.sh
 test -x /usr/sbin/restorecon && restorecon -R /etc/systemd/system
 systemctl enable hostnamer.service

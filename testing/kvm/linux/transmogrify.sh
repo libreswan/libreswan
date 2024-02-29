@@ -38,7 +38,7 @@ done
 : systemd-networkd
 :
 
-. /bench/testing/libvirt/systemd/transmogrify.sh
+. /bench/testing/kvm/systemd/transmogrify.sh
 
 systemctl disable NetworkManager
 
@@ -133,7 +133,7 @@ restorecon -R /root/.ssh /etc/ssh
 
 title replace root/.bash_profile
 
-for f in /bench/testing/libvirt/root/[a-z]* ; do
+for f in /bench/testing/kvm/root/[a-z]* ; do
     cp -v ${f} /root/.$(basename $f)
 done
 

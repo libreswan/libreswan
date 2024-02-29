@@ -254,7 +254,7 @@ KVM_OPENBSD_OS_VARIANT ?= $(shell osinfo-query os | awk '/openbsd[1-9]/ {print $
 #  KVM_*_DOMAIN_NAME KVM_*_DOMAIN_NAME
 #
 #      the host names with domain specific prefixes added; this is
-#      what is fed to libvirt but note ...
+#      what is fed to KVM but note ...
 #
 #  KVM_*_DOMAIN KVM_*_DOMAINS
 #
@@ -712,8 +712,8 @@ kvm-keys-ok:
 #    $(notdir $@), and $* (matching % in pattern rules) to get the
 #    name from the target.
 #
-# Because the gateway is created directly from libvirt/swandefault and
-# that file contains hardwired IP addresses, but only one is possible.
+# Because the gateway is created directly from net/swandefault and
+# that file contains hardwired IP addresses, only one is possible.
 #
 # XXX: Why?  Perhaps it is so that SSHing into the VMs is possible,
 # but with lots of VMs what address gets assigned stops being

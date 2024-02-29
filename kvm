@@ -7,7 +7,7 @@ set -e
 # possible hostnames, always implies first
 
 # gmake isn't on debian?
-gnumake="make -C $(realpath $(dirname $0))/testing/libvirt"
+gnumake="make -C $(realpath $(dirname $0))/testing/kvm"
 
 print-kvm-variable() {
     ${gnumake} --no-print-directory print-kvm-variable VARIABLE=$1
