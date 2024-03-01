@@ -2099,8 +2099,16 @@ void connswitch_state_and_log(struct state *st, struct connection *new)
 	passert(old != new);
 
 	connection_buf nb;
-	log_state(RC_LOG, st, "switched to "PRI_CONNECTION,
-		  pri_connection(new, &nb));
+	llog(RC_LOG, st->logger, "switched to "PRI_CONNECTION,
+	     pri_connection(new, &nb));
+
+	/*
+	 * Update the state's logger with the connection's debug flags
+	 */
+	st->logger->debugging &= ~old->logger->debugging;
+	st->logger->debugging |= new->logger->debugging;
+
+	/* and switch */
 	st->st_connection = connection_addref(new, st->logger);
 	state_db_rehash_connection_serialno(st);
 	connection_delref(&old, st->logger);
