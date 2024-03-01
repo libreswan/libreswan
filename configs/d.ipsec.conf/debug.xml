@@ -1,10 +1,11 @@
 <varlistentry>
   <term>
-    <envar>plutodebug</envar>
+    <envar>debug</envar>
   </term>
   <listitem>
     <para>
-      Enable debug logging.  For more information see <citerefentry>
+      Enable per-connection debug logging.
+      For more information see <citerefentry>
       <refentrytitle>ipsec-whack</refentrytitle>
       <manvolnum>8</manvolnum> </citerefentry> and the
       <option>--debug</option> option.
@@ -13,7 +14,7 @@
       <para>
 	This feature is used by <application>Libreswan</application>
 	developers.  The default logs should provide sufficient
-	information to diagnose configuration and connecion problems.
+	information to diagnose configuration and connection problems.
       </para>
     </note>
   </listitem>

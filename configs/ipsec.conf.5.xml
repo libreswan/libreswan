@@ -36,6 +36,7 @@
 <!ENTITY curl-timeout SYSTEM "d.ipsec.conf/curl-timeout.xml">
 <!ENTITY ddos-ike-threshold SYSTEM "d.ipsec.conf/ddos-ike-threshold.xml">
 <!ENTITY ddos-mode SYSTEM "d.ipsec.conf/ddos-mode.xml">
+<!ENTITY debug SYSTEM "d.ipsec.conf/debug.xml">
 <!ENTITY decap-dscp SYSTEM "d.ipsec.conf/decap-dscp.xml">
 <!ENTITY dns-match-id SYSTEM "d.ipsec.conf/dns-match-id.xml">
 <!ENTITY dnssec SYSTEM "d.ipsec.conf/dnssec.xml">
@@ -296,6 +297,7 @@
 	&policy-label;
 	&failureshunt;
 	&negotiationshunt;
+	&debug;
       </variablelist>
     </refsect2>
   </refsect1>
