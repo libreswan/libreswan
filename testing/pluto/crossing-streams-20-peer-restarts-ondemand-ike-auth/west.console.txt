@@ -1,0 +1,112 @@
+#
+west #
+ # set up west
+west #
+ #
+west #
+ /testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec whack --impair revival
+west #
+ ipsec whack --impair suppress_retransmits
+west #
+ ipsec whack --impair block_inbound:yes
+IMPAIR: recording all inbound messages
+IMPAIR: block all inbound messages: no -> yes
+west #
+ ipsec add east-west
+"east-west": added IKEv2 connection
+west #
+ ipsec route east-west
+west #
+ # should be the trap
+west #
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.0.1.0/24 dst 192.0.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+west #
+ # west gets an acquire; negotiates up to IKE_AUTH
+west #
+ ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
+down
+west #
+ ../../guestbin/wait-for-pluto.sh 'initiate on-demand for packet'
+"east-west": initiate on-demand for packet 192.0.1.254:8-ICMP->192.0.2.254:0
+west #
+ ../../guestbin/wait-for-pluto.sh '#1: sent IKE_SA_INIT request'
+"east-west" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+west #
+ ../../guestbin/drip-inbound.sh 1 '#1: processed IKE_SA_INIT response'
+packet from 192.1.2.23:500: IMPAIR: blocking inbound message 1
+IMPAIR: start processing inbound drip packet 1
+IMPAIR: stop processing inbound drip packet 1
+"east-west" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+west #
+ ../../guestbin/wait-for-pluto.sh '#1: sent IKE_AUTH request'
+"east-west" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
+west #
+ ../../guestbin/wait-for-inbound.sh 2
+packet from 192.1.2.23:500: IMPAIR: blocking inbound message 2
+west #
+ # should be the block
+west #
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.0.1.0/24 dst 192.0.2.0/24
+	dir out action block priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+west #
+ # west receives IKE_SA_INIT request
+west #
+ ../../guestbin/drip-inbound.sh 3 '#3: processed IKE_SA_INIT request'
+packet from 192.1.2.23:500: IMPAIR: blocking inbound message 3
+IMPAIR: start processing inbound drip packet 3
+IMPAIR: stop processing inbound drip packet 3
+"east-west" #3: processed IKE_SA_INIT request from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
+west #
+ ../../guestbin/drip-inbound.sh 4 '#4: responder established Child SA'
+packet from 192.1.2.23:500: IMPAIR: blocking inbound message 4
+IMPAIR: start processing inbound drip packet 4
+IMPAIR: stop processing inbound drip packet 4
+"east-west" #4: responder established Child SA using #3; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+west #
+ ../../guestbin/ipsec-kernel-state.sh
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 0 
+	sel src 192.1.2.23/32 dst 192.1.2.45/32 
+src 192.0.1.254 dst 192.0.2.254
+	proto esp spi 0x00000000 reqid 0 mode transport
+	replay-window 0 
+	sel src 192.0.1.254/32 dst 192.0.2.254/32 proto icmp type 8 code 0 dev eth1 
+west #
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.0.1.0/24 dst 192.0.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+west #
+ 

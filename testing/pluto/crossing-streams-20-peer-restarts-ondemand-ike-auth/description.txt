@@ -1,0 +1,9 @@
+west initiates ondemand; during IKE_AUTH east restarts and initiates
+
+Because west initiated on-demand, and is part way through IKE_AUTH, it
+is in ROUTED_NEGOTIATING (blocking policy installed) with the first
+Child SA #2 (IKE SA #1) as the route owner.
+
+When west then receives east's connection, it needs to transfer
+ownership to the new Child SA #4 (IKE SA #3) and then transition to
+ROUTED_TUNNEL while installing the full kernel state/policy.
