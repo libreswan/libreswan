@@ -1610,29 +1610,30 @@ static bool install_inbound_ipsec_kernel_policies(struct child_sa *child)
 	 * Note reversed ends.
 	 * Not much to be done on failure.
 	 */
-	ldbg(logger, "kernel: %s() owner="PRI_SO,
-	     __func__, pri_so(c->negotiating_child_sa));
 
 	if (is_labeled_child(c)) {
-		ldbg(logger, "kernel: %s() skipping as IKEv2 config.sec_label="PRI_SHUNK,
+		pdbg(logger, "kernel: %s() skipping as IKEv2 config.sec_label="PRI_SHUNK,
 		     __func__, pri_shunk(c->config->sec_label));
 		return true;
 	}
 
 	if (c->negotiating_child_sa != SOS_NOBODY &&
 	    c->negotiating_child_sa != child->sa.st_serialno) {
-		ldbg(logger, "kernel: %s() skipping as already has owner "PRI_SO,
-		     __func__, pri_so(c->negotiating_child_sa));
+		pdbg(logger, "kernel: %s() skipping "PRI_SO" as already has .negotiating_child_sa "PRI_SO,
+		     __func__, pri_so(child->sa.st_serialno), pri_so(c->negotiating_child_sa));
 		return true;
 	}
 
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 		selector_buf sb, db;
-		ldbg(logger, "kernel: %s() is installing SPD for %s=>%s",
+		enum_buf eb;
+		pdbg(logger, "kernel: %s() installing SPD for %s=>%s %s",
 		     __func__,
 		     /* inbound */
 		     str_selector(&spd->remote->client, &sb),
-		     str_selector(&spd->local->client, &db));
+		     str_selector(&spd->local->client, &db),
+		     str_enum_short(&routing_names, c->child.routing, &eb));
+
 		if (!install_inbound_ipsec_kernel_policy(child, spd, HERE)) {
 		    log_state(RC_LOG_SERIOUS, &child->sa, "Installing IPsec SA failed - check logs or dmesg");
 			return false;
@@ -1783,24 +1784,17 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 	struct connection *c = child->sa.st_connection;
 
 	if (is_labeled_child(c)) {
-		ldbg(logger, "kernel: %s() skipping install of IPsec policies as security label", __func__);
+		pdbg(logger, "kernel: %s() skipping as IKEv2 config.sec_label="PRI_SHUNK,
+		     __func__, pri_shunk(c->config->sec_label));
 		return true;
 	}
 
 	if (c->negotiating_child_sa != SOS_NOBODY &&
 	    c->negotiating_child_sa != child->sa.st_serialno) {
-		ldbg(logger, "kernel: %s() skipping kernel policies as already owner", __func__);
+		pdbg(logger, "kernel: %s() skipping "PRI_SO" as already has .negotiating_child_sa "PRI_SO,
+		     __func__, pri_so(child->sa.st_serialno), pri_so(c->negotiating_child_sa));
 		return true;
 	}
-
-	ldbg(logger,
-	     "kernel: %s() installing IPsec policies for "PRI_SO": connection is currently "PRI_SO" %s route=%s up=%s",
-	     __func__,
-	     pri_so(child->sa.st_serialno),
-	     pri_so(c->negotiating_child_sa),
-	     enum_name(&routing_names, c->child.routing),
-	     bool_str(updown.route),
-	     bool_str(updown.up));
 
 	/* clear the deck */
 	clear_connection_spd_conflicts(c);
@@ -1812,6 +1806,18 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 	 */
 
 	FOR_EACH_ITEM(spd, &c->child.spds) {
+
+		selector_buf sb, db;
+		enum_buf eb;
+		pdbg(logger,
+		     "kernel: %s() installing SPD for %s=>%s %s route=%s up=%s",
+		     __func__,
+		     /* outbound */
+		     str_selector(&spd->local->client, &db),
+		     str_selector(&spd->remote->client, &sb),
+		     str_enum_short(&routing_names, c->child.routing, &eb),
+		     bool_str(updown.route),
+		     bool_str(updown.up));
 
 		struct spd_owner owner;
 		ok = get_connection_spd_conflict(spd, new_routing, &owner,
