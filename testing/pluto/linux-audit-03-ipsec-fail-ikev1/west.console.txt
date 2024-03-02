@@ -30,7 +30,7 @@ west #
 "ikev1-ipsec-fail" #1: sent Main Mode I2
 "ikev1-ipsec-fail" #1: sent Main Mode I3
 "ikev1-ipsec-fail" #1: Peer ID is ID_FQDN: '@east-v1'
-"ikev1-ipsec-fail" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east-v1'
+"ikev1-ipsec-fail" #1: authenticated peer using preloaded certificate '@east-v1' and 2nnn-bit RSA with SHA1 signature
 "ikev1-ipsec-fail" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA1 group=MODP1536}
 "ikev1-ipsec-fail" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+COMPRESS+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 "ikev1-ipsec-fail" #2: sent Quick Mode request
@@ -49,7 +49,7 @@ west #
 "ikev1-aggr-ipsec-fail" #3: initiating IKEv1 Aggressive Mode connection
 "ikev1-aggr-ipsec-fail" #3: sent Aggressive Mode request
 "ikev1-aggr-ipsec-fail" #3: Peer ID is ID_FQDN: '@east-v1'
-"ikev1-aggr-ipsec-fail" #3: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east-v1'
+"ikev1-aggr-ipsec-fail" #3: authenticated peer using preloaded certificate '@east-v1' and 2nnn-bit RSA with SHA1 signature
 "ikev1-aggr-ipsec-fail" #3: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA1 group=MODP1536}
 "ikev1-aggr-ipsec-fail" #4: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+COMPRESS+TUNNEL+PFS+UP+AGGRESSIVE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 "ikev1-aggr-ipsec-fail" #4: sent Quick Mode request

@@ -18,8 +18,8 @@ s/\(rekeyed Child SA.*[^A-Z]ESP[^=]*=\)>0x[a-f0-9]* <0x[a-f0-9]* \(.*\)$/\1>0xES
 s/\(rekeyed Child SA.*[^A-Z]AH[^=]*=\)>0x[a-f0-9]* <0x[a-f0-9]* \(.*\)$/\1>0xAHAH <0xAHAH \2/
 
 # Generated RSA keys have some fuzz
-s/'\([0-9]\)[0-9][0-9][0-9]-bit RSA/'\1nnn-bit RSA/
-s/'\([0-9]\)[0-9][0-9]-bit RSA/'\1nn-bit RSA/
+s/ \([0-9]\)[0-9][0-9][0-9]-bit RSA/ \1nnn-bit RSA/
+s/ \([0-9]\)[0-9][0-9]-bit RSA/ \1nn-bit RSA/
 
 s,\(instance with peer .*\) {isakmp=#.*/ipsec=#.*},\1,
 s,\(initiating Quick Mode .*\) {using isakmp#.*},\1,

@@ -27,7 +27,7 @@ west #
 "west-east" #1: Deleting previous proposal in the hopes of selecting DH 2 or DH 5
 "west-east" #1: sent Aggressive Mode request
 "west-east" #1: Peer ID is ID_FQDN: '@east'
-"west-east" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"west-east" #1: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
 "west-east" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA1 group=MODP1536}
 "west-east" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+AGGRESSIVE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 "west-east" #2: sent Quick Mode request

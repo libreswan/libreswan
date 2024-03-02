@@ -54,7 +54,7 @@ west #
 "westnet-eastnet-aggr" #1: initiating IKEv1 Aggressive Mode connection
 "westnet-eastnet-aggr" #1: sent Aggressive Mode request
 "westnet-eastnet-aggr" #1: Peer ID is ID_FQDN: '@east'
-"westnet-eastnet-aggr" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet-aggr" #1: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
 "westnet-eastnet-aggr" #1: ISAKMP SA established {auth=RSA_SIG cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP1536}
 "westnet-eastnet-aggr" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+AGGRESSIVE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 "westnet-eastnet-aggr" #2: sent Quick Mode request

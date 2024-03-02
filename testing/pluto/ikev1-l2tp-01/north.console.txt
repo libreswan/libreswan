@@ -39,7 +39,7 @@ north #
 "north-east-l2tp" #1: sent Main Mode I2
 "north-east-l2tp" #1: sent Main Mode I3
 "north-east-l2tp" #1: Peer ID is ID_FQDN: '@east'
-"north-east-l2tp" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"north-east-l2tp" #1: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
 "north-east-l2tp" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "north-east-l2tp" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TRANSPORT+PFS+ROUTE+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 "north-east-l2tp" #2: sent Quick Mode request

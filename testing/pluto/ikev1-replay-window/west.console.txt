@@ -34,7 +34,7 @@ west #
 "westnet-eastnet-default" #1: sent Main Mode I2
 "westnet-eastnet-default" #1: sent Main Mode I3
 "westnet-eastnet-default" #1: Peer ID is ID_FQDN: '@east'
-"westnet-eastnet-default" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet-default" #1: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
 "westnet-eastnet-default" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "westnet-eastnet-default" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 "westnet-eastnet-default" #2: sent Quick Mode request
@@ -61,7 +61,7 @@ west #
 "westnet-eastnet-zero" #1: sent Main Mode I2
 "westnet-eastnet-zero" #1: sent Main Mode I3
 "westnet-eastnet-zero" #1: Peer ID is ID_FQDN: '@east'
-"westnet-eastnet-zero" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet-zero" #1: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
 "westnet-eastnet-zero" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "westnet-eastnet-zero" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
 "westnet-eastnet-zero" #2: sent Quick Mode request
@@ -97,7 +97,7 @@ west #
 "westnet-eastnet-64" #1: sent Main Mode I2
 "westnet-eastnet-64" #1: sent Main Mode I3
 "westnet-eastnet-64" #1: Peer ID is ID_FQDN: '@east'
-"westnet-eastnet-64" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet-64" #1: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
 "westnet-eastnet-64" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "westnet-eastnet-64" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 "westnet-eastnet-64" #2: sent Quick Mode request

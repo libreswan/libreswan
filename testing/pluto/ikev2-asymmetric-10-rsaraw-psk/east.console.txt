@@ -33,7 +33,7 @@ east #
 initdone
 east #
  grep -e "^[^|].* established IKE SA" /tmp/pluto.log
-"westnet-eastnet-ikev2" #1: responder established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@west'
+"westnet-eastnet-ikev2" #1: responder established IKE SA; authenticated peer using preloaded certificate '@west' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature
 east #
  ../../guestbin/ipsec-kernel-state.sh
 src 192.1.2.23 dst 192.1.2.45

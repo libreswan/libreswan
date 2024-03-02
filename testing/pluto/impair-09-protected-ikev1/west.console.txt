@@ -42,7 +42,7 @@ west #
 "westnet-eastnet" #1: sent Main Mode I2
 "westnet-eastnet" #1: sent Main Mode I3
 "westnet-eastnet" #1: Peer ID is ID_FQDN: '@east'
-"westnet-eastnet" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet" #1: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
 "westnet-eastnet" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "westnet-eastnet" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 "westnet-eastnet" #2: sent Quick Mode request
@@ -74,7 +74,7 @@ west #
 "westnet-eastnet" #3: sent Main Mode I2
 "westnet-eastnet" #3: sent Main Mode I3
 "westnet-eastnet" #3: Peer ID is ID_FQDN: '@east'
-"westnet-eastnet" #3: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet" #3: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
 "westnet-eastnet" #3: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "westnet-eastnet" #4: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 "westnet-eastnet" #4: IMPAIR: omitting HASH payload for outI1
@@ -96,7 +96,7 @@ west #
 "westnet-eastnet" #5: sent Main Mode I2
 "westnet-eastnet" #5: sent Main Mode I3
 "westnet-eastnet" #5: Peer ID is ID_FQDN: '@east'
-"westnet-eastnet" #5: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet" #5: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
 "westnet-eastnet" #5: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "westnet-eastnet" #6: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 "westnet-eastnet" #6: IMPAIR: sending HASH payload with no data for outI1
@@ -118,7 +118,7 @@ west #
 "westnet-eastnet" #7: sent Main Mode I2
 "westnet-eastnet" #7: sent Main Mode I3
 "westnet-eastnet" #7: Peer ID is ID_FQDN: '@east'
-"westnet-eastnet" #7: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet" #7: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
 "westnet-eastnet" #7: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "westnet-eastnet" #8: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 "westnet-eastnet" #8: IMPAIR: setting HASH payload bytes to 00
@@ -153,7 +153,7 @@ west #
 "westnet-eastnet" #9: sent Main Mode I2
 "westnet-eastnet" #9: sent Main Mode I3
 "westnet-eastnet" #9: Peer ID is ID_FQDN: '@east'
-"westnet-eastnet" #9: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet" #9: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
 "westnet-eastnet" #9: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "westnet-eastnet" #10: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 "westnet-eastnet" #10: sent Quick Mode request
@@ -177,7 +177,7 @@ west #
 "westnet-eastnet" #11: sent Main Mode I2
 "westnet-eastnet" #11: sent Main Mode I3
 "westnet-eastnet" #11: Peer ID is ID_FQDN: '@east'
-"westnet-eastnet" #11: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet" #11: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
 "westnet-eastnet" #11: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "westnet-eastnet" #12: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 "westnet-eastnet" #12: sent Quick Mode request
@@ -201,7 +201,7 @@ west #
 "westnet-eastnet" #13: sent Main Mode I2
 "westnet-eastnet" #13: sent Main Mode I3
 "westnet-eastnet" #13: Peer ID is ID_FQDN: '@east'
-"westnet-eastnet" #13: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet" #13: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
 "westnet-eastnet" #13: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "westnet-eastnet" #14: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 "westnet-eastnet" #14: sent Quick Mode request
@@ -238,7 +238,7 @@ west #
 "westnet-eastnet" #15: sent Main Mode I2
 "westnet-eastnet" #15: sent Main Mode I3
 "westnet-eastnet" #15: Peer ID is ID_FQDN: '@east'
-"westnet-eastnet" #15: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet" #15: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
 "westnet-eastnet" #15: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "westnet-eastnet" #16: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 "westnet-eastnet" #16: sent Quick Mode request
@@ -260,7 +260,7 @@ west #
 "westnet-eastnet" #17: sent Main Mode I2
 "westnet-eastnet" #17: sent Main Mode I3
 "westnet-eastnet" #17: Peer ID is ID_FQDN: '@east'
-"westnet-eastnet" #17: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet" #17: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
 "westnet-eastnet" #17: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "westnet-eastnet" #18: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 "westnet-eastnet" #18: sent Quick Mode request
@@ -282,7 +282,7 @@ west #
 "westnet-eastnet" #19: sent Main Mode I2
 "westnet-eastnet" #19: sent Main Mode I3
 "westnet-eastnet" #19: Peer ID is ID_FQDN: '@east'
-"westnet-eastnet" #19: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet" #19: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
 "westnet-eastnet" #19: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "westnet-eastnet" #20: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 "westnet-eastnet" #20: sent Quick Mode request
@@ -317,7 +317,7 @@ west #
 "westnet-eastnet" #21: sent Main Mode I2
 "westnet-eastnet" #21: sent Main Mode I3
 "westnet-eastnet" #21: Peer ID is ID_FQDN: '@east'
-"westnet-eastnet" #21: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet" #21: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
 "westnet-eastnet" #21: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "westnet-eastnet" #22: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 "westnet-eastnet" #22: sent Quick Mode request
@@ -339,7 +339,7 @@ west #
 "westnet-eastnet" #23: sent Main Mode I2
 "westnet-eastnet" #23: sent Main Mode I3
 "westnet-eastnet" #23: Peer ID is ID_FQDN: '@east'
-"westnet-eastnet" #23: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet" #23: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
 "westnet-eastnet" #23: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "westnet-eastnet" #24: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 "westnet-eastnet" #24: sent Quick Mode request
@@ -361,7 +361,7 @@ west #
 "westnet-eastnet" #25: sent Main Mode I2
 "westnet-eastnet" #25: sent Main Mode I3
 "westnet-eastnet" #25: Peer ID is ID_FQDN: '@east'
-"westnet-eastnet" #25: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet" #25: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
 "westnet-eastnet" #25: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "westnet-eastnet" #26: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 "westnet-eastnet" #26: sent Quick Mode request
@@ -386,7 +386,7 @@ west #
 | ***parse ISAKMP Signature Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
 |    length: 278 (01 16)
-"westnet-eastnet" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet" #1: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
@@ -398,7 +398,7 @@ west #
 | ***parse ISAKMP Signature Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
 |    length: 278 (01 16)
-"westnet-eastnet" #3: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet" #3: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
 "westnet-eastnet" #4: IMPAIR: omitting HASH payload for outI1
 "westnet-eastnet" #4: IMPAIR: revival: skip scheduling revival event
 -- start message (ID)
@@ -406,7 +406,7 @@ west #
 | ***parse ISAKMP Signature Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
 |    length: 278 (01 16)
-"westnet-eastnet" #5: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet" #5: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
 "westnet-eastnet" #6: IMPAIR: sending HASH payload with no data for outI1
 "westnet-eastnet" #6: IMPAIR: revival: skip scheduling revival event
 -- start message (ID)
@@ -414,7 +414,7 @@ west #
 | ***parse ISAKMP Signature Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
 |    length: 278 (01 16)
-"westnet-eastnet" #7: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet" #7: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
 "westnet-eastnet" #8: IMPAIR: setting HASH payload bytes to 00
 "westnet-eastnet" #8: IMPAIR: revival: skip scheduling revival event
 -- start message (ID)
@@ -422,7 +422,7 @@ west #
 | ***parse ISAKMP Signature Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
 |    length: 278 (01 16)
-"westnet-eastnet" #9: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet" #9: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
@@ -436,7 +436,7 @@ west #
 | ***parse ISAKMP Signature Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
 |    length: 278 (01 16)
-"westnet-eastnet" #11: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet" #11: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
@@ -450,7 +450,7 @@ west #
 | ***parse ISAKMP Signature Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
 |    length: 278 (01 16)
-"westnet-eastnet" #13: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet" #13: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
@@ -464,7 +464,7 @@ west #
 | ***parse ISAKMP Signature Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
 |    length: 278 (01 16)
-"westnet-eastnet" #15: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet" #15: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
@@ -476,7 +476,7 @@ west #
 | ***parse ISAKMP Signature Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
 |    length: 278 (01 16)
-"westnet-eastnet" #17: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet" #17: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
@@ -488,7 +488,7 @@ west #
 | ***parse ISAKMP Signature Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
 |    length: 278 (01 16)
-"westnet-eastnet" #19: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet" #19: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
@@ -500,7 +500,7 @@ west #
 | ***parse ISAKMP Signature Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
 |    length: 278 (01 16)
-"westnet-eastnet" #21: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet" #21: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
@@ -512,7 +512,7 @@ west #
 | ***parse ISAKMP Signature Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
 |    length: 278 (01 16)
-"westnet-eastnet" #23: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet" #23: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
@@ -524,7 +524,7 @@ west #
 | ***parse ISAKMP Signature Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
 |    length: 278 (01 16)
-"westnet-eastnet" #25: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"westnet-eastnet" #25: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:

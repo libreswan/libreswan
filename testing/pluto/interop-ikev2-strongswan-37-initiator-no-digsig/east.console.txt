@@ -49,7 +49,7 @@ east #
  # expect state #2, state #1 responded with INVALID_KE
 east #
  if [ -f /var/run/pluto/pluto.pid ]; then grep " authenticated peer " /tmp/pluto.log ; fi
-"westnet-eastnet-ikev2" #1: responder established IKE SA; authenticated peer '3072-bit PKCS#1 1.5 RSA with SHA1' signature using preloaded certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"westnet-eastnet-ikev2" #1: responder established IKE SA; authenticated peer using preloaded certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org' and 3072-bit PKCS#1 1.5 RSA with SHA1 signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 east #
  if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then strongswan status ; fi
 east #

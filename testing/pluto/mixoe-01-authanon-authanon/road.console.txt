@@ -58,6 +58,6 @@ road #
  # Authentication should be RSA
 road #
  grep '^[^|].*authenticated' /tmp/pluto.log
-"private-or-clear#192.1.2.23/32"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer '3nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate '192.1.2.23' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"private-or-clear#192.1.2.23/32"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer certificate '192.1.2.23' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 road #
  

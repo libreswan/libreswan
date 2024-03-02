@@ -27,7 +27,7 @@ west #
 "SAwest-east" #1: sent Main Mode I2
 "SAwest-east" #1: sent Main Mode I3
 "SAwest-east" #1: Peer ID is ID_FQDN: '@east'
-"SAwest-east" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+"SAwest-east" #1: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
 "SAwest-east" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "SAwest-east" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
 "SAwest-east" #2: sent Quick Mode request

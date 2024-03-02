@@ -23,7 +23,7 @@ west #
 "westnet-eastnet-propnum" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-propnum" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=3DES_CBC_192 integ=HMAC_MD5_96 prf=HMAC_MD5 group=MODP2048}, initiating IKE_AUTH
 "westnet-eastnet-propnum" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
-"westnet-eastnet-propnum" #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
+"westnet-eastnet-propnum" #1: initiator established IKE SA; authenticated peer using preloaded certificate '@east' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature
 "westnet-eastnet-propnum" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
  ipsec auto --delete westnet-eastnet-propnum
