@@ -455,7 +455,7 @@ static bool restore_spd_kernel_policy(const struct spd_route *spd,
 				      where_t where, const char *what)
 {
 	struct connection *c = spd->connection;
-	enum routing routing = c->child.routing;
+	enum routing routing = c->routing.state;
 	enum shunt_kind shunt_kind = routing_shunt_kind(routing);
 	struct nic_offload nic_offload = {};
 	selector_pair_buf spb;
@@ -534,7 +534,7 @@ bool delete_spd_kernel_policy(const struct spd_route *spd,
 			const struct connection *oc = owner->bare_policy->connection;
 			if (BROKEN_TRANSITION &&
 			    oc->config->negotiation_shunt == SHUNT_HOLD &&
-			    oc->child.routing == RT_ROUTED_NEGOTIATION) {
+			    oc->routing.state == RT_ROUTED_NEGOTIATION) {
 				ldbg(oc->logger, "%s() skipping NEGOTIATION=HOLD", __func__);
 				return true;
 			}

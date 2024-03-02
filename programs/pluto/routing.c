@@ -157,9 +157,9 @@ static void jam_routing(struct jambuf *buf,
 		jam_string(buf, "; never-negotiate");
 	}
 	const char *sep = "; ";
-	for (enum connection_owner owner = 0; owner < elemsof(c->owner); owner++) {
+	for (enum connection_owner owner = 0; owner < elemsof(c->routing.owner); owner++) {
 		/* same value - no actual update */
-		jam_so_update(buf, owner, c->owner[owner], c->owner[owner], &sep);
+		jam_so_update(buf, owner, c->routing.owner[owner], c->routing.owner[owner], &sep);
 	}
 }
 
@@ -234,11 +234,11 @@ static struct old_routing ldbg_routing_start(enum routing_event event,
 			       state_sa_short_name(&(*e->child)->sa)),
 		.child_so = (e->child == NULL || (*e->child) == NULL ? SOS_NOBODY :
 			     (*e->child)->sa.st_serialno),
-		.routing = c->child.routing,
+		.routing = c->routing.state,
 		.revival_attempt = c->revival.attempt,
 	};
 	for (unsigned i = 0; i < elemsof(old.owner); i++) {
-		old.owner[i] = c->owner[i];
+		old.owner[i] = c->routing.owner[i];
 	}
 
 	if (DBGP(DBG_ROUTING)) {
@@ -248,7 +248,7 @@ static struct old_routing ldbg_routing_start(enum routing_event event,
 		 */
 		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, logger, buf) {
 			jam_routing_prefix(buf, "start", event,
-					   c->child.routing, c->child.routing,
+					   c->routing.state, c->routing.state,
 					   c->local->kind);
 			jam_event(buf, c, e);
 			jam_string(buf, " ");
@@ -272,16 +272,16 @@ static void ldbg_routing_stop(enum routing_event event,
 		 */
 		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, logger, buf) {
 			jam_routing_prefix(buf, "stop", event,
-					   old->routing, c->child.routing,
+					   old->routing, c->routing.state,
 					   c->local->kind);
 			jam(buf, " ok=%s", bool_str(ok));
 			/* various SAs */
 			const char *sep = "; ";
 			for (enum connection_owner owner = 0;
-			     owner < elemsof(c->owner); owner++) {
+			     owner < elemsof(c->routing.owner); owner++) {
 				jam_so_update(buf, owner,
 					      old->owner[owner],
-					      c->owner[owner], &sep);
+					      c->routing.owner[owner], &sep);
 			}
 			if (old->revival_attempt != c->revival.attempt) {
 				jam_string(buf, sep); sep = " ";
@@ -398,7 +398,7 @@ enum shunt_kind routing_shunt_kind(enum routing routing)
 
 enum shunt_kind spd_shunt_kind(const struct spd_route *spd)
 {
-	return routing_shunt_kind(spd->connection->child.routing);
+	return routing_shunt_kind(spd->connection->routing.state);
 }
 
 /*
@@ -407,7 +407,7 @@ enum shunt_kind spd_shunt_kind(const struct spd_route *spd)
 
 bool kernel_route_installed(const struct connection *c)
 {
-	enum routing r = c->child.routing;
+	enum routing r = c->routing.state;
 	switch (r) {
 	case RT_ROUTED_ONDEMAND:
 	case RT_ROUTED_NEVER_NEGOTIATE:
@@ -429,7 +429,7 @@ bool kernel_route_installed(const struct connection *c)
 
 bool kernel_policy_installed(const struct connection *c)
 {
-	switch (c->child.routing) {
+	switch (c->routing.state) {
 	case RT_UNROUTED:
 	case RT_UNROUTED_NEGOTIATION:
 	case RT_UNROUTED_BARE_NEGOTIATION:
@@ -445,7 +445,7 @@ bool kernel_policy_installed(const struct connection *c)
 	case RT_UNROUTED_TUNNEL:
 		return true;
 	}
-	bad_case(c->child.routing);
+	bad_case(c->routing.state);
 }
 
 static void set_routing(struct connection *c,
@@ -454,7 +454,7 @@ static void set_routing(struct connection *c,
 	c->routing_sa = SOS_NOBODY;
 	c->negotiating_child_sa = SOS_NOBODY;
 	c->established_child_sa = SOS_NOBODY;
-	c->child.routing = new_routing;
+	c->routing.state = new_routing;
 }
 
 static void set_negotiating(struct connection *c,
@@ -476,7 +476,7 @@ static void set_negotiating(struct connection *c,
 			      c->established_child_sa == SOS_NOBODY);
 		c->routing_sa = (*e->child)->sa.st_serialno;
 		c->negotiating_child_sa = (*e->child)->sa.st_serialno;
-		c->child.routing = new_routing;
+		c->routing.state = new_routing;
 		return;
 	}
 
@@ -487,7 +487,7 @@ static void set_negotiating(struct connection *c,
 			      c->established_ike_sa == SOS_NOBODY);
 		c->routing_sa = (*e->ike)->sa.st_serialno;
 		c->negotiating_ike_sa = (*e->ike)->sa.st_serialno;
-		c->child.routing = new_routing;
+		c->routing.state = new_routing;
 		return;
 	}
 
@@ -502,7 +502,7 @@ static void set_negotiating(struct connection *c,
 	 */
 #if 1
 	ldbg_routing(c->logger, "no initiating IKE or Child SA; assumed to be pending");
-	c->child.routing = new_routing;
+	c->routing.state = new_routing;
 #else
 	llog_pexpect(c->logger, e->where,
 		     "no initiating IKE or Child SA; assumed to be pending; leaving routing alone");
@@ -516,7 +516,7 @@ static void set_established_inbound(struct connection *c,
 	struct child_sa *child = (*e->child);
 	c->routing_sa = child->sa.st_serialno;
 	c->negotiating_child_sa = child->sa.st_serialno;
-	c->child.routing = new_routing;
+	c->routing.state = new_routing;
 }
 
 static void set_established_outbound(struct connection *c,
@@ -536,33 +536,33 @@ static void set_established_outbound(struct connection *c,
 		for (enum connection_owner owner = IKE_SA_OWNER_FLOOR;
 		     owner < IKE_SA_OWNER_ROOF; owner++) {
 			if (ike->sa.st_connection == c) {
-				if (ike->sa.st_serialno != c->owner[owner]) {
+				if (ike->sa.st_serialno != c->routing.owner[owner]) {
 					/* child/ike have crossed streams */
 					enum_buf ob;
 					llog(RC_LOG_SERIOUS, child->sa.logger,
 					     "Child SA with IKE SA "PRI_SO" share their connection, .%s "PRI_SO" should be the IKE SA, updating "PRI_WHERE,
 					     pri_so(ike->sa.st_serialno),
 					     str_enum(&connection_owner_names, owner, &ob),
-					     pri_so(c->owner[owner]),
+					     pri_so(c->routing.owner[owner]),
 					     pri_where(e->where));
-					c->owner[owner] = ike->sa.st_serialno;
+					c->routing.owner[owner] = ike->sa.st_serialno;
 				}
 			} else {
-				if (c->owner[owner] != SOS_NOBODY) {
+				if (c->routing.owner[owner] != SOS_NOBODY) {
 					/* child is a cuckoo */
 					enum_buf ob;
 					llog_pexpect(child->sa.logger, HERE,
 						     "Child SA with IKE SA "PRI_SO" do not share their connection, .%s "PRI_SO" should be unset, clearing "PRI_WHERE,
 						     pri_so(ike->sa.st_serialno),
 						     str_enum(&connection_owner_names, owner, &ob),
-						     pri_so(c->owner[owner]),
+						     pri_so(c->routing.owner[owner]),
 						     pri_where(e->where));
-					c->owner[owner] = SOS_NOBODY;
+					c->routing.owner[owner] = SOS_NOBODY;
 				}
 			}
 		}
 	}
-	c->child.routing = routing;
+	c->routing.state = routing;
 	c->routing_sa = child->sa.st_serialno;
 	c->negotiating_child_sa = child->sa.st_serialno;
 	c->established_child_sa = child->sa.st_serialno;
@@ -595,7 +595,7 @@ static bool unrouted_to_routed_ondemand_sec_label(struct connection *c,
 	     pri_connection_co(c),
 	     pri_connection_co(c->clonedfrom),
 	     pri_connection(c, &cb),
-	     enum_name(&routing_names, c->child.routing),
+	     enum_name(&routing_names, c->routing.state),
 	     pri_shunk(c->config->sec_label));
 
 	if (!PEXPECT(logger, is_labeled_template(c) || is_labeled_parent(c))) {
@@ -623,7 +623,7 @@ static bool unrouted_to_routed_ondemand_sec_label(struct connection *c,
 				ldbg(logger, "pulling previously installed outbound policy");
 				pexpect(direction == DIRECTION_INBOUND);
 				/* go back to old routing */
-				struct spd_owner owner = spd_owner(c->spd, c->child.routing,
+				struct spd_owner owner = spd_owner(c->spd, c->routing.state,
 								   logger, where);
 				delete_spd_kernel_policy(c->spd, &owner, DIRECTION_OUTBOUND,
 							 EXPECT_KERNEL_POLICY_OK,
@@ -646,7 +646,7 @@ static bool unrouted_to_routed_ondemand_sec_label(struct connection *c,
 			ldbg(logger, "kernel: down command returned an error");
 		}
 		/* go back to old routing */
-		struct spd_owner owner = spd_owner(c->spd, c->child.routing,
+		struct spd_owner owner = spd_owner(c->spd, c->routing.state,
 						   logger, where);
 		delete_spd_kernel_policy(c->spd, &owner, DIRECTION_OUTBOUND,
 					 EXPECT_KERNEL_POLICY_OK,
@@ -854,7 +854,7 @@ static void unrouted_instance_to_unrouted_negotiation(enum routing_event event U
 	/* fails when whack forces the initiate so that the template
 	 * is instantiated before it is routed */
 	struct connection *t = c->clonedfrom; /* could be NULL */
-	PEXPECT(logger, t != NULL && t->child.routing == RT_ROUTED_ONDEMAND);
+	PEXPECT(logger, t != NULL && t->routing.state == RT_ROUTED_ONDEMAND);
 #endif
 	bool oe = is_opportunistic(c);
 	const char *reason = (oe ? "replace unrouted opportunistic %trap with broad %pass or %hold" :
@@ -1157,7 +1157,7 @@ static void teardown_routed_negotiation(struct connection *c,
 	if (scheduled_child_revival(child, reason)) {
 		routed_negotiation_to_routed_ondemand(c, logger, where,
 						      reason);
-		PEXPECT(logger, c->child.routing == RT_ROUTED_ONDEMAND);
+		PEXPECT(logger, c->routing.state == RT_ROUTED_ONDEMAND);
 		return;
 	}
 
@@ -1177,7 +1177,7 @@ static void teardown_routed_negotiation(struct connection *c,
 	if (c->policy.route) {
 		routed_negotiation_to_routed_ondemand(c, logger, where,
 						      "restoring ondemand, connection is routed");
-		PEXPECT(logger, c->child.routing == RT_ROUTED_ONDEMAND);
+		PEXPECT(logger, c->routing.state == RT_ROUTED_ONDEMAND);
 		return;
 	}
 
@@ -1186,7 +1186,7 @@ static void teardown_routed_negotiation(struct connection *c,
 	 */
 	routed_kernel_policy_to_unrouted(c, DIRECTION_INBOUND,
 					 logger, where, "deleting");
-	PEXPECT(logger, c->child.routing == RT_UNROUTED);
+	PEXPECT(logger, c->routing.state == RT_UNROUTED);
 }
 
 /*
@@ -1306,17 +1306,17 @@ void connection_timeout_ike(struct ike_sa **ike, where_t where)
 
 void connection_routing_init(struct connection *c)
 {
-	c->child.routing = RT_UNROUTED;
-	for (unsigned i = 0; i < elemsof(c->owner); i++) {
-		c->owner[i] = SOS_NOBODY;
+	c->routing.state = RT_UNROUTED;
+	for (unsigned i = 0; i < elemsof(c->routing.owner); i++) {
+		c->routing.owner[i] = SOS_NOBODY;
 	}
 }
 
 void state_disowns_connection(struct state *st)
 {
 	struct connection *c = st->st_connection;
-	for (unsigned i = 0; i < elemsof(c->owner); i++) {
-		if (c->owner[i] == st->st_serialno) {
+	for (unsigned i = 0; i < elemsof(c->routing.owner); i++) {
+		if (c->routing.owner[i] == st->st_serialno) {
 #if 0
 			/* should already be clear? */
 			llog_pexpect(st->logger, HERE,
@@ -1326,7 +1326,7 @@ void state_disowns_connection(struct state *st)
 			      "routing: disown .%s",
 			      enum_name(&connection_owner_names, i));
 #endif
-			c->owner[i] = SOS_NOBODY;
+			c->routing.owner[i] = SOS_NOBODY;
 		}
 	}
 }
@@ -1335,12 +1335,12 @@ void state_disowns_connection(struct state *st)
 bool pexpect_connection_is_unrouted(struct connection *c, struct logger *logger, where_t where)
 {
 	bool ok_to_delete = true;
-	if (c->child.routing != RT_UNROUTED) {
+	if (c->routing.state != RT_UNROUTED) {
 		enum_buf rn;
 		llog_pexpect(logger, where,
 			     "connection "PRI_CO" [%p] still in %s",
 			     pri_connection_co(c), c,
-			     str_enum_short(&routing_names, c->child.routing, &rn));
+			     str_enum_short(&routing_names, c->routing.state, &rn));
 		ok_to_delete = false;
 	}
 	return ok_to_delete;
@@ -1352,13 +1352,13 @@ bool pexpect_connection_is_unrouted(struct connection *c, struct logger *logger,
 bool pexpect_connection_is_disowned(struct connection *c, struct logger *logger, where_t where)
 {
 	bool ok_to_delete = true;
-	for (unsigned i = 0; i < elemsof(c->owner); i++) {
-		if (c->owner[i] != SOS_NOBODY) {
+	for (unsigned i = 0; i < elemsof(c->routing.owner); i++) {
+		if (c->routing.owner[i] != SOS_NOBODY) {
 			llog_pexpect(logger, where,
 				     "connection "PRI_CO" [%p] is owned by .%s "PRI_SO,
 				     pri_connection_co(c), c,
 				     enum_name(&connection_owner_names, i),
-				     pri_so(c->owner[i]));
+				     pri_so(c->routing.owner[i]));
 			ok_to_delete = false;
 		}
 	}
@@ -1433,7 +1433,7 @@ static bool pending_dispatch_ok(struct connection *c,
 				struct logger *logger,
 				const struct routing_annex *e UNUSED)
 {
-	switch (c->child.routing) {
+	switch (c->routing.state) {
 	case RT_ROUTED_ONDEMAND:
 		ldbg_routing(logger, "connection matches ROUTED_ONDEMAND");
 		return true;
@@ -1468,7 +1468,7 @@ static bool pending_dispatch_ok(struct connection *c,
 		 */
 		LLOG_JAMBUF(LOG_STREAM, logger, buf) {
 			jam_string(buf, "connection is already in state ");
-			jam_enum_human(buf, &routing_names, c->child.routing);
+			jam_enum_human(buf, &routing_names, c->routing.state);
 		}
 		return false;
 	}
@@ -1490,12 +1490,12 @@ static bool reschedule_dispatch_ok(struct connection *c,
 				   const struct routing_annex *e UNUSED)
 {
 	/* skip when any hint of an owner */
-	for (unsigned i = 0; i < elemsof(c->owner); i++) {
-		if (c->owner[i] != SOS_NOBODY) {
+	for (unsigned i = 0; i < elemsof(c->routing.owner); i++) {
+		if (c->routing.owner[i] != SOS_NOBODY) {
 			enum_buf ob;
 			ldbg_routing(logger, "connection owned by %s "PRI_SO,
 				     str_enum(&connection_owner_names, i, &ob),
-				     pri_so(c->owner[i]));
+				     pri_so(c->routing.owner[i]));
 			return false;
 		}
 	}
@@ -1522,7 +1522,7 @@ static void set_established_ike(enum routing_event event UNUSED,
 	/* steal both the established and negotiating IKE SAs */
 	struct ike_sa *ike = (*e->ike);
 	c->negotiating_ike_sa = c->established_ike_sa = ike->sa.st_serialno;
-	c->child.routing = routing; /* XXX: but this is IKE!?! */
+	c->routing.state = routing; /* XXX: but this is IKE!?! */
 	ike->sa.st_viable_parent = true;
 	linux_audit_conn(&ike->sa, LAK_PARENT_START);
 	/* dump new keys */
@@ -1635,7 +1635,7 @@ static bool dispatch_1(enum routing_event event,
 #define X(EVENT, ROUTING, KIND)				\
 	XX(CONNECTION_##EVENT, RT_##ROUTING, CK_##KIND)
 
-	const enum routing routing = c->child.routing;
+	const enum routing routing = c->routing.state;
 	const enum connection_kind kind = c->local->kind;
 
 	switch (XX(event, routing, kind)) {
@@ -1654,14 +1654,14 @@ static bool dispatch_1(enum routing_event event,
 				llog(RC_ROUTE, logger, "could not route");
 				return true;
 			}
-			PEXPECT(logger, c->child.routing == RT_ROUTED_NEVER_NEGOTIATE);
+			PEXPECT(logger, c->routing.state == RT_ROUTED_NEVER_NEGOTIATE);
 		} else {
 			if (!unrouted_to_routed_ondemand(c, e->where)) {
 				/* XXX: why whack only? */
 				llog(RC_ROUTE, logger, "could not route");
 				return true;
 			}
-			PEXPECT(logger, c->child.routing == RT_ROUTED_ONDEMAND);
+			PEXPECT(logger, c->routing.state == RT_ROUTED_ONDEMAND);
 		}
 		return true;
 
@@ -1680,7 +1680,7 @@ static bool dispatch_1(enum routing_event event,
 	case X(ESTABLISH_IKE, UNROUTED_INBOUND, INSTANCE):
 	case X(ESTABLISH_IKE, UNROUTED_INBOUND, PERMANENT):
 		/* unchanged; except to attach IKE */
-		set_established_ike(event, c, c->child.routing, e);
+		set_established_ike(event, c, c->routing.state, e);
 		return true;
 
 	case X(INITIATED, ROUTED_ONDEMAND, INSTANCE): /* from revival */
@@ -1695,7 +1695,7 @@ static bool dispatch_1(enum routing_event event,
 		 * then instantiated creating this connection.  The
 		 * template may or may not be routed.
 		 */
-		if (c->clonedfrom->child.routing == RT_UNROUTED) {
+		if (c->clonedfrom->routing.state == RT_UNROUTED) {
 			/*
 			 * Since the template has no policy nor
 			 * routing, skip these in the instance.
@@ -1704,7 +1704,7 @@ static bool dispatch_1(enum routing_event event,
 			set_negotiating(c, RT_UNROUTED_BARE_NEGOTIATION, e);
 			return true;
 		}
-		if (c->clonedfrom->child.routing == RT_ROUTED_ONDEMAND) {
+		if (c->clonedfrom->routing.state == RT_ROUTED_ONDEMAND) {
 			/*
 			 * Need to override the template's policy with our own
 			 * (else things will keep acquiring). I's assumed that
@@ -1817,7 +1817,7 @@ static bool dispatch_1(enum routing_event event,
 		if (connection_cannot_die(event, c, logger, e)) {
 			routed_negotiation_to_routed_ondemand(c, logger, e->where,
 							      "restoring ondemand, reviving");
-			PEXPECT(logger, c->child.routing == RT_ROUTED_ONDEMAND);
+			PEXPECT(logger, c->routing.state == RT_ROUTED_ONDEMAND);
 			return true;
 		}
 		if (is_instance(c) && is_opportunistic(c)) {
@@ -1835,13 +1835,13 @@ static bool dispatch_1(enum routing_event event,
 		if (c->policy.route) {
 			routed_negotiation_to_routed_ondemand(c, logger, e->where,
 							      "restoring ondemand, connection is routed");
-			PEXPECT(logger, c->child.routing == RT_ROUTED_ONDEMAND);
+			PEXPECT(logger, c->routing.state == RT_ROUTED_ONDEMAND);
 			return true;
 		}
 		/* is this reachable? */
 		routed_kernel_policy_to_unrouted(c, DIRECTION_OUTBOUND,
 						 logger, e->where, "deleting");
-		PEXPECT(logger, c->child.routing == RT_UNROUTED);
+		PEXPECT(logger, c->routing.state == RT_UNROUTED);
 		/* connection lives to fight another day */
 		return true;
 
@@ -2147,7 +2147,7 @@ static bool dispatch_1(enum routing_event event,
 		 *
 		 * XXX: no-op as SPD is still owned?
 		 */
-		c->child.routing = RT_UNROUTED_TUNNEL;
+		c->routing.state = RT_UNROUTED_TUNNEL;
 		(*e->child)->sa.st_v2_mobike.del_src_ip = true;
 		do_updown_unroute(c, (*e->child));
 		(*e->child)->sa.st_v2_mobike.del_src_ip = false;
@@ -2155,7 +2155,7 @@ static bool dispatch_1(enum routing_event event,
 
 	case X(RESUME, UNROUTED_TUNNEL, INSTANCE):
 	case X(RESUME, UNROUTED_TUNNEL, PERMANENT):
-		c->child.routing = RT_ROUTED_TUNNEL;
+		c->routing.state = RT_ROUTED_TUNNEL;
 		do_updown_child(UPDOWN_ROUTE, (*e->child));
 		do_updown_child(UPDOWN_UP, (*e->child));
 		return true;
@@ -2285,7 +2285,7 @@ static bool dispatch_1(enum routing_event event,
 				llog(WHACK_STREAM|RC_ROUTE, logger, "could not route");
 				return true;
 			}
-			PEXPECT(logger, c->child.routing == RT_ROUTED_NEVER_NEGOTIATE);
+			PEXPECT(logger, c->routing.state == RT_ROUTED_NEVER_NEGOTIATE);
 			return true;
 		}
 		if (!unrouted_to_routed_ondemand_sec_label(c, logger, e->where)) {
@@ -2417,7 +2417,7 @@ static bool dispatch_1(enum routing_event event,
 	BARF_JAMBUF((DBGP(DBG_ROUTING) ? PASSERT_FLAGS : PEXPECT_FLAGS),
 		    c->logger, /*ignore-exit-code*/0, e->where, buf) {
 		jam_routing_prefix(buf, "unhandled", event,
-				   c->child.routing, c->child.routing,
+				   c->routing.state, c->routing.state,
 				   c->local->kind);
 		jam_event(buf, c, e);
 	}

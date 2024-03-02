@@ -35,7 +35,7 @@ static unsigned maybe_route_connection(struct connection *c)
 		return 0; /* not counted */
 	}
 
-	if (c->child.routing == RT_UNROUTED) {
+	if (c->routing.state == RT_UNROUTED) {
 		/* both install policy and route connection */
 		connection_route(c, HERE);
 		return 1; /* counted */

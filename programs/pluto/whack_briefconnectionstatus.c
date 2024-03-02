@@ -161,8 +161,8 @@ static void show_brief_connection_statuses(struct show *s)
 		/* make an array of connections, sort it, and report it */
 		for (struct connection **c = connections; *c != NULL; c++) {
 			count++;
-			if ((*c)->child.routing == RT_ROUTED_TUNNEL ||
-			    (*c)->child.routing == RT_UNROUTED_TUNNEL) {
+			if ((*c)->routing.state == RT_ROUTED_TUNNEL ||
+			    (*c)->routing.state == RT_UNROUTED_TUNNEL) {
 				active++;
 				show_brief_connection_status(s, *c);
 			}

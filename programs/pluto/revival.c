@@ -51,13 +51,13 @@
  */
 void flush_routed_ondemand_revival(struct connection *c)
 {
-	PEXPECT(c->logger, c->child.routing == RT_ROUTED_ONDEMAND);
+	PEXPECT(c->logger, c->routing.state == RT_ROUTED_ONDEMAND);
 	flush_connection_event(c, CONNECTION_REVIVAL);
 }
 
 void flush_unrouted_revival(struct connection *c)
 {
-	PEXPECT(c->logger, c->child.routing == RT_UNROUTED);
+	PEXPECT(c->logger, c->routing.state == RT_UNROUTED);
 	flush_connection_event(c, CONNECTION_REVIVAL);
 }
 

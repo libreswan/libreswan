@@ -476,7 +476,7 @@ struct connection *spd_instantiate(struct connection *t,
 
 	/* leave breadcrumb */
 	pexpect(d->negotiating_child_sa == SOS_NOBODY);
-	pexpect(d->child.routing == RT_UNROUTED);
+	pexpect(d->routing.state == RT_UNROUTED);
 
 	connection_buf tb;
 	ldbg_connection(d, where, "%s: from "PRI_CONNECTION,
@@ -503,7 +503,7 @@ struct connection *labeled_template_instantiate(struct connection *t,
 	add_connection_spds(p, address_info(p->local->host.addr));
 
 	pexpect(p->negotiating_child_sa == SOS_NOBODY);
-	pexpect(p->child.routing == RT_UNROUTED);
+	pexpect(p->routing.state == RT_UNROUTED);
 
 	connection_buf tb;
 	ldbg_connection(p, where, "%s: from "PRI_CONNECTION,
@@ -539,7 +539,7 @@ struct connection *labeled_parent_instantiate(struct ike_sa *ike,
 	add_connection_spds(c, address_info(c->local->host.addr));
 
 	pexpect(c->negotiating_child_sa == SOS_NOBODY);
-	pexpect(c->child.routing == RT_UNROUTED);
+	pexpect(c->routing.state == RT_UNROUTED);
 
 	connection_buf tb;
 	ldbg_connection(c, where, "%s: from "PRI_CONNECTION,

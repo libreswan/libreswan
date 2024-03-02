@@ -735,8 +735,6 @@ struct connection {
 	bool log_file_err;			/* only bitch once */
 
 	struct child {
-		enum routing routing; /* level of routing in place */
-
 		/*
 		 * This is identical across kernel-states and shared
 		 * by all SPDs.
@@ -807,12 +805,15 @@ struct connection {
 	 * - since the Child SA owns the connection, it being deleted
 	 * triggers revival
 	 */
-	so_serial_t owner[CONNECTION_OWNER_ROOF];
-#define routing_sa owner[ROUTING_SA] /* IKE or Child SA! */
-#define negotiating_ike_sa owner[NEGOTIATING_IKE_SA]
-#define established_ike_sa owner[ESTABLISHED_IKE_SA]
-#define negotiating_child_sa owner[NEGOTIATING_CHILD_SA]
-#define established_child_sa owner[ESTABLISHED_CHILD_SA]
+	struct {
+		enum routing state; /* level of routing in place */
+		so_serial_t owner[CONNECTION_OWNER_ROOF];
+#define routing_sa routing.owner[ROUTING_SA] /* IKE or Child SA! */
+#define negotiating_ike_sa routing.owner[NEGOTIATING_IKE_SA]
+#define established_ike_sa routing.owner[ESTABLISHED_IKE_SA]
+#define negotiating_child_sa routing.owner[NEGOTIATING_CHILD_SA]
+#define established_child_sa routing.owner[ESTABLISHED_CHILD_SA]
+	} routing;
 
 	struct addresspool *pool[IP_INDEX_ROOF];
 

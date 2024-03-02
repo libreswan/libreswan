@@ -127,7 +127,7 @@ void ldbg_connection(const struct connection *c, where_t where,
 			jam_connection(buf, c);
 		}
 		LDBG_log(c->logger, "    routing+kind: %s %s",
-			 enum_name_short(&routing_names, c->child.routing),
+			 enum_name_short(&routing_names, c->routing.state),
 			 enum_name_short(&connection_kind_names, c->local->kind));
 		address_buf lb, rb;
 		LDBG_log(c->logger, "    host: %s->%s",

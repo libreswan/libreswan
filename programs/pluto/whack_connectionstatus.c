@@ -310,9 +310,9 @@ static void show_one_spd(struct show *s,
 		jam_string(buf, " ");
 		if (!oriented(c)) {
 			jam_string(buf, "unoriented");
-			PEXPECT(show_logger(s), c->child.routing == RT_UNROUTED);
+			PEXPECT(show_logger(s), c->routing.state == RT_UNROUTED);
 		} else {
-			jam_enum_human(buf, &routing_names, c->child.routing);
+			jam_enum_human(buf, &routing_names, c->routing.state);
 		}
 		jam_string(buf, ";");
 #define OPT_HOST(H)					\
@@ -344,11 +344,11 @@ static void jam_connection_owners(struct jambuf *buf,
 {
 	for (enum connection_owner owner = owner_floor;
 	     owner < owner_roof; owner++) {
-		if (c->owner[owner] == SOS_NOBODY) {
+		if (c->routing.owner[owner] == SOS_NOBODY) {
 			continue;
 		}
 		if (owner + 1 < owner_roof &&
-		    c->owner[owner] == c->owner[owner+1]) {
+		    c->routing.owner[owner] == c->routing.owner[owner+1]) {
 			continue;
 		}
 
@@ -381,7 +381,7 @@ static void jam_connection_owners(struct jambuf *buf,
 			break;
 		}
 		jam_string(buf, ": ");
-		jam_so(buf, c->owner[owner]);
+		jam_so(buf, c->routing.owner[owner]);
 		jam_string(buf, ";");
 	}
 }
@@ -880,7 +880,7 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		jam_string(buf, ":  ");
 		/* routing */
 		jam_string(buf, " routing: ");
-		jam_enum_human(buf, &routing_names, c->child.routing);
+		jam_enum_human(buf, &routing_names, c->routing.state);
 		jam_string(buf, ";");
 		struct state *sa = state_by_serialno(c->routing_sa);
 		if (sa != NULL) {
@@ -935,7 +935,7 @@ void show_connection_statuses(struct show *s)
 		/* make an array of connections, sort it, and report it */
 		for (struct connection **c = connections; *c != NULL; c++) {
 			count++;
-			if ((*c)->child.routing == RT_ROUTED_TUNNEL) {
+			if ((*c)->routing.state == RT_ROUTED_TUNNEL) {
 				active++;
 			}
 			show_connection_status(s, *c);

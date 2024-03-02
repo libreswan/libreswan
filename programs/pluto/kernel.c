@@ -508,7 +508,7 @@ static void ldbg_spd(struct logger *logger, unsigned indent,
 		jam_string(buf, " ");
 		jam_selector_pair(buf, &spd->local->client, &spd->remote->client);
 		jam_string(buf, " ");
-		jam_enum_short(buf, &routing_names, spd->connection->child.routing);
+		jam_enum_short(buf, &routing_names, spd->connection->routing.state);
 		jam_string(buf, "[");
 		jam_enum_short(buf, &shunt_kind_names, spd_shunt_kind(spd));
 		jam_string(buf, "] ");
@@ -612,7 +612,7 @@ struct spd_owner spd_owner(const struct spd_route *c_spd,
 			continue;
 		}
 
-		if (d->child.routing == RT_UNROUTED) {
+		if (d->routing.state == RT_UNROUTED) {
 			ldbg_spd(logger, indent, d_spd, "skipped; UNROUTED");
 			continue;
 		}
@@ -736,7 +736,7 @@ struct spd_owner spd_owner(const struct spd_route *c_spd,
 					 "skipped %s; is connection parent with routing = %s[%s] %s",
 					 checking, str_enum_short(&routing_names, c_routing, &rb),
 					 enum_name_short(&shunt_kind_names, c_shunt_kind),
-					 bool_str(d->child.routing >= c_routing));
+					 bool_str(d->routing.state >= c_routing));
 			} else if (c->config->overlapip && d->config->overlapip) {
 				ldbg_spd(logger, indent, d_spd, "skipped %s;  both ends have POLICY_OVERLAPIP", checking);
 			} else {
@@ -768,7 +768,7 @@ static void llog_spd_conflict(struct logger *logger, const struct spd_route *spd
 		jam_string(buf, "cannot install kernel policy ");
 		jam_selector_pair(buf, &spd->local->client, &spd->remote->client);
 		jam_string(buf, "; it is in use by the ");
-		jam_enum_human(buf, &routing_names, d->child.routing);
+		jam_enum_human(buf, &routing_names, d->routing.state);
 		jam_string(buf, " connection ");
 		jam_connection(buf, d);
 	}
@@ -861,7 +861,7 @@ static void revert_kernel_policy(struct spd_route *spd,
 		ldbg(logger, "kernel: %s() no previous kernel policy or shunt: delete whatever we installed",
 		     __func__);
 		/* go back to old routing */
-		struct spd_owner owner = spd_owner(spd, c->child.routing,
+		struct spd_owner owner = spd_owner(spd, c->routing.state,
 						   logger, HERE);
 		delete_spd_kernel_policy(spd, &owner, DIRECTION_OUTBOUND,
 					 EXPECT_KERNEL_POLICY_OK,
@@ -1625,7 +1625,7 @@ static bool install_inbound_ipsec_kernel_policies(struct child_sa *child)
 		     /* inbound */
 		     str_selector(&spd->remote->client, &sb),
 		     str_selector(&spd->local->client, &db),
-		     str_enum_short(&routing_names, c->child.routing, &eb));
+		     str_enum_short(&routing_names, c->routing.state, &eb));
 
 		if (!install_inbound_ipsec_kernel_policy(child, spd, HERE)) {
 		    log_state(RC_LOG_SERIOUS, &child->sa, "Installing IPsec SA failed - check logs or dmesg");
@@ -1801,7 +1801,7 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 		     /* outbound */
 		     str_selector(&spd->local->client, &db),
 		     str_selector(&spd->remote->client, &sb),
-		     str_enum_short(&routing_names, c->child.routing, &eb),
+		     str_enum_short(&routing_names, c->routing.state, &eb),
 		     bool_str(updown.route),
 		     bool_str(updown.up));
 
@@ -1902,7 +1902,7 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 	if (!ok) {
 		FOR_EACH_ITEM(spd, &c->child.spds) {
 			/* go back to old routing */
-			struct spd_owner owner = spd_owner(spd, c->child.routing,
+			struct spd_owner owner = spd_owner(spd, c->routing.state,
 							   logger, HERE);
 			delete_cat_kernel_policies(spd, &owner, child->sa.logger, HERE);
 			revert_kernel_policy(spd, child, logger);
@@ -2091,7 +2091,7 @@ void teardown_ipsec_kernel_states(struct child_sa *child)
 		if (IS_IPSEC_SA_ESTABLISHED(&child->sa)) {
 #if 0
 			/* see comments below about multiple calls */
-			PEXPECT(logger, c->child.routing == RT_ROUTED_TUNNEL);
+			PEXPECT(logger, c->routing.state == RT_ROUTED_TUNNEL);
 #endif
 			uninstall_kernel_states(child);
 		} else if (child->sa.st_state->kind == STATE_QUICK_I1 &&
@@ -2110,7 +2110,7 @@ void teardown_ipsec_kernel_states(struct child_sa *child)
 			 * #3, tries to tear down the SA.
 			 */
 #if 0
-			PEXPECT(logger, c->child.routing == RT_ROUTED_TUNNEL);
+			PEXPECT(logger, c->routing.state == RT_ROUTED_TUNNEL);
 #endif
 			uninstall_kernel_states(child);
 		} else if (child->sa.st_sa_role == SA_INITIATOR &&
