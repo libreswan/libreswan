@@ -1617,13 +1617,6 @@ static bool install_inbound_ipsec_kernel_policies(struct child_sa *child)
 		return true;
 	}
 
-	if (c->negotiating_child_sa != SOS_NOBODY &&
-	    c->negotiating_child_sa != child->sa.st_serialno) {
-		pdbg(logger, "kernel: %s() skipping "PRI_SO" as already has .negotiating_child_sa "PRI_SO,
-		     __func__, pri_so(child->sa.st_serialno), pri_so(c->negotiating_child_sa));
-		return true;
-	}
-
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 		selector_buf sb, db;
 		enum_buf eb;
@@ -1786,13 +1779,6 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 	if (is_labeled_child(c)) {
 		pdbg(logger, "kernel: %s() skipping as IKEv2 config.sec_label="PRI_SHUNK,
 		     __func__, pri_shunk(c->config->sec_label));
-		return true;
-	}
-
-	if (c->negotiating_child_sa != SOS_NOBODY &&
-	    c->negotiating_child_sa != child->sa.st_serialno) {
-		pdbg(logger, "kernel: %s() skipping "PRI_SO" as already has .negotiating_child_sa "PRI_SO,
-		     __func__, pri_so(child->sa.st_serialno), pri_so(c->negotiating_child_sa));
 		return true;
 	}
 
