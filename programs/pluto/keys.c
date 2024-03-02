@@ -167,7 +167,17 @@ struct tac_state {
 	realtime_t now;
 	struct logger *logger;
 	const struct host_end *remote;
-	const char *cert_origin;
+	enum cert_origin {
+		PEER,
+		PRELOADED,
+	} cert_origin;
+#define str_cert_origin(O)				\
+	({						\
+		enum cert_origin o_ = O;		\
+		(o_ == PEER ? "peer" :			\
+		 o_ == PRELOADED ? "preloaded" :	\
+		 "???");				\
+	})
 
 	/*
 	 * Both accumulated across calls and used to return the final
@@ -196,14 +206,15 @@ struct tac_state {
  *    true      NULL    <valid>     N/A     KEY worked
  */
 
-static bool try_all_keys(const char *cert_origin,
+static bool try_all_keys(enum cert_origin cert_origin,
 			 struct pubkey_list *pubkey_db,
 			 struct tac_state *s)
 {
 	id_buf thatid;
-	dbg("trying all '%s's for %s key using %s signature that matches ID: %s",
-	    cert_origin, s->signer->type->name, s->signer->name,
-	    str_id(&s->remote->id, &thatid));
+	ldbg(s->logger, "trying all '%s's for %s key using %s signature that matches ID: %s",
+	     str_cert_origin(cert_origin),
+	     s->signer->type->name, s->signer->name,
+	     str_id(&s->remote->id, &thatid));
 	s->cert_origin = cert_origin;
 
 	bool described = false;
@@ -259,7 +270,8 @@ static bool try_all_keys(const char *cert_origin,
 		s->tried_cnt++;
 
 		if (!described) {
-			jam(&s->tried_jambuf, " %s:", cert_origin);
+			jam(&s->tried_jambuf, " %s:",
+			    str_cert_origin(cert_origin));
 			described = true;
 		}
 		jam(&s->tried_jambuf, " *%s", keyid_str);
@@ -344,9 +356,9 @@ diag_t authsig_and_log_using_pubkey(struct ike_sa *ike,
 		pp = &(*pp)->next;
 	}
 
-	bool stop = try_all_keys("peer", ike->sa.st_remote_certs.pubkey_db, &s);
+	bool stop = try_all_keys(PEER, ike->sa.st_remote_certs.pubkey_db, &s);
 	if (!stop) {
-		stop = try_all_keys("preloaded", pluto_pubkeys, &s);
+		stop = try_all_keys(PRELOADED, pluto_pubkeys, &s);
 	}
 
 	if (s.fatal_diag != NULL) {
@@ -386,23 +398,30 @@ diag_t authsig_and_log_using_pubkey(struct ike_sa *ike,
 		}
 		/* all methods log this string */
 		jam_string(buf, "authenticated peer ");
-		/* what is the AUTH method ... */
+		switch (s.cert_origin) {
+		case PEER:
+			jam_string(buf, "certificate");
+			break;
+		case PRELOADED:
+			jam_string(buf, "using preloaded certificate");
+			break;
+		}
+		/* the peer's certificate: 'CA=.... ' */
+		jam_string(buf, " '");
+		jam_id_bytes(buf, &s.key->id, jam_sanitized_bytes);
 		jam_string(buf, "'");
+		/* the authentication method: 3048-bit RSA ... */
+		jam_string(buf, " and ");
 		signer->jam_auth_method(buf, signer, s.key, hash_algo);
-		jam_string(buf, "'");
+		/* the payload name: digital signature */
 		if (signature_payload_name != NULL) {
 			jam(buf, " %s", signature_payload_name);
 		} else {
 			jam(buf, " signature");
 		}
-		/* ... and what was used to authenticate it */
-		jam(buf, " using %s certificate ", s.cert_origin);
-		jam_string(buf, "'");
-		jam_id_bytes(buf, &s.key->id, jam_sanitized_bytes);
-		jam_string(buf, "'");
 		/* this is so that the cert verified line can be deleted */
 		if (s.key->issuer.ptr != NULL) {
-			jam_string(buf, " issued by CA ");
+			jam_string(buf, " issued by ");
 			jam_string(buf, "'");
 			jam_dn(buf, s.key->issuer, jam_sanitized_bytes);
 			jam_string(buf, "'");
