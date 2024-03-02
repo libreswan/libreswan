@@ -371,23 +371,33 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                             # to run post-mortem.sh.
                             guest_timed_out = None
 
-                            for command in test.commands:
+                            last_was_comment = False
 
-                                if not command.guest_name:
-                                    # Write what is assumed to be a
-                                    # comment to the merged output
-                                    # file.
-                                    if command.line:
-                                        all_verbose_txt.write("# ")
-                                        all_verbose_txt.write(command.line)
-                                    else:
-                                        all_verbose_txt.write("#")
-                                    all_verbose_txt.write("\n")
-                                    all_verbose_txt.flush()
-                                    continue
+                            for command in test.commands:
 
                                 guest_verbose_txt = verbose_files[command.guest_name]
                                 test_domain = test_domains[command.guest_name]
+
+                                # If the per-guest command turns out
+                                # to be a comment, skip executing it.
+                                # Instead write it directly to the
+                                # output (for GUEST also need to fake
+                                # up a new prompt).
+
+                                if command.line.startswith("#"):
+                                    last_was_comment = True
+                                    for txt in (all_verbose_txt, guest_verbose_txt):
+                                        txt.write(command.line)
+                                        txt.write("\n");
+                                    if command.guest_name:
+                                        _write_guest_prompt(guest_verbose_txt, command.guest_name, test.name)
+                                    for txt in (all_verbose_txt, guest_verbose_txt):
+                                        txt.flush()
+                                    continue
+
+                                if last_was_comment:
+                                    all_verbose_txt.write("\n");
+                                last_was_comment = False
 
                                 # ALL gets the new prompt
                                 all_verbose_txt.write(command.guest_name)

@@ -129,10 +129,10 @@ _GUEST_COMMAND_PATTERN = r'^(?P<guest>[a-z]*)# ?(?P<line>.*)[\n]$'
 _GUEST_COMMAND_REGEX = re.compile(_GUEST_COMMAND_PATTERN)
 
 def commands(directory, logger):
-    commands = Commands()
 
     all_console_txt = os.path.join(directory, "all.console.txt")
     if os.path.exists(all_console_txt):
+        commands = Commands()
         for line in open(all_console_txt, "r"):
             # includes '\n'; matches both:
             #   <host># command
@@ -140,15 +140,24 @@ def commands(directory, logger):
             #   # comment
             command = _GUEST_COMMAND_REGEX.match(line)
             if command:
-                commands.append(Command(command.group("guest"), command.group("line")))
-    else:
-        scripts = _guest_scripts(directory, logger)
-        for script in scripts:
-            for line in open(os.path.join(directory, script.path), "r"):
-                # toss blank lines and trailing '\n'
-                line = line.strip()
-                if line:
-                    command = Command(script.guest_name, line)
-                    commands.append(command)
+                guest = command.group("guest")
+                line = command.group("line")
+                if guest:
+                    commands.append(Command(guest, line))
+                elif line:
+                    commands.append(Command(guest, "# "+line))
+                else:
+                    commands.append(Command(guest, "#"))
+        return commands
+
+    commands = Commands()
+    scripts = _guest_scripts(directory, logger)
+    for script in scripts:
+        for line in open(os.path.join(directory, script.path), "r"):
+            # toss blank lines and trailing '\n'
+            line = line.strip()
+            if line:
+                command = Command(script.guest_name, line)
+                commands.append(command)
 
     return commands
