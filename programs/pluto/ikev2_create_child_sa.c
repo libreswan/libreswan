@@ -525,16 +525,12 @@ static void llog_v2_success_rekey_child_request(struct ike_sa *ike)
 	/* XXX: should the lerval SA be a parameter? */
 	struct child_sa *larval = ike->sa.st_v2_msgid_windows.initiator.wip_sa;
 	if (larval != NULL) {
-#if 0
-		llog_sa(RC_LOG, larval,
-			"sent CREATE_CHILD_SA request to rekey IPsec SA "PRI_SO" using IKE SA "PRI_SO,
-			pri_so(larval->sa.st_v2_rekey_pred), pri_so(ike->sa.st_serialno));
-#else
-		llog_sa(RC_LOG, larval,
-			"sent CREATE_CHILD_SA request to rekey IPsec SA");
-#endif
+		llog(RC_LOG, larval->sa.logger,
+		     "sent CREATE_CHILD_SA request to rekey Child SA "PRI_SO" using IKE SA "PRI_SO,
+		     pri_so(larval->sa.st_v2_rekey_pred),
+		     pri_so(ike->sa.st_serialno));
 	} else {
-		llog_sa(RC_LOG_SERIOUS, ike, "rekey of Child SA abandoned");
+		llog(RC_LOG_SERIOUS, ike->sa.logger, "rekey of Child SA abandoned");
 	}
 }
 
@@ -813,16 +809,11 @@ static void llog_v2_success_new_child_request(struct ike_sa *ike)
 	/* XXX: should the lerval SA be a parameter? */
 	struct child_sa *larval = ike->sa.st_v2_msgid_windows.initiator.wip_sa;
 	if (larval != NULL) {
-#if 0
-		llog_sa(RC_LOG, larval,
-			"sent CREATE_CHILD_SA request for new IPsec SA using IKE SA "PRI_SO,
-			pri_so(ike->sa.st_serialno));
-#else
-		llog_sa(RC_LOG, larval,
-			"sent CREATE_CHILD_SA request for new IPsec SA");
-#endif
+		llog(RC_LOG, larval->sa.logger,
+		     "sent CREATE_CHILD_SA request to create Child SA using IKE SA "PRI_SO,
+		     pri_so(ike->sa.st_serialno));
 	} else {
-		llog_sa(RC_LOG_SERIOUS, ike, "create new Child SA abandoned");
+		llog(RC_LOG_SERIOUS, ike->sa.logger, "create Child SA abandoned");
 	}
 }
 
@@ -1481,17 +1472,17 @@ static void llog_v2_success_rekey_ike_request(struct ike_sa *ike)
 	/* XXX: should the lerval SA be a parameter? */
 	struct child_sa *larval = ike->sa.st_v2_msgid_windows.initiator.wip_sa;
 	if (larval != NULL) {
-		pexpect(larval->sa.st_v2_rekey_pred == ike->sa.st_serialno);
-#if 0
-		llog_sa(RC_LARVAL, larval,
-			"sent CREATE_CHILD_SA request to rekey IKE SA "PRI_SO,
-			pri_so(larval->sa.st_v2_rekey_pred));
-#else
-		llog_sa(RC_LOG, larval,
-			"sent CREATE_CHILD_SA request to rekey IKE SA");
-#endif
+		PEXPECT(larval->sa.logger, larval->sa.st_v2_rekey_pred == ike->sa.st_serialno);
+		/*
+		 * Yes, "rekey IKE SA #1 using IKE SA #1" is redundant
+		 * but consistent with other logs; maybe?
+		 */
+		llog(RC_LOG, larval->sa.logger,
+		     "sent CREATE_CHILD_SA request to rekey IKE SA "PRI_SO" (using IKE SA "PRI_SO")",
+		     pri_so(larval->sa.st_v2_rekey_pred),
+		     pri_so(ike->sa.st_serialno));
 	} else {
-		llog_sa(RC_LOG_SERIOUS, ike, "rekey of IKE SA abandoned");
+		llog(RC_LOG_SERIOUS, ike->sa.logger, "rekey of IKE SA abandoned");
 	}
 }
 
