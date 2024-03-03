@@ -1,17 +1,27 @@
 # match: setkey ...
 
-/guestbin\/ipsec-kernel-state.sh/ b match-ipsec-kernel-state
-/^ ip xfrm state$/ b match-ipsec-kernel-state
-/^ ip xfrm state |/ b match-ipsec-kernel-state
-/^ ip -4 xfrm state$/ b match-ipsec-kernel-state
-/^ ip -6 xfrm state$/ b match-ipsec-kernel-state
+/guestbin\/ipsec-kernel-state.sh/ b next-ipsec-kernel-state
+/^ ip xfrm state$/ b next-ipsec-kernel-state
+/^ ip xfrm state |/ b next-ipsec-kernel-state
+/^ ip -4 xfrm state$/ b next-ipsec-kernel-state
+/^ ip -6 xfrm state$/ b next-ipsec-kernel-state
+
 b end-ipsec-kernel-state
 
-:match-ipsec-kernel-state
+:drop-ipsec-kernel-state
+  # read next line (drop current)
+  N
+  s/^.*\n//
+  b match-ipsec-kernel-state
 
-  # print and read next line
+:next-ipsec-kernel-state
+  # advance to next line (print current, read next)
   n
-  /^[a-z]* #/ b end-ipsec-kernel-state
+
+:match-ipsec-kernel-state
+  # next command?
+  /^[a-z][a-z]*#/ b end-ipsec-kernel-state
+  /^[a-z][a-z]* #/ b end-ipsec-kernel-state
 
   # SPI: preserve 0
 
@@ -82,7 +92,6 @@ b end-ipsec-kernel-state
   s/ sport [2-6][0-9][0-9][0-9][0-9] / sport EPHEM /g
   s/ dport [2-6][0-9][0-9][0-9][0-9] / dport EPHEM /g;
 
-b match-ipsec-kernel-state
+b next-ipsec-kernel-state
 
 :end-ipsec-kernel-state
-
