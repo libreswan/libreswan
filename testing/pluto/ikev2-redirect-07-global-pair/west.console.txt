@@ -61,7 +61,7 @@ west #
  ipsec whack --impair trigger_revival:2
 "west-cuckold": dispatch REVIVAL event
 "west-cuckold" #5: initiating Child SA using IKE SA #2
-"west-cuckold" #5: sent CREATE_CHILD_SA request for new IPsec SA
+"west-cuckold" #5: sent CREATE_CHILD_SA request to create Child SA using IKE SA #2
 "west-cuckold" #5: initiator established Child SA using #2; IPsec tunnel [192.0.3.0/24===192.0.20.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 DPD=passive}
 west #
  ipsec trafficstatus

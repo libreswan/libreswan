@@ -53,14 +53,14 @@ west #
 west #
  ipsec auto --up westnet-eastnet-ikev2b
 "westnet-eastnet-ikev2b" #3: initiating Child SA using IKE SA #1
-"westnet-eastnet-ikev2b" #3: sent CREATE_CHILD_SA request for new IPsec SA
+"westnet-eastnet-ikev2b" #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1
 "westnet-eastnet-ikev2b" #3: CREATE_CHILD_SA failed with error notification TS_UNACCEPTABLE
 "westnet-eastnet-ikev2b" #3: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "westnet-eastnet-ikev2b" #3: IMPAIR: revival: skip scheduling revival event
 west #
  ipsec auto --up westnet-eastnet-ikev2c
 "westnet-eastnet-ikev2c" #4: initiating Child SA using IKE SA #1
-"westnet-eastnet-ikev2c" #4: sent CREATE_CHILD_SA request for new IPsec SA
+"westnet-eastnet-ikev2c" #4: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1
 "westnet-eastnet-ikev2c" #4: CREATE_CHILD_SA failed with error notification TS_UNACCEPTABLE
 "westnet-eastnet-ikev2c" #4: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "westnet-eastnet-ikev2c" #4: IMPAIR: revival: skip scheduling revival event

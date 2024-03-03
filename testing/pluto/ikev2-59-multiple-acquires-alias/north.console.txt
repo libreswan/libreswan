@@ -35,7 +35,7 @@ initiating all connections with alias "north-eastnets"
 "north-eastnets/0x2" #1: initiator established IKE SA; authenticated peer using preloaded certificate '@east' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature
 "north-eastnets/0x1" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_512_256 DPD=passive}
 "north-eastnets/0x2" #3: initiating Child SA using IKE SA #1
-"north-eastnets/0x2" #3: sent CREATE_CHILD_SA request for new IPsec SA
+"north-eastnets/0x2" #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1
 "north-eastnets/0x2" #3: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.22.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_512_256-MODP3072 DPD=passive}
 north #
  ipsec auto --status | grep north-eastnets

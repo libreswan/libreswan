@@ -27,12 +27,12 @@ west #
 west #
  ipsec auto --up westnet-eastnet-one
 "westnet-eastnet-one" #3: initiating Child SA using IKE SA #1
-"westnet-eastnet-one" #3: sent CREATE_CHILD_SA request for new IPsec SA
+"westnet-eastnet-one" #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1
 "westnet-eastnet-one" #3: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 DPD=passive}
 west #
  ipsec auto --up westnet-eastnet-three
 "westnet-eastnet-three" #4: initiating Child SA using IKE SA #1
-"westnet-eastnet-three" #4: sent CREATE_CHILD_SA request for new IPsec SA
+"westnet-eastnet-three" #4: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1
 "westnet-eastnet-three" #4: initiator established Child SA using #1; IPsec tunnel [192.2.1.0/24===192.2.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 DPD=passive}
 west #
  echo done

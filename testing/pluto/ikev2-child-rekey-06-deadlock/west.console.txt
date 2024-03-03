@@ -72,7 +72,7 @@ west #
 west #
  ipsec whack --rekey-child --name west
 "west" #3: initiating rekey to replace Child SA #2
-"west" #3: sent CREATE_CHILD_SA request to rekey IPsec SA
+"west" #3: sent CREATE_CHILD_SA request to rekey Child SA #2 using IKE SA #1
 "west" #3: initiator rekeyed Child SA #2 using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 DPD=passive}
 "west" #2: deleting established Child SA using IKE SA #1
 "west" #2: ESP traffic information: in=84B out=84B
@@ -83,7 +83,7 @@ west #
 west #
  ipsec whack --rekey-child --name west
 "west" #4: initiating rekey to replace Child SA #3
-"west" #4: sent CREATE_CHILD_SA request to rekey IPsec SA
+"west" #4: sent CREATE_CHILD_SA request to rekey Child SA #3 using IKE SA #1
 "west" #1: STATE_V2_ESTABLISHED_IKE_SA: 15 second timeout exceeded after 0 retransmits.  No response (or no acceptable response) to our IKEv2 message
 "west" #3: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "west" #3: IMPAIR: revival: skip scheduling revival event

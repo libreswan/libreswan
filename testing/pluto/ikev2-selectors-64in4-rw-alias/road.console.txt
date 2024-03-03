@@ -32,7 +32,7 @@ initiating 2 connections
 "road/1x1" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "road/1x1" #2: initiator established Child SA using #1; IPsec tunnel [2001:db8:0:30::/64===2001:db8:0:20::/64] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATD=192.1.2.23:4500 DPD=passive}
 "road/2x2" #3: initiating Child SA using IKE SA #1
-"road/2x2" #3: sent CREATE_CHILD_SA request for new IPsec SA
+"road/2x2" #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1
 "road/2x2" #3: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 NATD=192.1.2.23:4500 DPD=passive}
 road #
  ../../guestbin/ipsec-kernel-state.sh
@@ -124,7 +124,7 @@ road #
  ipsec whack --rekey-ike --name road
 "road/2x2": connection does not have an established IKE SA
 "road/1x1" #4: initiating rekey to replace IKE SA #1
-"road/1x1" #4: sent CREATE_CHILD_SA request to rekey IKE SA
+"road/1x1" #4: sent CREATE_CHILD_SA request to rekey IKE SA #1 (using IKE SA #1)
 "road/1x1" #4: initiator rekeyed IKE SA #1 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
 "road/1x1" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 road #
@@ -141,9 +141,9 @@ road #
  ipsec whack --rekey-child --name road
 "road/2x2" #5: initiating rekey to replace Child SA #3
 "road/1x1" #6: initiating rekey to replace Child SA #2
-"road/2x2" #5: sent CREATE_CHILD_SA request to rekey IPsec SA
+"road/2x2" #5: sent CREATE_CHILD_SA request to rekey Child SA #3 using IKE SA #4
 "road/2x2" #5: initiator rekeyed Child SA #3 using #4; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 NATD=192.1.2.23:4500 DPD=passive}
-"road/1x1" #6: sent CREATE_CHILD_SA request to rekey IPsec SA
+"road/1x1" #6: sent CREATE_CHILD_SA request to rekey Child SA #2 using IKE SA #4
 "road/1x1" #6: initiator rekeyed Child SA #2 using #4; IPsec tunnel [2001:db8:0:30::/64===2001:db8:0:20::/64] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 NATD=192.1.2.23:4500 DPD=passive}
 "road/2x2" #3: deleting established Child SA using IKE SA #4
 "road/2x2" #3: ESP traffic information: in=168B out=168B

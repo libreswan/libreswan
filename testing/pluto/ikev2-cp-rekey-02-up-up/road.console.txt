@@ -39,7 +39,7 @@ road #
  # not using: ipsec whack --rekey-child --name eastnet-any
 road #
  ipsec auto --up eastnet-any
-"eastnet-any"[1] 192.1.2.23 #3: sent CREATE_CHILD_SA request for new IPsec SA
+"eastnet-any"[1] 192.1.2.23 #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1
 "eastnet-any"[1] 192.1.2.23 #3: initiator established Child SA using #1; IPsec tunnel [100.64.13.2/32===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 DPD=passive}
 road #
  ../../guestbin/ping-once.sh --up -I 100.64.13.2 192.0.2.254

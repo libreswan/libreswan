@@ -26,7 +26,7 @@ initiating 2 connections
 "west-cuckold" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "west-cuckold" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 "west-cuckoo" #3: initiating Child SA using IKE SA #1
-"west-cuckoo" #3: sent CREATE_CHILD_SA request for new IPsec SA
+"west-cuckoo" #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1
 "west-cuckoo" #3: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.20.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 DPD=passive}
 west #
  ipsec down west
@@ -53,7 +53,7 @@ west #
 initiating all connections with alias "cuckoo"
 "west-cuckoo" #6: initiating Child SA using IKE SA #4
 initiating 1 connection
-"west-cuckoo" #6: sent CREATE_CHILD_SA request for new IPsec SA
+"west-cuckoo" #6: sent CREATE_CHILD_SA request to create Child SA using IKE SA #4
 "west-cuckoo" #6: initiator established Child SA using #4; IPsec tunnel [192.0.3.0/24===192.0.20.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 DPD=passive}
 west #
  ipsec down west
