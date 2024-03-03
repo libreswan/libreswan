@@ -28,6 +28,7 @@
   /\[ 00.00] Bluetooth: / b zap-kernel # yes, apparently NIC has Bluetooth
   /\[ 00.00] .*: performance on this CPU would be suboptimal/ b zap-kernel
   /\[ 00.00] .* used greatest stack depth: [0-9]* bytes left/ b zap-kernel
+  /\[ 00.00] clocksource: Long readout interval, skipping watchdog check/ b zap-kernel
 
 b end-kernel
 
