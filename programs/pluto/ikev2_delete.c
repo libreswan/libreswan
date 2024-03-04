@@ -1,6 +1,6 @@
 /* IKEv2 DELETE Exchange, for Libreswan
  *
- * Copyright (C) 2020-2022 Andrew Cagney
+ * Copyright (C) 2020-2024 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -105,9 +105,28 @@ static stf_status initiate_v2_delete_ike_request(struct ike_sa *ike,
 		/* already logged */
 		return STF_INTERNAL_ERROR;
 	}
-	llog_sa(RC_LOG, ike, "intiating delete");
 	return STF_OK;
 }
+
+static void llog_v2_success_delete_ike_request(struct ike_sa *ike)
+{
+	/*
+	 * XXX: should this, when there are children, also mention
+	 * that they are being deleted?
+	 */
+	llog(RC_LOG, ike->sa.logger, "sent INFORMATIONAL request to delete IKE SA");
+}
+
+static const struct v2_state_transition v2_delete_ike = {
+	.story = "delete IKE SA",
+	.state = STATE_V2_ESTABLISHED_IKE_SA,
+	.next_state = STATE_V2_IKE_SA_DELETE,
+	.exchange = ISAKMP_v2_INFORMATIONAL,
+	.send_role = MESSAGE_REQUEST,
+	.processor = initiate_v2_delete_ike_request,
+	.llog_success = llog_v2_success_delete_ike_request,
+	.timeout_event =  EVENT_RETAIN,
+};
 
 static stf_status initiate_v2_delete_child_request(struct ike_sa *ike,
 						   struct child_sa *child,
@@ -126,12 +145,16 @@ static stf_status initiate_v2_delete_child_request(struct ike_sa *ike,
 	 *
 	 * Would be nice to have something indicating larval,
 	 * established, zombie.
+	 *
+	 * Should use .llog_success, but that code doesn't know which
+	 * Child SA the exchange was for.  Hence, pretend that it was
+	 * sent when it hasn't (but will real soon, promise!)
 	 */
 	bool established = IS_CHILD_SA_ESTABLISHED(&child->sa);
-	llog_sa(RC_LOG, child,
-		"deleting %s Child SA using IKE SA #%lu",
-		established ? "established" : "larval",
-		ike->sa.st_serialno);
+	llog(RC_LOG, child->sa.logger,
+	     "sent INFORMATIONAL request to delete %s Child SA using IKE SA "PRI_SO,
+	     established ? "established" : "larval",
+	     pri_so(ike->sa.st_serialno));
 	if (!established) {
 		/*
 		 * Normally the responder would include it's outgoing
@@ -151,17 +174,6 @@ static stf_status initiate_v2_delete_child_request(struct ike_sa *ike,
 /*
  * XXX: where to put this?
  */
-
-static const struct v2_state_transition v2_delete_ike = {
-	.story = "delete IKE SA",
-	.state = STATE_V2_ESTABLISHED_IKE_SA,
-	.next_state = STATE_V2_IKE_SA_DELETE,
-	.exchange = ISAKMP_v2_INFORMATIONAL,
-	.send_role = MESSAGE_REQUEST,
-	.processor = initiate_v2_delete_ike_request,
-	.llog_success = ldbg_v2_success,
-	.timeout_event =  EVENT_RETAIN,
-};
 
 static const struct v2_state_transition v2_delete_child = {
 	.story = "delete CHILD SA",
