@@ -26,7 +26,7 @@ west #
 "aes128" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 up
 "aes128": terminating SAs using this connection
-"aes128" #1: intiating delete
+"aes128" #1: sent INFORMATIONAL request to delete IKE SA
 "aes128" #2: ESP traffic information: in=84B out=84B
 "aes128" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #
@@ -84,7 +84,7 @@ west #
 "aes128" #9: initiator established Child SA using #8; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 up
 "aes128": terminating SAs using this connection
-"aes128" #8: intiating delete
+"aes128" #8: sent INFORMATIONAL request to delete IKE SA
 "aes128" #9: ESP traffic information: in=84B out=84B
 "aes128" #8: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #
@@ -105,7 +105,7 @@ west #
 "aes128" #11: initiator established Child SA using #10; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 up
 "aes128": terminating SAs using this connection
-"aes128" #10: intiating delete
+"aes128" #10: sent INFORMATIONAL request to delete IKE SA
 "aes128" #11: ESP traffic information: in=84B out=84B
 "aes128" #10: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #
@@ -200,7 +200,7 @@ west #
 "3des" #22: initiator established Child SA using #21; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 DPD=passive}
 up
 "3des": terminating SAs using this connection
-"3des" #21: intiating delete
+"3des" #21: sent INFORMATIONAL request to delete IKE SA
 "3des" #22: ESP traffic information: in=84B out=84B
 "3des" #21: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #
@@ -223,7 +223,7 @@ west #
 "3des" #24: initiator established Child SA using #23; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 DPD=passive}
 up
 "3des": terminating SAs using this connection
-"3des" #23: intiating delete
+"3des" #23: sent INFORMATIONAL request to delete IKE SA
 "3des" #24: ESP traffic information: in=84B out=84B
 "3des" #23: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #

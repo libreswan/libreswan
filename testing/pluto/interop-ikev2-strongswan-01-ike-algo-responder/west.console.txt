@@ -38,7 +38,7 @@ west #
 "ike=chacha20poly1305-sha2-dh19" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
 up
 "ike=chacha20poly1305-sha2-dh19": terminating SAs using this connection
-"ike=chacha20poly1305-sha2-dh19" #1: intiating delete
+"ike=chacha20poly1305-sha2-dh19" #1: sent INFORMATIONAL request to delete IKE SA
 "ike=chacha20poly1305-sha2-dh19" #2: ESP traffic information: in=84B out=84B
 "ike=chacha20poly1305-sha2-dh19" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #
@@ -52,7 +52,7 @@ west #
 "ike=aes128-sha2-dh19" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
 up
 "ike=aes128-sha2-dh19": terminating SAs using this connection
-"ike=aes128-sha2-dh19" #3: intiating delete
+"ike=aes128-sha2-dh19" #3: sent INFORMATIONAL request to delete IKE SA
 "ike=aes128-sha2-dh19" #4: ESP traffic information: in=84B out=84B
 "ike=aes128-sha2-dh19" #3: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #
@@ -66,7 +66,7 @@ west #
 "ike=aes128-sha2-dh20" #6: initiator established Child SA using #5; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
 up
 "ike=aes128-sha2-dh20": terminating SAs using this connection
-"ike=aes128-sha2-dh20" #5: intiating delete
+"ike=aes128-sha2-dh20" #5: sent INFORMATIONAL request to delete IKE SA
 "ike=aes128-sha2-dh20" #6: ESP traffic information: in=84B out=84B
 "ike=aes128-sha2-dh20" #5: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #
@@ -80,7 +80,7 @@ west #
 "ike=aes128-sha2-dh21" #8: initiator established Child SA using #7; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
 up
 "ike=aes128-sha2-dh21": terminating SAs using this connection
-"ike=aes128-sha2-dh21" #7: intiating delete
+"ike=aes128-sha2-dh21" #7: sent INFORMATIONAL request to delete IKE SA
 "ike=aes128-sha2-dh21" #8: ESP traffic information: in=84B out=84B
 "ike=aes128-sha2-dh21" #7: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #
@@ -94,7 +94,7 @@ west #
 "ike=aes128-sha1-dh19" #10: initiator established Child SA using #9; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
 up
 "ike=aes128-sha1-dh19": terminating SAs using this connection
-"ike=aes128-sha1-dh19" #9: intiating delete
+"ike=aes128-sha1-dh19" #9: sent INFORMATIONAL request to delete IKE SA
 "ike=aes128-sha1-dh19" #10: ESP traffic information: in=84B out=84B
 "ike=aes128-sha1-dh19" #9: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #
@@ -108,7 +108,7 @@ west #
 "ike=aes128-sha1-dh20" #12: initiator established Child SA using #11; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
 up
 "ike=aes128-sha1-dh20": terminating SAs using this connection
-"ike=aes128-sha1-dh20" #11: intiating delete
+"ike=aes128-sha1-dh20" #11: sent INFORMATIONAL request to delete IKE SA
 "ike=aes128-sha1-dh20" #12: ESP traffic information: in=84B out=84B
 "ike=aes128-sha1-dh20" #11: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #
@@ -122,7 +122,7 @@ west #
 "ike=aes128-sha1-dh21" #14: initiator established Child SA using #13; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
 up
 "ike=aes128-sha1-dh21": terminating SAs using this connection
-"ike=aes128-sha1-dh21" #13: intiating delete
+"ike=aes128-sha1-dh21" #13: sent INFORMATIONAL request to delete IKE SA
 "ike=aes128-sha1-dh21" #14: ESP traffic information: in=84B out=84B
 "ike=aes128-sha1-dh21" #13: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #
@@ -136,7 +136,7 @@ west #
 "ike=aes_ctr128-sha1-dh21" #16: initiator established Child SA using #15; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
 up
 "ike=aes_ctr128-sha1-dh21": terminating SAs using this connection
-"ike=aes_ctr128-sha1-dh21" #15: intiating delete
+"ike=aes_ctr128-sha1-dh21" #15: sent INFORMATIONAL request to delete IKE SA
 "ike=aes_ctr128-sha1-dh21" #16: ESP traffic information: in=84B out=84B
 "ike=aes_ctr128-sha1-dh21" #15: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #
@@ -150,7 +150,7 @@ west #
 "ike=3des-sha2-modp2048" #18: initiator established Child SA using #17; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
 up
 "ike=3des-sha2-modp2048": terminating SAs using this connection
-"ike=3des-sha2-modp2048" #17: intiating delete
+"ike=3des-sha2-modp2048" #17: sent INFORMATIONAL request to delete IKE SA
 "ike=3des-sha2-modp2048" #18: ESP traffic information: in=84B out=84B
 "ike=3des-sha2-modp2048" #17: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #
@@ -164,7 +164,7 @@ west #
 "ike=aes128-aes_xcbc-modp2048" #20: initiator established Child SA using #19; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
 up
 "ike=aes128-aes_xcbc-modp2048": terminating SAs using this connection
-"ike=aes128-aes_xcbc-modp2048" #19: intiating delete
+"ike=aes128-aes_xcbc-modp2048" #19: sent INFORMATIONAL request to delete IKE SA
 "ike=aes128-aes_xcbc-modp2048" #20: ESP traffic information: in=84B out=84B
 "ike=aes128-aes_xcbc-modp2048" #19: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #

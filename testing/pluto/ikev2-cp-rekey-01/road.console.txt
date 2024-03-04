@@ -40,7 +40,7 @@ road #
 "eastnet-any"[1] 192.1.2.23 #3: initiating rekey to replace Child SA #2
 "eastnet-any"[1] 192.1.2.23 #3: sent CREATE_CHILD_SA request to rekey Child SA #2 using IKE SA #1
 "eastnet-any"[1] 192.1.2.23 #3: initiator rekeyed Child SA #2 using #1; IPsec tunnel [100.64.13.2/32===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 DPD=passive}
-"eastnet-any"[1] 192.1.2.23 #2: deleting established Child SA using IKE SA #1
+"eastnet-any"[1] 192.1.2.23 #2: sent INFORMATIONAL request to delete established Child SA using IKE SA #1
 "eastnet-any"[1] 192.1.2.23 #2: ESP traffic information: in=84B out=84B
 road #
  # not using: ipsec auto --up eastnet-any

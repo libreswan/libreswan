@@ -35,7 +35,7 @@ terminating all connections with alias "west"
 "west-cuckoo" #3: ESP traffic information: in=0B out=0B
 "west-cuckold": terminating SAs using this connection
 terminated 2 connections
-"west-cuckold" #1: intiating delete
+"west-cuckold" #1: sent INFORMATIONAL request to delete IKE SA
 "west-cuckold" #2: ESP traffic information: in=0B out=0B
 "west-cuckold" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #
@@ -62,7 +62,7 @@ terminating all connections with alias "west"
 "west-cuckoo" #6: ESP traffic information: in=0B out=0B
 "west-cuckold": terminating SAs using this connection
 terminated 2 connections
-"west-cuckold" #4: intiating delete
+"west-cuckold" #4: sent INFORMATIONAL request to delete IKE SA
 "west-cuckold" #5: ESP traffic information: in=0B out=0B
 "west-cuckold" #4: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #

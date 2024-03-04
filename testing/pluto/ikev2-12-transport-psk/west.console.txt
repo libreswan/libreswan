@@ -71,7 +71,7 @@ west #
 "ipv4-psk-ikev2-transport" #3: initiating rekey to replace Child SA #2
 "ipv4-psk-ikev2-transport" #3: sent CREATE_CHILD_SA request to rekey Child SA #2 using IKE SA #1
 "ipv4-psk-ikev2-transport" #3: initiator rekeyed Child SA #2 using #1; IPsec transport [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA2_256_128-DH19 DPD=passive}
-"ipv4-psk-ikev2-transport" #2: deleting established Child SA using IKE SA #1
+"ipv4-psk-ikev2-transport" #2: sent INFORMATIONAL request to delete established Child SA using IKE SA #1
 "ipv4-psk-ikev2-transport" #2: ESP traffic information: in=64B out=64B
 west #
  # confirm transport mode is still part after rekey

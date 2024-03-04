@@ -74,7 +74,7 @@ src 192.1.2.23 dst 192.1.3.33
 north #
  ipsec auto --down north
 "north": terminating SAs using this connection
-"north" #1: intiating delete
+"north" #1: sent INFORMATIONAL request to delete IKE SA
 "north" #2: ESP traffic information: in=84B out=84B
 "north" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 north #

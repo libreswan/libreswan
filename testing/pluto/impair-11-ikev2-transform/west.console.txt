@@ -22,7 +22,7 @@ west #
 "conf" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 up
 "conf": terminating SAs using this connection
-"conf" #1: intiating delete
+"conf" #1: sent INFORMATIONAL request to delete IKE SA
 "conf" #2: ESP traffic information: in=84B out=84B
 "conf" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #
@@ -45,7 +45,7 @@ west #
 "conf" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 up
 "conf": terminating SAs using this connection
-"conf" #3: intiating delete
+"conf" #3: sent INFORMATIONAL request to delete IKE SA
 "conf" #4: ESP traffic information: in=84B out=84B
 "conf" #3: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #
@@ -68,7 +68,7 @@ west #
 "conf" #6: initiator established Child SA using #5; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 up
 "conf": terminating SAs using this connection
-"conf" #5: intiating delete
+"conf" #5: sent INFORMATIONAL request to delete IKE SA
 "conf" #6: ESP traffic information: in=84B out=84B
 "conf" #5: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #
@@ -91,7 +91,7 @@ west #
 "conf" #8: initiator established Child SA using #7; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 DPD=passive}
 up
 "conf": terminating SAs using this connection
-"conf" #7: intiating delete
+"conf" #7: sent INFORMATIONAL request to delete IKE SA
 "conf" #8: ESP traffic information: in=84B out=84B
 "conf" #7: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #
@@ -114,7 +114,7 @@ west #
 "conf" #10: initiator established Child SA using #9; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 up
 "conf": terminating SAs using this connection
-"conf" #9: intiating delete
+"conf" #9: sent INFORMATIONAL request to delete IKE SA
 "conf" #10: ESP traffic information: in=84B out=84B
 "conf" #9: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #

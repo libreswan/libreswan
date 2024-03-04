@@ -50,7 +50,7 @@ west #
 west #
  ipsec down west-cuckold
 "west-cuckold": terminating SAs using this connection
-"west-cuckold" #1: intiating delete
+"west-cuckold" #1: sent INFORMATIONAL request to delete IKE SA
 "west-cuckold" #2: ESP traffic information: in=84B out=84B
 "west-cuckold" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #

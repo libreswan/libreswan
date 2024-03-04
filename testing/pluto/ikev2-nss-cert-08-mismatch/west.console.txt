@@ -37,7 +37,7 @@ west #
 west #
  ipsec auto --down nss-cert-correct
 "nss-cert-correct": terminating SAs using this connection
-"nss-cert-correct" #1: intiating delete
+"nss-cert-correct" #1: sent INFORMATIONAL request to delete IKE SA
 "nss-cert-correct" #2: ESP traffic information: in=0B out=0B
 "nss-cert-correct" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #

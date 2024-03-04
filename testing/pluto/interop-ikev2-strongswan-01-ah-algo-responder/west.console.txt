@@ -34,7 +34,7 @@ west #
 "ah=md5" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {AH=>0xAHAH <0xAHAH xfrm=HMAC_MD5_96 DPD=passive}
 up
 "ah=md5": terminating SAs using this connection
-"ah=md5" #1: intiating delete
+"ah=md5" #1: sent INFORMATIONAL request to delete IKE SA
 "ah=md5" #2: AH traffic information: in=84B out=84B
 "ah=md5" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #
@@ -48,7 +48,7 @@ west #
 "ah=sha1" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {AH=>0xAHAH <0xAHAH xfrm=HMAC_SHA1_96 DPD=passive}
 up
 "ah=sha1": terminating SAs using this connection
-"ah=sha1" #3: intiating delete
+"ah=sha1" #3: sent INFORMATIONAL request to delete IKE SA
 "ah=sha1" #4: AH traffic information: in=84B out=84B
 "ah=sha1" #3: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #

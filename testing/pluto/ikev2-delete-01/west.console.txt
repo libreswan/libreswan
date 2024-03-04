@@ -167,7 +167,7 @@ Bare Shunt list:
  
 west #
  ipsec whack --deletestate 1
-"westnet-eastnet-ipv4-psk-ikev2" #1: intiating delete
+"westnet-eastnet-ipv4-psk-ikev2" #1: sent INFORMATIONAL request to delete IKE SA
 "westnet-eastnet-ipv4-psk-ikev2" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "westnet-eastnet-ipv4-psk-ikev2" #2: IMPAIR: revival: skip scheduling revival event
 "westnet-eastnet-ipv4-psk-ikev2" #2: ESP traffic information: in=84B out=84B

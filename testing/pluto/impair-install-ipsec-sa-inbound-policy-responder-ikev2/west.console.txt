@@ -42,7 +42,7 @@ west #
 "west-east" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "west-east" #2: IKE_AUTH response missing v2SA, v2TSi or v2TSr: not attempting to setup CHILD SA
 "west-east" #1: IKE SA established but initiator rejected Child SA response
-"west-east" #2: deleting larval Child SA using IKE SA #1
+"west-east" #2: sent INFORMATIONAL request to delete larval Child SA using IKE SA #1
 "west-east" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "west-east" #2: IMPAIR: revival: skip scheduling revival event
 west #

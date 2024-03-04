@@ -66,7 +66,7 @@ west #
 west #
  ipsec auto --down westnet-eastnet-ipv4-psk-ppk
 "westnet-eastnet-ipv4-psk-ppk": terminating SAs using this connection
-"westnet-eastnet-ipv4-psk-ppk" #1: intiating delete
+"westnet-eastnet-ipv4-psk-ppk" #1: sent INFORMATIONAL request to delete IKE SA
 "westnet-eastnet-ipv4-psk-ppk" #2: ESP traffic information: in=84B out=84B
 "westnet-eastnet-ipv4-psk-ppk" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #

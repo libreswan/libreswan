@@ -38,7 +38,7 @@ west #
 "tcp" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESPinTCP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 up
 "tcp": terminating SAs using this connection
-"tcp" #1: intiating delete
+"tcp" #1: sent INFORMATIONAL request to delete IKE SA
 "tcp" #2: ESP traffic information: in=84B out=84B
 "tcp" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #

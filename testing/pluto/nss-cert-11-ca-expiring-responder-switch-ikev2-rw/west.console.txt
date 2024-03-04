@@ -53,7 +53,7 @@ west #
 west #
  ipsec auto --down old-west
 "old-west": terminating SAs using this connection
-"old-west" #1: intiating delete
+"old-west" #1: sent INFORMATIONAL request to delete IKE SA
 "old-west" #2: ESP traffic information: in=0B out=0B
 "old-west" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #
@@ -68,7 +68,7 @@ west #
 west #
  ipsec auto --down new-west
 "new-west": terminating SAs using this connection
-"new-west" #3: intiating delete
+"new-west" #3: sent INFORMATIONAL request to delete IKE SA
 "new-west" #4: ESP traffic information: in=0B out=0B
 "new-west" #3: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #
@@ -83,7 +83,7 @@ west #
 west #
  ipsec auto --down old-west
 "old-west": terminating SAs using this connection
-"old-west" #5: intiating delete
+"old-west" #5: sent INFORMATIONAL request to delete IKE SA
 "old-west" #6: ESP traffic information: in=0B out=0B
 "old-west" #5: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #
@@ -98,7 +98,7 @@ west #
 west #
  ipsec auto --down new-west
 "new-west": terminating SAs using this connection
-"new-west" #7: intiating delete
+"new-west" #7: sent INFORMATIONAL request to delete IKE SA
 "new-west" #8: ESP traffic information: in=0B out=0B
 "new-west" #7: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #

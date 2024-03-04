@@ -74,7 +74,7 @@ west #
 west #
  ipsec auto --down new-west
 "new-west": terminating SAs using this connection
-"new-west" #4: intiating delete
+"new-west" #4: sent INFORMATIONAL request to delete IKE SA
 "new-west" #5: ESP traffic information: in=0B out=0B
 "new-west" #4: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #
@@ -88,7 +88,7 @@ west #
 west #
  ipsec auto --down hog-west
 "hog-west": terminating SAs using this connection
-"hog-west" #6: intiating delete
+"hog-west" #6: sent INFORMATIONAL request to delete IKE SA
 "hog-west" #7: ESP traffic information: in=0B out=0B
 "hog-west" #6: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #

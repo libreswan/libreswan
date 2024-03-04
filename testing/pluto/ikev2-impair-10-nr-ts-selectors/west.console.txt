@@ -27,7 +27,7 @@ west #
 west #
  ipsec auto --down westnet-eastnet-ipv4-psk-ikev2
 "westnet-eastnet-ipv4-psk-ikev2": terminating SAs using this connection
-"westnet-eastnet-ipv4-psk-ikev2" #1: intiating delete
+"westnet-eastnet-ipv4-psk-ikev2" #1: sent INFORMATIONAL request to delete IKE SA
 "westnet-eastnet-ipv4-psk-ikev2" #2: ESP traffic information: in=0B out=0B
 "westnet-eastnet-ipv4-psk-ikev2" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #
@@ -48,7 +48,7 @@ west #
 west #
  ipsec auto --down westnet-eastnet-ipv4-psk-ikev2
 "westnet-eastnet-ipv4-psk-ikev2": terminating SAs using this connection
-"westnet-eastnet-ipv4-psk-ikev2" #3: intiating delete
+"westnet-eastnet-ipv4-psk-ikev2" #3: sent INFORMATIONAL request to delete IKE SA
 "westnet-eastnet-ipv4-psk-ikev2" #3: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #
  ipsec whack --impair number_of_TSi_selectors:no
@@ -70,7 +70,7 @@ west #
 west #
  ipsec auto --down westnet-eastnet-ipv4-psk-ikev2
 "westnet-eastnet-ipv4-psk-ikev2": terminating SAs using this connection
-"westnet-eastnet-ipv4-psk-ikev2" #5: intiating delete
+"westnet-eastnet-ipv4-psk-ikev2" #5: sent INFORMATIONAL request to delete IKE SA
 "westnet-eastnet-ipv4-psk-ikev2" #5: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #
  ipsec whack --impair number_of_TSr_selectors:no

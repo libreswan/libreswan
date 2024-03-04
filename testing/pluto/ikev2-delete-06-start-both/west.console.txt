@@ -24,7 +24,7 @@ west #
 west #
  ipsec auto --down west-east-auto
 "west-east-auto": terminating SAs using this connection
-"west-east-auto" #1: intiating delete
+"west-east-auto" #1: sent INFORMATIONAL request to delete IKE SA
 "west-east-auto" #2: ESP traffic information: in=84B out=84B
 "west-east-auto" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
 west #

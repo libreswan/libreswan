@@ -119,7 +119,7 @@ road #
 "road" #4: sent CREATE_CHILD_SA request to rekey Child SA #2 using IKE SA #3
 "road" #4: accepted selectors [2001:db8:0:3::/64]->[2001:db8:0:2::/64 2001:db8:0:20::/64]
 "road" #4: initiator rekeyed Child SA #2 using #3; IPsec tunnel [2001:db8:0:3::/64===2001:db8:0:2::/64] [2001:db8:0:3::/64===2001:db8:0:20::/64] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 NATD=192.1.2.23:4500 DPD=passive}
-"road" #2: deleting established Child SA using IKE SA #3
+"road" #2: sent INFORMATIONAL request to delete established Child SA using IKE SA #3
 "road" #2: ESP traffic information: in=416B out=416B
 road #
  ../../guestbin/ping-once.sh --up 2001:db8:0:2::254

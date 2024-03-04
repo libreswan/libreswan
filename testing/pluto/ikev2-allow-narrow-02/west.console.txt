@@ -46,7 +46,7 @@ west #
 "westnet-eastnet-ikev2" #1: initiator established IKE SA; authenticated peer using preloaded certificate '@east' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature
 "westnet-eastnet-ikev2" #2: CHILD SA failed: TS_UNACCEPTABLE
 "westnet-eastnet-ikev2" #1: IKE SA established but initiator rejected Child SA response
-"westnet-eastnet-ikev2" #2: deleting larval Child SA using IKE SA #1
+"westnet-eastnet-ikev2" #2: sent INFORMATIONAL request to delete larval Child SA using IKE SA #1
 "westnet-eastnet-ikev2" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "westnet-eastnet-ikev2" #2: IMPAIR: revival: skip scheduling revival event
 ERROR: "westnet-eastnet-ikev2" #2: netlink response for Del SA esp.ESPSPIi@192.1.2.23: No such process (errno 3)

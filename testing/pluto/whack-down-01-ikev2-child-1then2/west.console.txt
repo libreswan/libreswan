@@ -46,7 +46,7 @@ west #
 west #
  ipsec down west-cuckold
 "west-cuckold": IKE SA is shared - only terminating Child SA
-"west-cuckold" #2: deleting established Child SA using IKE SA #1
+"west-cuckold" #2: sent INFORMATIONAL request to delete established Child SA using IKE SA #1
 "west-cuckold" #2: ESP traffic information: in=84B out=84B
 west #
  ipsec down west-cuckoo

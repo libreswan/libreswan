@@ -45,7 +45,7 @@ west #
 "west-east" #2: IMPAIR: kernel: install_ipsec_sa_outbound_state in setup_half_kernel_state()
 "west-east" #2: CHILD SA failed: TEMPORARY_FAILURE
 "west-east" #1: IKE SA established but initiator rejected Child SA response
-"west-east" #2: deleting larval Child SA using IKE SA #1
+"west-east" #2: sent INFORMATIONAL request to delete larval Child SA using IKE SA #1
 "west-east" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "west-east" #2: IMPAIR: revival: skip scheduling revival event
 ERROR: "west-east" #2: netlink response for Del SA esp.ESPSPIi@192.1.2.23: No such process (errno 3)
