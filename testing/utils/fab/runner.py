@@ -192,11 +192,11 @@ def _boot_test_domains(logger, test, domains):
 
     return test_domains
 
-def _write_guest_prompt(f, guest_name, test_name):
+def _write_guest_prompt(f, command, test):
     f.write("[root@");
-    f.write(guest_name)
+    f.write(command.host_name)
     f.write(" ")
-    f.write(test_name)
+    f.write(test.name)
     f.write("]# ")
     f.flush()
 
@@ -390,7 +390,7 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                         txt.write(command.line)
                                         txt.write("\n");
                                     if command.guest_name:
-                                        _write_guest_prompt(guest_verbose_txt, command.guest_name, test.name)
+                                        _write_guest_prompt(guest_verbose_txt, command, test)
                                     for txt in (all_verbose_txt, guest_verbose_txt):
                                         txt.flush()
                                     continue
@@ -446,7 +446,7 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                     test_domain.logger.warning("command '%s' failed with status %d", command.line, status)
 
                                 # GUEST then gets the next prompt
-                                _write_guest_prompt(guest_verbose_txt, command.guest_name, test.name)
+                                _write_guest_prompt(guest_verbose_txt, command, test)
 
                                 all_verbose_txt.write("\n")
                                 all_verbose_txt.flush()
@@ -517,7 +517,7 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                         continue # to next teardown
 
                                     # GUEST finishes with the old prompt
-                                    _write_guest_prompt(guest_verbose_txt, command.guest_name, test.name)
+                                    _write_guest_prompt(guest_verbose_txt, command, test)
 
                                     # followed by marker
                                     guest_verbose_txt.write("%s post-mortem %s" % (post.RHS, post.RHS))

@@ -38,3 +38,14 @@ def _guest_names():
 
 """An unordered set of tupples of (GUEST_NAME,HOST_NAME)"""
 GUEST_NAMES = _guest_names()
+
+def _guest_to_host():
+    d = dict()
+    for guest_name, host_name in GUEST_NAMES:
+        d[guest_name] = host_name
+    return d
+
+# A dictionary, with GUEST_NAME (as used to manipulate the domain
+# externally) as the KEY and HOST_NAME (what `hostname` within the
+# domain would return) as the value.
+GUEST_TO_HOST = _guest_to_host()

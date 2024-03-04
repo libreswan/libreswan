@@ -16,7 +16,7 @@ import os
 import re
 
 from fab import argutil
-from fab.hosts import GUEST_NAMES
+from fab import hosts
 
 class Scripts(list):
     def __str__(self):
@@ -59,7 +59,7 @@ def _guest_scripts(directory, logger):
     # Form a subset of GUEST_NAMES based on the names found in the
     # scripts.
     guest_names = set()
-    for guest_name, host_name in GUEST_NAMES:
+    for guest_name, host_name in hosts.GUEST_NAMES:
         for script in scripts:
             if re.search(guest_name, script):
                 guest_names.add(guest_name)
@@ -98,7 +98,7 @@ def _guest_scripts(directory, logger):
             ordered_scripts.append(Script(guest_name, script))
     logger.debug("ordered scripts: %s", ordered_scripts)
 
-    # Form the list if scripts to run.  Per above: init, run, ordered,
+    # Form the list of scripts to run.  Per above: init, run, ordered,
     # final.
     all_scripts = Scripts()
     all_scripts.extend(init_scripts)
@@ -110,6 +110,7 @@ def _guest_scripts(directory, logger):
 class Command:
     def __init__(self, guest_name, line):
         self.guest_name = guest_name
+        self.host_name = guest_name and hosts.GUEST_TO_HOST[guest_name]
         self.line = line
     def __str__(self):
         if self.guest_name:
