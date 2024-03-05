@@ -464,7 +464,7 @@ static void save_redirect(struct ike_sa *ike, struct msg_digest *md, ip_address 
 	ike->sa.st_skip_revival_as_redirecting = true;
 
 	address_buf b;
-	llog_sa(RC_LOG, ike, "%s response redirecting to new gateway %s",
+	llog_sa(RC_LOG, ike, "%s response redirects to new gateway %s",
 		xchg, str_address_sensitive(&to, &b));
 }
 
