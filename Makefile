@@ -102,8 +102,7 @@ OBJDIRTOP=${ABSOBJDIR}
 # Recursive clean dealt with elsewhere.
 .PHONY: local-clean-base
 local-clean-base:
-	$(foreach file,$(RPMTMPDIR) $(RPMDEST) out.*build out.*install, \
-		rm -rf $(file) ; )
+	rm -rf out.*
 	rm -rf $(OBJDIR)/html
 
 # Delete absolutely everything.
@@ -114,11 +113,21 @@ local-clean-base:
 # $(OBJDIR) only to then delete it.
 
 .PHONY: distclean
-distclean: kvm-clean-keys
-	rm -f $(RPMTMPDIR) $(RPMDEST) out.*
+distclean:
+	: generated test keys
+	: careful output mixed with repo files
+	rm -rf testing/x509/*/
+	rm -f testing/x509/nss-pw
+	rm -f testing/baseconfigs/all/etc/bind/signed/*.signed
+	rm -f testing/baseconfigs/all/etc/bind/keys/*.key
+	rm -f testing/baseconfigs/all/etc/bind/keys/*.private
+	rm -f testing/baseconfigs/all/etc/bind/dsset/dsset-*
+	: test results
 	rm -rf testing/pluto/*/OUTPUT*
-	rm -rf OBJ.* $(OBJDIR)
 	rm -rf BACKUP
+	: build results
+	rm -f out.*
+	rm -rf OBJ.* $(OBJDIR)
 	rm -f tags TAGS cscope
 	rm -f cscope.files
 
