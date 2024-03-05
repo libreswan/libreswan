@@ -21,7 +21,7 @@ north #
  ipsec auto --up north-east
 "north-east" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "north-east" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"north-east" #1: IKE_SA_INIT response redirecting to new gateway 192.1.2.44
+"north-east" #1: IKE_SA_INIT response redirects to new gateway 192.1.2.44
 "north-east" #1: scheduling redirect 1 to 192.1.2.44
 "north-east" #1: IMPAIR: redirect: skip scheduling redirect event
 "north-east" #1: deleting IKE SA (sent IKE_SA_INIT request)
@@ -49,7 +49,7 @@ north #
  ipsec auto --up north-east
 "north-east" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
 "north-east" #3: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"north-east" #3: IKE_SA_INIT response redirecting to new gateway 192.1.2.46
+"north-east" #3: IKE_SA_INIT response redirects to new gateway 192.1.2.46
 "north-east" #3: scheduling redirect 1 to 192.1.2.46
 "north-east" #3: IMPAIR: redirect: skip scheduling redirect event
 "north-east" #3: deleting IKE SA (sent IKE_SA_INIT request)
@@ -77,7 +77,7 @@ north #
  ipsec auto --up north-east
 "north-east" #5: initiating IKEv2 connection to 192.1.2.23 using UDP
 "north-east" #5: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"north-east" #5: IKE_SA_INIT response redirecting to new gateway 192.1.2.45
+"north-east" #5: IKE_SA_INIT response redirects to new gateway 192.1.2.45
 "north-east" #5: scheduling redirect 1 to 192.1.2.45
 "north-east" #5: IMPAIR: redirect: skip scheduling redirect event
 "north-east" #5: deleting IKE SA (sent IKE_SA_INIT request)
