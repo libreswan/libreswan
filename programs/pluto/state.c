@@ -874,9 +874,15 @@ void delete_state(struct state *st)
 		}
 	}
 
-	if (!st->st_on_delete.skip_log_message &&
-	    (st->st_ike_version == IKEv1 || IS_PARENT_SA(st))) {
-		llog_sa_delete_n_send(NULL, st);
+	if (!st->st_on_delete.skip_log_message) {
+		if (st->st_ike_version == IKEv1) {
+			/* actually logs NOT sending delete */
+			llog_sa_delete_n_send(NULL, st);
+		} else if (IS_PARENT_SA(st)) {
+			llog(RC_LOG, st->logger, "deleting IKE SA (%s)",
+			     st->st_state->story);
+		}
+		on_delete(st, skip_log_message);
 	}
 
 	pstat_sa_deleted(st);
