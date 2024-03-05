@@ -804,11 +804,10 @@ static void update_and_log_traffic(struct child_sa *child, const char *name,
 	pstats->out += proto->outbound.bytes;
 }
 
-static void llog_delete_n_send(lset_t rc_flags,
-			       struct ike_sa *ike,
-			       struct state *st)
+void llog_sa_delete_n_send(struct ike_sa *ike, struct state *st)
 {
-	LLOG_JAMBUF(rc_flags, st->logger, buf) {
+	PEXPECT(st->logger, !st->st_on_delete.skip_log_message);
+	LLOG_JAMBUF(RC_LOG, st->logger, buf) {
 		/* deleting {IKE,Child,IPsec,ISAKMP} SA */
 		jam_string(buf, "deleting ");
 		jam_string(buf, state_sa_name(st));
@@ -843,12 +842,6 @@ static void llog_delete_n_send(lset_t rc_flags,
 			jam_string(buf, " and sending notification");
 		}
 	}
-}
-
-void llog_sa_delete_n_send(struct ike_sa *ike, struct state *st)
-{
-	PEXPECT(st->logger, !st->st_on_delete.skip_log_message);
-	llog_delete_n_send(RC_LOG, ike, st);
 	on_delete(st, skip_log_message);
 }
 
