@@ -28,7 +28,7 @@ utilsdir=${benchdir}/testing/utils
 cd ${benchdir}
 
 make_variable() {
-    local v=$(make -C ${benchdir}/testing/libvirt --no-print-directory print-kvm-variable VARIABLE=$2)
+    local v=$(make -C ${benchdir}/testing/kvm --no-print-directory print-kvm-variable VARIABLE=$2)
     if test "${v}" == "" ; then
 	echo $2 not defined 1>&2
 	exit 1
