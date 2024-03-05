@@ -2996,8 +2996,9 @@ void event_v2_rekey(struct state *st, bool detach_whack)
 								  detach_whack);
 	}
 
-	const char *satype = IS_IKE_SA(st) ? "IKE" : "Child";
-	llog_sa(RC_LOG, larval_sa,
-		"initiating rekey to replace %s SA #%lu",
-		satype, st->st_serialno);
+	llog(RC_LOG, larval_sa->sa.logger,
+	     "initiating rekey to replace %s "PRI_SO" using IKE SA "PRI_SO,
+	     state_sa_name(st),
+	     pri_so(st->st_serialno),
+	     pri_so(ike->sa.st_serialno));
 }
