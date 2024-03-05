@@ -3,7 +3,7 @@
   <listitem>
 <para>Whether the pluto IKE daemon should listen on the (pseudo)
 standard TCP port <emphasis>4500</emphasis>. The default is
-"yes". The TCP usage complies to RFC 9329 for IKE and ESP over TCP
+"no". The TCP usage complies to RFC 9329 for IKE and ESP over TCP
 support. Connections can specify their own non-standard TCP port using
 <emphasis>leftikeport=</emphasis> and
 <emphasis>tcp-remoteport=</emphasis> for a non-standard peer TCP port.
