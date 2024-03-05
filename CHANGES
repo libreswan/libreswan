@@ -8,9 +8,6 @@ v5.0 (Unreleased)
 * IKEv1: globally disabled by default (ikev1-policy=drop) See RFC9395
 * IKEv1: drop support for Labeled IPsec [Andrew]
 * IKEv2: warn that fragmentation=force is ignored [Andrew]
-* whack: add --fragmentation option; change default to yes [Andrew]
-* config: fix keyexchange={ikev1,ikev2}; deprecate ikev2= [Andrew]
-* config: remove nic-offload=auto option, only accept packet,crypto,yes [Paul]
 * pluto: retry / revival code merged (dpdaction=, keyingtries= ignored) [Andrew]
 * pluto: avoid post-authentication crash on corrupt TS payload [Andrew]
 * pluto: Support addresspool=v4/mask,v6/mask [Andrew]
@@ -22,6 +19,32 @@ v5.0 (Unreleased)
 * building: remove old copy of unbound headers [Andrew]
 * building: Use DESTDIR instead of FINAL* env vars [Andrew]
 * building: Fix "make git-rpm" [Paul/Tuomo]
+* whack: overhaul
+  - review ipsec-whack.8 [Tuomo, Andrew, Paul]
+  - change defaults to match addconn [Andrew]
+  - add --{rekey,delete,down}-{ike,child} --name <conn> [Andrew]
+  - match whack and addconn option names [Andrew]
+* config (ipsec.conf): overhaul
+  - update ipsec.conf.5 [Tuomo, Andrew, Paul]
+  - log errors a dn warnings in ipsec.conf [Andrew]
+  - <<include {a,b,c}.conf>> no longer supported [Andrew]
+  - fix keyexchange={ikev1,ikev2}; deprecate ikev2= [Andrew]
+  - remove nic-offload=auto option, only accept packet,crypto,yes [Paul]
+  - warn when converting legacy ",," to "\," in {left,right}id= [Andrew]
+  - change also= to expand inline (more like C's #include) [Andrew]
+  - fix KEYWORD= sometimes causing program exit [Andrew]
+  - parse <<KEYWORD=>> as <<KEYWORD=''>>, i.e., empty [Andrew]
+  - warn when, within a conn, there are duplicate keys [Andrew]
+  - add encap-dscp= [Wolfgang]
+  - implement interface-ip [Brady]
+  - implement subnet=SELECTOR,SELECTOR,... [Andrew]
+  - default ikev1-policy to drop [Daniel]
+  - add ppk-ids= [Vukasin]
+  - add experimental per-connection debug= [Andrew]
+  - drop obsolete forceencaps= [Andrew]
+  - add groundhog= [Andrew]
+  - reject non-numeric sourceip=<address> [Andrew]
+  - fix crash when dpdtimeout= missing [Andrew]
 * install: overhaul [Andrew]
   - use INSTALL_INITSYSTEM=false to prevent update of /etc/<initsystem>
   - use INSTALL_CONFIGS=false prevents update of /etc/ipsec.d et.al.
@@ -38,7 +61,6 @@ v5.0 (Unreleased)
 * ipsec barf: script moved to contrib/ [Andrew]
 * ipsec _secretsensor: script moved to contrib/ [Andrew]
 * IKEv2: when non-MOBIKE never update NATed endpoint [#1492/Wofferl/Andrew]
-* ipsec.conf: <<include {a,b,c}.conf>> no longer supported [Andrew]
 
 v4.12 (Aug 8, 2023)
 * SECURITY IKEv2: Fixes https://libreswan.org/security/CVE-2023-38710
