@@ -140,8 +140,8 @@ west #
  # should match only on west, exactly twice
 west #
  grep "initiating rekey to replace Child SA" OUTPUT/$(hostname).pluto.log
-"west" #3: initiating rekey to replace Child SA #2
-"west" #4: initiating rekey to replace Child SA #3
+"west" #3: initiating rekey to replace Child SA #2 using IKE SA #1
+"west" #4: initiating rekey to replace Child SA #3 using IKE SA #1
 west #
  # should be absent
 west #

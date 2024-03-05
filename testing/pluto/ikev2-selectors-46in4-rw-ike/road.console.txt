@@ -100,7 +100,7 @@ road #
 #2: "road", type=ESP, add_time=1234567890, inBytes=188, outBytes=188, maxBytes=2^63B, id='@east'
 road #
  ipsec whack --rekey-ike --name road
-"road" #3: initiating rekey to replace IKE SA #1
+"road" #3: initiating rekey to replace IKE SA #1 using IKE SA #1
 "road" #3: sent CREATE_CHILD_SA request to rekey IKE SA #1 (using IKE SA #1)
 "road" #3: initiator rekeyed IKE SA #1 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
 "road" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
@@ -115,7 +115,7 @@ road #
 #2: "road", type=ESP, add_time=1234567890, inBytes=376, outBytes=376, maxBytes=2^63B, id='@east'
 road #
  ipsec whack --rekey-child --name road
-"road" #4: initiating rekey to replace Child SA #2
+"road" #4: initiating rekey to replace Child SA #2 using IKE SA #3
 "road" #4: sent CREATE_CHILD_SA request to rekey Child SA #2 using IKE SA #3
 "road" #4: accepted selectors [192.0.3.0/24 2001:db8:0:30::/64]->[192.0.2.0/24 2001:db8:0:20::/64]
 "road" #4: initiator rekeyed Child SA #2 using #3; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] [2001:db8:0:30::/64===2001:db8:0:20::/64] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 NATD=192.1.2.23:4500 DPD=passive}

@@ -49,7 +49,7 @@ west #
  # does not work on 3.29 for now leave it timer based rekey
 west #
  ipsec whack --rekey-child --name westnet-eastnet
-"westnet-eastnet" #3: initiating rekey to replace Child SA #2
+"westnet-eastnet" #3: initiating rekey to replace Child SA #2 using IKE SA #1
 "westnet-eastnet" #3: sent CREATE_CHILD_SA request to rekey Child SA #2 using IKE SA #1
 "westnet-eastnet" #3: initiator rekeyed Child SA #2 using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_512_256-MODP2048 DPD=passive}
 "westnet-eastnet" #2: sent INFORMATIONAL request to delete established Child SA using IKE SA #1

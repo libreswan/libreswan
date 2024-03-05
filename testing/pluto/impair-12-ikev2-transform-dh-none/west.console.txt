@@ -30,13 +30,13 @@ west #
  ipsec whack --impair v2_proposal_dh:allow-none
 west #
  ipsec whack --rekey-ike   --name dh
-"dh" #3: initiating rekey to replace IKE SA #1
+"dh" #3: initiating rekey to replace IKE SA #1 using IKE SA #1
 "dh" #3: sent CREATE_CHILD_SA request to rekey IKE SA #1 (using IKE SA #1)
 "dh" #3: initiator rekeyed IKE SA #1 {cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 group=MODP2048}
 "dh" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 west #
  ipsec whack --rekey-child --name dh
-"dh" #4: initiating rekey to replace Child SA #2
+"dh" #4: initiating rekey to replace Child SA #2 using IKE SA #3
 "dh" #4: IMPAIR: proposal 1 transform DH=NONE included when counting transforms
 "dh" #4: IMPAIR: proposal 1 transform DH=NONE included when emitting proposal
 "dh" #4: sent CREATE_CHILD_SA request to rekey Child SA #2 using IKE SA #3
@@ -55,13 +55,13 @@ west #
  ipsec whack --impair v2_proposal_dh:drop-none
 west #
  ipsec whack --rekey-ike   --name dh
-"dh" #5: initiating rekey to replace IKE SA #3
+"dh" #5: initiating rekey to replace IKE SA #3 using IKE SA #3
 "dh" #5: sent CREATE_CHILD_SA request to rekey IKE SA #3 (using IKE SA #3)
 "dh" #5: initiator rekeyed IKE SA #3 {cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 group=MODP2048}
 "dh" #3: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 west #
  ipsec whack --rekey-child --name dh
-"dh" #6: initiating rekey to replace Child SA #4
+"dh" #6: initiating rekey to replace Child SA #4 using IKE SA #5
 "dh" #6: IMPAIR: proposal 1 transform DH=NONE excluded when counting transforms
 "dh" #6: IMPAIR: proposal 1 transform DH=NONE excluded when emitting proposal
 "dh" #6: sent CREATE_CHILD_SA request to rekey Child SA #4 using IKE SA #5
@@ -108,13 +108,13 @@ west #
  ipsec whack --impair v2_proposal_dh:drop-none
 west #
  ipsec whack --rekey-ike   --name dh
-"dh" #3: initiating rekey to replace IKE SA #1
+"dh" #3: initiating rekey to replace IKE SA #1 using IKE SA #1
 "dh" #3: sent CREATE_CHILD_SA request to rekey IKE SA #1 (using IKE SA #1)
 "dh" #3: initiator rekeyed IKE SA #1 {cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 group=MODP2048}
 "dh" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 west #
  ipsec whack --rekey-child --name dh
-"dh" #4: initiating rekey to replace Child SA #2
+"dh" #4: initiating rekey to replace Child SA #2 using IKE SA #3
 "dh" #4: IMPAIR: proposal 1 transform DH=NONE excluded when counting transforms
 "dh" #4: IMPAIR: proposal 1 transform DH=NONE excluded when emitting proposal
 "dh" #4: sent CREATE_CHILD_SA request to rekey Child SA #2 using IKE SA #3
@@ -133,13 +133,13 @@ west #
  ipsec whack --impair v2_proposal_dh:allow-none
 west #
  ipsec whack --rekey-ike   --name dh
-"dh" #5: initiating rekey to replace IKE SA #3
+"dh" #5: initiating rekey to replace IKE SA #3 using IKE SA #3
 "dh" #5: sent CREATE_CHILD_SA request to rekey IKE SA #3 (using IKE SA #3)
 "dh" #5: initiator rekeyed IKE SA #3 {cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 group=MODP2048}
 "dh" #3: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 west #
  ipsec whack --rekey-child --name dh
-"dh" #6: initiating rekey to replace Child SA #4
+"dh" #6: initiating rekey to replace Child SA #4 using IKE SA #5
 "dh" #6: IMPAIR: proposal 1 transform DH=NONE included when counting transforms
 "dh" #6: IMPAIR: proposal 1 transform DH=NONE included when emitting proposal
 "dh" #6: sent CREATE_CHILD_SA request to rekey Child SA #4 using IKE SA #5

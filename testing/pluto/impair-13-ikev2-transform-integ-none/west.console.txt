@@ -32,7 +32,7 @@ west #
  ipsec whack --impair v2_proposal_integ:allow-none
 west #
  ipsec whack --rekey-ike   --name integ
-"integ" #3: initiating rekey to replace IKE SA #1
+"integ" #3: initiating rekey to replace IKE SA #1 using IKE SA #1
 "integ" #3: IMPAIR: proposal 1 transform INTEG=NONE included when counting transforms
 "integ" #3: IMPAIR: proposal 1 transform INTEG=NONE included when emitting proposal
 "integ" #3: sent CREATE_CHILD_SA request to rekey IKE SA #1 (using IKE SA #1)
@@ -40,7 +40,7 @@ west #
 "integ" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 west #
  ipsec whack --rekey-child --name integ
-"integ" #4: initiating rekey to replace Child SA #2
+"integ" #4: initiating rekey to replace Child SA #2 using IKE SA #3
 "integ" #4: IMPAIR: proposal 1 transform INTEG=NONE included when counting transforms
 "integ" #4: IMPAIR: proposal 1 transform INTEG=NONE included when emitting proposal
 "integ" #4: sent CREATE_CHILD_SA request to rekey Child SA #2 using IKE SA #3
@@ -59,7 +59,7 @@ west #
  ipsec whack --impair v2_proposal_integ:drop-none
 west #
  ipsec whack --rekey-ike   --name integ
-"integ" #5: initiating rekey to replace IKE SA #3
+"integ" #5: initiating rekey to replace IKE SA #3 using IKE SA #3
 "integ" #5: IMPAIR: proposal 1 transform INTEG=NONE excluded when counting transforms
 "integ" #5: IMPAIR: proposal 1 transform INTEG=NONE excluded when emitting proposal
 "integ" #5: sent CREATE_CHILD_SA request to rekey IKE SA #3 (using IKE SA #3)
@@ -67,7 +67,7 @@ west #
 "integ" #3: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 west #
  ipsec whack --rekey-child --name integ
-"integ" #6: initiating rekey to replace Child SA #4
+"integ" #6: initiating rekey to replace Child SA #4 using IKE SA #5
 "integ" #6: IMPAIR: proposal 1 transform INTEG=NONE excluded when counting transforms
 "integ" #6: IMPAIR: proposal 1 transform INTEG=NONE excluded when emitting proposal
 "integ" #6: sent CREATE_CHILD_SA request to rekey Child SA #4 using IKE SA #5
@@ -116,7 +116,7 @@ west #
  ipsec whack --impair v2_proposal_integ:drop-none
 west #
  ipsec whack --rekey-ike   --name integ
-"integ" #3: initiating rekey to replace IKE SA #1
+"integ" #3: initiating rekey to replace IKE SA #1 using IKE SA #1
 "integ" #3: IMPAIR: proposal 1 transform INTEG=NONE excluded when counting transforms
 "integ" #3: IMPAIR: proposal 1 transform INTEG=NONE excluded when emitting proposal
 "integ" #3: sent CREATE_CHILD_SA request to rekey IKE SA #1 (using IKE SA #1)
@@ -124,7 +124,7 @@ west #
 "integ" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 west #
  ipsec whack --rekey-child --name integ
-"integ" #4: initiating rekey to replace Child SA #2
+"integ" #4: initiating rekey to replace Child SA #2 using IKE SA #3
 "integ" #4: IMPAIR: proposal 1 transform INTEG=NONE excluded when counting transforms
 "integ" #4: IMPAIR: proposal 1 transform INTEG=NONE excluded when emitting proposal
 "integ" #4: sent CREATE_CHILD_SA request to rekey Child SA #2 using IKE SA #3
@@ -143,7 +143,7 @@ west #
  ipsec whack --impair v2_proposal_integ:allow-none
 west #
  ipsec whack --rekey-ike   --name integ
-"integ" #5: initiating rekey to replace IKE SA #3
+"integ" #5: initiating rekey to replace IKE SA #3 using IKE SA #3
 "integ" #5: IMPAIR: proposal 1 transform INTEG=NONE included when counting transforms
 "integ" #5: IMPAIR: proposal 1 transform INTEG=NONE included when emitting proposal
 "integ" #5: sent CREATE_CHILD_SA request to rekey IKE SA #3 (using IKE SA #3)
@@ -151,7 +151,7 @@ west #
 "integ" #3: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 west #
  ipsec whack --rekey-child --name integ
-"integ" #6: initiating rekey to replace Child SA #4
+"integ" #6: initiating rekey to replace Child SA #4 using IKE SA #5
 "integ" #6: IMPAIR: proposal 1 transform INTEG=NONE included when counting transforms
 "integ" #6: IMPAIR: proposal 1 transform INTEG=NONE included when emitting proposal
 "integ" #6: sent CREATE_CHILD_SA request to rekey Child SA #4 using IKE SA #5
