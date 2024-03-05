@@ -40,7 +40,7 @@ up
 "tcp": terminating SAs using this connection
 "tcp" #1: sent INFORMATIONAL request to delete IKE SA
 "tcp" #2: ESP traffic information: in=84B out=84B
-"tcp" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
+"tcp" #1: deleting IKE SA (STATE_IKESA_DEL)
 west #
  ipsec up udp && ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254 && ipsec down udp || true
 "udp" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -48,6 +48,6 @@ west #
 "udp" #3: STATE_V2_PARENT_I1: 10 second timeout exceeded after 5 retransmits.  No response (or no acceptable response) to our first IKEv2 message
 "udp" #3: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "udp" #3: IMPAIR: revival: skip scheduling revival event
-"udp" #3: deleting IKE SA (PARENT_I1) and NOT sending notification
+"udp" #3: deleting IKE SA (sent IKE_SA_INIT request)
 west #
  

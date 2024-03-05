@@ -31,7 +31,7 @@ west #
 "westnet-eastnet-ikev2" #1: encountered fatal error in state STATE_V2_PARENT_I2
 "westnet-eastnet-ikev2" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "westnet-eastnet-ikev2" #2: IMPAIR: revival: skip scheduling revival event
-"westnet-eastnet-ikev2" #1: deleting IKE SA (PARENT_I2) and NOT sending notification
+"westnet-eastnet-ikev2" #1: deleting IKE SA (sent IKE_AUTH request)
 west #
  echo done
 done

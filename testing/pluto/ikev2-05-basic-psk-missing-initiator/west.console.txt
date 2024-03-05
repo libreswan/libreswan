@@ -36,7 +36,7 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2" #1: authentication failed: no PSK found for '@west'
 "westnet-eastnet-ipv4-psk-ikev2" #1: encountered fatal error in state STATE_V2_PARENT_I1
 "westnet-eastnet-ipv4-psk-ikev2" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"westnet-eastnet-ipv4-psk-ikev2" #1: deleting IKE SA (PARENT_I1) and NOT sending notification
+"westnet-eastnet-ipv4-psk-ikev2" #1: deleting IKE SA (sent IKE_SA_INIT request)
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 down UNEXPECTED

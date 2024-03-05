@@ -26,7 +26,7 @@ west #
 "west-east-auto": terminating SAs using this connection
 "west-east-auto" #1: sent INFORMATIONAL request to delete IKE SA
 "west-east-auto" #2: ESP traffic information: in=84B out=84B
-"west-east-auto" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
+"west-east-auto" #1: deleting IKE SA (STATE_IKESA_DEL)
 west #
  sleep 5
 west #

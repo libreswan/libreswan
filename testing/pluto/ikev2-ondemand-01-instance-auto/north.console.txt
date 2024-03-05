@@ -76,7 +76,7 @@ north #
 "north": terminating SAs using this connection
 "north" #1: sent INFORMATIONAL request to delete IKE SA
 "north" #2: ESP traffic information: in=84B out=84B
-"north" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
+"north" #1: deleting IKE SA (STATE_IKESA_DEL)
 north #
  #everything but trap cleared
 north #

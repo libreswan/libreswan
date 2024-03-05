@@ -53,7 +53,7 @@ road #
 "eastnet-any"[1] 192.1.2.23 #1: sent INFORMATIONAL request to delete IKE SA
 "eastnet-any"[1] 192.1.2.23 #2: down-client output: restoring resolvconf
 "eastnet-any"[1] 192.1.2.23 #2: ESP traffic information: in=84B out=84B
-"eastnet-any"[1] 192.1.2.23 #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
+"eastnet-any"[1] 192.1.2.23 #1: deleting IKE SA (STATE_IKESA_DEL)
 road #
  cat /etc/resolv.conf
 domain testing.libreswan.org

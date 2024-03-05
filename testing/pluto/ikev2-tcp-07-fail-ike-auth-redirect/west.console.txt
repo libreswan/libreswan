@@ -26,7 +26,7 @@ west #
 "west" #1: IKE_AUTH response redirecting to new gateway 192.1.3.33
 "west" #2: scheduling redirect 1 to 192.1.3.33
 "west" #2: IMPAIR: redirect: skip scheduling redirect event
-"west" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and NOT sending notification
+"west" #1: deleting IKE SA (established IKE SA)
 west #
  ipsec whack --impair trigger_revival:1
 "west": dispatch REVIVAL event

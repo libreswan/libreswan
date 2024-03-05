@@ -37,7 +37,7 @@ terminating all connections with alias "west"
 terminated 2 connections
 "west-cuckold" #1: sent INFORMATIONAL request to delete IKE SA
 "west-cuckold" #2: ESP traffic information: in=0B out=0B
-"west-cuckold" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
+"west-cuckold" #1: deleting IKE SA (STATE_IKESA_DEL)
 west #
  ipsec up cuckold
 initiating all connections with alias "cuckold"
@@ -64,7 +64,7 @@ terminating all connections with alias "west"
 terminated 2 connections
 "west-cuckold" #4: sent INFORMATIONAL request to delete IKE SA
 "west-cuckold" #5: ESP traffic information: in=0B out=0B
-"west-cuckold" #4: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
+"west-cuckold" #4: deleting IKE SA (STATE_IKESA_DEL)
 west #
  ipsec delete cuckold
 west #

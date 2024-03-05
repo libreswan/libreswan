@@ -41,7 +41,7 @@ west #
 "westnet-eastnet-k2" #1: STATE_V2_PARENT_I1: 3 second timeout exceeded after 2 retransmits.  No response (or no acceptable response) to our first IKEv2 message
 "westnet-eastnet-k2" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "westnet-eastnet-k2" #1: IMPAIR: revival: skip scheduling revival event
-"westnet-eastnet-k2" #1: deleting IKE SA (PARENT_I1) and NOT sending notification
+"westnet-eastnet-k2" #1: deleting IKE SA (sent IKE_SA_INIT request)
 west #
  ipsec auto --delete westnet-eastnet-k2
 west #

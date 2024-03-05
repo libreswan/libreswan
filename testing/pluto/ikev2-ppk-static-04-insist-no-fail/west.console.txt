@@ -49,7 +49,7 @@ west #
 "westnet-eastnet-ipv4-psk-ppk" #1: encountered fatal error in state STATE_V2_PARENT_I1
 "westnet-eastnet-ipv4-psk-ppk" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "westnet-eastnet-ipv4-psk-ppk" #1: IMPAIR: revival: skip scheduling revival event
-"westnet-eastnet-ipv4-psk-ppk" #1: deleting IKE SA (PARENT_I1) and NOT sending notification
+"westnet-eastnet-ipv4-psk-ppk" #1: deleting IKE SA (sent IKE_SA_INIT request)
 west #
  echo done
 done

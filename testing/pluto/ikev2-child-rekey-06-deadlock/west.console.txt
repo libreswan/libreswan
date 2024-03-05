@@ -89,7 +89,7 @@ west #
 "west" #3: IMPAIR: revival: skip scheduling revival event
 "west" #3: ESP traffic information: in=0B out=0B
 "west" #4: deleting larval Child SA
-"west" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and NOT sending notification
+"west" #1: deleting IKE SA (established IKE SA)
 west #
  ipsec whack --trafficstatus
 west #

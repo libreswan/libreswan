@@ -24,7 +24,7 @@ up
 "conf": terminating SAs using this connection
 "conf" #1: sent INFORMATIONAL request to delete IKE SA
 "conf" #2: ESP traffic information: in=84B out=84B
-"conf" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
+"conf" #1: deleting IKE SA (STATE_IKESA_DEL)
 west #
  ipsec whack --impair none
 west #
@@ -47,7 +47,7 @@ up
 "conf": terminating SAs using this connection
 "conf" #3: sent INFORMATIONAL request to delete IKE SA
 "conf" #4: ESP traffic information: in=84B out=84B
-"conf" #3: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
+"conf" #3: deleting IKE SA (STATE_IKESA_DEL)
 west #
  ipsec whack --impair none
 west #
@@ -70,7 +70,7 @@ up
 "conf": terminating SAs using this connection
 "conf" #5: sent INFORMATIONAL request to delete IKE SA
 "conf" #6: ESP traffic information: in=84B out=84B
-"conf" #5: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
+"conf" #5: deleting IKE SA (STATE_IKESA_DEL)
 west #
  ipsec whack --impair none
 west #
@@ -93,7 +93,7 @@ up
 "conf": terminating SAs using this connection
 "conf" #7: sent INFORMATIONAL request to delete IKE SA
 "conf" #8: ESP traffic information: in=84B out=84B
-"conf" #7: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
+"conf" #7: deleting IKE SA (STATE_IKESA_DEL)
 west #
  ipsec whack --impair none
 west #
@@ -116,7 +116,7 @@ up
 "conf": terminating SAs using this connection
 "conf" #9: sent INFORMATIONAL request to delete IKE SA
 "conf" #10: ESP traffic information: in=84B out=84B
-"conf" #9: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
+"conf" #9: deleting IKE SA (STATE_IKESA_DEL)
 west #
  ipsec whack --impair none
 west #

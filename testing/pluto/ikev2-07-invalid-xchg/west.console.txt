@@ -23,7 +23,7 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2" #1: no useful state microcode entry found for incoming packet
 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: retransmit so timing out SA (may retry)
 "westnet-eastnet-ipv4-psk-ikev2" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"westnet-eastnet-ipv4-psk-ikev2" #1: deleting IKE SA (PARENT_I2) and NOT sending notification
+"westnet-eastnet-ipv4-psk-ikev2" #1: deleting IKE SA (sent IKE_AUTH request)
 west #
  echo done
 done

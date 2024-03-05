@@ -44,7 +44,7 @@ road #
  # and delete, ...
 road #
  ../../guestbin/wait-for-pluto.sh '^".*#1: deleting'
-"road-east-x509-ipv4"[1] 192.1.2.23 #1: deleting IKE SA (ESTABLISHED_IKE_SA) and NOT sending notification
+"road-east-x509-ipv4"[1] 192.1.2.23 #1: deleting IKE SA (established IKE SA)
 road #
  # before trying ping (else ping races response)
 road #

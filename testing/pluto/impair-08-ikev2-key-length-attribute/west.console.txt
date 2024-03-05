@@ -28,7 +28,7 @@ up
 "aes128": terminating SAs using this connection
 "aes128" #1: sent INFORMATIONAL request to delete IKE SA
 "aes128" #2: ESP traffic information: in=84B out=84B
-"aes128" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
+"aes128" #1: deleting IKE SA (STATE_IKESA_DEL)
 west #
  ipsec whack --impair none
 west #
@@ -46,7 +46,7 @@ west #
 "aes128" #3: dropping unexpected IKE_SA_INIT message containing NO_PROPOSAL_CHOSEN notification; message payloads: N; missing payloads: SA,KE,Ni
 "aes128" #3: IMPAIR: retransmit so timing out SA (may retry)
 "aes128" #3: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"aes128" #3: deleting IKE SA (PARENT_I1) and NOT sending notification
+"aes128" #3: deleting IKE SA (sent IKE_SA_INIT request)
 west #
  ipsec whack --impair none
 west #
@@ -86,7 +86,7 @@ up
 "aes128": terminating SAs using this connection
 "aes128" #8: sent INFORMATIONAL request to delete IKE SA
 "aes128" #9: ESP traffic information: in=84B out=84B
-"aes128" #8: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
+"aes128" #8: deleting IKE SA (STATE_IKESA_DEL)
 west #
  ipsec whack --impair none
 west #
@@ -107,7 +107,7 @@ up
 "aes128": terminating SAs using this connection
 "aes128" #10: sent INFORMATIONAL request to delete IKE SA
 "aes128" #11: ESP traffic information: in=84B out=84B
-"aes128" #10: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
+"aes128" #10: deleting IKE SA (STATE_IKESA_DEL)
 west #
  ipsec whack --impair none
 west #
@@ -125,7 +125,7 @@ west #
 "aes128" #12: dropping unexpected IKE_SA_INIT message containing NO_PROPOSAL_CHOSEN notification; message payloads: N; missing payloads: SA,KE,Ni
 "aes128" #12: IMPAIR: retransmit so timing out SA (may retry)
 "aes128" #12: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"aes128" #12: deleting IKE SA (PARENT_I1) and NOT sending notification
+"aes128" #12: deleting IKE SA (sent IKE_SA_INIT request)
 west #
  ipsec whack --impair none
 west #
@@ -163,7 +163,7 @@ west #
 "aes128" #17: dropping unexpected IKE_SA_INIT message containing INVALID_SYNTAX notification; message payloads: N; missing payloads: SA,KE,Ni
 "aes128" #17: IMPAIR: retransmit so timing out SA (may retry)
 "aes128" #17: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"aes128" #17: deleting IKE SA (PARENT_I1) and NOT sending notification
+"aes128" #17: deleting IKE SA (sent IKE_SA_INIT request)
 west #
  ipsec whack --impair none
 west #
@@ -182,7 +182,7 @@ west #
 "aes128" #19: dropping unexpected IKE_SA_INIT message containing INVALID_SYNTAX notification; message payloads: N; missing payloads: SA,KE,Ni
 "aes128" #19: IMPAIR: retransmit so timing out SA (may retry)
 "aes128" #19: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"aes128" #19: deleting IKE SA (PARENT_I1) and NOT sending notification
+"aes128" #19: deleting IKE SA (sent IKE_SA_INIT request)
 west #
  ipsec whack --impair none
 west #
@@ -202,7 +202,7 @@ up
 "3des": terminating SAs using this connection
 "3des" #21: sent INFORMATIONAL request to delete IKE SA
 "3des" #22: ESP traffic information: in=84B out=84B
-"3des" #21: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
+"3des" #21: deleting IKE SA (STATE_IKESA_DEL)
 west #
  ipsec whack --impair none
 west #
@@ -225,7 +225,7 @@ up
 "3des": terminating SAs using this connection
 "3des" #23: sent INFORMATIONAL request to delete IKE SA
 "3des" #24: ESP traffic information: in=84B out=84B
-"3des" #23: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
+"3des" #23: deleting IKE SA (STATE_IKESA_DEL)
 west #
  ipsec whack --impair none
 west #
@@ -243,7 +243,7 @@ west #
 "3des" #25: dropping unexpected IKE_SA_INIT message containing NO_PROPOSAL_CHOSEN notification; message payloads: N; missing payloads: SA,KE,Ni
 "3des" #25: IMPAIR: retransmit so timing out SA (may retry)
 "3des" #25: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"3des" #25: deleting IKE SA (PARENT_I1) and NOT sending notification
+"3des" #25: deleting IKE SA (sent IKE_SA_INIT request)
 west #
  ipsec whack --impair none
 west #

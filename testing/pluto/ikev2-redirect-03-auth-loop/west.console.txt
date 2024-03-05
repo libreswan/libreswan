@@ -26,7 +26,7 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2" #1: IKE_AUTH response redirecting to new gateway 192.1.3.33
 "westnet-eastnet-ipv4-psk-ikev2" #2: scheduling redirect 1 to 192.1.3.33
 "westnet-eastnet-ipv4-psk-ikev2" #2: IMPAIR: redirect: skip scheduling redirect event
-"westnet-eastnet-ipv4-psk-ikev2" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and NOT sending notification
+"westnet-eastnet-ipv4-psk-ikev2" #1: deleting IKE SA (established IKE SA)
 west #
  ipsec whack --impair trigger_revival:1
 "westnet-eastnet-ipv4-psk-ikev2": dispatch REVIVAL event
@@ -38,7 +38,7 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2" #3: IKE_AUTH response redirecting to new gateway 192.1.2.23
 "westnet-eastnet-ipv4-psk-ikev2" #4: scheduling redirect 2 to 192.1.2.23
 "westnet-eastnet-ipv4-psk-ikev2" #4: IMPAIR: redirect: skip scheduling redirect event
-"westnet-eastnet-ipv4-psk-ikev2" #3: deleting IKE SA (ESTABLISHED_IKE_SA) and NOT sending notification
+"westnet-eastnet-ipv4-psk-ikev2" #3: deleting IKE SA (established IKE SA)
 west #
  ipsec whack --impair trigger_revival:1
 "westnet-eastnet-ipv4-psk-ikev2": dispatch REVIVAL event
@@ -50,7 +50,7 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2" #5: IKE_AUTH response redirecting to new gateway 192.1.3.33
 "westnet-eastnet-ipv4-psk-ikev2" #6: scheduling redirect 3 to 192.1.3.33
 "westnet-eastnet-ipv4-psk-ikev2" #6: IMPAIR: redirect: skip scheduling redirect event
-"westnet-eastnet-ipv4-psk-ikev2" #5: deleting IKE SA (ESTABLISHED_IKE_SA) and NOT sending notification
+"westnet-eastnet-ipv4-psk-ikev2" #5: deleting IKE SA (established IKE SA)
 west #
  ipsec whack --impair trigger_revival:1
 "westnet-eastnet-ipv4-psk-ikev2": dispatch REVIVAL event
@@ -62,7 +62,7 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2" #7: IKE_AUTH response redirecting to new gateway 192.1.2.23
 "westnet-eastnet-ipv4-psk-ikev2" #8: scheduling redirect 4 to 192.1.2.23
 "westnet-eastnet-ipv4-psk-ikev2" #8: IMPAIR: redirect: skip scheduling redirect event
-"westnet-eastnet-ipv4-psk-ikev2" #7: deleting IKE SA (ESTABLISHED_IKE_SA) and NOT sending notification
+"westnet-eastnet-ipv4-psk-ikev2" #7: deleting IKE SA (established IKE SA)
 west #
  ipsec whack --impair trigger_revival:1
 "westnet-eastnet-ipv4-psk-ikev2": dispatch REVIVAL event
@@ -74,7 +74,7 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2" #9: IKE_AUTH response redirecting to new gateway 192.1.3.33
 "westnet-eastnet-ipv4-psk-ikev2" #10: scheduling redirect 5 to 192.1.3.33
 "westnet-eastnet-ipv4-psk-ikev2" #10: IMPAIR: redirect: skip scheduling redirect event
-"westnet-eastnet-ipv4-psk-ikev2" #9: deleting IKE SA (ESTABLISHED_IKE_SA) and NOT sending notification
+"westnet-eastnet-ipv4-psk-ikev2" #9: deleting IKE SA (established IKE SA)
 west #
  ipsec whack --impair trigger_revival:1
 "westnet-eastnet-ipv4-psk-ikev2": dispatch REVIVAL event
@@ -86,7 +86,7 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2" #11: IKE_AUTH redirect exceeds limit; assuming redirect loop
 "westnet-eastnet-ipv4-psk-ikev2" #12: connection is supposed to remain up; revival attempt 1 scheduled in 300 seconds
 "westnet-eastnet-ipv4-psk-ikev2" #12: IMPAIR: revival: skip scheduling revival event
-"westnet-eastnet-ipv4-psk-ikev2" #11: deleting IKE SA (ESTABLISHED_IKE_SA) and NOT sending notification
+"westnet-eastnet-ipv4-psk-ikev2" #11: deleting IKE SA (established IKE SA)
 west #
  ipsec whack --impair trigger_revival:1
 "westnet-eastnet-ipv4-psk-ikev2": dispatch REVIVAL event
@@ -99,7 +99,7 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2" #13: IKE_AUTH response redirecting to new gateway 192.1.3.33
 "westnet-eastnet-ipv4-psk-ikev2" #14: scheduling redirect 1 to 192.1.3.33
 "westnet-eastnet-ipv4-psk-ikev2" #14: IMPAIR: redirect: skip scheduling redirect event
-"westnet-eastnet-ipv4-psk-ikev2" #13: deleting IKE SA (ESTABLISHED_IKE_SA) and NOT sending notification
+"westnet-eastnet-ipv4-psk-ikev2" #13: deleting IKE SA (established IKE SA)
 west #
  echo done
 done

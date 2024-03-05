@@ -17,7 +17,7 @@ east #
 "westnet-eastnet-ipv4-psk-ikev2" #1: KE has 0 byte DH public value; 64 required
 "westnet-eastnet-ipv4-psk-ikev2" #1: responding to IKE_SA_INIT message (ID 0) from 192.1.2.45:500 with unencrypted notification INVALID_SYNTAX
 "westnet-eastnet-ipv4-psk-ikev2" #1: encountered fatal error in state STATE_V2_PARENT_R0
-"westnet-eastnet-ipv4-psk-ikev2" #1: deleting IKE SA (PARENT_R0) and NOT sending notification
+"westnet-eastnet-ipv4-psk-ikev2" #1: deleting IKE SA (processing IKE_SA_INIT request)
 "westnet-eastnet-ipv4-psk-ikev2" #2: IMPAIR: sending an empty KE value
 "westnet-eastnet-ipv4-psk-ikev2" #2: processed IKE_SA_INIT request from 192.1.2.45:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
 east #

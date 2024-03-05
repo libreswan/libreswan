@@ -35,7 +35,7 @@ west #
 "west" #1: STATE_V2_PARENT_I1: 10 second timeout exceeded after 5 retransmits.  No response (or no acceptable response) to our first IKEv2 message
 "west" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "west" #1: IMPAIR: revival: skip scheduling revival event
-"west" #1: deleting IKE SA (PARENT_I1) and NOT sending notification
+"west" #1: deleting IKE SA (sent IKE_SA_INIT request)
 west #
  ipsec whack --impair trigger_revival:1
 "west": dispatch REVIVAL event

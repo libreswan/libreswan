@@ -36,7 +36,7 @@ west #
 "nss-cert" #1: encountered fatal error in state STATE_V2_PARENT_I2
 "nss-cert" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "nss-cert" #2: IMPAIR: revival: skip scheduling revival event
-"nss-cert" #1: deleting IKE SA (PARENT_I2) and NOT sending notification
+"nss-cert" #1: deleting IKE SA (sent IKE_AUTH request)
 west #
  echo done
 done

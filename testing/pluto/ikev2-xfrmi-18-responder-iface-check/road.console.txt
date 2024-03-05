@@ -25,6 +25,6 @@ road #
 "road": terminating SAs using this connection
 "road" #1: sent INFORMATIONAL request to delete IKE SA
 "road" #2: ESP traffic information: in=0B out=0B
-"road" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
+"road" #1: deleting IKE SA (STATE_IKESA_DEL)
 road #
  

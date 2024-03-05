@@ -108,7 +108,7 @@ north #
 "north": terminating SAs using this connection
 "north" #2: sent INFORMATIONAL request to delete IKE SA
 "north" #3: ESP traffic information: in=84B out=84B
-"north" #2: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
+"north" #2: deleting IKE SA (STATE_IKESA_DEL)
 north #
  ../../guestbin/ipsec-kernel-policy.sh
 src 192.0.3.254/32 dst 192.0.2.0/24

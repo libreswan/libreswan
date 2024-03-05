@@ -30,7 +30,7 @@ up
 "westnet-eastnet-ipv4-psk-ikev2": terminating SAs using this connection
 "westnet-eastnet-ipv4-psk-ikev2" #1: sent INFORMATIONAL request to delete IKE SA
 "westnet-eastnet-ipv4-psk-ikev2" #2: ESP traffic information: in=84B out=84B
-"westnet-eastnet-ipv4-psk-ikev2" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
+"westnet-eastnet-ipv4-psk-ikev2" #1: deleting IKE SA (STATE_IKESA_DEL)
 west #
  : bad
 west #
@@ -54,7 +54,7 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2" #3: IKE SA authentication request rejected by peer: UNSUPPORTED_CRITICAL_PAYLOAD
 "westnet-eastnet-ipv4-psk-ikev2" #3: encountered fatal error in state STATE_V2_PARENT_I2
 "westnet-eastnet-ipv4-psk-ikev2" #4: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"westnet-eastnet-ipv4-psk-ikev2" #3: deleting IKE SA (PARENT_I2) and NOT sending notification
+"westnet-eastnet-ipv4-psk-ikev2" #3: deleting IKE SA (sent IKE_AUTH request)
 west #
  echo done
 done

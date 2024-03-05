@@ -35,7 +35,7 @@ west #
 "westnet-eastnet-auto": terminating SAs using this connection
 "westnet-eastnet-auto" #1: sent INFORMATIONAL request to delete IKE SA
 "westnet-eastnet-auto" #2: ESP traffic information: in=84B out=84B
-"westnet-eastnet-auto" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
+"westnet-eastnet-auto" #1: deleting IKE SA (STATE_IKESA_DEL)
 west #
  # give Delete/Notify some time; traffic counters on the new IPsec SA
 west #

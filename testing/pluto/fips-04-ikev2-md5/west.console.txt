@@ -35,7 +35,7 @@ west #
 "westnet-eastnet-md5" #1: dropping unexpected IKE_SA_INIT message containing NO_PROPOSAL_CHOSEN notification; message payloads: N; missing payloads: SA,KE,Ni
 "westnet-eastnet-md5" #1: IMPAIR: retransmit so timing out SA (may retry)
 "westnet-eastnet-md5" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"westnet-eastnet-md5" #1: deleting IKE SA (PARENT_I1) and NOT sending notification
+"westnet-eastnet-md5" #1: deleting IKE SA (sent IKE_SA_INIT request)
 west #
  ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
 down

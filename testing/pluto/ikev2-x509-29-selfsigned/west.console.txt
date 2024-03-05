@@ -48,7 +48,7 @@ west #
 "road-x509" #3: sent IKE_AUTH request to 192.1.2.23:UDP/500
 "road-x509" #3: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
 "road-x509" #3: encountered fatal error in state STATE_V2_PARENT_I2
-"road-x509" #3: deleting IKE SA (PARENT_I2) and NOT sending notification
+"road-x509" #3: deleting IKE SA (sent IKE_AUTH request)
 "road-x509" #3: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 west #
  echo "done"

@@ -58,11 +58,11 @@ west #
 "old-west" #1: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
 "old-west" #1: encountered fatal error in state STATE_V2_PARENT_I2
 "old-west" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"old-west" #1: deleting IKE SA (PARENT_I2) and NOT sending notification
+"old-west" #1: deleting IKE SA (sent IKE_AUTH request)
 west #
  ipsec auto --down old-west
 "old-west": terminating SAs using this connection
-"old-west" #3: deleting IKE SA (PARENT_I1) and NOT sending notification
+"old-west" #3: deleting IKE SA (sent IKE_SA_INIT request)
 west #
  ipsec auto --up new-west
 "new-west" #4: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -76,7 +76,7 @@ west #
 "new-west": terminating SAs using this connection
 "new-west" #4: sent INFORMATIONAL request to delete IKE SA
 "new-west" #5: ESP traffic information: in=0B out=0B
-"new-west" #4: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
+"new-west" #4: deleting IKE SA (STATE_IKESA_DEL)
 west #
  ipsec auto --up hog-west
 "hog-west" #6: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -90,6 +90,6 @@ west #
 "hog-west": terminating SAs using this connection
 "hog-west" #6: sent INFORMATIONAL request to delete IKE SA
 "hog-west" #7: ESP traffic information: in=0B out=0B
-"hog-west" #6: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
+"hog-west" #6: deleting IKE SA (STATE_IKESA_DEL)
 west #
  

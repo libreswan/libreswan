@@ -23,7 +23,7 @@ west #
 "westnet-eastnet-ikev2-major" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-ikev2-major" #1: IMPAIR: retransmit so timing out SA (may retry)
 "westnet-eastnet-ikev2-major" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"westnet-eastnet-ikev2-major" #1: deleting IKE SA (PARENT_I1) and NOT sending notification
+"westnet-eastnet-ikev2-major" #1: deleting IKE SA (sent IKE_SA_INIT request)
 west #
  echo done
 done

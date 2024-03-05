@@ -26,7 +26,7 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2" #1: IKE_AUTH response redirecting to new gateway 192.1.3.33
 "westnet-eastnet-ipv4-psk-ikev2" #2: scheduling redirect 1 to 192.1.3.33
 "westnet-eastnet-ipv4-psk-ikev2" #2: IMPAIR: redirect: skip scheduling redirect event
-"westnet-eastnet-ipv4-psk-ikev2" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and NOT sending notification
+"westnet-eastnet-ipv4-psk-ikev2" #1: deleting IKE SA (established IKE SA)
 west #
  ipsec whack --impair trigger_revival:1
 "westnet-eastnet-ipv4-psk-ikev2": dispatch REVIVAL event

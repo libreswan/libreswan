@@ -36,7 +36,7 @@ up
 "ah=md5": terminating SAs using this connection
 "ah=md5" #1: sent INFORMATIONAL request to delete IKE SA
 "ah=md5" #2: AH traffic information: in=84B out=84B
-"ah=md5" #1: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
+"ah=md5" #1: deleting IKE SA (STATE_IKESA_DEL)
 west #
  ../../guestbin/libreswan-up-down.sh ah=sha1 -I 192.0.1.254 192.0.2.254
 "ah=sha1": added IKEv2 connection
@@ -50,7 +50,7 @@ up
 "ah=sha1": terminating SAs using this connection
 "ah=sha1" #3: sent INFORMATIONAL request to delete IKE SA
 "ah=sha1" #4: AH traffic information: in=84B out=84B
-"ah=sha1" #3: deleting IKE SA (IKE_SA_DELETE) and NOT sending notification
+"ah=sha1" #3: deleting IKE SA (STATE_IKESA_DEL)
 west #
  # Test rekey
 west #

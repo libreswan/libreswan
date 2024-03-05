@@ -23,7 +23,7 @@ west #
 "westnet-eastnet-ikev2" #1: STATE_V2_PARENT_I1: retransmission; will wait 4 seconds for response
 "westnet-eastnet-ikev2" #1: STATE_V2_PARENT_I1: 5 second timeout exceeded after 3 retransmits.  No response (or no acceptable response) to our first IKEv2 message
 "westnet-eastnet-ikev2" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"westnet-eastnet-ikev2" #1: deleting IKE SA (PARENT_I1) and NOT sending notification
+"westnet-eastnet-ikev2" #1: deleting IKE SA (sent IKE_SA_INIT request)
 west #
  echo done
 done

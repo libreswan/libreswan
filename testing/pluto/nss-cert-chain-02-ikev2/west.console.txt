@@ -48,7 +48,7 @@ west #
 "nss-cert-chain" #1: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
 "nss-cert-chain" #1: encountered fatal error in state STATE_V2_PARENT_I2
 "nss-cert-chain" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"nss-cert-chain" #1: deleting IKE SA (PARENT_I2) and NOT sending notification
+"nss-cert-chain" #1: deleting IKE SA (sent IKE_AUTH request)
 west #
  echo done
 done

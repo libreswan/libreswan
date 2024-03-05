@@ -50,7 +50,7 @@ west #
 west #
  ipsec auto --delete westnet-eastnet-ipv4-psk-ikev2
 "westnet-eastnet-ipv4-psk-ikev2": terminating SAs using this connection
-"westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: deleting IKE SA (ESTABLISHED_IKE_SA) and NOT sending notification
+"westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: deleting IKE SA (established IKE SA)
 "westnet-eastnet-ipv4-psk-ikev2" #2: ESP traffic information: in=84B out=84B
 west #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2

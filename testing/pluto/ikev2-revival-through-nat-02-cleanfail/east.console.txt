@@ -72,7 +72,7 @@ east #
 "road-eastnet-ikev2"[1] 192.1.2.254 #3: STATE_V2_PARENT_I1: retransmission; will wait 4 seconds for response
 "road-eastnet-ikev2"[1] 192.1.2.254 #3: dropping unexpected IKE_SA_INIT message containing NO_PROPOSAL_CHOSEN notification; message payloads: N; missing payloads: SA,KE,Ni
 "road-eastnet-ikev2"[1] 192.1.2.254 #3: STATE_V2_PARENT_I1: 5 second timeout exceeded after 4 retransmits.  No response (or no acceptable response) to our first IKEv2 message
-"road-eastnet-ikev2"[1] 192.1.2.254 #3: deleting IKE SA (PARENT_I1) and NOT sending notification
+"road-eastnet-ikev2"[1] 192.1.2.254 #3: deleting IKE SA (sent IKE_SA_INIT request)
 east #
  # but road is really down, so that fails; and everything is deleted
 east #

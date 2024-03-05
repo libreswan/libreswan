@@ -45,7 +45,7 @@ west #
 "westnet-eastnet-ikev2a" #2: ESP traffic information: in=0B out=0B
 "westnet-eastnet-ikev2b" #3: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "westnet-eastnet-ikev2b" #3: IMPAIR: revival: skip scheduling revival event
-"westnet-eastnet-ikev2a" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and NOT sending notification
+"westnet-eastnet-ikev2a" #1: deleting IKE SA (established IKE SA)
 west #
  echo done
 done
