@@ -828,7 +828,7 @@ struct connection {
 
 	struct pending *pending;
 
-	struct connection_event_event *events[CONNECTION_EVENT_ROOF];
+	struct connection_event *events[CONNECTION_EVENT_KIND_ROOF];
 
 	/*
 	 * An extract of the original configuration information for

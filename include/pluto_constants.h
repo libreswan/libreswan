@@ -212,12 +212,12 @@ enum global_timer {
  * Connection based events.
  */
 
-enum connection_event {
+enum connection_event_kind {
 	CONNECTION_REVIVAL = 1,
 };
-#define CONNECTION_EVENT_ROOF (CONNECTION_REVIVAL+1)
+#define CONNECTION_EVENT_KIND_ROOF (CONNECTION_REVIVAL+1)
 
-extern const struct enum_names connection_event_names;
+extern const struct enum_names connection_event_kind_names;
 
 /*
  * State based events and timers.

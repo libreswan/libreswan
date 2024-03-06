@@ -110,8 +110,8 @@ static void whack_impair_action(enum impair_action impairment_action,
 		c = connection_addref(c, logger); /*must-delref*/
 		/* will log */
 		struct logger *loggers = merge_loggers(c->logger, detach_whack, logger);
-		enum connection_event event = impairment_param;
-		whack_impair_call_connection_event_handler(c, event, loggers);
+		enum connection_event_kind event_kind = impairment_param;
+		whack_impair_call_connection_event_handler(c, event_kind, loggers);
 		free_logger(&loggers, HERE);
 		/* release whack, possibly attached to C by
 		 * merge_loggers */

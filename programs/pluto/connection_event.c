@@ -26,8 +26,8 @@
 
 static void connection_event_handler(void *arg, const struct timer_event *event);
 
-struct connection_event_event {
-	enum connection_event event;
+struct connection_event {
+	enum connection_event_kind kind;
 	struct connection *connection;
 	const char *subplot;
 	struct timeout *timeout;
@@ -35,19 +35,20 @@ struct connection_event_event {
 };
 
 void schedule_connection_event(struct connection *c,
-			       enum connection_event event, const char *subplot,
+			       enum connection_event_kind event_kind,
+			       const char *subplot,
 			       deltatime_t delay,
 			       const char *impair, struct logger *logger)
 {
-	struct connection_event_event *d = alloc_thing(struct connection_event_event, "data");
+	struct connection_event *d = alloc_thing(struct connection_event, "data");
 	connection_buf cb;
 	d->logger = string_logger(HERE, "event %s for "PRI_CONNECTION,
-				  enum_name(&connection_event_names, event),
+				  enum_name(&connection_event_kind_names, event_kind),
 				  pri_connection(c, &cb));
-	d->event = event;
+	d->kind = event_kind;
 	d->subplot = subplot;
 	d->connection = connection_addref(c, d->logger);
-	c->events[event] = d;
+	c->events[event_kind] = d;
 
 	if (impair != NULL) {
 		llog(RC_LOG, logger,
@@ -56,12 +57,12 @@ void schedule_connection_event(struct connection *c,
 		return;
 	}
 
-	schedule_timeout(enum_name(&connection_event_names, event),
+	schedule_timeout(enum_name(&connection_event_kind_names, event_kind),
 			 &d->timeout, delay,
 			 connection_event_handler, d);
 }
 
-static void discard_connection_event(struct connection_event_event **e)
+static void discard_connection_event(struct connection_event **e)
 {
 	/*
 	 * When impaired, .timeout is NULL but destroy_timeout()
@@ -74,20 +75,20 @@ static void discard_connection_event(struct connection_event_event **e)
 	*e = NULL;
 }
 
-static void delete_connection_event(struct connection_event_event **e)
+static void delete_connection_event(struct connection_event **e)
 {
 	discard_connection_event(e);
 }
 
-static void dispatch_connection_event(struct connection_event_event *e,
+static void dispatch_connection_event(struct connection_event *e,
 				      const threadtime_t *inception)
 {
 	ldbg(e->logger, "dispatching");
 
 	/* make it invisible */
-	e->connection->events[e->event] = NULL;
+	e->connection->events[e->kind] = NULL;
 
-	switch (e->event) {
+	switch (e->kind) {
 	case CONNECTION_REVIVAL:
 		revive_connection(e->connection, e->subplot, inception);
 		break;
@@ -102,35 +103,35 @@ void connection_event_handler(void *arg, const struct timer_event *event)
 }
 
 void whack_impair_call_connection_event_handler(struct connection *c,
-						enum connection_event event,
+						enum connection_event_kind event_kind,
 						struct logger *logger)
 {
-	struct connection_event_event *e = c->events[event];
+	struct connection_event *e = c->events[event_kind];
 	if (e != NULL) {
 		threadtime_t inception = threadtime_start();
 		enum_buf eb;
 		llog(RC_COMMENT, logger, "IMPAIR: dispatch %s event",
-		     str_enum_short(&connection_event_names, event, &eb));
+		     str_enum_short(&connection_event_kind_names, event_kind, &eb));
 		/* dispatch will delete */
 		dispatch_connection_event(e, &inception);
 		return;
 	}
 	enum_buf eb;
 	llog(RC_COMMENT, logger, "IMPAIR: no %s event for connection found",
-	     str_enum_short(&connection_event_names, event, &eb));
+	     str_enum_short(&connection_event_kind_names, event_kind, &eb));
 }
 
 bool connection_event_is_scheduled(const struct connection *c,
-				   enum connection_event event)
+				   enum connection_event_kind event)
 {
 	return (c->events[event] != NULL);
 }
 
 bool flush_connection_event(struct connection *c,
-			    enum connection_event event)
+			    enum connection_event_kind event_kind)
 {
-	if (c->events[event] != NULL) {
-		delete_connection_event(&c->events[event]);
+	if (c->events[event_kind] != NULL) {
+		delete_connection_event(&c->events[event_kind]);
 		return true;
 	}
 	return false;
@@ -139,7 +140,7 @@ bool flush_connection_event(struct connection *c,
 bool flush_connection_events(struct connection *c)
 {
 	bool flushed = false;
-	for (enum connection_event e = 0; e < CONNECTION_EVENT_ROOF; e++) {
+	for (enum connection_event_kind e = 0; e < CONNECTION_EVENT_KIND_ROOF; e++) {
 		flushed |= flush_connection_event(c, e);
 
 	}

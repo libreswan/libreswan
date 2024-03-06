@@ -249,15 +249,15 @@ enum_names dns_auth_level_names = {
 	NULL
 };
 
-static const char *connection_event_name[] = {
+static const char *connection_event_kind_name[] = {
 #define S(E) [E - 1] = #E
 	S(CONNECTION_REVIVAL),
 #undef S
 };
 
-const struct enum_names connection_event_names = {
+const struct enum_names connection_event_kind_names = {
 	1, CONNECTION_REVIVAL,
-	ARRAY_REF(connection_event_name),
+	ARRAY_REF(connection_event_kind_name),
 	"CONNECTION_", NULL,
 };
 
