@@ -68,8 +68,11 @@ else
     earliest_commit=$(${webdir}/gime-git-hash.sh ${rutdir} HEAD)
 fi
 
+# start with basic status output; updated below to add more details as
+# they become available.
+
 json_status="${webdir}/json-status.sh --json ${summarydir}/status.json"
-status=${json_status}
+update_status=${json_status}
 
 MAKE() {
 
@@ -91,11 +94,6 @@ KVM() {
     ${benchdir}/kvm ${target}
 }
 
-# start with basic status output; updated below to add more details as
-# they become available.
-
-update_status=${json_status}
-
 # Update the repo.
 #
 # Time has passed (a run finished, woke up from sleep, or the script
@@ -105,6 +103,7 @@ update_status=${json_status}
 # it fails the script dies.
 
 ${update_status} "updating repository"
+
 git -C ${rutdir} fetch || true
 git -C ${rutdir} merge --ff-only
 
@@ -114,6 +113,7 @@ git -C ${rutdir} merge --ff-only
 # fetch) and merge the results from the last test run.
 
 ${update_status} "updating summary"
+
 make -C ${benchdir} web-summarydir \
      WEB_RESULTSDIR= \
      WEB_SUMMARYDIR=${summarydir}
@@ -124,6 +124,7 @@ make -C ${benchdir} web-summarydir \
 # untested.  If there's nothing interesting, sleep and then retry.
 
 ${update_status} "looking for work"
+
 if ! commit=$(${webdir}/gime-work.sh ${summarydir} ${rutdir} ${earliest_commit}) ; then
     # Seemlingly nothing to do ...  github gets updated up every 15
     # minutes so sleep for less than that
@@ -144,6 +145,7 @@ fi
 # is already at head.
 
 ${update_status} "checking out ${commit}"
+
 git -C ${rutdir} reset --hard ${commit}
 
 # Determine the rutdir and add that to status.
@@ -157,11 +159,12 @@ update_status="${update_status} --directory ${gitstamp}"
 
 # create the resultsdir and point the summary at it.
 
+${update_status} "creating results directory"
+
 rm -f ${summarydir}/current
 ln -s $(basename ${resultsdir}) ${summarydir}/current
 
 start_time=$(${webdir}/now.sh)
-${update_status} "creating results directory"
 make -C ${benchdir} web-resultsdir \
      WEB_TIME=${start_time} \
      WEB_HASH=${commit} \
@@ -256,7 +259,7 @@ for t in ${targets} ; do
     # creates ${target}.ok as a way to detect success
 
     href="<a href=\"$(basename ${resultsdir})/${target}.log\">${target}</a>"
-    ${status} "running '${run} ${href}'"
+    ${update_status} "running '${run} ${href}'"
 
     if ${run} ${target} 2>&1 ; then
 	touch ${resultsdir}/${target}.ok ;
@@ -288,7 +291,7 @@ for t in ${targets} ; do
     fi
     gzip -v -9 ${resultsdir}/${target}.log
 
-    ${status} "'${run} ${href}' ok"
+    ${update_status} "'${run} ${href}' ok"
 
     # generate json of the final result
 
@@ -309,7 +312,7 @@ for t in ${targets} ; do
 	# force the next run to test HEAD++ using rebuilt and updated
 	# domains; hopefully that will contain the fix (or at least
 	# contain the damage).
-	${update_status} "${target} barfed, restarting with HEAD"
+	${update_status} "${target} barfed, restarting with HEAD: ${tester}"
 	exec ${tester}
     fi
 
@@ -326,6 +329,7 @@ done
 # and not modifies in-place.
 
 ${update_status} "hardlink $(basename ${rutdir}) $(${resultsdir})"
+
 hardlink -v ${rutdir} ${resultsdir}
 
 # Check that the test VMs are ok
@@ -334,8 +338,9 @@ hardlink -v ${rutdir} ${resultsdir}
 # corrupt and need a rebuild.
 
 ${update_status} "checking KVMs"
+
 if grep '"output-missing"' "${resultsdir}/results.json" ; then
-    ${update_status} "corrupt domains detected, restarting with HEAD"
+    ${update_status} "corrupt domains detected, restarting with HEAD: ${tester}"
     exec ${tester}
 fi
 
@@ -345,10 +350,13 @@ fi
 # time.  Never delete log files for -0- commits (i.e., releases).
 
 ${update_status} "deleting *.log.gz files older than 14 days"
+
 find ${summarydir} \
      -type d -name '*-0-*' -prune \
      -o \
      -type f -name '*.log.gz' -mtime +14 -print0 | \
     xargs -0 --no-run-if-empty rm -v
+
+${update_status} "restarting: ${tester} ${earliest_commit}"
 
 exec ${tester} ${earliest_commit}
