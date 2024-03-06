@@ -1,6 +1,8 @@
 
 See also https://libreswan.org/
 
+v4.13rc1 (March 6, 2024)
+* Security: Fixes http://libreswan.org/security/CVE-2024-XXXX
 * Linux: make libcap-ng failures non-fatal
 * BSD: fix esp=aes_gcm
 * NetBSD: fix compiler warning in lib/libswan/x509.c
