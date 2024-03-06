@@ -195,7 +195,7 @@ targets="MAKE:distclean MAKE:html" # NATIVE!
 finished=""
 
 # form KVM:TARGET[~+]OS
-oss="+fedora ~freebsd ~openbsd ~alpine ~debian"
+oss="+linux ~fedora ~freebsd ~netbsd ~openbsd ~alpine ~debian"
 
 if ${build_kvms} ; then
     for os in $oss ; do
