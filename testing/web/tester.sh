@@ -40,6 +40,10 @@ make_variable rutdir KVM_RUTDIR
 make_variable summarydir WEB_SUMMARYDIR
 make_variable prefixes KVM_PREFIXES
 make_variable workers KVM_WORKERS
+# what could build
+make_variable platforms KVM_PLATFORM
+# what must build / is enabled
+make_variable oss KVM_OS
 
 rutdir=$(realpath ${rutdir})
 summarydir=$(realpath ${summarydir})
@@ -197,26 +201,31 @@ ${webdir}/json-summary.sh "${start_time}" > ${resultsdir}/summary.json
 targets="MAKE:distclean MAKE:html" # NATIVE!
 finished=""
 
-# form KVM:TARGET[~+]OS
-oss="+linux ~fedora ~freebsd ~netbsd ~openbsd ~alpine ~debian"
-
 if ${build_kvms} ; then
-    for os in $oss ; do
+    for platform in ${platforms} ; do
 	# i.e., kvm-upgrade[~+]OS
-	targets="${targets} KVM:upgrade${os}"
+	targets="${targets} KVM:upgrade~${platform}"
     done
 else
     targets="${targets} KVM:shutdown"
 fi
 
-for os in ${oss} ; do
-    targets="${targets} KVM:transmogrify${os}"
+for platform in ${platforms} ; do
+    targets="${targets} KVM:transmogrify~${platform}"
 done
 
 targets="${targets} KVM:keys"
 
-for os in ${oss} ; do
-    targets="${targets} KVM:install${os}"
+for platform in ${platforms} ; do
+    # anything in OSS must build
+    case " ${oss} " in
+	"* ${platform} *" )
+	    targets="${targets} KVM:install+${platform}"
+	    ;;
+	* )
+	    targets="${targets} KVM:install~${platform}"
+	    ;;
+    esac
 done
 
 targets="${targets} KVM:check"
