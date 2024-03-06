@@ -132,7 +132,8 @@ if ! commit=$(${webdir}/gime-work.sh ${summarydir} ${rutdir} ${earliest_commit})
     future=$(expr ${now} + ${delay})
     ${update_status} "idle; will retry at $(date -u -d @${future} +%H:%M) ($(date -u -d @${now} +%H:%M) + ${delay}s)"
     sleep ${delay}
-    echo ${tester}
+    ${update_status} "restarting: ${tester}"
+    exec ${tester}
 fi
 
 # Now discard everything back to the commit to be tested, making that
