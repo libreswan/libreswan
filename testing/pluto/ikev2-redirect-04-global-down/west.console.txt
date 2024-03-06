@@ -27,7 +27,7 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2" #1: deleting IKE SA (sent IKE_SA_INIT request)
 west #
  ipsec whack --impair trigger_revival:1
-"westnet-eastnet-ipv4-psk-ikev2": dispatch REVIVAL event
+"westnet-eastnet-ipv4-psk-ikev2": IMPAIR: dispatch REVIVAL event
 "westnet-eastnet-ipv4-psk-ikev2" #2: initiating IKEv2 connection to 192.1.3.33 using UDP
 "westnet-eastnet-ipv4-psk-ikev2" #2: sent IKE_SA_INIT request to 192.1.3.33:UDP/500
 "westnet-eastnet-ipv4-psk-ikev2" #2: STATE_V2_PARENT_I1: 10 second timeout exceeded after 0 retransmits.  No response (or no acceptable response) to our first IKEv2 message
@@ -36,7 +36,7 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2" #2: deleting IKE SA (sent IKE_SA_INIT request)
 west #
  ipsec whack --impair trigger_revival:1
-"westnet-eastnet-ipv4-psk-ikev2": dispatch REVIVAL event
+"westnet-eastnet-ipv4-psk-ikev2": IMPAIR: dispatch REVIVAL event
 "westnet-eastnet-ipv4-psk-ikev2": reviving connection which timeout IKE SA but must remain up per local policy (serial $1)
 "westnet-eastnet-ipv4-psk-ikev2" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet-eastnet-ipv4-psk-ikev2" #3: sent IKE_SA_INIT request to 192.1.2.23:UDP/500

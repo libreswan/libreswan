@@ -27,7 +27,7 @@ north #
 "north-east" #1: deleting IKE SA (sent IKE_SA_INIT request)
 north #
  ipsec whack --impair trigger_revival:1
-"north-east": dispatch REVIVAL event
+"north-east": IMPAIR: dispatch REVIVAL event
 "north-east" #2: initiating IKEv2 connection to 192.1.2.44 using UDP
 "north-east" #2: sent IKE_SA_INIT request to 192.1.2.44:UDP/500
 "north-east" #2: IMPAIR: retransmit so timing out SA (may retry)
@@ -55,7 +55,7 @@ north #
 "north-east" #3: deleting IKE SA (sent IKE_SA_INIT request)
 north #
  ipsec whack --impair trigger_revival:2
-"north-east": dispatch REVIVAL event
+"north-east": IMPAIR: dispatch REVIVAL event
 "north-east" #4: initiating IKEv2 connection to 192.1.2.46 using UDP
 "north-east" #4: sent IKE_SA_INIT request to 192.1.2.46:UDP/500
 "north-east" #4: IMPAIR: retransmit so timing out SA (may retry)
@@ -83,7 +83,7 @@ north #
 "north-east" #5: deleting IKE SA (sent IKE_SA_INIT request)
 north #
  ipsec whack --impair trigger_revival:3
-"north-east": dispatch REVIVAL event
+"north-east": IMPAIR: dispatch REVIVAL event
 "north-east" #6: initiating IKEv2 connection to 192.1.2.45 using UDP
 "north-east" #6: sent IKE_SA_INIT request to 192.1.2.45:UDP/500
 "north-east" #6: processed IKE_SA_INIT response from 192.1.2.45:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH

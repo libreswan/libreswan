@@ -27,7 +27,7 @@ road #
 "road-east" #1: deleting IKE SA (sent IKE_SA_INIT request)
 road #
  ipsec whack --impair trigger_revival:1
-"road-east": dispatch REVIVAL event
+"road-east": IMPAIR: dispatch REVIVAL event
 "road-east" #2: initiating IKEv2 connection to 192.1.2.45 using UDP
 "road-east" #2: sent IKE_SA_INIT request to 192.1.2.45:UDP/500
 "road-east" #2: processed IKE_SA_INIT response from 192.1.2.45:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
@@ -69,7 +69,7 @@ road #
 "road-east" #4: deleting IKE SA (sent IKE_SA_INIT request)
 road #
  ipsec whack --impair trigger_revival:2
-"road-east": dispatch REVIVAL event
+"road-east": IMPAIR: dispatch REVIVAL event
 "road-east" #5: initiating IKEv2 connection to 192.1.2.44 using UDP
 "road-east" #5: sent IKE_SA_INIT request to 192.1.2.44:UDP/500
 "road-east" #5: IMPAIR: retransmit so timing out SA (may retry)
