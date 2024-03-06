@@ -40,8 +40,8 @@ bool flush_connection_event(struct connection *c,
 			    enum connection_event event);
 bool flush_connection_events(struct connection *c);
 
-void call_connection_event_handler(struct logger *logger,
-				   struct connection *c,
-				   enum connection_event event);
+void whack_impair_call_connection_event_handler(struct connection *c,
+						enum connection_event event,
+						struct logger *logger);
 
 #endif

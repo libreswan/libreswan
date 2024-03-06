@@ -611,8 +611,8 @@ void event_force(enum event_type type, struct state *st)
 	event_schedule(type, delay, st);
 }
 
-void call_state_event_handler(struct logger *logger, struct state *st,
-			      enum event_type event_type, bool detach_whack)
+void whack_impair_call_state_event_handler(struct logger *logger, struct state *st,
+					   enum event_type event_type, bool detach_whack)
 {
 	const char *event_name = enum_name_short(&event_type_names, event_type);
 	if (event_name == NULL) {
@@ -623,7 +623,7 @@ void call_state_event_handler(struct logger *logger, struct state *st,
 	/* sanity checks */
 	struct state_event **evp = state_event_slot(st, event_type);
 	if (evp == NULL) {
-		llog(RC_COMMENT, logger, "%s is not a valid event", event_name);
+		llog(RC_COMMENT, logger, "IMPAIR: %s is not a valid event", event_name);
 		return;
 	}
 
@@ -634,21 +634,21 @@ void call_state_event_handler(struct logger *logger, struct state *st,
 	deltatime_t event_delay = deltatime(1);
 	if (*evp == NULL) {
 		llog(RC_COMMENT, logger,
-		     "no existing %s event to delete", event_name);
+		     "IMPAIR: no existing %s event to delete", event_name);
 	} else if ((*evp)->ev_type != event_type) {
 		llog(RC_COMMENT, logger,
-		     "deleting existing %s event occupying the slot shared with %s",
+		     "IMPAIR: deleting existing %s event occupying the slot shared with %s",
 		     enum_name(&event_type_names, (*evp)->ev_type),
 		     event_name);
 		delete_state_event(evp, HERE);
 	} else {
 		llog(RC_COMMENT, logger,
-		     "deleting existing %s event",
+		     "IMPAIR: deleting existing %s event",
 		     event_name);
 		event_delay = (*evp)->ev_delay;
 		delete_state_event(evp, HERE);
 	}
 
-	llog(RC_COMMENT, logger, "calling %s event handler", event_name);
+	llog(RC_COMMENT, logger, "IMPAIR: calling %s event handler", event_name);
 	dispatch_event(st, event_type, event_delay, logger, detach_whack);
 }

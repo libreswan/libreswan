@@ -163,8 +163,8 @@ void schedule_callback(const char *story, deltatime_t delay,
 		       so_serial_t serialno,
 		       callback_cb *callback, void *context);
 
-void call_global_event_inline(enum global_timer type,
-			      struct logger *logger);
+void whack_impair_call_global_event_handler(enum global_timer type,
+					    struct logger *logger);
 
 void complete_state_transition(struct state *st, struct msg_digest *md, stf_status status);
 

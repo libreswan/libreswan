@@ -84,7 +84,7 @@ static void whack_impair_action(enum impair_action impairment_action,
 		/* err... */
 		break;
 	case CALL_GLOBAL_EVENT_HANDLER:
-		call_global_event_inline(whack_value, logger);
+		whack_impair_call_global_event_handler(whack_value, logger);
 		break;
 	case CALL_STATE_EVENT_HANDLER:
 	{
@@ -96,7 +96,7 @@ static void whack_impair_action(enum impair_action impairment_action,
 		/* will log */
 		struct logger *loggers = merge_loggers(st->logger, detach_whack, logger);
 		enum event_type event = impairment_param;
-		call_state_event_handler(loggers, st, event, detach_whack);
+		whack_impair_call_state_event_handler(loggers, st, event, detach_whack);
 		free_logger(&loggers, HERE);
 		break;
 	}
@@ -111,7 +111,7 @@ static void whack_impair_action(enum impair_action impairment_action,
 		/* will log */
 		struct logger *loggers = merge_loggers(c->logger, detach_whack, logger);
 		enum connection_event event = impairment_param;
-		call_connection_event_handler(loggers, c, event);
+		whack_impair_call_connection_event_handler(c, event, loggers);
 		free_logger(&loggers, HERE);
 		/* release whack, possibly attached to C by
 		 * merge_loggers */
@@ -133,7 +133,7 @@ static void whack_impair_action(enum impair_action impairment_action,
 			return;
 		}
 		struct logger *loggers = merge_loggers(ike->sa.logger, detach_whack, logger);
-		llog(RC_COMMENT, loggers, "initiating liveness");
+		llog(RC_COMMENT, loggers, "IMPAIR: initiating liveness");
 		submit_v2_liveness_exchange(ike, st->st_serialno);
 		free_logger(&loggers, HERE);
 		break;
@@ -148,7 +148,7 @@ static void whack_impair_action(enum impair_action impairment_action,
 		/* will log */
 		struct logger *loggers = merge_loggers(st->logger,
 						       true/*detach_whack*/, logger);
-		llog(RC_COMMENT, loggers, "sending keepalive");
+		llog(RC_COMMENT, loggers, "IMPAIR: sending keepalive");
 		send_keepalive_using_state(st, "inject keep-alive");
 		free_logger(&loggers, HERE);
 		break;

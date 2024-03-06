@@ -101,22 +101,22 @@ void connection_event_handler(void *arg, const struct timer_event *event)
 	dispatch_connection_event(arg, &event->inception);
 }
 
-void call_connection_event_handler(struct logger *logger,
-				   struct connection *c,
-				   enum connection_event event)
+void whack_impair_call_connection_event_handler(struct connection *c,
+						enum connection_event event,
+						struct logger *logger)
 {
 	struct connection_event_event *e = c->events[event];
 	if (e != NULL) {
 		threadtime_t inception = threadtime_start();
 		enum_buf eb;
-		llog(RC_COMMENT, logger, "dispatch %s event",
+		llog(RC_COMMENT, logger, "IMPAIR: dispatch %s event",
 		     str_enum_short(&connection_event_names, event, &eb));
 		/* dispatch will delete */
 		dispatch_connection_event(e, &inception);
 		return;
 	}
 	enum_buf eb;
-	llog(RC_COMMENT, logger, "no %s event for connection found",
+	llog(RC_COMMENT, logger, "IMPAIR: no %s event for connection found",
 	     str_enum_short(&connection_event_names, event, &eb));
 }
 

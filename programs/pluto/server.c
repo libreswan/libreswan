@@ -274,8 +274,8 @@ static void global_timer_event_cb(evutil_socket_t fd UNUSED,
 	threadtime_stop(&start, SOS_NOBODY, "global timer %s", gt->name);
 }
 
-void call_global_event_inline(enum global_timer timer,
-			      struct logger *logger)
+void whack_impair_call_global_event_handler(enum global_timer timer,
+					    struct logger *logger)
 {
 	passert(in_main_thread());
 	/* timer is hardwired so shouldn't happen */
@@ -285,12 +285,12 @@ void call_global_event_inline(enum global_timer timer,
 	passert(gt->name != NULL);
 	if (!event_initialized(&gt->ev)) {
 		llog(RC_LOG, logger,
-			    "inject: timer %s is not initialized",
+			    "IMPAIR: timer %s is not initialized",
 			    gt->name);
 		return;
 	}
 
-	llog(RC_LOG, logger, "inject: injecting timer event %s", gt->name);
+	llog(RC_LOG, logger, "IMPAIR: injecting timer event %s", gt->name);
 	threadtime_t start = threadtime_start();
 	gt->cb(logger);
 	threadtime_stop(&start, SOS_NOBODY, "global timer %s", gt->name);

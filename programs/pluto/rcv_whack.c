@@ -41,7 +41,7 @@
 #include "crl_queue.h"			/* for submit_crl_fetch_requests() */
 #include "nss_cert_reread.h"		/* for reread_cert_connections() */
 #include "root_certs.h"			/* for free_root_certs() */
-#include "server.h"			/* for call_global_event_inline() */
+#include "server.h"			/* for listening; */
 #include "ikev2_liveness.h"		/* for submit_v2_liveness_exchange() */
 #include "send.h"			/* for send_keepalive_using_state() */
 #include "impair_message.h"		/* for add_message_impairment() */
