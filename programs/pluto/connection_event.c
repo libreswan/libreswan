@@ -23,6 +23,7 @@
 #include "connection_event.h"
 #include "revival.h"			/* for revive_connection() */
 #include "list_entry.h"
+#include "iface.h"			/* for struct iface_endpoint */
 
 static void connection_event_handler(void *arg, const struct timer_event *event);
 
@@ -33,6 +34,42 @@ struct connection_event {
 	struct timeout *timeout;
 	struct logger *logger;
 };
+
+static void jam_connection_event(struct jambuf *buf, const struct connection_event *event)
+{
+	const struct connection *c = event->connection;
+	/* currently only one */
+	jam_string(buf, " ");
+	jam_enum_short(buf, &connection_event_kind_names, event->kind);
+	switch (event->kind) {
+	case CONNECTION_REVIVAL:
+		if (c->redirect.attempt > 0) {
+			jam_string(buf, "; redirect");
+			jam(buf, " attempt %u", c->redirect.attempt);
+			jam_string(buf, " from ");
+			jam_address_sensitive(buf, &c->redirect.old_gw_address);
+			jam_string(buf, " to ");
+			jam_address_sensitive(buf, &c->redirect.ip);
+		}
+		if (c->revival.attempt > 0) {
+			jam(buf, "; attempt %u", c->revival.attempt);
+			jam_string(buf, " next in ");
+			jam_deltatime(buf, c->revival.delay);
+			jam_string(buf, "s");
+			if (c->revival.remote.is_set) {
+				jam_string(buf, " to ");
+				jam_endpoint_sensitive(buf, &c->revival.remote);
+			}
+			if (c->revival.local != NULL) {
+				jam_string(buf, " via ");
+				jam_endpoint_sensitive(buf, &c->revival.local->local_endpoint);
+			}
+		}
+		break;
+	}
+	jam_string(buf, "; ");
+	jam_string(buf, event->subplot);
+}
 
 void schedule_connection_event(struct connection *c,
 			       enum connection_event_kind event_kind,
@@ -106,14 +143,15 @@ void whack_impair_call_connection_event_handler(struct connection *c,
 						enum connection_event_kind event_kind,
 						struct logger *logger)
 {
-	struct connection_event *e = c->events[event_kind];
-	if (e != NULL) {
+	struct connection_event *event = c->events[event_kind];
+	if (event != NULL) {
 		threadtime_t inception = threadtime_start();
-		enum_buf eb;
-		llog(RC_COMMENT, logger, "IMPAIR: dispatch %s event",
-		     str_enum_short(&connection_event_kind_names, event_kind, &eb));
+		LLOG_JAMBUF(RC_LOG, logger, buf) {
+			jam_string(buf, "IMPAIR: dispatch");
+			jam_connection_event(buf, event);
+		}
 		/* dispatch will delete */
-		dispatch_connection_event(e, &inception);
+		dispatch_connection_event(event, &inception);
 		return;
 	}
 	enum_buf eb;
