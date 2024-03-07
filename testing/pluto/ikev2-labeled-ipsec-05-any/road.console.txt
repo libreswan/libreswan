@@ -87,6 +87,8 @@ road #
  echo done
 done
 road #
+ : sync console - east has output from _getpeercon_server waiting
+road #
  # There should be FOUR IPsec SA states (two sets), all with same
 road #
  # reqid. And there should be one set of tunnel policies using the

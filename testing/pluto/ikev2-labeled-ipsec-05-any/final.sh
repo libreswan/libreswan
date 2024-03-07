@@ -1,3 +1,4 @@
+: sync console - east has output from _getpeercon_server waiting
 # There should be FOUR IPsec SA states (two sets), all with same
 # reqid. And there should be one set of tunnel policies using the
 # configured ipsec_spd_t label, and no outgoing %trap policy

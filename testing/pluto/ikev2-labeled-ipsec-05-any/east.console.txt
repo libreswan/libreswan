@@ -29,10 +29,12 @@ east #
  echo "initdone"
 initdone
 east #
- # There should be FOUR IPsec SA states (two sets), all with same
+ : sync console - east has output from _getpeercon_server waiting
 <- connect(192.0.2.219,unconfined_u:unconfined_r:netutils_t:s0-s0:c0.c1023)
    quit
 -> connection closed
+east #
+ # There should be FOUR IPsec SA states (two sets), all with same
 east #
  # reqid. And there should be one set of tunnel policies using the
 east #
