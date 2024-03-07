@@ -353,7 +353,7 @@ $(foreach platform, $(KVM_PLATFORM), $(eval $(call kvm-os-dir, $(platform))))
 
 .PHONY: print-kvm-variable
 print-kvm-variable:
-	@echo "$($(VARIABLE))"
+	@echo "$(strip $($(VARIABLE)))"
 
 KVM_POOLDIR_PREFIX = $(KVM_POOLDIR)/$(KVM_FIRST_PREFIX)
 KVM_LOCALDIR_PREFIXES = \
