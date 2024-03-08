@@ -2,41 +2,47 @@
 See also https://libreswan.org/
 
 v5.0 (Unreleased)
-* BSD: fix esp=aes_gcm [github/1220, Igor V. Gubenko, Andrew]
-* ipsec: deprecate ipsec auto sub-command [Tuomo]
-  - ipsec auto --{cmd} connection -> ipsec {cmd} connection
-* IKEv1: globally disabled by default (ikev1-policy=drop) See RFC9395
-* IKEv1: drop support for Labeled IPsec [Andrew]
-* IKEv2: warn that fragmentation=force is ignored [Andrew]
-* pluto: retry / revival code merged (dpdaction=, keyingtries= ignored) [Andrew]
-* pluto: avoid post-authentication crash on corrupt TS payload [Andrew]
-* pluto: Support addresspool=v4/mask,v6/mask [Andrew]
-* pluto: Support multiple TSes per Child SA [Andrew]
-* pluto: HW packet offload support [Raed Salem <raeds@nvidia.com>]
-* pluto: XFRM interface IP management with ref-counting [Brady Johnson]
-* pluto: Check return values of libcap-ng functions [Paul]
-* pluto: Fix IPcomp with XFRM interfaces [Wolfgang]
-* building: remove old copy of unbound headers [Andrew]
-* building: Use DESTDIR instead of FINAL* env vars [Andrew]
-* building: Fix "make git-rpm" [Paul/Tuomo]
-* whack: overhaul
+* IKEv1:
+  - globally disabled by default (ikev1-policy=drop); see RFC9395 [Daniel]
+  - remove support for Labeled IPsec [Andrew]
+  - properly ignore dpdaction= [Andrew]
+  - see also IKEv2 routing/revival changes
+* IKEv2:
+  - warn that fragmentation=force is ignored [Andrew]
+  - avoid post-authentication crash on corrupt TS payload [Andrew]
+  - support addresspool=v4/mask,v6/mask [Andrew]
+  - support subnet=SELECTOR,... using a single Child SA [Andrew]
+  - when non-MOBIKE never update NATed endpoint [#1492/Wofferl/Andrew]
+  - fix revival of IKE_AUTH (first) Child SA [Andrew]
+  - properly ignore dpdaction=, keyingtries= [Andrew]
+  - when reviving, install trap then block [Andrew]
+  - for auto=keep only retry once [Andrew]
+  - when redirect fails, fall back to revival [Andrew]
+* Linux:
+  - HW packet offload support [Raed Salem <raeds@nvidia.com>,Paul]
+  - XFRM interface IP management with ref-counting [Brady Johnson]
+  - fix IPcomp with XFRM interfaces [Wolfgang]
+* BSD:
+  - fix esp=aes_gcm [github/1220, Igor V. Gubenko, Andrew]
+* whack:
   - review ipsec-whack.8 [Tuomo, Andrew, Paul]
   - change defaults to match addconn [Andrew]
   - add --{rekey,delete,down}-{ike,child} --name <conn> [Andrew]
   - match whack and addconn option names [Andrew]
-* config (ipsec.conf): overhaul
+  - drop NNN_ prefix from all output [Andrew]
+* config (ipsec.conf, addconn):
   - update ipsec.conf.5 [Tuomo, Andrew, Paul]
-  - log errors a dn warnings in ipsec.conf [Andrew]
+  - log ipsec.conf errors and warnings in Pluto [Andrew]
   - <<include {a,b,c}.conf>> no longer supported [Andrew]
   - fix keyexchange={ikev1,ikev2}; deprecate ikev2= [Andrew]
   - remove nic-offload=auto option, only accept packet,crypto,yes [Paul]
   - warn when converting legacy ",," to "\," in {left,right}id= [Andrew]
   - change also= to expand inline (more like C's #include) [Andrew]
-  - fix KEYWORD= sometimes causing program exit [Andrew]
+  - fix KEYWORD= sometimes causing Pluto to exit [Andrew]
   - parse <<KEYWORD=>> as <<KEYWORD=''>>, i.e., empty [Andrew]
   - warn when, within a conn, there are duplicate keys [Andrew]
   - add encap-dscp= [Wolfgang]
-  - implement interface-ip [Brady]
+  - implement interface-ip= [Brady]
   - implement subnet=SELECTOR,SELECTOR,... [Andrew]
   - default ikev1-policy to drop [Daniel]
   - add ppk-ids= [Vukasin]
@@ -45,22 +51,37 @@ v5.0 (Unreleased)
   - add groundhog= [Andrew]
   - reject non-numeric sourceip=<address> [Andrew]
   - fix crash when dpdtimeout= missing [Andrew]
-* install: overhaul [Andrew]
-  - use INSTALL_INITSYSTEM=false to prevent update of /etc/<initsystem>
-  - use INSTALL_CONFIGS=false prevents update of /etc/ipsec.d et.al.
-  - drop FINAL* make variables; see mk/config.mk for alternatives
-* show/verify: drop these ipsec subcommands (old, incomplete) [Paul]
-* packaging: Fix debian systemd service install [Antonio Silva]
-* testing: Fix namespace tests for super long dir names [Paul]
-* initsystem: Use documented ipsec sub-commands [Tuomo]
-* initsystem: Stop using _stackmanager [Tuomo]
-* documentation: update to docbook xml 4.5 [Tuomo]
-* output: drop NNN_ prefix from all output [Andrew]
-* ipsec look: script moved to contrib/; use ip xfrm et.al. [Andrew]
-* ipsec portexcludes: script moved to contrib/ [Andrew]
-* ipsec barf: script moved to contrib/ [Andrew]
-* ipsec _secretsensor: script moved to contrib/ [Andrew]
-* IKEv2: when non-MOBIKE never update NATed endpoint [#1492/Wofferl/Andrew]
+* building:
+  - use INSTALL_INITSYSTEM=false to prevent update of /etc/<initsystem> [Andrew]
+  - use INSTALL_CONFIGS=false prevents update of /etc/ipsec.d et.al. [Andrew]
+  - drop FINAL* make variables; see mk/config.mk for alternatives [Andrew]
+  - remove old copy of unbound headers [Andrew]
+  - use DESTDIR instead of FINAL* env vars [Andrew]
+  - fix "make git-rpm" [Paul/Tuomo]
+  - check return values of libcap-ng functions [Paul]
+  - don't call ischar(signed char) [Andrew]
+* packaging:
+  - fix Debian systemd service install [Antonio Silva]
+* testing:
+  - fix namespace tests for super long dir names [Paul]
+  - add Alpine, Debian, NetBSD and FreeBSD KVMs [Andrew]
+  - add Alpine, Debian, NetBSD, FreeBSD and OpenBSD to nightly builds [Andrew]
+  - add man pages to nightly build [Andrew]
+* initsystem:
+  - use documented ipsec sub-commands [Tuomo]
+  - stop using _stackmanager [Tuomo]
+* documentation:
+  - update to docbook xml 4.5 [Tuomo]
+  - re-org pages adding libreswan.5 [Andrew]
+* ipsec utilities:
+  - ipsec auto sub-command: deprecate [Tuomo]
+  - ipsec auto --{cmd} connection -> ipsec {cmd} connection [Tuomo]
+  - ipsec look: script moved to contrib/; use ip xfrm et.al. [Andrew]
+  - ipsec portexcludes: script moved to contrib/ [Andrew]
+  - ipsec barf: script moved to contrib/ [Andrew]
+  - ipsec _secretsensor: script moved to contrib/ [Andrew]
+  - ipsec show: drop ipsec subcommand (old, incomplete) [Paul]
+  - ipsec verify: drop ipsec subcommand (old, incomplete) [Paul]
 
 v4.12 (Aug 8, 2023)
 * SECURITY IKEv2: Fixes https://libreswan.org/security/CVE-2023-38710
