@@ -1,8 +1,8 @@
-IKEv2 REDIRECT Mechanism with active redirect with
-roadwarriors.
+IKEv2 active REDIRECT with two roadwarriors that connect and re-connect road,north
 
-two road warriors, north and road connect to east, shortly after that they are
-redirected to west with --redirect whack command.
+Road warriors, NORTH (assigned 192.0.2.101) and then ROAD (assigned
+192.0.2.102) connect to EAST.  A short time later they are both
+redirected to WEST with --redirect-to whack command.
 
-Because north and road are redirected at once, they can establish in different order,
-so we do some output massaging to that does not matter.
+ROAD, and then NORTH, proceed to connect to WEST.  Since the order
+doesn't change they are assigned the same IP addresses as before.

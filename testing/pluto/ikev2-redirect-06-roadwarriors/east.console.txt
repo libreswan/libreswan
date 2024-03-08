@@ -8,7 +8,7 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add east-any
+ ipsec add east-any
 "east-any": added IKEv2 connection
 east #
  echo initdone
@@ -27,8 +27,38 @@ redirections sent for 2 tunnels of connection "east-any"
 east #
  # give them time to be redirected
 east #
- ../../guestbin/wait-for.sh --no-match east-any -- ipsec whack --trafficstatus
+ ../../guestbin/wait-for.sh --no-match east-any -- ipsec trafficstatus
 east #
- ipsec whack --trafficstatus | sed -e 's/#[0-9]/#N/' -e 's/\[[0-9]\]/[N]/' -e 's/192.0.2.10[0-9]/192.0.2.10x/' | sort
+ ipsec trafficstatus
 east #
-
+ ipsec connectionstatus
+Connection list:
+ 
+"east-any": 0.0.0.0/0===192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org,MS+S=C]...%any[%fromcert,+MC+S=C]; unrouted; my_ip=unset; their_ip=unset;
+"east-any":   host: oriented; local: 192.1.2.23; remote: %any;
+"east-any":   mycert=east; my_updown=ipsec _updown;
+"east-any":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"east-any":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
+"east-any":   modecfg info: us:server, them:client, modecfg policy:pull, dns:1.2.3.4, 5.6.7.8, domains:unset, cat:unset;
+"east-any":   sec_label:unset;
+"east-any":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
+"east-any":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"east-any":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+"east-any":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"east-any":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+MODECFG_PULL+IKEV2_ALLOW_NARROWING+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"east-any":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
+"east-any":   conn_prio: 0,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"east-any":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
+"east-any":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org; their idtype: %fromcert; their id=%fromcert
+"east-any":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
+"east-any":   nat-traversal: encapsulation:auto; keepalive:20s
+"east-any":   routing: unrouted;
+"east-any":   conn serial: $1;
+ 
+Total IPsec connections: loaded 1, active 0
+east #
+ ../../guestbin/ipsec-kernel-state.sh
+east #
+ ../../guestbin/ipsec-kernel-policy.sh
+east #
+ 

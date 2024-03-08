@@ -3,4 +3,4 @@ ipsec whack --trafficstatus
 # send REDIRECT in informational to all tunnels from connection east-any (north and road)
 ipsec whack --name east-any --redirect-to 192.1.2.45
 # give them time to be redirected
-../../guestbin/wait-for.sh --no-match east-any -- ipsec whack --trafficstatus
+../../guestbin/wait-for.sh --no-match east-any -- ipsec trafficstatus
