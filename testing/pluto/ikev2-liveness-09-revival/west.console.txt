@@ -109,7 +109,7 @@ west #
  # now let the revival kick in; the trap should be replaced by a %hold(block)
 west #
  ipsec whack --async --impair trigger_revival:1
-"westnet-eastnet-ikev2": IMPAIR: dispatch REVIVAL event
+"westnet-eastnet-ikev2": IMPAIR: dispatch REVIVAL; attempt 1 next in 5s; received Delete/Notify
 west #
  ipsec connectionstatus westnet-eastnet-ikev2
 "westnet-eastnet-ikev2": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; routed-negotiation; my_ip=unset; their_ip=unset;

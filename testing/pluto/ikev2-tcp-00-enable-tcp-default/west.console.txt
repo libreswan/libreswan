@@ -38,7 +38,7 @@ west #
 "west" #1: deleting IKE SA (sent IKE_SA_INIT request)
 west #
  ipsec whack --impair trigger_revival:1
-"west": IMPAIR: dispatch REVIVAL event
+"west": IMPAIR: dispatch REVIVAL; attempt 1 next in 5s; timeout IKE SA
 "west": reviving connection which timeout IKE SA but must remain up per local policy (serial $1)
 "west" #2: initiating IKEv2 connection to 192.1.2.23 using UDP
 "west" #2: sent IKE_SA_INIT request to 192.1.2.23:UDP/500

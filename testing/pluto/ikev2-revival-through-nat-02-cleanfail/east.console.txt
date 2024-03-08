@@ -58,7 +58,7 @@ east #
  # being KEEP further revivals are abandoned.
 east #
  ipsec whack --impair trigger_revival:2
-"road-eastnet-ikev2"[1] 192.1.2.254: IMPAIR: dispatch REVIVAL event
+"road-eastnet-ikev2"[1] 192.1.2.254: IMPAIR: dispatch REVIVAL; attempt 1 next in 5s to 192.1.2.254:6666 via 192.1.2.23:4500; received Delete/Notify
 "road-eastnet-ikev2"[1] 192.1.2.254: reviving connection which received Delete/Notify but must remain up per local policy (serial $2)
 "road-eastnet-ikev2"[1] 192.1.2.254 #3: initiating IKEv2 connection to 192.1.2.254 using UDP
 "road-eastnet-ikev2"[1] 192.1.2.254 #3: sent IKE_SA_INIT request to 192.1.2.254:UDP/6666
