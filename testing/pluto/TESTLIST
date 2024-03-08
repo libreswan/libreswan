@@ -1416,6 +1416,7 @@ kvmplutotest	ikev2-redirect-03-global-loop			good	github/1078
 kvmplutotest	ikev2-redirect-04-auth-down			good	github/1396
 kvmplutotest	ikev2-redirect-04-global-down			good	github/1396
 kvmplutotest	ikev2-redirect-06-roadwarriors			good
+kvmplutotest	ikev2-redirect-06-roadwarriors-reverse		wip	github/1641
 kvmplutotest	ikev2-redirect-01-global-load-balancer		good
 kvmplutotest	ikev2-redirect-07-global-pair			good	github/1405
 kvmplutotest	ikev2-redirect-07-auth-pair			good	github/1405

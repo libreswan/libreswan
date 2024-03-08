@@ -1,0 +1,27 @@
+Active redirect with two roadwarriors that connect road-north but re-connect north-road
+
+- road warriors, NORTH (assigned 192.0.2.101) and then ROAD (assigned
+  192.0.2.102) connect to EAST.
+
+- a short time later they are both redirected to WEST
+
+- both NORTH and ROAD go into revival mode, installing traps for their
+  respective assigned address
+
+  But should they?
+
+- using impair-revival, NORTH, and then ROAD, connect to WEST
+
+  The existing trap is turned into a block.
+
+  Then, since the re-connect order is reversed they are each assigned
+  different IP addresses vis:
+
+	   to EAST      to WEST
+  ROAD   192.0.2.101  192.0.2.102
+  NORTH  192.0.2.102  192.0.2.101
+
+  The routing code needs to remove the old block
+
+See: redirect clueless to a changed CP IP address #1641
+

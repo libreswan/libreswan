@@ -1,0 +1,153 @@
+/testing/guestbin/swan-prep --x509 --x509name east
+Preparing X.509 files
+west #
+ ip route del 192.0.2.0/24
+west #
+ ifconfig eth0:1 192.0.2.254/24
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec add east-any
+"east-any": added IKEv2 connection
+west #
+ echo initdone
+initdone
+west #
+ ipsec trafficstatus
+#2: "east-any"[1] 192.1.3.33, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org', lease=192.0.2.101/32
+#4: "east-any"[2] 192.1.3.209, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org', lease=192.0.2.102/32
+west #
+ ipsec connectionstatus
+Connection list:
+ 
+"east-any": 0.0.0.0/0===192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org,MS+S=C]...%any[%fromcert,+MC+S=C]; unrouted; my_ip=unset; their_ip=unset;
+"east-any":   host: oriented; local: 192.1.2.45; remote: %any;
+"east-any":   mycert=east; my_updown=ipsec _updown;
+"east-any":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"east-any":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
+"east-any":   modecfg info: us:server, them:client, modecfg policy:pull, dns:1.2.3.4, 5.6.7.8, domains:unset, cat:unset;
+"east-any":   sec_label:unset;
+"east-any":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
+"east-any":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"east-any":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+"east-any":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"east-any":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+MODECFG_PULL+IKEV2_ALLOW_NARROWING+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"east-any":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
+"east-any":   conn_prio: 0,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"east-any":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
+"east-any":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org; their idtype: %fromcert; their id=%fromcert
+"east-any":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
+"east-any":   nat-traversal: encapsulation:auto; keepalive:20s
+"east-any":   routing: unrouted;
+"east-any":   conn serial: $1;
+"east-any"[1]: 0.0.0.0/0===192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org,MS+S=C]...192.1.3.33[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org,+MC+S=C]===192.0.2.101/32; routed-tunnel; my_ip=unset; their_ip=192.0.2.101;
+"east-any"[1]:   host: oriented; local: 192.1.2.45; remote: 192.1.3.33; established IKE SA: #1;
+"east-any"[1]:   mycert=east; my_updown=ipsec _updown;
+"east-any"[1]:   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"east-any"[1]:   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
+"east-any"[1]:   modecfg info: us:server, them:client, modecfg policy:pull, dns:1.2.3.4, 5.6.7.8, domains:unset, cat:unset;
+"east-any"[1]:   sec_label:unset;
+"east-any"[1]:   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
+"east-any"[1]:   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"east-any"[1]:   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+"east-any"[1]:   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"east-any"[1]:   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+MODECFG_PULL+IKEV2_ALLOW_NARROWING+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"east-any"[1]:   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
+"east-any"[1]:   conn_prio: 0,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"east-any"[1]:   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
+"east-any"[1]:   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org
+"east-any"[1]:   liveness: passive; dpddelay:0s; retransmit-timeout:60s
+"east-any"[1]:   nat-traversal: encapsulation:auto; keepalive:20s
+"east-any"[1]:   routing: routed-tunnel; owner: Child SA #2; established IKE SA: #1; established Child SA: #2;
+"east-any"[1]:   conn serial: $2, instantiated from: $1;
+"east-any"[1]:   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-DH19
+"east-any"[1]:   ESP algorithm newest: AES_GCM_16_256-NONE; pfsgroup=<Phase1>
+"east-any"[2]: 0.0.0.0/0===192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org,MS+S=C]...192.1.3.209[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org,+MC+S=C]===192.0.2.102/32; routed-tunnel; my_ip=unset; their_ip=192.0.2.102;
+"east-any"[2]:   host: oriented; local: 192.1.2.45; remote: 192.1.3.209; established IKE SA: #3;
+"east-any"[2]:   mycert=east; my_updown=ipsec _updown;
+"east-any"[2]:   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"east-any"[2]:   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
+"east-any"[2]:   modecfg info: us:server, them:client, modecfg policy:pull, dns:1.2.3.4, 5.6.7.8, domains:unset, cat:unset;
+"east-any"[2]:   sec_label:unset;
+"east-any"[2]:   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
+"east-any"[2]:   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"east-any"[2]:   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+"east-any"[2]:   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"east-any"[2]:   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+MODECFG_PULL+IKEV2_ALLOW_NARROWING+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"east-any"[2]:   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
+"east-any"[2]:   conn_prio: 0,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"east-any"[2]:   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
+"east-any"[2]:   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org
+"east-any"[2]:   liveness: passive; dpddelay:0s; retransmit-timeout:60s
+"east-any"[2]:   nat-traversal: encapsulation:auto; keepalive:20s
+"east-any"[2]:   routing: routed-tunnel; owner: Child SA #4; established IKE SA: #3; established Child SA: #4;
+"east-any"[2]:   conn serial: $3, instantiated from: $1;
+"east-any"[2]:   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-DH19
+"east-any"[2]:   ESP algorithm newest: AES_GCM_16_256-NONE; pfsgroup=<Phase1>
+ 
+Total IPsec connections: loaded 3, active 2
+west #
+ ../../guestbin/ipsec-kernel-state.sh
+src 192.1.2.45 dst 192.1.3.209
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+src 192.1.3.209 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+src 192.1.2.45 dst 192.1.3.33
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+src 192.1.3.33 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+west #
+ ../../guestbin/ipsec-kernel-policy.sh
+src 0.0.0.0/0 dst 192.0.2.101/32
+	dir out priority PRIORITY ptype main
+	tmpl src 192.1.2.45 dst 192.1.3.33
+		proto esp reqid REQID mode tunnel
+src 0.0.0.0/0 dst 192.0.2.102/32
+	dir out priority PRIORITY ptype main
+	tmpl src 192.1.2.45 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.0.2.101/32 dst 0.0.0.0/0
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.3.33 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+src 192.0.2.101/32 dst 0.0.0.0/0
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.3.33 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+src 192.0.2.102/32 dst 0.0.0.0/0
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.3.209 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+src 192.0.2.102/32 dst 0.0.0.0/0
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.3.209 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+west #
+ 
