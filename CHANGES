@@ -1,11 +1,12 @@
 
 See also https://libreswan.org/
 
-v4.13rc1 (March 6, 2024)
-* Security: Fixes http://libreswan.org/security/CVE-2024-XXXX
-* Linux: make libcap-ng failures non-fatal
-* BSD: fix esp=aes_gcm
-* NetBSD: fix compiler warning in lib/libswan/x509.c
+v4.13 (March 11, 2024)
+* Security: Fixes http://libreswan.org/security/CVE-2024-2357
+* Linux: make libcap-ng failures non-fatal [Andrew]
+* BSD: fix esp=aes_gcm [Andrew]
+* NetBSD: fix compiler warning in lib/libswan/x509.c [Andrew]
+* x509: unpack IPv6 general names based on length [Andrew]
 
 v4.12 (Aug 8, 2023)
 * SECURITY IKEv2: Fixes https://libreswan.org/security/CVE-2023-38710
