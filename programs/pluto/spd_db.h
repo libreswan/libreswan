@@ -13,27 +13,27 @@
  * for more details.
  */
 
-#ifndef SPD_ROUTE_DB_H
-#define SPD_ROUTE_DB_H
+#ifndef SPD_DB_H
+#define SPD_DB_H
 
 #include "where.h"
 
-struct spd_route;
+struct spd;
 struct logger;
 
 /* spd route */
 
-void spd_route_db_init(struct logger *logger);
-void spd_route_db_check(struct logger *logger);
+void spd_db_init(struct logger *logger);
+void spd_db_check(struct logger *logger);
 
-void spd_route_db_init_spd_route(struct spd_route *sr);
-void spd_route_db_check_spd_route(struct spd_route *sr, struct logger *logger, where_t where);
+void spd_db_init_spd(struct spd *sr);
+void spd_db_check_spd(struct spd *sr, struct logger *logger, where_t where);
 
-void spd_route_db_add(struct spd_route *sr);
-void spd_route_db_del(struct spd_route *sr);
+void spd_db_add(struct spd *sr);
+void spd_db_del(struct spd *sr);
 
 #if 0
-void spd_route_db_rehash_remote_client(struct spd_route *sr); /* see connections.h */
+void spd_db_rehash_remote_client(struct spd *sr); /* see connections.h */
 #endif
 
 #endif

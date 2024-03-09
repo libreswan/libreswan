@@ -32,7 +32,7 @@ enum kernel_policy_op;
 enum shunt_policy;
 enum kernel_mode;
 struct logger;
-struct spd_route;
+struct spd;
 
 /*
  * The kernel protocol used to encapsulate.
@@ -141,7 +141,7 @@ struct kernel_policy {
 	struct nic_offload nic_offload;
 };
 
-bool add_sec_label_kernel_policy(const struct spd_route *spd,
+bool add_sec_label_kernel_policy(const struct spd *spd,
 				 enum direction direction,
 				 struct logger *logger,
 				 where_t where, const char *what);
@@ -183,7 +183,7 @@ bool delete_kernel_policy(enum direction direction,
  * ROUTED_ONDEMAND and ROUTED_NEGOTIATION.
  */
 
-bool add_spd_kernel_policy(const struct spd_route *spd,
+bool add_spd_kernel_policy(const struct spd *spd,
 			   enum kernel_policy_op op,
 			   enum direction direction,
 			   enum shunt_kind shunt_kind,
@@ -195,14 +195,14 @@ void add_spd_kernel_policies(struct connection *c,
 			     enum shunt_kind shunt_kind,
 			     struct logger *logger, where_t where, const char *story);
 
-bool replace_spd_kernel_policy(const struct spd_route *spd,
+bool replace_spd_kernel_policy(const struct spd *spd,
 			       const struct spd_owner *owner,
 			       enum direction direction,
 			       enum shunt_kind shunt_kind,
 			       struct logger *logger,
 			       where_t where, const char *what);
 
-bool delete_spd_kernel_policy(const struct spd_route *spd,
+bool delete_spd_kernel_policy(const struct spd *spd,
 			      const struct spd_owner *owner,
 			      enum direction direction,
 			      enum expect_kernel_policy existing_policy_expectation,
@@ -210,7 +210,7 @@ bool delete_spd_kernel_policy(const struct spd_route *spd,
 			      where_t where,
 			      const char *story);
 
-void delete_spd_kernel_policies(struct spd_route *spd,
+void delete_spd_kernel_policies(struct spd *spd,
 				const struct spd_owner *owner,
 				enum expect_kernel_policy inbound_policy_expectation,
 				struct logger *logger,
@@ -234,19 +234,19 @@ void add_cat_kernel_policies(const struct connection *c,
 			     struct logger *logger, where_t where,
 			     const char *reason);
 
-void delete_cat_kernel_policies(const struct spd_route *spd,
+void delete_cat_kernel_policies(const struct spd *spd,
 				const struct spd_owner *owner,
 				struct logger *logger,
 				where_t where);
 
-bool install_inbound_ipsec_kernel_policy(struct child_sa *child, struct spd_route *spd,
+bool install_inbound_ipsec_kernel_policy(struct child_sa *child, struct spd *spd,
 					 where_t where);
-bool install_outbound_ipsec_kernel_policy(struct child_sa *child, struct spd_route *spd,
+bool install_outbound_ipsec_kernel_policy(struct child_sa *child, struct spd *spd,
 					  enum kernel_policy_op op, where_t where);
 
 void replace_ipsec_with_bare_kernel_policy(struct child_sa *child,
 					   struct connection *c,
-					   struct spd_route *spd,
+					   struct spd *spd,
 					   const struct spd_owner *owner,
 					   enum shunt_kind shunt_kind,
 					   enum expect_kernel_policy expect_inbound_policy,

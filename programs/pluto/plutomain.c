@@ -64,7 +64,7 @@
 #include "virtual_ip.h"
 #include "state_db.h"		/* for init_state_db() */
 #include "connection_db.h"	/* for init_connection_db() */
-#include "spd_route_db.h"	/* for init_spd_route_db() */
+#include "spd_db.h"	/* for init_spd_route_db() */
 #include "nat_traversal.h"
 #include "ike_alg.h"
 #include "ikev2_redirect.h"
@@ -1587,7 +1587,7 @@ int main(int argc, char **argv)
 	init_states();
 	state_db_init(logger);
 	connection_db_init(logger);
-	spd_route_db_init(logger);
+	spd_db_init(logger);
 
 	pluto_init_nss(oco->nssdir, logger);
 	if (is_fips_mode()) {

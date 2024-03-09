@@ -396,7 +396,7 @@ static stf_status modecfg_resp(struct state *st,
 
 			ldbg(c->logger, "another hack to get the SPD in sync");
 			c->spd->remote->client = c->remote->child.selectors.proposed.list[0];
-			spd_route_db_rehash_remote_client(c->spd);
+			spd_db_rehash_remote_client(c->spd);
 
 			ia = selector_prefix(c->spd->remote->client);
 			address_buf iab;
@@ -1715,7 +1715,7 @@ static void append_cisco_split_spd(struct connection *c,
 		       c->child.spds.len,
 		       c->child.spds.len + 1,
 		       "cisco SPDs");
-	struct spd_route *spd = &c->child.spds.list[c->child.spds.len];
+	struct spd *spd = &c->child.spds.list[c->child.spds.len];
 	c->child.spds.len++;
 
 	/*
@@ -1726,7 +1726,7 @@ static void append_cisco_split_spd(struct connection *c,
 	spd->local->client = c->child.spds.list[0].local->client;
 	spd->remote->client = wire_selector; /*OK;not first*/
 
-	spd_route_db_rehash_remote_client(spd);
+	spd_db_rehash_remote_client(spd);
 }
 #endif
 
@@ -1906,7 +1906,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 					passert(c->child.spds.len == 1);
 					set_child_has_client(c, remote, true);
 					update_first_selector(c, remote, ipv4_info.selector.all);
-					spd_route_db_rehash_remote_client(c->spd);
+					spd_db_rehash_remote_client(c->spd);
 				}
 
 				while (pbs_left(&strattr) > 0) {
@@ -1939,7 +1939,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 							/* duplicate entry: ignore */
 							subnet_buf pretty_subnet;
 							log_state(RC_INFORMATIONAL, st,
-								  "CISCO_SPLIT_INC subnet %s already has an spd_route - ignoring",
+								  "CISCO_SPLIT_INC subnet %s already has an spd - ignoring",
 								  str_subnet(&wire_subnet, &pretty_subnet));
 							already_split = true;
 							break;

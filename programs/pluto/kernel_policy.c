@@ -115,7 +115,7 @@ struct kernel_policy_encap {
 };
 
 static struct kernel_policy kernel_policy_from_spd(struct kernel_policy_encap policy,
-						   const struct spd_route *spd,
+						   const struct spd *spd,
 						   enum kernel_mode kernel_mode,
 						   enum direction direction,
 						   struct nic_offload *nic_offload,
@@ -224,7 +224,7 @@ static struct kernel_policy kernel_policy_from_spd(struct kernel_policy_encap po
 }
 
 static struct kernel_policy kernel_policy_from_state(const struct child_sa *child,
-						     const struct spd_route *spd,
+						     const struct spd *spd,
 						     enum direction direction,
 						     where_t where)
 {
@@ -263,7 +263,7 @@ static struct kernel_policy kernel_policy_from_state(const struct child_sa *chil
  * the IKE SA (everything else happens under the hood).
  */
 
-bool add_sec_label_kernel_policy(const struct spd_route *spd,
+bool add_sec_label_kernel_policy(const struct spd *spd,
 				 enum direction direction,
 				 struct logger *logger,
 				 where_t where, const char *what)
@@ -302,7 +302,7 @@ bool add_sec_label_kernel_policy(const struct spd_route *spd,
  * SPD is bare when there's no corresponding kernel state.
  */
 
-bool add_spd_kernel_policy(const struct spd_route *spd,
+bool add_spd_kernel_policy(const struct spd *spd,
 			   enum kernel_policy_op op,
 			   enum direction direction,
 			   enum shunt_kind shunt_kind,
@@ -408,7 +408,7 @@ bool add_kernel_policy(enum kernel_policy_op op,
 				     logger, where, story);
 }
 
-bool replace_spd_kernel_policy(const struct spd_route *spd,
+bool replace_spd_kernel_policy(const struct spd *spd,
 			       const struct spd_owner *owner,
 			       enum direction direction,
 			       enum shunt_kind shunt_kind,
@@ -449,7 +449,7 @@ bool replace_spd_kernel_policy(const struct spd_route *spd,
 
 }
 
-static bool restore_spd_kernel_policy(const struct spd_route *spd,
+static bool restore_spd_kernel_policy(const struct spd *spd,
 				      enum direction direction,
 				      struct logger *logger,
 				      where_t where, const char *what)
@@ -521,7 +521,7 @@ bool delete_kernel_policy(enum direction direction,
 				     logger, where, story);
 }
 
-bool delete_spd_kernel_policy(const struct spd_route *spd,
+bool delete_spd_kernel_policy(const struct spd *spd,
 			      const struct spd_owner *owner,
 			      enum direction direction,
 			      enum expect_kernel_policy existing_policy_expectation,
@@ -553,7 +553,7 @@ bool delete_spd_kernel_policy(const struct spd_route *spd,
 				    logger, where, story);
 }
 
-void delete_spd_kernel_policies(struct spd_route *spd,
+void delete_spd_kernel_policies(struct spd *spd,
 				const struct spd_owner *owner,
 				enum expect_kernel_policy inbound_policy_expectation,
 				struct logger *logger, where_t where,
@@ -599,7 +599,7 @@ bool add_cat_kernel_policy(const struct connection *c,
 	return true;
 }
 
-static void delete_cat_kernel_policy(const struct spd_route *spd,
+static void delete_cat_kernel_policy(const struct spd *spd,
 				     const struct spd_owner *owner,
 				     enum direction direction,
 				     struct logger *logger,
@@ -638,7 +638,7 @@ static void delete_cat_kernel_policy(const struct spd_route *spd,
 	}
 }
 
-void delete_cat_kernel_policies(const struct spd_route *spd,
+void delete_cat_kernel_policies(const struct spd *spd,
 				const struct spd_owner *owner,
 				struct logger *logger,
 				where_t where)
@@ -660,7 +660,7 @@ void delete_cat_kernel_policies(const struct spd_route *spd,
 }
 
 bool install_inbound_ipsec_kernel_policy(struct child_sa *child,
-					 struct spd_route *spd,
+					 struct spd *spd,
 					 where_t where)
 {
 	struct kernel_policy kernel_policy =
@@ -706,7 +706,7 @@ bool install_inbound_ipsec_kernel_policy(struct child_sa *child,
 }
 
 bool install_outbound_ipsec_kernel_policy(struct child_sa *child,
-					  struct spd_route *spd,
+					  struct spd *spd,
 					  enum kernel_policy_op op, where_t where)
 {
 	struct logger *logger = child->sa.logger;
@@ -786,7 +786,7 @@ bool install_bare_kernel_policy(ip_selector src, ip_selector dst,
 
 void replace_ipsec_with_bare_kernel_policy(struct child_sa *child,
 					   struct connection *c,
-					   struct spd_route *spd,
+					   struct spd *spd,
 					   const struct spd_owner *owner,
 					   enum shunt_kind shunt_kind,
 					   enum expect_kernel_policy expect_inbound_policy,

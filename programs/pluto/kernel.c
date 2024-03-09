@@ -101,7 +101,7 @@ static void delete_bare_shunt_kernel_policy(const struct bare_shunt *bsp,
 
 const spd_priority_t highest_spd_priority = { .value = 0, };
 
-spd_priority_t spd_priority(const struct spd_route *spd)
+spd_priority_t spd_priority(const struct spd *spd)
 {
 	const struct connection *c = spd->connection;
 
@@ -194,7 +194,7 @@ spd_priority_t spd_priority(const struct spd_route *spd)
  * not paired with a kernel state.
  */
 
-static bool install_prospective_kernel_policies(const struct spd_route *spd,
+static bool install_prospective_kernel_policies(const struct spd *spd,
 						enum shunt_kind shunt_kind,
 						struct logger *logger, where_t where)
 {
@@ -498,7 +498,7 @@ static struct kernel_route kernel_route_from_state(const struct child_sa *child,
 
 PRINTF_LIKE(4)
 static void ldbg_spd(struct logger *logger, unsigned indent,
-			  const struct spd_route *spd,
+			  const struct spd *spd,
 			  const char *fmt, ...)
 {
 	LDBGP_JAMBUF(DBG_BASE, logger, buf) {
@@ -520,7 +520,7 @@ static void ldbg_spd(struct logger *logger, unsigned indent,
 }
 
 static void LDBG_owner(struct logger *logger, const char *what,
-		       const struct spd_route *owner)
+		       const struct spd *owner)
 {
 	if (owner != NULL) {
 		ldbg_spd(logger, 1, owner, "%s owner", what);
@@ -549,8 +549,8 @@ static void ldbg_owner(struct logger *logger, const struct spd_owner *owner,
 	}
 }
 
-static void save_spd_owner(const struct spd_route **owner, const char *name,
-			    const struct spd_route *d_spd,
+static void save_spd_owner(const struct spd **owner, const char *name,
+			    const struct spd *d_spd,
 			    struct logger *logger, unsigned indent)
 {
 	/* winner? */
@@ -565,7 +565,7 @@ static void save_spd_owner(const struct spd_route **owner, const char *name,
 	}
 }
 
-struct spd_owner spd_owner(const struct spd_route *c_spd,
+struct spd_owner spd_owner(const struct spd *c_spd,
 			   const enum routing new_c_routing,
 			   struct logger *logger, where_t where)
 {
@@ -585,14 +585,14 @@ struct spd_owner spd_owner(const struct spd_route *c_spd,
 
 	struct spd_owner owner = {0};
 
-	struct spd_route_filter srf = {
+	struct spd_filter srf = {
 		.remote_client_range = c_remote,
 		.where = where,
 	};
 
 	indent += 2;
-	while (next_spd_route(NEW2OLD, &srf)) {
-		struct spd_route *d_spd = srf.spd;
+	while (next_spd(NEW2OLD, &srf)) {
+		struct spd *d_spd = srf.spd;
 		enum shunt_kind d_shunt_kind = spd_shunt_kind(d_spd);
 		struct connection *d = d_spd->connection;
 
@@ -760,8 +760,8 @@ static void clear_connection_spd_conflicts(struct connection *c)
 	}
 }
 
-static void llog_spd_conflict(struct logger *logger, const struct spd_route *spd,
-			      const struct spd_route *conflict)
+static void llog_spd_conflict(struct logger *logger, const struct spd *spd,
+			      const struct spd *conflict)
 {
 	struct connection *d = conflict->connection;
 	LLOG_JAMBUF(RC_LOG_SERIOUS, logger, buf) {
@@ -774,7 +774,7 @@ static void llog_spd_conflict(struct logger *logger, const struct spd_route *spd
 	}
 }
 
-static bool get_connection_spd_conflict(const struct spd_route *spd,
+static bool get_connection_spd_conflict(const struct spd *spd,
 					const enum routing new_routing,
 					struct spd_owner *owner,
 					struct bare_shunt ***bare_shunt,
@@ -812,7 +812,7 @@ static bool get_connection_spd_conflict(const struct spd_route *spd,
 	return true;
 }
 
-static void revert_kernel_policy(struct spd_route *spd,
+static void revert_kernel_policy(struct spd *spd,
 				 struct child_sa *child/*could be NULL*/,
 				 struct logger *logger)
 {
@@ -2293,7 +2293,7 @@ bool get_ipsec_traffic(struct child_sa *child,
 }
 
 void orphan_holdpass(struct connection *c,
-		     struct spd_route *sr,
+		     struct spd *sr,
 		     struct logger *logger)
 {
 	/*

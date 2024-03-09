@@ -34,7 +34,7 @@
 #include "kernel_mode.h"
 
 struct sa_marks;
-struct spd_route;
+struct spd;
 struct iface;
 struct kernel_iface;
 struct show;
@@ -363,7 +363,7 @@ extern bool flush_bare_shunt(const ip_address *src, const ip_address *dst,
 			     const char *why, struct logger *logger);
 
 void orphan_holdpass(struct connection *c,
-		     struct spd_route *sr,
+		     struct spd *sr,
 		     struct logger *logger);
 
 extern ipsec_spi_t get_ipsec_spi(const struct connection *c,
@@ -405,7 +405,7 @@ typedef struct { uint32_t value; } spd_priority_t;
 #define pri_spd_priority(P) (P).value
 
 extern const spd_priority_t highest_spd_priority;
-spd_priority_t spd_priority(const struct spd_route *spd);
+spd_priority_t spd_priority(const struct spd *spd);
 
 struct kernel_acquire {
 	ip_packet packet;			/* that triggered the on-demand exchange */
@@ -422,7 +422,7 @@ void setup_esp_nic_offload(struct nic_offload *nic_offload,
 			   const struct connection *c,
 			   struct logger *logger);
 
-struct spd_owner spd_owner(const struct spd_route *spd, enum routing new_routing,
+struct spd_owner spd_owner(const struct spd *spd, enum routing new_routing,
 			   struct logger *logger, where_t where);
 
 #endif

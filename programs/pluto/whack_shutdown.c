@@ -59,7 +59,7 @@
 #include "impair_message.h"	/* for free_impair_message() */
 #include "state_db.h"		/* for check_state_db() */
 #include "connection_db.h"	/* for check_connection_db() */
-#include "spd_route_db.h"	/* for check_spd_db() */
+#include "spd_db.h"	/* for check_spd_db() */
 #include "server_fork.h"	/* for check_server_fork() */
 #include "pending.h"
 #include "connection_event.h"
@@ -161,7 +161,7 @@ void exit_epilogue(void)
 	 */
 	state_db_check(logger);
 	connection_db_check(logger);
-	spd_route_db_check(logger);
+	spd_db_check(logger);
 	check_server_fork(logger); /*pid_entry_db_check()*/
 
 	/*

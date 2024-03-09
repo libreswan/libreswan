@@ -31,7 +31,7 @@
 
 struct state;
 struct connection;
-struct spd_route;
+struct spd;
 struct spds;
 struct logger;
 struct child_sa;
@@ -50,13 +50,13 @@ enum updown {
 };
 
 bool do_updown(enum updown updown_verb,
-	       const struct connection *c, const struct spd_route *sr,
+	       const struct connection *c, const struct spd *sr,
 	       struct child_sa *child, struct logger *logger);
 
 void do_updown_child(enum updown updown_verb, struct child_sa *child);
 
 void do_updown_unroute(const struct connection *c, struct child_sa *child);
-void do_updown_unroute_spd(const struct spd_route *spd, const struct spd_owner *owner,
+void do_updown_unroute_spd(const struct spd *spd, const struct spd_owner *owner,
 			   struct child_sa *child, struct logger *logger);
 
 #endif

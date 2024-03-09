@@ -35,7 +35,7 @@
 #include "ip_range.h"
 #include "iface.h"
 #include "pending.h"		/* for connection_is_pending() */
-#include "spd_route_db.h"	/* for spd_route_db_add_connection() */
+#include "spd_db.h"	/* for spd_route_db_add_connection() */
 #include "instantiate.h"
 
 #define TS_MAX 16 /* arbitrary */
@@ -235,11 +235,11 @@ static void scribble_selectors_on_spd(struct connection *c,
 			     remote_ns < remote_nsp->ns + remote_nsp->nr; remote_ns++) {
 				if (selector_info(local_ns->selector) == selector_info(remote_ns->selector)) {
 					if (pass == 2) {
-						struct spd_route *spd = &c->child.spds.list[nr_spds];
+						struct spd *spd = &c->child.spds.list[nr_spds];
 						spd->local->client = local_ns->selector;
 						spd->remote->client = remote_ns->selector;
 						spd->block = local_ns->block || remote_ns->block;
-						spd_route_db_add(spd);
+						spd_db_add(spd);
 					}
 					nr_spds++;
 				}
@@ -1908,7 +1908,7 @@ bool process_v2TS_response_payloads(struct child_sa *child,
 	}
 
 	scribble_ts_response_on_initiator(child, &best, indent);
-	spd_route_db_rehash_remote_client(c->spd);
+	spd_db_rehash_remote_client(c->spd);
 
 	return true;
 }

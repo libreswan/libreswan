@@ -611,7 +611,7 @@ struct spd_owner {
 	 * The check excludes SPDs of the connection's parent: this
 	 * seems very weak as the parent may still be routed.
 	 */
-	const struct spd_route *bare_route;
+	const struct spd *bare_route;
 	/*
 	 * .bare_cat
 	 *
@@ -619,7 +619,7 @@ struct spd_owner {
 	 * (ignoring current connection and SPD).  When deleting a CAT
 	 * this SPD will be restored.
 	 */
-	const struct spd_route *bare_cat;
+	const struct spd *bare_cat;
 	/*
 	 * .bare_policy
 	 *
@@ -629,7 +629,7 @@ struct spd_owner {
 	 * Since SPD doesn't exist checks for matching .overlapip
 	 * and/or priority aren't needed.
 	 */
-	const struct spd_route *bare_policy;
+	const struct spd *bare_policy;
 	/*
 	 * .policy
 	 *
@@ -640,10 +640,10 @@ struct spd_owner {
 	 * higher new_routing (shunt_kind).  As a special exception,
 	 * an instance isn't trumped when its template is identical.
 	 */
-	const struct spd_route *policy;
+	const struct spd *policy;
 };
 
-struct spd_route {
+struct spd {
 	struct spd_end end[END_ROOF];
 	/* point into above */
 	struct spd_end *local;		/* must update after clone */
@@ -665,12 +665,12 @@ struct spd_route {
 	struct {
 		struct list_entry list;
 		struct list_entry remote_client;
-	} spd_route_db_entries;
+	} spd_db_entries;
 };
 
 struct spds {
 	unsigned len;
-	struct spd_route *list;
+	struct spd *list;
 };
 
 struct sa_mark {
@@ -744,7 +744,7 @@ struct connection {
 		struct spds spds;
 	} child;
 
-	struct spd_route *spd;			/* HACK: points to child.spds.list */
+	struct spd *spd;			/* HACK: points to child.spds.list */
 
 	/* internal fields: */
 
@@ -991,7 +991,7 @@ bool next_connection(enum chrono order, struct connection_filter *query);
 bool all_connections(enum chrono adv, struct connection_filter *filter, struct logger *logger);
 
 /*
- * For iterating over the spd_route DB.
+ * For iterating over the spd DB.
  *
  * - parameters are only matched when non-NULL or non-zero
  * - .connection can be deleted between calls
@@ -1003,10 +1003,10 @@ bool all_connections(enum chrono adv, struct connection_filter *filter, struct l
  * newest entry.
  */
 
-struct spd_route_filter {
+struct spd_filter {
 	const ip_selector *remote_client_range;
 	/* current result (can be safely deleted) */
-	struct spd_route *spd;
+	struct spd *spd;
 	/* internal: handle on next entry */
 	struct list_entry *internal;
 	/* internal: total matches so far */
@@ -1015,13 +1015,13 @@ struct spd_route_filter {
 	where_t where;
 };
 
-bool next_spd_route(enum chrono order, struct spd_route_filter *srf);
+bool next_spd(enum chrono order, struct spd_filter *srf);
 
 void replace_connection_that_id(struct connection *c, const struct id *new_id);
 void connection_db_rehash_that_id(struct connection *c);
 void connection_db_rehash_host_pair(struct connection *c);
 
-void spd_route_db_rehash_remote_client(struct spd_route *sr);
+void spd_db_rehash_remote_client(struct spd *sr);
 
 bool dpd_active_locally(const struct connection *c);
 
@@ -1031,7 +1031,7 @@ PRINTF_LIKE(3)
 void ldbg_connection(const struct connection *c, where_t where,
 		     const char *message, ...);
 
-void init_connection_spd(struct connection *c, struct spd_route *spd);
+void init_connection_spd(struct connection *c, struct spd *spd);
 void alloc_connection_spds(struct connection *c, unsigned nr);
 void discard_connection_spds(struct connection *c);
 void add_connection_spds(struct connection *c, const struct ip_info *host_afi);
@@ -1096,7 +1096,7 @@ bool is_opportunistic_instance(const struct connection *c);
 
 bool is_xauth(const struct connection *c);
 
-bool is_v1_cisco_split(const struct spd_route *spd, where_t where);
+bool is_v1_cisco_split(const struct spd *spd, where_t where);
 
 /* IKE SA | ISAKMP SA || Child SA | IPsec SA */
 const char *connection_sa_name(const struct connection *c, enum sa_type sa_type);

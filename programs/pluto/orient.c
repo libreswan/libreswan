@@ -340,7 +340,7 @@ bool orient(struct connection *c, struct logger *logger)
 	/* rehash end dependent hashes */
 	connection_db_rehash_that_id(c);
 	FOR_EACH_ITEM(spd, &c->child.spds) {
-		spd_route_db_rehash_remote_client(spd);
+		spd_db_rehash_remote_client(spd);
 	}
 
 	/* the ends may have flipped */

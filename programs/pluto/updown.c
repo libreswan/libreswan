@@ -81,7 +81,7 @@ static void jam_clean_xauth_username(struct jambuf *buf,
 static bool fmt_common_shell_out(char *buf,
 				 size_t blen,
 				 const struct connection *c,
-				 const struct spd_route *sr,
+				 const struct spd *sr,
 				 struct child_sa *child)
 {
 	struct jambuf jb = array_as_jambuf(buf, blen);
@@ -398,7 +398,7 @@ static bool invoke_command(const char *verb, const char *verb_suffix, const char
 
 static bool do_updown_verb(const char *verb,
 			   const struct connection *c,
-			   const struct spd_route *sr,
+			   const struct spd *sr,
 			   struct child_sa *child,
 			   /* either st, or c's logger */
 			   struct logger *logger)
@@ -477,7 +477,7 @@ static bool do_updown_verb(const char *verb,
 
 bool do_updown(enum updown updown_verb,
 	       const struct connection *c,
-	       const struct spd_route *spd,
+	       const struct spd *spd,
 	       struct child_sa *child,
 	       /* either st, or c's logger */
 	       struct logger *logger)
@@ -545,7 +545,7 @@ void do_updown_child(enum updown updown_verb, struct child_sa *child)
  * isn't shared.
  */
 
-void do_updown_unroute_spd(const struct spd_route *spd, const struct spd_owner *owner,
+void do_updown_unroute_spd(const struct spd *spd, const struct spd_owner *owner,
 			   struct child_sa *child, struct logger *logger)
 {
 	if (owner->bare_route == NULL) {

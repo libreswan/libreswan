@@ -58,7 +58,7 @@
 #include "defs.h"
 #include "connections.h" /* needs id.h */
 #include "connection_db.h"
-#include "spd_route_db.h"
+#include "spd_db.h"
 #include "pending.h"
 #include "foodgroups.h"
 #include "packet.h"
@@ -221,9 +221,9 @@ static void discard_spd_end_content(struct spd_end *e)
 	virtual_ip_delref(&e->virt);
 }
 
-static void discard_spd_content(struct spd_route *spd)
+static void discard_spd_content(struct spd *spd)
 {
-	spd_route_db_del(spd);
+	spd_db_del(spd);
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
 		discard_spd_end_content(&spd->end[end]);
 	}
@@ -1667,7 +1667,7 @@ static void set_connection_selector_proposals(struct connection *c, const struct
 	}
 }
 
-void init_connection_spd(struct connection *c, struct spd_route *spd)
+void init_connection_spd(struct connection *c, struct spd *spd)
 {
 	/* back link */
 	spd->connection = c;
@@ -1680,7 +1680,7 @@ void init_connection_spd(struct connection *c, struct spd_route *spd)
 		spd->end[end].child = &c->end[end].child;	/*clone must update*/
 	}
 	/* db; will be updated */
-	spd_route_db_init_spd_route(spd);
+	spd_db_init_spd(spd);
 }
 
 void alloc_connection_spds(struct connection *c, unsigned nr_spds)
@@ -1689,7 +1689,7 @@ void alloc_connection_spds(struct connection *c, unsigned nr_spds)
 	ldbg(c->logger, "allocating %u SPDs", nr_spds);
 	c->child.spds = (struct spds) {
 		.len = nr_spds,
-		.list = alloc_things(struct spd_route, nr_spds, "spds"),
+		.list = alloc_things(struct spd, nr_spds, "spds"),
 	};
 	c->spd = c->child.spds.list;
 	FOR_EACH_ITEM(spd, &c->child.spds) {
@@ -1737,7 +1737,7 @@ void add_connection_spds(struct connection *c,
 				ldbg(c->logger, "%*s%s", indent, "",
 				     str_selector_pair(left_selector, right_selector, &spb));
 				indent = 3;
-				struct spd_route *spd = &c->child.spds.list[spds++];
+				struct spd *spd = &c->child.spds.list[spds++];
 				PASSERT(c->logger, spd < c->child.spds.list + c->child.spds.len);
 				ip_selector *selectors[] = {
 					[LEFT_END] = left_selector,
@@ -1760,7 +1760,7 @@ void add_connection_spds(struct connection *c,
 					     bool_str(spd_end->child->has_client),
 					     bool_str(spd_end->virt != NULL));
 				}
-				spd_route_db_add(spd);
+				spd_db_add(spd);
 			}
 		}
 	}
@@ -4767,7 +4767,7 @@ bool is_xauth(const struct connection *c)
 		c->local->host.config->xauth.client || c->remote->host.config->xauth.client);
 }
 
-bool is_v1_cisco_split(const struct spd_route *spd UNUSED, where_t where UNUSED)
+bool is_v1_cisco_split(const struct spd *spd UNUSED, where_t where UNUSED)
 {
 #ifdef USE_CISCO_SPLIT
 	if (spd->connection->remotepeertype == CISCO &&

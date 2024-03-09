@@ -2645,7 +2645,7 @@ static void echo_proposal(struct isakmp_proposal r_proposal,    /* proposal to e
 			  struct ipsec_proto_info *pi,          /* info about this protocol instance */
 			  struct_desc *trans_desc,              /* descriptor for this transformation */
 			  pb_stream *trans_pbs,                 /* PBS for incoming transform */
-			  const struct spd_route *sr,           /* host details for the association */
+			  const struct spd *sr,           /* host details for the association */
 			  struct logger *logger)
 {
 	pb_stream r_proposal_pbs;

@@ -94,7 +94,7 @@ static uint64_t get_child_bytes(const struct connection *c, enum direction direc
 
 static void show_one_spd_brief(struct show *s,
 			 const struct connection *c,
-			 const struct spd_route *spd)
+			 const struct spd *spd)
 {
 	bool local_client_eq_host = false;
 	bool remote_client_eq_host = false;

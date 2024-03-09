@@ -20,7 +20,7 @@
 #include "ip_subnet.h"
 
 struct connection;
-struct spd_route;
+struct spd;
 struct spd_end;
 struct show;
 

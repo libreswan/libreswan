@@ -16,7 +16,7 @@
 
 struct pending;
 struct pluto_crypto_req;
-struct spd_route;
+struct spd;
 struct crypt_mac;
 struct hash_desc;
 struct payload_digest;

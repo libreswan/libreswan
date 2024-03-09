@@ -1146,7 +1146,7 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 		     bool_str(c->remote->config->child.virt != NULL));
 
 		update_first_selector(c, remote, *remote_client);
-		spd_route_db_rehash_remote_client(c->spd);
+		spd_db_rehash_remote_client(c->spd);
 		set_child_has_client(c, remote, true);
 		virtual_ip_delref(&c->spd->remote->virt);
 
@@ -1481,7 +1481,7 @@ static stf_status quick_inI1_outR1_continue12_tail(struct state *st, struct msg_
 	LLOG_JAMBUF(RC_LOG, st->logger, buf) {
 		jam(buf, "    us: ");
 		const struct connection *c = st->st_connection;
-		const struct spd_route *sr = c->spd;
+		const struct spd *sr = c->spd;
 		jam_spd_end(buf, c, sr->local, sr->remote, LEFT_END, oriented(c));
 		jam_string(buf, "  them: ");
 		jam_spd_end(buf, c, sr->remote, sr->local, RIGHT_END, oriented(c));
