@@ -1790,7 +1790,7 @@ struct_desc *v2_payload_desc(unsigned p)
 	return v2_payload_descs[q];
 }
 
-void init_pbs(pb_stream *pbs, uint8_t *start, size_t len, const char *name)
+static void init_pbs(pb_stream *pbs, uint8_t *start, size_t len, const char *name)
 {
 	*pbs = (pb_stream) {
 		/* .container = NULL, */

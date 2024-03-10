@@ -244,14 +244,6 @@ shunk_t pbs_in_left(const struct pbs_in *pbs);
  */
 
 /*
- * Initializers; point PBS at a pre-allocated (or static) buffer.
- *
- * XXX: should the buffer instead be allocated as part of the PBS?
- */
-extern void init_pbs(pb_stream *pbs, uint8_t *start, size_t len,
-		     const char *name);
-
-/*
  * Map a byte buffer to/from an input PBS and a read-only HUNK.
  *
  * XXX: there's a bit of a cheat going on here - the read-only buffer
