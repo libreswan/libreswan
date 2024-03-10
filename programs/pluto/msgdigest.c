@@ -31,7 +31,7 @@ struct msg_digest *alloc_md(struct iface_endpoint *ifp,
 	md->logger = alloc_logger(md, &logger_message_vec,
 				     /*debugging*/LEMPTY, where);
 	void *buffer = md + 1;
-	init_pbs(&md->packet_pbs, buffer, packet_len, "packet");
+	md->packet_pbs = pbs_in_from_shunk(shunk2(buffer, packet_len), "packet");
 	if (packet != NULL) {
 		memcpy(buffer, packet, packet_len);
 	}
