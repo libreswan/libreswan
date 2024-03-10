@@ -249,9 +249,9 @@ struct kernel_iface *find_kernel_ifaces(const struct ip_info *afi, struct logger
 		strcpy(ri->name, ifname);
 		ri->next = rifaces;
 		rifaces = ri;
-		ipstr_buf b;
+		address_buf b;
 		dbg("  found %s interface %s with address %s",
-		    afi->ip_name, ri->name, ipstr(&ri->addr, &b));
+		    afi->ip_name, ri->name, str_address(&ri->addr, &b));
 	}
 
 	pfree(buf);

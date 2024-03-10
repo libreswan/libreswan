@@ -151,9 +151,6 @@ size_t jam_address_reversed(struct jambuf *buf, const ip_address *src);
 const char *str_address_sensitive(const ip_address *src, address_buf *dst);
 const char *str_address_reversed(const ip_address *src, address_reversed_buf *buf);
 
-typedef address_buf ipstr_buf;
-const char *ipstr(const ip_address *src, ipstr_buf *b);
-
 /*
  * Magic values.
  *

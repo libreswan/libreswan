@@ -606,12 +606,12 @@ static void process_kernel_ifaces(struct kernel_iface *rifaces, struct logger *l
 				after = true;
 			} else if (sameaddr(&ifp->addr, &vfp->addr)) {
 				if (after) {
-					ipstr_buf b;
+					address_buf b;
 
 					llog(RC_LOG_SERIOUS, logger,
 					            "IP interfaces %s and %s share address %s!",
 					       ifp->name, vfp->name,
-					       ipstr(&ifp->addr, &b));
+					       str_address(&ifp->addr, &b));
 				}
 				bad = true;
 				/* continue just to find other duplicates */
@@ -627,11 +627,11 @@ static void process_kernel_ifaces(struct kernel_iface *rifaces, struct logger *l
 		 * ignore if --listen is specified and we do not match
 		 */
 		if (pluto_listen != NULL && !sameaddr(&lip, &ifp->addr)) {
-			ipstr_buf b;
+			address_buf b;
 
 			llog(RC_LOG, logger,
 				    "skipping interface %s with %s",
-				    ifp->name, ipstr(&ifp->addr, &b));
+				    ifp->name, str_address(&ifp->addr, &b));
 			continue;
 		}
 

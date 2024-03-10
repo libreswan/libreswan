@@ -87,12 +87,12 @@ static bool initiate_connection_1_basics(struct connection *c,
 	    pri_logger(c->logger));
 
 	if (!oriented(c)) {
-		ipstr_buf a;
-		ipstr_buf b;
+		address_buf a;
+		address_buf b;
 		llog(RC_ORIENT, c->logger,
 		     "we cannot identify ourselves with either end of this connection.  %s or %s are not usable",
-		     ipstr(&c->local->host.addr, &a),
-		     ipstr(&c->remote->host.addr, &b));
+		     str_address(&c->local->host.addr, &a),
+		     str_address(&c->remote->host.addr, &b));
 		return false;
 	}
 

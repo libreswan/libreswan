@@ -79,11 +79,6 @@ const struct ip_info *address_info(const ip_address address)
  * to output.
  */
 
-const char *ipstr(const ip_address *src, ipstr_buf *b)
-{
-	return str_address(src, b);
-}
-
 shunk_t address_as_shunk(const ip_address *address)
 {
 	const struct ip_info *afi = address_type(address);

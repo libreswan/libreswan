@@ -461,9 +461,11 @@ void record_deladdr(ip_address *ip, char *a_type)
 		if (ike->sa.st_v2_addr_change_event == NULL) {
 			event_schedule(EVENT_v2_ADDR_CHANGE, deltatime(0), &ike->sa);
 		} else {
-			ipstr_buf o, n;
+			address_buf o, n;
 			dbg(PRI_SO" MOBIKE new RTM_DELADDR %s pending previous %s",
-			    ike->sa.st_serialno, ipstr(ip, &n), ipstr(&ip_p, &o));
+			    ike->sa.st_serialno,
+			    str_address(ip, &n),
+			    str_address(&ip_p, &o));
 		}
 	}
 }

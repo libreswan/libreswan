@@ -42,8 +42,9 @@
 
 static void delete_states_by_peer(struct show *s, const ip_address *peer)
 {
+	/* note: peer_buf and peerstr at same scope */
 	address_buf peer_buf;
-	const char *peerstr = ipstr(peer, &peer_buf);
+	const char *peerstr = str_address(peer, &peer_buf);
 
 	whack_log(RC_COMMENT, s, "restarting peer %s", peerstr);
 

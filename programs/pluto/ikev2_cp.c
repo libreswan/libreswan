@@ -512,8 +512,9 @@ static bool ikev2_set_dns(struct pbs_in *cp_a_pbs, struct child_sa *child,
 
 	bool responder = (child->sa.st_sa_role == SA_RESPONDER);
 	if (!responder) {
+		/* note: ip_buf and ip_str at same scope */
 		address_buf ip_buf;
-		const char *ip_str = ipstr(&ip, &ip_buf);
+		const char *ip_str = str_address(&ip, &ip_buf);
 
 		llog_sa(RC_LOG, child,
 			  "received %sINTERNAL_IP%d_DNS %s",

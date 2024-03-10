@@ -289,8 +289,9 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 	}
 	free(conn_encode); /* allocated by audit_encode_nv_string() */
 
+	/* note laddr_buf and laddr at same scope */
 	address_buf laddr_buf;
-	const char *laddr = ipstr(&c->local->host.addr, &laddr_buf);
+	const char *laddr = str_address(&c->local->host.addr, &laddr_buf);
 
 	jam(&buf, " raddr=");
 	jam_address(&buf, &c->remote->host.addr);

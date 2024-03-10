@@ -267,9 +267,9 @@ static void confwrite_side(FILE *out, struct starter_end *end)
 
 	case KH_IPADDR:
 		{
-			ipstr_buf as;
-
-			fprintf(out, "\t%s=%s\n", side, ipstr(&end->addr, &as));
+			address_buf as;
+			fprintf(out, "\t%s=%s\n",
+				side, str_address(&end->addr, &as));
 		}
 		break;
 	}
@@ -285,10 +285,9 @@ static void confwrite_side(FILE *out, struct starter_end *end)
 
 	case KH_IPADDR:
 		{
-			ipstr_buf as;
-
+			address_buf as;
 			fprintf(out, "\t%snexthop=%s\n",
-				side, ipstr(&end->nexthop, &as));
+				side, str_address(&end->nexthop, &as));
 		}
 		break;
 

@@ -120,7 +120,7 @@ void append_pending(struct ike_sa *ike,
 		     /* "IKE SA" or "ISAKMP SA" */
 		     c->config->ike_info->parent_sa_name,
 		     pri_state(&ike->sa, &sab),
-		     ipstr(&c->remote->host.addr, &b));
+		     str_address(&c->remote->host.addr, &b));
 	}
 
 	/*

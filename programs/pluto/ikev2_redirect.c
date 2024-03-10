@@ -409,7 +409,7 @@ static err_t parse_redirect_payload(const struct pbs_in *notify_pbs,
 			return "variable part of payload does not match transferred GW Identity Length";
 		}
 		address_buf b;
-		dbg("   GW Identity IP: %s", ipstr(redirect_ip, &b));
+		dbg("   GW Identity IP: %s", str_address(redirect_ip, &b));
 	}
 
 	/*

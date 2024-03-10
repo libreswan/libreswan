@@ -1869,7 +1869,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 				}
 
 				address_buf a_buf;
-				const char *a_str = ipstr(&a, &a_buf);
+				const char *a_str = str_address(&a, &a_buf);
 				bool ignore = c->config->ignore_peer_dns;
 				log_state(RC_INFORMATIONAL, st, "Received %sDNS server %s",
 					  ignore ? "and ignored " : "",
