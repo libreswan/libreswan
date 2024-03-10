@@ -693,12 +693,12 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 		 */
 		dbg("going to try to verify NO_PPK_AUTH.");
 		/* making a dummy pb_stream so we could pass it to v2_check_auth */
-		pb_stream pbs_no_ppk_auth;
-		pb_stream pbs = md->chain[ISAKMP_NEXT_v2AUTH]->pbs;
+		struct pbs_in pbs = md->chain[ISAKMP_NEXT_v2AUTH]->pbs;
 		size_t len = pbs_left(&pbs);
 		pexpect(len == ike->sa.st_no_ppk_auth.len);
-		init_pbs(&pbs_no_ppk_auth, ike->sa.st_no_ppk_auth.ptr, len, "pb_stream for verifying NO_PPK_AUTH");
-
+		struct pbs_in pbs_no_ppk_auth =
+			pbs_in_from_shunk(HUNK_AS_SHUNK(ike->sa.st_no_ppk_auth),
+					  "pb_stream for verifying NO_PPK_AUTH");
 		diag_t d = verify_v2AUTH_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
 						 ike, &idhash_in, &pbs_no_ppk_auth, remote_auth);
 		if (d != NULL) {
