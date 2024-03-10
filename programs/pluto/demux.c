@@ -105,16 +105,28 @@ void process_md(struct msg_digest *md)
 		return;
 	}
 
-	if (md->packet_pbs.roof > md->message_pbs.roof) {
-		/* Some (old?) versions of the Cisco VPN client send an additional
-		 * 16 bytes of zero bytes - Complain but accept it
+	/*
+	 * They map onto the same bytes.
+	 */
+	shunk_t message = pbs_in_all(&md->message_pbs);
+	shunk_t packet = pbs_in_all(&md->packet_pbs);
+	PEXPECT(md->logger, message.ptr == packet.ptr);
+
+	if (packet.len > message.len) {
+		/*
+		 * The extracted message, with its .len set from the
+		 * header, is shorter than the raw packet.
+		 *
+		 * Some (old?) versions of the Cisco VPN client send
+		 * an additional 16 bytes of zero bytes - Complain but
+		 * accept it
 		 */
 		if (DBGP(DBG_BASE)) {
-			DBG_log("size (%u) in received packet is larger than the size specified in ISAKMP HDR (%u) - ignoring extraneous bytes",
-				(unsigned) pbs_room(&md->packet_pbs),
+			DBG_log("size (%ju) in received packet is larger than the size specified in ISAKMP HDR (%u) - ignoring extraneous bytes",
+				packet.len,
 				md->hdr.isa_length);
-			DBG_dump("extraneous bytes:", md->message_pbs.roof,
-				md->packet_pbs.roof - md->message_pbs.roof);
+			shunk_t tail = hunk_slice(packet, message.len, packet.len);
+			DBG_dump_hunk("extraneous bytes:", tail);
 		}
 	}
 
