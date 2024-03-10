@@ -234,11 +234,12 @@ bool record_and_send_v1_ike_msg(struct state *st, pb_stream *pbs, const char *wh
 	return send_or_resend_v1_ike_msg_from_state(st, what, false);
 }
 
-void record_outbound_v1_ike_msg(struct state *st, pb_stream *pbs, const char *what)
+void record_outbound_v1_ike_msg(struct state *st, struct pbs_out *pbs, const char *what)
 {
-	passert(pbs_offset(pbs) != 0);
+	shunk_t packet = pbs_out_all(pbs);
+	passert(packet.len > 0);
 	free_v1_message_queues(st);
-	replace_chunk(&st->st_v1_tpacket, pbs_out_all(pbs), what);
+	replace_chunk(&st->st_v1_tpacket, packet, what);
 }
 
 void free_v1_message_queues(struct state *st)
