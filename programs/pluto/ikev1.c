@@ -2248,8 +2248,8 @@ void process_packet_tail(struct msg_digest *md)
 			if (md->hdr.isa_xchg == ISAKMP_XCHG_INFO) {
 				/* these are handled later on in informational() */
 				if (DBGP(DBG_BASE)) {
-					DBG_log("%s:", nname);
-					DBG_dump_pbs(&p->pbs);
+					shunk_t header = pbs_in_to_cursor(&p->pbs);
+					DBG_dump_hunk(p->pbs.name, header);
 				}
 				continue;
 			}
@@ -2279,7 +2279,8 @@ void process_packet_tail(struct msg_digest *md)
 				   p->payload.notification.isan_length);
 		}
 		if (DBGP(DBG_BASE)) {
-			DBG_dump_pbs(&p->pbs);
+			shunk_t header = pbs_in_to_cursor(&p->pbs);
+			DBG_dump_hunk(p->pbs.name, header);
 		}
 	}
 

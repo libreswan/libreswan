@@ -290,7 +290,8 @@ void nat_traversal_natoa_lookup(struct msg_digest *md,
 	p = md->chain[ISAKMP_NEXT_NATOA_RFC];
 
 	if (DBGP(DBG_BASE)) {
-		DBG_dump("NAT-OA:", p->pbs.start, pbs_room(&p->pbs));
+		shunk_t nat_ao = pbs_in_all(&p->pbs);
+		DBG_dump_hunk("NAT-OA:", nat_ao);
 	}
 
 	ip_address ip;

@@ -291,7 +291,8 @@ void process_iface_packet(int fd, void *ifp_arg, struct logger *logger)
 				md->iface->ip_dev->real_device_name,
 				str_endpoint(&md->iface->local_endpoint, &lb),
 				md->iface->io->protocol->name);
-			DBG_dump(NULL, md->packet_pbs.start, pbs_room(&md->packet_pbs));
+			shunk_t packet = pbs_in_all(&md->packet_pbs);
+			DBG_dump_hunk(NULL, packet);
 		}
 
 		pstats_ike_bytes.in += pbs_in_all(&md->packet_pbs).len;

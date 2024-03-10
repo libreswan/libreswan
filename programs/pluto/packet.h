@@ -237,8 +237,6 @@ shunk_t pbs_in_left(const struct pbs_in *pbs);
 #define pbs_room(pbs) ((size_t)((pbs)->roof - (pbs)->start))
 #define pbs_left(pbs) ((size_t)((pbs)->roof - (pbs)->cur))
 
-#define DBG_dump_pbs(pbs) DBG_dump((pbs)->name, (pbs)->start, pbs_offset(pbs))
-
 /*
  * Input PBS
  */
