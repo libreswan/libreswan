@@ -40,9 +40,9 @@ struct msg_digest *alloc_md(struct iface_endpoint *ifp,
 
 struct msg_digest *clone_raw_md(struct msg_digest *md, where_t where)
 {
-	size_t packet_len = pbs_room(&md->packet_pbs);
+	shunk_t packet = pbs_in_all(&md->packet_pbs);
 	struct msg_digest *clone = alloc_md(md->iface, &md->sender,
-					    md->packet_pbs.start, packet_len,
+					    packet.ptr, packet.len,
 					    where);
 	clone->fake_clone = true;
 	clone->md_inception = threadtime_start();
