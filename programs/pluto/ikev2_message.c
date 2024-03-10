@@ -1282,8 +1282,8 @@ static bool record_outbound_fragments(const struct pbs_out *body,
 	 */
 	struct isakmp_hdr hdr;
 	{
-		struct pbs_in pbs;
-		init_pbs(&pbs, body->start, pbs_offset(body), "sk hdr");
+		shunk_t message = pbs_out_all(body);
+		struct pbs_in pbs = pbs_in_from_shunk(message, "sk hdr");
 		struct pbs_in ignored;
 		diag_t d = pbs_in_struct(&pbs, &isakmp_hdr_desc, &hdr, sizeof(hdr), &ignored);
 		if (d != NULL) {
