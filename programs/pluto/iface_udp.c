@@ -403,8 +403,8 @@ static struct state *find_likely_sender(size_t packet_len, uint8_t *buffer,
 		return NULL;
 	}
 
-	struct pbs_in packet_pbs;
-	init_pbs(&packet_pbs, buffer, packet_len, __func__);
+	shunk_t packet = shunk2(buffer, packet_len);
+	struct pbs_in packet_pbs = pbs_in_from_shunk(packet, __func__);
 	struct isakmp_hdr hdr;
 	diag_t d = pbs_in_struct(&packet_pbs, &raw_isakmp_hdr_desc,
 				 &hdr, sizeof(hdr), NULL);
