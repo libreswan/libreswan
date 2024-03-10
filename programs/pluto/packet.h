@@ -213,12 +213,12 @@ shunk_t pbs_out_all(const struct pbs_out *pbs);
 chunk_t clone_pbs_out_all(const struct pbs_out *pbs, const char *name);
 
 /*
- * Return a map(chunk_t) or clone(chunk_t) of what is still left in
- * the input PBS.
+ * START..CURSOR - ROOF to_cursor()
+ * START - CURSOR..ROOF from_cursor()
  */
-
+shunk_t pbs_in_to_cursor(const struct pbs_in *pbs);
+shunk_t pbs_out_to_cursor(const struct pbs_out *pbs);
 shunk_t pbs_in_left(const struct pbs_in *pbs);
-chunk_t clone_pbs_in_left(const struct pbs_in *pbs, const char *name);
 
 /*
  * For an input PBS:

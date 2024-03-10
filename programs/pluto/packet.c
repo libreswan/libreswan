@@ -1829,19 +1829,16 @@ struct pbs_in pbs_in_from_shunk(shunk_t shunk, const char *name)
 	return pbs;
 }
 
-shunk_t pbs_out_all(const struct pbs_out *pbs)
-{
-	return shunk2(pbs->start, pbs_offset(pbs));
-}
-
-chunk_t clone_pbs_out_all(const struct pbs_out *pbs, const char *name)
-{
-	return clone_hunk(pbs_out_all(pbs), name);
-}
+/* start - roof */
 
 shunk_t pbs_in_all(const struct pbs_in *pbs)
 {
 	return shunk2(pbs->start, pbs_room(pbs));
+}
+
+shunk_t pbs_out_all(const struct pbs_out *pbs)
+{
+	return shunk2(pbs->start, pbs_offset(pbs));
 }
 
 chunk_t clone_pbs_in_all(const struct pbs_in *pbs, const char *name)
@@ -1849,14 +1846,28 @@ chunk_t clone_pbs_in_all(const struct pbs_in *pbs, const char *name)
 	return clone_hunk(pbs_in_all(pbs), name);
 }
 
-shunk_t pbs_in_left(const struct pbs_in *pbs)
+chunk_t clone_pbs_out_all(const struct pbs_out *pbs, const char *name)
 {
-	return shunk2(pbs->cur, pbs_left(pbs));
+	return clone_hunk(pbs_out_all(pbs), name);
 }
 
-chunk_t clone_pbs_in_left(const struct pbs_in *pbs, const char *name)
+/* start - cursor */
+
+shunk_t pbs_in_to_cursor(const struct pbs_in *pbs)
 {
-	return clone_hunk(pbs_in_left(pbs), name);
+	return shunk2(pbs->start, pbs->cur - pbs->start);
+}
+
+shunk_t pbs_out_to_cursor(const struct pbs_out *pbs)
+{
+	return shunk2(pbs->start, pbs->cur - pbs->start);
+}
+
+/* cursor - roof */
+
+shunk_t pbs_in_left(const struct pbs_in *pbs)
+{
+	return shunk2(pbs->cur, pbs->roof - pbs->cur);
 }
 
 /*
