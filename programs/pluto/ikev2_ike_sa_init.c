@@ -1117,14 +1117,13 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	 * XXX:
 	 *
 	 * Should this code use clone_in_pbs_as_chunk() which uses
-	 * pbs_room() (.roof-.start)?  The original code:
+	 * (.roof-.start)?  The original code:
 	 *
 	 * 	clonetochunk(ike->sa.st_firstpacket_peer, md->message_pbs.start,
-	 *		     pbs_offset(&md->message_pbs),
+	 *		     md->message_pbs(.cur-.start),
 	 *		     "saved first received packet");
 	 *
-	 * and clone_out_pbs_as_chunk() both use pbs_offset()
-	 * (.cur-.start).
+	 * and clone_out_pbs_as_chunk() both use (.cur-.start).
 	 *
 	 * Suspect it doesn't matter as the code initializing
 	 * .message_pbs forces .roof==.cur - look for the comment

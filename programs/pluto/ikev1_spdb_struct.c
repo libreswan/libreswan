@@ -2086,11 +2086,6 @@ rsasig_common:
 				close_output_pbs(r_sa_pbs);
 			}
 
-			/* ??? If selection, we used to save the proposal in state.
-			 * We never used it.  From proposal_pbs.start,
-			 * length pbs_room(&proposal_pbs)
-			 */
-
 			/* copy over the results */
 			st->st_oakley = ta;
 			return v1N_NOTHING_WRONG;	/* accept SA */

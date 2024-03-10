@@ -1709,10 +1709,6 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 		}
 	}
 
-	/* ??? We used to copy the accepted proposal into the state, but it was
-	 * never used.  From sa_pd->pbs.start, length pbs_room(&sa_pd->pbs).
-	 */
-
 	/**************** build reply packet HDR*, HASH(3) ****************/
 
 	/* HDR* out done */
