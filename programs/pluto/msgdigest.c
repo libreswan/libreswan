@@ -56,7 +56,7 @@ struct msg_digest *md_addref_where(struct msg_digest *md, where_t where)
 
 void md_delref_where(struct msg_digest **mdp, where_t where)
 {
-	/* need non-NULL so .md_logger is available */
+	/* need non-NULL so .logger is available */
 	const struct logger *logger = (*mdp != NULL ? (*mdp)->logger : &global_logger);
 	struct msg_digest *md = delref_where(mdp, logger, where);
 	if (md != NULL) {
