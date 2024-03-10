@@ -1837,10 +1837,11 @@ void process_packet_tail(struct msg_digest *md)
 
 		/* XXX Detect weak keys */
 
-		/* grab a copy of raw packet (for duplicate packet detection) */
-		md->raw_packet = clone_bytes_as_chunk(md->packet_pbs.start,
-						      pbs_room(&md->packet_pbs),
-						      "raw packet");
+		/*
+		 * Grab a copy of raw packet (for duplicate packet
+		 * detection).
+		 */
+		md->raw_packet = clone_pbs_in_all(&md->packet_pbs, "raw packet");
 
 		/* Decrypt everything after header */
 		if (!new_iv_set) {
