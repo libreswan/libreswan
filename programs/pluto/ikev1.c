@@ -1042,12 +1042,9 @@ void ikev1_init_pbs_out_from_md_hdr(struct msg_digest *md, bool enc,
 static bool ikev1_duplicate(struct state *st, struct msg_digest *md)
 {
 	passert(st != NULL);
-	if (st->st_v1_rpacket.ptr != NULL &&
-	    st->st_v1_rpacket.len == pbs_room(&md->packet_pbs) &&
-	    memeq(st->st_v1_rpacket.ptr, md->packet_pbs.start,
-		  st->st_v1_rpacket.len)) {
+	if (hunk_eq(st->st_v1_rpacket, pbs_in_all(&md->packet_pbs))) {
 		/*
-		 * Duplicate.  Drop or retransmit?
+		 * Exact Duplicate.  Drop or retransmit?
 		 *
 		 * Only re-transmit when the last state transition
 		 * (triggered by this packet the first time) included
