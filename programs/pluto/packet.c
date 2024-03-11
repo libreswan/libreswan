@@ -1833,12 +1833,12 @@ struct pbs_in pbs_in_from_shunk(shunk_t shunk, const char *name)
 
 shunk_t pbs_in_all(const struct pbs_in *pbs)
 {
-	return shunk2(pbs->start, pbs_room(pbs));
+	return shunk2(pbs->start, pbs->roof - pbs->start);
 }
 
 shunk_t pbs_out_all(const struct pbs_out *pbs)
 {
-	return shunk2(pbs->start, pbs_offset(pbs));
+	return shunk2(pbs->start, pbs->cur - pbs->start);
 }
 
 chunk_t clone_pbs_in_all(const struct pbs_in *pbs, const char *name)
