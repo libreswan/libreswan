@@ -11,6 +11,8 @@ road #
 road #
  ipsec whack --impair revival
 road #
+ ipsec whack --impair suppress_retransmits
+road #
  echo initdone
 initdone
 road #
