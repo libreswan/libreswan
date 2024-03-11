@@ -53,7 +53,7 @@ extern const shunk_t null_shunk;
 extern const shunk_t empty_shunk;
 
 shunk_t shunk1(const char *ptr); /* strlen() implied */
-shunk_t shunk2(const void *ptr, int len);
+shunk_t shunk2(const void *ptr, size_t len);
 
 #define HUNK_AS_SHUNK(HUNK)			\
 	({					\
