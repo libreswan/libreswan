@@ -1,6 +1,9 @@
 
 See also https://libreswan.org/
 
+v4.14 (March 11, 2024)
+* Fix compile error in 4.13 in gntoid() [Andrew]
+
 v4.13 (March 11, 2024)
 * Security: Fixes http://libreswan.org/security/CVE-2024-2357
 * Linux: make libcap-ng failures non-fatal [Andrew]
