@@ -21,34 +21,11 @@ west #
  echo "initdone"
 initdone
 west #
- strongswan up westnet-eastnet-ikev1
-initiating Main Mode IKE_SA westnet-eastnet-ikev1[1] to 192.1.2.23
-generating ID_PROT request 0 [ SA V V V V V ]
-sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
-received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
-parsed ID_PROT response 0 [ SA V V V ]
-received FRAGMENTATION vendor ID
-received DPD vendor ID
-received NAT-T (RFC 3947) vendor ID
-selected proposal: IKE:AES_CBC_128/HMAC_SHA2_256_128/PRF_HMAC_SHA2_256/ECP_256
-generating ID_PROT request 0 [ KE No NAT-D NAT-D ]
-sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
-received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
-parsed ID_PROT response 0 [ KE No NAT-D NAT-D ]
-generating ID_PROT request 0 [ ID HASH N(INITIAL_CONTACT) ]
-sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
-received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
-parsed ID_PROT response 0 [ ID HASH ]
-IKE_SA westnet-eastnet-ikev1[1] established between 192.1.2.45[west]...192.1.2.23[east]
-scheduling reauthentication in XXXs
-maximum IKE_SA lifetime XXXs
-generating QUICK_MODE request 0123456789 [ HASH SA No KE ID ID ]
-sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
-received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
-parsed QUICK_MODE response 0123456789 [ HASH SA No KE ID ID ]
-selected proposal: ESP:AES_CBC_128/HMAC_SHA2_256_128/MODP_1536/NO_EXT_SEQ
-CHILD_SA westnet-eastnet-ikev1{1} established with SPIs SPISPI_i SPISPI_o and TS 192.0.1.0/24 === 192.0.2.0/24
-connection 'westnet-eastnet-ikev1' established successfully
+ swanctl --initiate --child westnet-eastnet-ikev1 --loglevel 0
+[IKE] initiating Main Mode IKE_SA westnet-eastnet-ikev1[1] to 192.1.2.23
+[IKE] IKE_SA westnet-eastnet-ikev1[1] established between 192.1.2.45[west]...192.1.2.23[east]
+[IKE] CHILD_SA westnet-eastnet-ikev1{1} established with SPIs SPISPI_i SPISPI_o and TS 192.0.1.0/24 === 192.0.2.0/24
+initiate completed successfully
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
