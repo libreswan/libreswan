@@ -3,6 +3,7 @@ See also https://libreswan.org/
 
 v4.14 (March 11, 2024)
 * Fix compile error in 4.13 in gntoid() [Andrew]
+* testing: fixup ikev2-tfc-03 for padded packets [Andrew/Paul]
 
 v4.13 (March 11, 2024)
 * Security: Fixes http://libreswan.org/security/CVE-2024-2357
