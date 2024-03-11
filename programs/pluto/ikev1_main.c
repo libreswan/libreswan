@@ -102,6 +102,8 @@
 #include "ikev1_cert.h"
 #include "terminate.h"
 
+static bool emit_message_padding(struct pbs_out *pbs, const struct state *st);
+
 /*
  * Initiate an Oakley Main Mode exchange.
  * --> HDR;SA
@@ -360,9 +362,20 @@ bool ikev1_close_and_encrypt_message(pb_stream *pbs, struct state *st)
 	passert(st->st_v1_new_iv.len >= e->enc_blocksize);
 	st->st_v1_new_iv.len = e->enc_blocksize;   /* truncate */
 
-	/* close just before encrypting so NP backpatching isn't confused */
-	if (!ikev1_close_message(pbs, st))
-		return false;
+	/*
+	 * Close just before encrypting so NP backpatching isn't
+	 * confused.
+	 *
+	 * XXX: note the double padding (tripple if you count the code
+	 * paths that call ikev1_close_message() before encrypting.
+	 */
+
+	if (!emit_message_padding(pbs, st)) {
+		/* already logged */
+		return false; /*fatal*/
+	}
+
+	close_output_pbs(pbs);
 
 	e->encrypt_ops->do_crypt(e, enc_start, enc_len,
 				 st->st_enc_key_nss,
