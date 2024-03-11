@@ -30,7 +30,7 @@ mv /tmp/fstab /etc/fstab
 chsh -s /usr/local/bin/bash root
 cp -v /pool/${PREFIX}freebsd.bash_profile /root/.bash_profile
 
-# supress motd
+# suppress motd
 touch /root/.hushlogin
 
 cp -v /pool/${PREFIX}freebsd.rc.conf /etc/rc.conf
