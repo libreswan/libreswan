@@ -1,6 +1,6 @@
-libreswan (5.0~rc1) unstable; urgency=low
+libreswan (5.0~rc2) unstable; urgency=low
 
-  * Release 5.0~rc1
+  * Release 5.0~rc2
 
- -- Libreswan Team <team@libreswan.org>  Tue, 12 Dec 2023 01:00:00 +0200
+ -- Libreswan Team <team@libreswan.org>  Mon, 11 Mar 2024 01:00:00 +0200
 

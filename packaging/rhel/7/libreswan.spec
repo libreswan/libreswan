@@ -27,7 +27,7 @@
     USE_XFRM_INTERFACE_IFLA_HEADER=true \\\
 %{nil}
 
-%global prever rc1
+%global prever rc2
 
 Name: libreswan
 Summary: Internet Key Exchange (IKEv1 and IKEv2) implementation for IPsec
@@ -207,5 +207,5 @@ certutil -N -d sql:$tmpdir --empty-password
 %doc %{_mandir}/*/*
 
 %changelog
-* Tue Dec 12 2023 Team Libreswan <team@libreswan.org> - 5.0-0.rc1
+* Mon Mar 11 2024 Team Libreswan <team@libreswan.org> - 5.0-0.1.rc2
 - Automated build from release tar ball

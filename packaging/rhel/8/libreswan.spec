@@ -30,7 +30,7 @@
     USE_SECCOMP=true \\\
 %{nil}
 
-%global prever rc1
+%global prever rc2
 
 Name: libreswan
 Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
@@ -198,5 +198,5 @@ certutil -N -d sql:$tmpdir --empty-password
 %attr(0644,root,root) %doc %{_mandir}/*/*
 
 %changelog
-* Tue Dec 12 2023 Team Libreswan <team@libreswan.org> - 5.0-0.rc1
+* Mon Mar 11 2024 Team Libreswan <team@libreswan.org> - 5.0-0.1.rc2
 - Automated build from release tar ball
