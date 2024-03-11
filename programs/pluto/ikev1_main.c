@@ -396,14 +396,9 @@ bool ikev1_close_and_encrypt_message(pb_stream *pbs, struct state *st)
  *
  * @param pbs PB Stream
  */
-bool ikev1_close_message(struct pbs_out *pbs, const struct state *st)
+
+static bool emit_message_padding(struct pbs_out *pbs, const struct state *st)
 {
-	if (pbad(st == NULL)) {
-		return false;
-	}
-
-	PASSERT(st->logger, st->st_ike_version == IKEv1);
-
 	size_t padding = pad_up(pbs_offset(pbs), 4);
 	if (padding == 0) {
 		ldbg(st->logger, "no IKEv1 message padding required");
@@ -416,6 +411,19 @@ bool ikev1_close_message(struct pbs_out *pbs, const struct state *st)
 			/* already logged */
 			return false; /*fatal*/
 		}
+	}
+	return true;
+}
+
+bool ikev1_close_message(struct pbs_out *pbs, const struct state *st)
+{
+	if (pbad(st == NULL)) {
+		return false;
+	}
+
+	if (!emit_message_padding(pbs, st)) {
+		/* already logged */
+		return false; /*fatal*/
 	}
 
 	close_output_pbs(pbs);
