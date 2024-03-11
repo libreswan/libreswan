@@ -7,6 +7,7 @@ v4.13 (March 11, 2024)
 * BSD: fix esp=aes_gcm [Andrew]
 * NetBSD: fix compiler warning in lib/libswan/x509.c [Andrew]
 * x509: unpack IPv6 general names based on length [Andrew]
+* pluto: TFC padding was not set for AEAD algorithms [SaiKumarCholleti@github]
 
 v4.12 (Aug 8, 2023)
 * SECURITY IKEv2: Fixes https://libreswan.org/security/CVE-2023-38710

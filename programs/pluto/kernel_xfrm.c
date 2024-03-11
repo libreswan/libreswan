@@ -1547,18 +1547,19 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 			req.n.nlmsg_len += attr->rta_len;
 			attr = (struct rtattr *)((char *)attr + attr->rta_len);
 
-			/* Traffic Flow Confidentiality is only for ESP tunnel mode */
-			if (sa->tfcpad != 0 && sa->tunnel && sa->level == 0) {
-				dbg("xfrm: setting TFC to %" PRIu32 " (up to PMTU)",
-				    sa->tfcpad);
+		}
 
-				attr->rta_type = XFRMA_TFCPAD;
-				attr->rta_len = RTA_LENGTH(sizeof(sa->tfcpad));
-				memcpy(RTA_DATA(attr), &sa->tfcpad, sizeof(sa->tfcpad));
-				req.n.nlmsg_len += attr->rta_len;
-				attr = (struct rtattr *)((char *)attr + attr->rta_len);
+		/* Traffic Flow Confidentiality is only for ESP tunnel mode */
+		if (sa->tfcpad != 0 && sa->tunnel && sa->level == 0) {
+			dbg("xfrm: setting TFC to %" PRIu32 " (up to PMTU)",
+			    sa->tfcpad);
 
-			}
+			attr->rta_type = XFRMA_TFCPAD;
+			attr->rta_len = RTA_LENGTH(sizeof(sa->tfcpad));
+			memcpy(RTA_DATA(attr), &sa->tfcpad, sizeof(sa->tfcpad));
+			req.n.nlmsg_len += attr->rta_len;
+			attr = (struct rtattr *)((char *)attr + attr->rta_len);
+
 		}
 	}
 
