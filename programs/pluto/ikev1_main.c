@@ -327,44 +327,36 @@ struct hash_signature v1_sign_hash_RSA(const struct connection *c,
 bool ikev1_close_and_encrypt_message(pb_stream *pbs, struct state *st)
 {
 	const struct encrypt_desc *e = st->st_oakley.ta_encrypt;
-	uint8_t *enc_start = pbs->start + sizeof(struct isakmp_hdr);
-	size_t enc_len = pbs_offset(pbs) - sizeof(struct isakmp_hdr);
-
-	if (DBGP(DBG_CRYPT)) {
-		DBG_dump("encrypting:", enc_start, enc_len);
-		DBG_dump_hunk("IV:", st->st_v1_new_iv);
-		DBG_log("unpadded size is: %u", (unsigned int)enc_len);
-	}
 
 	/*
-	 * Pad up to multiple of encryption blocksize.
-	 * See the description associated with the definition of
-	 * struct isakmp_hdr in packet.h.
+	 * Pad up the encrypted part of the payload to a multiple of
+	 * encryption blocksize.
+	 *
+	 * This does not include the header.  See the description
+	 * associated with the definition of struct isakmp_hdr in
+	 * packet.h.
 	 */
-	{
-		size_t padding = pad_up(enc_len, e->enc_blocksize);
-
-		if (padding != 0) {
-			if (!pbs_out_zero(pbs, padding, "encryption padding")) {
-				/* already logged */
-				return false; /*fatal*/
-			}
-
-			enc_len += padding;
+	uint8_t *encrypt_start = pbs->start + sizeof(struct isakmp_hdr);
+	size_t unpadded_encrypt_len = pbs_offset(pbs) - sizeof(struct isakmp_hdr);
+	size_t encrypt_padding = pad_up(unpadded_encrypt_len, e->enc_blocksize);
+	size_t padded_encrypt_len = unpadded_encrypt_len + encrypt_padding;
+	if (encrypt_padding != 0) {
+		if (!pbs_out_zero(pbs, encrypt_padding, "encryption padding")) {
+			/* already logged */
+			return false; /*fatal*/
 		}
 	}
 
-	if (DBGP(DBG_CRYPT)) {
-		DBG_log("encrypting %zu using %s", enc_len,
-			st->st_oakley.ta_encrypt->common.fqn);
-	}
-
-	passert(st->st_v1_new_iv.len >= e->enc_blocksize);
+	PASSERT(st->logger, st->st_v1_new_iv.len >= e->enc_blocksize);
 	st->st_v1_new_iv.len = e->enc_blocksize;   /* truncate */
 
 	/*
-	 * Close just before encrypting so NP backpatching isn't
-	 * confused.
+	 * Now pad the entire message (header and body) to message
+	 * alignment.
+	 *
+	 * Typically this is redundant but with NONE the encryption
+	 * alignment is 1 which means this may need to do some
+	 * alignment.
 	 *
 	 * XXX: note the double padding (tripple if you count the code
 	 * paths that call ikev1_close_message() before encrypting.
@@ -377,7 +369,14 @@ bool ikev1_close_and_encrypt_message(pb_stream *pbs, struct state *st)
 
 	close_output_pbs(pbs);
 
-	e->encrypt_ops->do_crypt(e, enc_start, enc_len,
+
+	if (DBGP(DBG_CRYPT)) {
+		DBG_dump("encrypting:", encrypt_start, padded_encrypt_len);
+		DBG_dump_hunk("IV:", st->st_v1_new_iv);
+		DBG_log("unpadded encrypt size is: %zu", unpadded_encrypt_len);
+	}
+
+	e->encrypt_ops->do_crypt(e, encrypt_start, padded_encrypt_len,
 				 st->st_enc_key_nss,
 				 st->st_v1_new_iv.ptr, true,
 				 st->logger);
