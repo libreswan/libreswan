@@ -244,7 +244,7 @@ void send_v1_delete(struct ike_sa *isakmp, struct state *st, where_t where)
 		save_iv(p1st, old_iv);
 		init_phase2_iv(p1st, &msgid);
 
-		passert(ikev1_encrypt_message(&r_hdr_pbs, p1st));
+		passert(ikev1_close_and_encrypt_message(&r_hdr_pbs, p1st));
 
 		send_pbs_out_using_state(p1st, "delete notify", &reply_pbs);
 

@@ -322,7 +322,7 @@ struct hash_signature v1_sign_hash_RSA(const struct connection *c,
  * The theory is that there will be no "backing out", so we commit to IV.
  * We also close the pbs.
  */
-bool ikev1_encrypt_message(pb_stream *pbs, struct state *st)
+bool ikev1_close_and_encrypt_message(pb_stream *pbs, struct state *st)
 {
 	const struct encrypt_desc *e = st->st_oakley.ta_encrypt;
 	uint8_t *enc_start = pbs->start + sizeof(struct isakmp_hdr);
@@ -1154,7 +1154,7 @@ static stf_status main_inR2_outI3_continue(struct state *st,
 	/* encrypt message, except for fixed part of header */
 
 	/* st_new_iv was computed by generate_skeyids_iv (??? DOESN'T EXIST) */
-	if (!ikev1_encrypt_message(rbody, st))
+	if (!ikev1_close_and_encrypt_message(rbody, st))
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 
 	return STF_OK;
@@ -1341,7 +1341,7 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 
 	/* encrypt message, sans fixed part of header */
 
-	if (!ikev1_encrypt_message(&rbody, st))
+	if (!ikev1_close_and_encrypt_message(&rbody, st))
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 
 	/* Last block of Phase 1 (R3), kept for Phase 2 IV generation */
@@ -1530,7 +1530,7 @@ stf_status send_isakmp_notification(struct state *st,
 		save_new_iv(st, old_new_iv);
 
 		init_phase2_iv(st, &msgid);
-		if (!ikev1_encrypt_message(&rbody, st))
+		if (!ikev1_close_and_encrypt_message(&rbody, st))
 			return STF_INTERNAL_ERROR;
 
 		send_pbs_out_using_state(st, "ISAKMP notify", &reply_stream);
@@ -1698,7 +1698,7 @@ static void send_v1_notification(struct logger *logger,
 			update_iv(&isakmp_encrypt->sa);
 		}
 		init_phase2_iv(&isakmp_encrypt->sa, &msgid);
-		passert(ikev1_encrypt_message(&r_hdr_pbs, &isakmp_encrypt->sa));
+		passert(ikev1_close_and_encrypt_message(&r_hdr_pbs, &isakmp_encrypt->sa));
 
 		restore_iv(&isakmp_encrypt->sa, old_iv);
 	} else {

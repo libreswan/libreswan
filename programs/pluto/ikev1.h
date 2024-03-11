@@ -62,7 +62,7 @@ void doi_log_cert_thinking(uint16_t auth,
 			   bool send_cert,
 			   bool send_chain);
 
-bool ikev1_encrypt_message(pb_stream *pbs, struct state *st);
+bool ikev1_close_and_encrypt_message(pb_stream *pbs, struct state *st);
 bool ikev1_close_message(pb_stream *pbs, const struct state *st);
 
 /* Parent capable of sending messages.  */

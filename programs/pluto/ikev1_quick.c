@@ -866,7 +866,7 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 	init_phase2_iv(isakmp_sa, &st->st_v1_msgid.id);
 	restore_new_iv(st, isakmp_sa->st_v1_new_iv);
 
-	if (!ikev1_encrypt_message(&rbody, st)) {
+	if (!ikev1_close_and_encrypt_message(&rbody, st)) {
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -1572,7 +1572,7 @@ static stf_status quick_inI1_outR1_continue12_tail(struct state *st, struct msg_
 	}
 
 	/* encrypt message, except for fixed part of header */
-	if (!ikev1_encrypt_message(&rbody, st)) {
+	if (!ikev1_close_and_encrypt_message(&rbody, st)) {
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 	}
 
@@ -1789,7 +1789,7 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 
 	/* encrypt message, except for fixed part of header */
 
-	if (!ikev1_encrypt_message(&rbody, st)) {
+	if (!ikev1_close_and_encrypt_message(&rbody, st)) {
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 	}
 
