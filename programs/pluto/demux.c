@@ -273,7 +273,7 @@ void process_iface_packet(int fd, void *ifp_arg, struct logger *logger)
 		if (DBGP(DBG_BASE)) {
 			endpoint_buf sb;
 			endpoint_buf lb;
-			DBG_log("*received %ju bytes from %s on %s %s using %s",
+			DBG_log("*received %zu bytes from %s on %s %s using %s",
 				pbs_in_all(&md->packet_pbs).len,
 				str_endpoint(&md->sender, &sb),
 				md->iface->ip_dev->real_device_name,
