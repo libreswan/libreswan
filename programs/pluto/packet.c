@@ -2948,21 +2948,19 @@ uint8_t reply_buffer[MAX_OUTPUT_UDP_SIZE];
 void close_output_pbs(struct pbs_out *pbs)
 {
 	if (pbs->lenfld != NULL) {
-		uint32_t len = pbs_offset(pbs);
-		int i = pbs->lenfld_desc->size;
-
-		passert(i > 0);
+		size_t len = (pbs->cur - pbs->start);
 
 		if (pbs->lenfld_desc->field_type == ft_lv)
 			len -= sizeof(struct isakmp_attribute);
 
-		dbg("emitting length of %s: %" PRIu32, pbs->name, len);
+		dbg("emitting length of %s: %zu", pbs->name, len);
 
-		/* emit octets of length in network order */
-		while (i-- != 0) {
-			pbs->lenfld[i] = (uint8_t)len;
-			len >>= BITS_IN_BYTE;
-		}
+		/*
+		 * Emit SIZE octets of (host) length in network order.
+		 */
+		unsigned size = pbs->lenfld_desc->size;
+		PASSERT(pbs->outs_logger, size > 0);
+		hton_bytes(len, pbs->lenfld, size);
 	}
 
 	/* if there is one */
