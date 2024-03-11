@@ -2277,11 +2277,15 @@ diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
 	passert(cur == ins->cur + sd->size);
 	if (obj_pbs != NULL) {
 		passert(length_field_found);
-		init_pbs(obj_pbs, ins->cur,
-			 roof - ins->cur, sd->name);
+		/*
+		 * It starts at the same origin; but is truncated and
+		 * cursor skips header
+		 */
+		*obj_pbs = pbs_in_from_shunk(shunk2(ins->cur/*not CUR*/, roof - ins->cur), sd->name);
+		obj_pbs->cur = cur; /* skip header */
+		/* back link */
 		obj_pbs->container = ins;
 		obj_pbs->desc = sd;
-		obj_pbs->cur = cur;
 	}
 	ins->cur = roof;
 	if (DBGP(DBG_BASE)) {
