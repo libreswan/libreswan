@@ -195,7 +195,7 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 	 */
 	if (del_ike) {
 		/*
-		 * Complete the transtion; but then wipe us out.
+		 * Complete the transition; but then wipe us out.
 		 */
 		return STF_OK_RESPONDER_DELETE_IKE;
 	}

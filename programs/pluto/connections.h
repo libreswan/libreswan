@@ -146,7 +146,7 @@ struct child_end_config {
 	ip_addresses sourceip;
 
 	/*
-	 * Weired host related client stuff.
+	 * Weird host related client stuff.
 	 *
 	 * It's only used when there's a Child SA.
 	 */
@@ -479,7 +479,7 @@ struct host_end {
 	const struct host_end_config *config;
 	bool encap;			/* are packets encapsulated */
 	uint16_t port;			/* where the IKE port is */
-	ip_address nexthop;		/* identifes interface to send packets */
+	ip_address nexthop;		/* identifies interface to send packets */
 	struct id id;
 	ip_address addr;
 	ip_address first_addr;		/* for redirect */
@@ -775,7 +775,7 @@ struct connection {
 	 *
 	 * <<ipsec route>>
 	 *
-	 * - the unowned connection installs kernal trap policy and
+	 * - the unowned connection installs kernel trap policy and
 	 * transitions to on-demand
 	 *
 	 * acquire
@@ -1079,7 +1079,7 @@ bool is_template(const struct connection *c);
  * Labeled parent connections can have IKE/ISAKMP SA.  Labeled child
  * connections can have a Child SA.
  *
- * permenant and template-instance connections allow both, but labeled
+ * permanent and template-instance connections allow both, but labeled
  * connections are XOR.
  */
 bool can_have_sa(const struct connection *c, enum sa_type sa_type);
@@ -1087,7 +1087,7 @@ bool can_have_sa(const struct connection *c, enum sa_type sa_type);
 bool never_negotiate(const struct connection *c);
 
 bool is_group(const struct connection *c);
-bool is_group_instance(const struct connection *c); /* derived from group; tempate or instance */
+bool is_group_instance(const struct connection *c); /* derived from group; template or instance */
 
 bool is_opportunistic(const struct connection *c);
 bool is_opportunistic_group(const struct connection *c);

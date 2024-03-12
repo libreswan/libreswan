@@ -66,7 +66,7 @@ struct v2_state_transition {
 	/*
 	 * The message type being exchanged.
 	 *
-	 * Incomming message must match RECV_ROLE.
+	 * Incoming message must match RECV_ROLE.
 	 *
 	 * If the transition succeeds, outgoing message must match
 	 * SEND_ROLE.

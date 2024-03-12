@@ -1486,7 +1486,7 @@ stf_status modecfg_inR0(struct state *st, struct msg_digest *md)
 			}
 		}
 
-		/* they asked us, we reponded, msgid is done */
+		/* they asked us, we responded, msgid is done */
 		st->st_v1_msgid.phase15 = v1_MAINMODE_MSGID;
 	}
 
@@ -2184,7 +2184,7 @@ static stf_status xauth_client_resp(struct state *st,
  *
  * This state occurs in initiator.
  *
- * In the initating client, it occurs in XAUTH, when the responding server
+ * In the initiating client, it occurs in XAUTH, when the responding server
  * demands a password, and we have to supply it.
  *
  * @param md Message Digest

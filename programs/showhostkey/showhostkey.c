@@ -513,7 +513,7 @@ static struct secret_stuff *foreach_nss_private_key(secret_eval func,
 			break;
 		}
 
-		SECKEY_DestroyPrivateKey(pks.u.pubkey.private_key); /* destory reference */
+		SECKEY_DestroyPrivateKey(pks.u.pubkey.private_key); /* destroy reference */
 		type->free_pubkey_content(&pks.u.pubkey.content);
 
 		if (ret < 0) {

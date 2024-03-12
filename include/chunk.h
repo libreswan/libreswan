@@ -85,7 +85,7 @@ chunk_t clone_bytes_bytes_as_chunk(const void *first_ptr, size_t first_len,
 	})
 
 /*
- * replace RHS with the contatenation of LHS+RHS
+ * replace RHS with the concatenation of LHS+RHS
  *
  * These functions have their name first which, while inconsistent
  * with the other functions does read better.

@@ -13,7 +13,7 @@
       <para>
 	This feature is used by <application>Libreswan</application>
 	developers.  The default logs should provide sufficient
-	information to diagnose configuration and connecion problems.
+	information to diagnose configuration and connection problems.
       </para>
     </note>
   </listitem>

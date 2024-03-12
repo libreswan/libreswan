@@ -50,7 +50,7 @@
  * with new structure members.  When this happens a macro definition
  * of the new name is added.
  *
- * + implementations have (arrrg, and for no obvious reason) completly
+ * + implementations have (arrrg, and for no obvious reason) completely
  * rewritten some structures.  When this happens things are hacked so
  * that it looks like there's an sadb_x structure available.
  *
@@ -118,7 +118,7 @@
 
 /*
  * Work-around various OSs reusing / renaming fields of existing
- * strctures.
+ * structures.
  *
  * Use the macro expands to itself hack.
  */

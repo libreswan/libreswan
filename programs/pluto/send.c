@@ -99,7 +99,7 @@ static bool send_shunks(const char *where, bool just_a_keepalive,
 	 *
 	 * Code attempting to call this function with
 	 * hsetportof(port,addr) where addr is invalid also get an
-	 * expecation failed message.
+	 * expectation failed message.
 	 */
 	if (!endpoint_is_specified(remote_endpoint)) {
 		/* not asserting, who knows what nonsense a user can generate */

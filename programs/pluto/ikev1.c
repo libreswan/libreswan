@@ -259,7 +259,7 @@ void jam_v1_transition(struct jambuf *buf, const struct state_v1_microcode *tran
 /* this state completes P1, so any pending P2 negotiations should start */
 #define SMF_RELEASE_PENDING_P2  LELEM(OAKLEY_AUTH_ROOF + 6)
 
-/* if we have canoncalized the authentication from XAUTH mode */
+/* if we have canonicalized the authentication from XAUTH mode */
 #define SMF_XAUTH_AUTH  LELEM(OAKLEY_AUTH_ROOF + 7)
 
 /* end of flags */
@@ -1879,7 +1879,7 @@ void process_packet_tail(struct msg_digest *md)
 				 md->message_pbs.roof - md->message_pbs.start);
 		}
 	} else {
-		/* packet was not encryped -- should it have been? */
+		/* packet was not encrypted -- should it have been? */
 
 		if (smc->flags & SMF_INPUT_ENCRYPTED) {
 			LOG_PACKET(RC_LOG_SERIOUS,
@@ -2394,7 +2394,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 	/* handle oddball/meta results now */
 
 	/*
-	 * statistics; all STF_FAIL_v1N+v1N are lumped togeter
+	 * statistics; all STF_FAIL_v1N+v1N are lumped together
 	 */
 	pstat(stf_status, result);
 

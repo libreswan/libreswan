@@ -35,7 +35,7 @@ void terminate_all_connection_states(struct connection *c, where_t where);
  * If C is a TEMPLATE or LABELED_TEMPLATE this will delete any
  * INSTANCE, LABELED_PARENT or LABELED_CHILD.
  *
- * Whack is attached to C; whack will be propogated to instances.
+ * Whack is attached to C; whack will be propagated to instances.
  */
 void terminate_and_down_connections(struct connection *c,
 				    bool strip_route,

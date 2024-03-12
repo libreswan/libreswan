@@ -17,7 +17,7 @@ This means:
 
 - the srcdir/objdir shuffle has to go
 - all the flags get set up
-- all the auto-dependency stuff is delt with
+- all the auto-dependency stuff is dealt with
 - makefiles use a small well-defined set of flags
 
 And a small set of well defined targets work:

@@ -661,7 +661,7 @@ static void add_secret(struct secret **slist,
 	/*
 	 * If the ID list is empty, add two empty IDs.
 	 *
-	 * XXX: The below seem to be acting as a sentinal so that
+	 * XXX: The below seem to be acting as a sentinel so that
 	 * lsw_find_secret_by_id() always finds something (they act as
 	 * wildcards) in the ID list.
 	 *

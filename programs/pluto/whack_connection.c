@@ -131,7 +131,7 @@ static bool whack_connections_by_alias(const struct whack_message *m,
 		if (each->future_tense != NULL) {
 			/*
 			 * The config option is connalias= but, given
-			 * we wan't this to go away, better to not
+			 * we want this to go away, better to not
 			 * tell any one and instead use something
 			 * closer to connectionstatus which logs
 			 * "aliases: ...".
@@ -163,7 +163,7 @@ static bool whack_connections_by_alias(const struct whack_message *m,
  * connection.
  *
  * Return true if the search for a connection should stop; not that
- * the search was sucessful.
+ * the search was successful.
  */
 
 static bool whack_connection_by_serialno(const struct whack_message *m,

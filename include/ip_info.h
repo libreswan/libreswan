@@ -23,7 +23,7 @@ struct ip_info {
 	unsigned mask_cnt; /* 32 or 128 */
 
 	/*
-	 * Formatting primatives.
+	 * Formatting primitives.
 	 */
 	struct {
 		/* N.N.N.N or N:N:N:N */

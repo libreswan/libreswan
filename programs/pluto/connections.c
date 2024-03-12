@@ -337,7 +337,7 @@ static bool connection_ok_to_delete(struct connection *c, where_t where)
 	}
 
 	/*
-	 * Must not have instances (i.e., all intantiations are gone).
+	 * Must not have instances (i.e., all instantiations are gone).
 	 */
 	struct connection_filter instance = {
 		.clonedfrom = c,
@@ -355,7 +355,7 @@ static bool connection_ok_to_delete(struct connection *c, where_t where)
 	}
 
 	/*
-	 * Must not have states (i.e., no states are refering to this
+	 * Must not have states (i.e., no states are referring to this
 	 * connection).
 	 */
 	struct state_filter state = {
@@ -413,7 +413,7 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 	}
 
 	/*
-	 * Finall start cleanup.
+	 * Finally start cleanup.
 	 */
 
 	FOR_EACH_ELEMENT(afi, ip_families) {
@@ -2839,7 +2839,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 		 *
 		 * Since only things that affect this proposal suite
 		 * are the connection's .policy bits and the contents
-		 * .child_proposals, and modifiying those triggers the
+		 * .child_proposals, and modifying those triggers the
 		 * creation of a new connection (true?), the
 		 * connection can be cached.
 		 */
@@ -3304,7 +3304,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 * Determine the host topology.
 	 *
 	 * Needs two passes: first pass extracts tentative
-	 * host/nexthop; scecond propogates that to other dependent
+	 * host/nexthop; scecond propagates that to other dependent
 	 * fields.
 	 *
 	 * XXX: the host lookup is blocking; should instead do it
@@ -3994,7 +3994,7 @@ struct connection *find_connection_for_packet(const ip_packet packet,
 		 * created for responding.
 		 *
 		 * XXX: So, if the instance is routed, and so to is
-		 * its template, then let it be resued for an outgoing
+		 * its template, then let it be reused for an outgoing
 		 * connection?!?
 		 */
 		bool instance_initiation_ok =

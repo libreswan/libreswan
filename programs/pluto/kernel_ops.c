@@ -108,7 +108,7 @@ bool kernel_ops_policy_add(enum kernel_policy_op op,
 			    pri_spd_priority(policy->priority));
 			/*
 			 * Print outer-to-inner and use paren to show
-			 * how each wrapps the next.
+			 * how each wraps the next.
 			 *
 			 * XXX: how to also print the encap mode - TCP
 			 * or UDP?

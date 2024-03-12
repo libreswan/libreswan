@@ -207,7 +207,7 @@ static char *lsw_nss_get_password(PK11SlotInfo *slot, PRBool retry, void *arg)
 	const struct lsw_conf_options *oco = lsw_init_options();
 
 	/*
-	 * Easy case, passsword specified on the command line.
+	 * Easy case, password specified on the command line.
 	 */
 	if (oco->nsspassword != NULL) {
 		char *password = PORT_Strdup(oco->nsspassword);

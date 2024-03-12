@@ -255,7 +255,7 @@
 	      direct logging to standard error instead of a log file
 	    </para>
 	    <para>
-	      Often conbined with <option>--nofork</option> debugging
+	      Often combined with <option>--nofork</option> debugging
 	      <command>pluto</command>.
 	    </para>
 	  </listitem>
@@ -354,7 +354,7 @@
       </title>
 
       <para>
-	The following option overide the location of configuration
+	The following option overrides the location of configuration
 	files:
       </para>
 

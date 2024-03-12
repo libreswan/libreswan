@@ -1315,7 +1315,7 @@ int main(int argc, char **argv)
 #endif
 			/*
 			 * We don't check interfaces= here, should we?
-			 * This was hack becuse we had _stackmanager?
+			 * This was hack because we had _stackmanager?
 			 */
 			replace_when_cfg_setup(&pluto_listen, cfg, KSF_LISTEN);
 
@@ -1329,7 +1329,7 @@ int main(int argc, char **argv)
 
 #ifdef USE_NFLOG
 			/* nflog-all= */
-			/* only causes nflog nmber to show in ipsec status */
+			/* only causes nflog number to show in ipsec status */
 			pluto_nflog_group = cfg->setup.options[KBF_NFLOG_ALL];
 #endif
 
@@ -1633,7 +1633,7 @@ int main(int argc, char **argv)
 	 */
 	pluto_init_log(log_param);
 	/*
-	 * The string_logger() dbg_alloc() message went down a rabit
+	 * The string_logger() dbg_alloc() message went down a rabbit
 	 * hole (aka the console) so fake one up here.
 	 */
 	dbg_alloc("logger", logger, HERE);

@@ -311,7 +311,7 @@ static struct connection *instantiate(struct connection *t,
 		 is_labeled_parent(t) ? CK_LABELED_CHILD :
 		 CK_INSTANCE);
 
-	/* propogate remote address when set */
+	/* propagate remote address when set */
 	if (address_is_specified(d->remote->host.addr)) {
 		/* can't change remote once set */
 		PASSERT(d->logger, address_eq_address(remote_addr, d->remote->host.addr));
@@ -354,7 +354,7 @@ static struct connection *instantiate(struct connection *t,
 /*
  * XXX: unlike update_subnet_selectors() this must set each selector
  * to something valid?  For instance, of the end has addresspool, ask
- * for the entire adress range.
+ * for the entire address range.
  */
 
 static void update_selectors(struct connection *d)

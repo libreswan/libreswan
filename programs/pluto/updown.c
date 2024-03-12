@@ -541,7 +541,7 @@ void do_updown_child(enum updown updown_verb, struct child_sa *child)
 }
 
 /*
- * Delete any kernal policies for a connection and unroute it if route
+ * Delete any kernel policies for a connection and unroute it if route
  * isn't shared.
  */
 

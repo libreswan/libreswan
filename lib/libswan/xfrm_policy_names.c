@@ -31,7 +31,7 @@
  * kernel headers to use that definition.
  *
  * XXX: here this is overkill as there is no convoluted include
- * arangement.
+ * arrangement.
  */
 #include <netinet/in.h>
 #include "linux/xfrm.h"		/* local (if configured) or system copy */

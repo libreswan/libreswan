@@ -259,7 +259,7 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 		 * State has Message ID == 0:
 		 *
 		 * Either it really is a duplicate; or it's a second
-		 * (fake?) intiator sending the same SPIi at exactly
+		 * (fake?) initiator sending the same SPIi at exactly
 		 * the same time as the first (wow, what are the odds,
 		 * it must be our lucky day!).
 		 *
@@ -271,7 +271,7 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 		 * State has Message ID > 0:
 		 *
 		 * Either it is an old duplicate; or, again, it's a
-		 * second intiator sending the same SPIi only slightly
+		 * second initiator sending the same SPIi only slightly
 		 * later (again, what are the odds!).
 		 *
 		 * Several choices: let the duplicate code drop the
@@ -321,7 +321,7 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 				 * - it is an old duplicate and the
 				 *   packet should be dropped
 				 *
-				 * - it's a second intiator using the
+				 * - it's a second initiator using the
 				 *   same SPIi (wow!) and a new IKE SA
 				 *   should be created
 				 *
@@ -916,7 +916,7 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 	 *
 	 * The initiator would like the responder to prove their
 	 * identity using one of these hashes (plus a signature).
-	 * Since the iniator can't switch connections the decision is
+	 * Since the initiator can't switch connections the decision is
 	 * final.
 	 */
 	if (authby_has_digsig(c->remote->host.config->authby) &&
@@ -1441,7 +1441,7 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 	 * cover if there are multiple CREATE_CHILD_SA pending on this
 	 * IKE negotiation ???
 	 *
-	 * XXX: this is testing for an IKE SA that's been superseed by
+	 * XXX: this is testing for an IKE SA that's been superseded by
 	 * a newer IKE SA (not child).  Suspect this is to handle a
 	 * race where the other end brings up the IKE SA first?  For
 	 * that case, shouldn't this state have been deleted?

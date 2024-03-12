@@ -43,7 +43,7 @@
       For authentication, <application>Libreswan</application> uses
       an <application>NSS</application> trust store containing
       <application>X.509</application> certificates and raw private keys, or a
-      separate file containg preshared secrets (see <citerefentry>
+      separate file containing preshared secrets (see <citerefentry>
       <refentrytitle>ipsec.secrets</refentrytitle>
       <manvolnum>5</manvolnum> </citerefentry>).
     </para>
@@ -121,14 +121,14 @@
 	Security Associations.  The first part of a negotiation
 	between IKE instances is to build an IKE SA.  An IKE SA is
 	used to establish an authenticated and private communication
-	channel between the two IKE nodes. This communiation channel
+	channel between the two IKE nodes. This communication channel
 	is used to negotiate the actually Child SAs, which are the
 	actual IPsec SAs. The IPsec SAs carry protected IP traffic
 	between the systems.
       </para>
 
       <para>
-	Negotiating an IKE SA (refered to as the The Initial
+	Negotiating an IKE SA (referred to as the The Initial
 	Exchanges) consists of at least the IKE_SA_INIT exchange to
 	establish a private channel, and the IKE_AUTH exchange to
 	authenticate the channel. Extensions, such as EAP and
@@ -221,7 +221,7 @@
 	</listitem>
 	<listitem>
 	  <para>
-	    it is configured to negotate from startup (see
+	    it is configured to negotiate from startup (see
 	    <computeroutput>auto=up</computeroutput> in <citerefentry>
 	    <refentrytitle>ipsec.conf</refentrytitle>
             <manvolnum>5</manvolnum> </citerefentry>)

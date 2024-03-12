@@ -347,10 +347,10 @@ void terminate_and_down_connections(struct connection *c,
 		if (next_connection(OLD2NEW, &cq)) {
 			llog(RC_LOG, c->logger, "terminating group instances");
 			do {
-				connection_attach(cq.c, c->logger); /* propogate whack */
+				connection_attach(cq.c, c->logger); /* propagate whack */
 				terminate_and_down_connections(cq.c, strip_route_bit, where);
 				pmemory(cq.c); /* should not disappear */
-				connection_detach(cq.c, c->logger); /* propogate whack */
+				connection_detach(cq.c, c->logger); /* propagate whack */
 			} while (next_connection(OLD2NEW, &cq));
 		}
 		pmemory(c); /* should not disappear */
@@ -421,7 +421,7 @@ void terminate_and_delete_connections(struct connection **cp,
  *
  * This way the IKE SA's connection can jump to the front of the
  * revival queue (without this an IKE SA with multiple children ends
- * up with its chilren sqabbling over which SA should be revived
+ * up with its chilren squabbling over which SA should be revived
  * first).
  *
  * Also remember if there was a direct child.  The event only gets

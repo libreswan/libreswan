@@ -117,7 +117,7 @@ static asn1_t get_peer_ca(struct pubkey_list *const *pubkey_db,
  * tweaks).
  *
  * Now, in the IKE_SA_INIT, with the ID and validated certificates
- * known, it is posible to improve on this choice.
+ * known, it is possible to improve on this choice.
  *
  * XXX: since IKE_SA_INIT can be childless, the Child SA's Traffic
  * Selectors should not be used.  They will be examined later when
@@ -406,7 +406,7 @@ static struct connection *refine_host_connection_on_responder(int indent,
 				 * instance, given a connection that
 				 * allows both both ECDSA and RSASIG
 				 * then because .auth=rsasig
-				 * (prefered) the below will reject
+				 * (preferred) the below will reject
 				 * ECDSA?
 				 */
 				if (!LHAS(proposed_authbys, d->remote->host.config->auth)) {

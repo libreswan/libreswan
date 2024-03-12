@@ -41,7 +41,7 @@
  * with compiler flags:
  *    -DBIG_ENDIAN=4321 -DLITTLE_ENDIAN=1234 -DBYTE_ORDER=BIG_ENDIAN
  * or -DBIG_ENDIAN=4321 -DLITTLE_ENDIAN=1234 -DBYTE_ORDER=LITTLE_ENDIAN
- * Thse match the GNU definitions
+ * These match the GNU definitions
  */
 # include <sys/endian.h>
 #endif

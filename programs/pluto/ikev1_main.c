@@ -381,7 +381,7 @@ bool ikev1_close_and_encrypt_message(struct pbs_out *pbs, struct state *st)
 	 *
 	 * This should be a no-op?
 	 *
-	 * XXX: note the double padding (tripple if you count the code
+	 * XXX: note the double padding (triple if you count the code
 	 * paths that call ikev1_close_message() before encrypting.
 	 */
 

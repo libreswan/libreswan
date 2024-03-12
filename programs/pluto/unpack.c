@@ -41,7 +41,7 @@
  * According to RFC2409 "The Internet key exchange (IKE)" 5:
  *  The Diffie-Hellman public value passed in a KE payload, in either
  *  a phase 1 or phase 2 exchange, MUST be the length of the negotiated
- *  Diffie-Hellman group enforced, if necessary, by pre-pending the
+ *  Diffie-Hellman group enforced, if necessary, by prepending the
  *  value with zeros.
  */
 

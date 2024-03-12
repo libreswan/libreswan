@@ -23,7 +23,7 @@ struct connection;
 
 bool oriented(const struct connection *c);
 /*
- * Caller must hold a local reference, or be able to guarentee that
+ * Caller must hold a local reference, or be able to guarantee that
  * there is a floating reference.
  */
 bool orient(struct connection *c, struct logger *logger);

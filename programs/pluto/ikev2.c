@@ -522,7 +522,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .timeout_event = EVENT_v2_REPLACE, },
 
 	/*
-	 * Child transitions wheh rekeying an IKE SA using
+	 * Child transitions when rekeying an IKE SA using
 	 * CREATE_CHILD_SA.
 	 *
 	 *   Initiator                         Responder
@@ -2126,7 +2126,7 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
          *   reject any message that doesn't contain an SK or SKF
          *   payload
 	 *
-	 *   Any transition from a secured state must invole a
+	 *   Any transition from a secured state must involve a
 	 *   protected payload.
 	 *
 	 * XXX:
@@ -2671,7 +2671,7 @@ void complete_v2_state_transition(struct ike_sa *ike,
 	 * Perhaps that is no longer needed?
 	 *
 	 * Part of the hack is to get the IKE SA established message
-	 * out _before_ the Child SA processing occures.  Is that the
+	 * out _before_ the Child SA processing occurs.  Is that the
 	 * only reason?
 	 */
 	pexpect(transition->state == ike->sa.st_state->kind);
@@ -2711,7 +2711,7 @@ void complete_v2_state_transition(struct ike_sa *ike,
 	case STF_IGNORE:
 		/*
 		 * Logged earlier (where the decision to ignore
-		 * occured).
+		 * occurred).
 		 */
 		v2_msgid_cancel(ike, md);
 		return;

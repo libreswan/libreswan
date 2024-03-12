@@ -358,7 +358,7 @@ bool connection_establish_child(struct ike_sa *ike, struct child_sa *child, wher
 	};
 	/*
 	 * The IKEv1 initiator, and IKEv2 initiators and responders
-	 * alway establish both inbound and outbound during the same
+	 * always establish both inbound and outbound during the same
 	 * exchange.
 	 *
 	 * However, since this can fail part way through, it is broken
@@ -842,7 +842,7 @@ static void routed_tunnel_to_unrouted(struct child_sa *child,
  * If this is an instance, then presumably the instance instantiate
  * code has figured out how wide the SPDs need to be.
  *
- * OTOH, if this is an unrouted permenant triggered by whack, just
+ * OTOH, if this is an unrouted permanent triggered by whack, just
  * replace.
  */
 
@@ -1584,7 +1584,7 @@ void connection_unroute(struct connection *c, where_t where)
 {
 	/*
 	 * XXX: strip POLICY.ROUTE in whack code, not here (code
-	 * expects to be able to route/unroute without loosing the
+	 * expects to be able to route/unroute without losing the
 	 * policy bits).
 	 */
 	struct routing_annex annex =  {
@@ -1875,7 +1875,7 @@ static bool dispatch_1(enum routing_event event,
 
 	case X(TEARDOWN_CHILD, ROUTED_TUNNEL, INSTANCE):
 	case X(TEARDOWN_CHILD, ROUTED_TUNNEL, PERMANENT):
-		/* permenant connections are never deleted */
+		/* permanent connections are never deleted */
 		teardown_routed_tunnel(c, e->child, e->where);
 		return true;
 
