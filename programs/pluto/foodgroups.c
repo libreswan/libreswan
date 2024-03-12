@@ -416,7 +416,7 @@ void load_groups(struct logger *logger)
 				 * than .serialno).
 				 */
 				ldbg(op->group->logger,
-				     "transfering "PRI_CO, pri_co(op->serialno));
+				     "transferring "PRI_CO, pri_co(op->serialno));
 				passert(op->serialno != UNSET_CO_SERIAL);
 				passert(np->serialno == UNSET_CO_SERIAL);
 				np->serialno = op->serialno;

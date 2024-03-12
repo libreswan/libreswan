@@ -1854,7 +1854,7 @@ static diag_t extract_lifetime(deltatime_t *lifetime,
 
 	if (deltatime_cmp(*lifetime, >, max_lifetime)) {
 		llog(RC_LOG, logger,
-		     "%s%s=%ju seconds exceeds maximum of %ju seconds, seting to the maximum allowed",
+		     "%s%s=%ju seconds exceeds maximum of %ju seconds, setting to the maximum allowed",
 		     fips,
 		     lifetime_name, deltasecs(*lifetime),
 		     deltasecs(max_lifetime));

@@ -73,7 +73,7 @@ while true; do
 	    ;;
 	--down )
 	    op=down
-	    timeout=1 # may fail for delayed IPv6 ND timeout on the reciever side.
+	    timeout=1 # may fail for delayed IPv6 ND timeout on the receiver side.
 	    shift
 	    ;;
 	--lossy )

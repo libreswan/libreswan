@@ -1889,7 +1889,7 @@ static bool is_virtual_net_used(struct connection *c,
 				connection_buf cbuf;
 				subnet_buf pcb, dcb;
 				llog(RC_LOG_SERIOUS, c->logger,
-				     "peer Virtual IP %s overlapping %s fobidden by "PRI_CONNECTION" policy",
+				     "peer Virtual IP %s overlapping %s forbidden by "PRI_CONNECTION" policy",
 				     str_selector_subnet(peer_net, &pcb),
 				     pri_connection(d, &cbuf),
 				     str_selector_subnet(&d->spd->remote->client, &dcb));

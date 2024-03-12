@@ -194,7 +194,7 @@ void send_v1_delete(struct ike_sa *isakmp, struct state *st, where_t where)
 				close_output_pbs(&del_pbs);
 				break;
 			case IMPAIR_EMIT_DUPLICATE:
-				llog(RC_LOG, st->logger, "IMPAIR: emitting duplicte IPsec delete payloads");
+				llog(RC_LOG, st->logger, "IMPAIR: emitting duplicate IPsec delete payloads");
 				for (unsigned nr = 0; nr < 2; nr++) {
 					passert(out_struct(&isad, &isakmp_delete_desc,
 							   &r_hdr_pbs, &del_pbs));

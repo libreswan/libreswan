@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# coverity-cron.sh: a wraper script to automize Coverity scan build and upload for analysis
-# Dependecies:
+# coverity-cron.sh: a wrapper script to automize Coverity scan build and upload for analysis
+# Dependencies:
 # 0. a registered user account at Coverity's self-build server
-# 1. local copy cov-build tools Download it from Coverity webiste.
+# 1. local copy cov-build tools Download it from Coverity website.
 # 2. https://github.com/antonyantony/coverity-submit to automize scan and upload
 # 2.1 config file /home/build/.coverity-submit with credentials
 # [ALL]

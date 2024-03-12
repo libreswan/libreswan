@@ -299,7 +299,7 @@ class TestResult:
                 self.issues.add(Issues.LEAK, guest_name)
                 self.resolution.failed()
 
-        # Generate tupple lists of what to sanitize and what to
+        # Generate tpple lists of what to sanitize and what to
         # verify.
         #
         # Always sanitize both console outputs (merged and split) so
@@ -624,7 +624,7 @@ def mortem(test, args, logger, baseline=None, output_directory=None, quick=False
     #
     #    - a test failing, but the baseline passing
     #
-    #    - a test failing, and the baseline failling in a different way
+    #    - a test failing, and the baseline failing in a different way
     #
     # What isn't interesting is a test and the baseline failing the
     # same way.

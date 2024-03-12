@@ -435,7 +435,7 @@ static void check_selector_op_selector(void)
 			FAIL("ttoselector_num(%s) failed: %s", t->inner, err);
 		}
 		if (nonzero_host.is_set) {
-			FAIL("ttoselector_num(%s) failed: non-zero host identifer", t->inner);
+			FAIL("ttoselector_num(%s) failed: non-zero host identifier", t->inner);
 		}
 
 		ip_selector outer_selector;
@@ -445,7 +445,7 @@ static void check_selector_op_selector(void)
 			FAIL("ttoselector_num(%s) failed: %s", t->outer, err);
 		}
 		if (nonzero_host.is_set) {
-			FAIL("ttoselector_num(%s) failed: non-zero host identifer", t->outer);
+			FAIL("ttoselector_num(%s) failed: non-zero host identifier", t->outer);
 		}
 
 		bool selector = selector_in_selector(inner_selector, outer_selector);

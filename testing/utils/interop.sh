@@ -99,7 +99,7 @@ for d in "$@" ; do
 	    transport ) type=type=transport ;;
 	    tunnel )    type=type=tunnel    ;;
 
-	    ipcomp) compress=compres=yes ;;
+	    ipcomp) compress=compress=yes ;;
 
 	    ikev1 ) k= ; keyexchange=keyexchange=ikev1 ; ikev1_policy=ikev1-policy=accept ;;
 	    ikev2 ) k= ; keyexchange=keyexchange=ikev2 ; ikev1_policy=ikev1-policy=drop   ;;

@@ -434,7 +434,7 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 			 * count, even when there are other ids in the
 			 * list.
 			 */
-			dbg("  local match not asymetric");
+			dbg("  local match not asymmetric");
 			continue;
 		}
 

@@ -111,7 +111,7 @@ EOD
 #
 # These may not point at the current directory (they can change, and
 # are setup during transmogrify).  Not setting them now makes it
-# harder to accidently use a file from a wrong directory.
+# harder to accidentally use a file from a wrong directory.
 
 mkdir /pool /bench
 cat <<EOF >>/etc/fstab
@@ -126,7 +126,7 @@ systemctl enable ip6tables.service
 # > F27 and later to support X509 Certificates, signed with SHA1
 /usr/bin/update-crypto-policies --set LEGACY
 
-# blacklist NetworkManager since it conflits with systemd-networkd
+# blacklist NetworkManager since it conflicts with systemd-networkd
 sed -i $'s/enabled=1/enabled=1\\\nexclude=NetworkManager*/g' /etc/yum.repos.d/fedora.repo
 sed -i $'s/enabled=1/enabled=1\\\nexclude=NetworkManager*/g' /etc/yum.repos.d/fedora-updates.repo
 

@@ -2336,7 +2336,7 @@ void v2_dispatch(struct ike_sa *ike, struct msg_digest *md,
 		 * Danger! Processor did something dodgy like free the
 		 * IKE SA!
 		 */
-		dbg("processor '%s' for #%lu suppresed complete st_v2_transition",
+		dbg("processor '%s' for #%lu suppressed complete st_v2_transition",
 		    svm->story, old_ike);
 	} else {
 		complete_v2_state_transition(ike, md, e);
@@ -2892,7 +2892,7 @@ static void reinitiate_v2_ike_sa_init(const char *story, struct state *st, void 
 		/*
 		 * Danger! Processor did something dodgy like free ST!
 		 */
-		dbg("processor '%s' for #%lu suppresed complete st_v2_transition",
+		dbg("processor '%s' for #%lu suppressed complete st_v2_transition",
 		    story, old_st);
 	} else {
 		complete_v2_state_transition(ike, NULL, e);

@@ -253,7 +253,7 @@ static void main_mode_hash_body(struct state *st,
 	case SA_RESPONDER:
 		crypt_prf_update_hunk(ctx, "gr", st->st_gr);
 		crypt_prf_update_hunk(ctx, "gi", st->st_gi);
-		crypt_prf_update_thing(ctx, "respoder", st->st_ike_spis.responder);
+		crypt_prf_update_thing(ctx, "responder", st->st_ike_spis.responder);
 		crypt_prf_update_thing(ctx, "initiator", st->st_ike_spis.initiator);
 		break;
 	default:

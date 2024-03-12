@@ -2,7 +2,7 @@
 set -eu
 #
 # host comments execute using ${IP}
-# guest commands execute using ${NSENTER} <full namesapce name>
+# guest commands execute using ${NSENTER} <full namespace name>
 # this script create mount, net, uts namespce with the same name
 # one namespace per host.
 #

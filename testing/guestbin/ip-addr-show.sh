@@ -43,7 +43,7 @@ if [ -n "${ifface}" ] ; then
 	ifface="show dev ${ifface}"
 fi
 
-# dump raw version of what ../bin/ip-addr-show.sh manges
+# dump raw version of what ../bin/ip-addr-show.sh manages
 echo ==== cut ====
 ip addr ${ifface}
 echo ==== tuc ====

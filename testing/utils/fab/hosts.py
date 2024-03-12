@@ -36,7 +36,7 @@ def _guest_names():
 
     return guest_names
 
-"""An unordered set of tupples of (GUEST_NAME,HOST_NAME)"""
+"""An unordered set of tuples of (GUEST_NAME,HOST_NAME)"""
 GUEST_NAMES = _guest_names()
 
 def _guest_to_host():

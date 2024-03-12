@@ -239,7 +239,7 @@ unsigned whack_connection_instance_new2old(const struct whack_message *m,
 	while (next_connection(NEW2OLD, &instances)) {
 
 		connection_buf cqb;
-		ldbg(c->logger, "visting instance "PRI_CONNECTION,
+		ldbg(c->logger, "visiting instance "PRI_CONNECTION,
 		     pri_connection(instances.c, &cqb));
 		PEXPECT(c->logger, ((is_template(c) && is_instance(instances.c)) ||
 				    (is_labeled_template(c) && is_labeled_parent(instances.c)) ||

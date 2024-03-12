@@ -114,7 +114,7 @@ VIRSH = sudo virsh --connect=$(KVM_CONNECTION)
 # $(KVM_<OS>_<FLAG>) and $(KVM_$(strip $(1))) expands to
 # $(KVM_<FLAG>).
 
-# On Linux, overide linux defaults
+# On Linux, override linux defaults
 KVM_LINUX_NSSDIR ?= $(SYSCONFDIR)/ipsec.d
 KVM_LINUX_SD_RESTART_TYPE ?= no
 KVM_LINUX_USE_EFENCE ?= true
@@ -854,7 +854,7 @@ $(KVM_POOLDIR_PREFIX)%-base: \
 	:
 	: The /source and /testing directories are set up by transmogrify.
 	: They can change and may not point into this directory tree.
-	: Delaying their creation hopefully makes it harder to accidently
+	: Delaying their creation hopefully makes it harder to accidentally
 	: access the wrong files.
 	:
 	$(KVMSH) $(notdir $@) -- test ! -d /source -a ! -d /testing
@@ -1152,7 +1152,7 @@ $(KVM_OPENBSD_DOMAIN)-base.iso: | openbsd/base.disk
 ##
 ## While the script is running only /pool and /bench (pointing into
 ## this repo) are accessible (/source and /testing which may point
-## elsewhere are not accessable, see above and below).
+## elsewhere are not accessible, see above and below).
 ##
 
 KVM_UPGRADE_CPUS = 1
