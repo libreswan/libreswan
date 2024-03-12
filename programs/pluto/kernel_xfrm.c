@@ -2017,7 +2017,7 @@ static void netlink_kernel_sa_expire(struct nlmsghdr *n, struct logger *logger)
 
 	if ((ue->hard && impair.ignore_hard_expire) ||
 	    (!ue->hard && impair.ignore_soft_expire)) {
-		dbg("IMPAIR is supress a %s EXPIRE event",
+		dbg("IMPAIR is suppress a %s EXPIRE event",
 		    ue->hard ? "hard" : "soft");
 	}
 
