@@ -1314,25 +1314,43 @@ static stf_status quick_inI1_outR1_continue2(struct state *st,
 
 /*
  * Spit out the IPsec ID payload we got.
- *
- * We go to some trouble to use out_struct so NP
- * for adjacent packets is handled correctly.
  */
-static bool echo_id(pb_stream *outs,
+static bool echo_id(struct pbs_out *outs,
 		    const struct payload_digest *const id_pd)
 {
-	struct isakmp_ipsec_id id = id_pd->payload.ipsec_id;
-	id.isaiid_np = 0;
-	/* We leave .isaiid_length: It will be updated to the same value */
-
-	uint8_t *hs = outs->cur;
-	pb_stream id_body;
-	if (!out_struct(&id, &isakmp_ipsec_identification_desc, outs, &id_body))
+	/* Re-pack the received ID.  */
+	struct isakmp_ipsec_id id_header = {
+		.isaiid_idtype = id_pd->payload.ipsec_id.isaiid_idtype,
+		.isaiid_protoid = id_pd->payload.ipsec_id.isaiid_protoid,
+		.isaiid_port = id_pd->payload.ipsec_id.isaiid_port,
+	};
+	struct pbs_out id_body;
+	if (!pbs_out_struct(outs, &isakmp_ipsec_identification_desc,
+			    &id_header, sizeof(id_header), &id_body)) {
 		return false;
-	ptrdiff_t hl = id_body.cur - hs;	/* length of header */
+	}
 
-	if (!out_raw(id_pd->pbs.start + hl, pbs_room(&id_pd->pbs) - hl, &id_body, "ID body"))
+	/*
+	 * And the ID proper.
+	 *
+	 * As part of reading the header, id_pb.pbs is set up so that
+	 * .start points at the header, .cursor (.cur) points at the
+	 * header's end, and .roof points at .start+.isaiid_length
+	 * (i.e., length of payload with trailing junk trimmed).
+	 *
+	 * However:
+	 *
+	 * There's code using id_pd.pbs to read the payload breaking
+	 * that assumption.  Hence, the need to re-compute the
+	 * location of the Indentifer Data using hunk_slice().  See
+	 * decode_net_id().
+	 */
+	shunk_t id_all = pbs_in_all(&id_pd->pbs);
+	shunk_t id_data = hunk_slice(id_all, sizeof(id_header), id_all.len);
+
+	if (!pbs_out_hunk(&id_body, id_data, "ID body")) {
 		return false;
+	}
 
 	close_output_pbs(&id_body);
 	return true;
