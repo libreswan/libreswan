@@ -1574,7 +1574,11 @@ void process_v1_packet(struct msg_digest *md)
 			SEND_NOTIFICATION(v1N_PAYLOAD_MALFORMED);
 			return;
 		}
-		if (pbs_room(&frag_pbs) != fraghdr.isafrag_length ||
+		/*
+		 * XXX: how could .len!=.isafrag_length?  Reading the
+		 * header sets .len to the header length?
+		 */
+		if (pbs_in_all(&frag_pbs).len != fraghdr.isafrag_length ||
 		    fraghdr.isafrag_np != ISAKMP_NEXT_NONE ||
 		    fraghdr.isafrag_number == 0 ||
 		    fraghdr.isafrag_number > 16) {
