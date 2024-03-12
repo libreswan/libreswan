@@ -21,16 +21,22 @@
 #include "jambuf.h"
 #include "constants.h"		/* for thingeq() */
 #include "ip_port.h"
+#include "lswalloc.h"
 
-err_t ttoport(const char *service_name, ip_port *port)
+err_t ttoport(shunk_t service_name, ip_port *port)
 {
+	*port = unset_port;
+
 	/*
 	 * Extract port by trying to resolve it by name.
 	 *
 	 * XXX: the getservbyname() call requires a NUL terminated
-	 * SERVICE_NAME; hence this is not a shunk_t.
+	 * string but SERVICE_NAME, being a shunk_t may not include
+	 * that; hence the clone to create a proper string.
 	 */
-	const struct servent *service = getservbyname(service_name, NULL);
+	char *service_string = clone_hunk_as_string(service_name, "service name");
+	const struct servent *service = getservbyname(service_string, NULL);
+	pfree(service_string);
 	if (service != NULL) {
 		/* success */
 		*port = ip_nport(service->s_port/*network-order*/);
@@ -38,11 +44,13 @@ err_t ttoport(const char *service_name, ip_port *port)
 	}
 
 	/*
-	 * Now try converting it to a number; use SHUNK variant as it
-	 * is more strict.
+	 * Now try converting it to a number; use SHUNK's variant of
+	 * strtoul() as it is more strict around using the full
+	 * string.
 	 */
 	uintmax_t l;
-	err_t e = shunk_to_uintmax(shunk1(service_name), NULL/*trailing-chars-not-allowed*/,
+	err_t e = shunk_to_uintmax(service_name,
+				   NULL/*trailing-chars-not-allowed*/,
 				   0/*any-base*/, &l);
 	if (e != NULL) {
 		*port = unset_port;

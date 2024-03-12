@@ -51,7 +51,7 @@ bool port_is_unset(ip_port port);
 #define port_is_set !port_is_unset
 #define port_eq(L,R) ((L).hport == (R).hport)
 
-err_t ttoport(const char *text, ip_port *port);
+err_t ttoport(shunk_t text, ip_port *port);
 
 /*
  * XXX: to choices, which is better?

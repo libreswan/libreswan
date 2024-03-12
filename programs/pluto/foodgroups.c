@@ -240,7 +240,7 @@ static void read_foodgroup(struct file_lex_position *oflp,
 					    "missing source_port: either only specify CIDR, or specify CIDR protocol source_port dest_port");
 				break;
 			}
-			err = ttoport(flp->tok, &sport);
+			err = ttoport(shunk1(flp->tok), &sport);
 			if (err != NULL) {
 				llog(RC_LOG_SERIOUS, flp->logger,
 					    "source port '%s' invalid: %s",
@@ -253,7 +253,7 @@ static void read_foodgroup(struct file_lex_position *oflp,
 					    "missing dest_port: either only specify CIDR, or specify CIDR protocol source_port dest_port");
 				break;
 			}
-			err = ttoport(flp->tok, &dport);
+			err = ttoport(shunk1(flp->tok), &dport);
 			if (err != NULL) {
 				llog(RC_LOG_SERIOUS, flp->logger,
 					    "destination port '%s' invalid: %s",

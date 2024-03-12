@@ -77,7 +77,7 @@ err_t ttoprotoport(const char *src, ip_protoport *protoport)
 		port_wildcard = true;
 	} else {
 		/* Port 0-65535 is different to %any */
-		err = ttoport(service_name, &port);
+		err = ttoport(shunk1(service_name), &port);
 		if (err != NULL) {
 			return err;
 		}
