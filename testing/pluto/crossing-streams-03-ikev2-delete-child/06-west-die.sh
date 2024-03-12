@@ -1,7 +1,7 @@
 # wait for EAST's delete message to be blocked
 ../../guestbin/wait-for-pluto.sh 'IMPAIR: blocking inbound message 1'
 
-# stop further blocking so revival can occure
+# stop further blocking so revival can occur
 ipsec whack --no-impair block_inbound
 ipsec whack --no-impair block_outbound
 

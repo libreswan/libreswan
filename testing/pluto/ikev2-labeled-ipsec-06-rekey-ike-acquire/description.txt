@@ -5,5 +5,5 @@ IKEv2 labeled IPsec with an acquire happening part way through an IKE rekey
   until a retransmit (10s) gets things going again
 
 - an acquire is triggered; initially it goes on to the old IKE SA
-  queue but then the new IKE SA complets and it is moved to
+  queue but then the new IKE SA completes and it is moved to
   the new queue where it is initiated

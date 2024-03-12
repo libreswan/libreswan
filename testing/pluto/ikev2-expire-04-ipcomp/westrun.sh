@@ -5,7 +5,7 @@ actual=$(sed -n -e 's/.* ipsec-max-bytes.* actual-limit=\([0-9]*\).*/\1/ p' /tmp
 echo $actual
 
 # pings will get to almost rekey, but rekey wouldn't trigger; expect
-# ony #2 IPsec original Child SA; expression truncates but that is
+# only #2 IPsec original Child SA; expression truncates but that is
 # good enough
 ping -n -q -c $((actual / 84)) -I 192.0.1.254 192.0.2.254
 : ==== cut ====

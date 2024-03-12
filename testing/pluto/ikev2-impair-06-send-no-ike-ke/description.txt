@@ -1,7 +1,7 @@
 IKEv2: don't include the KE payload in the INIT packet
 
 Interop #1 omits KE from the request, which is rejected by the
-reponder.
+responder.
 
 Interop #2 includes KE, but then gets no KE back from the responder.
 

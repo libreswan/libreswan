@@ -1,1 +1,1 @@
-IKEv1 rejects connection us agressive mode and explicit authby=secret,rsasig
+IKEv1 rejects connection us aggressive mode and explicit authby=secret,rsasig

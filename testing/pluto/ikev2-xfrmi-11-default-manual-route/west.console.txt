@@ -2,7 +2,7 @@
 west #
  # ensure that clear text does not get through
 west #
- # this route from /etc/sysconfig/network-scripts/route-eth1 interfears
+ # this route from /etc/sysconfig/network-scripts/route-eth1 interferes
 west #
  ip route get to 192.0.2.254 | grep eth1 && ip route del 192.0.2.0/24 via 192.1.2.23 dev eth1
 192.0.2.254 via 192.1.2.23 dev eth1 src 192.1.2.45 uid 0

@@ -54,7 +54,7 @@ road #
 road #
  #
 road #
- # (remember everytime <<ipsec whack --trafficstatus>> runs and sees
+ # (remember every time <<ipsec whack --trafficstatus>> runs and sees
 road #
  # that traffic has followed it sets last-traffic time to "now").
 road #

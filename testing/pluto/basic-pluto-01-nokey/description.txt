@@ -1,5 +1,5 @@
 
 On west, the leftrsasigkey= to use is mangled. Therefore the connection
-should not establishd.
+should not established.
 
 the nss database is wiped to ensure no key is present

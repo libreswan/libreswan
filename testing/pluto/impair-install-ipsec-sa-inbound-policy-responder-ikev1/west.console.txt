@@ -612,7 +612,7 @@ output: | "west-east" #2: detach whack fd@0x7f18d5ea9fe8 from logger 0x7f18d544d
 output: | delref @0x7f18d5ea9fe8(2->1) (free_job() +430 programs/pluto/server_pool.c)
 output: | logger: delref @0x7f18d544dfc8(1->0) (free_job() +430 programs/pluto/server_pool.c)
 output: | job: delref @0x7f18d5449f98(1->0) (free_job() +431 programs/pluto/server_pool.c)
-output: | resume sending job back to main thread for #2 suppresed complete_v1_state_transition()
+output: | resume sending job back to main thread for #2 suppressed complete_v1_state_transition()
 output: | #2 spent 2.05 (23.4) milliseconds in resume sending job back to main thread
 output: | tt: delref @0x7f18d54d0f68(1->0) (destroy_timeout() +575 programs/pluto/server.c)
 output: | processing global timer EVENT_SHUNT_SCAN
@@ -1040,7 +1040,7 @@ output: | delref @0x7f18d5447fd8(2->1) (cleanup_ke_and_nonce() +83 programs/plut
 output: | "west-east" #3: releasing whack (but there are none) (free_job() +430 programs/pluto/server_pool.c)
 output: | logger: delref @0x7f18d5db7fc8(1->0) (free_job() +430 programs/pluto/server_pool.c)
 output: | job: delref @0x7f18d5ea9f98(1->0) (free_job() +431 programs/pluto/server_pool.c)
-output: | resume sending job back to main thread for #3 suppresed complete_v1_state_transition()
+output: | resume sending job back to main thread for #3 suppressed complete_v1_state_transition()
 output: | #3 spent 2.1 (12.2) milliseconds in resume sending job back to main thread
 output: | tt: delref @0x7f18d54b5f68(1->0) (destroy_timeout() +575 programs/pluto/server.c)
 output: | helper 1: waiting for work

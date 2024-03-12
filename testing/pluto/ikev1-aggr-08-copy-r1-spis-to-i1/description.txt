@@ -1,1 +1,1 @@
-IKEv1 aggessive mode initiator that retransmits adding SPIr
+IKEv1 aggressive mode initiator that retransmits adding SPIr

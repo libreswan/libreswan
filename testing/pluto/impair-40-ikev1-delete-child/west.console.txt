@@ -33,7 +33,7 @@ west #
  ipsec auto --delete west-east
 "west-east": terminating SAs using this connection
 "west-east" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
-"west-east" #2: IMPAIR: emitting duplicte IPsec delete payloads
+"west-east" #2: IMPAIR: emitting duplicate IPsec delete payloads
 "west-east" #2: ESP traffic information: in=0B out=0B
 "west-east" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
 "west-east" #1: IMPAIR: emitting duplicate ISKMP delete payloads

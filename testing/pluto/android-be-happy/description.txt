@@ -5,7 +5,7 @@ Setup:
 - Prepare the host:
 
   DO NOT SET KVM_PREFIXES:
-  EAST needs to be directly accessable from the host.
+  EAST needs to be directly accessible from the host.
 
     ./kvm install
     ./kvm check testing/pluto/android-be-happy
