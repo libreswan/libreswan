@@ -873,12 +873,16 @@ $(KVM_POOLDIR_PREFIX)%-base: \
 
 KVM_ALPINE_VERSION ?= v3.19
 KVM_ALPINE_RELEASE ?= 3.19.1
-KVM_ALPINE_URL ?= https://dl-cdn.alpinelinux.org/alpine/
-KVM_ALPINE_ISO_URL ?= $(KVM_ALPINE_URL)/$(KVM_ALPINE_VERSION)/releases/x86_64/alpine-standard-$(KVM_ALPINE_RELEASE)-x86_64.iso
+KVM_ALPINE_MACHINE ?= x86
+KVM_ALPINE_URL ?= https://dl-cdn.alpinelinux.org/
+KVM_ALPINE_ISO_SHA256 ?= 6e6f363c56880e137a3bc142884e650376c187bf416b75dcdb67cb848508931b
+KVM_ALPINE_ISO_PREFIX ?= $(KVM_ALPINE_URL)/alpine/$(KVM_ALPINE_VERSION)/releases/$(KVM_ALPINE_MACHINE)
+KVM_ALPINE_ISO_URL ?= $(KVM_ALPINE_ISO_PREFIX)/alpine-standard-$(KVM_ALPINE_RELEASE)-$(KVM_ALPINE_MACHINE).iso
 KVM_ALPINE_ISO = $(KVM_POOLDIR)/$(notdir $(KVM_ALPINE_ISO_URL))
 kvm-iso: $(KVM_ALPINE_ISO)
 $(KVM_ALPINE_ISO): | $(KVM_POOLDIR)
 	$(KVM_WGET) --output-document $@.tmp -- $(KVM_ALPINE_ISO_URL)
+	echo 'SHA256 ($@.tmp) = $(KVM_ALPINE_ISO_SHA256)' | cksum -c
 	touch $@.tmp # wget preserves dates
 	mv $@.tmp $@
 
