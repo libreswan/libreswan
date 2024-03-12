@@ -1143,7 +1143,7 @@ static int init_pluto_xfrmi(struct connection *c, uint32_t if_id, bool shared)
 /* Only called by add_xfrm_interface() */
 static bool add_xfrm_interface_ip(struct connection *c, ip_cidr *conn_xfrmi_cidr, struct logger *logger)
 {
-	/* Get the existing referenced IP, or create it if it doesnt exist */
+	/* Get the existing referenced IP, or create it if it doesn't exist */
 	struct pluto_xfrmi_ipaddr *refd_xfrmi_ipaddr =
 			find_xfrmi_ipaddr(c->xfrmi, conn_xfrmi_cidr, logger);
 	if (refd_xfrmi_ipaddr == NULL) {
@@ -1265,7 +1265,7 @@ bool add_xfrm_interface(struct connection *c, struct logger *logger)
 
 	/*
 	 * Get the IP to use on the XFRMi interface from the connection.
-	 * - If it doesnt exist, nothing to add to the interface
+	 * - If it doesn't exist, nothing to add to the interface
 	 */
 	ip_cidr conn_xfrmi_cidr = get_xfrmi_ipaddr_from_conn(c, logger);
 	if (conn_xfrmi_cidr.is_set == false) {

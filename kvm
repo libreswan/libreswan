@@ -254,7 +254,7 @@ fi
 
 # Translate ../../../kvm [...] into ./kvm [...]
 #
-# No argments implies "check $PWD", and operations but no directory
+# No arguments implies "check $PWD", and operations but no directory
 # implies $PWD as the test.  Do this before checking $#=0 as this will
 # add the missing parameter.
 

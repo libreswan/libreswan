@@ -2174,7 +2174,7 @@ static struct connection *fc_try(const struct connection *c,
 			 * for the best.
 			 * The highest priority wins, implementing eroute-like
 			 * rule.
-			 * - a routed connection is preferrred
+			 * - a routed connection is preferred
 			 * - given that, the smallest number of ID wildcards
 			 *   are preferred
 			 * - given that, the shortest CA pathlength is preferred

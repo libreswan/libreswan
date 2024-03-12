@@ -264,7 +264,7 @@
 	<term><command>ipsec whack</command></term>
 	<listitem>
 	  <para>
-	    Low-level utilitiy for manipulating
+	    Low-level utility for manipulating
 	    <application>Libreswan's</application> daemon
 	    <command>pluto</command>.
 	  </para>

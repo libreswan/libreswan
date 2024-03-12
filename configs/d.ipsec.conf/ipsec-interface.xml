@@ -29,7 +29,7 @@
       pre-encrypt and post-decrypt traffic on the device. When
       <emphasis>leftsubnet=</emphasis> is equal to
       <emphasis>rightsubnet=</emphasis>, the routing needs to be
-      manged by an external routing daemon or manually by the
+      managed by an external routing daemon or manually by the
       administrator.
     </para>
     <para>
@@ -69,7 +69,7 @@
       other scenarios. Currently requires
       <emphasis>ipsec-interface=</emphasis>. See also
       <emphasis>leftvti=</emphasis> for configuring IP addresses when
-      using depreated VTI.
+      using deprecated VTI.
     </para>
   </listitem>
 </varlistentry>

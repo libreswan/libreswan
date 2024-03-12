@@ -366,7 +366,7 @@ bool ikev1_close_and_encrypt_message(pb_stream *pbs, struct state *st)
 	 * Close just before encrypting so NP backpatching isn't
 	 * confused.
 	 *
-	 * XXX: note the double padding (tripple if you count the code
+	 * XXX: note the double padding (triple if you count the code
 	 * paths that call ikev1_close_message() before encrypting.
 	 */
 

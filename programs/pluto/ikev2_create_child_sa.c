@@ -107,7 +107,7 @@ static void queue_v2_CREATE_CHILD_SA_initiator(struct state *larval_sa,
 			 larval->sa.st_state->kind == STATE_V2_REKEY_IKE_I0));
 	/*
 	 * After initiating a delete the IKE SA transitions to
-	 * STATE_V2_IKE_SA_DELETE so accomodate it here (the request
+	 * STATE_V2_IKE_SA_DELETE so accommodate it here (the request
 	 * will be queued but never initiated - instead the delete
 	 * code will reschedule).
 	 *
@@ -279,7 +279,7 @@ static bool find_v2N_REKEY_SA_child(struct ike_sa *ike,
 	 * Check the protocol.
 	 *
 	 * "ikev2_notify_desc" allows 0, IKE, ESP and AH; reject the
-	 * first two.  Will also need to check that the protocl
+	 * first two.  Will also need to check that the protocol
 	 * matches that extablished by the Child SA.
 	 */
 
@@ -1014,7 +1014,7 @@ stf_status process_v2_CREATE_CHILD_SA_request(struct ike_sa *ike,
 	if (!accept_v2_nonce(larval_child->sa.logger, md, &larval_child->sa.st_ni, "Ni")) {
 		/*
 		 * Presumably not our fault.  Syntax error response
-		 * impicitly kills the family.
+		 * implicitly kills the family.
 		 */
 		record_v2N_response(ike->sa.logger, ike, md,
 				    v2N_INVALID_SYNTAX, NULL/*no-data*/,

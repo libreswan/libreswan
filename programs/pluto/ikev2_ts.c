@@ -1291,7 +1291,7 @@ static bool fit_connection_for_v2TS_request(struct connection *d,
 		} else {
 			/*
 			 * An existing instance needs
-			 * to just accomodate the
+			 * to just accommodate the
 			 * existing traffic
 			 * selectors?!?
 			 *
@@ -1563,7 +1563,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 	 * = more importantly, the existing connection is "permanent"
 	 *   (or permanent like) so there isn't the option of
 	 *   instantiating something better (switching away from
-	 *   permenant connections isn't allowed; explaining why might
+	 *   permanent connections isn't allowed; explaining why might
 	 *   be helpful here).
 	 *
 	 * = if the existing connection is LABELED then the search

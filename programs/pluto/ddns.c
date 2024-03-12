@@ -148,7 +148,7 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 		pdbg(c->logger, "  already disoriented");
 	}
 
-	/* propogate remote address */
+	/* propagate remote address */
 	pdbg(c->logger, "  updating hosts");
 	update_hosts_from_end_host_addr(c, c->remote->config->index, new_remote_addr, HERE); /* from DNS */
 	pdbg(c->logger, "  discarding SPDs");

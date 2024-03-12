@@ -263,7 +263,7 @@ static bool pack_constant_string(struct whackpacker *wp UNUSED,
 		*string = NULL;
 	} else {
 		/*
-		 * For instance, when whack sends constrol messages
+		 * For instance, when whack sends control messages
 		 * such as "status" the whack_end .leftright field is
 		 * still NULL.
 		 *

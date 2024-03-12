@@ -337,7 +337,7 @@ struct state {
 	 * initiator, it then uses that + POLICY to update HASH+SIGNER,
 	 * to sign it's proof-of-identity.
 	 *
-	 * Because things can be asymetric, the initiator values are
+	 * Because things can be asymmetric, the initiator values are
 	 * just hints to the responder.
 	 */
 
@@ -615,7 +615,7 @@ struct state {
 	 * KE+NONCE is being calculated, in addition to setting
 	 * ST_OFFLOADED_TASK, will have ST_SUSPENDED_MD set to a
 	 * 'fake_md' (grep for it).  This is because the initial
-	 * initator can't have a real MD, and (presumably) faking one
+	 * initiator can't have a real MD, and (presumably) faking one
 	 * stops a core dump - the MD contains a pointer to ST and
 	 * code likes to use that to find its state.  In the past
 	 * (before ST_OFFLOADED_TASK was added), its presence would

@@ -250,7 +250,7 @@ static void diagw(const char *mess)
 }
 
 /*
- * Conditially calls diag if ugh is set.
+ * Conditionally calls diag if ugh is set.
  * Prints second arg, if non-NULL, as quoted string
  *
  * @param ugh Error message
@@ -322,7 +322,7 @@ enum option_enums {
 #define OPT_START 356
 
 /*
- * Basic options - status and shutdown - are ment to work between
+ * Basic options - status and shutdown - are meant to work between
  * whack versions.  Look further down for where whack-magic is set.
  */
 

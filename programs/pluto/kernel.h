@@ -205,7 +205,7 @@ struct kernel_ops {
 	 * The names used to identify the interface.
 	 *
 	 * It's assumed that protostack=PROTOSTACK_NAMES[0] is
-	 * preferend.
+	 * preferred.
 	 */
 	const char **protostack_names;
 	/*

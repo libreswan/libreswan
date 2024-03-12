@@ -157,7 +157,7 @@
 	  Putting <envar>also</envar> at the end of the section after
 	  any <emphasis>parameter</emphasis> definitions is
 	  recommended.  This way, the section's
-	  <emphasis>paramter</emphasis>
+	  <emphasis>parameter</emphasis>
 	  <replaceable>value</replaceable> overrides
 	  <envar>also</envar> sections.
 	</para>

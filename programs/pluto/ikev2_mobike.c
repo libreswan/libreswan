@@ -67,7 +67,7 @@ static bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest 
 	struct child_sa *child = child_sa_by_serialno(c->established_child_sa);
 	if (child == NULL) {
 		/*
-		 * XXX: Technically, loosing the first child (it gets
+		 * XXX: Technically, losing the first child (it gets
 		 * torn down but others remain) is perfectly
 		 * reasonable.  However, per above comments, handling
 		 * multiple Child SAs is still a TODO item.

@@ -23,7 +23,7 @@ struct db_context {
 extern struct db_context *db_prop_new(uint8_t protoid, int max_trans,
 				int max_attrs);
 
-/*	Free all resourses for this db */
+/*	Free all resources for this db */
 extern void db_destroy(struct db_context *ctx);
 
 /*	Start a new transform */

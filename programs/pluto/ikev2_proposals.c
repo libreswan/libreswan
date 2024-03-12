@@ -900,7 +900,7 @@ static int ikev2_process_proposals(pb_stream *sa_payload,
 	/*
 	 * This loop contains no "return" statements.  Instead it
 	 * always enters at the top and exits at the bottom.  This
-	 * simplfies the dealing with buffers allocated above.
+	 * simplifies the dealing with buffers allocated above.
 	 *
 	 * On loop exit, MATCHING_LOCAL_PROPNUM contains one of:
 	 *
@@ -1372,7 +1372,7 @@ static int walk_transforms(pb_stream *proposal_pbs, int nr_trans,
 		 * transforms vis DI=NONE + DN=MODP1024.
 		 *
 		 * ...=NONE should be included in the response when
-		 * the intiator sent NONE.
+		 * the initiator sent NONE.
 		 */
 		bool multiple_transforms = (transforms->transform[0].valid &&
 					    transforms->transform[1].valid);
@@ -2530,7 +2530,7 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_rekey_child_proposals(struct ike_
 		 * be added as part of the rekey.
 		 *
 		 * Re-propose the accepted proposal but with the
-		 * mising DH filled in by the IKE SA's DH.
+		 * missing DH filled in by the IKE SA's DH.
 		 *
 		 * The alternative would be to re-send all the
 		 * original proposals with IKE SA DH added (which was

@@ -957,7 +957,7 @@ static bool pfkeyv2_add_sa(const struct kernel_state *k,
 	 *
 	 * Unlike .sadb_sa_replay which is in bytes (8 packets per
 	 * byte), .sadb_x_ext_sa_replay_replay is in packets - no
-	 * conversion is required (FreeBSD's kernel convers the packet
+	 * conversion is required (FreeBSD's kernel converts the packet
 	 * value back to bytes internally).
 	 */
 	if (bytes_for_replay_window > UINT8_MAX) {

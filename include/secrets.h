@@ -123,7 +123,7 @@ struct hash_signature {
 	 * For RSA this needs to be big enough to fit the modulus.
 	 * Because the modulus in the SECItem is signed (but the raw
 	 * value is unsigned), the modulus may have been prepended
-	 * with an additional zero byte.  Hence the +1 to accomodate
+	 * with an additional zero byte.  Hence the +1 to accommodate
 	 * fuzzy checks against modulus.len.
 	 *
 	 * New code should just ask NSS for the signature length.

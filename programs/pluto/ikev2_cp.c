@@ -395,7 +395,7 @@ bool process_v2_IKE_AUTH_request_v2CP_request_payload(struct ike_sa *ike,
  *   o  Domain Name (0 or more octets) - A Fully Qualified Domain Name
  *      used for Split DNS rules, such as "example.com", in DNS
  *      presentation format and using an Internationalized Domain Names
- *      for Applications (IDNA) A-label [RFC5890].  Implementors need to
+ *      for Applications (IDNA) A-label [RFC5890].  Implementers need to
  *      be careful that this value is not null terminated.
  *
  * but the below is based on cisco_stringify() which is a hang-over

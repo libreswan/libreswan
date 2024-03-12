@@ -71,7 +71,7 @@
 	<code>leftsubnets</code>
       </title>
       <para>
-	Compatibile with libreswan version 4, a simple
+	Compatible with libreswan version 4, a simple
 	<code>leftsubnet</code> (specifying a single network prefix
 	and netmask) may be combined with <code>leftprotoport</code>
 	and <code>leftsubnets</code>.  Anything more complicated

@@ -1166,7 +1166,7 @@ struct ikev2_cp {
 	uint8_t isacp_critical;
 	uint16_t isacp_length;
 	uint8_t isacp_type;
-	uint8_t isacp_res1; /* 3 octects */
+	uint8_t isacp_res1; /* 3 octets */
 	uint16_t isat_res2;
 };
 

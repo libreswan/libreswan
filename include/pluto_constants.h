@@ -846,7 +846,7 @@ size_t jam_policy(struct jambuf *buf, lset_t policy);
  * The bit numbers are assigned automatically in enum sa_policy_bits.
  *
  * The singleton set version is potentially too big for an enum
- * so these are exhausively defined as macros.  As are derived values.
+ * so these are exhaustively defined as macros.  As are derived values.
  *
  * Changes to sa_policy_bits must be reflected in #defines below it and
  * in sa_policy_bit_names.

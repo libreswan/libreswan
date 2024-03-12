@@ -61,7 +61,7 @@ static bool match_connection(const struct connection *c,
 	}
 
 	/*
-	 * Require all the bits to match (there's actually ony one).
+	 * Require all the bits to match (there's actually only one).
 	 */
 	if (!authby_le(remote_authby, c->remote->host.config->authby)) {
 		connection_buf cb;

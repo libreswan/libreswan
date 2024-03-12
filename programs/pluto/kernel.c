@@ -190,7 +190,7 @@ spd_priority_t spd_priority(const struct spd *spd)
  * choice between %trap/%pass/%drop/%reject is specified in the policy
  * of connection c.
  *
- * The kernel policy is refered to as bare (naked, global) as it is
+ * The kernel policy is referred to as bare (naked, global) as it is
  * not paired with a kernel state.
  */
 
@@ -1026,7 +1026,7 @@ bool unrouted_to_routed(struct connection *c, enum routing new_routing, where_t 
 /*
  * Find a bare shunt that encompasses the selector pair.
  *
- * Since bare shunt kernel policies have the heighest priority (0) use
+ * Since bare shunt kernel policies have the highest priority (0) use
  * selector_in_selector for the match.  For instance a bare shunt
  * 1.2.3.4/32/tcp encompass the address 1.2.3.4/32/tcp/22.
  *
