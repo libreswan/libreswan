@@ -4,5 +4,5 @@ An OE connection only covering tcp port 7 to east
 
 Now using transport mode to test whether we still properly pick up the
 port numbers, as with tunnel mode these reside in the "client"
-(subnet) defnition and for transport mode the "client" values are not
+(subnet) definition and for transport mode the "client" values are not
 used.

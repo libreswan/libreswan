@@ -1,1 +1,1 @@
-nflog on a per-connection basis using nflog= in connction using nftables.
+nflog on a per-connection basis using nflog= in connection using nftables.

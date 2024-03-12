@@ -49,7 +49,7 @@ west #
  ../../guestbin/wait-for-pluto.sh 'IMPAIR: blocking inbound message 1'
 packet from 192.1.2.23:500: IMPAIR: blocking inbound message 1
 west #
- # stop further blocking so revival can occure
+ # stop further blocking so revival can occur
 west #
  ipsec whack --no-impair block_inbound
 IMPAIR: block all inbound messages: yes -> no

@@ -155,7 +155,7 @@ void schedule_resume(const char *name, so_serial_t serialno,
  * doesn't try to unsuspend MD.
  *
  * DELAY should be deltatime(0).  However, impaired code says
- * otherwize.
+ * otherwise.
  */
 
 typedef void callback_cb(const char *story, struct state *st, void *context);

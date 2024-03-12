@@ -33,7 +33,7 @@ west #
 west #
  # pings will get to almost rekey, but rekey wouldn't trigger; expect
 west #
- # ony #2 IPsec original Child SA; expression truncates but that is
+ # only #2 IPsec original Child SA; expression truncates but that is
 west #
  # good enough
 west #

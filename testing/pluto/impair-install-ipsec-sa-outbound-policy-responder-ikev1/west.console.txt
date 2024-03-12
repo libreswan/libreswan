@@ -620,7 +620,7 @@ output: | "west-east" #2: detach whack fd@0x7f1c931a9fe8 from logger 0x7f1c9274d
 output: | delref @0x7f1c931a9fe8(2->1) (free_job() +430 programs/pluto/server_pool.c)
 output: | logger: delref @0x7f1c9274dfc8(1->0) (free_job() +430 programs/pluto/server_pool.c)
 output: | job: delref @0x7f1c92749f98(1->0) (free_job() +431 programs/pluto/server_pool.c)
-output: | resume sending job back to main thread for #2 suppresed complete_v1_state_transition()
+output: | resume sending job back to main thread for #2 suppressed complete_v1_state_transition()
 output: | #2 spent 1.86 (22.6) milliseconds in resume sending job back to main thread
 output: | tt: delref @0x7f1c927d0f68(1->0) (destroy_timeout() +575 programs/pluto/server.c)
 output: | spent 0 (0.00163) milliseconds in udp_read_packet() calling check_incoming_msg_errqueue()

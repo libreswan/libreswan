@@ -29,7 +29,7 @@ cp -v /bench/testing/kvm/freebsd/rc.conf /etc/
 
 cp -v /bench/testing/kvm/freebsd/auto_master /etc/
 
-# supress motd
+# suppress motd
 touch /root/.hushlogin
 
 exit 0

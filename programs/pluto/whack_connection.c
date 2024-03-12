@@ -131,7 +131,7 @@ static bool whack_connections_by_alias(const struct whack_message *m,
 		if (each->future_tense != NULL) {
 			/*
 			 * The config option is connalias= but, given
-			 * we wan't this to go away, better to not
+			 * we want this to go away, better to not
 			 * tell any one and instead use something
 			 * closer to connectionstatus which logs
 			 * "aliases: ...".
@@ -163,7 +163,7 @@ static bool whack_connections_by_alias(const struct whack_message *m,
  * connection.
  *
  * Return true if the search for a connection should stop; not that
- * the search was sucessful.
+ * the search was successful.
  */
 
 static bool whack_connection_by_serialno(const struct whack_message *m,
@@ -239,7 +239,7 @@ unsigned whack_connection_instance_new2old(const struct whack_message *m,
 	while (next_connection(NEW2OLD, &instances)) {
 
 		connection_buf cqb;
-		ldbg(c->logger, "visting instance "PRI_CONNECTION,
+		ldbg(c->logger, "visiting instance "PRI_CONNECTION,
 		     pri_connection(instances.c, &cqb));
 		PEXPECT(c->logger, ((is_template(c) && is_instance(instances.c)) ||
 				    (is_labeled_template(c) && is_labeled_parent(instances.c)) ||

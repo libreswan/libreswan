@@ -418,7 +418,7 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 		pstat_sa_failed(st, REASON_EXCHANGE_TIMEOUT);
 		/*
 		 * XXX: this is scary overkill - delete_state() likes
-		 * to resurect things and/or send messages.  What's
+		 * to resurrect things and/or send messages.  What's
 		 * needed is a lower-level discard_state() that just
 		 * does its job.
 		 *

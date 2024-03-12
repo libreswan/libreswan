@@ -253,7 +253,7 @@ static void main_mode_hash_body(struct state *st,
 	case SA_RESPONDER:
 		crypt_prf_update_hunk(ctx, "gr", st->st_gr);
 		crypt_prf_update_hunk(ctx, "gi", st->st_gi);
-		crypt_prf_update_thing(ctx, "respoder", st->st_ike_spis.responder);
+		crypt_prf_update_thing(ctx, "responder", st->st_ike_spis.responder);
 		crypt_prf_update_thing(ctx, "initiator", st->st_ike_spis.initiator);
 		break;
 	default:
@@ -381,7 +381,7 @@ bool ikev1_close_and_encrypt_message(struct pbs_out *pbs, struct state *st)
 	 *
 	 * This should be a no-op?
 	 *
-	 * XXX: note the double padding (tripple if you count the code
+	 * XXX: note the double padding (triple if you count the code
 	 * paths that call ikev1_close_message() before encrypting.
 	 */
 

@@ -9,4 +9,4 @@ At this point both ends think they are the one deleting.
 - west sends it's blocked delete request
 - west receives east's blocked delete request
 
-Since things are still +UP, revival should occure.
+Since things are still +UP, revival should occur.

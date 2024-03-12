@@ -2136,7 +2136,7 @@
 	</term>
         <listitem>
           <para>
-	    Specififies the identity of the peer for which a public
+	    Specifies the identity of the peer for which a public
 	    key should be used. Its form is identical to the identity
 	    in the connection. If no public key is specified,
 	    <command>pluto</command> attempts to find KEY

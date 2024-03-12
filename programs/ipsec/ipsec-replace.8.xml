@@ -34,7 +34,7 @@
       definition from <option>pluto</option> internal database with
       one from <filename>@@IPSEC_CONF@@</filename>.  Replace is very
       similar to <command>ipsec add</command> but it first deletes old
-      connection secification and old tunnels using same connection
+      connection specification and old tunnels using same connection
       name.
     </para>
     <para>

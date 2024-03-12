@@ -1721,7 +1721,7 @@ void update_ike_endpoints(struct ike_sa *ike,
 }
 
 /*
- * This is for panic situtations where the entire IKE family needs to
+ * This is for panic situations where the entire IKE family needs to
  * be blown away.
  */
 

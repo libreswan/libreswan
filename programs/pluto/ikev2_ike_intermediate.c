@@ -356,7 +356,7 @@ stf_status process_v2_IKE_INTERMEDIATE_response(struct ike_sa *ike,
 	 * cover if there are multiple CREATE_CHILD_SA pending on this
 	 * IKE negotiation ???
 	 *
-	 * XXX: this is testing for an IKE SA that's been superseed by
+	 * XXX: this is testing for an IKE SA that's been superseded by
 	 * a newer IKE SA (not child).  Suspect this is to handle a
 	 * race where the other end brings up the IKE SA first?  For
 	 * that case, shouldn't this state have been deleted?

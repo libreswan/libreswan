@@ -23,7 +23,7 @@
       Linux 6.3.  Both require that the Linux kernel is compiled with
       the options CONFIG_XFRM_OFFLOAD, CONFIG_INET_ESP_OFFLOAD and
       CONFIG_INET6_ESP_OFFLOAD.  Network card support can be seen by
-      the precense of the <emphasis>esp-hw-offload</emphasis>
+      the presence of the <emphasis>esp-hw-offload</emphasis>
       capability using the <emphasis>ethtool -S</emphasis> command.
       The Linux kernel attempts to fall back from crypto hardware
       offload to software, but only for some algorithms (AEADs only?).

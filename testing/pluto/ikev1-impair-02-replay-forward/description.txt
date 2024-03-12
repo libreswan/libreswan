@@ -1,7 +1,7 @@
 IKEv1 pluto test with lots of duplicate packets
 
 When a machine is under load - taking time to get to each packet - the
-initator will timeout out and start sending duplicates for each
+initiator will timeout out and start sending duplicates for each
 request.
 
 This simulates the scenario by overwhelming east's incoming queue with

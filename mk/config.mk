@@ -347,7 +347,7 @@ TRANSFORMS += 's:@@SYSCONFDIR@@:$(SYSCONFDIR):g'
 # Selects directory under initsystems/.  The below defines where to
 # install it (and their examples).
 #
-# Unlike ifndef INITSYSTEM, $(origin INITSYSTEM) consideres
+# Unlike ifndef INITSYSTEM, $(origin INITSYSTEM) considers
 # INITSYSTEM= to be defined.
 
 ifeq ($(origin INITSYSTEM),undefined)

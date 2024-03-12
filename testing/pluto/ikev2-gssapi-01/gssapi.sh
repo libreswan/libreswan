@@ -58,7 +58,7 @@ make kvm-install-test-domains
 
 # Transmogrify the domains using swan-transmogrify.sh.
 #
-# Transmogrifying involes things like fixing up the host name, hosts
+# Transmogrifying involves things like fixing up the host name, hosts
 # file, and network interfaces, and adding some default configuration
 # files.
 #

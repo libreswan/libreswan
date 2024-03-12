@@ -653,7 +653,7 @@ static void resume_handler(void *arg, const struct timer_event *event)
 		if (status == STF_SKIP_COMPLETE_STATE_TRANSITION) {
 			/* MD.ST may have been freed! */
 			ldbg(event->logger,
-			     "resume %s for #%lu suppresed complete_v%d_state_transition()%s",
+			     "resume %s for #%lu suppressed complete_v%d_state_transition()%s",
 			     e->name, e->serialno, ike_version,
 			     (old_md_st != SOS_NOBODY && md->v1_st == NULL ? "; MD.ST disappeared" :
 			      old_md_st != SOS_NOBODY && md->v1_st != st ? "; MD.ST was switched" :

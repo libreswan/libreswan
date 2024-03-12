@@ -24,7 +24,7 @@ Lets assume everything is being set up under ~/libreswan-web/:
 With the following layout:
 
       ~/libreswan-web/rutdir/   # repository/directory under test
-      ~/libreswan-web/benchdir/    # repostory/directory driving the tests
+      ~/libreswan-web/benchdir/    # repository/directory driving the tests
       ~/libreswan-web/pool/              # directory containing VM disks et.al.
       ~/libreswan-web/results/           # directory containing published results
 
@@ -338,7 +338,7 @@ After the release, save the results to elsewhere.
 
       mv ~/results/${o}-* ~/${o}-${n}
 
-- copy result from latest relese (so results are bookended with by
+- copy result from latest release (so results are bookended with by
   releases) (tester.sh given a chance will seek out and test ${n}-0):
 
       cp -r ~/results/${n}-0-* ~/${o}-${n}

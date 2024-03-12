@@ -14,7 +14,7 @@ ipsec whack --trafficstatus
 # the above <<ipsec whack --trafficstatus>> which is well beyond
 # REKEY_MARGIN.
 #
-# (remember everytime <<ipsec whack --trafficstatus>> runs and sees
+# (remember every time <<ipsec whack --trafficstatus>> runs and sees
 # that traffic has followed it sets last-traffic time to "now").
 
 sleep 30

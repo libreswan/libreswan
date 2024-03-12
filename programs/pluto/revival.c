@@ -300,7 +300,7 @@ void revive_connection(struct connection *c, const char *subplot,
 	/*
 	 * See ikev2-removed-iface-01
 	 *
-	 * The established connection is loosing its interface which
+	 * The established connection is losing its interface which
 	 * triggers a delete.  That in turn causes the connection to
 	 * go onto the revival queue expecting to then initiate a
 	 * connection via the interface that was just deleted.  Oh.

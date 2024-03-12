@@ -2,7 +2,7 @@
 /* simple test program from https://github.com/beatgammit/simple-pam */
 
 /* "gooduser60" will just sleep for 60 seconds and return success */
-/* "gooduser90" will just sleep for 90 secods and return success */
+/* "gooduser90" will just sleep for 90 seconds and return success */
 /* "gooduser" will always succeed with "right" password - everything else fails */
 
 #include <stdio.h>

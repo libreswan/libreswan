@@ -48,7 +48,7 @@ export OSDEP
 #
 # OBJDIR - directory to store result
 #
-# The obsession with reproducable builds means that this variable
+# The obsession with reproducible builds means that this variable
 # can't contain anything that might identify the build system, such as
 # the host name.
 #

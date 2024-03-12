@@ -45,7 +45,7 @@ config setup
 	# and auto, where auto means that the requests will be sent if DDoS
 	# mode is active (see ddos-mode). If set, the option
 	# global-redirect-to= must also be set to indicate where to redirect
-	# peers to. this can be given to the IKE daemon wile running using
+	# peers to. this can be given to the IKE daemon while running using
 	# ipsec whack --global-redirect{-to}
 	#global-redirect=no
 	#global-redirect-to=<ip or hostname>, ...

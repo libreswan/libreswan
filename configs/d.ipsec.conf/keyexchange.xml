@@ -4,7 +4,7 @@
   </term>
   <listitem>
     <para>
-      Wether to use IKEv2 (RFC 7296) or IKEv1 (RFC 4301). Currently the
+      Whether to use IKEv2 (RFC 7296) or IKEv1 (RFC 4301). Currently the
       accepted values are <emphasis>ikev2</emphasis> (the default) and
       <emphasis>ikev1</emphasis>.
     </para>

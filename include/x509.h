@@ -103,11 +103,11 @@ extern CERTCertList *get_all_certificates(struct logger *logger);
  * Formatting.
  *
  * jam_dn() converts the ASN.1 DN into a "standards compliant"
- * distinguised name (aka DN).
+ * distinguished name (aka DN).
  *
  * XXX: Where "standards compliant" presumably means RFC-1485 et.al. -
  * the raw output is passed to CERT_AsciiToName() and that expects
- * RFC-1485.  However, it looks like a different excaping schema is
+ * RFC-1485.  However, it looks like a different escaping schema is
  * used.
  *
  * The JAM_BYTES_FN parameter controls additional escaping (after
@@ -121,7 +121,7 @@ extern CERTCertList *get_all_certificates(struct logger *logger);
  */
 
 typedef struct {
-	/* Maximum length of ASN.1 distinquished name */
+	/* Maximum length of ASN.1 distinguished name */
 	/* XXX: where did 512 come from? */
 	char buf[512/*includes NUL and SENTINEL*/];
 } dn_buf;

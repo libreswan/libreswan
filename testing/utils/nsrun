@@ -1691,7 +1691,7 @@ def init_output_dir():
     output_dir = "%s/OUTPUT" % cwd
     ns_dir = "%s/NS" % cwd
 
-    if rm_fr_mkdir(output_dir, mode=0o777, ignore=True):  # for kvm. namesapce could 755 or so?
+    if rm_fr_mkdir(output_dir, mode=0o777, ignore=True):  # for kvm. namespace could 755 or so?
         return True
 
     subprocess.check_output("sudo rm -fr %s || false" % ns_dir, shell=True)
@@ -2014,7 +2014,7 @@ def cmdline():
     exclusive_grp_test_type.add_argument(
         '--ns', dest="testtype", action="store_const", const='nsplutotest', help="Test type nsplutotest")
 
-    parser.add_argument('--timeout-test-host-commands', help="host comands timeout %ds" % DEFAULTCONFIG[
+    parser.add_argument('--timeout-test-host-commands', help="host commands timeout %ds" % DEFAULTCONFIG[
                         "timeout-test-host-commands"], dest='tout_cmd', default=DEFAULTCONFIG["timeout-test-host-commands"])
 
     parser.add_argument("-v", "--verbose", default=1, type=int,
@@ -2991,7 +2991,7 @@ def ns_files_exist(nsname):
         err += " not found %s" % ns
 
     if not r:
-        logger.debug("%s no old namesapce directories %s", nsname, err)
+        logger.debug("%s no old namespace directories %s", nsname, err)
     else:
         logger.debug("%s found namespace directories %s", nsname, err)
 
@@ -3431,7 +3431,7 @@ class Docker:
         self.test_start_banner_pre = "***** DOCKER PLUTO RUNNING TEST"
         self.test_start_banner_suf = " *******"
 
-        # wrapers within class below
+        # wrappers within class below
         self.restart = self.docker_restart
         self.stop_inst = self.docker_del
         self.start_new_inst = self.docker_add
@@ -3518,7 +3518,7 @@ class Namespace:
         self.test_start_banner_pre = "***** NS PLUTO RUNNING TEST"
         self.test_start_banner_suf = " *******"
 
-        # wrapers within class below
+        # wrappers within class below
         self.restart = self.ns_restart
         self.stop_inst = self.ns_del
         self.start_new_inst = self.ns_add
@@ -3773,7 +3773,7 @@ class Test():
                 namespace = namespace.strip()
                 for host in HOST_NAMES:
                     if re.search(host, namespace):
-                        print("ABORT: namespace recurison namespace %s match a testhost %s" % (namespace, host))
+                        print("ABORT: namespace recursion namespace %s match a testhost %s" % (namespace, host))
                         sys.exit(1)
 
         self.vm = vm(self.type)
@@ -3975,7 +3975,7 @@ class TestListRun():
     def ns_skip_test(self, testdir):
         for s in self.ns_skip_tests:
             if re.search(s, testdir):
-                # TestList.log_skip(testdir, "namesapce do not support. It matched pattern %s" % s)
+                # TestList.log_skip(testdir, "namespace do not support. It matched pattern %s" % s)
                 self.nsunsuported += 1
                 return False
 

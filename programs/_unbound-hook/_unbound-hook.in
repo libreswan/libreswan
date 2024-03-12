@@ -36,7 +36,7 @@ for rr in "$@" ; do
     # reset args to
     set -- ${rr}
     if test $# -lt 5 ; then
-	echo "ingoring short rr record: $@" 1>&2
+	echo "ignoring short rr record: $@" 1>&2
 	exit 1
     fi
     gwprec=$1 ; shift

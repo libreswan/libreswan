@@ -80,7 +80,7 @@ export LC_ALL
 #		Time the IPsec SA was added to the kernel
 #
 #	PLUTO_MOBIKE_EVENT
-#		wether the connection is underdoing MOBIKE migration
+#		whether the connection is underdoing MOBIKE migration
 #
 #	PLUTO_MY_CLIENT
 #		is the IP address / count of our client subnet.	 If

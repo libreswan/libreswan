@@ -412,7 +412,7 @@ void jam_orientation(struct jambuf *buf,
 	 * failure, but when pluto isn't even listening
 	 * connections can't orient so say nothing.
 	 *
-	 * Should successfull orientation also be logged?
+	 * Should successful orientation also be logged?
 	 */
 	if (oriented(c)) {
 		if (oriented_details) {

@@ -182,7 +182,7 @@ static bool initiate_connection_2_address(struct connection *c,
 	if (!address_is_specified(c->remote->host.addr)) {
 
 		/*
-		 * Cant proceed; there's no peer address!  However, if
+		 * Can't proceed; there's no peer address!  However, if
 		 * there's a DNS hostname flip things to up so that
 		 * the DNS code, below, will kick in.  Try to provide
 		 * a really detailed message!!!
@@ -330,7 +330,7 @@ void initiate(struct connection *c,
 	 *
 	 * What is wrong with a larval responder?
 
-	 * Possible outcomes are: no IKE SA, so intiate a new one; IKE
+	 * Possible outcomes are: no IKE SA, so initiate a new one; IKE
 	 * SA is a larval initiator, so append connection to pending;
 	 * IKE SA is established, so append Child SA to IKE's exchange
 	 * queue.
@@ -406,7 +406,7 @@ void initiate(struct connection *c,
 			struct connection *cc;
 			if (c->config->sec_label.len > 0) {
 				cc = labeled_parent_instantiate(ike, sec_label, HERE);
-				/* propogate whack attached to C */
+				/* propagate whack attached to C */
 				connection_attach(cc, c->logger);
 			} else {
 				cc = connection_addref(c, c->logger);

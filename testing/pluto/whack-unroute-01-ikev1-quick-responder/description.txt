@@ -1,6 +1,6 @@
 IKEv1 quick exchange where the responder's haf quick exchange is unrouted
 
-The responder complets the first part of the quick mode exchange, only
+The responder completes the first part of the quick mode exchange, only
 to then be unrouted.
 
   routing: stop ESTABLISH_INBOUND, UNROUTED_BARE_NEGOTIATION->UNROUTED_INBOUND, PERMANENT; ok=yes; negotiating_ike_sa #1 established_ike_sa #1 newest_routing_sa #0->#2

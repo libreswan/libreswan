@@ -8,4 +8,4 @@ find the second address as new source address. Initiate MOBIKE probe
 Initiator:
 On the initiator "that" 0.0.0.0/0 with IKEv2 CP may not work.
 server assigned address can't be used to rech "that".
-Moving betwween WiFi networks, the Network Manager may remove the CP address.
+Moving between WiFi networks, the Network Manager may remove the CP address.

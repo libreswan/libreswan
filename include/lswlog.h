@@ -145,7 +145,7 @@ enum stream {
 	/*
 	 * <o>: add prefix when object is available
 	 *
-	 * | <o>: add both "| " and prefex when object is available and
+	 * | <o>: add both "| " and prefix when object is available and
          * feature is enabled
 	 *
 	 * err?: write to stderr when enabled (tests log_to_stderr,
@@ -307,7 +307,7 @@ void llog_errno(lset_t rc_flags, const struct logger *logger, int error,
  *
  * NOTE: DBG's action can be a { } block, but that block must not
  * contain commas that are outside quotes or parenthesis.
- * If it does, they will be interpreted by the C preprocesser
+ * If it does, they will be interpreted by the C preprocessor
  * as macro argument separators.  This happens accidentally if
  * multiple variables are declared in one declaration.
  *
@@ -340,7 +340,7 @@ void pdbg(const struct logger *logger, const char *message, ...) PRINTF_LIKE(2);
 void ldbgf(lset_t cond, const struct logger *logger, const char *fmt, ...) PRINTF_LIKE(3);
 void pdbgf(lset_t cond, const struct logger *logger, const char *fmt, ...) PRINTF_LIKE(3);
 
-/* LDBG_JAMBUF() is ambigious - LDBG_op() or ldbg() ucase? */
+/* LDBG_JAMBUF() is ambiguous - LDBG_op() or ldbg() ucase? */
 #define LDBGP_JAMBUF(COND, LOGGER, BUF)					\
 	for (bool cond_ = LDBGP(COND, LOGGER); cond_; cond_ = false)	\
 		LLOG_JAMBUF(DEBUG_STREAM, LOGGER, BUF)

@@ -205,7 +205,7 @@ void v2_msgid_start(struct ike_sa *ike, const struct msg_digest *md)
 		intmax_t msgid = md->hdr.isa_msgid;
 		if (ike->sa.st_v2_msgid_windows.responder.wip != -1) {
 			fail_v2_msgid(ike,
-				      "responder.wip shold be -1, was %jd",
+				      "responder.wip should be -1, was %jd",
 				      ike->sa.st_v2_msgid_windows.responder.wip);
 		}
 		ike->sa.st_v2_msgid_windows.responder.wip = msgid;
@@ -404,7 +404,7 @@ static void v2_msgid_update_sent(struct ike_sa *ike, const struct msg_digest *md
 		msgid = md->hdr.isa_msgid;
 		break;
 	case NO_MESSAGE:
-		dbg_v2_msgid(ike, "skipping update_send as nothing to send (presumably intiator receiving a response)");
+		dbg_v2_msgid(ike, "skipping update_send as nothing to send (presumably initiator receiving a response)");
 		return;
 	default:
 		bad_case(sending);

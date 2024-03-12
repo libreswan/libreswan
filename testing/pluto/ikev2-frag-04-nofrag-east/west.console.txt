@@ -17,7 +17,7 @@ west #
  echo "initdone"
 initdone
 west #
- # expceted to fail as east does not "support" fragmentation.
+ # expected to fail as east does not "support" fragmentation.
 west #
  ipsec auto --up westnet-eastnet-ikev2
 "westnet-eastnet-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP

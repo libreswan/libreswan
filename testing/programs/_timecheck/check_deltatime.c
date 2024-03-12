@@ -107,7 +107,7 @@ static void check_ttodeltatime(void)
 			pfree_diag(&diag);
 		}
 		if (deltamillisecs(d) != t->ms) {
-			fprintf(stderr, "FAIL: ttodeltatime(%s, "PRI_TIMESCALE") returned %jd, especting %jd\n",
+			fprintf(stderr, "FAIL: ttodeltatime(%s, "PRI_TIMESCALE") returned %jd, expecting %jd\n",
 				t->str, pri_timescale(*t->scale), deltamillisecs(d), t->ms);
 			fails++;
 			return;

@@ -122,7 +122,7 @@ void event_v1_dpd_timeout(struct state *tbd_st)
 	}
 
 	/*
-	 * Now zap any childen.
+	 * Now zap any children.
 	 */
 	{
 		struct state_filter sf = {

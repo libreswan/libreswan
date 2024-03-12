@@ -1,2 +1,2 @@
-IKEv1 using agressive mode and explicit authby=rsasig (raw RSA)
+IKEv1 using aggressive mode and explicit authby=rsasig (raw RSA)
 

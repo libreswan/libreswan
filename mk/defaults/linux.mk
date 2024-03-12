@@ -104,7 +104,7 @@ ifndef INITSYSTEM
 endif
 
 #
-# basic stuff (unless overwridden by above)
+# basic stuff (unless overridden by above)
 #
 
 USE_XFRM ?= true
@@ -115,7 +115,7 @@ ifneq ($(USE_IPTABLES), true)
 endif
 
 # Opportunistic Encryption with NAT (Client Address Translation) support
-# currenty only supported on Linux
+# currently only supported on Linux
 USE_CAT ?= true
 
 # Linux NFLOG support
