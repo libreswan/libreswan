@@ -12,7 +12,7 @@ east #
 initdone
 east #
  ipsec whack --trafficstatus
-006 #2: "tfc", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@west'
+006 #2: "tfc", type=ESP, add_time=1234567890, inBytes=1446, outBytes=84, maxBytes=2^63B, id='@west'
 east #
  # ESP should show TFC for west and east
 east #

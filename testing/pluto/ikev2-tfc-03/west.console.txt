@@ -61,13 +61,13 @@ west #
  # byte counters appear for unencrypted size, not encrypted/padded size
 west #
  ipsec whack --trafficstatus
-006 #2: "tfc", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+006 #2: "tfc", type=ESP, add_time=1234567890, inBytes=1446, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  echo done
 done
 west #
  ipsec whack --trafficstatus
-006 #2: "tfc", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+006 #2: "tfc", type=ESP, add_time=1234567890, inBytes=1446, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  # ESP should show TFC for west and east
 west #
