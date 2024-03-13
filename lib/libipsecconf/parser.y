@@ -432,17 +432,42 @@ static bool parser_kw_bool(struct keyword *kw, const char *yytext,
 	bad_case(yn);
 }
 
+/* parse seconds, but convert to milliseconds; ulgh! */
+
 static bool parser_kw_time(struct keyword *kw, const char *yytext,
 			   uintmax_t *number, struct logger *logger)
 {
-	const struct timescale *scale;
-	if (kw->keydef->validity & kv_milliseconds) {
-		scale = &timescale_milliseconds;
-	} else {
-		scale = &timescale_seconds;
-	}
 	deltatime_t d;
-	diag_t diag = ttodeltatime(yytext, &d, scale);
+	diag_t diag = ttodeltatime(yytext, &d, &timescale_seconds);
+	if (diag != NULL) {
+		parser_kw_warning(logger, kw, yytext, "%s, keyword ignored", str_diag(diag));
+		pfree_diag(&diag);
+		return false;
+	}
+	/* convert seconds to milliseconds */
+	(*number) = deltamillisecs(d);
+	return true;
+}
+
+static bool parser_kw_seconds(struct keyword *kw, const char *yytext,
+			      uintmax_t *number, struct logger *logger)
+{
+	deltatime_t d;
+	diag_t diag = ttodeltatime(yytext, &d, &timescale_seconds);
+	if (diag != NULL) {
+		parser_kw_warning(logger, kw, yytext, "%s, keyword ignored", str_diag(diag));
+		pfree_diag(&diag);
+		return false;
+	}
+	(*number) = deltasecs(d);
+	return true;
+}
+
+static bool parser_kw_milliseconds(struct keyword *kw, const char *yytext,
+				   uintmax_t *number, struct logger *logger)
+{
+	deltatime_t d;
+	diag_t diag = ttodeltatime(yytext, &d, &timescale_milliseconds);
 	if (diag != NULL) {
 		parser_kw_warning(logger, kw, yytext, "%s, keyword ignored", str_diag(diag));
 		pfree_diag(&diag);
@@ -607,6 +632,14 @@ void parser_kw(struct keyword *kw, const char *string, struct logger *logger)
 
 	case kt_time:
 		ok = parser_kw_time(kw, string, &number, logger);
+		break;
+
+	case kt_seconds:
+		ok = parser_kw_seconds(kw, string, &number, logger);
+		break;
+
+	case kt_milliseconds:
+		ok = parser_kw_milliseconds(kw, string, &number, logger);
 		break;
 
 	case kt_bool:

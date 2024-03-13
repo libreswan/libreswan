@@ -224,6 +224,8 @@ static bool load_setup(struct starter_config *cfg,
 		case kt_sparse_name:
 		case kt_unsigned:
 		case kt_time:
+		case kt_seconds:
+		case kt_milliseconds:
 		case kt_percent:
 		case kt_binary:
 		case kt_byte:
@@ -569,6 +571,8 @@ static bool translate_field(struct starter_conn *conn,
 	case kt_sparse_name:
 	case kt_unsigned:
 	case kt_time:
+	case kt_seconds:
+	case kt_milliseconds:
 	case kt_percent:
 	case kt_binary:
 	case kt_byte:

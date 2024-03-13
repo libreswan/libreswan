@@ -312,7 +312,6 @@ enum keyword_valid {
 					 * (also=), the item can be
 					 * overwritten */
 #endif
-	kv_milliseconds = LELEM(9),	/* value already in milliseconds */
 };
 #define KV_CONTEXT_MASK (kv_config | kv_conn | kv_leftright)
 
@@ -341,7 +340,9 @@ enum keyword_type {
 	kt_host,	        /* %-prefixed .sparse_name, or a hostname string */
 	kt_pubkey,	        /* %-prefixed .sparse_name, or a pubkey string */
 	kt_unsigned,            /* an unsigned integer */
-	kt_time,                /* a number representing time */
+	kt_time,                /* a number representing time in seconds or milliseconds (kv_milliseconds) */
+	kt_seconds,             /* a number representing time in seconds */
+	kt_milliseconds,        /* a number representing time in milliseconds */
 	kt_percent,             /* a number representing percentage */
 	kt_byte,                /* a number representing Binary bytes with prefixs. KiB.. IEC 60027-2/ISO 8000 */
 	kt_binary,              /* a number representing Binary prefixes Ki. IEC 60027-2/ISO 8000  */

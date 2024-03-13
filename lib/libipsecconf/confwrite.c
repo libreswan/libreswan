@@ -144,6 +144,8 @@ static void confwrite_int(FILE *out,
 			break;
 
 		case kt_time: /* special number, but do work later XXX */
+		case kt_seconds: /* special number, but do work later XXX */
+		case kt_milliseconds: /* special number, but do work later XXX */
 		case kt_binary:
 		case kt_byte:
 		case kt_unsigned:
@@ -212,6 +214,8 @@ static void confwrite_str(FILE *out,
 			break;
 
 		case kt_time:
+		case kt_seconds:
+		case kt_milliseconds:
 		case kt_binary:
 		case kt_byte:
 			/* special number, not a string */
