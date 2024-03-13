@@ -11,6 +11,8 @@ north #
 north #
  ipsec whack --impair revival
 north #
+ ipsec whack --impair suppress_retransmits
+north #
  echo initdone
 initdone
 north #
