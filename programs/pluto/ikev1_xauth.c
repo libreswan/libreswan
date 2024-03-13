@@ -466,8 +466,7 @@ static stf_status modecfg_resp(struct state *st,
 
 	fixup_xauth_hash(st, &hash_fixup, rbody->cur);
 
-	if (!ikev1_close_message(rbody, st) ||
-	    !ikev1_close_and_encrypt_message(rbody, st))
+	if (!ikev1_close_and_encrypt_message(rbody, st))
 		return STF_INTERNAL_ERROR;
 
 	return STF_OK;
