@@ -1228,8 +1228,12 @@ int main(int argc, char **argv)
 			ocsp_method = cfg->setup.options[KBF_OCSP_METHOD];
 			ocsp_post = (ocsp_method == OCSP_METHOD_POST);
 			ocsp_cache_size = cfg->setup.options[KBF_OCSP_CACHE_SIZE];
-			ocsp_cache_min_age = cfg->setup.options[KBF_OCSP_CACHE_MIN_AGE_MS] / 1000;
-			ocsp_cache_max_age = cfg->setup.options[KBF_OCSP_CACHE_MAX_AGE_MS] / 1000;
+			if (cfg->setup.options_set[KBF_OCSP_CACHE_MIN_AGE_SECONDS]) {
+				ocsp_cache_min_age = cfg->setup.options[KBF_OCSP_CACHE_MIN_AGE_SECONDS];
+			}
+			if (cfg->setup.options_set[KBF_OCSP_CACHE_MAX_AGE_SECONDS]) {
+				ocsp_cache_max_age = cfg->setup.options[KBF_OCSP_CACHE_MAX_AGE_SECONDS];
+			}
 
 			replace_when_cfg_setup(&ocsp_uri, cfg, KSF_OCSP_URI);
 			replace_when_cfg_setup(&ocsp_trust_name, cfg, KSF_OCSP_TRUSTNAME);

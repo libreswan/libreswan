@@ -322,8 +322,8 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "ocsp-timeout",  kv_config,  kt_unsigned,  KBF_OCSP_TIMEOUT, NULL, NULL, },
   { "ocsp-trustname",  kv_config,  kt_string,  KSF_OCSP_TRUSTNAME, NULL, NULL, },
   { "ocsp-cache-size",  kv_config,  kt_unsigned,  KBF_OCSP_CACHE_SIZE, NULL, NULL, },
-  { "ocsp-cache-min-age",  kv_config,  kt_time,  KBF_OCSP_CACHE_MIN_AGE_MS, NULL, NULL, },
-  { "ocsp-cache-max-age",  kv_config,  kt_time,  KBF_OCSP_CACHE_MAX_AGE_MS, NULL, NULL, },
+  { "ocsp-cache-min-age",  kv_config,  kt_seconds,  KBF_OCSP_CACHE_MIN_AGE_SECONDS, NULL, NULL, },
+  { "ocsp-cache-max-age",  kv_config,  kt_seconds,  KBF_OCSP_CACHE_MAX_AGE_SECONDS, NULL, NULL, },
   { "ocsp-method",  kv_config | kv_processed,  kt_sparse_name,  KBF_OCSP_METHOD,  kw_ocsp_method_list, NULL, },
 
   { "ddos-mode",  kv_config | kv_processed ,  kt_sparse_name,  KBF_DDOS_MODE,  kw_ddos_list, NULL, },
