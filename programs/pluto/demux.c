@@ -122,9 +122,8 @@ void process_md(struct msg_digest *md)
 		 * accept it
 		 */
 		if (DBGP(DBG_BASE)) {
-			DBG_log("size (%ju) in received packet is larger than the size specified in ISAKMP HDR (%u) - ignoring extraneous bytes",
-				packet.len,
-				md->hdr.isa_length);
+			DBG_log("size (%zu) in received packet is larger than the size specified in ISAKMP HDR (%u) - ignoring extraneous bytes",
+				packet.len, md->hdr.isa_length);
 			shunk_t tail = hunk_slice(packet, message.len, packet.len);
 			DBG_dump_hunk("extraneous bytes:", tail);
 		}
