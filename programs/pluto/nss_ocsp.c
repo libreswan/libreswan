@@ -28,8 +28,8 @@
 /* note: returning a diag is fatal! */
 diag_t init_nss_ocsp(const char *responder_url, const char *trust_cert_name,
 		     int timeout, bool strict, int cache_size,
-		     int cache_min, int cache_max, bool ocsp_post,
-		     struct logger *logger)
+		     deltatime_t cache_min, deltatime_t cache_max,
+		     bool ocsp_post, struct logger *logger)
 {
 	SECStatus rv;
 
@@ -119,16 +119,20 @@ diag_t init_nss_ocsp(const char *responder_url, const char *trust_cert_name,
 	 * NSS uses 0 for unlimited and -1 for disabled. We use 0 for disabled
 	 * and just a large number for a large cache
 	 */
-	if (cache_max == 0) {
-		cache_max = -1;
+	unsigned nss_max = deltasecs(cache_max);
+	if (nss_max == 0) {
+		nss_max = -1;
 	}
 
-	rv = CERT_OCSPCacheSettings(cache_size, cache_min, cache_max);
+	rv = CERT_OCSPCacheSettings(cache_size, deltasecs(cache_min), nss_max);
 	if (rv != SECSuccess) {
 		/* don't shoot pluto over this */
+		deltatime_buf minb, maxb;
 		llog_nss_error(RC_LOG_SERIOUS, logger,
-			       "error setting OCSP cache parameters (size=%d, min=%d, max=%d)",
-			       cache_size, cache_min, cache_max);
+			       "error setting OCSP cache parameters (size=%d, min=%s, max=%s)",
+			       cache_size,
+			       str_deltatime(cache_min, &minb),
+			       str_deltatime(cache_max, &maxb));
 	}
 
 	return NULL;

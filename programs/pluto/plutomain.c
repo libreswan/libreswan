@@ -128,8 +128,8 @@ static char *ocsp_trust_name = NULL;
 static int ocsp_timeout = OCSP_DEFAULT_TIMEOUT;
 static int ocsp_method = OCSP_METHOD_GET;
 static int ocsp_cache_size = OCSP_DEFAULT_CACHE_SIZE;
-static int ocsp_cache_min_age = OCSP_DEFAULT_CACHE_MIN_AGE;
-static int ocsp_cache_max_age = OCSP_DEFAULT_CACHE_MAX_AGE;
+static deltatime_t ocsp_cache_min_age = DELTATIME_INIT(OCSP_DEFAULT_CACHE_MIN_AGE);
+static deltatime_t ocsp_cache_max_age = DELTATIME_INIT(OCSP_DEFAULT_CACHE_MAX_AGE);
 
 static char *pluto_lock_filename = NULL;
 static bool pluto_lock_created = false;
@@ -1026,20 +1026,26 @@ int main(int argc, char **argv)
 		}
 
 		case 'G':	/* --ocsp-cache-min-age <seconds> */
-		{
-			unsigned long u;
-			check_err(ttoulb(optarg, 0, 10, 0xFFFF, &u), longindex, logger);
-			ocsp_cache_min_age = u;
+			check_diag(ttodeltatime(optarg, &ocsp_cache_min_age, &timescale_seconds),
+				   longindex, logger);
+			if (deltatime_cmp(ocsp_cache_min_age, <, deltatime(10))) {
+				fatal_opt(longindex, logger, "to small, less than 10");
+			}
+			if (deltatime_cmp(ocsp_cache_min_age, >, deltatime(0xffff))) {
+				fatal_opt(longindex, logger, "to big, bigger than 0xffff");
+			}
 			continue;
-		}
 
 		case 'H':	/* --ocsp-cache-max-age <seconds> */
-		{
-			unsigned long u;
-			check_err(ttoulb(optarg, 0, 10, 0xFFFF, &u), longindex, logger);
-			ocsp_cache_max_age = u;
+			check_diag(ttodeltatime(optarg, &ocsp_cache_max_age, &timescale_seconds),
+				   longindex, logger);
+			if (deltatime_cmp(ocsp_cache_max_age, <, deltatime(10))) {
+				fatal_opt(longindex, logger, "to small, less than 10");
+			}
+			if (deltatime_cmp(ocsp_cache_max_age, >, deltatime(0xffff))) {
+				fatal_opt(longindex, logger, "to big, bigger than 0xffff");
+			}
 			continue;
-		}
 
 		case 'B':	/* --ocsp-method get|post */
 			if (streq(optarg, "post")) {
@@ -1229,10 +1235,10 @@ int main(int argc, char **argv)
 			ocsp_post = (ocsp_method == OCSP_METHOD_POST);
 			ocsp_cache_size = cfg->setup.options[KBF_OCSP_CACHE_SIZE];
 			if (cfg->setup.options_set[KBF_OCSP_CACHE_MIN_AGE_SECONDS]) {
-				ocsp_cache_min_age = cfg->setup.options[KBF_OCSP_CACHE_MIN_AGE_SECONDS];
+				ocsp_cache_min_age = deltatime(cfg->setup.options[KBF_OCSP_CACHE_MIN_AGE_SECONDS]);
 			}
 			if (cfg->setup.options_set[KBF_OCSP_CACHE_MAX_AGE_SECONDS]) {
-				ocsp_cache_max_age = cfg->setup.options[KBF_OCSP_CACHE_MAX_AGE_SECONDS];
+				ocsp_cache_max_age = deltatime(cfg->setup.options[KBF_OCSP_CACHE_MAX_AGE_SECONDS]);
 			}
 
 			replace_when_cfg_setup(&ocsp_uri, cfg, KSF_OCSP_URI);
@@ -1886,11 +1892,15 @@ void show_setup_plutomain(struct show *s)
 		ocsp_trust_name != NULL ? ocsp_trust_name : "<unset>"
 		);
 
-	show_comment(s,
-		"ocsp-cache-size=%d, ocsp-cache-min-age=%d, ocsp-cache-max-age=%d, ocsp-method=%s",
-		ocsp_cache_size, ocsp_cache_min_age, ocsp_cache_max_age,
-		ocsp_method == OCSP_METHOD_GET ? "get" : "post"
-		);
+	SHOW_JAMBUF(s, buf) {
+		jam(buf, "ocsp-cache-size=%d", ocsp_cache_size);
+		jam_string(buf, ", ocsp-cache-min-age=");
+		jam_deltatime(buf, ocsp_cache_min_age);
+		jam_string(buf, ", ocsp-cache-max-age=");
+		jam_deltatime(buf, ocsp_cache_max_age);
+		jam_string(buf, ", ocsp-method=");
+		jam_string(buf, (ocsp_method == OCSP_METHOD_GET ? "get" : "post"));
+	}
 
 	show_comment(s,
 		"global-redirect=%s, global-redirect-to=%s",
