@@ -340,16 +340,26 @@ bool ikev1_close_and_encrypt_message(pb_stream *pbs, struct state *st)
 	 * associated with the definition of struct isakmp_hdr in
 	 * packet.h.
 	 */
-	uint8_t *encrypt_start = pbs->start + sizeof(struct isakmp_hdr);
-	size_t unpadded_encrypt_len = pbs_offset(pbs) - sizeof(struct isakmp_hdr);
-	size_t encrypt_padding = pad_up(unpadded_encrypt_len, e->enc_blocksize);
-	size_t padded_encrypt_len = unpadded_encrypt_len + encrypt_padding;
+	shunk_t message = pbs_out_all(pbs);
+	shunk_t unpadded_encrypt = hunk_slice(message, sizeof(struct isakmp_hdr), message.len);
+	size_t encrypt_padding = pad_up(unpadded_encrypt.len, e->enc_blocksize);
 	if (encrypt_padding != 0) {
 		if (!pbs_out_zero(pbs, encrypt_padding, "encryption padding")) {
 			/* already logged */
 			return false; /*fatal*/
 		}
 	}
+
+	/*
+	 * Now mark out the block that will be encrypted.
+	 *
+	 * Hack to get at writeable buffer!  IKEv2 does something
+	 * vaguely similar.
+	 */
+	chunk_t padded_message = chunk2(pbs->start, pbs_out_all(pbs).len);
+	chunk_t padded_encrypt = hunk_slice(padded_message,
+					    sizeof(struct isakmp_hdr),
+					    padded_message.len);
 
 	PASSERT(st->logger, st->st_v1_new_iv.len >= e->enc_blocksize);
 	st->st_v1_new_iv.len = e->enc_blocksize;   /* truncate */
@@ -373,14 +383,15 @@ bool ikev1_close_and_encrypt_message(pb_stream *pbs, struct state *st)
 
 	close_output_pbs(pbs);
 
-
+	/* XXX: not ldbg(pbs->outs_logger) as can be NULL */
+	dbg("encrypt unpadded %zu padding %zu padded %zu bytes",
+	    unpadded_encrypt.len, encrypt_padding, padded_encrypt.len);
 	if (DBGP(DBG_CRYPT)) {
-		DBG_dump("encrypting:", encrypt_start, padded_encrypt_len);
+		DBG_dump("encrypting:", padded_encrypt.ptr, padded_encrypt.len);
 		DBG_dump_hunk("IV:", st->st_v1_new_iv);
-		DBG_log("unpadded encrypt size is: %zu", unpadded_encrypt_len);
 	}
 
-	e->encrypt_ops->do_crypt(e, encrypt_start, padded_encrypt_len,
+	e->encrypt_ops->do_crypt(e, padded_encrypt.ptr, padded_encrypt.len,
 				 st->st_enc_key_nss,
 				 st->st_v1_new_iv.ptr, true,
 				 st->logger);
