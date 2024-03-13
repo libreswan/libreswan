@@ -634,12 +634,6 @@ stf_status xauth_send_request(struct state *st)
 	}
 
 	fixup_xauth_hash(st, &hash_fixup, rbody.cur);
-
-	if (!ikev1_close_message(&rbody, st))
-			return STF_INTERNAL_ERROR;
-
-	close_output_pbs(&reply);
-
 	init_phase2_iv(st, &st->st_v1_msgid.phase15);
 
 	if (!ikev1_close_and_encrypt_message(&rbody, st))
