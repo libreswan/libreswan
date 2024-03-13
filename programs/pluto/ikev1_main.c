@@ -415,7 +415,7 @@ bool ikev1_close_and_encrypt_message(pb_stream *pbs, struct state *st)
 
 static bool emit_message_padding(struct pbs_out *pbs, const struct state *st)
 {
-	size_t padding = pad_up(pbs_offset(pbs), 4);
+	size_t padding = pad_up(pbs_out_all(pbs).len, 4);
 	if (padding == 0) {
 		ldbg(st->logger, "no IKEv1 message padding required");
 	} else if (!st->st_connection->config->ikepad) {
