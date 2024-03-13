@@ -222,16 +222,13 @@ shunk_t pbs_in_left(const struct pbs_in *pbs);
 
 /*
  * For an input PBS:
- *	pbs_offset is amount of stream processed.
  *      pbs_in_left().len is remaming
  *
  * For an output PBS:
- *	pbs_offset is current size of stream.
  *	pbs_left is amount of space remaining
  *
  * XXX: How can an input pbs have room()?
  */
-#define pbs_offset(pbs) ((size_t)((pbs)->cur - (pbs)->start))
 #define pbs_left(pbs) ((size_t)((pbs)->roof - (pbs)->cur))
 
 /*
