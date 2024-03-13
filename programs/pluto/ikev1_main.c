@@ -333,12 +333,24 @@ bool ikev1_close_and_encrypt_message(pb_stream *pbs, struct state *st)
 	const struct encrypt_desc *e = st->st_oakley.ta_encrypt;
 
 	/*
-	 * Pad up the encrypted part of the payload to a multiple of
-	 * encryption blocksize.
+	 * Pad the message (header and body) to message alignment
+	 * which is normally 4-bytes.
+	 */
+
+	if (!emit_message_padding(pbs, st)) {
+		/* already logged */
+		return false; /*fatal*/
+	}
+
+	/*
+	 * Next pad the encrypted part of the payload so it is
+	 * alligned with the encryption's blocksize.
 	 *
-	 * This does not include the header.  See the description
-	 * associated with the definition of struct isakmp_hdr in
-	 * packet.h.
+	 * Since the header is isn't encrypted, this doesn't include
+	 * the header.  See the description associated with the
+	 * definition of struct isakmp_hdr in packet.h.
+	 *
+	 * The alignment is probably 16-bytes, but can be 1-byte!
 	 */
 	shunk_t message = pbs_out_all(pbs);
 	shunk_t unpadded_encrypt = hunk_slice(message, sizeof(struct isakmp_hdr), message.len);
@@ -365,12 +377,10 @@ bool ikev1_close_and_encrypt_message(pb_stream *pbs, struct state *st)
 	st->st_v1_new_iv.len = e->enc_blocksize;   /* truncate */
 
 	/*
-	 * Now pad the entire message (header and body) to message
-	 * alignment.
+	 * Finally, re-pad the entire message (header and body) to
+	 * message alignment.
 	 *
-	 * Typically this is redundant but with NONE the encryption
-	 * alignment is 1 which means this may need to do some
-	 * alignment.
+	 * This should be a no-op?
 	 *
 	 * XXX: note the double padding (tripple if you count the code
 	 * paths that call ikev1_close_message() before encrypting.
