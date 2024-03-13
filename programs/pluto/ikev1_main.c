@@ -271,14 +271,18 @@ static void main_mode_hash_body(struct state *st,
 			       st->st_p1isa.len - sizeof(struct isakmp_generic));
 
 	/*
-	 * Hash identification payload, without generic payload header.
+	 * Hash identification payload, without generic payload header
+	 * (i.e., slice it off).
+	 *
 	 * We used to reconstruct ID Payload for this purpose, but now
 	 * we use the bytes as they appear on the wire to avoid
 	 * "spelling problems".
 	 */
-	crypt_prf_update_bytes(ctx, "idpl",
-			       idpl->start + sizeof(struct isakmp_generic),
-			       pbs_offset(idpl) - sizeof(struct isakmp_generic));
+	shunk_t id_payload = pbs_out_all(idpl);
+	shunk_t id_body = hunk_slice(id_payload,
+				     sizeof(struct isakmp_generic),
+				     id_payload.len);
+	crypt_prf_update_hunk(ctx, "idpl", id_body);
 }
 
 struct crypt_mac main_mode_hash(struct state *st,
