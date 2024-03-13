@@ -1155,12 +1155,12 @@ int main(int argc, char **argv)
 		}
 
 		case '2':	/* --keep-alive <delay_secs> */
-		{
-			unsigned long u;
-			check_err(ttoulb(optarg, 0, 10, secs_per_day, &u), longindex, logger);
-			keep_alive = deltatime(u);
+			check_diag(ttodeltatime(optarg, &keep_alive, &timescale_seconds),
+				   longindex, logger);
+			if (deltatime_cmp(keep_alive, >, deltatime(secs_per_day))) {
+				fatal_opt(longindex, logger, "exceeds 1 day");
+			}
 			continue;
-		}
 
 		case '5':	/* --selftest */
 			selftest_only = true;
