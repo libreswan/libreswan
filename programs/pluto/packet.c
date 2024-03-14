@@ -2951,6 +2951,8 @@ uint8_t reply_buffer[MAX_OUTPUT_UDP_SIZE];
 
 void close_output_pbs(struct pbs_out *pbs)
 {
+	pexpect(pbs->outs_logger != NULL);
+
 	if (pbs->lenfld != NULL) {
 		size_t len = (pbs->cur - pbs->start);
 
