@@ -900,12 +900,15 @@ int main(int argc, char **argv)
 			continue;
 
 		case '9':	/* --expire-shunt-interval <interval> */
-		{
-			unsigned long d = 0;
-			check_err(ttoulb(optarg, 0, 10, 1000, &d), longindex, logger);
-			bare_shunt_interval = deltatime(d);
+			check_diag(ttodeltatime(optarg, &bare_shunt_interval, &timescale_seconds),
+				   longindex, logger);
+			if (deltatime_cmp(bare_shunt_interval, <, deltatime(10))) {
+				fatal_opt(longindex, logger, "too small, less than 10");
+			}
+			if (deltatime_cmp(bare_shunt_interval, >, deltatime(1000))) {
+				fatal_opt(longindex, logger, "too big, more than 1000");
+			}
 			continue;
-		}
 
 		case 'L':	/* --listen ip_addr */
 		{
@@ -1029,10 +1032,10 @@ int main(int argc, char **argv)
 			check_diag(ttodeltatime(optarg, &ocsp_cache_min_age, &timescale_seconds),
 				   longindex, logger);
 			if (deltatime_cmp(ocsp_cache_min_age, <, deltatime(10))) {
-				fatal_opt(longindex, logger, "to small, less than 10");
+				fatal_opt(longindex, logger, "too small, less than 10");
 			}
 			if (deltatime_cmp(ocsp_cache_min_age, >, deltatime(0xffff))) {
-				fatal_opt(longindex, logger, "to big, bigger than 0xffff");
+				fatal_opt(longindex, logger, "too big, bigger than 0xffff");
 			}
 			continue;
 
@@ -1040,10 +1043,10 @@ int main(int argc, char **argv)
 			check_diag(ttodeltatime(optarg, &ocsp_cache_max_age, &timescale_seconds),
 				   longindex, logger);
 			if (deltatime_cmp(ocsp_cache_max_age, <, deltatime(10))) {
-				fatal_opt(longindex, logger, "to small, less than 10");
+				fatal_opt(longindex, logger, "too small, less than 10");
 			}
 			if (deltatime_cmp(ocsp_cache_max_age, >, deltatime(0xffff))) {
-				fatal_opt(longindex, logger, "to big, bigger than 0xffff");
+				fatal_opt(longindex, logger, "too big, bigger than 0xffff");
 			}
 			continue;
 
