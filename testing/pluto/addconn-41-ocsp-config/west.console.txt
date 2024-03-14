@@ -1,0 +1,23 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec status | grep ocsp
+ocsp-enable=no, ocsp-strict=no, ocsp-timeout=2, ocsp-uri=<unset>
+ocsp-trust-name=<unset>
+ocsp-cache-size=1000, ocsp-cache-min-age=20, ocsp-cache-max-age=40, ocsp-method=get
+west #
+ ipsec stop
+Redirecting to: [initsystem]
+west #
+ ipsec pluto --ocsp-cache-min-age=100  --ocsp-cache-max-age=1000
+west #
+ ipsec status | grep ocsp
+ocsp-enable=no, ocsp-strict=no, ocsp-timeout=2, ocsp-uri=<unset>
+ocsp-trust-name=<unset>
+ocsp-cache-size=1000, ocsp-cache-min-age=100, ocsp-cache-max-age=1000, ocsp-method=get
+west #
+ 

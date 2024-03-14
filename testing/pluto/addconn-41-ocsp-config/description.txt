@@ -1,0 +1,1 @@
+test weird {left,right}id= syntaxes
