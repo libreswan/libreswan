@@ -286,7 +286,7 @@ static const struct sparse_name kw_eap_list[] = {
 const struct keyword_def ipsec_conf_keywords[] = {
   { "ikev1-policy",  kv_config,  kt_sparse_name,  KBF_GLOBAL_IKEv1,  kw_global_ikev1_list, NULL, },
   { "curl-iface",  kv_config,  kt_string,  KSF_CURLIFACE, NULL, NULL, },
-  { "curl-timeout",  kv_config,  kt_time,  KBF_CURLTIMEOUT_MS, NULL, NULL, },
+  { "curl-timeout",  kv_config,  kt_seconds,  KBF_CURL_TIMEOUT_SECONDS, NULL, NULL, },
 
   { "myvendorid",  kv_config,  kt_string,  KSF_MYVENDORID, NULL, NULL, },
   { "syslog",  kv_config,  kt_string,  KSF_SYSLOG, NULL, NULL, },

@@ -13,14 +13,19 @@
  * for more details.
  */
 
+#ifndef FETCH_H
+#define FETCH_H
+
 extern void start_crl_fetch_helper(struct logger *logger);
 extern void stop_crl_fetch_helper(struct logger *logger);
 
 extern void free_crl_fetch(void);
 
 extern char *curl_iface;
-extern long curl_timeout;
+extern deltatime_t curl_timeout;
 extern bool crl_strict;
 extern bool ocsp_strict;
 extern bool ocsp_enable;
 extern bool ocsp_post;
+
+#endif

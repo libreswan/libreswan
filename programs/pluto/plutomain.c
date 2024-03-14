@@ -971,16 +971,15 @@ int main(int argc, char **argv)
 			continue;
 
 		case 'I':	/* --curl-timeout */
-		{
-			unsigned long u;
-			check_err(ttoulb(optarg, /*not lower-bound*/0, 10, 0xFFFF, &u),
-				  longindex, logger);
-			if (u == 0) {
-				fatal_opt(longindex, logger, "must not be < 1");
+			check_diag(ttodeltatime(optarg, &curl_timeout, &timescale_seconds),
+				   longindex, logger);
+			if (deltatime_cmp(curl_timeout, <, deltatime(10))) {
+				fatal_opt(longindex, logger, "too small, less than 10");
 			}
-			curl_timeout = u;
+			if (deltatime_cmp(curl_timeout, >, deltatime(1000))) {
+				fatal_opt(longindex, logger, "too big, more than 1000");
+			}
 			continue;
-		}
 
 		case 'r':	/* --crl-strict */
 			crl_strict = true;
@@ -1316,8 +1315,9 @@ int main(int argc, char **argv)
 						       "curl-iface= via --config");
 			}
 
-			if (cfg->setup.options[KBF_CURLTIMEOUT_MS])
-				curl_timeout = cfg->setup.options[KBF_CURLTIMEOUT_MS] / 1000;
+			if (cfg->setup.options_set[KBF_CURL_TIMEOUT_SECONDS]) {
+				curl_timeout = deltatime(cfg->setup.options[KBF_CURL_TIMEOUT_SECONDS]);
+			}
 
 			if (cfg->setup.strings[KSF_DUMPDIR]) {
 				pfree(coredir);

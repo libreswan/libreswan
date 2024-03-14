@@ -49,6 +49,8 @@
 
 #define FETCH_CMD_TIMEOUT       5       /* seconds */
 
+deltatime_t curl_timeout = DELTATIME_INIT(FETCH_CMD_TIMEOUT);
+
 static pthread_t fetch_thread_id;
 
 #ifdef LIBCURL
@@ -85,7 +87,7 @@ static err_t fetch_curl(const char *url, chunk_t *blob, struct logger *logger)
 {
 	char errorbuffer[CURL_ERROR_SIZE] = "?";
 	chunk_t response = EMPTY_CHUNK;	/* managed by realloc/free */
-	long timeout = curl_timeout > 0 ? curl_timeout : FETCH_CMD_TIMEOUT;
+	long timeout = deltasecs(curl_timeout);
 
 	/* get it with libcurl */
 	CURL *curl = curl_easy_init();
