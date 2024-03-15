@@ -817,10 +817,17 @@ int main(int argc, char **argv)
 			if (streq(optarg, "-1")) {
 				nhelpers = -1;
 			} else {
-				unsigned long u;
-				check_err(ttoulb(optarg, 0, 10, 1000, &u),
+				uintmax_t u;
+				check_err(shunk_to_uintmax(shunk1(optarg), NULL/*all*/,
+							   0/*any-base*/, &u),
 					  longindex, logger);
-				nhelpers = u;
+				if (u < 10) {
+					fatal_opt(longindex, logger, "too small, less than 10");
+				}
+				if (u > 1000) {
+					fatal_opt(longindex, logger, "too big, more than 1000");
+				}
+				nhelpers = u; /* no loss; within INT_MAX */
 			}
 			continue;
 
