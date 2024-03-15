@@ -1092,8 +1092,17 @@ int main(int argc, char **argv)
 
 		case 'W':	/* --ike-socket-bufsize <bufsize> */
 		{
-			unsigned long u;
-			check_err(ttoulb(optarg, 0, 10, 0xFFFF, &u), longindex, logger);
+			uintmax_t u;
+			check_err(shunk_to_uintmax(shunk1(optarg), NULL/*all*/,
+						   0/*any-base*/, &u),
+				  longindex, logger);
+			if (u < 10) {
+				fatal_opt(longindex, logger, "too small, less than 10");
+			}
+			if (u > 0xffff) {
+				fatal_opt(longindex, logger, "too big, more than 0xffff");
+			}
+			/* but it must be >= 10?!? */
 			if (u == 0) {
 				fatal_opt(longindex, logger, "must not be 0");
 			}
