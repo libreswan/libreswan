@@ -1019,9 +1019,17 @@ int main(int argc, char **argv)
 
 		case 'E':	/* --ocsp-cache-size <entries> */
 		{
-			unsigned long u;
-			check_err(ttoulb(optarg, 0, 10, 0xFFFF, &u), longindex, logger);
-			ocsp_cache_size = u;
+			uintmax_t u;
+			check_err(shunk_to_uintmax(shunk1(optarg), NULL/*all*/,
+						   0/*any-base*/, &u),
+				  longindex, logger);
+			if (u < 10) {
+				fatal_opt(longindex, logger, "too small, less than 10");
+			}
+			if (u > 0xffff) {
+				fatal_opt(longindex, logger, "too big, more than 0xffff");
+			}
+			ocsp_cache_size = u; /* no loss; within INT_MAX */
 			continue;
 		}
 
