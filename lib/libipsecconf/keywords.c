@@ -319,7 +319,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "ocsp-strict",  kv_config,  kt_bool,  KBF_OCSP_STRICT, NULL, NULL, },
   { "ocsp-enable",  kv_config,  kt_bool,  KBF_OCSP_ENABLE, NULL, NULL, },
   { "ocsp-uri",  kv_config,  kt_string,  KSF_OCSP_URI, NULL, NULL, },
-  { "ocsp-timeout",  kv_config,  kt_unsigned,  KBF_OCSP_TIMEOUT, NULL, NULL, },
+  { "ocsp-timeout",  kv_config,  kt_seconds,  KBF_OCSP_TIMEOUT_SECONDS, NULL, NULL, },
   { "ocsp-trustname",  kv_config,  kt_string,  KSF_OCSP_TRUSTNAME, NULL, NULL, },
   { "ocsp-cache-size",  kv_config,  kt_unsigned,  KBF_OCSP_CACHE_SIZE, NULL, NULL, },
   { "ocsp-cache-min-age",  kv_config,  kt_seconds,  KBF_OCSP_CACHE_MIN_AGE_SECONDS, NULL, NULL, },

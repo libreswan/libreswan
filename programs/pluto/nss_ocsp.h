@@ -23,7 +23,7 @@ struct logger;
 
 
 extern diag_t init_nss_ocsp(const char *responder_url, const char *trust_cert_name,
-			    int timeout, bool strict, int cache_size,
+			    deltatime_t timeout, bool strict, int cache_size,
 			    deltatime_t cache_min, deltatime_t cache_max,
 			    bool ocsp_post, struct logger *logger);
 

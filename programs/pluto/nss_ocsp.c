@@ -27,7 +27,7 @@
 
 /* note: returning a diag is fatal! */
 diag_t init_nss_ocsp(const char *responder_url, const char *trust_cert_name,
-		     int timeout, bool strict, int cache_size,
+		     deltatime_t timeout, bool strict, int cache_size,
 		     deltatime_t cache_min, deltatime_t cache_max,
 		     bool ocsp_post, struct logger *logger)
 {
@@ -85,11 +85,11 @@ diag_t init_nss_ocsp(const char *responder_url, const char *trust_cert_name,
 		}
 	}
 
-	if (timeout != 0) {
-		dbg("OCSP timeout of %d seconds", timeout);
-		if (CERT_SetOCSPTimeout(timeout) != SECSuccess) {
+	if (deltatime_cmp(timeout, >, deltatime_zero)) {
+		dbg("OCSP timeout of %ju seconds", deltasecs(timeout));
+		if (CERT_SetOCSPTimeout(deltasecs(timeout)) != SECSuccess) {
 			/* don't shoot pluto over this */
-			llog_nss_error(RC_LOG_SERIOUS, logger, "error setting OCSP timeout");
+			llog_nss_error(RC_LOG_SERIOUS, logger, "error setting OCSP timeout to %ju", deltasecs(timeout));
 		}
 	}
 

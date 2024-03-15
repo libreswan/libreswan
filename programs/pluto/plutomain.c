@@ -125,7 +125,7 @@ static char *pluto_dnssec_trusted = NULL;
 
 static char *ocsp_uri = NULL;
 static char *ocsp_trust_name = NULL;
-static int ocsp_timeout = OCSP_DEFAULT_TIMEOUT;
+static deltatime_t ocsp_timeout = DELTATIME_INIT(OCSP_DEFAULT_TIMEOUT);
 static int ocsp_method = OCSP_METHOD_GET;
 static int ocsp_cache_size = OCSP_DEFAULT_CACHE_SIZE;
 static deltatime_t ocsp_cache_min_age = DELTATIME_INIT(OCSP_DEFAULT_CACHE_MIN_AGE);
@@ -1007,17 +1007,15 @@ int main(int argc, char **argv)
 			continue;
 
 		case 'T':	/* --ocsp_timeout <seconds> */
-		{
-			unsigned long u;
-			check_err(ttoulb(optarg, /*not-lower-bound*/0, 10, 0xFFFF, &u),
-				  longindex, logger);
-			if (u == 0) {
-				fatal_opt(longindex, logger, "must not be 0");
-				continue;
+			check_diag(ttodeltatime(optarg, &ocsp_timeout, &timescale_seconds),
+				   longindex, logger);
+			if (deltatime_cmp(ocsp_timeout, <, deltatime(10))) {
+				fatal_opt(longindex, logger, "too small, less than 10");
 			}
-			ocsp_timeout = u;
+			if (deltatime_cmp(ocsp_timeout, >, deltatime(1000))) {
+				fatal_opt(longindex, logger, "too big, more than 1000");
+			}
 			continue;
-		}
 
 		case 'E':	/* --ocsp-cache-size <entries> */
 		{
@@ -1232,7 +1230,9 @@ int main(int argc, char **argv)
 
 			ocsp_enable = cfg->setup.options[KBF_OCSP_ENABLE];
 			ocsp_strict = cfg->setup.options[KBF_OCSP_STRICT];
-			ocsp_timeout = cfg->setup.options[KBF_OCSP_TIMEOUT];
+			if (cfg->setup.options_set[KBF_OCSP_TIMEOUT_SECONDS]) {
+				ocsp_timeout = deltatime(cfg->setup.options[KBF_OCSP_TIMEOUT_SECONDS]);
+			}
 			ocsp_method = cfg->setup.options[KBF_OCSP_METHOD];
 			ocsp_post = (ocsp_method == OCSP_METHOD_POST);
 			ocsp_cache_size = cfg->setup.options[KBF_OCSP_CACHE_SIZE];
@@ -1884,11 +1884,11 @@ void show_setup_plutomain(struct show *s)
 		);
 
 	show_comment(s,
-		"ocsp-enable=%s, ocsp-strict=%s, ocsp-timeout=%d, ocsp-uri=%s",
-		bool_str(ocsp_enable),
-		bool_str(ocsp_strict),
-		ocsp_timeout,
-		ocsp_uri != NULL ? ocsp_uri : "<unset>"
+		     "ocsp-enable=%s, ocsp-strict=%s, ocsp-timeout=%ju, ocsp-uri=%s",
+		     bool_str(ocsp_enable),
+		     bool_str(ocsp_strict),
+		     deltasecs(ocsp_timeout),
+		     ocsp_uri != NULL ? ocsp_uri : "<unset>"
 		);
 	show_comment(s,
 		"ocsp-trust-name=%s",

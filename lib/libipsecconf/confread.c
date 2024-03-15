@@ -104,7 +104,6 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 
 	SOPT(KBF_OCSP_CACHE_SIZE, OCSP_DEFAULT_CACHE_SIZE);
 	SOPT(KBF_OCSP_METHOD, OCSP_METHOD_GET);
-	SOPT(KBF_OCSP_TIMEOUT, OCSP_DEFAULT_TIMEOUT);
 
 	SOPT(KBF_SECCOMP, SECCOMP_DISABLED); /* will be enabled in the future */
 
