@@ -1507,46 +1507,9 @@ static stf_status quick_inI1_outR1_continue12_tail(struct state *st, struct msg_
 
 	/**** finish reply packet: Nr [, KE ] [, IDci, IDcr ] ****/
 
-	{
-#ifdef IMPAIR_UNALIGNED_R1_MSG
-		const char *padstr = getenv("PLUTO_UNALIGNED_R1_MSG");
-#endif
-		/* Nr out */
-		if (!ikev1_justship_nonce(&st->st_nr, &rbody, "Nr"))
-			return STF_INTERNAL_ERROR;
-
-#ifdef IMPAIR_UNALIGNED_R1_MSG
-		if (padstr != NULL) {
-			unsigned long padsize;
-			err_t ugh = ttoulb(padstr, 0, 10, 100, &padsize);
-			pb_stream vid_pbs;
-
-			if (ugh != NULL) {
-				log_state(RC_LOG, st, "$PLUTO_UNALIGNED_R1_MSG malformed: %s; pretending it is 3", ugh);
-				padsize = 3;
-			}
-
-			log_state(RC_LOG, st, "inserting fake VID payload of %lu size",
-				  padsize);
-
-			if (st->st_pfs_group != NULL)
-				np = ISAKMP_NEXT_KE;
-			else if (id_pd != NULL)
-				np = ISAKMP_NEXT_ID;
-			else
-				np = ISAKMP_NEXT_NONE;
-
-			if (!ikev1_out_generic(np,
-					 &isakmp_vendor_id_desc, &rbody,
-					 &vid_pbs))
-				return STF_INTERNAL_ERROR;
-
-			if (!out_zero(padsize, &vid_pbs, "Filler VID"))
-				return STF_INTERNAL_ERROR;
-
-			close_output_pbs(&vid_pbs);
-		}
-#endif
+	/* Nr out */
+	if (!ikev1_justship_nonce(&st->st_nr, &rbody, "Nr")) {
+		return STF_INTERNAL_ERROR;
 	}
 
 	/* [ KE ] out (for PFS) */
@@ -1732,53 +1695,15 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 	/* HDR* out done */
 
 	/* HASH(3) out -- sometimes, we add more content */
-	{
-		struct v1_hash_fixup hash_fixup;
 
-#ifdef IMPAIR_UNALIGNED_I2_MSG
-		{
-			const char *padstr = getenv("PLUTO_UNALIGNED_I2_MSG");
+	struct v1_hash_fixup hash_fixup;
 
-			if (padstr != NULL) {
-				unsigned long padsize;
-				err_t ugh = ttoulb(padstr, 0, 10, 100, &padsize)
-				pb_stream vid_pbs;
-
-				if (ugh != NULL) {
-					log_state(RC_LOG, st, "$PLUTO_UNALIGNED_I2_MSG malformed: %s; pretending it is 3",
-						  ugh);
-					padsize = 3;
-				}
-
-				log_state(RC_LOG, st,
-					  "inserting fake VID payload of %u size",
-					  padsize);
-				START_HASH_PAYLOAD_NO_R_HASH_START(rbody,
-								   ISAKMP_NEXT_VID);
-
-				if (!ikev1_out_generic(ISAKMP_NEXT_NONE,
-						 &isakmp_vendor_id_desc,
-						 &rbody, &vid_pbs))
-					return STF_INTERNAL_ERROR;
-
-				if (!out_zero(padsize, &vid_pbs, "Filler VID"))
-					return STF_INTERNAL_ERROR;
-
-				close_output_pbs(&vid_pbs);
-			} else {
-				START_HASH_PAYLOAD(rbody,
-						   ISAKMP_NEXT_NONE);
-			}
-		}
-#else
-		if (!emit_v1_HASH(V1_HASH_3, "quick_inR1_outI2",
-				  IMPAIR_v1_QUICK_EXCHANGE, st, &hash_fixup, &rbody)) {
-			return STF_INTERNAL_ERROR;
-		}
-#endif
-
-		fixup_v1_HASH(st, &hash_fixup, st->st_v1_msgid.id, NULL);
+	if (!emit_v1_HASH(V1_HASH_3, "quick_inR1_outI2",
+			  IMPAIR_v1_QUICK_EXCHANGE, st, &hash_fixup, &rbody)) {
+		return STF_INTERNAL_ERROR;
 	}
+
+	fixup_v1_HASH(st, &hash_fixup, st->st_v1_msgid.id, NULL);
 
 	/* Derive new keying material */
 	compute_keymats(st);
