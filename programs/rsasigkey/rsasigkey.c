@@ -137,7 +137,6 @@ int main(int argc, char *argv[])
 	struct logger *logger = tool_logger(argc, argv);
 
 	int opt;
-	int nbits = 0;
 	int seedbits = DEFAULT_SEED_BITS;
 
 	while ((opt = getopt_long(argc, argv, "", opts, NULL)) != EOF)
@@ -201,6 +200,7 @@ int main(int argc, char *argv[])
 	 *
 	 * We require a multiple of 16.  (??? why?)
 	 */
+	uintmax_t nbits = 0;
 	if (argv[optind] == NULL) {
 		/*
 		 * Pick a default keysize in [3072, 3072+512+256);
@@ -208,31 +208,32 @@ int main(int argc, char *argv[])
 		 */
 		nbits = 3072 + get_rnd_uintmax((512 + 256) / 16) * 16;
 	} else {
-		unsigned long u;
-		err_t ugh = ttoulb(argv[optind], 0, 10, INT_MAX, &u);
-
+		err_t ugh = shunk_to_uintmax(shunk1(argv[optind]), NULL/*all*/, /*base*/10, &nbits);
 		if (ugh != NULL) {
 			fprintf(stderr,
-				"%s: keysize specification is malformed: %s\n",
-				progname, ugh);
+				"%s: keysize specification '%s' is malformed: %s\n",
+				progname, argv[optind], ugh);
 			exit(1);
 		}
-		nbits = u;
 	}
 
 	if (nbits < MIN_KEYBIT ) {
 		fprintf(stderr,
-			"%s: requested RSA key size (%d) is too small - use %d or more\n",
+			"%s: requested RSA key size (%ju) is too small - use %d or more\n",
 			progname, nbits, MIN_KEYBIT);
 		exit(1);
-	} else if (nbits > MAXBITS) {
+	}
+
+	if (nbits > MAXBITS) {
 		fprintf(stderr,
-			"%s: requested RSA key size (%d) is too large - (max %d)\n",
+			"%s: requested RSA key size (%ju) is too large - (max %d)\n",
 			progname, nbits, MAXBITS);
 		exit(1);
-	} else if (nbits % (BITS_IN_BYTE * 2) != 0) {
+	}
+
+	if (nbits % (BITS_IN_BYTE * 2) != 0) {
 		fprintf(stderr,
-			"%s: requested RSA key size (%d) is not a multiple of %d\n",
+			"%s: requested RSA key size (%ju) is not a multiple of %d\n",
 			progname, nbits, (int)BITS_IN_BYTE * 2);
 		exit(1);
 	}
