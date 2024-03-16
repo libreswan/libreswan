@@ -59,7 +59,6 @@ OBJS += constants.o \
 	sameaddr.o \
 	subnettypeof.o ttodata.o \
 	ttosaid.o \
-	ttoul.o \
 	secitem_chunk.o \
 	lswnss.o \
 	alg_byname.o
