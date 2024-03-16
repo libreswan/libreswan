@@ -583,8 +583,11 @@ err_t lease_that_address(struct connection *c, const struct state *st,
 				pool->nr_leases = min(pool->nr_leases * 2, pool->size);
 			}
 			realloc_things(pool->leases, old_nr_leases, pool->nr_leases, "leases");
-			DBG_pool(false, pool, "growing address pool from %u to %u",
-				 old_nr_leases, pool->nr_leases);
+
+			range_buf rb;
+			llog(RC_LOG, &global_logger, "pool %s: growing address pool from %u to %u",
+			     str_range(&pool->r, &rb), old_nr_leases, pool->nr_leases);
+
 			/* initialize new leases (and add to free list) */
 			for (unsigned l = old_nr_leases; l < pool->nr_leases; l++) {
 				struct lease *lease = &pool->leases[l];
