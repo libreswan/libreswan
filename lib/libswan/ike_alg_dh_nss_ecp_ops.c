@@ -162,7 +162,7 @@ static diag_t nss_ecp_calc_shared_secret(const struct dh_desc *group,
 		 * (see comments in pk11_get_EC_PointLenInBytes()).
 		 */
 		passert(remote_ke.len == local_pubk->u.ec.publicValue.len);
-		DBG_log("passing raw CURVE25519 public key blob to NSS");
+		ldbg(logger, "passing raw CURVE25519 public key blob to NSS");
 		memcpy(remote_pubk.u.ec.publicValue.data, remote_ke.ptr, remote_ke.len);
 	}
 
@@ -190,7 +190,7 @@ static diag_t nss_ecp_calc_shared_secret(const struct dh_desc *group,
 		return diag_nss_error("shared key calculation using ECP failed");
 	}
 
-	dbg_alloc("temp", temp, HERE);
+	ldbg_alloc(logger, "temp", temp, HERE);
 
 	/*
 	 * The key returned above doesn't play well with PK11_Derive()
