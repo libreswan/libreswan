@@ -586,12 +586,19 @@ int main(int argc, char *argv[])
 
 		case OPT_PRECIDENCE:
 			{
-				unsigned long u;
-				err_t ugh = ttoulb(optarg, 0, 10, 255, &u);
-
+				uintmax_t u;
+				err_t ugh = shunk_to_uintmax(shunk1(optarg),
+							     /*all*/NULL,
+							     /*base*/10, &u);
 				if (ugh != NULL) {
 					fprintf(stderr,
-						"%s: precedence malformed: %s\n", progname, ugh);
+						"%s: precedence '%s' malformed: %s\n",
+						progname, optarg, ugh);
+					exit(5);
+				}
+				if (precedence > 255) {
+					fprintf(stderr, "%s: precedence '%s' is too large, over 255",
+						progname, optarg);
 					exit(5);
 				}
 				precedence = u;
