@@ -560,6 +560,10 @@ static const struct option long_opts[] = {
 
 static void fatal_opt(int longindex, struct logger *logger, const char *fmt, ...)
 {
+	/*
+	 * Not exit_pluto() or fatal() as pluto isn't yet up and
+	 * running?
+	 */
 	passert(longindex >= 0);
 	const char *optname = long_opts[longindex].name;
 	LLOG_JAMBUF(RC_LOG, logger, buf) {
@@ -589,6 +593,41 @@ static void check_diag(diag_t d, int longindex, struct logger *logger)
 	if (d != NULL) {
 		fatal_opt(longindex, logger, "%s", str_diag(d));
 	}
+}
+
+static void check_conf(diag_t d, const char *conf, struct logger *logger)
+{
+	if (d == NULL) {
+		return;
+	}
+
+	/*
+	 * Not exit_pluto() or fatal() as pluto isn't yet up and
+	 * running?
+	 */
+	PEXPECT(logger, conffile != NULL);
+	LLOG_JAMBUF(RC_LOG, logger, buf) {
+		if (conffile != NULL) {
+			jam_string(buf, conffile);
+			jam_string(buf, ": ");
+		}
+		jam_string(buf, "configuration ");
+		jam_string(buf, conf);
+		jam_string(buf, " invalid: ");
+		jam_diag(buf, d);
+	}
+	exit(PLUTO_EXIT_FAIL);
+}
+
+static diag_t deltatime_ok(deltatime_t timeout, int lower, int upper)
+{
+	if (lower >= 0 && deltatime_cmp(timeout, <, deltatime(lower))) {
+		return diag("too small, less than %us", lower);
+	}
+	if (upper >= 0 && deltatime_cmp(timeout, >, deltatime(upper))) {
+		return diag("too big, more than %us", upper);
+	}
+	return NULL;
 }
 
 /* print full usage (from long_opts[]) */
@@ -815,15 +854,14 @@ int main(int argc, char **argv)
 
 		case 'j':	/* --nhelpers */
 			if (streq(optarg, "-1")) {
+				/* use number of CPUs */
 				nhelpers = -1;
 			} else {
 				uintmax_t u;
 				check_err(shunk_to_uintmax(shunk1(optarg), NULL/*all*/,
 							   0/*any-base*/, &u),
 					  longindex, logger);
-				if (u < 10) {
-					fatal_opt(longindex, logger, "too small, less than 10");
-				}
+				/* arbitrary */
 				if (u > 1000) {
 					fatal_opt(longindex, logger, "too big, more than 1000");
 				}
@@ -909,12 +947,8 @@ int main(int argc, char **argv)
 		case '9':	/* --expire-shunt-interval <interval> */
 			check_diag(ttodeltatime(optarg, &bare_shunt_interval, &timescale_seconds),
 				   longindex, logger);
-			if (deltatime_cmp(bare_shunt_interval, <, deltatime(10))) {
-				fatal_opt(longindex, logger, "too small, less than 10");
-			}
-			if (deltatime_cmp(bare_shunt_interval, >, deltatime(1000))) {
-				fatal_opt(longindex, logger, "too big, more than 1000");
-			}
+			check_diag(deltatime_ok(bare_shunt_interval, 1, 1000),
+				   longindex, logger);
 			continue;
 
 		case 'L':	/* --listen ip_addr */
@@ -980,12 +1014,8 @@ int main(int argc, char **argv)
 		case 'I':	/* --curl-timeout */
 			check_diag(ttodeltatime(optarg, &curl_timeout, &timescale_seconds),
 				   longindex, logger);
-			if (deltatime_cmp(curl_timeout, <, deltatime(10))) {
-				fatal_opt(longindex, logger, "too small, less than 10");
-			}
-			if (deltatime_cmp(curl_timeout, >, deltatime(1000))) {
-				fatal_opt(longindex, logger, "too big, more than 1000");
-			}
+#define CURL_TIMEOUT_OK deltatime_ok(curl_timeout, 1, 1000)
+			check_diag(CURL_TIMEOUT_OK, longindex, logger);
 			continue;
 
 		case 'r':	/* --crl-strict */
@@ -1013,15 +1043,11 @@ int main(int argc, char **argv)
 			replace_value(&ocsp_trust_name, optarg);
 			continue;
 
-		case 'T':	/* --ocsp_timeout <seconds> */
+		case 'T':	/* --ocsp-timeout <seconds> */
 			check_diag(ttodeltatime(optarg, &ocsp_timeout, &timescale_seconds),
 				   longindex, logger);
-			if (deltatime_cmp(ocsp_timeout, <, deltatime(10))) {
-				fatal_opt(longindex, logger, "too small, less than 10");
-			}
-			if (deltatime_cmp(ocsp_timeout, >, deltatime(1000))) {
-				fatal_opt(longindex, logger, "too big, more than 1000");
-			}
+#define OCSP_TIMEOUT_OK deltatime_ok(ocsp_timeout, 1, 1000)
+			check_diag(OCSP_TIMEOUT_OK, longindex, logger);
 			continue;
 
 		case 'E':	/* --ocsp-cache-size <entries> */
@@ -1030,9 +1056,7 @@ int main(int argc, char **argv)
 			check_err(shunk_to_uintmax(shunk1(optarg), NULL/*all*/,
 						   0/*any-base*/, &u),
 				  longindex, logger);
-			if (u < 10) {
-				fatal_opt(longindex, logger, "too small, less than 10");
-			}
+			/* Why 64k? UDP payload size? */
 			if (u > 0xffff) {
 				fatal_opt(longindex, logger, "too big, more than 0xffff");
 			}
@@ -1043,23 +1067,20 @@ int main(int argc, char **argv)
 		case 'G':	/* --ocsp-cache-min-age <seconds> */
 			check_diag(ttodeltatime(optarg, &ocsp_cache_min_age, &timescale_seconds),
 				   longindex, logger);
-			if (deltatime_cmp(ocsp_cache_min_age, <, deltatime(10))) {
-				fatal_opt(longindex, logger, "too small, less than 10");
-			}
-			if (deltatime_cmp(ocsp_cache_min_age, >, deltatime(0xffff))) {
-				fatal_opt(longindex, logger, "too big, bigger than 0xffff");
-			}
+#define OCSP_CACHE_MIN_AGE_OK deltatime_ok(ocsp_cache_min_age, 1, -1)
+			check_diag(OCSP_CACHE_MIN_AGE_OK, longindex, logger);
 			continue;
 
 		case 'H':	/* --ocsp-cache-max-age <seconds> */
+			/*
+			 * NSS uses 0 for unlimited and -1 for
+			 * disabled.  We use 0 for disabled, and a
+			 * large number for unlimited.
+			 */
 			check_diag(ttodeltatime(optarg, &ocsp_cache_max_age, &timescale_seconds),
 				   longindex, logger);
-			if (deltatime_cmp(ocsp_cache_max_age, <, deltatime(10))) {
-				fatal_opt(longindex, logger, "too small, less than 10");
-			}
-			if (deltatime_cmp(ocsp_cache_max_age, >, deltatime(0xffff))) {
-				fatal_opt(longindex, logger, "too big, bigger than 0xffff");
-			}
+#define OCSP_CACHE_MAX_AGE_OK deltatime_ok(ocsp_cache_max_age, 0, -1)
+			check_diag(OCSP_CACHE_MAX_AGE_OK, longindex, logger);
 			continue;
 
 		case 'B':	/* --ocsp-method get|post */
@@ -1093,12 +1114,11 @@ int main(int argc, char **argv)
 		case 'W':	/* --ike-socket-bufsize <bufsize> */
 		{
 			uintmax_t u;
-			check_err(shunk_to_uintmax(shunk1(optarg), NULL/*all*/,
+			check_err(shunk_to_uintmax(shunk1(optarg),
+						   NULL/*all*/,
 						   0/*any-base*/, &u),
 				  longindex, logger);
-			if (u < 10) {
-				fatal_opt(longindex, logger, "too small, less than 10");
-			}
+			/* 64k is max size for UDP */
 			if (u > 0xffff) {
 				fatal_opt(longindex, logger, "too big, more than 0xffff");
 			}
@@ -1256,15 +1276,18 @@ int main(int argc, char **argv)
 			ocsp_strict = cfg->setup.options[KBF_OCSP_STRICT];
 			if (cfg->setup.options_set[KBF_OCSP_TIMEOUT_SECONDS]) {
 				ocsp_timeout = deltatime(cfg->setup.options[KBF_OCSP_TIMEOUT_SECONDS]);
+				check_conf(OCSP_TIMEOUT_OK, "ocsp-timeout", logger);
 			}
 			ocsp_method = cfg->setup.options[KBF_OCSP_METHOD];
 			ocsp_post = (ocsp_method == OCSP_METHOD_POST);
 			ocsp_cache_size = cfg->setup.options[KBF_OCSP_CACHE_SIZE];
 			if (cfg->setup.options_set[KBF_OCSP_CACHE_MIN_AGE_SECONDS]) {
 				ocsp_cache_min_age = deltatime(cfg->setup.options[KBF_OCSP_CACHE_MIN_AGE_SECONDS]);
+				check_conf(OCSP_CACHE_MIN_AGE_OK, "ocsp-cache-min-age", logger);
 			}
 			if (cfg->setup.options_set[KBF_OCSP_CACHE_MAX_AGE_SECONDS]) {
 				ocsp_cache_max_age = deltatime(cfg->setup.options[KBF_OCSP_CACHE_MAX_AGE_SECONDS]);
+				check_conf(OCSP_CACHE_MAX_AGE_OK, "ocsp-cache-max-age", logger);
 			}
 
 			replace_when_cfg_setup(&ocsp_uri, cfg, KSF_OCSP_URI);
@@ -1341,6 +1364,8 @@ int main(int argc, char **argv)
 
 			if (cfg->setup.options_set[KBF_CURL_TIMEOUT_SECONDS]) {
 				curl_timeout = deltatime(cfg->setup.options[KBF_CURL_TIMEOUT_SECONDS]);
+				check_conf(CURL_TIMEOUT_OK, "curl-timeout", logger);
+				/* checked below */
 			}
 
 			if (cfg->setup.strings[KSF_DUMPDIR]) {
@@ -1465,6 +1490,8 @@ int main(int argc, char **argv)
 		/* not exit_pluto because we are not initialized yet */
 		exit(PLUTO_EXIT_FAIL);
 	}
+
+	/* set options set either using config and/or a param */
 
 	if (chdir(coredir) == -1) {
 		int e = errno;

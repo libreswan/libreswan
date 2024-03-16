@@ -116,10 +116,10 @@ diag_t init_nss_ocsp(const char *responder_url, const char *trust_cert_name,
 	}
 
 	/*
-	 * NSS uses 0 for unlimited and -1 for disabled. We use 0 for disabled
-	 * and just a large number for a large cache
+	 * NSS uses 0 for unlimited and -1 for disabled. We use 0 for
+	 * disabled and just a large number for a large cache.
 	 */
-	unsigned nss_max = deltasecs(cache_max);
+	int nss_max = deltasecs(cache_max);
 	if (nss_max == 0) {
 		nss_max = -1;
 	}
