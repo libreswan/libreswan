@@ -489,18 +489,21 @@ void v2_msgid_queue_initiator(struct ike_sa *ike, struct child_sa *child,
 	 */
 	enum stream stream = (ranking > 0 ? LOG_STREAM :
 			      v2_msgid_request_outstanding(ike) ? LOG_STREAM :
-			      DEBUG_STREAM);
-	LLOG_JAMBUF(stream, logger, buf) {
-		jam(buf, "adding %s request to IKE SA "PRI_SO"'s message queue",
-		    enum_name_short(&isakmp_xchg_type_names, transition->exchange),
-		    pri_so(ike->sa.st_serialno));
-		if (ranking > 0) {
-			jam(buf, " at position %u", ranking);
-		}
-		if ((*pp) != NULL) {
-			jam(buf, "; before "PRI_SO"'s %s exchange",
-			    pri_so((*pp)->who_for),
-			    enum_name_short(&isakmp_xchg_type_names, (*pp)->transition->exchange));
+			      DBGP(DBG_BASE) ? DEBUG_STREAM :
+			      NO_STREAM);
+	if (stream != NO_STREAM) {
+		LLOG_JAMBUF(stream, logger, buf) {
+			jam(buf, "adding %s request to IKE SA "PRI_SO"'s message queue",
+			    enum_name_short(&isakmp_xchg_type_names, transition->exchange),
+			    pri_so(ike->sa.st_serialno));
+			if (ranking > 0) {
+				jam(buf, " at position %u", ranking);
+			}
+			if ((*pp) != NULL) {
+				jam(buf, "; before "PRI_SO"'s %s exchange",
+				    pri_so((*pp)->who_for),
+				    enum_name_short(&isakmp_xchg_type_names, (*pp)->transition->exchange));
+			}
 		}
 	}
 	/* append */
