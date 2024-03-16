@@ -61,13 +61,22 @@ static void jam_child_sa_traffic(struct jambuf *buf, struct child_sa *child)
 	}
 
 	/* traffic */
-	jam(buf, ", type=%s%s, add_time=%"PRIu64,
-	    (child->sa.st_esp.protocol == &ip_protocol_esp ? "ESP" : child->sa.st_ah.protocol == &ip_protocol_ah ? "AH" : child->sa.st_ipcomp.protocol == &ip_protocol_ipcomp ? "IPCOMP" : "UNKNOWN"),
-	    (!c->iface->nic_offload) ? "" :
-		(c->config->nic_offload == NIC_OFFLOAD_PACKET) ? "(nic-offload=packet)" :
-		(c->config->nic_offload == NIC_OFFLOAD_CRYPTO) ? "(nic-offload=crypto)" :
-		   "(nic-offload=unknown)",
-	    child->sa.st_esp.add_time);
+	jam(buf, ", type=%s",
+	    (child->sa.st_esp.protocol == &ip_protocol_esp ? "ESP" :
+	     child->sa.st_ah.protocol == &ip_protocol_ah ? "AH" :
+	     child->sa.st_ipcomp.protocol == &ip_protocol_ipcomp ? "IPCOMP" :
+	     "UNKNOWN"));
+
+	if (c->iface->nic_offload) {
+		switch (c->config->nic_offload) {
+		case NIC_OFFLOAD_PACKET: jam(buf, "(nic-offload=packet)"); break;
+		case NIC_OFFLOAD_CRYPTO: jam(buf, "(nic-offload=crypto)"); break;
+		case NIC_OFFLOAD_NO: break;
+		case NIC_OFFLOAD_UNSET: jam(buf, "(nic-offload=UNSET)"); break;
+		}
+	}
+
+	jam(buf, ", add_time=%"PRIu64, child->sa.st_esp.add_time);
 
 	struct ipsec_proto_info *first_ipsec_proto =
 		(child->sa.st_esp.protocol == &ip_protocol_esp ? &child->sa.st_esp:
