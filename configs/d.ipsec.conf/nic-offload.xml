@@ -1,35 +1,47 @@
-  <varlistentry>
-  <term><emphasis>nic-offload</emphasis></term>
+<varlistentry>
+  <term>
+    <emphasis>nic-offload</emphasis>
+  </term>
   <listitem>
-<para>Set the method of Network Interface Controller (NIC) hardware
-offload for ESP/AH packet processing. Acceptable values are
-<emphasis>no</emphasis> (the default), <emphasis>crypto</emphasis>
-or <emphasis>packet</emphasis>.  The value <emphasis>yes</emphasis>
-is a backwards compatible value for <emphasis>crypto</emphasis>.
-The nic-offload option is separate from any CPU hardware offload available.
-When set to <emphasis>crypto</emphasis>, only cryptographic operations
-are offloaded to the NIC card. When set to <emphasis>packet</emphasis>, the
-entire packet processing including the encryption/decryption is offloaded
-to the NIC card.</para>
-<para> Crypto nic-offload is available starting Linux 4.13 using
-the XFRM IPsec stack. Packet nic-offload is available starting Linux 6.3.
-Both require that the Linux kernel is compiled with the options
-CONFIG_XFRM_OFFLOAD, CONFIG_INET_ESP_OFFLOAD and CONFIG_INET6_ESP_OFFLOAD.
-Network card support can be seen by the precense of the <emphasis>esp-hw-offload</emphasis>
-capability using the <emphasis>ethtool -S</emphasis> command. The Linux
-kernel attempts to fall back from crypto hardware offload to software,
-but only for some algorithms (AEADs only?). There is no fallback from
-packet offload to crypto offload. At the time of libreswan 5.0, we
-are only aware of the Nvidia/Mellanox ConnectX-7 (and to some extend
-ConnectX-6) cards supporting packet offload.</para>
-<para>In general, it makes no sense to try to offload older (non-AEAD) cryptographic
-algorithms such as AES-CBC or 3DES, as these algorithms are so much slower than AEAD
-algorithms (such as AES-GCM) that one would gain more performance by switching the
-algorithm to AEAD than by offloading. As such, AES-CBC tends to not be implemented in
-offload hardware. This option has also no effect on IKE packets, which are never
-offloaded, although IKE encryption does use supported CPU hardware instructions, such
-as AESNI.
-</para>
+    <para>
+      Set the method of Network Interface Controller (NIC) hardware
+      offload for ESP/AH packet processing.  Acceptable values are
+      <emphasis>no</emphasis> (the default),
+      <emphasis>crypto</emphasis> or <emphasis>packet</emphasis>.  The
+      value <emphasis>yes</emphasis> is a backwards compatible value
+      for <emphasis>crypto</emphasis>.  The nic-offload option is
+      separate from any CPU hardware offload available.  When set to
+      <emphasis>crypto</emphasis>, only cryptographic operations are
+      offloaded to the NIC card.  When set to
+      <emphasis>packet</emphasis>, the entire packet processing
+      including the encryption/decryption is offloaded to the NIC
+      card.
+    </para>
+    <para>
+      Crypto nic-offload is available starting Linux 4.13 using the
+      XFRM IPsec stack.  Packet nic-offload is available starting
+      Linux 6.3.  Both require that the Linux kernel is compiled with
+      the options CONFIG_XFRM_OFFLOAD, CONFIG_INET_ESP_OFFLOAD and
+      CONFIG_INET6_ESP_OFFLOAD.  Network card support can be seen by
+      the precense of the <emphasis>esp-hw-offload</emphasis>
+      capability using the <emphasis>ethtool -S</emphasis> command.
+      The Linux kernel attempts to fall back from crypto hardware
+      offload to software, but only for some algorithms (AEADs only?).
+      There is no fallback from packet offload to crypto offload.  At
+      the time of libreswan 5.0, we are only aware of the
+      Nvidia/Mellanox ConnectX-7 (and to some extend ConnectX-6) cards
+      supporting packet offload.
+    </para>
+    <para>
+      In general, it makes no sense to try to offload older (non-AEAD)
+      cryptographic algorithms such as AES-CBC or 3DES, as these
+      algorithms are so much slower than AEAD algorithms (such as
+      AES-GCM) that one would gain more performance by switching the
+      algorithm to AEAD than by offloading.  As such, AES-CBC tends to
+      not be implemented in offload hardware.  This option has also no
+      effect on IKE packets, which are never offloaded, although IKE
+      encryption does use supported CPU hardware instructions, such as
+      AESNI.
+    </para>
   </listitem>
-  </varlistentry>
-
+</varlistentry>
