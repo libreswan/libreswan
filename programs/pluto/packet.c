@@ -1790,31 +1790,28 @@ struct_desc *v2_payload_desc(unsigned p)
 	return v2_payload_descs[q];
 }
 
-static void init_pbs(pb_stream *pbs, uint8_t *start, size_t len, const char *name)
-{
-	*pbs = (pb_stream) {
-		/* .container = NULL, */
-		/* .desc = NULL, */
-		.name = name,
-		.start = start,
-		.cur = start,
-		.roof = start + len,
-		/* .lenfld = NULL, */
-		/* .lenfld_desc = NULL, */
-		/* .previous_np = NULL, */
-		/* .previous_npc.fp = NULL, */
-		/* .previous_np_struct = NULL, */
-	};
-}
+#define PBS_INIT(START, LEN, NAME)			\
+	{						\
+	/* .container = NULL, */			\
+	/* .desc = NULL, */				\
+	.name = name,					\
+		.start = START,				\
+		.cur = START,				\
+		.roof = START + LEN,			\
+		/* .lenfld = NULL, */			\
+		/* .lenfld_desc = NULL, */		\
+		/* .previous_np = NULL, */		\
+		/* .previous_npc.fp = NULL, */		\
+		/* .previous_np_struct = NULL, */	\
+		}
 
 struct pbs_out open_pbs_out(const char *name, uint8_t *buffer, size_t sizeof_buffer,
 			    struct logger *logger)
 {
-	struct pbs_out outs;
-	init_pbs(&outs, buffer, sizeof_buffer, name);
-	memset(buffer, 0xFA, sizeof_buffer);	/* value likely to be unpleasant */
+	struct pbs_out outs = PBS_INIT(buffer, sizeof_buffer, name);
 	outs.outs_logger = logger;
-	dbg("opening output PBS %s", name);
+	memset(buffer, 0xFA, sizeof_buffer);	/* value likely to be unpleasant */
+	ldbg(logger, "opening output PBS %s", name);
 	return outs;
 }
 
@@ -1824,8 +1821,7 @@ struct pbs_in pbs_in_from_shunk(shunk_t shunk, const char *name)
 	 * XXX: note uncast-const hack because pbs_in and pbs_out
 	 * share same structure.
 	 */
-	struct pbs_in pbs;
-	init_pbs(&pbs, (void*)shunk.ptr, shunk.len, name);
+	struct pbs_in pbs = PBS_INIT((void*)shunk.ptr, shunk.len, name);
 	return pbs;
 }
 
