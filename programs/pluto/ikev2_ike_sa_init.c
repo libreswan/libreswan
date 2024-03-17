@@ -122,6 +122,33 @@ void llog_v2_IKE_SA_INIT_success(struct ike_sa *ike)
 
 }
 
+static void record_first_v2_packet(struct ike_sa *ike, struct msg_digest *md,
+				   where_t where)
+{
+	/*
+	 * Record first packet for later checking of signature.
+	 *
+	 * XXX:
+	 *
+	 * Should this code use pbs_in_all() which uses
+	 * [.start...roof)?  The original code used:
+	 *
+	 * 	clonetochunk(st->st_firstpacket_peer, md->message_pbs.start,
+	 *		     md->message_pbs(.cur-start),
+	 *		     "saved first received packet");
+	 *
+	 * and pbs_in_to_cursor() both use (.cur-.start).
+	 *
+	 * Suspect it doesn't matter as the code initializing
+	 * .message_pbs forces .roof==.cur - look for the comment
+	 * "trim padding (not actually legit)".
+	 */
+	PEXPECT(ike->sa.logger, md->message_pbs.cur == md->message_pbs.roof);
+	replace_chunk(&ike->sa.st_firstpacket_peer,
+		      pbs_in_to_cursor(&md->message_pbs),
+		      where->func);
+}
+
 void process_v2_IKE_SA_INIT(struct msg_digest *md)
 {
 	/*

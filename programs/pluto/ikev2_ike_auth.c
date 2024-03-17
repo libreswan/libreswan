@@ -166,24 +166,6 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 {
 	struct connection *const pc = ike->sa.st_connection;	/* parent connection */
 
-	/*
-	 * Record first packet for later checking of signature.
-	 *
-	 * XXX: Is this redundant?
-	 *
-	 * The first received non-intermediate packet is, presumably,
-	 * IKE_SA_INIT (which saved the packet)?
-	 *
-	 * Or is it an earlier IKE_AUTH whe EAP?  But that isn't
-	 * first; and does it use this code path?
-	 *
-	 * Or is this just a hangover from when the code all lived in
-	 * one file?
-	 */
-	if (md->hdr.isa_xchg != ISAKMP_v2_IKE_INTERMEDIATE) {
-		record_first_v2_packet(ike, md, HERE);
-	}
-
 	/* beginning of data going out */
 
 	struct v2_message request;
