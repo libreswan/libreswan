@@ -62,7 +62,7 @@ static bool out_attr(int type,
 	      unsigned long val,
 	      struct_desc *attr_desc,
 	      enum_names *const *attr_val_descs,
-	      pb_stream *pbs)
+	      struct pbs_out *pbs)
 {
 	if (val >> 16 == 0) {
 		/* short value: use TV form */
@@ -80,7 +80,7 @@ static bool out_attr(int type,
 		 * Furthermore, we only handle values up to 4 octets in length.
 		 * Voila: a fixed format!
 		 */
-		pb_stream val_pbs;
+		struct pbs_out val_pbs;
 		uint32_t nval = htonl(val);
 
 		passert((type & ISAKMP_ATTR_AF_MASK) == 0);
@@ -828,7 +828,7 @@ static struct db_sa *v1_ike_alg_make_sadb(const struct ike_proposals ike_proposa
 	}
 }
 
-bool ikev1_out_sa(pb_stream *outs,
+bool ikev1_out_sa(struct pbs_out *outs,
 		  const struct db_sa *sadb,
 		  struct state *st,
 		  bool oakley_mode,
@@ -910,7 +910,7 @@ bool ikev1_out_sa(pb_stream *outs,
 		sadb = revised_sadb;
 
 	/* SA header out */
-	pb_stream sa_pbs;
+	struct pbs_out sa_pbs;
 	{
 		struct isakmp_sa sa = {
 			.isasa_doi = ISAKMP_DOI_IPSEC /* all we know */
@@ -949,7 +949,7 @@ bool ikev1_out_sa(pb_stream *outs,
 
 		for (unsigned pn = 0; pn < pc->prop_cnt; pn++) {
 			const struct db_prop *const p = &pc->props[pn];
-			pb_stream proposal_pbs;
+			struct pbs_out proposal_pbs;
 
 			/*
 			 * pick the part of the proposal we are trying to work on
@@ -1092,7 +1092,7 @@ bool ikev1_out_sa(pb_stream *outs,
 			for (unsigned tn = 0; tn != p->trans_cnt; tn++) {
 				const struct db_trans *const t = &p->trans[tn];
 
-				pb_stream trans_pbs;
+				struct pbs_out trans_pbs;
 
 				{
 					const struct isakmp_transform trans = {
@@ -1558,7 +1558,7 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 	 * There may well be multiple transforms.
 	 */
 	struct isakmp_proposal proposal;
-	pb_stream proposal_pbs;
+	struct pbs_in proposal_pbs;
 
 	d = pbs_in_struct(sa_pbs, &isakmp_proposal_desc,
 			  &proposal, sizeof(proposal),
@@ -1650,7 +1650,7 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 		};
 
 		struct isakmp_transform trans;
-		pb_stream trans_pbs;
+		struct pbs_in trans_pbs;
 
 		diag_t d = pbs_in_struct(&proposal_pbs, &isakmp_isakmp_transform_desc,
 					 &trans, sizeof(trans), &trans_pbs);
@@ -1697,7 +1697,7 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 
 		while (pbs_left(&trans_pbs) >= isakmp_oakley_attribute_desc.size) {
 			struct isakmp_attribute a;
-			pb_stream attr_pbs;
+			struct pbs_in attr_pbs;
 			uint32_t val; /* room for larger values */
 
 			diag_t d = pbs_in_struct(&trans_pbs, &isakmp_oakley_attribute_desc,
@@ -2064,7 +2064,7 @@ rsasig_common:
 				struct isakmp_proposal r_proposal = proposal;
 				r_proposal.isap_spisize = 0;
 				r_proposal.isap_notrans = 1;
-				pb_stream r_proposal_pbs;
+				struct pbs_out r_proposal_pbs;
 				passert(out_struct(&r_proposal,
 						   &isakmp_proposal_desc,
 						   r_sa_pbs,
@@ -2073,7 +2073,7 @@ rsasig_common:
 				/* Transform */
 				struct isakmp_transform r_trans = trans;
 				r_trans.isat_tnp = ISAKMP_NEXT_NONE;
-				pb_stream r_trans_pbs;
+				struct pbs_out r_trans_pbs;
 				passert(out_struct(&r_trans,
 						   &isakmp_isakmp_transform_desc,
 						   &r_proposal_pbs,
@@ -2317,7 +2317,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 
 	while (pbs_left(trans_pbs) >= isakmp_ipsec_attribute_desc.size) {
 		struct isakmp_attribute a;
-		pb_stream attr_pbs;
+		struct pbs_in attr_pbs;
 		enum_names *vdesc;
 		uint16_t ty;
 		uint32_t val;                          /* room for larger value */
@@ -2636,15 +2636,15 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 static void echo_proposal(struct isakmp_proposal r_proposal,    /* proposal to emit */
 			  struct isakmp_transform r_trans,      /* winning transformation within it */
 			  uint8_t pnp,                          /* Next Payload for proposal */
-			  pb_stream *r_sa_pbs,                  /* SA PBS into which to emit */
+			  struct pbs_out *r_sa_pbs,             /* SA PBS into which to emit */
 			  struct ipsec_proto_info *pi,          /* info about this protocol instance */
 			  struct_desc *trans_desc,              /* descriptor for this transformation */
-			  pb_stream *trans_pbs,                 /* PBS for incoming transform */
+			  struct pbs_in *trans_pbs,             /* PBS for incoming transform */
 			  const struct spd *sr,           /* host details for the association */
 			  struct logger *logger)
 {
-	pb_stream r_proposal_pbs;
-	pb_stream r_trans_pbs;
+	struct pbs_out r_proposal_pbs;
+	struct pbs_out r_trans_pbs;
 
 	/* Proposal */
 	r_proposal.isap_pnp = pnp;
@@ -2697,7 +2697,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 	diag_t d;
 	const struct connection *c = st->st_connection;
 	uint32_t ipsecdoisit;
-	pb_stream next_proposal_pbs;
+	struct pbs_in next_proposal_pbs;
 
 	struct isakmp_proposal next_proposal;
 	ipsec_spi_t next_spi;

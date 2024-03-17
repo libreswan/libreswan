@@ -139,7 +139,7 @@ const struct db_sa *IKEv1_ipsec_db_sa(struct ipsec_db_policy policy);
 /* for db_prop_conj */
 #define AD_PC(x) .props = (x), .prop_cnt = elemsof(x)
 
-extern bool ikev1_out_sa(pb_stream *outs,
+extern bool ikev1_out_sa(struct pbs_out *outs,
 		   const struct db_sa *sadb,
 		   struct state *st,
 		   bool oakley_mode,

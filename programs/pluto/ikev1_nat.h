@@ -19,7 +19,7 @@
 /*
  * NAT-D
  */
-extern bool ikev1_nat_traversal_add_natd(pb_stream *outs,
+extern bool ikev1_nat_traversal_add_natd(struct pbs_out *outs,
 					 const struct msg_digest *md);
 
 bool v1_nat_traversal_add_initiator_natoa(struct pbs_out *outs, struct state *st);
@@ -36,7 +36,7 @@ extern void ikev1_natd_init(struct state *st, struct msg_digest *md);
 /**
  * Vendor ID
  */
-bool nat_traversal_insert_vid(pb_stream *outs, const struct connection *c);
+bool nat_traversal_insert_vid(struct pbs_out *outs, const struct connection *c);
 void set_nat_traversal(struct state *st, const struct msg_digest *md);
 
 /**

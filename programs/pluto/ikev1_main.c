@@ -147,7 +147,7 @@ struct ike_sa *main_outI1(struct connection *c,
 	reply_stream = open_pbs_out("reply packet", reply_buffer, sizeof(reply_buffer), st->logger);
 
 	/* HDR out */
-	pb_stream rbody;
+	struct pbs_out rbody;
 	{
 		struct isakmp_hdr hdr = {
 			.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
@@ -328,7 +328,7 @@ struct hash_signature v1_sign_hash_RSA(const struct connection *c,
  * The theory is that there will be no "backing out", so we commit to IV.
  * We also close the pbs.
  */
-bool ikev1_close_and_encrypt_message(pb_stream *pbs, struct state *st)
+bool ikev1_close_and_encrypt_message(struct pbs_out *pbs, struct state *st)
 {
 	const struct encrypt_desc *e = st->st_oakley.ta_encrypt;
 
@@ -497,7 +497,7 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 {
 	/* ??? this code looks a lot like the middle of ikev2_parent_inI1outR1 */
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_SA];
-	pb_stream r_sa_pbs;
+	struct pbs_out r_sa_pbs;
 
 	if (drop_new_exchanges()) {
 		return STF_IGNORE;
@@ -691,7 +691,7 @@ static stf_status main_inR1_outI2_continue(struct state *st,
 		 * generate a pointless large VID payload to push message
 		 * over MTU
 		 */
-		pb_stream vid_pbs;
+		struct pbs_out vid_pbs;
 
 		/*
 		 * This next payload value will get rewritten
@@ -1070,7 +1070,7 @@ static stf_status main_inR2_outI3_continue(struct state *st,
 	/* HDR* out done */
 
 	/* IDii out */
-	pb_stream id_pbs; /* ID Payload; used later for hash calculation */
+	struct pbs_out id_pbs; /* ID Payload; used later for hash calculation */
 	enum next_payload_types_ikev1 auth_payload =
 		st->st_oakley.auth == OAKLEY_PRESHARED_KEY ?
 			ISAKMP_NEXT_HASH : ISAKMP_NEXT_SIG;
@@ -1172,7 +1172,7 @@ static stf_status main_inR2_outI3_continue(struct state *st,
 
 	/* INITIAL_CONTACT */
 	if (initial_contact) {
-		pb_stream notify_pbs;
+		struct pbs_out notify_pbs;
 		struct isakmp_notification isan = {
 			.isan_doi = ISAKMP_DOI_IPSEC,
 			.isan_protoid = PROTO_ISAKMP,
@@ -1302,7 +1302,7 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 		ISAKMP_NEXT_HASH : ISAKMP_NEXT_SIG;
 
 	/* IDir out */
-	pb_stream r_id_pbs; /* ID Payload; used later for hash calculation */
+	struct pbs_out r_id_pbs; /* ID Payload; used later for hash calculation */
 
 	{
 		/*
@@ -1508,7 +1508,7 @@ stf_status send_isakmp_notification(struct state *st,
 				    size_t len)
 {
 	msgid_t msgid;
-	pb_stream rbody;
+	struct pbs_out rbody;
 
 	msgid = generate_msgid(st);
 
@@ -1538,7 +1538,7 @@ stf_status send_isakmp_notification(struct state *st,
 
 	/* NOTIFY */
 	{
-		pb_stream notify_pbs;
+		struct pbs_out notify_pbs;
 		struct isakmp_notification isan = {
 			.isan_doi = ISAKMP_DOI_IPSEC,
 			.isan_protoid = PROTO_ISAKMP,
@@ -1711,7 +1711,7 @@ static void send_v1_notification(struct logger *logger,
 
 	/* Notification Payload */
 	{
-		pb_stream not_pbs;
+		struct pbs_out not_pbs;
 		struct isakmp_notification isan = {
 			.isan_doi = ISAKMP_DOI_IPSEC,
 			.isan_type = type,
@@ -1813,7 +1813,7 @@ void send_v1_notification_from_state(struct state *st, enum state_kind from_stat
 
 void send_v1_notification_from_md(struct msg_digest *md, v1_notification_t type)
 {
-	pb_stream r_hdr_pbs;
+	struct pbs_out r_hdr_pbs;
 	const monotime_t now = mononow();
 
 	switch (type) {
@@ -1863,7 +1863,7 @@ void send_v1_notification_from_md(struct msg_digest *md, v1_notification_t type)
 	/* Notification Payload */
 
 	{
-		pb_stream not_pbs;
+		struct pbs_out not_pbs;
 		struct isakmp_notification isan = {
 			.isan_doi = ISAKMP_DOI_IPSEC,
 			.isan_type = type,

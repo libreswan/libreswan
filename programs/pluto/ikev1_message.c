@@ -33,7 +33,7 @@ struct isakmp_ipsec_id build_v1_id_payload(const struct host_end *end, shunk_t *
 	return id_hd;
 }
 
-bool out_raw(const void *bytes, size_t len, pb_stream *outs, const char *name)
+bool out_raw(const void *bytes, size_t len, struct pbs_out *outs, const char *name)
 {
 	if (!pbs_out_raw(outs, bytes, len, name)) {
 		/* already logged */
@@ -76,7 +76,7 @@ v1_notification_t accept_v1_nonce(struct logger *logger,
  * package up the calculate KE value, and emit it as a KE payload.
  * used by IKEv1: main, aggressive, and quick (in PFS mode).
  */
-bool ikev1_justship_KE(struct logger *logger, chunk_t *g, pb_stream *outs)
+bool ikev1_justship_KE(struct logger *logger, chunk_t *g, struct pbs_out *outs)
 {
 	switch (impair.ke_payload) {
 	case IMPAIR_EMIT_NO:
@@ -92,7 +92,7 @@ bool ikev1_justship_KE(struct logger *logger, chunk_t *g, pb_stream *outs)
 	case IMPAIR_EMIT_ROOF:
 	default:
 	{
-		pb_stream z;
+		struct pbs_out z;
 		uint8_t byte = impair.ke_payload - IMPAIR_EMIT_ROOF;
 		llog(RC_LOG, logger, "IMPAIR: sending bogus KE (g^x) == %u value to break DH calculations", byte);
 		/* Only used to test sending/receiving bogus g^x */

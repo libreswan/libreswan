@@ -228,7 +228,7 @@ bool resend_recorded_v1_ike_msg(struct state *st, const char *where)
 	return ret;
 }
 
-bool record_and_send_v1_ike_msg(struct state *st, pb_stream *pbs, const char *what)
+bool record_and_send_v1_ike_msg(struct state *st, struct pbs_out *pbs, const char *what)
 {
 	record_outbound_v1_ike_msg(st, pbs, what);
 	return send_or_resend_v1_ike_msg_from_state(st, what, false);

@@ -1555,7 +1555,7 @@ void process_v1_packet(struct msg_digest *md)
 	if (md->hdr.isa_np == ISAKMP_NEXT_IKE_FRAGMENTATION) {
 		struct isakmp_ikefrag fraghdr;
 		int last_frag_index = 0;  /* index of the last fragment */
-		pb_stream frag_pbs;
+		struct pbs_in frag_pbs;
 
 		if (st == NULL) {
 			dbg("received IKE fragment, but have no state. Ignoring packet.");
@@ -3106,4 +3106,4 @@ struct ike_sa *established_isakmp_sa_for_state(struct state *st,
  * buffers already.  Oops.
  */
 
-pb_stream reply_stream;
+struct pbs_out reply_stream;

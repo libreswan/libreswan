@@ -25,10 +25,10 @@ extern void event_v1_dpd(struct state *st);
 
 extern stf_status dpd_inI_outR(struct state *st,
 			       struct isakmp_notification *const n,
-			       pb_stream *pbs);
+			       struct pbs_in *pbs);
 extern stf_status dpd_inR(struct state *st,
 			  struct isakmp_notification *const n,
-			  pb_stream *pbs);
+			  struct pbs_in *pbs);
 extern void event_v1_dpd_timeout(struct state *st);
 
 #define DPD_RETRANS_MAX 3

@@ -243,9 +243,9 @@ void decode_v1_certificate_requests(struct state *st, struct msg_digest *md)
 	}
 }
 
-bool ikev1_ship_CERT(enum ike_cert_type type, shunk_t cert, pb_stream *outs)
+bool ikev1_ship_CERT(enum ike_cert_type type, shunk_t cert, struct pbs_out *outs)
 {
-	pb_stream cert_pbs;
+	struct pbs_out cert_pbs;
 	struct isakmp_cert cert_hd = {
 		.isacert_type = type,
 		.isacert_reserved = 0,
@@ -262,9 +262,9 @@ bool ikev1_ship_CERT(enum ike_cert_type type, shunk_t cert, pb_stream *outs)
 }
 
 bool ikev1_build_and_ship_CR(enum ike_cert_type type,
-			     chunk_t ca, pb_stream *outs)
+			     chunk_t ca, struct pbs_out *outs)
 {
-	pb_stream cr_pbs;
+	struct pbs_out cr_pbs;
 	struct isakmp_cr cr_hd = {
 		.isacr_type = type,
 	};
@@ -277,7 +277,7 @@ bool ikev1_build_and_ship_CR(enum ike_cert_type type,
 	return true;
 }
 
-bool ikev1_ship_chain(chunk_t *chain, int n, pb_stream *outs,
+bool ikev1_ship_chain(chunk_t *chain, int n, struct pbs_out *outs,
 		      uint8_t type)
 {
 	for (int i = 0; i < n; i++) {

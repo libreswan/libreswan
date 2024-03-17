@@ -41,7 +41,7 @@ bool emit_v1_HASH(enum v1_hash_type hash_type, const char *what,
 		     "IMPAIR: omitting HASH payload for %s", what);
 		return true;
 	}
-	pb_stream hash_pbs;
+	struct pbs_out hash_pbs;
 	if (!ikev1_out_generic(&isakmp_hash_desc, rbody, &hash_pbs)) {
 		return false;
 	}

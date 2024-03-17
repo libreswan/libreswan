@@ -163,7 +163,7 @@ static bool emit_subnet_id(enum perspective perspective,
 {
 	const struct ip_info *ai = subnet_type(&net);
 	const bool usehost = (subnet_prefix_bits(net) == ai->mask_cnt);
-	pb_stream id_pbs;
+	struct pbs_out id_pbs;
 
 	enum ike_id_type idtype =
 		(perspective == REMOTE_PERSPECTIVE &&
@@ -739,7 +739,7 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 
 	struct state *isakmp_sa = state_by_serialno(st->st_clonedfrom);
 	struct connection *c = st->st_connection;
-	pb_stream rbody;
+	struct pbs_out rbody;
 	bool has_client = (c->local->child.has_client ||
 			   c->remote->child.has_client ||
 			   c->spd->local->client.ipproto != 0 ||
@@ -1469,7 +1469,7 @@ static stf_status quick_inI1_outR1_continue12_tail(struct state *st, struct msg_
 
 	passert(st->st_connection != NULL);
 
-	pb_stream r_sa_pbs;
+	struct pbs_out r_sa_pbs;
 
 	{
 		struct isakmp_sa sa = {

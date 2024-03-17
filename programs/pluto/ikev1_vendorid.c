@@ -139,7 +139,7 @@ void handle_v1_vendorid(struct msg_digest *md,
  * @return bool True if successful
  */
 
-bool out_v1VID(pb_stream *outs, unsigned int id)
+bool out_v1VID(struct pbs_out *outs, unsigned int id)
 {
 	shunk_t blob = shunk_from_vendorid(id);
 	enum_buf eb;

@@ -345,7 +345,7 @@ static stf_status aggr_inI1_outR1_continue2(struct state *st,
 	reply_stream = open_pbs_out("reply packet", reply_buffer, sizeof(reply_buffer), st->logger);
 
 	/* HDR out */
-	pb_stream rbody;
+	struct pbs_out rbody;
 
 	{
 		struct isakmp_hdr hdr = md->hdr;
@@ -371,7 +371,7 @@ static stf_status aggr_inI1_outR1_continue2(struct state *st,
 			.isasa_doi = ISAKMP_DOI_IPSEC,
 		};
 
-		pb_stream r_sa_pbs;
+		struct pbs_out r_sa_pbs;
 
 		if (!out_struct(&r_sa, &isakmp_sa_desc, &rbody,
 				&r_sa_pbs)) {
@@ -410,7 +410,7 @@ static stf_status aggr_inI1_outR1_continue2(struct state *st,
 
 	/* IDir out */
 
-	pb_stream r_id_pbs; /* ID Payload; used later for hash calculation; XXX: use ID_B instead? */
+	struct pbs_out r_id_pbs; /* ID Payload; used later for hash calculation; XXX: use ID_B instead? */
 
 	{
 		shunk_t id_b;
@@ -427,7 +427,7 @@ static stf_status aggr_inI1_outR1_continue2(struct state *st,
 
 	/* CERT out */
 	if (send_cert) {
-		pb_stream cert_pbs;
+		struct pbs_out cert_pbs;
 		struct isakmp_cert cert_hd = {
 			.isacert_type = cert_ike_type(mycert),
 		};
@@ -661,7 +661,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 
 	/* make sure HDR is at start of a clean buffer */
 	reply_stream = open_pbs_out("reply packet", reply_buffer, sizeof(reply_buffer), st->logger);
-	pb_stream rbody;
+	struct pbs_out rbody;
 
 	/* HDR out */
 	{
@@ -685,7 +685,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 
 	/* [ CERT out ] */
 	if (send_cert) {
-		pb_stream cert_pbs;
+		struct pbs_out cert_pbs;
 
 		struct isakmp_cert cert_hd = {
 			.isacert_type = cert_ike_type(mycert),
@@ -730,7 +730,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 
 		uint8_t idbuf[1024]; /* fits all possible identity payloads? */
 		struct pbs_out id_pbs = open_pbs_out("identity payload", idbuf, sizeof(idbuf), st->logger);
-		pb_stream r_id_pbs;
+		struct pbs_out r_id_pbs;
 		if (!out_struct(&id_hd, &isakmp_ipsec_identification_desc,
 				&id_pbs, &r_id_pbs) ||
 		    !out_hunk(id_b, &r_id_pbs, "my identity")) {
@@ -829,7 +829,7 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 	{
 		dbg("next payload chain: creating a fake payload for hashing identity");
 
-		pb_stream id_pbs;
+		struct pbs_out id_pbs;
 
 		shunk_t id_b;
 		struct isakmp_ipsec_id id_hd = build_v1_id_payload(&c->remote->host, &id_b);
@@ -1084,7 +1084,7 @@ static stf_status aggr_outI1_continue_tail(struct state *st,
 	reply_stream = open_pbs_out("reply packet", reply_buffer, sizeof(reply_buffer), st->logger);
 
 	/* HDR out */
-	pb_stream rbody;
+	struct pbs_out rbody;
 	{
 		struct isakmp_hdr hdr = {
 			.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
@@ -1129,7 +1129,7 @@ static stf_status aggr_outI1_continue_tail(struct state *st,
 		shunk_t id_b;
 		struct isakmp_ipsec_id id_hd = build_v1_id_payload(&c->local->host, &id_b);
 
-		pb_stream id_pbs;
+		struct pbs_out id_pbs;
 		if (!out_struct(&id_hd, &isakmp_ipsec_identification_desc,
 				&rbody, &id_pbs) ||
 		    !out_hunk(id_b, &id_pbs, "my identity"))

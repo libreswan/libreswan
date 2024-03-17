@@ -62,8 +62,8 @@ void doi_log_cert_thinking(uint16_t auth,
 			   bool send_cert,
 			   bool send_chain);
 
-bool ikev1_close_and_encrypt_message(pb_stream *pbs, struct state *st);
-bool ikev1_close_message(pb_stream *pbs, const struct state *st);
+bool ikev1_close_and_encrypt_message(struct pbs_out *pbs, struct state *st);
+bool ikev1_close_message(struct pbs_out *pbs, const struct state *st);
 
 /* Parent capable of sending messages.  */
 struct ike_sa *established_isakmp_sa_for_state(struct state *st, bool viable_parent);
@@ -111,6 +111,6 @@ extern ikev1_state_transition_fn quick_inI2;
 
 void ISAKMP_SA_established(struct ike_sa *ike);
 
-extern pb_stream reply_stream;
+extern struct pbs_out reply_stream;
 
 #endif

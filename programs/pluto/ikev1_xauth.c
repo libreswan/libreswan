@@ -83,7 +83,7 @@
 
 /* forward declarations */
 static stf_status xauth_client_ackstatus(struct state *st,
-					 pb_stream *rbody,
+					 struct pbs_out *rbody,
 					 uint16_t ap_id);
 
 /* CISCO_SPLIT_INC example payload
@@ -161,7 +161,7 @@ oakley_auth_t xauth_calcbaseauth(oakley_auth_t baseauth)
  */
 
 static bool emit_xauth_hash(const char *what, struct state *st,
-			    struct v1_hash_fixup *hash_fixup, pb_stream *out)
+			    struct v1_hash_fixup *hash_fixup, struct pbs_out *out)
 {
 	return emit_v1_HASH(V1_HASH_1, what,
 			    IMPAIR_v1_XAUTH_EXCHANGE,
@@ -180,13 +180,13 @@ static void fixup_xauth_hash(struct state *st,
  *
  * Add a given Mode Config attribute to the reply stream.
  *
- * @param pb_stream strattr the reply stream (stream)
+ * @param struct pbs_out strattr the reply stream (stream)
  * @param attr_type int the attribute type
  * @param ia internal_addr the IP information for the connection
  * @param st State structure
  * @return stf_status STF_OK or STF_INTERNAL_ERROR
  */
-static stf_status isakmp_add_attr(pb_stream *strattr,
+static stf_status isakmp_add_attr(struct pbs_out *strattr,
 				   const int attr_type,
 				   const ip_address ia,
 				   const struct state *st)
@@ -199,7 +199,7 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 		.isaat_af_type = attr_type | ISAKMP_ATTR_AF_TLV
 	};
 
-	pb_stream attrval;
+	struct pbs_out attrval;
 	if (!out_struct(&attr,
 			&isakmp_xauth_attribute_desc,
 			strattr,
@@ -332,7 +332,7 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
  *
  * @param st State structure
  * @param resp Type of reply (lset_t)  ??? why singular -- this is a set?
- * @param pb_stream rbody Body of the reply (stream)
+ * @param struct pbs_out rbody Body of the reply (stream)
  * @param replytype int
  * @param use_modecfg_addr_as_client_addr bool
  *	True means force the IP assigned by Mode Config to be the
@@ -343,7 +343,7 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
  */
 static stf_status modecfg_resp(struct state *st,
 			lset_t resp,
-			pb_stream *rbody,
+			struct pbs_out *rbody,
 			uint16_t replytype,
 			bool use_modecfg_addr_as_client_addr,
 			uint16_t ap_id)
@@ -356,7 +356,7 @@ static stf_status modecfg_resp(struct state *st,
 
 	/* ATTR out */
 	{
-		pb_stream strattr;
+		struct pbs_out strattr;
 		int attr_type;
 		struct connection *c = st->st_connection;
 
@@ -612,7 +612,7 @@ stf_status xauth_send_request(struct state *st)
 			.isama_type = ISAKMP_CFG_REQUEST,
 			.isama_identifier = 0,
 		};
-		pb_stream strattr;
+		struct pbs_out strattr;
 
 		/* Empty name attribute */
 		struct isakmp_attribute nm = {
@@ -719,7 +719,7 @@ stf_status modecfg_send_request(struct state *st)
 			.isama_type = ISAKMP_CFG_REQUEST,
 			.isama_identifier = 0,
 		};
-		pb_stream strattr;
+		struct pbs_out strattr;
 
 		if (!out_struct(&attrh, &isakmp_attr_desc, &rbody, &strattr))
 			return STF_INTERNAL_ERROR;
@@ -810,7 +810,7 @@ static stf_status xauth_send_status(struct state *st, int status)
 			.isama_type = ISAKMP_CFG_SET,
 			.isama_identifier = 0,
 		};
-		pb_stream strattr;
+		struct pbs_out strattr;
 		/* ISAKMP attr out (status) */
 		struct isakmp_attribute attr = {
 			.isaat_af_type = XAUTH_STATUS | ISAKMP_ATTR_AF_TV,
@@ -1265,7 +1265,7 @@ stf_status xauth_inR0(struct state *st, struct msg_digest *md)
 
 	while (pbs_left(attrs) >= isakmp_xauth_attribute_desc.size) {
 		struct isakmp_attribute attr;
-		pb_stream strattr;
+		struct pbs_in strattr;
 		size_t sz;
 
 		diag_t d = pbs_in_struct(attrs, &isakmp_xauth_attribute_desc,
@@ -1444,7 +1444,7 @@ stf_status modecfg_inR0(struct state *st, struct msg_digest *md)
 			 * - who actually parses the subattributes to see if they are OK?
 			 */
 			struct isakmp_attribute attr;
-			pb_stream strattr;
+			struct pbs_in strattr;
 
 			diag_t d = pbs_in_struct(attrs, &isakmp_xauth_attribute_desc,
 						 &attr, sizeof(attr), &strattr);
@@ -1501,7 +1501,7 @@ stf_status modecfg_inR0(struct state *st, struct msg_digest *md)
  * @param md Message Digest
  * @return stf_status
  */
-static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
+static stf_status modecfg_inI2(struct msg_digest *md, struct pbs_out *rbody)
 {
 	struct state *const st = md->v1_st;
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute;
@@ -1524,7 +1524,7 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 
 	while (pbs_left(attrs) >= isakmp_xauth_attribute_desc.size) {
 		struct isakmp_attribute attr;
-		pb_stream strattr;
+		struct pbs_in strattr;
 
 		diag_t d = pbs_in_struct(attrs, &isakmp_xauth_attribute_desc,
 					 &attr, sizeof(attr), &strattr);
@@ -1624,7 +1624,7 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
  * Result is allocated on heap so caller must ensure it is freed.
  */
 
-static char *cisco_stringify(pb_stream *input_pbs, const char *attr_name,
+static char *cisco_stringify(struct pbs_in *input_pbs, const char *attr_name,
 			     bool ignore, struct logger *logger)
 {
 	char strbuf[500]; /* Cisco maximum unknown - arbitrary choice */
@@ -1751,7 +1751,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 		while (pbs_left(attrs) >= isakmp_xauth_attribute_desc.size) {
 			struct isakmp_attribute attr;
 
-			pb_stream ignored;	/* we ignore the attribute value */
+			struct pbs_in ignored;	/* we ignore the attribute value */
 			diag_t d = pbs_in_struct(attrs, &isakmp_xauth_attribute_desc,
 						 &attr, sizeof(attr), &ignored);
 			if (d != NULL) {
@@ -1787,7 +1787,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 	case ISAKMP_CFG_REPLY:
 		while (pbs_left(attrs) >= isakmp_xauth_attribute_desc.size) {
 			struct isakmp_attribute attr;
-			pb_stream strattr;
+			struct pbs_in strattr;
 
 			diag_t d = pbs_in_struct(attrs, &isakmp_xauth_attribute_desc,
 						 &attr, sizeof(attr), &strattr);
@@ -1983,7 +1983,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
  */
 static stf_status xauth_client_resp(struct state *st,
 			     lset_t xauth_resp,
-			     pb_stream *rbody,
+			     struct pbs_out *rbody,
 			     uint16_t ap_id)
 {
 	char xauth_username[MAX_XAUTH_USERNAME_LEN];
@@ -1995,7 +1995,7 @@ static stf_status xauth_client_resp(struct state *st,
 
 	/* MCFG_ATTR out */
 	{
-		pb_stream strattr;
+		struct pbs_out strattr;
 
 		{
 			struct isakmp_mode_attr attrh = {
@@ -2013,7 +2013,7 @@ static stf_status xauth_client_resp(struct state *st,
 			if (xauth_resp & 1) {
 				/* ISAKMP attr out */
 				struct isakmp_attribute attr;
-				pb_stream attrval;
+				struct pbs_out attrval;
 
 				switch (attr_type) {
 				case XAUTH_TYPE:
@@ -2237,7 +2237,7 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 
 	while (pbs_left(attrs) >= isakmp_xauth_attribute_desc.size) {
 		struct isakmp_attribute attr;
-		pb_stream strattr;
+		struct pbs_in strattr;
 
 		diag_t d = pbs_in_struct(attrs, &isakmp_xauth_attribute_desc,
 					 &attr, sizeof(attr), &strattr);
@@ -2394,7 +2394,7 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
  * @return stf_status
  */
 static stf_status xauth_client_ackstatus(struct state *st,
-					 pb_stream *rbody,
+					 struct pbs_out *rbody,
 					 uint16_t ap_id)
 {
 	struct v1_hash_fixup hash_fixup;
@@ -2408,7 +2408,7 @@ static stf_status xauth_client_ackstatus(struct state *st,
 			.isama_type = ISAKMP_CFG_ACK,
 			.isama_identifier = ap_id,
 		};
-		pb_stream strattr;
+		struct pbs_out strattr;
 		struct isakmp_attribute attr = {
 			.isaat_af_type = XAUTH_STATUS | ISAKMP_ATTR_AF_TV,
 			.isaat_lv = XAUTH_STATUS_OK,
@@ -2470,7 +2470,7 @@ stf_status xauth_inI1(struct state *st, struct msg_digest *md)
 		/* CHECK that SET has been received. */
 		while (pbs_left(attrs) >= isakmp_xauth_attribute_desc.size) {
 			struct isakmp_attribute attr;
-			pb_stream strattr;
+			struct pbs_in strattr;
 
 			diag_t d = pbs_in_struct(attrs, &isakmp_xauth_attribute_desc,
 						 &attr, sizeof(attr), &strattr);

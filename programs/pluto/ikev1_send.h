@@ -29,8 +29,8 @@ struct v1_ike_rfrag {
 	size_t size;
 };
 
-void record_outbound_v1_ike_msg(struct state *st, pb_stream *pbs, const char *what);
-bool record_and_send_v1_ike_msg(struct state *st, pb_stream *pbs,
+void record_outbound_v1_ike_msg(struct state *st, struct pbs_out *pbs, const char *what);
+bool record_and_send_v1_ike_msg(struct state *st, struct pbs_out *pbs,
 				const char *what);
 
 bool resend_recorded_v1_ike_msg(struct state *st, const char *where);

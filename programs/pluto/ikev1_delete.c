@@ -58,7 +58,7 @@ void send_v1_delete(struct ike_sa *isakmp, struct state *st, where_t where)
 		return;
 	}
 
-	pb_stream r_hdr_pbs;
+	struct pbs_out r_hdr_pbs;
 	msgid_t msgid;
 	ip_said said[EM_MAXRELSPIS];
 	ip_said *ns = said;
@@ -130,7 +130,7 @@ void send_v1_delete(struct ike_sa *isakmp, struct state *st, where_t where)
 			.isad_nospi = 1,
 		};
 
-		pb_stream del_pbs;
+		struct pbs_out del_pbs;
 		switch (impair.v1_isakmp_delete_payload) {
 		case IMPAIR_EMIT_NO:
 			passert(out_struct(&isad, &isakmp_delete_desc, &r_hdr_pbs, &del_pbs));
@@ -175,7 +175,7 @@ void send_v1_delete(struct ike_sa *isakmp, struct state *st, where_t where)
 				.isad_nospi = 1,
 			};
 
-			pb_stream del_pbs;
+			struct pbs_out del_pbs;
 			switch (impair.v1_ipsec_delete_payload) {
 			case IMPAIR_EMIT_NO:
 				passert(out_struct(&isad, &isakmp_delete_desc,
@@ -208,7 +208,7 @@ void send_v1_delete(struct ike_sa *isakmp, struct state *st, where_t where)
 			}
 
 			if (impair.ikev1_del_with_notify) {
-				pb_stream cruft_pbs;
+				struct pbs_out cruft_pbs;
 
 				log_state(RC_LOG, st, "IMPAIR: adding bogus Notify payload after IKE Delete payload");
 				struct isakmp_notification isan = {

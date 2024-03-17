@@ -44,7 +44,7 @@
  *
  * Used when we're Initiator
  */
-bool nat_traversal_insert_vid(pb_stream *outs, const struct connection *c)
+bool nat_traversal_insert_vid(struct pbs_out *outs, const struct connection *c)
 {
 	dbg("nat add vid");
 
@@ -194,7 +194,7 @@ static void ikev1_natd_lookup(struct msg_digest *md, struct state *st)
 	natd_lookup_common(st, md->sender, found_local, found_remote);
 }
 
-bool ikev1_nat_traversal_add_natd(pb_stream *outs,
+bool ikev1_nat_traversal_add_natd(struct pbs_out *outs,
 				  const struct msg_digest *md)
 {
 	const struct state *st = md->v1_st;
@@ -355,7 +355,7 @@ static bool emit_one_natoa(struct pbs_out *outs,
 	return true;
 }
 
-bool v1_nat_traversal_add_initiator_natoa(pb_stream *outs, struct state *st)
+bool v1_nat_traversal_add_initiator_natoa(struct pbs_out *outs, struct state *st)
 {
 	ip_address ipinit = st->st_iface_endpoint->ip_dev->local_address;
 	ip_address ipresp = endpoint_address(st->st_remote_endpoint);
