@@ -1907,15 +1907,22 @@ static void DBG_print_nat(const field_desc *fp, uintmax_t nat)
  * explicit.
  */
 
-static void DBG_print_struct(const char *label, const void *struct_ptr,
-		      struct_desc *sd, bool len_meaningful)
+static void DBG_print_struct(const char *label, unsigned level,
+			     const void *struct_ptr,
+			     struct_desc *sd, bool len_meaningful)
 {
 	bool immediate = false;
 	const uint8_t *inp = struct_ptr;
 	field_desc *fp;
 	uintmax_t last_enum = 0;
 
-	DBG_log("%s%s:", label, sd->name);
+	char stars[40]; /* arbitrary limit on label+flock-of-* */
+	for (unsigned s = 0; s < level && s < elemsof(stars)-2; s++) {
+		stars[s+0] = '*';
+		stars[s+1] = '\0';
+	}
+
+	DBG_log("%s%s%s:", stars, label, sd->name);
 
 	for (fp = sd->fields; fp->field_type != ft_end; fp++) {
 		int i = fp->size;
@@ -2043,35 +2050,34 @@ static void DBG_print_struct(const char *label, const void *struct_ptr,
 	}
 }
 
-static void DBG_prefix_print_struct(const pb_stream *pbs,
-				    const char *label, const void *struct_ptr,
-				    struct_desc *sd, bool len_meaningful)
+static void DBG_prefix_print_pbs_out_struct(const struct pbs_out *pbs,
+					    const char *label, const void *struct_ptr,
+					    struct_desc *sd, bool len_meaningful)
 {
-	/* print out a title, with a prefix of asterisks to show
-	 * the nesting level.
+	/*
+	 * Print out a title, with a prefix of asterisks to show the
+	 * nesting level; minimum of one star.
 	 */
-	char space[40]; /* arbitrary limit on label+flock-of-* */
-	size_t len = strlen(label);
-
-	if (sizeof(space) <= len) {
-		DBG_print_struct(label, struct_ptr, sd, len_meaningful);
-	} else {
-		const pb_stream *p = pbs;
-		char *pre = &space[sizeof(space) - (len + 1)];
-
-		strcpy(pre, label);
-
-		/* put at least one * out */
-		for (;; ) {
-			if (pre <= space)
-				break;
-			*--pre = '*';
-			if (p == NULL)
-				break;
-			p = p->container;
-		}
-		DBG_print_struct(pre, struct_ptr, sd, len_meaningful);
+	unsigned level = 1;
+	for (const struct pbs_out *p = pbs; p != NULL; p = p->container) {
+		level++;
 	}
+	DBG_print_struct(label, level, struct_ptr, sd, len_meaningful);
+}
+
+static void DBG_prefix_print_pbs_in_struct(const struct pbs_in *pbs,
+					   const char *label, const void *struct_ptr,
+					   struct_desc *sd, bool len_meaningful)
+{
+	/*
+	 * Print out a title, with a prefix of asterisks to show the
+	 * nesting level; minimum of one star.
+	 */
+	unsigned level = 1;
+	for (const struct pbs_in *p = pbs; p != NULL; p = p->container) {
+		level++;
+	}
+	DBG_print_struct(label, level, struct_ptr, sd, len_meaningful);
 }
 
 /* "parse" a network struct into a host struct.
@@ -2285,9 +2291,9 @@ diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
 	}
 	ins->cur = roof;
 	if (DBGP(DBG_BASE)) {
-		DBG_prefix_print_struct(ins, "parse ",
-					dest_start, sd,
-					true);
+		DBG_prefix_print_pbs_in_struct(ins, "parse ",
+					       dest_start, sd,
+					       true);
 	}
 	return NULL;
 }
@@ -2634,7 +2640,7 @@ bool pbs_out_struct(struct pbs_out *outs, struct_desc *sd,
 	passert(struct_size == 0 || struct_size >= sd->size);
 
 	if (DBGP(DBG_BASE)) {
-		DBG_prefix_print_struct(outs, "emit ", struct_ptr, sd, obj_pbs == NULL);
+		DBG_prefix_print_pbs_out_struct(outs, "emit ", struct_ptr, sd, obj_pbs == NULL);
 	}
 
 	if (outs->roof - cur < (ptrdiff_t)sd->size) {
