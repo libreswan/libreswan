@@ -233,20 +233,12 @@ stf_status oakley_auth(struct msg_digest *md, bool initiator)
 
 	/*
 	 * Hash the ID Payload.
-	 * main_mode_hash requires idpl->cur to be at end of payload
-	 * so we temporarily set if so.
+	 *
+	 * main_mode_hash() expects the entire ID payload, i.e., up to
+	 * .raw.  Hence pbs_in_all.
 	 */
-	struct crypt_mac hash;
-	{
-		struct pbs_in *idpl = &md->chain[ISAKMP_NEXT_ID]->pbs;
-		uint8_t *old_cur = idpl->cur;
-
-		idpl->cur = idpl->roof;
-		/* authenticating other end, flip role! */
-		hash = main_mode_hash(st, initiator ? SA_RESPONDER : SA_INITIATOR,
-				      pbs_out_all(idpl));
-		idpl->cur = old_cur;
-	}
+	struct crypt_mac hash = main_mode_hash(st, initiator ? SA_RESPONDER : SA_INITIATOR,
+					       pbs_in_all(&md->chain[ISAKMP_NEXT_ID]->pbs));
 
 	switch (st->st_oakley.auth) {
 	case OAKLEY_PRESHARED_KEY:
