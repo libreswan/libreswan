@@ -1113,26 +1113,8 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 
 	/* note that we don't update the state here yet */
 
-	/*
-	 * XXX:
-	 *
-	 * Should this code use clone_in_pbs_as_chunk() which uses
-	 * (.roof-.start)?  The original code:
-	 *
-	 * 	clonetochunk(ike->sa.st_firstpacket_peer, md->message_pbs.start,
-	 *		     md->message_pbs(.cur-.start),
-	 *		     "saved first received packet");
-	 *
-	 * and clone_out_pbs_as_chunk() both use (.cur-.start).
-	 *
-	 * Suspect it doesn't matter as the code initializing
-	 * .message_pbs forces .roof==.cur - look for the comment
-	 * "trim padding (not actually legit)".
-	 */
-	/* record first packet for later checking of signature */
-	replace_chunk(&ike->sa.st_firstpacket_peer,
-		      pbs_out_all(&md->message_pbs),
-		      "saved first received packet in inI1outR1_continue_tail");
+	/* Record first packet for later checking of signature.  */
+	record_first_v2_packet(ike, md, HERE);
 
 	/* make sure HDR is at start of a clean buffer */
 
@@ -1553,9 +1535,9 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 			return STF_FATAL;
 		}
 	}
-	replace_chunk(&ike->sa.st_firstpacket_peer,
-		      pbs_out_all(&md->message_pbs),
-		      "saved first received packet in inR1outI2");
+
+	/* Record first packet for later checking of signature.  */
+	record_first_v2_packet(ike, md, HERE);
 
 	/*
 	 * Initiator: check v2N_NAT_DETECTION_DESTINATION_IP or/and

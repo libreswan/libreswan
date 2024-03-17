@@ -58,4 +58,6 @@ void ikev2_rekey_expire_predecessor(const struct child_sa *larval_sa, so_serial_
 void schedule_v2_replace_event(struct state *st);
 bool v2_state_is_expired(struct state *st, const char *verb);
 
+void record_first_v2_packet(struct ike_sa *ike, struct msg_digest *md, where_t where);
+
 #endif

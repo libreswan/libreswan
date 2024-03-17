@@ -167,26 +167,21 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 	struct connection *const pc = ike->sa.st_connection;	/* parent connection */
 
 	/*
-	 * XXX:
+	 * Record first packet for later checking of signature.
 	 *
-	 * Should this code use clone_in_pbs_as_chunk() which uses
-	 * (.roof-.start)?  The original code:
+	 * XXX: Is this redundant?
 	 *
-	 * 	clonetochunk(st->st_firstpacket_peer, md->message_pbs.start,
-	 *		     md->message_pbs(.cur-start),
-	 *		     "saved first received packet");
+	 * The first received non-intermediate packet is, presumably,
+	 * IKE_SA_INIT (which saved the packet)?
 	 *
-	 * and clone_out_pbs_as_chunk() both use (.cur-.start).
+	 * Or is it an earlier IKE_AUTH whe EAP?  But that isn't
+	 * first; and does it use this code path?
 	 *
-	 * Suspect it doesn't matter as the code initializing
-	 * .message_pbs forces .roof==.cur - look for the comment
-	 * "trim padding (not actually legit)".
+	 * Or is this just a hangover from when the code all lived in
+	 * one file?
 	 */
-	/* record first packet for later checking of signature */
 	if (md->hdr.isa_xchg != ISAKMP_v2_IKE_INTERMEDIATE) {
-		replace_chunk(&ike->sa.st_firstpacket_peer,
-			      pbs_out_all(&md->message_pbs),
-			      "saved first received non-intermediate packet");
+		record_first_v2_packet(ike, md, HERE);
 	}
 
 	/* beginning of data going out */
