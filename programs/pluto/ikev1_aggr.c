@@ -823,41 +823,57 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 {
 	struct connection *c = st->st_connection;
-	struct payload_digest id_pd;
+
+	/*
+	 * XXX: IDBUF must be same scope as id_pd.pbs
+	 *
+	 * ??? enough room for reconstructed peer ID payload?
+	 */
+	uint8_t peer_id_buf[1024];
+	struct payload_digest peer_id;
 
 	ikev1_natd_init(st, md);
 
-	/* Reconstruct the peer ID so the peer hash can be authenticated */
+	/*
+	 * Reconstruct the peer ID so the peer hash can be
+	 * authenticated.
+	 */
 	{
 		dbg("next payload chain: creating a fake payload for hashing identity");
 
-		struct pbs_out id_pbs;
-
-		shunk_t id_b;
-		struct isakmp_ipsec_id id_hd = build_v1_id_payload(&c->remote->host, &id_b);
-
-		uint8_t idbuf[1024];	/* ??? enough room for reconstructed peer ID payload? */
-		struct pbs_out pbs = open_pbs_out("identity payload", idbuf, sizeof(idbuf), st->logger);
-
+		shunk_t id_body;
+		struct isakmp_ipsec_id id_header = build_v1_id_payload(&c->remote->host, &id_body);
 		/* interop ID for SoftRemote & maybe others ? */
-		id_hd.isaiid_protoid = st->st_peeridentity_protocol;
-		id_hd.isaiid_port = htons(st->st_peeridentity_port);
+		id_header.isaiid_protoid = st->st_peeridentity_protocol;
+		id_header.isaiid_port = htons(st->st_peeridentity_port);
 
-		if (!out_struct(&id_hd, &isakmp_ipsec_identification_desc,
-				&pbs, &id_pbs) ||
-		    !out_hunk(id_b, &id_pbs, "my identity"))
+		struct pbs_out idout_pbs = open_pbs_out("identity payload",
+							peer_id_buf, sizeof(peer_id_buf),
+							st->logger);
+
+		struct pbs_out id_pbs;
+		if (!pbs_out_struct(&idout_pbs, &isakmp_ipsec_identification_desc,
+				    &id_header, sizeof(id_header), &id_pbs)) {
 			return STF_INTERNAL_ERROR;
+		}
+		if (!pbs_out_hunk(&id_pbs, id_body, "my identity")) {
+			return STF_INTERNAL_ERROR;
+		}
 
 		close_output_pbs(&id_pbs);
+		close_output_pbs(&idout_pbs);
 
-		/* rewind id_pbs and read what we wrote */
-		id_pbs.roof = pbs.cur;
-		id_pbs.cur = pbs.start;
-		diag_t d = pbs_in_struct(&id_pbs, &isakmp_identification_desc,
-					 &id_pd.payload, sizeof(id_pd.payload), &id_pd.pbs);
+		/*
+		 * Turn struct pbs_out idout_pbs into struct pbs_in
+		 * idin_pbs and then read it into ID_PD.
+		 */
+		struct pbs_in idin_pbs = pbs_in_from_shunk(pbs_out_all(&idout_pbs), "ID pbs");
+		diag_t d = pbs_in_struct(&idin_pbs, &isakmp_identification_desc,
+					 &peer_id.payload, sizeof(peer_id.payload),
+					 &peer_id.pbs);
 		if (d != NULL) {
 			llog_diag(RC_LOG, st->logger, &d, "%s", "");
-			return STF_FAIL_v1N + v1N_PAYLOAD_MALFORMED;
+			return STF_INTERNAL_ERROR;
 		}
 	}
 
@@ -868,7 +884,7 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 	 * - at least we undo the damage after calling oakley_auth().
 	 */
 	struct payload_digest *save_id = md->chain[ISAKMP_NEXT_ID];
-	md->chain[ISAKMP_NEXT_ID] = &id_pd;
+	md->chain[ISAKMP_NEXT_ID] = &peer_id;
 
 	/*
 	 * If the first message contained verified certs then
