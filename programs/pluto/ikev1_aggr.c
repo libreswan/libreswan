@@ -256,7 +256,7 @@ stf_status aggr_inI1_outR1(struct state *null_st UNUSED,
 	 */
 	/* SA body in */
 	{
-		pb_stream sabs = sa_pd->pbs;
+		struct pbs_in sabs = sa_pd->pbs;
 
 		RETURN_STF_FAIL_v1NURE(parse_isakmp_sa_body(&sabs,
 							    &sa_pd->payload.sa,

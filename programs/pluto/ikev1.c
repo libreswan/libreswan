@@ -918,7 +918,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 
 	/* If the Notification Payload is not null... */
 	if (n_pld != NULL) {
-		pb_stream *const n_pbs = &n_pld->pbs;
+		struct pbs_in *const n_pbs = &n_pld->pbs;
 		struct isakmp_notification *const n =
 			&n_pld->payload.notification;
 

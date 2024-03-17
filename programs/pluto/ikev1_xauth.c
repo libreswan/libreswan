@@ -1233,7 +1233,7 @@ static void log_bad_attr(const char *kind, enum_names *ed, unsigned val)
  */
 stf_status xauth_inR0(struct state *st, struct msg_digest *md)
 {
-	pb_stream *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
+	struct pbs_in *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
 
 	/*
 	 * There are many ways out of this routine
@@ -1421,7 +1421,7 @@ stf_status modecfg_inR0(struct state *st, struct msg_digest *md)
 				       &rbody, st->logger);
 
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute;
-	pb_stream *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
+	struct pbs_in *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
 	lset_t resp = LEMPTY;
 
 	dbg("arrived in modecfg_inR0");
@@ -1505,7 +1505,7 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 {
 	struct state *const st = md->v1_st;
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute;
-	pb_stream *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
+	struct pbs_in *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
 	uint16_t isama_id = ma->isama_identifier;
 	lset_t resp = LEMPTY;
 
@@ -1729,7 +1729,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 	struct connection *c = st->st_connection;
 
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute;
-	pb_stream *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
+	struct pbs_in *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
 	lset_t resp = LEMPTY;
 
 	dbg("modecfg_inR1: received mode cfg reply");
@@ -2196,7 +2196,7 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 				       &rbody, st->logger);
 
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute;
-	pb_stream *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
+	struct pbs_in *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
 	lset_t xauth_resp = LEMPTY;
 
 	int status = 0;
@@ -2444,7 +2444,7 @@ stf_status xauth_inI1(struct state *st, struct msg_digest *md)
 				       &rbody, st->logger);
 
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute;
-	pb_stream *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
+	struct pbs_in *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
 	bool got_status = false;
 	unsigned int status = XAUTH_STATUS_FAIL;
 	stf_status stat;

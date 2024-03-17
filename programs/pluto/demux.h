@@ -66,7 +66,7 @@ void process_iface_packet(int fd, void *ifp_arg, struct logger *logger);
  */
 
 struct payload_digest {
-	pb_stream pbs;
+	struct pbs_in pbs;
 	/* Use IKEv2 term: "... the payload type" */
 	unsigned payload_type;
 	union payload payload;
@@ -189,8 +189,8 @@ struct msg_digest {
 	 * at each other, their lifetime is the same as the
 	 * msg_digest.
 	 */
-	pb_stream packet_pbs;			/* whole packet */
-	pb_stream message_pbs;			/* message to be processed */
+	struct pbs_in packet_pbs;			/* whole packet */
+	struct pbs_in message_pbs;			/* message to be processed */
 
 #   define PAYLIMIT 30
 	struct payload_digest digest[PAYLIMIT];

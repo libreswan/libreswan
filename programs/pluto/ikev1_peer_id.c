@@ -238,7 +238,7 @@ stf_status oakley_auth(struct msg_digest *md, bool initiator)
 	 */
 	struct crypt_mac hash;
 	{
-		pb_stream *idpl = &md->chain[ISAKMP_NEXT_ID]->pbs;
+		struct pbs_in *idpl = &md->chain[ISAKMP_NEXT_ID]->pbs;
 		uint8_t *old_cur = idpl->cur;
 
 		idpl->cur = idpl->roof;
@@ -250,7 +250,7 @@ stf_status oakley_auth(struct msg_digest *md, bool initiator)
 	switch (st->st_oakley.auth) {
 	case OAKLEY_PRESHARED_KEY:
 	{
-		pb_stream *const hash_pbs = &md->chain[ISAKMP_NEXT_HASH]->pbs;
+		struct pbs_in *const hash_pbs = &md->chain[ISAKMP_NEXT_HASH]->pbs;
 
 		/*
 		 * XXX: looks a lot like the hack CHECK_QUICK_HASH(),

@@ -141,7 +141,7 @@ bool check_v1_HASH(enum v1_hash_type type, const char *what,
 		       what, type);
 		return false;
 	}
-	pb_stream *hash_pbs = &md->chain[ISAKMP_NEXT_HASH]->pbs;
+	struct pbs_in *hash_pbs = &md->chain[ISAKMP_NEXT_HASH]->pbs;
 	shunk_t received_hash = pbs_in_left(hash_pbs);
 	if (received_hash.len != st->st_oakley.ta_prf->prf_output_size) {
 		log_state(RC_LOG_SERIOUS, st,

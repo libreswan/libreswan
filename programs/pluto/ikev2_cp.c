@@ -617,7 +617,7 @@ bool process_v2CP_response_payload(struct ike_sa *ike UNUSED, struct child_sa *c
 {
 	struct ikev2_cp *cp =  &cp_pd->payload.v2cp;
 	struct connection *c = child->sa.st_connection;
-	pb_stream *attrs = &cp_pd->pbs;
+	struct pbs_in *attrs = &cp_pd->pbs;
 
 	pdbg(child->sa.logger, "parsing ISAKMP_NEXT_v2CP payload");
 

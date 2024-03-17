@@ -59,7 +59,7 @@ v1_notification_t accept_v1_nonce(struct logger *logger,
 				  struct msg_digest *md, chunk_t *dest,
 				  const char *name)
 {
-	pb_stream *nonce_pbs = &md->chain[ISAKMP_NEXT_NONCE]->pbs;
+	struct pbs_in *nonce_pbs = &md->chain[ISAKMP_NEXT_NONCE]->pbs;
 	size_t len = pbs_left(nonce_pbs);
 
 	if (len < IKEv1_MINIMUM_NONCE_SIZE || IKEv1_MAXIMUM_NONCE_SIZE < len) {
