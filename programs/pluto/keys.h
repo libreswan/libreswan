@@ -37,7 +37,6 @@ struct pubkey_content;
 struct pubkey;
 struct pubkey_type;
 struct crypt_mac;
-struct packet_byte_stream;
 struct secret_stuff;
 struct hash_desc;
 struct show;

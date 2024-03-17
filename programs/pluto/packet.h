@@ -107,10 +107,17 @@ struct fixup {
  * - pbs_out's underlying structure is read-write (chunk_t?)
  *
  * - half of packet_byte_stream is pbs_out specific
+ *
+ * XXX: pb_stream is being split into separate input and output
+ * structures.  They aren't really the same thing so sharing mechanics
+ * is confusing.
+ *
+ * For instance, PBS_OUT contains an embedded logger (so barfs can be
+ * logged) whipe PBS_IN propogates errors up the stack as DIAG_T.
  */
 
-struct packet_byte_stream {
-	struct packet_byte_stream *container;	/* PBS of which we are part */
+struct pbs_in {
+	struct pbs_in *container;		/* PBS of which we are part */
 	struct_desc *desc;
 	const char *name;			/* what does this PBS represent? */
 	uint8_t *start;				/* public: where this stream starts */
@@ -184,19 +191,80 @@ struct packet_byte_stream {
 	struct logger *outs_logger;
 };
 
-typedef struct packet_byte_stream pb_stream;
+struct pbs_out {
+	struct pbs_out *container;		/* PBS of which we are part */
+	struct_desc *desc;
+	const char *name;			/* what does this PBS represent? */
+	uint8_t *start;				/* public: where this stream starts */
+	uint8_t *cur;				/* public: current position (end) of stream */
+	uint8_t *roof;				/* byte after last in PBS (on output: just a limit) */
 
-/*
- * XXX: pb_stream is being split into separate input and output
- * structures.  They aren't really the same thing so sharing mechanics
- * is confusing.
- *
- * For instance, PBS_OUT contains an embedded logger (so barfs can be
- * logged) whipe PBS_IN propogates errors up the stack as DIAG_T.
- */
+	/* For an output PBS some things may need to be patched up. */
 
-#define pbs_in packet_byte_stream /* ins */
-#define pbs_out packet_byte_stream /* outs */
+	/*
+	 * For patching Length field in header.
+	 *
+	 * Filled in by close_output_pbs().
+	 * Note: it may not be aligned.
+	 */
+	uint8_t *lenfld;	/* start of variable length field */
+	field_desc *lenfld_desc;	/* includes length */
+
+	/*
+	 * For patching IKEv2's Next Payload field chain.
+	 *
+	 * IKEv2 has a "chain" of next payloads.  The chain starts
+	 * with the message's Next Payload field, and then threads its
+	 * way through every single payload header.  For SK, its Next
+	 * Payload field is for the first containing payload.
+	 *
+	 * IKEv1, provided payloads nested within an SK payload are
+	 * excluded (see below), is functionally equivalent and so can
+	 * also use this code.
+	 */
+	struct fixup next_payload_chain;
+
+	/*
+	 * For patching IKEv2's Last Substructure field.
+	 *
+	 * IKEv2 has nested substructures.  An SA Payload contains
+	 * Proposal Substructures, and a Proposal Substructure
+	 * contains Transform Substructures.
+	 *
+	 * When emitting a the substructure, the Last Substruc[ture]
+	 * field is set to either that substructure's type (non-last)
+	 * or zero (last).
+	 *
+	 * This is separate to the Next Payload field and the payload
+	 * "chain" - the SA payload is both linked into the payload
+	 * "chain" (.PT) and requires a specific sub-structure (.SST).
+	 *
+	 * Since IKEv1's SA, Proposal, and Transform payloads are
+	 * functionally equivalent it, too, uses this code (IKEv2
+	 * changed the names to avoid confusion).
+	 */
+	struct fixup last_substructure;
+
+	/*
+	 * Output packet byte Stream logger.
+	 *
+	 * Valid while the struct pbs_out is "open".
+	 *
+	 * NOT FOR INPUT.
+	 *
+	 * IKEv2 uses on-stack pbs_out which should ensure the
+	 * lifetime of the logger pointer is LE the lifetime of the
+	 * logger.
+	 *
+	 * IKEv1 uses the global reply_stream which is a sure way to
+	 * break any lifetime guarantees
+	 *
+	 * The input stream logger starts out with MD but then
+	 * switches to a state so more complicated; and its lifetime
+	 * is that of MD.
+	 */
+	struct logger *outs_logger;
+};
 
 extern const struct pbs_out empty_pbs_out;
 
