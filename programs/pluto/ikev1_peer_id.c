@@ -243,7 +243,8 @@ stf_status oakley_auth(struct msg_digest *md, bool initiator)
 
 		idpl->cur = idpl->roof;
 		/* authenticating other end, flip role! */
-		hash = main_mode_hash(st, initiator ? SA_RESPONDER : SA_INITIATOR, idpl);
+		hash = main_mode_hash(st, initiator ? SA_RESPONDER : SA_INITIATOR,
+				      pbs_out_all(idpl));
 		idpl->cur = old_cur;
 	}
 

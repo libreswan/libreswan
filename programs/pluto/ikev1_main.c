@@ -240,7 +240,7 @@ struct ike_sa *main_outI1(struct connection *c,
 
 static void main_mode_hash_body(struct state *st,
 				enum sa_role role,
-				const pb_stream *idpl, /* ID payload, as PBS */
+				shunk_t id_payload, /* ID payload, including header */
 				struct crypt_prf *ctx)
 {
 	switch (role) {
@@ -278,7 +278,6 @@ static void main_mode_hash_body(struct state *st,
 	 * we use the bytes as they appear on the wire to avoid
 	 * "spelling problems".
 	 */
-	shunk_t id_payload = pbs_out_all(idpl);
 	shunk_t id_body = hunk_slice(id_payload,
 				     sizeof(struct isakmp_generic),
 				     id_payload.len);
@@ -287,13 +286,13 @@ static void main_mode_hash_body(struct state *st,
 
 struct crypt_mac main_mode_hash(struct state *st,
 				enum sa_role role,
-				const pb_stream *idpl) /* ID payload, as PBS; cur must be at end */
+				shunk_t id_payload) /* ID payload, including header */
 {
 	struct crypt_prf *ctx = crypt_prf_init_symkey("main mode",
 						      st->st_oakley.ta_prf,
 						      "skeyid", st->st_skeyid_nss,
 						      st->logger);
-	main_mode_hash_body(st, role, idpl, ctx);
+	main_mode_hash_body(st, role, id_payload, ctx);
 	return crypt_prf_final_mac(&ctx, NULL);
 }
 
@@ -1145,7 +1144,8 @@ static stf_status main_inR2_outI3_continue(struct state *st,
 
 	/* HASH_I or SIG_I out */
 	{
-		struct crypt_mac hash = main_mode_hash(st, SA_INITIATOR, &id_pbs);
+		struct crypt_mac hash = main_mode_hash(st, SA_INITIATOR,
+						       pbs_out_all(&id_pbs));
 
 		if (auth_payload == ISAKMP_NEXT_HASH) {
 			/* HASH_I out */
@@ -1361,7 +1361,8 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 
 	/* HASH_R or SIG_R out */
 	{
-		struct crypt_mac hash = main_mode_hash(st, SA_RESPONDER, &r_id_pbs);
+		struct crypt_mac hash = main_mode_hash(st, SA_RESPONDER,
+						       pbs_out_all(&r_id_pbs));
 
 		if (auth_payload == ISAKMP_NEXT_HASH) {
 			/* HASH_R out */

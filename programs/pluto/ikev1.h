@@ -53,7 +53,7 @@ struct hash_signature v1_sign_hash_RSA(const struct connection *c,
 				       struct logger *logger);
 
 struct crypt_mac main_mode_hash(struct state *st, enum sa_role role,
-				const pb_stream *idpl);  /* ID payload, as PBS; cur must be at end */
+				shunk_t id_payload);  /* ID payload, including header */
 
 void doi_log_cert_thinking(uint16_t auth,
 			   enum ike_cert_type certtype,
