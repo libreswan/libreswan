@@ -52,7 +52,7 @@ bool create_ppk_id_payload(chunk_t *ppk_id, struct ppk_id_payload *payl)
  * used by initiator to make chunk_t from ppk_id payload
  * for sending it in PPK_ID Notify Payload over the wire
  */
-bool emit_unified_ppk_id(struct ppk_id_payload *payl, pb_stream *outs)
+bool emit_unified_ppk_id(struct ppk_id_payload *payl, struct pbs_out *outs)
 {
 	uint8_t type = PPK_ID_FIXED;
 	if (!pbs_out_thing(outs, type, "PPK_ID_FIXED")) {
@@ -123,7 +123,7 @@ bool extract_v2N_ppk_identity(const struct pbs_in *notify_pbs,
 
 static bool ikev2_calculate_hash(struct ike_sa *ike,
 				 const struct crypt_mac *idhash,
-				 pb_stream *a_pbs,
+				 struct pbs_out *a_pbs,
 				 chunk_t *no_ppk_auth, /* optional output */
 				 const struct hash_desc *hash_algo,
 				 const struct pubkey_signer *signer)

@@ -196,7 +196,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 	/* send out the IDi payload */
 
 	{
-		pb_stream i_id_pbs;
+		struct pbs_out i_id_pbs;
 		if (!out_struct(&ike->sa.st_v2_id_payload.header,
 				&ikev2_id_i_desc,
 				request.pbs,
@@ -238,7 +238,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 			struct ikev2_id r_id =
 				build_v2_id_payload(&pc->remote->host, &id_b,
 						    "their IDr", ike->sa.logger);
-			pb_stream r_id_pbs;
+			struct pbs_out r_id_pbs;
 			if (!out_struct(&r_id, &ikev2_id_r_desc, request.pbs,
 				&r_id_pbs) ||
 			    !out_hunk(id_b, &r_id_pbs, "their IDr"))
@@ -669,13 +669,16 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 		 * (meaning that initiator did use PPK) so we try to verify NO_PPK_AUTH.
 		 */
 		dbg("going to try to verify NO_PPK_AUTH.");
-		/* making a dummy pb_stream so we could pass it to v2_check_auth */
+		/*
+		 * Making a dummy struct pbs_in so we could pass it to
+		 * v2_check_auth.
+		 */
 		struct pbs_in pbs = md->chain[ISAKMP_NEXT_v2AUTH]->pbs;
 		size_t len = pbs_left(&pbs);
 		pexpect(len == ike->sa.st_no_ppk_auth.len);
 		struct pbs_in pbs_no_ppk_auth =
 			pbs_in_from_shunk(HUNK_AS_SHUNK(ike->sa.st_no_ppk_auth),
-					  "pb_stream for verifying NO_PPK_AUTH");
+					  "struct pbs_in for verifying NO_PPK_AUTH");
 		diag_t d = verify_v2AUTH_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
 						 ike, &idhash_in, &pbs_no_ppk_auth, remote_auth);
 		if (d != NULL) {
@@ -696,7 +699,10 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 		 * that payload, else verify AUTH normally.
 		 */
 
-		/* making a dummy pb_stream so we could pass it to v2_check_auth */
+		/*
+		 * Making a dummy struct pbs_in so we could pass it to
+		 * v2_check_auth()
+		 */
 		struct pbs_in pbs_null_auth = md->pd[PD_v2N_NULL_AUTH]->pbs;
 		diag_t d = verify_v2AUTH_and_log(IKEv2_AUTH_NULL, ike, &idhash_in,
 						 &pbs_null_auth, AUTH_NULL);
@@ -915,7 +921,7 @@ static stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike
 
 	/* send out the IDr payload */
 	{
-		pb_stream r_id_pbs;
+		struct pbs_out r_id_pbs;
 		if (!out_struct(&ike->sa.st_v2_id_payload.header,
 				&ikev2_id_r_desc, response.pbs, &r_id_pbs) ||
 		    !out_hunk(ike->sa.st_v2_id_payload.data,

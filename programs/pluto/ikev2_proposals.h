@@ -45,7 +45,7 @@ void llog_v2_proposals(lset_t rc_flags, struct logger *logger,
  */
 
 v2_notification_t process_v2SA_payload(const char *what,
-				       pb_stream *sa_payload,
+				       struct pbs_in *sa_payload,
 				       bool expect_ike,
 				       bool expect_spi,
 				       bool expect_accepted,
@@ -58,7 +58,7 @@ bool emit_v2SA_proposals(struct pbs_out *pbs,
 			 const struct ikev2_proposals *proposals,
 			 const shunk_t local_spi);
 
-bool emit_v2SA_proposal(pb_stream *pbs,
+bool emit_v2SA_proposal(struct pbs_out *pbs,
 			const struct ikev2_proposal *proposal,
 			shunk_t local_spi);
 

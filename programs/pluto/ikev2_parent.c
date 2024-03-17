@@ -294,14 +294,14 @@ bool id_ipseckey_allowed(struct ike_sa *ike, enum ikev2_auth_method atype)
  * used by IKEv2: parent, child (PFS)
  */
 bool emit_v2KE(chunk_t g, const struct dh_desc *group,
-	       pb_stream *outs)
+	       struct pbs_out *outs)
 {
 	if (impair.ke_payload == IMPAIR_EMIT_OMIT) {
 		llog(RC_LOG, outs->outs_logger, "IMPAIR: omitting KE payload");
 		return true;
 	}
 
-	pb_stream kepbs;
+	struct pbs_out kepbs;
 
 	struct ikev2_ke v2ke = {
 		.isak_group = group->common.id[IKEv2_ALG_ID],

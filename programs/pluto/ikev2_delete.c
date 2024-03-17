@@ -47,7 +47,7 @@ bool record_v2_delete(struct ike_sa *ike, struct state *st)
 	}
 
 	{
-		pb_stream del_pbs;
+		struct pbs_out del_pbs;
 		struct ikev2_delete v2del_tmp;
 		if (IS_CHILD_SA(st)) {
 			v2del_tmp = (struct ikev2_delete) {

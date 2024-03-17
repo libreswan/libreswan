@@ -214,7 +214,7 @@ static bool start_eap(struct ike_sa *ike, struct pbs_out *pbs)
 {
 	struct logger *logger = ike->sa.logger;
 	struct eap_state *eap;
-	pb_stream pb_eap;
+	struct pbs_out pb_eap;
 
 	eap = alloc_eap_state(logger);
 	ike->sa.st_eap = eap;
@@ -503,7 +503,7 @@ static stf_status process_v2_IKE_AUTH_request_EAP_start_signature_continue(struc
 
 	/* send out the IDr payload */
 	{
-		pb_stream r_id_pbs;
+		struct pbs_out r_id_pbs;
 		if (!out_struct(&ike->sa.st_v2_id_payload.header,
 				&ikev2_id_r_desc, response.pbs, &r_id_pbs) ||
 		    !out_hunk(ike->sa.st_v2_id_payload.data,

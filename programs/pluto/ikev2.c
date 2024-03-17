@@ -1127,7 +1127,7 @@ void init_ikev2(void)
  */
 struct payload_summary ikev2_decode_payloads(struct logger *log,
 					     struct msg_digest *md,
-					     pb_stream *in_pbs,
+					     struct pbs_in *in_pbs,
 					     enum next_payload_types_ikev2 np)
 {
 	struct payload_summary summary = {
@@ -1496,8 +1496,8 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 			}
 			pexpect(md->chain[ISAKMP_NEXT_v2SKF] == NULL); /* not yet parsed */
 			struct ikev2_skf skf;
-			pb_stream in_pbs = md->message_pbs; /* copy */
-			pb_stream ignored;
+			struct pbs_in in_pbs = md->message_pbs; /* copy */
+			struct pbs_in ignored;
 			diag_t d = pbs_in_struct(&in_pbs, &ikev2_skf_desc,
 						 &skf, sizeof(skf), &ignored);
 			if (d != NULL) {

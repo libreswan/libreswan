@@ -167,7 +167,7 @@ static bool emit_v2CP_attribute(struct pbs_out *outpbs,
 		.len = attrib.len,
 	};
 
-	pb_stream a_pbs;
+	struct pbs_out a_pbs;
 	if (!pbs_out_struct(outpbs, &ikev2_cp_attribute_desc,
 			    &attr, sizeof(attr), &a_pbs)) {
 		/* already logged */
@@ -192,7 +192,7 @@ static bool emit_v2CP_attribute(struct pbs_out *outpbs,
 bool emit_v2CP_response(const struct child_sa *child, struct pbs_out *outpbs)
 {
 	struct connection *c = child->sa.st_connection;
-	pb_stream cp_pbs;
+	struct pbs_out cp_pbs;
 	struct ikev2_cp cp = {
 		.isacp_critical = ISAKMP_PAYLOAD_NONCRITICAL,
 		.isacp_type = IKEv2_CP_CFG_REPLY,
@@ -657,7 +657,7 @@ bool process_v2CP_response_payload(struct ike_sa *ike UNUSED, struct child_sa *c
 
 	while (pbs_left(attrs) > 0) {
 		struct ikev2_cp_attribute cp_a;
-		pb_stream cp_a_pbs;
+		struct pbs_in cp_a_pbs;
 
 		diag_t d = pbs_in_struct(attrs, &ikev2_cp_attribute_desc,
 					 &cp_a, sizeof(cp_a), &cp_a_pbs);

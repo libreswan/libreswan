@@ -42,7 +42,7 @@
 /*
  * Add NAT-Traversal IKEv2 Notify payload (v2N)
  */
-bool ikev2_out_nat_v2n(pb_stream *outs, struct state *st,
+bool ikev2_out_nat_v2n(struct pbs_out *outs, struct state *st,
 		       const ike_spi_t *ike_responder_spi)
 {
 	/*
@@ -71,7 +71,7 @@ bool ikev2_out_nat_v2n(pb_stream *outs, struct state *st,
 bool ikev2_out_natd(const ip_endpoint *local_endpoint,
 		    const ip_endpoint *remote_endpoint,
 		    const ike_spis_t *ike_spis,
-		    pb_stream *outs)
+		    struct pbs_out *outs)
 {
 	struct crypt_mac hb;
 

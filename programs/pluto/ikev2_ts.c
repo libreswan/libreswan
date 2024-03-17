@@ -305,7 +305,7 @@ static bool emit_v2TS_selector(struct pbs_out *ts_pbs, ip_selector selector)
 		.isath_ipprotoid = selector.ipproto,
 	};
 
-	pb_stream ts_range_pbs;
+	struct pbs_out ts_range_pbs;
 	if (!pbs_out_struct(ts_pbs, &ikev2_ts_header_desc,
 			    &ts_range_header, sizeof(ts_range_header),
 			    &ts_range_pbs)) {

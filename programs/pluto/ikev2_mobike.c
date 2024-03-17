@@ -364,7 +364,7 @@ bool add_mobike_response_payloads(shunk_t cookie2, struct msg_digest *md,
 }
 
 static payload_emitter_fn add_mobike_payloads; /* type check */
-static bool add_mobike_payloads(struct state *st, pb_stream *pbs)
+static bool add_mobike_payloads(struct state *st, struct pbs_out *pbs)
 {
 	ip_endpoint local_endpoint = st->st_v2_mobike.local_endpoint;
 	ip_endpoint remote_endpoint = st->st_remote_endpoint;

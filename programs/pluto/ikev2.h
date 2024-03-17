@@ -111,7 +111,7 @@ void event_v2_rekey(struct state *st, bool detach_whack);
 
 struct payload_summary ikev2_decode_payloads(struct logger *log,
 					     struct msg_digest *md,
-					     pb_stream *in_pbs,
+					     struct pbs_in *in_pbs,
 					     enum next_payload_types_ikev2 np);
 
 void v2_dispatch(struct ike_sa *ike, struct msg_digest *md,

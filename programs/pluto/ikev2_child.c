@@ -490,7 +490,7 @@ bool emit_v2_child_response_payloads(struct ike_sa *ike,
 		struct ikev2_generic in = {
 			.isag_critical = build_ikev2_critical(false, ike->sa.logger),
 		};
-		pb_stream pb_nr;
+		struct pbs_out pb_nr;
 
 		if (!pbs_out_struct(outpbs, &ikev2_nonce_desc, &in, sizeof(in), &pb_nr)) {
 			/* already logged */

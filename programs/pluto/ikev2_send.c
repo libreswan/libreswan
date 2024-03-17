@@ -251,7 +251,7 @@ bool emit_v2N_bytes(v2_notification_t ntype,
 
 /* output a v2 simple Notification payload */
 bool emit_v2N(v2_notification_t ntype,
-	       pb_stream *outs)
+	       struct pbs_out *outs)
 {
 	return emit_v2N_bytes(ntype, NULL, 0, outs);
 }
@@ -328,7 +328,7 @@ static bool emit_v2N_spi_response(struct v2_message *response,
 		break;
 	}
 
-	pb_stream n_pbs;
+	struct pbs_out n_pbs;
 	if (!open_v2N_SA_output_pbs(response->pbs, ntype, protoid, spi, &n_pbs)) {
 		return false;
 	}

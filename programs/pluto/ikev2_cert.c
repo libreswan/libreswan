@@ -61,7 +61,7 @@ stf_status emit_v2CERT(const struct connection *c, struct pbs_out *outpbs)
 			.isac_critical = build_ikev2_critical(false, outpbs->outs_logger),
 			.isac_enc = CERT_PKCS7_WRAPPED_X509,
 		};
-		pb_stream cert_pbs;
+		struct pbs_out cert_pbs;
 		if (!out_struct(&pkcs7_hdr, &ikev2_certificate_desc,
 				outpbs, &cert_pbs) ||
 		    !out_hunk(same_secitem_as_chunk(*pkcs7), &cert_pbs, "PKCS7")) {
@@ -94,7 +94,7 @@ stf_status emit_v2CERT(const struct connection *c, struct pbs_out *outpbs)
 
 	/*   send own (Initiator CERT) */
 	{
-		pb_stream cert_pbs;
+		struct pbs_out cert_pbs;
 
 		dbg("sending [CERT] of certificate: %s", cert_nickname(mycert));
 
@@ -111,7 +111,7 @@ stf_status emit_v2CERT(const struct connection *c, struct pbs_out *outpbs)
 	/* send optional chain CERTs */
 	{
 		for (int i = 0; i < chain_len ; i++) {
-			pb_stream cert_pbs;
+			struct pbs_out cert_pbs;
 
 			dbg("sending an authcert");
 

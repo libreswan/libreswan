@@ -413,7 +413,7 @@ void llog_v2_proposals(lset_t rc_flags, struct logger *logger,
  * is accumulated in REMOTE_JAM_BUF.
  */
 
-static int process_transforms(pb_stream *prop_pbs, struct jambuf *remote_jam_buf,
+static int process_transforms(struct pbs_in *prop_pbs, struct jambuf *remote_jam_buf,
 			      unsigned remote_propnum, int num_remote_transforms,
 			      enum ikev2_sec_proto_id remote_protoid,
 			      const struct ikev2_proposals *local_proposals,
@@ -490,7 +490,7 @@ static int process_transforms(pb_stream *prop_pbs, struct jambuf *remote_jam_buf
 
 		/* first the transform */
 		struct ikev2_trans remote_trans;
-		pb_stream trans_pbs;
+		struct pbs_in trans_pbs;
 		diag_t d = pbs_in_struct(prop_pbs, &ikev2_trans_desc,
 					 &remote_trans, sizeof(remote_trans),
 					 &trans_pbs);
@@ -518,7 +518,7 @@ static int process_transforms(pb_stream *prop_pbs, struct jambuf *remote_jam_buf
 
 		/* followed by attributes */
 		while (pbs_left(&trans_pbs) != 0) {
-			pb_stream attr_pbs;
+			struct pbs_in attr_pbs;
 			struct ikev2_trans_attr attr;
 			diag_t d = pbs_in_struct(&trans_pbs, &ikev2_trans_attr_desc,
 						 &attr, sizeof(attr), &attr_pbs);
@@ -808,7 +808,7 @@ static size_t proto_spi_size(enum ikev2_sec_proto_id protoid)
  *    [1..LOCAL_PROPOSALS->ROOF): best match so far
  */
 
-static int ikev2_process_proposals(pb_stream *sa_payload,
+static int ikev2_process_proposals(struct pbs_in *sa_payload,
 				   bool expect_ike,
 				   bool expect_spi,
 				   bool expect_accepted,
@@ -915,7 +915,7 @@ static int ikev2_process_proposals(pb_stream *sa_payload,
 
 	do {
 		/* Read the next proposal */
-		pb_stream proposal_pbs;
+		struct pbs_in proposal_pbs;
 		diag_t d = pbs_in_struct(sa_payload, &ikev2_prop_desc,
 					 &remote_proposal, sizeof(remote_proposal),
 					 &proposal_pbs);
@@ -1136,7 +1136,7 @@ static int ikev2_process_proposals(pb_stream *sa_payload,
  * juggling is avoided.
  */
 v2_notification_t process_v2SA_payload(const char *what,
-				       pb_stream *sa_payload,
+				       struct pbs_in *sa_payload,
 				       bool expect_ike,
 				       bool expect_spi,
 				       bool expect_accepted,
@@ -1348,7 +1348,7 @@ static bool emit_transform(struct pbs_out *proposal_pbs,
  * passing the correct value/size in for the SPI.
  */
 
-static int walk_transforms(pb_stream *proposal_pbs, int nr_trans,
+static int walk_transforms(struct pbs_out *proposal_pbs, int nr_trans,
 			   const struct ikev2_proposal *proposal,
 			   unsigned propnum,
 			   bool allow_single_transform_none,
@@ -1530,7 +1530,7 @@ static bool emit_proposal(struct pbs_out *sa_pbs,
 		.isap_numtrans = numtrans,
 	};
 
-	pb_stream proposal_pbs;
+	struct pbs_out proposal_pbs;
 	if (!out_struct(&prop, &ikev2_prop_desc, sa_pbs, &proposal_pbs)) {
 		return false;
 	}
@@ -1562,7 +1562,7 @@ bool emit_v2SA_proposals(struct pbs_out *pbs,
 	struct ikev2_sa sa = {
 		.isasa_critical = build_ikev2_critical(false, pbs->outs_logger),
 	};
-	pb_stream sa_pbs;
+	struct pbs_out sa_pbs;
 	if (!out_struct(&sa, &ikev2_sa_desc, pbs, &sa_pbs))
 		return false;
 
@@ -1586,7 +1586,7 @@ bool emit_v2SA_proposals(struct pbs_out *pbs,
 	return true;
 }
 
-bool emit_v2SA_proposal(pb_stream *pbs,
+bool emit_v2SA_proposal(struct pbs_out *pbs,
 			const struct ikev2_proposal *proposal,
 			shunk_t local_spi)
 {
@@ -1597,7 +1597,7 @@ bool emit_v2SA_proposal(pb_stream *pbs,
 	struct ikev2_sa sa = {
 		.isasa_critical = ISAKMP_PAYLOAD_NONCRITICAL,
 	};
-	pb_stream sa_pbs;
+	struct pbs_out sa_pbs;
 	if (!out_struct(&sa, &ikev2_sa_desc, pbs, &sa_pbs)) {
 		return false;
 	}

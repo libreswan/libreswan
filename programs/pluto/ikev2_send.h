@@ -112,7 +112,7 @@ void send_v2N_response_from_md(struct msg_digest *md,
 			       v2_notification_t type,
 			       const shunk_t *data);
 
-typedef bool payload_emitter_fn(struct state *st, pb_stream *pbs);
+typedef bool payload_emitter_fn(struct state *st, struct pbs_out *pbs);
 
 extern stf_status record_v2_informational_request(const char *name,
 						  struct ike_sa *owner,

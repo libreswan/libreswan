@@ -52,7 +52,7 @@ extern bool redirect_global(struct msg_digest *md);
  */
 extern bool emit_redirected_from_notification(
 		const ip_address *ip_addr,
-		pb_stream *pbs);
+		struct pbs_out *pbs);
 
 /*
  * Emit IKEv2 Notify REDIRECT payload.
@@ -62,7 +62,7 @@ extern bool emit_redirected_from_notification(
  */
 extern bool emit_redirect_notification(
 		const shunk_t destination,
-		pb_stream *pbs);
+		struct pbs_out *pbs);
 
 bool redirect_ike_auth(struct ike_sa *ike, struct msg_digest *md, stf_status *status);
 

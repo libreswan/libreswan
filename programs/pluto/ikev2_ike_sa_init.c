@@ -864,7 +864,7 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 
 	/* send NONCE */
 	{
-		pb_stream pb;
+		struct pbs_out pb;
 		struct ikev2_generic in = {
 			.isag_critical = build_ikev2_critical(false, ike->sa.logger),
 		};
@@ -1204,7 +1204,7 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	/* send NONCE */
 	unpack_nonce(&ike->sa.st_nr, nonce);
 	{
-		pb_stream pb;
+		struct pbs_out pb;
 		struct ikev2_generic in = {
 			.isag_critical = build_ikev2_critical(false, ike->sa.logger),
 		};
