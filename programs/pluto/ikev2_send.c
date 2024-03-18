@@ -111,14 +111,14 @@ bool emit_v2UNKNOWN(const char *victim,
 		return true;
 	}
 
-	llog(RC_LOG, outs->outs_logger,
+	llog(RC_LOG, outs->logger,
 	     "IMPAIR: adding an unknown%s payload of type %d to %s %s message",
 	     impair.unknown_v2_payload_critical ? " critical" : "",
 	     ikev2_unknown_payload_desc.pt,
 	     victim,
 	     enum_name_short(&ikev2_exchange_names, exchange_type));
 	struct ikev2_generic gen = {
-		.isag_critical = build_ikev2_critical(impair.unknown_v2_payload_critical, outs->outs_logger),
+		.isag_critical = build_ikev2_critical(impair.unknown_v2_payload_critical, outs->logger),
 	};
 	struct pbs_out pbs;
 	if (!pbs_out_struct(outs, &ikev2_unknown_payload_desc, &gen, sizeof(gen), &pbs)) {
@@ -160,12 +160,12 @@ bool open_v2N_SA_output_pbs(struct pbs_out *outs,
 			    struct pbs_out *sub_payload)
 {
 	struct pbs_out tmp;
-	if (PBAD(outs->outs_logger, sub_payload == NULL)) {
+	if (PBAD(outs->logger, sub_payload == NULL)) {
 		sub_payload = &tmp;
 	}
 
 	/* See RFC 5996 section 3.10 "Notify Payload" */
-	if (!PEXPECT(outs->outs_logger, (impair.emitting ||
+	if (!PEXPECT(outs->logger, (impair.emitting ||
 					 protocol_id == PROTO_v2_RESERVED ||
 					 protocol_id == PROTO_v2_AH ||
 					 protocol_id == PROTO_v2_ESP))) {
@@ -179,20 +179,20 @@ bool open_v2N_SA_output_pbs(struct pbs_out *outs,
 	case v2N_REKEY_SA:
 	case v2N_CHILD_SA_NOT_FOUND:
 		if (protocol_id == PROTO_v2_RESERVED || spi_size == 0) {
-			ldbg(outs->outs_logger, "XXX: type requires SA; missing");
+			ldbg(outs->logger, "XXX: type requires SA; missing");
 		}
 		break;
 	default:
 		if (protocol_id != PROTO_v2_RESERVED || spi_size > 0) {
-			ldbg(outs->outs_logger, "XXX: type forbids SA but SA present");
+			ldbg(outs->logger, "XXX: type forbids SA but SA present");
 		}
 		break;
 	}
 
-	ldbg(outs->outs_logger, "adding a v2N Payload");
+	ldbg(outs->logger, "adding a v2N Payload");
 
 	struct ikev2_notify n = {
-		.isan_critical = build_ikev2_critical(false, outs->outs_logger),
+		.isan_critical = build_ikev2_critical(false, outs->logger),
 		.isan_protoid = protocol_id,
 		.isan_spisize = spi_size,
 		.isan_type = ntype,
@@ -229,7 +229,7 @@ bool emit_v2N_bytes(v2_notification_t ntype,
 	if (impair.omit_v2_notification.enabled &&
 	    impair.omit_v2_notification.value == ntype) {
 		enum_buf eb;
-		llog(RC_LOG, outs->outs_logger,
+		llog(RC_LOG, outs->logger,
 		     "IMPAIR: omitting %s notification",
 		     str_enum_short(&v2_notification_names, ntype, &eb));
 		return true;

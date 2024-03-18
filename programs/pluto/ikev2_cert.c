@@ -51,14 +51,14 @@ stf_status emit_v2CERT(const struct connection *c, struct pbs_out *outpbs)
 	bool send_full_chain = send_authcerts && c->config->send_ca == CA_SEND_ALL;
 
 	if (impair.send_pkcs7_thingie) {
-		llog(RC_LOG, outpbs->outs_logger, "IMPAIR: sending cert as PKCS7 blob");
+		llog(RC_LOG, outpbs->logger, "IMPAIR: sending cert as PKCS7 blob");
 		passert(mycert != NULL);
 		SECItem *pkcs7 = nss_pkcs7_blob(mycert, send_full_chain);
 		if (!pexpect(pkcs7 != NULL)) {
 			return STF_INTERNAL_ERROR;
 		}
 		struct ikev2_cert pkcs7_hdr = {
-			.isac_critical = build_ikev2_critical(false, outpbs->outs_logger),
+			.isac_critical = build_ikev2_critical(false, outpbs->logger),
 			.isac_enc = CERT_PKCS7_WRAPPED_X509,
 		};
 		struct pbs_out cert_pbs;
@@ -88,7 +88,7 @@ stf_status emit_v2CERT(const struct connection *c, struct pbs_out *outpbs)
 	}
 
 	const struct ikev2_cert certhdr = {
-		.isac_critical = build_ikev2_critical(false, outpbs->outs_logger),
+		.isac_critical = build_ikev2_critical(false, outpbs->logger),
 		.isac_enc = cert_ike_type(mycert),
 	};
 

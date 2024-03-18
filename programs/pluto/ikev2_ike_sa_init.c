@@ -781,7 +781,7 @@ static bool emit_v2N_SIGNATURE_HASH_ALGORITHMS(lset_t sighash_policy,
 	if (impair.omit_v2_notification.enabled &&
 	    impair.omit_v2_notification.value == ntype) {
 		enum_buf eb;
-		llog(RC_LOG, outs->outs_logger,
+		llog(RC_LOG, outs->logger,
 		     "IMPAIR: omitting %s notification",
 		     str_enum_short(&v2_notification_names, ntype, &eb));
 		return true;
@@ -790,7 +790,7 @@ static bool emit_v2N_SIGNATURE_HASH_ALGORITHMS(lset_t sighash_policy,
 	struct pbs_out n_pbs;
 
 	if (!open_v2N_output_pbs(outs, ntype, &n_pbs)) {
-		llog(RC_LOG, outs->outs_logger, "error initializing notify payload for notify message");
+		llog(RC_LOG, outs->logger, "error initializing notify payload for notify message");
 		return false;
 	}
 

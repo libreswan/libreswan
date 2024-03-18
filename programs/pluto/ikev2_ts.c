@@ -401,7 +401,7 @@ static bool emit_v2TS_payload(struct pbs_out *outpbs,
 
 	if (impaired_len->enabled) {
 		unsigned new_nr = impaired_len->value;
-		llog(RC_LOG, outpbs->outs_logger,
+		llog(RC_LOG, outpbs->logger,
 		     "IMPAIR: forcing number of %s selectors from %u to %u",
 		     name, nr_ts, new_nr);
 		nr_ts = new_nr;

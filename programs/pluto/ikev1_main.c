@@ -392,7 +392,7 @@ bool ikev1_close_and_encrypt_message(struct pbs_out *pbs, struct state *st)
 
 	close_output_pbs(pbs);
 
-	/* XXX: not ldbg(pbs->outs_logger) as can be NULL */
+	/* XXX: not ldbg(pbs->logger) as can be NULL */
 	dbg("encrypt unpadded %zu padding %zu padded %zu bytes",
 	    unpadded_encrypt.len, encrypt_padding, padded_encrypt.len);
 	if (DBGP(DBG_CRYPT)) {

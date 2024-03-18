@@ -169,26 +169,6 @@ struct pbs_in {
 	 * changed the names to avoid confusion).
 	 */
 	struct fixup last_substructure;
-
-	/*
-	 * Output packet byte Stream logger.
-	 *
-	 * Valid while the struct pbs_out is "open".
-	 *
-	 * NOT FOR INPUT.
-	 *
-	 * IKEv2 uses on-stack pbs_out which should ensure the
-	 * lifetime of the logger pointer is LE the lifetime of the
-	 * logger.
-	 *
-	 * IKEv1 uses the global reply_stream which is a sure way to
-	 * break any lifetime guarantees
-	 *
-	 * The input stream logger starts out with MD but then
-	 * switches to a state so more complicated; and its lifetime
-	 * is that of MD.
-	 */
-	struct logger *outs_logger;
 };
 
 struct pbs_out {
@@ -250,8 +230,6 @@ struct pbs_out {
 	 *
 	 * Valid while the struct pbs_out is "open".
 	 *
-	 * NOT FOR INPUT.
-	 *
 	 * IKEv2 uses on-stack pbs_out which should ensure the
 	 * lifetime of the logger pointer is LE the lifetime of the
 	 * logger.
@@ -263,7 +241,7 @@ struct pbs_out {
 	 * switches to a state so more complicated; and its lifetime
 	 * is that of MD.
 	 */
-	struct logger *outs_logger;
+	struct logger *logger;
 };
 
 extern const struct pbs_out empty_pbs_out;

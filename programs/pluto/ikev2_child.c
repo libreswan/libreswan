@@ -127,13 +127,13 @@ static bool compute_v2_child_spi(struct child_sa *larval_child)
 
 static bool emit_v2N_IPCOMP_SUPPORTED(const struct child_sa *child, struct pbs_out *outs)
 {
-	ldbg(outs->outs_logger, "initiator child policy is compress=yes, sending v2N_IPCOMP_SUPPORTED for DEFLATE");
+	ldbg(outs->logger, "initiator child policy is compress=yes, sending v2N_IPCOMP_SUPPORTED for DEFLATE");
 
 	v2_notification_t ntype = v2N_IPCOMP_SUPPORTED;
 	if (impair.omit_v2_notification.enabled &&
 	    impair.omit_v2_notification.value == ntype) {
 		enum_buf eb;
-		llog(RC_LOG, outs->outs_logger,
+		llog(RC_LOG, outs->logger,
 		     "IMPAIR: omitting %s notification",
 		     str_enum_short(&v2_notification_names, ntype, &eb));
 		return true;

@@ -33,7 +33,7 @@ bool emit_v1_HASH(enum v1_hash_type hash_type, const char *what,
 	zero(fixup);
 	fixup->what = what;
 	fixup->hash_type = hash_type;
-	fixup->logger = rbody->outs_logger; /* not ST; might be parent SA */
+	fixup->logger = rbody->logger; /* not ST; might be parent SA */
 	fixup->impair = (impair.v1_hash_exchange == exchange
 			 ? impair.v1_hash_payload : IMPAIR_EMIT_NO);
 	if (fixup->impair == IMPAIR_EMIT_OMIT) {

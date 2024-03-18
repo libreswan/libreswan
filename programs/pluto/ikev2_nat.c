@@ -81,7 +81,7 @@ bool ikev2_out_natd(const ip_endpoint *local_endpoint,
 	/* First: one with local (source) IP & port */
 
 	hb = natd_hash(&ike_alg_hash_sha1, ike_spis, *local_endpoint,
-		       outs->outs_logger);
+		       outs->logger);
 	if (!emit_v2N_hunk(v2N_NAT_DETECTION_SOURCE_IP, hb, outs)) {
 		return false;
 	}
@@ -89,7 +89,7 @@ bool ikev2_out_natd(const ip_endpoint *local_endpoint,
 	/* Second: one with remote (destination) IP & port */
 
 	hb = natd_hash(&ike_alg_hash_sha1, ike_spis, *remote_endpoint,
-		       outs->outs_logger);
+		       outs->logger);
 	if (!emit_v2N_hunk(v2N_NAT_DETECTION_DESTINATION_IP, hb, outs)) {
 		return false;
 	}

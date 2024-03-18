@@ -1809,7 +1809,7 @@ struct pbs_out open_pbs_out(const char *name, uint8_t *buffer, size_t sizeof_buf
 			    struct logger *logger)
 {
 	struct pbs_out outs = PBS_INIT(buffer, sizeof_buffer, name);
-	outs.outs_logger = logger;
+	outs.logger = logger;
 	memset(buffer, 0xFA, sizeof_buffer);	/* value likely to be unpleasant */
 	ldbg(logger, "opening output PBS %s", name);
 	return outs;
@@ -2420,7 +2420,7 @@ static void start_next_payload_chain(struct pbs_out *outs,
 	uint8_t n = *inp;
 	if (n != ISAKMP_NEXT_NONE) {
 		esb_buf npb;
-		llog_pexpect(outs->outs_logger, HERE,
+		llog_pexpect(outs->logger, HERE,
 			     "next payload chain: ignoring supplied '%s'.'%s' value %d:%s",
 			     sd->name, fp->name, n,
 			     enum_show(fp->desc, n, &npb));
@@ -2489,7 +2489,7 @@ static void update_next_payload_chain(struct pbs_out *outs,
 		     enum_show(fp->desc, n, &npb));
 	} else if (n != ISAKMP_NEXT_NONE) {
 		esb_buf npb;
-		llog_pexpect(outs->outs_logger, HERE,
+		llog_pexpect(outs->logger, HERE,
 			     "next payload chain: ignoring supplied '%s'.'%s' value %d:%s",
 			     sd->name, fp->name, n,
 			     enum_show(fp->desc, n, &npb));
@@ -2568,23 +2568,23 @@ static bool pbs_out_number(struct pbs_out *outs, struct_desc *sd,
 				n & ~ISAKMP_ATTR_AF_MASK,		\
 				n
 			if (!impair.emitting) {
-				llog_pexpect(outs->outs_logger, HERE, MSG);
+				llog_pexpect(outs->logger, HERE, MSG);
 				return false;
 			}
-			llog(RC_LOG, outs->outs_logger, "IMPAIR: emitting "MSG);
+			llog(RC_LOG, outs->logger, "IMPAIR: emitting "MSG);
 		}
 		break;
 
 	case ft_enum:   /* value from an enumeration */
 		if (enum_name(fp->desc, n) == NULL) {
 			if (!impair.emitting) {
-				llog_pexpect(outs->outs_logger, HERE,
+				llog_pexpect(outs->logger, HERE,
 					     "%s of %s has an unknown value: %" PRIu32 " (0x%" PRIx32 ")",
 					     fp->name, sd->name,
 					     n, n);
 				return false;
 			}
-			llog(RC_LOG, outs->outs_logger,
+			llog(RC_LOG, outs->logger,
 			     "IMPAIR: %s of %s has an unknown value: %" PRIu32 " (0x%" PRIx32 ")",
 			     fp->name, sd->name, n, n);
 		}
@@ -2600,7 +2600,7 @@ static bool pbs_out_number(struct pbs_out *outs, struct_desc *sd,
 		if (!test_lset(fp->desc, n)) {
 			if (!impair.emitting) {
 				lset_buf lb;
-				llog_pexpect(outs->outs_logger, HERE,
+				llog_pexpect(outs->logger, HERE,
 					     "bitset %s of %s has unknown member(s): %s (0x%" PRIx32 ")",
 					     fp->name, sd->name,
 					     str_lset(fp->desc, n, &lb),
@@ -2608,7 +2608,7 @@ static bool pbs_out_number(struct pbs_out *outs, struct_desc *sd,
 				return false;
 			}
 			lset_buf lb;
-			llog(RC_LOG, outs->outs_logger,
+			llog(RC_LOG, outs->logger,
 			     "IMPAIR: bitset %s of %s has unknown member(s): %s (0x%" PRIx32 ")",
 			     fp->name, sd->name,
 			     str_lset(fp->desc, n, &lb),
@@ -2644,7 +2644,7 @@ bool pbs_out_struct(struct pbs_out *outs, struct_desc *sd,
 	}
 
 	if (outs->roof - cur < (ptrdiff_t)sd->size) {
-		llog_pexpect(outs->outs_logger, HERE,
+		llog_pexpect(outs->logger, HERE,
 			     "not enough room left in output packet to place %s", sd->name);
 		return false;
 	}
@@ -2657,7 +2657,7 @@ bool pbs_out_struct(struct pbs_out *outs, struct_desc *sd,
 		.container = outs,
 		.desc = sd,
 		.name = sd->name,
-		.outs_logger = outs->outs_logger,
+		.logger = outs->logger,
 
 		/* until a length field is discovered */
 		/* .lenfld = NULL, */
@@ -2682,7 +2682,7 @@ bool pbs_out_struct(struct pbs_out *outs, struct_desc *sd,
 		/* verify that we are at the right place in the input structure */
 		passert(inp - (cur - outs->cur) == struct_ptr);
 
-		ldbgf(DBG_TMI, outs->outs_logger, "out_struct: %d %s",
+		ldbgf(DBG_TMI, outs->logger, "out_struct: %d %s",
 		      (int) (cur - outs->cur),
 		      fp->name == NULL ? "<end>" : fp->name);
 
@@ -2692,7 +2692,7 @@ bool pbs_out_struct(struct pbs_out *outs, struct_desc *sd,
 			uint8_t byte;
 			if (impair.send_nonzero_reserved) {
 				byte = ISAKMP_PAYLOAD_FLAG_LIBRESWAN_BOGUS;
-				llog(RC_LOG, outs->outs_logger,
+				llog(RC_LOG, outs->logger,
 				     "IMPAIR: setting zero/ignore field to 0x%02x", byte);
 			} else {
 				byte = 0;
@@ -2849,7 +2849,7 @@ static bool space_for(struct pbs_out *outs, size_t len, const char *what, const 
 		 * Overflowing.
 		 */
 		pexpect(pbs_left(outs) <= len);
-		llog_pexpect(outs->outs_logger, where,
+		llog_pexpect(outs->logger, where,
 			     "buffer is full; unable to emit %zu %s bytes of %s into %s",
 			     len, what, name, outs->name);
 		/* overflow the buffer */
@@ -2861,7 +2861,7 @@ static bool space_for(struct pbs_out *outs, size_t len, const char *what, const 
 	 * Already overflowing.
 	 */
 	pexpect(pbs_left(outs) == 0);
-	llog_pexpect(outs->outs_logger, where,
+	llog_pexpect(outs->logger, where,
 		     "buffer is overflowing; unable to emit %zu %s bytes of %s into %s",
 		     len, what, name, outs->name);
 	return false;
@@ -2953,7 +2953,7 @@ uint8_t reply_buffer[MAX_OUTPUT_UDP_SIZE];
 
 void close_output_pbs(struct pbs_out *pbs)
 {
-	pexpect(pbs->outs_logger != NULL);
+	pexpect(pbs->logger != NULL);
 
 	if (pbs->lenfld != NULL) {
 		size_t len = (pbs->cur - pbs->start);
@@ -2967,7 +2967,7 @@ void close_output_pbs(struct pbs_out *pbs)
 		 * Emit SIZE octets of (host) length in network order.
 		 */
 		unsigned size = pbs->lenfld_desc->size;
-		PASSERT(pbs->outs_logger, size > 0);
+		PASSERT(pbs->logger, size > 0);
 		hton_bytes(len, pbs->lenfld, size);
 	}
 
@@ -2977,7 +2977,7 @@ void close_output_pbs(struct pbs_out *pbs)
 	if (pbs->container != NULL)
 		pbs->container->cur = pbs->cur; /* pass space utilization up */
 	/* don't log against a closed pbs */
-	pbs->outs_logger = NULL;
+	pbs->logger = NULL;
 }
 
 diag_t pbs_in_address(struct pbs_in *input_pbs,

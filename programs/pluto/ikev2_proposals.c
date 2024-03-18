@@ -77,7 +77,7 @@ static bool v2_out_attr_fixed(struct pbs_out *pbs, enum ikev2_trans_attr_type ty
 		.isatr_lv = val,
 	};
 	if (!out_struct(&attr, &ikev2_trans_attr_desc, pbs, NULL)) {
-		llog(RC_LOG, pbs->outs_logger, "%s() for attribute %d failed", __func__, type);
+		llog(RC_LOG, pbs->logger, "%s() for attribute %d failed", __func__, type);
 		return false;
 	}
 	return true;
@@ -1280,22 +1280,22 @@ static bool emit_transform_attributes(struct pbs_out *transform_pbs,
 	} else {
 		switch (impair_key_length_attribute) {
 		case IMPAIR_EMIT_NO:
-			llog_passert(transform_pbs->outs_logger, HERE,
+			llog_passert(transform_pbs->logger, HERE,
 				     "%s", "should have been handled");
 			break;
 		case IMPAIR_EMIT_EMPTY:
-			llog(RC_LOG, transform_pbs->outs_logger,
+			llog(RC_LOG, transform_pbs->logger,
 			     "IMPAIR: emitting variable-size key-length attribute with no key");
 			if (!v2_out_attr_variable(transform_pbs, IKEv2_KEY_LENGTH, EMPTY_CHUNK)) {
 				return false;
 			}
 			break;
 		case IMPAIR_EMIT_OMIT:
-			llog(RC_LOG, transform_pbs->outs_logger,
+			llog(RC_LOG, transform_pbs->logger,
 			     "IMPAIR: omitting fixed-size key-length attribute");
 			break;
 		case IMPAIR_EMIT_DUPLICATE:
-			llog(RC_LOG, transform_pbs->outs_logger,
+			llog(RC_LOG, transform_pbs->logger,
 			     "IMPAIR: duplicating key-length attribute");
 			for (unsigned dup = 0; dup < 2; dup++) {
 				/* regardless of value */
@@ -1309,7 +1309,7 @@ static bool emit_transform_attributes(struct pbs_out *transform_pbs,
 		default:
 		{
 			uint16_t keylen = impair_key_length_attribute - IMPAIR_EMIT_ROOF; /* remove bias */
-			llog(RC_LOG, transform_pbs->outs_logger,
+			llog(RC_LOG, transform_pbs->logger,
 			     "IMPAIR: emitting fixed-length key-length attribute with %u key", keylen);
 			if (!v2_out_attr_fixed(transform_pbs, IKEv2_KEY_LENGTH, keylen)) {
 				return false;
@@ -1506,7 +1506,7 @@ static bool emit_proposal(struct pbs_out *sa_pbs,
 			  bool allow_single_transform_none)
 {
 	int numtrans = walk_transforms(NULL, -1, proposal, propnum,
-				       allow_single_transform_none, sa_pbs->outs_logger);
+				       allow_single_transform_none, sa_pbs->logger);
 	if (numtrans < 0) {
 		return false;
 	}
@@ -1515,7 +1515,7 @@ static bool emit_proposal(struct pbs_out *sa_pbs,
 	if (impair.v2_proposal_protoid.enabled) {
 		enum_buf ebo, ebn;
 		enum ikev2_sec_proto_id protoid = impair.v2_proposal_protoid.value;
-		llog(RC_LOG, sa_pbs->outs_logger, "IMPAIR: changing proposal substructure Protocol ID from %s to %s (%u)",
+		llog(RC_LOG, sa_pbs->logger, "IMPAIR: changing proposal substructure Protocol ID from %s to %s (%u)",
 		     str_enum_short(&ikev2_proposal_protocol_id_names, proposal_protoid, &ebo),
 		     str_enum_short(&ikev2_proposal_protocol_id_names, protoid, &ebn),
 		     protoid);
@@ -1544,7 +1544,7 @@ static bool emit_proposal(struct pbs_out *sa_pbs,
 	}
 
 	if (walk_transforms(&proposal_pbs, numtrans, proposal, propnum,
-			    allow_single_transform_none, sa_pbs->outs_logger) < 0) {
+			    allow_single_transform_none, sa_pbs->logger) < 0) {
 		return false;
 	}
 
@@ -1560,7 +1560,7 @@ bool emit_v2SA_proposals(struct pbs_out *pbs,
 
 	/* SA header out */
 	struct ikev2_sa sa = {
-		.isasa_critical = build_ikev2_critical(false, pbs->outs_logger),
+		.isasa_critical = build_ikev2_critical(false, pbs->logger),
 	};
 	struct pbs_out sa_pbs;
 	if (!out_struct(&sa, &ikev2_sa_desc, pbs, &sa_pbs))

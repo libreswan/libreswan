@@ -139,7 +139,7 @@ static bool emit_v2CERTREQ_ca_hash(struct pbs_out *cr_pbs,
 	 */
 	struct crypt_hash *ctx = crypt_hash_init("SHA-1 of Certificate Public Key",
 						 &ike_alg_hash_sha1,
-						 cr_pbs->outs_logger);
+						 cr_pbs->logger);
 	crypt_hash_digest_bytes(ctx, "pubkey",
 				cert->derPublicKey.data,
 				cert->derPublicKey.len);
@@ -200,7 +200,7 @@ static bool emit_v2CERTREQ_ca(struct pbs_out *cr_pbs, chunk_t ca)
 	CERTCertificate *cacert = CERT_FindCertByName(handle, &caname); /* must unref */
 
 	if (cacert == NULL) {
-		LDBGP_JAMBUF(DBG_BASE, cr_pbs->outs_logger, buf) {
+		LDBGP_JAMBUF(DBG_BASE, cr_pbs->logger, buf) {
 			jam(buf, "NSS: locating CA cert \'");
 			jam_dn(buf, ASN1(ca), jam_sanitized_bytes);
 			jam(buf, "\' for CERTREQ using CERT_FindCertByName() failed: ");

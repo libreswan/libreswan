@@ -280,7 +280,7 @@ bool emit_redirect_notification(const shunk_t dest_str, struct pbs_out *outs)
 	uint8_t buf[MIN_OUTPUT_UDP_SIZE];
 	shunk_t data = build_redirect_notification_data_str(dest_str, NULL,
 							    buf, sizeof(buf),
-							    outs->outs_logger);
+							    outs->logger);
 
 	return data.len > 0 && emit_v2N_hunk(v2N_REDIRECT, data, outs);
 }
@@ -290,7 +290,7 @@ bool emit_redirected_from_notification(const ip_address *ip_addr, struct pbs_out
 	uint8_t buf[MIN_OUTPUT_UDP_SIZE];
 	shunk_t data = build_redirect_notification_data_ip(ip_addr, NULL,
 							   buf, sizeof(buf),
-							   outs->outs_logger);
+							   outs->logger);
 
 	return data.len > 0 && emit_v2N_hunk(v2N_REDIRECTED_FROM, data, outs);
 }
