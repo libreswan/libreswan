@@ -34,8 +34,6 @@
 #include "defs.h"
 #include "log.h"
 
-const struct pbs_out empty_pbs_out;
-
 /*
  * IKEv1/IKEv2 Header: for all messages
  *

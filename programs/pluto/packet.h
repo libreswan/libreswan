@@ -183,8 +183,6 @@ struct pbs_out {
 	struct logger *logger;
 };
 
-extern const struct pbs_out empty_pbs_out;
-
 /*
  * Return a map(shunk_t) or clone(chunk_t) of the entire PBS contents
  * (i.e., for an output PBS that doesn't include any unwritten space

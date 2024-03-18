@@ -104,7 +104,7 @@ static bool open_v2_message_body(struct pbs_out *message,
 				 enum isakmp_xchg_type exchange_type,
 				 struct pbs_out *body)
 {
-	*body = empty_pbs_out;
+	*body = (struct pbs_out) {0};
 
 	/* at least one, possibly both */
 	passert(ike != NULL || md != NULL);
