@@ -226,7 +226,7 @@ static bool decode_peer_id(struct state *st, struct msg_digest *md, struct id *p
  * (Hash or Signature Payload).
  * XXX: This is used by aggressive mode too, move to ikev1.c ???
  */
-stf_status oakley_auth(struct msg_digest *md, enum sa_role sa_role)
+stf_status oakley_auth(struct msg_digest *md, enum sa_role sa_role, shunk_t id_payload)
 {
 	struct state *st = md->v1_st;
 	stf_status r = STF_OK;
@@ -237,8 +237,7 @@ stf_status oakley_auth(struct msg_digest *md, enum sa_role sa_role)
 	 * main_mode_hash() expects the entire ID payload, i.e., up to
 	 * .raw.  Hence pbs_in_all.
 	 */
-	struct crypt_mac hash = main_mode_hash(st, sa_role,
-					       pbs_in_all(&md->chain[ISAKMP_NEXT_ID]->pbs));
+	struct crypt_mac hash = main_mode_hash(st, sa_role, id_payload);
 
 	switch (st->st_oakley.auth) {
 	case OAKLEY_PRESHARED_KEY:

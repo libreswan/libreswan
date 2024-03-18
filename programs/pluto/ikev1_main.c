@@ -1241,7 +1241,7 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 	/* HASH_I or SIG_I */
 
 	/* responder authenticating initiator */
-	stf_status r = oakley_auth(md, SA_INITIATOR);
+	stf_status r = oakley_auth(md, SA_INITIATOR, pbs_in_all(&md->chain[ISAKMP_NEXT_ID]->pbs));
 	if (r != STF_OK) {
 		return r;
 	}
@@ -1459,7 +1459,7 @@ stf_status main_inR3(struct state *st, struct msg_digest *md)
 	/* HASH_R or SIG_R */
 
 	/* initiator authenticating responder */
-	stf_status r = oakley_auth(md, SA_RESPONDER);
+	stf_status r = oakley_auth(md, SA_RESPONDER, pbs_in_all(&md->chain[ISAKMP_NEXT_ID]->pbs));
 	if (r != STF_OK) {
 		return r;
 	}

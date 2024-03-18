@@ -26,8 +26,9 @@
 #ifndef IKEV1_PEER_ID_H
 #define IKEV1_PEER_ID_H
 
-extern stf_status oakley_auth(struct msg_digest *md,
-			      enum sa_role sa_role);
+#include "shunk.h"
+
+stf_status oakley_auth(struct msg_digest *md, enum sa_role sa_role, shunk_t id_payload);
 
 bool ikev1_decode_peer_id_initiator(struct state *st, struct msg_digest *md);
 
