@@ -1152,8 +1152,8 @@ static void xauth_immediate(const char *name, const struct state *st, bool succe
  * @param password Password
  */
 static void xauth_launch_authent(struct state *st,
-				chunk_t *name,
-				chunk_t *password)
+				 shunk_t *name,
+				 shunk_t *password)
 {
 	/*
 	 * XAUTH somehow already in progress?
@@ -1241,13 +1241,13 @@ stf_status xauth_inR0(struct state *st, struct msg_digest *md)
 	 * We manage this by making these chunks just
 	 * references to parts of the input packet.
 	 */
-	static unsigned char unknown[] = "<unknown>";	/* never written to */
-	chunk_t name;
-	chunk_t password = EMPTY_CHUNK;
-	bool gotname = false,
-		gotpassword = false;
+	static const unsigned char unknown[] = "<unknown>";	/* never written to */
+	shunk_t name = null_shunk;
+	shunk_t password = null_shunk;
+	bool gotname = false;
+	bool gotpassword = false;
 
-	name = chunk2(unknown, sizeof(unknown) - 1);	/* to make diagnostics easier */
+	name = shunk2(unknown, sizeof(unknown) - 1);	/* to make diagnostics easier */
 
 	/* XXX This needs checking with the proper RFC's - ISAKMP_CFG_ACK got added for Cisco interop */
 	switch (md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute.isama_type) {
@@ -1298,7 +1298,7 @@ stf_status xauth_inR0(struct state *st, struct msg_digest *md)
 					  "XAUTH User Name contains NUL character: rejected");
 				return STF_FAIL_v1N + v1N_NO_PROPOSAL_CHOSEN;
 			}
-			name = chunk2(strattr.cur, sz);
+			name = shunk2(strattr.cur, sz);
 			gotname = true;
 			break;
 
@@ -1319,7 +1319,7 @@ stf_status xauth_inR0(struct state *st, struct msg_digest *md)
 					  "XAUTH User Password contains NUL character: rejected");
 				return STF_FAIL_v1N + v1N_NO_PROPOSAL_CHOSEN;
 			}
-			password = chunk2(strattr.cur, sz);
+			password = shunk2(strattr.cur, sz);
 			gotpassword = true;
 			break;
 
@@ -1336,14 +1336,14 @@ stf_status xauth_inR0(struct state *st, struct msg_digest *md)
 			  !gotname ? "username" : "",
 			  !gotname && !gotpassword ? " and " : "",
 			  !gotpassword ? "password" : "");
-		if (st->hidden_variables.st_xauth_client_attempt++ <
-		    XAUTH_PROMPT_TRIES) {
+		if (st->hidden_variables.st_xauth_client_attempt++ < XAUTH_PROMPT_TRIES) {
 			stf_status stat = xauth_send_request(st);
-
-			log_state(RC_LOG, st,
-				  "XAUTH: User %.*s: Authentication Failed (retry %d)",
-				  (int)name.len, name.ptr,
-				  st->hidden_variables.st_xauth_client_attempt);
+			LLOG_JAMBUF(RC_LOG, st->logger, buf) {
+				jam_string(buf, "XAUTH: User ");
+				jam_sanitized_hunk(buf, name);
+				jam(buf, ": Authentication Failed (retry %d)",
+				    st->hidden_variables.st_xauth_client_attempt);
+			}
 			/**
 			 * STF_OK means that we transmitted again okay, but actually
 			 * the state transition failed, as we are prompting again.
@@ -1352,10 +1352,12 @@ stf_status xauth_inR0(struct state *st, struct msg_digest *md)
 		} else {
 			stf_status stat = xauth_send_status(st, XAUTH_STATUS_FAIL);
 
-			log_state(RC_LOG, st,
-				  "XAUTH: User %.*s: Authentication Failed (Retried %d times)",
-				  (int)name.len, name.ptr,
-				  st->hidden_variables.st_xauth_client_attempt);
+			LLOG_JAMBUF(RC_LOG, st->logger, buf) {
+				jam_string(buf, "XAUTH: User ");
+				jam_sanitized_hunk(buf, name);
+				jam(buf, ": Authentication Failed (Retried %d times)",
+				    st->hidden_variables.st_xauth_client_attempt);
+			}
 
 			return stat == STF_OK ? STF_FAIL_v1N : stat;
 		}
