@@ -1814,6 +1814,16 @@ struct pbs_out open_pbs_out(const char *name, uint8_t *buffer, size_t sizeof_buf
 	return outs;
 }
 
+void open_small_pbs_out(const char *name, struct small_pbs_out *pbs, struct logger *logger)
+{
+	pbs->pbs = open_pbs_out(name, pbs->buffer, sizeof(pbs->buffer), logger);
+}
+
+void open_large_pbs_out(const char *name, struct large_pbs_out *pbs, struct logger *logger)
+{
+	pbs->pbs = open_pbs_out(name, pbs->buffer, sizeof(pbs->buffer), logger);
+}
+
 struct pbs_in pbs_in_from_shunk(shunk_t shunk, const char *name)
 {
 	/*

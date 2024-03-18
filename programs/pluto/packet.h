@@ -255,6 +255,20 @@ extern struct pbs_out open_pbs_out(const char *name, uint8_t *buffer,
 				   size_t sizeof_buffer, struct logger *logger);
 extern void close_output_pbs(struct pbs_out *pbs);
 
+struct small_pbs_out {
+	struct pbs_out pbs;
+	uint8_t buffer[1024];
+};
+
+void open_small_pbs_out(const char *name, struct small_pbs_out *pbs, struct logger *logger);
+
+struct large_pbs_out {
+	struct pbs_out pbs;
+	uint8_t buffer[MAX_OUTPUT_UDP_SIZE];
+};
+
+void open_large_pbs_out(const char *name, struct large_pbs_out *pbs, struct logger *logger);
+
 /*
  * Map/clone the current contents (i.e., everything written so far)
  * [start..cur) of an output PBS as a chunk.
