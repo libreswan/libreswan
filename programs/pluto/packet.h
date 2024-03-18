@@ -123,52 +123,6 @@ struct pbs_in {
 	uint8_t *start;				/* public: where this stream starts */
 	uint8_t *cur;				/* public: current position (end) of stream */
 	uint8_t *roof;				/* byte after last in PBS (on output: just a limit) */
-
-	/* For an output PBS some things may need to be patched up. */
-
-	/*
-	 * For patching Length field in header.
-	 *
-	 * Filled in by close_output_pbs().
-	 * Note: it may not be aligned.
-	 */
-	uint8_t *lenfld;	/* start of variable length field */
-	field_desc *lenfld_desc;	/* includes length */
-
-	/*
-	 * For patching IKEv2's Next Payload field chain.
-	 *
-	 * IKEv2 has a "chain" of next payloads.  The chain starts
-	 * with the message's Next Payload field, and then threads its
-	 * way through every single payload header.  For SK, its Next
-	 * Payload field is for the first containing payload.
-	 *
-	 * IKEv1, provided payloads nested within an SK payload are
-	 * excluded (see below), is functionally equivalent and so can
-	 * also use this code.
-	 */
-	struct fixup next_payload_chain;
-
-	/*
-	 * For patching IKEv2's Last Substructure field.
-	 *
-	 * IKEv2 has nested substructures.  An SA Payload contains
-	 * Proposal Substructures, and a Proposal Substructure
-	 * contains Transform Substructures.
-	 *
-	 * When emitting a the substructure, the Last Substruc[ture]
-	 * field is set to either that substructure's type (non-last)
-	 * or zero (last).
-	 *
-	 * This is separate to the Next Payload field and the payload
-	 * "chain" - the SA payload is both linked into the payload
-	 * "chain" (.PT) and requires a specific sub-structure (.SST).
-	 *
-	 * Since IKEv1's SA, Proposal, and Transform payloads are
-	 * functionally equivalent it, too, uses this code (IKEv2
-	 * changed the names to avoid confusion).
-	 */
-	struct fixup last_substructure;
 };
 
 struct pbs_out {
