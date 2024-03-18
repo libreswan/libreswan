@@ -2107,7 +2107,7 @@ diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
 		     void *dest_start, size_t dest_size,
 		     struct pbs_in *obj_pbs)
 {
-	uint8_t *cur = ins->cur;
+	const uint8_t *cur = ins->cur;
 	if (cur + sd->size > ins->roof) {
 		return diag("not enough room in input packet for %s (remain=%li, sd->size=%zu)",
 			    sd->name, (long int)(ins->roof - cur),
@@ -2115,7 +2115,7 @@ diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
 	}
 
 	passert(dest_size >= sd->size);
-	uint8_t *roof = cur + sd->size; /* may be changed by a length field */
+	const uint8_t *roof = cur + sd->size; /* may be changed by a length field */
 	bool length_field_found = false;
 	uint8_t *dest = dest_start;
 	uint8_t *dest_end = dest + dest_size;
