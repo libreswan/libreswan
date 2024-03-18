@@ -16,6 +16,7 @@
 #ifndef IKEV1_SEND_H
 #define IKEV1_SEND_H
 
+#include "shunk.h"
 
 struct state;
 
@@ -24,8 +25,7 @@ struct v1_ike_rfrag {
 	struct msg_digest *md;
 	int index;
 	int last;
-	uint8_t *data;
-	size_t size;
+	shunk_t data;
 };
 
 void record_outbound_v1_ike_msg(struct state *st, struct pbs_out *pbs, const char *what);

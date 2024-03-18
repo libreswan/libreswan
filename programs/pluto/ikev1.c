@@ -1595,8 +1595,7 @@ void process_v1_packet(struct msg_digest *md)
 		ike_frag->md = md_addref(md);
 		ike_frag->index = fraghdr.isafrag_number;
 		ike_frag->last = (fraghdr.isafrag_flags & 1);
-		ike_frag->size = pbs_left(&frag_pbs);
-		ike_frag->data = frag_pbs.cur;
+		ike_frag->data = pbs_in_left(&frag_pbs);
 
 		/* Add the fragment to the state */
 		struct v1_ike_rfrag **i = &st->st_v1_rfrags;
@@ -1636,7 +1635,7 @@ void process_v1_packet(struct msg_digest *md)
 			int prev_index = 0;
 
 			for (struct v1_ike_rfrag *frag = st->st_v1_rfrags; frag; frag = frag->next) {
-				size += frag->size;
+				size += frag->data.len;
 				if (frag->index != ++prev_index) {
 					break; /* fragment list incomplete */
 				} else if (frag->index == last_frag_index) {
@@ -1659,11 +1658,9 @@ void process_v1_packet(struct msg_digest *md)
 					uint8_t *buffer = whole_md->packet_pbs.start;
 					size_t offset = 0;
 					while (frag != NULL && frag->index <= last_frag_index) {
-						passert(offset + frag->size <=
-							size);
-						memcpy(buffer + offset,
-						       frag->data, frag->size);
-						offset += frag->size;
+						passert(offset + frag->data.len <= size);
+						memcpy(buffer + offset, frag->data.ptr, frag->data.len);
+						offset += frag->data.len;
 						frag = frag->next;
 					}
 
