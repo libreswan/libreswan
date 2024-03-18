@@ -1281,12 +1281,13 @@ static const char *const encapsulation_mode_rfc_name[] = {
 	P(ENCAPSULATION_MODE_TRANSPORT),
 	P(ENCAPSULATION_MODE_UDP_TUNNEL_RFC),
 	P(ENCAPSULATION_MODE_UDP_TRANSPORT_RFC),
+	P(ENCAPSULATION_MODE_IPTFS),
 #undef P
 };
 
 enum_names encapsulation_mode_names = {
 	ENCAPSULATION_MODE_TUNNEL,
-	ENCAPSULATION_MODE_UDP_TRANSPORT_RFC,
+	ENCAPSULATION_MODE_IPTFS,
 	ARRAY_REF(encapsulation_mode_rfc_name),
 	"ENCAPSULATION_MODE_", /* prefix */
 	&encapsulation_mode_draft_names,

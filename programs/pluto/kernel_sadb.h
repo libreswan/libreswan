@@ -390,6 +390,12 @@ enum ipsec_mode {
 #undef IPSEC_MODE_TUNNEL
 #define IPSEC_MODE_TUNNEL ipsec_mode_tunnel
 
+#ifdef IPSEC_MODE_IPTFS
+	ipsec_mode_iptfs = IPSEC_MODE_IPTFS,
+#undef IPSEC_MODE_IPTFS
+#define IPSEC_MODE_IPTFS ipsec_mode_iptfs
+#endif
+
 };
 
 #endif

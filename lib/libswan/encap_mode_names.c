@@ -21,13 +21,13 @@
 static const char *encap_mode_name[] = {
 #define S(E) [E-ENCAP_MODE_TRANSPORT] = #E
 	S(ENCAP_MODE_TRANSPORT),
-	S(ENCAP_MODE_TUNNEL),
+	S(ENCAP_MODE_IPTFS),
 #undef S
 };
 
 const struct enum_names encap_mode_names = {
 	ENCAP_MODE_TRANSPORT,
-	ENCAP_MODE_TUNNEL,
+	ENCAP_MODE_IPTFS,
 	ARRAY_REF(encap_mode_name),
 	.en_prefix = "ENCAP_MODE_",
 };
@@ -35,13 +35,13 @@ const struct enum_names encap_mode_names = {
 static const char *encap_mode_story_name[] = {
 #define S(E,V) [E-ENCAP_MODE_TRANSPORT] = V
 	S(ENCAP_MODE_TRANSPORT, "transport"),
-	S(ENCAP_MODE_TUNNEL, "tunnel"),
+	S(ENCAP_MODE_IPTFS, "iptfs"),
 #undef S
 };
 
 const struct enum_names encap_mode_story = {
 	ENCAP_MODE_TRANSPORT,
-	ENCAP_MODE_TUNNEL,
+	ENCAP_MODE_IPTFS,
 	ARRAY_REF(encap_mode_story_name),
 	.en_prefix = NULL,
 };

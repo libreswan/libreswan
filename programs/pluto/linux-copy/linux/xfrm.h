@@ -152,7 +152,8 @@ enum {
 #define XFRM_MODE_ROUTEOPTIMIZATION 2
 #define XFRM_MODE_IN_TRIGGER 3
 #define XFRM_MODE_BEET 4
-#define XFRM_MODE_MAX 5
+#define XFRM_MODE_IPTFS 5
+#define XFRM_MODE_MAX 6
 
 /* Netlink configuration messages.  */
 enum {
@@ -314,6 +315,12 @@ enum xfrm_attr_type_t {
 	XFRMA_SET_MARK_MASK,	/* __u32 */
 	XFRMA_IF_ID,		/* __u32 */
 	XFRMA_MTIMER_THRESH,	/* __u32 in seconds for input SA */
+	XFRMA_IPTFS_PKT_SIZE,	/* __u32 Size of outer packet, 0 for PMTU */
+	XFRMA_IPTFS_MAX_QSIZE,	/* __u32 max ingress queue size */
+	XFRMA_IPTFS_DONT_FRAG,	/* don't use fragmentation */
+	XFRMA_IPTFS_DROP_TIME,	/* __u32 usec to wait for next seq */
+	XFRMA_IPTFS_REORDER_WINDOW,	/* __u16 reorder window size */
+	XFRMA_IPTFS_INIT_DELAY,	/* __u32 initial packet wait delay (usec) */
 	__XFRMA_MAX
 
 #define XFRMA_OUTPUT_MARK XFRMA_SET_MARK	/* Compatibility */

@@ -259,7 +259,7 @@ class guest (threading.Thread):
         # now on we MUST match the entire prompt,
         # or else we end up sending too soon and getting mangling!
 
-        prompt = "\[root@%s %s\]# " % (self.hostname, self.testname)
+        prompt = "\\[root@%s %s\\]# " % (self.hostname, self.testname)
         logger.debug("%s role %s running test %s prompt %s",
                      self.dname, self.role, self.testname, prompt.replace("\\", ""))
 
@@ -396,7 +396,7 @@ class guest (threading.Thread):
 
     def connect_to_kvm(self):
 
-        prompt = "\[root@%s " % (self.hostname)
+        prompt = "\\[root@%s " % (self.hostname)
 
         vmlist = subprocess.getoutput("sudo virsh list")
         running = False
@@ -524,7 +524,7 @@ SEARCH_WINDOW_SIZE = 100
 
 class Remote:
 
-    def __init__(self, child, hostname, prompt="\[root@[^ ]+ [^\]]+\]# "):
+    def __init__(self, child, hostname, prompt="\\[root@[^ ]+ [^\\]]+\\]# "):
         self.child = child
         self.hostname = hostname
         self.prompt = prompt
@@ -543,7 +543,7 @@ class Remote:
             self.prompt, timeout=timeout, searchwindowsize=SEARCH_WINDOW_SIZE)
 
     def cd(self, directory):
-        self.prompt = "\[root@%s %s\]# " % (
+        self.prompt = "\\[root@%s %s\\]# " % (
             self.hostname, os.path.basename(directory))
         self.run("cd %s" % directory)
         return self.prompt
@@ -573,7 +573,7 @@ class Remote:
     # would be nice if run, above, directly captured the exit code.
     def exit_status(self):
         self.child.sendline("echo status=$?")
-        self.child.expect('status=([0-9]+)\s*' + self.prompt, timeout=TIMEOUT)
+        self.child.expect('status=([0-9]+)\\s*' + self.prompt, timeout=TIMEOUT)
         status = int(self.child.match.group(1))
         # child.sendline("(exit %s)" % status)
         return status
