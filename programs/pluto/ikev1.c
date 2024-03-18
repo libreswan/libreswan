@@ -1863,10 +1863,13 @@ void process_packet_tail(struct msg_digest *md)
 				st->st_oakley.ta_encrypt->common.fqn);
 			DBG_dump_hunk("IV before:", st->st_v1_new_iv);
 		}
-		e->encrypt_ops->do_crypt(e, md->message_pbs.cur,
-					 pbs_left(&md->message_pbs),
+		size_t cipher_start = (md->message_pbs.cur - md->message_pbs.start);
+		chunk_t cipher_text = chunk2(md->message_pbs.start + cipher_start,
+					    pbs_left(&md->message_pbs));
+		e->encrypt_ops->do_crypt(e, cipher_text.ptr, cipher_text.len,
 					 st->st_enc_key_nss,
-					 st->st_v1_new_iv.ptr, false,
+					 st->st_v1_new_iv.ptr,
+					 /*encrypt*/false,
 					 st->logger);
 		if (DBGP(DBG_CRYPT)) {
 			DBG_dump_hunk("IV after:", st->st_v1_new_iv);
