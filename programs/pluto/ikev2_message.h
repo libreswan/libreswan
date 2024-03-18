@@ -18,8 +18,8 @@
 
 #include "chunk.h"
 
-#include "packet.h"		/* for pb_stream */
 #include "message_role.h"
+#include "packet.h"		/* for struct pbs_out; */
 
 struct msg_digest;
 struct dh_desc;

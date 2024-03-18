@@ -22,7 +22,6 @@
 
 #include "chunk.h"
 #include "defs.h"	/* for msgid_t */
-#include "packet.h"	/* for pb_stream */
 #include "impair.h"
 
 struct state;

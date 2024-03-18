@@ -99,21 +99,6 @@ struct fixup {
  *
  * Note: it is safe to copy a PBS with no children because a PBS
  * is only pointed to by its children.  This is done in out_struct().
- *
- * XXX: packet_byte_stream should be split into 'struct pbs_{in,out}':
- *
- * - pbs_in's underlying structure is read-only (shunk_t?)
- *
- * - pbs_out's underlying structure is read-write (chunk_t?)
- *
- * - half of packet_byte_stream is pbs_out specific
- *
- * XXX: pb_stream is being split into separate input and output
- * structures.  They aren't really the same thing so sharing mechanics
- * is confusing.
- *
- * For instance, PBS_OUT contains an embedded logger (so barfs can be
- * logged) whipe PBS_IN propogates errors up the stack as DIAG_T.
  */
 
 struct pbs_in {

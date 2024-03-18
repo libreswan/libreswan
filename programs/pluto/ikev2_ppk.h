@@ -17,7 +17,6 @@
  */
 
 #include "state.h"
-#include "packet.h"
 
 struct ppk_id_payload {
 	enum ikev2_ppk_id_type type;

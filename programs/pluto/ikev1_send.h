@@ -16,7 +16,6 @@
 #ifndef IKEV1_SEND_H
 #define IKEV1_SEND_H
 
-#include "packet.h"
 
 struct state;
 

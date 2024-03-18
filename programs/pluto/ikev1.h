@@ -2,7 +2,6 @@
 #define _IKEV1_H
 
 #include "ikev1_continuations.h"
-#include "packet.h"		/* for pb_stream */
 #include "fd.h"
 #include "crypt_mac.h"
 

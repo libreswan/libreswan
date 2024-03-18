@@ -60,7 +60,6 @@
 #include "constants.h"
 #include "defs.h"
 #include "state.h"
-#include "packet.h"
 #include "log.h"
 #include "whack.h"
 #include "ikev1_db_ops.h"

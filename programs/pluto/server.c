@@ -63,7 +63,6 @@
 #include "log.h"
 #include "server.h"
 #include "timer.h"
-#include "packet.h"
 #include "demux.h"  /* needs packet.h */
 #include "rcv_whack.h"
 #include "keys.h"

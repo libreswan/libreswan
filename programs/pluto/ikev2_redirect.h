@@ -17,7 +17,6 @@
 #ifndef _IKEV2_REDIRECT_H
 #define _IKEV2_REDIRECT_H
 
-#include "packet.h"
 
 extern enum allow_global_redirect global_redirect;
 

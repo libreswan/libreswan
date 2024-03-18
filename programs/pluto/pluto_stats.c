@@ -30,7 +30,6 @@
 #include "state.h"
 #include "connections.h"        /* needs id.h */
 #include "log.h"
-#include "packet.h"
 #include "demux.h"  /* needs packet.h */
 #include "rcv_whack.h"
 #include "whack.h"              /* for RC_LOG_SERIOUS */

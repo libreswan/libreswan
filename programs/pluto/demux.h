@@ -23,7 +23,7 @@
 #define _DEMUX_H
 
 #include "server.h"
-#include "packet.h"
+#include "packet.h"		/* for struct pbs_in */
 #include "quirks.h"
 #include "chunk.h"
 #include "ip_address.h"

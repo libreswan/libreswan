@@ -17,14 +17,11 @@
 #define IKEV2_TS_H
 
 #include "ip_range.h"
-#include "packet.h"	/* for pb_stream */
 
 struct msg_digest;
-struct traffic_selector;
-struct spd_end;
 struct connection;
 struct child_sa;
-struct state;
+struct pbs_out;
 
 bool process_v2TS_response_payloads(struct child_sa *child,
 				    struct msg_digest *md);

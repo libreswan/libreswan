@@ -31,7 +31,6 @@
 #include "sysdep.h"
 #include "constants.h"
 #include "defs.h"
-#include "packet.h"
 #include "demux.h"
 #include "log.h"
 #include "state.h"

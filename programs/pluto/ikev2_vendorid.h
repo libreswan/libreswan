@@ -20,7 +20,6 @@
 #include "shunk.h"
 
 #include "demux.h"
-#include "packet.h"
 
 struct logger;
 

@@ -1645,8 +1645,9 @@ struct_desc ikev2_skf_desc = {
  *
  * This is actually Notify Data in IKEv2 Notify payload (see RFC 5685)
  *
- * This struct_desc will be used for checking GW Ident Type and GW Ident Len
- * fields, the rest when using in_struct will be stored in separate pb_stream
+ * This struct_desc will be used for checking GW Ident Type and GW
+ * Ident Len fields, the rest when using in_struct will be stored in
+ * separate struct pbs_in.
  */
 static field_desc ikev2redirect_fields[] = {
 	{ ft_enum, 8 / BITS_IN_BYTE, "GW Identity type", &ikev2_redirect_gw_names },

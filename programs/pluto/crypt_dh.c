@@ -44,7 +44,6 @@
 #include "sysdep.h"
 #include "constants.h"
 #include "defs.h"
-#include "packet.h"
 #include "demux.h"
 #include "crypto.h"
 #include "rnd.h"

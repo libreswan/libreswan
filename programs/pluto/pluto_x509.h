@@ -24,7 +24,6 @@
 #define _PLUTO_X509_H
 
 #include "defs.h"
-#include "packet.h"
 #include "demux.h"
 #include "server.h"
 

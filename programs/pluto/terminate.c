@@ -41,7 +41,6 @@
 #include "connections.h"        /* needs id.h */
 #include "pending.h"
 #include "foodgroups.h"
-#include "packet.h"
 #include "demux.h"      /* needs packet.h */
 #include "state.h"
 #include "timer.h"

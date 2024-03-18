@@ -58,6 +58,7 @@
 #include "ikev2_msgid.h"
 #include "message_role.h"
 #include "sa_role.h"
+#include "packet.h"
 
 struct whack_message;
 struct v2_state_transition;

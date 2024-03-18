@@ -19,7 +19,6 @@
 #include <stdbool.h>
 
 #include "chunk.h"
-#include "packet.h"		/* for pbs_out */
 
 struct state;
 struct connection;
@@ -31,6 +30,8 @@ struct logger;
 struct secret_stuff;
 enum perspective;
 struct pubkey_signer;
+struct pbs_out;
+struct pbs_in;
 
 struct crypt_mac v2_sha1_hash(const struct crypt_mac *hash);
 struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,

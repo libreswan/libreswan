@@ -44,7 +44,6 @@
 #include "pending.h"
 #include "log.h"
 #include "state.h"
-#include "packet.h"
 #include "demux.h"
 #include "ikev1_quick.h"
 #include "timer.h"

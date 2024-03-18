@@ -17,13 +17,13 @@
 #ifndef SEND_H
 #define SEND_H
 
-#include "chunk.h"
+#include "shunk.h"
 #include "ip_address.h"
-#include "packet.h"		/* for pb_stream */
 
 struct iface_endpoint;
 struct state;
 struct msg_digest;
+struct pbs_out;
 
 bool send_pbs_out_using_md(struct msg_digest *md, const char *where, struct pbs_out *packet);
 bool send_pbs_out_using_state(struct state *st, const char *where, struct pbs_out *packet);

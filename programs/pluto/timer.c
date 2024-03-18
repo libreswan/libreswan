@@ -41,7 +41,6 @@
 #include "certs.h"
 #include "connections.h"	/* needs id.h */
 #include "state.h"
-#include "packet.h"
 #include "demux.h"	/* needs packet.h */
 #include "ipsec_doi.h"	/* needs demux.h and state.h */
 #include "kernel.h"	/* needs connections.h */

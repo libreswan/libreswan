@@ -19,7 +19,6 @@
 
 #include "chunk.h"
 
-#include "packet.h"		/* for pb_stream */
 #include "connections.h"
 
 struct msg_digest;

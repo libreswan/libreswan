@@ -59,7 +59,6 @@
 #include "kernel_ops.h"
 #include "kernel_xfrm.h"
 #include "kernel_policy.h"
-#include "packet.h"
 #include "x509.h"
 #include "pluto_x509.h"
 #include "certs.h"
@@ -72,7 +71,6 @@
 #include "ike_alg_encrypt.h"
 #include "ike_alg_integ.h"
 
-#include "packet.h"  /* for pb_stream in nat_traversal.h */
 #include "nat_traversal.h"
 #include "ip_address.h"
 #include "ip_info.h"
