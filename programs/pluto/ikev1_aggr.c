@@ -825,20 +825,20 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 {
 	struct connection *c = st->st_connection;
 
-	/*
-	 * XXX: IDBUF must be same scope as id_pd.pbs
-	 *
-	 * ??? enough room for reconstructed peer ID payload?
-	 */
-	uint8_t peer_id_buf[1024];
-	struct payload_digest peer_id;
-
 	ikev1_natd_init(st, md);
 
 	/*
-	 * Reconstruct the peer ID so the peer hash can be
-	 * authenticated.
+	 * In aggressive mode, the initiator sends its ID in the first
+	 * message (I1).  Need to reconstruct it so that it can be
+	 * used to authenticate this, the third message (I2).
+	 *
+	 * XXX: IDBUF must be same scope as peer_id!
+	 *
+	 * ??? enough room for reconstructed peer ID payload?
 	 */
+	uint8_t initiator_id_buf[1024];
+	shunk_t initiator_id;
+
 	{
 		dbg("next payload chain: creating a fake payload for hashing identity");
 
@@ -849,7 +849,7 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 		id_header.isaiid_port = htons(st->st_peeridentity_port);
 
 		struct pbs_out idout_pbs = open_pbs_out("identity payload",
-							peer_id_buf, sizeof(peer_id_buf),
+							initiator_id_buf, sizeof(initiator_id_buf),
 							st->logger);
 
 		struct pbs_out id_pbs;
@@ -863,29 +863,8 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 
 		close_output_pbs(&id_pbs);
 		close_output_pbs(&idout_pbs);
-
-		/*
-		 * Turn struct pbs_out idout_pbs into struct pbs_in
-		 * idin_pbs and then read it into ID_PD.
-		 */
-		struct pbs_in idin_pbs = pbs_in_from_shunk(pbs_out_all(&idout_pbs), "ID pbs");
-		diag_t d = pbs_in_struct(&idin_pbs, &isakmp_identification_desc,
-					 &peer_id.payload, sizeof(peer_id.payload),
-					 &peer_id.pbs);
-		if (d != NULL) {
-			llog_diag(RC_LOG, st->logger, &d, "%s", "");
-			return STF_INTERNAL_ERROR;
-		}
+		initiator_id = pbs_out_to_cursor(&idout_pbs);
 	}
-
-	/*
-	 * ??? this looks like a really rude assignment
-	 *
-	 * - we are rewriting the input.  Sheesh!
-	 * - at least we undo the damage after calling oakley_auth().
-	 */
-	struct payload_digest *save_id = md->chain[ISAKMP_NEXT_ID];
-	md->chain[ISAKMP_NEXT_ID] = &peer_id;
 
 	/*
 	 * If the first message contained verified certs then
@@ -925,14 +904,15 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 
 	/* HASH_I or SIG_I in */
 
-	/* responder authenticating initiator */
-	stf_status r = oakley_auth(md, SA_INITIATOR, pbs_in_all(&md->chain[ISAKMP_NEXT_ID]->pbs));
+	/*
+	 * responder authenticating initiator
+	 *
+	 * Use ID sent over in I1.
+	 */
+	stf_status r = oakley_auth(md, SA_INITIATOR, initiator_id);
 	if (r != STF_OK) {
 		return r;
 	}
-
-	/* And reset the md to not leave stale pointers to our private id payload */
-	md->chain[ISAKMP_NEXT_ID] = save_id;
 
 	/**************** done input ****************/
 
