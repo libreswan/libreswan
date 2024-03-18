@@ -107,7 +107,7 @@ struct pbs_in {
 	const char *name;			/* what does this PBS represent? */
 	uint8_t *start;				/* public: where this stream starts */
 	uint8_t *cur;				/* public: current position (end) of stream */
-	uint8_t *roof;				/* byte after last in PBS (on output: just a limit) */
+	const uint8_t *roof;			/* byte after last in PBS (on output: just a limit) */
 };
 
 struct pbs_out {

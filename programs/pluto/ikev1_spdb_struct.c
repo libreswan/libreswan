@@ -1676,7 +1676,7 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 			return v1N_INVALID_TRANSFORM_ID;	/* reject whole SA */
 		}
 
-		uint8_t *attr_start = trans_pbs.cur;
+		const uint8_t *attr_start = trans_pbs.cur;
 		size_t attr_len = pbs_left(&trans_pbs);
 
 		/* process all the attributes that make up the transform */
