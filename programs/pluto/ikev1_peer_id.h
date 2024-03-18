@@ -27,7 +27,7 @@
 #define IKEV1_PEER_ID_H
 
 extern stf_status oakley_auth(struct msg_digest *md,
-			      bool initiator); /* are we the Initiator? */
+			      enum sa_role sa_role);
 
 bool ikev1_decode_peer_id_initiator(struct state *st, struct msg_digest *md);
 

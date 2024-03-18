@@ -612,7 +612,8 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 
 	/* HASH_R or SIG_R in */
 
-	stf_status r = oakley_auth(md, true);
+	/* initiator authenticating responder */
+	stf_status r = oakley_auth(md, SA_RESPONDER);
 	if (r != STF_OK) {
 		return r;
 	}
@@ -924,7 +925,8 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 
 	/* HASH_I or SIG_I in */
 
-	stf_status r = oakley_auth(md, false);
+	/* responder authenticating initiator */
+	stf_status r = oakley_auth(md, SA_INITIATOR);
 	if (r != STF_OK) {
 		return r;
 	}
