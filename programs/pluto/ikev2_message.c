@@ -1071,6 +1071,8 @@ struct msg_digest *reassemble_v2_incoming_fragments(struct v2_incoming_fragments
  *
  * Since the message fragments are stored in the recipient's ST
  * (either IKE or CHILD SA), it, and not the IKE SA is needed.
+ *
+ * The bytes to be decryted are roughly .cursor + sizeof(IV) - .roof.
  */
 bool ikev2_decrypt_msg(struct ike_sa *ike, struct msg_digest *md)
 {
@@ -1085,23 +1087,27 @@ bool ikev2_decrypt_msg(struct ike_sa *ike, struct msg_digest *md)
 		schedule_md_event("replay encrypted message",
 				  clone_raw_md(md, HERE));
 	}
+
+	/*
+	 * Having read the SK header, the .cursor is pointing at the
+	 * IV.  Lets corrupt it!
+	 */
+	size_t iv_offset = sk_pbs->cur - md->packet_pbs.start;
 	if (impair.corrupt_encrypted && !md->fake_clone) {
 		llog_sa(RC_LOG, ike,
 			  "IMPAIR: corrupting incoming encrypted message's SK payload's first byte");
-		*sk_pbs->cur = ~(*sk_pbs->cur);
+		md->packet_pbs.start[iv_offset] = ~(md->packet_pbs.start[iv_offset]);
 	}
 
-	chunk_t c = chunk2(md->packet_pbs.start,
-			   sk_pbs->roof - md->packet_pbs.start);
+	chunk_t message = chunk2(md->packet_pbs.start, sk_pbs->roof - md->packet_pbs.start);
 	shunk_t plain = null_shunk; /*to be sure*/
-	bool ok = verify_and_decrypt_v2_message(ike, c, &plain,
-						sk_pbs->cur - md->packet_pbs.start);
+	bool ok = verify_and_decrypt_v2_message(ike, message, &plain, iv_offset);
 	md->chain[ISAKMP_NEXT_v2SK]->pbs = pbs_in_from_shunk(plain, "decrypted SK payload");
 
-	dbg("#%lu ikev2 %s decrypt %s",
-	    ike->sa.st_serialno,
-	    enum_name(&ikev2_exchange_names, md->hdr.isa_xchg),
-	    ok ? "success" : "failed");
+	ldbg(ike->sa.logger, PRI_SO" ikev2 %s decrypt %s",
+	     pri_so(ike->sa.st_serialno),
+	     enum_name(&ikev2_exchange_names, md->hdr.isa_xchg),
+	     ok ? "success" : "failed");
 
 	return ok;
 }
