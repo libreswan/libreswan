@@ -42,7 +42,7 @@ struct v2SK_payload {
 	/* pointers into SK header+contents */
 	chunk_t payload; /* header+iv+cleartext+padding+integrity */
 	/* chunk_t header; */
-	chunk_t iv;
+	chunk_t wire_iv;
 	chunk_t cleartext;
 	/* chunk_t padding; */
 	chunk_t integrity;

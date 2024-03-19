@@ -233,14 +233,14 @@ static bool open_v2_message_body(struct pbs_out *message,
 static bool emit_v2SK_iv(struct v2SK_payload *sk)
 {
 	/* compute location/size */
-	sk->iv = chunk2(sk->pbs.cur, sk->ike->sa.st_oakley.ta_encrypt->wire_iv_size);
+	sk->wire_iv = chunk2(sk->pbs.cur, sk->ike->sa.st_oakley.ta_encrypt->wire_iv_size);
 	/* make space */
-	if (!pbs_out_zero(&sk->pbs, sk->iv.len, "IV")) {
+	if (!pbs_out_zero(&sk->pbs, sk->wire_iv.len, "IV")) {
 		/* already logged */
 		return false; /*fatal*/
 	}
 	/* scribble on it */
-	fill_rnd_chunk(sk->iv);
+	fill_rnd_chunk(sk->wire_iv);
 	return true;
 }
 
@@ -285,7 +285,7 @@ static bool open_body_v2SK_payload(struct pbs_out *container,
 	sk->cleartext.ptr = sk->pbs.cur;
 	sk->cleartext.len = 0; /* to be determined */
 
-	passert(sk->iv.ptr <= sk->cleartext.ptr);
+	passert(sk->wire_iv.ptr <= sk->cleartext.ptr);
 
 	/* XXX: coverity thinks .container (set to E by out_struct()
 	 * above) can be NULL. */
@@ -386,7 +386,7 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 {
 	struct ike_sa *ike = sk->ike;
 	uint8_t *auth_start = sk->pbs.container->start;
-	uint8_t *wire_iv_start = sk->iv.ptr;
+	uint8_t *wire_iv_start = sk->wire_iv.ptr;
 	uint8_t *enc_start = sk->cleartext.ptr;
 	uint8_t *integ_start = sk->integrity.ptr;
 	size_t integ_size = sk->integrity.len;
