@@ -255,9 +255,14 @@ bool raw_casestarteq(const void *ptr, size_t len, const void *eat, size_t eat_le
 	})
 
 /*
- * Macros to treat the HUNK like a data stream.
+ * Macros to treat a HUNK, pointing into a buffer, like a data stream:
  *
- * - get/put advance the pointer and reduce the length
+ * - initially .ptr is the start of the buffer, and .len is the
+ *   buffer's size
+ *
+ * - .ptr is the cursor (next byte) and .len is the upper bound
+ *
+ * - get/put advance .ptr and reduce the .len
  *
  * - returns the get/put object as a pointer into the buffer
  *
@@ -311,6 +316,40 @@ bool raw_casestarteq(const void *ptr, size_t len, const void *eat, size_t eat_le
 
 #define hunk_put_thing(HUNK, THING)		\
 	(typeof(THING)*) hunk_put(HUNK, &(THING), sizeof(THING))
+
+/*
+ * Macros for filling in a HUNK like object (hunk like objects have an
+ * array for .ptr, hence sizeof(.ptr) determines the upper bound).
+ */
+
+#define hunk_append_bytes(DST/*pointer*/, SRC_PTR, SRC_LEN)		\
+	({								\
+		typeof(SRC_PTR) src_ptr_ = SRC_PTR; /* evaluate once */	\
+		size_t src_len_ = SRC_LEN; /* evaluate once */		\
+		typeof(DST) dst_ = DST; /* evaluate once */		\
+		passert(dst_->len + src_len_ <= sizeof(dst_->ptr/*array*/)); \
+		typeof(dst_->ptr[0]) *dst_ptr_ = dst_->ptr + dst_->len;	\
+		memcpy(dst_ptr_, src_ptr_, src_len_);			\
+		dst_->len += src_len_;					\
+		dst_ptr_;						\
+	})
+
+#define hunk_append_hunk(DST/*pointer*/, SRC/*value*/)		\
+	({							\
+		typeof(SRC) *src_ = &(SRC); /* evaluate once */	\
+		hunk_append_bytes(DST, src_->ptr, src_->len);	\
+	})
+
+#define hunk_append_byte(DST/*pointer*/, BYTE, COUNT)			\
+	({								\
+		size_t count_ = COUNT;					\
+		typeof(DST) dst_ = DST; /* evaluate once */		\
+		passert(dst_->len + count_ <= sizeof(dst_->ptr)/*array*/); \
+		typeof(dst_->ptr[0]) *dst_ptr_ = dst_->ptr + dst_->len;	\
+		memset(dst_ptr_, BYTE, count_);				\
+		dst_->len += count_;					\
+		dst_ptr_;						\
+	})
 
 /* see hunkcheck.c */
 bool char_isbdigit(char c);

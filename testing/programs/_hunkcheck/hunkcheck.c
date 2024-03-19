@@ -419,6 +419,58 @@ static void check__hunk_get__hunk_put(void)
 	}
 }
 
+static void check__hunk_append(void)
+{
+	struct hunk_like {
+		size_t len;
+		uint8_t ptr[11];
+	} dst = {
+		.len = 0,
+		.ptr = "0123456789", /* includes trailing NUL */
+	};
+
+	/* XXX: can't test overflow as it will abort!?! */
+	struct test {
+		size_t len;
+		const char *val;
+	} tests[3] = {
+		{ 3, "str3456789" },
+		{ 5, "strZZ56789" },
+		{ 8, "strZZABC89" },
+	};
+
+	shunk_t str = shunk1("str");
+
+	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		const struct test *t = &tests[ti];
+		PRINT("val: %zu %s", t->len, t->val);
+
+		switch (ti) {
+		case 0:
+			hunk_append_hunk(&dst, str);
+			break;
+
+		case 1:
+			/* now try zero */
+			hunk_append_byte(&dst, 'Z', 2);
+			break;
+
+		case 2:
+			hunk_append_bytes(&dst, "ABC", 3);
+			break;
+		}
+
+		if (dst.len != t->len) {
+			FAIL("hunk_append_hunk() appended %zu characters, expecting %zu",
+			     dst.len, t->len);
+		}
+		if (!memeq(dst.ptr, t->val, sizeof(dst.ptr))) {
+			FAIL("hunk_append_hunk() value is %s, expecting %s",
+			     dst.ptr, t->val);
+		}
+	}
+}
+
 static void check_hunk_char_is(void)
 {
 	static const struct test {
@@ -903,6 +955,7 @@ int main(int argc, char *argv[])
 	check_ntoh_hton_hunk();
 	check__hunk_get__hunk_put();
 	check_hunks();
+	check__hunk_append();
 
 	if (report_leaks(logger)) {
 		fails++;
