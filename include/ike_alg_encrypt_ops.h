@@ -16,6 +16,8 @@
 #ifndef IKE_ALG_ENCRYPT_OPS_H
 #define IKE_ALG_ENCRYPT_OPS_H
 
+#include "chunk.h"
+
 struct logger;
 
 struct encrypt_ops {
@@ -32,10 +34,9 @@ struct encrypt_ops {
 	 * Presumably something else is implementing the integrity.
 	 */
 	void (*const do_crypt)(const struct encrypt_desc *alg,
-			       uint8_t *dat,
-			       size_t datasize,
+			       chunk_t data,
+			       chunk_t iv,
 			       PK11SymKey *key,
-			       uint8_t *iv,
 			       bool enc,
 			       struct logger *logger);
 

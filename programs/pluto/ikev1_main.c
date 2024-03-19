@@ -400,9 +400,8 @@ bool ikev1_close_and_encrypt_message(struct pbs_out *pbs, struct state *st)
 		DBG_dump_hunk("IV:", st->st_v1_new_iv);
 	}
 
-	e->encrypt_ops->do_crypt(e, padded_encrypt.ptr, padded_encrypt.len,
-				 st->st_enc_key_nss,
-				 st->st_v1_new_iv.ptr, true,
+	e->encrypt_ops->do_crypt(e, padded_encrypt, HUNK_AS_CHUNK(st->st_v1_new_iv),
+				 st->st_enc_key_nss, true,
 				 st->logger);
 
 	update_iv(st);

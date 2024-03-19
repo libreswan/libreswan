@@ -30,8 +30,8 @@
 #include "lswnss.h"		/* for llog_nss_error() */
 
 static void ike_alg_nss_cbc(const struct encrypt_desc *alg,
-			    uint8_t *in_buf, size_t in_buf_len, PK11SymKey *symkey,
-			    uint8_t *iv, bool enc,
+			    chunk_t in_buf, chunk_t iv,
+			    PK11SymKey *symkey, bool enc,
 			    struct logger *logger)
 {
 	ldbgf(DBG_CRYPT, logger, "NSS ike_alg_nss_cbc: %s - enter", alg->common.fqn);
@@ -42,9 +42,10 @@ static void ike_alg_nss_cbc(const struct encrypt_desc *alg,
 			     alg->common.fqn);
 	}
 
+	PEXPECT(logger, iv.len == alg->enc_blocksize);
 	SECItem ivitem;
 	ivitem.type = siBuffer;
-	ivitem.data = iv;
+	ivitem.data = iv.ptr;
 	ivitem.len = alg->enc_blocksize;
 	SECItem *secparam = PK11_ParamFromIV(alg->nss.mechanism, &ivitem);
 	if (secparam == NULL) {
@@ -64,11 +65,11 @@ static void ike_alg_nss_cbc(const struct encrypt_desc *alg,
 	}
 
 	/* Output buffer for transformed data. */
-	uint8_t *out_buf = PR_Malloc((PRUint32)in_buf_len);
+	uint8_t *out_buf = PR_Malloc((PRUint32)in_buf.len);
 	int out_buf_len = 0;
 
-	SECStatus rv = PK11_CipherOp(enccontext, out_buf, &out_buf_len, in_buf_len,
-				     in_buf, in_buf_len);
+	SECStatus rv = PK11_CipherOp(enccontext, out_buf, &out_buf_len, in_buf.len,
+				     in_buf.ptr, in_buf.len);
 	if (rv != SECSuccess) {
 		passert_nss_error(logger, HERE,
 				  "%s: PKCS11 operation failure", alg->common.fqn);
@@ -91,15 +92,16 @@ static void ike_alg_nss_cbc(const struct encrypt_desc *alg,
 		 * The IV for the next decryption call is the last
 		 * block of the encrypted input data.
 		 */
-		new_iv = in_buf + in_buf_len - alg->enc_blocksize;
+		new_iv = in_buf.ptr + in_buf.len - alg->enc_blocksize;
 	}
-	memcpy(iv, new_iv, alg->enc_blocksize);
+	PEXPECT(logger, iv.len == alg->enc_blocksize);
+	memcpy(iv.ptr, new_iv, alg->enc_blocksize);
 
 	/*
 	 * Finally, copy the transformed data back to the buffer.  Do
 	 * this after extracting the IV.
 	 */
-	memcpy(in_buf, out_buf, in_buf_len);
+	memcpy(in_buf.ptr, out_buf, in_buf.len);
 	PR_Free(out_buf);
 
 	if (secparam != NULL)

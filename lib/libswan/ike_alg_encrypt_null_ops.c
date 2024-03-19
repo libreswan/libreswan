@@ -26,14 +26,14 @@
 #include "lswnss.h"		/* for llog_nss_error() */
 
 static void ike_alg_encrypt_null_do_crypt(const struct encrypt_desc *alg,
-					  uint8_t *in_buf, size_t in_buf_len,
+					  chunk_t in_buf, chunk_t iv,
 					  PK11SymKey *symkey,
-					  uint8_t *iv, bool enc,
+					  bool enc,
 					  struct logger *logger)
 {
 	ldbgf(DBG_CRYPT, logger, "%s() %s - enter %p %zu bytes iv %p enc=%s key=%p",
-	      __func__, alg->common.fqn, in_buf, in_buf_len,
-	      iv, bool_str(enc), symkey);
+	      __func__, alg->common.fqn, in_buf.ptr, in_buf.len,
+	      iv.ptr, bool_str(enc), symkey);
 	/* nothing happens */
 	ldbgf(DBG_CRYPT, logger, "%s() %s - exit", __func__, alg->common.fqn);
 }

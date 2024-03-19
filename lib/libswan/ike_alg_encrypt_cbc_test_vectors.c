@@ -144,8 +144,8 @@ static bool test_cbc_op(const struct encrypt_desc *encrypt_desc,
 	chunk_t expected = decode_to_chunk(output_name, output);
 
 	/* do_crypt modifies the data and IV in place. */
-	encrypt_desc->encrypt_ops->do_crypt(encrypt_desc, tmp.ptr, tmp.len,
-					    sym_key, iv.ptr, encrypt,
+	encrypt_desc->encrypt_ops->do_crypt(encrypt_desc, tmp, iv,
+					    sym_key, encrypt,
 					    logger);
 
 	if (!verify_hunk(op, expected, tmp)) {

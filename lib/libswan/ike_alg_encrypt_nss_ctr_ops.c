@@ -35,8 +35,8 @@
 #include "ike_alg_encrypt_ops.h"
 
 static void do_nss_ctr(const struct encrypt_desc *alg UNUSED,
-		       uint8_t *buf, size_t buf_len, PK11SymKey *sym_key,
-		       uint8_t *counter_block, bool encrypt,
+		       chunk_t buf, chunk_t counter_block,
+		       PK11SymKey *sym_key, bool encrypt,
 		       struct logger *logger)
 {
 	ldbgf(DBG_CRYPT, logger, "do_aes_ctr: enter");
@@ -48,33 +48,34 @@ static void do_nss_ctr(const struct encrypt_desc *alg UNUSED,
 
 	CK_AES_CTR_PARAMS counter_param;
 	counter_param.ulCounterBits = sizeof(uint32_t) * 8;/* Per RFC 3686 */
-	memcpy(counter_param.cb, counter_block, sizeof(counter_param.cb));
+	PEXPECT(logger, counter_block.len == sizeof(counter_param.cb));
+	memcpy(counter_param.cb, counter_block.ptr, sizeof(counter_param.cb));
 	SECItem param;
 	param.type = siBuffer;
 	param.data = (void*)&counter_param;
 	param.len = sizeof(counter_param);
 
 	/* Output buffer for transformed data. */
-	uint8_t *out_buf = PR_Malloc((PRUint32)buf_len);
+	uint8_t *out_buf = PR_Malloc((PRUint32)buf.len);
 	unsigned int out_len = 0;
 
 	if (encrypt) {
 		SECStatus rv = PK11_Encrypt(sym_key, CKM_AES_CTR, &param,
-					    out_buf, &out_len, buf_len,
-					    buf, buf_len);
+					    out_buf, &out_len, buf.len,
+					    buf.ptr, buf.len);
 		if (rv != SECSuccess) {
 			passert_nss_error(logger, HERE, "PK11_Encrypt failure");
 		}
 	} else {
 		SECStatus rv = PK11_Decrypt(sym_key, CKM_AES_CTR, &param,
-					    out_buf, &out_len, buf_len,
-					    buf, buf_len);
+					    out_buf, &out_len, buf.len,
+					    buf.ptr, buf.len);
 		if (rv != SECSuccess) {
 			passert_nss_error(logger, HERE, "PK11_Decrypt failure");
 		}
 	}
 
-	memcpy(buf, out_buf, buf_len);
+	memcpy(buf.ptr, out_buf, buf.len);
 	PR_Free(out_buf);
 
 	/*
@@ -85,13 +86,13 @@ static void do_nss_ctr(const struct encrypt_desc *alg UNUSED,
 	 * There's a portability assumption here that the IV buffer is
 	 * at least sizeof(uint32_t) (4-byte) aligned.
 	 */
-	uint32_t *counter = (uint32_t*)(counter_block + AES_BLOCK_SIZE
-					  - sizeof(uint32_t));
+	uint32_t *counter = (uint32_t*)(counter_block.ptr + AES_BLOCK_SIZE
+					- sizeof(uint32_t));
 	uint32_t old_counter = ntohl(*counter);
-	size_t increment = (buf_len + AES_BLOCK_SIZE - 1) / AES_BLOCK_SIZE;
+	size_t increment = (buf.len + AES_BLOCK_SIZE - 1) / AES_BLOCK_SIZE;
 	uint32_t new_counter = old_counter + increment;
 	ldbgf(DBG_CRYPT, logger, "do_aes_ctr: counter-block updated from 0x%" PRIx32 " to 0x%" PRIx32 " for %zd bytes",
-	      old_counter, new_counter, buf_len);
+	      old_counter, new_counter, buf.len);
 	/* Wrap ... */
 	passert(new_counter >= old_counter);
 	*counter = htonl(new_counter);

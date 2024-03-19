@@ -475,9 +475,9 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 
 		ike->sa.st_oakley.ta_encrypt->encrypt_ops
 			->do_crypt(ike->sa.st_oakley.ta_encrypt,
-				   enc_start, enc_size,
-				   cipherkey,
-				   enc_iv, true,
+				   chunk2(enc_start, enc_size),
+				   chunk2(enc_iv, ike->sa.st_oakley.ta_encrypt->enc_blocksize),
+				   cipherkey, true,
 				   sk->logger);
 
 		if (DBGP(DBG_CRYPT)) {
@@ -669,9 +669,9 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 
 		ike->sa.st_oakley.ta_encrypt->encrypt_ops
 			->do_crypt(ike->sa.st_oakley.ta_encrypt,
-				   enc_start, enc_size,
-				   cipherkey,
-				   enc_iv, false,
+				   chunk2(enc_start, enc_size),
+				   chunk2(enc_iv, ike->sa.st_oakley.ta_encrypt->enc_blocksize),
+				   cipherkey, false,
 				   ike->sa.logger);
 
 		if (DBGP(DBG_CRYPT)) {
