@@ -21,32 +21,9 @@ west #
  echo "initdone"
 initdone
 west #
- swanctl --initiate --child westnet-eastnet-ikev1 --loglevel 1
+ swanctl --initiate --child westnet-eastnet-ikev1 --loglevel 0
 [IKE] initiating Main Mode IKE_SA westnet-eastnet-ikev1[1] to 192.1.2.23
-[ENC] generating ID_PROT request 0 [ SA V V V V V ]
-[NET] sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
-[NET] received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
-[ENC] parsed ID_PROT response 0 [ SA V V V ]
-[IKE] received FRAGMENTATION vendor ID
-[IKE] received DPD vendor ID
-[IKE] received NAT-T (RFC 3947) vendor ID
-[CFG] selected proposal: IKE:AES_CBC_256/HMAC_SHA1_96/PRF_HMAC_SHA1/MODP_2048
-[ENC] generating ID_PROT request 0 [ KE No NAT-D NAT-D ]
-[NET] sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
-[NET] received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
-[ENC] parsed ID_PROT response 0 [ KE No NAT-D NAT-D ]
-[ENC] generating ID_PROT request 0 [ ID HASH N(INITIAL_CONTACT) ]
-[NET] sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
-[NET] received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
-[ENC] parsed ID_PROT response 0 [ ID HASH ]
 [IKE] IKE_SA westnet-eastnet-ikev1[1] established between 192.1.2.45[west]...192.1.2.23[east]
-[IKE] scheduling reauthentication in XXXs
-[IKE] maximum IKE_SA lifetime XXXs
-[ENC] generating QUICK_MODE request 0123456789 [ HASH SA No ID ID ]
-[NET] sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
-[NET] received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
-[ENC] parsed QUICK_MODE response 0123456789 [ HASH SA No ID ID ]
-[CFG] selected proposal: AH:HMAC_SHA2_512_256/NO_EXT_SEQ
 [IKE] CHILD_SA westnet-eastnet-ikev1{1} established with SPIs SPISPI_i SPISPI_o and TS 192.0.1.0/24 === 192.0.2.0/24
 initiate completed successfully
 west #

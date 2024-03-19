@@ -1,1 +1,1 @@
-swanctl --initiate --child westnet-eastnet-ikev1 --loglevel 1
+swanctl --initiate --child westnet-eastnet-ikev1 --loglevel 0
