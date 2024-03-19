@@ -352,33 +352,43 @@ static bool close_v2SK_payload(struct v2SK_payload *sk)
  *
  * note: no iv is longer than MAX_CBC_BLOCK_SIZE
  */
+
+struct iv {
+	size_t len;
+	uint8_t ptr[MAX_CBC_BLOCK_SIZE];
+};
+
 static void construct_enc_iv(const char *name,
-			     uint8_t enc_iv[],
-			     uint8_t *wire_iv, chunk_t salt,
+			     struct iv *iv,
+			     chunk_t wire_iv,
+			     chunk_t salt,
 			     const struct encrypt_desc *encrypter,
 			     struct logger *logger)
 {
-	ldbgf(DBG_CRYPT, logger,
-	      "construct_enc_iv: %s: salt-size=%zd wire-IV-size=%zd block-size %zd",
-	      name, encrypter->salt_size, encrypter->wire_iv_size,
-	      encrypter->enc_blocksize);
-	passert(salt.len == encrypter->salt_size);
-	passert(encrypter->enc_blocksize <= MAX_CBC_BLOCK_SIZE);
-	passert(encrypter->enc_blocksize >= encrypter->salt_size + encrypter->wire_iv_size);
 	size_t counter_size = encrypter->enc_blocksize - encrypter->salt_size - encrypter->wire_iv_size;
 	ldbgf(DBG_CRYPT, logger,
-	      "construct_enc_iv: %s: computed counter-size=%zd",
-	      name, counter_size);
+	      "construct_enc_iv: %s: salt-size=%zd wire-IV-size=%zd block-size=%zd computed counter-size=%zd",
+	      name, encrypter->salt_size, encrypter->wire_iv_size,
+	      encrypter->enc_blocksize,
+	      counter_size);
+	PASSERT(logger, salt.len == encrypter->salt_size);
+	PASSERT(logger, encrypter->enc_blocksize <= sizeof(iv->ptr/*array*/));
+	PASSERT(logger, encrypter->enc_blocksize >= encrypter->salt_size + encrypter->wire_iv_size);
 
-	memcpy(enc_iv, salt.ptr, salt.len);
-	memcpy(enc_iv + salt.len, wire_iv, encrypter->wire_iv_size);
+	iv->len = 0;
+
+	hunk_append_hunk(iv, salt);
+	hunk_append_hunk(iv, wire_iv);
+
 	if (counter_size > 0) {
-		memset(enc_iv + encrypter->enc_blocksize - counter_size, 0,
-		       counter_size - 1);
-		enc_iv[encrypter->enc_blocksize - 1] = 1;
+		/* zero counter, ... */
+		hunk_append_byte(iv, 0, counter_size);
+		/* .. then set LSB to 1 */
+		iv->ptr[iv->len - 1] = 1;
 	}
+	PASSERT(logger, iv->len == encrypter->enc_blocksize);
 	if (DBGP(DBG_CRYPT)) {
-		LDBG_dump(logger, enc_iv, encrypter->enc_blocksize);
+		LDBG_hunk(logger, *iv);
 	}
 }
 
@@ -462,9 +472,9 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 
 	} else {
 		/* note: no iv is longer than MAX_CBC_BLOCK_SIZE */
-		unsigned char enc_iv[MAX_CBC_BLOCK_SIZE];
-		construct_enc_iv("encryption IV/starting-variable", enc_iv,
-				 wire_iv_start, salt,
+		struct iv iv;
+		construct_enc_iv("encryption IV/starting-variable", &iv,
+				 sk->wire_iv, salt,
 				 ike->sa.st_oakley.ta_encrypt,
 				 ike->sa.logger);
 
@@ -476,7 +486,7 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 		ike->sa.st_oakley.ta_encrypt->encrypt_ops
 			->do_crypt(ike->sa.st_oakley.ta_encrypt,
 				   chunk2(enc_start, enc_size),
-				   chunk2(enc_iv, ike->sa.st_oakley.ta_encrypt->enc_blocksize),
+				   HUNK_AS_CHUNK(iv),
 				   cipherkey, true,
 				   sk->logger);
 
@@ -656,9 +666,10 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 		dbg("authenticator matched");
 
 		/* note: no iv is longer than MAX_CBC_BLOCK_SIZE */
-		unsigned char enc_iv[MAX_CBC_BLOCK_SIZE];
-		construct_enc_iv("decryption IV/starting-variable", enc_iv,
-				 wire_iv_start, salt,
+		chunk_t wire_iv = chunk2(wire_iv_start, wire_iv_size);
+		struct iv iv;
+		construct_enc_iv("decryption IV/starting-variable", &iv,
+				 wire_iv, salt,
 				 ike->sa.st_oakley.ta_encrypt,
 				 ike->sa.logger);
 
@@ -670,7 +681,7 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 		ike->sa.st_oakley.ta_encrypt->encrypt_ops
 			->do_crypt(ike->sa.st_oakley.ta_encrypt,
 				   chunk2(enc_start, enc_size),
-				   chunk2(enc_iv, ike->sa.st_oakley.ta_encrypt->enc_blocksize),
+				   HUNK_AS_CHUNK(iv),
 				   cipherkey, false,
 				   ike->sa.logger);
 
