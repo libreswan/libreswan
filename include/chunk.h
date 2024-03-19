@@ -45,6 +45,12 @@ typedef struct /*chunk*/ {
 
 chunk_t chunk2(void *ptr, size_t len);
 
+#define HUNK_AS_CHUNK(HUNK)			\
+	({					\
+		typeof(HUNK) *h_ = &(HUNK);	\
+		chunk2(h_->ptr, h_->len);	\
+	})
+
 /*
  * Convert writeable THING to a writeable CHUNK.  When compiled with
  * GCC (at least) and THING is read-only, a warning will be generated.

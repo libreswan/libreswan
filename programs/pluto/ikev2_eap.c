@@ -53,8 +53,6 @@
 
 static v2_auth_signature_cb process_v2_IKE_AUTH_request_EAP_start_signature_continue;
 
-#define HUNK_AS_CHUNK(HUNK) ({ typeof(HUNK) h_ = (HUNK); chunk2(h_.ptr, h_.len); })
-
 #define llog_eap(RC_FLAGS, EAP, MSG, ...) llog(RC_FLAGS, (EAP)->logger, MSG, ##__VA_ARGS__)
 
 static PRStatus eaptls_io_close(PRFileDesc *fd)
