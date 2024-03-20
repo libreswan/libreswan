@@ -184,7 +184,8 @@ static void do_job(struct job *job, helper_id_t helper_id)
 
 	job->time_used = logtime_stop(&start, PRI_JOB, pri_job(job));
 	schedule_resume("sending job back to main thread",
-			job->so_serialno, handle_helper_answer, job);
+			job->so_serialno, &job->md/*stolen*/,
+			handle_helper_answer, job);
 }
 
 /* IN A HELPER THREAD */

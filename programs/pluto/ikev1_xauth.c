@@ -1123,7 +1123,6 @@ static stf_status xauth_immediate_callback(struct state *st,
 					   void *arg)
 {
 	struct xauth_immediate_context *xic = (struct xauth_immediate_context *)arg;
-	PEXPECT(st->logger, md == xic->md);
 	if (st == NULL) {
 		log_state(RC_LOG, st,
 			  "XAUTH: #%lu: state destroyed for user '%s'",
@@ -1146,7 +1145,7 @@ static void xauth_immediate(const char *name, const struct state *st,
 	xic->serialno = st->st_serialno;
 	xic->name = clone_str(name, "xauth next name");
 	xic->md = md_addref(md);
-	schedule_resume("xauth immediate", st->st_serialno,
+	schedule_resume("xauth immediate", st->st_serialno, &xic->md,
 			xauth_immediate_callback, xic);
 }
 

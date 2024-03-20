@@ -594,6 +594,7 @@ struct resume_event {
 	void *context;
 	const char *name;
 	struct timeout *timer;
+	struct msg_digest *md;
 };
 
 void complete_state_transition(struct state *st, struct msg_digest *md, stf_status status)
@@ -638,6 +639,7 @@ static void resume_handler(void *arg, const struct timer_event *event)
 		/* no previous state */
 		statetime_t start = statetime_start(st);
 		struct msg_digest *md = unsuspend_any_md(st);
+		PEXPECT(st->logger, md == e->md);
 
 		/* trust nothing; so save everything */
 		so_serial_t old_st = st->st_serialno;
@@ -688,18 +690,35 @@ static void resume_handler(void *arg, const struct timer_event *event)
 	}
 	passert(e->timer != NULL);
 	destroy_timeout(&e->timer);
+	md_delref(&e->md);
 	pfree(e);
 }
 
 void schedule_resume(const char *name, so_serial_t serialno,
+		     struct msg_digest **mdp,
 		     resume_cb *callback, void *context)
 {
 	pexpect(serialno != SOS_NOBODY);
+	/*
+	 * Steal the thread's MD so it can be returned to the main
+	 * thread and then, after processing, be released.
+	 *
+	 * XXX: Here md_addref() works fine but the logs confuse
+	 * testing's refcnt.awk - the refcnt changes are logged out of
+	 * order.  So clearly a hack.
+	 */
+	struct msg_digest *md = NULL;
+	if (mdp != NULL) {
+		/* steal reference */
+		md = (*mdp);
+		(*mdp) = NULL;
+	}
 	struct resume_event tmp = {
 		.serialno = serialno,
 		.callback = callback,
 		.context = context,
 		.name = name,
+		.md = md,
 	};
 	struct resume_event *e = clone_thing(tmp, name);
 	dbg("scheduling resume %s for #%lu",
