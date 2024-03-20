@@ -32,7 +32,7 @@
 #include <unbound.h>		/* rpm:unbound-devel */
 #include "unbound-event.h"
 #include "dnssec.h" 		/* includes unbound.h */
-
+#include "demux.h"		/* for md_delref() */
 #include "ikev2_ipseckey.h" /* for dns_status */
 #include "ikev2_ipseckey_dnsr.h"
 
@@ -48,7 +48,7 @@ void free_ipseckey_dns(struct p_dns_req *d)
 		d->ub_async_id = 0;
 	}
 
-	/* XXX: free D, then remove D from a linked list?!?! */
+	md_delref(&d->md);
 	free_logger(&d->logger, HERE);
 	pfreeany(d->qname);
 	pfreeany(d->log_buf);

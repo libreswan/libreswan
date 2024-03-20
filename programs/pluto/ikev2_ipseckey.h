@@ -17,7 +17,7 @@ typedef enum {
 	DNS_SUSPEND = STF_SUSPEND,
 } dns_status;
 
-dns_status responder_fetch_idi_ipseckey(struct ike_sa *ike,
+dns_status responder_fetch_idi_ipseckey(struct ike_sa *ike, struct msg_digest *md,
 					stf_status (*callback)(struct ike_sa *ike,
 							       struct msg_digest *md,
 							       bool err));

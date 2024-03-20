@@ -191,12 +191,15 @@ static void initiator_fetch_idr_ipseckey_continue(struct p_dns_req *dnsr)
 	free_ipseckey_dns(dnsr);
 }
 
-static void idi_ipseckey_resume_ike_sa(struct ike_sa *ike, bool err,
+static void idi_ipseckey_resume_ike_sa(struct ike_sa *ike,
+				       struct msg_digest *ipseckey_md,
+				       bool err,
 				       stf_status(*callback)(struct ike_sa *ike,
 							     struct msg_digest *md,
 							     bool err))
 {
 	struct msg_digest *md = unsuspend_any_md(&ike->sa);
+	PEXPECT(ike->sa.logger, md == ipseckey_md);
 	complete_v2_state_transition(ike, md, callback(ike, md, err));
 	md_delref(&md);
 }
@@ -256,7 +259,7 @@ static void idi_a_fetch_continue(struct p_dns_req *dnsr)
 	}
 
 	llog(DEBUG_STREAM, dnsr->logger, "%s() unsuspend id=%s", __func__, dnsr->qname);
-	idi_ipseckey_resume_ike_sa(ike, err, dnsr->callback);
+	idi_ipseckey_resume_ike_sa(ike, dnsr->md, err, dnsr->callback);
 	free_ipseckey_dns(dnsr);
 }
 
@@ -315,7 +318,7 @@ static void responder_fetch_idi_ipseckey_continue(struct p_dns_req *dnsr)
 	}
 
 	llog(DEBUG_STREAM, dnsr->logger, "%s() unsuspend id=%s", __func__, dnsr->qname);
-	idi_ipseckey_resume_ike_sa(ike, err, dnsr->callback);
+	idi_ipseckey_resume_ike_sa(ike, dnsr->md, err, dnsr->callback);
 	free_ipseckey_dns(dnsr);
 }
 
@@ -357,6 +360,7 @@ static err_t build_dns_name(struct jambuf *name_buf, const struct id *id)
 
 
 static struct p_dns_req *qry_st_init(struct ike_sa *ike,
+				     struct msg_digest *md,
 				     int qtype,
 				     const char *qtype_name,
 				     dnsr_cb_fn dnsr_cb,
@@ -379,6 +383,7 @@ static struct p_dns_req *qry_st_init(struct ike_sa *ike,
 
 	struct p_dns_req *p = alloc_thing(struct p_dns_req, "id remote dns");
 	p->so_serial = ike->sa.st_serialno;
+	p->md = md_addref(md);
 	p->callback = callback;
 	p->logger = clone_logger(ike->sa.logger, HERE);
 	p->qname = clone_str(qname, "dns qname");
@@ -398,13 +403,15 @@ static struct p_dns_req *qry_st_init(struct ike_sa *ike,
 	return p;
 }
 
-static struct p_dns_req *ipseckey_qry_st_init(struct ike_sa *ike, dnsr_cb_fn dnsr_cb,
+static struct p_dns_req *ipseckey_qry_st_init(struct ike_sa *ike,
+					      struct msg_digest *md,
+					      dnsr_cb_fn dnsr_cb,
 					      stf_status(*callback)(struct ike_sa *ike,
 								    struct msg_digest *md,
 								    bool err))
 {
 	/* hardcoded RR type to IPSECKEY AA_2017_03 */
-	struct p_dns_req *p = qry_st_init(ike, LDNS_RR_TYPE_IPSECKEY, "IPSECKEY", dnsr_cb, callback);
+	struct p_dns_req *p = qry_st_init(ike, md, LDNS_RR_TYPE_IPSECKEY, "IPSECKEY", dnsr_cb, callback);
 	if (p == NULL) {
 		return NULL;
 	}
@@ -428,7 +435,7 @@ static struct p_dns_req *ipseckey_qry_st_init(struct ike_sa *ike, dnsr_cb_fn dns
 
 bool initiator_fetch_idr_ipseckey(struct ike_sa *ike)
 {
-	struct p_dns_req *dnsr = ipseckey_qry_st_init(ike,
+	struct p_dns_req *dnsr = ipseckey_qry_st_init(ike, /*initiator:no-md*/NULL,
 						      initiator_fetch_idr_ipseckey_continue,
 						      NULL/*no-callback-for-ike*/);
 	if (dnsr == NULL) {
@@ -455,7 +462,7 @@ bool initiator_fetch_idr_ipseckey(struct ike_sa *ike)
  * Note: libunbound call back quirck, if the data is local or cached
  * the call back function will be called without returning.
  */
-dns_status responder_fetch_idi_ipseckey(struct ike_sa *ike,
+dns_status responder_fetch_idi_ipseckey(struct ike_sa *ike, struct msg_digest *md,
 					stf_status (*callback)(struct ike_sa *ike,
 							       struct msg_digest *md,
 							       bool err))
@@ -463,7 +470,7 @@ dns_status responder_fetch_idi_ipseckey(struct ike_sa *ike,
 	dns_status ret_idi;
 	dns_status ret_a = DNS_OK;
 	struct p_dns_req *dnsr_a = NULL;
-	struct p_dns_req *dnsr_idi = ipseckey_qry_st_init(ike,
+	struct p_dns_req *dnsr_idi = ipseckey_qry_st_init(ike, md,
 							  responder_fetch_idi_ipseckey_continue,
 							  callback);
 
@@ -484,7 +491,7 @@ dns_status responder_fetch_idi_ipseckey(struct ike_sa *ike,
 	if (ike->sa.st_connection->config->dns_match_id) {
 		struct id id = ike->sa.st_connection->remote->host.id;
 		if (id.kind == ID_FQDN) {
-			dnsr_a = qry_st_init(ike, LDNS_RR_TYPE_A, "A",
+			dnsr_a = qry_st_init(ike, md, LDNS_RR_TYPE_A, "A",
 					     idi_a_fetch_continue,
 					     callback);
 			if (dnsr_a == NULL) {

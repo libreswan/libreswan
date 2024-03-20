@@ -1870,6 +1870,13 @@ bool state_is_busy(const struct state *st)
 		    st->st_serialno, st->st_v1_background_md);
 		return true;
 	}
+
+	if (st->ipseckey_dnsr != NULL) {
+		dbg("#%lu is busy; has IPSECKEY DNS %p",
+		    st->st_serialno, st->ipseckey_dnsr);
+		return true;
+	}
+
 	/*
 	 * If IKEv1 is doing something in the background then the
 	 * state isn't busy.
