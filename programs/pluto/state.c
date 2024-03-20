@@ -975,6 +975,12 @@ void delete_state(struct state *st)
 		md_delref(&md);
 	}
 
+	/* if there's an IKEv1 backgroud md, release it */
+	if (st->st_v1_background_md != NULL) {
+		ldbg(st->logger, "releasing IKEv1 MD received during background task");
+		md_delref(&st->st_v1_background_md);
+	}
+
 	/* delete any pending timer event */
 	delete_state_event(&st->st_event, HERE);
 	delete_state_event(&st->st_retransmit_event, HERE);
@@ -1856,6 +1862,12 @@ bool state_is_busy(const struct state *st)
 	if (st->st_suspended_md != NULL) {
 		dbg("#%lu is busy; has suspended MD %p",
 		    st->st_serialno, st->st_suspended_md);
+		return true;
+	}
+
+	if (st->st_v1_background_md != NULL) {
+		dbg("#%lu is busy; has background MD %p",
+		    st->st_serialno, st->st_v1_background_md);
 		return true;
 	}
 	/*

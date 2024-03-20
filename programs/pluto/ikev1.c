@@ -1760,21 +1760,26 @@ void process_v1_packet(struct msg_digest *md)
 	if ((md->hdr.isa_flags & ISAKMP_FLAGS_v1_ENCRYPTION) &&
 	    st != NULL &&
 	    !st->hidden_variables.st_skeyid_calculated) {
+		PEXPECT(st->logger, st->st_offloaded_task_in_background);
 		endpoint_buf b;
 		dbg("received encrypted packet from %s but exponentiation still in progress",
 		    str_endpoint(&md->sender, &b));
 
 		/*
-		 * if there was a previous packet, let it go, and go
+		 * If there was a previous packet, let it go, and go
 		 * with most recent one.
+		 *
+		 * XXX: since the presence of .st_v1_background_md
+		 * flags the state as busy, this shouldn't happen!?!
 		 */
-		if (st->st_suspended_md != NULL) {
+		PEXPECT(st->logger, st->st_v1_background_md == NULL);
+		if (st->st_v1_background_md != NULL) {
 			dbg("suspend: releasing suspended operation for "PRI_SO" MD@%p before completion "PRI_WHERE,
-			    st->st_serialno, st->st_suspended_md,
+			    st->st_serialno, st->st_v1_background_md,
 			    pri_where(HERE));
-			md_delref(&st->st_suspended_md);
+			md_delref(&st->st_v1_background_md);
 		}
-		suspend_any_md(st, md);
+		st->st_v1_background_md = md_addref(md);
 		return;
 	}
 

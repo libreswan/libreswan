@@ -588,42 +588,28 @@ struct state {
 	 * offloaded to a crypto helper (or for that matter a child
 	 * process or anything).
 	 *
-	 * ST_V1_OFFLOADED_TASK_IN_BACKGROUND is more complicated:
+	 * IKEv1's use of .st_offloaded_task_in_background is more
+	 * complicated:
 	 *
-	 * In IKEv1, the responder in main mode state MAIN_R1, after
-	 * sending its KE+NONCE, will kick off the shared DH secret
-	 * calculation in the 'background' - that is before it has
-	 * received the first encrypted packet and actually needs the
-	 * shared DH secret.  The responder than transitions to state
-	 * MAIN_R2; and ST_SUSPENDED_MD will be left NULL and the
-	 * above is set to TRUE.
+	 * In main mode state MAIN_R1, after sending its KE+NONCE,
+	 * will kick off the shared DH secret calculation in the
+	 * 'background' (i.e., before it has received the first
+	 * encrypted packet and actually needs the shared DH secret)
+	 * the responder than transitions to state MAIN_R2.
+	 * .st_suspended_md will be left NULL and
+	 * .st_offloaded_task_in_background is set.
 	 *
 	 * Later, if the shared DH secret is still being calculated
-	 * when the responder receives the next, and encrypted,
-	 * packet, that packet will be saved in .st_suspended_md and
-	 * things will really suspend (instead of clearing
-	 * ST_V1_OFFLOADED_TASK_IN_BACKGROUND, ST_SUSPENDED_MD is used
-	 * as the state-busy marker).
+	 * and the responder receives the next, and encrypted, packet,
+	 * that packet will be saved in .st_v1_background_md.  When
+	 * the crypto calculation completes that MD will be fed into
+	 * the state machine.
 	 *
-	 * IKEv2 doesn't have this complexity and instead waits for
-	 * that encrypted packet before kicking off the shared DH
-	 * secret calculation.
-	 *
-	 * But wait, with ST_SUSPENDED_MD, there's more:
-	 *
-	 * The initial initiator (both IKEv1 and IKEv2), while
-	 * KE+NONCE is being calculated, in addition to setting
-	 * ST_OFFLOADED_TASK, will have ST_SUSPENDED_MD set to a
-	 * 'fake_md' (grep for it).  This is because the initial
-	 * initiator can't have a real MD, and (presumably) faking one
-	 * stops a core dump - the MD contains a pointer to ST and
-	 * code likes to use that to find its state.  In the past
-	 * (before ST_OFFLOADED_TASK was added), its presence would
-	 * have also served as a state-is-busy marker.
+	 * IKEv2 has similar complexity with fragments.
 	 */
 	struct job *st_offloaded_task;
 	bool st_offloaded_task_in_background;
-
+	struct msg_digest *st_v1_background_md;	/* arrived during background task */
 	struct msg_digest *st_suspended_md;  /* suspended state-transition */
 
 	chunk_t st_p1isa;	/* v1 Phase 1 initiator SA (Payload) for HASH */

@@ -772,10 +772,11 @@ stf_status main_inI2_outR2(struct state *st, struct msg_digest *md)
 static dh_shared_secret_cb main_inI2_outR2_continue2;	/* type assertion */
 
 static stf_status main_inI2_outR2_continue2(struct state *st,
-					    struct msg_digest *md)
+					    struct msg_digest *null_md)
 {
 	dbg("main_inI2_outR2_calcdone for #%lu: calculate DH finished",
 	    st->st_serialno);
+	PEXPECT(st->logger, null_md == NULL);
 
 	/*
 	 * Ignore error.  It will be handled handled when the next
@@ -787,16 +788,21 @@ static stf_status main_inI2_outR2_continue2(struct state *st,
 	}
 
 	/*
-	 * If there was a packet received while we were calculating, then
-	 * process it now.
+	 * If there was a packet received while we were calculating,
+	 * then process it now.
+	 *
 	 * Otherwise, the result awaits the packet.
 	 */
-	if (md != NULL) {
+	if (st->st_v1_background_md != NULL) {
+		/* steal */
+		struct msg_digest *md = st->st_v1_background_md;
+		st->st_v1_background_md = NULL;
 		/*
 		 * This will call complete_v1_state_transition() when
 		 * needed.
 		 */
 		process_packet_tail(md);
+		md_delref(&md);
 	}
 	return STF_SKIP_COMPLETE_STATE_TRANSITION;
 }
