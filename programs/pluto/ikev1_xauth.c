@@ -1114,6 +1114,7 @@ struct xauth_immediate_context {
 	bool success;
 	so_serial_t serialno;
 	char *name;
+	struct msg_digest *md;
 };
 
 static resume_cb xauth_immediate_callback;
@@ -1122,6 +1123,7 @@ static stf_status xauth_immediate_callback(struct state *st,
 					   void *arg)
 {
 	struct xauth_immediate_context *xic = (struct xauth_immediate_context *)arg;
+	PEXPECT(st->logger, md == xic->md);
 	if (st == NULL) {
 		log_state(RC_LOG, st,
 			  "XAUTH: #%lu: state destroyed for user '%s'",
@@ -1131,16 +1133,19 @@ static stf_status xauth_immediate_callback(struct state *st,
 		ikev1_xauth_callback(st, md, xic->name, xic->success);
 	}
 	pfree(xic->name);
+	md_delref(&xic->md);
 	pfree(xic);
 	return STF_SKIP_COMPLETE_STATE_TRANSITION;
 }
 
-static void xauth_immediate(const char *name, const struct state *st, bool success)
+static void xauth_immediate(const char *name, const struct state *st,
+			    struct msg_digest *md, bool success)
 {
 	struct xauth_immediate_context *xic = alloc_thing(struct xauth_immediate_context, "xauth next");
 	xic->success = success;
 	xic->serialno = st->st_serialno;
 	xic->name = clone_str(name, "xauth next name");
+	xic->md = md_addref(md);
 	schedule_resume("xauth immediate", st->st_serialno,
 			xauth_immediate_callback, xic);
 }
@@ -1151,7 +1156,9 @@ static void xauth_immediate(const char *name, const struct state *st, bool succe
  * @param name Username
  * @param password Password
  */
+
 static void xauth_launch_authent(struct state *st,
+				 struct msg_digest *md,
 				 shunk_t *name,
 				 shunk_t *password)
 {
@@ -1192,14 +1199,14 @@ static void xauth_launch_authent(struct state *st,
 			  "XAUTH: password file authentication method requested to authenticate user '%s'",
 			  arg_name);
 		bool success = do_file_authentication(st, arg_name, arg_password, st->st_connection->name);
-		xauth_immediate(arg_name, st, success);
+		xauth_immediate(arg_name, st, md, success);
 		break;
 
 	case XAUTHBY_ALWAYSOK:
 		log_state(RC_LOG, st,
 			  "XAUTH: authentication method 'always ok' requested to authenticate user '%s'",
 			  arg_name);
-		xauth_immediate(arg_name, st, true);
+		xauth_immediate(arg_name, st, md, true);
 		break;
 
 	default:
@@ -1362,7 +1369,7 @@ stf_status xauth_inR0(struct state *st, struct msg_digest *md)
 			return stat == STF_OK ? STF_FAIL_v1N : stat;
 		}
 	} else {
-		xauth_launch_authent(st, &name, &password);
+		xauth_launch_authent(st, md, &name, &password);
 		return STF_SUSPEND;
 	}
 }
