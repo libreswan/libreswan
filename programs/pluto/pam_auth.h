@@ -36,6 +36,7 @@ typedef stf_status pam_auth_callback_fn(struct state *st,
 void pam_auth_abort(struct state *st, const char *story);
 
 bool pam_auth_fork_request(struct state *st,
+			   struct msg_digest *md,
 			   const char *name,
 			   const char *password,
 			   const char *atype,

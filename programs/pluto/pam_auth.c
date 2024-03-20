@@ -168,6 +168,7 @@ static int pam_child(void *arg, struct logger *logger)
 }
 
 bool pam_auth_fork_request(struct state *st,
+			   struct msg_digest *md,
 			   const char *name,
 			   const char *password,
 			   const char *atype,
@@ -196,8 +197,9 @@ bool pam_auth_fork_request(struct state *st,
 
 	dbg("PAM: #%lu: main-process starting PAM-process for authenticating user '%s'",
 	    pamauth->serialno, pamauth->ptarg.name);
-	pamauth->child = server_fork("pamauth", pamauth->serialno,
-				     pam_child, pam_callback, pamauth,
+	pamauth->child = server_fork("pamauth", pamauth->serialno, md,
+				     pam_child,
+				     pam_callback, pamauth,
 				     st->logger);
 	if (pamauth->child < 0) {
 		log_state(RC_LOG, st,

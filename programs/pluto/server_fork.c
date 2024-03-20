@@ -59,6 +59,7 @@ struct pid_entry {
 	void *context;
 	server_fork_cb *callback;
 	so_serial_t serialno;
+	struct msg_digest *md;
 	const char *name;
 	monotime_t start_time;
 	int fd; /* valid when fdl != NULL */
@@ -126,7 +127,10 @@ void show_process_status(struct show *s)
 	}
 }
 
-static struct pid_entry *add_pid(const char *name, so_serial_t serialno, pid_t pid,
+static struct pid_entry *add_pid(const char *name,
+				 so_serial_t serialno,
+				 struct msg_digest *md,
+				 pid_t pid,
 				 server_fork_cb *callback, void *context,
 				 struct logger *logger)
 {
@@ -141,6 +145,7 @@ static struct pid_entry *add_pid(const char *name, so_serial_t serialno, pid_t p
 	new_pid->name = name;
 	new_pid->start_time = mononow();
 	new_pid->logger = clone_logger(logger, HERE);
+	new_pid->md = md_addref(md);
 	pid_entry_db_init_pid_entry(new_pid);
 	pid_entry_db_add(new_pid);
 	return new_pid;
@@ -149,6 +154,7 @@ static struct pid_entry *add_pid(const char *name, so_serial_t serialno, pid_t p
 static void free_pid_entry(struct pid_entry **p)
 {
 	free_logger(&(*p)->logger, HERE);
+	md_delref(&(*p)->md);
 	dbg_free("pid", *p, HERE);
 	pfree(*p);
 	*p = NULL;
@@ -203,7 +209,10 @@ static bool dump_fd(struct pid_entry *pid_entry)
 	return true; /* try again */
 }
 
-int server_fork(const char *name, so_serial_t serialno, server_fork_op *op,
+int server_fork(const char *name,
+		so_serial_t serialno,
+		struct msg_digest *md,
+		server_fork_op *op,
 		server_fork_cb *callback, void *context,
 		struct logger *logger)
 {
@@ -216,7 +225,7 @@ int server_fork(const char *name, so_serial_t serialno, server_fork_op *op,
 		exit(op(context, logger));
 		break;
 	default: /* parent */
-		add_pid(name, serialno, pid, callback, context, logger);
+		add_pid(name, serialno, md, pid, callback, context, logger);
 		return pid;
 	}
 }
@@ -297,6 +306,7 @@ void server_fork_sigchld_handler(struct logger *logger)
 						    pid_entry->logger);
 			} else {
 				struct msg_digest *md = unsuspend_any_md(st);
+				PEXPECT(st->logger, pid_entry->md == md);
 				if (DBGP(DBG_CPU_USAGE)) {
 					deltatime_t took = monotimediff(mononow(), pid_entry->start_time);
 					deltatime_buf dtb;
@@ -401,7 +411,8 @@ void server_fork_exec(const char *path,
 	ldbg(logger, "created %s helper (pid:%d) using %s+execve",
 	     what, pid, USE_VFORK ? "vfork" : "fork");
 	close(fds[1/*write-fd*/]);
-	struct pid_entry *entry = add_pid(what, SOS_NOBODY, pid, callback, callback_context, logger);
+	struct pid_entry *entry = add_pid(what, SOS_NOBODY, /*md*/NULL,
+					  pid, callback, callback_context, logger);
 	/* save the FD */
 	entry->fd = fds[0/*read-fd*/];
 	/* enable nonblock */

@@ -747,7 +747,7 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 		llog_sa(RC_LOG, ike,
 			"IKEv2: [XAUTH]PAM method requested to authorize '%s'",
 			thatid);
-		if (!pam_auth_fork_request(&ike->sa, thatid, "password",
+		if (!pam_auth_fork_request(&ike->sa, md, thatid, "password",
 					   "IKEv2", ikev2_pam_continue)) {
 			return STF_FATAL;
 		}

@@ -1189,7 +1189,7 @@ static void xauth_launch_authent(struct state *st,
 		log_state(RC_LOG, st,
 			  "XAUTH: PAM authentication method requested to authenticate user '%s'",
 			  arg_name);
-		pam_auth_fork_request(st, arg_name, arg_password,
+		pam_auth_fork_request(st, md, arg_name, arg_password,
 				      "XAUTH", ikev1_xauth_callback);
 		break;
 #endif
