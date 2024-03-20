@@ -28,6 +28,7 @@ struct ike_alg;
 struct hash_desc;
 struct encrypt_desc;
 struct prf_desc;
+struct logger;
 
 void init_crypt_symkey(struct logger *logger);
 

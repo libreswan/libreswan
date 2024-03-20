@@ -40,6 +40,7 @@
 #include "authby.h"
 #include "encap_proto.h"
 #include "sa_type.h"
+#include "constants.h"		/* for enum keyword_auth; et.al. */
 
 #ifndef DEFAULT_CTL_SOCKET
 # define DEFAULT_CTL_SOCKET IPSEC_RUNDIR "/pluto.ctl"

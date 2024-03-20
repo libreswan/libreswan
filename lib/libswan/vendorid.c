@@ -29,6 +29,7 @@
 
 #include "vendorid.h"
 #include "lswlog.h"
+#include "lswalloc.h"
 
 /**
  * Listing of interesting but details unknown Vendor IDs:

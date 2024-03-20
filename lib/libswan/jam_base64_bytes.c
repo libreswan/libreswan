@@ -18,6 +18,7 @@
 #include "chunk.h"
 #include "ttodata.h"	/* for datatot() */
 #include "passert.h"
+#include "lswalloc.h"
 
 size_t jam_base64_bytes(struct jambuf *buf, const void *ptr, size_t size)
 {

@@ -17,6 +17,7 @@
 #include "chunk.h"
 #include "ttodata.h"	/* for datatot() */
 #include "passert.h"
+#include "lswalloc.h"
 
 void llog_base64_bytes(lset_t rc_flags,
 		       const struct logger *logger,

@@ -25,7 +25,7 @@
 #include "where.h"
 #include "passert.h"
 #include "lswlog.h"		/* for cur_debugging */
-
+#include "lswalloc.h"
 #include "lswtool.h"		/* for tool_init_log() */
 
 unsigned fails;

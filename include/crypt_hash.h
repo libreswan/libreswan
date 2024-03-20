@@ -23,6 +23,7 @@
 
 struct hash_desc;
 struct crypt_hash;
+struct logger;
 
 /*
  * Initialization.

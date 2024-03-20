@@ -29,6 +29,7 @@
 #include "passert.h"
 #include "ip_address.h"
 #include "ip_info.h"
+#include "lswalloc.h"
 
 /*
  * ttoaddress_dns

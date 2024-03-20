@@ -26,7 +26,7 @@
 #include <stdint.h>	/* uint8_t */
 
 #include "hunk.h"
-#include "lswalloc.h"	/* for freeanychunk() referring to pfree() which can go away */
+#include "shunk.h"
 
 /*
  * chunk is a simple pointer-and-size abstraction

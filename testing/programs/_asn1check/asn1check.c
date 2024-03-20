@@ -23,6 +23,7 @@
 
 #include "x509.h"
 #include "asn1.h"
+#include "lswalloc.h"		/* for leak_detective; */
 
 int fails = 0;
 

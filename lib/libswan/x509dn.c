@@ -30,6 +30,7 @@
 #include "asn1.h"
 #include "lswlog.h"
 #include "id.h"
+#include "lswalloc.h"
 
 /* coding of X.501 distinguished name */
 typedef const struct {

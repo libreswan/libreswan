@@ -18,6 +18,8 @@
 
 #include "chunk.h"
 
+struct logger;
+
 chunk_t decode_to_chunk(const char *prefix, const char *string);
 PK11SymKey *decode_hex_to_symkey(const char *prefix, const char *string,
 				 struct logger *logger);

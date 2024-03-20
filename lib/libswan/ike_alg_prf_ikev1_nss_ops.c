@@ -23,6 +23,7 @@
 #include "ike_alg_prf_ikev1_ops.h"
 #include "crypt_symkey.h"
 #include "lswlog.h"
+#include "lswalloc.h"
 
 /*
  * Compute: SKEYID = prf(Ni_b | Nr_b, g^xy)

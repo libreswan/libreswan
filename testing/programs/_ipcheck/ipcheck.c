@@ -23,6 +23,7 @@
 #include "stdlib.h"
 #include "ipcheck.h"
 #include "lswtool.h"
+#include "lswalloc.h"		/* for leak_detective; */
 
 unsigned fails;
 enum have_dns have_dns = DNS_NO;

@@ -11,6 +11,7 @@
 #include "ip_sockaddr.h"
 #include "ip_version.h"
 #include "ip_index.h"
+#include "constants.h"			/* for enum ikev2_ts_addr_range_type; et.al. */
 
 struct ip_info {
 	/*
