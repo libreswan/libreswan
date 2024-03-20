@@ -1,0 +1,6 @@
+Two ends initiate CREATE_CHILD_SA simultaneously; on west the crypto crosses
+
+- west initiates CREATE_CHILD_SA to east, puts response on-hold
+- east initiates CREATE_CHILD_SA to west, west puts request on-hold
+- west processes CREATE_CHILD_SA response; suspends for crypto
+- west processes CREATE_CHILD_SA request; suspends for crypt

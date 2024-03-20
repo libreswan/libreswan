@@ -1,0 +1,166 @@
+/testing/guestbin/swan-prep --nokey
+Creating empty NSS database
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec add cuckold
+"cuckold": added IKEv2 connection
+west #
+ ipsec add cuckoo
+"cuckoo": added IKEv2 connection
+west #
+ ipsec up cuckold
+"cuckold" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"cuckold" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"cuckold" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"cuckold" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"cuckold" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"cuckold" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+west #
+ ipsec whack --impair helper_thread_delay:5
+west #
+ # the count starts now!
+west #
+ ipsec whack --impair block_inbound
+IMPAIR: recording all inbound messages
+IMPAIR: block all inbound messages: no -> yes
+west #
+ ipsec up --asynchronous cuckoo
+"cuckoo" #3: initiating Child SA using IKE SA #1
+"cuckoo" #3: IMPAIR: job 3 helper 0 #3/#3 submit_v2_CREATE_CHILD_SA_new_child (dh): helper is pausing for 5 seconds
+west #
+ ../../guestbin/wait-for-pluto.sh '#3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1'
+"cuckoo" #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1
+west #
+ # Process the response to this end's CREATE_CHILD_SA request.  It
+west #
+ # needs to finish DH so expect it it be submitted to the crypto
+west #
+ # helper.
+west #
+ ../../guestbin/drip-inbound.sh 1 '#3: IMPAIR: job 4 helper 0 #1/#3 .* pausing for 5 seconds'
+packet from 192.1.2.23:500: IMPAIR: blocking inbound message 1
+IMPAIR: start processing inbound drip packet 1
+IMPAIR: stop processing inbound drip packet 1
+"cuckoo" #3: IMPAIR: job 4 helper 0 #1/#3 process_v2_CREATE_CHILD_SA_child_response (dh): helper is pausing for 5 seconds
+west #
+ # Now process the peer's CREATE_CHILD_SA request.  This two needs a
+west #
+ # full crypto calculation so expect it to be sent to the crypto
+west #
+ # helper.
+west #
+ #
+west #
+ # XXX: it is tied to #1/#1 but should be #1/#4
+west #
+ ../../guestbin/drip-inbound.sh 2 '#1: IMPAIR: job 5 helper 0 #1/#1 .* pausing for 5 seconds'
+packet from 192.1.2.23:500: IMPAIR: blocking inbound message 2
+IMPAIR: start processing inbound drip packet 2
+IMPAIR: stop processing inbound drip packet 2
+"cuckold" #1: IMPAIR: job 5 helper 0 #1/#1 process_v2_CREATE_CHILD_SA_request (dh): helper is pausing for 5 seconds
+west #
+ # finally wait for things to establish
+west #
+ ../../guestbin/wait-for-pluto.sh '#4: responder established Child SA using #1'
+"cuckoo" #4: responder established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.20.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 DPD=passive}
+west #
+ ../../guestbin/wait-for-pluto.sh '#3: initiator established Child SA using #1'
+"cuckoo" #3: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.20.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 DPD=passive}
+west #
+ ipsec whack --no-impair block_inbound
+IMPAIR: block all inbound messages: yes -> no
+west #
+ ipsec whack --no-impair helper_thread_delay
+west #
+ # non-zero counts confirm encrypted traffic flowing
+west #
+ ipsec trafficstatus
+#2: "cuckold", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+#3: "cuckoo", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+#4: "cuckoo", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+west #
+ # do things line up?
+west #
+ ../../guestbin/ipsec-kernel-state.sh
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+west #
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.0.2.0/24 dst 192.0.3.0/24
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+src 192.0.2.0/24 dst 192.0.3.0/24
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+src 192.0.3.0/24 dst 192.0.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.0.3.0/24 dst 192.0.20.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.0.20.0/24 dst 192.0.3.0/24
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+src 192.0.20.0/24 dst 192.0.3.0/24
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+west #
+ 
