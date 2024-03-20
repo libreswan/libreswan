@@ -35,7 +35,10 @@ typedef stf_status (ke_and_nonce_cb)(struct state *st, struct msg_digest *md,
  * When DH is non-null, compute do_local_secret.  Compute nonce.
  */
 
-void submit_ke_and_nonce(struct state *st, const struct dh_desc *dh,
+void submit_ke_and_nonce(struct state *callback_sa,
+			 struct state *task_sa,
+			 struct msg_digest *md,
+			 const struct dh_desc *dh,
 			 ke_and_nonce_cb *cb,
 			 bool detach_whack, where_t where);
 

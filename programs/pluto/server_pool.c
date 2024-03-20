@@ -43,6 +43,7 @@
 #include "list_entry.h"
 #include "pluto_timing.h"
 #include "connections.h"
+#include "demux.h"			/* for md_addref() md_delref() */
 
 #ifdef USE_SECCOMP
 # include "pluto_seccomp.h"
@@ -81,6 +82,7 @@ struct job {
 	const struct task_handler *handler;
 	struct list_entry backlog;
 	so_serial_t so_serialno;		/* sponsoring state-object's serial number */
+	struct msg_digest *md;
 	bool cancelled;
 	where_t where;
 	job_id_t job_id;
@@ -313,17 +315,18 @@ static void inline_worker(const char *story UNUSED, struct state *unused_st UNUS
  *
  */
 
-void submit_task(const struct logger *logger,
+void submit_task(struct state *callback_sa,
+		 struct state *task_sa,
+		 struct msg_digest *md,
 		 bool detach_whack,
-		 struct state *st,
 		 struct task *task,
 		 const struct task_handler *handler,
 		 where_t where)
 {
-	if (st->st_offloaded_task != NULL) {
-		llog_pexpect(st->logger, where,
+	if (callback_sa->st_offloaded_task != NULL) {
+		llog_pexpect(callback_sa->logger, where,
 			     "state already has outstanding crypto ["PRI_WHERE"]",
-			     pri_where(st->st_offloaded_task->where));
+			     pri_where(callback_sa->st_offloaded_task->where));
 		return;
 	}
 
@@ -332,11 +335,7 @@ void submit_task(const struct logger *logger,
 	job->cancelled = false;
 	job->where = where;
 	init_list_entry(&backlog_info, job, &job->backlog);
-	job->so_serialno = SOS_NOBODY;
-
-	passert(st->st_serialno != SOS_NOBODY);
-	passert(job->so_serialno == SOS_NOBODY);
-	job->so_serialno = st->st_serialno;
+	job->so_serialno = callback_sa->st_serialno;
 
 	/*
 	 * set up the id
@@ -353,17 +352,18 @@ void submit_task(const struct logger *logger,
 	/*
 	 * Save in case it needs to be cancelled.
 	 */
-	st->st_offloaded_task = job;
-	st->st_offloaded_task_in_background = false;
-	job->logger = clone_logger(logger, HERE);
+	callback_sa->st_offloaded_task = job;
+	callback_sa->st_offloaded_task_in_background = false;
+	job->logger = clone_logger(task_sa->logger, HERE);
+	job->md = md_addref(md);
 	ldbg(job->logger, PRI_JOB": added to pending queue", pri_job(job));
 
 	/*
 	 * Schedule a timeout event to cap the suspend time.
 	 * STF_SUSPEND will be looking for this.
 	 */
-	delete_event(st);
-	event_schedule(EVENT_CRYPTO_TIMEOUT, EVENT_CRYPTO_TIMEOUT_DELAY, st);
+	delete_event(callback_sa);
+	event_schedule(EVENT_CRYPTO_TIMEOUT, EVENT_CRYPTO_TIMEOUT_DELAY, callback_sa);
 
 	/*
 	 * do it all ourselves?
@@ -384,7 +384,7 @@ void submit_task(const struct logger *logger,
 		}
 
 		if (detach_whack) {
-			whack_detach(job->logger, logger);
+			whack_detach(job->logger, task_sa->logger);
 		}
 
 		schedule_callback("inline crypto", delay,
@@ -393,7 +393,7 @@ void submit_task(const struct logger *logger,
 	}
 
 	if (detach_whack) {
-		whack_detach(job->logger, logger);
+		whack_detach(job->logger, task_sa->logger);
 	}
 
 	/* add to backlog */
@@ -426,6 +426,7 @@ static void free_job(struct job **jobp)
 	passert(job->handler->cleanup_cb != NULL);
 	job->handler->cleanup_cb(&job->task);
 	pexpect(job->task == NULL); /* did your job */
+	md_delref(&job->md);
 	/* now free up the continuation */
 	free_logger(&job->logger, HERE);
 	dbg_free("job", job, HERE);

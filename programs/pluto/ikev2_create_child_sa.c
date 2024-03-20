@@ -513,7 +513,8 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_child(struct ike_sa *ike,
 	     larval_child->sa.st_pfs_group->common.fqn),
 	    pri_shunk(c->child.sec_label));
 
-	submit_ke_and_nonce(&larval_child->sa, larval_child->sa.st_pfs_group /*possibly-null*/,
+	submit_ke_and_nonce(/*callback*/&larval_child->sa, /*task*/&larval_child->sa, /*no-md*/NULL,
+			    larval_child->sa.st_pfs_group /*possibly-null*/,
 			    queue_v2_CREATE_CHILD_SA_rekey_child_request,
 			    detach_whack, HERE);
 
@@ -798,7 +799,8 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_new_child(struct ike_sa *ike,
 	    str_policy(policy, &pb),
 	    larval_child->sa.st_pfs_group == NULL ? "no-pfs" : larval_child->sa.st_pfs_group->common.fqn);
 
-	submit_ke_and_nonce(&larval_child->sa, larval_child->sa.st_pfs_group /*possibly-null*/,
+	submit_ke_and_nonce(/*callback*/&larval_child->sa, /*task*/&larval_child->sa, /*no-md*/NULL,
+			    larval_child->sa.st_pfs_group /*possibly-null*/,
 			    queue_v2_CREATE_CHILD_SA_new_child_request,
 			    detach_whack, HERE);
 	return larval_child;
@@ -1058,7 +1060,7 @@ stf_status process_v2_CREATE_CHILD_SA_request(struct ike_sa *ike,
 	 * acting more like a flag or perhaps, even though DH
 	 * was negotiated it can be ignored?
 	 */
-	submit_ke_and_nonce(&ike->sa,
+	submit_ke_and_nonce(/*callback*/&ike->sa, /*task*/&ike->sa, md,
 			    larval_child->sa.st_pfs_group != NULL ? larval_child->sa.st_oakley.ta_dh : NULL,
 			    process_v2_CREATE_CHILD_SA_request_continue_1,
 			    /*detach_whack*/false, HERE);
@@ -1104,7 +1106,7 @@ static stf_status process_v2_CREATE_CHILD_SA_request_continue_1(struct state *ik
 
 	unpack_KE_from_helper(&larval_child->sa, local_secret, &larval_child->sa.st_gr);
 	/* initiate calculation of g^xy */
-	submit_dh_shared_secret(&ike->sa, &larval_child->sa,
+	submit_dh_shared_secret(/*callback*/&ike->sa, /*task*/&larval_child->sa, request_md,
 				larval_child->sa.st_gi,
 				process_v2_CREATE_CHILD_SA_request_continue_2,
 				HERE);
@@ -1353,7 +1355,8 @@ stf_status process_v2_CREATE_CHILD_SA_child_response(struct ike_sa *ike,
 	}
 
 	chunk_t remote_ke = larval_child->sa.st_gr;
-	submit_dh_shared_secret(&ike->sa, &larval_child->sa, remote_ke,
+	submit_dh_shared_secret(/*callback*/&ike->sa, /*task*/&larval_child->sa, response_md,
+				remote_ke,
 				process_v2_CREATE_CHILD_SA_child_response_continue_1, HERE);
 	return STF_SUSPEND;
 }
@@ -1460,7 +1463,8 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_ike(struct ike_sa *ike,
 	    str_policy(larval_ike->sa.st_policy, &pb),
 	    larval_ike->sa.st_oakley.ta_dh->common.fqn);
 
-	submit_ke_and_nonce(&larval_ike->sa, larval_ike->sa.st_oakley.ta_dh,
+	submit_ke_and_nonce(/*callback*/&larval_ike->sa, /*task*/&larval_ike->sa, /*no-md*/NULL,
+			    larval_ike->sa.st_oakley.ta_dh,
 			    queue_v2_CREATE_CHILD_SA_rekey_ike_request,
 			    detach_whack, HERE);
 	/* "return STF_SUSPEND" */
@@ -1636,7 +1640,8 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
 		return STF_OK; /* IKE */
 	}
 
-	submit_ke_and_nonce(&ike->sa, larval_ike->sa.st_oakley.ta_dh,
+	submit_ke_and_nonce(/*callback*/&ike->sa, /*task*/&ike->sa, request_md,
+			    larval_ike->sa.st_oakley.ta_dh,
 			    process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_1,
 			    /*detach_whack*/false, HERE);
 	return STF_SUSPEND;
@@ -1675,7 +1680,7 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_1(struct
 					   &larval_ike->sa.st_ike_rekey_spis.initiator);
 	larval_ike->sa.st_ike_rekey_spis.responder = ike_responder_spi(&request_md->sender,
 								       larval_ike->sa.logger);
-	submit_dh_shared_secret(&ike->sa, &larval_ike->sa,
+	submit_dh_shared_secret(/*callback*/&ike->sa, /*task*/&larval_ike->sa, request_md,
 				larval_ike->sa.st_gi/*responder needs initiator KE*/,
 				process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_2,
 				HERE);
@@ -1831,7 +1836,7 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response(struct ike_sa *ike,
 					   &larval_ike->sa.st_ike_rekey_spis.responder);
 
 	/* initiate calculation of g^xy for rekey */
-	submit_dh_shared_secret(&ike->sa, &larval_ike->sa,
+	submit_dh_shared_secret(/*callback*/&ike->sa, /*task*/&larval_ike->sa, response_md,
 				larval_ike->sa.st_gr/*initiator needs responder's KE*/,
 				process_v2_CREATE_CHILD_SA_rekey_ike_response_continue_1,
 				HERE);

@@ -706,7 +706,9 @@ void process_v2_request_no_skeyseed(struct ike_sa *ike, struct msg_digest *md)
 	 * kick off SKEYSEED.
 	 */
 	if (!ike->sa.st_offloaded_task_in_background) {
-		submit_dh_shared_secret(&ike->sa, &ike->sa, ike->sa.st_gi/*responder needs initiator KE*/,
+		submit_dh_shared_secret(/*callback*/&ike->sa, /*task*/&ike->sa,
+					/*no-md:in-background*/NULL,
+					ike->sa.st_gi/*responder needs initiator KE*/,
 					process_v2_request_no_skeyseed_continue, HERE);
 		ike->sa.st_offloaded_task_in_background = true;
 	}

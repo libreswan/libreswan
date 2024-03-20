@@ -101,7 +101,10 @@ static const struct task_handler ke_and_nonce_handler = {
 	.completed_cb = complete_ke_and_nonce,
 };
 
-void submit_ke_and_nonce(struct state *st, const struct dh_desc *dh,
+void submit_ke_and_nonce(struct state *callback_sa,
+			 struct state *task_sa,
+			 struct msg_digest *md,
+			 const struct dh_desc *dh,
 			 ke_and_nonce_cb *cb,
 			 bool detach_whack,
 			 where_t where)
@@ -109,8 +112,8 @@ void submit_ke_and_nonce(struct state *st, const struct dh_desc *dh,
 	struct task *task = alloc_thing(struct task, "dh");
 	task->dh = dh;
 	task->cb = cb;
-	submit_task(st->logger, detach_whack,
-		    st, task, &ke_and_nonce_handler, where);
+	submit_task(/*callback*/callback_sa, /*task*/task_sa, md, detach_whack,
+		    task, &ke_and_nonce_handler, where);
 }
 
 /*

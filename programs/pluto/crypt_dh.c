@@ -195,12 +195,14 @@ static const struct task_handler dh_shared_secret_handler = {
 	.completed_cb = complete_dh_shared_secret,
 };
 
-void submit_dh_shared_secret(struct state *task_st,
-			     struct state *dh_st, chunk_t remote_ke,
+void submit_dh_shared_secret(struct state *callback_sa,
+			     struct state *dh_st,
+			     struct msg_digest *md,
+			     chunk_t remote_ke,
 			     dh_shared_secret_cb *cb, where_t where)
 {
 	dbg("submitting DH shared secret for "PRI_SO"/"PRI_SO" "PRI_WHERE,
-	    task_st->st_serialno, dh_st->st_serialno, pri_where(where));
+	    callback_sa->st_serialno, dh_st->st_serialno, pri_where(where));
 	if (dh_st->st_dh_shared_secret != NULL) {
 		llog_pexpect(dh_st->logger, where,
 			     "in %s expecting st->st_dh_shared_secret == NULL",
@@ -211,6 +213,7 @@ void submit_dh_shared_secret(struct state *task_st,
 	task->local_secret = dh_local_secret_addref(dh_st->st_dh_local_secret, HERE);
 	task->dh_serialno = dh_st->st_serialno;
 	task->cb = cb;
-	submit_task(dh_st->logger, /*detach_whack*/false,
-		    task_st, task, &dh_shared_secret_handler, where);
+	submit_task(/*callback*/callback_sa, /*task*/dh_st, md,
+		    /*detach_whack*/false,
+		    task, &dh_shared_secret_handler, where);
 }

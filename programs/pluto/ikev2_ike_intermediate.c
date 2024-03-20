@@ -391,7 +391,8 @@ stf_status process_v2_IKE_INTERMEDIATE_response(struct ike_sa *ike,
 	 * For now, do only one Intermediate Exchange round and
 	 * proceed with IKE_AUTH.
 	 */
-	submit_dh_shared_secret(&ike->sa, &ike->sa, ike->sa.st_gr/*initiator needs responder KE*/,
+	submit_dh_shared_secret(/*callback*/&ike->sa, /*task*/&ike->sa, md,
+				ike->sa.st_gr/*initiator needs responder KE*/,
 				process_v2_IKE_INTERMEDIATE_response_continue, HERE);
 	return STF_SUSPEND;
 }

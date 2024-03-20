@@ -90,7 +90,7 @@ static dh_shared_secret_cb aggr_inI1_outR1_continue2;	/* type assertion */
 static ke_and_nonce_cb aggr_inI1_outR1_continue1;	/* type assertion */
 
 static stf_status aggr_inI1_outR1_continue1(struct state *st,
-					    struct msg_digest *md UNUSED,
+					    struct msg_digest *md,
 					    struct dh_local_secret *local_secret,
 					    chunk_t *nonce)
 {
@@ -103,7 +103,8 @@ static stf_status aggr_inI1_outR1_continue1(struct state *st,
 	unpack_nonce(&st->st_nr, nonce);
 
 	/* set up second calculation */
-	submit_dh_shared_secret(st, st, st->st_gi/*initiator's KE*/,
+	submit_dh_shared_secret(/*callback*/st, /*task*/st, md,
+				st->st_gi/*initiator's KE*/,
 				aggr_inI1_outR1_continue2, HERE);
 
 	/*
@@ -273,7 +274,8 @@ stf_status aggr_inI1_outR1(struct state *null_st UNUSED,
 	RETURN_STF_FAIL_v1NURE(accept_v1_nonce(ike->sa.logger, md, &ike->sa.st_ni, "Ni"));
 
 	/* calculate KE and Nonce */
-	submit_ke_and_nonce(&ike->sa, ike->sa.st_oakley.ta_dh,
+	submit_ke_and_nonce(/*callback*/&ike->sa, /*task*/&ike->sa, md,
+			    ike->sa.st_oakley.ta_dh,
 			    aggr_inI1_outR1_continue1,
 			    /*detach_whack*/false, HERE);
 	return STF_SUSPEND;
@@ -589,7 +591,8 @@ stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 	ikev1_natd_init(st, md);
 
 	/* set up second calculation */
-	submit_dh_shared_secret(st, st, st->st_gr/*initiator needs responder's KE*/,
+	submit_dh_shared_secret(/*callback*/st, /*task*/st, md,
+				st->st_gr/*initiator needs responder's KE*/,
 				aggr_inR1_outI2_crypto_continue, HERE);
 	return STF_SUSPEND;
 }
@@ -1038,7 +1041,8 @@ struct ike_sa *aggr_outI1(struct connection *c,
 	/*
 	 * Calculate KE and Nonce.
 	 */
-	submit_ke_and_nonce(&ike->sa, ike->sa.st_oakley.ta_dh,
+	submit_ke_and_nonce(/*callback*/&ike->sa, /*task*/&ike->sa, /*no-md*/NULL,
+			    ike->sa.st_oakley.ta_dh,
 			    aggr_outI1_continue,
 			    /*detach_whack*/false, HERE);
 	statetime_stop(&start, "%s()", __func__);

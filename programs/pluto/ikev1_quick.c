@@ -677,11 +677,13 @@ struct child_sa *quick_outI1(struct ike_sa *isakmp,
 	child->sa.st_v1_ipsec_pred = replacing;
 
 	if (policy & POLICY_PFS) {
-		submit_ke_and_nonce(&child->sa, child->sa.st_pfs_group,
+		submit_ke_and_nonce(/*callback*/&child->sa, /*task*/&child->sa, /*no-md*/NULL,
+				    child->sa.st_pfs_group,
 				    quick_outI1_continue,
 				    /*detach_whack*/false, HERE);
 	} else {
-		submit_ke_and_nonce(&child->sa, NULL /* no-nonce*/,
+		submit_ke_and_nonce(/*callback*/&child->sa, /*task*/&child->sa, /*no-md*/NULL,
+				    NULL /* no-nonce*/,
 				    quick_outI1_continue,
 				    /*detach_whack*/false, HERE);
 	}
@@ -1257,7 +1259,8 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 
 	passert(child->sa.st_connection != NULL);
 
-	submit_ke_and_nonce(&child->sa, child->sa.st_pfs_group/*possibly-null*/,
+	submit_ke_and_nonce(/*callback*/&child->sa, /*task*/&child->sa, md,
+			    child->sa.st_pfs_group/*possibly-null*/,
 			    quick_inI1_outR1_continue1,
 			    /*detach_whack*/false, HERE);
 
@@ -1282,7 +1285,8 @@ static stf_status quick_inI1_outR1_continue1(struct state *st,
 	if (st->st_pfs_group != NULL) {
 		/* PFS is on: do a new DH */
 		unpack_KE_from_helper(st, local_secret, &st->st_gr);
-		submit_dh_shared_secret(st, st, st->st_gi,
+		submit_dh_shared_secret(/*callback*/st, /*task*/st, md,
+					st->st_gi,
 					quick_inI1_outR1_continue2,
 					HERE);
 		/*
@@ -1591,7 +1595,8 @@ stf_status quick_inR1_outI2(struct state *st, struct msg_digest *md)
 
 	if (st->st_pfs_group != NULL) {
 		/* set up DH calculation */
-		submit_dh_shared_secret(st, st, st->st_gr,
+		submit_dh_shared_secret(/*callback*/st, /*task*/st, md,
+					st->st_gr,
 					quick_inR1_outI2_continue,
 					HERE);
 		return STF_SUSPEND;

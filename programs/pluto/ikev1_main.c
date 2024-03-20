@@ -639,7 +639,8 @@ stf_status main_inR1_outI2(struct state *st, struct msg_digest *md)
 
 	set_nat_traversal(st, md);
 
-	submit_ke_and_nonce(st, st->st_oakley.ta_dh,
+	submit_ke_and_nonce(/*callback*/st, /*task*/st, md,
+			    st->st_oakley.ta_dh,
 			    main_inR1_outI2_continue,
 			    /*detach_whack*/false, HERE);
 	return STF_SUSPEND;
@@ -757,7 +758,8 @@ stf_status main_inI2_outR2(struct state *st, struct msg_digest *md)
 
 	ikev1_natd_init(st, md);
 
-	submit_ke_and_nonce(st, st->st_oakley.ta_dh,
+	submit_ke_and_nonce(/*callback*/st, /*task*/st, md,
+			    st->st_oakley.ta_dh,
 			    main_inI2_outR2_continue1,
 			    /*detach_whack*/false, HERE);
 	return STF_SUSPEND;
@@ -920,7 +922,9 @@ static stf_status main_inI2_outR2_continue1(struct state *st,
 	 */
 	dbg("main inI2_outR2: starting async DH calculation (group=%d)",
 	    st->st_oakley.ta_dh->group);
-	submit_dh_shared_secret(st, st, st->st_gi/*responder needs initiator's KE*/,
+	submit_dh_shared_secret(/*callback*/st, /*task*/st,
+				/*no-md:in-background*/NULL,
+				st->st_gi/*responder needs initiator's KE*/,
 				main_inI2_outR2_continue2, HERE);
 	/* we are calculating in the background, so it doesn't count */
 	dbg("#%lu %s:%u st->st_calculating = false;", st->st_serialno, __func__, __LINE__);
@@ -971,7 +975,8 @@ stf_status main_inR2_outI3(struct state *st, struct msg_digest *md)
 
 	/* Nr in */
 	RETURN_STF_FAIL_v1NURE(accept_v1_nonce(st->logger, md, &st->st_nr, "Nr"));
-	submit_dh_shared_secret(st, st, st->st_gr, main_inR2_outI3_continue, HERE);
+	submit_dh_shared_secret(/*callback*/st, /*task*/st, md,
+				st->st_gr, main_inR2_outI3_continue, HERE);
 	return STF_SUSPEND;
 }
 

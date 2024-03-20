@@ -60,9 +60,10 @@ struct task_handler {
 	task_cleanup_cb *cleanup_cb;
 };
 
-extern void submit_task(const struct logger *logger,
+extern void submit_task(struct state *callback_sa,
+			struct state *task_sa,
+			struct msg_digest *md,
 			bool detach_whack,
-			struct state *st,
 			struct task *task,
 			const struct task_handler *handler,
 			where_t where);

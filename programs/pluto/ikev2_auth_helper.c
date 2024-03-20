@@ -55,7 +55,7 @@ struct task_handler v2_auth_signature_handler = {
 	.cleanup_cb = v2_auth_signature_cleanup,
 };
 
-bool submit_v2_auth_signature(struct ike_sa *ike,
+bool submit_v2_auth_signature(struct ike_sa *ike, struct msg_digest *md,
 			      const struct crypt_mac *hash_to_sign,
 			      const struct hash_desc *hash_algo,
 			      const struct pubkey_signer *signer,
@@ -76,8 +76,8 @@ bool submit_v2_auth_signature(struct ike_sa *ike,
 		/* failure: no key to use */
 		return false;
 
-	submit_task(ike->sa.logger, /*detach_whack*/false,
-		    &ike->sa /*state to resume*/,
+	submit_task(/*callback*/&ike->sa, /*task*/&ike->sa, md,
+		    /*detach_whack*/false,
 		    clone_thing(task, "signature task"),
 		    &v2_auth_signature_handler, where);
 	return true;

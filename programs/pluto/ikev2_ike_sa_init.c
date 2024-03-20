@@ -747,7 +747,8 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 	/*
 	 * Calculate KE and Nonce.
 	 */
-	submit_ke_and_nonce(&ike->sa, ike->sa.st_oakley.ta_dh,
+	submit_ke_and_nonce(/*callback*/&ike->sa, /*task*/&ike->sa, /*no-md*/NULL,
+			    ike->sa.st_oakley.ta_dh,
 			    initiate_v2_IKE_SA_INIT_request_continue,
 			    detach_whack, HERE);
 	statetime_stop(&start, "%s()", __func__);
@@ -1118,7 +1119,8 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 	}
 
 	/* calculate the nonce and the KE */
-	submit_ke_and_nonce(&ike->sa, ike->sa.st_oakley.ta_dh,
+	submit_ke_and_nonce(/*callback*/&ike->sa, /*task*/&ike->sa, md,
+			    ike->sa.st_oakley.ta_dh,
 			    process_v2_IKE_SA_INIT_request_continue,
 			    /*detach_whack*/false, HERE);
 	return STF_SUSPEND;
@@ -1332,7 +1334,8 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 
 static stf_status resubmit_ke_and_nonce(struct ike_sa *ike)
 {
-	submit_ke_and_nonce(&ike->sa, ike->sa.st_oakley.ta_dh,
+	submit_ke_and_nonce(/*callback*/&ike->sa, /*task*/&ike->sa, /*no-md*/NULL,
+			    ike->sa.st_oakley.ta_dh,
 			    initiate_v2_IKE_SA_INIT_request_continue,
 			    /*detach_whack*/false, HERE);
 	return STF_SUSPEND;
@@ -1622,7 +1625,7 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 		accept_v2_notification(v2N_INTERMEDIATE_EXCHANGE_SUPPORTED,
 				       ike->sa.logger, md, c->config->intermediate);
 
-	submit_dh_shared_secret(&ike->sa, &ike->sa,
+	submit_dh_shared_secret(/*callback*/&ike->sa, /*task*/&ike->sa, md,
 				ike->sa.st_gr/*initiator needs responder KE*/,
 				process_v2_IKE_SA_INIT_response_continue, HERE);
 	return STF_SUSPEND;
