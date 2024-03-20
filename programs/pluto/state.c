@@ -968,13 +968,6 @@ void delete_state(struct state *st)
 	free_chunk_content(&st->st_v2_ike_intermediate.initiator);
 	free_chunk_content(&st->st_v2_ike_intermediate.responder);
 
-	/* if there is a suspended state transition, disconnect us */
-	struct msg_digest *md = unsuspend_any_md(st);
-	if (md != NULL) {
-		dbg("disconnecting state #%lu from md", st->st_serialno);
-		md_delref(&md);
-	}
-
 	/* if there's an IKEv1 backgroud md, release it */
 	if (st->st_v1_background_md != NULL) {
 		ldbg(st->logger, "releasing IKEv1 MD received during background task");
@@ -1804,66 +1797,11 @@ void send_n_log_delete_ike_family_now(struct ike_sa **ike,
 
 /*
  * if the state is too busy to process a packet, say so
- *
- * Two things indicate this - st_suspended_md is non-NULL or there's
- * an offloaded task.
  */
-
-void suspend_any_md_where(struct state *st, struct msg_digest *md, where_t where)
-{
-	if (md != NULL) {
-		dbg("suspend: saving MD@%p in state "PRI_SO" "PRI_WHERE,
-		    md, (st)->st_serialno, pri_where(where));
-		passert(st->st_suspended_md == NULL);
-		st->st_suspended_md = md_addref_where(md, where);
-		passert(state_is_busy(st));
-	} else {
-		dbg("suspend: no MD to save in state "PRI_SO" "PRI_WHERE,
-		    st->st_serialno, pri_where(where));
-	}
-}
-
-struct msg_digest *unsuspend_any_md_where(struct state *st, where_t where)
-{
-	/* don't assume it is non-NULL */
-	struct msg_digest *md = st->st_suspended_md;
-	if (md != NULL) {
-		dbg("suspend: restoring MD@%p from state "PRI_SO" "PRI_WHERE,
-		    md, st->st_serialno, pri_where(where));
-		st->st_suspended_md = NULL;
-	} else {
-		dbg("suspend: no MD saved in state "PRI_SO" "PRI_WHERE,
-		    st->st_serialno, pri_where(where));
-	}
-	return md;
-}
 
 bool state_is_busy(const struct state *st)
 {
 	passert(st != NULL);
-	/*
-	 * Ignore a packet if the state has a suspended state
-	 * transition.  Probably a duplicated packet but the original
-	 * packet is not yet recorded in st->st_v1_rpacket, so duplicate
-	 * checking won't catch.
-	 *
-	 * ??? Should the packet be recorded earlier to improve
-	 * diagnosis?
-	 *
-	 * See comments in state.h.
-	 *
-	 * ST_SUSPENDED.MD acts as a poor proxy for indicating a busy
-	 * state.  For instance, the initial initiator (both IKEv1 and
-	 * IKEv2) doesn't have a suspended MD.  To get around this a
-	 * 'fake_md' MD is created.
-	 *
-	 * XXX: what about xauth? It sets ST_SUSPENDED.MD.
-	 */
-	if (st->st_suspended_md != NULL) {
-		dbg("#%lu is busy; has suspended MD %p",
-		    st->st_serialno, st->st_suspended_md);
-		return true;
-	}
 
 	if (st->st_v1_background_md != NULL) {
 		dbg("#%lu is busy; has background MD %p",

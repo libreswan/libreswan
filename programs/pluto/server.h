@@ -132,9 +132,6 @@ extern struct event_base *get_pluto_event_base(void);
  * "disappeared"; if it is non-NULL then it is for SERIALNO.  Either
  * way the CALLBACK is responsible for releasing CONTEXT.
  *
- * MDP either points at the unsuspended contents of .st_suspended_md,
- * or NULL.  On return, if *MDP is non-NULL, then it will be released.
- *
  * XXX: There's a design flaw here - what happens if a state is
  * simultaneously processing a request and a response - there's only
  * space for one message!  Suspect what saves things is that it

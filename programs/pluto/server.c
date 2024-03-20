@@ -638,18 +638,18 @@ static void resume_handler(void *arg, const struct timer_event *event)
 	} else {
 		/* no previous state */
 		statetime_t start = statetime_start(st);
-		struct msg_digest *md = unsuspend_any_md(st);
-		PEXPECT(st->logger, md == e->md);
 
 		/* trust nothing; so save everything */
 		so_serial_t old_st = st->st_serialno;
-		so_serial_t old_md_st = md != NULL && md->v1_st != NULL ? md->v1_st->st_serialno : SOS_NOBODY;
+		so_serial_t old_md_st = (e->md == NULL ? SOS_NOBODY :
+					 e->md->v1_st == NULL ? SOS_NOBODY :
+					 e->md->v1_st->st_serialno);
 		const enum ike_version ike_version = st->st_ike_version;
 		/* when MD.ST it matches ST */
 		pexpect(old_md_st == SOS_NOBODY || old_md_st == old_st);
 
 		/* run the callback */
-		stf_status status = e->callback(st, md, e->context);
+		stf_status status = e->callback(st, e->md, e->context);
 		/* this may trash ST and/or MD.ST */
 
 		if (status == STF_SKIP_COMPLETE_STATE_TRANSITION) {
@@ -657,8 +657,8 @@ static void resume_handler(void *arg, const struct timer_event *event)
 			ldbg(event->logger,
 			     "resume %s for #%lu suppressed complete_v%d_state_transition()%s",
 			     e->name, e->serialno, ike_version,
-			     (old_md_st != SOS_NOBODY && md->v1_st == NULL ? "; MD.ST disappeared" :
-			      old_md_st != SOS_NOBODY && md->v1_st != st ? "; MD.ST was switched" :
+			     (old_md_st != SOS_NOBODY && e->md->v1_st == NULL ? "; MD.ST disappeared" :
+			      old_md_st != SOS_NOBODY && e->md->v1_st != st ? "; MD.ST was switched" :
 			      ""));
 		} else {
 			/* XXX: mumble something about struct ike_version */
@@ -668,12 +668,12 @@ static void resume_handler(void *arg, const struct timer_event *event)
 				/* no switching MD.ST */
 				if (old_md_st == SOS_NOBODY) {
 					/* (old)md->v1_st == (new)md->v1_st == NULL */
-					pexpect(md == NULL || md->v1_st == NULL);
+					pexpect(e->md == NULL || e->md->v1_st == NULL);
 				} else {
 					/* md->v1_st didn't change */
-					pexpect(md != NULL &&
-						md->v1_st != NULL &&
-						md->v1_st->st_serialno == old_md_st);
+					pexpect(e->md != NULL &&
+						e->md->v1_st != NULL &&
+						e->md->v1_st->st_serialno == old_md_st);
 				}
 				pexpect(st != NULL); /* see above */
 				break;
@@ -683,9 +683,8 @@ static void resume_handler(void *arg, const struct timer_event *event)
 			default:
 				bad_case(ike_version);
 			}
-			complete_state_transition(st, md, status);
+			complete_state_transition(st, e->md, status);
 		}
-		md_delref(&md);
 		statetime_stop(&start, "resume %s", e->name);
 	}
 	passert(e->timer != NULL);

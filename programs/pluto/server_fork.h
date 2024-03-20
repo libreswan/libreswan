@@ -34,9 +34,6 @@ struct show;
  * state back MUST check ST before processing.  Caller sets CUR_STATE
  * so don't play with that.
  *
- * MDP either points at the unsuspended contents of .st_suspended_md,
- * or NULL.  On return, if *MDP is non-NULL, then it will be released.
- *
  * STATUS is the child processes exit code as returned by things like
  * waitpid().
  */

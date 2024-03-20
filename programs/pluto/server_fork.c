@@ -305,8 +305,6 @@ void server_fork_sigchld_handler(struct logger *logger)
 						    pid_entry->context,
 						    pid_entry->logger);
 			} else {
-				struct msg_digest *md = unsuspend_any_md(st);
-				PEXPECT(st->logger, pid_entry->md == md);
 				if (DBGP(DBG_CPU_USAGE)) {
 					deltatime_t took = monotimediff(mononow(), pid_entry->start_time);
 					deltatime_buf dtb;
@@ -316,7 +314,7 @@ void server_fork_sigchld_handler(struct logger *logger)
 				}
 				statetime_t start = statetime_start(st);
 				const enum ike_version ike_version = st->st_ike_version;
-				stf_status ret = pid_entry->callback(st, md, status,
+				stf_status ret = pid_entry->callback(st, pid_entry->md, status,
 								     pid_entry->context,
 								     pid_entry->logger);
 				if (ret == STF_SKIP_COMPLETE_STATE_TRANSITION) {
@@ -324,9 +322,8 @@ void server_fork_sigchld_handler(struct logger *logger)
 					dbg("resume %s for #%lu skipped complete_v%d_state_transition()",
 					    pid_entry->name, pid_entry->serialno, ike_version);
 				} else {
-					complete_state_transition(st, md, ret);
+					complete_state_transition(st, pid_entry->md, ret);
 				}
-				md_delref(&md);
 				statetime_stop(&start, "callback for %s",
 					       pid_entry->name);
 			}

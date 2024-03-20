@@ -2422,7 +2422,6 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		 */
 		passert(md != NULL);
 		pexpect(md->v1_st == st);
-		suspend_any_md(md->v1_st, md);
 		/*
 		 * XXX: Clearing retransmits here is wrong (it is a
 		 * slight improvement on submit_task()).

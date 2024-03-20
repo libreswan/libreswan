@@ -662,8 +662,7 @@ void process_v2_request_no_skeyseed(struct ike_sa *ike, struct msg_digest *md)
 	 * ... then let it drop.  End result could be that no messages
 	 * accumulate and .st_v2_incomming remains NULL.
 	 *
-	 * XXX: as a hack, store the SK message in the exchange buffer
-	 * (storing it in .st_suspended_md confuses pluto).
+	 * XXX: as a hack, store the SK message in the exchange buffer.
 	 */
 
 	struct v2_incoming_fragments **frags = &ike->sa.st_v2_msgid_windows.responder.incoming_fragments;

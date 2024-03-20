@@ -2710,11 +2710,6 @@ void complete_v2_state_transition(struct ike_sa *ike,
 
 	case STF_SUSPEND:
 		/*
-		 * If this transition was triggered by an
-		 * incoming packet, save it.
-		 */
-		suspend_any_md(&ike->sa, md);
-		/*
 		 * Code off-loading work should have scheduled a
 		 * timeout.
 		 */

@@ -192,16 +192,13 @@ static void initiator_fetch_idr_ipseckey_continue(struct p_dns_req *dnsr)
 }
 
 static void idi_ipseckey_resume_ike_sa(struct ike_sa *ike,
-				       struct msg_digest *ipseckey_md,
+				       struct msg_digest *md,
 				       bool err,
 				       stf_status(*callback)(struct ike_sa *ike,
 							     struct msg_digest *md,
 							     bool err))
 {
-	struct msg_digest *md = unsuspend_any_md(&ike->sa);
-	PEXPECT(ike->sa.logger, md == ipseckey_md);
 	complete_v2_state_transition(ike, md, callback(ike, md, err));
-	md_delref(&md);
 }
 
 static void idi_a_fetch_continue(struct p_dns_req *dnsr)

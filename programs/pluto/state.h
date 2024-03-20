@@ -192,18 +192,6 @@ struct hidden_variables {
 };
 
 /*
- * On entry to this macro, when crypto has been off loaded then
- * st_offloaded.job is non-NULL.  However, with XAUTH immediate,
- * there's nothing to check.
- */
-
-struct msg_digest *unsuspend_any_md_where(struct state *st, where_t where);
-#define unsuspend_any_md(ST) unsuspend_any_md_where(ST, HERE)
-
-void suspend_any_md_where(struct state *st, struct msg_digest *md, where_t where);
-#define suspend_any_md(ST, MD) suspend_any_md_where(ST, MD, HERE)
-
-/*
  * For auditing, why an SA is being deleted.
  */
 enum delete_reason {
@@ -592,7 +580,6 @@ struct state {
 	 * 'background' (i.e., before it has received the first
 	 * encrypted packet and actually needs the shared DH secret)
 	 * the responder than transitions to state MAIN_R2.
-	 * .st_suspended_md will be left NULL and
 	 * .st_offloaded_task_in_background is set.
 	 *
 	 * Later, if the shared DH secret is still being calculated
@@ -606,7 +593,6 @@ struct state {
 	struct job *st_offloaded_task;
 	bool st_offloaded_task_in_background;
 	struct msg_digest *st_v1_background_md;	/* arrived during background task */
-	struct msg_digest *st_suspended_md;  /* suspended state-transition */
 
 	chunk_t st_p1isa;	/* v1 Phase 1 initiator SA (Payload) for HASH */
 
