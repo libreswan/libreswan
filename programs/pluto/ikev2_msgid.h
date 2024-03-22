@@ -43,6 +43,7 @@ struct v2_msgid_window {
 	intmax_t sent;
 	intmax_t recv;
 	unsigned recv_frags;	/* number of fragments making up incoming message */
+	struct v2_incoming_fragments *incoming_fragments;
 	/*
 	 * The Message ID for the IKE SA's's in-progress exchange(s).
 	 * If no exchange is in progress then its value is -1.

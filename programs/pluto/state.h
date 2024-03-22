@@ -413,7 +413,6 @@ struct state {
 
 	/* collected received fragments */
 	struct v2_outgoing_fragment *st_v2_outgoing[MESSAGE_ROLE_ROOF];
-	struct v2_incoming_fragments *st_v2_incoming[MESSAGE_ROLE_ROOF];
 
 	bool st_viable_parent;	/* can initiate new CERAET_CHILD_SA */
 	struct ikev2_proposal *st_v2_accepted_proposal;

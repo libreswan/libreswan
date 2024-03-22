@@ -1564,7 +1564,7 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 	 * If the message is not a "duplicate", then what is it?
 	 */
 
-	struct v2_incoming_fragments *frags = ike->sa.st_v2_incoming[MESSAGE_REQUEST];
+	struct v2_incoming_fragments *frags = ike->sa.st_v2_msgid_windows.responder.incoming_fragments;
 	if (ike->sa.st_offloaded_task_in_background) {
 		/*
 		 * The IKE SA responder is in the twilight zone:
@@ -2160,6 +2160,14 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 	 * fragments / messages.
 	 */
 	if (!ike->sa.hidden_variables.st_skeyid_calculated) {
+		/*
+		 * Responder only: on the initiator, SKEYSEED is
+		 * handled by the IKE_SA_INIT response processor
+		 * (i.e., not on this path).
+		 */
+		if (!pexpect(v2_msg_role(md) == MESSAGE_REQUEST)) {
+			return;
+		}
 		process_v2_request_no_skeyseed(ike, md);
 		return;
 	}
@@ -2178,7 +2186,18 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 	switch (md->message_payloads.present & (P(SK) | P(SKF))) {
 	case P(SKF):
 	{
-		struct v2_incoming_fragments **frags = &ike->sa.st_v2_incoming[v2_msg_role(md)];
+		struct v2_msgid_window *window;
+		switch (v2_msg_role(md)) {
+		case MESSAGE_REQUEST:
+			window = &ike->sa.st_v2_msgid_windows.responder;
+			break;
+		case MESSAGE_RESPONSE:
+			window = &ike->sa.st_v2_msgid_windows.initiator;
+			break;
+		default:
+			bad_case(v2_msg_role(md));
+		}
+		struct v2_incoming_fragments **frags = &window->incoming_fragments;
 		switch (collect_v2_incoming_fragment(ike, md, frags)) {
 		case FRAGMENT_IGNORED:
 			return;

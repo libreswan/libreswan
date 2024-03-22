@@ -532,9 +532,10 @@ void free_v2_incoming_fragments(struct v2_incoming_fragments **frags)
 
 void free_v2_message_queues(struct state *st)
 {
-	for (enum message_role message = MESSAGE_ROLE_FLOOR;
-	     message < MESSAGE_ROLE_ROOF; message++) {
-		free_v2_outgoing_fragments(&st->st_v2_outgoing[message]);
-		free_v2_incoming_fragments(&st->st_v2_incoming[message]);
+	FOR_EACH_ELEMENT(fragments, st->st_v2_outgoing) {
+		free_v2_outgoing_fragments(fragments);
+	}
+	FOR_EACH_THING(window, &st->st_v2_msgid_windows.initiator, &st->st_v2_msgid_windows.responder) {
+		free_v2_incoming_fragments(&window->incoming_fragments);
 	}
 }

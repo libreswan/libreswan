@@ -585,7 +585,8 @@ static stf_status process_v2_request_no_skeyseed_continue(struct state *ike_st,
 	dbg("%s() for #%lu %s: calculating g^{xy}, sending R2",
 	    __func__, ike->sa.st_serialno, ike->sa.st_state->name);
 
-	struct v2_incoming_fragments **frags = &ike->sa.st_v2_incoming[MESSAGE_REQUEST];
+	/* * Since UNUSED_MD is a request. */
+	struct v2_incoming_fragments **frags = &ike->sa.st_v2_msgid_windows.responder.incoming_fragments;
 	if (!pexpect((*frags) != NULL)) {
 		return STF_INTERNAL_ERROR;
 	}
@@ -651,7 +652,7 @@ void process_v2_request_no_skeyseed(struct ike_sa *ike, struct msg_digest *md)
 	}
 
 	/*
-	 * Accumulate (or ignore) the message.
+	 * Accumulate (or ignore) the message requests.
 	 *
 	 * If the message seems reasonable and is consistent with
 	 * previous messages, save it.
@@ -665,7 +666,7 @@ void process_v2_request_no_skeyseed(struct ike_sa *ike, struct msg_digest *md)
 	 * (storing it in .st_suspended_md confuses pluto).
 	 */
 
-	struct v2_incoming_fragments **frags = &ike->sa.st_v2_incoming[v2_msg_role(md)];
+	struct v2_incoming_fragments **frags = &ike->sa.st_v2_msgid_windows.responder.incoming_fragments;
 	if (md->chain[ISAKMP_NEXT_v2SK] != NULL) {
 		dbg("received IKE encrypted message");
 		if ((*frags) != NULL) {
