@@ -626,3 +626,16 @@ void v2_msgid_schedule_next_initiator(struct ike_sa *ike)
 			     "no pending message initiators to schedule");
 	}
 }
+
+/*
+ * XXX: only handles 1 window!
+ */
+struct v2_msgid_window *v2_msgid_window(struct ike_sa *ike, enum message_role message_role)
+{
+	switch (message_role) {
+	case MESSAGE_REQUEST: return &ike->sa.st_v2_msgid_windows.responder;
+	case MESSAGE_RESPONSE: return &ike->sa.st_v2_msgid_windows.initiator;
+	case NO_MESSAGE: break;
+	}
+	bad_enum(ike->sa.logger, &message_role_names, message_role);
+}

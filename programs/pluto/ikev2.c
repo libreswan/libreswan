@@ -2186,17 +2186,7 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 	switch (md->message_payloads.present & (P(SK) | P(SKF))) {
 	case P(SKF):
 	{
-		struct v2_msgid_window *window;
-		switch (v2_msg_role(md)) {
-		case MESSAGE_REQUEST:
-			window = &ike->sa.st_v2_msgid_windows.responder;
-			break;
-		case MESSAGE_RESPONSE:
-			window = &ike->sa.st_v2_msgid_windows.initiator;
-			break;
-		default:
-			bad_case(v2_msg_role(md));
-		}
+		struct v2_msgid_window *window = v2_msgid_window(ike, v2_msg_role(md));
 		struct v2_incoming_fragments **frags = &window->incoming_fragments;
 		switch (collect_v2_incoming_fragment(ike, md, frags)) {
 		case FRAGMENT_IGNORED:

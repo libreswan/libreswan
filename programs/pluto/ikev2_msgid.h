@@ -125,4 +125,6 @@ void dbg_v2_msgid(struct ike_sa *ike, const char *msg, ...) PRINTF_LIKE(2);
 void fail_v2_msgid_where(where_t where, struct ike_sa *ike, const char *fmt, ...) PRINTF_LIKE(3);
 #define fail_v2_msgid(IKE, FMT, ...) fail_v2_msgid_where(HERE, IKE, FMT,##__VA_ARGS__)
 
+struct v2_msgid_window *v2_msgid_window(struct ike_sa *ike, enum message_role message_role);
+
 #endif
