@@ -7,31 +7,11 @@ west #
  echo "initdone"
 initdone
 west #
- strongswan up psk
-initiating Aggressive Mode IKE_SA psk[1] to 192.1.2.23
-generating AGGRESSIVE request 0 [ SA KE No ID V V V V V ]
-sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
-received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
-parsed AGGRESSIVE response 0 [ SA KE No ID HASH V V V NAT-D NAT-D ]
-received FRAGMENTATION vendor ID
-received DPD vendor ID
-received NAT-T (RFC 3947) vendor ID
-selected proposal: IKE:AES_CBC_128/HMAC_SHA1_96/PRF_HMAC_SHA1/MODP_1536
-IKE_SA psk[1] established between 192.1.2.45[vpnclient]...192.1.2.23[vpnserver]
-scheduling reauthentication in XXXs
-maximum IKE_SA lifetime XXXs
-generating AGGRESSIVE request 0 [ HASH NAT-D NAT-D ]
-sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
-generating QUICK_MODE request 0123456789 [ HASH SA No KE ID ID ]
-sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
-received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
-parsed QUICK_MODE response 0123456789 [ HASH SA No KE ID ID ]
-selected proposal: ESP:AES_CBC_128/HMAC_SHA1_96/MODP_1536/NO_EXT_SEQ
-CHILD_SA psk{1} established with SPIs SPISPI_i SPISPI_o and TS 192.1.2.45/32 === 192.1.2.23/32
-connection 'psk' established successfully
-west #
- echo "done"
-done
+ swanctl --initiate --child psk --loglevel 0
+[IKE] initiating Aggressive Mode IKE_SA psk[1] to 192.1.2.23
+[IKE] IKE_SA psk[1] established between 192.1.2.45[vpnclient]...192.1.2.23[vpnserver]
+[IKE] CHILD_SA psk{1} established with SPIs SPISPI_i SPISPI_o and TS 192.1.2.45/32 === 192.1.2.23/32
+initiate completed successfully
 west #
  # confirm the right ID types were sent/received
 west #

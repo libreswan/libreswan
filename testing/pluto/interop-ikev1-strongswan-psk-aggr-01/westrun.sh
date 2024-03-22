@@ -1,2 +1,1 @@
-strongswan up psk
-echo "done"
+swanctl --initiate --child psk --loglevel 0
