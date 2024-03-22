@@ -296,7 +296,12 @@ static bool open_body_v2SK_payload(struct pbs_out *container,
 
 static bool close_v2SK_payload(struct v2SK_payload *sk)
 {
-	/* save cleartext end */
+	/*
+	 * Save cleartext end, excluding any padding.
+	 *
+	 * When chopping .cleartext into fragments, the last fragment
+	 * will get its own padding.
+	 */
 
 	sk->cleartext.len = sk->pbs.cur - sk->cleartext.ptr;
 
@@ -397,11 +402,19 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 	struct ike_sa *ike = sk->ike;
 	uint8_t *auth_start = sk->pbs.container->start;
 	uint8_t *wire_iv_start = sk->wire_iv.ptr;
-	uint8_t *enc_start = sk->cleartext.ptr;
+	/*
+	 * Will encrypt .cleartext + [.]padding.  I.e.,
+	 * [.cleartext.ptr..[.]integrity.ptr)
+	 *
+	 * Just note that .cleartext doesn't include the padding.
+	 * This is because when .cleartext gets chopped up into
+	 * fragments the last fragment does its own padding.
+	 */
+	chunk_t enc = chunk2(sk->cleartext.ptr, sk->integrity.ptr - sk->cleartext.ptr);
 
 	passert(auth_start <= wire_iv_start);
-	passert(wire_iv_start <= enc_start);
-	passert(enc_start <= sk->integrity.ptr);
+	passert(wire_iv_start <= enc.ptr);
+	passert(enc.ptr <= sk->integrity.ptr);
 
 	chunk_t salt;
 	PK11SymKey *cipherkey;
@@ -422,8 +435,13 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 		bad_case(ike->sa.st_sa_role);
 	}
 
-	/* size of plain or cipher text. */
-	size_t enc_size = sk->integrity.ptr - enc_start;
+	/* now, encrypt */
+	if (DBGP(DBG_CRYPT)) {
+		LDBG_log(sk->logger, "data before [authenticated] encryption:");
+		LDBG_hunk(sk->logger, enc);
+		LDBG_log(sk->logger, "integ before [authenticated] encryption:");
+		LDBG_hunk(sk->logger, sk->integrity);
+	}
 
 	/* encrypt and authenticate the block */
 	if (encrypt_desc_is_aead(ike->sa.st_oakley.ta_encrypt)) {
@@ -436,7 +454,7 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 		size_t wire_iv_size = ike->sa.st_oakley.ta_encrypt->wire_iv_size;
 		pexpect(sk->integrity.len == ike->sa.st_oakley.ta_encrypt->aead_tag_size);
 		unsigned char *aad_start = auth_start;
-		size_t aad_size = enc_start - aad_start - wire_iv_size;
+		size_t aad_size = enc.ptr - aad_start - wire_iv_size;
 
 		/* now, encrypt */
 		if (DBGP(DBG_CRYPT)) {
@@ -445,10 +463,6 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 			     wire_iv_start, wire_iv_size);
 		    DBG_dump("AAD before authenticated encryption:",
 			     aad_start, aad_size);
-		    DBG_dump("data before authenticated encryption:",
-			     enc_start, enc_size);
-		    LDBG_log(sk->logger, "integ before authenticated encryption:");
-		    LDBG_hunk(sk->logger, sk->integrity);
 		}
 
 		if (!ike->sa.st_oakley.ta_encrypt->encrypt_ops
@@ -456,17 +470,13 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 			      salt.ptr, salt.len,
 			      wire_iv_start, wire_iv_size,
 			      aad_start, aad_size,
-			      enc_start, enc_size,
+			      enc.ptr, enc.len,
 			      sk->integrity.len,
 			      cipherkey, true, sk->logger)) {
 			return false;
 		}
 
 		if (DBGP(DBG_CRYPT)) {
-		    DBG_dump("data after authenticated encryption:",
-			     enc_start, enc_size);
-		    LDBG_log(sk->logger, "integ after authenticated encryption:");
-		    LDBG_hunk(sk->logger, sk->integrity);
 		}
 
 	} else {
@@ -477,21 +487,11 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 				 ike->sa.st_oakley.ta_encrypt,
 				 ike->sa.logger);
 
-		/* now, encrypt */
-		if (DBGP(DBG_CRYPT)) {
-			DBG_dump("data before encryption:", enc_start, enc_size);
-		}
-
 		ike->sa.st_oakley.ta_encrypt->encrypt_ops
 			->do_crypt(ike->sa.st_oakley.ta_encrypt,
-				   chunk2(enc_start, enc_size),
-				   HUNK_AS_CHUNK(iv),
+				   enc, HUNK_AS_CHUNK(iv),
 				   cipherkey, true,
 				   sk->logger);
-
-		if (DBGP(DBG_CRYPT)) {
-			DBG_dump("data after encryption:", enc_start, enc_size);
-		}
 
 		/* note: saved_iv's updated value is discarded */
 
@@ -508,6 +508,13 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 			LDBG_log(sk->logger, "out calculated auth:");
 			LDBG_hunk(sk->logger, sk->integrity);
 		}
+	}
+
+	if (DBGP(DBG_CRYPT)) {
+		LDBG_log(sk->logger, "data after [authenticated] encryption:");
+		LDBG_hunk(sk->logger,  enc);
+		LDBG_log(sk->logger, "integ after [authenticated] encryption:");
+		LDBG_hunk(sk->logger, sk->integrity);
 	}
 
 	return true;
