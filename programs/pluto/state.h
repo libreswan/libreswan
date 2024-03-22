@@ -412,7 +412,6 @@ struct state {
 	const struct v2_state_transition *st_v2_transition;
 
 	/* collected received fragments */
-	struct v2_ike_rfrags *st_v2_rfrags;
 	struct v2_outgoing_fragment *st_v2_outgoing[MESSAGE_ROLE_ROOF];
 	struct v2_incoming_fragments *st_v2_incoming[MESSAGE_ROLE_ROOF];
 
