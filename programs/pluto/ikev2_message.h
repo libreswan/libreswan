@@ -83,15 +83,18 @@ bool close_v2_message(struct v2_message *message);
 bool close_and_record_v2_message(struct v2_message *message);
 
 /*
- * Incoming Messages.
+ * Incoming Message fragments.
  */
+
 enum  collected_fragment {
 	FRAGMENT_IGNORED,
 	FRAGMENTS_MISSING,
 	FRAGMENTS_COMPLETE,
 };
+
 enum collected_fragment collect_v2_incoming_fragment(struct ike_sa *ike,
-						     struct msg_digest *md);
+						     struct msg_digest *md,
+						     struct v2_incoming_fragments **frags);
 bool decrypt_v2_incoming_fragments(struct ike_sa *ike,
 				   struct v2_incoming_fragments **frags);
 struct msg_digest *reassemble_v2_incoming_fragments(struct v2_incoming_fragments **frags);

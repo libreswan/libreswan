@@ -842,14 +842,14 @@ static const char *ignore_v2_incoming_fragment(struct v2_incoming_fragments *fra
  */
 
 enum collected_fragment collect_v2_incoming_fragment(struct ike_sa *ike,
-						     struct msg_digest *md)
+						     struct msg_digest *md,
+						     struct v2_incoming_fragments **frags)
 {
 	if (!ike->sa.st_v2_ike_fragmentation_enabled) {
 		llog_sa(RC_LOG_SERIOUS, ike, "ignoring fragment as peer never proposed fragmentation");
 		return false;
 	}
 
-	struct v2_incoming_fragments **frags = &ike->sa.st_v2_incoming[v2_msg_role(md)];
 	struct ikev2_skf *skf_hdr = &md->chain[ISAKMP_NEXT_v2SKF]->payload.v2skf;
 
 	dbg("received IKE encrypted fragment number '%u', total number '%u', next payload '%u'",

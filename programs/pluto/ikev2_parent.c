@@ -681,7 +681,7 @@ void process_v2_request_no_skeyseed(struct ike_sa *ike, struct msg_digest *md)
 		*frags = alloc_thing(struct v2_incoming_fragments, "incoming v2_ike_rfrags");
 		(*frags)->md = md_addref(md);
 	} else if (md->chain[ISAKMP_NEXT_v2SKF] != NULL) {
-		switch (collect_v2_incoming_fragment(ike, md)) {
+		switch (collect_v2_incoming_fragment(ike, md, frags)) {
 		case FRAGMENT_IGNORED:
 			dbg("no fragments accumulated; skipping SKEYSEED");
 			return;

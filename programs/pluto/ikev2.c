@@ -2177,7 +2177,9 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 	struct msg_digest *protected_md; /* MUST md_delref() */
 	switch (md->message_payloads.present & (P(SK) | P(SKF))) {
 	case P(SKF):
-		switch (collect_v2_incoming_fragment(ike, md)) {
+	{
+		struct v2_incoming_fragments **frags = &ike->sa.st_v2_incoming[v2_msg_role(md)];
+		switch (collect_v2_incoming_fragment(ike, md, frags)) {
 		case FRAGMENT_IGNORED:
 			return;
 		case FRAGMENTS_MISSING:
@@ -2191,9 +2193,9 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 		 * fragment 1 (which also contains unencrypted
 		 * payloads).
 		 */
-		struct v2_incoming_fragments **frags = &ike->sa.st_v2_incoming[v2_msg_role(md)];
 		protected_md = reassemble_v2_incoming_fragments(frags);
 		break;
+	}
 	case P(SK):
 		if (!ikev2_decrypt_msg(ike, md)) {
 			llog_sa(RC_LOG, ike,
