@@ -46,22 +46,21 @@
 
 bool send_recorded_v2_message(struct ike_sa *ike,
 			      const char *where,
-			      enum message_role message)
+			      struct v2_outgoing_fragment *frags)
 {
-	struct v2_outgoing_fragment *frags = ike->sa.st_v2_outgoing[message];
 	if (ike->sa.st_iface_endpoint == NULL) {
 		llog_sa(RC_LOG, ike, "cannot send packet - interface vanished!");
+		return false;
+	}
+
+	if (frags == NULL) {
+		llog_sa(RC_LOG, ike, "no %s message to send", where);
 		return false;
 	}
 
 #ifdef USE_XFRM_INTERFACE
 	set_ike_mark_out(ike->sa.st_connection, &ike->sa.st_remote_endpoint);
 #endif
-
-	if (frags == NULL) {
-		llog_sa(RC_LOG, ike, "no %s message to send", where);
-		return false;
-	}
 
 	unsigned nr_frags = 0;
 	for (struct v2_outgoing_fragment *frag = frags;

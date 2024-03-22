@@ -313,7 +313,7 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 					  enum_name_short(&ikev2_exchange_names, md->hdr.isa_xchg),
 					  msgid);
 				send_recorded_v2_message(old, "IKE_SA_INIT responder retransmit",
-							 MESSAGE_RESPONSE);
+							 old->sa.st_v2_outgoing[MESSAGE_RESPONSE]);
 			} else {
 				/*
 				 * Either:

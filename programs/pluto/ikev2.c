@@ -1533,7 +1533,7 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 			return true;
 		}
 		send_recorded_v2_message(ike, "ikev2-responder-retransmit",
-					 MESSAGE_RESPONSE);
+					 ike->sa.st_v2_outgoing[MESSAGE_RESPONSE]);
 		return true;
 	}
 
@@ -2569,7 +2569,7 @@ static void success_v2_state_transition(struct ike_sa *ike,
 	case MESSAGE_REQUEST:
 	case MESSAGE_RESPONSE:
 		send_recorded_v2_message(ike, transition->story,
-					 transition->send_role);
+					 ike->sa.st_v2_outgoing[transition->send_role]);
 		break;
 	case NO_MESSAGE:
 		break;
@@ -2755,7 +2755,8 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		pexpect(transition->recv_role == MESSAGE_REQUEST);
 		pexpect(transition->send_role == MESSAGE_RESPONSE);
 		v2_msgid_finish(ike, md);
-		send_recorded_v2_message(ike, "DELETE_IKE_FAMILY", MESSAGE_RESPONSE);
+		send_recorded_v2_message(ike, "DELETE_IKE_FAMILY",
+					 ike->sa.st_v2_outgoing[MESSAGE_RESPONSE]);
 		/* do the deed */
 		on_delete(&ike->sa, skip_send_delete);
 		connection_delete_ike_family(&ike, HERE);
@@ -2816,7 +2817,7 @@ void complete_v2_state_transition(struct ike_sa *ike,
 				dbg_v2_msgid(ike, "responding with recorded fatal message");
 				v2_msgid_finish(ike, md);
 				send_recorded_v2_message(ike, "STF_FATAL",
-							 MESSAGE_RESPONSE);
+							 ike->sa.st_v2_outgoing[MESSAGE_RESPONSE]);
 			} else {
 				fail_v2_msgid(ike, "exchange zombie as no response?");
 			}

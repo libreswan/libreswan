@@ -105,7 +105,7 @@ void record_v2N_spi_response(struct logger *logger,
 			     enum payload_security security);
 
 bool send_recorded_v2_message(struct ike_sa *ike, const char *where,
-			      enum message_role role);
+			      struct v2_outgoing_fragment *frags);
 
 void send_v2N_response_from_md(struct msg_digest *md,
 			       v2_notification_t type,
