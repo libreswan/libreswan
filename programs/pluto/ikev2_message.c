@@ -398,12 +398,10 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 	uint8_t *auth_start = sk->pbs.container->start;
 	uint8_t *wire_iv_start = sk->wire_iv.ptr;
 	uint8_t *enc_start = sk->cleartext.ptr;
-	uint8_t *integ_start = sk->integrity.ptr;
-	size_t integ_size = sk->integrity.len;
 
 	passert(auth_start <= wire_iv_start);
 	passert(wire_iv_start <= enc_start);
-	passert(enc_start <= integ_start);
+	passert(enc_start <= sk->integrity.ptr);
 
 	chunk_t salt;
 	PK11SymKey *cipherkey;
@@ -425,7 +423,7 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 	}
 
 	/* size of plain or cipher text. */
-	size_t enc_size = integ_start - enc_start;
+	size_t enc_size = sk->integrity.ptr - enc_start;
 
 	/* encrypt and authenticate the block */
 	if (encrypt_desc_is_aead(ike->sa.st_oakley.ta_encrypt)) {
@@ -436,7 +434,7 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 		 * data.
 		 */
 		size_t wire_iv_size = ike->sa.st_oakley.ta_encrypt->wire_iv_size;
-		pexpect(integ_size == ike->sa.st_oakley.ta_encrypt->aead_tag_size);
+		pexpect(sk->integrity.len == ike->sa.st_oakley.ta_encrypt->aead_tag_size);
 		unsigned char *aad_start = auth_start;
 		size_t aad_size = enc_start - aad_start - wire_iv_size;
 
@@ -449,8 +447,8 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 			     aad_start, aad_size);
 		    DBG_dump("data before authenticated encryption:",
 			     enc_start, enc_size);
-		    DBG_dump("integ before authenticated encryption:",
-			     integ_start, integ_size);
+		    LDBG_log(sk->logger, "integ before authenticated encryption:");
+		    LDBG_hunk(sk->logger, sk->integrity);
 		}
 
 		if (!ike->sa.st_oakley.ta_encrypt->encrypt_ops
@@ -458,7 +456,8 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 			      salt.ptr, salt.len,
 			      wire_iv_start, wire_iv_size,
 			      aad_start, aad_size,
-			      enc_start, enc_size, integ_size,
+			      enc_start, enc_size,
+			      sk->integrity.len,
 			      cipherkey, true, sk->logger)) {
 			return false;
 		}
@@ -466,8 +465,8 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 		if (DBGP(DBG_CRYPT)) {
 		    DBG_dump("data after authenticated encryption:",
 			     enc_start, enc_size);
-		    DBG_dump("integ after authenticated encryption:",
-			     integ_start, integ_size);
+		    LDBG_log(sk->logger, "integ after authenticated encryption:");
+		    LDBG_hunk(sk->logger, sk->integrity);
 		}
 
 	} else {
@@ -499,15 +498,15 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 		/* okay, authenticate from beginning of IV */
 		struct crypt_prf *ctx = crypt_prf_init_symkey("integ", ike->sa.st_oakley.ta_integ->prf,
 							      "authkey", authkey, sk->logger);
-		crypt_prf_update_bytes(ctx, "message", auth_start, integ_start - auth_start);
-		passert(integ_size == ike->sa.st_oakley.ta_integ->integ_output_size);
+		crypt_prf_update_bytes(ctx, "message", auth_start, sk->integrity.ptr - auth_start);
+		passert(sk->integrity.len == ike->sa.st_oakley.ta_integ->integ_output_size);
 		struct crypt_mac mac = crypt_prf_final_mac(&ctx, ike->sa.st_oakley.ta_integ);
-		memcpy_hunk(integ_start, mac, integ_size);
+		memcpy_hunk(sk->integrity.ptr, mac, sk->integrity.len);
 
 		if (DBGP(DBG_CRYPT)) {
-			DBG_dump("data being hmac:", auth_start,
-				 integ_start - auth_start);
-			DBG_dump("out calculated auth:", integ_start, integ_size);
+			DBG_dump("data being hmac:", auth_start, sk->integrity.ptr - auth_start);
+			LDBG_log(sk->logger, "out calculated auth:");
+			LDBG_hunk(sk->logger, sk->integrity);
 		}
 	}
 
