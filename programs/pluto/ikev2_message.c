@@ -623,16 +623,15 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 		 * fields [...] MUST NOT be included in the associated
 		 * data.
 		 */
-		unsigned char *aad_start = auth_start;
-		size_t aad_size = enc_start - auth_start - wire_iv_size;
+		chunk_t aad = chunk2(auth_start, enc_start - auth_start - wire_iv_size);
 
 		/* decrypt */
 		if (DBGP(DBG_CRYPT)) {
 			DBG_dump_hunk("Salt before authenticated decryption:", salt);
 			DBG_dump("IV before authenticated decryption:",
 				 wire_iv_start, wire_iv_size);
-			DBG_dump("AAD before authenticated decryption:",
-				 aad_start, aad_size);
+			LDBG_log(ike->sa.logger, "AAD before authenticated decryption:");
+			LDBG_hunk(ike->sa.logger, aad);
 			DBG_dump("data before authenticated decryption:",
 				 enc_start, enc_size);
 			DBG_dump("integ before authenticated decryption:",
@@ -643,7 +642,7 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 		    ->do_aead(ike->sa.st_oakley.ta_encrypt,
 			      salt.ptr, salt.len,
 			      wire_iv_start, wire_iv_size,
-			      aad_start, aad_size,
+			      aad.ptr, aad.len,
 			      enc_start, enc_size, integ_size,
 			      cipherkey, false, ike->sa.logger)) {
 			return false;
