@@ -231,8 +231,7 @@ stf_status initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike, struct msg_d
 		return false;
 	}
 
-	record_v2_message(request.ike, &request.message,
-			  request.story, request.role);
+	record_v2_message(&request.message, request.story, request.outgoing_fragments);
 
 	return STF_OK;
 }
@@ -312,8 +311,7 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 		return false;
 	}
 
-	record_v2_message(response.ike, &response.message,
-			  response.story, response.role);
+	record_v2_message(&response.message, response.story, response.outgoing_fragments);
 
 	return STF_OK;
 }

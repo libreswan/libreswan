@@ -63,11 +63,10 @@ struct v2_message {
 	struct pbs_out *pbs; /* where to put message (POINTER!); either .BODY or .SK */
 	/* internal fields */
 	enum payload_security security;
-	struct ike_sa *ike;
 	struct pbs_out message;
 	struct pbs_out body;
-	enum message_role role;
 	const char *story;
+	struct v2_outgoing_fragment **outgoing_fragments;
 	struct v2SK_payload sk; /* optional */
 };
 

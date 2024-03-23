@@ -86,12 +86,10 @@ void record_v2_outgoing_fragment(struct pbs_out *pbs,
 	memcpy((*frags)->ptr/*array*/, frag.ptr, frag.len);
 }
 
-void record_v2_message(struct ike_sa *ike,
-		       struct pbs_out *msg,
+void record_v2_message(struct pbs_out *msg,
 		       const char *what,
-		       enum message_role message)
+		       struct v2_outgoing_fragment **frags)
 {
-	struct v2_outgoing_fragment **frags = &ike->sa.st_v2_outgoing[message];
 	free_v2_outgoing_fragments(frags);
 	record_v2_outgoing_fragment(msg, what, frags);
 }
