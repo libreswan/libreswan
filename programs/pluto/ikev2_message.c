@@ -453,30 +453,26 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 		 */
 		size_t wire_iv_size = ike->sa.st_oakley.ta_encrypt->wire_iv_size;
 		pexpect(sk->integrity.len == ike->sa.st_oakley.ta_encrypt->aead_tag_size);
-		unsigned char *aad_start = auth_start;
-		size_t aad_size = enc.ptr - aad_start - wire_iv_size;
+		chunk_t aad = chunk2(auth_start, enc.ptr - auth_start - wire_iv_size);
 
 		/* now, encrypt */
 		if (DBGP(DBG_CRYPT)) {
 		    DBG_dump_hunk("Salt before authenticated encryption:", salt);
 		    DBG_dump("IV before authenticated encryption:",
 			     wire_iv_start, wire_iv_size);
-		    DBG_dump("AAD before authenticated encryption:",
-			     aad_start, aad_size);
+		    LDBG_log(sk->logger, "AAD before authenticated encryption:");
+		    LDBG_hunk(sk->logger, aad);
 		}
 
 		if (!ike->sa.st_oakley.ta_encrypt->encrypt_ops
 		    ->do_aead(ike->sa.st_oakley.ta_encrypt,
 			      salt.ptr, salt.len,
 			      wire_iv_start, wire_iv_size,
-			      aad_start, aad_size,
+			      aad.ptr, aad.len,
 			      enc.ptr, enc.len,
 			      sk->integrity.len,
 			      cipherkey, true, sk->logger)) {
 			return false;
-		}
-
-		if (DBGP(DBG_CRYPT)) {
 		}
 
 	} else {
