@@ -401,7 +401,6 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 {
 	struct ike_sa *ike = sk->ike;
 	uint8_t *auth_start = sk->pbs.container->start;
-	uint8_t *wire_iv_start = sk->wire_iv.ptr;
 	/*
 	 * Will encrypt .cleartext + [.]padding.  I.e.,
 	 * [.cleartext.ptr..[.]integrity.ptr)
@@ -412,8 +411,8 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 	 */
 	chunk_t enc = chunk2(sk->cleartext.ptr, sk->integrity.ptr - sk->cleartext.ptr);
 
-	passert(auth_start <= wire_iv_start);
-	passert(wire_iv_start <= enc.ptr);
+	passert(auth_start <= sk->wire_iv.ptr);
+	passert(sk->wire_iv.ptr <= enc.ptr);
 	passert(enc.ptr <= sk->integrity.ptr);
 
 	chunk_t salt;
@@ -451,15 +450,14 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 		 * fields [...] MUST NOT be included in the associated
 		 * data.
 		 */
-		size_t wire_iv_size = ike->sa.st_oakley.ta_encrypt->wire_iv_size;
 		pexpect(sk->integrity.len == ike->sa.st_oakley.ta_encrypt->aead_tag_size);
-		chunk_t aad = chunk2(auth_start, enc.ptr - auth_start - wire_iv_size);
+		chunk_t aad = chunk2(auth_start, enc.ptr - auth_start - sk->wire_iv.len);
 
 		/* now, encrypt */
 		if (DBGP(DBG_CRYPT)) {
 		    DBG_dump_hunk("Salt before authenticated encryption:", salt);
-		    DBG_dump("IV before authenticated encryption:",
-			     wire_iv_start, wire_iv_size);
+		    LDBG_log(sk->logger, "IV before authenticated encryption:");
+		    LDBG_hunk(sk->logger, sk->wire_iv);
 		    LDBG_log(sk->logger, "AAD before authenticated encryption:");
 		    LDBG_hunk(sk->logger, aad);
 		}
@@ -467,7 +465,7 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 		if (!ike->sa.st_oakley.ta_encrypt->encrypt_ops
 		    ->do_aead(ike->sa.st_oakley.ta_encrypt,
 			      salt.ptr, salt.len,
-			      wire_iv_start, wire_iv_size,
+			      sk->wire_iv.ptr, sk->wire_iv.len,
 			      aad.ptr, aad.len,
 			      enc.ptr, enc.len,
 			      sk->integrity.len,
