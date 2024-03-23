@@ -1423,8 +1423,8 @@ bool open_v2_message(const char *story,
 		.story = story,
 		.logger = logger,
 		.security = security,
-		.outgoing_fragments = (request_md == NULL ? &ike->sa.st_v2_outgoing[MESSAGE_REQUEST] :
-				       &ike->sa.st_v2_outgoing[MESSAGE_RESPONSE]),
+		.outgoing_fragments = (request_md == NULL ? &ike->sa.st_v2_msgid_windows.initiator.outgoing_fragments :
+				       &ike->sa.st_v2_msgid_windows.responder.outgoing_fragments),
 	};
 
 	message->message = open_pbs_out(story, buf, sizeof_buf, logger);

@@ -82,6 +82,7 @@ void record_v2_outgoing_fragment(struct pbs_out *pbs,
 	pexpect(*frags == NULL);
 	shunk_t frag = pbs_out_all(pbs);
 	*frags = over_alloc_thing(struct v2_outgoing_fragment, frag.len);
+	dbg_alloc("frags", *frags, HERE);
 	(*frags)->len = frag.len;
 	memcpy((*frags)->ptr/*array*/, frag.ptr, frag.len);
 }
@@ -507,6 +508,7 @@ void free_v2_outgoing_fragments(struct v2_outgoing_fragment **frags)
 		struct v2_outgoing_fragment *frag = *frags;
 		do {
 			struct v2_outgoing_fragment *next = frag->next;
+			dbg_free("frags", frag, HERE);
 			pfree(frag);
 			frag = next;
 		} while (frag != NULL);
@@ -529,10 +531,8 @@ void free_v2_incoming_fragments(struct v2_incoming_fragments **frags)
 
 void free_v2_message_queues(struct state *st)
 {
-	FOR_EACH_ELEMENT(fragments, st->st_v2_outgoing) {
-		free_v2_outgoing_fragments(fragments);
-	}
 	FOR_EACH_THING(window, &st->st_v2_msgid_windows.initiator, &st->st_v2_msgid_windows.responder) {
 		free_v2_incoming_fragments(&window->incoming_fragments);
+		free_v2_outgoing_fragments(&window->outgoing_fragments);
 	}
 }

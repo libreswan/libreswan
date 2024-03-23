@@ -531,6 +531,6 @@ void record_n_send_n_log_v2_delete(struct ike_sa *ike, where_t where)
 	v2_msgid_start(ike, NULL/*MD*/);
 	record_v2_delete(ike, &ike->sa);
 	send_recorded_v2_message(ike, "delete notification",
-				 ike->sa.st_v2_outgoing[MESSAGE_REQUEST]);
+				 ike->sa.st_v2_msgid_windows.initiator.outgoing_fragments);
 	v2_msgid_finish(ike, NULL/*MD*/);
 }

@@ -411,9 +411,6 @@ struct state {
 	const struct v2_state_transition *st_v2_last_transition;
 	const struct v2_state_transition *st_v2_transition;
 
-	/* collected received fragments */
-	struct v2_outgoing_fragment *st_v2_outgoing[MESSAGE_ROLE_ROOF];
-
 	bool st_viable_parent;	/* can initiate new CERAET_CHILD_SA */
 	struct ikev2_proposal *st_v2_accepted_proposal;
 	struct ikev2_proposals *st_v2_create_child_sa_proposals;

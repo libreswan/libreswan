@@ -1445,7 +1445,7 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 		 *   are allowed to forget the response after a
 		 *   timeout of several minutes.
 		 */
-		if (ike->sa.st_v2_outgoing[MESSAGE_RESPONSE] == NULL) {
+		if (ike->sa.st_v2_msgid_windows.responder.outgoing_fragments == NULL) {
 			fail_v2_msgid(ike,
 				      "%s request has duplicate Message ID %jd but there is no saved message to retransmit; message dropped",
 				      enum_name(&ikev2_exchange_names, md->hdr.isa_xchg),
@@ -1533,7 +1533,7 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 			return true;
 		}
 		send_recorded_v2_message(ike, "ikev2-responder-retransmit",
-					 ike->sa.st_v2_outgoing[MESSAGE_RESPONSE]);
+					 ike->sa.st_v2_msgid_windows.responder.outgoing_fragments);
 		return true;
 	}
 
@@ -2567,9 +2567,12 @@ static void success_v2_state_transition(struct ike_sa *ike,
 	 */
 	switch (transition->send_role) {
 	case MESSAGE_REQUEST:
+		send_recorded_v2_message(ike, transition->story,
+					 ike->sa.st_v2_msgid_windows.initiator.outgoing_fragments);
+		break;
 	case MESSAGE_RESPONSE:
 		send_recorded_v2_message(ike, transition->story,
-					 ike->sa.st_v2_outgoing[transition->send_role]);
+					 ike->sa.st_v2_msgid_windows.responder.outgoing_fragments);
 		break;
 	case NO_MESSAGE:
 		break;
@@ -2756,7 +2759,7 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		pexpect(transition->send_role == MESSAGE_RESPONSE);
 		v2_msgid_finish(ike, md);
 		send_recorded_v2_message(ike, "DELETE_IKE_FAMILY",
-					 ike->sa.st_v2_outgoing[MESSAGE_RESPONSE]);
+					 ike->sa.st_v2_msgid_windows.responder.outgoing_fragments);
 		/* do the deed */
 		on_delete(&ike->sa, skip_send_delete);
 		connection_delete_ike_family(&ike, HERE);
@@ -2813,11 +2816,11 @@ void complete_v2_state_transition(struct ike_sa *ike,
 			break;
 		case MESSAGE_REQUEST:
 			pexpect(transition->send_role == MESSAGE_RESPONSE);
-			if (ike->sa.st_v2_outgoing[MESSAGE_RESPONSE] != NULL) {
+			if (ike->sa.st_v2_msgid_windows.responder.outgoing_fragments != NULL) {
 				dbg_v2_msgid(ike, "responding with recorded fatal message");
 				v2_msgid_finish(ike, md);
 				send_recorded_v2_message(ike, "STF_FATAL",
-							 ike->sa.st_v2_outgoing[MESSAGE_RESPONSE]);
+							 ike->sa.st_v2_msgid_windows.responder.outgoing_fragments);
 			} else {
 				fail_v2_msgid(ike, "exchange zombie as no response?");
 			}
@@ -2870,6 +2873,7 @@ static void reinitiate_v2_ike_sa_init(const char *story, struct state *st, void 
 	 * Need to wind back the Message ID counters so that the send
 	 * code things it is creating Message 0.
 	 */
+	free_v2_message_queues(st);
 	v2_msgid_init_ike(ike);
 
 	/*

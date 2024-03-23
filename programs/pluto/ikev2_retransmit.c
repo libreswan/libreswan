@@ -78,7 +78,7 @@ void event_v2_retransmit(struct state *ike_sa, monotime_t now UNUSED)
 
 	case RETRANSMIT_YES:
 		send_recorded_v2_message(ike, "EVENT_RETRANSMIT",
-					 ike->sa.st_v2_outgoing[MESSAGE_REQUEST]);
+					 ike->sa.st_v2_msgid_windows.initiator.outgoing_fragments);
 		return;
 
 	case RETRANSMIT_NO:
