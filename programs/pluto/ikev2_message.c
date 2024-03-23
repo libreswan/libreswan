@@ -543,8 +543,7 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 		return false;
 	}
 
-	uint8_t *wire_iv_start = text.ptr + iv_offset;
-	size_t wire_iv_size = ike->sa.st_oakley.ta_encrypt->wire_iv_size;
+	chunk_t wire_iv = chunk2(text.ptr + iv_offset, ike->sa.st_oakley.ta_encrypt->wire_iv_size);
 	size_t integ_size = (encrypt_desc_is_aead(ike->sa.st_oakley.ta_encrypt)
 			     ? ike->sa.st_oakley.ta_encrypt->aead_tag_size
 			     : ike->sa.st_oakley.ta_integ->integ_output_size);
@@ -557,15 +556,15 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 	 * - truncated integrity digest / tag
 	 */
 	uint8_t *payload_end = text.ptr + text.len;
-	if (payload_end < (wire_iv_start + wire_iv_size + 1 + integ_size)) {
+	if (payload_end < (wire_iv.ptr + wire_iv.len + 1 + integ_size)) {
 		llog_sa(RC_LOG, ike,
 			  "encrypted payload impossibly short (%tu)",
-			  payload_end - wire_iv_start);
+			  payload_end - wire_iv.ptr);
 		return false;
 	}
 
 	uint8_t *auth_start = text.ptr;
-	uint8_t *enc_start = wire_iv_start + wire_iv_size;
+	uint8_t *enc_start = wire_iv.ptr + wire_iv.len;
 	uint8_t *integ_start = payload_end - integ_size;
 	size_t enc_size = integ_start - enc_start;
 
@@ -619,13 +618,13 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 		 * fields [...] MUST NOT be included in the associated
 		 * data.
 		 */
-		chunk_t aad = chunk2(auth_start, enc_start - auth_start - wire_iv_size);
+		chunk_t aad = chunk2(auth_start, enc_start - auth_start - wire_iv.len);
 
 		/* decrypt */
 		if (DBGP(DBG_CRYPT)) {
 			DBG_dump_hunk("Salt before authenticated decryption:", salt);
-			DBG_dump("IV before authenticated decryption:",
-				 wire_iv_start, wire_iv_size);
+			LDBG_log(ike->sa.logger, "IV before authenticated decryption:");
+			LDBG_hunk(ike->sa.logger, wire_iv);
 			LDBG_log(ike->sa.logger, "AAD before authenticated decryption:");
 			LDBG_hunk(ike->sa.logger, aad);
 			DBG_dump("data before authenticated decryption:",
@@ -637,7 +636,7 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 		if (!ike->sa.st_oakley.ta_encrypt->encrypt_ops
 		    ->do_aead(ike->sa.st_oakley.ta_encrypt,
 			      salt.ptr, salt.len,
-			      wire_iv_start, wire_iv_size,
+			      wire_iv.ptr, wire_iv.len,
 			      aad.ptr, aad.len,
 			      enc_start, enc_size, integ_size,
 			      cipherkey, false, ike->sa.logger)) {
@@ -667,7 +666,6 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 		dbg("authenticator matched");
 
 		/* note: no iv is longer than MAX_CBC_BLOCK_SIZE */
-		chunk_t wire_iv = chunk2(wire_iv_start, wire_iv_size);
 		struct iv iv;
 		construct_enc_iv("decryption IV/starting-variable", &iv,
 				 wire_iv, salt,
