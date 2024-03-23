@@ -562,9 +562,9 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 	}
 
 	uint8_t *auth_start = text.ptr;
-	uint8_t *enc_start = wire_iv.ptr + wire_iv.len;
 	uint8_t *integ_start = payload_end - integ_size;
-	size_t enc_size = integ_start - enc_start;
+	chunk_t enc = chunk2(wire_iv.ptr + wire_iv.len,
+			     integ_start - wire_iv.ptr - wire_iv.len);
 
 	/*
 	 * Check that the payload is block-size aligned.
@@ -580,10 +580,10 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 	size_t enc_blocksize = ike->sa.st_oakley.ta_encrypt->enc_blocksize;
 	bool pad_to_blocksize = ike->sa.st_oakley.ta_encrypt->pad_to_blocksize;
 	if (pad_to_blocksize) {
-		if (enc_size % enc_blocksize != 0) {
+		if (enc.len % enc_blocksize != 0) {
 			llog_sa(RC_LOG, ike,
 				  "discarding invalid packet: %zu octet payload length is not a multiple of encryption block-size (%zu)",
-				  enc_size, enc_blocksize);
+				  enc.len, enc_blocksize);
 			return false;
 		}
 	}
@@ -609,6 +609,7 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 	}
 
 	/* authenticate and decrypt the block. */
+
 	if (encrypt_desc_is_aead(ike->sa.st_oakley.ta_encrypt)) {
 		/*
 		 * Additional Authenticated Data - AAD - size.
@@ -616,7 +617,7 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 		 * fields [...] MUST NOT be included in the associated
 		 * data.
 		 */
-		chunk_t aad = chunk2(auth_start, enc_start - auth_start - wire_iv.len);
+		chunk_t aad = chunk2(auth_start, enc.ptr - auth_start - wire_iv.len);
 
 		/* decrypt */
 		if (DBGP(DBG_CRYPT)) {
@@ -625,10 +626,10 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 			LDBG_hunk(ike->sa.logger, wire_iv);
 			LDBG_log(ike->sa.logger, "AAD before authenticated decryption:");
 			LDBG_hunk(ike->sa.logger, aad);
-			DBG_dump("data before authenticated decryption:",
-				 enc_start, enc_size);
 			DBG_dump("integ before authenticated decryption:",
 				 integ_start, integ_size);
+			LDBG_log(ike->sa.logger, "payload before decryption:");
+			LDBG_hunk(ike->sa.logger, enc);
 		}
 
 		if (!ike->sa.st_oakley.ta_encrypt->encrypt_ops
@@ -636,14 +637,16 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 			      salt.ptr, salt.len,
 			      wire_iv.ptr, wire_iv.len,
 			      aad.ptr, aad.len,
-			      enc_start, enc_size, integ_size,
+			      enc.ptr, enc.len,
+			      integ_size,
 			      cipherkey, false, ike->sa.logger)) {
 			return false;
 		}
 
 		if (DBGP(DBG_CRYPT)) {
-			DBG_dump("data after authenticated decryption:",
-				 enc_start, enc_size + integ_size);
+			LDBG_log(ike->sa.logger, "data after authenticated decryption:");
+			LDBG_hunk(ike->sa.logger, enc);
+			DBG_dump(NULL, integ_start, integ_size);
 		}
 
 	} else {
@@ -663,6 +666,11 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 
 		dbg("authenticator matched");
 
+		if (DBGP(DBG_CRYPT)) {
+			LDBG_log(ike->sa.logger, "payload before decryption:");
+			LDBG_hunk(ike->sa.logger, enc);
+		}
+
 		/* note: no iv is longer than MAX_CBC_BLOCK_SIZE */
 		struct iv iv;
 		construct_enc_iv("decryption IV/starting-variable", &iv,
@@ -671,20 +679,18 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 				 ike->sa.logger);
 
 		/* decrypt */
-		if (DBGP(DBG_CRYPT)) {
-			DBG_dump("payload before decryption:", enc_start, enc_size);
-		}
 
 		ike->sa.st_oakley.ta_encrypt->encrypt_ops
 			->do_crypt(ike->sa.st_oakley.ta_encrypt,
-				   chunk2(enc_start, enc_size),
-				   HUNK_AS_CHUNK(iv),
+				   enc, HUNK_AS_CHUNK(iv),
 				   cipherkey, false,
 				   ike->sa.logger);
 
 		if (DBGP(DBG_CRYPT)) {
-			DBG_dump("payload after decryption:", enc_start, enc_size);
+			LDBG_log(ike->sa.logger, "payload after decryption:");
+			LDBG_hunk(ike->sa.logger, enc);
 		}
+
 	}
 
 	/*
@@ -699,11 +705,11 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 	 * Notice the "should".  RACOON, for instance, sends extra
 	 * blocks of padding that contain random bytes.
 	 */
-	uint8_t padlen = enc_start[enc_size - 1] + 1;
-	if (padlen > enc_size) {
+	uint8_t padlen = enc.ptr[enc.len - 1] + 1;
+	if (padlen > enc.len) {
 		llog_sa(RC_LOG, ike,
 			  "discarding invalid packet: padding-length %u (octet 0x%02x) is larger than %zu octet payload length",
-			  padlen, padlen - 1, enc_size);
+			  padlen, padlen - 1, enc.len);
 		return false;
 	}
 	if (pad_to_blocksize) {
@@ -725,7 +731,7 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 	 * instance, sets them to random values.
 	 */
 	dbg("stripping %u octets as pad", padlen);
-	*plain = shunk2(enc_start, enc_size - padlen);
+	*plain = shunk2(enc.ptr, enc.len - padlen);
 
 	return true;
 }
