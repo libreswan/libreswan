@@ -396,7 +396,6 @@ struct state {
 	/** IKEv2-only things **/
 	/* XXX: union { struct { .. } v1; struct {...} v2;} st? */
 
-	const struct v2_state_transition *st_v2_last_transition;
 	const struct v2_state_transition *st_v2_transition;
 
 	bool st_viable_parent;	/* can initiate new CERAET_CHILD_SA */
