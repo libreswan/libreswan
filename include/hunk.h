@@ -80,6 +80,8 @@ bool raw_eq(const void *l_ptr, size_t l_len,
 	    const void *r_ptr, size_t r_len);
 bool raw_caseeq(const void *l_ptr, size_t l_len,
 		const void *r_ptr, size_t r_len);
+bool raw_heq(const void *l_ptr, size_t l_len,
+		const void *r_ptr, size_t r_len);
 
 #define hunk_isempty(HUNK)			\
 	({					\
@@ -100,6 +102,13 @@ bool raw_caseeq(const void *l_ptr, size_t l_len,
 		raw_caseeq(l_.ptr, l_.len, r_.ptr, r_.len);	\
 	})
 
+#define hunk_heq(L, R) /* case independent */			\
+	({							\
+		const typeof(L) l_ = L; /* evaluate once */	\
+		const typeof(R) r_ = R; /* evaluate once */	\
+		raw_heq(l_.ptr, l_.len, r_.ptr, r_.len);	\
+	})
+
 #define hunk_streq(HUNK, STRING)					\
 	({								\
 		const typeof(HUNK) hunk_ = HUNK; /* evaluate once */	\
@@ -114,6 +123,14 @@ bool raw_caseeq(const void *l_ptr, size_t l_len,
 		const char *string_ = STRING; /* evaluate once */	\
 		raw_caseeq(hunk_.ptr, hunk_.len, string_,		\
 			   string_ != NULL ? strlen(string_) : 0);	\
+	})
+
+#define hunk_strheq(HUNK, STRING) /* case and [-_] independent */	\
+	({								\
+		const typeof(HUNK) hunk_ = HUNK; /* evaluate once */	\
+		const char *string_ = STRING; /* evaluate once */	\
+		raw_heq(hunk_.ptr, hunk_.len, string_,		\
+			string_ != NULL ? strlen(string_) : 0);	\
 	})
 
 /*

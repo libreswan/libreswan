@@ -84,6 +84,34 @@ bool raw_caseeq(const void *l_ptr, size_t l_len,
 	return strncasecmp(l_ptr, r_ptr, r_len) == 0;
 }
 
+bool raw_heq(const void *l_ptr, size_t l_len,
+	     const void *r_ptr, size_t r_len)
+{
+	/* NULL and EMPTY("") are not the same */
+	if (l_ptr == NULL || r_ptr == NULL) {
+		return l_ptr == r_ptr;
+	}
+	if (l_len != r_len) {
+		return false;
+	}
+	const char *l = l_ptr;
+	const char *r = r_ptr;
+	for (unsigned i = 0; i < l_len; i++) {
+		char lc = l[i];
+		char rc = r[i];
+		if (char_tolower(lc) == char_tolower(rc)) {
+			continue;
+		}
+		const char *wild = "-_";
+		if (strchr(wild, lc) != NULL &&
+		    strchr(wild, rc) != NULL) {
+			continue;
+		}
+		return false;
+	}
+	return true;
+}
+
 void hton_bytes(uintmax_t h, void *bytes, size_t size)
 {
 	uint8_t *byte = bytes;

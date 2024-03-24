@@ -83,6 +83,7 @@ static void check_hunk_eq(void)
 		bool starteq;
 		bool casestarteq;
 		bool thingeq;
+		bool heq;
 	} tests[] = {
 		/*
 		 * Like strings, NULL and EMPTY ("") shunks are
@@ -91,25 +92,28 @@ static void check_hunk_eq(void)
 		 * Strangely, while NULL==NULL, NULL does not start
 		 * NULL - it goes to *eat() which can't eat nothing.
 		 */
-		{ NULL, NULL, .empty = false, .eq = true,  .caseeq = true,  .starteq = false, .casestarteq = false, .thingeq = false, },
-		{ NULL, "",   .empty = false, .eq = false, .caseeq = false, .starteq = false, .casestarteq = false, .thingeq = false, },
-		{ "", NULL,   .empty = true,  .eq = false, .caseeq = false, .starteq = false, .casestarteq = false, .thingeq = false, },
-		{ "", "",     .empty = true,  .eq = true,  .caseeq = true,  .starteq = true,  .casestarteq = true,  .thingeq = false, },
+		{ NULL, NULL, .empty = false, .eq = true,  .caseeq = true,  .starteq = false, .casestarteq = false, .thingeq = false, .heq = true,  },
+		{ NULL, "",   .empty = false, .eq = false, .caseeq = false, .starteq = false, .casestarteq = false, .thingeq = false, .heq = false, },
+		{ "", NULL,   .empty = true,  .eq = false, .caseeq = false, .starteq = false, .casestarteq = false, .thingeq = false, .heq = false, },
+		{ "", "",     .empty = true,  .eq = true,  .caseeq = true,  .starteq = true,  .casestarteq = true,  .thingeq = false, .heq = true,  },
 
-		{ "", "a",    .empty = true,  .eq = false, .caseeq = false, .starteq = false, .casestarteq = false, .thingeq = false, },
-		{ "a", "",    .empty = false, .eq = false, .caseeq = false, .starteq = true,  .casestarteq = true,  .thingeq = false, },
+		{ "", "a",    .empty = true,  .eq = false, .caseeq = false, .starteq = false, .casestarteq = false, .thingeq = false, .heq = false, },
+		{ "a", "",    .empty = false, .eq = false, .caseeq = false, .starteq = true,  .casestarteq = true,  .thingeq = false, .heq = false, },
 
-		{ "a", "a",   .empty = false, .eq = true,  .caseeq = true,  .starteq = true,  .casestarteq = true,  .thingeq = false, },
-		{ "a", "A",   .empty = false, .eq = false, .caseeq = true,  .starteq = false, .casestarteq = true,  .thingeq = false, },
-		{ "A", "a",   .empty = false, .eq = false, .caseeq = true,  .starteq = false, .casestarteq = true,  .thingeq = false, },
-		{ "a", "b",   .empty = false, .eq = false, .caseeq = false, .starteq = false, .casestarteq = false, .thingeq = false, },
+		{ "a", "a",   .empty = false, .eq = true,  .caseeq = true,  .starteq = true,  .casestarteq = true,  .thingeq = false, .heq = true,  },
+		{ "a", "A",   .empty = false, .eq = false, .caseeq = true,  .starteq = false, .casestarteq = true,  .thingeq = false, .heq = true,  },
+		{ "A", "a",   .empty = false, .eq = false, .caseeq = true,  .starteq = false, .casestarteq = true,  .thingeq = false, .heq = true,  },
+		{ "a", "b",   .empty = false, .eq = false, .caseeq = false, .starteq = false, .casestarteq = false, .thingeq = false, .heq = false, },
 
-		{ "a", "aa",  .empty = false, .eq = false, .caseeq = false, .starteq = false, .casestarteq = false, .thingeq = false, },
-		{ "A", "aa",  .empty = false, .eq = false, .caseeq = false, .starteq = false, .casestarteq = false, .thingeq = false, },
-		{ "ab", "a",  .empty = false, .eq = false, .caseeq = false, .starteq = true,  .casestarteq = true,  .thingeq = false, },
-		{ "AB", "a",  .empty = false, .eq = false, .caseeq = false, .starteq = false, .casestarteq = true,  .thingeq = false, },
-		{ "ab", "A",  .empty = false, .eq = false, .caseeq = false, .starteq = false, .casestarteq = true,  .thingeq = false, },
-		{ "ab", "b",  .empty = false, .eq = false, .caseeq = false, .starteq = false, .casestarteq = false, .thingeq = false, },
+		{ "a", "aa",  .empty = false, .eq = false, .caseeq = false, .starteq = false, .casestarteq = false, .thingeq = false, .heq = false, },
+		{ "A", "aa",  .empty = false, .eq = false, .caseeq = false, .starteq = false, .casestarteq = false, .thingeq = false, .heq = false, },
+		{ "ab", "a",  .empty = false, .eq = false, .caseeq = false, .starteq = true,  .casestarteq = true,  .thingeq = false, .heq = false, },
+		{ "AB", "a",  .empty = false, .eq = false, .caseeq = false, .starteq = false, .casestarteq = true,  .thingeq = false, .heq = false, },
+		{ "ab", "A",  .empty = false, .eq = false, .caseeq = false, .starteq = false, .casestarteq = true,  .thingeq = false, .heq = false, },
+		{ "ab", "b",  .empty = false, .eq = false, .caseeq = false, .starteq = false, .casestarteq = false, .thingeq = false, .heq = false, },
+
+		{ "a-b", "a_b",  .empty = false, .eq = false, .caseeq = false, .starteq = false, .casestarteq = false, .thingeq = false, .heq = true, },
+		{ "a_b", "a-b",  .empty = false, .eq = false, .caseeq = false, .starteq = false, .casestarteq = false, .thingeq = false, .heq = true, },
 
 		{ "thing", "a", .empty = false, .eq = false, .caseeq = false, .thingeq = true, },
 	};
@@ -159,6 +163,7 @@ static void check_hunk_eq(void)
 		HUNK_EQ(caseeq);
 		HUNK_EQ(starteq);
 		HUNK_EQ(casestarteq);
+		HUNK_EQ(heq);
 #undef HUNK_EQ
 
 		{
