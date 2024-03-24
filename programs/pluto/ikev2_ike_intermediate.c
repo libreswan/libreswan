@@ -192,7 +192,9 @@ static void compute_intermediate_mac(struct ike_sa *ike,
 	*int_auth_ir = clone_hunk(mac, "IntAuth");
 }
 
-stf_status initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike, struct msg_digest *mdp)
+static stf_status initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
+						       struct child_sa *unused_child UNUSED,
+						       struct msg_digest *mdp)
 {
 	pexpect(ike->sa.st_sa_role == SA_INITIATOR);
 	pexpect(v2_msg_role(mdp) == MESSAGE_RESPONSE); /* i.e., MD!=NULL */
@@ -417,5 +419,16 @@ stf_status process_v2_IKE_INTERMEDIATE_response_continue(struct state *st, struc
 	 * We've done one intermediate exchange round, now proceed to
 	 * IKE AUTH.
 	 */
-	return initiate_v2_IKE_AUTH_request(ike, md);
+	return next_v2_transition(ike, md, &v2_IKE_AUTH_initiator_transition, HERE);
 }
+
+const struct v2_state_transition v2_IKE_INTERMEDIATE_initiator_transition = {
+	.story      = "initiating IKE_INTERMEDIATE",
+	.state      = 0,
+	.next_state = STATE_V2_PARENT_I2,
+	.exchange   = ISAKMP_v2_IKE_INTERMEDIATE,
+	.send_role  = MESSAGE_REQUEST,
+	.processor  = initiate_v2_IKE_INTERMEDIATE_request,
+	.llog_success = llog_v2_success_exchange_sent_to,
+	.timeout_event = EVENT_RETRANSMIT,
+};

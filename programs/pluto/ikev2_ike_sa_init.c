@@ -1682,14 +1682,12 @@ stf_status process_v2_IKE_SA_INIT_response_continue(struct state *ike_sa,
 	 * and dispatch the next request.
 	 */
 
-	stf_status (*next_exchange)(struct ike_sa *ike, struct msg_digest *md);
+	const struct v2_state_transition *next_transition;
 	if (ike->sa.st_v2_ike_intermediate.enabled) {
-		next_exchange = initiate_v2_IKE_INTERMEDIATE_request;
+		next_transition = &v2_IKE_INTERMEDIATE_initiator_transition;
 	} else {
-		next_exchange = initiate_v2_IKE_AUTH_request;
+		next_transition = &v2_IKE_AUTH_initiator_transition;
 	}
 
-	llog_v2_IKE_SA_INIT_success(ike);
-
-	return next_exchange(ike, md);
+	return next_v2_transition(ike, md, next_transition, HERE);
 }

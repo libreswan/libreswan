@@ -90,7 +90,9 @@ static stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct
 
 static v2_auth_signature_cb process_v2_IKE_AUTH_request_auth_signature_continue; /* type check */
 
-stf_status initiate_v2_IKE_AUTH_request(struct ike_sa *ike, struct msg_digest *md)
+static stf_status initiate_v2_IKE_AUTH_request(struct ike_sa *ike,
+					       struct child_sa *unused_child_sa UNUSED,
+					       struct msg_digest *md)
 {
 	pexpect(ike->sa.st_sa_role == SA_INITIATOR);
 	pexpect(v2_msg_role(md) == MESSAGE_RESPONSE); /* i.e., MD!=NULL */
@@ -1308,3 +1310,14 @@ stf_status process_v2_IKE_AUTH_failure_response(struct ike_sa *ike,
 
 	return STF_FATAL;
 }
+
+const struct v2_state_transition v2_IKE_AUTH_initiator_transition = {
+	.story      = "initiating IKE_AUTH",
+	.state      = 0,
+	.next_state = STATE_V2_PARENT_I2,
+	.exchange   = ISAKMP_v2_IKE_AUTH,
+	.send_role  = MESSAGE_REQUEST,
+	.processor  = initiate_v2_IKE_AUTH_request,
+	.llog_success = llog_v2_success_exchange_sent_to,
+	.timeout_event = EVENT_RETRANSMIT,
+};

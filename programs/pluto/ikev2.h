@@ -134,6 +134,7 @@ void llog_v2_success_exchange_sent_to(struct ike_sa *ike);
 void llog_v2_success_exchange_processed(struct ike_sa *ike);
 void llog_v2_success_state_story(struct ike_sa *ike);
 void ldbg_v2_success(struct ike_sa *ike);
+void llog_v2_success_state_story_to(struct ike_sa *ike);
 
 bool accept_v2_notification(v2_notification_t n,
 			    struct logger *logger,
@@ -141,5 +142,9 @@ bool accept_v2_notification(v2_notification_t n,
 			    bool enabled);
 
 extern bool verbose_v2_state_busy(const struct state *st);
+
+stf_status next_v2_transition(struct ike_sa *ike, struct msg_digest *md,
+			      const struct v2_state_transition *transition,
+			      where_t where);
 
 #endif

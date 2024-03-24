@@ -183,7 +183,7 @@ void llog_v2_success_state_story(struct ike_sa *ike)
 	}
 }
 
-static void llog_v2_success_state_story_to(struct ike_sa *ike)
+void llog_v2_success_state_story_to(struct ike_sa *ike)
 {
 	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
 		jam_string(buf, ike->sa.st_state->story);
@@ -343,11 +343,11 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_IKE_SA_INIT,
 	  .recv_role  = MESSAGE_RESPONSE,
-	  .send_role  = MESSAGE_REQUEST,
+	  .send_role  = NO_MESSAGE, /* handled by next transition */
 	  .req_clear_payloads = P(SA) | P(KE) | P(Nr),
 	  .opt_clear_payloads = P(CERTREQ),
 	  .processor  = process_v2_IKE_SA_INIT_response,
-	  .llog_success = llog_v2_success_state_story_to,
+	  .llog_success = llog_v2_IKE_SA_INIT_success,
 	  .timeout_event = EVENT_RETRANSMIT, },
 
 	{ .story      = "Initiator: process IKE_INTERMEDIATE reply, initiate IKE_AUTH or IKE_INTERMEDIATE",
@@ -356,7 +356,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .flags      = MESSAGE_RESPONSE,
 	  .exchange   = ISAKMP_v2_IKE_INTERMEDIATE,
 	  .recv_role  = MESSAGE_RESPONSE,
-	  .send_role  = MESSAGE_REQUEST,
+	  .send_role  = NO_MESSAGE, /* handled by next transition */
 	  .req_clear_payloads = P(SK),
 	  .opt_clear_payloads = LEMPTY,
 	  .processor  = process_v2_IKE_INTERMEDIATE_response,
@@ -2635,6 +2635,15 @@ static void success_v2_state_transition(struct ike_sa *ike,
 	} else if (transition->flags & SMF2_RELEASE_WHACK) {
 		release_whack(ike->sa.logger, HERE);
 	}
+}
+
+stf_status next_v2_transition(struct ike_sa *ike, struct msg_digest *md,
+			      const struct v2_state_transition *next_transition,
+			      where_t where)
+{
+	ike->sa.st_v2_transition->llog_success(ike);
+	set_v2_transition(&ike->sa, next_transition, where);
+	return ike->sa.st_v2_transition->processor(ike, NULL, md);
 }
 
 /*
