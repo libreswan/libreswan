@@ -160,7 +160,7 @@ void llog_v2_success_exchange_processed(struct ike_sa *ike)
 }
 
 /* sent EXCHANGE {request,response} to <address> */
-void llog_v2_success_exchange_sent(struct ike_sa *ike)
+void llog_v2_success_exchange_sent_to(struct ike_sa *ike)
 {
 	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
 		jam_string(buf, "sent ");
@@ -283,7 +283,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .exchange   = ISAKMP_v2_IKE_SA_INIT,
 	  .send_role  = MESSAGE_REQUEST,
 	  .processor  = NULL, /* XXX: should be set */
-	  .llog_success = llog_v2_success_exchange_sent,
+	  .llog_success = llog_v2_success_exchange_sent_to,
 	  .timeout_event = EVENT_RETRANSMIT, },
 
 	/* STATE_V2_PARENT_I1: R1B --> I1B

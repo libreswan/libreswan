@@ -130,7 +130,7 @@ bool v2_notification_fatal(v2_notification_t n);
 
 bool already_has_larval_v2_child(struct ike_sa *ike, const struct connection *c);
 
-void llog_v2_success_exchange_sent(struct ike_sa *ike);
+void llog_v2_success_exchange_sent_to(struct ike_sa *ike);
 void llog_v2_success_exchange_processed(struct ike_sa *ike);
 void llog_v2_success_state_story(struct ike_sa *ike);
 void ldbg_v2_success(struct ike_sa *ike);
