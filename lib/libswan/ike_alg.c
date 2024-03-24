@@ -222,7 +222,7 @@ static const struct ike_alg *lookup_by_id(const struct ike_alg_type *type,
 		const struct ike_alg *alg = *algp;
 		if (alg->id[key] == id) {
 			const char *name = enum_name_short(type->enum_names[key], id);
-			DBGF(debug, "%s %s id: %s=%u, found %s\n",
+			DBGF(debug, "%s %s id: %s=%u, found %s",
 			     type->name, __func__,
 			     name ? name : "???",
 			     id, alg->fqn);
@@ -230,7 +230,7 @@ static const struct ike_alg *lookup_by_id(const struct ike_alg_type *type,
 		}
  	}
 	const char *name = enum_name_short(type->enum_names[key], id);
-	DBGF(debug, "%s %s id: %s=%u, not found\n",
+	DBGF(debug, "%s %s id: %s=%u, not found",
 	     type->name, __func__, name ? name : "???", id);
 	return NULL;
 }
