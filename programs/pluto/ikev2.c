@@ -3053,7 +3053,7 @@ void event_v2_rekey(struct state *st, bool detach_whack)
  * if the state is too busy to process a packet, say so
  */
 
-bool v2_state_busy(const struct state *st)
+static bool v2_state_busy(const struct state *st)
 {
 	passert(st != NULL);
 
