@@ -291,7 +291,7 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 			if (md->fake_clone) {
 				log_state(RC_LOG, &old->sa, "IMPAIR: processing a fake (cloned) message");
 			}
-			if (verbose_state_busy(&old->sa)) {
+			if (verbose_v2_state_busy(&old->sa)) {
 				/* already logged */;
 			} else if (old->sa.st_state->kind == STATE_V2_PARENT_R_IKE_SA_INIT &&
 				   old->sa.st_v2_msgid_windows.responder.recv == 0 &&
@@ -550,7 +550,7 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 			return;
 		}
 
-		if (verbose_state_busy(&ike->sa)) {
+		if (verbose_v2_state_busy(&ike->sa)) {
 			return;
 		}
 

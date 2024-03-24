@@ -903,8 +903,6 @@ extern void delete_cryptographic_continuation(struct state *st);
 extern void change_v1_state(struct state *st, enum state_kind new_state);
 extern void change_v2_state(struct state *st);
 
-extern bool state_is_busy(const struct state *st);
-extern bool verbose_state_busy(const struct state *st);
 extern bool drop_new_exchanges(void);
 extern bool require_ddos_cookies(void);
 extern void show_globalstate_status(struct show *s);

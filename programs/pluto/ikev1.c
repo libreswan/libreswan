@@ -175,6 +175,9 @@
 
 #include "pluto_stats.h"
 
+static bool v1_state_busy(const struct state *st);
+static bool verbose_v1_state_busy(const struct state *st);
+
 /*
  * state_v1_microcode is a tuple of information parameterizing certain
  * centralized processing of a packet.  For example, it roughly
@@ -1722,7 +1725,7 @@ void process_v1_packet(struct msg_digest *md)
 
 	/*
 	 * XXX: do this earlier? */
-	if (verbose_state_busy(st))
+	if (verbose_v1_state_busy(st))
 		return;
 
 	/*
@@ -2463,7 +2466,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 	st = md->v1_st;
 
 	passert(st != NULL);
-	pexpect(!state_is_busy(st));
+	pexpect(!v1_state_busy(st));
 
 	if (result > STF_OK) {
 		linux_audit_conn(md->v1_st, IS_V1_ISAKMP_SA_ESTABLISHED(md->v1_st) ? LAK_CHILD_FAIL : LAK_PARENT_FAIL);
@@ -3084,6 +3087,68 @@ struct ike_sa *established_isakmp_sa_for_state(struct state *st,
 	     st->st_state->short_name,
 	     pri_so(isakmp->sa.st_serialno));
 	return isakmp;
+}
+
+/*
+ * if the state is too busy to process a packet, say so
+ */
+
+bool v1_state_busy(const struct state *st)
+{
+	passert(st != NULL);
+
+	if (st->st_v1_background_md != NULL) {
+		dbg("#%lu is busy; has background MD %p",
+		    st->st_serialno, st->st_v1_background_md);
+		return true;
+	}
+
+	if (st->ipseckey_dnsr != NULL) {
+		dbg("#%lu is busy; has IPSECKEY DNS %p",
+		    st->st_serialno, st->ipseckey_dnsr);
+		return true;
+	}
+
+	/*
+	 * If IKEv1 is doing something in the background then the
+	 * state isn't busy.
+	 */
+	if (st->st_offloaded_task_in_background) {
+		pexpect(st->st_offloaded_task != NULL);
+		dbg("#%lu is idle; has background offloaded task",
+		    st->st_serialno);
+		return false;
+	}
+	/*
+	 * If this state is busy calculating.
+	 */
+	if (st->st_offloaded_task != NULL) {
+		dbg("#%lu is busy; has an offloaded task",
+		    st->st_serialno);
+		return true;
+	}
+	dbg("#%lu is idle", st->st_serialno);
+	return false;
+}
+
+bool verbose_v1_state_busy(const struct state *st)
+{
+	if (st == NULL) {
+		dbg("#null state always idle");
+		return false;
+	}
+	if (!v1_state_busy(st)) {
+		dbg("#%lu idle", st->st_serialno);
+		return false;
+	}
+
+	/* not whack */
+	/* XXX: why not whack? */
+	/* XXX: can this and below be merged; is there always an offloaded task? */
+	log_state(LOG_STREAM/*not-whack*/, st,
+		  "discarding packet received during asynchronous work (DNS or crypto) in %s",
+		  st->st_state->name);
+	return true;
 }
 
 /*

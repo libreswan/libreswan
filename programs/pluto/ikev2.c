@@ -1598,7 +1598,7 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 	 */
 	if (ike->sa.st_v2_msgid_windows.responder.wip == msgid) {
 		/* this generates the log message */
-		pexpect(verbose_state_busy(&ike->sa));
+		pexpect(verbose_v2_state_busy(&ike->sa));
 		return true;
 	}
 
@@ -1796,7 +1796,7 @@ static bool is_duplicate_response(struct ike_sa *ike,
 	 * XXX: Is this too strict?  Could an in-progress request make
 	 * things look busy?
 	 */
-	if (verbose_state_busy(&ike->sa)) {
+	if (verbose_v2_state_busy(&ike->sa)) {
 		return true;
 	}
 
@@ -3047,4 +3047,66 @@ void event_v2_rekey(struct state *st, bool detach_whack)
 	     state_sa_name(st),
 	     pri_so(st->st_serialno),
 	     pri_so(ike->sa.st_serialno));
+}
+
+/*
+ * if the state is too busy to process a packet, say so
+ */
+
+bool v2_state_busy(const struct state *st)
+{
+	passert(st != NULL);
+
+	if (st->st_v1_background_md != NULL) {
+		dbg("#%lu is busy; has background MD %p",
+		    st->st_serialno, st->st_v1_background_md);
+		return true;
+	}
+
+	if (st->ipseckey_dnsr != NULL) {
+		dbg("#%lu is busy; has IPSECKEY DNS %p",
+		    st->st_serialno, st->ipseckey_dnsr);
+		return true;
+	}
+
+	/*
+	 * If IKEv1 is doing something in the background then the
+	 * state isn't busy.
+	 */
+	if (st->st_offloaded_task_in_background) {
+		pexpect(st->st_offloaded_task != NULL);
+		dbg("#%lu is idle; has background offloaded task",
+		    st->st_serialno);
+		return false;
+	}
+	/*
+	 * If this state is busy calculating.
+	 */
+	if (st->st_offloaded_task != NULL) {
+		dbg("#%lu is busy; has an offloaded task",
+		    st->st_serialno);
+		return true;
+	}
+	dbg("#%lu is idle", st->st_serialno);
+	return false;
+}
+
+bool verbose_v2_state_busy(const struct state *st)
+{
+	if (st == NULL) {
+		dbg("#null state always idle");
+		return false;
+	}
+	if (!v2_state_busy(st)) {
+		dbg("#%lu idle", st->st_serialno);
+		return false;
+	}
+
+	/* not whack */
+	/* XXX: why not whack? */
+	/* XXX: can this and below be merged; is there always an offloaded task? */
+	log_state(LOG_STREAM/*not-whack*/, st,
+		  "discarding packet received during asynchronous work (DNS or crypto) in %s",
+		  st->st_state->name);
+	return true;
 }

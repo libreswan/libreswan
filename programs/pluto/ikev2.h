@@ -140,5 +140,7 @@ bool accept_v2_notification(v2_notification_t n,
 			    struct msg_digest *md,
 			    bool enabled);
 
+extern bool v2_state_busy(const struct state *st);
+extern bool verbose_v2_state_busy(const struct state *st);
 
 #endif
