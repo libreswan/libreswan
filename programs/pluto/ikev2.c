@@ -1594,11 +1594,12 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 	 *
 	 * - the IKE SA's keying material (SKEYSEED) has been computed
 	 * - the message successfully decrypts
-	 *
 	 */
+
 	if (ike->sa.st_v2_msgid_windows.responder.wip == msgid) {
-		/* this generates the log message */
-		pexpect(verbose_v2_state_busy(&ike->sa));
+		llog(LOG_STREAM/*not-whack*/, ike->sa.logger,
+		     "discarding packet received during asynchronous work (DNS or crypto) in %s",
+		     ike->sa.st_state->name);
 		return true;
 	}
 
