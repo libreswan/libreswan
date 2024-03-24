@@ -36,9 +36,6 @@ east #
 east #
  # there should be only one IKE_INIT exchange
 east #
- grep "PARENT_I1 with STF_OK" /tmp/pluto.log
-east #
- grep "PARENT_R1 with status STF_OK" /tmp/pluto.log
-| #1 complete_v2_state_transition() PARENT_R0->PARENT_R1 with status STF_OK
+ grep "sent IKE_SA_INIT" /tmp/pluto.log
 east #
  

@@ -146,7 +146,7 @@ west #
 west #
  # there should be only one IKE_SA_INIT exchange
 west #
- grep "PARENT_[IR]1 with status STF_OK" /tmp/pluto.log
-| #1 complete_v2_state_transition() PARENT_I0->PARENT_I1 with status STF_OK
+ grep "sent IKE_SA_INIT" /tmp/pluto.log
+"westnet-eastnet-a" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 west #
  
