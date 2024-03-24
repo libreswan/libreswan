@@ -85,8 +85,9 @@ struct finite_state v2_states[] = {
 
 	S(STATE_V2_PARENT_I1, "sent IKE_SA_INIT request", CAT_HALF_OPEN_IKE_SA),
 	S(STATE_V2_PARENT_R0, "processing IKE_SA_INIT request", CAT_HALF_OPEN_IKE_SA),
-	S(STATE_V2_PARENT_R1, "sent IKE_SA_INIT (or IKE_INTERMEDIATE) response", CAT_HALF_OPEN_IKE_SA, .v2.secured = true),
-	S(STATE_V2_PARENT_R_EAP, "sent EAP response", CAT_OPEN_IKE_SA, .v2.secured = true),
+	S(STATE_V2_PARENT_R_IKE_SA_INIT, "sent IKE_SA_INIT response, waiting for IKE_INTERMEDIATE or IKE_AUTH request", CAT_HALF_OPEN_IKE_SA, .v2.secured = true),
+	S(STATE_V2_PARENT_R_IKE_INTERMEDIATE, "sent IKE_INTERMEDIATE response, waiting for IKE_INTERMEDIATE or IKE_AUTH request", CAT_OPEN_IKE_SA, .v2.secured = true),
+	S(STATE_V2_PARENT_R_IKE_AUTH_EAP, "sent IKE_AUTH(EAP) response, waiting for IKE_AUTH(EAP) request", CAT_OPEN_IKE_SA, .v2.secured = true),
 
 	/*
 	 * All IKEv1 MAIN modes except the first (half-open) and last

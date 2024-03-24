@@ -562,8 +562,9 @@ enum state_kind {
 	STATE_V2_PARENT_I2,        /* IKE_AUTH: sent auth message, waiting for reply */
 
 	STATE_V2_PARENT_R0,	/* just starting */
-	STATE_V2_PARENT_R1,	/* IKE_SA_INIT: sent response */
-	STATE_V2_PARENT_R_EAP,  /* IKE_AUTH EAP negotiation */
+	STATE_V2_PARENT_R_IKE_SA_INIT,
+	STATE_V2_PARENT_R_IKE_INTERMEDIATE,
+	STATE_V2_PARENT_R_IKE_AUTH_EAP,  /* IKE_AUTH EAP negotiation */
 
 	/* IKE exchange can also create a child */
 

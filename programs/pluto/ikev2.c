@@ -404,7 +404,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	 */
 	{ .story      = "Respond to IKE_SA_INIT",
 	  .state      = STATE_V2_PARENT_R0,
-	  .next_state = STATE_V2_PARENT_R1,
+	  .next_state = STATE_V2_PARENT_R_IKE_SA_INIT,
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_IKE_SA_INIT,
 	  .recv_role  = MESSAGE_REQUEST,
@@ -425,8 +425,8 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	 */
 
 	{ .story      = "Responder: process IKE_INTERMEDIATE request",
-	  .state      = STATE_V2_PARENT_R1,
-	  .next_state = STATE_V2_PARENT_R1,
+	  .state      = STATE_V2_PARENT_R_IKE_SA_INIT,
+	  .next_state = STATE_V2_PARENT_R_IKE_INTERMEDIATE,
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_IKE_INTERMEDIATE,
 	  .recv_role  = MESSAGE_REQUEST,
@@ -438,13 +438,8 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .llog_success = llog_v2_success_exchange_processed,
 	  .timeout_event = EVENT_v2_DISCARD, },
 
-	/*
-	 * These two transitions should be merged; the no-child
-	 * variant is just so that the code can be hobbled.
-	 */
-
 	{ .story      = "Responder: process IKE_AUTH request",
-	  .state      = STATE_V2_PARENT_R1,
+	  .state      = STATE_V2_PARENT_R_IKE_SA_INIT,
 	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	  .flags      = SMF2_RELEASE_WHACK,
 	  .exchange   = ISAKMP_v2_IKE_AUTH,
@@ -457,9 +452,9 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_v2_REPLACE, },
 
-	{ .story      = "Responder: process IKE_AUTH request, initiate EAP",
-	  .state      = STATE_V2_PARENT_R1,
-	  .next_state = STATE_V2_PARENT_R_EAP,
+	{ .story      = "Responder: process IKE_AUTH(EAP) request",
+	  .state      = STATE_V2_PARENT_R_IKE_SA_INIT,
+	  .next_state = STATE_V2_PARENT_R_IKE_AUTH_EAP,
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_IKE_AUTH,
 	  .recv_role  = MESSAGE_REQUEST,
@@ -471,9 +466,56 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .llog_success = llog_v2_success_state_story,
 	  .timeout_event = EVENT_v2_DISCARD, },
 
+	{ .story      = "Responder: process IKE_INTERMEDIATE request",
+	  .state      = STATE_V2_PARENT_R_IKE_INTERMEDIATE,
+	  .next_state = STATE_V2_PARENT_R_IKE_INTERMEDIATE,
+	  .flags      = LEMPTY,
+	  .exchange   = ISAKMP_v2_IKE_INTERMEDIATE,
+	  .recv_role  = MESSAGE_REQUEST,
+	  .send_role  = MESSAGE_RESPONSE,
+	  .req_clear_payloads = P(SK),
+	  .req_enc_payloads = LEMPTY,
+	  .opt_enc_payloads = LEMPTY,
+	  .processor  = process_v2_IKE_INTERMEDIATE_request,
+	  .llog_success = llog_v2_success_exchange_processed,
+	  .timeout_event = EVENT_v2_DISCARD, },
+
+	{ .story      = "Responder: process IKE_AUTH(EAP) request",
+	  .state      = STATE_V2_PARENT_R_IKE_INTERMEDIATE,
+	  .next_state = STATE_V2_PARENT_R_IKE_AUTH_EAP,
+	  .flags      = LEMPTY,
+	  .exchange   = ISAKMP_v2_IKE_AUTH,
+	  .recv_role  = MESSAGE_REQUEST,
+	  .send_role  = MESSAGE_RESPONSE,
+	  .req_clear_payloads = P(SK),
+	  .req_enc_payloads = P(IDi),
+	  .opt_enc_payloads = P(CERTREQ) | P(IDr) | P(CP) | P(SA) | P(TSi) | P(TSr),
+	  .processor  = process_v2_IKE_AUTH_request_EAP_start,
+	  .llog_success = llog_v2_success_state_story,
+	  .timeout_event = EVENT_v2_DISCARD, },
+
+	/*
+	 * These two transitions should be merged; the no-child
+	 * variant is just so that the code can be hobbled.
+	 */
+
+	{ .story      = "Responder: process IKE_AUTH request",
+	  .state      = STATE_V2_PARENT_R_IKE_INTERMEDIATE,
+	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
+	  .flags      = SMF2_RELEASE_WHACK,
+	  .exchange   = ISAKMP_v2_IKE_AUTH,
+	  .recv_role  = MESSAGE_REQUEST,
+	  .send_role  = MESSAGE_RESPONSE,
+	  .req_clear_payloads = P(SK),
+	  .req_enc_payloads = P(IDi) | P(AUTH),
+	  .opt_enc_payloads = P(CERT) | P(CERTREQ) | P(IDr) | P(CP) | P(SA) | P(TSi) | P(TSr),
+	  .processor  = process_v2_IKE_AUTH_request,
+	  .llog_success = ldbg_v2_success,
+	  .timeout_event = EVENT_v2_REPLACE, },
+
 	{ .story      = "Responder: process IKE_AUTH/EAP, continue EAP",
-	  .state      = STATE_V2_PARENT_R_EAP,
-	  .next_state = STATE_V2_PARENT_R_EAP,
+	  .state      = STATE_V2_PARENT_R_IKE_AUTH_EAP,
+	  .next_state = STATE_V2_PARENT_R_IKE_AUTH_EAP,
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_IKE_AUTH,
 	  .recv_role  = MESSAGE_REQUEST,
@@ -485,7 +527,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .timeout_event = EVENT_v2_DISCARD, },
 
 	{ .story      = "Responder: process final IKE_AUTH/EAP",
-	  .state      = STATE_V2_PARENT_R_EAP,
+	  .state      = STATE_V2_PARENT_R_IKE_AUTH_EAP,
 	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	  .flags      = SMF2_RELEASE_WHACK,
 	  .exchange   = ISAKMP_v2_IKE_AUTH,
@@ -1581,7 +1623,7 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 		 * - passed to process_v2_request_no_skeyseed() which
 		 *   may decide to save it
 		 */
-		pexpect(ike->sa.st_state->kind == STATE_V2_PARENT_R1);
+		pexpect(ike->sa.st_state->kind == STATE_V2_PARENT_R_IKE_SA_INIT);
 		pexpect(!ike->sa.hidden_variables.st_skeyid_calculated);
 		if (pexpect(frags != NULL)) {
 			pexpect(/* single message */
@@ -1603,7 +1645,7 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 		 * decides if the twilight zone should even be entered
 		 * (SKEYSEED started).
 		 */
-		pexpect(ike->sa.st_state->kind == STATE_V2_PARENT_R1);
+		pexpect(ike->sa.st_state->kind == STATE_V2_PARENT_R_IKE_SA_INIT);
 		dbg_v2_msgid(ike,
 			     "not a duplicate - message request %jd is new (SKEYSEED still needs to be computed)",
 			     msgid);
@@ -1935,22 +1977,15 @@ static void complete_protected_but_fatal_exchange(struct ike_sa *ike, struct msg
 	const struct v2_state_transition *transition;
 	const struct finite_state *state = ike->sa.st_state;
 	switch (state->kind) {
-	case STATE_V2_PARENT_R1:
+	case STATE_V2_PARENT_R_IKE_SA_INIT:
+	case STATE_V2_PARENT_R_IKE_INTERMEDIATE:
+	case STATE_V2_PARENT_R_IKE_AUTH_EAP:
 		/*
 		 * Responding to either an IKE_INTERMEDIATE or
-		 * IKE_AUTH request.
+		 * IKE_AUTH request.  Grab the last one.
 		 */
-		pexpect(state->nr_transitions == 3);
-		if (md->hdr.isa_xchg == ISAKMP_v2_IKE_INTERMEDIATE) {
-			transition = &state->v2.transitions[0];
-			pexpect(transition->exchange == ISAKMP_v2_IKE_INTERMEDIATE);
-			pexpect(transition->next_state == STATE_V2_PARENT_R1);
-		} else {
-			transition = &state->v2.transitions[1];
-			pexpect(transition->exchange == ISAKMP_v2_IKE_AUTH);
-			pexpect(transition->next_state == STATE_V2_ESTABLISHED_IKE_SA);
-		}
-		pexpect(transition->state == STATE_V2_PARENT_R1);
+		PASSERT(ike->sa.logger, state->nr_transitions > 0);
+		transition = &state->v2.transitions[state->nr_transitions - 1];
 		break;
 	case STATE_V2_PARENT_I2:
 	{

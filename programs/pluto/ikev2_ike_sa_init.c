@@ -293,7 +293,7 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 			}
 			if (verbose_state_busy(&old->sa)) {
 				/* already logged */;
-			} else if (old->sa.st_state->kind == STATE_V2_PARENT_R1 &&
+			} else if (old->sa.st_state->kind == STATE_V2_PARENT_R_IKE_SA_INIT &&
 				   old->sa.st_v2_msgid_windows.responder.recv == 0 &&
 				   old->sa.st_v2_msgid_windows.responder.sent == 0 &&
 				   hunk_eq(old->sa.st_firstpacket_peer,
