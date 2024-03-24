@@ -524,7 +524,7 @@ enum impair_status parse_impair(const char *optarg,
 	unsigned ci = 1;
 	const struct impairment *impairment = NULL;
 	for (ci = 1/*skip 0*/; ci < elemsof(impairments); ci++) {
-		if (hunk_strcaseeq(what, impairments[ci].what)) {
+		if (hunk_strheq(what, impairments[ci].what)) {
 			impairment = &impairments[ci];
 			break;
 		}
