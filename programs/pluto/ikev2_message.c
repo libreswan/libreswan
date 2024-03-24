@@ -562,9 +562,9 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 	}
 
 	uint8_t *auth_start = text.ptr;
-	uint8_t *integ_start = payload_end - integ_size;
+	chunk_t integ = chunk2(payload_end - integ_size, integ_size);
 	chunk_t enc = chunk2(wire_iv.ptr + wire_iv.len,
-			     integ_start - wire_iv.ptr - wire_iv.len);
+			     integ.ptr - wire_iv.ptr - wire_iv.len);
 
 	/*
 	 * Check that the payload is block-size aligned.
@@ -626,8 +626,8 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 			LDBG_hunk(ike->sa.logger, wire_iv);
 			LDBG_log(ike->sa.logger, "AAD before authenticated decryption:");
 			LDBG_hunk(ike->sa.logger, aad);
-			DBG_dump("integ before authenticated decryption:",
-				 integ_start, integ_size);
+			LDBG_log(ike->sa.logger, "integ before authenticated decryption:");
+			LDBG_hunk(ike->sa.logger, integ);
 			LDBG_log(ike->sa.logger, "payload before decryption:");
 			LDBG_hunk(ike->sa.logger, enc);
 		}
@@ -638,7 +638,7 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 			      wire_iv.ptr, wire_iv.len,
 			      aad.ptr, aad.len,
 			      enc.ptr, enc.len,
-			      integ_size,
+			      integ.len,
 			      cipherkey, false, ike->sa.logger)) {
 			return false;
 		}
@@ -646,7 +646,7 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 		if (DBGP(DBG_CRYPT)) {
 			LDBG_log(ike->sa.logger, "data after authenticated decryption:");
 			LDBG_hunk(ike->sa.logger, enc);
-			DBG_dump(NULL, integ_start, integ_size);
+			LDBG_hunk(ike->sa.logger, integ);
 		}
 
 	} else {
@@ -656,10 +656,10 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 		 */
 		struct crypt_prf *ctx = crypt_prf_init_symkey("auth", ike->sa.st_oakley.ta_integ->prf,
 							      "authkey", authkey, ike->sa.logger);
-		crypt_prf_update_bytes(ctx, "message", auth_start, integ_start - auth_start);
+		crypt_prf_update_bytes(ctx, "message", auth_start, integ.ptr - auth_start);
 		struct crypt_mac td = crypt_prf_final_mac(&ctx, ike->sa.st_oakley.ta_integ);
 
-		if (!hunk_memeq(td, integ_start, integ_size)) {
+		if (!hunk_memeq(td, integ.ptr, integ.len)) {
 			llog_sa(RC_LOG, ike, "failed to match authenticator");
 			return false;
 		}
