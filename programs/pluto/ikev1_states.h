@@ -17,6 +17,6 @@
 #ifndef IKEV1_STATE_H
 #define IKEV1_STATE_H
 
-extern struct finite_state v1_states[STATE_IKEv1_ROOF - STATE_IKEv1_FLOOR];
+extern struct finite_state *v1_states[STATE_IKEv1_ROOF - STATE_IKEv1_FLOOR];
 
 #endif

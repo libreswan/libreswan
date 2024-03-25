@@ -55,78 +55,103 @@ static struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
 							 const struct payload_summary *summary,
 							 const struct ikev2_expected_payloads *payloads);
 
-struct finite_state v2_states[] = {
-
-#define S(KIND, STORY, CAT, ...) [KIND - STATE_IKEv2_FLOOR] = {	\
-		.kind = KIND,					\
-		.name = #KIND,					\
+#define S(KIND, STORY, CAT, ...)					\
+	struct finite_state state_v2_##KIND = {				\
+		.kind = STATE_V2_##KIND,				\
+		.name = "STATE_V2_"#KIND,				\
 		/* Not using #KIND + 6 because of clang's -Wstring-plus-int */ \
-		.short_name = &#KIND[9]/*STATE_V2_*/,		\
-		.story = STORY,					\
-		.category = CAT,				\
-		.ike_version = IKEv2,				\
-		##__VA_ARGS__,					\
+		.short_name = #KIND,					\
+		.story = STORY,						\
+		.category = CAT,					\
+		.ike_version = IKEv2,					\
+		##__VA_ARGS__,						\
 	}
 
-	/*
-	 * IKEv2 IKE SA initiator, while the the SA_INIT packet is
-	 * being constructed, are in state.  Only once the packet has
-	 * been sent out does it transition to STATE_V2_PARENT_I1 and
-	 * start being counted as half-open.
-	 */
+/*
+ * IKEv2 IKE SA initiator, while the the SA_INIT packet is being
+ * constructed, are in state.  Only once the packet has been sent out
+ * does it transition to STATE_V2_PARENT_I1 and start being counted as
+ * half-open.
+ */
 
-	S(STATE_V2_PARENT_I0, "waiting for KE to finish", CAT_IGNORE),
+S(PARENT_I0, "waiting for KE to finish", CAT_IGNORE);
 
-	/*
-	 * Count I1 as half-open too because with ondemand, a
-	 * plaintext packet (that is spoofed) will trigger an outgoing
-	 * IKE SA.
-	 */
+/*
+ * Count I1 as half-open too because with ondemand, a plaintext packet
+ * (that is spoofed) will trigger an outgoing IKE SA.
+ */
 
-	S(STATE_V2_PARENT_I1, "sent IKE_SA_INIT request", CAT_HALF_OPEN_IKE_SA),
-	S(STATE_V2_PARENT_R0, "processing IKE_SA_INIT request", CAT_HALF_OPEN_IKE_SA),
-	S(STATE_V2_PARENT_R_IKE_SA_INIT, "sent IKE_SA_INIT response, waiting for IKE_INTERMEDIATE or IKE_AUTH request", CAT_HALF_OPEN_IKE_SA, .v2.secured = true),
-	S(STATE_V2_PARENT_R_IKE_INTERMEDIATE, "sent IKE_INTERMEDIATE response, waiting for IKE_INTERMEDIATE or IKE_AUTH request", CAT_OPEN_IKE_SA, .v2.secured = true),
-	S(STATE_V2_PARENT_R_IKE_AUTH_EAP, "sent IKE_AUTH(EAP) response, waiting for IKE_AUTH(EAP) request", CAT_OPEN_IKE_SA, .v2.secured = true),
+S(PARENT_I1, "sent IKE_SA_INIT request", CAT_HALF_OPEN_IKE_SA);
+S(PARENT_R0, "processing IKE_SA_INIT request", CAT_HALF_OPEN_IKE_SA);
+S(PARENT_R_IKE_SA_INIT, "sent IKE_SA_INIT response, waiting for IKE_INTERMEDIATE or IKE_AUTH request", CAT_HALF_OPEN_IKE_SA, .v2.secured = true);
+S(PARENT_R_IKE_INTERMEDIATE, "sent IKE_INTERMEDIATE response, waiting for IKE_INTERMEDIATE or IKE_AUTH request", CAT_OPEN_IKE_SA, .v2.secured = true);
+S(PARENT_R_IKE_AUTH_EAP, "sent IKE_AUTH(EAP) response, waiting for IKE_AUTH(EAP) request", CAT_OPEN_IKE_SA, .v2.secured = true);
 
-	/*
-	 * All IKEv1 MAIN modes except the first (half-open) and last
-	 * ones are not authenticated.
-	 */
+/*
+ * All IKEv1 MAIN modes except the first (half-open) and last ones are
+ * not authenticated.
+ */
 
-	S(STATE_V2_PARENT_I2, "sent IKE_AUTH request", CAT_OPEN_IKE_SA, .v2.secured = true),
+S(PARENT_I2, "sent IKE_AUTH request", CAT_OPEN_IKE_SA, .v2.secured = true);
 
-	/* IKE exchange can also create a child */
+/* IKE exchange can also create a child */
 
-	S(STATE_V2_IKE_AUTH_CHILD_I0, "ephemeral: initiator creating child from IKE exchange", CAT_IGNORE),
-	S(STATE_V2_IKE_AUTH_CHILD_R0, "ephemeral: responder creating child from IKE exchange", CAT_IGNORE),
+S(IKE_AUTH_CHILD_I0, "ephemeral: initiator creating child from IKE exchange", CAT_IGNORE);
+S(IKE_AUTH_CHILD_R0, "ephemeral: responder creating child from IKE exchange", CAT_IGNORE);
 
-	/*
-	 * CREATE_CHILD_SA exchanges.
-	 */
+/*
+ * CREATE_CHILD_SA exchanges.
+ */
 
-	/* isn't this an ipsec state */
-	S(STATE_V2_NEW_CHILD_I0, "STATE_V2_NEW_CHILD_I0", CAT_ESTABLISHED_IKE_SA),
-	S(STATE_V2_NEW_CHILD_I1, "sent CREATE_CHILD_SA request for new IPsec SA", CAT_ESTABLISHED_IKE_SA, .v2.secured = true),
-	S(STATE_V2_NEW_CHILD_R0, "STATE_V2_NEW_CHILD_R0", CAT_ESTABLISHED_IKE_SA, .v2.secured = true),
-	S(STATE_V2_REKEY_CHILD_I0, "STATE_V2_REKEY_CHILD_I0", CAT_ESTABLISHED_IKE_SA),
-	S(STATE_V2_REKEY_CHILD_I1, "sent CREATE_CHILD_SA request to rekey IPsec SA", CAT_ESTABLISHED_IKE_SA, .v2.secured = true),
-	S(STATE_V2_REKEY_CHILD_R0, "STATE_V2_REKEY_CHILD_R0", CAT_ESTABLISHED_IKE_SA, .v2.secured = true),
-	S(STATE_V2_REKEY_IKE_I0, "STATE_V2_REKEY_IKE_I0", CAT_ESTABLISHED_IKE_SA),
-	S(STATE_V2_REKEY_IKE_I1, "sent CREATE_CHILD_SA request to rekey IKE SA", CAT_ESTABLISHED_IKE_SA, .v2.secured = true),
-	S(STATE_V2_REKEY_IKE_R0, "STATE_V2_REKEY_IKE_R0", CAT_ESTABLISHED_IKE_SA, .v2.secured = true),
+/* isn't this an ipsec state */
+S(NEW_CHILD_I0, "STATE_V2_NEW_CHILD_I0", CAT_ESTABLISHED_IKE_SA);
+S(NEW_CHILD_I1, "sent CREATE_CHILD_SA request for new IPsec SA", CAT_ESTABLISHED_IKE_SA, .v2.secured = true);
+S(NEW_CHILD_R0, "STATE_V2_NEW_CHILD_R0", CAT_ESTABLISHED_IKE_SA, .v2.secured = true);
+S(REKEY_CHILD_I0, "STATE_V2_REKEY_CHILD_I0", CAT_ESTABLISHED_IKE_SA);
+S(REKEY_CHILD_I1, "sent CREATE_CHILD_SA request to rekey IPsec SA", CAT_ESTABLISHED_IKE_SA, .v2.secured = true);
+S(REKEY_CHILD_R0, "STATE_V2_REKEY_CHILD_R0", CAT_ESTABLISHED_IKE_SA, .v2.secured = true);
+S(REKEY_IKE_I0, "STATE_V2_REKEY_IKE_I0", CAT_ESTABLISHED_IKE_SA);
+S(REKEY_IKE_I1, "sent CREATE_CHILD_SA request to rekey IKE SA", CAT_ESTABLISHED_IKE_SA, .v2.secured = true);
+S(REKEY_IKE_R0, "STATE_V2_REKEY_IKE_R0", CAT_ESTABLISHED_IKE_SA, .v2.secured = true);
 
-	/*
-	 * IKEv2 established states.
-	 */
+/*
+ * IKEv2 established states.
+ */
 
-	S(STATE_V2_ESTABLISHED_IKE_SA, "established IKE SA", CAT_ESTABLISHED_IKE_SA, .v2.secured = true),
-	/* this message is used for both initial exchanges and rekeys */
-	S(STATE_V2_ESTABLISHED_CHILD_SA, "established Child SA", CAT_ESTABLISHED_CHILD_SA),
+S(ESTABLISHED_IKE_SA, "established IKE SA", CAT_ESTABLISHED_IKE_SA, .v2.secured = true);
+/* this message is used for both initial exchanges and rekeys */
+S(ESTABLISHED_CHILD_SA, "established Child SA", CAT_ESTABLISHED_CHILD_SA);
 
-	/* ??? better story needed for these */
-	S(STATE_V2_IKE_SA_DELETE, "STATE_IKESA_DEL", CAT_ESTABLISHED_IKE_SA, .v2.secured = true),
-	S(STATE_V2_CHILD_SA_DELETE, "STATE_CHILDSA_DEL", CAT_INFORMATIONAL),
+/* ??? better story needed for these */
+S(IKE_SA_DELETE, "STATE_IKESA_DEL", CAT_ESTABLISHED_IKE_SA, .v2.secured = true);
+S(CHILD_SA_DELETE, "STATE_CHILDSA_DEL", CAT_INFORMATIONAL);
+
+#undef S
+
+struct finite_state *v2_states[] = {
+#define S(KIND, ...) [STATE_V2_##KIND - STATE_IKEv2_FLOOR] = &state_v2_##KIND
+	S(PARENT_I0),
+	S(PARENT_I1),
+	S(PARENT_R0),
+	S(PARENT_R_IKE_SA_INIT),
+	S(PARENT_R_IKE_INTERMEDIATE),
+	S(PARENT_R_IKE_AUTH_EAP),
+	S(PARENT_I2),
+	S(IKE_AUTH_CHILD_I0),
+	S(IKE_AUTH_CHILD_R0),
+	S(NEW_CHILD_I0),
+	S(NEW_CHILD_I1),
+	S(NEW_CHILD_R0),
+	S(REKEY_CHILD_I0),
+	S(REKEY_CHILD_I1),
+	S(REKEY_CHILD_R0),
+	S(REKEY_IKE_I0),
+	S(REKEY_IKE_I1),
+	S(REKEY_IKE_R0),
+	S(ESTABLISHED_IKE_SA),
+	S(ESTABLISHED_CHILD_SA),
+	S(IKE_SA_DELETE),
+	S(CHILD_SA_DELETE),
 #undef S
 };
 

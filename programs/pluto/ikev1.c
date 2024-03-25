@@ -773,7 +773,7 @@ void init_ikev1(struct logger *logger)
 	 */
 	for (enum state_kind kind = STATE_IKEv1_FLOOR; kind < STATE_IKEv1_ROOF; kind++) {
 		/* fill in using static struct */
-		const struct finite_state *fs = &v1_states[kind - STATE_IKEv1_FLOOR];
+		const struct finite_state *fs = v1_states[kind - STATE_IKEv1_FLOOR];
 		passert(fs->kind == kind);
 		passert(finite_states[kind] == NULL);
 		finite_states[kind] = fs;
@@ -789,7 +789,7 @@ void init_ikev1(struct logger *logger)
 		passert(t->state >= STATE_IKEv1_FLOOR);
 		passert(t->state < STATE_IKEv1_ROOF);
 
-		struct finite_state *from = &v1_states[t->state - STATE_IKEv1_FLOOR];
+		struct finite_state *from = v1_states[t->state - STATE_IKEv1_FLOOR];
 		passert(from->kind == t->state);
 		passert(from->ike_version == IKEv1);
 

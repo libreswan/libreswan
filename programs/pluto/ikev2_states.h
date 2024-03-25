@@ -17,7 +17,7 @@
 #ifndef IKEV2_STATE_H
 #define IKEV2_STATE_H
 
-extern struct finite_state v2_states[STATE_IKEv2_ROOF - STATE_IKEv2_FLOOR];
+extern struct finite_state *v2_states[STATE_IKEv2_ROOF - STATE_IKEv2_FLOOR];
 
 enum smf2_flags {
 	/*
