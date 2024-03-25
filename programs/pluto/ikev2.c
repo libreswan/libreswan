@@ -2598,19 +2598,19 @@ static void success_v2_state_transition(struct ike_sa *ike,
 	 * XXX: On responder, should this schedule a timer that deletes the
 	 * re-transmit buffer?
 	 */
-	switch (transition->send_role) {
-	case MESSAGE_REQUEST:
+	switch (transition->recv_role) {
+	case NO_MESSAGE: /* initiating a new exchange */
 		send_recorded_v2_message(ike, transition->story,
 					 ike->sa.st_v2_msgid_windows.initiator.outgoing_fragments);
 		break;
-	case MESSAGE_RESPONSE:
+	case MESSAGE_REQUEST: /* responding */
 		send_recorded_v2_message(ike, transition->story,
 					 ike->sa.st_v2_msgid_windows.responder.outgoing_fragments);
 		break;
-	case NO_MESSAGE:
+	case MESSAGE_RESPONSE: /* finishing exchange */
 		break;
 	default:
-		bad_case(transition->send_role);
+		bad_case(transition->recv_role);
 	}
 
 	/*
