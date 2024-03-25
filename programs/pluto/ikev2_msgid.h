@@ -109,6 +109,13 @@ void v2_msgid_cancel(struct ike_sa *ike, const struct msg_digest *md);
 void v2_msgid_finish(struct ike_sa *ike, const struct msg_digest *md);
 
 /*
+ * This is a hack for code that forces sending an additional request
+ * even though the request window is full.
+ */
+
+void v2_msgid_start_record_n_send(struct ike_sa *ike);
+
+/*
  * Handle multiple initiators trying to send simultaneously.
  *
  * XXX: Suspect this code is broken.

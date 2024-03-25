@@ -200,6 +200,19 @@ void v2_msgid_init_ike(struct ike_sa *ike)
 	dbg_msgids_update("initializing", NO_MESSAGE, -1, ike, &old);
 }
 
+void v2_msgid_start_record_n_send(struct ike_sa *ike)
+{
+	const struct v2_msgid_windows old = ike->sa.st_v2_msgid_windows;
+	struct v2_msgid_windows *new = &ike->sa.st_v2_msgid_windows;
+	/*
+	 * Make things look like the last exchange finished (even
+	 * though it didn't).
+	 */
+	intmax_t msgid = new->initiator.recv = old.initiator.sent;
+	new->initiator.wip = -1;
+	dbg_msgids_update("initiator record'n'send", NO_MESSAGE, msgid, ike, &old);
+}
+
 void v2_msgid_start(struct ike_sa *ike, const struct msg_digest *md)
 {
 	const struct v2_msgid_windows old = ike->sa.st_v2_msgid_windows;
@@ -210,16 +223,7 @@ void v2_msgid_start(struct ike_sa *ike, const struct msg_digest *md)
 	case NO_MESSAGE:
 	{
 		intmax_t msgid = old.initiator.sent + 1;
-#if 0
-		/*
-		 * XXX: record_n_send_n_log_v2_delete() breaks this.
-		 * It is forcing the initiate of a request when
-		 * there's already a request outstanding (i.e.,
-		 * .sent==.recv+1).
-		 */
-
 		pexpect_v2_msgid(ike, role, old.initiator.recv+1 == msgid);
-#endif
 		pexpect_v2_msgid(ike, role, old.initiator.sent+1 == msgid);
 #if 0
 		/*
