@@ -591,7 +591,8 @@ static void initiate_next(const char *story, struct state *ike_sa, void *context
 		 * unassign it if the exchange is abandoned)?
 		 */
 
-		set_v2_transition(&ike->sa, pending.transition, HERE);
+		start_v2_transition(ike, pending.transition, /*md*/NULL, HERE);
+
 		/* pexpect(initiator->wip_sa == NULL); */
 		initiator->wip_sa = child;
 		stf_status status = pending.transition->processor(ike, child, NULL);

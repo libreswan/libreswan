@@ -2039,9 +2039,7 @@ static void complete_protected_but_fatal_exchange(struct ike_sa *ike, struct msg
 	 * Fudge things so that the IKE SA appears to be processing MD
 	 * using TRANSITION.
 	 */
-	/*pexpect(st->st_v2_transition == NULL);*/
-	set_v2_transition(&ike->sa, transition, HERE);
-	v2_msgid_start(ike, md);
+	start_v2_transition(ike, transition, md, HERE);
 
 	/*
 	 * Respond to the request (can't respond to a response).
@@ -2352,8 +2350,7 @@ void v2_dispatch(struct ike_sa *ike, struct msg_digest *md,
 	 * Start the state transition, including any updates to
 	 * work-in-progress Message IDs.
 	 */
-	set_v2_transition(&ike->sa, svm, HERE);
-	v2_msgid_start(ike, md);
+	start_v2_transition(ike, svm, md, HERE);
 
 	if (DBGP(DBG_BASE)) {
 		if (pbs_left(&md->message_pbs) != 0)
@@ -2637,13 +2634,30 @@ static void success_v2_state_transition(struct ike_sa *ike,
 	}
 }
 
+void start_v2_transition(struct ike_sa *ike,
+			 const struct v2_state_transition *next_transition,
+			 struct msg_digest *md,
+			 where_t where)
+{
+	set_v2_transition(&ike->sa, next_transition, where);
+	v2_msgid_start(ike, md);
+}
+
 stf_status next_v2_transition(struct ike_sa *ike, struct msg_digest *md,
 			      const struct v2_state_transition *next_transition,
 			      where_t where)
 {
+	PEXPECT(ike->sa.logger, v2_msg_role(md) == MESSAGE_RESPONSE);
+	intmax_t wip = ike->sa.st_v2_msgid_windows.initiator.wip;
+	v2_msgid_finish(ike, md);
 	ike->sa.st_v2_transition->llog_success(ike);
-	set_v2_transition(&ike->sa, next_transition, where);
-	return ike->sa.st_v2_transition->processor(ike, NULL, md);
+	/*
+	 * XXX: currently .wip is set to the just completed
+	 * transaction when it should be allowed to go back to -1.
+	 */
+	ike->sa.st_v2_msgid_windows.initiator.wip = wip;
+	start_v2_transition(ike, next_transition, NULL, where);
+	return ike->sa.st_v2_transition->processor(ike, /*child*/NULL, /*md*/md);
 }
 
 /*
@@ -2919,7 +2933,8 @@ static void reinitiate_v2_ike_sa_init(const char *story, struct state *st, void 
 	/*
 	 * Pretend to be running the initiate state transition.
 	 */
-	set_v2_transition(&ike->sa, finite_states[STATE_V2_PARENT_I0]->v2.transitions, HERE); /* first */
+	start_v2_transition(ike, finite_states[STATE_V2_PARENT_I0]->v2.transitions,
+			    /*md*/NULL, HERE); /* first */
 
 	/*
 	 * Need to re-open TCP.
