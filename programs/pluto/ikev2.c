@@ -2483,8 +2483,7 @@ static void success_v2_state_transition(struct ike_sa *ike,
 	    /*
 	     * Only when responding ...
 	     */
-	    transition->send_role == MESSAGE_RESPONSE &&
-	    pexpect(v2_msg_role(md) == MESSAGE_REQUEST) &&
+	    v2_msg_role(md) == MESSAGE_REQUEST &&
 	    /*
 	     * Only when the request changes the remote's endpoint ...
 	     */
