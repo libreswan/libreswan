@@ -70,7 +70,7 @@
 #include "ikev2_redirect.h"
 #include "root_certs.h"		/* for init_root_certs() */
 #include "ikev1.h"		/* for init_ikev1() */
-#include "ikev2.h"		/* for init_ikev2() */
+#include "ikev2_states.h"	/* for init_ikev2_states() */
 #include "crypt_symkey.h"	/* for init_crypt_symkey() */
 #include "ddns.h"		/* for init_ddns() */
 #include "crl_queue.h"		/* for free_crl_queue() */
@@ -1647,7 +1647,7 @@ int main(int argc, char **argv)
 #ifdef USE_IKEv1
 	init_ikev1(logger);
 #endif
-	init_ikev2();
+	init_ikev2_states(logger);
 	init_states();
 	state_db_init(logger);
 	connection_db_init(logger);

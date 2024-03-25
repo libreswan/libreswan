@@ -32,5 +32,6 @@ const struct v2_state_transition *find_v2_state_transition(struct logger *logger
 							   const struct finite_state *state,
 							   struct msg_digest *md,
 							   bool *secured_payload_failed);
+void init_ikev2_states(struct logger *logger);
 
 #endif
