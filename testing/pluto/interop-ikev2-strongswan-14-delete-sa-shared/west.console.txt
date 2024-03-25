@@ -84,17 +84,27 @@ west #
  echo done
 done
 west #
- if [ -f /var/run/pluto/pluto.pid ]; then ../../guestbin/ipsec-kernel-state.sh ; fi
-west #
- if [ -f /var/run/pluto/pluto.pid ]; then ../../guestbin/ipsec-kernel-policy.sh ; fi
-west #
- if [ -f /var/run/pluto/pluto.pid ]; then grep "Message ID:" /tmp/pluto.log | sed "s/last_.*$//" ; fi
-west #
  if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then strongswan status ; fi
 Shunted Connections:
 Bypass LAN 192.0.1.0/24:  192.0.1.0/24 === 192.0.1.0/24 PASS
 Bypass LAN 192.1.2.0/24:  192.1.2.0/24 === 192.1.2.0/24 PASS
 Security Associations (1 up, 0 connecting):
 westnet-eastnet-ikev2[1]: ESTABLISHED XXX second ago, 192.1.2.45[west]...192.1.2.23[east]
+west #
+ ../../guestbin/ipsec-kernel-state.sh
+west #
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.0.1.0/24 dst 192.0.1.0/24
+	dir fwd priority PRIORITY ptype main
+src 192.0.1.0/24 dst 192.0.1.0/24
+	dir in priority PRIORITY ptype main
+src 192.0.1.0/24 dst 192.0.1.0/24
+	dir out priority PRIORITY ptype main
+src 192.1.2.0/24 dst 192.1.2.0/24
+	dir fwd priority PRIORITY ptype main
+src 192.1.2.0/24 dst 192.1.2.0/24
+	dir in priority PRIORITY ptype main
+src 192.1.2.0/24 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
 west #
  

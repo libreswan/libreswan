@@ -18,11 +18,17 @@ initdone
 east #
  # On east this shows the duplicates on west there is nothing.
 east #
- sed -n -e '/fragment .* duplicate Message ID/ s/ (.*/ (...)/p' /tmp/pluto.log
-| Message ID: IKE #1 IKE_AUTH request fragment 2 of 5 has duplicate Message ID 1 but is not fragment 1; message dropped (...)
-| Message ID: IKE #1 IKE_AUTH request fragment 3 of 5 has duplicate Message ID 1 but is not fragment 1; message dropped (...)
-| Message ID: IKE #1 IKE_AUTH request fragment 4 of 5 has duplicate Message ID 1 but is not fragment 1; message dropped (...)
-| Message ID: IKE #1 IKE_AUTH request fragment 5 of 5 has duplicate Message ID 1 but is not fragment 1; message dropped (...)
+ sed -n -e '/; retransmitting response/p' -e 's/\(; message dropped\).*/\1/p' /tmp/pluto.log
+"westnet-eastnet-ikev2" #1: received duplicate IKE_SA_INIT message request (Message ID 0); retransmitting response
+"westnet-eastnet-ikev2" #1: received duplicate IKE_SA_INIT message request (Message ID 0); retransmitting response
+"westnet-eastnet-ikev2" #1: received duplicate IKE_SA_INIT message request (Message ID 0); retransmitting response
+"westnet-eastnet-ikev2" #1: received duplicate IKE_SA_INIT message request (Message ID 0); retransmitting response
+"westnet-eastnet-ikev2" #1: received duplicate IKE_SA_INIT message request (Message ID 0); retransmitting response
+"westnet-eastnet-ikev2" #1: IKE_AUTH request fragment 1 of 5 has duplicate Message ID 1; retransmitting response
+| Message ID: IKE #1 IKE_AUTH request fragment 2 of 5 has duplicate Message ID 1 but is not fragment 1; message dropped
+| Message ID: IKE #1 IKE_AUTH request fragment 3 of 5 has duplicate Message ID 1 but is not fragment 1; message dropped
+| Message ID: IKE #1 IKE_AUTH request fragment 4 of 5 has duplicate Message ID 1 but is not fragment 1; message dropped
+| Message ID: IKE #1 IKE_AUTH request fragment 5 of 5 has duplicate Message ID 1 but is not fragment 1; message dropped
 east #
  ../../guestbin/ipsec-kernel-state.sh
 east #

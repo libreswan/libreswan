@@ -14,52 +14,10 @@ east #
  echo "initdone"
 initdone
 east #
- if [ -f /var/run/pluto/pluto.pid ]; then ../../guestbin/ipsec-kernel-state.sh ; fi
-east #
- if [ -f /var/run/pluto/pluto.pid ]; then ../../guestbin/ipsec-kernel-policy.sh ; fi
-east #
- if [ -f /var/run/pluto/pluto.pid ]; then grep "Message ID:" /tmp/pluto.log | sed "s/last_.*$//" ; fi
-|    Message ID: 0 (00 00 00 00)
-| Message ID: IKE #1 initializing (initiator: .sent=0->-1 .recv=0->-1 .wip=0->-1 .
-| Message ID: IKE #1 responder starting message request 0 (initiator: .sent=-1 .recv=-1 .recv_frags=0 .wip=-1 .
-|    Message ID: 0 (00 00 00 00)
-| Message ID: updating counters for #1
-| Message ID: IKE #1 updating responder received message request 0 (initiator: responder: .recv=-1->0 .wip=0->-1 .
-| Message ID: IKE #1 updating responder sent message response 0 (initiator: responder: .sent=-1->0 .
-| Message ID: IKE #1 no pending message initiators to schedule (initiator: .sent=-1 .recv=-1 .recv_frags=0 .wip=-1 .
-|    Message ID: 1 (00 00 00 01)
-| Message ID: IKE #1 not a duplicate - message request 1 is new (SKEYSEED still needs to be computed) (initiator: .sent=-1 .recv=-1 .recv_frags=0 .wip=-1 .
-| Message ID: IKE #1 responder starting message request 1 (initiator: .sent=-1 .recv=-1 .recv_frags=0 .wip=-1 .
-|    Message ID: 1 (00 00 00 01)
-| Message ID: updating counters for #1
-| Message ID: IKE #1 updating responder received message request 1 (initiator: responder: .recv=0->1 .wip=1->-1 .
-| Message ID: IKE #1 updating responder sent message response 1 (initiator: responder: .sent=0->1 .
-| Message ID: IKE #1 no pending message initiators to schedule (initiator: .sent=-1 .recv=-1 .recv_frags=0 .wip=-1 .
-|    Message ID: 2 (00 00 00 02)
-| Message ID: IKE #1 not a duplicate - message request 2 is new (SKEYSEED is known) (initiator: .sent=-1 .recv=-1 .recv_frags=0 .wip=-1 .
-| Message ID: IKE #1 responder starting message request 2 (initiator: .sent=-1 .recv=-1 .recv_frags=0 .wip=-1 .
-|    Message ID: 2 (00 00 00 02)
-| Message ID: updating counters for #1
-| Message ID: IKE #1 updating responder received message request 2 (initiator: responder: .recv=1->2 .wip=2->-1 .
-| Message ID: IKE #1 updating responder sent message response 2 (initiator: responder: .sent=1->2 .
-| Message ID: IKE #1 no pending message initiators to schedule (initiator: .sent=-1 .recv=-1 .recv_frags=0 .wip=-1 .
-|    Message ID: 3 (00 00 00 03)
-| Message ID: IKE #1 not a duplicate - message request 3 is new (SKEYSEED is known) (initiator: .sent=-1 .recv=-1 .recv_frags=0 .wip=-1 .
-| Message ID: IKE #1 responder starting message request 3 (initiator: .sent=-1 .recv=-1 .recv_frags=0 .wip=-1 .
-|    Message ID: 3 (00 00 00 03)
-| Message ID: updating counters for #1
-| Message ID: IKE #1 updating responder received message request 3 (initiator: responder: .recv=2->3 .wip=3->-1 .
-| Message ID: IKE #1 updating responder sent message response 3 (initiator: responder: .sent=2->3 .
-| Message ID: IKE #1 no pending message initiators to schedule (initiator: .sent=-1 .recv=-1 .recv_frags=0 .wip=-1 .
-|    Message ID: 4 (00 00 00 04)
-| Message ID: IKE #1 not a duplicate - message request 4 is new (SKEYSEED is known) (initiator: .sent=-1 .recv=-1 .recv_frags=0 .wip=-1 .
-| Message ID: IKE #1 responder starting message request 4 (initiator: .sent=-1 .recv=-1 .recv_frags=0 .wip=-1 .
-|    Message ID: 4 (00 00 00 04)
-| Message ID: updating counters for #1
-| Message ID: IKE #1 updating responder received message request 4 (initiator: responder: .recv=3->4 .wip=4->-1 .
-| Message ID: IKE #1 updating responder sent message response 4 (initiator: responder: .sent=3->4 .
-| Message ID: IKE #1 no pending message initiators to schedule (initiator: .sent=-1 .recv=-1 .recv_frags=0 .wip=-1 .
-east #
  if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then strongswan status ; fi
+east #
+ ../../guestbin/ipsec-kernel-state.sh
+east #
+ ../../guestbin/ipsec-kernel-policy.sh
 east #
  
