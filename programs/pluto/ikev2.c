@@ -166,10 +166,10 @@ void llog_v2_success_exchange_sent_to(struct ike_sa *ike)
 		jam_string(buf, "sent ");
 		jam_enum_short(buf, &ikev2_exchange_names, ike->sa.st_v2_transition->exchange);
 		jam_string(buf, " ");
-		switch (ike->sa.st_v2_transition->send_role) {
-		case MESSAGE_REQUEST: jam_string(buf, "request"); break;
-		case MESSAGE_RESPONSE: jam_string(buf, "response"); break;
-		case NO_MESSAGE: jam_string(buf, "INTERNAL ERROR"); break;
+		switch (ike->sa.st_v2_transition->recv_role) {
+		case NO_MESSAGE: jam_string(buf, "request"); break; /* new exchange */
+		case MESSAGE_REQUEST: jam_string(buf, "response"); break;
+		case MESSAGE_RESPONSE: jam_string(buf, "request"); break;
 		}
 		jam_string(buf, " to ");
 		jam_endpoint_address_protocol_port_sensitive(buf, &ike->sa.st_remote_endpoint);
