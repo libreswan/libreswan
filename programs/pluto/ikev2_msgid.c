@@ -34,10 +34,13 @@ static void jam_msgid_prefix(struct jambuf *buf, struct ike_sa *ike)
 	jam(buf, "IKE #%lu", ike->sa.st_serialno);
 }
 
-static void jam_old_new_monotime(struct jambuf *buf, const char *what,
+static void jam_old_new_monotime(struct jambuf *buf,
+				 const char **prefix, const char *what,
 				 const monotime_t *old, const monotime_t *new)
 {
 	if (old == new || monotime_cmp(*old, !=, *new)) {
+		jam_string(buf, *prefix);
+		*prefix = "";
 		monotime_buf mb;
 		jam(buf, " %s=%s", what, str_monotime(*old, &mb));
 		if (old != new) {
@@ -46,10 +49,13 @@ static void jam_old_new_monotime(struct jambuf *buf, const char *what,
 	}
 }
 
-static void jam_old_new_intmax(struct jambuf *buf, const char *what,
+static void jam_old_new_intmax(struct jambuf *buf,
+				 const char **prefix, const char *what,
 			       const intmax_t *old, const intmax_t *new)
 {
 	if (old == new || *old != *new) {
+		jam_string(buf, *prefix);
+		*prefix = "";
 		jam(buf, " %s=%jd", what, *old);
 		if (old != new) {
 			jam(buf, "->%jd", *new);
@@ -57,10 +63,13 @@ static void jam_old_new_intmax(struct jambuf *buf, const char *what,
 	}
 }
 
-static void jam_old_new_unsigned(struct jambuf *buf, const char *what,
+static void jam_old_new_unsigned(struct jambuf *buf,
+				 const char **prefix, const char *what,
 				 const unsigned *old, const unsigned *new)
 {
 	if (old == new || *old != *new) {
+		jam_string(buf, *prefix);
+		*prefix = "";
 		jam(buf, " %s=%u", what, *old);
 		if (old != new) {
 			jam(buf, "->%u", *new);
@@ -69,26 +78,24 @@ static void jam_old_new_unsigned(struct jambuf *buf, const char *what,
 }
 
 static void jam_ike_window(struct jambuf *buf,
+			   const char *prefix,
 			   const struct v2_msgid_window *old,
 			   const struct v2_msgid_window *new)
 {
-	jam_old_new_intmax(buf, ".sent", &old->sent, &new->sent);
-	jam_old_new_intmax(buf, ".recv", &old->recv, &new->recv);
-	jam_old_new_unsigned(buf, ".recv_frags", &old->recv_frags, &new->recv_frags);
-	jam_old_new_intmax(buf, ".wip", &old->wip, &new->wip);
-	jam_old_new_monotime(buf, ".last_sent", &old->last_sent, &new->last_sent);
-	jam_old_new_monotime(buf, ".last_recv", &old->last_recv, &new->last_recv);
+	jam_old_new_intmax(buf, &prefix, ".sent", &old->sent, &new->sent);
+	jam_old_new_intmax(buf, &prefix, ".recv", &old->recv, &new->recv);
+	jam_old_new_unsigned(buf, &prefix, ".recv_frags", &old->recv_frags, &new->recv_frags);
+	jam_old_new_intmax(buf, &prefix, ".wip", &old->wip, &new->wip);
+	jam_old_new_monotime(buf, &prefix, ".last_sent", &old->last_sent, &new->last_sent);
+	jam_old_new_monotime(buf, &prefix, ".last_recv", &old->last_recv, &new->last_recv);
 }
 
 static void jam_ike_windows(struct jambuf *buf,
 			    const struct v2_msgid_windows *old,
 			    const struct v2_msgid_windows *new)
 {
-	jam_string(buf, " (initiator:");
-	jam_ike_window(buf, &old->initiator, &new->initiator);
-	jam_string(buf, " responder:");
-	jam_ike_window(buf, &old->responder, &new->responder);
-	jam_string(buf, ")");
+	jam_ike_window(buf, "; initiator", &old->initiator, &new->initiator);
+	jam_ike_window(buf, "; responder", &old->responder, &new->responder);
 }
 
 static void jam_window_details(struct jambuf *buf,
@@ -147,8 +154,8 @@ static void dbg_msgids_update(const char *what,
 		jam_msgid_prefix(buf, ike);
 		jam(buf, " %s", what);
 		switch (message) {
-		case MESSAGE_REQUEST: jam(buf, " message request %jd", msgid); break;
-		case MESSAGE_RESPONSE: jam(buf, " message response %jd", msgid); break;
+		case MESSAGE_REQUEST: jam(buf, " request %jd", msgid); break;
+		case MESSAGE_RESPONSE: jam(buf, " response %jd", msgid); break;
 		case NO_MESSAGE: break;
 		default: bad_case(message);
 		}
