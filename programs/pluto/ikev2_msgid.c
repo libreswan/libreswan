@@ -180,42 +180,85 @@ static const struct v2_msgid_windows empty_v2_msgid_windows = {
 void v2_msgid_init_ike(struct ike_sa *ike)
 {
 	const monotime_t now = mononow();
-	struct v2_msgid_windows old_windows = ike->sa.st_v2_msgid_windows;
-	ike->sa.st_v2_msgid_windows = empty_v2_msgid_windows;
-	ike->sa.st_v2_msgid_windows.last_sent = now;
-	ike->sa.st_v2_msgid_windows.last_recv = now;
-	ike->sa.st_v2_msgid_windows.responder.last_sent = now;
-	ike->sa.st_v2_msgid_windows.responder.last_recv = now;
-	ike->sa.st_v2_msgid_windows.initiator.last_sent = now;
-	ike->sa.st_v2_msgid_windows.initiator.last_recv = now;
+	const struct v2_msgid_windows old = ike->sa.st_v2_msgid_windows;
+	struct v2_msgid_windows *new = &ike->sa.st_v2_msgid_windows;
+	*new = empty_v2_msgid_windows;
+	new->last_sent = now;
+	new->last_recv = now;
+	new->responder.last_sent = now;
+	new->responder.last_recv = now;
+	new->initiator.last_sent = now;
+	new->initiator.last_recv = now;
 	/* pretend there's a sender */
-	dbg_msgids_update("initializing", NO_MESSAGE, -1, ike, &old_windows);
+	dbg_msgids_update("initializing", NO_MESSAGE, -1, ike, &old);
 }
 
 void v2_msgid_start(struct ike_sa *ike, const struct msg_digest *md)
 {
+	const struct v2_msgid_windows old = ike->sa.st_v2_msgid_windows;
+	struct v2_msgid_windows *new = &ike->sa.st_v2_msgid_windows;
+
 	enum message_role role = v2_msg_role(md);
 	switch (role) {
 	case NO_MESSAGE:
-		dbg_v2_msgid(ike, "initiator starting new exchange");
+	{
+		intmax_t msgid = old.initiator.sent + 1;
+#if 0
+		/*
+		 * XXX: record_n_send_n_log_v2_delete() breaks this.
+		 * It is forcing the initiate of a request when
+		 * there's already a request outstanding (i.e.,
+		 * .sent==.recv+1).
+		 */
+
+		pexpect_v2_msgid(ike, role, old.initiator.recv+1 == msgid);
+#endif
+		pexpect_v2_msgid(ike, role, old.initiator.sent+1 == msgid);
+#if 0
+		/*
+		 * XXX: apparently, even this isn't always true!.
+		 */
+		pexpect_v2_msgid(ike, role, old.initiator.wip == -1);
+#endif
+#if 0
+		/*
+		 * XXX: v2_msgid_start() isn't called when starting a
+		 * new exchange!  It should be ...
+		 */
+		new->initiator.wip = msgid;
+#endif
+		dbg_msgids_update("initiator starting", role, msgid, ike, &old);
 		break;
+	}
 	case MESSAGE_REQUEST:
 	{
 		/* extend msgid */
 		intmax_t msgid = md->hdr.isa_msgid;
-		if (ike->sa.st_v2_msgid_windows.responder.wip != -1) {
-			fail_v2_msgid(ike,
-				      "responder.wip should be -1, was %jd",
-				      ike->sa.st_v2_msgid_windows.responder.wip);
-		}
-		ike->sa.st_v2_msgid_windows.responder.wip = msgid;
-		dbg_msgids_update("responder starting", role, msgid,
-				  ike, &ike->sa.st_v2_msgid_windows);
+		pexpect_v2_msgid(ike, role, old.responder.wip == -1);
+		pexpect_v2_msgid(ike, role, old.responder.sent+1 == msgid);
+		pexpect_v2_msgid(ike, role, old.responder.recv+1 == msgid);
+		new->responder.wip = msgid;
+		dbg_msgids_update("responder starting", role, msgid, ike, &old);
 		break;
 	}
 	case MESSAGE_RESPONSE:
-		dbg_v2_msgid(ike, "initiator processing response to existing exchange");
+	{
+		intmax_t msgid = md->hdr.isa_msgid;
+#if 0
+		/*
+		 * XXX: v2_msgid_start() isn't called when starting a
+		 * new exchange!  It should be ...
+		 */
+		pexpect_v2_msgid(ike, role, old.initiator.wip == -1);
+#else
+		pexpect_v2_msgid(ike, role, old.initiator.wip == msgid);
+#endif
+		pexpect_v2_msgid(ike, role, old.initiator.sent == msgid);
+		pexpect_v2_msgid(ike, role, old.initiator.recv+1 == msgid);
+		new->initiator.wip = msgid;
+		dbg_msgids_update("initiator response", role, msgid, ike, &old);
 		break;
+	}
 	}
 }
 

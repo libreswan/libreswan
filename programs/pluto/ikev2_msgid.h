@@ -40,23 +40,32 @@ enum message_role;
 struct v2_msgid_window {
 	monotime_t last_sent;  /* sent a message */
 	monotime_t last_recv;  /* received a message */
-	intmax_t sent;
-	intmax_t recv;
+	/*
+	 * .sent: last outbound message sent
+	 * .recv: last inbound message processed
+	 * .wip: message being processed; or -1
+	 *
+	 * Idle:       .sent:N   .recv:N   .wip:-1
+	 * Initiating: .sent:N   .recv:N   .wip:-1
+	 * XXX: Initiating: .sent:N   .recv:N   .wip:N+1
+
+	 * Initiated:  .sent:N+1 .recv:N   .wip:N+1
+	 * XXX: Initiated:  .sent:N+1 .recv:N   .wip:-1
+
+	 * Responding: .sent:N   .recv:N   .wip:N+1
+	 * Responded:  .sent:N+1 .recv:N+1 .wip:N+1
+	 * Response:   .sent:N+1 .recv:N   .wip:N+1
+	 * Idle    :   .sent:N+1 .recv:N+1 .wip:-1
+	 */
+	intmax_t sent;		/* starts with -1 */
+	intmax_t recv;		/* starts with -1 */
+	intmax_t wip;		/* >=0 when busy */
+	/*
+	 * Fragments.
+	 */
 	unsigned recv_frags;	/* number of fragments making up incoming message */
 	struct v2_incoming_fragments *incoming_fragments;
 	struct v2_outgoing_fragment *outgoing_fragments;
-	/*
-	 * The Message ID for the IKE SA's's in-progress exchange(s).
-	 * If no exchange is in progress then its value is -1.
-	 *
-	 * The INITIATOR's Message ID is valid from the time the
-	 * request is sent (possibly earlier?) through to when the
-	 * response is received.
-	 *
-	 * The RESPONDER Message ID is valid for the period that the
-	 * state is processing the request.
-	 */
-	intmax_t wip;
 	/*
 	 * The SA being worked on by the exchange.
 	 *
@@ -124,6 +133,16 @@ void v2_msgid_schedule_next_initiator(struct ike_sa *ike);
 
 void dbg_v2_msgid(struct ike_sa *ike, const char *msg, ...) PRINTF_LIKE(2);
 void fail_v2_msgid_where(where_t where, struct ike_sa *ike, const char *fmt, ...) PRINTF_LIKE(3);
+#define pexpect_v2_msgid(IKE, ROLE, COND)				\
+	({								\
+		bool cond_ = COND; /* eval once, no paren */		\
+		if (!cond_) {						\
+		enum_buf eb;						\
+			fail_v2_msgid(IKE, "%s %s",			\
+				      str_enum_short(&message_role_names, ROLE, &eb), \
+				      #COND);				\
+		}							\
+	})
 #define fail_v2_msgid(IKE, FMT, ...) fail_v2_msgid_where(HERE, IKE, FMT,##__VA_ARGS__)
 
 struct v2_msgid_window *v2_msgid_window(struct ike_sa *ike, enum message_role message_role);
