@@ -73,6 +73,7 @@
 #include "routing.h"
 #include "terminate.h"
 #include "whack_shutdown.h"		/* for exiting_pluto; */
+#include "ikev2_states.h"
 
 static void delete_state(struct state *st);
 
@@ -664,7 +665,7 @@ static struct ike_sa *new_v2_ike_sa(struct connection *c,
 				     ike_initiator_spi, ike_responder_spi,
 				     IKE_SA, sa_role, HERE);
 	struct ike_sa *ike = pexpect_ike_sa(st);
-	change_state(&ike->sa, transition->state);
+	change_state(&ike->sa, transition->from->kind);
 	set_v2_transition(&ike->sa, transition, HERE);
 	v2_msgid_init_ike(ike);
 	event_schedule(EVENT_v2_DISCARD, EXCHANGE_TIMEOUT_DELAY, &ike->sa);
@@ -926,7 +927,7 @@ void delete_state(struct state *st)
 	 */
 	if (IS_IKE_SA_ESTABLISHED(st) ||
 	    IS_V1_ISAKMP_SA_ESTABLISHED(st) ||
-	    st->st_state->kind == STATE_V2_IKE_SA_DELETE)
+	    st->st_state == &state_v2_IKE_SA_DELETE)
 		linux_audit_conn(st, LAK_PARENT_DESTROY);
 
 	if (IS_IPSEC_SA_ESTABLISHED(st) ||
@@ -1289,7 +1290,7 @@ struct child_sa *new_v2_child_sa(struct connection *c,
 	passert(fs->nr_transitions == 1);
 	const struct v2_state_transition *transition = &fs->v2.transitions[0];
 	struct child_sa *child = duplicate_state(c, ike, sa_type, sa_role);
-	change_state(&child->sa, transition->state);
+	change_state(&child->sa, transition->from->kind);
 	set_v2_transition(&child->sa, transition, HERE);
 	return child;
 }
@@ -1976,7 +1977,7 @@ void switch_md_st(struct msg_digest *md, struct state *st, where_t where)
 /*
  * Every time a state's connection is changed, the following need to happen:
  *
- * - update the connection->state hash table
+ * - update the connection->from hash table
  *
  * - discard the old connection when not in use
  */

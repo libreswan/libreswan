@@ -59,6 +59,7 @@
 #include "ikev2_proposals.h"
 #include "ikev2_parent.h"
 #include "ikev2_delete.h"
+#include "ikev2_states.h"
 
 static ikev2_state_transition_fn process_v2_CREATE_CHILD_SA_request;
 
@@ -102,9 +103,9 @@ static void queue_v2_CREATE_CHILD_SA_initiator(struct state *larval_sa,
 	struct logger *logger = larval->sa.logger;
 
 	PEXPECT(logger, larval->sa.st_sa_role == SA_INITIATOR);
-	PEXPECT(logger, (larval->sa.st_state->kind == STATE_V2_NEW_CHILD_I0 ||
-			 larval->sa.st_state->kind == STATE_V2_REKEY_CHILD_I0 ||
-			 larval->sa.st_state->kind == STATE_V2_REKEY_IKE_I0));
+	PEXPECT(logger, (larval->sa.st_state == &state_v2_NEW_CHILD_I0 ||
+			 larval->sa.st_state == &state_v2_REKEY_CHILD_I0 ||
+			 larval->sa.st_state == &state_v2_REKEY_IKE_I0));
 	/*
 	 * After initiating a delete the IKE SA transitions to
 	 * STATE_V2_IKE_SA_DELETE so accommodate it here (the request
@@ -117,8 +118,8 @@ static void queue_v2_CREATE_CHILD_SA_initiator(struct state *larval_sa,
 	 * also requesting an IKE SA delete is ignored (see: crossing
 	 * IKE SA delete ignored #1587).
 	 */
-	PEXPECT(logger, (ike->sa.st_state->kind == STATE_V2_ESTABLISHED_IKE_SA ||
-			 ike->sa.st_state->kind == STATE_V2_IKE_SA_DELETE));
+	PEXPECT(logger, (ike->sa.st_state == &state_v2_ESTABLISHED_IKE_SA ||
+			 ike->sa.st_state == &state_v2_IKE_SA_DELETE));
 
 	/*
 	 * Unpack the crypto material computed out-of-band.
@@ -126,7 +127,7 @@ static void queue_v2_CREATE_CHILD_SA_initiator(struct state *larval_sa,
 	 * For Child SAs DH is optional; for IKE SAs it's required.
 	 * Hence rekeying the IKE SA implies DH.
 	 */
-	pexpect((larval->sa.st_state->kind == STATE_V2_REKEY_IKE_I0) <=/*implies*/ (local_secret != NULL));
+	pexpect((larval->sa.st_state == &state_v2_REKEY_IKE_I0) <=/*implies*/ (local_secret != NULL));
 	unpack_nonce(&larval->sa.st_ni, nonce);
 	if (local_secret != NULL) {
 		unpack_KE_from_helper(&larval->sa, local_secret, &larval->sa.st_gi);
@@ -221,7 +222,7 @@ static void emancipate_larval_ike_sa(struct ike_sa *old_ike, struct child_sa *ne
 
 	/* complete the state transition */
 	const struct v2_state_transition *transition = new_ike->sa.st_v2_transition;
-	pexpect(transition->state == new_ike->sa.st_state->kind);
+	pexpect(transition->from == new_ike->sa.st_state);
 	pexpect(transition->next_state == STATE_V2_ESTABLISHED_IKE_SA);
 	change_v2_state(&new_ike->sa); /* should trash .st_v2_transition */
 
@@ -370,8 +371,8 @@ static bool record_v2_rekey_ike_message(struct ike_sa *ike,
 {
 	passert(ike != NULL);
 	pexpect((request_md != NULL) == (larval_ike->sa.st_sa_role == SA_RESPONDER));
-	pexpect((request_md == NULL) == (larval_ike->sa.st_state->kind == STATE_V2_REKEY_IKE_I0));
-	pexpect((request_md != NULL) == (larval_ike->sa.st_state->kind == STATE_V2_REKEY_IKE_R0));
+	pexpect((request_md == NULL) == (larval_ike->sa.st_state == &state_v2_REKEY_IKE_I0));
+	pexpect((request_md != NULL) == (larval_ike->sa.st_state == &state_v2_REKEY_IKE_R0));
 
 	struct v2_message message;
 	if (!open_v2_message("CREATE_CHILD_SA rekey ike",
@@ -537,7 +538,7 @@ static void llog_v2_success_rekey_child_request(struct ike_sa *ike)
 
 static const struct v2_state_transition v2_CREATE_CHILD_SA_rekey_child_transition = {
 	.story      = "initiate rekey Child_SA (CREATE_CHILD_SA)",
-	.state      = STATE_V2_ESTABLISHED_IKE_SA,
+	.from       = &state_v2_ESTABLISHED_IKE_SA,
 	.next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	.exchange   = ISAKMP_v2_CREATE_CHILD_SA,
 	.send_role  = MESSAGE_REQUEST,
@@ -821,7 +822,7 @@ static void llog_v2_success_new_child_request(struct ike_sa *ike)
 
 static const struct v2_state_transition v2_CREATE_CHILD_SA_new_child_transition = {
 	.story      = "initiate new Child SA (CREATE_CHILD_SA)",
-	.state      = STATE_V2_ESTABLISHED_IKE_SA,
+	.from       = &state_v2_ESTABLISHED_IKE_SA,
 	.next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	.exchange   = ISAKMP_v2_CREATE_CHILD_SA,
 	.send_role  = MESSAGE_REQUEST,
@@ -1094,8 +1095,8 @@ static stf_status process_v2_CREATE_CHILD_SA_request_continue_1(struct state *ik
 	 * Instead of computing the entire DH as a single crypto task,
 	 * does a second continue. Yuck!
 	 */
-	pexpect(larval_child->sa.st_state->kind == STATE_V2_NEW_CHILD_R0 ||
-		larval_child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0);
+	pexpect(larval_child->sa.st_state == &state_v2_NEW_CHILD_R0 ||
+		larval_child->sa.st_state == &state_v2_REKEY_CHILD_R0);
 
 	unpack_nonce(&larval_child->sa.st_nr, nonce);
 	if (local_secret == NULL) {
@@ -1135,8 +1136,8 @@ static stf_status process_v2_CREATE_CHILD_SA_request_continue_2(struct state *ik
 	 * handles only one state transition.  If there's commonality
 	 * then the per-transition functions can all call common code.
 	 */
-	pexpect(larval_child->sa.st_state->kind == STATE_V2_NEW_CHILD_R0 ||
-		larval_child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0);
+	pexpect(larval_child->sa.st_state == &state_v2_NEW_CHILD_R0 ||
+		larval_child->sa.st_state == &state_v2_REKEY_CHILD_R0);
 
 	if (larval_child->sa.st_dh_shared_secret == NULL) {
 		log_state(RC_LOG, &larval_child->sa, "DH failed");
@@ -1158,8 +1159,8 @@ stf_status process_v2_CREATE_CHILD_SA_request_continue_3(struct ike_sa *ike,
 	struct child_sa *larval_child = ike->sa.st_v2_msgid_windows.responder.wip_sa;
 	passert(v2_msg_role(request_md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
 	passert(larval_child->sa.st_sa_role == SA_RESPONDER);
-	pexpect(larval_child->sa.st_state->kind == STATE_V2_NEW_CHILD_R0 ||
-		larval_child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0);
+	pexpect(larval_child->sa.st_state == &state_v2_NEW_CHILD_R0 ||
+		larval_child->sa.st_state == &state_v2_REKEY_CHILD_R0);
 	dbg("%s() for #%lu %s",
 	     __func__, larval_child->sa.st_serialno, larval_child->sa.st_state->name);
 
@@ -1286,8 +1287,8 @@ stf_status process_v2_CREATE_CHILD_SA_child_response(struct ike_sa *ike,
 	pexpect(larval_child->sa.st_state->nr_transitions >= 1);
 	const struct v2_state_transition *transition =
 		&larval_child->sa.st_state->v2.transitions[0];
-	pexpect(transition->state == STATE_V2_REKEY_CHILD_I1 ||
-		transition->state == STATE_V2_NEW_CHILD_I1);
+	pexpect(transition->from == &state_v2_REKEY_CHILD_I1 ||
+		transition->from == &state_v2_NEW_CHILD_I1);
 	pexpect(transition->next_state == STATE_V2_ESTABLISHED_CHILD_SA);
 	larval_child->sa.st_v2_transition = transition;
 
@@ -1388,8 +1389,8 @@ static stf_status process_v2_CREATE_CHILD_SA_child_response_continue_1(struct st
 	 * handles only one state transition.  If there's commonality
 	 * then the per-transition functions can all call common code.
 	 */
-	pexpect(larval_child->sa.st_state->kind == STATE_V2_NEW_CHILD_I1 ||
-		larval_child->sa.st_state->kind == STATE_V2_REKEY_CHILD_I1);
+	pexpect(larval_child->sa.st_state == &state_v2_NEW_CHILD_I1 ||
+		larval_child->sa.st_state == &state_v2_REKEY_CHILD_I1);
 
 	if (larval_child->sa.st_dh_shared_secret == NULL) {
 		/*
@@ -1492,7 +1493,7 @@ static void llog_v2_success_rekey_ike_request(struct ike_sa *ike)
 
 static const struct v2_state_transition v2_CREATE_CHILD_SA_rekey_ike_transition = {
 	.story      = "initiate rekey IKE_SA (CREATE_CHILD_SA)",
-	.state      = STATE_V2_ESTABLISHED_IKE_SA,
+	.from       = &state_v2_ESTABLISHED_IKE_SA,
 	.next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	.exchange   = ISAKMP_v2_CREATE_CHILD_SA,
 	.send_role  = MESSAGE_REQUEST,
@@ -1664,7 +1665,7 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_1(struct
 
 	struct child_sa *larval_ike = ike->sa.st_v2_msgid_windows.responder.wip_sa; /* not yet emancipated */
 	pexpect(larval_ike->sa.st_sa_role == SA_RESPONDER);
-	pexpect(larval_ike->sa.st_state->kind == STATE_V2_REKEY_IKE_R0);
+	pexpect(larval_ike->sa.st_state == &state_v2_REKEY_IKE_R0);
 	dbg("%s() for #%lu %s",
 	     __func__, larval_ike->sa.st_serialno, larval_ike->sa.st_state->name);
 
@@ -1707,8 +1708,8 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_2(struct
 
 	passert(v2_msg_role(request_md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
 	passert(larval_ike->sa.st_sa_role == SA_RESPONDER);
-	pexpect(larval_ike->sa.st_state->kind == STATE_V2_REKEY_IKE_R0);
-	pexpect(larval_ike->sa.st_v2_transition->state == STATE_V2_REKEY_IKE_R0);
+	pexpect(larval_ike->sa.st_state == &state_v2_REKEY_IKE_R0);
+	pexpect(larval_ike->sa.st_v2_transition->from == &state_v2_REKEY_IKE_R0);
 	pexpect(larval_ike->sa.st_v2_transition->next_state == STATE_V2_ESTABLISHED_IKE_SA);
 	dbg("%s() for #%lu %s",
 	     __func__, larval_ike->sa.st_serialno, larval_ike->sa.st_state->name);
@@ -1762,7 +1763,7 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response(struct ike_sa *ike,
 	pexpect(larval_ike->sa.st_state->nr_transitions >= 1);
 	const struct v2_state_transition *transition =
 		&larval_ike->sa.st_state->v2.transitions[0];
-	pexpect(transition->state == STATE_V2_REKEY_IKE_I1);
+	pexpect(transition->from == &state_v2_REKEY_IKE_I1);
 	pexpect(transition->next_state == STATE_V2_ESTABLISHED_IKE_SA);
 	larval_ike->sa.st_v2_transition = transition;
 
@@ -1862,8 +1863,8 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response_continue_1(struc
 	/* Just checking this is the rekey IKE SA initiator */
 	pexpect(larval_ike->sa.st_sa_role == SA_INITIATOR);
 	pexpect(larval_ike->sa.st_sa_type_when_established == IKE_SA);
-	pexpect(larval_ike->sa.st_state->kind == STATE_V2_REKEY_IKE_I1);
-	pexpect(larval_ike->sa.st_v2_transition->state == STATE_V2_REKEY_IKE_I1);
+	pexpect(larval_ike->sa.st_state == &state_v2_REKEY_IKE_I1);
+	pexpect(larval_ike->sa.st_v2_transition->from == &state_v2_REKEY_IKE_I1);
 	pexpect(larval_ike->sa.st_v2_transition->next_state == STATE_V2_ESTABLISHED_IKE_SA);
 	pexpect(v2_msg_role(response_md) == MESSAGE_RESPONSE); /* i.e., MD!=NULL */
 

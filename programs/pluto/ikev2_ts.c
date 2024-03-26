@@ -37,6 +37,7 @@
 #include "pending.h"		/* for connection_is_pending() */
 #include "spd_db.h"	/* for spd_route_db_add_connection() */
 #include "instantiate.h"
+#include "ikev2_states.h"
 
 #define TS_MAX 16 /* arbitrary */
 
@@ -431,21 +432,21 @@ static bool emit_v2TS_payload(struct pbs_out *outpbs,
 	FOR_EACH_ITEM(s, selectors) {
 
 		ip_selector ts = *s;
-		if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0 &&
+		if (child->sa.st_state == &state_v2_REKEY_CHILD_R0 &&
 		    impair.rekey_respond_subnet) {
 			ts = impair_selector_to_subnet(ts);
 			selector_buf sb;
 			llog_sa(RC_LOG, child, "IMPAIR: rekey-respond-subnet %s set to %s",
 				name, str_selector(&ts, &sb));
 		}
-		if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0 &&
+		if (child->sa.st_state == &state_v2_REKEY_CHILD_R0 &&
 		    impair.rekey_respond_supernet) {
 			ts = impair_selector_to_supernet(ts);
 			selector_buf sb;
 			llog_sa(RC_LOG, child, "IMPAIR: rekey-respond-supernet %s set to %s",
 				name, str_selector(&ts, &sb));
 		}
-		if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_I0 &&
+		if (child->sa.st_state == &state_v2_REKEY_CHILD_I0 &&
 		    impair.rekey_initiate_supernet) {
 			ts = impair_selector_to_supernet(ts);
 			selector_buf tsb;
@@ -453,7 +454,7 @@ static bool emit_v2TS_payload(struct pbs_out *outpbs,
 				"IMPAIR: rekey-initiate-supernet %s set to %s",
 				name, str_selector(&ts, &tsb));
 		}
-		if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_I0 &&
+		if (child->sa.st_state == &state_v2_REKEY_CHILD_I0 &&
 		    impair.rekey_initiate_subnet) {
 			ts = impair_selector_to_subnet(ts);
 			selector_buf tsb;
@@ -1939,7 +1940,7 @@ bool verify_rekey_child_request_ts(struct child_sa *child, struct msg_digest *md
 {
 	indent_t indent = {child->sa.logger, 0};
 
-	if (!pexpect(child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0))
+	if (!pexpect(child->sa.st_state == &state_v2_REKEY_CHILD_R0))
 		return false;
 
 	const struct connection *c = child->sa.st_connection;

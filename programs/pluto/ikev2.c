@@ -656,7 +656,7 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 		 * - passed to process_v2_request_no_skeyseed() which
 		 *   may decide to save it
 		 */
-		pexpect(ike->sa.st_state->kind == STATE_V2_PARENT_R_IKE_SA_INIT);
+		pexpect(ike->sa.st_state == &state_v2_PARENT_R_IKE_SA_INIT);
 		pexpect(!ike->sa.hidden_variables.st_skeyid_calculated);
 		if (pexpect(frags != NULL)) {
 			pexpect(/* single message */
@@ -678,7 +678,7 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 		 * decides if the twilight zone should even be entered
 		 * (SKEYSEED started).
 		 */
-		pexpect(ike->sa.st_state->kind == STATE_V2_PARENT_R_IKE_SA_INIT);
+		pexpect(ike->sa.st_state == &state_v2_PARENT_R_IKE_SA_INIT);
 		dbg_v2_msgid(ike,
 			     "not a duplicate - message request %jd is new (SKEYSEED still needs to be computed)",
 			     msgid);
@@ -1030,7 +1030,7 @@ static void complete_protected_but_fatal_exchange(struct ike_sa *ike, struct msg
 		unsigned transition_nr = 1;
 		pexpect(state->nr_transitions > transition_nr);
 		transition = &state->v2.transitions[transition_nr];
-		pexpect(transition->state == STATE_V2_PARENT_I2);
+		pexpect(transition->from == &state_v2_PARENT_I2);
 		pexpect(transition->next_state == STATE_V2_ESTABLISHED_IKE_SA);
 		break;
 	}
@@ -1059,7 +1059,7 @@ static void complete_protected_but_fatal_exchange(struct ike_sa *ike, struct msg
 		} else {
 			static const struct v2_state_transition undefined_transition = {
 				.story = "suspect message",
-				.state = STATE_UNDEFINED,
+				.from = STATE_UNDEFINED,
 				.next_state = STATE_UNDEFINED,
 			};
 			transition = &undefined_transition;
@@ -1428,15 +1428,13 @@ static void success_v2_state_transition(struct ike_sa *ike,
 {
 	passert(ike != NULL);
 
-	/*
-	 * XXX: the transition's from state can lie - it may be
-	 * different to the ST's state!
-	 */
-	enum state_kind from_state = transition->state;
 	struct connection *c = ike->sa.st_connection;
 
 #if 0
 	/*
+	 * XXX: the transition's from state can lie - it may be
+	 * different to the ST's state!
+	 *
 	 * XXX: this fails.
 	 *
 	 * The problem is that the IKE SA, during IKE_AUTH, gets its
@@ -1444,12 +1442,14 @@ static void success_v2_state_transition(struct ike_sa *ike,
 	 * authentication but before Child SA processing.  Perhaps
 	 * that is no longer needed?
 	 */
-	pexpect(transition->state == ike->sa.st_state->kind);
+	pexpect(transition->from == ike->sa.st_state);
 #endif
-	if (from_state != transition->next_state) {
-		dbg("transitioning from state %s to state %s",
-		    finite_states[from_state]->name,
-		    finite_states[transition->next_state]->name);
+	if (transition->from->kind != transition->next_state) {
+		ldbg(ike->sa.logger,
+		     "transitioning IKE SA in state %s from state %s to state %s",
+		     ike->sa.st_state->short_name,
+		     transition->from->short_name,
+		     finite_states[transition->next_state]->short_name);
 	}
 
 	/*
@@ -1777,12 +1777,12 @@ void complete_v2_state_transition(struct ike_sa *ike,
 	 * out _before_ the Child SA processing occurs.  Is that the
 	 * only reason?
 	 */
-	pexpect(transition->state == ike->sa.st_state->kind);
+	pexpect(transition->from == ike->sa.st_state->kind);
 #endif
 
 	LDBGP_JAMBUF(DBG_BASE, ike->sa.logger, buf) {
 		jam(buf, "#%lu complete_v2_state_transition()", ike->sa.st_serialno);
-		if (ike->sa.st_state->kind != transition->state) {
+		if (ike->sa.st_state != transition->from) {
 			jam(buf, " in state %s", ike->sa.st_state->short_name);
 		}
 		jam(buf, " ");

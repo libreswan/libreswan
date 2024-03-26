@@ -33,6 +33,7 @@
 #include "ikev2_ike_auth.h"
 #include "pluto_stats.h"
 #include "crypt_prf.h"
+#include "ikev2_states.h"
 
 static dh_shared_secret_cb process_v2_IKE_INTERMEDIATE_response_continue;	/* type assertion */
 
@@ -425,7 +426,7 @@ stf_status process_v2_IKE_INTERMEDIATE_response_continue(struct state *st, struc
 
 const struct v2_state_transition v2_IKE_INTERMEDIATE_initiator_transition = {
 	.story      = "initiating IKE_INTERMEDIATE",
-	.state      = STATE_V2_PARENT_I2,
+	.from       = &state_v2_PARENT_I2,
 	.next_state = STATE_V2_PARENT_I2,
 	.exchange   = ISAKMP_v2_IKE_INTERMEDIATE,
 	.send_role  = MESSAGE_REQUEST,

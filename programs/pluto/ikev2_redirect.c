@@ -30,6 +30,7 @@
 #include "ipsec_doi.h"
 #include "ikev2.h"
 #include "ikev2_send.h"
+#include "ikev2_states.h"
 #include "ip_info.h"
 #include "ikev2_redirect.h"
 #include "initiate.h"
@@ -514,7 +515,7 @@ static stf_status send_v2_redirect_ike_request(struct ike_sa *ike,
 
 static const struct v2_state_transition v2_redirect_ike_transition = {
 	.story = "redirect IKE SA",
-	.state = STATE_V2_ESTABLISHED_IKE_SA,
+	.from = &state_v2_ESTABLISHED_IKE_SA,
 	.next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	.exchange = ISAKMP_v2_INFORMATIONAL,
 	.send_role = MESSAGE_REQUEST,

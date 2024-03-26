@@ -67,6 +67,7 @@
 #include "kernel.h"			/* for get_my_cpi() hack */
 #include "ikev2_proposals.h"
 #include "ikev2_parent.h"
+#include "ikev2_states.h"
 
 static bool emit_v2_child_response_payloads(struct ike_sa *ike,
 					    const struct child_sa *child,
@@ -184,9 +185,9 @@ bool emit_v2_child_request_payloads(const struct ike_sa *ike,
 				    const struct ikev2_proposals *child_proposals,
 				    struct pbs_out *pbs)
 {
-	if (!pexpect(larval_child->sa.st_state->kind == STATE_V2_NEW_CHILD_I0 ||
-		     larval_child->sa.st_state->kind == STATE_V2_REKEY_CHILD_I0 ||
-		     larval_child->sa.st_state->kind == STATE_V2_IKE_AUTH_CHILD_I0)) {
+	if (!pexpect(larval_child->sa.st_state == &state_v2_NEW_CHILD_I0 ||
+		     larval_child->sa.st_state == &state_v2_REKEY_CHILD_I0 ||
+		     larval_child->sa.st_state == &state_v2_IKE_AUTH_CHILD_I0)) {
 		return false;
 	}
 
@@ -195,7 +196,7 @@ bool emit_v2_child_request_payloads(const struct ike_sa *ike,
 	}
 
 	/* hack */
-	bool ike_auth_exchange = (larval_child->sa.st_state->kind == STATE_V2_IKE_AUTH_CHILD_I0);
+	bool ike_auth_exchange = (larval_child->sa.st_state == &state_v2_IKE_AUTH_CHILD_I0);
 
 	struct connection *cc = larval_child->sa.st_connection;
 
@@ -847,7 +848,7 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 		return v2N_TEMPORARY_FAILURE; /* delete child */
 	}
 
-	if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_I1)
+	if (child->sa.st_state == &state_v2_REKEY_CHILD_I1)
 		ikev2_rekey_expire_predecessor(child, child->sa.st_v2_rekey_pred);
 
 	return v2N_NOTHING_WRONG;

@@ -99,6 +99,7 @@
 #include "ikev2_create_child_sa.h"	/* for ikev2_rekey_ike_start() */
 #include "rekeyfuzz.h"
 #include "ikev2_ike_sa_init.h"		/* for initiate_v2_IKE_SA_INIT_request() */
+#include "ikev2_states.h"
 
 bool accept_v2_nonce(struct logger *logger, struct msg_digest *md,
 		     chunk_t *dest, const char *name)
@@ -581,7 +582,7 @@ static stf_status process_v2_request_no_skeyseed_continue(struct state *ike_st,
 	struct ike_sa *ike = pexpect_ike_sa(ike_st);
 	pexpect(ike->sa.st_sa_role == SA_RESPONDER);
 	pexpect(v2_msg_role(unused_md) == NO_MESSAGE);
-	pexpect(ike->sa.st_state->kind == STATE_V2_PARENT_R_IKE_SA_INIT);
+	pexpect(ike->sa.st_state == &state_v2_PARENT_R_IKE_SA_INIT);
 	dbg("%s() for #%lu %s: calculating g^{xy}, sending R2",
 	    __func__, ike->sa.st_serialno, ike->sa.st_state->name);
 

@@ -62,7 +62,7 @@ static struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
 							 const struct ikev2_expected_payloads *payloads);
 
 #define S(KIND, STORY, CAT, ...)					\
-	struct finite_state state_v2_##KIND = {				\
+	const struct finite_state state_v2_##KIND = {			\
 		.kind = STATE_V2_##KIND,				\
 		.name = "STATE_V2_"#KIND,				\
 		/* Not using #KIND + 6 because of clang's -Wstring-plus-int */ \
@@ -166,7 +166,7 @@ static const struct v2_state_transition PARENT_I0_transitions[] = {
 	 * HDR, SAi1, KEi, Ni -->
 	 */
 	{ .story      = "initiating IKE_SA_INIT",
-	  .state      = STATE_V2_PARENT_I0,
+	  .from       = &state_v2_PARENT_I0,
 	  .next_state = STATE_V2_PARENT_I1,
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_IKE_SA_INIT,
@@ -191,7 +191,7 @@ static const struct v2_state_transition PARENT_I1_transitions[] = {
 	 */
 
 	{ .story      = "received anti-DDOS COOKIE response; resending IKE_SA_INIT request with cookie payload added",
-	  .state      = STATE_V2_PARENT_I1,
+	  .from       = &state_v2_PARENT_I1,
 	  .next_state = STATE_V2_PARENT_I0,
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_IKE_SA_INIT,
@@ -204,7 +204,7 @@ static const struct v2_state_transition PARENT_I1_transitions[] = {
 	  .timeout_event = EVENT_v2_DISCARD, },
 
 	{ .story      = "received INVALID_KE_PAYLOAD response; resending IKE_SA_INIT with new KE payload",
-	  .state      = STATE_V2_PARENT_I1,
+	  .from       = &state_v2_PARENT_I1,
 	  .next_state = STATE_V2_PARENT_I0,
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_IKE_SA_INIT,
@@ -217,7 +217,7 @@ static const struct v2_state_transition PARENT_I1_transitions[] = {
 	  .timeout_event = EVENT_v2_DISCARD, },
 
 	{ .story      = "received REDIRECT response; resending IKE_SA_INIT request to new destination",
-	  .state      = STATE_V2_PARENT_I1,
+	  .from       = &state_v2_PARENT_I1,
 	  .next_state = STATE_V2_PARENT_I0, /* XXX: never happens STF_SUSPEND */
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_IKE_SA_INIT,
@@ -237,7 +237,7 @@ static const struct v2_state_transition PARENT_I1_transitions[] = {
 	 *      TSi, TSr}      -->
 	 */
 	{ .story      = "Initiator: process IKE_SA_INIT reply, initiate IKE_AUTH or IKE_INTERMEDIATE",
-	  .state      = STATE_V2_PARENT_I1,
+	  .from       = &state_v2_PARENT_I1,
 	  .next_state = STATE_V2_PARENT_I2,
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_IKE_SA_INIT,
@@ -267,7 +267,7 @@ static const struct v2_state_transition PARENT_I2_transitions[] = {
 	 */
 
 	{ .story      = "Initiator: process IKE_INTERMEDIATE reply, initiate IKE_AUTH or IKE_INTERMEDIATE",
-	  .state      = STATE_V2_PARENT_I2,
+	  .from       = &state_v2_PARENT_I2,
 	  .next_state = STATE_V2_PARENT_I2,
 	  .flags      = MESSAGE_RESPONSE,
 	  .exchange   = ISAKMP_v2_IKE_INTERMEDIATE,
@@ -284,7 +284,7 @@ static const struct v2_state_transition PARENT_I2_transitions[] = {
 	 */
 
 	{ .story      = "Initiator: process IKE_AUTH response",
-	  .state      = STATE_V2_PARENT_I2,
+	  .from       = &state_v2_PARENT_I2,
 	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	  .flags      = SMF2_RELEASE_WHACK,
 	  .exchange   = ISAKMP_v2_IKE_AUTH,
@@ -298,7 +298,7 @@ static const struct v2_state_transition PARENT_I2_transitions[] = {
 	},
 
 	{ .story      = "Initiator: processing IKE_AUTH failure response",
-	  .state      = STATE_V2_PARENT_I2,
+	  .from       = &state_v2_PARENT_I2,
 	  .next_state = STATE_V2_PARENT_I2,
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_IKE_AUTH,
@@ -320,7 +320,7 @@ static const struct v2_state_transition PARENT_R0_transitions[] = {
 	 * HDR, SAr1, KEr, Nr, [CERTREQ] -->
 	 */
 	{ .story      = "Respond to IKE_SA_INIT",
-	  .state      = STATE_V2_PARENT_R0,
+	  .from       = &state_v2_PARENT_R0,
 	  .next_state = STATE_V2_PARENT_R_IKE_SA_INIT,
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_IKE_SA_INIT,
@@ -348,7 +348,7 @@ static const struct v2_state_transition PARENT_R_IKE_SA_INIT_transitions[] = {
 	 */
 
 	{ .story      = "Responder: process IKE_INTERMEDIATE request",
-	  .state      = STATE_V2_PARENT_R_IKE_SA_INIT,
+	  .from       = &state_v2_PARENT_R_IKE_SA_INIT,
 	  .next_state = STATE_V2_PARENT_R_IKE_INTERMEDIATE,
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_IKE_INTERMEDIATE,
@@ -362,7 +362,7 @@ static const struct v2_state_transition PARENT_R_IKE_SA_INIT_transitions[] = {
 	  .timeout_event = EVENT_v2_DISCARD, },
 
 	{ .story      = "Responder: process IKE_AUTH request",
-	  .state      = STATE_V2_PARENT_R_IKE_SA_INIT,
+	  .from       = &state_v2_PARENT_R_IKE_SA_INIT,
 	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	  .flags      = SMF2_RELEASE_WHACK,
 	  .exchange   = ISAKMP_v2_IKE_AUTH,
@@ -376,7 +376,7 @@ static const struct v2_state_transition PARENT_R_IKE_SA_INIT_transitions[] = {
 	  .timeout_event = EVENT_v2_REPLACE, },
 
 	{ .story      = "Responder: process IKE_AUTH(EAP) request",
-	  .state      = STATE_V2_PARENT_R_IKE_SA_INIT,
+	  .from       = &state_v2_PARENT_R_IKE_SA_INIT,
 	  .next_state = STATE_V2_PARENT_R_IKE_AUTH_EAP,
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_IKE_AUTH,
@@ -396,7 +396,7 @@ S(PARENT_R_IKE_SA_INIT, "sent IKE_SA_INIT response, waiting for IKE_INTERMEDIATE
 static const struct v2_state_transition PARENT_R_IKE_INTERMEDIATE_transitions[] = {
 
 	{ .story      = "Responder: process IKE_INTERMEDIATE request",
-	  .state      = STATE_V2_PARENT_R_IKE_INTERMEDIATE,
+	  .from       = &state_v2_PARENT_R_IKE_INTERMEDIATE,
 	  .next_state = STATE_V2_PARENT_R_IKE_INTERMEDIATE,
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_IKE_INTERMEDIATE,
@@ -410,7 +410,7 @@ static const struct v2_state_transition PARENT_R_IKE_INTERMEDIATE_transitions[] 
 	  .timeout_event = EVENT_v2_DISCARD, },
 
 	{ .story      = "Responder: process IKE_AUTH(EAP) request",
-	  .state      = STATE_V2_PARENT_R_IKE_INTERMEDIATE,
+	  .from       = &state_v2_PARENT_R_IKE_INTERMEDIATE,
 	  .next_state = STATE_V2_PARENT_R_IKE_AUTH_EAP,
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_IKE_AUTH,
@@ -429,7 +429,7 @@ static const struct v2_state_transition PARENT_R_IKE_INTERMEDIATE_transitions[] 
 	 */
 
 	{ .story      = "Responder: process IKE_AUTH request",
-	  .state      = STATE_V2_PARENT_R_IKE_INTERMEDIATE,
+	  .from       = &state_v2_PARENT_R_IKE_INTERMEDIATE,
 	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	  .flags      = SMF2_RELEASE_WHACK,
 	  .exchange   = ISAKMP_v2_IKE_AUTH,
@@ -449,7 +449,7 @@ S(PARENT_R_IKE_INTERMEDIATE, "sent IKE_INTERMEDIATE response, waiting for IKE_IN
 static const struct v2_state_transition PARENT_R_IKE_AUTH_EAP_transitions[] = {
 
 	{ .story      = "Responder: process IKE_AUTH/EAP, continue EAP",
-	  .state      = STATE_V2_PARENT_R_IKE_AUTH_EAP,
+	  .from       = &state_v2_PARENT_R_IKE_AUTH_EAP,
 	  .next_state = STATE_V2_PARENT_R_IKE_AUTH_EAP,
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_IKE_AUTH,
@@ -462,7 +462,7 @@ static const struct v2_state_transition PARENT_R_IKE_AUTH_EAP_transitions[] = {
 	  .timeout_event = EVENT_v2_DISCARD, },
 
 	{ .story      = "Responder: process final IKE_AUTH/EAP",
-	  .state      = STATE_V2_PARENT_R_IKE_AUTH_EAP,
+	  .from       = &state_v2_PARENT_R_IKE_AUTH_EAP,
 	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	  .flags      = SMF2_RELEASE_WHACK,
 	  .exchange   = ISAKMP_v2_IKE_AUTH,
@@ -489,7 +489,7 @@ static const struct v2_state_transition IKE_AUTH_CHILD_I0_transitions[] = {
 	 */
 
 	{ .story      = "Child SA created by initiator during IKE_AUTH",
-	  .state      = STATE_V2_IKE_AUTH_CHILD_I0,
+	  .from       = &state_v2_IKE_AUTH_CHILD_I0,
 	  .next_state = STATE_V2_ESTABLISHED_CHILD_SA,
 	  .flags      = SMF2_RELEASE_WHACK,
 	  .exchange   = ISAKMP_v2_IKE_AUTH,
@@ -504,7 +504,7 @@ S(IKE_AUTH_CHILD_I0, "ephemeral: initiator creating child from IKE exchange", CA
 static const struct v2_state_transition IKE_AUTH_CHILD_R0_transitions[] = {
 
 	{ .story      = "Child SA created by responder during IKE_AUTH",
-	  .state      = STATE_V2_IKE_AUTH_CHILD_R0,
+	  .from       = &state_v2_IKE_AUTH_CHILD_R0,
 	  .next_state = STATE_V2_ESTABLISHED_CHILD_SA,
 	  .flags      = SMF2_RELEASE_WHACK,
 	  .exchange   = ISAKMP_v2_IKE_AUTH,
@@ -536,7 +536,7 @@ static const struct v2_state_transition REKEY_IKE_I0_transitions[] = {
 	 */
 
 	{ .story      = "initiate rekey IKE_SA (CREATE_CHILD_SA)",
-	  .state      = STATE_V2_REKEY_IKE_I0,
+	  .from       = &state_v2_REKEY_IKE_I0,
 	  .next_state = STATE_V2_REKEY_IKE_I1,
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
@@ -552,7 +552,7 @@ S(REKEY_IKE_I0, "STATE_V2_REKEY_IKE_I0", CAT_ESTABLISHED_IKE_SA);
 static const struct v2_state_transition REKEY_IKE_R0_transitions[] = {
 
 	{ .story      = "process rekey IKE SA request (CREATE_CHILD_SA)",
-	  .state      = STATE_V2_REKEY_IKE_R0,
+	  .from       = &state_v2_REKEY_IKE_R0,
 	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	  .flags      = SMF2_RELEASE_WHACK,
 	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
@@ -573,7 +573,7 @@ S(REKEY_IKE_R0, "STATE_V2_REKEY_IKE_R0", CAT_ESTABLISHED_IKE_SA, .v2.secured = t
 static const struct v2_state_transition REKEY_IKE_I1_transitions[] = {
 
 	{ .story      = "process rekey IKE SA response (CREATE_CHILD_SA)",
-	  .state      = STATE_V2_REKEY_IKE_I1,
+	  .from       = &state_v2_REKEY_IKE_I1,
 	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	  .flags      = SMF2_RELEASE_WHACK,
 	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
@@ -586,7 +586,7 @@ static const struct v2_state_transition REKEY_IKE_I1_transitions[] = {
 	  .timeout_event = EVENT_v2_REPLACE, },
 
 	{ .story      = "process rekey IKE SA failure response (CREATE_CHILD_SA)",
-	  .state      = STATE_V2_REKEY_IKE_I1,
+	  .from       = &state_v2_REKEY_IKE_I1,
 	  .next_state = STATE_V2_IKE_SA_DELETE, /* never reached */
 	  .flags      = SMF2_RELEASE_WHACK,
 	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
@@ -618,7 +618,7 @@ static const struct v2_state_transition REKEY_CHILD_I0_transitions[] = {
 	 */
 
 	{ .story      = "initiate rekey Child SA (CREATE_CHILD_SA)",
-	  .state      = STATE_V2_REKEY_CHILD_I0,
+	  .from       = &state_v2_REKEY_CHILD_I0,
 	  .next_state = STATE_V2_REKEY_CHILD_I1,
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
@@ -634,7 +634,7 @@ S(REKEY_CHILD_I0, "STATE_V2_REKEY_CHILD_I0", CAT_ESTABLISHED_IKE_SA);
 static const struct v2_state_transition REKEY_CHILD_R0_transitions[] = {
 
 	{ .story      = "process rekey Child SA request (CREATE_CHILD_SA)",
-	  .state      = STATE_V2_REKEY_CHILD_R0,
+	  .from       = &state_v2_REKEY_CHILD_R0,
 	  .next_state = STATE_V2_ESTABLISHED_CHILD_SA,
 	  .flags      = SMF2_RELEASE_WHACK,
 	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
@@ -655,7 +655,7 @@ S(REKEY_CHILD_R0, "STATE_V2_REKEY_CHILD_R0", CAT_ESTABLISHED_IKE_SA, .v2.secured
 static const struct v2_state_transition REKEY_CHILD_I1_transitions[] = {
 
 	{ .story      = "process rekey Child SA response (CREATE_CHILD_SA)",
-	  .state      = STATE_V2_REKEY_CHILD_I1,
+	  .from       = &state_v2_REKEY_CHILD_I1,
 	  .next_state = STATE_V2_ESTABLISHED_CHILD_SA,
 	  .flags      = SMF2_RELEASE_WHACK,
 	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
@@ -669,7 +669,7 @@ static const struct v2_state_transition REKEY_CHILD_I1_transitions[] = {
 	  .timeout_event = EVENT_v2_REPLACE, },
 
 	{ .story      = "process rekey Child SA failure response (CREATE_CHILD_SA)",
-	  .state      = STATE_V2_REKEY_CHILD_I1,
+	  .from       = &state_v2_REKEY_CHILD_I1,
 	  .next_state = STATE_V2_CHILD_SA_DELETE, /* never reached */
 	  .flags      = SMF2_RELEASE_WHACK,
 	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
@@ -701,7 +701,7 @@ static const struct v2_state_transition NEW_CHILD_I0_transitions[] = {
 	 */
 
 	{ .story      = "initiate create Child SA (CREATE_CHILD_SA)",
-	  .state      = STATE_V2_NEW_CHILD_I0,
+	  .from       = &state_v2_NEW_CHILD_I0,
 	  .next_state = STATE_V2_NEW_CHILD_I1,
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
@@ -717,7 +717,7 @@ S(NEW_CHILD_I0, "STATE_V2_NEW_CHILD_I0", CAT_ESTABLISHED_IKE_SA);
 static const struct v2_state_transition NEW_CHILD_R0_transitions[] = {
 
 	{ .story      = "process create Child SA request (CREATE_CHILD_SA)",
-	  .state      = STATE_V2_NEW_CHILD_R0,
+	  .from       = &state_v2_NEW_CHILD_R0,
 	  .next_state = STATE_V2_ESTABLISHED_CHILD_SA,
 	  .flags      = SMF2_RELEASE_WHACK,
 	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
@@ -737,7 +737,7 @@ S(NEW_CHILD_R0, "STATE_V2_NEW_CHILD_R0", CAT_ESTABLISHED_IKE_SA, .v2.secured = t
 static const struct v2_state_transition NEW_CHILD_I1_transitions[] = {
 
 	{ .story      = "process create Child SA response (CREATE_CHILD_SA)",
-	  .state      = STATE_V2_NEW_CHILD_I1,
+	  .from       = &state_v2_NEW_CHILD_I1,
 	  .next_state = STATE_V2_ESTABLISHED_CHILD_SA,
 	  .flags      = SMF2_RELEASE_WHACK,
 	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
@@ -751,7 +751,7 @@ static const struct v2_state_transition NEW_CHILD_I1_transitions[] = {
 	  .timeout_event = EVENT_v2_REPLACE, },
 
 	{ .story      = "process create Child SA failure response (CREATE_CHILD_SA)",
-	  .state      = STATE_V2_NEW_CHILD_I1,
+	  .from       = &state_v2_NEW_CHILD_I1,
 	  .next_state = STATE_V2_CHILD_SA_DELETE, /* never reached */
 	  .flags      = SMF2_RELEASE_WHACK,
 	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
@@ -788,7 +788,7 @@ static const struct v2_state_transition ESTABLISHED_IKE_SA_transitions[] = {
 	 */
 
 	{ .story      = "process rekey IKE SA request (CREATE_CHILD_SA)",
-	  .state      = STATE_V2_ESTABLISHED_IKE_SA,
+	  .from       = &state_v2_ESTABLISHED_IKE_SA,
 	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	  .flags      = SMF2_RELEASE_WHACK,
 	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
@@ -802,7 +802,7 @@ static const struct v2_state_transition ESTABLISHED_IKE_SA_transitions[] = {
 	  .timeout_event = EVENT_RETAIN },
 
 	{ .story      = "process rekey IKE SA response (CREATE_CHILD_SA)",
-	  .state      = STATE_V2_ESTABLISHED_IKE_SA,
+	  .from       = &state_v2_ESTABLISHED_IKE_SA,
 	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	  .flags      = LEMPTY, /* Whack is released when state is deleted */
 	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
@@ -831,7 +831,7 @@ static const struct v2_state_transition ESTABLISHED_IKE_SA_transitions[] = {
 	 */
 
 	{ .story      = "process rekey Child SA request (CREATE_CHILD_SA)",
-	  .state      = STATE_V2_ESTABLISHED_IKE_SA,
+	  .from       = &state_v2_ESTABLISHED_IKE_SA,
 	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	  .flags      = SMF2_RELEASE_WHACK,
 	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
@@ -862,7 +862,7 @@ static const struct v2_state_transition ESTABLISHED_IKE_SA_transitions[] = {
 	 */
 
 	{ .story      = "process create Child SA request (CREATE_CHILD_SA)",
-	  .state      = STATE_V2_ESTABLISHED_IKE_SA,
+	  .from       = &state_v2_ESTABLISHED_IKE_SA,
 	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	  .flags      = SMF2_RELEASE_WHACK,
 	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
@@ -887,7 +887,7 @@ static const struct v2_state_transition ESTABLISHED_IKE_SA_transitions[] = {
 	 */
 
 	{ .story      = "process Child SA response (new or rekey) (CREATE_CHILD_SA)",
-	  .state      = STATE_V2_ESTABLISHED_IKE_SA,
+	  .from       = &state_v2_ESTABLISHED_IKE_SA,
 	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	  .flags      = SMF2_RELEASE_WHACK,
 	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
@@ -900,7 +900,7 @@ static const struct v2_state_transition ESTABLISHED_IKE_SA_transitions[] = {
 	  .timeout_event = EVENT_RETAIN, },
 
 	{ .story      = "process CREATE_CHILD_SA failure response (new or rekey Child SA, rekey IKE SA)",
-	  .state      = STATE_V2_ESTABLISHED_IKE_SA,
+	  .from       = &state_v2_ESTABLISHED_IKE_SA,
 	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	  .flags      = SMF2_RELEASE_WHACK,
 	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
@@ -929,7 +929,7 @@ static const struct v2_state_transition ESTABLISHED_IKE_SA_transitions[] = {
 	 */
 
 	{ .story      = "Informational Request (liveness probe)",
-	  .state      = STATE_V2_ESTABLISHED_IKE_SA,
+	  .from       = &state_v2_ESTABLISHED_IKE_SA,
 	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_INFORMATIONAL,
@@ -941,7 +941,7 @@ static const struct v2_state_transition ESTABLISHED_IKE_SA_transitions[] = {
 	  .timeout_event = EVENT_RETAIN, },
 
 	{ .story      = "Informational Response (liveness probe)",
-	  .state      = STATE_V2_ESTABLISHED_IKE_SA,
+	  .from       = &state_v2_ESTABLISHED_IKE_SA,
 	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	  .flags      = SMF2_RELEASE_WHACK,
 	  .exchange   = ISAKMP_v2_INFORMATIONAL,
@@ -952,7 +952,7 @@ static const struct v2_state_transition ESTABLISHED_IKE_SA_transitions[] = {
 	  .timeout_event = EVENT_RETAIN, },
 
 	{ .story      = "Informational Request",
-	  .state      = STATE_V2_ESTABLISHED_IKE_SA,
+	  .from       = &state_v2_ESTABLISHED_IKE_SA,
 	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_INFORMATIONAL,
@@ -965,7 +965,7 @@ static const struct v2_state_transition ESTABLISHED_IKE_SA_transitions[] = {
 	  .timeout_event = EVENT_RETAIN, },
 
 	{ .story      = "Informational Response",
-	  .state      = STATE_V2_ESTABLISHED_IKE_SA,
+	  .from       = &state_v2_ESTABLISHED_IKE_SA,
 	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_INFORMATIONAL,
@@ -983,7 +983,7 @@ S(ESTABLISHED_IKE_SA, "established IKE SA", CAT_ESTABLISHED_IKE_SA, .v2.secured 
 static const struct v2_state_transition IKE_SA_DELETE_transitions[] = {
 
 	{ .story      = "IKE_SA_DEL: process INFORMATIONAL response",
-	  .state      = STATE_V2_IKE_SA_DELETE,
+	  .from       = &state_v2_IKE_SA_DELETE,
 	  .next_state = STATE_V2_IKE_SA_DELETE,
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_INFORMATIONAL,
@@ -1016,7 +1016,7 @@ S(CHILD_SA_DELETE, "STATE_CHILDSA_DEL", CAT_INFORMATIONAL);
 
 #undef S
 
-struct finite_state *v2_states[] = {
+static const struct finite_state *v2_states[] = {
 #define S(KIND, ...) [STATE_V2_##KIND - STATE_IKEv2_FLOOR] = &state_v2_##KIND
 	S(PARENT_I0),
 	S(PARENT_I1),
@@ -1336,7 +1336,7 @@ void jam_v2_transition(struct jambuf *buf, const struct v2_state_transition *tra
 		jam(buf, "NULL");
 	} else {
 		jam(buf, "%s->%s",
-		    finite_states[transition->state]->short_name,
+		    transition->from->short_name,
 		    finite_states[transition->next_state]->short_name);
 	}
 }
@@ -1391,7 +1391,7 @@ void init_ikev2_states(struct logger *logger)
 		for (unsigned u = 0; u < from->nr_transitions; u++) {
 			const struct v2_state_transition *t = &from->v2.transitions[u];
 
-			passert(t->state == kind);
+			passert(t->from == from);
 			passert(t->next_state >= STATE_IKEv2_FLOOR);
 			passert(t->next_state < STATE_IKEv2_ROOF);
 

@@ -70,6 +70,7 @@
 #include "ikev2_replace.h"
 #include "revival.h"
 #include "ikev2_parent.h"
+#include "ikev2_states.h"
 
 static stf_status process_v2_IKE_AUTH_request_tail(struct state *st,
 						   struct msg_digest *md,
@@ -438,7 +439,7 @@ static stf_status ikev2_pam_continue(struct state *ike_st,
 	struct ike_sa *ike = pexpect_ike_sa(ike_st);
 	pexpect(ike->sa.st_sa_role == SA_RESPONDER);
 	pexpect(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
-	pexpect(ike->sa.st_state->kind == STATE_V2_PARENT_R_IKE_SA_INIT);
+	pexpect(ike->sa.st_state == &state_v2_PARENT_R_IKE_SA_INIT);
 	dbg("%s() for #%lu %s",
 	     __func__, ike->sa.st_serialno, ike->sa.st_state->name);
 
@@ -1315,7 +1316,7 @@ stf_status process_v2_IKE_AUTH_failure_response(struct ike_sa *ike,
 
 const struct v2_state_transition v2_IKE_AUTH_initiator_transition = {
 	.story      = "initiating IKE_AUTH",
-	.state      = STATE_V2_PARENT_I2,
+	.from       = &state_v2_PARENT_I2,
 	.next_state = STATE_V2_PARENT_I2,
 	.exchange   = ISAKMP_v2_IKE_AUTH,
 	.send_role  = MESSAGE_REQUEST,

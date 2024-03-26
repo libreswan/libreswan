@@ -293,7 +293,7 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 			}
 			if (verbose_v2_state_busy(&old->sa)) {
 				/* already logged */;
-			} else if (old->sa.st_state->kind == STATE_V2_PARENT_R_IKE_SA_INIT &&
+			} else if (old->sa.st_state == &state_v2_PARENT_R_IKE_SA_INIT &&
 				   old->sa.st_v2_msgid_windows.responder.recv == 0 &&
 				   old->sa.st_v2_msgid_windows.responder.sent == 0 &&
 				   hunk_eq(old->sa.st_firstpacket_peer,
@@ -622,7 +622,7 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 
 	/* set up new state */
 	passert(ike->sa.st_ike_version == IKEv2);
-	passert(ike->sa.st_state->kind == STATE_V2_PARENT_I0);
+	passert(ike->sa.st_state == &state_v2_PARENT_I0);
 	passert(ike->sa.st_sa_role == SA_INITIATOR);
 
 	if (is_labeled(c) && sec_label.len == 0) {
@@ -764,8 +764,8 @@ stf_status initiate_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	pexpect(ike->sa.st_sa_role == SA_INITIATOR);
 	pexpect(unused_md == NULL);
 	/* I1 is from INVALID KE */
-	pexpect(ike->sa.st_state->kind == STATE_V2_PARENT_I0 ||
-		ike->sa.st_state->kind == STATE_V2_PARENT_I1);
+	pexpect(ike->sa.st_state == &state_v2_PARENT_I0 ||
+		ike->sa.st_state == &state_v2_PARENT_I1);
 	dbg("%s() for #%lu %s",
 	     __func__, ike->sa.st_serialno, ike->sa.st_state->name);
 
@@ -995,7 +995,7 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 	/* set up new state */
 	update_ike_endpoints(ike, md);
 	passert(ike->sa.st_ike_version == IKEv2);
-	passert(ike->sa.st_state->kind == STATE_V2_PARENT_R0);
+	passert(ike->sa.st_state == &state_v2_PARENT_R0);
 	passert(ike->sa.st_sa_role == SA_RESPONDER);
 
 	/* Vendor ID processing */
@@ -1134,7 +1134,7 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	struct ike_sa *ike = pexpect_ike_sa(ike_st);
 	pexpect(ike->sa.st_sa_role == SA_RESPONDER);
 	pexpect(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
-	pexpect(ike->sa.st_state->kind == STATE_V2_PARENT_R0);
+	pexpect(ike->sa.st_state == &state_v2_PARENT_R0);
 	dbg("%s() for #%lu %s: calculated ke+nonce, sending R1",
 	    __func__, ike->sa.st_serialno, ike->sa.st_state->name);
 

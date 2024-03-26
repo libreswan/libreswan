@@ -279,7 +279,7 @@ void liveness_check(struct state *st)
 
 static const struct v2_state_transition v2_liveness_probe = {
 	.story = "liveness probe",
-	.state = STATE_V2_ESTABLISHED_IKE_SA,
+	.from = &state_v2_ESTABLISHED_IKE_SA,
 	.next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	.exchange = ISAKMP_v2_INFORMATIONAL,
 	.send_role = MESSAGE_REQUEST,
@@ -291,11 +291,11 @@ static const struct v2_state_transition v2_liveness_probe = {
 void submit_v2_liveness_exchange(struct ike_sa *ike, so_serial_t who_for)
 {
 	const struct v2_state_transition *transition = &v2_liveness_probe;
-	if (ike->sa.st_state->kind != transition->state) {
+	if (ike->sa.st_state != transition->from) {
 		llog_sa(RC_LOG, ike,
 			"liveness: IKE SA in state %s but should be %s; liveness for #%lu ignored",
 			ike->sa.st_state->short_name,
-			finite_states[transition->state]->short_name,
+			transition->from->short_name,
 			who_for);
 		return;
 	}

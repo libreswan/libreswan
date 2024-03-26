@@ -19,6 +19,7 @@
 #include "ikev2_delete.h"
 #include "ikev2_message.h"
 #include "ikev2_send.h"
+#include "ikev2_states.h"
 #include "log.h"
 #include "demux.h"
 #include "connections.h"
@@ -119,7 +120,7 @@ static void llog_v2_success_delete_ike_request(struct ike_sa *ike)
 
 static const struct v2_state_transition v2_delete_ike = {
 	.story = "delete IKE SA",
-	.state = STATE_V2_ESTABLISHED_IKE_SA,
+	.from = &state_v2_ESTABLISHED_IKE_SA,
 	.next_state = STATE_V2_IKE_SA_DELETE,
 	.exchange = ISAKMP_v2_INFORMATIONAL,
 	.send_role = MESSAGE_REQUEST,
@@ -177,7 +178,7 @@ static stf_status initiate_v2_delete_child_request(struct ike_sa *ike,
 
 static const struct v2_state_transition v2_delete_child = {
 	.story = "delete CHILD SA",
-	.state = STATE_V2_ESTABLISHED_IKE_SA,
+	.from = &state_v2_ESTABLISHED_IKE_SA,
 	.next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	.exchange = ISAKMP_v2_INFORMATIONAL,
 	.send_role = MESSAGE_REQUEST,
