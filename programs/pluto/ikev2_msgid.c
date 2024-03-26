@@ -531,12 +531,15 @@ void v2_msgid_queue_initiator(struct ike_sa *ike, struct child_sa *child,
 		ranking++;
 		pp = &(*pp)->next;
 	}
+
 	/*
-	 * Full log when the exchange is blocked.  That is waiting on
-	 * another exchange (ranking>0) or an exchange in progress.
+	 * Log when the exchange is blocked by some other task.
+	 *
+	 * That is there is something in front of the task on the
+	 * queue (ranking>0).  Don't log to whack as it just scrambles
+	 * the output.
 	 */
 	enum stream stream = (ranking > 0 ? LOG_STREAM :
-			      v2_msgid_request_outstanding(ike) ? LOG_STREAM :
 			      DBGP(DBG_BASE) ? DEBUG_STREAM :
 			      NO_STREAM);
 	if (stream != NO_STREAM) {
@@ -554,6 +557,7 @@ void v2_msgid_queue_initiator(struct ike_sa *ike, struct child_sa *child,
 			}
 		}
 	}
+
 	/* append */
 	struct v2_msgid_pending new = {
 		.child = child != NULL ? child->sa.st_serialno : SOS_NOBODY,
