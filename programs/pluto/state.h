@@ -251,7 +251,7 @@ struct finite_state {
 	size_t nr_transitions;
 };
 
-void lswlog_finite_state(struct jambuf *buf, const struct finite_state *fs);
+void jam_finite_state(struct jambuf *buf, const struct finite_state *fs);
 
 /* this includes space for lurking STATE_IKEv2_ROOF */
 extern const struct finite_state *finite_states[STATE_IKE_ROOF];

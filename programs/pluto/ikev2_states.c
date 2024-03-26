@@ -1308,106 +1308,15 @@ void init_ikev2_states(struct logger *logger)
 				/* start the new one */
 				LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 					jam(buf, "  ");
-					lswlog_finite_state(buf, from);
+					jam_finite_state(buf, from);
 				}
-			}
-
-			const char *send;
-			switch (t->send_role) {
-			case NO_MESSAGE: send = ""; break;
-			case MESSAGE_REQUEST: send = "; send-request"; break;
-			case MESSAGE_RESPONSE: send = "; send-response"; break;
-			default: bad_case(t->send_role);
 			}
 
 			enum_buf tb;
-			DBG_log("    -> %s; %s%s",
+			DBG_log("    -> %s; %s",
 				to->short_name,
-				str_enum_short(&event_type_names, t->timeout_event, &tb),
-				send);
-
-			LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
-				enum_buf xb;
-				jam(buf, "       %s %s; payloads: ",
-				    str_enum_short(&ikev2_exchange_names, t->exchange, &xb),
-				    (t->recv_role == MESSAGE_REQUEST ? "request" :
-				     t->recv_role == MESSAGE_RESPONSE ? "response" :
-				     t->recv_role == NO_MESSAGE ? "no-message" :
-				     "EXPECATATION FAILED"));
-				FOR_EACH_THING(payloads, &t->message_payloads, &t->encrypted_payloads) {
-					if (payloads->required == LEMPTY && payloads->optional == LEMPTY) continue;
-					bool encrypted = (payloads == &t->encrypted_payloads);
-					/* assumes SK is last!!! */
-					if (encrypted) jam(buf, " {");
-					const char *sep = "";
-					FOR_EACH_THING(payload, &payloads->required, &payloads->optional) {
-						if (*payload == LEMPTY) continue;
-						bool optional = (payload == &payloads->optional);
-						jam_string(buf, sep); sep = " ";
-						if (optional) jam(buf, "[");
-						jam_lset_short(buf, &ikev2_payload_names, optional ? "] [" : " ", *payload);
-						if (optional) jam(buf, "]");
-					}
-					if (payloads->notification != 0) {
-						jam(buf, " N(");
-						jam_enum_short(buf, &v2_notification_names, payloads->notification);
-						jam(buf, ")");
-					}
-					if (encrypted) jam(buf, "}");
-				}
-			}
-
-			DBG_log("       %s", t->story);
+				str_enum_short(&event_type_names, t->timeout_event, &tb));
 		}
-
-		/*
-		 * Check that the NOTIFY -> PBS -> MD.pbs[]!=NULL will work.
-		 */
-		if (t->message_payloads.notification != v2N_NOTHING_WRONG) {
-			passert(v2_pd_from_notification(t->message_payloads.notification) != PD_v2_INVALID);
-		}
-		if (t->encrypted_payloads.notification != v2N_NOTHING_WRONG) {
-			passert(v2_pd_from_notification(t->encrypted_payloads.notification) != PD_v2_INVALID);
-		}
-
-		/*
-		 * Check recv:MESSAGE_REQUEST <-> send:MESSAGE_RESPONSE.
-		 *
-		 * "<=" is equivalent to implies (except the arrow
-		 * points the wrong way).
-		 *
-		 * XXX: IKE_SA_INIT should have processor set.
-		 */
-		if (t->processor != NULL || t->exchange == ISAKMP_v2_IKE_SA_INIT) {
-			passert((t->recv_role == NO_MESSAGE) <=/*implies*/ (t->send_role == MESSAGE_REQUEST));
-			passert((t->recv_role == MESSAGE_REQUEST) == (t->send_role == MESSAGE_RESPONSE));
-			passert((t->recv_role == MESSAGE_RESPONSE) <=/*implies*/ (t->send_role == NO_MESSAGE || t->send_role == MESSAGE_REQUEST));
-		} else {
-			passert(t->recv_role == NO_MESSAGE);
-			passert(t->send_role == NO_MESSAGE);
-		}
-		passert(t->exchange != 0);
-
-		/*
-		 * Check that all transitions from a secured state
-		 * require an SK payload.
-		 */
-		passert(t->recv_role == NO_MESSAGE ||
-			LIN(P(SK), t->message_payloads.required) == from->v2.secured);
-
-		/*
-		 * Check that only IKE_SA_INIT transitions are from an
-		 * unsecured state.
-		 */
-		if (t->recv_role != 0) {
-			passert((t->exchange == ISAKMP_v2_IKE_SA_INIT) == !from->v2.secured);
-		}
-
-		/*
-		 * Check that everything has either a success story,
-		 * or suppressed logging.
-		 */
-		passert(t->llog_success != NULL);
 
 		/*
 		 * Point .fs_v2_microcode at the first transition for
@@ -1429,4 +1338,155 @@ void init_ikev2_states(struct logger *logger)
 
 	/* finish the final state */
 	dbg("    %zu transitions", prev->nr_transitions);
+
+	/*
+	 * Iterate over the state transitions filling in missing bits
+	 * and checking for consistency.
+	 *
+	 * XXX: this misses magic state transitions, such as
+	 * v2_liveness_probe, that are not directly attached to a
+	 * state.
+	 */
+
+	for (enum state_kind kind = STATE_IKEv2_FLOOR; kind < STATE_IKEv2_ROOF; kind++) {
+		/* fill in using static struct */
+		const struct finite_state *from = finite_states[kind];
+
+		if (DBGP(DBG_BASE)) {
+			LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+				jam(buf, "  ");
+				jam_finite_state(buf, from);
+			}
+		}
+
+		passert(from != NULL);
+		passert(from->kind == kind);
+		passert(from->ike_version == IKEv2);
+
+		for (unsigned u = 0; u < from->nr_transitions; u++) {
+			const struct v2_state_transition *t = &from->v2.transitions[u];
+
+			passert(t->state == kind);
+			passert(t->next_state >= STATE_IKEv2_FLOOR);
+			passert(t->next_state < STATE_IKEv2_ROOF);
+
+			const struct finite_state *to = finite_states[t->next_state];
+
+			passert(to != NULL);
+			passert(to->kind == t->next_state);
+			passert(to->ike_version == IKEv2);
+
+			if (DBGP(DBG_BASE)) {
+				const char *send;
+				switch (t->send_role) {
+				case NO_MESSAGE: send = ""; break;
+				case MESSAGE_REQUEST: send = "; send-request"; break;
+				case MESSAGE_RESPONSE: send = "; send-response"; break;
+				default: bad_case(t->send_role);
+				}
+
+				enum_buf tb;
+				DBG_log("    -> %s; %s%s",
+					to->short_name,
+					str_enum_short(&event_type_names, t->timeout_event, &tb),
+					send);
+
+				LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+					jam_string(buf, "       ");
+					jam_enum_short(buf, &ikev2_exchange_names, t->exchange);
+					jam_string(buf, "recv: ");
+					jam_enum_short(buf, &message_role_names, t->recv_role);
+					jam_string(buf, "send: ");
+					jam_enum_short(buf, &message_role_names, t->send_role);
+				}
+
+				LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+					jam_string(buf, "       payloads: ");
+					FOR_EACH_THING(payloads, &t->message_payloads, &t->encrypted_payloads) {
+						if (payloads->required == LEMPTY &&
+						    payloads->optional == LEMPTY) {
+							continue;
+						}
+						bool encrypted = (payloads == &t->encrypted_payloads);
+						/* assumes SK is last!!! */
+						if (encrypted) {
+							jam_string(buf, " {");
+						}
+						const char *sep = "";
+						FOR_EACH_THING(payload, &payloads->required, &payloads->optional) {
+							if (*payload == LEMPTY) continue;
+							bool optional = (payload == &payloads->optional);
+							jam_string(buf, sep); sep = " ";
+							if (optional) jam(buf, "[");
+							jam_lset_short(buf, &ikev2_payload_names, optional ? "] [" : " ", *payload);
+							if (optional) jam(buf, "]");
+						}
+						if (payloads->notification != 0) {
+							jam(buf, " N(");
+							jam_enum_short(buf, &v2_notification_names, payloads->notification);
+							jam(buf, ")");
+						}
+						if (encrypted) {
+							jam(buf, "}");
+						}
+					}
+				}
+
+				DBG_log("       story: %s", t->story);
+			}
+
+			/*
+			 * Check that the NOTIFY -> PBS ->
+			 * MD.pbs[]!=NULL will work.
+			 */
+			if (t->message_payloads.notification != v2N_NOTHING_WRONG) {
+				passert(v2_pd_from_notification(t->message_payloads.notification) != PD_v2_INVALID);
+			}
+			if (t->encrypted_payloads.notification != v2N_NOTHING_WRONG) {
+				passert(v2_pd_from_notification(t->encrypted_payloads.notification) != PD_v2_INVALID);
+			}
+
+			/*
+			 * Check recv:MESSAGE_REQUEST <-> send:MESSAGE_RESPONSE.
+			 *
+			 * "<=" is equivalent to implies (except the
+			 * arrow points the wrong way).
+			 *
+			 * XXX: IKE_SA_INIT should have processor set.
+			 */
+			if (t->processor != NULL || t->exchange == ISAKMP_v2_IKE_SA_INIT) {
+				passert((t->recv_role == NO_MESSAGE) <=/*implies*/ (t->send_role == MESSAGE_REQUEST));
+				passert((t->recv_role == MESSAGE_REQUEST) == (t->send_role == MESSAGE_RESPONSE));
+				passert((t->recv_role == MESSAGE_RESPONSE) <=/*implies*/ (t->send_role == NO_MESSAGE || t->send_role == MESSAGE_REQUEST));
+			} else {
+				passert(t->recv_role == NO_MESSAGE);
+				passert(t->send_role == NO_MESSAGE);
+			}
+			passert(t->exchange != 0);
+
+			/*
+			 * Check that all transitions from a secured
+			 * state require an SK payload.
+			 */
+			passert(t->recv_role == NO_MESSAGE ||
+				LIN(P(SK), t->message_payloads.required) == from->v2.secured);
+
+			/*
+			 * Check that only IKE_SA_INIT transitions are
+			 * from an unsecured state.
+			 */
+			if (t->recv_role != 0) {
+				passert((t->exchange == ISAKMP_v2_IKE_SA_INIT) == !from->v2.secured);
+			}
+
+			/*
+			 * Check that everything has either a success story,
+			 * or suppressed logging.
+			 */
+			passert(t->llog_success != NULL);
+
+		}
+
+	}
+
 }

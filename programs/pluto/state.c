@@ -135,7 +135,7 @@ const struct finite_state *finite_states[STATE_IKE_ROOF] = {
 	[STATE_IKEv2_ROOF] = &state_ikev2_roof,
 };
 
-void lswlog_finite_state(struct jambuf *buf, const struct finite_state *fs)
+void jam_finite_state(struct jambuf *buf, const struct finite_state *fs)
 {
 	if (fs == NULL) {
 		jam_string(buf, "NULL-FINITE_STATE");
