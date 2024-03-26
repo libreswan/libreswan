@@ -91,11 +91,12 @@ static stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct
 static v2_auth_signature_cb process_v2_IKE_AUTH_request_auth_signature_continue; /* type check */
 
 static stf_status initiate_v2_IKE_AUTH_request(struct ike_sa *ike,
-					       struct child_sa *unused_child_sa UNUSED,
-					       struct msg_digest *md)
+					       struct child_sa *null_child_sa,
+					       struct msg_digest *null_md)
 {
 	pexpect(ike->sa.st_sa_role == SA_INITIATOR);
-	pexpect(v2_msg_role(md) == MESSAGE_RESPONSE); /* i.e., MD!=NULL */
+	PEXPECT(ike->sa.logger, null_md == NULL);
+	PEXPECT(ike->sa.logger, null_child_sa == NULL);
 	dbg("%s() for #%lu %s: g^{xy} calculated, sending IKE_AUTH",
 	    __func__, ike->sa.st_serialno, ike->sa.st_state->name);
 
@@ -159,7 +160,8 @@ static stf_status initiate_v2_IKE_AUTH_request(struct ike_sa *ike,
 	 */
 	v2_IKE_AUTH_initiator_id_payload(ike);
 
-	return submit_v2AUTH_generate_initiator_signature(ike, md, initiate_v2_IKE_AUTH_request_signature_continue);
+	return submit_v2AUTH_generate_initiator_signature(ike, null_md,
+							  initiate_v2_IKE_AUTH_request_signature_continue);
 }
 
 stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,

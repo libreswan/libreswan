@@ -193,11 +193,12 @@ static void compute_intermediate_mac(struct ike_sa *ike,
 }
 
 static stf_status initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
-						       struct child_sa *unused_child UNUSED,
-						       struct msg_digest *mdp)
+						       struct child_sa *null_child,
+						       struct msg_digest *null_md)
 {
+	PEXPECT(ike->sa.logger, null_child == NULL);
+	PEXPECT(ike->sa.logger, null_md == NULL);
 	pexpect(ike->sa.st_sa_role == SA_INITIATOR);
-	pexpect(v2_msg_role(mdp) == MESSAGE_RESPONSE); /* i.e., MD!=NULL */
 	dbg("%s() for #%lu %s: g^{xy} calculated, sending INTERMEDIATE",
 	    __func__, ike->sa.st_serialno, ike->sa.st_state->name);
 

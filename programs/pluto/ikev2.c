@@ -2656,7 +2656,7 @@ stf_status next_v2_transition(struct ike_sa *ike, struct msg_digest *md,
 	 */
 	ike->sa.st_v2_msgid_windows.initiator.wip = wip;
 	start_v2_transition(ike, next_transition, NULL, where);
-	return ike->sa.st_v2_transition->processor(ike, /*child*/NULL, /*md*/md);
+	return ike->sa.st_v2_transition->processor(ike, /*child*/NULL, /*md*/NULL);
 }
 
 /*
