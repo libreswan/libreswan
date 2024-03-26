@@ -1457,7 +1457,6 @@ static void success_v2_state_transition(struct ike_sa *ike,
 	 * new message.
 	 */
 
-	dbg("Message ID: updating counters for #%lu", ike->sa.st_serialno);
 	v2_msgid_finish(ike, md);
 
 	bool established_before = IS_IKE_SA_ESTABLISHED(&ike->sa);
