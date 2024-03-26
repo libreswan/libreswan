@@ -282,11 +282,12 @@ void select_nss_cert_id(CERTCertificate *cert, struct id *end_id)
 	}
 }
 
-generalName_t *collect_rw_ca_candidates(struct msg_digest *md)
+generalName_t *collect_rw_ca_candidates(ip_address local_address)
 {
 	generalName_t *top = NULL;
+	/* i.e., from anywhere to here - a host-pair search */
 	struct connection_filter hpf = {
-		.local = &md->iface->ip_dev->local_address,
+		.local = &local_address,
 		.remote = &unset_address,
 		.where = HERE,
 	};

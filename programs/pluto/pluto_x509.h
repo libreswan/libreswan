@@ -40,7 +40,7 @@ diag_t match_end_cert_id(const struct certs *certs,
 			 const struct id *peer_id,
 			 struct id *cert_id);
 
-extern generalName_t *collect_rw_ca_candidates(struct msg_digest *md);
+extern generalName_t *collect_rw_ca_candidates(ip_address local_address);
 
 extern void load_authcerts(const char *type, const char *path,
 			   uint8_t auth_flags);

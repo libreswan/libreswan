@@ -163,7 +163,7 @@ static stf_status initiate_v2_IKE_AUTH_request(struct ike_sa *ike,
 }
 
 stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
-							   struct msg_digest *md,
+							   struct msg_digest *null_md UNUSED,
 							   const struct hash_signature *auth_sig)
 {
 	struct connection *const pc = ike->sa.st_connection;	/* parent connection */
@@ -224,7 +224,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 			DBG_log("Sending [CERTREQ] of %s",
 				str_dn(ASN1(ike->sa.st_connection->remote->host.config->ca), &buf));
 		}
-		emit_v2CERTREQ(ike, md, request.pbs);
+		emit_v2CERTREQ(ike, request.pbs);
 	}
 
 	/* you Tarzan, me Jane support */

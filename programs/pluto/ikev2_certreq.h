@@ -42,8 +42,7 @@ struct state;
 bool need_v2CERTREQ_in_IKE_AUTH_request(const struct ike_sa *ike);
 bool need_v2CERTREQ_in_IKE_SA_INIT_response(const struct ike_sa *ike);
 
-stf_status emit_v2CERTREQ(const struct ike_sa *ike, struct msg_digest *md,
-			  struct pbs_out *outpbs);
+stf_status emit_v2CERTREQ(const struct ike_sa *ike, struct pbs_out *outpbs);
 
 void process_v2CERTREQ_payload(struct ike_sa *ike, struct msg_digest *md);
 

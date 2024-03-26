@@ -39,6 +39,7 @@
 #include "state.h"
 #include "connections.h"
 #include "log.h"
+#include "iface.h"
 #include "pluto_x509.h"
 
 /*
@@ -224,7 +225,6 @@ static bool emit_v2CERTREQ_ca(struct pbs_out *cr_pbs, chunk_t ca)
 }
 
 stf_status emit_v2CERTREQ(const struct ike_sa *ike,
-			  struct msg_digest *md,
 			  struct pbs_out *outpbs)
 {
 	struct pbs_out cr_pbs;
@@ -245,7 +245,8 @@ stf_status emit_v2CERTREQ(const struct ike_sa *ike,
 	} else {
 		dbg("connection->kind is not CK_PERMANENT (instance), so collect CAs");
 
-		generalName_t *gn = collect_rw_ca_candidates(md);
+		ip_address local_address = ike->sa.st_iface_endpoint->ip_dev->local_address;
+		generalName_t *gn = collect_rw_ca_candidates(local_address);
 
 		if (gn != NULL) {
 			dbg("connection is RW, lookup CA candidates");

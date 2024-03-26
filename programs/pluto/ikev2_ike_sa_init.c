@@ -1277,7 +1277,7 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 
 	if (need_v2CERTREQ_in_IKE_SA_INIT_response(ike)) {
 		dbg("going to send a certreq");
-		emit_v2CERTREQ(ike, md, response.pbs);
+		emit_v2CERTREQ(ike, response.pbs);
 	}
 
 	if (c->config->send_vendorid) {
