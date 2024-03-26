@@ -69,7 +69,7 @@
 #include "ike_alg.h"
 #include "ikev2_redirect.h"
 #include "root_certs.h"		/* for init_root_certs() */
-#include "ikev1.h"		/* for init_ikev1() */
+#include "ikev1_states.h"	/* for init_ikev1_states() */
 #include "ikev2_states.h"	/* for init_ikev2_states() */
 #include "crypt_symkey.h"	/* for init_crypt_symkey() */
 #include "ddns.h"		/* for init_ddns() */
@@ -1645,7 +1645,7 @@ int main(int argc, char **argv)
 	init_pluto_constants();
 
 #ifdef USE_IKEv1
-	init_ikev1(logger);
+	init_ikev1_states(logger);
 #endif
 	init_ikev2_states(logger);
 	init_states();

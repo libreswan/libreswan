@@ -10,8 +10,6 @@ struct ike_proposals;
 
 /* ikev1.c */
 
-extern void init_ikev1(struct logger *logger);
-
 const struct dh_desc *ikev1_quick_pfs(const struct child_proposals proposals);
 
 void ikev1_init_pbs_out_from_md_hdr(struct msg_digest *md, bool enc,
@@ -81,6 +79,8 @@ extern ikev1_state_transition_fn aggr_inI2;
 extern ikev1_state_transition_fn quick_inI1_outR1;
 extern ikev1_state_transition_fn quick_inR1_outI2;
 extern ikev1_state_transition_fn quick_inI2;
+extern ikev1_state_transition_fn unexpected;
+extern ikev1_state_transition_fn informational;
 
 /* macros to manipulate IVs in state */
 
