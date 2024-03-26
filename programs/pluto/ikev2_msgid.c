@@ -24,15 +24,22 @@
 
 static callback_cb initiate_next;		/* type assertion */
 
+static const struct v2_msgid_windows empty_v2_msgid_windows = {
+	.initiator = {
+		.sent = -1,
+		.recv = -1,
+		.wip = -1,
+	},
+	.responder = {
+		.sent = -1,
+		.recv = -1,
+		.wip = -1,
+	},
+};
+
 /*
  * Logging.
  */
-
-static void jam_msgid_prefix(struct jambuf *buf, struct ike_sa *ike)
-{
-	jam_string(buf, "Message ID: ");
-	jam(buf, "IKE #%lu", ike->sa.st_serialno);
-}
 
 static void jam_old_new_monotime(struct jambuf *buf,
 				 const char **prefix, const char *what,
@@ -100,11 +107,9 @@ static void jam_ike_windows(struct jambuf *buf,
 
 static void jam_window_details(struct jambuf *buf,
 			       struct ike_sa *ike,
-			       const struct v2_msgid_windows *old_windows)
+			       const struct v2_msgid_windows *old)
 {
-	jam_ike_windows(buf,
-			old_windows != NULL ? old_windows : &ike->sa.st_v2_msgid_windows,
-			&ike->sa.st_v2_msgid_windows);
+	jam_ike_windows(buf, old, &ike->sa.st_v2_msgid_windows);
 }
 
 VPRINTF_LIKE(3)
@@ -112,19 +117,20 @@ static void jam_v2_msgid(struct jambuf *buf,
 			 struct ike_sa *ike,
 			 const char *fmt, va_list ap)
 {
-	jam_msgid_prefix(buf, ike);
-	jam(buf, " ");
+	jam(buf, "Message ID: ");
 	jam_va_list(buf, fmt, ap);
-	jam_window_details(buf, ike, NULL);
+	jam_window_details(buf, ike, &empty_v2_msgid_windows);
 }
 
 void dbg_v2_msgid(struct ike_sa *ike, const char *fmt, ...)
 {
-	LDBGP_JAMBUF(DBG_BASE, ike->sa.logger, buf) {
-		va_list ap;
-		va_start(ap, fmt);
-		jam_v2_msgid(buf, ike, fmt, ap);
-		va_end(ap);
+	if (DBGP(DBG_BASE)) {
+		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, ike->sa.logger, buf) {
+			va_list ap;
+			va_start(ap, fmt);
+			jam_v2_msgid(buf, ike, fmt, ap);
+			va_end(ap);
+		}
 	}
 }
 
@@ -146,20 +152,21 @@ void fail_v2_msgid_where(where_t where, struct ike_sa *ike, const char *fmt, ...
  * between calls.
  */
 
-static void dbg_msgids_update(const char *what,
-			      enum message_role message, intmax_t msgid,
-			      struct ike_sa *ike, const struct v2_msgid_windows *old_windows)
+static void dbg_msgid_update(const char *what,
+			     enum message_role message, intmax_t msgid,
+			     struct ike_sa *ike, const struct v2_msgid_windows *old)
 {
-	LDBGP_JAMBUF(DBG_BASE, ike->sa.logger, buf) {
-		jam_msgid_prefix(buf, ike);
-		jam(buf, " %s", what);
-		switch (message) {
-		case MESSAGE_REQUEST: jam(buf, " request %jd", msgid); break;
-		case MESSAGE_RESPONSE: jam(buf, " response %jd", msgid); break;
-		case NO_MESSAGE: break;
-		default: bad_case(message);
+	if (DBGP(DBG_BASE)) {
+		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, ike->sa.logger, buf) {
+			jam(buf, "Message ID: %s", what);
+			switch (message) {
+			case MESSAGE_REQUEST: jam(buf, " request %jd", msgid); break;
+			case MESSAGE_RESPONSE: jam(buf, " response %jd", msgid); break;
+			case NO_MESSAGE: break;
+			default: bad_case(message);
+			}
+			jam_window_details(buf, ike, old);
 		}
-		jam_window_details(buf, ike, old_windows);
 	}
 }
 
@@ -170,19 +177,6 @@ static void dbg_msgids_update(const char *what,
  * ikev2_update_msgid_counters(() into thinking that this is a shiny
  * new init request.
  */
-
-static const struct v2_msgid_windows empty_v2_msgid_windows = {
-	.initiator = {
-		.sent = -1,
-		.recv = -1,
-		.wip = -1,
-	},
-	.responder = {
-		.sent = -1,
-		.recv = -1,
-		.wip = -1,
-	},
-};
 
 void v2_msgid_init_ike(struct ike_sa *ike)
 {
@@ -197,7 +191,7 @@ void v2_msgid_init_ike(struct ike_sa *ike)
 	new->initiator.last_sent = now;
 	new->initiator.last_recv = now;
 	/* pretend there's a sender */
-	dbg_msgids_update("initializing", NO_MESSAGE, -1, ike, &old);
+	dbg_msgid_update("initializing", NO_MESSAGE, -1, ike, &old);
 }
 
 void v2_msgid_start_record_n_send(struct ike_sa *ike)
@@ -210,7 +204,7 @@ void v2_msgid_start_record_n_send(struct ike_sa *ike)
 	 */
 	intmax_t msgid = new->initiator.recv = old.initiator.sent;
 	new->initiator.wip = -1;
-	dbg_msgids_update("initiator record'n'send", NO_MESSAGE, msgid, ike, &old);
+	dbg_msgid_update("initiator record'n'send", NO_MESSAGE, msgid, ike, &old);
 }
 
 void v2_msgid_start(struct ike_sa *ike, const struct msg_digest *md)
@@ -238,7 +232,7 @@ void v2_msgid_start(struct ike_sa *ike, const struct msg_digest *md)
 		 */
 		new->initiator.wip = msgid;
 #endif
-		dbg_msgids_update("initiator starting", role, msgid, ike, &old);
+		dbg_msgid_update("initiator starting", role, msgid, ike, &old);
 		break;
 	}
 	case MESSAGE_REQUEST:
@@ -249,7 +243,7 @@ void v2_msgid_start(struct ike_sa *ike, const struct msg_digest *md)
 		pexpect_v2_msgid(ike, role, old.responder.sent+1 == msgid);
 		pexpect_v2_msgid(ike, role, old.responder.recv+1 == msgid);
 		new->responder.wip = msgid;
-		dbg_msgids_update("responder starting", role, msgid, ike, &old);
+		dbg_msgid_update("responder starting", role, msgid, ike, &old);
 		break;
 	}
 	case MESSAGE_RESPONSE:
@@ -267,7 +261,7 @@ void v2_msgid_start(struct ike_sa *ike, const struct msg_digest *md)
 		pexpect_v2_msgid(ike, role, old.initiator.sent == msgid);
 		pexpect_v2_msgid(ike, role, old.initiator.recv+1 == msgid);
 		new->initiator.wip = msgid;
-		dbg_msgids_update("initiator response", role, msgid, ike, &old);
+		dbg_msgid_update("initiator response", role, msgid, ike, &old);
 		break;
 	}
 	}
@@ -290,8 +284,8 @@ void v2_msgid_cancel(struct ike_sa *ike, const struct msg_digest *md)
 				      msgid, ike->sa.st_v2_msgid_windows.responder.wip);
 		}
 		ike->sa.st_v2_msgid_windows.responder.wip = -1;
-		dbg_msgids_update("responder cancelling", msg_role, msgid,
-				  ike, &ike->sa.st_v2_msgid_windows);
+		dbg_msgid_update("responder cancelling", msg_role, msgid,
+				 ike, &ike->sa.st_v2_msgid_windows);
 		break;
 	}
 	case MESSAGE_RESPONSE:
@@ -391,7 +385,7 @@ static void v2_msgid_update_recv(struct ike_sa *ike, const struct msg_digest *md
 	update->recv_frags = md->v2_frags_total;
 	new->last_recv = update->last_recv = mononow(); /* not strictly correct */
 
-	dbg_msgids_update(update_received_story, receiving, msgid, ike, &old);
+	dbg_msgid_update(update_received_story, receiving, msgid, ike, &old);
 }
 
 static void v2_msgid_update_sent(struct ike_sa *ike, const struct msg_digest *md, enum message_role sending)
@@ -467,7 +461,7 @@ static void v2_msgid_update_sent(struct ike_sa *ike, const struct msg_digest *md
 	update->sent = msgid;
 	new->last_sent = update->last_sent = mononow(); /* close enough */
 
-	dbg_msgids_update(update_sent_story, sending, msgid, ike, &old);
+	dbg_msgid_update(update_sent_story, sending, msgid, ike, &old);
 }
 
 void v2_msgid_finish(struct ike_sa *ike, const struct msg_digest *md)
@@ -623,10 +617,12 @@ static void initiate_next(const char *story, struct state *ike_sa, void *context
 		 * try to check that the transition still applies ...
 		 */
 		if (pending.transition->state != ike->sa.st_state->kind) {
-			log_state(RC_LOG, who_for,
-				  "dropping transition %s; IKE SA is not in state %s",
-				  pending.transition->story,
-				  finite_states[pending.transition->state]->short_name);
+			llog(RC_LOG, who_for->logger,
+			     "dropping transition %s from state %s to %s as IKE SA is in state %s",
+			     pending.transition->story,
+			     finite_states[pending.transition->state]->short_name,
+			     finite_states[pending.transition->next_state]->short_name,
+			     ike->sa.st_state->short_name);
 			continue;
 		}
 
