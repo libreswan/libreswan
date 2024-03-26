@@ -183,6 +183,7 @@ bool prep_v2_child_for_request(struct child_sa *larval_child)
 bool emit_v2_child_request_payloads(const struct ike_sa *ike,
 				    const struct child_sa *larval_child,
 				    const struct ikev2_proposals *child_proposals,
+				    bool ike_auth_exchange,
 				    struct pbs_out *pbs)
 {
 	if (!pexpect(larval_child->sa.st_state == &state_v2_NEW_CHILD_I0 ||
@@ -194,9 +195,6 @@ bool emit_v2_child_request_payloads(const struct ike_sa *ike,
 	if (!pexpect(larval_child->sa.st_sa_type_when_established == CHILD_SA)) {
 		return false;
 	}
-
-	/* hack */
-	bool ike_auth_exchange = (larval_child->sa.st_state == &state_v2_IKE_AUTH_CHILD_I0);
 
 	struct connection *cc = larval_child->sa.st_connection;
 

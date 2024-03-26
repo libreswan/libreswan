@@ -695,7 +695,7 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 
 	if (!emit_v2_child_request_payloads(ike, larval_child,
 					    larval_child->sa.st_v2_create_child_sa_proposals,
-					    request.pbs)) {
+					    /*ike_auth_exchange*/false, request.pbs)) {
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -906,7 +906,7 @@ stf_status initiate_v2_CREATE_CHILD_SA_new_child_request(struct ike_sa *ike,
 
 	if (!emit_v2_child_request_payloads(ike, larval_child,
 					    larval_child->sa.st_v2_create_child_sa_proposals,
-					    request.pbs)) {
+					    /*ike_auth_exchange*/false, request.pbs)) {
 		return STF_INTERNAL_ERROR;
 	}
 

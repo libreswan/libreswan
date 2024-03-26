@@ -338,7 +338,8 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 		 * used.
 		 */
 		const struct ikev2_proposals *child_proposals = cc->config->child_sa.v2_ike_auth_proposals;
-		if (!emit_v2_child_request_payloads(ike, child, child_proposals, request.pbs)) {
+		if (!emit_v2_child_request_payloads(ike, child, child_proposals,
+						    /*ike_auth_exchange*/true, request.pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
