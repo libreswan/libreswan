@@ -61,6 +61,20 @@ static struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
 							 const struct payload_summary *summary,
 							 const struct ikev2_expected_payloads *payloads);
 
+#define S(KIND, STORY, CAT, ...)					\
+	struct finite_state state_v2_##KIND = {				\
+		.kind = STATE_V2_##KIND,				\
+		.name = "STATE_V2_"#KIND,				\
+		/* Not using #KIND + 6 because of clang's -Wstring-plus-int */ \
+		.short_name = #KIND,					\
+		.story = STORY,						\
+		.category = CAT,					\
+		.ike_version = IKEv2,					\
+		.nr_transitions = elemsof(KIND##_transitions),		\
+		.v2.transitions = KIND##_transitions,			\
+		##__VA_ARGS__,						\
+	}
+
 /*
  * From RFC 5996 syntax: [optional] and {encrypted}
  *
@@ -135,13 +149,19 @@ static struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
  * it seems to work.
  */
 
-static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
-
 #define req_clear_payloads message_payloads.required   /* required unencrypted payloads (allows just one) for received packet */
 #define opt_clear_payloads message_payloads.optional   /* optional unencrypted payloads (none or one) for received packet */
 #define req_enc_payloads   encrypted_payloads.required /* required encrypted payloads (allows just one) for received packet */
 #define opt_enc_payloads   encrypted_payloads.optional /* optional encrypted payloads (none or one) for received packet */
 
+/*
+ * IKEv2 IKE SA initiator, while the the SA_INIT packet is being
+ * constructed, are in state.  Only once the packet has been sent out
+ * does it transition to STATE_V2_PARENT_I1 and start being counted as
+ * half-open.
+ */
+
+static const struct v2_state_transition PARENT_I0_transitions[] = {
 	/* no state:   --> I1
 	 * HDR, SAi1, KEi, Ni -->
 	 */
@@ -154,6 +174,16 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .processor  = NULL, /* XXX: should be set */
 	  .llog_success = llog_v2_success_exchange_sent_to,
 	  .timeout_event = EVENT_RETRANSMIT, },
+};
+
+S(PARENT_I0, "waiting for KE to finish", CAT_IGNORE);
+
+/*
+ * Count I1 as half-open too because with ondemand, a plaintext packet
+ * (that is spoofed) will trigger an outgoing IKE SA.
+ */
+
+static const struct v2_state_transition PARENT_I1_transitions[] = {
 
 	/* STATE_V2_PARENT_I1: R1B --> I1B
 	 *                     <--  HDR, N
@@ -219,6 +249,23 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .llog_success = llog_v2_IKE_SA_INIT_success,
 	  .timeout_event = EVENT_RETRANSMIT, },
 
+};
+
+S(PARENT_I1, "sent IKE_SA_INIT request", CAT_HALF_OPEN_IKE_SA);
+
+/*
+ * All IKEv1 MAIN modes except the first (half-open) and last ones are
+ * not authenticated.
+ */
+
+static const struct v2_state_transition PARENT_I2_transitions[] = {
+
+	/* STATE_V2_PARENT_I2: R2 -->
+	 *                     <--  HDR, SK {IDr, [CERT,] AUTH,
+	 *                               SAr2, TSi, TSr}
+	 * [Parent SA established]
+	 */
+
 	{ .story      = "Initiator: process IKE_INTERMEDIATE reply, initiate IKE_AUTH or IKE_INTERMEDIATE",
 	  .state      = STATE_V2_PARENT_I2,
 	  .next_state = STATE_V2_PARENT_I2,
@@ -232,15 +279,10 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .llog_success = llog_v2_success_exchange_processed,
 	  .timeout_event = EVENT_RETRANSMIT, },
 
-	/* STATE_V2_PARENT_I2: R2 -->
-	 *                     <--  HDR, SK {IDr, [CERT,] AUTH,
-	 *                               SAr2, TSi, TSr}
-	 * [Parent SA established]
-	 */
-
 	/*
 	 * This pair of state transitions should be merged?
 	 */
+
 	{ .story      = "Initiator: process IKE_AUTH response",
 	  .state      = STATE_V2_PARENT_I2,
 	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
@@ -267,6 +309,12 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .llog_success = llog_v2_success_state_story,
 	},
 
+};
+
+S(PARENT_I2, "sent IKE_AUTH request", CAT_OPEN_IKE_SA, .v2.secured = true);
+
+static const struct v2_state_transition PARENT_R0_transitions[] = {
+
 	/* no state: none I1 --> R1
 	 *                <-- HDR, SAi1, KEi, Ni
 	 * HDR, SAr1, KEr, Nr, [CERTREQ] -->
@@ -282,6 +330,12 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .processor  = process_v2_IKE_SA_INIT_request,
 	  .llog_success = llog_v2_IKE_SA_INIT_success,
 	  .timeout_event = EVENT_v2_DISCARD, },
+
+};
+
+S(PARENT_R0, "processing IKE_SA_INIT request", CAT_HALF_OPEN_IKE_SA);
+
+static const struct v2_state_transition PARENT_R_IKE_SA_INIT_transitions[] = {
 
 	/* STATE_V2_PARENT_R1: I2 --> R2
 	 *                  <-- HDR, SK {IDi, [CERT,] [CERTREQ,]
@@ -335,6 +389,12 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .llog_success = llog_v2_success_state_story,
 	  .timeout_event = EVENT_v2_DISCARD, },
 
+};
+
+S(PARENT_R_IKE_SA_INIT, "sent IKE_SA_INIT response, waiting for IKE_INTERMEDIATE or IKE_AUTH request", CAT_HALF_OPEN_IKE_SA, .v2.secured = true);
+
+static const struct v2_state_transition PARENT_R_IKE_INTERMEDIATE_transitions[] = {
+
 	{ .story      = "Responder: process IKE_INTERMEDIATE request",
 	  .state      = STATE_V2_PARENT_R_IKE_INTERMEDIATE,
 	  .next_state = STATE_V2_PARENT_R_IKE_INTERMEDIATE,
@@ -382,6 +442,12 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_v2_REPLACE, },
 
+};
+
+S(PARENT_R_IKE_INTERMEDIATE, "sent IKE_INTERMEDIATE response, waiting for IKE_INTERMEDIATE or IKE_AUTH request", CAT_OPEN_IKE_SA, .v2.secured = true);
+
+static const struct v2_state_transition PARENT_R_IKE_AUTH_EAP_transitions[] = {
+
 	{ .story      = "Responder: process IKE_AUTH/EAP, continue EAP",
 	  .state      = STATE_V2_PARENT_R_IKE_AUTH_EAP,
 	  .next_state = STATE_V2_PARENT_R_IKE_AUTH_EAP,
@@ -408,6 +474,14 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .llog_success = llog_v2_success_state_story,
 	  .timeout_event = EVENT_v2_REPLACE, },
 
+};
+
+S(PARENT_R_IKE_AUTH_EAP, "sent IKE_AUTH(EAP) response, waiting for IKE_AUTH(EAP) request", CAT_OPEN_IKE_SA, .v2.secured = true);
+
+/* IKE exchange can also create a child */
+
+static const struct v2_state_transition IKE_AUTH_CHILD_I0_transitions[] = {
+
 	/*
 	 * Create a Child SA during IKE_AUTH.
 	 *
@@ -423,6 +497,12 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_v2_REPLACE, },
 
+};
+
+S(IKE_AUTH_CHILD_I0, "ephemeral: initiator creating child from IKE exchange", CAT_IGNORE);
+
+static const struct v2_state_transition IKE_AUTH_CHILD_R0_transitions[] = {
+
 	{ .story      = "Child SA created by responder during IKE_AUTH",
 	  .state      = STATE_V2_IKE_AUTH_CHILD_R0,
 	  .next_state = STATE_V2_ESTABLISHED_CHILD_SA,
@@ -431,6 +511,15 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .processor  = NULL,
 	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_v2_REPLACE, },
+};
+
+S(IKE_AUTH_CHILD_R0, "ephemeral: responder creating child from IKE exchange", CAT_IGNORE);
+
+/*
+ * CREATE_CHILD_SA exchanges.
+ */
+
+static const struct v2_state_transition REKEY_IKE_I0_transitions[] = {
 
 	/*
 	 * Child transitions when rekeying an IKE SA using
@@ -456,6 +545,12 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .llog_success = llog_v2_success_state_story,
 	  .timeout_event = EVENT_RETRANSMIT, },
 
+};
+
+S(REKEY_IKE_I0, "STATE_V2_REKEY_IKE_I0", CAT_ESTABLISHED_IKE_SA);
+
+static const struct v2_state_transition REKEY_IKE_R0_transitions[] = {
+
 	{ .story      = "process rekey IKE SA request (CREATE_CHILD_SA)",
 	  .state      = STATE_V2_REKEY_IKE_R0,
 	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
@@ -469,6 +564,13 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .processor  = process_v2_CREATE_CHILD_SA_rekey_ike_request,
 	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_v2_REPLACE, },
+
+};
+
+/* isn't this an ipsec state */
+S(REKEY_IKE_R0, "STATE_V2_REKEY_IKE_R0", CAT_ESTABLISHED_IKE_SA, .v2.secured = true);
+
+static const struct v2_state_transition REKEY_IKE_I1_transitions[] = {
 
 	{ .story      = "process rekey IKE SA response (CREATE_CHILD_SA)",
 	  .state      = STATE_V2_REKEY_IKE_I1,
@@ -495,6 +597,12 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .timeout_event = EVENT_RETAIN, /* no timeout really */
 	},
 
+};
+
+S(REKEY_IKE_I1, "sent CREATE_CHILD_SA request to rekey IKE SA", CAT_ESTABLISHED_IKE_SA, .v2.secured = true);
+
+static const struct v2_state_transition REKEY_CHILD_I0_transitions[] = {
+
 	/*
 	 * Child transitions when rekeying a Child SA using
 	 * CREATE_CHILD_SA.
@@ -519,6 +627,12 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .llog_success = llog_v2_success_state_story,
 	  .timeout_event = EVENT_RETRANSMIT, },
 
+};
+
+S(REKEY_CHILD_I0, "STATE_V2_REKEY_CHILD_I0", CAT_ESTABLISHED_IKE_SA);
+
+static const struct v2_state_transition REKEY_CHILD_R0_transitions[] = {
+
 	{ .story      = "process rekey Child SA request (CREATE_CHILD_SA)",
 	  .state      = STATE_V2_REKEY_CHILD_R0,
 	  .next_state = STATE_V2_ESTABLISHED_CHILD_SA,
@@ -533,6 +647,12 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .processor  = process_v2_CREATE_CHILD_SA_rekey_child_request,
 	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_v2_REPLACE, },
+
+};
+
+S(REKEY_CHILD_R0, "STATE_V2_REKEY_CHILD_R0", CAT_ESTABLISHED_IKE_SA, .v2.secured = true);
+
+static const struct v2_state_transition REKEY_CHILD_I1_transitions[] = {
 
 	{ .story      = "process rekey Child SA response (CREATE_CHILD_SA)",
 	  .state      = STATE_V2_REKEY_CHILD_I1,
@@ -560,6 +680,12 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .timeout_event = EVENT_RETAIN, /* no timeout really */
 	},
 
+};
+
+S(REKEY_CHILD_I1, "sent CREATE_CHILD_SA request to rekey IPsec SA", CAT_ESTABLISHED_IKE_SA, .v2.secured = true);
+
+static const struct v2_state_transition NEW_CHILD_I0_transitions[] = {
+
 	/*
 	 * Child transitions when creating a new Child SA using
 	 * CREATE_CHILD_SA.
@@ -584,6 +710,12 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .llog_success = llog_v2_success_state_story,
 	  .timeout_event = EVENT_RETRANSMIT, },
 
+};
+
+S(NEW_CHILD_I0, "STATE_V2_NEW_CHILD_I0", CAT_ESTABLISHED_IKE_SA);
+
+static const struct v2_state_transition NEW_CHILD_R0_transitions[] = {
+
 	{ .story      = "process create Child SA request (CREATE_CHILD_SA)",
 	  .state      = STATE_V2_NEW_CHILD_R0,
 	  .next_state = STATE_V2_ESTABLISHED_CHILD_SA,
@@ -597,6 +729,12 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .processor  = process_v2_CREATE_CHILD_SA_new_child_request,
 	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_v2_REPLACE, },
+
+};
+
+S(NEW_CHILD_R0, "STATE_V2_NEW_CHILD_R0", CAT_ESTABLISHED_IKE_SA, .v2.secured = true);
+
+static const struct v2_state_transition NEW_CHILD_I1_transitions[] = {
 
 	{ .story      = "process create Child SA response (CREATE_CHILD_SA)",
 	  .state      = STATE_V2_NEW_CHILD_I1,
@@ -623,6 +761,16 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .llog_success = ldbg_v2_success,
  	  .timeout_event = EVENT_RETAIN, /* no timeout really */
 	},
+
+};
+
+S(NEW_CHILD_I1, "sent CREATE_CHILD_SA request for new IPsec SA", CAT_ESTABLISHED_IKE_SA, .v2.secured = true);
+
+/*
+ * IKEv2 established states.
+ */
+
+static const struct v2_state_transition ESTABLISHED_IKE_SA_transitions[] = {
 
 	/*
 	 * IKE SA's CREATE_CHILD_SA exchange to rekey IKE SA.
@@ -828,6 +976,12 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_RETAIN, },
 
+};
+
+S(ESTABLISHED_IKE_SA, "established IKE SA", CAT_ESTABLISHED_IKE_SA, .v2.secured = true);
+
+static const struct v2_state_transition IKE_SA_DELETE_transitions[] = {
+
 	{ .story      = "IKE_SA_DEL: process INFORMATIONAL response",
 	  .state      = STATE_V2_IKE_SA_DELETE,
 	  .next_state = STATE_V2_IKE_SA_DELETE,
@@ -840,10 +994,6 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_RETAIN, },
 
-	/* last entry */
-	{ .story      = "roof",
-	  .state      = STATE_IKEv2_ROOF }
-
 #undef req_clear_payloads
 #undef opt_clear_payloads
 #undef req_enc_payloads
@@ -851,75 +1001,17 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 
 };
 
-#define S(KIND, STORY, CAT, ...)					\
-	struct finite_state state_v2_##KIND = {				\
-		.kind = STATE_V2_##KIND,				\
-		.name = "STATE_V2_"#KIND,				\
-		/* Not using #KIND + 6 because of clang's -Wstring-plus-int */ \
-		.short_name = #KIND,					\
-		.story = STORY,						\
-		.category = CAT,					\
-		.ike_version = IKEv2,					\
-		##__VA_ARGS__,						\
-	}
+static const struct v2_state_transition ESTABLISHED_CHILD_SA_transitions[] = {
+};
 
-/*
- * IKEv2 IKE SA initiator, while the the SA_INIT packet is being
- * constructed, are in state.  Only once the packet has been sent out
- * does it transition to STATE_V2_PARENT_I1 and start being counted as
- * half-open.
- */
-
-S(PARENT_I0, "waiting for KE to finish", CAT_IGNORE);
-
-/*
- * Count I1 as half-open too because with ondemand, a plaintext packet
- * (that is spoofed) will trigger an outgoing IKE SA.
- */
-
-S(PARENT_I1, "sent IKE_SA_INIT request", CAT_HALF_OPEN_IKE_SA);
-S(PARENT_R0, "processing IKE_SA_INIT request", CAT_HALF_OPEN_IKE_SA);
-S(PARENT_R_IKE_SA_INIT, "sent IKE_SA_INIT response, waiting for IKE_INTERMEDIATE or IKE_AUTH request", CAT_HALF_OPEN_IKE_SA, .v2.secured = true);
-S(PARENT_R_IKE_INTERMEDIATE, "sent IKE_INTERMEDIATE response, waiting for IKE_INTERMEDIATE or IKE_AUTH request", CAT_OPEN_IKE_SA, .v2.secured = true);
-S(PARENT_R_IKE_AUTH_EAP, "sent IKE_AUTH(EAP) response, waiting for IKE_AUTH(EAP) request", CAT_OPEN_IKE_SA, .v2.secured = true);
-
-/*
- * All IKEv1 MAIN modes except the first (half-open) and last ones are
- * not authenticated.
- */
-
-S(PARENT_I2, "sent IKE_AUTH request", CAT_OPEN_IKE_SA, .v2.secured = true);
-
-/* IKE exchange can also create a child */
-
-S(IKE_AUTH_CHILD_I0, "ephemeral: initiator creating child from IKE exchange", CAT_IGNORE);
-S(IKE_AUTH_CHILD_R0, "ephemeral: responder creating child from IKE exchange", CAT_IGNORE);
-
-/*
- * CREATE_CHILD_SA exchanges.
- */
-
-/* isn't this an ipsec state */
-S(NEW_CHILD_I0, "STATE_V2_NEW_CHILD_I0", CAT_ESTABLISHED_IKE_SA);
-S(NEW_CHILD_I1, "sent CREATE_CHILD_SA request for new IPsec SA", CAT_ESTABLISHED_IKE_SA, .v2.secured = true);
-S(NEW_CHILD_R0, "STATE_V2_NEW_CHILD_R0", CAT_ESTABLISHED_IKE_SA, .v2.secured = true);
-S(REKEY_CHILD_I0, "STATE_V2_REKEY_CHILD_I0", CAT_ESTABLISHED_IKE_SA);
-S(REKEY_CHILD_I1, "sent CREATE_CHILD_SA request to rekey IPsec SA", CAT_ESTABLISHED_IKE_SA, .v2.secured = true);
-S(REKEY_CHILD_R0, "STATE_V2_REKEY_CHILD_R0", CAT_ESTABLISHED_IKE_SA, .v2.secured = true);
-S(REKEY_IKE_I0, "STATE_V2_REKEY_IKE_I0", CAT_ESTABLISHED_IKE_SA);
-S(REKEY_IKE_I1, "sent CREATE_CHILD_SA request to rekey IKE SA", CAT_ESTABLISHED_IKE_SA, .v2.secured = true);
-S(REKEY_IKE_R0, "STATE_V2_REKEY_IKE_R0", CAT_ESTABLISHED_IKE_SA, .v2.secured = true);
-
-/*
- * IKEv2 established states.
- */
-
-S(ESTABLISHED_IKE_SA, "established IKE SA", CAT_ESTABLISHED_IKE_SA, .v2.secured = true);
-/* this message is used for both initial exchanges and rekeys */
 S(ESTABLISHED_CHILD_SA, "established Child SA", CAT_ESTABLISHED_CHILD_SA);
 
 /* ??? better story needed for these */
 S(IKE_SA_DELETE, "STATE_IKESA_DEL", CAT_ESTABLISHED_IKE_SA, .v2.secured = true);
+
+static const struct v2_state_transition CHILD_SA_DELETE_transitions[] = {
+};
+
 S(CHILD_SA_DELETE, "STATE_CHILDSA_DEL", CAT_INFORMATIONAL);
 
 #undef S
@@ -1281,73 +1373,6 @@ void init_ikev2_states(struct logger *logger)
 	 * state.
 	 */
 
-	const struct finite_state *prev = NULL;
-	for (struct v2_state_transition *t = v2_state_transition_table;
-	     t->state < STATE_IKEv2_ROOF; t++) {
-
-		passert(t->state >= STATE_IKEv2_FLOOR);
-		passert(t->state < STATE_IKEv2_ROOF);
-		struct finite_state *from = v2_states[t->state - STATE_IKEv2_FLOOR];
-		passert(from != NULL);
-		passert(from->kind == t->state);
-		passert(from->ike_version == IKEv2);
-
-		passert(t->next_state >= STATE_IKEv2_FLOOR);
-		passert(t->next_state < STATE_IKEv2_ROOF);
-		const struct finite_state *to = finite_states[t->next_state];
-		passert(to != NULL);
-		passert(to->kind == t->next_state);
-		passert(to->ike_version == IKEv2);
-
-		if (DBGP(DBG_BASE)) {
-			if (from->nr_transitions == 0) {
-				/* finish the previous state */
-				if (from->nr_transitions == 0 && prev != NULL) {
-					dbg("    %zu transitions", prev->nr_transitions);
-				}
-				/* start the new one */
-				LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
-					jam(buf, "  ");
-					jam_finite_state(buf, from);
-				}
-			}
-
-			enum_buf tb;
-			DBG_log("    -> %s; %s",
-				to->short_name,
-				str_enum_short(&event_type_names, t->timeout_event, &tb));
-		}
-
-		/*
-		 * Point .fs_v2_microcode at the first transition for
-		 * the from state.  All other transitions for the from
-		 * state should follow immediately after (or to put it
-		 * another way, previous should match).
-		 */
-		if (from->v2.transitions == NULL) {
-			/* start of the next state */
-			passert(from->nr_transitions == 0);
-			from->v2.transitions = t;
-		} else {
-			passert(prev != NULL);
-			passert(prev->kind == t->state);
-		}
-		from->nr_transitions++;
-		prev = from;
-	}
-
-	/* finish the final state */
-	dbg("    %zu transitions", prev->nr_transitions);
-
-	/*
-	 * Iterate over the state transitions filling in missing bits
-	 * and checking for consistency.
-	 *
-	 * XXX: this misses magic state transitions, such as
-	 * v2_liveness_probe, that are not directly attached to a
-	 * state.
-	 */
-
 	for (enum state_kind kind = STATE_IKEv2_FLOOR; kind < STATE_IKEv2_ROOF; kind++) {
 		/* fill in using static struct */
 		const struct finite_state *from = finite_states[kind];
@@ -1394,9 +1419,9 @@ void init_ikev2_states(struct logger *logger)
 				LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 					jam_string(buf, "       ");
 					jam_enum_short(buf, &ikev2_exchange_names, t->exchange);
-					jam_string(buf, "recv: ");
+					jam_string(buf, " recv: ");
 					jam_enum_short(buf, &message_role_names, t->recv_role);
-					jam_string(buf, "send: ");
+					jam_string(buf, " send: ");
 					jam_enum_short(buf, &message_role_names, t->send_role);
 				}
 
