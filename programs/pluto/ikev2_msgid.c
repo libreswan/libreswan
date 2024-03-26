@@ -585,6 +585,7 @@ static void initiate_next(const char *story, struct state *ike_sa, void *context
 		dbg("IKE SA with pending initiates disappeared (%s)", story);
 		return;
 	}
+
 	struct v2_msgid_window *initiator = &ike->sa.st_v2_msgid_windows.initiator;
 	for (intmax_t unack = (initiator->sent - initiator->recv);
 	     unack < ike->sa.st_connection->config->ike_window
@@ -592,8 +593,8 @@ static void initiate_next(const char *story, struct state *ike_sa, void *context
 	     unack++) {
 
 		/*
-		 * Make a copy of the pending exchange, and then
-		 * release it.
+		 * Make an on-stack copy of the pending exchange, and
+		 * then release the allocated memory.
 		 */
 		struct v2_msgid_pending pending = *ike->sa.st_v2_msgid_windows.pending_requests;
 		pfree(ike->sa.st_v2_msgid_windows.pending_requests);
@@ -602,9 +603,9 @@ static void initiate_next(const char *story, struct state *ike_sa, void *context
 		struct child_sa *child = child_sa_by_serialno(pending.child);
 		if (pending.child != SOS_NOBODY && child == NULL) {
 			dbg_v2_msgid(ike,
-				     "cannot initiate %s exchange for #%lu as Child SA disappeared (unack %jd)",
+				     "cannot initiate %s exchange for "PRI_SO" as Child SA disappeared (unack %jd)",
 				     enum_name(&isakmp_xchg_type_names, pending.transition->exchange),
-				     pending.child, unack);
+				     pri_so(pending.child), unack);
 			continue;
 		}
 
@@ -642,11 +643,21 @@ static void initiate_next(const char *story, struct state *ike_sa, void *context
 		 */
 
 		start_v2_transition(ike, pending.transition, /*md*/NULL, HERE);
-
 		/* pexpect(initiator->wip_sa == NULL); */
 		initiator->wip_sa = child;
 		stf_status status = pending.transition->processor(ike, child, NULL);
 		complete_v2_state_transition(ike, NULL/*initiate so no md*/, status);
+
+		/*
+		 * Get out of Dodge!
+		 *
+		 * complete_v2_state_transition can delete the IKE SA!
+		 * OTOH, if there's still a pending exchange then
+		 * success_v2_state_transition() will schedule a call
+		 * back to this function.
+		 */
+		return;
+
 	}
 }
 
