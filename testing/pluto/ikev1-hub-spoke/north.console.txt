@@ -102,7 +102,7 @@ north #
 000 algorithm IKE DH Key Exchange: name=DH21, bits=1056
 000 algorithm IKE DH Key Exchange: name=DH31, bits=256
 000  
-000 stats db_ops: {curr_cnt, total_cnt, maxsz} :context={0,0,0} trans={0,0,0} attrs={0,0,0} 
+000 stats db_ops: {curr_cnt, total_cnt, maxsz} :context={0,2,64} trans={0,2,2808} attrs={0,2,1872} 
 000  
 000 Connection list:
 000  
