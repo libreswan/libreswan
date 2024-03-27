@@ -564,7 +564,10 @@ enum state_kind {
 	STATE_V2_IKE_SA_INIT_R,		/* Responder send Response */
 	STATE_V2_IKE_SA_INIT_IR,	/* Initiator processed Response */
 
+	STATE_V2_IKE_INTERMEDIATE_I,
 	STATE_V2_IKE_INTERMEDIATE_R,
+	STATE_V2_IKE_INTERMEDIATE_IR,
+
 	STATE_V2_IKE_AUTH_EAP_R,  /* IKE_AUTH EAP negotiation */
 
 	STATE_V2_IKE_AUTH_I,        /* IKE_AUTH: sent auth message, waiting for reply */

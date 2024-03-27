@@ -421,5 +421,9 @@ stf_status process_v2_IKE_INTERMEDIATE_response_continue(struct state *st, struc
 	 * We've done one intermediate exchange round, now proceed to
 	 * IKE AUTH.
 	 */
-	return next_v2_transition(ike, md, &v2_IKE_AUTH_initiator_transition, HERE);
+#if 0
+	return next_v2_transition(ike, md, &v2_IKE_INTERMEDIATE_to_IKE_INTERMEDIATE_transition, HERE);
+#else
+	return next_v2_transition(ike, md, &v2_IKE_INTERMEDIATE_to_IKE_AUTH_transition, HERE);
+#endif
 }

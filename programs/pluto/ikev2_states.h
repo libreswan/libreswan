@@ -23,7 +23,9 @@ S(PARENT_R0);
 S(IKE_SA_INIT_I);
 S(IKE_SA_INIT_R);
 S(IKE_SA_INIT_IR);
+S(IKE_INTERMEDIATE_I);
 S(IKE_INTERMEDIATE_R);
+S(IKE_INTERMEDIATE_IR);
 S(IKE_AUTH_EAP_R);
 S(IKE_AUTH_I);
 S(NEW_CHILD_I0);
@@ -55,8 +57,11 @@ const struct v2_state_transition *find_v2_state_transition(struct logger *logger
 							   struct msg_digest *md,
 							   bool *secured_payload_failed);
 
-extern const struct v2_state_transition v2_IKE_INTERMEDIATE_initiator_transition;
-extern const struct v2_state_transition v2_IKE_AUTH_initiator_transition;
+extern const struct v2_state_transition v2_IKE_SA_INIT_to_IKE_INTERMEDIATE_transition;
+extern const struct v2_state_transition v2_IKE_INTERMEDIATE_to_IKE_INTERMEDIATE_transition;
+
+extern const struct v2_state_transition v2_IKE_SA_INIT_to_IKE_AUTH_transition;
+extern const struct v2_state_transition v2_IKE_INTERMEDIATE_to_IKE_AUTH_transition;
 
 void init_ikev2_states(struct logger *logger);
 

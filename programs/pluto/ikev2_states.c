@@ -247,13 +247,14 @@ static const struct v2_state_transition IKE_SA_INIT_I_transitions[] = {
 	  .opt_clear_payloads = P(CERTREQ),
 	  .processor  = process_v2_IKE_SA_INIT_response,
 	  .llog_success = llog_v2_IKE_SA_INIT_success,
-	  .timeout_event = EVENT_RETRANSMIT, },
+	  .timeout_event = EVENT_v2_DISCARD, /* timeout set by next transition */
+	},
 
 };
 
 S(IKE_SA_INIT_I, "sent IKE_SA_INIT request", CAT_HALF_OPEN_IKE_SA);
 
-const struct v2_state_transition v2_IKE_AUTH_initiator_transition = {
+const struct v2_state_transition v2_IKE_SA_INIT_to_IKE_AUTH_transition = {
 	.story      = "initiating IKE_AUTH",
 	.from       = &state_v2_IKE_SA_INIT_IR,
 	.next_state = STATE_V2_IKE_AUTH_I,
@@ -264,13 +265,13 @@ const struct v2_state_transition v2_IKE_AUTH_initiator_transition = {
 	.timeout_event = EVENT_RETRANSMIT,
 };
 
-const struct v2_state_transition v2_IKE_INTERMEDIATE_initiator_transition = {
-	.story      = "initiating IKE_INTERMEDIATE",
-	.from       = &state_v2_IKE_SA_INIT_IR,
+const struct v2_state_transition v2_IKE_INTERMEDIATE_to_IKE_AUTH_transition = {
+	.story      = "initiating IKE_AUTH",
+	.from       = &state_v2_IKE_INTERMEDIATE_IR,
 	.next_state = STATE_V2_IKE_AUTH_I,
-	.exchange   = ISAKMP_v2_IKE_INTERMEDIATE,
+	.exchange   = ISAKMP_v2_IKE_AUTH,
 	.send_role  = MESSAGE_REQUEST,
-	.processor  = initiate_v2_IKE_INTERMEDIATE_request,
+	.processor  = initiate_v2_IKE_AUTH_request,
 	.llog_success = llog_v2_success_exchange_sent_to,
 	.timeout_event = EVENT_RETRANSMIT,
 };
@@ -278,7 +279,7 @@ const struct v2_state_transition v2_IKE_INTERMEDIATE_initiator_transition = {
 static const struct v2_state_transition IKE_SA_INIT_IR_transitions[] = {
 };
 
-S(IKE_SA_INIT_IR, "processed IKE_SA_INIT response, initiating IKE_INTERMEDIATE or IKE_AUTH", CAT_OPEN_IKE_SA);
+S(IKE_SA_INIT_IR, "processed IKE_SA_INIT response, preparing IKE_INTERMEDIATE or IKE_AUTH request", CAT_OPEN_IKE_SA);
 
 /*
  * All IKEv1 MAIN modes except the first (half-open) and last ones are
@@ -292,19 +293,6 @@ static const struct v2_state_transition IKE_AUTH_I_transitions[] = {
 	 *                               SAr2, TSi, TSr}
 	 * [Parent SA established]
 	 */
-
-	{ .story      = "Initiator: process IKE_INTERMEDIATE reply, initiate IKE_AUTH or IKE_INTERMEDIATE",
-	  .from       = &state_v2_IKE_AUTH_I,
-	  .next_state = STATE_V2_IKE_AUTH_I,
-	  .flags      = MESSAGE_RESPONSE,
-	  .exchange   = ISAKMP_v2_IKE_INTERMEDIATE,
-	  .recv_role  = MESSAGE_RESPONSE,
-	  .send_role  = NO_MESSAGE, /* handled by next transition */
-	  .req_clear_payloads = P(SK),
-	  .opt_clear_payloads = LEMPTY,
-	  .processor  = process_v2_IKE_INTERMEDIATE_response,
-	  .llog_success = llog_v2_success_exchange_processed,
-	  .timeout_event = EVENT_RETRANSMIT, },
 
 	/*
 	 * This pair of state transitions should be merged?
@@ -420,9 +408,20 @@ static const struct v2_state_transition IKE_SA_INIT_R_transitions[] = {
 
 S(IKE_SA_INIT_R, "sent IKE_SA_INIT response, waiting for IKE_INTERMEDIATE or IKE_AUTH request", CAT_HALF_OPEN_IKE_SA, .v2.secured = true);
 
+const struct v2_state_transition v2_IKE_SA_INIT_to_IKE_INTERMEDIATE_transition = {
+	.story      = "initiating IKE_INTERMEDIATE",
+	.from       = &state_v2_IKE_SA_INIT_IR,
+	.next_state = STATE_V2_IKE_INTERMEDIATE_I,
+	.exchange   = ISAKMP_v2_IKE_INTERMEDIATE,
+	.send_role  = MESSAGE_REQUEST,
+	.processor  = initiate_v2_IKE_INTERMEDIATE_request,
+	.llog_success = llog_v2_success_exchange_sent_to,
+	.timeout_event = EVENT_RETRANSMIT,
+};
+
 static const struct v2_state_transition IKE_INTERMEDIATE_R_transitions[] = {
 
-	{ .story      = "Responder: process IKE_INTERMEDIATE request",
+	{ .story      = "processing IKE_INTERMEDIATE request",
 	  .from       = &state_v2_IKE_INTERMEDIATE_R,
 	  .next_state = STATE_V2_IKE_INTERMEDIATE_R,
 	  .flags      = LEMPTY,
@@ -436,7 +435,7 @@ static const struct v2_state_transition IKE_INTERMEDIATE_R_transitions[] = {
 	  .llog_success = llog_v2_success_exchange_processed,
 	  .timeout_event = EVENT_v2_DISCARD, },
 
-	{ .story      = "Responder: process IKE_AUTH(EAP) request",
+	{ .story      = "processing IKE_AUTH(EAP) request",
 	  .from       = &state_v2_IKE_INTERMEDIATE_R,
 	  .next_state = STATE_V2_IKE_AUTH_EAP_R,
 	  .flags      = LEMPTY,
@@ -450,12 +449,7 @@ static const struct v2_state_transition IKE_INTERMEDIATE_R_transitions[] = {
 	  .llog_success = llog_v2_success_state_story,
 	  .timeout_event = EVENT_v2_DISCARD, },
 
-	/*
-	 * These two transitions should be merged; the no-child
-	 * variant is just so that the code can be hobbled.
-	 */
-
-	{ .story      = "Responder: process IKE_AUTH request",
+	{ .story      = "processing IKE_AUTH request",
 	  .from       = &state_v2_IKE_INTERMEDIATE_R,
 	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	  .flags      = SMF2_RELEASE_WHACK,
@@ -472,6 +466,43 @@ static const struct v2_state_transition IKE_INTERMEDIATE_R_transitions[] = {
 };
 
 S(IKE_INTERMEDIATE_R, "sent IKE_INTERMEDIATE response, waiting for IKE_INTERMEDIATE or IKE_AUTH request", CAT_OPEN_IKE_SA, .v2.secured = true);
+
+static const struct v2_state_transition IKE_INTERMEDIATE_I_transitions[] = {
+	{ .story      = "processing IKE_INTERMEDIATE response",
+	  .from       = &state_v2_IKE_INTERMEDIATE_I,
+	  .next_state = STATE_V2_IKE_INTERMEDIATE_IR,
+	  .flags      = MESSAGE_RESPONSE,
+	  .exchange   = ISAKMP_v2_IKE_INTERMEDIATE,
+	  .recv_role  = MESSAGE_RESPONSE,
+	  .send_role  = NO_MESSAGE, /* handled by next transition */
+	  .req_clear_payloads = P(SK),
+	  .opt_clear_payloads = LEMPTY,
+	  .processor  = process_v2_IKE_INTERMEDIATE_response,
+	  .llog_success = llog_v2_success_exchange_processed,
+	  .timeout_event = EVENT_v2_DISCARD, },
+};
+
+S(IKE_INTERMEDIATE_I, "sent IKE_INTERMEDIATE request, waiting for response", CAT_OPEN_IKE_SA, .v2.secured = true);
+
+const struct v2_state_transition IKE_INTERMEDIATE_IR_transitions[] = {
+};
+
+S(IKE_INTERMEDIATE_IR, "processed IKE_INTERMEDIATE response, initiating IKE_INTERMEDIATE or IKE_AUTH", CAT_OPEN_IKE_SA, .v2.secured = true);
+
+const struct v2_state_transition v2_IKE_INTERMEDIATE_to_IKE_INTERMEDIATE_transition = {
+	.story      = "continuing IKE_INTERMEDIATE",
+	.from       = &state_v2_IKE_INTERMEDIATE_IR,
+	.next_state = STATE_V2_IKE_INTERMEDIATE_I,
+	.exchange   = ISAKMP_v2_IKE_INTERMEDIATE,
+	.send_role  = MESSAGE_REQUEST,
+	.processor  = initiate_v2_IKE_INTERMEDIATE_request,
+	.llog_success = llog_v2_success_exchange_sent_to,
+	.timeout_event = EVENT_RETRANSMIT,
+};
+
+/*
+ * EAP
+ */
 
 static const struct v2_state_transition IKE_AUTH_EAP_R_transitions[] = {
 
@@ -972,7 +1003,9 @@ static const struct finite_state *v2_states[] = {
 	S(IKE_SA_INIT_I),
 	S(IKE_SA_INIT_R),
 	S(IKE_SA_INIT_IR),
+	S(IKE_INTERMEDIATE_I),
 	S(IKE_INTERMEDIATE_R),
+	S(IKE_INTERMEDIATE_IR),
 	S(IKE_AUTH_EAP_R),
 	S(IKE_AUTH_I),
 	S(NEW_CHILD_I0),
@@ -1307,6 +1340,9 @@ void init_ikev2_states(struct logger *logger)
 	for (enum state_kind kind = STATE_IKEv2_FLOOR; kind < STATE_IKEv2_ROOF; kind++) {
 		/* fill in using static struct */
 		const struct finite_state *fs = v2_states[kind - STATE_IKEv2_FLOOR];
+		if (fs == NULL) {
+			llog_passert(logger, HERE, "entry %d is NULL", kind);
+		}
 		passert(fs->kind == kind);
 		passert(finite_states[kind] == NULL);
 		finite_states[kind] = fs;
