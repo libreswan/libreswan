@@ -1963,9 +1963,8 @@ static bool extract_connection(const struct whack_message *wm,
 			llog(RC_INFORMATIONAL, c->logger,
 			     "ignored esp= option for type=passthrough connection");
 		}
-	} else if (wm->esp != NULL ||
-		   (c->config->ike_version == IKEv2 &&
-		    (c->policy & (POLICY_ENCRYPT|POLICY_AUTHENTICATE)))) {
+	} else  {
+		PEXPECT(c->logger, c->policy & (POLICY_ENCRYPT|POLICY_AUTHENTICATE));
 		const char *esp = wm->esp != NULL ? wm->esp : "";
 		dbg("from whack: got --esp=%s", esp);
 
