@@ -1027,7 +1027,7 @@ static void complete_protected_but_fatal_exchange(struct ike_sa *ike, struct msg
 		 * down; would adding an extra transition that always
 		 * matches be better?
 		 */
-		unsigned transition_nr = 1;
+		unsigned transition_nr = 0;
 		pexpect(state->nr_transitions > transition_nr);
 		transition = &state->v2.transitions[transition_nr];
 		pexpect(transition->from == &state_v2_IKE_AUTH_I);
@@ -1647,11 +1647,12 @@ static void success_v2_state_transition(struct ike_sa *ike,
 	 * Tell whack and logs of our progress.
 	 *
 	 * If it's OE or a state transition we're not telling anyone
-	 * about, then be quiet.
+	 * about, then be quiet.  Sometimes, sort of.
 	 */
 
-        if (!pexpect(transition->llog_success != NULL) ||
-	    is_opportunistic(c)) {
+        if (PBAD(ike->sa.logger, transition->llog_success == NULL)) {
+		ldbg_v2_success(ike);
+	} else if (is_opportunistic(c) && transition->next_state != state_v2_IKE_SA_INIT_IR.kind) {
 		ldbg_v2_success(ike);
 	} else {
 		transition->llog_success(ike);
@@ -1677,17 +1678,13 @@ stf_status next_v2_transition(struct ike_sa *ike, struct msg_digest *md,
 			      const struct v2_state_transition *next_transition,
 			      where_t where)
 {
-	PEXPECT(ike->sa.logger, v2_msg_role(md) == MESSAGE_RESPONSE);
-	intmax_t wip = ike->sa.st_v2_msgid_windows.initiator.wip;
-	v2_msgid_finish(ike, md);
-	ike->sa.st_v2_transition->llog_success(ike);
-	/*
-	 * XXX: currently .wip is set to the just completed
-	 * transaction when it should be allowed to go back to -1.
-	 */
-	ike->sa.st_v2_msgid_windows.initiator.wip = wip;
-	start_v2_transition(ike, next_transition, NULL, where);
-	return ike->sa.st_v2_transition->processor(ike, /*child*/NULL, /*md*/NULL);
+	PEXPECT_WHERE(ike->sa.logger, where, v2_msg_role(md) == MESSAGE_RESPONSE);
+	/* nothing ahead in the queue */
+	PEXPECT_WHERE(ike->sa.logger, where, v2_msgid_request_pending(ike) == false);
+	/* queue transition; it's at the front */
+	v2_msgid_queue_initiator(ike, /*child*/NULL, next_transition);
+	/* complete current transition */
+	return STF_OK;
 }
 
 /*
