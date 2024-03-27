@@ -2781,8 +2781,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 			llog(RC_INFORMATIONAL, c->logger,
 			     "ignored esp= option for type=passthrough connection");
 		}
-	} else if (wm->esp != NULL ||
-		   (c->config->ike_version == IKEv2 && encap_proto != ENCAP_PROTO_UNSET)) {
+	} else  {
+		PEXPECT(c->logger, encap_proto != ENCAP_PROTO_UNSET);
 
 		const struct proposal_policy proposal_policy = {
 			/*
