@@ -38,7 +38,7 @@ west #
  # wait for it to fail
 west #
  ../../guestbin/wait-for-pluto.sh ' second timeout exceeded after '
-"west" #1: STATE_V2_PARENT_I1: 10 second timeout exceeded after 5 retransmits.  No response (or no acceptable response) to our first IKEv2 message
+"west" #1: STATE_V2_IKE_SA_INIT_I: 10 second timeout exceeded after 5 retransmits.  No response (or no acceptable response) to our first IKEv2 message
 west #
  ../../guestbin/ipsec-kernel-policy.sh
 src 192.1.2.45/32 dst 192.1.2.23/32

@@ -66,7 +66,7 @@ west #
 "labeled"[1] 192.1.2.23 #1: calling REAUTH event handler
 west #
  ../../guestbin/wait-for.sh --match PARENT_I1 -- ipsec whack --showstates
-#3: "labeled"[1] 192.1.2.23:500 STATE_V2_PARENT_I1 (sent IKE_SA_INIT request); RETRANSMIT in XXs; idle;
+#3: "labeled"[1] 192.1.2.23:500 STATE_V2_IKE_SA_INIT_I (sent IKE_SA_INIT request); RETRANSMIT in XXs; idle;
 west #
  # let another on-demand label establish
 west #

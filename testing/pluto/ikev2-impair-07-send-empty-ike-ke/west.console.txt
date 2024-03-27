@@ -41,7 +41,7 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2" #2: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet-eastnet-ipv4-psk-ikev2" #2: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-ipv4-psk-ikev2" #2: KE has 0 byte DH public value; 64 required
-"westnet-eastnet-ipv4-psk-ikev2" #2: encountered fatal error in state STATE_V2_PARENT_I1
+"westnet-eastnet-ipv4-psk-ikev2" #2: encountered fatal error in state STATE_V2_IKE_SA_INIT_I
 "westnet-eastnet-ipv4-psk-ikev2" #2: connection is supposed to remain up; revival attempt 2 scheduled in 5 seconds
 "westnet-eastnet-ipv4-psk-ikev2" #2: IMPAIR: revival: skip scheduling revival event
 "westnet-eastnet-ipv4-psk-ikev2" #2: deleting IKE SA (sent IKE_SA_INIT request)

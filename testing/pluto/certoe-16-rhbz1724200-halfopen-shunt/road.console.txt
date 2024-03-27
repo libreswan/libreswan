@@ -22,7 +22,7 @@ PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
 road #
  sleep 5
 road #
- # should show no tunnels and no bare shunts and a state in STATE_V2_PARENT_I1
+ # should show no tunnels and no bare shunts and a state in STATE_V2_IKE_SA_INIT_I
 road #
  ipsec whack --trafficstatus
 road #
@@ -31,7 +31,7 @@ Bare Shunt list:
  
 road #
  ipsec status |grep STATE_
-#5: "private#192.1.2.23/32"[1] ...192.1.2.23:500 STATE_V2_PARENT_I1 (sent IKE_SA_INIT request); RETRANSMIT in -1s; idle;
+#5: "private#192.1.2.23/32"[1] ...192.1.2.23:500 STATE_V2_IKE_SA_INIT_I (sent IKE_SA_INIT request); RETRANSMIT in -1s; idle;
 road #
  # east triggered OE, we still have our #1 which is now obsoleted
 road #

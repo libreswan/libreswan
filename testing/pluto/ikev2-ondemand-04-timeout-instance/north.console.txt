@@ -38,7 +38,7 @@ north #
  # wait for it to fail
 north #
  ../../guestbin/wait-for-pluto.sh ' second timeout exceeded after '
-"north" #1: STATE_V2_PARENT_I1: 10 second timeout exceeded after 5 retransmits.  No response (or no acceptable response) to our first IKEv2 message
+"north" #1: STATE_V2_IKE_SA_INIT_I: 10 second timeout exceeded after 5 retransmits.  No response (or no acceptable response) to our first IKEv2 message
 north #
  ../../guestbin/ipsec-kernel-policy.sh
 src 192.0.3.254/32 dst 192.0.2.0/24

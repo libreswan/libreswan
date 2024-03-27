@@ -31,7 +31,7 @@ west #
 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
-"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: encountered fatal error in state STATE_V2_PARENT_I2
+"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: encountered fatal error in state STATE_V2_IKE_AUTH_I
 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: deleting IKE SA (sent IKE_AUTH request)
 west #
  echo done
