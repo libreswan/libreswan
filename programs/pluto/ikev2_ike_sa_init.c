@@ -293,7 +293,7 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 			}
 			if (verbose_v2_state_busy(&old->sa)) {
 				/* already logged */;
-			} else if (old->sa.st_state == &state_v2_PARENT_R_IKE_SA_INIT &&
+			} else if (old->sa.st_state == &state_v2_IKE_SA_INIT_R &&
 				   old->sa.st_v2_msgid_windows.responder.recv == 0 &&
 				   old->sa.st_v2_msgid_windows.responder.sent == 0 &&
 				   hunk_eq(old->sa.st_firstpacket_peer,
@@ -537,7 +537,7 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 			return;
 		}
 
-		if (ike->sa.st_state->kind != STATE_V2_PARENT_I1 ||
+		if (ike->sa.st_state->kind != STATE_V2_IKE_SA_INIT_I ||
 		    ike->sa.st_v2_msgid_windows.initiator.sent != 0 ||
 		    ike->sa.st_v2_msgid_windows.initiator.recv != -1 ||
 		    ike->sa.st_v2_msgid_windows.initiator.wip != 0) {
@@ -765,7 +765,7 @@ stf_status initiate_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	pexpect(unused_md == NULL);
 	/* I1 is from INVALID KE */
 	pexpect(ike->sa.st_state == &state_v2_PARENT_I0 ||
-		ike->sa.st_state == &state_v2_PARENT_I1);
+		ike->sa.st_state == &state_v2_IKE_SA_INIT_I);
 	dbg("%s() for #%lu %s",
 	     __func__, ike->sa.st_serialno, ike->sa.st_state->name);
 
@@ -1327,7 +1327,7 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
  *
  *
  */
-/* STATE_V2_PARENT_I1: R1B --> I1B
+/* STATE_V2_IKE_SA_INIT_I: R1B --> I1B
  *                     <--  HDR, N
  * HDR, N(COOKIE), SAi1, KEi, Ni -->
  */
@@ -1412,7 +1412,7 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_PAYLOAD(struct ike_sa 
 	return STF_OK;
 }
 
-/* STATE_V2_PARENT_I1: R1 --> I2
+/* STATE_V2_IKE_SA_INIT_I: R1 --> I2
  *                     <--  HDR, SAr1, KEr, Nr, [CERTREQ]
  * HDR, SK {IDi, [CERT,] [CERTREQ,]
  *      [IDr,] AUTH, SAi2,

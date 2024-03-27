@@ -558,13 +558,15 @@ enum state_kind {
 	/* IKE SA */
 
 	STATE_V2_PARENT_I0 = STATE_IKEv2_FLOOR,	/* waiting for KE to finish */
-	STATE_V2_PARENT_I1,        /* IKE_SA_INIT: sent initial message, waiting for reply */
-	STATE_V2_PARENT_I2,        /* IKE_AUTH: sent auth message, waiting for reply */
-
 	STATE_V2_PARENT_R0,	/* just starting */
-	STATE_V2_PARENT_R_IKE_SA_INIT,
-	STATE_V2_PARENT_R_IKE_INTERMEDIATE,
-	STATE_V2_PARENT_R_IKE_AUTH_EAP,  /* IKE_AUTH EAP negotiation */
+
+	STATE_V2_IKE_SA_INIT_I,        /* IKE_SA_INIT: sent initial message, waiting for reply */
+	STATE_V2_IKE_SA_INIT_R,
+
+	STATE_V2_IKE_INTERMEDIATE_R,
+	STATE_V2_IKE_AUTH_EAP_R,  /* IKE_AUTH EAP negotiation */
+
+	STATE_V2_IKE_AUTH_I,        /* IKE_AUTH: sent auth message, waiting for reply */
 
 	/* IKE exchange can also create a child */
 
@@ -678,8 +680,8 @@ extern const struct enum_names perspective_names;
 #endif
 
 #define IKEV2_ISAKMP_INITIATOR_STATES (LELEM(STATE_V2_PARENT_I0) |	\
-				       LELEM(STATE_V2_PARENT_I1) |	\
-				       LELEM(STATE_V2_PARENT_I2))
+				       LELEM(STATE_V2_IKE_SA_INIT_I) |	\
+				       LELEM(STATE_V2_IKE_AUTH_I))
 
 /* IKEv1 or IKEv2 */
 #ifdef USE_IKEv1

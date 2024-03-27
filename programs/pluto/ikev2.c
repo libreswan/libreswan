@@ -656,7 +656,7 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 		 * - passed to process_v2_request_no_skeyseed() which
 		 *   may decide to save it
 		 */
-		pexpect(ike->sa.st_state == &state_v2_PARENT_R_IKE_SA_INIT);
+		pexpect(ike->sa.st_state == &state_v2_IKE_SA_INIT_R);
 		pexpect(!ike->sa.hidden_variables.st_skeyid_calculated);
 		if (pexpect(frags != NULL)) {
 			pexpect(/* single message */
@@ -678,7 +678,7 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 		 * decides if the twilight zone should even be entered
 		 * (SKEYSEED started).
 		 */
-		pexpect(ike->sa.st_state == &state_v2_PARENT_R_IKE_SA_INIT);
+		pexpect(ike->sa.st_state == &state_v2_IKE_SA_INIT_R);
 		dbg_v2_msgid(ike,
 			     "not a duplicate - message request %jd is new (SKEYSEED still needs to be computed)",
 			     msgid);
@@ -1010,9 +1010,9 @@ static void complete_protected_but_fatal_exchange(struct ike_sa *ike, struct msg
 	const struct v2_state_transition *transition;
 	const struct finite_state *state = ike->sa.st_state;
 	switch (state->kind) {
-	case STATE_V2_PARENT_R_IKE_SA_INIT:
-	case STATE_V2_PARENT_R_IKE_INTERMEDIATE:
-	case STATE_V2_PARENT_R_IKE_AUTH_EAP:
+	case STATE_V2_IKE_SA_INIT_R:
+	case STATE_V2_IKE_INTERMEDIATE_R:
+	case STATE_V2_IKE_AUTH_EAP_R:
 		/*
 		 * Responding to either an IKE_INTERMEDIATE or
 		 * IKE_AUTH request.  Grab the last one.
@@ -1020,7 +1020,7 @@ static void complete_protected_but_fatal_exchange(struct ike_sa *ike, struct msg
 		PASSERT(ike->sa.logger, state->nr_transitions > 0);
 		transition = &state->v2.transitions[state->nr_transitions - 1];
 		break;
-	case STATE_V2_PARENT_I2:
+	case STATE_V2_IKE_AUTH_I:
 	{
 		/*
 		 * Receiving IKE_AUTH response: it is buried deep
@@ -1030,7 +1030,7 @@ static void complete_protected_but_fatal_exchange(struct ike_sa *ike, struct msg
 		unsigned transition_nr = 1;
 		pexpect(state->nr_transitions > transition_nr);
 		transition = &state->v2.transitions[transition_nr];
-		pexpect(transition->from == &state_v2_PARENT_I2);
+		pexpect(transition->from == &state_v2_IKE_AUTH_I);
 		pexpect(transition->next_state == STATE_V2_ESTABLISHED_IKE_SA);
 		break;
 	}

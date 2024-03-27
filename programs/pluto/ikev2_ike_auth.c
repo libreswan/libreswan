@@ -440,7 +440,7 @@ static stf_status ikev2_pam_continue(struct state *ike_st,
 	struct ike_sa *ike = pexpect_ike_sa(ike_st);
 	pexpect(ike->sa.st_sa_role == SA_RESPONDER);
 	pexpect(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
-	pexpect(ike->sa.st_state == &state_v2_PARENT_R_IKE_SA_INIT);
+	pexpect(ike->sa.st_state == &state_v2_IKE_SA_INIT_R);
 	dbg("%s() for #%lu %s",
 	     __func__, ike->sa.st_serialno, ike->sa.st_state->name);
 
@@ -979,7 +979,7 @@ static stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike
 	return STF_OK;
 }
 
-/* STATE_V2_PARENT_I2: R2 --> I3
+/* STATE_V2_IKE_AUTH_I: R2 --> I3
  *                     <--  HDR, SK {IDr, [CERT,] AUTH,
  *                               [SAr2,] [TSi,] [TSr,]}
  * [Parent SA established]
@@ -1317,8 +1317,8 @@ stf_status process_v2_IKE_AUTH_failure_response(struct ike_sa *ike,
 
 const struct v2_state_transition v2_IKE_AUTH_initiator_transition = {
 	.story      = "initiating IKE_AUTH",
-	.from       = &state_v2_PARENT_I2,
-	.next_state = STATE_V2_PARENT_I2,
+	.from       = &state_v2_IKE_AUTH_I,
+	.next_state = STATE_V2_IKE_AUTH_I,
 	.exchange   = ISAKMP_v2_IKE_AUTH,
 	.send_role  = MESSAGE_REQUEST,
 	.processor  = initiate_v2_IKE_AUTH_request,

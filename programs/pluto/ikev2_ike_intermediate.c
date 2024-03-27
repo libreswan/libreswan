@@ -426,8 +426,8 @@ stf_status process_v2_IKE_INTERMEDIATE_response_continue(struct state *st, struc
 
 const struct v2_state_transition v2_IKE_INTERMEDIATE_initiator_transition = {
 	.story      = "initiating IKE_INTERMEDIATE",
-	.from       = &state_v2_PARENT_I2,
-	.next_state = STATE_V2_PARENT_I2,
+	.from       = &state_v2_IKE_AUTH_I,
+	.next_state = STATE_V2_IKE_AUTH_I,
 	.exchange   = ISAKMP_v2_IKE_INTERMEDIATE,
 	.send_role  = MESSAGE_REQUEST,
 	.processor  = initiate_v2_IKE_INTERMEDIATE_request,

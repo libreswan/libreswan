@@ -157,7 +157,7 @@ static struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
 /*
  * IKEv2 IKE SA initiator, while the the SA_INIT packet is being
  * constructed, are in state.  Only once the packet has been sent out
- * does it transition to STATE_V2_PARENT_I1 and start being counted as
+ * does it transition to STATE_V2_IKE_SA_INIT_I and start being counted as
  * half-open.
  */
 
@@ -167,7 +167,7 @@ static const struct v2_state_transition PARENT_I0_transitions[] = {
 	 */
 	{ .story      = "initiating IKE_SA_INIT",
 	  .from       = &state_v2_PARENT_I0,
-	  .next_state = STATE_V2_PARENT_I1,
+	  .next_state = STATE_V2_IKE_SA_INIT_I,
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_IKE_SA_INIT,
 	  .send_role  = MESSAGE_REQUEST,
@@ -183,15 +183,15 @@ S(PARENT_I0, "waiting for KE to finish", CAT_IGNORE);
  * (that is spoofed) will trigger an outgoing IKE SA.
  */
 
-static const struct v2_state_transition PARENT_I1_transitions[] = {
+static const struct v2_state_transition IKE_SA_INIT_I_transitions[] = {
 
-	/* STATE_V2_PARENT_I1: R1B --> I1B
+	/* STATE_V2_IKE_SA_INIT_I: R1B --> I1B
 	 *                     <--  HDR, N
 	 * HDR, N, SAi1, KEi, Ni -->
 	 */
 
 	{ .story      = "received anti-DDOS COOKIE response; resending IKE_SA_INIT request with cookie payload added",
-	  .from       = &state_v2_PARENT_I1,
+	  .from       = &state_v2_IKE_SA_INIT_I,
 	  .next_state = STATE_V2_PARENT_I0,
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_IKE_SA_INIT,
@@ -204,7 +204,7 @@ static const struct v2_state_transition PARENT_I1_transitions[] = {
 	  .timeout_event = EVENT_v2_DISCARD, },
 
 	{ .story      = "received INVALID_KE_PAYLOAD response; resending IKE_SA_INIT with new KE payload",
-	  .from       = &state_v2_PARENT_I1,
+	  .from       = &state_v2_IKE_SA_INIT_I,
 	  .next_state = STATE_V2_PARENT_I0,
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_IKE_SA_INIT,
@@ -217,7 +217,7 @@ static const struct v2_state_transition PARENT_I1_transitions[] = {
 	  .timeout_event = EVENT_v2_DISCARD, },
 
 	{ .story      = "received REDIRECT response; resending IKE_SA_INIT request to new destination",
-	  .from       = &state_v2_PARENT_I1,
+	  .from       = &state_v2_IKE_SA_INIT_I,
 	  .next_state = STATE_V2_PARENT_I0, /* XXX: never happens STF_SUSPEND */
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_IKE_SA_INIT,
@@ -230,15 +230,15 @@ static const struct v2_state_transition PARENT_I1_transitions[] = {
 	  .timeout_event = EVENT_v2_DISCARD,
 	},
 
-	/* STATE_V2_PARENT_I1: R1 --> I2
+	/* STATE_V2_IKE_SA_INIT_I: R1 --> I2
 	 *                     <--  HDR, SAr1, KEr, Nr, [CERTREQ]
 	 * HDR, SK {IDi, [CERT,] [CERTREQ,]
 	 *      [IDr,] AUTH, SAi2,
 	 *      TSi, TSr}      -->
 	 */
 	{ .story      = "Initiator: process IKE_SA_INIT reply, initiate IKE_AUTH or IKE_INTERMEDIATE",
-	  .from       = &state_v2_PARENT_I1,
-	  .next_state = STATE_V2_PARENT_I2,
+	  .from       = &state_v2_IKE_SA_INIT_I,
+	  .next_state = STATE_V2_IKE_AUTH_I,
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_IKE_SA_INIT,
 	  .recv_role  = MESSAGE_RESPONSE,
@@ -251,24 +251,24 @@ static const struct v2_state_transition PARENT_I1_transitions[] = {
 
 };
 
-S(PARENT_I1, "sent IKE_SA_INIT request", CAT_HALF_OPEN_IKE_SA);
+S(IKE_SA_INIT_I, "sent IKE_SA_INIT request", CAT_HALF_OPEN_IKE_SA);
 
 /*
  * All IKEv1 MAIN modes except the first (half-open) and last ones are
  * not authenticated.
  */
 
-static const struct v2_state_transition PARENT_I2_transitions[] = {
+static const struct v2_state_transition IKE_AUTH_I_transitions[] = {
 
-	/* STATE_V2_PARENT_I2: R2 -->
+	/* STATE_V2_IKE_AUTH_I: R2 -->
 	 *                     <--  HDR, SK {IDr, [CERT,] AUTH,
 	 *                               SAr2, TSi, TSr}
 	 * [Parent SA established]
 	 */
 
 	{ .story      = "Initiator: process IKE_INTERMEDIATE reply, initiate IKE_AUTH or IKE_INTERMEDIATE",
-	  .from       = &state_v2_PARENT_I2,
-	  .next_state = STATE_V2_PARENT_I2,
+	  .from       = &state_v2_IKE_AUTH_I,
+	  .next_state = STATE_V2_IKE_AUTH_I,
 	  .flags      = MESSAGE_RESPONSE,
 	  .exchange   = ISAKMP_v2_IKE_INTERMEDIATE,
 	  .recv_role  = MESSAGE_RESPONSE,
@@ -284,7 +284,7 @@ static const struct v2_state_transition PARENT_I2_transitions[] = {
 	 */
 
 	{ .story      = "Initiator: process IKE_AUTH response",
-	  .from       = &state_v2_PARENT_I2,
+	  .from       = &state_v2_IKE_AUTH_I,
 	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	  .flags      = SMF2_RELEASE_WHACK,
 	  .exchange   = ISAKMP_v2_IKE_AUTH,
@@ -298,8 +298,8 @@ static const struct v2_state_transition PARENT_I2_transitions[] = {
 	},
 
 	{ .story      = "Initiator: processing IKE_AUTH failure response",
-	  .from       = &state_v2_PARENT_I2,
-	  .next_state = STATE_V2_PARENT_I2,
+	  .from       = &state_v2_IKE_AUTH_I,
+	  .next_state = STATE_V2_IKE_AUTH_I,
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_IKE_AUTH,
 	  .recv_role  = MESSAGE_RESPONSE,
@@ -311,7 +311,7 @@ static const struct v2_state_transition PARENT_I2_transitions[] = {
 
 };
 
-S(PARENT_I2, "sent IKE_AUTH request", CAT_OPEN_IKE_SA, .v2.secured = true);
+S(IKE_AUTH_I, "sent IKE_AUTH request", CAT_OPEN_IKE_SA, .v2.secured = true);
 
 static const struct v2_state_transition PARENT_R0_transitions[] = {
 
@@ -321,7 +321,7 @@ static const struct v2_state_transition PARENT_R0_transitions[] = {
 	 */
 	{ .story      = "Respond to IKE_SA_INIT",
 	  .from       = &state_v2_PARENT_R0,
-	  .next_state = STATE_V2_PARENT_R_IKE_SA_INIT,
+	  .next_state = STATE_V2_IKE_SA_INIT_R,
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_IKE_SA_INIT,
 	  .recv_role  = MESSAGE_REQUEST,
@@ -335,7 +335,7 @@ static const struct v2_state_transition PARENT_R0_transitions[] = {
 
 S(PARENT_R0, "processing IKE_SA_INIT request", CAT_HALF_OPEN_IKE_SA);
 
-static const struct v2_state_transition PARENT_R_IKE_SA_INIT_transitions[] = {
+static const struct v2_state_transition IKE_SA_INIT_R_transitions[] = {
 
 	/* STATE_V2_PARENT_R1: I2 --> R2
 	 *                  <-- HDR, SK {IDi, [CERT,] [CERTREQ,]
@@ -348,8 +348,8 @@ static const struct v2_state_transition PARENT_R_IKE_SA_INIT_transitions[] = {
 	 */
 
 	{ .story      = "Responder: process IKE_INTERMEDIATE request",
-	  .from       = &state_v2_PARENT_R_IKE_SA_INIT,
-	  .next_state = STATE_V2_PARENT_R_IKE_INTERMEDIATE,
+	  .from       = &state_v2_IKE_SA_INIT_R,
+	  .next_state = STATE_V2_IKE_INTERMEDIATE_R,
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_IKE_INTERMEDIATE,
 	  .recv_role  = MESSAGE_REQUEST,
@@ -362,7 +362,7 @@ static const struct v2_state_transition PARENT_R_IKE_SA_INIT_transitions[] = {
 	  .timeout_event = EVENT_v2_DISCARD, },
 
 	{ .story      = "Responder: process IKE_AUTH request",
-	  .from       = &state_v2_PARENT_R_IKE_SA_INIT,
+	  .from       = &state_v2_IKE_SA_INIT_R,
 	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	  .flags      = SMF2_RELEASE_WHACK,
 	  .exchange   = ISAKMP_v2_IKE_AUTH,
@@ -376,8 +376,8 @@ static const struct v2_state_transition PARENT_R_IKE_SA_INIT_transitions[] = {
 	  .timeout_event = EVENT_v2_REPLACE, },
 
 	{ .story      = "Responder: process IKE_AUTH(EAP) request",
-	  .from       = &state_v2_PARENT_R_IKE_SA_INIT,
-	  .next_state = STATE_V2_PARENT_R_IKE_AUTH_EAP,
+	  .from       = &state_v2_IKE_SA_INIT_R,
+	  .next_state = STATE_V2_IKE_AUTH_EAP_R,
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_IKE_AUTH,
 	  .recv_role  = MESSAGE_REQUEST,
@@ -391,13 +391,13 @@ static const struct v2_state_transition PARENT_R_IKE_SA_INIT_transitions[] = {
 
 };
 
-S(PARENT_R_IKE_SA_INIT, "sent IKE_SA_INIT response, waiting for IKE_INTERMEDIATE or IKE_AUTH request", CAT_HALF_OPEN_IKE_SA, .v2.secured = true);
+S(IKE_SA_INIT_R, "sent IKE_SA_INIT response, waiting for IKE_INTERMEDIATE or IKE_AUTH request", CAT_HALF_OPEN_IKE_SA, .v2.secured = true);
 
-static const struct v2_state_transition PARENT_R_IKE_INTERMEDIATE_transitions[] = {
+static const struct v2_state_transition IKE_INTERMEDIATE_R_transitions[] = {
 
 	{ .story      = "Responder: process IKE_INTERMEDIATE request",
-	  .from       = &state_v2_PARENT_R_IKE_INTERMEDIATE,
-	  .next_state = STATE_V2_PARENT_R_IKE_INTERMEDIATE,
+	  .from       = &state_v2_IKE_INTERMEDIATE_R,
+	  .next_state = STATE_V2_IKE_INTERMEDIATE_R,
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_IKE_INTERMEDIATE,
 	  .recv_role  = MESSAGE_REQUEST,
@@ -410,8 +410,8 @@ static const struct v2_state_transition PARENT_R_IKE_INTERMEDIATE_transitions[] 
 	  .timeout_event = EVENT_v2_DISCARD, },
 
 	{ .story      = "Responder: process IKE_AUTH(EAP) request",
-	  .from       = &state_v2_PARENT_R_IKE_INTERMEDIATE,
-	  .next_state = STATE_V2_PARENT_R_IKE_AUTH_EAP,
+	  .from       = &state_v2_IKE_INTERMEDIATE_R,
+	  .next_state = STATE_V2_IKE_AUTH_EAP_R,
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_IKE_AUTH,
 	  .recv_role  = MESSAGE_REQUEST,
@@ -429,7 +429,7 @@ static const struct v2_state_transition PARENT_R_IKE_INTERMEDIATE_transitions[] 
 	 */
 
 	{ .story      = "Responder: process IKE_AUTH request",
-	  .from       = &state_v2_PARENT_R_IKE_INTERMEDIATE,
+	  .from       = &state_v2_IKE_INTERMEDIATE_R,
 	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	  .flags      = SMF2_RELEASE_WHACK,
 	  .exchange   = ISAKMP_v2_IKE_AUTH,
@@ -444,13 +444,13 @@ static const struct v2_state_transition PARENT_R_IKE_INTERMEDIATE_transitions[] 
 
 };
 
-S(PARENT_R_IKE_INTERMEDIATE, "sent IKE_INTERMEDIATE response, waiting for IKE_INTERMEDIATE or IKE_AUTH request", CAT_OPEN_IKE_SA, .v2.secured = true);
+S(IKE_INTERMEDIATE_R, "sent IKE_INTERMEDIATE response, waiting for IKE_INTERMEDIATE or IKE_AUTH request", CAT_OPEN_IKE_SA, .v2.secured = true);
 
-static const struct v2_state_transition PARENT_R_IKE_AUTH_EAP_transitions[] = {
+static const struct v2_state_transition IKE_AUTH_EAP_R_transitions[] = {
 
 	{ .story      = "Responder: process IKE_AUTH/EAP, continue EAP",
-	  .from       = &state_v2_PARENT_R_IKE_AUTH_EAP,
-	  .next_state = STATE_V2_PARENT_R_IKE_AUTH_EAP,
+	  .from       = &state_v2_IKE_AUTH_EAP_R,
+	  .next_state = STATE_V2_IKE_AUTH_EAP_R,
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_IKE_AUTH,
 	  .recv_role  = MESSAGE_REQUEST,
@@ -462,7 +462,7 @@ static const struct v2_state_transition PARENT_R_IKE_AUTH_EAP_transitions[] = {
 	  .timeout_event = EVENT_v2_DISCARD, },
 
 	{ .story      = "Responder: process final IKE_AUTH/EAP",
-	  .from       = &state_v2_PARENT_R_IKE_AUTH_EAP,
+	  .from       = &state_v2_IKE_AUTH_EAP_R,
 	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	  .flags      = SMF2_RELEASE_WHACK,
 	  .exchange   = ISAKMP_v2_IKE_AUTH,
@@ -476,7 +476,7 @@ static const struct v2_state_transition PARENT_R_IKE_AUTH_EAP_transitions[] = {
 
 };
 
-S(PARENT_R_IKE_AUTH_EAP, "sent IKE_AUTH(EAP) response, waiting for IKE_AUTH(EAP) request", CAT_OPEN_IKE_SA, .v2.secured = true);
+S(IKE_AUTH_EAP_R, "sent IKE_AUTH(EAP) response, waiting for IKE_AUTH(EAP) request", CAT_OPEN_IKE_SA, .v2.secured = true);
 
 /* IKE exchange can also create a child */
 
@@ -1019,12 +1019,12 @@ S(CHILD_SA_DELETE, "STATE_CHILDSA_DEL", CAT_INFORMATIONAL);
 static const struct finite_state *v2_states[] = {
 #define S(KIND, ...) [STATE_V2_##KIND - STATE_IKEv2_FLOOR] = &state_v2_##KIND
 	S(PARENT_I0),
-	S(PARENT_I1),
+	S(IKE_SA_INIT_I),
 	S(PARENT_R0),
-	S(PARENT_R_IKE_SA_INIT),
-	S(PARENT_R_IKE_INTERMEDIATE),
-	S(PARENT_R_IKE_AUTH_EAP),
-	S(PARENT_I2),
+	S(IKE_SA_INIT_R),
+	S(IKE_INTERMEDIATE_R),
+	S(IKE_AUTH_EAP_R),
+	S(IKE_AUTH_I),
 	S(IKE_AUTH_CHILD_I0),
 	S(IKE_AUTH_CHILD_R0),
 	S(NEW_CHILD_I0),
