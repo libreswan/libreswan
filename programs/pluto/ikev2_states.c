@@ -238,7 +238,7 @@ static const struct v2_state_transition IKE_SA_INIT_I_transitions[] = {
 	 */
 	{ .story      = "Initiator: process IKE_SA_INIT reply, initiate IKE_AUTH or IKE_INTERMEDIATE",
 	  .from       = &state_v2_IKE_SA_INIT_I,
-	  .next_state = STATE_V2_IKE_AUTH_I,
+	  .next_state = STATE_V2_IKE_SA_INIT_IR, /* next exchange does IKE_AUTH | IKE_INTERMEDIATE */
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_IKE_SA_INIT,
 	  .recv_role  = MESSAGE_RESPONSE,
@@ -252,6 +252,33 @@ static const struct v2_state_transition IKE_SA_INIT_I_transitions[] = {
 };
 
 S(IKE_SA_INIT_I, "sent IKE_SA_INIT request", CAT_HALF_OPEN_IKE_SA);
+
+const struct v2_state_transition v2_IKE_AUTH_initiator_transition = {
+	.story      = "initiating IKE_AUTH",
+	.from       = &state_v2_IKE_SA_INIT_IR,
+	.next_state = STATE_V2_IKE_AUTH_I,
+	.exchange   = ISAKMP_v2_IKE_AUTH,
+	.send_role  = MESSAGE_REQUEST,
+	.processor  = initiate_v2_IKE_AUTH_request,
+	.llog_success = llog_v2_success_exchange_sent_to,
+	.timeout_event = EVENT_RETRANSMIT,
+};
+
+const struct v2_state_transition v2_IKE_INTERMEDIATE_initiator_transition = {
+	.story      = "initiating IKE_INTERMEDIATE",
+	.from       = &state_v2_IKE_SA_INIT_IR,
+	.next_state = STATE_V2_IKE_AUTH_I,
+	.exchange   = ISAKMP_v2_IKE_INTERMEDIATE,
+	.send_role  = MESSAGE_REQUEST,
+	.processor  = initiate_v2_IKE_INTERMEDIATE_request,
+	.llog_success = llog_v2_success_exchange_sent_to,
+	.timeout_event = EVENT_RETRANSMIT,
+};
+
+static const struct v2_state_transition IKE_SA_INIT_IR_transitions[] = {
+};
+
+S(IKE_SA_INIT_IR, "processed IKE_SA_INIT response, initiating IKE_INTERMEDIATE or IKE_AUTH", CAT_HALF_OPEN_IKE_SA);
 
 /*
  * All IKEv1 MAIN modes except the first (half-open) and last ones are
@@ -1005,9 +1032,10 @@ S(CHILD_SA_DELETE, "STATE_CHILDSA_DEL", CAT_INFORMATIONAL);
 static const struct finite_state *v2_states[] = {
 #define S(KIND, ...) [STATE_V2_##KIND - STATE_IKEv2_FLOOR] = &state_v2_##KIND
 	S(PARENT_I0),
-	S(IKE_SA_INIT_I),
 	S(PARENT_R0),
+	S(IKE_SA_INIT_I),
 	S(IKE_SA_INIT_R),
+	S(IKE_SA_INIT_IR),
 	S(IKE_INTERMEDIATE_R),
 	S(IKE_AUTH_EAP_R),
 	S(IKE_AUTH_I),

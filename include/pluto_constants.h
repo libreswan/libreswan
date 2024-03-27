@@ -560,8 +560,9 @@ enum state_kind {
 	STATE_V2_PARENT_I0 = STATE_IKEv2_FLOOR,	/* waiting for KE to finish */
 	STATE_V2_PARENT_R0,	/* just starting */
 
-	STATE_V2_IKE_SA_INIT_I,        /* IKE_SA_INIT: sent initial message, waiting for reply */
-	STATE_V2_IKE_SA_INIT_R,
+	STATE_V2_IKE_SA_INIT_I,		/* Initiator sent Request */
+	STATE_V2_IKE_SA_INIT_R,		/* Responder send Response */
+	STATE_V2_IKE_SA_INIT_IR,	/* Initiator processed Response */
 
 	STATE_V2_IKE_INTERMEDIATE_R,
 	STATE_V2_IKE_AUTH_EAP_R,  /* IKE_AUTH EAP negotiation */

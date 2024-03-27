@@ -19,9 +19,10 @@
 
 #define S(KIND, ...) extern const struct finite_state state_v2_##KIND
 S(PARENT_I0);
-S(IKE_SA_INIT_I);
 S(PARENT_R0);
+S(IKE_SA_INIT_I);
 S(IKE_SA_INIT_R);
+S(IKE_SA_INIT_IR);
 S(IKE_INTERMEDIATE_R);
 S(IKE_AUTH_EAP_R);
 S(IKE_AUTH_I);
@@ -54,6 +55,10 @@ const struct v2_state_transition *find_v2_state_transition(struct logger *logger
 							   const struct finite_state *state,
 							   struct msg_digest *md,
 							   bool *secured_payload_failed);
+
+extern const struct v2_state_transition v2_IKE_INTERMEDIATE_initiator_transition;
+extern const struct v2_state_transition v2_IKE_AUTH_initiator_transition;
+
 void init_ikev2_states(struct logger *logger);
 
 #endif

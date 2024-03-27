@@ -26,6 +26,6 @@ extern ikev2_state_transition_fn process_v2_IKE_AUTH_failure_response;
 
 bool v2_ike_sa_auth_responder_establish(struct ike_sa *ike, bool *send_redirect);
 
-extern const struct v2_state_transition v2_IKE_AUTH_initiator_transition;
+extern ikev2_state_transition_fn initiate_v2_IKE_AUTH_request;
 
 #endif

@@ -16,9 +16,8 @@
 #ifndef IKEV2_IKE_INTERMEDIATE_H
 #define IKEV2_IKE_INTERMEDIATE_H
 
+extern ikev2_state_transition_fn initiate_v2_IKE_INTERMEDIATE_request;
 extern ikev2_state_transition_fn process_v2_IKE_INTERMEDIATE_request;
 extern ikev2_state_transition_fn process_v2_IKE_INTERMEDIATE_response;
-
-extern const struct v2_state_transition v2_IKE_INTERMEDIATE_initiator_transition;
 
 #endif
