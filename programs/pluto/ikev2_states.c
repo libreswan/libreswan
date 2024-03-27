@@ -501,20 +501,6 @@ static const struct v2_state_transition IKE_AUTH_CHILD_I0_transitions[] = {
 
 S(IKE_AUTH_CHILD_I0, "ephemeral: initiator creating child from IKE exchange", CAT_IGNORE);
 
-static const struct v2_state_transition IKE_AUTH_CHILD_R0_transitions[] = {
-
-	{ .story      = "Child SA created by responder during IKE_AUTH",
-	  .from       = &state_v2_IKE_AUTH_CHILD_R0,
-	  .next_state = STATE_V2_ESTABLISHED_CHILD_SA,
-	  .flags      = SMF2_RELEASE_WHACK,
-	  .exchange   = ISAKMP_v2_IKE_AUTH,
-	  .processor  = NULL,
-	  .llog_success = ldbg_v2_success,
-	  .timeout_event = EVENT_v2_REPLACE, },
-};
-
-S(IKE_AUTH_CHILD_R0, "ephemeral: responder creating child from IKE exchange", CAT_IGNORE);
-
 /*
  * CREATE_CHILD_SA exchanges.
  */
@@ -1026,7 +1012,6 @@ static const struct finite_state *v2_states[] = {
 	S(IKE_AUTH_EAP_R),
 	S(IKE_AUTH_I),
 	S(IKE_AUTH_CHILD_I0),
-	S(IKE_AUTH_CHILD_R0),
 	S(NEW_CHILD_I0),
 	S(NEW_CHILD_I1),
 	S(NEW_CHILD_R0),

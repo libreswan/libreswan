@@ -571,7 +571,6 @@ enum state_kind {
 	/* IKE exchange can also create a child */
 
 	STATE_V2_IKE_AUTH_CHILD_I0,	/* ephemeral: child from IKE exchange */
-	STATE_V2_IKE_AUTH_CHILD_R0,	/* ephemeral: child from IKE exchange */
 
 	/* IKEv2 CREATE_CHILD_SA Initiator states */
 

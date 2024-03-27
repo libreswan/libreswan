@@ -1021,7 +1021,7 @@ bool process_any_v2_IKE_AUTH_request_child_payloads(struct ike_sa *ike,
 		ike->sa.st_v2_msgid_windows.responder.wip_sa =
 		new_v2_child_sa(ike->sa.st_connection, ike,
 				CHILD_SA, SA_RESPONDER,
-				STATE_V2_IKE_AUTH_CHILD_R0);
+				STATE_V2_NEW_CHILD_R0);
 
 	v2_notification_t cn = process_v2_IKE_AUTH_request_child_sa_payloads(ike, child, md, sk_pbs);
 	if (cn != v2N_NOTHING_WRONG) {
