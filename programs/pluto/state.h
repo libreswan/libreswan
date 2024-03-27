@@ -59,6 +59,7 @@
 #include "message_role.h"
 #include "sa_role.h"
 #include "packet.h"
+#include "state_category.h"
 
 struct whack_message;
 struct v2_state_transition;
@@ -207,24 +208,6 @@ enum delete_reason {
 	REASON_COMPLETED,
 #define DELETE_REASON_ROOF (REASON_COMPLETED + 1)
 };
-
-/*
- * For auditing, different categories of a state.  Of most interest is
- * half-open states which suggest libreswan being under attack.
- *
- * "half-open" is where only one packet was received.
- */
-enum state_category {
-	CAT_UNKNOWN = 0,
-	CAT_HALF_OPEN_IKE_SA,
-	CAT_OPEN_IKE_SA,
-	CAT_ESTABLISHED_IKE_SA,
-	CAT_ESTABLISHED_CHILD_SA,
-	CAT_INFORMATIONAL,
-	CAT_IGNORE,
-};
-
-extern enum_names state_category_names;
 
 /*
  * Abstract state machine that drives the parent and child SA.

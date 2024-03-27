@@ -50,6 +50,7 @@ OBJS += connection_owner_names.o
 OBJS += sa_type.o
 OBJS += fips_mode.o
 OBJS += fips_mode_names.o
+OBJS += state_category_names.o
 
 OBJS += constants.o \
 	id.o \

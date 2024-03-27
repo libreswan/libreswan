@@ -278,7 +278,7 @@ const struct v2_state_transition v2_IKE_INTERMEDIATE_initiator_transition = {
 static const struct v2_state_transition IKE_SA_INIT_IR_transitions[] = {
 };
 
-S(IKE_SA_INIT_IR, "processed IKE_SA_INIT response, initiating IKE_INTERMEDIATE or IKE_AUTH", CAT_HALF_OPEN_IKE_SA);
+S(IKE_SA_INIT_IR, "processed IKE_SA_INIT response, initiating IKE_INTERMEDIATE or IKE_AUTH", CAT_OPEN_IKE_SA);
 
 /*
  * All IKEv1 MAIN modes except the first (half-open) and last ones are
@@ -560,7 +560,7 @@ static const struct v2_state_transition REKEY_IKE_I0_transitions[] = {
 
 };
 
-S(REKEY_IKE_I0, "STATE_V2_REKEY_IKE_I0", CAT_ESTABLISHED_IKE_SA);
+S(REKEY_IKE_I0, "STATE_V2_REKEY_IKE_I0", CAT_IGNORE);
 
 static const struct v2_state_transition REKEY_IKE_R0_transitions[] = {
 
@@ -581,7 +581,8 @@ static const struct v2_state_transition REKEY_IKE_R0_transitions[] = {
 };
 
 /* isn't this an ipsec state */
-S(REKEY_IKE_R0, "STATE_V2_REKEY_IKE_R0", CAT_ESTABLISHED_IKE_SA, .v2.secured = true);
+
+S(REKEY_IKE_R0, "STATE_V2_REKEY_IKE_R0", CAT_OPEN_IKE_SA, .v2.secured = true);
 
 static const struct v2_state_transition REKEY_IKE_I1_transitions[] = {
 
@@ -612,7 +613,7 @@ static const struct v2_state_transition REKEY_IKE_I1_transitions[] = {
 
 };
 
-S(REKEY_IKE_I1, "sent CREATE_CHILD_SA request to rekey IKE SA", CAT_ESTABLISHED_IKE_SA, .v2.secured = true);
+S(REKEY_IKE_I1, "sent CREATE_CHILD_SA request to rekey IKE SA", CAT_OPEN_CHILD_SA, .v2.secured = true);
 
 static const struct v2_state_transition REKEY_CHILD_I0_transitions[] = {
 
@@ -642,7 +643,7 @@ static const struct v2_state_transition REKEY_CHILD_I0_transitions[] = {
 
 };
 
-S(REKEY_CHILD_I0, "STATE_V2_REKEY_CHILD_I0", CAT_ESTABLISHED_IKE_SA);
+S(REKEY_CHILD_I0, "STATE_V2_REKEY_CHILD_I0", CAT_IGNORE);
 
 static const struct v2_state_transition REKEY_CHILD_R0_transitions[] = {
 
@@ -663,7 +664,7 @@ static const struct v2_state_transition REKEY_CHILD_R0_transitions[] = {
 
 };
 
-S(REKEY_CHILD_R0, "STATE_V2_REKEY_CHILD_R0", CAT_ESTABLISHED_IKE_SA, .v2.secured = true);
+S(REKEY_CHILD_R0, "STATE_V2_REKEY_CHILD_R0", CAT_OPEN_CHILD_SA, .v2.secured = true);
 
 static const struct v2_state_transition REKEY_CHILD_I1_transitions[] = {
 
@@ -695,7 +696,7 @@ static const struct v2_state_transition REKEY_CHILD_I1_transitions[] = {
 
 };
 
-S(REKEY_CHILD_I1, "sent CREATE_CHILD_SA request to rekey IPsec SA", CAT_ESTABLISHED_IKE_SA, .v2.secured = true);
+S(REKEY_CHILD_I1, "sent CREATE_CHILD_SA request to rekey IPsec SA", CAT_OPEN_CHILD_SA, .v2.secured = true);
 
 static const struct v2_state_transition NEW_CHILD_I0_transitions[] = {
 
@@ -725,7 +726,7 @@ static const struct v2_state_transition NEW_CHILD_I0_transitions[] = {
 
 };
 
-S(NEW_CHILD_I0, "STATE_V2_NEW_CHILD_I0", CAT_ESTABLISHED_IKE_SA);
+S(NEW_CHILD_I0, "STATE_V2_NEW_CHILD_I0", CAT_IGNORE);
 
 static const struct v2_state_transition NEW_CHILD_R0_transitions[] = {
 
@@ -745,7 +746,7 @@ static const struct v2_state_transition NEW_CHILD_R0_transitions[] = {
 
 };
 
-S(NEW_CHILD_R0, "STATE_V2_NEW_CHILD_R0", CAT_ESTABLISHED_IKE_SA, .v2.secured = true);
+S(NEW_CHILD_R0, "STATE_V2_NEW_CHILD_R0", CAT_OPEN_CHILD_SA, .v2.secured = true);
 
 static const struct v2_state_transition NEW_CHILD_I1_transitions[] = {
 
@@ -777,7 +778,7 @@ static const struct v2_state_transition NEW_CHILD_I1_transitions[] = {
 
 };
 
-S(NEW_CHILD_I1, "sent CREATE_CHILD_SA request for new IPsec SA", CAT_ESTABLISHED_IKE_SA, .v2.secured = true);
+S(NEW_CHILD_I1, "sent CREATE_CHILD_SA request for new IPsec SA", CAT_OPEN_CHILD_SA, .v2.secured = true);
 
 /*
  * IKEv2 established states.

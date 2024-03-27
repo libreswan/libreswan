@@ -156,25 +156,6 @@ void jam_finite_state(struct jambuf *buf, const struct finite_state *fs)
 	}
 }
 
-/* state categories */
-
-static const char *const cat_name[] = {
-	[CAT_UNKNOWN] = "unknown",
-	[CAT_HALF_OPEN_IKE_SA] = "half-open IKE SA",
-	[CAT_OPEN_IKE_SA] = "open IKE SA",
-	[CAT_ESTABLISHED_IKE_SA] = "established IKE SA",
-	[CAT_ESTABLISHED_CHILD_SA] = "established CHILD SA",
-	[CAT_INFORMATIONAL] = "informational",
-	[CAT_IGNORE] = "ignore",
-};
-
-enum_names state_category_names = {
-	0, elemsof(cat_name) - 1,
-	ARRAY_REF(cat_name),
-	"",
-	NULL
-};
-
 /*
  * Track the categories and for ESTABLISHED, also track if the SA was
  * AUTHENTICATED or ANONYMOUS.  Among other things used for DDoS
@@ -189,7 +170,7 @@ enum_names state_category_names = {
 typedef unsigned long cat_t;
 #define PRI_CAT "%ld"
 
-static cat_t cat_count[elemsof(cat_name)] = { 0 };
+static cat_t cat_count[CAT_ROOF] = { 0 };
 
 /* see .st_ikev2_anon, enum would be better */
 #define CAT_AUTHENTICATED false
@@ -246,8 +227,8 @@ static void update_state_stats(struct state *st,
 			       const struct finite_state *new_state)
 {
 	/* catch / log unexpected cases */
-	pexpect(old_state->category != CAT_UNKNOWN);
-	pexpect(new_state->category != CAT_UNKNOWN);
+	pexpect(old_state->category != 0);
+	pexpect(new_state->category != 0);
 
 	update_state_stat(st, old_state, -1);
 	update_state_stat(st, new_state, +1);
@@ -1053,6 +1034,8 @@ void delete_state(struct state *st)
 	 */
 	state_db_del(st);
 
+	change_state(st, STATE_UNDEFINED);
+
 	/*
 	 * Break the STATE->CONNECTION link.  If CONNECTION is an
 	 * instance, then it too will be deleted.
@@ -1071,8 +1054,6 @@ void delete_state(struct state *st)
 	connection_delref(&st->st_connection, st->logger);
 
 	v2_msgid_free(st);
-
-	change_state(st, STATE_UNDEFINED);
 
 	release_whack(st->logger, HERE);
 
