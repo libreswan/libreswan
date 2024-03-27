@@ -1284,13 +1284,7 @@ stf_status process_v2_CREATE_CHILD_SA_child_response(struct ike_sa *ike,
 	/*
 	 * Drive the larval Child SA's state machine.
 	 */
-	pexpect(larval_child->sa.st_state->nr_transitions >= 1);
-	const struct v2_state_transition *transition =
-		&larval_child->sa.st_state->v2.transitions[0];
-	pexpect(transition->from == &state_v2_REKEY_CHILD_I1 ||
-		transition->from == &state_v2_NEW_CHILD_I1);
-	pexpect(transition->next_state == STATE_V2_ESTABLISHED_CHILD_SA);
-	larval_child->sa.st_v2_transition = transition;
+	set_larval_v2_transition(larval_child, &state_v2_ESTABLISHED_CHILD_SA, HERE);
 
 	/* Ni in */
 	if (!accept_v2_nonce(larval_child->sa.logger, response_md,
@@ -1760,12 +1754,7 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response(struct ike_sa *ike,
 	/*
 	 * Drive the larval IKE SA's state machine.
 	 */
-	pexpect(larval_ike->sa.st_state->nr_transitions >= 1);
-	const struct v2_state_transition *transition =
-		&larval_ike->sa.st_state->v2.transitions[0];
-	pexpect(transition->from == &state_v2_REKEY_IKE_I1);
-	pexpect(transition->next_state == STATE_V2_ESTABLISHED_IKE_SA);
-	larval_ike->sa.st_v2_transition = transition;
+	set_larval_v2_transition(larval_ike, &state_v2_ESTABLISHED_IKE_SA, HERE);
 
 	/* Ni in */
 	if (!accept_v2_nonce(larval_ike->sa.logger, response_md, &larval_ike->sa.st_nr, "Nr")) {

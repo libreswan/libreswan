@@ -299,6 +299,7 @@ static void change_state(struct state *st, enum state_kind new_state_kind)
 	if (new_state != old_state) {
 		update_state_stats(st, old_state, new_state);
 		binlog_state(st, new_state_kind /* XXX */);
+		pdbg(st->logger, "transition %s->%s", old_state->short_name, new_state->short_name);
 		st->st_state = new_state;
 	}
 }

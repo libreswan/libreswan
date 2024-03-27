@@ -569,13 +569,10 @@ enum state_kind {
 
 	STATE_V2_IKE_AUTH_I,        /* IKE_AUTH: sent auth message, waiting for reply */
 
-	/* IKE exchange can also create a child */
-
-	STATE_V2_IKE_AUTH_CHILD_I0,	/* ephemeral: child from IKE exchange */
-
 	/* IKEv2 CREATE_CHILD_SA Initiator states */
 
 	STATE_V2_NEW_CHILD_I0,		/* larval: sent nothing yet */
+	STATE_V2_NEW_CHILD_R0,		/* larval: sent nothing yet. */
 	STATE_V2_NEW_CHILD_I1,		/* sent first message of CREATE_CHILD new IPsec */
 
 	STATE_V2_REKEY_IKE_I0,		/* larval: sent nothing yet */
@@ -586,7 +583,6 @@ enum state_kind {
 
 	/* IKEv2 CREATE_CHILD_SA Responder states */
 
-	STATE_V2_NEW_CHILD_R0,		/* larval: sent nothing yet. */
 	STATE_V2_REKEY_IKE_R0,		/* larval: sent nothing yet terminal state STATE_V2_PARENT_R2 */
 	STATE_V2_REKEY_CHILD_R0,	/* larval: sent nothing yet. */
 

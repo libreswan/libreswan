@@ -75,6 +75,22 @@ static bool emit_v2_child_response_payloads(struct ike_sa *ike,
 					    struct pbs_out *outpbs);
 
 /*
+ * Drive the larval Child SA's state machine.
+ */
+
+void set_larval_v2_transition(struct child_sa *larval,
+			      const struct finite_state *to,
+			      where_t where)
+{
+	PASSERT_WHERE(larval->sa.logger, where, larval->sa.st_state->nr_transitions == 1);
+	const struct v2_state_transition *transition =
+		&larval->sa.st_state->v2.transitions[0];
+	PEXPECT_WHERE(larval->sa.logger, where, transition->from == larval->sa.st_state);
+	PEXPECT_WHERE(larval->sa.logger, where, transition->next_state == to->kind);
+	set_v2_transition(&larval->sa, transition, where);
+}
+
+/*
  * All payloads required by an IKE_AUTH child?
  */
 
@@ -187,8 +203,7 @@ bool emit_v2_child_request_payloads(const struct ike_sa *ike,
 				    struct pbs_out *pbs)
 {
 	if (!pexpect(larval_child->sa.st_state == &state_v2_NEW_CHILD_I0 ||
-		     larval_child->sa.st_state == &state_v2_REKEY_CHILD_I0 ||
-		     larval_child->sa.st_state == &state_v2_IKE_AUTH_CHILD_I0)) {
+		     larval_child->sa.st_state == &state_v2_REKEY_CHILD_I0)) {
 		return false;
 	}
 
@@ -1093,6 +1108,11 @@ v2_notification_t process_v2_IKE_AUTH_response_child_payloads(struct ike_sa *ike
 	}
 
 	/*
+	 * Drive the larval Child SA's state machine.
+	 */
+	set_larval_v2_transition(child, &state_v2_ESTABLISHED_CHILD_SA, HERE);
+
+	/*
 	 * Was there a child error notification?  The RFC says this
 	 * list isn't definitive.
 	 *
@@ -1196,6 +1216,7 @@ v2_notification_t process_v2_IKE_AUTH_response_child_payloads(struct ike_sa *ike
 	 * success_v2_state_transition(); suspect very similar code
 	 * will appear in the responder.
 	 */
+
 	v2_child_sa_established(ike, child);
 	/* hack; cover all bases; handled by close any whacks? */
 	release_whack(child->sa.logger, HERE);

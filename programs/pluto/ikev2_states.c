@@ -505,29 +505,6 @@ static const struct v2_state_transition IKE_AUTH_EAP_R_transitions[] = {
 
 S(IKE_AUTH_EAP_R, "sent IKE_AUTH(EAP) response, waiting for IKE_AUTH(EAP) request", CAT_OPEN_IKE_SA, .v2.secured = true);
 
-/* IKE exchange can also create a child */
-
-static const struct v2_state_transition IKE_AUTH_CHILD_I0_transitions[] = {
-
-	/*
-	 * Create a Child SA during IKE_AUTH.
-	 *
-	 * Merge with the CREATE_CHILD_SA transitions below?
-	 */
-
-	{ .story      = "Child SA created by initiator during IKE_AUTH",
-	  .from       = &state_v2_IKE_AUTH_CHILD_I0,
-	  .next_state = STATE_V2_ESTABLISHED_CHILD_SA,
-	  .flags      = SMF2_RELEASE_WHACK,
-	  .exchange   = ISAKMP_v2_IKE_AUTH,
-	  .processor  = NULL,
-	  .llog_success = ldbg_v2_success,
-	  .timeout_event = EVENT_v2_REPLACE, },
-
-};
-
-S(IKE_AUTH_CHILD_I0, "ephemeral: initiator creating child from IKE exchange", CAT_IGNORE);
-
 /*
  * CREATE_CHILD_SA exchanges.
  */
@@ -585,7 +562,6 @@ static const struct v2_state_transition REKEY_IKE_R0_transitions[] = {
 S(REKEY_IKE_R0, "STATE_V2_REKEY_IKE_R0", CAT_OPEN_IKE_SA, .v2.secured = true);
 
 static const struct v2_state_transition REKEY_IKE_I1_transitions[] = {
-
 	{ .story      = "process rekey IKE SA response (CREATE_CHILD_SA)",
 	  .from       = &state_v2_REKEY_IKE_I1,
 	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
@@ -598,19 +574,6 @@ static const struct v2_state_transition REKEY_IKE_I1_transitions[] = {
 	  .processor  = process_v2_CREATE_CHILD_SA_rekey_ike_response,
 	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_v2_REPLACE, },
-
-	{ .story      = "process rekey IKE SA failure response (CREATE_CHILD_SA)",
-	  .from       = &state_v2_REKEY_IKE_I1,
-	  .next_state = STATE_V2_IKE_SA_DELETE, /* never reached */
-	  .flags      = SMF2_RELEASE_WHACK,
-	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
-	  .recv_role  = MESSAGE_RESPONSE,
-	  .message_payloads = { .required = P(SK), },
-	  .processor  = process_v2_CREATE_CHILD_SA_failure_response,
-	  .llog_success = ldbg_v2_success,
-	  .timeout_event = EVENT_RETAIN, /* no timeout really */
-	},
-
 };
 
 S(REKEY_IKE_I1, "sent CREATE_CHILD_SA request to rekey IKE SA", CAT_OPEN_CHILD_SA, .v2.secured = true);
@@ -667,7 +630,6 @@ static const struct v2_state_transition REKEY_CHILD_R0_transitions[] = {
 S(REKEY_CHILD_R0, "STATE_V2_REKEY_CHILD_R0", CAT_OPEN_CHILD_SA, .v2.secured = true);
 
 static const struct v2_state_transition REKEY_CHILD_I1_transitions[] = {
-
 	{ .story      = "process rekey Child SA response (CREATE_CHILD_SA)",
 	  .from       = &state_v2_REKEY_CHILD_I1,
 	  .next_state = STATE_V2_ESTABLISHED_CHILD_SA,
@@ -681,19 +643,6 @@ static const struct v2_state_transition REKEY_CHILD_I1_transitions[] = {
 	  /* .processor  = process_v2_CREATE_CHILD_SA_rekey_child_response, */
 	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_v2_REPLACE, },
-
-	{ .story      = "process rekey Child SA failure response (CREATE_CHILD_SA)",
-	  .from       = &state_v2_REKEY_CHILD_I1,
-	  .next_state = STATE_V2_CHILD_SA_DELETE, /* never reached */
-	  .flags      = SMF2_RELEASE_WHACK,
-	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
-	  .recv_role  = MESSAGE_RESPONSE,
-	  .message_payloads = { .required = P(SK), },
-	  .processor  = process_v2_CREATE_CHILD_SA_failure_response,
-	  .llog_success = ldbg_v2_success,
-	  .timeout_event = EVENT_RETAIN, /* no timeout really */
-	},
-
 };
 
 S(REKEY_CHILD_I1, "sent CREATE_CHILD_SA request to rekey IPsec SA", CAT_OPEN_CHILD_SA, .v2.secured = true);
@@ -749,7 +698,6 @@ static const struct v2_state_transition NEW_CHILD_R0_transitions[] = {
 S(NEW_CHILD_R0, "STATE_V2_NEW_CHILD_R0", CAT_OPEN_CHILD_SA, .v2.secured = true);
 
 static const struct v2_state_transition NEW_CHILD_I1_transitions[] = {
-
 	{ .story      = "process create Child SA response (CREATE_CHILD_SA)",
 	  .from       = &state_v2_NEW_CHILD_I1,
 	  .next_state = STATE_V2_ESTABLISHED_CHILD_SA,
@@ -763,19 +711,6 @@ static const struct v2_state_transition NEW_CHILD_I1_transitions[] = {
 	  /* .processor  = process_v2_CREATE_CHILD_SA_new_child_response, */
 	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_v2_REPLACE, },
-
-	{ .story      = "process create Child SA failure response (CREATE_CHILD_SA)",
-	  .from       = &state_v2_NEW_CHILD_I1,
-	  .next_state = STATE_V2_CHILD_SA_DELETE, /* never reached */
-	  .flags      = SMF2_RELEASE_WHACK,
-	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
-	  .recv_role  = MESSAGE_RESPONSE,
-	  .message_payloads = { .required = P(SK), },
-	  .processor  = process_v2_CREATE_CHILD_SA_failure_response,
-	  .llog_success = ldbg_v2_success,
- 	  .timeout_event = EVENT_RETAIN, /* no timeout really */
-	},
-
 };
 
 S(NEW_CHILD_I1, "sent CREATE_CHILD_SA request for new IPsec SA", CAT_OPEN_CHILD_SA, .v2.secured = true);
@@ -1040,7 +975,6 @@ static const struct finite_state *v2_states[] = {
 	S(IKE_INTERMEDIATE_R),
 	S(IKE_AUTH_EAP_R),
 	S(IKE_AUTH_I),
-	S(IKE_AUTH_CHILD_I0),
 	S(NEW_CHILD_I0),
 	S(NEW_CHILD_I1),
 	S(NEW_CHILD_R0),

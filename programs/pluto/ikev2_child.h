@@ -83,4 +83,7 @@ bool process_any_v2_IKE_AUTH_request_child_payloads(struct ike_sa *ike,
 
 void llog_v2_child_sa_established(struct ike_sa *ike, struct child_sa *child);
 
+void set_larval_v2_transition(struct child_sa *larval, const struct finite_state *to,
+			      where_t where);
+
 #endif

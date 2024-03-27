@@ -311,7 +311,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 		 */
 		struct child_sa *child = new_v2_child_sa(cc, ike, CHILD_SA,
 							 SA_INITIATOR,
-							 STATE_V2_IKE_AUTH_CHILD_I0);
+							 STATE_V2_NEW_CHILD_I0);
 		connection_initiated_child(ike, child, INITIATED_BY_IKE, HERE);
 
 		/*
@@ -342,6 +342,8 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 						    /*ike_auth_exchange*/true, request.pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
+		/* child ready to go */
+		change_v2_state(&child->sa);
 	}
 
 	/*
