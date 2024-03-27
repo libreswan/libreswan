@@ -173,6 +173,7 @@ static bool ikev1_verify_esp(const struct connection *c,
 		dbg("ignoring ESP proposal with unknown integrity");
 		return false;       /* try another */
 	}
+
 	if (ta->ta_integ != &ike_alg_integ_none && !kernel_alg_integ_ok(ta->ta_integ)) {
 		/*
 		 * No kernel support.  Needed because ALG_INFO==NULL
@@ -185,6 +186,12 @@ static bool ikev1_verify_esp(const struct connection *c,
 		 */
 		dbg("ignoring ESP proposal with alg %s not present in kernel",
 		    ta->ta_integ->common.fqn);
+		return false;
+	}
+
+	if (ta->ta_integ != &ike_alg_integ_none && encrypt_desc_is_aead(ta->ta_encrypt)) {
+		ldbg(logger, "ignoring ESP proposal AEAD alg %s with integrity %s",
+		     ta->ta_encrypt->common.fqn, ta->ta_integ->common.fqn);
 		return false;
 	}
 
