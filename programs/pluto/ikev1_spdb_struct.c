@@ -213,6 +213,11 @@ static bool ikev1_verify_esp(const struct connection *c,
 			     const struct trans_attrs *ta,
 			     struct logger *logger)
 {
+	if (c->config->child_proposals.p == NULL) {
+		llog_pexpect(logger, HERE, "ESP IPsec configuration has no proposals to check against");
+		return false;
+	}
+
 	if (!(c->policy & POLICY_ENCRYPT)) {
 		dbg("ignoring ESP proposal as POLICY_ENCRYPT unset");
 		return false;       /* try another */
@@ -307,11 +312,6 @@ static bool ikev1_verify_esp(const struct connection *c,
 		return false;
 	}
 
-	if (c->config->child_proposals.p == NULL) {
-		dbg("ESP IPsec Transform verified unconditionally; no alg_info to check against");
-		return true;
-	}
-
 	FOR_EACH_PROPOSAL(c->config->child_proposals.p, proposal) {
 		struct v1_proposal algs = v1_proposal(proposal);
 		if (algs.encrypt == ta->ta_encrypt &&
@@ -330,6 +330,11 @@ static bool ikev1_verify_ah(const struct connection *c,
 			    const struct trans_attrs *ta,
 			    struct logger *logger)
 {
+	if (c->config->child_proposals.p == NULL) {
+		llog_pexpect(logger, HERE, "ESP IPsec configuration has no proposals to check against");
+		return false;
+	}
+
 	if (!(c->policy & POLICY_AUTHENTICATE)) {
 		dbg("ignoring AH proposal as POLICY_AUTHENTICATE unset");
 		return false;       /* try another */
@@ -353,10 +358,6 @@ static bool ikev1_verify_ah(const struct connection *c,
 		llog_pexpect(logger, HERE, "AH IPsec Transform refused: contains unexpected DH %s",
 			     ta->ta_dh->common.fqn);
 		return false;
-	}
-	if (c->config->child_proposals.p == NULL) {
-		dbg("AH IPsec Transform verified unconditionally; no alg_info to check against");
-		return true;
 	}
 
 	FOR_EACH_PROPOSAL(c->config->child_proposals.p, proposal) {	/* really AH */
