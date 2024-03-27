@@ -1,0 +1,58 @@
+/testing/guestbin/swan-prep
+west #
+ # confirm that the network is alive
+west #
+ ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
+destination -I 192.0.1.254 192.0.2.254 is alive
+west #
+ # ensure that clear text does not get through
+west #
+ iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j DROP
+west #
+ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
+west #
+ # confirm clear text does not get through
+west #
+ ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
+down
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec whack --impair suppress-retransmits
+west #
+ ipsec whack --impair proposal-parser
+west #
+ ipsec auto --add westnet-eastnet-null
+002 "westnet-eastnet-null": IMPAIR: ignoring proposal error: AEAD ESP encryption algorithm NULL_AUTH_AES_GMAC must have 'NONE' as the integrity algorithm
+002 "westnet-eastnet-null": added IKEv1 connection
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec auto --up westnet-eastnet-null
+002 "westnet-eastnet-null" #1: initiating IKEv1 Main Mode connection
+1v1 "westnet-eastnet-null" #1: sent Main Mode request
+1v1 "westnet-eastnet-null" #1: sent Main Mode I2
+1v1 "westnet-eastnet-null" #1: sent Main Mode I3
+002 "westnet-eastnet-null" #1: Peer ID is ID_FQDN: '@east'
+003 "westnet-eastnet-null" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'
+004 "westnet-eastnet-null" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA1 group=MODP2048}
+002 "westnet-eastnet-null" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+1v1 "westnet-eastnet-null" #2: sent Quick Mode request
+031 "westnet-eastnet-null" #2: STATE_QUICK_I1: 60 second timeout exceeded after 0 retransmits.  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal
+000 "westnet-eastnet-null" #2: starting keying attempt 2 of an unlimited number, but releasing whack
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+down UNEXPECTED
+# ping -n -c 1  -i 6 -w 5   -I 192.0.1.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data. --- 192.0.2.254 ping statistics --- 1 packets transmitted, 0 received, 100% packet loss, time XXXX
+west #
+ ipsec whack --trafficstatus
+west #
+ echo done
+done
+west #
+ 
