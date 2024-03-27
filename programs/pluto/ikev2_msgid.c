@@ -388,10 +388,17 @@ static void v2_msgid_update_recv(struct ike_sa *ike, const struct msg_digest *md
 	dbg_msgid_update(update_received_story, receiving, msgid, ike, &old);
 }
 
-static void v2_msgid_update_sent(struct ike_sa *ike, const struct msg_digest *md, enum message_role sending)
+static void v2_msgid_update_sent(struct ike_sa *ike, const struct msg_digest *md)
 {
 	struct v2_msgid_windows old = ike->sa.st_v2_msgid_windows;
 	struct v2_msgid_windows *new = &ike->sa.st_v2_msgid_windows;
+
+	enum message_role receiving = v2_msg_role(md);
+	/* reverse the polarity */
+	enum message_role sending = (receiving == NO_MESSAGE ? MESSAGE_REQUEST :
+				     receiving == MESSAGE_REQUEST ? MESSAGE_RESPONSE :
+				     receiving == MESSAGE_RESPONSE ? NO_MESSAGE :
+				     pexpect(0));
 
 	/* tbd */
 	intmax_t msgid;
@@ -467,14 +474,7 @@ static void v2_msgid_update_sent(struct ike_sa *ike, const struct msg_digest *md
 void v2_msgid_finish(struct ike_sa *ike, const struct msg_digest *md)
 {
 	v2_msgid_update_recv(ike, md);
-	/*
-	 * XXX: If possible, avoid relying on .st_v2_transition.  When
-	 * record'n'send is forcing an initiate, .st_v2_transition is
-	 * bogus.  When record'n'send goes away so does this hack.
-	 */
-	v2_msgid_update_sent(ike, md,
-			     (md == NULL ? MESSAGE_REQUEST :
-			      ike->sa.st_v2_transition->send_role));
+	v2_msgid_update_sent(ike, md);
 }
 
 struct v2_msgid_pending {
