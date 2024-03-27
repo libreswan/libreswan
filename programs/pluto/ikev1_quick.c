@@ -203,7 +203,7 @@ static bool emit_subnet_id(enum perspective perspective,
  * RFC 2409 "IKE" section 5.5
  * specifies how this is to be done.
  */
-static void compute_proto_keymat(struct state *st,
+static bool compute_proto_keymat(struct state *st,
 				 uint8_t protoid,
 				 struct ipsec_proto_info *pi,
 				 const char *satypename)
@@ -297,27 +297,13 @@ static void compute_proto_keymat(struct state *st,
 			}
 			break;
 
-		case ESP_CAST:
-		case ESP_TWOFISH:
-		case ESP_SERPENT:
-		/* ESP_SEED is for IKEv1 only and not supported. Its number in IKEv2 has been re-used */
-			bad_case(pi->attrs.transattrs.ta_ikev1_encrypt);
-
 		default:
-			/* bytes */
-			needed_len = encrypt_max_key_bit_length(pi->attrs.transattrs.ta_encrypt) / BITS_PER_BYTE;
-			if (needed_len > 0) {
-				/* XXX: check key_len coupling with kernel.c's */
-				if (pi->attrs.transattrs.enckeylen) {
-					needed_len =
-						pi->attrs.transattrs.enckeylen
-						/ BITS_PER_BYTE;
-					dbg("compute_proto_keymat: key_len=%d from peer",
-					    (int)needed_len);
-				}
-				break;
-			}
-			bad_case(pi->attrs.transattrs.ta_ikev1_encrypt);
+		{
+			enum_buf eb;
+			llog(RC_LOG, st->st_logger, "rejecting request for keymat for %s",
+			     str_enum(&esp_transformid_names, protoid, &eb));
+			return false;
+		}
 		}
 		dbg("compute_proto_keymat: needed_len (after ESP enc)=%d", (int)needed_len);
 		needed_len += pi->attrs.transattrs.ta_integ->integ_keymat_size;
@@ -359,14 +345,17 @@ static void compute_proto_keymat(struct state *st,
 		DBG_dump_hunk("  inbound:", pi->inbound.keymat);
 		DBG_dump_hunk("  outbound:", pi->outbound.keymat);
 	}
+
+	return true;
 }
 
-static void compute_keymats(struct state *st)
+static bool compute_keymats(struct state *st)
 {
 	if (st->st_ah.present)
-		compute_proto_keymat(st, PROTO_IPSEC_AH, &st->st_ah, "AH");
+		return compute_proto_keymat(st, PROTO_IPSEC_AH, &st->st_ah, "AH");
 	if (st->st_esp.present)
-		compute_proto_keymat(st, PROTO_IPSEC_ESP, &st->st_esp, "ESP");
+		return compute_proto_keymat(st, PROTO_IPSEC_ESP, &st->st_esp, "ESP");
+	return false;
 }
 
 /*
@@ -1460,7 +1449,9 @@ static stf_status quick_inI1_outR1_continue12_tail(struct state *st, struct msg_
 	fixup_v1_HASH(st, &hash_fixup, st->st_v1_msgid.id, rbody.cur);
 
 	/* Derive new keying material */
-	compute_keymats(st);
+	if (!compute_keymats(st)) {
+		return STF_FATAL;
+	}
 
 	/* Tell the kernel to establish the new inbound SA
 	 * (unless the commit bit is set -- which we don't support).
