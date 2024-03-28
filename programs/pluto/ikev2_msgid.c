@@ -513,6 +513,9 @@ void v2_msgid_queue_initiator(struct ike_sa *ike, struct child_sa *child,
 	/* for logging */
 	so_serial_t who_for = (child != NULL ? child->sa.st_serialno : ike->sa.st_serialno);
 	struct logger *logger = (child != NULL ? child->sa.logger : ike->sa.logger);
+	bool crossing_stream =
+		(child != NULL && child->sa.st_connection != ike->sa.st_connection);
+
 	/*
 	 * Find the insertion point; small list?
 	 *
@@ -536,11 +539,17 @@ void v2_msgid_queue_initiator(struct ike_sa *ike, struct child_sa *child,
 	 * Log when the exchange is blocked by some other task.
 	 *
 	 * That is there is something in front of the task on the
-	 * queue (ranking>0).  Don't log to whack as it just scrambles
-	 * the output.
+	 * queue (ranking>0) or when there's a crossing stream.
+	 *
+	 * Log to the file as there can be long gaps between the
+	 * "initiating", adding, and sending messages.  Don't log to
+	 * whack they are always adjacent.
+	 *
+	 * Should the initiate code assign the window?
 	 */
 	enum stream stream = (ranking > 0 ? LOG_STREAM :
-			      DBGP(DBG_BASE) ? DEBUG_STREAM :
+			      crossing_stream ? LOG_STREAM :
+			      DBGP(DBG_BASE) ? DEBUG_STREAM|ADD_PREFIX :
 			      NO_STREAM);
 	if (stream != NO_STREAM) {
 		LLOG_JAMBUF(stream, logger, buf) {
