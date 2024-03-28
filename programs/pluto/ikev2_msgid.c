@@ -219,12 +219,7 @@ void v2_msgid_start(struct ike_sa *ike, const struct msg_digest *md)
 		intmax_t msgid = old.initiator.sent + 1;
 		pexpect_v2_msgid(ike, role, old.initiator.recv+1 == msgid);
 		pexpect_v2_msgid(ike, role, old.initiator.sent+1 == msgid);
-#if 0
-		/*
-		 * XXX: apparently, even this isn't always true!.
-		 */
 		pexpect_v2_msgid(ike, role, old.initiator.wip == -1);
-#endif
 #if 0
 		/*
 		 * XXX: v2_msgid_start() isn't called when starting a
