@@ -389,19 +389,14 @@ static void v2_msgid_update_sent(struct ike_sa *ike, const struct msg_digest *md
 	struct v2_msgid_windows *new = &ike->sa.st_v2_msgid_windows;
 
 	enum message_role receiving = v2_msg_role(md);
-	/* reverse the polarity */
-	enum message_role sending = (receiving == NO_MESSAGE ? MESSAGE_REQUEST :
-				     receiving == MESSAGE_REQUEST ? MESSAGE_RESPONSE :
-				     receiving == MESSAGE_RESPONSE ? NO_MESSAGE :
-				     pexpect(0));
 
 	/* tbd */
 	intmax_t msgid;
 	struct v2_msgid_window *update;
 	const char *update_sent_story;
 
-	switch (sending) {
-	case MESSAGE_REQUEST:
+	switch (receiving) {
+	case NO_MESSAGE:
 		/*
 		 * pluto is initiating a new exchange.
 		 *
@@ -437,7 +432,7 @@ static void v2_msgid_update_sent(struct ike_sa *ike, const struct msg_digest *md
 			dbg_v2_msgid(ike, "XXX: EVENT_RETRANSMIT already scheduled -- suspect record'n'send");
 		}
 		break;
-	case MESSAGE_RESPONSE:
+	case MESSAGE_REQUEST:
 		/*
 		 * pluto is responding to MD.
 		 *
@@ -453,17 +448,17 @@ static void v2_msgid_update_sent(struct ike_sa *ike, const struct msg_digest *md
 		/* extend isa_msgid */
 		msgid = md->hdr.isa_msgid;
 		break;
-	case NO_MESSAGE:
+	case MESSAGE_RESPONSE:
 		dbg_v2_msgid(ike, "skipping update_send as nothing to send (presumably initiator receiving a response)");
 		return;
 	default:
-		bad_case(sending);
+		bad_case(receiving);
 	}
 
 	update->sent = msgid;
 	new->last_sent = update->last_sent = mononow(); /* close enough */
 
-	dbg_msgid_update(update_sent_story, sending, msgid, ike, &old);
+	dbg_msgid_update(update_sent_story, receiving, msgid, ike, &old);
 }
 
 void v2_msgid_finish(struct ike_sa *ike, const struct msg_digest *md)
