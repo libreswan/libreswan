@@ -282,7 +282,6 @@ static const struct v2_state_transition v2_liveness_probe = {
 	.from = &state_v2_ESTABLISHED_IKE_SA,
 	.next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	.exchange = ISAKMP_v2_INFORMATIONAL,
-	.send_role = MESSAGE_REQUEST,
 	.processor = send_v2_liveness_request,
 	.llog_success = ldbg_v2_success,
 	.timeout_event =  EVENT_RETAIN,

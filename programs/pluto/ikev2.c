@@ -1585,7 +1585,8 @@ static void success_v2_state_transition(struct ike_sa *ike,
 		dbg("checking that a retransmit timeout_event was already");
 		delete_event(&ike->sa); /* relying on retransmit */
 		pexpect(ike->sa.st_retransmit_event != NULL);
-		pexpect(transition->send_role == MESSAGE_REQUEST);
+		/* reverse polarity */
+		pexpect(transition->recv_role == NO_MESSAGE);
 		break;
 
 	case EVENT_v2_REPLACE: /* IKE or Child SA replacement event */
@@ -1837,7 +1838,6 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		/* send the response */
 		dbg_v2_msgid(ike, "finishing old exchange (STF_OK_RESPONDER_DELETE_IKE)");
 		pexpect(transition->recv_role == MESSAGE_REQUEST);
-		pexpect(transition->send_role == MESSAGE_RESPONSE);
 		v2_msgid_finish(ike, md);
 		send_recorded_v2_message(ike, "DELETE_IKE_FAMILY",
 					 ike->sa.st_v2_msgid_windows.responder.outgoing_fragments);
@@ -1896,7 +1896,6 @@ void complete_v2_state_transition(struct ike_sa *ike,
 			v2_msgid_finish(ike, md);
 			break;
 		case MESSAGE_REQUEST:
-			pexpect(transition->send_role == MESSAGE_RESPONSE);
 			if (ike->sa.st_v2_msgid_windows.responder.outgoing_fragments != NULL) {
 				dbg_v2_msgid(ike, "responding with recorded fatal message");
 				v2_msgid_finish(ike, md);

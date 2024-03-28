@@ -170,7 +170,6 @@ static const struct v2_state_transition PARENT_I0_transitions[] = {
 	  .next_state = STATE_V2_IKE_SA_INIT_I,
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_IKE_SA_INIT,
-	  .send_role  = MESSAGE_REQUEST,
 	  .processor  = NULL, /* XXX: should be set */
 	  .llog_success = llog_v2_success_exchange_sent_to,
 	  .timeout_event = EVENT_RETRANSMIT, },
@@ -196,7 +195,6 @@ static const struct v2_state_transition IKE_SA_INIT_I_transitions[] = {
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_IKE_SA_INIT,
 	  .recv_role  = MESSAGE_RESPONSE,
-	  .send_role  = NO_MESSAGE,
 	  .message_payloads.required = P(N),
 	  .message_payloads.notification = v2N_COOKIE,
 	  .processor  = process_v2_IKE_SA_INIT_response_v2N_COOKIE,
@@ -209,7 +207,6 @@ static const struct v2_state_transition IKE_SA_INIT_I_transitions[] = {
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_IKE_SA_INIT,
 	  .recv_role  = MESSAGE_RESPONSE,
-	  .send_role  = NO_MESSAGE,
 	  .message_payloads.required = P(N),
 	  .message_payloads.notification = v2N_INVALID_KE_PAYLOAD,
 	  .processor  = process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_PAYLOAD,
@@ -222,7 +219,6 @@ static const struct v2_state_transition IKE_SA_INIT_I_transitions[] = {
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_IKE_SA_INIT,
 	  .recv_role  = MESSAGE_RESPONSE,
-	  .send_role  = NO_MESSAGE,
 	  .message_payloads.required = P(N),
 	  .message_payloads.notification = v2N_REDIRECT,
 	  .processor  = process_v2_IKE_SA_INIT_response_v2N_REDIRECT,
@@ -242,7 +238,6 @@ static const struct v2_state_transition IKE_SA_INIT_I_transitions[] = {
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_IKE_SA_INIT,
 	  .recv_role  = MESSAGE_RESPONSE,
-	  .send_role  = NO_MESSAGE, /* handled by next transition */
 	  .req_clear_payloads = P(SA) | P(KE) | P(Nr),
 	  .opt_clear_payloads = P(CERTREQ),
 	  .processor  = process_v2_IKE_SA_INIT_response,
@@ -259,7 +254,6 @@ const struct v2_state_transition v2_IKE_SA_INIT_to_IKE_AUTH_transition = {
 	.from       = &state_v2_IKE_SA_INIT_IR,
 	.next_state = STATE_V2_IKE_AUTH_I,
 	.exchange   = ISAKMP_v2_IKE_AUTH,
-	.send_role  = MESSAGE_REQUEST,
 	.processor  = initiate_v2_IKE_AUTH_request,
 	.llog_success = llog_v2_success_exchange_sent_to,
 	.timeout_event = EVENT_RETRANSMIT,
@@ -270,7 +264,6 @@ const struct v2_state_transition v2_IKE_INTERMEDIATE_to_IKE_AUTH_transition = {
 	.from       = &state_v2_IKE_INTERMEDIATE_IR,
 	.next_state = STATE_V2_IKE_AUTH_I,
 	.exchange   = ISAKMP_v2_IKE_AUTH,
-	.send_role  = MESSAGE_REQUEST,
 	.processor  = initiate_v2_IKE_AUTH_request,
 	.llog_success = llog_v2_success_exchange_sent_to,
 	.timeout_event = EVENT_RETRANSMIT,
@@ -340,7 +333,6 @@ static const struct v2_state_transition PARENT_R0_transitions[] = {
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_IKE_SA_INIT,
 	  .recv_role  = MESSAGE_REQUEST,
-	  .send_role  = MESSAGE_RESPONSE,
 	  .req_clear_payloads = P(SA) | P(KE) | P(Ni),
 	  .processor  = process_v2_IKE_SA_INIT_request,
 	  .llog_success = llog_v2_IKE_SA_INIT_success,
@@ -368,7 +360,6 @@ static const struct v2_state_transition IKE_SA_INIT_R_transitions[] = {
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_IKE_INTERMEDIATE,
 	  .recv_role  = MESSAGE_REQUEST,
-	  .send_role  = MESSAGE_RESPONSE,
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = LEMPTY,
 	  .opt_enc_payloads = LEMPTY,
@@ -382,7 +373,6 @@ static const struct v2_state_transition IKE_SA_INIT_R_transitions[] = {
 	  .flags      = SMF2_RELEASE_WHACK,
 	  .exchange   = ISAKMP_v2_IKE_AUTH,
 	  .recv_role  = MESSAGE_REQUEST,
-	  .send_role  = MESSAGE_RESPONSE,
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(IDi) | P(AUTH),
 	  .opt_enc_payloads = P(CERT) | P(CERTREQ) | P(IDr) | P(CP) | P(SA) | P(TSi) | P(TSr),
@@ -396,7 +386,6 @@ static const struct v2_state_transition IKE_SA_INIT_R_transitions[] = {
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_IKE_AUTH,
 	  .recv_role  = MESSAGE_REQUEST,
-	  .send_role  = MESSAGE_RESPONSE,
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(IDi),
 	  .opt_enc_payloads = P(CERTREQ) | P(IDr) | P(CP) | P(SA) | P(TSi) | P(TSr),
@@ -413,7 +402,6 @@ const struct v2_state_transition v2_IKE_SA_INIT_to_IKE_INTERMEDIATE_transition =
 	.from       = &state_v2_IKE_SA_INIT_IR,
 	.next_state = STATE_V2_IKE_INTERMEDIATE_I,
 	.exchange   = ISAKMP_v2_IKE_INTERMEDIATE,
-	.send_role  = MESSAGE_REQUEST,
 	.processor  = initiate_v2_IKE_INTERMEDIATE_request,
 	.llog_success = llog_v2_success_exchange_sent_to,
 	.timeout_event = EVENT_RETRANSMIT,
@@ -427,7 +415,6 @@ static const struct v2_state_transition IKE_INTERMEDIATE_R_transitions[] = {
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_IKE_INTERMEDIATE,
 	  .recv_role  = MESSAGE_REQUEST,
-	  .send_role  = MESSAGE_RESPONSE,
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = LEMPTY,
 	  .opt_enc_payloads = LEMPTY,
@@ -441,7 +428,6 @@ static const struct v2_state_transition IKE_INTERMEDIATE_R_transitions[] = {
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_IKE_AUTH,
 	  .recv_role  = MESSAGE_REQUEST,
-	  .send_role  = MESSAGE_RESPONSE,
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(IDi),
 	  .opt_enc_payloads = P(CERTREQ) | P(IDr) | P(CP) | P(SA) | P(TSi) | P(TSr),
@@ -455,7 +441,6 @@ static const struct v2_state_transition IKE_INTERMEDIATE_R_transitions[] = {
 	  .flags      = SMF2_RELEASE_WHACK,
 	  .exchange   = ISAKMP_v2_IKE_AUTH,
 	  .recv_role  = MESSAGE_REQUEST,
-	  .send_role  = MESSAGE_RESPONSE,
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(IDi) | P(AUTH),
 	  .opt_enc_payloads = P(CERT) | P(CERTREQ) | P(IDr) | P(CP) | P(SA) | P(TSi) | P(TSr),
@@ -474,7 +459,6 @@ static const struct v2_state_transition IKE_INTERMEDIATE_I_transitions[] = {
 	  .flags      = MESSAGE_RESPONSE,
 	  .exchange   = ISAKMP_v2_IKE_INTERMEDIATE,
 	  .recv_role  = MESSAGE_RESPONSE,
-	  .send_role  = NO_MESSAGE, /* handled by next transition */
 	  .req_clear_payloads = P(SK),
 	  .opt_clear_payloads = LEMPTY,
 	  .processor  = process_v2_IKE_INTERMEDIATE_response,
@@ -494,7 +478,6 @@ const struct v2_state_transition v2_IKE_INTERMEDIATE_to_IKE_INTERMEDIATE_transit
 	.from       = &state_v2_IKE_INTERMEDIATE_IR,
 	.next_state = STATE_V2_IKE_INTERMEDIATE_I,
 	.exchange   = ISAKMP_v2_IKE_INTERMEDIATE,
-	.send_role  = MESSAGE_REQUEST,
 	.processor  = initiate_v2_IKE_INTERMEDIATE_request,
 	.llog_success = llog_v2_success_exchange_sent_to,
 	.timeout_event = EVENT_RETRANSMIT,
@@ -512,7 +495,6 @@ static const struct v2_state_transition IKE_AUTH_EAP_R_transitions[] = {
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_IKE_AUTH,
 	  .recv_role  = MESSAGE_REQUEST,
-	  .send_role  = MESSAGE_RESPONSE,
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(EAP),
 	  .processor  = process_v2_IKE_AUTH_request_EAP_continue,
@@ -525,7 +507,6 @@ static const struct v2_state_transition IKE_AUTH_EAP_R_transitions[] = {
 	  .flags      = SMF2_RELEASE_WHACK,
 	  .exchange   = ISAKMP_v2_IKE_AUTH,
 	  .recv_role  = MESSAGE_REQUEST,
-	  .send_role  = MESSAGE_RESPONSE,
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(AUTH),
 	  .processor  = process_v2_IKE_AUTH_request_EAP_final,
@@ -561,7 +542,6 @@ static const struct v2_state_transition REKEY_IKE_I0_transitions[] = {
 	  .next_state = STATE_V2_REKEY_IKE_I1,
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
-	  .send_role  = MESSAGE_REQUEST,
 	  .processor  = initiate_v2_CREATE_CHILD_SA_rekey_ike_request,
 	  .llog_success = llog_v2_success_state_story,
 	  .timeout_event = EVENT_RETRANSMIT, },
@@ -578,7 +558,6 @@ static const struct v2_state_transition REKEY_IKE_R0_transitions[] = {
 	  .flags      = SMF2_RELEASE_WHACK,
 	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
 	  .recv_role  = MESSAGE_REQUEST,
-	  .send_role  = MESSAGE_RESPONSE,
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(SA) | P(Ni) | P(KE),
 	  .opt_enc_payloads = P(N),
@@ -630,7 +609,6 @@ static const struct v2_state_transition REKEY_CHILD_I0_transitions[] = {
 	  .next_state = STATE_V2_REKEY_CHILD_I1,
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
-	  .send_role  = MESSAGE_REQUEST,
 	  .processor  = initiate_v2_CREATE_CHILD_SA_rekey_child_request,
 	  .llog_success = llog_v2_success_state_story,
 	  .timeout_event = EVENT_RETRANSMIT, },
@@ -647,7 +625,6 @@ static const struct v2_state_transition REKEY_CHILD_R0_transitions[] = {
 	  .flags      = SMF2_RELEASE_WHACK,
 	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
 	  .recv_role  = MESSAGE_REQUEST,
-	  .send_role  = MESSAGE_RESPONSE,
 	  .message_payloads.required = P(SK),
 	  .encrypted_payloads.required = P(SA) | P(Ni) | P(TSi) | P(TSr),
 	  .encrypted_payloads.optional = P(KE) | P(N) | P(CP),
@@ -699,7 +676,6 @@ static const struct v2_state_transition NEW_CHILD_I0_transitions[] = {
 	  .next_state = STATE_V2_NEW_CHILD_I1,
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
-	  .send_role  = MESSAGE_REQUEST,
 	  .processor  = initiate_v2_CREATE_CHILD_SA_new_child_request,
 	  .llog_success = llog_v2_success_state_story,
 	  .timeout_event = EVENT_RETRANSMIT, },
@@ -716,7 +692,6 @@ static const struct v2_state_transition NEW_CHILD_R0_transitions[] = {
 	  .flags      = SMF2_RELEASE_WHACK,
 	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
 	  .recv_role  = MESSAGE_REQUEST,
-	  .send_role  = MESSAGE_RESPONSE,
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(SA) | P(Ni) | P(TSi) | P(TSr),
 	  .opt_enc_payloads = P(KE) | P(N) | P(CP),
@@ -773,7 +748,6 @@ static const struct v2_state_transition ESTABLISHED_IKE_SA_transitions[] = {
 	  .flags      = SMF2_RELEASE_WHACK,
 	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
 	  .recv_role  = MESSAGE_REQUEST,
-	  .send_role  = MESSAGE_RESPONSE,
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(SA) | P(Ni) | P(KE),
 	  .opt_enc_payloads = P(N),
@@ -816,7 +790,6 @@ static const struct v2_state_transition ESTABLISHED_IKE_SA_transitions[] = {
 	  .flags      = SMF2_RELEASE_WHACK,
 	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
 	  .recv_role  = MESSAGE_REQUEST,
-	  .send_role  = MESSAGE_RESPONSE,
 	  .message_payloads.required = P(SK),
 	  .encrypted_payloads.required = P(SA) | P(Ni) | P(TSi) | P(TSr),
 	  .encrypted_payloads.optional = P(KE) | P(N) | P(CP),
@@ -847,7 +820,6 @@ static const struct v2_state_transition ESTABLISHED_IKE_SA_transitions[] = {
 	  .flags      = SMF2_RELEASE_WHACK,
 	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
 	  .recv_role  = MESSAGE_REQUEST,
-	  .send_role  = MESSAGE_RESPONSE,
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(SA) | P(Ni) | P(TSi) | P(TSr),
 	  .opt_enc_payloads = P(KE) | P(N) | P(CP),
@@ -914,7 +886,6 @@ static const struct v2_state_transition ESTABLISHED_IKE_SA_transitions[] = {
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_INFORMATIONAL,
 	  .recv_role  = MESSAGE_REQUEST,
-	  .send_role  = MESSAGE_RESPONSE,
 	  .message_payloads.required = P(SK),
 	  .processor  = process_v2_INFORMATIONAL_request,
 	  .llog_success = ldbg_v2_success,
@@ -937,7 +908,6 @@ static const struct v2_state_transition ESTABLISHED_IKE_SA_transitions[] = {
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_INFORMATIONAL,
 	  .recv_role  = MESSAGE_REQUEST,
-	  .send_role  = MESSAGE_RESPONSE,
 	  .req_clear_payloads = P(SK),
 	  .opt_enc_payloads = P(N) | P(D) | P(CP),
 	  .processor  = process_v2_INFORMATIONAL_request,
@@ -1386,31 +1356,34 @@ void init_ikev2_states(struct logger *logger)
 			passert(to->ike_version == IKEv2);
 
 			if (DBGP(DBG_BASE)) {
-				const char *send;
-				switch (t->send_role) {
-				case NO_MESSAGE: send = ""; break;
-				case MESSAGE_REQUEST: send = "; send-request"; break;
-				case MESSAGE_RESPONSE: send = "; send-response"; break;
-				default: bad_case(t->send_role);
-				}
 
-				enum_buf tb;
-				DBG_log("    -> %s; %s%s",
-					to->short_name,
-					str_enum_short(&event_type_names, t->timeout_event, &tb),
-					send);
+				LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+					jam_string(buf, "    -> ");
+					jam_string(buf, to->short_name);
+					jam_string(buf, "; ");
+					jam_enum_short(buf, &event_type_names, t->timeout_event);
+				}
 
 				LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 					jam_string(buf, "       ");
+					switch (t->recv_role) {
+					case NO_MESSAGE:
+						/* reverse polarity */
+						jam_string(buf, "initiate");
+						break;
+					case MESSAGE_REQUEST:
+						jam_string(buf, "respond");
+						break;
+					case MESSAGE_RESPONSE:
+						jam_string(buf, "response");
+						break;
+					default:
+						bad_case(t->recv_role);
+					}
+					jam_string(buf, ": ");
 					jam_enum_short(buf, &ikev2_exchange_names, t->exchange);
-					jam_string(buf, " recv: ");
-					jam_enum_short(buf, &message_role_names, t->recv_role);
-					jam_string(buf, " send: ");
-					jam_enum_short(buf, &message_role_names, t->send_role);
-				}
-
-				LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
-					jam_string(buf, "       payloads: ");
+					jam_string(buf, "; ");
+					jam_string(buf, "payloads: ");
 					FOR_EACH_THING(payloads, &t->message_payloads, &t->encrypted_payloads) {
 						if (payloads->required == LEMPTY &&
 						    payloads->optional == LEMPTY) {
@@ -1455,22 +1428,6 @@ void init_ikev2_states(struct logger *logger)
 				passert(v2_pd_from_notification(t->encrypted_payloads.notification) != PD_v2_INVALID);
 			}
 
-			/*
-			 * Check recv:MESSAGE_REQUEST <-> send:MESSAGE_RESPONSE.
-			 *
-			 * "<=" is equivalent to implies (except the
-			 * arrow points the wrong way).
-			 *
-			 * XXX: IKE_SA_INIT should have processor set.
-			 */
-			if (t->processor != NULL || t->exchange == ISAKMP_v2_IKE_SA_INIT) {
-				passert((t->recv_role == NO_MESSAGE) <=/*implies*/ (t->send_role == MESSAGE_REQUEST));
-				passert((t->recv_role == MESSAGE_REQUEST) == (t->send_role == MESSAGE_RESPONSE));
-				passert((t->recv_role == MESSAGE_RESPONSE) <=/*implies*/ (t->send_role == NO_MESSAGE || t->send_role == MESSAGE_REQUEST));
-			} else {
-				passert(t->recv_role == NO_MESSAGE);
-				passert(t->send_role == NO_MESSAGE);
-			}
 			passert(t->exchange != 0);
 
 			/*
