@@ -81,7 +81,8 @@ struct job {
 	struct task *task;
 	const struct task_handler *handler;
 	struct list_entry backlog;
-	so_serial_t so_serialno;		/* sponsoring state-object's serial number */
+	so_serial_t callback_so;		/* sponsoring state-object's serial number */
+	so_serial_t task_so;			/* sponsoring state-object's serial number */
 	struct msg_digest *md;
 	bool cancelled;
 	where_t where;
@@ -93,10 +94,14 @@ struct job {
 	struct logger *logger;
 };
 
-#define PRI_JOB "job %u helper %u #%lu %s (%s)"
+#define PRI_JOB "job %u helper %u "PRI_SO"/"PRI_SO" %s (%s)"
 #define pri_job(JOB)							\
-	JOB->job_id, JOB->helper_id, JOB->so_serialno,			\
-	JOB->where->func, JOB->handler->name
+	JOB->job_id,							\
+		JOB->helper_id,						\
+		pri_so(JOB->callback_so),				\
+		pri_so(JOB->task_so),					\
+		JOB->where->func,					\
+		JOB->handler->name
 
 /*
  * The work queue.  Accesses must be locked.
@@ -111,8 +116,11 @@ static size_t jam_backlog(struct jambuf *buf, const void *data)
 	size_t s = 0;
 	const struct job *job = data;
 	s += jam(buf, "job %ju", (uintmax_t)job->job_id);
-	if (job->so_serialno != SOS_NOBODY) {
-		s += jam(buf, " state #%lu", job->so_serialno);
+	if (job->callback_so != SOS_NOBODY) {
+		s += jam(buf, " state "PRI_SO, pri_so(job->callback_so));
+	}
+	if (job->task_so != SOS_NOBODY && job->task_so != job->callback_so) {
+		s += jam(buf, " state #%lu", pri_so(job->task_so));
 	}
 	if (job->helper_id != 0) {
 		s += jam(buf, " helper %u", job->helper_id);
@@ -184,7 +192,7 @@ static void do_job(struct job *job, helper_id_t helper_id)
 
 	job->time_used = logtime_stop(&start, PRI_JOB, pri_job(job));
 	schedule_resume("sending job back to main thread",
-			job->so_serialno, &job->md/*stolen*/,
+			job->callback_so, &job->md/*stolen*/,
 			handle_helper_answer, job);
 }
 
@@ -336,7 +344,8 @@ void submit_task(struct state *callback_sa,
 	job->cancelled = false;
 	job->where = where;
 	init_list_entry(&backlog_info, job, &job->backlog);
-	job->so_serialno = callback_sa->st_serialno;
+	job->callback_so = callback_sa->st_serialno;
+	job->task_so = task_sa->st_serialno;
 
 	/*
 	 * set up the id
@@ -353,8 +362,8 @@ void submit_task(struct state *callback_sa,
 	/*
 	 * Save in case it needs to be cancelled.
 	 */
-	callback_sa->st_offloaded_task = job;
-	callback_sa->st_offloaded_task_in_background = false;
+	task_sa->st_offloaded_task = job;
+	task_sa->st_offloaded_task_in_background = false;
 	job->logger = clone_logger(task_sa->logger, HERE);
 	job->md = md_addref(md);
 	ldbg(job->logger, PRI_JOB": added to pending queue", pri_job(job));
@@ -409,6 +418,7 @@ void delete_cryptographic_continuation(struct state *st)
 	if (job == NULL) {
 		return;
 	}
+	pmemory(job);
 	/* shut it down */
 	job->cancelled = true;
 	st->st_offloaded_task = NULL;
@@ -435,13 +445,14 @@ static void free_job(struct job **jobp)
 	*jobp = NULL;
 }
 
-static stf_status handle_helper_answer(struct state *st,
+static stf_status handle_helper_answer(struct state *callback_sa,
 				       struct msg_digest *md,
 				       void *arg)
 {
 	passert(in_main_thread());
 	struct job *job = arg;
 	passert(job->handler != NULL);
+	struct state *task_sa = state_by_serialno(job->task_so);
 
 	/*
 	 * call the continuation (skip if suppressed)
@@ -450,23 +461,27 @@ static stf_status handle_helper_answer(struct state *st,
 	if (job->cancelled) {
 		/* suppressed */
 		ldbg(job->logger, PRI_JOB": job cancelled!", pri_job(job));
-		pexpect(st == NULL || st->st_offloaded_task == NULL);
+		PEXPECT(job->logger, task_sa == NULL || task_sa->st_offloaded_task == NULL);
 		status = STF_SKIP_COMPLETE_STATE_TRANSITION;
-	} else if (st == NULL) {
-		/* oops, the state disappeared! */
-		llog_pexpect(job->logger, HERE, PRI_JOB": state disappeared!", pri_job(job));
+	} else if (callback_sa == NULL) {
+		/* oops, the callback state disappeared! */
+		llog_pexpect(job->logger, HERE, PRI_JOB": callback disappeared!", pri_job(job));
+		status = STF_SKIP_COMPLETE_STATE_TRANSITION;
+	} else if (task_sa == NULL) {
+		/* oops, the task state disappeared! */
+		llog_pexpect(job->logger, HERE, PRI_JOB": task disappeared!", pri_job(job));
 		status = STF_SKIP_COMPLETE_STATE_TRANSITION;
 	} else {
 		ldbg(job->logger, PRI_JOB": calling state's callback function", pri_job(job));
-		pexpect(st->st_offloaded_task == job);
-		st->st_offloaded_task = NULL;
-		st->st_offloaded_task_in_background = false;
+		PEXPECT(job->logger, task_sa->st_offloaded_task == job);
+		task_sa->st_offloaded_task = NULL;
+		task_sa->st_offloaded_task_in_background = false;
 		/* bill the thread time */
-		cpu_usage_add(st->st_timing.helper_usage, job->time_used);
+		cpu_usage_add(task_sa->st_timing.helper_usage, job->time_used);
 		/* wall clock time not billed */
 		/* run the callback */
-		passert(job->handler->completed_cb != NULL);
-		status = job->handler->completed_cb(st, md, job->task);
+		PASSERT(job->logger, job->handler->completed_cb != NULL);
+		status = job->handler->completed_cb(callback_sa, md, job->task);
 	}
 	esb_buf buf;
 	ldbg(job->logger, PRI_JOB": final status %s; cleaning up",
