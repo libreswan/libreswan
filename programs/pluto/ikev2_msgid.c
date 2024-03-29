@@ -212,11 +212,14 @@ void v2_msgid_start(struct ike_sa *ike, const struct msg_digest *md)
 	const struct v2_msgid_windows old = ike->sa.st_v2_msgid_windows;
 	struct v2_msgid_windows *new = &ike->sa.st_v2_msgid_windows;
 
+	const char *update_story;
+	intmax_t msgid;
 	enum message_role role = v2_msg_role(md);
 	switch (role) {
 	case NO_MESSAGE:
 	{
-		intmax_t msgid = old.initiator.sent + 1;
+		update_story = "initiator starting";
+		msgid = old.initiator.sent + 1;
 		pexpect_v2_msgid(ike, role, old.initiator.recv+1 == msgid);
 		pexpect_v2_msgid(ike, role, old.initiator.sent+1 == msgid);
 		pexpect_v2_msgid(ike, role, old.initiator.wip == -1);
@@ -227,23 +230,23 @@ void v2_msgid_start(struct ike_sa *ike, const struct msg_digest *md)
 		 */
 		new->initiator.wip = msgid;
 #endif
-		dbg_msgid_update("initiator starting", role, msgid, ike, &old);
 		break;
 	}
 	case MESSAGE_REQUEST:
 	{
 		/* extend msgid */
-		intmax_t msgid = md->hdr.isa_msgid;
+		update_story = "responder starting";
+		msgid = md->hdr.isa_msgid;
 		pexpect_v2_msgid(ike, role, old.responder.wip == -1);
 		pexpect_v2_msgid(ike, role, old.responder.sent+1 == msgid);
 		pexpect_v2_msgid(ike, role, old.responder.recv+1 == msgid);
 		new->responder.wip = msgid;
-		dbg_msgid_update("responder starting", role, msgid, ike, &old);
 		break;
 	}
 	case MESSAGE_RESPONSE:
 	{
-		intmax_t msgid = md->hdr.isa_msgid;
+		update_story = "initiator starting";
+		msgid = md->hdr.isa_msgid;
 #if 0
 		/*
 		 * XXX: v2_msgid_start() isn't called when starting a
@@ -256,10 +259,12 @@ void v2_msgid_start(struct ike_sa *ike, const struct msg_digest *md)
 		pexpect_v2_msgid(ike, role, old.initiator.sent == msgid);
 		pexpect_v2_msgid(ike, role, old.initiator.recv+1 == msgid);
 		new->initiator.wip = msgid;
-		dbg_msgid_update("initiator response", role, msgid, ike, &old);
 		break;
 	}
+	default:
+		bad_case(role);
 	}
+	dbg_msgid_update(update_story, role, msgid, ike, &old);
 }
 
 void v2_msgid_cancel(struct ike_sa *ike, const struct msg_digest *md)
@@ -289,24 +294,49 @@ void v2_msgid_cancel(struct ike_sa *ike, const struct msg_digest *md)
 	}
 }
 
-static void v2_msgid_update_recv(struct ike_sa *ike, const struct msg_digest *md)
+void v2_msgid_finish(struct ike_sa *ike, const struct msg_digest *md)
 {
-	/* save old value, and add shortcut to new */
-	const struct v2_msgid_windows old = ike->sa.st_v2_msgid_windows;
+	struct v2_msgid_windows old = ike->sa.st_v2_msgid_windows;
 	struct v2_msgid_windows *new = &ike->sa.st_v2_msgid_windows;
-
 	enum message_role receiving = v2_msg_role(md);
+
 	intmax_t msgid;
+	const char *update_story;
 	struct v2_msgid_window *update;
-	const char *update_received_story;
 
 	switch (receiving) {
+	case NO_MESSAGE:
+	{
+		/*
+		 * pluto is initiating a new exchange.
+		 *
+		 * Use the next Message ID (which should be what was
+		 * used by the code emitting the message request).
+		 */
+		pexpect_v2_msgid(ike, receiving, old.initiator.wip == -1);
+		update_story = "initiator finishing";
+		msgid = old.initiator.sent + 1;
+		update = &new->initiator;
+		new->initiator.wip = msgid;
+		new->initiator.sent = msgid;
+		if (ike->sa.st_retransmit_event == NULL) {
+			dbg_v2_msgid(ike, "scheduling EVENT_RETRANSMIT");
+			start_retransmits(&ike->sa);
+		} else {
+			dbg_v2_msgid(ike, "XXX: EVENT_RETRANSMIT already scheduled -- suspect record'n'send");
+		}
+		break;
+	}
 	case MESSAGE_REQUEST:
 	{
-		update_received_story = "updating responder received";
-		/* update responder's last request received */
-		struct v2_msgid_window *responder = &ike->sa.st_v2_msgid_windows.responder;
-		update = responder;
+		/*
+		 * pluto is responding to MD.
+		 *
+		 * Since this is a response, the MD's Message ID
+		 * trumps what ever is in responder.sent.  This way,
+		 * when messages are lost, the counter jumps forward
+		 * to the most recent received.
+		 */
 		/*
 		 * Processing request finished.  Scrub it as wip.
 		 *
@@ -314,21 +344,18 @@ static void v2_msgid_update_recv(struct ike_sa *ike, const struct msg_digest *md
 		 * is when sending the response signifying that things
 		 * really finish?
 		 */
-		msgid = md->hdr.isa_msgid; /* zero-extended */
-		if (DBGP(DBG_BASE) && responder->wip != msgid) {
-			fail_v2_msgid(ike,
-				      "windows.responder.wip == %jd(msgid) (was %jd)",
-				      msgid, responder->wip);
-		}
-		responder->wip = -1;
+		update_story = "responder finishing";
+		msgid = md->hdr.isa_msgid;
+		pexpect_v2_msgid(ike, receiving, old.responder.wip == msgid);
+		update = &new->responder;
+		new->responder.wip = -1;
+		new->responder.recv = msgid;
+		new->responder.recv_frags = md->v2_frags_total;
+		new->responder.sent = msgid;
 		break;
 	}
 	case MESSAGE_RESPONSE:
 	{
-		update_received_story = "updating initiator received";
-		/* update initiator's last response received */
-		struct v2_msgid_window *initiator = &ike->sa.st_v2_msgid_windows.initiator;
-		update = initiator;
 		/*
 		 * Since the response has been successfully processed,
 		 * clear WIP.INITIATOR.  This way duplicate responses
@@ -339,29 +366,13 @@ static void v2_msgid_update_recv(struct ike_sa *ike, const struct msg_digest *md
 		 * before update_recv() breaking the assumption that
 		 * WIP.INITIATOR is the old MSGID.
 		 */
-		msgid = md->hdr.isa_msgid; /* zero-extended */
-		if (old.initiator.wip > msgid) {
-			/*
-			 * Hack around record 'n' send calling
-			 * update_sent() (setting WIP.INITIATOR to the
-			 * next request) midway through processing.
-			 *
-			 * Getting rid of record 'n' send will fix
-			 * this hack.
-			 */
-			dbg_v2_msgid(ike,
-				     "XXX: receiver.wip.initiator %jd != receiver.msgid %jd - suspect record'n'called update_sent() before update_recv()",
-				     old.initiator.wip, msgid);
-		} else {
-			if (DBGP(DBG_BASE) && old.initiator.wip != msgid) {
-				fail_v2_msgid(ike,
-					      "receiver.wip.initiator == %jd(msgid) (was %jd)",
-					      msgid, old.initiator.wip);
-			}
-			new->initiator.wip = -1;
-		}
-		/* this is what matters */
-		pexpect(new->initiator.wip != msgid);
+		update_story = "initiator finishing";
+		msgid = md->hdr.isa_msgid;
+		update = &new->initiator;
+		pexpect_v2_msgid(ike, receiving, old.initiator.wip == msgid);
+		new->initiator.recv = msgid;
+		new->initiator.recv_frags = md->v2_frags_total;
+		new->initiator.wip = -1;
 		/*
 		 * Clear the retransmits for the old message.
 		 */
@@ -369,102 +380,13 @@ static void v2_msgid_update_recv(struct ike_sa *ike, const struct msg_digest *md
 		clear_retransmits(&ike->sa);
 		break;
 	}
-	case NO_MESSAGE:
-		dbg_v2_msgid(ike, "skipping update_recv as no message (presumably initiator)");
-		return;
 	default:
 		bad_case(receiving);
 	}
 
-	update->recv = msgid;
-	update->recv_frags = md->v2_frags_total;
-	new->last_recv = update->last_recv = mononow(); /* not strictly correct */
-
-	dbg_msgid_update(update_received_story, receiving, msgid, ike, &old);
-}
-
-static void v2_msgid_update_sent(struct ike_sa *ike, const struct msg_digest *md)
-{
-	struct v2_msgid_windows old = ike->sa.st_v2_msgid_windows;
-	struct v2_msgid_windows *new = &ike->sa.st_v2_msgid_windows;
-
-	enum message_role receiving = v2_msg_role(md);
-
-	/* tbd */
-	intmax_t msgid;
-	struct v2_msgid_window *update;
-	const char *update_sent_story;
-
-	switch (receiving) {
-	case NO_MESSAGE:
-		/*
-		 * pluto is initiating a new exchange.
-		 *
-		 * Use the next Message ID (which should be what was
-		 * used by the code emitting the message request)
-		 */
-		update_sent_story = "updating initiator sent";
-		update = &new->initiator;
-		msgid = update->sent + 1;
-		new->initiator.wip = msgid;
-#if 0
-		/*
-		 * XXX: The record 'n' send code calls update_sent()
-		 * before update_recv() breaking WIP.INITIATOR's
-		 * expected sequence OLD-MSGID -> -1 -> NEW-MSGID.
-		 */
-		if (DBGP(DBG_BASE) && old.initiator.wip != -1) {
-			fail_v2_msgid(ike,
-				      "sender.wip.initiator == -1 (was %jd)",
-				      old.initiator.wip);
-		}
-#else
-		if (old.initiator.wip != -1) {
-			dbg_v2_msgid(ike,
-				     "XXX: expecting sender.wip.initiator %jd == -1 - suspect record'n'send out-of-order?)",
-				     old.initiator.wip);
-		}
-#endif
-		if (ike->sa.st_retransmit_event == NULL) {
-			dbg_v2_msgid(ike, "scheduling EVENT_RETRANSMIT");
-			start_retransmits(&ike->sa);
-		} else {
-			dbg_v2_msgid(ike, "XXX: EVENT_RETRANSMIT already scheduled -- suspect record'n'send");
-		}
-		break;
-	case MESSAGE_REQUEST:
-		/*
-		 * pluto is responding to MD.
-		 *
-		 * Since this is a response, the MD's Message ID
-		 * trumps what ever is in responder.sent.  This way,
-		 * when messages are lost, the counter jumps forward
-		 * to the most recent received.
-		 */
-		update_sent_story = "updating responder sent";
-		update = &new->responder;
-		passert(md != NULL);
-		pexpect(v2_msg_role(md) == MESSAGE_REQUEST);
-		/* extend isa_msgid */
-		msgid = md->hdr.isa_msgid;
-		break;
-	case MESSAGE_RESPONSE:
-		dbg_v2_msgid(ike, "skipping update_send as nothing to send (presumably initiator receiving a response)");
-		return;
-	default:
-		bad_case(receiving);
-	}
-
-	update->sent = msgid;
-	new->last_sent = update->last_sent = mononow(); /* close enough */
-
-	dbg_msgid_update(update_sent_story, receiving, msgid, ike, &old);
-}
-
-void v2_msgid_finish(struct ike_sa *ike, const struct msg_digest *md)
-{
-	v2_msgid_update_recv(ike, md);
-	v2_msgid_update_sent(ike, md);
+	/* should be backdated to when the message arrives? */
+	new->last_recv = update->last_recv = mononow(); /* close enough */
+	dbg_msgid_update(update_story, receiving, msgid, ike, &old);
 }
 
 struct v2_msgid_pending {
