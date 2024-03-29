@@ -57,11 +57,11 @@ west #
 west #
  # XXX: it is tied to #1/#1 but should be #1/#4
 west #
- ../../guestbin/drip-inbound.sh 2 '#1: IMPAIR: job 5 helper 0 #1/#1 .* pausing for 5 seconds'
+ ../../guestbin/drip-inbound.sh 2 '#4: IMPAIR: job 5 helper 0 #1/#4 .* pausing for 5 seconds'
 packet from 192.1.2.23:500: IMPAIR: blocking inbound message 2
 IMPAIR: start processing inbound drip packet 2
 IMPAIR: stop processing inbound drip packet 2
-"cuckold" #1: IMPAIR: job 5 helper 0 #1/#1 process_v2_CREATE_CHILD_SA_request (dh): helper is pausing for 5 seconds
+"cuckoo" #4: IMPAIR: job 5 helper 0 #1/#4 process_v2_CREATE_CHILD_SA_request (dh): helper is pausing for 5 seconds
 west #
  # finally wait for things to establish
 west #
