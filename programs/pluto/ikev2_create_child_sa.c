@@ -222,7 +222,7 @@ static void emancipate_larval_ike_sa(struct ike_sa *old_ike, struct child_sa *ne
 
 	/* complete the state transition */
 	const struct v2_state_transition *transition = new_ike->sa.st_v2_transition;
-	pexpect(transition->from == new_ike->sa.st_state);
+	pexpect(v2_transition_from(transition, new_ike->sa.st_state));
 	pexpect(transition->to == &state_v2_ESTABLISHED_IKE_SA);
 	change_v2_state(&new_ike->sa); /* should trash .st_v2_transition */
 
@@ -538,7 +538,7 @@ static void llog_v2_success_rekey_child_request(struct ike_sa *ike)
 
 static const struct v2_state_transition v2_CREATE_CHILD_SA_rekey_child_transition = {
 	.story      = "initiate rekey Child_SA (CREATE_CHILD_SA)",
-	.from       = &state_v2_ESTABLISHED_IKE_SA,
+	.from = { &state_v2_ESTABLISHED_IKE_SA, },
 	.to = &state_v2_ESTABLISHED_IKE_SA,
 	.exchange   = ISAKMP_v2_CREATE_CHILD_SA,
 	.processor  = initiate_v2_CREATE_CHILD_SA_rekey_child_request,
@@ -821,7 +821,7 @@ static void llog_v2_success_new_child_request(struct ike_sa *ike)
 
 static const struct v2_state_transition v2_CREATE_CHILD_SA_new_child_transition = {
 	.story      = "initiate new Child SA (CREATE_CHILD_SA)",
-	.from       = &state_v2_ESTABLISHED_IKE_SA,
+	.from = { &state_v2_ESTABLISHED_IKE_SA, },
 	.to = &state_v2_ESTABLISHED_IKE_SA,
 	.exchange   = ISAKMP_v2_CREATE_CHILD_SA,
 	.processor  = initiate_v2_CREATE_CHILD_SA_new_child_request,
@@ -1485,7 +1485,7 @@ static void llog_v2_success_rekey_ike_request(struct ike_sa *ike)
 
 static const struct v2_state_transition v2_CREATE_CHILD_SA_rekey_ike_transition = {
 	.story      = "initiate rekey IKE_SA (CREATE_CHILD_SA)",
-	.from       = &state_v2_ESTABLISHED_IKE_SA,
+	.from = { &state_v2_ESTABLISHED_IKE_SA, },
 	.to = &state_v2_ESTABLISHED_IKE_SA,
 	.exchange   = ISAKMP_v2_CREATE_CHILD_SA,
 	.processor  = initiate_v2_CREATE_CHILD_SA_rekey_ike_request,
@@ -1700,7 +1700,7 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_2(struct
 	passert(v2_msg_role(request_md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
 	passert(larval_ike->sa.st_sa_role == SA_RESPONDER);
 	pexpect(larval_ike->sa.st_state == &state_v2_REKEY_IKE_R0);
-	pexpect(larval_ike->sa.st_v2_transition->from == &state_v2_REKEY_IKE_R0);
+	pexpect(v2_transition_from(larval_ike->sa.st_v2_transition, &state_v2_REKEY_IKE_R0));
 	pexpect(larval_ike->sa.st_v2_transition->to == &state_v2_ESTABLISHED_IKE_SA);
 	dbg("%s() for #%lu %s",
 	     __func__, larval_ike->sa.st_serialno, larval_ike->sa.st_state->name);
@@ -1850,7 +1850,7 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response_continue_1(struc
 	pexpect(larval_ike->sa.st_sa_role == SA_INITIATOR);
 	pexpect(larval_ike->sa.st_sa_type_when_established == IKE_SA);
 	pexpect(larval_ike->sa.st_state == &state_v2_REKEY_IKE_I1);
-	pexpect(larval_ike->sa.st_v2_transition->from == &state_v2_REKEY_IKE_I1);
+	pexpect(v2_transition_from(larval_ike->sa.st_v2_transition, &state_v2_REKEY_IKE_I1));
 	pexpect(larval_ike->sa.st_v2_transition->to == &state_v2_ESTABLISHED_IKE_SA);
 	pexpect(v2_msg_role(response_md) == MESSAGE_RESPONSE); /* i.e., MD!=NULL */
 

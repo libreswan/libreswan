@@ -59,7 +59,7 @@ struct ikev2_expected_payloads {
 
 struct v2_state_transition {
 	const char *const story;	/* state transition story (not state_story[]) */
-	const struct finite_state *from;
+	const struct finite_state *from[2];	/* grow as needed */
 	const struct finite_state *to;
 	const lset_t flags;
 
@@ -139,5 +139,8 @@ void start_v2_transition(struct ike_sa *ike,
 stf_status next_v2_transition(struct ike_sa *ike, struct msg_digest *md,
 			      const struct v2_state_transition *transition,
 			      where_t where);
+
+extern void jam_v2_transition(struct jambuf *buf, const struct v2_state_transition *transition);
+extern bool v2_transition_from(const struct v2_state_transition *transition, const struct finite_state *state);
 
 #endif

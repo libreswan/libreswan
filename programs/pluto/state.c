@@ -647,7 +647,7 @@ static struct ike_sa *new_v2_ike_sa(struct connection *c,
 				     ike_initiator_spi, ike_responder_spi,
 				     IKE_SA, sa_role, HERE);
 	struct ike_sa *ike = pexpect_ike_sa(st);
-	change_state(&ike->sa, transition->from->kind);
+	change_state(&ike->sa, transition->from[0]->kind);
 	set_v2_transition(&ike->sa, transition, HERE);
 	v2_msgid_init_ike(ike);
 	event_schedule(EVENT_v2_DISCARD, EXCHANGE_TIMEOUT_DELAY, &ike->sa);
@@ -1272,7 +1272,7 @@ struct child_sa *new_v2_child_sa(struct connection *c,
 	passert(fs->nr_transitions == 1);
 	const struct v2_state_transition *transition = &fs->v2.transitions[0];
 	struct child_sa *child = duplicate_state(c, ike, sa_type, sa_role);
-	change_state(&child->sa, transition->from->kind);
+	change_state(&child->sa, transition->from[0]->kind);
 	set_v2_transition(&child->sa, transition, HERE);
 	return child;
 }

@@ -822,7 +822,6 @@ void set_v1_transition(struct state *st, const struct state_v1_microcode *transi
 void set_v2_transition(struct state *st, const struct v2_state_transition *transition, where_t where);
 void switch_md_st(struct msg_digest *md, struct state *st, where_t where);
 void jam_v1_transition(struct jambuf *buf, const struct state_v1_microcode *transition);
-void jam_v2_transition(struct jambuf *buf, const struct v2_state_transition *transition);
 
 extern void init_states(void);
 

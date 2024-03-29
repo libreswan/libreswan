@@ -515,7 +515,7 @@ static stf_status send_v2_redirect_ike_request(struct ike_sa *ike,
 
 static const struct v2_state_transition v2_redirect_ike_transition = {
 	.story = "redirect IKE SA",
-	.from = &state_v2_ESTABLISHED_IKE_SA,
+	.from = { &state_v2_ESTABLISHED_IKE_SA, },
 	.to = &state_v2_ESTABLISHED_IKE_SA,
 	.exchange = ISAKMP_v2_INFORMATIONAL,
 	.processor = send_v2_redirect_ike_request,

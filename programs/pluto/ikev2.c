@@ -1009,7 +1009,7 @@ static void complete_protected_but_fatal_exchange(struct ike_sa *ike, struct msg
 	/* starting point */
 	const struct v2_state_transition undefined_transition = {
 		.story = "suspect message",
-		.from = finite_states[STATE_UNDEFINED],
+		.from = { finite_states[STATE_UNDEFINED], },
 		.to = finite_states[STATE_UNDEFINED],
 		.recv_role = v2_msg_role(md),
 		.llog_success = ldbg_v2_success,
@@ -1040,7 +1040,7 @@ static void complete_protected_but_fatal_exchange(struct ike_sa *ike, struct msg
 		unsigned transition_nr = 0;
 		pexpect(state->nr_transitions > transition_nr);
 		transition = &state->v2.transitions[transition_nr];
-		pexpect(transition->from == &state_v2_IKE_AUTH_I);
+		pexpect(v2_transition_from(transition, &state_v2_IKE_AUTH_I));
 		pexpect(transition->to == &state_v2_ESTABLISHED_IKE_SA);
 		break;
 	}
@@ -1448,12 +1448,12 @@ static void success_v2_state_transition(struct ike_sa *ike,
 	 */
 	pexpect(transition->from == ike->sa.st_state);
 #endif
-	if (transition->from != transition->to) {
-		ldbg(ike->sa.logger,
-		     "transitioning IKE SA in state %s from state %s to state %s",
-		     ike->sa.st_state->short_name,
-		     transition->from->short_name,
-		     transition->to->short_name);
+	if (DBGP(DBG_BASE)) {
+		LLOG_JAMBUF(DEBUG_STREAM, ike->sa.logger, buf) {
+			jam(buf, "IKE SA in state %s transitioning ",
+			    ike->sa.st_state->short_name);
+			jam_v2_transition(buf, transition);
+		}
 	}
 
 	/*
@@ -1784,7 +1784,7 @@ void complete_v2_state_transition(struct ike_sa *ike,
 
 	LDBGP_JAMBUF(DBG_BASE, ike->sa.logger, buf) {
 		jam(buf, "#%lu complete_v2_state_transition()", ike->sa.st_serialno);
-		if (ike->sa.st_state != transition->from) {
+		if (!v2_transition_from(transition, ike->sa.st_state)) {
 			jam(buf, " in state %s", ike->sa.st_state->short_name);
 		}
 		jam(buf, " ");
@@ -2164,4 +2164,33 @@ bool verbose_v2_state_busy(const struct state *st)
 		  "discarding packet received during asynchronous work (DNS or crypto) in %s",
 		  st->st_state->name);
 	return true;
+}
+
+bool v2_transition_from(const struct v2_state_transition *transition, const struct finite_state *state)
+{
+	FOR_EACH_ELEMENT(from, transition->from) {
+		if (*from == state) {
+			return true;
+		}
+	}
+	return false;
+}
+
+void jam_v2_transition(struct jambuf *buf, const struct v2_state_transition *transition)
+{
+	if (transition == NULL) {
+		jam_string(buf, "<null-transition>");
+	} else {
+		jam_string(buf, transition->story);
+		const char *sep = " from "; /* at least one */
+		FOR_EACH_ELEMENT(from, transition->from) {
+			if (*from != NULL) {
+				jam_string(buf, sep);
+				jam_string(buf, (*from)->short_name);
+				sep = "+";
+			}
+		}
+		jam_string(buf, " to ");
+		jam_string(buf, transition->to->short_name);
+	}
 }

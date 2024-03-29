@@ -57,11 +57,8 @@ const struct v2_state_transition *find_v2_state_transition(struct logger *logger
 							   struct msg_digest *md,
 							   bool *secured_payload_failed);
 
-extern const struct v2_state_transition v2_IKE_SA_INIT_to_IKE_INTERMEDIATE_transition;
-extern const struct v2_state_transition v2_IKE_INTERMEDIATE_to_IKE_INTERMEDIATE_transition;
-
-extern const struct v2_state_transition v2_IKE_SA_INIT_to_IKE_AUTH_transition;
-extern const struct v2_state_transition v2_IKE_INTERMEDIATE_to_IKE_AUTH_transition;
+extern const struct v2_state_transition initiate_v2_IKE_INTERMEDIATE_transition;
+extern const struct v2_state_transition initiate_v2_IKE_AUTH_transition;
 
 void init_ikev2_states(struct logger *logger);
 

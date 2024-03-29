@@ -1684,9 +1684,9 @@ stf_status process_v2_IKE_SA_INIT_response_continue(struct state *ike_sa,
 
 	const struct v2_state_transition *next_transition;
 	if (ike->sa.st_v2_ike_intermediate.enabled) {
-		next_transition = &v2_IKE_SA_INIT_to_IKE_INTERMEDIATE_transition;
+		next_transition = &initiate_v2_IKE_INTERMEDIATE_transition;
 	} else {
-		next_transition = &v2_IKE_SA_INIT_to_IKE_AUTH_transition;
+		next_transition = &initiate_v2_IKE_AUTH_transition;
 	}
 
 	return next_v2_transition(ike, md, next_transition, HERE);

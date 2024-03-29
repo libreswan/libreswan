@@ -620,13 +620,13 @@ static void initiate_next(const char *story, struct state *ike_sa, void *context
 		/*
 		 * try to check that the transition still applies ...
 		 */
-		if (pending.transition->from != ike->sa.st_state) {
-			llog(RC_LOG, who_for->logger,
-			     "dropping transition %s from state %s to %s as IKE SA is in state %s",
-			     pending.transition->story,
-			     pending.transition->from->short_name,
-			     pending.transition->to->short_name,
-			     ike->sa.st_state->short_name);
+		if (!v2_transition_from(pending.transition, ike->sa.st_state)) {
+			LLOG_JAMBUF(RC_LOG, who_for->logger, buf) {
+				jam(buf, "dropping transition ");
+				jam_v2_transition(buf, pending.transition);
+				jam(buf, " as IKE SA is in state %s",
+				    ike->sa.st_state->short_name);
+			}
 			continue;
 		}
 
