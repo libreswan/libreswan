@@ -1053,14 +1053,8 @@ stf_status process_v2_CREATE_CHILD_SA_request(struct ike_sa *ike,
 		}
 	}
 
-	/*
-	 * XXX: note the .st_pfs_group vs .st_oakley.ta_dh
-	 * switch-a-roo.  Is this because .st_pfs_group is
-	 * acting more like a flag or perhaps, even though DH
-	 * was negotiated it can be ignored?
-	 */
-	submit_ke_and_nonce(/*callback*/&ike->sa, /*task*/&ike->sa, md,
-			    larval_child->sa.st_pfs_group != NULL ? larval_child->sa.st_oakley.ta_dh : NULL,
+	submit_ke_and_nonce(/*callback*/&ike->sa, /*task*/&larval_child->sa, md,
+			    (larval_child->sa.st_pfs_group != NULL ? larval_child->sa.st_oakley.ta_dh : NULL),
 			    process_v2_CREATE_CHILD_SA_request_continue_1,
 			    /*detach_whack*/false, HERE);
 	return STF_SUSPEND;
