@@ -1,0 +1,8 @@
+IKEv2 roadwarrior configured to start with TCP and skip UDP completely.
+
+east blocks UDP just in case.
+
+connection should establish with TCP.
+
+Both sides use leftikeport= and rightikeport= to set a different port
+for the server (east) on port 500.
