@@ -1102,7 +1102,7 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 	 * authenticated properly.
 	 */
 	passert(ike->sa.st_v2_transition->timeout_event == EVENT_v2_REPLACE);
-	passert(ike->sa.st_v2_transition->next_state == STATE_V2_ESTABLISHED_IKE_SA);
+	passert(ike->sa.st_v2_transition->to == &state_v2_ESTABLISHED_IKE_SA);
 	change_v2_state(&ike->sa);
 	v2_ike_sa_established(ike);
 

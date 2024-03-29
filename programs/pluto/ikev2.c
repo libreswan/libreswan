@@ -1003,12 +1003,22 @@ void ikev2_process_packet(struct msg_digest *md)
 static void complete_protected_but_fatal_exchange(struct ike_sa *ike, struct msg_digest *md,
 						  v2_notification_t n, chunk_t *data)
 {
-	/*
-	 * First find a transition to fail.
-	 */
 	passert(md != NULL);
-	const struct v2_state_transition *transition;
 	const struct finite_state *state = ike->sa.st_state;
+
+	/* starting point */
+	const struct v2_state_transition undefined_transition = {
+		.story = "suspect message",
+		.from = finite_states[STATE_UNDEFINED],
+		.to = finite_states[STATE_UNDEFINED],
+		.recv_role = v2_msg_role(md),
+		.llog_success = ldbg_v2_success,
+	};
+	const struct v2_state_transition *transition = &undefined_transition;
+
+	/*
+	 * Now try to find a better transition.
+	 */
 	switch (state->kind) {
 	case STATE_V2_IKE_SA_INIT_R:
 	case STATE_V2_IKE_INTERMEDIATE_R:
@@ -1031,7 +1041,7 @@ static void complete_protected_but_fatal_exchange(struct ike_sa *ike, struct msg
 		pexpect(state->nr_transitions > transition_nr);
 		transition = &state->v2.transitions[transition_nr];
 		pexpect(transition->from == &state_v2_IKE_AUTH_I);
-		pexpect(transition->next_state == STATE_V2_ESTABLISHED_IKE_SA);
+		pexpect(transition->to == &state_v2_ESTABLISHED_IKE_SA);
 		break;
 	}
 	case STATE_V2_ESTABLISHED_IKE_SA:
@@ -1056,13 +1066,6 @@ static void complete_protected_but_fatal_exchange(struct ike_sa *ike, struct msg
 	default:
 		if (/*pexpect*/(state->nr_transitions > 0)) {
 			transition = &state->v2.transitions[state->nr_transitions - 1];
-		} else {
-			static const struct v2_state_transition undefined_transition = {
-				.story = "suspect message",
-				.from = STATE_UNDEFINED,
-				.next_state = STATE_UNDEFINED,
-			};
-			transition = &undefined_transition;
 		}
 		break;
 	}
@@ -1087,6 +1090,7 @@ static void complete_protected_but_fatal_exchange(struct ike_sa *ike, struct msg
 		bad_case(v2_msg_role(md));
 	}
 
+	/* XXX: deletes IKE SA */
 	complete_v2_state_transition(ike, md, STF_FATAL);
 }
 
@@ -1444,12 +1448,12 @@ static void success_v2_state_transition(struct ike_sa *ike,
 	 */
 	pexpect(transition->from == ike->sa.st_state);
 #endif
-	if (transition->from->kind != transition->next_state) {
+	if (transition->from != transition->to) {
 		ldbg(ike->sa.logger,
 		     "transitioning IKE SA in state %s from state %s to state %s",
 		     ike->sa.st_state->short_name,
 		     transition->from->short_name,
-		     finite_states[transition->next_state]->short_name);
+		     transition->to->short_name);
 	}
 
 	/*
@@ -1653,7 +1657,7 @@ static void success_v2_state_transition(struct ike_sa *ike,
 
         if (PBAD(ike->sa.logger, transition->llog_success == NULL)) {
 		ldbg_v2_success(ike);
-	} else if (is_opportunistic(c) && transition->next_state != state_v2_IKE_SA_INIT_IR.kind) {
+	} else if (is_opportunistic(c) && transition->to != &state_v2_IKE_SA_INIT_IR) {
 		ldbg_v2_success(ike);
 	} else {
 		transition->llog_success(ike);

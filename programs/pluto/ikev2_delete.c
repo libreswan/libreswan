@@ -121,7 +121,7 @@ static void llog_v2_success_delete_ike_request(struct ike_sa *ike)
 static const struct v2_state_transition v2_delete_ike = {
 	.story = "delete IKE SA",
 	.from = &state_v2_ESTABLISHED_IKE_SA,
-	.next_state = STATE_V2_IKE_SA_DELETE,
+	.to = &state_v2_IKE_SA_DELETE,
 	.exchange = ISAKMP_v2_INFORMATIONAL,
 	.processor = initiate_v2_delete_ike_request,
 	.llog_success = llog_v2_success_delete_ike_request,
@@ -178,7 +178,7 @@ static stf_status initiate_v2_delete_child_request(struct ike_sa *ike,
 static const struct v2_state_transition v2_delete_child = {
 	.story = "delete CHILD SA",
 	.from = &state_v2_ESTABLISHED_IKE_SA,
-	.next_state = STATE_V2_ESTABLISHED_IKE_SA,
+	.to = &state_v2_ESTABLISHED_IKE_SA,
 	.exchange = ISAKMP_v2_INFORMATIONAL,
 	.processor = initiate_v2_delete_child_request,
 	.llog_success = ldbg_v2_success,

@@ -86,7 +86,7 @@ void set_larval_v2_transition(struct child_sa *larval,
 	const struct v2_state_transition *transition =
 		&larval->sa.st_state->v2.transitions[0];
 	PEXPECT_WHERE(larval->sa.logger, where, transition->from == larval->sa.st_state);
-	PEXPECT_WHERE(larval->sa.logger, where, transition->next_state == to->kind);
+	PEXPECT_WHERE(larval->sa.logger, where, transition->to == to);
 	set_v2_transition(&larval->sa, transition, where);
 }
 
@@ -714,7 +714,7 @@ void llog_v2_child_sa_established(struct ike_sa *ike UNUSED, struct child_sa *ch
 
 void v2_child_sa_established(struct ike_sa *ike, struct child_sa *child)
 {
-	pexpect(child->sa.st_v2_transition->next_state == STATE_V2_ESTABLISHED_CHILD_SA);
+	pexpect(child->sa.st_v2_transition->to == &state_v2_ESTABLISHED_CHILD_SA);
 	change_v2_state(&child->sa);
 
 	pstat_sa_established(&child->sa);

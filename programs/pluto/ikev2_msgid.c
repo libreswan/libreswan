@@ -625,7 +625,7 @@ static void initiate_next(const char *story, struct state *ike_sa, void *context
 			     "dropping transition %s from state %s to %s as IKE SA is in state %s",
 			     pending.transition->story,
 			     pending.transition->from->short_name,
-			     finite_states[pending.transition->next_state]->short_name,
+			     pending.transition->to->short_name,
 			     ike->sa.st_state->short_name);
 			continue;
 		}

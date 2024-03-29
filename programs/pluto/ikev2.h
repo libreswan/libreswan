@@ -60,7 +60,7 @@ struct ikev2_expected_payloads {
 struct v2_state_transition {
 	const char *const story;	/* state transition story (not state_story[]) */
 	const struct finite_state *from;
-	const enum state_kind next_state;
+	const struct finite_state *to;
 	const lset_t flags;
 
 	/*

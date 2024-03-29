@@ -312,7 +312,7 @@ void change_v1_state(struct state *st, enum state_kind new_state_kind)
 void change_v2_state(struct state *st)
 {
 	if (pexpect(st->st_v2_transition != NULL)) {
-		change_state(st, st->st_v2_transition->next_state);
+		change_state(st, st->st_v2_transition->to->kind);
 #if 0
 		/*
 		 * Breaks IKE_AUTH where IKE SA changes state twice:
