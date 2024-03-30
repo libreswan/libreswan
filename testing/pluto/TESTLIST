@@ -1453,6 +1453,7 @@ kvmplutotest	ikev2-tcp-01-listen-tcp-yes-udp-yes			good
 kvmplutotest	ikev2-tcp-03-basic-rawrsa-blocking			wip	github/717
 kvmplutotest	ikev2-tcp-03-basic-rawrsa-nonblocking			wip	github/717
 kvmplutotest	ikev2-tcp-04-ikeport-443				good
+kvmplutotest	ikev2-tcp-04-ikeport-500				wip
 kvmplutotest	ikev2-tcp-06-fail-ike-sa-init-cookie			good
 kvmplutotest	ikev2-tcp-06-fail-ike-sa-init-invalid-ke		good
 kvmplutotest	ikev2-tcp-06-fail-ike-sa-init-redirect			good
