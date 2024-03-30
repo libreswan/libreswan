@@ -635,8 +635,8 @@ struct ike_sa *new_v1_rstate(struct connection *c, struct msg_digest *md)
 }
 
 static struct ike_sa *new_v2_ike_sa(struct connection *c,
-				    const struct v2_state_transition *transition,
 				    enum sa_role sa_role,
+				    const struct finite_state *state,
 				    struct iface_endpoint *local_iface_endpoint,
 				    ip_endpoint remote_endpoint,
 				    const ike_spi_t ike_initiator_spi,
@@ -647,41 +647,35 @@ static struct ike_sa *new_v2_ike_sa(struct connection *c,
 				     ike_initiator_spi, ike_responder_spi,
 				     IKE_SA, sa_role, HERE);
 	struct ike_sa *ike = pexpect_ike_sa(st);
-	change_state(&ike->sa, transition->from[0]->kind);
-	set_v2_transition(&ike->sa, transition, HERE);
 	v2_msgid_init_ike(ike);
+	change_state(&ike->sa, state->kind);
 	event_schedule(EVENT_v2_DISCARD, EXCHANGE_TIMEOUT_DELAY, &ike->sa);
 	return ike;
 }
 
 struct ike_sa *new_v2_ike_sa_initiator(struct connection *c)
 {
-	const struct finite_state *fs = finite_states[STATE_V2_PARENT_I0];
-	pexpect(fs->nr_transitions == 1);
-	const struct v2_state_transition *transition = &fs->v2.transitions[0];
-
 	ip_endpoint remote_endpoint;
 	struct iface_endpoint *local_iface_endpoint;
 	if (!get_initiator_endpoints(c, &remote_endpoint, &local_iface_endpoint)) {
 		return NULL;
 	}
 
-	struct ike_sa *ike = new_v2_ike_sa(c, transition, SA_INITIATOR,
+	struct ike_sa *ike = new_v2_ike_sa(c, SA_INITIATOR, &state_v2_PARENT_I0,
 					   local_iface_endpoint, remote_endpoint,
 					   ike_initiator_spi(), zero_ike_spi);
-
 	return ike;
 }
 
 struct ike_sa *new_v2_ike_sa_responder(struct connection *c,
-				       const struct v2_state_transition *transition,
+				       const struct finite_state *state,
 				       struct msg_digest *md)
 {
 	ip_endpoint remote_endpoint;
 	struct iface_endpoint *local_iface_endpoint;
 	get_responder_endpoints(md, &remote_endpoint, &local_iface_endpoint);
 
-	return new_v2_ike_sa(c, transition, SA_RESPONDER,
+	return new_v2_ike_sa(c, SA_RESPONDER, state,
 			     local_iface_endpoint, remote_endpoint,
 			     md->hdr.isa_ike_spis.initiator,
 			     ike_responder_spi(&md->sender, md->logger));

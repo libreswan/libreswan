@@ -464,7 +464,7 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 		 * presumably, dedicating real resources to the
 		 * connection.
 		 */
-		struct ike_sa *ike = new_v2_ike_sa_responder(c, transition, md);
+		struct ike_sa *ike = new_v2_ike_sa_responder(c, transition->from[0], md);
 
 		statetime_t start = statetime_backdate(&ike->sa, &md->md_inception);
 		/* XXX: keep test results happy */
@@ -617,6 +617,9 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 	if (ike == NULL) {
 		return NULL;
 	}
+
+	const struct v2_state_transition *transition = &state_v2_PARENT_I0.v2.transitions[0];
+	start_v2_transition(ike, transition, NULL/*md*/, HERE);
 
 	statetime_t start = statetime_backdate(&ike->sa, inception);
 
