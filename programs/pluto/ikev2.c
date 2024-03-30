@@ -1665,7 +1665,7 @@ static void success_v2_state_transition(struct ike_sa *ike,
 
 	if (just_established) {
 		release_whack(ike->sa.logger, HERE);
-	} else if (transition->flags & SMF2_RELEASE_WHACK) {
+	} else if (transition->flags.release_whack) {
 		release_whack(ike->sa.logger, HERE);
 	}
 }

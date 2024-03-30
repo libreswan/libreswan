@@ -43,13 +43,6 @@ S(IKE_SA_DELETE);
 S(CHILD_SA_DELETE);
 #undef S
 
-enum smf2_flags {
-	/*
-	 * Should whack be released?
-	 */
-	SMF2_RELEASE_WHACK = LELEM(10),
-};
-
 bool sniff_v2_state_transition(struct logger *logger, const struct finite_state *state, struct msg_digest *md);
 
 const struct v2_state_transition *find_v2_state_transition(struct logger *logger,

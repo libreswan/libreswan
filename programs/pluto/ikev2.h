@@ -61,7 +61,9 @@ struct v2_state_transition {
 	const char *const story;	/* state transition story (not state_story[]) */
 	const struct finite_state *from[2];	/* grow as needed */
 	const struct finite_state *to;
-	const lset_t flags;
+	struct {
+		bool release_whack;
+	} flags;
 
 	/*
 	 * The message type being exchanged.
