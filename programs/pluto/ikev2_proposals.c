@@ -1148,7 +1148,7 @@ v2_notification_t process_v2SA_payload(const char *what,
 	dbg("comparing remote proposals against %s %d local proposals",
 	    what, local_proposals->roof - 1);
 
-	passert(*chosen_proposal == NULL);
+	PASSERT(logger, *chosen_proposal == NULL);
 
 	/*
 	 * The chosen proposal.  If there was a match, and no errors,
@@ -1230,9 +1230,9 @@ v2_notification_t process_v2SA_payload(const char *what,
 	pfreeany(best_proposal); /* only free if still owned by us */
 
 	if (notification == v2N_NOTHING_WRONG) {
-		passert(*chosen_proposal != NULL);
+		PASSERT(logger, *chosen_proposal != NULL);
 	} else {
-		passert(*chosen_proposal == NULL);
+		PASSERT(logger, *chosen_proposal == NULL);
 	}
 
 	return notification;
@@ -2143,9 +2143,9 @@ struct ikev2_proposals *ikev2_proposals_from_proposals(enum ikev2_sec_proto_id p
 						       struct logger *logger)
 {
 	const char *name = enum_name_short(&ikev2_proposal_protocol_id_names, protoid);
-	passert(name != NULL);
+	PASSERT(logger, name != NULL);
 	dbg("generating IKEv2 %s proposals", name);
-	passert(proposals != NULL);
+	PASSERT(logger, proposals != NULL);
 	struct ikev2_proposals *v2_proposals = alloc_thing(struct ikev2_proposals, "v2 proposals");
 	/* +1 as proposal[0] is empty */
 	int v2_proposals_roof = nr_proposals(proposals) + 1;
@@ -2161,7 +2161,7 @@ struct ikev2_proposals *ikev2_proposals_from_proposals(enum ikev2_sec_proto_id p
 			jam_string(buf, " to ikev2 ...");
 		}
 
-		passert(v2_proposals->roof < v2_proposals_roof);
+		PASSERT(logger, v2_proposals->roof < v2_proposals_roof);
 		struct ikev2_proposal *v2_proposal =
 			ikev2_proposal_from_proposal_info(proposal,
 							  protoid,
