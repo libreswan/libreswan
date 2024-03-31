@@ -289,54 +289,68 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 			pexpect(msgid == 0); /* per above */
 			/* XXX: keep test results happy */
 			if (md->fake_clone) {
-				log_state(RC_LOG, &old->sa, "IMPAIR: processing a fake (cloned) message");
+				llog_sa(RC_LOG, old, "IMPAIR: processing a fake (cloned) message");
 			}
-			if (verbose_v2_state_busy(&old->sa)) {
-				/* already logged */;
-			} else if (old->sa.st_state == &state_v2_IKE_SA_INIT_R &&
-				   old->sa.st_v2_msgid_windows.responder.recv == 0 &&
-				   old->sa.st_v2_msgid_windows.responder.sent == 0 &&
-				   hunk_eq(old->sa.st_firstpacket_peer,
-					   pbs_in_all(&md->message_pbs))) {
+
+			if (old->sa.st_state != &state_v2_IKE_SA_INIT_R) {
 				/*
-				 * It looks a lot like a shiny new IKE
-				 * SA that only just responded to a
-				 * message identical to this one.
-				 * Re-transmit the response.
+				 * For a duplicate, the IKE SA can't
+				 * have advanced beyond IKE_SA_INIT.
+				 */
+				llog_sa(RC_LOG, old,
+					"received old IKE_SA_INIT request; packet dropped");
+				return;
+			}
+
+			/*
+			 * The IKE SA hasn't yet started processing
+			 * IKE AUTH (or IKE_INTERMEDIATE).  However it
+			 * may be accumulating fragments or running
+			 * background crypto in preparation.
+			 *
+			 * Ignore that.  Until the fragments have been
+			 * re-assembled and verified they can't be
+			 * trusted.
+			 */
+
+			PEXPECT(old->sa.logger, old->sa.st_v2_msgid_windows.responder.recv == 0);
+			PEXPECT(old->sa.logger, old->sa.st_v2_msgid_windows.responder.sent == 0);
+			if (old->sa.st_v2_msgid_windows.responder.wip != -1) {
+				/*
+				 * Started processing (accumulating)
+				 * the next packet.  No sense in
+				 * replying to an older one.
+				 */
+				PEXPECT(old->sa.logger, old->sa.st_v2_msgid_windows.responder.wip == 1);
+				llog_sa(RC_LOG, old,
+					"received IKE_SA_INIT request from previous exchange; packet dropped");
+			}
+
+			if (hunk_eq(old->sa.st_firstpacket_peer, pbs_in_all(&md->message_pbs))) {
+				/*
+				 * Clearly a duplicate.
 				 *
 				 * XXX: Log message matches
 				 * is_duplicate_request() - keep test
 				 * results happy.
 				 */
-				log_state(RC_LOG, &old->sa,
-					  "received duplicate %s message request (Message ID %jd); retransmitting response",
-					  enum_name_short(&ikev2_exchange_names, md->hdr.isa_xchg),
-					  msgid);
+				llog_sa(RC_LOG, old,
+					"received duplicate IKE_SA_INIT request; retransmitting response");
 				send_recorded_v2_message(old, "IKE_SA_INIT responder retransmit",
 							 old->sa.st_v2_msgid_windows.responder.outgoing_fragments);
-			} else {
-				/*
-				 * Either:
-				 *
-				 * - it is an old duplicate and the
-				 *   packet should be dropped
-				 *
-				 * - it's a second initiator using the
-				 *   same SPIi (wow!) and a new IKE SA
-				 *   should be created
-				 *
-				 * However the odds of the later are
-				 * essentially zero so assume the
-				 * former and drop the packet.
-				 *
-				 * XXX: Log message matches
-				 * is_duplicate_request() - keep test
-				 * results happy.
-				 */
-				log_state(RC_LOG, &old->sa,
-					  "received too old retransmit: %jd < %jd",
-					  msgid, old->sa.st_v2_msgid_windows.responder.sent);
+				return;
 			}
+
+			/*
+			 * Is this a second IKE_SA_INIT request using
+			 * the same SPIi as the existing IKE SA?  Wow!
+			 * But lets not go there.
+			 *
+			 * XXX: Log message matches
+			 * is_duplicate_request() - keep test results
+			 * happy.
+			 */
+			llog_sa(RC_LOG, old, "received too old IKE_SA_INIT retransmit");
 			return;
 		}
 

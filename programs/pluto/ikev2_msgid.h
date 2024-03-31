@@ -45,16 +45,26 @@ struct v2_msgid_window {
 	 * .recv: last inbound message processed
 	 * .wip: message being processed; or -1
 	 *
-	 * Idle:       .sent:N   .recv:N   .wip:-1
-	 * Initiating: .sent:N   .recv:N   .wip:N+1
-	 * Initiated:  .sent:N+1 .recv:N   .wip:-1
+	 * Initiator:
 	 *
-	 * Responding: .sent:N   .recv:N   .wip:N+1
-	 * Responded:  .sent:N+1 .recv:N+1 .wip:N+1
+	 * Idle:       .sent:N   .recv:N   .wip:-1   .state=_IRn?
+	 * Initiating: .sent:N   .recv:N   .wip:N+1  .state=_IRn?
+	 * Initiated:  .sent:N+1 .recv:N   .wip:-1   .state=_In+1
 	 *
-	 * Response:   .sent:N+1 .recv:N   .wip:N+1
-	 * Idle    :   .sent:N+1 .recv:N+1 .wip:-1
+	 * Responder:
+	 *
+	 * Idle:       .sent:N   .recv:N   .wip:-1   .state=_Rn?
+	 * Responding: .sent:N   .recv:N   .wip:N+1  .state=_Rn?
+	 * Responded:  .sent:N+1 .recv:N+1 .wip:N+1  .state=_Rn+1
+	 *
+	 * Initiator:
+	 *
+	 * Response:   .sent:N+1 .recv:N   .wip:N+1  .state=_In+1
 	 * (after packet has been assembled)
+	 * Idle    :   .sent:N+1 .recv:N+1 .wip:-1   .state=_IRn+1
+	 *
+	 * XXX: should .wip be set _while_ protected and verified
+	 * fragments are being accumulated.
 	 */
 	intmax_t sent;		/* starts with -1 */
 	intmax_t recv;		/* starts with -1 */
