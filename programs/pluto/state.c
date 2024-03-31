@@ -661,7 +661,7 @@ struct ike_sa *new_v2_ike_sa_initiator(struct connection *c)
 		return NULL;
 	}
 
-	struct ike_sa *ike = new_v2_ike_sa(c, SA_INITIATOR, &state_v2_PARENT_I0,
+	struct ike_sa *ike = new_v2_ike_sa(c, SA_INITIATOR, &state_v2_IKE_SA_INIT_I0,
 					   local_iface_endpoint, remote_endpoint,
 					   ike_initiator_spi(), zero_ike_spi);
 	return ike;

@@ -634,14 +634,14 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 		return NULL;
 	}
 
-	const struct v2_state_transition *transition = &state_v2_PARENT_I0.v2.transitions[0];
-	start_v2_transition(ike, transition, NULL/*md*/, HERE);
+	start_v2_transition(ike, &initiate_v2_IKE_SA_INIT_transition,
+			    NULL/*md*/, HERE);
 
 	statetime_t start = statetime_backdate(&ike->sa, inception);
 
 	/* set up new state */
 	passert(ike->sa.st_ike_version == IKEv2);
-	passert(ike->sa.st_state == &state_v2_PARENT_I0);
+	passert(ike->sa.st_state == &state_v2_IKE_SA_INIT_I0);
 	passert(ike->sa.st_sa_role == SA_INITIATOR);
 
 	if (is_labeled(c) && sec_label.len == 0) {
@@ -783,7 +783,7 @@ stf_status initiate_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	pexpect(ike->sa.st_sa_role == SA_INITIATOR);
 	pexpect(unused_md == NULL);
 	/* I1 is from INVALID KE */
-	pexpect(ike->sa.st_state == &state_v2_PARENT_I0 ||
+	pexpect(ike->sa.st_state == &state_v2_IKE_SA_INIT_I0 ||
 		ike->sa.st_state == &state_v2_IKE_SA_INIT_I);
 	dbg("%s() for #%lu %s",
 	     __func__, ike->sa.st_serialno, ike->sa.st_state->name);

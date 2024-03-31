@@ -557,7 +557,7 @@ enum state_kind {
 
 	/* IKE SA */
 
-	STATE_V2_PARENT_I0 = STATE_IKEv2_FLOOR,	/* waiting for KE to finish */
+	STATE_V2_IKE_SA_INIT_I0 = STATE_IKEv2_FLOOR,	/* waiting for KE to finish */
 
 	STATE_V2_IKE_SA_INIT_I,		/* Initiator sent Request */
 	STATE_V2_IKE_SA_INIT_R0,	/* just starting */
@@ -678,7 +678,7 @@ extern const struct enum_names perspective_names;
 #define IS_V1_ISAKMP_SA_ESTABLISHED(ST) false
 #endif
 
-#define IKEV2_ISAKMP_INITIATOR_STATES (LELEM(STATE_V2_PARENT_I0) |	\
+#define IKEV2_ISAKMP_INITIATOR_STATES (LELEM(STATE_V2_IKE_SA_INIT_I0) |	\
 				       LELEM(STATE_V2_IKE_SA_INIT_I) |	\
 				       LELEM(STATE_V2_IKE_AUTH_I))
 

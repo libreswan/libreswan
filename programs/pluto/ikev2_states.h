@@ -18,7 +18,7 @@
 #define IKEV2_STATE_H
 
 #define S(KIND, ...) extern const struct finite_state state_v2_##KIND
-S(PARENT_I0);
+S(IKE_SA_INIT_I0);
 S(IKE_SA_INIT_I);
 S(IKE_SA_INIT_R0);
 S(IKE_SA_INIT_R);
@@ -50,6 +50,7 @@ const struct v2_state_transition *find_v2_state_transition(struct logger *logger
 							   struct msg_digest *md,
 							   bool *secured_payload_failed);
 
+extern const struct v2_state_transition initiate_v2_IKE_SA_INIT_transition;
 extern const struct v2_state_transition initiate_v2_IKE_INTERMEDIATE_transition;
 extern const struct v2_state_transition initiate_v2_IKE_AUTH_transition;
 

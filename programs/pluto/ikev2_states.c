@@ -161,20 +161,23 @@ static struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
  * half-open.
  */
 
-static const struct v2_state_transition PARENT_I0_transitions[] = {
+const struct v2_state_transition initiate_v2_IKE_SA_INIT_transition = {
 	/* no state:   --> I1
 	 * HDR, SAi1, KEi, Ni -->
 	 */
-	{ .story      = "initiating IKE_SA_INIT",
-	  .from = { &state_v2_PARENT_I0, },
-	  .to = &state_v2_IKE_SA_INIT_I,
-	  .exchange   = ISAKMP_v2_IKE_SA_INIT,
-	  .processor  = NULL, /* XXX: should be set */
-	  .llog_success = llog_v2_success_exchange_sent_to,
-	  .timeout_event = EVENT_RETRANSMIT, },
+	.story      = "initiating IKE_SA_INIT",
+	.from = { &state_v2_IKE_SA_INIT_I0, },
+	.to = &state_v2_IKE_SA_INIT_I,
+	.exchange   = ISAKMP_v2_IKE_SA_INIT,
+	.processor  = NULL, /* XXX: should be set */
+	.llog_success = llog_v2_success_exchange_sent_to,
+	.timeout_event = EVENT_RETRANSMIT,
 };
 
-S(PARENT_I0, "waiting for KE to finish", CAT_IGNORE);
+static const struct v2_state_transition IKE_SA_INIT_I0_transitions[] = {
+};
+
+S(IKE_SA_INIT_I0, "waiting for KE to finish", CAT_IGNORE);
 
 /*
  * Count I1 as half-open too because with ondemand, a plaintext packet
@@ -190,7 +193,7 @@ static const struct v2_state_transition IKE_SA_INIT_I_transitions[] = {
 
 	{ .story      = "received anti-DDOS COOKIE response; resending IKE_SA_INIT request with cookie payload added",
 	  .from = { &state_v2_IKE_SA_INIT_I, },
-	  .to = &state_v2_PARENT_I0,
+	  .to = &state_v2_IKE_SA_INIT_I0,
 	  .exchange   = ISAKMP_v2_IKE_SA_INIT,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .message_payloads.required = P(N),
@@ -201,7 +204,7 @@ static const struct v2_state_transition IKE_SA_INIT_I_transitions[] = {
 
 	{ .story      = "received INVALID_KE_PAYLOAD response; resending IKE_SA_INIT with new KE payload",
 	  .from = { &state_v2_IKE_SA_INIT_I, },
-	  .to = &state_v2_PARENT_I0,
+	  .to = &state_v2_IKE_SA_INIT_I0,
 	  .exchange   = ISAKMP_v2_IKE_SA_INIT,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .message_payloads.required = P(N),
@@ -212,7 +215,7 @@ static const struct v2_state_transition IKE_SA_INIT_I_transitions[] = {
 
 	{ .story      = "received REDIRECT response; resending IKE_SA_INIT request to new destination",
 	  .from = { &state_v2_IKE_SA_INIT_I, },
-	  .to = &state_v2_PARENT_I0, /* XXX: never happens STF_SUSPEND */
+	  .to = &state_v2_IKE_SA_INIT_I0, /* XXX: never happens STF_SUSPEND */
 	  .exchange   = ISAKMP_v2_IKE_SA_INIT,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .message_payloads.required = P(N),
@@ -931,7 +934,7 @@ S(CHILD_SA_DELETE, "STATE_CHILDSA_DEL", CAT_INFORMATIONAL);
 
 static const struct finite_state *v2_states[] = {
 #define S(KIND, ...) [STATE_V2_##KIND - STATE_IKEv2_FLOOR] = &state_v2_##KIND
-	S(PARENT_I0),
+	S(IKE_SA_INIT_I0),
 	S(IKE_SA_INIT_I),
 	S(IKE_SA_INIT_R0),
 	S(IKE_SA_INIT_R),

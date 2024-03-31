@@ -1884,7 +1884,7 @@ static void reinitiate_v2_ike_sa_init(const char *story, struct state *st, void 
 	/*
 	 * Pretend to be running the initiate state transition.
 	 */
-	start_v2_transition(ike, finite_states[STATE_V2_PARENT_I0]->v2.transitions,
+	start_v2_transition(ike, &initiate_v2_IKE_SA_INIT_transition,
 			    /*md*/NULL, HERE); /* first */
 
 	/*
