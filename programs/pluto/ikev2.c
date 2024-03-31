@@ -825,24 +825,6 @@ static bool is_duplicate_response(struct ike_sa *ike,
 		return true;
 	}
 
-	/*
-	 * If the state is busy, presumably doing something like
-	 * crypto, skip further processing.
-	 *
-	 * For fragments, things only go busy once all fragments have
-	 * been received (and re-transmitted fragments are ignored).
-	 * If this changes then a lot more than this code will need to
-	 * be moved.
-	 *
-	 * XXX: Is there a better way to handle this?
-	 *
-	 * XXX: Is this too strict?  Could an in-progress request make
-	 * things look busy?
-	 */
-	if (verbose_v2_state_busy(&ike->sa)) {
-		return true;
-	}
-
 	return false;
 }
 
