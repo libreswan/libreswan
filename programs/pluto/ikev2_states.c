@@ -305,14 +305,14 @@ static const struct v2_state_transition IKE_AUTH_I_transitions[] = {
 
 S(IKE_AUTH_I, "sent IKE_AUTH request", CAT_OPEN_IKE_SA, .v2.secured = true);
 
-static const struct v2_state_transition PARENT_R0_transitions[] = {
+static const struct v2_state_transition IKE_SA_INIT_R0_transitions[] = {
 
 	/* no state: none I1 --> R1
 	 *                <-- HDR, SAi1, KEi, Ni
 	 * HDR, SAr1, KEr, Nr, [CERTREQ] -->
 	 */
 	{ .story      = "Respond to IKE_SA_INIT",
-	  .from = { &state_v2_PARENT_R0, },
+	  .from = { &state_v2_IKE_SA_INIT_R0, },
 	  .to = &state_v2_IKE_SA_INIT_R,
 	  .exchange   = ISAKMP_v2_IKE_SA_INIT,
 	  .recv_role  = MESSAGE_REQUEST,
@@ -323,7 +323,7 @@ static const struct v2_state_transition PARENT_R0_transitions[] = {
 
 };
 
-S(PARENT_R0, "processing IKE_SA_INIT request", CAT_HALF_OPEN_IKE_SA);
+S(IKE_SA_INIT_R0, "processing IKE_SA_INIT request", CAT_HALF_OPEN_IKE_SA);
 
 static const struct v2_state_transition IKE_SA_INIT_R_transitions[] = {
 
@@ -932,8 +932,8 @@ S(CHILD_SA_DELETE, "STATE_CHILDSA_DEL", CAT_INFORMATIONAL);
 static const struct finite_state *v2_states[] = {
 #define S(KIND, ...) [STATE_V2_##KIND - STATE_IKEv2_FLOOR] = &state_v2_##KIND
 	S(PARENT_I0),
-	S(PARENT_R0),
 	S(IKE_SA_INIT_I),
+	S(IKE_SA_INIT_R0),
 	S(IKE_SA_INIT_R),
 	S(IKE_SA_INIT_IR),
 	S(IKE_INTERMEDIATE_I),

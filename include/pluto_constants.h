@@ -558,9 +558,9 @@ enum state_kind {
 	/* IKE SA */
 
 	STATE_V2_PARENT_I0 = STATE_IKEv2_FLOOR,	/* waiting for KE to finish */
-	STATE_V2_PARENT_R0,	/* just starting */
 
 	STATE_V2_IKE_SA_INIT_I,		/* Initiator sent Request */
+	STATE_V2_IKE_SA_INIT_R0,	/* just starting */
 	STATE_V2_IKE_SA_INIT_R,		/* Responder send Response */
 	STATE_V2_IKE_SA_INIT_IR,	/* Initiator processed Response */
 

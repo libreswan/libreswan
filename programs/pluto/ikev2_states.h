@@ -19,8 +19,8 @@
 
 #define S(KIND, ...) extern const struct finite_state state_v2_##KIND
 S(PARENT_I0);
-S(PARENT_R0);
 S(IKE_SA_INIT_I);
+S(IKE_SA_INIT_R0);
 S(IKE_SA_INIT_R);
 S(IKE_SA_INIT_IR);
 S(IKE_INTERMEDIATE_I);

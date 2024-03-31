@@ -433,9 +433,8 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 		 * Does the message match the (only) expected
 		 * transition?
 		 */
-		const struct finite_state *start_state = finite_states[STATE_V2_PARENT_R0];
 		const struct v2_state_transition *transition =
-			find_v2_state_transition(md->logger, start_state, md,
+			find_v2_state_transition(md->logger, &state_v2_IKE_SA_INIT_R0, md,
 						 /*secured_payload_failed?*/NULL);
 		if (transition == NULL) {
 			/* already logged */
@@ -478,7 +477,7 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 		 * presumably, dedicating real resources to the
 		 * connection.
 		 */
-		struct ike_sa *ike = new_v2_ike_sa_responder(c, transition->from[0], md);
+		struct ike_sa *ike = new_v2_ike_sa_responder(c, &state_v2_IKE_SA_INIT_R0, md);
 
 		statetime_t start = statetime_backdate(&ike->sa, &md->md_inception);
 		/* XXX: keep test results happy */
@@ -1015,7 +1014,7 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 	/* set up new state */
 	update_ike_endpoints(ike, md);
 	passert(ike->sa.st_ike_version == IKEv2);
-	passert(ike->sa.st_state == &state_v2_PARENT_R0);
+	passert(ike->sa.st_state == &state_v2_IKE_SA_INIT_R0);
 	passert(ike->sa.st_sa_role == SA_RESPONDER);
 
 	/* Vendor ID processing */
@@ -1154,7 +1153,7 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	struct ike_sa *ike = pexpect_ike_sa(ike_st);
 	pexpect(ike->sa.st_sa_role == SA_RESPONDER);
 	pexpect(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
-	pexpect(ike->sa.st_state == &state_v2_PARENT_R0);
+	pexpect(ike->sa.st_state == &state_v2_IKE_SA_INIT_R0);
 	dbg("%s() for #%lu %s: calculated ke+nonce, sending R1",
 	    __func__, ike->sa.st_serialno, ike->sa.st_state->name);
 
