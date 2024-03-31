@@ -549,13 +549,11 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 			/*
 			 * This doesn't seem right; drop the
 			 * packet.
+			 *
+			 * Log against MD as source may not match IKE.
 			 */
-			llog_md(md, "dropping IKE_SA_INIT response as unexpected for matching IKE SA #%lu",
+			llog_md(md, "dropping IKE_SA_INIT response as not expected by IKE SA #%lu",
 				ike->sa.st_serialno);
-			return;
-		}
-
-		if (verbose_v2_state_busy(&ike->sa)) {
 			return;
 		}
 
