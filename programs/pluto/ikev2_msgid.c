@@ -112,14 +112,15 @@ static void jam_window_details(struct jambuf *buf,
 	jam_ike_windows(buf, old, &ike->sa.st_v2_msgid_windows);
 }
 
-VPRINTF_LIKE(3)
+VPRINTF_LIKE(4)
 static void jam_v2_msgid(struct jambuf *buf,
 			 struct ike_sa *ike,
+			 const struct v2_msgid_windows *old,
 			 const char *fmt, va_list ap)
 {
 	jam(buf, "Message ID: ");
 	jam_va_list(buf, fmt, ap);
-	jam_window_details(buf, ike, &empty_v2_msgid_windows);
+	jam_window_details(buf, ike, old);
 }
 
 void dbg_v2_msgid(struct ike_sa *ike, const char *fmt, ...)
@@ -128,7 +129,8 @@ void dbg_v2_msgid(struct ike_sa *ike, const char *fmt, ...)
 		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, ike->sa.logger, buf) {
 			va_list ap;
 			va_start(ap, fmt);
-			jam_v2_msgid(buf, ike, fmt, ap);
+			/* dump non-default values */
+			jam_v2_msgid(buf, ike, &empty_v2_msgid_windows, fmt, ap);
 			va_end(ap);
 		}
 	}
@@ -139,7 +141,8 @@ void fail_v2_msgid_where(where_t where, struct ike_sa *ike, const char *fmt, ...
 	LLOG_PEXPECT_JAMBUF(ike->sa.logger, where, buf) {
 		va_list ap;
 		va_start(ap, fmt);
-		jam_v2_msgid(buf, ike, fmt, ap);
+		/* dump all values */
+		jam_v2_msgid(buf, ike, &ike->sa.st_v2_msgid_windows, fmt, ap);
 		va_end(ap);
 	}
 }
