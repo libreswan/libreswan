@@ -2096,68 +2096,6 @@ void event_v2_rekey(struct state *st, bool detach_whack)
 	     pri_so(ike->sa.st_serialno));
 }
 
-/*
- * if the state is too busy to process a packet, say so
- */
-
-static bool v2_state_busy(const struct state *st)
-{
-	passert(st != NULL);
-
-	if (st->st_v1_background_md != NULL) {
-		dbg("#%lu is busy; has background MD %p",
-		    st->st_serialno, st->st_v1_background_md);
-		return true;
-	}
-
-	if (st->ipseckey_dnsr != NULL) {
-		dbg("#%lu is busy; has IPSECKEY DNS %p",
-		    st->st_serialno, st->ipseckey_dnsr);
-		return true;
-	}
-
-	/*
-	 * If IKEv1 is doing something in the background then the
-	 * state isn't busy.
-	 */
-	if (st->st_offloaded_task_in_background) {
-		pexpect(st->st_offloaded_task != NULL);
-		dbg("#%lu is idle; has background offloaded task",
-		    st->st_serialno);
-		return false;
-	}
-	/*
-	 * If this state is busy calculating.
-	 */
-	if (st->st_offloaded_task != NULL) {
-		dbg("#%lu is busy; has an offloaded task",
-		    st->st_serialno);
-		return true;
-	}
-	dbg("#%lu is idle", st->st_serialno);
-	return false;
-}
-
-bool verbose_v2_state_busy(const struct state *st)
-{
-	if (st == NULL) {
-		dbg("#null state always idle");
-		return false;
-	}
-	if (!v2_state_busy(st)) {
-		dbg("#%lu idle", st->st_serialno);
-		return false;
-	}
-
-	/* not whack */
-	/* XXX: why not whack? */
-	/* XXX: can this and below be merged; is there always an offloaded task? */
-	log_state(LOG_STREAM/*not-whack*/, st,
-		  "discarding packet received during asynchronous work (DNS or crypto) in %s",
-		  st->st_state->name);
-	return true;
-}
-
 bool v2_transition_from(const struct v2_state_transition *transition, const struct finite_state *state)
 {
 	FOR_EACH_ELEMENT(from, transition->from) {

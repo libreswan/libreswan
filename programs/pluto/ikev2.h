@@ -132,8 +132,6 @@ bool accept_v2_notification(v2_notification_t n,
 			    struct msg_digest *md,
 			    bool enabled);
 
-extern bool verbose_v2_state_busy(const struct state *st);
-
 void start_v2_transition(struct ike_sa *ike,
 			 const struct v2_state_transition *transition,
 			 struct msg_digest *md, where_t where);
