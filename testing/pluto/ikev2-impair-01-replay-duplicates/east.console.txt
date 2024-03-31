@@ -22,7 +22,7 @@ east #
  sed -n -e '/IMPAIR: start processing inbound duplicate/,/IMPAIR: stop processing inbound duplicate/ { /^[^|]/ p }' /tmp/pluto.log
 packet from 192.1.2.45:500: IMPAIR: start processing inbound duplicate packet 1
 "westnet-eastnet" #1: IMPAIR: processing a fake (cloned) message
-"westnet-eastnet" #1: discarding packet received during asynchronous work (DNS or crypto) in STATE_V2_PARENT_R0
+"westnet-eastnet" #1: received old IKE_SA_INIT request; packet dropped
 packet from 192.1.2.45:500: IMPAIR: stop processing inbound duplicate packet 1
 packet from 192.1.2.45:500: IMPAIR: start processing inbound duplicate packet 2
 "westnet-eastnet" #1: IMPAIR: processing a fake (cloned) message
