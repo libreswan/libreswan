@@ -537,10 +537,15 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 			return;
 		}
 
+		/*
+		 * While the IKE SA is initiating, .sent==-1,
+		 * .recv==-1, and .wip==0.  Once the message is sent,
+		 * .sent==0, .recv==-1, and .wip==-1.
+		 */
 		if (ike->sa.st_state->kind != STATE_V2_IKE_SA_INIT_I ||
 		    ike->sa.st_v2_msgid_windows.initiator.sent != 0 ||
 		    ike->sa.st_v2_msgid_windows.initiator.recv != -1 ||
-		    ike->sa.st_v2_msgid_windows.initiator.wip != 0) {
+		    ike->sa.st_v2_msgid_windows.initiator.wip != -1) {
 			/*
 			 * This doesn't seem right; drop the
 			 * packet.

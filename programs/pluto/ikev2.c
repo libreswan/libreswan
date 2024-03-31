@@ -730,14 +730,14 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 static bool is_duplicate_response(struct ike_sa *ike,
 				  struct msg_digest *md)
 {
-	passert(v2_msg_role(md) == MESSAGE_RESPONSE);
+	PASSERT(ike->sa.logger, v2_msg_role(md) == MESSAGE_RESPONSE);
 	intmax_t msgid = md->hdr.isa_msgid;
 
 	/* the sliding window is really small!?! */
-	pexpect(ike->sa.st_v2_msgid_windows.initiator.sent >=
-		ike->sa.st_v2_msgid_windows.initiator.recv);
+	PEXPECT(ike->sa.logger, (ike->sa.st_v2_msgid_windows.initiator.sent >=
+				 ike->sa.st_v2_msgid_windows.initiator.recv));
 
-	if (msgid <= ike->sa.st_v2_msgid_windows.initiator.recv) {
+	if (ike->sa.st_v2_msgid_windows.initiator.recv >= msgid) {
 		/*
 		 * Processing of the response was completed so drop as
 		 * too old.
@@ -783,35 +783,45 @@ static bool is_duplicate_response(struct ike_sa *ike,
 		 * to-old so doesn't expect there to be a matching
 		 * initiator, arrg
 		 */
-		dbg_v2_msgid(ike, "already processed response %jd (%s); discarding packet",
-			     msgid, enum_name_short(&ikev2_exchange_names, md->hdr.isa_xchg));
+		dbg_v2_msgid(ike, "unexpected %s response with Message ID %ju (last received was %jd); dropping packet",
+			     enum_name_short(&ikev2_exchange_names, md->hdr.isa_xchg),
+			     msgid, ike->sa.st_v2_msgid_windows.initiator.recv);
 		return true;
 	}
 
-	if (ike->sa.st_v2_msgid_windows.initiator.wip != msgid) {
+	if (ike->sa.st_v2_msgid_windows.initiator.sent != msgid) {
 		/*
 		 * While there's an IKE SA matching the IKE SPIs,
 		 * there's no corresponding initiator for the message.
 		 */
 		llog_sa(RC_LOG, ike,
-			"%s message response with Message ID %jd has no matching SA",
-			enum_name(&ikev2_exchange_names, md->hdr.isa_xchg), msgid);
+			"unexpected %s response with Message ID %jd (last sent was %jd); dropping packet",
+			enum_name(&ikev2_exchange_names, md->hdr.isa_xchg),
+			msgid, ike->sa.st_v2_msgid_windows.initiator.sent);
 		return true;
 	}
 
-	/*
-	 * Sanity check the MSGID and initiator against the IKE SA
-	 * Message ID window.
-	 */
-
-	if (msgid > ike->sa.st_v2_msgid_windows.initiator.sent) {
+	if (ike->sa.st_v2_msgid_windows.initiator.wip == msgid) {
 		/*
-		 * The IKE SA is waiting for a message that, according
-		 * to the IKE SA, has yet to be sent?!?
+		 * Initiator is already working on this response.
+		 * Presumably a re-transmit so quietly drop it.
 		 */
-		fail_v2_msgid(ike,
-			      "dropping response with Message ID %jd which is from the future - last request sent was %jd",
-			      msgid, ike->sa.st_v2_msgid_windows.initiator.sent);
+		dbg_v2_msgid(ike,
+			     "%s response with Message ID %jd is work-in-progress; dropping packet",
+			     enum_name(&ikev2_exchange_names, md->hdr.isa_xchg),
+			     msgid);
+		return true;
+	}
+
+	if (ike->sa.st_v2_msgid_windows.initiator.wip != -1) {
+		/*
+		 * While there's an IKE SA matching the IKE SPIs,
+		 * there's no corresponding initiator for the message.
+		 */
+		llog_sa(RC_LOG, ike,
+			"unexpected %s response with Message ID %jd (processing %jd); dropping packet",
+			enum_name(&ikev2_exchange_names, md->hdr.isa_xchg), msgid,
+			ike->sa.st_v2_msgid_windows.initiator.wip);
 		return true;
 	}
 

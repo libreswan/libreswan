@@ -203,7 +203,7 @@ void v2_msgid_start_record_n_send(struct ike_sa *ike)
 	 * though it didn't).
 	 */
 	intmax_t msgid = new->initiator.recv = old.initiator.sent;
-	new->initiator.wip = -1;
+	new->initiator.wip = msgid + 1;
 	dbg_msgid_update("initiator record'n'send", NO_MESSAGE, msgid, ike, &old);
 }
 
@@ -223,13 +223,7 @@ void v2_msgid_start(struct ike_sa *ike, const struct msg_digest *md)
 		pexpect_v2_msgid(ike, role, old.initiator.recv+1 == msgid);
 		pexpect_v2_msgid(ike, role, old.initiator.sent+1 == msgid);
 		pexpect_v2_msgid(ike, role, old.initiator.wip == -1);
-#if 0
-		/*
-		 * XXX: v2_msgid_start() isn't called when starting a
-		 * new exchange!  It should be ...
-		 */
 		new->initiator.wip = msgid;
-#endif
 		break;
 	}
 	case MESSAGE_REQUEST:
@@ -247,15 +241,7 @@ void v2_msgid_start(struct ike_sa *ike, const struct msg_digest *md)
 	{
 		update_story = "initiator starting";
 		msgid = md->hdr.isa_msgid;
-#if 0
-		/*
-		 * XXX: v2_msgid_start() isn't called when starting a
-		 * new exchange!  It should be ...
-		 */
 		pexpect_v2_msgid(ike, role, old.initiator.wip == -1);
-#else
-		pexpect_v2_msgid(ike, role, old.initiator.wip == msgid);
-#endif
 		pexpect_v2_msgid(ike, role, old.initiator.sent == msgid);
 		pexpect_v2_msgid(ike, role, old.initiator.recv+1 == msgid);
 		new->initiator.wip = msgid;
@@ -313,11 +299,11 @@ void v2_msgid_finish(struct ike_sa *ike, const struct msg_digest *md)
 		 * Use the next Message ID (which should be what was
 		 * used by the code emitting the message request).
 		 */
-		pexpect_v2_msgid(ike, receiving, old.initiator.wip == -1);
-		update_story = "initiator finishing";
 		msgid = old.initiator.sent + 1;
+		update_story = "initiator finishing";
+		pexpect_v2_msgid(ike, receiving, old.initiator.wip == msgid);
 		update = &new->initiator;
-		new->initiator.wip = msgid;
+		new->initiator.wip = -1;
 		new->initiator.sent = msgid;
 		if (ike->sa.st_retransmit_event == NULL) {
 			dbg_v2_msgid(ike, "scheduling EVENT_RETRANSMIT");

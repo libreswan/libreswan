@@ -46,16 +46,15 @@ struct v2_msgid_window {
 	 * .wip: message being processed; or -1
 	 *
 	 * Idle:       .sent:N   .recv:N   .wip:-1
-	 * Initiating: .sent:N   .recv:N   .wip:-1
-	 * XXX: Initiating: .sent:N   .recv:N   .wip:N+1
-
-	 * Initiated:  .sent:N+1 .recv:N   .wip:N+1
-	 * XXX: Initiated:  .sent:N+1 .recv:N   .wip:-1
-
+	 * Initiating: .sent:N   .recv:N   .wip:N+1
+	 * Initiated:  .sent:N+1 .recv:N   .wip:-1
+	 *
 	 * Responding: .sent:N   .recv:N   .wip:N+1
 	 * Responded:  .sent:N+1 .recv:N+1 .wip:N+1
+	 *
 	 * Response:   .sent:N+1 .recv:N   .wip:N+1
 	 * Idle    :   .sent:N+1 .recv:N+1 .wip:-1
+	 * (after packet has been assembled)
 	 */
 	intmax_t sent;		/* starts with -1 */
 	intmax_t recv;		/* starts with -1 */
