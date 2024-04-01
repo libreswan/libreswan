@@ -162,14 +162,14 @@ void v2_msgid_schedule_next_initiator(struct ike_sa *ike);
 
 void dbg_v2_msgid(struct ike_sa *ike, const char *msg, ...) PRINTF_LIKE(2);
 void fail_v2_msgid_where(where_t where, struct ike_sa *ike, const char *fmt, ...) PRINTF_LIKE(3);
-#define pexpect_v2_msgid(IKE, ROLE, COND)				\
+#define pexpect_v2_msgid(IKE, ROLE, WHERE, COND)				\
 	({								\
 		bool cond_ = COND; /* eval once, no paren */		\
 		if (!cond_) {						\
-		enum_buf eb;						\
-			fail_v2_msgid(IKE, "%s %s",			\
-				      str_enum_short(&message_role_names, ROLE, &eb), \
-				      #COND);				\
+			enum_buf eb;					\
+			fail_v2_msgid_where(WHERE, IKE, "%s %s",	\
+					    str_enum_short(&message_role_names, ROLE, &eb), \
+					    #COND);			\
 		}							\
 	})
 #define fail_v2_msgid(IKE, FMT, ...) fail_v2_msgid_where(HERE, IKE, FMT,##__VA_ARGS__)

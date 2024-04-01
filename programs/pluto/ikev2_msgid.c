@@ -232,9 +232,9 @@ void v2_msgid_start(struct ike_sa *ike, const struct msg_digest *md)
 	{
 		update_story = "initiator starting";
 		msgid = old.initiator.sent + 1;
-		pexpect_v2_msgid(ike, role, old.initiator.recv+1 == msgid);
-		pexpect_v2_msgid(ike, role, old.initiator.sent+1 == msgid);
-		pexpect_v2_msgid(ike, role, old.initiator.wip == -1);
+		pexpect_v2_msgid(ike, role, HERE, old.initiator.recv+1 == msgid);
+		pexpect_v2_msgid(ike, role, HERE, old.initiator.sent+1 == msgid);
+		pexpect_v2_msgid(ike, role, HERE, old.initiator.wip == -1);
 		new->initiator.wip = msgid;
 		break;
 	}
@@ -243,9 +243,9 @@ void v2_msgid_start(struct ike_sa *ike, const struct msg_digest *md)
 		/* extend msgid */
 		update_story = "responder starting";
 		msgid = md->hdr.isa_msgid;
-		pexpect_v2_msgid(ike, role, old.responder.wip == -1);
-		pexpect_v2_msgid(ike, role, old.responder.sent+1 == msgid);
-		pexpect_v2_msgid(ike, role, old.responder.recv+1 == msgid);
+		pexpect_v2_msgid(ike, role, HERE, old.responder.wip == -1);
+		pexpect_v2_msgid(ike, role, HERE, old.responder.sent+1 == msgid);
+		pexpect_v2_msgid(ike, role, HERE, old.responder.recv+1 == msgid);
 		new->responder.wip = msgid;
 		break;
 	}
@@ -253,9 +253,9 @@ void v2_msgid_start(struct ike_sa *ike, const struct msg_digest *md)
 	{
 		update_story = "initiator starting";
 		msgid = md->hdr.isa_msgid;
-		pexpect_v2_msgid(ike, role, old.initiator.wip == -1);
-		pexpect_v2_msgid(ike, role, old.initiator.sent == msgid);
-		pexpect_v2_msgid(ike, role, old.initiator.recv+1 == msgid);
+		pexpect_v2_msgid(ike, role, HERE, old.initiator.wip == -1);
+		pexpect_v2_msgid(ike, role, HERE, old.initiator.sent == msgid);
+		pexpect_v2_msgid(ike, role, HERE, old.initiator.recv+1 == msgid);
 		new->initiator.wip = msgid;
 		break;
 	}
@@ -313,7 +313,7 @@ void v2_msgid_finish(struct ike_sa *ike, const struct msg_digest *md)
 		 */
 		msgid = old.initiator.sent + 1;
 		update_story = "initiator finishing";
-		pexpect_v2_msgid(ike, receiving, old.initiator.wip == msgid);
+		pexpect_v2_msgid(ike, receiving, HERE, old.initiator.wip == msgid);
 		update = &new->initiator;
 		new->initiator.wip = -1;
 		new->initiator.sent = msgid;
@@ -340,7 +340,7 @@ void v2_msgid_finish(struct ike_sa *ike, const struct msg_digest *md)
 		 */
 		update_story = "responder finishing";
 		msgid = md->hdr.isa_msgid;
-		pexpect_v2_msgid(ike, receiving, old.responder.wip == msgid);
+		pexpect_v2_msgid(ike, receiving, HERE, old.responder.wip == msgid);
 		update = &new->responder;
 		new->responder.wip = -1;
 		/* for duplicate detection */
@@ -364,7 +364,7 @@ void v2_msgid_finish(struct ike_sa *ike, const struct msg_digest *md)
 		update_story = "initiator finishing";
 		msgid = md->hdr.isa_msgid;
 		update = &new->initiator;
-		pexpect_v2_msgid(ike, receiving, old.initiator.wip == msgid);
+		pexpect_v2_msgid(ike, receiving, HERE, old.initiator.wip == msgid);
 		new->initiator.recv = msgid;
 		new->initiator.wip = -1;
 		/*
