@@ -41,17 +41,26 @@ static const struct v2_msgid_windows empty_v2_msgid_windows = {
  * Logging.
  */
 
+static void jam_old_new_prefix(struct jambuf *buf,
+			       const char **prefix, const char *what)
+{
+	jam_string(buf, *prefix);
+	*prefix = "";
+	jam_string(buf, " ");
+	jam_string(buf, what);
+	jam_string(buf, "=");
+}
+
 static void jam_old_new_monotime(struct jambuf *buf,
 				 const char **prefix, const char *what,
 				 const monotime_t *old, const monotime_t *new)
 {
 	if (old == new || monotime_cmp(*old, !=, *new)) {
-		jam_string(buf, *prefix);
-		*prefix = "";
-		monotime_buf mb;
-		jam(buf, " %s=%s", what, str_monotime(*old, &mb));
+		jam_old_new_prefix(buf, prefix, what);
+		jam_monotime(buf, *old);
 		if (old != new) {
-			jam(buf, "->%s", str_monotime(*new, &mb));
+			jam_string(buf, "->");
+			jam_monotime(buf, *new);
 		}
 	}
 }
@@ -61,11 +70,11 @@ static void jam_old_new_intmax(struct jambuf *buf,
 			       const intmax_t *old, const intmax_t *new)
 {
 	if (old == new || *old != *new) {
-		jam_string(buf, *prefix);
-		*prefix = "";
-		jam(buf, " %s=%jd", what, *old);
+		jam_old_new_prefix(buf, prefix, what);
+		jam(buf, "%jd", *old);
 		if (old != new) {
-			jam(buf, "->%jd", *new);
+			jam_string(buf, "->");
+			jam(buf, "%jd", *new);
 		}
 	}
 }
@@ -75,11 +84,11 @@ static void jam_old_new_unsigned(struct jambuf *buf,
 				 const unsigned *old, const unsigned *new)
 {
 	if (old == new || *old != *new) {
-		jam_string(buf, *prefix);
-		*prefix = "";
-		jam(buf, " %s=%u", what, *old);
+		jam_old_new_prefix(buf, prefix, what);
+		jam(buf, "%u", *old);
 		if (old != new) {
-			jam(buf, "->%u", *new);
+			jam_string(buf, "->");
+			jam(buf, "%u", *new);
 		}
 	}
 }
