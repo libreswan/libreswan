@@ -28,7 +28,7 @@
 		if (!cond_) {						\
 			enum_buf eb;					\
 			llog_pexpect_v2_msgid_where(where, ike,		\
-						    "%s %ju: %s",	\
+						    "%s %jd: %s",	\
 						    str_enum_short(&message_role_names, role, &eb), \
 						    msgid, #COND);	\
 		}							\
