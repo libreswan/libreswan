@@ -622,10 +622,14 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 	 * IKE_SA_INIT goes elsewhere)
 	 *
 	 * The IKE SA responder only starts working on the message
-	 * (setting wip.responder) when both:
+	 * (setting wip.responder) when:
 	 *
 	 * - the IKE SA's keying material (SKEYSEED) has been computed
-	 * - the message successfully decrypts
+	 *
+	 * - all fragments decrypt
+	 *
+	 * - the message has been re-assembled from decrypted
+	 *   fragments
 	 */
 
 	if (ike->sa.st_v2_msgid_windows.responder.wip == msgid) {
@@ -637,83 +641,8 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 
 	/*
 	 * If the message is not a "duplicate", then what is it?
+	 * Following code gets to decide.
 	 */
-
-	struct v2_incoming_fragments *frags = ike->sa.st_v2_msgid_windows.responder.incoming_fragments;
-	if (ike->sa.st_offloaded_task_in_background) {
-		/*
-		 * The IKE SA responder is in the twilight zone:
-		 *
-		 *   Even though the responder has received an
-		 *   IKE_AUTH message (or fragment), it hasn't started
-		 *   processing it, and isn't considered "busy".  It
-		 *   needs SKEYSEED to do that.
-		 *
-		 * Further down:
-		 *
-		 * - this message is unpacked locating SK/SKF payload
-		 * - checked to see if there's a transition
-		 * - passed to process_v2_request_no_skeyseed() which
-		 *   may decide to save it
-		 */
-		pexpect(ike->sa.st_state == &state_v2_IKE_SA_INIT_R);
-		pexpect(!ike->sa.hidden_variables.st_skeyid_calculated);
-		if (pexpect(frags != NULL)) {
-			pexpect(/* single message */
-				(frags->total == 0 && frags->md != NULL) ||
-				/* multiple fragments */
-				(frags->total >= 1 && frags->count <= frags->total));
-		}
-		dbg_v2_msgid(ike,
-			     "not a duplicate - responder is accumulating encrypted fragments for message with request %jd (SKEYSEED is being computed)",
-			     msgid);
-	} else if (!ike->sa.hidden_variables.st_skeyid_calculated) {
-		/*
-		 * The IKE SA responder is standing at the gateway to
-		 * the twilight zone (see above).
-		 *
-		 * Same as above, however ...
-		 *
-		 * This time, process_v2_request_no_skeyseed() also
-		 * decides if the twilight zone should even be entered
-		 * (SKEYSEED started).
-		 */
-		pexpect(ike->sa.st_state == &state_v2_IKE_SA_INIT_R);
-		dbg_v2_msgid(ike,
-			     "not a duplicate - message request %jd is new (SKEYSEED still needs to be computed)",
-			     msgid);
-	} else if (frags != NULL) {
-		/*
-		 * A fragment and SKEYSEED is available.
-		 *
-		 * The code below will:
-		 *
-		 * - unpack the message to find SK/SKF
-		 * - decrypt and accumulate fragments
-		 *
-		 * Only once the entire message has been accumulated
-		 * will the code below start processing it.
-		 */
-		pexpect(ike->sa.hidden_variables.st_skeyid_calculated);
-		pexpect(frags->count < frags->total);
-		dbg_v2_msgid(ike,
-			     "not a duplicate - responder is accumulating decrypted fragments for message request %jd (SKEYSEED is known)",
-			     msgid);
-	} else {
-		/*
-		 * A simple message and SKEYSEED is available.
-		 *
-		 * The code below will unpack the, and decrypt the
-		 * message and then, if acceptable, start processing
-		 * it.  If it turns out to be a fragment then it will
-		 * start accumulating them.
-		 */
-		pexpect(ike->sa.hidden_variables.st_skeyid_calculated);
-		dbg_v2_msgid(ike,
-			     "not a duplicate - message request %jd is new (SKEYSEED is known)",
-			     msgid);
-	}
-
 	return false;
 }
 
@@ -1223,11 +1152,11 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 	 */
 	if (!ike->sa.hidden_variables.st_skeyid_calculated) {
 		/*
-		 * Responder only: on the initiator, SKEYSEED is
+		 * Responder only.  On the initiator, SKEYSEED is
 		 * handled by the IKE_SA_INIT response processor
 		 * (i.e., not on this path).
 		 */
-		if (!pexpect(v2_msg_role(md) == MESSAGE_REQUEST)) {
+		if (!PEXPECT(md->logger, v2_msg_role(md) == MESSAGE_REQUEST)) {
 			return;
 		}
 		process_v2_request_no_skeyseed(ike, md);
