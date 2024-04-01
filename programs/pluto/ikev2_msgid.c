@@ -328,25 +328,22 @@ void v2_msgid_finish(struct ike_sa *ike, const struct msg_digest *md)
 	case MESSAGE_REQUEST:
 	{
 		/*
-		 * pluto is responding to MD.
+		 * Finished responding to MD.
 		 *
 		 * Since this is a response, the MD's Message ID
 		 * trumps what ever is in responder.sent.  This way,
 		 * when messages are lost, the counter jumps forward
 		 * to the most recent received.
-		 */
-		/*
-		 * Processing request finished.  Scrub it as wip.
 		 *
-		 * XXX: should this be done in update_sent() since it
-		 * is when sending the response signifying that things
-		 * really finish?
+		 * The retransmit code uses both .recv and
+		 * .recv_frags.  Both need to match.
 		 */
 		update_story = "responder finishing";
 		msgid = md->hdr.isa_msgid;
 		pexpect_v2_msgid(ike, receiving, old.responder.wip == msgid);
 		update = &new->responder;
 		new->responder.wip = -1;
+		/* for duplicate detection */
 		new->responder.recv = msgid;
 		new->responder.recv_frags = md->v2_frags_total;
 		new->responder.sent = msgid;
@@ -369,7 +366,6 @@ void v2_msgid_finish(struct ike_sa *ike, const struct msg_digest *md)
 		update = &new->initiator;
 		pexpect_v2_msgid(ike, receiving, old.initiator.wip == msgid);
 		new->initiator.recv = msgid;
-		new->initiator.recv_frags = md->v2_frags_total;
 		new->initiator.wip = -1;
 		/*
 		 * Clear the retransmits for the old message.

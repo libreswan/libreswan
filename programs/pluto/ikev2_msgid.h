@@ -65,14 +65,27 @@ struct v2_msgid_window {
 	 *
 	 * XXX: should .wip be set _while_ protected and verified
 	 * fragments are being accumulated.
+	 *
+	 * When retransmitting a response, the RFC says to also check
+	 * that the fragments match.  Hence .recv_frags which
+	 * out-lives the .incomming_fragments field.
 	 */
 	intmax_t sent;		/* starts with -1 */
 	intmax_t recv;		/* starts with -1 */
+	unsigned recv_frags;	/* number of fragments in last .recv */
 	intmax_t wip;		/* >=0 when busy */
 	/*
-	 * Fragments.
+	 * Fragments:
+	 *
+	 * Incoming fragments are accumulated and then re-assembled
+	 * into a single message.  Once assembled the structure is
+	 * deleted.  Note that this all happens before .recv and
+	 * .recv_frags (used to detect the need to retransmit a
+	 * response) are set.
+	 *
+	 * Outgoing fragments are used when retransmitting.  A todo is
+	 * to delete them after a few minutes.
 	 */
-	unsigned recv_frags;	/* number of fragments making up incoming message */
 	struct v2_incoming_fragments *incoming_fragments;
 	struct v2_outgoing_fragment *outgoing_fragments;
 	/*
