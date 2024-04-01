@@ -1056,7 +1056,7 @@ void process_v1_packet(struct msg_digest *md)
 	if ((md->hdr.isa_flags & ISAKMP_FLAGS_v1_ENCRYPTION) &&
 	    st != NULL &&
 	    !st->hidden_variables.st_skeyid_calculated) {
-		PEXPECT(st->logger, st->st_offloaded_task_in_background);
+		PEXPECT(st->logger, st->st_v1_offloaded_task_in_background);
 		endpoint_buf b;
 		dbg("received encrypted packet from %s but exponentiation still in progress",
 		    str_endpoint(&md->sender, &b));
@@ -2406,7 +2406,7 @@ bool v1_state_busy(const struct state *st)
 	 * If IKEv1 is doing something in the background then the
 	 * state isn't busy.
 	 */
-	if (st->st_offloaded_task_in_background) {
+	if (st->st_v1_offloaded_task_in_background) {
 		pexpect(st->st_offloaded_task != NULL);
 		dbg("#%lu is idle; has background offloaded task",
 		    st->st_serialno);

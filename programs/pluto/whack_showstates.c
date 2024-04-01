@@ -248,7 +248,7 @@ static void show_state(struct show *s, struct state *st, const monotime_t now)
 		}
 
 		if (st->st_offloaded_task != NULL &&
-		    !st->st_offloaded_task_in_background) {
+		    !st->st_v1_offloaded_task_in_background) {
 			jam(buf, " crypto_calculating;");
 		} else {
 			jam(buf, " idle;");

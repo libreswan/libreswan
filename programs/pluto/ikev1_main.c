@@ -786,6 +786,7 @@ static stf_status main_inI2_outR2_continue2(struct state *ike_sa,
 	     "main_inI2_outR2_calcdone for #%lu: calculate DH finished",
 	     ike->sa.st_serialno);
 	PEXPECT(ike->sa.logger, null_md == NULL);
+	ike->sa.st_v1_offloaded_task_in_background = false;
 
 	/*
 	 * Ignore error.  It will be handled handled when the next
@@ -937,7 +938,7 @@ static stf_status main_inI2_outR2_continue1(struct state *ike_sa,
 				main_inI2_outR2_continue2, HERE);
 	/* we are calculating in the background, so it doesn't count */
 	dbg("#%lu %s:%u ike->sa.st_calculating = false;", ike->sa.st_serialno, __func__, __LINE__);
-	ike->sa.st_offloaded_task_in_background = true;
+	ike->sa.st_v1_offloaded_task_in_background = true;
 
 	return STF_OK;
 }

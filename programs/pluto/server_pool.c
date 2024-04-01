@@ -363,7 +363,6 @@ void submit_task(struct state *callback_sa,
 	 * Save in case it needs to be cancelled.
 	 */
 	task_sa->st_offloaded_task = job;
-	task_sa->st_offloaded_task_in_background = false;
 	job->logger = clone_logger(task_sa->logger, HERE);
 	job->md = md_addref(md);
 	ldbg(job->logger, PRI_JOB": added to pending queue", pri_job(job));
@@ -475,7 +474,6 @@ static stf_status handle_helper_answer(struct state *callback_sa,
 		ldbg(job->logger, PRI_JOB": calling state's callback function", pri_job(job));
 		PEXPECT(job->logger, task_sa->st_offloaded_task == job);
 		task_sa->st_offloaded_task = NULL;
-		task_sa->st_offloaded_task_in_background = false;
 		/* bill the thread time */
 		cpu_usage_add(task_sa->st_timing.helper_usage, job->time_used);
 		/* wall clock time not billed */

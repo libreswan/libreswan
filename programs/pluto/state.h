@@ -554,7 +554,7 @@ struct state {
 	 * offloaded to a crypto helper (or for that matter a child
 	 * process or anything).
 	 *
-	 * IKEv1's use of .st_offloaded_task_in_background is more
+	 * IKEv1's use of .st_v1_offloaded_task_in_background is more
 	 * complicated:
 	 *
 	 * In main mode state MAIN_R1, after sending its KE+NONCE,
@@ -562,18 +562,16 @@ struct state {
 	 * 'background' (i.e., before it has received the first
 	 * encrypted packet and actually needs the shared DH secret)
 	 * the responder than transitions to state MAIN_R2.
-	 * .st_offloaded_task_in_background is set.
+	 * .st_v1_offloaded_task_in_background is set.
 	 *
 	 * Later, if the shared DH secret is still being calculated
 	 * and the responder receives the next, and encrypted, packet,
 	 * that packet will be saved in .st_v1_background_md.  When
 	 * the crypto calculation completes that MD will be fed into
 	 * the state machine.
-	 *
-	 * IKEv2 has similar complexity with fragments.
 	 */
 	struct job *st_offloaded_task;
-	bool st_offloaded_task_in_background;
+	bool st_v1_offloaded_task_in_background;
 	struct msg_digest *st_v1_background_md;	/* arrived during background task */
 
 	chunk_t st_p1isa;	/* v1 Phase 1 initiator SA (Payload) for HASH */
