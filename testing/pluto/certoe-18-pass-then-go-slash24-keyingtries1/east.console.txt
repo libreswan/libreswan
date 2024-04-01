@@ -49,8 +49,8 @@ east #
  # there should be no %pass shunts on either side and an active tunnel and no partial IKE states
 east #
  ipsec showstates
-#1: "private-or-clear#192.1.3.0/24"[1] ...192.1.3.209:500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
-#2: "private-or-clear#192.1.3.0/24"[1] ...192.1.3.209:500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
+#1: "private-or-clear#192.1.3.0/24"[1] ...192.1.3.209:500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
+#2: "private-or-clear#192.1.3.0/24"[1] ...192.1.3.209:500 ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
 #2: "private-or-clear#192.1.3.0/24"[1] ...192.1.3.209 esp.ESPSPIi@192.1.3.209 esp.ESPSPIi@192.1.2.23 tun.0@192.1.3.209 tun.0@192.1.2.23 Traffic: ESPin=252B ESPout=252B ESPmax=2^63B 
 east #
  ipsec trafficstatus

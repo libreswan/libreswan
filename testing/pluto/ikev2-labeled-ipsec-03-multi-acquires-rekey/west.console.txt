@@ -75,8 +75,8 @@ Bare Shunt list:
  
 west #
  ipsec showstates
-#1: "labeled"[1] 192.1.2.23:500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
-#2: "labeled"[1][1] 192.1.2.23:500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
+#1: "labeled"[1] 192.1.2.23:500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
+#2: "labeled"[1][1] 192.1.2.23:500 ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
 #2: "labeled"[1][1] 192.1.2.23 esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=40B ESPout=60B ESPmax=2^63B 
 west #
  ../../guestbin/ipsec-kernel-state.sh
@@ -159,10 +159,10 @@ Bare Shunt list:
  
 west #
  ipsec showstates
-#1: "labeled"[1] 192.1.2.23:500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
-#2: "labeled"[1][1] 192.1.2.23:500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
+#1: "labeled"[1] 192.1.2.23:500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
+#2: "labeled"[1][1] 192.1.2.23:500 ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
 #2: "labeled"[1][1] 192.1.2.23 esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=40B ESPout=60B ESPmax=2^63B 
-#3: "labeled"[1][2] 192.1.2.23:500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
+#3: "labeled"[1][2] 192.1.2.23:500 ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
 #3: "labeled"[1][2] 192.1.2.23 esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=377B ESPout=325B ESPmax=2^63B 
 west #
  ../../guestbin/ipsec-kernel-state.sh

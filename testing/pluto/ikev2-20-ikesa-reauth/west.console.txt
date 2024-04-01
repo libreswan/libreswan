@@ -45,8 +45,8 @@ west #
  ipsec whack --trafficstatus
 #4: "west", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 west #
- ipsec status | grep "STATE_"
-#3: "west":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REPLACE in XXs; newest; idle;
-#4: "west":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #3; idle;
+ ipsec status | grep "ESTABLISHED_"
+#3: "west":500 ESTABLISHED_IKE_SA (established IKE SA); REPLACE in XXs; newest; idle;
+#4: "west":500 ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #3; idle;
 west #
  

@@ -103,8 +103,8 @@ road #
 done
 road #
  ipsec status | grep STATE_
-#7: "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23:4500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
-#8: "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23:4500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #7; idle;
+#7: "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23:4500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
+#8: "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23:4500 ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #7; idle;
 road #
  ip xfrm policy
 src 192.0.2.1/32 dst 192.1.2.23/32 

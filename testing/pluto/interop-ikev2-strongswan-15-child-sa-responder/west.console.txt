@@ -130,12 +130,12 @@ west #
 "westnet-eastnet-ikev2c":   IKE algorithms: 3DES_CBC-HMAC_MD5-MODP2048
 "westnet-eastnet-ikev2c":   ESP algorithms: AES_CBC_128-HMAC_SHA2_512_256
 "westnet-eastnet-ikev2c":   ESP algorithm newest: AES_CBC_128-HMAC_SHA2_512_256; pfsgroup=<N/A>
-#1: "westnet-eastnet-ikev2a":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
-#2: "westnet-eastnet-ikev2a":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
+#1: "westnet-eastnet-ikev2a":500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
+#2: "westnet-eastnet-ikev2a":500 ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
 #2: "westnet-eastnet-ikev2a" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=84B ESPout=84B ESPmax=2^63B 
-#3: "westnet-eastnet-ikev2b":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
+#3: "westnet-eastnet-ikev2b":500 ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
 #3: "westnet-eastnet-ikev2b" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=84B ESPout=84B ESPmax=2^63B 
-#4: "westnet-eastnet-ikev2c":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
+#4: "westnet-eastnet-ikev2c":500 ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
 #4: "westnet-eastnet-ikev2c" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
 west #
  echo done

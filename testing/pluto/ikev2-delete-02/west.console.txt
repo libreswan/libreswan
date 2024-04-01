@@ -60,8 +60,8 @@ src 192.0.2.0/24 dst 192.0.1.0/24
 		proto esp reqid REQID mode tunnel
 west #
  ipsec whack --showstates
-#1: "west-east-delete1":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
-#2: "west-east-delete1":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
+#1: "west-east-delete1":500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
+#2: "west-east-delete1":500 ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
 #2: "west-east-delete1" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=84B ESPout=84B ESPmax=2^63B 
 west #
  echo "sleeping a bit.. then deleting child"
@@ -84,7 +84,7 @@ src 192.0.1.0/24 dst 192.0.2.0/24
 		proto esp reqid 0 mode transport
 west #
  ipsec whack --showstates
-#1: "west-east-delete1":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
+#1: "west-east-delete1":500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
 west #
  echo "sleeping a bit.. then deleting ike"
 sleeping a bit.. then deleting ike

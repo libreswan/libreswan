@@ -65,6 +65,6 @@ east #
 "east/0x2" #4: sent CREATE_CHILD_SA request for new IPsec SA
 "east/0x2" #4: sent CREATE_CHILD_SA request for new IPsec SA
 "east/0x2" #1: ISAKMP_v2_CREATE_CHILD_SA message response with Message ID 0 has no matching SA
-"east/0x2" #1: STATE_V2_ESTABLISHED_IKE_SA: 60 second timeout exceeded after 0 retransmits.  No response (or no acceptable response) to our IKEv2 message
+"east/0x2" #1: ESTABLISHED_IKE_SA: 60 second timeout exceeded after 0 retransmits.  No response (or no acceptable response) to our IKEv2 message
 "east/0x2" #1: deleting IKE SA (established IKE SA)
 >>>>>>>>>> TIMEOUT while running command east# ipsec up east/0x2 <<<<<<<<<<

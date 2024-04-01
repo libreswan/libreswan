@@ -179,8 +179,8 @@ State Information: DDoS cookies not required, Accepting new IKE connections
 IKE SAs: total(1), half-open(0), open(0), authenticated(1), anonymous(0)
 IPsec SAs: total(1), authenticated(1), anonymous(0)
  
-#1: "westnet-eastnet-ikev2":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); EXPIRE in XXs; newest; idle;
-#2: "westnet-eastnet-ikev2":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); EXPIRE in XXs; newest; eroute owner; IKE SA #1; idle;
+#1: "westnet-eastnet-ikev2":500 ESTABLISHED_IKE_SA (established IKE SA); EXPIRE in XXs; newest; idle;
+#2: "westnet-eastnet-ikev2":500 ESTABLISHED_CHILD_SA (established Child SA); EXPIRE in XXs; newest; eroute owner; IKE SA #1; idle;
 #2: "westnet-eastnet-ikev2" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=84B ESPout=84B ESPmax=2^63B 
  
 Bare Shunt list:

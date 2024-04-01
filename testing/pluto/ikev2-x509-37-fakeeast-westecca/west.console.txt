@@ -52,7 +52,7 @@ west #
 "ikev2-westnet-eastnet-x509-cr" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
 "ikev2-westnet-eastnet-x509-cr" #1: NSS: ERROR: IPsec certificate E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA invalid: SEC_ERROR_UNKNOWN_ISSUER: Peer's Certificate issuer is not recognized.
 "ikev2-westnet-eastnet-x509-cr" #1: X509: certificate payload rejected for this connection
-"ikev2-westnet-eastnet-x509-cr" #1: encountered fatal error in state STATE_V2_IKE_AUTH_I
+"ikev2-westnet-eastnet-x509-cr" #1: encountered fatal error in state IKE_AUTH_I
 "ikev2-westnet-eastnet-x509-cr" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "ikev2-westnet-eastnet-x509-cr" #2: IMPAIR: revival: skip scheduling revival event
 "ikev2-westnet-eastnet-x509-cr" #1: deleting IKE SA (sent IKE_AUTH request)

@@ -1,2 +1,2 @@
 ipsec whack --trafficstatus
-ipsec status | grep "STATE_"
+ipsec status | grep "ESTABLISHED_"

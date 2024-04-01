@@ -104,8 +104,8 @@ road #
 #2: "static", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 road #
  ipsec status |grep STATE_
-#1: "static":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
-#2: "static":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
-#3: "static":500 STATE_V2_PARENT_R1 (sent IKE_SA_INIT (or IKE_INTERMEDIATE) response); DISCARD in XXs; idle;
+#1: "static":500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
+#2: "static":500 ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
+#3: "static":500 PARENT_R1 (sent IKE_SA_INIT (or IKE_INTERMEDIATE) response); DISCARD in XXs; idle;
 road #
  

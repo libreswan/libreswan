@@ -58,7 +58,7 @@ west #
  ipsec whack --rekey-ike --asynchronous --name labeled
 west #
  ../../guestbin/wait-for.sh --match REKEY_IKE_I1 -- ipsec whack --showstates
-#2: "labeled"[1] 192.1.2.23:500 STATE_V2_REKEY_IKE_I1 (sent CREATE_CHILD_SA request to rekey IKE SA); idle;
+#2: "labeled"[1] 192.1.2.23:500 REKEY_IKE_I1 (sent CREATE_CHILD_SA request to rekey IKE SA); idle;
 west #
  # Trigger traffic using the predefined ping_t context.  Because the
 west #
@@ -138,10 +138,10 @@ west #
  # The IKE SA should be associated with the template connection
 west #
  ipsec showstates
-#1: "labeled"[1] 192.1.2.23:500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); RETRANSMIT in XXs; REPLACE in XXs; idle;
-#2: "labeled"[1] 192.1.2.23:500 STATE_V2_REKEY_IKE_I1 (sent CREATE_CHILD_SA request to rekey IKE SA); idle;
-#3: "labeled"[1] 192.1.2.23:500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
-#4: "labeled"[1][1] 192.1.2.23:500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #3; idle;
+#1: "labeled"[1] 192.1.2.23:500 ESTABLISHED_IKE_SA (established IKE SA); RETRANSMIT in XXs; REPLACE in XXs; idle;
+#2: "labeled"[1] 192.1.2.23:500 REKEY_IKE_I1 (sent CREATE_CHILD_SA request to rekey IKE SA); idle;
+#3: "labeled"[1] 192.1.2.23:500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
+#4: "labeled"[1][1] 192.1.2.23:500 ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #3; idle;
 #4: "labeled"[1][1] 192.1.2.23 esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 Traffic: ESPin=64B ESPout=64B ESPmax=2^63B 
 west #
  

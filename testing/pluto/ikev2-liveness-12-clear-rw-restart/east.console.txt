@@ -15,7 +15,7 @@ east #
  # wait for the child to start a liveness probe; this is the first clue
 east #
  ../../guestbin/wait-for-pluto.sh ': retransmission; will wait 1 second'
-"east"[1] 192.1.3.209 #1: STATE_V2_ESTABLISHED_IKE_SA: retransmission; will wait 1 seconds for response
+"east"[1] 192.1.3.209 #1: ESTABLISHED_IKE_SA: retransmission; will wait 1 seconds for response
 east #
  ../../guestbin/wait-for-pluto.sh ' liveness action '
 "east"[1] 192.1.3.209 #1: liveness action - clearing connection kind CK_INSTANCE

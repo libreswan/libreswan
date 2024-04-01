@@ -88,8 +88,8 @@ east #
  # The IKE SA should be associated with the template connection
 east #
  ipsec showstates
-#1: "labeled"[1] 192.1.2.45:500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
-#2: "labeled"[1][1] 192.1.2.45:500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
+#1: "labeled"[1] 192.1.2.45:500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
+#2: "labeled"[1][1] 192.1.2.45:500 ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
 #2: "labeled"[1][1] 192.1.2.45 esp.ESPSPIi@192.1.2.45 esp.ESPSPIi@192.1.2.23 Traffic: ESPin=64B ESPout=64B ESPmax=2^63B 
 east #
  

@@ -15,14 +15,14 @@ east #
 initdone
 east #
  ipsec status | grep STATE_
-#1: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:4500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; idle;
-#2: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:4500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; IKE SA #1; idle;
-#3: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:4500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; idle;
-#4: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:4500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; IKE SA #3; idle;
-#5: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:4500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; idle;
-#6: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:4500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; IKE SA #5; idle;
-#7: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:4500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
-#8: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:4500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #7; idle;
+#1: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:4500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; idle;
+#2: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:4500 ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; IKE SA #1; idle;
+#3: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:4500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; idle;
+#4: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:4500 ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; IKE SA #3; idle;
+#5: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:4500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; idle;
+#6: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:4500 ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; IKE SA #5; idle;
+#7: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:4500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
+#8: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:4500 ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #7; idle;
 east #
  ip xfrm policy
 src 192.1.2.23/32 dst 192.0.2.1/32 

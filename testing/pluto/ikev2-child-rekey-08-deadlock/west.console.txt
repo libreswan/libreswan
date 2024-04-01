@@ -38,14 +38,14 @@ initiating all connections with alias "west-east"
 "west-east/4x0" #5: sent IPsec Child req wait response
 "west-east/4x0" #5: initiator established Child SA; IPsec tunnel [192.0.1.251/32===192.0.2.254/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
- # state #1(STATE_V2_ESTABLISHED_IKE_SA), #2, #3, #4, and #5
+ # state #1(ESTABLISHED_IKE_SA), #2, #3, #4, and #5
 west #
  ipsec status | grep STATE_
-#2: "west-east/1x0":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
-#3: "west-east/2x0":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
-#4: "west-east/3x0":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
-#1: "west-east/4x0":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
-#5: "west-east/4x0":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
+#2: "west-east/1x0":500 ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
+#3: "west-east/2x0":500 ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
+#4: "west-east/3x0":500 ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
+#1: "west-east/4x0":500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
+#5: "west-east/4x0":500 ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
 west #
  ipsec whack --rekey-child --name west-east/1x0
 west #
@@ -57,16 +57,16 @@ west #
 west #
  sleep 45
 west #
- # state #1(STATE_V2_ESTABLISHED_IKE_SA) #6, #7, #8  and #9 in STATE_V2_ESTABLISHED_CHILD_SA
+ # state #1(ESTABLISHED_IKE_SA) #6, #7, #8  and #9 in ESTABLISHED_CHILD_SA
 west #
  # anything other state is a sign of regression
 west #
  ipsec status | grep STATE_
-#6: "west-east/1x0":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
-#7: "west-east/2x0":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
-#8: "west-east/3x0":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
-#1: "west-east/4x0":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
-#9: "west-east/4x0":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
+#6: "west-east/1x0":500 ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
+#7: "west-east/2x0":500 ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
+#8: "west-east/3x0":500 ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
+#1: "west-east/4x0":500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
+#9: "west-east/4x0":500 ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
 west #
  # this is complex grep line susceptible to changes to log lines.
 west #

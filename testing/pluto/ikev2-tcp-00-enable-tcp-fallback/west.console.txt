@@ -32,7 +32,7 @@ west #
  ipsec up west
 "west" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "west" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"west" #1: STATE_V2_IKE_SA_INIT_I: 10 second timeout exceeded after 5 retransmits.  No response (or no acceptable response) to our first IKEv2 message
+"west" #1: IKE_SA_INIT_I: 10 second timeout exceeded after 5 retransmits.  No response (or no acceptable response) to our first IKEv2 message
 "west" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "west" #1: IMPAIR: revival: skip scheduling revival event
 "west" #1: deleting IKE SA (sent IKE_SA_INIT request)

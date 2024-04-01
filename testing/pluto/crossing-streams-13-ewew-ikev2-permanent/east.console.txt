@@ -16,10 +16,10 @@ east #
 "east-west" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 east #
  ipsec showstates
-#1: "east-west":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
-#2: "east-west":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
+#1: "east-west":500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
+#2: "east-west":500 ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
 #2: "east-west" esp.ESPSPIi@192.1.2.45 esp.ESPSPIi@192.1.2.23 tun.0@192.1.2.45 tun.0@192.1.2.23 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
-#3: "east-west":500 STATE_V2_PARENT_R1 (sent IKE_SA_INIT (or IKE_INTERMEDIATE) response); DISCARD in XXs; idle;
+#3: "east-west":500 PARENT_R1 (sent IKE_SA_INIT (or IKE_INTERMEDIATE) response); DISCARD in XXs; idle;
 east #
  ipsec trafficstatus
 #2: "east-west", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@west'

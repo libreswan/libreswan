@@ -33,9 +33,9 @@ east #
 "westnet-eastnet-ikev2":   conn serial: $1;
 "westnet-eastnet-ikev2":   IKEv2 algorithm newest: AES_CBC_256-HMAC_SHA2_512-MODP2048
 "westnet-eastnet-ikev2":   ESP algorithm newest: AES_CBC_256-HMAC_SHA2_512_256; pfsgroup=<Phase1>
-#2: "westnet-eastnet-ikev2":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #4; idle;
+#2: "westnet-eastnet-ikev2":500 ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #4; idle;
 #2: "westnet-eastnet-ikev2" esp.ESPSPIi@192.1.2.45 esp.ESPSPIi@192.1.2.23 tun.0@192.1.2.45 tun.0@192.1.2.23 Traffic: ESPin=336B ESPout=336B ESPmax=2^63B 
-#4: "westnet-eastnet-ikev2":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
+#4: "westnet-eastnet-ikev2":500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
 east #
  if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then strongswan status ; fi
 east #

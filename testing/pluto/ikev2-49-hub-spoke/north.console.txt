@@ -132,8 +132,8 @@ State Information: DDoS cookies not required, Accepting new IKE connections
 IKE SAs: total(1), half-open(0), open(0), authenticated(1), anonymous(0)
 IPsec SAs: total(1), authenticated(1), anonymous(0)
  
-#1: "northnet-westnet-ipv4-psk":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
-#2: "northnet-westnet-ipv4-psk":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
+#1: "northnet-westnet-ipv4-psk":500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
+#2: "northnet-westnet-ipv4-psk":500 ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
 #2: "northnet-westnet-ipv4-psk" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.3.33 tun.0@192.1.2.23 tun.0@192.1.3.33 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
  
 Bare Shunt list:

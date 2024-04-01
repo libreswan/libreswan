@@ -106,8 +106,8 @@ road #
  # there should be no %pass shunts on either side and an active tunnel and no partial states
 road #
  ipsec status |grep STATE_
-#2: "private-or-clear#192.1.2.0/24"[2] ...192.1.2.23:500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
-#3: "private-or-clear#192.1.2.0/24"[2] ...192.1.2.23:500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #2; idle;
+#2: "private-or-clear#192.1.2.0/24"[2] ...192.1.2.23:500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
+#3: "private-or-clear#192.1.2.0/24"[2] ...192.1.2.23:500 ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #2; idle;
 road #
  ipsec trafficstatus
 #3: "private-or-clear#192.1.2.0/24"[2] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=252, outBytes=252, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'

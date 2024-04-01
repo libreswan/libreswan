@@ -38,7 +38,7 @@ west #
 "west" #1: processed IKE_SA_INIT response from 192.1.2.23:TCP/4500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "west" #1: legacy RSA-SHA1 is not allowed but peer supports nothing else
 "west" #1: authentication method IKEv2_AUTH_RESERVED not supported
-"west" #1: encountered fatal error in state STATE_V2_IKE_SA_INIT_IR
+"west" #1: encountered fatal error in state IKE_SA_INIT_IR
 "west" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "west" #1: deleting IKE SA (processed IKE_SA_INIT response, preparing IKE_INTERMEDIATE or IKE_AUTH request)
 west #

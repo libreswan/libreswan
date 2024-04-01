@@ -14,7 +14,7 @@ east #
  # wait for the child to start a liveness probe; this is the first clue
 east #
  ../../guestbin/wait-for-pluto.sh ': retransmission; will wait 1 second'
-"westnet-eastnet-ipv4-psk-ikev2" #1: STATE_V2_ESTABLISHED_IKE_SA: retransmission; will wait 1 seconds for response
+"westnet-eastnet-ipv4-psk-ikev2" #1: ESTABLISHED_IKE_SA: retransmission; will wait 1 seconds for response
 east #
  ../../guestbin/wait-for-pluto.sh ' liveness action '
 "westnet-eastnet-ipv4-psk-ikev2" #1: liveness action - clearing connection kind CK_PERMANENT

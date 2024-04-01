@@ -66,7 +66,7 @@ west #
 "labeled"[1] 192.1.2.23 #1: calling REAUTH event handler
 west #
  ../../guestbin/wait-for.sh --match PARENT_I1 -- ipsec whack --showstates
-#3: "labeled"[1] 192.1.2.23:500 STATE_V2_IKE_SA_INIT_I (sent IKE_SA_INIT request); RETRANSMIT in XXs; idle;
+#3: "labeled"[1] 192.1.2.23:500 IKE_SA_INIT_I (sent IKE_SA_INIT request); RETRANSMIT in XXs; idle;
 west #
  # let another on-demand label establish
 west #
@@ -162,11 +162,11 @@ west #
  # The IKE SA should be associated with the template connection
 west #
  ipsec showstates
-#1: "labeled"[1] 192.1.2.23:500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REPLACE in XXs; idle;
-#3: "labeled"[1] 192.1.2.23:500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REPLACE in XXs; newest; idle;
-#2: "labeled"[1][1] 192.1.2.23:500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; IKE SA #1; idle;
+#1: "labeled"[1] 192.1.2.23:500 ESTABLISHED_IKE_SA (established IKE SA); REPLACE in XXs; idle;
+#3: "labeled"[1] 192.1.2.23:500 ESTABLISHED_IKE_SA (established IKE SA); REPLACE in XXs; newest; idle;
+#2: "labeled"[1][1] 192.1.2.23:500 ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; IKE SA #1; idle;
 #2: "labeled"[1][1] 192.1.2.23 esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 Traffic: ESPin=64B ESPout=64B ESPmax=2^63B 
-#4: "labeled"[1][2] 192.1.2.23:500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; IKE SA #3; idle;
+#4: "labeled"[1][2] 192.1.2.23:500 ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; IKE SA #3; idle;
 #4: "labeled"[1][2] 192.1.2.23 esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 Traffic: ESPin=257B ESPout=269B ESPmax=2^63B 
 west #
  

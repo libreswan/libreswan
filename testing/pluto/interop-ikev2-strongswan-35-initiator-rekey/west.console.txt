@@ -89,8 +89,8 @@ west #
 "westnet-eastnet":   IKEv2 algorithm newest: AES_CBC_256-HMAC_SHA2_512-MODP2048
 "westnet-eastnet":   ESP algorithms: AES_CBC_256-HMAC_SHA2_512_256-MODP2048
 "westnet-eastnet":   ESP algorithm newest: AES_CBC_256-HMAC_SHA2_512_256; pfsgroup=<Phase1>
-#1: "westnet-eastnet":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
-#3: "westnet-eastnet":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
+#1: "westnet-eastnet":500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
+#3: "westnet-eastnet":500 ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
 #3: "westnet-eastnet" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=84B ESPout=84B ESPmax=2^63B 
 west #
  # give time to strongswan to expire old one
